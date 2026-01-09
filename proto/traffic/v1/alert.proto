@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+package traffic.v1;
+
+option go_package = "github.com/1144160159/traffic-analysis-platform/go/control-plane/pkg/proto/traffic/v1;trafficv1";
+option java_package = "com.traffic.proto.v1";
+option java_multiple_files = true;
+
+import "traffic/v1/common.proto";
+
+// Alert 告警对象
+// 由 Alert Service 从 DetectionEvent 聚合生成
+message Alert {
+  // 基础标识
+  string alert_id = 1;
+  string tenant_id = 2;
+  
+  // 去重指纹 (MD5(alert_type + src_ip + dst_ip + dst_port))
+  string fingerprint = 3;
+  
+  // ==================== 关联信息 ====================
+  string community_id = 10;
+  string session_id = 11;
+  string campaign_id = 12;      // 所属战役ID (可选)
+  
+  // ==================== 网络信息 ====================
+  FiveTuple tuple = 20;
+  
+  // ==================== 分类信息 ====================
+  string alert_type = 30;       // 告警类型
+  repeated string labels = 31;  // 标签列表
+  float score = 32;             // 综合评分
+  string severity = 33;         // 严重程度
+  
+  // ==================== 时间信息 ====================
+  int64 first_seen = 40;        // 首次发现时间
+  int64 last_seen = 41;         // 最后发现时间
+  int32 count = 42;             // 聚合计数
+  
+  // ==================== 状态管理 ====================
+  // status: "new" | "triage" | "assigned" | "closed"
+  string status = 50;
+  string assignee = 51;         // 分配给谁处理
+  
+  // ==================== 证据 ====================
+  repeated string evidence_ids = 60;
+  
+  // ==================== 版本信息 ====================
+  string rule_version = 70;
+  string model_version = 71;
+  string feature_set_id = 72;
+}
+
+// AlertFeedback 告警反馈
+// 用于回灌标注
+message AlertFeedback {
+  string alert_id = 1;
+  string tenant_id = 2;
+  
+  // label: "TP" (True Positive) | "FP" (False Positive)
+  string label = 3;
+  
+  // 误报原因码
+  string reason_code = 4;
+  
+  // 备注
+  string comment = 5;
+  
+  // 操作者
+  string user_id = 6;
+  int64 timestamp = 7;
+  
+  // 是否加入白名单
+  bool add_to_whitelist = 8;
+}

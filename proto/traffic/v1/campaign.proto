@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package traffic.v1;
+
+option go_package = "github.com/yourorg/traffic-control-plane/pkg/proto/traffic/v1;trafficv1";
+option java_package = "com.traffic.proto.v1";
+option java_multiple_files = true;
+
+import "traffic/v1/common.proto";
+
+// Campaign 攻击战役
+// 由 Flink CEP Job 通过关联分析生成
+message Campaign {
+  EventHeader header = 1;
+  
+  // 战役标识
+  string campaign_id = 2;
+  
+  // 时间范围
+  int64 ts_start = 3;
+  int64 ts_end = 4;
+  
+  // 关联的告警 ID 列表
+  repeated string alert_ids = 5;
+  
+  // 涉及的实体 (IP、域名、用户等)
+  repeated string entities = 6;
+  
+  // 综合评分
+  float score = 7;
+  
+  // 战役摘要描述
+  string summary = 8;
+  
+  // 战役类型 (如 "APT", "Ransomware", "DataExfiltration")
+  string campaign_type = 9;
+  
+  // 攻击阶段 (参考 ATT&CK)
+  repeated string attack_phases = 10;
+  
+  // 关联的检测规则/模型
+  repeated string rule_ids = 11;
+  repeated string model_ids = 12;
+}

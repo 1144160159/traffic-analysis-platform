@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+package traffic.v1;
+
+option go_package = "github.com/yourorg/traffic-control-plane/pkg/proto/traffic/v1;trafficv1";
+option java_package = "com.traffic.proto.v1";
+option java_multiple_files = true;
+
+import "traffic/v1/flow.proto";
+import "traffic/v1/pcap.proto";
+
+// IngestService 数据接入服务
+// 探针通过此服务上报 Flow 事件和 PCAP 索引
+service IngestService {
+  // UploadFlows 批量上报 Flow 事件
+  rpc UploadFlows(BatchUploadRequest) returns (BatchUploadResponse);
+  
+  // UploadPcapIndex 上报 PCAP 索引元数据
+  rpc UploadPcapIndex(PcapIndexMeta) returns (PcapIndexResponse);
+  
+  // StreamFlows 流式上报 (用于持续连接场景)
+  rpc StreamFlows(stream FlowEvent) returns (stream FlowAck);
+  
+  // Heartbeat 心跳检测
+  rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+}
+
+// PcapIndexResponse PCAP 索引上报响应
+message PcapIndexResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// FlowAck 流式上报确认
+message FlowAck {
+  string event_id = 1;
+  bool accepted = 2;
+  string error = 3;
+}
+
+// HeartbeatRequest 心跳请求
+message HeartbeatRequest {
+  string probe_id = 1;
+  string tenant_id = 2;
+  int64 timestamp = 3;
+  
+  // 探针状态信息
+  ProbeStatus status = 4;
+}
+
+// HeartbeatResponse 心跳响应
+message HeartbeatResponse {
+  bool ok = 1;
+  
+  // 可选: 服务端下发的配置更新
+  ProbeConfig config = 2;
+}
+
+// ProbeStatus 探针状态
+message ProbeStatus {
+  float cpu_usage = 1;          // CPU 使用率 (0-100)
+  float memory_usage = 2;       // 内存使用率 (0-100)
+  uint64 packets_captured = 3;  // 已捕获包数
+  uint64 packets_dropped = 4;   // 丢包数
+  float capture_pps = 5;        // 当前捕获速率
+  float upload_bps = 6;         // 当前上报速率
+}
+
+// ProbeConfig 探针配置
+message ProbeConfig {
+  string config_version = 1;
+  
+  // 采样率 (0.0-1.0, 1.0 表示全量)
+  float sample_rate = 2;
+  
+  // BPF 过滤表达式
+  string bpf_filter = 3;
+  
+  // 流超时配置
+  uint32 idle_timeout_sec = 4;
+  uint32 active_timeout_sec = 5;
+  
+  // 上报批次大小
+  uint32 batch_size = 6;
+}

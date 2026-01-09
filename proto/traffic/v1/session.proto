@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package traffic.v1;
+
+option go_package = "github.com/1144160159/traffic-analysis-platform/go/control-plane/pkg/proto/traffic/v1;trafficv1";
+option java_package = "com.traffic.proto.v1";
+option java_multiple_files = true;
+
+import "traffic/v1/common.proto";
+
+// SessionEvent 双向会话事件
+// 由 Flink Session Job 从 FlowEvent 聚合生成
+message SessionEvent {
+  EventHeader header = 1;
+  
+  // 会话标识
+  string session_id = 2;        // 会话唯一ID
+  string community_id = 3;      // 社区ID (与 FlowEvent 中相同)
+  
+  // 五元组 (以客户端视角)
+  FiveTuple tuple = 4;
+  
+  // ==================== 时间信息 ====================
+  int64 ts_start = 10;          // 会话开始时间
+  int64 ts_end = 11;            // 会话结束时间
+  uint32 duration_ms = 12;      // 持续时间
+  
+  // ==================== 统计信息 ====================
+  uint64 packets_total = 20;    // 总包数
+  uint64 bytes_total = 21;      // 总字节数
+  uint64 bytes_fwd = 22;        // 上行字节数 (C2S)
+  uint64 bytes_bwd = 23;        // 下行字节数 (S2C)
+  float up_down_ratio = 24;     // 上下行比例
+  
+  // ==================== TCP 状态 ====================
+  bool has_syn = 30;            // 是否有 SYN
+  bool has_fin = 31;            // 是否有 FIN
+  bool has_rst = 32;            // 是否有 RST
+  bool is_established = 33;     // 是否建立连接
+  
+  // ==================== 聚合的 Flow ID 列表 ====================
+  repeated string flow_ids = 40;
+  
+  // ==================== 会话结束原因 ====================
+  string end_reason = 50;
+}

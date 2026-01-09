@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package traffic.v1;
+
+option go_package = "github.com/1144160159/traffic-analysis-platform/go/control-plane/pkg/proto/traffic/v1;trafficv1";
+option java_package = "com.traffic.proto.v1";
+option java_multiple_files = true;
+
+// EventHeader 是所有事件的通用头部
+// 包含用于追踪、租户隔离和幂等处理的关键字段
+message EventHeader {
+  // event_id: UUID v4，全局唯一，用于幂等处理
+  string event_id = 1;
+  
+  // tenant_id: 租户标识，用于数据隔离
+  string tenant_id = 2;
+  
+  // run_id: 运行批次ID，用于区分实时流量与回放流量
+  string run_id = 3;
+  
+  // event_ts: 事件发生时间戳 (毫秒)
+  int64 event_ts = 4;
+  
+  // ingest_ts: 接入网关接收时间戳 (毫秒)
+  int64 ingest_ts = 5;
+  
+  // probe_id: 探针标识
+  string probe_id = 6;
+  
+  // feature_set_id: 特征集版本，用于模型训练一致性
+  string feature_set_id = 7;
+}
+
+// FiveTuple 网络五元组
+message FiveTuple {
+  string src_ip = 1;      // 源 IP (IPv4/IPv6 字符串格式)
+  string dst_ip = 2;      // 目的 IP
+  uint32 src_port = 3;    // 源端口
+  uint32 dst_port = 4;    // 目的端口
+  uint32 protocol = 5;    // 协议号: 6=TCP, 17=UDP, 1=ICMP
+}
+
+// TcpFlags TCP 标志位统计
+message TcpFlags {
+  uint32 syn = 1;
+  uint32 ack = 2;
+  uint32 fin = 3;
+  uint32 rst = 4;
+  uint32 psh = 5;
+  uint32 urg = 6;
+}

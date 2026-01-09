@@ -1,0 +1,79 @@
+syntax = "proto3";
+
+package traffic.v1;
+
+option go_package = "github.com/1144160159/traffic-analysis-platform/go/control-plane/pkg/proto/traffic/v1;trafficv1";
+option java_package = "com.traffic.proto.v1";
+option java_multiple_files = true;
+
+import "traffic/v1/common.proto";
+
+// FlowEvent 单向流事件
+// 这是探针上报的核心数据结构，代表一个单向网络流的统计信息
+message FlowEvent {
+  // 通用头部
+  EventHeader header = 1;
+  
+  // 流标识
+  string flow_id = 2;           // 流唯一ID
+  string community_id = 3;      // 双向会话ID (用于关联正反向流)
+  
+  // 五元组
+  FiveTuple tuple = 4;
+  
+  // 方向定义: "c2s" (client to server) 或 "s2c" (server to client)
+  string direction = 5;
+  
+  // ==================== 包/字节统计 ====================
+  uint64 packets_fwd = 10;      // 正向包数
+  uint64 packets_bwd = 11;      // 反向包数
+  uint64 bytes_fwd = 12;        // 正向字节数
+  uint64 bytes_bwd = 13;        // 反向字节数
+  
+  // ==================== 时间信息 ====================
+  int64 ts_start = 14;          // 流开始时间 (毫秒)
+  int64 ts_end = 15;            // 流结束时间 (毫秒)
+  uint32 duration_ms = 16;      // 持续时间 (毫秒)
+  
+  // ==================== TCP 标志位 ====================
+  uint32 tcp_flags_fwd = 20;    // 正向 TCP flags OR 值
+  uint32 tcp_flags_bwd = 21;    // 反向 TCP flags OR 值
+  
+  // ==================== 包长统计 ====================
+  uint32 pktlen_min = 30;       // 最小包长
+  uint32 pktlen_max = 31;       // 最大包长
+  float pktlen_mean = 32;       // 平均包长
+  float pktlen_std = 33;        // 包长标准差
+  
+  // ==================== 包间隔统计 (IAT) ====================
+  float iat_min_ms = 40;        // 最小 IAT (毫秒)
+  float iat_max_ms = 41;        // 最大 IAT
+  float iat_mean_ms = 42;       // 平均 IAT
+  float iat_std_ms = 43;        // IAT 标准差
+  
+  // ==================== 流结束原因 ====================
+  // "timeout_idle": 空闲超时
+  // "timeout_active": 活跃超时
+  // "tcp_fin": TCP FIN
+  // "tcp_rst": TCP RST
+  // "forced": 强制刷新
+  string end_reason = 50;
+}
+
+// BatchUploadRequest 批量上报请求
+message BatchUploadRequest {
+  repeated FlowEvent events = 1;
+  
+  // 可选的压缩信息
+  string compression = 2;       // "none", "zstd", "lz4"
+}
+
+// BatchUploadResponse 批量上报响应
+message BatchUploadResponse {
+  int32 accepted = 1;           // 接受的事件数
+  int32 rejected = 2;           // 拒绝的事件数
+  string message = 3;           // 可选的消息
+  
+  // 被拒绝的 event_id 列表 (用于重试)
+  repeated string rejected_ids = 4;
+}
