@@ -1,0 +1,79 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ingest-gateway
+  namespace: traffic-analysis
+  labels:
+    app: ingest-gateway
+spec:
+  type: LoadBalancer
+  selector:
+    app: ingest-gateway
+  ports:
+    - name: grpc
+      port: 9090
+      targetPort: 9090
+    - name: metrics
+      port: 9091
+      targetPort: 9091
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ingest-gateway
+  namespace: traffic-analysis
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ingest-gateway
+  template:
+    metadata:
+      labels:
+        app: ingest-gateway
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9091"
+    spec:
+      containers:
+      - name: ingest-gateway
+        image: registry.example.com/traffic/ingest-gateway:latest
+        ports:
+        - containerPort: 9090
+          name: grpc
+        - containerPort: 9091
+          name: metrics
+        env:
+        - name: GRPC_ADDR
+          value: ":9090"
+        - name: KAFKA_BROKERS
+          value: "kafka-0.kafka:9092,kafka-1.kafka:9092,kafka-2.kafka:9092"
+        - name: KAFKA_FLOW_TOPIC
+          value: "flow.events.v1"
+        - name: REDIS_ADDRS
+          value: "redis-cluster:6379"
+        - name: REQUIRE_MTLS
+          value: "false"
+        - name: METRICS_ENABLED
+          value: "true"
+        - name: METRICS_ADDR
+          value: ":9091"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "2000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 9091
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 9091
+          initialDelaySeconds: 5
+          periodSeconds: 5

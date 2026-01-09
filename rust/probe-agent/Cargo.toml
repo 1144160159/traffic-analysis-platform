@@ -1,0 +1,16 @@
+[package]
+name = "proto-gen"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+prost = "0.12"
+prost-types = "0.12"
+tonic = "0.10"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+pbjson = "0.6"
+pbjson-types = "0.6"
+
+[build-dependencies]
+# 不需要 build.rs，代码由 buf 生成

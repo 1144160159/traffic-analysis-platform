@@ -1,0 +1,18 @@
+# rust/probe-agent/proto-gen/Cargo.toml
+[package]
+name = "proto-gen"
+version = "0.1.0"
+edition = "2021"
+description = "Generated protobuf types for traffic analysis platform"
+publish = false
+
+[dependencies]
+prost = "0.12"
+prost-types = "0.12"
+tonic = { version = "0.10", features = ["gzip", "zstd"] }
+bytes = "1.5"
+serde = { version = "1.0", features = ["derive"] }
+
+[build-dependencies]
+tonic-build = "0.10"
+prost-build = "0.12"

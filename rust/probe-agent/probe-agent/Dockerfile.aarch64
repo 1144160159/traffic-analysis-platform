@@ -1,0 +1,51 @@
+# =========================
+# Stage 1: Builder (aarch64 / Kunpeng)
+# =========================
+FROM openeuler/openeuler:22.03-lts as builder
+
+RUN dnf update -y && \
+    dnf groupinstall -y "Development Tools" && \
+    dnf install -y \
+        clang \
+        llvm \
+        lld \
+        elfutils-libelf-devel \
+        zlib-devel \
+        openssl-devel \
+        kernel-devel \
+        pkg-config \
+        git \
+        protobuf-compiler \
+        protobuf-devel && \
+    dnf clean all
+
+# 安装 Rust
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.75.0
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+WORKDIR /workspace
+COPY rust/probe-agent /workspace/
+
+# 构建 aarch64
+RUN cargo build --release --target aarch64-unknown-linux-gnu
+
+# =========================
+# Stage 2: Runtime
+# =========================
+FROM openeuler/openeuler:22.03-lts
+
+RUN dnf install -y \
+        libelf \
+        openssl \
+        ca-certificates \
+        zstd && \
+    dnf clean all
+
+RUN useradd -r -s /bin/false probe
+RUN mkdir -p /var/lib/probe-agent/cache && \
+    chown -R probe:probe /var/lib/probe-agent
+
+COPY --from=builder /workspace/target/aarch64-unknown-linux-gnu/release/probe-agent /usr/local/bin/
+
+USER probe
+ENTRYPOINT ["/usr/local/bin/probe-agent"]

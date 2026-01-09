@@ -1,0 +1,78 @@
+[package]
+name = "probe-agent"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "probe-agent"
+path = "src/main.rs"
+
+[dependencies]
+# Workspace dependencies
+proto-gen = { path = "../proto-gen" }
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+serde_yaml.workspace = true
+prost.workspace = true
+tonic.workspace = true
+
+# Network capture (optional, for XDP support)
+# aya = { version = "0.12", features = ["async_tokio"], optional = true }
+# aya-log = { version = "0.2", optional = true }
+etherparse.workspace = true
+
+# Concurrency
+dashmap.workspace = true
+crossbeam-channel.workspace = true
+parking_lot.workspace = true
+
+# Storage
+sled.workspace = true
+rust-s3.workspace = true
+
+# Compression
+zstd.workspace = true
+
+# Crypto
+sha1.workspace = true
+sha2.workspace = true
+base64.workspace = true
+uuid.workspace = true
+
+# Config
+config.workspace = true
+
+# Metrics
+prometheus.workspace = true
+hyper.workspace = true
+lazy_static.workspace = true
+
+# Time
+chrono.workspace = true
+
+# Utilities
+byteorder.workspace = true
+memmap2.workspace = true
+libc.workspace = true
+
+[features]
+default = []
+# xdp = ["aya", "aya-log"]
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+strip = true
+panic = "abort"
+
+[profile.release.package."*"]
+opt-level = 3

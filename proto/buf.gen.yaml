@@ -1,36 +1,36 @@
+# proto/buf.gen.yaml
 version: v1
 
-# =========================
-# 使用更稳定的 Buf Schema Registry 插件版本
-# =========================
+managed:
+  enabled: true
+  go_package_prefix:
+    default: github.com/1144160159/traffic-analysis-platform/go/control-plane/pkg/proto
+    except:
+      - buf.build/googleapis/googleapis
+  java_package_prefix:
+    default: com.traffic.proto
+  optimize_for: SPEED
 
 plugins:
-  # Rust: 使用 prost 插件
-  - plugin: buf.build/community/neoeinstein-prost:v0.3.1
-    out: ../rust/probe-agent/proto-gen/src
-    opt:
-      - bytes=.
-
-  # Rust: 使用 tonic 插件（不带高级选项）
-  - plugin: buf.build/community/neoeinstein-tonic:v0.3.0
-    out: ../rust/probe-agent/proto-gen/src
-
-  # Go: protobuf 消息生成
-  - plugin: buf.build/protocolbuffers/go:v1.31.0
+  # ==================== Go ====================
+  - plugin: buf.build/protocolbuffers/go
     out: ../go/control-plane/pkg/proto
     opt:
       - paths=source_relative
 
-  # Go: gRPC 服务代码生成
-  - plugin: buf.build/grpc/go:v1.3.0
+  - plugin: buf.build/grpc/go
     out: ../go/control-plane/pkg/proto
     opt:
       - paths=source_relative
+      - require_unimplemented_servers=false
 
-  # Java: protobuf 消息生成
-  - plugin: buf.build/protocolbuffers/java:v33.2
+  # ==================== Java ====================
+  - plugin: buf.build/protocolbuffers/java
     out: ../java/flink-jobs/flink-common/src/main/java
 
-  # Java: gRPC 服务代码生成
-  - plugin: buf.build/grpc/java:v1.58.0
+  - plugin: buf.build/grpc/java
     out: ../java/flink-jobs/flink-common/src/main/java
+
+  # ==================== Rust (prost + tonic) ====================
+  # Note: Rust 使用 prost-build 在 build.rs 中生成，此处仅作备用
+  # 主要通过 rust/probe-agent/proto-gen/build.rs 生成

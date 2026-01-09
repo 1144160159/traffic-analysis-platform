@@ -1,0 +1,37 @@
+# Multi-stage build for Go services
+FROM golang:1.23-alpine AS builder
+
+RUN apk add --no-cache git ca-certificates tzdata
+
+WORKDIR /workspace
+
+# Copy go mod files
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source
+COPY . .
+
+# Build argument for service name
+ARG SERVICE_NAME
+
+# Build
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -ldflags="-s -w -X main.version=${VERSION:-dev}" \
+    -o /app \
+    ./cmd/${SERVICE_NAME}
+
+# Runtime
+FROM alpine:3.19
+
+RUN apk --no-cache add ca-certificates tzdata
+
+COPY --from=builder /app /usr/local/bin/app
+
+# Create non-root user
+RUN adduser -D -u 1000 appuser
+USER appuser
+
+EXPOSE 8080 9090
+
+ENTRYPOINT ["/usr/local/bin/app"]

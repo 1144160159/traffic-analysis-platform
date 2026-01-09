@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: forensics-service
+  namespace: traffic-analysis
+spec:
+  selector:
+    app: forensics-service
+  ports:
+    - name: http
+      port: 8083
+      targetPort: 8083
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: forensics-service
+  namespace: traffic-analysis
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: forensics-service
+  template:
+    metadata:
+      labels:
+        app: forensics-service
+    spec:
+      containers:
+      - name: forensics-service
+        image: registry.example.com/traffic/forensics-service:latest
+        ports:
+        - containerPort: 8083
+        env:
+        - name: CLICKHOUSE_DSN
+          value: "clickhouse://clickhouse:9000/traffic"
+        - name: S3_ENDPOINT
+          value: "minio:9000"
+        - name: S3_BUCKET
+          value: "traffic-pcap"
+        - name: S3_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: minio-credentials
+              key: access-key
+        - name: S3_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: minio-credentials
+              key: secret-key
+        - name: S3_USE_SSL
+          value: "false"
+        - name: MAX_CONCURRENT
+          value: "5"
+        - name: API_LISTEN_ADDR
+          value: ":8083"
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "2000m"
