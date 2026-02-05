@@ -3,6 +3,7 @@
 // 修复版 v3：
 // 1. 修复问题 3：健康检查使用独立 context.Background()
 // 2. 保留所有原有功能（Lua 脚本限流、TTL 上限检查等）
+// 3. 使用 config.constants 移除硬编码
 ////////////////////////////////////////////////////////////////////////////////
 
 package quota
@@ -17,6 +18,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/otel"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/ingest/config"
 )
 
 // LimiterConfig 限流器配置
@@ -119,6 +121,11 @@ return 1
 // NewLimiter 创建限流器
 func NewLimiter(rdb redis.UniversalClient, cfg LimiterConfig, logger *zap.Logger) *Limiter {
 	ctx, cancel := context.WithCancel(context.Background())
+
+	// 设置默认值
+	if cfg.RedisPrefix == "" {
+		cfg.RedisPrefix = config.RedisRateLimitPrefix
+	}
 
 	l := &Limiter{
 		redis:  rdb,

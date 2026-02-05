@@ -1,6 +1,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 // FILE PATH: control-plane/internal/ingest/dedup/lru_dedup.go
 // event_id LRU 去重器 - 详细设计要求实现
+// 优化版：移除硬编码，使用 config 常量
 ////////////////////////////////////////////////////////////////////////////////
 
 package dedup
@@ -14,6 +15,8 @@ import (
 	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
+
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/ingest/config"
 )
 
 // DedupConfig 去重器配置
@@ -37,11 +40,11 @@ type DedupConfig struct {
 // DefaultDedupConfig 默认配置
 func DefaultDedupConfig() DedupConfig {
 	return DedupConfig{
-		LocalCacheSize: 100000,
-		LocalTTL:       5 * time.Minute,
+		LocalCacheSize: config.DefaultDedupLocalCacheSize,
+		LocalTTL:       config.DefaultDedupLocalTTL,
 		RedisEnabled:   false,
-		RedisPrefix:    "dedup:",
-		RedisTTL:       10 * time.Minute,
+		RedisPrefix:    config.RedisDedupPrefix,
+		RedisTTL:       config.DefaultDedupRedisTTL,
 	}
 }
 
@@ -73,12 +76,17 @@ type Deduplicator struct {
 func NewDeduplicator(cfg DedupConfig, rdb redis.UniversalClient, logger *zap.Logger) (*Deduplicator, error) {
 	cacheSize := cfg.LocalCacheSize
 	if cacheSize <= 0 {
-		cacheSize = 100000
+		cacheSize = config.DefaultDedupLocalCacheSize
 	}
 
 	localCache, err := lru.New[string, *dedupEntry](cacheSize)
 	if err != nil {
 		return nil, err
+	}
+
+	// 默认前缀
+	if cfg.RedisPrefix == "" {
+		cfg.RedisPrefix = config.RedisDedupPrefix
 	}
 
 	d := &Deduplicator{

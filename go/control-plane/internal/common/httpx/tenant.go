@@ -14,6 +14,7 @@ import (
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/errors"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/logging"
+	"go.uber.org/zap"
 )
 
 // ==================== 修复 #12：增强的业务上下文提取 ====================
@@ -363,12 +364,12 @@ func LogBusinessContext() Middleware {
 			logger := logging.FromContext(r.Context())
 
 			logger.Debug("Business context extracted",
-				logging.FieldTenantID, bc.TenantID,
-				logging.FieldUserID, bc.UserID,
-				logging.FieldRunID, bc.RunID,
-				logging.FieldProbeID, bc.ProbeID,
-				"feature_set_id", bc.FeatureSetID,
-				logging.FieldEventID, bc.EventID,
+				zap.String(logging.FieldTenantID, bc.TenantID),
+				zap.String(logging.FieldUserID, bc.UserID),
+				zap.String(logging.FieldRunID, bc.RunID),
+				zap.String(logging.FieldProbeID, bc.ProbeID),
+				zap.String("feature_set_id", bc.FeatureSetID),
+				zap.String(logging.FieldEventID, bc.EventID),
 			)
 
 			next.ServeHTTP(w, r)

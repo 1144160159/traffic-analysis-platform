@@ -1,16 +1,17 @@
 ////////////////////////////////////////////////////////////////////////////////
 // FILE PATH: control-plane/internal/ingest/config/config.go
-// 完整版：完整配置定义 - 包含所有 Ingest Gateway 配置项
+// 优化版 v6（完整无删减）：
+// 1. 移除所有硬编码，使用 constants.go 中的常量
+// 2. 完整的配置结构体定义
+// 3. 详细的验证逻辑
+// 4. 环境变量映射
 ////////////////////////////////////////////////////////////////////////////////
 
 package config
 
 import (
 	"fmt"
-	"os"
 	"time"
-
-	"github.com/caarlos0/env/v10"
 )
 
 // Config 完整配置
@@ -35,16 +36,12 @@ type Config struct {
 
 // ServerConfig gRPC 服务器配置
 type ServerConfig struct {
-	GRPCAddr    string `env:"GRPC_ADDR" envDefault:":9090"`
-	TLSCertFile string `env:"TLS_CERT_FILE"`
-	TLSKeyFile  string `env:"TLS_KEY_FILE"`
-	TLSCAFile   string `env:"TLS_CA_FILE"`
-
-	// gRPC 选项
-	MaxRecvMsgSize int `env:"GRPC_MAX_RECV_MSG_SIZE" envDefault:"67108864"` // 64MB
-	MaxSendMsgSize int `env:"GRPC_MAX_SEND_MSG_SIZE" envDefault:"67108864"`
-
-	// Keepalive
+	GRPCAddr              string        `env:"GRPC_ADDR" envDefault:":50051"`
+	TLSCertFile           string        `env:"TLS_CERT_FILE"`
+	TLSKeyFile            string        `env:"TLS_KEY_FILE"`
+	TLSCAFile             string        `env:"TLS_CA_FILE"`
+	MaxRecvMsgSize        int           `env:"GRPC_MAX_RECV_MSG_SIZE" envDefault:"67108864"`
+	MaxSendMsgSize        int           `env:"GRPC_MAX_SEND_MSG_SIZE" envDefault:"67108864"`
 	KeepaliveTime         time.Duration `env:"GRPC_KEEPALIVE_TIME" envDefault:"5m"`
 	KeepaliveTimeout      time.Duration `env:"GRPC_KEEPALIVE_TIMEOUT" envDefault:"20s"`
 	MaxConnectionIdle     time.Duration `env:"GRPC_MAX_CONNECTION_IDLE" envDefault:"15m"`
@@ -54,31 +51,28 @@ type ServerConfig struct {
 
 // HTTPConfig HTTP/REST 服务器配置
 type HTTPConfig struct {
-	Enabled      bool          `env:"HTTP_ENABLED" envDefault:"true"`
-	Addr         string        `env:"HTTP_ADDR" envDefault:":8080"`
-	ReadTimeout  time.Duration `env:"HTTP_READ_TIMEOUT" envDefault:"30s"`
-	WriteTimeout time.Duration `env:"HTTP_WRITE_TIMEOUT" envDefault:"30s"`
-	IdleTimeout  time.Duration `env:"HTTP_IDLE_TIMEOUT" envDefault:"120s"`
-
-	// CORS
-	AllowedOrigins []string `env:"HTTP_ALLOWED_ORIGINS" envSeparator:"," envDefault:"*"`
-	AllowedMethods []string `env:"HTTP_ALLOWED_METHODS" envSeparator:"," envDefault:"GET,POST,PUT,DELETE,OPTIONS"`
+	Enabled        bool          `env:"HTTP_ENABLED" envDefault:"true"`
+	Addr           string        `env:"HTTP_ADDR" envDefault:":8080"`
+	ReadTimeout    time.Duration `env:"HTTP_READ_TIMEOUT" envDefault:"30s"`
+	WriteTimeout   time.Duration `env:"HTTP_WRITE_TIMEOUT" envDefault:"30s"`
+	IdleTimeout    time.Duration `env:"HTTP_IDLE_TIMEOUT" envDefault:"120s"`
+	AllowedOrigins []string      `env:"HTTP_ALLOWED_ORIGINS" envSeparator:"," envDefault:"*"`
+	AllowedMethods []string      `env:"HTTP_ALLOWED_METHODS" envSeparator:"," envDefault:"GET,POST,PUT,DELETE,OPTIONS"`
 }
 
 // KafkaConfig Kafka 配置
 type KafkaConfig struct {
-	Brokers      []string      `env:"KAFKA_BROKERS" envSeparator:","`
-	FlowTopic    string        `env:"KAFKA_FLOW_TOPIC" envDefault:"flow.events.v1"`
-	PcapTopic    string        `env:"KAFKA_PCAP_TOPIC" envDefault:"pcap.index.v1"`
-	DLQTopic     string        `env:"KAFKA_DLQ_TOPIC" envDefault:"dlq.ingest-gateway"`
-	BatchSize    int           `env:"KAFKA_BATCH_SIZE" envDefault:"1000"`
-	BatchTimeout time.Duration `env:"KAFKA_BATCH_TIMEOUT" envDefault:"100ms"`
-	Compression  string        `env:"KAFKA_COMPRESSION" envDefault:"lz4"`
-	RequiredAcks string        `env:"KAFKA_REQUIRED_ACKS" envDefault:"all"`
-	MaxRetries   int           `env:"KAFKA_MAX_RETRIES" envDefault:"3"`
-
-	// 幂等配置
-	EnableIdempotence bool `env:"KAFKA_ENABLE_IDEMPOTENCE" envDefault:"true"`
+	Brokers           []string      `env:"KAFKA_BROKERS" envSeparator:","`
+	FlowTopic         string        `env:"KAFKA_FLOW_TOPIC" envDefault:"flow.events.v1"`
+	PcapTopic         string        `env:"KAFKA_PCAP_TOPIC" envDefault:"pcap.index.v1"`
+	SessionTopic      string        `env:"KAFKA_SESSION_TOPIC" envDefault:"session.events.v1"`
+	DLQTopic          string        `env:"KAFKA_DLQ_TOPIC" envDefault:"dlq.ingest-gateway"`
+	BatchSize         int           `env:"KAFKA_BATCH_SIZE" envDefault:"1000"`
+	BatchTimeout      time.Duration `env:"KAFKA_BATCH_TIMEOUT" envDefault:"100ms"`
+	Compression       string        `env:"KAFKA_COMPRESSION" envDefault:"lz4"`
+	RequiredAcks      string        `env:"KAFKA_REQUIRED_ACKS" envDefault:"all"`
+	MaxRetries        int           `env:"KAFKA_MAX_RETRIES" envDefault:"3"`
+	EnableIdempotence bool          `env:"KAFKA_ENABLE_IDEMPOTENCE" envDefault:"true"`
 }
 
 // RedisConfig Redis 配置
@@ -111,28 +105,22 @@ type AuthConfig struct {
 	LocalCacheTTL   time.Duration `env:"LOCAL_CACHE_TTL" envDefault:"30s"`
 	LocalCacheSize  int           `env:"LOCAL_CACHE_SIZE" envDefault:"10000"`
 	DefaultTenantID string        `env:"DEFAULT_TENANT_ID" envDefault:""`
-
-	// 权限要求
-	RequireScopes  bool     `env:"REQUIRE_SCOPES" envDefault:"true"`
-	RequiredScopes []string `env:"REQUIRED_SCOPES" envSeparator:"," envDefault:"ingest:write"`
-
-	// 审计
-	EnableAudit bool `env:"ENABLE_AUDIT" envDefault:"true"`
-
-	// 探针 RBAC
-	EnableProbeRBAC bool `env:"ENABLE_PROBE_RBAC" envDefault:"true"`
+	RequireScopes   bool          `env:"REQUIRE_SCOPES" envDefault:"true"`
+	RequiredScopes  []string      `env:"REQUIRED_SCOPES" envSeparator:"," envDefault:"ingest:write"`
+	EnableAudit     bool          `env:"ENABLE_AUDIT" envDefault:"true"`
+	EnableProbeRBAC bool          `env:"ENABLE_PROBE_RBAC" envDefault:"true"`
 }
 
 // MetricsConfig 指标配置
 type MetricsConfig struct {
 	Enabled    bool   `env:"METRICS_ENABLED" envDefault:"true"`
-	ListenAddr string `env:"METRICS_ADDR" envDefault:":9091"`
+	ListenAddr string `env:"METRICS_ADDR" envDefault:":9090"`
 }
 
 // HandlerConfig Handler 配置
 type HandlerConfig struct {
 	MaxBatchSize       int           `env:"MAX_BATCH_SIZE" envDefault:"10000"`
-	MaxEventSize       int           `env:"MAX_EVENT_SIZE" envDefault:"65536"` // 64KB
+	MaxEventSize       int           `env:"MAX_EVENT_SIZE" envDefault:"65536"`
 	StreamBufferSize   int           `env:"STREAM_BUFFER_SIZE" envDefault:"1000"`
 	HeartbeatInterval  time.Duration `env:"HEARTBEAT_INTERVAL" envDefault:"30s"`
 	EnableDLQ          bool          `env:"ENABLE_DLQ" envDefault:"true"`
@@ -165,18 +153,13 @@ type DedupConfig struct {
 
 // ProbeConfig 探针配置管理
 type ProbeConfig struct {
-	// 默认配置
-	DefaultSampleRate    float32       `env:"PROBE_DEFAULT_SAMPLE_RATE" envDefault:"1.0"`
-	DefaultIdleTimeout   time.Duration `env:"PROBE_DEFAULT_IDLE_TIMEOUT" envDefault:"60s"`
-	DefaultActiveTimeout time.Duration `env:"PROBE_DEFAULT_ACTIVE_TIMEOUT" envDefault:"300s"`
-	DefaultBatchSize     int           `env:"PROBE_DEFAULT_BATCH_SIZE" envDefault:"1000"`
-	DefaultBPFFilter     string        `env:"PROBE_DEFAULT_BPF_FILTER" envDefault:""`
-
-	// 配置更新
+	DefaultSampleRate     float32       `env:"PROBE_DEFAULT_SAMPLE_RATE" envDefault:"1.0"`
+	DefaultIdleTimeout    time.Duration `env:"PROBE_DEFAULT_IDLE_TIMEOUT" envDefault:"60s"`
+	DefaultActiveTimeout  time.Duration `env:"PROBE_DEFAULT_ACTIVE_TIMEOUT" envDefault:"300s"`
+	DefaultBatchSize      int           `env:"PROBE_DEFAULT_BATCH_SIZE" envDefault:"1000"`
+	DefaultBPFFilter      string        `env:"PROBE_DEFAULT_BPF_FILTER" envDefault:""`
 	ConfigRefreshInterval time.Duration `env:"PROBE_CONFIG_REFRESH_INTERVAL" envDefault:"1m"`
 	EnableDynamicConfig   bool          `env:"PROBE_ENABLE_DYNAMIC_CONFIG" envDefault:"true"`
-
-	// 状态监控
 	StatusTimeout         time.Duration `env:"PROBE_STATUS_TIMEOUT" envDefault:"5m"`
 	StatusCleanupInterval time.Duration `env:"PROBE_STATUS_CLEANUP_INTERVAL" envDefault:"1m"`
 }
@@ -193,7 +176,7 @@ type AuditConfig struct {
 // TokenConfig Token 管理配置
 type TokenConfig struct {
 	MaxTokensPerTenant int           `env:"MAX_TOKENS_PER_TENANT" envDefault:"100"`
-	DefaultTTL         time.Duration `env:"DEFAULT_TOKEN_TTL" envDefault:"8760h"` // 1 year
+	DefaultTTL         time.Duration `env:"DEFAULT_TOKEN_TTL" envDefault:"8760h"`
 }
 
 // OIDCConfig OIDC 配置
@@ -211,7 +194,7 @@ type JWTConfig struct {
 	SigningKey      string        `env:"JWT_SIGNING_KEY" envDefault:"your-256-bit-secret-key-here"`
 	SigningMethod   string        `env:"JWT_SIGNING_METHOD" envDefault:"HS256"`
 	AccessTokenTTL  time.Duration `env:"JWT_ACCESS_TOKEN_TTL" envDefault:"15m"`
-	RefreshTokenTTL time.Duration `env:"JWT_REFRESH_TOKEN_TTL" envDefault:"7d"`
+	RefreshTokenTTL time.Duration `env:"JWT_REFRESH_TOKEN_TTL" envDefault:"168h"`
 	Issuer          string        `env:"JWT_ISSUER" envDefault:"traffic-auth-service"`
 }
 
@@ -224,50 +207,297 @@ type APIConfig struct {
 	AllowedOrigins []string      `env:"API_ALLOWED_ORIGINS" envSeparator:"," envDefault:"*"`
 }
 
-// Load 加载配置
-func Load() (*Config, error) {
-	cfg := &Config{}
-	if err := env.Parse(cfg); err != nil {
-		return nil, err
+// SetDefaults 设置默认值（使用 constants.go 中的常量）
+func (c *Config) SetDefaults() {
+	// Kafka 默认值
+	if c.Kafka.FlowTopic == "" {
+		c.Kafka.FlowTopic = TopicFlowEvents
+	}
+	if c.Kafka.SessionTopic == "" {
+		c.Kafka.SessionTopic = TopicSessionEvents
+	}
+	if c.Kafka.PcapTopic == "" {
+		c.Kafka.PcapTopic = TopicPcapIndex
+	}
+	if c.Kafka.DLQTopic == "" {
+		c.Kafka.DLQTopic = TopicDLQ
+	}
+	if c.Kafka.BatchSize == 0 {
+		c.Kafka.BatchSize = DefaultKafkaBatchSize
+	}
+	if c.Kafka.Compression == "" {
+		c.Kafka.Compression = DefaultKafkaCompression
+	}
+	if c.Kafka.BatchTimeout == 0 {
+		c.Kafka.BatchTimeout = KafkaBatchTimeout
+	}
+	if c.Kafka.MaxRetries == 0 {
+		c.Kafka.MaxRetries = DefaultKafkaMaxRetries
+	}
+	if c.Kafka.RequiredAcks == "" {
+		c.Kafka.RequiredAcks = KafkaRequiredAcksAll
 	}
 
-	// 设置默认值
-	if len(cfg.Redis.Addrs) == 0 {
-		cfg.Redis.Addrs = []string{"localhost:6379"}
+	// Redis 默认值
+	if len(c.Redis.Addrs) == 0 {
+		c.Redis.Addrs = []string{"localhost:6379"}
 	}
-	if len(cfg.Kafka.Brokers) == 0 {
-		cfg.Kafka.Brokers = []string{"localhost:9092"}
+	if c.Redis.PoolSize == 0 {
+		c.Redis.PoolSize = DefaultRedisPoolSize
 	}
-	if cfg.JWT.SigningKey == "your-256-bit-secret-key-here" {
-		// 生产环境必须设置签名密钥
-		if os.Getenv("ENVIRONMENT") != "development" {
-			return nil, fmt.Errorf("JWT_SIGNING_KEY must be set in production")
-		}
+	if c.Redis.MinIdleConns == 0 {
+		c.Redis.MinIdleConns = DefaultRedisMinIdleConns
+	}
+	if c.Redis.DialTimeout == 0 {
+		c.Redis.DialTimeout = RedisDialTimeout
+	}
+	if c.Redis.ReadTimeout == 0 {
+		c.Redis.ReadTimeout = RedisReadTimeout
+	}
+	if c.Redis.WriteTimeout == 0 {
+		c.Redis.WriteTimeout = RedisWriteTimeout
+	}
+	if c.Redis.PoolTimeout == 0 {
+		c.Redis.PoolTimeout = RedisPoolTimeout
+	}
+	if c.Redis.ConnMaxIdleTime == 0 {
+		c.Redis.ConnMaxIdleTime = RedisConnMaxIdleTime
 	}
 
-	return cfg, nil
+	// PostgreSQL 默认值
+	if c.Postgres.MaxOpenConns == 0 {
+		c.Postgres.MaxOpenConns = 10
+	}
+	if c.Postgres.MaxIdleConns == 0 {
+		c.Postgres.MaxIdleConns = 5
+	}
+	if c.Postgres.ConnLifetime == 0 {
+		c.Postgres.ConnLifetime = PostgresConnLifetime
+	}
+
+	// Auth 默认值
+	if c.Auth.TokenTTL == 0 {
+		c.Auth.TokenTTL = DefaultTokenTTL
+	}
+	if c.Auth.LocalCacheTTL == 0 {
+		c.Auth.LocalCacheTTL = DefaultLocalCacheTTL
+	}
+	if c.Auth.LocalCacheSize == 0 {
+		c.Auth.LocalCacheSize = DefaultLocalCacheSize
+	}
+	if len(c.Auth.RequiredScopes) == 0 {
+		c.Auth.RequiredScopes = []string{ScopeIngestWrite}
+	}
+
+	// Handler 默认值
+	if c.Handler.MaxBatchSize == 0 {
+		c.Handler.MaxBatchSize = DefaultMaxBatchSize
+	}
+	if c.Handler.MaxEventSize == 0 {
+		c.Handler.MaxEventSize = DefaultMaxEventSize
+	}
+	if c.Handler.StreamBufferSize == 0 {
+		c.Handler.StreamBufferSize = DefaultStreamBufferSize
+	}
+	if c.Handler.HeartbeatInterval == 0 {
+		c.Handler.HeartbeatInterval = DefaultHeartbeatInterval
+	}
+	if c.Handler.ProbeStatusTimeout == 0 {
+		c.Handler.ProbeStatusTimeout = DefaultProbeStatusTimeout
+	}
+
+	// Quota 默认值
+	if c.Quota.RedisPrefix == "" {
+		c.Quota.RedisPrefix = RedisRateLimitPrefix
+	}
+	if c.Quota.GlobalRPS == 0 {
+		c.Quota.GlobalRPS = DefaultGlobalRPS
+	}
+	if c.Quota.GlobalBurst == 0 {
+		c.Quota.GlobalBurst = DefaultGlobalBurst
+	}
+	if c.Quota.TenantRPS == 0 {
+		c.Quota.TenantRPS = DefaultTenantRPS
+	}
+	if c.Quota.TenantBurst == 0 {
+		c.Quota.TenantBurst = DefaultTenantBurst
+	}
+	if c.Quota.ProbeRPS == 0 {
+		c.Quota.ProbeRPS = DefaultProbeRPS
+	}
+	if c.Quota.ProbeBurst == 0 {
+		c.Quota.ProbeBurst = DefaultProbeBurst
+	}
+
+	// Dedup 默认值
+	if c.Dedup.LocalCacheSize == 0 {
+		c.Dedup.LocalCacheSize = DefaultDedupLocalCacheSize
+	}
+	if c.Dedup.LocalTTL == 0 {
+		c.Dedup.LocalTTL = DefaultDedupLocalTTL
+	}
+	if c.Dedup.RedisPrefix == "" {
+		c.Dedup.RedisPrefix = RedisDedupPrefix
+	}
+	if c.Dedup.RedisTTL == 0 {
+		c.Dedup.RedisTTL = DefaultDedupRedisTTL
+	}
+
+	// Probe 默认值
+	if c.Probe.DefaultSampleRate == 0 {
+		c.Probe.DefaultSampleRate = 1.0
+	}
+	if c.Probe.DefaultIdleTimeout == 0 {
+		c.Probe.DefaultIdleTimeout = 60 * time.Second
+	}
+	if c.Probe.DefaultActiveTimeout == 0 {
+		c.Probe.DefaultActiveTimeout = 300 * time.Second
+	}
+	if c.Probe.DefaultBatchSize == 0 {
+		c.Probe.DefaultBatchSize = DefaultKafkaBatchSize
+	}
+	if c.Probe.ConfigRefreshInterval == 0 {
+		c.Probe.ConfigRefreshInterval = 1 * time.Minute
+	}
+	if c.Probe.StatusTimeout == 0 {
+		c.Probe.StatusTimeout = DefaultProbeStatusTimeout
+	}
+	if c.Probe.StatusCleanupInterval == 0 {
+		c.Probe.StatusCleanupInterval = 1 * time.Minute
+	}
+
+	// Audit 默认值
+	if c.Audit.Topic == "" {
+		c.Audit.Topic = TopicAuditLogs
+	}
+	if c.Audit.BufferSize == 0 {
+		c.Audit.BufferSize = DefaultAuditBufferSize
+	}
+	if c.Audit.BatchSize == 0 {
+		c.Audit.BatchSize = DefaultAuditBatchSize
+	}
+	if c.Audit.FlushInterval == 0 {
+		c.Audit.FlushInterval = DefaultAuditFlushInterval
+	}
+
+	// Server 默认值
+	if c.Server.GRPCAddr == "" {
+		c.Server.GRPCAddr = DefaultGRPCAddr
+	}
+	if c.Server.MaxRecvMsgSize == 0 {
+		c.Server.MaxRecvMsgSize = MaxRecvMsgSize
+	}
+	if c.Server.MaxSendMsgSize == 0 {
+		c.Server.MaxSendMsgSize = MaxSendMsgSize
+	}
+	if c.Server.KeepaliveTime == 0 {
+		c.Server.KeepaliveTime = 5 * time.Minute
+	}
+	if c.Server.KeepaliveTimeout == 0 {
+		c.Server.KeepaliveTimeout = 20 * time.Second
+	}
+
+	// Metrics 默认值
+	if c.Metrics.ListenAddr == "" {
+		c.Metrics.ListenAddr = DefaultMetricsAddr
+	}
+
+	// HTTP 默认值
+	if c.HTTP.Addr == "" {
+		c.HTTP.Addr = DefaultHTTPAddr
+	}
+	if c.HTTP.ReadTimeout == 0 {
+		c.HTTP.ReadTimeout = HTTPRequestTimeout
+	}
+	if c.HTTP.WriteTimeout == 0 {
+		c.HTTP.WriteTimeout = HTTPRequestTimeout
+	}
+
+	// Token 默认值
+	if c.Token.DefaultTTL == 0 {
+		c.Token.DefaultTTL = 8760 * time.Hour
+	}
+	if c.Token.MaxTokensPerTenant == 0 {
+		c.Token.MaxTokensPerTenant = 100
+	}
+
+	// JWT 默认值
+	if c.JWT.AccessTokenTTL == 0 {
+		c.JWT.AccessTokenTTL = 15 * time.Minute
+	}
+	if c.JWT.RefreshTokenTTL == 0 {
+		c.JWT.RefreshTokenTTL = 168 * time.Hour
+	}
 }
 
 // Validate 验证配置
 func (c *Config) Validate() error {
+	// Kafka 验证
 	if len(c.Kafka.Brokers) == 0 {
 		return &ConfigError{Field: "Kafka.Brokers", Message: "at least one broker required"}
 	}
+	if c.Kafka.FlowTopic == "" {
+		return &ConfigError{Field: "Kafka.FlowTopic", Message: "flow topic required"}
+	}
+	if c.Kafka.SessionTopic == "" {
+		return &ConfigError{Field: "Kafka.SessionTopic", Message: "session topic required"}
+	}
+	if c.Kafka.PcapTopic == "" {
+		return &ConfigError{Field: "Kafka.PcapTopic", Message: "pcap topic required"}
+	}
+	if c.Kafka.BatchSize <= 0 || c.Kafka.BatchSize > 100000 {
+		return &ConfigError{Field: "Kafka.BatchSize", Message: "must be between 1 and 100000"}
+	}
+
+	// Handler 验证
 	if c.Handler.MaxBatchSize <= 0 {
 		return &ConfigError{Field: "Handler.MaxBatchSize", Message: "must be positive"}
 	}
 	if c.Handler.MaxEventSize <= 0 {
 		return &ConfigError{Field: "Handler.MaxEventSize", Message: "must be positive"}
 	}
+	if c.Handler.MaxEventSize > MaxRecvMsgSize {
+		return &ConfigError{Field: "Handler.MaxEventSize",
+			Message: fmt.Sprintf("exceeds max recv msg size %d", MaxRecvMsgSize)}
+	}
+
+	// Quota 验证
 	if c.Quota.GlobalRPS <= 0 {
 		return &ConfigError{Field: "Quota.GlobalRPS", Message: "must be positive"}
 	}
 	if c.Quota.TenantRPS <= 0 {
 		return &ConfigError{Field: "Quota.TenantRPS", Message: "must be positive"}
 	}
-	if c.Dedup.LocalCacheSize <= 0 {
-		c.Dedup.LocalCacheSize = 100000
+	if c.Quota.ProbeRPS <= 0 {
+		return &ConfigError{Field: "Quota.ProbeRPS", Message: "must be positive"}
 	}
+	if c.Quota.TenantRPS > c.Quota.GlobalRPS {
+		return &ConfigError{Field: "Quota.TenantRPS", Message: "cannot exceed global RPS"}
+	}
+
+	// Dedup 验证
+	if c.Dedup.Enabled && c.Dedup.LocalCacheSize <= 0 {
+		return &ConfigError{Field: "Dedup.LocalCacheSize", Message: "must be positive when dedup enabled"}
+	}
+
+	// Auth 验证
+	if c.Auth.RequireScopes && len(c.Auth.RequiredScopes) == 0 {
+		return &ConfigError{Field: "Auth.RequiredScopes", Message: "at least one scope required"}
+	}
+
+	// TLS 验证
+	if c.Auth.RequireMTLS {
+		if c.Server.TLSCertFile == "" {
+			return &ConfigError{Field: "Server.TLSCertFile", Message: "required when mTLS enabled"}
+		}
+		if c.Server.TLSKeyFile == "" {
+			return &ConfigError{Field: "Server.TLSKeyFile", Message: "required when mTLS enabled"}
+		}
+		if c.Server.TLSCAFile == "" {
+			return &ConfigError{Field: "Server.TLSCAFile", Message: "required when mTLS enabled"}
+		}
+	}
+
 	return nil
 }
 
@@ -278,20 +508,20 @@ type ConfigError struct {
 }
 
 func (e *ConfigError) Error() string {
-	return "config error: " + e.Field + ": " + e.Message
+	return fmt.Sprintf("config validation error [%s]: %s", e.Field, e.Message)
 }
 
-// GetJwtConfig 获取 JWT 配置（兼容旧版本）
+// GetJwtConfig 获取 JWT 配置（兼容性方法）
 func (c *Config) GetJwtConfig() JWTConfig {
 	return c.JWT
 }
 
-// GetOidcConfig 获取 OIDC 配置（兼容旧版本）
+// GetOidcConfig 获取 OIDC 配置（兼容性方法）
 func (c *Config) GetOidcConfig() OIDCConfig {
 	return c.OIDC
 }
 
-// GetPostgresqlConfig 获取 PostgreSQL 配置（兼容旧版本）
+// GetPostgresqlConfig 获取 PostgreSQL 配置（兼容性方法）
 func (c *Config) GetPostgresqlConfig() PostgresConfig {
 	return c.Postgres
 }

@@ -220,7 +220,7 @@ func (c *PostgresClient) Query(ctx context.Context, query string, args ...interf
 	if duration > c.config.SlowQueryThreshold {
 		postgresSlowQueries.WithLabelValues(c.config.Database, "query").Inc()
 		c.logger.Warn("Slow query detected",
-			zap.String("query", truncateQuery(query)),
+			zap.String("query", truncatePostgresQuery(query)),
 			zap.Duration("duration", duration),
 			zap.Duration("threshold", c.config.SlowQueryThreshold))
 	}
@@ -229,14 +229,14 @@ func (c *PostgresClient) Query(ctx context.Context, query string, args ...interf
 		postgresErrors.WithLabelValues(c.config.Database, "query", categorizePostgresError(err)).Inc()
 		c.logger.Error("PostgreSQL query failed",
 			zap.Error(err),
-			zap.String("query", truncateQuery(query)),
+			zap.String("query", truncatePostgresQuery(query)),
 			zap.Duration("duration", duration))
 		otel.RecordError(ctx, err)
 		return nil, fmt.Errorf("query failed: %w", err)
 	}
 
 	c.logger.Debug("PostgreSQL query executed",
-		zap.String("query", truncateQuery(query)),
+		zap.String("query", truncatePostgresQuery(query)),
 		zap.Duration("duration", duration))
 
 	return rows, nil
@@ -258,7 +258,7 @@ func (c *PostgresClient) QueryRow(ctx context.Context, query string, args ...int
 	if duration > c.config.SlowQueryThreshold {
 		postgresSlowQueries.WithLabelValues(c.config.Database, "query_row").Inc()
 		c.logger.Warn("Slow query_row detected",
-			zap.String("query", truncateQuery(query)),
+			zap.String("query", truncatePostgresQuery(query)),
 			zap.Duration("duration", duration))
 	}
 
@@ -281,7 +281,7 @@ func (c *PostgresClient) Exec(ctx context.Context, query string, args ...interfa
 	if duration > c.config.SlowQueryThreshold {
 		postgresSlowQueries.WithLabelValues(c.config.Database, "exec").Inc()
 		c.logger.Warn("Slow exec detected",
-			zap.String("query", truncateQuery(query)),
+			zap.String("query", truncatePostgresQuery(query)),
 			zap.Duration("duration", duration))
 	}
 
@@ -289,14 +289,14 @@ func (c *PostgresClient) Exec(ctx context.Context, query string, args ...interfa
 		postgresErrors.WithLabelValues(c.config.Database, "exec", categorizePostgresError(err)).Inc()
 		c.logger.Error("PostgreSQL exec failed",
 			zap.Error(err),
-			zap.String("query", truncateQuery(query)),
+			zap.String("query", truncatePostgresQuery(query)),
 			zap.Duration("duration", duration))
 		otel.RecordError(ctx, err)
 		return nil, fmt.Errorf("exec failed: %w", err)
 	}
 
 	c.logger.Debug("PostgreSQL exec completed",
-		zap.String("query", truncateQuery(query)),
+		zap.String("query", truncatePostgresQuery(query)),
 		zap.Duration("duration", duration))
 
 	return result, nil
@@ -542,8 +542,8 @@ func (m *PostgresMigrator) Migrate(ctx context.Context, version string, query st
 	return nil
 }
 
-// truncateQuery 截断查询字符串
-func truncateQuery(query string) string {
+// truncatePostgresQuery 截断查询字符串
+func truncatePostgresQuery(query string) string {
 	if len(query) > 200 {
 		return query[:200] + "..."
 	}

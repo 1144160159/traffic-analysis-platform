@@ -418,14 +418,14 @@ func (c *ClickHouseClient) Query(ctx context.Context, query string, args ...inte
 		c.metrics.queryErrors.Inc()
 		c.logger.Error("ClickHouse query failed",
 			zap.Error(err),
-			zap.String("query", truncateQuery(query)),
+			zap.String("query", truncateClickhouseQuery(query)),
 			zap.Duration("duration", duration))
 		otel.RecordError(ctx, err)
 		return nil, fmt.Errorf("query failed: %w", err)
 	}
 
 	c.logger.Debug("ClickHouse query executed",
-		zap.String("query", truncateQuery(query)),
+		zap.String("query", truncateClickhouseQuery(query)),
 		zap.Duration("duration", duration))
 
 	return rows, nil
@@ -462,14 +462,14 @@ func (c *ClickHouseClient) Exec(ctx context.Context, query string, args ...inter
 		c.metrics.queryErrors.Inc()
 		c.logger.Error("ClickHouse exec failed",
 			zap.Error(err),
-			zap.String("query", truncateQuery(query)),
+			zap.String("query", truncateClickhouseQuery(query)),
 			zap.Duration("duration", duration))
 		otel.RecordError(ctx, err)
 		return fmt.Errorf("exec failed: %w", err)
 	}
 
 	c.logger.Debug("ClickHouse exec completed",
-		zap.String("query", truncateQuery(query)),
+		zap.String("query", truncateClickhouseQuery(query)),
 		zap.Duration("duration", duration))
 
 	return nil
@@ -489,7 +489,7 @@ func (c *ClickHouseClient) PrepareBatch(ctx context.Context, query string) (driv
 	if err != nil {
 		c.logger.Error("Failed to prepare batch",
 			zap.Error(err),
-			zap.String("query", truncateQuery(query)))
+			zap.String("query", truncateClickhouseQuery(query)))
 		return nil, fmt.Errorf("prepare batch failed: %w", err)
 	}
 
@@ -572,7 +572,7 @@ func (c *ClickHouseClient) Close() error {
 	return nil
 }
 
-func truncateQuery(query string) string {
+func truncateClickhouseQuery(query string) string {
 	if len(query) > 200 {
 		return query[:200] + "..."
 	}

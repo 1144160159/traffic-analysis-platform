@@ -145,7 +145,7 @@ func getCompression(name string) compress.Compression {
 	case "zstd":
 		return compress.Zstd
 	default:
-		return nil
+		return compress.None
 	}
 }
 

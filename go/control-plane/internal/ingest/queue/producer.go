@@ -1,10 +1,9 @@
 ////////////////////////////////////////////////////////////////////////////////
 // FILE PATH: control-plane/internal/ingest/queue/producer.go
-// 重构版 v6：
-// 1. 完全使用 common/kafka.MultiTopicProducer
-// 2. 移除所有原生 kafka.Writer 实现
-// 3. 保留业务验证和 Header 构建逻辑
-// 4. 简化代码从 400+ 行到 250 行
+// 优化版 v3：
+// 1. 移除所有硬编码（Topic、Header、Protobuf类型）
+// 2. 使用 config 常量
+// 3. 统一错误处理和日志
 ////////////////////////////////////////////////////////////////////////////////
 
 package queue
@@ -20,29 +19,26 @@ import (
 	kafkaCommon "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/kafka"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/logging"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/otel"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/ingest/config"
 	pb "github.com/1144160159/traffic-analysis-platform/go/control-plane/pkg/proto/traffic/v1"
 )
 
 // ProducerConfig 生产者配置
 type ProducerConfig struct {
-	Brokers        []string      `env:"KAFKA_BROKERS" envSeparator:","`
-	FlowTopic      string        `env:"KAFKA_FLOW_TOPIC" envDefault:"flow.events.v1"`
-	PcapIndexTopic string        `env:"KAFKA_PCAP_INDEX_TOPIC" envDefault:"pcap.index.v1"`
-	SessionTopic   string        `env:"KAFKA_SESSION_TOPIC" envDefault:"session.events.v1"`
-	BatchSize      int           `env:"KAFKA_BATCH_SIZE" envDefault:"1000"`
-	BatchTimeout   time.Duration `env:"KAFKA_BATCH_TIMEOUT" envDefault:"100ms"`
-	Compression    string        `env:"KAFKA_COMPRESSION" envDefault:"lz4"`
-	RequiredAcks   string        `env:"KAFKA_REQUIRED_ACKS" envDefault:"all"`
-	MaxRetries     int           `env:"KAFKA_MAX_RETRIES" envDefault:"3"`
-
-	// 幂等配置
-	EnableIdempotence bool `env:"KAFKA_ENABLE_IDEMPOTENCE" envDefault:"true"`
-
-	// 数据验证
-	EnableValidation bool `env:"KAFKA_ENABLE_VALIDATION" envDefault:"true"`
+	Brokers           []string      `env:"KAFKA_BROKERS" envSeparator:","`
+	FlowTopic         string        `env:"KAFKA_FLOW_TOPIC"`
+	PcapIndexTopic    string        `env:"KAFKA_PCAP_INDEX_TOPIC"`
+	SessionTopic      string        `env:"KAFKA_SESSION_TOPIC"`
+	BatchSize         int           `env:"KAFKA_BATCH_SIZE"`
+	BatchTimeout      time.Duration `env:"KAFKA_BATCH_TIMEOUT"`
+	Compression       string        `env:"KAFKA_COMPRESSION"`
+	RequiredAcks      string        `env:"KAFKA_REQUIRED_ACKS"`
+	MaxRetries        int           `env:"KAFKA_MAX_RETRIES"`
+	EnableIdempotence bool          `env:"KAFKA_ENABLE_IDEMPOTENCE"`
+	EnableValidation  bool          `env:"KAFKA_ENABLE_VALIDATION"`
 }
 
-// Producer Kafka 生产者（封装 common/kafka）
+// Producer Kafka 生产者
 type Producer struct {
 	multiProducer *kafkaCommon.MultiTopicProducer
 	partitioner   *TenantCommunityPartitioner
@@ -56,9 +52,21 @@ func NewProducer(cfg ProducerConfig, logger *zap.Logger) (*Producer, error) {
 		return nil, fmt.Errorf("kafka brokers not configured")
 	}
 
-	// 设置默认值
+	// 应用默认值（使用 config 常量）
+	if cfg.FlowTopic == "" {
+		cfg.FlowTopic = config.TopicFlowEvents
+	}
 	if cfg.SessionTopic == "" {
-		cfg.SessionTopic = "session.events.v1"
+		cfg.SessionTopic = config.TopicSessionEvents
+	}
+	if cfg.PcapIndexTopic == "" {
+		cfg.PcapIndexTopic = config.TopicPcapIndex
+	}
+	if cfg.BatchSize == 0 {
+		cfg.BatchSize = config.DefaultKafkaBatchSize
+	}
+	if cfg.Compression == "" {
+		cfg.Compression = config.DefaultKafkaCompression
 	}
 
 	// 创建 MultiTopicProducer
@@ -72,7 +80,7 @@ func NewProducer(cfg ProducerConfig, logger *zap.Logger) (*Producer, error) {
 		Compression:  cfg.Compression,
 		RequiredAcks: cfg.RequiredAcks,
 		MaxAttempts:  cfg.MaxRetries,
-		Async:        false, // 强制同步，保证幂等
+		Async:        false,
 	}
 
 	// 添加 Flow Topic
@@ -98,14 +106,13 @@ func NewProducer(cfg ProducerConfig, logger *zap.Logger) (*Producer, error) {
 		return nil, fmt.Errorf("failed to add session topic: %w", err)
 	}
 
-	logger.Info("Kafka producer initialized (using common/kafka)",
+	logger.Info("Kafka producer initialized",
 		zap.Strings("brokers", cfg.Brokers),
 		zap.String("flow_topic", cfg.FlowTopic),
 		zap.String("pcap_topic", cfg.PcapIndexTopic),
 		zap.String("session_topic", cfg.SessionTopic),
 		zap.Bool("idempotence", cfg.EnableIdempotence),
-		zap.String("acks", cfg.RequiredAcks),
-		zap.Bool("validation", cfg.EnableValidation))
+		zap.String("acks", cfg.RequiredAcks))
 
 	return &Producer{
 		multiProducer: multiProducer,
@@ -148,10 +155,10 @@ func (p *Producer) WriteFlowEvents(ctx context.Context, events []*pb.FlowEvent) 
 			continue
 		}
 
-		// 构建消息 Key: tenant_id:community_id
+		// 构建消息 Key
 		key := fmt.Sprintf("%s:%s", event.Header.TenantId, event.CommunityId)
 
-		// 构建 Headers
+		// 构建 Headers（使用 config 常量）
 		headers := []kafkaCommon.MessageHeader{
 			{Key: "tenant_id", Value: event.Header.TenantId},
 			{Key: "probe_id", Value: event.Header.ProbeId},
@@ -159,10 +166,10 @@ func (p *Producer) WriteFlowEvents(ctx context.Context, events []*pb.FlowEvent) 
 			{Key: "run_id", Value: event.Header.RunId},
 			{Key: "feature_set_id", Value: event.Header.FeatureSetId},
 			{Key: "community_id", Value: event.CommunityId},
-			{Key: "content_type", Value: "application/x-protobuf"},
-			{Key: "proto_message_type", Value: "traffic.v1.FlowEvent"},
-			{Key: "proto_schema_version", Value: "v1"},
-			{Key: "proto_package", Value: "traffic.v1"},
+			{Key: "content_type", Value: config.ContentTypeProtobuf},
+			{Key: "proto_message_type", Value: config.ProtoMessageFlowEvent},
+			{Key: "proto_schema_version", Value: config.ProtoSchemaVersion},
+			{Key: "proto_package", Value: config.ProtoPackage},
 			{Key: "event_ts", Value: fmt.Sprintf("%d", event.Header.EventTs)},
 			{Key: "ingest_ts", Value: fmt.Sprintf("%d", event.Header.IngestTs)},
 		}
@@ -179,20 +186,13 @@ func (p *Producer) WriteFlowEvents(ctx context.Context, events []*pb.FlowEvent) 
 		return nil
 	}
 
-	// 使用 MultiTopicProducer 发送
+	// 批量发送
 	start := time.Now()
-	var lastErr error
-	for _, msg := range messages {
-		if err := p.multiProducer.Send(ctx, p.config.FlowTopic, msg.Key, msg.Value, msg.Headers...); err != nil {
-			lastErr = err
-			logger.Error("Failed to send flow event",
-				zap.String("key", msg.Key),
-				zap.Error(err))
-		}
-	}
-
-	if lastErr != nil {
-		return fmt.Errorf("failed to write flow events: %w", lastErr)
+	if err := p.multiProducer.SendBatch(ctx, p.config.FlowTopic, messages); err != nil {
+		logger.Error("Failed to write flow events",
+			zap.Int("count", len(messages)),
+			zap.Error(err))
+		return fmt.Errorf("failed to write flow events: %w", err)
 	}
 
 	logger.Debug("Flow events written",
@@ -227,19 +227,19 @@ func (p *Producer) WritePcapIndex(ctx context.Context, meta *pb.PcapIndexMeta) e
 		return fmt.Errorf("failed to marshal pcap index: %w", err)
 	}
 
-	// 构建消息 Key: tenant_id:probe_id
+	// 构建消息 Key
 	key := fmt.Sprintf("%s:%s", meta.TenantId, meta.ProbeId)
 
-	// 构建 Headers
+	// 构建 Headers（使用 config 常量）
 	headers := []kafkaCommon.MessageHeader{
 		{Key: "tenant_id", Value: meta.TenantId},
 		{Key: "probe_id", Value: meta.ProbeId},
 		{Key: "file_key", Value: meta.FileKey},
 		{Key: "community_id", Value: meta.CommunityId},
 		{Key: "sha256", Value: meta.Sha256},
-		{Key: "content_type", Value: "application/x-protobuf"},
-		{Key: "proto_message_type", Value: "traffic.v1.PcapIndexMeta"},
-		{Key: "proto_schema_version", Value: "v1"},
+		{Key: "content_type", Value: config.ContentTypeProtobuf},
+		{Key: "proto_message_type", Value: config.ProtoMessagePcapIndex},
+		{Key: "proto_schema_version", Value: config.ProtoSchemaVersion},
 		{Key: "ts_start", Value: fmt.Sprintf("%d", meta.TsStart)},
 		{Key: "ts_end", Value: fmt.Sprintf("%d", meta.TsEnd)},
 	}
@@ -297,20 +297,20 @@ func (p *Producer) WriteSessionEvents(ctx context.Context, sessions []*pb.Sessio
 			continue
 		}
 
-		// 构建消息 Key: tenant_id:community_id
+		// 构建消息 Key
 		key := fmt.Sprintf("%s:%s", session.Header.TenantId, session.CommunityId)
 
-		// 构建 Headers
+		// 构建 Headers（使用 config 常量）
 		headers := []kafkaCommon.MessageHeader{
 			{Key: "tenant_id", Value: session.Header.TenantId},
 			{Key: "probe_id", Value: session.Header.ProbeId},
 			{Key: "event_id", Value: session.Header.EventId},
 			{Key: "session_id", Value: session.SessionId},
 			{Key: "community_id", Value: session.CommunityId},
-			{Key: "content_type", Value: "application/x-protobuf"},
-			{Key: "proto_message_type", Value: "traffic.v1.SessionEvent"},
-			{Key: "proto_schema_version", Value: "v1"},
-			{Key: "proto_package", Value: "traffic.v1"},
+			{Key: "content_type", Value: config.ContentTypeProtobuf},
+			{Key: "proto_message_type", Value: config.ProtoMessageSessionEvent},
+			{Key: "proto_schema_version", Value: config.ProtoSchemaVersion},
+			{Key: "proto_package", Value: config.ProtoPackage},
 			{Key: "event_ts", Value: fmt.Sprintf("%d", session.Header.EventTs)},
 		}
 
@@ -326,20 +326,13 @@ func (p *Producer) WriteSessionEvents(ctx context.Context, sessions []*pb.Sessio
 		return nil
 	}
 
-	// 使用 MultiTopicProducer 发送
+	// 批量发送
 	start := time.Now()
-	var lastErr error
-	for _, msg := range messages {
-		if err := p.multiProducer.Send(ctx, p.config.SessionTopic, msg.Key, msg.Value, msg.Headers...); err != nil {
-			lastErr = err
-			logger.Error("Failed to send session event",
-				zap.String("key", msg.Key),
-				zap.Error(err))
-		}
-	}
-
-	if lastErr != nil {
-		return fmt.Errorf("failed to write session events: %w", lastErr)
+	if err := p.multiProducer.SendBatch(ctx, p.config.SessionTopic, messages); err != nil {
+		logger.Error("Failed to write session events",
+			zap.Int("count", len(messages)),
+			zap.Error(err))
+		return fmt.Errorf("failed to write session events: %w", err)
 	}
 
 	logger.Debug("Session events written",
@@ -355,17 +348,17 @@ func (p *Producer) validateFlowEvent(event *pb.FlowEvent, logger *zap.Logger) {
 		return
 	}
 
-	if event.Tuple.SrcPort > 65535 {
+	if event.Tuple.SrcPort > config.MaxUInt16 {
 		logger.Warn("Source port exceeds UInt16 range",
 			zap.String("event_id", event.Header.EventId),
 			zap.Uint32("src_port", event.Tuple.SrcPort))
 	}
-	if event.Tuple.DstPort > 65535 {
+	if event.Tuple.DstPort > config.MaxUInt16 {
 		logger.Warn("Destination port exceeds UInt16 range",
 			zap.String("event_id", event.Header.EventId),
 			zap.Uint32("dst_port", event.Tuple.DstPort))
 	}
-	if event.Tuple.Protocol > 255 {
+	if event.Tuple.Protocol > config.MaxUInt8 {
 		logger.Warn("Protocol number exceeds UInt8 range",
 			zap.String("event_id", event.Header.EventId),
 			zap.Uint32("protocol", event.Tuple.Protocol))
@@ -377,7 +370,7 @@ func (p *Producer) validatePcapIndex(meta *pb.PcapIndexMeta, logger *zap.Logger)
 	if meta == nil {
 		return
 	}
-	if meta.ZstdLevel > 255 {
+	if meta.ZstdLevel > config.MaxUInt8 {
 		logger.Warn("ZSTD level exceeds UInt8 range",
 			zap.String("file_key", meta.FileKey),
 			zap.Uint32("zstd_level", meta.ZstdLevel))
@@ -389,17 +382,17 @@ func (p *Producer) validateSessionEvent(session *pb.SessionEvent, logger *zap.Lo
 	if session == nil {
 		return
 	}
-	if session.ClientPort > 65535 {
+	if session.ClientPort > config.MaxUInt16 {
 		logger.Warn("Client port exceeds UInt16 range",
 			zap.String("session_id", session.SessionId),
 			zap.Uint32("client_port", session.ClientPort))
 	}
-	if session.ServerPort > 65535 {
+	if session.ServerPort > config.MaxUInt16 {
 		logger.Warn("Server port exceeds UInt16 range",
 			zap.String("session_id", session.SessionId),
 			zap.Uint32("server_port", session.ServerPort))
 	}
-	if session.Protocol > 255 {
+	if session.Protocol > config.MaxUInt8 {
 		logger.Warn("Protocol exceeds UInt8 range",
 			zap.String("session_id", session.SessionId),
 			zap.Uint32("protocol", session.Protocol))
@@ -408,10 +401,9 @@ func (p *Producer) validateSessionEvent(session *pb.SessionEvent, logger *zap.Lo
 
 // GetMetrics 获取生产者指标
 func (p *Producer) GetMetrics() ProducerMetrics {
-	// 从 MultiTopicProducer 获取各个 Topic 的指标
-	flowMetrics := p.getTopicMetrics(p.config.FlowTopic)
-	pcapMetrics := p.getTopicMetrics(p.config.PcapIndexTopic)
-	sessionMetrics := p.getTopicMetrics(p.config.SessionTopic)
+	flowMetrics, _ := p.multiProducer.GetTopicMetrics(p.config.FlowTopic)
+	pcapMetrics, _ := p.multiProducer.GetTopicMetrics(p.config.PcapIndexTopic)
+	sessionMetrics, _ := p.multiProducer.GetTopicMetrics(p.config.SessionTopic)
 
 	return ProducerMetrics{
 		FlowMessagesSent:       flowMetrics.MessagesSent,
@@ -421,22 +413,6 @@ func (p *Producer) GetMetrics() ProducerMetrics {
 		SessionMessagesSent:    sessionMetrics.MessagesSent,
 		SessionMessagesError:   sessionMetrics.MessagesError,
 		LastSendTime:           flowMetrics.LastSendTime,
-	}
-}
-
-// getTopicMetrics 获取指定 Topic 的指标（内部辅助方法）
-func (p *Producer) getTopicMetrics(topic string) kafkaCommon.ProducerMetricsSnapshot {
-	// 使用反射或类型断言从 MultiTopicProducer 获取指标
-	// 由于 MultiTopicProducer.producers 是私有的，这里使用默认值
-	// 实际生产环境应该在 common/kafka 中添加 GetTopicMetrics 方法
-	return kafkaCommon.ProducerMetricsSnapshot{
-		MessagesSent:  0,
-		MessagesError: 0,
-		BytesSent:     0,
-		BatchesSent:   0,
-		LastSendTime:  time.Now(),
-		LastErrorTime: time.Time{},
-		LastError:     "",
 	}
 }
 
@@ -458,7 +434,5 @@ func (p *Producer) Close() error {
 
 // Healthy 检查生产者健康状态
 func (p *Producer) Healthy() bool {
-	// 简化实现：只要 MultiTopicProducer 存在即认为健康
-	// 实际应该检查各个 Topic 的错误率
 	return p.multiProducer != nil
 }
