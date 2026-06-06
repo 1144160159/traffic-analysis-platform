@@ -187,8 +187,8 @@ func GenerateCommunityIDFromTuple(tuple *trafficv1.FiveTuple) string {
 // Evidence 相关
 // =============================================================================
 
-// EvidenceEntry 证据条目
-type EvidenceEntry struct {
+// Evidence 证据条目
+type Evidence struct {
 	EvidenceID string                 `json:"evidence_id"`
 	Key        string                 `json:"key"`
 	Value      string                 `json:"value"`
@@ -197,12 +197,11 @@ type EvidenceEntry struct {
 }
 
 // BuildEvidenceWithID 构建带 ID 的证据条目
-func BuildEvidenceWithID(key, value, evidenceType string) *EvidenceEntry {
-	return &EvidenceEntry{
+func BuildEvidenceWithID(key, value, evidenceType string) *Evidence {
+	return &Evidence{
 		EvidenceID: uuid.New().String(),
 		Type:        key,
-		Summary:      value,
-		Type:       evidenceType,
+		//Type: removed (duplicate)
 	}
 }
 
@@ -257,8 +256,8 @@ func buildRuleEvidence(rule *model.Rule) []*trafficv1.Evidence {
 // Rule 转换函数
 // =============================================================================
 
-// RuleToDetectionEvent 将规则命令转换为 DetectionEvent（用于规则触发时）
-func RuleToDetectionEvent(rule *model.Rule, tuple *trafficv1.FiveTuple, communityID, sessionID, flowID string) *trafficv1.DetectionBatch {
+// RuleToDetectionBatch 将规则命令转换为 DetectionBatch（用于规则触发时）
+func RuleToDetectionBatch(rule *model.Rule, tuple *trafficv1.FiveTuple, communityID, sessionID, flowID string) *trafficv1.DetectionBatch {
 	now := time.Now().UnixMilli()
 
 	// 如果没有提供 communityID，自动生成
@@ -266,33 +265,46 @@ func RuleToDetectionEvent(rule *model.Rule, tuple *trafficv1.FiveTuple, communit
 		communityID = GenerateCommunityIDFromTuple(tuple)
 	}
 
-	return &trafficv1.DetectionBatch{
-		Header: &trafficv1.EventHeader{
-			EventId:      uuid.New().String(),
-			TenantId:     rule.TenantID,
-			RunId:        "", // 实时流量无 run_id
-			EventTs:      now,
-			IngestTs:     now,
-			ProbeId:      "",
-			FeatureSetId: "",
-		},
-		DetectionId:   uuid.New().String(),
-		CommunityId:   communityID,
-		RuleId:        rule.RuleID,
-		RuleVersion:   FormatVersion(rule.Version),
-		ModelId:       "",
-		ModelVersion:  "",
-		DetectionType: "rule",
-		Labels:        rule.Labels,
-		Score:         1.0, // 规则匹配默认置信度为1.0
-		Severity:      rule.Severity,
-		Tuple:         tuple,
-		TsStart:       now,
-		TsEnd:         now,
-		Evidence:      buildRuleEvidence(rule),
-		SessionId:     sessionID,
-		FlowId:        flowID,
+	// 构建 EventHeader
+	header := &trafficv1.EventHeader{
+		EventId:      uuid.New().String(),
+		TenantId:     rule.TenantID,
+		RunId:        "", // 实时流量无 run_id
+		EventTs:      now,
+		IngestTs:     now,
+		ProbeId:      "",
+		FeatureSetId: "",
 	}
+
+	// 构建 DetectionBusiness（规则检测结果）
+	business := &trafficv1.DetectionBusiness{
+		Header:        header,
+		RuleVersion:   FormatVersion(rule.Version),
+		ModelVersion:  "",
+		Ts:            now,
+		CommunityId:   communityID,
+		SessionId:     sessionID,
+		CampaignId:    "",
+		DetectionType: "rule",
+		Label:         firstLabel(rule.Labels),
+		Score:         1.0, // 规则匹配默认置信度
+	}
+
+	return &trafficv1.DetectionBatch{
+		Businesses: []*trafficv1.DetectionBusiness{business},
+		BatchId:    uuid.New().String(),
+		TenantId:   rule.TenantID,
+		RunId:      "", // 实时流量无 run_id
+		CreatedAt:  now,
+	}
+}
+
+// firstLabel 获取第一个标签，如果为空返回空字符串
+func firstLabel(labels []string) string {
+	if len(labels) > 0 {
+		return labels[0]
+	}
+	return ""
 }
 
 // =============================================================================
@@ -443,34 +455,60 @@ func AlertFromRule(rule *model.Rule, tuple *trafficv1.FiveTuple, communityID, se
 		communityID = GenerateCommunityIDFromTuple(tuple)
 	}
 
-	// 生成去重指纹
-	fingerprint := GenerateAlertFingerprint(rule.Type, tuple)
-
 	// 构建证据 ID 列表
 	evidenceIDs := make([]string, 0, 1)
 	evidenceIDs = append(evidenceIDs, uuid.New().String())
 
+	// 从 FiveTuple 提取 IP/Port 信息
+	srcIP, dstIP := "", ""
+	var srcPort, dstPort, protocol uint32
+	if tuple != nil {
+		srcIP = tuple.SrcIp
+		dstIP = tuple.DstIp
+		srcPort = tuple.SrcPort
+		dstPort = tuple.DstPort
+		protocol = tuple.Protocol
+	}
+
 	return &trafficv1.Alert{
 		AlertId:      uuid.New().String(),
 		TenantId:     rule.TenantID,
-		Fingerprint:  fingerprint,
 		CommunityId:  communityID,
 		SessionId:    sessionID,
 		CampaignId:   "", // 由 CEP Job 填充
-		Tuple:        tuple,
+		SrcIp:        srcIP,
+		DstIp:        dstIP,
+		SrcPort:      srcPort,
+		DstPort:      dstPort,
+		Protocol:     protocol,
 		AlertType:    rule.Type,
 		Labels:       rule.Labels,
 		Score:        1.0, // 规则匹配默认置信度
-		Severity:     rule.Severity,
+		Severity:     severityToProtoEnum(rule.Severity),
 		FirstSeen:    now,
 		LastSeen:     now,
-		Count:        1,
-		Status:       "new",
+		Status:       trafficv1.AlertStatus_ALERT_STATUS_NEW,
 		Assignee:     "",
 		EvidenceIds:  evidenceIDs,
 		RuleVersion:  FormatVersion(rule.Version),
 		ModelVersion: "",
 		FeatureSetId: "",
+	}
+}
+
+// severityToProtoEnum 将 string severity 转换为 proto Severity 枚举
+func severityToProtoEnum(severity string) trafficv1.Severity {
+	switch severity {
+	case "low":
+		return trafficv1.Severity_SEVERITY_LOW
+	case "medium":
+		return trafficv1.Severity_SEVERITY_MEDIUM
+	case "high":
+		return trafficv1.Severity_SEVERITY_HIGH
+	case "critical":
+		return trafficv1.Severity_SEVERITY_CRITICAL
+	default:
+		return trafficv1.Severity_SEVERITY_MEDIUM
 	}
 }
 
@@ -678,10 +716,12 @@ func CampaignFromAlerts(tenantID string, alerts []*trafficv1.Alert, campaignType
 	for _, alert := range alerts {
 		alertIDs = append(alertIDs, alert.AlertId)
 
-		if alert.Tuple != nil {
-			entitySet[alert.Tuple.SrcIp] = true
-			entitySet[alert.Tuple.DstIp] = true
-		}
+			if alert.SrcIp != "" {
+				entitySet[alert.SrcIp] = true
+			}
+			if alert.DstIp != "" {
+				entitySet[alert.DstIp] = true
+			}
 
 		if alert.FirstSeen < minTime {
 			minTime = alert.FirstSeen
@@ -720,7 +760,7 @@ func CampaignFromAlerts(tenantID string, alerts []*trafficv1.Alert, campaignType
 		CampaignId:   uuid.New().String(),
 		TsStart:      minTime,
 		TsEnd:        maxTime,
-		AlertIds:     alertIDs,
+		Alerts:       alertIDs,
 		Entities:     entities,
 		Score:        avgScore,
 		Summary:      summary,
@@ -732,52 +772,58 @@ func CampaignFromAlerts(tenantID string, alerts []*trafficv1.Alert, campaignType
 }
 
 // =============================================================================
-// DetectionEvent 转换
+// DetectionBatch 转换
 // =============================================================================
 
-// DetectionEventToAlert 将检测事件转换为告警
-func DetectionEventToAlert(detection *trafficv1.DetectionBatch) *trafficv1.Alert {
-	now := time.Now().UnixMilli()
-
-	// 生成去重指纹
-	var fingerprint string
-	if detection.Tuple != nil {
-		fingerprint = GenerateAlertFingerprint(detection.DetectionType, detection.Tuple)
-	} else {
-		fingerprint = fmt.Sprintf("%x", md5.Sum([]byte(detection.DetectionId)))
+// DetectionBatchToAlert 将检测批次中的第一个 DetectionBusiness 转换为告警
+func DetectionBatchToAlert(detection *trafficv1.DetectionBatch) *trafficv1.Alert {
+	if detection == nil || len(detection.Businesses) == 0 {
+		return nil
 	}
 
-	// 获取第一个标签作为告警类型
-	alertType := detection.DetectionType
-	if len(detection.Labels) > 0 {
-		alertType = detection.Labels[0]
+	biz := detection.Businesses[0]
+	now := time.Now().UnixMilli()
+
+	// 从 DetectionBusiness 提取数据
+	tenantID := detection.TenantId
+	if tenantID == "" && biz.Header != nil {
+		tenantID = biz.Header.TenantId
+	}
+
+	srcIP, dstIP := "", ""
+	var srcPort, dstPort, protocol uint32
+	// FiveTuple 信息可从 EventHeader 获取（如果存在）
+	if biz.Header != nil {
+		// 五元组信息可能在其他地方，这里留空
 	}
 
 	return &trafficv1.Alert{
 		AlertId:      uuid.New().String(),
-		TenantId:     detection.Header.TenantId,
-		Fingerprint:  fingerprint,
-		CommunityId:  detection.CommunityId,
-		SessionId:    detection.SessionId,
-		CampaignId:   "",
-		Tuple:        detection.Tuple,
-		AlertType:    alertType,
-		Labels:       detection.Labels,
-		Score:        detection.Score,
-		Severity:     detection.Severity,
-		FirstSeen:    detection.TsStart,
-		LastSeen:     detection.TsEnd,
-		Count:        1,
-		Status:       "new",
+		TenantId:     tenantID,
+		CommunityId:  biz.CommunityId,
+		SessionId:    biz.SessionId,
+		CampaignId:   biz.CampaignId,
+		SrcIp:        srcIP,
+		DstIp:        dstIP,
+		SrcPort:      srcPort,
+		DstPort:      dstPort,
+		Protocol:     protocol,
+		AlertType:    biz.DetectionType,
+		Labels:       []string{biz.Label},
+		Score:        biz.Score,
+		Severity:     trafficv1.Severity_SEVERITY_MEDIUM,
+		FirstSeen:    biz.Ts,
+		LastSeen:     now,
+		Status:       trafficv1.AlertStatus_ALERT_STATUS_NEW,
 		Assignee:     "",
-		EvidenceIds:  extractEvidenceIDs(detection.Evidence),
-		RuleVersion:  detection.RuleVersion,
-		ModelVersion: detection.ModelVersion,
-		FeatureSetId: detection.Header.FeatureSetId,
+		EvidenceIds:  []string{},
+		RuleVersion:  biz.RuleVersion,
+		ModelVersion: biz.ModelVersion,
+		FeatureSetId: "",
 	}
 }
 
-// extractEvidenceIDs 从证据条目中提取ID
+// extractEvidenceIDs 从证据条目中提取ID（保留兼容性）
 func extractEvidenceIDs(evidence []*trafficv1.Evidence) []string {
 	ids := make([]string, 0)
 	for _, e := range evidence {

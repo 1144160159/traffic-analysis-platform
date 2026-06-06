@@ -27,6 +27,7 @@ import (
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/audit"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/httpx"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/logging"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/storage"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/forensics/api"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/forensics/config"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/forensics/cutter"
@@ -78,18 +79,18 @@ func main() {
 	logger.Info("Connected to PostgreSQL")
 
 	// 创建 PostgresClient 包装
-	pgClient := &postgresClientWrapper{db: pgDB}
+	pgClient := storage.NewPostgresClientFromDB(pgDB, logger)
 
 	// 初始化 ClickHouse（用于索引查询）
-	chClient, err := initClickHouse(cfg.ClickHouse, logger)
+	rawCHConn, err := initClickHouse(cfg.ClickHouse, logger)
 	if err != nil {
 		logger.Fatal("Failed to connect to ClickHouse", zap.Error(err))
 	}
-	defer chClient.Close()
+	defer rawCHConn.Close()
 	logger.Info("Connected to ClickHouse")
 
 	// 创建 ClickHouseClient 包装
-	chClientWrapper := &clickhouseClientWrapper{conn: chClient}
+	chClient := storage.NewClickHouseClientFromConn(rawCHConn, logger)
 
 	// 初始化 Redis（可选，用于缓存和 Auth）
 	var rdb *redis.Client
@@ -104,7 +105,7 @@ func main() {
 	}
 
 	// 初始化 Index Client
-	indexClient := index.NewIndexClient(chClientWrapper, logger)
+	indexClient := index.NewIndexClient(chClient, logger)
 
 	// 初始化 S3 Client
 	s3Client, err := s3client.NewS3Client(
@@ -191,7 +192,8 @@ func main() {
 	r := mux.NewRouter()
 
 	// 注册路由
-	handler.RegisterRoutes(r)
+	apiRouter := r.PathPrefix("/api/v1").Subrouter()
+	handler.RegisterRoutes(apiRouter)
 
 	// 构建中间件链
 	middlewareChain := buildMiddlewareChain(cfg, logger, pgDB, rdb)
@@ -421,9 +423,13 @@ func buildAuthMiddleware(cfg config.AuthConfig, logger *zap.Logger, db *sql.DB, 
 	}
 
 	// 创建依赖
-	userRepo := authRepository.NewUserRepository(db)
-	jwtSvc := authJwt.NewService(jwtCfg, rdb, logger)
-	authSvc := authService.NewAuthService(userRepo, jwtSvc, nil, nil, logger)
+	userRepo := authRepository.NewUserRepository(db, logger)
+	tokenRepo := authRepository.NewTokenRepository(db, logger)
+		jwtSvc, jwtErr := authJwt.NewService(jwtCfg, storage.NewRedisClientFromExisting(rdb, logger), tokenRepo, logger)
+		if jwtErr != nil {
+			logger.Fatal("Failed to init JWT", zap.Error(jwtErr))
+		}
+	authSvc := authService.NewAuthService(userRepo, jwtSvc, nil, nil, logger, nil)
 
 	return authMiddleware.NewAuthMiddleware(authSvc, logger)
 }
@@ -436,80 +442,3 @@ func getEnv(key, defaultValue string) string {
 }
 
 // ============================================================================
-// 数据库客户端包装器（适配 storage 接口）
-// ============================================================================
-
-// postgresClientWrapper PostgreSQL 客户端包装
-type postgresClientWrapper struct {
-	db *sql.DB
-}
-
-func (w *postgresClientWrapper) DB() *sql.DB {
-	return w.db
-}
-
-func (w *postgresClientWrapper) Query(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
-	return w.db.QueryContext(ctx, query, args...)
-}
-
-func (w *postgresClientWrapper) QueryRow(ctx context.Context, query string, args ...interface{}) *sql.Row {
-	return w.db.QueryRowContext(ctx, query, args...)
-}
-
-func (w *postgresClientWrapper) Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
-	return w.db.ExecContext(ctx, query, args...)
-}
-
-func (w *postgresClientWrapper) Transaction(ctx context.Context, fn func(tx *sql.Tx) error) error {
-	tx, err := w.db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		if p := recover(); p != nil {
-			tx.Rollback()
-			panic(p)
-		}
-	}()
-
-	if err := fn(tx); err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	return tx.Commit()
-}
-
-func (w *postgresClientWrapper) Ping(ctx context.Context) error {
-	return w.db.PingContext(ctx)
-}
-
-func (w *postgresClientWrapper) Close() error {
-	return w.db.Close()
-}
-
-// clickhouseClientWrapper ClickHouse 客户端包装
-type clickhouseClientWrapper struct {
-	conn clickhouse.Conn
-}
-
-func (w *clickhouseClientWrapper) Query(ctx context.Context, query string, args ...interface{}) (clickhouse.Rows, error) {
-	return w.conn.Query(ctx, query, args...)
-}
-
-func (w *clickhouseClientWrapper) QueryRow(ctx context.Context, query string, args ...interface{}) clickhouse.Row {
-	return w.conn.QueryRow(ctx, query, args...)
-}
-
-func (w *clickhouseClientWrapper) Exec(ctx context.Context, query string, args ...interface{}) error {
-	return w.conn.Exec(ctx, query, args...)
-}
-
-func (w *clickhouseClientWrapper) Ping(ctx context.Context) error {
-	return w.conn.Ping(ctx)
-}
-
-func (w *clickhouseClientWrapper) Close() error {
-	return w.conn.Close()
-}

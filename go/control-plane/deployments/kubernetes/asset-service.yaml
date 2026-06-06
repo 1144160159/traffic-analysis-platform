@@ -1,0 +1,95 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: asset-service
+  namespace: traffic-analysis
+  labels:
+    app: asset-service
+spec:
+  type: ClusterIP
+  selector:
+    app: asset-service
+  ports:
+    - name: grpc
+      port: 50053
+      targetPort: 50053
+    - name: http
+      port: 8083
+      targetPort: 8083
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: asset-service
+  namespace: traffic-analysis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: asset-service
+  template:
+    metadata:
+      labels:
+        app: asset-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8083"
+    spec:
+      containers:
+      - name: asset-service
+        image: registry.example.com/traffic/asset-service:latest
+        ports:
+        - containerPort: 50053
+          name: grpc
+        - containerPort: 8083
+          name: http
+        env:
+        - name: ASSET_GRPC_PORT
+          value: "50053"
+        - name: ASSET_HTTP_PORT
+          value: "8083"
+        - name: ASSET_PG_HOST
+          value: "postgres-primary.databases.svc"
+        - name: ASSET_PG_PORT
+          value: "5432"
+        - name: ASSET_PG_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-credentials
+              key: username
+              optional: true
+        - name: ASSET_PG_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-credentials
+              key: password
+              optional: true
+        - name: ASSET_PG_DB
+          value: "traffic_platform"
+        - name: ASSET_PG_SSLMODE
+          value: "disable"
+        - name: LOG_LEVEL
+          value: "info"
+        - name: SERVICE_VERSION
+          value: "1.0.0"
+        - name: ENVIRONMENT
+          value: "production"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8083
+          initialDelaySeconds: 10
+          periodSeconds: 15
+        readinessProbe:
+          httpGet:
+            path: /health/readiness
+            port: 8083
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi

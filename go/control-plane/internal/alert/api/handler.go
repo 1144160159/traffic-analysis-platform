@@ -58,8 +58,15 @@ func NewHandlerWithFeedback(
 		logger:       logger,
 	}
 	// 初始化 FeedbackHandler
-	h.feedbackHandler = NewFeedbackHandler(alertService, kafkaProducer, auditLogger, logger)
+	h.feedbackHandler = NewFeedbackHandler(alertService, kafkaProducer, auditLogger, nil, logger)
 	return h
+}
+
+// SetFeedbackRepo 设置反馈持久化仓库（由 main.go 在 CH 初始化后调用）
+func (h *Handler) SetFeedbackRepo(repo *FeedbackRepository) {
+	if h.feedbackHandler != nil {
+		h.feedbackHandler.repo = repo
+	}
 }
 
 // RegisterRoutes 注册路由

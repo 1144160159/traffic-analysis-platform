@@ -357,7 +357,8 @@ func main() {
 	)
 
 	// 注册业务路由
-	handler.RegisterRoutes(r)
+	apiRouter := r.PathPrefix("/api/v1").Subrouter()
+	handler.RegisterRoutes(apiRouter)
 
 	// 注册健康检查路由
 	r.HandleFunc("/healthz", healthChecker.LivenessHandler).Methods("GET")

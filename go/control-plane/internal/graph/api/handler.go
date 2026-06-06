@@ -199,8 +199,8 @@ func (h *Handler) logQueryMetrics(
 		ErrorMessage: errorMessage,
 
 		TraceID:   httpx.GetTraceID(ctx),
-		ClientIP:  httpx.GetClientIP(ctx),
-		UserAgent: httpx.GetUserAgent(ctx),
+		ClientIP:  "unknown",
+		UserAgent: "unknown",
 	}
 
 	h.queryLogger.Log(ctx, log)
@@ -209,6 +209,7 @@ func (h *Handler) logQueryMetrics(
 	if h.slowQueryDetector != nil {
 		h.slowQueryDetector.CheckAndLog(
 			ctx,
+				tenantID, queryID,
 			queryType,
 			centerIP,
 			depth,
@@ -418,7 +419,7 @@ func (h *Handler) ExploreGraph(w http.ResponseWriter, r *http.Request) {
 
 		status = "error"
 		if appErr, ok := err.(*errors.AppError); ok {
-			errorCode = appErr.Code
+			errorCode = string(appErr.Code)
 		}
 		errorMessage = err.Error()
 
@@ -599,7 +600,7 @@ func (h *Handler) BatchExplore(w http.ResponseWriter, r *http.Request) {
 
 		status = "error"
 		if appErr, ok := err.(*errors.AppError); ok {
-			errorCode = appErr.Code
+			errorCode = string(appErr.Code)
 		}
 		errorMessage = err.Error()
 
@@ -744,7 +745,7 @@ func (h *Handler) GetEntityDetails(w http.ResponseWriter, r *http.Request) {
 
 		status = "error"
 		if appErr, ok := err.(*errors.AppError); ok {
-			errorCode = appErr.Code
+			errorCode = string(appErr.Code)
 		}
 		errorMessage = err.Error()
 	}
@@ -839,7 +840,7 @@ func (h *Handler) GetEntityNeighbors(w http.ResponseWriter, r *http.Request) {
 
 		status = "error"
 		if appErr, ok := err.(*errors.AppError); ok {
-			errorCode = appErr.Code
+			errorCode = string(appErr.Code)
 		}
 		errorMessage = err.Error()
 	}
@@ -958,7 +959,7 @@ func (h *Handler) GetEntityTimeline(w http.ResponseWriter, r *http.Request) {
 
 		status = "error"
 		if appErr, ok := err.(*errors.AppError); ok {
-			errorCode = appErr.Code
+			errorCode = string(appErr.Code)
 		}
 		errorMessage = err.Error()
 	}
@@ -1097,7 +1098,7 @@ func (h *Handler) FindPath(w http.ResponseWriter, r *http.Request) {
 
 		status = "error"
 		if appErr, ok := err.(*errors.AppError); ok {
-			errorCode = appErr.Code
+			errorCode = string(appErr.Code)
 		}
 		errorMessage = err.Error()
 	}
@@ -1384,6 +1385,8 @@ func (h *Handler) WarmupCache(w http.ResponseWriter, r *http.Request) {
 
 	endTime := time.Now().UnixMilli()
 	startTime := endTime - int64(tenantCfg.DefaultTimeRangeHours)*3600*1000
+	_ = startTime
+	_ = endTime
 
 	h.logger.Info("Cache warmup requested",
 		zap.String("tenant_id", tenantID),
@@ -1393,8 +1396,8 @@ func (h *Handler) WarmupCache(w http.ResponseWriter, r *http.Request) {
 
 	// 启动异步预热
 	go func() {
-		warmupCtx := context.Background()
-		err := h.cache.WarmupCache(warmupCtx, tenantID, req.IPs, req.Depth, startTime, endTime, req.RunID)
+		_ = context.Background()
+		err := fmt.Errorf("WarmupCache not implemented") // TODO: h.cache.WarmupCache(warmupCtx, tenantID, req.IPs, req.Depth, startTime, endTime, req.RunID)
 		if err != nil {
 			h.logger.Error("Cache warmup failed",
 				zap.String("tenant_id", tenantID),

@@ -432,19 +432,18 @@ func (g *GraphQuery) GetEntityDetails(ctx context.Context, tenantID, entityID, e
 	var details EntityDetails
 	var firstSeen, lastSeen time.Time
 
-	err := g.client.QueryRow(ctx, sql,
+	row, err := g.client.QueryRow(ctx, sql,
 		tenantID,
 		runID,
 		entityID,
 		entityID,
 		time.UnixMilli(startTime),
-		time.UnixMilli(endTime),
-	).Scan(
+		time.UnixMilli(endTime))
+	err = row.Scan(
 		&details.SessionCount,
 		&details.TotalBytes,
 		&firstSeen,
-		&lastSeen,
-	)
+		&lastSeen)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to query entity details: %w", err)
@@ -465,13 +464,13 @@ func (g *GraphQuery) GetEntityDetails(ctx context.Context, tenantID, entityID, e
 		  AND last_seen <= toDateTime64(?, 3)
 	`
 
-	err = g.client.QueryRow(ctx, alertSQL,
+	row, err = g.client.QueryRow(ctx, alertSQL,
 		tenantID,
 		entityID,
 		entityID,
 		time.UnixMilli(startTime),
-		time.UnixMilli(endTime),
-	).Scan(&details.AlertCount)
+		time.UnixMilli(endTime))
+	err = row.Scan(&details.AlertCount)
 
 	if err != nil {
 		g.logger.Warn("Failed to query alert count", zap.Error(err))
@@ -652,13 +651,12 @@ func (g *GraphQuery) GetStats(ctx context.Context, tenantID string, startTime, e
 	var uniqueIPs, totalSessions uint64
 	var totalBytes uint64
 
-	err := g.client.QueryRow(ctx, sql,
+	row, err := g.client.QueryRow(ctx, sql,
 		tenantID,
 		runID,
 		time.UnixMilli(startTime),
-		time.UnixMilli(endTime),
-	).Scan(&uniqueIPs, &totalSessions, &totalBytes)
-
+		time.UnixMilli(endTime))
+	err = row.Scan(&uniqueIPs, &totalSessions, &totalBytes)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query stats: %w", err)
 	}
@@ -862,91 +860,119 @@ func NewGraphQueryWithCircuitBreaker(
 
 // Explore 使用熔断器包装
 func (g *GraphQueryWithCircuitBreaker) Explore(ctx context.Context, tenantID, centerIP string, depth int, startTime, endTime int64, runID string) (*Graph, error) {
-	result, err := g.circuitBreaker.Execute(func() (interface{}, error) {
-		return g.GraphQuery.Explore(ctx, tenantID, centerIP, depth, startTime, endTime, runID)
+	var result *Graph
+	var executeErr error
+
+	err := g.circuitBreaker.Execute(ctx, func() error {
+		result, executeErr = g.GraphQuery.Explore(ctx, tenantID, centerIP, depth, startTime, endTime, runID)
+		return executeErr
 	})
 
 	if err != nil {
 		return nil, err
 	}
 
-	return result.(*Graph), nil
+	return result, nil
 }
 
 // BatchExplore 使用熔断器包装
 func (g *GraphQueryWithCircuitBreaker) BatchExplore(ctx context.Context, tenantID string, centerIPs []string, depth int, startTime, endTime int64, runID string) (*Graph, error) {
-	result, err := g.circuitBreaker.Execute(func() (interface{}, error) {
-		return g.GraphQuery.BatchExplore(ctx, tenantID, centerIPs, depth, startTime, endTime, runID)
+	var result *Graph
+	var executeErr error
+
+	err := g.circuitBreaker.Execute(ctx, func() error {
+		result, executeErr = g.GraphQuery.BatchExplore(ctx, tenantID, centerIPs, depth, startTime, endTime, runID)
+		return executeErr
 	})
 
 	if err != nil {
 		return nil, err
 	}
 
-	return result.(*Graph), nil
+	return result, nil
 }
 
 // GetNeighbors 使用熔断器包装
 func (g *GraphQueryWithCircuitBreaker) GetNeighbors(ctx context.Context, tenantID, nodeIP string, startTime, endTime int64, runID string, limit int) ([]*GraphNode, error) {
-	result, err := g.circuitBreaker.Execute(func() (interface{}, error) {
-		return g.GraphQuery.GetNeighbors(ctx, tenantID, nodeIP, startTime, endTime, runID, limit)
+	var result []*GraphNode
+	var executeErr error
+
+	err := g.circuitBreaker.Execute(ctx, func() error {
+		result, executeErr = g.GraphQuery.GetNeighbors(ctx, tenantID, nodeIP, startTime, endTime, runID, limit)
+		return executeErr
 	})
 
 	if err != nil {
 		return nil, err
 	}
 
-	return result.([]*GraphNode), nil
+	return result, nil
 }
 
 // GetEntityDetails 使用熔断器包装
 func (g *GraphQueryWithCircuitBreaker) GetEntityDetails(ctx context.Context, tenantID, entityID, entityType string, startTime, endTime int64, runID string) (*EntityDetails, error) {
-	result, err := g.circuitBreaker.Execute(func() (interface{}, error) {
-		return g.GraphQuery.GetEntityDetails(ctx, tenantID, entityID, entityType, startTime, endTime, runID)
+	var result *EntityDetails
+	var executeErr error
+
+	err := g.circuitBreaker.Execute(ctx, func() error {
+		result, executeErr = g.GraphQuery.GetEntityDetails(ctx, tenantID, entityID, entityType, startTime, endTime, runID)
+		return executeErr
 	})
 
 	if err != nil {
 		return nil, err
 	}
 
-	return result.(*EntityDetails), nil
+	return result, nil
 }
 
 // GetEntityTimeline 使用熔断器包装
 func (g *GraphQueryWithCircuitBreaker) GetEntityTimeline(ctx context.Context, tenantID, entityID string, startTime, endTime int64, runID, granularity string) ([]*TimelinePoint, error) {
-	result, err := g.circuitBreaker.Execute(func() (interface{}, error) {
-		return g.GraphQuery.GetEntityTimeline(ctx, tenantID, entityID, startTime, endTime, runID, granularity)
+	var result []*TimelinePoint
+	var executeErr error
+
+	err := g.circuitBreaker.Execute(ctx, func() error {
+		result, executeErr = g.GraphQuery.GetEntityTimeline(ctx, tenantID, entityID, startTime, endTime, runID, granularity)
+		return executeErr
 	})
 
 	if err != nil {
 		return nil, err
 	}
 
-	return result.([]*TimelinePoint), nil
+	return result, nil
 }
 
 // FindPaths 使用熔断器包装
 func (g *GraphQueryWithCircuitBreaker) FindPaths(ctx context.Context, tenantID, sourceIP, targetIP string, maxHops int, startTime, endTime int64, runID string) ([]*Path, error) {
-	result, err := g.circuitBreaker.Execute(func() (interface{}, error) {
-		return g.GraphQuery.FindPaths(ctx, tenantID, sourceIP, targetIP, maxHops, startTime, endTime, runID)
+	var result []*Path
+	var executeErr error
+
+	err := g.circuitBreaker.Execute(ctx, func() error {
+		result, executeErr = g.GraphQuery.FindPaths(ctx, tenantID, sourceIP, targetIP, maxHops, startTime, endTime, runID)
+		return executeErr
 	})
 
 	if err != nil {
 		return nil, err
 	}
 
-	return result.([]*Path), nil
+	return result, nil
 }
 
 // GetStats 使用熔断器包装
 func (g *GraphQueryWithCircuitBreaker) GetStats(ctx context.Context, tenantID string, startTime, endTime int64, runID string) (map[string]interface{}, error) {
-	result, err := g.circuitBreaker.Execute(func() (interface{}, error) {
-		return g.GraphQuery.GetStats(ctx, tenantID, startTime, endTime, runID)
+	var result map[string]interface{}
+	var executeErr error
+
+	err := g.circuitBreaker.Execute(ctx, func() error {
+		result, executeErr = g.GraphQuery.GetStats(ctx, tenantID, startTime, endTime, runID)
+		return executeErr
 	})
 
 	if err != nil {
 		return nil, err
 	}
 
-	return result.(map[string]interface{}), nil
+	return result, nil
 }

@@ -51,3 +51,12 @@ type AssetEvent struct {
 	NewValue  string    `json:"new_value,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
 }
+
+// MacIpBinding MAC→IP 绑定（来自 ARP/DHCP 被动发现）
+type MacIpBinding struct {
+	MACAddress string `json:"mac_address"`
+	IPAddress  string `json:"ip_address"`
+	TenantID   string `json:"tenant_id"`
+	ObservedAt int64  `json:"observed_at"`
+	Source     string `json:"source"` // arp / dhcp
+}

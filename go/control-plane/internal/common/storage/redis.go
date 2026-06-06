@@ -146,6 +146,16 @@ func NewRedisClient(cfg RedisConfig, logger *zap.Logger) (*RedisClient, error) {
 	return rc, nil
 }
 
+// NewRedisClientFromExisting 从已有的 *redis.Client 创建 RedisClient 包装器
+// 用于已有 Redis 连接的场景（如 alert-service 等复用了 go-redis 客户端的服务）
+func NewRedisClientFromExisting(client *redis.Client, logger *zap.Logger) *RedisClient {
+	return &RedisClient{
+		client:  client,
+		logger:  logger,
+		metrics: newRedisMetrics("redis"),
+	}
+}
+
 func (c *RedisClient) monitorPoolStats() {
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()

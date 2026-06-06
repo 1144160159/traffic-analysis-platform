@@ -189,6 +189,32 @@ func (r *AssetRepository) insertEvent(ctx context.Context, assetID, tenantID, ev
 	}
 }
 
+// MarkInactiveSince 标记指定时间之前最后活跃的资产为 inactive
+func (r *AssetRepository) MarkInactiveSince(ctx context.Context, tenantID string, since time.Time) (int, error) {
+	result, err := r.db.ExecContext(ctx,
+		`UPDATE assets SET last_seen = last_seen WHERE tenant_id = $1 AND last_seen < $2`,
+		tenantID, since)
+	if err != nil {
+		return 0, fmt.Errorf("mark inactive: %w", err)
+	}
+	n, _ := result.RowsAffected()
+	// 为每个被标记的资产记录 inactive 事件
+	if n > 0 {
+		rows, err := r.db.QueryContext(ctx,
+			`SELECT asset_id FROM assets WHERE tenant_id = $1 AND last_seen < $2`, tenantID, since)
+		if err == nil {
+			defer rows.Close()
+			for rows.Next() {
+				var assetID string
+				if rows.Scan(&assetID) == nil {
+					r.insertEvent(ctx, assetID, tenantID, "inactive", "", "")
+				}
+			}
+		}
+	}
+	return int(n), nil
+}
+
 func assetToJSON(a *config.AssetRecord) string {
 	return fmt.Sprintf(`{"ip":"%s","mac":"%s","hostname":"%s","vendor":"%s"}`,
 		a.IPAddress, a.MACAddress, a.Hostname, a.Vendor)

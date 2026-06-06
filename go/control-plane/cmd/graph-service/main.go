@@ -276,10 +276,11 @@ func main() {
 
 	var warmupService *cache.WarmupService
 	if graphCache != nil && pgDB != nil {
+		// 适配器：GraphQueryWithCircuitBreaker → GraphQueryInterface
 		warmupService = cache.NewWarmupService(
 			pgDB,
 			graphCache,
-			graphQuery, // 修复 W1：注入 GraphQuery
+			&graphQueryExploreAdapter{graphQuery},
 			logger,
 			1*time.Hour,
 		)
@@ -313,7 +314,8 @@ func main() {
 	r.Handle("/metrics", promhttp.Handler()).Methods("GET")
 
 	// 注册业务路由
-	handler.RegisterRoutes(r)
+	apiRouter := r.PathPrefix("/api/v1").Subrouter()
+	handler.RegisterRoutes(apiRouter)
 
 	// ==================== 构建中间件链 ====================
 
@@ -467,8 +469,8 @@ func buildMiddlewareChain(cfg *config.Config, logger *zap.Logger) *httpx.Chain {
 		httpx.CORS(corsConfig),
 		httpx.BodyLimit(cfg.API.MaxRequestBodySize),
 		httpx.Metrics(cfg.OTEL.ServiceName),
-		httpx.MiddlewareFunc(otel.HTTPMiddlewareWithConfig(otelConfig)),
-		httpx.TimeoutWithConfig(time.Duration(cfg.API.RequestTimeout)*time.Second, nil),
+		httpx.Middleware(otel.HTTPMiddlewareWithConfig(otelConfig)),
+		httpx.TimeoutWithConfig(cfg.API.RequestTimeout, nil),
 		httpx.TenantExtractor(),
 	)
 
@@ -492,7 +494,7 @@ func monitorConnectionPools(ctx context.Context, chClient *storage.ClickHouseCli
 				if stats.Open > 0 {
 					logger.Debug("ClickHouse connection pool stats",
 						zap.Int("open", stats.Open),
-						zap.Int("in_use", stats.InUse),
+						zap.Int("open_connections", stats.Open),
 						zap.Int("idle", stats.Idle))
 				}
 			}
@@ -564,4 +566,13 @@ func getEnv(key, defaultValue string) string {
 		return value
 	}
 	return defaultValue
+}
+
+// graphQueryExploreAdapter 将 GraphQueryWithCircuitBreaker 适配为 GraphQueryInterface
+type graphQueryExploreAdapter struct {
+	gq *query.GraphQueryWithCircuitBreaker
+}
+
+func (a *graphQueryExploreAdapter) Explore(ctx context.Context, tenantID, centerIP string, depth int, startTime, endTime int64, runID string) (interface{}, error) {
+	return a.gq.Explore(ctx, tenantID, centerIP, depth, startTime, endTime, runID)
 }

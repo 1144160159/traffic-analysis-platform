@@ -510,8 +510,9 @@ func setupRoutes(
 ) *mux.Router {
 	r := mux.NewRouter()
 
-	authHandler.RegisterRoutes(r)
-	tokenHandler.RegisterRoutes(r)
+	apiRouter := r.PathPrefix("/api/v1").Subrouter()
+	authHandler.RegisterRoutes(apiRouter)
+	tokenHandler.RegisterRoutes(apiRouter)
 
 	r.HandleFunc("/health", healthChecker.Handler()).Methods("GET")
 	r.HandleFunc("/health/ready", healthChecker.ReadinessHandler()).Methods("GET")
