@@ -135,7 +135,8 @@ func (r *TaskRepository) GetByID(ctx context.Context, taskID string) (*Task, err
 		WHERE task_id = $1
 	`
 
-	return r.scanTask(ctx, r.client.QueryRow(ctx, query, taskID))
+	row := r.client.QueryRow(ctx, query, taskID)
+	return r.scanTask(ctx, row)
 }
 
 // scanTask 扫描单个任务

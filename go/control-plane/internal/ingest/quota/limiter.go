@@ -1,11 +1,3 @@
-////////////////////////////////////////////////////////////////////////////////
-// FILE PATH: control-plane/internal/ingest/quota/limiter.go
-// 修复版 v3：
-// 1. 修复问题 3：健康检查使用独立 context.Background()
-// 2. 保留所有原有功能（Lua 脚本限流、TTL 上限检查等）
-// 3. 使用 config.constants 移除硬编码
-////////////////////////////////////////////////////////////////////////////////
-
 package quota
 
 import (
@@ -21,29 +13,22 @@ import (
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/ingest/config"
 )
 
-// LimiterConfig 限流器配置
 type LimiterConfig struct {
-	// Redis 限流
 	RedisEnabled bool   `env:"RATE_LIMIT_REDIS_ENABLED" envDefault:"true"`
 	RedisPrefix  string `env:"RATE_LIMIT_REDIS_PREFIX" envDefault:"ratelimit:"`
 
-	// 全局限流
 	GlobalRPS   float64 `env:"RATE_LIMIT_GLOBAL_RPS" envDefault:"100000"`
 	GlobalBurst int     `env:"RATE_LIMIT_GLOBAL_BURST" envDefault:"200000"`
 
-	// 租户限流
 	TenantRPS   float64 `env:"RATE_LIMIT_TENANT_RPS" envDefault:"10000"`
 	TenantBurst int     `env:"RATE_LIMIT_TENANT_BURST" envDefault:"20000"`
 
-	// 探针限流
 	ProbeRPS   float64 `env:"RATE_LIMIT_PROBE_RPS" envDefault:"5000"`
 	ProbeBurst int     `env:"RATE_LIMIT_PROBE_BURST" envDefault:"10000"`
 
-	// 降级配置
 	LocalFallbackEnabled bool `env:"RATE_LIMIT_LOCAL_FALLBACK" envDefault:"true"`
 }
 
-// Limiter 多级限流器
 type Limiter struct {
 	redis       redis.UniversalClient
 	localGlobal *LocalTokenBucket
@@ -52,25 +37,20 @@ type Limiter struct {
 	logger      *zap.Logger
 	config      LimiterConfig
 
-	// 令牌桶 Lua 脚本（高性能版本）
 	tokenBucketScript *redis.Script
 
-	// 状态
-	redisAvailable int32 // 1=可用, 0=不可用
-	lastRedisCheck int64 // 上次检查时间
+	redisAvailable int32
+	lastRedisCheck int64
 
-	// 统计
 	allowedTotal int64
 	deniedTotal  int64
 	fallbackUsed int64
 
-	// 优雅关闭支持
 	ctx    context.Context
 	cancel context.CancelFunc
 	done   chan struct{}
 }
 
-// 令牌桶 Lua 脚本（包含 TTL 上限检查）
 const tokenBucketLuaScript = `
 local key = KEYS[1]
 local capacity = tonumber(ARGV[1])
@@ -118,11 +98,9 @@ redis.call('EXPIRE', key, ttl)
 return 1
 `
 
-// NewLimiter 创建限流器
 func NewLimiter(rdb redis.UniversalClient, cfg LimiterConfig, logger *zap.Logger) *Limiter {
 	ctx, cancel := context.WithCancel(context.Background())
 
-	// 设置默认值
 	if cfg.RedisPrefix == "" {
 		cfg.RedisPrefix = config.RedisRateLimitPrefix
 	}
@@ -132,10 +110,8 @@ func NewLimiter(rdb redis.UniversalClient, cfg LimiterConfig, logger *zap.Logger
 		logger: logger,
 		config: cfg,
 
-		// 预编译 Lua 脚本
 		tokenBucketScript: redis.NewScript(tokenBucketLuaScript),
 
-		// 本地降级限流器
 		localGlobal: NewLocalTokenBucket(float64(cfg.GlobalBurst), cfg.GlobalRPS),
 		localTenant: NewLocalBucketManager(float64(cfg.TenantBurst), cfg.TenantRPS),
 		localProbe:  NewLocalBucketManager(float64(cfg.ProbeBurst), cfg.ProbeRPS),
@@ -147,23 +123,19 @@ func NewLimiter(rdb redis.UniversalClient, cfg LimiterConfig, logger *zap.Logger
 		done:   make(chan struct{}),
 	}
 
-	// 启动 Redis 健康检查
 	go l.healthCheckLoop()
 
 	return l
 }
 
-// Allow 检查是否允许请求
 func (l *Limiter) Allow(ctx context.Context, tenantID, probeID string) bool {
 	return l.AllowN(ctx, tenantID, probeID, 1)
 }
 
-// AllowN 检查是否允许 n 个请求
 func (l *Limiter) AllowN(ctx context.Context, tenantID, probeID string, n int) bool {
 	ctx, span := otel.StartSpan(ctx, "limiter.allow")
 	defer span.End()
 
-	// 检查 Redis 是否可用
 	if l.config.RedisEnabled && atomic.LoadInt32(&l.redisAvailable) == 1 {
 		allowed, err := l.checkRedis(ctx, tenantID, probeID, n)
 		if err == nil {
@@ -175,33 +147,28 @@ func (l *Limiter) AllowN(ctx context.Context, tenantID, probeID string, n int) b
 			return allowed
 		}
 
-		// Redis 错误，标记为不可用
 		l.logger.Warn("Redis rate limit failed, falling back to local",
 			zap.Error(err))
 		atomic.StoreInt32(&l.redisAvailable, 0)
 	}
 
-	// 使用本地限流
 	if l.config.LocalFallbackEnabled {
 		atomic.AddInt64(&l.fallbackUsed, int64(n))
 		return l.checkLocal(tenantID, probeID, n)
 	}
 
-	// 降级未启用时，默认放行（Fail-Open）
 	l.logger.Warn("Rate limiting disabled, allowing request",
 		zap.String("tenant_id", tenantID),
 		zap.String("probe_id", probeID))
 	return true
 }
 
-// checkRedis 使用 Redis 检查限流（令牌桶算法）
 func (l *Limiter) checkRedis(ctx context.Context, tenantID, probeID string, n int) (bool, error) {
 	ctx, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
 	defer cancel()
 
 	now := time.Now().UnixMilli()
 
-	// 检查全局限流
 	globalKey := l.config.RedisPrefix + "global"
 	result, err := l.tokenBucketScript.Run(ctx, l.redis, []string{globalKey},
 		l.config.GlobalBurst, l.config.GlobalRPS, now, n).Int()
@@ -213,7 +180,6 @@ func (l *Limiter) checkRedis(ctx context.Context, tenantID, probeID string, n in
 		return false, nil
 	}
 
-	// 检查租户限流
 	tenantKey := l.config.RedisPrefix + "tenant:" + tenantID
 	result, err = l.tokenBucketScript.Run(ctx, l.redis, []string{tenantKey},
 		l.config.TenantBurst, l.config.TenantRPS, now, n).Int()
@@ -225,7 +191,6 @@ func (l *Limiter) checkRedis(ctx context.Context, tenantID, probeID string, n in
 		return false, nil
 	}
 
-	// 检查探针限流
 	probeKey := l.config.RedisPrefix + "probe:" + probeID
 	result, err = l.tokenBucketScript.Run(ctx, l.redis, []string{probeKey},
 		l.config.ProbeBurst, l.config.ProbeRPS, now, n).Int()
@@ -240,21 +205,18 @@ func (l *Limiter) checkRedis(ctx context.Context, tenantID, probeID string, n in
 	return true, nil
 }
 
-// checkLocal 使用本地令牌桶检查限流
 func (l *Limiter) checkLocal(tenantID, probeID string, n int) bool {
-	// 检查全局限流
+
 	if !l.localGlobal.AllowN(n) {
 		l.logger.Debug("Local global rate limit exceeded")
 		return false
 	}
 
-	// 检查租户限流
 	if !l.localTenant.AllowN(tenantID, n) {
 		l.logger.Debug("Local tenant rate limit exceeded", zap.String("tenant_id", tenantID))
 		return false
 	}
 
-	// 检查探针限流
 	if !l.localProbe.AllowN(probeID, n) {
 		l.logger.Debug("Local probe rate limit exceeded", zap.String("probe_id", probeID))
 		return false
@@ -263,7 +225,6 @@ func (l *Limiter) checkLocal(tenantID, probeID string, n int) bool {
 	return true
 }
 
-// healthCheckLoop Redis 健康检查循环（修复版：使用独立 context）
 func (l *Limiter) healthCheckLoop() {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
@@ -276,7 +237,7 @@ func (l *Limiter) healthCheckLoop() {
 			return
 
 		case <-ticker.C:
-			// ✅ 修复问题 3：使用独立的 Background context，避免父 context 取消影响
+
 			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 			err := l.redis.Ping(ctx).Err()
 			cancel()
@@ -296,11 +257,9 @@ func (l *Limiter) healthCheckLoop() {
 	}
 }
 
-// Close 优雅关闭限流器
 func (l *Limiter) Close() error {
 	l.cancel()
 
-	// 等待健康检查循环退出
 	select {
 	case <-l.done:
 		l.logger.Info("Limiter closed gracefully")
@@ -311,7 +270,6 @@ func (l *Limiter) Close() error {
 	return nil
 }
 
-// GetStats 获取统计信息
 func (l *Limiter) GetStats() LimiterStats {
 	return LimiterStats{
 		AllowedTotal:   atomic.LoadInt64(&l.allowedTotal),
@@ -322,7 +280,6 @@ func (l *Limiter) GetStats() LimiterStats {
 	}
 }
 
-// LimiterStats 限流器统计
 type LimiterStats struct {
 	AllowedTotal   int64
 	DeniedTotal    int64
@@ -331,7 +288,6 @@ type LimiterStats struct {
 	LocalBuckets   int
 }
 
-// Reset 重置限流器
 func (l *Limiter) Reset() {
 	l.localGlobal.Reset()
 	l.localTenant.Clear()
@@ -342,12 +298,10 @@ func (l *Limiter) Reset() {
 	atomic.StoreInt64(&l.fallbackUsed, 0)
 }
 
-// ResetTenant 重置特定租户的限流
 func (l *Limiter) ResetTenant(ctx context.Context, tenantID string) error {
-	// 重置本地
+
 	l.localTenant.Reset(tenantID)
 
-	// 重置 Redis
 	if l.config.RedisEnabled && atomic.LoadInt32(&l.redisAvailable) == 1 {
 		tenantKey := l.config.RedisPrefix + "tenant:" + tenantID
 		return l.redis.Del(ctx, tenantKey).Err()
@@ -355,12 +309,10 @@ func (l *Limiter) ResetTenant(ctx context.Context, tenantID string) error {
 	return nil
 }
 
-// ResetProbe 重置特定探针的限流
 func (l *Limiter) ResetProbe(ctx context.Context, probeID string) error {
-	// 重置本地
+
 	l.localProbe.Reset(probeID)
 
-	// 重置 Redis
 	if l.config.RedisEnabled && atomic.LoadInt32(&l.redisAvailable) == 1 {
 		probeKey := l.config.RedisPrefix + "probe:" + probeID
 		return l.redis.Del(ctx, probeKey).Err()
@@ -368,10 +320,9 @@ func (l *Limiter) ResetProbe(ctx context.Context, probeID string) error {
 	return nil
 }
 
-// GetTokensRemaining 获取剩余令牌数（用于监控）
 func (l *Limiter) GetTokensRemaining(ctx context.Context, tenantID, probeID string) (global, tenant, probe float64, err error) {
 	if !l.config.RedisEnabled || atomic.LoadInt32(&l.redisAvailable) == 0 {
-		// 返回本地缓存的值
+
 		return l.localGlobal.Available(),
 			l.localTenant.GetBucket(tenantID).Available(),
 			l.localProbe.GetBucket(probeID).Available(),
@@ -381,21 +332,18 @@ func (l *Limiter) GetTokensRemaining(ctx context.Context, tenantID, probeID stri
 	ctx, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
 	defer cancel()
 
-	// 获取全局令牌
 	globalKey := l.config.RedisPrefix + "global"
 	globalTokens, err := l.redis.HGet(ctx, globalKey, "tokens").Float64()
 	if err != nil && err != redis.Nil {
 		return 0, 0, 0, err
 	}
 
-	// 获取租户令牌
 	tenantKey := l.config.RedisPrefix + "tenant:" + tenantID
 	tenantTokens, err := l.redis.HGet(ctx, tenantKey, "tokens").Float64()
 	if err != nil && err != redis.Nil {
 		return 0, 0, 0, err
 	}
 
-	// 获取探针令牌
 	probeKey := l.config.RedisPrefix + "probe:" + probeID
 	probeTokens, err := l.redis.HGet(ctx, probeKey, "tokens").Float64()
 	if err != nil && err != redis.Nil {

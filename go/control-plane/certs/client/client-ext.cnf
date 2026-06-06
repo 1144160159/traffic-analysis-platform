@@ -1,0 +1,5 @@
+basicConstraints = CA:FALSE
+keyUsage = critical, digitalSignature, keyEncipherment
+extendedKeyUsage = clientAuth
+subjectKeyIdentifier = hash
+subjectAltName = DNS:probe-tenant01-001

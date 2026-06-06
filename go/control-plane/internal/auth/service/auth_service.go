@@ -22,6 +22,7 @@ import (
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/model"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/oidc"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/repository"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/audit"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/errors"
 )
 
@@ -32,6 +33,7 @@ type AuthService struct {
 	oidcProvider *oidc.Provider
 	config       *config.Config
 	logger       *zap.Logger
+	auditLogger  *audit.Logger
 }
 
 // NewAuthService 创建认证服务
@@ -41,6 +43,7 @@ func NewAuthService(
 	oidcProvider *oidc.Provider,
 	cfg *config.Config,
 	logger *zap.Logger,
+	auditLogger *audit.Logger,
 ) *AuthService {
 	return &AuthService{
 		userRepo:     userRepo,
@@ -48,6 +51,7 @@ func NewAuthService(
 		oidcProvider: oidcProvider,
 		config:       cfg,
 		logger:       logger,
+		auditLogger:  auditLogger,
 	}
 }
 
@@ -135,6 +139,8 @@ func (s *AuthService) Login(ctx context.Context, req *LoginRequest) (*LoginRespo
 	s.logger.Info("User logged in",
 		zap.String("user_id", user.UserID.String()),
 		zap.String("username", user.Username))
+
+	s.auditLogin(ctx, user, true, "")
 
 	return &LoginResponse{
 		AccessToken:  tokenPair.AccessToken,
@@ -424,4 +430,31 @@ func (s *AuthService) mapOIDCRoles(oidcRoles []string) []string {
 	}
 
 	return roles
+}
+
+// auditLogin records audit event for login attempts
+func (s *AuthService) auditLogin(ctx context.Context, user *model.User, success bool, reason string) {
+	if s.auditLogger == nil { return }
+	eventType := audit.EventTypeLogin
+	if !success { eventType = audit.EventTypeLoginFailed }
+	s.auditLogger.Log(ctx, &audit.AuditEvent{
+		EventType:    eventType,
+		TenantID:     user.TenantID,
+		UserID:       user.UserID.String(),
+		Username:     user.Username,
+		Action:       "login",
+		ResourceType: "auth",
+	})
+}
+
+// auditLogout records audit event for logout
+func (s *AuthService) auditLogout(ctx context.Context, tenantID, userID, sessionID string) {
+	if s.auditLogger == nil { return }
+	s.auditLogger.Log(ctx, &audit.AuditEvent{
+		EventType:    audit.EventTypeLogout,
+		TenantID:     tenantID,
+		UserID:       userID,
+		Action:       "logout",
+		ResourceType: "auth",
+	})
 }

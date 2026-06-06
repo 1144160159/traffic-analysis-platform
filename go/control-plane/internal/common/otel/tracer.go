@@ -18,7 +18,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-// TracerConfig Tracer配置
 type TracerConfig struct {
 	ServiceName    string  `env:"OTEL_SERVICE_NAME"`
 	ServiceVersion string  `env:"OTEL_SERVICE_VERSION" envDefault:"1.0.0"`
@@ -29,14 +28,12 @@ type TracerConfig struct {
 	Enabled        bool    `env:"OTEL_ENABLED" envDefault:"true"`
 }
 
-// TracerProvider OpenTelemetry TracerProvider包装
 type TracerProvider struct {
 	provider *sdktrace.TracerProvider
 	tracer   trace.Tracer
 	config   TracerConfig
 }
 
-// NewTracerProvider 创建TracerProvider
 func NewTracerProvider(cfg TracerConfig) (*TracerProvider, error) {
 	if !cfg.Enabled {
 		return &TracerProvider{
@@ -104,12 +101,10 @@ func NewTracerProvider(cfg TracerConfig) (*TracerProvider, error) {
 	}, nil
 }
 
-// Tracer 获取Tracer
 func (tp *TracerProvider) Tracer() trace.Tracer {
 	return tp.tracer
 }
 
-// Shutdown 关闭TracerProvider
 func (tp *TracerProvider) Shutdown(ctx context.Context) error {
 	if tp.provider != nil {
 		return tp.provider.Shutdown(ctx)
@@ -117,46 +112,38 @@ func (tp *TracerProvider) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-// StartSpan 开始一个新的Span
 func (tp *TracerProvider) StartSpan(ctx context.Context, name string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
 	return tp.tracer.Start(ctx, name, opts...)
 }
 
-// StartSpan 使用全局Tracer开始Span
 func StartSpan(ctx context.Context, name string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
 	return otel.Tracer("").Start(ctx, name, opts...)
 }
 
-// SpanFromContext 从Context获取当前Span
 func SpanFromContext(ctx context.Context) trace.Span {
 	return trace.SpanFromContext(ctx)
 }
 
-// AddEvent 添加事件到当前Span
 func AddEvent(ctx context.Context, name string, attrs ...attribute.KeyValue) {
 	span := trace.SpanFromContext(ctx)
 	span.AddEvent(name, trace.WithAttributes(attrs...))
 }
 
-// SetAttributes 设置属性到当前Span
 func SetAttributes(ctx context.Context, attrs ...attribute.KeyValue) {
 	span := trace.SpanFromContext(ctx)
 	span.SetAttributes(attrs...)
 }
 
-// RecordError 记录错误到当前Span
 func RecordError(ctx context.Context, err error, opts ...trace.EventOption) {
 	span := trace.SpanFromContext(ctx)
 	span.RecordError(err, opts...)
 }
 
-// SetStatus 设置Span状态（修复：使用 codes.Code 而非 trace.SpanKind）
 func SetStatus(ctx context.Context, code codes.Code, description string) {
 	span := trace.SpanFromContext(ctx)
 	span.SetStatus(code, description)
 }
 
-// GetTraceID 获取当前TraceID
 func GetTraceID(ctx context.Context) string {
 	span := trace.SpanFromContext(ctx)
 	if span.SpanContext().IsValid() {
@@ -165,7 +152,6 @@ func GetTraceID(ctx context.Context) string {
 	return ""
 }
 
-// GetSpanID 获取当前SpanID
 func GetSpanID(ctx context.Context) string {
 	span := trace.SpanFromContext(ctx)
 	if span.SpanContext().IsValid() {

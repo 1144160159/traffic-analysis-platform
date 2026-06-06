@@ -21,14 +21,14 @@ import (
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/errors"
 )
 
-// TokenHasher Token 哈希器
-type TokenHasher struct {
+// APIKeyHasher Token 哈希器
+type APIKeyHasher struct {
 	bcryptCost int
 }
 
-// NewTokenHasher 创建 Token 哈希器
-func NewTokenHasher() *TokenHasher {
-	return &TokenHasher{
+// NewAPIKeyHasher 创建 Token 哈希器
+func NewAPIKeyHasher() *APIKeyHasher {
+	return &APIKeyHasher{
 		bcryptCost: 10, // 对于 Token 使用较低的 cost（Token 已经足够随机）
 	}
 }
@@ -39,7 +39,7 @@ func NewTokenHasher() *TokenHasher {
 //   - tus: User Token
 //   - tpr: Probe Token
 //   - tsv: Service Token
-func (h *TokenHasher) GenerateAPIKey(tokenType model.TokenType) (plainToken, prefix string, err error) {
+func (h *APIKeyHasher) GenerateAPIKey(tokenType model.TokenType) (plainToken, prefix string, err error) {
 	// 确定前缀
 	var prefixStr string
 	switch tokenType {
@@ -88,7 +88,7 @@ func (h *TokenHasher) GenerateAPIKey(tokenType model.TokenType) (plainToken, pre
 }
 
 // HashToken 哈希 Token（使用 bcrypt）
-func (h *TokenHasher) HashToken(plainToken string) (string, error) {
+func (h *APIKeyHasher) HashToken(plainToken string) (string, error) {
 	if plainToken == "" {
 		return "", errors.New(errors.ErrCodeInvalidParameter, "Token cannot be empty")
 	}
@@ -102,7 +102,7 @@ func (h *TokenHasher) HashToken(plainToken string) (string, error) {
 }
 
 // VerifyToken 验证 Token
-func (h *TokenHasher) VerifyToken(hashedToken, plainToken string) error {
+func (h *APIKeyHasher) VerifyToken(hashedToken, plainToken string) error {
 	if hashedToken == "" || plainToken == "" {
 		return errors.New(errors.ErrCodeInvalidParameter, "Token and hash cannot be empty")
 	}
@@ -119,7 +119,7 @@ func (h *TokenHasher) VerifyToken(hashedToken, plainToken string) error {
 }
 
 // generateRandomString 生成随机字符串
-func (h *TokenHasher) generateRandomString(length int) (string, error) {
+func (h *APIKeyHasher) generateRandomString(length int) (string, error) {
 	if length < 8 {
 		length = 8 // 最小 8 字节
 	}
@@ -134,7 +134,7 @@ func (h *TokenHasher) generateRandomString(length int) (string, error) {
 }
 
 // GenerateSecureToken 生成通用安全 Token（用于其他场景）
-func (h *TokenHasher) GenerateSecureToken(length int) (string, error) {
+func (h *APIKeyHasher) GenerateSecureToken(length int) (string, error) {
 	if length < 32 {
 		length = 32 // 最小 32 字节
 	}

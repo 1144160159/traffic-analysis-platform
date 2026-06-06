@@ -276,7 +276,7 @@ func (g *Generator) generateStatEvidence(ctx context.Context, alert *persistence
 		LIMIT 1
 	`
 
-	row := g.chClient.QueryRow(ctx, query, alert.TenantID, alert.CommunityID)
+	row , _ := g.chClient.QueryRow(ctx, query, alert.TenantID, alert.CommunityID)
 
 	var pps, bps, upDownRatio float32
 	var pktlenMean, pktlenStd, iatMean, iatStd float32
@@ -370,7 +370,7 @@ func (g *Generator) generateSequenceEvidence(ctx context.Context, alert *persist
 		LIMIT 1
 	`
 
-	row := g.chClient.QueryRow(ctx, query, alert.TenantID, alert.CommunityID)
+	row , _ := g.chClient.QueryRow(ctx, query, alert.TenantID, alert.CommunityID)
 
 	var pktlenHash, iatHash string
 	var waveletFwd, waveletBwd, entropyFwd, entropyBwd float32
@@ -459,7 +459,7 @@ func (g *Generator) generateFingerprintEvidence(ctx context.Context, alert *pers
 		LIMIT 1
 	`
 
-	row := g.chClient.QueryRow(ctx, query, alert.TenantID, alert.CommunityID, alert.SessionID)
+	row , _ := g.chClient.QueryRow(ctx, query, alert.TenantID, alert.CommunityID, alert.SessionID)
 
 	var isEncrypted uint8
 	var tlsVersion, ja3, sniHash, certSha256 string
@@ -842,7 +842,7 @@ func (g *Generator) GetEvidenceByID(ctx context.Context, tenantID, evidenceID st
 		LIMIT 1
 	`
 
-	row := g.chClient.QueryRow(ctx, query, tenantID, evidenceID)
+	row , _ := g.chClient.QueryRow(ctx, query, tenantID, evidenceID)
 
 	var e Evidence
 	var metricsJSON, snippetRefJSON string

@@ -1,15 +1,3 @@
-////////////////////////////////////////////////////////////////////////////////
-// FILE PATH: control-plane/internal/ingest/server/handler.go (Part 1/2)
-// 优化版 v6：
-// 1. 移除所有硬编码（feature_set_id、错误消息、超时时间）
-// 2. 统一错误处理（errors.AppError）
-// 3. 统一日志（logging.L(ctx)）
-// 4. 统一审计（audit.Logger）
-// 5. 修复问题 2：totalEventsReceived 统计移到函数开头
-// 6. 修复问题 4：UploadSessions 添加完整指标记录
-// 7. 修复 StreamFlows dedup 命中返回 ACK
-////////////////////////////////////////////////////////////////////////////////
-
 package server
 
 import (
@@ -38,7 +26,6 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// 错误消息常量（移除硬编码）
 const (
 	errMsgEmptyRequest        = "empty request"
 	errMsgBatchTooLarge       = "batch size exceeds maximum"
@@ -57,13 +44,11 @@ const (
 	msgRejectedDeduplicated = "%d rejected, %d deduplicated"
 )
 
-// probeStatusEntry 探针状态条目（带时间戳）
 type probeStatusEntry struct {
 	Status    *pb.ProbeStatus
 	UpdatedAt time.Time
 }
 
-// IngestHandler gRPC Handler 实现
 type IngestHandler struct {
 	pb.UnimplementedIngestServiceServer
 
@@ -75,26 +60,21 @@ type IngestHandler struct {
 	auditLogger   *audit.Logger
 	logger        *zap.Logger
 
-	// 探针状态缓存（带过期清理）
-	probeStatus sync.Map // map[string]*probeStatusEntry
+	probeStatus sync.Map
 
-	// 配置
 	handlerConfig HandlerConfig
 
-	// 统计（原子安全）
 	totalEventsReceived int64
 	totalEventsAccepted int64
 	totalEventsRejected int64
 	totalEventsDedupe   int64
 
-	// 默认 feature_set_id（从配置加载）
 	defaultFeatureSetID string
 }
 
-// HandlerConfig Handler 配置
 type HandlerConfig struct {
 	MaxBatchSize       int           `env:"MAX_BATCH_SIZE" envDefault:"10000"`
-	MaxEventSize       int           `env:"MAX_EVENT_SIZE" envDefault:"65536"` // 64KB
+	MaxEventSize       int           `env:"MAX_EVENT_SIZE" envDefault:"65536"`
 	StreamBufferSize   int           `env:"STREAM_BUFFER_SIZE" envDefault:"1000"`
 	HeartbeatInterval  time.Duration `env:"HEARTBEAT_INTERVAL" envDefault:"30s"`
 	EnableDLQ          bool          `env:"ENABLE_DLQ" envDefault:"true"`
@@ -103,7 +83,6 @@ type HandlerConfig struct {
 	EnableAudit        bool          `env:"ENABLE_AUDIT" envDefault:"true"`
 }
 
-// NewIngestHandlerWithConfig 创建带配置的 Handler
 func NewIngestHandlerWithConfig(
 	logger *zap.Logger,
 	producer *queue.Producer,
@@ -111,7 +90,7 @@ func NewIngestHandlerWithConfig(
 	m *metrics.Metrics,
 	cfg HandlerConfig,
 ) *IngestHandler {
-	// 应用默认值
+
 	if cfg.ProbeStatusTimeout <= 0 {
 		cfg.ProbeStatusTimeout = config.DefaultProbeStatusTimeout
 	}
@@ -147,31 +126,26 @@ func NewIngestHandlerWithConfig(
 	return h
 }
 
-// SetConfigManager 设置配置管理器
 func (h *IngestHandler) SetConfigManager(cm *config.ProbeConfigManager) {
 	h.configManager = cm
 	h.logger.Info("Config manager set")
 }
 
-// SetDeduplicator 设置去重器
 func (h *IngestHandler) SetDeduplicator(d *dedup.Deduplicator) {
 	h.deduper = d
 	h.logger.Info("Deduplicator set", zap.Bool("enabled", d != nil))
 }
 
-// SetDLQProducer 设置 DLQ 生产者
 func (h *IngestHandler) SetDLQProducer(dlq *dlq.Producer) {
 	h.dlqProducer = dlq
 	h.logger.Info("DLQ producer set", zap.Bool("enabled", dlq != nil))
 }
 
-// SetAuditLogger 设置审计日志记录器
 func (h *IngestHandler) SetAuditLogger(auditLogger *audit.Logger) {
 	h.auditLogger = auditLogger
 	h.logger.Info("Audit logger set", zap.Bool("enabled", auditLogger != nil))
 }
 
-// StartProbeStatusCleaner 启动探针状态清理器
 func (h *IngestHandler) StartProbeStatusCleaner(ctx context.Context) {
 	go func() {
 		ticker := time.NewTicker(time.Minute)
@@ -192,7 +166,6 @@ func (h *IngestHandler) StartProbeStatusCleaner(ctx context.Context) {
 	}()
 }
 
-// cleanExpiredProbeStatus 清理过期的探针状态
 func (h *IngestHandler) cleanExpiredProbeStatus() {
 	threshold := time.Now().Add(-h.handlerConfig.ProbeStatusTimeout)
 	expiredCount := 0
@@ -212,12 +185,10 @@ func (h *IngestHandler) cleanExpiredProbeStatus() {
 	}
 }
 
-// isDedupEnabled 检查去重是否启用
 func (h *IngestHandler) isDedupEnabled() bool {
 	return h.handlerConfig.EnableDedup && h.deduper != nil
 }
 
-// recordAudit 记录审计事件
 func (h *IngestHandler) recordAudit(ctx context.Context, eventType audit.EventType, tenantID, probeID, action string, detail map[string]interface{}) {
 	if !h.handlerConfig.EnableAudit || h.auditLogger == nil {
 		return
@@ -234,9 +205,8 @@ func (h *IngestHandler) recordAudit(ctx context.Context, eventType audit.EventTy
 	})
 }
 
-// getFeatureSetID 获取 feature_set_id（三级回退，无硬编码）
 func (h *IngestHandler) getFeatureSetID(ctx context.Context, tenantID, probeID string) string {
-	// 优先级 1: 从探针配置获取
+
 	if h.configManager != nil {
 		cfg, err := h.configManager.GetConfig(ctx, tenantID, probeID)
 		if err == nil && cfg != nil && cfg.FeatureSetVersion != "" {
@@ -244,31 +214,25 @@ func (h *IngestHandler) getFeatureSetID(ctx context.Context, tenantID, probeID s
 		}
 	}
 
-	// 优先级 2: 使用默认值（从配置加载）
 	if h.defaultFeatureSetID != "" {
 		return h.defaultFeatureSetID
 	}
 
-	// 优先级 3: 使用常量
 	return config.DefaultFeatureSetID
 }
 
-// UploadFlows 批量上报 Flow 事件（完整优化版）
 func (h *IngestHandler) UploadFlows(ctx context.Context, req *pb.UploadFlowsRequest) (*pb.UploadFlowsResponse, error) {
 	ctx, span := otel.StartSpan(ctx, "ingest.upload_flows")
 	defer span.End()
 	start := time.Now()
 
-	// ✅ 修复问题 2：立即统计接收量（移到最前面，避免提前返回导致统计遗漏）
 	if req != nil && len(req.Events) > 0 {
 		atomic.AddInt64(&h.totalEventsReceived, int64(len(req.Events)))
 	}
 
-	// 获取认证信息
 	tenantID := auth.GetTenantID(ctx)
 	probeID := auth.GetProbeID(ctx)
 
-	// 注入日志上下文
 	ctx = logging.WithTenantID(ctx, tenantID)
 	ctx = logging.WithProbeID(ctx, probeID)
 	otel.AddTenantAttribute(ctx, tenantID)
@@ -276,7 +240,6 @@ func (h *IngestHandler) UploadFlows(ctx context.Context, req *pb.UploadFlowsRequ
 
 	logger := logging.L(ctx)
 
-	// 验证租户
 	if tenantID == "" {
 		h.metrics.RecordReject401()
 		h.recordAudit(ctx, audit.EventTypeAccessDenied, "", probeID, "upload_flows", map[string]interface{}{
@@ -285,7 +248,6 @@ func (h *IngestHandler) UploadFlows(ctx context.Context, req *pb.UploadFlowsRequ
 		return nil, status.Error(codes.Unauthenticated, errMsgTenantIDRequired)
 	}
 
-	// 验证请求
 	if req == nil || len(req.Events) == 0 {
 		return &pb.UploadFlowsResponse{
 			Accepted: 0,
@@ -294,7 +256,6 @@ func (h *IngestHandler) UploadFlows(ctx context.Context, req *pb.UploadFlowsRequ
 		}, nil
 	}
 
-	// 检查批次大小
 	if len(req.Events) > h.handlerConfig.MaxBatchSize {
 		h.metrics.RecordError("batch_too_large")
 		h.metrics.RecordReject400()
@@ -307,7 +268,6 @@ func (h *IngestHandler) UploadFlows(ctx context.Context, req *pb.UploadFlowsRequ
 			"%s: %d > %d", errMsgBatchTooLarge, len(req.Events), h.handlerConfig.MaxBatchSize)
 	}
 
-	// 记录批次大小
 	h.metrics.RecordBatchSize(tenantID, len(req.Events))
 
 	logger.Debug("Received flow events",
@@ -316,7 +276,6 @@ func (h *IngestHandler) UploadFlows(ctx context.Context, req *pb.UploadFlowsRequ
 		zap.Int("count", len(req.Events)),
 		zap.String("compression", req.Compression))
 
-	// 预处理事件
 	validEvents := make([]*pb.FlowEvent, 0, len(req.Events))
 	rejectedIDs := make([]string, 0)
 	dedupedIDs := make([]string, 0)
@@ -329,12 +288,10 @@ func (h *IngestHandler) UploadFlows(ctx context.Context, req *pb.UploadFlowsRequ
 			continue
 		}
 
-		// 确保 Header 存在
 		if event.Header == nil {
 			event.Header = &pb.EventHeader{}
 		}
 
-		// 填充 Header 字段
 		if event.Header.EventId == "" {
 			event.Header.EventId = uuid.New().String()
 		}
@@ -351,12 +308,10 @@ func (h *IngestHandler) UploadFlows(ctx context.Context, req *pb.UploadFlowsRequ
 			event.Header.IngestTs = nowMs
 		}
 
-		// 自动填充 feature_set_id（使用配置，无硬编码）
 		if event.Header.FeatureSetId == "" {
 			event.Header.FeatureSetId = h.getFeatureSetID(ctx, tenantID, probeID)
 		}
 
-		// 去重检查
 		if h.isDedupEnabled() {
 			if h.deduper.IsDuplicate(ctx, event.Header.EventId) {
 				dedupedIDs = append(dedupedIDs, event.Header.EventId)
@@ -367,7 +322,6 @@ func (h *IngestHandler) UploadFlows(ctx context.Context, req *pb.UploadFlowsRequ
 			h.metrics.RecordDedupMiss()
 		}
 
-		// 验证事件
 		if err := h.validateFlowEvent(event); err != nil {
 			logger.Debug("Event validation failed",
 				zap.String("event_id", event.Header.EventId),
@@ -379,7 +333,6 @@ func (h *IngestHandler) UploadFlows(ctx context.Context, req *pb.UploadFlowsRequ
 		validEvents = append(validEvents, event)
 	}
 
-	// 写入 Kafka
 	var writeErr error
 	if len(validEvents) > 0 {
 		kafkaStart := time.Now()
@@ -391,7 +344,6 @@ func (h *IngestHandler) UploadFlows(ctx context.Context, req *pb.UploadFlowsRequ
 				zap.Int("count", len(validEvents)),
 				zap.Error(writeErr))
 
-			// 发送到 DLQ
 			if h.handlerConfig.EnableDLQ && h.dlqProducer != nil {
 				h.dlqProducer.SendFlowEvents(ctx, validEvents, writeErr)
 			}
@@ -405,7 +357,7 @@ func (h *IngestHandler) UploadFlows(ctx context.Context, req *pb.UploadFlowsRequ
 				"count": len(validEvents),
 			})
 		} else {
-			// 标记已处理（用于去重）
+
 			if h.isDedupEnabled() {
 				eventIDs := make([]string, len(validEvents))
 				for i, e := range validEvents {
@@ -417,7 +369,6 @@ func (h *IngestHandler) UploadFlows(ctx context.Context, req *pb.UploadFlowsRequ
 		}
 	}
 
-	// 记录指标
 	accepted := int32(len(validEvents))
 	rejected := int32(len(rejectedIDs))
 	deduped := int32(len(dedupedIDs))
@@ -434,7 +385,6 @@ func (h *IngestHandler) UploadFlows(ctx context.Context, req *pb.UploadFlowsRequ
 
 	h.metrics.RecordLatency("upload_flows", time.Since(start))
 
-	// 构建响应
 	response := &pb.UploadFlowsResponse{
 		Accepted:    accepted,
 		Rejected:    rejected + deduped,
@@ -466,7 +416,6 @@ func (h *IngestHandler) UploadFlows(ctx context.Context, req *pb.UploadFlowsRequ
 	return response, nil
 }
 
-// validateFlowEvent 验证 Flow 事件（使用 errors.AppError）
 func (h *IngestHandler) validateFlowEvent(event *pb.FlowEvent) *errors.AppError {
 	if event == nil {
 		return errors.New(errors.ErrCodeInvalidRequest, errMsgEventNil)
@@ -484,7 +433,6 @@ func (h *IngestHandler) validateFlowEvent(event *pb.FlowEvent) *errors.AppError 
 		return errors.New(errors.ErrCodeMissingParameter, errMsgIPRequired)
 	}
 
-	// 检查事件大小
 	actualSize := proto.Size(event)
 	if actualSize > h.handlerConfig.MaxEventSize {
 		return errors.Newf(errors.ErrCodeOutOfRange,
@@ -494,7 +442,6 @@ func (h *IngestHandler) validateFlowEvent(event *pb.FlowEvent) *errors.AppError 
 	return nil
 }
 
-// validateSessionEvent 验证 Session 事件（使用 errors.AppError）
 func (h *IngestHandler) validateSessionEvent(session *pb.SessionEvent) *errors.AppError {
 	if session == nil {
 		return errors.New(errors.ErrCodeInvalidRequest, errMsgEventNil)
@@ -512,7 +459,6 @@ func (h *IngestHandler) validateSessionEvent(session *pb.SessionEvent) *errors.A
 		return errors.New(errors.ErrCodeMissingParameter, errMsgCommunityIDRequired)
 	}
 
-	// 检查事件大小
 	actualSize := proto.Size(session)
 	if actualSize > h.handlerConfig.MaxEventSize {
 		return errors.Newf(errors.ErrCodeOutOfRange,
@@ -522,7 +468,6 @@ func (h *IngestHandler) validateSessionEvent(session *pb.SessionEvent) *errors.A
 	return nil
 }
 
-// GetStats 获取统计信息
 func (h *IngestHandler) GetStats() HandlerStats {
 	return HandlerStats{
 		TotalEventsReceived: atomic.LoadInt64(&h.totalEventsReceived),
@@ -534,7 +479,6 @@ func (h *IngestHandler) GetStats() HandlerStats {
 	}
 }
 
-// HandlerStats 处理器统计
 type HandlerStats struct {
 	TotalEventsReceived int64
 	TotalEventsAccepted int64
@@ -559,22 +503,18 @@ func (h *IngestHandler) countActiveProbes() int {
 	return count
 }
 
-// UploadSessions 批量上报 Session 事件（修复版：添加完整指标）
 func (h *IngestHandler) UploadSessions(ctx context.Context, req *pb.UploadSessionsRequest) (*pb.UploadSessionsResponse, error) {
 	ctx, span := otel.StartSpan(ctx, "ingest.upload_sessions")
 	defer span.End()
 	start := time.Now()
 
-	// ✅ 修复问题 2：立即统计接收量（移到最前面）
 	if req != nil && len(req.Sessions) > 0 {
 		atomic.AddInt64(&h.totalEventsReceived, int64(len(req.Sessions)))
 	}
 
-	// 获取认证信息
 	tenantID := auth.GetTenantID(ctx)
 	probeID := auth.GetProbeID(ctx)
 
-	// 注入日志上下文
 	ctx = logging.WithTenantID(ctx, tenantID)
 	ctx = logging.WithProbeID(ctx, probeID)
 	otel.AddTenantAttribute(ctx, tenantID)
@@ -582,7 +522,6 @@ func (h *IngestHandler) UploadSessions(ctx context.Context, req *pb.UploadSessio
 
 	logger := logging.L(ctx)
 
-	// 验证租户
 	if tenantID == "" {
 		h.metrics.RecordReject401()
 		h.recordAudit(ctx, audit.EventTypeAccessDenied, "", probeID, "upload_sessions", map[string]interface{}{
@@ -591,7 +530,6 @@ func (h *IngestHandler) UploadSessions(ctx context.Context, req *pb.UploadSessio
 		return nil, status.Error(codes.Unauthenticated, errMsgTenantIDRequired)
 	}
 
-	// 验证请求
 	if req == nil || len(req.Sessions) == 0 {
 		return &pb.UploadSessionsResponse{
 			Accepted: 0,
@@ -600,7 +538,6 @@ func (h *IngestHandler) UploadSessions(ctx context.Context, req *pb.UploadSessio
 		}, nil
 	}
 
-	// 检查批次大小
 	if len(req.Sessions) > h.handlerConfig.MaxBatchSize {
 		h.metrics.RecordError("batch_too_large")
 		h.metrics.RecordReject400()
@@ -613,7 +550,6 @@ func (h *IngestHandler) UploadSessions(ctx context.Context, req *pb.UploadSessio
 			"%s: %d > %d", errMsgBatchTooLarge, len(req.Sessions), h.handlerConfig.MaxBatchSize)
 	}
 
-	// 记录批次大小
 	h.metrics.RecordBatchSize(tenantID, len(req.Sessions))
 
 	logger.Debug("Received session events",
@@ -621,7 +557,6 @@ func (h *IngestHandler) UploadSessions(ctx context.Context, req *pb.UploadSessio
 		zap.String("probe_id", probeID),
 		zap.Int("count", len(req.Sessions)))
 
-	// 预处理事件
 	validSessions := make([]*pb.SessionEvent, 0, len(req.Sessions))
 	rejectedIDs := make([]string, 0)
 	dedupedIDs := make([]string, 0)
@@ -634,12 +569,10 @@ func (h *IngestHandler) UploadSessions(ctx context.Context, req *pb.UploadSessio
 			continue
 		}
 
-		// 确保 Header 存在
 		if session.Header == nil {
 			session.Header = &pb.EventHeader{}
 		}
 
-		// 填充 Header 字段
 		if session.Header.EventId == "" {
 			session.Header.EventId = uuid.New().String()
 		}
@@ -656,12 +589,10 @@ func (h *IngestHandler) UploadSessions(ctx context.Context, req *pb.UploadSessio
 			session.Header.IngestTs = nowMs
 		}
 
-		// 自动填充 feature_set_id
 		if session.Header.FeatureSetId == "" {
 			session.Header.FeatureSetId = h.getFeatureSetID(ctx, tenantID, probeID)
 		}
 
-		// 去重检查
 		if h.isDedupEnabled() {
 			if h.deduper.IsDuplicate(ctx, session.Header.EventId) {
 				dedupedIDs = append(dedupedIDs, session.Header.EventId)
@@ -672,7 +603,6 @@ func (h *IngestHandler) UploadSessions(ctx context.Context, req *pb.UploadSessio
 			h.metrics.RecordDedupMiss()
 		}
 
-		// 验证事件
 		if err := h.validateSessionEvent(session); err != nil {
 			logger.Debug("Session validation failed",
 				zap.String("session_id", session.SessionId),
@@ -684,7 +614,6 @@ func (h *IngestHandler) UploadSessions(ctx context.Context, req *pb.UploadSessio
 		validSessions = append(validSessions, session)
 	}
 
-	// 写入 Kafka
 	var writeErr error
 	if len(validSessions) > 0 {
 		kafkaStart := time.Now()
@@ -696,7 +625,6 @@ func (h *IngestHandler) UploadSessions(ctx context.Context, req *pb.UploadSessio
 				zap.Int("count", len(validSessions)),
 				zap.Error(writeErr))
 
-			// 发送到 DLQ
 			if h.handlerConfig.EnableDLQ && h.dlqProducer != nil {
 				h.dlqProducer.SendSessionEvents(ctx, validSessions, writeErr)
 			}
@@ -705,7 +633,7 @@ func (h *IngestHandler) UploadSessions(ctx context.Context, req *pb.UploadSessio
 			h.metrics.RecordReject503()
 			atomic.AddInt64(&h.totalEventsRejected, int64(len(validSessions)))
 		} else {
-			// 标记已处理（用于去重）
+
 			if h.isDedupEnabled() {
 				eventIDs := make([]string, len(validSessions))
 				for i, s := range validSessions {
@@ -717,7 +645,6 @@ func (h *IngestHandler) UploadSessions(ctx context.Context, req *pb.UploadSessio
 		}
 	}
 
-	// 记录指标
 	accepted := int32(len(validSessions))
 	rejected := int32(len(rejectedIDs))
 	deduped := int32(len(dedupedIDs))
@@ -727,11 +654,9 @@ func (h *IngestHandler) UploadSessions(ctx context.Context, req *pb.UploadSessio
 		accepted = 0
 	}
 
-	// ✅ 修复问题 4：记录 Session 事件指标
 	if accepted > 0 {
 		h.metrics.RecordSessionEvents(tenantID, int64(accepted))
 
-		// ✅ 修复问题 4：记录字节数
 		var totalBytes int64
 		for _, s := range validSessions {
 			totalBytes += int64(proto.Size(s))
@@ -745,7 +670,6 @@ func (h *IngestHandler) UploadSessions(ctx context.Context, req *pb.UploadSessio
 
 	h.metrics.RecordLatency("upload_sessions", time.Since(start))
 
-	// 构建响应
 	response := &pb.UploadSessionsResponse{
 		Accepted:    accepted,
 		Rejected:    rejected + deduped,
@@ -777,13 +701,11 @@ func (h *IngestHandler) UploadSessions(ctx context.Context, req *pb.UploadSessio
 	return response, nil
 }
 
-// UploadPcapIndex 上报 PCAP 索引元数据（统一错误处理）
 func (h *IngestHandler) UploadPcapIndex(ctx context.Context, req *pb.UploadPcapIndexRequest) (*pb.UploadPcapIndexResponse, error) {
 	ctx, span := otel.StartSpan(ctx, "ingest.upload_pcap_index")
 	defer span.End()
 	start := time.Now()
 
-	// 获取认证信息
 	tenantID := auth.GetTenantID(ctx)
 	probeID := auth.GetProbeID(ctx)
 
@@ -802,7 +724,6 @@ func (h *IngestHandler) UploadPcapIndex(ctx context.Context, req *pb.UploadPcapI
 		return nil, status.Error(codes.Unauthenticated, errMsgTenantIDRequired)
 	}
 
-	// 验证请求
 	if req == nil || req.Index == nil {
 		h.metrics.RecordReject400()
 		return &pb.UploadPcapIndexResponse{
@@ -813,7 +734,6 @@ func (h *IngestHandler) UploadPcapIndex(ctx context.Context, req *pb.UploadPcapI
 
 	meta := req.Index
 
-	// 填充元数据
 	if meta.TenantId == "" {
 		meta.TenantId = tenantID
 	}
@@ -821,7 +741,6 @@ func (h *IngestHandler) UploadPcapIndex(ctx context.Context, req *pb.UploadPcapI
 		meta.ProbeId = probeID
 	}
 
-	// 验证必填字段
 	if meta.FileKey == "" {
 		h.metrics.RecordReject400()
 		h.recordAudit(ctx, audit.EventTypeAccessDenied, tenantID, probeID, "upload_pcap_index", map[string]interface{}{
@@ -839,7 +758,6 @@ func (h *IngestHandler) UploadPcapIndex(ctx context.Context, req *pb.UploadPcapI
 		zap.String("file_key", meta.FileKey),
 		zap.Uint64("byte_size", meta.ByteSize))
 
-	// 写入 Kafka
 	kafkaStart := time.Now()
 	err := h.producer.WritePcapIndex(ctx, meta)
 	h.metrics.RecordKafkaLatency(config.TopicPcapIndex, time.Since(kafkaStart))
@@ -853,7 +771,6 @@ func (h *IngestHandler) UploadPcapIndex(ctx context.Context, req *pb.UploadPcapI
 		h.metrics.RecordKafkaError()
 		h.metrics.RecordReject503()
 
-		// 发送到 DLQ
 		if h.handlerConfig.EnableDLQ && h.dlqProducer != nil {
 			h.dlqProducer.SendPcapIndex(ctx, meta, err)
 		}
@@ -889,13 +806,11 @@ func (h *IngestHandler) UploadPcapIndex(ctx context.Context, req *pb.UploadPcapI
 	}, nil
 }
 
-// StreamFlows 流式上报 Flow 事件（修复版：dedup 命中返回 ACK）
 func (h *IngestHandler) StreamFlows(stream pb.IngestService_StreamFlowsServer) error {
 	ctx := stream.Context()
 	ctx, span := otel.StartSpan(ctx, "ingest.stream_flows")
 	defer span.End()
 
-	// 获取认证信息
 	tenantID := auth.GetTenantID(ctx)
 	probeID := auth.GetProbeID(ctx)
 
@@ -911,7 +826,6 @@ func (h *IngestHandler) StreamFlows(stream pb.IngestService_StreamFlowsServer) e
 		return status.Error(codes.Unauthenticated, errMsgTenantIDRequired)
 	}
 
-	// 记录活跃连接
 	h.metrics.IncrActiveConnections()
 	defer h.metrics.DecrActiveConnections()
 
@@ -919,11 +833,9 @@ func (h *IngestHandler) StreamFlows(stream pb.IngestService_StreamFlowsServer) e
 		zap.String("tenant_id", tenantID),
 		zap.String("probe_id", probeID))
 
-	// 使用 channel 接收事件
 	eventChan := make(chan *pb.FlowEvent, h.handlerConfig.StreamBufferSize)
 	errChan := make(chan error, 1)
 
-	// 接收 goroutine
 	go func() {
 		defer close(eventChan)
 		for {
@@ -943,14 +855,12 @@ func (h *IngestHandler) StreamFlows(stream pb.IngestService_StreamFlowsServer) e
 		}
 	}()
 
-	// 批量缓冲
 	buffer := make([]*pb.FlowEvent, 0, h.handlerConfig.StreamBufferSize)
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
 
 	var totalReceived, totalAccepted, totalDeduped int64
 
-	// 刷新缓冲区
 	flushBuffer := func() error {
 		if len(buffer) == 0 {
 			return nil
@@ -966,7 +876,6 @@ func (h *IngestHandler) StreamFlows(stream pb.IngestService_StreamFlowsServer) e
 				zap.Error(err))
 			h.metrics.RecordKafkaError()
 
-			// 发送 NACK
 			for _, event := range buffer {
 				if sendErr := stream.Send(&pb.StreamFlowsResponse{
 					EventId:  event.Header.EventId,
@@ -978,7 +887,6 @@ func (h *IngestHandler) StreamFlows(stream pb.IngestService_StreamFlowsServer) e
 				}
 			}
 
-			// 发送到 DLQ
 			if h.handlerConfig.EnableDLQ && h.dlqProducer != nil {
 				h.dlqProducer.SendFlowEvents(ctx, buffer, err)
 			}
@@ -987,7 +895,6 @@ func (h *IngestHandler) StreamFlows(stream pb.IngestService_StreamFlowsServer) e
 			return nil
 		}
 
-		// 标记已处理
 		if h.isDedupEnabled() {
 			eventIDs := make([]string, len(buffer))
 			for i, e := range buffer {
@@ -996,7 +903,6 @@ func (h *IngestHandler) StreamFlows(stream pb.IngestService_StreamFlowsServer) e
 			h.deduper.MarkSeenBatch(ctx, eventIDs)
 		}
 
-		// 发送 ACK
 		for _, event := range buffer {
 			if sendErr := stream.Send(&pb.StreamFlowsResponse{
 				EventId:  event.Header.EventId,
@@ -1012,7 +918,6 @@ func (h *IngestHandler) StreamFlows(stream pb.IngestService_StreamFlowsServer) e
 		return nil
 	}
 
-	// 主循环
 	for {
 		select {
 		case <-ctx.Done():
@@ -1058,7 +963,6 @@ func (h *IngestHandler) StreamFlows(stream pb.IngestService_StreamFlowsServer) e
 			now := time.Now()
 			nowMs := now.UnixMilli()
 
-			// 填充 Header
 			if event.Header == nil {
 				event.Header = &pb.EventHeader{}
 			}
@@ -1081,12 +985,11 @@ func (h *IngestHandler) StreamFlows(stream pb.IngestService_StreamFlowsServer) e
 				event.Header.FeatureSetId = h.getFeatureSetID(ctx, tenantID, probeID)
 			}
 
-			// ✅ 修复：去重命中返回 ACK（幂等成功）
 			if h.isDedupEnabled() {
 				if h.deduper.IsDuplicate(ctx, event.Header.EventId) {
 					totalDeduped++
 					h.metrics.RecordDedupHit()
-					// 发送 ACK（accepted=true），表示幂等成功
+
 					if sendErr := stream.Send(&pb.StreamFlowsResponse{
 						EventId:  event.Header.EventId,
 						Accepted: true,
@@ -1098,7 +1001,6 @@ func (h *IngestHandler) StreamFlows(stream pb.IngestService_StreamFlowsServer) e
 				h.metrics.RecordDedupMiss()
 			}
 
-			// 验证
 			if err := h.validateFlowEvent(event); err != nil {
 				if sendErr := stream.Send(&pb.StreamFlowsResponse{
 					EventId:  event.Header.EventId,
@@ -1110,10 +1012,8 @@ func (h *IngestHandler) StreamFlows(stream pb.IngestService_StreamFlowsServer) e
 				continue
 			}
 
-			// 添加到缓冲区
 			buffer = append(buffer, event)
 
-			// 缓冲区满时刷新
 			if len(buffer) >= h.handlerConfig.StreamBufferSize {
 				if err := flushBuffer(); err != nil {
 					return err
@@ -1123,12 +1023,10 @@ func (h *IngestHandler) StreamFlows(stream pb.IngestService_StreamFlowsServer) e
 	}
 }
 
-// Heartbeat 心跳检测（下发探针配置）
 func (h *IngestHandler) Heartbeat(ctx context.Context, req *pb.HeartbeatRequest) (*pb.HeartbeatResponse, error) {
 	ctx, span := otel.StartSpan(ctx, "ingest.heartbeat")
 	defer span.End()
 
-	// 获取认证信息
 	tenantID := auth.GetTenantID(ctx)
 	probeID := auth.GetProbeID(ctx)
 
@@ -1148,7 +1046,6 @@ func (h *IngestHandler) Heartbeat(ctx context.Context, req *pb.HeartbeatRequest)
 		zap.String("tenant_id", tenantID),
 		zap.String("probe_id", probeID))
 
-	// 更新探针状态
 	if req != nil && req.Status != nil {
 		h.probeStatus.Store(probeID, &probeStatusEntry{
 			Status:    req.Status,
@@ -1157,12 +1054,10 @@ func (h *IngestHandler) Heartbeat(ctx context.Context, req *pb.HeartbeatRequest)
 		h.metrics.RecordProbeStatus(probeID, req.Status)
 	}
 
-	// 构建响应
 	response := &pb.HeartbeatResponse{
 		Ok: true,
 	}
 
-	// 获取探针配置
 	if h.configManager != nil && tenantID != "" && probeID != "" {
 		probeCfg, err := h.configManager.GetConfig(ctx, tenantID, probeID)
 		if err != nil {
@@ -1172,14 +1067,13 @@ func (h *IngestHandler) Heartbeat(ctx context.Context, req *pb.HeartbeatRequest)
 			probeCfg = h.configManager.GetDefaultConfig()
 		}
 
-		// 确保 feature_set_version 被下发
 		if probeCfg.FeatureSetVersion == "" {
 			probeCfg.FeatureSetVersion = h.defaultFeatureSetID
 		}
 
 		response.Config = probeCfg
 	} else {
-		// 返回默认配置
+
 		response.Config = &pb.ProbeConfig{
 			ConfigVersion:     "default",
 			SampleRate:        1.0,
@@ -1193,7 +1087,6 @@ func (h *IngestHandler) Heartbeat(ctx context.Context, req *pb.HeartbeatRequest)
 	return response, nil
 }
 
-// GetProbeStatus 获取探针状态
 func (h *IngestHandler) GetProbeStatus(probeID string) *pb.ProbeStatus {
 	if v, ok := h.probeStatus.Load(probeID); ok {
 		entry := v.(*probeStatusEntry)
@@ -1205,7 +1098,6 @@ func (h *IngestHandler) GetProbeStatus(probeID string) *pb.ProbeStatus {
 	return nil
 }
 
-// GetAllProbeStatus 获取所有探针状态
 func (h *IngestHandler) GetAllProbeStatus() map[string]*pb.ProbeStatus {
 	result := make(map[string]*pb.ProbeStatus)
 	threshold := time.Now().Add(-h.handlerConfig.ProbeStatusTimeout)
@@ -1219,4 +1111,123 @@ func (h *IngestHandler) GetAllProbeStatus() map[string]*pb.ProbeStatus {
 	})
 
 	return result
+}
+
+func (h *IngestHandler) RegisterProbe(ctx context.Context, req *pb.RegisterProbeRequest) (*pb.RegisterProbeResponse, error) {
+	ctx, span := otel.StartSpan(ctx, "ingest.register_probe")
+	defer span.End()
+
+	tenantID := auth.GetTenantID(ctx)
+	probeID := auth.GetProbeID(ctx)
+
+	if tenantID == "" && req != nil {
+		tenantID = req.TenantId
+	}
+	if probeID == "" && req != nil {
+		probeID = req.ProbeId
+	}
+
+	ctx = logging.WithTenantID(ctx, tenantID)
+	ctx = logging.WithProbeID(ctx, probeID)
+	otel.AddTenantAttribute(ctx, tenantID)
+	otel.AddProbeAttribute(ctx, probeID)
+
+	logger := logging.L(ctx)
+
+	if req == nil {
+		h.metrics.RecordReject400()
+		return &pb.RegisterProbeResponse{
+			Success: false,
+			Message: "empty request",
+		}, nil
+	}
+
+	if req.ProbeId == "" {
+		h.metrics.RecordReject400()
+		return &pb.RegisterProbeResponse{
+			Success: false,
+			Message: "probe_id is required",
+		}, nil
+	}
+
+	if req.TenantId == "" {
+		h.metrics.RecordReject400()
+		return &pb.RegisterProbeResponse{
+			Success: false,
+			Message: "tenant_id is required",
+		}, nil
+	}
+
+	logger.Info("Probe registration request received",
+		zap.String("tenant_id", req.TenantId),
+		zap.String("probe_id", req.ProbeId),
+		zap.String("software_version", req.SoftwareVersion),
+		zap.String("build_commit", req.BuildCommit))
+
+	if req.Hardware != nil {
+		logger.Info("Probe hardware info",
+			zap.String("probe_id", req.ProbeId),
+			zap.String("cpu_model", req.Hardware.CpuModel),
+			zap.Uint32("cpu_cores", req.Hardware.CpuCores),
+			zap.Uint64("memory_mb", req.Hardware.MemoryMb),
+			zap.String("os_version", req.Hardware.OsVersion),
+			zap.Int("nic_count", len(req.Hardware.Nics)))
+	}
+
+	h.probeStatus.Store(req.ProbeId, &probeStatusEntry{
+		Status: &pb.ProbeStatus{
+			CpuUsage:    0,
+			MemoryUsage: 0,
+			CapturePps:  0,
+			UploadBps:   0,
+		},
+		UpdatedAt: time.Now(),
+	})
+
+	var initialConfig *pb.ProbeConfig
+	if h.configManager != nil {
+		cfg, err := h.configManager.GetConfig(ctx, req.TenantId, req.ProbeId)
+		if err != nil {
+			logger.Warn("Failed to get probe config, using default",
+				zap.String("probe_id", req.ProbeId),
+				zap.Error(err))
+			initialConfig = h.configManager.GetDefaultConfig()
+		} else {
+			initialConfig = cfg
+		}
+	} else {
+
+		initialConfig = &pb.ProbeConfig{
+			ConfigVersion:     "default",
+			SampleRate:        1.0,
+			IdleTimeoutSec:    60,
+			ActiveTimeoutSec:  300,
+			BatchSize:         1000,
+			FeatureSetVersion: h.defaultFeatureSetID,
+		}
+	}
+
+	if initialConfig.FeatureSetVersion == "" {
+		initialConfig.FeatureSetVersion = h.defaultFeatureSetID
+	}
+
+	if h.handlerConfig.EnableAudit && h.auditLogger != nil {
+		h.recordAudit(ctx, audit.EventTypeProbeRegister, req.TenantId, req.ProbeId, "register_probe", map[string]interface{}{
+			"software_version": req.SoftwareVersion,
+			"build_commit":     req.BuildCommit,
+			"cpu_cores":        req.Hardware.GetCpuCores(),
+			"memory_mb":        req.Hardware.GetMemoryMb(),
+		})
+	}
+
+	logger.Info("Probe registered successfully",
+		zap.String("tenant_id", req.TenantId),
+		zap.String("probe_id", req.ProbeId),
+		zap.String("config_version", initialConfig.ConfigVersion))
+
+	return &pb.RegisterProbeResponse{
+		Success:       true,
+		Message:       "probe registered successfully",
+		InitialConfig: initialConfig,
+	}, nil
 }

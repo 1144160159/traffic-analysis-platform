@@ -181,50 +181,65 @@ type Alert struct {
 
 // NewAlertFromProto 从 Proto DetectionEvent 创建 Alert
 // 修复：使用索引 + 哈希生成唯一证据 ID
-func NewAlertFromProto(detection *pb.DetectionEvent, alertID, fingerprint string, count int32, firstSeen, lastSeen time.Time) *Alert {
+func NewAlertFromProto(detection *pb.DetectionBatch, alertID, fingerprint string, count int32, firstSeen, lastSeen time.Time) *Alert {
 	if detection == nil {
 		return nil
 	}
 
-	// 从 header 获取通用字段
-	tenantID := ""
-	eventID := ""
+	// Extract from first behavior/business in batch
+	tenantID := detection.GetTenantId()
+	eventID := detection.GetBatchId()
 	featureSetID := ""
-	if detection.Header != nil {
-		tenantID = detection.Header.GetTenantId()
-		eventID = detection.Header.GetEventId()
-		featureSetID = detection.Header.GetFeatureSetId()
-	}
-
-	// 提取五元组信息
-	srcIP := ""
-	dstIP := ""
+	srcIP, dstIP := "", ""
 	var srcPort, dstPort uint16
 	var protocol uint8
-	if detection.Tuple != nil {
-		srcIP = detection.Tuple.SrcIp
-		dstIP = detection.Tuple.DstIp
-		srcPort = uint16(detection.Tuple.SrcPort)
-		dstPort = uint16(detection.Tuple.DstPort)
-		protocol = uint8(detection.Tuple.Protocol)
+	communityID := ""
+	sessionID := ""
+	alertType := ""
+	severity := ""
+	modelVersion := ""
+	ruleVersion := ""
+	var score float32
+	var labels []string
+	var evidenceList []*pb.Evidence
+
+	if len(detection.Behaviors) > 0 {
+		b := detection.Behaviors[0]
+		if b.Header != nil {
+			eventID = b.Header.GetEventId()
+			featureSetID = b.Header.GetFeatureSetId()
+		}
+		communityID = b.GetCommunityId()
+		alertType = b.GetObjectType()
+		severity = b.GetTopLabel()
+		score = b.GetTopScore()
+		labels = b.GetLabels()
+	} else if len(detection.Businesses) > 0 {
+		bu := detection.Businesses[0]
+		if bu.Header != nil {
+			eventID = bu.Header.GetEventId()
+			featureSetID = bu.Header.GetFeatureSetId()
+		}
+		communityID = bu.GetCommunityId()
+		sessionID = bu.GetSessionId()
+		alertType = bu.GetDetectionType()
+		modelVersion = bu.GetModelVersion()
+		ruleVersion = bu.GetRuleVersion()
 	}
 
-	// 提取 labels
-	labels := detection.GetLabels()
 	if labels == nil {
 		labels = []string{}
 	}
 
-	// 修复：使用索引 + 哈希生成唯一证据 ID
-	evidenceIDs := generateEvidenceIDs(eventID, detection.GetEvidence())
+	evidenceIDs := generateEvidenceIDs(eventID, evidenceList)
 
 	return &Alert{
 		TenantID:    tenantID,
 		AlertID:     alertID,
 		Fingerprint: fingerprint,
-		CommunityID: detection.GetCommunityId(),
-		SessionID:   detection.GetSessionId(),
-		CampaignID:  "", // 由 CEP 后续填充
+		CommunityID: communityID,
+		SessionID:   sessionID,
+		CampaignID:  "",
 
 		SrcIP:    srcIP,
 		DstIP:    dstIP,
@@ -232,10 +247,10 @@ func NewAlertFromProto(detection *pb.DetectionEvent, alertID, fingerprint string
 		DstPort:  dstPort,
 		Protocol: protocol,
 
-		AlertType: detection.GetDetectionType(),
+		AlertType: alertType,
 		Labels:    labels,
-		Score:     detection.GetScore(),
-		Severity:  detection.GetSeverity(),
+		Score:     score,
+		Severity:  severity,
 
 		FirstSeen: firstSeen,
 		LastSeen:  lastSeen,
@@ -245,8 +260,8 @@ func NewAlertFromProto(detection *pb.DetectionEvent, alertID, fingerprint string
 		Assignee:  "",
 		UpdatedTs: time.Now(),
 
-		ModelVersion: detection.GetModelVersion(),
-		RuleVersion:  detection.GetRuleVersion(),
+		ModelVersion: modelVersion,
+		RuleVersion:  ruleVersion,
 		FeatureSetID: featureSetID,
 
 		EvidenceIDs: evidenceIDs,
@@ -256,7 +271,7 @@ func NewAlertFromProto(detection *pb.DetectionEvent, alertID, fingerprint string
 
 // generateEvidenceIDs 生成唯一的证据 ID 列表
 // 修复：使用索引和哈希确保 ID 唯一性
-func generateEvidenceIDs(eventID string, evidenceEntries []*pb.EvidenceEntry) []string {
+func generateEvidenceIDs(eventID string, evidenceEntries []*pb.Evidence) []string {
 	if len(evidenceEntries) == 0 {
 		return []string{}
 	}
@@ -273,14 +288,14 @@ func generateEvidenceIDs(eventID string, evidenceEntries []*pb.EvidenceEntry) []
 		// 格式：eventID:idx:hash
 		var evidenceID string
 
-		if ev.Key != "" {
+		if ev.Type != "" {
 			// 使用 MD5 哈希保证唯一性（即使 key:value 相同，索引不同也不会重复）
-			data := fmt.Sprintf("%s:%d:%s:%s", eventID, idx, ev.Key, ev.Value)
+			data := fmt.Sprintf("%s:%d:%s:%s", eventID, idx, ev.Type, ev.Summary)
 			hash := md5.Sum([]byte(data))
 			evidenceID = fmt.Sprintf("%s:%d:%x", eventID, idx, hash[:8]) // 使用前8字节
 		} else {
 			// 没有 key 的情况，仅使用索引
-			data := fmt.Sprintf("%s:%d:%s", eventID, idx, ev.Value)
+			data := fmt.Sprintf("%s:%d:%s", eventID, idx, ev.Summary)
 			hash := md5.Sum([]byte(data))
 			evidenceID = fmt.Sprintf("%s:%d:%x", eventID, idx, hash[:8])
 		}
@@ -312,18 +327,18 @@ func (a *Alert) ToProto() *pb.Alert {
 	return &pb.Alert{
 		AlertId:      a.AlertID,
 		TenantId:     a.TenantID,
-		Fingerprint:  a.Fingerprint,
+		DedupFingerprint: a.Fingerprint,
 		CommunityId:  a.CommunityID,
 		SessionId:    a.SessionID,
 		CampaignId:   a.CampaignID,
 		AlertType:    a.AlertType,
 		Labels:       a.Labels,
 		Score:        a.Score,
-		Severity:     a.Severity,
+		Severity:     pb.Severity(pb.Severity_value[a.Severity]),
 		FirstSeen:    a.FirstSeen.UnixMilli(),
 		LastSeen:     a.LastSeen.UnixMilli(),
 		Count:        a.Count,
-		Status:       a.Status,
+		Status:       pb.AlertStatus(pb.AlertStatus_value[a.Status]),
 		Assignee:     a.Assignee,
 		UpdatedTs:    a.UpdatedTs.UnixMilli(),
 		ModelVersion: a.ModelVersion,
@@ -331,13 +346,11 @@ func (a *Alert) ToProto() *pb.Alert {
 		FeatureSetId: a.FeatureSetID,
 		EvidenceIds:  a.EvidenceIDs,
 		EventId:      a.EventID,
-		Tuple: &pb.FiveTuple{
-			SrcIp:    a.SrcIP,
-			DstIp:    a.DstIP,
-			SrcPort:  uint32(a.SrcPort),
-			DstPort:  uint32(a.DstPort),
-			Protocol: uint32(a.Protocol),
-		},
+		SrcIp:    a.SrcIP,
+		DstIp:    a.DstIP,
+		SrcPort:  uint32(a.SrcPort),
+		DstPort:  uint32(a.DstPort),
+		Protocol: uint32(a.Protocol),
 	}
 }
 

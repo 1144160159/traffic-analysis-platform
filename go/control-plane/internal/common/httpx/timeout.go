@@ -1,8 +1,3 @@
-////////////////////////////////////////////////////////////////////////////////
-// FILE PATH: control-plane/internal/common/httpx/timeout.go
-// 修复：超时中间件防止 goroutine 泄漏和重复写入
-////////////////////////////////////////////////////////////////////////////////
-
 package httpx
 
 import (
@@ -12,7 +7,6 @@ import (
 	"time"
 )
 
-// timeoutResponseWriter 带超时保护的 ResponseWriter
 type timeoutResponseWriter struct {
 	http.ResponseWriter
 	mu          sync.Mutex
@@ -59,7 +53,6 @@ func (tw *timeoutResponseWriter) hasWritten() bool {
 	return tw.wroteHeader
 }
 
-// TimeoutWithConfig 带配置的超时中间件（修复版）
 func TimeoutWithConfig(seconds int, onTimeout func(w http.ResponseWriter, r *http.Request)) Middleware {
 	if seconds <= 0 {
 		seconds = 30
@@ -71,10 +64,8 @@ func TimeoutWithConfig(seconds int, onTimeout func(w http.ResponseWriter, r *htt
 			ctx, cancel := context.WithTimeout(r.Context(), timeout)
 			defer cancel()
 
-			// 使用带保护的 ResponseWriter
 			tw := &timeoutResponseWriter{ResponseWriter: w}
 
-			// 使用 channel 协调完成状态
 			done := make(chan struct{})
 			panicChan := make(chan interface{}, 1)
 
@@ -90,18 +81,17 @@ func TimeoutWithConfig(seconds int, onTimeout func(w http.ResponseWriter, r *htt
 
 			select {
 			case <-done:
-				// 正常完成
+
 				return
 
 			case p := <-panicChan:
-				// handler panic
+
 				panic(p)
 
 			case <-ctx.Done():
-				// 超时
+
 				tw.markTimedOut()
 
-				// 只在未写入响应时写入超时错误
 				if !tw.hasWritten() {
 					if onTimeout != nil {
 						onTimeout(w, r)
@@ -117,7 +107,6 @@ func TimeoutWithConfig(seconds int, onTimeout func(w http.ResponseWriter, r *htt
 	}
 }
 
-// TimeoutHandler 返回一个设置了超时的 http.Handler
 func TimeoutHandler(h http.Handler, timeout time.Duration, message string) http.Handler {
 	return http.TimeoutHandler(h, timeout, message)
 }

@@ -1,11 +1,3 @@
-////////////////////////////////////////////////////////////////////////////////
-// FILE PATH: control-plane/internal/ingest/queue/producer.go
-// 优化版 v3：
-// 1. 移除所有硬编码（Topic、Header、Protobuf类型）
-// 2. 使用 config 常量
-// 3. 统一错误处理和日志
-////////////////////////////////////////////////////////////////////////////////
-
 package queue
 
 import (
@@ -23,7 +15,6 @@ import (
 	pb "github.com/1144160159/traffic-analysis-platform/go/control-plane/pkg/proto/traffic/v1"
 )
 
-// ProducerConfig 生产者配置
 type ProducerConfig struct {
 	Brokers           []string      `env:"KAFKA_BROKERS" envSeparator:","`
 	FlowTopic         string        `env:"KAFKA_FLOW_TOPIC"`
@@ -38,7 +29,6 @@ type ProducerConfig struct {
 	EnableValidation  bool          `env:"KAFKA_ENABLE_VALIDATION"`
 }
 
-// Producer Kafka 生产者
 type Producer struct {
 	multiProducer *kafkaCommon.MultiTopicProducer
 	partitioner   *TenantCommunityPartitioner
@@ -46,13 +36,11 @@ type Producer struct {
 	config        ProducerConfig
 }
 
-// NewProducer 创建生产者
 func NewProducer(cfg ProducerConfig, logger *zap.Logger) (*Producer, error) {
 	if len(cfg.Brokers) == 0 {
 		return nil, fmt.Errorf("kafka brokers not configured")
 	}
 
-	// 应用默认值（使用 config 常量）
 	if cfg.FlowTopic == "" {
 		cfg.FlowTopic = config.TopicFlowEvents
 	}
@@ -69,10 +57,8 @@ func NewProducer(cfg ProducerConfig, logger *zap.Logger) (*Producer, error) {
 		cfg.Compression = config.DefaultKafkaCompression
 	}
 
-	// 创建 MultiTopicProducer
 	multiProducer := kafkaCommon.NewMultiTopicProducer(logger)
 
-	// 构建通用配置
 	baseConfig := kafkaCommon.ProducerConfig{
 		Brokers:      cfg.Brokers,
 		BatchSize:    cfg.BatchSize,
@@ -83,14 +69,12 @@ func NewProducer(cfg ProducerConfig, logger *zap.Logger) (*Producer, error) {
 		Async:        false,
 	}
 
-	// 添加 Flow Topic
 	flowConfig := baseConfig
 	flowConfig.Topic = cfg.FlowTopic
 	if err := multiProducer.AddTopic(cfg.FlowTopic, flowConfig); err != nil {
 		return nil, fmt.Errorf("failed to add flow topic: %w", err)
 	}
 
-	// 添加 PCAP Topic
 	pcapConfig := baseConfig
 	pcapConfig.Topic = cfg.PcapIndexTopic
 	if err := multiProducer.AddTopic(cfg.PcapIndexTopic, pcapConfig); err != nil {
@@ -98,7 +82,6 @@ func NewProducer(cfg ProducerConfig, logger *zap.Logger) (*Producer, error) {
 		return nil, fmt.Errorf("failed to add pcap topic: %w", err)
 	}
 
-	// 添加 Session Topic
 	sessionConfig := baseConfig
 	sessionConfig.Topic = cfg.SessionTopic
 	if err := multiProducer.AddTopic(cfg.SessionTopic, sessionConfig); err != nil {
@@ -122,7 +105,6 @@ func NewProducer(cfg ProducerConfig, logger *zap.Logger) (*Producer, error) {
 	}, nil
 }
 
-// WriteFlowEvents 批量写入 Flow 事件
 func (p *Producer) WriteFlowEvents(ctx context.Context, events []*pb.FlowEvent) error {
 	ctx, span := otel.StartSpan(ctx, "producer.write_flow_events")
 	defer span.End()
@@ -133,7 +115,6 @@ func (p *Producer) WriteFlowEvents(ctx context.Context, events []*pb.FlowEvent) 
 
 	logger := logging.L(ctx)
 
-	// 转换为 common/kafka.Message
 	messages := make([]kafkaCommon.Message, 0, len(events))
 
 	for _, event := range events {
@@ -141,12 +122,10 @@ func (p *Producer) WriteFlowEvents(ctx context.Context, events []*pb.FlowEvent) 
 			continue
 		}
 
-		// 数据验证
 		if p.config.EnableValidation {
 			p.validateFlowEvent(event, logger)
 		}
 
-		// 序列化
 		value, err := proto.Marshal(event)
 		if err != nil {
 			logger.Error("Failed to marshal flow event",
@@ -155,10 +134,8 @@ func (p *Producer) WriteFlowEvents(ctx context.Context, events []*pb.FlowEvent) 
 			continue
 		}
 
-		// 构建消息 Key
 		key := fmt.Sprintf("%s:%s", event.Header.TenantId, event.CommunityId)
 
-		// 构建 Headers（使用 config 常量）
 		headers := []kafkaCommon.MessageHeader{
 			{Key: "tenant_id", Value: event.Header.TenantId},
 			{Key: "probe_id", Value: event.Header.ProbeId},
@@ -186,7 +163,6 @@ func (p *Producer) WriteFlowEvents(ctx context.Context, events []*pb.FlowEvent) 
 		return nil
 	}
 
-	// 批量发送
 	start := time.Now()
 	if err := p.multiProducer.SendBatch(ctx, p.config.FlowTopic, messages); err != nil {
 		logger.Error("Failed to write flow events",
@@ -202,7 +178,6 @@ func (p *Producer) WriteFlowEvents(ctx context.Context, events []*pb.FlowEvent) 
 	return nil
 }
 
-// WritePcapIndex 写入 PCAP 索引
 func (p *Producer) WritePcapIndex(ctx context.Context, meta *pb.PcapIndexMeta) error {
 	ctx, span := otel.StartSpan(ctx, "producer.write_pcap_index")
 	defer span.End()
@@ -213,12 +188,10 @@ func (p *Producer) WritePcapIndex(ctx context.Context, meta *pb.PcapIndexMeta) e
 
 	logger := logging.L(ctx)
 
-	// 数据验证
 	if p.config.EnableValidation {
 		p.validatePcapIndex(meta, logger)
 	}
 
-	// 序列化
 	value, err := proto.Marshal(meta)
 	if err != nil {
 		logger.Error("Failed to marshal pcap index meta",
@@ -227,10 +200,8 @@ func (p *Producer) WritePcapIndex(ctx context.Context, meta *pb.PcapIndexMeta) e
 		return fmt.Errorf("failed to marshal pcap index: %w", err)
 	}
 
-	// 构建消息 Key
 	key := fmt.Sprintf("%s:%s", meta.TenantId, meta.ProbeId)
 
-	// 构建 Headers（使用 config 常量）
 	headers := []kafkaCommon.MessageHeader{
 		{Key: "tenant_id", Value: meta.TenantId},
 		{Key: "probe_id", Value: meta.ProbeId},
@@ -264,7 +235,6 @@ func (p *Producer) WritePcapIndex(ctx context.Context, meta *pb.PcapIndexMeta) e
 	return nil
 }
 
-// WriteSessionEvents 批量写入 Session 事件
 func (p *Producer) WriteSessionEvents(ctx context.Context, sessions []*pb.SessionEvent) error {
 	ctx, span := otel.StartSpan(ctx, "producer.write_session_events")
 	defer span.End()
@@ -275,7 +245,6 @@ func (p *Producer) WriteSessionEvents(ctx context.Context, sessions []*pb.Sessio
 
 	logger := logging.L(ctx)
 
-	// 转换为 common/kafka.Message
 	messages := make([]kafkaCommon.Message, 0, len(sessions))
 
 	for _, session := range sessions {
@@ -283,12 +252,10 @@ func (p *Producer) WriteSessionEvents(ctx context.Context, sessions []*pb.Sessio
 			continue
 		}
 
-		// 数据验证
 		if p.config.EnableValidation {
 			p.validateSessionEvent(session, logger)
 		}
 
-		// 序列化
 		value, err := proto.Marshal(session)
 		if err != nil {
 			logger.Error("Failed to marshal session event",
@@ -297,10 +264,8 @@ func (p *Producer) WriteSessionEvents(ctx context.Context, sessions []*pb.Sessio
 			continue
 		}
 
-		// 构建消息 Key
 		key := fmt.Sprintf("%s:%s", session.Header.TenantId, session.CommunityId)
 
-		// 构建 Headers（使用 config 常量）
 		headers := []kafkaCommon.MessageHeader{
 			{Key: "tenant_id", Value: session.Header.TenantId},
 			{Key: "probe_id", Value: session.Header.ProbeId},
@@ -326,7 +291,6 @@ func (p *Producer) WriteSessionEvents(ctx context.Context, sessions []*pb.Sessio
 		return nil
 	}
 
-	// 批量发送
 	start := time.Now()
 	if err := p.multiProducer.SendBatch(ctx, p.config.SessionTopic, messages); err != nil {
 		logger.Error("Failed to write session events",
@@ -342,7 +306,6 @@ func (p *Producer) WriteSessionEvents(ctx context.Context, sessions []*pb.Sessio
 	return nil
 }
 
-// validateFlowEvent 验证 Flow 事件
 func (p *Producer) validateFlowEvent(event *pb.FlowEvent, logger *zap.Logger) {
 	if event == nil || event.Tuple == nil {
 		return
@@ -365,7 +328,6 @@ func (p *Producer) validateFlowEvent(event *pb.FlowEvent, logger *zap.Logger) {
 	}
 }
 
-// validatePcapIndex 验证 PCAP 索引
 func (p *Producer) validatePcapIndex(meta *pb.PcapIndexMeta, logger *zap.Logger) {
 	if meta == nil {
 		return
@@ -377,7 +339,6 @@ func (p *Producer) validatePcapIndex(meta *pb.PcapIndexMeta, logger *zap.Logger)
 	}
 }
 
-// validateSessionEvent 验证 Session 事件
 func (p *Producer) validateSessionEvent(session *pb.SessionEvent, logger *zap.Logger) {
 	if session == nil {
 		return
@@ -399,7 +360,6 @@ func (p *Producer) validateSessionEvent(session *pb.SessionEvent, logger *zap.Lo
 	}
 }
 
-// GetMetrics 获取生产者指标
 func (p *Producer) GetMetrics() ProducerMetrics {
 	flowMetrics, _ := p.multiProducer.GetTopicMetrics(p.config.FlowTopic)
 	pcapMetrics, _ := p.multiProducer.GetTopicMetrics(p.config.PcapIndexTopic)
@@ -416,7 +376,6 @@ func (p *Producer) GetMetrics() ProducerMetrics {
 	}
 }
 
-// ProducerMetrics 生产者指标
 type ProducerMetrics struct {
 	FlowMessagesSent       int64
 	FlowMessagesError      int64
@@ -427,12 +386,10 @@ type ProducerMetrics struct {
 	LastSendTime           time.Time
 }
 
-// Close 关闭生产者
 func (p *Producer) Close() error {
 	return p.multiProducer.Close()
 }
 
-// Healthy 检查生产者健康状态
 func (p *Producer) Healthy() bool {
 	return p.multiProducer != nil
 }

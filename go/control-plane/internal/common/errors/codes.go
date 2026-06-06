@@ -84,6 +84,8 @@ const (
 	ErrCodeOIDCError          ErrorCode = "EXT_6007"
 	ErrCodeArkimeError        ErrorCode = "EXT_6008"
 	ErrCodeServiceUnavailable ErrorCode = "EXT_6009"
+	ErrCodeUserNotActive   ErrorCode = "AUTH_1011"
+	ErrCodeNotImplemented   ErrorCode = "SYS_5001"
 )
 
 // String 返回错误码字符串

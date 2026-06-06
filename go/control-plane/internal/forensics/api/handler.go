@@ -718,13 +718,13 @@ func (h *Handler) GetPresignedURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.Key == "" {
+	if req.Type == "" {
 		rw.Error(http.StatusBadRequest, "INVALID_PARAMETER", "key is required", nil)
 		return
 	}
 
 	// ========== 修复 H2: 路径验证 ==========
-	key, err := url.PathUnescape(req.Key)
+	key, err := url.PathUnescape(req.Type)
 	if err != nil {
 		rw.Error(http.StatusBadRequest, "INVALID_PARAMETER", "invalid key encoding", nil)
 		return
@@ -734,7 +734,7 @@ func (h *Handler) GetPresignedURL(w http.ResponseWriter, r *http.Request) {
 
 	if strings.Contains(key, "..") || strings.HasPrefix(key, "/") || strings.Contains(key, "\\") {
 		h.logger.Warn("Path traversal in presign request",
-			zap.String("key", req.Key))
+			zap.String("key", req.Type))
 		rw.Error(http.StatusBadRequest, "INVALID_PARAMETER", "invalid key format", nil)
 		return
 	}

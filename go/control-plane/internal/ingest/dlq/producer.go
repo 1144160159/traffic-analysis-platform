@@ -1,12 +1,3 @@
-////////////////////////////////////////////////////////////////////////////////
-// FILE PATH: control-plane/internal/ingest/dlq/producer.go
-// 重构版 v10：
-// 1. 消除 SendFlowEvents/SendPcapIndex/SendSessionEvents 重复代码
-// 2. 修复除零错误和 Writer 资源泄漏
-// 3. 移除废弃的 io/ioutil，使用 os 和 io 包替代
-// 4. 使用 config.constants 移除硬编码
-////////////////////////////////////////////////////////////////////////////////
-
 package dlq
 
 import (
@@ -29,32 +20,26 @@ import (
 	pb "github.com/1144160159/traffic-analysis-platform/go/control-plane/pkg/proto/traffic/v1"
 )
 
-// Config DLQ 配置
 type Config struct {
-	// Kafka DLQ Topic
 	Brokers      []string
 	DLQTopic     string
 	BatchSize    int
 	MaxRetries   int
 	RetryBackoff time.Duration
 
-	// 原始 Topic 名称（用于回放）
 	FlowTopic    string
 	SessionTopic string
 	PcapTopic    string
 
-	// 文件降级配置
 	EnableFallback  bool
 	FallbackDir     string
 	MaxFallbackSize int64
 
-	// 回放配置
 	ReplayInterval       time.Duration
 	ReplayBatchSize      int
 	ReplaySuccessRateMin float64
 }
 
-// DefaultConfig 默认配置（使用 constants）
 func DefaultConfig(brokers []string) Config {
 	return Config{
 		Brokers:              brokers,
@@ -74,40 +59,33 @@ func DefaultConfig(brokers []string) Config {
 	}
 }
 
-// Producer DLQ 生产者
 type Producer struct {
 	config Config
 	logger *zap.Logger
 
-	// Kafka Writer
 	writer *kafka.Writer
 
-	// 文件降级
 	fallbackMu      sync.Mutex
 	fallbackFile    *os.File
 	fallbackSize    int64
 	fallbackSeqNum  int64
 	fallbackEnabled bool
 
-	// 原始 Topic Writers（用于回放，懒加载 + 缓存）
 	topicWriters map[string]*kafka.Writer
 	writersMu    sync.RWMutex
 
-	// 统计
 	kafkaSuccessCount int64
 	kafkaFailCount    int64
 	fallbackCount     int64
 	replayCount       int64
 
-	// 关闭控制
 	closed    int32
 	closeChan chan struct{}
 	wg        sync.WaitGroup
 }
 
-// NewProducer 创建 DLQ 生产者
 func NewProducer(cfg Config, logger *zap.Logger) *Producer {
-	// 应用默认值
+
 	if cfg.DLQTopic == "" {
 		cfg.DLQTopic = config.TopicDLQ
 	}
@@ -142,7 +120,6 @@ func NewProducer(cfg Config, logger *zap.Logger) *Producer {
 		cfg.MaxFallbackSize = config.MaxFallbackFileSize
 	}
 
-	// 创建 Kafka Writer（DLQ）
 	writer := &kafka.Writer{
 		Addr:         kafka.TCP(cfg.Brokers...),
 		Topic:        cfg.DLQTopic,
@@ -166,7 +143,6 @@ func NewProducer(cfg Config, logger *zap.Logger) *Producer {
 		fallbackEnabled: cfg.EnableFallback,
 	}
 
-	// 创建降级目录
 	if cfg.EnableFallback && cfg.FallbackDir != "" {
 		if err := os.MkdirAll(cfg.FallbackDir, 0755); err != nil {
 			logger.Warn("Failed to create fallback directory, disabling fallback",
@@ -187,7 +163,6 @@ func NewProducer(cfg Config, logger *zap.Logger) *Producer {
 	return p
 }
 
-// getTopicWriter 获取或创建 Topic Writer（懒加载 + 缓存）
 func (p *Producer) getTopicWriter(topic string) *kafka.Writer {
 	p.writersMu.RLock()
 	writer, exists := p.topicWriters[topic]
@@ -197,11 +172,9 @@ func (p *Producer) getTopicWriter(topic string) *kafka.Writer {
 		return writer
 	}
 
-	// 创建新 Writer（双重检查锁）
 	p.writersMu.Lock()
 	defer p.writersMu.Unlock()
 
-	// 双重检查
 	if writer, exists := p.topicWriters[topic]; exists {
 		return writer
 	}
@@ -223,7 +196,6 @@ func (p *Producer) getTopicWriter(topic string) *kafka.Writer {
 	return writer
 }
 
-// DLQMessage DLQ 消息包装
 type DLQMessage struct {
 	OriginalTopic string            `json:"original_topic"`
 	EventType     string            `json:"event_type"`
@@ -237,9 +209,6 @@ type DLQMessage struct {
 	PayloadBase64 string            `json:"payload_base64"`
 }
 
-// ==================== 元数据接口定义 ====================
-
-// eventMetadata 事件元数据接口
 type eventMetadata interface {
 	getOriginalTopic() string
 	getEventType() string
@@ -249,7 +218,6 @@ type eventMetadata interface {
 	getHeaders() map[string]string
 }
 
-// flowEventMetadata Flow 事件元数据
 type flowEventMetadata struct {
 	event *pb.FlowEvent
 	topic string
@@ -273,7 +241,6 @@ func (m *flowEventMetadata) getHeaders() map[string]string {
 	}
 }
 
-// sessionEventMetadata Session 事件元数据
 type sessionEventMetadata struct {
 	event *pb.SessionEvent
 	topic string
@@ -296,7 +263,6 @@ func (m *sessionEventMetadata) getHeaders() map[string]string {
 	}
 }
 
-// pcapIndexMetadata PCAP 索引元数据
 type pcapIndexMetadata struct {
 	meta  *pb.PcapIndexMeta
 	topic string
@@ -317,11 +283,8 @@ func (m *pcapIndexMetadata) getHeaders() map[string]string {
 	}
 }
 
-// ==================== 统一发送方法 ====================
-
-// sendToDLQ 统一的 DLQ 发送方法（消除重复代码）
 func (p *Producer) sendToDLQ(ctx context.Context, payload []byte, metadata eventMetadata, err error) error {
-	// 构建 DLQ 消息
+
 	dlqMsg := &DLQMessage{
 		OriginalTopic: metadata.getOriginalTopic(),
 		EventType:     metadata.getEventType(),
@@ -335,7 +298,6 @@ func (p *Producer) sendToDLQ(ctx context.Context, payload []byte, metadata event
 		PayloadBase64: base64.StdEncoding.EncodeToString(payload),
 	}
 
-	// 序列化为 JSON
 	msgData, jsonErr := json.Marshal(dlqMsg)
 	if jsonErr != nil {
 		p.logger.Error("Failed to marshal DLQ message",
@@ -344,7 +306,6 @@ func (p *Producer) sendToDLQ(ctx context.Context, payload []byte, metadata event
 		return jsonErr
 	}
 
-	// 构建 Kafka 消息
 	key := fmt.Sprintf("%s:%s", metadata.getTenantID(), metadata.getEventID())
 	msg := kafka.Message{
 		Key:   []byte(key),
@@ -358,10 +319,9 @@ func (p *Producer) sendToDLQ(ctx context.Context, payload []byte, metadata event
 		},
 	}
 
-	// 写入 Kafka
 	writeErr := p.writeToKafka(ctx, []kafka.Message{msg})
 	if writeErr != nil {
-		// 降级到文件
+
 		if p.fallbackEnabled {
 			return p.writeToFallback([]kafka.Message{msg})
 		}
@@ -372,9 +332,6 @@ func (p *Producer) sendToDLQ(ctx context.Context, payload []byte, metadata event
 	return nil
 }
 
-// ==================== 公共 API 方法 ====================
-
-// SendFlowEvents 发送 Flow 事件到 DLQ
 func (p *Producer) SendFlowEvents(ctx context.Context, events []*pb.FlowEvent, err error) error {
 	if len(events) == 0 {
 		return nil
@@ -385,7 +342,6 @@ func (p *Producer) SendFlowEvents(ctx context.Context, events []*pb.FlowEvent, e
 			continue
 		}
 
-		// 序列化 Protobuf
 		payload, marshalErr := proto.Marshal(event)
 		if marshalErr != nil {
 			p.logger.Error("Failed to marshal flow event for DLQ",
@@ -394,7 +350,6 @@ func (p *Producer) SendFlowEvents(ctx context.Context, events []*pb.FlowEvent, e
 			continue
 		}
 
-		// 使用公共方法发送
 		metadata := &flowEventMetadata{event: event, topic: p.config.FlowTopic}
 		if sendErr := p.sendToDLQ(ctx, payload, metadata, err); sendErr != nil {
 			p.logger.Error("Failed to send flow event to DLQ",
@@ -406,13 +361,11 @@ func (p *Producer) SendFlowEvents(ctx context.Context, events []*pb.FlowEvent, e
 	return nil
 }
 
-// SendPcapIndex 发送 PCAP 索引到 DLQ
 func (p *Producer) SendPcapIndex(ctx context.Context, meta *pb.PcapIndexMeta, err error) error {
 	if meta == nil {
 		return nil
 	}
 
-	// 序列化 Protobuf
 	payload, marshalErr := proto.Marshal(meta)
 	if marshalErr != nil {
 		p.logger.Error("Failed to marshal pcap index for DLQ",
@@ -421,12 +374,10 @@ func (p *Producer) SendPcapIndex(ctx context.Context, meta *pb.PcapIndexMeta, er
 		return marshalErr
 	}
 
-	// 使用公共方法发送
 	metadata := &pcapIndexMetadata{meta: meta, topic: p.config.PcapTopic}
 	return p.sendToDLQ(ctx, payload, metadata, err)
 }
 
-// SendSessionEvents 发送 Session 事件到 DLQ
 func (p *Producer) SendSessionEvents(ctx context.Context, sessions []*pb.SessionEvent, err error) error {
 	if len(sessions) == 0 {
 		return nil
@@ -437,7 +388,6 @@ func (p *Producer) SendSessionEvents(ctx context.Context, sessions []*pb.Session
 			continue
 		}
 
-		// 序列化 Protobuf
 		payload, marshalErr := proto.Marshal(session)
 		if marshalErr != nil {
 			p.logger.Error("Failed to marshal session event for DLQ",
@@ -446,7 +396,6 @@ func (p *Producer) SendSessionEvents(ctx context.Context, sessions []*pb.Session
 			continue
 		}
 
-		// 使用公共方法发送
 		metadata := &sessionEventMetadata{event: session, topic: p.config.SessionTopic}
 		if sendErr := p.sendToDLQ(ctx, payload, metadata, err); sendErr != nil {
 			p.logger.Error("Failed to send session event to DLQ",
@@ -458,9 +407,6 @@ func (p *Producer) SendSessionEvents(ctx context.Context, sessions []*pb.Session
 	return nil
 }
 
-// ==================== Kafka 写入和文件降级 ====================
-
-// writeToKafka 写入 Kafka（带重试）
 func (p *Producer) writeToKafka(ctx context.Context, messages []kafka.Message) error {
 	var lastErr error
 
@@ -485,19 +431,16 @@ func (p *Producer) writeToKafka(ctx context.Context, messages []kafka.Message) e
 	return lastErr
 }
 
-// writeToFallback 降级到文件
 func (p *Producer) writeToFallback(messages []kafka.Message) error {
 	p.fallbackMu.Lock()
 	defer p.fallbackMu.Unlock()
 
-	// 检查或创建新文件
 	if p.fallbackFile == nil || p.fallbackSize >= p.config.MaxFallbackSize {
 		if err := p.rotateFallbackFile(); err != nil {
 			return fmt.Errorf("failed to rotate fallback file: %w", err)
 		}
 	}
 
-	// 写入消息
 	for _, msg := range messages {
 		line := fmt.Sprintf("%s|%s|%s\n", p.config.DLQTopic, string(msg.Key), string(msg.Value))
 		n, err := p.fallbackFile.WriteString(line)
@@ -507,7 +450,6 @@ func (p *Producer) writeToFallback(messages []kafka.Message) error {
 		p.fallbackSize += int64(n)
 	}
 
-	// 刷盘
 	if err := p.fallbackFile.Sync(); err != nil {
 		return fmt.Errorf("failed to sync fallback file: %w", err)
 	}
@@ -521,14 +463,12 @@ func (p *Producer) writeToFallback(messages []kafka.Message) error {
 	return nil
 }
 
-// rotateFallbackFile 轮转降级文件
 func (p *Producer) rotateFallbackFile() error {
-	// 关闭旧文件
+
 	if p.fallbackFile != nil {
 		p.fallbackFile.Close()
 	}
 
-	// 创建新文件
 	seqNum := atomic.AddInt64(&p.fallbackSeqNum, 1)
 	filename := fmt.Sprintf(config.DLQFallbackFileFormat, time.Now().Unix(), seqNum)
 	filePath := filepath.Join(p.config.FallbackDir, filename)
@@ -545,9 +485,6 @@ func (p *Producer) rotateFallbackFile() error {
 	return nil
 }
 
-// ==================== 降级文件回放 ====================
-
-// StartFallbackReplay 启动降级文件回放任务
 func (p *Producer) StartFallbackReplay(ctx context.Context, interval time.Duration) {
 	if !p.fallbackEnabled {
 		return
@@ -581,13 +518,11 @@ func (p *Producer) StartFallbackReplay(ctx context.Context, interval time.Durati
 	}()
 }
 
-// replayFallbackFiles 回放降级文件
 func (p *Producer) replayFallbackFiles(ctx context.Context) {
 	if !p.fallbackEnabled || p.config.FallbackDir == "" {
 		return
 	}
 
-	// 使用 os.ReadDir 替代废弃的 ioutil.ReadDir
 	entries, err := os.ReadDir(p.config.FallbackDir)
 	if err != nil {
 		p.logger.Error("Failed to read fallback directory", zap.Error(err))
@@ -608,7 +543,6 @@ func (p *Producer) replayFallbackFiles(ctx context.Context) {
 			continue
 		}
 
-		// 跳过当前正在写入的文件
 		p.fallbackMu.Lock()
 		isCurrent := p.fallbackFile != nil && entry.Name() == filepath.Base(p.fallbackFile.Name())
 		p.fallbackMu.Unlock()
@@ -617,7 +551,6 @@ func (p *Producer) replayFallbackFiles(ctx context.Context) {
 			continue
 		}
 
-		// 回放文件
 		filePath := filepath.Join(p.config.FallbackDir, entry.Name())
 		if err := p.replayFile(ctx, filePath); err != nil {
 			p.logger.Error("Failed to replay fallback file",
@@ -636,25 +569,21 @@ func (p *Producer) replayFallbackFiles(ctx context.Context) {
 	}
 }
 
-// replayFile 回放单个文件（修复版：避免除零错误）
 func (p *Producer) replayFile(ctx context.Context, filePath string) error {
 	totalSuccess := 0
 	totalFailed := 0
 
-	// 使用 os.ReadFile 替代废弃的 ioutil.ReadFile
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return fmt.Errorf("failed to read file: %w", err)
 	}
 
-	// 解析行
 	lines := strings.Split(string(data), "\n")
 	if len(lines) == 0 {
-		// 空文件，直接删除
+
 		return os.Remove(filePath)
 	}
 
-	// 按批次回放
 	batch := make([]kafka.Message, 0, p.config.ReplayBatchSize)
 
 	for _, line := range lines {
@@ -663,7 +592,6 @@ func (p *Producer) replayFile(ctx context.Context, filePath string) error {
 			continue
 		}
 
-		// 解析行格式：topic|key|value
 		parts := strings.SplitN(line, "|", 3)
 		if len(parts) != 3 {
 			p.logger.Warn("Invalid fallback line format", zap.String("line", line))
@@ -674,7 +602,6 @@ func (p *Producer) replayFile(ctx context.Context, filePath string) error {
 		key := parts[1]
 		value := parts[2]
 
-		// 解析 DLQ 消息
 		var dlqMsg DLQMessage
 		if err := json.Unmarshal([]byte(value), &dlqMsg); err != nil {
 			p.logger.Warn("Failed to unmarshal DLQ message", zap.Error(err))
@@ -682,7 +609,6 @@ func (p *Producer) replayFile(ctx context.Context, filePath string) error {
 			continue
 		}
 
-		// 解码 payload
 		payload, err := base64.StdEncoding.DecodeString(dlqMsg.PayloadBase64)
 		if err != nil {
 			p.logger.Warn("Failed to decode payload", zap.Error(err))
@@ -690,7 +616,6 @@ func (p *Producer) replayFile(ctx context.Context, filePath string) error {
 			continue
 		}
 
-		// 构建原始消息（回放到原始 Topic）
 		originalMsg := kafka.Message{
 			Topic:   dlqMsg.OriginalTopic,
 			Key:     []byte(key),
@@ -700,7 +625,6 @@ func (p *Producer) replayFile(ctx context.Context, filePath string) error {
 
 		batch = append(batch, originalMsg)
 
-		// 批次满时回放
 		if len(batch) >= p.config.ReplayBatchSize {
 			success, failed := p.replayBatch(ctx, batch)
 			totalSuccess += success
@@ -709,26 +633,22 @@ func (p *Producer) replayFile(ctx context.Context, filePath string) error {
 		}
 	}
 
-	// 回放剩余消息
 	if len(batch) > 0 {
 		success, failed := p.replayBatch(ctx, batch)
 		totalSuccess += success
 		totalFailed += failed
 	}
 
-	// ✅ 修复：避免除零错误
 	totalProcessed := totalSuccess + totalFailed
 	if totalProcessed == 0 {
-		// 文件中没有有效消息，直接删除
+
 		p.logger.Info("No valid messages in file, removing",
 			zap.String("file", filePath))
 		return os.Remove(filePath)
 	}
 
-	// 计算成功率
 	successRate := float64(totalSuccess) / float64(totalProcessed)
 
-	// 成功率检查
 	if successRate >= p.config.ReplaySuccessRateMin {
 		if err := os.Remove(filePath); err != nil {
 			p.logger.Warn("Failed to delete replayed file", zap.Error(err))
@@ -742,7 +662,6 @@ func (p *Producer) replayFile(ctx context.Context, filePath string) error {
 		return nil
 	}
 
-	// 成功率过低，保留文件
 	p.logger.Warn("Replay success rate too low, keeping file",
 		zap.String("file", filePath),
 		zap.Float64("success_rate", successRate),
@@ -752,19 +671,16 @@ func (p *Producer) replayFile(ctx context.Context, filePath string) error {
 		successRate*100, p.config.ReplaySuccessRateMin*100)
 }
 
-// replayBatch 回放批次（返回成功和失败数量）
 func (p *Producer) replayBatch(ctx context.Context, messages []kafka.Message) (success int, failed int) {
 	if len(messages) == 0 {
 		return 0, 0
 	}
 
-	// 按 Topic 分组
 	topicGroups := make(map[string][]kafka.Message)
 	for _, msg := range messages {
 		topicGroups[msg.Topic] = append(topicGroups[msg.Topic], msg)
 	}
 
-	// 分别回放各个 Topic
 	for topic, msgs := range topicGroups {
 		writer := p.getTopicWriter(topic)
 		if err := writer.WriteMessages(ctx, msgs...); err != nil {
@@ -782,7 +698,6 @@ func (p *Producer) replayBatch(ctx context.Context, messages []kafka.Message) (s
 	return success, failed
 }
 
-// buildHeaders 构建 Kafka Headers
 func buildHeaders(m map[string]string) []kafka.Header {
 	headers := make([]kafka.Header, 0, len(m))
 	for k, v := range m {
@@ -791,15 +706,11 @@ func buildHeaders(m map[string]string) []kafka.Header {
 	return headers
 }
 
-// ==================== 统计和管理 ====================
-
-// GetFallbackStats 获取降级文件统计
 func (p *Producer) GetFallbackStats() (fileCount int, totalSize int64, err error) {
 	if !p.fallbackEnabled || p.config.FallbackDir == "" {
 		return 0, 0, nil
 	}
 
-	// 使用 os.ReadDir 替代废弃的 ioutil.ReadDir
 	entries, err := os.ReadDir(p.config.FallbackDir)
 	if err != nil {
 		return 0, 0, err
@@ -818,7 +729,6 @@ func (p *Producer) GetFallbackStats() (fileCount int, totalSize int64, err error
 	return fileCount, totalSize, nil
 }
 
-// GetStats 获取统计信息
 func (p *Producer) GetStats() DLQStats {
 	return DLQStats{
 		KafkaSuccessCount: atomic.LoadInt64(&p.kafkaSuccessCount),
@@ -828,7 +738,6 @@ func (p *Producer) GetStats() DLQStats {
 	}
 }
 
-// DLQStats DLQ 统计
 type DLQStats struct {
 	KafkaSuccessCount int64
 	KafkaFailCount    int64
@@ -836,7 +745,6 @@ type DLQStats struct {
 	ReplayCount       int64
 }
 
-// Close 关闭 DLQ 生产者
 func (p *Producer) Close() error {
 	if !atomic.CompareAndSwapInt32(&p.closed, 0, 1) {
 		return nil
@@ -844,20 +752,16 @@ func (p *Producer) Close() error {
 
 	p.logger.Info("Closing DLQ producer")
 
-	// 关闭回放任务
 	close(p.closeChan)
 
-	// 等待回放任务退出
 	p.wg.Wait()
 
-	// 关闭降级文件
 	p.fallbackMu.Lock()
 	if p.fallbackFile != nil {
 		p.fallbackFile.Close()
 	}
 	p.fallbackMu.Unlock()
 
-	// 关闭 Kafka Writers
 	var errs []error
 	if err := p.writer.Close(); err != nil {
 		errs = append(errs, fmt.Errorf("close dlq writer: %w", err))

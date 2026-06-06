@@ -1,12 +1,3 @@
-////////////////////////////////////////////////////////////////////////////////
-// FILE PATH: control-plane/internal/ingest/config/config.go
-// 优化版 v6（完整无删减）：
-// 1. 移除所有硬编码，使用 constants.go 中的常量
-// 2. 完整的配置结构体定义
-// 3. 详细的验证逻辑
-// 4. 环境变量映射
-////////////////////////////////////////////////////////////////////////////////
-
 package config
 
 import (
@@ -14,7 +5,6 @@ import (
 	"time"
 )
 
-// Config 完整配置
 type Config struct {
 	Server   ServerConfig
 	HTTP     HTTPConfig
@@ -34,7 +24,6 @@ type Config struct {
 	API      APIConfig
 }
 
-// ServerConfig gRPC 服务器配置
 type ServerConfig struct {
 	GRPCAddr              string        `env:"GRPC_ADDR" envDefault:":50051"`
 	TLSCertFile           string        `env:"TLS_CERT_FILE"`
@@ -49,7 +38,6 @@ type ServerConfig struct {
 	MaxConnectionAgeGrace time.Duration `env:"GRPC_MAX_CONNECTION_AGE_GRACE" envDefault:"5m"`
 }
 
-// HTTPConfig HTTP/REST 服务器配置
 type HTTPConfig struct {
 	Enabled        bool          `env:"HTTP_ENABLED" envDefault:"true"`
 	Addr           string        `env:"HTTP_ADDR" envDefault:":8080"`
@@ -60,7 +48,6 @@ type HTTPConfig struct {
 	AllowedMethods []string      `env:"HTTP_ALLOWED_METHODS" envSeparator:"," envDefault:"GET,POST,PUT,DELETE,OPTIONS"`
 }
 
-// KafkaConfig Kafka 配置
 type KafkaConfig struct {
 	Brokers           []string      `env:"KAFKA_BROKERS" envSeparator:","`
 	FlowTopic         string        `env:"KAFKA_FLOW_TOPIC" envDefault:"flow.events.v1"`
@@ -75,7 +62,6 @@ type KafkaConfig struct {
 	EnableIdempotence bool          `env:"KAFKA_ENABLE_IDEMPOTENCE" envDefault:"true"`
 }
 
-// RedisConfig Redis 配置
 type RedisConfig struct {
 	Addrs           []string      `env:"REDIS_ADDRS" envSeparator:","`
 	Password        string        `env:"REDIS_PASSWORD"`
@@ -89,7 +75,6 @@ type RedisConfig struct {
 	ConnMaxIdleTime time.Duration `env:"REDIS_CONN_MAX_IDLE_TIME" envDefault:"30m"`
 }
 
-// PostgresConfig PostgreSQL 配置（用于 Token 验证降级）
 type PostgresConfig struct {
 	DSN          string        `env:"POSTGRES_DSN"`
 	MaxOpenConns int           `env:"POSTGRES_MAX_OPEN_CONNS" envDefault:"10"`
@@ -97,7 +82,6 @@ type PostgresConfig struct {
 	ConnLifetime time.Duration `env:"POSTGRES_CONN_LIFETIME" envDefault:"1h"`
 }
 
-// AuthConfig 认证配置
 type AuthConfig struct {
 	RequireMTLS     bool          `env:"REQUIRE_MTLS" envDefault:"false"`
 	AllowNoToken    bool          `env:"ALLOW_NO_TOKEN" envDefault:"false"`
@@ -111,13 +95,11 @@ type AuthConfig struct {
 	EnableProbeRBAC bool          `env:"ENABLE_PROBE_RBAC" envDefault:"true"`
 }
 
-// MetricsConfig 指标配置
 type MetricsConfig struct {
 	Enabled    bool   `env:"METRICS_ENABLED" envDefault:"true"`
 	ListenAddr string `env:"METRICS_ADDR" envDefault:":9090"`
 }
 
-// HandlerConfig Handler 配置
 type HandlerConfig struct {
 	MaxBatchSize       int           `env:"MAX_BATCH_SIZE" envDefault:"10000"`
 	MaxEventSize       int           `env:"MAX_EVENT_SIZE" envDefault:"65536"`
@@ -128,7 +110,6 @@ type HandlerConfig struct {
 	ProbeStatusTimeout time.Duration `env:"PROBE_STATUS_TIMEOUT" envDefault:"5m"`
 }
 
-// QuotaConfig 限流配置
 type QuotaConfig struct {
 	RedisEnabled         bool    `env:"RATE_LIMIT_REDIS_ENABLED" envDefault:"true"`
 	RedisPrefix          string  `env:"RATE_LIMIT_REDIS_PREFIX" envDefault:"ratelimit:"`
@@ -141,7 +122,6 @@ type QuotaConfig struct {
 	LocalFallbackEnabled bool    `env:"RATE_LIMIT_LOCAL_FALLBACK" envDefault:"true"`
 }
 
-// DedupConfig 去重配置
 type DedupConfig struct {
 	Enabled        bool          `env:"DEDUP_ENABLED" envDefault:"true"`
 	LocalCacheSize int           `env:"DEDUP_LOCAL_CACHE_SIZE" envDefault:"100000"`
@@ -151,7 +131,6 @@ type DedupConfig struct {
 	RedisTTL       time.Duration `env:"DEDUP_REDIS_TTL" envDefault:"10m"`
 }
 
-// ProbeConfig 探针配置管理
 type ProbeConfig struct {
 	DefaultSampleRate     float32       `env:"PROBE_DEFAULT_SAMPLE_RATE" envDefault:"1.0"`
 	DefaultIdleTimeout    time.Duration `env:"PROBE_DEFAULT_IDLE_TIMEOUT" envDefault:"60s"`
@@ -164,7 +143,6 @@ type ProbeConfig struct {
 	StatusCleanupInterval time.Duration `env:"PROBE_STATUS_CLEANUP_INTERVAL" envDefault:"1m"`
 }
 
-// AuditConfig 审计日志配置
 type AuditConfig struct {
 	Enabled       bool          `env:"AUDIT_ENABLED" envDefault:"true"`
 	Topic         string        `env:"AUDIT_TOPIC" envDefault:"audit.logs"`
@@ -173,13 +151,11 @@ type AuditConfig struct {
 	FlushInterval time.Duration `env:"AUDIT_FLUSH_INTERVAL" envDefault:"1s"`
 }
 
-// TokenConfig Token 管理配置
 type TokenConfig struct {
 	MaxTokensPerTenant int           `env:"MAX_TOKENS_PER_TENANT" envDefault:"100"`
 	DefaultTTL         time.Duration `env:"DEFAULT_TOKEN_TTL" envDefault:"8760h"`
 }
 
-// OIDCConfig OIDC 配置
 type OIDCConfig struct {
 	Enabled      bool   `env:"OIDC_ENABLED" envDefault:"false"`
 	IssuerURL    string `env:"OIDC_ISSUER_URL"`
@@ -189,7 +165,6 @@ type OIDCConfig struct {
 	Scopes       string `env:"OIDC_SCOPES" envDefault:"openid profile email"`
 }
 
-// JWTConfig JWT 配置
 type JWTConfig struct {
 	SigningKey      string        `env:"JWT_SIGNING_KEY" envDefault:"your-256-bit-secret-key-here"`
 	SigningMethod   string        `env:"JWT_SIGNING_METHOD" envDefault:"HS256"`
@@ -198,7 +173,6 @@ type JWTConfig struct {
 	Issuer          string        `env:"JWT_ISSUER" envDefault:"traffic-auth-service"`
 }
 
-// APIConfig API 服务器配置
 type APIConfig struct {
 	ListenAddr     string        `env:"API_LISTEN_ADDR" envDefault:":8080"`
 	ReadTimeout    time.Duration `env:"API_READ_TIMEOUT" envDefault:"30s"`
@@ -207,9 +181,8 @@ type APIConfig struct {
 	AllowedOrigins []string      `env:"API_ALLOWED_ORIGINS" envSeparator:"," envDefault:"*"`
 }
 
-// SetDefaults 设置默认值（使用 constants.go 中的常量）
 func (c *Config) SetDefaults() {
-	// Kafka 默认值
+
 	if c.Kafka.FlowTopic == "" {
 		c.Kafka.FlowTopic = TopicFlowEvents
 	}
@@ -238,7 +211,6 @@ func (c *Config) SetDefaults() {
 		c.Kafka.RequiredAcks = KafkaRequiredAcksAll
 	}
 
-	// Redis 默认值
 	if len(c.Redis.Addrs) == 0 {
 		c.Redis.Addrs = []string{"localhost:6379"}
 	}
@@ -264,7 +236,6 @@ func (c *Config) SetDefaults() {
 		c.Redis.ConnMaxIdleTime = RedisConnMaxIdleTime
 	}
 
-	// PostgreSQL 默认值
 	if c.Postgres.MaxOpenConns == 0 {
 		c.Postgres.MaxOpenConns = 10
 	}
@@ -275,7 +246,6 @@ func (c *Config) SetDefaults() {
 		c.Postgres.ConnLifetime = PostgresConnLifetime
 	}
 
-	// Auth 默认值
 	if c.Auth.TokenTTL == 0 {
 		c.Auth.TokenTTL = DefaultTokenTTL
 	}
@@ -289,7 +259,6 @@ func (c *Config) SetDefaults() {
 		c.Auth.RequiredScopes = []string{ScopeIngestWrite}
 	}
 
-	// Handler 默认值
 	if c.Handler.MaxBatchSize == 0 {
 		c.Handler.MaxBatchSize = DefaultMaxBatchSize
 	}
@@ -306,7 +275,6 @@ func (c *Config) SetDefaults() {
 		c.Handler.ProbeStatusTimeout = DefaultProbeStatusTimeout
 	}
 
-	// Quota 默认值
 	if c.Quota.RedisPrefix == "" {
 		c.Quota.RedisPrefix = RedisRateLimitPrefix
 	}
@@ -329,7 +297,6 @@ func (c *Config) SetDefaults() {
 		c.Quota.ProbeBurst = DefaultProbeBurst
 	}
 
-	// Dedup 默认值
 	if c.Dedup.LocalCacheSize == 0 {
 		c.Dedup.LocalCacheSize = DefaultDedupLocalCacheSize
 	}
@@ -343,7 +310,6 @@ func (c *Config) SetDefaults() {
 		c.Dedup.RedisTTL = DefaultDedupRedisTTL
 	}
 
-	// Probe 默认值
 	if c.Probe.DefaultSampleRate == 0 {
 		c.Probe.DefaultSampleRate = 1.0
 	}
@@ -366,7 +332,6 @@ func (c *Config) SetDefaults() {
 		c.Probe.StatusCleanupInterval = 1 * time.Minute
 	}
 
-	// Audit 默认值
 	if c.Audit.Topic == "" {
 		c.Audit.Topic = TopicAuditLogs
 	}
@@ -380,7 +345,6 @@ func (c *Config) SetDefaults() {
 		c.Audit.FlushInterval = DefaultAuditFlushInterval
 	}
 
-	// Server 默认值
 	if c.Server.GRPCAddr == "" {
 		c.Server.GRPCAddr = DefaultGRPCAddr
 	}
@@ -397,12 +361,10 @@ func (c *Config) SetDefaults() {
 		c.Server.KeepaliveTimeout = 20 * time.Second
 	}
 
-	// Metrics 默认值
 	if c.Metrics.ListenAddr == "" {
 		c.Metrics.ListenAddr = DefaultMetricsAddr
 	}
 
-	// HTTP 默认值
 	if c.HTTP.Addr == "" {
 		c.HTTP.Addr = DefaultHTTPAddr
 	}
@@ -413,7 +375,6 @@ func (c *Config) SetDefaults() {
 		c.HTTP.WriteTimeout = HTTPRequestTimeout
 	}
 
-	// Token 默认值
 	if c.Token.DefaultTTL == 0 {
 		c.Token.DefaultTTL = 8760 * time.Hour
 	}
@@ -421,7 +382,6 @@ func (c *Config) SetDefaults() {
 		c.Token.MaxTokensPerTenant = 100
 	}
 
-	// JWT 默认值
 	if c.JWT.AccessTokenTTL == 0 {
 		c.JWT.AccessTokenTTL = 15 * time.Minute
 	}
@@ -430,9 +390,8 @@ func (c *Config) SetDefaults() {
 	}
 }
 
-// Validate 验证配置
 func (c *Config) Validate() error {
-	// Kafka 验证
+
 	if len(c.Kafka.Brokers) == 0 {
 		return &ConfigError{Field: "Kafka.Brokers", Message: "at least one broker required"}
 	}
@@ -449,7 +408,6 @@ func (c *Config) Validate() error {
 		return &ConfigError{Field: "Kafka.BatchSize", Message: "must be between 1 and 100000"}
 	}
 
-	// Handler 验证
 	if c.Handler.MaxBatchSize <= 0 {
 		return &ConfigError{Field: "Handler.MaxBatchSize", Message: "must be positive"}
 	}
@@ -461,7 +419,6 @@ func (c *Config) Validate() error {
 			Message: fmt.Sprintf("exceeds max recv msg size %d", MaxRecvMsgSize)}
 	}
 
-	// Quota 验证
 	if c.Quota.GlobalRPS <= 0 {
 		return &ConfigError{Field: "Quota.GlobalRPS", Message: "must be positive"}
 	}
@@ -475,17 +432,14 @@ func (c *Config) Validate() error {
 		return &ConfigError{Field: "Quota.TenantRPS", Message: "cannot exceed global RPS"}
 	}
 
-	// Dedup 验证
 	if c.Dedup.Enabled && c.Dedup.LocalCacheSize <= 0 {
 		return &ConfigError{Field: "Dedup.LocalCacheSize", Message: "must be positive when dedup enabled"}
 	}
 
-	// Auth 验证
 	if c.Auth.RequireScopes && len(c.Auth.RequiredScopes) == 0 {
 		return &ConfigError{Field: "Auth.RequiredScopes", Message: "at least one scope required"}
 	}
 
-	// TLS 验证
 	if c.Auth.RequireMTLS {
 		if c.Server.TLSCertFile == "" {
 			return &ConfigError{Field: "Server.TLSCertFile", Message: "required when mTLS enabled"}
@@ -501,7 +455,6 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-// ConfigError 配置错误
 type ConfigError struct {
 	Field   string
 	Message string
@@ -511,17 +464,14 @@ func (e *ConfigError) Error() string {
 	return fmt.Sprintf("config validation error [%s]: %s", e.Field, e.Message)
 }
 
-// GetJwtConfig 获取 JWT 配置（兼容性方法）
 func (c *Config) GetJwtConfig() JWTConfig {
 	return c.JWT
 }
 
-// GetOidcConfig 获取 OIDC 配置（兼容性方法）
 func (c *Config) GetOidcConfig() OIDCConfig {
 	return c.OIDC
 }
 
-// GetPostgresqlConfig 获取 PostgreSQL 配置（兼容性方法）
 func (c *Config) GetPostgresqlConfig() PostgresConfig {
 	return c.Postgres
 }

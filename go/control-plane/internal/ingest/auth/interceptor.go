@@ -1,12 +1,3 @@
-////////////////////////////////////////////////////////////////////////////////
-// FILE PATH: control-plane/internal/ingest/auth/interceptor.go
-// 优化版 v3：
-// 1. ✅ 健康检查白名单放行（不被拦截）
-// 2. ✅ 统一日志、审计、错误处理
-// 3. ✅ 移除所有硬编码
-// 4. ✅ 完整的请求链路追踪
-////////////////////////////////////////////////////////////////////////////////
-
 package auth
 
 import (
@@ -29,7 +20,6 @@ import (
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/ingest/quota"
 )
 
-// contextKey 上下文键类型
 type contextKey string
 
 const (
@@ -39,7 +29,6 @@ const (
 	TokenInfoKey contextKey = "token_info"
 )
 
-// InterceptorConfig 拦截器配置
 type InterceptorConfig struct {
 	RequireMTLS     bool     `env:"REQUIRE_MTLS" envDefault:"false"`
 	AllowNoToken    bool     `env:"ALLOW_NO_TOKEN" envDefault:"false"`
@@ -54,7 +43,6 @@ type InterceptorConfig struct {
 	EnableProbeRBAC bool     `env:"ENABLE_PROBE_RBAC" envDefault:"true"`
 }
 
-// TokenInfo Token 信息（包含 scopes）
 type TokenInfo struct {
 	TenantID  string
 	ProbeID   string
@@ -62,7 +50,6 @@ type TokenInfo struct {
 	ExpiresAt int64
 }
 
-// HasScope 检查是否有指定 scope
 func (t *TokenInfo) HasScope(scope string) bool {
 	for _, s := range t.Scopes {
 		if s == scope || s == config.ScopeWildcard {
@@ -72,7 +59,6 @@ func (t *TokenInfo) HasScope(scope string) bool {
 	return false
 }
 
-// HasAnyScope 检查是否有任一 scope
 func (t *TokenInfo) HasAnyScope(scopes ...string) bool {
 	for _, scope := range scopes {
 		if t.HasScope(scope) {
@@ -82,7 +68,6 @@ func (t *TokenInfo) HasAnyScope(scopes ...string) bool {
 	return false
 }
 
-// Interceptor gRPC 认证拦截器
 type Interceptor struct {
 	logger      *zap.Logger
 	tokenCache  *TokenCache
@@ -91,7 +76,6 @@ type Interceptor struct {
 	auditLogger *audit.Logger
 }
 
-// AuditEvent 审计事件（简化版，实际应使用 common/audit）
 type AuditEvent struct {
 	EventType string
 	TenantID  string
@@ -102,9 +86,8 @@ type AuditEvent struct {
 	Scopes    []string
 }
 
-// NewInterceptor 创建拦截器
 func NewInterceptor(logger *zap.Logger, tokenCache *TokenCache, config1 InterceptorConfig) *Interceptor {
-	// 设置默认 required scopes
+
 	if len(config1.RequiredScopes) == 0 {
 		config1.RequiredScopes = []string{config.ScopeIngestWrite}
 	}
@@ -116,47 +99,41 @@ func NewInterceptor(logger *zap.Logger, tokenCache *TokenCache, config1 Intercep
 	}
 }
 
-// SetLimiter 设置限流器
 func (i *Interceptor) SetLimiter(limiter *quota.Limiter) {
 	i.limiter = limiter
 }
 
-// SetAuditLogger 设置审计日志记录器
 func (i *Interceptor) SetAuditLogger(auditLogger *audit.Logger) {
 	i.auditLogger = auditLogger
 }
 
-// UnaryInterceptor 一元 RPC 拦截器
 func (i *Interceptor) UnaryInterceptor(
 	ctx context.Context,
 	req interface{},
 	info *grpc.UnaryServerInfo,
 	handler grpc.UnaryHandler,
 ) (interface{}, error) {
-	// ✅ 步骤 0: 检查公开方法（白名单：健康检查、反射等）
+
 	if config.IsPublicMethod(info.FullMethod) {
 		i.logger.Debug("Public method bypassed authentication",
 			zap.String("method", info.FullMethod))
 		return handler(ctx, req)
 	}
 
-	// 启动追踪
 	ctx, span := otel.StartSpan(ctx, "auth.unary_interceptor")
 	defer span.End()
 
 	clientIP := i.extractClientIP(ctx)
 
-	// 步骤 1: 提取探针 ID
 	probeID, err := i.extractProbeID(ctx)
 	if err != nil {
 		return i.handleAuthError(ctx, "", probeID, info.FullMethod, clientIP,
 			errors.Wrap(err, errors.ErrCodeUnauthorized, "probe ID extraction failed"))
 	}
 
-	// 步骤 2: 验证 Token 并获取完整信息
 	tokenInfo, err := i.extractAndValidateToken(ctx, probeID)
 	if err != nil {
-		// 尝试降级方案
+
 		if i.config.AllowNoToken {
 			tokenInfo = i.resolveTenantIDFallback(probeID)
 			if tokenInfo == nil || tokenInfo.TenantID == "" {
@@ -174,14 +151,12 @@ func (i *Interceptor) UnaryInterceptor(
 
 	tenantID := tokenInfo.TenantID
 
-	// 步骤 3: 探针级 RBAC 权限检查
 	if i.config.EnableProbeRBAC && i.config.RequireScopes {
 		if err := i.checkProbePermissions(tokenInfo, info.FullMethod); err != nil {
 			return i.handleAuthError(ctx, tenantID, probeID, info.FullMethod, clientIP, err)
 		}
 	}
 
-	// 步骤 4: 限流检查
 	if i.config.EnableRateLimit && i.limiter != nil {
 		if !i.limiter.Allow(ctx, tenantID, probeID) {
 			i.recordAudit(ctx, config.AuditEventTypeAccessDenied, tenantID, probeID, info.FullMethod, clientIP, "rate_limit_exceeded", tokenInfo.Scopes)
@@ -189,10 +164,8 @@ func (i *Interceptor) UnaryInterceptor(
 		}
 	}
 
-	// 步骤 5: 将认证信息注入 Context
 	ctx = i.enrichContext(ctx, tokenInfo)
 
-	// 步骤 6: 记录成功的审计日志
 	i.recordAudit(ctx, "auth_success", tenantID, probeID, info.FullMethod, clientIP, "", tokenInfo.Scopes)
 
 	i.logger.Debug("Request authenticated",
@@ -201,18 +174,16 @@ func (i *Interceptor) UnaryInterceptor(
 		zap.String("method", info.FullMethod),
 		zap.Strings("scopes", tokenInfo.Scopes))
 
-	// 调用实际处理器
 	return handler(ctx, req)
 }
 
-// StreamInterceptor 流式 RPC 拦截器
 func (i *Interceptor) StreamInterceptor(
 	srv interface{},
 	ss grpc.ServerStream,
 	info *grpc.StreamServerInfo,
 	handler grpc.StreamHandler,
 ) error {
-	// ✅ 检查公开方法
+
 	if config.IsPublicMethod(info.FullMethod) {
 		i.logger.Debug("Public stream method bypassed authentication",
 			zap.String("method", info.FullMethod))
@@ -225,7 +196,6 @@ func (i *Interceptor) StreamInterceptor(
 
 	clientIP := i.extractClientIP(ctx)
 
-	// 提取探针 ID
 	probeID, err := i.extractProbeID(ctx)
 	if err != nil {
 		_, grpcErr := i.handleAuthError(ctx, "", probeID, info.FullMethod, clientIP,
@@ -233,7 +203,6 @@ func (i *Interceptor) StreamInterceptor(
 		return grpcErr
 	}
 
-	// 验证 Token
 	tokenInfo, err := i.extractAndValidateToken(ctx, probeID)
 	if err != nil {
 		if i.config.AllowNoToken {
@@ -252,7 +221,6 @@ func (i *Interceptor) StreamInterceptor(
 
 	tenantID := tokenInfo.TenantID
 
-	// RBAC 检查
 	if i.config.EnableProbeRBAC && i.config.RequireScopes {
 		if err := i.checkProbePermissions(tokenInfo, info.FullMethod); err != nil {
 			_, grpcErr := i.handleAuthError(ctx, tenantID, probeID, info.FullMethod, clientIP, err)
@@ -260,7 +228,6 @@ func (i *Interceptor) StreamInterceptor(
 		}
 	}
 
-	// 限流检查
 	if i.config.EnableRateLimit && i.limiter != nil {
 		if !i.limiter.Allow(ctx, tenantID, probeID) {
 			i.recordAudit(ctx, config.AuditEventTypeAccessDenied, tenantID, probeID, info.FullMethod, clientIP, "rate_limit_exceeded", tokenInfo.Scopes)
@@ -268,7 +235,6 @@ func (i *Interceptor) StreamInterceptor(
 		}
 	}
 
-	// 包装 ServerStream
 	newCtx := i.enrichContext(ctx, tokenInfo)
 	wrapped := &wrappedServerStream{
 		ServerStream: ss,
@@ -280,7 +246,6 @@ func (i *Interceptor) StreamInterceptor(
 	return handler(srv, wrapped)
 }
 
-// wrappedServerStream 包装的 ServerStream
 type wrappedServerStream struct {
 	grpc.ServerStream
 	ctx context.Context
@@ -290,25 +255,21 @@ func (w *wrappedServerStream) Context() context.Context {
 	return w.ctx
 }
 
-// enrichContext 将认证信息注入 Context
 func (i *Interceptor) enrichContext(ctx context.Context, tokenInfo *TokenInfo) context.Context {
 	ctx = context.WithValue(ctx, TenantIDKey, tokenInfo.TenantID)
 	ctx = context.WithValue(ctx, ProbeIDKey, tokenInfo.ProbeID)
 	ctx = context.WithValue(ctx, ScopesKey, tokenInfo.Scopes)
 	ctx = context.WithValue(ctx, TokenInfoKey, tokenInfo)
 
-	// 注入日志上下文
 	ctx = logging.WithTenantID(ctx, tokenInfo.TenantID)
 	ctx = logging.WithProbeID(ctx, tokenInfo.ProbeID)
 
-	// 注入 OpenTelemetry 属性
 	otel.AddTenantAttribute(ctx, tokenInfo.TenantID)
 	otel.AddProbeAttribute(ctx, tokenInfo.ProbeID)
 
 	return ctx
 }
 
-// handleAuthError 统一处理认证错误
 func (i *Interceptor) handleAuthError(ctx context.Context, tenantID, probeID, method, clientIP string, err *errors.AppError) (interface{}, error) {
 	logger := logging.L(ctx)
 
@@ -319,17 +280,13 @@ func (i *Interceptor) handleAuthError(ctx context.Context, tenantID, probeID, me
 		zap.String("client_ip", clientIP),
 		zap.Error(err))
 
-	// 记录审计日志
 	i.recordAudit(ctx, config.AuditEventTypeAuthFailure, tenantID, probeID, method, clientIP, err.Error(), nil)
 
-	// 记录到 OpenTelemetry
 	otel.RecordError(ctx, err)
 
-	// 转换为 gRPC 错误
 	return nil, status.Error(codes.Code(err.HTTPStatus()/100), err.Message)
 }
 
-// checkProbePermissions 检查探针权限
 func (i *Interceptor) checkProbePermissions(tokenInfo *TokenInfo, method string) *errors.AppError {
 	if tokenInfo == nil {
 		return errors.New(errors.ErrCodePermissionDenied, "no token info available")
@@ -347,9 +304,8 @@ func (i *Interceptor) checkProbePermissions(tokenInfo *TokenInfo, method string)
 		"permission denied: required scopes %v, got %v", requiredScopes, tokenInfo.Scopes)
 }
 
-// getRequiredScopesForMethod 根据方法获取所需权限
 func (i *Interceptor) getRequiredScopesForMethod(method string) []string {
-	// 根据方法名判断所需权限
+
 	methodMap := map[string][]string{
 		"UploadFlows":     {config.ScopeIngestWrite, config.ScopeWildcard},
 		"StreamFlows":     {config.ScopeIngestWrite, config.ScopeWildcard},
@@ -367,9 +323,8 @@ func (i *Interceptor) getRequiredScopesForMethod(method string) []string {
 	return i.config.RequiredScopes
 }
 
-// resolveTenantIDFallback 解析租户 ID 的降级方法
 func (i *Interceptor) resolveTenantIDFallback(probeID string) *TokenInfo {
-	// 1. 尝试从 probe_id 提取
+
 	tenantID := extractTenantFromProbeID(probeID)
 	if tenantID != "" {
 		return &TokenInfo{
@@ -379,7 +334,6 @@ func (i *Interceptor) resolveTenantIDFallback(probeID string) *TokenInfo {
 		}
 	}
 
-	// 2. 使用默认租户
 	if i.config.DefaultTenantID != "" {
 		return &TokenInfo{
 			TenantID: i.config.DefaultTenantID,
@@ -391,9 +345,8 @@ func (i *Interceptor) resolveTenantIDFallback(probeID string) *TokenInfo {
 	return nil
 }
 
-// extractProbeID 提取探针 ID
 func (i *Interceptor) extractProbeID(ctx context.Context) (string, error) {
-	// 非 mTLS 模式：从 metadata 获取
+
 	if !i.config.RequireMTLS {
 		md, ok := metadata.FromIncomingContext(ctx)
 		if !ok {
@@ -407,7 +360,6 @@ func (i *Interceptor) extractProbeID(ctx context.Context) (string, error) {
 		return probeID, nil
 	}
 
-	// mTLS 模式：从证书提取
 	p, ok := peer.FromContext(ctx)
 	if !ok {
 		return "", fmt.Errorf("no peer info in context")
@@ -431,7 +383,6 @@ func (i *Interceptor) extractProbeID(ctx context.Context) (string, error) {
 	return probeID, nil
 }
 
-// extractAndValidateToken 提取并验证 Token
 func (i *Interceptor) extractAndValidateToken(ctx context.Context, probeID string) (*TokenInfo, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
@@ -443,18 +394,15 @@ func (i *Interceptor) extractAndValidateToken(ctx context.Context, probeID strin
 		return nil, fmt.Errorf("tenant token not found in metadata")
 	}
 
-	// 移除 "Bearer " 前缀
 	if len(token) > 7 && (token[:7] == "Bearer " || token[:7] == "bearer ") {
 		token = token[7:]
 	}
 
-	// 验证 Token
 	tokenInfo, err := i.tokenCache.ValidateWithScopes(ctx, probeID, token)
 	if err != nil {
 		return nil, fmt.Errorf("token validation failed: %w", err)
 	}
 
-	// 检查 ProbeID 绑定
 	if tokenInfo.ProbeID != "" && tokenInfo.ProbeID != probeID {
 		return nil, fmt.Errorf("token is bound to probe %s, but request came from %s", tokenInfo.ProbeID, probeID)
 	}
@@ -462,12 +410,11 @@ func (i *Interceptor) extractAndValidateToken(ctx context.Context, probeID strin
 	return tokenInfo, nil
 }
 
-// extractClientIP 提取客户端 IP
 func (i *Interceptor) extractClientIP(ctx context.Context) string {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if ok {
 		if xff := getFirstMetadataValue(md, "x-forwarded-for", "x-real-ip"); xff != "" {
-			// 取第一个 IP
+
 			for j := 0; j < len(xff); j++ {
 				if xff[j] == ',' {
 					return xff[:j]
@@ -485,7 +432,6 @@ func (i *Interceptor) extractClientIP(ctx context.Context) string {
 	return ""
 }
 
-// recordAudit 记录审计日志
 func (i *Interceptor) recordAudit(ctx context.Context, eventType, tenantID, probeID, method, clientIP, errMsg string, scopes []string) {
 	if !i.config.EnableAuditLog {
 		return
@@ -495,7 +441,7 @@ func (i *Interceptor) recordAudit(ctx context.Context, eventType, tenantID, prob
 		i.auditLogger.Log(ctx, &audit.AuditEvent{
 			EventType:    audit.EventType(eventType),
 			TenantID:     tenantID,
-			UserID:       probeID, // 探针 ID 作为用户 ID
+			UserID:       probeID,
 			Action:       method,
 			ResourceType: "grpc_method",
 			ResourceID:   method,
@@ -511,7 +457,6 @@ func (i *Interceptor) recordAudit(ctx context.Context, eventType, tenantID, prob
 	}
 }
 
-// getFirstMetadataValue 获取第一个存在的 metadata 值
 func getFirstMetadataValue(md metadata.MD, keys ...string) string {
 	for _, key := range keys {
 		values := md.Get(key)
@@ -522,7 +467,6 @@ func getFirstMetadataValue(md metadata.MD, keys ...string) string {
 	return ""
 }
 
-// GetTenantID 从 Context 获取租户 ID
 func GetTenantID(ctx context.Context) string {
 	if v := ctx.Value(TenantIDKey); v != nil {
 		return v.(string)
@@ -530,7 +474,6 @@ func GetTenantID(ctx context.Context) string {
 	return ""
 }
 
-// GetProbeID 从 Context 获取探针 ID
 func GetProbeID(ctx context.Context) string {
 	if v := ctx.Value(ProbeIDKey); v != nil {
 		return v.(string)
@@ -538,7 +481,6 @@ func GetProbeID(ctx context.Context) string {
 	return ""
 }
 
-// GetScopes 从 Context 获取权限列表
 func GetScopes(ctx context.Context) []string {
 	if v := ctx.Value(ScopesKey); v != nil {
 		return v.([]string)
@@ -546,7 +488,6 @@ func GetScopes(ctx context.Context) []string {
 	return nil
 }
 
-// GetTokenInfo 从 Context 获取完整 Token 信息
 func GetTokenInfo(ctx context.Context) *TokenInfo {
 	if v := ctx.Value(TokenInfoKey); v != nil {
 		return v.(*TokenInfo)
@@ -554,7 +495,6 @@ func GetTokenInfo(ctx context.Context) *TokenInfo {
 	return nil
 }
 
-// HasScope 检查 Context 中是否有指定 scope
 func HasScope(ctx context.Context, scope string) bool {
 	scopes := GetScopes(ctx)
 	for _, s := range scopes {
@@ -565,7 +505,6 @@ func HasScope(ctx context.Context, scope string) bool {
 	return false
 }
 
-// extractTenantFromProbeID 从探针 ID 提取租户
 func extractTenantFromProbeID(probeID string) string {
 	if len(probeID) < 7 {
 		return ""
@@ -596,7 +535,6 @@ func extractTenantFromProbeID(probeID string) string {
 	return tenantID
 }
 
-// isValidTenantID 验证租户 ID 是否合法
 func isValidTenantID(tenantID string) bool {
 	if tenantID == "" {
 		return false

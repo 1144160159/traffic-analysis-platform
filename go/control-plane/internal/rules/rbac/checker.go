@@ -204,12 +204,12 @@ func (c *Checker) CheckResourceAccess(ctx context.Context, resourceTenantID stri
 // GetPermissionsFromContext 从上下文获取权限（支持 []string 到 []Permission 的转换）
 func (c *Checker) GetPermissionsFromContext(ctx context.Context) []Permission {
 	// 优先尝试获取 []Permission 类型
-	if perms, ok := ctx.Value(ContextKeyPermissions).([]Permission); ok {
+	if perms, ok := ctx.Summary(ContextKeyPermissions).([]Permission); ok {
 		return perms
 	}
 
 	// 尝试从字符串切片转换
-	if permStrs, ok := ctx.Value(ContextKeyPermissions).([]string); ok {
+	if permStrs, ok := ctx.Summary(ContextKeyPermissions).([]string); ok {
 		perms := make([]Permission, len(permStrs))
 		for i, s := range permStrs {
 			perms[i] = Permission(s)
@@ -218,7 +218,7 @@ func (c *Checker) GetPermissionsFromContext(ctx context.Context) []Permission {
 	}
 
 	// 尝试从角色获取权限
-	if roles, ok := ctx.Value(ContextKeyRoles).([]string); ok {
+	if roles, ok := ctx.Summary(ContextKeyRoles).([]string); ok {
 		return GetPermissionsFromRoles(roles)
 	}
 
@@ -227,7 +227,7 @@ func (c *Checker) GetPermissionsFromContext(ctx context.Context) []Permission {
 
 // GetUserIDFromContext 从上下文获取用户ID
 func GetUserIDFromContext(ctx context.Context) string {
-	if userID, ok := ctx.Value(ContextKeyUserID).(string); ok {
+	if userID, ok := ctx.Summary(ContextKeyUserID).(string); ok {
 		return userID
 	}
 	return ""
@@ -235,7 +235,7 @@ func GetUserIDFromContext(ctx context.Context) string {
 
 // GetTenantIDFromContext 从上下文获取租户ID
 func GetTenantIDFromContext(ctx context.Context) string {
-	if tenantID, ok := ctx.Value(ContextKeyTenantID).(string); ok {
+	if tenantID, ok := ctx.Summary(ContextKeyTenantID).(string); ok {
 		return tenantID
 	}
 	return ""
@@ -243,7 +243,7 @@ func GetTenantIDFromContext(ctx context.Context) string {
 
 // GetUsernameFromContext 从上下文获取用户名
 func GetUsernameFromContext(ctx context.Context) string {
-	if username, ok := ctx.Value(ContextKeyUsername).(string); ok {
+	if username, ok := ctx.Summary(ContextKeyUsername).(string); ok {
 		return username
 	}
 	return ""
@@ -251,7 +251,7 @@ func GetUsernameFromContext(ctx context.Context) string {
 
 // GetRolesFromContext 从上下文获取角色
 func GetRolesFromContext(ctx context.Context) []string {
-	if roles, ok := ctx.Value(ContextKeyRoles).([]string); ok {
+	if roles, ok := ctx.Summary(ContextKeyRoles).([]string); ok {
 		return roles
 	}
 	return nil

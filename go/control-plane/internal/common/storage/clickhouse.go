@@ -1,12 +1,3 @@
-////////////////////////////////////////////////////////////////////////////////
-// FILE PATH: control-plane/internal/common/storage/clickhouse.go
-// 修复版：
-// 1. 增加自动重连机制（带指数退避）
-// 2. 增加连接健康检查
-// 3. 增加 Prometheus 指标
-// 4. 增加连接状态通知回调
-////////////////////////////////////////////////////////////////////////////////
-
 package storage
 
 import (
@@ -25,7 +16,6 @@ import (
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/otel"
 )
 
-// ClickHouseConfig ClickHouse配置
 type ClickHouseConfig struct {
 	Hosts           []string      `env:"CLICKHOUSE_HOSTS" envSeparator:","`
 	Database        string        `env:"CLICKHOUSE_DATABASE" envDefault:"traffic"`
@@ -40,14 +30,12 @@ type ClickHouseConfig struct {
 	CompressionLZ4  bool          `env:"CLICKHOUSE_COMPRESSION_LZ4" envDefault:"true"`
 	Debug           bool          `env:"CLICKHOUSE_DEBUG" envDefault:"false"`
 
-	// 重连配置
 	EnableAutoReconnect bool          `env:"CLICKHOUSE_AUTO_RECONNECT" envDefault:"true"`
 	ReconnectInterval   time.Duration `env:"CLICKHOUSE_RECONNECT_INTERVAL" envDefault:"5s"`
 	MaxReconnectDelay   time.Duration `env:"CLICKHOUSE_MAX_RECONNECT_DELAY" envDefault:"60s"`
 	HealthCheckInterval time.Duration `env:"CLICKHOUSE_HEALTH_CHECK_INTERVAL" envDefault:"30s"`
 }
 
-// ConnectionState 连接状态
 type ConnectionState int32
 
 const (
@@ -72,34 +60,27 @@ func (s ConnectionState) String() string {
 	}
 }
 
-// ConnectionCallback 连接状态变化回调
 type ConnectionCallback func(oldState, newState ConnectionState, err error)
 
-// ClickHouseClient ClickHouse客户端（带自动重连）
 type ClickHouseClient struct {
 	conn   driver.Conn
 	config ClickHouseConfig
 	logger *zap.Logger
 
-	// 连接状态
-	state          int32 // atomic: ConnectionState
+	state          int32
 	mu             sync.RWMutex
 	reconnectTimer *time.Timer
 	stopReconnect  chan struct{}
 	healthTicker   *time.Ticker
 	stopHealth     chan struct{}
 
-	// 回调
 	callbacks []ConnectionCallback
 
-	// 指标
 	metrics *clickhouseMetrics
 
-	// 生命周期
-	closed int32 // atomic
+	closed int32
 }
 
-// clickhouseMetrics ClickHouse 指标
 type clickhouseMetrics struct {
 	connectionState   prometheus.Gauge
 	reconnectAttempts prometheus.Counter
@@ -145,13 +126,11 @@ func newClickHouseMetrics(serviceName string) *clickhouseMetrics {
 	}
 }
 
-// NewClickHouseClient 创建ClickHouse客户端
 func NewClickHouseClient(cfg ClickHouseConfig, logger *zap.Logger) (*ClickHouseClient, error) {
 	if len(cfg.Hosts) == 0 {
 		return nil, fmt.Errorf("clickhouse hosts not configured")
 	}
 
-	// 设置默认值
 	if cfg.ReconnectInterval <= 0 {
 		cfg.ReconnectInterval = 5 * time.Second
 	}
@@ -170,7 +149,6 @@ func NewClickHouseClient(cfg ClickHouseConfig, logger *zap.Logger) (*ClickHouseC
 		metrics:       newClickHouseMetrics("clickhouse"),
 	}
 
-	// 初始连接
 	if err := client.connect(); err != nil {
 		if !cfg.EnableAutoReconnect {
 			return nil, err
@@ -180,7 +158,6 @@ func NewClickHouseClient(cfg ClickHouseConfig, logger *zap.Logger) (*ClickHouseC
 		go client.reconnectLoop()
 	}
 
-	// 启动健康检查
 	if cfg.EnableAutoReconnect {
 		go client.healthCheckLoop()
 	}
@@ -188,7 +165,6 @@ func NewClickHouseClient(cfg ClickHouseConfig, logger *zap.Logger) (*ClickHouseC
 	return client, nil
 }
 
-// connect 建立连接
 func (c *ClickHouseClient) connect() error {
 	c.setState(StateConnecting)
 
@@ -224,7 +200,6 @@ func (c *ClickHouseClient) connect() error {
 		return fmt.Errorf("failed to open clickhouse connection: %w", err)
 	}
 
-	// 测试连接
 	ctx, cancel := context.WithTimeout(context.Background(), c.config.DialTimeout)
 	defer cancel()
 
@@ -235,7 +210,7 @@ func (c *ClickHouseClient) connect() error {
 	}
 
 	c.mu.Lock()
-	// 关闭旧连接
+
 	if c.conn != nil {
 		c.conn.Close()
 	}
@@ -251,7 +226,6 @@ func (c *ClickHouseClient) connect() error {
 	return nil
 }
 
-// reconnectLoop 重连循环
 func (c *ClickHouseClient) reconnectLoop() {
 	attempt := 0
 	baseDelay := c.config.ReconnectInterval
@@ -263,13 +237,12 @@ func (c *ClickHouseClient) reconnectLoop() {
 
 		state := c.GetState()
 		if state == StateConnected {
-			// 已连接，重置计数
+
 			attempt = 0
 			time.Sleep(baseDelay)
 			continue
 		}
 
-		// 计算退避延迟（指数退避）
 		delay := baseDelay * time.Duration(1<<uint(attempt))
 		if delay > c.config.MaxReconnectDelay {
 			delay = c.config.MaxReconnectDelay
@@ -301,7 +274,6 @@ func (c *ClickHouseClient) reconnectLoop() {
 	}
 }
 
-// healthCheckLoop 健康检查循环
 func (c *ClickHouseClient) healthCheckLoop() {
 	c.healthTicker = time.NewTicker(c.config.HealthCheckInterval)
 	defer c.healthTicker.Stop()
@@ -332,7 +304,6 @@ func (c *ClickHouseClient) healthCheckLoop() {
 	}
 }
 
-// setState 设置连接状态并触发回调
 func (c *ClickHouseClient) setState(newState ConnectionState) {
 	oldState := ConnectionState(atomic.SwapInt32(&c.state, int32(newState)))
 
@@ -342,7 +313,6 @@ func (c *ClickHouseClient) setState(newState ConnectionState) {
 
 	c.metrics.connectionState.Set(float64(newState))
 
-	// 触发回调
 	c.mu.RLock()
 	callbacks := c.callbacks
 	c.mu.RUnlock()
@@ -356,25 +326,21 @@ func (c *ClickHouseClient) setState(newState ConnectionState) {
 		zap.String("new_state", newState.String()))
 }
 
-// GetState 获取当前连接状态
 func (c *ClickHouseClient) GetState() ConnectionState {
 	return ConnectionState(atomic.LoadInt32(&c.state))
 }
 
-// OnStateChange 注册状态变化回调
 func (c *ClickHouseClient) OnStateChange(cb ConnectionCallback) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.callbacks = append(c.callbacks, cb)
 }
 
-// Conn 获取原生连接（会等待连接可用）
 func (c *ClickHouseClient) Conn() (driver.Conn, error) {
 	if atomic.LoadInt32(&c.closed) == 1 {
 		return nil, fmt.Errorf("client is closed")
 	}
 
-	// 等待连接可用（最多等待 30 秒）
 	timeout := time.After(30 * time.Second)
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
@@ -398,7 +364,6 @@ func (c *ClickHouseClient) Conn() (driver.Conn, error) {
 	}
 }
 
-// Query 执行查询
 func (c *ClickHouseClient) Query(ctx context.Context, query string, args ...interface{}) (driver.Rows, error) {
 	ctx, span := otel.StartSpan(ctx, "clickhouse.query")
 	defer span.End()
@@ -431,7 +396,6 @@ func (c *ClickHouseClient) Query(ctx context.Context, query string, args ...inte
 	return rows, nil
 }
 
-// QueryRow 执行单行查询
 func (c *ClickHouseClient) QueryRow(ctx context.Context, query string, args ...interface{}) (driver.Row, error) {
 	ctx, span := otel.StartSpan(ctx, "clickhouse.query_row")
 	defer span.End()
@@ -444,7 +408,6 @@ func (c *ClickHouseClient) QueryRow(ctx context.Context, query string, args ...i
 	return conn.QueryRow(ctx, query, args...), nil
 }
 
-// Exec 执行命令
 func (c *ClickHouseClient) Exec(ctx context.Context, query string, args ...interface{}) error {
 	ctx, span := otel.StartSpan(ctx, "clickhouse.exec")
 	defer span.End()
@@ -475,7 +438,6 @@ func (c *ClickHouseClient) Exec(ctx context.Context, query string, args ...inter
 	return nil
 }
 
-// PrepareBatch 准备批量插入
 func (c *ClickHouseClient) PrepareBatch(ctx context.Context, query string) (driver.Batch, error) {
 	ctx, span := otel.StartSpan(ctx, "clickhouse.prepare_batch")
 	defer span.End()
@@ -496,7 +458,6 @@ func (c *ClickHouseClient) PrepareBatch(ctx context.Context, query string) (driv
 	return batch, nil
 }
 
-// BatchInsert 批量插入辅助函数
 func (c *ClickHouseClient) BatchInsert(ctx context.Context, query string, appendFunc func(batch driver.Batch) error) error {
 	ctx, span := otel.StartSpan(ctx, "clickhouse.batch_insert")
 	defer span.End()
@@ -526,7 +487,6 @@ func (c *ClickHouseClient) BatchInsert(ctx context.Context, query string, append
 	return nil
 }
 
-// Ping 测试连接
 func (c *ClickHouseClient) Ping(ctx context.Context) error {
 	conn, err := c.Conn()
 	if err != nil {
@@ -535,7 +495,6 @@ func (c *ClickHouseClient) Ping(ctx context.Context) error {
 	return conn.Ping(ctx)
 }
 
-// Stats 获取连接统计
 func (c *ClickHouseClient) Stats() driver.Stats {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
@@ -546,7 +505,6 @@ func (c *ClickHouseClient) Stats() driver.Stats {
 	return driver.Stats{}
 }
 
-// Close 关闭连接
 func (c *ClickHouseClient) Close() error {
 	if !atomic.CompareAndSwapInt32(&c.closed, 0, 1) {
 		return nil
@@ -554,7 +512,6 @@ func (c *ClickHouseClient) Close() error {
 
 	c.logger.Info("Closing ClickHouse connection")
 
-	// 停止重连和健康检查
 	close(c.stopReconnect)
 	close(c.stopHealth)
 
@@ -579,17 +536,14 @@ func truncateClickhouseQuery(query string) string {
 	return query
 }
 
-// ClickHouseHealthChecker 健康检查
 type ClickHouseHealthChecker struct {
 	client *ClickHouseClient
 }
 
-// NewClickHouseHealthChecker 创建健康检查器
 func NewClickHouseHealthChecker(client *ClickHouseClient) *ClickHouseHealthChecker {
 	return &ClickHouseHealthChecker{client: client}
 }
 
-// Check 执行健康检查
 func (h *ClickHouseHealthChecker) Check(ctx context.Context) error {
 	if h.client.GetState() != StateConnected {
 		return fmt.Errorf("clickhouse not connected: %s", h.client.GetState().String())
@@ -601,7 +555,6 @@ func (h *ClickHouseHealthChecker) Check(ctx context.Context) error {
 	return h.client.Ping(ctx)
 }
 
-// Name 返回检查器名称
 func (h *ClickHouseHealthChecker) Name() string {
 	return "clickhouse"
 }

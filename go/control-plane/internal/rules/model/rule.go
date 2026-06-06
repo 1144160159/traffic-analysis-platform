@@ -441,11 +441,11 @@ type AuditLog struct {
 // =============================================================================
 
 // ValidationError 验证错误
-type ValidationError struct {
+type RuleValidationError struct {
 	Errors []string `json:"errors"`
 }
 
-func (e *ValidationError) Error() string {
+func (e *RuleValidationError) Error() string {
 	return "validation error: " + strings.Join(e.Errors, "; ")
 }
 

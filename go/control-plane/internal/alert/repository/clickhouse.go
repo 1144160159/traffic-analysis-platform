@@ -109,9 +109,14 @@ func (r *AlertRepository) List(ctx context.Context, query *ListQuery) (*ListResu
 	`, whereClause)
 
 	var total int64
-	if err := r.client.QueryRow(ctx, countSQL, args...).Scan(&total); err != nil {
-		r.logger.Error("Failed to count alerts", zap.Error(err))
-		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to count alerts")
+	row, err := r.client.QueryRow(ctx, countSQL, args...)
+	if err != nil {
+		r.logger.Error("Failed to query count", zap.Error(err))
+		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to query count")
+	}
+	if err := row.Scan(&total); err != nil {
+		r.logger.Error("Failed to scan count", zap.Error(err))
+		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to scan count")
 	}
 
 	// 2. 查询数据（使用物化视图，无需 FINAL）

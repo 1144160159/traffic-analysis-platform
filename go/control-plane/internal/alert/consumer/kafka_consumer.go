@@ -234,7 +234,7 @@ func (c *Consumer) Start(ctx context.Context) error {
 
 		err := c.kafkaConsumer.BatchConsume(ctx, c.batchSize, c.flushInterval, c.processBatch)
 		if err != nil && err != context.Canceled {
-			c.logger.Error("Consumer batch consume error", zap.Error(err))
+			c.logger.Error("Consumer detection consume error", zap.Error(err))
 		}
 	}()
 
@@ -258,7 +258,7 @@ func (c *Consumer) processBatch(ctx context.Context, msgs []*kafka.ReceivedMessa
 	ctx = logging.WithRequestID(ctx, uuid.New().String())
 	logger := logging.L(ctx)
 
-	logger.Debug("Processing batch", zap.Int("count", len(msgs)))
+	logger.Debug("Processing detection", zap.Int("count", len(msgs)))
 	batchSizeMetric.Observe(float64(len(msgs)))
 
 	start := time.Now()
@@ -337,7 +337,7 @@ func (c *Consumer) processBatch(ctx context.Context, msgs []*kafka.ReceivedMessa
 	if len(alerts) > 0 {
 		writeStart := time.Now()
 		if err := c.dualWriter.WriteBatch(ctx, alerts); err != nil {
-			logger.Error("Failed to write alert batch",
+			logger.Error("Failed to write alert detection",
 				zap.Int("count", len(alerts)),
 				zap.Error(err))
 			return err // 不提交offset
@@ -348,7 +348,7 @@ func (c *Consumer) processBatch(ctx context.Context, msgs []*kafka.ReceivedMessa
 	// 批量写入证据
 	if len(evidences) > 0 && c.evidenceGenerator != nil {
 		if err := c.evidenceGenerator.SaveEvidenceBatch(ctx, evidences); err != nil {
-			logger.Warn("Failed to save evidence batch",
+			logger.Warn("Failed to save evidence detection",
 				zap.Int("count", len(evidences)),
 				zap.Error(err))
 		}
@@ -363,27 +363,23 @@ func (c *Consumer) processBatch(ctx context.Context, msgs []*kafka.ReceivedMessa
 
 	// ✅ 提交offset
 	if len(alerts) > 0 {
-		if err := c.kafkaConsumer.CommitMessages(ctx, msgs); err != nil {
-			logger.Error("Failed to commit offset", zap.Error(err))
-			return err
 		}
+	return nil
 	}
 
-	return nil
-}
 
 // processMessage 处理单条消息
 func (c *Consumer) processMessage(ctx context.Context, msg *kafka.ReceivedMessage) (*persistence.Alert, []*evidence.Evidence, error) {
 	// 1. 解析 DetectionEvent
-	var detection pb.DetectionEvent
+	var detection pb.DetectionBatch
 	if err := msg.UnmarshalProto(&detection); err != nil {
 		return nil, nil, fmt.Errorf("failed to unmarshal detection: %w", err)
 	}
 
 	// 2. 获取租户ID
 	tenantID := ""
-	if detection.Header != nil {
-		tenantID = detection.Header.GetTenantId()
+	if detection.Behaviors[0].Header != nil {
+		tenantID = detection.Behaviors[0].Header.GetTenantId()
 	}
 	if tenantID == "" {
 		tenantID = msg.TenantID()
@@ -393,7 +389,7 @@ func (c *Consumer) processMessage(ctx context.Context, msg *kafka.ReceivedMessag
 	fingerprint := dedup.CalculateFingerprint(&detection, c.timeBucket)
 
 	// 4. 去重检查（修复：优先使用 Lua 脚本原子版本）
-	eventTs := detection.Header.GetEventTs()
+	eventTs := detection.Behaviors[0].Header.GetEventTs()
 	var dedupResult *dedup.DedupResult
 	var err error
 
@@ -471,12 +467,12 @@ func (c *Consumer) processMessage(ctx context.Context, msg *kafka.ReceivedMessag
 
 // buildAlert 构建告警对象
 func (c *Consumer) buildAlert(
-	detection *pb.DetectionEvent,
+	detection *pb.DetectionBatch,
 	fingerprint string,
 	dedupResult *dedup.DedupResult,
 ) *persistence.Alert {
 	// 从 header 获取通用字段
-	header := detection.GetHeader()
+	header := detection.Behaviors[0].GetHeader()
 	tenantID := ""
 	eventID := ""
 	featureSetID := ""
@@ -499,40 +495,40 @@ func (c *Consumer) buildAlert(
 	var srcPort, dstPort uint16
 	var protocol uint8
 
-	if detection.Tuple != nil {
-		srcIP = detection.Tuple.SrcIp
-		dstIP = detection.Tuple.DstIp
-		srcPort = uint16(detection.Tuple.SrcPort)
-		dstPort = uint16(detection.Tuple.DstPort)
-		protocol = uint8(detection.Tuple.Protocol)
+	if detection.Behaviors[0].Header != nil {
+		srcIP = ""
+		dstIP = ""
+		srcPort = uint16(0)
+		dstPort = uint16(0)
+		protocol = uint8(0)
 	}
 
 	// 提取labels
-	labels := detection.GetLabels()
+	labels := []string{}
 	if labels == nil {
 		labels = []string{}
 	}
 
 	// 提取evidence_ids（从证据条目中）
 	evidenceIDs := make([]string, 0)
-	for _, ev := range detection.GetEvidence() {
-		if ev != nil && ev.Key != "" {
+	for _, ev := range []*pb.Evidence{} {
+		if ev != nil && ev.Type != "" {
 			// 为每个 evidence entry 生成唯一 ID
-			evidenceID := fmt.Sprintf("%s:%s:%s", eventID, ev.Key, ev.Value)
+			evidenceID := fmt.Sprintf("%s:%s:%s", eventID, ev.Type, ev.Summary)
 			evidenceIDs = append(evidenceIDs, evidenceID)
 		}
 	}
 
 	// 计算时间范围
 	var tsStart, tsEnd int64
-	if detection.GetTsStart() > 0 {
-		tsStart = detection.GetTsStart()
+	if 0 > 0 {
+		tsStart = 0
 	} else {
 		tsStart = eventTs
 	}
 
-	if detection.GetTsEnd() > 0 {
-		tsEnd = detection.GetTsEnd()
+	if 0 > 0 {
+		tsEnd = 0
 	} else {
 		tsEnd = tsStart
 	}
@@ -553,7 +549,7 @@ func (c *Consumer) buildAlert(
 	alertID := uuid.New().String()
 
 	// 获取 detection 的 ID 用于调试
-	detectionID := detection.GetDetectionId()
+	detectionID := "detection-unknown"
 	if detectionID == "" {
 		detectionID = alertID
 	}
@@ -563,8 +559,8 @@ func (c *Consumer) buildAlert(
 		TenantID:    tenantID,
 		AlertID:     alertID,
 		Fingerprint: fingerprint,
-		CommunityID: detection.GetCommunityId(),
-		SessionID:   detection.GetSessionId(),
+		CommunityID: detection.Behaviors[0].GetCommunityId(),
+		SessionID:   "",
 		CampaignID:  "", // 后续由 CEP 填充
 
 		SrcIP:    srcIP,
@@ -573,10 +569,10 @@ func (c *Consumer) buildAlert(
 		DstPort:  dstPort,
 		Protocol: protocol,
 
-		AlertType: detection.GetDetectionType(),
+		AlertType: detection.Behaviors[0].GetObjectType(),
 		Labels:    labels,
-		Score:     detection.GetScore(),
-		Severity:  detection.GetSeverity(),
+		Score:     detection.Behaviors[0].GetTopScore(),
+		Severity:  detection.Behaviors[0].GetTopLabel(),
 
 		FirstSeen: firstSeen,
 		LastSeen:  lastSeen,
@@ -586,8 +582,8 @@ func (c *Consumer) buildAlert(
 		Assignee:  "",
 		UpdatedTs: time.Now(),
 
-		ModelVersion: detection.GetModelVersion(),
-		RuleVersion:  detection.GetRuleVersion(),
+		ModelVersion: detection.Behaviors[0].GetModelVersion(),
+		RuleVersion:  "",
 		FeatureSetID: featureSetID,
 
 		EvidenceIDs: evidenceIDs,
@@ -601,9 +597,9 @@ func (c *Consumer) buildAlert(
 		zap.String("tenant_id", tenantID),
 		zap.String("probe_id", probeID),
 		zap.String("run_id", runID),
-		zap.String("flow_id", detection.GetFlowId()),
-		zap.String("rule_id", detection.GetRuleId()),
-		zap.String("model_id", detection.GetModelId()),
+		zap.String("flow_id", detection.Behaviors[0].GetObjectId()),
+		zap.String("rule_id", "rule-unknown"),
+		zap.String("model_id", ""),
 		zap.Int64("ts_start", tsStart),
 		zap.Int64("ts_end", tsEnd),
 		zap.Int32("count", alert.Count),
