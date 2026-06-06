@@ -21,11 +21,12 @@ import (
 	"go.uber.org/zap"
 )
 
-// FeedbackHandler 告警反馈处理器
+// FeedbackHandler 告警反馈处理器 — TP/FP 反馈业务闭环
 type FeedbackHandler struct {
 	alertService  *service.AlertService
 	kafkaProducer *kafka.Producer
 	auditLogger   interface{}
+	repo          *FeedbackRepository // 反馈持久化仓库（ClickHouse）
 	logger        *zap.Logger
 }
 
@@ -34,21 +35,25 @@ func NewFeedbackHandler(
 	alertService *service.AlertService,
 	kafkaProducer *kafka.Producer,
 	auditLogger interface{},
+	repo *FeedbackRepository,
 	logger *zap.Logger,
 ) *FeedbackHandler {
 	return &FeedbackHandler{
 		alertService:  alertService,
 		kafkaProducer: kafkaProducer,
 		auditLogger:   auditLogger,
+		repo:          repo,
 		logger:        logger,
 	}
 }
 
-// RegisterRoutes 注册反馈路由
+// RegisterRoutes 注册反馈路由（含统计分析）
 func (h *FeedbackHandler) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/alerts/{id}/feedback", h.SubmitFeedback).Methods("POST")
 	r.HandleFunc("/alerts/{id}/feedback", h.GetFeedback).Methods("GET")
 	r.HandleFunc("/feedback/reason-codes", h.GetReasonCodes).Methods("GET")
+	r.HandleFunc("/feedback/stats", h.GetFeedbackStats).Methods("GET")
+	r.HandleFunc("/feedback/fp-ranking", h.GetFPRanking).Methods("GET")
 }
 
 // FeedbackRequest 反馈请求 - 与 proto AlertFeedback 字段对齐
@@ -190,6 +195,28 @@ func (h *FeedbackHandler) SubmitFeedback(w http.ResponseWriter, r *http.Request)
 		UserID:         userID,
 		AddToWhitelist: req.AddToWhitelist,
 	}
+	// 持久化到 ClickHouse（业务闭环：反馈数据可供查询 + 模型训练）
+	if h.repo != nil {
+		record := &FeedbackRecord{
+			FeedbackID:     feedbackID,
+			AlertID:        alertID,
+			TenantID:       tenantID,
+			UserID:         userID,
+			Label:          req.Label,
+			ReasonCode:     req.ReasonCode,
+			Comment:        req.Comment,
+			AddToWhitelist: req.AddToWhitelist,
+			AlertType:      alert.AlertType,
+			Severity:       alert.Severity,
+			ModelVersion:   alert.ModelVersion,
+			RuleVersion:    alert.RuleVersion,
+			CreatedAt:      time.Now(),
+		}
+		if err := h.repo.Insert(ctx, record); err != nil {
+			logger.Error("Failed to persist feedback to ClickHouse", zap.Error(err))
+		}
+	}
+
 	httpx.JSONCreated(w, ctx, response)
 }
 
@@ -244,6 +271,38 @@ func (h *FeedbackHandler) GetReasonCodes(w http.ResponseWriter, r *http.Request)
 	httpx.JSONSuccess(w, ctx, map[string]interface{}{
 		"reason_codes": codes,
 	})
+}
+
+// GetFeedbackStats 获取反馈统计（TP/FP 分布）
+func (h *FeedbackHandler) GetFeedbackStats(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	tenantID := h.extractTenantID(r)
+	if tenantID == "" {
+		httpx.JSONError(w, ctx, http.StatusBadRequest, "MISSING_PARAM", "tenant_id required")
+		return
+	}
+	stats, err := h.repo.GetStats(ctx, tenantID, 30*24*time.Hour)
+	if err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
+	httpx.JSONSuccess(w, ctx, stats)
+}
+
+// GetFPRanking 获取误报原因排行
+func (h *FeedbackHandler) GetFPRanking(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	tenantID := h.extractTenantID(r)
+	if tenantID == "" {
+		httpx.JSONError(w, ctx, http.StatusBadRequest, "MISSING_PARAM", "tenant_id required")
+		return
+	}
+	ranking, err := h.repo.GetFPRanking(ctx, tenantID, 10)
+	if err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
+	httpx.JSONSuccess(w, ctx, map[string]interface{}{"fp_ranking": ranking})
 }
 
 // publishFeedback 发布反馈到Kafka

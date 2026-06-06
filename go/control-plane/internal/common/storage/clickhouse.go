@@ -165,6 +165,14 @@ func NewClickHouseClient(cfg ClickHouseConfig, logger *zap.Logger) (*ClickHouseC
 	return client, nil
 }
 
+// NewClickHouseClientFromConn 从已有的 driver.Conn 创建 ClickHouseClient 包装器
+func NewClickHouseClientFromConn(conn driver.Conn, logger *zap.Logger) *ClickHouseClient {
+	return &ClickHouseClient{
+		conn:   conn,
+		logger: logger,
+	}
+}
+
 func (c *ClickHouseClient) connect() error {
 	c.setState(StateConnecting)
 

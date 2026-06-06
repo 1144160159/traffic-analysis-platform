@@ -272,7 +272,7 @@ func (c *Cutter) CutPCAP(
 				mu.Unlock()
 
 				// 单个文件失败不中断整体任务，除非是 context 取消
-				if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+				if errors.IsCode(err, errors.ErrCodeInternal) || err == context.DeadlineExceeded {
 					// 只有当 gctx 取消时才返回错误
 					if gctx.Err() != nil {
 						return gctx.Err()

@@ -147,6 +147,14 @@ func NewPostgresClient(cfg PostgresConfig, logger *zap.Logger) (*PostgresClient,
 	return client, nil
 }
 
+// NewPostgresClientFromDB 从已有的 *sql.DB 创建 PostgresClient 包装器
+func NewPostgresClientFromDB(db *sql.DB, logger *zap.Logger) *PostgresClient {
+	return &PostgresClient{
+		db:     db,
+		logger: logger,
+	}
+}
+
 func (mc *postgresMetricsCollector) start() {
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
