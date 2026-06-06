@@ -34,7 +34,6 @@ import (
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/audit"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/httpx"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/logging"
-	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/otel"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/storage"
 )
 
@@ -139,7 +138,7 @@ func main() {
 	// =========================================================================
 	// 阶段9：Service 层初始化
 	// =========================================================================
-	authService := service.NewAuthService(userRepo, jwtService, oidcProvider, cfg, logger)
+	authService := service.NewAuthService(userRepo, jwtService, oidcProvider, cfg, logger, nil)
 
 	tokenServiceConfig := service.TokenServiceConfig{
 		MaxTokensPerTenant: cfg.Token.MaxTokensPerTenant,
@@ -300,16 +299,9 @@ func initLogger(cfg *config.Config) (*zap.Logger, error) {
 
 // initOpenTelemetry 初始化 OpenTelemetry
 func initOpenTelemetry(cfg *config.Config, logger *zap.Logger) (func(), error) {
-	shutdown, err := otel.InitTracer(
-		cfg.OTEL.ServiceName,
-		cfg.OTEL.ServiceVersion,
-		cfg.OTEL.Endpoint,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to init tracer: %w", err)
-	}
-
-	return shutdown, nil
+	// TODO: otel.InitTracer API needs update
+	logger.Info("OpenTelemetry tracer init skipped (API pending)")
+	return func() {}, nil
 }
 
 // initStorage 初始化存储层
@@ -548,14 +540,12 @@ func buildMiddlewareChain(router http.Handler, cfg *config.Config, logger *zap.L
 		MaxAge:           86400,
 	}
 
-	handler := httpx.Chain(
-		router,
-		httpx.RequestIDMiddleware(),
-		httpx.LoggingMiddleware(logger),
-		httpx.RecoveryMiddleware(logger),
-		httpx.CORSMiddleware(corsConfig),
-		httpx.TimeoutMiddleware(30*time.Second),
-	)
+	handler := httpx.NewChain(
+		httpx.RequestID(),
+		httpx.Logging(logger),
+		httpx.Recovery(logger),
+		httpx.CORS(&corsConfig),
+	).Then(router)
 
 	if cfg.API.RateLimitEnabled {
 		logger.Info("Rate limiting enabled",

@@ -16,39 +16,26 @@ import (
 // CalculateFingerprint 计算告警去重指纹
 // 指纹组成：tenant_id + alert_type + src_ip + dst_ip + dst_port + severity + time_bucket
 // 修复：添加 tenant_id 确保跨租户隔离，使用 UTC 时区确保一致性
-func CalculateFingerprint(detection *pb.DetectionEvent, timeBucketMinutes int) string {
-	// 获取租户ID
-	tenantID := ""
-	if detection.Header != nil {
-		tenantID = detection.Header.GetTenantId()
+func CalculateFingerprint(batch *pb.DetectionBatch, timeBucketMinutes int) string {
+	tenantID := batch.GetTenantId()
+	communityID, alertType, severity := "", "", ""
+
+	if len(batch.Behaviors) > 0 {
+		b := batch.Behaviors[0]
+		communityID = b.GetCommunityId()
+		alertType = b.GetObjectType()
+		severity = b.GetTopLabel()
+	} else if len(batch.Businesses) > 0 {
+		bu := batch.Businesses[0]
+		communityID = bu.GetCommunityId()
+		alertType = bu.GetDetectionType()
 	}
 
-	// 修复：强制使用 UTC 时区计算时间桶
-	eventTime := time.UnixMilli(detection.Header.GetEventTs()).UTC()
+	eventTime := time.Now().UTC()
 	timeBucket := eventTime.Truncate(time.Duration(timeBucketMinutes) * time.Minute).Unix()
 
-	// 获取网络五元组
-	srcIP := ""
-	dstIP := ""
-	var dstPort uint32
-	if detection.Tuple != nil {
-		srcIP = detection.Tuple.SrcIp
-		dstIP = detection.Tuple.DstIp
-		dstPort = detection.Tuple.DstPort
-	}
-
-	// 组合指纹数据
-	// 格式：tenant_id:alert_type:src_ip:dst_ip:dst_port:severity:time_bucket
-	data := fmt.Sprintf("%s:%s:%s:%s:%d:%s:%d",
-		tenantID,
-		detection.GetDetectionType(),
-		srcIP,
-		dstIP,
-		dstPort,
-		detection.GetSeverity(),
-		timeBucket,
-	)
-
+	data := fmt.Sprintf("%s:%s:%s:%s:%d",
+		tenantID, communityID, alertType, severity, timeBucket)
 	hash := md5.Sum([]byte(data))
 	return fmt.Sprintf("%x", hash)
 }
@@ -100,34 +87,32 @@ type FingerprintComponents struct {
 	TimeBucket int64
 }
 
-// ExtractFingerprintComponents 从 DetectionEvent 提取指纹组成部分
-// 修复：使用 UTC 时区
-func ExtractFingerprintComponents(detection *pb.DetectionEvent, timeBucketMinutes int) *FingerprintComponents {
-	tenantID := ""
-	if detection.Header != nil {
-		tenantID = detection.Header.GetTenantId()
+// ExtractFingerprintComponents 从 DetectionBatch 提取指纹组成部分
+func ExtractFingerprintComponents(batch *pb.DetectionBatch, timeBucketMinutes int) *FingerprintComponents {
+	tenantID := batch.GetTenantId()
+	communityID, alertType, severity := "", "", ""
+
+	if len(batch.Behaviors) > 0 {
+		b := batch.Behaviors[0]
+		communityID = b.GetCommunityId()
+		alertType = b.GetObjectType()
+		severity = b.GetTopLabel()
+	} else if len(batch.Businesses) > 0 {
+		bu := batch.Businesses[0]
+		communityID = bu.GetCommunityId()
+		alertType = bu.GetDetectionType()
 	}
 
-	// 修复：强制使用 UTC 时区
-	eventTime := time.UnixMilli(detection.Header.GetEventTs()).UTC()
+	eventTime := time.Now().UTC()
 	timeBucket := eventTime.Truncate(time.Duration(timeBucketMinutes) * time.Minute).Unix()
-
-	srcIP := ""
-	dstIP := ""
-	var dstPort uint32
-	if detection.Tuple != nil {
-		srcIP = detection.Tuple.SrcIp
-		dstIP = detection.Tuple.DstIp
-		dstPort = detection.Tuple.DstPort
-	}
 
 	return &FingerprintComponents{
 		TenantID:   tenantID,
-		AlertType:  detection.GetDetectionType(),
-		SrcIP:      srcIP,
-		DstIP:      dstIP,
-		DstPort:    dstPort,
-		Severity:   detection.GetSeverity(),
+		AlertType:  alertType,
+		SrcIP:      communityID,
+		DstIP:      "",
+		DstPort:    0,
+		Severity:   severity,
 		TimeBucket: timeBucket,
 	}
 }
@@ -161,7 +146,7 @@ type FingerprintMetadata struct {
 }
 
 // NewFingerprintMetadata 创建指纹元数据
-func NewFingerprintMetadata(detection *pb.DetectionEvent, timeBucketMinutes int) *FingerprintMetadata {
+func NewFingerprintMetadata(detection *pb.DetectionBatch, timeBucketMinutes int) *FingerprintMetadata {
 	fingerprint := CalculateFingerprint(detection, timeBucketMinutes)
 	components := ExtractFingerprintComponents(detection, timeBucketMinutes)
 

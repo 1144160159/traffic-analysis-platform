@@ -89,7 +89,7 @@ func (s *Service) GenerateTokenPair(user *model.User, roles []string, permission
 		Email:       user.Email,
 		Roles:       roles,
 		Permissions: permissions,
-		TokenType:   model.TokenTypeAccess,
+		TokenType:   model.JWTTokenAccess,
 		SessionID:   sessionID,
 	}
 
@@ -110,7 +110,7 @@ func (s *Service) GenerateTokenPair(user *model.User, roles []string, permission
 		},
 		UserID:    user.UserID,
 		TenantID:  user.TenantID,
-		TokenType: model.TokenTypeRefresh,
+		TokenType: model.JWTTokenRefresh,
 		SessionID: sessionID,
 	}
 
@@ -149,7 +149,7 @@ func (s *Service) ValidateAccessToken(tokenString string) (*model.Claims, error)
 		return nil, errors.New(errors.ErrCodeTokenInvalid, "Token is invalid")
 	}
 
-	if claims.TokenType != model.TokenTypeAccess {
+	if claims.TokenType != model.JWTTokenAccess {
 		return nil, errors.Newf(errors.ErrCodeTokenInvalid,
 			"Invalid token type: expected access token, got %s", claims.TokenType)
 	}
@@ -182,7 +182,7 @@ func (s *Service) ValidateRefreshToken(tokenString string) (*model.Claims, error
 		return nil, errors.New(errors.ErrCodeTokenInvalid, "Refresh token is invalid")
 	}
 
-	if claims.TokenType != model.TokenTypeRefresh {
+	if claims.TokenType != model.JWTTokenRefresh {
 		return nil, errors.Newf(errors.ErrCodeTokenInvalid,
 			"Invalid token type: expected refresh token, got %s", claims.TokenType)
 	}
@@ -355,11 +355,11 @@ func (s *Service) ValidateToken(tokenString string) (*model.Claims, error) {
 
 	// 根据 TokenType 进行额外验证
 	switch claims.TokenType {
-	case model.TokenTypeAccess:
+	case model.JWTTokenAccess:
 		if s.isSessionRevoked(claims.SessionID) {
 			return nil, errors.New(errors.ErrCodeSessionExpired, "Session has been revoked")
 		}
-	case model.TokenTypeRefresh:
+	case model.JWTTokenRefresh:
 		if s.isSessionRevoked(claims.SessionID) {
 			return nil, errors.New(errors.ErrCodeSessionExpired, "Session has been revoked")
 		}
@@ -394,7 +394,7 @@ func (s *Service) RefreshAccessToken(refreshToken string) (*TokenPair, error) {
 		Email:       claims.Email,
 		Roles:       claims.Roles,
 		Permissions: claims.Permissions,
-		TokenType:   model.TokenTypeAccess,
+		TokenType:   model.JWTTokenAccess,
 		SessionID:   claims.SessionID,
 	}
 

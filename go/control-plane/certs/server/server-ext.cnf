@@ -1,0 +1,14 @@
+basicConstraints = CA:FALSE
+keyUsage = critical, digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth
+subjectKeyIdentifier = hash
+subjectAltName = @alt_names
+
+[alt_names]
+DNS.1 = ingest-gateway
+DNS.2 = ingest-gateway.traffic
+DNS.3 = ingest-gateway.traffic.svc
+DNS.4 = ingest-gateway.traffic.svc.cluster.local
+DNS.5 = localhost
+IP.1 = 127.0.0.1
+IP.2 = ::1

@@ -62,32 +62,25 @@ func init() {
 	)
 }
 
-// Metrics Prometheus指标中间件
 func Metrics(serviceName string) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
 
-			// 增加进行中请求计数
 			httpRequestsInFlight.WithLabelValues(serviceName, r.Method).Inc()
 			defer httpRequestsInFlight.WithLabelValues(serviceName, r.Method).Dec()
 
-			// 记录请求大小
 			if r.ContentLength > 0 {
 				httpRequestSize.WithLabelValues(serviceName, r.Method, r.URL.Path).Observe(float64(r.ContentLength))
 			}
 
-			// 包装ResponseWriter
 			rw := newResponseWriter(w)
 
-			// 处理请求
 			next.ServeHTTP(rw, r)
 
-			// 计算耗时
 			duration := time.Since(start).Seconds()
 			statusStr := strconv.Itoa(rw.statusCode)
 
-			// 记录指标
 			httpRequestsTotal.WithLabelValues(serviceName, r.Method, r.URL.Path, statusStr).Inc()
 			httpRequestDuration.WithLabelValues(serviceName, r.Method, r.URL.Path, statusStr).Observe(duration)
 			httpResponseSize.WithLabelValues(serviceName, r.Method, r.URL.Path).Observe(float64(rw.bytesWritten))
@@ -95,13 +88,11 @@ func Metrics(serviceName string) Middleware {
 	}
 }
 
-// MetricsWithPathNormalizer 带路径归一化的指标中间件
 func MetricsWithPathNormalizer(serviceName string, normalizer func(string) string) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
 
-			// 归一化路径（避免高基数问题）
 			normalizedPath := r.URL.Path
 			if normalizer != nil {
 				normalizedPath = normalizer(r.URL.Path)
@@ -127,14 +118,11 @@ func MetricsWithPathNormalizer(serviceName string, normalizer func(string) strin
 	}
 }
 
-// DefaultPathNormalizer 默认路径归一化器
 func DefaultPathNormalizer(path string) string {
-	// 将类似 /api/v1/alerts/abc-123 的路径归一化为 /api/v1/alerts/:id
-	// 这里是简化实现，实际应根据路由定义来归一化
+
 	return path
 }
 
-// BusinessMetrics 业务指标
 type BusinessMetrics struct {
 	service string
 
@@ -144,7 +132,6 @@ type BusinessMetrics struct {
 	graphQueryDuration *prometheus.HistogramVec
 }
 
-// NewBusinessMetrics 创建业务指标
 func NewBusinessMetrics(service string) *BusinessMetrics {
 	return &BusinessMetrics{
 		service: service,
@@ -185,22 +172,18 @@ func NewBusinessMetrics(service string) *BusinessMetrics {
 	}
 }
 
-// RecordAlertProcessed 记录告警处理
 func (m *BusinessMetrics) RecordAlertProcessed(tenantID, severity string) {
 	m.alertsProcessed.WithLabelValues(m.service, tenantID, severity).Inc()
 }
 
-// RecordDedupRate 记录去重率
 func (m *BusinessMetrics) RecordDedupRate(tenantID string, rate float64) {
 	m.dedupRate.WithLabelValues(m.service, tenantID).Set(rate)
 }
 
-// RecordPcapCutDuration 记录PCAP裁剪耗时
 func (m *BusinessMetrics) RecordPcapCutDuration(tenantID string, duration time.Duration) {
 	m.pcapCutDuration.WithLabelValues(m.service, tenantID).Observe(duration.Seconds())
 }
 
-// RecordGraphQueryDuration 记录图查询耗时
 func (m *BusinessMetrics) RecordGraphQueryDuration(tenantID string, depth int, duration time.Duration) {
 	m.graphQueryDuration.WithLabelValues(m.service, tenantID, strconv.Itoa(depth)).Observe(duration.Seconds())
 }

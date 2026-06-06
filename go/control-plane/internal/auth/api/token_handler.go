@@ -236,7 +236,7 @@ func (h *TokenHandler) CreateProbeToken(w http.ResponseWriter, r *http.Request) 
 
 	// 记录审计成功
 	if h.auditLogger != nil {
-		h.auditLogger.LogEvent(r.Context(), &audit.AuditEvent{
+		h.auditLogger.Log(r.Context(), &audit.AuditEvent{
 			EventType:    audit.EventTypeTokenCreate,
 			TenantID:     claims.TenantID,
 			UserID:       claims.UserID.String(),
@@ -433,7 +433,7 @@ func (h *TokenHandler) UpdateToken(w http.ResponseWriter, r *http.Request) {
 
 	// 记录审计日志
 	if h.auditLogger != nil {
-		h.auditLogger.LogEvent(r.Context(), &audit.AuditEvent{
+		h.auditLogger.Log(r.Context(), &audit.AuditEvent{
 			EventType:    audit.EventTypeTokenCreate,
 			TenantID:     claims.TenantID,
 			UserID:       claims.UserID.String(),
@@ -765,7 +765,7 @@ func (h *TokenHandler) recordAuditFailure(ctx context.Context, tenantID, userID,
 		return
 	}
 
-	h.auditLogger.LogEvent(ctx, &audit.AuditEvent{
+	h.auditLogger.Log(ctx, &audit.AuditEvent{
 		EventType:    audit.EventTypeTokenCreate,
 		TenantID:     tenantID,
 		UserID:       userID,

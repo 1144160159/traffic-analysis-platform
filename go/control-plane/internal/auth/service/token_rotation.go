@@ -185,12 +185,9 @@ func (s *TokenRotationService) rotateToken(ctx context.Context, token *model.API
 		zap.String("name", token.Name))
 
 	// 生成新的 token
-	plainToken, tokenPrefix, err := s.tokenHasher.GenerateAPIKey(token.TokenType)
-	if err != nil {
-		return errors.Wrap(err, errors.ErrCodeInternal, "Failed to generate new token")
-	}
-
-	// 哈希新 token
+	plainToken, err := s.tokenHasher.GenerateAPIKey(string(token.TokenType))
+	tokenPrefix := ""
+	if len(plainToken) > 8 { tokenPrefix = plainToken[:8] }
 	newTokenHash, err := s.tokenHasher.HashToken(plainToken)
 	if err != nil {
 		return errors.Wrap(err, errors.ErrCodeInternal, "Failed to hash new token")
@@ -217,7 +214,7 @@ func (s *TokenRotationService) rotateToken(ctx context.Context, token *model.API
 			Result:       audit.ResultSuccess,
 			Detail: map[string]interface{}{
 				"token_name":        token.Name,
-				"token_type":        token.TokenType,
+				"token_type":        string(token.TokenType),
 				"reason":            "automatic_rotation",
 				"grace_period_days": s.gracePeriod.Hours() / 24,
 			},
@@ -392,8 +389,8 @@ func (s *TokenRotationService) RotateTokenManually(ctx context.Context, tokenID,
 		return nil, errors.Wrap(err, errors.ErrCodeInvalidParameter, "Invalid token_id")
 	}
 
-	userUUID, err := parseUUID(userID)
-	if err != nil {
+	if _, err := parseUUID(userID); err != nil {
+	
 		return nil, errors.Wrap(err, errors.ErrCodeInvalidParameter, "Invalid user_id")
 	}
 
@@ -408,7 +405,7 @@ func (s *TokenRotationService) RotateTokenManually(ctx context.Context, tokenID,
 	}
 
 	// 生成新 token
-	plainToken, tokenPrefix, err := s.tokenHasher.GenerateAPIKey(token.TokenType)
+	plainToken, err := s.tokenHasher.GenerateAPIKey(string(token.TokenType)); tokenPrefix := plainToken[:8]
 	if err != nil {
 		return nil, errors.Wrap(err, errors.ErrCodeInternal, "Failed to generate new token")
 	}
@@ -437,7 +434,7 @@ func (s *TokenRotationService) RotateTokenManually(ctx context.Context, tokenID,
 			Result:       audit.ResultSuccess,
 			Detail: map[string]interface{}{
 				"token_name": token.Name,
-				"token_type": token.TokenType,
+				"token_type": string(token.TokenType),
 				"reason":     "manual_rotation",
 			},
 		})
@@ -504,7 +501,7 @@ func (s *TokenRotationService) GetRotationStatistics(ctx context.Context, tenant
 		GracePeriodActive: 0,
 	}
 
-	now := time.Now()
+	now := time.Now(); _ = now
 
 	for _, token := range tokens {
 		if token.RotationEnabled {

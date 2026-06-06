@@ -60,8 +60,8 @@ type UserRole struct {
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 }
 
-// APIToken API Token 模型
-type APIToken struct {
+// APIKeyRecord API 密钥记录 (DB 持久化模型)
+type APIKeyRecord struct {
 	TokenID     uuid.UUID       `json:"token_id" db:"token_id"`
 	TenantID    string          `json:"tenant_id" db:"tenant_id"`
 	Name        string          `json:"name" db:"name"`
@@ -78,11 +78,11 @@ type APIToken struct {
 	ProbeID     string          `json:"probe_id,omitempty" db:"probe_id"` // 关联探针 ID
 }
 
-// TokenStatus Token 状态常量
+// APIKeyStatus 常量 (与 token.go TokenStatus 互补)
 const (
-	TokenStatusActive  = "active"
-	TokenStatusRevoked = "revoked"
-	TokenStatusExpired = "expired"
+	APIKeyStatusActive  = "active"
+	APIKeyStatusRevoked = "revoked"
+	APIKeyStatusExpired = "expired"
 )
 
 // Session 会话模型
@@ -224,22 +224,18 @@ func HasAllScopes(scopes []string, requiredScopes ...string) bool {
 	return true
 }
 
-// ScopesToList 将 scopes map 转换为列表
-func ScopesToList(scopes map[string]bool) []string {
+// ScopesMapToList 将 scopes map 转换为列表
+func ScopesMapToList(scopes map[string]bool) []string {
 	result := make([]string, 0, len(scopes))
 	for scope, enabled := range scopes {
-		if enabled {
-			result = append(result, scope)
-		}
+		if enabled { result = append(result, scope) }
 	}
 	return result
 }
 
-// ListToScopes 将 scopes 列表转换为 map
-func ListToScopes(list []string) map[string]bool {
+// ListToScopesMap 将 scopes 列表转换为 map
+func ListToScopesMap(list []string) map[string]bool {
 	result := make(map[string]bool)
-	for _, scope := range list {
-		result[scope] = true
-	}
+	for _, scope := range list { result[scope] = true }
 	return result
 }

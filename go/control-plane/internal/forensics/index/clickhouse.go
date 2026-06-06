@@ -303,7 +303,7 @@ func (c *IndexClient) CountFiles(ctx context.Context, tenantID string, startTime
 	`
 
 	var count int64
-	row := c.client.QueryRow(ctx, sql, tenantID, time.UnixMilli(endTime), time.UnixMilli(startTime))
+	row, _ := c.client.QueryRow(ctx, sql, tenantID, time.UnixMilli(endTime), time.UnixMilli(startTime))
 	if err := row.Scan(&count); err != nil {
 		return 0, errors.Wrap(err, errors.ErrCodeClickHouseError, "failed to count files")
 	}

@@ -200,42 +200,42 @@ type EvidenceEntry struct {
 func BuildEvidenceWithID(key, value, evidenceType string) *EvidenceEntry {
 	return &EvidenceEntry{
 		EvidenceID: uuid.New().String(),
-		Key:        key,
-		Value:      value,
+		Type:        key,
+		Summary:      value,
 		Type:       evidenceType,
 	}
 }
 
 // buildRuleEvidence 构建规则证据（增强版）
-func buildRuleEvidence(rule *model.Rule) []*trafficv1.EvidenceEntry {
-	evidence := make([]*trafficv1.EvidenceEntry, 0, 6)
+func buildRuleEvidence(rule *model.Rule) []*trafficv1.Evidence {
+	evidence := make([]*trafficv1.Evidence, 0, 6)
 
 	// 基础规则信息
-	evidence = append(evidence, &trafficv1.EvidenceEntry{
-		Key:   "evidence_id",
-		Value: uuid.New().String(),
+	evidence = append(evidence, &trafficv1.Evidence{
+		Type:   "evidence_id",
+		Summary: uuid.New().String(),
 	})
-	evidence = append(evidence, &trafficv1.EvidenceEntry{
-		Key:   "rule_id",
-		Value: rule.RuleID,
+	evidence = append(evidence, &trafficv1.Evidence{
+		Type:   "rule_id",
+		Summary: rule.RuleID,
 	})
-	evidence = append(evidence, &trafficv1.EvidenceEntry{
-		Key:   "rule_name",
-		Value: rule.Name,
+	evidence = append(evidence, &trafficv1.Evidence{
+		Type:   "rule_name",
+		Summary: rule.Name,
 	})
-	evidence = append(evidence, &trafficv1.EvidenceEntry{
-		Key:   "rule_type",
-		Value: rule.Type,
+	evidence = append(evidence, &trafficv1.Evidence{
+		Type:   "rule_type",
+		Summary: rule.Type,
 	})
-	evidence = append(evidence, &trafficv1.EvidenceEntry{
-		Key:   "rule_engine",
-		Value: rule.Engine,
+	evidence = append(evidence, &trafficv1.Evidence{
+		Type:   "rule_engine",
+		Summary: rule.Engine,
 	})
 
 	if rule.Description != "" {
-		evidence = append(evidence, &trafficv1.EvidenceEntry{
-			Key:   "description",
-			Value: rule.Description,
+		evidence = append(evidence, &trafficv1.Evidence{
+			Type:   "description",
+			Summary: rule.Description,
 		})
 	}
 
@@ -243,9 +243,9 @@ func buildRuleEvidence(rule *model.Rule) []*trafficv1.EvidenceEntry {
 	if len(rule.Conditions) > 0 {
 		conditionsJSON, err := json.Marshal(rule.Conditions)
 		if err == nil {
-			evidence = append(evidence, &trafficv1.EvidenceEntry{
-				Key:   "conditions_summary",
-				Value: string(conditionsJSON),
+			evidence = append(evidence, &trafficv1.Evidence{
+				Type:   "conditions_summary",
+				Summary: string(conditionsJSON),
 			})
 		}
 	}
@@ -258,7 +258,7 @@ func buildRuleEvidence(rule *model.Rule) []*trafficv1.EvidenceEntry {
 // =============================================================================
 
 // RuleToDetectionEvent 将规则命令转换为 DetectionEvent（用于规则触发时）
-func RuleToDetectionEvent(rule *model.Rule, tuple *trafficv1.FiveTuple, communityID, sessionID, flowID string) *trafficv1.DetectionEvent {
+func RuleToDetectionEvent(rule *model.Rule, tuple *trafficv1.FiveTuple, communityID, sessionID, flowID string) *trafficv1.DetectionBatch {
 	now := time.Now().UnixMilli()
 
 	// 如果没有提供 communityID，自动生成
@@ -266,7 +266,7 @@ func RuleToDetectionEvent(rule *model.Rule, tuple *trafficv1.FiveTuple, communit
 		communityID = GenerateCommunityIDFromTuple(tuple)
 	}
 
-	return &trafficv1.DetectionEvent{
+	return &trafficv1.DetectionBatch{
 		Header: &trafficv1.EventHeader{
 			EventId:      uuid.New().String(),
 			TenantId:     rule.TenantID,
@@ -736,7 +736,7 @@ func CampaignFromAlerts(tenantID string, alerts []*trafficv1.Alert, campaignType
 // =============================================================================
 
 // DetectionEventToAlert 将检测事件转换为告警
-func DetectionEventToAlert(detection *trafficv1.DetectionEvent) *trafficv1.Alert {
+func DetectionEventToAlert(detection *trafficv1.DetectionBatch) *trafficv1.Alert {
 	now := time.Now().UnixMilli()
 
 	// 生成去重指纹
@@ -778,11 +778,11 @@ func DetectionEventToAlert(detection *trafficv1.DetectionEvent) *trafficv1.Alert
 }
 
 // extractEvidenceIDs 从证据条目中提取ID
-func extractEvidenceIDs(evidence []*trafficv1.EvidenceEntry) []string {
+func extractEvidenceIDs(evidence []*trafficv1.Evidence) []string {
 	ids := make([]string, 0)
 	for _, e := range evidence {
-		if e.Key == "evidence_id" {
-			ids = append(ids, e.Value)
+		if e.Type == "evidence_id" {
+			ids = append(ids, e.Summary)
 		}
 	}
 	return ids

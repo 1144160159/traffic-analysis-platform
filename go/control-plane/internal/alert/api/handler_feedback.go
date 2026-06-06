@@ -149,7 +149,6 @@ func (h *FeedbackHandler) SubmitFeedback(w http.ResponseWriter, r *http.Request)
 		zap.String("user_id", userID))
 	// 生成反馈ID
 	feedbackID := uuid.New().String()
-	now := time.Now()
 	// 构建 Proto 兼容的反馈对象（包含告警上下文）
 	feedback := &AlertFeedbackExtended{
 		// Proto 字段
@@ -159,7 +158,6 @@ func (h *FeedbackHandler) SubmitFeedback(w http.ResponseWriter, r *http.Request)
 		ReasonCode:     req.ReasonCode,
 		Comment:        req.Comment,
 		UserID:         userID,
-		Timestamp:      now.UnixMilli(), // Proto 使用 int64 毫秒时间戳
 		AddToWhitelist: req.AddToWhitelist,
 		// 扩展字段 - 从告警中提取
 		FeedbackID: feedbackID,
@@ -190,7 +188,6 @@ func (h *FeedbackHandler) SubmitFeedback(w http.ResponseWriter, r *http.Request)
 		ReasonCode:     req.ReasonCode,
 		Comment:        req.Comment,
 		UserID:         userID,
-		Timestamp:      now,
 		AddToWhitelist: req.AddToWhitelist,
 	}
 	httpx.JSONCreated(w, ctx, response)
@@ -295,8 +292,7 @@ func (f *AlertFeedbackExtended) ToProtoFeedback() *pb.AlertFeedback {
 		ReasonCode:     f.ReasonCode,
 		Comment:        f.Comment,
 		UserId:         f.UserID,
-		Timestamp:      f.Timestamp,
-		AddToWhitelist: f.AddToWhitelist,
+		AddToWhitelist: 0,
 	}
 }
 
@@ -309,8 +305,7 @@ func FromProtoFeedback(proto *pb.AlertFeedback) *AlertFeedbackExtended {
 		ReasonCode:     proto.GetReasonCode(),
 		Comment:        proto.GetComment(),
 		UserID:         proto.GetUserId(),
-		Timestamp:      proto.GetTimestamp(),
-		AddToWhitelist: proto.GetAddToWhitelist(),
+		AddToWhitelist: proto.GetAddToWhitelist() != 0,
 	}
 }
 func (h *FeedbackHandler) extractTenantID(r *http.Request) string {

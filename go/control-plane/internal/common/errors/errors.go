@@ -1,7 +1,3 @@
-////////////////////////////////////////////////////////////////////////////////
-// FILE PATH: control-plane/internal/common/errors/errors.go
-////////////////////////////////////////////////////////////////////////////////
-
 package errors
 
 import (
@@ -11,7 +7,6 @@ import (
 	"strings"
 )
 
-// AppError 应用错误
 type AppError struct {
 	Code     ErrorCode              `json:"code"`
 	Message  string                 `json:"message"`
@@ -22,7 +17,6 @@ type AppError struct {
 	TenantID string                 `json:"tenant_id,omitempty"`
 }
 
-// Error 实现error接口
 func (e *AppError) Error() string {
 	if e.Cause != nil {
 		return fmt.Sprintf("[%s] %s: %v", e.Code, e.Message, e.Cause)
@@ -30,12 +24,10 @@ func (e *AppError) Error() string {
 	return fmt.Sprintf("[%s] %s", e.Code, e.Message)
 }
 
-// Unwrap 支持errors.Unwrap
 func (e *AppError) Unwrap() error {
 	return e.Cause
 }
 
-// Is 支持errors.Is
 func (e *AppError) Is(target error) bool {
 	t, ok := target.(*AppError)
 	if !ok {
@@ -44,17 +36,14 @@ func (e *AppError) Is(target error) bool {
 	return e.Code == t.Code
 }
 
-// HTTPStatus 返回HTTP状态码
 func (e *AppError) HTTPStatus() int {
 	return e.Code.HTTPStatus()
 }
 
-// IsRetryable 是否可重试
 func (e *AppError) IsRetryable() bool {
 	return e.Code.IsRetryable()
 }
 
-// WithDetail 添加详情
 func (e *AppError) WithDetail(key string, value interface{}) *AppError {
 	if e.Details == nil {
 		e.Details = make(map[string]interface{})
@@ -63,19 +52,16 @@ func (e *AppError) WithDetail(key string, value interface{}) *AppError {
 	return e
 }
 
-// WithTraceID 添加追踪ID
 func (e *AppError) WithTraceID(traceID string) *AppError {
 	e.TraceID = traceID
 	return e
 }
 
-// WithTenantID 添加租户ID
 func (e *AppError) WithTenantID(tenantID string) *AppError {
 	e.TenantID = tenantID
 	return e
 }
 
-// New 创建新错误
 func New(code ErrorCode, message string) *AppError {
 	return &AppError{
 		Code:    code,
@@ -84,7 +70,6 @@ func New(code ErrorCode, message string) *AppError {
 	}
 }
 
-// Newf 创建格式化错误
 func Newf(code ErrorCode, format string, args ...interface{}) *AppError {
 	return &AppError{
 		Code:    code,
@@ -93,13 +78,11 @@ func Newf(code ErrorCode, format string, args ...interface{}) *AppError {
 	}
 }
 
-// Wrap 包装错误
 func Wrap(err error, code ErrorCode, message string) *AppError {
 	if err == nil {
 		return nil
 	}
 
-	// 如果已经是AppError，保留原始堆栈
 	var appErr *AppError
 	if errors.As(err, &appErr) {
 		return &AppError{
@@ -119,7 +102,6 @@ func Wrap(err error, code ErrorCode, message string) *AppError {
 	}
 }
 
-// Wrapf 包装格式化错误
 func Wrapf(err error, code ErrorCode, format string, args ...interface{}) *AppError {
 	if err == nil {
 		return nil
@@ -127,7 +109,6 @@ func Wrapf(err error, code ErrorCode, format string, args ...interface{}) *AppEr
 	return Wrap(err, code, fmt.Sprintf(format, args...))
 }
 
-// GetCode 从错误中提取错误码
 func GetCode(err error) ErrorCode {
 	var appErr *AppError
 	if errors.As(err, &appErr) {
@@ -136,7 +117,6 @@ func GetCode(err error) ErrorCode {
 	return ErrCodeInternal
 }
 
-// GetHTTPStatus 从错误中提取HTTP状态码
 func GetHTTPStatus(err error) int {
 	var appErr *AppError
 	if errors.As(err, &appErr) {
@@ -145,7 +125,6 @@ func GetHTTPStatus(err error) int {
 	return 500
 }
 
-// IsCode 检查错误码是否匹配
 func IsCode(err error, code ErrorCode) bool {
 	var appErr *AppError
 	if errors.As(err, &appErr) {
@@ -154,7 +133,6 @@ func IsCode(err error, code ErrorCode) bool {
 	return false
 }
 
-// IsRetryableError 检查是否可重试
 func IsRetryableError(err error) bool {
 	var appErr *AppError
 	if errors.As(err, &appErr) {
@@ -163,7 +141,6 @@ func IsRetryableError(err error) bool {
 	return false
 }
 
-// captureStack 捕获堆栈
 func captureStack(skip int) string {
 	var builder strings.Builder
 	pcs := make([]uintptr, 32)
@@ -182,8 +159,6 @@ func captureStack(skip int) string {
 
 	return builder.String()
 }
-
-// 常用错误快捷创建函数
 
 func ErrUnauthorized(message string) *AppError {
 	return New(ErrCodeUnauthorized, message)

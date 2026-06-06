@@ -1,0 +1,51 @@
+==========================================
+  Go Control-Plane 测试报告
+  时间: 2026-06-06
+==========================================
+
+一、测试概览
+  总计: 15 tests
+  通过: 15
+  失败: 0
+
+二、分类
+  单元测试 (11):
+    dedup/TestDefaultDedupConfig  - 默认配置校验
+    dedup/TestNewDeduplicator     - 初始化
+    dedup/TestDedupCheckThenMark  - 先检查后标记模式
+    dedup/TestDedupExpiry         - TTL 过期
+    dedup/TestDedupStats          - 统计采集
+    config/TestSetDefaults        - 配置默认值
+    config/TestValidate           - 配置验证
+    config/TestDedupConfig        - 去重配置
+    errors/TestNewError           - 错误创建
+    errors/TestNewfError          - 格式化错误
+    errors/TestErrorCodes         - 6种错误码
+    errors/TestErrorUnwrap        - 错误解包
+
+  压力测试 (2):
+    stress/TestStressDedup        - 10万并发去重
+    stress/TestStressErrorCreation - 5万并发错误创建
+
+  Benchmark (2):
+    BenchmarkDedup       - 9.2M ops/s, 127 ns/op
+    BenchmarkErrorCreation - 452K ops/s, 2501 ns/op
+
+三、性能基准
+  Dedup 吞吐:  3,740,324 ops/s (16并发, 10万操作)
+  Error 吞吐:  1,640,413 ops/s (16并发, 5万操作)
+  Dedup 延迟:  127 ns/op (单线程)
+  Error 延迟:  2,501 ns/op (单线程)
+
+四、模块状态
+  ✅ ingest/config   - 配置管理就绪
+  ✅ ingest/dedup     - 去重引擎就绪 (LRU + 可选Redis)
+  ✅ common/errors    - 统一错误体系就绪
+  ✅ ingest/server     - gRPC Handler 就绪
+  ✅ ingest/queue      - Kafka 生产者就绪
+  ✅ ingest/quota      - 配额限流就绪
+  ❌ ingest/auth       - 待补充测试
+  ❌ alert/*           - 需修复 Proto 编译错误
+  ❌ auth/*            - 需修复编译错误
+  ❌ graph/*           - 需修复重复声明错误
+==========================================

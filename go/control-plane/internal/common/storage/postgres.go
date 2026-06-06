@@ -1,12 +1,3 @@
-////////////////////////////////////////////////////////////////////////////////
-// FILE PATH: control-plane/internal/common/storage/postgres.go
-// 修复版本 v2：
-// 1. 修复 #6：增加连接池监控指标（Prometheus）
-// 2. 新增连接池健康检查方法
-// 3. 增加慢查询日志记录
-// 4. 优化事务处理
-////////////////////////////////////////////////////////////////////////////////
-
 package storage
 
 import (
@@ -23,7 +14,6 @@ import (
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/otel"
 )
 
-// PostgresConfig PostgreSQL配置
 type PostgresConfig struct {
 	Host            string        `env:"POSTGRES_HOST" envDefault:"localhost"`
 	Port            int           `env:"POSTGRES_PORT" envDefault:"5432"`
@@ -37,11 +27,9 @@ type PostgresConfig struct {
 	ConnMaxIdleTime time.Duration `env:"POSTGRES_CONN_MAX_IDLE_TIME" envDefault:"30m"`
 	ConnectTimeout  int           `env:"POSTGRES_CONNECT_TIMEOUT" envDefault:"10"`
 
-	// 修复 #6：新增慢查询阈值配置
 	SlowQueryThreshold time.Duration `env:"POSTGRES_SLOW_QUERY_THRESHOLD" envDefault:"1s"`
 }
 
-// DSN 生成连接字符串
 func (c PostgresConfig) DSN() string {
 	return fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s connect_timeout=%d",
@@ -49,7 +37,6 @@ func (c PostgresConfig) DSN() string {
 	)
 }
 
-// 修复 #6：Prometheus 指标定义
 var (
 	postgresConnectionsInUse = promauto.NewGaugeVec(
 		prometheus.GaugeOpts{
@@ -109,36 +96,30 @@ var (
 	)
 )
 
-// PostgresClient PostgreSQL客户端（修复版）
 type PostgresClient struct {
 	db     *sql.DB
 	config PostgresConfig
 	logger *zap.Logger
 
-	// 修复 #6：指标收集器
 	metricsCollector *postgresMetricsCollector
 }
 
-// postgresMetricsCollector 指标收集器
 type postgresMetricsCollector struct {
 	client   *PostgresClient
 	stopChan chan struct{}
 }
 
-// NewPostgresClient 创建PostgreSQL客户端（修复版）
 func NewPostgresClient(cfg PostgresConfig, logger *zap.Logger) (*PostgresClient, error) {
 	db, err := sql.Open("postgres", cfg.DSN())
 	if err != nil {
 		return nil, fmt.Errorf("failed to open postgres connection: %w", err)
 	}
 
-	// 配置连接池
 	db.SetMaxOpenConns(cfg.MaxOpenConns)
 	db.SetMaxIdleConns(cfg.MaxIdleConns)
 	db.SetConnMaxLifetime(cfg.ConnMaxLifetime)
 	db.SetConnMaxIdleTime(cfg.ConnMaxIdleTime)
 
-	// 测试连接
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(cfg.ConnectTimeout)*time.Second)
 	defer cancel()
 
@@ -157,7 +138,6 @@ func NewPostgresClient(cfg PostgresConfig, logger *zap.Logger) (*PostgresClient,
 		logger: logger,
 	}
 
-	// 修复 #6：启动指标收集
 	client.metricsCollector = &postgresMetricsCollector{
 		client:   client,
 		stopChan: make(chan struct{}),
@@ -167,9 +147,8 @@ func NewPostgresClient(cfg PostgresConfig, logger *zap.Logger) (*PostgresClient,
 	return client, nil
 }
 
-// start 启动指标收集（修复 #6）
 func (mc *postgresMetricsCollector) start() {
-	ticker := time.NewTicker(10 * time.Second) // 每 10 秒采集一次
+	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
 	for {
@@ -182,7 +161,6 @@ func (mc *postgresMetricsCollector) start() {
 	}
 }
 
-// collect 采集指标（修复 #6）
 func (mc *postgresMetricsCollector) collect() {
 	stats := mc.client.db.Stats()
 
@@ -194,17 +172,14 @@ func (mc *postgresMetricsCollector) collect() {
 	postgresConnectionsMaxOpen.WithLabelValues(dbName).Set(float64(stats.MaxOpenConnections))
 }
 
-// stop 停止指标收集（修复 #6）
 func (mc *postgresMetricsCollector) stop() {
 	close(mc.stopChan)
 }
 
-// DB 获取原生数据库连接
 func (c *PostgresClient) DB() *sql.DB {
 	return c.db
 }
 
-// Query 执行查询（修复版：增加慢查询日志）
 func (c *PostgresClient) Query(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
 	ctx, span := otel.StartSpan(ctx, "postgres.query")
 	defer span.End()
@@ -213,10 +188,8 @@ func (c *PostgresClient) Query(ctx context.Context, query string, args ...interf
 	rows, err := c.db.QueryContext(ctx, query, args...)
 	duration := time.Since(start)
 
-	// 记录指标
 	postgresQueryDuration.WithLabelValues(c.config.Database, "query").Observe(duration.Seconds())
 
-	// 修复 #6：记录慢查询
 	if duration > c.config.SlowQueryThreshold {
 		postgresSlowQueries.WithLabelValues(c.config.Database, "query").Inc()
 		c.logger.Warn("Slow query detected",
@@ -242,7 +215,6 @@ func (c *PostgresClient) Query(ctx context.Context, query string, args ...interf
 	return rows, nil
 }
 
-// QueryRow 执行单行查询
 func (c *PostgresClient) QueryRow(ctx context.Context, query string, args ...interface{}) *sql.Row {
 	ctx, span := otel.StartSpan(ctx, "postgres.query_row")
 	defer span.End()
@@ -251,10 +223,8 @@ func (c *PostgresClient) QueryRow(ctx context.Context, query string, args ...int
 	row := c.db.QueryRowContext(ctx, query, args...)
 	duration := time.Since(start)
 
-	// 记录指标
 	postgresQueryDuration.WithLabelValues(c.config.Database, "query_row").Observe(duration.Seconds())
 
-	// 记录慢查询
 	if duration > c.config.SlowQueryThreshold {
 		postgresSlowQueries.WithLabelValues(c.config.Database, "query_row").Inc()
 		c.logger.Warn("Slow query_row detected",
@@ -265,7 +235,6 @@ func (c *PostgresClient) QueryRow(ctx context.Context, query string, args ...int
 	return row
 }
 
-// Exec 执行命令（修复版：增加慢查询日志）
 func (c *PostgresClient) Exec(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
 	ctx, span := otel.StartSpan(ctx, "postgres.exec")
 	defer span.End()
@@ -274,10 +243,8 @@ func (c *PostgresClient) Exec(ctx context.Context, query string, args ...interfa
 	result, err := c.db.ExecContext(ctx, query, args...)
 	duration := time.Since(start)
 
-	// 记录指标
 	postgresQueryDuration.WithLabelValues(c.config.Database, "exec").Observe(duration.Seconds())
 
-	// 记录慢查询
 	if duration > c.config.SlowQueryThreshold {
 		postgresSlowQueries.WithLabelValues(c.config.Database, "exec").Inc()
 		c.logger.Warn("Slow exec detected",
@@ -302,7 +269,6 @@ func (c *PostgresClient) Exec(ctx context.Context, query string, args ...interfa
 	return result, nil
 }
 
-// BeginTx 开始事务
 func (c *PostgresClient) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error) {
 	ctx, span := otel.StartSpan(ctx, "postgres.begin_tx")
 	defer span.End()
@@ -317,7 +283,6 @@ func (c *PostgresClient) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql
 	return tx, nil
 }
 
-// Transaction 事务辅助函数（修复版：优化错误处理）
 func (c *PostgresClient) Transaction(ctx context.Context, fn func(tx *sql.Tx) error) error {
 	ctx, span := otel.StartSpan(ctx, "postgres.transaction")
 	defer span.End()
@@ -329,7 +294,6 @@ func (c *PostgresClient) Transaction(ctx context.Context, fn func(tx *sql.Tx) er
 		return err
 	}
 
-	// 确保事务被正确处理
 	defer func() {
 		if p := recover(); p != nil {
 			if rbErr := tx.Rollback(); rbErr != nil {
@@ -337,11 +301,10 @@ func (c *PostgresClient) Transaction(ctx context.Context, fn func(tx *sql.Tx) er
 					zap.Error(rbErr),
 					zap.Any("panic", p))
 			}
-			panic(p) // 重新抛出 panic
+			panic(p)
 		}
 	}()
 
-	// 执行业务逻辑
 	if err := fn(tx); err != nil {
 		if rbErr := tx.Rollback(); rbErr != nil {
 			postgresErrors.WithLabelValues(c.config.Database, "rollback", categorizePostgresError(rbErr)).Inc()
@@ -352,7 +315,6 @@ func (c *PostgresClient) Transaction(ctx context.Context, fn func(tx *sql.Tx) er
 		return err
 	}
 
-	// 提交事务
 	if err := tx.Commit(); err != nil {
 		postgresErrors.WithLabelValues(c.config.Database, "commit", categorizePostgresError(err)).Inc()
 		c.logger.Error("Failed to commit transaction", zap.Error(err))
@@ -368,17 +330,14 @@ func (c *PostgresClient) Transaction(ctx context.Context, fn func(tx *sql.Tx) er
 	return nil
 }
 
-// Ping 测试连接
 func (c *PostgresClient) Ping(ctx context.Context) error {
 	return c.db.PingContext(ctx)
 }
 
-// Stats 获取连接统计
 func (c *PostgresClient) Stats() sql.DBStats {
 	return c.db.Stats()
 }
 
-// GetPoolHealth 获取连接池健康状态（修复 #6：新增）
 func (c *PostgresClient) GetPoolHealth() PoolHealth {
 	stats := c.db.Stats()
 
@@ -395,7 +354,6 @@ func (c *PostgresClient) GetPoolHealth() PoolHealth {
 	}
 }
 
-// PoolHealth 连接池健康状态（修复 #6：新增）
 type PoolHealth struct {
 	MaxOpenConnections int           `json:"max_open_connections"`
 	OpenConnections    int           `json:"open_connections"`
@@ -408,14 +366,12 @@ type PoolHealth struct {
 	MaxIdleTimeClosed  int64         `json:"max_idle_time_closed"`
 }
 
-// IsHealthy 检查连接池是否健康（修复 #6：新增）
 func (h *PoolHealth) IsHealthy() bool {
-	// 检查是否有可用连接
+
 	if h.Idle == 0 && h.InUse >= h.MaxOpenConnections {
 		return false
 	}
 
-	// 检查等待队列是否过长（超过 100 个等待）
 	if h.WaitCount > 100 {
 		return false
 	}
@@ -423,11 +379,9 @@ func (h *PoolHealth) IsHealthy() bool {
 	return true
 }
 
-// Close 关闭连接（修复版：停止指标收集）
 func (c *PostgresClient) Close() error {
 	c.logger.Info("Closing PostgreSQL connection")
 
-	// 修复 #6：停止指标收集
 	if c.metricsCollector != nil {
 		c.metricsCollector.stop()
 	}
@@ -435,27 +389,22 @@ func (c *PostgresClient) Close() error {
 	return c.db.Close()
 }
 
-// PostgresHealthChecker 健康检查
 type PostgresHealthChecker struct {
 	client *PostgresClient
 }
 
-// NewPostgresHealthChecker 创建健康检查器
 func NewPostgresHealthChecker(client *PostgresClient) *PostgresHealthChecker {
 	return &PostgresHealthChecker{client: client}
 }
 
-// Check 执行健康检查（修复版：增加连接池检查）
 func (h *PostgresHealthChecker) Check(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	// 检查连接
 	if err := h.client.Ping(ctx); err != nil {
 		return fmt.Errorf("ping failed: %w", err)
 	}
 
-	// 修复 #6：检查连接池健康状态
 	poolHealth := h.client.GetPoolHealth()
 	if !poolHealth.IsHealthy() {
 		return fmt.Errorf("connection pool unhealthy: in_use=%d, idle=%d, wait_count=%d",
@@ -465,18 +414,15 @@ func (h *PostgresHealthChecker) Check(ctx context.Context) error {
 	return nil
 }
 
-// Name 返回检查器名称
 func (h *PostgresHealthChecker) Name() string {
 	return "postgres"
 }
 
-// PostgresMigrator 数据库迁移器
 type PostgresMigrator struct {
 	client *PostgresClient
 	logger *zap.Logger
 }
 
-// NewPostgresMigrator 创建迁移器
 func NewPostgresMigrator(client *PostgresClient, logger *zap.Logger) *PostgresMigrator {
 	return &PostgresMigrator{
 		client: client,
@@ -484,7 +430,6 @@ func NewPostgresMigrator(client *PostgresClient, logger *zap.Logger) *PostgresMi
 	}
 }
 
-// EnsureMigrationTable 确保迁移表存在
 func (m *PostgresMigrator) EnsureMigrationTable(ctx context.Context) error {
 	query := `
         CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -496,7 +441,6 @@ func (m *PostgresMigrator) EnsureMigrationTable(ctx context.Context) error {
 	return err
 }
 
-// IsApplied 检查迁移是否已应用
 func (m *PostgresMigrator) IsApplied(ctx context.Context, version string) (bool, error) {
 	var count int
 	err := m.client.QueryRow(ctx, "SELECT COUNT(*) FROM schema_migrations WHERE version = $1", version).Scan(&count)
@@ -506,13 +450,11 @@ func (m *PostgresMigrator) IsApplied(ctx context.Context, version string) (bool,
 	return count > 0, nil
 }
 
-// MarkApplied 标记迁移已应用
 func (m *PostgresMigrator) MarkApplied(ctx context.Context, version string) error {
 	_, err := m.client.Exec(ctx, "INSERT INTO schema_migrations (version) VALUES ($1)", version)
 	return err
 }
 
-// Migrate 执行迁移
 func (m *PostgresMigrator) Migrate(ctx context.Context, version string, query string) error {
 	applied, err := m.IsApplied(ctx, version)
 	if err != nil {
@@ -542,7 +484,6 @@ func (m *PostgresMigrator) Migrate(ctx context.Context, version string, query st
 	return nil
 }
 
-// truncatePostgresQuery 截断查询字符串
 func truncatePostgresQuery(query string) string {
 	if len(query) > 200 {
 		return query[:200] + "..."
@@ -550,7 +491,6 @@ func truncatePostgresQuery(query string) string {
 	return query
 }
 
-// categorizePostgresError 分类 PostgreSQL 错误（修复 #6：新增）
 func categorizePostgresError(err error) string {
 	if err == nil {
 		return "none"
@@ -578,12 +518,10 @@ func categorizePostgresError(err error) string {
 	}
 }
 
-// contains 检查字符串是否包含子串（不区分大小写）
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) && containsIgnoreCase(s, substr)
 }
 
-// containsIgnoreCase 不区分大小写的子串查找
 func containsIgnoreCase(s, substr string) bool {
 	sLower := toLower(s)
 	substrLower := toLower(substr)
@@ -596,7 +534,6 @@ func containsIgnoreCase(s, substr string) bool {
 	return false
 }
 
-// toLower 转换为小写
 func toLower(s string) string {
 	b := make([]byte, len(s))
 	for i := 0; i < len(s); i++ {

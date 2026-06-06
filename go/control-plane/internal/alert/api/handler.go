@@ -832,7 +832,7 @@ func (h *Handler) ExportAlerts(w http.ResponseWriter, r *http.Request) {
 	}
 	// 记录审计日志
 	if h.auditLogger != nil {
-		h.auditLogger.LogAlertAction(ctx, "export", tenantID, userID, "", "", "")
+		h.auditLogger.LogAlertStatusChange(ctx, "", tenantID, "", "export")
 	}
 	// 设置下载头
 	w.Header().Set("Content-Type", "application/json")
@@ -886,7 +886,7 @@ func (h *Handler) ExportAlertsCSV(w http.ResponseWriter, r *http.Request) {
 	}
 	// 记录审计日志
 	if h.auditLogger != nil {
-		h.auditLogger.LogAlertAction(ctx, "export_csv", tenantID, userID, "", "", "")
+		h.auditLogger.LogAlertStatusChange(ctx, "", tenantID, "", "export_csv")
 	}
 	// 设置下载头
 	w.Header().Set("Content-Type", "text/csv; charset=utf-8")

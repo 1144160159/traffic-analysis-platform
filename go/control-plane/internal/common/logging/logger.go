@@ -1,7 +1,3 @@
-////////////////////////////////////////////////////////////////////////////////
-// FILE PATH: control-plane/internal/common/logging/logger.go
-////////////////////////////////////////////////////////////////////////////////
-
 package logging
 
 import (
@@ -13,21 +9,18 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-// Config 日志配置
 type Config struct {
 	Level       string `env:"LOG_LEVEL" envDefault:"info"`
-	Format      string `env:"LOG_FORMAT" envDefault:"json"`   // json or console
-	Output      string `env:"LOG_OUTPUT" envDefault:"stdout"` // stdout, stderr, or file path
+	Format      string `env:"LOG_FORMAT" envDefault:"json"`
+	Output      string `env:"LOG_OUTPUT" envDefault:"stdout"`
 	Service     string `env:"SERVICE_NAME" envDefault:"unknown"`
 	Version     string `env:"SERVICE_VERSION" envDefault:"unknown"`
 	Environment string `env:"ENVIRONMENT" envDefault:"development"`
 
-	// 采样配置（高频日志采样）
 	SamplingInitial    int `env:"LOG_SAMPLING_INITIAL" envDefault:"100"`
 	SamplingThereafter int `env:"LOG_SAMPLING_THEREAFTER" envDefault:"100"`
 }
 
-// NewLogger 创建新的logger
 func NewLogger(cfg Config) (*zap.Logger, error) {
 	level := parseLevel(cfg.Level)
 
@@ -70,7 +63,6 @@ func NewLogger(cfg Config) (*zap.Logger, error) {
 
 	core := zapcore.NewCore(encoder, writeSyncer, level)
 
-	// 添加采样（避免日志风暴）
 	if cfg.SamplingInitial > 0 {
 		core = zapcore.NewSamplerWithOptions(
 			core,
@@ -80,7 +72,6 @@ func NewLogger(cfg Config) (*zap.Logger, error) {
 		)
 	}
 
-	// 创建logger并添加全局字段
 	logger := zap.New(core,
 		zap.AddCaller(),
 		zap.AddStacktrace(zapcore.ErrorLevel),
@@ -91,19 +82,16 @@ func NewLogger(cfg Config) (*zap.Logger, error) {
 		),
 	)
 
-	// 设置全局logger
 	zap.ReplaceGlobals(logger)
 
 	return logger, nil
 }
 
-// NewDevelopmentLogger 创建开发环境logger
 func NewDevelopmentLogger() *zap.Logger {
 	logger, _ := zap.NewDevelopment()
 	return logger
 }
 
-// NewProductionLogger 创建生产环境logger
 func NewProductionLogger(service, version string) *zap.Logger {
 	cfg := Config{
 		Level:       "info",
@@ -138,27 +126,22 @@ func parseLevel(level string) zapcore.Level {
 	}
 }
 
-// Sync 同步日志缓冲
 func Sync(logger *zap.Logger) {
 	_ = logger.Sync()
 }
 
-// With 添加字段
 func With(logger *zap.Logger, fields ...zap.Field) *zap.Logger {
 	return logger.With(fields...)
 }
 
-// WithError 添加错误字段
 func WithError(logger *zap.Logger, err error) *zap.Logger {
 	return logger.With(zap.Error(err))
 }
 
-// WithTenant 添加租户字段
 func WithTenant(logger *zap.Logger, tenantID string) *zap.Logger {
 	return logger.With(zap.String(FieldTenantID, tenantID))
 }
 
-// WithUser 添加用户字段
 func WithUser(logger *zap.Logger, userID, username string) *zap.Logger {
 	return logger.With(
 		zap.String(FieldUserID, userID),
@@ -166,7 +149,6 @@ func WithUser(logger *zap.Logger, userID, username string) *zap.Logger {
 	)
 }
 
-// WithTrace 添加追踪字段
 func WithTrace(logger *zap.Logger, traceID, spanID string) *zap.Logger {
 	return logger.With(
 		zap.String(FieldTraceID, traceID),
@@ -174,7 +156,6 @@ func WithTrace(logger *zap.Logger, traceID, spanID string) *zap.Logger {
 	)
 }
 
-// WithRequest 添加请求字段
 func WithRequest(logger *zap.Logger, requestID, method, path string) *zap.Logger {
 	return logger.With(
 		zap.String(FieldRequestID, requestID),

@@ -62,9 +62,9 @@ func (m *AuthMiddleware) Authenticate(next http.Handler) http.Handler {
 		}
 
 		// 修复 #34：验证 Token 类型，只允许 Access Token
-		if claims.TokenType != model.TokenTypeAccess {
+		if claims.TokenType != model.JWTTokenAccess {
 			m.logger.Warn("Invalid token type in authentication",
-				zap.String("expected", string(model.TokenTypeAccess)),
+				zap.String("expected", string(model.JWTTokenAccess)),
 				zap.String("got", string(claims.TokenType)),
 				zap.String("user_id", claims.UserID.String()))
 			http.Error(w, "Invalid token type: only access tokens are allowed", http.StatusUnauthorized)

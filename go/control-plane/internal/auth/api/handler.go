@@ -164,7 +164,7 @@ func (h *Handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 
 		// 记录失败审计日志
 		if h.auditLogger != nil {
-			h.auditLogger.LogEvent(r.Context(), &audit.AuditEvent{
+			h.auditLogger.Log(r.Context(), &audit.AuditEvent{
 				EventType:    audit.EventTypeTokenRefresh,
 				Action:       "token_refresh_failed",
 				ResourceType: "session",
@@ -181,7 +181,7 @@ func (h *Handler) RefreshToken(w http.ResponseWriter, r *http.Request) {
 
 	// 记录成功审计日志
 	if h.auditLogger != nil {
-		h.auditLogger.LogEvent(r.Context(), &audit.AuditEvent{
+		h.auditLogger.Log(r.Context(), &audit.AuditEvent{
 			EventType:    audit.EventTypeTokenRefresh,
 			TenantID:     resp.User.TenantID,
 			UserID:       resp.User.UserID,
@@ -214,7 +214,7 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 
 	// 记录登出审计日志
 	if h.auditLogger != nil {
-		h.auditLogger.LogEvent(r.Context(), &audit.AuditEvent{
+		h.auditLogger.Log(r.Context(), &audit.AuditEvent{
 			EventType:    audit.EventTypeLogout,
 			TenantID:     claims.TenantID,
 			UserID:       claims.UserID.String(),
@@ -339,7 +339,7 @@ func (h *Handler) OIDCCallback(w http.ResponseWriter, r *http.Request) {
 			zap.String("description", errorDesc))
 
 		if h.auditLogger != nil {
-			h.auditLogger.LogEvent(r.Context(), &audit.AuditEvent{
+			h.auditLogger.Log(r.Context(), &audit.AuditEvent{
 				EventType:    audit.EventTypeLoginFailed,
 				Action:       "oidc_login_failed",
 				ResourceType: "session",
@@ -384,7 +384,7 @@ func (h *Handler) OIDCCallback(w http.ResponseWriter, r *http.Request) {
 
 		// 记录失败审计
 		if h.auditLogger != nil {
-			h.auditLogger.LogEvent(r.Context(), &audit.AuditEvent{
+			h.auditLogger.Log(r.Context(), &audit.AuditEvent{
 				EventType:    audit.EventTypeLoginFailed,
 				Action:       "oidc_invalid_state",
 				ResourceType: "session",
@@ -417,7 +417,7 @@ func (h *Handler) OIDCCallback(w http.ResponseWriter, r *http.Request) {
 		h.logger.Error("OIDC callback failed", zap.Error(err))
 
 		if h.auditLogger != nil {
-			h.auditLogger.LogEvent(r.Context(), &audit.AuditEvent{
+			h.auditLogger.Log(r.Context(), &audit.AuditEvent{
 				EventType:    audit.EventTypeLoginFailed,
 				TenantID:     tenantID,
 				Action:       "oidc_login_failed",

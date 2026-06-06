@@ -176,7 +176,7 @@ func (s *TokenService) CreateToken(ctx context.Context, req *CreateTokenRequest)
 	}
 
 	// 生成明文 Token 和前缀
-	plainToken, tokenPrefix, err := s.tokenHasher.GenerateAPIKey(tokenType)
+	plainToken, err := s.tokenHasher.GenerateAPIKey(string(tokenType))
 	if err != nil {
 		s.logger.Error("Failed to generate token", zap.Error(err))
 		s.recordAuditFailure(ctx, req, "token_generation_failed")
@@ -217,7 +217,7 @@ func (s *TokenService) CreateToken(ctx context.Context, req *CreateTokenRequest)
 		Description: req.Description,
 		TokenType:   tokenType,
 		TokenHash:   tokenHash,
-		TokenPrefix: tokenPrefix,
+		TokenPrefix: "",
 		Scopes:      model.StringSlice(validScopes),
 		Status:      model.TokenStatusActive,
 		ExpiresAt:   expiresAt,
@@ -259,7 +259,7 @@ func (s *TokenService) CreateToken(ctx context.Context, req *CreateTokenRequest)
 	return &CreateTokenResponse{
 		TokenID:     token.TokenID,
 		Token:       plainToken,
-		TokenPrefix: tokenPrefix,
+		TokenPrefix: "",
 		Name:        token.Name,
 		Scopes:      validScopes,
 		ProbeID:     req.ProbeID,
@@ -466,7 +466,7 @@ func (s *TokenService) UpdateToken(ctx context.Context, tenantID string, tokenID
 			"expires_at":   token.ExpiresAt,
 		}
 
-		s.auditLogger.LogEvent(ctx, &audit.AuditEvent{
+		s.auditLogger.Log(ctx, &audit.AuditEvent{
 			EventType:    audit.EventTypeTokenCreate,
 			TenantID:     tenantID,
 			UserID:       updatedBy.String(),
@@ -543,7 +543,7 @@ func (s *TokenService) DeleteToken(ctx context.Context, tenantID string, tokenID
 	}
 
 	if s.auditLogger != nil {
-		s.auditLogger.LogEvent(ctx, &audit.AuditEvent{
+		s.auditLogger.Log(ctx, &audit.AuditEvent{
 			EventType:    audit.EventTypeTokenRevoke,
 			TenantID:     tenantID,
 			UserID:       deletedBy.String(),
@@ -599,7 +599,7 @@ func (s *TokenService) UpdateTokenScopes(ctx context.Context, tenantID string, t
 			oldScopes = append(oldScopes, scope)
 		}
 
-		s.auditLogger.LogEvent(ctx, &audit.AuditEvent{
+		s.auditLogger.Log(ctx, &audit.AuditEvent{
 			EventType:    audit.EventTypeTokenCreate,
 			TenantID:     tenantID,
 			UserID:       updatedBy.String(),
@@ -693,7 +693,7 @@ func (s *TokenService) RegenerateToken(ctx context.Context, tenantID string, tok
 	}
 
 	if s.auditLogger != nil {
-		s.auditLogger.LogEvent(ctx, &audit.AuditEvent{
+		s.auditLogger.Log(ctx, &audit.AuditEvent{
 			EventType:    audit.EventTypeTokenCreate,
 			TenantID:     tenantID,
 			UserID:       regeneratedBy.String(),
@@ -717,7 +717,7 @@ func (s *TokenService) RegenerateToken(ctx context.Context, tenantID string, tok
 
 // CleanupExpiredTokens 清理过期的 Token
 func (s *TokenService) CleanupExpiredTokens(ctx context.Context) (int64, error) {
-	count, err := s.tokenRepo.CleanupExpiredTokens(ctx, 24*time.Hour)
+	count, err := s.tokenRepo.CleanupExpiredTokens(ctx, time.Now().Add(-24*time.Hour))
 	if err != nil {
 		s.logger.Error("Failed to cleanup expired tokens", zap.Error(err))
 		return 0, err
@@ -774,7 +774,7 @@ func (s *TokenService) recordAuditSuccess(ctx context.Context, req *CreateTokenR
 		return
 	}
 
-	s.auditLogger.LogEvent(ctx, &audit.AuditEvent{
+	s.auditLogger.Log(ctx, &audit.AuditEvent{
 		EventType:    audit.EventTypeTokenCreate,
 		TenantID:     req.TenantID,
 		UserID:       req.CreatedBy.String(),
@@ -795,7 +795,7 @@ func (s *TokenService) recordAuditFailure(ctx context.Context, req *CreateTokenR
 		return
 	}
 
-	s.auditLogger.LogEvent(ctx, &audit.AuditEvent{
+	s.auditLogger.Log(ctx, &audit.AuditEvent{
 		EventType:    audit.EventTypeTokenCreate,
 		TenantID:     req.TenantID,
 		UserID:       req.CreatedBy.String(),
@@ -816,7 +816,7 @@ func (s *TokenService) recordRevokeAuditSuccess(ctx context.Context, tenantID, t
 		return
 	}
 
-	s.auditLogger.LogEvent(ctx, &audit.AuditEvent{
+	s.auditLogger.Log(ctx, &audit.AuditEvent{
 		EventType:    audit.EventTypeTokenRevoke,
 		TenantID:     tenantID,
 		UserID:       revokedBy.String(),
@@ -835,7 +835,7 @@ func (s *TokenService) recordRevokeAuditFailure(ctx context.Context, tenantID, t
 		return
 	}
 
-	s.auditLogger.LogEvent(ctx, &audit.AuditEvent{
+	s.auditLogger.Log(ctx, &audit.AuditEvent{
 		EventType:    audit.EventTypeTokenRevoke,
 		TenantID:     tenantID,
 		UserID:       revokedBy.String(),

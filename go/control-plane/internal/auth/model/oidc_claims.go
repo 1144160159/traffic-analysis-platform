@@ -9,6 +9,7 @@ package model
 import (
 	"strings"
 
+	"time"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
@@ -205,7 +206,7 @@ func (c *OIDCClaims) ToInternalClaims(clientID, defaultTenantID string, roleToPe
 		Email:       c.Email,
 		Roles:       roles,
 		Permissions: permissions,
-		TokenType:   TokenTypeAccess,
+		TokenType:   JWTTokenAccess,
 	}
 }
 
@@ -228,7 +229,7 @@ func (c *OIDCClaims) ValidateStandardClaims(expectedIssuer string) error {
 	}
 
 	// 验证过期时间
-	if c.ExpiresAt != nil && c.ExpiresAt.Before(jwt.NewNumericDate(jwt.TimeFunc()).Time) {
+	if c.ExpiresAt != nil && c.ExpiresAt.Before(jwt.NewNumericDate(time.Now()).Time) {
 		return &OIDCClaimsError{
 			Field:   "exp",
 			Message: "token is expired",

@@ -875,7 +875,7 @@ type InterfaceStatus struct {
 	TxErrors    uint64 `protobuf:"varint,9,opt,name=tx_errors,json=txErrors,proto3" json:"tx_errors,omitempty"`
 	RxCrcErrors uint64 `protobuf:"varint,10,opt,name=rx_crc_errors,json=rxCrcErrors,proto3" json:"rx_crc_errors,omitempty"`
 	RxDropped   uint64 `protobuf:"varint,11,opt,name=rx_dropped,json=rxDropped,proto3" json:"rx_dropped,omitempty"`
-	Collisions  uint64 `protobuf:"varint,12,opt,name=collisions,proto3" json:"collisions,omitempty"`
+	Collisions  uint64 `protobuf:"varint,12,opt,name=collisions,proto3" json:"collisions,omitempty"` //uint64 tx_dropped = 13;
 }
 
 func (x *InterfaceStatus) Reset() {

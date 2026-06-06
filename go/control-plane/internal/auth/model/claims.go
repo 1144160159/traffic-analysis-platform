@@ -9,16 +9,17 @@ package model
 import (
 	"strings"
 
+	"time"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
 
-// TokenType Token 类型
-type TokenType string
+// JWTTokenType JWT Token 类型
+type JWTTokenType string
 
 const (
-	TokenTypeAccess  TokenType = "access"
-	TokenTypeRefresh TokenType = "refresh"
+	JWTTokenAccess  JWTTokenType = "access"
+	JWTTokenRefresh JWTTokenType = "refresh"
 )
 
 // Claims JWT Claims 结构
@@ -36,7 +37,7 @@ type Claims struct {
 	Permissions []string `json:"permissions,omitempty"`
 
 	// Token 类型
-	TokenType TokenType `json:"token_type"`
+	TokenType JWTTokenType `json:"token_type"`
 
 	// 会话信息
 	SessionID string `json:"session_id,omitempty"`
@@ -178,7 +179,7 @@ func (c *Claims) IsExpired() bool {
 	if c.ExpiresAt == nil {
 		return false
 	}
-	return c.ExpiresAt.Time.Before(jwt.NewNumericDate(jwt.TimeFunc()).Time)
+	return c.ExpiresAt.Time.Before(jwt.NewNumericDate(time.Now()).Time)
 }
 
 // =============================================================================
@@ -194,7 +195,7 @@ func NewAccessClaims(userID uuid.UUID, tenantID, username, email string, roles, 
 		Email:       email,
 		Roles:       roles,
 		Permissions: permissions,
-		TokenType:   TokenTypeAccess,
+		TokenType:   JWTTokenAccess,
 		SessionID:   sessionID,
 	}
 }
@@ -204,7 +205,7 @@ func NewRefreshClaims(userID uuid.UUID, tenantID, sessionID string) *Claims {
 	return &Claims{
 		UserID:    userID,
 		TenantID:  tenantID,
-		TokenType: TokenTypeRefresh,
+		TokenType: JWTTokenRefresh,
 		SessionID: sessionID,
 	}
 }

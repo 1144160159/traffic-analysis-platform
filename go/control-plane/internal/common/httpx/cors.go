@@ -6,17 +6,15 @@ import (
 	"strings"
 )
 
-// CORSConfig CORS配置
 type CORSConfig struct {
 	AllowedOrigins   []string
 	AllowedMethods   []string
 	AllowedHeaders   []string
 	ExposedHeaders   []string
 	AllowCredentials bool
-	MaxAge           int // 预检请求缓存时间（秒）
+	MaxAge           int
 }
 
-// DefaultCORSConfig 默认CORS配置
 func DefaultCORSConfig() *CORSConfig {
 	return &CORSConfig{
 		AllowedOrigins:   []string{"*"},
@@ -28,7 +26,6 @@ func DefaultCORSConfig() *CORSConfig {
 	}
 }
 
-// CORS 跨域中间件
 func CORS(cfg *CORSConfig) Middleware {
 	if cfg == nil {
 		cfg = DefaultCORSConfig()
@@ -53,7 +50,6 @@ func CORS(cfg *CORSConfig) Middleware {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			origin := r.Header.Get("Origin")
 
-			// 检查origin是否允许
 			if origin != "" {
 				if allowAll {
 					w.Header().Set("Access-Control-Allow-Origin", origin)
@@ -62,7 +58,6 @@ func CORS(cfg *CORSConfig) Middleware {
 				}
 			}
 
-			// 设置其他CORS头
 			if cfg.AllowCredentials {
 				w.Header().Set("Access-Control-Allow-Credentials", "true")
 			}
@@ -71,7 +66,6 @@ func CORS(cfg *CORSConfig) Middleware {
 				w.Header().Set("Access-Control-Expose-Headers", exposedHeaders)
 			}
 
-			// 处理预检请求
 			if r.Method == http.MethodOptions {
 				w.Header().Set("Access-Control-Allow-Methods", allowedMethods)
 				w.Header().Set("Access-Control-Allow-Headers", allowedHeaders)
@@ -85,7 +79,6 @@ func CORS(cfg *CORSConfig) Middleware {
 	}
 }
 
-// CORSWithConfig 使用配置创建CORS中间件
 func CORSWithConfig(allowedOrigins []string, allowCredentials bool) Middleware {
 	cfg := &CORSConfig{
 		AllowedOrigins:   allowedOrigins,
