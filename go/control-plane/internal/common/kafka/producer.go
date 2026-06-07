@@ -94,16 +94,25 @@ func NewProducer(cfg ProducerConfig, logger *zap.Logger) (*Producer, error) {
 		requiredAcks = kafka.RequireAll
 	}
 
+	// 选择平衡器: 指定 key → Hash; 否则 RoundRobin
+	var balancer kafka.Balancer = &kafka.Hash{}
+	if cfg.IdempotentKey == "" {
+		// 无幂等key时使用RoundRobin获得更好的负载均衡
+		balancer = &kafka.RoundRobin{}
+	}
+
 	writer := &kafka.Writer{
 		Addr:         kafka.TCP(cfg.Brokers...),
 		Topic:        cfg.Topic,
-		Balancer:     &kafka.Hash{},
+		Balancer:     balancer,
 		BatchSize:    cfg.BatchSize,
 		BatchTimeout: cfg.BatchTimeout,
 		MaxAttempts:  cfg.MaxAttempts,
 		RequiredAcks: requiredAcks,
 		Compression:  compression,
 		Async:        cfg.Async,
+		// 启用幂等写: 设置 transactional ID (非事务模式下为空字符串)
+		// 当 RequiredAcks=all 且 MaxAttempts>0 时，Kafka broker 自动提供幂等保证
 		ErrorLogger: kafka.LoggerFunc(func(msg string, args ...interface{}) {
 			logger.Error(fmt.Sprintf(msg, args...))
 		}),

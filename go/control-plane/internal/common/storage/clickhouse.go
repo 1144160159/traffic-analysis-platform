@@ -413,7 +413,16 @@ func (c *ClickHouseClient) QueryRow(ctx context.Context, query string, args ...i
 		return nil, err
 	}
 
-	return conn.QueryRow(ctx, query, args...), nil
+	row := conn.QueryRow(ctx, query, args...)
+	// 检查 row 本身的错误 (与 Query 不同, QueryRow 延迟返回错误)
+	if err := row.Err(); err != nil {
+		c.logger.Error("ClickHouse QueryRow failed",
+			zap.String("query", truncateClickhouseQuery(query)),
+			zap.Error(err))
+		otel.RecordError(ctx, err)
+		return nil, fmt.Errorf("query row failed: %w", err)
+	}
+	return row, nil
 }
 
 func (c *ClickHouseClient) Exec(ctx context.Context, query string, args ...interface{}) error {

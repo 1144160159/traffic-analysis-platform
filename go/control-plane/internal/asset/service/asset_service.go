@@ -260,12 +260,47 @@ func LookupVendor(mac string) string {
 	}
 	oui := mac[:8]
 	vendors := map[string]string{
-		"00:1a:c5": "Cisco Systems", "00:1b:21": "Intel Corporate",
-		"00:0c:29": "VMware, Inc.", "08:00:27": "Oracle VirtualBox",
-		"18:c0:09": "Broadcom Limited", "b8:27:eb": "Raspberry Pi Foundation",
-		"dc:a6:32": "Raspberry Pi Trading", "00:50:56": "VMware ESX",
+		// 网络设备
+		"00:1a:c5": "Cisco Systems", "00:1b:53": "Cisco Systems",
+		"00:0d:bc": "Cisco Systems", "00:1e:49": "Cisco Systems",
+		"00:1a:a1": "Cisco Systems", "00:18:19": "Cisco Systems",
+		"00:1a:30": "Cisco-Linksys", "00:1e:e5": "Cisco-Linksys",
+		"00:1f:6c": "Cisco Systems",
+		"00:e0:4c": "Huawei Technologies", "00:18:82": "Huawei Technologies",
+		"28:6e:d4": "Huawei Technologies", "00:1e:10": "Huawei Technologies",
+		"00:14:6c": "Netgear", "00:1b:2f": "Netgear",
+		"00:1f:33": "Netgear", "00:14:bf": "Cisco-Linksys",
+		"00:0c:41": "Cisco-Linksys", "00:1a:70": "Cisco-Linksys",
+		"00:1f:a7": "Juniper Networks", "00:12:1e": "Juniper Networks",
+		"00:1e:58": "Arista Networks", "00:1b:21": "Intel Corporate",
+		"00:1e:67": "Intel Corporate", "00:1b:77": "Intel Corporate",
+		"d4:ae:52": "Dell Inc.", "f0:1f:af": "Dell Inc.",
+		"00:1e:c9": "Dell Inc.", "b8:ca:3a": "Dell Inc.",
+		"00:1b:78": "Hewlett Packard", "00:1f:29": "Hewlett Packard",
+		"00:17:a4": "Hewlett Packard", "14:58:d0": "Hewlett Packard Enterprise",
+		"00:0c:29": "VMware, Inc.", "00:50:56": "VMware, Inc.",
+		"00:1c:14": "VMware, Inc.", "08:00:27": "Oracle VirtualBox",
+		// 服务器/存储
 		"00:1b:63": "Apple, Inc.", "3c:15:c2": "Apple, Inc.",
-		"00:1e:67": "Intel Corporate", "f0:1f:af": "Dell Inc.",
+		"00:1e:c2": "Apple, Inc.", "00:1f:f3": "Apple, Inc.",
+		"00:1d:4f": "Apple, Inc.", "a4:b1:97": "Apple, Inc.",
+		"b8:27:eb": "Raspberry Pi Foundation", "dc:a6:32": "Raspberry Pi Trading",
+		"18:c0:09": "Broadcom Limited", "00:10:18": "Broadcom",
+		// 网络芯片/设备
+		"00:15:5d": "Microsoft Corporation", "00:1d:d8": "Microsoft Corporation",
+		"00:15:99": "Samsung Electronics", "00:1e:3d": "Samsung Electronics",
+		"00:1e:df": "Sony Corporation", "00:01:4a": "Sony Corporation",
+		"00:1a:80": "Nokia Corporation", "00:1e:3a": "Nokia Corporation",
+		"00:16:3e": "XenSource (Citrix)", "00:1b:fc": "Citrix Systems",
+		"00:1a:4a": "Oracle Corporation", "00:14:4f": "Oracle Corporation",
+		"00:11:43": "IBM Corporation", "00:14:5e": "IBM Corporation",
+		// IoT/嵌入式
+		"00:1e:c0": "Espressif Inc. (ESP32)", "b4:e6:2d": "Amazon Technologies (Alexa)",
+		"00:17:f2": "Apple (HomePod)", "00:04:a3": "Microchip Technology",
+		"78:21:84": "ARRIS Group", "00:1d:cf": "ARRIS Group",
+		// 打印机
+		"00:1b:a9": "Brother Industries", "00:1e:8f": "Canon Inc.",
+		"00:1a:a2": "Xerox Corporation", "00:00:74": "Ricoh Company",
 	}
 	if v, ok := vendors[oui]; ok {
 		return v

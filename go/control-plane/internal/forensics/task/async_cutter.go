@@ -519,7 +519,31 @@ func (a *AsyncCutter) cleanupExpiredTasks() {
 		a.logger.Info("Cleaned up expired tasks", zap.Int64("count", deleted))
 	}
 
-	// TODO: 清理 S3 中的过期文件
+	// 清理 S3 中的过期文件: 查询 completed/failed 状态超过 72h 的任务, 清理关联的 S3 对象
+	if a.s3Client != nil {
+		cutoffTime := time.Now().Add(-72 * time.Hour)
+		// 查询已完成的任务 (复用 List API, 后续可优化为专用 expired query)
+		completedTasks, _, err := a.taskRepo.List(ctx, "", "completed", 50, 0)
+		if err != nil {
+			a.logger.Warn("Failed to list tasks for S3 cleanup", zap.Error(err))
+		} else {
+			cleanedCount := 0
+			for _, task := range completedTasks {
+				if task.CreatedAt.Before(cutoffTime) && task.ResultFileKey != "" {
+					if err := a.s3Client.DeleteObject(ctx, task.ResultFileKey); err != nil {
+						a.logger.Warn("Failed to delete S3 object",
+							zap.String("key", task.ResultFileKey), zap.Error(err))
+						continue
+					}
+					cleanedCount++
+				}
+			}
+			if cleanedCount > 0 {
+				a.logger.Info("Cleaned up expired S3 files",
+					zap.Int("file_count", cleanedCount))
+			}
+		}
+	}
 }
 
 // GetQueueLength 获取队列长度

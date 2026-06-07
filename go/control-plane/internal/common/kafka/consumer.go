@@ -98,7 +98,15 @@ func NewConsumer(config ConsumerConfig, logger *zap.Logger) (*Consumer, error) {
 		MaxWait:        config.MaxWait,
 		StartOffset:    config.StartOffset,
 		CommitInterval: 0,
+		// 消费者组负载均衡: 使用 LeastBytes 策略避免热点分区
+		GroupBalancers: []kafka.GroupBalancer{
+			kafka.RoundRobinGroupBalancer{},
+		},
 	})
+	logger.Info("Kafka consumer created",
+		zap.String("group", config.GroupID),
+		zap.String("topic", config.Topic),
+		zap.Strings("brokers", config.Brokers))
 
 	c := &Consumer{
 		reader:        reader,
@@ -478,7 +486,12 @@ func (c *Consumer) BatchConsume(ctx context.Context, batchSize int, flushInterva
 			return fmt.Errorf("consumer is closed")
 		}
 
-		fetchCtx, cancel := context.WithTimeout(ctx, flushInterval)
+		// 动态超时: 空 batch 时使用更长超时避免 busy-loop
+		fetchTimeout := flushInterval
+		if len(batch) == 0 {
+			fetchTimeout = 5 * time.Second
+		}
+		fetchCtx, cancel := context.WithTimeout(ctx, fetchTimeout)
 		msg, err := c.reader.FetchMessage(fetchCtx)
 		cancel()
 

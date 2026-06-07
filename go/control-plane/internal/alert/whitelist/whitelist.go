@@ -107,21 +107,22 @@ func (r *Repository) MatchesAlert(ctx context.Context, tenantID, srcIP, dstIP, f
 	return false
 }
 
-// MatchesSubnet 检查 IP 是否在白名单子网内
+// MatchesSubnet 检查 IP 是否在白名单子网内 (优化版: 使用 PostgreSQL inet 类型进行服务端过滤)
 func (r *Repository) MatchesSubnet(ctx context.Context, tenantID, ip string) bool {
-	rows, err := r.db.QueryContext(ctx,
-		`SELECT value FROM whitelist WHERE tenant_id=$1 AND type='subnet' AND (expires_at IS NULL OR expires_at > now())`, tenantID)
-	if err != nil { return false }
-	defer rows.Close()
 	parsedIP := net.ParseIP(ip)
-	if parsedIP == nil { return false }
-	for rows.Next() {
-		var subnet string
-		rows.Scan(&subnet)
-		_, cidr, err := net.ParseCIDR(subnet)
-		if err == nil && cidr.Contains(parsedIP) { return true }
+	if parsedIP == nil {
+		return false
 	}
-	return false
+	// 使用 PostgreSQL 的 inet << 操作符进行服务端子网匹配，避免全表扫描后客户端过滤
+	var exists bool
+	err := r.db.QueryRowContext(ctx,
+		`SELECT EXISTS(SELECT 1 FROM whitelist WHERE tenant_id=$1 AND type='subnet'
+		 AND (expires_at IS NULL OR expires_at > now())
+		 AND $2::inet <<= value::inet)`, tenantID, ip).Scan(&exists)
+	if err != nil {
+		return false
+	}
+	return exists
 }
 
 func (e *Entry) ToJSON() string {

@@ -284,7 +284,7 @@ func (i *Interceptor) handleAuthError(ctx context.Context, tenantID, probeID, me
 
 	otel.RecordError(ctx, err)
 
-	return nil, status.Error(codes.Code(err.HTTPStatus()/100), err.Message)
+	return nil, status.Error(grpcCodeFromHTTPStatus(err.HTTPStatus()), err.Message)
 }
 
 func (i *Interceptor) checkProbePermissions(tokenInfo *TokenInfo, method string) *errors.AppError {
@@ -548,4 +548,33 @@ func isValidTenantID(tenantID string) bool {
 	}
 
 	return true
+}
+
+// grpcCodeFromHTTPStatus maps HTTP status codes to gRPC status codes correctly.
+// This replaces the incorrect codes.Code(httpStatus/100) pattern.
+func grpcCodeFromHTTPStatus(httpStatus int) codes.Code {
+	switch {
+	case httpStatus == 400:
+		return codes.InvalidArgument
+	case httpStatus == 401:
+		return codes.Unauthenticated
+	case httpStatus == 403:
+		return codes.PermissionDenied
+	case httpStatus == 404:
+		return codes.NotFound
+	case httpStatus == 409:
+		return codes.AlreadyExists
+	case httpStatus == 429:
+		return codes.ResourceExhausted
+	case httpStatus >= 500 && httpStatus < 600:
+		if httpStatus == 503 {
+			return codes.Unavailable
+		}
+		if httpStatus == 504 {
+			return codes.DeadlineExceeded
+		}
+		return codes.Internal
+	default:
+		return codes.Unknown
+	}
 }

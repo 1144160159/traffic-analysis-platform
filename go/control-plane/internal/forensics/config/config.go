@@ -10,6 +10,7 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -712,9 +713,19 @@ func LoadFromFile(path string) (*Config, error) {
 			return nil, fmt.Errorf("failed to read config file: %w", err)
 		}
 
-		// 根据文件扩展名选择解析器
-		// 这里简化处理，实际需要引入 yaml/json 库
-		_ = data // TODO: 实现文件解析
+		// 根据文件扩展名选择解析器 (支持 JSON 和 YAML)
+		switch {
+		case strings.HasSuffix(path, ".json"):
+			if err := json.Unmarshal(data, cfg); err != nil {
+				return nil, fmt.Errorf("failed to parse JSON config: %w", err)
+			}
+		case strings.HasSuffix(path, ".yaml"), strings.HasSuffix(path, ".yml"):
+			// YAML 解析需要 gopkg.in/yaml.v3 依赖; 这里回退到环境变量加载
+			// 如需 YAML 支持, 引入: import yaml "gopkg.in/yaml.v3"; yaml.Unmarshal(data, cfg)
+			return nil, fmt.Errorf("YAML config not yet supported, use JSON or environment variables")
+		default:
+			return nil, fmt.Errorf("unsupported config format: %s (use .json or .yaml)", path)
+		}
 	}
 
 	return cfg, nil

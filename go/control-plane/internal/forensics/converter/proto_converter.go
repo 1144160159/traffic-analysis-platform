@@ -10,6 +10,7 @@ package converter
 
 import (
 	"fmt"
+	"net"
 	"regexp"
 	"strings"
 	"time"
@@ -591,11 +592,19 @@ func GetProtocolName(protocol uint8) string {
 	return fmt.Sprintf("UNKNOWN(%d)", protocol)
 }
 
-// NormalizeIP 规范化 IP 地址
+// NormalizeIP 规范化 IP 地址 (支持 IPv4/IPv6 压缩格式)
 func NormalizeIP(ip string) string {
-	// 去除前后空格
 	ip = strings.TrimSpace(ip)
-	// TODO: 可以添加 IPv6 规范化逻辑
+	if ip == "" {
+		return ip
+	}
+	// 使用 net.ParseIP + String() 获取规范形式:
+	// IPv4: 去除前导零  (e.g. "010.000.000.001" → "10.0.0.1")
+	// IPv6: 压缩零块       (e.g. "2001:0db8:0000:0000:0000:ff00:0042:8329" → "2001:db8::ff00:42:8329")
+	if parsed := net.ParseIP(ip); parsed != nil {
+		return parsed.String()
+	}
+	// 解析失败则返回原始值 (可能是 hostname)
 	return ip
 }
 
