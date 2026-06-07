@@ -168,7 +168,7 @@ func (c *ClickHouseConfig) GetPassword() string {
 type OpenSearchConfig struct {
 	Addresses []string `env:"OPENSEARCH_ADDRS" envSeparator:"," envDefault:"http://localhost:9200"`
 	Username  string   `env:"OPENSEARCH_USERNAME" envDefault:"admin"`
-	Password  string   `env:"OPENSEARCH_PASSWORD" envDefault:"admin"`
+	Password  string   `env:"OPENSEARCH_PASSWORD" envDefault:""` // 生产环境必须通过环境变量注入
 	Index     string   `env:"OPENSEARCH_INDEX" envDefault:"traffic-alerts"`
 }
 
@@ -214,5 +214,22 @@ func Load() (*Config, error) {
 		cfg.OpenSearch.Addresses = []string{"http://localhost:9200"}
 	}
 
+	// 安全验证：生产环境禁止使用通配符 CORS 和弱凭据
+	cfg.validate()
+
 	return cfg, nil
+}
+
+// validate 安全配置检查
+func (c *Config) validate() {
+	if c.API.AllowedOrigins[0] == "*" && c.Kafka.Brokers[0] != "localhost:9092" {
+		// 生产环境检测：当 Kafka broker 不是 localhost 时发出警告
+		println("⚠ SECURITY WARNING: CORS AllowedOrigins is '*', this is unsafe for production. Set API_ALLOWED_ORIGINS to your domain.")
+	}
+	if c.Auth.JWTSecretKey == "your-256-bit-secret-key-here" {
+		println("⚠ SECURITY WARNING: Using default JWT secret key. Set JWT_SECRET_KEY environment variable.")
+	}
+	if c.OpenSearch.Password == "" {
+		println("⚠ SECURITY WARNING: OpenSearch password is empty. Set OPENSEARCH_PASSWORD environment variable.")
+	}
 }

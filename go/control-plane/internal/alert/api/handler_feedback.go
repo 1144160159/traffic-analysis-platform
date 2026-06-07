@@ -7,10 +7,12 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/service"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/whitelist"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/errors"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/httpx"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/kafka"
@@ -23,11 +25,12 @@ import (
 
 // FeedbackHandler 告警反馈处理器 — TP/FP 反馈业务闭环
 type FeedbackHandler struct {
-	alertService  *service.AlertService
-	kafkaProducer *kafka.Producer
-	auditLogger   interface{}
-	repo          *FeedbackRepository // 反馈持久化仓库（ClickHouse）
-	logger        *zap.Logger
+	alertService     *service.AlertService
+	kafkaProducer    *kafka.Producer
+	auditLogger      interface{}
+	repo             *FeedbackRepository   // 反馈持久化仓库（ClickHouse）
+	whitelistRepo    *whitelist.Repository  // 白名单仓库（PostgreSQL）
+	logger           *zap.Logger
 }
 
 // NewFeedbackHandler 创建反馈处理器
@@ -36,6 +39,7 @@ func NewFeedbackHandler(
 	kafkaProducer *kafka.Producer,
 	auditLogger interface{},
 	repo *FeedbackRepository,
+	whitelistRepo *whitelist.Repository,
 	logger *zap.Logger,
 ) *FeedbackHandler {
 	return &FeedbackHandler{
@@ -43,6 +47,7 @@ func NewFeedbackHandler(
 		kafkaProducer: kafkaProducer,
 		auditLogger:   auditLogger,
 		repo:          repo,
+		whitelistRepo: whitelistRepo,
 		logger:        logger,
 	}
 }
@@ -248,13 +253,19 @@ func (h *FeedbackHandler) GetFeedback(w http.ResponseWriter, r *http.Request) {
 	logger.Debug("Get alert feedback",
 		zap.String("alert_id", alertID),
 		zap.String("tenant_id", tenantID))
-	// TODO: 从数据库查询反馈历史
-	// 需要创建 feedback 表和对应的 repository
-	feedbacks := []interface{}{}
+	// 从 ClickHouse 查询反馈历史
+	var feedbacks interface{} = []interface{}{}
+	if h.repo != nil {
+		records, err := h.repo.GetByAlertID(ctx, tenantID, alertID)
+		if err == nil && records != nil {
+			feedbacks = records
+		} else if err != nil {
+			logger.Warn("Failed to query feedback history", zap.Error(err))
+		}
+	}
 	httpx.JSONSuccess(w, ctx, map[string]interface{}{
 		"alert_id":  alertID,
 		"feedbacks": feedbacks,
-		"count":     len(feedbacks),
 	})
 }
 
@@ -319,11 +330,6 @@ func (h *FeedbackHandler) publishFeedback(ctx context.Context, feedback *AlertFe
 
 // addToWhitelist 添加到白名单
 func (h *FeedbackHandler) addToWhitelist(ctx context.Context, tenantID, alertID, reasonCode string, alert *service.AlertDetailDTO) error {
-	// TODO: 实现白名单添加逻辑
-	// 1. 获取告警详情（已传入）
-	// 2. 提取五元组/特征
-	// 3. 插入白名单表
-	// 4. 发送白名单更新事件
 	logger := logging.L(ctx)
 	logger.Info("Adding alert to whitelist",
 		zap.String("tenant_id", tenantID),
@@ -332,13 +338,52 @@ func (h *FeedbackHandler) addToWhitelist(ctx context.Context, tenantID, alertID,
 		zap.String("src_ip", alert.SrcIP),
 		zap.String("dst_ip", alert.DstIP),
 		zap.String("alert_type", alert.AlertType))
-	// 白名单规则可以基于：
-	// - 源IP
-	// - 目的IP
-	// - 源IP + 目的IP 组合
-	// - 源IP + 目的端口 组合
-	// - 完整五元组
-	// - 告警类型 + IP组合
+
+	if h.whitelistRepo == nil {
+		logger.Warn("Whitelist repository not available, skipping whitelist add")
+		return nil
+	}
+
+	// 根据 FP reason code 选择白名单粒度
+	whitelistType := "ip_pair" // 默认：源IP+目的IP 组合
+	value := fmt.Sprintf("%s,%s", alert.SrcIP, alert.DstIP)
+
+	switch reasonCode {
+	case "normal_behavior":
+		// 源IP + 目的IP 组合 (业务正常通信)
+		whitelistType = "ip_pair"
+		value = fmt.Sprintf("%s,%s", alert.SrcIP, alert.DstIP)
+	case "known_service":
+		// 目的IP + 端口 (已知服务)
+		whitelistType = "ip_port"
+		value = fmt.Sprintf("%s,%d", alert.DstIP, alert.DstPort)
+	case "internal_test":
+		// 源IP 白名单 (内部测试)
+		whitelistType = "ip"
+		value = alert.SrcIP
+	case "false_signature":
+		// 告警类型 + 源IP (签名误报)
+		whitelistType = "alert_ip"
+		value = fmt.Sprintf("%s,%s", alert.AlertType, alert.SrcIP)
+	}
+
+	entry := &whitelist.Entry{
+		TenantID:    tenantID,
+		Type:        whitelistType,
+		Value:       value,
+		Description: fmt.Sprintf("Auto-whitelist from FP feedback: %s (alert_id=%s)", reasonCode, alertID),
+		CreatedBy:   "feedback-system",
+		ExpiresAt:   func() *time.Time { t := time.Now().Add(90 * 24 * time.Hour); return &t }(), // 90 天自动过期
+	}
+
+	if err := h.whitelistRepo.Create(ctx, entry); err != nil {
+		return fmt.Errorf("failed to create whitelist entry: %w", err)
+	}
+
+	logger.Info("Alert added to whitelist",
+		zap.String("alert_id", alertID),
+		zap.String("whitelist_type", whitelistType),
+		zap.String("value", value))
 	return nil
 }
 

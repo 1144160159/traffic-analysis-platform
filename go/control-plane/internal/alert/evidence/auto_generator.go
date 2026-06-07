@@ -3,6 +3,7 @@ package evidence
 import (
 	"context"
 	"crypto/md5"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -193,30 +194,17 @@ func (g *AutoEvidenceGenerator) insertEvidence(ctx context.Context, ev *Evidence
 	)
 }
 
+// toJSON safely serializes a value to JSON string using encoding/json.
+// This replaces the previous hand-rolled implementation that produced non-standard JSON.
 func toJSON(v interface{}) string {
 	if v == nil {
 		return "{}"
 	}
-	// Use fmt.Sprintf for simple maps
-	if m, ok := v.(map[string]interface{}); ok {
-		parts := make([]string, 0, len(m))
-		for k, val := range m {
-			parts = append(parts, fmt.Sprintf("\"%s\":\"%v\"", k, val))
-		}
-		return "{" + fmt.Sprintf("%s", join(parts, ",")) + "}"
+	b, err := json.Marshal(v)
+	if err != nil {
+		return "{}"
 	}
-	return "{}"
-}
-
-func join(parts []string, sep string) string {
-	if len(parts) == 0 {
-		return ""
-	}
-	result := parts[0]
-	for i := 1; i < len(parts); i++ {
-		result += sep + parts[i]
-	}
-	return result
+	return string(b)
 }
 
 // GenerateFingerprint 生成去重指纹 (供外部使用)

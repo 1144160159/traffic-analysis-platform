@@ -58,7 +58,7 @@ func NewHandlerWithFeedback(
 		logger:       logger,
 	}
 	// 初始化 FeedbackHandler
-	h.feedbackHandler = NewFeedbackHandler(alertService, kafkaProducer, auditLogger, nil, logger)
+	h.feedbackHandler = NewFeedbackHandler(alertService, kafkaProducer, auditLogger, nil, nil, logger)
 	return h
 }
 

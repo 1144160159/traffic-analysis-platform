@@ -22,6 +22,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/api"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/whitelist"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/arkime"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/audit"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/config"
@@ -254,6 +255,17 @@ func main() {
 		apiHandler = api.NewHandler(alertService, alertAuditLogger, logger)
 	}
 
+	// 初始化反馈持久化 (ClickHouse) — TP/FP 闭环
+	if chClient != nil {
+		feedbackRepo := api.NewFeedbackRepository(chClient, logger)
+		if err := feedbackRepo.InitSchema(context.Background()); err != nil {
+			logger.Warn("Failed to init feedback schema", zap.Error(err))
+		} else {
+			apiHandler.SetFeedbackRepo(feedbackRepo)
+			logger.Info("Feedback repository initialized (TP/FP persistence + stats)")
+		}
+	}
+
 	// ==================== 初始化 Kafka Consumer ====================
 	// 使用带 Evidence 的构造函数
 	kafkaConsumer := consumer.NewConsumerWithEvidence(
@@ -295,7 +307,7 @@ func main() {
 	var authMiddleware *middleware.AuthMiddleware
 	if cfg.Auth.Enabled && db != nil {
 		// 初始化 User Repository
-		userRepo := authRepo.NewUserRepository(db)
+		userRepo := authRepo.NewUserRepository(db, logger)
 
 		// 初始化 JWT Service（使用正确的配置类型）
 		jwtConfig := jwt.Config{
@@ -305,10 +317,14 @@ func main() {
 			RefreshTokenTTL: 7 * 24 * time.Hour,
 			Issuer:          "traffic-auth-service",
 		}
-		jwtService := jwt.NewService(jwtConfig, rdb, logger)
+		tokenRepo := authRepo.NewTokenRepository(db, logger)
+			jwtService, jwtErr := jwt.NewService(jwtConfig, storage.NewRedisClientFromExisting(rdb, logger), tokenRepo, logger)
+			if jwtErr != nil {
+				logger.Fatal("Failed to init JWT service", zap.Error(jwtErr))
+			}
 
 		// 初始化 Auth Service
-		authSvc := authService.NewAuthService(userRepo, jwtService, nil, nil, logger)
+		authSvc := authService.NewAuthService(userRepo, jwtService, nil, nil, logger, nil)
 
 		// 初始化 Auth Middleware
 		authMiddleware = middleware.NewAuthMiddleware(authSvc, logger)
@@ -322,12 +338,12 @@ func main() {
 
 	// 应用中间件链
 	apiRouter.Use(
-		httpx.Recovery(logger),
-		httpx.RequestID(),
-		httpx.Logging(logger),
-		httpx.CORS(httpx.DefaultCORSConfig()),
-		httpx.Metrics("alert-service"),
-		httpx.TenantExtractor(),
+		mux.MiddlewareFunc(httpx.Recovery(logger)),
+		mux.MiddlewareFunc(httpx.RequestID()),
+		mux.MiddlewareFunc(httpx.Logging(logger)),
+		mux.MiddlewareFunc(httpx.CORS(httpx.DefaultCORSConfig())),
+		mux.MiddlewareFunc(httpx.Metrics("alert-service")),
+		mux.MiddlewareFunc(httpx.TenantExtractor()),
 	)
 
 	// 添加 Auth 中间件（如果可用）
@@ -337,6 +353,27 @@ func main() {
 
 	// 注册 API 路由
 	apiHandler.RegisterRoutes(apiRouter)
+
+	// Dashboard API — 实时统计 (Web UI 大屏)
+	dashboardHandler := api.NewDashboardHandler(chClient, logger)
+	apiRouter.HandleFunc("/dashboard/stats", dashboardHandler.GetStats).Methods("GET")
+	apiRouter.HandleFunc("/dashboard/alerts/trend", dashboardHandler.GetAlertTrend).Methods("GET")
+	apiRouter.HandleFunc("/dashboard/attack-phases", dashboardHandler.GetAttackPhases).Methods("GET")
+	apiRouter.HandleFunc("/dashboard/top-ips/{type}", dashboardHandler.GetTopIPs).Methods("GET")
+	apiRouter.HandleFunc("/dashboard/encrypted/trend", dashboardHandler.GetEncryptedTrend).Methods("GET")
+	logger.Info("Dashboard API registered (stats/trend/phases/top-ips/encrypted)")
+
+		// 白名单管理 (PostgreSQL) — Web UI /api/v1/whitelist
+		if db != nil {
+			whitelistRepo := whitelist.NewRepository(db, logger)
+			if err := whitelistRepo.InitSchema(context.Background()); err != nil {
+				logger.Warn("Failed to init whitelist schema", zap.Error(err))
+			} else {
+				whitelistHandler := whitelist.NewHandler(whitelistRepo, logger)
+				whitelistHandler.RegisterRoutes(apiRouter)
+				logger.Info("Whitelist management initialized (IP/domain/fingerprint/subnet)")
+			}
+		}
 
 	// ==================== HTTP Server ====================
 	srv := &http.Server{

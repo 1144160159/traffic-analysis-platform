@@ -449,8 +449,8 @@ func (e *RuleValidationError) Error() string {
 	return "validation error: " + strings.Join(e.Errors, "; ")
 }
 
-// 规则名称正则：允许字母、数字、下划线、连字符、空格、中文
-var ruleNameRegex = regexp.MustCompile(`^[a-zA-Z0-9_\-\s\u4e00-\u9fa5]+$`)
+// rule name regex: allows Unicode letters, digits, underscores, hyphens, spaces
+var ruleNameRegex = regexp.MustCompile(`^[\p{L}\p{N}_\-\s]+$`)
 
 // isValidRuleName 检查规则名称是否有效
 func isValidRuleName(name string) bool {

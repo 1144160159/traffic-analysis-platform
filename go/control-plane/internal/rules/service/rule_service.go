@@ -1744,9 +1744,26 @@ func (s *RuleService) deleteByPattern(ctx context.Context, pattern string) error
 // =============================================================================
 
 // isRuleInActiveDeployment 检查规则是否在活跃部署中
+// 活跃部署定义: 规则 enabled=true 且已发布到 Kafka (有活跃版本)
 func (s *RuleService) isRuleInActiveDeployment(ctx context.Context, ruleID string) (bool, error) {
-	// TODO: 实现部署检查
-	// 需要查询 deployments 表
+	rule, err := s.repo.GetByID(ctx, ruleID)
+	if err != nil {
+		return false, fmt.Errorf("isRuleInActiveDeployment: get rule: %w", err)
+	}
+	// 规则已启用且未被软删除 = 活跃部署
+	if rule.Enabled && rule.Status != "deleted" {
+		return true, nil
+	}
+	// 额外检查: 是否有活跃版本记录
+	versions, err := s.repo.GetVersions(ctx, ruleID)
+	if err != nil {
+		return false, nil // 版本查询失败不阻塞
+	}
+	for _, v := range versions {
+		if v.Status == "active" {
+			return true, nil
+		}
+	}
 	return false, nil
 }
 

@@ -65,6 +65,9 @@ const (
 	ErrCodeResourceLocked   ErrorCode = "RES_4003"
 	ErrCodeResourceDeleted  ErrorCode = "RES_4004"
 	ErrCodeConcurrentModify ErrorCode = "RES_4005"
+	ErrCodeGraphNodeNotFound ErrorCode = "RES_4006"
+	ErrCodeGraphEdgeNotFound ErrorCode = "RES_4007"
+	ErrCodeSpaceNotFound     ErrorCode = "RES_4008"
 
 	// 系统内部错误 (5xxx)
 	ErrCodeInternal           ErrorCode = "SYS_5001"
@@ -77,15 +80,20 @@ const (
 	// 外部依赖错误 (6xxx)
 	ErrCodeKafkaError         ErrorCode = "EXT_6001"
 	ErrCodeClickHouseError    ErrorCode = "EXT_6002"
-	ErrCodeOpenSearchError    ErrorCode = "EXT_6003"
-	ErrCodeMinIOError         ErrorCode = "EXT_6004"
+	ErrCodeNebulaGraphError   ErrorCode = "EXT_6003"
+	ErrCodeOpenSearchError    ErrorCode = "EXT_6004"
 	ErrCodeRedisError         ErrorCode = "EXT_6005"
-	ErrCodePostgresError      ErrorCode = "EXT_6006"
-	ErrCodeOIDCError          ErrorCode = "EXT_6007"
-	ErrCodeArkimeError        ErrorCode = "EXT_6008"
-	ErrCodeServiceUnavailable ErrorCode = "EXT_6009"
-	ErrCodeUserNotActive   ErrorCode = "AUTH_1011"
-	ErrCodeNotImplemented   ErrorCode = "SYS_5001"
+	ErrCodeMinIOError         ErrorCode = "EXT_6006"
+	ErrCodePostgresError      ErrorCode = "EXT_6007"
+	ErrCodeOIDCError          ErrorCode = "EXT_6008"
+	ErrCodeArkimeError        ErrorCode = "EXT_6009"
+	ErrCodeServiceUnavailable ErrorCode = "EXT_6010"
+
+	// 认证授权补充
+	ErrCodeUserNotActive ErrorCode = "AUTH_1011"
+
+	// 系统内部补充
+	ErrCodeNotImplemented ErrorCode = "SYS_5007"
 )
 
 // String 返回错误码字符串
@@ -108,20 +116,25 @@ func (c ErrorCode) HTTPStatus() int {
 			return 409
 		}
 		return 404
-	case c >= "RES_4001" && c <= "RES_4005":
-		if c == ErrCodeResourceNotFound {
+	case c == "AUTH_1011":
+		return 401
+	case c >= "RES_4001" && c <= "RES_4008":
+		if c == ErrCodeResourceNotFound || c == ErrCodeGraphNodeNotFound || c == ErrCodeGraphEdgeNotFound || c == ErrCodeSpaceNotFound {
 			return 404
 		}
 		if c == ErrCodeResourceExists || c == ErrCodeConcurrentModify {
 			return 409
 		}
 		return 400
-	case c >= "SYS_5001" && c <= "SYS_5006":
+	case c >= "SYS_5001" && c <= "SYS_5007":
 		if c == ErrCodeTimeout {
 			return 504
 		}
+		if c == ErrCodeNotImplemented {
+			return 501
+		}
 		return 500
-	case c >= "EXT_6001" && c <= "EXT_6009":
+	case c >= "EXT_6001" && c <= "EXT_6010":
 		if c == ErrCodeServiceUnavailable {
 			return 503
 		}
@@ -137,10 +150,12 @@ func (c ErrorCode) IsRetryable() bool {
 	case ErrCodeTimeout,
 		ErrCodeKafkaError,
 		ErrCodeClickHouseError,
+		ErrCodeNebulaGraphError,
 		ErrCodeOpenSearchError,
 		ErrCodeMinIOError,
 		ErrCodeRedisError,
 		ErrCodePostgresError,
+		ErrCodeOIDCError,
 		ErrCodeServiceUnavailable:
 		return true
 	default:
@@ -540,6 +555,7 @@ func GetAllErrorCodes() []ErrorCode {
 		ErrCodeSessionExpired,
 		ErrCodeMTLSRequired,
 		ErrCodeQuotaExceeded,
+		ErrCodeUserNotActive,
 
 		// 参数验证
 		ErrCodeInvalidRequest,
@@ -568,6 +584,9 @@ func GetAllErrorCodes() []ErrorCode {
 		ErrCodeResourceLocked,
 		ErrCodeResourceDeleted,
 		ErrCodeConcurrentModify,
+		ErrCodeGraphNodeNotFound,
+		ErrCodeGraphEdgeNotFound,
+		ErrCodeSpaceNotFound,
 
 		// 系统内部
 		ErrCodeInternal,
@@ -576,10 +595,12 @@ func GetAllErrorCodes() []ErrorCode {
 		ErrCodeSerializationError,
 		ErrCodeConfigError,
 		ErrCodeTimeout,
+		ErrCodeNotImplemented,
 
 		// 外部依赖
 		ErrCodeKafkaError,
 		ErrCodeClickHouseError,
+		ErrCodeNebulaGraphError,
 		ErrCodeOpenSearchError,
 		ErrCodeMinIOError,
 		ErrCodeRedisError,

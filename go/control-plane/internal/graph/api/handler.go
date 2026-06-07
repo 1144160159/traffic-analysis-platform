@@ -1396,17 +1396,35 @@ func (h *Handler) WarmupCache(w http.ResponseWriter, r *http.Request) {
 
 	// 启动异步预热
 	go func() {
-		_ = context.Background()
-		err := fmt.Errorf("WarmupCache not implemented") // TODO: h.cache.WarmupCache(warmupCtx, tenantID, req.IPs, req.Depth, startTime, endTime, req.RunID)
-		if err != nil {
-			h.logger.Error("Cache warmup failed",
-				zap.String("tenant_id", tenantID),
-				zap.Error(err))
-		} else {
-			h.logger.Info("Cache warmup completed",
-				zap.String("tenant_id", tenantID),
-				zap.Int("ip_count", len(req.IPs)))
+		warmupCtx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		defer cancel()
+
+		warmedCount := 0
+		for _, ip := range req.IPs {
+			select {
+			case <-warmupCtx.Done():
+				h.logger.Warn("Cache warmup cancelled",
+					zap.String("tenant_id", tenantID),
+					zap.Int("warmed", warmedCount),
+					zap.Int("total", len(req.IPs)))
+				return
+			default:
+			}
+			if _, err := h.graphQuery.Explore(warmupCtx, tenantID, ip, req.Depth,
+				time.Now().Add(-24*time.Hour).UnixMilli(), time.Now().UnixMilli(), req.RunID); err != nil {
+				h.logger.Warn("Warmup explore failed for IP",
+					zap.String("tenant_id", tenantID),
+					zap.String("ip", ip),
+					zap.Error(err))
+			} else {
+				warmedCount++
+			}
 		}
+
+		h.logger.Info("Cache warmup completed",
+			zap.String("tenant_id", tenantID),
+			zap.Int("warmed", warmedCount),
+			zap.Int("total", len(req.IPs)))
 	}()
 
 	errors.WriteSuccess(w, map[string]interface{}{

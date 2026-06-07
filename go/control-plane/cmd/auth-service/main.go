@@ -34,6 +34,7 @@ import (
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/audit"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/httpx"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/logging"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/otel"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/storage"
 )
 
@@ -297,11 +298,34 @@ func initLogger(cfg *config.Config) (*zap.Logger, error) {
 	return logger, nil
 }
 
-// initOpenTelemetry 初始化 OpenTelemetry
+// initOpenTelemetry 初始化 OpenTelemetry 分布式追踪
 func initOpenTelemetry(cfg *config.Config, logger *zap.Logger) (func(), error) {
-	// TODO: otel.InitTracer API needs update
-	logger.Info("OpenTelemetry tracer init skipped (API pending)")
-	return func() {}, nil
+	otelCfg := otel.TracerConfig{
+		ServiceName:    cfg.OTEL.ServiceName,
+		ServiceVersion: cfg.OTEL.ServiceVersion,
+		Environment:    cfg.OTEL.Environment,
+		Endpoint:       cfg.OTEL.Endpoint,
+		SampleRate:     cfg.OTEL.SampleRate,
+		Enabled:        cfg.OTEL.Enabled,
+	}
+
+	provider, err := otel.NewTracerProvider(otelCfg)
+	if err != nil {
+		return func() {}, fmt.Errorf("failed to create tracer provider: %w", err)
+	}
+
+	logger.Info("OpenTelemetry initialized",
+		zap.String("service", otelCfg.ServiceName),
+		zap.String("endpoint", otelCfg.Endpoint),
+		zap.Float64("sample_rate", otelCfg.SampleRate))
+
+	return func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := provider.Shutdown(ctx); err != nil {
+			logger.Warn("Failed to shutdown tracer provider", zap.Error(err))
+		}
+	}, nil
 }
 
 // initStorage 初始化存储层

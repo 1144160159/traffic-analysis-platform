@@ -22,12 +22,25 @@ type EvidenceGenerator interface {
 	GenerateForAlert(ctx context.Context, alert *persistence.Alert) ([]string, error)
 }
 
-// AlertConsumer 从 Kafka 消费告警，去重后批量写入 ClickHouse + 自动生成证据
+// ThreatIntelEnricher 威胁情报富化接口
+type ThreatIntelEnricher interface {
+	EnrichAlert(ctx context.Context, srcIP, dstIP string) *ThreatEnrichment
+}
+
+// ThreatEnrichment 威胁情报富化结果
+type ThreatEnrichment struct {
+	IPs       map[string]string `json:"ips"`
+	Tags      []string          `json:"tags"`
+	RiskScore float32           `json:"risk_score"`
+}
+
+// AlertConsumer 从 Kafka 消费告警，去重后批量写入 ClickHouse + 自动生成证据 + 威胁情报
 type AlertConsumer struct {
 	consumer      *kafka.Consumer
 	repo          *repository.AlertRepository
 	dedup         *dedup.RedisDedup
-	evidenceGen   EvidenceGenerator // 自动证据生成器
+	evidenceGen   EvidenceGenerator    // 自动证据生成器
+	tiEnricher    ThreatIntelEnricher  // 威胁情报富化器
 	logger        *zap.Logger
 	topic         string
 	groupID       string
@@ -59,6 +72,11 @@ func NewAlertConsumer(
 // SetEvidenceGenerator 设置证据生成器（由 main.go 在初始化后注入）
 func (c *AlertConsumer) SetEvidenceGenerator(gen EvidenceGenerator) {
 	c.evidenceGen = gen
+}
+
+// SetThreatIntelEnricher 设置威胁情报富化器
+func (c *AlertConsumer) SetThreatIntelEnricher(ti ThreatIntelEnricher) {
+	c.tiEnricher = ti
 }
 
 // Start 启动消费循环
@@ -114,6 +132,20 @@ func (c *AlertConsumer) handleBatch(ctx context.Context, messages []*kafka.Recei
 
 	if len(alerts) == 0 {
 		return nil
+	}
+
+	// 威胁情报富化（业务闭环：Alert + 已知恶意 IP 标记）
+	if c.tiEnricher != nil {
+		for _, alert := range alerts {
+			enrich := c.tiEnricher.EnrichAlert(ctx, alert.SrcIP, alert.DstIP)
+			if enrich != nil && enrich.RiskScore > 0 {
+				alert.Labels = append(alert.Labels, enrich.Tags...)
+				c.logger.Debug("Threat intel enriched alert",
+					zap.String("alert_id", alert.AlertID),
+					zap.Float32("risk_score", enrich.RiskScore),
+					zap.Strings("tags", enrich.Tags))
+			}
+		}
 	}
 
 	// 自动生成证据（业务闭环：Alert → Evidence 自动关联）
