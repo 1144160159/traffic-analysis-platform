@@ -186,9 +186,16 @@ commit_batch() {
   local message="$1"
   shift
   local paths=("$@")
+  local pathspec_file="$STATE_DIR/pathspec.$$"
 
   git reset -q
-  git add --ignore-errors -- "${paths[@]}" "${GLOBAL_EXCLUDES[@]}"
+  git ls-files -z -m -d -o --exclude-standard -- "${paths[@]}" "${GLOBAL_EXCLUDES[@]}" > "$pathspec_file"
+  if [[ ! -s "$pathspec_file" ]]; then
+    rm -f "$pathspec_file"
+    return
+  fi
+  git add -A --pathspec-from-file="$pathspec_file" --pathspec-file-nul
+  rm -f "$pathspec_file"
 
   if git diff --cached --quiet; then
     git reset -q
