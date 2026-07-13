@@ -1,0 +1,38 @@
+==========================================
+  Probe Agent 全量测试报告
+  时间: 2026-06-06 14:02:38
+==========================================
+
+===== 测试分类 =====
+
+单元测试 (5):
+  xdp_sys::ring_mmap_size    - UMEM 内存映射
+  xdp_sys::struct_sizes      - 结构体大小校验
+  interface_monitor::read    - 网卡状态读取
+  interface_monitor::delta   - 状态增量计算
+  interface_monitor::monitor - 监控器生命周期
+
+集成测试 (11):
+  parser::tcp_syn            - TCP SYN 解析
+  parser::udp               - UDP 解析
+  parser::short_packet       - 短包返回 None
+  flow::same_flow_aggregates - 同五元组聚合
+  flow::multiple_flows       - 100 独立流
+  flow::mixed_tcp_udp        - TCP/UDP 混合
+  flow::eviction             - 超时淘汰产生事件
+  flow::empty_pcap           - 空文件处理
+
+性能测试 (4):
+  bench::small_packets   - 100K 小包(64B)
+  bench::large_packets   - 50K 大包(1514B)
+  bench::flow_aggregation - 10K 包/10 流聚合
+  stress::500k            - 50万包压力测试
+
+===== 性能基准 =====
+
+
+===== 结果 =====
+  总计: 20 tests
+  通过: 20
+  失败: 0
+==========================================
