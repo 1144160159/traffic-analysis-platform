@@ -182,6 +182,7 @@ func (s *TokenService) CreateToken(ctx context.Context, req *CreateTokenRequest)
 		s.recordAuditFailure(ctx, req, "token_generation_failed")
 		return nil, errors.Wrap(err, errors.ErrCodeInternal, "Failed to generate token")
 	}
+	tokenPrefix := security.TokenPrefix(plainToken)
 
 	// 哈希 Token
 	tokenHash, err := s.tokenHasher.HashToken(plainToken)
@@ -217,7 +218,7 @@ func (s *TokenService) CreateToken(ctx context.Context, req *CreateTokenRequest)
 		Description: req.Description,
 		TokenType:   tokenType,
 		TokenHash:   tokenHash,
-		TokenPrefix: "",
+		TokenPrefix: tokenPrefix,
 		Scopes:      model.StringSlice(validScopes),
 		Status:      model.TokenStatusActive,
 		ExpiresAt:   expiresAt,
@@ -259,7 +260,7 @@ func (s *TokenService) CreateToken(ctx context.Context, req *CreateTokenRequest)
 	return &CreateTokenResponse{
 		TokenID:     token.TokenID,
 		Token:       plainToken,
-		TokenPrefix: "",
+		TokenPrefix: tokenPrefix,
 		Name:        token.Name,
 		Scopes:      validScopes,
 		ProbeID:     req.ProbeID,
@@ -693,6 +694,11 @@ func (s *TokenService) RegenerateToken(ctx context.Context, tenantID string, tok
 	}
 
 	if s.auditLogger != nil {
+		detail := map[string]interface{}{
+			"old_token_id": tokenID.String(),
+			"new_token_id": newTokenResp.TokenID.String(),
+		}
+		s.writeAuditRow(ctx, tenantID, regeneratedBy.String(), "regenerate_token", "api_token", newTokenResp.TokenID.String(), detail)
 		s.auditLogger.Log(ctx, &audit.AuditEvent{
 			EventType:    audit.EventTypeTokenCreate,
 			TenantID:     tenantID,
@@ -700,11 +706,13 @@ func (s *TokenService) RegenerateToken(ctx context.Context, tenantID string, tok
 			Action:       "regenerate_token",
 			ResourceType: "api_token",
 			ResourceID:   newTokenResp.TokenID.String(),
-			Detail: map[string]interface{}{
-				"old_token_id": tokenID.String(),
-				"new_token_id": newTokenResp.TokenID.String(),
-			},
-			Result: audit.ResultSuccess,
+			Detail:       detail,
+			Result:       audit.ResultSuccess,
+		})
+	} else {
+		s.writeAuditRow(ctx, tenantID, regeneratedBy.String(), "regenerate_token", "api_token", newTokenResp.TokenID.String(), map[string]interface{}{
+			"old_token_id": tokenID.String(),
+			"new_token_id": newTokenResp.TokenID.String(),
 		})
 	}
 
@@ -770,6 +778,13 @@ type ScopeInfo struct {
 // =============================================================================
 
 func (s *TokenService) recordAuditSuccess(ctx context.Context, req *CreateTokenRequest, tokenID string) {
+	detail := map[string]interface{}{
+		"name":     req.Name,
+		"scopes":   req.Scopes,
+		"probe_id": req.ProbeID,
+	}
+	s.writeAuditRow(ctx, req.TenantID, req.CreatedBy.String(), "create_token", "api_token", tokenID, detail)
+
 	if s.auditLogger == nil {
 		return
 	}
@@ -781,16 +796,20 @@ func (s *TokenService) recordAuditSuccess(ctx context.Context, req *CreateTokenR
 		Action:       "create_token",
 		ResourceType: "api_token",
 		ResourceID:   tokenID,
-		Detail: map[string]interface{}{
-			"name":     req.Name,
-			"scopes":   req.Scopes,
-			"probe_id": req.ProbeID,
-		},
-		Result: audit.ResultSuccess,
+		Detail:       detail,
+		Result:       audit.ResultSuccess,
 	})
 }
 
 func (s *TokenService) recordAuditFailure(ctx context.Context, req *CreateTokenRequest, errorMsg string) {
+	detail := map[string]interface{}{
+		"name":     req.Name,
+		"scopes":   req.Scopes,
+		"probe_id": req.ProbeID,
+		"error":    errorMsg,
+	}
+	s.writeAuditRow(ctx, req.TenantID, req.CreatedBy.String(), "create_token_failed", "api_token", "", detail)
+
 	if s.auditLogger == nil {
 		return
 	}
@@ -803,15 +822,16 @@ func (s *TokenService) recordAuditFailure(ctx context.Context, req *CreateTokenR
 		ResourceType: "api_token",
 		Result:       audit.ResultFailure,
 		ErrorMsg:     errorMsg,
-		Detail: map[string]interface{}{
-			"name":     req.Name,
-			"scopes":   req.Scopes,
-			"probe_id": req.ProbeID,
-		},
+		Detail:       detail,
 	})
 }
 
 func (s *TokenService) recordRevokeAuditSuccess(ctx context.Context, tenantID, tokenName, tokenID string, revokedBy uuid.UUID) {
+	detail := map[string]interface{}{
+		"name": tokenName,
+	}
+	s.writeAuditRow(ctx, tenantID, revokedBy.String(), "revoke_token", "api_token", tokenID, detail)
+
 	if s.auditLogger == nil {
 		return
 	}
@@ -823,14 +843,16 @@ func (s *TokenService) recordRevokeAuditSuccess(ctx context.Context, tenantID, t
 		Action:       "revoke_token",
 		ResourceType: "api_token",
 		ResourceID:   tokenID,
-		Detail: map[string]interface{}{
-			"name": tokenName,
-		},
-		Result: audit.ResultSuccess,
+		Detail:       detail,
+		Result:       audit.ResultSuccess,
 	})
 }
 
 func (s *TokenService) recordRevokeAuditFailure(ctx context.Context, tenantID, tokenID string, revokedBy uuid.UUID, errorMsg string) {
+	s.writeAuditRow(ctx, tenantID, revokedBy.String(), "revoke_token_failed", "api_token", tokenID, map[string]interface{}{
+		"error": errorMsg,
+	})
+
 	if s.auditLogger == nil {
 		return
 	}
@@ -845,4 +867,17 @@ func (s *TokenService) recordRevokeAuditFailure(ctx context.Context, tenantID, t
 		Result:       audit.ResultFailure,
 		ErrorMsg:     errorMsg,
 	})
+}
+
+func (s *TokenService) writeAuditRow(ctx context.Context, tenantID, userID, action, objectType, objectID string, detail map[string]interface{}) {
+	if s.tokenRepo == nil {
+		return
+	}
+	if err := s.tokenRepo.InsertAuditLog(ctx, tenantID, userID, action, objectType, objectID, detail); err != nil {
+		s.logger.Warn("Failed to write token audit_logs row",
+			zap.String("tenant_id", tenantID),
+			zap.String("action", action),
+			zap.String("object_id", objectID),
+			zap.Error(err))
+	}
 }

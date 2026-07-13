@@ -20,6 +20,7 @@ import (
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/asset/api"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/asset/config"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/asset/consumer"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/asset/repository"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/asset/service"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/logging"
@@ -105,6 +106,24 @@ func main() {
 
 	logger.Info("Asset service initialized")
 
+	consumerCtx, consumerCancel := context.WithCancel(context.Background())
+	defer consumerCancel()
+	assetSvc.StartDiscoveryScheduler(consumerCtx)
+	var bindingConsumer *consumer.BindingConsumer
+	if cfg.Kafka.Enabled {
+		bc, err := consumer.NewBindingConsumer(cfg.Kafka, assetSvc, logger)
+		if err != nil {
+			logger.Fatal("Failed to initialize asset binding consumer", zap.Error(err))
+		}
+		bindingConsumer = bc
+		go bindingConsumer.Run(consumerCtx)
+		logger.Info("Asset binding Kafka consumer enabled",
+			zap.String("topic", cfg.Kafka.Topic),
+			zap.String("group_id", cfg.Kafka.GroupID))
+	} else {
+		logger.Info("Asset binding Kafka consumer disabled")
+	}
+
 	// =========================================================================
 	// 阶段6：启动 gRPC Server
 	// =========================================================================
@@ -158,6 +177,9 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status":"ready"}`))
 	})
+	assetHTTPHandler := api.NewHTTPHandler(assetSvc, logger)
+	httpMux.Handle("/api/v1/assets", assetHTTPHandler)
+	httpMux.Handle("/api/v1/assets/", assetHTTPHandler)
 
 	httpAddr := fmt.Sprintf(":%d", cfg.Server.HTTPPort)
 	httpServer := &http.Server{
@@ -183,6 +205,12 @@ func main() {
 	sig := <-sigCh
 
 	logger.Info("Received signal, shutting down", zap.String("signal", sig.String()))
+	consumerCancel()
+	if bindingConsumer != nil {
+		if err := bindingConsumer.Close(); err != nil {
+			logger.Warn("Asset binding consumer close failed", zap.Error(err))
+		}
+	}
 
 	// 标记 gRPC 服务为 NOT_SERVING
 	healthServer.SetServingStatus("asset-service", grpc_health_v1.HealthCheckResponse_NOT_SERVING)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -15,9 +16,15 @@ import (
 )
 
 type PostgresConfig struct {
-	Host            string        `env:"POSTGRES_HOST" envDefault:"localhost"`
-	Port            int           `env:"POSTGRES_PORT" envDefault:"5432"`
-	Database        string        `env:"POSTGRES_DATABASE" envDefault:"traffic"`
+	// 主库 (读写) — 必填
+	Host     string `env:"POSTGRES_HOST" envDefault:"postgres-primary.databases.svc"`
+	Port     int    `env:"POSTGRES_PORT" envDefault:"5432"`
+	Database string `env:"POSTGRES_DATABASE" envDefault:"traffic_platform"`
+
+	// 只读副本 (可选, 多个副本逗号分隔)
+	// 示例: "postgres-replica.databases.svc,postgres-replica-1.databases.svc"
+	ReplicaHosts string `env:"POSTGRES_REPLICA_HOSTS"`
+
 	Username        string        `env:"POSTGRES_USERNAME" envDefault:"postgres"`
 	Password        string        `env:"POSTGRES_PASSWORD"`
 	SSLMode         string        `env:"POSTGRES_SSL_MODE" envDefault:"disable"`
@@ -30,11 +37,48 @@ type PostgresConfig struct {
 	SlowQueryThreshold time.Duration `env:"POSTGRES_SLOW_QUERY_THRESHOLD" envDefault:"1s"`
 }
 
-func (c PostgresConfig) DSN() string {
+// PrimaryDSN 返回主库 (读写) DSN
+func (c PostgresConfig) PrimaryDSN() string {
 	return fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s connect_timeout=%d",
 		c.Host, c.Port, c.Username, c.Password, c.Database, c.SSLMode, c.ConnectTimeout,
 	)
+}
+
+// ReplicaDSN 返回只读副本 DSN (如果配置了副本)
+// 未配置副本时回退到主库
+func (c PostgresConfig) ReplicaDSN() string {
+	if c.ReplicaHosts != "" {
+		// 取第一个副本
+		hosts := splitHosts(c.ReplicaHosts)
+		if len(hosts) > 0 {
+			return fmt.Sprintf(
+				"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s connect_timeout=%d",
+				hosts[0], c.Port, c.Username, c.Password, c.Database, c.SSLMode, c.ConnectTimeout,
+			)
+		}
+	}
+	// 回退到主库
+	return c.PrimaryDSN()
+}
+
+func splitHosts(s string) []string {
+	if s == "" {
+		return nil
+	}
+	parts := make([]string, 0)
+	for _, p := range strings.Split(s, ",") {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			parts = append(parts, p)
+		}
+	}
+	return parts
+}
+
+// DSN 保留向后兼容 (等同于 PrimaryDSN)
+func (c PostgresConfig) DSN() string {
+	return c.PrimaryDSN()
 }
 
 var (

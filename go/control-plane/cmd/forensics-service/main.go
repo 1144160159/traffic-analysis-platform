@@ -94,7 +94,7 @@ func main() {
 
 	// 初始化 Redis（可选，用于缓存和 Auth）
 	var rdb *redis.Client
-	if cfg.Redis.Addr != "" || len(cfg.Redis.ClusterAddrs) > 0 {
+	if cfg.Redis.Addr != "" || len(cfg.Redis.ClusterAddrs) > 0 || cfg.Redis.IsSentinelMode() {
 		rdb, err = initRedis(cfg.Redis, logger)
 		if err != nil {
 			logger.Warn("Failed to connect to Redis, caching disabled", zap.Error(err))
@@ -150,6 +150,7 @@ func main() {
 			BufferSize:    1000,
 			BatchSize:     100,
 			FlushInterval: time.Second,
+			Security:      cfg.KafkaSecurity,
 		}
 		auditLogger, err = audit.NewLogger(auditCfg, logger)
 		if err != nil {
@@ -187,13 +188,13 @@ func main() {
 		auditLogger,
 		logger,
 	)
+	handler.SetAuditDB(pgDB)
 
 	// 创建 Router
 	r := mux.NewRouter()
 
-	// 注册路由
-	apiRouter := r.PathPrefix("/api/v1").Subrouter()
-	handler.RegisterRoutes(apiRouter)
+	// 注册路由。Handler 内部已经声明 /api/v1 前缀，入口层只传根路由。
+	handler.RegisterRoutes(r)
 
 	// 构建中间件链
 	middlewareChain := buildMiddlewareChain(cfg, logger, pgDB, rdb)
@@ -382,7 +383,7 @@ func buildMiddlewareChain(cfg *config.Config, logger *zap.Logger, db *sql.DB, rd
 		AllowedOrigins:   cfg.API.AllowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-Tenant-ID", "X-User-ID", "X-Request-ID"},
-		ExposedHeaders:   []string{"X-Request-ID", "X-Trace-ID", "Content-Disposition"},
+		ExposedHeaders:   []string{"X-Request-ID", "X-Trace-ID", "Content-Disposition", "X-Content-SHA256"},
 		AllowCredentials: true,
 		MaxAge:           86400,
 	}
@@ -425,10 +426,10 @@ func buildAuthMiddleware(cfg config.AuthConfig, logger *zap.Logger, db *sql.DB, 
 	// 创建依赖
 	userRepo := authRepository.NewUserRepository(db, logger)
 	tokenRepo := authRepository.NewTokenRepository(db, logger)
-		jwtSvc, jwtErr := authJwt.NewService(jwtCfg, storage.NewRedisClientFromExisting(rdb, logger), tokenRepo, logger)
-		if jwtErr != nil {
-			logger.Fatal("Failed to init JWT", zap.Error(jwtErr))
-		}
+	jwtSvc, jwtErr := authJwt.NewService(jwtCfg, storage.NewRedisClientFromExisting(rdb, logger), tokenRepo, logger)
+	if jwtErr != nil {
+		logger.Fatal("Failed to init JWT", zap.Error(jwtErr))
+	}
 	authSvc := authService.NewAuthService(userRepo, jwtSvc, nil, nil, logger, nil)
 
 	return authMiddleware.NewAuthMiddleware(authSvc, logger)

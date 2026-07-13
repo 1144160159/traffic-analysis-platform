@@ -17,19 +17,26 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
+	_ "github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
+	authjwt "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/jwt"
+	authrepository "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/repository"
+	authservice "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/service"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/audit"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/httpx"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/logging"
@@ -47,6 +54,14 @@ const (
 	serviceName    = "rule-manager"
 	serviceVersion = "1.0.0"
 )
+
+type tokenValidatorAdapter struct {
+	authService *authservice.AuthService
+}
+
+func (a tokenValidatorAdapter) ValidateToken(tokenString string) (httpx.Claims, error) {
+	return a.authService.ValidateToken(tokenString)
+}
 
 func main() {
 	// =========================================================================
@@ -122,7 +137,25 @@ func main() {
 		zap.String("database", pgCfg.Database))
 
 	// =========================================================================
-	// 4. 初始化 Redis（可选，用于缓存和限流）
+	// 4. 初始化 ClickHouse（用于 MLOps 自编排评估）
+	// =========================================================================
+	var chDB *sql.DB
+	if cfg.ClickHouse.Enabled {
+		chDB, err = initClickHouseSQLDB(cfg.ClickHouse, logger)
+		if err != nil {
+			logger.Warn("Failed to connect to ClickHouse; MLOps automatic condition checks will be disabled", zap.Error(err))
+		} else {
+			defer func() {
+				logger.Info("Closing ClickHouse connection...")
+				if err := chDB.Close(); err != nil {
+					logger.Error("Failed to close ClickHouse connection", zap.Error(err))
+				}
+			}()
+		}
+	}
+
+	// =========================================================================
+	// 5. 初始化 Redis（可选，用于缓存和限流）
 	// =========================================================================
 	var redisClient *redis.Client
 	if cfg.Redis.Enabled {
@@ -132,7 +165,31 @@ func main() {
 			redisAddr = cfg.Redis.Addrs[0]
 		}
 
-		if redisAddr != "" {
+		if len(cfg.Redis.SentinelAddrs) > 0 && cfg.Redis.SentinelMaster != "" {
+			redisClient = redis.NewFailoverClient(&redis.FailoverOptions{
+				MasterName:      cfg.Redis.SentinelMaster,
+				SentinelAddrs:   cfg.Redis.SentinelAddrs,
+				Password:        cfg.Redis.Password,
+				DB:              cfg.Redis.DB,
+				DialTimeout:     cfg.Redis.DialTimeout,
+				ReadTimeout:     cfg.Redis.ReadTimeout,
+				WriteTimeout:    cfg.Redis.WriteTimeout,
+				PoolSize:        cfg.Redis.PoolSize,
+				MinIdleConns:    cfg.Redis.MinIdleConns,
+				PoolTimeout:     cfg.Redis.PoolTimeout,
+				ConnMaxIdleTime: cfg.Redis.ConnMaxIdleTime,
+			})
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			if err := redisClient.Ping(ctx).Err(); err != nil {
+				logger.Warn("Failed to connect to Redis Sentinel master, caching disabled", zap.Error(err))
+				redisClient = nil
+			} else {
+				logger.Info("Connected to Redis Sentinel",
+					zap.Strings("sentinels", cfg.Redis.SentinelAddrs),
+					zap.String("master", cfg.Redis.SentinelMaster))
+			}
+			cancel()
+		} else if redisAddr != "" {
 			redisClient = redis.NewClient(&redis.Options{
 				Addr:            redisAddr,
 				Password:        cfg.Redis.Password,
@@ -167,7 +224,7 @@ func main() {
 	}
 
 	// =========================================================================
-	// 5. 初始化审计日志
+	// 6. 初始化审计日志
 	// =========================================================================
 	var auditLogger *audit.Logger
 	if cfg.Audit.Enabled && len(cfg.Kafka.Brokers) > 0 {
@@ -181,6 +238,7 @@ func main() {
 			ShutdownTimeout: cfg.Audit.ShutdownTimeout,
 			BackupEnabled:   cfg.Audit.BackupEnabled,
 			BackupDir:       cfg.Audit.BackupDir,
+			Security:        cfg.Kafka.Security,
 		}
 
 		auditLogger, err = audit.NewLogger(auditCfg, logger)
@@ -200,11 +258,12 @@ func main() {
 	}
 
 	// =========================================================================
-	// 6. 初始化 Kafka Publisher
+	// 7. 初始化 Kafka Publisher
 	// =========================================================================
 	publisherCfg := publisher.PublisherConfig{
 		Brokers:        cfg.Kafka.Brokers,
 		RuleTopic:      cfg.Kafka.RuleTopic,
+		ModelTopic:     cfg.Kafka.ModelTopic,
 		AuditTopic:     cfg.Kafka.AuditTopic,
 		SendTimeout:    cfg.Kafka.SendTimeout,
 		PublishTimeout: cfg.Kafka.PublishTimeout,
@@ -212,6 +271,7 @@ func main() {
 		RetryBackoff:   cfg.Kafka.RetryBackoff,
 		Compression:    cfg.Kafka.Compression,
 		RequiredAcks:   cfg.Kafka.RequiredAcks,
+		Security:       cfg.Kafka.Security,
 	}
 
 	kafkaPublisher, err := publisher.NewKafkaPublisherWithConfig(publisherCfg, logger)
@@ -227,15 +287,16 @@ func main() {
 
 	logger.Info("Kafka publisher initialized",
 		zap.String("rule_topic", cfg.Kafka.RuleTopic),
+		zap.String("model_topic", cfg.Kafka.ModelTopic),
 		zap.Strings("brokers", cfg.Kafka.Brokers))
 
 	// =========================================================================
-	// 7. 初始化 Repository
+	// 8. 初始化 Repository
 	// =========================================================================
 	ruleRepo := repository.NewRuleRepository(pgClient, logger)
 
 	// =========================================================================
-	// 8. 初始化 RBAC Checker
+	// 9. 初始化 RBAC Checker
 	// =========================================================================
 	var rbacChecker *rbac.Checker
 	if cfg.RBAC.Enabled {
@@ -244,7 +305,7 @@ func main() {
 	}
 
 	// =========================================================================
-	// 9. 初始化 Services
+	// 10. 初始化 Services
 	// =========================================================================
 	ruleServiceCfg := service.RuleServiceConfig{
 		MaxRulesPerTenant:     10000,
@@ -293,18 +354,53 @@ func main() {
 		deploymentServiceCfg,
 	)
 
+	// Model Service (MLOps)
+	modelServiceCfg := service.DefaultModelServiceConfig()
+	modelService := service.NewModelService(
+		pgClient.DB(),
+		kafkaPublisher,
+		auditLogger,
+		rbacChecker,
+		logger,
+		modelServiceCfg,
+	)
 	// =========================================================================
-	// 10. 初始化健康检查器
+	// 11. 初始化健康检查器
 	// =========================================================================
 	healthChecker := health.NewChecker(logger)
 	healthChecker.RegisterComponent(health.NewPostgresChecker(pgClient.DB()))
 	healthChecker.RegisterComponent(health.NewKafkaHealthChecker(kafkaPublisher))
+	if chDB != nil {
+		healthChecker.RegisterComponent(health.NewCustomChecker("clickhouse", func(ctx context.Context) *health.ComponentHealth {
+			start := time.Now()
+			component := &health.ComponentHealth{
+				Name:      "clickhouse",
+				CheckedAt: time.Now(),
+			}
+			if err := chDB.PingContext(ctx); err != nil {
+				component.Status = health.StatusUnhealthy
+				component.Message = fmt.Sprintf("ping failed: %v", err)
+				component.Latency = time.Since(start)
+				return component
+			}
+			stats := chDB.Stats()
+			component.Status = health.StatusHealthy
+			component.Latency = time.Since(start)
+			component.Details = map[string]interface{}{
+				"open_connections": stats.OpenConnections,
+				"in_use":           stats.InUse,
+				"idle":             stats.Idle,
+				"max_open":         stats.MaxOpenConnections,
+			}
+			return component
+		}))
+	}
 	if redisClient != nil {
 		healthChecker.RegisterComponent(health.NewRedisChecker(redisClient))
 	}
 
 	// =========================================================================
-	// 11. 初始化 API Handler
+	// 12. 初始化 API Handler
 	// =========================================================================
 	handlerCfg := api.HandlerConfig{
 		EnableRBAC:       cfg.RBAC.Enabled,
@@ -315,10 +411,42 @@ func main() {
 		EnableRequestLog: cfg.API.EnableRequestLog,
 		MaxRequestSize:   cfg.API.MaxRequestSize,
 	}
-	handler := api.NewHandler(ruleService, deploymentService, auditLogger, rbacChecker, logger, handlerCfg)
+	handler := api.NewHandler(ruleService, deploymentService, modelService, auditLogger, rbacChecker, logger, handlerCfg)
+
+	// MLOps Self-Orchestrator
+	mlopsOrchConfig := loadMLOpsOrchestratorConfigFromEnv()
+	mlopsOrchestrator := service.NewMLOpsOrchestrator(chDB, pgClient.DB(), mlopsOrchConfig, logger)
+	handler.SetOrchestrator(mlopsOrchestrator)
+	go mlopsOrchestrator.Start(context.Background())
+	defer mlopsOrchestrator.Stop()
+
+	var authMiddleware httpx.Middleware
+	if jwtSecret := getEnv("JWT_SECRET_KEY", getEnv("JWT_SIGNING_KEY", "")); jwtSecret != "" {
+		userRepo := authrepository.NewUserRepository(pgClient.DB(), logger)
+		tokenRepo := authrepository.NewTokenRepository(pgClient.DB(), logger)
+		var redisWrapper *storage.RedisClient
+		if redisClient != nil {
+			redisWrapper = storage.NewRedisClientFromExisting(redisClient, logger)
+		}
+		jwtSvc, jwtErr := authjwt.NewService(authjwt.Config{
+			SigningKey:      jwtSecret,
+			SigningMethod:   "HS256",
+			AccessTokenTTL:  15 * time.Minute,
+			RefreshTokenTTL: 7 * 24 * time.Hour,
+			Issuer:          "traffic-auth-service",
+		}, redisWrapper, tokenRepo, logger)
+		if jwtErr != nil {
+			logger.Fatal("Failed to init JWT service", zap.Error(jwtErr))
+		}
+		authSvc := authservice.NewAuthService(userRepo, jwtSvc, nil, nil, logger, nil)
+		authMiddleware = httpx.Auth(tokenValidatorAdapter{authService: authSvc}, logger)
+		logger.Info("Auth middleware initialized")
+	} else {
+		logger.Warn("JWT_SECRET_KEY is empty, rule APIs require trusted identity headers")
+	}
 
 	// =========================================================================
-	// 12. 创建 Router
+	// 13. 创建 Router
 	// =========================================================================
 	r := mux.NewRouter()
 
@@ -355,10 +483,12 @@ func main() {
 		// 7. Tenant Extractor - 租户信息提取
 		httpx.TenantExtractor(),
 	)
+	if authMiddleware != nil {
+		middlewareChain = middlewareChain.Append(authMiddleware)
+	}
 
-	// 注册业务路由
-	apiRouter := r.PathPrefix("/api/v1").Subrouter()
-	handler.RegisterRoutes(apiRouter)
+	// 注册业务路由。Handler 内部已经声明 /api/v1 前缀，入口层只传根路由。
+	handler.RegisterRoutes(r)
 
 	// 注册健康检查路由
 	r.HandleFunc("/healthz", healthChecker.LivenessHandler).Methods("GET")
@@ -369,7 +499,7 @@ func main() {
 	finalHandler := middlewareChain.Then(r)
 
 	// =========================================================================
-	// 13. 启动 Metrics 服务器
+	// 14. 启动 Metrics 服务器
 	// =========================================================================
 	var metricsServer *http.Server
 	if cfg.Metrics.Enabled {
@@ -397,7 +527,7 @@ func main() {
 	}
 
 	// =========================================================================
-	// 14. 启动 API 服务器
+	// 15. 启动 API 服务器
 	// =========================================================================
 	srv := &http.Server{
 		Addr:         cfg.API.ListenAddr,
@@ -419,7 +549,7 @@ func main() {
 	}()
 
 	// =========================================================================
-	// 15. 等待关闭信号
+	// 16. 等待关闭信号
 	// =========================================================================
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
@@ -429,7 +559,7 @@ func main() {
 	logger.Info("Shutting down gracefully...")
 
 	// =========================================================================
-	// 16. 优雅关闭
+	// 17. 优雅关闭
 	// =========================================================================
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer shutdownCancel()
@@ -546,6 +676,94 @@ func getEnvDuration(key string, defaultValue time.Duration) time.Duration {
 	if value := os.Getenv(key); value != "" {
 		if d, err := time.ParseDuration(value); err == nil {
 			return d
+		}
+	}
+	return defaultValue
+}
+
+func loadMLOpsOrchestratorConfigFromEnv() service.MLOpsOrchestratorConfig {
+	cfg := service.DefaultMLOpsOrchestratorConfig()
+	cfg.CheckInterval = getEnvDuration("MLOPS_CHECK_INTERVAL", cfg.CheckInterval)
+	cfg.MinNewFeedbackCount = getEnvInt("MLOPS_MIN_NEW_FEEDBACK", cfg.MinNewFeedbackCount)
+	cfg.FeedbackLookbackHours = getEnvInt("MLOPS_FEEDBACK_LOOKBACK_HOURS", cfg.FeedbackLookbackHours)
+	cfg.MaxFPRate = getEnvFloat("MLOPS_MAX_FP_RATE", cfg.MaxFPRate)
+	cfg.MaxPSI = getEnvFloat("MLOPS_MAX_PSI", cfg.MaxPSI)
+	cfg.MinRetrainInterval = getEnvDuration("MLOPS_MIN_RETRAIN_INTERVAL", cfg.MinRetrainInterval)
+	cfg.MaxConcurrentTrains = getEnvInt("MLOPS_MAX_CONCURRENT_TRAINS", cfg.MaxConcurrentTrains)
+	cfg.ArgoNamespace = getEnv("MLOPS_ARGO_NAMESPACE", cfg.ArgoNamespace)
+	cfg.ArgoServerURL = getEnv("MLOPS_ARGO_SERVER_URL", cfg.ArgoServerURL)
+	cfg.WorkflowTemplate = getEnv("MLOPS_WORKFLOW_TEMPLATE", cfg.WorkflowTemplate)
+	return cfg
+}
+
+func initClickHouseSQLDB(cfg config.ClickHouseConfig, logger *zap.Logger) (*sql.DB, error) {
+	if len(cfg.Hosts) == 0 {
+		return nil, fmt.Errorf("clickhouse hosts not configured")
+	}
+
+	host := strings.TrimSpace(cfg.Hosts[0])
+	if host == "" {
+		return nil, fmt.Errorf("clickhouse host is empty")
+	}
+	if cfg.Database == "" {
+		cfg.Database = "traffic"
+	}
+	if cfg.Username == "" {
+		cfg.Username = "default"
+	}
+	if cfg.DialTimeout <= 0 {
+		cfg.DialTimeout = 10 * time.Second
+	}
+	if cfg.ReadTimeout <= 0 {
+		cfg.ReadTimeout = 30 * time.Second
+	}
+	if cfg.MaxOpenConns <= 0 {
+		cfg.MaxOpenConns = 10
+	}
+	if cfg.MaxIdleConns <= 0 {
+		cfg.MaxIdleConns = 5
+	}
+	if cfg.ConnMaxLifetime <= 0 {
+		cfg.ConnMaxLifetime = time.Hour
+	}
+
+	dsn := url.URL{
+		Scheme: "clickhouse",
+		User:   url.UserPassword(cfg.Username, cfg.Password),
+		Host:   host,
+		Path:   "/" + cfg.Database,
+	}
+	q := dsn.Query()
+	q.Set("dial_timeout", cfg.DialTimeout.String())
+	q.Set("read_timeout", cfg.ReadTimeout.String())
+	dsn.RawQuery = q.Encode()
+
+	db, err := sql.Open("clickhouse", dsn.String())
+	if err != nil {
+		return nil, fmt.Errorf("open clickhouse: %w", err)
+	}
+	db.SetMaxOpenConns(cfg.MaxOpenConns)
+	db.SetMaxIdleConns(cfg.MaxIdleConns)
+	db.SetConnMaxLifetime(cfg.ConnMaxLifetime)
+
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.DialTimeout)
+	defer cancel()
+	if err := db.PingContext(ctx); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("ping clickhouse: %w", err)
+	}
+
+	logger.Info("Connected to ClickHouse for MLOps orchestrator",
+		zap.String("host", host),
+		zap.String("database", cfg.Database))
+	return db, nil
+}
+
+func getEnvFloat(key string, defaultValue float64) float64 {
+	if value := os.Getenv(key); value != "" {
+		var result float64
+		if _, err := fmt.Sscanf(value, "%f", &result); err == nil {
+			return result
 		}
 	}
 	return defaultValue

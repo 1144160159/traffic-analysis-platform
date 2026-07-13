@@ -14,6 +14,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -145,6 +146,36 @@ func (r *TokenRepository) Create(ctx context.Context, token *model.APIToken) err
 		zap.String("tenant_id", token.TenantID),
 		zap.String("name", token.Name))
 
+	return nil
+}
+
+// InsertAuditLog 同步写入 token 管理审计行，供 live 闭环直接核对 audit_logs。
+func (r *TokenRepository) InsertAuditLog(
+	ctx context.Context,
+	tenantID string,
+	userID string,
+	action string,
+	objectType string,
+	objectID string,
+	detail map[string]interface{},
+) error {
+	if detail == nil {
+		detail = map[string]interface{}{}
+	}
+	detailJSON, err := json.Marshal(detail)
+	if err != nil {
+		return errors.Wrap(err, errors.ErrCodeSerializationError, "Failed to marshal audit detail")
+	}
+
+	query := `
+		INSERT INTO audit_logs (
+			tenant_id, user_id, action, object_type, object_id, detail, created_at
+		) VALUES ($1, $2, $3, $4, $5, $6::jsonb, NOW())
+	`
+	_, err = r.db.ExecContext(ctx, query, tenantID, userID, action, objectType, objectID, string(detailJSON))
+	if err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to insert audit log")
+	}
 	return nil
 }
 

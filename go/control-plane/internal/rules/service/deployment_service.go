@@ -213,6 +213,7 @@ func (s *DeploymentService) GetDeployment(ctx context.Context, deploymentID stri
 
 	var d model.Deployment
 	var name, description sql.NullString
+	var ruleVersion, modelVersion, featureSetID, createdBy sql.NullString
 	var rollbackFrom sql.NullString
 	var rollbackReason sql.NullString
 	var grayStartedAt, grayExpiredAt, activatedAt, rolledBackAt sql.NullTime
@@ -222,12 +223,12 @@ func (s *DeploymentService) GetDeployment(ctx context.Context, deploymentID stri
 		&d.TenantID,
 		&name,
 		&description,
-		&d.RuleVersion,
-		&d.ModelVersion,
-		&d.FeatureSetID,
+		&ruleVersion,
+		&modelVersion,
+		&featureSetID,
 		&d.ScopeJSON,
 		&d.Status,
-		&d.CreatedBy,
+		&createdBy,
 		&d.CreatedAt,
 		&d.UpdatedAt,
 		&grayStartedAt,
@@ -251,6 +252,18 @@ func (s *DeploymentService) GetDeployment(ctx context.Context, deploymentID stri
 	}
 	if description.Valid {
 		d.Description = description.String
+	}
+	if ruleVersion.Valid {
+		d.RuleVersion = ruleVersion.String
+	}
+	if modelVersion.Valid {
+		d.ModelVersion = modelVersion.String
+	}
+	if featureSetID.Valid {
+		d.FeatureSetID = featureSetID.String
+	}
+	if createdBy.Valid {
+		d.CreatedBy = createdBy.String
 	}
 	if rollbackFrom.Valid {
 		d.RollbackFrom = &rollbackFrom.String
@@ -349,6 +362,7 @@ func (s *DeploymentService) ListDeployments(ctx context.Context, tenantID string
 	for rows.Next() {
 		var d model.Deployment
 		var name, description sql.NullString
+		var ruleVersion, modelVersion, featureSetID, createdBy sql.NullString
 		var grayStartedAt, grayExpiredAt, activatedAt, rolledBackAt sql.NullTime
 
 		err := rows.Scan(
@@ -356,12 +370,12 @@ func (s *DeploymentService) ListDeployments(ctx context.Context, tenantID string
 			&d.TenantID,
 			&name,
 			&description,
-			&d.RuleVersion,
-			&d.ModelVersion,
-			&d.FeatureSetID,
+			&ruleVersion,
+			&modelVersion,
+			&featureSetID,
 			&d.ScopeJSON,
 			&d.Status,
-			&d.CreatedBy,
+			&createdBy,
 			&d.CreatedAt,
 			&d.UpdatedAt,
 			&grayStartedAt,
@@ -378,6 +392,18 @@ func (s *DeploymentService) ListDeployments(ctx context.Context, tenantID string
 		}
 		if description.Valid {
 			d.Description = description.String
+		}
+		if ruleVersion.Valid {
+			d.RuleVersion = ruleVersion.String
+		}
+		if modelVersion.Valid {
+			d.ModelVersion = modelVersion.String
+		}
+		if featureSetID.Valid {
+			d.FeatureSetID = featureSetID.String
+		}
+		if createdBy.Valid {
+			d.CreatedBy = createdBy.String
 		}
 
 		// 设置时间字段
@@ -647,16 +673,20 @@ func (s *DeploymentService) PauseDeployment(ctx context.Context, deploymentID st
 	}
 
 	if err := s.checkPermission(ctx, opCtx, rbac.PermDeployActivate, deployment.TenantID); err != nil {
+		s.recordAuditFailure(ctx, opCtx, audit.EventTypeDeployPause, "deployment", deploymentID, err.Error())
 		return err
 	}
 
 	currentStatus := model.DeploymentStatus(deployment.Status)
 	if !model.CanTransition(currentStatus, model.DeploymentStatusPaused) {
-		return errors.Newf(errors.ErrCodeInvalidStateTransition,
+		err := errors.Newf(errors.ErrCodeInvalidStateTransition,
 			"cannot transition from %s to %s", currentStatus, model.DeploymentStatusPaused)
+		s.recordAuditFailure(ctx, opCtx, audit.EventTypeDeployPause, "deployment", deploymentID, err.Error())
+		return err
 	}
 
 	if err := s.updateDeploymentStatus(ctx, deploymentID, model.DeploymentStatusPaused, nil, nil); err != nil {
+		s.recordAuditFailure(ctx, opCtx, audit.EventTypeDeployPause, "deployment", deploymentID, err.Error())
 		return err
 	}
 
@@ -666,7 +696,7 @@ func (s *DeploymentService) PauseDeployment(ctx context.Context, deploymentID st
 
 	go s.publishDeploymentEventAsync(ctx, deployment, "pause", opCtx.UserID)
 
-	s.recordAuditSuccess(ctx, opCtx, audit.EventTypeDeployActivate, "deployment", deploymentID, map[string]interface{}{
+	s.recordAuditSuccess(ctx, opCtx, audit.EventTypeDeployPause, "deployment", deploymentID, map[string]interface{}{
 		"action":          "pause",
 		"previous_status": deployment.Status,
 		"new_status":      string(model.DeploymentStatusPaused),
@@ -686,16 +716,20 @@ func (s *DeploymentService) ResumeDeployment(ctx context.Context, deploymentID s
 	}
 
 	if err := s.checkPermission(ctx, opCtx, rbac.PermDeployActivate, deployment.TenantID); err != nil {
+		s.recordAuditFailure(ctx, opCtx, audit.EventTypeDeployResume, "deployment", deploymentID, err.Error())
 		return err
 	}
 
 	currentStatus := model.DeploymentStatus(deployment.Status)
 	if currentStatus != model.DeploymentStatusPaused {
-		return errors.Newf(errors.ErrCodeInvalidStateTransition,
+		err := errors.Newf(errors.ErrCodeInvalidStateTransition,
 			"can only resume from paused state, current: %s", currentStatus)
+		s.recordAuditFailure(ctx, opCtx, audit.EventTypeDeployResume, "deployment", deploymentID, err.Error())
+		return err
 	}
 
 	if err := s.updateDeploymentStatus(ctx, deploymentID, model.DeploymentStatusActive, nil, nil); err != nil {
+		s.recordAuditFailure(ctx, opCtx, audit.EventTypeDeployResume, "deployment", deploymentID, err.Error())
 		return err
 	}
 
@@ -705,7 +739,7 @@ func (s *DeploymentService) ResumeDeployment(ctx context.Context, deploymentID s
 
 	go s.publishDeploymentEventAsync(ctx, deployment, "resume", opCtx.UserID)
 
-	s.recordAuditSuccess(ctx, opCtx, audit.EventTypeDeployActivate, "deployment", deploymentID, map[string]interface{}{
+	s.recordAuditSuccess(ctx, opCtx, audit.EventTypeDeployResume, "deployment", deploymentID, map[string]interface{}{
 		"action":          "resume",
 		"previous_status": deployment.Status,
 		"new_status":      string(model.DeploymentStatusActive),
@@ -982,27 +1016,85 @@ func (s *DeploymentService) hasAdminPermission(opCtx *OperationContext) bool {
 }
 
 func (s *DeploymentService) recordAuditSuccess(ctx context.Context, opCtx *OperationContext, eventType audit.EventType, resourceType, resourceID string, detail map[string]interface{}) {
-	if s.auditLogger == nil || opCtx == nil {
+	if opCtx == nil {
 		return
 	}
-	s.auditLogger.LogDeployment(ctx, eventType, opCtx.TenantID, opCtx.UserID, resourceID, detail)
+	if s.auditLogger != nil {
+		s.auditLogger.LogDeployment(ctx, eventType, opCtx.TenantID, opCtx.UserID, resourceID, detail)
+	}
+	s.recordAuditLogDB(ctx, opCtx, eventType, resourceType, resourceID, detail, audit.ResultSuccess, "")
 }
 
 func (s *DeploymentService) recordAuditFailure(ctx context.Context, opCtx *OperationContext, eventType audit.EventType, resourceType, resourceID, errorMsg string) {
-	if s.auditLogger == nil || opCtx == nil {
+	if opCtx == nil {
 		return
 	}
-	s.auditLogger.Log(ctx, &audit.AuditEvent{
-		EventType:    eventType,
-		TenantID:     opCtx.TenantID,
-		UserID:       opCtx.UserID,
-		Username:     opCtx.Username,
-		Action:       string(eventType) + "_failed",
-		ResourceType: resourceType,
-		ResourceID:   resourceID,
-		Result:       audit.ResultFailure,
-		ErrorMsg:     errorMsg,
-		IPAddr:       opCtx.IPAddr,
-		UserAgent:    opCtx.UserAgent,
-	})
+	if s.auditLogger != nil {
+		s.auditLogger.Log(ctx, &audit.AuditEvent{
+			EventType:    eventType,
+			TenantID:     opCtx.TenantID,
+			UserID:       opCtx.UserID,
+			Username:     opCtx.Username,
+			Action:       string(eventType) + "_failed",
+			ResourceType: resourceType,
+			ResourceID:   resourceID,
+			Result:       audit.ResultFailure,
+			ErrorMsg:     errorMsg,
+			IPAddr:       opCtx.IPAddr,
+			UserAgent:    opCtx.UserAgent,
+		})
+	}
+	s.recordAuditLogDB(ctx, opCtx, eventType, resourceType, resourceID, nil, audit.ResultFailure, errorMsg)
+}
+
+func (s *DeploymentService) recordAuditLogDB(ctx context.Context, opCtx *OperationContext, eventType audit.EventType, resourceType, resourceID string, detail map[string]interface{}, result audit.Result, errorMsg string) {
+	if s.db == nil || opCtx == nil {
+		return
+	}
+
+	detailCopy := make(map[string]interface{}, len(detail)+2)
+	for k, v := range detail {
+		detailCopy[k] = v
+	}
+	if result != "" {
+		detailCopy["result"] = string(result)
+	}
+	if errorMsg != "" {
+		detailCopy["error"] = errorMsg
+	}
+
+	detailJSON, err := json.Marshal(detailCopy)
+	if err != nil {
+		s.logger.Warn("Failed to marshal deployment audit detail",
+			zap.String("event_type", string(eventType)),
+			zap.String("resource_id", resourceID),
+			zap.Error(err))
+		detailJSON = []byte("{}")
+	}
+
+	action := string(eventType)
+	if result == audit.ResultFailure {
+		action += "_failed"
+	}
+
+	query := `
+		INSERT INTO audit_logs (tenant_id, user_id, action, object_type, object_id, detail, ip_addr, user_agent)
+		VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8)
+	`
+	if _, err := s.db.ExecContext(ctx, query,
+		opCtx.TenantID,
+		opCtx.UserID,
+		action,
+		resourceType,
+		resourceID,
+		string(detailJSON),
+		opCtx.IPAddr,
+		opCtx.UserAgent,
+	); err != nil {
+		s.logger.Warn("Failed to persist deployment audit log",
+			zap.String("event_type", string(eventType)),
+			zap.String("resource_type", resourceType),
+			zap.String("resource_id", resourceID),
+			zap.Error(err))
+	}
 }

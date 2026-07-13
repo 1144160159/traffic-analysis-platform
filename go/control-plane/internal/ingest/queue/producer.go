@@ -27,6 +27,7 @@ type ProducerConfig struct {
 	MaxRetries        int           `env:"KAFKA_MAX_RETRIES"`
 	EnableIdempotence bool          `env:"KAFKA_ENABLE_IDEMPOTENCE"`
 	EnableValidation  bool          `env:"KAFKA_ENABLE_VALIDATION"`
+	Security          kafkaCommon.SecurityConfig
 }
 
 type Producer struct {
@@ -67,6 +68,7 @@ func NewProducer(cfg ProducerConfig, logger *zap.Logger) (*Producer, error) {
 		RequiredAcks: cfg.RequiredAcks,
 		MaxAttempts:  cfg.MaxRetries,
 		Async:        false,
+		Security:     cfg.Security,
 	}
 
 	flowConfig := baseConfig
@@ -122,6 +124,10 @@ func (p *Producer) WriteFlowEvents(ctx context.Context, events []*pb.FlowEvent) 
 			continue
 		}
 
+		kafkaTs := time.Now().UnixMilli()
+		event.Header.KafkaTs = kafkaTs
+		event.Header.FlinkOutTs = 0
+
 		if p.config.EnableValidation {
 			p.validateFlowEvent(event, logger)
 		}
@@ -149,13 +155,14 @@ func (p *Producer) WriteFlowEvents(ctx context.Context, events []*pb.FlowEvent) 
 			{Key: "proto_package", Value: config.ProtoPackage},
 			{Key: "event_ts", Value: fmt.Sprintf("%d", event.Header.EventTs)},
 			{Key: "ingest_ts", Value: fmt.Sprintf("%d", event.Header.IngestTs)},
+			{Key: "kafka_ts", Value: fmt.Sprintf("%d", event.Header.KafkaTs)},
 		}
 
 		messages = append(messages, kafkaCommon.Message{
 			Key:     key,
 			Value:   value,
 			Headers: headers,
-			Time:    time.UnixMilli(event.Header.EventTs),
+			Time:    time.UnixMilli(kafkaTs),
 		})
 	}
 
@@ -252,6 +259,10 @@ func (p *Producer) WriteSessionEvents(ctx context.Context, sessions []*pb.Sessio
 			continue
 		}
 
+		kafkaTs := time.Now().UnixMilli()
+		session.Header.KafkaTs = kafkaTs
+		session.Header.FlinkOutTs = 0
+
 		if p.config.EnableValidation {
 			p.validateSessionEvent(session, logger)
 		}
@@ -277,13 +288,15 @@ func (p *Producer) WriteSessionEvents(ctx context.Context, sessions []*pb.Sessio
 			{Key: "proto_schema_version", Value: config.ProtoSchemaVersion},
 			{Key: "proto_package", Value: config.ProtoPackage},
 			{Key: "event_ts", Value: fmt.Sprintf("%d", session.Header.EventTs)},
+			{Key: "ingest_ts", Value: fmt.Sprintf("%d", session.Header.IngestTs)},
+			{Key: "kafka_ts", Value: fmt.Sprintf("%d", session.Header.KafkaTs)},
 		}
 
 		messages = append(messages, kafkaCommon.Message{
 			Key:     key,
 			Value:   value,
 			Headers: headers,
-			Time:    time.UnixMilli(session.Header.EventTs),
+			Time:    time.UnixMilli(kafkaTs),
 		})
 	}
 

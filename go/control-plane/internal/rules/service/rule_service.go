@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
@@ -299,19 +300,20 @@ func (s *RuleService) UpdateRule(ctx context.Context, rule *model.Rule, opCtx *O
 		return err
 	}
 
-	// 3. 验证规则
+	// 3. 保留不可变字段。验证依赖 tenant_id，必须在 validateRule 前补齐。
+	rule.TenantID = oldRule.TenantID
+	rule.CreatedBy = oldRule.CreatedBy
+	rule.CreatedAt = oldRule.CreatedAt
+	rule.Status = oldRule.Status
+	currentVersion := oldRule.Version
+
+	// 4. 验证规则
 	if err := s.validateRule(rule); err != nil {
 		s.recordAuditFailure(ctx, opCtx, audit.EventTypeRuleUpdate, "rule", rule.RuleID, err.Error())
 		return err
 	}
 
-	// 4. ✅ 删除重复的唯一性检查，依赖数据库约束
-
-	// 5. 保留不可变字段
-	rule.TenantID = oldRule.TenantID
-	rule.CreatedBy = oldRule.CreatedBy
-	rule.CreatedAt = oldRule.CreatedAt
-	currentVersion := oldRule.Version
+	// 5. ✅ 删除重复的唯一性检查，依赖数据库约束
 
 	// 6. 预设新版本
 	newVersion := currentVersion + 1
@@ -469,7 +471,7 @@ func (s *RuleService) EnableRule(ctx context.Context, ruleID string, enabled boo
 	}
 
 	// 2. 权限检查
-	if err := s.checkPermission(ctx, opCtx, rbac.PermissionRuleWrite, rule.TenantID); err != nil {
+	if err := s.checkPermission(ctx, opCtx, rbac.PermRuleEnable, rule.TenantID); err != nil {
 		eventType := audit.EventTypeRuleEnable
 		if !enabled {
 			eventType = audit.EventTypeRuleDisable
@@ -486,26 +488,32 @@ func (s *RuleService) EnableRule(ctx context.Context, ruleID string, enabled boo
 		return nil
 	}
 
+	status := string(model.RuleStatusDisabled)
+	if enabled {
+		status = string(model.RuleStatusActive)
+	}
+	now := time.Now()
+	updatedRule := *rule
+	updatedRule.Enabled = enabled
+	updatedRule.Status = status
+	updatedRule.Version = rule.Version + 1
+	updatedRule.UpdatedAt = now
+	updatedRule.UpdatedBy = opCtx.UserID
+
 	// 4. 使用事务更新状态和 Outbox
 	err = s.repo.Transaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
-		// 4.1 更新状态
-		status := string(model.RuleStatusDisabled)
-		if enabled {
-			status = string(model.RuleStatusActive)
-		}
-
-		if err := s.setEnabledInTx(ctx, tx, ruleID, enabled, status); err != nil {
+		// 4.1 更新状态并递增版本
+		if err := s.setEnabledInTx(ctx, tx, &updatedRule, rule.Version); err != nil {
 			return err
 		}
 
-		// 4.2 写入 Outbox
-		if s.config.EnableOutbox {
-			updatedRule := *rule
-			updatedRule.Enabled = enabled
-			updatedRule.Status = status
-			updatedRule.UpdatedAt = time.Now()
-			updatedRule.UpdatedBy = opCtx.UserID
+		// 4.2 创建状态变更版本记录，保证启用/停用动作可回放
+		if err := s.createRuleVersionInTx(ctx, tx, &updatedRule); err != nil {
+			return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to create rule version record")
+		}
 
+		// 4.3 写入 Outbox
+		if s.config.EnableOutbox {
 			action := string(model.ActionEnable)
 			if !enabled {
 				action = string(model.ActionDisable)
@@ -544,13 +552,19 @@ func (s *RuleService) EnableRule(ctx context.Context, ruleID string, enabled boo
 	s.recordAuditSuccess(ctx, opCtx, eventType, "rule", ruleID, map[string]interface{}{
 		"old_enabled": rule.Enabled,
 		"new_enabled": enabled,
+		"old_status":  rule.Status,
+		"new_status":  updatedRule.Status,
+		"old_version": rule.Version,
+		"new_version": updatedRule.Version,
 		"name":        rule.Name,
 	})
 
 	s.logger.Info("Rule enabled status changed",
 		zap.String("rule_id", ruleID),
 		zap.Bool("old_enabled", rule.Enabled),
-		zap.Bool("new_enabled", enabled))
+		zap.Bool("new_enabled", enabled),
+		zap.Int64("old_version", rule.Version),
+		zap.Int64("new_version", updatedRule.Version))
 
 	return nil
 }
@@ -672,7 +686,7 @@ func (s *RuleService) BatchEnableRules(ctx context.Context, ruleIDs []string, en
 			continue
 		}
 
-		if err := s.checkPermission(ctx, opCtx, rbac.PermissionRuleWrite, rule.TenantID); err != nil {
+		if err := s.checkPermission(ctx, opCtx, rbac.PermRuleEnable, rule.TenantID); err != nil {
 			result.Failed++
 			result.Errors = append(result.Errors, BatchError{
 				ID:      ruleID,
@@ -1136,7 +1150,7 @@ func (s *RuleService) insertOutboxInTx(ctx context.Context, tx *sql.Tx, ruleID, 
 		INSERT INTO rule_outbox (rule_id, event_type, payload, created_at)
 		VALUES ($1, $2, $3, $4)
 	`
-	_, err = tx.ExecContext(ctx, query, ruleID, eventType, payload, time.Now())
+	_, err = tx.ExecContext(ctx, query, ruleID, eventType, string(payload), time.Now())
 	return err
 }
 
@@ -1319,7 +1333,7 @@ func (s *RuleService) createRuleInTx(ctx context.Context, tx *sql.Tx, rule *mode
 		rule.Engine,
 		rule.Description,
 		rule.ConditionsJSON,
-		strings.Join(rule.Labels, ","), // 简化处理，实际应使用 pq.Array
+		pq.Array(rule.Labels),
 		rule.Severity,
 		rule.Enabled,
 		rule.Priority,
@@ -1342,6 +1356,10 @@ func (s *RuleService) createRuleVersionInTx(ctx context.Context, tx *sql.Tx, rul
 	}
 
 	versionID := fmt.Sprintf("%s-v%d", rule.RuleID, rule.Version)
+	createdBy := rule.UpdatedBy
+	if createdBy == "" {
+		createdBy = rule.CreatedBy
+	}
 
 	query := `
 		INSERT INTO rule_versions (rule_version, rule_id, tenant_id, version, content_uri, status, created_by, created_at)
@@ -1355,7 +1373,7 @@ func (s *RuleService) createRuleVersionInTx(ctx context.Context, tx *sql.Tx, rul
 		rule.Version,
 		fmt.Sprintf("inline:%s", string(contentJSON)),
 		"active",
-		rule.CreatedBy,
+		createdBy,
 		time.Now(),
 	)
 	return err
@@ -1381,7 +1399,7 @@ func (s *RuleService) updateRuleInTx(ctx context.Context, tx *sql.Tx, rule *mode
 		rule.Engine,
 		rule.Description,
 		rule.ConditionsJSON,
-		strings.Join(rule.Labels, ","),
+		pq.Array(rule.Labels),
 		rule.Severity,
 		rule.Enabled,
 		rule.Priority,
@@ -1421,17 +1439,29 @@ func (s *RuleService) softDeleteRuleInTx(ctx context.Context, tx *sql.Tx, ruleID
 	return nil
 }
 
-// setEnabledInTx 在事务中设置启用状态
-func (s *RuleService) setEnabledInTx(ctx context.Context, tx *sql.Tx, ruleID string, enabled bool, status string) error {
-	query := `UPDATE rules SET enabled = $1, status = $2, updated_at = $3 WHERE rule_id = $4 AND status != 'deleted'`
-	result, err := tx.ExecContext(ctx, query, enabled, status, time.Now(), ruleID)
+// setEnabledInTx 在事务中设置启用状态并使用乐观锁递增版本
+func (s *RuleService) setEnabledInTx(ctx context.Context, tx *sql.Tx, rule *model.Rule, expectedVersion int64) error {
+	query := `
+		UPDATE rules
+		SET enabled = $1, status = $2, version = $3, updated_by = $4, updated_at = $5
+		WHERE rule_id = $6 AND version = $7 AND status != 'deleted'
+	`
+	result, err := tx.ExecContext(ctx, query,
+		rule.Enabled,
+		rule.Status,
+		rule.Version,
+		rule.UpdatedBy,
+		rule.UpdatedAt,
+		rule.RuleID,
+		expectedVersion,
+	)
 	if err != nil {
 		return err
 	}
 
 	rowsAffected, _ := result.RowsAffected()
 	if rowsAffected == 0 {
-		return errors.Newf(errors.ErrCodeRuleNotFound, "rule not found: %s", ruleID)
+		return repository.ErrVersionConflict
 	}
 
 	return nil
@@ -1743,28 +1773,42 @@ func (s *RuleService) deleteByPattern(ctx context.Context, pattern string) error
 // 辅助方法
 // =============================================================================
 
-// isRuleInActiveDeployment 检查规则是否在活跃部署中
-// 活跃部署定义: 规则 enabled=true 且已发布到 Kafka (有活跃版本)
+// isRuleInActiveDeployment 检查规则是否在真实部署中被引用。
+// 规则版本处于 active 只表示版本可发布，不能等价为已有部署。
 func (s *RuleService) isRuleInActiveDeployment(ctx context.Context, ruleID string) (bool, error) {
-	rule, err := s.repo.GetByID(ctx, ruleID)
-	if err != nil {
-		return false, fmt.Errorf("isRuleInActiveDeployment: get rule: %w", err)
+	if s.db == nil {
+		return false, nil
 	}
-	// 规则已启用且未被软删除 = 活跃部署
-	if rule.Enabled && rule.Status != "deleted" {
-		return true, nil
-	}
-	// 额外检查: 是否有活跃版本记录
+
 	versions, err := s.repo.GetVersions(ctx, ruleID)
 	if err != nil {
-		return false, nil // 版本查询失败不阻塞
+		return false, fmt.Errorf("isRuleInActiveDeployment: get versions: %w", err)
 	}
-	for _, v := range versions {
-		if v.Status == "active" {
-			return true, nil
+	if len(versions) == 0 {
+		return false, nil
+	}
+
+	ruleVersions := make([]string, 0, len(versions))
+	for _, version := range versions {
+		if strings.TrimSpace(version.RuleVersionID) != "" {
+			ruleVersions = append(ruleVersions, version.RuleVersionID)
 		}
 	}
-	return false, nil
+	if len(ruleVersions) == 0 {
+		return false, nil
+	}
+
+	query := `
+		SELECT COUNT(1)
+		FROM deployments
+		WHERE rule_version = ANY($1)
+		  AND status IN ('gray', 'active', 'paused')
+	`
+	var count int64
+	if err := s.db.QueryRowContext(ctx, query, pq.Array(ruleVersions)).Scan(&count); err != nil {
+		return false, fmt.Errorf("isRuleInActiveDeployment: query deployments: %w", err)
+	}
+	return count > 0, nil
 }
 
 // =============================================================================
@@ -1773,44 +1817,102 @@ func (s *RuleService) isRuleInActiveDeployment(ctx context.Context, ruleID strin
 
 // recordAuditSuccess 记录审计成功
 func (s *RuleService) recordAuditSuccess(ctx context.Context, opCtx *OperationContext, eventType audit.EventType, resourceType, resourceID string, detail map[string]interface{}) {
-	if s.auditLogger == nil || opCtx == nil {
+	if opCtx == nil {
 		return
 	}
 
-	s.auditLogger.Log(ctx, &audit.AuditEvent{
-		EventType:    eventType,
-		TenantID:     opCtx.TenantID,
-		UserID:       opCtx.UserID,
-		Username:     opCtx.Username,
-		Action:       string(eventType),
-		ResourceType: resourceType,
-		ResourceID:   resourceID,
-		Detail:       detail,
-		Result:       audit.ResultSuccess,
-		IPAddr:       opCtx.IPAddr,
-		UserAgent:    opCtx.UserAgent,
-	})
+	if s.auditLogger != nil {
+		s.auditLogger.Log(ctx, &audit.AuditEvent{
+			EventType:    eventType,
+			TenantID:     opCtx.TenantID,
+			UserID:       opCtx.UserID,
+			Username:     opCtx.Username,
+			Action:       string(eventType),
+			ResourceType: resourceType,
+			ResourceID:   resourceID,
+			Detail:       detail,
+			Result:       audit.ResultSuccess,
+			IPAddr:       opCtx.IPAddr,
+			UserAgent:    opCtx.UserAgent,
+		})
+	}
+	s.recordAuditLogDB(ctx, opCtx, eventType, resourceType, resourceID, detail, audit.ResultSuccess, "")
 }
 
 // recordAuditFailure 记录审计失败
 func (s *RuleService) recordAuditFailure(ctx context.Context, opCtx *OperationContext, eventType audit.EventType, resourceType, resourceID, errorMsg string) {
-	if s.auditLogger == nil || opCtx == nil {
+	if opCtx == nil {
 		return
 	}
 
-	s.auditLogger.Log(ctx, &audit.AuditEvent{
-		EventType:    eventType,
-		TenantID:     opCtx.TenantID,
-		UserID:       opCtx.UserID,
-		Username:     opCtx.Username,
-		Action:       string(eventType) + "_failed",
-		ResourceType: resourceType,
-		ResourceID:   resourceID,
-		Result:       audit.ResultFailure,
-		ErrorMsg:     errorMsg,
-		IPAddr:       opCtx.IPAddr,
-		UserAgent:    opCtx.UserAgent,
-	})
+	if s.auditLogger != nil {
+		s.auditLogger.Log(ctx, &audit.AuditEvent{
+			EventType:    eventType,
+			TenantID:     opCtx.TenantID,
+			UserID:       opCtx.UserID,
+			Username:     opCtx.Username,
+			Action:       string(eventType) + "_failed",
+			ResourceType: resourceType,
+			ResourceID:   resourceID,
+			Result:       audit.ResultFailure,
+			ErrorMsg:     errorMsg,
+			IPAddr:       opCtx.IPAddr,
+			UserAgent:    opCtx.UserAgent,
+		})
+	}
+	s.recordAuditLogDB(ctx, opCtx, eventType, resourceType, resourceID, nil, audit.ResultFailure, errorMsg)
+}
+
+func (s *RuleService) recordAuditLogDB(ctx context.Context, opCtx *OperationContext, eventType audit.EventType, resourceType, resourceID string, detail map[string]interface{}, result audit.Result, errorMsg string) {
+	if s.db == nil || opCtx == nil {
+		return
+	}
+
+	detailCopy := make(map[string]interface{}, len(detail)+2)
+	for k, v := range detail {
+		detailCopy[k] = v
+	}
+	if result != "" {
+		detailCopy["result"] = string(result)
+	}
+	if errorMsg != "" {
+		detailCopy["error"] = errorMsg
+	}
+
+	detailJSON, err := json.Marshal(detailCopy)
+	if err != nil {
+		s.logger.Warn("Failed to marshal rule audit detail",
+			zap.String("event_type", string(eventType)),
+			zap.String("resource_id", resourceID),
+			zap.Error(err))
+		detailJSON = []byte("{}")
+	}
+
+	action := string(eventType)
+	if result == audit.ResultFailure {
+		action += "_failed"
+	}
+
+	query := `
+		INSERT INTO audit_logs (tenant_id, user_id, action, object_type, object_id, detail, ip_addr, user_agent)
+		VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8)
+	`
+	if _, err := s.db.ExecContext(ctx, query,
+		opCtx.TenantID,
+		opCtx.UserID,
+		action,
+		resourceType,
+		resourceID,
+		string(detailJSON),
+		opCtx.IPAddr,
+		opCtx.UserAgent,
+	); err != nil {
+		s.logger.Warn("Failed to persist rule audit log",
+			zap.String("event_type", string(eventType)),
+			zap.String("resource_type", resourceType),
+			zap.String("resource_id", resourceID),
+			zap.Error(err))
+	}
 }
 
 // recordRuleChangeAudit 记录规则变更审计

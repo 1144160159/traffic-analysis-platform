@@ -330,19 +330,48 @@ CREATE INDEX IF NOT EXISTS idx_asset_groups_tenant ON asset_groups(tenant_id);
 CREATE TABLE IF NOT EXISTS assets (
   asset_id       UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   tenant_id      TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE,
-  ip             TEXT NOT NULL,
+  ip             TEXT,
+  ip_address     TEXT,
+  mac_address    TEXT,
   hostname       TEXT,
+  vendor         TEXT,
+  os_type        TEXT,
+  source         TEXT NOT NULL DEFAULT 'manual',
+  vlan_id        TEXT,
+  switch_port    TEXT,
   tags           JSONB NOT NULL DEFAULT '{}'::jsonb,
   criticality    INT NOT NULL DEFAULT 0,
   metadata       JSONB NOT NULL DEFAULT '{}'::jsonb,
+  first_seen     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_seen      TIMESTAMPTZ NOT NULL DEFAULT now(),
   created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (tenant_id, ip)
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS ip TEXT;
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS ip_address TEXT;
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS mac_address TEXT;
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS hostname TEXT;
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS vendor TEXT;
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS os_type TEXT;
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'manual';
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS vlan_id TEXT;
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS switch_port TEXT;
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS tags JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS criticality INT NOT NULL DEFAULT 0;
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS metadata JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS first_seen TIMESTAMPTZ NOT NULL DEFAULT now();
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS last_seen TIMESTAMPTZ NOT NULL DEFAULT now();
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now();
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+ALTER TABLE assets ALTER COLUMN ip DROP NOT NULL;
+UPDATE assets SET ip_address = ip WHERE (ip_address IS NULL OR ip_address = '') AND ip IS NOT NULL;
+UPDATE assets SET ip = ip_address WHERE ip IS NULL AND ip_address IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_assets_tenant ON assets(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_assets_ip ON assets(ip);
+CREATE INDEX IF NOT EXISTS idx_assets_ip ON assets(tenant_id, ip_address);
 CREATE INDEX IF NOT EXISTS idx_assets_tags ON assets USING GIN(tags);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_assets_tenant_ip_unique ON assets(tenant_id, ip) WHERE ip IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_assets_tenant_mac_unique ON assets(tenant_id, mac_address) WHERE mac_address IS NOT NULL;
 
 -- =========================================================================================
 -- 特征工程注册表
@@ -567,6 +596,7 @@ CREATE TABLE IF NOT EXISTS tasks (
   status         TEXT NOT NULL DEFAULT 'queued',
   progress       INT NOT NULL DEFAULT 0,
   result_file_key TEXT,
+  result_sha256   TEXT NOT NULL DEFAULT '',
   result_packets  BIGINT DEFAULT 0,
   result_bytes    BIGINT DEFAULT 0,
   files_scanned   INT DEFAULT 0,
@@ -577,6 +607,8 @@ CREATE TABLE IF NOT EXISTS tasks (
   updated_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
   completed_at   TIMESTAMPTZ
 );
+
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS result_sha256 TEXT NOT NULL DEFAULT '';
 
 CREATE INDEX IF NOT EXISTS idx_tasks_tenant_time ON tasks(tenant_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status) WHERE status IN ('queued', 'processing');
@@ -606,12 +638,30 @@ CREATE TABLE IF NOT EXISTS probes (
 CREATE INDEX IF NOT EXISTS idx_probes_tenant ON probes(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_probes_status ON probes(status);
 
+ALTER TABLE probes ADD COLUMN IF NOT EXISTS hardware_info JSONB;
+ALTER TABLE probes ADD COLUMN IF NOT EXISTS software_version TEXT;
+
+CREATE TABLE IF NOT EXISTS probe_operations (
+  operation_id  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  tenant_id     TEXT NOT NULL,
+  probe_id      TEXT NOT NULL,
+  operation_type TEXT NOT NULL,
+  status        TEXT NOT NULL DEFAULT 'completed',
+  requested_by  TEXT NOT NULL DEFAULT '',
+  request       JSONB NOT NULL DEFAULT '{}'::jsonb,
+  result        JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_probe_operations_tenant_probe_time ON probe_operations (tenant_id, probe_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_probe_operations_tenant_type_time ON probe_operations (tenant_id, operation_type, created_at DESC);
+
 -- =========================================================================================
 -- 审计日志（合并所有字段）
 -- =========================================================================================
 
 CREATE TABLE IF NOT EXISTS audit_logs (
     id BIGSERIAL PRIMARY KEY,
+    event_id TEXT NOT NULL DEFAULT ('audit-' || uuid_generate_v4()::text),
     tenant_id TEXT NOT NULL,
     user_id UUID REFERENCES users(user_id) ON DELETE SET NULL,
     
@@ -635,10 +685,50 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS event_id TEXT;
+UPDATE audit_logs SET event_id = 'audit-' || id::TEXT WHERE event_id IS NULL OR event_id = '';
+ALTER TABLE audit_logs ALTER COLUMN event_id SET DEFAULT ('audit-' || uuid_generate_v4()::text);
+ALTER TABLE audit_logs ALTER COLUMN event_id SET NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_audit_event_id ON audit_logs(event_id);
 CREATE INDEX IF NOT EXISTS idx_audit_tenant_time ON audit_logs(tenant_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_logs(user_id) WHERE user_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_audit_action ON audit_logs(action);
 CREATE INDEX IF NOT EXISTS idx_audit_object ON audit_logs(object_type, object_id) WHERE object_id IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS fusion_conflict_resolutions (
+    tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE,
+    conflict_id TEXT NOT NULL,
+    object_id TEXT NOT NULL DEFAULT '',
+    object_type TEXT NOT NULL DEFAULT 'entity',
+    field_name TEXT NOT NULL,
+    selected_source TEXT NOT NULL,
+    selected_value TEXT NOT NULL,
+    strategy TEXT NOT NULL DEFAULT 'manual',
+    note TEXT NOT NULL DEFAULT '',
+    rule_id TEXT NOT NULL DEFAULT '',
+    state_version BIGINT NOT NULL DEFAULT 1,
+    resolved_by TEXT NOT NULL DEFAULT '',
+    resolved_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    detail JSONB NOT NULL DEFAULT '{}'::jsonb,
+    PRIMARY KEY (tenant_id, conflict_id)
+);
+CREATE INDEX IF NOT EXISTS idx_fusion_conflict_resolutions_time ON fusion_conflict_resolutions(tenant_id, resolved_at DESC);
+
+CREATE TABLE IF NOT EXISTS fusion_rule_overrides (
+    tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE,
+    rule_id TEXT NOT NULL,
+    rule_name TEXT NOT NULL DEFAULT '',
+    version BIGINT NOT NULL DEFAULT 1,
+    status TEXT NOT NULL DEFAULT 'draft',
+    strategy TEXT NOT NULL DEFAULT 'manual-review',
+    confidence_threshold DOUBLE PRECISION NOT NULL DEFAULT 0.85,
+    note TEXT NOT NULL DEFAULT '',
+    updated_by TEXT NOT NULL DEFAULT '',
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    detail JSONB NOT NULL DEFAULT '{}'::jsonb,
+    PRIMARY KEY (tenant_id, rule_id)
+);
+CREATE INDEX IF NOT EXISTS idx_fusion_rule_overrides_time ON fusion_rule_overrides(tenant_id, updated_at DESC);
 
 -- =========================================================================================
 -- Graph Service 配置表（来自 graph_postgres.sql）
@@ -770,6 +860,46 @@ CREATE TABLE IF NOT EXISTS alert_feedback (
 CREATE INDEX IF NOT EXISTS idx_feedback_tenant_alert ON alert_feedback (tenant_id, alert_id);
 CREATE INDEX IF NOT EXISTS idx_feedback_tenant_time ON alert_feedback (tenant_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_feedback_label ON alert_feedback (tenant_id, label, created_at DESC);
+
+-- -----------------------------------------------------------------------------------------
+-- whitelist: 白名单治理表（Web UI /api/v1/whitelist）
+-- -----------------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS whitelist (
+  id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  tenant_id       TEXT NOT NULL,
+  type            TEXT NOT NULL CHECK (type IN ('ip','domain','fingerprint','subnet')),
+  value           TEXT NOT NULL,
+  reason          TEXT NOT NULL DEFAULT '',
+  description     TEXT NOT NULL DEFAULT '',
+  status          TEXT NOT NULL DEFAULT 'active',
+  approval_status TEXT NOT NULL DEFAULT 'approved',
+  source_alert_id TEXT NOT NULL DEFAULT '',
+  feedback_id     TEXT NOT NULL DEFAULT '',
+  owner_role      TEXT NOT NULL DEFAULT '',
+  created_by      TEXT NOT NULL DEFAULT '',
+  approved_by     TEXT NOT NULL DEFAULT '',
+  approved_at     TIMESTAMPTZ,
+  disabled_at     TIMESTAMPTZ,
+  expires_at      TIMESTAMPTZ,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (tenant_id, type, value)
+);
+
+ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active';
+ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS approval_status TEXT NOT NULL DEFAULT 'approved';
+ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS source_alert_id TEXT NOT NULL DEFAULT '';
+ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS feedback_id TEXT NOT NULL DEFAULT '';
+ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS owner_role TEXT NOT NULL DEFAULT '';
+ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS approved_by TEXT NOT NULL DEFAULT '';
+ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ;
+ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS disabled_at TIMESTAMPTZ;
+ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+CREATE INDEX IF NOT EXISTS idx_whitelist_tenant ON whitelist (tenant_id);
+CREATE INDEX IF NOT EXISTS idx_whitelist_entries_tenant_status ON whitelist (tenant_id, status, updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_whitelist_entries_approval ON whitelist (tenant_id, approval_status, updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_whitelist_source_alert ON whitelist (tenant_id, source_alert_id) WHERE source_alert_id <> '';
+CREATE INDEX IF NOT EXISTS idx_whitelist_expires ON whitelist (expires_at) WHERE expires_at IS NOT NULL;
 
 -- -----------------------------------------------------------------------------------------
 -- whitelist_rules: 白名单规则表
@@ -1033,6 +1163,98 @@ CREATE TABLE IF NOT EXISTS notification_history (
 
 CREATE INDEX IF NOT EXISTS idx_notification_tenant_alert ON notification_history (tenant_id, alert_id);
 CREATE INDEX IF NOT EXISTS idx_notification_status ON notification_history (tenant_id, status, created_at DESC);
+
+-- -----------------------------------------------------------------------------------------
+-- notification_silence_rules: 通知静默窗口
+-- -----------------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS notification_silence_rules (
+  rule_id          TEXT PRIMARY KEY,
+  tenant_id        TEXT NOT NULL,
+  name             TEXT NOT NULL,
+  scope            TEXT NOT NULL DEFAULT '',
+  starts_at        TIMESTAMPTZ NOT NULL,
+  ends_at          TIMESTAMPTZ NOT NULL,
+  affected_targets JSONB NOT NULL DEFAULT '[]'::jsonb,
+  policy           TEXT NOT NULL DEFAULT 'all',
+  reason           TEXT NOT NULL DEFAULT '',
+  enabled          BOOLEAN NOT NULL DEFAULT true,
+  created_by       TEXT NOT NULL DEFAULT '',
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_notification_silence_tenant_time
+  ON notification_silence_rules (tenant_id, starts_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notification_silence_tenant_enabled
+  ON notification_silence_rules (tenant_id, enabled, starts_at DESC);
+
+-- -----------------------------------------------------------------------------------------
+-- topic governance: 专题视图、范围、订阅和导出
+-- -----------------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS topic_saved_views (
+  view_id     UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  tenant_id   TEXT NOT NULL,
+  topic       TEXT NOT NULL,
+  name        TEXT NOT NULL,
+  filters     JSONB NOT NULL DEFAULT '{}'::jsonb,
+  visibility  TEXT NOT NULL DEFAULT 'private',
+  favorite    BOOLEAN NOT NULL DEFAULT false,
+  shared      BOOLEAN NOT NULL DEFAULT false,
+  share_token TEXT,
+  created_by  TEXT NOT NULL DEFAULT '',
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_topic_saved_views_tenant_topic
+  ON topic_saved_views (tenant_id, topic, updated_at DESC);
+
+CREATE TABLE IF NOT EXISTS topic_scope_overrides (
+  tenant_id       TEXT NOT NULL,
+  topic           TEXT NOT NULL,
+  scope_name      TEXT NOT NULL DEFAULT '',
+  included_assets JSONB NOT NULL DEFAULT '[]'::jsonb,
+  excluded_assets JSONB NOT NULL DEFAULT '[]'::jsonb,
+  risk_levels     JSONB NOT NULL DEFAULT '[]'::jsonb,
+  time_window     TEXT NOT NULL DEFAULT '24h',
+  detail          JSONB NOT NULL DEFAULT '{}'::jsonb,
+  updated_by      TEXT NOT NULL DEFAULT '',
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (tenant_id, topic)
+);
+
+CREATE TABLE IF NOT EXISTS topic_subscriptions (
+  subscription_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  tenant_id        TEXT NOT NULL,
+  topic            TEXT NOT NULL,
+  channel          TEXT NOT NULL,
+  threshold        TEXT NOT NULL DEFAULT 'high',
+  schedule         TEXT NOT NULL DEFAULT 'realtime',
+  recipients       JSONB NOT NULL DEFAULT '[]'::jsonb,
+  enabled          BOOLEAN NOT NULL DEFAULT true,
+  created_by       TEXT NOT NULL DEFAULT '',
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+  detail           JSONB NOT NULL DEFAULT '{}'::jsonb
+);
+
+CREATE INDEX IF NOT EXISTS idx_topic_subscriptions_tenant_topic
+  ON topic_subscriptions (tenant_id, topic, updated_at DESC);
+
+CREATE TABLE IF NOT EXISTS topic_exports (
+  export_id    UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  tenant_id    TEXT NOT NULL,
+  topic        TEXT NOT NULL,
+  export_type  TEXT NOT NULL,
+  status       TEXT NOT NULL DEFAULT 'completed',
+  parameters   JSONB NOT NULL DEFAULT '{}'::jsonb,
+  result       JSONB NOT NULL DEFAULT '{}'::jsonb,
+  generated_by TEXT NOT NULL DEFAULT '',
+  generated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_topic_exports_tenant_time
+  ON topic_exports (tenant_id, generated_at DESC);
 
 -- =========================================================================================
 -- Graph Service 表（来源：graph_postgres.sql）
@@ -1387,4 +1609,3 @@ COMMENT ON TABLE revoked_sessions IS 'Session 撤销记录，建议每天清理 
 COMMENT ON TABLE token_rotation_history IS 'Token 轮转历史，建议保留 90 天，超过后可归档到对象存储';
 COMMENT ON TABLE token_usage_logs IS 'Token 使用日志，建议使用分区表按月分区，保留 6 个月';
 COMMIT;
-

@@ -12,6 +12,7 @@ package service
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"sync"
 	"time"
 
@@ -25,12 +26,18 @@ import (
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/errors"
 )
 
+// Notifier 通知接口（token 轮转后可选的 user notification）
+type Notifier interface {
+	Send(ctx context.Context, userID, subject, body string) error
+}
+
 // TokenRotationService Token 轮转服务
 type TokenRotationService struct {
 	tokenRepo   *repository.TokenRepository
 	tokenHasher *security.TokenHasher
 	auditLogger *audit.Logger
 	logger      *zap.Logger
+	notifier    Notifier
 
 	// 配置
 	checkInterval time.Duration
@@ -57,12 +64,14 @@ func NewTokenRotationService(
 	auditLogger *audit.Logger,
 	logger *zap.Logger,
 	config TokenRotationConfig,
+	notifier Notifier,
 ) *TokenRotationService {
 	return &TokenRotationService{
 		tokenRepo:     tokenRepo,
 		tokenHasher:   security.NewTokenHasher(),
 		auditLogger:   auditLogger,
 		logger:        logger,
+		notifier:      notifier,
 		checkInterval: config.CheckInterval,
 		gracePeriod:   config.GracePeriod,
 		enabled:       config.Enabled,
@@ -186,8 +195,10 @@ func (s *TokenRotationService) rotateToken(ctx context.Context, token *model.API
 
 	// 生成新的 token
 	plainToken, err := s.tokenHasher.GenerateAPIKey(string(token.TokenType))
-	tokenPrefix := ""
-	if len(plainToken) > 8 { tokenPrefix = plainToken[:8] }
+	if err != nil {
+		return errors.Wrap(err, errors.ErrCodeInternal, "Failed to generate new token")
+	}
+	tokenPrefix := security.TokenPrefix(plainToken)
 	newTokenHash, err := s.tokenHasher.HashToken(plainToken)
 	if err != nil {
 		return errors.Wrap(err, errors.ErrCodeInternal, "Failed to hash new token")
@@ -225,10 +236,36 @@ func (s *TokenRotationService) rotateToken(ctx context.Context, token *model.API
 		zap.String("token_id", token.TokenID.String()),
 		zap.Duration("grace_period", s.gracePeriod))
 
-	// TODO: 通知用户新 token（通过邮件/webhook）
-	// s.notifyTokenRotation(ctx, token, plainToken)
+	// 通知用户新 token
+	s.notifyTokenRotation(ctx, token, plainToken)
 
 	return nil
+}
+
+// notifyTokenRotation 通知用户 token 已轮转
+func (s *TokenRotationService) notifyTokenRotation(ctx context.Context, token *model.APIToken, plainToken string) {
+	if s.notifier == nil {
+		s.logger.Debug("Notifier not configured, skipping token rotation notification",
+			zap.String("token_id", token.TokenID.String()))
+		return
+	}
+
+	subject := "API Token Rotated — Action Required"
+	body := fmt.Sprintf(
+		"Your API token '%s' has been automatically rotated.\n\n"+
+			"New Token: %s\n"+
+			"Token ID: %s\n"+
+			"Valid until: %s\n\n"+
+			"Please update your applications to use the new token.\n"+
+			"The old token will remain valid during the grace period.\n",
+		token.Name, plainToken, token.TokenID.String(), token.ExpiresAt.Format(time.RFC3339),
+	)
+
+	if err := s.notifier.Send(ctx, token.UserID.String(), subject, body); err != nil {
+		s.logger.Warn("Failed to send token rotation notification",
+			zap.String("token_id", token.TokenID.String()),
+			zap.Error(err))
+	}
 }
 
 // rotateTokenWithTransaction 在事务中执行轮转（修复 #29）
@@ -390,7 +427,7 @@ func (s *TokenRotationService) RotateTokenManually(ctx context.Context, tokenID,
 	}
 
 	if _, err := parseUUID(userID); err != nil {
-	
+
 		return nil, errors.Wrap(err, errors.ErrCodeInvalidParameter, "Invalid user_id")
 	}
 
@@ -405,10 +442,11 @@ func (s *TokenRotationService) RotateTokenManually(ctx context.Context, tokenID,
 	}
 
 	// 生成新 token
-	plainToken, err := s.tokenHasher.GenerateAPIKey(string(token.TokenType)); tokenPrefix := plainToken[:8]
+	plainToken, err := s.tokenHasher.GenerateAPIKey(string(token.TokenType))
 	if err != nil {
 		return nil, errors.Wrap(err, errors.ErrCodeInternal, "Failed to generate new token")
 	}
+	tokenPrefix := security.TokenPrefix(plainToken)
 
 	newTokenHash, err := s.tokenHasher.HashToken(plainToken)
 	if err != nil {
@@ -501,7 +539,8 @@ func (s *TokenRotationService) GetRotationStatistics(ctx context.Context, tenant
 		GracePeriodActive: 0,
 	}
 
-	now := time.Now(); _ = now
+	now := time.Now()
+	_ = now
 
 	for _, token := range tokens {
 		if token.RotationEnabled {

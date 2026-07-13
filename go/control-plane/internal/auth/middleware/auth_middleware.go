@@ -15,6 +15,7 @@ import (
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/model"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/service"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/httpx"
 )
 
 type contextKey string
@@ -75,6 +76,12 @@ func (m *AuthMiddleware) Authenticate(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), ContextKeyClaims, claims)
 		ctx = context.WithValue(ctx, ContextKeyUserID, claims.UserID.String())
 		ctx = context.WithValue(ctx, ContextKeyTenantID, claims.TenantID)
+		ctx = context.WithValue(ctx, httpx.ContextKeyClaims, claims)
+		ctx = context.WithValue(ctx, httpx.ContextKeyUserID, claims.UserID.String())
+		ctx = context.WithValue(ctx, httpx.ContextKeyTenantID, claims.TenantID)
+		ctx = context.WithValue(ctx, httpx.ContextKeyUsername, claims.Username)
+		ctx = context.WithValue(ctx, httpx.ContextKeyRoles, claims.Roles)
+		ctx = context.WithValue(ctx, httpx.ContextKeyPermissions, claims.Permissions)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

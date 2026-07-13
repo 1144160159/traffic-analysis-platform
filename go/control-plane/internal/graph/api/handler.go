@@ -169,9 +169,13 @@ func (h *Handler) logQueryMetrics(
 
 	// 计算结果大小（估算）
 	var resultSize uint64
+	var nodeCount int
+	var edgeCount int
 	if graph != nil {
+		nodeCount = len(graph.Nodes)
+		edgeCount = len(graph.Edges)
 		// 粗略估算：每个节点 200 bytes，每条边 150 bytes
-		resultSize = uint64(len(graph.Nodes)*200 + len(graph.Edges)*150)
+		resultSize = uint64(nodeCount*200 + edgeCount*150)
 	}
 
 	log := &graphlogging.QueryLog{
@@ -187,8 +191,8 @@ func (h *Handler) logQueryMetrics(
 		QueryStartTime: startTime,
 		QueryEndTime:   endTime,
 
-		NodeCount:       uint32(len(graph.Nodes)),
-		EdgeCount:       uint32(len(graph.Edges)),
+		NodeCount:       uint32(nodeCount),
+		EdgeCount:       uint32(edgeCount),
 		ResultSizeBytes: resultSize,
 
 		DurationMs: uint32(duration.Milliseconds()),
@@ -209,7 +213,7 @@ func (h *Handler) logQueryMetrics(
 	if h.slowQueryDetector != nil {
 		h.slowQueryDetector.CheckAndLog(
 			ctx,
-				tenantID, queryID,
+			tenantID, queryID,
 			queryType,
 			centerIP,
 			depth,
@@ -405,8 +409,7 @@ func (h *Handler) ExploreGraph(w http.ResponseWriter, r *http.Request) {
 	status := "success"
 	errorCode := ""
 	errorMessage := ""
-	cacheHit := false // TODO: 从 query 返回值中获取
-
+	var cacheHit bool
 	if graph != nil {
 		cacheHit = graph.CacheHit
 	}

@@ -29,6 +29,7 @@ import (
 // AuthService 认证服务
 type AuthService struct {
 	userRepo     *repository.UserRepository
+	settingsRepo *repository.UserSettingsRepository
 	jwtService   *jwt.Service
 	oidcProvider *oidc.Provider
 	config       *config.Config
@@ -45,8 +46,13 @@ func NewAuthService(
 	logger *zap.Logger,
 	auditLogger *audit.Logger,
 ) *AuthService {
+	var settingsRepo *repository.UserSettingsRepository
+	if userRepo != nil {
+		settingsRepo = repository.NewUserSettingsRepository(userRepo.DB(), logger)
+	}
 	return &AuthService{
 		userRepo:     userRepo,
+		settingsRepo: settingsRepo,
 		jwtService:   jwtService,
 		oidcProvider: oidcProvider,
 		config:       cfg,
@@ -57,9 +63,11 @@ func NewAuthService(
 
 // LoginRequest 登录请求
 type LoginRequest struct {
-	TenantID string `json:"tenant_id"`
-	Username string `json:"username"`
-	Password string `json:"password"`
+	TenantID    string `json:"tenant_id"`
+	Username    string `json:"username"`
+	Password    string `json:"password"`
+	CaptchaID   string `json:"captcha_id,omitempty"`
+	CaptchaCode string `json:"captcha_code,omitempty"`
 }
 
 // LoginResponse 登录响应
@@ -78,6 +86,17 @@ type UserInfo struct {
 	Username string   `json:"username"`
 	Email    string   `json:"email"`
 	Roles    []string `json:"roles"`
+}
+
+// UpdateCurrentUserRequest 当前用户资料更新请求
+type UpdateCurrentUserRequest struct {
+	Email string `json:"email"`
+}
+
+// UserSettingsResponse 用户偏好设置响应。
+type UserSettingsResponse struct {
+	Category string                 `json:"category"`
+	Settings map[string]interface{} `json:"settings"`
 }
 
 // Login 登录（修复 #A2：更新最后登录时间）
@@ -225,6 +244,139 @@ func (s *AuthService) Logout(ctx context.Context, sessionID string) error {
 	return s.jwtService.RevokeSession(ctx, sessionID)
 }
 
+// UpdateCurrentUser 更新当前用户可自助维护的资料
+func (s *AuthService) UpdateCurrentUser(ctx context.Context, userID uuid.UUID, req *UpdateCurrentUserRequest) (*UserInfo, error) {
+	user, err := s.userRepo.GetByID(ctx, userID)
+	if err != nil {
+		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to query user")
+	}
+	if user == nil {
+		return nil, errors.New(errors.ErrCodeUserNotFound, "User not found")
+	}
+	if req != nil {
+		email := strings.TrimSpace(req.Email)
+		if email != "" && !strings.Contains(email, "@") {
+			return nil, errors.New(errors.ErrCodeInvalidParameter, "invalid email")
+		}
+		user.Email = email
+	}
+	if err := s.userRepo.Update(ctx, user); err != nil {
+		return nil, err
+	}
+	roles, err := s.userRepo.GetUserRoles(ctx, user.UserID)
+	if err != nil {
+		s.logger.Warn("Failed to get user roles after profile update",
+			zap.String("user_id", user.UserID.String()),
+			zap.Error(err))
+		roles = []string{}
+	}
+	return &UserInfo{
+		UserID:   user.UserID.String(),
+		TenantID: user.TenantID,
+		Username: user.Username,
+		Email:    user.Email,
+		Roles:    roles,
+	}, nil
+}
+
+// ChangePassword 校验当前密码后更新密码
+func (s *AuthService) ChangePassword(ctx context.Context, userID uuid.UUID, currentPassword, newPassword string) error {
+	if currentPassword == "" {
+		return errors.New(errors.ErrCodeMissingParameter, "current_password is required")
+	}
+	if len(newPassword) < 8 {
+		return errors.New(errors.ErrCodeInvalidParameter, "new_password must be at least 8 characters")
+	}
+	user, err := s.userRepo.GetByID(ctx, userID)
+	if err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to query user")
+	}
+	if user == nil {
+		return errors.New(errors.ErrCodeUserNotFound, "User not found")
+	}
+	if !s.userRepo.VerifyPassword(user, currentPassword) {
+		return errors.New(errors.ErrCodeInvalidCredentials, "Invalid current password")
+	}
+	return s.userRepo.UpdatePassword(ctx, user.UserID, newPassword)
+}
+
+// GetUserSettings 获取当前用户某类偏好设置；没有保存过时返回服务端默认值。
+func (s *AuthService) GetUserSettings(ctx context.Context, tenantID string, userID uuid.UUID, category string) (*UserSettingsResponse, error) {
+	category = normalizeSettingsCategory(category)
+	if category == "" {
+		return nil, errors.New(errors.ErrCodeInvalidParameter, "invalid settings category")
+	}
+	values := defaultUserSettings(category)
+	if s.settingsRepo == nil {
+		return &UserSettingsResponse{Category: category, Settings: values}, nil
+	}
+	stored, err := s.settingsRepo.Get(ctx, tenantID, userID, category)
+	if err != nil {
+		return nil, err
+	}
+	if stored != nil {
+		for key, value := range stored.Settings {
+			values[key] = value
+		}
+	}
+	return &UserSettingsResponse{Category: category, Settings: values}, nil
+}
+
+// UpdateUserSettings 保存当前用户某类偏好设置。
+func (s *AuthService) UpdateUserSettings(ctx context.Context, tenantID string, userID uuid.UUID, category string, values map[string]interface{}) (*UserSettingsResponse, error) {
+	category = normalizeSettingsCategory(category)
+	if category == "" {
+		return nil, errors.New(errors.ErrCodeInvalidParameter, "invalid settings category")
+	}
+	merged := defaultUserSettings(category)
+	for key, value := range values {
+		merged[key] = value
+	}
+	if s.settingsRepo == nil {
+		return &UserSettingsResponse{Category: category, Settings: merged}, nil
+	}
+	stored, err := s.settingsRepo.Upsert(ctx, tenantID, userID, category, merged)
+	if err != nil {
+		return nil, err
+	}
+	return &UserSettingsResponse{Category: category, Settings: stored.Settings}, nil
+}
+
+func normalizeSettingsCategory(category string) string {
+	category = strings.TrimSpace(strings.ToLower(category))
+	switch category {
+	case "notifications", "display":
+		return category
+	default:
+		return ""
+	}
+}
+
+func defaultUserSettings(category string) map[string]interface{} {
+	switch category {
+	case "notifications":
+		return map[string]interface{}{
+			"email_enabled":       true,
+			"wechat_enabled":      false,
+			"webhook_enabled":     false,
+			"min_severity":        "medium",
+			"alert_types":         []interface{}{},
+			"webhook_url":         "",
+			"webhook_auth_header": "",
+		}
+	case "display":
+		return map[string]interface{}{
+			"page_size":          20,
+			"refresh_interval":   30,
+			"default_time_range": "last_24h",
+			"timezone":           "Asia/Shanghai",
+			"show_ws_status":     true,
+		}
+	default:
+		return map[string]interface{}{}
+	}
+}
+
 // GetOIDCAuthURL 获取 OIDC 认证 URL
 func (s *AuthService) GetOIDCAuthURL(state string) string {
 	if s.oidcProvider == nil {
@@ -320,7 +472,7 @@ func (s *AuthService) syncUserRoles(ctx context.Context, userID uuid.UUID, roles
 	for _, role := range rolesToSync {
 		if !currentRolesMap[role] {
 			// 查找角色 ID
-			roleID, err := s.getRoleIDByName(ctx, tenantID, role)
+			roleID, err := s.userRepo.GetRoleIDByName(ctx, tenantID, role)
 			if err != nil {
 				s.logger.Warn("Failed to find role",
 					zap.String("role", role),
@@ -339,32 +491,7 @@ func (s *AuthService) syncUserRoles(ctx context.Context, userID uuid.UUID, roles
 		}
 	}
 
-	// 需要移除的角色（可选：是否要移除不在 OIDC 中的角色）
-	// 注释掉以保留手动分配的角色
-	/*
-		for _, role := range currentRoles {
-			if !targetRolesMap[role] {
-				roleID, err := s.getRoleIDByName(ctx, tenantID, role)
-				if err != nil {
-					continue
-				}
-				if roleID != uuid.Nil {
-					s.userRepo.RemoveRole(ctx, userID, roleID)
-				}
-			}
-		}
-	*/
-
 	return nil
-}
-
-// getRoleIDByName 根据角色名称获取角色 ID（修复 #A13：新增辅助方法）
-func (s *AuthService) getRoleIDByName(ctx context.Context, tenantID, roleName string) (uuid.UUID, error) {
-	// 这里需要查询 roles 表
-	// 由于 UserRepository 没有此方法，我们添加一个简单的查询
-	// TODO: 将此方法移到 RoleRepository
-	// 实际部署时需要实现 RoleRepository
-	return uuid.Nil, errors.New(errors.ErrCodeNotImplemented, "getRoleIDByName requires RoleRepository")
 }
 
 // ValidateToken 验证 Token
@@ -434,9 +561,13 @@ func (s *AuthService) mapOIDCRoles(oidcRoles []string) []string {
 
 // auditLogin records audit event for login attempts
 func (s *AuthService) auditLogin(ctx context.Context, user *model.User, success bool, reason string) {
-	if s.auditLogger == nil { return }
+	if s.auditLogger == nil {
+		return
+	}
 	eventType := audit.EventTypeLogin
-	if !success { eventType = audit.EventTypeLoginFailed }
+	if !success {
+		eventType = audit.EventTypeLoginFailed
+	}
 	s.auditLogger.Log(ctx, &audit.AuditEvent{
 		EventType:    eventType,
 		TenantID:     user.TenantID,
@@ -449,7 +580,9 @@ func (s *AuthService) auditLogin(ctx context.Context, user *model.User, success 
 
 // auditLogout records audit event for logout
 func (s *AuthService) auditLogout(ctx context.Context, tenantID, userID, sessionID string) {
-	if s.auditLogger == nil { return }
+	if s.auditLogger == nil {
+		return
+	}
 	s.auditLogger.Log(ctx, &audit.AuditEvent{
 		EventType:    audit.EventTypeLogout,
 		TenantID:     tenantID,

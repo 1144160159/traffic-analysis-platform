@@ -3,28 +3,18 @@ package config
 import (
 	"fmt"
 	"os"
-	"strconv"
+
+	"github.com/caarlos0/env/v10"
 )
 
-// Load 从环境变量加载配置
+// Load 从环境变量加载配置（使用 env struct tags，与 config.go 保持一致）
 func Load() (*Config, error) {
-	cfg := &Config{
-		Server: ServerConfig{
-			GRPCPort: getEnvInt("ASSET_GRPC_PORT", 50053),
-			HTTPPort: getEnvInt("ASSET_HTTP_PORT", 8083),
-		},
-		Postgres: PostgresConfig{
-			Host:     getEnv("ASSET_PG_HOST", "postgres-primary.databases.svc"),
-			Port:     getEnvInt("ASSET_PG_PORT", 5432),
-			User:     getEnv("ASSET_PG_USER", "postgres"),
-			Password: getEnv("ASSET_PG_PASSWORD", "pgadmin123"),
-			Database: getEnv("ASSET_PG_DB", "traffic_platform"),
-			SSLMode:  getEnv("ASSET_PG_SSLMODE", "disable"),
-		},
-		Metrics: MetricsConfig{
-			Enabled: getEnvBool("ASSET_METRICS_ENABLED", true),
-			Port:    getEnvInt("ASSET_METRICS_PORT", 9094),
-		},
+	cfg := &Config{}
+	if err := env.Parse(cfg); err != nil {
+		return nil, fmt.Errorf("failed to parse config: %w", err)
+	}
+	if cfg.Auth.JWTSigningKey == "" {
+		cfg.Auth.JWTSigningKey = os.Getenv("JWT_SECRET_KEY")
 	}
 
 	if err := cfg.validate(); err != nil {
@@ -47,34 +37,11 @@ func (c *Config) validate() error {
 	if c.Postgres.Host == "" {
 		return fmt.Errorf("postgres host is required")
 	}
+	if c.Discovery.MaxHosts <= 0 || c.Discovery.MaxHosts > 4096 {
+		return fmt.Errorf("invalid discovery max hosts: %d", c.Discovery.MaxHosts)
+	}
+	if c.Discovery.SchedulerEnabled && c.Discovery.TargetCIDR == "" && c.Discovery.CredentialID == "" {
+		return fmt.Errorf("asset discovery scheduler requires ASSET_DISCOVERY_TARGET_CIDR or ASSET_DISCOVERY_CREDENTIAL_ID")
+	}
 	return nil
-}
-
-// =============================================================================
-// 环境变量辅助
-// =============================================================================
-
-func getEnv(key, def string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return def
-}
-
-func getEnvInt(key string, def int) int {
-	if v := os.Getenv(key); v != "" {
-		if n, err := strconv.Atoi(v); err == nil {
-			return n
-		}
-	}
-	return def
-}
-
-func getEnvBool(key string, def bool) bool {
-	if v := os.Getenv(key); v != "" {
-		if b, err := strconv.ParseBool(v); err == nil {
-			return b
-		}
-	}
-	return def
 }

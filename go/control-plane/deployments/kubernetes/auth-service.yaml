@@ -17,26 +17,26 @@ services:
       # 从 .env 文件加载
       - LOG_LEVEL=${LOG_LEVEL:-info}
       - ENVIRONMENT=${ENVIRONMENT:-development}
-      
+
       # PostgreSQL
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
       - POSTGRES_DATABASE=traffic
       - POSTGRES_USERNAME=postgres
-      - POSTGRES_PASSWORD=postgres
-      
+      - "POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}"
+
       # Redis
       - REDIS_ADDR=redis:6379
       - REDIS_ENABLED=true
-      
+
       # JWT
       - JWT_SIGNING_KEY=development-key-change-in-production-must-be-at-least-32-bytes
       - JWT_ACCESS_TOKEN_TTL=15m
       - JWT_REFRESH_TOKEN_TTL=168h
-      
+
       # Kafka
       - KAFKA_BROKERS=kafka:9092
-      
+
       # OTEL
       - OTEL_ENABLED=true
       - OTEL_ENDPOINT=jaeger:4317
@@ -60,7 +60,7 @@ services:
     environment:
       POSTGRES_DB: traffic
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}"
     ports:
       - "5432:5432"
     volumes:

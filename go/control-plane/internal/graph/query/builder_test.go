@@ -8,10 +8,10 @@ import (
 // TestQueryBuilderBasic 验证基本 SQL 构建
 func TestQueryBuilderBasic(t *testing.T) {
 	qb := NewQueryBuilder("traffic.sessions").
-		Select("client_ip", "server_ip", "count() as session_count").
+		Select("src_ip", "dst_ip", "count() as session_count").
 		WhereTenant("test-tenant").
 		Where("run_id = ?", "realtime").
-		GroupBy("client_ip", "server_ip").
+		GroupBy("src_ip", "dst_ip").
 		OrderByDesc("session_count").
 		Limit(10)
 
@@ -73,8 +73,8 @@ func TestQueryBuilderFieldValidation(t *testing.T) {
 		{"session_count", true},
 		{"total_bytes", true},
 		{"last_seen", true},
-		{"client_ip", true},
-		{"server_ip", true},
+		{"src_ip", true},
+		{"dst_ip", true},
 		{"invalid_field", false},
 		{"1=1", false},
 		{"session_count--", false},
@@ -92,7 +92,7 @@ func TestQueryBuilderFieldValidation(t *testing.T) {
 // TestQueryBuilderGroupByValidation 验证 GROUP BY 白名单
 func TestQueryBuilderGroupByValidation(t *testing.T) {
 	qb := NewQueryBuilder("traffic.sessions").
-		GroupBy("client_ip", "invalid_hack; DROP")
+		GroupBy("src_ip", "invalid_hack; DROP")
 
 	sql, _ := qb.Build()
 
@@ -100,10 +100,10 @@ func TestQueryBuilderGroupByValidation(t *testing.T) {
 		t.Error("SQL injection in GROUP BY not prevented")
 	}
 
-	// Only "client_ip" should pass validation
+	// Only "src_ip" should pass validation
 	if strings.Count(sql, "GROUP BY") == 1 {
 		groupPart := sql[strings.Index(sql, "GROUP BY")+9:]
-		if !strings.Contains(groupPart, "client_ip") {
+		if !strings.Contains(groupPart, "src_ip") {
 			t.Error("Valid field missing from GROUP BY")
 		}
 	}
@@ -118,7 +118,7 @@ func TestQueryBuilderAggregateValidation(t *testing.T) {
 		{"count()", true},
 		{"sum(total_bytes)", true},
 		{"avg(duration_ms)", true},
-		{"uniq(client_ip)", true},
+		{"uniq(src_ip)", true},
 		{"exec(rm -rf /)", false},
 		{"DROP TABLE", false},
 		{"sleep(10)", false},
@@ -140,7 +140,7 @@ func TestQueryBuilderWhereIn(t *testing.T) {
 	}
 
 	qb := NewQueryBuilder("traffic.sessions").
-		WhereIn("client_ip", values)
+		WhereIn("src_ip", values)
 
 	sql, args := qb.Build()
 
@@ -173,7 +173,7 @@ func TestQueryBuilderBuildCount(t *testing.T) {
 // TestQueryBuilderClone 验证克隆
 func TestQueryBuilderClone(t *testing.T) {
 	qb := NewQueryBuilder("traffic.sessions").
-		Select("client_ip").
+		Select("src_ip").
 		WhereTenant("t1").
 		Limit(5)
 
@@ -215,7 +215,7 @@ func TestIsValidFieldName(t *testing.T) {
 	}{
 		{"session_count", true},
 		{"total_bytes", true},
-		{"client_ip", true},
+		{"src_ip", true},
 		{"", false},
 		{"1field", false},
 		{"field-name", false},

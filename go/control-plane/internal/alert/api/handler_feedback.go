@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/service"
@@ -25,12 +26,12 @@ import (
 
 // FeedbackHandler 告警反馈处理器 — TP/FP 反馈业务闭环
 type FeedbackHandler struct {
-	alertService     *service.AlertService
-	kafkaProducer    *kafka.Producer
-	auditLogger      interface{}
-	repo             *FeedbackRepository   // 反馈持久化仓库（ClickHouse）
-	whitelistRepo    *whitelist.Repository  // 白名单仓库（PostgreSQL）
-	logger           *zap.Logger
+	alertService  *service.AlertService
+	kafkaProducer *kafka.Producer
+	auditLogger   interface{}
+	repo          *FeedbackRepository   // 反馈持久化仓库（ClickHouse）
+	whitelistRepo *whitelist.Repository // 白名单仓库（PostgreSQL）
+	logger        *zap.Logger
 }
 
 // NewFeedbackHandler 创建反馈处理器
@@ -71,15 +72,31 @@ type FeedbackRequest struct {
 
 // FeedbackResponse 反馈响应
 type FeedbackResponse struct {
-	FeedbackID     string    `json:"feedback_id"`
-	AlertID        string    `json:"alert_id"`              // 对应 proto alert_id
-	TenantID       string    `json:"tenant_id"`             // 对应 proto tenant_id
-	Label          string    `json:"label"`                 // 对应 proto label
-	ReasonCode     string    `json:"reason_code,omitempty"` // 对应 proto reason_code
-	Comment        string    `json:"comment,omitempty"`     // 对应 proto comment
-	UserID         string    `json:"user_id"`               // 对应 proto user_id
-	Timestamp      time.Time `json:"timestamp"`             // 对应 proto timestamp (int64)
-	AddToWhitelist bool      `json:"add_to_whitelist"`      // 对应 proto add_to_whitelist
+	FeedbackID     string                          `json:"feedback_id"`
+	AlertID        string                          `json:"alert_id"`              // 对应 proto alert_id
+	TenantID       string                          `json:"tenant_id"`             // 对应 proto tenant_id
+	Label          string                          `json:"label"`                 // 对应 proto label
+	ReasonCode     string                          `json:"reason_code,omitempty"` // 对应 proto reason_code
+	Comment        string                          `json:"comment,omitempty"`     // 对应 proto comment
+	UserID         string                          `json:"user_id"`               // 对应 proto user_id
+	Timestamp      time.Time                       `json:"timestamp"`             // 对应 proto timestamp (int64)
+	AddToWhitelist bool                            `json:"add_to_whitelist"`      // 对应 proto add_to_whitelist
+	WhitelistDraft *FeedbackWhitelistDraftResponse `json:"whitelist_draft,omitempty"`
+}
+
+// FeedbackWhitelistDraftResponse 描述由 FP 反馈生成的白名单审批草案。
+type FeedbackWhitelistDraftResponse struct {
+	ID            string     `json:"id"`
+	Type          string     `json:"type"`
+	Value         string     `json:"value"`
+	Reason        string     `json:"reason"`
+	Description   string     `json:"description"`
+	Status        string     `json:"status"`
+	SourceAlertID string     `json:"source_alert_id"`
+	FeedbackID    string     `json:"feedback_id"`
+	URL           string     `json:"url"`
+	ExpiresAt     *time.Time `json:"expires_at,omitempty"`
+	CreatedAt     time.Time  `json:"created_at"`
 }
 
 // AlertFeedbackExtended 扩展的告警反馈结构（用于Kafka，包含额外上下文）
@@ -159,6 +176,7 @@ func (h *FeedbackHandler) SubmitFeedback(w http.ResponseWriter, r *http.Request)
 		zap.String("user_id", userID))
 	// 生成反馈ID
 	feedbackID := uuid.New().String()
+	feedbackTimestamp := time.Now()
 	// 构建 Proto 兼容的反馈对象（包含告警上下文）
 	feedback := &AlertFeedbackExtended{
 		// Proto 字段
@@ -168,6 +186,7 @@ func (h *FeedbackHandler) SubmitFeedback(w http.ResponseWriter, r *http.Request)
 		ReasonCode:     req.ReasonCode,
 		Comment:        req.Comment,
 		UserID:         userID,
+		Timestamp:      feedbackTimestamp.UnixMilli(),
 		AddToWhitelist: req.AddToWhitelist,
 		// 扩展字段 - 从告警中提取
 		FeedbackID: feedbackID,
@@ -183,10 +202,14 @@ func (h *FeedbackHandler) SubmitFeedback(w http.ResponseWriter, r *http.Request)
 		}
 	}
 	// 如果需要加入白名单，额外处理
+	var whitelistDraft *FeedbackWhitelistDraftResponse
 	if req.AddToWhitelist && req.Label == "FP" {
-		if err := h.addToWhitelist(ctx, tenantID, alertID, req.ReasonCode, alert); err != nil {
+		entry, err := h.createWhitelistDraft(ctx, tenantID, alertID, feedbackID, userID, req.ReasonCode, alert)
+		if err != nil {
 			logger.Warn("Failed to add to whitelist", zap.Error(err))
 			// 不阻塞请求
+		} else if entry != nil {
+			whitelistDraft = feedbackWhitelistDraftResponse(entry)
 		}
 	}
 	// 响应
@@ -198,7 +221,9 @@ func (h *FeedbackHandler) SubmitFeedback(w http.ResponseWriter, r *http.Request)
 		ReasonCode:     req.ReasonCode,
 		Comment:        req.Comment,
 		UserID:         userID,
+		Timestamp:      feedbackTimestamp,
 		AddToWhitelist: req.AddToWhitelist,
+		WhitelistDraft: whitelistDraft,
 	}
 	// 持久化到 ClickHouse（业务闭环：反馈数据可供查询 + 模型训练）
 	if h.repo != nil {
@@ -215,7 +240,7 @@ func (h *FeedbackHandler) SubmitFeedback(w http.ResponseWriter, r *http.Request)
 			Severity:       alert.Severity,
 			ModelVersion:   alert.ModelVersion,
 			RuleVersion:    alert.RuleVersion,
-			CreatedAt:      time.Now(),
+			CreatedAt:      feedbackTimestamp,
 		}
 		if err := h.repo.Insert(ctx, record); err != nil {
 			logger.Error("Failed to persist feedback to ClickHouse", zap.Error(err))
@@ -328,63 +353,95 @@ func (h *FeedbackHandler) publishFeedback(ctx context.Context, feedback *AlertFe
 	return h.kafkaProducer.SendJSON(ctx, key, feedback, headers...)
 }
 
-// addToWhitelist 添加到白名单
-func (h *FeedbackHandler) addToWhitelist(ctx context.Context, tenantID, alertID, reasonCode string, alert *service.AlertDetailDTO) error {
+// createWhitelistDraft 基于误报反馈生成白名单审批草案。
+func (h *FeedbackHandler) createWhitelistDraft(ctx context.Context, tenantID, alertID, feedbackID, userID, reasonCode string, alert *service.AlertDetailDTO) (*whitelist.Entry, error) {
 	logger := logging.L(ctx)
-	logger.Info("Adding alert to whitelist",
+	srcIP, dstIP, alertType := "", "", ""
+	if alert != nil {
+		srcIP = alert.SrcIP
+		dstIP = alert.DstIP
+		alertType = alert.AlertType
+	}
+	logger.Info("Creating whitelist draft from alert feedback",
 		zap.String("tenant_id", tenantID),
 		zap.String("alert_id", alertID),
+		zap.String("feedback_id", feedbackID),
 		zap.String("reason_code", reasonCode),
-		zap.String("src_ip", alert.SrcIP),
-		zap.String("dst_ip", alert.DstIP),
-		zap.String("alert_type", alert.AlertType))
+		zap.String("src_ip", srcIP),
+		zap.String("dst_ip", dstIP),
+		zap.String("alert_type", alertType))
 
 	if h.whitelistRepo == nil {
-		logger.Warn("Whitelist repository not available, skipping whitelist add")
-		return nil
+		logger.Warn("Whitelist repository not available, skipping whitelist draft")
+		return nil, nil
 	}
 
-	// 根据 FP reason code 选择白名单粒度
-	whitelistType := "ip_pair" // 默认：源IP+目的IP 组合
-	value := fmt.Sprintf("%s,%s", alert.SrcIP, alert.DstIP)
-
-	switch reasonCode {
-	case "normal_behavior":
-		// 源IP + 目的IP 组合 (业务正常通信)
-		whitelistType = "ip_pair"
-		value = fmt.Sprintf("%s,%s", alert.SrcIP, alert.DstIP)
-	case "known_service":
-		// 目的IP + 端口 (已知服务)
-		whitelistType = "ip_port"
-		value = fmt.Sprintf("%s,%d", alert.DstIP, alert.DstPort)
-	case "internal_test":
-		// 源IP 白名单 (内部测试)
-		whitelistType = "ip"
-		value = alert.SrcIP
-	case "false_signature":
-		// 告警类型 + 源IP (签名误报)
-		whitelistType = "alert_ip"
-		value = fmt.Sprintf("%s,%s", alert.AlertType, alert.SrcIP)
-	}
-
-	entry := &whitelist.Entry{
-		TenantID:    tenantID,
-		Type:        whitelistType,
-		Value:       value,
-		Description: fmt.Sprintf("Auto-whitelist from FP feedback: %s (alert_id=%s)", reasonCode, alertID),
-		CreatedBy:   "feedback-system",
-		ExpiresAt:   func() *time.Time { t := time.Now().Add(90 * 24 * time.Hour); return &t }(), // 90 天自动过期
+	entry, err := buildWhitelistDraftEntry(tenantID, alertID, feedbackID, userID, reasonCode, alert)
+	if err != nil {
+		return nil, err
 	}
 
 	if err := h.whitelistRepo.Create(ctx, entry); err != nil {
-		return fmt.Errorf("failed to create whitelist entry: %w", err)
+		return nil, fmt.Errorf("failed to create whitelist draft: %w", err)
 	}
 
-	logger.Info("Alert added to whitelist",
+	logger.Info("Whitelist draft created from alert feedback",
 		zap.String("alert_id", alertID),
-		zap.String("whitelist_type", whitelistType),
-		zap.String("value", value))
-	return nil
+		zap.String("feedback_id", feedbackID),
+		zap.String("whitelist_id", entry.ID),
+		zap.String("whitelist_type", entry.Type),
+		zap.String("value", entry.Value))
+	return entry, nil
+}
+
+func buildWhitelistDraftEntry(tenantID, alertID, feedbackID, userID, reasonCode string, alert *service.AlertDetailDTO) (*whitelist.Entry, error) {
+	if alert == nil {
+		return nil, fmt.Errorf("alert is required")
+	}
+	// 白名单表当前只允许 ip/domain/fingerprint/subnet。误报反馈按真实可执行粒度落为 IP 条目。
+	whitelistType := "ip"
+	value := alert.SrcIP
+	if value == "" {
+		value = alert.DstIP
+	}
+	if value == "" {
+		return nil, fmt.Errorf("alert has no src_ip or dst_ip to whitelist")
+	}
+	createdBy := userID
+	if createdBy == "" {
+		createdBy = "feedback-system"
+	}
+	return &whitelist.Entry{
+		TenantID:      tenantID,
+		Type:          whitelistType,
+		Value:         value,
+		Reason:        reasonCode,
+		Description:   fmt.Sprintf("Auto-whitelist draft from FP feedback: %s (alert_id=%s, feedback_id=%s)", reasonCode, alertID, feedbackID),
+		Status:        "draft",
+		SourceAlertID: alertID,
+		FeedbackID:    feedbackID,
+		CreatedBy:     createdBy,
+		ExpiresAt:     func() *time.Time { t := time.Now().Add(90 * 24 * time.Hour); return &t }(), // 90 天自动过期
+	}, nil
+}
+
+func feedbackWhitelistDraftResponse(entry *whitelist.Entry) *FeedbackWhitelistDraftResponse {
+	if entry == nil {
+		return nil
+	}
+	return &FeedbackWhitelistDraftResponse{
+		ID:            entry.ID,
+		Type:          entry.Type,
+		Value:         entry.Value,
+		Reason:        entry.Reason,
+		Description:   entry.Description,
+		Status:        entry.Status,
+		SourceAlertID: entry.SourceAlertID,
+		FeedbackID:    entry.FeedbackID,
+		URL:           fmt.Sprintf("/whitelist?source_alert=%s&draft_id=%s", url.QueryEscape(entry.SourceAlertID), url.QueryEscape(entry.ID)),
+		ExpiresAt:     entry.ExpiresAt,
+		CreatedAt:     entry.CreatedAt,
+	}
 }
 
 // ToProtoFeedback 将扩展反馈转换为 Proto AlertFeedback

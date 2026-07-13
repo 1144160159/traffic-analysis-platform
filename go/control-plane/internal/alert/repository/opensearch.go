@@ -43,12 +43,16 @@ func NewOpenSearchRepository(cfg OpenSearchConfig, logger *zap.Logger) (*OpenSea
 		return nil, fmt.Errorf("failed to create opensearch client: %w", err)
 	}
 
-	// 测试连接
-	res, err := client.Info()
+	// This repository is used by request handlers; startup should not hang forever
+	// if OpenSearch is slow after the primary persistence client has connected.
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	res, err := opensearchapi.InfoRequest{}.Do(ctx, client)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to opensearch: %w", err)
+		logger.Warn("OpenSearch repository ping failed, continuing with lazy checks", zap.Error(err))
+	} else {
+		res.Body.Close()
 	}
-	res.Body.Close()
 
 	return &OpenSearchRepository{
 		client:    client,

@@ -20,22 +20,24 @@ import (
 	"github.com/caarlos0/env/v10"
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/errors"
+	commonkafka "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/kafka"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/storage"
 )
 
 // Config 应用配置
 type Config struct {
-	Server     ServerConfig     `envPrefix:"SERVER_"`
-	PostgreSQL PostgreSQLConfig `envPrefix:"POSTGRES_"`
-	Redis      RedisConfig      `envPrefix:"REDIS_"`
-	JWT        JWTConfig        `envPrefix:"JWT_"`
-	OIDC       OIDCConfig       `envPrefix:"OIDC_"`
-	Token      TokenConfig      `envPrefix:"TOKEN_"`
-	Audit      AuditConfig      `envPrefix:"AUDIT_"`
-	Kafka      KafkaConfig      `envPrefix:"KAFKA_"`
-	API        APIConfig        `envPrefix:"API_"`
-	OTEL       OTELConfig       `envPrefix:"OTEL_"`
-	Security   SecurityConfig   `envPrefix:"SECURITY_"`
+	Server        ServerConfig     `envPrefix:"SERVER_"`
+	PostgreSQL    PostgreSQLConfig `envPrefix:"POSTGRES_"`
+	Redis         RedisConfig      `envPrefix:"REDIS_"`
+	JWT           JWTConfig        `envPrefix:"JWT_"`
+	OIDC          OIDCConfig       `envPrefix:"OIDC_"`
+	Token         TokenConfig      `envPrefix:"TOKEN_"`
+	Audit         AuditConfig      `envPrefix:"AUDIT_"`
+	Kafka         KafkaConfig      `envPrefix:"KAFKA_"`
+	KafkaSecurity commonkafka.SecurityConfig
+	API           APIConfig      `envPrefix:"API_"`
+	OTEL          OTELConfig     `envPrefix:"OTEL_"`
+	Security      SecurityConfig `envPrefix:"SECURITY_"`
 }
 
 // ServerConfig HTTP 服务器配置
@@ -56,7 +58,7 @@ type ServerConfig struct {
 
 // PostgreSQLConfig PostgreSQL 配置
 type PostgreSQLConfig struct {
-	Host            string        `env:"HOST" envDefault:"localhost"`
+	Host            string        `env:"HOST" envDefault:"postgres-primary.databases.svc"`
 	Port            int           `env:"PORT" envDefault:"5432"`
 	Database        string        `env:"DATABASE" envDefault:"traffic"`
 	Username        string        `env:"USERNAME" envDefault:"postgres"`
@@ -98,6 +100,8 @@ type RedisConfig struct {
 	Addr            string        `env:"ADDR"`
 	Password        string        `env:"PASSWORD"`
 	DB              int           `env:"DB" envDefault:"0"`
+	SentinelAddrs   []string      `env:"SENTINEL_ADDRS" envSeparator:","`
+	SentinelMaster  string        `env:"SENTINEL_MASTER"`
 	PoolSize        int           `env:"POOL_SIZE" envDefault:"10"`
 	MinIdleConns    int           `env:"MIN_IDLE_CONNS" envDefault:"5"`
 	MaxRetries      int           `env:"MAX_RETRIES" envDefault:"3"`
@@ -110,18 +114,15 @@ type RedisConfig struct {
 }
 
 func (c RedisConfig) IsConfigured() bool {
-	return c.Enabled && (c.Addr != "" || len(c.Addrs) > 0)
+	return c.Enabled && (c.Addr != "" || len(c.Addrs) > 0 || len(c.SentinelAddrs) > 0)
 }
 
 func (c RedisConfig) ToStorageConfig() storage.RedisConfig {
-	addrs := c.Addrs
-	if len(addrs) == 0 && c.Addr != "" {
-		addrs = []string{c.Addr}
-	}
-
 	return storage.RedisConfig{
 		Addr:            c.Addr,
-		ClusterAddrs:    addrs,
+		ClusterAddrs:    c.Addrs,
+		SentinelAddrs:   c.SentinelAddrs,
+		SentinelMaster:  c.SentinelMaster,
 		Password:        c.Password,
 		DB:              c.DB,
 		PoolSize:        c.PoolSize,
@@ -184,7 +185,7 @@ type AuditConfig struct {
 
 // KafkaConfig Kafka 配置
 type KafkaConfig struct {
-	Brokers []string `env:"BROKERS" envSeparator:"," envDefault:"localhost:9092"`
+	Brokers []string `env:"BROKERS" envSeparator:"," envDefault:"kafka-bootstrap.middleware.svc:9092"`
 }
 
 // APIConfig API 配置
@@ -201,7 +202,7 @@ type OTELConfig struct {
 	ServiceName    string  `env:"SERVICE_NAME" envDefault:"auth-service"`
 	ServiceVersion string  `env:"SERVICE_VERSION" envDefault:"1.0.0"`
 	Environment    string  `env:"ENVIRONMENT" envDefault:"development"`
-	Endpoint       string  `env:"ENDPOINT" envDefault:"localhost:4317"`
+	Endpoint       string  `env:"ENDPOINT" envDefault:"victoria-metrics.observability.svc:4317"`
 	Insecure       bool    `env:"INSECURE" envDefault:"true"`
 	SampleRate     float64 `env:"SAMPLE_RATE" envDefault:"1.0"`
 }
@@ -416,14 +417,19 @@ func (c *Config) validateRedis() error {
 		return nil
 	}
 
-	if c.Redis.Addr == "" && len(c.Redis.Addrs) == 0 {
+	if c.Redis.Addr == "" && len(c.Redis.Addrs) == 0 && len(c.Redis.SentinelAddrs) == 0 {
 		return errors.New(errors.ErrCodeConfigError,
-			"Redis address (REDIS_ADDR or REDIS_ADDRS) is required when Redis is enabled")
+			"Redis address (REDIS_ADDR, REDIS_ADDRS, or REDIS_SENTINEL_ADDRS) is required when Redis is enabled")
 	}
 
 	if c.Redis.Addr != "" && len(c.Redis.Addrs) > 0 {
 		return errors.New(errors.ErrCodeConfigError,
 			"Cannot specify both REDIS_ADDR and REDIS_ADDRS")
+	}
+
+	if len(c.Redis.SentinelAddrs) > 0 && c.Redis.SentinelMaster == "" {
+		return errors.New(errors.ErrCodeConfigError,
+			"REDIS_SENTINEL_MASTER is required when REDIS_SENTINEL_ADDRS is set")
 	}
 
 	if c.Redis.PoolSize < 1 {

@@ -166,6 +166,20 @@ type AlertDTO struct {
 	Status       string    `json:"status"`
 	Assignee     string    `json:"assignee,omitempty"`
 	UpdatedAt    time.Time `json:"updated_at"`
+	StateVersion uint64    `json:"state_version"`
+}
+
+// StatusUpdateResult 告警状态更新结果
+type StatusUpdateResult struct {
+	OldStatus    string
+	NewStatus    string
+	StateVersion uint64
+}
+
+// BatchStatusUpdateItem 批量状态更新单项
+type BatchStatusUpdateItem struct {
+	AlertID         string
+	ExpectedVersion *uint64
 }
 
 // AlertDetailDTO 告警详情DTO
@@ -333,17 +347,31 @@ func (s *AlertService) GetEvidenceByID(ctx context.Context, tenantID, alertID, e
 
 // ==================== 更新方法 ====================
 // UpdateStatus 更新告警状态，状态机脏数据自动修复
-func (s *AlertService) UpdateStatus(ctx context.Context, tenantID, alertID, newStatus, userID string) (string, error) {
+func (s *AlertService) UpdateStatus(ctx context.Context, tenantID, alertID, newStatus, userID, reason string) (string, error) {
+	result, err := s.UpdateStatusWithExpectedVersion(ctx, tenantID, alertID, newStatus, userID, reason, nil)
+	if err != nil {
+		return "", err
+	}
+	return result.OldStatus, nil
+}
+
+// UpdateStatusWithExpectedVersion 更新告警状态，并在提供 state_version 时执行客户端乐观锁校验。
+func (s *AlertService) UpdateStatusWithExpectedVersion(ctx context.Context, tenantID, alertID, newStatus, userID, reason string, expectedVersion *uint64) (*StatusUpdateResult, error) {
 	ctx, span := otel.StartSpan(ctx, "alert_service.update_status")
 	defer span.End()
 
 	// 获取当前告警
 	alert, err := s.chRepo.GetByID(ctx, tenantID, alertID)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	oldStatus := alert.Status
+	currentVersion := stateVersionMillis(alert.UpdatedTs)
+	if expectedVersion != nil && currentVersion != *expectedVersion {
+		return nil, errors.Newf(errors.ErrCodeVersionConflict,
+			"alert state_version conflict: expected %d, actual %d", *expectedVersion, currentVersion)
+	}
 
 	// ✅ 修复：处理无效状态
 	currentStatus, err := state.ParseStatus(oldStatus)
@@ -357,9 +385,16 @@ func (s *AlertService) UpdateStatus(ctx context.Context, tenantID, alertID, newS
 
 		// 强制设置为new状态
 		if fixErr := s.chRepo.UpdateStatus(ctx, tenantID, alertID, state.StatusNew.String(), "system"); fixErr != nil {
-			return "", errors.Wrap(fixErr, errors.ErrCodeDatabaseError, "failed to fix invalid status")
+			return nil, errors.Wrap(fixErr, errors.ErrCodeDatabaseError, "failed to fix invalid status")
 		}
 
+		if expectedVersion != nil {
+			fixedAlert, getErr := s.chRepo.GetByID(ctx, tenantID, alertID)
+			if getErr != nil {
+				return nil, getErr
+			}
+			alert = fixedAlert
+		}
 		currentStatus = state.StatusNew
 		oldStatus = state.StatusNew.String()
 	}
@@ -367,39 +402,57 @@ func (s *AlertService) UpdateStatus(ctx context.Context, tenantID, alertID, newS
 	// 验证目标状态
 	targetStatus, err := state.ParseStatus(newStatus)
 	if err != nil {
-		return "", errors.Wrapf(err, errors.ErrCodeInvalidParameter, "invalid target status: %s", newStatus)
+		return nil, errors.Wrapf(err, errors.ErrCodeInvalidParameter, "invalid target status: %s", newStatus)
 	}
 
-	// ✅ 允许从任何状态直接关闭（运维需求）
-	if targetStatus != state.StatusClosed {
-		if err := state.Transition(currentStatus, targetStatus); err != nil {
-			return "", errors.Newf(errors.ErrCodeInvalidStateTransition,
-				"cannot transition from %s to %s: %v", oldStatus, newStatus, err)
-		}
+	canonicalNewStatus := targetStatus.String()
+	if err := state.Transition(currentStatus, targetStatus); err != nil {
+		return nil, errors.Newf(errors.ErrCodeInvalidStateTransition,
+			"cannot transition from %s to %s: %v", oldStatus, canonicalNewStatus, err)
 	}
 
 	// 更新状态
-	if err := s.chRepo.UpdateStatus(ctx, tenantID, alertID, newStatus, userID); err != nil {
-		return "", err
+	newVersion := time.Now()
+	if expectedVersion != nil {
+		var updateErr error
+		newVersion, updateErr = s.chRepo.UpdateStatusWithVersion(ctx, tenantID, alertID, canonicalNewStatus, userID, alert.UpdatedTs)
+		if updateErr != nil {
+			return nil, updateErr
+		}
+	} else if err := s.chRepo.UpdateStatus(ctx, tenantID, alertID, canonicalNewStatus, userID); err != nil {
+		return nil, err
 	}
 
 	// 记录审计日志
 	if s.auditLogger != nil {
-		s.auditLogger.LogAlertStatusChange(ctx, alertID, tenantID, oldStatus, newStatus)
+		s.auditLogger.LogAlertStatusChangeWithReason(ctx, alertID, tenantID, userID, oldStatus, canonicalNewStatus, reason)
 	}
 
 	s.logger.Info("Alert status updated",
 		zap.String("alert_id", alertID),
 		zap.String("tenant_id", tenantID),
 		zap.String("old_status", oldStatus),
-		zap.String("new_status", newStatus),
+		zap.String("new_status", canonicalNewStatus),
 		zap.String("user_id", userID))
 
-	return oldStatus, nil
+	return &StatusUpdateResult{
+		OldStatus:    oldStatus,
+		NewStatus:    canonicalNewStatus,
+		StateVersion: stateVersionMillis(newVersion),
+	}, nil
 }
 
 // BatchUpdateStatus 批量更新告警状态（优化：并发执行）
-func (s *AlertService) BatchUpdateStatus(ctx context.Context, tenantID string, alertIDs []string, newStatus, userID string) (*BatchUpdateResult, error) {
+func (s *AlertService) BatchUpdateStatus(ctx context.Context, tenantID string, alertIDs []string, newStatus, userID, reason string) (*BatchUpdateResult, error) {
+	items := make([]BatchStatusUpdateItem, 0, len(alertIDs))
+	for _, alertID := range alertIDs {
+		items = append(items, BatchStatusUpdateItem{AlertID: alertID})
+	}
+	return s.BatchUpdateStatusWithExpectedVersions(ctx, tenantID, items, newStatus, userID, reason)
+}
+
+// BatchUpdateStatusWithExpectedVersions 批量更新告警状态，支持逐项 state_version 乐观锁。
+func (s *AlertService) BatchUpdateStatusWithExpectedVersions(ctx context.Context, tenantID string, items []BatchStatusUpdateItem, newStatus, userID, reason string) (*BatchUpdateResult, error) {
 	// ✅ 添加总超时
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
@@ -408,14 +461,17 @@ func (s *AlertService) BatchUpdateStatus(ctx context.Context, tenantID string, a
 	defer span.End()
 
 	result := &BatchUpdateResult{
-		TotalCount:   len(alertIDs),
-		SuccessCount: 0,
-		FailedCount:  0,
-		FailedIDs:    make([]string, 0),
-		Errors:       make(map[string]string),
+		TotalCount:    len(items),
+		SuccessCount:  0,
+		FailedCount:   0,
+		SuccessIDs:    make([]string, 0),
+		FailedIDs:     make([]string, 0),
+		Errors:        make(map[string]string),
+		ErrorCodes:    make(map[string]string),
+		StateVersions: make(map[string]uint64),
 	}
 
-	if len(alertIDs) == 0 {
+	if len(items) == 0 {
 		return result, nil
 	}
 
@@ -424,24 +480,29 @@ func (s *AlertService) BatchUpdateStatus(ctx context.Context, tenantID string, a
 	g.SetLimit(10)
 	var mu sync.Mutex
 
-	for _, id := range alertIDs {
-		alertID := id
+	for _, item := range items {
+		item := item
 		g.Go(func() error {
 			// ✅ 每个操作独立超时
 			opCtx, opCancel := context.WithTimeout(gctx, 5*time.Second)
 			defer opCancel()
 
-			_, err := s.UpdateStatus(opCtx, tenantID, alertID, newStatus, userID)
+			updateResult, err := s.UpdateStatusWithExpectedVersion(opCtx, tenantID, item.AlertID, newStatus, userID, reason, item.ExpectedVersion)
 
 			mu.Lock()
 			defer mu.Unlock()
 
 			if err != nil {
 				result.FailedCount++
-				result.FailedIDs = append(result.FailedIDs, alertID)
-				result.Errors[alertID] = err.Error()
+				result.FailedIDs = append(result.FailedIDs, item.AlertID)
+				result.Errors[item.AlertID] = err.Error()
+				result.ErrorCodes[item.AlertID] = errors.GetCode(err).String()
 			} else {
 				result.SuccessCount++
+				result.SuccessIDs = append(result.SuccessIDs, item.AlertID)
+				if updateResult != nil && updateResult.StateVersion > 0 {
+					result.StateVersions[item.AlertID] = updateResult.StateVersion
+				}
 			}
 
 			return nil // 不中断其他操作
@@ -463,29 +524,67 @@ func (s *AlertService) BatchUpdateStatus(ctx context.Context, tenantID string, a
 
 // BatchUpdateResult 批量更新结果
 type BatchUpdateResult struct {
-	TotalCount   int               `json:"total_count"`
-	SuccessCount int               `json:"success_count"`
-	FailedCount  int               `json:"failed_count"`
-	FailedIDs    []string          `json:"failed_ids,omitempty"`
-	Errors       map[string]string `json:"errors,omitempty"`
+	TotalCount    int               `json:"total_count"`
+	SuccessCount  int               `json:"success_count"`
+	FailedCount   int               `json:"failed_count"`
+	SuccessIDs    []string          `json:"success_ids,omitempty"`
+	FailedIDs     []string          `json:"failed_ids,omitempty"`
+	Errors        map[string]string `json:"errors,omitempty"`
+	ErrorCodes    map[string]string `json:"error_codes,omitempty"`
+	StateVersions map[string]uint64 `json:"state_versions,omitempty"`
 }
 
 // AssignAlert 分配告警
 func (s *AlertService) AssignAlert(ctx context.Context, tenantID, alertID, assignee, userID string) error {
 	ctx, span := otel.StartSpan(ctx, "alert_service.assign_alert")
 	defer span.End()
+
+	alert, err := s.chRepo.GetByID(ctx, tenantID, alertID)
+	if err != nil {
+		return err
+	}
+
+	oldStatus := alert.Status
+	currentStatus, err := state.ParseStatus(oldStatus)
+	if err != nil {
+		if s.logger != nil {
+			s.logger.Warn("Invalid alert status detected before assignment, auto-fixing",
+				zap.String("alert_id", alertID),
+				zap.String("tenant_id", tenantID),
+				zap.String("invalid_status", oldStatus),
+				zap.String("fixing_to", state.StatusNew.String()))
+		}
+		if fixErr := s.chRepo.UpdateStatus(ctx, tenantID, alertID, state.StatusNew.String(), "system"); fixErr != nil {
+			return errors.Wrap(fixErr, errors.ErrCodeDatabaseError, "failed to fix invalid status before assignment")
+		}
+		currentStatus = state.StatusNew
+		oldStatus = state.StatusNew.String()
+	}
+
+	if currentStatus != state.StatusAssigned {
+		if err := state.Transition(currentStatus, state.StatusAssigned); err != nil {
+			return errors.Newf(errors.ErrCodeInvalidStateTransition,
+				"cannot transition from %s to %s during assignment: %v", oldStatus, state.StatusAssigned.String(), err)
+		}
+	}
+
 	if err := s.chRepo.UpdateAssignee(ctx, tenantID, alertID, assignee, userID); err != nil {
 		return err
 	}
 	// 记录审计日志
 	if s.auditLogger != nil {
+		if currentStatus != state.StatusAssigned {
+			s.auditLogger.LogAlertStatusChangeWithReason(ctx, alertID, tenantID, userID, oldStatus, state.StatusAssigned.String(), "assign alert")
+		}
 		s.auditLogger.LogAlertAssign(ctx, alertID, tenantID, assignee)
 	}
-	s.logger.Info("Alert assigned",
-		zap.String("alert_id", alertID),
-		zap.String("tenant_id", tenantID),
-		zap.String("assignee", assignee),
-		zap.String("user_id", userID))
+	if s.logger != nil {
+		s.logger.Info("Alert assigned",
+			zap.String("alert_id", alertID),
+			zap.String("tenant_id", tenantID),
+			zap.String("assignee", assignee),
+			zap.String("user_id", userID))
+	}
 	return nil
 }
 
@@ -493,7 +592,7 @@ func (s *AlertService) AssignAlert(ctx context.Context, tenantID, alertID, assig
 func (s *AlertService) CloseAlert(ctx context.Context, tenantID, alertID, reason, userID string) error {
 	ctx, span := otel.StartSpan(ctx, "alert_service.close_alert")
 	defer span.End()
-	oldStatus, err := s.UpdateStatus(ctx, tenantID, alertID, state.StatusClosed.String(), userID)
+	oldStatus, err := s.UpdateStatus(ctx, tenantID, alertID, state.StatusClosed.String(), userID, reason)
 	if err != nil {
 		return err
 	}
@@ -514,7 +613,7 @@ func (s *AlertService) CloseAlert(ctx context.Context, tenantID, alertID, reason
 func (s *AlertService) ReopenAlert(ctx context.Context, tenantID, alertID, userID string) error {
 	ctx, span := otel.StartSpan(ctx, "alert_service.reopen_alert")
 	defer span.End()
-	_, err := s.UpdateStatus(ctx, tenantID, alertID, state.StatusNew.String(), userID)
+	_, err := s.UpdateStatus(ctx, tenantID, alertID, state.StatusNew.String(), userID, "reopen")
 	if err != nil {
 		return err
 	}
@@ -802,7 +901,15 @@ func (s *AlertService) toAlertDTO(a *persistence.Alert) *AlertDTO {
 		Status:       a.Status,
 		Assignee:     a.Assignee,
 		UpdatedAt:    a.UpdatedTs,
+		StateVersion: stateVersionMillis(a.UpdatedTs),
 	}
+}
+
+func stateVersionMillis(t time.Time) uint64 {
+	if t.IsZero() {
+		return 0
+	}
+	return uint64(t.UnixMilli())
 }
 func (s *AlertService) toAlertDetailDTO(ctx context.Context, a *persistence.Alert) *AlertDetailDTO {
 	if a == nil {

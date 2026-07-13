@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/caarlos0/env/v10"
+
+	kafkaCommon "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/kafka"
 )
 
 // MetricsConfig Metrics 配置
@@ -40,6 +42,7 @@ type DeploymentConfig struct {
 type Config struct {
 	API        APIConfig
 	PostgreSQL PostgreSQLConfig
+	ClickHouse ClickHouseConfig
 	Kafka      KafkaConfig
 	Redis      RedisConfig
 	Audit      AuditConfig
@@ -73,8 +76,8 @@ type APIConfig struct {
 
 // PostgreSQLConfig PostgreSQL 配置
 type PostgreSQLConfig struct {
-	DSN             string        `env:"POSTGRES_DSN" envDefault:"postgres://postgres:postgres@localhost:5432/traffic?sslmode=disable"`
-	Host            string        `env:"POSTGRES_HOST" envDefault:"localhost"`
+	DSN             string        `env:"POSTGRES_DSN"`
+	Host            string        `env:"POSTGRES_HOST" envDefault:"postgres-primary.databases.svc"`
 	Port            int           `env:"POSTGRES_PORT" envDefault:"5432"`
 	Database        string        `env:"POSTGRES_DATABASE" envDefault:"traffic"`
 	Username        string        `env:"POSTGRES_USERNAME" envDefault:"postgres"`
@@ -87,11 +90,26 @@ type PostgreSQLConfig struct {
 	ConnectTimeout  time.Duration `env:"POSTGRES_CONNECT_TIMEOUT" envDefault:"10s"`
 }
 
+// ClickHouseConfig ClickHouse 配置（用于 MLOps 自编排评估）
+type ClickHouseConfig struct {
+	Enabled         bool          `env:"CLICKHOUSE_ENABLED" envDefault:"true"`
+	Hosts           []string      `env:"CLICKHOUSE_HOSTS" envSeparator:","`
+	Database        string        `env:"CLICKHOUSE_DATABASE" envDefault:"traffic"`
+	Username        string        `env:"CLICKHOUSE_USERNAME" envDefault:"default"`
+	Password        string        `env:"CLICKHOUSE_PASSWORD"`
+	MaxOpenConns    int           `env:"CLICKHOUSE_MAX_OPEN_CONNS" envDefault:"10"`
+	MaxIdleConns    int           `env:"CLICKHOUSE_MAX_IDLE_CONNS" envDefault:"5"`
+	ConnMaxLifetime time.Duration `env:"CLICKHOUSE_CONN_MAX_LIFETIME" envDefault:"1h"`
+	DialTimeout     time.Duration `env:"CLICKHOUSE_DIAL_TIMEOUT" envDefault:"10s"`
+	ReadTimeout     time.Duration `env:"CLICKHOUSE_READ_TIMEOUT" envDefault:"30s"`
+}
+
 // KafkaConfig Kafka 配置
 type KafkaConfig struct {
 	Brokers        []string      `env:"KAFKA_BROKERS" envSeparator:","`
-	RuleTopic      string        `env:"KAFKA_RULE_TOPIC" envDefault:"rule.updates.v1"`
-	AuditTopic     string        `env:"KAFKA_AUDIT_TOPIC" envDefault:"audit.logs.v1"`
+	RuleTopic      string        `env:"KAFKA_RULE_TOPIC" envDefault:"rule.updates"`
+	ModelTopic     string        `env:"KAFKA_MODEL_TOPIC" envDefault:"model-updates"`
+	AuditTopic     string        `env:"KAFKA_AUDIT_TOPIC" envDefault:"audit.logs"`
 	DLQTopicPrefix string        `env:"KAFKA_DLQ_TOPIC_PREFIX" envDefault:"dlq."`
 	BatchSize      int           `env:"KAFKA_BATCH_SIZE" envDefault:"100"`
 	BatchTimeout   time.Duration `env:"KAFKA_BATCH_TIMEOUT" envDefault:"100ms"`
@@ -103,18 +121,21 @@ type KafkaConfig struct {
 	SendTimeout    time.Duration `env:"KAFKA_SEND_TIMEOUT" envDefault:"5s"`
 	PublishTimeout time.Duration `env:"KAFKA_PUBLISH_TIMEOUT" envDefault:"30s"`
 	RetryBackoff   time.Duration `env:"KAFKA_RETRY_BACKOFF" envDefault:"100ms"`
+	Security       kafkaCommon.SecurityConfig
 }
 
 // RedisConfig Redis 配置
 type RedisConfig struct {
 	Enabled bool `env:"REDIS_ENABLED" envDefault:"true"`
 	// 单机模式
-	Addr     string `env:"REDIS_ADDR" envDefault:"localhost:6379"`
+	Addr     string `env:"REDIS_ADDR" envDefault:"redis-master.databases.svc:6379"`
 	Password string `env:"REDIS_PASSWORD" envDefault:""`
 	DB       int    `env:"REDIS_DB" envDefault:"0"`
 	// 集群模式（修复：使用 Addrs 替代 ClusterAddrs）
 	Addrs          []string `env:"REDIS_ADDRS" envSeparator:","`
 	ClusterEnabled bool     `env:"REDIS_CLUSTER_ENABLED" envDefault:"false"`
+	SentinelAddrs  []string `env:"REDIS_SENTINEL_ADDRS" envSeparator:","`
+	SentinelMaster string   `env:"REDIS_SENTINEL_MASTER"`
 	// 连接池
 	PoolSize        int           `env:"REDIS_POOL_SIZE" envDefault:"10"`
 	MinIdleConns    int           `env:"REDIS_MIN_IDLE_CONNS" envDefault:"5"`
@@ -129,7 +150,7 @@ type RedisConfig struct {
 // AuditConfig 审计配置
 type AuditConfig struct {
 	Enabled         bool          `env:"AUDIT_ENABLED" envDefault:"true"`
-	Topic           string        `env:"AUDIT_TOPIC" envDefault:"audit.logs.v1"`
+	Topic           string        `env:"AUDIT_TOPIC" envDefault:"audit.logs"`
 	BufferSize      int           `env:"AUDIT_BUFFER_SIZE" envDefault:"1000"`
 	BatchSize       int           `env:"AUDIT_BATCH_SIZE" envDefault:"100"`
 	FlushInterval   time.Duration `env:"AUDIT_FLUSH_INTERVAL" envDefault:"1s"`
@@ -186,11 +207,15 @@ func Load() (*Config, error) {
 
 	// 设置默认值
 	if len(cfg.Kafka.Brokers) == 0 {
-		cfg.Kafka.Brokers = []string{"localhost:9092"}
+		cfg.Kafka.Brokers = []string{"kafka-bootstrap.middleware.svc:9092"}
 	}
 
 	if len(cfg.API.AllowedOrigins) == 0 {
 		cfg.API.AllowedOrigins = []string{"*"}
+	}
+
+	if cfg.ClickHouse.Enabled && len(cfg.ClickHouse.Hosts) == 0 {
+		cfg.ClickHouse.Hosts = []string{"clickhouse-1.middleware.svc:9000"}
 	}
 
 	// Redis 地址兼容处理
@@ -216,6 +241,10 @@ func (c *Config) Validate() error {
 
 	if c.API.ListenAddr == "" {
 		return &ConfigError{Field: "API.ListenAddr", Message: "listen address is required"}
+	}
+
+	if c.ClickHouse.Enabled && len(c.ClickHouse.Hosts) == 0 {
+		return &ConfigError{Field: "ClickHouse.Hosts", Message: "at least one host is required when ClickHouse is enabled"}
 	}
 
 	// 验证限流配置
@@ -269,7 +298,7 @@ func (c *Config) GetPostgresDSN() string {
 
 // IsRedisEnabled 检查 Redis 是否启用
 func (c *Config) IsRedisEnabled() bool {
-	return c.Redis.Enabled && (c.Redis.Addr != "" || len(c.Redis.Addrs) > 0)
+	return c.Redis.Enabled && (c.Redis.Addr != "" || len(c.Redis.Addrs) > 0 || len(c.Redis.SentinelAddrs) > 0)
 }
 
 // IsAuditEnabled 检查审计是否启用

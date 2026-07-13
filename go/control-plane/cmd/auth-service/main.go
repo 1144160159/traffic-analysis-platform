@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/api"
@@ -396,6 +397,7 @@ func initAuditLogger(cfg *config.Config, logger *zap.Logger) (*audit.Logger, err
 		MaxRetries:      3,
 		RetryBackoff:    100 * time.Millisecond,
 		ShutdownTimeout: 10 * time.Second,
+		Security:        cfg.KafkaSecurity,
 	}
 
 	auditLogger, err := audit.NewLogger(auditConfig, logger)
@@ -492,7 +494,7 @@ func initHealthChecker(pgClient *storage.PostgresClient, redisClient *storage.Re
 	if redisClient != nil {
 		healthChecker.AddChecker(health.NewRedisChecker(redisClient))
 	} else {
-		healthChecker.AddChecker(health.NewDummyChecker("redis"))
+		logger.Info("Redis health checker disabled")
 	}
 
 	return healthChecker
@@ -534,19 +536,15 @@ func setupRoutes(
 ) *mux.Router {
 	r := mux.NewRouter()
 
-	apiRouter := r.PathPrefix("/api/v1").Subrouter()
-	authHandler.RegisterRoutes(apiRouter)
-	tokenHandler.RegisterRoutes(apiRouter)
+	authHandler.RegisterRoutes(r)
+	tokenHandler.RegisterRoutes(r)
 
 	r.HandleFunc("/health", healthChecker.Handler()).Methods("GET")
 	r.HandleFunc("/health/ready", healthChecker.ReadinessHandler()).Methods("GET")
 	r.HandleFunc("/health/live", healthChecker.LivenessHandler()).Methods("GET")
 
 	if os.Getenv("METRICS_ENABLED") == "true" {
-		r.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusNotImplemented)
-			w.Write([]byte("Metrics endpoint not implemented"))
-		}).Methods("GET")
+		r.Handle("/metrics", promhttp.Handler()).Methods("GET")
 	}
 
 	logger.Info("Routes registered")

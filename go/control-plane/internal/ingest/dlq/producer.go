@@ -13,9 +13,11 @@ import (
 	"time"
 
 	"github.com/segmentio/kafka-go"
+	"github.com/segmentio/kafka-go/lz4"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 
+	kafkaCommon "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/kafka"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/ingest/config"
 	pb "github.com/1144160159/traffic-analysis-platform/go/control-plane/pkg/proto/traffic/v1"
 )
@@ -38,6 +40,7 @@ type Config struct {
 	ReplayInterval       time.Duration
 	ReplayBatchSize      int
 	ReplaySuccessRateMin float64
+	Security             kafkaCommon.SecurityConfig
 }
 
 func DefaultConfig(brokers []string) Config {
@@ -84,7 +87,7 @@ type Producer struct {
 	wg        sync.WaitGroup
 }
 
-func NewProducer(cfg Config, logger *zap.Logger) *Producer {
+func NewProducer(cfg Config, logger *zap.Logger) (*Producer, error) {
 
 	if cfg.DLQTopic == "" {
 		cfg.DLQTopic = config.TopicDLQ
@@ -120,19 +123,25 @@ func NewProducer(cfg Config, logger *zap.Logger) *Producer {
 		cfg.MaxFallbackSize = config.MaxFallbackFileSize
 	}
 
-	writer := &kafka.Writer{
-		Addr:         kafka.TCP(cfg.Brokers...),
-		Topic:        cfg.DLQTopic,
-		Balancer:     &kafka.LeastBytes{},
-		BatchSize:    cfg.BatchSize,
-		BatchTimeout: config.KafkaBatchTimeout,
-		Compression:  kafka.Lz4,
-		MaxAttempts:  cfg.MaxRetries,
-		Async:        false,
+	dialer, err := cfg.Security.Dialer("ingest-gateway-dlq")
+	if err != nil {
+		return nil, fmt.Errorf("invalid Kafka DLQ security configuration: %w", err)
+	}
+
+	writer := kafka.NewWriter(kafka.WriterConfig{
+		Brokers:          cfg.Brokers,
+		Topic:            cfg.DLQTopic,
+		Dialer:           dialer,
+		Balancer:         &kafka.LeastBytes{},
+		BatchSize:        cfg.BatchSize,
+		BatchTimeout:     config.KafkaBatchTimeout,
+		CompressionCodec: lz4.NewCompressionCodec(),
+		MaxAttempts:      cfg.MaxRetries,
+		Async:            false,
 		ErrorLogger: kafka.LoggerFunc(func(msg string, args ...interface{}) {
 			logger.Error(fmt.Sprintf(msg, args...))
 		}),
-	}
+	})
 
 	p := &Producer{
 		config:          cfg,
@@ -160,40 +169,45 @@ func NewProducer(cfg Config, logger *zap.Logger) *Producer {
 		zap.Bool("fallback_enabled", p.fallbackEnabled),
 		zap.String("fallback_dir", cfg.FallbackDir))
 
-	return p
+	return p, nil
 }
 
-func (p *Producer) getTopicWriter(topic string) *kafka.Writer {
+func (p *Producer) getTopicWriter(topic string) (*kafka.Writer, error) {
 	p.writersMu.RLock()
 	writer, exists := p.topicWriters[topic]
 	p.writersMu.RUnlock()
 
 	if exists {
-		return writer
+		return writer, nil
 	}
 
 	p.writersMu.Lock()
 	defer p.writersMu.Unlock()
 
 	if writer, exists := p.topicWriters[topic]; exists {
-		return writer
+		return writer, nil
 	}
 
-	writer = &kafka.Writer{
-		Addr:         kafka.TCP(p.config.Brokers...),
-		Topic:        topic,
-		Balancer:     &kafka.Hash{},
-		BatchSize:    config.DefaultKafkaBatchSize,
-		BatchTimeout: config.KafkaBatchTimeout,
-		Compression:  kafka.Lz4,
-		MaxAttempts:  p.config.MaxRetries,
-		Async:        false,
+	dialer, err := p.config.Security.Dialer("ingest-gateway-dlq-replay")
+	if err != nil {
+		return nil, fmt.Errorf("invalid Kafka replay security configuration: %w", err)
 	}
+
+	writer = kafka.NewWriter(kafka.WriterConfig{
+		Brokers:          p.config.Brokers,
+		Balancer:         &kafka.Hash{},
+		BatchSize:        config.DefaultKafkaBatchSize,
+		BatchTimeout:     config.KafkaBatchTimeout,
+		CompressionCodec: lz4.NewCompressionCodec(),
+		MaxAttempts:      p.config.MaxRetries,
+		Async:            false,
+		Dialer:           dialer,
+	})
 
 	p.topicWriters[topic] = writer
 	p.logger.Info("Created topic writer for replay", zap.String("topic", topic))
 
-	return writer
+	return writer, nil
 }
 
 type DLQMessage struct {
@@ -519,24 +533,40 @@ func (p *Producer) StartFallbackReplay(ctx context.Context, interval time.Durati
 }
 
 func (p *Producer) replayFallbackFiles(ctx context.Context) {
-	if !p.fallbackEnabled || p.config.FallbackDir == "" {
-		return
+	report := p.ReplayFallbackFiles(ctx)
+	if report.ReplayedFiles > 0 || report.FailedFiles > 0 {
+		p.logger.Info("DLQ fallback replay completed",
+			zap.Int("success", report.ReplayedFiles),
+			zap.Int("failed", report.FailedFiles),
+			zap.Int("remaining_files", report.RemainingFallbackFiles))
 	}
+}
+
+func (p *Producer) ReplayFallbackFiles(ctx context.Context) (report FallbackReplayReport) {
+	report.StartedAt = time.Now()
+	defer func() {
+		report.FinishedAt = time.Now()
+		report.RemainingFallbackFiles, report.RemainingFallbackBytes, _ = p.GetFallbackStats()
+	}()
+
+	if !p.fallbackEnabled || p.config.FallbackDir == "" {
+		return report
+	}
+	report.FallbackReplayAvailable = true
 
 	entries, err := os.ReadDir(p.config.FallbackDir)
 	if err != nil {
 		p.logger.Error("Failed to read fallback directory", zap.Error(err))
-		return
+		report.Errors = append(report.Errors, err.Error())
+		return report
 	}
 
 	if len(entries) == 0 {
-		return
+		return report
 	}
+	report.FileCount = len(entries)
 
 	p.logger.Info("Starting DLQ fallback replay", zap.Int("file_count", len(entries)))
-
-	successCount := 0
-	failCount := 0
 
 	for _, entry := range entries {
 		if entry.IsDir() {
@@ -548,6 +578,7 @@ func (p *Producer) replayFallbackFiles(ctx context.Context) {
 		p.fallbackMu.Unlock()
 
 		if isCurrent {
+			report.SkippedCurrentFiles++
 			continue
 		}
 
@@ -556,17 +587,14 @@ func (p *Producer) replayFallbackFiles(ctx context.Context) {
 			p.logger.Error("Failed to replay fallback file",
 				zap.String("file", filePath),
 				zap.Error(err))
-			failCount++
+			report.FailedFiles++
+			report.Errors = append(report.Errors, err.Error())
 		} else {
-			successCount++
+			report.ReplayedFiles++
 		}
 	}
 
-	if successCount > 0 || failCount > 0 {
-		p.logger.Info("DLQ fallback replay completed",
-			zap.Int("success", successCount),
-			zap.Int("failed", failCount))
-	}
+	return report
 }
 
 func (p *Producer) replayFile(ctx context.Context, filePath string) error {
@@ -682,7 +710,15 @@ func (p *Producer) replayBatch(ctx context.Context, messages []kafka.Message) (s
 	}
 
 	for topic, msgs := range topicGroups {
-		writer := p.getTopicWriter(topic)
+		writer, err := p.getTopicWriter(topic)
+		if err != nil {
+			p.logger.Error("Failed to create replay writer",
+				zap.String("topic", topic),
+				zap.Int("count", len(msgs)),
+				zap.Error(err))
+			failed += len(msgs)
+			continue
+		}
 		if err := writer.WriteMessages(ctx, msgs...); err != nil {
 			p.logger.Error("Failed to replay messages",
 				zap.String("topic", topic),
@@ -743,6 +779,19 @@ type DLQStats struct {
 	KafkaFailCount    int64
 	FallbackCount     int64
 	ReplayCount       int64
+}
+
+type FallbackReplayReport struct {
+	StartedAt               time.Time `json:"started_at"`
+	FinishedAt              time.Time `json:"finished_at"`
+	FileCount               int       `json:"file_count"`
+	ReplayedFiles           int       `json:"replayed_files"`
+	FailedFiles             int       `json:"failed_files"`
+	SkippedCurrentFiles     int       `json:"skipped_current_files"`
+	RemainingFallbackFiles  int       `json:"remaining_fallback_files"`
+	RemainingFallbackBytes  int64     `json:"remaining_fallback_bytes"`
+	Errors                  []string  `json:"errors,omitempty"`
+	FallbackReplayAvailable bool      `json:"fallback_replay_available"`
 }
 
 func (p *Producer) Close() error {

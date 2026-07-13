@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -130,7 +131,7 @@ func main() {
 	// ==================== 初始化数据库连接 ====================
 
 	// PostgreSQL（修复 G2）
-	pgDSN := getEnv("POSTGRES_DSN", "host=localhost port=5432 user=postgres password=postgres dbname=traffic sslmode=disable")
+	pgDSN := postgresDSNFromEnv()
 	pgDB, err := sql.Open("postgres", pgDSN)
 	if err != nil {
 		logger.Fatal("Failed to connect to PostgreSQL", zap.Error(err))
@@ -206,6 +207,7 @@ func main() {
 			FlushInterval: cfg.Audit.FlushInterval,
 			BackupEnabled: cfg.Audit.BackupEnabled,
 			BackupDir:     cfg.Audit.BackupDir,
+			Security:      cfg.KafkaSecurity,
 		}
 		auditLogger, err = audit.NewLogger(auditCfg, logger)
 		if err != nil {
@@ -313,9 +315,8 @@ func main() {
 	r.HandleFunc("/ready", handler.ReadinessCheck).Methods("GET")
 	r.Handle("/metrics", promhttp.Handler()).Methods("GET")
 
-	// 注册业务路由
-	apiRouter := r.PathPrefix("/api/v1").Subrouter()
-	handler.RegisterRoutes(apiRouter)
+	// 注册业务路由。Handler 内部已经声明 /api/v1 前缀，入口层只传根路由。
+	handler.RegisterRoutes(r)
 
 	// ==================== 构建中间件链 ====================
 
@@ -566,6 +567,32 @@ func getEnv(key, defaultValue string) string {
 		return value
 	}
 	return defaultValue
+}
+
+func postgresDSNFromEnv() string {
+	if dsn := os.Getenv("POSTGRES_DSN"); dsn != "" {
+		return dsn
+	}
+
+	pairs := []string{
+		pqKV("host", getEnv("POSTGRES_HOST", "localhost")),
+		pqKV("port", getEnv("POSTGRES_PORT", "5432")),
+		pqKV("user", getEnv("POSTGRES_USERNAME", "postgres")),
+		pqKV("password", os.Getenv("POSTGRES_PASSWORD")),
+		pqKV("dbname", getEnv("POSTGRES_DATABASE", "traffic_platform")),
+		pqKV("sslmode", getEnv("POSTGRES_SSL_MODE", "disable")),
+		pqKV("connect_timeout", getEnv("POSTGRES_CONNECT_TIMEOUT", "10")),
+	}
+	return strings.Join(pairs, " ")
+}
+
+func pqKV(key, value string) string {
+	return key + "=" + pqQuote(value)
+}
+
+func pqQuote(value string) string {
+	escaped := strings.NewReplacer(`\`, `\\`, `'`, `\'`).Replace(value)
+	return "'" + escaped + "'"
 }
 
 // graphQueryExploreAdapter 将 GraphQueryWithCircuitBreaker 适配为 GraphQueryInterface

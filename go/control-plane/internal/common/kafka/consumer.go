@@ -26,6 +26,7 @@ type ConsumerConfig struct {
 	DLQTopicPrefix string
 
 	CommitOnDLQSuccess bool
+	Security           SecurityConfig
 }
 
 type Consumer struct {
@@ -38,17 +39,22 @@ type Consumer struct {
 	commitChan    chan commitRequest
 	stopCommitter chan struct{}
 	dlqProducer   *DLQProducer
+	fetchFailures int64
+	lastFetchErr  string
+	lastFetchAt   time.Time
 }
 
 type ConsumerMetrics struct {
-	MessagesReceived  int64
-	MessagesProcessed int64
-	MessagesFailed    int64
-	MessagesDLQ       int64
-	CommitsSucceeded  int64
-	CommitsFailed     int64
-	LastOffset        int64
-	Lag               int64
+	MessagesReceived         int64
+	MessagesProcessed        int64
+	MessagesFailed           int64
+	MessagesDLQ              int64
+	CommitsSucceeded         int64
+	CommitsFailed            int64
+	LastOffset               int64
+	Lag                      int64
+	ConsecutiveFetchFailures int64
+	LastFetchErrorUnix       int64
 }
 
 type commitRequest struct {
@@ -89,10 +95,16 @@ func NewConsumer(config ConsumerConfig, logger *zap.Logger) (*Consumer, error) {
 		config.DLQTopicPrefix = "dlq."
 	}
 
+	dialer, err := config.Security.Dialer("traffic-control-plane-consumer")
+	if err != nil {
+		return nil, err
+	}
+
 	reader := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:        config.Brokers,
 		Topic:          config.Topic,
 		GroupID:        config.GroupID,
+		Dialer:         dialer,
 		MinBytes:       config.MinBytes,
 		MaxBytes:       config.MaxBytes,
 		MaxWait:        config.MaxWait,
@@ -123,6 +135,7 @@ func NewConsumer(config ConsumerConfig, logger *zap.Logger) (*Consumer, error) {
 			BatchSize:   100,
 			MaxRetries:  3,
 			RetryDelay:  100 * time.Millisecond,
+			Security:    config.Security,
 		}
 		c.dlqProducer = NewDLQProducer(dlqConfig, "consumer-"+config.Topic, logger)
 	}
@@ -328,10 +341,12 @@ func (c *Consumer) Consume(ctx context.Context, handler MessageHandler) error {
 			if err == context.Canceled || err == context.DeadlineExceeded {
 				return err
 			}
+			c.recordFetchFailure(err)
 			c.logger.Error("Failed to fetch message", zap.Error(err))
 			time.Sleep(c.config.RetryBackoff)
 			continue
 		}
+		c.recordFetchSuccess()
 
 		atomic.AddInt64(&c.metrics.MessagesReceived, 1)
 
@@ -503,10 +518,12 @@ func (c *Consumer) BatchConsume(ctx context.Context, batchSize int, flushInterva
 				}
 				continue
 			}
+			c.recordFetchFailure(err)
 			c.logger.Error("Failed to fetch message", zap.Error(err))
 			time.Sleep(c.config.RetryBackoff)
 			continue
 		}
+		c.recordFetchSuccess()
 
 		atomic.AddInt64(&c.metrics.MessagesReceived, 1)
 
@@ -531,16 +548,53 @@ func (c *Consumer) Lag(ctx context.Context) (int64, error) {
 }
 
 func (c *Consumer) GetMetrics() ConsumerMetrics {
+	c.mu.RLock()
+	lastFetchAt := c.lastFetchAt
+	c.mu.RUnlock()
 	return ConsumerMetrics{
-		MessagesReceived:  atomic.LoadInt64(&c.metrics.MessagesReceived),
-		MessagesProcessed: atomic.LoadInt64(&c.metrics.MessagesProcessed),
-		MessagesFailed:    atomic.LoadInt64(&c.metrics.MessagesFailed),
-		MessagesDLQ:       atomic.LoadInt64(&c.metrics.MessagesDLQ),
-		CommitsSucceeded:  atomic.LoadInt64(&c.metrics.CommitsSucceeded),
-		CommitsFailed:     atomic.LoadInt64(&c.metrics.CommitsFailed),
-		LastOffset:        atomic.LoadInt64(&c.metrics.LastOffset),
-		Lag:               atomic.LoadInt64(&c.metrics.Lag),
+		MessagesReceived:         atomic.LoadInt64(&c.metrics.MessagesReceived),
+		MessagesProcessed:        atomic.LoadInt64(&c.metrics.MessagesProcessed),
+		MessagesFailed:           atomic.LoadInt64(&c.metrics.MessagesFailed),
+		MessagesDLQ:              atomic.LoadInt64(&c.metrics.MessagesDLQ),
+		CommitsSucceeded:         atomic.LoadInt64(&c.metrics.CommitsSucceeded),
+		CommitsFailed:            atomic.LoadInt64(&c.metrics.CommitsFailed),
+		LastOffset:               atomic.LoadInt64(&c.metrics.LastOffset),
+		Lag:                      atomic.LoadInt64(&c.metrics.Lag),
+		ConsecutiveFetchFailures: atomic.LoadInt64(&c.fetchFailures),
+		LastFetchErrorUnix:       lastFetchAt.Unix(),
 	}
+}
+
+// HealthCheck reports persistent transport/authentication failures without
+// treating normal idle-topic fetch timeouts as unhealthy.
+func (c *Consumer) HealthCheck() error {
+	if atomic.LoadInt32(&c.closed) == 1 {
+		return fmt.Errorf("consumer is closed")
+	}
+	failures := atomic.LoadInt64(&c.fetchFailures)
+	if failures < 3 {
+		return nil
+	}
+	c.mu.RLock()
+	lastErr := c.lastFetchErr
+	c.mu.RUnlock()
+	return fmt.Errorf("kafka fetch failed %d consecutive times: %s", failures, lastErr)
+}
+
+func (c *Consumer) recordFetchFailure(err error) {
+	atomic.AddInt64(&c.fetchFailures, 1)
+	c.mu.Lock()
+	c.lastFetchErr = err.Error()
+	c.lastFetchAt = time.Now()
+	c.mu.Unlock()
+}
+
+func (c *Consumer) recordFetchSuccess() {
+	atomic.StoreInt64(&c.fetchFailures, 0)
+	c.mu.Lock()
+	c.lastFetchErr = ""
+	c.lastFetchAt = time.Time{}
+	c.mu.Unlock()
 }
 
 func (c *Consumer) Close() error {

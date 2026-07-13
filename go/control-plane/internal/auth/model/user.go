@@ -112,27 +112,36 @@ var DefaultRoleScopes = map[string][]string{
 		ScopeRuleRead, ScopeRuleWrite, ScopeRuleDelete,
 		ScopePcapRead, ScopePcapDownload, ScopePcapCut,
 		ScopeGraphRead,
+		ScopeAssetRead, ScopeAssetDiscover,
+		ScopeScreenView,
 		ScopeAdminAll,
 		ScopeTokenRead, ScopeTokenWrite,
 		ScopeDeployRead, ScopeDeployCreate, ScopeDeployActivate, ScopeDeployRollback,
 		ScopeUserRead, ScopeUserWrite, ScopeUserDelete,
+		ScopeAll,
 	},
 	"analyst": {
 		ScopeAlertRead, ScopeAlertWrite, ScopeAlertExport,
 		ScopeRuleRead,
 		ScopePcapRead, ScopePcapDownload,
 		ScopeGraphRead,
+		ScopeAssetRead,
+		ScopeScreenView,
 	},
 	"viewer": {
 		ScopeAlertRead,
 		ScopeRuleRead,
 		ScopeGraphRead,
+		ScopeAssetRead,
+		ScopeScreenView,
 	},
 	"operator": {
 		ScopeAlertRead, ScopeAlertWrite,
 		ScopeRuleRead,
 		ScopePcapRead,
 		ScopeGraphRead,
+		ScopeAssetRead, ScopeAssetDiscover,
+		ScopeScreenView,
 		ScopeDeployRead,
 	},
 }
@@ -228,7 +237,9 @@ func HasAllScopes(scopes []string, requiredScopes ...string) bool {
 func ScopesMapToList(scopes map[string]bool) []string {
 	result := make([]string, 0, len(scopes))
 	for scope, enabled := range scopes {
-		if enabled { result = append(result, scope) }
+		if enabled {
+			result = append(result, scope)
+		}
 	}
 	return result
 }
@@ -236,6 +247,8 @@ func ScopesMapToList(scopes map[string]bool) []string {
 // ListToScopesMap 将 scopes 列表转换为 map
 func ListToScopesMap(list []string) map[string]bool {
 	result := make(map[string]bool)
-	for _, scope := range list { result[scope] = true }
+	for _, scope := range list {
+		result[scope] = true
+	}
 	return result
 }

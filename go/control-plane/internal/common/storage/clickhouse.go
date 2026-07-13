@@ -17,6 +17,8 @@ import (
 )
 
 type ClickHouseConfig struct {
+	// 集群模式 — 多 shard 端点列表 (每个 shard 至少一个端点)
+	// 示例: "clickhouse-1.middleware.svc:9000,clickhouse-2.middleware.svc:9000"
 	Hosts           []string      `env:"CLICKHOUSE_HOSTS" envSeparator:","`
 	Database        string        `env:"CLICKHOUSE_DATABASE" envDefault:"traffic"`
 	Username        string        `env:"CLICKHOUSE_USERNAME" envDefault:"default"`
@@ -29,6 +31,15 @@ type ClickHouseConfig struct {
 	WriteTimeout    time.Duration `env:"CLICKHOUSE_WRITE_TIMEOUT" envDefault:"30s"`
 	CompressionLZ4  bool          `env:"CLICKHOUSE_COMPRESSION_LZ4" envDefault:"true"`
 	Debug           bool          `env:"CLICKHOUSE_DEBUG" envDefault:"false"`
+
+	// 集群模式: 是否使用 Distributed 表读写
+	// 为 true 时, 读写 Distributed 表 (如 flows_raw 而非 flows_raw_local)
+	// 写入 Distributed 表会自动按 sharding key 分布到各 shard
+	ClusterMode bool `env:"CLICKHOUSE_CLUSTER_MODE" envDefault:"true"`
+
+	// 集群模式: Distributed 表后缀 (空=直接用表名, 如 flows_raw)
+	// 如需使用 _local 表直连 shard, 设置为 Distributed 表名
+	TableSuffix string `env:"CLICKHOUSE_TABLE_SUFFIX" envDefault:""`
 
 	EnableAutoReconnect bool          `env:"CLICKHOUSE_AUTO_RECONNECT" envDefault:"true"`
 	ReconnectInterval   time.Duration `env:"CLICKHOUSE_RECONNECT_INTERVAL" envDefault:"5s"`
@@ -155,10 +166,10 @@ func NewClickHouseClient(cfg ClickHouseConfig, logger *zap.Logger) (*ClickHouseC
 		}
 		logger.Warn("Initial connection failed, will retry in background",
 			zap.Error(err))
-		go client.reconnectLoop()
 	}
 
 	if cfg.EnableAutoReconnect {
+		go client.reconnectLoop()
 		go client.healthCheckLoop()
 	}
 
@@ -167,10 +178,16 @@ func NewClickHouseClient(cfg ClickHouseConfig, logger *zap.Logger) (*ClickHouseC
 
 // NewClickHouseClientFromConn 从已有的 driver.Conn 创建 ClickHouseClient 包装器
 func NewClickHouseClientFromConn(conn driver.Conn, logger *zap.Logger) *ClickHouseClient {
-	return &ClickHouseClient{
-		conn:   conn,
-		logger: logger,
+	client := &ClickHouseClient{
+		conn:          conn,
+		logger:        logger,
+		stopReconnect: make(chan struct{}),
+		stopHealth:    make(chan struct{}),
+		metrics:       newClickHouseMetrics("clickhouse"),
 	}
+	atomic.StoreInt32(&client.state, int32(StateConnected))
+	client.metrics.connectionState.Set(float64(StateConnected))
+	return client
 }
 
 func (c *ClickHouseClient) connect() error {
@@ -184,7 +201,11 @@ func (c *ClickHouseClient) connect() error {
 			Password: c.config.Password,
 		},
 		Settings: clickhouse.Settings{
-			"max_execution_time": 60,
+			"max_execution_time":                                 60,
+			"distributed_product_mode":                           "allow",
+			"prefer_localhost_replica":                           1,
+			"load_balancing":                                     "random",
+			"fallback_to_stale_replicas_for_distributed_queries": 1,
 		},
 		DialTimeout:     c.config.DialTimeout,
 		MaxOpenConns:    c.config.MaxOpenConns,
@@ -229,7 +250,8 @@ func (c *ClickHouseClient) connect() error {
 
 	c.logger.Info("Connected to ClickHouse",
 		zap.Strings("hosts", c.config.Hosts),
-		zap.String("database", c.config.Database))
+		zap.String("database", c.config.Database),
+		zap.Bool("cluster_mode", c.config.ClusterMode))
 
 	return nil
 }
@@ -344,12 +366,16 @@ func (c *ClickHouseClient) OnStateChange(cb ConnectionCallback) {
 	c.callbacks = append(c.callbacks, cb)
 }
 
-func (c *ClickHouseClient) Conn() (driver.Conn, error) {
+func (c *ClickHouseClient) Conn(ctx context.Context) (driver.Conn, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	if atomic.LoadInt32(&c.closed) == 1 {
 		return nil, fmt.Errorf("client is closed")
 	}
 
-	timeout := time.After(30 * time.Second)
+	timeout := time.NewTimer(30 * time.Second)
+	defer timeout.Stop()
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
 
@@ -364,7 +390,9 @@ func (c *ClickHouseClient) Conn() (driver.Conn, error) {
 		}
 
 		select {
-		case <-timeout:
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-timeout.C:
 			return nil, fmt.Errorf("timeout waiting for connection")
 		case <-ticker.C:
 			continue
@@ -376,7 +404,7 @@ func (c *ClickHouseClient) Query(ctx context.Context, query string, args ...inte
 	ctx, span := otel.StartSpan(ctx, "clickhouse.query")
 	defer span.End()
 
-	conn, err := c.Conn()
+	conn, err := c.Conn(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -408,7 +436,7 @@ func (c *ClickHouseClient) QueryRow(ctx context.Context, query string, args ...i
 	ctx, span := otel.StartSpan(ctx, "clickhouse.query_row")
 	defer span.End()
 
-	conn, err := c.Conn()
+	conn, err := c.Conn(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -429,7 +457,7 @@ func (c *ClickHouseClient) Exec(ctx context.Context, query string, args ...inter
 	ctx, span := otel.StartSpan(ctx, "clickhouse.exec")
 	defer span.End()
 
-	conn, err := c.Conn()
+	conn, err := c.Conn(ctx)
 	if err != nil {
 		return err
 	}
@@ -459,7 +487,7 @@ func (c *ClickHouseClient) PrepareBatch(ctx context.Context, query string) (driv
 	ctx, span := otel.StartSpan(ctx, "clickhouse.prepare_batch")
 	defer span.End()
 
-	conn, err := c.Conn()
+	conn, err := c.Conn(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -505,7 +533,7 @@ func (c *ClickHouseClient) BatchInsert(ctx context.Context, query string, append
 }
 
 func (c *ClickHouseClient) Ping(ctx context.Context) error {
-	conn, err := c.Conn()
+	conn, err := c.Conn(ctx)
 	if err != nil {
 		return err
 	}

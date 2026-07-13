@@ -8,6 +8,7 @@ package index
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -34,14 +35,15 @@ type IndexQuery struct {
 
 // FileMetadata 文件元数据
 type FileMetadata struct {
-	FileKey     string
-	TsStart     time.Time
-	TsEnd       time.Time
-	ProbeID     string
-	ByteSize    uint64
-	CommunityID string
-	OffsetStart uint64
-	OffsetEnd   uint64
+	FileKey      string
+	TsStart      time.Time
+	TsEnd        time.Time
+	ProbeID      string
+	ByteSize     uint64
+	CommunityID  string
+	CommunityIDs []string
+	OffsetStart  uint64
+	OffsetEnd    uint64
 }
 
 // IndexClient 索引客户端
@@ -58,6 +60,24 @@ func NewIndexClient(client *storage.ClickHouseClient, logger *zap.Logger) *Index
 	}
 }
 
+func indexTimeRangeArgs(startMs, endMs int64) []interface{} {
+	startUs, endUs := startMs, endMs
+	if startMs > 0 && startMs < 100_000_000_000_000 {
+		startUs = startMs * 1000
+	}
+	if endMs > 0 && endMs < 100_000_000_000_000 {
+		endUs = endMs * 1000
+	}
+	return []interface{}{endMs, startMs, endUs, startUs}
+}
+
+func timeFromIndexTimestamp(ts int64) time.Time {
+	if ts >= 100_000_000_000_000 {
+		return time.UnixMicro(ts)
+	}
+	return time.UnixMilli(ts)
+}
+
 // LookupFiles 查询匹配的 PCAP 文件
 func (c *IndexClient) LookupFiles(ctx context.Context, query *IndexQuery) ([]*FileMetadata, error) {
 	ctx, span := otel.StartSpan(ctx, "IndexClient.LookupFiles")
@@ -71,24 +91,23 @@ func (c *IndexClient) LookupFiles(ctx context.Context, query *IndexQuery) ([]*Fi
 			ts_end,
 			probe_id,
 			byte_size,
-			community_id,
+			community_ids,
 			offset_start,
 			offset_end
 		FROM traffic.pcap_index
 		WHERE tenant_id = ?
-		  AND ts_start <= toDateTime64(?, 3)
-		  AND ts_end >= toDateTime64(?, 3)
+		  AND (
+		    (ts_start <= ? AND ts_end >= ?)
+		    OR (ts_start <= ? AND ts_end >= ?)
+		  )
 	`
 
-	args := []interface{}{
-		query.TenantID,
-		time.UnixMilli(query.EndTime),
-		time.UnixMilli(query.StartTime),
-	}
+	args := []interface{}{query.TenantID}
+	args = append(args, indexTimeRangeArgs(query.StartTime, query.EndTime)...)
 
 	// 可选条件
 	if query.CommunityID != "" {
-		sql += " AND community_id = ?"
+		sql += " AND has(community_ids, ?)"
 		args = append(args, query.CommunityID)
 	}
 
@@ -117,28 +136,26 @@ func (c *IndexClient) LookupFiles(ctx context.Context, query *IndexQuery) ([]*Fi
 	var files []*FileMetadata
 	for rows.Next() {
 		var file FileMetadata
-		var offsetStart, offsetEnd *uint64
+		var tsStartMs, tsEndMs int64
+		var communityIDs []string
 
 		if err := rows.Scan(
 			&file.FileKey,
-			&file.TsStart,
-			&file.TsEnd,
+			&tsStartMs,
+			&tsEndMs,
 			&file.ProbeID,
 			&file.ByteSize,
-			&file.CommunityID,
-			&offsetStart,
-			&offsetEnd,
+			&communityIDs,
+			&file.OffsetStart,
+			&file.OffsetEnd,
 		); err != nil {
 			return nil, errors.Wrap(err, errors.ErrCodeClickHouseError, "failed to scan row")
 		}
 
-		// 处理可空字段
-		if offsetStart != nil {
-			file.OffsetStart = *offsetStart
-		}
-		if offsetEnd != nil {
-			file.OffsetEnd = *offsetEnd
-		}
+		file.TsStart = timeFromIndexTimestamp(tsStartMs)
+		file.TsEnd = timeFromIndexTimestamp(tsEndMs)
+		file.CommunityIDs = communityIDs
+		file.CommunityID = strings.Join(communityIDs, ",")
 
 		files = append(files, &file)
 	}
@@ -170,12 +187,12 @@ func (c *IndexClient) LookupByCommunityID(ctx context.Context, tenantID, communi
 			ts_end,
 			probe_id,
 			byte_size,
-			community_id,
+			community_ids,
 			offset_start,
 			offset_end
 		FROM traffic.pcap_index
 		WHERE tenant_id = ?
-		  AND community_id = ?
+		  AND has(community_ids, ?)
 		ORDER BY ts_start ASC
 		LIMIT 100
 	`
@@ -189,27 +206,26 @@ func (c *IndexClient) LookupByCommunityID(ctx context.Context, tenantID, communi
 	var files []*FileMetadata
 	for rows.Next() {
 		var file FileMetadata
-		var offsetStart, offsetEnd *uint64
+		var tsStartMs, tsEndMs int64
+		var communityIDs []string
 
 		if err := rows.Scan(
 			&file.FileKey,
-			&file.TsStart,
-			&file.TsEnd,
+			&tsStartMs,
+			&tsEndMs,
 			&file.ProbeID,
 			&file.ByteSize,
-			&file.CommunityID,
-			&offsetStart,
-			&offsetEnd,
+			&communityIDs,
+			&file.OffsetStart,
+			&file.OffsetEnd,
 		); err != nil {
 			return nil, errors.Wrap(err, errors.ErrCodeClickHouseError, "failed to scan row")
 		}
 
-		if offsetStart != nil {
-			file.OffsetStart = *offsetStart
-		}
-		if offsetEnd != nil {
-			file.OffsetEnd = *offsetEnd
-		}
+		file.TsStart = timeFromIndexTimestamp(tsStartMs)
+		file.TsEnd = timeFromIndexTimestamp(tsEndMs)
+		file.CommunityIDs = communityIDs
+		file.CommunityID = strings.Join(communityIDs, ",")
 
 		files = append(files, &file)
 	}
@@ -229,19 +245,23 @@ func (c *IndexClient) LookupByProbeID(ctx context.Context, tenantID, probeID str
 			ts_end,
 			probe_id,
 			byte_size,
-			community_id,
+			community_ids,
 			offset_start,
 			offset_end
 		FROM traffic.pcap_index
 		WHERE tenant_id = ?
 		  AND probe_id = ?
-		  AND ts_start <= toDateTime64(?, 3)
-		  AND ts_end >= toDateTime64(?, 3)
+		  AND (
+		    (ts_start <= ? AND ts_end >= ?)
+		    OR (ts_start <= ? AND ts_end >= ?)
+		  )
 		ORDER BY ts_start ASC
 		LIMIT 1000
 	`
 
-	rows, err := c.client.Query(ctx, sql, tenantID, probeID, time.UnixMilli(endTime), time.UnixMilli(startTime))
+	args := []interface{}{tenantID, probeID}
+	args = append(args, indexTimeRangeArgs(startTime, endTime)...)
+	rows, err := c.client.Query(ctx, sql, args...)
 	if err != nil {
 		return nil, errors.Wrap(err, errors.ErrCodeClickHouseError, "failed to query by probe_id")
 	}
@@ -250,27 +270,26 @@ func (c *IndexClient) LookupByProbeID(ctx context.Context, tenantID, probeID str
 	var files []*FileMetadata
 	for rows.Next() {
 		var file FileMetadata
-		var offsetStart, offsetEnd *uint64
+		var tsStartMs, tsEndMs int64
+		var communityIDs []string
 
 		if err := rows.Scan(
 			&file.FileKey,
-			&file.TsStart,
-			&file.TsEnd,
+			&tsStartMs,
+			&tsEndMs,
 			&file.ProbeID,
 			&file.ByteSize,
-			&file.CommunityID,
-			&offsetStart,
-			&offsetEnd,
+			&communityIDs,
+			&file.OffsetStart,
+			&file.OffsetEnd,
 		); err != nil {
 			return nil, errors.Wrap(err, errors.ErrCodeClickHouseError, "failed to scan row")
 		}
 
-		if offsetStart != nil {
-			file.OffsetStart = *offsetStart
-		}
-		if offsetEnd != nil {
-			file.OffsetEnd = *offsetEnd
-		}
+		file.TsStart = timeFromIndexTimestamp(tsStartMs)
+		file.TsEnd = timeFromIndexTimestamp(tsEndMs)
+		file.CommunityIDs = communityIDs
+		file.CommunityID = strings.Join(communityIDs, ",")
 
 		files = append(files, &file)
 	}
@@ -298,17 +317,21 @@ func (c *IndexClient) CountFiles(ctx context.Context, tenantID string, startTime
 		SELECT count(DISTINCT file_key)
 		FROM traffic.pcap_index
 		WHERE tenant_id = ?
-		  AND ts_start <= toDateTime64(?, 3)
-		  AND ts_end >= toDateTime64(?, 3)
+		  AND (
+		    (ts_start <= ? AND ts_end >= ?)
+		    OR (ts_start <= ? AND ts_end >= ?)
+		  )
 	`
 
-	var count int64
-	row, _ := c.client.QueryRow(ctx, sql, tenantID, time.UnixMilli(endTime), time.UnixMilli(startTime))
+	var count uint64
+	args := []interface{}{tenantID}
+	args = append(args, indexTimeRangeArgs(startTime, endTime)...)
+	row, _ := c.client.QueryRow(ctx, sql, args...)
 	if err := row.Scan(&count); err != nil {
 		return 0, errors.Wrap(err, errors.ErrCodeClickHouseError, "failed to count files")
 	}
 
-	return count, nil
+	return int64(count), nil
 }
 
 // Ping 检查连接

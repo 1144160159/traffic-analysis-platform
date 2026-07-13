@@ -11,8 +11,19 @@ import (
 
 const testSpace = "traffic_graph"
 
+func setTestConsoleEndpoint(t *testing.T) {
+	t.Helper()
+	if os.Getenv("NEBULA_CONSOLE_ADDR") == "" {
+		t.Setenv("NEBULA_CONSOLE_ADDR", "10.0.5.8")
+	}
+	if os.Getenv("NEBULA_CONSOLE_PORT") == "" {
+		t.Setenv("NEBULA_CONSOLE_PORT", "30069")
+	}
+}
+
 func testConsoleClient(t *testing.T) *ConsoleClient {
 	t.Helper()
+	setTestConsoleEndpoint(t)
 	cfg := DefaultConsoleConfig()
 	cfg.Timeout = 10 * time.Second
 
@@ -33,7 +44,6 @@ func testConsoleClient(t *testing.T) *ConsoleClient {
 }
 
 func TestConsoleClient_Ping(t *testing.T) {
-	_ = os.Setenv("NEBULA_CONSOLE_ADDR", "10.0.5.224")
 	client := testConsoleClient(t)
 	defer client.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -44,7 +54,6 @@ func TestConsoleClient_Ping(t *testing.T) {
 }
 
 func TestConsoleClient_ShowSpaces(t *testing.T) {
-	_ = os.Setenv("NEBULA_CONSOLE_ADDR", "10.0.5.224")
 	client := testConsoleClient(t)
 	defer client.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -60,7 +69,6 @@ func TestConsoleClient_ShowSpaces(t *testing.T) {
 }
 
 func TestConsoleClient_ShowHosts(t *testing.T) {
-	_ = os.Setenv("NEBULA_CONSOLE_ADDR", "10.0.5.224")
 	client := testConsoleClient(t)
 	defer client.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -87,7 +95,6 @@ func TestConsoleClient_ShowHosts(t *testing.T) {
 }
 
 func TestConsoleClient_ShowTags(t *testing.T) {
-	_ = os.Setenv("NEBULA_CONSOLE_ADDR", "10.0.5.224")
 	client := testConsoleClient(t)
 	defer client.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -118,7 +125,6 @@ func TestConsoleClient_ShowTags(t *testing.T) {
 }
 
 func TestConsoleClient_ShowEdges(t *testing.T) {
-	_ = os.Setenv("NEBULA_CONSOLE_ADDR", "10.0.5.224")
 	client := testConsoleClient(t)
 	defer client.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -134,7 +140,6 @@ func TestConsoleClient_ShowEdges(t *testing.T) {
 }
 
 func TestConsoleClient_ExecuteInsert(t *testing.T) {
-	_ = os.Setenv("NEBULA_CONSOLE_ADDR", "10.0.5.224")
 	client := testConsoleClient(t)
 	defer client.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
@@ -162,7 +167,6 @@ VALUES "` + hashVID(testIP) + `":("default", "` + testIP + `", "aa:bb:cc:dd:ee:f
 }
 
 func TestConsoleClient_ExecuteGo(t *testing.T) {
-	_ = os.Setenv("NEBULA_CONSOLE_ADDR", "10.0.5.224")
 	client := testConsoleClient(t)
 	defer client.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)

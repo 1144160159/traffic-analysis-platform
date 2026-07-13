@@ -4,15 +4,16 @@
 // 适用于 K8s Pod 内已安装 nebula-console 的环境。
 //
 // 使用方式:
-//   1. 在 graph-service Docker 镜像中安装 nebula-console
-//   2. 或通过 initContainer/shared volume 挂载二进制
-//   3. 或通过 sidecar 容器提供 console 服务
+//  1. 在 graph-service Docker 镜像中安装 nebula-console
+//  2. 或通过 initContainer/shared volume 挂载二进制
+//  3. 或通过 sidecar 容器提供 console 服务
 //
 // 验证状态: 已通过 K8s 集群内实际执行验证 (SHOW HOSTS, INSERT, FETCH, GO)
 package nebula
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -28,13 +29,13 @@ import (
 
 // ConsoleClientConfig Console 客户端配置
 type ConsoleClientConfig struct {
-	ConsoleBin  string        // nebula-console 二进制路径 (默认: /usr/local/nebula/bin/nebula-console)
-	GraphAddr   string        // Graph 服务地址
-	GraphPort   int           // Graph 端口 (默认: 9669)
-	Username    string        // 用户名
-	Password    string        // 密码
-	Timeout     time.Duration // 单次查询超时
-	RetryCount  int           // 重试次数
+	ConsoleBin string        // nebula-console 二进制路径 (默认: /usr/local/nebula/bin/nebula-console)
+	GraphAddr  string        // Graph 服务地址
+	GraphPort  int           // Graph 端口 (默认: 9669)
+	Username   string        // 用户名
+	Password   string        // 密码
+	Timeout    time.Duration // 单次查询超时
+	RetryCount int           // 重试次数
 }
 
 // DefaultConsoleConfig 默认 Console 配置
@@ -154,6 +155,7 @@ func (cc *ConsoleClient) Execute(ctx context.Context, nGQL string) (*ResultSet, 
 
 // executeConsole 调用 nebula-console 执行查询
 func (cc *ConsoleClient) executeConsole(ctx context.Context, nGQL string) (*ResultSet, error) {
+	nGQL = normalizeNGQL(nGQL)
 	args := []string{
 		"-addr", cc.config.GraphAddr,
 		"-port", fmt.Sprintf("%d", cc.config.GraphPort),
@@ -163,30 +165,28 @@ func (cc *ConsoleClient) executeConsole(ctx context.Context, nGQL string) (*Resu
 	}
 
 	cmd := exec.CommandContext(ctx, cc.config.ConsoleBin, args...)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
 
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return nil, fmt.Errorf("stdout pipe: %w", err)
-	}
-
-	if err := cmd.Start(); err != nil {
-		return nil, fmt.Errorf("start console: %w", err)
-	}
-
-	// 解析输出
-	scanner := bufio.NewScanner(stdout)
+	stdout, err := cmd.Output()
+	output := string(stdout)
+	scanner := bufio.NewScanner(strings.NewReader(output))
 	result := cc.parseTabularOutput(scanner)
 
-	if err := cmd.Wait(); err != nil {
+	if strings.Contains(output, "[ERROR") {
+		return result, fmt.Errorf("console returned error: %s", firstConsoleError(output))
+	}
+
+	if err != nil {
 		// nebula-console 即使查询成功也可能返回非零退出码
 		// 如果有解析结果，视为成功
 		if result != nil && len(result.Rows) > 0 {
 			return result, nil
 		}
-		if strings.Contains(err.Error(), "exit status") {
-			return result, nil // 尝试返回部分结果
+		if msg := strings.TrimSpace(stderr.String()); msg != "" {
+			return nil, fmt.Errorf("console command failed: %w: %s", err, msg)
 		}
-		return nil, fmt.Errorf("console wait: %w", err)
+		return nil, fmt.Errorf("console command failed: %w", err)
 	}
 
 	return result, nil
@@ -215,7 +215,7 @@ func (cc *ConsoleClient) parseTabularOutput(scanner *bufio.Scanner) *ResultSet {
 	headerParsed := false
 
 	for scanner.Scan() {
-		line := scanner.Text()
+		line := normalizeConsoleLine(scanner.Text())
 
 		// 检测表格开始: +---+---+
 		if !inTable && isSeparatorLine(line) {
@@ -371,9 +371,24 @@ func (cc *ConsoleClient) GetMetrics() ClientMetrics {
 // ============================================================================
 
 var (
-	separatorRe = regexp.MustCompile(`^\+\-+\+$`)
+	separatorRe = regexp.MustCompile(`^\+(?:-+\+)+$`)
 	dataLineRe  = regexp.MustCompile(`^\|.*\|$`)
 )
+
+func normalizeConsoleLine(line string) string {
+	line = strings.TrimSpace(line)
+	if idx := strings.LastIndex(line, "> "); idx >= 0 {
+		if candidate := strings.TrimSpace(line[idx+2:]); candidate != "" {
+			return candidate
+		}
+	}
+	return line
+}
+
+func normalizeNGQL(nGQL string) string {
+	replacer := strings.NewReplacer("\r", " ", "\n", " ", "\t", " ")
+	return strings.TrimSpace(replacer.Replace(nGQL))
+}
 
 func isSeparatorLine(line string) bool {
 	return separatorRe.MatchString(strings.TrimSpace(line))
@@ -393,4 +408,14 @@ func parseRow(line string) []string {
 		result[i] = strings.TrimSpace(p)
 	}
 	return result
+}
+
+func firstConsoleError(output string) string {
+	for _, line := range strings.Split(output, "\n") {
+		line = strings.TrimSpace(line)
+		if strings.Contains(line, "[ERROR") {
+			return line
+		}
+	}
+	return strings.TrimSpace(output)
 }

@@ -7,8 +7,10 @@ package security
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"regexp"
 	"strings"
@@ -201,19 +203,14 @@ func NewTokenHasher() *TokenHasher {
 	return &TokenHasher{}
 }
 
-// HashToken 哈希 Token（使用 bcrypt，与密码类似）
+// HashToken 哈希 Token（与 api_tokens.token_hash 表契约保持一致）
 func (h *TokenHasher) HashToken(token string) (string, error) {
 	if token == "" {
 		return "", errors.New(errors.ErrCodeInvalidParameter, "Token cannot be empty")
 	}
 
-	// 对于 token，使用较低的 cost（因为 token 通常已经足够随机）
-	hash, err := bcrypt.GenerateFromPassword([]byte(token), 10)
-	if err != nil {
-		return "", errors.Wrap(err, errors.ErrCodeInternal, "Failed to hash token")
-	}
-
-	return string(hash), nil
+	hash := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(hash[:]), nil
 }
 
 // VerifyToken 验证 Token
@@ -222,12 +219,12 @@ func (h *TokenHasher) VerifyToken(hashedToken, token string) error {
 		return errors.New(errors.ErrCodeInvalidParameter, "Token and hash cannot be empty")
 	}
 
-	err := bcrypt.CompareHashAndPassword([]byte(hashedToken), []byte(token))
+	actual, err := h.HashToken(token)
 	if err != nil {
-		if err == bcrypt.ErrMismatchedHashAndPassword {
-			return errors.New(errors.ErrCodeTokenInvalid, "Invalid token")
-		}
-		return errors.Wrap(err, errors.ErrCodeInternal, "Failed to verify token")
+		return err
+	}
+	if subtle.ConstantTimeCompare([]byte(hashedToken), []byte(actual)) != 1 {
+		return errors.New(errors.ErrCodeTokenInvalid, "Invalid token")
 	}
 
 	return nil
@@ -277,6 +274,15 @@ func (h *TokenHasher) GenerateAPIKey(prefix string) (string, error) {
 	}
 
 	return fmt.Sprintf("%s_%s_%s", prefix, clean(part1), clean(part2)), nil
+}
+
+// TokenPrefix 返回可展示、可索引的 token 前缀；不包含完整密钥。
+func TokenPrefix(token string) string {
+	const maxPrefixLength = 18
+	if len(token) <= maxPrefixLength {
+		return token
+	}
+	return token[:maxPrefixLength]
 }
 
 // ConstantTimeCompare 常量时间比较（防止时序攻击）

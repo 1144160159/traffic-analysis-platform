@@ -15,7 +15,7 @@ func TestCanTransition_Valid(t *testing.T) {
 	}{
 		{"new_to_triage", StatusNew, StatusTriage, true},
 		{"new_to_closed", StatusNew, StatusClosed, true},
-		{"new_to_assigned", StatusNew, StatusAssigned, false},
+		{"new_to_assigned", StatusNew, StatusAssigned, true},
 		{"triage_to_assigned", StatusTriage, StatusAssigned, true},
 		{"triage_to_closed", StatusTriage, StatusClosed, true},
 		{"triage_to_new", StatusTriage, StatusNew, false},
@@ -44,7 +44,7 @@ func TestTransition(t *testing.T) {
 		wantErr bool
 	}{
 		{"valid", StatusNew, StatusTriage, false},
-		{"invalid", StatusNew, StatusAssigned, true},
+		{"invalid", StatusTriage, StatusNew, true},
 		{"reopen", StatusClosed, StatusNew, false},
 	}
 
@@ -68,9 +68,15 @@ func TestParseStatus(t *testing.T) {
 		wantErr bool
 	}{
 		{"new", "new", StatusNew, false},
+		{"open_alias", "open", StatusNew, false},
 		{"triage", "triage", StatusTriage, false},
+		{"in_progress_alias", "in_progress", StatusTriage, false},
 		{"assigned", "assigned", StatusAssigned, false},
+		{"assigned_display_alias", "已指派", StatusAssigned, false},
 		{"closed", "closed", StatusClosed, false},
+		{"resolved_alias", "resolved", StatusClosed, false},
+		{"false_positive_alias", "false_positive", StatusClosed, false},
+		{"proto_alias", "ALERT_STATUS_CLOSED", StatusClosed, false},
 		{"unknown", "unknown", "", true},
 		{"empty", "", "", true},
 	}
