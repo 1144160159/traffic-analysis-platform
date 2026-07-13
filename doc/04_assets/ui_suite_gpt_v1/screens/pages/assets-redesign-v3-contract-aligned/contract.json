@@ -1,0 +1,92 @@
+{
+  "version": "assets-contract-aligned-v3",
+  "updatedAt": "2026-07-13",
+  "viewport": { "width": 1920, "height": 1080 },
+  "visualRoiMax": 0.125,
+  "productionState": {
+    "keys": ["tab", "assetId", "detail"],
+    "tabs": ["endpoint", "server", "network-device", "business-system", "unknown"],
+    "details": ["basic", "network-interface", "open-services", "ownership", "history"],
+    "default": { "tab": "endpoint", "assetId": "PC-0082", "detail": null },
+    "detailGuard": { "tab": "server", "assetIdPattern": "^SRV-" }
+  },
+  "captures": [
+    {
+      "id": "assets-endpoint-default",
+      "file": "01-assets-endpoint-PC-0082.png",
+      "route": "/assets?tab=endpoint&assetId=PC-0082",
+      "type": "page",
+      "breakdown": ["app-shell", "category-tabs", "filter-bar", "asset-table", "selected-asset-summary", "traffic-summary", "evidence-summary"]
+    },
+    {
+      "id": "assets-unknown-attribution",
+      "file": "02-assets-unknown-attribution.png",
+      "route": "/assets?tab=unknown&assetId=UNK-10.12.88.45",
+      "type": "page",
+      "primaryAction": "confirm-attribution",
+      "breakdown": ["app-shell", "category-tabs", "unknown-kpis", "unknown-table", "attribution-candidates", "lifecycle", "selected-asset-summary"]
+    },
+    {
+      "id": "assets-server-high-risk",
+      "file": "03-assets-server-high-risk.png",
+      "route": "/assets?tab=server&assetId=SRV-0007",
+      "type": "page",
+      "preCaptureActions": ["apply-risk-filter:high", "select-asset:SRV-0007"],
+      "breakdown": ["app-shell", "category-tabs", "filter-bar", "server-kpis", "server-table", "open-services-summary", "selected-asset-summary"]
+    },
+    {
+      "id": "assets-detail-history",
+      "file": "04-assets-detail-history.png",
+      "route": "/assets?tab=server&assetId=SRV-0007&detail=history",
+      "type": "detail",
+      "breakdown": ["detail-header", "detail-tabs", "change-timeline", "field-diff", "rollback-approval", "evidence-snapshot", "impact-analysis"]
+    },
+    {
+      "id": "assets-detail-basic",
+      "file": "05-assets-detail-basic.png",
+      "route": "/assets?tab=server&assetId=SRV-0007&detail=basic",
+      "type": "detail",
+      "graphEntry": "/graph?assetId=SRV-0007",
+      "breakdown": ["detail-header", "detail-tabs", "risk-kpis", "basic-fields", "tags", "detail-actions"]
+    },
+    {
+      "id": "assets-detail-network-interface",
+      "file": "06-assets-detail-network-interface.png",
+      "route": "/assets?tab=server&assetId=SRV-0007&detail=network-interface",
+      "type": "detail",
+      "breakdown": ["detail-header", "detail-tabs", "interface-kpis", "interface-table", "traffic-trend", "vlan-bindings", "interface-alerts"]
+    },
+    {
+      "id": "assets-detail-ownership",
+      "file": "07-assets-detail-ownership.png",
+      "route": "/assets?tab=server&assetId=SRV-0007&detail=ownership",
+      "type": "detail",
+      "breakdown": ["detail-header", "detail-tabs", "ownership-kpis", "ownership-card", "organization-boundary", "business-dependencies", "ownership-audit"]
+    },
+    {
+      "id": "modal-asset-edit-compact",
+      "file": "08-modal-asset-edit-compact.png",
+      "route": "/assets?tab=server&assetId=SRV-0007&detail=basic",
+      "type": "overlay",
+      "preCaptureActions": ["open-edit-modal"],
+      "overlayBounds": { "width": 560, "height": 400, "roi": 0.1081 },
+      "breakdown": ["host-context", "modal-header", "core-fields", "validation-message", "source-readonly-note", "modal-footer"]
+    },
+    {
+      "id": "modal-asset-batch-governance-step2",
+      "file": "09-modal-asset-batch-governance-step2.png",
+      "route": "/assets?tab=server",
+      "type": "overlay",
+      "preCaptureActions": ["apply-risk-filter:high", "select-assets:SRV-0007,WEB-APP-01,DB-SRV-02", "open-batch-governance", "choose-operation:create-work-orders", "go-to-step:confirm"],
+      "requiredPermission": "asset:batch_governance",
+      "overlayBounds": { "width": 600, "height": 400, "roi": 0.1157 },
+      "breakdown": ["host-context", "step-indicator", "selection-summary", "permission-state", "responsibility-conflict", "confirmation-grid", "audit-boundary", "modal-footer"]
+    }
+  ],
+  "captureGates": {
+    "viewport": "1920x1080",
+    "requiredArtifacts": ["actual-1920.png", "diff-1920.png", "metrics.json", "capture-meta.json"],
+    "browser": "Windows Chrome extension",
+    "forbidMockAsAcceptanceEvidence": true
+  }
+}
