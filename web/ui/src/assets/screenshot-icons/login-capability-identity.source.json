@@ -1,0 +1,42 @@
+{
+  "usage": "Login page capability button standalone screenshot icon: identity",
+  "source": {
+    "image": "evidence/ui-image-breakdowns/pages/login/target.png",
+    "bbox": {
+      "x": 388,
+      "y": 670,
+      "w": 62,
+      "h": 60
+    },
+    "policy": "independent icon/small symbol only; dark page background pixels removed; not a full page, panel, form, card, or background resource",
+    "foreground_bbox": {
+      "x": 419,
+      "y": 684,
+      "w": 31,
+      "h": 32
+    },
+    "processing": "2026-07-05 strict foreground-only blue stroke mask; transparent background; icon scaled to fill 24/48/72 variants; surrounding icon-box rectangle and dark crop pixels removed"
+  },
+  "format": "bitmap screenshot icon",
+  "variants": [
+    {
+      "file": "login-capability-identity.png",
+      "width": 24,
+      "height": 24,
+      "scale": 1
+    },
+    {
+      "file": "login-capability-identity@2x.png",
+      "width": 48,
+      "height": 48,
+      "scale": 2
+    },
+    {
+      "file": "login-capability-identity@3x.png",
+      "width": 72,
+      "height": 72,
+      "scale": 3
+    }
+  ],
+  "integration": "web/ui/src/pages/LoginPage.tsx capability icon nodes with srcSet; target PNG remains evidence-only and is not served from public assets"
+}

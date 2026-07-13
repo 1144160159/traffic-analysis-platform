@@ -1,0 +1,22 @@
+:root {
+  --ui-bg-page: #03111c;
+  --ui-bg-shell: #061827;
+  --ui-bg-panel: rgba(6, 28, 43, 0.88);
+  --ui-bg-panel-strong: #071f32;
+  --ui-bg-panel-soft: rgba(9, 39, 60, 0.72);
+  --ui-border-subtle: rgba(56, 151, 201, 0.24);
+  --ui-border-active: #1e9cff;
+  --ui-glow-cyan: rgba(0, 191, 255, 0.38);
+  --ui-text-primary: #eaf7ff;
+  --ui-text-secondary: #9db9c9;
+  --ui-text-muted: #5e7b8d;
+  --ui-info: #18a8ff;
+  --ui-success: #36d66b;
+  --ui-warning: #ffb020;
+  --ui-danger: #ff4d4f;
+  --ui-critical: #ff2d2d;
+  --shell-topbar: 80px;
+  --shell-sidebar: 166px;
+  --shell-bottombar: 83px;
+  --panel-radius: 6px;
+}

@@ -1,0 +1,43 @@
+{
+  "usage": "Topbar and login-derived brand logo independent screenshot icon; cropped to the inner shield/emblem only, with the outer hologram shield frame and surrounding glow removed.",
+  "source": {
+    "image": "web/ui/src/assets/screenshot-icons/login-shield-screenshot.png",
+    "original_source_image": "evidence/ui-image-breakdowns/pages/login/target.png",
+    "bbox": {
+      "x": 56,
+      "y": 76,
+      "w": 83,
+      "h": 102
+    },
+    "mask": "polygon alpha mask follows the inner shield outline; outer shield frame, hologram glow, grid texture outside the inner shield and bottom light column are removed",
+    "policy": "independent icon/emblem only; no full page, panel, form, background or business diagram is used as a page resource"
+  },
+  "format": "bitmap screenshot icon",
+  "variants": [
+    {
+      "file": "login-inner-shield-screenshot-24.png",
+      "width": 24,
+      "height": 24,
+      "scale": 1
+    },
+    {
+      "file": "login-inner-shield-screenshot@2x.png",
+      "width": 48,
+      "height": 48,
+      "scale": 2
+    },
+    {
+      "file": "login-inner-shield-screenshot@3x.png",
+      "width": 72,
+      "height": 72,
+      "scale": 3
+    },
+    {
+      "file": "login-inner-shield-screenshot.png",
+      "width": 128,
+      "height": 128,
+      "scale": "display-source"
+    }
+  ],
+  "integration": "web/ui/src/layouts/AppShell.tsx uses the @3x variant as the AppShell topbar brand logo so the visible logo is the login-page inner shield only."
+}
