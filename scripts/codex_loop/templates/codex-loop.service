@@ -1,0 +1,18 @@
+[Unit]
+Description=Codex Loop Engineering supervisor
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory={repo_root}
+Environment=PYTHONUNBUFFERED=1
+ExecStart={exec_start}
+ExecStop={exec_stop}
+Restart=on-failure
+RestartSec=30
+KillSignal=SIGTERM
+TimeoutStopSec=120
+
+[Install]
+WantedBy=multi-user.target

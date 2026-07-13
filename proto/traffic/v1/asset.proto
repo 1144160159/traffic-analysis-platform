@@ -1,0 +1,112 @@
+syntax = "proto3";
+
+package traffic.v1;
+
+option go_package = "github.com/1144160159/traffic-analysis-platform/go/control-plane/pkg/proto/traffic/v1;trafficv1";
+option java_multiple_files = true;
+option java_package = "com.traffic.proto.traffic.v1";
+
+// Asset represents a network device discovered through passive or active means.
+message Asset {
+  string asset_id = 1;       // UUID
+  string tenant_id = 2;      // 租户 ID
+  string ip_address = 3;     // IPv4/IPv6
+  string mac_address = 4;    // MAC (canonical form xx:xx:xx:xx:xx:xx)
+  string hostname = 5;       // hostname (DHCP/DNS/LLMNR)
+  string vendor = 6;         // OUI vendor name
+  string os_type = 7;        // OS fingerprint (DHCP option 60, HTTP UA)
+  string source = 8;         // discovery source: arp/dhcp/dns/lldp/snmp/manual
+  int64 first_seen = 9;      // unix ms
+  int64 last_seen = 10;      // unix ms
+  string vlan_id = 11;       // VLAN tag
+  string switch_port = 12;   // switch port from LLDP/SNMP
+}
+
+// AssetEvent records changes to an asset for audit trail.
+message AssetEvent {
+  string event_id = 1;
+  string asset_id = 2;
+  string tenant_id = 3;
+  string event_type = 4;     // first_seen, ip_changed, mac_changed, inactive, reactivated
+  string old_value = 5;      // JSON of previous state
+  string new_value = 6;      // JSON of new state
+  int64 created_at = 7;      // unix ms
+}
+
+// MAC→IP binding learned from ARP/DHCP traffic.
+message MacIpBinding {
+  string mac_address = 1;
+  string ip_address = 2;
+  string tenant_id = 3;
+  int64 observed_at = 4;     // unix ms
+  string source = 5;         // arp or dhcp
+}
+
+service AssetService {
+  // RegisterOrUpdate creates or updates an asset.
+  rpc UpsertAsset(UpsertAssetRequest) returns (UpsertAssetResponse);
+
+  // GetAsset retrieves an asset by ID or MAC.
+  rpc GetAsset(GetAssetRequest) returns (GetAssetResponse);
+
+  // ListAssets returns assets for a tenant, with optional filters.
+  rpc ListAssets(ListAssetsRequest) returns (ListAssetsResponse);
+
+  // RecordMacIpBinding records a MAC→IP binding observed from traffic.
+  rpc RecordMacIpBinding(RecordMacIpBindingRequest) returns (RecordMacIpBindingResponse);
+
+  // GetAssetHistory returns the change event history for an asset.
+  rpc GetAssetHistory(GetAssetHistoryRequest) returns (GetAssetHistoryResponse);
+}
+
+message UpsertAssetRequest {
+  Asset asset = 1;
+}
+
+message UpsertAssetResponse {
+  string asset_id = 1;
+  bool created = 2;  // true if new, false if updated
+}
+
+message GetAssetRequest {
+  string asset_id = 1;
+  string mac_address = 2;  // alternative lookup key
+  string tenant_id = 3;
+}
+
+message GetAssetResponse {
+  Asset asset = 1;
+}
+
+message ListAssetsRequest {
+  string tenant_id = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+  string ip_prefix = 4;     // optional filter
+  string vendor_filter = 5; // optional filter
+}
+
+message ListAssetsResponse {
+  repeated Asset assets = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
+
+message RecordMacIpBindingRequest {
+  repeated MacIpBinding bindings = 1;
+}
+
+message RecordMacIpBindingResponse {
+  int32 accepted = 1;
+  int32 rejected = 2;
+}
+
+message GetAssetHistoryRequest {
+  string asset_id = 1;
+  string tenant_id = 2;
+  int32 page_size = 3;
+}
+
+message GetAssetHistoryResponse {
+  repeated AssetEvent events = 1;
+}

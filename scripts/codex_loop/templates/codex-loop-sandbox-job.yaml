@@ -1,0 +1,73 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {job_name}
+  namespace: {namespace}
+  labels:
+    app.kubernetes.io/name: codex-loop-sandbox
+    app.kubernetes.io/component: isolated-executor
+    codex-loop/run-id: {safe_run_id}
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: {active_deadline_seconds}
+  ttlSecondsAfterFinished: {ttl_seconds_after_finished}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: codex-loop-sandbox
+        app.kubernetes.io/component: isolated-executor
+        codex-loop/run-id: {safe_run_id}
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: {automount_service_account_token}
+      securityContext:
+        runAsNonRoot: {run_as_non_root}
+        runAsUser: {run_as_user}
+        runAsGroup: {run_as_group}
+        fsGroup: {fs_group}
+        seccompProfile:
+          type: {seccomp_profile}
+      containers:
+        - name: codex-loop
+          image: {image}
+          imagePullPolicy: IfNotPresent
+          workingDir: {repo_mount_path}
+          command:
+            - python
+            - -B
+            - scripts/codex_loop/workflow.py
+            - --task
+            - "{task_path}"
+            - --run-id
+            - "{child_run_id}"
+            - --stage
+            - "{stage}"
+          env:
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: CODEX_LOOP_SANDBOX
+              value: "1"
+          securityContext:
+            allowPrivilegeEscalation: {allow_privilege_escalation}
+            readOnlyRootFilesystem: {read_only_root_filesystem}
+            capabilities:
+              drop:
+{capability_drop_yaml}
+          resources:
+            requests:
+              cpu: "{cpu_request}"
+              memory: "{memory_request}"
+            limits:
+              cpu: "{cpu_limit}"
+              memory: "{memory_limit}"
+          volumeMounts:
+            - name: workspace
+              mountPath: {repo_mount_path}
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: workspace
+          persistentVolumeClaim:
+            claimName: codex-loop-workspace
+        - name: tmp
+          emptyDir: {{}}

@@ -1,0 +1,63 @@
+id: CLE-P1-PILOT-001
+title: 试点交付包和 25 分钟演示证据脚本
+priority: P1
+status: DISCOVERED
+lane:
+  primary: Mission / Acceptance
+  dependent:
+    - Product Design
+source:
+  - "doc/01_design/课题一产品与技术总体设计.md#7"
+  - "doc/05_status/未开发项梳理-2026-06-19.md#4"
+acceptance_type: third-party-prep
+subsystems:
+  - doc/02_acceptance
+  - doc/01_design
+risk:
+  level: medium
+  reasons:
+
+execution:
+  mode: plan
+  allow_live_write: false
+workspace:
+  allowed_paths:
+    - doc/02_acceptance/
+    - doc/01_design/
+contracts:
+  proto: false
+  kafka_topics: false
+  database_schema: false
+  apisix_routes: false
+data_plan:
+  mode: live_existing
+  tenant: default
+  cleanup: none
+verification:
+  local:
+    - python scripts/codex_loop/plan.py --task scripts/codex_loop/tasks/CLE-P1-PILOT-001.yaml
+  live_readonly:
+    - "curl --noproxy '*' http://10.0.5.8:30180/login"
+review:
+  required: true
+  perspectives:
+    - code_correctness
+    - product_logic
+    - technical_design
+    - acceptance_evidence
+  design_update_allowed:
+    - doc/01_design/
+    - doc/02_acceptance/
+    - doc/05_status/
+evidence:
+  run_dir: "doc/02_acceptance/runs/${run_id}"
+  required:
+    - run-summary.json
+    - plan.md
+    - local-report.md
+    - review-report.md
+    - evidence-report.md
+close_when:
+  - pilot package directory structure is defined
+  - 25 minute demo maps each step to REQ-T1 evidence
+  - economic benefit and user confirmation templates are listed

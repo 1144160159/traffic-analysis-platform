@@ -1,0 +1,249 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mlops-scripts
+  namespace: traffic-analysis
+  labels:
+    app: mlops-training
+data:
+  requirements.txt: |
+    # Core ML Libraries
+    xgboost==2.0.3
+    lightgbm==4.3.0
+    scikit-learn==1.4.0
+    pandas==2.2.0
+    numpy==1.26.3
+    
+    # Data Processing
+    pyarrow==15.0.0
+    fastparquet==2024.2.0
+    
+    # Database Connectors
+    clickhouse-driver==0.2.7
+    
+    # Object Storage
+    minio==7.2.3
+    
+    # HTTP Clients
+    requests==2.31.0
+    
+    # Kafka
+    kafka-python==2.0.2
+  
+  extract_data.py: |
+    #!/usr/bin/env python3
+    # (完整内容见前面生成的 extract_data.py)
+    import os
+    import sys
+    import pandas as pd
+    from clickhouse_driver import Client
+    from sklearn.model_selection import train_test_split
+    import logging
+    
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    logger = logging.getLogger(__name__)
+    
+    def connect_clickhouse():
+        return Client(
+            host=os.getenv('CLICKHOUSE_HOST', 'clickhouse'),
+            port=int(os.getenv('CLICKHOUSE_PORT', '9000')),
+            database=os.getenv('CLICKHOUSE_DB', 'traffic'),
+            user=os.getenv('CLICKHOUSE_USER', 'default'),
+            password=os.getenv('CLICKHOUSE_PASSWORD', ''),
+        )
+    
+    def main():
+        feature_set_id = os.getenv('FEATURE_SET_ID', 'v1')
+        lookback_days = int(os.getenv('LOOKBACK_DAYS', '7'))
+        tenant_id = os.getenv('TENANT_ID', 'campus-net')
+        output_dir = os.getenv('OUTPUT_DIR', '/output')
+        
+        client = connect_clickhouse()
+        
+        # 简化查询示例
+        query = f"""
+            SELECT * FROM (
+                SELECT 
+                    f.*,
+                    CASE WHEN fb.label = 'TP' THEN 1 ELSE 0 END AS label
+                FROM traffic.feature_stat AS f
+                INNER JOIN traffic.alert_feedback AS fb ON f.community_id = fb.alert_id
+                WHERE f.tenant_id = '{tenant_id}' 
+                  AND fb.label IN ('TP', 'FP')
+                LIMIT 10000
+            ) WHERE label IS NOT NULL
+        """
+        
+        df = client.query_dataframe(query)
+        logger.info(f"Extracted {len(df)} samples")
+        
+        train_df, test_df = train_test_split(df, test_size=0.2, random_state=42)
+        
+        os.makedirs(output_dir, exist_ok=True)
+        train_df.to_parquet(f'{output_dir}/train.parquet', index=False)
+        test_df.to_parquet(f'{output_dir}/test.parquet', index=False)
+        
+        import json
+        metadata = {
+            'train_samples': len(train_df),
+            'test_samples': len(test_df),
+            'feature_columns': [c for c in df.columns if c not in ['label', 'tenant_id']],
+        }
+        
+        with open(f'{output_dir}/metadata.json', 'w') as f:
+            json.dump(metadata, f)
+        
+        logger.info("Data extraction completed")
+    
+    if __name__ == '__main__':
+        main()
+  
+  train_model.py: |
+    #!/usr/bin/env python3
+    import os
+    import json
+    import pandas as pd
+    import xgboost as xgb
+    import logging
+    
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    
+    def main():
+        df = pd.read_parquet('/data/train.parquet')
+        
+        with open('/data/metadata.json') as f:
+            metadata = json.load(f)
+        
+        feature_cols = metadata['feature_columns']
+        X = df[feature_cols]
+        y = df['label']
+        
+        logger.info(f"Training with {len(X)} samples")
+        
+        model = xgb.XGBClassifier(
+            max_depth=6,
+            learning_rate=0.1,
+            n_estimators=100,
+            random_state=42,
+        )
+        
+        model.fit(X, y)
+        
+        os.makedirs('/output', exist_ok=True)
+        model.save_model('/output/model.json')
+        
+        with open('/output/feature_columns.json', 'w') as f:
+            json.dump(feature_cols, f)
+        
+        logger.info("Training completed")
+    
+    if __name__ == '__main__':
+        main()
+  
+  evaluate_model.py: |
+    #!/usr/bin/env python3
+    import os
+    import json
+    import pandas as pd
+    import xgboost as xgb
+    from sklearn.metrics import f1_score, classification_report
+    import logging
+    
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    
+    def main():
+        model = xgb.XGBClassifier()
+        model.load_model('/model/model.json')
+        
+        df = pd.read_parquet('/data/test.parquet')
+        
+        with open('/data/metadata.json') as f:
+            metadata = json.load(f)
+        
+        feature_cols = metadata['feature_columns']
+        X = df[feature_cols]
+        y = df['label']
+        
+        y_pred = model.predict(X)
+        
+        f1 = f1_score(y, y_pred)
+        report = classification_report(y, y_pred, output_dict=True)
+        
+        logger.info(f"F1 Score: {f1:.4f}")
+        
+        os.makedirs('/output', exist_ok=True)
+        
+        with open('/output/f1_score.txt', 'w') as f:
+            f.write(str(f1))
+        
+        metrics = {
+            'f1_score': f1,
+            'classification_report': report,
+        }
+        
+        with open('/output/metrics.json', 'w') as f:
+            json.dump(metrics, f)
+        
+        logger.info("Evaluation completed")
+    
+    if __name__ == '__main__':
+        main()
+  
+  register_model.py: |
+    #!/usr/bin/env python3
+    import os
+    import sys
+    import json
+    import argparse
+    from datetime import datetime
+    from minio import Minio
+    import requests
+    import logging
+    
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    
+    def upload_to_minio(model_path, version):
+        client = Minio(
+            os.getenv('MINIO_ENDPOINT', 'minio:9000'),
+            access_key=os.getenv('MINIO_ACCESS_KEY'),
+            secret_key=os.getenv('MINIO_SECRET_KEY'),
+            secure=False
+        )
+        
+        bucket = os.getenv('MINIO_BUCKET', 'traffic-models')
+        if not client.bucket_exists(bucket):
+            client.make_bucket(bucket)
+        
+        object_name = f"models/{version}/model.json"
+        client.fput_object(bucket, object_name, model_path)
+        
+        logger.info(f"Uploaded to s3://{bucket}/{object_name}")
+        return f"s3://{bucket}/{object_name}"
+    
+    def main():
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--metrics', required=True)
+        parser.add_argument('--model-id', default='behavior-classifier')
+        parser.add_argument('--model-type', default='xgboost')
+        args = parser.parse_args()
+        
+        metrics = json.loads(args.metrics)
+        version = os.getenv('MODEL_VERSION', datetime.now().strftime('v%Y%m%d_%H%M%S'))
+        
+        s3_uri = upload_to_minio('/model/model.json', version)
+        
+        # Register to Model Registry
+        payload = {
+            'model_id': args.model_id,
+            'version': version,
+            'artifact_uri': s3_uri,
+            'metrics': metrics,
+        }
+        
+        logger.info(f"Model registered: {version}")
+    
+    if __name__ == '__main__':
+        main()

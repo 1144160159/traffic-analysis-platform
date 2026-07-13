@@ -1,76 +1,80 @@
+// =============================================================================
+// FILE: proto/traffic/v1/pcap.proto
+// =============================================================================
+
 syntax = "proto3";
 
 package traffic.v1;
 
 option go_package = "github.com/1144160159/traffic-analysis-platform/go/control-plane/pkg/proto/traffic/v1;trafficv1";
-option java_package = "com.traffic.proto.v1";
+option java_package = "com.traffic.proto.traffic.v1";
 option java_multiple_files = true;
 
 // PcapIndexMeta PCAP 索引元数据
-// 由探针上报，用于快速定位 PCAP 文件位置
 message PcapIndexMeta {
   string tenant_id = 1;
   string probe_id = 2;
-  
-  // S3 存储路径
   string file_key = 3;
-  
-  // 时间范围
   int64 ts_start = 4;
   int64 ts_end = 5;
-  
-  // 文件信息
   uint64 byte_size = 6;
-  uint32 zstd_level = 7;        // 压缩级别
-  string sha256 = 8;            // 文件校验和
-  
-  // 可选: IP BloomFilter (Base64 编码)
-  // 用于快速判断某个 IP 是否可能存在于此文件
-  string bloom_filter_b64 = 9;
-  
-  // 可选: 包含的 community_id 列表
-  repeated string community_ids = 10;
+  uint32 zstd_level = 7;
+  string sha256 = 8;
+  string community_id = 9;
+  string flow_id = 10;
+  uint64 offset_start = 11;
+  uint64 offset_end = 12;
+  string bloom_filter_b64 = 13;
+  repeated string community_ids = 14;
+  int64 created_ts = 15;
+}
+
+// PcapIndexBatch PCAP 索引批次
+message PcapIndexBatch {
+  repeated PcapIndexMeta indexes = 1;
+  string batch_id = 2;
+  string tenant_id = 3;
+  string probe_id = 4;
+  int64 created_at = 5;
 }
 
 // PcapCutRequest PCAP 裁剪请求
 message PcapCutRequest {
   string tenant_id = 1;
-  
-  // 五元组过滤条件 (可选，为空表示不过滤)
   string src_ip = 2;
   string dst_ip = 3;
   uint32 src_port = 4;
   uint32 dst_port = 5;
   uint32 protocol = 6;
-  
-  // 时间范围 (必填)
   int64 start_time = 7;
   int64 end_time = 8;
-  
-  // 可选: community_id (精确匹配)
   string community_id = 9;
-  
-  // 可选: 最大返回包数
-  uint32 max_packets = 10;
+  string flow_id = 10;
+  uint32 max_packets = 11;
+  uint64 max_bytes = 12;
+  string output_format = 13;
+  bool compress = 14;
 }
 
 // PcapCutResponse PCAP 裁剪响应
 message PcapCutResponse {
   string job_id = 1;
-  
-  // status: "queued" | "processing" | "completed" | "failed"
   string status = 2;
-  
-  // 完成后的下载 URL
   string download_url = 3;
-  
-  // 进度信息
   int32 progress_percent = 4;
-  
-  // 错误信息
   string error_message = 5;
-  
-  // 结果统计
   uint64 total_packets = 6;
   uint64 total_bytes = 7;
+  int32 files_scanned = 8;
+  int32 files_matched = 9;
+  int64 created_at = 10;
+  int64 started_at = 11;
+  int64 completed_at = 12;
+  int64 expires_at = 13;
+}
+
+// PcapCutJobStatus 裁剪任务状态查询
+message PcapCutJobStatus {
+  string job_id = 1;
+  string tenant_id = 2;
 }

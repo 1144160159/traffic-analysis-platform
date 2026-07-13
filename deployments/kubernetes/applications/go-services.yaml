@@ -1,0 +1,489 @@
+---
+# Go 控制面服务 — 8 个微服务
+# 依赖：Kafka(middleware), ClickHouse(middleware), PG(databases), Redis(databases)
+---
+# ---- Ingest Gateway (gRPC 50051, Management HTTP 8080, Metrics 9091) ----
+apiVersion: v1
+kind: Service
+metadata: {name: ingest-gateway, namespace: traffic-analysis, labels: {app: ingest-gateway}}
+spec:
+  type: ClusterIP
+  selector: {app: ingest-gateway}
+  ports:
+  - {name: grpc, port: 50051, targetPort: 50051}
+  - {name: management, port: 8080, targetPort: 8080}
+  - {name: metrics, port: 9091, targetPort: 9091}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ingest-gateway
+  namespace: traffic-analysis
+  annotations:
+    kubernetes.io/change-cause: "Kafka DLQ security fail-closed r3 from e3316aec worktree"
+spec:
+  replicas: 2
+  selector: {matchLabels: {app: ingest-gateway}}
+  template:
+    metadata:
+      labels: {app: ingest-gateway}
+      annotations: {prometheus.io/scrape: "true", prometheus.io/port: "9091", traffic.analysis/build-id: "kafka-security-20260712-r3-worktree"}
+    spec:
+      initContainers:
+      - name: init-dlq-fallback-dir
+        image: docker.io/traffic/ingest-gateway@sha256:7e5895b2402581820859acbf48c5a0a532237ab2352826cfcf199d0c2a1f5d0a
+        imagePullPolicy: Never
+        command: ["sh", "-c", "mkdir -p /var/log/ingest-gateway/dlq-fallback && chown -R 1000:1000 /var/log/ingest-gateway"]
+        securityContext: {runAsUser: 0, runAsGroup: 0}
+        volumeMounts:
+        - {name: dlq-fallback, mountPath: /var/log/ingest-gateway}
+      containers:
+      - name: ingest-gateway
+        image: docker.io/traffic/ingest-gateway@sha256:7e5895b2402581820859acbf48c5a0a532237ab2352826cfcf199d0c2a1f5d0a
+        imagePullPolicy: Never
+        ports: [{containerPort: 50051}, {containerPort: 8080}, {containerPort: 9091}]
+        env:
+        - {name: GRPC_ADDR, value: ":50051"}
+        - {name: HEALTH_ADDR, value: ":8080"}
+        - {name: METRICS_ADDR, value: ":9091"}
+        - {name: KAFKA_BROKERS, value: "kafka-bootstrap.middleware.svc:9092"}
+        - {name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL"}
+        - {name: KAFKA_SASL_MECHANISM, value: "SCRAM-SHA-512"}
+        - {name: KAFKA_SASL_USERNAME, valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_USERNAME}}}
+        - {name: KAFKA_SASL_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_PASSWORD}}}
+        - {name: KAFKA_TLS_CA_FILE, value: "/etc/kafka/tls/ca.crt"}
+        - {name: KAFKA_TLS_SERVER_NAME, value: "kafka-bootstrap.middleware.svc"}
+        - {name: REDIS_SENTINEL_ADDRS, value: "redis-sentinel.databases.svc:26379"}
+        - {name: REDIS_SENTINEL_MASTER, value: "mymaster"}
+        - {name: POSTGRES_HOST, value: "postgres-primary.databases.svc"}
+        - {name: POSTGRES_PORT, value: "5432"}
+        - {name: POSTGRES_DATABASE, value: "traffic_platform"}
+        - {name: POSTGRES_USERNAME, value: "postgres"}
+        - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: PG_PASSWORD}}}
+        - {name: JWT_SIGNING_KEY, valueFrom: {secretKeyRef: {name: traffic-credentials, key: JWT_SECRET}}}
+        - {name: REQUIRE_MTLS, value: "true"}
+        - {name: TLS_CA_FILE, value: "/etc/ingest-gateway/certs/ca-cert.pem"}
+        - {name: TLS_CERT_FILE, value: "/etc/ingest-gateway/certs/server-cert.pem"}
+        - {name: TLS_KEY_FILE, value: "/etc/ingest-gateway/certs/server-key.pem"}
+        - {name: LOG_LEVEL, value: "info"}
+        resources: {requests: {cpu: "1", memory: 512Mi}, limits: {cpu: "2", memory: 1Gi}}
+        livenessProbe:  {httpGet: {path: /health, port: 8080}, initialDelaySeconds: 10, periodSeconds: 15}
+        readinessProbe: {httpGet: {path: /health, port: 8080}, initialDelaySeconds: 5, periodSeconds: 10}
+        volumeMounts:
+        - {name: certs, mountPath: /etc/ingest-gateway/certs, readOnly: true}
+        - {name: kafka-client-tls, mountPath: /etc/kafka/tls, readOnly: true}
+        - {name: dlq-fallback, mountPath: /var/log/ingest-gateway}
+      volumes:
+      - {name: certs, secret: {secretName: ingest-gateway-certs, optional: false}}
+      - {name: kafka-client-tls, secret: {secretName: kafka-client-tls, optional: false}}
+      - {name: dlq-fallback, emptyDir: {}}
+---
+# ---- Auth Service (HTTP 8081, Metrics 9092) ----
+apiVersion: v1
+kind: Service
+metadata: {name: auth-service, namespace: traffic-analysis, labels: {app: auth-service}}
+spec:
+  selector: {app: auth-service}
+  ports:
+  - {name: http, port: 8081}
+  - {name: metrics, port: 9092}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: auth-service, namespace: traffic-analysis}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: auth-service}}
+  template:
+    metadata:
+      labels: {app: auth-service}
+      annotations: {prometheus.io/scrape: "true", prometheus.io/port: "9092"}
+    spec:
+      securityContext: {fsGroup: 1000, fsGroupChangePolicy: OnRootMismatch}
+      containers:
+      - name: auth-service
+        image: docker.io/traffic/auth-service@sha256:dbaba705c7309a36e3e8cac8aa4dbd1ff06794afcd3e72e33fa963a9bd5823b5
+        imagePullPolicy: Never
+        ports: [{containerPort: 8081}, {containerPort: 9092}]
+        env:
+        - {name: SERVER_LISTEN_ADDR, value: ":8081"}
+        - {name: POSTGRES_HOST, value: "postgres-primary.databases.svc"}
+        - {name: POSTGRES_PORT, value: "5432"}
+        - {name: POSTGRES_DATABASE, value: "traffic_platform"}
+        - {name: POSTGRES_USERNAME, value: "postgres"}
+        - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: PG_PASSWORD}}}
+        - {name: REDIS_ENABLED, value: "true"}
+        - {name: REDIS_SENTINEL_ADDRS, value: "redis-sentinel.databases.svc:26379"}
+        - {name: REDIS_SENTINEL_MASTER, value: "mymaster"}
+        - {name: KAFKA_BROKERS, value: "kafka-bootstrap.middleware.svc:9092"}
+        - {name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL"}
+        - {name: KAFKA_SASL_MECHANISM, value: "SCRAM-SHA-512"}
+        - {name: KAFKA_SASL_USERNAME, valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_USERNAME}}}
+        - {name: KAFKA_SASL_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_PASSWORD}}}
+        - {name: KAFKA_TLS_CA_FILE, value: "/etc/kafka/tls/ca.crt"}
+        - {name: KAFKA_TLS_SERVER_NAME, value: "kafka-bootstrap.middleware.svc"}
+        - {name: OIDC_ENABLED, value: "true"}
+        - {name: OIDC_ISSUER_URL, value: "http://10.0.5.8:30180/realms/master"}
+        - {name: OIDC_CLIENT_ID, value: "traffic-ui"}
+        - {name: OIDC_CLIENT_SECRET, valueFrom: {secretKeyRef: {name: traffic-credentials, key: OIDC_CLIENT_SECRET}}}
+        - {name: OIDC_REDIRECT_URL, value: "http://10.0.5.8:30180/api/v1/auth/oidc/callback"}
+        - {name: JWT_SIGNING_KEY, valueFrom: {secretKeyRef: {name: traffic-credentials, key: JWT_SECRET}}}
+        - {name: LOG_LEVEL, value: "info"}
+        resources: {requests: {cpu: 200m, memory: 256Mi}, limits: {cpu: 500m, memory: 512Mi}}
+        livenessProbe:  {httpGet: {path: /health, port: 8081}, initialDelaySeconds: 10, periodSeconds: 15}
+        readinessProbe: {httpGet: {path: /health/ready, port: 8081}, initialDelaySeconds: 5, periodSeconds: 10}
+        volumeMounts:
+        - {name: kafka-client-tls, mountPath: /etc/kafka/tls, readOnly: true}
+        - {name: audit-backup, mountPath: /var/log/audit}
+      volumes:
+      - {name: kafka-client-tls, secret: {secretName: kafka-client-tls, optional: false}}
+      - {name: audit-backup, emptyDir: {}}
+---
+# ---- Alert Service (HTTP 8082, Metrics 9093) ----
+apiVersion: v1
+kind: Service
+metadata: {name: alert-service, namespace: traffic-analysis, labels: {app: alert-service}}
+spec:
+  selector: {app: alert-service}
+  ports:
+  - {name: http, port: 8082}
+  - {name: metrics, port: 9093}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alert-service
+  namespace: traffic-analysis
+  annotations:
+    kubernetes.io/change-cause: "Campaign atomic actions and Kafka audit TLS r214 from e3316aec worktree"
+    traffic.analysis/source-revision: "e3316aec4ac1d6592e28aefc86853128ecde7408"
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: alert-service}}
+  template:
+    metadata:
+      labels: {app: alert-service}
+      annotations: {prometheus.io/scrape: "true", prometheus.io/port: "9093", traffic.analysis/build-id: "campaign-fullstack-20260712-r214-worktree"}
+    spec:
+      terminationGracePeriodSeconds: 120
+      containers:
+      - name: alert-service
+        image: docker.io/traffic/alert-service@sha256:ebb5cc36b3badeba8b9973b1a04851f1f3e49b15bed48a195ff72166150bad91
+        imagePullPolicy: Never
+        ports: [{containerPort: 8082}, {containerPort: 9093}]
+        lifecycle:
+          preStop:
+            exec: {command: ["/bin/sh", "-c", "sleep 10"]}
+        env:
+        - {name: API_LISTEN_ADDR, value: ":8082"}
+        - {name: KAFKA_BROKERS, value: "kafka-bootstrap.middleware.svc:9092"}
+        - {name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL"}
+        - {name: KAFKA_SASL_MECHANISM, value: "SCRAM-SHA-512"}
+        - {name: KAFKA_SASL_USERNAME, valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_USERNAME}}}
+        - {name: KAFKA_SASL_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_PASSWORD}}}
+        - {name: KAFKA_TLS_CA_FILE, value: "/etc/kafka/tls/ca.crt"}
+        - {name: KAFKA_TLS_SERVER_NAME, value: "kafka-bootstrap.middleware.svc"}
+        - {name: CLICKHOUSE_HOSTS, value: "clickhouse-1.middleware.svc:9000,clickhouse-2.middleware.svc:9000"}
+        - {name: CLICKHOUSE_DATABASE, value: "traffic"}
+        - {name: CLICKHOUSE_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: CLICKHOUSE_PASSWORD}}}
+        - {name: CLICKHOUSE_MAX_OPEN_CONNS, value: "32"}
+        - {name: CLICKHOUSE_MAX_IDLE_CONNS, value: "16"}
+        - {name: REDIS_SENTINEL_ADDRS, value: "redis-sentinel.databases.svc:26379"}
+        - {name: REDIS_SENTINEL_MASTER, value: "mymaster"}
+        - {name: AUTH_POSTGRES_HOST, value: "postgres-primary.databases.svc"}
+        - {name: AUTH_POSTGRES_PORT, value: "5432"}
+        - {name: AUTH_POSTGRES_DATABASE, value: "traffic_platform"}
+        - {name: AUTH_POSTGRES_USERNAME, value: "postgres"}
+        - {name: AUTH_POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: PG_PASSWORD}}}
+        - {name: OPENSEARCH_ADDRS, value: "http://opensearch.middleware.svc:9200"}
+        - {name: OPENSEARCH_USERNAME, value: "admin"}
+        - {name: OPENSEARCH_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: OPENSEARCH_ADMIN_PASSWORD}}}
+        - {name: JWT_SECRET_KEY, valueFrom: {secretKeyRef: {name: traffic-credentials, key: JWT_SECRET}}}
+        - {name: LOG_LEVEL, value: "info"}
+        resources: {requests: {cpu: 500m, memory: 512Mi, ephemeral-storage: 128Mi}, limits: {cpu: "1", memory: 1Gi, ephemeral-storage: 512Mi}}
+        livenessProbe:  {httpGet: {path: /health, port: 8082}, initialDelaySeconds: 10, periodSeconds: 15}
+        readinessProbe: {httpGet: {path: /ready, port: 8082}, initialDelaySeconds: 5, periodSeconds: 10}
+        volumeMounts:
+        - {name: kafka-client-tls, mountPath: /etc/kafka/tls, readOnly: true}
+      volumes:
+      - {name: kafka-client-tls, secret: {secretName: kafka-client-tls, optional: false}}
+---
+# ---- Asset Service (gRPC 50053, HTTP 8083) ----
+apiVersion: v1
+kind: Service
+metadata: {name: asset-service, namespace: traffic-analysis, labels: {app: asset-service}}
+spec:
+  selector: {app: asset-service}
+  ports:
+  - {name: grpc, port: 50053}
+  - {name: http, port: 8083}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: asset-service, namespace: traffic-analysis}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: asset-service}}
+  template:
+    metadata:
+      labels: {app: asset-service}
+      annotations: {prometheus.io/scrape: "true", prometheus.io/port: "8083"}
+    spec:
+      containers:
+      - name: asset-service
+        image: docker.io/traffic/asset-service@sha256:0ff5bc4b1084b610e8508e47195dddbc692d8a10ff28daa653508a00af5b95bd
+        imagePullPolicy: IfNotPresent
+        ports: [{containerPort: 50053}, {containerPort: 8083}]
+        env:
+        - {name: ASSET_GRPC_PORT, value: "50053"}
+        - {name: ASSET_HTTP_PORT, value: "8083"}
+        - {name: ASSET_PG_HOST, value: "postgres-primary.databases.svc"}
+        - {name: ASSET_PG_USER, value: "postgres"}
+        - {name: ASSET_PG_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: PG_PASSWORD}}}
+        - {name: ASSET_PG_DB, value: "traffic_platform"}
+        - {name: ASSET_KAFKA_ENABLED, value: "true"}
+        - {name: ASSET_KAFKA_BROKERS, value: "kafka-bootstrap.middleware.svc:9092"}
+        - {name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL"}
+        - {name: KAFKA_SASL_MECHANISM, value: "SCRAM-SHA-512"}
+        - {name: KAFKA_SASL_USERNAME, valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_USERNAME}}}
+        - {name: KAFKA_SASL_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_PASSWORD}}}
+        - {name: KAFKA_TLS_CA_FILE, value: "/etc/kafka/tls/ca.crt"}
+        - {name: KAFKA_TLS_SERVER_NAME, value: "kafka-bootstrap.middleware.svc"}
+        - {name: ASSET_KAFKA_TOPIC, value: "asset.bindings.v1"}
+        - {name: ASSET_KAFKA_GROUP_ID, value: "asset-service-bindings"}
+        - {name: ASSET_DISCOVERY_SCHEDULER_ENABLED, value: "false"}
+        - {name: ASSET_DISCOVERY_MODE, value: "snmp_lldp"}
+        - {name: ASSET_DISCOVERY_INTERVAL, value: "30m"}
+        - {name: ASSET_DISCOVERY_MAX_HOSTS, value: "128"}
+        - {name: JWT_SIGNING_KEY, valueFrom: {secretKeyRef: {name: traffic-credentials, key: JWT_SECRET}}}
+        - {name: LOG_LEVEL, value: "info"}
+        resources: {requests: {cpu: 100m, memory: 128Mi}, limits: {cpu: 500m, memory: 512Mi}}
+        livenessProbe:  {httpGet: {path: /health, port: 8083}, initialDelaySeconds: 10, periodSeconds: 15}
+        readinessProbe: {httpGet: {path: /health/readiness, port: 8083}, initialDelaySeconds: 5, periodSeconds: 10}
+        volumeMounts:
+        - {name: kafka-client-tls, mountPath: /etc/kafka/tls, readOnly: true}
+      volumes:
+      - {name: kafka-client-tls, secret: {secretName: kafka-client-tls, optional: false}}
+---
+# ---- Rule Manager (HTTP 8084) ----
+apiVersion: v1
+kind: Service
+metadata: {name: rule-manager, namespace: traffic-analysis, labels: {app: rule-manager}}
+spec:
+  selector: {app: rule-manager}
+  ports:
+  - {name: http, port: 8084}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: rule-manager, namespace: traffic-analysis}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: rule-manager}}
+  template:
+    metadata: {labels: {app: rule-manager}}
+    spec:
+      securityContext: {fsGroup: 1000, fsGroupChangePolicy: OnRootMismatch}
+      containers:
+      - name: rule-manager
+        image: docker.io/traffic/rule-manager@sha256:4b487c15120fe634ba6316d0fa5fff170b3f8d5a9a12d84c1a1c4ca9a84cdbd7
+        imagePullPolicy: Never
+        ports: [{containerPort: 8084}]
+        env:
+        - {name: API_LISTEN_ADDR, value: ":8084"}
+        - {name: POSTGRES_HOST, value: "postgres-primary.databases.svc"}
+        - {name: POSTGRES_PORT, value: "5432"}
+        - {name: POSTGRES_DATABASE, value: "traffic_platform"}
+        - {name: POSTGRES_USERNAME, value: "postgres"}
+        - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: PG_PASSWORD}}}
+        - {name: CLICKHOUSE_HOSTS, value: "clickhouse-1.middleware.svc:9000"}
+        - {name: CLICKHOUSE_DATABASE, value: "traffic"}
+        - {name: CLICKHOUSE_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: CLICKHOUSE_PASSWORD}}}
+        - {name: REDIS_SENTINEL_ADDRS, value: "redis-sentinel.databases.svc:26379"}
+        - {name: REDIS_SENTINEL_MASTER, value: "mymaster"}
+        - {name: KAFKA_BROKERS, value: "kafka-bootstrap.middleware.svc:9092"}
+        - {name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL"}
+        - {name: KAFKA_SASL_MECHANISM, value: "SCRAM-SHA-512"}
+        - {name: KAFKA_SASL_USERNAME, valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_USERNAME}}}
+        - {name: KAFKA_SASL_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_PASSWORD}}}
+        - {name: KAFKA_TLS_CA_FILE, value: "/etc/kafka/tls/ca.crt"}
+        - {name: KAFKA_TLS_SERVER_NAME, value: "kafka-bootstrap.middleware.svc"}
+        - {name: KAFKA_RULE_TOPIC, value: "rule.updates"}
+        - {name: KAFKA_MODEL_TOPIC, value: "model-updates"}
+        - {name: KAFKA_AUDIT_TOPIC, value: "audit.logs"}
+        - {name: AUDIT_TOPIC, value: "audit.logs"}
+        - {name: MLOPS_ARGO_NAMESPACE, value: "argo"}
+        - {name: MLOPS_ARGO_SERVER_URL, value: "http://argo-server.argo.svc:2746"}
+        - {name: MLOPS_WORKFLOW_TEMPLATE, value: "mlops-training-template"}
+        - {name: JWT_SECRET_KEY, valueFrom: {secretKeyRef: {name: traffic-credentials, key: JWT_SECRET}}}
+        - {name: LOG_LEVEL, value: "info"}
+        resources: {requests: {cpu: 200m, memory: 256Mi}, limits: {cpu: 500m, memory: 512Mi}}
+        volumeMounts:
+        - {name: kafka-client-tls, mountPath: /etc/kafka/tls, readOnly: true}
+        - {name: audit-backup, mountPath: /var/log/audit}
+      volumes:
+      - {name: kafka-client-tls, secret: {secretName: kafka-client-tls, optional: false}}
+      - {name: audit-backup, emptyDir: {}}
+---
+# ---- Graph Service (HTTP 8085) ----
+apiVersion: v1
+kind: Service
+metadata: {name: graph-service, namespace: traffic-analysis, labels: {app: graph-service}}
+spec:
+  selector: {app: graph-service}
+  ports:
+  - {name: http, port: 8085}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: graph-service, namespace: traffic-analysis}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: graph-service}}
+  template:
+    metadata: {labels: {app: graph-service}}
+    spec:
+      securityContext: {fsGroup: 1000, fsGroupChangePolicy: OnRootMismatch}
+      containers:
+      - name: graph-service
+        image: docker.io/traffic/graph-service@sha256:43b44faa0ec00f54c8c3087c908eae0d7e7d9d76313583ad9e95ee863b87284f
+        imagePullPolicy: Never
+        ports: [{containerPort: 8085}]
+        env:
+        - {name: SERVER_LISTEN_ADDR, value: ":8085"}
+        - {name: CLICKHOUSE_HOSTS, value: "clickhouse-1.middleware.svc:9000,clickhouse-2.middleware.svc:9000"}
+        - {name: CLICKHOUSE_DATABASE, value: "traffic"}
+        - {name: CLICKHOUSE_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: CLICKHOUSE_PASSWORD}}}
+        - {name: CLICKHOUSE_DIAL_TIMEOUT, value: "5s"}
+        - {name: CLICKHOUSE_READ_TIMEOUT, value: "12s"}
+        - {name: CLICKHOUSE_WRITE_TIMEOUT, value: "12s"}
+        - {name: QUERY_TIMEOUT, value: "12s"}
+        - {name: POSTGRES_HOST, value: "postgres-primary.databases.svc"}
+        - {name: POSTGRES_PORT, value: "5432"}
+        - {name: POSTGRES_DATABASE, value: "traffic_platform"}
+        - {name: POSTGRES_USERNAME, value: "postgres"}
+        - {name: POSTGRES_DSN, valueFrom: {secretKeyRef: {name: traffic-credentials, key: POSTGRES_DSN}}}
+        - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: PG_PASSWORD}}}
+        - {name: POSTGRES_SSL_MODE, value: "disable"}
+        - {name: REDIS_SENTINEL_ADDRS, value: "redis-sentinel.databases.svc:26379"}
+        - {name: REDIS_SENTINEL_MASTER, value: "mymaster"}
+        - {name: KAFKA_BROKERS, value: "kafka-bootstrap.middleware.svc:9092"}
+        - {name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL"}
+        - {name: KAFKA_SASL_MECHANISM, value: "SCRAM-SHA-512"}
+        - {name: KAFKA_SASL_USERNAME, valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_USERNAME}}}
+        - {name: KAFKA_SASL_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_PASSWORD}}}
+        - {name: KAFKA_TLS_CA_FILE, value: "/etc/kafka/tls/ca.crt"}
+        - {name: KAFKA_TLS_SERVER_NAME, value: "kafka-bootstrap.middleware.svc"}
+        - {name: OTEL_ENABLED, value: "false"}
+        - {name: LOG_LEVEL, value: "info"}
+        resources: {requests: {cpu: 500m, memory: 512Mi}, limits: {cpu: "1", memory: 1Gi}}
+        volumeMounts:
+        - {name: kafka-client-tls, mountPath: /etc/kafka/tls, readOnly: true}
+        - {name: audit-backup, mountPath: /var/log/audit}
+      volumes:
+      - {name: kafka-client-tls, secret: {secretName: kafka-client-tls, optional: false}}
+      - {name: audit-backup, emptyDir: {}}
+---
+# ---- Threat Intel Service (HTTP 8087) ----
+apiVersion: v1
+kind: Service
+metadata: {name: threat-intel-service, namespace: traffic-analysis, labels: {app: threat-intel-service}}
+spec:
+  selector: {app: threat-intel-service}
+  ports:
+  - {name: http, port: 8087}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: threat-intel-service, namespace: traffic-analysis}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: threat-intel-service}}
+  template:
+    metadata:
+      labels: {app: threat-intel-service}
+      annotations: {prometheus.io/scrape: "true", prometheus.io/port: "8087"}
+    spec:
+      containers:
+      - name: threat-intel-service
+        image: docker.io/traffic/threat-intel-service@sha256:d87ccc7066dbd2d04aa55db16c1e2ca271e0d5274373ba0ca5159b513c0c629c
+        imagePullPolicy: Never
+        ports: [{containerPort: 8087}]
+        env:
+        - {name: API_LISTEN_ADDR, value: ":8087"}
+        - {name: POSTGRES_HOST, value: "postgres-primary.databases.svc"}
+        - {name: POSTGRES_PORT, value: "5432"}
+        - {name: POSTGRES_DATABASE, value: "traffic_platform"}
+        - {name: POSTGRES_USERNAME, value: "postgres"}
+        - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: PG_PASSWORD}}}
+        - {name: KAFKA_BROKERS, value: "kafka-bootstrap.middleware.svc:9092"}
+        - {name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL"}
+        - {name: KAFKA_SASL_MECHANISM, value: "SCRAM-SHA-512"}
+        - {name: KAFKA_SASL_USERNAME, valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_USERNAME}}}
+        - {name: KAFKA_SASL_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_PASSWORD}}}
+        - {name: KAFKA_TLS_CA_FILE, value: "/etc/kafka/tls/ca.crt"}
+        - {name: KAFKA_TLS_SERVER_NAME, value: "kafka-bootstrap.middleware.svc"}
+        - {name: KAFKA_THREAT_INTEL_TOPIC, value: "threat.intel.v1"}
+        - {name: THREAT_INTEL_FEED_SCHEDULER_ENABLED, value: "true"}
+        - {name: THREAT_INTEL_FEED_SCHEDULER_TICK_SECONDS, value: "2"}
+        - {name: JWT_SECRET_KEY, valueFrom: {secretKeyRef: {name: traffic-credentials, key: JWT_SECRET}}}
+        - {name: LOG_LEVEL, value: "info"}
+        resources: {requests: {cpu: 100m, memory: 128Mi}, limits: {cpu: 500m, memory: 512Mi}}
+        livenessProbe:  {httpGet: {path: /health, port: 8087}, initialDelaySeconds: 10, periodSeconds: 15}
+        readinessProbe: {httpGet: {path: /readyz, port: 8087}, initialDelaySeconds: 5, periodSeconds: 10}
+        volumeMounts:
+        - {name: kafka-client-tls, mountPath: /etc/kafka/tls, readOnly: true}
+      volumes:
+      - {name: kafka-client-tls, secret: {secretName: kafka-client-tls, optional: false}}
+---
+# ---- Forensics Service (HTTP 8086) ----
+apiVersion: v1
+kind: Service
+metadata: {name: forensics-service, namespace: traffic-analysis, labels: {app: forensics-service}}
+spec:
+  selector: {app: forensics-service}
+  ports:
+  - {name: http, port: 8086}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: forensics-service, namespace: traffic-analysis}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: forensics-service}}
+  template:
+    metadata: {labels: {app: forensics-service}}
+    spec:
+      containers:
+      - name: forensics-service
+        image: docker.io/traffic/forensics-service@sha256:31a224080db7d2bd8aabb3c6e100a00ce91bcea280c291bb82dbee83d7bc80a4
+        imagePullPolicy: Never
+        ports: [{containerPort: 8086}]
+        env:
+        - {name: API_LISTEN_ADDR, value: ":8086"}
+        - {name: POSTGRES_HOST, value: "postgres-primary.databases.svc"}
+        - {name: POSTGRES_PORT, value: "5432"}
+        - {name: POSTGRES_DATABASE, value: "traffic_platform"}
+        - {name: POSTGRES_USERNAME, value: "postgres"}
+        - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: PG_PASSWORD}}}
+        - {name: CLICKHOUSE_HOSTS, value: "clickhouse-1.middleware.svc:9000"}
+        - {name: CLICKHOUSE_DATABASE, value: "traffic"}
+        - {name: CLICKHOUSE_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: CLICKHOUSE_PASSWORD}}}
+        - {name: S3_ENDPOINT, value: "minio.minio.svc:9000"}
+        - {name: S3_ACCESS_KEY, valueFrom: {secretKeyRef: {name: traffic-credentials, key: MINIO_ACCESS_KEY}}}
+        - {name: S3_SECRET_KEY, valueFrom: {secretKeyRef: {name: traffic-credentials, key: MINIO_SECRET_KEY}}}
+        - {name: REDIS_SENTINEL_ADDRS, value: "redis-sentinel.databases.svc:26379"}
+        - {name: REDIS_SENTINEL_MASTER, value: "mymaster"}
+        - {name: KAFKA_BROKERS, value: "kafka-bootstrap.middleware.svc:9092"}
+        - {name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL"}
+        - {name: KAFKA_SASL_MECHANISM, value: "SCRAM-SHA-512"}
+        - {name: KAFKA_SASL_USERNAME, valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_USERNAME}}}
+        - {name: KAFKA_SASL_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_PASSWORD}}}
+        - {name: KAFKA_TLS_CA_FILE, value: "/etc/kafka/tls/ca.crt"}
+        - {name: KAFKA_TLS_SERVER_NAME, value: "kafka-bootstrap.middleware.svc"}
+        - {name: LOG_LEVEL, value: "info"}
+        resources: {requests: {cpu: 500m, memory: 512Mi}, limits: {cpu: "1", memory: 1Gi}}
+        volumeMounts:
+        - {name: kafka-client-tls, mountPath: /etc/kafka/tls, readOnly: true}
+      volumes:
+      - {name: kafka-client-tls, secret: {secretName: kafka-client-tls, optional: false}}

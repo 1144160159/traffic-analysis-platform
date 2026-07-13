@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "9"
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"name":"streampark-proxy","namespace":"streampark"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"streampark-proxy"}},"template":{"metadata":{"labels":{"app":"streampark-proxy"}},"spec":{"containers":[{"image":"nginx:alpine","name":"nginx","ports":[{"containerPort":8080}],"resources":{"limits":{"cpu":"200m","memory":"128Mi"},"requests":{"cpu":"50m","memory":"32Mi"}},"volumeMounts":[{"mountPath":"/etc/nginx/conf.d","name":"nginx-config"}]}],"volumes":[{"configMap":{"name":"streampark-proxy-nginx"},"name":"nginx-config"}]}}}}
+  creationTimestamp: "2026-06-12T01:33:27Z"
+  generation: 9
+  name: streampark-proxy
+  namespace: streampark
+  resourceVersion: "1033538"
+  uid: a094007b-fd20-4ba1-a2ba-0bc73896c00d
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: streampark-proxy
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/restartedAt: "2026-06-12T11:04:54+08:00"
+      creationTimestamp: null
+      labels:
+        app: streampark-proxy
+    spec:
+      containers:
+      - image: nginx:alpine
+        imagePullPolicy: IfNotPresent
+        name: nginx
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 200m
+            memory: 128Mi
+          requests:
+            cpu: 50m
+            memory: 32Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /etc/nginx/conf.d
+          name: nginx-config
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: streampark-proxy-nginx
+        name: nginx-config
+status:
+  availableReplicas: 1
+  conditions:
+  - lastTransitionTime: "2026-06-12T03:00:42Z"
+    lastUpdateTime: "2026-06-12T03:00:42Z"
+    message: Deployment has minimum availability.
+    reason: MinimumReplicasAvailable
+    status: "True"
+    type: Available
+  - lastTransitionTime: "2026-06-12T01:33:27Z"
+    lastUpdateTime: "2026-06-12T03:04:55Z"
+    message: ReplicaSet "streampark-proxy-6d78c69985" has successfully progressed.
+    reason: NewReplicaSetAvailable
+    status: "True"
+    type: Progressing
+  observedGeneration: 9
+  readyReplicas: 1
+  replicas: 1
+  updatedReplicas: 1

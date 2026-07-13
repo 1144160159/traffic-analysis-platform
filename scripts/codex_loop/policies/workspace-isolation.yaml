@@ -1,0 +1,14 @@
+version: 1
+enabled: true
+description: Workspace isolation policy for bounded parallel Codex Loop execution.
+mode: worktree-plan
+backend: git-worktree
+root: doc/02_acceptance/runs/.loop/worktrees
+allow_create_env: CODEX_LOOP_ALLOW_WORKTREE_CREATE
+allow_cleanup_env: CODEX_LOOP_ALLOW_WORKTREE_CLEANUP
+max_parallel_workspaces: 4
+require_task_path: true
+require_allowed_paths: true
+allow_dirty_source_worktree: false
+allowed_roots:
+  - doc/02_acceptance/runs/.loop/worktrees

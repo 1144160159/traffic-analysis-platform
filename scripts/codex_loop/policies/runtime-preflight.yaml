@@ -1,0 +1,39 @@
+version: 1
+min_python_major: 3
+min_python_minor: 10
+min_free_disk_mb: 512
+min_available_memory_mb: 256
+required_tools:
+  - git
+optional_tools:
+  - kubectl
+  - systemd-analyze
+  - codex
+required_paths:
+  - agent.md
+  - doc/README.md
+  - doc/01_design/自动开发Loop引擎设计.md
+  - scripts/codex_loop
+  - scripts/codex_loop/tasks
+  - scripts/codex_loop/policies/default.yaml
+  - scripts/codex_loop/policies/resource-profiles.yaml
+  - scripts/codex_loop/policies/resource-quotas.yaml
+  - scripts/codex_loop/policies/resource-observability.yaml
+  - scripts/codex_loop/policies/workspace-isolation.yaml
+  - tests/run_tests.sh
+writable_paths:
+  - doc/02_acceptance/runs
+allowed_queue_backends:
+  - repo-json
+  - sqlite
+  - http
+max_dirty_items_warning: 800
+resource_observability_policy: scripts/codex_loop/policies/resource-observability.yaml
+profile_required:
+  worker_stage: prepare
+  allow_live_write: false
+  allow_external_codex: false
+profile_bounds:
+  max_concurrent_workers:
+    min: 1
+    max: 4

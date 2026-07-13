@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {network_policy_name}
+  namespace: {namespace}
+  labels:
+    app.kubernetes.io/name: codex-loop-sandbox
+    app.kubernetes.io/component: isolated-executor
+    codex-loop/run-id: {safe_run_id}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: codex-loop-sandbox
+      app.kubernetes.io/component: isolated-executor
+      codex-loop/run-id: {safe_run_id}
+  policyTypes:
+    - Ingress
+    - Egress

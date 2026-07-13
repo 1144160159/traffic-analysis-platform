@@ -1,0 +1,22 @@
+version: 1
+deny_without_human_gate:
+  - kubectl delete
+  - kubectl replace --force
+  - helm uninstall
+  - kafka-topics --delete
+  - mc rm
+  - aws s3 rm
+  - psql -c "drop
+  - clickhouse-client --query "drop
+  - rm -rf /home/k8s-data
+  - rm -rf deployments
+  - secret
+  - certificate-authority
+  - root-ca
+  - production credential
+always_manual:
+  - production Kafka TLS/SASL/ACL switch
+  - Secret or root CA rotation
+  - PVC, Topic, Bucket or database deletion
+  - 10 x 100Gbps or 512Mpps performance run
+  - CNAS or third-party pass/fail marking

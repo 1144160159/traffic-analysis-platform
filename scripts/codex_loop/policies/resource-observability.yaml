@@ -1,0 +1,25 @@
+version: 1
+enabled: true
+description: Conservative dynamic resource observability thresholds for Codex Loop automation.
+sample_seconds: 1
+cpu_busy_warn_percent: 90
+cpu_busy_block_percent: 98
+load_1_per_cpu_warn_percent: 150
+load_1_per_cpu_block_percent: 300
+memory_available_warn_mb: 512
+memory_available_block_mb: 128
+repo_free_warn_mb: 1024
+repo_free_block_mb: 256
+evidence_free_warn_mb: 1024
+evidence_free_block_mb: 256
+queue_total_warn: 200
+queue_total_block: 1000
+queue_claimed_warn: 2
+queue_claimed_block: 8
+queue_quarantined_warn: 1
+queue_quarantined_block: 10
+process_count_warn: 2000
+process_count_block: 5000
+thread_count_warn: 8000
+thread_count_block: 20000
+max_recommended_workers: 4

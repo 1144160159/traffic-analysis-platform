@@ -1,0 +1,50 @@
+objective:
+  name: complete_project_development
+  description: Stop only when the project-level development objective is proven by task closure, release evidence, and runtime gates.
+  required_priorities:
+    - P0
+    - P1
+  terminal_task_statuses:
+    - CLOSED
+  acceptable_terminal_task_statuses:
+    - CLOSED
+    - DEFERRED
+  human_gate_task_statuses:
+    - NEEDS_HUMAN_GATE
+    - QUARANTINED
+  blocker_task_statuses:
+    - BLOCKED
+    - DESIGN_ITERATING
+    - REPAIRING
+    - EVIDENCE_INCOMPLETE
+  max_open_p0: 0
+  max_open_p1: 0
+  allow_deferred_p0: false
+  require_release_frozen: true
+  latest_blocker_run_kinds:
+    - release_freeze
+    - image_build
+    - image_distribution
+    - runtime_preflight
+    - k8s_bootstrap
+    - resource_quota
+    - resource_monitor
+    - workspace_isolation
+    - workspace_cleanup
+    - executor_pool_stress
+    - remote_pool_stress
+    - remote_pool_k8s_stress
+    - remote_pool_k8s_readiness
+    - soak
+    - queue_service
+  blocker_status_fragments:
+    - BLOCKED
+    - FAILED
+    - REJECTED
+    - NOT_READY
+  ignore_blocker_run_id_fragments:
+    - guard
+    - negative
+  ready_required_run_kinds:
+    - context_scout
+    - release_freeze

@@ -1,0 +1,55 @@
+---
+# Web UI — React + Vite 前端
+---
+apiVersion: v1
+kind: Service
+metadata: {name: web-ui, namespace: traffic-analysis, labels: {app: web-ui}}
+spec:
+  type: ClusterIP
+  selector: {app: web-ui}
+  ports:
+  - {name: http, port: 80, targetPort: 80}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-ui
+  namespace: traffic-analysis
+  annotations:
+    kubernetes.io/change-cause: "Asset ledger classification/detail drawers, UI gap closure and Windows Chrome evidence r303"
+    traffic.analysis/source-revision: "worktree-20260713"
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: web-ui}}
+  template:
+    metadata:
+      labels: {app: web-ui}
+      annotations:
+        traffic.analysis/build-id: "ui-assets-ledger-v2-20260713-r303-worktree"
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: web-ui
+        image: docker.io/traffic/web-ui@sha256:5f722ffad20890c208eba0037d9eab4157220e1350989f1172b84d61b1af4b80
+        imagePullPolicy: Never
+        ports: [{containerPort: 80}]
+        lifecycle:
+          preStop:
+            exec: {command: ["/bin/sh", "-c", "sleep 10"]}
+        env:
+        - {name: API_BASE_URL, value: "/api"}
+        - {name: API_BACKEND_HOST, value: "apisix.gateway.svc"}
+        - {name: API_BACKEND_PORT, value: "9080"}
+        - {name: WS_URL, value: "/ws/events"}
+        - {name: WS_BACKEND_HOST, value: "apisix.gateway.svc"}
+        - {name: WS_BACKEND_PORT, value: "9080"}
+        - {name: VITE_ENABLE_WEBSOCKET, value: "true"}
+        - {name: ENABLE_REALTIME, value: "true"}
+        - {name: AUTH_ENABLED, value: "true"}
+        - {name: USE_MOCK, value: "false"}
+        - {name: ALERT_DETAIL_API_ENABLED, value: "false"}
+        - {name: SCREEN_ACCESS_MODE, value: "protected"}
+        - {name: DESKTOP_SMOKE_TOKEN_ENABLED, value: "true"}
+        resources: {requests: {cpu: 100m, memory: 128Mi, ephemeral-storage: 128Mi}, limits: {cpu: 500m, memory: 512Mi, ephemeral-storage: 512Mi}}
+        livenessProbe:  {httpGet: {path: /, port: 80}, initialDelaySeconds: 10, periodSeconds: 15}
+        readinessProbe: {httpGet: {path: /, port: 80}, initialDelaySeconds: 5, periodSeconds: 10}

@@ -1,0 +1,72 @@
+---
+# NebulaGraph HTTP Gateway — 将 REST 请求代理到 NebulaGraph gRPC (9669)
+# 解决 graphd 内置 HTTP (19669) 仅提供 /status 端点的问题
+# 部署后 nGQL 可通过 POST http://nebula-http-gateway.middleware.svc:18080/api/v1/ngql 执行
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nebula-http-gateway
+  namespace: middleware
+  labels:
+    app: nebula-http-gateway
+spec:
+  selector:
+    app: nebula-http-gateway
+  ports:
+    - name: http
+      port: 18080
+      targetPort: 18080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nebula-http-gateway
+  namespace: middleware
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nebula-http-gateway
+  template:
+    metadata:
+      labels:
+        app: nebula-http-gateway
+    spec:
+      containers:
+        - name: http-gateway
+          image: vesoft/nebula-http-gateway:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 18080
+              name: http
+          env:
+            - name: NEBULA_GRAPH_ADDR
+              value: "nebula-graph.middleware.svc:9669"
+            - name: NEBULA_USER
+              value: "root"
+            - name: NEBULA_PASSWORD
+              value: "root"
+            - name: NEBULA_SPACE
+              value: "traffic_graph"
+            - name: LISTEN_PORT
+              value: "18080"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /status
+              port: 18080
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /status
+              port: 18080
+            initialDelaySeconds: 5
+            periodSeconds: 10

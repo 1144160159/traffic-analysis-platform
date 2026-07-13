@@ -1,0 +1,65 @@
+id: CLE-P1-FUSION-001
+title: 多源融合消融实验框架
+priority: P1
+status: DISCOVERED
+lane:
+  primary: MLOps
+  dependent:
+    - Product Design
+    - Mission / Acceptance
+source:
+  - "doc/05_status/未开发项梳理-2026-06-19.md#4"
+  - "doc/03_review/专家深评整改清单.md#ALG-04"
+acceptance_type: acceptance-prep
+subsystems:
+  - mlops
+  - doc/02_acceptance
+risk:
+  level: medium
+  reasons:
+
+execution:
+  mode: plan
+  allow_live_write: false
+workspace:
+  allowed_paths:
+    - mlops/
+    - doc/02_acceptance/
+    - doc/01_design/
+contracts:
+  proto: false
+  kafka_topics: false
+  database_schema: false
+  apisix_routes: false
+data_plan:
+  mode: live_existing
+  tenant: default
+  cleanup: none
+verification:
+  local:
+    - make python-test
+  live_readonly:
+    - "curl --noproxy '*' http://10.0.5.8:30180/login"
+review:
+  required: true
+  perspectives:
+    - code_correctness
+    - product_logic
+    - technical_design
+    - acceptance_evidence
+  design_update_allowed:
+    - doc/01_design/
+    - doc/02_acceptance/
+    - doc/05_status/
+evidence:
+  run_dir: "doc/02_acceptance/runs/${run_id}"
+  required:
+    - run-summary.json
+    - plan.md
+    - local-report.md
+    - review-report.md
+    - evidence-report.md
+close_when:
+  - single-source and multi-source experiment groups are defined
+  - "metrics include FPR, recall, MTTR and evidence completeness"
+  - report template is present

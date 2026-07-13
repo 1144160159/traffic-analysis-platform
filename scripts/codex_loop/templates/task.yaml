@@ -1,0 +1,57 @@
+id: CLE-P0-EXAMPLE-001
+title: 示例任务标题
+priority: P0
+status: DISCOVERED
+lane:
+  primary: Mission / Acceptance
+  dependent:
+    - Product Design
+source:
+  - doc/05_status/代码实证状态核对-2026-06-19.md
+acceptance_type: regression
+subsystems:
+  - doc/02_acceptance
+risk:
+  level: medium
+  reasons:
+    - explain the task risk
+execution:
+  mode: plan
+  allow_live_write: false
+workspace:
+  allowed_paths:
+    - doc/02_acceptance/
+contracts:
+  proto: false
+  kafka_topics: false
+  database_schema: false
+  apisix_routes: false
+data_plan:
+  mode: live_existing
+  tenant: default
+  cleanup: none
+verification:
+  local:
+    - python scripts/codex_loop/plan.py --task scripts/codex_loop/templates/task.yaml
+  live_readonly:
+    - curl --noproxy '*' http://10.0.5.8:30180/login
+review:
+  required: true
+  perspectives:
+    - code_correctness
+    - product_logic
+    - technical_design
+    - acceptance_evidence
+  design_update_allowed:
+    - doc/01_design/
+    - doc/02_acceptance/
+    - doc/05_status/
+evidence:
+  run_dir: doc/02_acceptance/runs/${run_id}
+  required:
+    - run-summary.json
+    - plan.md
+    - review-report.md
+    - evidence-report.md
+close_when:
+  - close condition is testable

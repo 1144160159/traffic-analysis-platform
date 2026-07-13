@@ -1,0 +1,384 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-master
+  namespace: databases
+spec:
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+  podManagementPolicy: OrderedReady
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: redis
+      role: master
+  serviceName: redis-master
+  template:
+    metadata:
+      labels:
+        app: redis
+        redis-type: server
+        role: master
+    spec:
+      containers:
+      - args:
+        - redis-server
+        - --appendonly
+        - 'yes'
+        - --maxmemory
+        - 4gb
+        - --maxmemory-policy
+        - allkeys-lru
+        - --bind
+        - 0.0.0.0
+        image: docker.io/library/redis@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          successThreshold: 1
+          tcpSocket:
+            port: 6379
+          timeoutSeconds: 1
+        name: redis
+        ports:
+        - containerPort: 6379
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          successThreshold: 1
+          tcpSocket:
+            port: 6379
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: '4'
+            memory: 8Gi
+          requests:
+            cpu: 500m
+            memory: 1Gi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /data
+          name: data
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        kubernetes.io/hostname: 8-2tb
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+  updateStrategy:
+    rollingUpdate:
+      partition: 0
+    type: RollingUpdate
+  volumeClaimTemplates:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 100Gi
+      selector:
+        matchLabels:
+          app: redis-master
+      storageClassName: local-hdd
+      volumeMode: Filesystem
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-replica
+  namespace: databases
+spec:
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+  podManagementPolicy: OrderedReady
+  replicas: 2
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: redis
+      role: replica
+  serviceName: redis-replica
+  template:
+    metadata:
+      labels:
+        app: redis
+        redis-type: server
+        role: replica
+    spec:
+      containers:
+      - args:
+        - redis-server
+        - --appendonly
+        - 'yes'
+        - --maxmemory
+        - 4gb
+        - --replicaof
+        - redis-master.databases.svc.cluster.local
+        - '6379'
+        - --bind
+        - 0.0.0.0
+        image: docker.io/library/redis@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          successThreshold: 1
+          tcpSocket:
+            port: 6379
+          timeoutSeconds: 1
+        name: redis
+        ports:
+        - containerPort: 6379
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          successThreshold: 1
+          tcpSocket:
+            port: 6379
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: '4'
+            memory: 8Gi
+          requests:
+            cpu: 500m
+            memory: 1Gi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /data
+          name: data
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+  updateStrategy:
+    rollingUpdate:
+      partition: 0
+    type: RollingUpdate
+  volumeClaimTemplates:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 100Gi
+      storageClassName: local-hdd
+      volumeMode: Filesystem
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-sentinel
+  namespace: databases
+spec:
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+  podManagementPolicy: OrderedReady
+  replicas: 3
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: redis
+      component: sentinel
+  serviceName: redis-sentinel-svc
+  template:
+    metadata:
+      labels:
+        app: redis
+        component: sentinel
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: redis
+                  component: sentinel
+              topologyKey: kubernetes.io/hostname
+            weight: 100
+      containers:
+      - args:
+        - cp /conf/sentinel.conf /tmp/sentinel.conf && exec redis-sentinel /tmp/sentinel.conf
+        command:
+        - sh
+        - -c
+        image: docker.io/library/redis@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
+        imagePullPolicy: IfNotPresent
+        name: sentinel
+        ports:
+        - containerPort: 26379
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /conf
+          name: config
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+      topologySpreadConstraints:
+      - labelSelector:
+          matchLabels:
+            app: redis
+            component: sentinel
+        maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: DoNotSchedule
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: sentinel-conf
+        name: config
+  updateStrategy:
+    rollingUpdate:
+      partition: 0
+    type: RollingUpdate
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-master
+  namespace: databases
+spec:
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - port: 6379
+    protocol: TCP
+    targetPort: 6379
+  selector:
+    app: redis
+    role: master
+  sessionAffinity: None
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: databases
+spec:
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - port: 6379
+    protocol: TCP
+    targetPort: 6379
+  selector:
+    app: redis
+    redis-type: server
+  sessionAffinity: None
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: redis
+    component: sentinel
+  name: redis-sentinel
+  namespace: databases
+spec:
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - name: sentinel
+    port: 26379
+    protocol: TCP
+    targetPort: 26379
+  selector:
+    app: redis
+    component: sentinel
+  sessionAffinity: None
+  type: ClusterIP
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: redis-pdb
+  namespace: databases
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: redis
+      redis-type: server
+
+---
+apiVersion: v1
+data:
+  sentinel.conf: 'bind 0.0.0.0
+
+    port 26379
+
+    sentinel monitor mymaster redis-master 6379 2
+
+    sentinel down-after-milliseconds mymaster 5000
+
+    sentinel failover-timeout mymaster 10000
+
+    sentinel parallel-syncs mymaster 1
+
+    sentinel resolve-hostnames yes
+
+    sentinel announce-hostnames yes
+
+    '
+kind: ConfigMap
+metadata:
+  name: sentinel-conf
+  namespace: databases
+
+---

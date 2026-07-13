@@ -1,0 +1,157 @@
+---
+# Probe Agent DaemonSet — 每节点运行一个探针实例
+# 采集方式: AF_XDP / AF_PACKET (hostNetwork)
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: probe-agent
+  namespace: traffic-analysis
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: probe-agent
+rules:
+- apiGroups: [""]
+  resources: ["nodes", "pods"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: probe-agent
+subjects:
+- kind: ServiceAccount
+  name: probe-agent
+  namespace: traffic-analysis
+roleRef:
+  kind: ClusterRole
+  name: probe-agent
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: probe-agent-config
+  namespace: traffic-analysis
+data:
+  config.yaml: |
+    tenant_id: "default"
+    probe_id: "probe-${NODE_NAME}"
+    run_id: "realtime"
+    capture:
+      interface: "ens9f0"
+      mode: "af_packet"
+      queue_id: 0
+      buffer_size: 65536
+      frame_size: 65536
+      frame_count: 4096
+      promiscuous_mode: true
+      cpu_cores: [0, 1]
+      numa_aware: true
+    aggregator:
+      flow_capacity: 250000
+      idle_timeout_sec: 5
+      active_timeout_sec: 1800
+      scan_interval_sec: 1
+      tos_update_policy: "highest_dscp"
+      enable_dscp_tracking: true
+    archiver:
+      enabled: true
+      buffer_size_mb: 64
+      rotation_interval_sec: 30
+      zstd_level: 3
+      s3_endpoint: "http://minio.minio.svc:9000"
+      s3_bucket: "pcap-archive"
+      s3_region: "us-east-1"
+      s3_access_key: "${PROBE_S3_ACCESS_KEY}"
+      s3_secret_key: "${PROBE_S3_SECRET_KEY}"
+      max_concurrent_uploads: 2
+    sender:
+      gateway_addr: "https://ingest-gateway.traffic-analysis.svc:50051"
+      tenant_id: "default"
+      probe_id: "probe-${NODE_NAME}"
+      auth_token: "probe-token-default-001"
+      batch_size: 100
+      batch_timeout_ms: 100
+      max_retries: 3
+      tls_ca_cert: "/etc/probe-agent/certs/ca-cert.pem"
+      tls_client_cert: "/etc/probe-agent/certs/client-cert.pem"
+      tls_client_key: "/etc/probe-agent/certs/client-key.pem"
+      cache_path: "/var/lib/probe-agent/cache"
+      cache_max_size: 250000
+    metrics:
+      enabled: true
+      listen_addr: "0.0.0.0:9091"
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: probe-agent
+  namespace: traffic-analysis
+spec:
+  selector:
+    matchLabels: {app: probe-agent}
+  template:
+    metadata:
+      labels: {app: probe-agent}
+      annotations: {prometheus.io/scrape: "true", prometheus.io/port: "9091"}
+    spec:
+      serviceAccountName: probe-agent
+      hostNetwork: true
+      hostPID: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+      - name: probe-agent
+        image: docker.io/traffic/probe-agent@sha256:1760b0cfd6ff0666e221bb055d5a6abb7df69b2c7dbb0e856517d6be1adbcec7
+        imagePullPolicy: IfNotPresent
+        args: ["/etc/probe-agent/config.yaml"]
+        securityContext:
+          privileged: true
+          runAsUser: 0
+          runAsGroup: 0
+          capabilities:
+            add: ["NET_ADMIN", "NET_RAW", "SYS_ADMIN", "SYS_NICE"]
+        env:
+        - name: NODE_NAME
+          valueFrom: {fieldRef: {fieldPath: spec.nodeName}}
+        - name: RUST_LOG
+          value: "probe_agent=info"
+        - name: PROBE_S3_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: MINIO_ACCESS_KEY
+        - name: PROBE_S3_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: MINIO_SECRET_KEY
+        ports:
+        - {containerPort: 9091, name: metrics}
+        livenessProbe:
+          httpGet: {path: /metrics, port: 9091}
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          timeoutSeconds: 3
+          failureThreshold: 4
+        readinessProbe:
+          httpGet: {path: /metrics, port: 9091}
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+        resources:
+          requests: {cpu: "2", memory: "4Gi"}
+          limits:   {cpu: "4", memory: "8Gi"}
+        volumeMounts:
+        - {name: config, mountPath: /etc/probe-agent}
+        - {name: cache, mountPath: /var/lib/probe-agent}
+        - {name: certs, mountPath: /etc/probe-agent/certs, readOnly: true}
+      volumes:
+      - {name: config, configMap: {name: probe-agent-config}}
+      - {name: cache, hostPath: {path: /home/data/probe-agent, type: DirectoryOrCreate}}
+      - {name: certs, secret: {secretName: probe-agent-certs, optional: false}}
+      tolerations:
+      - operator: Exists

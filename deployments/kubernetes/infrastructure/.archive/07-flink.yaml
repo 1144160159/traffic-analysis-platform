@@ -1,0 +1,85 @@
+---
+# Flink 1.18 Session Cluster — 1 JobManager + 2 TaskManager
+# Checkpoints: S3/MinIO durable storage
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flink-jobmanager
+  namespace: flink
+spec:
+  ports:
+  - {name: rpc, port: 6123}
+  - {name: blob, port: 6124}
+  - {name: ui, port: 8081}
+  selector: {app: flink, component: jobmanager}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flink-jobmanager
+  namespace: flink
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: flink, component: jobmanager}
+  template:
+    metadata:
+      labels: {app: flink, component: jobmanager}
+    spec:
+      containers:
+      - name: jobmanager
+        image: flink:1.18-scala_2.12
+        command: ["/opt/flink/bin/jobmanager.sh"]
+        args: ["start-foreground"]
+        env:
+        - name: FLINK_PROPERTIES
+          value: "jobmanager.rpc.address: flink-jobmanager\njobmanager.memory.process.size: 4g\ntaskmanager.memory.process.size: 8g\ntaskmanager.numberOfTaskSlots: 8\nparallelism.default: 4\nstate.backend: rocksdb\nstate.checkpoints.dir: s3://flink-checkpoints/\nstate.savepoints.dir: s3://flink-savepoints/\nstate.backend.rocksdb.localdir: /tmp/flink-rocksdb\ns3.endpoint: http://minio.minio.svc:9000\ns3.path.style.access: true\nexecution.checkpointing.interval: 30s\nexecution.checkpointing.timeout: 10min"
+        ports:
+        - containerPort: 6123
+        - containerPort: 6124
+        - containerPort: 8081
+        resources:
+          requests:
+            cpu: "2"
+            memory: "4Gi"
+          limits:
+            cpu: "4"
+            memory: "8Gi"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flink-taskmanager
+  namespace: flink
+spec:
+  replicas: 2
+  selector:
+    matchLabels: {app: flink, component: taskmanager}
+  template:
+    metadata:
+      labels: {app: flink, component: taskmanager}
+    spec:
+      containers:
+      - name: taskmanager
+        image: flink:1.18-scala_2.12
+        command: ["/opt/flink/bin/taskmanager.sh"]
+        args: ["start-foreground"]
+        env:
+        - name: FLINK_PROPERTIES
+          value: "jobmanager.rpc.address: flink-jobmanager\ntaskmanager.memory.process.size: 8g\ntaskmanager.numberOfTaskSlots: 8\nstate.backend: rocksdb\nstate.checkpoints.dir: s3://flink-checkpoints/\nstate.savepoints.dir: s3://flink-savepoints/\nstate.backend.rocksdb.localdir: /tmp/flink-rocksdb\ns3.endpoint: http://minio.minio.svc:9000\ns3.path.style.access: true"
+        ports:
+        - containerPort: 6122
+        resources:
+          requests:
+            cpu: "4"
+            memory: "8Gi"
+          limits:
+            cpu: "8"
+            memory: "16Gi"
+        volumeMounts:
+        - name: flink-rocksdb
+          mountPath: /tmp/flink-rocksdb
+      volumes:
+      - name: flink-rocksdb
+        emptyDir: {}

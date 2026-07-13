@@ -1,85 +1,91 @@
+// =============================================================================
+// FILE: proto/traffic/v1/feature.proto
+// =============================================================================
+
 syntax = "proto3";
 
 package traffic.v1;
 
-option go_package = "github.com/1144160159/traffic-analysis-platform/go/control-plane/pkg/proto/traffic/v1;trafficv1";
-option java_package = "com.traffic.proto.v1";
-option java_multiple_files = true;
-
 import "traffic/v1/common.proto";
 
-// FeatureStatV1 L1 统计特征
-// 由 Flink Feature Job 计算生成，用于规则检测和模型推理
-message FeatureStatV1 {
+option go_package = "github.com/1144160159/traffic-analysis-platform/go/control-plane/pkg/proto/traffic/v1;trafficv1";
+option java_package = "com.traffic.proto.traffic.v1";
+option java_multiple_files = true;
+
+// FeatureStat L1 统计特征
+message FeatureStat {
   EventHeader header = 1;
-  
-  // 关联标识
-  string community_id = 2;
-  string object_type = 3;       // "flow" 或 "session"
-  string object_id = 4;         // flow_id 或 session_id
-  
-  // ==================== 速率特征 ====================
-  float pps = 10;               // 包速率 (packets per second)
-  float bps = 11;               // 比特率 (bits per second)
-  
-  // ==================== 方向特征 ====================
-  float up_down_ratio = 20;     // 上下行比例
-  float bytes_fwd_ratio = 21;   // 正向字节占比
-  
-  // ==================== TCP 标志特征 ====================
-  float syn_ratio = 30;         // SYN 包占比
-  float fin_ratio = 31;         // FIN 包占比
-  float rst_ratio = 32;         // RST 包占比
-  float ack_ratio = 33;         // ACK 包占比
-  float psh_ratio = 34;         // PSH 包占比
-  
-  // ==================== 时间特征 ====================
-  float iat_mean_ms = 40;       // 平均包间隔
-  float iat_std_ms = 41;        // 包间隔标准差
-  float iat_min_ms = 42;        // 最小包间隔
-  float iat_max_ms = 43;        // 最大包间隔
-  
-  // ==================== 包长特征 ====================
-  float pktlen_mean = 50;       // 平均包长
-  float pktlen_std = 51;        // 包长标准差
-  float pktlen_min = 52;        // 最小包长
-  float pktlen_max = 53;        // 最大包长
-  
-  // ==================== 活跃/空闲特征 ====================
-  float active_mean_ms = 60;    // 平均活跃时间
-  float idle_mean_ms = 61;      // 平均空闲时间
-  
-  // ==================== 扩展特征 (用于模型) ====================
-  repeated float extra = 100;   // 额外的数值特征
-  repeated string tag_keys = 101;   // 标签键列表
-  repeated string tag_values = 102; // 标签值列表 (与 tag_keys 一一对应)
+  string schema_version = 2;
+  string object_type = 3;
+  string object_id = 4;
+  string community_id = 5;
+  int64 ts = 6;
+  uint32 protocol = 7;
+  uint32 duration_ms = 8;
+  float pps = 9;
+  float bps = 10;
+  float up_down_ratio = 11;
+  float pktlen_mean = 12;
+  float pktlen_std = 13;
+  float iat_mean_ms = 14;
+  float iat_std_ms = 15;
+  float active_mean_ms = 16;
+  float idle_mean_ms = 17;
+  uint32 tcp_flag_syn_cnt = 18;
+  uint32 tcp_flag_ack_cnt = 19;
+  uint32 tcp_init_win_bytes_fwd = 20;
+  uint32 tcp_init_win_bytes_bwd = 21;
+  repeated float extra = 22;
 }
 
-// FeatureSeqV1 L2 序列特征
-// 用于加密流量分析和行为检测
-message FeatureSeqV1 {
+// FeatureSeq L2 序列特征
+message FeatureSeq {
   EventHeader header = 1;
-  
+  string object_type = 2;
+  string object_id = 3;
+  string community_id = 4;
+  string window_id = 5;
+  int64 ts_start = 6;
+  int64 ts_end = 7;
+  string pktlen_seq_hash = 8;
+  string iat_seq_hash = 9;
+  float wavelet_releng_fwd = 10;
+  float wavelet_releng_bwd = 11;
+  float wavelet_entropy_fwd = 12;
+  float wavelet_entropy_bwd = 13;
+  float wavelet_detail_mean_fwd = 14;
+  float wavelet_detail_mean_bwd = 15;
+  float wavelet_detail_std_fwd = 16;
+  float wavelet_detail_std_bwd = 17;
+  string seq_blob_ref = 18;
+}
+
+// FeatureFingerprint L3 指纹特征
+message FeatureFingerprint {
+  EventHeader header = 1;
   string community_id = 2;
   string session_id = 3;
-  string window_id = 4;         // 滑动窗口ID
-  
-  // 时间范围
-  int64 ts_start = 10;
-  int64 ts_end = 11;
-  
-  // 序列数据 (前 N 个包)
-  repeated uint32 pktlen_seq = 20;   // 包长序列
-  repeated int32 dir_seq = 21;       // 方向序列 (1=fwd, -1=bwd)
-  repeated float iat_seq = 22;       // IAT 序列
-  
-  // 序列统计
-  string pktlen_seq_hash = 30;       // 包长序列哈希
-  string iat_seq_hash = 31;          // IAT 序列哈希
-  
-  // 小波特征
-  float wavelet_energy_fwd = 40;
-  float wavelet_energy_bwd = 41;
-  float wavelet_entropy_fwd = 42;
-  float wavelet_entropy_bwd = 43;
+  int64 ts = 4;
+  uint32 is_encrypted = 5;
+  string tls_version = 6;
+  string ja3 = 7;
+  string sni_hash = 8;
+  string cert_sha256 = 9;
+  uint32 cert_is_self_signed = 10;
+  uint32 pubkey_len = 11;
+  repeated float hex_freq = 12;
+  repeated float hex_ratio = 13;
+  float entropy_payload = 14;
+  float chi_square_bfd = 15;
+}
+
+// FeatureBatch 特征批次
+message FeatureBatch {
+  repeated FeatureStat stats = 1;
+  repeated FeatureSeq sequences = 2;
+  repeated FeatureFingerprint fingerprints = 3;
+  string batch_id = 4;
+  string tenant_id = 5;
+  string run_id = 6;
+  int64 created_at = 7;
 }

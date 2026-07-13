@@ -1,23 +1,15 @@
 # proto/buf.yaml
 version: v1
-name: buf.build/traffic-analysis/proto
-
+name: buf.build/traffic/proto
 deps: []
-
-build:
-  excludes: []
-
 breaking:
   use:
     - FILE
-
 lint:
   use:
     - DEFAULT
   except:
     - PACKAGE_VERSION_SUFFIX
-    - FIELD_LOWER_SNAKE_CASE
-    - ENUM_VALUE_PREFIX
-    - ENUM_ZERO_VALUE_SUFFIX
-  ignore:
-    - google
+    - RPC_REQUEST_STANDARD_NAME
+    - RPC_RESPONSE_STANDARD_NAME
+    - RPC_REQUEST_RESPONSE_UNIQUE

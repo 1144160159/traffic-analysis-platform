@@ -1,0 +1,23 @@
+version: 1
+default_profile: gpt5_llm_review
+profiles:
+  gpt5_llm_review:
+    description: Independent LLM reviewer for normal scoped tasks.
+    model: gpt-5
+    sandbox: read-only
+    timeout_seconds: 1800
+    prompt: "Review the Codex Loop reviewer request at {prompt}. Return only JSON matching the provided schema."
+    execute_default: false
+  gpt5_high_risk_llm_review:
+    description: Independent LLM reviewer for P0, high-risk, or contract-impacting tasks.
+    model: gpt-5
+    sandbox: read-only
+    timeout_seconds: 2400
+    prompt: "Review the high-risk Codex Loop reviewer request at {prompt}. Return only JSON matching the provided schema. Focus on security, contracts, evidence, rollback, and product correctness."
+    execute_default: false
+selection:
+  high_risk_priorities:
+    - P0
+  high_risk_levels:
+    - high
+  contract_profile: gpt5_high_risk_llm_review

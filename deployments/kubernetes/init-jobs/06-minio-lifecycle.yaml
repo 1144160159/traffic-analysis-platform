@@ -1,0 +1,118 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: minio-lifecycle-policy
+  namespace: minio
+data:
+  pcap-archive-lifecycle.json: |
+    {
+      "Rules": [
+        {
+          "ID": "expire-pcap-archive-after-14-days",
+          "Status": "Enabled",
+          "Filter": {
+            "Prefix": ""
+          },
+          "Expiration": {
+            "Days": 14
+          }
+        }
+      ]
+    }
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: init-minio-lifecycle
+  namespace: minio
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: init-lifecycle
+        image: docker.io/minio/mc@sha256:eb4ea9884b77704230e2423e9004d2fa738dc272876b9cc41a297d29443b8780
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: MINIO_ROOT_USER
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: MINIO_ACCESS_KEY
+        - name: MINIO_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: MINIO_SECRET_KEY
+        command: ["sh", "-c"]
+        args:
+        - |
+          set -eu
+          mc alias set local http://minio.minio.svc:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
+          mc mb --ignore-existing local/pcap-archive
+          # Flink owns checkpoint cleanup; do not attach the PCAP expiry policy.
+          mc mb --ignore-existing local/flink-checkpoints
+          mc ilm rule import local/pcap-archive < /policies/pcap-archive-lifecycle.json
+          mc ilm rule ls local/pcap-archive
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+        volumeMounts:
+        - name: lifecycle-policy
+          mountPath: /policies
+          readOnly: true
+      volumes:
+      - name: lifecycle-policy
+        configMap:
+          name: minio-lifecycle-policy
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: minio-incomplete-multipart-cleanup
+  namespace: minio
+spec:
+  schedule: "37 2 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 300
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: cleanup-incomplete
+            image: docker.io/minio/mc@sha256:eb4ea9884b77704230e2423e9004d2fa738dc272876b9cc41a297d29443b8780
+            imagePullPolicy: IfNotPresent
+            env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: traffic-credentials
+                  key: MINIO_ACCESS_KEY
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: traffic-credentials
+                  key: MINIO_SECRET_KEY
+            command: ["sh", "-c"]
+            args:
+            - |
+              set -eu
+              mc alias set local http://minio.minio.svc:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
+              mc rm --incomplete --recursive --force --older-than 24h local/pcap-archive/
+            resources:
+              requests:
+                cpu: 50m
+                memory: 64Mi
+              limits:
+                cpu: 200m
+                memory: 256Mi

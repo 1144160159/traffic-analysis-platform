@@ -1,0 +1,32 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: init-opensearch-templates
+  namespace: middleware
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: init-os
+        image: docker.io/curlimages/curl@sha256:1ab04d023ece37e6ec991bf3306ad04e0ef0084e94a5c6b6563cfcb9563169db
+        command: ["sh", "-c"]
+        env:
+        - name: OPENSEARCH_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: OPENSEARCH_ADMIN_PASSWORD
+        args:
+        - |
+          OS="http://opensearch-0.opensearch.middleware.svc:9200"
+          echo "Waiting for OpenSearch..."
+          until curl -fsS -u "admin:${OPENSEARCH_ADMIN_PASSWORD}" "$OS/_cluster/health" | grep -q '"status"'; do sleep 5; done
+          echo "Creating index templates..."
+          curl -fsS -u "admin:${OPENSEARCH_ADMIN_PASSWORD}" -X PUT "$OS/_index_template/audit-template" -H 'Content-Type: application/json' -d '{"index_patterns":["audit-*"],"template":{"settings":{"number_of_shards":3,"number_of_replicas":1},"mappings":{"properties":{"tenant_id":{"type":"keyword"},"user_id":{"type":"keyword"},"action":{"type":"keyword"},"object_type":{"type":"keyword"},"object_id":{"type":"keyword"},"ip_addr":{"type":"ip"},"created_at":{"type":"date"}}}}}'
+          curl -fsS -u "admin:${OPENSEARCH_ADMIN_PASSWORD}" -X PUT "$OS/_index_template/alerts-template" -H 'Content-Type: application/json' -d '{"index_patterns":["alerts-*"],"template":{"settings":{"number_of_shards":6,"number_of_replicas":1},"mappings":{"properties":{"tenant_id":{"type":"keyword"},"alert_id":{"type":"keyword"},"community_id":{"type":"keyword"},"src_ip":{"type":"ip"},"dst_ip":{"type":"ip"},"alert_type":{"type":"keyword"},"severity":{"type":"keyword"},"score":{"type":"float"},"status":{"type":"keyword"},"first_seen":{"type":"date"},"last_seen":{"type":"date"}}}}}'
+          curl -fsS -u "admin:${OPENSEARCH_ADMIN_PASSWORD}" -X PUT "$OS/_index_template/device-logs-template" -H 'Content-Type: application/json' -d '{"index_patterns":["device-logs-*"],"template":{"settings":{"number_of_shards":3,"number_of_replicas":1},"mappings":{"properties":{"tenant_id":{"type":"keyword"},"device_ip":{"type":"ip"},"device_type":{"type":"keyword"},"severity":{"type":"integer"},"timestamp":{"type":"date"},"message":{"type":"text"},"source":{"type":"keyword"}}}}}'
+          curl -fsS -u "admin:${OPENSEARCH_ADMIN_PASSWORD}" -X PUT "$OS/_index_template/evidence-template" -H 'Content-Type: application/json' -d '{"index_patterns":["evidence-*"],"template":{"settings":{"number_of_shards":3,"number_of_replicas":1},"mappings":{"properties":{"tenant_id":{"type":"keyword"},"evidence_id":{"type":"keyword"},"alert_id":{"type":"keyword"},"type":{"type":"keyword"},"summary":{"type":"text"},"confidence":{"type":"float"},"ts":{"type":"date"}}}}}'
+          echo "OpenSearch templates created."

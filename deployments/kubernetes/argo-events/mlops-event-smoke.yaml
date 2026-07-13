@@ -1,0 +1,107 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: argo-events-workflow-trigger
+  namespace: argo-events
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: argo-events-workflow-trigger
+  namespace: argo
+rules:
+- apiGroups:
+  - argoproj.io
+  resources:
+  - workflows
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: argo-events-workflow-trigger
+  namespace: argo
+subjects:
+- kind: ServiceAccount
+  name: argo-events-workflow-trigger
+  namespace: argo-events
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: argo-events-workflow-trigger
+---
+apiVersion: argoproj.io/v1alpha1
+kind: EventSource
+metadata:
+  name: mlops-webhook
+  namespace: argo-events
+  labels:
+    app: mlops-events
+spec:
+  service:
+    ports:
+    - port: 12000
+      targetPort: 12000
+  webhook:
+    retrain:
+      port: "12000"
+      endpoint: /mlops/retrain
+      method: POST
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: mlops-retrain-smoke
+  namespace: argo-events
+  labels:
+    app: mlops-events
+spec:
+  template:
+    serviceAccountName: argo-events-workflow-trigger
+  dependencies:
+  - name: retrain
+    eventSourceName: mlops-webhook
+    eventName: retrain
+  triggers:
+  - template:
+      name: argo-workflow-smoke-trigger
+      argoWorkflow:
+        operation: submit
+        source:
+          resource:
+            apiVersion: argoproj.io/v1alpha1
+            kind: Workflow
+            metadata:
+              generateName: mlops-event-smoke-
+              namespace: argo
+              labels:
+                app: mlops-events
+                mlops-trigger: argo-events-smoke
+            spec:
+              entrypoint: main
+              arguments:
+                parameters:
+                - name: payload
+                  value: "{}"
+              templates:
+              - name: main
+                inputs:
+                  parameters:
+                  - name: payload
+                container:
+                  image: alpine:3.19
+                  command: [sh, -c]
+                  args:
+                  - |
+                    echo "argo-events mlops webhook received"
+                    echo '{{inputs.parameters.payload}}'
+        parameters:
+        - src:
+            dependencyName: retrain
+            dataKey: body
+          dest: spec.arguments.parameters.0.value

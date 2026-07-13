@@ -1,13 +1,21 @@
 #!/usr/bin/env bash
-#
 # proto/scripts/generate.sh
-# Protobuf 代码生成脚本 - 为 Rust、Go、Java 生成代码
-#
+# Protobuf 代码生成脚本
+
 set -euo pipefail
 
+# =============================================================================
+# 配置
+# =============================================================================
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROTO_DIR="$(dirname "$SCRIPT_DIR")"
-PROJECT_ROOT="$(dirname "$PROTO_DIR")"
+PROTO_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+PROJECT_ROOT="$(cd "${PROTO_DIR}/.." && pwd)"
+
+# 输出目录
+RUST_OUT="${PROJECT_ROOT}/rust/probe-agent/proto-gen/src"
+GO_OUT="${PROJECT_ROOT}/go/control-plane/pkg/proto"
+JAVA_OUT="${PROJECT_ROOT}/java/flink-jobs/flink-common/src/main/java"
 
 # 颜色输出
 RED='\033[0;31m'
@@ -16,306 +24,484 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-log_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
-log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
-log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
-log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
+# =============================================================================
+# 辅助函数
+# =============================================================================
 
-# ==================== 设置 Go 环境 ====================
-setup_go_env() {
-    export GOPATH="${GOPATH:-$HOME/go}"
-    export PATH="$PATH:$GOPATH/bin:/usr/local/go/bin"
+log_info() {
+    echo -e "${BLUE}[INFO]${NC} $1"
 }
 
-# ==================== 安装 Go 插件 ====================
-install_go_plugins() {
-    log_info "安装 Go protoc 插件..."
-    
-    if ! command -v go &> /dev/null; then
-        log_error "Go 未安装，请先安装 Go 1.21+"
-        echo "  安装命令: yum install -y golang  或  apt install -y golang-go"
-        exit 1
-    fi
-    
-    log_info "  Go 版本: $(go version)"
-    
-    # 安装 protoc-gen-go
-    if ! command -v protoc-gen-go &> /dev/null; then
-        log_info "  安装 protoc-gen-go..."
-        go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-    fi
-    
-    # 安装 protoc-gen-go-grpc
-    if ! command -v protoc-gen-go-grpc &> /dev/null; then
-        log_info "  安装 protoc-gen-go-grpc..."
-        go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-    fi
-    
-    # 再次验证
-    if command -v protoc-gen-go &> /dev/null && command -v protoc-gen-go-grpc &> /dev/null; then
-        log_success "Go 插件安装完成"
-        log_info "  protoc-gen-go: $(which protoc-gen-go)"
-        log_info "  protoc-gen-go-grpc: $(which protoc-gen-go-grpc)"
-    else
-        log_error "Go 插件安装失败"
-        log_error "请手动执行:"
-        echo "  export PATH=\"\$PATH:\$HOME/go/bin\""
-        echo "  go install google.golang.org/protobuf/cmd/protoc-gen-go@latest"
-        echo "  go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest"
-        exit 1
-    fi
+log_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
 }
 
-# ==================== 安装 buf ====================
-install_buf() {
-    if command -v buf &> /dev/null; then
-        return 0
-    fi
-    
-    log_info "安装 buf..."
-    
-    local buf_version="1.28.1"
-    local os_type="Linux"
-    local arch_type="x86_64"
-    
-    # 检测架构
-    case "$(uname -m)" in
-        aarch64|arm64) arch_type="aarch64" ;;
-        x86_64) arch_type="x86_64" ;;
-    esac
-    
-    curl -sSL "https://github.com/bufbuild/buf/releases/download/v${buf_version}/buf-${os_type}-${arch_type}" \
-        -o /tmp/buf
-    
-    chmod +x /tmp/buf
-    
-    if [ -w /usr/local/bin ]; then
-        mv /tmp/buf /usr/local/bin/buf
-    else
-        sudo mv /tmp/buf /usr/local/bin/buf
-    fi
-    
-    log_success "buf 安装完成: $(buf --version)"
+log_warn() {
+    echo -e "${YELLOW}[WARN]${NC} $1"
 }
 
-# ==================== 依赖检查 ====================
+log_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+check_command() {
+    if ! command -v "$1" &> /dev/null; then
+        log_error "$1 is not installed"
+        return 1
+    fi
+    log_info "$1 found: $(command -v "$1")"
+    return 0
+}
+
+# =============================================================================
+# 依赖检查
+# =============================================================================
+
 check_dependencies() {
-    log_info "检查依赖工具..."
+    log_info "Checking dependencies..."
     
-    # 设置 Go 环境
-    setup_go_env
+    local missing=0
     
-    # 安装 buf (如果需要)
-    install_buf
+    # 检查 buf
+    if ! check_command "buf"; then
+        log_error "Please install buf: https://buf.build/docs/installation"
+        missing=1
+    else
+        local buf_version
+        buf_version=$(buf --version 2>&1 | head -1)
+        log_info "buf version: ${buf_version}"
+    fi
     
-    # 检查 protoc
-    if ! command -v protoc &> /dev/null; then
-        log_error "protoc 未安装"
-        echo "  openEuler/CentOS: yum install -y protobuf-compiler"
-        echo "  Ubuntu/Debian:    apt install -y protobuf-compiler"
+    # 检查 protoc (备用)
+    if check_command "protoc"; then
+        local protoc_version
+        protoc_version=$(protoc --version)
+        log_info "protoc version: ${protoc_version}"
+    else
+        log_warn "protoc not found, using buf plugins only"
+    fi
+    
+    if [[ $missing -eq 1 ]]; then
+        log_error "Missing required dependencies"
         exit 1
     fi
-    log_info "  protoc: $(protoc --version)"
     
-    # 安装 Go 插件 (如果需要)
-    install_go_plugins
-    
-    log_success "所有依赖检查通过"
+    log_success "All dependencies satisfied"
 }
 
-# ==================== 清理旧文件 ====================
+# =============================================================================
+# 清理旧文件
+# =============================================================================
+
 clean_generated() {
-    log_info "清理旧的生成文件..."
-    
-    # Go
-    local go_proto_dir="${PROJECT_ROOT}/go/control-plane/pkg/proto/traffic/v1"
-    if [ -d "$go_proto_dir" ]; then
-        rm -f "$go_proto_dir"/*.pb.go 2>/dev/null || true
-        log_info "  已清理 Go 生成文件"
-    fi
-    
-    # Java
-    local java_proto_dir="${PROJECT_ROOT}/java/flink-jobs/flink-common/src/main/java/com/traffic/proto/v1"
-    if [ -d "$java_proto_dir" ]; then
-        rm -f "$java_proto_dir"/*.java 2>/dev/null || true
-        log_info "  已清理 Java 生成文件"
-    fi
-    
-    # Rust (proto-gen)
-    local rust_proto_dir="${PROJECT_ROOT}/rust/probe-agent/proto-gen/src"
-    if [ -d "$rust_proto_dir" ]; then
-        rm -f "$rust_proto_dir"/traffic.v1.rs 2>/dev/null || true
-        rm -f "$rust_proto_dir"/traffic.v1.tonic.rs 2>/dev/null || true
-        log_info "  已清理 Rust 生成文件"
-    fi
-    
-    log_success "清理完成"
-}
-
-# ==================== 创建输出目录 ====================
-create_output_dirs() {
-    log_info "创建输出目录..."
-    
-    mkdir -p "${PROJECT_ROOT}/go/control-plane/pkg/proto/traffic/v1"
-    mkdir -p "${PROJECT_ROOT}/java/flink-jobs/flink-common/src/main/java/com/traffic/proto/v1"
-    mkdir -p "${PROJECT_ROOT}/rust/probe-agent/proto-gen/src"
-    
-    log_success "输出目录已创建"
-}
-
-# ==================== 生成 Go 和 Java 代码 ====================
-generate_go_java() {
-    log_info "生成 Go 和 Java 代码 (使用 buf)..."
-    
-    cd "$PROTO_DIR"
-    
-    # 使用 buf 生成
-    buf generate
-    
-    log_success "Go 和 Java 代码生成完成"
-}
-
-# ==================== 生成 Rust 代码 ====================
-generate_rust() {
-    log_info "生成 Rust 代码 (使用 prost-build)..."
-    
-    local rust_proto_gen_dir="${PROJECT_ROOT}/rust/probe-agent/proto-gen"
-    
-    if [ ! -f "${rust_proto_gen_dir}/Cargo.toml" ]; then
-        log_warn "Rust proto-gen 项目不存在，跳过 Rust 代码生成"
-        return 0
-    fi
-    
-    cd "$rust_proto_gen_dir"
-    
-    # 通过 cargo build 触发 build.rs 生成代码
-    if command -v cargo &> /dev/null; then
-        cargo build --release 2>&1 | grep -v "Compiling" || true
-        log_success "Rust 代码生成完成"
-    else
-        log_warn "cargo 不可用，跳过 Rust 代码生成"
-    fi
-}
-
-# ==================== 验证生成结果 ====================
-verify_output() {
-    log_info "验证生成结果..."
-    
-    local errors=0
-    
-    # 验证 Go
-    local go_dir="${PROJECT_ROOT}/go/control-plane/pkg/proto/traffic/v1"
-    local go_files=(
-        "common.pb.go"
-        "flow.pb.go"
-        "session.pb.go"
-        "feature.pb.go"
-        "detection.pb.go"
-        "alert.pb.go"
-        "pcap.pb.go"
-        "ingest.pb.go"
-        "campaign.pb.go"
-        "ingest_grpc.pb.go"
-    )
-    
-    echo ""
-    log_info "Go 文件检查:"
-    for f in "${go_files[@]}"; do
-        if [ -f "${go_dir}/${f}" ]; then
-            echo -e "  ${GREEN}✓${NC} $f"
-        else
-            echo -e "  ${RED}✗${NC} $f 未生成"
-            ((errors++))
-        fi
-    done
-    
-    # 验证 Java
-    local java_dir="${PROJECT_ROOT}/java/flink-jobs/flink-common/src/main/java/com/traffic/proto/v1"
-    local java_files=(
-        "EventHeader.java"
-        "FiveTuple.java"
-        "FlowEvent.java"
-        "SessionEvent.java"
-        "FeatureStatV1.java"
-        "DetectionEvent.java"
-        "Alert.java"
-        "PcapIndexMeta.java"
-        "Campaign.java"
-        "IngestServiceGrpc.java"
-    )
-    
-    echo ""
-    log_info "Java 文件检查:"
-    for f in "${java_files[@]}"; do
-        if [ -f "${java_dir}/${f}" ]; then
-            echo -e "  ${GREEN}✓${NC} $f"
-        else
-            echo -e "  ${RED}✗${NC} $f 未生成"
-            ((errors++))
-        fi
-    done
-    
-    # 验证 Rust (如果存在)
-    echo ""
-    log_info "Rust 文件检查:"
-    local rust_lib="${PROJECT_ROOT}/rust/probe-agent/proto-gen/src/lib.rs"
-    if [ -f "$rust_lib" ]; then
-        echo -e "  ${GREEN}✓${NC} lib.rs"
-    else
-        echo -e "  ${YELLOW}!${NC} Rust proto-gen 需要通过 cargo build 生成"
-    fi
-    
-    echo ""
-    if [ $errors -gt 0 ]; then
-        log_error "验证失败: $errors 个文件未生成"
-        exit 1
-    fi
-    
-    log_success "所有文件验证通过"
-}
-
-# ==================== 统计生成结果 ====================
-print_summary() {
-    echo ""
-    echo "=========================================="
-    echo "           代码生成统计"
-    echo "=========================================="
-    
-    # Go
-    local go_count=$(find "${PROJECT_ROOT}/go/control-plane/pkg/proto" -name "*.pb.go" 2>/dev/null | wc -l)
-    echo "  Go:    ${go_count} 个文件"
-    
-    # Java
-    local java_count=$(find "${PROJECT_ROOT}/java/flink-jobs/flink-common/src/main/java/com/traffic/proto" -name "*.java" 2>/dev/null | wc -l)
-    echo "  Java:  ${java_count} 个文件"
+    log_info "Cleaning previously generated files..."
     
     # Rust
-    local rust_count=$(find "${PROJECT_ROOT}/rust/probe-agent/proto-gen/src" -name "*.rs" 2>/dev/null | wc -l)
-    echo "  Rust:  ${rust_count} 个文件"
+    if [[ -d "${RUST_OUT}" ]]; then
+        find "${RUST_OUT}" -name "*.rs" -type f ! -name "lib.rs" -delete 2>/dev/null || true
+        log_info "Cleaned Rust generated files"
+    fi
     
-    echo "=========================================="
-    echo ""
+    # Go
+    if [[ -d "${GO_OUT}" ]]; then
+        find "${GO_OUT}" -name "*.pb.go" -type f -delete 2>/dev/null || true
+        find "${GO_OUT}" -name "*_grpc.pb.go" -type f -delete 2>/dev/null || true
+        log_info "Cleaned Go generated files"
+    fi
+    
+    # Java
+    if [[ -d "${JAVA_OUT}/com/traffic/proto" ]]; then
+        rm -rf "${JAVA_OUT}/com/traffic/proto"
+        log_info "Cleaned Java generated files"
+    fi
+    
+    log_success "Cleanup completed"
 }
 
-# ==================== 主流程 ====================
+# =============================================================================
+# 创建输出目录
+# =============================================================================
+
+create_output_dirs() {
+    log_info "Creating output directories..."
+    
+    mkdir -p "${RUST_OUT}"
+    mkdir -p "${GO_OUT}"
+    mkdir -p "${JAVA_OUT}"
+    
+    log_success "Output directories created"
+}
+
+# =============================================================================
+# Lint 检查
+# =============================================================================
+
+lint_protos() {
+    log_info "Linting proto files..."
+    
+    cd "${PROTO_DIR}"
+    
+    if ! buf lint; then
+        log_error "Proto lint failed"
+        exit 1
+    fi
+    
+    log_success "Proto lint passed"
+}
+
+# =============================================================================
+# 生成代码
+# =============================================================================
+
+generate_code() {
+    log_info "Generating code for all languages..."
+    
+    cd "${PROTO_DIR}"
+    
+    # 执行 buf generate
+    if ! buf generate; then
+        log_error "Code generation failed"
+        exit 1
+    fi
+    
+    log_success "Code generation completed"
+}
+
+# =============================================================================
+# 生成 Rust lib.rs
+# =============================================================================
+
+generate_rust_lib() {
+    log_info "Generating Rust lib.rs..."
+    
+    local lib_rs="${RUST_OUT}/lib.rs"
+    
+    cat > "${lib_rs}" << 'EOF'
+//! Auto-generated Protobuf types for traffic-analysis-platform
+//!
+//! This module contains all generated protobuf types and gRPC service definitions.
+//! DO NOT EDIT MANUALLY - Generated by proto/scripts/generate.sh
+
+#![allow(clippy::all)]
+#![allow(rustdoc::bare_urls)]
+#![allow(rustdoc::broken_intra_doc_links)]
+
+/// Traffic v1 protocol definitions
+pub mod traffic {
+    pub mod v1 {
+        // Common types (EventHeader, FiveTuple, Enums, etc.)
+        include!("traffic.v1.rs");
+        
+        // Include serde implementations if generated
+        #[cfg(feature = "serde")]
+        include!("traffic.v1.serde.rs");
+    }
+}
+
+// Re-export commonly used types for convenience
+pub use traffic::v1::*;
+
+// Version information
+pub const PROTO_VERSION: &str = "v1";
+pub const GENERATED_AT: &str = env!("CARGO_PKG_VERSION");
+EOF
+
+    log_success "Rust lib.rs generated"
+}
+
+# =============================================================================
+# 验证生成结果
+# =============================================================================
+
+verify_rust() {
+    log_info "Verifying Rust generated files..."
+    
+    local rust_files=(
+        "${RUST_OUT}/traffic.v1.rs"
+    )
+    
+    local missing=0
+    for file in "${rust_files[@]}"; do
+        if [[ -f "$file" ]]; then
+            local lines
+            lines=$(wc -l < "$file")
+            log_info "  ✓ $(basename "$file") (${lines} lines)"
+        else
+            log_warn "  ✗ $(basename "$file") not found"
+            missing=1
+        fi
+    done
+    
+    # 检查 lib.rs
+    if [[ -f "${RUST_OUT}/lib.rs" ]]; then
+        log_info "  ✓ lib.rs"
+    else
+        log_warn "  ✗ lib.rs not found"
+        missing=1
+    fi
+    
+    return $missing
+}
+
+verify_go() {
+    log_info "Verifying Go generated files..."
+    
+    local go_dir="${GO_OUT}/traffic/v1"
+    
+    if [[ ! -d "$go_dir" ]]; then
+        log_warn "Go output directory not found: ${go_dir}"
+        return 1
+    fi
+    
+    local pb_files
+    pb_files=$(find "$go_dir" -name "*.pb.go" 2>/dev/null | wc -l)
+    local grpc_files
+    grpc_files=$(find "$go_dir" -name "*_grpc.pb.go" 2>/dev/null | wc -l)
+    
+    log_info "  ✓ Found ${pb_files} .pb.go files"
+    log_info "  ✓ Found ${grpc_files} _grpc.pb.go files"
+    
+    # 列出所有生成的文件
+    for file in "${go_dir}"/*.pb.go; do
+        if [[ -f "$file" ]]; then
+            local lines
+            lines=$(wc -l < "$file")
+            log_info "    - $(basename "$file") (${lines} lines)"
+        fi
+    done
+    
+    if [[ $pb_files -eq 0 ]]; then
+        return 1
+    fi
+    
+    return 0
+}
+
+verify_java() {
+    log_info "Verifying Java generated files..."
+    
+    local java_dir="${JAVA_OUT}/com/traffic/proto/traffic/v1"
+    
+    if [[ ! -d "$java_dir" ]]; then
+        log_warn "Java output directory not found: ${java_dir}"
+        return 1
+    fi
+    
+    local java_files
+    java_files=$(find "$java_dir" -name "*.java" 2>/dev/null | wc -l)
+    
+    log_info "  ✓ Found ${java_files} .java files"
+    
+    # 列出部分生成的文件
+    local count=0
+    for file in "${java_dir}"/*.java; do
+        if [[ -f "$file" ]] && [[ $count -lt 10 ]]; then
+            log_info "    - $(basename "$file")"
+            ((count++))
+        fi
+    done
+    
+    if [[ $java_files -gt 10 ]]; then
+        log_info "    ... and $((java_files - 10)) more files"
+    fi
+    
+    if [[ $java_files -eq 0 ]]; then
+        return 1
+    fi
+    
+    return 0
+}
+
+verify_all() {
+    log_info "Verifying generated code..."
+    
+    local failed=0
+    
+    if ! verify_rust; then
+        log_error "Rust verification failed"
+        failed=1
+    fi
+    
+    if ! verify_go; then
+        log_error "Go verification failed"
+        failed=1
+    fi
+    
+    if ! verify_java; then
+        log_error "Java verification failed"
+        failed=1
+    fi
+    
+    if [[ $failed -eq 1 ]]; then
+        log_error "Verification failed for some languages"
+        exit 1
+    fi
+    
+    log_success "All verifications passed"
+}
+
+# =============================================================================
+# 编译测试
+# =============================================================================
+
+test_rust_compile() {
+    log_info "Testing Rust compilation..."
+    
+    local rust_project="${PROJECT_ROOT}/rust/probe-agent/proto-gen"
+    
+    if [[ -f "${rust_project}/Cargo.toml" ]]; then
+        cd "${rust_project}"
+        if cargo check --quiet 2>/dev/null; then
+            log_success "Rust compilation check passed"
+        else
+            log_warn "Rust compilation check failed (may need dependencies)"
+        fi
+    else
+        log_warn "Rust Cargo.toml not found, skipping compilation test"
+    fi
+}
+
+test_go_compile() {
+    log_info "Testing Go compilation..."
+    
+    local go_project="${PROJECT_ROOT}/go/control-plane"
+    
+    if [[ -f "${go_project}/go.mod" ]]; then
+        cd "${go_project}"
+        if go build ./pkg/proto/... 2>/dev/null; then
+            log_success "Go compilation check passed"
+        else
+            log_warn "Go compilation check failed (may need dependencies)"
+        fi
+    else
+        log_warn "Go go.mod not found, skipping compilation test"
+    fi
+}
+
+# =============================================================================
+# 打印集成说明
+# =============================================================================
+
+print_integration_guide() {
+    echo ""
+    echo "=============================================================="
+    echo "                   Integration Guide"
+    echo "=============================================================="
+    echo ""
+    echo "📦 RUST (rust/probe-agent/proto-gen/Cargo.toml):"
+    echo "   [dependencies]"
+    echo "   proto-gen = { path = \"proto-gen\" }"
+    echo "   prost = \"0.12\""
+    echo "   prost-types = \"0.12\""
+    echo "   tonic = \"0.11\""
+    echo "   pbjson-types = \"0.6\""
+    echo ""
+    echo "📦 GO (go/control-plane/go.mod):"
+    echo "   require ("
+    echo "       google.golang.org/protobuf v1.32.0"
+    echo "       google.golang.org/grpc v1.61.0"
+    echo "   )"
+    echo "   Import: \"github.com/1144160159/traffic-analysis-platform/go/control-plane/pkg/proto/traffic/v1\""
+    echo ""
+    echo "📦 JAVA (java/flink-jobs/flink-common/pom.xml):"
+    echo "   <dependency>"
+    echo "       <groupId>com.google.protobuf</groupId>"
+    echo "       <artifactId>protobuf-java</artifactId>"
+    echo "       <version>3.25.2</version>"
+    echo "   </dependency>"
+    echo "   <dependency>"
+    echo "       <groupId>io.grpc</groupId>"
+    echo "       <artifactId>grpc-protobuf</artifactId>"
+    echo "       <version>1.61.0</version>"
+    echo "   </dependency>"
+    echo "   Import: com.traffic.proto.traffic.v1.*"
+    echo ""
+    echo "=============================================================="
+}
+
+# =============================================================================
+# 主函数
+# =============================================================================
+
 main() {
     echo ""
-    echo "╔══════════════════════════════════════════════╗"
-    echo "║   Traffic Analysis Platform - Proto Gen      ║"
-    echo "╚══════════════════════════════════════════════╝"
+    echo "=============================================================="
+    echo "     Traffic Analysis Platform - Protobuf Code Generator"
+    echo "=============================================================="
     echo ""
     
+    local start_time
+    start_time=$(date +%s)
+    
+    # 解析参数
+    local skip_clean=false
+    local skip_lint=false
+    local skip_verify=false
+    
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --skip-clean)
+                skip_clean=true
+                shift
+                ;;
+            --skip-lint)
+                skip_lint=true
+                shift
+                ;;
+            --skip-verify)
+                skip_verify=true
+                shift
+                ;;
+            --help|-h)
+                echo "Usage: $0 [OPTIONS]"
+                echo ""
+                echo "Options:"
+                echo "  --skip-clean    Skip cleaning old generated files"
+                echo "  --skip-lint     Skip proto linting"
+                echo "  --skip-verify   Skip verification"
+                echo "  --help, -h      Show this help message"
+                exit 0
+                ;;
+            *)
+                log_error "Unknown option: $1"
+                exit 1
+                ;;
+        esac
+    done
+    
+    # 执行步骤
     check_dependencies
-    clean_generated
-    create_output_dirs
-    generate_go_java
-    generate_rust
-    verify_output
-    print_summary
     
-    log_success "所有代码生成完成!"
+    if [[ "$skip_clean" != true ]]; then
+        clean_generated
+    fi
+    
+    create_output_dirs
+    
+    if [[ "$skip_lint" != true ]]; then
+        lint_protos
+    fi
+    
+    generate_code
+    generate_rust_lib
+    
+    if [[ "$skip_verify" != true ]]; then
+        verify_all
+    fi
+    
+    # 可选: 编译测试
+    # test_rust_compile
+    # test_go_compile
+    
+    local end_time
+    end_time=$(date +%s)
+    local duration=$((end_time - start_time))
+    
     echo ""
+    log_success "All tasks completed in ${duration}s"
+    
+    print_integration_guide
 }
 
-# 执行
+# 执行主函数
 main "$@"

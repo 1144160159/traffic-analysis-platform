@@ -1,0 +1,56 @@
+apiVersion: v1
+data:
+  default.conf: |
+    server {
+        listen 8080;
+        server_name _;
+        location / {
+            proxy_pass http://streampark.streampark.svc:8080;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header Accept-Encoding "";
+            sub_filter_types text/html application/javascript text/javascript text/css;
+            # CSS url() asset paths (no quotes)
+            sub_filter 'url(/assets/' 'url(/streampark/assets/';
+            sub_filter_once off;
+            # Generic: catch ALL "/assets/ and "/_app references (JS strings, chunks, etc.)
+            sub_filter '"/assets/' '"/streampark/assets/';
+            sub_filter '"/_app' '"/streampark/_app';
+            # Relative asset paths (Vite preload deps: "assets/ -> "streampark/assets/)
+            sub_filter '"assets/' '"streampark/assets/';
+            # HTML attributes (belt-and-suspenders)
+            sub_filter 'src="/assets/'  'src="/streampark/assets/';
+            sub_filter 'href="/assets/'  'href="/streampark/assets/';
+            sub_filter 'href="/favicon'  'href="/streampark/favicon';
+            # JS config (_app.config.js)
+            sub_filter 'VITE_GLOB_API_URL":"' 'VITE_GLOB_API_URL":"/streampark';
+            sub_filter 'VITE_GLOB_UPLOAD_URL":"/upload"' 'VITE_GLOB_UPLOAD_URL":"/streampark/upload"';
+            # JS API paths - auth
+            sub_filter '"/login' '"/streampark/login';
+            sub_filter '"/passport/' '"/streampark/passport/';
+            sub_filter '"/getPermCode' '"/streampark/getPermCode';
+            sub_filter '"/signout' '"/streampark/signout';
+            # JS API paths - user/member management
+            sub_filter '"/user/' '"/streampark/user/';
+            sub_filter '"/member/' '"/streampark/member/';
+            sub_filter '"/menu/' '"/streampark/menu/';
+            # JS API paths - flink management
+            sub_filter '"/flink/' '"/streampark/flink/';
+            # JS page paths
+            sub_filter '"/setting' '"/streampark/setting';
+            sub_filter '"/error-log' '"/streampark/error-log';
+            sub_filter '"/exception' '"/streampark/exception';
+            sub_filter '"/upload' '"/streampark/upload';
+            sub_filter '"/redirect' '"/streampark/redirect';
+        }
+    }
+kind: ConfigMap
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","data":{"default.conf":"server {\n    listen 8080;\n    server_name _;\n    location / {\n        proxy_pass http://streampark.streampark.svc:8080;\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;\n        proxy_set_header Accept-Encoding \"\";\n        sub_filter_types text/html application/javascript text/javascript text/css;\n        # CSS url() asset paths (no quotes)\n        sub_filter 'url(/assets/' 'url(/streampark/assets/';\n        sub_filter_once off;\n        # Generic: catch ALL \"/assets/ and \"/_app references (JS strings, chunks, etc.)\n        sub_filter '\"/assets/' '\"/streampark/assets/';\n        sub_filter '\"/_app' '\"/streampark/_app';\n        # Relative asset paths (Vite preload deps: \"assets/ -\u003e \"streampark/assets/)\n        sub_filter '\"assets/' '\"streampark/assets/';\n        # HTML attributes (belt-and-suspenders)\n        sub_filter 'src=\"/assets/'  'src=\"/streampark/assets/';\n        sub_filter 'href=\"/assets/'  'href=\"/streampark/assets/';\n        sub_filter 'href=\"/favicon'  'href=\"/streampark/favicon';\n        # JS config (_app.config.js)\n        sub_filter 'VITE_GLOB_API_URL\":\"' 'VITE_GLOB_API_URL\":\"/streampark';\n        sub_filter 'VITE_GLOB_UPLOAD_URL\":\"/upload\"' 'VITE_GLOB_UPLOAD_URL\":\"/streampark/upload\"';\n        # JS API paths - auth\n        sub_filter '\"/login' '\"/streampark/login';\n        sub_filter '\"/passport/' '\"/streampark/passport/';\n        sub_filter '\"/getPermCode' '\"/streampark/getPermCode';\n        sub_filter '\"/signout' '\"/streampark/signout';\n        # JS API paths - user/member management\n        sub_filter '\"/user/' '\"/streampark/user/';\n        sub_filter '\"/member/' '\"/streampark/member/';\n        sub_filter '\"/menu/' '\"/streampark/menu/';\n        # JS API paths - flink management\n        sub_filter '\"/flink/' '\"/streampark/flink/';\n        # JS page paths\n        sub_filter '\"/setting' '\"/streampark/setting';\n        sub_filter '\"/error-log' '\"/streampark/error-log';\n        sub_filter '\"/exception' '\"/streampark/exception';\n        sub_filter '\"/upload' '\"/streampark/upload';\n        sub_filter '\"/redirect' '\"/streampark/redirect';\n    }\n}\n"},"kind":"ConfigMap","metadata":{"annotations":{},"creationTimestamp":"2026-06-12T02:34:29Z","name":"streampark-proxy-nginx","namespace":"streampark","resourceVersion":"1033263","uid":"ade591db-bc21-4600-b79a-67533fd2da1b"}}
+  creationTimestamp: "2026-06-12T02:34:29Z"
+  name: streampark-proxy-nginx
+  namespace: streampark
+  resourceVersion: "1033451"
+  uid: ade591db-bc21-4600-b79a-67533fd2da1b

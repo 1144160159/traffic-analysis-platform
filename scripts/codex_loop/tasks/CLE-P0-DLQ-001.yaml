@@ -1,0 +1,72 @@
+id: CLE-P0-DLQ-001
+title: DLQ replay API、审批、审计、幂等验证
+priority: P0
+status: DISCOVERED
+lane:
+  primary: Storage / Data Quality
+  dependent:
+    - Go Control-plane
+    - Proto / Kafka / Flink
+    - Mission / Acceptance
+source:
+  - "doc/05_status/代码实证状态核对-2026-06-19.md#3"
+  - "doc/03_review/专家深评整改清单.md#QA-05"
+acceptance_type: regression
+subsystems:
+  - go/control-plane
+  - java/flink-jobs
+  - proto
+  - common
+risk:
+  level: high
+  reasons:
+    - touches replay and data correctness
+execution:
+  mode: plan
+  allow_live_write: false
+workspace:
+  allowed_paths:
+    - go/control-plane/
+    - java/flink-jobs/
+    - proto/traffic/v1/
+    - common/
+    - doc/02_acceptance/
+contracts:
+  proto: true
+  kafka_topics: true
+  database_schema: true
+  apisix_routes: false
+data_plan:
+  mode: live_existing
+  tenant: default
+  cleanup: none
+verification:
+  local:
+    - tests/run_tests.sh go
+    - tests/run_tests.sh java
+    - tests/run_tests.sh proto
+  live_readonly:
+    - "curl --noproxy '*' http://10.0.5.8:30180/login"
+review:
+  required: true
+  perspectives:
+    - code_correctness
+    - product_logic
+    - technical_design
+    - acceptance_evidence
+  design_update_allowed:
+    - doc/01_design/
+    - doc/02_acceptance/
+    - doc/05_status/
+evidence:
+  run_dir: "doc/02_acceptance/runs/${run_id}"
+  required:
+    - run-summary.json
+    - plan.md
+    - local-report.md
+    - review-report.md
+    - evidence-report.md
+close_when:
+  - bad message injection path exists
+  - "manual repair, approval, replay and audit are represented"
+  - idempotency key and duplicate-write evidence are recorded

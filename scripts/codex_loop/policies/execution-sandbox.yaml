@@ -1,0 +1,40 @@
+version: 1
+default_driver: kubernetes-job
+allow_execute_env: CODEX_LOOP_ALLOW_SANDBOX_EXECUTION
+default_timeout_seconds: 1800
+allowed_drivers:
+  - kubernetes-job
+  - local-container
+allowed_stages:
+  - prepare
+  - dry-run
+default_namespace: traffic-analysis
+default_image: docker.io/traffic-analysis/codex-loop@sha256:8c5b02614836432992780e6a8e7550d73fbffabd13f834150f960f8f374a4ee7
+repo_mount_path: /workspace
+allow_live_write: false
+allow_external_codex: false
+allow_network: false
+automount_service_account_token: false
+read_only_root_filesystem: true
+allow_privilege_escalation: false
+run_as_non_root: true
+run_as_user: 1000
+run_as_group: 1000
+fs_group: 1000
+seccomp_profile: RuntimeDefault
+drop_capabilities:
+  - ALL
+cpu_request: 250m
+memory_request: 256Mi
+cpu_limit: "1"
+memory_limit: 1Gi
+active_deadline_seconds: 1800
+ttl_seconds_after_finished: 86400
+local_container_runtime: docker
+local_network: none
+required_outputs:
+  - sandbox/sandbox-plan.json
+  - sandbox/sandbox-report.md
+  - sandbox/codex-loop-sandbox-job.yaml
+  - sandbox/codex-loop-sandbox-networkpolicy.yaml
+  - sandbox/local-container-command.txt

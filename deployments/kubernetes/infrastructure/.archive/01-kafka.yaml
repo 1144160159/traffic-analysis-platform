@@ -1,0 +1,136 @@
+---
+# Kafka KRaft StatefulSet — 3 Broker 集群
+# 客户端入口: kafka-bootstrap.middleware.svc:9092 (LoadBalancer 10.0.5.213)
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-bootstrap
+  namespace: middleware
+  labels:
+    app: kafka
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 10.0.5.213
+  ports:
+  - name: kafka
+    port: 9092
+    targetPort: 9092
+  - name: kafka-external
+    port: 9094
+    targetPort: 9094
+  selector:
+    app: kafka
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-headless
+  namespace: middleware
+spec:
+  clusterIP: None
+  ports:
+  - name: kafka
+    port: 9092
+  - name: controller
+    port: 9093
+  selector:
+    app: kafka
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: kafka-pdb
+  namespace: middleware
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: kafka
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kafka
+  namespace: middleware
+spec:
+  serviceName: kafka-headless
+  replicas: 3
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels:
+      app: kafka
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector: {matchLabels: {app: kafka}}
+            topologyKey: kubernetes.io/hostname
+      containers:
+      - name: kafka
+        image: bitnami/kafka:3.7
+        env:
+        - name: KAFKA_CFG_NODE_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: KAFKA_CFG_PROCESS_ROLES
+          value: "broker,controller"
+        - name: KAFKA_CFG_CONTROLLER_QUORUM_VOTERS
+          value: "1@kafka-0.kafka-headless.middleware.svc:9093,2@kafka-1.kafka-headless.middleware.svc:9093,3@kafka-2.kafka-headless.middleware.svc:9093"
+        - name: KAFKA_CFG_LISTENERS
+          value: "PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094"
+        - name: KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP
+          value: "PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT"
+        - name: KAFKA_CFG_ADVERTISED_LISTENERS
+          value: "PLAINTEXT://$(MY_POD_NAME).kafka-headless.middleware.svc:9092,EXTERNAL://10.0.5.213:9092"
+        - name: KAFKA_CFG_CONTROLLER_LISTENER_NAMES
+          value: "CONTROLLER"
+        - name: KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR
+          value: "3"
+        - name: KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR
+          value: "3"
+        - name: KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR
+          value: "2"
+        - name: KAFKA_CFG_LOG_RETENTION_HOURS
+          value: "24"
+        - name: KAFKA_CFG_LOG_RETENTION_BYTES
+          value: "107374182400"
+        - name: MY_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        ports:
+        - containerPort: 9092
+          name: kafka
+        - containerPort: 9093
+          name: controller
+        - containerPort: 9094
+          name: kafka-external
+        resources:
+          requests: {cpu: "2", memory: "4Gi"}
+          limits:   {cpu: "4", memory: "8Gi"}
+        livenessProbe:
+          tcpSocket: {port: 9092}
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          tcpSocket: {port: 9092}
+          initialDelaySeconds: 20
+          periodSeconds: 5
+        volumeMounts:
+        - name: kafka-data
+          mountPath: /bitnami/kafka
+  volumeClaimTemplates:
+  - metadata:
+      name: kafka-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: local-hdd
+      resources:
+        requests:
+          storage: 500Gi

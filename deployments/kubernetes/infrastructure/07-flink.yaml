@@ -1,0 +1,423 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: flink-jobmanager
+  namespace: flink
+spec:
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+  podManagementPolicy: OrderedReady
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: flink
+      component: jobmanager
+  serviceName: flink-jobmanager
+  template:
+    metadata:
+      labels:
+        app: flink
+        component: jobmanager
+    spec:
+      containers:
+      - args:
+        - jobmanager
+        env:
+        - name: ENABLE_BUILT_IN_PLUGINS
+          value: flink-s3-fs-presto-1.18.1.jar
+        - name: CLICKHOUSE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: CLICKHOUSE_PASSWORD
+              optional: true
+        - name: MINIO_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: MINIO_ACCESS_KEY
+        - name: MINIO_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: MINIO_SECRET_KEY
+        - name: KAFKA_SECURITY_PROTOCOL
+          value: SASL_SSL
+        - name: KAFKA_SASL_MECHANISM
+          value: SCRAM-SHA-512
+        - name: KAFKA_SASL_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: KAFKA_CLIENT_USERNAME
+        - name: KAFKA_SASL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: KAFKA_CLIENT_PASSWORD
+        - name: KAFKA_SSL_TRUSTSTORE_LOCATION
+          value: /etc/kafka/tls/kafka.truststore.p12
+        - name: KAFKA_SSL_TRUSTSTORE_TYPE
+          value: PKCS12
+        - name: KAFKA_SSL_TRUSTSTORE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: KAFKA_TLS_TRUSTSTORE_PASSWORD
+        - name: FLINK_PROPERTIES
+          value: 'jobmanager.rpc.address: flink-jobmanager.flink.svc
+
+            jobmanager.memory.process.size: 4g
+
+            taskmanager.memory.process.size: 8g
+
+            taskmanager.memory.jvm-metaspace.size: 1024m
+
+            taskmanager.numberOfTaskSlots: 32
+
+            parallelism.default: 32
+
+            state.backend: rocksdb
+
+            state.checkpoints.dir: s3://flink-checkpoints/checkpoints/flink-traffic
+
+            state.savepoints.dir: s3://flink-checkpoints/savepoints/flink-traffic
+
+            state.backend.rocksdb.localdir: /home/k8s-data/flink/rocksdb
+
+            s3.endpoint: http://minio.minio.svc:9000
+
+            s3.path.style.access: true
+
+            s3.access-key: $(MINIO_ACCESS_KEY)
+
+            s3.secret-key: $(MINIO_SECRET_KEY)
+
+            fs.allowed-fallback-filesystems: s3
+
+            high-availability.type: kubernetes
+
+            high-availability.cluster-id: flink-traffic
+
+            high-availability.storageDir: file:///home/k8s-data/flink/ha
+
+            job-result-store.storage-path: file:///home/k8s-data/flink/job-result-store
+
+            kubernetes.cluster-id: flink-traffic
+
+            kubernetes.namespace: flink
+
+            kubernetes.jobmanager.service-account: flink
+
+            restart-strategy: fixed-delay
+
+            restart-strategy.fixed-delay.attempts: 10
+
+            restart-strategy.fixed-delay.delay: 10s'
+        image: docker.io/library/flink@sha256:f0e9ffd07f3d43291dfaf7e0609eb2871462193275d452affbe5fac091017ae3
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - mountPath: /home/k8s-data
+          name: flink-local
+        - mountPath: /etc/kafka/tls
+          name: kafka-client-tls
+          readOnly: true
+        livenessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 60
+          periodSeconds: 20
+          successThreshold: 1
+          tcpSocket:
+            port: 6123
+          timeoutSeconds: 1
+        name: jobmanager
+        ports:
+        - containerPort: 6123
+          protocol: TCP
+        - containerPort: 6124
+          protocol: TCP
+        - containerPort: 8081
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /overview
+            port: 8081
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: '8'
+            memory: 16Gi
+          requests:
+            cpu: '2'
+            memory: 6Gi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: flink
+      serviceAccountName: flink
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+      volumes:
+      - hostPath:
+          path: /home/k8s-data
+          type: DirectoryOrCreate
+        name: flink-local
+      - name: kafka-client-tls
+        secret:
+          secretName: kafka-client-tls
+          optional: false
+  updateStrategy:
+    rollingUpdate:
+      partition: 0
+    type: RollingUpdate
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: flink-taskmanager
+  namespace: flink
+spec:
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+  podManagementPolicy: OrderedReady
+  replicas: 2
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: flink
+      component: taskmanager
+  serviceName: flink-taskmanager
+  template:
+    metadata:
+      labels:
+        app: flink
+        component: taskmanager
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: flink
+                component: taskmanager
+            topologyKey: kubernetes.io/hostname
+      containers:
+      - args:
+        - taskmanager
+        env:
+        - name: ENABLE_BUILT_IN_PLUGINS
+          value: flink-s3-fs-presto-1.18.1.jar
+        - name: CLICKHOUSE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: CLICKHOUSE_PASSWORD
+              optional: true
+        - name: MINIO_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: MINIO_ACCESS_KEY
+        - name: MINIO_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: MINIO_SECRET_KEY
+        - name: KAFKA_SECURITY_PROTOCOL
+          value: SASL_SSL
+        - name: KAFKA_SASL_MECHANISM
+          value: SCRAM-SHA-512
+        - name: KAFKA_SASL_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: KAFKA_CLIENT_USERNAME
+        - name: KAFKA_SASL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: KAFKA_CLIENT_PASSWORD
+        - name: KAFKA_SSL_TRUSTSTORE_LOCATION
+          value: /etc/kafka/tls/kafka.truststore.p12
+        - name: KAFKA_SSL_TRUSTSTORE_TYPE
+          value: PKCS12
+        - name: KAFKA_SSL_TRUSTSTORE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: KAFKA_TLS_TRUSTSTORE_PASSWORD
+        - name: FLINK_PROPERTIES
+          value: 'jobmanager.rpc.address: flink-jobmanager.flink.svc
+
+            jobmanager.memory.process.size: 1600m
+
+            taskmanager.memory.process.size: 8g
+
+            taskmanager.memory.jvm-metaspace.size: 1024m
+
+            taskmanager.numberOfTaskSlots: 32
+
+            parallelism.default: 1
+
+            state.backend: rocksdb
+
+            state.checkpoints.dir: s3://flink-checkpoints/checkpoints/flink-traffic
+
+            state.savepoints.dir: s3://flink-checkpoints/savepoints/flink-traffic
+
+            state.backend.rocksdb.localdir: /home/k8s-data/flink/rocksdb
+
+            s3.endpoint: http://minio.minio.svc:9000
+
+            s3.path.style.access: true
+
+            s3.access-key: $(MINIO_ACCESS_KEY)
+
+            s3.secret-key: $(MINIO_SECRET_KEY)
+
+            high-availability.type: kubernetes
+
+            high-availability.cluster-id: flink-traffic
+
+            high-availability.storageDir: file:///home/k8s-data/flink/ha
+
+            job-result-store.storage-path: file:///home/k8s-data/flink/job-result-store
+
+            kubernetes.cluster-id: flink-traffic
+
+            kubernetes.namespace: flink'
+        image: docker.io/library/flink@sha256:f0e9ffd07f3d43291dfaf7e0609eb2871462193275d452affbe5fac091017ae3
+        imagePullPolicy: IfNotPresent
+        name: taskmanager
+        ports:
+        - containerPort: 6122
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /home/k8s-data
+          name: flink-local
+        - mountPath: /etc/kafka/tls
+          name: kafka-client-tls
+          readOnly: true
+        resources:
+          limits:
+            cpu: '16'
+            memory: 32Gi
+          requests:
+            cpu: '4'
+            memory: 10Gi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: flink
+      serviceAccountName: flink
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+      volumes:
+      - hostPath:
+          path: /home/k8s-data
+          type: DirectoryOrCreate
+        name: flink-local
+      - name: kafka-client-tls
+        secret:
+          secretName: kafka-client-tls
+          optional: false
+  updateStrategy:
+    rollingUpdate:
+      partition: 0
+    type: RollingUpdate
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flink-jobmanager
+  namespace: flink
+spec:
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - name: rpc
+    port: 6123
+    protocol: TCP
+    targetPort: 6123
+  - name: blob
+    port: 6124
+    protocol: TCP
+    targetPort: 6124
+  - name: ui
+    port: 8081
+    protocol: TCP
+    targetPort: 8081
+  selector:
+    app: flink
+    component: jobmanager
+  sessionAffinity: None
+  type: ClusterIP
+
+---
+apiVersion: v1
+data:
+  active.timeout.ms: '1800000'
+  checkpoint.interval.ms: '30000'
+  checkpoint.path: s3://flink-checkpoints/checkpoints/flink-traffic
+  checkpoint.timeout.ms: '600000'
+  clickhouse.batch.interval.ms: '2000'
+  clickhouse.batch.size: '5000'
+  clickhouse.cluster.mode: 'true'
+  clickhouse.connection.timeout: '30000'
+  clickhouse.database: traffic
+  clickhouse.host: clickhouse-1.middleware.svc
+  clickhouse.hosts: clickhouse-1.middleware.svc:8123,clickhouse-2.middleware.svc:8123
+  clickhouse.jdbc.url: jdbc:clickhouse://clickhouse-1.middleware.svc:8123,clickhouse-2.middleware.svc:8123/traffic
+  clickhouse.password: ''
+  clickhouse.port: '8123'
+  clickhouse.socket.timeout: '300000'
+  clickhouse.user: default
+  kafka.brokers: kafka-bootstrap.middleware.svc:9092
+  kafka.security.protocol: SASL_SSL
+  kafka.sasl.mechanism: SCRAM-SHA-512
+  kafka.ssl.truststore.location: /etc/kafka/tls/kafka.truststore.p12
+  kafka.ssl.truststore.type: PKCS12
+  max.parallelism: '128'
+  opensearch.enabled: 'false'
+  opensearch.hosts: opensearch.middleware.svc:9200
+  opensearch.index: sessions_v1
+  opensearch.password: ${OPENSEARCH_ADMIN_PASSWORD}
+  opensearch.port: '9200'
+  opensearch.user: admin
+  parallelism: '4'
+  s3.access.key: ${MINIO_ACCESS_KEY}
+  s3.bucket.checkpoints: flink-checkpoints
+  s3.endpoint: http://minio.minio.svc:9000
+  s3.secret.key: ${MINIO_SECRET_KEY}
+  flow.raw.clickhouse.table: flows_raw
+  flow.raw.sink.enabled: 'true'
+  session.gap.ms: '5000'
+  state.ttl.enabled: 'true'
+  state.ttl.ms: '1800000'
+  watermark.delay.ms: '5000'
+kind: ConfigMap
+metadata:
+  name: flink-job-config
+  namespace: flink

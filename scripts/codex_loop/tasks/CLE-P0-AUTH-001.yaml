@@ -1,0 +1,66 @@
+id: CLE-P0-AUTH-001
+title: 启动 /auth/me 鉴权和 WebSocket 延迟连接
+priority: P0
+status: DISCOVERED
+lane:
+  primary: UI Rebuild
+  dependent:
+    - Go Control-plane
+source:
+  - "doc/03_review/专家深评整改清单.md#SUB-FS-02"
+  - "doc/03_review/专家深评整改清单.md#SUB-UI-01"
+acceptance_type: regression
+subsystems:
+  - web/ui
+  - go/control-plane/internal/auth
+risk:
+  level: high
+  reasons:
+    - touches authentication and session timing
+execution:
+  mode: local
+  allow_live_write: false
+workspace:
+  allowed_paths:
+    - web/ui/src/
+    - web/ui/e2e/
+    - go/control-plane/internal/auth/
+    - doc/02_acceptance/
+contracts:
+  proto: false
+  kafka_topics: false
+  database_schema: false
+  apisix_routes: false
+data_plan:
+  mode: live_existing
+  tenant: default
+  cleanup: none
+verification:
+  local:
+    - tests/run_tests.sh web
+    - tests/run_tests.sh go
+  live_readonly:
+    - "curl --noproxy '*' http://10.0.5.8:30180/login"
+review:
+  required: true
+  perspectives:
+    - code_correctness
+    - product_logic
+    - technical_design
+    - acceptance_evidence
+  design_update_allowed:
+    - doc/01_design/
+    - doc/02_acceptance/
+    - doc/05_status/
+evidence:
+  run_dir: "doc/02_acceptance/runs/${run_id}"
+  required:
+    - run-summary.json
+    - plan.md
+    - local-report.md
+    - review-report.md
+    - evidence-report.md
+close_when:
+  - fake or expired token cannot enter protected shell
+  - WebSocket connects only after authorized route is active
+  - auth negative cases are recorded as expected negatives
