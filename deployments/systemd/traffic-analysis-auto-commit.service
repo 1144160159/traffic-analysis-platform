@@ -1,0 +1,19 @@
+[Unit]
+Description=Traffic Analysis Platform automatic git commit
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/wangwt/phase_2/code/traffic-analysis-platform
+Environment=PROJECT_DIR=/home/wangwt/phase_2/code/traffic-analysis-platform
+Environment=BRANCH=main
+Environment=REMOTE=origin
+Environment=REMOTE_BRANCH=main
+Environment=STABLE_SECONDS=300
+Environment=AUTO_PUSH=1
+ExecStart=/home/wangwt/phase_2/code/traffic-analysis-platform/scripts/git_auto_commit.sh --run
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+
