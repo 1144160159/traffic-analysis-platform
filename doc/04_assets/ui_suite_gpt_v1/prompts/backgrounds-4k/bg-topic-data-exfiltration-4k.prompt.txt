@@ -1,0 +1,17 @@
+Generate a 3840x2160 PNG static 4K background asset for traffic-analysis-platform.
+
+Use case: productivity-visual.
+Asset type: data exfiltration security topic background.
+
+Scene:
+- A dark enterprise network where sensitive data particles leave an internal zone through abnormal egress streams toward external storage-like silhouettes.
+- Include DLP-like inspection gates, packet shards, file-fragment trails, throttled channels, anomaly heat, and containment boundaries.
+- The visual should be analytical and operational, not dramatic or destructive.
+
+Style:
+- Deep navy/black base, cyan internal flows, amber suspicious exfil paths, sparse red critical breach highlights, green containment signals.
+- High-detail 4K technical visualization with room for overlay panels.
+
+Constraints:
+- No readable filenames, personal data, credentials, real IP addresses, logos, browser chrome, people, full UI screenshot, or literal stolen-document imagery.
+

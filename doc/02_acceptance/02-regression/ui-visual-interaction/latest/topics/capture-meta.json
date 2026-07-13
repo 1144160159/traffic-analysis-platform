@@ -1,0 +1,192 @@
+{
+  "status": "pass",
+  "acceptance_eligible": false,
+  "reason": "Windows Chrome CDP evidence. Formal legacy gate expects Desktop Chrome extension receiver metadata and pixel diff; this capture proves real Windows Chrome rendering, route, runtime events, viewport, and layout metrics.",
+  "backend": "windows-chrome-cdp",
+  "target_id": "topics",
+  "route_id": "topics",
+  "route": "/topics",
+  "resolved_path": "/topics",
+  "source_image": null,
+  "final_url": "http://10.0.5.8:30180/topics?fullRouteEvidenceTs=1783072716378",
+  "final_path": "/topics",
+  "protected_route": true,
+  "smoke_hash_consumed": true,
+  "uploaded_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "stored_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "expected_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "desktop_viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "post_capture_resize": false,
+  "no_4xx_5xx": true,
+  "no_requestfailed": true,
+  "no_console_error": true,
+  "no_pageerror": true,
+  "errors": {
+    "requestfailed": [],
+    "badResponses": [],
+    "console": [],
+    "pageerror": []
+  },
+  "screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics/actual-1920.png",
+  "mirror_screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/evidence/windows-chrome-cdp-20260703-full-route-desktop-r6/topics-1920x1080.png",
+  "metrics": {
+    "title": "园区网络全流量采集与分析系统",
+    "location": "http://10.0.5.8:30180/topics?fullRouteEvidenceTs=1783072716378",
+    "viewport": {
+      "width": 1920,
+      "height": 1080,
+      "dpr": 1.0000000298023224
+    },
+    "scroll": {
+      "horizontalOverflow": 0,
+      "verticalOverflow": 0,
+      "bodyScrollWidth": 1920,
+      "bodyClientWidth": 1920,
+      "bodyScrollHeight": 1080,
+      "bodyClientHeight": 1080
+    },
+    "headings": [
+      "专题面板",
+      "加密隧道局部影响面",
+      "隧道信号雷达",
+      "隧道研判路径",
+      "加密隧道线索",
+      "专题闭环建议",
+      "证据门禁",
+      "报告预览",
+      "跨域下钻"
+    ],
+    "buttons": [
+      "移动端导航",
+      "PCAP检索",
+      "资产检索",
+      "规则检索",
+      "脚本中心",
+      "帮助中心",
+      "更多应用",
+      "Ccodex-ui-desktop-admin系统管理员在线",
+      "加密隧道专题",
+      "数据外传专题",
+      "APT 战役专题",
+      "保存视图",
+      "范围编辑",
+      "报告导出",
+      "证据包导出",
+      "订阅配置",
+      "分享收藏",
+      "协议族识别TLS / QUIC / VPN",
+      "高危用户风险 Top 20",
+      "指纹证据JA3 / JA3S",
+      "协议族识别TLS / QUIC / VPN按协议、SNI、ALPN 和指纹聚合",
+      "高危用户风险 Top 20源资产会话数、总流量、最近命中",
+      "指纹证据JA3 / JA3S与加密流量页共享指纹证据"
+    ],
+    "visibleText": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-03 17:58:37 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 仪表盘 态势大屏 专题面板 采集监测 威胁分析 资产图谱 检测运营 审计配置 C codex-ui-desktop-admin 系统管理员 在线 综合态势 / 专题面板 / 加密隧道 专题面板 加密隧道专题：围绕 TLS、QUIC、VPN、DoH 和未知加密通道组织隧道专题研判。 加密隧道专题 数据外传专题 APT 战役专题 高危会话 未知 SNI DoH 长连接 近 24 小时 保存视图 范围编辑 报告导出 证据包导出 订阅配置 分享收藏 专题ID： tunnel-20260620-01 站点： 主园区 资产组： 办公终端 / 服务群组 IP 段： 10.12.0.0/16 协议： SSH / TLS / HTTPS / RDP / SOCKS 时间窗： 近 7 天 (2026-06-13 00:00:00 ~ 2026-06-20 03:45:00) 规则： 加密隧道识别规则集 v2.1 模型： 加密隧道识别模型 v1.3 活跃隧道会话 0 真实 API 隧道协议 0 protocols 高危用户 0 users 总流量 0 B total_bytes 异常长连接 1 推导 证据完整度 0.0% PCAP/Session 加密隧道局部影响面 布局：径向 主机/资产 探针 隧道协议 代理/跳板 外部端点 告警 Probe-01 10.12.1.11 在线采集 Probe-02 10.12.1.12 在线采集 10.12.8.45 高风险隧道源 10.12.6.78 高风险隧道源 10.12.9.33 高风险隧道源 SSH 隧道 203 会话 SSH / TLS / HTTPS / RDP / SOCKS TLS 隧道 165.1M 会话 SSH / TLS / HTTPS / RDP / SOCKS HTTPS 隧道 104.3M 会话 SSH / TLS / HTTPS / RDP / SOCKS SOCKS 隧道 6.2M 会话 SSH / TLS / HTTPS / RDP / SOCKS 美国 45 节点 外部端点 新加坡 28 节点 外部端点 香港 79 节点 外部端点 德国 12 节点 外部端点 协议族识别 TLS / QUIC / VPN 高危用户 风险 Top 20 指纹证据 JA3 / JA3S 隧道信号雷达 /v1/topics/tunnel 协议族识别 TLS / QUIC / VPN 高危用户 风险 Top 2",
+    "elements": {
+      "pageHero": {
+        "selector": ".taf-page-hero",
+        "visible": false
+      },
+      "panelHeader": {
+        "selector": ".taf-panel__header",
+        "visible": true,
+        "text": "加密隧道局部影响面布局：径向",
+        "x": 183,
+        "y": 372,
+        "right": 906,
+        "bottom": 402,
+        "w": 723,
+        "h": 30,
+        "display": "flex",
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      "table": {
+        "selector": ".ant-table, .taf-table, table",
+        "visible": true,
+        "text": "会话摘要协议族源资产目标对象指纹/特征持续时间流量风险等级处置会话摘要协议族源资产目标对象指纹/特征持续时间流量风险等级处置暂无数据暂无数据",
+        "x": 190,
+        "y": 774,
+        "right": 1522,
+        "bottom": 952,
+        "w": 1331,
+        "h": 178,
+        "display": "block",
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      "topicTitlebar": {
+        "selector": ".taf-topic-titlebar",
+        "visible": true,
+        "text": "综合态势 / 专题面板 / 加密隧道专题面板加密隧道专题：围绕 TLS、QUIC、VPN、DoH 和未知加密通道组织隧道专题研判。加密隧道专题数据外传专题APT 战役专题高危会话未知 SNIDoH长连接近 24 小时保存视图范围编辑报告导出证据包导出订阅配置分享收藏",
+        "x": 183,
+        "y": 95,
+        "right": 1901,
+        "bottom": 208,
+        "w": 1719,
+        "h": 113,
+        "display": "grid",
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      "topicFacts": {
+        "selector": ".taf-topic-facts",
+        "visible": true,
+        "text": "专题ID：tunnel-20260620-01站点：主园区资产组：办公终端 / 服务群组IP 段：10.12.0.0/16协议：SSH / TLS / HTTPS / RDP / SOCKS时间窗：近 7 天 (2026-06-13 00:00:00 ~ 2026-06-20 03:45:00)规则：加密隧道识别规则集 v2.1模型：加密隧道识别模型 v1.3",
+        "x": 183,
+        "y": 214,
+        "right": 1901,
+        "bottom": 280,
+        "w": 1719,
+        "h": 66,
+        "display": "grid",
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      "topicKpis": {
+        "selector": ".taf-topic-kpis",
+        "visible": true,
+        "text": "活跃隧道会话0真实 API隧道协议0protocols高危用户0users总流量0 Btotal_bytes异常长连接1推导证据完整度0.0%PCAP/Session",
+        "x": 183,
+        "y": 286,
+        "right": 1901,
+        "bottom": 366,
+        "w": 1719,
+        "h": 80,
+        "display": "grid",
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      "topicGrid": {
+        "selector": ".taf-topic-grid",
+        "visible": true,
+        "text": "加密隧道局部影响面布局：径向主机/资产探针隧道协议代理/跳板外部端点告警Probe-01 10.12.1.11在线采集Probe-02 10.12.1.12在线采集10.12.8.45高风险隧道源10.12.6.78高风险隧道源10.12.9.33高风险隧道源SSH 隧道 203 会话SSH / TLS / HTTPS / RDP / SOCKSTLS 隧道 165.1M 会话SSH / TLS / HTTPS / RDP / SOCKSHTTPS 隧道 104.3M 会话S",
+        "x": 183,
+        "y": 372,
+        "right": 1901,
+        "bottom": 982,
+        "w": 1719,
+        "h": 611,
+        "display": "grid",
+        "overflowX": "hidden",
+        "overflowY": "hidden"
+      }
+    },
+    "overlapChecks": {
+      "topicTitlebarFacts": false,
+      "topicKpisGrid": false
+    }
+  }
+}

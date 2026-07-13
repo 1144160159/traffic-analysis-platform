@@ -1,0 +1,102 @@
+{
+  "title": "园区网络全流量采集与分析系统",
+  "location": "http://10.0.5.8:30180/models?fullRouteEvidenceTs=1783072674717",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "dpr": 1.0000000298023224
+  },
+  "scroll": {
+    "horizontalOverflow": 0,
+    "verticalOverflow": 0,
+    "bodyScrollWidth": 1920,
+    "bodyClientWidth": 1920,
+    "bodyScrollHeight": 1080,
+    "bodyClientHeight": 1080
+  },
+  "headings": [
+    "模型管理",
+    "模型列表（共 5/5）",
+    "模型指标（behavior-classifier v1.8.0）",
+    "解释与特征",
+    "Champion / Challenger 状态机",
+    "数据集与样本",
+    "激活与回滚"
+  ],
+  "buttons": [
+    "移动端导航",
+    "PCAP检索",
+    "资产检索",
+    "规则检索",
+    "脚本中心",
+    "帮助中心",
+    "更多应用",
+    "Ccodex-ui-desktop-admin系统管理员在线",
+    "导入模型",
+    "追加反馈样本",
+    "发起重训",
+    "激活候选",
+    "回滚线上版本",
+    "进入 MLOps 编排",
+    "模型详情",
+    "1",
+    "2",
+    "3",
+    "重要特征",
+    "规则贡献",
+    "异常解释",
+    "样本示例"
+  ],
+  "visibleText": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-03 17:57:55 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 采集监测 威胁分析 资产图谱 检测运营 规则管理 部署管理 模型管理 MLOps 编排 SOAR 剧本 白名单 审计配置 C codex-ui-desktop-admin 系统管理员 在线 检测运营 / 模型管理 模型管理 导入模型 追加反馈样本 发起重训 激活候选 回滚线上版本 进入 MLOps 编排 模型详情 线上模型数 5 个 真实 API 候选模型数 0 个 真实 API 漂移告警 0 个 真实 API 待重训模型 0 个 真实 API 平均 F1 0.947 真实 API 误报率变化 -6.2% 真实 API 模型列表（共 5/5） 全部类型 全部状态 模型名 类型 版本 状态 线上版本 训练时间 负责人 操作 behavior-classifier xgboost v1.8.0 线上 v1.8.0 2026-06-17 08:12 安全运营组 scan xgboost v2.7.0 线上 v2.2.0 2026-06-17 04:34 安全运营组 behavior-xgboost-v1 gbdt v3.6.0 线上 v3.6.0 2026-06-17 04:16 安全运营组 business-rule-v1 rules v4.5.0 线上 v4.5.0 2026-06-17 04:16 安全运营组 vpn-detector-v1 onnx v5.4.0 线上 v2.2.0 2026-06-17 04:16 安全运营组 1 2 3 10 条/页 共 28 条 模型指标（behavior-classifier v1.8.0） 准确率 0.971 +0.018 召回率 0.925 +0.011 F1 0.948 +0.012 AUC 0.982 +0.009 误报率 0.82% -0.15% 漂移 (PSI) 0.12 正常 置信区间 (F1) [0.942,0.953] 稳定 当前 基线 阈值上限 阈值下限 解释与特征 重要特征 规则贡献 异常解释 样本示例 异常登录聚合点 0.182 登录时段异常 0.146 命令执行异常 0.121 端口连接数量 0.093 敏感文件访问 0.071 数据流量大小 0.064 时间 源 IP 话题 得分 06-19 21:33 10.12.2.45 异常登录 0.96 06-19 21:28 10.12.3.78 提权前置 0.93 06-19 21:19 172.16.5.23 Power",
+  "elements": {
+    "pageHero": {
+      "selector": ".taf-page-hero",
+      "visible": false
+    },
+    "panelHeader": {
+      "selector": ".taf-panel__header",
+      "visible": true,
+      "text": "模型列表（共 5/5）",
+      "x": 183,
+      "y": 256,
+      "right": 1246,
+      "bottom": 288,
+      "w": 1063,
+      "h": 32,
+      "display": "flex",
+      "overflowX": "visible",
+      "overflowY": "visible"
+    },
+    "table": {
+      "selector": ".ant-table, .taf-table, table",
+      "visible": true,
+      "text": "模型名类型版本状态线上版本训练时间负责人操作behavior-classifierxgboostv1.8.0线上v1.8.02026-06-17 08:12安全运营组scanxgboostv2.7.0线上v2.2.02026-06-17 04:34安全运营组behavior-xgboost-v1gbdtv3.6.0线上v3.6.02026-06-17 04:16安全运营组business-rule-v1rulesv4.5.0线上v4.5.02026-06-17 04:16安全",
+      "x": 191,
+      "y": 332,
+      "right": 1238,
+      "bottom": 564,
+      "w": 1047,
+      "h": 232,
+      "display": "block",
+      "overflowX": "visible",
+      "overflowY": "visible"
+    },
+    "topicTitlebar": {
+      "selector": ".taf-topic-titlebar",
+      "visible": false
+    },
+    "topicFacts": {
+      "selector": ".taf-topic-facts",
+      "visible": false
+    },
+    "topicKpis": {
+      "selector": ".taf-topic-kpis",
+      "visible": false
+    },
+    "topicGrid": {
+      "selector": ".taf-topic-grid",
+      "visible": false
+    }
+  },
+  "overlapChecks": {}
+}

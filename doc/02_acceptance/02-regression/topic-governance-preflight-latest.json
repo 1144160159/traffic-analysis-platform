@@ -1,0 +1,439 @@
+{
+  "run_id": "20260630-topic-governance-preflight-r2",
+  "result": "pass",
+  "apisix": "http://10.0.5.8:30180",
+  "tenant": "default",
+  "other_tenant": "tenant-b",
+  "view_id": "105e481b-bd4c-4137-81c6-9dec6f6cba62",
+  "subscription_id": "e688a990-3053-455e-9c0a-e21c1851c30a",
+  "report_export_id": "3b62dfcb-c762-4f6e-a7ea-dd82c92e5f15",
+  "evidence_export_id": "8329fdf4-bc6d-43bc-8aea-655ab8460c4f",
+  "report": "doc/02_acceptance/runs/20260630-topic-governance-preflight-r2/live-topic-governance-preflight-20260630-topic-governance-preflight-r2.ndjson",
+  "local_report": "doc/02_acceptance/runs/20260630-topic-governance-preflight-r2/local-report.md",
+  "total": 42,
+  "passed": 42,
+  "blockers": 0,
+  "warnings": 0,
+  "checks": [
+    {
+      "ts": "2026-06-30T12:33:02+08:00",
+      "phase": "contract",
+      "name": "frontend topic governance contract present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "topic actions, exports, and snapshot adapter declared",
+      "artifact": "web/ui/src/services/pageApiPlans.ts"
+    },
+    {
+      "ts": "2026-06-30T12:33:02+08:00",
+      "phase": "api",
+      "name": "topic tunnel page readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"protocols\":[{\"protocol\":\"DNS\",\"count\":7415,\"total_bytes\":2643397},{\"protocol\":\"TLS\",\"count\":1741,\"total_bytes\":170216651},{\"protocol\":\"SSH\",\"count\":354,\"total_bytes\":5455758909},{\"protocol\":\"QUIC\",\"count\":74,\"total_bytes\":568480}],\"summary\":{\"active_users\":12,\"high_risk_users\":5,\"protocol_count\":4,\"session_count\":9584,\"total_bytes\":5629187437},\"time_range\":{\"end\":1782793982444,\"start\":1782707582444},\"topic\":\"tunnel\",\"updated_at\":1782793982564,\"users\":[{\"ip\":\"10.0.5.8\",\"count\":7415,\"protocol\":\"DNS\",\"risk\":\"high\",\"total_bytes\":2643397,\"last_seen\":1782757314420},{\"ip\":\"10.0.5.8\",\"count\":1317,\"protocol\":\"TLS\",\"risk\":\"high\",\"total_bytes\":4679932,\"last_seen\":1782755886217},{\"ip\":\"10.0.5.9\",\"count\":269,\"protocol\":\"TLS\",\"risk\":\"high\",\"total_bytes\":1536322,\"last_seen\":1782751197241},{\"ip\":\"10.0.3.22\",\"count\":236,\"protocol\":\"SSH\",\"risk\":\"high\",\"total_bytes\":1144741,\"last_seen\":1782755885614},{\"ip\":\"10.0.5.8\",\"count\":79,\"protocol\":\"SSH\",\"risk\":\"high\",\"total_bytes\":5454609942,\"last_seen\":1782743566018},{\"ip\":\"240c:caa1:1:204::3\",\"count\":78,\"protocol\":\"TLS\",\"risk\":\"medium\",\"total_bytes\":15923060,\"last_seen\":1782747614979},{\"ip\":\"240c:caa1:1:204::2\",\"count\":75,\"protocol\"",
+      "artifact": "topic-tunnel.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:02+08:00",
+      "phase": "assert",
+      "name": "topic tunnel response shape",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.topic == \"tunnel\"",
+      "artifact": "topic-tunnel.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:02+08:00",
+      "phase": "api",
+      "name": "topic exfil page readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"paths\":[{\"src_ip\":\"10.0.5.8\",\"dst_ip\":\"10.0.5.9\",\"session_count\":69,\"upload_bytes\":2861248084,\"last_seen\":1782743566018,\"risk\":\"high\"},{\"src_ip\":\"10.0.5.8\",\"dst_ip\":\"10.3.6.59\",\"session_count\":4,\"upload_bytes\":1686711979,\"last_seen\":1782739091050,\"risk\":\"high\"},{\"src_ip\":\"10.0.5.8\",\"dst_ip\":\"20.205.243.166\",\"session_count\":23,\"upload_bytes\":19395422,\"last_seen\":1782747388770,\"risk\":\"medium\"},{\"src_ip\":\"240c:caa1:1:204::2\",\"dst_ip\":\"2606:50c0:8003::154\",\"session_count\":2,\"upload_bytes\":2785007,\"last_seen\":1782747659698,\"risk\":\"low\"},{\"src_ip\":\"240c:caa1:1:204::2\",\"dst_ip\":\"2606:4700:3033::ac43:dcdd\",\"session_count\":4,\"upload_bytes\":1043304,\"last_seen\":1782713687526,\"risk\":\"low\"},{\"src_ip\":\"240c:caa1:1:204::3\",\"dst_ip\":\"2606:4700:3033::ac43:dcdd\",\"session_count\":2,\"upload_bytes\":469593,\"last_seen\":1782711583224,\"risk\":\"low\"},{\"src_ip\":\"10.0.5.8\",\"dst_ip\":\"34.120.177.193\",\"session_count\":518,\"upload_bytes\":209193,\"last_seen\":1782755886217,\"risk\":\"high\"},{\"src_ip\":\"10.0.3.22\",\"dst_ip\":\"10.0.5.8\",\"session_count\":236,\"upload_bytes\":130486,\"last_seen\":1782755885614,\"risk\":\"high\"},{\"src_ip\":\"240c:caa1:1:204::2\",\"dst_ip\":\"2606:50c0:8000::154\",\"session_count\":1,\"uplo",
+      "artifact": "topic-exfil.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:02+08:00",
+      "phase": "assert",
+      "name": "topic exfil response shape",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.topic == \"exfil\"",
+      "artifact": "topic-exfil.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:02+08:00",
+      "phase": "api",
+      "name": "topic apt page readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"campaigns\":[{\"tenant_id\":\"default\",\"campaign_id\":\"campaign-exfil-default-1782729598739-e1d2dc37\",\"ts_start\":1782729598739,\"ts_end\":1782729627572,\"entities\":[\"ip:cid:1:wFzAUL\",\"ip:cid:Vd4LpooJh+IX5DWBudQ3E=\"],\"alerts\":[\"alert-default-1782729598739-6a142f38\",\"alert-default-1782729627572-6fba2b0f\"],\"score\":0.6000000238418579,\"summary\":\"检测到数据外泄攻击链：主机 cid:1:wFzAUL 进行了 1 次大量数据传输，最终通过外部通道传输至 cid:Vd4LpooJh+IX5DWBudQ3E=\",\"event_id\":\"eb26122f-1bb9-41a4-b326-a80d3c9eb8c1\",\"ingest_ts\":1782733689529,\"campaign_type\":\"data_exfiltration\",\"attack_phases\":[\"collection\",\"exfiltration\",\"command_and_control\"],\"rule_ids\":[],\"model_ids\":[\"v1.0\"]},{\"tenant_id\":\"default\",\"campaign_id\":\"campaign-exfil-default-1782729526884-0a78f734\",\"ts_start\":1782729526884,\"ts_end\":1782729627572,\"entities\":[\"ip:cid:1:wFzAUL\",\"ip:cid:Vd4LpooJh+IX5DWBudQ3E=\"],\"alerts\":[\"alert-default-1782729526884-53ea5686\",\"alert-default-1782729598739-6a142f38\",\"alert-default-1782729627572-6fba2b0f\"],\"score\":0.7000000476837158,\"summary\":\"检测到数据外泄攻击链：主机 cid:1:wFzAUL 进行了 2 次大量数据传输，最终通过外部通�",
+      "artifact": "topic-apt.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:02+08:00",
+      "phase": "assert",
+      "name": "topic apt response shape",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.topic == \"apt\"",
+      "artifact": "topic-apt.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:03+08:00",
+      "phase": "api",
+      "name": "topic saved views readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"total\":0,\"views\":[]},\"meta\":{\"request_id\":\"35b0279f-81bb-4d71-87e4-7ff826bddbc7\",\"trace_id\":\"35b0279f-81bb-4d71-87e4-7ff826bddbc7\"},\"timestamp\":\"2026-06-30T04:33:03Z\"} ",
+      "artifact": "topic-views-before.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:03+08:00",
+      "phase": "assert",
+      "name": "topic saved views response shape",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and (.data.views | type == \"array\") and (.data.total | type == \"number\")",
+      "artifact": "topic-views-before.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:03+08:00",
+      "phase": "api",
+      "name": "topic subscriptions readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"subscriptions\":[],\"total\":0},\"meta\":{\"request_id\":\"5bfe9717-823e-415d-b2f9-1ed73322748c\",\"trace_id\":\"5bfe9717-823e-415d-b2f9-1ed73322748c\"},\"timestamp\":\"2026-06-30T04:33:03Z\"} ",
+      "artifact": "topic-subscriptions-before.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:03+08:00",
+      "phase": "assert",
+      "name": "topic subscriptions response shape",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and (.data.subscriptions | type == \"array\") and (.data.total | type == \"number\")",
+      "artifact": "topic-subscriptions-before.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:03+08:00",
+      "phase": "api",
+      "name": "admin can save topic view",
+      "severity": "info",
+      "passed": true,
+      "status": "201",
+      "detail": "{\"data\":{\"view_id\":\"105e481b-bd4c-4137-81c6-9dec6f6cba62\",\"tenant_id\":\"default\",\"topic\":\"tunnel\",\"name\":\"codex topic view 20260630-topic-governance-preflight-r2\",\"filters\":{\"owner\":\"codex\",\"risk\":\"high\"},\"visibility\":\"team\",\"favorite\":true,\"shared\":false,\"created_by\":\"6bfa7873-98d5-4188-b311-2e1955d33322\",\"created_at\":1782793983201,\"updated_at\":1782793983201},\"success\":true} ",
+      "artifact": "topic-view-create.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:03+08:00",
+      "phase": "assert",
+      "name": "created topic view has identity",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and (.data.view_id | type == \"string\" and length > 0) and .data.topic == \"tunnel\" and .data.name == $name",
+      "artifact": "topic-view-create.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:03+08:00",
+      "phase": "api",
+      "name": "admin can share favorite topic view",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"view_id\":\"105e481b-bd4c-4137-81c6-9dec6f6cba62\",\"tenant_id\":\"default\",\"topic\":\"tunnel\",\"name\":\"codex topic view 20260630-topic-governance-preflight-r2\",\"filters\":{\"owner\":\"codex\",\"risk\":\"high\"},\"visibility\":\"team\",\"favorite\":true,\"shared\":true,\"share_token\":\"topic-share-1782793983316355173\",\"created_by\":\"6bfa7873-98d5-4188-b311-2e1955d33322\",\"created_at\":1782793983201,\"updated_at\":1782793983313},\"meta\":{\"request_id\":\"22f23f6e-a717-4c4b-956f-c245de095c9f\",\"trace_id\":\"22f23f6e-a717-4c4b-956f-c245de095c9f\"},\"timestamp\":\"2026-06-30T04:33:03Z\"} ",
+      "artifact": "topic-view-share.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:03+08:00",
+      "phase": "assert",
+      "name": "topic view share response",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.shared == true and (.data.share_token | type == \"string\" and length > 0)",
+      "artifact": "topic-view-share.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:03+08:00",
+      "phase": "api",
+      "name": "other tenant cannot update topic view",
+      "severity": "info",
+      "passed": true,
+      "status": "404",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"NOT_FOUND\",\"message\":\"topic view not found\"},\"meta\":{\"request_id\":\"057a37ed-439d-4ccb-aea8-c7c17ee01b23\",\"trace_id\":\"057a37ed-439d-4ccb-aea8-c7c17ee01b23\"},\"timestamp\":\"2026-06-30T04:33:03Z\"} ",
+      "artifact": "topic-view-other-tenant.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:03+08:00",
+      "phase": "api",
+      "name": "viewer cannot save topic view",
+      "severity": "info",
+      "passed": true,
+      "status": "403",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"permission denied: topic:write required\"},\"meta\":{\"request_id\":\"69288af8-27d0-4042-9947-422ec4d24675\",\"trace_id\":\"69288af8-27d0-4042-9947-422ec4d24675\"},\"timestamp\":\"2026-06-30T04:33:03Z\"} ",
+      "artifact": "topic-view-viewer.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:03+08:00",
+      "phase": "api",
+      "name": "audit log page API has topic view save event",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"total\":1,\"trails\":[{\"log_id\":\"audit-20260630043303.212727976\",\"tenant_id\":\"default\",\"user_id\":\"6bfa7873-98d5-4188-b311-2e1955d33322\",\"action\":\"TOPIC_VIEW_SAVED\",\"resource_type\":\"topic_saved_view\",\"resource_id\":\"105e481b-bd4c-4137-81c6-9dec6f6cba62\",\"details\":{\"favorite\":true,\"name\":\"codex topic view 20260630-topic-governance-preflight-r2\",\"topic\":\"tunnel\",\"visibility\":\"team\"},\"ip_address\":\"10.244.0.1\",\"timestamp\":1782793983209,\"result\":\"success\"}]},\"meta\":{\"request_id\":\"e49722ca-ec6a-4d19-985b-f90901b4a51d\",\"trace_id\":\"e49722ca-ec6a-4d19-985b-f90901b4a51d\"},\"timestamp\":\"2026-06-30T04:33:03Z\"} ",
+      "artifact": "topic-audit-view-saved.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:03+08:00",
+      "phase": "assert",
+      "name": "audit log contains topic view save event",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and (.data.total >= 1) and ([.data.trails[] | select(.resource_id == $view_id and .action == \"TOPIC_VIEW_SAVED\")] | length) >= 1",
+      "artifact": "topic-audit-view-saved.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:03+08:00",
+      "phase": "postgres",
+      "name": "topic saved view persisted in PostgreSQL",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "pg-topic-view-count.txt"
+    },
+    {
+      "ts": "2026-06-30T12:33:03+08:00",
+      "phase": "api",
+      "name": "admin can update topic scope",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"tenant_id\":\"default\",\"topic\":\"tunnel\",\"scope_name\":\"codex scope 20260630-topic-governance-preflight-r2\",\"included_assets\":[\"core-switch\",\"border-fw\"],\"excluded_assets\":[],\"risk_levels\":[\"high\",\"critical\"],\"time_window\":\"24h\",\"updated_by\":\"6bfa7873-98d5-4188-b311-2e1955d33322\",\"updated_at\":1782793983678,\"detail\":{\"reason\":\"codex live topic governance preflight\"}},\"meta\":{\"request_id\":\"da414654-995e-40f0-bfd3-6ca9aacc8a5c\",\"trace_id\":\"da414654-995e-40f0-bfd3-6ca9aacc8a5c\"},\"timestamp\":\"2026-06-30T04:33:03Z\"} ",
+      "artifact": "topic-scope-update.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:03+08:00",
+      "phase": "assert",
+      "name": "topic scope update response",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.topic == \"tunnel\" and .data.scope_name == $scope and (.data.included_assets | length) >= 1",
+      "artifact": "topic-scope-update.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:03+08:00",
+      "phase": "api",
+      "name": "admin can create topic subscription",
+      "severity": "info",
+      "passed": true,
+      "status": "201",
+      "detail": "{\"data\":{\"subscription_id\":\"e688a990-3053-455e-9c0a-e21c1851c30a\",\"tenant_id\":\"default\",\"topic\":\"exfil\",\"channel\":\"webhook\",\"threshold\":\"high\",\"schedule\":\"realtime\",\"recipients\":[\"codex-topic-20260630-topic-governance-preflight-r2\"],\"enabled\":true,\"created_by\":\"6bfa7873-98d5-4188-b311-2e1955d33322\",\"created_at\":1782793983787,\"updated_at\":1782793983787,\"detail\":{}},\"success\":true} ",
+      "artifact": "topic-subscription-create.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:03+08:00",
+      "phase": "assert",
+      "name": "created topic subscription has identity",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and (.data.subscription_id | type == \"string\" and length > 0) and .data.topic == \"exfil\" and .data.enabled == true and (.data.recipients | index($recipient)) != null",
+      "artifact": "topic-subscription-create.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:03+08:00",
+      "phase": "api",
+      "name": "admin can disable topic subscription",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"subscription_id\":\"e688a990-3053-455e-9c0a-e21c1851c30a\",\"tenant_id\":\"default\",\"topic\":\"exfil\",\"channel\":\"webhook\",\"threshold\":\"high\",\"schedule\":\"realtime\",\"recipients\":[\"codex-topic-20260630-topic-governance-preflight-r2\"],\"enabled\":false,\"created_by\":\"6bfa7873-98d5-4188-b311-2e1955d33322\",\"created_at\":1782793983787,\"updated_at\":1782793983897,\"detail\":{}},\"meta\":{\"request_id\":\"bd11960f-a2e2-447a-a115-2d5f6af95249\",\"trace_id\":\"bd11960f-a2e2-447a-a115-2d5f6af95249\"},\"timestamp\":\"2026-06-30T04:33:03Z\"} ",
+      "artifact": "topic-subscription-disable.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:03+08:00",
+      "phase": "assert",
+      "name": "topic subscription disable response",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.enabled == false",
+      "artifact": "topic-subscription-disable.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:03+08:00",
+      "phase": "api",
+      "name": "other tenant cannot update topic subscription",
+      "severity": "info",
+      "passed": true,
+      "status": "404",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"NOT_FOUND\",\"message\":\"topic subscription not found\"},\"meta\":{\"request_id\":\"9d9b8c14-3a0b-4457-9c33-89dcbfd27ab3\",\"trace_id\":\"9d9b8c14-3a0b-4457-9c33-89dcbfd27ab3\"},\"timestamp\":\"2026-06-30T04:33:03Z\"} ",
+      "artifact": "topic-subscription-other-tenant.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:04+08:00",
+      "phase": "api",
+      "name": "viewer cannot create topic subscription",
+      "severity": "info",
+      "passed": true,
+      "status": "403",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"permission denied: topic:write required\"},\"meta\":{\"request_id\":\"55808d49-09fd-4588-8d78-aab552ace8da\",\"trace_id\":\"55808d49-09fd-4588-8d78-aab552ace8da\"},\"timestamp\":\"2026-06-30T04:33:04Z\"} ",
+      "artifact": "topic-subscription-viewer.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:04+08:00",
+      "phase": "postgres",
+      "name": "topic subscription persisted in PostgreSQL",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "pg-topic-subscription-count.txt"
+    },
+    {
+      "ts": "2026-06-30T12:33:04+08:00",
+      "phase": "api",
+      "name": "admin can export topic report",
+      "severity": "info",
+      "passed": true,
+      "status": "202",
+      "detail": "{\"data\":{\"export_id\":\"3b62dfcb-c762-4f6e-a7ea-dd82c92e5f15\",\"tenant_id\":\"default\",\"topic\":\"apt\",\"export_type\":\"report\",\"status\":\"completed\",\"parameters\":{\"format\":\"json\",\"time_range\":{\"end\":1782793984152,\"start\":1782707584152}},\"result\":{\"audit_required\":true,\"file_key\":\"topics/apt/report-1782793984.json\",\"retention_days\":30,\"summary\":\"apt topic operational report\"},\"generated_by\":\"6bfa7873-98d5-4188-b311-2e1955d33322\",\"generated_at\":1782793984149},\"success\":true} ",
+      "artifact": "topic-report-export.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:04+08:00",
+      "phase": "assert",
+      "name": "topic report export response",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.export_type == \"report\" and (.data.result.file_key | contains(\"topics/apt\"))",
+      "artifact": "topic-report-export.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:04+08:00",
+      "phase": "api",
+      "name": "admin can export topic evidence package",
+      "severity": "info",
+      "passed": true,
+      "status": "202",
+      "detail": "{\"data\":{\"export_id\":\"8329fdf4-bc6d-43bc-8aea-655ab8460c4f\",\"tenant_id\":\"default\",\"topic\":\"exfil\",\"export_type\":\"evidence_package\",\"status\":\"completed\",\"parameters\":{\"format\":\"json\",\"time_range\":{\"end\":1782793984260,\"start\":1782707584260}},\"result\":{\"audit_required\":true,\"file_key\":\"topics/exfil/evidence_package-1782793984.json\",\"retention_days\":30,\"summary\":\"exfil topic evidence package with source APIs, filters and audit trail\"},\"generated_by\":\"6bfa7873-98d5-4188-b311-2e1955d33322\",\"generated_at\":1782793984257},\"success\":true} ",
+      "artifact": "topic-evidence-package-export.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:04+08:00",
+      "phase": "assert",
+      "name": "topic evidence package export response",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.export_type == \"evidence_package\" and (.data.result.file_key | contains(\"topics/exfil\"))",
+      "artifact": "topic-evidence-package-export.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:04+08:00",
+      "phase": "api",
+      "name": "viewer cannot export topic report",
+      "severity": "info",
+      "passed": true,
+      "status": "403",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"permission denied: topic:export required\"},\"meta\":{\"request_id\":\"2a890ded-3956-4126-b19f-7fae9124b432\",\"trace_id\":\"2a890ded-3956-4126-b19f-7fae9124b432\"},\"timestamp\":\"2026-06-30T04:33:04Z\"} ",
+      "artifact": "topic-report-export-viewer.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:04+08:00",
+      "phase": "api",
+      "name": "topic saved views list includes created view",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"total\":1,\"views\":[{\"view_id\":\"105e481b-bd4c-4137-81c6-9dec6f6cba62\",\"tenant_id\":\"default\",\"topic\":\"tunnel\",\"name\":\"codex topic view 20260630-topic-governance-preflight-r2\",\"filters\":{\"owner\":\"codex\",\"risk\":\"high\"},\"visibility\":\"team\",\"favorite\":true,\"shared\":true,\"share_token\":\"topic-share-1782793983316355173\",\"created_by\":\"6bfa7873-98d5-4188-b311-2e1955d33322\",\"created_at\":1782793983201,\"updated_at\":1782793983313}]},\"meta\":{\"request_id\":\"73a4ff0a-f88a-48da-b7c5-14b2d6c081a0\",\"trace_id\":\"73a4ff0a-f88a-48da-b7c5-14b2d6c081a0\"},\"timestamp\":\"2026-06-30T04:33:04Z\"} ",
+      "artifact": "topic-views-after.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:04+08:00",
+      "phase": "assert",
+      "name": "created topic view appears in list",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and ([.data.views[] | select(.view_id == $view_id)] | length) == 1",
+      "artifact": "topic-views-after.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:04+08:00",
+      "phase": "api",
+      "name": "topic subscriptions list includes created subscription",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"subscriptions\":[{\"subscription_id\":\"e688a990-3053-455e-9c0a-e21c1851c30a\",\"tenant_id\":\"default\",\"topic\":\"exfil\",\"channel\":\"webhook\",\"threshold\":\"high\",\"schedule\":\"realtime\",\"recipients\":[\"codex-topic-20260630-topic-governance-preflight-r2\"],\"enabled\":false,\"created_by\":\"6bfa7873-98d5-4188-b311-2e1955d33322\",\"created_at\":1782793983787,\"updated_at\":1782793983897,\"detail\":{}}],\"total\":1},\"meta\":{\"request_id\":\"d3132574-908b-46b3-8748-79346653739b\",\"trace_id\":\"d3132574-908b-46b3-8748-79346653739b\"},\"timestamp\":\"2026-06-30T04:33:04Z\"} ",
+      "artifact": "topic-subscriptions-after.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:04+08:00",
+      "phase": "assert",
+      "name": "created topic subscription appears in list",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and ([.data.subscriptions[] | select(.subscription_id == $subscription_id)] | length) == 1",
+      "artifact": "topic-subscriptions-after.json"
+    },
+    {
+      "ts": "2026-06-30T12:33:04+08:00",
+      "phase": "postgres",
+      "name": "topic scope persisted in PostgreSQL",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "pg-topic-scope-count.txt"
+    },
+    {
+      "ts": "2026-06-30T12:33:04+08:00",
+      "phase": "postgres",
+      "name": "topic report export persisted in PostgreSQL",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "pg-topic-report-export-count.txt"
+    },
+    {
+      "ts": "2026-06-30T12:33:04+08:00",
+      "phase": "postgres",
+      "name": "topic evidence package export persisted in PostgreSQL",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "pg-topic-evidence-export-count.txt"
+    },
+    {
+      "ts": "2026-06-30T12:33:04+08:00",
+      "phase": "postgres",
+      "name": "topic governance audit persisted",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "7",
+      "artifact": "pg-topic-audit-count.txt"
+    }
+  ]
+}

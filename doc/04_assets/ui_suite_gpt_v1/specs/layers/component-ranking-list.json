@@ -1,0 +1,57 @@
+{
+  "id": "component-ranking-list",
+  "title": "排行列表",
+  "type": "component",
+  "route": null,
+  "domain": "global",
+  "source": {
+    "targetFile": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-ranking-list.png",
+    "promptFile": "doc/04_assets/ui_suite_gpt_v1/prompts/component-ranking-list.prompt.txt",
+    "rawTraceFiles": [
+      "doc/04_assets/ui_suite_gpt_v1/screens/components/component-ranking-list.raw-deterministic.png"
+    ],
+    "dimensions": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "implementation": {
+    "pageComponent": null,
+    "suggestedComponents": [
+      "Ant Design",
+      "CSS token",
+      "React component"
+    ],
+    "apiEndpoints": [],
+    "workflows": []
+  },
+  "layers": [
+    {
+      "id": "component-board",
+      "role": "component-specimen",
+      "bbox": {
+        "x": 80,
+        "y": 80,
+        "w": 1760,
+        "h": 920
+      }
+    },
+    {
+      "id": "states-matrix",
+      "role": "normal-hover-active-disabled-error-loading",
+      "bbox": {
+        "x": 1120,
+        "y": 140,
+        "w": 660,
+        "h": 760
+      }
+    }
+  ],
+  "acceptance": [
+    "最终 PNG 必须为 1920x1080",
+    "中文为主，只保留必要英文技术词和单位",
+    "状态色必须遵守 success/info/warning/danger/critical token",
+    "危险动作必须具备影响范围、权限提示和审计留痕",
+    "必须展示 normal/hover/active/disabled/error/loading 等状态矩阵"
+  ]
+}

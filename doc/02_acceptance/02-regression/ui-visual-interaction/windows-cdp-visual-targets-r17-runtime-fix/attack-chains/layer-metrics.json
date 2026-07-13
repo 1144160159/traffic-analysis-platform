@@ -1,0 +1,157 @@
+{
+  "target_id": "attack-chains",
+  "route": "/attack-chains",
+  "status": "fail",
+  "generated_at": "2026-07-03T20:33:10.352533+08:00",
+  "layer_spec": "doc/04_assets/ui_suite_gpt_v1/specs/layers/attack-chains.json",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/attack-chains.png",
+  "actual_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-visual-targets-r17-runtime-fix/attack-chains/actual-1920.png",
+  "viewport": {
+    "source_width": 1920,
+    "source_height": 1080,
+    "actual_width": 1920,
+    "actual_height": 1080,
+    "size_ok": true
+  },
+  "summary": {
+    "layer_count": 5,
+    "failed_layer_count": 5,
+    "roles": {
+      "global-app-shell": {
+        "layer_count": 3,
+        "failed_count": 3,
+        "weighted_mismatch_pixels": 465154,
+        "weighted_compared_pixels": 465182,
+        "weighted_channel_delta": 6793932.75,
+        "weighted_pixel_max_delta": 11258685.0,
+        "pixel_mismatch_ratio": 0.9999398085050583,
+        "mean_channel_delta": 14.604891741296955,
+        "mean_pixel_max_delta": 24.202752901015085
+      },
+      "page-workspace": {
+        "layer_count": 1,
+        "failed_count": 1,
+        "weighted_mismatch_pixels": 1579066,
+        "weighted_compared_pixels": 1579074,
+        "weighted_channel_delta": 27157872.5,
+        "weighted_pixel_max_delta": 44429295.0,
+        "pixel_mismatch_ratio": 0.9999949337396474,
+        "mean_channel_delta": 17.198606588418276,
+        "mean_pixel_max_delta": 28.13629696898309
+      },
+      "closed-loop-rail": {
+        "layer_count": 1,
+        "failed_count": 1,
+        "weighted_mismatch_pixels": 361200,
+        "weighted_compared_pixels": 361200,
+        "weighted_channel_delta": 6315673.25,
+        "weighted_pixel_max_delta": 9793767.0,
+        "pixel_mismatch_ratio": 1.0,
+        "mean_channel_delta": 17.485252630121817,
+        "mean_pixel_max_delta": 27.11452657807309
+      }
+    }
+  },
+  "layers": [
+    {
+      "id": "topbar",
+      "role": "global-app-shell",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 80
+      },
+      "status": "fail",
+      "compared_pixels": 153600,
+      "mismatch_pixels": 153598,
+      "pixel_mismatch_ratio": 0.9999869791666667,
+      "max_pixel_ratio": 0.015,
+      "channel_tolerance": 0,
+      "max_channel_delta": 255,
+      "mean_channel_delta": 18.850421549479165,
+      "mean_pixel_max_delta": 32.63982421875,
+      "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-visual-targets-r17-runtime-fix/attack-chains/layers/topbar-diff.png"
+    },
+    {
+      "id": "sidebar",
+      "role": "global-app-shell",
+      "bbox": {
+        "x": 0,
+        "y": 80,
+        "w": 166,
+        "h": 917
+      },
+      "status": "fail",
+      "compared_pixels": 152222,
+      "mismatch_pixels": 152219,
+      "pixel_mismatch_ratio": 0.9999802919420321,
+      "max_pixel_ratio": 0.015,
+      "channel_tolerance": 0,
+      "max_channel_delta": 255,
+      "mean_channel_delta": 15.070592621303097,
+      "mean_pixel_max_delta": 24.095919118130098,
+      "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-visual-targets-r17-runtime-fix/attack-chains/layers/sidebar-diff.png"
+    },
+    {
+      "id": "content",
+      "role": "page-workspace",
+      "bbox": {
+        "x": 198,
+        "y": 80,
+        "w": 1722,
+        "h": 917
+      },
+      "status": "fail",
+      "compared_pixels": 1579074,
+      "mismatch_pixels": 1579066,
+      "pixel_mismatch_ratio": 0.9999949337396474,
+      "max_pixel_ratio": 0.015,
+      "channel_tolerance": 0,
+      "max_channel_delta": 255,
+      "mean_channel_delta": 17.198606588418276,
+      "mean_pixel_max_delta": 28.13629696898309,
+      "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-visual-targets-r17-runtime-fix/attack-chains/layers/content-diff.png"
+    },
+    {
+      "id": "bottombar",
+      "role": "global-app-shell",
+      "bbox": {
+        "x": 0,
+        "y": 997,
+        "w": 1920,
+        "h": 83
+      },
+      "status": "fail",
+      "compared_pixels": 159360,
+      "mismatch_pixels": 159337,
+      "pixel_mismatch_ratio": 0.999855672690763,
+      "max_pixel_ratio": 0.015,
+      "channel_tolerance": 0,
+      "max_channel_delta": 255,
+      "mean_channel_delta": 10.067973456325301,
+      "mean_pixel_max_delta": 16.172684487951805,
+      "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-visual-targets-r17-runtime-fix/attack-chains/layers/bottombar-diff.png"
+    },
+    {
+      "id": "right-rail",
+      "role": "closed-loop-rail",
+      "bbox": {
+        "x": 1460,
+        "y": 104,
+        "w": 420,
+        "h": 860
+      },
+      "status": "fail",
+      "compared_pixels": 361200,
+      "mismatch_pixels": 361200,
+      "pixel_mismatch_ratio": 1.0,
+      "max_pixel_ratio": 0.015,
+      "channel_tolerance": 0,
+      "max_channel_delta": 255,
+      "mean_channel_delta": 17.485252630121817,
+      "mean_pixel_max_delta": 27.11452657807309,
+      "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-visual-targets-r17-runtime-fix/attack-chains/layers/right-rail-diff.png"
+    }
+  ]
+}

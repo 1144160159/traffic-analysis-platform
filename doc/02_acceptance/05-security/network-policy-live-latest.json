@@ -1,0 +1,1537 @@
+{
+    "apiVersion": "v1",
+    "items": [
+        {
+            "apiVersion": "networking.k8s.io/v1",
+            "kind": "NetworkPolicy",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"networking.k8s.io/v1\",\"kind\":\"NetworkPolicy\",\"metadata\":{\"annotations\":{},\"name\":\"allow-database-runtime-traffic\",\"namespace\":\"databases\"},\"spec\":{\"egress\":[{\"to\":[{\"podSelector\":{}}]},{\"ports\":[{\"port\":53,\"protocol\":\"UDP\"},{\"port\":53,\"protocol\":\"TCP\"}],\"to\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"kube-system\"}},\"podSelector\":{\"matchLabels\":{\"k8s-app\":\"kube-dns\"}}}]}],\"ingress\":[{\"from\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"traffic-analysis\"}}},{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"flink\"}}}],\"ports\":[{\"port\":5432,\"protocol\":\"TCP\"},{\"port\":6379,\"protocol\":\"TCP\"},{\"port\":26379,\"protocol\":\"TCP\"}]},{\"from\":[{\"podSelector\":{}}]}],\"podSelector\":{},\"policyTypes\":[\"Ingress\",\"Egress\"]}}\n"
+                },
+                "creationTimestamp": "2026-06-29T05:03:16Z",
+                "generation": 1,
+                "name": "allow-database-runtime-traffic",
+                "namespace": "databases",
+                "resourceVersion": "5825566",
+                "uid": "f0e91948-081a-4d1a-b42c-b94b03b05d50"
+            },
+            "spec": {
+                "egress": [
+                    {
+                        "to": [
+                            {
+                                "podSelector": {}
+                            }
+                        ]
+                    },
+                    {
+                        "ports": [
+                            {
+                                "port": 53,
+                                "protocol": "UDP"
+                            },
+                            {
+                                "port": 53,
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "to": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "kube-system"
+                                    }
+                                },
+                                "podSelector": {
+                                    "matchLabels": {
+                                        "k8s-app": "kube-dns"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "ingress": [
+                    {
+                        "from": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "traffic-analysis"
+                                    }
+                                }
+                            },
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "flink"
+                                    }
+                                }
+                            }
+                        ],
+                        "ports": [
+                            {
+                                "port": 5432,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 6379,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 26379,
+                                "protocol": "TCP"
+                            }
+                        ]
+                    },
+                    {
+                        "from": [
+                            {
+                                "podSelector": {}
+                            }
+                        ]
+                    }
+                ],
+                "podSelector": {},
+                "policyTypes": [
+                    "Ingress",
+                    "Egress"
+                ]
+            }
+        },
+        {
+            "apiVersion": "networking.k8s.io/v1",
+            "kind": "NetworkPolicy",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"networking.k8s.io/v1\",\"kind\":\"NetworkPolicy\",\"metadata\":{\"annotations\":{},\"name\":\"default-deny-ingress-egress\",\"namespace\":\"databases\"},\"spec\":{\"podSelector\":{},\"policyTypes\":[\"Ingress\",\"Egress\"]}}\n"
+                },
+                "creationTimestamp": "2026-06-29T05:03:16Z",
+                "generation": 1,
+                "name": "default-deny-ingress-egress",
+                "namespace": "databases",
+                "resourceVersion": "5825565",
+                "uid": "ef5cadff-d405-420a-82ae-7362d7109b4d"
+            },
+            "spec": {
+                "podSelector": {},
+                "policyTypes": [
+                    "Ingress",
+                    "Egress"
+                ]
+            }
+        },
+        {
+            "apiVersion": "networking.k8s.io/v1",
+            "kind": "NetworkPolicy",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"networking.k8s.io/v1\",\"kind\":\"NetworkPolicy\",\"metadata\":{\"annotations\":{},\"name\":\"allow-flink-runtime-traffic\",\"namespace\":\"flink\"},\"spec\":{\"egress\":[{\"to\":[{\"podSelector\":{}}]},{\"ports\":[{\"port\":9092,\"protocol\":\"TCP\"},{\"port\":8123,\"protocol\":\"TCP\"},{\"port\":9000,\"protocol\":\"TCP\"}],\"to\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"middleware\"}}}]},{\"ports\":[{\"port\":5432,\"protocol\":\"TCP\"}],\"to\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"databases\"}}}]},{\"ports\":[{\"port\":9000,\"protocol\":\"TCP\"}],\"to\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"minio\"}}}]},{\"ports\":[{\"port\":53,\"protocol\":\"UDP\"},{\"port\":53,\"protocol\":\"TCP\"}],\"to\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"kube-system\"}},\"podSelector\":{\"matchLabels\":{\"k8s-app\":\"kube-dns\"}}}]}],\"ingress\":[{\"from\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"traffic-analysis\"}}},{\"podSelector\":{}}]},{\"from\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"gateway\"}}}],\"ports\":[{\"port\":8081,\"protocol\":\"TCP\"}]}],\"podSelector\":{},\"policyTypes\":[\"Ingress\",\"Egress\"]}}\n"
+                },
+                "creationTimestamp": "2026-06-29T05:03:16Z",
+                "generation": 1,
+                "name": "allow-flink-runtime-traffic",
+                "namespace": "flink",
+                "resourceVersion": "5825570",
+                "uid": "cc27df82-cca3-4ecc-9bf0-c5fa5247c2e5"
+            },
+            "spec": {
+                "egress": [
+                    {
+                        "to": [
+                            {
+                                "podSelector": {}
+                            }
+                        ]
+                    },
+                    {
+                        "ports": [
+                            {
+                                "port": 9092,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 8123,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 9000,
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "to": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "middleware"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "ports": [
+                            {
+                                "port": 5432,
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "to": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "databases"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "ports": [
+                            {
+                                "port": 9000,
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "to": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "minio"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "ports": [
+                            {
+                                "port": 53,
+                                "protocol": "UDP"
+                            },
+                            {
+                                "port": 53,
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "to": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "kube-system"
+                                    }
+                                },
+                                "podSelector": {
+                                    "matchLabels": {
+                                        "k8s-app": "kube-dns"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "ingress": [
+                    {
+                        "from": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "traffic-analysis"
+                                    }
+                                }
+                            },
+                            {
+                                "podSelector": {}
+                            }
+                        ]
+                    },
+                    {
+                        "from": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "gateway"
+                                    }
+                                }
+                            }
+                        ],
+                        "ports": [
+                            {
+                                "port": 8081,
+                                "protocol": "TCP"
+                            }
+                        ]
+                    }
+                ],
+                "podSelector": {},
+                "policyTypes": [
+                    "Ingress",
+                    "Egress"
+                ]
+            }
+        },
+        {
+            "apiVersion": "networking.k8s.io/v1",
+            "kind": "NetworkPolicy",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"networking.k8s.io/v1\",\"kind\":\"NetworkPolicy\",\"metadata\":{\"annotations\":{},\"name\":\"default-deny-ingress-egress\",\"namespace\":\"flink\"},\"spec\":{\"podSelector\":{},\"policyTypes\":[\"Ingress\",\"Egress\"]}}\n"
+                },
+                "creationTimestamp": "2026-06-29T05:03:16Z",
+                "generation": 1,
+                "name": "default-deny-ingress-egress",
+                "namespace": "flink",
+                "resourceVersion": "5825569",
+                "uid": "64d3307c-4de6-490d-bce0-c6c9c9cada66"
+            },
+            "spec": {
+                "podSelector": {},
+                "policyTypes": [
+                    "Ingress",
+                    "Egress"
+                ]
+            }
+        },
+        {
+            "apiVersion": "networking.k8s.io/v1",
+            "kind": "NetworkPolicy",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"networking.k8s.io/v1\",\"kind\":\"NetworkPolicy\",\"metadata\":{\"annotations\":{},\"name\":\"allow-apisix-dns-and-upstream-egress\",\"namespace\":\"gateway\"},\"spec\":{\"egress\":[{\"ports\":[{\"port\":53,\"protocol\":\"UDP\"},{\"port\":53,\"protocol\":\"TCP\"}],\"to\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"kube-system\"}},\"podSelector\":{\"matchLabels\":{\"k8s-app\":\"kube-dns\"}}}]},{\"ports\":[{\"port\":80,\"protocol\":\"TCP\"},{\"port\":8080,\"protocol\":\"TCP\"},{\"port\":8081,\"protocol\":\"TCP\"},{\"port\":8082,\"protocol\":\"TCP\"},{\"port\":8083,\"protocol\":\"TCP\"},{\"port\":8084,\"protocol\":\"TCP\"},{\"port\":8085,\"protocol\":\"TCP\"},{\"port\":8086,\"protocol\":\"TCP\"},{\"port\":8087,\"protocol\":\"TCP\"},{\"port\":50051,\"protocol\":\"TCP\"},{\"port\":50053,\"protocol\":\"TCP\"}],\"to\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"traffic-analysis\"}}}]},{\"ports\":[{\"port\":8443,\"protocol\":\"TCP\"}],\"to\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"iam\"}}}]},{\"ports\":[{\"port\":3000,\"protocol\":\"TCP\"}],\"to\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"observability\"}}}]},{\"ports\":[{\"port\":8848,\"protocol\":\"TCP\"}],\"to\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"nacos\"}}}]},{\"ports\":[{\"port\":8081,\"protocol\":\"TCP\"}],\"to\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"flink\"}}}]},{\"ports\":[{\"port\":8080,\"protocol\":\"TCP\"},{\"port\":7002,\"protocol\":\"TCP\"}],\"to\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"middleware\"}}}]},{\"ports\":[{\"port\":8080,\"protocol\":\"TCP\"}],\"to\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"streampark\"}}}]},{\"ports\":[{\"port\":2746,\"protocol\":\"TCP\"}],\"to\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"argo\"}}}]},{\"ports\":[{\"port\":9002,\"protocol\":\"TCP\"}],\"to\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"minio\"}}}]},{\"ports\":[{\"port\":8080,\"protocol\":\"TCP\"}],\"to\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"registry\"}}}]}],\"podSelector\":{\"matchLabels\":{\"app\":\"apisix\"}},\"policyTypes\":[\"Egress\"]}}\n"
+                },
+                "creationTimestamp": "2026-06-29T05:03:16Z",
+                "generation": 1,
+                "name": "allow-apisix-dns-and-upstream-egress",
+                "namespace": "gateway",
+                "resourceVersion": "5825562",
+                "uid": "7e0e7c1d-54c7-4d97-84c1-2162c4abfc0b"
+            },
+            "spec": {
+                "egress": [
+                    {
+                        "ports": [
+                            {
+                                "port": 53,
+                                "protocol": "UDP"
+                            },
+                            {
+                                "port": 53,
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "to": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "kube-system"
+                                    }
+                                },
+                                "podSelector": {
+                                    "matchLabels": {
+                                        "k8s-app": "kube-dns"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "ports": [
+                            {
+                                "port": 80,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 8080,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 8081,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 8082,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 8083,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 8084,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 8085,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 8086,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 8087,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 50051,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 50053,
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "to": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "traffic-analysis"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "ports": [
+                            {
+                                "port": 8443,
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "to": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "iam"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "ports": [
+                            {
+                                "port": 3000,
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "to": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "observability"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "ports": [
+                            {
+                                "port": 8848,
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "to": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "nacos"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "ports": [
+                            {
+                                "port": 8081,
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "to": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "flink"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "ports": [
+                            {
+                                "port": 8080,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 7002,
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "to": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "middleware"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "ports": [
+                            {
+                                "port": 8080,
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "to": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "streampark"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "ports": [
+                            {
+                                "port": 2746,
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "to": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "argo"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "ports": [
+                            {
+                                "port": 9002,
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "to": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "minio"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "ports": [
+                            {
+                                "port": 8080,
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "to": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "registry"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "podSelector": {
+                    "matchLabels": {
+                        "app": "apisix"
+                    }
+                },
+                "policyTypes": [
+                    "Egress"
+                ]
+            }
+        },
+        {
+            "apiVersion": "networking.k8s.io/v1",
+            "kind": "NetworkPolicy",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"networking.k8s.io/v1\",\"kind\":\"NetworkPolicy\",\"metadata\":{\"annotations\":{},\"name\":\"allow-apisix-public-http\",\"namespace\":\"gateway\"},\"spec\":{\"ingress\":[{\"from\":[{\"ipBlock\":{\"cidr\":\"0.0.0.0/0\"}}],\"ports\":[{\"port\":9080,\"protocol\":\"TCP\"}]}],\"podSelector\":{\"matchLabels\":{\"app\":\"apisix\"}},\"policyTypes\":[\"Ingress\"]}}\n"
+                },
+                "creationTimestamp": "2026-06-29T05:03:16Z",
+                "generation": 1,
+                "name": "allow-apisix-public-http",
+                "namespace": "gateway",
+                "resourceVersion": "5825561",
+                "uid": "c51ee4ec-9ab5-4648-abd8-5d0089edaecf"
+            },
+            "spec": {
+                "ingress": [
+                    {
+                        "from": [
+                            {
+                                "ipBlock": {
+                                    "cidr": "0.0.0.0/0"
+                                }
+                            }
+                        ],
+                        "ports": [
+                            {
+                                "port": 9080,
+                                "protocol": "TCP"
+                            }
+                        ]
+                    }
+                ],
+                "podSelector": {
+                    "matchLabels": {
+                        "app": "apisix"
+                    }
+                },
+                "policyTypes": [
+                    "Ingress"
+                ]
+            }
+        },
+        {
+            "apiVersion": "networking.k8s.io/v1",
+            "kind": "NetworkPolicy",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"networking.k8s.io/v1\",\"kind\":\"NetworkPolicy\",\"metadata\":{\"annotations\":{},\"name\":\"default-deny-ingress-egress\",\"namespace\":\"gateway\"},\"spec\":{\"podSelector\":{},\"policyTypes\":[\"Ingress\",\"Egress\"]}}\n"
+                },
+                "creationTimestamp": "2026-06-29T05:03:16Z",
+                "generation": 1,
+                "name": "default-deny-ingress-egress",
+                "namespace": "gateway",
+                "resourceVersion": "5825560",
+                "uid": "a7649c8d-e768-4c40-b7b4-3cf3265e1f2b"
+            },
+            "spec": {
+                "podSelector": {},
+                "policyTypes": [
+                    "Ingress",
+                    "Egress"
+                ]
+            }
+        },
+        {
+            "apiVersion": "networking.k8s.io/v1",
+            "kind": "NetworkPolicy",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"networking.k8s.io/v1\",\"kind\":\"NetworkPolicy\",\"metadata\":{\"annotations\":{},\"name\":\"allow-keycloak-runtime-traffic\",\"namespace\":\"iam\"},\"spec\":{\"egress\":[{\"to\":[{\"podSelector\":{}}]},{\"ports\":[{\"port\":53,\"protocol\":\"UDP\"},{\"port\":53,\"protocol\":\"TCP\"}],\"to\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"kube-system\"}},\"podSelector\":{\"matchLabels\":{\"k8s-app\":\"kube-dns\"}}}]}],\"ingress\":[{\"from\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"gateway\"}}},{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"traffic-analysis\"}}}],\"ports\":[{\"port\":8443,\"protocol\":\"TCP\"}]},{\"from\":[{\"podSelector\":{}}]}],\"podSelector\":{\"matchLabels\":{\"app\":\"keycloak\"}},\"policyTypes\":[\"Ingress\",\"Egress\"]}}\n"
+                },
+                "creationTimestamp": "2026-06-29T05:03:16Z",
+                "generation": 1,
+                "name": "allow-keycloak-runtime-traffic",
+                "namespace": "iam",
+                "resourceVersion": "5825573",
+                "uid": "d14d702a-51e1-44a0-984f-cae4bcf6fb23"
+            },
+            "spec": {
+                "egress": [
+                    {
+                        "to": [
+                            {
+                                "podSelector": {}
+                            }
+                        ]
+                    },
+                    {
+                        "ports": [
+                            {
+                                "port": 53,
+                                "protocol": "UDP"
+                            },
+                            {
+                                "port": 53,
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "to": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "kube-system"
+                                    }
+                                },
+                                "podSelector": {
+                                    "matchLabels": {
+                                        "k8s-app": "kube-dns"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "ingress": [
+                    {
+                        "from": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "gateway"
+                                    }
+                                }
+                            },
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "traffic-analysis"
+                                    }
+                                }
+                            }
+                        ],
+                        "ports": [
+                            {
+                                "port": 8443,
+                                "protocol": "TCP"
+                            }
+                        ]
+                    },
+                    {
+                        "from": [
+                            {
+                                "podSelector": {}
+                            }
+                        ]
+                    }
+                ],
+                "podSelector": {
+                    "matchLabels": {
+                        "app": "keycloak"
+                    }
+                },
+                "policyTypes": [
+                    "Ingress",
+                    "Egress"
+                ]
+            }
+        },
+        {
+            "apiVersion": "networking.k8s.io/v1",
+            "kind": "NetworkPolicy",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"networking.k8s.io/v1\",\"kind\":\"NetworkPolicy\",\"metadata\":{\"annotations\":{},\"name\":\"default-deny-ingress-egress\",\"namespace\":\"iam\"},\"spec\":{\"podSelector\":{},\"policyTypes\":[\"Ingress\",\"Egress\"]}}\n"
+                },
+                "creationTimestamp": "2026-06-29T05:03:16Z",
+                "generation": 1,
+                "name": "default-deny-ingress-egress",
+                "namespace": "iam",
+                "resourceVersion": "5825572",
+                "uid": "92ae7525-5f85-4ec8-98e2-5b808385ac41"
+            },
+            "spec": {
+                "podSelector": {},
+                "policyTypes": [
+                    "Ingress",
+                    "Egress"
+                ]
+            }
+        },
+        {
+            "apiVersion": "networking.k8s.io/v1",
+            "kind": "NetworkPolicy",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"networking.k8s.io/v1\",\"kind\":\"NetworkPolicy\",\"metadata\":{\"annotations\":{},\"name\":\"allow-middleware-runtime-traffic\",\"namespace\":\"middleware\"},\"spec\":{\"egress\":[{\"to\":[{\"podSelector\":{}}]},{\"ports\":[{\"port\":53,\"protocol\":\"UDP\"},{\"port\":53,\"protocol\":\"TCP\"}],\"to\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"kube-system\"}},\"podSelector\":{\"matchLabels\":{\"k8s-app\":\"kube-dns\"}}}]}],\"ingress\":[{\"from\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"traffic-analysis\"}}},{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"flink\"}}}],\"ports\":[{\"port\":9092,\"protocol\":\"TCP\"},{\"port\":8123,\"protocol\":\"TCP\"},{\"port\":9000,\"protocol\":\"TCP\"},{\"port\":9200,\"protocol\":\"TCP\"},{\"port\":9669,\"protocol\":\"TCP\"},{\"port\":7002,\"protocol\":\"TCP\"}]},{\"from\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"gateway\"}}}],\"ports\":[{\"port\":8080,\"protocol\":\"TCP\"},{\"port\":7002,\"protocol\":\"TCP\"}]},{\"from\":[{\"podSelector\":{}}]}],\"podSelector\":{},\"policyTypes\":[\"Ingress\",\"Egress\"]}}\n"
+                },
+                "creationTimestamp": "2026-06-29T05:03:16Z",
+                "generation": 1,
+                "name": "allow-middleware-runtime-traffic",
+                "namespace": "middleware",
+                "resourceVersion": "5825564",
+                "uid": "f6cb351a-e6fe-4005-843f-19625b3550f7"
+            },
+            "spec": {
+                "egress": [
+                    {
+                        "to": [
+                            {
+                                "podSelector": {}
+                            }
+                        ]
+                    },
+                    {
+                        "ports": [
+                            {
+                                "port": 53,
+                                "protocol": "UDP"
+                            },
+                            {
+                                "port": 53,
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "to": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "kube-system"
+                                    }
+                                },
+                                "podSelector": {
+                                    "matchLabels": {
+                                        "k8s-app": "kube-dns"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "ingress": [
+                    {
+                        "from": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "traffic-analysis"
+                                    }
+                                }
+                            },
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "flink"
+                                    }
+                                }
+                            }
+                        ],
+                        "ports": [
+                            {
+                                "port": 9092,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 8123,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 9000,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 9200,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 9669,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 7002,
+                                "protocol": "TCP"
+                            }
+                        ]
+                    },
+                    {
+                        "from": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "gateway"
+                                    }
+                                }
+                            }
+                        ],
+                        "ports": [
+                            {
+                                "port": 8080,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 7002,
+                                "protocol": "TCP"
+                            }
+                        ]
+                    },
+                    {
+                        "from": [
+                            {
+                                "podSelector": {}
+                            }
+                        ]
+                    }
+                ],
+                "podSelector": {},
+                "policyTypes": [
+                    "Ingress",
+                    "Egress"
+                ]
+            }
+        },
+        {
+            "apiVersion": "networking.k8s.io/v1",
+            "kind": "NetworkPolicy",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"networking.k8s.io/v1\",\"kind\":\"NetworkPolicy\",\"metadata\":{\"annotations\":{},\"name\":\"default-deny-ingress-egress\",\"namespace\":\"middleware\"},\"spec\":{\"podSelector\":{},\"policyTypes\":[\"Ingress\",\"Egress\"]}}\n"
+                },
+                "creationTimestamp": "2026-06-29T05:03:16Z",
+                "generation": 1,
+                "name": "default-deny-ingress-egress",
+                "namespace": "middleware",
+                "resourceVersion": "5825563",
+                "uid": "fae88f97-e617-43ad-b8fa-b19df212b11a"
+            },
+            "spec": {
+                "podSelector": {},
+                "policyTypes": [
+                    "Ingress",
+                    "Egress"
+                ]
+            }
+        },
+        {
+            "apiVersion": "networking.k8s.io/v1",
+            "kind": "NetworkPolicy",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"networking.k8s.io/v1\",\"kind\":\"NetworkPolicy\",\"metadata\":{\"annotations\":{},\"name\":\"allow-minio-proxy-from-apisix\",\"namespace\":\"minio\"},\"spec\":{\"egress\":[{\"ports\":[{\"port\":9000,\"protocol\":\"TCP\"},{\"port\":9001,\"protocol\":\"TCP\"}],\"to\":[{\"podSelector\":{\"matchLabels\":{\"app\":\"minio\"}}}]},{\"ports\":[{\"port\":53,\"protocol\":\"UDP\"},{\"port\":53,\"protocol\":\"TCP\"}],\"to\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"kube-system\"}},\"podSelector\":{\"matchLabels\":{\"k8s-app\":\"kube-dns\"}}}]}],\"ingress\":[{\"from\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"gateway\"}},\"podSelector\":{\"matchLabels\":{\"app\":\"apisix\"}}}],\"ports\":[{\"port\":9002,\"protocol\":\"TCP\"}]}],\"podSelector\":{\"matchLabels\":{\"app\":\"minio-proxy\"}},\"policyTypes\":[\"Ingress\",\"Egress\"]}}\n"
+                },
+                "creationTimestamp": "2026-06-29T05:03:16Z",
+                "generation": 1,
+                "name": "allow-minio-proxy-from-apisix",
+                "namespace": "minio",
+                "resourceVersion": "5825571",
+                "uid": "3c1d5c61-42ff-41f7-95b0-631c8bb9198d"
+            },
+            "spec": {
+                "egress": [
+                    {
+                        "ports": [
+                            {
+                                "port": 9000,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 9001,
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "to": [
+                            {
+                                "podSelector": {
+                                    "matchLabels": {
+                                        "app": "minio"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "ports": [
+                            {
+                                "port": 53,
+                                "protocol": "UDP"
+                            },
+                            {
+                                "port": 53,
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "to": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "kube-system"
+                                    }
+                                },
+                                "podSelector": {
+                                    "matchLabels": {
+                                        "k8s-app": "kube-dns"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "ingress": [
+                    {
+                        "from": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "gateway"
+                                    }
+                                },
+                                "podSelector": {
+                                    "matchLabels": {
+                                        "app": "apisix"
+                                    }
+                                }
+                            }
+                        ],
+                        "ports": [
+                            {
+                                "port": 9002,
+                                "protocol": "TCP"
+                            }
+                        ]
+                    }
+                ],
+                "podSelector": {
+                    "matchLabels": {
+                        "app": "minio-proxy"
+                    }
+                },
+                "policyTypes": [
+                    "Ingress",
+                    "Egress"
+                ]
+            }
+        },
+        {
+            "apiVersion": "networking.k8s.io/v1",
+            "kind": "NetworkPolicy",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"networking.k8s.io/v1\",\"kind\":\"NetworkPolicy\",\"metadata\":{\"annotations\":{},\"name\":\"allow-minio-runtime-traffic\",\"namespace\":\"minio\"},\"spec\":{\"egress\":[{\"to\":[{\"podSelector\":{}}]},{\"ports\":[{\"port\":53,\"protocol\":\"UDP\"},{\"port\":53,\"protocol\":\"TCP\"}],\"to\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"kube-system\"}},\"podSelector\":{\"matchLabels\":{\"k8s-app\":\"kube-dns\"}}}]}],\"ingress\":[{\"from\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"traffic-analysis\"}}},{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"flink\"}}},{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"argo\"}}}],\"ports\":[{\"port\":9000,\"protocol\":\"TCP\"}]},{\"from\":[{\"podSelector\":{}}]}],\"podSelector\":{\"matchLabels\":{\"app\":\"minio\"}},\"policyTypes\":[\"Ingress\",\"Egress\"]}}\n"
+                },
+                "creationTimestamp": "2026-06-29T05:03:16Z",
+                "generation": 1,
+                "name": "allow-minio-runtime-traffic",
+                "namespace": "minio",
+                "resourceVersion": "5825568",
+                "uid": "af799664-dfe1-4302-a910-9312a24c6525"
+            },
+            "spec": {
+                "egress": [
+                    {
+                        "to": [
+                            {
+                                "podSelector": {}
+                            }
+                        ]
+                    },
+                    {
+                        "ports": [
+                            {
+                                "port": 53,
+                                "protocol": "UDP"
+                            },
+                            {
+                                "port": 53,
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "to": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "kube-system"
+                                    }
+                                },
+                                "podSelector": {
+                                    "matchLabels": {
+                                        "k8s-app": "kube-dns"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "ingress": [
+                    {
+                        "from": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "traffic-analysis"
+                                    }
+                                }
+                            },
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "flink"
+                                    }
+                                }
+                            },
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "argo"
+                                    }
+                                }
+                            }
+                        ],
+                        "ports": [
+                            {
+                                "port": 9000,
+                                "protocol": "TCP"
+                            }
+                        ]
+                    },
+                    {
+                        "from": [
+                            {
+                                "podSelector": {}
+                            }
+                        ]
+                    }
+                ],
+                "podSelector": {
+                    "matchLabels": {
+                        "app": "minio"
+                    }
+                },
+                "policyTypes": [
+                    "Ingress",
+                    "Egress"
+                ]
+            }
+        },
+        {
+            "apiVersion": "networking.k8s.io/v1",
+            "kind": "NetworkPolicy",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"networking.k8s.io/v1\",\"kind\":\"NetworkPolicy\",\"metadata\":{\"annotations\":{},\"name\":\"default-deny-ingress-egress\",\"namespace\":\"minio\"},\"spec\":{\"podSelector\":{},\"policyTypes\":[\"Ingress\",\"Egress\"]}}\n"
+                },
+                "creationTimestamp": "2026-06-29T05:03:16Z",
+                "generation": 1,
+                "name": "default-deny-ingress-egress",
+                "namespace": "minio",
+                "resourceVersion": "5825567",
+                "uid": "3ac1ac28-fc7f-4003-8102-e93b9515b5ae"
+            },
+            "spec": {
+                "podSelector": {},
+                "policyTypes": [
+                    "Ingress",
+                    "Egress"
+                ]
+            }
+        },
+        {
+            "apiVersion": "networking.k8s.io/v1",
+            "kind": "NetworkPolicy",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"networking.k8s.io/v1\",\"kind\":\"NetworkPolicy\",\"metadata\":{\"annotations\":{},\"name\":\"allow-apisix-to-control-plane\",\"namespace\":\"traffic-analysis\"},\"spec\":{\"ingress\":[{\"from\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"gateway\"}},\"podSelector\":{\"matchLabels\":{\"app\":\"apisix\"}}}],\"ports\":[{\"port\":80,\"protocol\":\"TCP\"},{\"port\":8080,\"protocol\":\"TCP\"},{\"port\":8081,\"protocol\":\"TCP\"},{\"port\":8082,\"protocol\":\"TCP\"},{\"port\":8083,\"protocol\":\"TCP\"},{\"port\":8084,\"protocol\":\"TCP\"},{\"port\":8085,\"protocol\":\"TCP\"},{\"port\":8086,\"protocol\":\"TCP\"},{\"port\":8087,\"protocol\":\"TCP\"},{\"port\":50051,\"protocol\":\"TCP\"},{\"port\":50053,\"protocol\":\"TCP\"}]}],\"podSelector\":{\"matchExpressions\":[{\"key\":\"app\",\"operator\":\"In\",\"values\":[\"alert-service\",\"asset-service\",\"auth-service\",\"forensics-service\",\"graph-service\",\"ingest-gateway\",\"rule-manager\",\"web-ui\"]}]},\"policyTypes\":[\"Ingress\"]}}\n"
+                },
+                "creationTimestamp": "2026-06-29T05:03:15Z",
+                "generation": 1,
+                "name": "allow-apisix-to-control-plane",
+                "namespace": "traffic-analysis",
+                "resourceVersion": "5825557",
+                "uid": "0011b7ce-6b47-4274-a88a-8f03b56cab55"
+            },
+            "spec": {
+                "ingress": [
+                    {
+                        "from": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "gateway"
+                                    }
+                                },
+                                "podSelector": {
+                                    "matchLabels": {
+                                        "app": "apisix"
+                                    }
+                                }
+                            }
+                        ],
+                        "ports": [
+                            {
+                                "port": 80,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 8080,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 8081,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 8082,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 8083,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 8084,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 8085,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 8086,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 8087,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 50051,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 50053,
+                                "protocol": "TCP"
+                            }
+                        ]
+                    }
+                ],
+                "podSelector": {
+                    "matchExpressions": [
+                        {
+                            "key": "app",
+                            "operator": "In",
+                            "values": [
+                                "alert-service",
+                                "asset-service",
+                                "auth-service",
+                                "forensics-service",
+                                "graph-service",
+                                "ingest-gateway",
+                                "rule-manager",
+                                "web-ui"
+                            ]
+                        }
+                    ]
+                },
+                "policyTypes": [
+                    "Ingress"
+                ]
+            }
+        },
+        {
+            "apiVersion": "networking.k8s.io/v1",
+            "kind": "NetworkPolicy",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"networking.k8s.io/v1\",\"kind\":\"NetworkPolicy\",\"metadata\":{\"annotations\":{},\"name\":\"allow-control-plane-egress-to-runtime\",\"namespace\":\"traffic-analysis\"},\"spec\":{\"egress\":[{\"ports\":[{\"port\":9092,\"protocol\":\"TCP\"},{\"port\":8123,\"protocol\":\"TCP\"},{\"port\":9000,\"protocol\":\"TCP\"},{\"port\":9200,\"protocol\":\"TCP\"},{\"port\":9669,\"protocol\":\"TCP\"},{\"port\":7002,\"protocol\":\"TCP\"}],\"to\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"middleware\"}}}]},{\"ports\":[{\"port\":5432,\"protocol\":\"TCP\"},{\"port\":6379,\"protocol\":\"TCP\"},{\"port\":26379,\"protocol\":\"TCP\"}],\"to\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"databases\"}}}]},{\"ports\":[{\"port\":9000,\"protocol\":\"TCP\"}],\"to\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"minio\"}}}]},{\"ports\":[{\"port\":8443,\"protocol\":\"TCP\"}],\"to\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"iam\"}}}]},{\"ports\":[{\"port\":2746,\"protocol\":\"TCP\"}],\"to\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"argo\"}}}]},{\"ports\":[{\"port\":9080,\"protocol\":\"TCP\"}],\"to\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"gateway\"}},\"podSelector\":{\"matchLabels\":{\"app\":\"apisix\"}}}]}],\"podSelector\":{},\"policyTypes\":[\"Egress\"]}}\n"
+                },
+                "creationTimestamp": "2026-06-29T05:03:16Z",
+                "generation": 1,
+                "name": "allow-control-plane-egress-to-runtime",
+                "namespace": "traffic-analysis",
+                "resourceVersion": "5825559",
+                "uid": "e0596a24-6d3d-40a0-83b6-5cecb48e581c"
+            },
+            "spec": {
+                "egress": [
+                    {
+                        "ports": [
+                            {
+                                "port": 9092,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 8123,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 9000,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 9200,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 9669,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 7002,
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "to": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "middleware"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "ports": [
+                            {
+                                "port": 5432,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 6379,
+                                "protocol": "TCP"
+                            },
+                            {
+                                "port": 26379,
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "to": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "databases"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "ports": [
+                            {
+                                "port": 9000,
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "to": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "minio"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "ports": [
+                            {
+                                "port": 8443,
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "to": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "iam"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "ports": [
+                            {
+                                "port": 2746,
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "to": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "argo"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "ports": [
+                            {
+                                "port": 9080,
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "to": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "gateway"
+                                    }
+                                },
+                                "podSelector": {
+                                    "matchLabels": {
+                                        "app": "apisix"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "podSelector": {},
+                "policyTypes": [
+                    "Egress"
+                ]
+            }
+        },
+        {
+            "apiVersion": "networking.k8s.io/v1",
+            "kind": "NetworkPolicy",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"networking.k8s.io/v1\",\"kind\":\"NetworkPolicy\",\"metadata\":{\"annotations\":{},\"name\":\"allow-dns-egress\",\"namespace\":\"traffic-analysis\"},\"spec\":{\"egress\":[{\"ports\":[{\"port\":53,\"protocol\":\"UDP\"},{\"port\":53,\"protocol\":\"TCP\"}],\"to\":[{\"namespaceSelector\":{\"matchLabels\":{\"kubernetes.io/metadata.name\":\"kube-system\"}},\"podSelector\":{\"matchLabels\":{\"k8s-app\":\"kube-dns\"}}}]}],\"podSelector\":{},\"policyTypes\":[\"Egress\"]}}\n"
+                },
+                "creationTimestamp": "2026-06-29T05:03:15Z",
+                "generation": 1,
+                "name": "allow-dns-egress",
+                "namespace": "traffic-analysis",
+                "resourceVersion": "5825555",
+                "uid": "ab1b4bc0-7c0f-4bcb-811b-dd94b2dca4ea"
+            },
+            "spec": {
+                "egress": [
+                    {
+                        "ports": [
+                            {
+                                "port": 53,
+                                "protocol": "UDP"
+                            },
+                            {
+                                "port": 53,
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "to": [
+                            {
+                                "namespaceSelector": {
+                                    "matchLabels": {
+                                        "kubernetes.io/metadata.name": "kube-system"
+                                    }
+                                },
+                                "podSelector": {
+                                    "matchLabels": {
+                                        "k8s-app": "kube-dns"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "podSelector": {},
+                "policyTypes": [
+                    "Egress"
+                ]
+            }
+        },
+        {
+            "apiVersion": "networking.k8s.io/v1",
+            "kind": "NetworkPolicy",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"networking.k8s.io/v1\",\"kind\":\"NetworkPolicy\",\"metadata\":{\"annotations\":{},\"name\":\"allow-probe-agent-to-ingest\",\"namespace\":\"traffic-analysis\"},\"spec\":{\"ingress\":[{\"from\":[{\"podSelector\":{\"matchLabels\":{\"app\":\"probe-agent\"}}}],\"ports\":[{\"port\":50051,\"protocol\":\"TCP\"}]}],\"podSelector\":{\"matchLabels\":{\"app\":\"ingest-gateway\"}},\"policyTypes\":[\"Ingress\"]}}\n"
+                },
+                "creationTimestamp": "2026-06-29T05:03:15Z",
+                "generation": 1,
+                "name": "allow-probe-agent-to-ingest",
+                "namespace": "traffic-analysis",
+                "resourceVersion": "5825558",
+                "uid": "3f48b98d-7059-4eb8-9892-3a6026b3e9c8"
+            },
+            "spec": {
+                "ingress": [
+                    {
+                        "from": [
+                            {
+                                "podSelector": {
+                                    "matchLabels": {
+                                        "app": "probe-agent"
+                                    }
+                                }
+                            }
+                        ],
+                        "ports": [
+                            {
+                                "port": 50051,
+                                "protocol": "TCP"
+                            }
+                        ]
+                    }
+                ],
+                "podSelector": {
+                    "matchLabels": {
+                        "app": "ingest-gateway"
+                    }
+                },
+                "policyTypes": [
+                    "Ingress"
+                ]
+            }
+        },
+        {
+            "apiVersion": "networking.k8s.io/v1",
+            "kind": "NetworkPolicy",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"networking.k8s.io/v1\",\"kind\":\"NetworkPolicy\",\"metadata\":{\"annotations\":{},\"name\":\"allow-same-namespace\",\"namespace\":\"traffic-analysis\"},\"spec\":{\"egress\":[{\"to\":[{\"podSelector\":{}}]}],\"ingress\":[{\"from\":[{\"podSelector\":{}}]}],\"podSelector\":{},\"policyTypes\":[\"Ingress\",\"Egress\"]}}\n"
+                },
+                "creationTimestamp": "2026-06-29T05:03:15Z",
+                "generation": 1,
+                "name": "allow-same-namespace",
+                "namespace": "traffic-analysis",
+                "resourceVersion": "5825556",
+                "uid": "05bc38d2-1728-47ac-813d-e4f4fb7e4a56"
+            },
+            "spec": {
+                "egress": [
+                    {
+                        "to": [
+                            {
+                                "podSelector": {}
+                            }
+                        ]
+                    }
+                ],
+                "ingress": [
+                    {
+                        "from": [
+                            {
+                                "podSelector": {}
+                            }
+                        ]
+                    }
+                ],
+                "podSelector": {},
+                "policyTypes": [
+                    "Ingress",
+                    "Egress"
+                ]
+            }
+        },
+        {
+            "apiVersion": "networking.k8s.io/v1",
+            "kind": "NetworkPolicy",
+            "metadata": {
+                "annotations": {
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"networking.k8s.io/v1\",\"kind\":\"NetworkPolicy\",\"metadata\":{\"annotations\":{},\"name\":\"default-deny-ingress-egress\",\"namespace\":\"traffic-analysis\"},\"spec\":{\"podSelector\":{},\"policyTypes\":[\"Ingress\",\"Egress\"]}}\n"
+                },
+                "creationTimestamp": "2026-06-29T05:03:15Z",
+                "generation": 1,
+                "name": "default-deny-ingress-egress",
+                "namespace": "traffic-analysis",
+                "resourceVersion": "5825554",
+                "uid": "a5ce6f58-f5f0-4681-97d4-25a59fdd7779"
+            },
+            "spec": {
+                "podSelector": {},
+                "policyTypes": [
+                    "Ingress",
+                    "Egress"
+                ]
+            }
+        }
+    ],
+    "kind": "List",
+    "metadata": {
+        "resourceVersion": ""
+    }
+}

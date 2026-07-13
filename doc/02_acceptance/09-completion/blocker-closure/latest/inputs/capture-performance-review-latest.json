@@ -1,0 +1,114 @@
+{
+  "run_id": "20260701-capture-performance-review-r1",
+  "result": "pass",
+  "generated_at": "2026-07-01T01:23:54+08:00",
+  "input_bootstrap_dir": "doc/02_acceptance/03-performance/bootstrap/latest",
+  "packet_dir": "doc/02_acceptance/runs/20260701-capture-performance-review-r1/capture-performance-review.packet",
+  "stable_packet_dir": "doc/02_acceptance/03-performance/review/latest",
+  "review_required": true,
+  "formal_gate_note": "capture performance review packet only; does not close GATE-P0-03 or GATE-P0-04",
+  "target_count": 2,
+  "review_file_count": 7,
+  "formal_artifact_count": 0,
+  "passed": 6,
+  "total": 6,
+  "blockers": 0,
+  "warnings": 0,
+  "review_summary": {
+    "package_id": "capture_performance_review_packet",
+    "run_id": "20260701-capture-performance-review-r1",
+    "generated_at": "2026-06-30T17:23:53Z",
+    "input_bootstrap_dir": "doc/02_acceptance/03-performance/bootstrap/latest",
+    "source_bootstrap_run_id": "20260630-capture-performance-bootstrap-r1",
+    "review_required": true,
+    "formal_gate_note": "review packet only; does not close GATE-P0-03 or GATE-P0-04",
+    "target_count": 2,
+    "hardware_review_row_count": 2,
+    "traffic_profile_row_count": 2,
+    "review_file_count": 7,
+    "formal_artifact_count": 0,
+    "required_formal_artifacts": [
+      "tests/perf/100g_capture/hardware-inventory.yaml",
+      "tests/perf/100g_capture/traffic-profile.yaml",
+      "tests/perf/100g_capture/results/10x100g-summary.json",
+      "tests/perf/100g_capture/results/512mpps-summary.json"
+    ],
+    "current_context": {
+      "probe_mode": "af_packet",
+      "probe_cpu_core_count": 2,
+      "repo_stress_mbps": 1305.9,
+      "repo_stress_pps": 937403
+    },
+    "review_outputs": [
+      "hardware-review.csv",
+      "traffic-profile-review.csv",
+      "result-summary-worklist.csv",
+      "formal-artifact-manifest.template.json",
+      "operator-approval.template.md",
+      "review-checklist.md",
+      "review-summary.json"
+    ]
+  },
+  "checks": [
+    {
+      "ts": "2026-07-01T01:23:53+08:00",
+      "phase": "input",
+      "name": "bootstrap directory exists",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/03-performance/bootstrap/latest",
+      "artifact": "doc/02_acceptance/03-performance/bootstrap/latest"
+    },
+    {
+      "ts": "2026-07-01T01:23:53+08:00",
+      "phase": "packet",
+      "name": "review packet generated",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "targets=2 files=7",
+      "artifact": "review-summary.json"
+    },
+    {
+      "ts": "2026-07-01T01:23:53+08:00",
+      "phase": "packet",
+      "name": "both performance targets represented",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "10x100g and 512mpps",
+      "artifact": "result-summary-worklist.csv"
+    },
+    {
+      "ts": "2026-07-01T01:23:53+08:00",
+      "phase": "packet",
+      "name": "review worklists present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "hardware/traffic/results",
+      "artifact": "doc/02_acceptance/runs/20260701-capture-performance-review-r1/capture-performance-review.packet"
+    },
+    {
+      "ts": "2026-07-01T01:23:53+08:00",
+      "phase": "packet",
+      "name": "manifest approval and checklist present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "manifest/approval/checklist",
+      "artifact": "doc/02_acceptance/runs/20260701-capture-performance-review-r1/capture-performance-review.packet"
+    },
+    {
+      "ts": "2026-07-01T01:23:53+08:00",
+      "phase": "safety",
+      "name": "review packet does not create formal artifacts",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "formal_artifact_count=0",
+      "artifact": "review-summary.json"
+    }
+  ]
+}

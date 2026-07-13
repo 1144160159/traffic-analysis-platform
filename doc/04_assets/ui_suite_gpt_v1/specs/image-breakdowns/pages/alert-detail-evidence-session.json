@@ -1,0 +1,1024 @@
+{
+  "id": "alert-detail-evidence-session",
+  "order": 22,
+  "route": "/alerts",
+  "resolved_route": "/alerts/AL-20260620-000123?evidenceView=session",
+  "type": "menu-state",
+  "parent": "alerts",
+  "target_ui": "doc/04_assets/ui_suite_gpt_v1/screens/pages/alert-detail-evidence-session.png",
+  "evidence_dir": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-session",
+  "status": "evidence-ready",
+  "status_reason": "r160 accepts alert-detail-evidence-session as a small popup with top-right close control.",
+  "updated_at": "2026-07-09T19:46:24.903198+08:00",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "image_tag": "traffic/web-ui:ui-alert-detail-evidence-session-popup-close-20260709-r160",
+  "production_url": "http://10.0.5.8:30180/alerts/AL-20260620-000123?__codex_ui_breakdown_production=1&__codex_page_id=alert-detail-evidence-session&evidenceView=session&__capture=r160-close-final&windowsCdpEvidenceTs=1783596176357",
+  "target_interpretation": "User corrected this state as a small popup. The target PNG remains the content reference, while the final acceptance uses the small-popup crop and close interaction evidence.",
+  "global_small_popup_constraint": "All small popups must expose a top-right close X; clicking it must dismiss the popup without leaving the parent business page.",
+  "regions": [
+    {
+      "id": "canvas",
+      "label": "实现截图画布",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "role": "viewport",
+      "notes": "Windows Chrome CDP screenshot, 1920x1080."
+    },
+    {
+      "id": "topbar",
+      "label": "AppShell 顶栏",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 72
+      },
+      "role": "appshell",
+      "notes": "小弹窗不隐藏公共顶栏。"
+    },
+    {
+      "id": "sidebar",
+      "label": "AppShell 左侧菜单",
+      "bbox": {
+        "x": 0,
+        "y": 72,
+        "w": 171,
+        "h": 933
+      },
+      "role": "appshell-menu",
+      "notes": "进入详情态仍选中 威胁分析 / 告警中心。"
+    },
+    {
+      "id": "bottombar",
+      "label": "AppShell 底部状态栏",
+      "bbox": {
+        "x": 0,
+        "y": 1005,
+        "w": 1920,
+        "h": 75
+      },
+      "role": "appshell-status",
+      "notes": "小弹窗未遮挡底部状态栏。"
+    },
+    {
+      "id": "alert-detail-underlay",
+      "label": "告警详情父页面",
+      "bbox": {
+        "x": 178,
+        "y": 72,
+        "w": 1733,
+        "h": 933
+      },
+      "role": "parent-page",
+      "notes": "弹窗关闭后保留该详情页。"
+    },
+    {
+      "id": "popup-focus-host",
+      "label": "Session 证据弹窗承载层",
+      "bbox": {
+        "x": 171,
+        "y": 72,
+        "w": 1749,
+        "h": 933
+      },
+      "role": "popup-host",
+      "notes": "固定在业务区内，不占满 Windows/浏览器。"
+    },
+    {
+      "id": "popup-card",
+      "label": "Session 证据小弹窗",
+      "bbox": {
+        "x": 469,
+        "y": 214,
+        "w": 1152,
+        "h": 648
+      },
+      "role": "small-popup",
+      "notes": "1280x720 CSS px，约占截图 60% 宽和 60% 高。"
+    },
+    {
+      "id": "popup-close",
+      "label": "右上角关闭叉号",
+      "bbox": {
+        "x": 1575,
+        "y": 229,
+        "w": 31,
+        "h": 31
+      },
+      "role": "close-button",
+      "notes": "aria-label/title 均为 关闭弹窗，点击后弹窗消失。"
+    },
+    {
+      "id": "tabs",
+      "label": "证据类型 Tab",
+      "bbox": {
+        "x": 471,
+        "y": 216,
+        "w": 1149,
+        "h": 88
+      },
+      "role": "tabs",
+      "notes": "全部 6 / PCAP 1 / Session 2 / 日志 1 / 图谱路径 1 / 文件 1，Session 2 active。"
+    },
+    {
+      "id": "session-table",
+      "label": "Session 证据表格",
+      "bbox": {
+        "x": 485,
+        "y": 304,
+        "w": 1121,
+        "h": 539
+      },
+      "role": "table",
+      "notes": "两条 Session 证据，列宽在小弹窗内自适应。"
+    },
+    {
+      "id": "session-flow",
+      "label": "Session 事件链",
+      "bbox": {
+        "x": 486,
+        "y": 584,
+        "w": 1118,
+        "h": 128
+      },
+      "role": "business-dynamic-diagram",
+      "notes": "React/CSS 根据 sessionEvidence.timeline 渲染，非截图资源。"
+    },
+    {
+      "id": "footer-link",
+      "name": "查看全部 Session",
+      "bbox": {
+        "x": 46,
+        "y": 834,
+        "w": 1825,
+        "h": 157
+      },
+      "purpose": "打开完整 Session 证据列表"
+    }
+  ],
+  "runtime_bounding_boxes": {
+    ".taf-topbar": {
+      "selector": ".taf-topbar",
+      "css_bbox": {
+        "x": 0,
+        "y": 0,
+        "width": 2133,
+        "height": 80,
+        "right": 2133,
+        "bottom": 80
+      },
+      "screenshot_bbox": [
+        0,
+        0,
+        1920,
+        72
+      ],
+      "display": "grid",
+      "visibility": "visible",
+      "overflow_x": "visible",
+      "overflow_y": "visible"
+    },
+    ".taf-sidebar": {
+      "selector": ".taf-sidebar",
+      "css_bbox": {
+        "x": 0,
+        "y": 80,
+        "width": 190,
+        "height": 1037,
+        "right": 190,
+        "bottom": 1117
+      },
+      "screenshot_bbox": [
+        0,
+        72,
+        171,
+        933
+      ],
+      "display": "flex",
+      "visibility": "visible",
+      "overflow_x": "visible",
+      "overflow_y": "visible"
+    },
+    ".taf-bottombar": {
+      "selector": ".taf-bottombar",
+      "css_bbox": {
+        "x": 0,
+        "y": 1117,
+        "width": 2133,
+        "height": 83,
+        "right": 2133,
+        "bottom": 1200
+      },
+      "screenshot_bbox": [
+        0,
+        1005,
+        1920,
+        75
+      ],
+      "display": "flex",
+      "visibility": "visible",
+      "overflow_x": "hidden",
+      "overflow_y": "hidden"
+    },
+    ".taf-main": {
+      "selector": ".taf-main",
+      "css_bbox": {
+        "x": 190,
+        "y": 80,
+        "width": 1943,
+        "height": 1037,
+        "right": 2133,
+        "bottom": 1117
+      },
+      "screenshot_bbox": [
+        171,
+        72,
+        1749,
+        933
+      ],
+      "display": "block",
+      "visibility": "visible",
+      "overflow_x": "hidden",
+      "overflow_y": "hidden"
+    },
+    ".taf-alert-detail-page": {
+      "selector": ".taf-alert-detail-page",
+      "css_bbox": {
+        "x": 198,
+        "y": 80,
+        "width": 1925,
+        "height": 1037,
+        "right": 2123,
+        "bottom": 1117
+      },
+      "screenshot_bbox": [
+        178,
+        72,
+        1733,
+        933
+      ],
+      "display": "flex",
+      "visibility": "visible",
+      "overflow_x": "hidden",
+      "overflow_y": "hidden"
+    },
+    ".taf-alert-evidence-session-focus": {
+      "selector": ".taf-alert-evidence-session-focus",
+      "css_bbox": {
+        "x": 190,
+        "y": 80,
+        "width": 1943,
+        "height": 1037,
+        "right": 2133,
+        "bottom": 1117
+      },
+      "screenshot_bbox": [
+        171,
+        72,
+        1749,
+        933
+      ],
+      "display": "flex",
+      "visibility": "visible",
+      "overflow_x": "hidden",
+      "overflow_y": "hidden"
+    },
+    ".taf-alert-evidence-session-card": {
+      "selector": ".taf-alert-evidence-session-card",
+      "css_bbox": {
+        "x": 521,
+        "y": 238,
+        "width": 1280,
+        "height": 720,
+        "right": 1801,
+        "bottom": 958
+      },
+      "screenshot_bbox": [
+        469,
+        214,
+        1152,
+        648
+      ],
+      "display": "grid",
+      "visibility": "visible",
+      "overflow_x": "hidden",
+      "overflow_y": "hidden"
+    },
+    ".taf-alert-evidence-session-close": {
+      "selector": ".taf-alert-evidence-session-close",
+      "css_bbox": {
+        "x": 1750,
+        "y": 254,
+        "width": 34,
+        "height": 34,
+        "right": 1784,
+        "bottom": 288
+      },
+      "screenshot_bbox": [
+        1575,
+        229,
+        31,
+        31
+      ],
+      "display": "flex",
+      "visibility": "visible",
+      "overflow_x": "visible",
+      "overflow_y": "visible"
+    },
+    ".taf-alert-evidence-session-tabs": {
+      "selector": ".taf-alert-evidence-session-tabs",
+      "css_bbox": {
+        "x": 523,
+        "y": 240,
+        "width": 1277,
+        "height": 98,
+        "right": 1800,
+        "bottom": 338
+      },
+      "screenshot_bbox": [
+        471,
+        216,
+        1149,
+        88
+      ],
+      "display": "grid",
+      "visibility": "visible",
+      "overflow_x": "hidden",
+      "overflow_y": "hidden"
+    },
+    ".taf-alert-evidence-session-table": {
+      "selector": ".taf-alert-evidence-session-table",
+      "css_bbox": {
+        "x": 539,
+        "y": 338,
+        "width": 1245,
+        "height": 599,
+        "right": 1784,
+        "bottom": 937
+      },
+      "screenshot_bbox": [
+        485,
+        304,
+        1121,
+        539
+      ],
+      "display": "grid",
+      "visibility": "visible",
+      "overflow_x": "hidden",
+      "overflow_y": "hidden"
+    },
+    ".taf-alert-evidence-session-flow": {
+      "selector": ".taf-alert-evidence-session-flow",
+      "css_bbox": {
+        "x": 540,
+        "y": 649,
+        "width": 1242,
+        "height": 142,
+        "right": 1783,
+        "bottom": 791
+      },
+      "screenshot_bbox": [
+        486,
+        584,
+        1118,
+        128
+      ],
+      "display": "grid",
+      "visibility": "visible",
+      "overflow_x": "hidden",
+      "overflow_y": "hidden"
+    }
+  },
+  "texts": [
+    {
+      "value": "告警详情",
+      "must_match": true,
+      "type": "parent-heading"
+    },
+    {
+      "value": "证据链（6）",
+      "must_match": true,
+      "type": "popup-heading"
+    },
+    {
+      "value": "关闭弹窗",
+      "must_match": true,
+      "type": "close-button-title"
+    },
+    {
+      "value": "全部 6",
+      "must_match": true,
+      "type": "tab"
+    },
+    {
+      "value": "PCAP 1",
+      "must_match": true,
+      "type": "tab"
+    },
+    {
+      "value": "Session 2",
+      "must_match": true,
+      "type": "tab-active"
+    },
+    {
+      "value": "日志 1",
+      "must_match": true,
+      "type": "tab"
+    },
+    {
+      "value": "图谱路径 1",
+      "must_match": true,
+      "type": "tab"
+    },
+    {
+      "value": "文件 1",
+      "must_match": true,
+      "type": "tab"
+    },
+    {
+      "value": "证据类型",
+      "must_match": true,
+      "type": "table-header"
+    },
+    {
+      "value": "Session ID",
+      "must_match": true,
+      "type": "table-header"
+    },
+    {
+      "value": "五元组",
+      "must_match": true,
+      "type": "table-header"
+    },
+    {
+      "value": "请求/响应摘要",
+      "must_match": true,
+      "type": "table-header"
+    },
+    {
+      "value": "字节数",
+      "must_match": true,
+      "type": "table-header"
+    },
+    {
+      "value": "持续时间",
+      "must_match": true,
+      "type": "table-header"
+    },
+    {
+      "value": "状态",
+      "must_match": true,
+      "type": "table-header"
+    },
+    {
+      "value": "操作",
+      "must_match": true,
+      "type": "table-header"
+    },
+    {
+      "value": "session-20260620-000123.json",
+      "must_match": true,
+      "type": "row-link"
+    },
+    {
+      "value": "172.16.5.10:443 -> 185.22.14.9:8443 / TCP",
+      "must_match": true,
+      "type": "tuple"
+    },
+    {
+      "value": "异常长连接，双向持续传输，SNI 缺失",
+      "must_match": true,
+      "type": "summary"
+    },
+    {
+      "value": "1.2 MB",
+      "must_match": true,
+      "type": "bytes"
+    },
+    {
+      "value": "12m 38s",
+      "must_match": true,
+      "type": "duration"
+    },
+    {
+      "value": "已生成",
+      "must_match": true,
+      "type": "status"
+    },
+    {
+      "value": "session-20260620-000124.json",
+      "must_match": true,
+      "type": "row-link"
+    },
+    {
+      "value": "10.20.4.18:51514 -> 185.22.14.9:443 / TCP",
+      "must_match": true,
+      "type": "tuple"
+    },
+    {
+      "value": "周期心跳，每 30s 上行小包",
+      "must_match": true,
+      "type": "summary"
+    },
+    {
+      "value": "768 KB",
+      "must_match": true,
+      "type": "bytes"
+    },
+    {
+      "value": "08m 16s",
+      "must_match": true,
+      "type": "duration"
+    },
+    {
+      "value": "03:31 建连",
+      "must_match": true,
+      "type": "flow"
+    },
+    {
+      "value": "03:34 心跳",
+      "must_match": true,
+      "type": "flow"
+    },
+    {
+      "value": "03:43 切片关联",
+      "must_match": true,
+      "type": "flow"
+    },
+    {
+      "value": "关联 PCAP: AL-20260620-000123.pcap",
+      "must_match": true,
+      "type": "flow-link"
+    },
+    {
+      "value": "查看全部 Session 2 项",
+      "must_match": true,
+      "type": "footer-link"
+    }
+  ],
+  "components": [
+    {
+      "id": "session-evidence-small-popup",
+      "type": "custom React small popup",
+      "implementation": "AlertEvidenceSessionFocusView",
+      "data_source": "fetchAlertDetailSnapshot(alertId) with typed fallback",
+      "close_behavior": "top-right button invokes onClose and unmounts the popup while keeping AlertDetailPage visible",
+      "refresh": "30s outside visual breakdown mode",
+      "adaptive_strategy": "fixed business-area host plus max 1280x720 card constrained by var(--taf-window-inner-width/height)"
+    },
+    {
+      "id": "popup-close-button",
+      "type": "independent icon button",
+      "implementation": "AntD CloseOutlined",
+      "data_source": "local popup state",
+      "close_behavior": "click sets sessionEvidencePopupOpen=false"
+    },
+    {
+      "id": "session-table",
+      "type": "CSS grid table",
+      "implementation": "visibleSessions from row.sessionEvidence",
+      "data_source": "sessionEvidence typed API/fallback rows",
+      "refresh": "30s outside visual breakdown mode"
+    },
+    {
+      "id": "session-flow",
+      "type": "business dynamic diagram",
+      "implementation": "React/CSS dashed timeline nodes",
+      "data_source": "sessionEvidence.timeline + linkedPcap",
+      "refresh": "30s outside visual breakdown mode"
+    },
+    {
+      "id": "EvidenceTabs",
+      "file": "web/ui/src/pages/AlertDetailPage.tsx",
+      "role": "evidence category tabs",
+      "data_source": "evidence type counts"
+    },
+    {
+      "id": "SessionTimeline",
+      "file": "web/ui/src/pages/AlertDetailPage.tsx",
+      "role": "session lifecycle and linked PCAP",
+      "data_source": "timeline and linkedPcap"
+    }
+  ],
+  "business_dynamic_diagrams": [
+    {
+      "id": "session-flow",
+      "category": "状态/流程图",
+      "allowed_implementation": "React/CSS/SVG/canvas/ECharts data-driven component",
+      "implemented_by": "React/CSS grid and dashed connector in AlertEvidenceSessionFocusView",
+      "data_source": "AlertDetailSessionEvidence.timeline from API adapter or typed fallback",
+      "field_mapping": {
+        "time": "timeline[].time",
+        "label": "timeline[].label",
+        "linked_pcap": "linkedPcap",
+        "rows": "sessionEvidence[]"
+      },
+      "refresh": "fetchAlertDetailSnapshot refetches every 30s when not in visual breakdown mode",
+      "adaptive_strategy": "flow nodes use grid/flex within popup card; full text is available via title attributes"
+    }
+  ],
+  "icons": [
+    {
+      "icon": "SafetyCertificateOutlined",
+      "location": "session-table",
+      "semantic": "Session 证据"
+    },
+    {
+      "icon": "HistoryOutlined",
+      "location": "session-table",
+      "semantic": "会话回放"
+    },
+    {
+      "icon": "FileTextOutlined",
+      "location": "session-table",
+      "semantic": "会话记录"
+    },
+    {
+      "icon": "EyeOutlined",
+      "location": "session-table",
+      "semantic": "查看详情"
+    },
+    {
+      "icon": "LinkOutlined",
+      "location": "session-flow",
+      "semantic": "关联 PCAP"
+    },
+    {
+      "icon": "CloseOutlined",
+      "location": "popup-close",
+      "semantic": "关闭证据面板"
+    }
+  ],
+  "resource_policy": {
+    "target_png_used_as_runtime_asset": false,
+    "business_diagram_as_screenshot": false,
+    "forbidden_resource_markers": []
+  },
+  "runtime": {
+    "url": "http://10.0.5.8:30180/alerts/AL-20260620-000123?__codex_ui_breakdown_production=1&__codex_page_id=alert-detail-evidence-session&evidenceView=session&__capture=r160-close-final&windowsCdpEvidenceTs=1783596176357",
+    "final_url": "http://10.0.5.8:30180/alerts/AL-20260620-000123?__codex_ui_breakdown_production=1&__codex_page_id=alert-detail-evidence-session&evidenceView=session&__capture=r160-close-final&windowsCdpEvidenceTs=1783596176357",
+    "browser_backend": "Windows Chrome CDP",
+    "cdp_url": "http://127.0.0.1:9224",
+    "image_tag": "traffic/web-ui:ui-alert-detail-evidence-session-popup-close-20260709-r160",
+    "runtime_clean": true,
+    "console_errors": [],
+    "page_errors": [],
+    "requestfailed": [],
+    "http_4xx_5xx": [],
+    "missing_key_texts": [],
+    "root_overflow": {
+      "scroll_width": 2133,
+      "client_width": 2133,
+      "scroll_height": 1200,
+      "client_height": 1200,
+      "horizontal_overflow": false,
+      "vertical_overflow": false
+    },
+    "svg_count": 68,
+    "canvas_count": 0,
+    "echarts_count": 0,
+    "appshell_visible": {
+      "topbar": true,
+      "sidebar": true,
+      "bottombar": true
+    },
+    "selected_menu_candidates": [
+      {
+        "text": "威胁分析",
+        "class": "taf-sidebar__group is-active",
+        "ariaCurrent": ""
+      },
+      {
+        "text": "告警中心128",
+        "class": "taf-sidebar__item is-active",
+        "ariaCurrent": "page"
+      }
+    ]
+  },
+  "popup_gate": {
+    "small_popup_assertion": {
+      "card_not_full_width": true,
+      "card_not_full_height": true,
+      "card_width_ratio": 0.6001,
+      "card_height_ratio": 0.6,
+      "focus_hosts_popup": true,
+      "focus_not_overflowing_viewport": true
+    },
+    "close_button_assertion": {
+      "visible": true,
+      "top_right": true,
+      "aria_label": "关闭弹窗",
+      "title": "关闭弹窗"
+    },
+    "close_interaction": {
+      "click_error": null,
+      "after_close": {
+        "popup_absent": true,
+        "alert_detail_still_visible": true,
+        "session_popup_text_absent": true,
+        "url": "http://10.0.5.8:30180/alerts/AL-20260620-000123?__codex_ui_breakdown_production=1&__codex_page_id=alert-detail-evidence-session&evidenceView=session&__capture=r160-close-final&windowsCdpEvidenceTs=1783596176357"
+      },
+      "screenshot": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-session/interaction-r160-close-final.png",
+      "interaction_alias": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-session/interaction.png"
+    }
+  },
+  "metrics": {
+    "target_id": "alert-detail-evidence-session",
+    "route": "/alerts/AL-20260620-000123?evidenceView=session",
+    "status": "pass",
+    "generated_at": "2026-07-09T19:23:43.929676+08:00",
+    "desktop_chrome_backend_status": "pass",
+    "source_image": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-session/target-business-r160-close-final.png",
+    "actual_screenshot": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-session/implementation-business-r160-close-final.png",
+    "diff_image": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-session/diff-business-r160-close-final.png",
+    "viewport": {
+      "width": 1152,
+      "height": 648
+    },
+    "visual_diff": {
+      "size_ok": true,
+      "source_width": 1152,
+      "source_height": 648,
+      "actual_width": 1152,
+      "actual_height": 648,
+      "compared_pixels": 746496,
+      "total_pixels": 746496,
+      "mismatch_pixels": 63557,
+      "pixel_mismatch_ratio": 0.08514044281550069,
+      "max_pixel_ratio": 0.35,
+      "channel_tolerance": 64,
+      "max_channel_delta": 255
+    },
+    "acceptance_mode": "business-popup-crop-and-interaction",
+    "target_interpretation": "User corrected alert-detail-evidence-session as a small popup; full-screen target canvas is used as content reference only, not as full-viewport acceptance.",
+    "production_url": "http://10.0.5.8:30180",
+    "image_tag": "traffic/web-ui:ui-alert-detail-evidence-session-popup-close-20260709-r160",
+    "viewport_full": {
+      "width": 1920,
+      "height": 1080
+    },
+    "implementation_full": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-session/implementation-r160-close-final.png",
+    "interaction_screenshot": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-session/interaction-r160-close-final.png",
+    "business_crop": {
+      "target": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-session/target-business-r160-close-final.png",
+      "implementation": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-session/implementation-business-r160-close-final.png",
+      "diff": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-session/diff-business-r160-close-final.png",
+      "source_target_box": [
+        9,
+        20,
+        1910,
+        1063
+      ],
+      "implementation_card_bbox": {
+        "selector": ".taf-alert-evidence-session-card",
+        "x": 521,
+        "y": 238,
+        "width": 1280,
+        "height": 720,
+        "right": 1801,
+        "bottom": 958,
+        "display": "grid",
+        "visibility": "visible",
+        "overflow_x": "hidden",
+        "overflow_y": "hidden"
+      }
+    },
+    "runtime_gate": {
+      "status": "pass",
+      "no_console_errors": true,
+      "no_page_errors": true,
+      "no_requestfailed": true,
+      "no_http_4xx_5xx": true,
+      "no_forbidden_target_resources": true,
+      "no_overflow": true,
+      "text_hover_complete": true,
+      "appshell_visible": {
+        "topbar": true,
+        "sidebar": true,
+        "bottombar": true
+      },
+      "selected_menu_candidates": [
+        {
+          "text": "威胁分析",
+          "class": "taf-sidebar__group is-active",
+          "ariaCurrent": ""
+        },
+        {
+          "text": "告警中心128",
+          "class": "taf-sidebar__item is-active",
+          "ariaCurrent": "page"
+        }
+      ]
+    },
+    "popup_gate": {
+      "small_popup_assertion": {
+        "card_not_full_width": true,
+        "card_not_full_height": true,
+        "card_width_ratio": 0.6001,
+        "card_height_ratio": 0.6,
+        "focus_hosts_popup": true,
+        "focus_not_overflowing_viewport": true
+      },
+      "close_button_assertion": {
+        "visible": true,
+        "top_right": true,
+        "aria_label": "关闭弹窗",
+        "title": "关闭弹窗"
+      },
+      "close_interaction": {
+        "click_error": null,
+        "after_close": {
+          "popup_absent": true,
+          "alert_detail_still_visible": true,
+          "session_popup_text_absent": true,
+          "url": "http://10.0.5.8:30180/alerts/AL-20260620-000123?__codex_ui_breakdown_production=1&__codex_page_id=alert-detail-evidence-session&evidenceView=session&__capture=r160-close-final&windowsCdpEvidenceTs=1783596176357"
+        },
+        "screenshot": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-session/interaction-r160-close-final.png",
+        "interaction_alias": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-session/interaction.png"
+      }
+    }
+  },
+  "supersedes": {
+    "previous_image_tag": "traffic/web-ui:ui-alert-detail-evidence-session-visual-20260709-r155",
+    "reason": "r155 treated the state as a near-full-screen focus panel. User clarified it must be a small popup with a top-right close X."
+  },
+  "category": "pages",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/alert-detail-evidence-session.png",
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "observation": {
+    "layout": "Full-viewport Session evidence panel",
+    "business_focus": "Two Session rows with five-tuples, summaries, metrics, status, actions and linked PCAP timeline",
+    "current_state": "Session 2 active",
+    "acceptance_scope": "Breakdown plus independent Windows Chrome runtime, close interaction and visual diff"
+  },
+  "tokens": [
+    {
+      "name": "page-bg",
+      "value": "#03111c",
+      "usage": "画布"
+    },
+    {
+      "name": "panel-bg",
+      "value": "rgba(6,28,43,0.86)",
+      "usage": "Session 面板"
+    },
+    {
+      "name": "panel-strong-bg",
+      "value": "#071f32",
+      "usage": "表头和时间轴"
+    },
+    {
+      "name": "border-weak",
+      "value": "rgba(56,151,201,0.22)",
+      "usage": "表格线"
+    },
+    {
+      "name": "active-blue",
+      "value": "#1e9cff",
+      "usage": "激活和链接"
+    },
+    {
+      "name": "text-primary",
+      "value": "#eaf7ff",
+      "usage": "主文字"
+    },
+    {
+      "name": "text-secondary",
+      "value": "#9db9c9",
+      "usage": "辅助文字"
+    },
+    {
+      "name": "success",
+      "value": "#36d66b",
+      "usage": "已生成"
+    },
+    {
+      "name": "info",
+      "value": "#18a8ff",
+      "usage": "操作和时间点"
+    },
+    {
+      "name": "panel-radius",
+      "value": "6px",
+      "usage": "面板圆角"
+    },
+    {
+      "name": "control-radius",
+      "value": "4px",
+      "usage": "控件圆角"
+    },
+    {
+      "name": "panel-gap",
+      "value": "8px",
+      "usage": "间距"
+    }
+  ],
+  "interactions": [
+    {
+      "control": "session-tab",
+      "trigger": "click",
+      "state": "selected",
+      "expected": "Session 2 激活"
+    },
+    {
+      "control": "replay",
+      "trigger": "click history",
+      "state": "replay-open",
+      "expected": "打开第一条会话回放"
+    },
+    {
+      "control": "record",
+      "trigger": "click file",
+      "state": "record-open",
+      "expected": "打开第二条会话记录"
+    },
+    {
+      "control": "view",
+      "trigger": "click eye",
+      "state": "detail-open",
+      "expected": "打开会话详情"
+    },
+    {
+      "control": "linked-pcap",
+      "trigger": "click",
+      "state": "navigated",
+      "expected": "打开关联 PCAP"
+    },
+    {
+      "control": "view-all",
+      "trigger": "click",
+      "state": "list-open",
+      "expected": "打开全部 Session"
+    },
+    {
+      "control": "close",
+      "trigger": "click close",
+      "state": "closed",
+      "expected": "面板关闭且告警详情仍可见"
+    }
+  ],
+  "implementation": {
+    "source": "/alerts/alert-default-1782752318016-1dd589c4",
+    "mode": "production-route",
+    "route": "/alerts/:alertId",
+    "pages": [
+      "web/ui/src/pages/AlertDetailPage.tsx"
+    ],
+    "components": [
+      "AlertEvidenceSessionFocusView",
+      "AlertDetailEvidenceRow.sessionEvidence"
+    ],
+    "services": [
+      "web/ui/src/services/alertDetailApi.ts",
+      "web/ui/src/services/api.ts"
+    ],
+    "resolved_path": "/alerts/alert-default-1782752318016-1dd589c4",
+    "route_state": {},
+    "note": "implementation.png is captured from the real APISIX/Web UI production route through Windows Chrome CDP. It is not a raster replay of target.png."
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-session/target.png",
+    "implementation": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-session/implementation.png",
+    "diff": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-session/diff.png",
+    "metrics": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-session/metrics.json",
+    "interaction": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-session/interaction.png",
+    "evidence_mode": "production-route",
+    "capture_meta": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-session/capture-meta.json",
+    "cdp_version": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-session/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-session/cdp-list.json",
+    "production_route_report": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-session/production-route-report.json",
+    "url": "http://10.0.5.8:30180/alerts/alert-default-1782752318016-1dd589c4?windowsCdpEvidenceTs=1783853639939#codex_smoke_token=<redacted>",
+    "final_url": "http://10.0.5.8:30180/alerts/alert-default-1782752318016-1dd589c4?windowsCdpEvidenceTs=1783853639939",
+    "verification": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-session/verification.json"
+  },
+  "accepted": false,
+  "differences": [
+    {
+      "type": "production-evidence-scope",
+      "location": "/alerts/alert-default-1782752318016-1dd589c4",
+      "current": "implementation.png is captured from the real APISIX/Web UI route in Windows Chrome CDP",
+      "expected": "no target.png raster replay is used as implementation evidence",
+      "status": "documented"
+    },
+    {
+      "type": "production-state-mapping",
+      "location": "/alerts/alert-default-1782752318016-1dd589c4",
+      "current": "no dedicated production state query is implemented for alert-detail-evidence-session; captured host route alert-detail",
+      "expected": "target image has a deterministic implemented route state or interaction mapping",
+      "status": "open"
+    }
+  ],
+  "unresolved": [
+    "production-state-mapping:/alerts/alert-default-1782752318016-1dd589c4"
+  ]
+}

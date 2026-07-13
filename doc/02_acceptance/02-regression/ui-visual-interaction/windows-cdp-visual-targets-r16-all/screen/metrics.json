@@ -1,0 +1,28 @@
+{
+  "target_id": "screen",
+  "route": "/screen",
+  "status": "fail",
+  "generated_at": "2026-07-03T20:12:29.701184+08:00",
+  "desktop_chrome_backend_status": "pass",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/screen.png",
+  "actual_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-visual-targets-r16-all/screen/actual-1920.png",
+  "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-visual-targets-r16-all/screen/diff-1920.png",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "visual_diff": {
+    "size_ok": true,
+    "source_width": 1920,
+    "source_height": 1080,
+    "actual_width": 1920,
+    "actual_height": 1080,
+    "compared_pixels": 2073600,
+    "total_pixels": 2073600,
+    "mismatch_pixels": 2073543,
+    "pixel_mismatch_ratio": 0.9999725115740741,
+    "max_pixel_ratio": 0.015,
+    "channel_tolerance": 0,
+    "max_channel_delta": 255
+  }
+}

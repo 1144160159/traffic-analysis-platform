@@ -1,0 +1,156 @@
+{
+  "package_id": "desktop_chrome_bridge_execution_request",
+  "result": "ready_for_trusted_context",
+  "generated_at": "2026-07-02T20:12:54.621Z",
+  "readiness_checks": [
+    {
+      "id": "windows_tunnel_preflight",
+      "label": "Windows localhost tunnel endpoints are reachable",
+      "path": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-tunnel-channel-preflight-latest.json",
+      "exists": true,
+      "valid": true,
+      "passed": true,
+      "result": "pass",
+      "detail": "requires 127.0.0.1:25173/25174/25175 with Windows proxy bypass"
+    },
+    {
+      "id": "windows_host_preflight",
+      "label": "Windows host has Chrome/Codex/VSCode and bridge client files",
+      "path": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-desktop-bridge-host-preflight-latest.json",
+      "exists": true,
+      "valid": true,
+      "passed": true,
+      "result": "pass",
+      "detail": "chrome_clients=2 chrome_processes=36"
+    },
+    {
+      "id": "windows_runtime_preflight",
+      "label": "Windows Codex bridge runtime prerequisites are present",
+      "path": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-codex-bridge-runtime-preflight-latest.json",
+      "exists": true,
+      "valid": true,
+      "passed": true,
+      "result": "pass",
+      "detail": "chrome_clients=2 processes={\"chrome\":18,\"codex\":10,\"code\":18}"
+    },
+    {
+      "id": "ssh_privilege_preflight",
+      "label": "Windows SSH privilege probe narrows ordinary-SSH boundary",
+      "path": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-ssh-privilege-preflight-latest.json",
+      "exists": true,
+      "valid": true,
+      "passed": true,
+      "result": "pass",
+      "detail": "high_integrity=true privileges=24"
+    },
+    {
+      "id": "payload_selftest",
+      "label": "Desktop Chrome bridge payload self-test passes",
+      "path": "doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-payload-selftest-latest.json",
+      "exists": true,
+      "valid": true,
+      "passed": true,
+      "result": "pass",
+      "detail": "checks=21/21"
+    },
+    {
+      "id": "tool_call_template",
+      "label": "Outer MCP tool-call template is ready",
+      "path": "doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-tool-call-latest.json",
+      "exists": true,
+      "valid": true,
+      "passed": true,
+      "result": "pass",
+      "detail": "tool=mcp__codex_desktop_node_repl__js checks=9/9"
+    },
+    {
+      "id": "ui_preflight_batch",
+      "label": "UI preflight is aligned to the Windows tunnel capture batch",
+      "path": "doc/02_acceptance/02-regression/ui-visual-interaction-preflight-latest.json",
+      "exists": true,
+      "valid": true,
+      "passed": true,
+      "result": "blocked",
+      "detail": "ui_result=blocked visual=0/30 interaction=0/28"
+    }
+  ],
+  "boundary_checks": [
+    {
+      "id": "codex_bridge_tool_surface",
+      "label": "Local Codex bridge plugin/proxy tool surface is diagnosed",
+      "path": "doc/02_acceptance/02-regression/ui-visual-interaction/codex-bridge-tool-surface-preflight-latest.json",
+      "exists": true,
+      "valid": true,
+      "passed": true,
+      "result": "pass",
+      "detail": "plugin=true backend_open=false tools_list=error: [Errno 111] Connection refused session_tools=not_exposed_in_current_chat_tool_surface"
+    },
+    {
+      "id": "windows_node_repl_active_execs",
+      "label": "Windows active_execs/proxy channel probe is current",
+      "path": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-node-repl-active-execs-preflight-latest.json",
+      "exists": true,
+      "valid": true,
+      "passed": true,
+      "result": "pass",
+      "detail": "channel=no_active_exec_metadata_or_proxy_listener active_records=0 live_records=0 node_repl_pids=20724,10700,19720 port19998=0"
+    },
+    {
+      "id": "windows_node_repl_chrome_smoke",
+      "label": "Windows node_repl stdio JS and Chrome trust boundary smoke is current",
+      "path": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-node-repl-chrome-bridge-smoke-latest.json",
+      "exists": true,
+      "valid": true,
+      "passed": true,
+      "result": "blocked_chrome_bridge",
+      "detail": "result=blocked_chrome_bridge direct_js=pass full_env_js=blocked chrome_no_env=blocked:native_pipe_or_trust_unavailable chrome=blocked:sandbox_firewall_denied"
+    },
+    {
+      "id": "windows_node_repl_scheduled_chrome_smoke",
+      "label": "Windows scheduled-task node_repl Chrome bridge smoke is diagnosed",
+      "path": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-node-repl-scheduled-chrome-smoke-latest.json",
+      "exists": true,
+      "valid": true,
+      "passed": true,
+      "result": "blocked_node_repl_js",
+      "detail": "result=blocked_node_repl_js create=false run=false runner=missing blocker=scheduled task create failed: 错误:占位程序接收到错误数据。"
+    }
+  ],
+  "execution": {
+    "trusted_context_required": true,
+    "tool_name": "mcp__codex_desktop_node_repl__js",
+    "timeout_ms": 900000,
+    "tool_call_path": "doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-tool-call-latest.json",
+    "payload_js_path": "doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-payload-latest.js",
+    "payload_json_path": "doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-payload-latest.json",
+    "payload_sha256": "3f0f6d0128d0e4b8807e7addd52d9371a06f070cedceb2116f3a1148743a9e4a",
+    "visual_target_count": 30,
+    "interaction_target_count": 28,
+    "receiver_upload_count": 59,
+    "placeholder_policy": "contains <CODEX_CAPTURE_KEY> and <CODEX_SMOKE_NONCE> only; do not write concrete values to this artifact"
+  },
+  "formal_acceptance": {
+    "bridge_run_result_path": "doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-run-latest.json",
+    "bridge_run_result_exists": false,
+    "active_execs_channel_status": "no_active_exec_metadata_or_proxy_listener",
+    "node_repl_chrome_smoke_result": "blocked_chrome_bridge",
+    "node_repl_direct_js_result": "pass",
+    "node_repl_chrome_no_env_failure_class": "native_pipe_or_trust_unavailable",
+    "node_repl_chrome_full_env_failure_class": "sandbox_firewall_denied",
+    "scheduled_chrome_smoke_result": "blocked_node_repl_js",
+    "scheduled_chrome_task_create_ok": false,
+    "scheduled_chrome_first_blocker": "scheduled task create failed: 错误:占位程序接收到错误数据。",
+    "codex_bridge_tool_surface_status": "not_exposed_in_current_chat_tool_surface",
+    "codex_bridge_backend_open": false,
+    "current_visual_diff": "0/30",
+    "current_business_interaction": "0/28",
+    "completion_status": "not accepted until trusted Chrome bridge run uploads evidence"
+  },
+  "after_trusted_run": {
+    "commands": [
+      "RUN_ID=<run-id> ALLOW_BLOCKERS=false python3 tests/e2e/ui_visual_interaction_evidence_finalize.py --capture-plan doc/02_acceptance/02-regression/ui-visual-interaction/capture-plan-windows-tunnel-25173.json",
+      "RUN_ID=<run-id> CAPTURE_SESSION=doc/02_acceptance/02-regression/ui-visual-interaction/capture-session-windows-tunnel-25173.json DESKTOP_CHROME_STATUS=pass ALLOW_BLOCKERS=false tests/e2e/live_ui_visual_interaction_preflight.sh",
+      "RUN_ID=<run-id> ALLOW_BLOCKERS=false tests/e2e/live_project_completion_audit.sh"
+    ]
+  }
+}

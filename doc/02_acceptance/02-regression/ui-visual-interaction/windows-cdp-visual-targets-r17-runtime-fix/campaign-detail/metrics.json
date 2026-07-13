@@ -1,0 +1,28 @@
+{
+  "target_id": "campaign-detail",
+  "route": "/campaigns/campaign-exfil-default-1782729598739-e1d2dc37",
+  "status": "fail",
+  "generated_at": "2026-07-03T20:23:10.077809+08:00",
+  "desktop_chrome_backend_status": "pass",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/campaign-detail.png",
+  "actual_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-visual-targets-r17-runtime-fix/campaign-detail/actual-1920.png",
+  "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-visual-targets-r17-runtime-fix/campaign-detail/diff-1920.png",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "visual_diff": {
+    "size_ok": true,
+    "source_width": 1920,
+    "source_height": 1080,
+    "actual_width": 1920,
+    "actual_height": 1080,
+    "compared_pixels": 2073600,
+    "total_pixels": 2073600,
+    "mismatch_pixels": 2073473,
+    "pixel_mismatch_ratio": 0.9999387538580247,
+    "max_pixel_ratio": 0.015,
+    "channel_tolerance": 0,
+    "max_channel_delta": 255
+  }
+}

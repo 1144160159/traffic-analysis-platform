@@ -1,0 +1,2248 @@
+{
+  "generatedAt": "2026-07-13T00:00:46.051Z",
+  "summary": {
+    "pages": 28,
+    "pageFilesPresent": 28,
+    "routesCovered": 28,
+    "apiEndpoints": 46,
+    "apiEndpointsCovered": 46,
+    "directFetchViolations": 0,
+    "appShellTokenGaps": 0,
+    "overlays": 70,
+    "overlaysConfirmed": 70,
+    "overlaysPartial": 0,
+    "overlaysMissing": 0,
+    "pageGaps": 0,
+    "routeGaps": 0,
+    "fixQueue": 0
+  },
+  "appShell": {
+    "target": {
+      "shellTopbar": "80px",
+      "shellSidebar": "166px",
+      "shellBottombar": "83px"
+    },
+    "current": {
+      "shellTopbar": "80px",
+      "shellSidebar": "166px",
+      "shellBottombar": "83px",
+      "panelRadius": "6px"
+    },
+    "gaps": []
+  },
+  "routeGaps": [],
+  "pages": [
+    {
+      "id": "login",
+      "title": "登录",
+      "route": "/login",
+      "batchId": "01-core-entry",
+      "pageComponent": "LoginPage",
+      "codeFile": "web/ui/src/pages/LoginPage.tsx",
+      "fileExists": true,
+      "lazyCovered": true,
+      "routeManifestCovered": true,
+      "apiCoverage": [],
+      "missingApi": [],
+      "signals": {
+        "usesQuery": false,
+        "usesService": true,
+        "directFetch": false,
+        "anyUsage": false,
+        "loading": true,
+        "error": true,
+        "empty": false,
+        "forbidden": true,
+        "dangerousActionCount": 0,
+        "dangerousLines": [],
+        "guardedDanger": true,
+        "dataAccessOk": true,
+        "dataAccessNote": "登录页使用 login/fetchCaptcha，不走 page snapshot。"
+      }
+    },
+    {
+      "id": "screen",
+      "title": "态势大屏",
+      "route": "/screen",
+      "batchId": "01-core-entry",
+      "pageComponent": "SituationalScreen",
+      "codeFile": "web/ui/src/pages/SituationalScreen.tsx",
+      "fileExists": true,
+      "lazyCovered": true,
+      "routeManifestCovered": true,
+      "apiCoverage": [
+        {
+          "endpoint": "/v1/dashboard/stats",
+          "covered": true
+        },
+        {
+          "endpoint": "/v1/dashboard/encrypted/trend",
+          "covered": true
+        },
+        {
+          "endpoint": "/v1/dashboard/attack-phases",
+          "covered": true
+        }
+      ],
+      "missingApi": [],
+      "signals": {
+        "usesQuery": true,
+        "usesService": true,
+        "directFetch": false,
+        "anyUsage": false,
+        "loading": true,
+        "error": true,
+        "empty": true,
+        "forbidden": true,
+        "dangerousActionCount": 0,
+        "dangerousLines": [],
+        "guardedDanger": true,
+        "dataAccessOk": true,
+        "dataAccessNote": null
+      }
+    },
+    {
+      "id": "dashboard",
+      "title": "仪表盘",
+      "route": "/dashboard",
+      "batchId": "01-core-entry",
+      "pageComponent": "DashboardOperationsPage",
+      "codeFile": "web/ui/src/pages/DashboardOperationsPage.tsx",
+      "fileExists": true,
+      "lazyCovered": true,
+      "routeManifestCovered": true,
+      "apiCoverage": [
+        {
+          "endpoint": "/v1/dashboard/stats",
+          "covered": true
+        },
+        {
+          "endpoint": "/v1/dashboard/alerts/trend",
+          "covered": true
+        },
+        {
+          "endpoint": "/v1/dashboard/attack-phases",
+          "covered": true
+        }
+      ],
+      "missingApi": [],
+      "signals": {
+        "usesQuery": true,
+        "usesService": true,
+        "directFetch": false,
+        "anyUsage": false,
+        "loading": true,
+        "error": true,
+        "empty": true,
+        "forbidden": true,
+        "dangerousActionCount": 0,
+        "dangerousLines": [],
+        "guardedDanger": true,
+        "dataAccessOk": true,
+        "dataAccessNote": null
+      }
+    },
+    {
+      "id": "alerts",
+      "title": "告警中心",
+      "route": "/alerts",
+      "batchId": "02-threat-forensics",
+      "pageComponent": "AlertTriagePage",
+      "codeFile": "web/ui/src/pages/AlertTriagePage.tsx",
+      "fileExists": true,
+      "lazyCovered": true,
+      "routeManifestCovered": true,
+      "apiCoverage": [
+        {
+          "endpoint": "/v1/alerts",
+          "covered": true
+        }
+      ],
+      "missingApi": [],
+      "signals": {
+        "usesQuery": true,
+        "usesService": true,
+        "directFetch": false,
+        "anyUsage": false,
+        "loading": true,
+        "error": true,
+        "empty": true,
+        "forbidden": true,
+        "dangerousActionCount": 0,
+        "dangerousLines": [],
+        "guardedDanger": true,
+        "dataAccessOk": true,
+        "dataAccessNote": null
+      }
+    },
+    {
+      "id": "alert-detail",
+      "title": "告警详情",
+      "route": "/alerts/:alertId",
+      "batchId": "02-threat-forensics",
+      "pageComponent": "AlertDetailPage",
+      "codeFile": "web/ui/src/pages/AlertDetailPage.tsx",
+      "fileExists": true,
+      "lazyCovered": true,
+      "routeManifestCovered": true,
+      "apiCoverage": [
+        {
+          "endpoint": "/v1/alerts/{id}",
+          "covered": true
+        },
+        {
+          "endpoint": "/v1/alerts/{id}/evidence",
+          "covered": true
+        },
+        {
+          "endpoint": "/v1/alerts/{id}/feedback",
+          "covered": true
+        }
+      ],
+      "missingApi": [],
+      "signals": {
+        "usesQuery": true,
+        "usesService": true,
+        "directFetch": false,
+        "anyUsage": false,
+        "loading": true,
+        "error": true,
+        "empty": true,
+        "forbidden": true,
+        "dangerousActionCount": 0,
+        "dangerousLines": [],
+        "guardedDanger": true,
+        "dataAccessOk": true,
+        "dataAccessNote": null
+      }
+    },
+    {
+      "id": "campaigns",
+      "title": "战役列表",
+      "route": "/campaigns",
+      "batchId": "02-threat-forensics",
+      "pageComponent": "CampaignWorkbenchPage",
+      "codeFile": "web/ui/src/pages/CampaignWorkbenchPage.tsx",
+      "fileExists": true,
+      "lazyCovered": true,
+      "routeManifestCovered": true,
+      "apiCoverage": [
+        {
+          "endpoint": "/v1/campaigns",
+          "covered": true
+        }
+      ],
+      "missingApi": [],
+      "signals": {
+        "usesQuery": true,
+        "usesService": true,
+        "directFetch": false,
+        "anyUsage": false,
+        "loading": true,
+        "error": true,
+        "empty": true,
+        "forbidden": true,
+        "dangerousActionCount": 0,
+        "dangerousLines": [],
+        "guardedDanger": true,
+        "dataAccessOk": true,
+        "dataAccessNote": null
+      }
+    },
+    {
+      "id": "campaign-detail",
+      "title": "战役详情",
+      "route": "/campaigns/:campaignId",
+      "batchId": "02-threat-forensics",
+      "pageComponent": "CampaignDetailPage",
+      "codeFile": "web/ui/src/pages/CampaignDetailPage.tsx",
+      "fileExists": true,
+      "lazyCovered": true,
+      "routeManifestCovered": true,
+      "apiCoverage": [
+        {
+          "endpoint": "/v1/campaigns/{id}",
+          "covered": true
+        }
+      ],
+      "missingApi": [],
+      "signals": {
+        "usesQuery": true,
+        "usesService": true,
+        "directFetch": false,
+        "anyUsage": false,
+        "loading": true,
+        "error": true,
+        "empty": true,
+        "forbidden": true,
+        "dangerousActionCount": 0,
+        "dangerousLines": [],
+        "guardedDanger": true,
+        "dataAccessOk": true,
+        "dataAccessNote": null
+      }
+    },
+    {
+      "id": "attack-chains",
+      "title": "攻击链分析",
+      "route": "/attack-chains",
+      "batchId": "02-threat-forensics",
+      "pageComponent": "AttackChainAnalysisPage",
+      "codeFile": "web/ui/src/pages/AttackChainAnalysisPage.tsx",
+      "fileExists": true,
+      "lazyCovered": true,
+      "routeManifestCovered": true,
+      "apiCoverage": [
+        {
+          "endpoint": "/v1/attack-chains",
+          "covered": true
+        }
+      ],
+      "missingApi": [],
+      "signals": {
+        "usesQuery": true,
+        "usesService": true,
+        "directFetch": false,
+        "anyUsage": false,
+        "loading": true,
+        "error": true,
+        "empty": true,
+        "forbidden": true,
+        "dangerousActionCount": 0,
+        "dangerousLines": [],
+        "guardedDanger": true,
+        "dataAccessOk": true,
+        "dataAccessNote": null
+      }
+    },
+    {
+      "id": "encrypted-traffic",
+      "title": "加密流量",
+      "route": "/encrypted-traffic",
+      "batchId": "02-threat-forensics",
+      "pageComponent": "EncryptedTrafficPage",
+      "codeFile": "web/ui/src/pages/EncryptedTrafficPage.tsx",
+      "fileExists": true,
+      "lazyCovered": true,
+      "routeManifestCovered": true,
+      "apiCoverage": [
+        {
+          "endpoint": "/v1/encrypted-traffic/stats",
+          "covered": true
+        },
+        {
+          "endpoint": "/v1/encrypted-traffic/sessions",
+          "covered": true
+        },
+        {
+          "endpoint": "/v1/encrypted-traffic/ja3",
+          "covered": true
+        },
+        {
+          "endpoint": "/v1/encrypted-traffic/tunnels",
+          "covered": true
+        },
+        {
+          "endpoint": "/v1/encrypted-traffic/exfiltration",
+          "covered": true
+        }
+      ],
+      "missingApi": [],
+      "signals": {
+        "usesQuery": true,
+        "usesService": true,
+        "directFetch": false,
+        "anyUsage": false,
+        "loading": true,
+        "error": true,
+        "empty": true,
+        "forbidden": true,
+        "dangerousActionCount": 0,
+        "dangerousLines": [],
+        "guardedDanger": true,
+        "dataAccessOk": true,
+        "dataAccessNote": null
+      }
+    },
+    {
+      "id": "forensics",
+      "title": "取证分析",
+      "route": "/forensics",
+      "batchId": "02-threat-forensics",
+      "pageComponent": "ForensicsWorkbenchPage",
+      "codeFile": "web/ui/src/pages/ForensicsWorkbenchPage.tsx",
+      "fileExists": true,
+      "lazyCovered": true,
+      "routeManifestCovered": true,
+      "apiCoverage": [
+        {
+          "endpoint": "/v1/pcap/jobs",
+          "covered": true
+        },
+        {
+          "endpoint": "/v1/pcap/stats",
+          "covered": true
+        }
+      ],
+      "missingApi": [],
+      "signals": {
+        "usesQuery": true,
+        "usesService": true,
+        "directFetch": false,
+        "anyUsage": false,
+        "loading": true,
+        "error": true,
+        "empty": true,
+        "forbidden": true,
+        "dangerousActionCount": 0,
+        "dangerousLines": [],
+        "guardedDanger": true,
+        "dataAccessOk": true,
+        "dataAccessNote": null
+      }
+    },
+    {
+      "id": "assets",
+      "title": "资产台账",
+      "route": "/assets",
+      "batchId": "03-collection-asset",
+      "pageComponent": "AssetInventoryPage",
+      "codeFile": "web/ui/src/pages/AssetInventoryPage.tsx",
+      "fileExists": true,
+      "lazyCovered": true,
+      "routeManifestCovered": true,
+      "apiCoverage": [
+        {
+          "endpoint": "/v1/assets",
+          "covered": true
+        }
+      ],
+      "missingApi": [],
+      "signals": {
+        "usesQuery": true,
+        "usesService": true,
+        "directFetch": false,
+        "anyUsage": false,
+        "loading": true,
+        "error": true,
+        "empty": true,
+        "forbidden": true,
+        "dangerousActionCount": 0,
+        "dangerousLines": [],
+        "guardedDanger": true,
+        "dataAccessOk": true,
+        "dataAccessNote": null
+      }
+    },
+    {
+      "id": "graph",
+      "title": "实体图谱",
+      "route": "/graph",
+      "batchId": "03-collection-asset",
+      "pageComponent": "GraphEntityPage",
+      "codeFile": "web/ui/src/pages/GraphEntityPage.tsx",
+      "fileExists": true,
+      "lazyCovered": true,
+      "routeManifestCovered": true,
+      "apiCoverage": [
+        {
+          "endpoint": "/v1/graph/explore",
+          "covered": true
+        }
+      ],
+      "missingApi": [],
+      "signals": {
+        "usesQuery": true,
+        "usesService": true,
+        "directFetch": false,
+        "anyUsage": false,
+        "loading": true,
+        "error": true,
+        "empty": true,
+        "forbidden": true,
+        "dangerousActionCount": 0,
+        "dangerousLines": [],
+        "guardedDanger": true,
+        "dataAccessOk": true,
+        "dataAccessNote": null
+      }
+    },
+    {
+      "id": "fusion",
+      "title": "数据融合",
+      "route": "/fusion",
+      "batchId": "03-collection-asset",
+      "pageComponent": "FusionWorkbenchPage",
+      "codeFile": "web/ui/src/pages/FusionWorkbenchPage.tsx",
+      "fileExists": true,
+      "lazyCovered": true,
+      "routeManifestCovered": true,
+      "apiCoverage": [
+        {
+          "endpoint": "/v1/fusion/stats",
+          "covered": true
+        },
+        {
+          "endpoint": "/v1/fusion/entities",
+          "covered": true
+        },
+        {
+          "endpoint": "/v1/fusion/value-report",
+          "covered": true
+        }
+      ],
+      "missingApi": [],
+      "signals": {
+        "usesQuery": true,
+        "usesService": true,
+        "directFetch": false,
+        "anyUsage": false,
+        "loading": true,
+        "error": true,
+        "empty": true,
+        "forbidden": true,
+        "dangerousActionCount": 0,
+        "dangerousLines": [],
+        "guardedDanger": true,
+        "dataAccessOk": true,
+        "dataAccessNote": null
+      }
+    },
+    {
+      "id": "baselines",
+      "title": "行为基准",
+      "route": "/baselines",
+      "batchId": "03-collection-asset",
+      "pageComponent": "BaselineWorkbenchPage",
+      "codeFile": "web/ui/src/pages/BaselineWorkbenchPage.tsx",
+      "fileExists": true,
+      "lazyCovered": true,
+      "routeManifestCovered": true,
+      "apiCoverage": [
+        {
+          "endpoint": "/v1/baselines",
+          "covered": true
+        }
+      ],
+      "missingApi": [],
+      "signals": {
+        "usesQuery": true,
+        "usesService": true,
+        "directFetch": false,
+        "anyUsage": false,
+        "loading": true,
+        "error": true,
+        "empty": true,
+        "forbidden": true,
+        "dangerousActionCount": 0,
+        "dangerousLines": [],
+        "guardedDanger": true,
+        "dataAccessOk": true,
+        "dataAccessNote": null
+      }
+    },
+    {
+      "id": "probes",
+      "title": "探针管理",
+      "route": "/probes",
+      "batchId": "03-collection-asset",
+      "pageComponent": "ProbesManagementPage",
+      "codeFile": "web/ui/src/pages/ProbesManagementPage.tsx",
+      "fileExists": true,
+      "lazyCovered": true,
+      "routeManifestCovered": true,
+      "apiCoverage": [
+        {
+          "endpoint": "/v1/probes",
+          "covered": true
+        }
+      ],
+      "missingApi": [],
+      "signals": {
+        "usesQuery": true,
+        "usesService": true,
+        "directFetch": false,
+        "anyUsage": false,
+        "loading": true,
+        "error": true,
+        "empty": true,
+        "forbidden": true,
+        "dangerousActionCount": 0,
+        "dangerousLines": [],
+        "guardedDanger": true,
+        "dataAccessOk": true,
+        "dataAccessNote": null
+      }
+    },
+    {
+      "id": "rules",
+      "title": "规则管理",
+      "route": "/rules",
+      "batchId": "04-detection-ops",
+      "pageComponent": "RuleManagementPage",
+      "codeFile": "web/ui/src/pages/RuleManagementPage.tsx",
+      "fileExists": true,
+      "lazyCovered": true,
+      "routeManifestCovered": true,
+      "apiCoverage": [
+        {
+          "endpoint": "/v1/rules",
+          "covered": true
+        }
+      ],
+      "missingApi": [],
+      "signals": {
+        "usesQuery": true,
+        "usesService": true,
+        "directFetch": false,
+        "anyUsage": false,
+        "loading": true,
+        "error": true,
+        "empty": true,
+        "forbidden": true,
+        "dangerousActionCount": 2,
+        "dangerousLines": [
+          "<Button size=\"small\" danger ghost icon={<RollbackOutlined />} onClick={() => onAction('回滚版本')}>回滚版本</Button>",
+          "buttonProps={{ className: 'taf-rules-delete', size: 'small', danger: true }}"
+        ],
+        "guardedDanger": true,
+        "dataAccessOk": true,
+        "dataAccessNote": null
+      }
+    },
+    {
+      "id": "deployments",
+      "title": "部署管理",
+      "route": "/deployments",
+      "batchId": "04-detection-ops",
+      "pageComponent": "DeploymentManagementPage",
+      "codeFile": "web/ui/src/pages/DeploymentManagementPage.tsx",
+      "fileExists": true,
+      "lazyCovered": true,
+      "routeManifestCovered": true,
+      "apiCoverage": [
+        {
+          "endpoint": "/v1/deployments",
+          "covered": true
+        }
+      ],
+      "missingApi": [],
+      "signals": {
+        "usesQuery": true,
+        "usesService": true,
+        "directFetch": false,
+        "anyUsage": false,
+        "loading": true,
+        "error": true,
+        "empty": true,
+        "forbidden": true,
+        "dangerousActionCount": 3,
+        "dangerousLines": [
+          "<Button size=\"small\" danger ghost icon={<StopOutlined />} onClick={() => openAction('停止灰度')}>停止灰度</Button>",
+          "<Button size=\"small\" danger icon={<RollbackOutlined />} onClick={() => openAction('快速回滚')}>快速回滚</Button>",
+          "<div className=\"taf-deployments-rollback-actions\"><Button size=\"small\" onClick={() => setReason('误报升高')}>误报升高</Button><Button size=\"small\" onClick={() => setReason('性能下降')}>性能下降</Button><Button size=\"small\" onClick={() => setReason('策略变更')}>策略变更</Button><Button size=\"small\" danger onClick={() => onAction('执行回滚', reason || '当前灰度版本')}>执行回滚</Button></div>"
+        ],
+        "guardedDanger": true,
+        "dataAccessOk": true,
+        "dataAccessNote": null
+      }
+    },
+    {
+      "id": "models",
+      "title": "模型管理",
+      "route": "/models",
+      "batchId": "04-detection-ops",
+      "pageComponent": "ModelManagementPage",
+      "codeFile": "web/ui/src/pages/ModelManagementPage.tsx",
+      "fileExists": true,
+      "lazyCovered": true,
+      "routeManifestCovered": true,
+      "apiCoverage": [
+        {
+          "endpoint": "/v1/models",
+          "covered": true
+        }
+      ],
+      "missingApi": [],
+      "signals": {
+        "usesQuery": true,
+        "usesService": true,
+        "directFetch": false,
+        "anyUsage": false,
+        "loading": true,
+        "error": true,
+        "empty": true,
+        "forbidden": true,
+        "dangerousActionCount": 3,
+        "dangerousLines": [
+          "<Button size=\"small\" danger ghost icon={<RollbackOutlined />} data-model-action-managed=\"true\" onClick={() => openAction('回滚线上版本', 'model-version-rollback')}>回滚线上版本</Button>",
+          "<Button size=\"small\" danger ghost data-model-action-managed=\"true\" onClick={() => onAction('停用模型', 'model-version-deprecate', selected)}>停用模型</Button>",
+          "<Button size=\"small\" danger data-model-action-managed=\"true\" onClick={() => onAction(`回滚到 ${String(selected?.线上版本 ?? 'v1.7.0')}`, 'model-version-rollback', selected)}>回滚到 {String(selected?.线上版本 ?? 'v1.7.0')}</Button>"
+        ],
+        "guardedDanger": true,
+        "dataAccessOk": true,
+        "dataAccessNote": null
+      }
+    },
+    {
+      "id": "mlops",
+      "title": "MLOps 编排",
+      "route": "/mlops",
+      "batchId": "04-detection-ops",
+      "pageComponent": "MlopsOrchestrationPage",
+      "codeFile": "web/ui/src/pages/MlopsOrchestrationPage.tsx",
+      "fileExists": true,
+      "lazyCovered": true,
+      "routeManifestCovered": true,
+      "apiCoverage": [
+        {
+          "endpoint": "/v1/mlops/status",
+          "covered": true
+        },
+        {
+          "endpoint": "/v1/mlops/conditions",
+          "covered": true
+        }
+      ],
+      "missingApi": [],
+      "signals": {
+        "usesQuery": true,
+        "usesService": true,
+        "directFetch": false,
+        "anyUsage": false,
+        "loading": true,
+        "error": true,
+        "empty": true,
+        "forbidden": true,
+        "dangerousActionCount": 1,
+        "dangerousLines": [
+          "<Button size=\"small\" danger ghost icon={<PauseCircleOutlined />} onClick={() => openAction('停止任务', 'mlops-task-stop')}>停止任务</Button>"
+        ],
+        "guardedDanger": true,
+        "dataAccessOk": true,
+        "dataAccessNote": null
+      }
+    },
+    {
+      "id": "data-quality",
+      "title": "数据质量",
+      "route": "/data-quality",
+      "batchId": "03-collection-asset",
+      "pageComponent": "DataQualityPage",
+      "codeFile": "web/ui/src/pages/DataQualityPage.tsx",
+      "fileExists": true,
+      "lazyCovered": true,
+      "routeManifestCovered": true,
+      "apiCoverage": [
+        {
+          "endpoint": "/v1/data-quality",
+          "covered": true
+        }
+      ],
+      "missingApi": [],
+      "signals": {
+        "usesQuery": true,
+        "usesService": true,
+        "directFetch": false,
+        "anyUsage": false,
+        "loading": true,
+        "error": true,
+        "empty": true,
+        "forbidden": true,
+        "dangerousActionCount": 0,
+        "dangerousLines": [],
+        "guardedDanger": true,
+        "dataAccessOk": true,
+        "dataAccessNote": null
+      }
+    },
+    {
+      "id": "playbooks",
+      "title": "SOAR 剧本",
+      "route": "/playbooks",
+      "batchId": "04-detection-ops",
+      "pageComponent": "PlaybookAutomationPage",
+      "codeFile": "web/ui/src/pages/PlaybookAutomationPage.tsx",
+      "fileExists": true,
+      "lazyCovered": true,
+      "routeManifestCovered": true,
+      "apiCoverage": [
+        {
+          "endpoint": "/v1/playbooks/catalog",
+          "covered": true
+        },
+        {
+          "endpoint": "/v1/playbooks/executions",
+          "covered": true
+        }
+      ],
+      "missingApi": [],
+      "signals": {
+        "usesQuery": true,
+        "usesService": true,
+        "directFetch": false,
+        "anyUsage": false,
+        "loading": true,
+        "error": true,
+        "empty": true,
+        "forbidden": true,
+        "dangerousActionCount": 1,
+        "dangerousLines": [
+          "<Button size=\"small\" danger ghost icon={<RollbackOutlined />}>回滚执行</Button>"
+        ],
+        "guardedDanger": true,
+        "dataAccessOk": true,
+        "dataAccessNote": null
+      }
+    },
+    {
+      "id": "whitelist",
+      "title": "白名单",
+      "route": "/whitelist",
+      "batchId": "04-detection-ops",
+      "pageComponent": "WhitelistGovernancePage",
+      "codeFile": "web/ui/src/pages/WhitelistGovernancePage.tsx",
+      "fileExists": true,
+      "lazyCovered": true,
+      "routeManifestCovered": true,
+      "apiCoverage": [
+        {
+          "endpoint": "/v1/whitelist",
+          "covered": true
+        }
+      ],
+      "missingApi": [],
+      "signals": {
+        "usesQuery": true,
+        "usesService": true,
+        "directFetch": false,
+        "anyUsage": false,
+        "loading": true,
+        "error": true,
+        "empty": true,
+        "forbidden": true,
+        "dangerousActionCount": 1,
+        "dangerousLines": [
+          "<Button size=\"small\" danger ghost icon={<StopOutlined />} onClick={() => openAction('停用')}>停用</Button>"
+        ],
+        "guardedDanger": true,
+        "dataAccessOk": true,
+        "dataAccessNote": null
+      }
+    },
+    {
+      "id": "compliance",
+      "title": "合规审计",
+      "route": "/compliance",
+      "batchId": "05-audit-config",
+      "pageComponent": "ComplianceAuditPage",
+      "codeFile": "web/ui/src/pages/ComplianceAuditPage.tsx",
+      "fileExists": true,
+      "lazyCovered": true,
+      "routeManifestCovered": true,
+      "apiCoverage": [
+        {
+          "endpoint": "/v1/compliance/reports",
+          "covered": true
+        },
+        {
+          "endpoint": "/v1/compliance/audit-trail",
+          "covered": true
+        }
+      ],
+      "missingApi": [],
+      "signals": {
+        "usesQuery": true,
+        "usesService": true,
+        "directFetch": false,
+        "anyUsage": false,
+        "loading": true,
+        "error": true,
+        "empty": true,
+        "forbidden": true,
+        "dangerousActionCount": 0,
+        "dangerousLines": [],
+        "guardedDanger": true,
+        "dataAccessOk": true,
+        "dataAccessNote": null
+      }
+    },
+    {
+      "id": "audit-log",
+      "title": "审计日志",
+      "route": "/audit-log",
+      "batchId": "05-audit-config",
+      "pageComponent": "AuditLogPage",
+      "codeFile": "web/ui/src/pages/AuditLogPage.tsx",
+      "fileExists": true,
+      "lazyCovered": true,
+      "routeManifestCovered": true,
+      "apiCoverage": [
+        {
+          "endpoint": "/v1/audit/logs",
+          "covered": true
+        }
+      ],
+      "missingApi": [],
+      "signals": {
+        "usesQuery": true,
+        "usesService": true,
+        "directFetch": false,
+        "anyUsage": false,
+        "loading": true,
+        "error": true,
+        "empty": true,
+        "forbidden": true,
+        "dangerousActionCount": 0,
+        "dangerousLines": [],
+        "guardedDanger": true,
+        "dataAccessOk": true,
+        "dataAccessNote": null
+      }
+    },
+    {
+      "id": "notifications",
+      "title": "通知配置",
+      "route": "/notifications",
+      "batchId": "05-audit-config",
+      "pageComponent": "NotificationConfigPage",
+      "codeFile": "web/ui/src/pages/NotificationConfigPage.tsx",
+      "fileExists": true,
+      "lazyCovered": true,
+      "routeManifestCovered": true,
+      "apiCoverage": [
+        {
+          "endpoint": "/v1/notifications/settings",
+          "covered": true
+        }
+      ],
+      "missingApi": [],
+      "signals": {
+        "usesQuery": true,
+        "usesService": true,
+        "directFetch": false,
+        "anyUsage": false,
+        "loading": true,
+        "error": true,
+        "empty": true,
+        "forbidden": true,
+        "dangerousActionCount": 0,
+        "dangerousLines": [],
+        "guardedDanger": true,
+        "dataAccessOk": true,
+        "dataAccessNote": null
+      }
+    },
+    {
+      "id": "settings",
+      "title": "系统设置",
+      "route": "/settings",
+      "batchId": "05-audit-config",
+      "pageComponent": "SettingsGovernancePage",
+      "codeFile": "web/ui/src/pages/SettingsGovernancePage.tsx",
+      "fileExists": true,
+      "lazyCovered": true,
+      "routeManifestCovered": true,
+      "apiCoverage": [
+        {
+          "endpoint": "/v1/tokens/scopes",
+          "covered": true
+        },
+        {
+          "endpoint": "/v1/tokens",
+          "covered": true
+        },
+        {
+          "endpoint": "/v1/tokens/scopes/probe",
+          "covered": true
+        }
+      ],
+      "missingApi": [],
+      "signals": {
+        "usesQuery": true,
+        "usesService": true,
+        "directFetch": false,
+        "anyUsage": false,
+        "loading": true,
+        "error": true,
+        "empty": true,
+        "forbidden": true,
+        "dangerousActionCount": 0,
+        "dangerousLines": [],
+        "guardedDanger": true,
+        "dataAccessOk": true,
+        "dataAccessNote": null
+      }
+    },
+    {
+      "id": "not-found",
+      "title": "404 异常页",
+      "route": "*",
+      "batchId": "05-audit-config",
+      "pageComponent": "NotFoundPage",
+      "codeFile": "web/ui/src/pages/NotFoundPage.tsx",
+      "fileExists": true,
+      "lazyCovered": true,
+      "routeManifestCovered": true,
+      "apiCoverage": [],
+      "missingApi": [],
+      "signals": {
+        "usesQuery": false,
+        "usesService": false,
+        "directFetch": false,
+        "anyUsage": false,
+        "loading": false,
+        "error": false,
+        "empty": false,
+        "forbidden": true,
+        "dangerousActionCount": 0,
+        "dangerousLines": [],
+        "guardedDanger": true,
+        "dataAccessOk": true,
+        "dataAccessNote": "404 页不需要业务 API。"
+      }
+    },
+    {
+      "id": "topics",
+      "title": "专题面板",
+      "route": "/topics",
+      "batchId": "01-core-entry",
+      "pageComponent": "TopicWorkbenchPage",
+      "codeFile": "web/ui/src/pages/TopicWorkbenchPage.tsx",
+      "fileExists": true,
+      "lazyCovered": true,
+      "routeManifestCovered": true,
+      "apiCoverage": [
+        {
+          "endpoint": "/v1/topics/tunnel",
+          "covered": true
+        },
+        {
+          "endpoint": "/v1/topics/exfil",
+          "covered": true
+        },
+        {
+          "endpoint": "/v1/topics/apt",
+          "covered": true
+        }
+      ],
+      "missingApi": [],
+      "signals": {
+        "usesQuery": true,
+        "usesService": true,
+        "directFetch": false,
+        "anyUsage": false,
+        "loading": true,
+        "error": true,
+        "empty": true,
+        "forbidden": true,
+        "dangerousActionCount": 0,
+        "dangerousLines": [],
+        "guardedDanger": true,
+        "dataAccessOk": true,
+        "dataAccessNote": null
+      }
+    }
+  ],
+  "pageGaps": [],
+  "overlays": [
+    {
+      "id": "dropdown-user-menu",
+      "title": "用户下拉菜单",
+      "route": "/settings",
+      "kind": "Dropdown/Menu",
+      "hostFiles": [
+        "web/ui/src/pages/SettingsGovernancePage.tsx",
+        "web/ui/src/layouts/AppShell.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "user",
+        "menu"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "drawer-mobile-navigation",
+      "title": "移动端侧滑菜单",
+      "route": "/dashboard",
+      "kind": "Drawer",
+      "hostFiles": [
+        "web/ui/src/pages/DashboardOperationsPage.tsx",
+        "web/ui/src/layouts/AppShell.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "mobile",
+        "navigation"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "drawer-notification-center",
+      "title": "通知中心抽屉",
+      "route": "/notifications",
+      "kind": "Drawer",
+      "hostFiles": [
+        "web/ui/src/pages/NotificationConfigPage.tsx",
+        "web/ui/src/layouts/AppShell.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "notification"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-global-search",
+      "title": "全局搜索弹窗",
+      "route": "/dashboard",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/DashboardOperationsPage.tsx",
+        "web/ui/src/layouts/AppShell.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "global",
+        "search"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "dropdown-quick-entry",
+      "title": "快速入口下拉",
+      "route": "/dashboard",
+      "kind": "Dropdown/Menu",
+      "hostFiles": [
+        "web/ui/src/pages/DashboardOperationsPage.tsx",
+        "web/ui/src/layouts/AppShell.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "quick",
+        "entry"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-login-error-captcha",
+      "title": "登录异常与验证码状态",
+      "route": "/login",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/LoginPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "login",
+        "error",
+        "captcha"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "drawer-dashboard-kpi-detail",
+      "title": "仪表盘 KPI 详情",
+      "route": "/dashboard",
+      "kind": "Drawer",
+      "hostFiles": [
+        "web/ui/src/pages/DashboardOperationsPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "dashboard"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "drawer-dashboard-task-detail",
+      "title": "待办任务详情",
+      "route": "/dashboard",
+      "kind": "Drawer",
+      "hostFiles": [
+        "web/ui/src/pages/DashboardOperationsPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "dashboard",
+        "task"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-screen-readonly-token",
+      "title": "态势大屏只读令牌/脱敏配置",
+      "route": "/screen",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/SituationalScreen.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "screen",
+        "readonly",
+        "token"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "drawer-probe-detail",
+      "title": "探针详情",
+      "route": "/probes",
+      "kind": "Drawer",
+      "hostFiles": [
+        "web/ui/src/pages/ProbesManagementPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "probe"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-probe-config",
+      "title": "探针配置下发",
+      "route": "/probes",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/ProbesManagementPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "probe",
+        "config"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-probe-batch-upgrade",
+      "title": "探针批量升级确认",
+      "route": "/probes",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/ProbesManagementPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "probe",
+        "batch",
+        "upgrade"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-probe-cert-rotate",
+      "title": "证书轮换确认",
+      "route": "/probes",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/ProbesManagementPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "probe",
+        "cert",
+        "rotate"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "drawer-probe-log",
+      "title": "探针日志抽屉",
+      "route": "/probes",
+      "kind": "Drawer",
+      "hostFiles": [
+        "web/ui/src/pages/ProbesManagementPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "probe"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "drawer-dlq-sample",
+      "title": "DLQ 样例详情",
+      "route": "/data-quality",
+      "kind": "Drawer",
+      "hostFiles": [
+        "web/ui/src/pages/DataQualityPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "sample"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-data-replay-task",
+      "title": "数据重放任务",
+      "route": "/data-quality",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/DataQualityPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "data",
+        "replay",
+        "task"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "drawer-field-quality-sample",
+      "title": "字段质量样例",
+      "route": "/data-quality",
+      "kind": "Drawer",
+      "hostFiles": [
+        "web/ui/src/pages/DataQualityPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "field",
+        "quality",
+        "sample"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-alert-batch",
+      "title": "告警批量操作确认",
+      "route": "/alerts",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/AlertTriagePage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "alert",
+        "batch"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "dropdown-alert-batch-actions",
+      "title": "告警批量操作下拉",
+      "route": "/alerts",
+      "kind": "Dropdown/Menu",
+      "hostFiles": [
+        "web/ui/src/pages/AlertTriagePage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "alert",
+        "batch",
+        "actions"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "dropdown-alert-row-actions",
+      "title": "告警行操作下拉",
+      "route": "/alerts",
+      "kind": "Dropdown/Menu",
+      "hostFiles": [
+        "web/ui/src/pages/AlertTriagePage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "alert",
+        "actions"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-alert-status",
+      "title": "更新告警状态",
+      "route": "/alerts/:alertId",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/AlertDetailPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "alert",
+        "status"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-alert-feedback",
+      "title": "提交告警反馈",
+      "route": "/alerts/:alertId",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/AlertDetailPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "alert",
+        "feedback"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-evidence-detail",
+      "title": "证据详情",
+      "route": "/alerts/:alertId",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/AlertDetailPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "evidence"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-forensics-task",
+      "title": "取证任务详情",
+      "route": "/forensics",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/ForensicsWorkbenchPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "forensics",
+        "task"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "drawer-campaign-detail",
+      "title": "战役详情抽屉",
+      "route": "/campaigns",
+      "kind": "Drawer",
+      "hostFiles": [
+        "web/ui/src/pages/CampaignWorkbenchPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "campaign"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "drawer-attack-chain-detail",
+      "title": "攻击链详情抽屉",
+      "route": "/attack-chains",
+      "kind": "Drawer",
+      "hostFiles": [
+        "web/ui/src/pages/AttackChainAnalysisPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "attack",
+        "chain"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "drawer-encrypted-fingerprint",
+      "title": "加密指纹详情",
+      "route": "/encrypted-traffic",
+      "kind": "Drawer",
+      "hostFiles": [
+        "web/ui/src/pages/EncryptedTrafficPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "encrypted",
+        "fingerprint"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "drawer-certificate-detail",
+      "title": "证书详情",
+      "route": "/encrypted-traffic",
+      "kind": "Drawer",
+      "hostFiles": [
+        "web/ui/src/pages/EncryptedTrafficPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "certificate"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-playbook-trigger",
+      "title": "从告警触发剧本",
+      "route": "/alerts/:alertId",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/AlertDetailPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "playbook",
+        "trigger"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-whitelist-draft-from-alert",
+      "title": "从告警生成白名单草案",
+      "route": "/alerts/:alertId",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/AlertDetailPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "whitelist",
+        "draft",
+        "from",
+        "alert"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "popconfirm-pcap-download",
+      "title": "PCAP 下载确认",
+      "route": "/forensics",
+      "kind": "Popconfirm",
+      "hostFiles": [
+        "web/ui/src/pages/ForensicsWorkbenchPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "pcap",
+        "download"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "drawer-session-replay",
+      "title": "会话复放抽屉",
+      "route": "/forensics",
+      "kind": "Drawer",
+      "hostFiles": [
+        "web/ui/src/pages/ForensicsWorkbenchPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "session",
+        "replay"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "drawer-asset-detail",
+      "title": "资产详情",
+      "route": "/assets",
+      "kind": "Drawer",
+      "hostFiles": [
+        "web/ui/src/pages/AssetInventoryPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "asset"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-asset-edit",
+      "title": "编辑资产",
+      "route": "/assets",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/AssetInventoryPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "asset"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "drawer-asset-history",
+      "title": "资产历史",
+      "route": "/assets",
+      "kind": "Drawer",
+      "hostFiles": [
+        "web/ui/src/pages/AssetInventoryPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "asset"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "drawer-graph-entity",
+      "title": "图谱实体详情",
+      "route": "/graph",
+      "kind": "Drawer",
+      "hostFiles": [
+        "web/ui/src/pages/GraphEntityPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "graph",
+        "entity"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "drawer-graph-path-analysis",
+      "title": "图谱路径分析",
+      "route": "/graph",
+      "kind": "Drawer",
+      "hostFiles": [
+        "web/ui/src/pages/GraphEntityPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "graph",
+        "path",
+        "analysis"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "drawer-fusion-conflict",
+      "title": "数据融合冲突处理",
+      "route": "/fusion",
+      "kind": "Drawer",
+      "hostFiles": [
+        "web/ui/src/pages/FusionWorkbenchPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "fusion",
+        "conflict"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-fusion-rule-edit",
+      "title": "融合规则编辑",
+      "route": "/fusion",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/FusionWorkbenchPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "fusion",
+        "rule"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-baseline-threshold",
+      "title": "基线阈值编辑",
+      "route": "/baselines",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/BaselineWorkbenchPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "baseline",
+        "threshold"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-rule-edit",
+      "title": "新建/编辑规则",
+      "route": "/rules",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/RuleManagementPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "rule"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "drawer-rule-detail",
+      "title": "规则详情",
+      "route": "/rules",
+      "kind": "Drawer",
+      "hostFiles": [
+        "web/ui/src/pages/RuleManagementPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "rule"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "popconfirm-delete",
+      "title": "规则删除确认",
+      "route": "/rules",
+      "kind": "Popconfirm",
+      "hostFiles": [
+        "web/ui/src/pages/RuleManagementPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "delete"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-rule-publish",
+      "title": "规则发布确认",
+      "route": "/rules",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/RuleManagementPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "rule",
+        "publish"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-deployment-create",
+      "title": "新建部署",
+      "route": "/deployments",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/DeploymentManagementPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "deployment",
+        "create"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-deployment-rollback",
+      "title": "回滚部署确认",
+      "route": "/deployments",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/DeploymentManagementPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "deployment",
+        "rollback"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "drawer-model-detail",
+      "title": "模型详情",
+      "route": "/models",
+      "kind": "Drawer",
+      "hostFiles": [
+        "web/ui/src/pages/ModelManagementPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "model"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "drawer-mlops-task-detail",
+      "title": "MLOps 任务详情",
+      "route": "/mlops",
+      "kind": "Drawer",
+      "hostFiles": [
+        "web/ui/src/pages/MlopsOrchestrationPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "mlops",
+        "task"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-playbook-edit",
+      "title": "剧本编辑",
+      "route": "/playbooks",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/PlaybookAutomationPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "playbook"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-whitelist-add",
+      "title": "添加白名单",
+      "route": "/whitelist",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/WhitelistGovernancePage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "whitelist"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "drawer-whitelist-approval",
+      "title": "白名单审批详情",
+      "route": "/whitelist",
+      "kind": "Drawer",
+      "hostFiles": [
+        "web/ui/src/pages/WhitelistGovernancePage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "whitelist",
+        "approval"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-settings-token",
+      "title": "创建 API 令牌",
+      "route": "/settings",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/SettingsGovernancePage.tsx",
+        "web/ui/src/layouts/AppShell.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "settings",
+        "token"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-topic-save-view",
+      "title": "专题保存视图",
+      "route": "/topics",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/TopicWorkbenchPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "topic",
+        "save",
+        "view"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "drawer-topic-scope-edit",
+      "title": "专题范围编辑",
+      "route": "/topics",
+      "kind": "Drawer",
+      "hostFiles": [
+        "web/ui/src/pages/TopicWorkbenchPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "topic",
+        "scope"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-topic-report-export",
+      "title": "专题报告导出",
+      "route": "/topics",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/TopicWorkbenchPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "topic",
+        "report",
+        "export"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-topic-evidence-package-export",
+      "title": "专题证据包导出",
+      "route": "/topics",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/TopicWorkbenchPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "topic",
+        "evidence",
+        "package",
+        "export"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "drawer-topic-subscription",
+      "title": "专题订阅配置",
+      "route": "/topics",
+      "kind": "Drawer",
+      "hostFiles": [
+        "web/ui/src/pages/TopicWorkbenchPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "topic",
+        "subscription"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "dropdown-topic-share-favorite",
+      "title": "专题分享收藏菜单",
+      "route": "/topics",
+      "kind": "Dropdown/Menu",
+      "hostFiles": [
+        "web/ui/src/pages/TopicWorkbenchPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "topic",
+        "share",
+        "favorite"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-campaign-report-export",
+      "title": "战役报告导出",
+      "route": "/campaigns/:campaignId",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/CampaignDetailPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "campaign",
+        "report",
+        "export"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-forensics-evidence-export",
+      "title": "取证证据导出",
+      "route": "/forensics",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/ForensicsWorkbenchPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "forensics",
+        "evidence",
+        "export"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "drawer-compliance-gate-detail",
+      "title": "合规门禁详情",
+      "route": "/compliance",
+      "kind": "Drawer",
+      "hostFiles": [
+        "web/ui/src/pages/ComplianceAuditPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "compliance",
+        "gate"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-compliance-evidence-package-export",
+      "title": "合规证据包导出",
+      "route": "/compliance",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/ComplianceAuditPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "compliance",
+        "evidence",
+        "package",
+        "export"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-compliance-report-export",
+      "title": "合规运行报告导出",
+      "route": "/compliance",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/ComplianceAuditPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "compliance",
+        "report",
+        "export"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "drawer-audit-operation-detail",
+      "title": "审计操作详情",
+      "route": "/audit-log",
+      "kind": "Drawer",
+      "hostFiles": [
+        "web/ui/src/pages/AuditLogPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "audit",
+        "operation"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-audit-export",
+      "title": "审计材料导出",
+      "route": "/audit-log",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/AuditLogPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "audit",
+        "export"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-notification-channel-edit",
+      "title": "通知渠道编辑",
+      "route": "/notifications",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/NotificationConfigPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "notification",
+        "channel"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "modal-notification-template-preview-test",
+      "title": "通知模板预览测试",
+      "route": "/notifications",
+      "kind": "Modal",
+      "hostFiles": [
+        "web/ui/src/pages/NotificationConfigPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "notification",
+        "template",
+        "preview",
+        "test"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "drawer-notification-silence-rule",
+      "title": "通知静默规则",
+      "route": "/notifications",
+      "kind": "Drawer",
+      "hostFiles": [
+        "web/ui/src/pages/NotificationConfigPage.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "notification",
+        "silence",
+        "rule"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "popconfirm-settings-token-revoke",
+      "title": "API 令牌吊销确认",
+      "route": "/settings",
+      "kind": "Popconfirm",
+      "hostFiles": [
+        "web/ui/src/pages/SettingsGovernancePage.tsx",
+        "web/ui/src/layouts/AppShell.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "settings",
+        "token",
+        "revoke"
+      ],
+      "status": "confirmed"
+    },
+    {
+      "id": "drawer-settings-rbac-edit",
+      "title": "RBAC 权限编辑",
+      "route": "/settings",
+      "kind": "Drawer",
+      "hostFiles": [
+        "web/ui/src/pages/SettingsGovernancePage.tsx",
+        "web/ui/src/layouts/AppShell.tsx"
+      ],
+      "kindFound": true,
+      "semanticHintFound": true,
+      "tokenHits": [
+        "settings",
+        "rbac"
+      ],
+      "status": "confirmed"
+    }
+  ],
+  "batches": [
+    {
+      "id": "00-foundation",
+      "title": "公共骨架与组件底座",
+      "pageCount": 0,
+      "overlayCount": 0,
+      "missingOverlayCount": 0,
+      "partialOverlayCount": 0,
+      "pageGapCount": 0,
+      "nextAction": "先对齐 AppShell token 和全局浮层入口。"
+    },
+    {
+      "id": "01-core-entry",
+      "title": "入口、总览与专题统一页",
+      "pageCount": 4,
+      "overlayCount": 13,
+      "missingOverlayCount": 0,
+      "partialOverlayCount": 0,
+      "pageGapCount": 0,
+      "nextAction": "进入截图回归和业务链路验收。"
+    },
+    {
+      "id": "02-threat-forensics",
+      "title": "告警、战役、攻击链、加密流量与取证闭环",
+      "pageCount": 7,
+      "overlayCount": 17,
+      "missingOverlayCount": 0,
+      "partialOverlayCount": 0,
+      "pageGapCount": 0,
+      "nextAction": "进入截图回归和业务链路验收。"
+    },
+    {
+      "id": "03-collection-asset",
+      "title": "采集质量、资产图谱与融合基线",
+      "pageCount": 6,
+      "overlayCount": 16,
+      "missingOverlayCount": 0,
+      "partialOverlayCount": 0,
+      "pageGapCount": 0,
+      "nextAction": "进入截图回归和业务链路验收。"
+    },
+    {
+      "id": "04-detection-ops",
+      "title": "规则、部署、模型、MLOps、剧本和白名单",
+      "pageCount": 6,
+      "overlayCount": 11,
+      "missingOverlayCount": 0,
+      "partialOverlayCount": 0,
+      "pageGapCount": 0,
+      "nextAction": "进入截图回归和业务链路验收。"
+    },
+    {
+      "id": "05-audit-config",
+      "title": "合规、审计、通知、系统设置与异常页",
+      "pageCount": 5,
+      "overlayCount": 13,
+      "missingOverlayCount": 0,
+      "partialOverlayCount": 0,
+      "pageGapCount": 0,
+      "nextAction": "进入截图回归和业务链路验收。"
+    }
+  ],
+  "fixQueue": []
+}

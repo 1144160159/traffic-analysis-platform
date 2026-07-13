@@ -1,0 +1,12 @@
+Use case: precise-object-edit
+Asset type: enterprise cybersecurity SaaS UI screenshot, 16:9.
+Edit target: the first large screenshot showing “园区网络全流量采集与分析系统”.
+Reference image: the second narrow crop showing the desired campus topology header: “园区拓扑总览（数字孪生）” with right-side small toolbar buttons “拓扑视图” and an icon button.
+
+Primary request: Edit the first large UI screenshot. Replace only the title/header strip of the campus digital twin / campus topology panel. Specifically, replace the current text “园区网络数字孪生 / Campus Topology” at the top of the topology panel with the second reference crop style and text: “园区拓扑总览（数字孪生）”, including the small right-side toolbar buttons from the reference crop.
+
+Preserve everything else unchanged: the product title “园区网络全流量采集与分析系统”, left sidebar and secondary menu, top metric bar, site/time selectors, the campus buildings and network lines inside the topology map, the vertical campus stats cards inside the map, the collection pipeline, alert queue, alert timeline, correlated cluster, traffic trend, traffic topology, evidence list, right selected-alert rail, bottom status bar, colors, spacing, borders, icons, and all data values.
+
+Style constraints: the replacement header must match the original dark blue enterprise UI style, crisp Chinese text, cyan panel border, subtle glow, same height and alignment as the existing topology panel header. No unrelated redesign, no changed menus, no changed charts, no changed right rail, no added panels, no changed product title, no English replacement for Chinese labels, no browser chrome, no watermark, no unreadably tiny text.
+
+Output: one polished production-quality UI screenshot with only the campus topology panel header replaced.

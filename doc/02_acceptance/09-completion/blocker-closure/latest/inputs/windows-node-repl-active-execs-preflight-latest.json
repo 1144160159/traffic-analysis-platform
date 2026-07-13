@@ -1,0 +1,57 @@
+{
+  "package_id": "ui_windows_node_repl_active_execs_preflight",
+  "result": "pass",
+  "generated_at": "2026-07-02T20:21:09.712Z",
+  "windows": {
+    "host": "10.3.6.59",
+    "user": "LongShine",
+    "active_execs_dir": "C:\\Users\\LongShine\\.codex\\node_repl\\active_execs"
+  },
+  "ssh": {
+    "passed": true,
+    "commands": {
+      "active_execs": "sshpass -e ssh <ssh-options> LongShine@10.3.6.59 <active-execs-preflight>",
+      "tasklist": "sshpass -e ssh <ssh-options> LongShine@10.3.6.59 <active-execs-preflight>",
+      "netstat": "sshpass -e ssh <ssh-options> LongShine@10.3.6.59 <active-execs-preflight>"
+    },
+    "exit_codes": {
+      "active_execs": 0,
+      "tasklist": 0,
+      "netstat": 0
+    },
+    "signals": {
+      "active_execs": null,
+      "tasklist": null,
+      "netstat": null
+    },
+    "stderr": {
+      "active_execs": "",
+      "tasklist": "",
+      "netstat": ""
+    },
+    "duration_ms": {
+      "active_execs": 432,
+      "tasklist": 926,
+      "netstat": 481
+    }
+  },
+  "runtime": {
+    "active_execs_dir_exists": true,
+    "active_exec_files": [],
+    "active_exec_records": [],
+    "running_node_repl_pids": [
+      "20724",
+      "10700",
+      "19720"
+    ],
+    "live_active_exec_records": [],
+    "stale_active_exec_records": [],
+    "port_19998_entries": [],
+    "port_19998_listeners": [],
+    "observed_process_count": 355
+  },
+  "channel_status": "no_active_exec_metadata_or_proxy_listener",
+  "acceptance_effect": "boundary_evidence_only_not_desktop_chrome_acceptance",
+  "inference": "SSH-visible active_execs metadata is not a reusable trusted channel for this session; use the trusted Windows Codex Desktop / VSCode MCP tool surface.",
+  "blockers": []
+}

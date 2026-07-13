@@ -1,0 +1,116 @@
+{
+  "package_id": "windows_chrome_cdp_full_route_capture",
+  "run_id": "topics-r16-recheck",
+  "result": "fail",
+  "runtime_result": "fail",
+  "visual_diff_result": "fail",
+  "generated_at": "2026-07-03T12:19:58.462Z",
+  "base_url": "http://10.0.5.8:30180",
+  "cdp_url": "http://127.0.0.1:9224",
+  "cdp_version": {
+    "Browser": "Chrome/150.0.7871.47",
+    "Protocol-Version": "1.3",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+    "V8-Version": "15.0.245.13",
+    "WebKit-Version": "537.36 (@0c3cca15d78645281db2d339b2dc3d6fad4ee90a)",
+    "webSocketDebuggerUrl": "ws://127.0.0.1:9224/devtools/browser/044b273c-d1b6-4227-aa54-a523a3e8c863"
+  },
+  "cdp_targets_count": 4,
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "evidence_dir": "evidence/windows-chrome-cdp-20260703-topics-r16-recheck/topics-r16-recheck",
+  "acceptance_dir": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-topics-r16-recheck",
+  "target_mode": "visual-targets",
+  "capture_plan": "doc/02_acceptance/02-regression/ui-visual-interaction/capture-plan-latest.json",
+  "output_json": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-topics-r16-recheck.json",
+  "output_md": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-topics-r16-recheck.md",
+  "alert_id": "alert-default-1782752318016-1dd589c4",
+  "campaign_id": "campaign-exfil-default-1782729598739-e1d2dc37",
+  "auth": {
+    "strategy": "hash-smoke-token",
+    "smoke_token_source": "generated-from-k8s-secret",
+    "smoke_token_env": "DESKTOP_SMOKE_TOKEN",
+    "token_material_redacted": true
+  },
+  "max_pixel_ratio": 0.015,
+  "channel_tolerance": 0,
+  "summary": {
+    "total": 1,
+    "runtime_pass": 0,
+    "runtime_fail": 1,
+    "visual_diff_total": 1,
+    "visual_diff_pass": 0,
+    "visual_diff_fail": 1,
+    "failed_runtime_routes": [
+      "topics"
+    ],
+    "failed_visual_diff_routes": [
+      "topics"
+    ]
+  },
+  "routes": [
+    {
+      "id": "topics",
+      "route_id": "topics",
+      "title": "专题面板",
+      "route": "/topics",
+      "resolved_path": "/topics",
+      "url": "http://10.0.5.8:30180/topics?windowsCdpEvidenceTs=1783081178599#codex_smoke_token=<redacted>",
+      "final_url": "http://10.0.5.8:30180/topics?windowsCdpEvidenceTs=1783081178599",
+      "screenshot": "evidence/windows-chrome-cdp-20260703-topics-r16-recheck/topics-r16-recheck/topics-1920x1080.png",
+      "acceptance_actual": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-topics-r16-recheck/topics/actual-1920.png",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/topics-encrypted-tunnel.png",
+      "duration_ms": 14482,
+      "goto_error": null,
+      "bad_responses": [
+        {
+          "status": 500,
+          "url": "http://10.0.5.8:30180/api/v1/topics/tunnel?limit=8&page_size=8",
+          "method": "GET"
+        }
+      ],
+      "request_failures": [],
+      "console_errors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+        }
+      ],
+      "page_errors": [],
+      "metrics": {
+        "final_url": "http://10.0.5.8:30180/topics?windowsCdpEvidenceTs=1783081178599",
+        "document_title": "园区网络全流量采集与分析系统",
+        "h1": "专题面板",
+        "body_text_sample": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-03 20:19:40 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 仪表盘 态势大屏 专题面板 采集监测 威胁分析 资产图谱 检测运营 审计配置 C codex-windows-cdp-admin 系统管理员 在线 综合态势 / 专题面板 / 加密隧道 专题面板 加密隧道专题：围绕 TLS、QUIC、VPN、DoH 和未知加密通道组织隧道专题研判。 加密隧道专题 数据外传专题 APT 战役专题 高危会话 未知 SNI DoH 长连接 近 24 小时 保存视图 范围编辑 报告导出 证据包导出 订阅配置 分享收藏 专题ID： tunnel-20260620-01 站点： 主园区 资产组： 办公终端 / 服务群组 IP 段： 10.12.0.0/16 协议： SSH / TLS / HTTPS / RDP / SOCKS 时间窗： 近 7 天 (2026-06-13 00:00:00 ~ 2026-06-20 03:45:00) 规则： 加密隧道识别规则集 v2.1 模型： 加密隧道识别模型 v1.3 活跃隧道会话 0 等待 API",
+        "scroll_width": 1920,
+        "client_width": 1920,
+        "scroll_height": 1080,
+        "client_height": 1080,
+        "horizontal_overflow": false,
+        "error_alerts": [],
+        "visible_bad_geometry": []
+      },
+      "protected_route": true,
+      "smoke_token_used": true,
+      "smoke_hash_consumed": true,
+      "runtime_status": "fail",
+      "runtime_reasons": [
+        "1 bad responses",
+        "1 console errors"
+      ],
+      "visual_diff": {
+        "skipped": false,
+        "status": "fail",
+        "exit_code": 1,
+        "pixel_mismatch_ratio": 0.9999561149691358,
+        "stdout": "{\"status\": \"fail\", \"target_id\": \"topics\", \"pixel_mismatch_ratio\": 0.9999561149691358}",
+        "stderr": "",
+        "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-topics-r16-recheck/topics/metrics.json",
+        "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-topics-r16-recheck/topics/diff-1920.png"
+      },
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-topics-r16-recheck/topics/capture-meta.json"
+    }
+  ]
+}

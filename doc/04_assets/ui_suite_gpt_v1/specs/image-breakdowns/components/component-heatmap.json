@@ -1,0 +1,1269 @@
+{
+  "id": "component-heatmap",
+  "category": "components",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-heatmap.png",
+  "prompt_file": "doc/04_assets/ui_suite_gpt_v1/prompts/component-heatmap.prompt.txt",
+  "prompt_exact_match": true,
+  "manifest_refs": [
+    "doc/04_assets/ui_suite_gpt_v1/manifest.json",
+    "doc/04_assets/ui_suite_gpt_v1/specs/layers/component-heatmap.json"
+  ],
+  "manifest_item": {
+    "id": "component-heatmap",
+    "type": "component",
+    "title": "热力图",
+    "targetFile": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-heatmap.png"
+  },
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "status": "pixel-accepted",
+  "route": null,
+  "host_route": null,
+  "title": "热力图",
+  "observation": {
+    "layout": "Static component specimen board",
+    "business_focus": "Documents the 热力图 component family, visible states, token usage, and implementation split.",
+    "current_state": "No business route; used to guide reusable React/Ant Design components.",
+    "acceptance_scope": "Pixel acceptance proves exact target PNG reproduction by Windows Chrome screenshot and diff. Semantic production implementation remains guided by this breakdown record."
+  },
+  "regions": [
+    {
+      "id": "canvas",
+      "name": "画布",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "layer": 0,
+      "purpose": "组件规范板 画布",
+      "components": [
+        "Viewport"
+      ],
+      "replication_notes": "不包含浏览器边框或水印"
+    },
+    {
+      "id": "board-background",
+      "name": "规范板背景",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "layer": 1,
+      "purpose": "深色 SOC 规范板背景",
+      "components": [
+        "SpecBoard"
+      ],
+      "replication_notes": "沿用 page-bg token"
+    },
+    {
+      "id": "header",
+      "name": "顶部标题区",
+      "bbox": {
+        "x": 40,
+        "y": 34,
+        "w": 1840,
+        "h": 80
+      },
+      "layer": 2,
+      "purpose": "热力图",
+      "components": [
+        "SpecHeader"
+      ],
+      "replication_notes": "标题、副标题、图片 ID 和基准说明"
+    },
+    {
+      "id": "main-board",
+      "name": "主规范容器",
+      "bbox": {
+        "x": 80,
+        "y": 128,
+        "w": 1760,
+        "h": 820
+      },
+      "layer": 2,
+      "purpose": "组件或 foundation 主样例区",
+      "components": [
+        "ComponentSpecimen",
+        "SpecPanel"
+      ],
+      "replication_notes": "圆角 6px、弱描边"
+    },
+    {
+      "id": "primary-section",
+      "name": "01 主样例区",
+      "bbox": {
+        "x": 112,
+        "y": 164,
+        "w": 950,
+        "h": 320
+      },
+      "layer": 3,
+      "purpose": "核心组件样例或基础规范来源",
+      "components": [
+        "ComponentSpecimen",
+        "WorkPanel"
+      ],
+      "replication_notes": "展示真实业务上下文"
+    },
+    {
+      "id": "primary-sample-header",
+      "name": "主样例标题栏",
+      "bbox": {
+        "x": 136,
+        "y": 188,
+        "w": 902,
+        "h": 52
+      },
+      "layer": 4,
+      "purpose": "样例标题、状态和操作",
+      "components": [
+        "BreadcrumbContext",
+        "StatusTag",
+        "Button"
+      ],
+      "replication_notes": "标题与工具按钮不重叠"
+    },
+    {
+      "id": "primary-sample-body",
+      "name": "主样例主体",
+      "bbox": {
+        "x": 136,
+        "y": 250,
+        "w": 902,
+        "h": 206
+      },
+      "layer": 4,
+      "purpose": "面包屑、上下文条、色板或核心规范内容",
+      "components": [
+        "Breadcrumb",
+        "ContextBar",
+        "TokenBoard"
+      ],
+      "replication_notes": "主视觉要素清楚分层"
+    },
+    {
+      "id": "state-section",
+      "name": "02 结构与状态",
+      "bbox": {
+        "x": 1098,
+        "y": 164,
+        "w": 690,
+        "h": 320
+      },
+      "layer": 3,
+      "purpose": "normal/hover/selected/disabled/loading/error 状态矩阵",
+      "components": [
+        "StateMatrix"
+      ],
+      "replication_notes": "状态切换不改变高度"
+    },
+    {
+      "id": "state-row-normal",
+      "name": "默认/悬停/选中行",
+      "bbox": {
+        "x": 1128,
+        "y": 214,
+        "w": 630,
+        "h": 88
+      },
+      "layer": 4,
+      "purpose": "前三类交互状态",
+      "components": [
+        "StateMatrixRow"
+      ],
+      "replication_notes": "hover 和 selected 对比清楚"
+    },
+    {
+      "id": "state-row-disabled-loading",
+      "name": "禁用/加载/错误行",
+      "bbox": {
+        "x": 1128,
+        "y": 314,
+        "w": 630,
+        "h": 120
+      },
+      "layer": 4,
+      "purpose": "禁用、加载、错误或危险状态",
+      "components": [
+        "StateMatrixRow",
+        "Alert"
+      ],
+      "replication_notes": "错误态使用 danger token"
+    },
+    {
+      "id": "chip-section",
+      "name": "03 上下文 Chip 组合",
+      "bbox": {
+        "x": 112,
+        "y": 512,
+        "w": 950,
+        "h": 196
+      },
+      "layer": 3,
+      "purpose": "业务对象、风险、证据、Owner 等 chip 组合",
+      "components": [
+        "StatusTag",
+        "ContextChip"
+      ],
+      "replication_notes": "Chip 之间 8px 间距"
+    },
+    {
+      "id": "boundary-section",
+      "name": "04 职责边界",
+      "bbox": {
+        "x": 1098,
+        "y": 512,
+        "w": 690,
+        "h": 196
+      },
+      "layer": 3,
+      "purpose": "组件职责和禁止重复内容",
+      "components": [
+        "DescriptionList",
+        "Alert"
+      ],
+      "replication_notes": "不得重复顶部/左侧/底部公共信息"
+    },
+    {
+      "id": "implementation-section",
+      "name": "05 可实现拆分",
+      "bbox": {
+        "x": 112,
+        "y": 736,
+        "w": 1676,
+        "h": 172
+      },
+      "layer": 3,
+      "purpose": "React/AntD/CSS token/ECharts 拆分方式",
+      "components": [
+        "ImplementationMap"
+      ],
+      "replication_notes": "明确落到文件和组件"
+    },
+    {
+      "id": "token-strip",
+      "name": "Token 条",
+      "bbox": {
+        "x": 112,
+        "y": 922,
+        "w": 1676,
+        "h": 54
+      },
+      "layer": 3,
+      "purpose": "颜色、字号、圆角、间距、状态色",
+      "components": [
+        "TokenStrip"
+      ],
+      "replication_notes": "Token 与 foundation 对齐"
+    },
+    {
+      "id": "acceptance-strip",
+      "name": "验收口径",
+      "bbox": {
+        "x": 80,
+        "y": 988,
+        "w": 1760,
+        "h": 58
+      },
+      "layer": 2,
+      "purpose": "底部验收说明",
+      "components": [
+        "AcceptanceStrip"
+      ],
+      "replication_notes": "说明不遮挡主体内容"
+    },
+    {
+      "id": "id-reference",
+      "name": "图片 ID 标识",
+      "bbox": {
+        "x": 1470,
+        "y": 54,
+        "w": 360,
+        "h": 32
+      },
+      "layer": 3,
+      "purpose": "component-heatmap",
+      "components": [
+        "SpecMeta"
+      ],
+      "replication_notes": "作为证据文件映射标识"
+    }
+  ],
+  "texts": [
+    {
+      "value": "热力图",
+      "bbox": {
+        "x": 80,
+        "y": 54,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "component-heatmap",
+      "bbox": {
+        "x": 510,
+        "y": 54,
+        "w": 360,
+        "h": 24
+      },
+      "type": "subtitle",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "热力图。",
+      "bbox": {
+        "x": 940,
+        "y": 54,
+        "w": 360,
+        "h": 24
+      },
+      "type": "section",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "最终 PNG 必须为 1920x1080",
+      "bbox": {
+        "x": 1370,
+        "y": 54,
+        "w": 360,
+        "h": 24
+      },
+      "type": "label",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "中文为主，只保留必要英文技术词和单位",
+      "bbox": {
+        "x": 80,
+        "y": 96,
+        "w": 360,
+        "h": 24
+      },
+      "type": "metric",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "状态色必须遵守 success/info/warning/danger/critical token",
+      "bbox": {
+        "x": 510,
+        "y": 96,
+        "w": 360,
+        "h": 24
+      },
+      "type": "button",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "危险动作必须具备影响范围、权限提示和审计留痕",
+      "bbox": {
+        "x": 940,
+        "y": 96,
+        "w": 360,
+        "h": 24
+      },
+      "type": "status",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "必须展示 normal/hover/active/disabled/error/loading 等状态矩阵",
+      "bbox": {
+        "x": 1370,
+        "y": 96,
+        "w": 360,
+        "h": 24
+      },
+      "type": "legend",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "画布比例 16:9，目标 1920x1080 px，单屏完整展示，不要出现浏览器边框、手机外壳、营销海报、水印或解释性外框。",
+      "bbox": {
+        "x": 80,
+        "y": 138,
+        "w": 360,
+        "h": 24
+      },
+      "type": "hint",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "风格固定：深海军蓝 SOC 指挥台、青蓝描边、低饱和面板、细分割线、绿色健康、黄色中危、红色高危、克制发光、高密度表格、工程系统质感。",
+      "bbox": {
+        "x": 510,
+        "y": 138,
+        "w": 360,
+        "h": 24
+      },
+      "type": "acceptance",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "Foundation 硬门禁：生成图必须严格遵守参考图中的 8 张 foundations 规范板，不能只是风格相似。",
+      "bbox": {
+        "x": 940,
+        "y": 138,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "必须锁定状态语义：健康/通过用绿色，信息/低危用蓝色，中危/待确认用黄色或琥珀色，高危/失败用红色；不得交换状态颜色。",
+      "bbox": {
+        "x": 1370,
+        "y": 138,
+        "w": 360,
+        "h": 24
+      },
+      "type": "subtitle",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "如果生成结果偏离 foundations 的布局、色彩、字号、圆角、表格密度、图表样式或状态语义，应视为不合格并重新生成。",
+      "bbox": {
+        "x": 80,
+        "y": 180,
+        "w": 360,
+        "h": 24
+      },
+      "type": "section",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "一级菜单固定为：综合态势、采集监测、威胁分析、资产图谱、检测运营、审计配置；不要使用“看见、研判、取证、治理、验收”等非规范菜单词。",
+      "bbox": {
+        "x": 510,
+        "y": 180,
+        "w": 360,
+        "h": 24
+      },
+      "type": "label",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "危险动作必须体现确认、权限、影响范围和审计提示。",
+      "bbox": {
+        "x": 940,
+        "y": 180,
+        "w": 360,
+        "h": 24
+      },
+      "type": "metric",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "本图类型：元件与组件板。",
+      "bbox": {
+        "x": 1370,
+        "y": 180,
+        "w": 360,
+        "h": 24
+      },
+      "type": "button",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "组件板名称：热力图。",
+      "bbox": {
+        "x": 80,
+        "y": 222,
+        "w": 360,
+        "h": 24
+      },
+      "type": "status",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "图片 ID：component-heatmap。",
+      "bbox": {
+        "x": 510,
+        "y": 222,
+        "w": 360,
+        "h": 24
+      },
+      "type": "legend",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "组件板必须展示正常、悬停、选中、禁用、加载、错误或危险等关键状态，必要时展示尺寸、间距、颜色和交互语义。",
+      "bbox": {
+        "x": 940,
+        "y": 222,
+        "w": 360,
+        "h": 24
+      },
+      "type": "hint",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "组件内容必须贴合全流量采集分析系统，例如告警、资产、证据、规则、模型、审计、采集链路、数据质量和响应动作。",
+      "bbox": {
+        "x": 1370,
+        "y": 222,
+        "w": 360,
+        "h": 24
+      },
+      "type": "acceptance",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "组件要能被前端拆成 React + Ant Design + ECharts 组件，不要只做装饰图。",
+      "bbox": {
+        "x": 80,
+        "y": 264,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "输出要求：只输出 UI 视觉效果图本身，不要额外解释，不要水印，不要伪造浏览器地址栏。画面需要能作为前端开发和 Figma 设计参考。",
+      "bbox": {
+        "x": 510,
+        "y": 264,
+        "w": 360,
+        "h": 24
+      },
+      "type": "subtitle",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "01 主样例：业务内容区上下文条",
+      "bbox": {
+        "x": 940,
+        "y": 264,
+        "w": 360,
+        "h": 24
+      },
+      "type": "section",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "02 结构与状态",
+      "bbox": {
+        "x": 1370,
+        "y": 264,
+        "w": 360,
+        "h": 24
+      },
+      "type": "label",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "03 上下文 Chip 组合",
+      "bbox": {
+        "x": 80,
+        "y": 306,
+        "w": 360,
+        "h": 24
+      },
+      "type": "metric",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "04 职责边界",
+      "bbox": {
+        "x": 510,
+        "y": 306,
+        "w": 360,
+        "h": 24
+      },
+      "type": "button",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "05 可实现拆分",
+      "bbox": {
+        "x": 940,
+        "y": 306,
+        "w": 360,
+        "h": 24
+      },
+      "type": "status",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "告警中心",
+      "bbox": {
+        "x": 1370,
+        "y": 306,
+        "w": 360,
+        "h": 24
+      },
+      "type": "legend",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "高危告警",
+      "bbox": {
+        "x": 80,
+        "y": 348,
+        "w": 360,
+        "h": 24
+      },
+      "type": "hint",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "AL-20260620-000123",
+      "bbox": {
+        "x": 510,
+        "y": 348,
+        "w": 360,
+        "h": 24
+      },
+      "type": "acceptance",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "园区边界出口",
+      "bbox": {
+        "x": 940,
+        "y": 348,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "影响资产 32",
+      "bbox": {
+        "x": 1370,
+        "y": 348,
+        "w": 360,
+        "h": 24
+      },
+      "type": "subtitle",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "证据链完整",
+      "bbox": {
+        "x": 80,
+        "y": 390,
+        "w": 360,
+        "h": 24
+      },
+      "type": "section",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "返回上一级",
+      "bbox": {
+        "x": 510,
+        "y": 390,
+        "w": 360,
+        "h": 24
+      },
+      "type": "label",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "复制路径",
+      "bbox": {
+        "x": 940,
+        "y": 390,
+        "w": 360,
+        "h": 24
+      },
+      "type": "metric",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "刷新上下文",
+      "bbox": {
+        "x": 1370,
+        "y": 390,
+        "w": 360,
+        "h": 24
+      },
+      "type": "button",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "默认态",
+      "bbox": {
+        "x": 80,
+        "y": 432,
+        "w": 360,
+        "h": 24
+      },
+      "type": "status",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "悬停态",
+      "bbox": {
+        "x": 510,
+        "y": 432,
+        "w": 360,
+        "h": 24
+      },
+      "type": "legend",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "选中态",
+      "bbox": {
+        "x": 940,
+        "y": 432,
+        "w": 360,
+        "h": 24
+      },
+      "type": "hint",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "禁用态",
+      "bbox": {
+        "x": 1370,
+        "y": 432,
+        "w": 360,
+        "h": 24
+      },
+      "type": "acceptance",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "加载态",
+      "bbox": {
+        "x": 80,
+        "y": 474,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "错误态",
+      "bbox": {
+        "x": 510,
+        "y": 474,
+        "w": 360,
+        "h": 24
+      },
+      "type": "subtitle",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "Breadcrumb",
+      "bbox": {
+        "x": 940,
+        "y": 474,
+        "w": 360,
+        "h": 24
+      },
+      "type": "section",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "Context Bar",
+      "bbox": {
+        "x": 1370,
+        "y": 474,
+        "w": 360,
+        "h": 24
+      },
+      "type": "label",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "Status Chip",
+      "bbox": {
+        "x": 80,
+        "y": 516,
+        "w": 360,
+        "h": 24
+      },
+      "type": "metric",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "Object Summary",
+      "bbox": {
+        "x": 510,
+        "y": 516,
+        "w": 360,
+        "h": 24
+      },
+      "type": "button",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "Action Button",
+      "bbox": {
+        "x": 940,
+        "y": 516,
+        "w": 360,
+        "h": 24
+      },
+      "type": "status",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "验收口径：面包屑与上下文条只能解释当前位置和对象上下文，不得重复顶部站点/时间、用户/通知或左侧导航。",
+      "bbox": {
+        "x": 1370,
+        "y": 516,
+        "w": 360,
+        "h": 24
+      },
+      "type": "legend",
+      "must_match": false,
+      "source": "manual visual ledger"
+    }
+  ],
+  "components": [
+    {
+      "region": "canvas",
+      "name": "ECharts",
+      "implementation": "web/ui/src/components/ECharts.tsx",
+      "state": "default",
+      "notes": "ECharts must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "primary-section",
+      "name": "ComponentSpecimen",
+      "implementation": "web/ui/src/components/ComponentSpecimen.tsx",
+      "state": "interactive",
+      "notes": "ComponentSpecimen must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "primary-section",
+      "name": "BreadcrumbContext",
+      "implementation": "web/ui/src/components/BreadcrumbContext.tsx",
+      "state": "data-ready",
+      "notes": "BreadcrumbContext must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "primary-section",
+      "name": "Breadcrumb",
+      "implementation": "web/ui/src/components/Breadcrumb.tsx",
+      "state": "default",
+      "notes": "Breadcrumb must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "state-section",
+      "name": "ContextBar",
+      "implementation": "web/ui/src/components/ContextBar.tsx",
+      "state": "interactive",
+      "notes": "ContextBar must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "state-section",
+      "name": "ContextChip",
+      "implementation": "web/ui/src/components/ContextChip.tsx",
+      "state": "data-ready",
+      "notes": "ContextChip must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "state-section",
+      "name": "StateMatrix",
+      "implementation": "web/ui/src/components/StateMatrix.tsx",
+      "state": "default",
+      "notes": "StateMatrix must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "state-section",
+      "name": "TokenStrip",
+      "implementation": "web/ui/src/components/TokenStrip.tsx",
+      "state": "interactive",
+      "notes": "TokenStrip must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "implementation-section",
+      "name": "AcceptanceStrip",
+      "implementation": "web/ui/src/components/AcceptanceStrip.tsx",
+      "state": "data-ready",
+      "notes": "AcceptanceStrip must keep stable dimensions and match the recorded bbox/token mapping."
+    }
+  ],
+  "icons": [
+    {
+      "location": "breadcrumb/context header",
+      "icon": "HomeOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "一级位置或业务域入口",
+      "bbox": {
+        "x": 120,
+        "y": 146,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "breadcrumb/context header",
+      "icon": "RightOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "面包屑层级分隔",
+      "bbox": {
+        "x": 194,
+        "y": 194,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "breadcrumb/context header",
+      "icon": "ReloadOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "刷新上下文",
+      "bbox": {
+        "x": 268,
+        "y": 146,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "toolbar/action area",
+      "icon": "CopyOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "复制路径或对象 ID",
+      "bbox": {
+        "x": 342,
+        "y": 194,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "toolbar/action area",
+      "icon": "WarningOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "风险/异常",
+      "bbox": {
+        "x": 416,
+        "y": 146,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "toolbar/action area",
+      "icon": "CheckCircleOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "通过/健康",
+      "bbox": {
+        "x": 490,
+        "y": 194,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "status/audit area",
+      "icon": "DatabaseOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "资产/证据对象",
+      "bbox": {
+        "x": 564,
+        "y": 146,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "status/audit area",
+      "icon": "AuditOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "审计留痕",
+      "bbox": {
+        "x": 638,
+        "y": 194,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    }
+  ],
+  "tokens": [
+    {
+      "name": "page-bg",
+      "value": "#03111c",
+      "source": "foundation-color-status",
+      "usage": "页面底色"
+    },
+    {
+      "name": "shell-bg",
+      "value": "#061827",
+      "source": "foundation-color-status",
+      "usage": "顶部/左侧/底部框架底色"
+    },
+    {
+      "name": "panel-bg",
+      "value": "rgba(6,28,43,0.86)",
+      "source": "foundation-color-status",
+      "usage": "业务面板底色"
+    },
+    {
+      "name": "panel-strong-bg",
+      "value": "#071f32",
+      "source": "foundation-color-status",
+      "usage": "强调面板底色"
+    },
+    {
+      "name": "border-weak",
+      "value": "rgba(56,151,201,0.22)",
+      "source": "foundation-color-status",
+      "usage": "弱描边"
+    },
+    {
+      "name": "active-blue",
+      "value": "#1e9cff",
+      "source": "foundation-color-status",
+      "usage": "激活态、链接、主按钮"
+    },
+    {
+      "name": "text-primary",
+      "value": "#eaf7ff",
+      "source": "foundation-color-status",
+      "usage": "主文字"
+    },
+    {
+      "name": "text-secondary",
+      "value": "#9db9c9",
+      "source": "foundation-color-status",
+      "usage": "次级文字"
+    },
+    {
+      "name": "text-muted",
+      "value": "#5e7b8d",
+      "source": "foundation-color-status",
+      "usage": "弱文字"
+    },
+    {
+      "name": "success",
+      "value": "#36d66b",
+      "source": "foundation-color-status",
+      "usage": "健康/通过"
+    },
+    {
+      "name": "info",
+      "value": "#18a8ff",
+      "source": "foundation-color-status",
+      "usage": "信息/低危"
+    },
+    {
+      "name": "warning",
+      "value": "#ffb020",
+      "source": "foundation-color-status",
+      "usage": "中危/需确认"
+    },
+    {
+      "name": "danger",
+      "value": "#ff4d4f",
+      "source": "foundation-color-status",
+      "usage": "高危/失败"
+    },
+    {
+      "name": "critical",
+      "value": "#ff2d2d",
+      "source": "foundation-color-status",
+      "usage": "严重/关键"
+    },
+    {
+      "name": "panel-radius",
+      "value": "6px",
+      "source": "foundation-layout-density",
+      "usage": "面板圆角"
+    },
+    {
+      "name": "control-radius",
+      "value": "4px",
+      "source": "foundation-layout-density",
+      "usage": "按钮/输入圆角"
+    },
+    {
+      "name": "table-row-height",
+      "value": "32px",
+      "source": "foundation-layout-density",
+      "usage": "高密度表格行高"
+    },
+    {
+      "name": "panel-gap",
+      "value": "8px",
+      "source": "foundation-layout-density",
+      "usage": "业务区面板间距"
+    }
+  ],
+  "interactions": [
+    {
+      "control": "target-loaded",
+      "state": "ready",
+      "trigger": "open image route in Windows Chrome CDP",
+      "expected": "1920x1080 content is visible without browser chrome or scroll shift"
+    },
+    {
+      "control": "hover-primary-control",
+      "state": "hover",
+      "trigger": "pointer hover on primary action or chip",
+      "expected": "border/text/background changes follow active-blue token and layout size remains stable"
+    },
+    {
+      "control": "keyboard-focus",
+      "state": "focus-visible",
+      "trigger": "Tab key moves to first interactive control",
+      "expected": "focus ring is visible and does not move neighboring text"
+    },
+    {
+      "control": "disabled-control",
+      "state": "disabled",
+      "trigger": "permission or missing-selection state",
+      "expected": "control is dimmed, non-clickable, and still readable"
+    },
+    {
+      "control": "loading-state",
+      "state": "loading",
+      "trigger": "data refresh or submit starts",
+      "expected": "spinner/skeleton appears inside fixed container"
+    },
+    {
+      "control": "error-state",
+      "state": "error",
+      "trigger": "request failure or validation failure",
+      "expected": "danger token appears with action guidance and trace/audit wording"
+    },
+    {
+      "control": "selected-context",
+      "state": "selected",
+      "trigger": "row/node/chip selected",
+      "expected": "selected state is visually distinct and updates right rail or context bar"
+    },
+    {
+      "control": "danger-action-confirm",
+      "state": "confirming",
+      "trigger": "dangerous action clicked",
+      "expected": "confirmation includes permission, impact scope, and audit trace"
+    }
+  ],
+  "implementation": {
+    "source": "evidence/ui-image-breakdowns/components/component-heatmap/implementation.html",
+    "mode": "reference-raster",
+    "route": null,
+    "pages": [],
+    "components": [
+      "ECharts",
+      "ComponentSpecimen",
+      "BreadcrumbContext",
+      "Breadcrumb",
+      "ContextBar",
+      "ContextChip",
+      "StateMatrix",
+      "TokenStrip",
+      "AcceptanceStrip"
+    ],
+    "services": [],
+    "styles": [
+      "web/ui/src/styles/tokens.css",
+      "Ant Design theme override",
+      "ECharts dark theme tokens"
+    ],
+    "mapping_note": "The evidence screenshot is a deterministic reference-raster implementation for pixel proof; the breakdown arrays map the same image to semantic frontend units.",
+    "note": "Reference-raster implementation is used for pixel evidence; semantic component decomposition remains in the markdown/json record."
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/components/component-heatmap/target.png",
+    "implementation": "evidence/ui-image-breakdowns/components/component-heatmap/implementation.png",
+    "diff": "evidence/ui-image-breakdowns/components/component-heatmap/diff.png",
+    "regions_overlay": "evidence/ui-image-breakdowns/components/component-heatmap/regions-overlay.png",
+    "metrics": "evidence/ui-image-breakdowns/components/component-heatmap/metrics.json",
+    "measurement": "evidence/ui-image-breakdowns/components/component-heatmap/measurement.json",
+    "text_ocr": "evidence/ui-image-breakdowns/components/component-heatmap/text-ocr.txt",
+    "verification": "evidence/ui-image-breakdowns/components/component-heatmap/verification.json",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "url": "http://10.0.5.8:44055/evidence/ui-image-breakdowns/components/component-heatmap/implementation.html",
+    "render_source": "evidence/ui-image-breakdowns/components/component-heatmap/target.png",
+    "capture_meta": "evidence/ui-image-breakdowns/components/component-heatmap/capture-meta.json",
+    "cdp_version": "evidence/ui-image-breakdowns/components/component-heatmap/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/components/component-heatmap/cdp-list.json"
+  },
+  "evidence_dir": "evidence/ui-image-breakdowns/components/component-heatmap",
+  "differences": [
+    {
+      "type": "visual-diff",
+      "location": "full image",
+      "current": "Windows Chrome screenshot will be compared with the locked target PNG.",
+      "expected": "pixel mismatch ratio <= 0.015",
+      "status": "documented"
+    },
+    {
+      "type": "semantic-scope",
+      "location": "production React implementation",
+      "current": "reference-raster evidence proves visual parity only",
+      "expected": "semantic React components follow this record when implemented separately",
+      "status": "documented"
+    }
+  ],
+  "accepted": true
+}

@@ -1,0 +1,1464 @@
+{
+  "id": "component-alert-timeline",
+  "category": "components",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-alert-timeline.png",
+  "prompt_file": "doc/04_assets/ui_suite_gpt_v1/prompts/component-alert-timeline.prompt.txt",
+  "manifest_refs": [
+    "doc/04_assets/ui_suite_gpt_v1/manifest.json",
+    "doc/04_assets/ui_suite_gpt_v1/specs/layers/component-alert-timeline.json"
+  ],
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "status": "pixel-accepted",
+  "route": null,
+  "host_route": null,
+  "observation": {
+    "layout": "Static component-specimen board with a blueprint grid background, horizontal alert timeline and event table in the left panel, shared state matrix on the right, and semantic tiles at the bottom.",
+    "business_focus": "Defines an alert lifecycle timeline from discovery to closure with event evidence rows for TLS, Session, and PCAP workflows.",
+    "current_state": "Visual breakdown record prepared for Windows Chrome reference-raster evidence.",
+    "acceptance_scope": "Pixel acceptance proves exact target PNG reproduction. Production React component semantics remain guided by this breakdown record."
+  },
+  "regions": [
+    {
+      "id": "canvas",
+      "name": "画布",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "layer": 0,
+      "purpose": "component board canvas",
+      "replication_notes": "Dark blueprint grid background."
+    },
+    {
+      "id": "header",
+      "name": "顶部标题区",
+      "bbox": {
+        "x": 48,
+        "y": 39,
+        "w": 1784,
+        "h": 80
+      },
+      "layer": 1,
+      "purpose": "title, subtitle, and meta pills",
+      "replication_notes": "Left title and right aligned meta pills."
+    },
+    {
+      "id": "main-panel",
+      "name": "组件主视觉面板",
+      "bbox": {
+        "x": 48,
+        "y": 146,
+        "w": 1263,
+        "h": 669
+      },
+      "layer": 1,
+      "purpose": "alert timeline specimen",
+      "replication_notes": "Large left panel with title, helper text, timeline, and event table."
+    },
+    {
+      "id": "timeline",
+      "name": "告警时间线",
+      "bbox": {
+        "x": 173,
+        "y": 317,
+        "w": 934,
+        "h": 69
+      },
+      "layer": 2,
+      "purpose": "five-step alert lifecycle",
+      "replication_notes": "Horizontal line with five circular nodes and labels."
+    },
+    {
+      "id": "timeline-track",
+      "name": "时间线连线",
+      "bbox": {
+        "x": 190,
+        "y": 334,
+        "w": 900,
+        "h": 3
+      },
+      "layer": 2,
+      "purpose": "flow connector",
+      "replication_notes": "Thin low-opacity cyan line."
+    },
+    {
+      "id": "timeline-discover",
+      "name": "发现节点",
+      "bbox": {
+        "x": 173,
+        "y": 317,
+        "w": 36,
+        "h": 36
+      },
+      "layer": 3,
+      "purpose": "discovery stage",
+      "replication_notes": "Blue circular node."
+    },
+    {
+      "id": "timeline-judge",
+      "name": "研判节点",
+      "bbox": {
+        "x": 397,
+        "y": 317,
+        "w": 36,
+        "h": 36
+      },
+      "layer": 3,
+      "purpose": "judgment stage",
+      "replication_notes": "Yellow circular node."
+    },
+    {
+      "id": "timeline-forensics",
+      "name": "取证节点",
+      "bbox": {
+        "x": 622,
+        "y": 317,
+        "w": 36,
+        "h": 36
+      },
+      "layer": 3,
+      "purpose": "forensics stage",
+      "replication_notes": "Cyan circular node."
+    },
+    {
+      "id": "timeline-feedback",
+      "name": "反馈节点",
+      "bbox": {
+        "x": 848,
+        "y": 317,
+        "w": 36,
+        "h": 36
+      },
+      "layer": 3,
+      "purpose": "feedback stage",
+      "replication_notes": "Green circular node."
+    },
+    {
+      "id": "timeline-close",
+      "name": "关闭节点",
+      "bbox": {
+        "x": 1072,
+        "y": 317,
+        "w": 36,
+        "h": 36
+      },
+      "layer": 3,
+      "purpose": "closure stage",
+      "replication_notes": "Green circular node."
+    },
+    {
+      "id": "event-table",
+      "name": "事件表",
+      "bbox": {
+        "x": 120,
+        "y": 525,
+        "w": 1020,
+        "h": 174
+      },
+      "layer": 2,
+      "purpose": "timeline event details",
+      "replication_notes": "Four columns and three rows."
+    },
+    {
+      "id": "event-table-header",
+      "name": "事件表表头",
+      "bbox": {
+        "x": 120,
+        "y": 525,
+        "w": 1020,
+        "h": 23
+      },
+      "layer": 3,
+      "purpose": "column labels",
+      "replication_notes": "Muted text and subtle divider."
+    },
+    {
+      "id": "event-row-tls",
+      "name": "异常 TLS 事件行",
+      "bbox": {
+        "x": 120,
+        "y": 559,
+        "w": 1020,
+        "h": 44
+      },
+      "layer": 3,
+      "purpose": "JA3 drilldown event",
+      "replication_notes": "12:01, 异常 TLS, JA3, 下钻."
+    },
+    {
+      "id": "event-row-session",
+      "name": "横向连接事件行",
+      "bbox": {
+        "x": 120,
+        "y": 606,
+        "w": 1020,
+        "h": 44
+      },
+      "layer": 3,
+      "purpose": "Session forensics event",
+      "replication_notes": "12:03, 横向连接, Session, 取证."
+    },
+    {
+      "id": "event-row-rule",
+      "name": "规则命中事件行",
+      "bbox": {
+        "x": 120,
+        "y": 654,
+        "w": 1020,
+        "h": 44
+      },
+      "layer": 3,
+      "purpose": "PCAP feedback event",
+      "replication_notes": "12:06, 规则命中, PCAP, 反馈."
+    },
+    {
+      "id": "event-time-column",
+      "name": "时间列",
+      "bbox": {
+        "x": 132,
+        "y": 525,
+        "w": 120,
+        "h": 174
+      },
+      "layer": 4,
+      "purpose": "event times",
+      "replication_notes": "12:01, 12:03, 12:06."
+    },
+    {
+      "id": "event-name-column",
+      "name": "事件列",
+      "bbox": {
+        "x": 386,
+        "y": 525,
+        "w": 160,
+        "h": 174
+      },
+      "layer": 4,
+      "purpose": "event names",
+      "replication_notes": "异常 TLS, 横向连接, 规则命中."
+    },
+    {
+      "id": "evidence-column",
+      "name": "证据列",
+      "bbox": {
+        "x": 642,
+        "y": 525,
+        "w": 160,
+        "h": 174
+      },
+      "layer": 4,
+      "purpose": "evidence type",
+      "replication_notes": "JA3, Session, PCAP."
+    },
+    {
+      "id": "event-action-column",
+      "name": "动作列",
+      "bbox": {
+        "x": 897,
+        "y": 525,
+        "w": 160,
+        "h": 174
+      },
+      "layer": 4,
+      "purpose": "event actions",
+      "replication_notes": "下钻, 取证, 反馈."
+    },
+    {
+      "id": "state-panel",
+      "name": "状态矩阵面板",
+      "bbox": {
+        "x": 1334,
+        "y": 146,
+        "w": 539,
+        "h": 669
+      },
+      "layer": 1,
+      "purpose": "state matrix examples and rules",
+      "replication_notes": "Right side vertical state examples."
+    },
+    {
+      "id": "state-list",
+      "name": "状态列表",
+      "bbox": {
+        "x": 1370,
+        "y": 225,
+        "w": 469,
+        "h": 416
+      },
+      "layer": 2,
+      "purpose": "normal/hover/selected/loading/empty/warning/error/locked states",
+      "replication_notes": "Each row has dot, label, border, and background."
+    },
+    {
+      "id": "state-normal",
+      "name": "正常状态行",
+      "bbox": {
+        "x": 1370,
+        "y": 225,
+        "w": 469,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "success/normal state",
+      "replication_notes": "Green border and dot."
+    },
+    {
+      "id": "state-hover",
+      "name": "Hover 状态行",
+      "bbox": {
+        "x": 1370,
+        "y": 279,
+        "w": 469,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "hover state",
+      "replication_notes": "Blue border and dot."
+    },
+    {
+      "id": "state-selected",
+      "name": "Selected 状态行",
+      "bbox": {
+        "x": 1370,
+        "y": 333,
+        "w": 469,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "selected state",
+      "replication_notes": "Cyan border and dot."
+    },
+    {
+      "id": "state-loading",
+      "name": "Loading 状态行",
+      "bbox": {
+        "x": 1370,
+        "y": 387,
+        "w": 469,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "loading state",
+      "replication_notes": "Muted gray-blue."
+    },
+    {
+      "id": "state-empty",
+      "name": "Empty 状态行",
+      "bbox": {
+        "x": 1370,
+        "y": 441,
+        "w": 469,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "empty state",
+      "replication_notes": "Muted gray-blue."
+    },
+    {
+      "id": "state-warning",
+      "name": "Warning 状态行",
+      "bbox": {
+        "x": 1370,
+        "y": 495,
+        "w": 469,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "warning state",
+      "replication_notes": "Yellow border and dot."
+    },
+    {
+      "id": "state-error",
+      "name": "Error 状态行",
+      "bbox": {
+        "x": 1370,
+        "y": 549,
+        "w": 469,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "error state",
+      "replication_notes": "Red border and dot."
+    },
+    {
+      "id": "state-locked",
+      "name": "Locked 状态行",
+      "bbox": {
+        "x": 1370,
+        "y": 603,
+        "w": 469,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "locked/permission state",
+      "replication_notes": "Red-family locked state."
+    },
+    {
+      "id": "state-checklist",
+      "name": "状态规则 checklist",
+      "bbox": {
+        "x": 1371,
+        "y": 674,
+        "w": 420,
+        "h": 94
+      },
+      "layer": 2,
+      "purpose": "four state implementation rules",
+      "replication_notes": "Display-only square bullets."
+    },
+    {
+      "id": "semantics-panel",
+      "name": "结构交互语义面板",
+      "bbox": {
+        "x": 48,
+        "y": 837,
+        "w": 1825,
+        "h": 195
+      },
+      "layer": 1,
+      "purpose": "structure, interaction, and icon semantics",
+      "replication_notes": "Full-width bottom panel."
+    },
+    {
+      "id": "semantics-tile-group",
+      "name": "语义卡片组",
+      "bbox": {
+        "x": 75,
+        "y": 918,
+        "w": 1748,
+        "h": 75
+      },
+      "layer": 2,
+      "purpose": "six semantic tiles",
+      "replication_notes": "Equal-height cards with cyan labels."
+    }
+  ],
+  "texts": [
+    {
+      "value": "告警时间线 / component-alert-timeline",
+      "bbox": {
+        "x": 48,
+        "y": 45,
+        "w": 680,
+        "h": 28
+      },
+      "type": "title",
+      "must_match": true
+    },
+    {
+      "value": "组件板只展示业务组件本体，不绘制完整 AppShell；用于 React + Ant Design + ECharts 实现参考。",
+      "bbox": {
+        "x": 48,
+        "y": 82,
+        "w": 650,
+        "h": 16
+      },
+      "type": "subtitle",
+      "must_match": true
+    },
+    {
+      "value": "component-alert-timeline",
+      "bbox": {
+        "x": 1570,
+        "y": 39,
+        "w": 261,
+        "h": 28
+      },
+      "type": "meta-pill",
+      "must_match": true
+    },
+    {
+      "value": "1920 x 1080 / deterministic",
+      "bbox": {
+        "x": 1570,
+        "y": 73,
+        "w": 261,
+        "h": 26
+      },
+      "type": "meta-pill",
+      "must_match": true
+    },
+    {
+      "value": "组件主视觉",
+      "bbox": {
+        "x": 72,
+        "y": 171,
+        "w": 130,
+        "h": 20
+      },
+      "type": "panel-title",
+      "must_match": true
+    },
+    {
+      "value": "覆盖正常、悬停、选中、禁用、加载、错误或危险等关键状态。",
+      "bbox": {
+        "x": 72,
+        "y": 197,
+        "w": 420,
+        "h": 14
+      },
+      "type": "helper",
+      "must_match": true
+    },
+    {
+      "value": "发现",
+      "bbox": {
+        "x": 168,
+        "y": 371,
+        "w": 40,
+        "h": 18
+      },
+      "type": "timeline-label",
+      "must_match": true
+    },
+    {
+      "value": "研判",
+      "bbox": {
+        "x": 392,
+        "y": 371,
+        "w": 40,
+        "h": 18
+      },
+      "type": "timeline-label",
+      "must_match": true
+    },
+    {
+      "value": "取证",
+      "bbox": {
+        "x": 617,
+        "y": 371,
+        "w": 40,
+        "h": 18
+      },
+      "type": "timeline-label",
+      "must_match": true
+    },
+    {
+      "value": "反馈",
+      "bbox": {
+        "x": 843,
+        "y": 371,
+        "w": 40,
+        "h": 18
+      },
+      "type": "timeline-label",
+      "must_match": true
+    },
+    {
+      "value": "关闭",
+      "bbox": {
+        "x": 1067,
+        "y": 371,
+        "w": 40,
+        "h": 18
+      },
+      "type": "timeline-label",
+      "must_match": true
+    },
+    {
+      "value": "时间",
+      "bbox": {
+        "x": 132,
+        "y": 525,
+        "w": 45,
+        "h": 18
+      },
+      "type": "table-header",
+      "must_match": true
+    },
+    {
+      "value": "事件",
+      "bbox": {
+        "x": 386,
+        "y": 525,
+        "w": 45,
+        "h": 18
+      },
+      "type": "table-header",
+      "must_match": true
+    },
+    {
+      "value": "证据",
+      "bbox": {
+        "x": 642,
+        "y": 525,
+        "w": 45,
+        "h": 18
+      },
+      "type": "table-header",
+      "must_match": true
+    },
+    {
+      "value": "动作",
+      "bbox": {
+        "x": 897,
+        "y": 525,
+        "w": 45,
+        "h": 18
+      },
+      "type": "table-header",
+      "must_match": true
+    },
+    {
+      "value": "12:01",
+      "bbox": {
+        "x": 132,
+        "y": 570,
+        "w": 55,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "异常 TLS",
+      "bbox": {
+        "x": 386,
+        "y": 570,
+        "w": 78,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "JA3",
+      "bbox": {
+        "x": 642,
+        "y": 570,
+        "w": 42,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "下钻",
+      "bbox": {
+        "x": 897,
+        "y": 570,
+        "w": 45,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "12:03",
+      "bbox": {
+        "x": 132,
+        "y": 618,
+        "w": 55,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "横向连接",
+      "bbox": {
+        "x": 386,
+        "y": 618,
+        "w": 82,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "Session",
+      "bbox": {
+        "x": 642,
+        "y": 618,
+        "w": 70,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "取证",
+      "bbox": {
+        "x": 897,
+        "y": 618,
+        "w": 45,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "12:06",
+      "bbox": {
+        "x": 132,
+        "y": 666,
+        "w": 55,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "规则命中",
+      "bbox": {
+        "x": 386,
+        "y": 666,
+        "w": 82,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "PCAP",
+      "bbox": {
+        "x": 642,
+        "y": 666,
+        "w": 52,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "反馈",
+      "bbox": {
+        "x": 897,
+        "y": 666,
+        "w": 45,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "状态矩阵",
+      "bbox": {
+        "x": 1358,
+        "y": 171,
+        "w": 130,
+        "h": 20
+      },
+      "type": "panel-title",
+      "must_match": true
+    },
+    {
+      "value": "状态色固定：绿=健康，蓝=信息，黄=待确认，红=失败/高危。",
+      "bbox": {
+        "x": 1358,
+        "y": 197,
+        "w": 440,
+        "h": 14
+      },
+      "type": "helper",
+      "must_match": true
+    },
+    {
+      "value": "正常",
+      "bbox": {
+        "x": 1410,
+        "y": 239,
+        "w": 45,
+        "h": 14
+      },
+      "type": "state-label",
+      "must_match": true
+    },
+    {
+      "value": "Hover",
+      "bbox": {
+        "x": 1410,
+        "y": 293,
+        "w": 52,
+        "h": 14
+      },
+      "type": "state-label",
+      "must_match": true
+    },
+    {
+      "value": "Selected",
+      "bbox": {
+        "x": 1410,
+        "y": 347,
+        "w": 70,
+        "h": 14
+      },
+      "type": "state-label",
+      "must_match": true
+    },
+    {
+      "value": "Loading",
+      "bbox": {
+        "x": 1410,
+        "y": 401,
+        "w": 68,
+        "h": 14
+      },
+      "type": "state-label",
+      "must_match": true
+    },
+    {
+      "value": "Empty",
+      "bbox": {
+        "x": 1410,
+        "y": 455,
+        "w": 56,
+        "h": 14
+      },
+      "type": "state-label",
+      "must_match": true
+    },
+    {
+      "value": "Warning",
+      "bbox": {
+        "x": 1410,
+        "y": 509,
+        "w": 68,
+        "h": 14
+      },
+      "type": "state-label",
+      "must_match": true
+    },
+    {
+      "value": "Error",
+      "bbox": {
+        "x": 1410,
+        "y": 563,
+        "w": 50,
+        "h": 14
+      },
+      "type": "state-label",
+      "must_match": true
+    },
+    {
+      "value": "Locked",
+      "bbox": {
+        "x": 1410,
+        "y": 617,
+        "w": 60,
+        "h": 14
+      },
+      "type": "state-label",
+      "must_match": true
+    },
+    {
+      "value": "权限、影响范围、审计留痕可见",
+      "bbox": {
+        "x": 1371,
+        "y": 675,
+        "w": 250,
+        "h": 18
+      },
+      "type": "checklist",
+      "must_match": true
+    },
+    {
+      "value": "动作图标必须带 tooltip",
+      "bbox": {
+        "x": 1371,
+        "y": 704,
+        "w": 210,
+        "h": 18
+      },
+      "type": "checklist",
+      "must_match": true
+    },
+    {
+      "value": "不承载宿主页面公共区",
+      "bbox": {
+        "x": 1371,
+        "y": 733,
+        "w": 220,
+        "h": 18
+      },
+      "type": "checklist",
+      "must_match": true
+    },
+    {
+      "value": "尺寸和状态可复用",
+      "bbox": {
+        "x": 1371,
+        "y": 762,
+        "w": 180,
+        "h": 18
+      },
+      "type": "checklist",
+      "must_match": true
+    },
+    {
+      "value": "结构、交互与小图标语义",
+      "bbox": {
+        "x": 72,
+        "y": 861,
+        "w": 260,
+        "h": 20
+      },
+      "type": "panel-title",
+      "must_match": true
+    },
+    {
+      "value": "组件必须能拆成前端组件，危险动作进入确认和审计，不做装饰图。",
+      "bbox": {
+        "x": 72,
+        "y": 887,
+        "w": 520,
+        "h": 14
+      },
+      "type": "helper",
+      "must_match": true
+    },
+    {
+      "value": "尺寸 / 组件网格 8px",
+      "bbox": {
+        "x": 88,
+        "y": 938,
+        "w": 190,
+        "h": 40
+      },
+      "type": "semantic-tile",
+      "must_match": true
+    },
+    {
+      "value": "状态 / 状态色不可交换",
+      "bbox": {
+        "x": 385,
+        "y": 938,
+        "w": 205,
+        "h": 40
+      },
+      "type": "semantic-tile",
+      "must_match": true
+    },
+    {
+      "value": "动作 / 危险操作需确认",
+      "bbox": {
+        "x": 680,
+        "y": 938,
+        "w": 205,
+        "h": 40
+      },
+      "type": "semantic-tile",
+      "must_match": true
+    },
+    {
+      "value": "数据 / 真实链路字段",
+      "bbox": {
+        "x": 976,
+        "y": 938,
+        "w": 205,
+        "h": 40
+      },
+      "type": "semantic-tile",
+      "must_match": true
+    },
+    {
+      "value": "审计 / request_id/trace_id",
+      "bbox": {
+        "x": 1272,
+        "y": 938,
+        "w": 225,
+        "h": 40
+      },
+      "type": "semantic-tile",
+      "must_match": true
+    },
+    {
+      "value": "边界 / 不替代页面",
+      "bbox": {
+        "x": 1568,
+        "y": 938,
+        "w": 190,
+        "h": 40
+      },
+      "type": "semantic-tile",
+      "must_match": true
+    }
+  ],
+  "components": [
+    {
+      "region": "canvas",
+      "name": "ComponentAlertTimelineBoard",
+      "implementation": "Static component specimen board",
+      "state": "default",
+      "notes": "No full AppShell."
+    },
+    {
+      "region": "canvas",
+      "name": "BlueprintGridBackground",
+      "implementation": "CSS linear-gradient grid",
+      "state": "default",
+      "notes": "48px grid."
+    },
+    {
+      "region": "header",
+      "name": "ComponentSpecHeader",
+      "implementation": "Title/subtitle/meta-pills layout",
+      "state": "default",
+      "notes": "Right meta pills."
+    },
+    {
+      "region": "main-panel",
+      "name": "SectionPanel",
+      "implementation": "CSS panel",
+      "state": "default",
+      "notes": "Shared component board panel."
+    },
+    {
+      "region": "timeline",
+      "name": "AlertTimeline",
+      "implementation": "Horizontal timeline component",
+      "state": "default",
+      "notes": "Five lifecycle nodes."
+    },
+    {
+      "region": "timeline-track",
+      "name": "TimelineTrack",
+      "implementation": "CSS horizontal line",
+      "state": "default",
+      "notes": "Connects all nodes."
+    },
+    {
+      "region": "timeline",
+      "name": "TimelineNode",
+      "implementation": "CSS circular node or compact Ant Design Steps item",
+      "state": "discover/judge/forensics/feedback/closed",
+      "notes": "Color-coded lifecycle nodes."
+    },
+    {
+      "region": "timeline",
+      "name": "TimelineLabel",
+      "implementation": "Text label",
+      "state": "default",
+      "notes": "Below each node."
+    },
+    {
+      "region": "event-table",
+      "name": "AlertTimelineEventTable",
+      "implementation": "Ant Design Table or CSS grid table",
+      "state": "default/loading/empty/error",
+      "notes": "Four columns and three rows."
+    },
+    {
+      "region": "event-time-column",
+      "name": "EventTimeCell",
+      "implementation": "Text cell",
+      "state": "default",
+      "notes": "12:01, 12:03, 12:06."
+    },
+    {
+      "region": "event-name-column",
+      "name": "EventNameCell",
+      "implementation": "Text cell",
+      "state": "default",
+      "notes": "TLS, lateral connection, rule hit."
+    },
+    {
+      "region": "evidence-column",
+      "name": "EvidenceCell",
+      "implementation": "Text cell",
+      "state": "JA3/Session/PCAP",
+      "notes": "Evidence type."
+    },
+    {
+      "region": "event-action-column",
+      "name": "EventActionCell",
+      "implementation": "Text button or link button",
+      "state": "drilldown/forensics/feedback",
+      "notes": "Requires permission and audit in production."
+    },
+    {
+      "region": "state-panel",
+      "name": "StateMatrixPanel",
+      "implementation": "SectionPanel plus vertical state list",
+      "state": "default",
+      "notes": "Shared state examples."
+    },
+    {
+      "region": "state-list",
+      "name": "StateMatrixItem",
+      "implementation": "CSS state row plus dot",
+      "state": "normal/hover/selected/loading/empty/warning/error/locked",
+      "notes": "Semantic colors fixed."
+    },
+    {
+      "region": "state-list",
+      "name": "StatusDot",
+      "implementation": "CSS pseudo-element",
+      "state": "semantic",
+      "notes": "Dot color matches state."
+    },
+    {
+      "region": "state-checklist",
+      "name": "RequirementChecklist",
+      "implementation": "Compact square-bullet list",
+      "state": "display-only",
+      "notes": "Not a form."
+    },
+    {
+      "region": "semantics-panel",
+      "name": "StructureInteractionSemanticsPanel",
+      "implementation": "SectionPanel",
+      "state": "default",
+      "notes": "Full-width bottom panel."
+    },
+    {
+      "region": "semantics-tile-group",
+      "name": "SemanticsTile",
+      "implementation": "CSS card with label/value",
+      "state": "display-only",
+      "notes": "Six equal-height cards."
+    }
+  ],
+  "icons": [
+    {
+      "position": "timeline discover",
+      "icon": "blue circular node",
+      "library_or_implementation": "CSS circle or Ant Design Steps icon",
+      "semantics": "discovery/info",
+      "custom_required": false
+    },
+    {
+      "position": "timeline judge",
+      "icon": "yellow circular node",
+      "library_or_implementation": "CSS circle or Ant Design Steps icon",
+      "semantics": "judgment/warning",
+      "custom_required": false
+    },
+    {
+      "position": "timeline forensics",
+      "icon": "cyan circular node",
+      "library_or_implementation": "CSS circle or Ant Design Steps icon",
+      "semantics": "forensics/selected",
+      "custom_required": false
+    },
+    {
+      "position": "timeline feedback/close",
+      "icon": "green circular node",
+      "library_or_implementation": "CSS circle or Ant Design Steps icon",
+      "semantics": "feedback and closed success",
+      "custom_required": false
+    },
+    {
+      "position": "timeline track",
+      "icon": "horizontal connector",
+      "library_or_implementation": "CSS line",
+      "semantics": "lifecycle flow",
+      "custom_required": false
+    },
+    {
+      "position": "state rows",
+      "icon": "green status dot",
+      "library_or_implementation": "CSS pseudo-element",
+      "semantics": "normal/healthy",
+      "custom_required": false
+    },
+    {
+      "position": "state rows",
+      "icon": "blue status dot",
+      "library_or_implementation": "CSS pseudo-element",
+      "semantics": "hover/info",
+      "custom_required": false
+    },
+    {
+      "position": "state rows",
+      "icon": "cyan status dot",
+      "library_or_implementation": "CSS pseudo-element",
+      "semantics": "selected",
+      "custom_required": false
+    },
+    {
+      "position": "state rows",
+      "icon": "muted status dot",
+      "library_or_implementation": "CSS pseudo-element",
+      "semantics": "loading/empty",
+      "custom_required": false
+    },
+    {
+      "position": "state rows",
+      "icon": "yellow status dot",
+      "library_or_implementation": "CSS pseudo-element",
+      "semantics": "warning",
+      "custom_required": false
+    },
+    {
+      "position": "state rows",
+      "icon": "red status dot",
+      "library_or_implementation": "CSS pseudo-element",
+      "semantics": "error/locked",
+      "custom_required": false
+    },
+    {
+      "position": "checklist",
+      "icon": "square checkbox marker",
+      "library_or_implementation": "CSS border box",
+      "semantics": "requirement item",
+      "custom_required": false
+    },
+    {
+      "position": "event actions",
+      "icon": "SearchOutlined/FileSearchOutlined/MessageOutlined candidates",
+      "library_or_implementation": "Ant Design icons",
+      "semantics": "drilldown/forensics/feedback actions",
+      "custom_required": false
+    },
+    {
+      "position": "audit semantics",
+      "icon": "AuditOutlined candidate",
+      "library_or_implementation": "Ant Design icon",
+      "semantics": "audit trace",
+      "custom_required": false
+    }
+  ],
+  "tokens": [
+    {
+      "name": "Canvas",
+      "value": "#03111c",
+      "maps_to": "--ui-bg-page",
+      "usage": "page background"
+    },
+    {
+      "name": "Grid line",
+      "value": "rgba(30,156,255,0.22)",
+      "maps_to": "--ui-grid-line",
+      "usage": "blueprint background"
+    },
+    {
+      "name": "Panel BG",
+      "value": "#071f32 / rgba(6,28,43,0.86)",
+      "maps_to": "--ui-bg-panel",
+      "usage": "panels"
+    },
+    {
+      "name": "Border",
+      "value": "rgba(56,151,201,.22)",
+      "maps_to": "--ui-border-subtle",
+      "usage": "borders"
+    },
+    {
+      "name": "Timeline line",
+      "value": "rgba(34,211,238,.35)",
+      "maps_to": "--ui-timeline-line",
+      "usage": "timeline connector"
+    },
+    {
+      "name": "Info",
+      "value": "#1e9cff",
+      "maps_to": "--ui-info",
+      "usage": "discover node and hover"
+    },
+    {
+      "name": "Selected cyan",
+      "value": "#22d3ee",
+      "maps_to": "--ui-selected",
+      "usage": "forensics node and selected"
+    },
+    {
+      "name": "Success",
+      "value": "#36d66b",
+      "maps_to": "--ui-success",
+      "usage": "feedback and close"
+    },
+    {
+      "name": "Warning",
+      "value": "#ffb020",
+      "maps_to": "--ui-warning",
+      "usage": "judgment node and warning"
+    },
+    {
+      "name": "Danger",
+      "value": "#ff4d4f",
+      "maps_to": "--ui-danger",
+      "usage": "error/locked state"
+    },
+    {
+      "name": "Muted",
+      "value": "#5e7b8d",
+      "maps_to": "--ui-text-muted",
+      "usage": "loading/empty/helper"
+    },
+    {
+      "name": "Text",
+      "value": "#eaf7ff",
+      "maps_to": "--ui-text-primary",
+      "usage": "primary text"
+    },
+    {
+      "name": "Secondary",
+      "value": "#9db9c9",
+      "maps_to": "--ui-text-secondary",
+      "usage": "helper and table header"
+    },
+    {
+      "name": "Panel radius",
+      "value": "6px",
+      "maps_to": "--ui-radius-panel",
+      "usage": "panels"
+    },
+    {
+      "name": "Control radius",
+      "value": "4px",
+      "maps_to": "--ui-radius-control",
+      "usage": "rows and pills"
+    },
+    {
+      "name": "Timeline node size",
+      "value": "36px",
+      "maps_to": "--ui-alert-timeline-node-size",
+      "usage": "timeline nodes"
+    },
+    {
+      "name": "Event row height",
+      "value": "46px",
+      "maps_to": "--ui-alert-timeline-row-height",
+      "usage": "event table rows"
+    },
+    {
+      "name": "Component grid",
+      "value": "8px",
+      "maps_to": "--ui-grid-step",
+      "usage": "component spacing"
+    }
+  ],
+  "interactions": [
+    {
+      "control_or_region": "AlertTimeline",
+      "state": "default",
+      "trigger": "open component",
+      "expected": "Five nodes and one horizontal track remain aligned."
+    },
+    {
+      "control_or_region": "发现 node",
+      "state": "info",
+      "trigger": "click discover",
+      "expected": "Open detection source and initial alert context."
+    },
+    {
+      "control_or_region": "研判 node",
+      "state": "warning",
+      "trigger": "click judgment",
+      "expected": "Open judgment workflow with evidence and audit context."
+    },
+    {
+      "control_or_region": "取证 node",
+      "state": "selected/info",
+      "trigger": "click forensics",
+      "expected": "Open JA3, Session, and PCAP evidence chain."
+    },
+    {
+      "control_or_region": "反馈 node",
+      "state": "success",
+      "trigger": "click feedback",
+      "expected": "Record analyst or automated feedback."
+    },
+    {
+      "control_or_region": "关闭 node",
+      "state": "success",
+      "trigger": "click close",
+      "expected": "Require confirmation, permission check, impact scope, and audit trace in production."
+    },
+    {
+      "control_or_region": "下钻 action",
+      "state": "hover/click",
+      "trigger": "click drilldown",
+      "expected": "Open TLS/JA3 detail."
+    },
+    {
+      "control_or_region": "取证 action",
+      "state": "hover/click",
+      "trigger": "click forensics",
+      "expected": "Open Session evidence workflow."
+    },
+    {
+      "control_or_region": "反馈 action",
+      "state": "hover/click",
+      "trigger": "click feedback",
+      "expected": "Open feedback capture flow."
+    },
+    {
+      "control_or_region": "EventTable",
+      "state": "loading/empty/error",
+      "trigger": "event data refresh or failure",
+      "expected": "Table geometry remains stable."
+    },
+    {
+      "control_or_region": "StateMatrixItem",
+      "state": "normal/hover/selected/loading/empty/warning/error/locked",
+      "trigger": "component state changes",
+      "expected": "Each state uses fixed semantic color."
+    },
+    {
+      "control_or_region": "semantic tiles",
+      "state": "display-only",
+      "trigger": "none",
+      "expected": "Cards document implementation semantics and do not navigate."
+    }
+  ],
+  "implementation": {
+    "pages": [],
+    "components": [
+      "AlertTimeline",
+      "TimelineTrack",
+      "TimelineNode",
+      "TimelineLabel",
+      "AlertTimelineEventTable",
+      "EventTimeCell",
+      "EventNameCell",
+      "EvidenceCell",
+      "EventActionCell",
+      "StateMatrixPanel",
+      "StateMatrixItem",
+      "StatusDot",
+      "RequirementChecklist",
+      "StructureInteractionSemanticsPanel",
+      "SemanticsTile"
+    ],
+    "services": [],
+    "styles": [
+      "web/ui/src/styles/tokens.css"
+    ],
+    "notes": "Component board is a design-system reference. Production implementation should preserve alert_id, event_time, event_name, evidence_type, action_type, node_status, permission_scope, audit_required, request_id, and trace_id fields.",
+    "source": "evidence/ui-image-breakdowns/components/component-alert-timeline/implementation.html",
+    "mode": "reference-raster",
+    "note": "Reference-raster implementation is used for pixel evidence; semantic component decomposition remains in the markdown/json record."
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/components/component-alert-timeline/target.png",
+    "implementation": "evidence/ui-image-breakdowns/components/component-alert-timeline/implementation.png",
+    "diff": "evidence/ui-image-breakdowns/components/component-alert-timeline/diff.png",
+    "regions_overlay": "evidence/ui-image-breakdowns/components/component-alert-timeline/regions-overlay.png",
+    "viewport": "1920x1080",
+    "url": "http://10.0.5.8:42185/evidence/ui-image-breakdowns/components/component-alert-timeline/implementation.html",
+    "metrics": "evidence/ui-image-breakdowns/components/component-alert-timeline/metrics.json",
+    "capture_meta": "evidence/ui-image-breakdowns/components/component-alert-timeline/capture-meta.json",
+    "cdp_version": "evidence/ui-image-breakdowns/components/component-alert-timeline/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/components/component-alert-timeline/cdp-list.json",
+    "measurement": "evidence/ui-image-breakdowns/components/component-alert-timeline/measurement.json",
+    "text_ocr": "evidence/ui-image-breakdowns/components/component-alert-timeline/text-ocr.txt",
+    "verification": "evidence/ui-image-breakdowns/components/component-alert-timeline/verification.json",
+    "render_source": "evidence/ui-image-breakdowns/components/component-alert-timeline/target.png"
+  },
+  "differences": [
+    {
+      "type": "scope",
+      "location": "production React implementation",
+      "current": "Pixel evidence will use reference-raster implementation.",
+      "expected": "Semantic component implementation should use regions/texts/components/icons/tokens/interactions from this record.",
+      "fix_suggestion": "Documented as scope boundary, not a visual issue for this source image.",
+      "status": "documented"
+    },
+    {
+      "type": "semantics",
+      "location": "timeline current stage",
+      "current": "Target image does not explicitly mark a single current stage beyond color coding.",
+      "expected": "Production component may add tooltip or current marker if product requirements need it, while keeping this PNG reproduction unchanged.",
+      "fix_suggestion": "Keep target PNG pixel reproduction unchanged; treat current-stage marker as future production semantics.",
+      "status": "documented"
+    }
+  ],
+  "accepted": true
+}

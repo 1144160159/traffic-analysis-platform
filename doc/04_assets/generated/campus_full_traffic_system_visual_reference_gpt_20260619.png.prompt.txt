@@ -1,0 +1,34 @@
+Use case: ui-mockup
+Asset type: high-fidelity product UI visual for a campus network full-traffic collection and analysis system.
+Input image: Use the attached dashboard image as the source reference for layout, visual language, information architecture, and business semantics.
+
+Primary request:
+Regenerate the attached dark enterprise command-center dashboard as a polished high-fidelity UI mockup. Keep the same overall composition: left two-level navigation, top KPI bar, campus topology overview, collection and streaming pipeline health, alert queue, alert timeline, correlated alert cluster, traffic trend, traffic topology, evidence list, and right-side selected alert detail panel.
+
+Critical text and semantics:
+- Product title must be exactly: “园区网络全流量采集与分析系统”.
+- Left first-level menu must be: “综合态势”, “威胁分析”, “资产图谱”, “检测运营”, “审计配置”.
+- Active second-level menu under 威胁分析 must show: “告警中心”, “战役列表”, “攻击链分析”, “加密流量”, “取证分析”.
+- Keep all panel titles Chinese-only, no bilingual titles and no slash-English subtitles.
+- Use these Chinese panel titles: “园区拓扑总览（数字孪生）”, “采集与流处理管道健康”, “告警队列”, “告警时间线”, “关联告警簇”, “流量趋势”, “流量拓扑”, “证据列表”, “选中告警详情”, “资产上下文”, “风险评分”, “响应处置”, “反馈与学习”, “模型状态”, “验收证据”.
+- Technical identifiers may remain in English where they are product/technology names: Kafka, Flink, ClickHouse, OpenSearch, NebulaGraph, MinIO, PCAP, TLS, IP, DNS.
+
+Typography requirement:
+- Unify the visual size and weight of all panel titles.
+- All panel titles must match the visual pixel height of “园区拓扑总览（数字孪生）”.
+- Product title is larger; KPI numbers are larger; body/table text is smaller. Do not let some panel titles become oversized or undersized.
+- Use a clean Chinese enterprise sans-serif style, crisp text rendering, consistent baseline, no random font mixing.
+
+Business content constraints:
+- Preserve the same dashboard meaning and flow: campus topology -> probe/collection -> Kafka/Flink/storage -> alert triage -> evidence -> response -> feedback/model learning.
+- Preserve the same representative data values where legible: 高风险 87/100, 告警总数 128, 采集健康度 98.6%, 数据质量 99.1%, 采集流量 78.3Gbps, 处理流量 57.8K EPS, 风险评分 92/100.
+- Preserve the selected alert semantic: “横向移动-IPCS 暴力访问”, ID “AL-20260619-0001”, source “10.12.15.23”, destination “185.224.137.89”, port “443 (TLS)”.
+
+Visual style:
+- Dark navy cyber-security operations center UI, subtle cyan outlines, blue-green telemetry lines, red/orange/yellow/green severity colors, compact dense enterprise dashboard.
+- Keep the campus digital twin topology as a central visual anchor with connected campus buildings and glowing network links.
+- Keep charts, tables, badges, buttons, timeline, graph cluster, donut score, and evidence table visually coherent and readable.
+- No marketing hero layout, no decorative blobs, no unrelated illustration, no random icons, no watermark.
+
+Output:
+A single wide dashboard screenshot-style image, same aspect ratio and framing as the reference, high fidelity, production UI concept art.

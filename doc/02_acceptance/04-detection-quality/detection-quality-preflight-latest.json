@@ -1,0 +1,114 @@
+{
+  "run_id": "20260701-detection-quality-preflight-r5-review-packet",
+  "generated_at": "2026-06-30T17:08:48Z",
+  "package_dir": "mlops/eval_packages/topic1_blind",
+  "output_dir": "doc/02_acceptance/runs/20260701-detection-quality-preflight-r5-review-packet",
+  "thresholds": {
+    "min_detection_rate": 0.95,
+    "max_false_positive_rate": 0.05,
+    "min_unknown_recall": 0.8
+  },
+  "locked_threshold": null,
+  "artifacts": {
+    "dataset_manifest": null,
+    "threshold_lock": null,
+    "labels": null,
+    "predictions": null,
+    "third_party_attestation": null
+  },
+  "inventory_file_count": 9,
+  "metrics": null,
+  "checks": [
+    {
+      "phase": "contract",
+      "name": "README.md present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "README.md",
+      "artifact": "README.md"
+    },
+    {
+      "phase": "contract",
+      "name": "dataset-manifest.template.yaml present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "dataset-manifest.template.yaml",
+      "artifact": "dataset-manifest.template.yaml"
+    },
+    {
+      "phase": "contract",
+      "name": "label-schema.yaml present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "label-schema.yaml",
+      "artifact": "label-schema.yaml"
+    },
+    {
+      "phase": "contract",
+      "name": "metric-definition.md present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "metric-definition.md",
+      "artifact": "metric-definition.md"
+    },
+    {
+      "phase": "package",
+      "name": "dataset manifest present",
+      "severity": "blocker",
+      "passed": false,
+      "status": "missing",
+      "detail": "missing dataset-manifest.yaml",
+      "artifact": ""
+    },
+    {
+      "phase": "package",
+      "name": "threshold lock present",
+      "severity": "blocker",
+      "passed": false,
+      "status": "missing",
+      "detail": "missing threshold-lock.json",
+      "artifact": ""
+    },
+    {
+      "phase": "package",
+      "name": "labels present",
+      "severity": "blocker",
+      "passed": false,
+      "status": "missing",
+      "detail": "missing labels.csv",
+      "artifact": ""
+    },
+    {
+      "phase": "package",
+      "name": "predictions present",
+      "severity": "blocker",
+      "passed": false,
+      "status": "missing",
+      "detail": "missing predictions.csv",
+      "artifact": ""
+    },
+    {
+      "phase": "package",
+      "name": "third party attestation present",
+      "severity": "blocker",
+      "passed": false,
+      "status": "missing",
+      "detail": "missing third-party-attestation.yaml",
+      "artifact": ""
+    },
+    {
+      "phase": "integrity",
+      "name": "bootstrap and review-template artifacts are blocked from formal pass",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "formal artifacts are scanned for review_required/template markers and unsigned attestation fields",
+      "artifact": "mlops/scripts/evaluate_blind_package.py"
+    }
+  ],
+  "result": "blocked"
+}

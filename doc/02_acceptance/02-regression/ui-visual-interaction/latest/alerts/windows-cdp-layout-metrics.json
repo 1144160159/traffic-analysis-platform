@@ -1,0 +1,101 @@
+{
+  "title": "园区网络全流量采集与分析系统",
+  "location": "http://10.0.5.8:30180/alerts?fullRouteEvidenceTs=1783072616180",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "dpr": 1.0000000298023224
+  },
+  "scroll": {
+    "horizontalOverflow": 0,
+    "verticalOverflow": 0,
+    "bodyScrollWidth": 1920,
+    "bodyClientWidth": 1920,
+    "bodyScrollHeight": 1080,
+    "bodyClientHeight": 1080
+  },
+  "headings": [
+    "告警中心",
+    "告警队列",
+    "筛选检索",
+    "告警列表（共 8 条）",
+    "告警详情",
+    "研判时间线",
+    "关联告警簇",
+    "处置与反馈"
+  ],
+  "buttons": [
+    "移动端导航",
+    "PCAP检索",
+    "资产检索",
+    "规则检索",
+    "脚本中心",
+    "帮助中心",
+    "更多应用",
+    "Ccodex-ui-desktop-admin系统管理员在线",
+    "保存视图",
+    "批量确认",
+    "批量操作",
+    "行操作",
+    "重 置",
+    "查 询",
+    "批量指派",
+    "批量状态变更",
+    "导出",
+    "进入详情",
+    "同源 IP4",
+    "同资产7"
+  ],
+  "visibleText": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-03 17:56:57 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 采集监测 威胁分析 告警中心 128 战役列表 攻击链分析 加密流量 取证分析 资产图谱 检测运营 审计配置 C codex-ui-desktop-admin 系统管理员 在线 威胁分析 / 告警中心 告警中心 自定义视图 保存视图 批量确认 批量操作 行操作 告警队列 高危 0 条 真实 API 中危 0 条 真实 API 低危 0 条 真实 API 未处理 8 条 真实 API 研判中 0 条 真实 API 已指派 0 条 真实 API 已关闭 0 条 真实 API 筛选检索 时间窗 资产 全部资产 目的 IP 规则 全部规则 模型 全部模型 攻击阶段 全部阶段 状态 全部状态 置信度 全部 重 置 查 询 告警列表（共 8 条） 研判中 批量指派 批量状态变更 导出 告警 ID 风险等级 告警名称 攻击阶段 源 IP 目的 IP 受影响资产 规则/模型 置信度 首次发生 状态 alert-default-1782752318016-1dd589c4 SEVERITY_CRITICAL statistical_anomaly - cid:1:U8amJ5 cid:qLQ8lYcJ38oGJET8RBUwg= - - 1.00 2026-06-29T16:58:38.016Z 未处理 alert-default-1782752318016-1dd589c4 SEVERITY_CRITICAL statistical_anomaly - cid:1:U8amJ5 cid:qLQ8lYcJ38oGJET8RBUwg= - - 1.00 2026-06-29T16:58:38.016Z 未处理 alert-default-1782752312710-7134fcdb SEVERITY_CRITICAL statistical_anomaly - cid:1:0E3Eti cid:6IzaBK0hIa/t9OXbHeht4= - - 1.00 2026-06-29T16:58:32.71Z 未处理 alert-default-1782752312710-7134fcdb SEVERITY_CRITICAL statistical_anomaly - cid:1:0E3Eti cid:6IzaBK0hIa/t9OXbHeht4= - - 1.00 2026-06-29T16:58:32.71Z 未处理 alert-default-1782752",
+  "elements": {
+    "pageHero": {
+      "selector": ".taf-page-hero",
+      "visible": false
+    },
+    "panelHeader": {
+      "selector": ".taf-panel__header",
+      "visible": true,
+      "text": "告警队列",
+      "x": 175,
+      "y": 160,
+      "right": 1390,
+      "bottom": 196,
+      "w": 1216,
+      "h": 36,
+      "display": "flex",
+      "overflowX": "visible",
+      "overflowY": "visible"
+    },
+    "table": {
+      "selector": ".ant-table, .taf-table, table",
+      "visible": true,
+      "text": "告警 ID风险等级告警名称攻击阶段源 IP目的 IP受影响资产规则/模型置信度首次发生状态alert-default-1782752318016-1dd589c4SEVERITY_CRITICALstatistical_anomaly-cid:1:U8amJ5cid:qLQ8lYcJ38oGJET8RBUwg=--1.002026-06-29T16:58:38.016Z未处理alert-default-1782752318016-1dd589c4SEVERITY_CRITIC",
+      "x": 185,
+      "y": 467,
+      "right": 1380,
+      "bottom": 821,
+      "w": 1196,
+      "h": 353,
+      "display": "block",
+      "overflowX": "visible",
+      "overflowY": "visible"
+    },
+    "topicTitlebar": {
+      "selector": ".taf-topic-titlebar",
+      "visible": false
+    },
+    "topicFacts": {
+      "selector": ".taf-topic-facts",
+      "visible": false
+    },
+    "topicKpis": {
+      "selector": ".taf-topic-kpis",
+      "visible": false
+    },
+    "topicGrid": {
+      "selector": ".taf-topic-grid",
+      "visible": false
+    }
+  },
+  "overlapChecks": {}
+}

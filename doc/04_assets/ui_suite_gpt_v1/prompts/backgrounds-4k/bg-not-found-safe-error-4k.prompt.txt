@@ -1,0 +1,17 @@
+Generate a 3840x2160 PNG static 4K background asset for traffic-analysis-platform.
+
+Use case: productivity-visual.
+Asset type: safe error and not-found background.
+
+Scene:
+- A dark safe-error state for an enterprise cybersecurity platform: disconnected route traces, missing node in a topology, graceful fallback path, protected boundary, and calm recovery signal.
+- It should feel like a resilient system page background for not-found or empty route states, not a failure alarm.
+- Leave large negative space in the center for future error message overlay.
+
+Style:
+- Quiet dark enterprise product illustration, near-black/navy base, cyan broken route traces, blue topology fragments, subtle green recovery signal, minimal amber caution.
+- Clean 4K asset, calm, not scary, not humorous, not marketing.
+
+Constraints:
+- No readable error codes or text, no 404 text, no sad characters, no people, no logos, no credentials, no real IPs, no browser chrome, no UI controls, no bright splash screen.
+

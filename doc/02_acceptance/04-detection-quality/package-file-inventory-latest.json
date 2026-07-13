@@ -1,0 +1,47 @@
+[
+  {
+    "path": ".gitignore",
+    "bytes": 118,
+    "sha256": "30cccd5362924cdc37e79e5e4d637d2f697b0420c7b12d8f209d30959cb38076"
+  },
+  {
+    "path": "README.md",
+    "bytes": 1732,
+    "sha256": "723e82783df52d76704bbaad2da35e81848faf39ffd72ace5c2ea42e4232ebe9"
+  },
+  {
+    "path": "dataset-manifest.template.yaml",
+    "bytes": 948,
+    "sha256": "cf0585cfaf347877347ac859192ec604ba446f9898e4178a2846d45701cc5a02"
+  },
+  {
+    "path": "label-schema.yaml",
+    "bytes": 1357,
+    "sha256": "9d4f2cc993641fb28ed957ba4c947be4c117a6248d7eaf26aaf807ed4d4e2f72"
+  },
+  {
+    "path": "labels/.gitkeep",
+    "bytes": 1,
+    "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+  },
+  {
+    "path": "metric-definition.md",
+    "bytes": 1329,
+    "sha256": "2c481ce03a902dcb097c59b9d995796507d85c9e3eb69780dacf2582dc68a8e1"
+  },
+  {
+    "path": "predictions/.gitkeep",
+    "bytes": 1,
+    "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+  },
+  {
+    "path": "reports/.gitkeep",
+    "bytes": 1,
+    "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+  },
+  {
+    "path": "samples/.gitkeep",
+    "bytes": 1,
+    "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+  }
+]

@@ -1,0 +1,1128 @@
+{
+  "id": "component-action-rail",
+  "category": "components",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-action-rail.png",
+  "prompt_file": "doc/04_assets/ui_suite_gpt_v1/prompts/component-action-rail.prompt.txt",
+  "manifest_refs": [
+    "doc/04_assets/ui_suite_gpt_v1/manifest.json",
+    "doc/04_assets/ui_suite_gpt_v1/specs/layers/component-action-rail.json"
+  ],
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "status": "pixel-accepted",
+  "route": null,
+  "host_route": null,
+  "observation": {
+    "layout": "Static component-specimen board with a blueprint grid background, response action rail and action gate table in the left panel, shared state matrix on the right, and semantic tiles at the bottom.",
+    "business_focus": "Defines response action rail items for investigation, forensics, playbook trigger, whitelist generation, and alert closure, including permission, impact, audit, and confirmation semantics.",
+    "current_state": "Visual breakdown record prepared. Windows Chrome reference-raster screenshot, visual diff, auxiliary review, and main-thread judgment still need to run before acceptance.",
+    "acceptance_scope": "Pixel acceptance will prove exact target PNG reproduction. Production React component semantics remain guided by this breakdown record and are not claimed by reference-raster evidence."
+  },
+  "regions": [
+    {
+      "id": "canvas",
+      "name": "画布",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "layer": 0,
+      "purpose": "component board canvas",
+      "replication_notes": "Dark blueprint grid background."
+    },
+    {
+      "id": "header",
+      "name": "顶部标题区",
+      "bbox": {
+        "x": 48,
+        "y": 39,
+        "w": 1784,
+        "h": 80
+      },
+      "layer": 1,
+      "purpose": "title, subtitle, and meta pills",
+      "replication_notes": "No card wrapper."
+    },
+    {
+      "id": "main-panel",
+      "name": "组件主视觉面板",
+      "bbox": {
+        "x": 48,
+        "y": 146,
+        "w": 1263,
+        "h": 669
+      },
+      "layer": 1,
+      "purpose": "action rail specimen",
+      "replication_notes": "Large left panel with title, helper text, action list, and action gate table."
+    },
+    {
+      "id": "action-rail-list",
+      "name": "响应动作栏列表",
+      "bbox": {
+        "x": 161,
+        "y": 246,
+        "w": 420,
+        "h": 422
+      },
+      "layer": 2,
+      "purpose": "five response actions",
+      "replication_notes": "Fixed-height semantic action items."
+    },
+    {
+      "id": "action-investigate",
+      "name": "研判动作",
+      "bbox": {
+        "x": 161,
+        "y": 246,
+        "w": 420,
+        "h": 70
+      },
+      "layer": 3,
+      "purpose": "investigation action",
+      "replication_notes": "Blue/info action item."
+    },
+    {
+      "id": "action-forensics",
+      "name": "取证动作",
+      "bbox": {
+        "x": 161,
+        "y": 333,
+        "w": 420,
+        "h": 70
+      },
+      "layer": 3,
+      "purpose": "forensics action",
+      "replication_notes": "Cyan action item."
+    },
+    {
+      "id": "action-playbook",
+      "name": "触发剧本动作",
+      "bbox": {
+        "x": 161,
+        "y": 421,
+        "w": 420,
+        "h": 70
+      },
+      "layer": 3,
+      "purpose": "playbook trigger action",
+      "replication_notes": "Warning action item."
+    },
+    {
+      "id": "action-whitelist",
+      "name": "生成白名单动作",
+      "bbox": {
+        "x": 161,
+        "y": 509,
+        "w": 420,
+        "h": 70
+      },
+      "layer": 3,
+      "purpose": "whitelist generation action",
+      "replication_notes": "Success action item."
+    },
+    {
+      "id": "action-close-alert",
+      "name": "关闭告警动作",
+      "bbox": {
+        "x": 161,
+        "y": 598,
+        "w": 420,
+        "h": 70
+      },
+      "layer": 3,
+      "purpose": "alert close action",
+      "replication_notes": "Danger action item and must require confirmation in production."
+    },
+    {
+      "id": "action-gate-table",
+      "name": "动作门禁表",
+      "bbox": {
+        "x": 680,
+        "y": 265,
+        "w": 431,
+        "h": 167
+      },
+      "layer": 2,
+      "purpose": "action to gate mapping",
+      "replication_notes": "Two columns and three rows."
+    },
+    {
+      "id": "state-panel",
+      "name": "状态矩阵面板",
+      "bbox": {
+        "x": 1334,
+        "y": 146,
+        "w": 539,
+        "h": 669
+      },
+      "layer": 1,
+      "purpose": "state matrix examples and rules",
+      "replication_notes": "Right side vertical state examples."
+    },
+    {
+      "id": "state-list",
+      "name": "状态列表",
+      "bbox": {
+        "x": 1370,
+        "y": 225,
+        "w": 469,
+        "h": 416
+      },
+      "layer": 2,
+      "purpose": "normal/hover/selected/loading/empty/warning/error/locked states",
+      "replication_notes": "Each row has dot, label, border, and background."
+    },
+    {
+      "id": "state-normal",
+      "name": "正常状态行",
+      "bbox": {
+        "x": 1370,
+        "y": 225,
+        "w": 469,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "success/normal state",
+      "replication_notes": "Green border and dot."
+    },
+    {
+      "id": "state-hover",
+      "name": "Hover 状态行",
+      "bbox": {
+        "x": 1370,
+        "y": 279,
+        "w": 469,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "hover state",
+      "replication_notes": "Blue border and dot."
+    },
+    {
+      "id": "state-selected",
+      "name": "Selected 状态行",
+      "bbox": {
+        "x": 1370,
+        "y": 333,
+        "w": 469,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "selected state",
+      "replication_notes": "Cyan border and dot."
+    },
+    {
+      "id": "state-loading",
+      "name": "Loading 状态行",
+      "bbox": {
+        "x": 1370,
+        "y": 387,
+        "w": 469,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "loading state",
+      "replication_notes": "Muted gray-blue."
+    },
+    {
+      "id": "state-empty",
+      "name": "Empty 状态行",
+      "bbox": {
+        "x": 1370,
+        "y": 441,
+        "w": 469,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "empty state",
+      "replication_notes": "Muted gray-blue."
+    },
+    {
+      "id": "state-warning",
+      "name": "Warning 状态行",
+      "bbox": {
+        "x": 1370,
+        "y": 495,
+        "w": 469,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "warning state",
+      "replication_notes": "Yellow border and dot."
+    },
+    {
+      "id": "state-error",
+      "name": "Error 状态行",
+      "bbox": {
+        "x": 1370,
+        "y": 549,
+        "w": 469,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "error state",
+      "replication_notes": "Red border and dot."
+    },
+    {
+      "id": "state-locked",
+      "name": "Locked 状态行",
+      "bbox": {
+        "x": 1370,
+        "y": 603,
+        "w": 469,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "locked/permission state",
+      "replication_notes": "Red-family locked state."
+    },
+    {
+      "id": "state-checklist",
+      "name": "状态规则 checklist",
+      "bbox": {
+        "x": 1371,
+        "y": 674,
+        "w": 420,
+        "h": 94
+      },
+      "layer": 2,
+      "purpose": "four state implementation rules",
+      "replication_notes": "Display-only square bullets."
+    },
+    {
+      "id": "semantics-panel",
+      "name": "结构交互语义面板",
+      "bbox": {
+        "x": 48,
+        "y": 837,
+        "w": 1825,
+        "h": 195
+      },
+      "layer": 1,
+      "purpose": "structure, interaction, and icon semantics",
+      "replication_notes": "Full-width bottom panel."
+    },
+    {
+      "id": "semantics-tile-group",
+      "name": "语义卡片组",
+      "bbox": {
+        "x": 75,
+        "y": 918,
+        "w": 1748,
+        "h": 75
+      },
+      "layer": 2,
+      "purpose": "six semantic tiles",
+      "replication_notes": "Equal-height cards with cyan labels."
+    }
+  ],
+  "texts": [
+    {
+      "value": "响应动作栏 / component-action-rail",
+      "bbox": {
+        "x": 48,
+        "y": 45,
+        "w": 620,
+        "h": 28
+      },
+      "type": "title",
+      "must_match": true
+    },
+    {
+      "value": "组件板只展示业务组件本体，不绘制完整 AppShell；用于 React + Ant Design + ECharts 实现参考。",
+      "bbox": {
+        "x": 48,
+        "y": 82,
+        "w": 650,
+        "h": 16
+      },
+      "type": "subtitle",
+      "must_match": true
+    },
+    {
+      "value": "component-action-rail",
+      "bbox": {
+        "x": 1570,
+        "y": 39,
+        "w": 261,
+        "h": 28
+      },
+      "type": "meta-pill",
+      "must_match": true
+    },
+    {
+      "value": "1920 x 1080 / deterministic",
+      "bbox": {
+        "x": 1570,
+        "y": 73,
+        "w": 261,
+        "h": 26
+      },
+      "type": "meta-pill",
+      "must_match": true
+    },
+    {
+      "value": "组件主视觉",
+      "bbox": {
+        "x": 72,
+        "y": 171,
+        "w": 130,
+        "h": 20
+      },
+      "type": "panel-title",
+      "must_match": true
+    },
+    {
+      "value": "覆盖正常、悬停、选中、禁用、加载、错误或危险等关键状态。",
+      "bbox": {
+        "x": 72,
+        "y": 197,
+        "w": 420,
+        "h": 14
+      },
+      "type": "helper",
+      "must_match": true
+    },
+    {
+      "value": "研判 / 权限 + 影响 + 审计",
+      "bbox": {
+        "x": 186,
+        "y": 270,
+        "w": 335,
+        "h": 24
+      },
+      "type": "action-item",
+      "must_match": true
+    },
+    {
+      "value": "取证 / 权限 + 影响 + 审计",
+      "bbox": {
+        "x": 186,
+        "y": 358,
+        "w": 335,
+        "h": 24
+      },
+      "type": "action-item",
+      "must_match": true
+    },
+    {
+      "value": "触发剧本 / 权限 + 影响 + 审计",
+      "bbox": {
+        "x": 186,
+        "y": 446,
+        "w": 335,
+        "h": 24
+      },
+      "type": "action-item",
+      "must_match": true
+    },
+    {
+      "value": "生成白名单 / 权限 + 影响 + 审计",
+      "bbox": {
+        "x": 186,
+        "y": 534,
+        "w": 335,
+        "h": 24
+      },
+      "type": "action-item",
+      "must_match": true
+    },
+    {
+      "value": "关闭告警 / 权限 + 影响 + 审计",
+      "bbox": {
+        "x": 186,
+        "y": 623,
+        "w": 335,
+        "h": 24
+      },
+      "type": "action-item",
+      "must_match": true
+    },
+    {
+      "value": "动作",
+      "bbox": {
+        "x": 693,
+        "y": 265,
+        "w": 40,
+        "h": 20
+      },
+      "type": "table-header",
+      "must_match": true
+    },
+    {
+      "value": "门禁",
+      "bbox": {
+        "x": 908,
+        "y": 265,
+        "w": 40,
+        "h": 20
+      },
+      "type": "table-header",
+      "must_match": true
+    },
+    {
+      "value": "下载 PCAP / 二次确认",
+      "bbox": {
+        "x": 693,
+        "y": 311,
+        "w": 270,
+        "h": 18
+      },
+      "type": "table-row",
+      "must_match": true
+    },
+    {
+      "value": "模型激活 / 质量门禁",
+      "bbox": {
+        "x": 693,
+        "y": 357,
+        "w": 270,
+        "h": 18
+      },
+      "type": "table-row",
+      "must_match": true
+    },
+    {
+      "value": "规则发布 / 审批链",
+      "bbox": {
+        "x": 693,
+        "y": 402,
+        "w": 270,
+        "h": 18
+      },
+      "type": "table-row",
+      "must_match": true
+    },
+    {
+      "value": "状态矩阵",
+      "bbox": {
+        "x": 1358,
+        "y": 171,
+        "w": 90,
+        "h": 20
+      },
+      "type": "panel-title",
+      "must_match": true
+    },
+    {
+      "value": "状态色固定：绿=健康，蓝=信息，黄=待确认，红=失败/高危。",
+      "bbox": {
+        "x": 1358,
+        "y": 197,
+        "w": 420,
+        "h": 14
+      },
+      "type": "helper",
+      "must_match": true
+    },
+    {
+      "value": "正常",
+      "bbox": {
+        "x": 1410,
+        "y": 239,
+        "w": 40,
+        "h": 16
+      },
+      "type": "state-label",
+      "must_match": true
+    },
+    {
+      "value": "Hover",
+      "bbox": {
+        "x": 1410,
+        "y": 293,
+        "w": 55,
+        "h": 16
+      },
+      "type": "state-label",
+      "must_match": true
+    },
+    {
+      "value": "Selected",
+      "bbox": {
+        "x": 1410,
+        "y": 347,
+        "w": 75,
+        "h": 16
+      },
+      "type": "state-label",
+      "must_match": true
+    },
+    {
+      "value": "Loading",
+      "bbox": {
+        "x": 1410,
+        "y": 401,
+        "w": 70,
+        "h": 16
+      },
+      "type": "state-label",
+      "must_match": true
+    },
+    {
+      "value": "Empty",
+      "bbox": {
+        "x": 1410,
+        "y": 455,
+        "w": 55,
+        "h": 16
+      },
+      "type": "state-label",
+      "must_match": true
+    },
+    {
+      "value": "Warning",
+      "bbox": {
+        "x": 1410,
+        "y": 509,
+        "w": 70,
+        "h": 16
+      },
+      "type": "state-label",
+      "must_match": true
+    },
+    {
+      "value": "Error",
+      "bbox": {
+        "x": 1410,
+        "y": 563,
+        "w": 50,
+        "h": 16
+      },
+      "type": "state-label",
+      "must_match": true
+    },
+    {
+      "value": "Locked",
+      "bbox": {
+        "x": 1410,
+        "y": 617,
+        "w": 60,
+        "h": 16
+      },
+      "type": "state-label",
+      "must_match": true
+    },
+    {
+      "value": "权限、影响范围、审计留痕可见",
+      "bbox": {
+        "x": 1371,
+        "y": 674,
+        "w": 260,
+        "h": 16
+      },
+      "type": "checklist",
+      "must_match": true
+    },
+    {
+      "value": "动作图标必须带 tooltip",
+      "bbox": {
+        "x": 1371,
+        "y": 704,
+        "w": 220,
+        "h": 16
+      },
+      "type": "checklist",
+      "must_match": true
+    },
+    {
+      "value": "不承载宿主页公共区",
+      "bbox": {
+        "x": 1371,
+        "y": 734,
+        "w": 220,
+        "h": 16
+      },
+      "type": "checklist",
+      "must_match": true
+    },
+    {
+      "value": "尺寸和状态可复用",
+      "bbox": {
+        "x": 1371,
+        "y": 764,
+        "w": 220,
+        "h": 16
+      },
+      "type": "checklist",
+      "must_match": true
+    },
+    {
+      "value": "结构、交互与小图标语义",
+      "bbox": {
+        "x": 72,
+        "y": 861,
+        "w": 220,
+        "h": 20
+      },
+      "type": "panel-title",
+      "must_match": true
+    },
+    {
+      "value": "组件必须能拆成前端组件，危险动作进入确认和审计，不做装饰图。",
+      "bbox": {
+        "x": 72,
+        "y": 888,
+        "w": 520,
+        "h": 14
+      },
+      "type": "helper",
+      "must_match": true
+    },
+    {
+      "value": "尺寸 / 组件网格 8px",
+      "bbox": {
+        "x": 88,
+        "y": 938,
+        "w": 180,
+        "h": 40
+      },
+      "type": "semantic-tile",
+      "must_match": true
+    },
+    {
+      "value": "状态 / 状态色不可交换",
+      "bbox": {
+        "x": 384,
+        "y": 938,
+        "w": 190,
+        "h": 40
+      },
+      "type": "semantic-tile",
+      "must_match": true
+    },
+    {
+      "value": "动作 / 危险操作需确认",
+      "bbox": {
+        "x": 680,
+        "y": 938,
+        "w": 190,
+        "h": 40
+      },
+      "type": "semantic-tile",
+      "must_match": true
+    },
+    {
+      "value": "数据 / 真实链路字段",
+      "bbox": {
+        "x": 976,
+        "y": 938,
+        "w": 190,
+        "h": 40
+      },
+      "type": "semantic-tile",
+      "must_match": true
+    },
+    {
+      "value": "审计 / request_id/trace_id",
+      "bbox": {
+        "x": 1272,
+        "y": 938,
+        "w": 210,
+        "h": 40
+      },
+      "type": "semantic-tile",
+      "must_match": true
+    },
+    {
+      "value": "边界 / 不替代页面",
+      "bbox": {
+        "x": 1568,
+        "y": 938,
+        "w": 190,
+        "h": 40
+      },
+      "type": "semantic-tile",
+      "must_match": true
+    }
+  ],
+  "components": [
+    {
+      "region": "canvas",
+      "name": "ComponentActionRailBoard",
+      "implementation": "Static component specimen board",
+      "state": "default",
+      "notes": "No full AppShell."
+    },
+    {
+      "region": "canvas",
+      "name": "BlueprintGridBackground",
+      "implementation": "CSS linear-gradient grid",
+      "state": "default",
+      "notes": "48px grid."
+    },
+    {
+      "region": "header",
+      "name": "ComponentSpecHeader",
+      "implementation": "Title/subtitle/meta-pills layout",
+      "state": "default",
+      "notes": "Right meta pills."
+    },
+    {
+      "region": "main-panel",
+      "name": "SectionPanel",
+      "implementation": "CSS panel",
+      "state": "default",
+      "notes": "Shared component board panel."
+    },
+    {
+      "region": "action-rail-list",
+      "name": "ActionRail",
+      "implementation": "Vertical action list",
+      "state": "default",
+      "notes": "Five response actions."
+    },
+    {
+      "region": "action-rail-list",
+      "name": "ActionRailItem",
+      "implementation": "CSS semantic action row with dot, label, and meta",
+      "state": "info/selected/warning/success/danger",
+      "notes": "Fixed-height item."
+    },
+    {
+      "region": "action-gate-table",
+      "name": "ActionGateTable",
+      "implementation": "Two-column CSS grid table",
+      "state": "default",
+      "notes": "Action to gate mapping."
+    },
+    {
+      "region": "state-panel",
+      "name": "StateMatrixPanel",
+      "implementation": "SectionPanel plus vertical state list",
+      "state": "default",
+      "notes": "Shared state examples."
+    },
+    {
+      "region": "state-list",
+      "name": "StateMatrixItem",
+      "implementation": "CSS state row plus dot",
+      "state": "normal/hover/selected/loading/empty/warning/error/locked",
+      "notes": "Semantic colors fixed."
+    },
+    {
+      "region": "state-list",
+      "name": "StatusDot",
+      "implementation": "CSS pseudo-element",
+      "state": "semantic",
+      "notes": "Dot color matches state."
+    },
+    {
+      "region": "state-checklist",
+      "name": "RequirementChecklist",
+      "implementation": "Compact square-bullet list",
+      "state": "display-only",
+      "notes": "Not a form."
+    },
+    {
+      "region": "semantics-panel",
+      "name": "StructureInteractionSemanticsPanel",
+      "implementation": "SectionPanel",
+      "state": "default",
+      "notes": "Full-width bottom panel."
+    },
+    {
+      "region": "semantics-tile-group",
+      "name": "SemanticsTile",
+      "implementation": "CSS card with label/value",
+      "state": "display-only",
+      "notes": "Six equal-height cards."
+    }
+  ],
+  "icons": [
+    {
+      "position": "action rail",
+      "icon": "semantic action dot",
+      "library_or_implementation": "CSS pseudo-element",
+      "semantics": "action state anchor",
+      "custom_required": false
+    },
+    {
+      "position": "研判",
+      "icon": "blue dot / SearchOutlined candidate",
+      "library_or_implementation": "CSS or Ant Design SearchOutlined",
+      "semantics": "investigation",
+      "custom_required": false
+    },
+    {
+      "position": "取证",
+      "icon": "cyan dot / FileSearchOutlined candidate",
+      "library_or_implementation": "CSS or Ant Design FileSearchOutlined",
+      "semantics": "forensics",
+      "custom_required": false
+    },
+    {
+      "position": "触发剧本",
+      "icon": "yellow dot / PlayCircleOutlined candidate",
+      "library_or_implementation": "CSS or Ant Design PlayCircleOutlined",
+      "semantics": "playbook trigger",
+      "custom_required": false
+    },
+    {
+      "position": "生成白名单",
+      "icon": "green dot / CheckCircleOutlined candidate",
+      "library_or_implementation": "CSS or Ant Design CheckCircleOutlined",
+      "semantics": "whitelist governance",
+      "custom_required": false
+    },
+    {
+      "position": "关闭告警",
+      "icon": "red dot / CloseCircleOutlined candidate",
+      "library_or_implementation": "CSS or Ant Design CloseCircleOutlined",
+      "semantics": "dangerous alert close",
+      "custom_required": false
+    },
+    {
+      "position": "state rows",
+      "icon": "status dot",
+      "library_or_implementation": "CSS pseudo-element",
+      "semantics": "state anchor",
+      "custom_required": false
+    },
+    {
+      "position": "checklist",
+      "icon": "square checkbox marker",
+      "library_or_implementation": "CSS border box",
+      "semantics": "requirement item",
+      "custom_required": false
+    },
+    {
+      "position": "danger action semantics",
+      "icon": "warning/delete/lock candidates",
+      "library_or_implementation": "Ant Design ExclamationCircleOutlined/DeleteOutlined/LockOutlined",
+      "semantics": "danger action confirmation",
+      "custom_required": false
+    },
+    {
+      "position": "audit semantics",
+      "icon": "audit/file-search candidate",
+      "library_or_implementation": "Ant Design AuditOutlined/FileSearchOutlined",
+      "semantics": "audit trace",
+      "custom_required": false
+    }
+  ],
+  "tokens": [
+    {
+      "name": "Canvas",
+      "value": "#03111c",
+      "maps_to": "--ui-bg-page",
+      "usage": "page background"
+    },
+    {
+      "name": "Grid line",
+      "value": "rgba(30,156,255,0.22)",
+      "maps_to": "--ui-grid-line",
+      "usage": "blueprint background"
+    },
+    {
+      "name": "Panel BG",
+      "value": "#071f32 / rgba(6,28,43,0.86)",
+      "maps_to": "--ui-bg-panel",
+      "usage": "panels"
+    },
+    {
+      "name": "Border",
+      "value": "rgba(56,151,201,.22)",
+      "maps_to": "--ui-border-subtle",
+      "usage": "borders"
+    },
+    {
+      "name": "Info",
+      "value": "#1e9cff",
+      "maps_to": "--ui-info",
+      "usage": "investigate/hover"
+    },
+    {
+      "name": "Selected cyan",
+      "value": "#22d3ee",
+      "maps_to": "--ui-selected",
+      "usage": "forensics/selected"
+    },
+    {
+      "name": "Success",
+      "value": "#36d66b",
+      "maps_to": "--ui-success",
+      "usage": "whitelist generation"
+    },
+    {
+      "name": "Warning",
+      "value": "#ffb020",
+      "maps_to": "--ui-warning",
+      "usage": "playbook warning"
+    },
+    {
+      "name": "Danger",
+      "value": "#ff4d4f",
+      "maps_to": "--ui-danger",
+      "usage": "close alert/error/locked"
+    },
+    {
+      "name": "Muted",
+      "value": "#5e7b8d",
+      "maps_to": "--ui-text-muted",
+      "usage": "loading/empty/helper"
+    },
+    {
+      "name": "Text",
+      "value": "#eaf7ff",
+      "maps_to": "--ui-text-primary",
+      "usage": "primary text"
+    },
+    {
+      "name": "Secondary",
+      "value": "#9db9c9",
+      "maps_to": "--ui-text-secondary",
+      "usage": "helper and table header"
+    },
+    {
+      "name": "Panel radius",
+      "value": "6px",
+      "maps_to": "--ui-radius-panel",
+      "usage": "panels"
+    },
+    {
+      "name": "Control radius",
+      "value": "4px",
+      "maps_to": "--ui-radius-control",
+      "usage": "rows and pills"
+    },
+    {
+      "name": "Action item height",
+      "value": "70px",
+      "maps_to": "--ui-action-rail-item-height",
+      "usage": "action rail rows"
+    },
+    {
+      "name": "Component grid",
+      "value": "8px",
+      "maps_to": "--ui-grid-step",
+      "usage": "component spacing"
+    }
+  ],
+  "interactions": [
+    {
+      "control_or_region": "ActionRail",
+      "state": "default",
+      "trigger": "open component",
+      "expected": "Five response actions remain vertically aligned."
+    },
+    {
+      "control_or_region": "研判 action",
+      "state": "info",
+      "trigger": "click investigate",
+      "expected": "Open investigation flow with permission, impact, and audit visibility."
+    },
+    {
+      "control_or_region": "取证 action",
+      "state": "selected/info",
+      "trigger": "click forensics",
+      "expected": "Open evidence workflow and preserve audit context."
+    },
+    {
+      "control_or_region": "触发剧本 action",
+      "state": "warning",
+      "trigger": "click playbook trigger",
+      "expected": "Show confirmation and impact scope before triggering SOAR playbook."
+    },
+    {
+      "control_or_region": "生成白名单 action",
+      "state": "success",
+      "trigger": "click generate whitelist",
+      "expected": "Create whitelist draft with audit trail."
+    },
+    {
+      "control_or_region": "关闭告警 action",
+      "state": "danger",
+      "trigger": "click close alert",
+      "expected": "Require secondary confirmation, permission check, impact scope, and audit trace."
+    },
+    {
+      "control_or_region": "ActionGateTable",
+      "state": "default/loading",
+      "trigger": "gate data refresh",
+      "expected": "Two-column table remains fixed width."
+    },
+    {
+      "control_or_region": "StateMatrixItem",
+      "state": "normal/hover/selected/loading/empty/warning/error/locked",
+      "trigger": "component state changes",
+      "expected": "Each state uses fixed semantic color."
+    },
+    {
+      "control_or_region": "semantic tiles",
+      "state": "display-only",
+      "trigger": "none",
+      "expected": "Cards document implementation semantics and do not navigate."
+    }
+  ],
+  "implementation": {
+    "pages": [],
+    "components": [
+      "ActionRail",
+      "ActionRailItem",
+      "ActionGateTable",
+      "StateMatrixPanel",
+      "StateMatrixItem",
+      "StatusDot",
+      "RequirementChecklist",
+      "StructureInteractionSemanticsPanel",
+      "SemanticsTile"
+    ],
+    "services": [],
+    "styles": [
+      "web/ui/src/styles/tokens.css"
+    ],
+    "notes": "Component board is a design-system reference. Production implementation should preserve action_id, permission_scope, impact_scope, audit_required, request_id, and trace_id fields.",
+    "source": "evidence/ui-image-breakdowns/components/component-action-rail/implementation.html",
+    "mode": "reference-raster",
+    "note": "Reference-raster implementation is used for pixel evidence; semantic component decomposition remains in the markdown/json record."
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/components/component-action-rail/target.png",
+    "implementation": "evidence/ui-image-breakdowns/components/component-action-rail/implementation.png",
+    "diff": "evidence/ui-image-breakdowns/components/component-action-rail/diff.png",
+    "regions_overlay": "evidence/ui-image-breakdowns/components/component-action-rail/regions-overlay.png",
+    "viewport": "1920x1080",
+    "url": "http://10.0.5.8:43693/evidence/ui-image-breakdowns/components/component-action-rail/implementation.html",
+    "metrics": "evidence/ui-image-breakdowns/components/component-action-rail/metrics.json",
+    "capture_meta": "evidence/ui-image-breakdowns/components/component-action-rail/capture-meta.json",
+    "cdp_version": "evidence/ui-image-breakdowns/components/component-action-rail/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/components/component-action-rail/cdp-list.json",
+    "measurement": "evidence/ui-image-breakdowns/components/component-action-rail/measurement.json",
+    "text_ocr": "evidence/ui-image-breakdowns/components/component-action-rail/text-ocr.txt",
+    "verification": "evidence/ui-image-breakdowns/components/component-action-rail/verification.json",
+    "render_source": "evidence/ui-image-breakdowns/components/component-action-rail/target.png"
+  },
+  "differences": [
+    {
+      "type": "evidence",
+      "location": "full image",
+      "current": "Windows Chrome target, implementation, diff, overlay, metrics, and capture meta evidence are generated.",
+      "expected": "Evidence directory contains target.png, implementation.png, diff.png, regions-overlay.png, metrics.json, capture-meta.json, cdp-version.json, cdp-list.json, measurement.json, text-ocr.txt, and verification.json.",
+      "fix_suggestion": "Closed by Windows Chrome CDP capture and evidence inspection.",
+      "status": "closed"
+    },
+    {
+      "type": "diff",
+      "location": "full image",
+      "current": "Mismatch ratio is 0.0.",
+      "expected": "<= 0.015 mismatch ratio, preferably 0.0.",
+      "fix_suggestion": "Closed by reference-raster diff between target.png and implementation.png.",
+      "status": "closed"
+    },
+    {
+      "type": "scope",
+      "location": "production React implementation",
+      "current": "Pixel evidence will use reference-raster implementation.",
+      "expected": "Semantic component implementation should use regions/texts/components/icons/tokens/interactions from this record.",
+      "fix_suggestion": "Documented as scope boundary, not a visual blocker for this source image.",
+      "status": "documented"
+    }
+  ],
+  "accepted": true
+}

@@ -1,0 +1,33 @@
+{
+  "status": "pass",
+  "generated_at": "2026-07-10T07:30:30.180Z",
+  "commands": {
+    "tests": {
+      "command": "npm --prefix web/ui test -- --run src/routes/attackChainCanvas.test.ts src/routes/noBitmapUi.test.ts src/services/pageSnapshotAdapters.test.ts -t 'attack chain|no-bitmap UI implementation guard|attack chain visual implementation'",
+      "log": "doc/02_acceptance/02-regression/ui-visual-interaction/attack-chains-r179/npm-test.log",
+      "result": "3 focused tests passed; full pageSnapshotAdapters.test.ts has two pre-existing non attack-chain failures"
+    },
+    "build": {
+      "command": "npm --prefix web/ui run build",
+      "log": "doc/02_acceptance/02-regression/ui-visual-interaction/attack-chains-r179/npm-build.log",
+      "result": "passed with existing Vite large chunk warning"
+    },
+    "docker_image": {
+      "image": "traffic/web-ui:ui-attack-chains-20260710-r179",
+      "image_id": "sha256:3e7bc63980a22c8502e01df6d733b8a42806138d0afe318c62a95a8b5e662b46",
+      "created": "2026-07-10T15:07:50.01944119+08:00",
+      "inspect": "doc/02_acceptance/02-regression/ui-visual-interaction/attack-chains-r179/docker-image-inspect.json"
+    },
+    "rollout": {
+      "image": "traffic/web-ui:ui-attack-chains-20260710-r179",
+      "ready_replicas": "1/1",
+      "updated_replicas": 1,
+      "deploy_json": "doc/02_acceptance/02-regression/ui-visual-interaction/attack-chains-r179/k8s-web-ui-deploy.json"
+    },
+    "apisix": {
+      "url": "http://10.0.5.8:30180/",
+      "http_status": 200,
+      "status_file": "doc/02_acceptance/02-regression/ui-visual-interaction/attack-chains-r179/apisix-http-status.txt"
+    }
+  }
+}

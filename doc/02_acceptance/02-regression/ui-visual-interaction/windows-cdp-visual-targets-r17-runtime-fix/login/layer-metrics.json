@@ -1,0 +1,86 @@
+{
+  "target_id": "login",
+  "route": "/login",
+  "status": "fail",
+  "generated_at": "2026-07-03T20:32:32.688872+08:00",
+  "layer_spec": "doc/04_assets/ui_suite_gpt_v1/specs/layers/login.json",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/login.png",
+  "actual_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-visual-targets-r17-runtime-fix/login/actual-1920.png",
+  "viewport": {
+    "source_width": 1920,
+    "source_height": 1080,
+    "actual_width": 1920,
+    "actual_height": 1080,
+    "size_ok": true
+  },
+  "summary": {
+    "layer_count": 2,
+    "failed_layer_count": 2,
+    "roles": {
+      "auth-background": {
+        "layer_count": 1,
+        "failed_count": 1,
+        "weighted_mismatch_pixels": 2072151,
+        "weighted_compared_pixels": 2073600,
+        "weighted_channel_delta": 14953267.5,
+        "weighted_pixel_max_delta": 28064005.0,
+        "pixel_mismatch_ratio": 0.9993012152777778,
+        "mean_channel_delta": 7.211259403935185,
+        "mean_pixel_max_delta": 13.533953028549382
+      },
+      "auth-form": {
+        "layer_count": 1,
+        "failed_count": 1,
+        "weighted_mismatch_pixels": 322365,
+        "weighted_compared_pixels": 322400,
+        "weighted_channel_delta": 3442412.25,
+        "weighted_pixel_max_delta": 5911043.0,
+        "pixel_mismatch_ratio": 0.9998914392059554,
+        "mean_channel_delta": 10.677457351116626,
+        "mean_pixel_max_delta": 18.334500620347395
+      }
+    }
+  },
+  "layers": [
+    {
+      "id": "login-background",
+      "role": "auth-background",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "status": "fail",
+      "compared_pixels": 2073600,
+      "mismatch_pixels": 2072151,
+      "pixel_mismatch_ratio": 0.9993012152777778,
+      "max_pixel_ratio": 0.015,
+      "channel_tolerance": 0,
+      "max_channel_delta": 255,
+      "mean_channel_delta": 7.211259403935185,
+      "mean_pixel_max_delta": 13.533953028549382,
+      "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-visual-targets-r17-runtime-fix/login/layers/login-background-diff.png"
+    },
+    {
+      "id": "login-panel",
+      "role": "auth-form",
+      "bbox": {
+        "x": 1160,
+        "y": 210,
+        "w": 520,
+        "h": 620
+      },
+      "status": "fail",
+      "compared_pixels": 322400,
+      "mismatch_pixels": 322365,
+      "pixel_mismatch_ratio": 0.9998914392059554,
+      "max_pixel_ratio": 0.015,
+      "channel_tolerance": 0,
+      "max_channel_delta": 255,
+      "mean_channel_delta": 10.677457351116626,
+      "mean_pixel_max_delta": 18.334500620347395,
+      "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-visual-targets-r17-runtime-fix/login/layers/login-panel-diff.png"
+    }
+  ]
+}

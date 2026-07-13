@@ -1,0 +1,95 @@
+{
+  "package_id": "ui_desktop_smoke_token_preflight",
+  "generated_at": "2026-07-02T16:50:31.581Z",
+  "result": "pass",
+  "acceptance_eligible": false,
+  "reason": "Local readiness check only. Formal acceptance still requires Windows Codex Desktop Chrome extension evidence.",
+  "base_url": "http://127.0.0.1:5173",
+  "apisix_url": "http://10.0.5.8:30180",
+  "route": "/dashboard",
+  "expected_path": "/dashboard",
+  "final_url": "http://127.0.0.1:5173/dashboard",
+  "final_path": "/dashboard",
+  "title": "园区网络全流量采集与分析系统",
+  "runtime": {
+    "VITE_AUTH_ENABLED": "true",
+    "VITE_USE_MOCK": "false",
+    "VITE_DESKTOP_SMOKE_TOKEN_ENABLED": "true"
+  },
+  "auth_me": {
+    "status": 200,
+    "username": "codex-ui-desktop-admin",
+    "tenant_id": "default"
+  },
+  "runtime_events": {
+    "console_errors": [],
+    "page_errors": [],
+    "request_failures": [],
+    "server_errors": []
+  },
+  "checks": [
+    {
+      "name": "Vite auth enabled",
+      "status": "pass",
+      "passed": true,
+      "detail": "status=200 VITE_AUTH_ENABLED=true",
+      "artifact": ""
+    },
+    {
+      "name": "Vite mock disabled",
+      "status": "pass",
+      "passed": true,
+      "detail": "status=200 VITE_USE_MOCK=false",
+      "artifact": ""
+    },
+    {
+      "name": "Vite desktop smoke token enabled",
+      "status": "pass",
+      "passed": true,
+      "detail": "status=200 VITE_DESKTOP_SMOKE_TOKEN_ENABLED=true",
+      "artifact": ""
+    },
+    {
+      "name": "JWT generated from K8s secret",
+      "status": "pass",
+      "passed": true,
+      "detail": "traffic-analysis/traffic-credentials#JWT_SECRET",
+      "artifact": ""
+    },
+    {
+      "name": "short-lived JWT accepted by auth/me",
+      "status": "pass",
+      "passed": true,
+      "detail": "status=200 username=codex-ui-desktop-admin",
+      "artifact": ""
+    },
+    {
+      "name": "smoke hash consumed by app",
+      "status": "pass",
+      "passed": true,
+      "detail": "final_url=http://127.0.0.1:5173/dashboard",
+      "artifact": ""
+    },
+    {
+      "name": "protected route stayed on expected path",
+      "status": "pass",
+      "passed": true,
+      "detail": "final_path=/dashboard",
+      "artifact": ""
+    },
+    {
+      "name": "protected route did not fall back to login",
+      "status": "pass",
+      "passed": true,
+      "detail": "title=园区网络全流量采集与分析系统",
+      "artifact": ""
+    },
+    {
+      "name": "no browser runtime errors",
+      "status": "pass",
+      "passed": true,
+      "detail": "{\"console_errors\":0,\"page_errors\":0,\"request_failures\":0,\"server_errors\":0}",
+      "artifact": ""
+    }
+  ]
+}

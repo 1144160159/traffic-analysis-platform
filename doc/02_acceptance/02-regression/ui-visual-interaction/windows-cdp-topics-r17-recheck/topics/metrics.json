@@ -1,0 +1,28 @@
+{
+  "target_id": "topics",
+  "route": "/topics",
+  "status": "fail",
+  "generated_at": "2026-07-03T20:21:36.316861+08:00",
+  "desktop_chrome_backend_status": "pass",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/topics-encrypted-tunnel.png",
+  "actual_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-topics-r17-recheck/topics/actual-1920.png",
+  "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-topics-r17-recheck/topics/diff-1920.png",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "visual_diff": {
+    "size_ok": true,
+    "source_width": 1920,
+    "source_height": 1080,
+    "actual_width": 1920,
+    "actual_height": 1080,
+    "compared_pixels": 2073600,
+    "total_pixels": 2073600,
+    "mismatch_pixels": 2073509,
+    "pixel_mismatch_ratio": 0.9999561149691358,
+    "max_pixel_ratio": 0.015,
+    "channel_tolerance": 0,
+    "max_channel_delta": 255
+  }
+}

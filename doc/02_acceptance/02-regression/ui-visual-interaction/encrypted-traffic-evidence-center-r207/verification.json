@@ -1,0 +1,143 @@
+{
+  "generated_by": "r207-main-thread-review-and-contract-verification",
+  "generated_at": "2026-07-10T14:29:00Z",
+  "id": "encrypted-traffic-evidence-center",
+  "category": "pages",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic-evidence-center.png",
+  "status": "evidence-ready",
+  "accepted": false,
+  "main_thread_judgment": "business-rework-verified-strict-pixel-open",
+  "main_thread_decision_basis": "r207 verifies fixed Tab geometry, three ECharts evidence canvases, API-first fallback, Session selection linkage, audited action behavior and truthful entropy semantics. Two r206 and one r207 Windows Chrome production captures are stable at 0.10848717206790123. This passes the configured 0.35 business threshold, but not the strict 0.015 target, so pixel acceptance is not granted.",
+  "browser": {
+    "backend": "Windows Chrome CDP",
+    "cdp_url": "http://127.0.0.1:9224",
+    "browser": "Chrome/150.0.7871.49"
+  },
+  "viewport": { "width": 1920, "height": 1080 },
+  "url": "http://10.0.5.8:30180/encrypted-traffic?tab=evidence-center#codex_smoke_token=<redacted>",
+  "deployment": {
+    "alert_service": "traffic/alert-service:encrypted-evidence-center-20260710-r207",
+    "web_ui": "traffic/web-ui:ui-encrypted-traffic-evidence-center-20260710-r207"
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/pages/encrypted-traffic-evidence-center/target.png",
+    "implementation": "evidence/ui-image-breakdowns/pages/encrypted-traffic-evidence-center/implementation.png",
+    "diff": "evidence/ui-image-breakdowns/pages/encrypted-traffic-evidence-center/diff.png",
+    "metrics": "evidence/ui-image-breakdowns/pages/encrypted-traffic-evidence-center/metrics.json",
+    "capture_meta": "evidence/ui-image-breakdowns/pages/encrypted-traffic-evidence-center/capture-meta.json",
+    "production_route_report": "evidence/ui-image-breakdowns/pages/encrypted-traffic-evidence-center/production-route-report.json",
+    "stable_runtime": "evidence/ui-image-breakdowns/pages/encrypted-traffic-evidence-center/normal-route-r206-stable-runtime.json",
+    "api_contract_runtime": "evidence/ui-image-breakdowns/pages/encrypted-traffic-evidence-center/normal-route-r207-api-contract-runtime.json",
+    "acceptance_bundle": "doc/02_acceptance/02-regression/ui-visual-interaction/encrypted-traffic-evidence-center-r207/"
+  },
+  "visual_diff": {
+    "status": "business-threshold-pass",
+    "pixel_mismatch_ratio": 0.10848717206790123,
+    "configured_max_pixel_ratio": 0.35,
+    "strict_pixel_target": 0.015,
+    "channel_tolerance": 64,
+    "stable_capture_attempts": 3
+  },
+  "runtime": {
+    "status": "pass",
+    "bad_responses": 0,
+    "request_failures": 0,
+    "console_errors": 0,
+    "page_errors": 0,
+    "horizontal_overflow": false
+  },
+  "data_contract": {
+    "status": "pass",
+    "endpoint": "/api/v1/encrypted-traffic/evidence",
+    "response_keys": [
+      "sessions",
+      "pcap_indexes",
+      "pcap_trend",
+      "entropy_trend",
+      "entropy_available",
+      "anomaly_trend",
+      "completeness",
+      "total"
+    ],
+    "entropy_semantics": "entropy_trend remains a reserved API field and is empty while payload entropy is unavailable. anomaly_trend is independent and must not be presented as Payload Entropy.",
+    "live_counts": {
+      "sessions": 0,
+      "pcap_indexes": 0,
+      "pcap_trend": 0,
+      "entropy_trend": 0,
+      "anomaly_trend": 0,
+      "completeness": 4
+    },
+    "fallback": "Typed simulated evidence, including entropy trend, is used only when Session, PCAP-index and PCAP-trend collections are all empty; the page visibly marks simulated mode."
+  },
+  "interaction": {
+    "status": "pass",
+    "fixed_tab_geometry": true,
+    "canvas_count": 3,
+    "default_session": "s-8f7a2c16b9e0",
+    "selected_session": "s-23a9b7d4c1e8",
+    "certificate_details_include_issuer": true,
+    "handshake_timeline_includes_client_hello": true,
+    "selection_shared_with_details_and_rail": true,
+    "write_action": {
+      "endpoint": "/api/v1/encrypted-traffic/evidence-actions",
+      "http_status": 200,
+      "action": "preserve_evidence",
+      "audit_event": "ENCRYPTED_EVIDENCE_PRESERVATION_REQUESTED",
+      "recorded": true,
+      "audit_readback_status": 200,
+      "audit_result": "success",
+      "semantics": "request and audit persistence; it does not claim an external forensic task has completed"
+    }
+  },
+  "tests": {
+    "ui": "50 passed",
+    "build": "npm --prefix web/ui run build passed",
+    "alert_api": "go test ./internal/alert/api passed"
+  },
+  "auxiliary_agent_review": {
+    "agent": "Aquinas",
+    "status": "reviewed",
+    "scope": "r206 Windows Chrome image, source implementation, API/simulation semantics and strict-pixel reassessment",
+    "conclusion": "ECharts coverage and all-empty API fallback are correct. The remaining strict mismatch is dominated by target shell, right rail, table density, bottom summaries and KPI overall-vs-sample values. The prior entropy/anomaly semantic mismatch was repaired in r207."
+  },
+  "differences": [
+    {
+      "type": "strict-pixel-diff",
+      "location": "full image",
+      "current": "Stable Windows Chrome mismatch ratio is 0.10848717206790123.",
+      "expected": "mismatch ratio <= 0.015 for strict pixel acceptance.",
+      "status": "rework-required"
+    },
+    {
+      "type": "target-shell-density",
+      "location": "topbar, sidebar and bottombar",
+      "current": "The production shell remains less dense and has different icon/action composition than the target SOC shell.",
+      "expected": "Route-scoped shell geometry and content density match the canonical target.",
+      "status": "rework-required"
+    },
+    {
+      "type": "target-evidence-density",
+      "location": "right rail, Session table and bottom detail panels",
+      "current": "Controls, summary fields and simulated totals remain structurally sparser or differently ordered than the target.",
+      "expected": "API-backed target-state fields and controls align without representing simulated rows as live totals.",
+      "status": "rework-required"
+    },
+    {
+      "type": "forensic-task-dispatch",
+      "location": "/api/v1/encrypted-traffic/evidence-actions",
+      "current": "The endpoint persists a request and audit event.",
+      "expected": "A later forensic-task service integration exposes task dispatch and terminal status separately.",
+      "status": "documented-follow-up"
+    }
+  ],
+  "reproduction_steps": [
+    "Open the APISIX route in Windows Chrome through connectOverCDP(http://127.0.0.1:9224).",
+    "Use /encrypted-traffic?tab=evidence-center at 1920x1080, wait 11000ms, and capture implementation.png.",
+    "Confirm two repeat captures have the same pixel-mismatch ratio.",
+    "Verify the five fixed tab rectangles and three ECharts canvas nodes.",
+    "Select s-23a9b7d4c1e8 and confirm the inner anchor and right rail update together.",
+    "Fetch /api/v1/encrypted-traffic/evidence through the browser auth state; verify entropy_available=false and anomaly_trend is separate.",
+    "Compare target.png and implementation.png with tolerance 64 using both the configured business threshold and the strict 0.015 target."
+  ]
+}

@@ -1,0 +1,970 @@
+{
+  "id": "data-quality-storage-quality",
+  "category": "pages",
+  "order": 12,
+  "type": "menu-state",
+  "parent": "data-quality",
+  "route": "/data-quality?tab=storage-quality",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/data-quality-storage-quality.png",
+  "evidence_dir": "evidence/ui-image-breakdowns/pages/data-quality-storage-quality",
+  "status": "evidence-ready",
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "observation": {
+    "layout": "八Tab数据质量外壳内的存储质量态，七KPI下分组件健康、写入趋势、容量趋势、失败写入、链路全景、副本对象健康和右侧闭环栏。",
+    "business_focus": "ClickHouse、OpenSearch、NebulaGraph、MinIO写入成功率、延迟、容量、副本、分片和归档状态。",
+    "visual_style": "深蓝存储运维台，四条动态图表序列、容量面积图和API驱动写入链路。"
+  },
+  "production": {
+    "url": "http://10.0.5.8:30180/data-quality?tab=storage-quality&__codex_ui_breakdown_production=1&__capture=r126-final",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "image_tag": "traffic/web-ui:ui-data-quality-storage-quality-visual-20260708-r126"
+  },
+  "layout_regions": [
+    {
+      "id": "business-root",
+      "bbox": {
+        "x": 198,
+        "y": 80,
+        "w": 1722,
+        "h": 917
+      },
+      "purpose": "data-quality storage tab business area"
+    },
+    {
+      "id": "title-tabs",
+      "bbox": {
+        "x": 199,
+        "y": 81,
+        "w": 1505,
+        "h": 74
+      },
+      "purpose": "page title and 8 unified tabs"
+    },
+    {
+      "id": "filterbar",
+      "bbox": {
+        "x": 199,
+        "y": 163,
+        "w": 1505,
+        "h": 32
+      },
+      "purpose": "time range and refresh controls"
+    },
+    {
+      "id": "kpi-strip",
+      "bbox": {
+        "x": 199,
+        "y": 203,
+        "w": 1505,
+        "h": 116
+      },
+      "purpose": "storage specific KPI cards"
+    },
+    {
+      "id": "storage-upper",
+      "bbox": {
+        "x": 199,
+        "y": 327,
+        "w": 1505,
+        "h": 350
+      },
+      "purpose": "component health, write trend, capacity trend"
+    },
+    {
+      "id": "storage-lower",
+      "bbox": {
+        "x": 199,
+        "y": 684,
+        "w": 1505,
+        "h": 312
+      },
+      "purpose": "failure table, pipeline flow, replica and object health"
+    },
+    {
+      "id": "right-rail",
+      "bbox": {
+        "x": 1711,
+        "y": 81,
+        "w": 198,
+        "h": 916
+      },
+      "purpose": "storage abnormality and action rail"
+    }
+  ],
+  "regions": [
+    {
+      "id": "canvas",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "purpose": "1920x1080 viewport"
+    },
+    {
+      "id": "topbar",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 63
+      },
+      "purpose": "global status header"
+    },
+    {
+      "id": "sidebar",
+      "bbox": {
+        "x": 8,
+        "y": 64,
+        "w": 172,
+        "h": 913
+      },
+      "purpose": "global navigation"
+    },
+    {
+      "id": "bottombar",
+      "bbox": {
+        "x": 8,
+        "y": 987,
+        "w": 1904,
+        "h": 81
+      },
+      "purpose": "global health footer"
+    },
+    {
+      "id": "business-root",
+      "bbox": {
+        "x": 196,
+        "y": 64,
+        "w": 1716,
+        "h": 913
+      },
+      "purpose": "storage quality business area"
+    },
+    {
+      "id": "title-tabs",
+      "bbox": {
+        "x": 197,
+        "y": 64,
+        "w": 1710,
+        "h": 74
+      },
+      "purpose": "title and eight stable tabs"
+    },
+    {
+      "id": "filterbar",
+      "bbox": {
+        "x": 197,
+        "y": 145,
+        "w": 1710,
+        "h": 31
+      },
+      "purpose": "time range auto refresh and refresh"
+    },
+    {
+      "id": "kpi-strip",
+      "bbox": {
+        "x": 197,
+        "y": 182,
+        "w": 1710,
+        "h": 108
+      },
+      "purpose": "seven storage metrics"
+    },
+    {
+      "id": "component-health",
+      "bbox": {
+        "x": 197,
+        "y": 300,
+        "w": 646,
+        "h": 296
+      },
+      "purpose": "four storage components table"
+    },
+    {
+      "id": "write-trend",
+      "bbox": {
+        "x": 850,
+        "y": 300,
+        "w": 397,
+        "h": 296
+      },
+      "purpose": "write rate and P95 ECharts"
+    },
+    {
+      "id": "capacity-trend",
+      "bbox": {
+        "x": 1254,
+        "y": 300,
+        "w": 429,
+        "h": 296
+      },
+      "purpose": "seven day capacity area chart"
+    },
+    {
+      "id": "failure-table",
+      "bbox": {
+        "x": 197,
+        "y": 605,
+        "w": 540,
+        "h": 340
+      },
+      "purpose": "paginated failed writes"
+    },
+    {
+      "id": "pipeline-flow",
+      "bbox": {
+        "x": 744,
+        "y": 605,
+        "w": 458,
+        "h": 340
+      },
+      "purpose": "API-driven write pipeline SVG"
+    },
+    {
+      "id": "replica-object-health",
+      "bbox": {
+        "x": 1210,
+        "y": 605,
+        "w": 473,
+        "h": 340
+      },
+      "purpose": "replica index partition and object health"
+    },
+    {
+      "id": "right-rail",
+      "bbox": {
+        "x": 1692,
+        "y": 300,
+        "w": 215,
+        "h": 645
+      },
+      "purpose": "anomaly locate repair evidence rail"
+    }
+  ],
+  "text_ledger": [
+    "数据质量",
+    "质量总览",
+    "Topic 健康",
+    "Flink 质量",
+    "字段质量",
+    "存储质量",
+    "重放对账",
+    "质量报告",
+    "质量设置",
+    "时间范围",
+    "近 24 小时",
+    "2025-06-25 15:30:45 ~ 2025-06-26 15:30:45",
+    "自动刷新",
+    "刷新",
+    "存储质量分",
+    "93/100",
+    "写入成功率",
+    "99.84%",
+    "写入延迟 P95",
+    "420 ms",
+    "失败写入",
+    "186 条",
+    "索引滞后",
+    "2.1 s",
+    "归档成功率",
+    "99.7%",
+    "容量水位",
+    "72.6%",
+    "存储组件健康总览",
+    "ClickHouse",
+    "OpenSearch",
+    "NebulaGraph",
+    "MinIO",
+    "写入速率与延迟趋势（近 24 小时）",
+    "容量与水位趋势（近 7 天）",
+    "失败写入与原因列表（近 24 小时）",
+    "索引与归档链路（写入链路全景）",
+    "副本、分片与对象健康",
+    "存储质量异常（近 24 小时）",
+    "快速定位",
+    "修复建议",
+    "证据与报告"
+  ],
+  "texts": [
+    {
+      "value": "数据质量",
+      "type": "title",
+      "bbox": {
+        "x": 198,
+        "y": 73,
+        "w": 120,
+        "h": 30
+      }
+    },
+    {
+      "value": "质量总览",
+      "type": "tab",
+      "bbox": {
+        "x": 197,
+        "y": 102,
+        "w": 118,
+        "h": 36
+      }
+    },
+    {
+      "value": "Topic 健康",
+      "type": "tab",
+      "bbox": {
+        "x": 315,
+        "y": 102,
+        "w": 123,
+        "h": 36
+      }
+    },
+    {
+      "value": "Flink 质量",
+      "type": "tab",
+      "bbox": {
+        "x": 438,
+        "y": 102,
+        "w": 122,
+        "h": 36
+      }
+    },
+    {
+      "value": "字段质量",
+      "type": "tab",
+      "bbox": {
+        "x": 560,
+        "y": 102,
+        "w": 118,
+        "h": 36
+      }
+    },
+    {
+      "value": "存储质量",
+      "type": "tab-active",
+      "bbox": {
+        "x": 678,
+        "y": 102,
+        "w": 120,
+        "h": 36
+      }
+    },
+    {
+      "value": "重放对账",
+      "type": "tab",
+      "bbox": {
+        "x": 798,
+        "y": 102,
+        "w": 119,
+        "h": 36
+      }
+    },
+    {
+      "value": "质量报告",
+      "type": "tab",
+      "bbox": {
+        "x": 917,
+        "y": 102,
+        "w": 116,
+        "h": 36
+      }
+    },
+    {
+      "value": "质量设置",
+      "type": "tab",
+      "bbox": {
+        "x": 1033,
+        "y": 102,
+        "w": 117,
+        "h": 36
+      }
+    },
+    {
+      "value": "时间范围",
+      "type": "filter-label",
+      "bbox": {
+        "x": 207,
+        "y": 145,
+        "w": 62,
+        "h": 28
+      }
+    },
+    {
+      "value": "近 24 小时",
+      "type": "select-value",
+      "bbox": {
+        "x": 269,
+        "y": 145,
+        "w": 114,
+        "h": 28
+      }
+    },
+    {
+      "value": "自动刷新",
+      "type": "toggle-label",
+      "bbox": {
+        "x": 1578,
+        "y": 145,
+        "w": 72,
+        "h": 28
+      }
+    },
+    {
+      "value": "刷新",
+      "type": "button",
+      "bbox": {
+        "x": 1686,
+        "y": 145,
+        "w": 70,
+        "h": 28
+      }
+    },
+    {
+      "value": "存储质量分 93/100",
+      "type": "metric",
+      "bbox": {
+        "x": 210,
+        "y": 192,
+        "w": 180,
+        "h": 76
+      }
+    },
+    {
+      "value": "写入成功率 99.84%",
+      "type": "metric",
+      "bbox": {
+        "x": 444,
+        "y": 192,
+        "w": 190,
+        "h": 76
+      }
+    },
+    {
+      "value": "写入延迟 P95 420 ms",
+      "type": "metric",
+      "bbox": {
+        "x": 691,
+        "y": 192,
+        "w": 190,
+        "h": 76
+      }
+    },
+    {
+      "value": "失败写入 186 条",
+      "type": "metric-warning",
+      "bbox": {
+        "x": 906,
+        "y": 192,
+        "w": 190,
+        "h": 76
+      }
+    },
+    {
+      "value": "索引滞后 2.1 s",
+      "type": "metric-warning",
+      "bbox": {
+        "x": 1146,
+        "y": 192,
+        "w": 180,
+        "h": 76
+      }
+    },
+    {
+      "value": "归档成功率 99.7%",
+      "type": "metric",
+      "bbox": {
+        "x": 1400,
+        "y": 192,
+        "w": 190,
+        "h": 76
+      }
+    },
+    {
+      "value": "容量水位 72.6%",
+      "type": "metric-warning",
+      "bbox": {
+        "x": 1650,
+        "y": 192,
+        "w": 190,
+        "h": 76
+      }
+    },
+    {
+      "value": "存储组件健康总览",
+      "type": "panel-title",
+      "bbox": {
+        "x": 209,
+        "y": 307,
+        "w": 210,
+        "h": 25
+      }
+    },
+    {
+      "value": "写入速率与延迟趋势（近 24 小时）",
+      "type": "panel-title",
+      "bbox": {
+        "x": 864,
+        "y": 307,
+        "w": 290,
+        "h": 25
+      }
+    },
+    {
+      "value": "容量与水位趋势（近 7 天）",
+      "type": "panel-title",
+      "bbox": {
+        "x": 1266,
+        "y": 307,
+        "w": 260,
+        "h": 25
+      }
+    },
+    {
+      "value": "失败写入与原因列表（近 24 小时）",
+      "type": "panel-title",
+      "bbox": {
+        "x": 209,
+        "y": 613,
+        "w": 290,
+        "h": 25
+      }
+    },
+    {
+      "value": "索引与归档链路（写入链路全景）",
+      "type": "panel-title",
+      "bbox": {
+        "x": 757,
+        "y": 613,
+        "w": 280,
+        "h": 25
+      }
+    },
+    {
+      "value": "副本、分片与对象健康",
+      "type": "panel-title",
+      "bbox": {
+        "x": 1223,
+        "y": 613,
+        "w": 230,
+        "h": 25
+      }
+    },
+    {
+      "value": "存储质量异常（近 24 小时）",
+      "type": "rail-title",
+      "bbox": {
+        "x": 1706,
+        "y": 307,
+        "w": 190,
+        "h": 25
+      }
+    },
+    {
+      "value": "快速定位",
+      "type": "rail-title",
+      "bbox": {
+        "x": 1706,
+        "y": 547,
+        "w": 100,
+        "h": 25
+      }
+    },
+    {
+      "value": "修复建议",
+      "type": "rail-title",
+      "bbox": {
+        "x": 1706,
+        "y": 675,
+        "w": 100,
+        "h": 25
+      }
+    },
+    {
+      "value": "证据与报告",
+      "type": "rail-title",
+      "bbox": {
+        "x": 1706,
+        "y": 833,
+        "w": 120,
+        "h": 25
+      }
+    },
+    {
+      "value": "ClickHouse",
+      "type": "component-label",
+      "bbox": {
+        "x": 215,
+        "y": 373,
+        "w": 90,
+        "h": 25
+      }
+    },
+    {
+      "value": "OpenSearch",
+      "type": "component-label",
+      "bbox": {
+        "x": 215,
+        "y": 435,
+        "w": 90,
+        "h": 25
+      }
+    },
+    {
+      "value": "NebulaGraph",
+      "type": "component-label",
+      "bbox": {
+        "x": 215,
+        "y": 497,
+        "w": 100,
+        "h": 25
+      }
+    },
+    {
+      "value": "MinIO",
+      "type": "component-label",
+      "bbox": {
+        "x": 215,
+        "y": 559,
+        "w": 70,
+        "h": 25
+      }
+    }
+  ],
+  "components": [
+    {
+      "name": "DataQualityPage",
+      "file": "web/ui/src/pages/DataQualityPage.tsx",
+      "role": "unified 8-tab shell and storage tab routing"
+    },
+    {
+      "name": "StorageComponentHealthTable",
+      "file": "web/ui/src/pages/DataQualityPage.tsx",
+      "role": "component health table"
+    },
+    {
+      "name": "StorageWriteTrend",
+      "file": "web/ui/src/pages/DataQualityPage.tsx",
+      "role": "React SVG write/latency trend"
+    },
+    {
+      "name": "StorageCapacityTrend",
+      "file": "web/ui/src/pages/DataQualityPage.tsx",
+      "role": "React SVG capacity/water trend"
+    },
+    {
+      "name": "StoragePipelineFlow",
+      "file": "web/ui/src/pages/DataQualityPage.tsx",
+      "role": "React/CSS pipeline nodes"
+    },
+    {
+      "name": "StorageReplicaHealth",
+      "file": "web/ui/src/pages/DataQualityPage.tsx",
+      "role": "replica, index donut, partition and object health"
+    },
+    {
+      "name": "StorageQualitySideRail",
+      "file": "web/ui/src/pages/DataQualityPage.tsx",
+      "role": "storage abnormality, locate, repair and evidence rail"
+    }
+  ],
+  "icons": [
+    {
+      "name": "SafetyCertificateOutlined",
+      "location": "score card",
+      "meaning": "storage score"
+    },
+    {
+      "name": "ReloadOutlined",
+      "location": "toolbar",
+      "meaning": "refresh"
+    },
+    {
+      "name": "DatabaseOutlined",
+      "location": "component rows",
+      "meaning": "storage engine"
+    },
+    {
+      "name": "CheckCircleFilled",
+      "location": "replicas and archive",
+      "meaning": "healthy"
+    },
+    {
+      "name": "WarningFilled",
+      "location": "write failures",
+      "meaning": "warning"
+    },
+    {
+      "name": "ExportOutlined",
+      "location": "evidence rail",
+      "meaning": "export"
+    }
+  ],
+  "tokens": [
+    {
+      "name": "canvas-bg",
+      "value": "#020e18",
+      "use": "background"
+    },
+    {
+      "name": "panel-bg",
+      "value": "#031723",
+      "use": "panels"
+    },
+    {
+      "name": "border",
+      "value": "#0c4261",
+      "use": "panel borders"
+    },
+    {
+      "name": "active",
+      "value": "#168cff",
+      "use": "active tab"
+    },
+    {
+      "name": "clickhouse",
+      "value": "#2498ff",
+      "use": "ClickHouse series"
+    },
+    {
+      "name": "opensearch",
+      "value": "#70c448",
+      "use": "OpenSearch series"
+    },
+    {
+      "name": "nebula",
+      "value": "#f5a20b",
+      "use": "NebulaGraph series"
+    },
+    {
+      "name": "minio",
+      "value": "#b45ae8",
+      "use": "MinIO series"
+    },
+    {
+      "name": "danger",
+      "value": "#f0443e",
+      "use": "failed write"
+    },
+    {
+      "name": "font-body",
+      "value": "12px",
+      "use": "dense tables"
+    },
+    {
+      "name": "panel-radius",
+      "value": "4px",
+      "use": "panels"
+    },
+    {
+      "name": "space-unit",
+      "value": "8px",
+      "use": "layout rhythm"
+    }
+  ],
+  "interactions": [
+    {
+      "name": "switch-tab",
+      "trigger": "click tab",
+      "result": "activate storage-quality query"
+    },
+    {
+      "name": "refresh",
+      "trigger": "click refresh",
+      "result": "refetch storage snapshot and redraw charts"
+    },
+    {
+      "name": "auto-refresh",
+      "trigger": "toggle",
+      "result": "control 30s polling"
+    },
+    {
+      "name": "component-detail",
+      "trigger": "click detail",
+      "result": "open component health drawer"
+    },
+    {
+      "name": "failure-pagination",
+      "trigger": "click page control",
+      "result": "load next stable-height failure page"
+    },
+    {
+      "name": "pipeline-node",
+      "trigger": "click node",
+      "result": "filter failures by component or queue"
+    },
+    {
+      "name": "export-report",
+      "trigger": "click evidence action",
+      "result": "download filtered storage report"
+    }
+  ],
+  "implementation_mapping": {
+    "page": "web/ui/src/pages/DataQualityPage.tsx",
+    "components": "storageComponentRows -> health table",
+    "write_trend": "storageTrend -> ECharts line chart",
+    "capacity": "storageCapacityTrend -> ECharts area chart",
+    "failures": "storageFailureRows -> paginated table",
+    "pipeline": "storagePipelineRows -> API-driven SVG",
+    "health": "storageReplica/Index/Partition/ObjectRows -> health panels",
+    "rail": "storageRail*Rows -> action rail"
+  },
+  "dynamic_visuals": [
+    {
+      "id": "write-latency-trend",
+      "source": "snapshot.visuals.dataQuality.storageTrend",
+      "fields": [
+        "times",
+        "clickhouse",
+        "opensearch",
+        "nebula",
+        "minio",
+        "latencyP95",
+        "latencySla"
+      ],
+      "implementation": "React SVG polyline",
+      "refresh": "React Query 30s"
+    },
+    {
+      "id": "capacity-water-trend",
+      "source": "snapshot.visuals.dataQuality.storageCapacityTrend",
+      "fields": [
+        "days",
+        "clickhouse",
+        "opensearch",
+        "nebula",
+        "minio",
+        "threshold"
+      ],
+      "implementation": "React SVG polygon/polyline",
+      "refresh": "React Query 30s"
+    },
+    {
+      "id": "pipeline-flow",
+      "source": "snapshot.visuals.dataQuality.storagePipelineRows",
+      "fields": [
+        "from",
+        "to",
+        "label",
+        "status"
+      ],
+      "implementation": "React/CSS nodes and data-driven edge labels",
+      "refresh": "React Query 30s"
+    },
+    {
+      "id": "index-health-donut",
+      "source": "snapshot.visuals.dataQuality.storageIndexHealth",
+      "fields": [
+        "label",
+        "value",
+        "status"
+      ],
+      "implementation": "React SVG donut",
+      "refresh": "React Query 30s"
+    }
+  ],
+  "data_mapping": {
+    "kpis": "storageKpis",
+    "component_table": "storageComponentRows",
+    "failure_table": "storageFailureRows",
+    "replica_health": "storageReplicaRows",
+    "partition_health": "storagePartitionRows",
+    "object_health": "storageObjectRows",
+    "right_rail_alerts": "storageRailAlerts",
+    "right_rail_links": [
+      "storageRailLocateRows",
+      "storageRailRepairRows",
+      "storageRailEvidenceRows"
+    ]
+  },
+  "implementation": {
+    "source": "/data-quality",
+    "mode": "production-route",
+    "route": "/data-quality",
+    "pages": [
+      "web/ui/src/pages/DataQualityPage.tsx"
+    ],
+    "components": [
+      "StorageQualityTab",
+      "DynamicEChart"
+    ],
+    "services": [
+      "web/ui/src/services/dataQualityApi.ts",
+      "web/ui/src/services/api.ts"
+    ],
+    "resolved_path": "/data-quality",
+    "route_state": {
+      "tab": "storage-quality"
+    },
+    "note": "implementation.png is captured from the real APISIX/Web UI production route through Windows Chrome CDP. It is not a raster replay of target.png."
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/pages/data-quality-storage-quality/target.png",
+    "regions_overlay": "evidence/ui-image-breakdowns/pages/data-quality-storage-quality/regions-overlay.png",
+    "implementation": "evidence/ui-image-breakdowns/pages/data-quality-storage-quality/implementation.png",
+    "diff": "evidence/ui-image-breakdowns/pages/data-quality-storage-quality/diff.png",
+    "metrics": "evidence/ui-image-breakdowns/pages/data-quality-storage-quality/metrics.json",
+    "evidence_mode": "production-route",
+    "capture_meta": "evidence/ui-image-breakdowns/pages/data-quality-storage-quality/capture-meta.json",
+    "cdp_version": "evidence/ui-image-breakdowns/pages/data-quality-storage-quality/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/pages/data-quality-storage-quality/cdp-list.json",
+    "production_route_report": "evidence/ui-image-breakdowns/pages/data-quality-storage-quality/production-route-report.json",
+    "url": "http://10.0.5.8:30180/data-quality?tab=storage-quality&windowsCdpEvidenceTs=1783853544017#codex_smoke_token=<redacted>",
+    "final_url": "http://10.0.5.8:30180/data-quality?tab=storage-quality&windowsCdpEvidenceTs=1783853544017",
+    "verification": "evidence/ui-image-breakdowns/pages/data-quality-storage-quality/verification.json"
+  },
+  "differences": [
+    {
+      "type": "rendering",
+      "location": "charts and table text",
+      "note": "business diff passes; remaining heat is antialiasing and curve density"
+    },
+    {
+      "type": "scope",
+      "location": "AppShell",
+      "note": "live global status values are outside storage tab ownership"
+    },
+    {
+      "type": "production-evidence-scope",
+      "location": "/data-quality",
+      "current": "implementation.png is captured from the real APISIX/Web UI route in Windows Chrome CDP",
+      "expected": "no target.png raster replay is used as implementation evidence",
+      "status": "documented"
+    }
+  ],
+  "conclusion": "business-pixel-accepted; target structure, dynamic chart mapping, interactions and evidence are explicitly recorded.",
+  "verification": {
+    "implementation": "evidence/ui-image-breakdowns/pages/data-quality-storage-quality/implementation-r126-final.png",
+    "diff": "evidence/ui-image-breakdowns/pages/data-quality-storage-quality/diff-r126.png",
+    "metrics": "evidence/ui-image-breakdowns/pages/data-quality-storage-quality/metrics-r126.json",
+    "business_diff": "evidence/ui-image-breakdowns/pages/data-quality-storage-quality/diff-business-r126.png",
+    "business_metrics": "evidence/ui-image-breakdowns/pages/data-quality-storage-quality/metrics-business-r126.json",
+    "capture_meta": "evidence/ui-image-breakdowns/pages/data-quality-storage-quality/capture-meta-r126-final.json",
+    "full_ratio": 0.10324749228395062,
+    "business_ratio": 0.11260840213948174,
+    "threshold": 0.13,
+    "channel_tolerance": 90,
+    "runtime_clean": true,
+    "business_overflow": false
+  },
+  "r271_validation": {
+    "status": "business-pixel-accepted-r271",
+    "image_tag": "traffic/web-ui:ui-data-quality-tabs-query-20260711-r271",
+    "interaction_evidence": "evidence/ui-image-breakdowns/pages/data-quality/interaction-r271-all-tabs.json",
+    "screenshot": "evidence/ui-image-breakdowns/pages/data-quality/interaction-r271-storage-quality.png",
+    "metrics": "evidence/ui-image-breakdowns/pages/data-quality-storage-quality/metrics-business-r271.json",
+    "business_ratio": 0.0939867289310064,
+    "threshold": 0.125,
+    "canvas_count": 9,
+    "runtime_clean": true,
+    "all_tabs_geometry_stable": true,
+    "max_tab_geometry_delta": 0,
+    "field_quality_click_geometry_stable": true,
+    "field_quality_click_first_three_max_delta": 0
+  },
+  "accepted": false
+}

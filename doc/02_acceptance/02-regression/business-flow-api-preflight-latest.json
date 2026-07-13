@@ -1,0 +1,477 @@
+{
+  "run_id": "20260630-business-flow-api-r26-baseline-governance",
+  "generated_at": "2026-06-30T06:09:09Z",
+  "apisix": "http://10.0.5.8:30180",
+  "result": "pass",
+  "total": 46,
+  "passed": 46,
+  "blockers": 0,
+  "warnings": 0,
+  "api_checks": 43,
+  "api_passed": 43,
+  "report": "doc/02_acceptance/runs/20260630-business-flow-api-r26-baseline-governance/live-business-flow-api-preflight-20260630-business-flow-api-r26-baseline-governance.ndjson",
+  "endpoint_matrix": "doc/02_acceptance/runs/20260630-business-flow-api-r26-baseline-governance/business-flow-api-matrix.json",
+  "local_report": "doc/02_acceptance/runs/20260630-business-flow-api-r26-baseline-governance/local-report.md",
+  "checks": [
+    {
+      "ts": "2026-06-30T14:08:54+08:00",
+      "phase": "contract",
+      "name": "business flow acceptance contract present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/04_assets/ui_suite_gpt_v1/specs/business-flow-acceptance.json",
+      "artifact": "doc/04_assets/ui_suite_gpt_v1/specs/business-flow-acceptance.json"
+    },
+    {
+      "ts": "2026-06-30T14:08:55+08:00",
+      "phase": "fixture",
+      "name": "live alert id resolved",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "alert-default-1782752318016-1dd589c4",
+      "artifact": "fixture-alerts.json"
+    },
+    {
+      "ts": "2026-06-30T14:08:55+08:00",
+      "phase": "fixture",
+      "name": "live campaign id resolved",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "campaign-exfil-default-1782729598739-e1d2dc37",
+      "artifact": "fixture-campaigns.json"
+    },
+    {
+      "ts": "2026-06-30T14:08:57+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/alerts",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"meta\",\"success\",\"timestamp\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-alerts.json"
+    },
+    {
+      "ts": "2026-06-30T14:08:57+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/alerts/{id}",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"meta\",\"success\",\"timestamp\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-alerts-id.json"
+    },
+    {
+      "ts": "2026-06-30T14:08:57+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/alerts/{id}/evidence",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"meta\",\"success\",\"timestamp\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-alerts-id-evidence.json"
+    },
+    {
+      "ts": "2026-06-30T14:08:58+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/alerts/{id}/feedback",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"meta\",\"success\",\"timestamp\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-alerts-id-feedback.json"
+    },
+    {
+      "ts": "2026-06-30T14:08:58+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/assets",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"pagination\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-assets.json"
+    },
+    {
+      "ts": "2026-06-30T14:08:58+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/attack-chains",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"meta\",\"success\",\"timestamp\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-attack-chains.json"
+    },
+    {
+      "ts": "2026-06-30T14:08:58+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/audit/logs",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"meta\",\"success\",\"timestamp\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-audit-logs.json"
+    },
+    {
+      "ts": "2026-06-30T14:08:58+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/baselines",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"meta\",\"success\",\"timestamp\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-baselines.json"
+    },
+    {
+      "ts": "2026-06-30T14:08:59+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/campaigns",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"meta\",\"success\",\"timestamp\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-campaigns.json"
+    },
+    {
+      "ts": "2026-06-30T14:08:59+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/campaigns/{id}",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"meta\",\"success\",\"timestamp\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-campaigns-id.json"
+    },
+    {
+      "ts": "2026-06-30T14:08:59+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/compliance/audit-trail",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"meta\",\"success\",\"timestamp\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-compliance-audit-trail.json"
+    },
+    {
+      "ts": "2026-06-30T14:08:59+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/compliance/reports",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"meta\",\"success\",\"timestamp\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-compliance-reports.json"
+    },
+    {
+      "ts": "2026-06-30T14:08:59+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/dashboard/alerts/trend",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"meta\",\"success\",\"timestamp\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-dashboard-alerts-trend.json"
+    },
+    {
+      "ts": "2026-06-30T14:08:59+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/dashboard/attack-phases",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"meta\",\"success\",\"timestamp\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-dashboard-attack-phases.json"
+    },
+    {
+      "ts": "2026-06-30T14:09:00+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/dashboard/encrypted/trend",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"meta\",\"success\",\"timestamp\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-dashboard-encrypted-trend.json"
+    },
+    {
+      "ts": "2026-06-30T14:09:00+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/dashboard/stats",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"meta\",\"success\",\"timestamp\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-dashboard-stats.json"
+    },
+    {
+      "ts": "2026-06-30T14:09:00+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/data-quality",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"success\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-data-quality.json"
+    },
+    {
+      "ts": "2026-06-30T14:09:00+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/deployments",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"pagination\",\"success\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-deployments.json"
+    },
+    {
+      "ts": "2026-06-30T14:09:01+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/encrypted-traffic/exfiltration",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"meta\",\"success\",\"timestamp\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-encrypted-traffic-exfiltration.json"
+    },
+    {
+      "ts": "2026-06-30T14:09:01+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/encrypted-traffic/ja3",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"meta\",\"success\",\"timestamp\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-encrypted-traffic-ja3.json"
+    },
+    {
+      "ts": "2026-06-30T14:09:01+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/encrypted-traffic/sessions",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"meta\",\"success\",\"timestamp\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-encrypted-traffic-sessions.json"
+    },
+    {
+      "ts": "2026-06-30T14:09:01+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/encrypted-traffic/stats",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"meta\",\"success\",\"timestamp\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-encrypted-traffic-stats.json"
+    },
+    {
+      "ts": "2026-06-30T14:09:01+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/encrypted-traffic/tunnels",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"meta\",\"success\",\"timestamp\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-encrypted-traffic-tunnels.json"
+    },
+    {
+      "ts": "2026-06-30T14:09:02+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/fusion/entities",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"meta\",\"success\",\"timestamp\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-fusion-entities.json"
+    },
+    {
+      "ts": "2026-06-30T14:09:06+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/fusion/stats",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"meta\",\"success\",\"timestamp\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-fusion-stats.json"
+    },
+    {
+      "ts": "2026-06-30T14:09:06+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/graph/explore",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"timestamp\",\"trace_id\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-graph-explore.json"
+    },
+    {
+      "ts": "2026-06-30T14:09:06+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/mlops/conditions",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"success\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-mlops-conditions.json"
+    },
+    {
+      "ts": "2026-06-30T14:09:06+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/mlops/status",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"success\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-mlops-status.json"
+    },
+    {
+      "ts": "2026-06-30T14:09:06+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/models",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"pagination\",\"success\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-models.json"
+    },
+    {
+      "ts": "2026-06-30T14:09:06+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/notifications/settings",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"success\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-notifications-settings.json"
+    },
+    {
+      "ts": "2026-06-30T14:09:07+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/pcap/jobs",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"meta\",\"success\",\"timestamp\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-pcap-jobs.json"
+    },
+    {
+      "ts": "2026-06-30T14:09:07+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/pcap/stats",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"meta\",\"success\",\"timestamp\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-pcap-stats.json"
+    },
+    {
+      "ts": "2026-06-30T14:09:07+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/playbooks/catalog",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"success\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-playbooks-catalog.json"
+    },
+    {
+      "ts": "2026-06-30T14:09:07+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/playbooks/executions",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"success\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-playbooks-executions.json"
+    },
+    {
+      "ts": "2026-06-30T14:09:07+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/probes",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"meta\",\"success\",\"timestamp\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-probes.json"
+    },
+    {
+      "ts": "2026-06-30T14:09:07+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/rules",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"pagination\",\"success\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-rules.json"
+    },
+    {
+      "ts": "2026-06-30T14:09:07+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/tokens",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"limit\",\"offset\",\"tokens\",\"total\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-tokens.json"
+    },
+    {
+      "ts": "2026-06-30T14:09:08+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/tokens/scopes",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"scopes\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-tokens-scopes.json"
+    },
+    {
+      "ts": "2026-06-30T14:09:08+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/tokens/scopes/probe",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"default_scopes\",\"full_scopes\",\"minimal_scopes\",\"scopes\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-tokens-scopes-probe.json"
+    },
+    {
+      "ts": "2026-06-30T14:09:08+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/topics/apt",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"meta\",\"success\",\"timestamp\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-topics-apt.json"
+    },
+    {
+      "ts": "2026-06-30T14:09:08+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/topics/exfil",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"meta\",\"success\",\"timestamp\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-topics-exfil.json"
+    },
+    {
+      "ts": "2026-06-30T14:09:09+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/topics/tunnel",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"meta\",\"success\",\"timestamp\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-topics-tunnel.json"
+    },
+    {
+      "ts": "2026-06-30T14:09:09+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/whitelist",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"type\":\"object\",\"top_keys\":[\"data\",\"meta\",\"success\",\"timestamp\"],\"array_len\":null}",
+      "artifact": "endpoint-api-v1-whitelist.json"
+    }
+  ]
+}

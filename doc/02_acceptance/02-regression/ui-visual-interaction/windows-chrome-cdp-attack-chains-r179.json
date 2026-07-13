@@ -1,0 +1,160 @@
+{
+  "run_id": "windows-chrome-cdp-attack-chains-r179",
+  "generated_at": "2026-07-10T07:30:30.180Z",
+  "status": "business-pixel-accepted",
+  "result": "business-pixel-accepted",
+  "target_id": "attack-chains",
+  "route": "/attack-chains",
+  "production_url": "http://10.0.5.8:30180/attack-chains?__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1783668386974",
+  "normal_route_url": "http://10.0.5.8:30180/attack-chains?normalEvidenceTs=1783668432396",
+  "image_tag": "traffic/web-ui:ui-attack-chains-20260710-r179",
+  "browser": "Chrome/150.0.7871.49",
+  "cdp_url": "http://127.0.0.1:9224",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "source": "captured PNG pixels"
+  },
+  "summary": {
+    "runtime": "pass",
+    "normal_route_geometry": "pass",
+    "business_visual_diff": "pass",
+    "strict_visual_diff": "fail-documented",
+    "dynamic_data": "pass",
+    "auxiliary_review": "pass",
+    "main_thread_judgment": "business-pixel-accepted"
+  },
+  "runtime": {
+    "status": "pass",
+    "console_errors": 0,
+    "page_errors": 0,
+    "request_failures": 0,
+    "bad_responses": 0,
+    "forbidden_target_resource_requests": 0,
+    "horizontal_overflow": false
+  },
+  "normal_business_route": {
+    "status": "pass",
+    "screenshot": "evidence/ui-image-breakdowns/pages/attack-chains/normal-route-r179.png",
+    "runtime": "evidence/ui-image-breakdowns/pages/attack-chains/normal-route-runtime-r179.json",
+    "checks": {
+      "app_shell": true,
+      "title": true,
+      "attack_canvas": true,
+      "six_phases": true,
+      "phase_content": true,
+      "evidence_rows": true,
+      "recommendation_rows": true,
+      "toolbar_actions": true,
+      "no_horizontal_overflow": true,
+      "no_4xx_5xx": true,
+      "no_request_failed": true,
+      "no_console_errors": true,
+      "no_page_errors": true,
+      "smoke_hash_consumed": true,
+      "goto_ok": true
+    },
+    "failed_checks": []
+  },
+  "visual_diff": {
+    "business": {
+      "status": "pass",
+      "pixel_mismatch_ratio": 0.09817563657407408,
+      "max_pixel_ratio": 0.35,
+      "channel_tolerance": 64,
+      "metrics": "evidence/ui-image-breakdowns/pages/attack-chains/metrics-business-r179-final.json",
+      "diff": "evidence/ui-image-breakdowns/pages/attack-chains/diff-business-r179-final.png"
+    },
+    "strict": {
+      "status": "fail-documented",
+      "pixel_mismatch_ratio": 0.9999156057098766,
+      "max_pixel_ratio": 0.015,
+      "channel_tolerance": 0,
+      "metrics": "evidence/ui-image-breakdowns/pages/attack-chains/metrics-strict-r179-final.json",
+      "diff": "evidence/ui-image-breakdowns/pages/attack-chains/diff-strict-r179-final.png",
+      "capture_meta": "evidence/ui-image-breakdowns/pages/attack-chains/capture-meta-strict-r179-final.json",
+      "production_route_report": "evidence/ui-image-breakdowns/pages/attack-chains/production-route-report-strict-r179-final.json"
+    }
+  },
+  "dynamic_implementation": {
+    "endpoint": "GET /v1/attack-chains",
+    "adapter": "fetchPageSnapshot -> adaptAttackChains",
+    "components": [
+      "AttackCanvas",
+      "PhaseMatrix",
+      "PathDetail",
+      "EvidenceAnchorList",
+      "ResponseRecommendations"
+    ],
+    "no_raster_replay": true
+  },
+  "evidence": {
+    "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/attack-chains-r179/actual-1920.png",
+    "normal_route": "doc/02_acceptance/02-regression/ui-visual-interaction/attack-chains-r179/normal-route-1920.png",
+    "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/attack-chains-r179/capture-meta.json",
+    "capture_meta_strict": "doc/02_acceptance/02-regression/ui-visual-interaction/attack-chains-r179/capture-meta-strict.json",
+    "production_route_report": "doc/02_acceptance/02-regression/ui-visual-interaction/attack-chains-r179/production-route-report.json",
+    "production_route_report_strict": "doc/02_acceptance/02-regression/ui-visual-interaction/attack-chains-r179/production-route-report-strict.json",
+    "metrics_business": "doc/02_acceptance/02-regression/ui-visual-interaction/attack-chains-r179/metrics-business.json",
+    "metrics_strict": "doc/02_acceptance/02-regression/ui-visual-interaction/attack-chains-r179/metrics-strict.json",
+    "diff_business": "doc/02_acceptance/02-regression/ui-visual-interaction/attack-chains-r179/diff-business-1920.png",
+    "diff_strict": "doc/02_acceptance/02-regression/ui-visual-interaction/attack-chains-r179/diff-strict-1920.png",
+    "normal_route_runtime": "doc/02_acceptance/02-regression/ui-visual-interaction/attack-chains-r179/normal-route-runtime.json",
+    "build_deploy": "doc/02_acceptance/02-regression/ui-visual-interaction/attack-chains-r179/build-deploy-evidence.json",
+    "npm_test_log": "doc/02_acceptance/02-regression/ui-visual-interaction/attack-chains-r179/npm-test.log",
+    "npm_build_log": "doc/02_acceptance/02-regression/ui-visual-interaction/attack-chains-r179/npm-build.log",
+    "docker_image_inspect": "doc/02_acceptance/02-regression/ui-visual-interaction/attack-chains-r179/docker-image-inspect.json",
+    "k8s_web_ui_deploy": "doc/02_acceptance/02-regression/ui-visual-interaction/attack-chains-r179/k8s-web-ui-deploy.json",
+    "apisix_http_status": "doc/02_acceptance/02-regression/ui-visual-interaction/attack-chains-r179/apisix-http-status.txt"
+  },
+  "build_deploy_evidence": {
+    "status": "pass",
+    "generated_at": "2026-07-10T07:30:30.180Z",
+    "commands": {
+      "tests": {
+        "command": "npm --prefix web/ui test -- --run src/routes/attackChainCanvas.test.ts src/routes/noBitmapUi.test.ts src/services/pageSnapshotAdapters.test.ts -t 'attack chain|no-bitmap UI implementation guard|attack chain visual implementation'",
+        "log": "doc/02_acceptance/02-regression/ui-visual-interaction/attack-chains-r179/npm-test.log",
+        "result": "3 focused tests passed; full pageSnapshotAdapters.test.ts has two pre-existing non attack-chain failures"
+      },
+      "build": {
+        "command": "npm --prefix web/ui run build",
+        "log": "doc/02_acceptance/02-regression/ui-visual-interaction/attack-chains-r179/npm-build.log",
+        "result": "passed with existing Vite large chunk warning"
+      },
+      "docker_image": {
+        "image": "traffic/web-ui:ui-attack-chains-20260710-r179",
+        "image_id": "sha256:3e7bc63980a22c8502e01df6d733b8a42806138d0afe318c62a95a8b5e662b46",
+        "created": "2026-07-10T15:07:50.01944119+08:00",
+        "inspect": "doc/02_acceptance/02-regression/ui-visual-interaction/attack-chains-r179/docker-image-inspect.json"
+      },
+      "rollout": {
+        "image": "traffic/web-ui:ui-attack-chains-20260710-r179",
+        "ready_replicas": "1/1",
+        "updated_replicas": 1,
+        "deploy_json": "doc/02_acceptance/02-regression/ui-visual-interaction/attack-chains-r179/k8s-web-ui-deploy.json"
+      },
+      "apisix": {
+        "url": "http://10.0.5.8:30180/",
+        "http_status": 200,
+        "status_file": "doc/02_acceptance/02-regression/ui-visual-interaction/attack-chains-r179/apisix-http-status.txt"
+      }
+    }
+  },
+  "tests": [
+    "npm --prefix web/ui test -- --run src/routes/attackChainCanvas.test.ts src/routes/noBitmapUi.test.ts src/services/pageSnapshotAdapters.test.ts -t 'attack chain|no-bitmap UI implementation guard|attack chain visual implementation'",
+    "npm --prefix web/ui run build"
+  ],
+  "deployment": {
+    "image": "traffic/web-ui:ui-attack-chains-20260710-r179",
+    "ready_replicas": "1/1",
+    "apisix_http": 200
+  },
+  "unresolved": [
+    "Strict pixel diff is documented and non-blocking for business-pixel acceptance.",
+    "Full pageSnapshotAdapters.test.ts has two unrelated existing failures outside attack-chains focused scope."
+  ],
+  "review": {
+    "auxiliary_agent": "019f4aed-f7da-7cb2-a19d-adeba76c9b0f",
+    "status": "pass"
+  }
+}

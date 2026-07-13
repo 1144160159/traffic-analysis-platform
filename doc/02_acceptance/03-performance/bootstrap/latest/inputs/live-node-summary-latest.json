@@ -1,0 +1,16 @@
+[
+  {
+    "name": "8-2tb",
+    "internal_ip": "10.0.5.8",
+    "kernel": "5.10.0-153.56.0.134.oe2203sp2.x86_64",
+    "os": "openEuler 22.03 (LTS-SP2)",
+    "ready": "True"
+  },
+  {
+    "name": "zeus-server",
+    "internal_ip": "10.0.5.9",
+    "kernel": "5.10.0-153.56.0.134.oe2203sp2.x86_64",
+    "os": "openEuler 22.03 (LTS-SP2)",
+    "ready": "True"
+  }
+]

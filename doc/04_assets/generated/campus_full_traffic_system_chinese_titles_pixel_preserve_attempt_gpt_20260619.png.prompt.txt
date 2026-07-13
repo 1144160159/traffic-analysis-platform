@@ -1,0 +1,34 @@
+Use case: precise-object-edit
+Asset type: enterprise cybersecurity SaaS UI screenshot, 16:9.
+Edit target: the latest provided screenshot of “园区网络全流量采集与分析系统”.
+
+CRITICAL INVARIANT: Do not redesign or redraw the screen. Preserve the original screenshot content pixel-for-pixel except for the specific heading text cleanup described below. Do not change any business data, numbers, chart lines, topology buildings, icons, menus, panel positions, panel sizes, colors, borders, glow, tables, right rail content, bottom bar, or layout. Do not add, delete, move, simplify, or reinterpret any UI module.
+
+Allowed edits only:
+1. In panel/section headings that contain a slash and an English subtitle, remove only the slash and the English subtitle. Keep the Chinese heading before the slash exactly as it is.
+2. Keep technical identifiers unchanged, including Kafka, Flink, ClickHouse, OpenSearch, NebulaGraph, MinIO, PCAP, TLS, IP, DNS, JA3, K EPS, Gbps, TB.
+3. Harmonize only heading typography where needed so Chinese panel headings use the existing native heading style. Do not change body/table/metric fonts or any values.
+
+Examples of allowed heading-only edits:
+“选中告警详情 / Selected Alert” becomes “选中告警详情”.
+“资产上下文 / Asset Context” becomes “资产上下文”.
+“风险评分 / Risk Score” becomes “风险评分”.
+“响应处置 / Response Actions” becomes “响应处置”.
+“反馈与学习 / Feedback” becomes “反馈与学习”.
+“模型状态 / Model Status” becomes “模型状态”.
+“验收证据 / Acceptance Evidence” becomes “验收证据状态”.
+“告警时间线 / Alert Timeline” becomes “告警时间线”.
+“关联告警簇 / Correlated Cluster” becomes “关联告警簇”.
+“流量趋势 / Traffic Trend” becomes “流量趋势”.
+“流量拓扑 / Traffic Topology” becomes “流量拓扑”.
+“证据列表 / Evidence List” becomes “证据列表”.
+
+Forbidden changes:
+- Do not change the product title “园区网络全流量采集与分析系统”.
+- Do not change the left navigation labels or badges.
+- Do not change alert names, IP addresses, timestamps, scores, table rows, chart values, legends, topology labels, or KPI numbers.
+- Do not change the topology image or pipeline cards.
+- Do not translate technical identifiers.
+- Do not alter any non-heading text.
+
+Output one image that is visually the same as the source screenshot, with only English subtitle fragments removed from headings.

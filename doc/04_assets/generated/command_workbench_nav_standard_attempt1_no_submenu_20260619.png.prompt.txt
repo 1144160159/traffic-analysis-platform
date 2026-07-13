@@ -1,0 +1,16 @@
+Use case: ui-mockup
+Asset type: archived product UI visual direction mockup for a React + Ant Design + ECharts campus network security analytics platform
+
+Create one realistic, production-quality widescreen UI mockup, 16:9 composition, for a campus network full-traffic collection and analysis system. Direction name: Command Workbench / 指挥研判台. This is a hybrid of Command Deck and Analyst Workbench: keep the global command-center situational awareness, but make it a real analyst operating workspace with drill-down, triage, evidence, and response closure.
+
+Hard navigation constraint: the left first-level navigation MUST use only these five business-domain labels, large and readable: 综合态势, 威胁分析, 资产图谱, 检测运营, 审计配置. Do NOT use 看见, 研判, 取证, 治理, 验收 as left navigation labels. The workflow loop can be communicated inside the content area using operational modules, arrows, and status chips, but not as first-level menu text.
+
+Reference mood: dark enterprise cyber command atmosphere inspired by a campus network blueprint: campus digital twin, topology, data-flow arrows, streaming pipeline, evidence panels, response-loop language. Redesign it as a cleaner usable product screen, not a poster.
+
+Layout: full-screen enterprise app shell with compact left grouped navigation rail, top site/time/risk/collection health bar, central canvas split into global situational awareness and investigation workbench, and a right fixed action/evidence rail. Center upper area: campus topology/digital twin plus collection and streaming pipeline health, including probes, Kafka, Flink, ClickHouse, OpenSearch, NebulaGraph, MinIO. Center middle/lower area: selected alert triage timeline, correlated alert cluster, traffic flow chart, and PCAP/session/log evidence table. Right rail: selected alert summary, asset context, risk score, response actions, feedback labeling, model retraining status, and acceptance evidence status.
+
+Must show these product modules: campus topology, probe health, collection pipeline, Kafka/Flink stream processing, data lake/evidence storage, alert queue, selected alert timeline, PCAP evidence, asset context, topology graph, response actions, feedback learning, model status, data quality/acceptance gate.
+
+Style: polished dark enterprise cybersecurity SaaS UI, Ant Design and ECharts compatible, readable Chinese UI labels with small English subtitles only where useful. Deep charcoal background, subtle blue-gray surfaces, semantic cyan for data flow, green for healthy/closed-loop, amber for medium risk, red for high risk. Use restrained glow only for active flows. 8px or smaller border radius. High-density but orderly. No browser chrome, no device frame, no marketing hero, no stock photos, no decorative orbs, no card-inside-card nesting, no unreadably tiny text, no fake lorem ipsum. Every panel should have a clear operational purpose.
+
+Typography: product-readable sizes, strong section hierarchy, no oversized hero type. Text must fit inside controls. Use crisp icon-like UI symbols where appropriate. Make the screen feel like a production control surface for SOC operators and project acceptance demos.

@@ -1,0 +1,16 @@
+Generate a 3840x2160 PNG static 4K background asset for traffic-analysis-platform.
+
+Use case: productivity-visual.
+Asset type: playbook automation flow background.
+
+Scene:
+- A dark security automation flow where alerts trigger decision gates, enrichment, isolation, notification, evidence capture, approval, and feedback as abstract connected actions.
+- Show human approval as a neutral governance symbol, automated steps as glowing lanes, and containment loops as green/cyan arcs.
+
+Style:
+- SOAR-style enterprise security automation, deep navy/black, cyan flow lines, blue action nodes, green completed response, amber manual review, sparse red critical trigger.
+- High-detail, organized, panel-safe, suitable for overlaying playbook editor UI.
+
+Constraints:
+- No readable playbook names, step labels, scripts, credentials, IP addresses, logos, people, browser chrome, buttons, or full UI screenshot.
+

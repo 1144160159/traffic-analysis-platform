@@ -1,0 +1,107 @@
+{
+  "package_id": "ui_desktop_capture_receiver_selftest",
+  "run_id": "ui-desktop-capture-receiver-selftest-latest",
+  "result": "pass",
+  "generated_at": "2026-07-03T00:53:00.540105+08:00",
+  "expected_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "temporary_evidence_only": true,
+  "acceptance_effect": "Proves the receiver endpoint behavior only; does not replace Desktop Chrome visual or interaction evidence.",
+  "passed": 13,
+  "total": 13,
+  "checks": [
+    {
+      "name": "health endpoint responds",
+      "passed": true,
+      "status": "pass",
+      "detail": "status=200",
+      "artifact": ""
+    },
+    {
+      "name": "viewport probe page is served",
+      "passed": true,
+      "status": "pass",
+      "detail": "status=200 contains_report_endpoint=True",
+      "artifact": ""
+    },
+    {
+      "name": "token endpoint rejects unauthenticated reads",
+      "passed": true,
+      "status": "pass",
+      "detail": "status=403",
+      "artifact": ""
+    },
+    {
+      "name": "token endpoint accepts capture key",
+      "passed": true,
+      "status": "pass",
+      "detail": "status=200",
+      "artifact": ""
+    },
+    {
+      "name": "viewport report pass is stored",
+      "passed": true,
+      "status": "pass",
+      "detail": "status=201 result=pass",
+      "artifact": "/tmp/taf-capture-receiver-selftest-v48qysmu/desktop-chrome-viewport-probe-latest.json"
+    },
+    {
+      "name": "viewport report blocked is stored",
+      "passed": true,
+      "status": "pass",
+      "detail": "status=201 result=blocked viewport={'width': 2560, 'height': 1271}",
+      "artifact": "/tmp/taf-capture-receiver-selftest-v48qysmu/desktop-chrome-viewport-probe-latest.json"
+    },
+    {
+      "name": "viewport report rejects sensitive material",
+      "passed": true,
+      "status": "pass",
+      "detail": "status=400 preserved_result=blocked",
+      "artifact": ""
+    },
+    {
+      "name": "screenshot upload writes passing capture metadata",
+      "passed": true,
+      "status": "pass",
+      "detail": "status=201 meta_status=pass",
+      "artifact": "/tmp/taf-capture-receiver-selftest-v48qysmu/latest/selftest/capture-meta.json"
+    },
+    {
+      "name": "interaction screenshot upload writes passing metadata",
+      "passed": true,
+      "status": "pass",
+      "detail": "status=201 exists=True meta_status=pass",
+      "artifact": "/tmp/taf-capture-receiver-selftest-v48qysmu/latest/selftest/interaction.png"
+    },
+    {
+      "name": "interaction upload writes JSON",
+      "passed": true,
+      "status": "pass",
+      "detail": "status=201 exists=True",
+      "artifact": "/tmp/taf-capture-receiver-selftest-v48qysmu/latest/selftest/interaction.json"
+    },
+    {
+      "name": "interaction upload rejects sensitive material",
+      "passed": true,
+      "status": "pass",
+      "detail": "status=400",
+      "artifact": ""
+    },
+    {
+      "name": "bridge result upload writes run summary",
+      "passed": true,
+      "status": "pass",
+      "detail": "status=201 result=pass",
+      "artifact": "/tmp/taf-capture-receiver-selftest-v48qysmu/desktop-chrome-bridge-run-latest.json"
+    },
+    {
+      "name": "bridge result upload rejects sensitive material",
+      "passed": true,
+      "status": "pass",
+      "detail": "status=400",
+      "artifact": ""
+    }
+  ]
+}

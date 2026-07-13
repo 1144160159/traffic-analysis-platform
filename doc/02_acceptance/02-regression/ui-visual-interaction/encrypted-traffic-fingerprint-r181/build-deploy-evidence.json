@@ -1,0 +1,21 @@
+{
+  "page_id": "encrypted-traffic-fingerprint",
+  "queue_order": 32,
+  "route": "/encrypted-traffic?tab=fingerprint",
+  "image": "traffic/web-ui:ui-encrypted-traffic-fingerprint-20260710-r181",
+  "ready": "1/1",
+  "apisix_status": "200",
+  "tests": {
+    "vitest_log": "npm-test.log",
+    "vitest_sha256": "4b942e50bbe0fabd54fcc1325a0d4e99b35df359cf67e76db51e65ee3c27c19f",
+    "build_log": "npm-build.log",
+    "build_sha256": "dc2d6352159f220208bd54bafde5c422a4531db353f3cb10cda8237b815c9ea1"
+  },
+  "docker": {
+    "inspect": "docker-image-inspect.json"
+  },
+  "kubernetes": {
+    "deployment": "k8s-web-ui-deploy.json"
+  },
+  "generated_at": "2026-07-10T08:05:51.456Z"
+}

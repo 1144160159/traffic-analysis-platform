@@ -1,0 +1,103 @@
+{
+  "title": "园区网络全流量采集与分析系统",
+  "location": "http://10.0.5.8:30180/whitelist?fullRouteEvidenceTs=1783072692231",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "dpr": 1.0000000298023224
+  },
+  "scroll": {
+    "horizontalOverflow": 0,
+    "verticalOverflow": 0,
+    "bodyScrollWidth": 1920,
+    "bodyClientWidth": 1920,
+    "bodyScrollHeight": 1080,
+    "bodyClientHeight": 1080
+  },
+  "headings": [
+    "白名单",
+    "A. 白名单列表",
+    "E. 到期治理",
+    "B. 条件构造器 / 新增白名单草案",
+    "F. 反馈关联（从告警到白名单草案）",
+    "C. 审批流程状态机",
+    "D. 命中监控（近7天）",
+    "G. 影响矩阵 / 来源链路卡"
+  ],
+  "buttons": [
+    "移动端导航",
+    "PCAP检索",
+    "资产检索",
+    "规则检索",
+    "脚本中心",
+    "帮助中心",
+    "更多应用",
+    "Ccodex-ui-desktop-admin系统管理员在线",
+    "新增白名单",
+    "从告警生成草案",
+    "提交审批",
+    "批量延期",
+    "停用",
+    "转审计",
+    "添加白名单",
+    "审批详情",
+    "筛选",
+    "1",
+    "2",
+    "3",
+    "4",
+    "10 条/页"
+  ],
+  "visibleText": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-03 17:58:13 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 采集监测 威胁分析 资产图谱 检测运营 规则管理 部署管理 模型管理 MLOps 编排 SOAR 剧本 白名单 审计配置 C codex-ui-desktop-admin 系统管理员 在线 检测运营 / 白名单 白名单 新增白名单 从告警生成草案 提交审批 批量延期 停用 转审计 添加白名单 审批详情 生效白名单 2 个 真实 API 待审批 0 个 无积压 即将到期 0 个 7 天内 长期生效 0 个 >180 天 覆盖告警 14 条 近 7 天 潜在漏报风险 2 项 2 来源 A. 白名单列表 筛选 全部状态 对象类型 对象类型 匹配条件 生效范围 有效期 责任角色 来源告警 状态 操作 域名 codex-20260630-whitelist-governance-preflight-r2.example.test 研发网络 2026-06-30 ~ 2026-07-30 bccd85e3-fc2f-4021-b877-f192e690b4d4 codex-alert-20260630-whitelist-governance-preflight-r2 生效 域名 codex-20260630-whitelist-governance-preflight-r1.example.test 测试环境 2026-06-30 ~ 2026-07-30 04b2f337-7a44-45fa-bded-dac0ee798ccd codex-alert-20260630-whitelist-governance-preflight-r1 生效 共 2 个 条 1 2 3 4 10 条/页 E. 到期治理 即将到期（7天内） 过期未处理 长期生效（>180天） 未归属责任角色 对象类型 匹配条件 生效范围 到期时间 责任角色 风险等级 操作 IP 10.****.88 办公网 2026-06-24 安全运营 中 延期 / 停用 域名 downloads.campus.local 全网 2026-06-25 平台团队 中 延期 / 停用 账号 temp_admin 管理平台 2026-06-26 (未归属) 高 指派角色 / 停用 规则 Rule-100324 全网 长期 安全运营 高 转审计 查看全部 27 项 B. 条件构造器 / 新增白名单草案 当前：codex-20260630-whitelist-governance-preflight-r",
+  "elements": {
+    "pageHero": {
+      "selector": ".taf-page-hero",
+      "visible": false
+    },
+    "panelHeader": {
+      "selector": ".taf-panel__header",
+      "visible": true,
+      "text": "A. 白名单列表筛选",
+      "x": 183,
+      "y": 256,
+      "right": 713,
+      "bottom": 288,
+      "w": 531,
+      "h": 32,
+      "display": "flex",
+      "overflowX": "visible",
+      "overflowY": "visible"
+    },
+    "table": {
+      "selector": ".ant-table, .taf-table, table",
+      "visible": true,
+      "text": "对象类型匹配条件生效范围有效期责任角色来源告警状态操作域名codex-20260630-whitelist-governance-preflight-r2.example.test研发网络2026-06-30 ~ 2026-07-30bccd85e3-fc2f-4021-b877-f192e690b4d4codex-alert-20260630-whitelist-governance-preflight-r2生效域名codex-20260630-whitelist-gove",
+      "x": 191,
+      "y": 326,
+      "right": 705,
+      "bottom": 442,
+      "w": 515,
+      "h": 116,
+      "display": "block",
+      "overflowX": "visible",
+      "overflowY": "visible"
+    },
+    "topicTitlebar": {
+      "selector": ".taf-topic-titlebar",
+      "visible": false
+    },
+    "topicFacts": {
+      "selector": ".taf-topic-facts",
+      "visible": false
+    },
+    "topicKpis": {
+      "selector": ".taf-topic-kpis",
+      "visible": false
+    },
+    "topicGrid": {
+      "selector": ".taf-topic-grid",
+      "visible": false
+    }
+  },
+  "overlapChecks": {}
+}

@@ -1,0 +1,56 @@
+{
+  "template_type": "ui_visual_interaction_route_evidence",
+  "template_version": 1,
+  "route_id": "login",
+  "title": "登录",
+  "route": "/login",
+  "expected_final_path": "/login",
+  "url": "http://10.0.5.8:30180/login",
+  "authenticated_url_pattern": "http://10.0.5.8:30180/login",
+  "safe_redirect_url_pattern": "http://10.0.5.8:30180/login",
+  "safe_wrapper_call": {
+    "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+    "args": {
+      "url": "http://10.0.5.8:30180/login",
+      "keep": true,
+      "wait_ms": 3500
+    }
+  },
+  "output_path": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/login/interaction.json",
+  "required_screenshot_path": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/login/interaction.png",
+  "interaction_screenshot_upload": "http://10.0.5.8:15174/interaction-screenshot/login",
+  "business_action_hint": "render login form and captcha challenge without submitting credentials",
+  "api_endpoints": [],
+  "acceptance_requirements": {
+    "expected_final_path": "/login",
+    "required_assertions": [
+      "product_name_visible",
+      "account_password_tab_visible",
+      "captcha_visible",
+      "submit_visible",
+      "smoke_hash_absent"
+    ],
+    "forbidden_final_paths": []
+  },
+  "interaction_json_skeleton": {
+    "status": "pass",
+    "route_id": "login",
+    "route": "/login",
+    "final_url": "http://10.0.5.8:30180/login",
+    "business_action": "render login form and captcha challenge without submitting credentials",
+    "desktop_chrome_backend_status": "pass",
+    "no_4xx_5xx": true,
+    "no_requestfailed": true,
+    "no_pageerror": true,
+    "no_console_error": true,
+    "target_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/login/interaction.png",
+    "assertions": {
+      "product_name_visible": true,
+      "account_password_tab_visible": true,
+      "captcha_visible": true,
+      "submit_visible": true,
+      "smoke_hash_absent": true
+    }
+  },
+  "note": "Template only. Do not copy this file into latest/<route-id>/interaction.json without replacing placeholders with real Desktop Chrome evidence."
+}

@@ -1,0 +1,98 @@
+{
+  "package_id": "windows_chrome_cdp_full_route_capture",
+  "run_id": "campaigns-r165",
+  "result": "pass",
+  "runtime_result": "pass",
+  "visual_diff_result": "pass",
+  "generated_at": "2026-07-10T00:29:51.623Z",
+  "base_url": "http://10.0.5.8:30180",
+  "cdp_url": "http://127.0.0.1:9224",
+  "cdp_version": {
+    "Browser": "Chrome/150.0.7871.49",
+    "Protocol-Version": "1.3",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+    "V8-Version": "15.0.245.13",
+    "WebKit-Version": "537.36 (@7ab03afd1c9903523ed81ffbb459a307bcb8a0bf)",
+    "webSocketDebuggerUrl": "ws://127.0.0.1:9224/devtools/browser/28d86153-5f5a-408b-b491-9a1d9e3aed4f"
+  },
+  "cdp_targets_count": 3,
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "evidence_dir": "evidence/windows-chrome-cdp-campaigns/campaigns-r165",
+  "acceptance_dir": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-campaigns-r165",
+  "target_mode": "visual-targets",
+  "capture_plan": "doc/02_acceptance/02-regression/ui-visual-interaction/capture-plan-latest.json",
+  "output_json": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-campaigns-r165.json",
+  "output_md": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-campaigns-r165.md",
+  "alert_id": "alert-default-1782752318016-1dd589c4",
+  "campaign_id": "campaign-exfil-default-1782729598739-e1d2dc37",
+  "auth": {
+    "strategy": "hash-smoke-token",
+    "smoke_token_source": "generated-from-k8s-secret",
+    "smoke_token_env": "DESKTOP_SMOKE_TOKEN",
+    "token_material_redacted": true
+  },
+  "max_pixel_ratio": 0.35,
+  "channel_tolerance": 64,
+  "summary": {
+    "total": 1,
+    "runtime_pass": 1,
+    "runtime_fail": 0,
+    "visual_diff_total": 1,
+    "visual_diff_pass": 1,
+    "visual_diff_fail": 0,
+    "failed_runtime_routes": [],
+    "failed_visual_diff_routes": []
+  },
+  "routes": [
+    {
+      "id": "campaigns",
+      "route_id": "campaigns",
+      "title": "战役列表",
+      "route": "/campaigns",
+      "resolved_path": "/campaigns",
+      "url": "http://10.0.5.8:30180/campaigns?windowsCdpEvidenceTs=1783643386219#codex_smoke_token=<redacted>",
+      "final_url": "http://10.0.5.8:30180/campaigns?windowsCdpEvidenceTs=1783643386219",
+      "screenshot": "evidence/windows-chrome-cdp-campaigns/campaigns-r165/campaigns-1920x1080.png",
+      "acceptance_actual": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-campaigns-r165/campaigns/actual-1920.png",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/campaigns.png",
+      "duration_ms": 4242,
+      "goto_error": null,
+      "bad_responses": [],
+      "request_failures": [],
+      "console_errors": [],
+      "page_errors": [],
+      "metrics": {
+        "final_url": "http://10.0.5.8:30180/campaigns?windowsCdpEvidenceTs=1783643386219",
+        "document_title": "园区网络全流量采集与分析系统",
+        "h1": "战役列表",
+        "body_text_sample": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-10 08:29:29 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 采集监测 威胁分析 告警中心 128 战役列表 攻击链分析 加密流量 取证分析 资产图谱 检测运营 审计配置 C codex-windows-cdp-admin 系统管理员 在线 战役列表 战役详情 战役总数 2.9M 个 真实 API 活跃战役 8 个 真实 API 影响资产 16 台 真实 API 最高风险 0 个 真实 API 告警总数 32 条 真实 API 平均持续时间 0 小时 真实 API 风险分布 高风险 0 (0.0%) 中风险 8 (100.0%) 低风险 0 (0.0%) 战役列表（共 8 个） 指派负责人 变更状态 风险等级 全部 状态 全部 阶段 全部 战役名称 / 关键字 重 置 查 询 战役名称 阶段 风险等级 影响资产 告警数 首次发现 最近活动 状态 操作 campaign-exfil-default-1782729598739-e1d2dc37 外联通信 中风险 2 2 06-29 10:39 06-29 10:40 调查中",
+        "scroll_width": 2133,
+        "client_width": 2133,
+        "scroll_height": 1200,
+        "client_height": 1200,
+        "horizontal_overflow": false,
+        "error_alerts": [],
+        "visible_bad_geometry": []
+      },
+      "protected_route": true,
+      "smoke_token_used": true,
+      "smoke_hash_consumed": true,
+      "runtime_status": "pass",
+      "runtime_reasons": [],
+      "visual_diff": {
+        "skipped": false,
+        "status": "pass",
+        "exit_code": 0,
+        "pixel_mismatch_ratio": 0.09477961033950617,
+        "stdout": "{\"status\": \"pass\", \"target_id\": \"campaigns\", \"pixel_mismatch_ratio\": 0.09477961033950617}",
+        "stderr": "",
+        "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-campaigns-r165/campaigns/metrics.json",
+        "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-campaigns-r165/campaigns/diff-1920.png"
+      },
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-campaigns-r165/campaigns/capture-meta.json"
+    }
+  ]
+}

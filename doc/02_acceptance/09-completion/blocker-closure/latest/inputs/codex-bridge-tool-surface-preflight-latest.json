@@ -1,0 +1,45 @@
+{
+  "package_id": "ui_codex_bridge_tool_surface_preflight",
+  "result": "pass",
+  "generated_at": "2026-07-02T19:20:36.854Z",
+  "plugin": {
+    "plugin_dir": "/root/.codex/plugins/cache/personal/codex-desktop-iab-bridge/0.1.0",
+    "plugin_json_path": "/root/.codex/plugins/cache/personal/codex-desktop-iab-bridge/0.1.0/.codex-plugin/plugin.json",
+    "plugin_json_valid": true,
+    "mcp_json_path": "/root/.codex/plugins/cache/personal/codex-desktop-iab-bridge/0.1.0/.mcp.json",
+    "mcp_config_valid": true,
+    "installed_enabled": true,
+    "mcp_server_names": [
+      "codex-desktop-node-repl"
+    ],
+    "codex_plugin_list_exit_code": 0
+  },
+  "proxy": {
+    "path": "/root/.codex/bin/node-repl-mcp-proxy.py",
+    "path_exists": true,
+    "initialize_exit_code": 0,
+    "initialize_fallback_ok": true,
+    "tools_list_exit_code": 0,
+    "tools_list_status": "error: [Errno 111] Connection refused",
+    "tools_list_error": "[Errno 111] Connection refused"
+  },
+  "backend": {
+    "host": "127.0.0.1",
+    "port": 19998,
+    "open": false,
+    "detail": "Error: connect ECONNREFUSED 127.0.0.1:19998"
+  },
+  "codex_session": {
+    "desktop_tool_status": "not_exposed_in_current_chat_tool_surface",
+    "desktop_tool_detail": "tool discovery returned unrelated app connector tools only",
+    "required_tools": [
+      "mcp__codex_desktop_node_repl__js",
+      "desktop_chrome_open_url",
+      "desktop_chrome_list_tabs",
+      "desktop_chrome_claim_url"
+    ]
+  },
+  "acceptance_effect": "boundary_evidence_only_not_desktop_chrome_acceptance",
+  "inference": "The local plugin and proxy are installed, but there is no local node_repl backend listener and the current chat tool surface still lacks the Desktop Chrome tools.",
+  "blockers": []
+}

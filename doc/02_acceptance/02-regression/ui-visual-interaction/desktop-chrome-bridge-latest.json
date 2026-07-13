@@ -1,0 +1,351 @@
+{
+  "run_id": "20260703-desktop-chrome-bridge-windows-tunnel-r13",
+  "checked_at": "2026-07-03T02:40:29+08:00",
+  "result": "blocked",
+  "required_backend": "codex-desktop-chrome-extension",
+  "fallback_allowed": false,
+  "probes": [
+    {
+      "tool": "tool_search",
+      "operation": "discover desktop_chrome_* or mcp__codex_desktop_node_repl__js in the current Codex session",
+      "result": "blocked",
+      "error": "Only unrelated app connector tools were exposed; Desktop Chrome / Desktop Node REPL tools were not callable."
+    },
+    {
+      "tool": "ssh -L 19998:127.0.0.1:19998 LongShine@10.3.6.59",
+      "operation": "tunnel current Linux 127.0.0.1:19998 to the Windows Codex Desktop host",
+      "result": "blocked",
+      "error": "The local tunnel port opened, but an MCP initialize probe closed without a response."
+    },
+    {
+      "tool": "ssh LongShine@10.3.6.59 cmd /c netstat/tasklist",
+      "operation": "read-only Windows process and port check",
+      "result": "blocked",
+      "error": "Windows had VSCode, Chrome, Codex.exe, codex.exe, node_repl.exe, and node.exe processes, but no TCP listener on 127.0.0.1:19998 was visible."
+    },
+    {
+      "tool": "tool_search",
+      "operation": "rediscover Desktop Chrome bridge tools after tunnel/stdout evidence refresh",
+      "result": "blocked",
+      "error": "Search for codex desktop node repl js / desktop_chrome_open_url still exposed unrelated app connector tools only; no callable Desktop Chrome wrapper or Desktop Node REPL tool was available in this Codex session."
+    },
+    {
+      "tool": "ssh LongShine@10.3.6.59 cmd /c where codex && where node_repl",
+      "operation": "read-only Windows non-interactive PATH check",
+      "result": "blocked",
+      "error": "The Windows SSH shell PATH did not resolve codex, node_repl, or node through where; this does not disprove running Desktop processes, but it means the SSH shell cannot directly substitute for the missing MCP tool."
+    },
+    {
+      "tool": "ssh LongShine@10.3.6.59 cmd /c dir %USERPROFILE%\\.codex",
+      "operation": "read-only Windows Codex cache inventory",
+      "result": "blocked",
+      "error": "The Windows Codex profile exists and has openai-bundled chrome/browser clients at 26.623.81905/latest, but the plugin cache exposed no personal codex-desktop-iab-bridge package and the node_repl directory only showed active_execs metadata."
+    },
+    {
+      "tool": "ssh LongShine@10.3.6.59 -> codex.exe remote-control start --json",
+      "operation": "check whether Windows Codex CLI can start the app-server daemon lifecycle directly",
+      "result": "blocked",
+      "error": "The Windows Codex CLI returned: codex app-server daemon lifecycle is only supported on Unix platforms."
+    },
+    {
+      "tool": "ssh LongShine@10.3.6.59 -> codex.exe mcp list/get node_repl",
+      "operation": "read-only Windows Codex MCP configuration check",
+      "result": "pass",
+      "error": "",
+      "evidence": {
+        "name": "node_repl",
+        "enabled": true,
+        "transport": "stdio",
+        "command": "C:\\Users\\LongShine\\AppData\\Local\\OpenAI\\Codex\\runtimes\\cua_node\\1b23c930bdf84ed6\\bin\\node_repl.exe",
+        "startup_timeout_sec": 120,
+        "auth": "Unsupported",
+        "env_names": [
+          "BROWSER_USE_AVAILABLE_BACKENDS",
+          "BROWSER_USE_CODEX_APP_BUILD_FLAVOR",
+          "BROWSER_USE_CODEX_APP_VERSION",
+          "CODEX_CLI_PATH",
+          "CODEX_HOME",
+          "NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER",
+          "NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME",
+          "NODE_REPL_NATIVE_PIPE_CONNECT_TIMEOUT_MS",
+          "NODE_REPL_NODE_MODULE_DIRS",
+          "NODE_REPL_NODE_PATH",
+          "NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S",
+          "NODE_REPL_TRUSTED_CODE_PATHS",
+          "SKY_CUA_NATIVE_PIPE",
+          "SKY_CUA_NATIVE_PIPE_DIRECTORY"
+        ]
+      }
+    },
+    {
+      "tool": "ssh LongShine@10.3.6.59 -> node_repl.exe JSONL stdio",
+      "operation": "initialize Windows Codex Node REPL MCP server and list available tools",
+      "result": "pass",
+      "error": "",
+      "evidence": {
+        "tool_count": 3,
+        "tools": [
+          "js",
+          "js_add_node_module_dir",
+          "js_reset"
+        ]
+      }
+    },
+    {
+      "tool": "ssh LongShine@10.3.6.59 -> node_repl.exe tools/call js",
+      "operation": "execute minimal nodeRepl.write JavaScript through the Windows Codex Node REPL MCP server",
+      "result": "blocked",
+      "error": "tools/call js returned isError=true because the node_repl kernel exited unexpectedly. Diagnostics reported Windows sandbox firewall rule creation denied: helper_firewall_rule_create_or_add_failed / SetRemotePorts failed / HRESULT(0x80070005) / 拒绝访问。"
+    },
+    {
+      "tool": "ssh LongShine@10.3.6.59 -> node_repl.exe JSONL stdio with explicit Windows Codex native-pipe env",
+      "operation": "execute minimal nodeRepl.write JavaScript after setting CODEX_HOME, NODE_REPL_*, BROWSER_USE_*, CODEX_CLI_PATH, SKY_CUA_NATIVE_PIPE, and SKY_CUA_NATIVE_PIPE_DIRECTORY in the SSH-spawned cmd context",
+      "result": "blocked",
+      "error": "The full-env tools/call js probe still returned isError=true with the same Windows sandbox failure before Chrome control: helper_firewall_rule_create_or_add_failed / SetRemotePorts failed / HRESULT(0x80070005) / 拒绝访问。"
+    },
+    {
+      "tool": "temporary local TCP 127.0.0.1:19998 -> ssh stdio node_repl.exe -> node-repl-mcp-proxy.py",
+      "operation": "expose Windows stdio node_repl.exe behind the local proxy endpoint expected by /root/.codex/bin/node-repl-mcp-proxy.py and list proxy tools",
+      "result": "pass",
+      "error": "",
+      "evidence": {
+        "tool_count": 8,
+        "tools": [
+          "js",
+          "js_add_node_module_dir",
+          "js_reset",
+          "desktop_chrome_list_tabs",
+          "desktop_iab_list_targets",
+          "desktop_chrome_open_url",
+          "desktop_chrome_claim_url",
+          "desktop_chrome_cleanup_blank_tabs"
+        ]
+      }
+    },
+    {
+      "tool": "node-repl-mcp-proxy.py via temporary local TCP bridge",
+      "operation": "execute minimal nodeRepl.write JavaScript through the proxy-wrapped js tool",
+      "result": "blocked",
+      "error": "The proxy-wrapped js tool returned the same node_repl kernel failure as direct SSH stdio: Windows sandbox firewall rule creation denied at SetRemotePorts with HRESULT(0x80070005) / 拒绝访问。"
+    },
+    {
+      "tool": "node-repl-mcp-proxy.py via temporary local TCP bridge",
+      "operation": "execute desktop_chrome_list_tabs wrapper through the proxy-wrapped Desktop Chrome tool",
+      "result": "blocked",
+      "error": "The wrapped Desktop Chrome tool reached the same lower-level js kernel failure before Chrome control: Windows sandbox firewall rule creation denied at SetRemotePorts with HRESULT(0x80070005) / 拒绝访问。"
+    },
+    {
+      "tool": "tool_search",
+      "operation": "rediscover Desktop Chrome bridge tools in the current Codex session after r10 evidence refresh",
+      "result": "blocked",
+      "error": "Search for Chrome / control-chrome / codex desktop node repl / desktop_chrome_* still exposed unrelated app connector tools only; no callable Desktop Chrome wrapper or Desktop Node REPL tool was available in this Codex session."
+    },
+    {
+      "tool": "node tests/e2e/ui_windows_tunnel_channel_preflight.mjs",
+      "operation": "verify Linux and Windows localhost tunnel endpoints for app, receiver, viewport probe, and smoke redirect",
+      "result": "pass",
+      "error": "",
+      "evidence": {
+        "windows_host": "10.3.6.59",
+        "linux_app": "http://127.0.0.1:5173/screen -> 200",
+        "windows_app": "http://127.0.0.1:25173/screen -> 200",
+        "windows_receiver": "http://127.0.0.1:25174/health -> 200",
+        "windows_viewport_probe": "http://127.0.0.1:25174/viewport-probe -> 200",
+        "windows_redirect": "http://127.0.0.1:25175/health -> 200"
+      }
+    },
+    {
+      "tool": "node tests/e2e/ui_desktop_chrome_bridge_payload.mjs && node tests/e2e/ui_desktop_chrome_bridge_payload_selftest.mjs",
+      "operation": "regenerate and self-test the trusted Windows Desktop Chrome payload package",
+      "result": "pass",
+      "error": "",
+      "evidence": {
+        "selftest": "21/21",
+        "visual_targets": 30,
+        "interaction_targets": 28,
+        "screenshot_uploads": 58,
+        "bridge_result_uploads": 1,
+        "receiver_uploads": 59,
+        "url_policy": "payload target URLs use Windows-local 127.0.0.1:25173/25174/25175 tunnel endpoints and reject direct 10.0.5.8:30180 capture URLs",
+        "syntax": "payload JS parses as async Desktop Node REPL code",
+        "artifact": "doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-payload-latest.js"
+      }
+    },
+    {
+      "tool": "node tests/e2e/ui_desktop_chrome_bridge_tool_call.mjs",
+      "operation": "generate and self-test the outer MCP tool-call template for the trusted Desktop Node REPL",
+      "result": "pass",
+      "error": "",
+      "evidence": {
+        "selftest": "9/9",
+        "tool_name": "mcp__codex_desktop_node_repl__js",
+        "timeout_ms": 900000,
+        "payload_sha256": "3f0f6d0128d0e4b8807e7addd52d9371a06f070cedceb2116f3a1148743a9e4a",
+        "payload_selftest": "21/21",
+        "visual_targets": 30,
+        "interaction_targets": 28,
+        "receiver_uploads": 59,
+        "placeholder_policy": "contains <CODEX_CAPTURE_KEY> and <CODEX_SMOKE_NONCE> only; no concrete secrets are written",
+        "artifact": "doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-tool-call-latest.json"
+      }
+    },
+    {
+      "tool": "node tests/e2e/ui_windows_ssh_privilege_preflight.mjs",
+      "operation": "verify Windows SSH token privilege, firewall service, PowerShell boundary, and Desktop process visibility",
+      "result": "pass",
+      "error": "",
+      "evidence": {
+        "selftest": "9/9",
+        "administrator_group": "enabled",
+        "high_integrity": true,
+        "enabled_privilege_count": 24,
+        "net_session_admin_check": "pass_no_sessions",
+        "firewall_service": "running",
+        "firewall_profiles": "Domain OFF, Private OFF, Public ON; all AllowInbound/AllowOutbound",
+        "process_counts": {
+          "code": 18,
+          "codex": 10,
+          "chrome": 18,
+          "node_repl": 3,
+          "node": 0
+        },
+        "powershell_smoke": "blocked in SSH context with access denied",
+        "inference": "The recurring SSH-spawned node_repl JS failure is not explained by missing Windows host, missing admin group, low-integrity token, stopped firewall service, or absent Codex/Chrome/node_repl processes; it remains a trusted Desktop Node REPL/native-pipe/sandbox context boundary.",
+        "artifact": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-ssh-privilege-preflight-latest.json"
+      }
+    },
+    {
+      "tool": "ssh LongShine@10.3.6.59 cmd /c type %USERPROFILE%\\.codex\\node_repl\\active_execs\\*.json && tasklist /fi pid",
+      "operation": "inspect Windows Codex Node REPL active_execs metadata for a reusable trusted execution entry",
+      "result": "blocked",
+      "error": "Only one stale active_execs JSON was present from 2026-06-16; its nodeReplPid 23300 and kernelPid 20368 are no longer running, so it is not a reusable trusted bridge endpoint.",
+      "evidence": {
+        "active_exec_id": "51865368-a864-45d0-a139-af16cc6741ae",
+        "session_id": "019ece55-6e78-7da2-b018-da9abbc7348c",
+        "node_repl_pid": 23300,
+        "kernel_pid": 20368,
+        "pid_status": "not_running"
+      }
+    }
+  ],
+  "windows_tunnel": {
+    "host": "10.3.6.59",
+    "user": "LongShine",
+    "local_forward_attempt": "127.0.0.1:19998 -> 127.0.0.1:19998",
+    "local_socket_status": "open_via_ssh_tunnel",
+    "mcp_initialize_status": "closed_without_response",
+    "windows_process_evidence": {
+      "vscode": "present",
+      "chrome": "present",
+      "codex": "present",
+      "node_repl": "present",
+      "node": "present"
+    },
+    "windows_19998_listener": "not_observed",
+    "direct_ssh_stdio": {
+      "mcp_initialize": "pass",
+      "tools_list": "pass",
+      "tools": [
+        "js",
+        "js_add_node_module_dir",
+        "js_reset"
+      ],
+      "js_call": "blocked",
+      "js_call_error": "Windows sandbox firewall rule creation denied while starting the Node REPL kernel from the SSH-spawned context (SetRemotePorts HRESULT 0x80070005 / 拒绝访问).",
+      "full_env_js_call": "blocked",
+      "full_env_js_call_error": "Setting the same Windows Codex native-pipe and NODE_REPL/BROWSER_USE environment names observed in mcp get node_repl did not change the failure; JS kernel startup still stops at helper_firewall_rule_create_or_add_failed / SetRemotePorts HRESULT 0x80070005."
+    },
+    "local_proxy_over_ssh_stdio": {
+      "temporary_listener": "127.0.0.1:19998",
+      "proxy_tool_list": "pass",
+      "proxy_tool_count": 8,
+      "proxy_tools": [
+        "js",
+        "js_add_node_module_dir",
+        "js_reset",
+        "desktop_chrome_list_tabs",
+        "desktop_iab_list_targets",
+        "desktop_chrome_open_url",
+        "desktop_chrome_claim_url",
+        "desktop_chrome_cleanup_blank_tabs"
+      ],
+      "proxy_js_call": "blocked",
+      "proxy_desktop_chrome_list_tabs": "blocked",
+      "shared_error": "Windows sandbox firewall rule creation denied while starting the Node REPL kernel from the SSH-spawned context (SetRemotePorts HRESULT 0x80070005 / 拒绝访问).",
+      "cleanup": "temporary listener stopped and temporary local script removed"
+    },
+    "windows_local_tunnel_execution_package": {
+      "channel_preflight": "pass",
+      "windows_app_url": "http://127.0.0.1:25173/screen",
+      "windows_receiver_url": "http://127.0.0.1:25174/health",
+      "windows_redirect_url": "http://127.0.0.1:25175/health",
+      "payload_selftest": "pass",
+      "payload_selftest_passed": 21,
+      "payload_selftest_total": 21,
+      "payload_visual_targets": 30,
+      "payload_interaction_targets": 28,
+      "payload_receiver_uploads": 59,
+      "payload_url_policy": "all generated capture URL templates use Windows-local 127.0.0.1 tunnel endpoints for the 10.3.6.59 Chrome run",
+      "tool_call_template": "pass",
+      "tool_call_selftest_passed": 9,
+      "tool_call_selftest_total": 9,
+      "tool_call_tool": "mcp__codex_desktop_node_repl__js",
+      "tool_call_timeout_ms": 900000,
+      "tool_call_payload_sha256": "3f0f6d0128d0e4b8807e7addd52d9371a06f070cedceb2116f3a1148743a9e4a",
+      "tool_call_artifact": "doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-tool-call-latest.json",
+      "ssh_privilege_preflight": "pass",
+      "ssh_privilege_selftest_passed": 9,
+      "ssh_privilege_selftest_total": 9,
+      "ssh_high_integrity": true,
+      "ssh_enabled_privilege_count": 24,
+      "ssh_net_session_admin_check": "pass_no_sessions",
+      "ssh_firewall_service": "running",
+      "ssh_process_counts": {
+        "code": 18,
+        "codex": 10,
+        "chrome": 18,
+        "node_repl": 3,
+        "node": 0
+      },
+      "ssh_privilege_artifact": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-ssh-privilege-preflight-latest.json",
+      "active_execs_reusable": false,
+      "active_execs_status": "stale metadata only; nodeReplPid 23300 and kernelPid 20368 not running"
+    },
+    "windows_codex_profile": {
+      "user_profile": "C:\\Users\\LongShine",
+      "codex_root": "present",
+      "chrome_client_versions": [
+        "26.623.81905",
+        "latest"
+      ],
+      "browser_client_versions": [
+        "26.623.81905",
+        "latest"
+      ],
+      "plugin_cache_roots": [
+        "chatgpt-global",
+        "openai-bundled",
+        "openai-curated",
+        "openai-curated-remote"
+      ],
+      "personal_bridge_plugin": "not_observed",
+      "node_repl_directory_entries": [
+        "active_execs"
+      ],
+      "ssh_shell_path_resolution": {
+        "codex": "not_found",
+        "node_repl": "not_found",
+        "node": "not_found"
+      },
+      "codex_cli": {
+        "remote_control_start_json": "unsupported_on_windows",
+        "remote_control_error": "codex app-server daemon lifecycle is only supported on Unix platforms",
+        "node_repl_mcp_config": "enabled_stdio",
+        "node_repl_mcp_auth": "Unsupported",
+        "node_repl_env_includes_native_pipe": true
+      }
+    }
+  },
+  "acceptance_effect": "The full current-gap UI package is ready, but the dual gate still cannot capture Desktop Chrome screenshots or route interactions from this model session. The Windows host is reachable through 10.3.6.59. Direct SSH stdio can start the Windows Codex Node REPL MCP server, Windows Codex MCP configuration shows node_repl enabled over stdio with native-pipe environment names, and a temporary local 19998 bridge can expose the proxy desktop_chrome_* wrapper tools. The r10 full-env probe confirmed that explicitly setting the observed Windows Codex native-pipe/NODE_REPL/BROWSER_USE environment in the SSH-spawned cmd context still fails before Chrome control because Windows sandbox firewall rule creation is denied. The r11 package refresh confirms the Windows localhost tunnel endpoints are reachable and the generated trusted-context payload parses, passes 21/21 self-test checks, uses 127.0.0.1:25173/25174/25175 URLs only, and covers all 30 visual plus 28 interaction captures. The r12 package adds an outer MCP tool-call template for mcp__codex_desktop_node_repl__js; it passes 9/9 checks, binds payload sha256 3f0f6d0128d0e4b8807e7addd52d9371a06f070cedceb2116f3a1148743a9e4a, and keeps only placeholder capture/smoke values. The r13 SSH privilege preflight passes 9/9: the SSH token is high-integrity, has the Administrators group enabled, net session is not access-denied, the firewall service is running, and Codex/Chrome/node_repl processes are visible in the interactive console session; PowerShell remains blocked in the SSH context. Current strict finalization remains visual 0/30 and interaction 0/28 because the trusted Desktop Chrome MCP tool is still not exposed in this session. A follow-up active_execs probe found only stale Windows Node REPL metadata from 2026-06-16 with non-running pids, so there is no reusable trusted Node REPL endpoint to claim from ordinary SSH.",
+  "next_action": "Run the bridge from the trusted Codex Desktop / VSCode session that owns the Desktop Node REPL/native-pipe/sandbox permissions, or restore the current-session Codex Desktop Chrome Bridge MCP tools (desktop_chrome_open_url, desktop_chrome_list_tabs, desktop_chrome_claim_url, or mcp__codex_desktop_node_repl__js). The r13 evidence shows SSH reachability, Windows admin/high-integrity token, firewall service, process presence, tunnel endpoints, payload, and outer MCP tool-call template are ready; the remaining missing proof is execution from the trusted Desktop Chrome MCP tool surface. Then call mcp__codex_desktop_node_repl__js with the JSON arguments from doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-tool-call-latest.json after replacing placeholders, and rerun the UI finalizer, UI preflight, and project completion audit."
+}

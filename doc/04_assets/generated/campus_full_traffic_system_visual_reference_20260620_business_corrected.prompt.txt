@@ -1,0 +1,14 @@
+Source: user-provided corrected final visual baseline screenshot.
+Date: 2026-06-20
+Status: adopted
+
+This file documents the adopted baseline image rather than a generative prompt. The image replaces the previous final visual baseline because the old business context could cause misunderstanding.
+
+Use `campus_full_traffic_system_visual_reference_20260620_business_corrected.png` as the high-fidelity UI suite reference. Generate every high-fidelity UI image as exactly `1920x1080 px`; the reference image provides business context, visual style, and information density, not the output pixel size. Preserve these business constraints when generating or implementing related screens:
+
+- Product title: 园区网络全流量采集与分析系统.
+- Current navigation: 综合态势 / 态势大屏.
+- First-level navigation: 综合态势、采集监测、威胁分析、资产图谱、检测运营、审计配置.
+- Second-level navigation under 综合态势: 仪表盘、态势大屏、专题面板.
+- Main screen should emphasize campus topology, collection/flow pipeline health, alert queue, alert timeline, associated alert cluster, traffic trends, flow topology, evidence list, risk scoring, feedback/learning, model status, and evidence validation.
+- Visual language: dark cyber operations console, dense but readable panels, cyan/green/red/yellow semantic status colors, compact tables, and continuous closed-loop evidence from collection to validation.

@@ -1,0 +1,85 @@
+flowchart LR
+    subgraph client ["Clients and Sensors"]
+        webUi["React Web UI"]
+        bigScreen["Situation Screen"]
+        probeAgent["Rust Probe Agent"]
+    end
+    subgraph gateway ["Ingress Layer"]
+        apisix["APISIX Gateway"]
+        ingestEndpoint["mTLS Ingest Endpoint"]
+    end
+    subgraph service ["Core Services and Jobs"]
+        ingestService["Ingest Gateway Service"]
+        authService["Auth Service"]
+        alertService["Alert Service"]
+        ruleManager["Rule Manager and MLOps"]
+        assetService["Asset Service"]
+        forensicsService["Forensics Service"]
+        graphService["Graph Service"]
+        sessionJob["Flink Session Job"]
+        featureJob["Flink Feature Job"]
+        ruleJob["Flink Rule Job"]
+        behaviorJob["Flink Behavior Job"]
+        alertGenJob["Flink Alert Generator"]
+        cepJob["Flink CEP Job"]
+        pcapIndexJob["Flink PCAP Index Job"]
+    end
+    subgraph datastore ["Data Stores"]
+        clickHouse["ClickHouse"]
+        postgres["PostgreSQL"]
+        openSearch["OpenSearch"]
+        nebula["NebulaGraph"]
+        redis["Redis"]
+        minio["MinIO"]
+    end
+    subgraph external ["External Validation"]
+        cnas["CNAS Third Party Test"]
+    end
+    subgraph async ["Event Streaming"]
+        kafka["Kafka Topics"]
+    end
+
+    webUi -->|"HTTPS API"| apisix
+    bigScreen -->|"HTTPS API"| apisix
+    probeAgent -->|"gRPC stream"| ingestEndpoint
+    ingestEndpoint -->|"Routes ingest"| ingestService
+    apisix -->|"Routes auth"| authService
+    apisix -->|"Routes alerts"| alertService
+    apisix -->|"Routes rules"| ruleManager
+    apisix -->|"Routes assets"| assetService
+    apisix -->|"Routes PCAP"| forensicsService
+    apisix -->|"Routes graph"| graphService
+    ingestService -.->|"Produces Flow and PCAP"| kafka
+    sessionJob -.->|"Consumes Flow"| kafka
+    sessionJob -->|"Writes sessions"| clickHouse
+    sessionJob -.->|"Produces Session"| kafka
+    featureJob -.->|"Consumes Session"| kafka
+    featureJob -->|"Writes features"| clickHouse
+    featureJob -.->|"Produces Feature"| kafka
+    ruleJob -.->|"Consumes Feature and Rules"| kafka
+    behaviorJob -.->|"Consumes Feature and Models"| kafka
+    ruleJob -->|"Writes detections"| clickHouse
+    behaviorJob -->|"Writes detections"| clickHouse
+    ruleJob -.->|"Produces Detection"| kafka
+    behaviorJob -.->|"Produces Detection"| kafka
+    alertGenJob -.->|"Consumes Detection"| kafka
+    alertGenJob -->|"Writes alerts"| clickHouse
+    alertGenJob -->|"Indexes evidence"| openSearch
+    alertGenJob -.->|"Produces Alert"| kafka
+    cepJob -.->|"Consumes Alerts"| kafka
+    cepJob -->|"Writes campaigns"| clickHouse
+    pcapIndexJob -.->|"Consumes PCAP Index"| kafka
+    pcapIndexJob -->|"Writes PCAP index"| clickHouse
+    authService -->|"Reads users"| postgres
+    authService -->|"Caches sessions"| redis
+    alertService -->|"Queries alerts"| clickHouse
+    alertService -->|"Searches evidence"| openSearch
+    alertService -.->|"Produces feedback"| kafka
+    ruleManager -->|"Stores rules and models"| postgres
+    ruleManager -->|"Stores artifacts"| minio
+    ruleManager -.->|"Publishes updates"| kafka
+    assetService -->|"Stores assets"| postgres
+    forensicsService -->|"Reads PCAP index"| clickHouse
+    forensicsService -->|"Stores PCAP cuts"| minio
+    graphService -->|"Queries graph"| nebula
+    cnas -.->|"Tests evidence package"| alertService

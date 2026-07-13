@@ -1,0 +1,111 @@
+{
+  "id": "campaign-detail-impact-department",
+  "route": "/campaigns/:campaignId",
+  "screenshot": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-department/normal-route-r177.png",
+  "url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=department&windowsCdpEvidenceTs=1783666415569#codex_smoke_token=<redacted>",
+  "final_url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=department&windowsCdpEvidenceTs=1783666415569",
+  "captured_at": "2026-07-10T06:53:41.531Z",
+  "goto_error": null,
+  "bad_responses": [],
+  "request_failures": [],
+  "console_errors": [],
+  "page_errors": [],
+  "metrics": {
+    "final_url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=department&windowsCdpEvidenceTs=1783666415569",
+    "title": "园区网络全流量采集与分析系统",
+    "viewport_width": 2133,
+    "viewport_height": 1200,
+    "device_pixel_ratio": 0.8999999632438005,
+    "scroll_width": 2133,
+    "client_width": 2133,
+    "scroll_height": 1200,
+    "client_height": 1200,
+    "horizontal_overflow": false,
+    "vertical_scroll": false,
+    "app_shell": {
+      "topbar": true,
+      "sidebar": true,
+      "bottombar": true
+    },
+    "active_impact_text": "部门7 个",
+    "h1": "战役详情",
+    "panel_body": {
+      "top": 524.1666870117188,
+      "bottom": 849.0625305175781,
+      "left": 1094.8958740234375,
+      "right": 1676.60888671875
+    },
+    "content": {
+      "x": 1102.8935546875,
+      "y": 641.13427734375,
+      "width": 565.7175903320312,
+      "height": 207.68519592285156,
+      "top": 641.13427734375,
+      "right": 1668.6111450195312,
+      "bottom": 848.8194732666016,
+      "left": 1102.8935546875,
+      "text": "7受影响部门高风险228.6%中风险342.9%低风险228.6%关键部门（Top 5）部门名称责任人风险处置进度科研处王主任高危40%信息中心sec_manager高危55%财务处李主任中危60%教务处张主任中危72%图书馆运维组中危80"
+    },
+    "table": {
+      "x": 1360.5787353515625,
+      "y": 671.1227416992188,
+      "width": 299.29400634765625,
+      "height": 151.41204833984375,
+      "top": 671.1227416992188,
+      "right": 1659.8727416992188,
+      "bottom": 822.5347900390625,
+      "left": 1360.5787353515625,
+      "text": "部门名称责任人风险处置进度科研处王主任高危40%信息中心sec_manager高危55%财务处李主任中危60%教务处张主任中危72%图书馆运维组中危80%"
+    },
+    "row_count": 5,
+    "row_rects": [
+      {
+        "top": 696.8518676757812,
+        "bottom": 721.8402938842773,
+        "left": 1361.3194580078125,
+        "right": 1659.1319580078125,
+        "text": "科研处王主任高危40%"
+      },
+      {
+        "top": 721.84033203125,
+        "bottom": 746.8287582397461,
+        "left": 1361.3194580078125,
+        "right": 1659.1319580078125,
+        "text": "信息中心sec_manager高危55%"
+      },
+      {
+        "top": 746.8287353515625,
+        "bottom": 771.8171615600586,
+        "left": 1361.3194580078125,
+        "right": 1659.1319580078125,
+        "text": "财务处李主任中危60%"
+      },
+      {
+        "top": 771.817138671875,
+        "bottom": 796.8055648803711,
+        "left": 1361.3194580078125,
+        "right": 1659.1319580078125,
+        "text": "教务处张主任中危72%"
+      },
+      {
+        "top": 796.8056030273438,
+        "bottom": 821.7940292358398,
+        "left": 1361.3194580078125,
+        "right": 1659.1319580078125,
+        "text": "图书馆运维组中危80%"
+      }
+    ],
+    "progress_values": [
+      "40%",
+      "55%",
+      "60%",
+      "72%",
+      "80%"
+    ],
+    "all_rows_within_panel_body": true,
+    "link_within_panel_body": true,
+    "body_text_sample": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-10 14:53:18 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 采集监测 威胁分析 告警中心 128 战役列表 攻击链分析 加密流量 取证分析 资产图谱 检测运营 审计配置 C codex-windows-cdp-admin 系统管理员 在线 战役详情 导出战役包 生成战役报告 写入审计 更多 报告导出 campaign-exfil-default-1782729598739-e1d2dc37 检测到数据外泄攻击链：主机 cid:1:wFz... 检测到数据外泄攻击链：主机 cid:1:wFzAUL 进行了 1 次大量数据传输，最终通过外部通道传输至 cid:Vd4LpooJh+IX5DWBudQ3E= data_exfiltration v1.0 60 数据外传 战役 ID campaign-exfil-default-1782729598739-e1d2dc37 风险评分 60/100 当前阶段 数据外传 持续时间 1小时 首次发现 2026-06-29 18:39:58 最近活动 2026-06-29 18:40:27 当前状态 观察中 负责人 sec_analyst 关联告警 2 条 影响资产 2 台 风险评分 60/100 数据外传 关联告警 2 alert-service 影响资产 2 asset graph 攻击阶段 7 ATT&CK 证据完整度 68% evidence bundle 处置进度 68% 观察中 攻击时间轴（从发现到闭环） 下钻攻击链 06-19 09:12 初始访问 邮件投递与 VP",
+    "error_alerts": []
+  },
+  "status": "pass"
+}

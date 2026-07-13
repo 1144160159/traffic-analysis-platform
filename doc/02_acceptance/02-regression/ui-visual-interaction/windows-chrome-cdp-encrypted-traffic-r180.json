@@ -1,0 +1,84 @@
+{
+  "run_id": "windows-chrome-cdp-encrypted-traffic-r180",
+  "generated_at": "2026-07-10T07:56:32.676Z",
+  "status": "business-pixel-accepted",
+  "result": "business-pixel-accepted",
+  "target_id": "encrypted-traffic",
+  "route": "/encrypted-traffic",
+  "image_tag": "traffic/web-ui:ui-encrypted-traffic-20260710-r180",
+  "browser": "Chrome/150.0.7871.49",
+  "cdp_url": "http://127.0.0.1:9224",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "source": "captured PNG pixels"
+  },
+  "summary": {
+    "runtime": "pass",
+    "normal_route_geometry": "pass",
+    "business_visual_diff": "pass",
+    "strict_visual_diff": "fail-documented",
+    "dynamic_data": "pass",
+    "auxiliary_review": "pass",
+    "main_thread_judgment": "business-pixel-accepted"
+  },
+  "dynamic_contract": {
+    "api_data_entry": "fetchPageSnapshot(route.id) -> adaptEncryptedTraffic -> visuals.encryptedTraffic",
+    "primary": "/v1/encrypted-traffic/stats",
+    "secondary": [
+      "/v1/encrypted-traffic/sessions",
+      "/v1/encrypted-traffic/ja3",
+      "/v1/encrypted-traffic/tunnels",
+      "/v1/encrypted-traffic/exfiltration"
+    ],
+    "visual_bindings": [
+      "protocolRows/protocolTrend",
+      "ja3Rows/scatterPoints",
+      "tunnelCards/tunnelRows/tunnelRuleRows",
+      "destinationRows/egressKpis",
+      "certificateRows/evidenceRows/adviceRows"
+    ],
+    "fallback_policy": "Typed fallback supplements empty or sparse API payloads while preserving real API entry points."
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/pages/encrypted-traffic/target.png",
+    "implementation": "evidence/ui-image-breakdowns/pages/encrypted-traffic/implementation-r180-final.png",
+    "diff_business": "evidence/ui-image-breakdowns/pages/encrypted-traffic/diff-business-r180-final.png",
+    "diff_strict": "evidence/ui-image-breakdowns/pages/encrypted-traffic/diff-strict-r180-final.png",
+    "metrics_business": "evidence/ui-image-breakdowns/pages/encrypted-traffic/metrics-business-r180-final.json",
+    "metrics_strict": "evidence/ui-image-breakdowns/pages/encrypted-traffic/metrics-strict-r180-final.json",
+    "capture_meta_business": "evidence/ui-image-breakdowns/pages/encrypted-traffic/capture-meta-r180-final.json",
+    "capture_meta_strict": "evidence/ui-image-breakdowns/pages/encrypted-traffic/capture-meta-strict-r180-final.json",
+    "production_route_report_business": "evidence/ui-image-breakdowns/pages/encrypted-traffic/production-route-report-r180-final.json",
+    "production_route_report_strict": "evidence/ui-image-breakdowns/pages/encrypted-traffic/production-route-report-strict-r180-final.json",
+    "normal_route_screenshot": "evidence/ui-image-breakdowns/pages/encrypted-traffic/normal-route-r180.png",
+    "normal_route_runtime": "evidence/ui-image-breakdowns/pages/encrypted-traffic/normal-route-runtime-r180.json",
+    "verification": "evidence/ui-image-breakdowns/pages/encrypted-traffic/verification.json",
+    "acceptance_dir": "doc/02_acceptance/02-regression/ui-visual-interaction/encrypted-traffic-r180"
+  },
+  "tests": {
+    "focused": {
+      "status": "pass",
+      "command": "npm --prefix web/ui test -- --run src/routes/encryptedTrafficVisuals.test.ts src/routes/noBitmapUi.test.ts src/services/pageSnapshotAdapters.test.ts -t 'encrypted traffic|no-bitmap UI implementation guard'",
+      "log": "doc/02_acceptance/02-regression/ui-visual-interaction/encrypted-traffic-r180/npm-test.log"
+    },
+    "build": {
+      "status": "pass",
+      "command": "npm --prefix web/ui run build",
+      "log": "doc/02_acceptance/02-regression/ui-visual-interaction/encrypted-traffic-r180/npm-build.log",
+      "note": "Vite large chunk warning remains non-blocking."
+    }
+  },
+  "deployment": {
+    "image": "traffic/web-ui:ui-encrypted-traffic-20260710-r180",
+    "ready_replicas": "1/1",
+    "apisix_http": 200
+  },
+  "unresolved": [
+    "Strict pixel diff is documented and non-blocking for business-pixel acceptance."
+  ],
+  "review": {
+    "auxiliary_agent": "019f4b06-5981-7542-8112-19d447ba1144",
+    "status": "pass"
+  }
+}

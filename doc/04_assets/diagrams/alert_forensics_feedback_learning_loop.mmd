@@ -1,0 +1,58 @@
+flowchart LR
+    subgraph collect ["采集与检测"]
+        flowData["流量 资产 日志 用户行为"]
+        normalize["清洗归一化与质量校验"]
+        detect["规则 模型 CEP 检测"]
+    end
+    subgraph triage ["告警研判"]
+        alertNode["告警生成与去重"]
+        enrich["资产 风险 历史 上下文富化"]
+        judge{"是否真实威胁?"}
+    end
+    subgraph evidence ["取证与追踪"]
+        pcap["PCAP 裁剪与下载"]
+        graphView["实体图谱与攻击链"]
+        report["研判结论与报告"]
+    end
+    subgraph govern ["治理与学习"]
+        actionDecision{"处置类型?"}
+        closeArchive["关闭归档"]
+        whitelist["白名单草稿审批"]
+        tune["规则复审与阈值调整"]
+        retrain["MLOps 重训评估"]
+        deploy["模型或规则灰度发布"]
+    end
+    subgraph verify ["验收与复盘"]
+        metrics["准确率 误报率 召回率 P95"]
+        audit["审计日志与版本追踪"]
+        replay["样本回放与回归测试"]
+    end
+
+    flowData -->|"采集入流"| normalize
+    normalize -->|"输出特征"| detect
+    detect -->|"命中事件"| alertNode
+    alertNode -->|"拉取上下文"| enrich
+    enrich -->|"研判"| judge
+    judge -->|"真实威胁"| pcap
+    judge -->|"需关联分析"| graphView
+    pcap -->|"证据链"| report
+    graphView -->|"攻击路径"| report
+    report -->|"确认动作"| actionDecision
+    actionDecision -->|"真实告警"| closeArchive
+    actionDecision -->|"误报"| whitelist
+    actionDecision -->|"规则问题"| tune
+    actionDecision -->|"模型问题"| retrain
+    whitelist -->|"审批生效"| deploy
+    tune -->|"版本发布"| deploy
+    retrain -->|"评估通过"| deploy
+    deploy -->|"回归验证"| replay
+    replay -->|"指标刷新"| metrics
+    closeArchive -->|"归档审计"| audit
+    deploy -->|"版本审计"| audit
+    metrics -->|"反馈门禁"| normalize
+
+    style collect fill:#E3F2FD,stroke:#2196F3
+    style triage fill:#FFF3E0,stroke:#FB8C00
+    style evidence fill:#E8F5E9,stroke:#43A047
+    style govern fill:#F3E5F5,stroke:#8E24AA
+    style verify fill:#F5F5F5,stroke:#616161

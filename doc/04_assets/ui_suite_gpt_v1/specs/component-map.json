@@ -1,0 +1,92 @@
+{
+  "appShell": {
+    "files": [
+      "web/ui/src/layouts/AppShell.tsx",
+      "web/ui/src/styles/app-shell.css",
+      "web/ui/src/styles/tokens.css"
+    ],
+    "sourceImages": [
+      "screens/pages/screen.png",
+      "screens/components/component-app-header.png",
+      "screens/components/component-primary-sidebar.png",
+      "screens/components/component-secondary-menu.png",
+      "screens/components/component-bottom-status-bar.png"
+    ],
+    "required": [
+      "topbar",
+      "sidebar",
+      "bottombar",
+      "quickEntries",
+      "userMenu"
+    ]
+  },
+  "primitives": {
+    "Button": [
+      "component-button",
+      "component-icon-button"
+    ],
+    "Tag": [
+      "component-status-chip"
+    ],
+    "Tooltip": [
+      "component-tooltip"
+    ],
+    "Tabs": [
+      "component-tabs"
+    ],
+    "Segmented": [
+      "component-segmented"
+    ],
+    "Dropdown": [
+      "component-dropdown"
+    ],
+    "Pagination": [
+      "component-pagination"
+    ],
+    "Input": [
+      "component-input",
+      "component-search"
+    ],
+    "Select": [
+      "component-select"
+    ],
+    "DatePicker": [
+      "component-date-range"
+    ],
+    "Switch": [
+      "component-switch-checkbox-radio"
+    ],
+    "Table": [
+      "component-data-table"
+    ],
+    "Form": [
+      "component-condition-builder"
+    ]
+  },
+  "composites": {
+    "MetricTile": [
+      "component-kpi-tile",
+      "web/ui/src/components/MetricTile.tsx"
+    ],
+    "WorkPanel": [
+      "component-empty-card",
+      "component-permission-card",
+      "web/ui/src/components/WorkPanel.tsx"
+    ],
+    "StatusTag": [
+      "component-status-chip",
+      "web/ui/src/components/StatusTag.tsx"
+    ],
+    "Charts": [
+      "component-line-area-chart",
+      "component-donut-chart",
+      "component-bar-ranking-chart",
+      "component-sankey-flow",
+      "component-radar-quality",
+      "component-heatmap",
+      "component-topology-graph",
+      "component-timeline-state-machine",
+      "web/ui/src/components/charts.tsx"
+    ]
+  }
+}

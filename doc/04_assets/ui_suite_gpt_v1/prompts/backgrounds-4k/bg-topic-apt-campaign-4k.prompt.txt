@@ -1,0 +1,17 @@
+Generate a 3840x2160 PNG static 4K background asset for traffic-analysis-platform.
+
+Use case: productivity-visual.
+Asset type: APT campaign topic background.
+
+Scene:
+- A dark campaign-analysis visual showing multi-stage intrusion paths, command nodes, lateral movement, persistence, beacon timing, and correlated evidence clusters.
+- Use abstract attacker infrastructure and victim campus segments without depicting real countries or organizations.
+- Include a subtle investigation ring and temporal correlation arcs.
+
+Style:
+- Enterprise threat intelligence and SOC investigation, precise dark cyber palette, cyan/blue graph lines, amber campaign hints, restrained red high-risk nodes.
+- Sophisticated and information-rich, but still panel-safe.
+
+Constraints:
+- No real flags, country names, group names, readable labels, real IPs, credentials, malware names, logos, people, browser chrome, or dashboard screenshot.
+

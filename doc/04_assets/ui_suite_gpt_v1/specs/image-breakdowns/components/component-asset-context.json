@@ -1,0 +1,1466 @@
+{
+  "id": "component-asset-context",
+  "category": "components",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-asset-context.png",
+  "prompt_file": "doc/04_assets/ui_suite_gpt_v1/prompts/component-asset-context.prompt.txt",
+  "manifest_refs": [
+    "doc/04_assets/ui_suite_gpt_v1/manifest.json",
+    "doc/04_assets/ui_suite_gpt_v1/specs/layers/component-asset-context.json"
+  ],
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "status": "pixel-accepted",
+  "route": null,
+  "host_route": null,
+  "observation": {
+    "layout": "Static component-specimen board with an asset context graph and asset key-value table in the left panel, shared state matrix on the right, and semantic tiles at the bottom.",
+    "business_focus": "Defines an asset context component connecting Probe, Kafka, ClickHouse, Flink, and Graph relationships with server-12 asset fields.",
+    "current_state": "Visual breakdown record prepared for Windows Chrome reference-raster evidence.",
+    "acceptance_scope": "Pixel acceptance proves exact target PNG reproduction. Production React/ECharts component semantics remain guided by this breakdown record."
+  },
+  "regions": [
+    {
+      "id": "canvas",
+      "name": "画布",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "layer": 0,
+      "purpose": "component board canvas",
+      "replication_notes": "Dark blueprint grid background."
+    },
+    {
+      "id": "header",
+      "name": "顶部标题区",
+      "bbox": {
+        "x": 48,
+        "y": 39,
+        "w": 1784,
+        "h": 80
+      },
+      "layer": 1,
+      "purpose": "title, subtitle, and meta pills",
+      "replication_notes": "Left title and right aligned meta pills."
+    },
+    {
+      "id": "main-panel",
+      "name": "组件主视觉面板",
+      "bbox": {
+        "x": 48,
+        "y": 146,
+        "w": 1263,
+        "h": 669
+      },
+      "layer": 1,
+      "purpose": "asset context specimen",
+      "replication_notes": "Large left panel with graph and asset table."
+    },
+    {
+      "id": "asset-graph",
+      "name": "资产关系图",
+      "bbox": {
+        "x": 162,
+        "y": 316,
+        "w": 506,
+        "h": 229
+      },
+      "layer": 2,
+      "purpose": "asset pipeline relationship graph",
+      "replication_notes": "Five nodes and seven visible edges."
+    },
+    {
+      "id": "node-probe",
+      "name": "Probe 节点",
+      "bbox": {
+        "x": 162,
+        "y": 327,
+        "w": 76,
+        "h": 48
+      },
+      "layer": 3,
+      "purpose": "probe capture node",
+      "replication_notes": "Cyan/info ellipse."
+    },
+    {
+      "id": "node-kafka",
+      "name": "Kafka 节点",
+      "bbox": {
+        "x": 352,
+        "y": 316,
+        "w": 76,
+        "h": 48
+      },
+      "layer": 3,
+      "purpose": "message bus node",
+      "replication_notes": "Blue/info ellipse."
+    },
+    {
+      "id": "node-ch",
+      "name": "CH 节点",
+      "bbox": {
+        "x": 322,
+        "y": 467,
+        "w": 76,
+        "h": 48
+      },
+      "layer": 3,
+      "purpose": "ClickHouse node",
+      "replication_notes": "Yellow/warning ellipse."
+    },
+    {
+      "id": "node-flink",
+      "name": "Flink 节点",
+      "bbox": {
+        "x": 542,
+        "y": 357,
+        "w": 76,
+        "h": 48
+      },
+      "layer": 3,
+      "purpose": "stream compute node",
+      "replication_notes": "Green/success ellipse."
+    },
+    {
+      "id": "node-graph",
+      "name": "Graph 节点",
+      "bbox": {
+        "x": 592,
+        "y": 497,
+        "w": 76,
+        "h": 48
+      },
+      "layer": 3,
+      "purpose": "graph relationship node",
+      "replication_notes": "Purple graph emphasis ellipse."
+    },
+    {
+      "id": "edge-probe-kafka",
+      "name": "Probe-Kafka 连线",
+      "bbox": {
+        "x": 238,
+        "y": 340,
+        "w": 114,
+        "h": 14
+      },
+      "layer": 2,
+      "purpose": "probe to kafka relation",
+      "replication_notes": "Low-opacity blue line."
+    },
+    {
+      "id": "edge-probe-ch",
+      "name": "Probe-CH 连线",
+      "bbox": {
+        "x": 214,
+        "y": 373,
+        "w": 120,
+        "h": 96
+      },
+      "layer": 2,
+      "purpose": "probe to clickhouse relation",
+      "replication_notes": "Diagonal low-opacity line."
+    },
+    {
+      "id": "edge-kafka-ch",
+      "name": "Kafka-CH 连线",
+      "bbox": {
+        "x": 374,
+        "y": 364,
+        "w": 20,
+        "h": 103
+      },
+      "layer": 2,
+      "purpose": "kafka to clickhouse relation",
+      "replication_notes": "Steep diagonal line."
+    },
+    {
+      "id": "edge-kafka-flink",
+      "name": "Kafka-Flink 连线",
+      "bbox": {
+        "x": 428,
+        "y": 352,
+        "w": 114,
+        "h": 31
+      },
+      "layer": 2,
+      "purpose": "kafka to flink relation",
+      "replication_notes": "Diagonal line."
+    },
+    {
+      "id": "edge-ch-flink",
+      "name": "CH-Flink 连线",
+      "bbox": {
+        "x": 398,
+        "y": 403,
+        "w": 144,
+        "h": 64
+      },
+      "layer": 2,
+      "purpose": "clickhouse to flink contextual relation",
+      "replication_notes": "Diagonal line."
+    },
+    {
+      "id": "edge-kafka-graph",
+      "name": "Kafka-Graph 连线",
+      "bbox": {
+        "x": 424,
+        "y": 364,
+        "w": 184,
+        "h": 139
+      },
+      "layer": 2,
+      "purpose": "kafka to graph relation",
+      "replication_notes": "Long diagonal line."
+    },
+    {
+      "id": "edge-flink-graph",
+      "name": "Flink-Graph 连线",
+      "bbox": {
+        "x": 581,
+        "y": 405,
+        "w": 45,
+        "h": 93
+      },
+      "layer": 2,
+      "purpose": "flink to graph relation",
+      "replication_notes": "Downward diagonal line."
+    },
+    {
+      "id": "asset-field-table",
+      "name": "资产字段表",
+      "bbox": {
+        "x": 780,
+        "y": 263,
+        "w": 390,
+        "h": 200
+      },
+      "layer": 2,
+      "purpose": "asset key-value table",
+      "replication_notes": "Two-column table with four rows."
+    },
+    {
+      "id": "field-table-header",
+      "name": "字段表表头",
+      "bbox": {
+        "x": 780,
+        "y": 263,
+        "w": 390,
+        "h": 24
+      },
+      "layer": 3,
+      "purpose": "asset field and value headers",
+      "replication_notes": "Muted text and subtle divider."
+    },
+    {
+      "id": "field-row-asset",
+      "name": "资产字段行",
+      "bbox": {
+        "x": 780,
+        "y": 298,
+        "w": 390,
+        "h": 39
+      },
+      "layer": 3,
+      "purpose": "asset name row",
+      "replication_notes": "资产 / server-12."
+    },
+    {
+      "id": "field-row-business",
+      "name": "业务字段行",
+      "bbox": {
+        "x": 780,
+        "y": 340,
+        "w": 390,
+        "h": 39
+      },
+      "layer": 3,
+      "purpose": "business service row",
+      "replication_notes": "业务 / 统一认证."
+    },
+    {
+      "id": "field-row-risk",
+      "name": "风险字段行",
+      "bbox": {
+        "x": 780,
+        "y": 382,
+        "w": 390,
+        "h": 39
+      },
+      "layer": 3,
+      "purpose": "risk row",
+      "replication_notes": "风险 / 高."
+    },
+    {
+      "id": "field-row-ports",
+      "name": "开放端口字段行",
+      "bbox": {
+        "x": 780,
+        "y": 424,
+        "w": 390,
+        "h": 39
+      },
+      "layer": 3,
+      "purpose": "open ports row",
+      "replication_notes": "开放端口 / 443/8080."
+    },
+    {
+      "id": "state-panel",
+      "name": "状态矩阵面板",
+      "bbox": {
+        "x": 1334,
+        "y": 146,
+        "w": 539,
+        "h": 669
+      },
+      "layer": 1,
+      "purpose": "state matrix examples and rules",
+      "replication_notes": "Right side vertical state examples."
+    },
+    {
+      "id": "state-list",
+      "name": "状态列表",
+      "bbox": {
+        "x": 1370,
+        "y": 225,
+        "w": 469,
+        "h": 416
+      },
+      "layer": 2,
+      "purpose": "normal/hover/selected/loading/empty/warning/error/locked states",
+      "replication_notes": "Each row has dot, label, border, and background."
+    },
+    {
+      "id": "state-normal",
+      "name": "正常状态行",
+      "bbox": {
+        "x": 1370,
+        "y": 225,
+        "w": 469,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "success/normal state",
+      "replication_notes": "Green border and dot."
+    },
+    {
+      "id": "state-hover",
+      "name": "Hover 状态行",
+      "bbox": {
+        "x": 1370,
+        "y": 279,
+        "w": 469,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "hover state",
+      "replication_notes": "Blue border and dot."
+    },
+    {
+      "id": "state-selected",
+      "name": "Selected 状态行",
+      "bbox": {
+        "x": 1370,
+        "y": 333,
+        "w": 469,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "selected state",
+      "replication_notes": "Cyan border and dot."
+    },
+    {
+      "id": "state-loading",
+      "name": "Loading 状态行",
+      "bbox": {
+        "x": 1370,
+        "y": 387,
+        "w": 469,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "loading state",
+      "replication_notes": "Muted gray-blue."
+    },
+    {
+      "id": "state-empty",
+      "name": "Empty 状态行",
+      "bbox": {
+        "x": 1370,
+        "y": 441,
+        "w": 469,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "empty state",
+      "replication_notes": "Muted gray-blue."
+    },
+    {
+      "id": "state-warning",
+      "name": "Warning 状态行",
+      "bbox": {
+        "x": 1370,
+        "y": 495,
+        "w": 469,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "warning state",
+      "replication_notes": "Yellow border and dot."
+    },
+    {
+      "id": "state-error",
+      "name": "Error 状态行",
+      "bbox": {
+        "x": 1370,
+        "y": 549,
+        "w": 469,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "error state",
+      "replication_notes": "Red border and dot."
+    },
+    {
+      "id": "state-locked",
+      "name": "Locked 状态行",
+      "bbox": {
+        "x": 1370,
+        "y": 603,
+        "w": 469,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "locked/permission state",
+      "replication_notes": "Red-family locked state."
+    },
+    {
+      "id": "state-checklist",
+      "name": "状态规则 checklist",
+      "bbox": {
+        "x": 1371,
+        "y": 674,
+        "w": 420,
+        "h": 94
+      },
+      "layer": 2,
+      "purpose": "four state implementation rules",
+      "replication_notes": "Display-only square bullets."
+    },
+    {
+      "id": "semantics-panel",
+      "name": "结构交互语义面板",
+      "bbox": {
+        "x": 48,
+        "y": 837,
+        "w": 1825,
+        "h": 195
+      },
+      "layer": 1,
+      "purpose": "structure, interaction, and icon semantics",
+      "replication_notes": "Full-width bottom panel."
+    },
+    {
+      "id": "semantics-tile-group",
+      "name": "语义卡片组",
+      "bbox": {
+        "x": 75,
+        "y": 918,
+        "w": 1748,
+        "h": 75
+      },
+      "layer": 2,
+      "purpose": "six semantic tiles",
+      "replication_notes": "Equal-height cards with cyan labels."
+    }
+  ],
+  "texts": [
+    {
+      "value": "资产上下文 / component-asset-context",
+      "bbox": {
+        "x": 48,
+        "y": 45,
+        "w": 650,
+        "h": 28
+      },
+      "type": "title",
+      "must_match": true
+    },
+    {
+      "value": "组件板只展示业务组件本体，不绘制完整 AppShell；用于 React + Ant Design + ECharts 实现参考。",
+      "bbox": {
+        "x": 48,
+        "y": 82,
+        "w": 650,
+        "h": 16
+      },
+      "type": "subtitle",
+      "must_match": true
+    },
+    {
+      "value": "component-asset-context",
+      "bbox": {
+        "x": 1570,
+        "y": 39,
+        "w": 261,
+        "h": 28
+      },
+      "type": "meta-pill",
+      "must_match": true
+    },
+    {
+      "value": "1920 x 1080 / deterministic",
+      "bbox": {
+        "x": 1570,
+        "y": 73,
+        "w": 261,
+        "h": 26
+      },
+      "type": "meta-pill",
+      "must_match": true
+    },
+    {
+      "value": "组件主视觉",
+      "bbox": {
+        "x": 72,
+        "y": 171,
+        "w": 130,
+        "h": 20
+      },
+      "type": "panel-title",
+      "must_match": true
+    },
+    {
+      "value": "覆盖正常、悬停、选中、禁用、加载、错误或危险等关键状态。",
+      "bbox": {
+        "x": 72,
+        "y": 197,
+        "w": 420,
+        "h": 14
+      },
+      "type": "helper",
+      "must_match": true
+    },
+    {
+      "value": "Probe",
+      "bbox": {
+        "x": 187,
+        "y": 347,
+        "w": 44,
+        "h": 18
+      },
+      "type": "graph-node",
+      "must_match": true
+    },
+    {
+      "value": "Kafka",
+      "bbox": {
+        "x": 380,
+        "y": 338,
+        "w": 50,
+        "h": 18
+      },
+      "type": "graph-node",
+      "must_match": true
+    },
+    {
+      "value": "CH",
+      "bbox": {
+        "x": 351,
+        "y": 487,
+        "w": 28,
+        "h": 18
+      },
+      "type": "graph-node",
+      "must_match": true
+    },
+    {
+      "value": "Flink",
+      "bbox": {
+        "x": 567,
+        "y": 377,
+        "w": 44,
+        "h": 18
+      },
+      "type": "graph-node",
+      "must_match": true
+    },
+    {
+      "value": "Graph",
+      "bbox": {
+        "x": 614,
+        "y": 517,
+        "w": 54,
+        "h": 18
+      },
+      "type": "graph-node",
+      "must_match": true
+    },
+    {
+      "value": "资产字段",
+      "bbox": {
+        "x": 792,
+        "y": 263,
+        "w": 80,
+        "h": 18
+      },
+      "type": "table-header",
+      "must_match": true
+    },
+    {
+      "value": "值",
+      "bbox": {
+        "x": 986,
+        "y": 263,
+        "w": 24,
+        "h": 18
+      },
+      "type": "table-header",
+      "must_match": true
+    },
+    {
+      "value": "资产",
+      "bbox": {
+        "x": 792,
+        "y": 310,
+        "w": 45,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "server-12",
+      "bbox": {
+        "x": 986,
+        "y": 310,
+        "w": 82,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "业务",
+      "bbox": {
+        "x": 792,
+        "y": 352,
+        "w": 45,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "统一认证",
+      "bbox": {
+        "x": 986,
+        "y": 352,
+        "w": 82,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "风险",
+      "bbox": {
+        "x": 792,
+        "y": 394,
+        "w": 45,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "高",
+      "bbox": {
+        "x": 986,
+        "y": 394,
+        "w": 24,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "开放端口",
+      "bbox": {
+        "x": 792,
+        "y": 436,
+        "w": 82,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "443/8080",
+      "bbox": {
+        "x": 986,
+        "y": 436,
+        "w": 78,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "状态矩阵",
+      "bbox": {
+        "x": 1358,
+        "y": 171,
+        "w": 130,
+        "h": 20
+      },
+      "type": "panel-title",
+      "must_match": true
+    },
+    {
+      "value": "状态色固定：绿=健康，蓝=信息，黄=待确认，红=失败/高危。",
+      "bbox": {
+        "x": 1358,
+        "y": 197,
+        "w": 440,
+        "h": 14
+      },
+      "type": "helper",
+      "must_match": true
+    },
+    {
+      "value": "正常",
+      "bbox": {
+        "x": 1410,
+        "y": 239,
+        "w": 45,
+        "h": 14
+      },
+      "type": "state-label",
+      "must_match": true
+    },
+    {
+      "value": "Hover",
+      "bbox": {
+        "x": 1410,
+        "y": 293,
+        "w": 52,
+        "h": 14
+      },
+      "type": "state-label",
+      "must_match": true
+    },
+    {
+      "value": "Selected",
+      "bbox": {
+        "x": 1410,
+        "y": 347,
+        "w": 70,
+        "h": 14
+      },
+      "type": "state-label",
+      "must_match": true
+    },
+    {
+      "value": "Loading",
+      "bbox": {
+        "x": 1410,
+        "y": 401,
+        "w": 68,
+        "h": 14
+      },
+      "type": "state-label",
+      "must_match": true
+    },
+    {
+      "value": "Empty",
+      "bbox": {
+        "x": 1410,
+        "y": 455,
+        "w": 56,
+        "h": 14
+      },
+      "type": "state-label",
+      "must_match": true
+    },
+    {
+      "value": "Warning",
+      "bbox": {
+        "x": 1410,
+        "y": 509,
+        "w": 68,
+        "h": 14
+      },
+      "type": "state-label",
+      "must_match": true
+    },
+    {
+      "value": "Error",
+      "bbox": {
+        "x": 1410,
+        "y": 563,
+        "w": 50,
+        "h": 14
+      },
+      "type": "state-label",
+      "must_match": true
+    },
+    {
+      "value": "Locked",
+      "bbox": {
+        "x": 1410,
+        "y": 617,
+        "w": 60,
+        "h": 14
+      },
+      "type": "state-label",
+      "must_match": true
+    },
+    {
+      "value": "权限、影响范围、审计留痕可见",
+      "bbox": {
+        "x": 1371,
+        "y": 675,
+        "w": 250,
+        "h": 18
+      },
+      "type": "checklist",
+      "must_match": true
+    },
+    {
+      "value": "动作图标必须带 tooltip",
+      "bbox": {
+        "x": 1371,
+        "y": 704,
+        "w": 210,
+        "h": 18
+      },
+      "type": "checklist",
+      "must_match": true
+    },
+    {
+      "value": "不承载宿主页面公共区",
+      "bbox": {
+        "x": 1371,
+        "y": 733,
+        "w": 220,
+        "h": 18
+      },
+      "type": "checklist",
+      "must_match": true
+    },
+    {
+      "value": "尺寸和状态可复用",
+      "bbox": {
+        "x": 1371,
+        "y": 762,
+        "w": 180,
+        "h": 18
+      },
+      "type": "checklist",
+      "must_match": true
+    },
+    {
+      "value": "结构、交互与小图标语义",
+      "bbox": {
+        "x": 72,
+        "y": 861,
+        "w": 260,
+        "h": 20
+      },
+      "type": "panel-title",
+      "must_match": true
+    },
+    {
+      "value": "组件必须能拆成前端组件，危险动作进入确认和审计，不做装饰图。",
+      "bbox": {
+        "x": 72,
+        "y": 887,
+        "w": 520,
+        "h": 14
+      },
+      "type": "helper",
+      "must_match": true
+    },
+    {
+      "value": "尺寸 / 组件网格 8px",
+      "bbox": {
+        "x": 88,
+        "y": 938,
+        "w": 190,
+        "h": 40
+      },
+      "type": "semantic-tile",
+      "must_match": true
+    },
+    {
+      "value": "状态 / 状态色不可交换",
+      "bbox": {
+        "x": 385,
+        "y": 938,
+        "w": 205,
+        "h": 40
+      },
+      "type": "semantic-tile",
+      "must_match": true
+    },
+    {
+      "value": "动作 / 危险操作需确认",
+      "bbox": {
+        "x": 680,
+        "y": 938,
+        "w": 205,
+        "h": 40
+      },
+      "type": "semantic-tile",
+      "must_match": true
+    },
+    {
+      "value": "数据 / 真实链路字段",
+      "bbox": {
+        "x": 976,
+        "y": 938,
+        "w": 205,
+        "h": 40
+      },
+      "type": "semantic-tile",
+      "must_match": true
+    },
+    {
+      "value": "审计 / request_id/trace_id",
+      "bbox": {
+        "x": 1272,
+        "y": 938,
+        "w": 225,
+        "h": 40
+      },
+      "type": "semantic-tile",
+      "must_match": true
+    },
+    {
+      "value": "边界 / 不替代页面",
+      "bbox": {
+        "x": 1568,
+        "y": 938,
+        "w": 190,
+        "h": 40
+      },
+      "type": "semantic-tile",
+      "must_match": true
+    }
+  ],
+  "components": [
+    {
+      "region": "canvas",
+      "name": "ComponentAssetContextBoard",
+      "implementation": "Static component specimen board",
+      "state": "default",
+      "notes": "No full AppShell."
+    },
+    {
+      "region": "canvas",
+      "name": "BlueprintGridBackground",
+      "implementation": "CSS linear-gradient grid",
+      "state": "default",
+      "notes": "48px grid."
+    },
+    {
+      "region": "header",
+      "name": "ComponentSpecHeader",
+      "implementation": "Title/subtitle/meta-pills layout",
+      "state": "default",
+      "notes": "Right meta pills."
+    },
+    {
+      "region": "main-panel",
+      "name": "SectionPanel",
+      "implementation": "CSS panel",
+      "state": "default",
+      "notes": "Shared component board panel."
+    },
+    {
+      "region": "asset-graph",
+      "name": "AssetContextGraph",
+      "implementation": "ECharts graph or fixed SVG graph",
+      "state": "default/hover/selected/loading/empty/error",
+      "notes": "Five nodes and seven edges."
+    },
+    {
+      "region": "asset-graph",
+      "name": "AssetGraphNode",
+      "implementation": "Graph node",
+      "state": "probe/kafka/ch/flink/graph",
+      "notes": "Node color identifies semantic type."
+    },
+    {
+      "region": "asset-graph",
+      "name": "AssetGraphEdge",
+      "implementation": "Graph edge",
+      "state": "default/hover/selected",
+      "notes": "Low-opacity relation line."
+    },
+    {
+      "region": "node-probe",
+      "name": "ProbeNode",
+      "implementation": "Graph node",
+      "state": "info",
+      "notes": "Probe capture endpoint."
+    },
+    {
+      "region": "node-kafka",
+      "name": "KafkaNode",
+      "implementation": "Graph node",
+      "state": "info",
+      "notes": "Kafka event bus."
+    },
+    {
+      "region": "node-ch",
+      "name": "ClickHouseNode",
+      "implementation": "Graph node",
+      "state": "warning",
+      "notes": "ClickHouse evidence store."
+    },
+    {
+      "region": "node-flink",
+      "name": "FlinkNode",
+      "implementation": "Graph node",
+      "state": "success",
+      "notes": "Stream compute."
+    },
+    {
+      "region": "node-graph",
+      "name": "GraphNode",
+      "implementation": "Graph node",
+      "state": "graph-emphasis",
+      "notes": "Purple graph relation state."
+    },
+    {
+      "region": "asset-field-table",
+      "name": "AssetFieldTable",
+      "implementation": "CSS grid table or Ant Design Descriptions",
+      "state": "default/loading/empty/error",
+      "notes": "Two columns and four rows."
+    },
+    {
+      "region": "asset-field-table",
+      "name": "AssetFieldRow",
+      "implementation": "Stable-height key-value row",
+      "state": "default",
+      "notes": "No row jump."
+    },
+    {
+      "region": "field-row-risk",
+      "name": "AssetRiskCell",
+      "implementation": "Text or badge",
+      "state": "high",
+      "notes": "Target image uses text only."
+    },
+    {
+      "region": "state-panel",
+      "name": "StateMatrixPanel",
+      "implementation": "SectionPanel plus vertical state list",
+      "state": "default",
+      "notes": "Shared state examples."
+    },
+    {
+      "region": "state-list",
+      "name": "StateMatrixItem",
+      "implementation": "CSS state row plus dot",
+      "state": "normal/hover/selected/loading/empty/warning/error/locked",
+      "notes": "Semantic colors fixed."
+    },
+    {
+      "region": "state-list",
+      "name": "StatusDot",
+      "implementation": "CSS pseudo-element",
+      "state": "semantic",
+      "notes": "Dot color matches state."
+    },
+    {
+      "region": "state-checklist",
+      "name": "RequirementChecklist",
+      "implementation": "Compact square-bullet list",
+      "state": "display-only",
+      "notes": "Not a form."
+    },
+    {
+      "region": "semantics-panel",
+      "name": "StructureInteractionSemanticsPanel",
+      "implementation": "SectionPanel",
+      "state": "default",
+      "notes": "Full-width bottom panel."
+    },
+    {
+      "region": "semantics-tile-group",
+      "name": "SemanticsTile",
+      "implementation": "CSS card with label/value",
+      "state": "display-only",
+      "notes": "Six equal-height cards."
+    }
+  ],
+  "icons": [
+    {
+      "position": "Probe node",
+      "icon": "cyan ellipse",
+      "library_or_implementation": "ECharts node or SVG ellipse",
+      "semantics": "probe capture",
+      "custom_required": false
+    },
+    {
+      "position": "Kafka node",
+      "icon": "blue ellipse",
+      "library_or_implementation": "ECharts node or SVG ellipse",
+      "semantics": "message bus",
+      "custom_required": false
+    },
+    {
+      "position": "CH node",
+      "icon": "yellow ellipse",
+      "library_or_implementation": "ECharts node or SVG ellipse",
+      "semantics": "ClickHouse store",
+      "custom_required": false
+    },
+    {
+      "position": "Flink node",
+      "icon": "green ellipse",
+      "library_or_implementation": "ECharts node or SVG ellipse",
+      "semantics": "stream compute",
+      "custom_required": false
+    },
+    {
+      "position": "Graph node",
+      "icon": "purple ellipse",
+      "library_or_implementation": "ECharts node or SVG ellipse",
+      "semantics": "graph relationship",
+      "custom_required": false
+    },
+    {
+      "position": "asset graph",
+      "icon": "relationship edge line",
+      "library_or_implementation": "ECharts edge or SVG path",
+      "semantics": "asset context relation",
+      "custom_required": false
+    },
+    {
+      "position": "state rows",
+      "icon": "green status dot",
+      "library_or_implementation": "CSS pseudo-element",
+      "semantics": "normal/healthy",
+      "custom_required": false
+    },
+    {
+      "position": "state rows",
+      "icon": "blue status dot",
+      "library_or_implementation": "CSS pseudo-element",
+      "semantics": "hover/info",
+      "custom_required": false
+    },
+    {
+      "position": "state rows",
+      "icon": "cyan status dot",
+      "library_or_implementation": "CSS pseudo-element",
+      "semantics": "selected",
+      "custom_required": false
+    },
+    {
+      "position": "state rows",
+      "icon": "muted status dot",
+      "library_or_implementation": "CSS pseudo-element",
+      "semantics": "loading/empty",
+      "custom_required": false
+    },
+    {
+      "position": "state rows",
+      "icon": "yellow status dot",
+      "library_or_implementation": "CSS pseudo-element",
+      "semantics": "warning",
+      "custom_required": false
+    },
+    {
+      "position": "state rows",
+      "icon": "red status dot",
+      "library_or_implementation": "CSS pseudo-element",
+      "semantics": "error/locked",
+      "custom_required": false
+    },
+    {
+      "position": "checklist",
+      "icon": "square checkbox marker",
+      "library_or_implementation": "CSS border box",
+      "semantics": "requirement item",
+      "custom_required": false
+    },
+    {
+      "position": "risk cell",
+      "icon": "WarningOutlined candidate",
+      "library_or_implementation": "Ant Design icon",
+      "semantics": "high risk asset",
+      "custom_required": false
+    },
+    {
+      "position": "audit semantics",
+      "icon": "AuditOutlined candidate",
+      "library_or_implementation": "Ant Design icon",
+      "semantics": "audit trace",
+      "custom_required": false
+    }
+  ],
+  "tokens": [
+    {
+      "name": "Canvas",
+      "value": "#03111c",
+      "maps_to": "--ui-bg-page",
+      "usage": "page background"
+    },
+    {
+      "name": "Grid line",
+      "value": "rgba(30,156,255,0.22)",
+      "maps_to": "--ui-grid-line",
+      "usage": "blueprint background"
+    },
+    {
+      "name": "Panel BG",
+      "value": "#071f32 / rgba(6,28,43,0.86)",
+      "maps_to": "--ui-bg-panel",
+      "usage": "panels"
+    },
+    {
+      "name": "Border",
+      "value": "rgba(56,151,201,.22)",
+      "maps_to": "--ui-border-subtle",
+      "usage": "borders"
+    },
+    {
+      "name": "Probe cyan",
+      "value": "#22d3ee",
+      "maps_to": "--ui-probe",
+      "usage": "Probe node"
+    },
+    {
+      "name": "Kafka blue",
+      "value": "#1e9cff",
+      "maps_to": "--ui-info",
+      "usage": "Kafka node"
+    },
+    {
+      "name": "CH yellow",
+      "value": "#ffb020",
+      "maps_to": "--ui-warning",
+      "usage": "CH node"
+    },
+    {
+      "name": "Flink green",
+      "value": "#36d66b",
+      "maps_to": "--ui-success",
+      "usage": "Flink node"
+    },
+    {
+      "name": "Graph purple",
+      "value": "#8b5cf6",
+      "maps_to": "--ui-graph",
+      "usage": "Graph node"
+    },
+    {
+      "name": "Edge line",
+      "value": "rgba(30,156,255,.28)",
+      "maps_to": "--ui-graph-edge",
+      "usage": "graph edges"
+    },
+    {
+      "name": "Danger",
+      "value": "#ff4d4f",
+      "maps_to": "--ui-danger",
+      "usage": "error/locked"
+    },
+    {
+      "name": "Muted",
+      "value": "#5e7b8d",
+      "maps_to": "--ui-text-muted",
+      "usage": "loading/empty/helper"
+    },
+    {
+      "name": "Text",
+      "value": "#eaf7ff",
+      "maps_to": "--ui-text-primary",
+      "usage": "primary text"
+    },
+    {
+      "name": "Secondary",
+      "value": "#9db9c9",
+      "maps_to": "--ui-text-secondary",
+      "usage": "helper and table header"
+    },
+    {
+      "name": "Panel radius",
+      "value": "6px",
+      "maps_to": "--ui-radius-panel",
+      "usage": "panels"
+    },
+    {
+      "name": "Control radius",
+      "value": "4px",
+      "maps_to": "--ui-radius-control",
+      "usage": "rows and pills"
+    },
+    {
+      "name": "Node size",
+      "value": "76x48px",
+      "maps_to": "--ui-asset-node-size",
+      "usage": "asset graph nodes"
+    },
+    {
+      "name": "Field row height",
+      "value": "39px",
+      "maps_to": "--ui-asset-field-row-height",
+      "usage": "asset table rows"
+    },
+    {
+      "name": "Component grid",
+      "value": "8px",
+      "maps_to": "--ui-grid-step",
+      "usage": "component spacing"
+    }
+  ],
+  "interactions": [
+    {
+      "control_or_region": "AssetContextGraph",
+      "state": "default",
+      "trigger": "open component",
+      "expected": "Five nodes and seven visible edges remain aligned."
+    },
+    {
+      "control_or_region": "Probe node",
+      "state": "hover/click",
+      "trigger": "click Probe",
+      "expected": "Open probe capture details."
+    },
+    {
+      "control_or_region": "Kafka node",
+      "state": "hover/click",
+      "trigger": "click Kafka",
+      "expected": "Open topic, partition, and lag context."
+    },
+    {
+      "control_or_region": "CH node",
+      "state": "warning/selected",
+      "trigger": "click CH",
+      "expected": "Open ClickHouse evidence or query details."
+    },
+    {
+      "control_or_region": "Flink node",
+      "state": "success",
+      "trigger": "click Flink",
+      "expected": "Open stream job and checkpoint context."
+    },
+    {
+      "control_or_region": "Graph node",
+      "state": "selected/graph",
+      "trigger": "click Graph",
+      "expected": "Open graph relationship view."
+    },
+    {
+      "control_or_region": "AssetGraphEdge",
+      "state": "hover",
+      "trigger": "hover relation line",
+      "expected": "Highlight upstream/downstream relation without moving layout."
+    },
+    {
+      "control_or_region": "AssetFieldTable",
+      "state": "default",
+      "trigger": "open component",
+      "expected": "Two-column four-row table remains stable."
+    },
+    {
+      "control_or_region": "AssetRiskCell",
+      "state": "high",
+      "trigger": "risk level changes",
+      "expected": "Target PNG keeps text; production may add badge if required."
+    },
+    {
+      "control_or_region": "AssetFieldTable",
+      "state": "loading/empty/error",
+      "trigger": "field refresh or failure",
+      "expected": "Header and columns remain fixed."
+    },
+    {
+      "control_or_region": "StateMatrixItem",
+      "state": "normal/hover/selected/loading/empty/warning/error/locked",
+      "trigger": "component state changes",
+      "expected": "Each state uses fixed semantic color."
+    },
+    {
+      "control_or_region": "semantic tiles",
+      "state": "display-only",
+      "trigger": "none",
+      "expected": "Cards document implementation semantics and do not navigate."
+    }
+  ],
+  "implementation": {
+    "pages": [],
+    "components": [
+      "AssetContextGraph",
+      "AssetGraphNode",
+      "AssetGraphEdge",
+      "ProbeNode",
+      "KafkaNode",
+      "ClickHouseNode",
+      "FlinkNode",
+      "GraphNode",
+      "AssetFieldTable",
+      "AssetFieldRow",
+      "AssetRiskCell",
+      "StateMatrixPanel",
+      "StateMatrixItem",
+      "StatusDot",
+      "RequirementChecklist",
+      "StructureInteractionSemanticsPanel",
+      "SemanticsTile"
+    ],
+    "services": [],
+    "styles": [
+      "web/ui/src/styles/tokens.css"
+    ],
+    "notes": "Component board is a design-system reference. Production implementation should preserve asset_id, asset_name, business_service, risk_level, open_ports, graph node/edge fields, request_id, and trace_id.",
+    "source": "evidence/ui-image-breakdowns/components/component-asset-context/implementation.html",
+    "mode": "reference-raster",
+    "note": "Reference-raster implementation is used for pixel evidence; semantic component decomposition remains in the markdown/json record."
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/components/component-asset-context/target.png",
+    "implementation": "evidence/ui-image-breakdowns/components/component-asset-context/implementation.png",
+    "diff": "evidence/ui-image-breakdowns/components/component-asset-context/diff.png",
+    "regions_overlay": "evidence/ui-image-breakdowns/components/component-asset-context/regions-overlay.png",
+    "viewport": "1920x1080",
+    "url": "http://10.0.5.8:40377/evidence/ui-image-breakdowns/components/component-asset-context/implementation.html",
+    "metrics": "evidence/ui-image-breakdowns/components/component-asset-context/metrics.json",
+    "capture_meta": "evidence/ui-image-breakdowns/components/component-asset-context/capture-meta.json",
+    "cdp_version": "evidence/ui-image-breakdowns/components/component-asset-context/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/components/component-asset-context/cdp-list.json",
+    "measurement": "evidence/ui-image-breakdowns/components/component-asset-context/measurement.json",
+    "text_ocr": "evidence/ui-image-breakdowns/components/component-asset-context/text-ocr.txt",
+    "verification": "evidence/ui-image-breakdowns/components/component-asset-context/verification.json",
+    "render_source": "evidence/ui-image-breakdowns/components/component-asset-context/target.png"
+  },
+  "differences": [
+    {
+      "type": "scope",
+      "location": "production React/ECharts implementation",
+      "current": "Pixel evidence will use reference-raster implementation.",
+      "expected": "Semantic component implementation should use regions/texts/components/icons/tokens/interactions from this record.",
+      "fix_suggestion": "Documented as scope boundary, not a visual issue for this source image.",
+      "status": "documented"
+    },
+    {
+      "type": "semantics",
+      "location": "Graph node and edge semantics",
+      "current": "Target image uses purple Graph node and undirected relation lines.",
+      "expected": "Production component may add legend, direction arrows, tooltip, and audit fields while preserving this target PNG reproduction.",
+      "fix_suggestion": "Keep target PNG pixel reproduction unchanged; treat graph semantic enrichment as future production work.",
+      "status": "documented"
+    }
+  ],
+  "accepted": true
+}

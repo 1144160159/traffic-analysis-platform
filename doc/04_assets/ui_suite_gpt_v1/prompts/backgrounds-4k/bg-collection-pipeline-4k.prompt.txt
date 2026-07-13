@@ -1,0 +1,21 @@
+Generate a 3840x2160 PNG static 4K background asset for traffic-analysis-platform.
+
+Use case:
+- Technical background for the full collection and analytics pipeline.
+- It should visually support pages about probes, ingest, streaming jobs, storage, APIs, and web analysis.
+
+Scene:
+- A dark abstract data pipeline from left to right.
+- Start with distributed probe nodes and mirrored traffic capture, then show packet streams moving through message queues, stream processing, feature extraction, multi-store persistence, API service layers, and web analysis surfaces.
+- Represent Kafka, Flink, ClickHouse, PostgreSQL, OpenSearch, graph storage, object storage, and API gateway concepts visually, but do not write their names.
+- Include packet ribbons, schema tiles, stream windows, shard blocks, graph fragments, and evidence objects as abstract motifs.
+
+Visual style:
+- Precise technical infrastructure visualization.
+- Deep black/navy base, cyan/blue stream lines, green normal-flow accents, amber congestion/risk hints.
+- High detail in the pipeline, with quiet negative space around the top and right side for UI overlays.
+
+Constraints:
+- No readable labels, no product names as text, no code snippets, no credentials, no real IP addresses, no logos, no people, no browser frame, no full UI screenshot.
+- Keep the image suitable as a static background, not a diagram requiring exact interpretation.
+

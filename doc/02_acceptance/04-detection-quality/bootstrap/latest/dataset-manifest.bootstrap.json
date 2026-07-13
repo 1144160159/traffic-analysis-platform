@@ -1,0 +1,54 @@
+{
+  "package_id": "topic1_blind_bootstrap",
+  "version": 1,
+  "status": "bootstrap_review_required",
+  "run_id": "20260630-detection-quality-bootstrap-r1",
+  "tenant_scope": "default",
+  "generated_at": "2026-06-30T11:32:34.535287+00:00",
+  "review_required": true,
+  "formal_gate_note": "Rename/freeze this package only after third-party label review, threshold lock, prediction run, and attestation.",
+  "sample_contract": {
+    "primary_key": "sample_id",
+    "sample_index": "sample-index.bootstrap.csv",
+    "label_template": "labels/labels.review-template.csv",
+    "prediction_template": "predictions/predictions.review-template.csv",
+    "required_strata": [
+      "normal",
+      "known_attack",
+      "unknown_attack",
+      "encrypted"
+    ]
+  },
+  "observed_candidate_counts": {
+    "alerts": 45
+  },
+  "fusion_value_report_meta": {
+    "model": "fusion-value-ablation-v1",
+    "quality_gates": [
+      {
+        "gate": "source_coverage",
+        "title": "多源覆盖",
+        "status": "pass",
+        "evidence": "3/5 active sources"
+      },
+      {
+        "gate": "sample_size",
+        "title": "告警样本量",
+        "status": "blocked",
+        "evidence": "0 alerts in 168h"
+      },
+      {
+        "gate": "feedback_mttr",
+        "title": "反馈与处置时间",
+        "status": "blocked",
+        "evidence": "0 resolved, 0 false positives"
+      },
+      {
+        "gate": "formula_reproducibility",
+        "title": "消融公式版本",
+        "status": "pass",
+        "evidence": "fusion-value-ablation-v1"
+      }
+    ]
+  }
+}

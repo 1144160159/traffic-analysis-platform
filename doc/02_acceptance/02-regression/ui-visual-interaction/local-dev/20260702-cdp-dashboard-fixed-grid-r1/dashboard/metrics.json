@@ -1,0 +1,28 @@
+{
+  "target_id": "dashboard",
+  "route": "/dashboard",
+  "status": "fail",
+  "generated_at": "2026-07-02T19:28:04.069172+08:00",
+  "desktop_chrome_backend_status": "local-dev-only",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/dashboard.png",
+  "actual_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/local-dev/20260702-cdp-dashboard-fixed-grid-r1/dashboard/actual-1920.png",
+  "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/local-dev/20260702-cdp-dashboard-fixed-grid-r1/dashboard/diff-1920.png",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "visual_diff": {
+    "size_ok": true,
+    "source_width": 1920,
+    "source_height": 1080,
+    "actual_width": 1920,
+    "actual_height": 1080,
+    "compared_pixels": 2073600,
+    "total_pixels": 2073600,
+    "mismatch_pixels": 2072329,
+    "pixel_mismatch_ratio": 0.9993870563271605,
+    "max_pixel_ratio": 0.015,
+    "channel_tolerance": 0,
+    "max_channel_delta": 255
+  }
+}

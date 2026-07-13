@@ -1,0 +1,46 @@
+{
+  "package_id": "topic1_blind",
+  "version": 1,
+  "status": "review-template",
+  "generated_from_review_packet": "20260701-detection-quality-review-r1",
+  "generated_at": "2026-06-30T17:08:48Z",
+  "review_required": true,
+  "freeze": {
+    "frozen_at": "TBD",
+    "frozen_by": "TBD",
+    "immutable_storage_uri": "TBD",
+    "package_sha256_manifest": "TBD"
+  },
+  "model_scope": {
+    "model_id": "behavior-classifier",
+    "feature_set_id": "v1",
+    "tenant_scope": "default"
+  },
+  "sample_contract": {
+    "primary_key": "sample_id",
+    "label_file": "labels/labels.csv",
+    "prediction_file": "predictions/predictions.csv",
+    "required_strata": [
+      "normal",
+      "known_attack",
+      "unknown_attack",
+      "encrypted"
+    ]
+  },
+  "candidate_sample_count": 45,
+  "strata_counts": {
+    "normal": "TBD",
+    "known_attack": "TBD",
+    "unknown_attack": "TBD",
+    "encrypted": "TBD"
+  },
+  "review": {
+    "third_party_attestation": "third-party-attestation.yaml",
+    "cnas_lab": "TBD",
+    "reviewer": "TBD"
+  },
+  "notes": [
+    "This is a review template, not dataset-manifest.yaml.",
+    "Replace all TBD fields and remove review_required before copying into the formal package."
+  ]
+}

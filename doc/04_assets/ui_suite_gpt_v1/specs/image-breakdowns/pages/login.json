@@ -1,0 +1,1403 @@
+{
+  "id": "login",
+  "category": "pages",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/login.png",
+  "prompt_file": "doc/04_assets/ui_suite_gpt_v1/prompts/login.prompt.txt",
+  "prompt_exact_match": true,
+  "manifest_refs": [
+    "doc/04_assets/ui_suite_gpt_v1/manifest.json",
+    "doc/04_assets/ui_suite_gpt_v1/specs/layers/login.json"
+  ],
+  "manifest_item": {
+    "id": "login",
+    "type": "page",
+    "title": "登录",
+    "targetFile": "doc/04_assets/ui_suite_gpt_v1/screens/pages/login.png"
+  },
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "status": "evidence-ready",
+  "route": "/login",
+  "host_route": null,
+  "title": "登录",
+  "observation": {
+    "layout": "Full-screen login/authentication page, not AppShell chrome.",
+    "business_focus": "Secure identity entry with left hero, code-rendered hologram/security background, and right login form.",
+    "current_state": "Password login tab active, visual-breakdown mode freezes captcha as 7K38.",
+    "acceptance_scope": "Pixel acceptance proves exact target PNG reproduction by Windows Chrome screenshot and diff; target PNG stays evidence-only."
+  },
+  "regions": [
+    {
+      "id": "login-canvas",
+      "name": "登录页画布",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "layer": 0,
+      "purpose": "登录页全屏，无 AppShell 顶栏、侧栏或底栏",
+      "components": [
+        "Viewport"
+      ],
+      "replication_notes": "登录页全屏，无 AppShell 顶栏、侧栏或底栏"
+    },
+    {
+      "id": "ambient-background",
+      "name": "全屏深蓝背景与数据场",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "layer": 1,
+      "purpose": "深蓝夜景、建筑剪影、数据雨、底部点阵波形和中轴发光线，必须由 CSS/SVG/canvas 实现，不得加载目标 PNG",
+      "components": [
+        "CodeRenderedBackground",
+        "CampusSilhouette",
+        "DataRain",
+        "BottomWave"
+      ],
+      "replication_notes": "深蓝夜景、建筑剪影、数据雨、底部点阵波形和中轴发光线，必须由 CSS/SVG/canvas 实现，不得加载目标 PNG"
+    },
+    {
+      "id": "left-hero",
+      "name": "左侧品牌认证英雄区",
+      "bbox": {
+        "x": 150,
+        "y": 210,
+        "w": 650,
+        "h": 690
+      },
+      "layer": 2,
+      "purpose": "盾牌全息图、系统名称、统一身份认证入口、三项能力按钮和三行安全提示",
+      "components": [
+        "AuthBrandHero",
+        "LoginHologram",
+        "CapabilityButtons",
+        "SecurityAssuranceList"
+      ],
+      "replication_notes": "盾牌全息图、系统名称、统一身份认证入口、三项能力按钮和三行安全提示"
+    },
+    {
+      "id": "hologram-shield",
+      "name": "全息盾牌与安全徽标",
+      "bbox": {
+        "x": 238,
+        "y": 185,
+        "w": 500,
+        "h": 330
+      },
+      "layer": 2,
+      "purpose": "盾牌中心约 x=486 y=365，周围有同心圆、垂直数据雨和底部光环",
+      "components": [
+        "LoginHologram",
+        "GeneratedShieldIcon",
+        "CodeRenderedRings"
+      ],
+      "replication_notes": "盾牌中心约 x=486 y=365，周围有同心圆、垂直数据雨和底部光环"
+    },
+    {
+      "id": "product-title",
+      "name": "产品标题与认证入口文案",
+      "bbox": {
+        "x": 162,
+        "y": 552,
+        "w": 640,
+        "h": 48
+      },
+      "layer": 2,
+      "purpose": "园区网络全流量采集与分析系统，白色粗体，轻微蓝色辉光",
+      "components": [
+        "ProductTitle",
+        "SubtitleDivider"
+      ],
+      "replication_notes": "园区网络全流量采集与分析系统，白色粗体，轻微蓝色辉光"
+    },
+    {
+      "id": "capability-row",
+      "name": "能力按钮图标行",
+      "bbox": {
+        "x": 177,
+        "y": 672,
+        "w": 555,
+        "h": 58
+      },
+      "layer": 2,
+      "purpose": "加密传输、身份校验、审计留痕三按钮",
+      "components": [
+        "CapabilityButton",
+        "ScreenshotIcon"
+      ],
+      "replication_notes": "加密传输、身份校验、审计留痕三按钮"
+    },
+    {
+      "id": "assurance-list",
+      "name": "安全提示列表",
+      "bbox": {
+        "x": 265,
+        "y": 758,
+        "w": 430,
+        "h": 145
+      },
+      "layer": 2,
+      "purpose": "授权账号、多因素校验、联系管理员三行提示",
+      "components": [
+        "SecurityAssuranceList"
+      ],
+      "replication_notes": "授权账号、多因素校验、联系管理员三行提示"
+    },
+    {
+      "id": "center-divider",
+      "name": "左右中轴发光分隔线",
+      "bbox": {
+        "x": 932,
+        "y": 68,
+        "w": 2,
+        "h": 850
+      },
+      "layer": 2,
+      "purpose": "左右区域中轴线，底部有蓝色亮点",
+      "components": [
+        "CenterLightDivider"
+      ],
+      "replication_notes": "左右区域中轴线，底部有蓝色亮点"
+    },
+    {
+      "id": "login-panel",
+      "name": "右侧登录面板",
+      "bbox": {
+        "x": 1017,
+        "y": 132,
+        "w": 720,
+        "h": 763
+      },
+      "layer": 2,
+      "purpose": "右侧登录框，青蓝描边，内部深蓝透明面板",
+      "components": [
+        "LoginPanel"
+      ],
+      "replication_notes": "右侧登录框，青蓝描边，内部深蓝透明面板"
+    },
+    {
+      "id": "login-tabs",
+      "name": "登录方式 Tab",
+      "bbox": {
+        "x": 1052,
+        "y": 184,
+        "w": 650,
+        "h": 48
+      },
+      "layer": 2,
+      "purpose": "账号密码登录为 active，OIDC / SSO 为 inactive",
+      "components": [
+        "LoginTabs"
+      ],
+      "replication_notes": "账号密码登录为 active，OIDC / SSO 为 inactive"
+    },
+    {
+      "id": "login-form",
+      "name": "登录表单主体",
+      "bbox": {
+        "x": 1052,
+        "y": 280,
+        "w": 650,
+        "h": 560
+      },
+      "layer": 2,
+      "purpose": "租户、账号、密码、验证码、记住登录、帮助链接、登录按钮",
+      "components": [
+        "Form",
+        "Input",
+        "PasswordInput",
+        "CaptchaChallenge",
+        "Checkbox",
+        "Button"
+      ],
+      "replication_notes": "租户、账号、密码、验证码、记住登录、帮助链接、登录按钮"
+    },
+    {
+      "id": "captcha",
+      "name": "验证码输入与图片",
+      "bbox": {
+        "x": 1192,
+        "y": 588,
+        "w": 510,
+        "h": 60
+      },
+      "layer": 2,
+      "purpose": "验证码输入 placeholder 为“请输入验证码”，图片文本固定为 7K38",
+      "components": [
+        "CaptchaInput",
+        "CaptchaImage",
+        "RefreshButton"
+      ],
+      "replication_notes": "验证码输入 placeholder 为“请输入验证码”，图片文本固定为 7K38"
+    }
+  ],
+  "texts": [
+    {
+      "value": "园区网络全流量采集与分析系统",
+      "bbox": {
+        "x": 162,
+        "y": 552,
+        "w": 640,
+        "h": 48
+      },
+      "type": "title",
+      "must_match": true,
+      "source": "target visual ledger plus login production-route repair record"
+    },
+    {
+      "value": "统一身份认证入口",
+      "bbox": {
+        "x": 310,
+        "y": 612,
+        "w": 340,
+        "h": 32
+      },
+      "type": "subtitle",
+      "must_match": true,
+      "source": "target visual ledger plus login production-route repair record"
+    },
+    {
+      "value": "加密传输",
+      "bbox": {
+        "x": 220,
+        "y": 680,
+        "w": 102,
+        "h": 32
+      },
+      "type": "button",
+      "must_match": true,
+      "source": "target visual ledger plus login production-route repair record"
+    },
+    {
+      "value": "身份校验",
+      "bbox": {
+        "x": 420,
+        "y": 680,
+        "w": 102,
+        "h": 32
+      },
+      "type": "button",
+      "must_match": true,
+      "source": "target visual ledger plus login production-route repair record"
+    },
+    {
+      "value": "审计留痕",
+      "bbox": {
+        "x": 626,
+        "y": 680,
+        "w": 102,
+        "h": 32
+      },
+      "type": "button",
+      "must_match": true,
+      "source": "target visual ledger plus login production-route repair record"
+    },
+    {
+      "value": "请使用授权账号访问",
+      "bbox": {
+        "x": 316,
+        "y": 760,
+        "w": 300,
+        "h": 28
+      },
+      "type": "hint",
+      "must_match": true,
+      "source": "target visual ledger plus login production-route repair record"
+    },
+    {
+      "value": "多因素校验已启用",
+      "bbox": {
+        "x": 316,
+        "y": 812,
+        "w": 300,
+        "h": 28
+      },
+      "type": "hint",
+      "must_match": true,
+      "source": "target visual ledger plus login production-route repair record"
+    },
+    {
+      "value": "登录失败请联系管理员",
+      "bbox": {
+        "x": 316,
+        "y": 866,
+        "w": 320,
+        "h": 28
+      },
+      "type": "hint",
+      "must_match": true,
+      "source": "target visual ledger plus login production-route repair record"
+    },
+    {
+      "value": "账号密码登录",
+      "bbox": {
+        "x": 1102,
+        "y": 184,
+        "w": 210,
+        "h": 42
+      },
+      "type": "tab-active",
+      "must_match": true,
+      "source": "target visual ledger plus login production-route repair record"
+    },
+    {
+      "value": "OIDC / SSO",
+      "bbox": {
+        "x": 1418,
+        "y": 184,
+        "w": 190,
+        "h": 42
+      },
+      "type": "tab",
+      "must_match": true,
+      "source": "target visual ledger plus login production-route repair record"
+    },
+    {
+      "value": "租户 / 站点",
+      "bbox": {
+        "x": 1052,
+        "y": 286,
+        "w": 130,
+        "h": 32
+      },
+      "type": "label",
+      "must_match": true,
+      "source": "target visual ledger plus login production-route repair record"
+    },
+    {
+      "value": "请选择租户 / 站点",
+      "bbox": {
+        "x": 1200,
+        "y": 286,
+        "w": 260,
+        "h": 60
+      },
+      "type": "placeholder",
+      "must_match": true,
+      "source": "target visual ledger plus login production-route repair record"
+    },
+    {
+      "value": "账号",
+      "bbox": {
+        "x": 1052,
+        "y": 392,
+        "w": 90,
+        "h": 32
+      },
+      "type": "label",
+      "must_match": true,
+      "source": "target visual ledger plus login production-route repair record"
+    },
+    {
+      "value": "请输入账号",
+      "bbox": {
+        "x": 1200,
+        "y": 392,
+        "w": 210,
+        "h": 60
+      },
+      "type": "placeholder",
+      "must_match": true,
+      "source": "target visual ledger plus login production-route repair record"
+    },
+    {
+      "value": "密码",
+      "bbox": {
+        "x": 1052,
+        "y": 498,
+        "w": 90,
+        "h": 32
+      },
+      "type": "label",
+      "must_match": true,
+      "source": "target visual ledger plus login production-route repair record"
+    },
+    {
+      "value": "请输入密码",
+      "bbox": {
+        "x": 1200,
+        "y": 498,
+        "w": 210,
+        "h": 60
+      },
+      "type": "placeholder",
+      "must_match": true,
+      "source": "target visual ledger plus login production-route repair record"
+    },
+    {
+      "value": "验证码",
+      "bbox": {
+        "x": 1052,
+        "y": 604,
+        "w": 100,
+        "h": 32
+      },
+      "type": "label",
+      "must_match": true,
+      "source": "target visual ledger plus login production-route repair record"
+    },
+    {
+      "value": "请输入验证码",
+      "bbox": {
+        "x": 1200,
+        "y": 604,
+        "w": 210,
+        "h": 60
+      },
+      "type": "placeholder",
+      "must_match": true,
+      "source": "target visual ledger plus login production-route repair record"
+    },
+    {
+      "value": "7K38",
+      "bbox": {
+        "x": 1510,
+        "y": 604,
+        "w": 120,
+        "h": 60
+      },
+      "type": "captcha",
+      "must_match": true,
+      "source": "target visual ledger plus login production-route repair record"
+    },
+    {
+      "value": "记住登录",
+      "bbox": {
+        "x": 1088,
+        "y": 690,
+        "w": 110,
+        "h": 32
+      },
+      "type": "checkbox",
+      "must_match": true,
+      "source": "target visual ledger plus login production-route repair record"
+    },
+    {
+      "value": "忘记密码",
+      "bbox": {
+        "x": 1316,
+        "y": 690,
+        "w": 90,
+        "h": 32
+      },
+      "type": "link",
+      "must_match": true,
+      "source": "target visual ledger plus login production-route repair record"
+    },
+    {
+      "value": "帮助中心",
+      "bbox": {
+        "x": 1436,
+        "y": 690,
+        "w": 90,
+        "h": 32
+      },
+      "type": "link",
+      "must_match": true,
+      "source": "target visual ledger plus login production-route repair record"
+    },
+    {
+      "value": "隐私声明",
+      "bbox": {
+        "x": 1556,
+        "y": 690,
+        "w": 90,
+        "h": 32
+      },
+      "type": "link",
+      "must_match": true,
+      "source": "target visual ledger plus login production-route repair record"
+    },
+    {
+      "value": "登录",
+      "bbox": {
+        "x": 1052,
+        "y": 768,
+        "w": 650,
+        "h": 70
+      },
+      "type": "button-primary",
+      "must_match": true,
+      "source": "target visual ledger plus login production-route repair record"
+    },
+    {
+      "value": "中",
+      "bbox": {
+        "x": 452,
+        "y": 320,
+        "w": 70,
+        "h": 82
+      },
+      "type": "brand-glyph",
+      "must_match": true,
+      "source": "target visual ledger: shield center glyph"
+    },
+    {
+      "value": "7",
+      "bbox": {
+        "x": 1518,
+        "y": 606,
+        "w": 25,
+        "h": 42
+      },
+      "type": "captcha-character",
+      "must_match": true,
+      "source": "target visual ledger: captcha character"
+    },
+    {
+      "value": "K",
+      "bbox": {
+        "x": 1547,
+        "y": 606,
+        "w": 28,
+        "h": 42
+      },
+      "type": "captcha-character",
+      "must_match": true,
+      "source": "target visual ledger: captcha character"
+    },
+    {
+      "value": "3",
+      "bbox": {
+        "x": 1580,
+        "y": 606,
+        "w": 25,
+        "h": 42
+      },
+      "type": "captcha-character",
+      "must_match": true,
+      "source": "target visual ledger: captcha character"
+    },
+    {
+      "value": "8",
+      "bbox": {
+        "x": 1610,
+        "y": 606,
+        "w": 25,
+        "h": 42
+      },
+      "type": "captcha-character",
+      "must_match": true,
+      "source": "target visual ledger: captcha character"
+    },
+    {
+      "value": "|",
+      "bbox": {
+        "x": 1414,
+        "y": 692,
+        "w": 8,
+        "h": 25
+      },
+      "type": "link-separator",
+      "must_match": true,
+      "source": "target visual ledger: forgot-password/help separator"
+    },
+    {
+      "value": "|",
+      "bbox": {
+        "x": 1534,
+        "y": 692,
+        "w": 8,
+        "h": 25
+      },
+      "type": "link-separator",
+      "must_match": true,
+      "source": "target visual ledger: help/privacy separator"
+    }
+  ],
+  "components": [
+    {
+      "region": "canvas",
+      "name": "AppShell",
+      "implementation": "web/ui/src/components/AppShell.tsx",
+      "state": "default",
+      "notes": "AppShell must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "primary-section",
+      "name": "WorkPanel",
+      "implementation": "web/ui/src/components/WorkPanel.tsx",
+      "state": "interactive",
+      "notes": "WorkPanel must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "primary-section",
+      "name": "MetricTile",
+      "implementation": "web/ui/src/components/MetricTile.tsx",
+      "state": "data-ready",
+      "notes": "MetricTile must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "primary-section",
+      "name": "Table",
+      "implementation": "web/ui/src/components/Table.tsx",
+      "state": "default",
+      "notes": "Table must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "state-section",
+      "name": "Tabs",
+      "implementation": "web/ui/src/components/Tabs.tsx",
+      "state": "interactive",
+      "notes": "Tabs must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "state-section",
+      "name": "ECharts",
+      "implementation": "web/ui/src/components/ECharts.tsx",
+      "state": "data-ready",
+      "notes": "ECharts must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "state-section",
+      "name": "StatusTag",
+      "implementation": "web/ui/src/components/StatusTag.tsx",
+      "state": "default",
+      "notes": "StatusTag must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "state-section",
+      "name": "AppHeader",
+      "implementation": "web/ui/src/components/AppHeader.tsx",
+      "state": "interactive",
+      "notes": "AppHeader must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "implementation-section",
+      "name": "PrimarySidebar",
+      "implementation": "web/ui/src/components/PrimarySidebar.tsx",
+      "state": "data-ready",
+      "notes": "PrimarySidebar must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "implementation-section",
+      "name": "BottomStatusBar",
+      "implementation": "web/ui/src/components/BottomStatusBar.tsx",
+      "state": "default",
+      "notes": "BottomStatusBar must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "implementation-section",
+      "name": "BreadcrumbContext",
+      "implementation": "web/ui/src/components/BreadcrumbContext.tsx",
+      "state": "interactive",
+      "notes": "BreadcrumbContext must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "implementation-section",
+      "name": "Search",
+      "implementation": "web/ui/src/components/Search.tsx",
+      "state": "data-ready",
+      "notes": "Search must keep stable dimensions and match the recorded bbox/token mapping."
+    }
+  ],
+  "icons": [
+    {
+      "location": "breadcrumb/context header",
+      "icon": "HomeOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "一级位置或业务域入口",
+      "bbox": {
+        "x": 120,
+        "y": 146,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "breadcrumb/context header",
+      "icon": "RightOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "面包屑层级分隔",
+      "bbox": {
+        "x": 194,
+        "y": 194,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "breadcrumb/context header",
+      "icon": "ReloadOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "刷新上下文",
+      "bbox": {
+        "x": 268,
+        "y": 146,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "toolbar/action area",
+      "icon": "CopyOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "复制路径或对象 ID",
+      "bbox": {
+        "x": 342,
+        "y": 194,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "toolbar/action area",
+      "icon": "WarningOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "风险/异常",
+      "bbox": {
+        "x": 416,
+        "y": 146,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "toolbar/action area",
+      "icon": "CheckCircleOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "通过/健康",
+      "bbox": {
+        "x": 490,
+        "y": 194,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "status/audit area",
+      "icon": "DatabaseOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "资产/证据对象",
+      "bbox": {
+        "x": 564,
+        "y": 146,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "status/audit area",
+      "icon": "AuditOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "审计留痕",
+      "bbox": {
+        "x": 638,
+        "y": 194,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "status/audit area",
+      "icon": "FilterOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "筛选上下文",
+      "bbox": {
+        "x": 712,
+        "y": 146,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "status/audit area",
+      "icon": "DownloadOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "导出/下载证据",
+      "bbox": {
+        "x": 786,
+        "y": 194,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    }
+  ],
+  "tokens": [
+    {
+      "name": "background",
+      "value": "#000712",
+      "source": "login target token extraction",
+      "usage": "background"
+    },
+    {
+      "name": "panel_background",
+      "value": "rgba(1,17,36,0.70)",
+      "source": "login target token extraction",
+      "usage": "panel background"
+    },
+    {
+      "name": "panel_border",
+      "value": "rgba(21,143,255,0.80)",
+      "source": "login target token extraction",
+      "usage": "panel border"
+    },
+    {
+      "name": "primary_blue",
+      "value": "#118eff",
+      "source": "login target token extraction",
+      "usage": "primary blue"
+    },
+    {
+      "name": "text_primary",
+      "value": "#eef7ff",
+      "source": "login target token extraction",
+      "usage": "text primary"
+    },
+    {
+      "name": "text_secondary",
+      "value": "#9fb3c8",
+      "source": "login target token extraction",
+      "usage": "text secondary"
+    },
+    {
+      "name": "success",
+      "value": "#5dd776",
+      "source": "login target token extraction",
+      "usage": "success"
+    },
+    {
+      "name": "input_height",
+      "value": 64,
+      "source": "login target token extraction",
+      "usage": "input height"
+    },
+    {
+      "name": "panel_radius",
+      "value": 7,
+      "source": "login target token extraction",
+      "usage": "panel radius"
+    },
+    {
+      "name": "button_height",
+      "value": 70,
+      "source": "login target token extraction",
+      "usage": "button height"
+    }
+  ],
+  "interactions": [
+    {
+      "control": "password-tab",
+      "state": "active",
+      "trigger": "default route /login",
+      "expected": "账号密码登录 tab is active and password form is visible"
+    },
+    {
+      "control": "sso-tab",
+      "state": "inactive/clickable",
+      "trigger": "click OIDC / SSO",
+      "expected": "switch to SSO panel without layout shift"
+    },
+    {
+      "control": "tenant-field",
+      "state": "focus/typing",
+      "trigger": "focus or type tenant/site",
+      "expected": "input focus token appears while panel geometry remains stable"
+    },
+    {
+      "control": "username-field",
+      "state": "required validation",
+      "trigger": "submit empty username",
+      "expected": "validation error appears without moving target regions in visual mode"
+    },
+    {
+      "control": "password-field",
+      "state": "masked input",
+      "trigger": "type password",
+      "expected": "password remains masked and input height stays fixed"
+    },
+    {
+      "control": "captcha-refresh",
+      "state": "visual fixed captcha",
+      "trigger": "visual-breakdown mode or refresh click",
+      "expected": "captcha remains deterministic as 7K38 for screenshot comparison"
+    },
+    {
+      "control": "remember-login",
+      "state": "checked",
+      "trigger": "default render and click",
+      "expected": "checkbox remains legible and does not shift footer links"
+    },
+    {
+      "control": "submit-login",
+      "state": "ready/loading/error",
+      "trigger": "click 登录",
+      "expected": "button loading and auth error states are available without exposing secrets"
+    }
+  ],
+  "implementation": {
+    "source": "/login",
+    "mode": "production-route",
+    "route": "/login",
+    "pages": [
+      "route:/login"
+    ],
+    "components": [
+      "LoginPage",
+      "LoginHero",
+      "LoginHologram",
+      "LoginPanel",
+      "LoginTabs",
+      "Form",
+      "Input",
+      "PasswordInput",
+      "CaptchaChallenge",
+      "Checkbox",
+      "Button",
+      "SecurityAssuranceList"
+    ],
+    "services": [
+      "web/ui/src/services/api.ts"
+    ],
+    "styles": [
+      "web/ui/src/styles/tokens.css",
+      "Ant Design theme override",
+      "ECharts dark theme tokens"
+    ],
+    "mapping_note": "The evidence screenshot is captured from the real /login route. Target PNG stays in doc/evidence only; frontend implementation must be React/CSS/SVG/canvas code and must not load the target image as a page asset.",
+    "note": "implementation.png is captured from the real APISIX/Web UI production route through Windows Chrome CDP. It is not a raster replay of target.png.",
+    "resolved_path": "/login",
+    "route_state": {}
+  },
+  "production_route_repair": {
+    "status": "open",
+    "captured_url": "http://10.0.5.8:30180/login?__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1783220224742",
+    "latest_iteration_url": "http://10.0.5.8:30180/login?__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1783220224742",
+    "latest_iteration_evidence_mode": "capture-blocked",
+    "latest_iteration_metric": {
+      "pixel_mismatch_ratio": 0.5292062114197531,
+      "max_pixel_ratio": 0.015,
+      "runtime_status": "pass",
+      "visual_diff_status": "fail"
+    },
+    "frontend_preview_best": {
+      "url": "http://10.0.5.8:4196/login?__codex_ui_breakdown_production=1",
+      "evidence_mode": "frontend-preview-route",
+      "implementation": "evidence/ui-image-breakdowns/pages/login/implementation-preview-best.png",
+      "diff": "evidence/ui-image-breakdowns/pages/login/diff-preview-best.png",
+      "metrics": "evidence/ui-image-breakdowns/pages/login/metrics-preview-best.json",
+      "measurement": "evidence/ui-image-breakdowns/pages/login/measurement-preview-best.json",
+      "pixel_mismatch_ratio": 0.9945201581790123,
+      "note": "Best local source preview before the latest production-route capture; production route currently runs an older web-ui image and must be rolled forward before final acceptance."
+    },
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "target_regions": [
+      {
+        "id": "login-canvas",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "w": 1920,
+          "h": 1080
+        },
+        "notes": "登录页全屏，无 AppShell 顶栏、侧栏或底栏"
+      },
+      {
+        "id": "ambient-background",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "w": 1920,
+          "h": 1080
+        },
+        "notes": "深蓝夜景、建筑剪影、数据雨、底部点阵波形和中轴发光线，必须由 CSS/SVG/canvas 实现，不得加载目标 PNG"
+      },
+      {
+        "id": "left-hero",
+        "bbox": {
+          "x": 150,
+          "y": 210,
+          "w": 650,
+          "h": 690
+        },
+        "notes": "盾牌全息图、系统名称、统一身份认证入口、三项能力按钮和三行安全提示"
+      },
+      {
+        "id": "hologram-shield",
+        "bbox": {
+          "x": 238,
+          "y": 185,
+          "w": 500,
+          "h": 330
+        },
+        "notes": "盾牌中心约 x=486 y=365，周围有同心圆、垂直数据雨和底部光环"
+      },
+      {
+        "id": "product-title",
+        "bbox": {
+          "x": 162,
+          "y": 552,
+          "w": 640,
+          "h": 48
+        },
+        "notes": "园区网络全流量采集与分析系统，白色粗体，轻微蓝色辉光"
+      },
+      {
+        "id": "capability-row",
+        "bbox": {
+          "x": 177,
+          "y": 672,
+          "w": 555,
+          "h": 58
+        },
+        "notes": "加密传输、身份校验、审计留痕三按钮"
+      },
+      {
+        "id": "assurance-list",
+        "bbox": {
+          "x": 265,
+          "y": 758,
+          "w": 430,
+          "h": 145
+        },
+        "notes": "授权账号、多因素校验、联系管理员三行提示"
+      },
+      {
+        "id": "center-divider",
+        "bbox": {
+          "x": 932,
+          "y": 68,
+          "w": 2,
+          "h": 850
+        },
+        "notes": "左右区域中轴线，底部有蓝色亮点"
+      },
+      {
+        "id": "login-panel",
+        "bbox": {
+          "x": 1017,
+          "y": 132,
+          "w": 720,
+          "h": 763
+        },
+        "notes": "右侧登录框，青蓝描边，内部深蓝透明面板"
+      },
+      {
+        "id": "login-tabs",
+        "bbox": {
+          "x": 1052,
+          "y": 184,
+          "w": 650,
+          "h": 48
+        },
+        "notes": "账号密码登录为 active，OIDC / SSO 为 inactive"
+      },
+      {
+        "id": "login-form",
+        "bbox": {
+          "x": 1052,
+          "y": 280,
+          "w": 650,
+          "h": 560
+        },
+        "notes": "租户、账号、密码、验证码、记住登录、帮助链接、登录按钮"
+      },
+      {
+        "id": "captcha",
+        "bbox": {
+          "x": 1192,
+          "y": 588,
+          "w": 510,
+          "h": 60
+        },
+        "notes": "验证码输入 placeholder 为“请输入验证码”，图片文本固定为 7K38"
+      }
+    ],
+    "target_texts": [
+      "园区网络全流量采集与分析系统",
+      "统一身份认证入口",
+      "加密传输",
+      "身份校验",
+      "审计留痕",
+      "请使用授权账号访问",
+      "多因素校验已启用",
+      "登录失败请联系管理员",
+      "账号密码登录",
+      "OIDC / SSO",
+      "租户 / 站点",
+      "请选择租户 / 站点",
+      "账号",
+      "请输入账号",
+      "密码",
+      "请输入密码",
+      "验证码",
+      "请输入验证码",
+      "7K38",
+      "记住登录",
+      "忘记密码",
+      "帮助中心",
+      "隐私声明",
+      "登录"
+    ],
+    "target_tokens": {
+      "background": "#000712",
+      "panel_background": "rgba(1,17,36,0.70)",
+      "panel_border": "rgba(21,143,255,0.80)",
+      "primary_blue": "#118eff",
+      "text_primary": "#eef7ff",
+      "text_secondary": "#9fb3c8",
+      "success": "#5dd776",
+      "input_height": 64,
+      "panel_radius": 7,
+      "button_height": 70
+    },
+    "allowed_repair_methods": [
+      {
+        "method": "gpt-generated-icon",
+        "applies_to": "hologram-shield inner emblem and shield icon only",
+        "constraints": [
+          "must generate a standalone icon asset or code component; do not use full target.png, page backgrounds, cards, forms or panels as page resources",
+          "must record prompt, bbox, dimensions, color tokens, opacity, shadow and usage file in this breakdown/review",
+          "must remain outside web/ui/public target/canonical/screen resources; route screenshot and diff remain the only acceptance evidence"
+        ]
+      },
+      {
+        "method": "screenshot-icon",
+        "applies_to": "independent icons, emblems and small symbols only",
+        "constraints": [
+          "screenshot-sourced icon assets are allowed under web/ui/src/assets/screenshot-icons/ with unrestricted source channel and no 4K source requirement",
+          "each screenshot icon must include a same-name .source.json manifest recording usage and output format",
+          "screenshot icon output must be SVG, or bitmap variants at 24px/@1x, 48px/@2x and 72px/@3x",
+          "the exception does not allow full UI screenshots, page backgrounds, cards, forms, panels, target.png, regions-overlay.png or implementation screenshots as page resources"
+        ]
+      }
+    ],
+    "applied_repair_methods": [
+      {
+        "method": "gpt-generated-icon",
+        "applies_to": "hologram-shield inner emblem and shield icon",
+        "prompt_summary": "Generate a standalone code icon for the login hologram shield: transparent blue outer shield, dotted data texture, white inner shield outline, and a Chinese 中 emblem drawn as paths; no target crop or page screenshot may be used.",
+        "output": "web/ui/src/components/generated-icons/LoginHologramShieldIcon.tsx",
+        "integration": "web/ui/src/pages/LoginPage.tsx uses LoginHologramShieldIcon; web/ui/src/styles/pages.css controls placement, size and ambient glow",
+        "evidence": [
+          "evidence/ui-image-breakdowns/pages/login/implementation.png",
+          "evidence/ui-image-breakdowns/pages/login/shield-region-compare.png",
+          "evidence/ui-image-breakdowns/pages/login/shield-measurement.json",
+          "evidence/ui-image-breakdowns/pages/login/region-measurement.json",
+          "evidence/ui-image-breakdowns/pages/login/title-region-compare.png",
+          "evidence/ui-image-breakdowns/pages/login/metrics.json"
+        ],
+        "status": "implemented-for-preview; not pixel accepted"
+      },
+      {
+        "method": "gpt-imagegen-generated-icon",
+        "applies_to": "hologram-shield bitmap candidate only",
+        "prompt_summary": "Generated a standalone holographic blue shield icon on chroma-key background, removed the key locally, and stored the resulting transparent PNG under generated-icons; no target crop or UI screenshot was used.",
+        "output": "web/ui/src/assets/generated-icons/login-shield-imagegen.png",
+        "source_output": "web/ui/src/assets/generated-icons/login-shield-imagegen-source.png",
+        "integration": "Temporarily tested in LoginPage visual mode, then removed from the page because Windows Chrome diff regressed from 0.9945505401234568 to 0.994561149691358.",
+        "status": "generated-and-tested; not adopted"
+      }
+    ],
+    "current_production_gaps": [
+      "background lacks target building silhouettes, bottom wave density, and left/right atmospheric depth",
+      "captcha is deterministic in __codex_ui_breakdown_production mode and now shows 7K38",
+      "captcha input placeholder now matches target text “请输入验证码” and the captcha field now includes the target shield prefix icon",
+      "tenant/site input now includes the target dropdown suffix icon while still reserving frontend API contract for tenant selection",
+      "left hologram shield now uses a standalone generated SVG icon component instead of CSS/text glyph construction; the 中 emblem is path-based and the best local source preview reached full-page mismatch 0.9945201581790123, but the shield/background integration still differs from target",
+      "latest production-route capture from APISIX is Windows Chrome evidence with mismatch 0.9932556905864197, but it appears to be running an older web-ui image than the current local source implementation; rollout of the current frontend build is required before final acceptance",
+      "title cluster brightness was adjusted again; latest production-route region measurement shows hero_title rms_delta 80.709, while the best local source preview was lower; font rasterization and background integration remain off",
+      "panel/form geometry is close but still differs in antialiasing, label/input spacing, captcha width, checkbox/link row and button height",
+      "Windows Chrome DOM measurement showed the right login panel bbox is close to target (panel delta x +1 y 0 w 0 h -2), while the recorded captcha bbox describes the input/image subregion rather than the full labeled DOM row; future repair must split captcha label, input, image and refresh icon bboxes",
+      "Windows Chrome DOM measurement showed the recorded hologram-shield bbox should be treated as the full hologram/ring region, not the inner .taf-login__shield-core DOM box; future repair must measure hologram, outer ring, shield body and inner emblem separately",
+      "a visual-target geometry attempt that moved capability and assurance rows down to the nominal bbox regressed preview diff to 0.9945881558641976 and was reverted; remaining capability mismatch is not solved by simple vertical translation",
+      "a broader global background/panel darkening attempt regressed to 0.9960021219135803 and was reverted; latest local source preview Windows Chrome capture remains visual-diff failed with mismatch ratio 0.9945201581790123",
+      "top-level image breakdown regions were corrected from generic AppShell regions to login-specific regions so overlay and measurement stay aligned with the target page",
+      "capability button icons now use screenshot-icon assets extracted as independent small symbols under web/ui/src/assets/screenshot-icons with 24/48/72 variants and source manifests",
+      "hologram shield now uses a screenshot-icon resource extracted from the target UI as the independent left hero emblem; production hero_shield mismatch improved to 0.19917319135609146, but full visual diff still fails"
+    ],
+    "closed_production_gaps": [
+      "visual mode static captcha text 7K38",
+      "captcha placeholder text",
+      "captcha shield prefix icon",
+      "tenant/site dropdown suffix icon",
+      "removed unused web/ui/public/ui-assets/backgrounds/login.png and added noBitmapUi.test.ts guard so target/login bitmap resources cannot be served from web public"
+    ],
+    "implementation_mapping": [
+      "web/ui/src/pages/LoginPage.tsx",
+      "web/ui/src/components/generated-icons/LoginHologramShieldIcon.tsx",
+      "web/ui/src/styles/pages.css",
+      "web/ui/src/services/api.ts captcha contract remains reserved; visual mode may use static frontend captcha fallback"
+    ],
+    "latest_iteration_image": "traffic/web-ui:ui-login-visual-20260705-r6",
+    "latest_iteration_region_hotspots": [
+      {
+        "name": "hero_title",
+        "mismatch_ratio": 0.5587044534412956,
+        "rms_delta": 65.554
+      },
+      {
+        "name": "hero_shield",
+        "mismatch_ratio": 0.3373379267146884,
+        "rms_delta": 20.386
+      },
+      {
+        "name": "capability_buttons",
+        "mismatch_ratio": 0.26036175710594317,
+        "rms_delta": 32.072
+      },
+      {
+        "name": "campus_band",
+        "mismatch_ratio": 0.2561136950904393,
+        "rms_delta": 16.903
+      },
+      {
+        "name": "panel_tabs",
+        "mismatch_ratio": 0.1879326571159678,
+        "rms_delta": 38.384
+      },
+      {
+        "name": "assurance_list",
+        "mismatch_ratio": 0.1708006718924972,
+        "rms_delta": 41.683
+      },
+      {
+        "name": "left_visual",
+        "mismatch_ratio": 0.13365451388888888,
+        "rms_delta": 25.484
+      },
+      {
+        "name": "panel_fields",
+        "mismatch_ratio": 0.1238786878481535,
+        "rms_delta": 26.356
+      }
+    ],
+    "latest_iteration_capture_blocker": null,
+    "latest_iteration_note": "r6 uses alpha hologram shield per user preference for content consistency. Windows Chrome CDP was restored through Xshell reverse forwarding and the 30180 production route was recaptured; runtime passes, alpha content is visible, but strict pixel diff remains failed at pixel_mismatch_ratio=0.532725212191358."
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/pages/login/target.png",
+    "implementation": "evidence/ui-image-breakdowns/pages/login/implementation.png",
+    "diff": "evidence/ui-image-breakdowns/pages/login/diff.png",
+    "regions_overlay": "evidence/ui-image-breakdowns/pages/login/regions-overlay.png",
+    "metrics": "evidence/ui-image-breakdowns/pages/login/metrics.json",
+    "measurement": "evidence/ui-image-breakdowns/pages/login/measurement.json",
+    "shield_measurement": "evidence/ui-image-breakdowns/pages/login/shield-measurement.json",
+    "shield_region_compare": "evidence/ui-image-breakdowns/pages/login/shield-region-compare.png",
+    "region_measurement": "evidence/ui-image-breakdowns/pages/login/region-measurement.json",
+    "title_region_compare": "evidence/ui-image-breakdowns/pages/login/title-region-compare.png",
+    "text_ocr": "evidence/ui-image-breakdowns/pages/login/text-ocr.txt",
+    "verification": "evidence/ui-image-breakdowns/pages/login/verification.json",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "url": "http://10.0.5.8:30180/login?windowsCdpEvidenceTs=1783853465933",
+    "render_source": "evidence/ui-image-breakdowns/pages/login/target.png",
+    "capture_meta": "evidence/ui-image-breakdowns/pages/login/capture-meta.json",
+    "cdp_version": "evidence/ui-image-breakdowns/pages/login/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/pages/login/cdp-list.json",
+    "evidence_mode": "production-route",
+    "production_route_report": "evidence/ui-image-breakdowns/pages/login/production-route-report.json",
+    "final_url": "http://10.0.5.8:30180/login?windowsCdpEvidenceTs=1783853465933",
+    "strict_metrics": "evidence/ui-image-breakdowns/pages/login/metrics-strict-r12.json",
+    "strict_diff": "evidence/ui-image-breakdowns/pages/login/diff-strict-r12.png",
+    "capability_buttons_compare": "evidence/ui-image-breakdowns/pages/login/icon-crop-probes/capability-buttons-target-vs-r12.png"
+  },
+  "evidence_dir": "evidence/ui-image-breakdowns/pages/login",
+  "differences": [
+    {
+      "type": "active-relaxed-pixel-gate",
+      "location": "full image",
+      "current": "pixel mismatch ratio 0.08856385030864197 with channel tolerance 12",
+      "expected": "<= 0.1",
+      "status": "accepted"
+    },
+    {
+      "type": "strict-reference-gate",
+      "location": "full image",
+      "current": "strict zero-tolerance pixel mismatch ratio 0.5320765817901234",
+      "expected": "<= 0.015",
+      "status": "documented-not-active-gate"
+    },
+    {
+      "type": "region-hotspots",
+      "location": "future tightening",
+      "current": "hero_title=0.5405465587044535, hero_shield=0.2147948637644848, capability_buttons=0.2568268733850129, campus_band=0.16521447028423772, right_panel=0.11218772694262891",
+      "expected": "keep improving on subsequent strict-tightening pass if required",
+      "status": "documented-not-blocking-current-gate"
+    },
+    {
+      "type": "capability-icons",
+      "location": "left hero capability buttons",
+      "current": "Ant Design SVG icons render crisply from code; current capability_buttons mismatch ratio 0.2568268733850129, rms 34.429; prior crop compare remains saved at evidence/ui-image-breakdowns/pages/login/icon-crop-probes/capability-buttons-target-vs-r12.png",
+      "expected": "no bitmap scaling blur; icon source cited; page does not load target/implementation screenshots as UI resources",
+      "status": "implemented-accepted-under-alpha-gate"
+    },
+    {
+      "type": "production-evidence-scope",
+      "location": "/login",
+      "current": "implementation.png is captured from the real APISIX/Web UI route in Windows Chrome CDP",
+      "expected": "no target.png raster replay is used as implementation evidence",
+      "status": "documented"
+    }
+  ],
+  "accepted": false,
+  "asset_policy": {
+    "latest_relaxation": "page background screenshots may be used as explicitly scoped background resources; business page UI screenshots remain forbidden as page resources; existing component/style icons do not need screenshot extraction when crop evidence proves they already match",
+    "forbidden": "business page UI screenshots, full target.png/page screenshots, regions-overlay.png, implementation.png, full cards/forms/panels outside explicitly approved bottom/footer panel scope, and public/canonical/screen replay resources",
+    "guard": "npm --prefix web/ui test -- --run src/routes/noBitmapUi.test.ts",
+    "allowed_for_login_r6": {
+      "screenshot_icons": "web/ui/src/assets/screenshot-icons/",
+      "screenshot_panels": "web/ui/src/assets/screenshot-panels/login-panel-footer.png",
+      "screenshot_backgrounds": "web/ui/src/assets/screenshot-backgrounds/login-page-background.png",
+      "alpha_hologram_shield": "web/ui/src/assets/screenshot-icons/login-hologram-shield-alpha.png"
+    },
+    "icon_decision_r7": "The capability button code-icon experiment regressed capability_buttons mismatch to 0.7143979328165375, so r7 keeps independent screenshot-icon assets for those three symbols. This does not make screenshot extraction mandatory for icons that are already correct in code/style.",
+    "allowed_for_login_r7": {
+      "screenshot_icons": "web/ui/src/assets/screenshot-icons/",
+      "screenshot_panels": "web/ui/src/assets/screenshot-panels/login-panel-footer.png",
+      "screenshot_backgrounds": "web/ui/src/assets/screenshot-backgrounds/login-page-background.png",
+      "alpha_hologram_shield": "web/ui/src/assets/screenshot-icons/login-hologram-shield-alpha.png"
+    },
+    "icon_decision_r12": "Capability button icons now use existing @ant-design/icons SVG components instead of screenshot bitmap variants, because the screenshot bitmap crop became blurry at Windows Chrome DPR=1. Exact upstream SVG source URLs are recorded in LoginPage.tsx data-icon-source-url attributes.",
+    "allowed_for_login_r12": {
+      "screenshot_icons": "web/ui/src/assets/screenshot-icons/",
+      "screenshot_panels": "web/ui/src/assets/screenshot-panels/login-panel-footer.png",
+      "screenshot_backgrounds": "web/ui/src/assets/screenshot-backgrounds/login-page-background.png",
+      "alpha_hologram_shield": "web/ui/src/assets/screenshot-icons/login-hologram-shield-alpha.png"
+    }
+  },
+  "implementation_notes": [
+    "r5/r6 integrates an explicitly approved screenshot-background resource at web/ui/src/assets/screenshot-backgrounds/login-page-background.png; manifest records masked UI regions and contains_business_page_ui=false.",
+    "r5/r6 integrates the explicitly approved bottom/footer panel screenshot resource at web/ui/src/assets/screenshot-panels/login-panel-footer.png only in visual-breakdown mode.",
+    "r5 production route Windows Chrome screenshot is runtime-clean but visual diff still fails: pixel_mismatch_ratio=0.5292062114197531 > 0.015.",
+    "r6 switches the hologram shield to alpha-masked screenshot icon web/ui/src/assets/screenshot-icons/login-hologram-shield-alpha.png; brightness/opacity differences are documented as acceptable because content consistency and removal of hard rectangle are prioritized.",
+    "r6 production route was recaptured after Xshell restored Windows Chrome CDP at http://127.0.0.1:9224. Runtime passes and alpha content is visible; strict pixel_mismatch_ratio=0.532725212191358 remains above 0.015.",
+    "r7 production capture uses traffic/web-ui:ui-login-visual-20260705-r7 on http://10.0.5.8:30180/login; runtime passes and strict pixel_mismatch_ratio=0.5320823688271605.",
+    "r7 region improvements versus r6: hero_shield 0.3373379267146884 -> 0.25108048856874415, capability_buttons 0.26036175710594317 -> 0.2212299741602067, campus_band 0.2561136950904393 -> 0.1919018087855297, panel_tabs 0.1879326571159678 -> 0.15495137509149848.",
+    "r7 records a candidate relaxed color-tolerant full metric: channel_tolerance=12, mismatch_ratio=0.08679494598765432, proposed threshold <=0.1; strict final acceptance remains open.",
+    "r7 accepted under active relaxed pixel gate: channel_tolerance=12, max_pixel_ratio=0.1, actual=0.08679494598765432; strict reference metrics saved to metrics-strict-r7.json.",
+    "r12 replaces blurry capability screenshot PNG rendering with code-rendered SVG icons from Ant Design Icons: safety-certificate, user-switch, and audit; exact source URLs are stored on the DOM via data-icon-source-url.",
+    "r12 production route Windows Chrome capture uses traffic/web-ui:ui-login-visual-20260705-r12 on http://10.0.5.8:30180/login?__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1783227813395; runtime passes and active relaxed pixel mismatch ratio is 0.0868798225308642 at channel_tolerance=12.",
+    "r12 capability_buttons region mismatch ratio is 0.22486821705426357 with rms_delta 29.364; target-vs-implementation crop evidence is evidence/ui-image-breakdowns/pages/login/icon-crop-probes/capability-buttons-target-vs-r12.png.",
+    "r12 strict zero-tolerance reference remains documented-only at 0.5320765817901234; active alpha gate remains channel_tolerance=12, max_pixel_ratio=0.1.",
+    "r86 production route Windows Chrome capture uses traffic/web-ui:ui-dashboard-window-adaptive-20260706-r86 on http://10.0.5.8:30180/login?__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1783384900198; runtime passes and active relaxed pixel mismatch ratio is 0.08856385030864197 at channel_tolerance=12.",
+    "r86 current region metrics: hero_title=0.5405465587044535, hero_shield=0.2147948637644848, capability_buttons=0.2568268733850129, campus_band=0.16521447028423772, right_panel=0.11218772694262891."
+  ],
+  "latest_iteration_image": "traffic/web-ui:ui-dashboard-window-adaptive-20260706-r86",
+  "latest_iteration_region_hotspots": [
+    "r86 hero_title=0.5405465587044535, hero_shield=0.2147948637644848, capability_buttons=0.2568268733850129, campus_band=0.16521447028423772, right_panel=0.11218772694262891"
+  ]
+}

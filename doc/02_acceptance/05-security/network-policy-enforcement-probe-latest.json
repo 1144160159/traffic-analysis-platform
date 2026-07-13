@@ -1,0 +1,6 @@
+{
+  "skipped": true,
+  "mode": "auto",
+  "reason": "policy-capable CNI missing",
+  "policy_capable_count": 0
+}

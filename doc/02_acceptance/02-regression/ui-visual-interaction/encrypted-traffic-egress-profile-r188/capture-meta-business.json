@@ -1,0 +1,92 @@
+{
+  "status": "pass",
+  "evidence_mode": "production-route",
+  "browser_backend": "Windows Chrome CDP",
+  "backend": "windows-chrome-cdp",
+  "target_id": "encrypted-traffic-egress-profile",
+  "route_id": "encrypted-traffic",
+  "route": "/encrypted-traffic",
+  "resolved_path": "/encrypted-traffic",
+  "route_state": {
+    "tab": "egress-profile"
+  },
+  "route_state_notes": [],
+  "url": "http://10.0.5.8:30180/encrypted-traffic?tab=egress-profile&windowsCdpEvidenceTs=1783683785014#codex_smoke_token=<redacted>",
+  "final_url": "http://10.0.5.8:30180/encrypted-traffic?tab=egress-profile&windowsCdpEvidenceTs=1783683785014",
+  "cdp_url": "http://127.0.0.1:9224",
+  "browser": "Chrome/150.0.7871.49",
+  "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "desktop_viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "expected_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "stored_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "uploaded_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "post_capture_resize": false,
+  "visible_tab": true,
+  "reused_visible_tab": false,
+  "left_open": false,
+  "visible_activation": {
+    "status": "activated",
+    "target": {
+      "id": "F148E3398828300B8AF2074DA963072A",
+      "title": "园区网络全流量采集与分析系统",
+      "url": "http://10.0.5.8:30180/encrypted-traffic?tab=egress-profile&windowsCdpEvidenceTs=1783683785014"
+    },
+    "window_id": 1256781357,
+    "before_bounds": {
+      "left": -7,
+      "top": -7,
+      "width": 1722,
+      "height": 1034,
+      "windowState": "maximized"
+    },
+    "after_bounds": {
+      "left": -7,
+      "top": -7,
+      "width": 1722,
+      "height": 1034,
+      "windowState": "maximized"
+    }
+  },
+  "device_pixel_ratio": 0.8999999632438005,
+  "viewport_width": 2133,
+  "viewport_height": 1200,
+  "document_width": 2133,
+  "document_height": 1200,
+  "has_horizontal_scroll": false,
+  "has_vertical_scroll": false,
+  "runtime_status": "pass",
+  "runtime_reasons": [],
+  "visual_diff": {
+    "status": "pass",
+    "exit_code": 0,
+    "stdout": "{\"status\": \"pass\", \"target_id\": \"encrypted-traffic-egress-profile\", \"pixel_mismatch_ratio\": 0.13109278549382716}",
+    "stderr": "",
+    "metrics": "evidence/ui-image-breakdowns/pages/encrypted-traffic-egress-profile/metrics.json",
+    "diff": "evidence/ui-image-breakdowns/pages/encrypted-traffic-egress-profile/diff.png",
+    "pixel_mismatch_ratio": 0.13109278549382716
+  },
+  "console_errors": [],
+  "page_errors": [],
+  "request_failures": [],
+  "bad_responses": [],
+  "forbidden_target_resource_requests": [],
+  "screenshot": "evidence/ui-image-breakdowns/pages/encrypted-traffic-egress-profile/implementation.png",
+  "target": "evidence/ui-image-breakdowns/pages/encrypted-traffic-egress-profile/target.png",
+  "captured_at": "2026-07-10T11:43:15.119Z"
+}

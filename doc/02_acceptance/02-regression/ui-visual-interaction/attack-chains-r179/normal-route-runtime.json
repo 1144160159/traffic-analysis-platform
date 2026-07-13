@@ -1,0 +1,92 @@
+{
+  "id": "attack-chains",
+  "image_tag": "traffic/web-ui:ui-attack-chains-20260710-r179",
+  "status": "pass",
+  "generated_at": "2026-07-10T07:27:20.879Z",
+  "cdp_url": "http://127.0.0.1:9224",
+  "browser": "Chrome/150.0.7871.49",
+  "route": "/attack-chains",
+  "url": "http://10.0.5.8:30180/attack-chains?normalEvidenceTs=1783668432396#codex_smoke_token=<redacted>",
+  "final_url": "http://10.0.5.8:30180/attack-chains?normalEvidenceTs=1783668432396",
+  "duration_ms": 5442,
+  "screenshot": "evidence/ui-image-breakdowns/pages/attack-chains/normal-route-r179.png",
+  "checks": {
+    "app_shell": true,
+    "title": true,
+    "attack_canvas": true,
+    "six_phases": true,
+    "phase_content": true,
+    "evidence_rows": true,
+    "recommendation_rows": true,
+    "toolbar_actions": true,
+    "no_horizontal_overflow": true,
+    "no_4xx_5xx": true,
+    "no_request_failed": true,
+    "no_console_errors": true,
+    "no_page_errors": true,
+    "smoke_hash_consumed": true,
+    "goto_ok": true
+  },
+  "failed_checks": [],
+  "goto_error": null,
+  "bad_responses": [],
+  "request_failures": [],
+  "console_errors": [],
+  "page_errors": [],
+  "metrics": {
+    "final_url": "http://10.0.5.8:30180/attack-chains?normalEvidenceTs=1783668432396",
+    "document_title": "园区网络全流量采集与分析系统",
+    "h1": "攻击链分析",
+    "app_shell": true,
+    "attack_canvas": true,
+    "phase_count": 6,
+    "phase_texts": [
+      "1侦察TA0043",
+      "2初始访问TA0001",
+      "3执行TA0002",
+      "4横向移动TA0008",
+      "5C2 通信TA0011",
+      "6数据外传TA0010"
+    ],
+    "evidence_rows": 6,
+    "recommendation_rows": 6,
+    "route_buttons": [
+      "2026-06-19 00:00:00 ~ 2026-06-20 03:45:00",
+      "导出报告",
+      "下钻图谱",
+      "触发响应",
+      "链路详情"
+    ],
+    "panel_rect": {
+      "x": 173.99305725097656,
+      "y": 87.98611450195312,
+      "width": 1949.3519287109375,
+      "height": 973.912109375,
+      "right": 2123.344985961914,
+      "bottom": 1061.8982238769531
+    },
+    "canvas_rect": {
+      "x": 182.7314910888672,
+      "y": 196.7129669189453,
+      "width": 1395.879638671875,
+      "height": 557.46533203125,
+      "right": 1578.6111297607422,
+      "bottom": 754.1782989501953
+    },
+    "rail_rect": {
+      "x": 1586.60888671875,
+      "y": 196.7129669189453,
+      "width": 527.9976806640625,
+      "height": 856.44677734375,
+      "right": 2114.6065673828125,
+      "bottom": 1053.1597442626953
+    },
+    "horizontal_overflow": false,
+    "vertical_overflow": false,
+    "scroll_width": 2133,
+    "client_width": 2133,
+    "scroll_height": 1200,
+    "client_height": 1200,
+    "body_text_sample": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-10 15:26:57 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 采集监测 威胁分析 告警中心 128 战役列表 攻击链分析 加密流量 取证分析 资产图谱 检测运营 审计配置 C codex-windows-cdp-admin 系统管理员 在线 攻击链分析 选择战役 疑似 C2 隧道通信 时间范围 2026-06-19 00:00:00 ~ 2026-06-20 03:45:00 资产范围 全部资产 视图模式 攻击链视图 导出报告 下钻图谱 触发响应 链路详情 攻击链画布 攻击阶段 MITRE ATT&CK 攻击阶段 实体 / 资产 告警事件 证据锚点 处置动作 1 侦察 TA0043 203.0.113.45 端口扫描探测 06-19 01:12:08 DNS 解析记录 pcap / sysmon / session 封禁源 IP 低影响 2 初始访问 TA0001 边界防火墙 FW-01 Web 漏洞利用 06-19 01:18:08 HTTP 请求包 pcap / sysmon / session WAF 规则加固 低影响 3 执行 TA0002 WEB 服务器 10.12.5.23 恶意命令执行 06-19 01:24:08 进程创建日志 pcap / sysmon / session 终止恶意进程 中影响 4 横向移动 TA0008 域控服务器 10.12.1.10 凭证窃取 06-19 01:30:08 LSASS 访问 pcap / sysmon / session 重置域控凭证 中影响 5 C2 通信 TA0011 内网主机 10.12.8.45 C2 隧道通信 06-19 01:36:08 TLS 流量会话 pcap / sysmon / session 阻断 C2 域名 需审批 6 数据外传 TA0010 外部域名 c2.example.com 数据外传尝试 06-19 01:42:08 外传流量样本 pcap / sysmon / session 阻断外传通道 需审批 ATT&CK 阶段"
+  }
+}

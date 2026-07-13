@@ -1,0 +1,3111 @@
+{
+  "generatedAt": "2026-06-28T14:14:00.157Z",
+  "summary": {
+    "manifestItems": 181,
+    "pages": 28,
+    "overlays": 70,
+    "components": 48,
+    "states": 16,
+    "responsive": 12,
+    "methods": 5
+  },
+  "batches": [
+    {
+      "id": "00-foundation",
+      "title": "公共骨架与组件底座",
+      "goal": "先统一 AppShell、token、Ant Design 组件封装、状态页和响应式规则，避免每个页面重复返工。",
+      "pageIds": [],
+      "sourceContracts": [
+        "tokens.json",
+        "app-shell.json",
+        "component-map.json",
+        "visual-acceptance.json"
+      ],
+      "entryFiles": [
+        "web/ui/src/styles/tokens.css",
+        "web/ui/src/styles/app-shell.css",
+        "web/ui/src/layouts/AppShell.tsx",
+        "web/ui/src/components/*.tsx"
+      ],
+      "pages": [],
+      "routes": [],
+      "overlayCount": 0,
+      "foundationCounts": {
+        "foundation": 8,
+        "component": 48,
+        "state": 16,
+        "responsive": 12
+      },
+      "doneWhen": [
+        "契约自检无 error",
+        "相关页面 npm run build 通过",
+        "页面 loading/error/empty/403 状态可触发",
+        "危险动作具备权限提示、影响范围、审计 trace 和二次确认"
+      ]
+    },
+    {
+      "id": "01-core-entry",
+      "title": "入口、总览与专题统一页",
+      "goal": "打通登录、仪表盘、大屏、专题三态，形成所有页面复用的导航和闭环栏样板。",
+      "pageIds": [
+        "login",
+        "dashboard",
+        "screen",
+        "topics"
+      ],
+      "sourceContracts": [
+        "page-contracts/login.md",
+        "page-contracts/dashboard.md",
+        "page-contracts/screen.md",
+        "page-contracts/topics.md"
+      ],
+      "entryFiles": [
+        "web/ui/src/App.tsx",
+        "web/ui/src/pages/LoginPage.tsx",
+        "web/ui/src/pages/DashboardOperationsPage.tsx",
+        "web/ui/src/pages/TopicWorkbenchPage.tsx"
+      ],
+      "pages": [
+        "login",
+        "screen",
+        "dashboard",
+        "topics"
+      ],
+      "routes": [
+        "/login",
+        "/screen",
+        "/dashboard",
+        "/topics"
+      ],
+      "overlayCount": 13,
+      "doneWhen": [
+        "契约自检无 error",
+        "相关页面 npm run build 通过",
+        "页面 loading/error/empty/403 状态可触发",
+        "危险动作具备权限提示、影响范围、审计 trace 和二次确认"
+      ]
+    },
+    {
+      "id": "02-threat-forensics",
+      "title": "告警、战役、攻击链、加密流量与取证闭环",
+      "goal": "完成核心安全分析闭环：告警研判、详情证据、战役聚类、攻击路径、取证导出和审计留痕。",
+      "pageIds": [
+        "alerts",
+        "alert-detail",
+        "campaigns",
+        "campaign-detail",
+        "attack-chains",
+        "encrypted-traffic",
+        "forensics"
+      ],
+      "sourceContracts": [
+        "page-contracts/alerts.md",
+        "page-contracts/alert-detail.md",
+        "page-contracts/campaigns.md",
+        "page-contracts/encrypted-traffic.md",
+        "page-contracts/forensics.md"
+      ],
+      "entryFiles": [
+        "web/ui/src/pages/AlertTriagePage.tsx",
+        "web/ui/src/pages/AlertDetailPage.tsx",
+        "web/ui/src/pages/CampaignWorkbenchPage.tsx",
+        "web/ui/src/pages/EncryptedTrafficPage.tsx",
+        "web/ui/src/pages/ForensicsWorkbenchPage.tsx"
+      ],
+      "pages": [
+        "alerts",
+        "alert-detail",
+        "campaigns",
+        "campaign-detail",
+        "attack-chains",
+        "encrypted-traffic",
+        "forensics"
+      ],
+      "routes": [
+        "/alerts",
+        "/alerts/:alertId",
+        "/campaigns",
+        "/campaigns/:campaignId",
+        "/attack-chains",
+        "/encrypted-traffic",
+        "/forensics"
+      ],
+      "overlayCount": 17,
+      "doneWhen": [
+        "契约自检无 error",
+        "相关页面 npm run build 通过",
+        "页面 loading/error/empty/403 状态可触发",
+        "危险动作具备权限提示、影响范围、审计 trace 和二次确认"
+      ]
+    },
+    {
+      "id": "03-collection-asset",
+      "title": "采集质量、资产图谱与融合基线",
+      "goal": "证明数据来源可信、资产画像可追踪、图谱/融合/基线能支撑告警解释。",
+      "pageIds": [
+        "probes",
+        "data-quality",
+        "assets",
+        "graph",
+        "fusion",
+        "baselines"
+      ],
+      "sourceContracts": [
+        "page-contracts/probes.md",
+        "page-contracts/data-quality.md",
+        "page-contracts/assets.md",
+        "page-contracts/graph.md",
+        "page-contracts/fusion.md",
+        "page-contracts/baselines.md"
+      ],
+      "entryFiles": [
+        "web/ui/src/pages/ProbesManagementPage.tsx",
+        "web/ui/src/pages/DataQualityPage.tsx",
+        "web/ui/src/pages/AssetInventoryPage.tsx",
+        "web/ui/src/pages/GraphEntityPage.tsx"
+      ],
+      "pages": [
+        "assets",
+        "graph",
+        "fusion",
+        "baselines",
+        "probes",
+        "data-quality"
+      ],
+      "routes": [
+        "/assets",
+        "/graph",
+        "/fusion",
+        "/baselines",
+        "/probes",
+        "/data-quality"
+      ],
+      "overlayCount": 16,
+      "doneWhen": [
+        "契约自检无 error",
+        "相关页面 npm run build 通过",
+        "页面 loading/error/empty/403 状态可触发",
+        "危险动作具备权限提示、影响范围、审计 trace 和二次确认"
+      ]
+    },
+    {
+      "id": "04-detection-ops",
+      "title": "规则、部署、模型、MLOps、剧本和白名单",
+      "goal": "把检测能力从规则编辑推进到发布、模型激活、剧本执行和白名单治理。",
+      "pageIds": [
+        "rules",
+        "deployments",
+        "models",
+        "mlops",
+        "playbooks",
+        "whitelist"
+      ],
+      "sourceContracts": [
+        "page-contracts/rules.md",
+        "page-contracts/deployments.md",
+        "page-contracts/models.md",
+        "page-contracts/mlops.md",
+        "page-contracts/playbooks.md",
+        "page-contracts/whitelist.md"
+      ],
+      "entryFiles": [
+        "web/ui/src/pages/RuleManagementPage.tsx",
+        "web/ui/src/pages/DeploymentManagementPage.tsx",
+        "web/ui/src/pages/ModelManagementPage.tsx",
+        "web/ui/src/pages/MlopsOrchestrationPage.tsx"
+      ],
+      "pages": [
+        "rules",
+        "deployments",
+        "models",
+        "mlops",
+        "playbooks",
+        "whitelist"
+      ],
+      "routes": [
+        "/rules",
+        "/deployments",
+        "/models",
+        "/mlops",
+        "/playbooks",
+        "/whitelist"
+      ],
+      "overlayCount": 11,
+      "doneWhen": [
+        "契约自检无 error",
+        "相关页面 npm run build 通过",
+        "页面 loading/error/empty/403 状态可触发",
+        "危险动作具备权限提示、影响范围、审计 trace 和二次确认"
+      ]
+    },
+    {
+      "id": "05-audit-config",
+      "title": "合规、审计、通知、系统设置与异常页",
+      "goal": "补齐验收证据、审计查询、通知升级、租户配置、权限与 API token 管理。",
+      "pageIds": [
+        "compliance",
+        "audit-log",
+        "notifications",
+        "settings",
+        "not-found"
+      ],
+      "sourceContracts": [
+        "page-contracts/compliance.md",
+        "page-contracts/audit-log.md",
+        "page-contracts/notifications.md",
+        "page-contracts/settings.md",
+        "page-contracts/not-found.md"
+      ],
+      "entryFiles": [
+        "web/ui/src/pages/ComplianceAuditPage.tsx",
+        "web/ui/src/pages/AuditLogPage.tsx",
+        "web/ui/src/pages/NotificationConfigPage.tsx",
+        "web/ui/src/pages/SettingsGovernancePage.tsx"
+      ],
+      "pages": [
+        "compliance",
+        "audit-log",
+        "notifications",
+        "settings",
+        "not-found"
+      ],
+      "routes": [
+        "/compliance",
+        "/audit-log",
+        "/notifications",
+        "/settings",
+        "*"
+      ],
+      "overlayCount": 13,
+      "doneWhen": [
+        "契约自检无 error",
+        "相关页面 npm run build 通过",
+        "页面 loading/error/empty/403 状态可触发",
+        "危险动作具备权限提示、影响范围、审计 trace 和二次确认"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "id": "login",
+      "title": "登录",
+      "route": "/login",
+      "domain": "auth",
+      "domainLabel": "认证入口",
+      "batchId": "01-core-entry",
+      "batchTitle": "入口、总览与专题统一页",
+      "pageComponent": "LoginPage",
+      "codeFile": "web/ui/src/pages/LoginPage.tsx",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/login.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/login.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/login.json",
+      "apiEndpoints": [],
+      "workflows": [],
+      "overlayIds": [
+        "modal-login-error-captcha"
+      ],
+      "overlayCount": 1,
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "登录页不展示常规 AppShell",
+        "页面主工作区不得复用相邻页面的业务组件组合",
+        "所有 API 调用必须经 services/api.ts 或现有服务封装",
+        "React Query 必须覆盖 loading/error/empty 状态"
+      ]
+    },
+    {
+      "id": "screen",
+      "title": "态势大屏",
+      "route": "/screen",
+      "domain": "overview",
+      "domainLabel": "综合态势",
+      "batchId": "01-core-entry",
+      "batchTitle": "入口、总览与专题统一页",
+      "pageComponent": "SituationalScreen",
+      "codeFile": "web/ui/src/pages/SituationalScreen.tsx",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/screen.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/screen.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/screen.json",
+      "apiEndpoints": [
+        "/api/v1/dashboard/stats",
+        "/api/v1/dashboard/encrypted/trend",
+        "/api/v1/dashboard/attack-phases"
+      ],
+      "workflows": [
+        "园区拓扑总览",
+        "采集流处理管道",
+        "威胁态势",
+        "证据取证",
+        "响应与反馈",
+        "运行底座"
+      ],
+      "overlayIds": [
+        "modal-screen-readonly-token"
+      ],
+      "overlayCount": 1,
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "公共 AppShell 必须与 screen.png 目标参数一致",
+        "页面主工作区不得复用相邻页面的业务组件组合",
+        "所有 API 调用必须经 services/api.ts 或现有服务封装",
+        "React Query 必须覆盖 loading/error/empty 状态"
+      ]
+    },
+    {
+      "id": "dashboard",
+      "title": "仪表盘",
+      "route": "/dashboard",
+      "domain": "overview",
+      "domainLabel": "综合态势",
+      "batchId": "01-core-entry",
+      "batchTitle": "入口、总览与专题统一页",
+      "pageComponent": "DashboardOperationsPage",
+      "codeFile": "web/ui/src/pages/DashboardOperationsPage.tsx",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/dashboard.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/dashboard.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/dashboard.json",
+      "apiEndpoints": [
+        "/api/v1/dashboard/stats",
+        "/api/v1/dashboard/alerts/trend",
+        "/api/v1/dashboard/attack-phases"
+      ],
+      "workflows": [
+        "脱敏运营 KPI",
+        "优先级待办队列",
+        "采集与数据健康门禁",
+        "证据与反馈质量摘要",
+        "验收缺口看板"
+      ],
+      "overlayIds": [
+        "drawer-mobile-navigation",
+        "modal-global-search",
+        "dropdown-quick-entry",
+        "drawer-dashboard-kpi-detail",
+        "drawer-dashboard-task-detail"
+      ],
+      "overlayCount": 5,
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "公共 AppShell 必须与 screen.png 目标参数一致",
+        "页面主工作区不得复用相邻页面的业务组件组合",
+        "所有 API 调用必须经 services/api.ts 或现有服务封装",
+        "React Query 必须覆盖 loading/error/empty 状态"
+      ]
+    },
+    {
+      "id": "alerts",
+      "title": "告警中心",
+      "route": "/alerts",
+      "domain": "threat-analysis",
+      "domainLabel": "威胁分析",
+      "batchId": "02-threat-forensics",
+      "batchTitle": "告警、战役、攻击链、加密流量与取证闭环",
+      "pageComponent": "AlertTriagePage",
+      "codeFile": "web/ui/src/pages/AlertTriagePage.tsx",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/alerts.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/alerts.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/alerts.json",
+      "apiEndpoints": [
+        "/api/v1/alerts"
+      ],
+      "workflows": [
+        "告警队列",
+        "筛选检索",
+        "选中告警摘要",
+        "研判时间线",
+        "关联告警簇",
+        "处置与反馈"
+      ],
+      "overlayIds": [
+        "modal-alert-batch",
+        "dropdown-alert-batch-actions",
+        "dropdown-alert-row-actions"
+      ],
+      "overlayCount": 3,
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "公共 AppShell 必须与 screen.png 目标参数一致",
+        "页面主工作区不得复用相邻页面的业务组件组合",
+        "所有 API 调用必须经 services/api.ts 或现有服务封装",
+        "React Query 必须覆盖 loading/error/empty 状态"
+      ]
+    },
+    {
+      "id": "alert-detail",
+      "title": "告警详情",
+      "route": "/alerts/:alertId",
+      "domain": "threat-analysis",
+      "domainLabel": "威胁分析",
+      "batchId": "02-threat-forensics",
+      "batchTitle": "告警、战役、攻击链、加密流量与取证闭环",
+      "pageComponent": "AlertDetailPage",
+      "codeFile": "web/ui/src/pages/AlertDetailPage.tsx",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/alert-detail.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/alert-detail.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/alert-detail.json",
+      "apiEndpoints": [
+        "/api/v1/alerts/{id}",
+        "/api/v1/alerts/{id}/evidence",
+        "/api/v1/alerts/{id}/feedback"
+      ],
+      "workflows": [
+        "告警摘要",
+        "状态机",
+        "证据链",
+        "处置反馈",
+        "上下文跳转"
+      ],
+      "overlayIds": [
+        "modal-alert-status",
+        "modal-alert-feedback",
+        "modal-evidence-detail",
+        "modal-playbook-trigger",
+        "modal-whitelist-draft-from-alert"
+      ],
+      "overlayCount": 5,
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "公共 AppShell 必须与 screen.png 目标参数一致",
+        "页面主工作区不得复用相邻页面的业务组件组合",
+        "所有 API 调用必须经 services/api.ts 或现有服务封装",
+        "React Query 必须覆盖 loading/error/empty 状态"
+      ]
+    },
+    {
+      "id": "campaigns",
+      "title": "战役列表",
+      "route": "/campaigns",
+      "domain": "threat-analysis",
+      "domainLabel": "威胁分析",
+      "batchId": "02-threat-forensics",
+      "batchTitle": "告警、战役、攻击链、加密流量与取证闭环",
+      "pageComponent": "CampaignWorkbenchPage",
+      "codeFile": "web/ui/src/pages/CampaignWorkbenchPage.tsx",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/campaigns.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/campaigns.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/campaigns.json",
+      "apiEndpoints": [
+        "/api/v1/campaigns"
+      ],
+      "workflows": [
+        "战役总览",
+        "战役列表",
+        "战役时间线",
+        "影响范围",
+        "证据汇总"
+      ],
+      "overlayIds": [
+        "drawer-campaign-detail"
+      ],
+      "overlayCount": 1,
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "公共 AppShell 必须与 screen.png 目标参数一致",
+        "页面主工作区不得复用相邻页面的业务组件组合",
+        "所有 API 调用必须经 services/api.ts 或现有服务封装",
+        "React Query 必须覆盖 loading/error/empty 状态"
+      ]
+    },
+    {
+      "id": "campaign-detail",
+      "title": "战役详情",
+      "route": "/campaigns/:campaignId",
+      "domain": "threat-analysis",
+      "domainLabel": "威胁分析",
+      "batchId": "02-threat-forensics",
+      "batchTitle": "告警、战役、攻击链、加密流量与取证闭环",
+      "pageComponent": "CampaignDetailPage",
+      "codeFile": "web/ui/src/pages/CampaignDetailPage.tsx",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/campaign-detail.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/campaign-detail.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/campaign-detail.json",
+      "apiEndpoints": [
+        "/api/v1/campaigns/{id}"
+      ],
+      "workflows": [
+        "战役画像",
+        "攻击阶段",
+        "影响范围",
+        "证据链",
+        "报告导出"
+      ],
+      "overlayIds": [
+        "modal-campaign-report-export"
+      ],
+      "overlayCount": 1,
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "公共 AppShell 必须与 screen.png 目标参数一致",
+        "页面主工作区不得复用相邻页面的业务组件组合",
+        "所有 API 调用必须经 services/api.ts 或现有服务封装",
+        "React Query 必须覆盖 loading/error/empty 状态"
+      ]
+    },
+    {
+      "id": "attack-chains",
+      "title": "攻击链分析",
+      "route": "/attack-chains",
+      "domain": "threat-analysis",
+      "domainLabel": "威胁分析",
+      "batchId": "02-threat-forensics",
+      "batchTitle": "告警、战役、攻击链、加密流量与取证闭环",
+      "pageComponent": "AttackChainAnalysisPage",
+      "codeFile": "web/ui/src/pages/AttackChainAnalysisPage.tsx",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/attack-chains.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/attack-chains.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/attack-chains.json",
+      "apiEndpoints": [
+        "/api/v1/attack-chains"
+      ],
+      "workflows": [
+        "攻击链画布",
+        "阶段识别",
+        "路径分析",
+        "证据锚点",
+        "处置建议"
+      ],
+      "overlayIds": [
+        "drawer-attack-chain-detail"
+      ],
+      "overlayCount": 1,
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "公共 AppShell 必须与 screen.png 目标参数一致",
+        "页面主工作区不得复用相邻页面的业务组件组合",
+        "所有 API 调用必须经 services/api.ts 或现有服务封装",
+        "React Query 必须覆盖 loading/error/empty 状态"
+      ]
+    },
+    {
+      "id": "encrypted-traffic",
+      "title": "加密流量",
+      "route": "/encrypted-traffic",
+      "domain": "threat-analysis",
+      "domainLabel": "威胁分析",
+      "batchId": "02-threat-forensics",
+      "batchTitle": "告警、战役、攻击链、加密流量与取证闭环",
+      "pageComponent": "EncryptedTrafficPage",
+      "codeFile": "web/ui/src/pages/EncryptedTrafficPage.tsx",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/encrypted-traffic.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/encrypted-traffic.json",
+      "apiEndpoints": [
+        "/api/v1/encrypted-traffic/stats",
+        "/api/v1/encrypted-traffic/sessions",
+        "/api/v1/encrypted-traffic/ja3",
+        "/api/v1/encrypted-traffic/tunnels",
+        "/api/v1/encrypted-traffic/exfiltration"
+      ],
+      "workflows": [
+        "加密流量总览",
+        "指纹分析",
+        "隧道检测",
+        "外联画像",
+        "证据提取"
+      ],
+      "overlayIds": [
+        "drawer-encrypted-fingerprint",
+        "drawer-certificate-detail"
+      ],
+      "overlayCount": 2,
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "公共 AppShell 必须与 screen.png 目标参数一致",
+        "页面主工作区不得复用相邻页面的业务组件组合",
+        "所有 API 调用必须经 services/api.ts 或现有服务封装",
+        "React Query 必须覆盖 loading/error/empty 状态"
+      ]
+    },
+    {
+      "id": "forensics",
+      "title": "取证分析",
+      "route": "/forensics",
+      "domain": "threat-analysis",
+      "domainLabel": "威胁分析",
+      "batchId": "02-threat-forensics",
+      "batchTitle": "告警、战役、攻击链、加密流量与取证闭环",
+      "pageComponent": "ForensicsWorkbenchPage",
+      "codeFile": "web/ui/src/pages/ForensicsWorkbenchPage.tsx",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/forensics.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/forensics.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/forensics.json",
+      "apiEndpoints": [
+        "/api/v1/pcap/jobs",
+        "/api/v1/pcap/stats"
+      ],
+      "workflows": [
+        "取证任务",
+        "PCAP 索引",
+        "会话复放",
+        "证据完整性",
+        "证据导出",
+        "跨页上下文"
+      ],
+      "overlayIds": [
+        "modal-forensics-task",
+        "popconfirm-pcap-download",
+        "drawer-session-replay",
+        "modal-forensics-evidence-export"
+      ],
+      "overlayCount": 4,
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "公共 AppShell 必须与 screen.png 目标参数一致",
+        "页面主工作区不得复用相邻页面的业务组件组合",
+        "所有 API 调用必须经 services/api.ts 或现有服务封装",
+        "React Query 必须覆盖 loading/error/empty 状态"
+      ]
+    },
+    {
+      "id": "assets",
+      "title": "资产台账",
+      "route": "/assets",
+      "domain": "asset-graph",
+      "domainLabel": "资产图谱",
+      "batchId": "03-collection-asset",
+      "batchTitle": "采集质量、资产图谱与融合基线",
+      "pageComponent": "AssetInventoryPage",
+      "codeFile": "web/ui/src/pages/AssetInventoryPage.tsx",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/assets.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/assets.json",
+      "apiEndpoints": [
+        "/api/v1/assets"
+      ],
+      "workflows": [
+        "资产列表",
+        "风险画像",
+        "资产详情",
+        "流量画像",
+        "证据关联"
+      ],
+      "overlayIds": [
+        "drawer-asset-detail",
+        "modal-asset-edit",
+        "drawer-asset-history"
+      ],
+      "overlayCount": 3,
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "公共 AppShell 必须与 screen.png 目标参数一致",
+        "页面主工作区不得复用相邻页面的业务组件组合",
+        "所有 API 调用必须经 services/api.ts 或现有服务封装",
+        "React Query 必须覆盖 loading/error/empty 状态"
+      ]
+    },
+    {
+      "id": "graph",
+      "title": "实体图谱",
+      "route": "/graph",
+      "domain": "asset-graph",
+      "domainLabel": "资产图谱",
+      "batchId": "03-collection-asset",
+      "batchTitle": "采集质量、资产图谱与融合基线",
+      "pageComponent": "GraphEntityPage",
+      "codeFile": "web/ui/src/pages/GraphEntityPage.tsx",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/graph.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/graph.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/graph.json",
+      "apiEndpoints": [
+        "/api/v1/graph/explore"
+      ],
+      "workflows": [
+        "实体关系图",
+        "路径分析",
+        "邻居扩展",
+        "风险边解释",
+        "证据跳转"
+      ],
+      "overlayIds": [
+        "drawer-graph-entity",
+        "drawer-graph-path-analysis"
+      ],
+      "overlayCount": 2,
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "公共 AppShell 必须与 screen.png 目标参数一致",
+        "页面主工作区不得复用相邻页面的业务组件组合",
+        "所有 API 调用必须经 services/api.ts 或现有服务封装",
+        "React Query 必须覆盖 loading/error/empty 状态"
+      ]
+    },
+    {
+      "id": "fusion",
+      "title": "数据融合",
+      "route": "/fusion",
+      "domain": "asset-graph",
+      "domainLabel": "资产图谱",
+      "batchId": "03-collection-asset",
+      "batchTitle": "采集质量、资产图谱与融合基线",
+      "pageComponent": "FusionWorkbenchPage",
+      "codeFile": "web/ui/src/pages/FusionWorkbenchPage.tsx",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/fusion.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/fusion.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/fusion.json",
+      "apiEndpoints": [
+        "/api/v1/fusion/stats",
+        "/api/v1/fusion/entities",
+        "/api/v1/fusion/value-report"
+      ],
+      "workflows": [
+        "融合总览",
+        "冲突队列",
+        "来源可信度",
+        "回写审计",
+        "冲突处理"
+      ],
+      "overlayIds": [
+        "drawer-fusion-conflict",
+        "modal-fusion-rule-edit"
+      ],
+      "overlayCount": 2,
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "公共 AppShell 必须与 screen.png 目标参数一致",
+        "页面主工作区不得复用相邻页面的业务组件组合",
+        "所有 API 调用必须经 services/api.ts 或现有服务封装",
+        "React Query 必须覆盖 loading/error/empty 状态"
+      ]
+    },
+    {
+      "id": "baselines",
+      "title": "行为基准",
+      "route": "/baselines",
+      "domain": "asset-graph",
+      "domainLabel": "资产图谱",
+      "batchId": "03-collection-asset",
+      "batchTitle": "采集质量、资产图谱与融合基线",
+      "pageComponent": "BaselineWorkbenchPage",
+      "codeFile": "web/ui/src/pages/BaselineWorkbenchPage.tsx",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/baselines.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/baselines.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/baselines.json",
+      "apiEndpoints": [
+        "/api/v1/baselines"
+      ],
+      "workflows": [
+        "资产基线",
+        "账号基线",
+        "端口基线",
+        "协议基线",
+        "时间段基线"
+      ],
+      "overlayIds": [
+        "modal-baseline-threshold"
+      ],
+      "overlayCount": 1,
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "公共 AppShell 必须与 screen.png 目标参数一致",
+        "页面主工作区不得复用相邻页面的业务组件组合",
+        "所有 API 调用必须经 services/api.ts 或现有服务封装",
+        "React Query 必须覆盖 loading/error/empty 状态"
+      ]
+    },
+    {
+      "id": "probes",
+      "title": "探针管理",
+      "route": "/probes",
+      "domain": "collection-monitoring",
+      "domainLabel": "采集监控",
+      "batchId": "03-collection-asset",
+      "batchTitle": "采集质量、资产图谱与融合基线",
+      "pageComponent": "ProbesManagementPage",
+      "codeFile": "web/ui/src/pages/ProbesManagementPage.tsx",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/probes.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/probes.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/probes.json",
+      "apiEndpoints": [
+        "/api/v1/probes"
+      ],
+      "workflows": [
+        "探针总览",
+        "部署拓扑",
+        "吞吐与丢包",
+        "探针配置",
+        "心跳与日志",
+        "批量运维"
+      ],
+      "overlayIds": [
+        "drawer-probe-detail",
+        "modal-probe-config",
+        "modal-probe-batch-upgrade",
+        "modal-probe-cert-rotate",
+        "drawer-probe-log"
+      ],
+      "overlayCount": 5,
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "公共 AppShell 必须与 screen.png 目标参数一致",
+        "页面主工作区不得复用相邻页面的业务组件组合",
+        "所有 API 调用必须经 services/api.ts 或现有服务封装",
+        "React Query 必须覆盖 loading/error/empty 状态"
+      ]
+    },
+    {
+      "id": "rules",
+      "title": "规则管理",
+      "route": "/rules",
+      "domain": "detection-ops",
+      "domainLabel": "检测运营",
+      "batchId": "04-detection-ops",
+      "batchTitle": "规则、部署、模型、MLOps、剧本和白名单",
+      "pageComponent": "RuleManagementPage",
+      "codeFile": "web/ui/src/pages/RuleManagementPage.tsx",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/rules.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/rules.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/rules.json",
+      "apiEndpoints": [
+        "/api/v1/rules"
+      ],
+      "workflows": [
+        "规则定义",
+        "测试验证",
+        "依赖引用",
+        "样本回放",
+        "发布门禁"
+      ],
+      "overlayIds": [
+        "modal-rule-edit",
+        "drawer-rule-detail",
+        "popconfirm-delete",
+        "modal-rule-publish"
+      ],
+      "overlayCount": 4,
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "公共 AppShell 必须与 screen.png 目标参数一致",
+        "页面主工作区不得复用相邻页面的业务组件组合",
+        "所有 API 调用必须经 services/api.ts 或现有服务封装",
+        "React Query 必须覆盖 loading/error/empty 状态"
+      ]
+    },
+    {
+      "id": "deployments",
+      "title": "部署管理",
+      "route": "/deployments",
+      "domain": "detection-ops",
+      "domainLabel": "检测运营",
+      "batchId": "04-detection-ops",
+      "batchTitle": "规则、部署、模型、MLOps、剧本和白名单",
+      "pageComponent": "DeploymentManagementPage",
+      "codeFile": "web/ui/src/pages/DeploymentManagementPage.tsx",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/deployments.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/deployments.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/deployments.json",
+      "apiEndpoints": [
+        "/api/v1/deployments"
+      ],
+      "workflows": [
+        "发布计划",
+        "灰度状态",
+        "回滚窗口",
+        "运行健康",
+        "审计记录"
+      ],
+      "overlayIds": [
+        "modal-deployment-create",
+        "modal-deployment-rollback"
+      ],
+      "overlayCount": 2,
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "公共 AppShell 必须与 screen.png 目标参数一致",
+        "页面主工作区不得复用相邻页面的业务组件组合",
+        "所有 API 调用必须经 services/api.ts 或现有服务封装",
+        "React Query 必须覆盖 loading/error/empty 状态"
+      ]
+    },
+    {
+      "id": "models",
+      "title": "模型管理",
+      "route": "/models",
+      "domain": "detection-ops",
+      "domainLabel": "检测运营",
+      "batchId": "04-detection-ops",
+      "batchTitle": "规则、部署、模型、MLOps、剧本和白名单",
+      "pageComponent": "ModelManagementPage",
+      "codeFile": "web/ui/src/pages/ModelManagementPage.tsx",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/models.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/models.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/models.json",
+      "apiEndpoints": [
+        "/api/v1/models"
+      ],
+      "workflows": [
+        "模型版本",
+        "特征解释",
+        "异常解释",
+        "样本示例",
+        "激活回滚"
+      ],
+      "overlayIds": [
+        "drawer-model-detail"
+      ],
+      "overlayCount": 1,
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "公共 AppShell 必须与 screen.png 目标参数一致",
+        "页面主工作区不得复用相邻页面的业务组件组合",
+        "所有 API 调用必须经 services/api.ts 或现有服务封装",
+        "React Query 必须覆盖 loading/error/empty 状态"
+      ]
+    },
+    {
+      "id": "mlops",
+      "title": "MLOps 编排",
+      "route": "/mlops",
+      "domain": "detection-ops",
+      "domainLabel": "检测运营",
+      "batchId": "04-detection-ops",
+      "batchTitle": "规则、部署、模型、MLOps、剧本和白名单",
+      "pageComponent": "MlopsOrchestrationPage",
+      "codeFile": "web/ui/src/pages/MlopsOrchestrationPage.tsx",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/mlops.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/mlops.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/mlops.json",
+      "apiEndpoints": [
+        "/api/v1/mlops/status",
+        "/api/v1/mlops/conditions"
+      ],
+      "workflows": [
+        "任务 DAG",
+        "标注回流",
+        "训练评估",
+        "模型注册",
+        "在线效果"
+      ],
+      "overlayIds": [
+        "drawer-mlops-task-detail"
+      ],
+      "overlayCount": 1,
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "公共 AppShell 必须与 screen.png 目标参数一致",
+        "页面主工作区不得复用相邻页面的业务组件组合",
+        "所有 API 调用必须经 services/api.ts 或现有服务封装",
+        "React Query 必须覆盖 loading/error/empty 状态"
+      ]
+    },
+    {
+      "id": "data-quality",
+      "title": "数据质量",
+      "route": "/data-quality",
+      "domain": "collection-monitoring",
+      "domainLabel": "采集监控",
+      "batchId": "03-collection-asset",
+      "batchTitle": "采集质量、资产图谱与融合基线",
+      "pageComponent": "DataQualityPage",
+      "codeFile": "web/ui/src/pages/DataQualityPage.tsx",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/data-quality.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/data-quality.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/data-quality.json",
+      "apiEndpoints": [
+        "/api/v1/data-quality"
+      ],
+      "workflows": [
+        "质量总分",
+        "Topic 健康",
+        "Flink 处理质量",
+        "字段质量",
+        "存储质量",
+        "重放与对账"
+      ],
+      "overlayIds": [
+        "drawer-dlq-sample",
+        "modal-data-replay-task",
+        "drawer-field-quality-sample"
+      ],
+      "overlayCount": 3,
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "公共 AppShell 必须与 screen.png 目标参数一致",
+        "页面主工作区不得复用相邻页面的业务组件组合",
+        "所有 API 调用必须经 services/api.ts 或现有服务封装",
+        "React Query 必须覆盖 loading/error/empty 状态"
+      ]
+    },
+    {
+      "id": "playbooks",
+      "title": "SOAR 剧本",
+      "route": "/playbooks",
+      "domain": "detection-ops",
+      "domainLabel": "检测运营",
+      "batchId": "04-detection-ops",
+      "batchTitle": "规则、部署、模型、MLOps、剧本和白名单",
+      "pageComponent": "PlaybookAutomationPage",
+      "codeFile": "web/ui/src/pages/PlaybookAutomationPage.tsx",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/playbooks.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/playbooks.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/playbooks.json",
+      "apiEndpoints": [
+        "/api/v1/playbooks/catalog",
+        "/api/v1/playbooks/executions"
+      ],
+      "workflows": [
+        "剧本列表",
+        "剧本编排",
+        "触发策略",
+        "执行历史",
+        "风险控制",
+        "审计证据"
+      ],
+      "overlayIds": [
+        "modal-playbook-edit"
+      ],
+      "overlayCount": 1,
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "公共 AppShell 必须与 screen.png 目标参数一致",
+        "页面主工作区不得复用相邻页面的业务组件组合",
+        "所有 API 调用必须经 services/api.ts 或现有服务封装",
+        "React Query 必须覆盖 loading/error/empty 状态"
+      ]
+    },
+    {
+      "id": "whitelist",
+      "title": "白名单",
+      "route": "/whitelist",
+      "domain": "detection-ops",
+      "domainLabel": "检测运营",
+      "batchId": "04-detection-ops",
+      "batchTitle": "规则、部署、模型、MLOps、剧本和白名单",
+      "pageComponent": "WhitelistGovernancePage",
+      "codeFile": "web/ui/src/pages/WhitelistGovernancePage.tsx",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/whitelist.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/whitelist.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/whitelist.json",
+      "apiEndpoints": [
+        "/api/v1/whitelist"
+      ],
+      "workflows": [
+        "条件构造",
+        "审批流程",
+        "到期治理",
+        "命中监控",
+        "风险解释"
+      ],
+      "overlayIds": [
+        "modal-whitelist-add",
+        "drawer-whitelist-approval"
+      ],
+      "overlayCount": 2,
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "公共 AppShell 必须与 screen.png 目标参数一致",
+        "页面主工作区不得复用相邻页面的业务组件组合",
+        "所有 API 调用必须经 services/api.ts 或现有服务封装",
+        "React Query 必须覆盖 loading/error/empty 状态"
+      ]
+    },
+    {
+      "id": "compliance",
+      "title": "合规审计",
+      "route": "/compliance",
+      "domain": "audit-config",
+      "domainLabel": "审计配置",
+      "batchId": "05-audit-config",
+      "batchTitle": "合规、审计、通知、系统设置与异常页",
+      "pageComponent": "ComplianceAuditPage",
+      "codeFile": "web/ui/src/pages/ComplianceAuditPage.tsx",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/compliance.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/compliance.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/compliance.json",
+      "apiEndpoints": [
+        "/api/v1/compliance/reports",
+        "/api/v1/compliance/audit-trail"
+      ],
+      "workflows": [
+        "验收门禁",
+        "指标映射",
+        "证据包",
+        "运行报告",
+        "缺口治理",
+        "第三方评测"
+      ],
+      "overlayIds": [
+        "drawer-compliance-gate-detail",
+        "modal-compliance-evidence-package-export",
+        "modal-compliance-report-export"
+      ],
+      "overlayCount": 3,
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "公共 AppShell 必须与 screen.png 目标参数一致",
+        "页面主工作区不得复用相邻页面的业务组件组合",
+        "所有 API 调用必须经 services/api.ts 或现有服务封装",
+        "React Query 必须覆盖 loading/error/empty 状态"
+      ]
+    },
+    {
+      "id": "audit-log",
+      "title": "审计日志",
+      "route": "/audit-log",
+      "domain": "audit-config",
+      "domainLabel": "审计配置",
+      "batchId": "05-audit-config",
+      "batchTitle": "合规、审计、通知、系统设置与异常页",
+      "pageComponent": "AuditLogPage",
+      "codeFile": "web/ui/src/pages/AuditLogPage.tsx",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/audit-log.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/audit-log.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/audit-log.json",
+      "apiEndpoints": [
+        "/api/v1/audit/logs"
+      ],
+      "workflows": [
+        "日志检索",
+        "操作详情",
+        "高风险审计",
+        "关联链路",
+        "留存状态",
+        "导出取证"
+      ],
+      "overlayIds": [
+        "drawer-audit-operation-detail",
+        "modal-audit-export"
+      ],
+      "overlayCount": 2,
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "公共 AppShell 必须与 screen.png 目标参数一致",
+        "页面主工作区不得复用相邻页面的业务组件组合",
+        "所有 API 调用必须经 services/api.ts 或现有服务封装",
+        "React Query 必须覆盖 loading/error/empty 状态"
+      ]
+    },
+    {
+      "id": "notifications",
+      "title": "通知配置",
+      "route": "/notifications",
+      "domain": "audit-config",
+      "domainLabel": "审计配置",
+      "batchId": "05-audit-config",
+      "batchTitle": "合规、审计、通知、系统设置与异常页",
+      "pageComponent": "NotificationConfigPage",
+      "codeFile": "web/ui/src/pages/NotificationConfigPage.tsx",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/notifications.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/notifications.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/notifications.json",
+      "apiEndpoints": [
+        "/api/v1/notifications/settings"
+      ],
+      "workflows": [
+        "通知渠道",
+        "订阅规则",
+        "升级策略",
+        "模板管理",
+        "发送历史",
+        "抑制静默"
+      ],
+      "overlayIds": [
+        "drawer-notification-center",
+        "modal-notification-channel-edit",
+        "modal-notification-template-preview-test",
+        "drawer-notification-silence-rule"
+      ],
+      "overlayCount": 4,
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "公共 AppShell 必须与 screen.png 目标参数一致",
+        "页面主工作区不得复用相邻页面的业务组件组合",
+        "所有 API 调用必须经 services/api.ts 或现有服务封装",
+        "React Query 必须覆盖 loading/error/empty 状态"
+      ]
+    },
+    {
+      "id": "settings",
+      "title": "系统设置",
+      "route": "/settings",
+      "domain": "audit-config",
+      "domainLabel": "审计配置",
+      "batchId": "05-audit-config",
+      "batchTitle": "合规、审计、通知、系统设置与异常页",
+      "pageComponent": "SettingsGovernancePage",
+      "codeFile": "web/ui/src/pages/SettingsGovernancePage.tsx",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/settings.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/settings.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/settings.json",
+      "apiEndpoints": [
+        "/api/v1/tokens/scopes",
+        "/api/v1/tokens",
+        "/api/v1/tokens/scopes/probe"
+      ],
+      "workflows": [
+        "租户站点",
+        "权限矩阵",
+        "API 令牌",
+        "留存策略",
+        "集成配置",
+        "安全策略",
+        "系统参数"
+      ],
+      "overlayIds": [
+        "dropdown-user-menu",
+        "modal-settings-token",
+        "popconfirm-settings-token-revoke",
+        "drawer-settings-rbac-edit"
+      ],
+      "overlayCount": 4,
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "公共 AppShell 必须与 screen.png 目标参数一致",
+        "页面主工作区不得复用相邻页面的业务组件组合",
+        "所有 API 调用必须经 services/api.ts 或现有服务封装",
+        "React Query 必须覆盖 loading/error/empty 状态"
+      ]
+    },
+    {
+      "id": "not-found",
+      "title": "404 异常页",
+      "route": "*",
+      "domain": "global",
+      "domainLabel": "全局",
+      "batchId": "05-audit-config",
+      "batchTitle": "合规、审计、通知、系统设置与异常页",
+      "pageComponent": "NotFoundPage",
+      "codeFile": "web/ui/src/pages/NotFoundPage.tsx",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/not-found.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/not-found.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/not-found.json",
+      "apiEndpoints": [],
+      "workflows": [],
+      "overlayIds": [],
+      "overlayCount": 0,
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "公共 AppShell 必须与 screen.png 目标参数一致",
+        "页面主工作区不得复用相邻页面的业务组件组合",
+        "所有 API 调用必须经 services/api.ts 或现有服务封装",
+        "React Query 必须覆盖 loading/error/empty 状态"
+      ]
+    },
+    {
+      "id": "topics",
+      "title": "专题面板",
+      "route": "/topics",
+      "domain": "overview",
+      "domainLabel": "综合态势",
+      "batchId": "01-core-entry",
+      "batchTitle": "入口、总览与专题统一页",
+      "pageComponent": "TopicWorkbenchPage",
+      "codeFile": "web/ui/src/pages/TopicWorkbenchPage.tsx",
+      "sourceImage": null,
+      "visualStates": [
+        {
+          "id": "topics-encrypted-tunnel",
+          "title": "加密隧道专题",
+          "query": "?topic=tunnel&tab=tunnel",
+          "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/topics-encrypted-tunnel.png"
+        },
+        {
+          "id": "topics-data-exfiltration",
+          "title": "数据外传专题",
+          "query": "?topic=exfil&tab=exfil",
+          "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/topics-data-exfiltration.png"
+        },
+        {
+          "id": "topics-apt-campaign",
+          "title": "APT 战役专题",
+          "query": "?topic=apt&tab=apt",
+          "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/topics-apt-campaign.png"
+        }
+      ],
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/topics.md",
+      "layerContract": null,
+      "apiEndpoints": [
+        "/api/v1/topics/tunnel",
+        "/api/v1/topics/exfil",
+        "/api/v1/topics/apt"
+      ],
+      "workflows": [],
+      "overlayIds": [
+        "modal-topic-save-view",
+        "drawer-topic-scope-edit",
+        "modal-topic-report-export",
+        "modal-topic-evidence-package-export",
+        "drawer-topic-subscription",
+        "dropdown-topic-share-favorite"
+      ],
+      "overlayCount": 6,
+      "acceptance": []
+    }
+  ],
+  "overlays": [
+    {
+      "id": "dropdown-user-menu",
+      "title": "用户下拉菜单",
+      "route": "/settings",
+      "kind": "Dropdown/Menu",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/dropdown-user-menu.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/dropdown-user-menu.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/dropdown-user-menu.json",
+      "apiEndpoints": [
+        "/api/v1/tokens/scopes",
+        "/api/v1/tokens",
+        "/api/v1/tokens/scopes/probe"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Dropdown/Menu 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "drawer-mobile-navigation",
+      "title": "移动端侧滑菜单",
+      "route": "/dashboard",
+      "kind": "Drawer",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-mobile-navigation.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/drawer-mobile-navigation.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/drawer-mobile-navigation.json",
+      "apiEndpoints": [
+        "/api/v1/dashboard/stats",
+        "/api/v1/dashboard/alerts/trend",
+        "/api/v1/dashboard/attack-phases"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Drawer 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "drawer-notification-center",
+      "title": "通知中心抽屉",
+      "route": "/notifications",
+      "kind": "Drawer",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-notification-center.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/drawer-notification-center.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/drawer-notification-center.json",
+      "apiEndpoints": [
+        "/api/v1/notifications/settings"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Drawer 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-global-search",
+      "title": "全局搜索弹窗",
+      "route": "/dashboard",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-global-search.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-global-search.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-global-search.json",
+      "apiEndpoints": [
+        "/api/v1/dashboard/stats",
+        "/api/v1/dashboard/alerts/trend",
+        "/api/v1/dashboard/attack-phases"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "dropdown-quick-entry",
+      "title": "快速入口下拉",
+      "route": "/dashboard",
+      "kind": "Dropdown/Menu",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/dropdown-quick-entry.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/dropdown-quick-entry.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/dropdown-quick-entry.json",
+      "apiEndpoints": [
+        "/api/v1/dashboard/stats",
+        "/api/v1/dashboard/alerts/trend",
+        "/api/v1/dashboard/attack-phases"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Dropdown/Menu 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-login-error-captcha",
+      "title": "登录异常与验证码状态",
+      "route": "/login",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-login-error-captcha.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-login-error-captcha.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-login-error-captcha.json",
+      "apiEndpoints": [],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "drawer-dashboard-kpi-detail",
+      "title": "仪表盘 KPI 详情",
+      "route": "/dashboard",
+      "kind": "Drawer",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-dashboard-kpi-detail.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/drawer-dashboard-kpi-detail.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/drawer-dashboard-kpi-detail.json",
+      "apiEndpoints": [
+        "/api/v1/dashboard/stats",
+        "/api/v1/dashboard/alerts/trend",
+        "/api/v1/dashboard/attack-phases"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Drawer 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "drawer-dashboard-task-detail",
+      "title": "待办任务详情",
+      "route": "/dashboard",
+      "kind": "Drawer",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-dashboard-task-detail.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/drawer-dashboard-task-detail.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/drawer-dashboard-task-detail.json",
+      "apiEndpoints": [
+        "/api/v1/dashboard/stats",
+        "/api/v1/dashboard/alerts/trend",
+        "/api/v1/dashboard/attack-phases"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Drawer 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-screen-readonly-token",
+      "title": "态势大屏只读令牌/脱敏配置",
+      "route": "/screen",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-screen-readonly-token.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-screen-readonly-token.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-screen-readonly-token.json",
+      "apiEndpoints": [
+        "/api/v1/dashboard/stats",
+        "/api/v1/dashboard/encrypted/trend",
+        "/api/v1/dashboard/attack-phases"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "drawer-probe-detail",
+      "title": "探针详情",
+      "route": "/probes",
+      "kind": "Drawer",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-probe-detail.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/drawer-probe-detail.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/drawer-probe-detail.json",
+      "apiEndpoints": [
+        "/api/v1/probes"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Drawer 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-probe-config",
+      "title": "探针配置下发",
+      "route": "/probes",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-probe-config.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-probe-config.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-probe-config.json",
+      "apiEndpoints": [
+        "/api/v1/probes"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-probe-batch-upgrade",
+      "title": "探针批量升级确认",
+      "route": "/probes",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-probe-batch-upgrade.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-probe-batch-upgrade.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-probe-batch-upgrade.json",
+      "apiEndpoints": [
+        "/api/v1/probes"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-probe-cert-rotate",
+      "title": "证书轮换确认",
+      "route": "/probes",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-probe-cert-rotate.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-probe-cert-rotate.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-probe-cert-rotate.json",
+      "apiEndpoints": [
+        "/api/v1/probes"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "drawer-probe-log",
+      "title": "探针日志抽屉",
+      "route": "/probes",
+      "kind": "Drawer",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-probe-log.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/drawer-probe-log.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/drawer-probe-log.json",
+      "apiEndpoints": [
+        "/api/v1/probes"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Drawer 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "drawer-dlq-sample",
+      "title": "DLQ 样例详情",
+      "route": "/data-quality",
+      "kind": "Drawer",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-dlq-sample.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/drawer-dlq-sample.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/drawer-dlq-sample.json",
+      "apiEndpoints": [
+        "/api/v1/data-quality"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Drawer 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-data-replay-task",
+      "title": "数据重放任务",
+      "route": "/data-quality",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-data-replay-task.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-data-replay-task.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-data-replay-task.json",
+      "apiEndpoints": [
+        "/api/v1/data-quality"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "drawer-field-quality-sample",
+      "title": "字段质量样例",
+      "route": "/data-quality",
+      "kind": "Drawer",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-field-quality-sample.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/drawer-field-quality-sample.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/drawer-field-quality-sample.json",
+      "apiEndpoints": [
+        "/api/v1/data-quality"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Drawer 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-alert-batch",
+      "title": "告警批量操作确认",
+      "route": "/alerts",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-alert-batch.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-alert-batch.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-alert-batch.json",
+      "apiEndpoints": [
+        "/api/v1/alerts"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "dropdown-alert-batch-actions",
+      "title": "告警批量操作下拉",
+      "route": "/alerts",
+      "kind": "Dropdown/Menu",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/dropdown-alert-batch-actions.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/dropdown-alert-batch-actions.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/dropdown-alert-batch-actions.json",
+      "apiEndpoints": [
+        "/api/v1/alerts"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Dropdown/Menu 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "dropdown-alert-row-actions",
+      "title": "告警行操作下拉",
+      "route": "/alerts",
+      "kind": "Dropdown/Menu",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/dropdown-alert-row-actions.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/dropdown-alert-row-actions.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/dropdown-alert-row-actions.json",
+      "apiEndpoints": [
+        "/api/v1/alerts"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Dropdown/Menu 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-alert-status",
+      "title": "更新告警状态",
+      "route": "/alerts/:alertId",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-alert-status.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-alert-status.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-alert-status.json",
+      "apiEndpoints": [
+        "/api/v1/alerts/{id}",
+        "/api/v1/alerts/{id}/evidence",
+        "/api/v1/alerts/{id}/feedback"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-alert-feedback",
+      "title": "提交告警反馈",
+      "route": "/alerts/:alertId",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-alert-feedback.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-alert-feedback.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-alert-feedback.json",
+      "apiEndpoints": [
+        "/api/v1/alerts/{id}",
+        "/api/v1/alerts/{id}/evidence",
+        "/api/v1/alerts/{id}/feedback"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-evidence-detail",
+      "title": "证据详情",
+      "route": "/alerts/:alertId",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-evidence-detail.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-evidence-detail.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-evidence-detail.json",
+      "apiEndpoints": [
+        "/api/v1/alerts/{id}",
+        "/api/v1/alerts/{id}/evidence",
+        "/api/v1/alerts/{id}/feedback"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-forensics-task",
+      "title": "取证任务详情",
+      "route": "/forensics",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-forensics-task.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-forensics-task.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-forensics-task.json",
+      "apiEndpoints": [
+        "/api/v1/pcap/jobs",
+        "/api/v1/pcap/stats"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "drawer-campaign-detail",
+      "title": "战役详情抽屉",
+      "route": "/campaigns",
+      "kind": "Drawer",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-campaign-detail.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/drawer-campaign-detail.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/drawer-campaign-detail.json",
+      "apiEndpoints": [
+        "/api/v1/campaigns"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Drawer 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "drawer-attack-chain-detail",
+      "title": "攻击链详情抽屉",
+      "route": "/attack-chains",
+      "kind": "Drawer",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-attack-chain-detail.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/drawer-attack-chain-detail.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/drawer-attack-chain-detail.json",
+      "apiEndpoints": [
+        "/api/v1/attack-chains"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Drawer 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "drawer-encrypted-fingerprint",
+      "title": "加密指纹详情",
+      "route": "/encrypted-traffic",
+      "kind": "Drawer",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-encrypted-fingerprint.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/drawer-encrypted-fingerprint.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/drawer-encrypted-fingerprint.json",
+      "apiEndpoints": [
+        "/api/v1/encrypted-traffic/stats",
+        "/api/v1/encrypted-traffic/sessions",
+        "/api/v1/encrypted-traffic/ja3",
+        "/api/v1/encrypted-traffic/tunnels",
+        "/api/v1/encrypted-traffic/exfiltration"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Drawer 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "drawer-certificate-detail",
+      "title": "证书详情",
+      "route": "/encrypted-traffic",
+      "kind": "Drawer",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-certificate-detail.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/drawer-certificate-detail.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/drawer-certificate-detail.json",
+      "apiEndpoints": [
+        "/api/v1/encrypted-traffic/stats",
+        "/api/v1/encrypted-traffic/sessions",
+        "/api/v1/encrypted-traffic/ja3",
+        "/api/v1/encrypted-traffic/tunnels",
+        "/api/v1/encrypted-traffic/exfiltration"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Drawer 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-playbook-trigger",
+      "title": "从告警触发剧本",
+      "route": "/alerts/:alertId",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-playbook-trigger.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-playbook-trigger.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-playbook-trigger.json",
+      "apiEndpoints": [
+        "/api/v1/alerts/{id}",
+        "/api/v1/alerts/{id}/evidence",
+        "/api/v1/alerts/{id}/feedback"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-whitelist-draft-from-alert",
+      "title": "从告警生成白名单草案",
+      "route": "/alerts/:alertId",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-whitelist-draft-from-alert.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-whitelist-draft-from-alert.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-whitelist-draft-from-alert.json",
+      "apiEndpoints": [
+        "/api/v1/alerts/{id}",
+        "/api/v1/alerts/{id}/evidence",
+        "/api/v1/alerts/{id}/feedback"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "popconfirm-pcap-download",
+      "title": "PCAP 下载确认",
+      "route": "/forensics",
+      "kind": "Popconfirm",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/popconfirm-pcap-download.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/popconfirm-pcap-download.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/popconfirm-pcap-download.json",
+      "apiEndpoints": [
+        "/api/v1/pcap/jobs",
+        "/api/v1/pcap/stats"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Popconfirm 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "drawer-session-replay",
+      "title": "会话复放抽屉",
+      "route": "/forensics",
+      "kind": "Drawer",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-session-replay.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/drawer-session-replay.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/drawer-session-replay.json",
+      "apiEndpoints": [
+        "/api/v1/pcap/jobs",
+        "/api/v1/pcap/stats"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Drawer 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "drawer-asset-detail",
+      "title": "资产详情",
+      "route": "/assets",
+      "kind": "Drawer",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-asset-detail.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/drawer-asset-detail.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/drawer-asset-detail.json",
+      "apiEndpoints": [
+        "/api/v1/assets"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Drawer 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-asset-edit",
+      "title": "编辑资产",
+      "route": "/assets",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-asset-edit.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-asset-edit.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-asset-edit.json",
+      "apiEndpoints": [
+        "/api/v1/assets"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "drawer-asset-history",
+      "title": "资产历史",
+      "route": "/assets",
+      "kind": "Drawer",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-asset-history.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/drawer-asset-history.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/drawer-asset-history.json",
+      "apiEndpoints": [
+        "/api/v1/assets"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Drawer 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "drawer-graph-entity",
+      "title": "图谱实体详情",
+      "route": "/graph",
+      "kind": "Drawer",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-graph-entity.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/drawer-graph-entity.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/drawer-graph-entity.json",
+      "apiEndpoints": [
+        "/api/v1/graph/explore"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Drawer 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "drawer-graph-path-analysis",
+      "title": "图谱路径分析",
+      "route": "/graph",
+      "kind": "Drawer",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-graph-path-analysis.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/drawer-graph-path-analysis.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/drawer-graph-path-analysis.json",
+      "apiEndpoints": [
+        "/api/v1/graph/explore"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Drawer 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "drawer-fusion-conflict",
+      "title": "数据融合冲突处理",
+      "route": "/fusion",
+      "kind": "Drawer",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-fusion-conflict.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/drawer-fusion-conflict.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/drawer-fusion-conflict.json",
+      "apiEndpoints": [
+        "/api/v1/fusion/stats",
+        "/api/v1/fusion/entities",
+        "/api/v1/fusion/value-report"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Drawer 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-fusion-rule-edit",
+      "title": "融合规则编辑",
+      "route": "/fusion",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-fusion-rule-edit.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-fusion-rule-edit.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-fusion-rule-edit.json",
+      "apiEndpoints": [
+        "/api/v1/fusion/stats",
+        "/api/v1/fusion/entities",
+        "/api/v1/fusion/value-report"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-baseline-threshold",
+      "title": "基线阈值编辑",
+      "route": "/baselines",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-baseline-threshold.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-baseline-threshold.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-baseline-threshold.json",
+      "apiEndpoints": [
+        "/api/v1/baselines"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-rule-edit",
+      "title": "新建/编辑规则",
+      "route": "/rules",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-rule-edit.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-rule-edit.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-rule-edit.json",
+      "apiEndpoints": [
+        "/api/v1/rules"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "drawer-rule-detail",
+      "title": "规则详情",
+      "route": "/rules",
+      "kind": "Drawer",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-rule-detail.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/drawer-rule-detail.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/drawer-rule-detail.json",
+      "apiEndpoints": [
+        "/api/v1/rules"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Drawer 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "popconfirm-delete",
+      "title": "规则删除确认",
+      "route": "/rules",
+      "kind": "Popconfirm",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/popconfirm-delete.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/popconfirm-delete.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/popconfirm-delete.json",
+      "apiEndpoints": [
+        "/api/v1/rules"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Popconfirm 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-rule-publish",
+      "title": "规则发布确认",
+      "route": "/rules",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-rule-publish.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-rule-publish.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-rule-publish.json",
+      "apiEndpoints": [
+        "/api/v1/rules"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-deployment-create",
+      "title": "新建部署",
+      "route": "/deployments",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-deployment-create.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-deployment-create.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-deployment-create.json",
+      "apiEndpoints": [
+        "/api/v1/deployments"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-deployment-rollback",
+      "title": "回滚部署确认",
+      "route": "/deployments",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-deployment-rollback.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-deployment-rollback.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-deployment-rollback.json",
+      "apiEndpoints": [
+        "/api/v1/deployments"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "drawer-model-detail",
+      "title": "模型详情",
+      "route": "/models",
+      "kind": "Drawer",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-model-detail.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/drawer-model-detail.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/drawer-model-detail.json",
+      "apiEndpoints": [
+        "/api/v1/models"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Drawer 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "drawer-mlops-task-detail",
+      "title": "MLOps 任务详情",
+      "route": "/mlops",
+      "kind": "Drawer",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-mlops-task-detail.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/drawer-mlops-task-detail.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/drawer-mlops-task-detail.json",
+      "apiEndpoints": [
+        "/api/v1/mlops/status",
+        "/api/v1/mlops/conditions"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Drawer 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-playbook-edit",
+      "title": "剧本编辑",
+      "route": "/playbooks",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-playbook-edit.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-playbook-edit.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-playbook-edit.json",
+      "apiEndpoints": [
+        "/api/v1/playbooks/catalog",
+        "/api/v1/playbooks/executions"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-whitelist-add",
+      "title": "添加白名单",
+      "route": "/whitelist",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-whitelist-add.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-whitelist-add.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-whitelist-add.json",
+      "apiEndpoints": [
+        "/api/v1/whitelist"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "drawer-whitelist-approval",
+      "title": "白名单审批详情",
+      "route": "/whitelist",
+      "kind": "Drawer",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-whitelist-approval.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/drawer-whitelist-approval.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/drawer-whitelist-approval.json",
+      "apiEndpoints": [
+        "/api/v1/whitelist"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Drawer 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-settings-token",
+      "title": "创建 API 令牌",
+      "route": "/settings",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-settings-token.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-settings-token.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-settings-token.json",
+      "apiEndpoints": [
+        "/api/v1/tokens/scopes",
+        "/api/v1/tokens",
+        "/api/v1/tokens/scopes/probe"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-topic-save-view",
+      "title": "专题保存视图",
+      "route": "/topics",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-topic-save-view.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-topic-save-view.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-topic-save-view.json",
+      "apiEndpoints": [
+        "/api/v1/topics/tunnel",
+        "/api/v1/topics/exfil",
+        "/api/v1/topics/apt"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "drawer-topic-scope-edit",
+      "title": "专题范围编辑",
+      "route": "/topics",
+      "kind": "Drawer",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-topic-scope-edit.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/drawer-topic-scope-edit.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/drawer-topic-scope-edit.json",
+      "apiEndpoints": [
+        "/api/v1/topics/tunnel",
+        "/api/v1/topics/exfil",
+        "/api/v1/topics/apt"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Drawer 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-topic-report-export",
+      "title": "专题报告导出",
+      "route": "/topics",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-topic-report-export.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-topic-report-export.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-topic-report-export.json",
+      "apiEndpoints": [
+        "/api/v1/topics/tunnel",
+        "/api/v1/topics/exfil",
+        "/api/v1/topics/apt"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-topic-evidence-package-export",
+      "title": "专题证据包导出",
+      "route": "/topics",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-topic-evidence-package-export.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-topic-evidence-package-export.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-topic-evidence-package-export.json",
+      "apiEndpoints": [
+        "/api/v1/topics/tunnel",
+        "/api/v1/topics/exfil",
+        "/api/v1/topics/apt"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "drawer-topic-subscription",
+      "title": "专题订阅配置",
+      "route": "/topics",
+      "kind": "Drawer",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-topic-subscription.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/drawer-topic-subscription.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/drawer-topic-subscription.json",
+      "apiEndpoints": [
+        "/api/v1/topics/tunnel",
+        "/api/v1/topics/exfil",
+        "/api/v1/topics/apt"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Drawer 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "dropdown-topic-share-favorite",
+      "title": "专题分享收藏菜单",
+      "route": "/topics",
+      "kind": "Dropdown/Menu",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/dropdown-topic-share-favorite.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/dropdown-topic-share-favorite.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/dropdown-topic-share-favorite.json",
+      "apiEndpoints": [
+        "/api/v1/topics/tunnel",
+        "/api/v1/topics/exfil",
+        "/api/v1/topics/apt"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Dropdown/Menu 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-campaign-report-export",
+      "title": "战役报告导出",
+      "route": "/campaigns/:campaignId",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-campaign-report-export.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-campaign-report-export.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-campaign-report-export.json",
+      "apiEndpoints": [
+        "/api/v1/campaigns/{id}"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-forensics-evidence-export",
+      "title": "取证证据导出",
+      "route": "/forensics",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-forensics-evidence-export.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-forensics-evidence-export.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-forensics-evidence-export.json",
+      "apiEndpoints": [
+        "/api/v1/pcap/jobs",
+        "/api/v1/pcap/stats"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "drawer-compliance-gate-detail",
+      "title": "合规门禁详情",
+      "route": "/compliance",
+      "kind": "Drawer",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-compliance-gate-detail.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/drawer-compliance-gate-detail.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/drawer-compliance-gate-detail.json",
+      "apiEndpoints": [
+        "/api/v1/compliance/reports",
+        "/api/v1/compliance/audit-trail"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Drawer 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-compliance-evidence-package-export",
+      "title": "合规证据包导出",
+      "route": "/compliance",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-compliance-evidence-package-export.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-compliance-evidence-package-export.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-compliance-evidence-package-export.json",
+      "apiEndpoints": [
+        "/api/v1/compliance/reports",
+        "/api/v1/compliance/audit-trail"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-compliance-report-export",
+      "title": "合规运行报告导出",
+      "route": "/compliance",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-compliance-report-export.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-compliance-report-export.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-compliance-report-export.json",
+      "apiEndpoints": [
+        "/api/v1/compliance/reports",
+        "/api/v1/compliance/audit-trail"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "drawer-audit-operation-detail",
+      "title": "审计操作详情",
+      "route": "/audit-log",
+      "kind": "Drawer",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-audit-operation-detail.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/drawer-audit-operation-detail.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/drawer-audit-operation-detail.json",
+      "apiEndpoints": [
+        "/api/v1/audit/logs"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Drawer 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-audit-export",
+      "title": "审计材料导出",
+      "route": "/audit-log",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-audit-export.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-audit-export.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-audit-export.json",
+      "apiEndpoints": [
+        "/api/v1/audit/logs"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-notification-channel-edit",
+      "title": "通知渠道编辑",
+      "route": "/notifications",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-notification-channel-edit.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-notification-channel-edit.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-notification-channel-edit.json",
+      "apiEndpoints": [
+        "/api/v1/notifications/settings"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "modal-notification-template-preview-test",
+      "title": "通知模板预览测试",
+      "route": "/notifications",
+      "kind": "Modal",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-notification-template-preview-test.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/modal-notification-template-preview-test.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/modal-notification-template-preview-test.json",
+      "apiEndpoints": [
+        "/api/v1/notifications/settings"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Modal 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "drawer-notification-silence-rule",
+      "title": "通知静默规则",
+      "route": "/notifications",
+      "kind": "Drawer",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-notification-silence-rule.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/drawer-notification-silence-rule.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/drawer-notification-silence-rule.json",
+      "apiEndpoints": [
+        "/api/v1/notifications/settings"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Drawer 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "popconfirm-settings-token-revoke",
+      "title": "API 令牌吊销确认",
+      "route": "/settings",
+      "kind": "Popconfirm",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/popconfirm-settings-token-revoke.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/popconfirm-settings-token-revoke.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/popconfirm-settings-token-revoke.json",
+      "apiEndpoints": [
+        "/api/v1/tokens/scopes",
+        "/api/v1/tokens",
+        "/api/v1/tokens/scopes/probe"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Popconfirm 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    },
+    {
+      "id": "drawer-settings-rbac-edit",
+      "title": "RBAC 权限编辑",
+      "route": "/settings",
+      "kind": "Drawer",
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-settings-rbac-edit.png",
+      "markdownContract": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/drawer-settings-rbac-edit.md",
+      "layerContract": "doc/04_assets/ui_suite_gpt_v1/specs/layers/drawer-settings-rbac-edit.json",
+      "apiEndpoints": [
+        "/api/v1/tokens/scopes",
+        "/api/v1/tokens",
+        "/api/v1/tokens/scopes/probe"
+      ],
+      "acceptance": [
+        "最终 PNG 必须为 1920x1080",
+        "中文为主，只保留必要英文技术词和单位",
+        "状态色必须遵守 success/info/warning/danger/critical token",
+        "危险动作必须具备影响范围、权限提示和审计留痕",
+        "必须实现为 Drawer 或等价语义组件",
+        "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+        "确认类动作必须出现取消/确认，危险确认默认不可误触"
+      ]
+    }
+  ],
+  "componentBacklog": [
+    "component-app-header",
+    "component-primary-sidebar",
+    "component-secondary-menu",
+    "component-bottom-status-bar",
+    "component-breadcrumb-context",
+    "component-site-time-selector",
+    "component-quick-entry",
+    "component-user-menu",
+    "component-button",
+    "component-icon-button",
+    "component-status-chip",
+    "component-tooltip",
+    "component-tabs",
+    "component-segmented",
+    "component-dropdown",
+    "component-pagination",
+    "component-input",
+    "component-search",
+    "component-select",
+    "component-date-range",
+    "component-switch-checkbox-radio",
+    "component-condition-builder",
+    "component-batch-action-bar",
+    "component-data-table",
+    "component-description-list",
+    "component-kpi-tile",
+    "component-health-card",
+    "component-ranking-list",
+    "component-log-list",
+    "component-evidence-file-card",
+    "component-empty-card",
+    "component-permission-card",
+    "component-line-area-chart",
+    "component-donut-chart",
+    "component-bar-ranking-chart",
+    "component-sankey-flow",
+    "component-radar-quality",
+    "component-heatmap",
+    "component-topology-graph",
+    "component-timeline-state-machine",
+    "component-alert-queue",
+    "component-risk-score",
+    "component-alert-timeline",
+    "component-evidence-drawer",
+    "component-asset-context",
+    "component-action-rail",
+    "component-feedback-block",
+    "component-acceptance-gate-matrix"
+  ],
+  "stateBacklog": [
+    "state-page-loading",
+    "state-table-loading",
+    "state-chart-loading",
+    "state-empty-page",
+    "state-empty-table",
+    "state-empty-chart",
+    "state-api-error",
+    "state-network-error",
+    "state-unauthorized",
+    "state-forbidden",
+    "state-partial-degraded",
+    "state-offline-probe",
+    "state-stream-backpressure",
+    "state-task-running",
+    "state-task-failed",
+    "state-success-accepted"
+  ],
+  "responsiveBacklog": [
+    "responsive-dashboard-1440",
+    "responsive-dashboard-1920",
+    "responsive-screen-4k",
+    "responsive-alerts-1440",
+    "responsive-alerts-1920",
+    "responsive-forensics-1440",
+    "responsive-graph-1440",
+    "responsive-compliance-1440",
+    "responsive-tablet-dashboard",
+    "responsive-tablet-alert-detail",
+    "responsive-mobile-navigation",
+    "responsive-mobile-alert-list"
+  ],
+  "implementationMethods": [
+    {
+      "id": "layer-contract-first",
+      "title": "分层 JSON 契约法",
+      "priority": "主方法",
+      "input": [
+        "layers/<id>.json",
+        "tokens.json",
+        "app-shell.json",
+        "目标 PNG"
+      ],
+      "output": [
+        "页面区域坐标",
+        "组件角色",
+        "验收 checklist"
+      ],
+      "risk": "需要把 bbox 转成响应式 CSS 约束，不能只写固定像素。"
+    },
+    {
+      "id": "component-system-first",
+      "title": "组件库优先法",
+      "priority": "主方法",
+      "input": [
+        "component-map.json",
+        "48 张 component 图",
+        "现有 Ant Design/ECharts 封装"
+      ],
+      "output": [
+        "可复用 WorkPanel/MetricTile/StatusTag/Chart/Table/Form 模块"
+      ],
+      "risk": "组件抽象过早会拖慢页面，必须从真实页面复用点反推。"
+    },
+    {
+      "id": "route-api-contract",
+      "title": "路由与 API 契约法",
+      "priority": "主方法",
+      "input": [
+        "route-page-map.json",
+        "web/ui/src/routes/routeManifest.tsx",
+        "web/ui/src/services/*.ts"
+      ],
+      "output": [
+        "页面数据 hook",
+        "loading/error/empty 状态",
+        "权限 requiredScopes"
+      ],
+      "risk": "不能在页面中直接 fetch，也不能用 mock 掩盖真实 API 缺口。"
+    },
+    {
+      "id": "visual-regression",
+      "title": "截图回归法",
+      "priority": "验收方法",
+      "input": [
+        "visual-acceptance.json",
+        "目标 PNG",
+        "Playwright 1920x1080 截图"
+      ],
+      "output": [
+        "公共区像素级差异",
+        "主工作区结构差异",
+        "交互状态截图证据"
+      ],
+      "risk": "截图差异只能证明视觉接近，业务动作仍需 API 和审计验证。"
+    },
+    {
+      "id": "annotated-review",
+      "title": "人工标注评审法",
+      "priority": "补充方法",
+      "input": [
+        "BUSINESS_FLOW_ACCEPTANCE.md",
+        "页面 PR 截图",
+        "产品/安全专家评审意见"
+      ],
+      "output": [
+        "业务语义修正",
+        "缺失动作或危险动作提示",
+        "专家验收记录"
+      ],
+      "risk": "不能替代自动校验，评审意见必须回写到契约或代码任务。"
+    }
+  ]
+}

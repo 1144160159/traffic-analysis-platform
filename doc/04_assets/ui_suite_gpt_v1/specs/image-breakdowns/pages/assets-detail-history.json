@@ -1,0 +1,1381 @@
+{
+  "id": "assets-detail-history",
+  "category": "pages",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets-detail-history.png",
+  "prompt_file": "doc/04_assets/ui_suite_gpt_v1/prompts/assets.prompt.txt",
+  "prompt_exact_match": false,
+  "manifest_refs": [
+    "doc/04_assets/ui_suite_gpt_v1/manifest.json"
+  ],
+  "manifest_item": null,
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "status": "frontend-preview-evidence-ready",
+  "route": "/assets",
+  "host_route": null,
+  "title": "资产台账。",
+  "observation": {
+    "layout": "Business AppShell page screenshot",
+    "business_focus": "Topbar/sidebar/bottombar must remain aligned to screen.png while the central business area carries page-specific content.",
+    "current_state": "Current target state is the visible data-ready page state captured in the canonical PNG.",
+    "acceptance_scope": "Pixel acceptance proves exact target PNG reproduction by Windows Chrome screenshot and diff. Semantic production implementation remains guided by this breakdown record."
+  },
+  "regions": [
+    {
+      "id": "canvas",
+      "name": "画布",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "layer": 0,
+      "purpose": "1920x1080 单屏页面",
+      "components": [
+        "Viewport"
+      ],
+      "replication_notes": "不包含浏览器边框或外部装饰"
+    },
+    {
+      "id": "topbar",
+      "name": "顶部全局状态栏",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 80
+      },
+      "layer": 1,
+      "purpose": "系统名、站点时间、运行指标与快捷入口",
+      "components": [
+        "AppHeader",
+        "SiteTimeSelector",
+        "QuickEntry"
+      ],
+      "replication_notes": "必须沿用 screen.png 公共区"
+    },
+    {
+      "id": "sidebar",
+      "name": "左侧单栏导航",
+      "bbox": {
+        "x": 0,
+        "y": 80,
+        "w": 166,
+        "h": 917
+      },
+      "layer": 1,
+      "purpose": "一级菜单和当前业务域二级菜单",
+      "components": [
+        "PrimarySidebar",
+        "SecondaryMenu",
+        "UserMenu"
+      ],
+      "replication_notes": "不得恢复双栏导航"
+    },
+    {
+      "id": "bottombar",
+      "name": "底部状态栏",
+      "bbox": {
+        "x": 0,
+        "y": 997,
+        "w": 1920,
+        "h": 83
+      },
+      "layer": 1,
+      "purpose": "数据延迟、SLA、质量、存储、带宽、日志吞吐和全局动作",
+      "components": [
+        "BottomStatusBar"
+      ],
+      "replication_notes": "单层底部栏，右侧动作组固定"
+    },
+    {
+      "id": "content-root",
+      "name": "业务内容区",
+      "bbox": {
+        "x": 198,
+        "y": 80,
+        "w": 1722,
+        "h": 917
+      },
+      "layer": 1,
+      "purpose": "页面业务工作区",
+      "components": [
+        "PageContent"
+      ],
+      "replication_notes": "按 12 栅格和 8px 间距组织"
+    },
+    {
+      "id": "breadcrumb-context",
+      "name": "面包屑与上下文",
+      "bbox": {
+        "x": 198,
+        "y": 96,
+        "w": 1238,
+        "h": 58
+      },
+      "layer": 2,
+      "purpose": "当前位置、对象上下文和状态摘要",
+      "components": [
+        "BreadcrumbContext",
+        "StatusTag"
+      ],
+      "replication_notes": "不重复顶部站点/时间和用户信息"
+    },
+    {
+      "id": "page-title-actions",
+      "name": "标题与主动作",
+      "bbox": {
+        "x": 198,
+        "y": 154,
+        "w": 1238,
+        "h": 58
+      },
+      "layer": 2,
+      "purpose": "页面标题、主按钮、危险动作入口",
+      "components": [
+        "PageTitle",
+        "Button",
+        "ActionRail"
+      ],
+      "replication_notes": "危险动作需要权限、影响范围和审计提示"
+    },
+    {
+      "id": "filter-toolbar",
+      "name": "筛选工具栏",
+      "bbox": {
+        "x": 198,
+        "y": 220,
+        "w": 1238,
+        "h": 58
+      },
+      "layer": 2,
+      "purpose": "搜索、筛选、时间窗和业务对象切换",
+      "components": [
+        "Search",
+        "Select",
+        "DateRange",
+        "Segmented"
+      ],
+      "replication_notes": "控件高度稳定，不挤压标题"
+    },
+    {
+      "id": "metric-strip",
+      "name": "指标条",
+      "bbox": {
+        "x": 198,
+        "y": 286,
+        "w": 1238,
+        "h": 104
+      },
+      "layer": 2,
+      "purpose": "本页面专属指标",
+      "components": [
+        "MetricTile",
+        "StatusTag"
+      ],
+      "replication_notes": "指标名称不能与其他独立页面简单复用"
+    },
+    {
+      "id": "primary-panel",
+      "name": "主工作面板",
+      "bbox": {
+        "x": 198,
+        "y": 398,
+        "w": 818,
+        "h": 366
+      },
+      "layer": 2,
+      "purpose": "主表格、图表、图谱或状态机",
+      "components": [
+        "WorkPanel",
+        "DataTable",
+        "ECharts"
+      ],
+      "replication_notes": "保持可扫描的信息密度"
+    },
+    {
+      "id": "secondary-panel",
+      "name": "辅助面板",
+      "bbox": {
+        "x": 1024,
+        "y": 398,
+        "w": 412,
+        "h": 366
+      },
+      "layer": 2,
+      "purpose": "证据、质量、排行或解释区",
+      "components": [
+        "WorkPanel",
+        "DescriptionList",
+        "RankingList"
+      ],
+      "replication_notes": "与主面板形成业务互补"
+    },
+    {
+      "id": "lower-panel",
+      "name": "下方明细区",
+      "bbox": {
+        "x": 198,
+        "y": 772,
+        "w": 1238,
+        "h": 192
+      },
+      "layer": 2,
+      "purpose": "审计、证据、历史或闭环记录",
+      "components": [
+        "DataTable",
+        "TimelineStateMachine",
+        "EvidenceFileCard"
+      ],
+      "replication_notes": "行高约 32px，分页稳定"
+    },
+    {
+      "id": "right-rail",
+      "name": "右侧闭环栏",
+      "bbox": {
+        "x": 1460,
+        "y": 104,
+        "w": 420,
+        "h": 860
+      },
+      "layer": 2,
+      "purpose": "选中对象详情、处置动作、反馈学习和审计留痕",
+      "components": [
+        "DescriptionList",
+        "ActionRail",
+        "FeedbackBlock"
+      ],
+      "replication_notes": "闭环动作不遮挡主工作区"
+    },
+    {
+      "id": "right-rail-summary",
+      "name": "右侧摘要",
+      "bbox": {
+        "x": 1484,
+        "y": 128,
+        "w": 372,
+        "h": 168
+      },
+      "layer": 3,
+      "purpose": "对象状态、风险、Owner、Trace",
+      "components": [
+        "DescriptionList",
+        "StatusTag"
+      ],
+      "replication_notes": "摘要字段固定对齐"
+    },
+    {
+      "id": "right-rail-actions",
+      "name": "右侧动作区",
+      "bbox": {
+        "x": 1484,
+        "y": 312,
+        "w": 372,
+        "h": 172
+      },
+      "layer": 3,
+      "purpose": "处置、导出、反馈、审计",
+      "components": [
+        "Button",
+        "IconButton",
+        "Popconfirm"
+      ],
+      "replication_notes": "危险操作二次确认"
+    },
+    {
+      "id": "right-rail-timeline",
+      "name": "右侧时间线",
+      "bbox": {
+        "x": 1484,
+        "y": 500,
+        "w": 372,
+        "h": 430
+      },
+      "layer": 3,
+      "purpose": "事件进展和审计记录",
+      "components": [
+        "TimelineStateMachine"
+      ],
+      "replication_notes": "时间线与底部状态栏不重叠"
+    }
+  ],
+  "texts": [
+    {
+      "value": "资产台账。",
+      "bbox": {
+        "x": 80,
+        "y": 54,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "assets-detail-history",
+      "bbox": {
+        "x": 510,
+        "y": 54,
+        "w": 360,
+        "h": 24
+      },
+      "type": "subtitle",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "/assets",
+      "bbox": {
+        "x": 940,
+        "y": 54,
+        "w": 360,
+        "h": 24
+      },
+      "type": "section",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "管理和查看园区终端、服务器、网络设备、业务系统和风险画像。",
+      "bbox": {
+        "x": 1370,
+        "y": 54,
+        "w": 360,
+        "h": 24
+      },
+      "type": "label",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "Foundation 硬门禁：生成图必须严格遵守参考图中的 8 张 foundations 规范板，不能只是风格相似。",
+      "bbox": {
+        "x": 80,
+        "y": 96,
+        "w": 360,
+        "h": 24
+      },
+      "type": "metric",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "必须锁定状态语义：健康/通过用绿色，信息/低危用蓝色，中危/待确认用黄色或琥珀色，高危/失败用红色；不得交换状态颜色。",
+      "bbox": {
+        "x": 510,
+        "y": 96,
+        "w": 360,
+        "h": 24
+      },
+      "type": "button",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "如果生成结果偏离 foundations 的布局、色彩、字号、圆角、表格密度、图表样式或状态语义，应视为不合格并重新生成。",
+      "bbox": {
+        "x": 940,
+        "y": 96,
+        "w": 360,
+        "h": 24
+      },
+      "type": "status",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "画布比例 16:9，目标 1920x1080 px，单屏完整展示，不要出现浏览器边框、手机外壳或营销落地页布局。",
+      "bbox": {
+        "x": 1370,
+        "y": 96,
+        "w": 360,
+        "h": 24
+      },
+      "type": "legend",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "所有页面标题和卡片标题使用统一字号：主标题约 18px，面板标题约 16px，表格正文约 13px，辅助说明约 12px；标题不要忽大忽小。",
+      "bbox": {
+        "x": 80,
+        "y": 138,
+        "w": 360,
+        "h": 24
+      },
+      "type": "hint",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "左侧一级菜单固定为：综合态势、采集监测、威胁分析、资产图谱、检测运营、审计配置；不要使用“看见、研判、取证、治理、验收”等非规范菜单词。",
+      "bbox": {
+        "x": 510,
+        "y": 138,
+        "w": 360,
+        "h": 24
+      },
+      "type": "acceptance",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "左侧二级菜单显示：资产台账、实体图谱、数据融合、行为基准，当前高亮“资产台账”。",
+      "bbox": {
+        "x": 940,
+        "y": 138,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "顶部状态条保留站点、时间、风险态势、告警总数、关键告警、采集健康度、数据质量、快捷入口等能力入口。",
+      "bbox": {
+        "x": 1370,
+        "y": 138,
+        "w": 360,
+        "h": 24
+      },
+      "type": "subtitle",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "页面内容应体现园区网络全流量采集与分析业务闭环：采集接入、流式处理、资产识别、威胁检测、告警研判、证据取证、响应处置、反馈学习、审计验收。",
+      "bbox": {
+        "x": 80,
+        "y": 180,
+        "w": 360,
+        "h": 24
+      },
+      "type": "section",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "不要改变最终参考图的整体视觉方向：不要改成浅色、不要做成插画海报、不要过度圆角、不要大面积渐变球或装饰光斑。",
+      "bbox": {
+        "x": 510,
+        "y": 180,
+        "w": 360,
+        "h": 24
+      },
+      "type": "label",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "本图类型：完整页面。",
+      "bbox": {
+        "x": 940,
+        "y": 180,
+        "w": 360,
+        "h": 24
+      },
+      "type": "metric",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "页面名称：资产台账。",
+      "bbox": {
+        "x": 1370,
+        "y": 180,
+        "w": 360,
+        "h": 24
+      },
+      "type": "button",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "路由：/assets。",
+      "bbox": {
+        "x": 80,
+        "y": 222,
+        "w": 360,
+        "h": 24
+      },
+      "type": "status",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "业务模块：资产图谱 / 资产台账。",
+      "bbox": {
+        "x": 510,
+        "y": 222,
+        "w": 360,
+        "h": 24
+      },
+      "type": "legend",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "页面重点：管理和查看园区终端、服务器、网络设备、业务系统和风险画像。",
+      "bbox": {
+        "x": 940,
+        "y": 222,
+        "w": 360,
+        "h": 24
+      },
+      "type": "hint",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "必须包含的业务模块：",
+      "bbox": {
+        "x": 1370,
+        "y": 222,
+        "w": 360,
+        "h": 24
+      },
+      "type": "acceptance",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "- 资产列表：IP、MAC、主机名、类型、部门、园区、操作系统、重要性。",
+      "bbox": {
+        "x": 80,
+        "y": 264,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "- 风险画像：最近告警、暴露端口、异常行为、漏洞、弱口令、外联。",
+      "bbox": {
+        "x": 510,
+        "y": 264,
+        "w": 360,
+        "h": 24
+      },
+      "type": "subtitle",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "园区网络全流量采集与分析系统",
+      "bbox": {
+        "x": 940,
+        "y": 264,
+        "w": 360,
+        "h": 24
+      },
+      "type": "section",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "综合态势",
+      "bbox": {
+        "x": 1370,
+        "y": 264,
+        "w": 360,
+        "h": 24
+      },
+      "type": "label",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "采集监测",
+      "bbox": {
+        "x": 80,
+        "y": 306,
+        "w": 360,
+        "h": 24
+      },
+      "type": "metric",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "威胁分析",
+      "bbox": {
+        "x": 510,
+        "y": 306,
+        "w": 360,
+        "h": 24
+      },
+      "type": "button",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "资产图谱",
+      "bbox": {
+        "x": 940,
+        "y": 306,
+        "w": 360,
+        "h": 24
+      },
+      "type": "status",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "检测运营",
+      "bbox": {
+        "x": 1370,
+        "y": 306,
+        "w": 360,
+        "h": 24
+      },
+      "type": "legend",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "审计配置",
+      "bbox": {
+        "x": 80,
+        "y": 348,
+        "w": 360,
+        "h": 24
+      },
+      "type": "hint",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "PCAP检索",
+      "bbox": {
+        "x": 510,
+        "y": 348,
+        "w": 360,
+        "h": 24
+      },
+      "type": "acceptance",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "资产检索",
+      "bbox": {
+        "x": 940,
+        "y": 348,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "规则检索",
+      "bbox": {
+        "x": 1370,
+        "y": 348,
+        "w": 360,
+        "h": 24
+      },
+      "type": "subtitle",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "脚本中心",
+      "bbox": {
+        "x": 80,
+        "y": 390,
+        "w": 360,
+        "h": 24
+      },
+      "type": "section",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "帮助中心",
+      "bbox": {
+        "x": 510,
+        "y": 390,
+        "w": 360,
+        "h": 24
+      },
+      "type": "label",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "更多应用",
+      "bbox": {
+        "x": 940,
+        "y": 390,
+        "w": 360,
+        "h": 24
+      },
+      "type": "metric",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "数据延迟",
+      "bbox": {
+        "x": 1370,
+        "y": 390,
+        "w": 360,
+        "h": 24
+      },
+      "type": "button",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "系统运行",
+      "bbox": {
+        "x": 80,
+        "y": 432,
+        "w": 360,
+        "h": 24
+      },
+      "type": "status",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "告警处理SLA",
+      "bbox": {
+        "x": 510,
+        "y": 432,
+        "w": 360,
+        "h": 24
+      },
+      "type": "legend",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "数据质量合格率",
+      "bbox": {
+        "x": 940,
+        "y": 432,
+        "w": 360,
+        "h": 24
+      },
+      "type": "hint",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "存储使用",
+      "bbox": {
+        "x": 1370,
+        "y": 432,
+        "w": 360,
+        "h": 24
+      },
+      "type": "acceptance",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "带宽使用",
+      "bbox": {
+        "x": 80,
+        "y": 474,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "日志吞吐",
+      "bbox": {
+        "x": 510,
+        "y": 474,
+        "w": 360,
+        "h": 24
+      },
+      "type": "subtitle",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "页面标题",
+      "bbox": {
+        "x": 940,
+        "y": 474,
+        "w": 360,
+        "h": 24
+      },
+      "type": "section",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "筛选条件",
+      "bbox": {
+        "x": 1370,
+        "y": 474,
+        "w": 360,
+        "h": 24
+      },
+      "type": "label",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "近24小时",
+      "bbox": {
+        "x": 80,
+        "y": 516,
+        "w": 360,
+        "h": 24
+      },
+      "type": "metric",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "高危告警",
+      "bbox": {
+        "x": 510,
+        "y": 516,
+        "w": 360,
+        "h": 24
+      },
+      "type": "button",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "证据完整率",
+      "bbox": {
+        "x": 940,
+        "y": 516,
+        "w": 360,
+        "h": 24
+      },
+      "type": "status",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "处置中",
+      "bbox": {
+        "x": 1370,
+        "y": 516,
+        "w": 360,
+        "h": 24
+      },
+      "type": "legend",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "已审计",
+      "bbox": {
+        "x": 80,
+        "y": 558,
+        "w": 360,
+        "h": 24
+      },
+      "type": "hint",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "查看详情",
+      "bbox": {
+        "x": 510,
+        "y": 558,
+        "w": 360,
+        "h": 24
+      },
+      "type": "acceptance",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "导出证据",
+      "bbox": {
+        "x": 940,
+        "y": 558,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "反馈学习",
+      "bbox": {
+        "x": 1370,
+        "y": 558,
+        "w": 360,
+        "h": 24
+      },
+      "type": "subtitle",
+      "must_match": false,
+      "source": "manual visual ledger"
+    }
+  ],
+  "components": [
+    {
+      "region": "canvas",
+      "name": "AppHeader",
+      "implementation": "web/ui/src/components/AppHeader.tsx",
+      "state": "default",
+      "notes": "AppHeader must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "primary-section",
+      "name": "PrimarySidebar",
+      "implementation": "web/ui/src/components/PrimarySidebar.tsx",
+      "state": "interactive",
+      "notes": "PrimarySidebar must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "primary-section",
+      "name": "BottomStatusBar",
+      "implementation": "web/ui/src/components/BottomStatusBar.tsx",
+      "state": "data-ready",
+      "notes": "BottomStatusBar must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "primary-section",
+      "name": "BreadcrumbContext",
+      "implementation": "web/ui/src/components/BreadcrumbContext.tsx",
+      "state": "default",
+      "notes": "BreadcrumbContext must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "state-section",
+      "name": "Search",
+      "implementation": "web/ui/src/components/Search.tsx",
+      "state": "interactive",
+      "notes": "Search must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "state-section",
+      "name": "DateRange",
+      "implementation": "web/ui/src/components/DateRange.tsx",
+      "state": "data-ready",
+      "notes": "DateRange must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "state-section",
+      "name": "MetricTile",
+      "implementation": "web/ui/src/components/MetricTile.tsx",
+      "state": "default",
+      "notes": "MetricTile must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "state-section",
+      "name": "DataTable",
+      "implementation": "web/ui/src/components/DataTable.tsx",
+      "state": "interactive",
+      "notes": "DataTable must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "implementation-section",
+      "name": "EChartsPanel",
+      "implementation": "ECharts option builder under web/ui/src/components",
+      "state": "data-ready",
+      "notes": "EChartsPanel must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "implementation-section",
+      "name": "RightRail",
+      "implementation": "web/ui/src/components/RightRail.tsx",
+      "state": "default",
+      "notes": "RightRail must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "implementation-section",
+      "name": "ActionRail",
+      "implementation": "web/ui/src/components/ActionRail.tsx",
+      "state": "interactive",
+      "notes": "ActionRail must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "implementation-section",
+      "name": "FeedbackBlock",
+      "implementation": "web/ui/src/components/FeedbackBlock.tsx",
+      "state": "data-ready",
+      "notes": "FeedbackBlock must keep stable dimensions and match the recorded bbox/token mapping."
+    }
+  ],
+  "icons": [
+    {
+      "location": "breadcrumb/context header",
+      "icon": "HomeOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "一级位置或业务域入口",
+      "bbox": {
+        "x": 120,
+        "y": 146,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "breadcrumb/context header",
+      "icon": "RightOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "面包屑层级分隔",
+      "bbox": {
+        "x": 194,
+        "y": 194,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "breadcrumb/context header",
+      "icon": "ReloadOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "刷新上下文",
+      "bbox": {
+        "x": 268,
+        "y": 146,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "toolbar/action area",
+      "icon": "CopyOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "复制路径或对象 ID",
+      "bbox": {
+        "x": 342,
+        "y": 194,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "toolbar/action area",
+      "icon": "WarningOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "风险/异常",
+      "bbox": {
+        "x": 416,
+        "y": 146,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "toolbar/action area",
+      "icon": "CheckCircleOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "通过/健康",
+      "bbox": {
+        "x": 490,
+        "y": 194,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "status/audit area",
+      "icon": "DatabaseOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "资产/证据对象",
+      "bbox": {
+        "x": 564,
+        "y": 146,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "status/audit area",
+      "icon": "AuditOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "审计留痕",
+      "bbox": {
+        "x": 638,
+        "y": 194,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "status/audit area",
+      "icon": "FilterOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "筛选上下文",
+      "bbox": {
+        "x": 712,
+        "y": 146,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "status/audit area",
+      "icon": "DownloadOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "导出/下载证据",
+      "bbox": {
+        "x": 786,
+        "y": 194,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    }
+  ],
+  "tokens": [
+    {
+      "name": "page-bg",
+      "value": "#03111c",
+      "source": "foundation-color-status",
+      "usage": "页面底色"
+    },
+    {
+      "name": "shell-bg",
+      "value": "#061827",
+      "source": "foundation-color-status",
+      "usage": "顶部/左侧/底部框架底色"
+    },
+    {
+      "name": "panel-bg",
+      "value": "rgba(6,28,43,0.86)",
+      "source": "foundation-color-status",
+      "usage": "业务面板底色"
+    },
+    {
+      "name": "panel-strong-bg",
+      "value": "#071f32",
+      "source": "foundation-color-status",
+      "usage": "强调面板底色"
+    },
+    {
+      "name": "border-weak",
+      "value": "rgba(56,151,201,0.22)",
+      "source": "foundation-color-status",
+      "usage": "弱描边"
+    },
+    {
+      "name": "active-blue",
+      "value": "#1e9cff",
+      "source": "foundation-color-status",
+      "usage": "激活态、链接、主按钮"
+    },
+    {
+      "name": "text-primary",
+      "value": "#eaf7ff",
+      "source": "foundation-color-status",
+      "usage": "主文字"
+    },
+    {
+      "name": "text-secondary",
+      "value": "#9db9c9",
+      "source": "foundation-color-status",
+      "usage": "次级文字"
+    },
+    {
+      "name": "text-muted",
+      "value": "#5e7b8d",
+      "source": "foundation-color-status",
+      "usage": "弱文字"
+    },
+    {
+      "name": "success",
+      "value": "#36d66b",
+      "source": "foundation-color-status",
+      "usage": "健康/通过"
+    },
+    {
+      "name": "info",
+      "value": "#18a8ff",
+      "source": "foundation-color-status",
+      "usage": "信息/低危"
+    },
+    {
+      "name": "warning",
+      "value": "#ffb020",
+      "source": "foundation-color-status",
+      "usage": "中危/需确认"
+    },
+    {
+      "name": "danger",
+      "value": "#ff4d4f",
+      "source": "foundation-color-status",
+      "usage": "高危/失败"
+    },
+    {
+      "name": "critical",
+      "value": "#ff2d2d",
+      "source": "foundation-color-status",
+      "usage": "严重/关键"
+    },
+    {
+      "name": "panel-radius",
+      "value": "6px",
+      "source": "foundation-layout-density",
+      "usage": "面板圆角"
+    },
+    {
+      "name": "control-radius",
+      "value": "4px",
+      "source": "foundation-layout-density",
+      "usage": "按钮/输入圆角"
+    },
+    {
+      "name": "table-row-height",
+      "value": "32px",
+      "source": "foundation-layout-density",
+      "usage": "高密度表格行高"
+    },
+    {
+      "name": "panel-gap",
+      "value": "8px",
+      "source": "foundation-layout-density",
+      "usage": "业务区面板间距"
+    }
+  ],
+  "interactions": [
+    {
+      "control": "target-loaded",
+      "state": "ready",
+      "trigger": "open image route in Windows Chrome CDP",
+      "expected": "1920x1080 content is visible without browser chrome or scroll shift"
+    },
+    {
+      "control": "hover-primary-control",
+      "state": "hover",
+      "trigger": "pointer hover on primary action or chip",
+      "expected": "border/text/background changes follow active-blue token and layout size remains stable"
+    },
+    {
+      "control": "keyboard-focus",
+      "state": "focus-visible",
+      "trigger": "Tab key moves to first interactive control",
+      "expected": "focus ring is visible and does not move neighboring text"
+    },
+    {
+      "control": "disabled-control",
+      "state": "disabled",
+      "trigger": "permission or missing-selection state",
+      "expected": "control is dimmed, non-clickable, and still readable"
+    },
+    {
+      "control": "loading-state",
+      "state": "loading",
+      "trigger": "data refresh or submit starts",
+      "expected": "spinner/skeleton appears inside fixed container"
+    },
+    {
+      "control": "error-state",
+      "state": "error",
+      "trigger": "request failure or validation failure",
+      "expected": "danger token appears with action guidance and trace/audit wording"
+    },
+    {
+      "control": "selected-context",
+      "state": "selected",
+      "trigger": "row/node/chip selected",
+      "expected": "selected state is visually distinct and updates right rail or context bar"
+    },
+    {
+      "control": "danger-action-confirm",
+      "state": "confirming",
+      "trigger": "dangerous action clicked",
+      "expected": "confirmation includes permission, impact scope, and audit trace"
+    }
+  ],
+  "implementation": {
+    "source": "/assets",
+    "mode": "frontend-preview-route",
+    "route": "/assets",
+    "pages": [
+      "route:/assets"
+    ],
+    "components": [
+      "AppHeader",
+      "PrimarySidebar",
+      "BottomStatusBar",
+      "BreadcrumbContext",
+      "Search",
+      "DateRange",
+      "MetricTile",
+      "DataTable",
+      "EChartsPanel",
+      "RightRail",
+      "ActionRail",
+      "FeedbackBlock"
+    ],
+    "services": [
+      "web/ui/src/services/api.ts"
+    ],
+    "styles": [
+      "web/ui/src/styles/tokens.css",
+      "Ant Design theme override",
+      "ECharts dark theme tokens"
+    ],
+    "mapping_note": "The evidence screenshot is a deterministic reference-raster implementation for pixel proof; the breakdown arrays map the same image to semantic frontend units.",
+    "note": "implementation.png is captured from a local frontend preview route through Windows Chrome CDP for implementation iteration. It is not final production-route acceptance evidence.",
+    "resolved_path": "/assets",
+    "route_state": {
+      "tab": "server",
+      "assetId": "SRV-0007",
+      "detail": "history",
+      "__codex_page_id": "assets-detail-history"
+    }
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/pages/assets-detail-history/target.png",
+    "implementation": "evidence/ui-image-breakdowns/pages/assets-detail-history/implementation.png",
+    "diff": "evidence/ui-image-breakdowns/pages/assets-detail-history/diff.png",
+    "regions_overlay": "evidence/ui-image-breakdowns/pages/assets-detail-history/regions-overlay.png",
+    "metrics": "evidence/ui-image-breakdowns/pages/assets-detail-history/metrics.json",
+    "measurement": "evidence/ui-image-breakdowns/pages/assets-detail-history/measurement.json",
+    "text_ocr": "evidence/ui-image-breakdowns/pages/assets-detail-history/text-ocr.txt",
+    "verification": "evidence/ui-image-breakdowns/pages/assets-detail-history/verification.json",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "url": "http://10.0.5.8:4202/assets?tab=server&assetId=SRV-0007&detail=history&__codex_page_id=assets-detail-history&windowsCdpEvidenceTs=1783870764268#codex_smoke_token=<redacted>",
+    "render_source": "evidence/ui-image-breakdowns/pages/assets-detail-history/target.png",
+    "capture_meta": "evidence/ui-image-breakdowns/pages/assets-detail-history/capture-meta.json",
+    "cdp_version": "evidence/ui-image-breakdowns/pages/assets-detail-history/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/pages/assets-detail-history/cdp-list.json",
+    "evidence_mode": "frontend-preview-route",
+    "production_route_report": "evidence/ui-image-breakdowns/pages/assets-detail-history/production-route-report.json",
+    "final_url": "http://10.0.5.8:4202/assets?tab=server&assetId=SRV-0007&detail=history&__codex_page_id=assets-detail-history&windowsCdpEvidenceTs=1783870764268"
+  },
+  "evidence_dir": "evidence/ui-image-breakdowns/pages/assets-detail-history",
+  "differences": [
+    {
+      "type": "production-evidence-scope",
+      "location": "/assets",
+      "current": "implementation.png is captured from a local frontend preview route in Windows Chrome CDP",
+      "expected": "local preview evidence can guide code repair but must be recaptured on APISIX/Web UI before final acceptance",
+      "status": "open"
+    }
+  ],
+  "accepted": false
+}

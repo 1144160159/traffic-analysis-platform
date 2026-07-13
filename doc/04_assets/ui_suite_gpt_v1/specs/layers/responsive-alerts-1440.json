@@ -1,0 +1,57 @@
+{
+  "id": "responsive-alerts-1440",
+  "title": "告警中心 1440 视口适配策略",
+  "type": "responsive",
+  "route": null,
+  "domain": "global",
+  "source": {
+    "targetFile": "doc/04_assets/ui_suite_gpt_v1/screens/responsive/responsive-alerts-1440.png",
+    "promptFile": "doc/04_assets/ui_suite_gpt_v1/prompts/responsive-alerts-1440.prompt.txt",
+    "rawTraceFiles": [
+      "doc/04_assets/ui_suite_gpt_v1/screens/responsive/responsive-alerts-1440.raw-deterministic.png"
+    ],
+    "dimensions": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "implementation": {
+    "pageComponent": null,
+    "suggestedComponents": [
+      "CSS media query",
+      "AppShell breakpoint",
+      "Drawer navigation"
+    ],
+    "apiEndpoints": [],
+    "workflows": []
+  },
+  "layers": [
+    {
+      "id": "breakpoint-frame",
+      "role": "responsive-reference",
+      "bbox": {
+        "x": 80,
+        "y": 80,
+        "w": 1760,
+        "h": 920
+      }
+    },
+    {
+      "id": "folding-rules",
+      "role": "module-priority-and-collapse",
+      "bbox": {
+        "x": 1160,
+        "y": 140,
+        "w": 620,
+        "h": 760
+      }
+    }
+  ],
+  "acceptance": [
+    "最终 PNG 必须为 1920x1080",
+    "中文为主，只保留必要英文技术词和单位",
+    "状态色必须遵守 success/info/warning/danger/critical token",
+    "危险动作必须具备影响范围、权限提示和审计留痕",
+    "必须说明核心业务保留、次要区域折叠、危险动作位置和上下文传递"
+  ]
+}

@@ -1,0 +1,149 @@
+{
+  "status": "pass",
+  "acceptance_eligible": false,
+  "reason": "Windows Chrome CDP evidence. Formal legacy gate expects Desktop Chrome extension receiver metadata and pixel diff; this capture proves real Windows Chrome rendering, route, runtime events, viewport, and layout metrics.",
+  "backend": "windows-chrome-cdp",
+  "target_id": "audit-log",
+  "route_id": "audit-log",
+  "route": "/audit-log",
+  "resolved_path": "/audit-log",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/audit-log.png",
+  "final_url": "http://10.0.5.8:30180/audit-log?fullRouteEvidenceTs=1783072700532",
+  "final_path": "/audit-log",
+  "protected_route": true,
+  "smoke_hash_consumed": true,
+  "uploaded_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "stored_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "expected_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "desktop_viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "post_capture_resize": false,
+  "no_4xx_5xx": true,
+  "no_requestfailed": true,
+  "no_console_error": true,
+  "no_pageerror": true,
+  "errors": {
+    "requestfailed": [],
+    "badResponses": [],
+    "console": [],
+    "pageerror": []
+  },
+  "screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/doc/02_acceptance/02-regression/ui-visual-interaction/latest/audit-log/actual-1920.png",
+  "mirror_screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/evidence/windows-chrome-cdp-20260703-full-route-desktop-r6/audit-log-1920x1080.png",
+  "metrics": {
+    "title": "园区网络全流量采集与分析系统",
+    "location": "http://10.0.5.8:30180/audit-log?fullRouteEvidenceTs=1783072700532",
+    "viewport": {
+      "width": 1920,
+      "height": 1080,
+      "dpr": 1.0000000298023224
+    },
+    "scroll": {
+      "horizontalOverflow": 0,
+      "verticalOverflow": 0,
+      "bodyScrollWidth": 1920,
+      "bodyClientWidth": 1920,
+      "bodyScrollHeight": 1080,
+      "bodyClientHeight": 1080
+    },
+    "headings": [
+      "审计日志",
+      "日志检索",
+      "审计日志（共 12.7K 条 条）",
+      "操作详情 / Diff 视图",
+      "高风险审计（近 24h）",
+      "留存状态",
+      "关联链路（从当前操作追溯业务链路）",
+      "操作时间线",
+      "导出取证"
+    ],
+    "buttons": [
+      "移动端导航",
+      "PCAP检索",
+      "资产检索",
+      "规则检索",
+      "脚本中心",
+      "帮助中心",
+      "更多应用",
+      "Ccodex-ui-desktop-admin系统管理员在线",
+      "保存查询",
+      "导出取证",
+      "生成合规证据",
+      "触发复核",
+      "归档校验",
+      "操作详情",
+      "材料导出",
+      "重 置",
+      "查询",
+      "收起",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5"
+    ],
+    "visibleText": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-03 17:58:21 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 采集监测 威胁分析 资产图谱 检测运营 审计配置 合规审计 审计日志 通知配置 系统设置 C codex-ui-desktop-admin 系统管理员 在线 审计配置 / 审计日志 审计日志 保存查询 导出取证 生成合规证据 触发复核 归档校验 操作详情 材料导出 今日操作 12.7K 条 较昨 +18.6% 失败操作 0 条 无失败 高风险操作 0 条 稳定 导出下载 0 次 无导出 PCAP 访问 0 次 无访问 完整性校验通过率 100.00% SHA-256 日志检索 用户/角色 全部用户/角色 租户 全部租户 时间 对象类型 全部 动作类型 全部 结果 全部 请求 ID trace_id 重 置 查询 收起 审计日志（共 12.7K 条 条） 时间 用户/角色 对象类型 动作类型 结果 请求ID trace_id 风险标签 操作 2026-07-03 09:58:12 system / 安全分析师 threat_intel THREAT_INTEL_FEED_SCHEDULED_IMPORT 成功 req-53413826ac05 trace-53413826ac05 低风险 详情 / 关联 / 复核 2026-07-03 09:57:42 system / 安全分析师 threat_intel THREAT_INTEL_FEED_SCHEDULED_IMPORT 成功 req-579027261932 trace-579027261932 低风险 详情 / 关联 / 复核 2026-07-03 09:57:12 system / 安全分析师 threat_intel THREAT_INTEL_FEED_SCHEDULED_IMPORT 成功 req-866675fa7a30 trace-866675fa7a30 低风险 详情 / 关联 / 复核 2026-07-03 09:56:42 system / 安全分析师 threat_intel THREAT_INTEL_FEED_SCHEDULED_IMPORT 成功 req-64730a1bdf1c trace-64730a1bdf1c 低风险 详情 / 关联 / 复核 2026-07-03 09:56:12 system / 安全分析师 threat_intel THREAT_INTEL_FEED_SCHEDULED_IMPORT 成功 req-e1cb9e82984f tr",
+    "elements": {
+      "pageHero": {
+        "selector": ".taf-page-hero",
+        "visible": false
+      },
+      "panelHeader": {
+        "selector": ".taf-panel__header",
+        "visible": true,
+        "text": "日志检索",
+        "x": 183,
+        "y": 258,
+        "right": 1289,
+        "bottom": 289,
+        "w": 1107,
+        "h": 31,
+        "display": "flex",
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      "table": {
+        "selector": ".ant-table, .taf-table, table",
+        "visible": true,
+        "text": "时间用户/角色对象类型动作类型结果请求IDtrace_id风险标签操作2026-07-03 09:58:12system / 安全分析师threat_intelTHREAT_INTEL_FEED_SCHEDULED_IMPORT成功req-53413826ac05trace-53413826ac05低风险详情 / 关联 / 复核2026-07-03 09:57:42system / 安全分析师threat_intelTHREAT_INTEL_FEED_SCHEDULED_IM",
+        "x": 191,
+        "y": 421,
+        "right": 1281,
+        "bottom": 769,
+        "w": 1091,
+        "h": 348,
+        "display": "block",
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      "topicTitlebar": {
+        "selector": ".taf-topic-titlebar",
+        "visible": false
+      },
+      "topicFacts": {
+        "selector": ".taf-topic-facts",
+        "visible": false
+      },
+      "topicKpis": {
+        "selector": ".taf-topic-kpis",
+        "visible": false
+      },
+      "topicGrid": {
+        "selector": ".taf-topic-grid",
+        "visible": false
+      }
+    },
+    "overlapChecks": {}
+  }
+}

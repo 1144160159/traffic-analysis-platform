@@ -1,0 +1,41 @@
+{
+  "status": "pass",
+  "route_id": "dashboard",
+  "route": "/dashboard",
+  "generated_at": "2026-07-02T03:41:05.729Z",
+  "desktop_chrome_backend_status": "pass",
+  "desktop_backend": "extension",
+  "auth_mode": "desktop_smoke_hash_acceptance_window",
+  "final_url": "http://10.0.5.8:30180/dashboard",
+  "title": "园区网络全流量采集与分析系统",
+  "business_action": "Authenticated Desktop Chrome opened dashboard and verified KPI/work queue business content from live APIs.",
+  "target_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/dashboard/actual-1920.png",
+  "no_4xx_5xx": true,
+  "no_requestfailed": true,
+  "no_pageerror": true,
+  "no_console_error": true,
+  "assertions": {
+    "expected_text_hits": [
+      "仪表盘",
+      "优先级待办队列",
+      "真实 API"
+    ],
+    "not_login_shell": true,
+    "access_denied_absent": true,
+    "smoke_hash_consumed": true,
+    "resource_error_count": 0,
+    "screenshot_upload_status": 201,
+    "screenshot_bytes": 207666,
+    "viewport": {
+      "dpr": 1.5,
+      "height": 1271,
+      "width": 2560
+    }
+  },
+  "errors": {
+    "console_errors": [],
+    "page_errors": [],
+    "request_failures": [],
+    "response_errors": []
+  }
+}

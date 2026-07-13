@@ -1,0 +1,10 @@
+exception_id,source_gate,current_status,severity,impact_on_trial,owner,closure_standard,review_note
+EX-ui_contract,ui_contract,result=blocked blockers=1,TBD,TBD,TBD,doc/02_acceptance/02-regression/ui-contract-preflight-latest.json,Site/user reviewer must decide whether this exception blocks pilot signoff.
+EX-ui_visual_interaction,ui_visual_interaction,result=blocked blockers=3,TBD,TBD,TBD,doc/02_acceptance/02-regression/ui-visual-interaction-preflight-latest.json,Site/user reviewer must decide whether this exception blocks pilot signoff.
+EX-ui_visual_evidence_finalization,ui_visual_evidence_finalization,result=blocked blockers=54,TBD,TBD,TBD,doc/02_acceptance/02-regression/ui-visual-interaction/evidence-finalization-latest.json,Site/user reviewer must decide whether this exception blocks pilot signoff.
+EX-security,security,result=blocked blockers=1,TBD,TBD,TBD,doc/02_acceptance/05-security/production-security-preflight-latest.json,Site/user reviewer must decide whether this exception blocks pilot signoff.
+EX-ha,ha,result=blocked blockers=1,TBD,TBD,TBD,doc/02_acceptance/06-resilience/ha-readiness-preflight-latest.json,Site/user reviewer must decide whether this exception blocks pilot signoff.
+EX-performance,performance,result=blocked blockers=4,TBD,TBD,TBD,doc/02_acceptance/03-performance/capture-performance-preflight-latest.json,Site/user reviewer must decide whether this exception blocks pilot signoff.
+EX-detection_quality,detection_quality,result=blocked blockers=5,TBD,TBD,TBD,doc/02_acceptance/04-detection-quality/detection-quality-preflight-latest.json,Site/user reviewer must decide whether this exception blocks pilot signoff.
+EX-asset_discovery_coverage,asset_discovery_coverage,result=blocked blockers=1,TBD,TBD,TBD,doc/02_acceptance/02-regression/asset-discovery-coverage-latest.json,Site/user reviewer must decide whether this exception blocks pilot signoff.
+EX-completion_snapshot,completion_snapshot,result=blocked blockers=9,TBD,TBD,TBD,doc/02_acceptance/09-completion/project-completion-audit-latest.json,Site/user reviewer must decide whether this exception blocks pilot signoff.

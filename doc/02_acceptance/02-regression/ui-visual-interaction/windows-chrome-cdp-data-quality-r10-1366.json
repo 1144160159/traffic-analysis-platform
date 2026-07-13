@@ -1,0 +1,95 @@
+{
+  "package_id": "windows_chrome_cdp_full_route_capture",
+  "run_id": "windows-cdp-full-route-20260703112452",
+  "result": "pass",
+  "runtime_result": "pass",
+  "visual_diff_result": "skipped",
+  "generated_at": "2026-07-03T11:24:58.020Z",
+  "base_url": "http://10.0.5.8:30180",
+  "cdp_url": "http://127.0.0.1:9224",
+  "cdp_version": {
+    "Browser": "Chrome/150.0.7871.47",
+    "Protocol-Version": "1.3",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+    "V8-Version": "15.0.245.13",
+    "WebKit-Version": "537.36 (@0c3cca15d78645281db2d339b2dc3d6fad4ee90a)",
+    "webSocketDebuggerUrl": "ws://127.0.0.1:9224/devtools/browser/044b273c-d1b6-4227-aa54-a523a3e8c863"
+  },
+  "cdp_targets_count": 3,
+  "viewport": {
+    "width": 1366,
+    "height": 768
+  },
+  "evidence_dir": "evidence/windows-chrome-cdp-20260703-data-quality-r10-1366",
+  "acceptance_dir": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-data-quality-r10-1366",
+  "target_mode": "visual-targets",
+  "capture_plan": "doc/02_acceptance/02-regression/ui-visual-interaction/capture-plan-latest.json",
+  "output_json": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-data-quality-r10-1366.json",
+  "output_md": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-data-quality-r10-1366.md",
+  "alert_id": "alert-default-1782752318016-1dd589c4",
+  "campaign_id": "campaign-exfil-default-1782729598739-e1d2dc37",
+  "auth": {
+    "strategy": "hash-smoke-token",
+    "smoke_token_source": "generated-from-k8s-secret",
+    "smoke_token_env": "DESKTOP_SMOKE_TOKEN",
+    "token_material_redacted": true
+  },
+  "max_pixel_ratio": 0.015,
+  "channel_tolerance": 0,
+  "summary": {
+    "total": 1,
+    "runtime_pass": 1,
+    "runtime_fail": 0,
+    "visual_diff_total": 0,
+    "visual_diff_pass": 0,
+    "visual_diff_fail": 0,
+    "failed_runtime_routes": [],
+    "failed_visual_diff_routes": []
+  },
+  "routes": [
+    {
+      "id": "data-quality",
+      "route_id": "data-quality",
+      "title": "数据质量",
+      "route": "/data-quality",
+      "resolved_path": "/data-quality",
+      "url": "http://10.0.5.8:30180/data-quality?windowsCdpEvidenceTs=1783077892068#codex_smoke_token=<redacted>",
+      "final_url": "http://10.0.5.8:30180/data-quality?windowsCdpEvidenceTs=1783077892068",
+      "screenshot": "evidence/windows-chrome-cdp-20260703-data-quality-r10-1366/data-quality-1366x768.png",
+      "acceptance_actual": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-data-quality-r10-1366/data-quality/actual-1920.png",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/data-quality.png",
+      "duration_ms": 4928,
+      "goto_error": null,
+      "bad_responses": [],
+      "request_failures": [],
+      "console_errors": [],
+      "page_errors": [],
+      "metrics": {
+        "final_url": "http://10.0.5.8:30180/data-quality?windowsCdpEvidenceTs=1783077892068",
+        "document_title": "园区网络全流量采集与分析系统",
+        "h1": "数据质量",
+        "body_text_sample": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-03 19:24:54 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 综合态势 采集监测 探针管理 数据质量 2 威胁分析 资产图谱 检测运营 审计配置 C codex-windows-cdp-admin 系统管理员 在线 数据质量 Kafka、Flink、字段、存储和重放对账质量门禁 质量总览 Topic 健康 Flink 质量 字段质量 存储质量 重放对账 质量报告 质量设置 近 24 小时 全部管道 数据重放 质量总分 76 分 真实 API 完整性 96.3% 真实 API 及时性 91.7% 真实 API 准确性 94.0% 真实 API 重复率 0.4% 真实 API 字段缺失率 1.1% 真实 API DLQ 数量 12.8K 条 真实 API Kafka Topic 健康 (Top 10) Topic 分区数 当前吞吐量 消费延迟 积压量 积压趋势 消费延迟 P95 分区倾斜 消息延迟 P95 操作 Topic 分区数 当前吞吐量 消费延迟 积压量 积压趋势 消费延迟 P95 分区倾斜 消息延迟 P95 操作 flow_original 36 4.2K msg/min 2s 3.9K ",
+        "scroll_width": 1366,
+        "client_width": 1366,
+        "scroll_height": 768,
+        "client_height": 768,
+        "horizontal_overflow": false,
+        "error_alerts": [],
+        "visible_bad_geometry": []
+      },
+      "protected_route": true,
+      "smoke_token_used": true,
+      "smoke_hash_consumed": true,
+      "runtime_status": "pass",
+      "runtime_reasons": [],
+      "visual_diff": {
+        "skipped": true,
+        "status": "skipped",
+        "reasons": [
+          "skipDiff=true"
+        ]
+      },
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-data-quality-r10-1366/data-quality/capture-meta.json"
+    }
+  ]
+}

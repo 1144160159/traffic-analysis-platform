@@ -1,0 +1,60 @@
+{
+  "run_id": "20260702-third-party-signoff-readiness-r26-ui-r40-receiver-selftest",
+  "generated_at": "2026-07-02T15:55:56.347293+08:00",
+  "total_tbd": 162,
+  "by_owner": {
+    "maintenance_window": 2,
+    "performance_lab": 2,
+    "project_review": 84,
+    "project_team": 3,
+    "site_operations": 15,
+    "third_party_lab": 8,
+    "user_signoff": 48
+  },
+  "by_file": [
+    {
+      "file": "doc/02_acceptance/08-third-party/economic-benefit.md",
+      "total_tbd": 20,
+      "by_owner": {
+        "project_review": 15,
+        "third_party_lab": 5
+      }
+    },
+    {
+      "file": "doc/02_acceptance/08-third-party/ipr-index.md",
+      "total_tbd": 10,
+      "by_owner": {
+        "project_review": 8,
+        "user_signoff": 2
+      }
+    },
+    {
+      "file": "doc/02_acceptance/08-third-party/pilot-deployment-proof.md",
+      "total_tbd": 27,
+      "by_owner": {
+        "site_operations": 14,
+        "user_signoff": 13
+      }
+    },
+    {
+      "file": "doc/02_acceptance/08-third-party/pilot-weekly-report-template.md",
+      "total_tbd": 68,
+      "by_owner": {
+        "project_review": 61,
+        "project_team": 3,
+        "user_signoff": 4
+      }
+    },
+    {
+      "file": "doc/02_acceptance/08-third-party/user-acceptance-signoff.md",
+      "total_tbd": 37,
+      "by_owner": {
+        "maintenance_window": 2,
+        "performance_lab": 2,
+        "site_operations": 1,
+        "third_party_lab": 3,
+        "user_signoff": 29
+      }
+    }
+  ]
+}

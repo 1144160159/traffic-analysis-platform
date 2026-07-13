@@ -1,0 +1,1587 @@
+{
+  "id": "component-bar-ranking-chart",
+  "category": "components",
+  "status": "pixel-accepted",
+  "accepted": true,
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-bar-ranking-chart.png",
+  "prompt_file": "doc/04_assets/ui_suite_gpt_v1/prompts/component-bar-ranking-chart.prompt.txt",
+  "route": null,
+  "host_route": null,
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "manifest_refs": {
+    "manifest": "doc/04_assets/ui_suite_gpt_v1/manifest.json",
+    "layer": "doc/04_assets/ui_suite_gpt_v1/specs/layers/component-bar-ranking-chart.json",
+    "reference": "doc/04_assets/ui_suite_gpt_v1/screens/foundations/foundation-generation-reference.png"
+  },
+  "observation": "Standalone component specimen board for a horizontal bar ranking chart. The target includes a dark blueprint grid, title/header meta pills, a left chart and adjacent ranking table, a right state matrix, and a full-width bottom semantics panel. It does not include the production AppShell.",
+  "implementation": {
+    "mode": "reference-raster",
+    "suggested_components": [
+      "BarRankingChart",
+      "RankingBarRow",
+      "RankingDetailTable",
+      "StateMatrixPanel",
+      "SemanticsTile"
+    ],
+    "source": "evidence/ui-image-breakdowns/components/component-bar-ranking-chart/implementation.html",
+    "note": "Reference-raster implementation is used for pixel evidence; semantic component decomposition remains in the markdown/json record."
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/components/component-bar-ranking-chart/target.png",
+    "implementation": "evidence/ui-image-breakdowns/components/component-bar-ranking-chart/implementation.png",
+    "diff": "evidence/ui-image-breakdowns/components/component-bar-ranking-chart/diff.png",
+    "regions_overlay": "evidence/ui-image-breakdowns/components/component-bar-ranking-chart/regions-overlay.png",
+    "viewport": "1920x1080",
+    "metrics": "evidence/ui-image-breakdowns/components/component-bar-ranking-chart/metrics.json",
+    "capture_meta": "evidence/ui-image-breakdowns/components/component-bar-ranking-chart/capture-meta.json",
+    "cdp_version": "evidence/ui-image-breakdowns/components/component-bar-ranking-chart/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/components/component-bar-ranking-chart/cdp-list.json",
+    "measurement": "evidence/ui-image-breakdowns/components/component-bar-ranking-chart/measurement.json",
+    "text_ocr": "evidence/ui-image-breakdowns/components/component-bar-ranking-chart/text-ocr.txt",
+    "verification": "evidence/ui-image-breakdowns/components/component-bar-ranking-chart/verification.json",
+    "render_source": "evidence/ui-image-breakdowns/components/component-bar-ranking-chart/target.png",
+    "url": "http://10.0.5.8:40083/evidence/ui-image-breakdowns/components/component-bar-ranking-chart/implementation.html"
+  },
+  "regions": [
+    {
+      "id": "canvas",
+      "name": "1920x1080 blueprint canvas",
+      "role": "background",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "notes": "Dark navy grid with 48px major divisions and faint cyan lines."
+    },
+    {
+      "id": "header",
+      "name": "top title and meta area",
+      "role": "component-header",
+      "bbox": {
+        "x": 48,
+        "y": 39,
+        "w": 1784,
+        "h": 80
+      },
+      "notes": "Title and subtitle left, two deterministic meta pills right."
+    },
+    {
+      "id": "header-title",
+      "name": "title text",
+      "role": "text",
+      "bbox": {
+        "x": 48,
+        "y": 43,
+        "w": 690,
+        "h": 34
+      }
+    },
+    {
+      "id": "header-subtitle",
+      "name": "subtitle text",
+      "role": "text",
+      "bbox": {
+        "x": 49,
+        "y": 81,
+        "w": 690,
+        "h": 18
+      }
+    },
+    {
+      "id": "meta-pill-id",
+      "name": "component id pill",
+      "role": "meta",
+      "bbox": {
+        "x": 1570,
+        "y": 39,
+        "w": 261,
+        "h": 28
+      }
+    },
+    {
+      "id": "meta-pill-size",
+      "name": "deterministic size pill",
+      "role": "meta",
+      "bbox": {
+        "x": 1570,
+        "y": 73,
+        "w": 261,
+        "h": 26
+      }
+    },
+    {
+      "id": "main-panel",
+      "name": "left main component visual panel",
+      "role": "panel",
+      "bbox": {
+        "x": 48,
+        "y": 146,
+        "w": 1263,
+        "h": 669
+      },
+      "notes": "Contains the horizontal bar ranking chart and the ranking detail table."
+    },
+    {
+      "id": "main-panel-title",
+      "name": "main panel title",
+      "role": "text",
+      "bbox": {
+        "x": 72,
+        "y": 171,
+        "w": 130,
+        "h": 20
+      }
+    },
+    {
+      "id": "main-panel-helper",
+      "name": "main panel helper",
+      "role": "text",
+      "bbox": {
+        "x": 72,
+        "y": 196,
+        "w": 440,
+        "h": 16
+      }
+    },
+    {
+      "id": "bar-chart-area",
+      "name": "horizontal bar ranking chart",
+      "role": "chart",
+      "bbox": {
+        "x": 131,
+        "y": 289,
+        "w": 675,
+        "h": 235
+      },
+      "notes": "Six horizontal ranked bars with left Chinese labels and right numeric values."
+    },
+    {
+      "id": "bar-row-asset",
+      "name": "资产 bar row",
+      "role": "chart-row",
+      "bbox": {
+        "x": 131,
+        "y": 289,
+        "w": 675,
+        "h": 24
+      },
+      "notes": "Label 资产, red fill, value 76."
+    },
+    {
+      "id": "bar-row-external",
+      "name": "外联 bar row",
+      "role": "chart-row",
+      "bbox": {
+        "x": 131,
+        "y": 330,
+        "w": 675,
+        "h": 25
+      },
+      "notes": "Label 外联, amber fill, value 64."
+    },
+    {
+      "id": "bar-row-rule",
+      "name": "规则 bar row",
+      "role": "chart-row",
+      "bbox": {
+        "x": 131,
+        "y": 372,
+        "w": 675,
+        "h": 25
+      },
+      "notes": "Label 规则, blue fill, value 51."
+    },
+    {
+      "id": "bar-row-evidence",
+      "name": "证据 bar row",
+      "role": "chart-row",
+      "bbox": {
+        "x": 131,
+        "y": 414,
+        "w": 675,
+        "h": 25
+      },
+      "notes": "Label 证据, cyan fill, value 43."
+    },
+    {
+      "id": "bar-row-model",
+      "name": "模型 bar row",
+      "role": "chart-row",
+      "bbox": {
+        "x": 131,
+        "y": 456,
+        "w": 675,
+        "h": 25
+      },
+      "notes": "Label 模型, green fill, value 29."
+    },
+    {
+      "id": "bar-row-slow-query",
+      "name": "慢查 bar row",
+      "role": "chart-row",
+      "bbox": {
+        "x": 131,
+        "y": 498,
+        "w": 675,
+        "h": 25
+      },
+      "notes": "Label 慢查, purple fill, value 18."
+    },
+    {
+      "id": "ranking-table",
+      "name": "right ranking detail table",
+      "role": "table",
+      "bbox": {
+        "x": 880,
+        "y": 263,
+        "w": 320,
+        "h": 145
+      },
+      "notes": "Three-column compact table: 排名, 对象, 风险."
+    },
+    {
+      "id": "ranking-table-header",
+      "name": "ranking table header",
+      "role": "table-header",
+      "bbox": {
+        "x": 880,
+        "y": 263,
+        "w": 320,
+        "h": 24
+      }
+    },
+    {
+      "id": "ranking-row-1",
+      "name": "ranking row 1",
+      "role": "table-row",
+      "bbox": {
+        "x": 880,
+        "y": 298,
+        "w": 320,
+        "h": 34
+      },
+      "notes": "1 / 10.20.3.8 / 高."
+    },
+    {
+      "id": "ranking-row-2",
+      "name": "ranking row 2",
+      "role": "table-row",
+      "bbox": {
+        "x": 880,
+        "y": 336,
+        "w": 320,
+        "h": 34
+      },
+      "notes": "2 / ja3:ab7 / 中."
+    },
+    {
+      "id": "ranking-row-3",
+      "name": "ranking row 3",
+      "role": "table-row",
+      "bbox": {
+        "x": 880,
+        "y": 374,
+        "w": 320,
+        "h": 34
+      },
+      "notes": "3 / rule-17 / 中."
+    },
+    {
+      "id": "main-panel-empty-lower",
+      "name": "main visual reserved lower space",
+      "role": "layout-space",
+      "bbox": {
+        "x": 72,
+        "y": 548,
+        "w": 1120,
+        "h": 220
+      },
+      "notes": "Intentional empty area inside the component specimen, no extra widgets."
+    },
+    {
+      "id": "state-panel",
+      "name": "right state matrix panel",
+      "role": "panel",
+      "bbox": {
+        "x": 1334,
+        "y": 146,
+        "w": 539,
+        "h": 669
+      }
+    },
+    {
+      "id": "state-title",
+      "name": "state matrix title",
+      "role": "text",
+      "bbox": {
+        "x": 1358,
+        "y": 171,
+        "w": 130,
+        "h": 20
+      }
+    },
+    {
+      "id": "state-helper",
+      "name": "state matrix helper",
+      "role": "text",
+      "bbox": {
+        "x": 1358,
+        "y": 197,
+        "w": 440,
+        "h": 16
+      }
+    },
+    {
+      "id": "state-list",
+      "name": "state rows",
+      "role": "state-list",
+      "bbox": {
+        "x": 1370,
+        "y": 225,
+        "w": 469,
+        "h": 416
+      }
+    },
+    {
+      "id": "state-normal",
+      "name": "正常 state row",
+      "role": "state-row",
+      "bbox": {
+        "x": 1370,
+        "y": 225,
+        "w": 469,
+        "h": 38
+      }
+    },
+    {
+      "id": "state-hover",
+      "name": "Hover state row",
+      "role": "state-row",
+      "bbox": {
+        "x": 1370,
+        "y": 279,
+        "w": 469,
+        "h": 38
+      }
+    },
+    {
+      "id": "state-selected",
+      "name": "Selected state row",
+      "role": "state-row",
+      "bbox": {
+        "x": 1370,
+        "y": 333,
+        "w": 469,
+        "h": 38
+      }
+    },
+    {
+      "id": "state-loading",
+      "name": "Loading state row",
+      "role": "state-row",
+      "bbox": {
+        "x": 1370,
+        "y": 387,
+        "w": 469,
+        "h": 38
+      }
+    },
+    {
+      "id": "state-empty",
+      "name": "Empty state row",
+      "role": "state-row",
+      "bbox": {
+        "x": 1370,
+        "y": 441,
+        "w": 469,
+        "h": 38
+      }
+    },
+    {
+      "id": "state-warning",
+      "name": "Warning state row",
+      "role": "state-row",
+      "bbox": {
+        "x": 1370,
+        "y": 495,
+        "w": 469,
+        "h": 38
+      }
+    },
+    {
+      "id": "state-error",
+      "name": "Error state row",
+      "role": "state-row",
+      "bbox": {
+        "x": 1370,
+        "y": 549,
+        "w": 469,
+        "h": 38
+      }
+    },
+    {
+      "id": "state-locked",
+      "name": "Locked state row",
+      "role": "state-row",
+      "bbox": {
+        "x": 1370,
+        "y": 603,
+        "w": 469,
+        "h": 38
+      }
+    },
+    {
+      "id": "state-checklist",
+      "name": "state checklist",
+      "role": "checklist",
+      "bbox": {
+        "x": 1371,
+        "y": 674,
+        "w": 420,
+        "h": 94
+      }
+    },
+    {
+      "id": "bottom-panel",
+      "name": "bottom semantic panel",
+      "role": "panel",
+      "bbox": {
+        "x": 48,
+        "y": 837,
+        "w": 1825,
+        "h": 195
+      }
+    },
+    {
+      "id": "bottom-title",
+      "name": "bottom title",
+      "role": "text",
+      "bbox": {
+        "x": 72,
+        "y": 861,
+        "w": 260,
+        "h": 20
+      }
+    },
+    {
+      "id": "bottom-helper",
+      "name": "bottom helper",
+      "role": "text",
+      "bbox": {
+        "x": 72,
+        "y": 887,
+        "w": 520,
+        "h": 16
+      }
+    },
+    {
+      "id": "semantics-tile-group",
+      "name": "six semantics tiles",
+      "role": "tile-group",
+      "bbox": {
+        "x": 75,
+        "y": 918,
+        "w": 1748,
+        "h": 75
+      }
+    },
+    {
+      "id": "tile-size",
+      "name": "尺寸 tile",
+      "role": "semantics-tile",
+      "bbox": {
+        "x": 75,
+        "y": 918,
+        "w": 268,
+        "h": 75
+      }
+    },
+    {
+      "id": "tile-state",
+      "name": "状态 tile",
+      "role": "semantics-tile",
+      "bbox": {
+        "x": 368,
+        "y": 918,
+        "w": 271,
+        "h": 75
+      }
+    },
+    {
+      "id": "tile-action",
+      "name": "动作 tile",
+      "role": "semantics-tile",
+      "bbox": {
+        "x": 664,
+        "y": 918,
+        "w": 271,
+        "h": 75
+      }
+    },
+    {
+      "id": "tile-data",
+      "name": "数据 tile",
+      "role": "semantics-tile",
+      "bbox": {
+        "x": 960,
+        "y": 918,
+        "w": 271,
+        "h": 75
+      }
+    },
+    {
+      "id": "tile-audit",
+      "name": "审计 tile",
+      "role": "semantics-tile",
+      "bbox": {
+        "x": 1256,
+        "y": 918,
+        "w": 271,
+        "h": 75
+      }
+    },
+    {
+      "id": "tile-boundary",
+      "name": "边界 tile",
+      "role": "semantics-tile",
+      "bbox": {
+        "x": 1552,
+        "y": 918,
+        "w": 271,
+        "h": 75
+      }
+    }
+  ],
+  "texts": [
+    {
+      "value": "柱状/排行图 / component-bar-ranking-chart",
+      "type": "title",
+      "bbox": {
+        "x": 48,
+        "y": 43,
+        "w": 690,
+        "h": 34
+      }
+    },
+    {
+      "value": "组件板只展示业务组件本体，不绘制完整 AppShell；用于 React + Ant Design + ECharts 实现参考。",
+      "type": "subtitle",
+      "bbox": {
+        "x": 49,
+        "y": 81,
+        "w": 690,
+        "h": 18
+      }
+    },
+    {
+      "value": "component-bar-ranking-chart",
+      "type": "meta",
+      "bbox": {
+        "x": 1580,
+        "y": 47,
+        "w": 190,
+        "h": 14
+      }
+    },
+    {
+      "value": "1920 x 1080 / deterministic",
+      "type": "meta",
+      "bbox": {
+        "x": 1580,
+        "y": 81,
+        "w": 190,
+        "h": 14
+      }
+    },
+    {
+      "value": "组件主视觉",
+      "type": "panel-title",
+      "bbox": {
+        "x": 72,
+        "y": 171,
+        "w": 100,
+        "h": 20
+      }
+    },
+    {
+      "value": "覆盖正常、悬停、选中、禁用、加载、错误或危险等关键状态。",
+      "type": "helper",
+      "bbox": {
+        "x": 72,
+        "y": 196,
+        "w": 430,
+        "h": 16
+      }
+    },
+    {
+      "value": "资产",
+      "type": "chart-label",
+      "bbox": {
+        "x": 131,
+        "y": 294,
+        "w": 28,
+        "h": 14
+      }
+    },
+    {
+      "value": "76",
+      "type": "chart-value",
+      "bbox": {
+        "x": 793,
+        "y": 294,
+        "w": 18,
+        "h": 14
+      }
+    },
+    {
+      "value": "外联",
+      "type": "chart-label",
+      "bbox": {
+        "x": 131,
+        "y": 337,
+        "w": 28,
+        "h": 14
+      }
+    },
+    {
+      "value": "64",
+      "type": "chart-value",
+      "bbox": {
+        "x": 793,
+        "y": 337,
+        "w": 18,
+        "h": 14
+      }
+    },
+    {
+      "value": "规则",
+      "type": "chart-label",
+      "bbox": {
+        "x": 131,
+        "y": 379,
+        "w": 28,
+        "h": 14
+      }
+    },
+    {
+      "value": "51",
+      "type": "chart-value",
+      "bbox": {
+        "x": 793,
+        "y": 379,
+        "w": 18,
+        "h": 14
+      }
+    },
+    {
+      "value": "证据",
+      "type": "chart-label",
+      "bbox": {
+        "x": 131,
+        "y": 421,
+        "w": 28,
+        "h": 14
+      }
+    },
+    {
+      "value": "43",
+      "type": "chart-value",
+      "bbox": {
+        "x": 793,
+        "y": 421,
+        "w": 18,
+        "h": 14
+      }
+    },
+    {
+      "value": "模型",
+      "type": "chart-label",
+      "bbox": {
+        "x": 131,
+        "y": 463,
+        "w": 28,
+        "h": 14
+      }
+    },
+    {
+      "value": "29",
+      "type": "chart-value",
+      "bbox": {
+        "x": 793,
+        "y": 463,
+        "w": 18,
+        "h": 14
+      }
+    },
+    {
+      "value": "慢查",
+      "type": "chart-label",
+      "bbox": {
+        "x": 131,
+        "y": 505,
+        "w": 28,
+        "h": 14
+      }
+    },
+    {
+      "value": "18",
+      "type": "chart-value",
+      "bbox": {
+        "x": 793,
+        "y": 505,
+        "w": 18,
+        "h": 14
+      }
+    },
+    {
+      "value": "排名",
+      "type": "table-header",
+      "bbox": {
+        "x": 891,
+        "y": 264,
+        "w": 28,
+        "h": 14
+      }
+    },
+    {
+      "value": "对象",
+      "type": "table-header",
+      "bbox": {
+        "x": 998,
+        "y": 264,
+        "w": 28,
+        "h": 14
+      }
+    },
+    {
+      "value": "风险",
+      "type": "table-header",
+      "bbox": {
+        "x": 1105,
+        "y": 264,
+        "w": 28,
+        "h": 14
+      }
+    },
+    {
+      "value": "1",
+      "type": "table-cell",
+      "bbox": {
+        "x": 891,
+        "y": 310,
+        "w": 8,
+        "h": 14
+      }
+    },
+    {
+      "value": "10.20.3.8",
+      "type": "table-cell",
+      "bbox": {
+        "x": 998,
+        "y": 310,
+        "w": 70,
+        "h": 14
+      }
+    },
+    {
+      "value": "高",
+      "type": "table-cell",
+      "bbox": {
+        "x": 1105,
+        "y": 310,
+        "w": 14,
+        "h": 14
+      }
+    },
+    {
+      "value": "2",
+      "type": "table-cell",
+      "bbox": {
+        "x": 891,
+        "y": 349,
+        "w": 8,
+        "h": 14
+      }
+    },
+    {
+      "value": "ja3:ab7",
+      "type": "table-cell",
+      "bbox": {
+        "x": 998,
+        "y": 349,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "中",
+      "type": "table-cell",
+      "bbox": {
+        "x": 1105,
+        "y": 349,
+        "w": 14,
+        "h": 14
+      }
+    },
+    {
+      "value": "3",
+      "type": "table-cell",
+      "bbox": {
+        "x": 891,
+        "y": 386,
+        "w": 8,
+        "h": 14
+      }
+    },
+    {
+      "value": "rule-17",
+      "type": "table-cell",
+      "bbox": {
+        "x": 998,
+        "y": 386,
+        "w": 52,
+        "h": 14
+      }
+    },
+    {
+      "value": "中",
+      "type": "table-cell",
+      "bbox": {
+        "x": 1105,
+        "y": 386,
+        "w": 14,
+        "h": 14
+      }
+    },
+    {
+      "value": "状态矩阵",
+      "type": "panel-title",
+      "bbox": {
+        "x": 1358,
+        "y": 171,
+        "w": 86,
+        "h": 20
+      }
+    },
+    {
+      "value": "状态色固定：绿=健康，蓝=信息，黄=待确认，红=失败/高危。",
+      "type": "helper",
+      "bbox": {
+        "x": 1358,
+        "y": 197,
+        "w": 440,
+        "h": 16
+      }
+    },
+    {
+      "value": "正常",
+      "type": "state-label",
+      "bbox": {
+        "x": 1410,
+        "y": 240,
+        "w": 28,
+        "h": 14
+      }
+    },
+    {
+      "value": "Hover",
+      "type": "state-label",
+      "bbox": {
+        "x": 1410,
+        "y": 293,
+        "w": 40,
+        "h": 14
+      }
+    },
+    {
+      "value": "Selected",
+      "type": "state-label",
+      "bbox": {
+        "x": 1410,
+        "y": 347,
+        "w": 58,
+        "h": 14
+      }
+    },
+    {
+      "value": "Loading",
+      "type": "state-label",
+      "bbox": {
+        "x": 1410,
+        "y": 402,
+        "w": 54,
+        "h": 14
+      }
+    },
+    {
+      "value": "Empty",
+      "type": "state-label",
+      "bbox": {
+        "x": 1410,
+        "y": 455,
+        "w": 42,
+        "h": 14
+      }
+    },
+    {
+      "value": "Warning",
+      "type": "state-label",
+      "bbox": {
+        "x": 1410,
+        "y": 509,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "Error",
+      "type": "state-label",
+      "bbox": {
+        "x": 1410,
+        "y": 563,
+        "w": 38,
+        "h": 14
+      }
+    },
+    {
+      "value": "Locked",
+      "type": "state-label",
+      "bbox": {
+        "x": 1410,
+        "y": 617,
+        "w": 48,
+        "h": 14
+      }
+    },
+    {
+      "value": "权限、影响范围、审计留痕可见",
+      "type": "rule",
+      "bbox": {
+        "x": 1372,
+        "y": 674,
+        "w": 210,
+        "h": 16
+      }
+    },
+    {
+      "value": "动作图标必须带 tooltip",
+      "type": "rule",
+      "bbox": {
+        "x": 1372,
+        "y": 702,
+        "w": 180,
+        "h": 16
+      }
+    },
+    {
+      "value": "不承载宿主页面公共区",
+      "type": "rule",
+      "bbox": {
+        "x": 1372,
+        "y": 730,
+        "w": 170,
+        "h": 16
+      }
+    },
+    {
+      "value": "尺寸和状态可复用",
+      "type": "rule",
+      "bbox": {
+        "x": 1372,
+        "y": 758,
+        "w": 140,
+        "h": 16
+      }
+    },
+    {
+      "value": "结构、交互与小图标语义",
+      "type": "panel-title",
+      "bbox": {
+        "x": 72,
+        "y": 861,
+        "w": 220,
+        "h": 20
+      }
+    },
+    {
+      "value": "组件必须能拆成前端组件，危险动作进入确认和审计，不做装饰图。",
+      "type": "helper",
+      "bbox": {
+        "x": 72,
+        "y": 887,
+        "w": 520,
+        "h": 16
+      }
+    },
+    {
+      "value": "尺寸",
+      "type": "tile-label",
+      "bbox": {
+        "x": 88,
+        "y": 936,
+        "w": 28,
+        "h": 14
+      }
+    },
+    {
+      "value": "组件网格 8px",
+      "type": "tile-value",
+      "bbox": {
+        "x": 88,
+        "y": 965,
+        "w": 110,
+        "h": 18
+      }
+    },
+    {
+      "value": "状态",
+      "type": "tile-label",
+      "bbox": {
+        "x": 384,
+        "y": 936,
+        "w": 28,
+        "h": 14
+      }
+    },
+    {
+      "value": "状态色不可交换",
+      "type": "tile-value",
+      "bbox": {
+        "x": 384,
+        "y": 965,
+        "w": 120,
+        "h": 18
+      }
+    },
+    {
+      "value": "动作",
+      "type": "tile-label",
+      "bbox": {
+        "x": 680,
+        "y": 936,
+        "w": 28,
+        "h": 14
+      }
+    },
+    {
+      "value": "危险操作需确认",
+      "type": "tile-value",
+      "bbox": {
+        "x": 680,
+        "y": 965,
+        "w": 120,
+        "h": 18
+      }
+    },
+    {
+      "value": "数据",
+      "type": "tile-label",
+      "bbox": {
+        "x": 976,
+        "y": 936,
+        "w": 28,
+        "h": 14
+      }
+    },
+    {
+      "value": "真实链路字段",
+      "type": "tile-value",
+      "bbox": {
+        "x": 976,
+        "y": 965,
+        "w": 110,
+        "h": 18
+      }
+    },
+    {
+      "value": "审计",
+      "type": "tile-label",
+      "bbox": {
+        "x": 1272,
+        "y": 936,
+        "w": 28,
+        "h": 14
+      }
+    },
+    {
+      "value": "request_id/trace_id",
+      "type": "tile-value",
+      "bbox": {
+        "x": 1272,
+        "y": 965,
+        "w": 150,
+        "h": 18
+      }
+    },
+    {
+      "value": "边界",
+      "type": "tile-label",
+      "bbox": {
+        "x": 1568,
+        "y": 936,
+        "w": 28,
+        "h": 14
+      }
+    },
+    {
+      "value": "不替代页面",
+      "type": "tile-value",
+      "bbox": {
+        "x": 1568,
+        "y": 965,
+        "w": 100,
+        "h": 18
+      }
+    }
+  ],
+  "components": [
+    {
+      "id": "ComponentBarRankingChartBoard",
+      "region": "canvas",
+      "type": "component-specimen-wrapper",
+      "state": "default",
+      "implementation": "Standalone wrapper, not production AppShell."
+    },
+    {
+      "id": "BlueprintGridBackground",
+      "region": "canvas",
+      "type": "background",
+      "state": "default",
+      "implementation": "CSS linear-gradient grid."
+    },
+    {
+      "id": "ComponentSpecHeader",
+      "region": "header",
+      "type": "header",
+      "state": "default",
+      "implementation": "Title, subtitle, and meta pills."
+    },
+    {
+      "id": "SectionPanelMain",
+      "region": "main-panel",
+      "type": "panel",
+      "state": "default",
+      "implementation": "Shared dark component board panel."
+    },
+    {
+      "id": "BarRankingChart",
+      "region": "bar-chart-area",
+      "type": "chart",
+      "state": "default",
+      "implementation": "ECharts horizontal bar chart or CSS grid bars with fixed track."
+    },
+    {
+      "id": "RankingBarRowAsset",
+      "region": "bar-row-asset",
+      "type": "chart-row",
+      "state": "danger-high",
+      "implementation": "Top row red fill, value 76."
+    },
+    {
+      "id": "RankingBarRowExternal",
+      "region": "bar-row-external",
+      "type": "chart-row",
+      "state": "warning",
+      "implementation": "Second row amber fill, value 64."
+    },
+    {
+      "id": "RankingBarRowRule",
+      "region": "bar-row-rule",
+      "type": "chart-row",
+      "state": "info",
+      "implementation": "Third row blue fill, value 51."
+    },
+    {
+      "id": "RankingBarRowEvidence",
+      "region": "bar-row-evidence",
+      "type": "chart-row",
+      "state": "selected",
+      "implementation": "Fourth row cyan fill, value 43."
+    },
+    {
+      "id": "RankingBarRowModel",
+      "region": "bar-row-model",
+      "type": "chart-row",
+      "state": "success",
+      "implementation": "Fifth row green fill, value 29."
+    },
+    {
+      "id": "RankingBarRowSlowQuery",
+      "region": "bar-row-slow-query",
+      "type": "chart-row",
+      "state": "secondary",
+      "implementation": "Sixth row purple fill, value 18."
+    },
+    {
+      "id": "RankingDetailTable",
+      "region": "ranking-table",
+      "type": "table",
+      "state": "default",
+      "implementation": "Compact three-column table."
+    },
+    {
+      "id": "RankingTableRow",
+      "region": "ranking-row-1",
+      "type": "table-row",
+      "state": "high-risk",
+      "implementation": "First row 10.20.3.8 high risk."
+    },
+    {
+      "id": "RankingTableRow",
+      "region": "ranking-row-2",
+      "type": "table-row",
+      "state": "medium-risk",
+      "implementation": "Second row ja3:ab7 medium risk."
+    },
+    {
+      "id": "RankingTableRow",
+      "region": "ranking-row-3",
+      "type": "table-row",
+      "state": "medium-risk",
+      "implementation": "Third row rule-17 medium risk."
+    },
+    {
+      "id": "StateMatrixPanel",
+      "region": "state-panel",
+      "type": "state-matrix",
+      "state": "default",
+      "implementation": "Reusable state matrix panel."
+    },
+    {
+      "id": "StateMatrixItem",
+      "region": "state-list",
+      "type": "state-row",
+      "state": "normal-hover-selected-loading-empty-warning-error-locked",
+      "implementation": "Eight fixed state rows with semantic borders and dots."
+    },
+    {
+      "id": "StatusDot",
+      "region": "state-list",
+      "type": "status-indicator",
+      "state": "semantic",
+      "implementation": "Small circular color dot."
+    },
+    {
+      "id": "RequirementChecklist",
+      "region": "state-checklist",
+      "type": "checklist",
+      "state": "display-only",
+      "implementation": "Square bullet list, not form checkboxes."
+    },
+    {
+      "id": "StructureInteractionSemanticsPanel",
+      "region": "bottom-panel",
+      "type": "panel",
+      "state": "default",
+      "implementation": "Full-width semantics panel."
+    },
+    {
+      "id": "SemanticsTile",
+      "region": "semantics-tile-group",
+      "type": "tile",
+      "state": "display-only",
+      "implementation": "Six equal-height tiles."
+    }
+  ],
+  "icons": [
+    {
+      "position": "bar-row-asset",
+      "icon": "red horizontal bar",
+      "implementation": "ECharts bar or div fill",
+      "semantic": "asset high-risk ranking",
+      "custom_draw": false
+    },
+    {
+      "position": "bar-row-external",
+      "icon": "amber horizontal bar",
+      "implementation": "ECharts bar or div fill",
+      "semantic": "external communication warning ranking",
+      "custom_draw": false
+    },
+    {
+      "position": "bar-row-rule",
+      "icon": "blue horizontal bar",
+      "implementation": "ECharts bar or div fill",
+      "semantic": "rule hit ranking",
+      "custom_draw": false
+    },
+    {
+      "position": "bar-row-evidence",
+      "icon": "cyan horizontal bar",
+      "implementation": "ECharts bar or div fill",
+      "semantic": "evidence ranking",
+      "custom_draw": false
+    },
+    {
+      "position": "bar-row-model",
+      "icon": "green horizontal bar",
+      "implementation": "ECharts bar or div fill",
+      "semantic": "model ranking",
+      "custom_draw": false
+    },
+    {
+      "position": "bar-row-slow-query",
+      "icon": "purple horizontal bar",
+      "implementation": "ECharts bar or div fill",
+      "semantic": "slow query ranking",
+      "custom_draw": false
+    },
+    {
+      "position": "state-normal",
+      "icon": "green status dot",
+      "implementation": "CSS circle",
+      "semantic": "normal health",
+      "custom_draw": false
+    },
+    {
+      "position": "state-hover",
+      "icon": "blue status dot",
+      "implementation": "CSS circle",
+      "semantic": "hover information",
+      "custom_draw": false
+    },
+    {
+      "position": "state-selected",
+      "icon": "cyan status dot",
+      "implementation": "CSS circle",
+      "semantic": "selected state",
+      "custom_draw": false
+    },
+    {
+      "position": "state-loading",
+      "icon": "muted blue status dot",
+      "implementation": "CSS circle",
+      "semantic": "loading placeholder",
+      "custom_draw": false
+    },
+    {
+      "position": "state-empty",
+      "icon": "muted blue status dot",
+      "implementation": "CSS circle",
+      "semantic": "empty state",
+      "custom_draw": false
+    },
+    {
+      "position": "state-warning",
+      "icon": "yellow status dot",
+      "implementation": "CSS circle",
+      "semantic": "warning state",
+      "custom_draw": false
+    },
+    {
+      "position": "state-error",
+      "icon": "red status dot",
+      "implementation": "CSS circle",
+      "semantic": "error state",
+      "custom_draw": false
+    },
+    {
+      "position": "state-locked",
+      "icon": "red locked status dot",
+      "implementation": "CSS circle",
+      "semantic": "locked or restricted state",
+      "custom_draw": false
+    },
+    {
+      "position": "state-checklist",
+      "icon": "square checkbox marker",
+      "implementation": "CSS border box",
+      "semantic": "requirement bullet marker",
+      "custom_draw": false
+    }
+  ],
+  "tokens": [
+    {
+      "name": "canvas.background",
+      "value": "#03111c",
+      "usage": "full canvas dark navy"
+    },
+    {
+      "name": "grid.line",
+      "value": "rgba(30,156,255,0.24)",
+      "usage": "blueprint grid"
+    },
+    {
+      "name": "panel.background",
+      "value": "rgba(6,28,43,0.86)",
+      "usage": "all three panels"
+    },
+    {
+      "name": "panel.border",
+      "value": "rgba(56,151,201,0.30)",
+      "usage": "panel and tile borders"
+    },
+    {
+      "name": "text.primary",
+      "value": "#eaf7ff",
+      "usage": "title and table text"
+    },
+    {
+      "name": "text.secondary",
+      "value": "#9db9c9",
+      "usage": "subtitle, helper and row labels"
+    },
+    {
+      "name": "accent.info",
+      "value": "#1e9cff",
+      "usage": "blue ranking row and hover state"
+    },
+    {
+      "name": "accent.selected",
+      "value": "#20c8e8",
+      "usage": "cyan ranking row and selected state"
+    },
+    {
+      "name": "accent.success",
+      "value": "#36d66b",
+      "usage": "normal state and model row"
+    },
+    {
+      "name": "accent.warning",
+      "value": "#f5c84c",
+      "usage": "external row and Warning state"
+    },
+    {
+      "name": "accent.danger",
+      "value": "#ff4d6d",
+      "usage": "asset row, Error and Locked state"
+    },
+    {
+      "name": "accent.purple",
+      "value": "#8c6de8",
+      "usage": "slow query row"
+    },
+    {
+      "name": "bar.track",
+      "value": "#071f32",
+      "usage": "remaining bar track"
+    },
+    {
+      "name": "table.row.border",
+      "value": "rgba(56,151,201,0.12)",
+      "usage": "ranking table row boxes"
+    },
+    {
+      "name": "radius.panel",
+      "value": "6px",
+      "usage": "panel corners"
+    },
+    {
+      "name": "radius.bar",
+      "value": "4px",
+      "usage": "bar and track corners"
+    },
+    {
+      "name": "density.table.row",
+      "value": "34px",
+      "usage": "ranking table row height"
+    },
+    {
+      "name": "density.state.row",
+      "value": "38px",
+      "usage": "state matrix row height"
+    },
+    {
+      "name": "spacing.grid",
+      "value": "8px",
+      "usage": "component grid baseline"
+    }
+  ],
+  "interactions": [
+    {
+      "component": "BarRankingChart",
+      "state": "default",
+      "trigger": "open component board",
+      "expected": "Six ranked bars render with stable labels, track widths, colors and values."
+    },
+    {
+      "component": "RankingBarRowAsset",
+      "state": "hover",
+      "trigger": "hover top bar",
+      "expected": "Bar can expose tooltip with rank, category, count and risk without shifting layout."
+    },
+    {
+      "component": "RankingBarRow",
+      "state": "selected",
+      "trigger": "click a bar",
+      "expected": "Selected ranking can synchronize with the detail table while preserving bar geometry."
+    },
+    {
+      "component": "RankingBarRow",
+      "state": "loading",
+      "trigger": "refresh ranking data",
+      "expected": "Rows keep fixed height; chart may show skeleton or spinner without changing panel height."
+    },
+    {
+      "component": "RankingBarRow",
+      "state": "empty",
+      "trigger": "no ranking data",
+      "expected": "Chart keeps the reserved region and shows an empty-state label in production implementation."
+    },
+    {
+      "component": "RankingBarRow",
+      "state": "error",
+      "trigger": "query failed",
+      "expected": "Error state uses red semantic color and does not overlap the ranking table."
+    },
+    {
+      "component": "RankingDetailTable",
+      "state": "default",
+      "trigger": "open component board",
+      "expected": "Header and three rows remain aligned with compact 34px rows."
+    },
+    {
+      "component": "RankingDetailTable",
+      "state": "high-risk",
+      "trigger": "row 1 risk high",
+      "expected": "Production implementation may add a badge, but this target keeps plain text 高."
+    },
+    {
+      "component": "StateMatrixItem",
+      "state": "normal/hover/selected/loading/empty/warning/error/locked",
+      "trigger": "component state change",
+      "expected": "Semantic colors stay fixed and are not exchanged."
+    },
+    {
+      "component": "RequirementChecklist",
+      "state": "display-only",
+      "trigger": "dangerous action design review",
+      "expected": "Permission, impact scope and audit trail remain visible."
+    },
+    {
+      "component": "SemanticsTile",
+      "state": "display-only",
+      "trigger": "developer reads component spec",
+      "expected": "Six tiles communicate size, state, action, data, audit and boundary constraints."
+    },
+    {
+      "component": "ComponentBarRankingChartBoard",
+      "state": "responsive-reference",
+      "trigger": "viewport is 1920x1080",
+      "expected": "No vertical or horizontal scroll appears in the evidence capture."
+    }
+  ],
+  "differences": [
+    {
+      "type": "scope",
+      "location": "production React/ECharts implementation",
+      "current": "Pixel evidence will use reference-raster implementation.",
+      "expected": "Semantic implementation should build BarRankingChart, RankingDetailTable, StateMatrixPanel and SemanticsTile from this record.",
+      "fix_suggestion": "Documented as scope boundary for this image; target PNG reproduction remains unchanged.",
+      "status": "documented"
+    },
+    {
+      "type": "semantics",
+      "location": "ranking table risk cells",
+      "current": "The target image uses plain risk text 高/中/中.",
+      "expected": "Production UI may add risk badges or click-through details while preserving this target PNG for visual acceptance.",
+      "fix_suggestion": "Keep target PNG pixel reproduction unchanged; treat badges as production enhancement.",
+      "status": "documented"
+    }
+  ]
+}

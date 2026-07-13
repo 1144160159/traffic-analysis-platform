@@ -1,0 +1,41 @@
+package_id: topic1_blind
+version: 1
+status: template
+owner:
+  organization: ""
+  contact: ""
+freeze:
+  frozen_at: ""
+  frozen_by: ""
+  immutable_storage_uri: ""
+  package_sha256_manifest: ""
+model_scope:
+  model_id: behavior-classifier
+  feature_set_id: v1
+  tenant_scope: campus-net
+sample_contract:
+  primary_key: sample_id
+  label_file: labels/labels.csv
+  prediction_file: predictions/predictions.csv
+  required_strata:
+    - normal
+    - known_attack
+    - unknown_attack
+    - encrypted
+strata_counts:
+  normal: 0
+  known_attack: 0
+  unknown_attack: 0
+  encrypted: 0
+sources:
+  pcaps: []
+  feature_exports: []
+  label_guidelines: []
+review:
+  third_party_attestation: third-party-attestation.yaml
+  cnas_lab: ""
+  reviewer: ""
+notes:
+  - Replace this template with dataset-manifest.yaml when a real frozen package exists.
+  - Keep labels hidden from the prediction run.
+  - Record every source artifact with sha256 and immutable storage URI.

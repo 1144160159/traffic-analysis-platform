@@ -1,0 +1,78 @@
+{
+  "run_id": "20260702-desktop-chrome-viewport-capability-r3-cdp-tab-control-timeout",
+  "result": "blocked",
+  "backend": "codex-desktop-chrome-extension",
+  "target_url": "http://10.0.5.8:30180/login",
+  "title": "园区网络全流量采集与分析系统",
+  "probe_method": "codex-desktop-node-repl Chrome extension bridge target probe plus raw screenshot/CDP capability probes",
+  "generated_at": "2026-07-02T01:55:00+08:00",
+  "target_probe": {
+    "status": "pass",
+    "import_path": "file:///C:/Users/11441/.codex/plugins/cache/openai-bundled/chrome/latest/scripts/browser-client.mjs",
+    "target_count": 1,
+    "chrome_target_count": 1,
+    "targets": [
+      {
+        "name": "Chrome",
+        "type": "extension",
+        "profile_name": "用户1"
+      }
+    ]
+  },
+  "wrapper_probe": {
+    "desktop_chrome_list_tabs": "initially passed in this continuation, then timed out after the CDP device-metrics probe",
+    "desktop_chrome_open_url": "passed for http://10.0.5.8:30180/login before the CDP device-metrics probe",
+    "desktop_chrome_cleanup_blank_tabs": "not retried after tab-control timeout",
+    "acceptance_effect": "the Chrome extension target is visible and can open pages before CDP experimentation, but the tab-control path is not stable enough for automated capture sequencing after the failed viewport-control probe"
+  },
+  "screenshot": {
+    "format": "jpeg",
+    "width": 2559,
+    "height": 1271,
+    "byte_length": 230399
+  },
+  "window_metrics": {
+    "inner_width": 2560,
+    "inner_height": 1271,
+    "device_pixel_ratio": 1.5,
+    "visual_viewport_width": 2560,
+    "visual_viewport_height": 1271.3333740234375,
+    "resize_to_type": "undefined"
+  },
+  "cdp_probe": {
+    "tab_capability_present": true,
+    "capability_list": ["pageAssets", "cdp"],
+    "send_api": "cdp.send(method, params, options)",
+    "browser_get_version": "not retried in r3; previous run reported unsupported through raw CDP",
+    "emulation_command": "Emulation.setDeviceMetricsOverride width=1920 height=1080 deviceScaleFactor=1 mobile=false",
+    "emulation_capture_result": "timed out; subsequent tab.playwright.evaluate, user.openTabs, and tabs.list also timed out",
+    "clip_screenshot_result": "not retried in r3 after tab-control timeout",
+    "acceptance_effect": "CDP is discoverable and may be the correct route for viewport control, but the current Desktop Chrome control session became unstable before it could prove a browser-generated 1920x1080 screenshot"
+  },
+  "exposed_control_methods": {
+    "browser_keys": ["browserId", "capabilities", "tabs", "user"],
+    "tab_methods": ["back", "close", "forward", "getJsDialog", "goto", "reload", "screenshot", "title", "url"],
+    "playwright_methods": [
+      "domSnapshot",
+      "elementInfo",
+      "elementScreenshot",
+      "evaluate",
+      "expectNavigation",
+      "frameLocator",
+      "getByLabel",
+      "getByPlaceholder",
+      "getByRole",
+      "getByTestId",
+      "getByText",
+      "goBack",
+      "goForward",
+      "locator",
+      "waitForEvent",
+      "waitForLoadState",
+      "waitForTimeout",
+      "waitForURL"
+    ],
+    "helper_viewport_like_methods": []
+  },
+  "acceptance_effect": "Current Desktop Chrome bridge can expose the Chrome extension target, open /login, and capture a real page before viewport-control experimentation. However, the only discovered viewport-control path is CDP, and the r3 CDP device metrics probe left tab control timing out. The 1:1 visual gate remains blocked until Desktop Chrome can reliably produce browser-generated 1920x1080 screenshots with receiver capture-meta.json proving uploaded/stored size and browser viewport."
+}

@@ -1,0 +1,47 @@
+{
+  "package_id": "capture_performance_formal_artifacts",
+  "status": "review-template",
+  "review_required": true,
+  "generated_from_review_packet": "20260701-capture-performance-review-r1",
+  "generated_at": "2026-06-30T17:23:53Z",
+  "source_bootstrap_run_id": "20260630-capture-performance-bootstrap-r1",
+  "formal_gate_note": "This template must not be used as a formal artifact manifest until all TBD fields are replaced and the hardware-window outputs are signed.",
+  "required_formal_artifacts": [
+    "tests/perf/100g_capture/hardware-inventory.yaml",
+    "tests/perf/100g_capture/traffic-profile.yaml",
+    "tests/perf/100g_capture/results/10x100g-summary.json",
+    "tests/perf/100g_capture/results/512mpps-summary.json"
+  ],
+  "context": {
+    "current_probe_profile": {
+      "interface": "ens9f0",
+      "mode": "af_packet",
+      "queue_id": "0",
+      "frame_count": "4096",
+      "frame_size": "65536",
+      "cpu_cores": [
+        "0",
+        "1"
+      ],
+      "numa_aware": "true"
+    },
+    "repo_stress_context": {
+      "source": "rust/probe-agent/tests/reports/stress_500k_report.txt",
+      "packets": 500000.0,
+      "pps": 937403.0,
+      "mbps": 1305.9,
+      "parse_success_percent": 100.0,
+      "acceptance_note": "small offline PCAP stress only; not a 10x100Gbps or 512Mpps acceptance result"
+    },
+    "latest_preflight_result": "blocked",
+    "latest_preflight_blockers": 4
+  },
+  "operator_approval": {
+    "approved_by": "TBD",
+    "approved_at": "TBD",
+    "test_window": "TBD",
+    "lab": "TBD",
+    "signed_report_uri": "TBD",
+    "sha256_manifest": "TBD"
+  }
+}

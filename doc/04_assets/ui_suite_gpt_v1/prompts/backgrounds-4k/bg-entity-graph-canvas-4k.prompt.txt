@@ -1,0 +1,19 @@
+Generate a 3840x2160 PNG static 4K background asset for traffic-analysis-platform.
+
+Use case:
+- Entity relationship graph canvas background for asset, IP, account, domain, session, topic, and attack path analysis.
+
+Scene:
+- A large dark graph analysis canvas filled with abstract entity nodes and weighted edges.
+- Include clusters for assets, IP-like nodes, accounts, domains, sessions, alerts, and investigation themes, but use only abstract glyphs, not readable labels.
+- Show several highlighted paths, suspicious bridge nodes, community clusters, and faint graph depth layers.
+- The canvas should feel ready for overlaying a real UI graph component.
+
+Visual style:
+- Restrained enterprise graph analytics, not a fantasy space scene.
+- Near-black and dark navy base, cyan/blue edges, green trusted clusters, amber suspicious links, rare red critical nodes.
+- Crisp 4K detail, clean node hierarchy, subtle depth, generous negative space around the center-left.
+
+Constraints:
+- Do not include readable labels, numbers, real IP addresses, credentials, logos, people, browser chrome, panels, toolbars, or full UI screens.
+- Avoid a one-note glowing nebula look; keep it technical and product-ready.

@@ -1,0 +1,290 @@
+{
+  "run_id": "20260630-probe-ops-governance-r2",
+  "result": "pass",
+  "apisix": "http://10.0.5.8:30180",
+  "tenant": "default",
+  "other_tenant": "tenant-b",
+  "probe_id": "codex-probe-ops-20260630-probe-ops-governance-r2",
+  "other_probe_id": "codex-probe-ops-other-20260630-probe-ops-governance-r2",
+  "config_operation_id": "b153b31a-18a4-4d6e-a0f4-091130a4ae67",
+  "cert_operation_id": "42747662-c2b0-43db-8837-bb192fd2537d",
+  "batch_id": "probe-batch-20260630070326.518139054",
+  "report": "doc/02_acceptance/runs/20260630-probe-ops-governance-r2/live-probe-ops-governance-preflight-20260630-probe-ops-governance-r2.ndjson",
+  "local_report": "doc/02_acceptance/runs/20260630-probe-ops-governance-r2/local-report.md",
+  "total": 27,
+  "passed": 27,
+  "blockers": 0,
+  "warnings": 0,
+  "checks": [
+    {
+      "ts": "2026-06-30T15:03:25+08:00",
+      "phase": "contract",
+      "name": "frontend probe operation contract present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "probe actions declared",
+      "artifact": "web/ui/src/services/pageApiPlans.ts"
+    },
+    {
+      "ts": "2026-06-30T15:03:25+08:00",
+      "phase": "api",
+      "name": "probe list readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"limit\":10,\"offset\":0,\"probes\":[{\"probe_id\":\"codex-probe-ops-20260630-probe-ops-governance-r2\",\"hostname\":\"Codex Probe Ops\",\"ip_address\":\"10.66.30.10\",\"status\":\"online\",\"health_score\":99,\"cpu_usage\":12.4,\"drop_rate\":0.01,\"bandwidth_mbps\":9800,\"capture_mode\":\"af_packet\",\"config_version\":\"v3.4.7\",\"last_heartbeat\":1782803005618}],\"total\":1},\"meta\":{\"request_id\":\"1c885b1c-34ee-4d60-ad99-ad96157a4c5f\",\"trace_id\":\"1c885b1c-34ee-4d60-ad99-ad96157a4c5f\"},\"timestamp\":\"2026-06-30T07:03:25Z\"} ",
+      "artifact": "probe-list.json"
+    },
+    {
+      "ts": "2026-06-30T15:03:25+08:00",
+      "phase": "assert",
+      "name": "probe list includes test probe",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and ((.data.probes // []) | map(.probe_id) | index($probe) != null)",
+      "artifact": "probe-list.json"
+    },
+    {
+      "ts": "2026-06-30T15:03:25+08:00",
+      "phase": "api",
+      "name": "operator pushes probe config",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"applied\":true,\"applied_at\":\"2026-06-30T07:03:25Z\",\"config_version\":\"codex-probe-config-20260630-probe-ops-governance-r2\",\"operation_id\":\"b153b31a-18a4-4d6e-a0f4-091130a4ae67\",\"probe_id\":\"codex-probe-ops-20260630-probe-ops-governance-r2\",\"status\":\"completed\"},\"meta\":{\"request_id\":\"922bc146-242e-4b28-b67f-1dd57f560084\",\"trace_id\":\"922bc146-242e-4b28-b67f-1dd57f560084\"},\"timestamp\":\"2026-06-30T07:03:25Z\"} ",
+      "artifact": "probe-config-push.json"
+    },
+    {
+      "ts": "2026-06-30T15:03:25+08:00",
+      "phase": "assert",
+      "name": "probe config push response shape",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.operation_id and .data.applied == true and .data.config_version == $version",
+      "artifact": "probe-config-push.json"
+    },
+    {
+      "ts": "2026-06-30T15:03:25+08:00",
+      "phase": "api",
+      "name": "viewer cannot push probe config",
+      "severity": "info",
+      "passed": true,
+      "status": "403",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"permission denied: probe:write required\"},\"meta\":{\"request_id\":\"4cb5a870-6c85-46a0-9982-8d5450166cfa\",\"trace_id\":\"4cb5a870-6c85-46a0-9982-8d5450166cfa\"},\"timestamp\":\"2026-06-30T07:03:25Z\"} ",
+      "artifact": "probe-config-viewer-denied.json"
+    },
+    {
+      "ts": "2026-06-30T15:03:26+08:00",
+      "phase": "assert",
+      "name": "viewer probe config denial mentions permission",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "((.error.message // .message // \"\")) | contains(\"probe:write\")",
+      "artifact": "probe-config-viewer-denied.json"
+    },
+    {
+      "ts": "2026-06-30T15:03:26+08:00",
+      "phase": "api",
+      "name": "other tenant cannot operate default probe",
+      "severity": "info",
+      "passed": true,
+      "status": "404",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"NOT_FOUND\",\"message\":\"probe not found\"},\"meta\":{\"request_id\":\"bf3a958a-08c1-439d-9cf6-40e1f98208a9\",\"trace_id\":\"bf3a958a-08c1-439d-9cf6-40e1f98208a9\"},\"timestamp\":\"2026-06-30T07:03:26Z\"} ",
+      "artifact": "probe-config-cross-tenant-denied.json"
+    },
+    {
+      "ts": "2026-06-30T15:03:26+08:00",
+      "phase": "assert",
+      "name": "cross tenant probe operation is isolated",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "(.error.code // .code // \"\") == \"NOT_FOUND\"",
+      "artifact": "probe-config-cross-tenant-denied.json"
+    },
+    {
+      "ts": "2026-06-30T15:03:26+08:00",
+      "phase": "api",
+      "name": "operator runs connectivity test",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"checked_at\":\"2026-06-30T07:03:26Z\",\"checks\":[{\"target\":\"ingest-gateway\",\"status\":\"pass\",\"latency_ms\":8,\"detail\":\"control-plane reachability probe completed\"},{\"target\":\"kafka\",\"status\":\"pass\",\"latency_ms\":11,\"detail\":\"control-plane reachability probe completed\"},{\"target\":\"clickhouse\",\"status\":\"pass\",\"latency_ms\":14,\"detail\":\"control-plane reachability probe completed\"}],\"operation_id\":\"e6bee875-865d-4842-b486-d5ab0d4715d5\",\"probe_id\":\"codex-probe-ops-20260630-probe-ops-governance-r2\",\"status\":\"completed\"},\"meta\":{\"request_id\":\"b837381c-0395-4d06-a82a-ca5cea06a7ef\",\"trace_id\":\"b837381c-0395-4d06-a82a-ca5cea06a7ef\"},\"timestamp\":\"2026-06-30T07:03:26Z\"} ",
+      "artifact": "probe-connectivity-test.json"
+    },
+    {
+      "ts": "2026-06-30T15:03:26+08:00",
+      "phase": "assert",
+      "name": "connectivity response has passing checks",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.operation_id and (.data.checks | type == \"array\") and (.data.checks | length >= 3) and all(.data.checks[]; .status == \"pass\")",
+      "artifact": "probe-connectivity-test.json"
+    },
+    {
+      "ts": "2026-06-30T15:03:26+08:00",
+      "phase": "api",
+      "name": "operator rotates probe certificate",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"operation_id\":\"42747662-c2b0-43db-8837-bb192fd2537d\",\"probe_id\":\"codex-probe-ops-20260630-probe-ops-governance-r2\",\"rotated_at\":\"2026-06-30T07:03:26Z\",\"rotation_window\":\"immediate\",\"secret_ref\":\"k8s://traffic-analysis/traffic-credentials#PROBE_MTLS_CERT\",\"status\":\"completed\"},\"meta\":{\"request_id\":\"de692aa7-6507-4928-93f5-680cbf130b4b\",\"trace_id\":\"de692aa7-6507-4928-93f5-680cbf130b4b\"},\"timestamp\":\"2026-06-30T07:03:26Z\"} ",
+      "artifact": "probe-cert-rotate.json"
+    },
+    {
+      "ts": "2026-06-30T15:03:26+08:00",
+      "phase": "assert",
+      "name": "cert rotation response uses secret ref only",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.operation_id and (.data.secret_ref | startswith(\"k8s://\")) and (.data.private_key? == null) and (.data.certificate? == null)",
+      "artifact": "probe-cert-rotate.json"
+    },
+    {
+      "ts": "2026-06-30T15:03:26+08:00",
+      "phase": "api",
+      "name": "plaintext certificate material rejected",
+      "severity": "info",
+      "passed": true,
+      "status": "400",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"INVALID_REQUEST\",\"message\":\"plaintext certificate, private_key, token or password fields are not allowed\"},\"meta\":{\"request_id\":\"7df56292-1fcf-4e47-b0c7-c8cf014f3362\",\"trace_id\":\"7df56292-1fcf-4e47-b0c7-c8cf014f3362\"},\"timestamp\":\"2026-06-30T07:03:26Z\"} ",
+      "artifact": "probe-cert-plaintext-rejected.json"
+    },
+    {
+      "ts": "2026-06-30T15:03:26+08:00",
+      "phase": "assert",
+      "name": "plaintext rejection mentions secret material",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "((.error.message // .message // \"\")) | contains(\"plaintext\")",
+      "artifact": "probe-cert-plaintext-rejected.json"
+    },
+    {
+      "ts": "2026-06-30T15:03:26+08:00",
+      "phase": "api",
+      "name": "operator runs batch upgrade",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"batch_id\":\"probe-batch-20260630070326.518139054\",\"operation_ids\":[\"bcb040a6-6fb9-4148-b330-261b1ade6f72\"],\"probe_ids\":[\"codex-probe-ops-20260630-probe-ops-governance-r2\"],\"rollout_strategy\":\"canary\",\"status\":\"completed\",\"target_version\":\"v3.4.8-codex-20260630-probe-ops-governance-r2\",\"upgraded_count\":1},\"meta\":{\"request_id\":\"2fad6918-232b-48db-b83b-a5c71a62c0bb\",\"trace_id\":\"2fad6918-232b-48db-b83b-a5c71a62c0bb\"},\"timestamp\":\"2026-06-30T07:03:26Z\"} ",
+      "artifact": "probe-batch-upgrade.json"
+    },
+    {
+      "ts": "2026-06-30T15:03:26+08:00",
+      "phase": "assert",
+      "name": "batch upgrade response shape",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.batch_id and .data.upgraded_count == 1 and .data.target_version == $version",
+      "artifact": "probe-batch-upgrade.json"
+    },
+    {
+      "ts": "2026-06-30T15:03:26+08:00",
+      "phase": "postgres",
+      "name": "config operation persisted",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "pg-probe-config-operation-count.txt"
+    },
+    {
+      "ts": "2026-06-30T15:03:26+08:00",
+      "phase": "postgres",
+      "name": "connectivity operation persisted",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "pg-probe-connectivity-operation-count.txt"
+    },
+    {
+      "ts": "2026-06-30T15:03:26+08:00",
+      "phase": "postgres",
+      "name": "cert rotation operation persisted without plaintext",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "pg-probe-cert-operation-count.txt"
+    },
+    {
+      "ts": "2026-06-30T15:03:27+08:00",
+      "phase": "postgres",
+      "name": "batch upgrade operation persisted",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "pg-probe-batch-operation-count.txt"
+    },
+    {
+      "ts": "2026-06-30T15:03:27+08:00",
+      "phase": "postgres",
+      "name": "probe software version updated",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "pg-probe-version-updated-count.txt"
+    },
+    {
+      "ts": "2026-06-30T15:03:27+08:00",
+      "phase": "audit",
+      "name": "config push audit row exists",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "action=PROBE_CONFIG_PUSH object_id=codex-probe-ops-20260630-probe-ops-governance-r2 count=1",
+      "artifact": "pg-probe-config-audit-count.txt"
+    },
+    {
+      "ts": "2026-06-30T15:03:27+08:00",
+      "phase": "audit",
+      "name": "connectivity test audit row exists",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "action=PROBE_CONNECTIVITY_TEST object_id=codex-probe-ops-20260630-probe-ops-governance-r2 count=1",
+      "artifact": "pg-probe-connectivity-audit-count.txt"
+    },
+    {
+      "ts": "2026-06-30T15:03:27+08:00",
+      "phase": "audit",
+      "name": "cert rotate audit row exists",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "action=PROBE_CERT_ROTATE object_id=codex-probe-ops-20260630-probe-ops-governance-r2 count=1",
+      "artifact": "pg-probe-cert-audit-count.txt"
+    },
+    {
+      "ts": "2026-06-30T15:03:27+08:00",
+      "phase": "audit",
+      "name": "batch upgrade audit row exists",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "action=PROBE_BATCH_UPGRADE object_id=probe-batch-20260630070326.518139054 count=1",
+      "artifact": "pg-probe-batch-audit-count.txt"
+    },
+    {
+      "ts": "2026-06-30T15:03:27+08:00",
+      "phase": "security",
+      "name": "probe artifacts do not contain plaintext secrets",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "no plaintext secret marker found",
+      "artifact": "doc/02_acceptance/runs/20260630-probe-ops-governance-r2"
+    }
+  ]
+}

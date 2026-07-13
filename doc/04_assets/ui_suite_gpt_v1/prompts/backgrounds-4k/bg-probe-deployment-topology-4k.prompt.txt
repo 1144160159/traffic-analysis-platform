@@ -1,0 +1,16 @@
+Generate a 3840x2160 PNG static 4K background asset for traffic-analysis-platform.
+
+Use case: productivity-visual.
+Asset type: probe deployment and topology background.
+
+Scene:
+- A campus and data-center topology with distributed probe devices, mirror ports, aggregation switches, edge gateways, packet capture links, mTLS channels, and health beacons.
+- Show deployment coverage, upgrade waves, certificate rotation hints, and traffic capture zones as abstract visual layers.
+
+Style:
+- Dark enterprise network topology, precise hardware silhouettes, cyan/blue links, green healthy probes, amber maintenance states, rare red offline risk marker.
+- Clean 4K rendering with space for probe cards and topology overlays.
+
+Constraints:
+- No readable device names, serial numbers, IP addresses, credentials, logos, people, browser chrome, full UI controls, or literal vendor hardware branding.
+

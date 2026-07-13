@@ -1,0 +1,15 @@
+{
+  "run_id": "encrypted-traffic-r180",
+  "image": {
+    "expected": "traffic/web-ui:ui-encrypted-traffic-20260710-r180",
+    "deployed": "traffic/web-ui:ui-encrypted-traffic-20260710-r180"
+  },
+  "k8s": {
+    "ready": "1/1"
+  },
+  "apisix": {
+    "http_status": 200
+  },
+  "docker_image_inspect": "doc/02_acceptance/02-regression/ui-visual-interaction/encrypted-traffic-r180/docker-image-inspect.json",
+  "generated_at": "2026-07-10T07:55:14Z"
+}

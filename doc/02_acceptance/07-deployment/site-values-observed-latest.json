@@ -1,0 +1,59 @@
+{
+  "namespaces": [
+    "argo",
+    "argo-events",
+    "cert-manager",
+    "databases",
+    "default",
+    "external-secrets",
+    "external-secrets-canary",
+    "external-secrets-source",
+    "flink",
+    "gateway",
+    "iam",
+    "kube-flannel",
+    "kube-node-lease",
+    "kube-public",
+    "kube-system",
+    "metallb-system",
+    "middleware",
+    "minio",
+    "nacos",
+    "observability",
+    "registry",
+    "streampark",
+    "traffic-analysis"
+  ],
+  "storageclasses": [
+    "local-hdd"
+  ],
+  "nodes": [
+    {
+      "name": "8-2tb",
+      "ready": "True",
+      "kubernetes_version": "v1.29.15",
+      "os_image": "openEuler 22.03 (LTS-SP2)",
+      "container_runtime": "containerd://1.6.33",
+      "internal_ip": "10.0.5.8"
+    },
+    {
+      "name": "zeus-server",
+      "ready": "True",
+      "kubernetes_version": "v1.29.15",
+      "os_image": "openEuler 22.03 (LTS-SP2)",
+      "container_runtime": "containerd://1.6.32",
+      "internal_ip": "10.0.5.9"
+    }
+  ],
+  "node_ports": [
+    {
+      "namespace": "gateway",
+      "service": "apisix",
+      "port_name": "http",
+      "port": 9080,
+      "node_port": 30180,
+      "type": "NodePort"
+    }
+  ],
+  "pending_pvcs": []
+}

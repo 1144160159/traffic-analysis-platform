@@ -1,0 +1,16 @@
+Generate a 3840x2160 PNG static 4K background asset for traffic-analysis-platform.
+
+Use case: productivity-visual.
+Asset type: behavioral baseline and anomaly background.
+
+Scene:
+- A dark behavioral analytics visual showing normal traffic baselines, seasonal patterns, user behavior traces, device activity envelopes, anomaly deviations, and threshold bands.
+- Include smooth time-series surfaces, baseline corridors, clustering fields, and subtle anomaly markers without readable axes.
+
+Style:
+- Calm enterprise analytics, dark navy/black, cyan and blue baseline waves, green normal behavior, amber drift, sparse red anomaly spikes.
+- Crisp 4K technical rendering, not a chart screenshot.
+
+Constraints:
+- No readable axes, numbers, labels, names, real IP addresses, credentials, logos, people, browser chrome, tables, forms, or complete UI screen.
+

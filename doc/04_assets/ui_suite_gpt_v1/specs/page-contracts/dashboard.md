@@ -1,0 +1,55 @@
+# 仪表盘 前端实现契约
+
+## 基本信息
+
+- ID：`dashboard`
+- 路由：`/dashboard`
+- 领域：`overview`
+- React 页面：`DashboardOperationsPage`
+- 目标图：`doc/04_assets/ui_suite_gpt_v1/screens/pages/dashboard.png`
+- API：`/api/v1/dashboard/stats`、`/api/v1/dashboard/alerts/trend`、`/api/v1/dashboard/attack-phases`
+
+## 必须实现的业务层
+
+- 脱敏运营 KPI
+- 优先级待办队列
+- 采集与数据健康门禁
+- 证据与反馈质量摘要
+- 验收缺口看板
+
+## 分层参数
+
+- `topbar`：global-app-shell，bbox=`{"x":0,"y":0,"w":1920,"h":80}`
+- `sidebar`：global-app-shell，bbox=`{"x":0,"y":80,"w":166,"h":917}`
+- `content`：page-workspace，bbox=`{"x":198,"y":80,"w":1722,"h":917}`
+- `bottombar`：global-app-shell，bbox=`{"x":0,"y":997,"w":1920,"h":83}`
+- `right-rail`：closed-loop-rail，bbox=`{"x":1460,"y":104,"w":420,"h":860}`
+
+## 组件映射
+
+- AppShell
+- WorkPanel
+- MetricTile
+- Table
+- Tabs
+- ECharts
+- StatusTag
+
+## 关联浮层
+
+- `drawer-mobile-navigation`：移动端侧滑菜单，Drawer
+- `modal-global-search`：全局搜索弹窗，Modal
+- `dropdown-quick-entry`：快速入口下拉，Dropdown/Menu
+- `drawer-dashboard-kpi-detail`：仪表盘 KPI 详情，Drawer
+- `drawer-dashboard-task-detail`：待办任务详情，Drawer
+
+## 验收清单
+
+- [ ] 最终 PNG 必须为 1920x1080
+- [ ] 中文为主，只保留必要英文技术词和单位
+- [ ] 状态色必须遵守 success/info/warning/danger/critical token
+- [ ] 危险动作必须具备影响范围、权限提示和审计留痕
+- [ ] 公共 AppShell 必须与 screen.png 目标参数一致
+- [ ] 页面主工作区不得复用相邻页面的业务组件组合
+- [ ] 所有 API 调用必须经 services/api.ts 或现有服务封装
+- [ ] React Query 必须覆盖 loading/error/empty 状态

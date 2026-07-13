@@ -1,0 +1,80 @@
+{
+  "id": "drawer-probe-detail",
+  "title": "探针详情",
+  "type": "overlay",
+  "route": "/probes",
+  "domain": "collection-monitoring",
+  "source": {
+    "targetFile": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-probe-detail.png",
+    "promptFile": "doc/04_assets/ui_suite_gpt_v1/prompts/drawer-probe-detail.prompt.txt",
+    "rawTraceFiles": [
+      "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-probe-detail.raw-imagegen.png"
+    ],
+    "dimensions": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "implementation": {
+    "pageComponent": "ProbesManagementPage",
+    "suggestedComponents": [
+      "Drawer",
+      "Button",
+      "Form",
+      "Alert",
+      "Tag"
+    ],
+    "apiEndpoints": [
+      "/api/v1/probes"
+    ],
+    "workflows": [
+      "探针总览",
+      "部署拓扑",
+      "吞吐与丢包",
+      "探针配置",
+      "心跳与日志",
+      "批量运维"
+    ]
+  },
+  "layers": [
+    {
+      "id": "drawer-surface",
+      "role": "interaction-container",
+      "bbox": {
+        "x": 980,
+        "y": 48,
+        "w": 900,
+        "h": 984
+      }
+    },
+    {
+      "id": "action-bar",
+      "role": "cancel-confirm-actions",
+      "bbox": {
+        "x": 1240,
+        "y": 950,
+        "w": 560,
+        "h": 52
+      }
+    },
+    {
+      "id": "audit-strip",
+      "role": "audit-and-risk-hint",
+      "bbox": {
+        "x": 980,
+        "y": 950,
+        "w": 760,
+        "h": 52
+      }
+    }
+  ],
+  "acceptance": [
+    "最终 PNG 必须为 1920x1080",
+    "中文为主，只保留必要英文技术词和单位",
+    "状态色必须遵守 success/info/warning/danger/critical token",
+    "危险动作必须具备影响范围、权限提示和审计留痕",
+    "必须实现为 Drawer 或等价语义组件",
+    "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+    "确认类动作必须出现取消/确认，危险确认默认不可误触"
+  ]
+}

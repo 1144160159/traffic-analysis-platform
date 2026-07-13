@@ -1,0 +1,16 @@
+Generate a 3840x2160 PNG static 4K background asset for traffic-analysis-platform.
+
+Use case: productivity-visual.
+Asset type: campaign timeline and investigation background.
+
+Scene:
+- A wide dark investigation timeline with phased campaign markers, correlated alert clusters, evidence nodes, dwell-time arcs, and response milestones.
+- Use abstract time lanes and relationship traces across the image, with a quiet top band for overlaying real page content.
+
+Style:
+- Enterprise threat investigation, dark navy/black, cyan temporal lines, blue evidence nodes, amber suspicious phases, sparse red high-risk phase.
+- Crisp, technical, high-detail, calm and analytical.
+
+Constraints:
+- No readable dates, group names, labels, case IDs, real IP addresses, credentials, logos, people, browser chrome, or full UI screenshot.
+

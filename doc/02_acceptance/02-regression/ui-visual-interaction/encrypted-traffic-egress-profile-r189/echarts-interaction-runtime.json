@@ -1,0 +1,52 @@
+{
+  "route": "/encrypted-traffic?tab=egress-profile",
+  "browser_backend": "Windows Chrome CDP",
+  "destination": "104.16.12.34",
+  "before": {
+    "canvasCount": 5,
+    "chartLabels": [
+      "外联目的地全球流向图，当前选中 未选择对象",
+      "外联会话风险趋势图",
+      "外联实体关联图，当前选中 未选择对象"
+    ],
+    "simulated": true,
+    "horizontalOverflow": false
+  },
+  "selected": {
+    "selected": "外联目的地全球流向图，当前选中 104.16.12.34",
+    "graph": "外联实体关联图，当前选中 104.16.12.34"
+  },
+  "post": {
+    "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/egress-actions",
+    "status": 200,
+    "actionId": "egress-1783684569139281481",
+    "action": "write_audit",
+    "auditEvent": "ENCRYPTED_EGRESS_AUDIT_WRITTEN",
+    "recorded": "recorded"
+  },
+  "audit": {
+    "status": 200,
+    "total": 1,
+    "trail": {
+      "log_id": "audit-20260710115609.142220188",
+      "tenant_id": "default",
+      "user_id": "10a171fd-6e09-4817-a7d9-6a66aecaef64",
+      "action": "ENCRYPTED_EGRESS_AUDIT_WRITTEN",
+      "resource_type": "encrypted_egress_action",
+      "resource_id": "egress-1783684569139281481",
+      "details": {
+        "action": "write_audit",
+        "data_mode": "simulated",
+        "target": "104.16.12.34"
+      },
+      "ip_address": "10.244.0.1",
+      "timestamp": 1783684569143,
+      "result": "success"
+    }
+  },
+  "messageText": "外联研判已写入服务端审计。",
+  "badResponses": [],
+  "requestFailures": [],
+  "consoleErrors": [],
+  "pageErrors": []
+}

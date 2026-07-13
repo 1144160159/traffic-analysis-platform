@@ -1,0 +1,510 @@
+{
+  "global": {
+    "imageSize": {
+      "width": 1920,
+      "height": 1080
+    },
+    "maxAllowedMissingTargets": 0,
+    "maxAllowedMissingPrompts": 0,
+    "requiredRawTrace": true,
+    "businessRoiMaxPixelRatio": 0.125,
+    "businessRoiRule": "For page evidence with an explicit business scoring region, the effective pass/fail threshold is ROI < 0.125. Full-image values remain diagnostic-only.",
+    "appShellPixelStrictPages": [
+      "dashboard",
+      "alerts",
+      "alert-detail",
+      "campaigns",
+      "campaign-detail",
+      "attack-chains",
+      "encrypted-traffic",
+      "forensics",
+      "assets",
+      "graph",
+      "fusion",
+      "baselines",
+      "probes",
+      "rules",
+      "deployments",
+      "models",
+      "mlops",
+      "data-quality",
+      "playbooks",
+      "whitelist",
+      "compliance",
+      "audit-log",
+      "notifications",
+      "settings",
+      "not-found"
+    ]
+  },
+  "playwright": {
+    "viewports": [
+      {
+        "name": "desktop-1920",
+        "width": 1920,
+        "height": 1080
+      },
+      {
+        "name": "desktop-1440",
+        "width": 1440,
+        "height": 900
+      },
+      {
+        "name": "tablet",
+        "width": 1024,
+        "height": 768
+      },
+      {
+        "name": "mobile",
+        "width": 390,
+        "height": 844
+      }
+    ],
+    "failOn": [
+      "4xx/5xx API response",
+      "requestfailed",
+      "pageerror",
+      "console error except known warnings",
+      "missing loading/error/empty state"
+    ]
+  },
+  "routes": [
+    {
+      "id": "login",
+      "title": "登录",
+      "route": "/login",
+      "domain": "auth",
+      "pageComponent": "LoginPage",
+      "apiEndpoints": [],
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/login.png",
+      "sourceImages": [
+        "doc/04_assets/ui_suite_gpt_v1/screens/pages/login.png"
+      ],
+      "contract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/login.md"
+    },
+    {
+      "id": "screen",
+      "title": "态势大屏",
+      "route": "/screen",
+      "domain": "overview",
+      "pageComponent": "SituationalScreen",
+      "apiEndpoints": [
+        "/api/v1/dashboard/stats",
+        "/api/v1/dashboard/encrypted/trend",
+        "/api/v1/dashboard/attack-phases"
+      ],
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/screen.png",
+      "sourceImages": [
+        "doc/04_assets/ui_suite_gpt_v1/screens/pages/screen.png"
+      ],
+      "contract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/screen.md"
+    },
+    {
+      "id": "dashboard",
+      "title": "仪表盘",
+      "route": "/dashboard",
+      "domain": "overview",
+      "pageComponent": "DashboardOperationsPage",
+      "apiEndpoints": [
+        "/api/v1/dashboard/stats",
+        "/api/v1/dashboard/alerts/trend",
+        "/api/v1/dashboard/attack-phases"
+      ],
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/dashboard.png",
+      "sourceImages": [
+        "doc/04_assets/ui_suite_gpt_v1/screens/pages/dashboard.png"
+      ],
+      "contract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/dashboard.md"
+    },
+    {
+      "id": "alerts",
+      "title": "告警中心",
+      "route": "/alerts",
+      "domain": "threat-analysis",
+      "pageComponent": "AlertTriagePage",
+      "apiEndpoints": [
+        "/api/v1/alerts"
+      ],
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/alerts.png",
+      "sourceImages": [
+        "doc/04_assets/ui_suite_gpt_v1/screens/pages/alerts.png"
+      ],
+      "contract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/alerts.md"
+    },
+    {
+      "id": "alert-detail",
+      "title": "告警详情",
+      "route": "/alerts/:alertId",
+      "domain": "threat-analysis",
+      "pageComponent": "AlertDetailPage",
+      "apiEndpoints": [
+        "/api/v1/alerts/{id}",
+        "/api/v1/alerts/{id}/evidence",
+        "/api/v1/alerts/{id}/feedback"
+      ],
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/alert-detail.png",
+      "sourceImages": [
+        "doc/04_assets/ui_suite_gpt_v1/screens/pages/alert-detail.png"
+      ],
+      "contract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/alert-detail.md"
+    },
+    {
+      "id": "campaigns",
+      "title": "战役列表",
+      "route": "/campaigns",
+      "domain": "threat-analysis",
+      "pageComponent": "CampaignWorkbenchPage",
+      "apiEndpoints": [
+        "/api/v1/campaigns"
+      ],
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/campaigns.png",
+      "sourceImages": [
+        "doc/04_assets/ui_suite_gpt_v1/screens/pages/campaigns.png"
+      ],
+      "contract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/campaigns.md"
+    },
+    {
+      "id": "campaign-detail",
+      "title": "战役详情",
+      "route": "/campaigns/:campaignId",
+      "domain": "threat-analysis",
+      "pageComponent": "CampaignDetailPage",
+      "apiEndpoints": [
+        "/api/v1/campaigns/{id}"
+      ],
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/campaign-detail.png",
+      "sourceImages": [
+        "doc/04_assets/ui_suite_gpt_v1/screens/pages/campaign-detail.png"
+      ],
+      "contract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/campaign-detail.md"
+    },
+    {
+      "id": "attack-chains",
+      "title": "攻击链分析",
+      "route": "/attack-chains",
+      "domain": "threat-analysis",
+      "pageComponent": "AttackChainAnalysisPage",
+      "apiEndpoints": [
+        "/api/v1/attack-chains"
+      ],
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/attack-chains.png",
+      "sourceImages": [
+        "doc/04_assets/ui_suite_gpt_v1/screens/pages/attack-chains.png"
+      ],
+      "contract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/attack-chains.md"
+    },
+    {
+      "id": "encrypted-traffic",
+      "title": "加密流量",
+      "route": "/encrypted-traffic",
+      "domain": "threat-analysis",
+      "pageComponent": "EncryptedTrafficPage",
+      "apiEndpoints": [
+        "/api/v1/encrypted-traffic/stats",
+        "/api/v1/encrypted-traffic/sessions",
+        "/api/v1/encrypted-traffic/ja3",
+        "/api/v1/encrypted-traffic/tunnels",
+        "/api/v1/encrypted-traffic/exfiltration"
+      ],
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic.png",
+      "sourceImages": [
+        "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic.png"
+      ],
+      "contract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/encrypted-traffic.md"
+    },
+    {
+      "id": "forensics",
+      "title": "取证分析",
+      "route": "/forensics",
+      "domain": "threat-analysis",
+      "pageComponent": "ForensicsWorkbenchPage",
+      "apiEndpoints": [
+        "/api/v1/pcap/jobs",
+        "/api/v1/pcap/stats"
+      ],
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/forensics.png",
+      "sourceImages": [
+        "doc/04_assets/ui_suite_gpt_v1/screens/pages/forensics.png"
+      ],
+      "contract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/forensics.md"
+    },
+    {
+      "id": "assets",
+      "title": "资产台账",
+      "route": "/assets",
+      "domain": "asset-graph",
+      "pageComponent": "AssetInventoryPage",
+      "apiEndpoints": [
+        "/api/v1/assets"
+      ],
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets.png",
+      "sourceImages": [
+        "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets.png"
+      ],
+      "contract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/assets.md"
+    },
+    {
+      "id": "graph",
+      "title": "实体图谱",
+      "route": "/graph",
+      "domain": "asset-graph",
+      "pageComponent": "GraphEntityPage",
+      "apiEndpoints": [
+        "/api/v1/graph/explore"
+      ],
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/graph.png",
+      "sourceImages": [
+        "doc/04_assets/ui_suite_gpt_v1/screens/pages/graph.png"
+      ],
+      "contract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/graph.md"
+    },
+    {
+      "id": "fusion",
+      "title": "数据融合",
+      "route": "/fusion",
+      "domain": "asset-graph",
+      "pageComponent": "FusionWorkbenchPage",
+      "apiEndpoints": [
+        "/api/v1/fusion/stats",
+        "/api/v1/fusion/entities"
+      ],
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/fusion.png",
+      "sourceImages": [
+        "doc/04_assets/ui_suite_gpt_v1/screens/pages/fusion.png"
+      ],
+      "contract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/fusion.md"
+    },
+    {
+      "id": "baselines",
+      "title": "行为基准",
+      "route": "/baselines",
+      "domain": "asset-graph",
+      "pageComponent": "BaselineWorkbenchPage",
+      "apiEndpoints": [
+        "/api/v1/baselines"
+      ],
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/baselines.png",
+      "sourceImages": [
+        "doc/04_assets/ui_suite_gpt_v1/screens/pages/baselines.png"
+      ],
+      "contract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/baselines.md"
+    },
+    {
+      "id": "probes",
+      "title": "探针管理",
+      "route": "/probes",
+      "domain": "collection-monitoring",
+      "pageComponent": "ProbesManagementPage",
+      "apiEndpoints": [
+        "/api/v1/probes"
+      ],
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/probes.png",
+      "sourceImages": [
+        "doc/04_assets/ui_suite_gpt_v1/screens/pages/probes.png"
+      ],
+      "contract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/probes.md"
+    },
+    {
+      "id": "rules",
+      "title": "规则管理",
+      "route": "/rules",
+      "domain": "detection-ops",
+      "pageComponent": "RuleManagementPage",
+      "apiEndpoints": [
+        "/api/v1/rules"
+      ],
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/rules.png",
+      "sourceImages": [
+        "doc/04_assets/ui_suite_gpt_v1/screens/pages/rules.png"
+      ],
+      "contract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/rules.md"
+    },
+    {
+      "id": "deployments",
+      "title": "部署管理",
+      "route": "/deployments",
+      "domain": "detection-ops",
+      "pageComponent": "DeploymentManagementPage",
+      "apiEndpoints": [
+        "/api/v1/deployments"
+      ],
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/deployments.png",
+      "sourceImages": [
+        "doc/04_assets/ui_suite_gpt_v1/screens/pages/deployments.png"
+      ],
+      "contract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/deployments.md"
+    },
+    {
+      "id": "models",
+      "title": "模型管理",
+      "route": "/models",
+      "domain": "detection-ops",
+      "pageComponent": "ModelManagementPage",
+      "apiEndpoints": [
+        "/api/v1/models"
+      ],
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/models.png",
+      "sourceImages": [
+        "doc/04_assets/ui_suite_gpt_v1/screens/pages/models.png"
+      ],
+      "contract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/models.md"
+    },
+    {
+      "id": "mlops",
+      "title": "MLOps 编排",
+      "route": "/mlops",
+      "domain": "detection-ops",
+      "pageComponent": "MlopsOrchestrationPage",
+      "apiEndpoints": [
+        "/api/v1/mlops/status",
+        "/api/v1/mlops/conditions"
+      ],
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/mlops.png",
+      "sourceImages": [
+        "doc/04_assets/ui_suite_gpt_v1/screens/pages/mlops.png"
+      ],
+      "contract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/mlops.md"
+    },
+    {
+      "id": "data-quality",
+      "title": "数据质量",
+      "route": "/data-quality",
+      "domain": "collection-monitoring",
+      "pageComponent": "DataQualityPage",
+      "apiEndpoints": [
+        "/api/v1/data-quality"
+      ],
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/data-quality.png",
+      "sourceImages": [
+        "doc/04_assets/ui_suite_gpt_v1/screens/pages/data-quality.png"
+      ],
+      "contract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/data-quality.md"
+    },
+    {
+      "id": "playbooks",
+      "title": "SOAR 剧本",
+      "route": "/playbooks",
+      "domain": "detection-ops",
+      "pageComponent": "PlaybookAutomationPage",
+      "apiEndpoints": [
+        "/api/v1/playbooks/catalog",
+        "/api/v1/playbooks/executions"
+      ],
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/playbooks.png",
+      "sourceImages": [
+        "doc/04_assets/ui_suite_gpt_v1/screens/pages/playbooks.png"
+      ],
+      "contract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/playbooks.md"
+    },
+    {
+      "id": "whitelist",
+      "title": "白名单",
+      "route": "/whitelist",
+      "domain": "detection-ops",
+      "pageComponent": "WhitelistGovernancePage",
+      "apiEndpoints": [
+        "/api/v1/whitelist"
+      ],
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/whitelist.png",
+      "sourceImages": [
+        "doc/04_assets/ui_suite_gpt_v1/screens/pages/whitelist.png"
+      ],
+      "contract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/whitelist.md"
+    },
+    {
+      "id": "compliance",
+      "title": "合规审计",
+      "route": "/compliance",
+      "domain": "audit-config",
+      "pageComponent": "ComplianceAuditPage",
+      "apiEndpoints": [
+        "/api/v1/compliance/reports",
+        "/api/v1/compliance/audit-trail"
+      ],
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/compliance.png",
+      "sourceImages": [
+        "doc/04_assets/ui_suite_gpt_v1/screens/pages/compliance.png"
+      ],
+      "contract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/compliance.md"
+    },
+    {
+      "id": "audit-log",
+      "title": "审计日志",
+      "route": "/audit-log",
+      "domain": "audit-config",
+      "pageComponent": "AuditLogPage",
+      "apiEndpoints": [
+        "/api/v1/audit/logs"
+      ],
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/audit-log.png",
+      "sourceImages": [
+        "doc/04_assets/ui_suite_gpt_v1/screens/pages/audit-log.png"
+      ],
+      "contract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/audit-log.md"
+    },
+    {
+      "id": "notifications",
+      "title": "通知配置",
+      "route": "/notifications",
+      "domain": "audit-config",
+      "pageComponent": "NotificationConfigPage",
+      "apiEndpoints": [
+        "/api/v1/notifications/settings"
+      ],
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/notifications.png",
+      "sourceImages": [
+        "doc/04_assets/ui_suite_gpt_v1/screens/pages/notifications.png"
+      ],
+      "contract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/notifications.md"
+    },
+    {
+      "id": "settings",
+      "title": "系统设置",
+      "route": "/settings",
+      "domain": "audit-config",
+      "pageComponent": "SettingsGovernancePage",
+      "apiEndpoints": [
+        "/api/v1/tokens/scopes",
+        "/api/v1/tokens",
+        "/api/v1/tokens/scopes/probe"
+      ],
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/settings.png",
+      "sourceImages": [
+        "doc/04_assets/ui_suite_gpt_v1/screens/pages/settings.png"
+      ],
+      "contract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/settings.md"
+    },
+    {
+      "id": "not-found",
+      "title": "404 异常页",
+      "route": "*",
+      "domain": "global",
+      "pageComponent": "NotFoundPage",
+      "apiEndpoints": [],
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/not-found.png",
+      "sourceImages": [
+        "doc/04_assets/ui_suite_gpt_v1/screens/pages/not-found.png"
+      ],
+      "contract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/not-found.md"
+    },
+    {
+      "id": "topics",
+      "title": "专题面板",
+      "route": "/topics",
+      "domain": "overview",
+      "pageComponent": "TopicWorkbenchPage",
+      "apiEndpoints": [
+        "/api/v1/topics/tunnel",
+        "/api/v1/topics/exfil",
+        "/api/v1/topics/apt"
+      ],
+      "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/topics-encrypted-tunnel.png",
+      "sourceImages": [
+        "doc/04_assets/ui_suite_gpt_v1/screens/pages/topics-encrypted-tunnel.png",
+        "doc/04_assets/ui_suite_gpt_v1/screens/pages/topics-data-exfiltration.png",
+        "doc/04_assets/ui_suite_gpt_v1/screens/pages/topics-apt-campaign.png"
+      ],
+      "contract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/topics.md"
+    }
+  ]
+}

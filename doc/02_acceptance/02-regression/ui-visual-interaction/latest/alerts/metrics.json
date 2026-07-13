@@ -1,0 +1,30 @@
+{
+  "target_id": "alerts",
+  "route": "/alerts",
+  "status": "fail",
+  "generated_at": "2026-07-03T01:03:59.994533+08:00",
+  "generated_by": "ui_visual_interaction_evidence_finalize.py",
+  "finalizer_run_id": "202607030-ui-visual-evidence-finalize-current-gap-r1",
+  "desktop_chrome_backend_status": "pass",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/alerts.png",
+  "actual_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/alerts/actual-1920.png",
+  "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/alerts/diff-1920.png",
+  "viewport": {
+    "width": 2559,
+    "height": 1271
+  },
+  "visual_diff": {
+    "size_ok": false,
+    "source_width": 1920,
+    "source_height": 1080,
+    "actual_width": 2559,
+    "actual_height": 1271,
+    "compared_pixels": 2073600,
+    "total_pixels": 3252489,
+    "mismatch_pixels": 3252302,
+    "pixel_mismatch_ratio": 0.9999425055703494,
+    "max_pixel_ratio": 0.015,
+    "channel_tolerance": 0,
+    "max_channel_delta": 255
+  }
+}

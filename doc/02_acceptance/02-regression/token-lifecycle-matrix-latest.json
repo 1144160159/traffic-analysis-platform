@@ -1,0 +1,197 @@
+{
+  "run_id": "20260629-token-lifecycle-r2",
+  "apisix": "http://10.0.5.8:30180",
+  "tenant": "default",
+  "tenant_b": "tenant-b",
+  "report": "doc/02_acceptance/runs/20260629-token-lifecycle/live-token-lifecycle-matrix-20260629-token-lifecycle-r2.ndjson",
+  "result": "pass",
+  "total": 23,
+  "passed": 23,
+  "failed": 0,
+  "checks": [
+    {
+      "ts": "2026-06-29T09:47:20+08:00",
+      "phase": "api",
+      "name": "scope catalog includes token lifecycle scopes",
+      "ok": true,
+      "status": "200",
+      "detail": "http=200"
+    },
+    {
+      "ts": "2026-06-29T09:47:20+08:00",
+      "phase": "api",
+      "name": "admin creates API token",
+      "ok": true,
+      "status": "201",
+      "detail": "http=201"
+    },
+    {
+      "ts": "2026-06-29T09:47:20+08:00",
+      "phase": "api",
+      "name": "created token response exposes safe prefix only",
+      "ok": true,
+      "status": "ok",
+      "detail": "token_id=ed4a46f5-9429-4fe5-99f2-f4a5e556b295 prefix=api_lgoongizo2u6sd"
+    },
+    {
+      "ts": "2026-06-29T09:47:20+08:00",
+      "phase": "postgres",
+      "name": "created token hash/prefix/scopes persisted",
+      "ok": true,
+      "status": "1",
+      "detail": "min=1"
+    },
+    {
+      "ts": "2026-06-29T09:47:20+08:00",
+      "phase": "api",
+      "name": "admin reads token metadata without secret hash",
+      "ok": true,
+      "status": "200",
+      "detail": "http=200"
+    },
+    {
+      "ts": "2026-06-29T09:47:21+08:00",
+      "phase": "api",
+      "name": "viewer cannot create token",
+      "ok": true,
+      "status": "403",
+      "detail": "http=403"
+    },
+    {
+      "ts": "2026-06-29T09:47:21+08:00",
+      "phase": "api",
+      "name": "cross tenant admin cannot read tenant token",
+      "ok": true,
+      "status": "404",
+      "detail": "http=404"
+    },
+    {
+      "ts": "2026-06-29T09:47:21+08:00",
+      "phase": "api",
+      "name": "created raw token validates",
+      "ok": true,
+      "status": "200",
+      "detail": "http=200"
+    },
+    {
+      "ts": "2026-06-29T09:47:21+08:00",
+      "phase": "audit",
+      "name": "create token audit row exists",
+      "ok": true,
+      "status": "1",
+      "detail": "action=create_token object_id=ed4a46f5-9429-4fe5-99f2-f4a5e556b295"
+    },
+    {
+      "ts": "2026-06-29T09:47:21+08:00",
+      "phase": "api",
+      "name": "admin regenerates token",
+      "ok": true,
+      "status": "201",
+      "detail": "http=201"
+    },
+    {
+      "ts": "2026-06-29T09:47:21+08:00",
+      "phase": "api",
+      "name": "old raw token rejected after regenerate",
+      "ok": true,
+      "status": "401",
+      "detail": "http=401"
+    },
+    {
+      "ts": "2026-06-29T09:47:21+08:00",
+      "phase": "api",
+      "name": "new raw token validates after regenerate",
+      "ok": true,
+      "status": "200",
+      "detail": "http=200"
+    },
+    {
+      "ts": "2026-06-29T09:47:21+08:00",
+      "phase": "postgres",
+      "name": "old token revoked by regenerate",
+      "ok": true,
+      "status": "1",
+      "detail": "min=1"
+    },
+    {
+      "ts": "2026-06-29T09:47:21+08:00",
+      "phase": "postgres",
+      "name": "regenerated token hash/prefix persisted",
+      "ok": true,
+      "status": "1",
+      "detail": "min=1"
+    },
+    {
+      "ts": "2026-06-29T09:47:21+08:00",
+      "phase": "audit",
+      "name": "regenerate token audit row exists",
+      "ok": true,
+      "status": "1",
+      "detail": "action=regenerate_token object_id=d58f9f9b-942b-49cd-b451-8c7b7037159c"
+    },
+    {
+      "ts": "2026-06-29T09:47:21+08:00",
+      "phase": "api",
+      "name": "admin revokes regenerated token",
+      "ok": true,
+      "status": "200",
+      "detail": "http=200"
+    },
+    {
+      "ts": "2026-06-29T09:47:22+08:00",
+      "phase": "api",
+      "name": "revoked raw token rejected",
+      "ok": true,
+      "status": "401",
+      "detail": "http=401"
+    },
+    {
+      "ts": "2026-06-29T09:47:22+08:00",
+      "phase": "postgres",
+      "name": "revoked token state persisted",
+      "ok": true,
+      "status": "1",
+      "detail": "min=1"
+    },
+    {
+      "ts": "2026-06-29T09:47:22+08:00",
+      "phase": "audit",
+      "name": "revoke token audit row exists",
+      "ok": true,
+      "status": "1",
+      "detail": "action=revoke_token object_id=d58f9f9b-942b-49cd-b451-8c7b7037159c"
+    },
+    {
+      "ts": "2026-06-29T09:47:22+08:00",
+      "phase": "api",
+      "name": "admin creates short lived token",
+      "ok": true,
+      "status": "201",
+      "detail": "http=201"
+    },
+    {
+      "ts": "2026-06-29T09:47:22+08:00",
+      "phase": "api",
+      "name": "short lived token initially validates",
+      "ok": true,
+      "status": "200",
+      "detail": "http=200"
+    },
+    {
+      "ts": "2026-06-29T09:47:24+08:00",
+      "phase": "api",
+      "name": "expired raw token rejected",
+      "ok": true,
+      "status": "401",
+      "detail": "http=401"
+    },
+    {
+      "ts": "2026-06-29T09:47:24+08:00",
+      "phase": "postgres",
+      "name": "expired token has past expiry",
+      "ok": true,
+      "status": "1",
+      "detail": "min=1"
+    }
+  ]
+}

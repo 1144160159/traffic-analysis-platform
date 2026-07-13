@@ -1,0 +1,17 @@
+Generate a 3840x2160 PNG static 4K background asset for traffic-analysis-platform.
+
+Use case: productivity-visual.
+Asset type: encrypted tunnel security topic background.
+
+Scene:
+- A dark network path where encrypted tunnels pass through gateways, TLS-like capsules, cipher stream ribbons, JA3/JA4-like fingerprint geometry, and hidden command-channel hints.
+- Show suspicious tunnel concentration, unusual egress paths, and inspection layers as abstract technical visuals.
+- Keep a clean negative space band on the left for topic cards or title overlays.
+
+Style:
+- Cybersecurity analytical visual, dark navy/black, cyan encrypted flow, violet-blue cipher highlights, amber suspicious markers, rare red risk node.
+- High-resolution, precise, not cinematic fantasy.
+
+Constraints:
+- No readable protocol names, no real fingerprints, no real IPs, no credentials, no text labels, no logos, no browser chrome, no UI controls, no people.
+

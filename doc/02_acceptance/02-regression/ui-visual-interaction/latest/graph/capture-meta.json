@@ -1,0 +1,145 @@
+{
+  "status": "pass",
+  "acceptance_eligible": false,
+  "reason": "Windows Chrome CDP evidence. Formal legacy gate expects Desktop Chrome extension receiver metadata and pixel diff; this capture proves real Windows Chrome rendering, route, runtime events, viewport, and layout metrics.",
+  "backend": "windows-chrome-cdp",
+  "target_id": "graph",
+  "route_id": "graph",
+  "route": "/graph",
+  "resolved_path": "/graph",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/graph.png",
+  "final_url": "http://10.0.5.8:30180/graph?fullRouteEvidenceTs=1783072648949",
+  "final_path": "/graph",
+  "protected_route": true,
+  "smoke_hash_consumed": true,
+  "uploaded_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "stored_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "expected_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "desktop_viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "post_capture_resize": false,
+  "no_4xx_5xx": true,
+  "no_requestfailed": true,
+  "no_console_error": true,
+  "no_pageerror": true,
+  "errors": {
+    "requestfailed": [],
+    "badResponses": [],
+    "console": [],
+    "pageerror": []
+  },
+  "screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/doc/02_acceptance/02-regression/ui-visual-interaction/latest/graph/actual-1920.png",
+  "mirror_screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/evidence/windows-chrome-cdp-20260703-full-route-desktop-r6/graph-1920x1080.png",
+  "metrics": {
+    "title": "园区网络全流量采集与分析系统",
+    "location": "http://10.0.5.8:30180/graph?fullRouteEvidenceTs=1783072648949",
+    "viewport": {
+      "width": 1920,
+      "height": 1080,
+      "dpr": 1.0000000298023224
+    },
+    "scroll": {
+      "horizontalOverflow": 0,
+      "verticalOverflow": 0,
+      "bodyScrollWidth": 1920,
+      "bodyClientWidth": 1920,
+      "bodyScrollHeight": 1080,
+      "bodyClientHeight": 1080
+    },
+    "headings": [
+      "实体图谱",
+      "邻居图谱",
+      "路径分析结果",
+      "查询治理",
+      "实体详情",
+      "关联证据"
+    ],
+    "buttons": [
+      "移动端导航",
+      "PCAP检索",
+      "资产检索",
+      "规则检索",
+      "脚本中心",
+      "帮助中心",
+      "更多应用",
+      "Ccodex-ui-desktop-admin系统管理员在线",
+      "定位中心节点",
+      "路径分析",
+      "保存视图",
+      "导出证据",
+      "实体详情",
+      "路径分析",
+      "可疑外部IP185.234.15.23",
+      "biz_admin账号",
+      "WEB-SRV-0210.20.4.19",
+      "边界网关10.20.0.1",
+      "核心业务服务器10.20.4.18",
+      "DB-SRV-0110.20.4.20",
+      "erp.corp.edu.cn域名",
+      "PCAP-0156证据"
+    ],
+    "visibleText": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-03 17:57:29 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 采集监测 威胁分析 资产图谱 资产台账 实体图谱 数据融合 行为基准 检测运营 审计配置 C codex-ui-desktop-admin 系统管理员 在线 资产图谱 / 实体图谱 实体图谱 定位中心节点 近24小时 主园区 实体类型：全部 关系深度：二跳 路径分析 保存视图 导出证据 实体详情 路径分析 实体节点 1 个 真实 API 关系边 0 条 真实 API 异常路径 0 条 真实 API 关键资产 0 个 真实 API 告警关联 0 条 真实 API 邻居图谱 查询耗时 278 ms 节点 10 关系 12 IP地址 主机 账号 域名 服务 告警 证据 通信 登录 通信 通信 通信 DNS解析 证据引用 关联告警 可疑外部IP 185.234.15.23 biz_admin 账号 WEB-SRV-02 10.20.4.19 边界网关 10.20.0.1 核心业务服务器 10.20.4.18 DB-SRV-01 10.20.4.20 erp.corp.edu.cn 域名 PCAP-0156 证据 ALERT-1287 告警 路径分析结果 最短路径 攻击路径 通信路径 账号访问路径 185.234.15.23 DB-SRV-01 高危 路径 ID 源实体 目标实体 跳数 风险 证据 暂无数据 查询治理 3 慢查询数 5,000 节点上限 92.7% 图缓存命中率 278 ms 平均查询耗时 核心业务服务器关系分析 已通过 可疑外部IP路径分析 缓存命中 biz_admin账号活动分析 缓存命中 erp.corp.edu.cn访问关系 缓存命中 实体详情 关闭 核心业务服务器 10.20.4.18 85 实体类型 主机 操作系统 CentOS Linux 7.9 资产分组 核心业务区 / 服务器 资产负责人 张伟（信息化中心） 开放服务 TCP/22、TCP/80、TCP/443、TCP/3306 最近活跃 2026-06-25 09:43:18 关联证据 PCAP-20260620-0156 03:31:22 SESSION-20260620-3381 03:28:41 ALERT-20260620-1287 03:31:09 AUDIT-GRAPH-0042 03:32:01 查看资产 查看告警 进入取证 跳转攻击链 审计日志 数据延迟 1.23 s 系统运行 23 天 14 小时 告警处理SLA 98.2% 数据质量合格率 9",
+    "elements": {
+      "pageHero": {
+        "selector": ".taf-page-hero",
+        "visible": false
+      },
+      "panelHeader": {
+        "selector": ".taf-panel__header",
+        "visible": true,
+        "text": "邻居图谱查询耗时 278 ms节点 10关系 12",
+        "x": 175,
+        "y": 337,
+        "right": 1526,
+        "bottom": 373,
+        "w": 1351,
+        "h": 36,
+        "display": "flex",
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      "table": {
+        "selector": ".ant-table, .taf-table, table",
+        "visible": true,
+        "text": "路径 ID源实体目标实体跳数风险证据暂无数据暂无数据",
+        "x": 185,
+        "y": 922,
+        "right": 1028,
+        "bottom": 1111,
+        "w": 843,
+        "h": 189,
+        "display": "block",
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      "topicTitlebar": {
+        "selector": ".taf-topic-titlebar",
+        "visible": false
+      },
+      "topicFacts": {
+        "selector": ".taf-topic-facts",
+        "visible": false
+      },
+      "topicKpis": {
+        "selector": ".taf-topic-kpis",
+        "visible": false
+      },
+      "topicGrid": {
+        "selector": ".taf-topic-grid",
+        "visible": false
+      }
+    },
+    "overlapChecks": {}
+  }
+}

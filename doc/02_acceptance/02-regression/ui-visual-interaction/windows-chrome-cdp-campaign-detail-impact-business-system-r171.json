@@ -1,0 +1,103 @@
+{
+  "run_id": "windows-chrome-cdp-campaign-detail-impact-business-system-r171",
+  "generated_at": "2026-07-10T05:22:00.000Z",
+  "result": "pass",
+  "target_id": "campaign-detail-impact-business-system",
+  "route": "/campaigns/:campaignId?impact=business-system",
+  "production_url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=business-system&__codex_ui_breakdown_production=1&__codex_page_id=campaign-detail-impact-business-system&windowsCdpEvidenceTs=1783660704752",
+  "image_tag": "traffic/web-ui:ui-campaign-impact-business-system-20260710-r171",
+  "browser": "150.0.7871.49",
+  "cdp_url": "http://127.0.0.1:9224",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "device_scale_factor": 1,
+    "source": "captured PNG pixels"
+  },
+  "summary": {
+    "runtime": "pass",
+    "visual_diff": "pass",
+    "dynamic_data": "pass",
+    "auxiliary_review": "pass",
+    "overlay_policy": "pass",
+    "main_thread_judgment": "business-pixel-accepted"
+  },
+  "runtime": {
+    "status": "pass",
+    "console_errors": 0,
+    "page_errors": 0,
+    "request_failures": 0,
+    "http_4xx_5xx": 0,
+    "horizontal_overflow": false,
+    "vertical_overflow": false,
+    "forbidden_resource_markers": [],
+    "business_system_row_count": 5,
+    "risk_row_count": 3,
+    "shell_hidden": true,
+    "screenshot_viewport": {
+      "width": 1920,
+      "height": 1080,
+      "device_scale_factor": 1,
+      "source": "captured PNG pixels"
+    },
+    "windows_scaling_observation": {
+      "width": 2133,
+      "height": 1200,
+      "dpr": 0.8999999632438005
+    }
+  },
+  "visual_diff": {
+    "status": "pass",
+    "pixel_mismatch_ratio": 0.06796344521604938,
+    "max_pixel_ratio": 0.35,
+    "channel_tolerance": 64,
+    "metrics": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-business-system/metrics-r171-final.json",
+    "diff": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-business-system/diff-r171-final.png",
+    "baseline_r168_ratio": 0.10338348765432098,
+    "repaired_r170_ratio": 0.06808883101851852
+  },
+  "dynamic_data_review": {
+    "status": "pass",
+    "primary_endpoint": "/v1/campaigns/{campaignId}",
+    "service": "web/ui/src/services/campaignDetailApi.ts",
+    "typed_contracts": [
+      "CampaignDetailImpactBusinessSystem",
+      "CampaignDetailBusinessSystemRow",
+      "CampaignDetailImpactRiskRow"
+    ],
+    "adapter": "normalizeCampaignDetailSnapshot -> buildImpactBusinessSystem",
+    "visual_component": "CampaignImpactBusinessSystemContent",
+    "rendering": "typed risk counts drive the CSS ring; five business-system rows render from snapshot data",
+    "fallback": "total=9, risk counts 3/4/2 and five typed rows when the API omits fields",
+    "refresh": "30 seconds on the normal production route; disabled only for deterministic visual evidence",
+    "tests": [
+      "src/services/campaignDetailApi.test.ts",
+      "src/routes/noBitmapUi.test.ts"
+    ]
+  },
+  "auxiliary_review": {
+    "agent": "codex-fresh-auxiliary-visual-review-r171",
+    "status": "pass",
+    "findings": [
+      "r168 and r170 were rejected for real structural mismatches despite passing the numeric threshold.",
+      "r171 closes the ellipse, summary frame, table density, risk-label style and internal risk-column findings.",
+      "All business content is present with no clipping, overlap, overflow or target bitmap replay.",
+      "Remaining differences are limited to font antialiasing, glow and small title offsets."
+    ]
+  },
+  "overlay_policy": {
+    "status": "pass",
+    "production_rule": "Use a narrow side Drawer or small Modal for desktop business details; never cover the whole business area.",
+    "evidence_note": "The full-frame focus query is not a production popup."
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-business-system/target.png",
+    "regions_overlay": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-business-system/regions-overlay.png",
+    "measurement": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-business-system/measurement.json",
+    "implementation": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-business-system/implementation-r171-final.png",
+    "diff": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-business-system/diff-r171-final.png",
+    "metrics": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-business-system/metrics-r171-final.json",
+    "capture_meta": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-business-system/capture-meta-r171-final.json",
+    "verification": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-business-system/verification.json"
+  }
+}

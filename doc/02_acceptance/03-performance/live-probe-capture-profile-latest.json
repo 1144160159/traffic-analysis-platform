@@ -1,0 +1,12 @@
+{
+  "interface": "ens9f0",
+  "mode": "af_packet",
+  "queue_id": "0",
+  "frame_count": "4096",
+  "frame_size": "65536",
+  "cpu_cores": [
+    "0",
+    "1"
+  ],
+  "numa_aware": "true"
+}

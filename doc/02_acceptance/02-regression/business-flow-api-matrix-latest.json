@@ -1,0 +1,414 @@
+{
+  "generatedAt": "2026-06-30T06:08:55.881Z",
+  "summary": {
+    "flows": 7,
+    "endpoints": 43,
+    "dynamicEndpoints": 4,
+    "missingFixtures": 0
+  },
+  "endpoints": [
+    {
+      "endpoint": "/api/v1/alerts",
+      "resolvedPath": "/api/v1/alerts",
+      "urlPath": "/api/v1/alerts?limit=8&page_size=8",
+      "flows": [
+        "asset-evidence-loop",
+        "daily-soc-loop"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/alerts/{id}",
+      "resolvedPath": "/api/v1/alerts/alert-default-1782752318016-1dd589c4",
+      "urlPath": "/api/v1/alerts/alert-default-1782752318016-1dd589c4?limit=8&page_size=8",
+      "flows": [
+        "daily-soc-loop"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/alerts/{id}/evidence",
+      "resolvedPath": "/api/v1/alerts/alert-default-1782752318016-1dd589c4/evidence",
+      "urlPath": "/api/v1/alerts/alert-default-1782752318016-1dd589c4/evidence?limit=8&page_size=8",
+      "flows": [
+        "daily-soc-loop"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/alerts/{id}/feedback",
+      "resolvedPath": "/api/v1/alerts/alert-default-1782752318016-1dd589c4/feedback",
+      "urlPath": "/api/v1/alerts/alert-default-1782752318016-1dd589c4/feedback?limit=8&page_size=8",
+      "flows": [
+        "daily-soc-loop"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/assets",
+      "resolvedPath": "/api/v1/assets",
+      "urlPath": "/api/v1/assets?limit=8&page_size=8",
+      "flows": [
+        "asset-evidence-loop"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/attack-chains",
+      "resolvedPath": "/api/v1/attack-chains",
+      "urlPath": "/api/v1/attack-chains?limit=8&page_size=8",
+      "flows": [
+        "topic-investigation"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/audit/logs",
+      "resolvedPath": "/api/v1/audit/logs",
+      "urlPath": "/api/v1/audit/logs?limit=8&page_size=8",
+      "flows": [
+        "auth-access",
+        "daily-soc-loop",
+        "governance-loop"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/baselines",
+      "resolvedPath": "/api/v1/baselines",
+      "urlPath": "/api/v1/baselines?limit=8&page_size=8",
+      "flows": [
+        "asset-evidence-loop"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/campaigns",
+      "resolvedPath": "/api/v1/campaigns",
+      "urlPath": "/api/v1/campaigns?limit=8&page_size=8",
+      "flows": [
+        "topic-investigation"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/campaigns/{id}",
+      "resolvedPath": "/api/v1/campaigns/campaign-exfil-default-1782729598739-e1d2dc37",
+      "urlPath": "/api/v1/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?limit=8&page_size=8",
+      "flows": [
+        "topic-investigation"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/compliance/audit-trail",
+      "resolvedPath": "/api/v1/compliance/audit-trail",
+      "urlPath": "/api/v1/compliance/audit-trail?limit=8&page_size=8",
+      "flows": [
+        "data-quality-loop",
+        "governance-loop"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/compliance/reports",
+      "resolvedPath": "/api/v1/compliance/reports",
+      "urlPath": "/api/v1/compliance/reports?limit=8&page_size=8",
+      "flows": [
+        "data-quality-loop",
+        "governance-loop"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/dashboard/alerts/trend",
+      "resolvedPath": "/api/v1/dashboard/alerts/trend",
+      "urlPath": "/api/v1/dashboard/alerts/trend?limit=8&page_size=8",
+      "flows": [
+        "auth-access",
+        "daily-soc-loop"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/dashboard/attack-phases",
+      "resolvedPath": "/api/v1/dashboard/attack-phases",
+      "urlPath": "/api/v1/dashboard/attack-phases?limit=8&page_size=8",
+      "flows": [
+        "auth-access",
+        "daily-soc-loop"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/dashboard/encrypted/trend",
+      "resolvedPath": "/api/v1/dashboard/encrypted/trend",
+      "urlPath": "/api/v1/dashboard/encrypted/trend?limit=8&page_size=8",
+      "flows": [
+        "auth-access"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/dashboard/stats",
+      "resolvedPath": "/api/v1/dashboard/stats",
+      "urlPath": "/api/v1/dashboard/stats?limit=8&page_size=8",
+      "flows": [
+        "auth-access",
+        "daily-soc-loop"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/data-quality",
+      "resolvedPath": "/api/v1/data-quality",
+      "urlPath": "/api/v1/data-quality?limit=8&page_size=8",
+      "flows": [
+        "data-quality-loop"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/deployments",
+      "resolvedPath": "/api/v1/deployments",
+      "urlPath": "/api/v1/deployments?limit=8&page_size=8",
+      "flows": [
+        "detection-release-loop"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/encrypted-traffic/exfiltration",
+      "resolvedPath": "/api/v1/encrypted-traffic/exfiltration",
+      "urlPath": "/api/v1/encrypted-traffic/exfiltration?limit=8&page_size=8",
+      "flows": [
+        "topic-investigation"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/encrypted-traffic/ja3",
+      "resolvedPath": "/api/v1/encrypted-traffic/ja3",
+      "urlPath": "/api/v1/encrypted-traffic/ja3?limit=8&page_size=8",
+      "flows": [
+        "topic-investigation"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/encrypted-traffic/sessions",
+      "resolvedPath": "/api/v1/encrypted-traffic/sessions",
+      "urlPath": "/api/v1/encrypted-traffic/sessions?limit=8&page_size=8",
+      "flows": [
+        "topic-investigation"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/encrypted-traffic/stats",
+      "resolvedPath": "/api/v1/encrypted-traffic/stats",
+      "urlPath": "/api/v1/encrypted-traffic/stats?limit=8&page_size=8",
+      "flows": [
+        "topic-investigation"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/encrypted-traffic/tunnels",
+      "resolvedPath": "/api/v1/encrypted-traffic/tunnels",
+      "urlPath": "/api/v1/encrypted-traffic/tunnels?limit=8&page_size=8",
+      "flows": [
+        "topic-investigation"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/fusion/entities",
+      "resolvedPath": "/api/v1/fusion/entities",
+      "urlPath": "/api/v1/fusion/entities?limit=8&page_size=8",
+      "flows": [
+        "asset-evidence-loop"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/fusion/stats",
+      "resolvedPath": "/api/v1/fusion/stats",
+      "urlPath": "/api/v1/fusion/stats?limit=8&page_size=8",
+      "flows": [
+        "asset-evidence-loop"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/graph/explore",
+      "resolvedPath": "/api/v1/graph/explore",
+      "urlPath": "/api/v1/graph/explore?limit=8&page_size=8&ip=10.20.4.18&depth=2&run_id=realtime",
+      "flows": [
+        "asset-evidence-loop"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/mlops/conditions",
+      "resolvedPath": "/api/v1/mlops/conditions",
+      "urlPath": "/api/v1/mlops/conditions?limit=8&page_size=8",
+      "flows": [
+        "data-quality-loop",
+        "detection-release-loop"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/mlops/status",
+      "resolvedPath": "/api/v1/mlops/status",
+      "urlPath": "/api/v1/mlops/status?limit=8&page_size=8",
+      "flows": [
+        "data-quality-loop",
+        "detection-release-loop"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/models",
+      "resolvedPath": "/api/v1/models",
+      "urlPath": "/api/v1/models?limit=8&page_size=8",
+      "flows": [
+        "detection-release-loop"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/notifications/settings",
+      "resolvedPath": "/api/v1/notifications/settings",
+      "urlPath": "/api/v1/notifications/settings?limit=8&page_size=8",
+      "flows": [
+        "governance-loop"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/pcap/jobs",
+      "resolvedPath": "/api/v1/pcap/jobs",
+      "urlPath": "/api/v1/pcap/jobs?limit=8&page_size=8",
+      "flows": [
+        "daily-soc-loop",
+        "topic-investigation"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/pcap/stats",
+      "resolvedPath": "/api/v1/pcap/stats",
+      "urlPath": "/api/v1/pcap/stats?limit=8&page_size=8",
+      "flows": [
+        "daily-soc-loop",
+        "topic-investigation"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/playbooks/catalog",
+      "resolvedPath": "/api/v1/playbooks/catalog",
+      "urlPath": "/api/v1/playbooks/catalog?limit=8&page_size=8",
+      "flows": [
+        "detection-release-loop"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/playbooks/executions",
+      "resolvedPath": "/api/v1/playbooks/executions",
+      "urlPath": "/api/v1/playbooks/executions?limit=8&page_size=8",
+      "flows": [
+        "detection-release-loop"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/probes",
+      "resolvedPath": "/api/v1/probes",
+      "urlPath": "/api/v1/probes?limit=8&page_size=8",
+      "flows": [
+        "data-quality-loop"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/rules",
+      "resolvedPath": "/api/v1/rules",
+      "urlPath": "/api/v1/rules?limit=8&page_size=8",
+      "flows": [
+        "detection-release-loop"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/tokens",
+      "resolvedPath": "/api/v1/tokens",
+      "urlPath": "/api/v1/tokens?limit=8&page_size=8",
+      "flows": [
+        "auth-access",
+        "governance-loop"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/tokens/scopes",
+      "resolvedPath": "/api/v1/tokens/scopes",
+      "urlPath": "/api/v1/tokens/scopes?limit=8&page_size=8",
+      "flows": [
+        "auth-access",
+        "governance-loop"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/tokens/scopes/probe",
+      "resolvedPath": "/api/v1/tokens/scopes/probe",
+      "urlPath": "/api/v1/tokens/scopes/probe?limit=8&page_size=8",
+      "flows": [
+        "auth-access",
+        "governance-loop"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/topics/apt",
+      "resolvedPath": "/api/v1/topics/apt",
+      "urlPath": "/api/v1/topics/apt?limit=8&page_size=8",
+      "flows": [
+        "topic-investigation"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/topics/exfil",
+      "resolvedPath": "/api/v1/topics/exfil",
+      "urlPath": "/api/v1/topics/exfil?limit=8&page_size=8",
+      "flows": [
+        "topic-investigation"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/topics/tunnel",
+      "resolvedPath": "/api/v1/topics/tunnel",
+      "urlPath": "/api/v1/topics/tunnel?limit=8&page_size=8",
+      "flows": [
+        "topic-investigation"
+      ],
+      "fixtureMissing": false
+    },
+    {
+      "endpoint": "/api/v1/whitelist",
+      "resolvedPath": "/api/v1/whitelist",
+      "urlPath": "/api/v1/whitelist?limit=8&page_size=8",
+      "flows": [
+        "daily-soc-loop",
+        "detection-release-loop"
+      ],
+      "fixtureMissing": false
+    }
+  ]
+}

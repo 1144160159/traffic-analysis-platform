@@ -1,0 +1,58 @@
+version: 1
+gate_ids:
+  - GATE-P0-03
+  - GATE-P0-04
+scope: topic1_full_traffic_capture
+human_gate_required: true
+execution_window:
+  requires_dedicated_hardware: true
+  requires_network_isolation: true
+  requires_operator_approval: true
+targets:
+  ten_by_100g:
+    description: 10 x 100Gbps multi-port line-rate capture
+    min_ports: 10
+    min_port_gbps: 100
+    min_aggregate_gbps: 1000
+    min_duration_seconds: 3600
+    max_packet_loss_rate: 0.0001
+    min_parse_success_rate: 0.9999
+  small_packet_512mpps:
+    description: 64B or agreed small-packet profile at 512Mpps
+    min_aggregate_mpps: 512
+    min_duration_seconds: 1800
+    max_packet_loss_rate: 0.0001
+    min_parse_success_rate: 0.9999
+supporting_signals:
+  probe:
+    required_capture_mode: af_xdp
+    metrics:
+      - probe_capture_pps
+      - probe_packets_captured_total
+      - probe_packets_dropped_total
+      - probe_parse_success_total
+      - probe_parse_failed_total
+      - probe_flow_table_utilization
+      - probe_umem_usage_ratio
+  kafka:
+    max_lag_records: 0
+    required_topics:
+      - flow.events.v1
+      - session.events.v1
+      - detections.v1
+      - alerts.v1
+  flink:
+    allowed_backpressure: LOW
+    required_checkpoint_state: completed
+    max_restart_delta: 0
+artifacts:
+  required_before_run:
+    - hardware-inventory.yaml
+    - traffic-profile.yaml
+  required_after_run:
+    - results/10x100g-summary.json
+    - results/512mpps-summary.json
+    - doc/02_acceptance/03-performance/capture-performance-preflight-latest.json
+notes:
+  - Default thresholds are acceptance presets and may be tightened in a signed site task.yaml.
+  - Functional live smoke, PCAP replay, or 500k synthetic stress reports cannot satisfy GATE-P0-03/04.

@@ -1,0 +1,163 @@
+{
+	"meta":
+	[
+		{
+			"name": "database",
+			"type": "String"
+		},
+		{
+			"name": "table",
+			"type": "String"
+		},
+		{
+			"name": "is_readonly",
+			"type": "UInt8"
+		},
+		{
+			"name": "absolute_delay",
+			"type": "UInt64"
+		},
+		{
+			"name": "queue_size",
+			"type": "UInt32"
+		},
+		{
+			"name": "inserts_in_queue",
+			"type": "UInt32"
+		},
+		{
+			"name": "log_lag",
+			"type": "Int64"
+		}
+	],
+
+	"data":
+	[
+		{
+			"database": "traffic",
+			"table": "alert_feedback_local",
+			"is_readonly": 0,
+			"absolute_delay": "0",
+			"queue_size": 0,
+			"inserts_in_queue": 0,
+			"log_lag": "-1"
+		},
+		{
+			"database": "traffic",
+			"table": "alerts_local",
+			"is_readonly": 0,
+			"absolute_delay": "0",
+			"queue_size": 0,
+			"inserts_in_queue": 0,
+			"log_lag": "-1"
+		},
+		{
+			"database": "traffic",
+			"table": "campaigns_local",
+			"is_readonly": 0,
+			"absolute_delay": "0",
+			"queue_size": 0,
+			"inserts_in_queue": 0,
+			"log_lag": "-1"
+		},
+		{
+			"database": "traffic",
+			"table": "detections_behavior_local",
+			"is_readonly": 0,
+			"absolute_delay": "0",
+			"queue_size": 0,
+			"inserts_in_queue": 0,
+			"log_lag": "-1"
+		},
+		{
+			"database": "traffic",
+			"table": "device_logs_local",
+			"is_readonly": 0,
+			"absolute_delay": "0",
+			"queue_size": 0,
+			"inserts_in_queue": 0,
+			"log_lag": "0"
+		},
+		{
+			"database": "traffic",
+			"table": "dlq_events_local",
+			"is_readonly": 0,
+			"absolute_delay": "0",
+			"queue_size": 0,
+			"inserts_in_queue": 0,
+			"log_lag": "0"
+		},
+		{
+			"database": "traffic",
+			"table": "evidence_local",
+			"is_readonly": 0,
+			"absolute_delay": "0",
+			"queue_size": 0,
+			"inserts_in_queue": 0,
+			"log_lag": "-1"
+		},
+		{
+			"database": "traffic",
+			"table": "feature_stat_local",
+			"is_readonly": 0,
+			"absolute_delay": "0",
+			"queue_size": 0,
+			"inserts_in_queue": 0,
+			"log_lag": "-1"
+		},
+		{
+			"database": "traffic",
+			"table": "flows_raw_local",
+			"is_readonly": 0,
+			"absolute_delay": "0",
+			"queue_size": 0,
+			"inserts_in_queue": 0,
+			"log_lag": "-1"
+		},
+		{
+			"database": "traffic",
+			"table": "graph_query_log_local",
+			"is_readonly": 0,
+			"absolute_delay": "0",
+			"queue_size": 0,
+			"inserts_in_queue": 0,
+			"log_lag": "-1"
+		},
+		{
+			"database": "traffic",
+			"table": "pcap_index_local",
+			"is_readonly": 0,
+			"absolute_delay": "0",
+			"queue_size": 0,
+			"inserts_in_queue": 0,
+			"log_lag": "-1"
+		},
+		{
+			"database": "traffic",
+			"table": "sessions_local",
+			"is_readonly": 0,
+			"absolute_delay": "0",
+			"queue_size": 0,
+			"inserts_in_queue": 0,
+			"log_lag": "-1"
+		},
+		{
+			"database": "traffic",
+			"table": "user_events_local",
+			"is_readonly": 0,
+			"absolute_delay": "0",
+			"queue_size": 0,
+			"inserts_in_queue": 0,
+			"log_lag": "0"
+		}
+	],
+
+	"rows": 13,
+
+	"statistics":
+	{
+		"elapsed": 0.002993507,
+		"rows_read": 13,
+		"bytes_read": 5001
+	}
+}

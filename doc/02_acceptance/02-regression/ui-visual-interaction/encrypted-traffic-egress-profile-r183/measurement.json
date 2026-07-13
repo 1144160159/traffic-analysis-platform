@@ -1,0 +1,927 @@
+{
+  "generated_by": "generate_image_breakdown_overlay.py",
+  "generated_at": "2026-07-04T22:52:06.447308+08:00",
+  "id": "encrypted-traffic-egress-profile",
+  "category": "pages",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic-egress-profile.png",
+  "target": "evidence/ui-image-breakdowns/pages/encrypted-traffic-egress-profile/target.png",
+  "regions_overlay": "evidence/ui-image-breakdowns/pages/encrypted-traffic-egress-profile/regions-overlay.png",
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "coverage": {
+    "canvas_width": 1920,
+    "canvas_height": 1080,
+    "region_count": 16,
+    "summed_region_area": 5797536,
+    "summed_region_area_ratio": 2.7958796296296295,
+    "out_of_canvas_or_invalid_regions": []
+  },
+  "regions": [
+    {
+      "id": "canvas",
+      "name": "画布",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "layer": 0,
+      "purpose": "1920x1080 单屏页面",
+      "components": [
+        "Viewport"
+      ],
+      "replication_notes": "不包含浏览器边框或外部装饰"
+    },
+    {
+      "id": "topbar",
+      "name": "顶部全局状态栏",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 80
+      },
+      "layer": 1,
+      "purpose": "系统名、站点时间、运行指标与快捷入口",
+      "components": [
+        "AppHeader",
+        "SiteTimeSelector",
+        "QuickEntry"
+      ],
+      "replication_notes": "必须沿用 screen.png 公共区"
+    },
+    {
+      "id": "sidebar",
+      "name": "左侧单栏导航",
+      "bbox": {
+        "x": 0,
+        "y": 80,
+        "w": 166,
+        "h": 917
+      },
+      "layer": 1,
+      "purpose": "一级菜单和当前业务域二级菜单",
+      "components": [
+        "PrimarySidebar",
+        "SecondaryMenu",
+        "UserMenu"
+      ],
+      "replication_notes": "不得恢复双栏导航"
+    },
+    {
+      "id": "bottombar",
+      "name": "底部状态栏",
+      "bbox": {
+        "x": 0,
+        "y": 997,
+        "w": 1920,
+        "h": 83
+      },
+      "layer": 1,
+      "purpose": "数据延迟、SLA、质量、存储、带宽、日志吞吐和全局动作",
+      "components": [
+        "BottomStatusBar"
+      ],
+      "replication_notes": "单层底部栏，右侧动作组固定"
+    },
+    {
+      "id": "content-root",
+      "name": "业务内容区",
+      "bbox": {
+        "x": 198,
+        "y": 80,
+        "w": 1722,
+        "h": 917
+      },
+      "layer": 1,
+      "purpose": "页面业务工作区",
+      "components": [
+        "PageContent"
+      ],
+      "replication_notes": "按 12 栅格和 8px 间距组织"
+    },
+    {
+      "id": "breadcrumb-context",
+      "name": "面包屑与上下文",
+      "bbox": {
+        "x": 198,
+        "y": 96,
+        "w": 1238,
+        "h": 58
+      },
+      "layer": 2,
+      "purpose": "当前位置、对象上下文和状态摘要",
+      "components": [
+        "BreadcrumbContext",
+        "StatusTag"
+      ],
+      "replication_notes": "不重复顶部站点/时间和用户信息"
+    },
+    {
+      "id": "page-title-actions",
+      "name": "标题与主动作",
+      "bbox": {
+        "x": 198,
+        "y": 154,
+        "w": 1238,
+        "h": 58
+      },
+      "layer": 2,
+      "purpose": "页面标题、主按钮、危险动作入口",
+      "components": [
+        "PageTitle",
+        "Button",
+        "ActionRail"
+      ],
+      "replication_notes": "危险动作需要权限、影响范围和审计提示"
+    },
+    {
+      "id": "filter-toolbar",
+      "name": "筛选工具栏",
+      "bbox": {
+        "x": 198,
+        "y": 220,
+        "w": 1238,
+        "h": 58
+      },
+      "layer": 2,
+      "purpose": "搜索、筛选、时间窗和业务对象切换",
+      "components": [
+        "Search",
+        "Select",
+        "DateRange",
+        "Segmented"
+      ],
+      "replication_notes": "控件高度稳定，不挤压标题"
+    },
+    {
+      "id": "metric-strip",
+      "name": "指标条",
+      "bbox": {
+        "x": 198,
+        "y": 286,
+        "w": 1238,
+        "h": 104
+      },
+      "layer": 2,
+      "purpose": "本页面专属指标",
+      "components": [
+        "MetricTile",
+        "StatusTag"
+      ],
+      "replication_notes": "指标名称不能与其他独立页面简单复用"
+    },
+    {
+      "id": "primary-panel",
+      "name": "主工作面板",
+      "bbox": {
+        "x": 198,
+        "y": 398,
+        "w": 818,
+        "h": 366
+      },
+      "layer": 2,
+      "purpose": "主表格、图表、图谱或状态机",
+      "components": [
+        "WorkPanel",
+        "DataTable",
+        "ECharts"
+      ],
+      "replication_notes": "保持可扫描的信息密度"
+    },
+    {
+      "id": "secondary-panel",
+      "name": "辅助面板",
+      "bbox": {
+        "x": 1024,
+        "y": 398,
+        "w": 412,
+        "h": 366
+      },
+      "layer": 2,
+      "purpose": "证据、质量、排行或解释区",
+      "components": [
+        "WorkPanel",
+        "DescriptionList",
+        "RankingList"
+      ],
+      "replication_notes": "与主面板形成业务互补"
+    },
+    {
+      "id": "lower-panel",
+      "name": "下方明细区",
+      "bbox": {
+        "x": 198,
+        "y": 772,
+        "w": 1238,
+        "h": 192
+      },
+      "layer": 2,
+      "purpose": "审计、证据、历史或闭环记录",
+      "components": [
+        "DataTable",
+        "TimelineStateMachine",
+        "EvidenceFileCard"
+      ],
+      "replication_notes": "行高约 32px，分页稳定"
+    },
+    {
+      "id": "right-rail",
+      "name": "右侧闭环栏",
+      "bbox": {
+        "x": 1460,
+        "y": 104,
+        "w": 420,
+        "h": 860
+      },
+      "layer": 2,
+      "purpose": "选中对象详情、处置动作、反馈学习和审计留痕",
+      "components": [
+        "DescriptionList",
+        "ActionRail",
+        "FeedbackBlock"
+      ],
+      "replication_notes": "闭环动作不遮挡主工作区"
+    },
+    {
+      "id": "right-rail-summary",
+      "name": "右侧摘要",
+      "bbox": {
+        "x": 1484,
+        "y": 128,
+        "w": 372,
+        "h": 168
+      },
+      "layer": 3,
+      "purpose": "对象状态、风险、Owner、Trace",
+      "components": [
+        "DescriptionList",
+        "StatusTag"
+      ],
+      "replication_notes": "摘要字段固定对齐"
+    },
+    {
+      "id": "right-rail-actions",
+      "name": "右侧动作区",
+      "bbox": {
+        "x": 1484,
+        "y": 312,
+        "w": 372,
+        "h": 172
+      },
+      "layer": 3,
+      "purpose": "处置、导出、反馈、审计",
+      "components": [
+        "Button",
+        "IconButton",
+        "Popconfirm"
+      ],
+      "replication_notes": "危险操作二次确认"
+    },
+    {
+      "id": "right-rail-timeline",
+      "name": "右侧时间线",
+      "bbox": {
+        "x": 1484,
+        "y": 500,
+        "w": 372,
+        "h": 430
+      },
+      "layer": 3,
+      "purpose": "事件进展和审计记录",
+      "components": [
+        "TimelineStateMachine"
+      ],
+      "replication_notes": "时间线与底部状态栏不重叠"
+    }
+  ],
+  "texts": [
+    {
+      "value": "加密流量。",
+      "bbox": {
+        "x": 80,
+        "y": 54,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "encrypted-traffic-egress-profile",
+      "bbox": {
+        "x": 510,
+        "y": 54,
+        "w": 360,
+        "h": 24
+      },
+      "type": "subtitle",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "/encrypted-traffic",
+      "bbox": {
+        "x": 940,
+        "y": 54,
+        "w": 360,
+        "h": 24
+      },
+      "type": "section",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "对 TLS、QUIC、VPN、隧道和未知加密外联进行可解释分析。",
+      "bbox": {
+        "x": 1370,
+        "y": 54,
+        "w": 360,
+        "h": 24
+      },
+      "type": "label",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "Foundation 硬门禁：生成图必须严格遵守参考图中的 8 张 foundations 规范板，不能只是风格相似。",
+      "bbox": {
+        "x": 80,
+        "y": 96,
+        "w": 360,
+        "h": 24
+      },
+      "type": "metric",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "必须锁定状态语义：健康/通过用绿色，信息/低危用蓝色，中危/待确认用黄色或琥珀色，高危/失败用红色；不得交换状态颜色。",
+      "bbox": {
+        "x": 510,
+        "y": 96,
+        "w": 360,
+        "h": 24
+      },
+      "type": "button",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "如果生成结果偏离 foundations 的布局、色彩、字号、圆角、表格密度、图表样式或状态语义，应视为不合格并重新生成。",
+      "bbox": {
+        "x": 940,
+        "y": 96,
+        "w": 360,
+        "h": 24
+      },
+      "type": "status",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "画布比例 16:9，目标 1920x1080 px，单屏完整展示，不要出现浏览器边框、手机外壳或营销落地页布局。",
+      "bbox": {
+        "x": 1370,
+        "y": 96,
+        "w": 360,
+        "h": 24
+      },
+      "type": "legend",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "所有页面标题和卡片标题使用统一字号：主标题约 18px，面板标题约 16px，表格正文约 13px，辅助说明约 12px；标题不要忽大忽小。",
+      "bbox": {
+        "x": 80,
+        "y": 138,
+        "w": 360,
+        "h": 24
+      },
+      "type": "hint",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "左侧一级菜单固定为：综合态势、采集监测、威胁分析、资产图谱、检测运营、审计配置；不要使用“看见、研判、取证、治理、验收”等非规范菜单词。",
+      "bbox": {
+        "x": 510,
+        "y": 138,
+        "w": 360,
+        "h": 24
+      },
+      "type": "acceptance",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "左侧二级菜单显示：告警中心、战役列表、攻击链分析、加密流量、取证分析，当前高亮“加密流量”。",
+      "bbox": {
+        "x": 940,
+        "y": 138,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "顶部状态条保留站点、时间、风险态势、告警总数、关键告警、采集健康度、数据质量、快捷入口等能力入口。",
+      "bbox": {
+        "x": 1370,
+        "y": 138,
+        "w": 360,
+        "h": 24
+      },
+      "type": "subtitle",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "页面内容应体现园区网络全流量采集与分析业务闭环：采集接入、流式处理、资产识别、威胁检测、告警研判、证据取证、响应处置、反馈学习、审计验收。",
+      "bbox": {
+        "x": 80,
+        "y": 180,
+        "w": 360,
+        "h": 24
+      },
+      "type": "section",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "不要改变最终参考图的整体视觉方向：不要改成浅色、不要做成插画海报、不要过度圆角、不要大面积渐变球或装饰光斑。",
+      "bbox": {
+        "x": 510,
+        "y": 180,
+        "w": 360,
+        "h": 24
+      },
+      "type": "label",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "本图类型：完整页面。",
+      "bbox": {
+        "x": 940,
+        "y": 180,
+        "w": 360,
+        "h": 24
+      },
+      "type": "metric",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "页面名称：加密流量。",
+      "bbox": {
+        "x": 1370,
+        "y": 180,
+        "w": 360,
+        "h": 24
+      },
+      "type": "button",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "路由：/encrypted-traffic。",
+      "bbox": {
+        "x": 80,
+        "y": 222,
+        "w": 360,
+        "h": 24
+      },
+      "type": "status",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "业务模块：威胁分析 / 加密流量。",
+      "bbox": {
+        "x": 510,
+        "y": 222,
+        "w": 360,
+        "h": 24
+      },
+      "type": "legend",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "页面重点：对 TLS、QUIC、VPN、隧道和未知加密外联进行可解释分析。",
+      "bbox": {
+        "x": 940,
+        "y": 222,
+        "w": 360,
+        "h": 24
+      },
+      "type": "hint",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "必须包含的业务模块：",
+      "bbox": {
+        "x": 1370,
+        "y": 222,
+        "w": 360,
+        "h": 24
+      },
+      "type": "acceptance",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "- 加密流量总览：TLS/QUIC 比例、未知 SNI、异常证书、可疑 JA3、外联目的地。",
+      "bbox": {
+        "x": 80,
+        "y": 264,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "- 指纹分析：JA3/JA3S、证书 issuer、SNI、ALPN、TLS 版本、密码套件。",
+      "bbox": {
+        "x": 510,
+        "y": 264,
+        "w": 360,
+        "h": 24
+      },
+      "type": "subtitle",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "园区网络全流量采集与分析系统",
+      "bbox": {
+        "x": 940,
+        "y": 264,
+        "w": 360,
+        "h": 24
+      },
+      "type": "section",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "综合态势",
+      "bbox": {
+        "x": 1370,
+        "y": 264,
+        "w": 360,
+        "h": 24
+      },
+      "type": "label",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "采集监测",
+      "bbox": {
+        "x": 80,
+        "y": 306,
+        "w": 360,
+        "h": 24
+      },
+      "type": "metric",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "威胁分析",
+      "bbox": {
+        "x": 510,
+        "y": 306,
+        "w": 360,
+        "h": 24
+      },
+      "type": "button",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "资产图谱",
+      "bbox": {
+        "x": 940,
+        "y": 306,
+        "w": 360,
+        "h": 24
+      },
+      "type": "status",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "检测运营",
+      "bbox": {
+        "x": 1370,
+        "y": 306,
+        "w": 360,
+        "h": 24
+      },
+      "type": "legend",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "审计配置",
+      "bbox": {
+        "x": 80,
+        "y": 348,
+        "w": 360,
+        "h": 24
+      },
+      "type": "hint",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "PCAP检索",
+      "bbox": {
+        "x": 510,
+        "y": 348,
+        "w": 360,
+        "h": 24
+      },
+      "type": "acceptance",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "资产检索",
+      "bbox": {
+        "x": 940,
+        "y": 348,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "规则检索",
+      "bbox": {
+        "x": 1370,
+        "y": 348,
+        "w": 360,
+        "h": 24
+      },
+      "type": "subtitle",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "脚本中心",
+      "bbox": {
+        "x": 80,
+        "y": 390,
+        "w": 360,
+        "h": 24
+      },
+      "type": "section",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "帮助中心",
+      "bbox": {
+        "x": 510,
+        "y": 390,
+        "w": 360,
+        "h": 24
+      },
+      "type": "label",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "更多应用",
+      "bbox": {
+        "x": 940,
+        "y": 390,
+        "w": 360,
+        "h": 24
+      },
+      "type": "metric",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "数据延迟",
+      "bbox": {
+        "x": 1370,
+        "y": 390,
+        "w": 360,
+        "h": 24
+      },
+      "type": "button",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "系统运行",
+      "bbox": {
+        "x": 80,
+        "y": 432,
+        "w": 360,
+        "h": 24
+      },
+      "type": "status",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "告警处理SLA",
+      "bbox": {
+        "x": 510,
+        "y": 432,
+        "w": 360,
+        "h": 24
+      },
+      "type": "legend",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "数据质量合格率",
+      "bbox": {
+        "x": 940,
+        "y": 432,
+        "w": 360,
+        "h": 24
+      },
+      "type": "hint",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "存储使用",
+      "bbox": {
+        "x": 1370,
+        "y": 432,
+        "w": 360,
+        "h": 24
+      },
+      "type": "acceptance",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "带宽使用",
+      "bbox": {
+        "x": 80,
+        "y": 474,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "日志吞吐",
+      "bbox": {
+        "x": 510,
+        "y": 474,
+        "w": 360,
+        "h": 24
+      },
+      "type": "subtitle",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "页面标题",
+      "bbox": {
+        "x": 940,
+        "y": 474,
+        "w": 360,
+        "h": 24
+      },
+      "type": "section",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "筛选条件",
+      "bbox": {
+        "x": 1370,
+        "y": 474,
+        "w": 360,
+        "h": 24
+      },
+      "type": "label",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "近24小时",
+      "bbox": {
+        "x": 80,
+        "y": 516,
+        "w": 360,
+        "h": 24
+      },
+      "type": "metric",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "高危告警",
+      "bbox": {
+        "x": 510,
+        "y": 516,
+        "w": 360,
+        "h": 24
+      },
+      "type": "button",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "证据完整率",
+      "bbox": {
+        "x": 940,
+        "y": 516,
+        "w": 360,
+        "h": 24
+      },
+      "type": "status",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "处置中",
+      "bbox": {
+        "x": 1370,
+        "y": 516,
+        "w": 360,
+        "h": 24
+      },
+      "type": "legend",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "已审计",
+      "bbox": {
+        "x": 80,
+        "y": 558,
+        "w": 360,
+        "h": 24
+      },
+      "type": "hint",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "查看详情",
+      "bbox": {
+        "x": 510,
+        "y": 558,
+        "w": 360,
+        "h": 24
+      },
+      "type": "acceptance",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "导出证据",
+      "bbox": {
+        "x": 940,
+        "y": 558,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "反馈学习",
+      "bbox": {
+        "x": 1370,
+        "y": 558,
+        "w": 360,
+        "h": 24
+      },
+      "type": "subtitle",
+      "must_match": false,
+      "source": "manual visual ledger"
+    }
+  ]
+}

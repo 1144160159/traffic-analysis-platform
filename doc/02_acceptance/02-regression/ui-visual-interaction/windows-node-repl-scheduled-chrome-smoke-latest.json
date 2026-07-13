@@ -1,0 +1,97 @@
+{
+  "package_id": "ui_windows_node_repl_scheduled_chrome_smoke",
+  "result": "blocked_node_repl_js",
+  "generated_at": "2026-07-02T20:12:17.595Z",
+  "windows": {
+    "host": "10.3.6.59",
+    "user": "LongShine",
+    "node_exe": "D:\\soft\\nvm\\nodejs\\node.exe",
+    "codex_exe": "C:\\Users\\LongShine\\AppData\\Local\\OpenAI\\Codex\\bin\\ea1c60319a1dcb19\\codex.exe",
+    "chrome_client_url": "file:///C:/Users/LongShine/.codex/plugins/cache/openai-bundled/chrome/latest/scripts/browser-client.mjs"
+  },
+  "scheduled_task": {
+    "task_name": "CodexCB3023096181",
+    "remote_dir": "C:\\Users\\LongShine\\AppData\\Local\\Temp\\CodexCB3023096181",
+    "command_shapes": {
+      "mkdir": "cmd /d /c mkdir \"C:\\Users\\LongShine\\AppData\\Local\\Temp\\CodexCB3023096181\" 2>nul",
+      "create_task": "cmd /d /c schtasks /Create /TN CodexCB3023096181 /TR \"C:/Users/LongShine/AppData/Local/Temp/CodexCB3023096181/run.cmd\" /SC ONCE /ST 23:59 /RL HIGHEST /F /IT /RU LongShine",
+      "run_task": "cmd /d /c schtasks /Run /TN CodexCB3023096181",
+      "read_result": "cmd /d /c if exist \"C:\\Users\\LongShine\\AppData\\Local\\Temp\\CodexCB3023096181\\scheduled-result.json\" type \"C:\\Users\\LongShine\\AppData\\Local\\Temp\\CodexCB3023096181\\scheduled-result.json\"",
+      "query_task": "cmd /d /c schtasks /Query /TN CodexCB3023096181 /V /FO LIST",
+      "delete_task": "cmd /d /c schtasks /Delete /TN CodexCB3023096181 /F",
+      "cleanup_files": "cmd /d /c rmdir /s /q \"C:\\Users\\LongShine\\AppData\\Local\\Temp\\CodexCB3023096181\""
+    },
+    "create": {
+      "ok": false,
+      "status": 0,
+      "signal": null,
+      "stdout": "错误:占位程序接收到错误数据。",
+      "stderr": "Connection to 10.3.6.59 closed.",
+      "error": ""
+    },
+    "run": {
+      "ok": false,
+      "status": null,
+      "stdout": "",
+      "stderr": "task was not created",
+      "error": ""
+    },
+    "query_after_timeout": {
+      "ok": false,
+      "status": 0,
+      "signal": null,
+      "stdout": "错误:系统找不到指定的文件。",
+      "stderr": "Connection to 10.3.6.59 closed.",
+      "error": ""
+    },
+    "delete": {
+      "ok": false,
+      "status": 0,
+      "signal": null,
+      "stdout": "错误:系统找不到指定的文件。",
+      "stderr": "Connection to 10.3.6.59 closed.",
+      "error": ""
+    },
+    "cleanup_files": {
+      "ok": true,
+      "status": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": "Connection to 10.3.6.59 closed.",
+      "error": ""
+    }
+  },
+  "transfer": {
+    "mkdir": {
+      "ok": true,
+      "status": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": "Connection to 10.3.6.59 closed.",
+      "error": ""
+    },
+    "copy_runner": {
+      "ok": true,
+      "status": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": "",
+      "error": ""
+    },
+    "copy_cmd": {
+      "ok": true,
+      "status": 0,
+      "signal": null,
+      "stdout": "",
+      "stderr": "",
+      "error": ""
+    }
+  },
+  "runner": null,
+  "acceptance_effect": "boundary_evidence_only_not_visual_acceptance",
+  "blockers": [
+    "scheduled task create failed: 错误:占位程序接收到错误数据。",
+    "scheduled task run failed: task was not created",
+    "scheduled task runner did not produce parseable result: Connection to 10.3.6.59 closed."
+  ]
+}

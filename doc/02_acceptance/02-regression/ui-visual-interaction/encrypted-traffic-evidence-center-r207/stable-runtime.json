@@ -1,0 +1,55 @@
+{
+  "generated_at": "2026-07-10T14:24:03.484Z",
+  "browser": "Windows Chrome CDP",
+  "cdp_url": "http://127.0.0.1:9224",
+  "route": "/encrypted-traffic?tab=evidence-center",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "deployment": "traffic/web-ui:ui-encrypted-traffic-evidence-center-20260710-r206",
+  "stable_visual_capture": {
+    "wait_ms": 11000,
+    "attempts": 2,
+    "pixel_mismatch_ratio": [
+      0.10848717206790123,
+      0.10848717206790123
+    ],
+    "entropy_chart_animation": false
+  },
+  "tabs": {
+    "active": "证据中心",
+    "fixed_geometry": true,
+    "items": [
+      { "label": "总览", "x": 297.99, "y": 116.99, "width": 88, "height": 29.99 },
+      { "label": "指纹分析", "x": 391.98, "y": 116.99, "width": 88, "height": 29.99 },
+      { "label": "隧道检测", "x": 485.97, "y": 116.99, "width": 88, "height": 29.99 },
+      { "label": "外联画像", "x": 579.97, "y": 116.99, "width": 88, "height": 29.99 },
+      { "label": "证据中心", "x": 673.96, "y": 116.99, "width": 88, "height": 29.99 }
+    ]
+  },
+  "echarts": [
+    { "aria_label": "PCAP 数据包字节趋势图", "canvas": true },
+    { "aria_label": "证据完整度环图", "canvas": true },
+    { "aria_label": "加密证据会话熵分趋势图", "canvas": true }
+  ],
+  "details": {
+    "default_session": "s-8f7a2c16b9e0",
+    "certificate_issuer_present": true,
+    "handshake_client_hello_present": true
+  },
+  "selection": {
+    "clicked_session": "s-23a9b7d4c1e8",
+    "anchor_session": "s-23a9b7d4c1e8",
+    "right_rail_session": "s-23a9b7d4c1e8",
+    "selected_row_count": 1,
+    "shared_selection": true
+  },
+  "runtime": {
+    "bad_responses": [],
+    "request_failures": [],
+    "console_errors": [],
+    "page_errors": [],
+    "horizontal_overflow": false
+  }
+}

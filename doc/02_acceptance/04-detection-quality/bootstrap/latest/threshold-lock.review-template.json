@@ -1,0 +1,8 @@
+{
+  "status": "bootstrap_review_required",
+  "review_required": true,
+  "threshold": null,
+  "model_id": "behavior-classifier",
+  "feature_set_id": "v1",
+  "lock_note": "Set numeric threshold before prediction generation; do not use this bootstrap file as threshold-lock.json."
+}

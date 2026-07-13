@@ -1,0 +1,103 @@
+{
+  "title": "园区网络全流量采集与分析系统",
+  "location": "http://10.0.5.8:30180/probes?fullRouteEvidenceTs=1783072662123",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "dpr": 1.0000000298023224
+  },
+  "scroll": {
+    "horizontalOverflow": 0,
+    "verticalOverflow": 0,
+    "bodyScrollWidth": 1920,
+    "bodyClientWidth": 1920,
+    "bodyScrollHeight": 1080,
+    "bodyClientHeight": 1080
+  },
+  "headings": [
+    "探针管理",
+    "部署拓扑",
+    "探针状态矩阵",
+    "吞吐与丢包趋势",
+    "选中探针详情",
+    "批量运维",
+    "心跳与日志"
+  ],
+  "buttons": [
+    "移动端导航",
+    "PCAP检索",
+    "资产检索",
+    "规则检索",
+    "脚本中心",
+    "帮助中心",
+    "更多应用",
+    "Ccodex-ui-desktop-admin系统管理员在线",
+    "探针详情",
+    "配置下发",
+    "批量升级",
+    "证书轮换",
+    "探针日志",
+    "2D",
+    "3D",
+    "图书馆PROBE-LIB-01",
+    "教学区PROBE-BUILD-01",
+    "办公区PROBE-OFFICE-01",
+    "核心区CORE-SW-01",
+    "数据中心PROBE-DC-01",
+    "实验楼PROBE-LAB-01",
+    "宿舍区PROBE-DORM-01",
+    "汇聚区 BPROBE-BRANCH-01"
+  ],
+  "visibleText": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-03 17:57:43 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 采集监测 探针管理 数据质量 2 威胁分析 资产图谱 检测运营 审计配置 C codex-ui-desktop-admin 系统管理员 在线 探针管理 采集入口、部署拓扑、吞吐丢包与探针运维 主园区 自动刷新 15s 探针详情 配置下发 批量升级 证书轮换 探针日志 探针总数 0 台 真实 API 在线探针 0 在线 真实 API 采集网卡 0 张 真实 API 采集模式 1 种 真实 API 平均 CPU 0.0% 真实 API 平均内存 0.0% 真实 API 告警探针 0 台 真实 API 离线探针 0 台 真实 API 部署拓扑 2D 3D 在线 离线 告警 10-40 Gbps ≥ 40 Gbps 图书馆 PROBE-LIB-01 教学区 PROBE-BUILD-01 办公区 PROBE-OFFICE-01 核心区 CORE-SW-01 数据中心 PROBE-DC-01 实验楼 PROBE-LAB-01 宿舍区 PROBE-DORM-01 汇聚区 B PROBE-BRANCH-01 探针状态矩阵 探针 ID 位置 状态 采集模式 采集带宽 丢包率 解析率 CPU 内存 运行时长 版本 操作 暂无数据 共 25 条 1 2 3 10 条/页 吞吐与丢包趋势 近 6 小时 PPS (K) 1,286 +8.2% 丢包率 0.02% -0.01% 解析率 99.18% +0.16% 背压率 0.06% +0.02% 批量发送带宽 (Gbps) 阈值线 30 Gbps 选中探针详情 在线 探针 ID PROBE-DC-01 所在位置 数据中心机房 A 采集网卡 eth2 (100G) 采集模式 混合 (L2+L3) 版本 v3.4.7 运行时长 12d 14h CPU 使用率 28.7% 内存使用率 38.2% 磁盘使用率 56.1% 采集带宽 18.6 Gbps / 40 Gbps 丢包率 0.02% 解析率 99.21% 心跳同步 0 在线 mTLS 已启用 接口状态 0 张网卡 批量发送 0.0 Gbps 采集网卡 eth2, eth3 过滤策略 办公网_全量_20260601 PCAP 归档 已启用 (MinIO) 归档路径 s3://pcap-archive/probe-dc-01/ mTLS 已启用 CPU 亲和 0, 1, 2, 3 缓冲区大小 4096 MB 批量发送 2.0 Gbps 批量运维 编辑 批量升级 批量启",
+  "elements": {
+    "pageHero": {
+      "selector": ".taf-page-hero",
+      "visible": false
+    },
+    "panelHeader": {
+      "selector": ".taf-panel__header",
+      "visible": true,
+      "text": "部署拓扑2D3D",
+      "x": 183,
+      "y": 247,
+      "right": 1293,
+      "bottom": 277,
+      "w": 1109,
+      "h": 30,
+      "display": "flex",
+      "overflowX": "visible",
+      "overflowY": "visible"
+    },
+    "table": {
+      "selector": ".ant-table, .taf-table, table",
+      "visible": true,
+      "text": "探针 ID位置状态采集模式采集带宽丢包率解析率CPU内存运行时长版本操作暂无数据暂无数据",
+      "x": 190,
+      "y": 686,
+      "right": 837,
+      "bottom": 872,
+      "w": 646,
+      "h": 186,
+      "display": "block",
+      "overflowX": "visible",
+      "overflowY": "visible"
+    },
+    "topicTitlebar": {
+      "selector": ".taf-topic-titlebar",
+      "visible": false
+    },
+    "topicFacts": {
+      "selector": ".taf-topic-facts",
+      "visible": false
+    },
+    "topicKpis": {
+      "selector": ".taf-topic-kpis",
+      "visible": false
+    },
+    "topicGrid": {
+      "selector": ".taf-topic-grid",
+      "visible": false
+    }
+  },
+  "overlapChecks": {}
+}

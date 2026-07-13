@@ -1,0 +1,152 @@
+{
+  "status": "pass",
+  "acceptance_eligible": false,
+  "reason": "Windows Chrome CDP evidence. Formal legacy gate expects Desktop Chrome extension receiver metadata and pixel diff; this capture proves real Windows Chrome rendering, route, runtime events, viewport, and layout metrics.",
+  "backend": "windows-chrome-cdp",
+  "target_id": "forensics",
+  "route_id": "forensics",
+  "route": "/forensics",
+  "resolved_path": "/forensics",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/forensics.png",
+  "final_url": "http://10.0.5.8:30180/forensics?fullRouteEvidenceTs=1783072641392",
+  "final_path": "/forensics",
+  "protected_route": true,
+  "smoke_hash_consumed": true,
+  "uploaded_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "stored_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "expected_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "desktop_viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "post_capture_resize": false,
+  "no_4xx_5xx": true,
+  "no_requestfailed": true,
+  "no_console_error": true,
+  "no_pageerror": true,
+  "errors": {
+    "requestfailed": [],
+    "badResponses": [],
+    "console": [],
+    "pageerror": []
+  },
+  "screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/doc/02_acceptance/02-regression/ui-visual-interaction/latest/forensics/actual-1920.png",
+  "mirror_screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/evidence/windows-chrome-cdp-20260703-full-route-desktop-r6/forensics-1920x1080.png",
+  "metrics": {
+    "title": "园区网络全流量采集与分析系统",
+    "location": "http://10.0.5.8:30180/forensics?fullRouteEvidenceTs=1783072641392",
+    "viewport": {
+      "width": 1920,
+      "height": 1080,
+      "dpr": 1.0000000298023224
+    },
+    "scroll": {
+      "horizontalOverflow": 0,
+      "verticalOverflow": 0,
+      "bodyScrollWidth": 1920,
+      "bodyClientWidth": 1920,
+      "bodyScrollHeight": 1080,
+      "bodyClientHeight": 1080
+    },
+    "headings": [
+      "取证分析",
+      "取证任务状态机",
+      "会话复放 (Session)",
+      "取证任务列表（共 190 条）",
+      "PCAP 索引（共 1,256 条）",
+      "证据导出包",
+      "hash 校验结果（最近 20 条）",
+      "返回来源",
+      "证据完整性",
+      "签名 URL 与有效期",
+      "取证操作",
+      "审计日志（近 24 小时）"
+    ],
+    "buttons": [
+      "移动端导航",
+      "PCAP检索",
+      "资产检索",
+      "规则检索",
+      "脚本中心",
+      "帮助中心",
+      "更多应用",
+      "Ccodex-ui-desktop-admin系统管理员在线",
+      "告警(AL-20260620-000123)",
+      "战役(APT-20260619-001)",
+      "资产(办公区-WS-1024)",
+      "图谱路径(点击查看)",
+      "清空条件",
+      "任务详情",
+      "下载确认",
+      "会话复放",
+      "证据导出",
+      "2026-06-19 00:00:00 ~ 2026-06-20 03:45:00",
+      "重 置",
+      "查询",
+      "新建任务",
+      "导出会话",
+      "03:41:55TLS172.16.5.10:44221185.22.14.9:4431.23 MB12.45 s"
+    ],
+    "visibleText": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-03 17:57:22 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 采集监测 威胁分析 告警中心 128 战役列表 攻击链分析 加密流量 取证分析 资产图谱 检测运营 审计配置 C codex-ui-desktop-admin 系统管理员 在线 取证分析 证据检索、会话复放与导出 来源上下文 告警(AL-20260620-000123) 战役(APT-20260619-001) 资产(办公区-WS-1024) 图谱路径(点击查看) 清空条件 任务详情 下载确认 会话复放 证据导出 时间窗 2026-06-19 00:00:00 ~ 2026-06-20 03:45:00 资产 请选择资产 源 IP 目的 IP 协议 全部 端口 全部 五元组 告警 ID 重 置 查询 取证任务状态机 新建任务 新建 12 排队中 5 采集中 8 解析中 6 完成 156 失败 3 会话复放 (Session) 全部协议 全部方向 导出会话 开始时间 协议 源 IP:端口 目的 IP:端口 字节数 持续时间 03:41:55 TLS 172.16.5.10:44221 185.22.14.9:443 1.23 MB 12.45 s 03:41:20 TLS 172.16.5.10:44222 185.22.14.9:443 512 KB 5.16 s 03:39:44 TLS 172.16.5.10:44323 104.16.12.34:443 845 KB 8.37 s 03:38:31 DNS 172.16.5.10:53513 8.8.8.8:53 2.1 KB 0.21 s 03:38:12 HTTP 172.16.5.10:51512 198.51.100.27:80 3.21 MB 14.82 s GET /update/check HTTP/1.1 Host: update.example.com User-Agent: Mozilla/5.0 Accept: */* Connection: keep-alive HTTP/1.1 200 OK Date: Fri, 20 Jun 2026 03:41:55 GMT Content-Type: application/json {\"status\":\"ok\",\"ts\":1750388515} 域名 update.example.com SNI update.example.com 证书 有效 持续时间 12.45 s 取证任务列表（共 190 条） 任务 ID ",
+    "elements": {
+      "pageHero": {
+        "selector": ".taf-page-hero",
+        "visible": false
+      },
+      "panelHeader": {
+        "selector": ".taf-panel__header",
+        "visible": true,
+        "text": "取证任务状态机新建任务",
+        "x": 183,
+        "y": 272,
+        "right": 766,
+        "bottom": 299,
+        "w": 583,
+        "h": 27,
+        "display": "flex",
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      "table": {
+        "selector": ".ant-table, .taf-table, table",
+        "visible": true,
+        "text": "任务 ID告警/战役 ID资产五元组时间窗证据包状态操作4ce53a3c-e11a-4a0e-b95c-b331b6deac7dAL-20260620-000118办公区-WS-1024172.16.5.10 -> 185.22.14.9 TLS06-29 11:37 ~ 06-29 11:370 files完成查看",
+        "x": 188,
+        "y": 613,
+        "right": 731,
+        "bottom": 690,
+        "w": 542,
+        "h": 76,
+        "display": "block",
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      "topicTitlebar": {
+        "selector": ".taf-topic-titlebar",
+        "visible": false
+      },
+      "topicFacts": {
+        "selector": ".taf-topic-facts",
+        "visible": false
+      },
+      "topicKpis": {
+        "selector": ".taf-topic-kpis",
+        "visible": false
+      },
+      "topicGrid": {
+        "selector": ".taf-topic-grid",
+        "visible": false
+      }
+    },
+    "overlapChecks": {}
+  }
+}

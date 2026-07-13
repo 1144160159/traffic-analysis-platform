@@ -1,0 +1,28 @@
+{
+  "package_id": "detection_quality_review_packet",
+  "run_id": "20260701-detection-quality-review-r1",
+  "generated_at": "2026-06-30T17:08:48Z",
+  "input_bootstrap_dir": "doc/02_acceptance/04-detection-quality/bootstrap/latest",
+  "review_required": true,
+  "formal_gate_note": "review packet only; does not close GATE-P0-06",
+  "sample_count": 45,
+  "duplicate_sample_ids": [],
+  "duplicate_sample_id_count": 0,
+  "review_template_file_count": 6,
+  "required_formal_artifacts": [
+    "mlops/eval_packages/topic1_blind/dataset-manifest.yaml",
+    "mlops/eval_packages/topic1_blind/threshold-lock.json",
+    "mlops/eval_packages/topic1_blind/labels/labels.csv",
+    "mlops/eval_packages/topic1_blind/predictions/predictions.csv",
+    "mlops/eval_packages/topic1_blind/third-party-attestation.yaml"
+  ],
+  "review_outputs": [
+    "sample-review.csv",
+    "labeling-worklist.csv",
+    "prediction-worklist.csv",
+    "formal-package-manifest.template.yaml",
+    "threshold-lock.template.json",
+    "third-party-attestation.template.yaml",
+    "review-checklist.md"
+  ]
+}

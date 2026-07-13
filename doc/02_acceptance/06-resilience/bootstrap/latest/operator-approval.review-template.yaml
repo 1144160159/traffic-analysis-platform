@@ -1,0 +1,24 @@
+status: template_review_required
+review_required: true
+maintenance_window:
+  ticket_id: ""
+  approved_by: ""
+  approved_at: ""
+  start_at: ""
+  end_at: ""
+  rollback_owner: ""
+  communication_channel: ""
+scope_acknowledgement:
+  destructive_drill: true
+  allowed_injections: []
+  forbidden_without_new_approval:
+    - delete persistent volumes
+    - delete persistent volume claims
+    - delete Kafka topics
+    - delete object buckets
+    - rotate root CA or production credentials
+signoff:
+  operator: ""
+  sre: ""
+  user_representative: ""
+  notes: ""

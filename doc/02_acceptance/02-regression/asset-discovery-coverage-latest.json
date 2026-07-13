@@ -1,0 +1,734 @@
+{
+  "run_id": "20260701-asset-discovery-coverage-r3-review-packet-guard",
+  "result": "blocked",
+  "apisix": "http://10.0.5.8:30180",
+  "tenant_id": "default",
+  "expected_inventory": "doc/02_acceptance/02-regression/asset-inventory-review/latest/formal-site-inventory.template.json",
+  "min_coverage_pct": 95,
+  "passed": 6,
+  "total": 7,
+  "blockers": 1,
+  "warnings": 0,
+  "postgres_coverage": {
+    "tenant_id": "default",
+    "latest_run": {
+      "mode": "snmp_lldp",
+      "run_id": "259373a6-5599-4abd-bd37-bb70eb285064",
+      "status": "failed",
+      "started_at": "2026-06-30T08:16:48.190908+00:00",
+      "target_cidr": "192.0.2.10/32",
+      "completed_at": "2026-06-30T08:16:48.192836+00:00",
+      "credential_id": "68074985-57ef-41d1-87e1-9c8113890743",
+      "error_message": "ASSET_DISCOVERY_SNMP_COMMUNITY secret is required for active SNMP scan",
+      "discovered_links": 0,
+      "discovered_assets": 0
+    },
+    "run_counts": {
+      "total_runs": 8,
+      "failed_runs": 2,
+      "completed_runs": 6,
+      "run_discovered_links": 6,
+      "run_discovered_assets": 6
+    },
+    "asset_counts": {
+      "total_assets": 27,
+      "unnamed_assets": 2,
+      "seen_24h_assets": 4,
+      "vlan_tagged_assets": 20,
+      "active_discovery_assets": 10
+    },
+    "topology_counts": {
+      "topology_links": 5,
+      "source_assets_with_links": 5,
+      "neighbor_assets_with_links": 5
+    },
+    "source_breakdown": {
+      "arp": 2,
+      "active:snmp_lldp": 10,
+      "live_100_round_smoke": 15
+    }
+  },
+  "coverage_match_report": {
+    "inventory_file": "doc/02_acceptance/02-regression/asset-inventory-review/latest/formal-site-inventory.template.json",
+    "inventory_present": true,
+    "inventory_review_required": false,
+    "inventory_source": "site-owner-review-template",
+    "inventory_usage": "Fill site_owner_decision for each row in review-assets.csv, remove excluded rows, replace all TBD fields, and only then use this as SITE_ASSET_INVENTORY_JSON.",
+    "expected_total": 27,
+    "matched_total": 27,
+    "coverage_rate": 100,
+    "threshold": 95,
+    "raw_threshold_passed": true,
+    "threshold_passed": false,
+    "matches": [
+      {
+        "expected": {
+          "index": 0,
+          "asset_id": "c5b964e4-dd9f-4c6f-826a-4031ae87e9e2",
+          "mac_address": "02:cd:29:16:16:41",
+          "ip_address": "10.12.0.41",
+          "hostname": "codex-edge-sw-161647",
+          "expected_type": "observed-live-asset",
+          "location": ""
+        },
+        "match_key": "mac_address",
+        "live_asset": {
+          "source": "active:snmp_lldp",
+          "vlan_id": "",
+          "asset_id": "c5b964e4-dd9f-4c6f-826a-4031ae87e9e2",
+          "hostname": "codex-edge-sw-161647",
+          "last_seen": "2026-06-30T08:16:47.959981+00:00",
+          "ip_address": "10.12.0.41",
+          "mac_address": "02:cd:29:16:16:41",
+          "switch_port": "Gi1/0/41"
+        }
+      },
+      {
+        "expected": {
+          "index": 1,
+          "asset_id": "d59a03f5-142e-4f93-a7b8-695558e78129",
+          "mac_address": "02:cd:29:16:16:31",
+          "ip_address": "10.12.0.31",
+          "hostname": "codex-core-sw-161647",
+          "expected_type": "observed-live-asset",
+          "location": ""
+        },
+        "match_key": "mac_address",
+        "live_asset": {
+          "source": "active:snmp_lldp",
+          "vlan_id": "310",
+          "asset_id": "d59a03f5-142e-4f93-a7b8-695558e78129",
+          "hostname": "codex-core-sw-161647",
+          "last_seen": "2026-06-30T08:16:47.956453+00:00",
+          "ip_address": "10.12.0.31",
+          "mac_address": "02:cd:29:16:16:31",
+          "switch_port": "Gi1/0/31"
+        }
+      },
+      {
+        "expected": {
+          "index": 2,
+          "asset_id": "8dada6c5-cb3a-4993-9612-69908437d195",
+          "mac_address": "02:cd:29:15:37:41",
+          "ip_address": "10.12.0.41",
+          "hostname": "codex-edge-sw-153752",
+          "expected_type": "observed-live-asset",
+          "location": ""
+        },
+        "match_key": "mac_address",
+        "live_asset": {
+          "source": "active:snmp_lldp",
+          "vlan_id": "",
+          "asset_id": "8dada6c5-cb3a-4993-9612-69908437d195",
+          "hostname": "codex-edge-sw-153752",
+          "last_seen": "2026-06-30T07:37:52.514525+00:00",
+          "ip_address": "10.12.0.41",
+          "mac_address": "02:cd:29:15:37:41",
+          "switch_port": "Gi1/0/41"
+        }
+      },
+      {
+        "expected": {
+          "index": 3,
+          "asset_id": "be22ca45-1e24-4a59-94cd-996ab0ed9e74",
+          "mac_address": "02:cd:29:15:37:31",
+          "ip_address": "10.12.0.31",
+          "hostname": "codex-core-sw-153752",
+          "expected_type": "observed-live-asset",
+          "location": ""
+        },
+        "match_key": "mac_address",
+        "live_asset": {
+          "source": "active:snmp_lldp",
+          "vlan_id": "310",
+          "asset_id": "be22ca45-1e24-4a59-94cd-996ab0ed9e74",
+          "hostname": "codex-core-sw-153752",
+          "last_seen": "2026-06-30T07:37:52.507172+00:00",
+          "ip_address": "10.12.0.31",
+          "mac_address": "02:cd:29:15:37:31",
+          "switch_port": "Gi1/0/31"
+        }
+      },
+      {
+        "expected": {
+          "index": 4,
+          "asset_id": "26357341-520f-4649-bd0c-2c7760a7de7a",
+          "mac_address": "02:cd:29:22:34:41",
+          "ip_address": "10.12.0.41",
+          "hostname": "codex-edge-sw-223447",
+          "expected_type": "observed-live-asset",
+          "location": ""
+        },
+        "match_key": "mac_address",
+        "live_asset": {
+          "source": "active:snmp_lldp",
+          "vlan_id": "",
+          "asset_id": "26357341-520f-4649-bd0c-2c7760a7de7a",
+          "hostname": "codex-edge-sw-223447",
+          "last_seen": "2026-06-29T14:34:47.609969+00:00",
+          "ip_address": "10.12.0.41",
+          "mac_address": "02:cd:29:22:34:41",
+          "switch_port": "Gi1/0/41"
+        }
+      },
+      {
+        "expected": {
+          "index": 5,
+          "asset_id": "d0ed7087-e778-453b-9702-1dea05693c5e",
+          "mac_address": "02:cd:29:22:34:31",
+          "ip_address": "10.12.0.31",
+          "hostname": "codex-core-sw-223447",
+          "expected_type": "observed-live-asset",
+          "location": ""
+        },
+        "match_key": "mac_address",
+        "live_asset": {
+          "source": "active:snmp_lldp",
+          "vlan_id": "310",
+          "asset_id": "d0ed7087-e778-453b-9702-1dea05693c5e",
+          "hostname": "codex-core-sw-223447",
+          "last_seen": "2026-06-29T14:34:47.606333+00:00",
+          "ip_address": "10.12.0.31",
+          "mac_address": "02:cd:29:22:34:31",
+          "switch_port": "Gi1/0/31"
+        }
+      },
+      {
+        "expected": {
+          "index": 6,
+          "asset_id": "c82e62fe-0f01-44b9-b998-5232065446aa",
+          "mac_address": "02:cd:29:22:33:41",
+          "ip_address": "10.12.0.41",
+          "hostname": "codex-edge-sw-223358",
+          "expected_type": "observed-live-asset",
+          "location": ""
+        },
+        "match_key": "mac_address",
+        "live_asset": {
+          "source": "active:snmp_lldp",
+          "vlan_id": "",
+          "asset_id": "c82e62fe-0f01-44b9-b998-5232065446aa",
+          "hostname": "codex-edge-sw-223358",
+          "last_seen": "2026-06-29T14:33:58.284734+00:00",
+          "ip_address": "10.12.0.41",
+          "mac_address": "02:cd:29:22:33:41",
+          "switch_port": "Gi1/0/41"
+        }
+      },
+      {
+        "expected": {
+          "index": 7,
+          "asset_id": "cb3e3475-4ea8-4d84-b319-00eff7e5ed2d",
+          "mac_address": "02:cd:29:22:33:31",
+          "ip_address": "10.12.0.31",
+          "hostname": "codex-core-sw-223358",
+          "expected_type": "observed-live-asset",
+          "location": ""
+        },
+        "match_key": "mac_address",
+        "live_asset": {
+          "source": "active:snmp_lldp",
+          "vlan_id": "310",
+          "asset_id": "cb3e3475-4ea8-4d84-b319-00eff7e5ed2d",
+          "hostname": "codex-core-sw-223358",
+          "last_seen": "2026-06-29T14:33:58.28133+00:00",
+          "ip_address": "10.12.0.31",
+          "mac_address": "02:cd:29:22:33:31",
+          "switch_port": "Gi1/0/31"
+        }
+      },
+      {
+        "expected": {
+          "index": 8,
+          "asset_id": "fe9001e8-b589-40f9-a12e-ebfe617d1133",
+          "mac_address": "02:cd:29:22:28:21",
+          "ip_address": "10.12.0.21",
+          "hostname": "codex-edge-sw-222822",
+          "expected_type": "observed-live-asset",
+          "location": ""
+        },
+        "match_key": "mac_address",
+        "live_asset": {
+          "source": "active:snmp_lldp",
+          "vlan_id": "",
+          "asset_id": "fe9001e8-b589-40f9-a12e-ebfe617d1133",
+          "hostname": "codex-edge-sw-222822",
+          "last_seen": "2026-06-29T14:28:22.65463+00:00",
+          "ip_address": "10.12.0.21",
+          "mac_address": "02:cd:29:22:28:21",
+          "switch_port": "Gi1/0/48"
+        }
+      },
+      {
+        "expected": {
+          "index": 9,
+          "asset_id": "73c54c14-3fca-43ce-8117-ee7c11640688",
+          "mac_address": "02:cd:29:22:28:11",
+          "ip_address": "10.12.0.11",
+          "hostname": "codex-core-sw-222822",
+          "expected_type": "observed-live-asset",
+          "location": ""
+        },
+        "match_key": "mac_address",
+        "live_asset": {
+          "source": "active:snmp_lldp",
+          "vlan_id": "110",
+          "asset_id": "73c54c14-3fca-43ce-8117-ee7c11640688",
+          "hostname": "codex-core-sw-222822",
+          "last_seen": "2026-06-29T14:28:22.650235+00:00",
+          "ip_address": "10.12.0.11",
+          "mac_address": "02:cd:29:22:28:11",
+          "switch_port": "Gi1/0/1"
+        }
+      },
+      {
+        "expected": {
+          "index": 10,
+          "asset_id": "75c6532e-1745-4b78-8d37-85f502a176d7",
+          "mac_address": "02:42:ac:d0:9e:ca",
+          "ip_address": "10.66.5.202",
+          "hostname": "codex-smoke-20260624105507-1271578",
+          "expected_type": "observed-live-asset",
+          "location": ""
+        },
+        "match_key": "mac_address",
+        "live_asset": {
+          "source": "live_100_round_smoke",
+          "vlan_id": "smoke",
+          "asset_id": "75c6532e-1745-4b78-8d37-85f502a176d7",
+          "hostname": "codex-smoke-20260624105507-1271578",
+          "last_seen": "2026-06-24T02:55:07.998788+00:00",
+          "ip_address": "10.66.5.202",
+          "mac_address": "02:42:ac:d0:9e:ca",
+          "switch_port": "codex-100"
+        }
+      },
+      {
+        "expected": {
+          "index": 11,
+          "asset_id": "e077fee7-7efb-4d6b-bbfe-bb1b7b499ae3",
+          "mac_address": "02:42:ac:33:1b:a9",
+          "ip_address": "10.66.150.148",
+          "hostname": "codex-smoke-20260624103232-1216855",
+          "expected_type": "observed-live-asset",
+          "location": ""
+        },
+        "match_key": "mac_address",
+        "live_asset": {
+          "source": "live_100_round_smoke",
+          "vlan_id": "smoke",
+          "asset_id": "e077fee7-7efb-4d6b-bbfe-bb1b7b499ae3",
+          "hostname": "codex-smoke-20260624103232-1216855",
+          "last_seen": "2026-06-24T02:32:32.612647+00:00",
+          "ip_address": "10.66.150.148",
+          "mac_address": "02:42:ac:33:1b:a9",
+          "switch_port": "codex-100"
+        }
+      },
+      {
+        "expected": {
+          "index": 12,
+          "asset_id": "ac1ca641-36cd-4292-9d5e-21714d2b8830",
+          "mac_address": "02:42:ac:82:bf:74",
+          "ip_address": "10.66.185.2",
+          "hostname": "codex-smoke-20260624103047-1209415",
+          "expected_type": "observed-live-asset",
+          "location": ""
+        },
+        "match_key": "mac_address",
+        "live_asset": {
+          "source": "live_100_round_smoke",
+          "vlan_id": "smoke",
+          "asset_id": "ac1ca641-36cd-4292-9d5e-21714d2b8830",
+          "hostname": "codex-smoke-20260624103047-1209415",
+          "last_seen": "2026-06-24T02:30:47.408701+00:00",
+          "ip_address": "10.66.185.2",
+          "mac_address": "02:42:ac:82:bf:74",
+          "switch_port": "codex-100"
+        }
+      },
+      {
+        "expected": {
+          "index": 13,
+          "asset_id": "14f3fb8a-e092-4121-9f0d-fda9edde92c3",
+          "mac_address": "02:42:ac:95:0c:d6",
+          "ip_address": "10.66.99.33",
+          "hostname": "codex-smoke-20260619082043-4085535",
+          "expected_type": "observed-live-asset",
+          "location": ""
+        },
+        "match_key": "mac_address",
+        "live_asset": {
+          "source": "live_100_round_smoke",
+          "vlan_id": "smoke",
+          "asset_id": "14f3fb8a-e092-4121-9f0d-fda9edde92c3",
+          "hostname": "codex-smoke-20260619082043-4085535",
+          "last_seen": "2026-06-19T00:20:44.124443+00:00",
+          "ip_address": "10.66.99.33",
+          "mac_address": "02:42:ac:95:0c:d6",
+          "switch_port": "codex-100"
+        }
+      },
+      {
+        "expected": {
+          "index": 14,
+          "asset_id": "320174b4-ce8e-4045-a790-006e66207125",
+          "mac_address": "02:42:ac:81:fe:8e",
+          "ip_address": "10.66.162.48",
+          "hostname": "codex-smoke-20260618231803-3162194",
+          "expected_type": "observed-live-asset",
+          "location": ""
+        },
+        "match_key": "mac_address",
+        "live_asset": {
+          "source": "live_100_round_smoke",
+          "vlan_id": "smoke",
+          "asset_id": "320174b4-ce8e-4045-a790-006e66207125",
+          "hostname": "codex-smoke-20260618231803-3162194",
+          "last_seen": "2026-06-18T15:18:03.832863+00:00",
+          "ip_address": "10.66.162.48",
+          "mac_address": "02:42:ac:81:fe:8e",
+          "switch_port": "codex-100"
+        }
+      },
+      {
+        "expected": {
+          "index": 15,
+          "asset_id": "7b0c9447-65d6-4201-9397-f05aa4348d28",
+          "mac_address": "02:42:ac:85:ec:fe",
+          "ip_address": "10.66.16.59",
+          "hostname": "codex-smoke-20260618225108-2971242",
+          "expected_type": "observed-live-asset",
+          "location": ""
+        },
+        "match_key": "mac_address",
+        "live_asset": {
+          "source": "live_100_round_smoke",
+          "vlan_id": "smoke",
+          "asset_id": "7b0c9447-65d6-4201-9397-f05aa4348d28",
+          "hostname": "codex-smoke-20260618225108-2971242",
+          "last_seen": "2026-06-18T14:51:09.233872+00:00",
+          "ip_address": "10.66.16.59",
+          "mac_address": "02:42:ac:85:ec:fe",
+          "switch_port": "codex-100"
+        }
+      },
+      {
+        "expected": {
+          "index": 16,
+          "asset_id": "9b3d428e-fa70-48af-acdf-ef3a769ca24e",
+          "mac_address": "02:42:ac:ad:2c:b8",
+          "ip_address": "10.66.217.90",
+          "hostname": "codex-smoke-20260618214518-2489292",
+          "expected_type": "observed-live-asset",
+          "location": ""
+        },
+        "match_key": "mac_address",
+        "live_asset": {
+          "source": "live_100_round_smoke",
+          "vlan_id": "smoke",
+          "asset_id": "9b3d428e-fa70-48af-acdf-ef3a769ca24e",
+          "hostname": "codex-smoke-20260618214518-2489292",
+          "last_seen": "2026-06-18T13:45:18.46758+00:00",
+          "ip_address": "10.66.217.90",
+          "mac_address": "02:42:ac:ad:2c:b8",
+          "switch_port": "codex-100"
+        }
+      },
+      {
+        "expected": {
+          "index": 17,
+          "asset_id": "48ebd60f-2efc-4c97-9238-a4594672d5b0",
+          "mac_address": "02:42:ac:49:07:f8",
+          "ip_address": "10.66.214.186",
+          "hostname": "codex-smoke-20260618214508-2486708",
+          "expected_type": "observed-live-asset",
+          "location": ""
+        },
+        "match_key": "mac_address",
+        "live_asset": {
+          "source": "live_100_round_smoke",
+          "vlan_id": "smoke",
+          "asset_id": "48ebd60f-2efc-4c97-9238-a4594672d5b0",
+          "hostname": "codex-smoke-20260618214508-2486708",
+          "last_seen": "2026-06-18T13:45:08.640369+00:00",
+          "ip_address": "10.66.214.186",
+          "mac_address": "02:42:ac:49:07:f8",
+          "switch_port": "codex-100"
+        }
+      },
+      {
+        "expected": {
+          "index": 18,
+          "asset_id": "970007a3-d8bb-49a2-acf0-e1a557b91b37",
+          "mac_address": "02:42:ac:ed:b5:e1",
+          "ip_address": "10.66.113.19",
+          "hostname": "codex-smoke-20260618214111-2426096",
+          "expected_type": "observed-live-asset",
+          "location": ""
+        },
+        "match_key": "mac_address",
+        "live_asset": {
+          "source": "live_100_round_smoke",
+          "vlan_id": "smoke",
+          "asset_id": "970007a3-d8bb-49a2-acf0-e1a557b91b37",
+          "hostname": "codex-smoke-20260618214111-2426096",
+          "last_seen": "2026-06-18T13:41:11.926948+00:00",
+          "ip_address": "10.66.113.19",
+          "mac_address": "02:42:ac:ed:b5:e1",
+          "switch_port": "codex-100"
+        }
+      },
+      {
+        "expected": {
+          "index": 19,
+          "asset_id": "c686848c-42b3-40a3-a0b3-693fb2d97983",
+          "mac_address": "02:42:ac:d2:89:62",
+          "ip_address": "10.66.100.196",
+          "hostname": "codex-smoke-20260618214101-2424971",
+          "expected_type": "observed-live-asset",
+          "location": ""
+        },
+        "match_key": "mac_address",
+        "live_asset": {
+          "source": "live_100_round_smoke",
+          "vlan_id": "smoke",
+          "asset_id": "c686848c-42b3-40a3-a0b3-693fb2d97983",
+          "hostname": "codex-smoke-20260618214101-2424971",
+          "last_seen": "2026-06-18T13:41:02.008967+00:00",
+          "ip_address": "10.66.100.196",
+          "mac_address": "02:42:ac:d2:89:62",
+          "switch_port": "codex-100"
+        }
+      },
+      {
+        "expected": {
+          "index": 20,
+          "asset_id": "6aaeb8ed-a596-4974-bf58-7f3a05e1e760",
+          "mac_address": "02:42:ac:8b:f0:74",
+          "ip_address": "10.66.215.20",
+          "hostname": "codex-smoke-20260618213957-2416337",
+          "expected_type": "observed-live-asset",
+          "location": ""
+        },
+        "match_key": "mac_address",
+        "live_asset": {
+          "source": "live_100_round_smoke",
+          "vlan_id": "smoke",
+          "asset_id": "6aaeb8ed-a596-4974-bf58-7f3a05e1e760",
+          "hostname": "codex-smoke-20260618213957-2416337",
+          "last_seen": "2026-06-18T13:39:58.040523+00:00",
+          "ip_address": "10.66.215.20",
+          "mac_address": "02:42:ac:8b:f0:74",
+          "switch_port": "codex-100"
+        }
+      },
+      {
+        "expected": {
+          "index": 21,
+          "asset_id": "7470f5cb-99e5-4ba9-bdb7-8dea5dd22025",
+          "mac_address": "02:42:ac:bb:56:11",
+          "ip_address": "10.66.175.113",
+          "hostname": "codex-smoke-20260618213943-2414466",
+          "expected_type": "observed-live-asset",
+          "location": ""
+        },
+        "match_key": "mac_address",
+        "live_asset": {
+          "source": "live_100_round_smoke",
+          "vlan_id": "smoke",
+          "asset_id": "7470f5cb-99e5-4ba9-bdb7-8dea5dd22025",
+          "hostname": "codex-smoke-20260618213943-2414466",
+          "last_seen": "2026-06-18T13:39:43.911822+00:00",
+          "ip_address": "10.66.175.113",
+          "mac_address": "02:42:ac:bb:56:11",
+          "switch_port": "codex-100"
+        }
+      },
+      {
+        "expected": {
+          "index": 22,
+          "asset_id": "88b4599d-98e1-42d3-8dad-ff50c1b67a4b",
+          "mac_address": "02:42:ac:08:5f:ed",
+          "ip_address": "10.66.7.73",
+          "hostname": "codex-smoke-20260618213742-2399243",
+          "expected_type": "observed-live-asset",
+          "location": ""
+        },
+        "match_key": "mac_address",
+        "live_asset": {
+          "source": "live_100_round_smoke",
+          "vlan_id": "smoke",
+          "asset_id": "88b4599d-98e1-42d3-8dad-ff50c1b67a4b",
+          "hostname": "codex-smoke-20260618213742-2399243",
+          "last_seen": "2026-06-18T13:37:42.481871+00:00",
+          "ip_address": "10.66.7.73",
+          "mac_address": "02:42:ac:08:5f:ed",
+          "switch_port": "codex-100"
+        }
+      },
+      {
+        "expected": {
+          "index": 23,
+          "asset_id": "e6c14935-998d-4e17-8b68-5ba43ab5b69d",
+          "mac_address": "02:42:ac:da:62:72",
+          "ip_address": "10.66.2.89",
+          "hostname": "codex-smoke-20260618213727-2396857",
+          "expected_type": "observed-live-asset",
+          "location": ""
+        },
+        "match_key": "mac_address",
+        "live_asset": {
+          "source": "live_100_round_smoke",
+          "vlan_id": "smoke",
+          "asset_id": "e6c14935-998d-4e17-8b68-5ba43ab5b69d",
+          "hostname": "codex-smoke-20260618213727-2396857",
+          "last_seen": "2026-06-18T13:37:27.500205+00:00",
+          "ip_address": "10.66.2.89",
+          "mac_address": "02:42:ac:da:62:72",
+          "switch_port": "codex-100"
+        }
+      },
+      {
+        "expected": {
+          "index": 24,
+          "asset_id": "38a1b615-f865-4fcb-aa3f-80835a26a98a",
+          "mac_address": "02:42:ac:4e:ce:12",
+          "ip_address": "10.66.47.94",
+          "hostname": "codex-smoke-20260618213703-2391799",
+          "expected_type": "observed-live-asset",
+          "location": ""
+        },
+        "match_key": "mac_address",
+        "live_asset": {
+          "source": "live_100_round_smoke",
+          "vlan_id": "smoke",
+          "asset_id": "38a1b615-f865-4fcb-aa3f-80835a26a98a",
+          "hostname": "codex-smoke-20260618213703-2391799",
+          "last_seen": "2026-06-18T13:37:04.212467+00:00",
+          "ip_address": "10.66.47.94",
+          "mac_address": "02:42:ac:4e:ce:12",
+          "switch_port": "codex-100"
+        }
+      },
+      {
+        "expected": {
+          "index": 25,
+          "asset_id": "4247b5f7-cb4d-41ff-bf10-00fea055b33d",
+          "mac_address": "02:42:ac:11:09:06",
+          "ip_address": "10.244.250.151",
+          "hostname": "",
+          "expected_type": "observed-live-asset",
+          "location": ""
+        },
+        "match_key": "mac_address",
+        "live_asset": {
+          "source": "arp",
+          "vlan_id": "",
+          "asset_id": "4247b5f7-cb4d-41ff-bf10-00fea055b33d",
+          "hostname": "",
+          "last_seen": "2026-06-17T05:03:15.540934+00:00",
+          "ip_address": "10.244.250.151",
+          "mac_address": "02:42:ac:11:09:06",
+          "switch_port": ""
+        }
+      },
+      {
+        "expected": {
+          "index": 26,
+          "asset_id": "51d7cde3-076f-426b-a104-d295131a3df0",
+          "mac_address": "02:42:ac:11:0f:06",
+          "ip_address": "10.244.250.247",
+          "hostname": "",
+          "expected_type": "observed-live-asset",
+          "location": ""
+        },
+        "match_key": "mac_address",
+        "live_asset": {
+          "source": "arp",
+          "vlan_id": "",
+          "asset_id": "51d7cde3-076f-426b-a104-d295131a3df0",
+          "hostname": "",
+          "last_seen": "2026-06-17T05:01:23.021854+00:00",
+          "ip_address": "10.244.250.247",
+          "mac_address": "02:42:ac:11:0f:06",
+          "switch_port": ""
+        }
+      }
+    ],
+    "missing": [],
+    "inventory_review_marker_detected": true
+  },
+  "checks": [
+    {
+      "ts": "2026-07-01T00:46:18+08:00",
+      "phase": "api",
+      "name": "Asset inventory API is queryable",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "total=27",
+      "artifact": "assets-response.json"
+    },
+    {
+      "ts": "2026-07-01T00:46:18+08:00",
+      "phase": "api",
+      "name": "Discovery runs API is queryable",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "runs=8",
+      "artifact": "discovery-runs-response.json"
+    },
+    {
+      "ts": "2026-07-01T00:46:18+08:00",
+      "phase": "api",
+      "name": "Discovery neighbors API is queryable",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "links=5",
+      "artifact": "discovery-neighbors-response.json"
+    },
+    {
+      "ts": "2026-07-01T00:46:18+08:00",
+      "phase": "postgres",
+      "name": "Asset discovery coverage counters are queryable",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "assets=27 active=10 completed_runs=6 links=5",
+      "artifact": "postgres-coverage-summary.json"
+    },
+    {
+      "ts": "2026-07-01T00:46:18+08:00",
+      "phase": "coverage",
+      "name": "Site inventory is approved for formal coverage",
+      "severity": "blocker",
+      "passed": false,
+      "status": "review_marker",
+      "detail": "27/27 coverage=100%; remove TBD/review-template/bootstrap markers before formal coverage",
+      "artifact": "coverage-match-report.json"
+    },
+    {
+      "ts": "2026-07-01T00:46:18+08:00",
+      "phase": "coverage",
+      "name": "Completed discovery run evidence exists",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "completed_runs=6",
+      "artifact": "postgres-coverage-summary.json"
+    },
+    {
+      "ts": "2026-07-01T00:46:18+08:00",
+      "phase": "coverage",
+      "name": "Topology link evidence exists",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "links=5",
+      "artifact": "postgres-coverage-summary.json"
+    }
+  ]
+}

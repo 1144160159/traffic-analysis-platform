@@ -1,0 +1,147 @@
+{
+  "status": "pass",
+  "acceptance_eligible": false,
+  "reason": "Windows Chrome CDP evidence. Formal legacy gate expects Desktop Chrome extension receiver metadata and pixel diff; this capture proves real Windows Chrome rendering, route, runtime events, viewport, and layout metrics.",
+  "backend": "windows-chrome-cdp",
+  "target_id": "mlops",
+  "route_id": "mlops",
+  "route": "/mlops",
+  "resolved_path": "/mlops",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/mlops.png",
+  "final_url": "http://10.0.5.8:30180/mlops?fullRouteEvidenceTs=1783072678749",
+  "final_path": "/mlops",
+  "protected_route": true,
+  "smoke_hash_consumed": true,
+  "uploaded_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "stored_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "expected_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "desktop_viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "post_capture_resize": false,
+  "no_4xx_5xx": true,
+  "no_requestfailed": true,
+  "no_console_error": true,
+  "no_pageerror": true,
+  "errors": {
+    "requestfailed": [],
+    "badResponses": [],
+    "console": [],
+    "pageerror": []
+  },
+  "screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/doc/02_acceptance/02-regression/ui-visual-interaction/latest/mlops/actual-1920.png",
+  "mirror_screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/evidence/windows-chrome-cdp-20260703-full-route-desktop-r6/mlops-1920x1080.png",
+  "metrics": {
+    "title": "园区网络全流量采集与分析系统",
+    "location": "http://10.0.5.8:30180/mlops?fullRouteEvidenceTs=1783072678749",
+    "viewport": {
+      "width": 1920,
+      "height": 1080,
+      "dpr": 1.0000000298023224
+    },
+    "scroll": {
+      "horizontalOverflow": 0,
+      "verticalOverflow": 0,
+      "bodyScrollWidth": 1920,
+      "bodyClientWidth": 1920,
+      "bodyScrollHeight": 1080,
+      "bodyClientHeight": 1080
+    },
+    "headings": [
+      "MLOps 编排",
+      "MLOps 闭环编排 DAG（当前流水线：训练任务）",
+      "反馈样本池（未处理样本 Top 10）",
+      "训练任务队列",
+      "评估与门禁（当前途中：评估门禁）",
+      "注册与发布",
+      "效果回流（近7日）"
+    ],
+    "buttons": [
+      "移动端导航",
+      "PCAP检索",
+      "资产检索",
+      "规则检索",
+      "脚本中心",
+      "帮助中心",
+      "更多应用",
+      "Ccodex-ui-desktop-admin系统管理员在线",
+      "新建流水线",
+      "投递训练任务",
+      "失败重试",
+      "停止任务",
+      "注册模型",
+      "进入部署管理",
+      "任务详情",
+      "发起标注",
+      "FB-000982FP端口扫风暴AL-20250527-00123建议忽略★★★★☆05-27 14:28查看",
+      "FB-000958FPCDN 误报AL-20250527-00124高误报★★★☆☆05-27 14:22查看",
+      "FB-000946TPC2 连接AL-20250527-00126无需★★★★★05-27 14:26查看",
+      "FB-000985FP健康检查AL-20250527-00126建议忽略★★★★☆05-27 14:26查看",
+      "FB-000936TPNAT 变更AL-20250527-00127高置信★★★☆☆05-27 14:25查看",
+      "FB-000707FP异常域名AL-20250527-00128无需★★★★★05-27 14:24查看",
+      "FB-000988FPP2P 通讯AL-20250527-00129误报忽略★★★☆☆05-27 14:24查看"
+    ],
+    "visibleText": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-03 17:57:59 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 采集监测 威胁分析 资产图谱 检测运营 规则管理 部署管理 模型管理 MLOps 编排 SOAR 剧本 白名单 审计配置 C codex-ui-desktop-admin 系统管理员 在线 检测运营 / MLOps 编排 MLOps 编排 新建流水线 投递训练任务 失败重试 停止任务 注册模型 进入部署管理 任务详情 训练任务 1 项 真实 API 评估任务 5 项 真实 API 注册任务 1 项 真实 API 发布任务 1 项 真实 API 失败任务 0 项 真实 API 门禁通过率 86.7% 真实 API MLOps 闭环编排 DAG（当前流水线：训练任务） 成功 运行中 待处理 失败 反馈样本池 1,238 待处理样本 队列: feedback_q 2m 标注管理 568 待标注样本 队列: label_q 18m 特征构建 v1.8.7 特征版本 队列: feature_q 6m 训练任务 6 运行中任务 队列: train_q 1h 32m 评估门禁 3 评估中任务 队列: eval_q 23m 模型注册 2 待注册模型 队列: register_q 6m 灰度发布 1 灰度中 队列: release_q 45m 效果回流 542 未反馈样本 队列: feedback_q 持续回流 反馈样本池（未处理样本 Top 10） 发起标注 ID TP/FP 误报原因 来源告警 白名单建议 样本质量 入池时间 操作 FB-000982 FP 端口扫风暴 AL-20250527-00123 建议忽略 ★★★★☆ 05-27 14:28 查看 FB-000958 FP CDN 误报 AL-20250527-00124 高误报 ★★★☆☆ 05-27 14:22 查看 FB-000946 TP C2 连接 AL-20250527-00126 无需 ★★★★★ 05-27 14:26 查看 FB-000985 FP 健康检查 AL-20250527-00126 建议忽略 ★★★★☆ 05-27 14:26 查看 FB-000936 TP NAT 变更 AL-20250527-00127 高置信 ★★★☆☆ 05-27 14:25 查看 FB-000707 FP 异常域名 AL-20250527-00128 无需 ★★★★★ 05-27 14:24 查看 FB-000988 FP P2P 通讯 AL-20250527-00129 误报忽略 ★★",
+    "elements": {
+      "pageHero": {
+        "selector": ".taf-page-hero",
+        "visible": false
+      },
+      "panelHeader": {
+        "selector": ".taf-panel__header",
+        "visible": true,
+        "text": "MLOps 闭环编排 DAG（当前流水线：训练任务）成功运行中待处理失败",
+        "x": 183,
+        "y": 256,
+        "right": 1265,
+        "bottom": 288,
+        "w": 1083,
+        "h": 32,
+        "display": "flex",
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      "table": {
+        "selector": ".ant-table, .taf-table, table",
+        "visible": true,
+        "text": "任务ID阶段数据集版本算法配置特征版本资源占用状态操作TR-20250527-006训练任务ds_v1.6.3xgb_v2.4feat_v1.8.7CPU 18% / MEM 26%待调度TR-20250527-005评估门禁ds_v1.6.2lightgbm_v1.3feat_v1.8.7GPU 35% / CPU 24%运行中TR-20250527-004标注管理ds_v1.6.1manual_reviewfeat_v1.8.6CPU 90% / MEM 78%运行中TR",
+        "x": 723,
+        "y": 600,
+        "right": 1257,
+        "bottom": 870,
+        "w": 534,
+        "h": 271,
+        "display": "block",
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      "topicTitlebar": {
+        "selector": ".taf-topic-titlebar",
+        "visible": false
+      },
+      "topicFacts": {
+        "selector": ".taf-topic-facts",
+        "visible": false
+      },
+      "topicKpis": {
+        "selector": ".taf-topic-kpis",
+        "visible": false
+      },
+      "topicGrid": {
+        "selector": ".taf-topic-grid",
+        "visible": false
+      }
+    },
+    "overlapChecks": {}
+  }
+}

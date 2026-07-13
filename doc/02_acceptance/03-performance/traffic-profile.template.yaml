@@ -1,0 +1,34 @@
+version: 1
+status: template
+profiles:
+  ten_by_100g:
+    generator: trex
+    ports: 10
+    target_gbps_per_port: 100
+    duration_seconds: 3600
+    packet_size_distribution:
+      64: 20
+      128: 20
+      512: 20
+      1024: 20
+      1518: 20
+    protocol_mix:
+      tcp: 70
+      udp: 30
+    flow_cardinality: ""
+  small_packet_512mpps:
+    generator: trex
+    packet_size_bytes: 64
+    target_mpps: 512
+    duration_seconds: 1800
+    flow_cardinality: ""
+thresholds:
+  max_packet_loss_rate: 0.0001
+  min_parse_success_rate: 0.9999
+  kafka_max_lag_records: 0
+  flink_allowed_backpressure: LOW
+evidence:
+  raw_generator_logs_uri: ""
+  switch_telemetry_uri: ""
+  prometheus_snapshot_uri: ""
+  signed_report_uri: ""

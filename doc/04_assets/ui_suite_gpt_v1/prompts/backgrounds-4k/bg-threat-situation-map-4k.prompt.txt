@@ -1,0 +1,20 @@
+Generate a 3840x2160 PNG static 4K background asset for traffic-analysis-platform.
+
+Use case:
+- Threat situation map background for alert operations, topic analysis, attack campaign tracking, and large-screen monitoring.
+
+Scene:
+- A dark abstract security situation map blending campus topology, regional map contours, and network threat arcs.
+- Show alert clusters, suspicious movement paths, encrypted tunnel traces, exfiltration routes, campaign correlation rings, and heat zones.
+- The map should feel analytical and operational, not geopolitical or decorative.
+- Include layered grids, faint contour lines, risk pulses, and relationship paths.
+
+Visual style:
+- Enterprise SOC map aesthetic, high-detail but restrained.
+- Deep navy and black base, cyan/blue map grid, amber risk regions, red critical hotspots used sparingly, green containment or healthy zones.
+- Strong 4K clarity with central composition and safe margins for overlays.
+
+Constraints:
+- Do not include country names, city names, readable labels, real coordinates, real IP addresses, credentials, logos, people, browser chrome, or full UI controls.
+- Do not create a political map or a literal dashboard screenshot.
+

@@ -1,0 +1,172 @@
+{
+  "package_id": "ui_desktop_chrome_bridge_payload_selftest",
+  "result": "pass",
+  "generated_at": "2026-07-02T18:13:15.294Z",
+  "payload_json": {
+    "path": "doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-payload-latest.json",
+    "exists": true,
+    "valid": true
+  },
+  "payload_js": {
+    "path": "doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-payload-latest.js",
+    "exists": true
+  },
+  "counts": {
+    "visual_targets": 30,
+    "interaction_targets": 28,
+    "screenshot_uploads": 58,
+    "bridge_result_uploads": 1,
+    "receiver_uploads": 59
+  },
+  "checks": [
+    {
+      "name": "payload summary JSON is valid",
+      "passed": true,
+      "status": "ok",
+      "detail": "valid",
+      "artifact": "doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-payload-latest.json"
+    },
+    {
+      "name": "payload JS exists",
+      "passed": true,
+      "status": "ok",
+      "detail": "present",
+      "artifact": "doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-payload-latest.js"
+    },
+    {
+      "name": "capture session is valid",
+      "passed": true,
+      "status": "ok",
+      "detail": "valid",
+      "artifact": "doc/02_acceptance/02-regression/ui-visual-interaction/capture-session-windows-tunnel-25173.json"
+    },
+    {
+      "name": "gap report is valid",
+      "passed": true,
+      "status": "ok",
+      "detail": "valid",
+      "artifact": "doc/02_acceptance/02-regression/ui-visual-interaction-gap-report-latest.json"
+    },
+    {
+      "name": "Windows host preflight is pass",
+      "passed": true,
+      "status": "ok",
+      "detail": "pass",
+      "artifact": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-desktop-bridge-host-preflight-latest.json"
+    },
+    {
+      "name": "Windows runtime preflight is pass",
+      "passed": true,
+      "status": "ok",
+      "detail": "pass",
+      "artifact": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-codex-bridge-runtime-preflight-latest.json"
+    },
+    {
+      "name": "payload uses Windows LongShine Chrome client",
+      "passed": true,
+      "status": "ok",
+      "detail": "file:///C:/Users/LongShine/.codex/plugins/cache/openai-bundled/chrome/26.623.81905/scripts/browser-client.mjs",
+      "artifact": ""
+    },
+    {
+      "name": "payload JS parses as async Desktop Node REPL code",
+      "passed": true,
+      "status": "ok",
+      "detail": "parse ok",
+      "artifact": ""
+    },
+    {
+      "name": "payload target URLs have no unresolved smoke redirect base URL marker",
+      "passed": true,
+      "status": "ok",
+      "detail": "<SMOKE_REDIRECT_BASE_URL> absent from url_template values",
+      "artifact": ""
+    },
+    {
+      "name": "payload uses Windows localhost tunnel URLs instead of direct APISIX for capture",
+      "passed": true,
+      "status": "ok",
+      "detail": "requires 25173/25174/25175 and rejects 10.0.5.8:30180 in payload JS",
+      "artifact": ""
+    },
+    {
+      "name": "payload requires Chrome extension backend",
+      "passed": true,
+      "status": "ok",
+      "detail": "backend=codex-desktop-chrome-extension",
+      "artifact": ""
+    },
+    {
+      "name": "payload forbids iab",
+      "passed": true,
+      "status": "ok",
+      "detail": "forbidden=iab",
+      "artifact": ""
+    },
+    {
+      "name": "payload contains placeholders only",
+      "passed": true,
+      "status": "ok",
+      "detail": "{\"CODEX_CAPTURE_KEY\":\"<CODEX_CAPTURE_KEY>\",\"CODEX_SMOKE_NONCE\":\"<CODEX_SMOKE_NONCE>\"}",
+      "artifact": ""
+    },
+    {
+      "name": "payload JS has no JWT or Bearer material",
+      "passed": true,
+      "status": "ok",
+      "detail": "secret scan pattern absent",
+      "artifact": ""
+    },
+    {
+      "name": "payload uploads bridge result summary",
+      "passed": true,
+      "status": "ok",
+      "detail": "bridge_result_upload_count=1",
+      "artifact": ""
+    },
+    {
+      "name": "payload visual count matches current gap report",
+      "passed": true,
+      "status": "ok",
+      "detail": "30/30",
+      "artifact": ""
+    },
+    {
+      "name": "payload interaction count matches current gap report",
+      "passed": true,
+      "status": "ok",
+      "detail": "28/28",
+      "artifact": ""
+    },
+    {
+      "name": "payload counts match capture session",
+      "passed": true,
+      "status": "ok",
+      "detail": "payload=30/28 session=30/28",
+      "artifact": ""
+    },
+    {
+      "name": "payload receiver upload count is complete",
+      "passed": true,
+      "status": "ok",
+      "detail": "59=58+1",
+      "artifact": ""
+    },
+    {
+      "name": "payload JS target literal counts match summary",
+      "passed": true,
+      "status": "ok",
+      "detail": "js=30/28 summary=30/28",
+      "artifact": ""
+    },
+    {
+      "name": "payload covers all interaction gap route ids",
+      "passed": true,
+      "status": "ok",
+      "detail": "covered=28 gaps=28",
+      "artifact": ""
+    }
+  ],
+  "passed": 21,
+  "total": 21
+}

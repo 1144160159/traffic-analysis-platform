@@ -1,0 +1,59 @@
+{
+  "title": "园区网络全流量采集与分析系统",
+  "location": "http://10.0.5.8:30180/login?fullRouteEvidenceTs=1783072603135",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "dpr": 1.0000000298023224
+  },
+  "scroll": {
+    "horizontalOverflow": 0,
+    "verticalOverflow": 0,
+    "bodyScrollWidth": 1920,
+    "bodyClientWidth": 1920,
+    "bodyScrollHeight": 1080,
+    "bodyClientHeight": 1080
+  },
+  "headings": [
+    "园区网络全流量采集与分析系统"
+  ],
+  "buttons": [
+    "账号密码登录",
+    "OIDC / SSO",
+    "登录异常",
+    "刷新验证码",
+    "登 录"
+  ],
+  "visibleText": "中 园区网络全流量采集与分析系统 统一身份认证入口 加密传输 身份校验 审计留痕 请使用授权账号访问 多因素校验已启用 i 登录失败请联系管理员 账号密码登录 OIDC / SSO 租户 / 站点 账号 密码 验证码 记住登录 忘记密码 帮助中心 隐私声明 登 录",
+  "elements": {
+    "pageHero": {
+      "selector": ".taf-page-hero",
+      "visible": false
+    },
+    "panelHeader": {
+      "selector": ".taf-panel__header",
+      "visible": false
+    },
+    "table": {
+      "selector": ".ant-table, .taf-table, table",
+      "visible": false
+    },
+    "topicTitlebar": {
+      "selector": ".taf-topic-titlebar",
+      "visible": false
+    },
+    "topicFacts": {
+      "selector": ".taf-topic-facts",
+      "visible": false
+    },
+    "topicKpis": {
+      "selector": ".taf-topic-kpis",
+      "visible": false
+    },
+    "topicGrid": {
+      "selector": ".taf-topic-grid",
+      "visible": false
+    }
+  },
+  "overlapChecks": {}
+}

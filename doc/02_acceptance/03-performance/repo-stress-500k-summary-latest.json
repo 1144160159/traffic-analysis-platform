@@ -1,0 +1,8 @@
+{
+  "source": "rust/probe-agent/tests/reports/stress_500k_report.txt",
+  "packets": 500000.0,
+  "pps": 937403.0,
+  "mbps": 1305.9,
+  "parse_success_percent": 100.0,
+  "acceptance_note": "small offline PCAP stress only; not a 10x100Gbps or 512Mpps acceptance result"
+}

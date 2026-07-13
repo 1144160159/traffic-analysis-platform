@@ -1,0 +1,124 @@
+{
+  "run_id": "20260630-kafka-sasl-ssl-rollout-r6-controller-mtls-live",
+  "result": "pass",
+  "report": "doc/02_acceptance/runs/20260630-kafka-sasl-ssl-rollout-r6-controller-mtls-live/live-kafka-sasl-ssl-rollout-20260630-kafka-sasl-ssl-rollout-r6-controller-mtls-live.ndjson",
+  "local_report": "doc/02_acceptance/runs/20260630-kafka-sasl-ssl-rollout-r6-controller-mtls-live/local-report.md",
+  "total": 11,
+  "passed": 11,
+  "blockers": 0,
+  "warnings": 0,
+  "pre_prereq_blockers": 0,
+  "post_preflight_blockers": 0,
+  "checks": [
+    {
+      "ts": "2026-06-30T02:22:09+08:00",
+      "phase": "repo",
+      "name": "Kafka SASL_SSL manifest server dry-run",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "deployments/kubernetes/infrastructure/01-kafka.yaml",
+      "artifact": "kafka-manifest-server-dry-run.txt"
+    },
+    {
+      "ts": "2026-06-30T02:22:15+08:00",
+      "phase": "preflight",
+      "name": "Kafka rollout prerequisites are clear",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "rollout_blockers=2",
+      "artifact": "preflight"
+    },
+    {
+      "ts": "2026-06-30T02:22:15+08:00",
+      "phase": "rollout",
+      "name": "Disruptive Kafka rollout explicitly allowed",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "ALLOW_DISRUPTIVE_KAFKA_ROLLOUT=true",
+      "artifact": "env"
+    },
+    {
+      "ts": "2026-06-30T02:22:25+08:00",
+      "phase": "rollout",
+      "name": "Kafka pods scaled down for full-protocol restart",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "0 pods",
+      "artifact": "kafka-scale-down.txt"
+    },
+    {
+      "ts": "2026-06-30T02:22:26+08:00",
+      "phase": "rollout",
+      "name": "Kafka SASL_SSL manifest applied",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "deployments/kubernetes/infrastructure/01-kafka.yaml",
+      "artifact": "kafka-manifest-apply.txt"
+    },
+    {
+      "ts": "2026-06-30T02:22:56+08:00",
+      "phase": "rollout",
+      "name": "Kafka StatefulSet ready after SASL_SSL restart",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "3 broker pods ready",
+      "artifact": "kafka-rollout-status.txt"
+    },
+    {
+      "ts": "2026-06-30T02:23:33+08:00",
+      "phase": "post",
+      "name": "Kafka topic and ACL init job completed on SASL_SSL",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "deployments/kubernetes/init-jobs/01-kafka-topics.yaml",
+      "artifact": "init-kafka-topics.log"
+    },
+    {
+      "ts": "2026-06-30T02:23:35+08:00",
+      "phase": "post",
+      "name": "Kafka SASL_SSL broker API reachable",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "broker API command succeeded",
+      "artifact": "kafka-post-rollout-broker-api.txt"
+    },
+    {
+      "ts": "2026-06-30T02:23:36+08:00",
+      "phase": "post",
+      "name": "Kafka topics listable over SASL_SSL",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "topics=29",
+      "artifact": "kafka-post-rollout-topics.txt"
+    },
+    {
+      "ts": "2026-06-30T02:23:38+08:00",
+      "phase": "post",
+      "name": "Kafka ACLs listable over SASL_SSL",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "ACL authorizer active",
+      "artifact": "kafka-post-rollout-acls.txt"
+    },
+    {
+      "ts": "2026-06-30T02:23:44+08:00",
+      "phase": "post",
+      "name": "Kafka security rollout preflight passes after rollout",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "blockers=0",
+      "artifact": "post-preflight"
+    }
+  ]
+}

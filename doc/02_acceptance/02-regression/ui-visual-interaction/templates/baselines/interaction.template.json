@@ -1,0 +1,62 @@
+{
+  "template_type": "ui_visual_interaction_route_evidence",
+  "template_version": 1,
+  "route_id": "baselines",
+  "title": "行为基准",
+  "route": "/baselines",
+  "expected_final_path": "/baselines",
+  "url": "http://10.0.5.8:30180/baselines",
+  "authenticated_url_pattern": "http://10.0.5.8:30180/baselines#codex_smoke_token=<DESKTOP_SMOKE_TOKEN>",
+  "safe_redirect_url_pattern": "http://10.0.5.8:15175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fbaselines",
+  "safe_wrapper_call": {
+    "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+    "args": {
+      "url": "http://10.0.5.8:15175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fbaselines",
+      "keep": true,
+      "wait_ms": 3500
+    }
+  },
+  "output_path": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/baselines/interaction.json",
+  "required_screenshot_path": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/baselines/interaction.png",
+  "interaction_screenshot_upload": "http://10.0.5.8:15174/interaction-screenshot/baselines",
+  "business_action_hint": "行为基准: verify live data from /api/v1/baselines; perform one route-specific read or safe UI action",
+  "api_endpoints": [
+    "/api/v1/baselines"
+  ],
+  "acceptance_requirements": {
+    "expected_final_path": "/baselines",
+    "required_assertions": [
+      "smoke_hash_consumed",
+      "not_login_shell",
+      "access_denied_absent"
+    ],
+    "forbidden_final_paths": [
+      "/login"
+    ],
+    "expected_text_markers": [
+      "行为基准"
+    ],
+    "api_endpoints": [
+      "/api/v1/baselines"
+    ]
+  },
+  "interaction_json_skeleton": {
+    "status": "pass",
+    "route_id": "baselines",
+    "route": "/baselines",
+    "final_url": "http://10.0.5.8:30180/baselines",
+    "business_action": "行为基准: verify live data from /api/v1/baselines; perform one route-specific read or safe UI action",
+    "desktop_chrome_backend_status": "pass",
+    "no_4xx_5xx": true,
+    "no_requestfailed": true,
+    "no_pageerror": true,
+    "no_console_error": true,
+    "target_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/baselines/interaction.png",
+    "assertions": {
+      "smoke_hash_consumed": true,
+      "not_login_shell": true,
+      "access_denied_absent": true
+    }
+  },
+  "note": "Template only. Do not copy this file into latest/<route-id>/interaction.json without replacing placeholders with real Desktop Chrome evidence."
+}

@@ -1,0 +1,141 @@
+{
+  "status": "pass",
+  "acceptance_eligible": false,
+  "reason": "Windows Chrome CDP evidence. Formal legacy gate expects Desktop Chrome extension receiver metadata and pixel diff; this capture proves real Windows Chrome rendering, route, runtime events, viewport, and layout metrics.",
+  "backend": "windows-chrome-cdp",
+  "target_id": "screen",
+  "route_id": "screen",
+  "route": "/screen",
+  "resolved_path": "/screen",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/screen.png",
+  "final_url": "http://10.0.5.8:30180/screen?fullRouteEvidenceTs=1783072607228",
+  "final_path": "/screen",
+  "protected_route": true,
+  "smoke_hash_consumed": true,
+  "uploaded_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "stored_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "expected_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "desktop_viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "post_capture_resize": false,
+  "no_4xx_5xx": true,
+  "no_requestfailed": true,
+  "no_console_error": true,
+  "no_pageerror": true,
+  "errors": {
+    "requestfailed": [],
+    "badResponses": [],
+    "console": [],
+    "pageerror": []
+  },
+  "screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/doc/02_acceptance/02-regression/ui-visual-interaction/latest/screen/actual-1920.png",
+  "mirror_screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/evidence/windows-chrome-cdp-20260703-full-route-desktop-r6/screen-1920x1080.png",
+  "metrics": {
+    "title": "园区网络全流量采集与分析系统",
+    "location": "http://10.0.5.8:30180/screen?fullRouteEvidenceTs=1783072607228",
+    "viewport": {
+      "width": 1920,
+      "height": 1080,
+      "dpr": 1.0000000298023224
+    },
+    "scroll": {
+      "horizontalOverflow": 0,
+      "verticalOverflow": 0,
+      "bodyScrollWidth": 1920,
+      "bodyClientWidth": 1920,
+      "bodyScrollHeight": 1080,
+      "bodyClientHeight": 1080
+    },
+    "headings": [
+      "园区覆盖与链路状态",
+      "证据与取证闭环",
+      "园区数字孪生拓扑",
+      "采集与流处理管道（全流量处理链路）",
+      "响应与反馈闭环（近 24 小时）",
+      "威胁态势总览",
+      "风险区域密度",
+      "异常链路影响面（Top 5）",
+      "外联流向强度（近24小时）",
+      "运行底座（大屏性能与渲染）"
+    ],
+    "buttons": [
+      "移动端导航",
+      "PCAP检索",
+      "资产检索",
+      "规则检索",
+      "脚本中心",
+      "帮助中心",
+      "更多应用",
+      "Ccodex-ui-desktop-admin系统管理员在线",
+      "刷 新",
+      "只读令牌",
+      "2D",
+      "3D",
+      "核心区",
+      "教学楼A探针在线",
+      "教学楼B汇聚正常",
+      "图书馆核心链路",
+      "实验楼群维护中",
+      "安全运营中心高风险区",
+      "数据中心入库正常",
+      "宿舍区在线",
+      "行政楼在线",
+      "食堂汇聚正常",
+      "体育馆带宽 57%",
+      "侦察218612%"
+    ],
+    "visibleText": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-03 17:56:48 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 仪表盘 态势大屏 采集监测 威胁分析 资产图谱 检测运营 审计配置 C codex-ui-desktop-admin 系统管理员 在线 真实 API 5 条 数据来源：/v1/dashboard/stats、/v1/dashboard/encrypted/trend、/v1/dashboard/attack-phases。 刷 新 只读令牌 园区覆盖与链路状态 查看详情 96.4% 楼宇覆盖率 建筑 27/28 95.2% 园区在线覆盖 探针 24/25 核心链路 正常 8 / 8 汇聚链路 正常 24 / 26 异常链路 3 处 需复核 教学区 实验楼 数据中心 宿舍区 办公区 在线 离线 维护中 探针部署图 证据与取证闭环 进入取证分析 98.6% PCAP 覆盖率 闭环 98.6% 95.7% Session 还原率 还原会话 1.23M 93.2% 日志关联率 关联日志 246.5M 99.1% 对象存储归档率 归档 72.4TB 99.8% hash 校验通过率 校验文件 18.6M 99.6% 签名 URL 可用率 可用链接 12,645 园区数字孪生拓扑 2D 3D 核心链路 汇聚链路 异常链路 探针位置 园区边界 实时重算 5s 建筑 27 教学区 办公区 核心区 实验区 宿舍区 高风险边界 核心区 教学楼A 探针在线 教学楼B 汇聚正常 图书馆 核心链路 实验楼群 维护中 安全运营中心 高风险区 数据中心 入库正常 宿舍区 在线 行政楼 在线 食堂 汇聚正常 体育馆 带宽 57% 核心运营 安全运营中心 在线探针 2 / 3 链路 9 条 资产 124 风险 87 吞吐 11.7 Gbps 下钻建筑详情 异常链路位置 实验楼群 - 核心区链路 安全运营中心外联边界 体育馆 - 汇聚区A链路 N S 进入拓扑详情 采集与流处理管道（全流量处理链路） 进入数据管道详情 探针采集 78.3 Gbps 在线 95.2% 协议解析 99.2% 真实 API 汇总 归一化 98.1% 字段标准化 Kafka 集群 0 msg 积压监控 Flink 处理 0 ms 端到端 P95 ClickHouse 78.3 Gbps 入库吞吐 OpenSearch 12.6 K EPS 索引 0.6s NebulaGraph 2.1 K/s 图谱正常 MinIO 存储 72.4 TB 120 TB 响应与反馈闭环（近 24 小时） 查看剧本 0",
+    "elements": {
+      "pageHero": {
+        "selector": ".taf-page-hero",
+        "visible": false
+      },
+      "panelHeader": {
+        "selector": ".taf-panel__header",
+        "visible": true,
+        "text": "园区覆盖与链路状态查看详情",
+        "x": 175,
+        "y": 89,
+        "right": 433,
+        "bottom": 125,
+        "w": 259,
+        "h": 36,
+        "display": "flex",
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      "table": {
+        "selector": ".ant-table, .taf-table, table",
+        "visible": false
+      },
+      "topicTitlebar": {
+        "selector": ".taf-topic-titlebar",
+        "visible": false
+      },
+      "topicFacts": {
+        "selector": ".taf-topic-facts",
+        "visible": false
+      },
+      "topicKpis": {
+        "selector": ".taf-topic-kpis",
+        "visible": false
+      },
+      "topicGrid": {
+        "selector": ".taf-topic-grid",
+        "visible": false
+      }
+    },
+    "overlapChecks": {}
+  }
+}

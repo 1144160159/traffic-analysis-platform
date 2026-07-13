@@ -1,0 +1,277 @@
+{
+  "run_id": "20260630-notification-governance-preflight-r1",
+  "result": "pass",
+  "apisix": "http://10.0.5.8:30180",
+  "tenant": "default",
+  "other_tenant": "tenant-b",
+  "rule_id": "f77ee1ad-0182-425e-9004-a51e86060ede",
+  "rule_name": "codex notification silence 20260630-notification-governance-preflight-r1",
+  "report": "doc/02_acceptance/runs/20260630-notification-governance-preflight-r1/live-notification-governance-preflight-20260630-notification-governance-preflight-r1.ndjson",
+  "local_report": "doc/02_acceptance/runs/20260630-notification-governance-preflight-r1/local-report.md",
+  "total": 26,
+  "passed": 26,
+  "blockers": 0,
+  "warnings": 0,
+  "checks": [
+    {
+      "ts": "2026-06-30T11:21:27+08:00",
+      "phase": "contract",
+      "name": "frontend notification action contract present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "notification settings/test/silence actions declared",
+      "artifact": "web/ui/src/services/pageApiPlans.ts"
+    },
+    {
+      "ts": "2026-06-30T11:21:27+08:00",
+      "phase": "api",
+      "name": "notification settings readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"data\":{\"channels\":{\"dingtalk\":false,\"email\":false,\"feishu\":false,\"slack\":false,\"webhook\":false,\"wechat\":false},\"enabled\":true,\"min_severity\":\"medium\",\"rate_limit_per_min\":30,\"secret_ref\":\"k8s://traffic-analysis/live-100-round-smoke\"},\"success\":true} ",
+      "artifact": "notification-settings-before.json"
+    },
+    {
+      "ts": "2026-06-30T11:21:27+08:00",
+      "phase": "assert",
+      "name": "notification settings response shape",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and (.data.channels | type == \"object\")",
+      "artifact": "notification-settings-before.json"
+    },
+    {
+      "ts": "2026-06-30T11:21:27+08:00",
+      "phase": "api",
+      "name": "notification silence rules readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"data\":{\"rules\":[],\"total\":0},\"success\":true} ",
+      "artifact": "notification-silence-rules-before.json"
+    },
+    {
+      "ts": "2026-06-30T11:21:27+08:00",
+      "phase": "assert",
+      "name": "notification silence rules response shape",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and (.data.rules | type == \"array\") and (.data.total | type == \"number\")",
+      "artifact": "notification-silence-rules-before.json"
+    },
+    {
+      "ts": "2026-06-30T11:21:27+08:00",
+      "phase": "api",
+      "name": "admin can update notification settings",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"data\":{\"channels\":{\"dingtalk\":false,\"email\":true,\"feishu\":false,\"slack\":false,\"webhook\":false,\"wechat\":true},\"enabled\":true,\"min_severity\":\"high\",\"rate_limit_per_min\":7,\"secret_ref\":\"traffic-analysis/notification-secret\"},\"success\":true} ",
+      "artifact": "notification-settings-update.json"
+    },
+    {
+      "ts": "2026-06-30T11:21:27+08:00",
+      "phase": "assert",
+      "name": "notification settings update merged channels and secret ref",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.channels.email == true and .data.channels.webhook == false and .data.secret_ref == \"traffic-analysis/notification-secret\"",
+      "artifact": "notification-settings-update.json"
+    },
+    {
+      "ts": "2026-06-30T11:21:27+08:00",
+      "phase": "api",
+      "name": "inline notification secret is rejected",
+      "severity": "info",
+      "passed": true,
+      "status": "400",
+      "detail": "{\"message\":\"sensitive notification value must be stored as a secret reference: webhook_token\",\"success\":false} ",
+      "artifact": "notification-settings-inline-secret.json"
+    },
+    {
+      "ts": "2026-06-30T11:21:27+08:00",
+      "phase": "api",
+      "name": "viewer cannot update notification settings",
+      "severity": "info",
+      "passed": true,
+      "status": "403",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"permission denied: admin:* required\"},\"meta\":{\"request_id\":\"785f8e88-eed8-4615-b464-b8bc1955867d\",\"trace_id\":\"785f8e88-eed8-4615-b464-b8bc1955867d\"},\"timestamp\":\"2026-06-30T03:21:27Z\"} ",
+      "artifact": "notification-settings-viewer.json"
+    },
+    {
+      "ts": "2026-06-30T11:21:27+08:00",
+      "phase": "api",
+      "name": "admin can send notification test",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"message\":\"test notification sent\",\"success\":true} ",
+      "artifact": "notification-test-admin.json"
+    },
+    {
+      "ts": "2026-06-30T11:21:27+08:00",
+      "phase": "assert",
+      "name": "notification test response shape",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .message == \"test notification sent\"",
+      "artifact": "notification-test-admin.json"
+    },
+    {
+      "ts": "2026-06-30T11:21:27+08:00",
+      "phase": "api",
+      "name": "viewer cannot send notification test",
+      "severity": "info",
+      "passed": true,
+      "status": "403",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"permission denied: admin:* required\"},\"meta\":{\"request_id\":\"ec7ac5a9-5fb7-4233-a1e4-f4d25f7c7b75\",\"trace_id\":\"ec7ac5a9-5fb7-4233-a1e4-f4d25f7c7b75\"},\"timestamp\":\"2026-06-30T03:21:27Z\"} ",
+      "artifact": "notification-test-viewer.json"
+    },
+    {
+      "ts": "2026-06-30T11:21:27+08:00",
+      "phase": "api",
+      "name": "admin can create notification silence rule",
+      "severity": "info",
+      "passed": true,
+      "status": "201",
+      "detail": "{\"data\":{\"rule_id\":\"f77ee1ad-0182-425e-9004-a51e86060ede\",\"tenant_id\":\"default\",\"name\":\"codex notification silence 20260630-notification-governance-preflight-r1\",\"scope\":\"main-campus\",\"starts_at\":\"2026-06-30T04:21:27Z\",\"ends_at\":\"2026-06-30T08:21:27Z\",\"affected_targets\":[\"core-switch\",\"probe-agent\"],\"policy\":\"night-escalation\",\"reason\":\"codex live notification governance preflight\",\"enabled\":true,\"created_by\":\"6c3324b6-a590-4635-91d3-b154116e95eb\",\"created_at\":\"2026-06-30T03:21:27.880512Z\",\"updated_at\":\"2026-06-30T03:21:27.880512Z\"},\"success\":true} ",
+      "artifact": "notification-silence-create.json"
+    },
+    {
+      "ts": "2026-06-30T11:21:27+08:00",
+      "phase": "assert",
+      "name": "created silence rule has identity and enabled state",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and (.data.rule_id | type == \"string\" and length > 0) and .data.name == $name and .data.enabled == true",
+      "artifact": "notification-silence-create.json"
+    },
+    {
+      "ts": "2026-06-30T11:21:27+08:00",
+      "phase": "api",
+      "name": "created silence rule is queryable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"data\":{\"rules\":[{\"rule_id\":\"f77ee1ad-0182-425e-9004-a51e86060ede\",\"tenant_id\":\"default\",\"name\":\"codex notification silence 20260630-notification-governance-preflight-r1\",\"scope\":\"main-campus\",\"starts_at\":\"2026-06-30T04:21:27Z\",\"ends_at\":\"2026-06-30T08:21:27Z\",\"affected_targets\":[\"core-switch\",\"probe-agent\"],\"policy\":\"night-escalation\",\"reason\":\"codex live notification governance preflight\",\"enabled\":true,\"created_by\":\"6c3324b6-a590-4635-91d3-b154116e95eb\",\"created_at\":\"2026-06-30T03:21:27.880512Z\",\"updated_at\":\"2026-06-30T03:21:27.880512Z\"}],\"total\":1},\"success\":true} ",
+      "artifact": "notification-silence-rules-after.json"
+    },
+    {
+      "ts": "2026-06-30T11:21:28+08:00",
+      "phase": "assert",
+      "name": "silence rule appears in list",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and ([.data.rules[] | select(.rule_id == $rule_id)] | length) == 1",
+      "artifact": "notification-silence-rules-after.json"
+    },
+    {
+      "ts": "2026-06-30T11:21:28+08:00",
+      "phase": "api",
+      "name": "admin can disable silence rule",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"data\":{\"rule_id\":\"f77ee1ad-0182-425e-9004-a51e86060ede\",\"tenant_id\":\"default\",\"name\":\"codex notification silence 20260630-notification-governance-preflight-r1\",\"scope\":\"main-campus\",\"starts_at\":\"2026-06-30T04:21:27Z\",\"ends_at\":\"2026-06-30T08:21:27Z\",\"affected_targets\":[\"core-switch\",\"probe-agent\"],\"policy\":\"night-escalation\",\"reason\":\"codex live notification governance preflight\",\"enabled\":false,\"created_by\":\"6c3324b6-a590-4635-91d3-b154116e95eb\",\"created_at\":\"2026-06-30T03:21:27.880512Z\",\"updated_at\":\"2026-06-30T03:21:28.074177Z\"},\"success\":true} ",
+      "artifact": "notification-silence-disable.json"
+    },
+    {
+      "ts": "2026-06-30T11:21:28+08:00",
+      "phase": "assert",
+      "name": "silence rule disabled response",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.enabled == false",
+      "artifact": "notification-silence-disable.json"
+    },
+    {
+      "ts": "2026-06-30T11:21:28+08:00",
+      "phase": "api",
+      "name": "other tenant cannot update silence rule",
+      "severity": "info",
+      "passed": true,
+      "status": "404",
+      "detail": "{\"message\":\"notification silence rule not found\",\"success\":false} ",
+      "artifact": "notification-silence-other-tenant.json"
+    },
+    {
+      "ts": "2026-06-30T11:21:28+08:00",
+      "phase": "api",
+      "name": "viewer cannot update silence rule",
+      "severity": "info",
+      "passed": true,
+      "status": "403",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"permission denied: admin:* required\"},\"meta\":{\"request_id\":\"582c2894-174b-4910-9ffc-4f6bdb3852e6\",\"trace_id\":\"582c2894-174b-4910-9ffc-4f6bdb3852e6\"},\"timestamp\":\"2026-06-30T03:21:28Z\"} ",
+      "artifact": "notification-silence-viewer.json"
+    },
+    {
+      "ts": "2026-06-30T11:21:28+08:00",
+      "phase": "api",
+      "name": "audit log page API has silence create event",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"total\":1,\"trails\":[{\"log_id\":\"audit-bbe05b97-62c4-4a01-95a1-dd168316af9a\",\"tenant_id\":\"default\",\"user_id\":\"6c3324b6-a590-4635-91d3-b154116e95eb\",\"action\":\"NOTIFICATION_SILENCE_RULE_CREATED\",\"resource_type\":\"notification_silence_rule\",\"resource_id\":\"f77ee1ad-0182-425e-9004-a51e86060ede\",\"details\":{\"affected_targets\":[\"core-switch\",\"probe-agent\"],\"enabled\":true,\"ends_at\":\"2026-06-30T08:21:27Z\",\"name\":\"codex notification silence 20260630-notification-governance-preflight-r1\",\"policy\":\"night-escalation\",\"reason\":\"codex live notification governance preflight\",\"scope\":\"main-campus\",\"starts_at\":\"2026-06-30T04:21:27Z\"},\"ip_address\":\"10.244.0.0\",\"timestamp\":1782789687887,\"result\":\"success\"}]},\"meta\":{\"request_id\":\"e328b5c7-6731-405a-8c46-26894c9f6421\",\"trace_id\":\"e328b5c7-6731-405a-8c46-26894c9f6421\"},\"timestamp\":\"2026-06-30T03:21:28Z\"} ",
+      "artifact": "notification-audit-silence-created.json"
+    },
+    {
+      "ts": "2026-06-30T11:21:28+08:00",
+      "phase": "assert",
+      "name": "audit log contains silence create event",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and (.data.total >= 1) and ([.data.trails[] | select(.resource_id == $rule_id and .action == \"NOTIFICATION_SILENCE_RULE_CREATED\")] | length) >= 1",
+      "artifact": "notification-audit-silence-created.json"
+    },
+    {
+      "ts": "2026-06-30T11:21:28+08:00",
+      "phase": "postgres",
+      "name": "notification silence rule persisted in PostgreSQL",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "pg-notification-silence-rule-count.txt"
+    },
+    {
+      "ts": "2026-06-30T11:21:28+08:00",
+      "phase": "postgres",
+      "name": "notification settings update audit persisted",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "pg-notification-settings-audit-count.txt"
+    },
+    {
+      "ts": "2026-06-30T11:21:28+08:00",
+      "phase": "postgres",
+      "name": "notification test audit persisted",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "pg-notification-test-audit-count.txt"
+    },
+    {
+      "ts": "2026-06-30T11:21:28+08:00",
+      "phase": "postgres",
+      "name": "notification silence audit persisted",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "2",
+      "artifact": "pg-notification-silence-audit-count.txt"
+    }
+  ]
+}

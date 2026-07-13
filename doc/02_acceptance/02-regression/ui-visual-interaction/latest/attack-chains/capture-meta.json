@@ -1,0 +1,145 @@
+{
+  "status": "pass",
+  "acceptance_eligible": false,
+  "reason": "Windows Chrome CDP evidence. Formal legacy gate expects Desktop Chrome extension receiver metadata and pixel diff; this capture proves real Windows Chrome rendering, route, runtime events, viewport, and layout metrics.",
+  "backend": "windows-chrome-cdp",
+  "target_id": "attack-chains",
+  "route_id": "attack-chains",
+  "route": "/attack-chains",
+  "resolved_path": "/attack-chains",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/attack-chains.png",
+  "final_url": "http://10.0.5.8:30180/attack-chains?fullRouteEvidenceTs=1783072632836",
+  "final_path": "/attack-chains",
+  "protected_route": true,
+  "smoke_hash_consumed": true,
+  "uploaded_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "stored_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "expected_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "desktop_viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "post_capture_resize": false,
+  "no_4xx_5xx": true,
+  "no_requestfailed": true,
+  "no_console_error": true,
+  "no_pageerror": true,
+  "errors": {
+    "requestfailed": [],
+    "badResponses": [],
+    "console": [],
+    "pageerror": []
+  },
+  "screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/doc/02_acceptance/02-regression/ui-visual-interaction/latest/attack-chains/actual-1920.png",
+  "mirror_screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/evidence/windows-chrome-cdp-20260703-full-route-desktop-r6/attack-chains-1920x1080.png",
+  "metrics": {
+    "title": "园区网络全流量采集与分析系统",
+    "location": "http://10.0.5.8:30180/attack-chains?fullRouteEvidenceTs=1783072632836",
+    "viewport": {
+      "width": 1920,
+      "height": 1080,
+      "dpr": 1.0000000298023224
+    },
+    "scroll": {
+      "horizontalOverflow": 0,
+      "verticalOverflow": 0,
+      "bodyScrollWidth": 1920,
+      "bodyClientWidth": 1920,
+      "bodyScrollHeight": 1080,
+      "bodyClientHeight": 1080
+    },
+    "headings": [
+      "攻击链分析",
+      "攻击链画布",
+      "ATT&CK 阶段矩阵",
+      "路径明细（关键跳转）",
+      "证据锚点",
+      "处置建议"
+    ],
+    "buttons": [
+      "移动端导航",
+      "PCAP检索",
+      "资产检索",
+      "规则检索",
+      "脚本中心",
+      "帮助中心",
+      "更多应用",
+      "Ccodex-ui-desktop-admin系统管理员在线",
+      "2026-06-19 00:00:00 ~ 2026-06-20 03:45:00",
+      "导出报告",
+      "下钻图谱",
+      "触发响应",
+      "链路详情",
+      "侦察TA0043已发生",
+      "初始访问TA0001已发生",
+      "执行TA0002已发生",
+      "横向移动TA0008已发生",
+      "C2 通信TA0011已发生",
+      "数据外传TA0010已发生",
+      "全部",
+      "告警",
+      "PCAP"
+    ],
+    "visibleText": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-03 17:57:13 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 采集监测 威胁分析 告警中心 128 战役列表 攻击链分析 加密流量 取证分析 资产图谱 检测运营 审计配置 C codex-ui-desktop-admin 系统管理员 在线 攻击链分析 选择战役 疑似 C2 隧道通信 时间范围 2026-06-19 00:00:00 ~ 2026-06-20 03:45:00 资产范围 全部资产 视图模式 攻击链视图 导出报告 下钻图谱 触发响应 链路详情 攻击链画布 攻击阶段 MITRE ATT&CK 攻击阶段 实体 / 资产 告警事件 证据锚点 处置动作 1 侦察 TA0043 203.0.113.45 端口扫描探测 06-19 01:12:08 DNS 解析记录 pcap / sysmon / session 封禁源 IP 低影响 2 初始访问 TA0001 边界防火墙 FW-01 Web 漏洞利用 06-19 01:18:08 HTTP 请求包 pcap / sysmon / session WAF 规则加固 低影响 3 执行 TA0002 WEB 服务器 10.12.5.23 恶意命令执行 06-19 01:24:08 进程创建日志 pcap / sysmon / session 终止恶意进程 中影响 4 横向移动 TA0008 域控服务器 10.12.1.10 凭证窃取 06-19 01:30:08 LSASS 访问 pcap / sysmon / session 重置域控凭证 中影响 5 C2 通信 TA0011 内网主机 10.12.8.45 C2 隧道通信 06-19 01:36:08 TLS 流量会话 pcap / sysmon / session 阻断 C2 域名 需审批 6 数据外传 TA0010 外部域名 c2.example.com 数据外传尝试 06-19 01:42:08 外传流量样本 pcap / sysmon / session 阻断外传通道 需审批 ATT&CK 阶段矩阵 侦察 TA0043 已发生 初始访问 TA0001 已发生 执行 TA0002 已发生 横向移动 TA0008 已发生 C2 通信 TA0011 已发生 数据外传 TA0010 已发生 链路置信度 75.0% 路径明细（关键跳转） 阶段 实体 告警 证据 处置建议 状态 collection ip:cid:1:wFzAUL collection 告警 alert-default-1782729",
+    "elements": {
+      "pageHero": {
+        "selector": ".taf-page-hero",
+        "visible": false
+      },
+      "panelHeader": {
+        "selector": ".taf-panel__header",
+        "visible": true,
+        "text": "攻击链画布",
+        "x": 183,
+        "y": 197,
+        "right": 1349,
+        "bottom": 233,
+        "w": 1166,
+        "h": 36,
+        "display": "flex",
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      "table": {
+        "selector": ".ant-table, .taf-table, table",
+        "visible": true,
+        "text": "阶段实体告警证据处置建议状态collectionip:cid:1:wFzAULcollection 告警alert-default-1782729598739-6a142f38触发 SOAR 剧本待确认数据外传ip:cid:1:wFzAUL数据外传 告警alert-default-1782729598739-6a142f38阻断外传通道待确认外联通信ip:cid:1:wFzAUL外联通信 告警alert-default-1782729598739-6a142f38阻断 C2 ",
+        "x": 710,
+        "y": 809,
+        "right": 1339,
+        "bottom": 1044,
+        "w": 629,
+        "h": 235,
+        "display": "block",
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      "topicTitlebar": {
+        "selector": ".taf-topic-titlebar",
+        "visible": false
+      },
+      "topicFacts": {
+        "selector": ".taf-topic-facts",
+        "visible": false
+      },
+      "topicKpis": {
+        "selector": ".taf-topic-kpis",
+        "visible": false
+      },
+      "topicGrid": {
+        "selector": ".taf-topic-grid",
+        "visible": false
+      }
+    },
+    "overlapChecks": {}
+  }
+}

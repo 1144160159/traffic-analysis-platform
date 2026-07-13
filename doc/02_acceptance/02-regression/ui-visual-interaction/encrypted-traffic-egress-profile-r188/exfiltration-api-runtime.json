@@ -1,0 +1,16 @@
+{
+  "hasToken": true,
+  "status": 200,
+  "keys": [
+    "paths",
+    "risk_types",
+    "top_destinations",
+    "top_sources",
+    "total",
+    "trend"
+  ],
+  "destinationCount": 0,
+  "firstDestination": null,
+  "trendBucketCount": 0,
+  "firstTrendBucket": null
+}

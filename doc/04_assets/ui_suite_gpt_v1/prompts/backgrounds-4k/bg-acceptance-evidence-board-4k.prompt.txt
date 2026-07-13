@@ -1,0 +1,20 @@
+Generate a 3840x2160 PNG static 4K background asset for traffic-analysis-platform.
+
+Use case:
+- Acceptance evidence board background for engineering verification, smoke evidence, regression evidence, acceptance gates, and third-party evaluation material.
+
+Scene:
+- A dark technical evidence board with abstract gate matrices, verification lanes, report packages, trace artifacts, release baselines, and audit-backed proof bundles.
+- Suggest a chain from build verification to live smoke, regression, acceptance, and external evaluation through visual structure, without readable labels.
+- Include completed markers, pending markers, evidence packets, timeline fragments, and sealed report blocks as abstract shapes.
+
+Visual style:
+- Enterprise engineering governance and cyber platform assurance.
+- Dark navy/black base, cyan structural lines, green pass states, amber review states, restrained red failure markers.
+- Dense enough to feel like real evidence infrastructure, but quiet enough for UI overlays.
+- Leave center-right and top-left safe zones for panels or text.
+
+Constraints:
+- Do not include readable text, real ticket numbers, credentials, real IPs, logos, people, browser chrome, buttons, forms, or full UI screenshots.
+- Keep it static, high-quality, and suitable as a reusable 4K background.
+

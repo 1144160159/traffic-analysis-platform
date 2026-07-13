@@ -1,0 +1,158 @@
+{
+  "run_id": "20260701-ha-readiness-preflight-r10-review-packet",
+  "result": "blocked",
+  "report": "doc/02_acceptance/runs/20260701-ha-readiness-preflight-r10-review-packet/live-ha-readiness-preflight-20260701-ha-readiness-preflight-r10-review-packet.ndjson",
+  "local_report": "doc/02_acceptance/runs/20260701-ha-readiness-preflight-r10-review-packet/local-report.md",
+  "total": 14,
+  "passed": 13,
+  "blockers": 1,
+  "warnings": 0,
+  "running_flink_jobs": 9,
+  "expected_running_flink_jobs": 9,
+  "kafka_topic_count": 29,
+  "clickhouse_replica_rows": 13,
+  "postgres_replica_count": 2,
+  "rto_rpo_evidence_count": 0,
+  "checks": [
+    {
+      "ts": "2026-07-01T02:26:40+08:00",
+      "phase": "k8s",
+      "name": "critical HA workloads ready",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "16 workloads",
+      "artifact": "ha-workload-readiness.json"
+    },
+    {
+      "ts": "2026-07-01T02:26:40+08:00",
+      "phase": "k8s",
+      "name": "critical PDBs present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "6 PDBs",
+      "artifact": "ha-pdb-readiness.json"
+    },
+    {
+      "ts": "2026-07-01T02:26:40+08:00",
+      "phase": "k8s",
+      "name": "controlled eviction budget available",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "all critical PDBs allow voluntary disruption",
+      "artifact": "ha-pdb-readiness.json"
+    },
+    {
+      "ts": "2026-07-01T02:26:40+08:00",
+      "phase": "k8s",
+      "name": "critical namespace PVCs bound",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "29 PVCs",
+      "artifact": "ha-pvc-readiness.json"
+    },
+    {
+      "ts": "2026-07-01T02:26:40+08:00",
+      "phase": "k8s",
+      "name": "critical service endpoints populated",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "13 services",
+      "artifact": "ha-endpoint-readiness.json"
+    },
+    {
+      "ts": "2026-07-01T02:26:42+08:00",
+      "phase": "kafka",
+      "name": "Kafka leaders and ISR healthy",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "29 topics",
+      "artifact": "kafka-topic-health.json"
+    },
+    {
+      "ts": "2026-07-01T02:26:44+08:00",
+      "phase": "flink",
+      "name": "Flink running jobs checkpointing without exceptions",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "running=9 expected=9",
+      "artifact": "flink-running-job-health.json"
+    },
+    {
+      "ts": "2026-07-01T02:26:44+08:00",
+      "phase": "clickhouse",
+      "name": "ClickHouse replicated tables healthy",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "13 replicated tables",
+      "artifact": "clickhouse-replication.json"
+    },
+    {
+      "ts": "2026-07-01T02:26:44+08:00",
+      "phase": "postgres",
+      "name": "PostgreSQL replicas streaming",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "replicas=2 expected=2 detail_rc=0",
+      "artifact": "postgres-replication.csv"
+    },
+    {
+      "ts": "2026-07-01T02:26:44+08:00",
+      "phase": "redis",
+      "name": "Redis Sentinel master discoverable",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "10.244.0.73 6379 ",
+      "artifact": "redis-sentinel-master.txt"
+    },
+    {
+      "ts": "2026-07-01T02:26:45+08:00",
+      "phase": "minio",
+      "name": "MinIO live health endpoint reachable",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "minio/minio-0 http://localhost:9000/minio/health/live",
+      "artifact": "minio-health-body.txt"
+    },
+    {
+      "ts": "2026-07-01T02:26:45+08:00",
+      "phase": "gateway",
+      "name": "APISIX business NodePort reachable",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "http://10.0.5.8:30180 http=200",
+      "artifact": "apisix-root.txt"
+    },
+    {
+      "ts": "2026-07-01T02:26:45+08:00",
+      "phase": "acceptance",
+      "name": "destructive RTO/RPO drill reports present",
+      "severity": "blocker",
+      "passed": false,
+      "status": "missing",
+      "detail": "present=0 required=6 missing=kafka-failover.md flink-failover.md clickhouse-failover.md postgres-failover.md minio-failover.md ha-rto-rpo-latest.json",
+      "artifact": "existing-rto-rpo-evidence-files.txt"
+    },
+    {
+      "ts": "2026-07-01T02:26:45+08:00",
+      "phase": "integrity",
+      "name": "bootstrap and review-template artifacts are blocked from formal HA pass",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "formal HA RTO/RPO artifacts are scanned for review-template/TBD markers before this gate can pass",
+      "artifact": "tests/chaos/live_ha_readiness_preflight.sh"
+    }
+  ]
+}

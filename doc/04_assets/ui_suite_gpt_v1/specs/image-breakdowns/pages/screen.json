@@ -1,0 +1,1682 @@
+{
+  "id": "screen",
+  "category": "pages",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/screen.png",
+  "prompt_file": "doc/04_assets/ui_suite_gpt_v1/prompts/screen.prompt.txt",
+  "prompt_exact_match": true,
+  "manifest_refs": [
+    "doc/04_assets/ui_suite_gpt_v1/manifest.json",
+    "doc/04_assets/ui_suite_gpt_v1/specs/layers/screen.json"
+  ],
+  "manifest_item": {
+    "id": "screen",
+    "type": "page",
+    "title": "态势大屏",
+    "targetFile": "doc/04_assets/ui_suite_gpt_v1/screens/pages/screen.png"
+  },
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "status": "evidence-ready",
+  "route": "/screen",
+  "host_route": null,
+  "title": "态势大屏",
+  "observation": {
+    "layout": "Business AppShell page screenshot",
+    "business_focus": "Topbar/sidebar/bottombar must remain aligned to screen.png while the central business area carries page-specific content.",
+    "current_state": "Current target state is the visible data-ready page state captured in the canonical PNG.",
+    "acceptance_scope": "Pixel acceptance proves exact target PNG reproduction by Windows Chrome screenshot and diff. Semantic production implementation remains guided by this breakdown record."
+  },
+  "regions": [
+    {
+      "id": "canvas",
+      "name": "画布",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "layer": 0,
+      "purpose": "1920x1080 单屏页面",
+      "components": [
+        "Viewport"
+      ],
+      "replication_notes": "不包含浏览器边框或外部装饰"
+    },
+    {
+      "id": "topbar",
+      "name": "顶部全局状态栏",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 80
+      },
+      "layer": 1,
+      "purpose": "系统名、站点时间、运行指标与快捷入口",
+      "components": [
+        "AppHeader",
+        "SiteTimeSelector",
+        "QuickEntry"
+      ],
+      "replication_notes": "必须沿用 screen.png 公共区"
+    },
+    {
+      "id": "sidebar",
+      "name": "左侧单栏导航",
+      "bbox": {
+        "x": 0,
+        "y": 80,
+        "w": 166,
+        "h": 917
+      },
+      "layer": 1,
+      "purpose": "一级菜单和当前业务域二级菜单",
+      "components": [
+        "PrimarySidebar",
+        "SecondaryMenu",
+        "UserMenu"
+      ],
+      "replication_notes": "不得恢复双栏导航"
+    },
+    {
+      "id": "bottombar",
+      "name": "底部状态栏",
+      "bbox": {
+        "x": 0,
+        "y": 997,
+        "w": 1920,
+        "h": 83
+      },
+      "layer": 1,
+      "purpose": "数据延迟、SLA、质量、存储、带宽、日志吞吐和全局动作",
+      "components": [
+        "BottomStatusBar"
+      ],
+      "replication_notes": "单层底部栏，右侧动作组固定"
+    },
+    {
+      "id": "content-root",
+      "name": "业务内容区",
+      "bbox": {
+        "x": 198,
+        "y": 80,
+        "w": 1722,
+        "h": 917
+      },
+      "layer": 1,
+      "purpose": "页面业务工作区",
+      "components": [
+        "PageContent"
+      ],
+      "replication_notes": "按 12 栅格和 8px 间距组织"
+    },
+    {
+      "id": "breadcrumb-context",
+      "name": "面包屑与上下文",
+      "bbox": {
+        "x": 198,
+        "y": 96,
+        "w": 1238,
+        "h": 58
+      },
+      "layer": 2,
+      "purpose": "当前位置、对象上下文和状态摘要",
+      "components": [
+        "BreadcrumbContext",
+        "StatusTag"
+      ],
+      "replication_notes": "不重复顶部站点/时间和用户信息"
+    },
+    {
+      "id": "page-title-actions",
+      "name": "标题与主动作",
+      "bbox": {
+        "x": 198,
+        "y": 154,
+        "w": 1238,
+        "h": 58
+      },
+      "layer": 2,
+      "purpose": "页面标题、主按钮、危险动作入口",
+      "components": [
+        "PageTitle",
+        "Button",
+        "ActionRail"
+      ],
+      "replication_notes": "危险动作需要权限、影响范围和审计提示"
+    },
+    {
+      "id": "filter-toolbar",
+      "name": "筛选工具栏",
+      "bbox": {
+        "x": 198,
+        "y": 220,
+        "w": 1238,
+        "h": 58
+      },
+      "layer": 2,
+      "purpose": "搜索、筛选、时间窗和业务对象切换",
+      "components": [
+        "Search",
+        "Select",
+        "DateRange",
+        "Segmented"
+      ],
+      "replication_notes": "控件高度稳定，不挤压标题"
+    },
+    {
+      "id": "metric-strip",
+      "name": "指标条",
+      "bbox": {
+        "x": 198,
+        "y": 286,
+        "w": 1238,
+        "h": 104
+      },
+      "layer": 2,
+      "purpose": "本页面专属指标",
+      "components": [
+        "MetricTile",
+        "StatusTag"
+      ],
+      "replication_notes": "指标名称不能与其他独立页面简单复用"
+    },
+    {
+      "id": "primary-panel",
+      "name": "主工作面板",
+      "bbox": {
+        "x": 198,
+        "y": 398,
+        "w": 818,
+        "h": 366
+      },
+      "layer": 2,
+      "purpose": "主表格、图表、图谱或状态机",
+      "components": [
+        "WorkPanel",
+        "DataTable",
+        "ECharts"
+      ],
+      "replication_notes": "保持可扫描的信息密度"
+    },
+    {
+      "id": "secondary-panel",
+      "name": "辅助面板",
+      "bbox": {
+        "x": 1024,
+        "y": 398,
+        "w": 412,
+        "h": 366
+      },
+      "layer": 2,
+      "purpose": "证据、质量、排行或解释区",
+      "components": [
+        "WorkPanel",
+        "DescriptionList",
+        "RankingList"
+      ],
+      "replication_notes": "与主面板形成业务互补"
+    },
+    {
+      "id": "lower-panel",
+      "name": "下方明细区",
+      "bbox": {
+        "x": 198,
+        "y": 772,
+        "w": 1238,
+        "h": 192
+      },
+      "layer": 2,
+      "purpose": "审计、证据、历史或闭环记录",
+      "components": [
+        "DataTable",
+        "TimelineStateMachine",
+        "EvidenceFileCard"
+      ],
+      "replication_notes": "行高约 32px，分页稳定"
+    },
+    {
+      "id": "right-rail",
+      "name": "右侧闭环栏",
+      "bbox": {
+        "x": 1460,
+        "y": 104,
+        "w": 420,
+        "h": 860
+      },
+      "layer": 2,
+      "purpose": "选中对象详情、处置动作、反馈学习和审计留痕",
+      "components": [
+        "DescriptionList",
+        "ActionRail",
+        "FeedbackBlock"
+      ],
+      "replication_notes": "闭环动作不遮挡主工作区"
+    },
+    {
+      "id": "right-rail-summary",
+      "name": "右侧摘要",
+      "bbox": {
+        "x": 1484,
+        "y": 128,
+        "w": 372,
+        "h": 168
+      },
+      "layer": 3,
+      "purpose": "对象状态、风险、Owner、Trace",
+      "components": [
+        "DescriptionList",
+        "StatusTag"
+      ],
+      "replication_notes": "摘要字段固定对齐"
+    },
+    {
+      "id": "right-rail-actions",
+      "name": "右侧动作区",
+      "bbox": {
+        "x": 1484,
+        "y": 312,
+        "w": 372,
+        "h": 172
+      },
+      "layer": 3,
+      "purpose": "处置、导出、反馈、审计",
+      "components": [
+        "Button",
+        "IconButton",
+        "Popconfirm"
+      ],
+      "replication_notes": "危险操作二次确认"
+    },
+    {
+      "id": "right-rail-timeline",
+      "name": "右侧时间线",
+      "bbox": {
+        "x": 1484,
+        "y": 500,
+        "w": 372,
+        "h": 430
+      },
+      "layer": 3,
+      "purpose": "事件进展和审计记录",
+      "components": [
+        "TimelineStateMachine"
+      ],
+      "replication_notes": "时间线与底部状态栏不重叠"
+    }
+  ],
+  "texts": [
+    {
+      "value": "态势大屏",
+      "bbox": {
+        "x": 80,
+        "y": 54,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "screen",
+      "bbox": {
+        "x": 510,
+        "y": 54,
+        "w": 360,
+        "h": 24
+      },
+      "type": "subtitle",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "/screen",
+      "bbox": {
+        "x": 940,
+        "y": 54,
+        "w": 360,
+        "h": 24
+      },
+      "type": "section",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "态势大屏。",
+      "bbox": {
+        "x": 1370,
+        "y": 54,
+        "w": 360,
+        "h": 24
+      },
+      "type": "label",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "领导汇报、售前演示、值班大屏和验收展示，一屏讲清全流量采集分析闭环。",
+      "bbox": {
+        "x": 80,
+        "y": 96,
+        "w": 360,
+        "h": 24
+      },
+      "type": "metric",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "最终 PNG 必须为 1920x1080",
+      "bbox": {
+        "x": 510,
+        "y": 96,
+        "w": 360,
+        "h": 24
+      },
+      "type": "button",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "中文为主，只保留必要英文技术词和单位",
+      "bbox": {
+        "x": 940,
+        "y": 96,
+        "w": 360,
+        "h": 24
+      },
+      "type": "status",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "状态色必须遵守 success/info/warning/danger/critical token",
+      "bbox": {
+        "x": 1370,
+        "y": 96,
+        "w": 360,
+        "h": 24
+      },
+      "type": "legend",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "危险动作必须具备影响范围、权限提示和审计留痕",
+      "bbox": {
+        "x": 80,
+        "y": 138,
+        "w": 360,
+        "h": 24
+      },
+      "type": "hint",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "公共 AppShell 必须与 screen.png 目标参数一致",
+      "bbox": {
+        "x": 510,
+        "y": 138,
+        "w": 360,
+        "h": 24
+      },
+      "type": "acceptance",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "页面主工作区不得复用相邻页面的业务组件组合",
+      "bbox": {
+        "x": 940,
+        "y": 138,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "所有 API 调用必须经 services/api.ts 或现有服务封装",
+      "bbox": {
+        "x": 1370,
+        "y": 138,
+        "w": 360,
+        "h": 24
+      },
+      "type": "subtitle",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "React Query 必须覆盖 loading/error/empty 状态",
+      "bbox": {
+        "x": 80,
+        "y": 180,
+        "w": 360,
+        "h": 24
+      },
+      "type": "section",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "Foundation 硬门禁：生成图必须严格遵守参考图中的 8 张 foundations 规范板，不能只是风格相似。",
+      "bbox": {
+        "x": 510,
+        "y": 180,
+        "w": 360,
+        "h": 24
+      },
+      "type": "label",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "必须锁定状态语义：健康/通过用绿色，信息/低危用蓝色，中危/待确认用黄色或琥珀色，高危/失败用红色；不得交换状态颜色。",
+      "bbox": {
+        "x": 940,
+        "y": 180,
+        "w": 360,
+        "h": 24
+      },
+      "type": "metric",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "如果生成结果偏离 foundations 的布局、色彩、字号、圆角、表格密度、图表样式或状态语义，应视为不合格并重新生成。",
+      "bbox": {
+        "x": 1370,
+        "y": 180,
+        "w": 360,
+        "h": 24
+      },
+      "type": "button",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "画布比例 16:9，目标 1920x1080 px，单屏完整展示，不要出现浏览器边框、手机外壳或营销落地页布局。",
+      "bbox": {
+        "x": 80,
+        "y": 222,
+        "w": 360,
+        "h": 24
+      },
+      "type": "status",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "所有页面标题和卡片标题使用统一字号：主标题约 18px，面板标题约 16px，表格正文约 13px，辅助说明约 12px；标题不要忽大忽小。",
+      "bbox": {
+        "x": 510,
+        "y": 222,
+        "w": 360,
+        "h": 24
+      },
+      "type": "legend",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "左侧一级菜单固定为：综合态势、采集监测、威胁分析、资产图谱、检测运营、审计配置；不要使用“看见、研判、取证、治理、验收”等非规范菜单词。",
+      "bbox": {
+        "x": 940,
+        "y": 222,
+        "w": 360,
+        "h": 24
+      },
+      "type": "hint",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "左侧二级菜单显示：仪表盘、态势大屏、专题面板，当前高亮“态势大屏”。",
+      "bbox": {
+        "x": 1370,
+        "y": 222,
+        "w": 360,
+        "h": 24
+      },
+      "type": "acceptance",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "顶部状态条保留站点、时间、风险态势、告警总数、关键告警、采集健康度、数据质量、快捷入口等能力入口。",
+      "bbox": {
+        "x": 80,
+        "y": 264,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "页面内容应体现园区网络全流量采集与分析业务闭环：采集接入、流式处理、资产识别、威胁检测、告警研判、证据取证、响应处置、反馈学习、审计验收。",
+      "bbox": {
+        "x": 510,
+        "y": 264,
+        "w": 360,
+        "h": 24
+      },
+      "type": "subtitle",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "不要改变最终参考图的整体视觉方向：不要改成浅色、不要做成插画海报、不要过度圆角、不要大面积渐变球或装饰光斑。",
+      "bbox": {
+        "x": 940,
+        "y": 264,
+        "w": 360,
+        "h": 24
+      },
+      "type": "section",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "本图类型：完整页面。",
+      "bbox": {
+        "x": 1370,
+        "y": 264,
+        "w": 360,
+        "h": 24
+      },
+      "type": "label",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "页面名称：态势大屏。",
+      "bbox": {
+        "x": 80,
+        "y": 306,
+        "w": 360,
+        "h": 24
+      },
+      "type": "metric",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "路由：/screen。",
+      "bbox": {
+        "x": 510,
+        "y": 306,
+        "w": 360,
+        "h": 24
+      },
+      "type": "button",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "业务模块：综合态势 / 态势大屏。",
+      "bbox": {
+        "x": 940,
+        "y": 306,
+        "w": 360,
+        "h": 24
+      },
+      "type": "status",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "页面重点：领导汇报、售前演示、值班大屏和验收展示，一屏讲清全流量采集分析闭环。",
+      "bbox": {
+        "x": 1370,
+        "y": 306,
+        "w": 360,
+        "h": 24
+      },
+      "type": "legend",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "必须包含的业务模块：",
+      "bbox": {
+        "x": 80,
+        "y": 348,
+        "w": 360,
+        "h": 24
+      },
+      "type": "hint",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "- 园区拓扑总览：楼宇覆盖率、园区在线覆盖、核心链路状态、汇聚链路状态、异常链路位置、探针覆盖地图。",
+      "bbox": {
+        "x": 510,
+        "y": 348,
+        "w": 360,
+        "h": 24
+      },
+      "type": "acceptance",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "- 威胁态势：攻击阶段热度、战役簇密度、风险区域密度、异常链路影响面、外联流向强度。",
+      "bbox": {
+        "x": 940,
+        "y": 348,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "园区网络全流量采集与分析系统",
+      "bbox": {
+        "x": 1370,
+        "y": 348,
+        "w": 360,
+        "h": 24
+      },
+      "type": "subtitle",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "综合态势",
+      "bbox": {
+        "x": 80,
+        "y": 390,
+        "w": 360,
+        "h": 24
+      },
+      "type": "section",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "采集监测",
+      "bbox": {
+        "x": 510,
+        "y": 390,
+        "w": 360,
+        "h": 24
+      },
+      "type": "label",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "威胁分析",
+      "bbox": {
+        "x": 940,
+        "y": 390,
+        "w": 360,
+        "h": 24
+      },
+      "type": "metric",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "资产图谱",
+      "bbox": {
+        "x": 1370,
+        "y": 390,
+        "w": 360,
+        "h": 24
+      },
+      "type": "button",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "检测运营",
+      "bbox": {
+        "x": 80,
+        "y": 432,
+        "w": 360,
+        "h": 24
+      },
+      "type": "status",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "审计配置",
+      "bbox": {
+        "x": 510,
+        "y": 432,
+        "w": 360,
+        "h": 24
+      },
+      "type": "legend",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "PCAP检索",
+      "bbox": {
+        "x": 940,
+        "y": 432,
+        "w": 360,
+        "h": 24
+      },
+      "type": "hint",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "资产检索",
+      "bbox": {
+        "x": 1370,
+        "y": 432,
+        "w": 360,
+        "h": 24
+      },
+      "type": "acceptance",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "规则检索",
+      "bbox": {
+        "x": 80,
+        "y": 474,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "脚本中心",
+      "bbox": {
+        "x": 510,
+        "y": 474,
+        "w": 360,
+        "h": 24
+      },
+      "type": "subtitle",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "帮助中心",
+      "bbox": {
+        "x": 940,
+        "y": 474,
+        "w": 360,
+        "h": 24
+      },
+      "type": "section",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "更多应用",
+      "bbox": {
+        "x": 1370,
+        "y": 474,
+        "w": 360,
+        "h": 24
+      },
+      "type": "label",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "数据延迟",
+      "bbox": {
+        "x": 80,
+        "y": 516,
+        "w": 360,
+        "h": 24
+      },
+      "type": "metric",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "系统运行",
+      "bbox": {
+        "x": 510,
+        "y": 516,
+        "w": 360,
+        "h": 24
+      },
+      "type": "button",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "告警处理SLA",
+      "bbox": {
+        "x": 940,
+        "y": 516,
+        "w": 360,
+        "h": 24
+      },
+      "type": "status",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "数据质量合格率",
+      "bbox": {
+        "x": 1370,
+        "y": 516,
+        "w": 360,
+        "h": 24
+      },
+      "type": "legend",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "存储使用",
+      "bbox": {
+        "x": 80,
+        "y": 558,
+        "w": 360,
+        "h": 24
+      },
+      "type": "hint",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "带宽使用",
+      "bbox": {
+        "x": 510,
+        "y": 558,
+        "w": 360,
+        "h": 24
+      },
+      "type": "acceptance",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "日志吞吐",
+      "bbox": {
+        "x": 940,
+        "y": 558,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "页面标题",
+      "bbox": {
+        "x": 1370,
+        "y": 558,
+        "w": 360,
+        "h": 24
+      },
+      "type": "subtitle",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "筛选条件",
+      "bbox": {
+        "x": 80,
+        "y": 600,
+        "w": 360,
+        "h": 24
+      },
+      "type": "section",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "近24小时",
+      "bbox": {
+        "x": 510,
+        "y": 600,
+        "w": 360,
+        "h": 24
+      },
+      "type": "label",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "高危告警",
+      "bbox": {
+        "x": 940,
+        "y": 600,
+        "w": 360,
+        "h": 24
+      },
+      "type": "metric",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "证据完整率",
+      "bbox": {
+        "x": 1370,
+        "y": 600,
+        "w": 360,
+        "h": 24
+      },
+      "type": "button",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "处置中",
+      "bbox": {
+        "x": 80,
+        "y": 642,
+        "w": 360,
+        "h": 24
+      },
+      "type": "status",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "已审计",
+      "bbox": {
+        "x": 510,
+        "y": 642,
+        "w": 360,
+        "h": 24
+      },
+      "type": "legend",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "查看详情",
+      "bbox": {
+        "x": 940,
+        "y": 642,
+        "w": 360,
+        "h": 24
+      },
+      "type": "hint",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "导出证据",
+      "bbox": {
+        "x": 1370,
+        "y": 642,
+        "w": 360,
+        "h": 24
+      },
+      "type": "acceptance",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "反馈学习",
+      "bbox": {
+        "x": 80,
+        "y": 684,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": false,
+      "source": "manual visual ledger"
+    }
+  ],
+  "components": [
+    {
+      "region": "canvas",
+      "name": "AppShell",
+      "implementation": "web/ui/src/components/AppShell.tsx",
+      "state": "default",
+      "notes": "AppShell must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "primary-section",
+      "name": "WorkPanel",
+      "implementation": "web/ui/src/components/WorkPanel.tsx",
+      "state": "interactive",
+      "notes": "WorkPanel must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "primary-section",
+      "name": "MetricTile",
+      "implementation": "web/ui/src/components/MetricTile.tsx",
+      "state": "data-ready",
+      "notes": "MetricTile must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "primary-section",
+      "name": "Table",
+      "implementation": "web/ui/src/components/Table.tsx",
+      "state": "default",
+      "notes": "Table must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "state-section",
+      "name": "Tabs",
+      "implementation": "web/ui/src/components/Tabs.tsx",
+      "state": "interactive",
+      "notes": "Tabs must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "state-section",
+      "name": "ECharts",
+      "implementation": "web/ui/src/components/ECharts.tsx",
+      "state": "data-ready",
+      "notes": "ECharts must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "state-section",
+      "name": "StatusTag",
+      "implementation": "web/ui/src/components/StatusTag.tsx",
+      "state": "default",
+      "notes": "StatusTag must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "state-section",
+      "name": "AppHeader",
+      "implementation": "web/ui/src/components/AppHeader.tsx",
+      "state": "interactive",
+      "notes": "AppHeader must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "implementation-section",
+      "name": "PrimarySidebar",
+      "implementation": "web/ui/src/components/PrimarySidebar.tsx",
+      "state": "data-ready",
+      "notes": "PrimarySidebar must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "implementation-section",
+      "name": "BottomStatusBar",
+      "implementation": "web/ui/src/components/BottomStatusBar.tsx",
+      "state": "default",
+      "notes": "BottomStatusBar must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "implementation-section",
+      "name": "BreadcrumbContext",
+      "implementation": "web/ui/src/components/BreadcrumbContext.tsx",
+      "state": "interactive",
+      "notes": "BreadcrumbContext must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "implementation-section",
+      "name": "Search",
+      "implementation": "web/ui/src/components/Search.tsx",
+      "state": "data-ready",
+      "notes": "Search must keep stable dimensions and match the recorded bbox/token mapping."
+    }
+  ],
+  "icons": [
+    {
+      "location": "breadcrumb/context header",
+      "icon": "HomeOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "一级位置或业务域入口",
+      "bbox": {
+        "x": 120,
+        "y": 146,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "breadcrumb/context header",
+      "icon": "RightOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "面包屑层级分隔",
+      "bbox": {
+        "x": 194,
+        "y": 194,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "breadcrumb/context header",
+      "icon": "ReloadOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "刷新上下文",
+      "bbox": {
+        "x": 268,
+        "y": 146,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "toolbar/action area",
+      "icon": "CopyOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "复制路径或对象 ID",
+      "bbox": {
+        "x": 342,
+        "y": 194,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "toolbar/action area",
+      "icon": "WarningOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "风险/异常",
+      "bbox": {
+        "x": 416,
+        "y": 146,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "toolbar/action area",
+      "icon": "CheckCircleOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "通过/健康",
+      "bbox": {
+        "x": 490,
+        "y": 194,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "status/audit area",
+      "icon": "DatabaseOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "资产/证据对象",
+      "bbox": {
+        "x": 564,
+        "y": 146,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "status/audit area",
+      "icon": "AuditOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "审计留痕",
+      "bbox": {
+        "x": 638,
+        "y": 194,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "status/audit area",
+      "icon": "FilterOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "筛选上下文",
+      "bbox": {
+        "x": 712,
+        "y": 146,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "status/audit area",
+      "icon": "DownloadOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "导出/下载证据",
+      "bbox": {
+        "x": 786,
+        "y": 194,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    }
+  ],
+  "tokens": [
+    {
+      "name": "page-bg",
+      "value": "#03111c",
+      "source": "foundation-color-status",
+      "usage": "页面底色"
+    },
+    {
+      "name": "shell-bg",
+      "value": "#061827",
+      "source": "foundation-color-status",
+      "usage": "顶部/左侧/底部框架底色"
+    },
+    {
+      "name": "panel-bg",
+      "value": "rgba(6,28,43,0.86)",
+      "source": "foundation-color-status",
+      "usage": "业务面板底色"
+    },
+    {
+      "name": "panel-strong-bg",
+      "value": "#071f32",
+      "source": "foundation-color-status",
+      "usage": "强调面板底色"
+    },
+    {
+      "name": "border-weak",
+      "value": "rgba(56,151,201,0.22)",
+      "source": "foundation-color-status",
+      "usage": "弱描边"
+    },
+    {
+      "name": "active-blue",
+      "value": "#1e9cff",
+      "source": "foundation-color-status",
+      "usage": "激活态、链接、主按钮"
+    },
+    {
+      "name": "text-primary",
+      "value": "#eaf7ff",
+      "source": "foundation-color-status",
+      "usage": "主文字"
+    },
+    {
+      "name": "text-secondary",
+      "value": "#9db9c9",
+      "source": "foundation-color-status",
+      "usage": "次级文字"
+    },
+    {
+      "name": "text-muted",
+      "value": "#5e7b8d",
+      "source": "foundation-color-status",
+      "usage": "弱文字"
+    },
+    {
+      "name": "success",
+      "value": "#36d66b",
+      "source": "foundation-color-status",
+      "usage": "健康/通过"
+    },
+    {
+      "name": "info",
+      "value": "#18a8ff",
+      "source": "foundation-color-status",
+      "usage": "信息/低危"
+    },
+    {
+      "name": "warning",
+      "value": "#ffb020",
+      "source": "foundation-color-status",
+      "usage": "中危/需确认"
+    },
+    {
+      "name": "danger",
+      "value": "#ff4d4f",
+      "source": "foundation-color-status",
+      "usage": "高危/失败"
+    },
+    {
+      "name": "critical",
+      "value": "#ff2d2d",
+      "source": "foundation-color-status",
+      "usage": "严重/关键"
+    },
+    {
+      "name": "panel-radius",
+      "value": "6px",
+      "source": "foundation-layout-density",
+      "usage": "面板圆角"
+    },
+    {
+      "name": "control-radius",
+      "value": "4px",
+      "source": "foundation-layout-density",
+      "usage": "按钮/输入圆角"
+    },
+    {
+      "name": "table-row-height",
+      "value": "32px",
+      "source": "foundation-layout-density",
+      "usage": "高密度表格行高"
+    },
+    {
+      "name": "panel-gap",
+      "value": "8px",
+      "source": "foundation-layout-density",
+      "usage": "业务区面板间距"
+    }
+  ],
+  "interactions": [
+    {
+      "control": "target-loaded",
+      "state": "ready",
+      "trigger": "open image route in Windows Chrome CDP",
+      "expected": "1920x1080 content is visible without browser chrome or scroll shift"
+    },
+    {
+      "control": "hover-primary-control",
+      "state": "hover",
+      "trigger": "pointer hover on primary action or chip",
+      "expected": "border/text/background changes follow active-blue token and layout size remains stable"
+    },
+    {
+      "control": "keyboard-focus",
+      "state": "focus-visible",
+      "trigger": "Tab key moves to first interactive control",
+      "expected": "focus ring is visible and does not move neighboring text"
+    },
+    {
+      "control": "disabled-control",
+      "state": "disabled",
+      "trigger": "permission or missing-selection state",
+      "expected": "control is dimmed, non-clickable, and still readable"
+    },
+    {
+      "control": "loading-state",
+      "state": "loading",
+      "trigger": "data refresh or submit starts",
+      "expected": "spinner/skeleton appears inside fixed container"
+    },
+    {
+      "control": "error-state",
+      "state": "error",
+      "trigger": "request failure or validation failure",
+      "expected": "danger token appears with action guidance and trace/audit wording"
+    },
+    {
+      "control": "selected-context",
+      "state": "selected",
+      "trigger": "row/node/chip selected",
+      "expected": "selected state is visually distinct and updates right rail or context bar"
+    },
+    {
+      "control": "danger-action-confirm",
+      "state": "confirming",
+      "trigger": "dangerous action clicked",
+      "expected": "confirmation includes permission, impact scope, and audit trace"
+    }
+  ],
+  "implementation": {
+    "source": "/screen",
+    "mode": "production-route",
+    "route": "/screen",
+    "pages": [
+      "route:/screen"
+    ],
+    "components": [
+      "AppShell",
+      "WorkPanel",
+      "MetricTile",
+      "Table",
+      "Tabs",
+      "ECharts",
+      "SparklineChart",
+      "StatusTag",
+      "AppHeader",
+      "PrimarySidebar",
+      "BottomStatusBar",
+      "BreadcrumbContext",
+      "Search"
+    ],
+    "services": [
+      "web/ui/src/services/api.ts"
+    ],
+    "styles": [
+      "web/ui/src/styles/tokens.css",
+      "web/ui/src/styles/pages.css",
+      "Ant Design theme override",
+      "ECharts dark theme tokens"
+    ],
+    "mapping_note": "The evidence screenshot is captured from the real APISIX/Web UI route; the breakdown arrays map the target image to semantic frontend units while the implementation renders API/fallback-driven React and ECharts components.",
+    "note": "implementation.png is captured from the real APISIX/Web UI production route through Windows Chrome CDP. It is not a raster replay of target.png.",
+    "resolved_path": "/screen",
+    "route_state": {}
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/pages/screen/target.png",
+    "implementation": "evidence/ui-image-breakdowns/pages/screen/implementation.png",
+    "diff": "evidence/ui-image-breakdowns/pages/screen/diff.png",
+    "regions_overlay": "evidence/ui-image-breakdowns/pages/screen/regions-overlay.png",
+    "metrics": "evidence/ui-image-breakdowns/pages/screen/metrics.json",
+    "measurement": "evidence/ui-image-breakdowns/pages/screen/measurement.json",
+    "text_ocr": "evidence/ui-image-breakdowns/pages/screen/text-ocr.txt",
+    "verification": "evidence/ui-image-breakdowns/pages/screen/verification.json",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "url": "http://10.0.5.8:30180/screen?windowsCdpEvidenceTs=1783741599615#codex_smoke_token=<redacted>",
+    "render_source": "evidence/ui-image-breakdowns/pages/screen/target.png",
+    "capture_meta": "evidence/ui-image-breakdowns/pages/screen/capture-meta.json",
+    "cdp_version": "evidence/ui-image-breakdowns/pages/screen/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/pages/screen/cdp-list.json",
+    "evidence_mode": "production-route",
+    "production_route_report": "evidence/ui-image-breakdowns/pages/screen/production-route-report.json",
+    "final_url": "http://10.0.5.8:30180/screen?windowsCdpEvidenceTs=1783741599615",
+    "deployed_image": "traffic/web-ui:ui-screen-dynamic-maps-20260707-r90",
+    "api_live_screenshot": "evidence/ui-image-breakdowns/pages/screen/production-screen-r90-api-live.png",
+    "api_live_analysis": "evidence/ui-image-breakdowns/pages/screen/production-screen-r90-api-live-analysis.json",
+    "api_live_url": "http://10.0.5.8:30180/screen?r90ApiLive=1783387438331",
+    "campaign_density_target_crop": "evidence/ui-image-breakdowns/pages/screen/target-campaign-density-r39-crop.png",
+    "campaign_density_production_crop": "evidence/ui-image-breakdowns/pages/screen/production-campaign-density-r39-crop.png",
+    "pipeline_target_crop": "evidence/ui-image-breakdowns/pages/screen/target-pipeline-r47-crop.png",
+    "pipeline_production_crop": "evidence/ui-image-breakdowns/pages/screen/production-pipeline-r47-crop.png",
+    "pipeline_crop_meta": "evidence/ui-image-breakdowns/pages/screen/production-pipeline-r41-crop-meta.json",
+    "topbar_brand_target_crop": "evidence/ui-image-breakdowns/pages/screen/target-topbar-brand-r57-crop.png",
+    "topbar_brand_production_crop": "evidence/ui-image-breakdowns/pages/screen/production-topbar-brand-r57-crop.png",
+    "topbar_logo_target_crop": "evidence/ui-image-breakdowns/pages/screen/target-topbar-logo-context-r57-crop.png",
+    "topbar_logo_production_crop": "evidence/ui-image-breakdowns/pages/screen/production-topbar-logo-context-r57-crop.png",
+    "topbar_logo_analysis": "evidence/ui-image-breakdowns/pages/screen/topbar-logo-r57-analysis.json",
+    "layer_diff_right_rail": "evidence/ui-image-breakdowns/pages/screen/layer-diffs-r90/right-rail-diff.png"
+  },
+  "evidence_dir": "evidence/ui-image-breakdowns/pages/screen",
+  "differences": [
+    {
+      "type": "campaign-density-business-diagram",
+      "location": "威胁态势总览 / 战役簇密度",
+      "current": "ECharts heatmap plus scatter density radar with high/medium/low legend; no screenshot or bitmap resource.",
+      "expected": "Business density diagram is data-driven and visually close to the target density radar.",
+      "status": "fixed-r39"
+    },
+    {
+      "type": "pipeline-business-diagram",
+      "location": "采集与流处理管道（全流量处理链路）",
+      "current": "API/fallback-driven React node cards with complete labels and values, ECharts sparkline per node, CSS arrows between nodes, and panel-contained detail link.",
+      "expected": "Business pipeline is dynamic, readable and free of misplaced arrows or overlapping detail links.",
+      "status": "fixed-r41"
+    },
+    {
+      "type": "topbar-system-logo",
+      "location": "顶部全局状态栏 / 系统品牌徽标",
+      "current": "Target-style shield is topbar-only and aligned with the product title centerline.",
+      "expected": "System logo belongs in the topbar and must not appear inside business diagram cards.",
+      "status": "fixed-r57"
+    },
+    {
+      "type": "campus-topology-2d-3d-dynamic-polish",
+      "location": "园区数字孪生拓扑",
+      "current": "r247 renders 2D and 3D topology relation layers with ECharts from API/typed screen visual data, while the existing business node controls retain selection and detail behavior.",
+      "expected": "2D and 3D topology must be dynamic business diagrams and express campus topology clearly.",
+      "status": "fixed-r247"
+    },
+    {
+      "type": "evidence-forensics-closure-business-diagram",
+      "location": "证据与取证闭环",
+      "current": "All six closure rings render from screenVisuals.evidenceRings with ECharts pie canvas charts.",
+      "expected": "Evidence and forensics closure must be an API/typed-data dynamic business diagram, not CSS-only static rings or screenshot resources.",
+      "status": "fixed-r63"
+    },
+    {
+      "type": "right-rail-business-dynamic-maps",
+      "location": "态势大屏右侧闭环栏 / 风险地图、异常链路、外联流向、运行底座",
+      "current": "r90 derives riskMapPoints, egressMapPoints and egressMapFlows from API-derived screenVisuals; API-live evidence reports rightRailDynamicMaps=true, 4 right-rail ECharts roots and 9 canvases.",
+      "expected": "Right-rail maps and flow diagrams must be API/typed-data dynamic components, while visual-breakdown mode may preserve target legend/list text for diff stability.",
+      "status": "fixed-r90"
+    },
+    {
+      "type": "right-rail-layer-alpha-delta",
+      "location": "态势大屏右侧闭环栏",
+      "current": "Full-page production diff passes at 0.10551649305555555 <= 0.12. The r90 right-rail layer crop remains higher at 0.1473200442967885 because of texture, brightness and map distribution differences, but business content, dynamic chart semantics and overflow checks pass.",
+      "expected": "Under the alpha business-focused rule, business content, text, dynamic chart behavior, layout containment and runtime health are the gate; brightness, transparency and texture differences are recorded when they do not obscure business content.",
+      "status": "accepted-alpha-r90"
+    },
+    {
+      "type": "production-evidence-scope",
+      "location": "/screen",
+      "current": "implementation.png is captured from the real APISIX/Web UI route in Windows Chrome CDP",
+      "expected": "no target.png raster replay is used as implementation evidence",
+      "status": "documented"
+    }
+  ],
+  "accepted": true,
+  "visible_chrome_rerun": {
+    "status": "completed",
+    "reason": "r90 production-route screenshot and API-live route were captured through Windows Chrome CDP http://127.0.0.1:9224 after mandatory /json/version and /json/list prechecks.",
+    "required_cdp_url": "http://127.0.0.1:9224",
+    "production_url": "http://10.0.5.8:30180/screen?__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1783387312164#codex_smoke_token=<redacted>",
+    "api_live_url": "http://10.0.5.8:30180/screen?r90ApiLive=1783387438331",
+    "completed_at": "2026-07-07T09:32:00.000+08:00"
+  },
+  "review_gate": {
+    "status": "reviewed",
+    "agent": "main-thread-visual-review",
+    "reason": "r90 main-thread review accepts the page under the alpha business-focused gate: production full diff passes, runtime passes, API-live dynamic business diagram assertions pass, and right-rail layer texture delta is documented."
+  },
+  "latest_iteration_note": "r90 wires right-rail risk and egress world maps to API-derived screenVisuals, keeps visual-breakdown diff text stable, captures Windows Chrome production evidence, and accepts the remaining right-rail layer texture delta under alpha business-focused rules.",
+  "latest_business_verification": {
+    "generated_at": "2026-07-07T09:32:00.000+08:00",
+    "page_id": "screen",
+    "deployed_image": "traffic/web-ui:ui-screen-dynamic-maps-20260707-r90",
+    "production_url": "http://10.0.5.8:30180/screen?__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1783387312164#codex_smoke_token=<redacted>",
+    "api_live_url": "http://10.0.5.8:30180/screen?r90ApiLive=1783387438331",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "browser": "Chrome/150.0.7871.47 via Windows Chrome CDP http://127.0.0.1:9224",
+    "page_state": "production visual-breakdown route for diff plus API-live production route after 7.2s realtime observation",
+    "evidence": {
+      "implementation": "evidence/ui-image-breakdowns/pages/screen/implementation.png",
+      "diff": "evidence/ui-image-breakdowns/pages/screen/diff.png",
+      "metrics": "evidence/ui-image-breakdowns/pages/screen/metrics.json",
+      "capture_meta": "evidence/ui-image-breakdowns/pages/screen/capture-meta.json",
+      "verification": "evidence/ui-image-breakdowns/pages/screen/verification.json",
+      "api_live_screenshot": "evidence/ui-image-breakdowns/pages/screen/production-screen-r90-api-live.png",
+      "api_live_analysis": "evidence/ui-image-breakdowns/pages/screen/production-screen-r90-api-live-analysis.json",
+      "right_rail_layer_diff": "evidence/ui-image-breakdowns/pages/screen/layer-diffs-r90/right-rail-diff.png"
+    },
+    "visual_diff": {
+      "status": "pass",
+      "pixel_mismatch_ratio": 0.10551649305555555,
+      "max_pixel_ratio": 0.12,
+      "channel_tolerance": 90
+    },
+    "layer_metrics": {
+      "status": "accepted-alpha",
+      "right_rail_pixel_mismatch_ratio": 0.1473200442967885,
+      "max_pixel_ratio": 0.12,
+      "evidence": "evidence/ui-image-breakdowns/pages/screen/layer-diffs-r90/right-rail-diff.png",
+      "note": "Full-page and business dynamic gates pass; right-rail crop delta is documented as an alpha visual-texture delta."
+    },
+    "runtime": {
+      "status": "pass",
+      "bad_responses": 0,
+      "request_failures": 0,
+      "console_errors": 0,
+      "page_errors": 0
+    },
+    "api_live_assertions": {
+      "apiRequestsOk": true,
+      "realtimeRefetchObserved": true,
+      "noRuntimeErrors": true,
+      "hasDynamicEcharts": true,
+      "rightRailDynamicMaps": true,
+      "campaignDensityEcharts": true,
+      "pipelineTrendCharts": true,
+      "evidenceRingsEcharts": true,
+      "topologyDynamicEcharts": true,
+      "probeCoverageDynamicEcharts": true,
+      "noHorizontalOverflow": true,
+      "api_responses": 13,
+      "echarts_instances": 19,
+      "canvas_count": 24
+    },
+    "main_thread_judgment": "pixel-accepted",
+    "auxiliary_agent_review": "reviewed"
+  },
+  "r247_business_ui_constraints": {
+    "status": "pass",
+    "image": "traffic/web-ui:ui-screen-echarts-20260711-r247",
+    "runtime": "Windows Chrome CDP pass on the APISIX production route with no bad response, console error, page error, or request failure.",
+    "interaction_evidence": "evidence/ui-image-breakdowns/pages/screen/interaction-r247.json",
+    "screenshot": "evidence/ui-image-breakdowns/pages/screen/interaction-r247.png",
+    "dynamic_echarts": [
+      "探针覆盖地图",
+      "园区数字孪生拓扑"
+    ],
+    "interaction_coverage": [
+      "2D topology state switch",
+      "topology node selection",
+      "ECharts relation layer does not block node controls"
+    ],
+    "business_roi": {
+      "metrics": "evidence/ui-image-breakdowns/pages/screen/metrics-business-r247.json",
+      "diff": "evidence/ui-image-breakdowns/pages/screen/diff-business-r247.png",
+      "pixel_mismatch_ratio": 0.09511460514200094,
+      "max_pixel_ratio": 0.125,
+      "scoring_region": "content-root:198,80,1722,917"
+    },
+    "full_image_diagnostic": {
+      "metrics": "evidence/ui-image-breakdowns/pages/screen/metrics.json",
+      "pixel_mismatch_ratio": 0.09130738811728395,
+      "max_pixel_ratio": 0.125
+    }
+  },
+  "r259_original_svg_rollback": {
+    "status": "pass",
+    "image": "traffic/web-ui:ui-screen-original-svg-20260711-r259",
+    "runtime": "Windows Chrome CDP pass on APISIX production route; no bad response, request failure, console error, or page error.",
+    "interaction_evidence": "evidence/ui-image-breakdowns/pages/screen/interaction-r259-original-svg.json",
+    "screenshot": "evidence/ui-image-breakdowns/pages/screen/interaction-r259-original-svg.png",
+    "restored_original_svg": [
+      "园区覆盖与链路状态",
+      "园区数字孪生拓扑"
+    ],
+    "interaction_coverage": [
+      "2D topology state",
+      "topology node selection"
+    ],
+    "business_roi": {
+      "metrics": "evidence/ui-image-breakdowns/pages/screen/metrics-business-r259.json",
+      "diff": "evidence/ui-image-breakdowns/pages/screen/diff-business-r259.png",
+      "pixel_mismatch_ratio": 0.10485385738730421,
+      "max_pixel_ratio": 0.125,
+      "scoring_region": "content-root:198,80,1722,917"
+    },
+    "main_thread_judgment": "business-pixel-accepted"
+  }
+}

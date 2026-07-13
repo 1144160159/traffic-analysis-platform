@@ -1,0 +1,16 @@
+Generate a 3840x2160 PNG static 4K background asset for traffic-analysis-platform.
+
+Use case: productivity-visual.
+Asset type: audit trail and compliance trace background.
+
+Scene:
+- A dark immutable audit trail showing action events, user-operation traces, hash-linked log blocks, compliance evidence, timestamp-like glyphs, and tamper-evident chain structure.
+- Show search and review paths as abstract light traces, not as a real log table.
+
+Style:
+- Enterprise audit and compliance, deep navy/black, cyan log chain, blue evidence blocks, green verified markers, amber review markers, rare red anomaly.
+- High-resolution, trustworthy, restrained, suitable behind audit log UI.
+
+Constraints:
+- No readable usernames, actions, timestamps, IP addresses, ticket IDs, credentials, logos, people, browser chrome, table rows, or full UI screenshot.
+

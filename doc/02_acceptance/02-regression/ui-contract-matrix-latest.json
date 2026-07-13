@@ -1,0 +1,700 @@
+{
+  "generatedAt": "2026-07-01T15:40:06.633Z",
+  "summary": {
+    "designMenuRoutes": 24,
+    "navGroups": 6,
+    "navRoutes": 24,
+    "legacyTopicRoutes": 3,
+    "detailRoutes": 2,
+    "routePageMapEntries": 28,
+    "businessFlows": 7
+  },
+  "groups": [
+    {
+      "id": "overview",
+      "title": "综合态势",
+      "children": [
+        {
+          "domain": "overview",
+          "id": "dashboard",
+          "title": "仪表盘",
+          "path": "/dashboard"
+        },
+        {
+          "domain": "overview",
+          "id": "screen",
+          "title": "态势大屏",
+          "path": "/screen"
+        },
+        {
+          "domain": "overview",
+          "id": "topics",
+          "title": "专题面板",
+          "path": "/topics"
+        }
+      ]
+    },
+    {
+      "id": "collection-monitoring",
+      "title": "采集监测",
+      "children": [
+        {
+          "domain": "collection-monitoring",
+          "id": "probes",
+          "title": "探针管理",
+          "path": "/probes"
+        },
+        {
+          "domain": "collection-monitoring",
+          "id": "data-quality",
+          "title": "数据质量",
+          "path": "/data-quality"
+        }
+      ]
+    },
+    {
+      "id": "threat-analysis",
+      "title": "威胁分析",
+      "children": [
+        {
+          "domain": "threat-analysis",
+          "id": "alerts",
+          "title": "告警中心",
+          "path": "/alerts"
+        },
+        {
+          "domain": "threat-analysis",
+          "id": "campaigns",
+          "title": "战役列表",
+          "path": "/campaigns"
+        },
+        {
+          "domain": "threat-analysis",
+          "id": "attack-chains",
+          "title": "攻击链分析",
+          "path": "/attack-chains"
+        },
+        {
+          "domain": "threat-analysis",
+          "id": "encrypted-traffic",
+          "title": "加密流量",
+          "path": "/encrypted-traffic"
+        },
+        {
+          "domain": "threat-analysis",
+          "id": "forensics",
+          "title": "取证分析",
+          "path": "/forensics"
+        }
+      ]
+    },
+    {
+      "id": "asset-graph",
+      "title": "资产图谱",
+      "children": [
+        {
+          "domain": "asset-graph",
+          "id": "assets",
+          "title": "资产台账",
+          "path": "/assets"
+        },
+        {
+          "domain": "asset-graph",
+          "id": "graph",
+          "title": "实体图谱",
+          "path": "/graph"
+        },
+        {
+          "domain": "asset-graph",
+          "id": "fusion",
+          "title": "数据融合",
+          "path": "/fusion"
+        },
+        {
+          "domain": "asset-graph",
+          "id": "baselines",
+          "title": "行为基准",
+          "path": "/baselines"
+        }
+      ]
+    },
+    {
+      "id": "detection-ops",
+      "title": "检测运营",
+      "children": [
+        {
+          "domain": "detection-ops",
+          "id": "rules",
+          "title": "规则管理",
+          "path": "/rules"
+        },
+        {
+          "domain": "detection-ops",
+          "id": "deployments",
+          "title": "部署管理",
+          "path": "/deployments"
+        },
+        {
+          "domain": "detection-ops",
+          "id": "models",
+          "title": "模型管理",
+          "path": "/models"
+        },
+        {
+          "domain": "detection-ops",
+          "id": "mlops",
+          "title": "MLOps 编排",
+          "path": "/mlops"
+        },
+        {
+          "domain": "detection-ops",
+          "id": "playbooks",
+          "title": "SOAR 剧本",
+          "path": "/playbooks"
+        },
+        {
+          "domain": "detection-ops",
+          "id": "whitelist",
+          "title": "白名单",
+          "path": "/whitelist"
+        }
+      ]
+    },
+    {
+      "id": "audit-config",
+      "title": "审计配置",
+      "children": [
+        {
+          "domain": "audit-config",
+          "id": "compliance",
+          "title": "合规审计",
+          "path": "/compliance"
+        },
+        {
+          "domain": "audit-config",
+          "id": "audit-log",
+          "title": "审计日志",
+          "path": "/audit-log"
+        },
+        {
+          "domain": "audit-config",
+          "id": "notifications",
+          "title": "通知配置",
+          "path": "/notifications"
+        },
+        {
+          "domain": "audit-config",
+          "id": "settings",
+          "title": "系统设置",
+          "path": "/settings"
+        }
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "name": "routeManifest top-level groups match design order",
+      "severity": "blocker",
+      "passed": true,
+      "detail": {
+        "expected": [
+          [
+            "overview",
+            "综合态势"
+          ],
+          [
+            "collection-monitoring",
+            "采集监测"
+          ],
+          [
+            "threat-analysis",
+            "威胁分析"
+          ],
+          [
+            "asset-graph",
+            "资产图谱"
+          ],
+          [
+            "detection-ops",
+            "检测运营"
+          ],
+          [
+            "audit-config",
+            "审计配置"
+          ]
+        ],
+        "actual": [
+          [
+            "overview",
+            "综合态势"
+          ],
+          [
+            "collection-monitoring",
+            "采集监测"
+          ],
+          [
+            "threat-analysis",
+            "威胁分析"
+          ],
+          [
+            "asset-graph",
+            "资产图谱"
+          ],
+          [
+            "detection-ops",
+            "检测运营"
+          ],
+          [
+            "audit-config",
+            "审计配置"
+          ]
+        ]
+      },
+      "artifact": "web/ui/src/routes/routeManifest.tsx"
+    },
+    {
+      "name": "design menu table extracts 24 active second-level routes",
+      "severity": "blocker",
+      "passed": true,
+      "detail": {
+        "count": 24,
+        "routes": [
+          "/dashboard",
+          "/screen",
+          "/topics",
+          "/probes",
+          "/data-quality",
+          "/alerts",
+          "/campaigns",
+          "/attack-chains",
+          "/encrypted-traffic",
+          "/forensics",
+          "/assets",
+          "/graph",
+          "/fusion",
+          "/baselines",
+          "/rules",
+          "/deployments",
+          "/models",
+          "/mlops",
+          "/playbooks",
+          "/whitelist",
+          "/compliance",
+          "/audit-log",
+          "/notifications",
+          "/settings"
+        ]
+      },
+      "artifact": "doc/01_design/面向园区网络的全流量采集分析系统-左侧菜单信息架构.md"
+    },
+    {
+      "name": "routeManifest keeps all 24 menu routes in designed group and order",
+      "severity": "blocker",
+      "passed": true,
+      "detail": {
+        "expected": [
+          [
+            "综合态势",
+            "仪表盘",
+            "/dashboard"
+          ],
+          [
+            "综合态势",
+            "态势大屏",
+            "/screen"
+          ],
+          [
+            "综合态势",
+            "专题面板",
+            "/topics"
+          ],
+          [
+            "采集监测",
+            "探针管理",
+            "/probes"
+          ],
+          [
+            "采集监测",
+            "数据质量",
+            "/data-quality"
+          ],
+          [
+            "威胁分析",
+            "告警中心",
+            "/alerts"
+          ],
+          [
+            "威胁分析",
+            "战役列表",
+            "/campaigns"
+          ],
+          [
+            "威胁分析",
+            "攻击链分析",
+            "/attack-chains"
+          ],
+          [
+            "威胁分析",
+            "加密流量",
+            "/encrypted-traffic"
+          ],
+          [
+            "威胁分析",
+            "取证分析",
+            "/forensics"
+          ],
+          [
+            "资产图谱",
+            "资产台账",
+            "/assets"
+          ],
+          [
+            "资产图谱",
+            "实体图谱",
+            "/graph"
+          ],
+          [
+            "资产图谱",
+            "数据融合",
+            "/fusion"
+          ],
+          [
+            "资产图谱",
+            "行为基准",
+            "/baselines"
+          ],
+          [
+            "检测运营",
+            "规则管理",
+            "/rules"
+          ],
+          [
+            "检测运营",
+            "部署管理",
+            "/deployments"
+          ],
+          [
+            "检测运营",
+            "模型管理",
+            "/models"
+          ],
+          [
+            "检测运营",
+            "MLOps 编排",
+            "/mlops"
+          ],
+          [
+            "检测运营",
+            "SOAR 剧本",
+            "/playbooks"
+          ],
+          [
+            "检测运营",
+            "白名单",
+            "/whitelist"
+          ],
+          [
+            "审计配置",
+            "合规审计",
+            "/compliance"
+          ],
+          [
+            "审计配置",
+            "审计日志",
+            "/audit-log"
+          ],
+          [
+            "审计配置",
+            "通知配置",
+            "/notifications"
+          ],
+          [
+            "审计配置",
+            "系统设置",
+            "/settings"
+          ]
+        ],
+        "actual": [
+          [
+            "综合态势",
+            "仪表盘",
+            "/dashboard"
+          ],
+          [
+            "综合态势",
+            "态势大屏",
+            "/screen"
+          ],
+          [
+            "综合态势",
+            "专题面板",
+            "/topics"
+          ],
+          [
+            "采集监测",
+            "探针管理",
+            "/probes"
+          ],
+          [
+            "采集监测",
+            "数据质量",
+            "/data-quality"
+          ],
+          [
+            "威胁分析",
+            "告警中心",
+            "/alerts"
+          ],
+          [
+            "威胁分析",
+            "战役列表",
+            "/campaigns"
+          ],
+          [
+            "威胁分析",
+            "攻击链分析",
+            "/attack-chains"
+          ],
+          [
+            "威胁分析",
+            "加密流量",
+            "/encrypted-traffic"
+          ],
+          [
+            "威胁分析",
+            "取证分析",
+            "/forensics"
+          ],
+          [
+            "资产图谱",
+            "资产台账",
+            "/assets"
+          ],
+          [
+            "资产图谱",
+            "实体图谱",
+            "/graph"
+          ],
+          [
+            "资产图谱",
+            "数据融合",
+            "/fusion"
+          ],
+          [
+            "资产图谱",
+            "行为基准",
+            "/baselines"
+          ],
+          [
+            "检测运营",
+            "规则管理",
+            "/rules"
+          ],
+          [
+            "检测运营",
+            "部署管理",
+            "/deployments"
+          ],
+          [
+            "检测运营",
+            "模型管理",
+            "/models"
+          ],
+          [
+            "检测运营",
+            "MLOps 编排",
+            "/mlops"
+          ],
+          [
+            "检测运营",
+            "SOAR 剧本",
+            "/playbooks"
+          ],
+          [
+            "检测运营",
+            "白名单",
+            "/whitelist"
+          ],
+          [
+            "审计配置",
+            "合规审计",
+            "/compliance"
+          ],
+          [
+            "审计配置",
+            "审计日志",
+            "/audit-log"
+          ],
+          [
+            "审计配置",
+            "通知配置",
+            "/notifications"
+          ],
+          [
+            "审计配置",
+            "系统设置",
+            "/settings"
+          ]
+        ]
+      },
+      "artifact": "web/ui/src/routes/routeManifest.tsx"
+    },
+    {
+      "name": "legacy topic deep links are not left-nav items",
+      "severity": "blocker",
+      "passed": true,
+      "detail": {
+        "legacyExpected": [
+          "/topics/tunnel",
+          "/topics/exfil",
+          "/topics/apt"
+        ],
+        "navPaths": [
+          "/dashboard",
+          "/screen",
+          "/topics",
+          "/probes",
+          "/data-quality",
+          "/alerts",
+          "/campaigns",
+          "/attack-chains",
+          "/encrypted-traffic",
+          "/forensics",
+          "/assets",
+          "/graph",
+          "/fusion",
+          "/baselines",
+          "/rules",
+          "/deployments",
+          "/models",
+          "/mlops",
+          "/playbooks",
+          "/whitelist",
+          "/compliance",
+          "/audit-log",
+          "/notifications",
+          "/settings"
+        ]
+      },
+      "artifact": "web/ui/src/routes/routeManifest.tsx"
+    },
+    {
+      "name": "legacy topic deep links remain registered for redirect compatibility",
+      "severity": "blocker",
+      "passed": true,
+      "detail": {
+        "expected": [
+          "/topics/tunnel",
+          "/topics/exfil",
+          "/topics/apt"
+        ],
+        "actual": [
+          "/topics/tunnel",
+          "/topics/exfil",
+          "/topics/apt"
+        ]
+      },
+      "artifact": "web/ui/src/routes/routeManifest.tsx"
+    },
+    {
+      "name": "detail routes are registered outside the left navigation",
+      "severity": "blocker",
+      "passed": true,
+      "detail": {
+        "expected": [
+          "/alerts/:alertId",
+          "/campaigns/:campaignId"
+        ],
+        "actual": [
+          "/alerts/:alertId",
+          "/campaigns/:campaignId"
+        ]
+      },
+      "artifact": "web/ui/src/routes/routeManifest.tsx"
+    },
+    {
+      "name": "UI suite route-page-map covers every left-nav route",
+      "severity": "blocker",
+      "passed": true,
+      "detail": {
+        "missing": [],
+        "routeMapCount": 28
+      },
+      "artifact": "doc/04_assets/ui_suite_gpt_v1/specs/route-page-map.json"
+    },
+    {
+      "name": "UI suite page contracts exist for route-page-map entries",
+      "severity": "blocker",
+      "passed": true,
+      "detail": {
+        "missing": []
+      },
+      "artifact": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts"
+    },
+    {
+      "name": "business-flow acceptance covers login, all menu routes, and detail routes",
+      "severity": "blocker",
+      "passed": true,
+      "detail": {
+        "missing": [],
+        "flowCount": 7
+      },
+      "artifact": "doc/04_assets/ui_suite_gpt_v1/specs/business-flow-acceptance.json"
+    },
+    {
+      "name": "frontend task matrix keeps expected page and overlay contract counts",
+      "severity": "blocker",
+      "passed": true,
+      "detail": {
+        "manifestItems": 181,
+        "pages": 28,
+        "overlays": 70,
+        "components": 48,
+        "states": 16,
+        "responsive": 12,
+        "methods": 5
+      },
+      "artifact": "doc/04_assets/ui_suite_gpt_v1/specs/frontend-task-matrix.json"
+    },
+    {
+      "name": "frontend code gap has no route gaps or direct fetch violations",
+      "severity": "blocker",
+      "passed": true,
+      "detail": {
+        "routeGaps": 0,
+        "directFetchViolations": 0
+      },
+      "artifact": "doc/04_assets/ui_suite_gpt_v1/specs/frontend-code-gap.json"
+    },
+    {
+      "name": "frontend code gap covers all planned API endpoints",
+      "severity": "blocker",
+      "passed": true,
+      "detail": {
+        "covered": 46,
+        "total": 46
+      },
+      "artifact": "doc/04_assets/ui_suite_gpt_v1/specs/frontend-code-gap.json"
+    },
+    {
+      "name": "frontend code gap keeps AppShell token deltas at zero",
+      "severity": "warn",
+      "passed": true,
+      "detail": {
+        "appShellTokenGaps": 0
+      },
+      "artifact": "doc/04_assets/ui_suite_gpt_v1/specs/frontend-code-gap.json"
+    },
+    {
+      "name": "frontend code gap has all overlay contracts statically traceable",
+      "severity": "warn",
+      "passed": true,
+      "detail": {
+        "overlaysConfirmed": 70,
+        "overlaysPartial": 0,
+        "overlaysMissing": 0
+      },
+      "artifact": "doc/04_assets/ui_suite_gpt_v1/specs/frontend-code-gap.json"
+    }
+  ]
+}

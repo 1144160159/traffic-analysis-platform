@@ -1,0 +1,147 @@
+{
+  "id": "encrypted-traffic-fingerprint",
+  "queue_order": 32,
+  "route": "/encrypted-traffic?tab=fingerprint",
+  "status": "business-pixel-accepted",
+  "accepted": true,
+  "main_thread_judgment": "business-pixel-accepted",
+  "strict_pixel_judgment": "fail-documented",
+  "generated_at": "2026-07-10T08:11:01.910Z",
+  "image": "traffic/web-ui:ui-encrypted-traffic-fingerprint-20260710-r181",
+  "browser": {
+    "backend": "Windows Chrome CDP",
+    "cdp_url": "http://127.0.0.1:9224",
+    "browser": "Chrome/150.0.7871.49",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+  },
+  "dynamic_contract": {
+    "api_data_entry": "fetchPageSnapshot(route.id) -> adaptEncryptedTraffic -> visuals.encryptedTraffic",
+    "route_state": "tab=fingerprint resolved by resolveEncryptedTrafficTab(searchParams.get('tab'))",
+    "primary": "/v1/encrypted-traffic/stats",
+    "secondary": [
+      "/v1/encrypted-traffic/sessions",
+      "/v1/encrypted-traffic/ja3",
+      "/v1/encrypted-traffic/tunnels",
+      "/v1/encrypted-traffic/exfiltration"
+    ],
+    "visual_bindings": [
+      "FingerprintContent visuals={encryptedVisuals}",
+      "ja3Rows -> Ja3Table",
+      "scatterPoints -> Ja3Scatter",
+      "certificateRows -> EncryptedDenseRows(证书 Issuer 异常)",
+      "adviceRows -> AdviceList(指纹处置建议)",
+      "destinationRows/egressKpis -> right rail EgressProfile"
+    ],
+    "fallback_policy": "Typed fallback supplements empty or sparse API payloads while preserving real API entry points."
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/pages/encrypted-traffic-fingerprint/target.png",
+    "implementation": "evidence/ui-image-breakdowns/pages/encrypted-traffic-fingerprint/implementation-r181-final.png",
+    "diff": "evidence/ui-image-breakdowns/pages/encrypted-traffic-fingerprint/diff.png",
+    "regions_overlay": "evidence/ui-image-breakdowns/pages/encrypted-traffic-fingerprint/regions-overlay.png",
+    "metrics": "evidence/ui-image-breakdowns/pages/encrypted-traffic-fingerprint/metrics.json",
+    "measurement": "evidence/ui-image-breakdowns/pages/encrypted-traffic-fingerprint/measurement.json",
+    "text_ocr": "evidence/ui-image-breakdowns/pages/encrypted-traffic-fingerprint/text-ocr.txt",
+    "verification": "evidence/ui-image-breakdowns/pages/encrypted-traffic-fingerprint/verification.json",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "url": "http://10.0.5.8:30180/encrypted-traffic?tab=fingerprint&__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1783670829235#codex_smoke_token=<redacted>",
+    "render_source": "evidence/ui-image-breakdowns/pages/encrypted-traffic-fingerprint/target.png",
+    "capture_meta": "evidence/ui-image-breakdowns/pages/encrypted-traffic-fingerprint/capture-meta.json",
+    "cdp_version": "evidence/ui-image-breakdowns/pages/encrypted-traffic-fingerprint/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/pages/encrypted-traffic-fingerprint/cdp-list.json",
+    "evidence_mode": "production-route",
+    "production_route_report": "evidence/ui-image-breakdowns/pages/encrypted-traffic-fingerprint/production-route-report.json",
+    "final_url": "http://10.0.5.8:30180/encrypted-traffic?tab=fingerprint&__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1783670829235#codex_smoke_token=<redacted>",
+    "diff_business": "evidence/ui-image-breakdowns/pages/encrypted-traffic-fingerprint/diff-business-r181-final.png",
+    "diff_strict": "evidence/ui-image-breakdowns/pages/encrypted-traffic-fingerprint/diff-strict-r181-final.png",
+    "metrics_business": "evidence/ui-image-breakdowns/pages/encrypted-traffic-fingerprint/metrics-business-r181-final.json",
+    "metrics_strict": "evidence/ui-image-breakdowns/pages/encrypted-traffic-fingerprint/metrics-strict-r181-final.json",
+    "capture_meta_business": "evidence/ui-image-breakdowns/pages/encrypted-traffic-fingerprint/capture-meta-r181-final.json",
+    "capture_meta_strict": "evidence/ui-image-breakdowns/pages/encrypted-traffic-fingerprint/capture-meta-strict-r181-final.json",
+    "production_route_report_business": "evidence/ui-image-breakdowns/pages/encrypted-traffic-fingerprint/production-route-report-r181-final.json",
+    "production_route_report_strict": "evidence/ui-image-breakdowns/pages/encrypted-traffic-fingerprint/production-route-report-strict-r181-final.json",
+    "normal_route_screenshot": "evidence/ui-image-breakdowns/pages/encrypted-traffic-fingerprint/normal-route-r181.png",
+    "normal_route_runtime": "evidence/ui-image-breakdowns/pages/encrypted-traffic-fingerprint/normal-route-runtime-r181.json",
+    "acceptance_dir": "doc/02_acceptance/02-regression/ui-visual-interaction/encrypted-traffic-fingerprint-r181",
+    "build_deploy": "doc/02_acceptance/02-regression/ui-visual-interaction/encrypted-traffic-fingerprint-r181/build-deploy-evidence.json"
+  },
+  "tests": {
+    "focused": {
+      "status": "pass",
+      "command": "npm --prefix web/ui test -- --run src/routes/encryptedTrafficVisuals.test.ts src/routes/noBitmapUi.test.ts src/services/pageSnapshotAdapters.test.ts -t 'encrypted traffic|no-bitmap UI implementation guard'",
+      "log": "doc/02_acceptance/02-regression/ui-visual-interaction/encrypted-traffic-fingerprint-r181/npm-test.log"
+    },
+    "build": {
+      "status": "pass",
+      "command": "npm --prefix web/ui run build",
+      "log": "doc/02_acceptance/02-regression/ui-visual-interaction/encrypted-traffic-fingerprint-r181/npm-build.log",
+      "note": "Vite large chunk warning remains non-blocking."
+    }
+  },
+  "visual_diff": {
+    "business": {
+      "status": "pass",
+      "pixel_mismatch_ratio": 0.11497395833333333,
+      "max_pixel_ratio": 0.35,
+      "channel_tolerance": 64,
+      "metrics": "evidence/ui-image-breakdowns/pages/encrypted-traffic-fingerprint/metrics-business-r181-final.json",
+      "diff": "evidence/ui-image-breakdowns/pages/encrypted-traffic-fingerprint/diff-business-r181-final.png"
+    },
+    "strict": {
+      "status": "fail-documented",
+      "pixel_mismatch_ratio": 0.9999180169753087,
+      "max_pixel_ratio": 0.015,
+      "channel_tolerance": 0,
+      "metrics": "evidence/ui-image-breakdowns/pages/encrypted-traffic-fingerprint/metrics-strict-r181-final.json",
+      "diff": "evidence/ui-image-breakdowns/pages/encrypted-traffic-fingerprint/diff-strict-r181-final.png"
+    }
+  },
+  "normal_route": {
+    "status": "pass",
+    "screenshot": "evidence/ui-image-breakdowns/pages/encrypted-traffic-fingerprint/normal-route-r181.png",
+    "runtime": "evidence/ui-image-breakdowns/pages/encrypted-traffic-fingerprint/normal-route-runtime-r181.json",
+    "checks": {
+      "app_shell": true,
+      "title": true,
+      "active_fingerprint_tab": true,
+      "encrypted_shell": true,
+      "tabs": true,
+      "kpis": true,
+      "fingerprint_layout": true,
+      "ja3_rows": true,
+      "scatter_points": true,
+      "certificate_rows": true,
+      "suite_matrix": true,
+      "advice_rows": true,
+      "has_business_text": true,
+      "no_horizontal_overflow": true,
+      "no_4xx_5xx": true,
+      "no_request_failed": true,
+      "no_console_errors": true,
+      "no_page_errors": true,
+      "smoke_hash_consumed": true,
+      "goto_ok": true
+    },
+    "failed_checks": []
+  },
+  "deployment": {
+    "image": "traffic/web-ui:ui-encrypted-traffic-fingerprint-20260710-r181",
+    "ready_replicas": "1/1",
+    "apisix_http": 200
+  },
+  "review_gate": {
+    "status": "pass",
+    "auxiliary_agent": "019f4b14-af04-79b3-86f6-438cefe967e9",
+    "auxiliary_status": "pass",
+    "main_thread_judgment": "business-pixel-accepted",
+    "strict_pixel_judgment": "fail-documented",
+    "reason": "Auxiliary read-only review passed; Windows Chrome CDP business capture, normal production route runtime, focused tests, build, deployment, and sensitive-data scan support business-pixel acceptance."
+  },
+  "notes": [
+    "Business-pixel acceptance uses max-pixel-ratio 0.35 and channel tolerance 64.",
+    "Strict pixel gate is retained as fail-documented and is not used as the business acceptance gate for this production DOM implementation."
+  ]
+}

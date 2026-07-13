@@ -1,0 +1,139 @@
+{
+  "package_id": "windows_chrome_cdp_full_route_capture",
+  "run_id": "windows-cdp-full-route-20260703104721",
+  "result": "pass",
+  "runtime_result": "pass",
+  "visual_diff_result": "skipped",
+  "generated_at": "2026-07-03T10:47:29.400Z",
+  "base_url": "http://10.0.5.8:30180",
+  "cdp_url": "http://127.0.0.1:9224",
+  "cdp_version": {
+    "Browser": "Chrome/150.0.7871.47",
+    "Protocol-Version": "1.3",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+    "V8-Version": "15.0.245.13",
+    "WebKit-Version": "537.36 (@0c3cca15d78645281db2d339b2dc3d6fad4ee90a)",
+    "webSocketDebuggerUrl": "ws://127.0.0.1:9224/devtools/browser/044b273c-d1b6-4227-aa54-a523a3e8c863"
+  },
+  "cdp_targets_count": 3,
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "evidence_dir": "evidence/windows-chrome-cdp-20260703-responsive-390-r1",
+  "acceptance_dir": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-responsive-390",
+  "target_mode": "visual-targets",
+  "capture_plan": "doc/02_acceptance/02-regression/ui-visual-interaction/capture-plan-latest.json",
+  "output_json": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-responsive-390.json",
+  "output_md": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-responsive-390.md",
+  "alert_id": "alert-default-1782752318016-1dd589c4",
+  "campaign_id": "campaign-exfil-default-1782729598739-e1d2dc37",
+  "auth": {
+    "strategy": "hash-smoke-token",
+    "smoke_token_source": "generated-from-k8s-secret",
+    "smoke_token_env": "DESKTOP_SMOKE_TOKEN",
+    "token_material_redacted": true
+  },
+  "max_pixel_ratio": 0.015,
+  "channel_tolerance": 0,
+  "summary": {
+    "total": 2,
+    "runtime_pass": 2,
+    "runtime_fail": 0,
+    "visual_diff_total": 0,
+    "visual_diff_pass": 0,
+    "visual_diff_fail": 0,
+    "failed_runtime_routes": [],
+    "failed_visual_diff_routes": []
+  },
+  "routes": [
+    {
+      "id": "dashboard",
+      "route_id": "dashboard",
+      "title": "仪表盘",
+      "route": "/dashboard",
+      "resolved_path": "/dashboard",
+      "url": "http://10.0.5.8:30180/dashboard?windowsCdpEvidenceTs=1783075641186#codex_smoke_token=<redacted>",
+      "final_url": "http://10.0.5.8:30180/dashboard?windowsCdpEvidenceTs=1783075641186",
+      "screenshot": "evidence/windows-chrome-cdp-20260703-responsive-390-r1/dashboard-390x844.png",
+      "acceptance_actual": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-responsive-390/dashboard/actual-1920.png",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/dashboard.png",
+      "duration_ms": 3713,
+      "goto_error": null,
+      "bad_responses": [],
+      "request_failures": [],
+      "console_errors": [],
+      "page_errors": [],
+      "metrics": {
+        "final_url": "http://10.0.5.8:30180/dashboard?windowsCdpEvidenceTs=1783075641186",
+        "document_title": "园区网络全流量采集与分析系统",
+        "h1": "仪表盘",
+        "body_text_sample": "园区网络全流量采集与分析系统 综合态势 / 仪表盘 仪表盘 创建闭环任务 全局搜索 KPI 详情 任务详情 脱敏运营 KPI 超时 SLA 0 项 真实 API 临近超时 0 条 真实 API 高危未处理 0 条 真实 API 待取证 0 项 真实 API 待反馈 0 项 真实 API 待复核 0 项 真实 API 队列积压 0 msg 真实 API 闭环进度 0.0% 真实 API 优先级待办队列 事件 ID 风险级别 资产组 业务系统 处置阶段 剩余时间 证据状态 DASHBOARD-HEALTH-GATE 中危 0 个对象 采集分析链路 健康门禁 0 ms P95 待补齐 1 采集与数据健康门禁 组件 健康状态 失败原因 影响范围 更新时间 Probe 正常 - - 实时 Kafka 正常 - - 实时 Flink 告警 Checkpoint 延迟 部分任务 1 分钟前 ClickHouse 正常 - - 实时 OpenSearch 正常 - - 实时 NebulaGraph 告警 查询延迟偏高 部分图空间 2 分钟前 MinIO 异常 对象存储可用区不可用 部分存储桶 3 分钟前 PostgreSQL 正常 - - 实时 正常 5 告警 2 异常 1 验收缺口与建议动作 待补证据数 0 项 较昨日 +18 补齐证据 待回流样本数 0 项 较昨日 -9 回流样本 审计留痕缺口",
+        "scroll_width": 390,
+        "client_width": 390,
+        "scroll_height": 844,
+        "client_height": 844,
+        "horizontal_overflow": false,
+        "error_alerts": [],
+        "visible_bad_geometry": []
+      },
+      "protected_route": true,
+      "smoke_token_used": true,
+      "smoke_hash_consumed": true,
+      "runtime_status": "pass",
+      "runtime_reasons": [],
+      "visual_diff": {
+        "skipped": true,
+        "status": "skipped",
+        "reasons": [
+          "skipDiff=true"
+        ]
+      },
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-responsive-390/dashboard/capture-meta.json"
+    },
+    {
+      "id": "data-quality",
+      "route_id": "data-quality",
+      "title": "数据质量",
+      "route": "/data-quality",
+      "resolved_path": "/data-quality",
+      "url": "http://10.0.5.8:30180/data-quality?windowsCdpEvidenceTs=1783075641186#codex_smoke_token=<redacted>",
+      "final_url": "http://10.0.5.8:30180/data-quality?windowsCdpEvidenceTs=1783075641186",
+      "screenshot": "evidence/windows-chrome-cdp-20260703-responsive-390-r1/data-quality-390x844.png",
+      "acceptance_actual": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-responsive-390/data-quality/actual-1920.png",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/data-quality.png",
+      "duration_ms": 3761,
+      "goto_error": null,
+      "bad_responses": [],
+      "request_failures": [],
+      "console_errors": [],
+      "page_errors": [],
+      "metrics": {
+        "final_url": "http://10.0.5.8:30180/data-quality?windowsCdpEvidenceTs=1783075641186",
+        "document_title": "园区网络全流量采集与分析系统",
+        "h1": "数据质量",
+        "body_text_sample": "园区网络全流量采集与分析系统 数据质量 Kafka、Flink、字段、存储和重放对账质量门禁 近 24 小时 全部管道 数据重放 质量总览 Topic 健康 Flink 质量 字段质量 存储质量 重放对账 质量报告 质量设置 质量总分 76 分 真实 API 完整性 96.3% 真实 API 及时性 91.7% 真实 API 准确性 94.0% 真实 API 重复率 0.4% 真实 API 字段缺失率 1.1% 真实 API DLQ 数量 12.8K 条 真实 API Kafka Topic 健康 (Top 10) Topic 分区数 当前吞吐量 消费延迟 积压量 积压趋势 消费延迟 P95 分区倾斜 消息延迟 P95 操作 Topic 分区数 当前吞吐量 消费延迟 积压量 积压趋势 消费延迟 P95 分区倾斜 消息延迟 P95 操作 flow_original 36 4.2K msg/min 2s 3.9K 波动 1600 ms 1.08x 1152 ms 重放 DLQ flow_enriched 24 3.4K msg/min 1s 2.5K 下降 1344 ms 1.15x 968 ms 定位 Flink session.events.v1 18 2.2K msg/min 1s 1.3K 下降 1152 ms 1.22x 829 ms 查看 Session feature.e",
+        "scroll_width": 390,
+        "client_width": 390,
+        "scroll_height": 844,
+        "client_height": 844,
+        "horizontal_overflow": false,
+        "error_alerts": [],
+        "visible_bad_geometry": []
+      },
+      "protected_route": true,
+      "smoke_token_used": true,
+      "smoke_hash_consumed": true,
+      "runtime_status": "pass",
+      "runtime_reasons": [],
+      "visual_diff": {
+        "skipped": true,
+        "status": "skipped",
+        "reasons": [
+          "skipDiff=true"
+        ]
+      },
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-responsive-390/data-quality/capture-meta.json"
+    }
+  ]
+}

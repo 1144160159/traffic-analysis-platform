@@ -1,0 +1,147 @@
+{
+  "status": "pass",
+  "acceptance_eligible": false,
+  "reason": "Windows Chrome CDP evidence. Formal legacy gate expects Desktop Chrome extension receiver metadata and pixel diff; this capture proves real Windows Chrome rendering, route, runtime events, viewport, and layout metrics.",
+  "backend": "windows-chrome-cdp",
+  "target_id": "deployments",
+  "route_id": "deployments",
+  "route": "/deployments",
+  "resolved_path": "/deployments",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/deployments.png",
+  "final_url": "http://10.0.5.8:30180/deployments?fullRouteEvidenceTs=1783072670681",
+  "final_path": "/deployments",
+  "protected_route": true,
+  "smoke_hash_consumed": true,
+  "uploaded_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "stored_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "expected_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "desktop_viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "post_capture_resize": false,
+  "no_4xx_5xx": true,
+  "no_requestfailed": true,
+  "no_console_error": true,
+  "no_pageerror": true,
+  "errors": {
+    "requestfailed": [],
+    "badResponses": [],
+    "console": [],
+    "pageerror": []
+  },
+  "screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/doc/02_acceptance/02-regression/ui-visual-interaction/latest/deployments/actual-1920.png",
+  "mirror_screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/evidence/windows-chrome-cdp-20260703-full-route-desktop-r6/deployments-1920x1080.png",
+  "metrics": {
+    "title": "园区网络全流量采集与分析系统",
+    "location": "http://10.0.5.8:30180/deployments?fullRouteEvidenceTs=1783072670681",
+    "viewport": {
+      "width": 1920,
+      "height": 1080,
+      "dpr": 1.0000000298023224
+    },
+    "scroll": {
+      "horizontalOverflow": 0,
+      "verticalOverflow": 0,
+      "bodyScrollWidth": 1920,
+      "bodyClientWidth": 1920,
+      "bodyScrollHeight": 1080,
+      "bodyClientHeight": 1080
+    },
+    "headings": [
+      "部署管理",
+      "发布清单",
+      "灰度策略",
+      "发布健康",
+      "版本对比 / 变更摘要",
+      "回滚管理",
+      "发布证据"
+    ],
+    "buttons": [
+      "移动端导航",
+      "PCAP检索",
+      "资产检索",
+      "规则检索",
+      "脚本中心",
+      "帮助中心",
+      "更多应用",
+      "Ccodex-ui-desktop-admin系统管理员在线",
+      "新建发布",
+      "继续灰度",
+      "停止灰度",
+      "快速回滚",
+      "导出证据",
+      "新建部署",
+      "回滚确认",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "编辑策略",
+      "v2.2.72025-05-26 16:10租户A / 全量安全运营组回滚",
+      "v2.2.32025-05-23 11:05租户A / 全量安全运营组回滚"
+    ],
+    "visibleText": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-03 17:57:51 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 采集监测 威胁分析 资产图谱 检测运营 规则管理 部署管理 模型管理 MLOps 编排 SOAR 剧本 白名单 审计配置 C codex-ui-desktop-admin 系统管理员 在线 部署管理 规则、模型、采集策略、Flink 作业和配置的发布与回滚 新建发布 继续灰度 停止灰度 快速回滚 导出证据 新建部署 回滚确认 待发布对象 0 个 真实 API 灰度中 0 个 真实 API 失败/阻断 0 个 真实 API 可回滚版本 0 个 真实 API 发布成功率 0.0% 真实 API 平均生效延迟 58 s 真实 API 发布清单 发布对象 版本 环境 状态 负责人 发布时间 影响范围 操作 暂无数据 共 48 条 1 2 3 4 5 10 条/页 灰度策略 按租户+园区+探针分级 租户 租户A 园区 华东园区 探针组 办公区探针组 (12) 资产组 核心业务资产组 流量百分比 5% 20% 50% 100% 当前阶段 灰度中 生效时间 2025-05-27 14:15 预计观察时长 30 分钟 自动推进 未开启 编辑策略 发布健康 近 30 分钟 Flink Checkpoint 成功率 98.8% Kafka 消费延迟 (P95) 320 ms 告警数量变化 -18.5% 误报率变化 +2.1% 端到端延迟 (P95) 1.28 s 采集丢包率 0.03% 版本对比 / 变更摘要 当前版本 v2.2.7 已发布 → 目标版本 v2.3.1 灰度中 规则变更数 32 条 → 57 条 +25 模型版本 v1.7.3 → v1.8.0 升级 DDL 变更 2 处 → 3 处 +1 Topic 变更 1 个 → 2 个 +1 风险等级 低风险 → 中风险 升高 影响评估：中，建议先在 20% 流量灰度验证误报率。 回滚管理 可回滚版本 发布时间 影响范围 发布人 操作 v2.2.7 2025-05-26 16:10 租户A / 全量 安全运营组 回滚 v2.2.3 2025-05-23 11:05 租户A / 全量 安全运营组 回滚 v2.1.9 2025-05-20 09:40 租户A / 全量 安全运营组 回滚 回滚原因（可选） 误报升高 性能下降 策略变更 执行回滚 发布证据 证据项 校验状态 哈希 / 编号 操作 manifest 已通过 a1b2c3d4...e5f6 镜像 已通过 sha256:7e8d...9e0f D",
+    "elements": {
+      "pageHero": {
+        "selector": ".taf-page-hero",
+        "visible": false
+      },
+      "panelHeader": {
+        "selector": ".taf-panel__header",
+        "visible": true,
+        "text": "发布清单",
+        "x": 183,
+        "y": 254,
+        "right": 1258,
+        "bottom": 286,
+        "w": 1075,
+        "h": 32,
+        "display": "flex",
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      "table": {
+        "selector": ".ant-table, .taf-table, table",
+        "visible": true,
+        "text": "发布对象版本环境状态负责人发布时间影响范围操作暂无数据暂无数据",
+        "x": 191,
+        "y": 294,
+        "right": 1250,
+        "bottom": 483,
+        "w": 1059,
+        "h": 189,
+        "display": "block",
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      "topicTitlebar": {
+        "selector": ".taf-topic-titlebar",
+        "visible": false
+      },
+      "topicFacts": {
+        "selector": ".taf-topic-facts",
+        "visible": false
+      },
+      "topicKpis": {
+        "selector": ".taf-topic-kpis",
+        "visible": false
+      },
+      "topicGrid": {
+        "selector": ".taf-topic-grid",
+        "visible": false
+      }
+    },
+    "overlapChecks": {}
+  }
+}

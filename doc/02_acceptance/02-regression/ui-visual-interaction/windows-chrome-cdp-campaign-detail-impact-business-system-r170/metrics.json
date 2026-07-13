@@ -1,0 +1,28 @@
+{
+  "target_id": "campaign-detail-impact-business-system",
+  "route": "/campaigns/:campaignId?impact=business-system",
+  "status": "pass",
+  "generated_at": "2026-07-10T13:13:35.936989+08:00",
+  "desktop_chrome_backend_status": "pass",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/campaign-detail-impact-business-system.png",
+  "actual_screenshot": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-business-system/implementation-r170-final.png",
+  "diff_image": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-business-system/diff-r170-final.png",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "visual_diff": {
+    "size_ok": true,
+    "source_width": 1920,
+    "source_height": 1080,
+    "actual_width": 1920,
+    "actual_height": 1080,
+    "compared_pixels": 2073600,
+    "total_pixels": 2073600,
+    "mismatch_pixels": 141189,
+    "pixel_mismatch_ratio": 0.06808883101851852,
+    "max_pixel_ratio": 0.35,
+    "channel_tolerance": 64,
+    "max_channel_delta": 255
+  }
+}

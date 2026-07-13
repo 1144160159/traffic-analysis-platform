@@ -1,0 +1,243 @@
+{
+  "run_id": "20260629-deployment-state-machine-r3-model-version-state",
+  "result": "pass",
+  "tenant": "codex-deployment-state",
+  "other_tenant": "codex-deployment-cross",
+  "deployment_id": "e4cec613-5a60-4574-b20e-90dc97637870",
+  "invalid_deployment_id": "41e8575e-65cb-40f4-9c59-6a0506248ac9",
+  "cross_deployment_id": "2af74ab0-050e-4a34-a3ce-11e680ef24be",
+  "viewer_deployment_id": "c0e677a1-2e3d-4a9c-84cb-3e3220d972ea",
+  "total": 25,
+  "passed": 25,
+  "failed": 0,
+  "blockers": 0,
+  "warnings": 0,
+  "report": "doc/02_acceptance/runs/20260629-deployment-state-machine/live-deployment-state-machine-20260629-deployment-state-machine-r3-model-version-state.ndjson",
+  "checks": [
+    {
+      "ts": "2026-06-29T22:07:12+08:00",
+      "phase": "fixture",
+      "name": "seed deployment state-machine fixtures",
+      "ok": true,
+      "status": "ok",
+      "detail": "e4cec613-5a60-4574-b20e-90dc97637870,c3c538b4-c0a2-4245-aebf-6728b4e49504,41e8575e-65cb-40f4-9c59-6a0506248ac9,2af74ab0-050e-4a34-a3ce-11e680ef24be,c0e677a1-2e3d-4a9c-84cb-3e3220d972ea",
+      "artifact": ""
+    },
+    {
+      "ts": "2026-06-29T22:07:12+08:00",
+      "phase": "api",
+      "name": "start gray deployment",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/deployments/e4cec613-5a60-4574-b20e-90dc97637870/gray",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-start-gray-deployment.json"
+    },
+    {
+      "ts": "2026-06-29T22:07:12+08:00",
+      "phase": "db",
+      "name": "gray status persisted",
+      "ok": true,
+      "status": "ok",
+      "detail": "gray|true|true",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-gray-status-persisted.txt"
+    },
+    {
+      "ts": "2026-06-29T22:07:12+08:00",
+      "phase": "db",
+      "name": "gray history persisted",
+      "ok": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-gray-history-persisted.txt"
+    },
+    {
+      "ts": "2026-06-29T22:07:12+08:00",
+      "phase": "api",
+      "name": "activate deployment",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/deployments/e4cec613-5a60-4574-b20e-90dc97637870/activate",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-activate-deployment.json"
+    },
+    {
+      "ts": "2026-06-29T22:07:12+08:00",
+      "phase": "db",
+      "name": "active status persisted",
+      "ok": true,
+      "status": "ok",
+      "detail": "active|true",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-active-status-persisted.txt"
+    },
+    {
+      "ts": "2026-06-29T22:07:12+08:00",
+      "phase": "db",
+      "name": "previous active superseded",
+      "ok": true,
+      "status": "ok",
+      "detail": "superseded",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-previous-active-superseded.txt"
+    },
+    {
+      "ts": "2026-06-29T22:07:12+08:00",
+      "phase": "db",
+      "name": "activate history persisted",
+      "ok": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-activate-history-persisted.txt"
+    },
+    {
+      "ts": "2026-06-29T22:07:12+08:00",
+      "phase": "api",
+      "name": "pause active deployment",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/deployments/e4cec613-5a60-4574-b20e-90dc97637870/pause",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-pause-active-deployment.json"
+    },
+    {
+      "ts": "2026-06-29T22:07:13+08:00",
+      "phase": "db",
+      "name": "pause status persisted",
+      "ok": true,
+      "status": "ok",
+      "detail": "paused",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-pause-status-persisted.txt"
+    },
+    {
+      "ts": "2026-06-29T22:07:13+08:00",
+      "phase": "db",
+      "name": "pause history persisted",
+      "ok": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-pause-history-persisted.txt"
+    },
+    {
+      "ts": "2026-06-29T22:07:13+08:00",
+      "phase": "api",
+      "name": "resume paused deployment",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/deployments/e4cec613-5a60-4574-b20e-90dc97637870/resume",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-resume-paused-deployment.json"
+    },
+    {
+      "ts": "2026-06-29T22:07:13+08:00",
+      "phase": "db",
+      "name": "resume status persisted",
+      "ok": true,
+      "status": "ok",
+      "detail": "active",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-resume-status-persisted.txt"
+    },
+    {
+      "ts": "2026-06-29T22:07:13+08:00",
+      "phase": "db",
+      "name": "resume history persisted",
+      "ok": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-resume-history-persisted.txt"
+    },
+    {
+      "ts": "2026-06-29T22:07:13+08:00",
+      "phase": "api",
+      "name": "rollback active deployment",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/deployments/e4cec613-5a60-4574-b20e-90dc97637870/rollback",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-rollback-active-deployment.json"
+    },
+    {
+      "ts": "2026-06-29T22:07:13+08:00",
+      "phase": "db",
+      "name": "rollback status persisted",
+      "ok": true,
+      "status": "ok",
+      "detail": "rolled_back|true",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-rollback-status-persisted.txt"
+    },
+    {
+      "ts": "2026-06-29T22:07:13+08:00",
+      "phase": "db",
+      "name": "rollback history persisted",
+      "ok": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-rollback-history-persisted.txt"
+    },
+    {
+      "ts": "2026-06-29T22:07:13+08:00",
+      "phase": "api",
+      "name": "planned rollback rejected",
+      "ok": true,
+      "status": "409",
+      "detail": "POST /api/v1/deployments/41e8575e-65cb-40f4-9c59-6a0506248ac9/rollback",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-planned-rollback-rejected.json"
+    },
+    {
+      "ts": "2026-06-29T22:07:13+08:00",
+      "phase": "db",
+      "name": "planned rollback unchanged",
+      "ok": true,
+      "status": "ok",
+      "detail": "planned",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-planned-rollback-unchanged.txt"
+    },
+    {
+      "ts": "2026-06-29T22:07:13+08:00",
+      "phase": "api",
+      "name": "cross tenant rollback rejected",
+      "ok": true,
+      "status": "403",
+      "detail": "POST /api/v1/deployments/2af74ab0-050e-4a34-a3ce-11e680ef24be/rollback",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-cross-tenant-rollback-rejected.json"
+    },
+    {
+      "ts": "2026-06-29T22:07:14+08:00",
+      "phase": "db",
+      "name": "cross tenant deployment unchanged",
+      "ok": true,
+      "status": "ok",
+      "detail": "active",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-cross-tenant-deployment-unchanged.txt"
+    },
+    {
+      "ts": "2026-06-29T22:07:14+08:00",
+      "phase": "api",
+      "name": "viewer gray rejected",
+      "ok": true,
+      "status": "403",
+      "detail": "POST /api/v1/deployments/c0e677a1-2e3d-4a9c-84cb-3e3220d972ea/gray",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-viewer-gray-rejected.json"
+    },
+    {
+      "ts": "2026-06-29T22:07:14+08:00",
+      "phase": "db",
+      "name": "viewer deployment unchanged",
+      "ok": true,
+      "status": "ok",
+      "detail": "planned",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-viewer-deployment-unchanged.txt"
+    },
+    {
+      "ts": "2026-06-29T22:07:14+08:00",
+      "phase": "api",
+      "name": "audit trail query",
+      "ok": true,
+      "status": "200",
+      "detail": "GET /api/v1/audit/logs?object_type=deployment&limit=200",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-audit-trail-query.json"
+    },
+    {
+      "ts": "2026-06-29T22:07:14+08:00",
+      "phase": "audit",
+      "name": "deployment action audit queryable",
+      "ok": true,
+      "status": "ok",
+      "detail": "e4cec613-5a60-4574-b20e-90dc97637870",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-audit.json"
+    }
+  ]
+}

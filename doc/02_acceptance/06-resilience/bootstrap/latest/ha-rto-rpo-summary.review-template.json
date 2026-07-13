@@ -1,0 +1,173 @@
+{
+  "test_id": "live-ha-rto-rpo-drill",
+  "status": "template_review_required",
+  "review_required": true,
+  "run_id": "20260630-ha-drill-evidence-bootstrap-r1",
+  "started_at": "",
+  "completed_at": "",
+  "result": "TBD",
+  "formal_gate_note": "Do not rename this file to ha-rto-rpo-latest.json until all component reports are filled and signed.",
+  "components": [
+    {
+      "component": "kafka",
+      "phase": "kafka-broker-loss",
+      "target_rto_seconds": 180,
+      "observed_rto_seconds": null,
+      "target_rpo": "zero_acknowledged_message_loss",
+      "observed_rpo": "",
+      "consistency_checks": [
+        {
+          "name": "all_partitions_have_leader",
+          "status": "TBD",
+          "evidence": ""
+        },
+        {
+          "name": "isr_recovers_to_replication_factor",
+          "status": "TBD",
+          "evidence": ""
+        },
+        {
+          "name": "live_topic_catalog_unchanged",
+          "status": "TBD",
+          "evidence": ""
+        },
+        {
+          "name": "consumer_offsets_continue",
+          "status": "TBD",
+          "evidence": ""
+        }
+      ],
+      "result": "TBD"
+    },
+    {
+      "component": "flink",
+      "phase": "flink-taskmanager-loss",
+      "target_rto_seconds": 300,
+      "observed_rto_seconds": null,
+      "target_rpo": "exactly_once_checkpoint_restore",
+      "observed_rpo": "",
+      "consistency_checks": [
+        {
+          "name": "all_expected_jobs_return_running",
+          "status": "TBD",
+          "evidence": ""
+        },
+        {
+          "name": "latest_completed_checkpoint_advances_after_recovery",
+          "status": "TBD",
+          "evidence": ""
+        },
+        {
+          "name": "no_root_exceptions",
+          "status": "TBD",
+          "evidence": ""
+        },
+        {
+          "name": "output_tables_do_not_duplicate_drill_records",
+          "status": "TBD",
+          "evidence": ""
+        }
+      ],
+      "result": "TBD"
+    },
+    {
+      "component": "clickhouse",
+      "phase": "clickhouse-replica-loss",
+      "target_rto_seconds": 300,
+      "observed_rto_seconds": null,
+      "target_rpo": "no_committed_row_loss",
+      "observed_rpo": "",
+      "consistency_checks": [
+        {
+          "name": "system_replicas_not_readonly",
+          "status": "TBD",
+          "evidence": ""
+        },
+        {
+          "name": "absolute_delay_returns_below_60s",
+          "status": "TBD",
+          "evidence": ""
+        },
+        {
+          "name": "queue_size_returns_below_100",
+          "status": "TBD",
+          "evidence": ""
+        },
+        {
+          "name": "drill_query_counts_match_before_after",
+          "status": "TBD",
+          "evidence": ""
+        }
+      ],
+      "result": "TBD"
+    },
+    {
+      "component": "postgresql",
+      "phase": "postgresql-replica-loss",
+      "target_rto_seconds": 300,
+      "observed_rto_seconds": null,
+      "target_rpo": "no_committed_transaction_loss",
+      "observed_rpo": "",
+      "consistency_checks": [
+        {
+          "name": "primary_or_promoted_primary_accepts_connections",
+          "status": "TBD",
+          "evidence": ""
+        },
+        {
+          "name": "replicas_resume_streaming",
+          "status": "TBD",
+          "evidence": ""
+        },
+        {
+          "name": "replay_lag_returns_to_zero_or_site_threshold",
+          "status": "TBD",
+          "evidence": ""
+        },
+        {
+          "name": "control_plane_crud_smoke_passes",
+          "status": "TBD",
+          "evidence": ""
+        }
+      ],
+      "result": "TBD"
+    },
+    {
+      "component": "minio",
+      "phase": "minio-pod-loss",
+      "target_rto_seconds": 300,
+      "observed_rto_seconds": null,
+      "target_rpo": "no_object_loss_for_completed_writes",
+      "observed_rpo": "",
+      "consistency_checks": [
+        {
+          "name": "health_endpoint_recovers",
+          "status": "TBD",
+          "evidence": ""
+        },
+        {
+          "name": "pcap_object_head_or_verify_passes",
+          "status": "TBD",
+          "evidence": ""
+        },
+        {
+          "name": "presigned_download_still_matches_sha256",
+          "status": "TBD",
+          "evidence": ""
+        },
+        {
+          "name": "lifecycle_or_retention_config_unchanged",
+          "status": "TBD",
+          "evidence": ""
+        }
+      ],
+      "result": "TBD"
+    }
+  ],
+  "artifacts": {
+    "operator_approval": "operator-approval.review-template.yaml",
+    "timeline": "timeline.review-template.jsonl",
+    "rto_rpo_table": "rto-rpo-table.review-template.csv",
+    "data_consistency_report": "data-consistency-report.review-template.md"
+  }
+}

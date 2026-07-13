@@ -1,0 +1,28 @@
+{
+  "package_id": "ui_desktop_chrome_bridge_payload",
+  "generated_at": "2026-07-02T18:12:57.511Z",
+  "capture_session": "doc/02_acceptance/02-regression/ui-visual-interaction/capture-session-windows-tunnel-25173.json",
+  "output_js": "doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-payload-latest.js",
+  "bridge_host_preflight": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-desktop-bridge-host-preflight-latest.json",
+  "chrome_client_url": "file:///C:/Users/LongShine/.codex/plugins/cache/openai-bundled/chrome/26.623.81905/scripts/browser-client.mjs",
+  "chrome_client_url_source": "windows_desktop_bridge_host_preflight",
+  "smoke_redirect_base_url": "http://127.0.0.1:25175",
+  "url_policy": "all page, redirect, receiver, and upload URLs must use Windows-local 127.0.0.1 tunnel endpoints for the 10.3.6.59 Chrome run",
+  "backend_required": "codex-desktop-chrome-extension",
+  "forbidden_backend": "iab",
+  "expected_viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "placeholders": {
+    "CODEX_CAPTURE_KEY": "<CODEX_CAPTURE_KEY>",
+    "CODEX_SMOKE_NONCE": "<CODEX_SMOKE_NONCE>"
+  },
+  "visual_target_count": 30,
+  "interaction_target_count": 28,
+  "screenshot_upload_count": 58,
+  "bridge_result_upload_count": 1,
+  "receiver_upload_count": 59,
+  "smoke_redirect_url_count": 56,
+  "secret_policy": "The generated payload contains placeholders only. Do not commit or write concrete capture keys, smoke tokens, or nonces."
+}

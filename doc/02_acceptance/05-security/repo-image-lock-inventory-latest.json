@@ -1,0 +1,1028 @@
+[
+  {
+    "path": "deployments/kubernetes/applications/go-services.yaml",
+    "line": 30,
+    "image": "docker.io/traffic/ingest-gateway@sha256:65f19c6a1e16e14270ec8656d9595fd22ae2ce583bebfe88bb3322a515e62380",
+    "normalized": "docker.io/traffic/ingest-gateway",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/traffic/ingest-gateway@sha256:65f19c6a1e16e14270ec8656d9595fd22ae2ce583bebfe88bb3322a515e62380",
+    "effective_normalized": "docker.io/traffic/ingest-gateway",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/applications/go-services.yaml",
+    "line": 38,
+    "image": "docker.io/traffic/ingest-gateway@sha256:65f19c6a1e16e14270ec8656d9595fd22ae2ce583bebfe88bb3322a515e62380",
+    "normalized": "docker.io/traffic/ingest-gateway",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/traffic/ingest-gateway@sha256:65f19c6a1e16e14270ec8656d9595fd22ae2ce583bebfe88bb3322a515e62380",
+    "effective_normalized": "docker.io/traffic/ingest-gateway",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/applications/go-services.yaml",
+    "line": 100,
+    "image": "docker.io/traffic/auth-service@sha256:b5a247f01baf26c4939711bf25c22cb3668718d2ff4f303b8c40cac572c5dc11",
+    "normalized": "docker.io/traffic/auth-service",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/traffic/auth-service@sha256:b5a247f01baf26c4939711bf25c22cb3668718d2ff4f303b8c40cac572c5dc11",
+    "effective_normalized": "docker.io/traffic/auth-service",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/applications/go-services.yaml",
+    "line": 147,
+    "image": "docker.io/traffic/alert-service@sha256:89d2e52463f7bcadf103b8c6274dd5559570fc7a2ff0da7103c1faf9d83e0569",
+    "normalized": "docker.io/traffic/alert-service",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/traffic/alert-service@sha256:89d2e52463f7bcadf103b8c6274dd5559570fc7a2ff0da7103c1faf9d83e0569",
+    "effective_normalized": "docker.io/traffic/alert-service",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/applications/go-services.yaml",
+    "line": 205,
+    "image": "docker.io/traffic/asset-service@sha256:0ff5bc4b1084b610e8508e47195dddbc692d8a10ff28daa653508a00af5b95bd",
+    "normalized": "docker.io/traffic/asset-service",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/traffic/asset-service@sha256:0ff5bc4b1084b610e8508e47195dddbc692d8a10ff28daa653508a00af5b95bd",
+    "effective_normalized": "docker.io/traffic/asset-service",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/applications/go-services.yaml",
+    "line": 259,
+    "image": "docker.io/traffic/rule-manager@sha256:d614aa785ddc742407e083eaaceba06869478ab8fa365121ff31e75019f8b045",
+    "normalized": "docker.io/traffic/rule-manager",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/traffic/rule-manager@sha256:d614aa785ddc742407e083eaaceba06869478ab8fa365121ff31e75019f8b045",
+    "effective_normalized": "docker.io/traffic/rule-manager",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/applications/go-services.yaml",
+    "line": 316,
+    "image": "docker.io/traffic/graph-service@sha256:9a6065d76ad0775eda142e55775b48fcb2731c2d4935a7c4c1ea5c5cd1477168",
+    "normalized": "docker.io/traffic/graph-service",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/traffic/graph-service@sha256:9a6065d76ad0775eda142e55775b48fcb2731c2d4935a7c4c1ea5c5cd1477168",
+    "effective_normalized": "docker.io/traffic/graph-service",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/applications/go-services.yaml",
+    "line": 363,
+    "image": "docker.io/traffic/threat-intel-service@sha256:aafc7bf6a84d0d850463e031e54e8ea03fa549e4622992b5e3e3299d4e83fd44",
+    "normalized": "docker.io/traffic/threat-intel-service",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/traffic/threat-intel-service@sha256:aafc7bf6a84d0d850463e031e54e8ea03fa549e4622992b5e3e3299d4e83fd44",
+    "effective_normalized": "docker.io/traffic/threat-intel-service",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/applications/go-services.yaml",
+    "line": 413,
+    "image": "docker.io/traffic/forensics-service@sha256:7d37a072f6e470b00d7170496b87f671d50469afbddacecf62b337df42fd3c44",
+    "normalized": "docker.io/traffic/forensics-service",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/traffic/forensics-service@sha256:7d37a072f6e470b00d7170496b87f671d50469afbddacecf62b337df42fd3c44",
+    "effective_normalized": "docker.io/traffic/forensics-service",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/applications/probe-agent.yaml",
+    "line": 107,
+    "image": "docker.io/traffic/probe-agent@sha256:1760b0cfd6ff0666e221bb055d5a6abb7df69b2c7dbb0e856517d6be1adbcec7",
+    "normalized": "docker.io/traffic/probe-agent",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/traffic/probe-agent@sha256:1760b0cfd6ff0666e221bb055d5a6abb7df69b2c7dbb0e856517d6be1adbcec7",
+    "effective_normalized": "docker.io/traffic/probe-agent",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/applications/web-ui.yaml",
+    "line": 24,
+    "image": "docker.io/traffic/web-ui@sha256:f0648e458b8930bb69603ffffa8e46c842e48bc27355c4eb29ded87d3c9664e8",
+    "normalized": "docker.io/traffic/web-ui",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/traffic/web-ui@sha256:f0648e458b8930bb69603ffffa8e46c842e48bc27355c4eb29ded87d3c9664e8",
+    "effective_normalized": "docker.io/traffic/web-ui",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/argo-events/argo-events-install-v1.9.9.yaml",
+    "line": 413,
+    "image": "quay.io/argoproj/argo-events@sha256:ee78d5a780cf449063003af241b3741d79bdde30840c1d5a2458b2cb1bbf3190",
+    "normalized": "quay.io/argoproj/argo-events",
+    "status": "digest_pinned",
+    "effective_reference": "quay.io/argoproj/argo-events@sha256:ee78d5a780cf449063003af241b3741d79bdde30840c1d5a2458b2cb1bbf3190",
+    "effective_normalized": "quay.io/argoproj/argo-events",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/argo-events/mlops-event-smoke.yaml",
+    "line": 97,
+    "image": "alpine:3.19",
+    "normalized": "docker.io/library/alpine:3.19",
+    "status": "lock_covered",
+    "effective_reference": "alpine:3.19",
+    "effective_normalized": "docker.io/library/alpine:3.19",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "repo_digest",
+      "lock_reference": "alpine:3.19",
+      "repo_digest": "docker.io/library/alpine@sha256:6baf43584bcb78f2e5847d1de515f23499913ac9f12bdf834811a3145eb11ca1",
+      "image_id": "",
+      "source": "live-pod-image-id"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/argo-events/mlops-training-template.yaml",
+    "line": 135,
+    "image": "clickhouse/clickhouse-server:24.3",
+    "normalized": "docker.io/clickhouse/clickhouse-server:24.3",
+    "status": "lock_covered",
+    "effective_reference": "clickhouse/clickhouse-server:24.3",
+    "effective_normalized": "docker.io/clickhouse/clickhouse-server:24.3",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "repo_digest",
+      "lock_reference": "clickhouse/clickhouse-server:24.3",
+      "repo_digest": "docker.io/clickhouse/clickhouse-server@sha256:b052ae89097c2d0f718b15ba1f4ce1c2a781eda8375980cf1cddd8f203981b58",
+      "image_id": "sha256:cd3b547d16ce8ab9e122ff96fe3379564535b85d5d9a7ab8237dd8b65e964b4b",
+      "source": "live-pod-image-id-and-local-cri"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/argo-events/mlops-training-template.yaml",
+    "line": 226,
+    "image": "{{workflow.parameters.trainer-image}}",
+    "normalized": "{{workflow.parameters.trainer-image}}",
+    "status": "lock_covered",
+    "effective_reference": "traffic/mlops-trainer:full-pipeline-fix-20260617",
+    "effective_normalized": "docker.io/traffic/mlops-trainer:full-pipeline-fix-20260617",
+    "template_parameter": "trainer-image",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "image_id",
+      "lock_reference": "traffic/mlops-trainer:full-pipeline-fix-20260617",
+      "repo_digest": "",
+      "image_id": "sha256:7d3f43afa16d6b0de9b0388c77279100140cb56f6db038677149e030336babc2",
+      "source": "local-cri"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/argo-events/mlops-training-template.yaml",
+    "line": 276,
+    "image": "{{workflow.parameters.trainer-image}}",
+    "normalized": "{{workflow.parameters.trainer-image}}",
+    "status": "lock_covered",
+    "effective_reference": "traffic/mlops-trainer:full-pipeline-fix-20260617",
+    "effective_normalized": "docker.io/traffic/mlops-trainer:full-pipeline-fix-20260617",
+    "template_parameter": "trainer-image",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "image_id",
+      "lock_reference": "traffic/mlops-trainer:full-pipeline-fix-20260617",
+      "repo_digest": "",
+      "image_id": "sha256:7d3f43afa16d6b0de9b0388c77279100140cb56f6db038677149e030336babc2",
+      "source": "local-cri"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/argo-events/mlops-training-template.yaml",
+    "line": 315,
+    "image": "{{workflow.parameters.trainer-image}}",
+    "normalized": "{{workflow.parameters.trainer-image}}",
+    "status": "lock_covered",
+    "effective_reference": "traffic/mlops-trainer:full-pipeline-fix-20260617",
+    "effective_normalized": "docker.io/traffic/mlops-trainer:full-pipeline-fix-20260617",
+    "template_parameter": "trainer-image",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "image_id",
+      "lock_reference": "traffic/mlops-trainer:full-pipeline-fix-20260617",
+      "repo_digest": "",
+      "image_id": "sha256:7d3f43afa16d6b0de9b0388c77279100140cb56f6db038677149e030336babc2",
+      "source": "local-cri"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/argo-events/mlops-training-template.yaml",
+    "line": 362,
+    "image": "{{workflow.parameters.trainer-image}}",
+    "normalized": "{{workflow.parameters.trainer-image}}",
+    "status": "lock_covered",
+    "effective_reference": "traffic/mlops-trainer:full-pipeline-fix-20260617",
+    "effective_normalized": "docker.io/traffic/mlops-trainer:full-pipeline-fix-20260617",
+    "template_parameter": "trainer-image",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "image_id",
+      "lock_reference": "traffic/mlops-trainer:full-pipeline-fix-20260617",
+      "repo_digest": "",
+      "image_id": "sha256:7d3f43afa16d6b0de9b0388c77279100140cb56f6db038677149e030336babc2",
+      "source": "local-cri"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/flink/flink-log-job.yaml",
+    "line": 15,
+    "image": "traffic/flink-log-job:log-job-20260629-r1",
+    "normalized": "docker.io/traffic/flink-log-job:log-job-20260629-r1",
+    "status": "lock_covered",
+    "effective_reference": "traffic/flink-log-job:log-job-20260629-r1",
+    "effective_normalized": "docker.io/traffic/flink-log-job:log-job-20260629-r1",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "image_id",
+      "lock_reference": "traffic/flink-log-job:log-job-20260629-r1",
+      "repo_digest": "",
+      "image_id": "sha256:e971330791443312ba212425a008d16df2b16726cf7d6460b1ef03b934238caf",
+      "source": "local-cri-dual-node-import"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/01-kafka.yaml",
+    "line": 137,
+    "image": "docker.io/apache/kafka@sha256:32217f809d3fba75ee46e93b1fdbea4aacc0821139443efb73691a913948c31a",
+    "normalized": "docker.io/apache/kafka",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/apache/kafka@sha256:32217f809d3fba75ee46e93b1fdbea4aacc0821139443efb73691a913948c31a",
+    "effective_normalized": "docker.io/apache/kafka",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/01-kafka.yaml",
+    "line": 252,
+    "image": "docker.io/provectuslabs/kafka-ui@sha256:8f2ff02d64b0a7a2b71b6b3b3148b85f66d00ec20ad40c30bdcd415d46d31818",
+    "normalized": "docker.io/provectuslabs/kafka-ui",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/provectuslabs/kafka-ui@sha256:8f2ff02d64b0a7a2b71b6b3b3148b85f66d00ec20ad40c30bdcd415d46d31818",
+    "effective_normalized": "docker.io/provectuslabs/kafka-ui",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/02-clickhouse.yaml",
+    "line": 193,
+    "image": "docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662",
+    "normalized": "docker.io/library/busybox",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662",
+    "effective_normalized": "docker.io/library/busybox",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/02-clickhouse.yaml",
+    "line": 210,
+    "image": "docker.io/clickhouse/clickhouse-server@sha256:b052ae89097c2d0f718b15ba1f4ce1c2a781eda8375980cf1cddd8f203981b58",
+    "normalized": "docker.io/clickhouse/clickhouse-server",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/clickhouse/clickhouse-server@sha256:b052ae89097c2d0f718b15ba1f4ce1c2a781eda8375980cf1cddd8f203981b58",
+    "effective_normalized": "docker.io/clickhouse/clickhouse-server",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/02-clickhouse.yaml",
+    "line": 316,
+    "image": "docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662",
+    "normalized": "docker.io/library/busybox",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662",
+    "effective_normalized": "docker.io/library/busybox",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/02-clickhouse.yaml",
+    "line": 332,
+    "image": "docker.io/clickhouse/clickhouse-server@sha256:b052ae89097c2d0f718b15ba1f4ce1c2a781eda8375980cf1cddd8f203981b58",
+    "normalized": "docker.io/clickhouse/clickhouse-server",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/clickhouse/clickhouse-server@sha256:b052ae89097c2d0f718b15ba1f4ce1c2a781eda8375980cf1cddd8f203981b58",
+    "effective_normalized": "docker.io/clickhouse/clickhouse-server",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/02-clickhouse.yaml",
+    "line": 472,
+    "image": "docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662",
+    "normalized": "docker.io/library/busybox",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662",
+    "effective_normalized": "docker.io/library/busybox",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/02-clickhouse.yaml",
+    "line": 488,
+    "image": "docker.io/clickhouse/clickhouse-server@sha256:b052ae89097c2d0f718b15ba1f4ce1c2a781eda8375980cf1cddd8f203981b58",
+    "normalized": "docker.io/clickhouse/clickhouse-server",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/clickhouse/clickhouse-server@sha256:b052ae89097c2d0f718b15ba1f4ce1c2a781eda8375980cf1cddd8f203981b58",
+    "effective_normalized": "docker.io/clickhouse/clickhouse-server",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/02-clickhouse.yaml",
+    "line": 656,
+    "image": "docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662",
+    "normalized": "docker.io/library/busybox",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662",
+    "effective_normalized": "docker.io/library/busybox",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/02-clickhouse.yaml",
+    "line": 672,
+    "image": "docker.io/clickhouse/clickhouse-server@sha256:b052ae89097c2d0f718b15ba1f4ce1c2a781eda8375980cf1cddd8f203981b58",
+    "normalized": "docker.io/clickhouse/clickhouse-server",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/clickhouse/clickhouse-server@sha256:b052ae89097c2d0f718b15ba1f4ce1c2a781eda8375980cf1cddd8f203981b58",
+    "effective_normalized": "docker.io/clickhouse/clickhouse-server",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/03-postgresql.yaml",
+    "line": 33,
+    "image": "docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7",
+    "normalized": "docker.io/library/postgres",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7",
+    "effective_normalized": "docker.io/library/postgres",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/03-postgresql.yaml",
+    "line": 131,
+    "image": "docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7",
+    "normalized": "docker.io/library/postgres",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7",
+    "effective_normalized": "docker.io/library/postgres",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/03-postgresql.yaml",
+    "line": 180,
+    "image": "docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7",
+    "normalized": "docker.io/library/postgres",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7",
+    "effective_normalized": "docker.io/library/postgres",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/03-postgresql.yaml",
+    "line": 320,
+    "image": "docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7",
+    "normalized": "docker.io/library/postgres",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7",
+    "effective_normalized": "docker.io/library/postgres",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/04-redis.yaml",
+    "line": 36,
+    "image": "docker.io/library/redis@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99",
+    "normalized": "docker.io/library/redis",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/library/redis@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99",
+    "effective_normalized": "docker.io/library/redis",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/04-redis.yaml",
+    "line": 138,
+    "image": "docker.io/library/redis@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99",
+    "normalized": "docker.io/library/redis",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/library/redis@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99",
+    "effective_normalized": "docker.io/library/redis",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/04-redis.yaml",
+    "line": 238,
+    "image": "docker.io/library/redis@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99",
+    "normalized": "docker.io/library/redis",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/library/redis@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99",
+    "effective_normalized": "docker.io/library/redis",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/05-opensearch.yaml",
+    "line": 46,
+    "image": "docker.io/opensearchproject/opensearch@sha256:61846553903d59d51914afbc31eae4653111b585d7ca7b2a1da91c5e8b897b28",
+    "normalized": "docker.io/opensearchproject/opensearch",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/opensearchproject/opensearch@sha256:61846553903d59d51914afbc31eae4653111b585d7ca7b2a1da91c5e8b897b28",
+    "effective_normalized": "docker.io/opensearchproject/opensearch",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/06-minio.yaml",
+    "line": 39,
+    "image": "quay.io/minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+    "normalized": "quay.io/minio/minio",
+    "status": "digest_pinned",
+    "effective_reference": "quay.io/minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+    "effective_normalized": "quay.io/minio/minio",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/06-minio.yaml",
+    "line": 151,
+    "image": "docker.io/library/nginx@sha256:8b1e78743a03dbb2c95171cc58639fef29abc8816598e27fb910ed2e621e589a",
+    "normalized": "docker.io/library/nginx",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/library/nginx@sha256:8b1e78743a03dbb2c95171cc58639fef29abc8816598e27fb910ed2e621e589a",
+    "effective_normalized": "docker.io/library/nginx",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/07-flink.yaml",
+    "line": 119,
+    "image": "docker.io/library/flink@sha256:f0e9ffd07f3d43291dfaf7e0609eb2871462193275d452affbe5fac091017ae3",
+    "normalized": "docker.io/library/flink",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/library/flink@sha256:f0e9ffd07f3d43291dfaf7e0609eb2871462193275d452affbe5fac091017ae3",
+    "effective_normalized": "docker.io/library/flink",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/07-flink.yaml",
+    "line": 303,
+    "image": "docker.io/library/flink@sha256:f0e9ffd07f3d43291dfaf7e0609eb2871462193275d452affbe5fac091017ae3",
+    "normalized": "docker.io/library/flink",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/library/flink@sha256:f0e9ffd07f3d43291dfaf7e0609eb2871462193275d452affbe5fac091017ae3",
+    "effective_normalized": "docker.io/library/flink",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/08-gateway.yaml",
+    "line": 48,
+    "image": "docker.io/apache/apisix@sha256:d3de70b3ea6f29fc0d2d812649c0e4be20ba6c00357e839311eae57ba6bc0059",
+    "normalized": "docker.io/apache/apisix",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/apache/apisix@sha256:d3de70b3ea6f29fc0d2d812649c0e4be20ba6c00357e839311eae57ba6bc0059",
+    "effective_normalized": "docker.io/apache/apisix",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/08-gateway.yaml",
+    "line": 183,
+    "image": "quay.io/keycloak/keycloak@sha256:f8ade94c1d0ad2f2fa7734a455fee5392764f402c43ca35e9af6bf63a2541dc9",
+    "normalized": "quay.io/keycloak/keycloak",
+    "status": "digest_pinned",
+    "effective_reference": "quay.io/keycloak/keycloak@sha256:f8ade94c1d0ad2f2fa7734a455fee5392764f402c43ca35e9af6bf63a2541dc9",
+    "effective_normalized": "quay.io/keycloak/keycloak",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/09-nebula-graph.yaml",
+    "line": 62,
+    "image": "docker.io/vesoft/nebula-metad@sha256:6d72a76fd44a738d1353186d8f2a8d467752239f4f85030f56c1b53b657b21d8",
+    "normalized": "docker.io/vesoft/nebula-metad",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/vesoft/nebula-metad@sha256:6d72a76fd44a738d1353186d8f2a8d467752239f4f85030f56c1b53b657b21d8",
+    "effective_normalized": "docker.io/vesoft/nebula-metad",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/09-nebula-graph.yaml",
+    "line": 188,
+    "image": "docker.io/vesoft/nebula-graphd@sha256:0457a789213499fbfa2a07fb01cbea174843e9617771536a5b67cd89d96bcbf9",
+    "normalized": "docker.io/vesoft/nebula-graphd",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/vesoft/nebula-graphd@sha256:0457a789213499fbfa2a07fb01cbea174843e9617771536a5b67cd89d96bcbf9",
+    "effective_normalized": "docker.io/vesoft/nebula-graphd",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/09-nebula-graph.yaml",
+    "line": 294,
+    "image": "docker.io/vesoft/nebula-storaged@sha256:29b9dccaecc339ed0e98b21575105eb45afc44afe84b8ca0cc9b0dca03c14fae",
+    "normalized": "docker.io/vesoft/nebula-storaged",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/vesoft/nebula-storaged@sha256:29b9dccaecc339ed0e98b21575105eb45afc44afe84b8ca0cc9b0dca03c14fae",
+    "effective_normalized": "docker.io/vesoft/nebula-storaged",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/09-nebula-graph.yaml",
+    "line": 341,
+    "image": "docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662",
+    "normalized": "docker.io/library/busybox",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662",
+    "effective_normalized": "docker.io/library/busybox",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/09-nebula-graph.yaml",
+    "line": 415,
+    "image": "docker.io/vesoft/nebula-graph-studio@sha256:5c97db40af3ef5130a8cec8b7a4a499d5710779890a3ca5a3e7f016989bcf88e",
+    "normalized": "docker.io/vesoft/nebula-graph-studio",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/vesoft/nebula-graph-studio@sha256:5c97db40af3ef5130a8cec8b7a4a499d5710779890a3ca5a3e7f016989bcf88e",
+    "effective_normalized": "docker.io/vesoft/nebula-graph-studio",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/09-nebula-graph.yaml",
+    "line": 480,
+    "image": "docker.io/library/nginx@sha256:8b1e78743a03dbb2c95171cc58639fef29abc8816598e27fb910ed2e621e589a",
+    "normalized": "docker.io/library/nginx",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/library/nginx@sha256:8b1e78743a03dbb2c95171cc58639fef29abc8816598e27fb910ed2e621e589a",
+    "effective_normalized": "docker.io/library/nginx",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/10-observability.yaml",
+    "line": 35,
+    "image": "docker.io/grafana/grafana@sha256:f9811e4e687ffecf1a43adb9b64096c50bc0d7a782f8608530f478b6542de7d5",
+    "normalized": "docker.io/grafana/grafana",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/grafana/grafana@sha256:f9811e4e687ffecf1a43adb9b64096c50bc0d7a782f8608530f478b6542de7d5",
+    "effective_normalized": "docker.io/grafana/grafana",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/10-observability.yaml",
+    "line": 136,
+    "image": "docker.io/grafana/loki@sha256:b025a0220f390baaab01578aea2fe0ba677584d9f248c3fe5af15f84dd1de60d",
+    "normalized": "docker.io/grafana/loki",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/grafana/loki@sha256:b025a0220f390baaab01578aea2fe0ba677584d9f248c3fe5af15f84dd1de60d",
+    "effective_normalized": "docker.io/grafana/loki",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/10-observability.yaml",
+    "line": 211,
+    "image": "docker.io/victoriametrics/victoria-metrics@sha256:b8703ff12ed437effad4fc36492fec14824277f2890a5876b8a9e6cfe5139839",
+    "normalized": "docker.io/victoriametrics/victoria-metrics",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/victoriametrics/victoria-metrics@sha256:b8703ff12ed437effad4fc36492fec14824277f2890a5876b8a9e6cfe5139839",
+    "effective_normalized": "docker.io/victoriametrics/victoria-metrics",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/11-management.yaml",
+    "line": 40,
+    "image": "quay.io/argoproj/argocli@sha256:91b9825f09a8d097cc7ca339ab3e8a6387d18a8c705819e37114600640d871b2",
+    "normalized": "quay.io/argoproj/argocli",
+    "status": "digest_pinned",
+    "effective_reference": "quay.io/argoproj/argocli@sha256:91b9825f09a8d097cc7ca339ab3e8a6387d18a8c705819e37114600640d871b2",
+    "effective_normalized": "quay.io/argoproj/argocli",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/11-management.yaml",
+    "line": 97,
+    "image": "quay.io/argoproj/workflow-controller@sha256:6ab0da144235e4b808178f1d1baa34b236e2a25bf9c0b9d4f40aec0f93aaa85e",
+    "normalized": "quay.io/argoproj/workflow-controller",
+    "status": "digest_pinned",
+    "effective_reference": "quay.io/argoproj/workflow-controller@sha256:6ab0da144235e4b808178f1d1baa34b236e2a25bf9c0b9d4f40aec0f93aaa85e",
+    "effective_normalized": "quay.io/argoproj/workflow-controller",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/11-management.yaml",
+    "line": 186,
+    "image": "docker.io/nacos/nacos-server@sha256:d70b20546fe59aeb86add0754db1dbc3a3067363e18599329c5163d0d8cd9cd8",
+    "normalized": "docker.io/nacos/nacos-server",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/nacos/nacos-server@sha256:d70b20546fe59aeb86add0754db1dbc3a3067363e18599329c5163d0d8cd9cd8",
+    "effective_normalized": "docker.io/nacos/nacos-server",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/11-management.yaml",
+    "line": 294,
+    "image": "docker.io/apache/streampark@sha256:c288e20ced36cec7a897f8f3806a04170a1916cba20feae1d5dc6e2d9770f920",
+    "normalized": "docker.io/apache/streampark",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/apache/streampark@sha256:c288e20ced36cec7a897f8f3806a04170a1916cba20feae1d5dc6e2d9770f920",
+    "effective_normalized": "docker.io/apache/streampark",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/11-management.yaml",
+    "line": 375,
+    "image": "docker.io/library/nginx@sha256:8b1e78743a03dbb2c95171cc58639fef29abc8816598e27fb910ed2e621e589a",
+    "normalized": "docker.io/library/nginx",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/library/nginx@sha256:8b1e78743a03dbb2c95171cc58639fef29abc8816598e27fb910ed2e621e589a",
+    "effective_normalized": "docker.io/library/nginx",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/infrastructure/11-management.yaml",
+    "line": 439,
+    "image": "docker.io/apicurio/apicurio-registry-mem@sha256:25be1769b688af7d3d7d35404429869bb0db89375b5a4751de4d584049c39c84",
+    "normalized": "docker.io/apicurio/apicurio-registry-mem",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/apicurio/apicurio-registry-mem@sha256:25be1769b688af7d3d7d35404429869bb0db89375b5a4751de4d584049c39c84",
+    "effective_normalized": "docker.io/apicurio/apicurio-registry-mem",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/init-jobs/01-kafka-topics.yaml",
+    "line": 14,
+    "image": "docker.io/apache/kafka@sha256:32217f809d3fba75ee46e93b1fdbea4aacc0821139443efb73691a913948c31a",
+    "normalized": "docker.io/apache/kafka",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/apache/kafka@sha256:32217f809d3fba75ee46e93b1fdbea4aacc0821139443efb73691a913948c31a",
+    "effective_normalized": "docker.io/apache/kafka",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+    "line": 305,
+    "image": "docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7",
+    "normalized": "docker.io/library/postgres",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7",
+    "effective_normalized": "docker.io/library/postgres",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/init-jobs/03-clickhouse-schema.yaml",
+    "line": 31,
+    "image": "docker.io/clickhouse/clickhouse-server@sha256:b052ae89097c2d0f718b15ba1f4ce1c2a781eda8375980cf1cddd8f203981b58",
+    "normalized": "docker.io/clickhouse/clickhouse-server",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/clickhouse/clickhouse-server@sha256:b052ae89097c2d0f718b15ba1f4ce1c2a781eda8375980cf1cddd8f203981b58",
+    "effective_normalized": "docker.io/clickhouse/clickhouse-server",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/init-jobs/04-opensearch-templates.yaml",
+    "line": 14,
+    "image": "docker.io/curlimages/curl@sha256:1ab04d023ece37e6ec991bf3306ad04e0ef0084e94a5c6b6563cfcb9563169db",
+    "normalized": "docker.io/curlimages/curl",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/curlimages/curl@sha256:1ab04d023ece37e6ec991bf3306ad04e0ef0084e94a5c6b6563cfcb9563169db",
+    "effective_normalized": "docker.io/curlimages/curl",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/init-jobs/05-nebula-schema.yaml",
+    "line": 16,
+    "image": "busybox:1.36",
+    "normalized": "docker.io/library/busybox:1.36",
+    "status": "lock_covered",
+    "effective_reference": "busybox:1.36",
+    "effective_normalized": "docker.io/library/busybox:1.36",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "repo_digest",
+      "lock_reference": "busybox:1.36",
+      "repo_digest": "docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662",
+      "image_id": "sha256:b116e155074440ffd9e449559433feb4cd2341eb3554b1da1c638c976e56451d",
+      "source": "live-pod-image-id-and-local-cri"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/init-jobs/05-nebula-schema.yaml",
+    "line": 40,
+    "image": "vesoft/nebula-console:v3.6.0",
+    "normalized": "docker.io/vesoft/nebula-console:v3.6.0",
+    "status": "lock_covered",
+    "effective_reference": "vesoft/nebula-console:v3.6.0",
+    "effective_normalized": "docker.io/vesoft/nebula-console:v3.6.0",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "repo_digest",
+      "lock_reference": "vesoft/nebula-console:v3.6.0",
+      "repo_digest": "docker.io/vesoft/nebula-console@sha256:0bc9e8ee62ac62b85959d7ed9538238ae34c33cea9e291ee124184f55be7048c",
+      "image_id": "sha256:73dde089847b2e7be0b3e12a438aa50dab9d29587a3f37512daf74271d6f7eb1",
+      "source": "local-cri"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/init-jobs/06-minio-lifecycle.yaml",
+    "line": 36,
+    "image": "docker.io/minio/mc@sha256:eb4ea9884b77704230e2423e9004d2fa738dc272876b9cc41a297d29443b8780",
+    "normalized": "docker.io/minio/mc",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/minio/mc@sha256:eb4ea9884b77704230e2423e9004d2fa738dc272876b9cc41a297d29443b8780",
+    "effective_normalized": "docker.io/minio/mc",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  },
+  {
+    "path": "deployments/kubernetes/init-jobs/06-minio-lifecycle.yaml",
+    "line": 91,
+    "image": "docker.io/minio/mc@sha256:eb4ea9884b77704230e2423e9004d2fa738dc272876b9cc41a297d29443b8780",
+    "normalized": "docker.io/minio/mc",
+    "status": "digest_pinned",
+    "effective_reference": "docker.io/minio/mc@sha256:eb4ea9884b77704230e2423e9004d2fa738dc272876b9cc41a297d29443b8780",
+    "effective_normalized": "docker.io/minio/mc",
+    "template_parameter": "",
+    "mutable_tag": false,
+    "evidence": {
+      "type": "manifest_digest"
+    },
+    "reason": ""
+  }
+]

@@ -1,0 +1,21 @@
+Generate a 3840x2160 PNG static 4K background asset for traffic-analysis-platform.
+
+Use case:
+- Evidence and forensics chain background for PCAP, session, log, hash chain, audit, and case investigation pages.
+
+Scene:
+- A dark forensic workbench made of abstract evidence objects.
+- Include packet capture fragments, session timelines, immutable hash chain links, audit trail blocks, object storage capsules, log shards, and case evidence bundles.
+- Show provenance as connected luminous chains, with a clear sense of custody and verification.
+- Keep it abstract and product-oriented, not a crime scene.
+
+Visual style:
+- Professional cyber forensics, precise, trustworthy, and high-resolution.
+- Deep black/navy base, cyan evidence links, blue storage glow, green verified markers, amber pending-review accents.
+- Use depth, glass-like panels, and fine technical texture without turning it into a UI screenshot.
+- Reserve broad dark space in the left-center and upper-right for overlay panels.
+
+Constraints:
+- No readable text, case names, personal data, real IP addresses, credentials, logos, people, hands, browser chrome, buttons, tables, or forms.
+- This must be a static background asset, not an application screen.
+

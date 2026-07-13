@@ -1,0 +1,18 @@
+review_required: true
+selected_cni: TBD
+selected_version: TBD
+candidate_options:
+  - name: Calico
+    policy_capable: true
+    notes: TBD
+  - name: Cilium
+    policy_capable: true
+    notes: TBD
+  - name: Antrea
+    policy_capable: true
+    notes: TBD
+approval:
+  sre_owner: TBD
+  security_owner: TBD
+  maintenance_window: TBD
+  rollback_owner: TBD

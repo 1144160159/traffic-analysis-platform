@@ -1,0 +1,138 @@
+{
+  "status": "pass",
+  "acceptance_eligible": false,
+  "reason": "Windows Chrome CDP evidence. Formal legacy gate expects Desktop Chrome extension receiver metadata and pixel diff; this capture proves real Windows Chrome rendering, route, runtime events, viewport, and layout metrics.",
+  "backend": "windows-chrome-cdp",
+  "target_id": "campaigns",
+  "route_id": "campaigns",
+  "route": "/campaigns",
+  "resolved_path": "/campaigns",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/campaigns.png",
+  "final_url": "http://10.0.5.8:30180/campaigns?fullRouteEvidenceTs=1783072625072",
+  "final_path": "/campaigns",
+  "protected_route": true,
+  "smoke_hash_consumed": true,
+  "uploaded_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "stored_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "expected_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "desktop_viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "post_capture_resize": false,
+  "no_4xx_5xx": true,
+  "no_requestfailed": true,
+  "no_console_error": true,
+  "no_pageerror": true,
+  "errors": {
+    "requestfailed": [],
+    "badResponses": [],
+    "console": [],
+    "pageerror": []
+  },
+  "screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaigns/actual-1920.png",
+  "mirror_screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/evidence/windows-chrome-cdp-20260703-full-route-desktop-r6/campaigns-1920x1080.png",
+  "metrics": {
+    "title": "园区网络全流量采集与分析系统",
+    "location": "http://10.0.5.8:30180/campaigns?fullRouteEvidenceTs=1783072625072",
+    "viewport": {
+      "width": 1920,
+      "height": 1080,
+      "dpr": 1.0000000298023224
+    },
+    "scroll": {
+      "horizontalOverflow": 0,
+      "verticalOverflow": 0,
+      "bodyScrollWidth": 1920,
+      "bodyClientWidth": 1920,
+      "bodyScrollHeight": 1080,
+      "bodyClientHeight": 1080
+    },
+    "headings": [
+      "战役列表",
+      "风险分布",
+      "战役列表（共 8 个）",
+      "战役阶段视图（ATT&CK）",
+      "当前选中战役",
+      "影响范围",
+      "证据完整度",
+      "状态流转"
+    ],
+    "buttons": [
+      "移动端导航",
+      "PCAP检索",
+      "资产检索",
+      "规则检索",
+      "脚本中心",
+      "帮助中心",
+      "更多应用",
+      "Ccodex-ui-desktop-admin系统管理员在线",
+      "战役详情",
+      "指派负责人",
+      "变更状态",
+      "重 置",
+      "查 询"
+    ],
+    "visibleText": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-03 17:57:05 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 采集监测 威胁分析 告警中心 128 战役列表 攻击链分析 加密流量 取证分析 资产图谱 检测运营 审计配置 C codex-ui-desktop-admin 系统管理员 在线 战役列表 战役详情 战役总数 2.9M 个 真实 API 活跃战役 8 个 真实 API 影响资产 16 台 真实 API 最高风险 0 个 真实 API 告警总数 32 条 真实 API 平均持续时间 0 小时 真实 API 风险分布 高风险 18 (31.0%) 中风险 24 (41.4%) 低风险 16 (27.6%) 战役列表（共 8 个） 指派负责人 变更状态 风险等级 全部 状态 全部 阶段 全部 重 置 查 询 战役名称 阶段 风险等级 影响资产 告警数 首次发现 最近活动 状态 操作 campaign-exfil-default-1782729598739-e1d2dc37 外联通信 中风险 2 2 06-29 10:39 06-29 10:40 调查中 campaign-exfil-default-1782729526884-0a78f734 外联通信 中风险 2 3 06-29 10:38 06-29 10:40 调查中 campaign-exfil-default-1782728816996-7104cd75 外联通信 中风险 2 6 06-29 10:26 06-29 10:40 调查中 campaign-exfil-default-1782729489286-50826ce0 外联通信 中风险 2 4 06-29 10:38 06-29 10:40 调查中 campaign-exfil-default-1782729364343-a5916198 外联通信 中风险 2 5 06-29 10:36 06-29 10:40 调查中 campaign-exfil-default-1782728816996-34c06c33 外联通信 中风险 2 6 06-29 10:26 06-29 10:40 调查中 campaign-exfil-default-1782729587108-a7444b18 外联通信 中风险 2 1 06-29 10:39 06-29 10:40 调查中 campaign-exfil-default-1782728721658-72087a1e 外联通信 中风险 2 5 06-29 10:25 06-29 10:40 调查",
+    "elements": {
+      "pageHero": {
+        "selector": ".taf-page-hero",
+        "visible": false
+      },
+      "panelHeader": {
+        "selector": ".taf-panel__header",
+        "visible": true,
+        "text": "战役列表（共 8 个）指派负责人变更状态",
+        "x": 175,
+        "y": 307,
+        "right": 783,
+        "bottom": 343,
+        "w": 609,
+        "h": 36,
+        "display": "flex",
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      "table": {
+        "selector": ".ant-table, .taf-table, table",
+        "visible": true,
+        "text": "战役名称阶段风险等级影响资产告警数首次发现最近活动状态操作campaign-exfil-default-1782729598739-e1d2dc37外联通信中风险2206-29 10:3906-29 10:40调查中campaign-exfil-default-1782729526884-0a78f734外联通信中风险2306-29 10:3806-29 10:40调查中campaign-exfil-default-1782728816996-7104cd75外联通信中风险2",
+        "x": 185,
+        "y": 405,
+        "right": 773,
+        "bottom": 769,
+        "w": 589,
+        "h": 364,
+        "display": "block",
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      "topicTitlebar": {
+        "selector": ".taf-topic-titlebar",
+        "visible": false
+      },
+      "topicFacts": {
+        "selector": ".taf-topic-facts",
+        "visible": false
+      },
+      "topicKpis": {
+        "selector": ".taf-topic-kpis",
+        "visible": false
+      },
+      "topicGrid": {
+        "selector": ".taf-topic-grid",
+        "visible": false
+      }
+    },
+    "overlapChecks": {}
+  }
+}

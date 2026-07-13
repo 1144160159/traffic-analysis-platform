@@ -1,0 +1,7 @@
+{
+  "describe_rc": 0,
+  "describe_mode": "secure",
+  "client_user_present": true,
+  "broker_user_present": true,
+  "scram_prereq_ready": true
+}

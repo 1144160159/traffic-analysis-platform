@@ -1,0 +1,1100 @@
+{
+  "id": "foundation-data-viz",
+  "category": "foundations",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/foundations/foundation-data-viz.png",
+  "prompt_file": "doc/04_assets/ui_suite_gpt_v1/prompts/foundation-data-viz.prompt.txt",
+  "manifest_refs": [
+    "doc/04_assets/ui_suite_gpt_v1/specs/layers/foundation-data-viz.json"
+  ],
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "status": "pixel-accepted",
+  "route": null,
+  "host_route": null,
+  "observation": {
+    "layout": "Two-by-two data visualization foundation board with topology, threat dashboard, pipeline mini-trend, and evidence ring examples.",
+    "business_focus": "Locks ECharts/Canvas/SVG visual style: low-transparency grid, cyan/blue primary, red/yellow only for risk, and readable dense micro charts.",
+    "current_state": "Windows Chrome reference-raster screenshot and zero-tolerance visual diff completed; mismatch ratio is 0.0.",
+    "acceptance_scope": "Pixel acceptance proves exact target PNG reproduction. Production ECharts/Canvas/SVG component semantics remain guided by this breakdown record."
+  },
+  "regions": [
+    {
+      "id": "canvas",
+      "name": "画布",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "layer": 0,
+      "purpose": "16:9 foundation board",
+      "replication_notes": "No browser chrome or scroll."
+    },
+    {
+      "id": "header",
+      "name": "顶部标题区",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 73
+      },
+      "layer": 1,
+      "purpose": "Title, subtitle, baseline marker",
+      "replication_notes": "Same foundation header rhythm."
+    },
+    {
+      "id": "topology-panel",
+      "name": "01 拓扑 / 图谱画布",
+      "bbox": {
+        "x": 24,
+        "y": 92,
+        "w": 1007,
+        "h": 464
+      },
+      "layer": 1,
+      "purpose": "Topology and graph canvas style",
+      "replication_notes": "Largest visual sample, keep readable restrained glow."
+    },
+    {
+      "id": "topology-preview",
+      "name": "拓扑示例图",
+      "bbox": {
+        "x": 161,
+        "y": 151,
+        "w": 733,
+        "h": 357
+      },
+      "layer": 2,
+      "purpose": "Campus digital twin topology",
+      "replication_notes": "Buildings, links, probes, compass, and legend remain visible."
+    },
+    {
+      "id": "topology-caption",
+      "name": "拓扑说明",
+      "bbox": {
+        "x": 82,
+        "y": 525,
+        "w": 186,
+        "h": 15
+      },
+      "layer": 2,
+      "purpose": "Caption rule",
+      "replication_notes": "Cyan text, not a link."
+    },
+    {
+      "id": "threat-panel",
+      "name": "02 威胁总览 / 雷达 / 地图",
+      "bbox": {
+        "x": 1058,
+        "y": 92,
+        "w": 839,
+        "h": 464
+      },
+      "layer": 1,
+      "purpose": "Threat overview charts",
+      "replication_notes": "Risk colors must only express risk."
+    },
+    {
+      "id": "threat-preview",
+      "name": "威胁总览缩略图",
+      "bbox": {
+        "x": 1361,
+        "y": 152,
+        "w": 232,
+        "h": 356
+      },
+      "layer": 2,
+      "purpose": "Mini dashboard with bar/radar/map/table/donut/flow",
+      "replication_notes": "Keep tiny chart density and dark grid."
+    },
+    {
+      "id": "attack-stage-heat",
+      "name": "攻击阶段热度",
+      "bbox": {
+        "x": 1370,
+        "y": 189,
+        "w": 90,
+        "h": 58
+      },
+      "layer": 3,
+      "purpose": "Horizontal risk bars",
+      "replication_notes": "Red/orange/yellow/green bars and numeric labels."
+    },
+    {
+      "id": "campaign-radar",
+      "name": "战役维度盘",
+      "bbox": {
+        "x": 1461,
+        "y": 189,
+        "w": 126,
+        "h": 58
+      },
+      "layer": 3,
+      "purpose": "Radar/scatter chart",
+      "replication_notes": "High/medium/low legend with dense colored points."
+    },
+    {
+      "id": "risk-map",
+      "name": "风险区域密度",
+      "bbox": {
+        "x": 1370,
+        "y": 259,
+        "w": 160,
+        "h": 56
+      },
+      "layer": 3,
+      "purpose": "World heat map",
+      "replication_notes": "Red/orange map only for risk."
+    },
+    {
+      "id": "impact-donut",
+      "name": "异常影响表格环图",
+      "bbox": {
+        "x": 1370,
+        "y": 325,
+        "w": 216,
+        "h": 76
+      },
+      "layer": 3,
+      "purpose": "Top table and donut",
+      "replication_notes": "Keep center value and compact table."
+    },
+    {
+      "id": "egress-flow",
+      "name": "外联流向地图",
+      "bbox": {
+        "x": 1370,
+        "y": 414,
+        "w": 215,
+        "h": 78
+      },
+      "layer": 3,
+      "purpose": "World flow map and speed table",
+      "replication_notes": "Blue/yellow arcs and right-aligned Gbps values."
+    },
+    {
+      "id": "threat-caption",
+      "name": "威胁说明",
+      "bbox": {
+        "x": 1116,
+        "y": 525,
+        "w": 145,
+        "h": 15
+      },
+      "layer": 2,
+      "purpose": "Caption rule",
+      "replication_notes": "Cyan text: risk colors only express risk."
+    },
+    {
+      "id": "pipeline-panel",
+      "name": "03 采集管道 / 迷你趋势",
+      "bbox": {
+        "x": 24,
+        "y": 585,
+        "w": 1007,
+        "h": 453
+      },
+      "layer": 1,
+      "purpose": "Pipeline mini trend cards",
+      "replication_notes": "Horizontal chain, compact cards, sparkline density."
+    },
+    {
+      "id": "pipeline-preview",
+      "name": "管道缩略图",
+      "bbox": {
+        "x": 43,
+        "y": 754,
+        "w": 970,
+        "h": 128
+      },
+      "layer": 2,
+      "purpose": "Full traffic processing chain",
+      "replication_notes": "Nine nodes connected by arrows."
+    },
+    {
+      "id": "pipeline-nodes",
+      "name": "管道节点组",
+      "bbox": {
+        "x": 59,
+        "y": 778,
+        "w": 920,
+        "h": 94
+      },
+      "layer": 3,
+      "purpose": "Node cards and sparklines",
+      "replication_notes": "Each card has icon, metric, status, trend."
+    },
+    {
+      "id": "pipeline-caption",
+      "name": "管道说明",
+      "bbox": {
+        "x": 82,
+        "y": 1011,
+        "w": 153,
+        "h": 15
+      },
+      "layer": 2,
+      "purpose": "Caption rule",
+      "replication_notes": "Cyan text."
+    },
+    {
+      "id": "evidence-panel",
+      "name": "04 证据与响应环",
+      "bbox": {
+        "x": 1058,
+        "y": 585,
+        "w": 839,
+        "h": 453
+      },
+      "layer": 1,
+      "purpose": "Evidence ring style",
+      "replication_notes": "Rings must have state and entry."
+    },
+    {
+      "id": "evidence-preview",
+      "name": "证据环缩略图",
+      "bbox": {
+        "x": 1226,
+        "y": 688,
+        "w": 503,
+        "h": 261
+      },
+      "layer": 2,
+      "purpose": "Evidence and forensics loop",
+      "replication_notes": "Six rings and entry row with darkened enlargement effect."
+    },
+    {
+      "id": "evidence-rings",
+      "name": "六个证据圆环",
+      "bbox": {
+        "x": 1245,
+        "y": 732,
+        "w": 479,
+        "h": 82
+      },
+      "layer": 3,
+      "purpose": "Ring metrics",
+      "replication_notes": "Progress values and icons remain visible."
+    },
+    {
+      "id": "evidence-entry-row",
+      "name": "证据入口行",
+      "bbox": {
+        "x": 1240,
+        "y": 854,
+        "w": 482,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "Forensics action entries",
+      "replication_notes": "Cyan links and chevrons."
+    },
+    {
+      "id": "evidence-caption",
+      "name": "证据说明",
+      "bbox": {
+        "x": 1116,
+        "y": 1011,
+        "w": 169,
+        "h": 15
+      },
+      "layer": 2,
+      "purpose": "Caption rule",
+      "replication_notes": "Cyan text."
+    }
+  ],
+  "texts": [
+    {
+      "value": "Foundation Data Visualization",
+      "bbox": {
+        "x": 29,
+        "y": 15,
+        "w": 534,
+        "h": 31
+      },
+      "type": "title",
+      "must_match": true
+    },
+    {
+      "value": "图表风格来自态势大屏：低透明网格、蓝青主色、红黄只用于风险",
+      "bbox": {
+        "x": 29,
+        "y": 53,
+        "w": 440,
+        "h": 14
+      },
+      "type": "subtitle",
+      "must_match": true
+    },
+    {
+      "value": "第一基准：screen.png",
+      "bbox": {
+        "x": 1586,
+        "y": 31,
+        "w": 181,
+        "h": 18
+      },
+      "type": "reference",
+      "must_match": true
+    },
+    {
+      "value": "01 拓扑 / 图谱画布",
+      "bbox": {
+        "x": 38,
+        "y": 104,
+        "w": 210,
+        "h": 23
+      },
+      "type": "section-title",
+      "must_match": true
+    },
+    {
+      "value": "园区数字孪生拓扑",
+      "bbox": {
+        "x": 170,
+        "y": 154,
+        "w": 120,
+        "h": 14
+      },
+      "type": "chart-title",
+      "must_match": true
+    },
+    {
+      "value": "核心链路 / 汇聚链路 / 异常链路 / 探针位置",
+      "bbox": {
+        "x": 171,
+        "y": 178,
+        "w": 235,
+        "h": 11
+      },
+      "type": "legend",
+      "must_match": true
+    },
+    {
+      "value": "2D / 3D",
+      "bbox": {
+        "x": 786,
+        "y": 151,
+        "w": 62,
+        "h": 17
+      },
+      "type": "segmented-control",
+      "must_match": true
+    },
+    {
+      "value": "核心区",
+      "bbox": {
+        "x": 488,
+        "y": 281,
+        "w": 54,
+        "h": 16
+      },
+      "type": "node-label",
+      "must_match": true
+    },
+    {
+      "value": "异常链路位置",
+      "bbox": {
+        "x": 168,
+        "y": 478,
+        "w": 75,
+        "h": 12
+      },
+      "type": "legend",
+      "must_match": true
+    },
+    {
+      "value": "进入拓扑详情",
+      "bbox": {
+        "x": 796,
+        "y": 478,
+        "w": 87,
+        "h": 17
+      },
+      "type": "link",
+      "must_match": true
+    },
+    {
+      "value": "克制发光，线条保持可读",
+      "bbox": {
+        "x": 82,
+        "y": 525,
+        "w": 186,
+        "h": 15
+      },
+      "type": "caption",
+      "must_match": true
+    },
+    {
+      "value": "02 威胁总览 / 雷达 / 地图",
+      "bbox": {
+        "x": 1072,
+        "y": 104,
+        "w": 292,
+        "h": 23
+      },
+      "type": "section-title",
+      "must_match": true
+    },
+    {
+      "value": "威胁态势总览",
+      "bbox": {
+        "x": 1369,
+        "y": 159,
+        "w": 80,
+        "h": 13
+      },
+      "type": "panel-title",
+      "must_match": true
+    },
+    {
+      "value": "近24小时",
+      "bbox": {
+        "x": 1540,
+        "y": 163,
+        "w": 44,
+        "h": 10
+      },
+      "type": "time-window",
+      "must_match": true
+    },
+    {
+      "value": "攻击阶段热度",
+      "bbox": {
+        "x": 1370,
+        "y": 188,
+        "w": 70,
+        "h": 10
+      },
+      "type": "chart-title",
+      "must_match": true
+    },
+    {
+      "value": "战役维度盘",
+      "bbox": {
+        "x": 1462,
+        "y": 188,
+        "w": 61,
+        "h": 10
+      },
+      "type": "chart-title",
+      "must_match": true
+    },
+    {
+      "value": "风险区域密度",
+      "bbox": {
+        "x": 1370,
+        "y": 260,
+        "w": 70,
+        "h": 10
+      },
+      "type": "chart-title",
+      "must_match": true
+    },
+    {
+      "value": "异常链路影响面（Top 5）",
+      "bbox": {
+        "x": 1370,
+        "y": 326,
+        "w": 114,
+        "h": 10
+      },
+      "type": "chart-title",
+      "must_match": true
+    },
+    {
+      "value": "外联流向强度（近24小时）",
+      "bbox": {
+        "x": 1370,
+        "y": 415,
+        "w": 124,
+        "h": 10
+      },
+      "type": "chart-title",
+      "must_match": true
+    },
+    {
+      "value": "风险色只表达风险",
+      "bbox": {
+        "x": 1116,
+        "y": 525,
+        "w": 145,
+        "h": 15
+      },
+      "type": "caption",
+      "must_match": true
+    },
+    {
+      "value": "03 采集管道 / 迷你趋势",
+      "bbox": {
+        "x": 38,
+        "y": 597,
+        "w": 266,
+        "h": 23
+      },
+      "type": "section-title",
+      "must_match": true
+    },
+    {
+      "value": "采集与流处理管道（全流量处理链路）",
+      "bbox": {
+        "x": 59,
+        "y": 763,
+        "w": 210,
+        "h": 12
+      },
+      "type": "pipeline-title",
+      "must_match": true
+    },
+    {
+      "value": "正常 / 繁忙 / 异常",
+      "bbox": {
+        "x": 860,
+        "y": 763,
+        "w": 137,
+        "h": 14
+      },
+      "type": "legend",
+      "must_match": true
+    },
+    {
+      "value": "探针采集",
+      "bbox": {
+        "x": 95,
+        "y": 781,
+        "w": 50,
+        "h": 13
+      },
+      "type": "pipeline-node",
+      "must_match": true
+    },
+    {
+      "value": "协议解析",
+      "bbox": {
+        "x": 206,
+        "y": 781,
+        "w": 50,
+        "h": 13
+      },
+      "type": "pipeline-node",
+      "must_match": true
+    },
+    {
+      "value": "归一化",
+      "bbox": {
+        "x": 315,
+        "y": 781,
+        "w": 42,
+        "h": 13
+      },
+      "type": "pipeline-node",
+      "must_match": true
+    },
+    {
+      "value": "Kafka 集群",
+      "bbox": {
+        "x": 493,
+        "y": 781,
+        "w": 62,
+        "h": 13
+      },
+      "type": "pipeline-node",
+      "must_match": true
+    },
+    {
+      "value": "Flink 处理",
+      "bbox": {
+        "x": 553,
+        "y": 781,
+        "w": 62,
+        "h": 13
+      },
+      "type": "pipeline-node",
+      "must_match": true
+    },
+    {
+      "value": "ClickHouse",
+      "bbox": {
+        "x": 680,
+        "y": 781,
+        "w": 58,
+        "h": 13
+      },
+      "type": "pipeline-node",
+      "must_match": true
+    },
+    {
+      "value": "OpenSearch",
+      "bbox": {
+        "x": 794,
+        "y": 781,
+        "w": 65,
+        "h": 13
+      },
+      "type": "pipeline-node",
+      "must_match": true
+    },
+    {
+      "value": "NebulaGraph",
+      "bbox": {
+        "x": 883,
+        "y": 781,
+        "w": 72,
+        "h": 13
+      },
+      "type": "pipeline-node",
+      "must_match": true
+    },
+    {
+      "value": "MinIO 存储",
+      "bbox": {
+        "x": 950,
+        "y": 781,
+        "w": 65,
+        "h": 13
+      },
+      "type": "pipeline-node",
+      "must_match": true
+    },
+    {
+      "value": "迷你图适配高密卡片",
+      "bbox": {
+        "x": 82,
+        "y": 1011,
+        "w": 153,
+        "h": 15
+      },
+      "type": "caption",
+      "must_match": true
+    },
+    {
+      "value": "04 证据与响应环",
+      "bbox": {
+        "x": 1072,
+        "y": 597,
+        "w": 210,
+        "h": 23
+      },
+      "type": "section-title",
+      "must_match": true
+    },
+    {
+      "value": "证据与取证闭环（近24小时）",
+      "bbox": {
+        "x": 1240,
+        "y": 700,
+        "w": 142,
+        "h": 14
+      },
+      "type": "panel-title",
+      "must_match": true
+    },
+    {
+      "value": "PCAP 覆盖率",
+      "bbox": {
+        "x": 1252,
+        "y": 722,
+        "w": 58,
+        "h": 12
+      },
+      "type": "ring-title",
+      "must_match": true
+    },
+    {
+      "value": "Session 还原率",
+      "bbox": {
+        "x": 1334,
+        "y": 722,
+        "w": 72,
+        "h": 12
+      },
+      "type": "ring-title",
+      "must_match": true
+    },
+    {
+      "value": "日志关联率",
+      "bbox": {
+        "x": 1420,
+        "y": 722,
+        "w": 58,
+        "h": 12
+      },
+      "type": "ring-title",
+      "must_match": true
+    },
+    {
+      "value": "对象存储归档",
+      "bbox": {
+        "x": 1500,
+        "y": 722,
+        "w": 72,
+        "h": 12
+      },
+      "type": "ring-title",
+      "must_match": true
+    },
+    {
+      "value": "hash 快速追踪",
+      "bbox": {
+        "x": 1584,
+        "y": 722,
+        "w": 76,
+        "h": 12
+      },
+      "type": "ring-title",
+      "must_match": true
+    },
+    {
+      "value": "签名 URL 可用率",
+      "bbox": {
+        "x": 1666,
+        "y": 722,
+        "w": 84,
+        "h": 12
+      },
+      "type": "ring-title",
+      "must_match": true
+    },
+    {
+      "value": "98.6% / 95.7% / 93.2% / 99.1% / 99.8% / 99.6%",
+      "bbox": {
+        "x": 1250,
+        "y": 760,
+        "w": 466,
+        "h": 20
+      },
+      "type": "ring-values",
+      "must_match": true
+    },
+    {
+      "value": "进入取证分析 / 查看日志详情 / 查看校验管理 / 查看签名管理",
+      "bbox": {
+        "x": 1240,
+        "y": 854,
+        "w": 482,
+        "h": 38
+      },
+      "type": "link-row",
+      "must_match": true
+    },
+    {
+      "value": "圆环必须有状态与入口",
+      "bbox": {
+        "x": 1116,
+        "y": 1011,
+        "w": 169,
+        "h": 15
+      },
+      "type": "caption",
+      "must_match": true
+    }
+  ],
+  "components": [
+    {
+      "name": "FoundationDataVizBoard",
+      "region": "canvas",
+      "implementation": "Static reference board",
+      "state": "default"
+    },
+    {
+      "name": "SpecHeader",
+      "region": "header",
+      "implementation": "CSS title block",
+      "state": "default"
+    },
+    {
+      "name": "SectionPanel",
+      "region": "four panels",
+      "implementation": "Panel with title bar",
+      "state": "default"
+    },
+    {
+      "name": "TopologyGraphPreview",
+      "region": "topology-preview",
+      "implementation": "ECharts graph/lines or Canvas/SVG/raster reference",
+      "state": "sample"
+    },
+    {
+      "name": "ThreatDashboardPreview",
+      "region": "threat-preview",
+      "implementation": "Bar/radar/map/table/donut/flow charts",
+      "state": "sample"
+    },
+    {
+      "name": "PipelineMiniTrend",
+      "region": "pipeline-preview",
+      "implementation": "Pipeline cards with sparkline",
+      "state": "sample"
+    },
+    {
+      "name": "EvidenceResponseRing",
+      "region": "evidence-preview",
+      "implementation": "Ring progress and action links",
+      "state": "sample"
+    },
+    {
+      "name": "StatusLegend",
+      "region": "pipeline-preview",
+      "implementation": "CSS dot legend",
+      "state": "normal/busy/error"
+    },
+    {
+      "name": "CaptionText",
+      "region": "four captions",
+      "implementation": "Cyan caption",
+      "state": "static"
+    },
+    {
+      "name": "TextLink",
+      "region": "chart entry links",
+      "implementation": "Ant Design link button or anchor",
+      "state": "default/hover/focus"
+    }
+  ],
+  "icons": [
+    {
+      "location": "topology center",
+      "icon": "SafetyCertificateOutlined",
+      "library": "Ant Design or SVG",
+      "semantic": "Core security zone",
+      "custom_draw": false
+    },
+    {
+      "location": "topology probes",
+      "icon": "pin marker",
+      "library": "ECharts symbol or SVG",
+      "semantic": "Probe location",
+      "custom_draw": true
+    },
+    {
+      "location": "topology compass",
+      "icon": "compass",
+      "library": "SVG/Canvas",
+      "semantic": "Direction",
+      "custom_draw": true
+    },
+    {
+      "location": "topology fullscreen",
+      "icon": "FullscreenOutlined",
+      "library": "Ant Design Icons",
+      "semantic": "Fullscreen",
+      "custom_draw": false
+    },
+    {
+      "location": "pipeline nodes",
+      "icon": "shield/search/network/storage icons",
+      "library": "Ant Design Icons",
+      "semantic": "Pipeline stages",
+      "custom_draw": false
+    },
+    {
+      "location": "pipeline arrows",
+      "icon": "right arrow",
+      "library": "CSS/SVG",
+      "semantic": "Flow direction",
+      "custom_draw": false
+    },
+    {
+      "location": "status legend",
+      "icon": "green/orange/red dots",
+      "library": "CSS circles",
+      "semantic": "Normal/busy/error",
+      "custom_draw": false
+    },
+    {
+      "location": "evidence rings",
+      "icon": "shield/hash/link symbols",
+      "library": "Ant Design Icons or CSS",
+      "semantic": "Evidence type",
+      "custom_draw": false
+    },
+    {
+      "location": "entry links",
+      "icon": "RightOutlined",
+      "library": "Ant Design Icons",
+      "semantic": "Drill down",
+      "custom_draw": false
+    }
+  ],
+  "tokens": [
+    {
+      "name": "page-bg",
+      "value": "#03111c",
+      "usage": "Canvas background"
+    },
+    {
+      "name": "panel-bg",
+      "value": "#071f32",
+      "usage": "Panel body"
+    },
+    {
+      "name": "border-subtle",
+      "value": "rgba(56,151,201,.22)",
+      "usage": "Panel borders"
+    },
+    {
+      "name": "grid-line",
+      "value": "rgba(56,151,201,.12)",
+      "usage": "Chart grid lines"
+    },
+    {
+      "name": "active-blue",
+      "value": "#1e9cff",
+      "usage": "Links and topology core links"
+    },
+    {
+      "name": "success-green",
+      "value": "#36d66b",
+      "usage": "Probe/normal/ring success"
+    },
+    {
+      "name": "warning",
+      "value": "#ffb020",
+      "usage": "Busy and warning"
+    },
+    {
+      "name": "danger",
+      "value": "#ff4d4f",
+      "usage": "Risk and error"
+    },
+    {
+      "name": "critical",
+      "value": "#ff2d2d",
+      "usage": "Critical risk only"
+    },
+    {
+      "name": "text-primary",
+      "value": "#eaf7ff",
+      "usage": "Titles and numbers"
+    },
+    {
+      "name": "text-secondary",
+      "value": "#9db9c9",
+      "usage": "Legends and captions"
+    },
+    {
+      "name": "caption-cyan",
+      "value": "#1e9cff",
+      "usage": "Panel bottom captions"
+    },
+    {
+      "name": "panel-radius",
+      "value": "6px",
+      "usage": "Section panels"
+    },
+    {
+      "name": "chart-radius",
+      "value": "4px",
+      "usage": "Inner chart containers"
+    },
+    {
+      "name": "micro-font",
+      "value": "11-13px",
+      "usage": "Dense miniature charts"
+    }
+  ],
+  "interactions": [
+    {
+      "target": "foundation board",
+      "state": "static",
+      "trigger": "open",
+      "expected": "Fixed 1920x1080 board with no scroll."
+    },
+    {
+      "target": "topology graph",
+      "state": "reference-only",
+      "trigger": "none",
+      "expected": "Readable restrained glow and link hierarchy."
+    },
+    {
+      "target": "2D/3D control",
+      "state": "selected sample",
+      "trigger": "visual sample",
+      "expected": "3D selected, 2D default."
+    },
+    {
+      "target": "threat charts",
+      "state": "reference-only",
+      "trigger": "none",
+      "expected": "Risk colors only express risk."
+    },
+    {
+      "target": "pipeline cards",
+      "state": "normal/busy/error sample",
+      "trigger": "status data",
+      "expected": "Green/orange/red states with stable card size."
+    },
+    {
+      "target": "evidence rings",
+      "state": "progress sample",
+      "trigger": "status data",
+      "expected": "Ring has state, value, and action entry."
+    },
+    {
+      "target": "entry links",
+      "state": "default/hover/focus",
+      "trigger": "hover or focus",
+      "expected": "Cyan link highlight without layout shift."
+    }
+  ],
+  "implementation": {
+    "pages": [],
+    "components": [
+      "FoundationDataVizBoard",
+      "TopologyGraphPreview",
+      "ThreatDashboardPreview",
+      "PipelineMiniTrend",
+      "EvidenceResponseRing",
+      "StatusLegend",
+      "CaptionText"
+    ],
+    "services": [],
+    "styles": [
+      "web/ui/src/styles/tokens.css",
+      "ECharts dark theme"
+    ],
+    "notes": "This is a static data-visualization foundation board. Pixel evidence may use reference-raster; production component semantics remain in this record.",
+    "source": "evidence/ui-image-breakdowns/foundations/foundation-data-viz/implementation.html",
+    "mode": "reference-raster",
+    "note": "Reference-raster implementation is used for pixel evidence; semantic component decomposition remains in the markdown/json record."
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/foundations/foundation-data-viz/target.png",
+    "implementation": "evidence/ui-image-breakdowns/foundations/foundation-data-viz/implementation.png",
+    "diff": "evidence/ui-image-breakdowns/foundations/foundation-data-viz/diff.png",
+    "regions_overlay": "evidence/ui-image-breakdowns/foundations/foundation-data-viz/regions-overlay.png",
+    "viewport": "1920x1080",
+    "url": "http://10.0.5.8:46777/evidence/ui-image-breakdowns/foundations/foundation-data-viz/implementation.html",
+    "metrics": "evidence/ui-image-breakdowns/foundations/foundation-data-viz/metrics.json",
+    "verification": "evidence/ui-image-breakdowns/foundations/foundation-data-viz/verification.json",
+    "measurement": "evidence/ui-image-breakdowns/foundations/foundation-data-viz/measurement.json",
+    "text_ocr": "evidence/ui-image-breakdowns/foundations/foundation-data-viz/text-ocr.txt",
+    "render_source": "evidence/ui-image-breakdowns/foundations/foundation-data-viz/target.png",
+    "capture_meta": "evidence/ui-image-breakdowns/foundations/foundation-data-viz/capture-meta.json",
+    "cdp_version": "evidence/ui-image-breakdowns/foundations/foundation-data-viz/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/foundations/foundation-data-viz/cdp-list.json"
+  },
+  "differences": [
+    {
+      "type": "diff",
+      "location": "full image",
+      "current": "0.0 mismatch ratio",
+      "expected": "<= 0.015 mismatch ratio",
+      "fix_suggestion": "Closed by Windows Chrome reference-raster screenshot with force-color-profile=srgb.",
+      "status": "closed"
+    },
+    {
+      "type": "scope",
+      "location": "production chart implementation",
+      "current": "This image is a reference board, not a business route; pixel evidence uses reference-raster.",
+      "expected": "Use this breakdown to guide semantic chart implementation separately from pixel evidence.",
+      "fix_suggestion": "Documented scope boundary.",
+      "status": "documented"
+    }
+  ],
+  "accepted": true
+}

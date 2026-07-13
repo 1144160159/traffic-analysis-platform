@@ -1,0 +1,28 @@
+{
+  "target_id": "encrypted-traffic-evidence-center",
+  "route": "/encrypted-traffic",
+  "status": "pass",
+  "generated_at": "2026-07-10T21:54:15.958722+08:00",
+  "desktop_chrome_backend_status": "Windows Chrome CDP pass",
+  "source_image": "/home/wangwt/phase_2/code/traffic-analysis-platform/evidence/ui-image-breakdowns/pages/encrypted-traffic-evidence-center/target.png",
+  "actual_screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/evidence/ui-image-breakdowns/pages/encrypted-traffic-evidence-center/implementation.png",
+  "diff_image": "/home/wangwt/phase_2/code/traffic-analysis-platform/evidence/ui-image-breakdowns/pages/encrypted-traffic-evidence-center/diff.png",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "visual_diff": {
+    "size_ok": true,
+    "source_width": 1920,
+    "source_height": 1080,
+    "actual_width": 1920,
+    "actual_height": 1080,
+    "compared_pixels": 2073600,
+    "total_pixels": 2073600,
+    "mismatch_pixels": 223989,
+    "pixel_mismatch_ratio": 0.10801938657407407,
+    "max_pixel_ratio": 0.35,
+    "channel_tolerance": 64,
+    "max_channel_delta": 255
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "run_id": "20260702-oidc-sso-preflight-r4-completion-gate",
+  "result": "passed",
+  "base_url": "http://10.0.5.8:30180",
+  "discovery": {
+    "issuer": "http://10.0.5.8:30180/realms/master",
+    "authorization_endpoint": "http://10.0.5.8:30180/realms/master/protocol/openid-connect/auth",
+    "token_endpoint": "http://10.0.5.8:30180/realms/master/protocol/openid-connect/token"
+  },
+  "frontend": {
+    "login_index_asset": "/assets/index-BR5ZTjdq.js",
+    "login_chunk": "LoginPage-DpOwephw.js",
+    "oidc_callback_chunk": "OidcCallbackPage-cYsOzWd_.js"
+  },
+  "oidc_login": {
+    "status": "302",
+    "location": "http://10.0.5.8:30180/realms/master/protocol/openid-connect/auth?client_id=traffic-ui&redirect_uri=http%3A%2F%2F10.0.5.8%3A30180%2Fapi%2Fv1%2Fauth%2Foidc%2Fcallback&response_type=code&scope=openid+profile+email&state=c5244f09dd673c9967751d5d0e07c13a"
+  },
+  "keycloak_authorization_page": {
+    "status": "200"
+  },
+  "failures": []
+}

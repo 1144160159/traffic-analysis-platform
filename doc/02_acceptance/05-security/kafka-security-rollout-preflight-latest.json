@@ -1,0 +1,125 @@
+{
+  "run_id": "20260630-kafka-security-rollout-preflight-r9-post-sasl-ssl",
+  "result": "pass",
+  "report": "doc/02_acceptance/runs/20260630-kafka-security-rollout-preflight-r9-post-sasl-ssl/live-kafka-security-rollout-preflight-20260630-kafka-security-rollout-preflight-r9-post-sasl-ssl.ndjson",
+  "local_report": "doc/02_acceptance/runs/20260630-kafka-security-rollout-preflight-r9-post-sasl-ssl/local-report.md",
+  "total": 10,
+  "passed": 9,
+  "blockers": 0,
+  "warnings": 1,
+  "prereq_blockers": 0,
+  "rollout_blockers": 0,
+  "secret_missing_count": 0,
+  "tls_validation_blockers": 0,
+  "scram_describe_rc": 0,
+  "scram_describe_mode": "secure",
+  "scram_client_present": true,
+  "scram_broker_present": true,
+  "acl_list_rc": 0,
+  "acl_list_mode": "secure",
+  "acl_authorizer_disabled": false,
+  "live_kafka_plaintext_count": 0,
+  "live_kafka_sasl_ssl_count": 1,
+  "checks": [
+    {
+      "ts": "2026-06-30T03:21:53+08:00",
+      "phase": "repo",
+      "name": "repo Kafka StatefulSet uses SASL_SSL authorizer profile",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "SASL_SSL/SCRAM/StandardAuthorizer markers present",
+      "artifact": "01-kafka.yaml"
+    },
+    {
+      "ts": "2026-06-30T03:21:53+08:00",
+      "phase": "repo",
+      "name": "repo Kafka TLS store type and headless DNS are rollout-safe",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "PKCS12 store type, controller mTLS, and publishNotReadyAddresses present",
+      "artifact": "01-kafka.yaml"
+    },
+    {
+      "ts": "2026-06-30T03:21:53+08:00",
+      "phase": "repo",
+      "name": "repo Kafka init job grants application ACLs",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "topic/group/cluster ACL commands present",
+      "artifact": "01-kafka-topics.yaml"
+    },
+    {
+      "ts": "2026-06-30T03:21:53+08:00",
+      "phase": "repo",
+      "name": "repo Kafka clients are configured for SASL_SSL",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "Go/Flink/init-job client markers present",
+      "artifact": "deployments/kubernetes"
+    },
+    {
+      "ts": "2026-06-30T03:21:55+08:00",
+      "phase": "live",
+      "name": "Kafka Secret/TLS material exists in target namespaces",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "all 16 required keys present",
+      "artifact": "kafka-security-secret-readiness.json"
+    },
+    {
+      "ts": "2026-06-30T03:21:55+08:00",
+      "phase": "live",
+      "name": "Kafka TLS material is parseable with live passwords",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "keystore/truststore/CA parsed",
+      "artifact": "kafka-tls-material-validation.json"
+    },
+    {
+      "ts": "2026-06-30T03:21:56+08:00",
+      "phase": "live",
+      "name": "Kafka SCRAM users seeded on plaintext cluster",
+      "severity": "warn",
+      "passed": false,
+      "status": "skipped",
+      "detail": "set SEED_SCRAM=true to seed before rollout",
+      "artifact": "kafka-scram-seed-summary.json"
+    },
+    {
+      "ts": "2026-06-30T03:21:57+08:00",
+      "phase": "live",
+      "name": "Kafka SCRAM users exist before SASL_SSL rollout",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "client and broker users present",
+      "artifact": "kafka-scram-readiness.json"
+    },
+    {
+      "ts": "2026-06-30T03:21:59+08:00",
+      "phase": "live",
+      "name": "live Kafka ACL authorizer is enabled",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "ACLs listable",
+      "artifact": "kafka-acl-live-summary.json"
+    },
+    {
+      "ts": "2026-06-30T03:21:59+08:00",
+      "phase": "live",
+      "name": "live Kafka listener has rolled to SASL_SSL",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "SASL_SSL markers present and plaintext absent",
+      "artifact": "live-kafka-listener-summary.json"
+    }
+  ]
+}

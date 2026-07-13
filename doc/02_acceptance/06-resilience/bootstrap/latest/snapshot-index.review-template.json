@@ -1,0 +1,47 @@
+{
+  "status": "template_review_required",
+  "review_required": true,
+  "run_id": "20260630-ha-drill-evidence-bootstrap-r1",
+  "snapshots": [
+    {
+      "component": "kafka",
+      "before_snapshot_uri": "",
+      "after_snapshot_uri": "",
+      "sha256": "",
+      "collector": "",
+      "collected_at": ""
+    },
+    {
+      "component": "flink",
+      "before_snapshot_uri": "",
+      "after_snapshot_uri": "",
+      "sha256": "",
+      "collector": "",
+      "collected_at": ""
+    },
+    {
+      "component": "clickhouse",
+      "before_snapshot_uri": "",
+      "after_snapshot_uri": "",
+      "sha256": "",
+      "collector": "",
+      "collected_at": ""
+    },
+    {
+      "component": "postgresql",
+      "before_snapshot_uri": "",
+      "after_snapshot_uri": "",
+      "sha256": "",
+      "collector": "",
+      "collected_at": ""
+    },
+    {
+      "component": "minio",
+      "before_snapshot_uri": "",
+      "after_snapshot_uri": "",
+      "sha256": "",
+      "collector": "",
+      "collected_at": ""
+    }
+  ]
+}

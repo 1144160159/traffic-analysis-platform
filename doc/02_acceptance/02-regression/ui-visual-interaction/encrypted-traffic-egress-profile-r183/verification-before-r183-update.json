@@ -1,0 +1,82 @@
+{
+  "generated_by": "write_image_breakdown_verification.mjs",
+  "generated_at": "2026-07-04T14:56:48.904Z",
+  "id": "encrypted-traffic-egress-profile",
+  "category": "pages",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic-egress-profile.png",
+  "status": "evidence-ready",
+  "accepted": false,
+  "main_thread_judgment": "awaiting-visible-chrome-rerun-and-real-auxiliary-review",
+  "main_thread_decision_basis": "Historical page evidence is retained, but final page acceptance is reopened because CDP previously ran in Windows SessionId=0 and was not visually observable by the user.",
+  "browser": {
+    "backend": "Windows Chrome CDP",
+    "cdp_url": "http://127.0.0.1:9224",
+    "browser": "Chrome/150.0.7871.47",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+    "tabs_seen": 3
+  },
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "url": "http://10.0.5.8:36467/evidence/ui-image-breakdowns/pages/encrypted-traffic-egress-profile/implementation.html",
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/pages/encrypted-traffic-egress-profile/target.png",
+    "implementation": "evidence/ui-image-breakdowns/pages/encrypted-traffic-egress-profile/implementation.png",
+    "diff": "evidence/ui-image-breakdowns/pages/encrypted-traffic-egress-profile/diff.png",
+    "regions_overlay": "evidence/ui-image-breakdowns/pages/encrypted-traffic-egress-profile/regions-overlay.png",
+    "metrics": "evidence/ui-image-breakdowns/pages/encrypted-traffic-egress-profile/metrics.json",
+    "measurement": "evidence/ui-image-breakdowns/pages/encrypted-traffic-egress-profile/measurement.json",
+    "text_ocr": "evidence/ui-image-breakdowns/pages/encrypted-traffic-egress-profile/text-ocr.txt",
+    "verification": "evidence/ui-image-breakdowns/pages/encrypted-traffic-egress-profile/verification.json"
+  },
+  "missing_evidence": [],
+  "visual_diff": {
+    "status": "pass",
+    "pixel_mismatch_ratio": 0,
+    "max_pixel_ratio": 0.015,
+    "metrics": "evidence/ui-image-breakdowns/pages/encrypted-traffic-egress-profile/metrics.json",
+    "diff": "evidence/ui-image-breakdowns/pages/encrypted-traffic-egress-profile/diff.png"
+  },
+  "auxiliary_agent_review": {
+    "agent": "independent-subagent-required",
+    "status": "requested",
+    "notes": [
+      "This page requires a new independent review batch after the visible Windows Chrome SessionId=1 rerun.",
+      "Previous page review batches are historical evidence only for this restarted gate."
+    ]
+  },
+  "differences": [
+    {
+      "type": "visual-diff",
+      "location": "full image",
+      "current": "Windows Chrome screenshot will be compared with the locked target PNG.",
+      "expected": "pixel mismatch ratio <= 0.015",
+      "status": "documented"
+    },
+    {
+      "type": "semantic-scope",
+      "location": "production React implementation",
+      "current": "reference-raster evidence proves visual parity only",
+      "expected": "semantic React components follow this record when implemented separately",
+      "status": "documented"
+    }
+  ],
+  "reproduction_steps": [
+    "Check Windows Chrome CDP with curl http://127.0.0.1:9224/json/version and /json/list.",
+    "Open the implementation URL in Windows Chrome through connectOverCDP(http://127.0.0.1:9224).",
+    "Capture implementation.png at 1920x1080 with deviceScaleFactor 1.",
+    "Generate diff.png and metrics.json against target.png.",
+    "Review target.png, implementation.png, diff.png, regions-overlay.png, and this verification.json before main-thread judgment."
+  ],
+  "independent_subagent_review": {
+    "status": "required",
+    "review_batch": ""
+  },
+  "visible_chrome_rerun": {
+    "status": "required",
+    "reason": "Pages are being restarted after fixing Windows Chrome CDP from SessionId=0 background Chrome to SessionId=1 interactive Chrome.",
+    "required_cdp_url": "http://127.0.0.1:9224",
+    "required_windows_session_id": 1
+  }
+}

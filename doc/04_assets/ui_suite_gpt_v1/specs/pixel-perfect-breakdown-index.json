@@ -1,0 +1,3392 @@
+{
+  "generated_by": "build_pixel_breakdown_queue.mjs",
+  "purpose": "queue-only; not a visual breakdown and not an acceptance result",
+  "canonical_png_count": 241,
+  "category_counts": {
+    "foundations": 10,
+    "components": 48,
+    "pages": 85,
+    "overlays": 70,
+    "states": 16,
+    "responsive": 12
+  },
+  "status_counts": {
+    "not-started": 241
+  },
+  "items": [
+    {
+      "id": "foundation-color-status",
+      "category": "foundations",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/foundations/foundation-color-status.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/foundations/foundation-color-status.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/foundations/foundation-color-status.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/foundations/foundation-color-status.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/foundations/foundation-color-status"
+    },
+    {
+      "id": "foundation-current-screen-reference",
+      "category": "foundations",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/foundations/foundation-current-screen-reference.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/foundations/foundation-current-screen-reference.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/foundations/foundation-current-screen-reference.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/foundations/foundation-current-screen-reference.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/foundations/foundation-current-screen-reference"
+    },
+    {
+      "id": "foundation-data-viz",
+      "category": "foundations",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/foundations/foundation-data-viz.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/foundations/foundation-data-viz.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/foundations/foundation-data-viz.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/foundations/foundation-data-viz.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/foundations/foundation-data-viz"
+    },
+    {
+      "id": "foundation-generation-reference",
+      "category": "foundations",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/foundations/foundation-generation-reference.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/foundations/foundation-generation-reference.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/foundations/foundation-generation-reference.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/foundations/foundation-generation-reference.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/foundations/foundation-generation-reference"
+    },
+    {
+      "id": "foundation-icons-actions",
+      "category": "foundations",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/foundations/foundation-icons-actions.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/foundations/foundation-icons-actions.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/foundations/foundation-icons-actions.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/foundations/foundation-icons-actions.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/foundations/foundation-icons-actions"
+    },
+    {
+      "id": "foundation-layout-grid",
+      "category": "foundations",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/foundations/foundation-layout-grid.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/foundations/foundation-layout-grid.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/foundations/foundation-layout-grid.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/foundations/foundation-layout-grid.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/foundations/foundation-layout-grid"
+    },
+    {
+      "id": "foundation-responsive",
+      "category": "foundations",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/foundations/foundation-responsive.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/foundations/foundation-responsive.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/foundations/foundation-responsive.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/foundations/foundation-responsive.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/foundations/foundation-responsive"
+    },
+    {
+      "id": "foundation-table-form",
+      "category": "foundations",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/foundations/foundation-table-form.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/foundations/foundation-table-form.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/foundations/foundation-table-form.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/foundations/foundation-table-form.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/foundations/foundation-table-form"
+    },
+    {
+      "id": "foundation-typography-density",
+      "category": "foundations",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/foundations/foundation-typography-density.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/foundations/foundation-typography-density.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/foundations/foundation-typography-density.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/foundations/foundation-typography-density.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/foundations/foundation-typography-density"
+    },
+    {
+      "id": "foundation-visual-reference",
+      "category": "foundations",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/foundations/foundation-visual-reference.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/foundations/foundation-visual-reference.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/foundations/foundation-visual-reference.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/foundations/foundation-visual-reference.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/foundations/foundation-visual-reference"
+    },
+    {
+      "id": "component-acceptance-gate-matrix",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-acceptance-gate-matrix.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-acceptance-gate-matrix.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-acceptance-gate-matrix.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-acceptance-gate-matrix.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-acceptance-gate-matrix"
+    },
+    {
+      "id": "component-action-rail",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-action-rail.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-action-rail.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-action-rail.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-action-rail.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-action-rail"
+    },
+    {
+      "id": "component-alert-queue",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-alert-queue.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-alert-queue.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-alert-queue.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-alert-queue.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-alert-queue"
+    },
+    {
+      "id": "component-alert-timeline",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-alert-timeline.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-alert-timeline.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-alert-timeline.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-alert-timeline.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-alert-timeline"
+    },
+    {
+      "id": "component-app-header",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-app-header.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-app-header.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-app-header.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-app-header.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-app-header"
+    },
+    {
+      "id": "component-asset-context",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-asset-context.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-asset-context.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-asset-context.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-asset-context.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-asset-context"
+    },
+    {
+      "id": "component-bar-ranking-chart",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-bar-ranking-chart.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-bar-ranking-chart.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-bar-ranking-chart.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-bar-ranking-chart.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-bar-ranking-chart"
+    },
+    {
+      "id": "component-batch-action-bar",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-batch-action-bar.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-batch-action-bar.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-batch-action-bar.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-batch-action-bar.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-batch-action-bar"
+    },
+    {
+      "id": "component-bottom-status-bar",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-bottom-status-bar.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-bottom-status-bar.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-bottom-status-bar.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-bottom-status-bar.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-bottom-status-bar"
+    },
+    {
+      "id": "component-breadcrumb-context",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-breadcrumb-context.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-breadcrumb-context.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-breadcrumb-context.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-breadcrumb-context.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-breadcrumb-context"
+    },
+    {
+      "id": "component-button",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-button.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-button.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-button.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-button.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-button"
+    },
+    {
+      "id": "component-condition-builder",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-condition-builder.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-condition-builder.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-condition-builder.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-condition-builder.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-condition-builder"
+    },
+    {
+      "id": "component-data-table",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-data-table.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-data-table.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-data-table.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-data-table.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-data-table"
+    },
+    {
+      "id": "component-date-range",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-date-range.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-date-range.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-date-range.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-date-range.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-date-range"
+    },
+    {
+      "id": "component-description-list",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-description-list.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-description-list.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-description-list.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-description-list.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-description-list"
+    },
+    {
+      "id": "component-donut-chart",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-donut-chart.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-donut-chart.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-donut-chart.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-donut-chart.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-donut-chart"
+    },
+    {
+      "id": "component-dropdown",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-dropdown.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-dropdown.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-dropdown.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-dropdown.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-dropdown"
+    },
+    {
+      "id": "component-empty-card",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-empty-card.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-empty-card.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-empty-card.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-empty-card.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-empty-card"
+    },
+    {
+      "id": "component-evidence-drawer",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-evidence-drawer.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-evidence-drawer.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-evidence-drawer.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-evidence-drawer.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-evidence-drawer"
+    },
+    {
+      "id": "component-evidence-file-card",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-evidence-file-card.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-evidence-file-card.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-evidence-file-card.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-evidence-file-card.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-evidence-file-card"
+    },
+    {
+      "id": "component-feedback-block",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-feedback-block.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-feedback-block.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-feedback-block.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-feedback-block.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-feedback-block"
+    },
+    {
+      "id": "component-health-card",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-health-card.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-health-card.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-health-card.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-health-card.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-health-card"
+    },
+    {
+      "id": "component-heatmap",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-heatmap.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-heatmap.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-heatmap.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-heatmap.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-heatmap"
+    },
+    {
+      "id": "component-icon-button",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-icon-button.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-icon-button.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-icon-button.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-icon-button.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-icon-button"
+    },
+    {
+      "id": "component-input",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-input.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-input.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-input.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-input.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-input"
+    },
+    {
+      "id": "component-kpi-tile",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-kpi-tile.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-kpi-tile.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-kpi-tile.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-kpi-tile.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-kpi-tile"
+    },
+    {
+      "id": "component-line-area-chart",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-line-area-chart.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-line-area-chart.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-line-area-chart.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-line-area-chart.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-line-area-chart"
+    },
+    {
+      "id": "component-log-list",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-log-list.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-log-list.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-log-list.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-log-list.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-log-list"
+    },
+    {
+      "id": "component-pagination",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-pagination.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-pagination.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-pagination.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-pagination.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-pagination"
+    },
+    {
+      "id": "component-permission-card",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-permission-card.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-permission-card.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-permission-card.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-permission-card.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-permission-card"
+    },
+    {
+      "id": "component-primary-sidebar",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-primary-sidebar.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-primary-sidebar.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-primary-sidebar.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-primary-sidebar.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-primary-sidebar"
+    },
+    {
+      "id": "component-quick-entry",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-quick-entry.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-quick-entry.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-quick-entry.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-quick-entry.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-quick-entry"
+    },
+    {
+      "id": "component-radar-quality",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-radar-quality.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-radar-quality.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-radar-quality.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-radar-quality.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-radar-quality"
+    },
+    {
+      "id": "component-ranking-list",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-ranking-list.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-ranking-list.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-ranking-list.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-ranking-list.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-ranking-list"
+    },
+    {
+      "id": "component-risk-score",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-risk-score.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-risk-score.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-risk-score.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-risk-score.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-risk-score"
+    },
+    {
+      "id": "component-sankey-flow",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-sankey-flow.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-sankey-flow.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-sankey-flow.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-sankey-flow.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-sankey-flow"
+    },
+    {
+      "id": "component-search",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-search.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-search.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-search.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-search.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-search"
+    },
+    {
+      "id": "component-secondary-menu",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-secondary-menu.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-secondary-menu.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-secondary-menu.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-secondary-menu.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-secondary-menu"
+    },
+    {
+      "id": "component-segmented",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-segmented.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-segmented.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-segmented.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-segmented.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-segmented"
+    },
+    {
+      "id": "component-select",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-select.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-select.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-select.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-select.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-select"
+    },
+    {
+      "id": "component-site-time-selector",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-site-time-selector.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-site-time-selector.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-site-time-selector.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-site-time-selector.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-site-time-selector"
+    },
+    {
+      "id": "component-status-chip",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-status-chip.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-status-chip.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-status-chip.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-status-chip.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-status-chip"
+    },
+    {
+      "id": "component-switch-checkbox-radio",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-switch-checkbox-radio.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-switch-checkbox-radio.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-switch-checkbox-radio.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-switch-checkbox-radio.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-switch-checkbox-radio"
+    },
+    {
+      "id": "component-tabs",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-tabs.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-tabs.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-tabs.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-tabs.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-tabs"
+    },
+    {
+      "id": "component-timeline-state-machine",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-timeline-state-machine.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-timeline-state-machine.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-timeline-state-machine.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-timeline-state-machine.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-timeline-state-machine"
+    },
+    {
+      "id": "component-tooltip",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-tooltip.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-tooltip.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-tooltip.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-tooltip.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-tooltip"
+    },
+    {
+      "id": "component-topology-graph",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-topology-graph.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-topology-graph.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-topology-graph.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-topology-graph.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-topology-graph"
+    },
+    {
+      "id": "component-user-menu",
+      "category": "components",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-user-menu.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-user-menu.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-user-menu.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/components/component-user-menu.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/components/component-user-menu"
+    },
+    {
+      "id": "alert-detail",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/alert-detail.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/alert-detail.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/alert-detail.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/alert-detail.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/alert-detail"
+    },
+    {
+      "id": "alert-detail-evidence-files",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/alert-detail-evidence-files.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/alert-detail-evidence-files.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/alert-detail-evidence-files.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/alert-detail-evidence-files.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-files"
+    },
+    {
+      "id": "alert-detail-evidence-graph-path",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/alert-detail-evidence-graph-path.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/alert-detail-evidence-graph-path.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/alert-detail-evidence-graph-path.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/alert-detail-evidence-graph-path.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-graph-path"
+    },
+    {
+      "id": "alert-detail-evidence-logs",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/alert-detail-evidence-logs.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/alert-detail-evidence-logs.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/alert-detail-evidence-logs.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/alert-detail-evidence-logs.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-logs"
+    },
+    {
+      "id": "alert-detail-evidence-pcap",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/alert-detail-evidence-pcap.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/alert-detail-evidence-pcap.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/alert-detail-evidence-pcap.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/alert-detail-evidence-pcap.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-pcap"
+    },
+    {
+      "id": "alert-detail-evidence-session",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/alert-detail-evidence-session.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/alert-detail-evidence-session.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/alert-detail-evidence-session.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/alert-detail-evidence-session.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-session"
+    },
+    {
+      "id": "alerts",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/alerts.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/alerts.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/alerts.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/alerts.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/alerts"
+    },
+    {
+      "id": "assets",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/assets"
+    },
+    {
+      "id": "assets-business-system",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets-business-system.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets-business-system.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets-business-system.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets-business-system.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/assets-business-system"
+    },
+    {
+      "id": "assets-detail-basic",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets-detail-basic.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets-detail-basic.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets-detail-basic.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets-detail-basic.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/assets-detail-basic"
+    },
+    {
+      "id": "assets-detail-history",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets-detail-history.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets-detail-history.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets-detail-history.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets-detail-history.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/assets-detail-history"
+    },
+    {
+      "id": "assets-detail-network-interface",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets-detail-network-interface.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets-detail-network-interface.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets-detail-network-interface.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets-detail-network-interface.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/assets-detail-network-interface"
+    },
+    {
+      "id": "assets-detail-open-services",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets-detail-open-services.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets-detail-open-services.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets-detail-open-services.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets-detail-open-services.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/assets-detail-open-services"
+    },
+    {
+      "id": "assets-detail-ownership",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets-detail-ownership.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets-detail-ownership.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets-detail-ownership.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets-detail-ownership.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/assets-detail-ownership"
+    },
+    {
+      "id": "assets-network-device",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets-network-device.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets-network-device.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets-network-device.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets-network-device.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/assets-network-device"
+    },
+    {
+      "id": "assets-server",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets-server.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets-server.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets-server.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets-server.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/assets-server"
+    },
+    {
+      "id": "assets-unknown",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets-unknown.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets-unknown.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets-unknown.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets-unknown.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/assets-unknown"
+    },
+    {
+      "id": "attack-chains",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/attack-chains.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/attack-chains.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/attack-chains.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/attack-chains.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/attack-chains"
+    },
+    {
+      "id": "audit-log",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/audit-log.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/audit-log.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/audit-log.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/audit-log.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/audit-log"
+    },
+    {
+      "id": "audit-log-operation-context",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/audit-log-operation-context.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/audit-log-operation-context.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/audit-log-operation-context.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/audit-log-operation-context.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/audit-log-operation-context"
+    },
+    {
+      "id": "audit-log-related-chain",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/audit-log-related-chain.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/audit-log-related-chain.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/audit-log-related-chain.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/audit-log-related-chain.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/audit-log-related-chain"
+    },
+    {
+      "id": "baselines",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/baselines.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/baselines.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/baselines.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/baselines.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/baselines"
+    },
+    {
+      "id": "baselines-account",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/baselines-account.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/baselines-account.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/baselines-account.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/baselines-account.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/baselines-account"
+    },
+    {
+      "id": "baselines-port",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/baselines-port.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/baselines-port.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/baselines-port.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/baselines-port.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/baselines-port"
+    },
+    {
+      "id": "baselines-protocol",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/baselines-protocol.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/baselines-protocol.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/baselines-protocol.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/baselines-protocol.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/baselines-protocol"
+    },
+    {
+      "id": "baselines-time-window",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/baselines-time-window.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/baselines-time-window.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/baselines-time-window.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/baselines-time-window.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/baselines-time-window"
+    },
+    {
+      "id": "campaign-detail",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/campaign-detail.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/campaign-detail.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/campaign-detail.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/campaign-detail.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/campaign-detail"
+    },
+    {
+      "id": "campaign-detail-impact-account",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/campaign-detail-impact-account.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/campaign-detail-impact-account.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/campaign-detail-impact-account.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/campaign-detail-impact-account.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-account"
+    },
+    {
+      "id": "campaign-detail-impact-business-system",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/campaign-detail-impact-business-system.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/campaign-detail-impact-business-system.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/campaign-detail-impact-business-system.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/campaign-detail-impact-business-system.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-business-system"
+    },
+    {
+      "id": "campaign-detail-impact-campus",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/campaign-detail-impact-campus.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/campaign-detail-impact-campus.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/campaign-detail-impact-campus.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/campaign-detail-impact-campus.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus"
+    },
+    {
+      "id": "campaign-detail-impact-department",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/campaign-detail-impact-department.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/campaign-detail-impact-department.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/campaign-detail-impact-department.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/campaign-detail-impact-department.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-department"
+    },
+    {
+      "id": "campaign-detail-impact-service",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/campaign-detail-impact-service.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/campaign-detail-impact-service.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/campaign-detail-impact-service.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/campaign-detail-impact-service.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-service"
+    },
+    {
+      "id": "campaigns",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/campaigns.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/campaigns.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/campaigns.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/campaigns.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/campaigns"
+    },
+    {
+      "id": "compliance",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/compliance.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/compliance.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/compliance.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/compliance.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/compliance"
+    },
+    {
+      "id": "dashboard",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/dashboard.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/dashboard.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/dashboard.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/dashboard.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/dashboard"
+    },
+    {
+      "id": "data-quality",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/data-quality.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/data-quality.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/data-quality.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/data-quality.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/data-quality"
+    },
+    {
+      "id": "data-quality-field-quality",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/data-quality-field-quality.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/data-quality-field-quality.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/data-quality-field-quality.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/data-quality-field-quality.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/data-quality-field-quality"
+    },
+    {
+      "id": "data-quality-flink-quality",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/data-quality-flink-quality.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/data-quality-flink-quality.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/data-quality-flink-quality.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/data-quality-flink-quality.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/data-quality-flink-quality"
+    },
+    {
+      "id": "data-quality-replay-reconcile",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/data-quality-replay-reconcile.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/data-quality-replay-reconcile.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/data-quality-replay-reconcile.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/data-quality-replay-reconcile.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/data-quality-replay-reconcile"
+    },
+    {
+      "id": "data-quality-report",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/data-quality-report.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/data-quality-report.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/data-quality-report.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/data-quality-report.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/data-quality-report"
+    },
+    {
+      "id": "data-quality-settings",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/data-quality-settings.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/data-quality-settings.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/data-quality-settings.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/data-quality-settings.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/data-quality-settings"
+    },
+    {
+      "id": "data-quality-storage-quality",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/data-quality-storage-quality.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/data-quality-storage-quality.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/data-quality-storage-quality.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/data-quality-storage-quality.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/data-quality-storage-quality"
+    },
+    {
+      "id": "data-quality-topic-health",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/data-quality-topic-health.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/data-quality-topic-health.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/data-quality-topic-health.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/data-quality-topic-health.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/data-quality-topic-health"
+    },
+    {
+      "id": "deployments",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/deployments.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/deployments.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/deployments.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/deployments.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/deployments"
+    },
+    {
+      "id": "encrypted-traffic",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/encrypted-traffic.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/encrypted-traffic.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/encrypted-traffic.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/encrypted-traffic"
+    },
+    {
+      "id": "encrypted-traffic-egress-profile",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic-egress-profile.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/encrypted-traffic-egress-profile.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/encrypted-traffic-egress-profile.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/encrypted-traffic-egress-profile.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/encrypted-traffic-egress-profile"
+    },
+    {
+      "id": "encrypted-traffic-evidence-center",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic-evidence-center.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/encrypted-traffic-evidence-center.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/encrypted-traffic-evidence-center.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/encrypted-traffic-evidence-center.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/encrypted-traffic-evidence-center"
+    },
+    {
+      "id": "encrypted-traffic-fingerprint",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic-fingerprint.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/encrypted-traffic-fingerprint.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/encrypted-traffic-fingerprint.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/encrypted-traffic-fingerprint.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/encrypted-traffic-fingerprint"
+    },
+    {
+      "id": "encrypted-traffic-tunnel-detection",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic-tunnel-detection.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/encrypted-traffic-tunnel-detection.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/encrypted-traffic-tunnel-detection.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/encrypted-traffic-tunnel-detection.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/encrypted-traffic-tunnel-detection"
+    },
+    {
+      "id": "forensics",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/forensics.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/forensics.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/forensics.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/forensics.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/forensics"
+    },
+    {
+      "id": "fusion",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/fusion.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/fusion.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/fusion.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/fusion.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/fusion"
+    },
+    {
+      "id": "graph",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/graph.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/graph.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/graph.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/graph.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/graph"
+    },
+    {
+      "id": "graph-account-access-path",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/graph-account-access-path.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/graph-account-access-path.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/graph-account-access-path.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/graph-account-access-path.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/graph-account-access-path"
+    },
+    {
+      "id": "graph-attack-path",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/graph-attack-path.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/graph-attack-path.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/graph-attack-path.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/graph-attack-path.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/graph-attack-path"
+    },
+    {
+      "id": "graph-communication-path",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/graph-communication-path.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/graph-communication-path.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/graph-communication-path.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/graph-communication-path.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/graph-communication-path"
+    },
+    {
+      "id": "login",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/login.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/login.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/login.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/login.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/login"
+    },
+    {
+      "id": "mlops",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/mlops.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/mlops.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/mlops.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/mlops.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/mlops"
+    },
+    {
+      "id": "models",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/models.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/models"
+    },
+    {
+      "id": "models-activation-audit-gate",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/models-activation-audit-gate.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-activation-audit-gate.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-activation-audit-gate.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-activation-audit-gate.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/models-activation-audit-gate"
+    },
+    {
+      "id": "models-feature-anomaly-explanation",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/models-feature-anomaly-explanation.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-feature-anomaly-explanation.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-feature-anomaly-explanation.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-feature-anomaly-explanation.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/models-feature-anomaly-explanation"
+    },
+    {
+      "id": "models-feature-rule-contribution",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/models-feature-rule-contribution.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-feature-rule-contribution.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-feature-rule-contribution.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-feature-rule-contribution.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/models-feature-rule-contribution"
+    },
+    {
+      "id": "models-feature-sample-examples",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/models-feature-sample-examples.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-feature-sample-examples.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-feature-sample-examples.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-feature-sample-examples.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/models-feature-sample-examples"
+    },
+    {
+      "id": "not-found",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/not-found.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/not-found.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/not-found.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/not-found.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/not-found"
+    },
+    {
+      "id": "notifications",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/notifications.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/notifications.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/notifications.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/notifications.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/notifications"
+    },
+    {
+      "id": "playbooks",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/playbooks.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/playbooks.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/playbooks.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/playbooks.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/playbooks"
+    },
+    {
+      "id": "probes",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/probes.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/probes.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/probes.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/probes.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/probes"
+    },
+    {
+      "id": "rules",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/rules.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/rules.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/rules.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/rules.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/rules"
+    },
+    {
+      "id": "rules-editor-dependencies",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/rules-editor-dependencies.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/rules-editor-dependencies.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/rules-editor-dependencies.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/rules-editor-dependencies.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/rules-editor-dependencies"
+    },
+    {
+      "id": "rules-editor-test-validation",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/rules-editor-test-validation.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/rules-editor-test-validation.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/rules-editor-test-validation.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/rules-editor-test-validation.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/rules-editor-test-validation"
+    },
+    {
+      "id": "rules-sample-logs",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/rules-sample-logs.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/rules-sample-logs.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/rules-sample-logs.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/rules-sample-logs.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/rules-sample-logs"
+    },
+    {
+      "id": "rules-sample-session",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/rules-sample-session.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/rules-sample-session.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/rules-sample-session.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/rules-sample-session.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/rules-sample-session"
+    },
+    {
+      "id": "screen",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/screen.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/screen.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/screen.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/screen.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/screen"
+    },
+    {
+      "id": "settings",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/settings.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/settings.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/settings.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/settings.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/settings"
+    },
+    {
+      "id": "topics-apt-campaign",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/topics-apt-campaign.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/topics-apt-campaign.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/topics-apt-campaign.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/topics-apt-campaign.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/topics-apt-campaign"
+    },
+    {
+      "id": "topics-data-exfiltration",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/topics-data-exfiltration.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/topics-data-exfiltration.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/topics-data-exfiltration.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/topics-data-exfiltration.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/topics-data-exfiltration"
+    },
+    {
+      "id": "topics-encrypted-tunnel",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/topics-encrypted-tunnel.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/topics-encrypted-tunnel.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/topics-encrypted-tunnel.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/topics-encrypted-tunnel.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/topics-encrypted-tunnel"
+    },
+    {
+      "id": "whitelist",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/whitelist.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/whitelist.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/whitelist.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/whitelist.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/whitelist"
+    },
+    {
+      "id": "whitelist-condition-account",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/whitelist-condition-account.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/whitelist-condition-account.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/whitelist-condition-account.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/whitelist-condition-account.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/whitelist-condition-account"
+    },
+    {
+      "id": "whitelist-condition-asset",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/whitelist-condition-asset.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/whitelist-condition-asset.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/whitelist-condition-asset.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/whitelist-condition-asset.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/whitelist-condition-asset"
+    },
+    {
+      "id": "whitelist-condition-ip",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/whitelist-condition-ip.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/whitelist-condition-ip.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/whitelist-condition-ip.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/whitelist-condition-ip.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/whitelist-condition-ip"
+    },
+    {
+      "id": "whitelist-condition-model",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/whitelist-condition-model.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/whitelist-condition-model.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/whitelist-condition-model.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/whitelist-condition-model.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/whitelist-condition-model"
+    },
+    {
+      "id": "whitelist-condition-rule",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/whitelist-condition-rule.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/whitelist-condition-rule.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/whitelist-condition-rule.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/whitelist-condition-rule.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/whitelist-condition-rule"
+    },
+    {
+      "id": "whitelist-expiry-expired-unhandled",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/whitelist-expiry-expired-unhandled.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/whitelist-expiry-expired-unhandled.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/whitelist-expiry-expired-unhandled.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/whitelist-expiry-expired-unhandled.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/whitelist-expiry-expired-unhandled"
+    },
+    {
+      "id": "whitelist-expiry-long-lived",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/whitelist-expiry-long-lived.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/whitelist-expiry-long-lived.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/whitelist-expiry-long-lived.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/whitelist-expiry-long-lived.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/whitelist-expiry-long-lived"
+    },
+    {
+      "id": "whitelist-expiry-unassigned-owner",
+      "category": "pages",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/whitelist-expiry-unassigned-owner.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/whitelist-expiry-unassigned-owner.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/whitelist-expiry-unassigned-owner.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/whitelist-expiry-unassigned-owner.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/whitelist-expiry-unassigned-owner"
+    },
+    {
+      "id": "drawer-asset-detail",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-asset-detail.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-asset-detail.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-asset-detail.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-asset-detail.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/drawer-asset-detail"
+    },
+    {
+      "id": "drawer-asset-history",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-asset-history.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-asset-history.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-asset-history.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-asset-history.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/drawer-asset-history"
+    },
+    {
+      "id": "drawer-attack-chain-detail",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-attack-chain-detail.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-attack-chain-detail.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-attack-chain-detail.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-attack-chain-detail.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/drawer-attack-chain-detail"
+    },
+    {
+      "id": "drawer-audit-operation-detail",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-audit-operation-detail.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-audit-operation-detail.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-audit-operation-detail.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-audit-operation-detail.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/drawer-audit-operation-detail"
+    },
+    {
+      "id": "drawer-campaign-detail",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-campaign-detail.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-campaign-detail.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-campaign-detail.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-campaign-detail.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/drawer-campaign-detail"
+    },
+    {
+      "id": "drawer-certificate-detail",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-certificate-detail.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-certificate-detail.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-certificate-detail.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-certificate-detail.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/drawer-certificate-detail"
+    },
+    {
+      "id": "drawer-compliance-gate-detail",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-compliance-gate-detail.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-compliance-gate-detail.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-compliance-gate-detail.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-compliance-gate-detail.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/drawer-compliance-gate-detail"
+    },
+    {
+      "id": "drawer-dashboard-kpi-detail",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-dashboard-kpi-detail.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-dashboard-kpi-detail.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-dashboard-kpi-detail.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-dashboard-kpi-detail.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/drawer-dashboard-kpi-detail"
+    },
+    {
+      "id": "drawer-dashboard-task-detail",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-dashboard-task-detail.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-dashboard-task-detail.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-dashboard-task-detail.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-dashboard-task-detail.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/drawer-dashboard-task-detail"
+    },
+    {
+      "id": "drawer-dlq-sample",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-dlq-sample.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-dlq-sample.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-dlq-sample.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-dlq-sample.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/drawer-dlq-sample"
+    },
+    {
+      "id": "drawer-encrypted-fingerprint",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-encrypted-fingerprint.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-encrypted-fingerprint.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-encrypted-fingerprint.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-encrypted-fingerprint.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/drawer-encrypted-fingerprint"
+    },
+    {
+      "id": "drawer-field-quality-sample",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-field-quality-sample.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-field-quality-sample.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-field-quality-sample.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-field-quality-sample.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/drawer-field-quality-sample"
+    },
+    {
+      "id": "drawer-fusion-conflict",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-fusion-conflict.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-fusion-conflict.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-fusion-conflict.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-fusion-conflict.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/drawer-fusion-conflict"
+    },
+    {
+      "id": "drawer-graph-entity",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-graph-entity.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-graph-entity.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-graph-entity.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-graph-entity.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/drawer-graph-entity"
+    },
+    {
+      "id": "drawer-graph-path-analysis",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-graph-path-analysis.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-graph-path-analysis.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-graph-path-analysis.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-graph-path-analysis.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/drawer-graph-path-analysis"
+    },
+    {
+      "id": "drawer-mlops-task-detail",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-mlops-task-detail.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-mlops-task-detail.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-mlops-task-detail.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-mlops-task-detail.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/drawer-mlops-task-detail"
+    },
+    {
+      "id": "drawer-mobile-navigation",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-mobile-navigation.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-mobile-navigation.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-mobile-navigation.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-mobile-navigation.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/drawer-mobile-navigation"
+    },
+    {
+      "id": "drawer-model-detail",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-model-detail.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-model-detail.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-model-detail.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-model-detail.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/drawer-model-detail"
+    },
+    {
+      "id": "drawer-notification-center",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-notification-center.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-notification-center.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-notification-center.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-notification-center.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/drawer-notification-center"
+    },
+    {
+      "id": "drawer-notification-silence-rule",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-notification-silence-rule.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-notification-silence-rule.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-notification-silence-rule.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-notification-silence-rule.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/drawer-notification-silence-rule"
+    },
+    {
+      "id": "drawer-probe-detail",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-probe-detail.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-probe-detail.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-probe-detail.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-probe-detail.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/drawer-probe-detail"
+    },
+    {
+      "id": "drawer-probe-log",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-probe-log.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-probe-log.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-probe-log.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-probe-log.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/drawer-probe-log"
+    },
+    {
+      "id": "drawer-rule-detail",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-rule-detail.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-rule-detail.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-rule-detail.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-rule-detail.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/drawer-rule-detail"
+    },
+    {
+      "id": "drawer-session-replay",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-session-replay.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-session-replay.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-session-replay.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-session-replay.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/drawer-session-replay"
+    },
+    {
+      "id": "drawer-settings-rbac-edit",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-settings-rbac-edit.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-settings-rbac-edit.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-settings-rbac-edit.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-settings-rbac-edit.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/drawer-settings-rbac-edit"
+    },
+    {
+      "id": "drawer-topic-scope-edit",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-topic-scope-edit.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-topic-scope-edit.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-topic-scope-edit.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-topic-scope-edit.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/drawer-topic-scope-edit"
+    },
+    {
+      "id": "drawer-topic-subscription",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-topic-subscription.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-topic-subscription.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-topic-subscription.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-topic-subscription.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/drawer-topic-subscription"
+    },
+    {
+      "id": "drawer-whitelist-approval",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-whitelist-approval.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-whitelist-approval.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-whitelist-approval.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-whitelist-approval.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/drawer-whitelist-approval"
+    },
+    {
+      "id": "dropdown-alert-batch-actions",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/dropdown-alert-batch-actions.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/dropdown-alert-batch-actions.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/dropdown-alert-batch-actions.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/dropdown-alert-batch-actions.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/dropdown-alert-batch-actions"
+    },
+    {
+      "id": "dropdown-alert-row-actions",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/dropdown-alert-row-actions.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/dropdown-alert-row-actions.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/dropdown-alert-row-actions.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/dropdown-alert-row-actions.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/dropdown-alert-row-actions"
+    },
+    {
+      "id": "dropdown-quick-entry",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/dropdown-quick-entry.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/dropdown-quick-entry.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/dropdown-quick-entry.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/dropdown-quick-entry.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/dropdown-quick-entry"
+    },
+    {
+      "id": "dropdown-topic-share-favorite",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/dropdown-topic-share-favorite.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/dropdown-topic-share-favorite.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/dropdown-topic-share-favorite.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/dropdown-topic-share-favorite.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/dropdown-topic-share-favorite"
+    },
+    {
+      "id": "dropdown-user-menu",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/dropdown-user-menu.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/dropdown-user-menu.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/dropdown-user-menu.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/dropdown-user-menu.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/dropdown-user-menu"
+    },
+    {
+      "id": "modal-alert-batch",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-alert-batch.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-alert-batch.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-alert-batch.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-alert-batch.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-alert-batch"
+    },
+    {
+      "id": "modal-alert-feedback",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-alert-feedback.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-alert-feedback.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-alert-feedback.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-alert-feedback.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-alert-feedback"
+    },
+    {
+      "id": "modal-alert-status",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-alert-status.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-alert-status.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-alert-status.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-alert-status.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-alert-status"
+    },
+    {
+      "id": "modal-asset-edit",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-asset-edit.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-asset-edit.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-asset-edit.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-asset-edit.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-asset-edit"
+    },
+    {
+      "id": "modal-audit-export",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-audit-export.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-audit-export.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-audit-export.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-audit-export.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-audit-export"
+    },
+    {
+      "id": "modal-baseline-threshold",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-baseline-threshold.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-baseline-threshold.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-baseline-threshold.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-baseline-threshold.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-baseline-threshold"
+    },
+    {
+      "id": "modal-campaign-report-export",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-campaign-report-export.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-campaign-report-export.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-campaign-report-export.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-campaign-report-export.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-campaign-report-export"
+    },
+    {
+      "id": "modal-compliance-evidence-package-export",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-compliance-evidence-package-export.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-compliance-evidence-package-export.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-compliance-evidence-package-export.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-compliance-evidence-package-export.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-compliance-evidence-package-export"
+    },
+    {
+      "id": "modal-compliance-report-export",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-compliance-report-export.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-compliance-report-export.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-compliance-report-export.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-compliance-report-export.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-compliance-report-export"
+    },
+    {
+      "id": "modal-data-replay-task",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-data-replay-task.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-data-replay-task.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-data-replay-task.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-data-replay-task.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-data-replay-task"
+    },
+    {
+      "id": "modal-deployment-create",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-deployment-create.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-deployment-create.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-deployment-create.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-deployment-create.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-deployment-create"
+    },
+    {
+      "id": "modal-deployment-rollback",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-deployment-rollback.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-deployment-rollback.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-deployment-rollback.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-deployment-rollback.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-deployment-rollback"
+    },
+    {
+      "id": "modal-evidence-detail",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-evidence-detail.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-evidence-detail.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-evidence-detail.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-evidence-detail.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-evidence-detail"
+    },
+    {
+      "id": "modal-forensics-evidence-export",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-forensics-evidence-export.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-forensics-evidence-export.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-forensics-evidence-export.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-forensics-evidence-export.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-forensics-evidence-export"
+    },
+    {
+      "id": "modal-forensics-task",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-forensics-task.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-forensics-task.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-forensics-task.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-forensics-task.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-forensics-task"
+    },
+    {
+      "id": "modal-fusion-rule-edit",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-fusion-rule-edit.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-fusion-rule-edit.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-fusion-rule-edit.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-fusion-rule-edit.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-fusion-rule-edit"
+    },
+    {
+      "id": "modal-global-search",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-global-search.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-global-search.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-global-search.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-global-search.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-global-search"
+    },
+    {
+      "id": "modal-login-error-captcha",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-login-error-captcha.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-login-error-captcha.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-login-error-captcha.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-login-error-captcha.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-login-error-captcha"
+    },
+    {
+      "id": "modal-notification-channel-edit",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-notification-channel-edit.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-notification-channel-edit.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-notification-channel-edit.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-notification-channel-edit.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-notification-channel-edit"
+    },
+    {
+      "id": "modal-notification-template-preview-test",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-notification-template-preview-test.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-notification-template-preview-test.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-notification-template-preview-test.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-notification-template-preview-test.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-notification-template-preview-test"
+    },
+    {
+      "id": "modal-playbook-edit",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-playbook-edit.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-playbook-edit.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-playbook-edit.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-playbook-edit.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-playbook-edit"
+    },
+    {
+      "id": "modal-playbook-trigger",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-playbook-trigger.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-playbook-trigger.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-playbook-trigger.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-playbook-trigger.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-playbook-trigger"
+    },
+    {
+      "id": "modal-probe-batch-upgrade",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-probe-batch-upgrade.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-probe-batch-upgrade.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-probe-batch-upgrade.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-probe-batch-upgrade.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-probe-batch-upgrade"
+    },
+    {
+      "id": "modal-probe-cert-rotate",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-probe-cert-rotate.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-probe-cert-rotate.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-probe-cert-rotate.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-probe-cert-rotate.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-probe-cert-rotate"
+    },
+    {
+      "id": "modal-probe-config",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-probe-config.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-probe-config.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-probe-config.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-probe-config.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-probe-config"
+    },
+    {
+      "id": "modal-rule-edit",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-rule-edit.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-rule-edit.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-rule-edit.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-rule-edit.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-rule-edit"
+    },
+    {
+      "id": "modal-rule-publish",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-rule-publish.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-rule-publish.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-rule-publish.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-rule-publish.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-rule-publish"
+    },
+    {
+      "id": "modal-screen-readonly-token",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-screen-readonly-token.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-screen-readonly-token.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-screen-readonly-token.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-screen-readonly-token.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-screen-readonly-token"
+    },
+    {
+      "id": "modal-settings-token",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-settings-token.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-settings-token.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-settings-token.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-settings-token.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-settings-token"
+    },
+    {
+      "id": "modal-topic-evidence-package-export",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-topic-evidence-package-export.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-topic-evidence-package-export.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-topic-evidence-package-export.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-topic-evidence-package-export.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-topic-evidence-package-export"
+    },
+    {
+      "id": "modal-topic-report-export",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-topic-report-export.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-topic-report-export.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-topic-report-export.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-topic-report-export.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-topic-report-export"
+    },
+    {
+      "id": "modal-topic-save-view",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-topic-save-view.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-topic-save-view.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-topic-save-view.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-topic-save-view.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-topic-save-view"
+    },
+    {
+      "id": "modal-whitelist-add",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-whitelist-add.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-whitelist-add.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-whitelist-add.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-whitelist-add.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-whitelist-add"
+    },
+    {
+      "id": "modal-whitelist-draft-from-alert",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-whitelist-draft-from-alert.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-whitelist-draft-from-alert.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-whitelist-draft-from-alert.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/modal-whitelist-draft-from-alert.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-whitelist-draft-from-alert"
+    },
+    {
+      "id": "popconfirm-delete",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/popconfirm-delete.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/popconfirm-delete.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/popconfirm-delete.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/popconfirm-delete.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/popconfirm-delete"
+    },
+    {
+      "id": "popconfirm-pcap-download",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/popconfirm-pcap-download.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/popconfirm-pcap-download.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/popconfirm-pcap-download.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/popconfirm-pcap-download.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/popconfirm-pcap-download"
+    },
+    {
+      "id": "popconfirm-settings-token-revoke",
+      "category": "overlays",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/popconfirm-settings-token-revoke.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/popconfirm-settings-token-revoke.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/popconfirm-settings-token-revoke.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/popconfirm-settings-token-revoke.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/overlays/popconfirm-settings-token-revoke"
+    },
+    {
+      "id": "state-api-error",
+      "category": "states",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/states/state-api-error.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-api-error.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-api-error.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-api-error.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/states/state-api-error"
+    },
+    {
+      "id": "state-chart-loading",
+      "category": "states",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/states/state-chart-loading.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-chart-loading.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-chart-loading.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-chart-loading.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/states/state-chart-loading"
+    },
+    {
+      "id": "state-empty-chart",
+      "category": "states",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/states/state-empty-chart.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-empty-chart.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-empty-chart.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-empty-chart.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/states/state-empty-chart"
+    },
+    {
+      "id": "state-empty-page",
+      "category": "states",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/states/state-empty-page.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-empty-page.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-empty-page.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-empty-page.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/states/state-empty-page"
+    },
+    {
+      "id": "state-empty-table",
+      "category": "states",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/states/state-empty-table.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-empty-table.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-empty-table.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-empty-table.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/states/state-empty-table"
+    },
+    {
+      "id": "state-forbidden",
+      "category": "states",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/states/state-forbidden.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-forbidden.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-forbidden.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-forbidden.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/states/state-forbidden"
+    },
+    {
+      "id": "state-network-error",
+      "category": "states",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/states/state-network-error.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-network-error.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-network-error.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-network-error.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/states/state-network-error"
+    },
+    {
+      "id": "state-offline-probe",
+      "category": "states",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/states/state-offline-probe.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-offline-probe.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-offline-probe.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-offline-probe.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/states/state-offline-probe"
+    },
+    {
+      "id": "state-page-loading",
+      "category": "states",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/states/state-page-loading.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-page-loading.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-page-loading.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-page-loading.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/states/state-page-loading"
+    },
+    {
+      "id": "state-partial-degraded",
+      "category": "states",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/states/state-partial-degraded.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-partial-degraded.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-partial-degraded.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-partial-degraded.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/states/state-partial-degraded"
+    },
+    {
+      "id": "state-stream-backpressure",
+      "category": "states",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/states/state-stream-backpressure.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-stream-backpressure.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-stream-backpressure.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-stream-backpressure.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/states/state-stream-backpressure"
+    },
+    {
+      "id": "state-success-accepted",
+      "category": "states",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/states/state-success-accepted.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-success-accepted.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-success-accepted.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-success-accepted.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/states/state-success-accepted"
+    },
+    {
+      "id": "state-table-loading",
+      "category": "states",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/states/state-table-loading.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-table-loading.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-table-loading.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-table-loading.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/states/state-table-loading"
+    },
+    {
+      "id": "state-task-failed",
+      "category": "states",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/states/state-task-failed.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-task-failed.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-task-failed.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-task-failed.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/states/state-task-failed"
+    },
+    {
+      "id": "state-task-running",
+      "category": "states",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/states/state-task-running.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-task-running.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-task-running.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-task-running.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/states/state-task-running"
+    },
+    {
+      "id": "state-unauthorized",
+      "category": "states",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/states/state-unauthorized.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-unauthorized.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-unauthorized.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/states/state-unauthorized.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/states/state-unauthorized"
+    },
+    {
+      "id": "responsive-alerts-1440",
+      "category": "responsive",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/responsive/responsive-alerts-1440.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-alerts-1440.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-alerts-1440.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-alerts-1440.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/responsive/responsive-alerts-1440"
+    },
+    {
+      "id": "responsive-alerts-1920",
+      "category": "responsive",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/responsive/responsive-alerts-1920.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-alerts-1920.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-alerts-1920.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-alerts-1920.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/responsive/responsive-alerts-1920"
+    },
+    {
+      "id": "responsive-compliance-1440",
+      "category": "responsive",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/responsive/responsive-compliance-1440.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-compliance-1440.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-compliance-1440.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-compliance-1440.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/responsive/responsive-compliance-1440"
+    },
+    {
+      "id": "responsive-dashboard-1440",
+      "category": "responsive",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/responsive/responsive-dashboard-1440.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-dashboard-1440.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-dashboard-1440.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-dashboard-1440.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/responsive/responsive-dashboard-1440"
+    },
+    {
+      "id": "responsive-dashboard-1920",
+      "category": "responsive",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/responsive/responsive-dashboard-1920.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-dashboard-1920.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-dashboard-1920.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-dashboard-1920.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/responsive/responsive-dashboard-1920"
+    },
+    {
+      "id": "responsive-forensics-1440",
+      "category": "responsive",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/responsive/responsive-forensics-1440.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-forensics-1440.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-forensics-1440.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-forensics-1440.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/responsive/responsive-forensics-1440"
+    },
+    {
+      "id": "responsive-graph-1440",
+      "category": "responsive",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/responsive/responsive-graph-1440.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-graph-1440.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-graph-1440.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-graph-1440.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/responsive/responsive-graph-1440"
+    },
+    {
+      "id": "responsive-mobile-alert-list",
+      "category": "responsive",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/responsive/responsive-mobile-alert-list.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-mobile-alert-list.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-mobile-alert-list.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-mobile-alert-list.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/responsive/responsive-mobile-alert-list"
+    },
+    {
+      "id": "responsive-mobile-navigation",
+      "category": "responsive",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/responsive/responsive-mobile-navigation.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-mobile-navigation.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-mobile-navigation.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-mobile-navigation.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/responsive/responsive-mobile-navigation"
+    },
+    {
+      "id": "responsive-screen-4k",
+      "category": "responsive",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/responsive/responsive-screen-4k.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-screen-4k.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-screen-4k.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-screen-4k.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/responsive/responsive-screen-4k"
+    },
+    {
+      "id": "responsive-tablet-alert-detail",
+      "category": "responsive",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/responsive/responsive-tablet-alert-detail.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-tablet-alert-detail.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-tablet-alert-detail.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-tablet-alert-detail.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/responsive/responsive-tablet-alert-detail"
+    },
+    {
+      "id": "responsive-tablet-dashboard",
+      "category": "responsive",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/responsive/responsive-tablet-dashboard.png",
+      "canvas": {
+        "width": 1920,
+        "height": 1080
+      },
+      "status": "not-started",
+      "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-tablet-dashboard.md",
+      "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-tablet-dashboard.review.md",
+      "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/responsive/responsive-tablet-dashboard.json",
+      "evidence_dir": "evidence/ui-image-breakdowns/responsive/responsive-tablet-dashboard"
+    }
+  ]
+}

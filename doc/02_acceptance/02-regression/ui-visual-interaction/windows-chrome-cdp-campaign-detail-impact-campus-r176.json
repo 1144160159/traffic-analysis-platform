@@ -1,0 +1,122 @@
+{
+  "run_id": "windows-chrome-cdp-campaign-detail-impact-campus-r176",
+  "generated_at": "2026-07-10T06:32:55.213Z",
+  "result": "business-pixel-accepted",
+  "target_id": "campaign-detail-impact-campus",
+  "route": "/campaigns/:campaignId?impact=campus",
+  "production_url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=campus&__codex_page_id=campaign-detail-impact-campus&__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1783664919212",
+  "image_tag": "traffic/web-ui:ui-campaign-impact-campus-20260710-r176",
+  "browser": "Chrome/150.0.7871.49",
+  "cdp_url": "http://127.0.0.1:9224",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "source": "captured PNG pixels"
+  },
+  "summary": {
+    "runtime": "pass",
+    "normal_route_geometry": "pass",
+    "business_visual_diff": "pass",
+    "strict_visual_diff": "fail-documented",
+    "dynamic_data": "pass",
+    "auxiliary_review": "pass",
+    "main_thread_judgment": "business-pixel-accepted"
+  },
+  "runtime": {
+    "status": "pass",
+    "console_errors": 0,
+    "page_errors": 0,
+    "request_failures": 0,
+    "bad_responses": 0,
+    "forbidden_target_resource_requests": 0,
+    "horizontal_overflow": false,
+    "vertical_scroll": false
+  },
+  "normal_business_route": {
+    "status": "pass",
+    "screenshot": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/normal-route-r176.png",
+    "runtime": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/normal-route-runtime-r176.json",
+    "geometry": {
+      "status": "pass",
+      "app_shell": {
+        "topbar": true,
+        "sidebar": true,
+        "bottombar": true
+      },
+      "active_impact": "campus",
+      "data_row_count": 5,
+      "all_rows_within_panel_body": true,
+      "link_within_panel_body": true,
+      "content_within_panel_body": true,
+      "horizontal_overflow": false,
+      "runtime_errors": 0
+    }
+  },
+  "visual_gates": {
+    "business_tolerance": {
+      "status": "pass",
+      "mismatch_pixels": 148200,
+      "compared_pixels": 2073600,
+      "pixel_mismatch_ratio": 0.07146990740740741,
+      "max_pixel_ratio": 0.35,
+      "channel_tolerance": 64
+    },
+    "strict_pixel": {
+      "status": "fail",
+      "mismatch_pixels": 2073421,
+      "compared_pixels": 2073600,
+      "pixel_mismatch_ratio": 0.9999136766975308,
+      "max_pixel_ratio": 0.015,
+      "channel_tolerance": 0
+    },
+    "policy": "business-pixel-accepted 仅表示业务容差门通过；不得表述为 strict pixel pass 或 pixel-perfect。"
+  },
+  "dynamic_implementation": {
+    "status": "pass",
+    "primary_endpoint": "/v1/campaigns/{campaignId}",
+    "focus_data_source": "typed deterministic snapshot for evidence mode",
+    "normal_route_data_source": "live endpoint with typed fallback when fields are absent",
+    "adapter": "normalizeCampaignDetailSnapshot -> buildImpactCampus",
+    "component": "CampaignImpactCampusContent",
+    "bitmap_substitution": false
+  },
+  "auxiliary_review": {
+    "agent_id": "019f4ab3-4f56-7ac1-9408-dffccb4f118f",
+    "status": "pass",
+    "conclusion": "May mark business-pixel-accepted for business tolerance only; strict/pixel-perfect remains failed."
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/target.png",
+    "regions_overlay": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/regions-overlay.png",
+    "measurement": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/measurement.json",
+    "text_ocr": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/text-ocr.txt",
+    "implementation": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/implementation.png",
+    "implementation_r176": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/implementation-r176-final.png",
+    "diff_business": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/diff-business-r176-final.png",
+    "diff_strict": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/diff-strict-r176-final.png",
+    "metrics": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/metrics.json",
+    "metrics_business": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/metrics-business-r176-final.json",
+    "metrics_strict": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/metrics-strict-r176-final.json",
+    "capture_meta": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/capture-meta.json",
+    "production_route_report": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/production-route-report.json",
+    "normal_route_screenshot": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/normal-route-r176.png",
+    "normal_route_runtime": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/normal-route-runtime-r176.json",
+    "cdp_version": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/cdp-list.json",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "css_viewport": {
+      "width": 2133,
+      "height": 1200,
+      "device_pixel_ratio": 0.9
+    },
+    "image_tag": "traffic/web-ui:ui-campaign-impact-campus-20260710-r176",
+    "evidence_mode": "production-route",
+    "url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=campus&__codex_page_id=campaign-detail-impact-campus&__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1783664919212",
+    "final_url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=campus&__codex_page_id=campaign-detail-impact-campus&__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1783664919212",
+    "diff": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/diff.png",
+    "verification": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/verification.json"
+  }
+}

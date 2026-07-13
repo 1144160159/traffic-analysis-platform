@@ -1,0 +1,114 @@
+{
+  "run_id": "20260630-asset-discovery-rbac-r1",
+  "result": "pass",
+  "apisix": "http://10.0.5.8:30180",
+  "tenant_id": "default",
+  "discovery_run_id": "3eabf2b8-4c39-4b2f-8ff0-8bb364350eea",
+  "worker_run_id": "259373a6-5599-4abd-bd37-bb70eb285064",
+  "credential_id": "68074985-57ef-41d1-87e1-9c8113890743",
+  "passed": 11,
+  "total": 11,
+  "blockers": 0,
+  "warnings": 0,
+  "checks": [
+    {
+      "ts": "2026-06-30T16:16:47+08:00",
+      "phase": "api",
+      "name": "Token scope catalog includes asset:discover",
+      "ok": true,
+      "status": "ok",
+      "detail": "asset scope catalog synced",
+      "artifact": "token-scopes-response.json"
+    },
+    {
+      "ts": "2026-06-30T16:16:47+08:00",
+      "phase": "api",
+      "name": "Viewer cannot register discovery credential",
+      "ok": true,
+      "status": "ok",
+      "detail": "asset:discover required",
+      "artifact": "credential-viewer-denied.json"
+    },
+    {
+      "ts": "2026-06-30T16:16:47+08:00",
+      "phase": "api",
+      "name": "SNMP/LLDP credential reference registered",
+      "ok": true,
+      "status": "ok",
+      "detail": "credential_id=68074985-57ef-41d1-87e1-9c8113890743",
+      "artifact": "credential-response.json"
+    },
+    {
+      "ts": "2026-06-30T16:16:47+08:00",
+      "phase": "postgres",
+      "name": "Credential registration audit log is queryable",
+      "ok": true,
+      "status": "ok",
+      "detail": "count=1",
+      "artifact": "audit_logs"
+    },
+    {
+      "ts": "2026-06-30T16:16:48+08:00",
+      "phase": "api",
+      "name": "SNMP/LLDP discovery run completed",
+      "ok": true,
+      "status": "ok",
+      "detail": "run_id=3eabf2b8-4c39-4b2f-8ff0-8bb364350eea assets=1 links=1",
+      "artifact": "run-response.json"
+    },
+    {
+      "ts": "2026-06-30T16:16:48+08:00",
+      "phase": "api",
+      "name": "Discovery run is queryable",
+      "ok": true,
+      "status": "ok",
+      "detail": "run_id=3eabf2b8-4c39-4b2f-8ff0-8bb364350eea",
+      "artifact": "runs-response.json"
+    },
+    {
+      "ts": "2026-06-30T16:16:48+08:00",
+      "phase": "api",
+      "name": "SNMP/LLDP scanner worker records failed runs safely",
+      "ok": true,
+      "status": "ok",
+      "detail": "run_id=259373a6-5599-4abd-bd37-bb70eb285064 status=failed",
+      "artifact": "worker-run-response.json"
+    },
+    {
+      "ts": "2026-06-30T16:16:48+08:00",
+      "phase": "postgres",
+      "name": "Discovery run audit logs are queryable",
+      "ok": true,
+      "status": "ok",
+      "detail": "count=2",
+      "artifact": "audit_logs"
+    },
+    {
+      "ts": "2026-06-30T16:16:48+08:00",
+      "phase": "api",
+      "name": "LLDP topology link is queryable",
+      "ok": true,
+      "status": "ok",
+      "detail": "source=d59a03f5-142e-4f93-a7b8-695558e78129 neighbor=c5b964e4-dd9f-4c6f-826a-4031ae87e9e2",
+      "artifact": "neighbors-response.json"
+    },
+    {
+      "ts": "2026-06-30T16:16:48+08:00",
+      "phase": "api",
+      "name": "Source asset was upserted from active discovery",
+      "ok": true,
+      "status": "ok",
+      "detail": "02:cd:29:16:16:31",
+      "artifact": "source-asset-response.json"
+    },
+    {
+      "ts": "2026-06-30T16:16:48+08:00",
+      "phase": "api",
+      "name": "Neighbor asset was upserted from LLDP discovery",
+      "ok": true,
+      "status": "ok",
+      "detail": "02:cd:29:16:16:41",
+      "artifact": "neighbor-asset-response.json"
+    }
+  ]
+}

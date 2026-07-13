@@ -1,0 +1,11 @@
+{
+  "route": "/encrypted-traffic?tab=egress-profile&echartsEvidenceTs=1783683831737",
+  "canvasCount": 5,
+  "chartLabels": [
+    "外联目的地全球流向图，当前选中 未选择对象",
+    "外联会话风险趋势图",
+    "外联实体关联图，当前选中 未选择对象"
+  ],
+  "simulated": true,
+  "horizontalOverflow": false
+}

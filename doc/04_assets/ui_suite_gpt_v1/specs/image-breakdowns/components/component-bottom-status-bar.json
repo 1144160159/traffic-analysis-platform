@@ -1,0 +1,2012 @@
+{
+  "id": "component-bottom-status-bar",
+  "category": "components",
+  "status": "pixel-accepted",
+  "accepted": true,
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-bottom-status-bar.png",
+  "prompt_file": "doc/04_assets/ui_suite_gpt_v1/prompts/component-bottom-status-bar.prompt.txt",
+  "route": null,
+  "host_route": null,
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "manifest_refs": {
+    "manifest": "doc/04_assets/ui_suite_gpt_v1/manifest.json",
+    "layer": "doc/04_assets/ui_suite_gpt_v1/specs/layers/component-bottom-status-bar.json",
+    "reference": "doc/04_assets/ui_suite_gpt_v1/screens/foundations/foundation-generation-reference.png"
+  },
+  "observation": "Standalone component specimen board for the fixed global bottom status bar. The target documents screen.png bottom y=997/h=83, fixed status item order, global action ownership, status variants, and React component split.",
+  "implementation": {
+    "mode": "reference-raster",
+    "suggested_components": [
+      "BottomStatusBar",
+      "StatusItem",
+      "GlobalActions",
+      "StatusVariantRow",
+      "BottomStatusOwnershipPanel",
+      "BottomStatusReactMapping"
+    ],
+    "source": "evidence/ui-image-breakdowns/components/component-bottom-status-bar/implementation.html",
+    "note": "Reference-raster implementation is used for pixel evidence; semantic component decomposition remains in the markdown/json record."
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/components/component-bottom-status-bar/target.png",
+    "implementation": "evidence/ui-image-breakdowns/components/component-bottom-status-bar/implementation.png",
+    "diff": "evidence/ui-image-breakdowns/components/component-bottom-status-bar/diff.png",
+    "regions_overlay": "evidence/ui-image-breakdowns/components/component-bottom-status-bar/regions-overlay.png",
+    "viewport": "1920x1080",
+    "metrics": "evidence/ui-image-breakdowns/components/component-bottom-status-bar/metrics.json",
+    "capture_meta": "evidence/ui-image-breakdowns/components/component-bottom-status-bar/capture-meta.json",
+    "cdp_version": "evidence/ui-image-breakdowns/components/component-bottom-status-bar/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/components/component-bottom-status-bar/cdp-list.json",
+    "measurement": "evidence/ui-image-breakdowns/components/component-bottom-status-bar/measurement.json",
+    "text_ocr": "evidence/ui-image-breakdowns/components/component-bottom-status-bar/text-ocr.txt",
+    "verification": "evidence/ui-image-breakdowns/components/component-bottom-status-bar/verification.json",
+    "render_source": "evidence/ui-image-breakdowns/components/component-bottom-status-bar/target.png",
+    "url": "http://10.0.5.8:43457/evidence/ui-image-breakdowns/components/component-bottom-status-bar/implementation.html"
+  },
+  "regions": [
+    {
+      "id": "canvas",
+      "name": "1920x1080 blueprint canvas",
+      "role": "background",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "notes": "Dark navy blueprint grid."
+    },
+    {
+      "id": "header",
+      "name": "top title area",
+      "role": "header",
+      "bbox": {
+        "x": 40,
+        "y": 31,
+        "w": 1800,
+        "h": 55
+      }
+    },
+    {
+      "id": "header-title",
+      "name": "component title",
+      "role": "text",
+      "bbox": {
+        "x": 40,
+        "y": 31,
+        "w": 770,
+        "h": 34
+      }
+    },
+    {
+      "id": "header-subtitle",
+      "name": "component subtitle",
+      "role": "text",
+      "bbox": {
+        "x": 40,
+        "y": 66,
+        "w": 760,
+        "h": 18
+      }
+    },
+    {
+      "id": "fixed-global-label",
+      "name": "fixed global statusbar label",
+      "role": "meta",
+      "bbox": {
+        "x": 1560,
+        "y": 38,
+        "w": 190,
+        "h": 18
+      }
+    },
+    {
+      "id": "section-01",
+      "name": "01 screen bottom sample",
+      "role": "panel",
+      "bbox": {
+        "x": 40,
+        "y": 92,
+        "w": 1841,
+        "h": 168
+      }
+    },
+    {
+      "id": "section-01-header",
+      "name": "01 header strip",
+      "role": "panel-header",
+      "bbox": {
+        "x": 40,
+        "y": 92,
+        "w": 1841,
+        "h": 36
+      }
+    },
+    {
+      "id": "section-01-tag",
+      "name": "83px tag",
+      "role": "section-tag",
+      "bbox": {
+        "x": 1819,
+        "y": 100,
+        "w": 50,
+        "h": 21
+      }
+    },
+    {
+      "id": "height-measure-83px",
+      "name": "83px vertical measure",
+      "role": "measurement",
+      "bbox": {
+        "x": 56,
+        "y": 145,
+        "w": 20,
+        "h": 77
+      }
+    },
+    {
+      "id": "bottom-statusbar-sample",
+      "name": "screen.png bottom statusbar crop",
+      "role": "statusbar-sample",
+      "bbox": {
+        "x": 80,
+        "y": 146,
+        "w": 1760,
+        "h": 75
+      },
+      "notes": "Fixed order global status bar, cropped from screen.png bottom region."
+    },
+    {
+      "id": "sample-latency",
+      "name": "data latency item",
+      "role": "status-item",
+      "bbox": {
+        "x": 88,
+        "y": 166,
+        "w": 150,
+        "h": 31
+      }
+    },
+    {
+      "id": "sample-uptime",
+      "name": "system uptime item",
+      "role": "status-item",
+      "bbox": {
+        "x": 262,
+        "y": 166,
+        "w": 187,
+        "h": 31
+      }
+    },
+    {
+      "id": "sample-sla",
+      "name": "alert SLA item",
+      "role": "status-item",
+      "bbox": {
+        "x": 488,
+        "y": 166,
+        "w": 162,
+        "h": 31
+      }
+    },
+    {
+      "id": "sample-quality",
+      "name": "data quality item",
+      "role": "status-item",
+      "bbox": {
+        "x": 688,
+        "y": 166,
+        "w": 190,
+        "h": 31
+      }
+    },
+    {
+      "id": "sample-storage",
+      "name": "storage usage item",
+      "role": "status-item",
+      "bbox": {
+        "x": 912,
+        "y": 166,
+        "w": 214,
+        "h": 31
+      }
+    },
+    {
+      "id": "sample-bandwidth",
+      "name": "bandwidth usage item",
+      "role": "status-item",
+      "bbox": {
+        "x": 1168,
+        "y": 166,
+        "w": 230,
+        "h": 31
+      }
+    },
+    {
+      "id": "sample-logs",
+      "name": "log ingest item",
+      "role": "status-item",
+      "bbox": {
+        "x": 1430,
+        "y": 166,
+        "w": 154,
+        "h": 31
+      }
+    },
+    {
+      "id": "sample-global-actions",
+      "name": "right global action area",
+      "role": "global-actions",
+      "bbox": {
+        "x": 1618,
+        "y": 162,
+        "w": 206,
+        "h": 36
+      }
+    },
+    {
+      "id": "sample-fixed-order-caption",
+      "name": "fixed order caption",
+      "role": "caption",
+      "bbox": {
+        "x": 80,
+        "y": 232,
+        "w": 760,
+        "h": 18
+      }
+    },
+    {
+      "id": "section-02",
+      "name": "02 status item split",
+      "role": "panel",
+      "bbox": {
+        "x": 40,
+        "y": 287,
+        "w": 1201,
+        "h": 272
+      }
+    },
+    {
+      "id": "section-02-header",
+      "name": "02 header strip",
+      "role": "panel-header",
+      "bbox": {
+        "x": 40,
+        "y": 287,
+        "w": 1201,
+        "h": 35
+      }
+    },
+    {
+      "id": "section-02-tag",
+      "name": "fixed order tag",
+      "role": "section-tag",
+      "bbox": {
+        "x": 1138,
+        "y": 294,
+        "w": 91,
+        "h": 21
+      }
+    },
+    {
+      "id": "split-latency-card",
+      "name": "data latency split card",
+      "role": "status-card",
+      "bbox": {
+        "x": 72,
+        "y": 345,
+        "w": 247,
+        "h": 45
+      }
+    },
+    {
+      "id": "split-uptime-card",
+      "name": "system uptime split card",
+      "role": "status-card",
+      "bbox": {
+        "x": 350,
+        "y": 345,
+        "w": 247,
+        "h": 45
+      }
+    },
+    {
+      "id": "split-sla-card",
+      "name": "alert SLA split card",
+      "role": "status-card",
+      "bbox": {
+        "x": 629,
+        "y": 345,
+        "w": 247,
+        "h": 45
+      }
+    },
+    {
+      "id": "split-quality-card",
+      "name": "data quality split card",
+      "role": "status-card",
+      "bbox": {
+        "x": 907,
+        "y": 345,
+        "w": 247,
+        "h": 45
+      }
+    },
+    {
+      "id": "split-storage-card",
+      "name": "storage usage split card",
+      "role": "status-card",
+      "bbox": {
+        "x": 72,
+        "y": 424,
+        "w": 247,
+        "h": 45
+      }
+    },
+    {
+      "id": "split-bandwidth-card",
+      "name": "bandwidth usage split card",
+      "role": "status-card",
+      "bbox": {
+        "x": 350,
+        "y": 424,
+        "w": 247,
+        "h": 45
+      }
+    },
+    {
+      "id": "split-logs-card",
+      "name": "log ingest split card",
+      "role": "status-card",
+      "bbox": {
+        "x": 629,
+        "y": 424,
+        "w": 247,
+        "h": 45
+      }
+    },
+    {
+      "id": "split-global-actions",
+      "name": "global action split card",
+      "role": "global-actions",
+      "bbox": {
+        "x": 897,
+        "y": 469,
+        "w": 294,
+        "h": 65
+      }
+    },
+    {
+      "id": "section-03",
+      "name": "03 ownership boundary",
+      "role": "panel",
+      "bbox": {
+        "x": 1270,
+        "y": 287,
+        "w": 611,
+        "h": 272
+      }
+    },
+    {
+      "id": "section-03-header",
+      "name": "03 header strip",
+      "role": "panel-header",
+      "bbox": {
+        "x": 1270,
+        "y": 287,
+        "w": 611,
+        "h": 35
+      }
+    },
+    {
+      "id": "ownership-ok-1",
+      "name": "notification icon bottom right",
+      "role": "ownership-ok",
+      "bbox": {
+        "x": 1300,
+        "y": 342,
+        "w": 262,
+        "h": 41
+      }
+    },
+    {
+      "id": "ownership-bad-1",
+      "name": "top notification bell bad",
+      "role": "ownership-bad",
+      "bbox": {
+        "x": 1587,
+        "y": 342,
+        "w": 251,
+        "h": 41
+      }
+    },
+    {
+      "id": "ownership-ok-2",
+      "name": "settings bottom",
+      "role": "ownership-ok",
+      "bbox": {
+        "x": 1300,
+        "y": 398,
+        "w": 262,
+        "h": 41
+      }
+    },
+    {
+      "id": "ownership-bad-2",
+      "name": "top avatar bad",
+      "role": "ownership-bad",
+      "bbox": {
+        "x": 1587,
+        "y": 398,
+        "w": 251,
+        "h": 41
+      }
+    },
+    {
+      "id": "ownership-ok-3",
+      "name": "power action bottom",
+      "role": "ownership-ok",
+      "bbox": {
+        "x": 1300,
+        "y": 454,
+        "w": 262,
+        "h": 41
+      }
+    },
+    {
+      "id": "ownership-bad-3",
+      "name": "page-specific bottom bar bad",
+      "role": "ownership-bad",
+      "bbox": {
+        "x": 1587,
+        "y": 454,
+        "w": 251,
+        "h": 41
+      }
+    },
+    {
+      "id": "ownership-note",
+      "name": "ownership note",
+      "role": "note",
+      "bbox": {
+        "x": 1300,
+        "y": 524,
+        "w": 520,
+        "h": 20
+      }
+    },
+    {
+      "id": "section-04",
+      "name": "04 status variants",
+      "role": "panel",
+      "bbox": {
+        "x": 40,
+        "y": 586,
+        "w": 1121,
+        "h": 316
+      }
+    },
+    {
+      "id": "section-04-header",
+      "name": "04 header strip",
+      "role": "panel-header",
+      "bbox": {
+        "x": 40,
+        "y": 586,
+        "w": 1121,
+        "h": 35
+      }
+    },
+    {
+      "id": "variant-normal",
+      "name": "normal variant row",
+      "role": "variant-row",
+      "bbox": {
+        "x": 72,
+        "y": 640,
+        "w": 1047,
+        "h": 43
+      }
+    },
+    {
+      "id": "variant-latency",
+      "name": "latency elevated variant row",
+      "role": "variant-row",
+      "bbox": {
+        "x": 72,
+        "y": 698,
+        "w": 1047,
+        "h": 43
+      }
+    },
+    {
+      "id": "variant-degraded",
+      "name": "link degraded variant row",
+      "role": "variant-row",
+      "bbox": {
+        "x": 72,
+        "y": 756,
+        "w": 1047,
+        "h": 43
+      }
+    },
+    {
+      "id": "variant-loading",
+      "name": "loading skeleton variant row",
+      "role": "variant-row",
+      "bbox": {
+        "x": 72,
+        "y": 814,
+        "w": 1047,
+        "h": 43
+      }
+    },
+    {
+      "id": "variant-token-row",
+      "name": "dimension token row",
+      "role": "token-row",
+      "bbox": {
+        "x": 82,
+        "y": 875,
+        "w": 850,
+        "h": 22
+      }
+    },
+    {
+      "id": "section-05",
+      "name": "05 implementation split",
+      "role": "panel",
+      "bbox": {
+        "x": 1189,
+        "y": 586,
+        "w": 692,
+        "h": 316
+      }
+    },
+    {
+      "id": "section-05-header",
+      "name": "05 header strip",
+      "role": "panel-header",
+      "bbox": {
+        "x": 1189,
+        "y": 586,
+        "w": 692,
+        "h": 35
+      }
+    },
+    {
+      "id": "react-heading",
+      "name": "React component recommendation heading",
+      "role": "heading",
+      "bbox": {
+        "x": 1220,
+        "y": 643,
+        "w": 170,
+        "h": 24
+      }
+    },
+    {
+      "id": "code-latency",
+      "name": "StatusItem latency code",
+      "role": "code",
+      "bbox": {
+        "x": 1220,
+        "y": 682,
+        "w": 282,
+        "h": 28
+      }
+    },
+    {
+      "id": "code-uptime",
+      "name": "StatusItem uptime code",
+      "role": "code",
+      "bbox": {
+        "x": 1525,
+        "y": 682,
+        "w": 282,
+        "h": 28
+      }
+    },
+    {
+      "id": "code-sla",
+      "name": "StatusItem sla code",
+      "role": "code",
+      "bbox": {
+        "x": 1220,
+        "y": 720,
+        "w": 282,
+        "h": 28
+      }
+    },
+    {
+      "id": "code-quality",
+      "name": "StatusItem quality code",
+      "role": "code",
+      "bbox": {
+        "x": 1525,
+        "y": 720,
+        "w": 282,
+        "h": 28
+      }
+    },
+    {
+      "id": "code-storage",
+      "name": "StatusItem storage code",
+      "role": "code",
+      "bbox": {
+        "x": 1220,
+        "y": 758,
+        "w": 282,
+        "h": 28
+      }
+    },
+    {
+      "id": "code-bandwidth",
+      "name": "StatusItem bandwidth code",
+      "role": "code",
+      "bbox": {
+        "x": 1525,
+        "y": 758,
+        "w": 282,
+        "h": 28
+      }
+    },
+    {
+      "id": "code-logs",
+      "name": "StatusItem logs code",
+      "role": "code",
+      "bbox": {
+        "x": 1220,
+        "y": 796,
+        "w": 282,
+        "h": 28
+      }
+    },
+    {
+      "id": "code-actions",
+      "name": "GlobalActions code",
+      "role": "code",
+      "bbox": {
+        "x": 1525,
+        "y": 796,
+        "w": 282,
+        "h": 28
+      }
+    },
+    {
+      "id": "react-note",
+      "name": "React split note",
+      "role": "note",
+      "bbox": {
+        "x": 1220,
+        "y": 854,
+        "w": 560,
+        "h": 50
+      }
+    },
+    {
+      "id": "footer",
+      "name": "acceptance footer",
+      "role": "footer",
+      "bbox": {
+        "x": 40,
+        "y": 944,
+        "w": 1841,
+        "h": 82
+      }
+    }
+  ],
+  "texts": [
+    {
+      "value": "component-bottom-status-bar / 底部状态栏组件规范",
+      "type": "title",
+      "bbox": {
+        "x": 40,
+        "y": 31,
+        "w": 770,
+        "h": 34
+      }
+    },
+    {
+      "value": "基准：screen.png 实测 bottom y=997 / h=83；右侧全局动作区承载通知、设置、全局配置、电源",
+      "type": "subtitle",
+      "bbox": {
+        "x": 40,
+        "y": 66,
+        "w": 760,
+        "h": 18
+      }
+    },
+    {
+      "value": "fixed global statusbar",
+      "type": "meta",
+      "bbox": {
+        "x": 1560,
+        "y": 38,
+        "w": 190,
+        "h": 18
+      }
+    },
+    {
+      "value": "01 主样例：screen.png 底部 y=997 / h=83 裁切",
+      "type": "section-title",
+      "bbox": {
+        "x": 56,
+        "y": 104,
+        "w": 500,
+        "h": 22
+      }
+    },
+    {
+      "value": "83px",
+      "type": "measurement",
+      "bbox": {
+        "x": 70,
+        "y": 177,
+        "w": 46,
+        "h": 18
+      }
+    },
+    {
+      "value": "83px",
+      "type": "section-tag",
+      "bbox": {
+        "x": 1826,
+        "y": 104,
+        "w": 35,
+        "h": 14
+      }
+    },
+    {
+      "value": "数据延迟",
+      "type": "status-label",
+      "bbox": {
+        "x": 130,
+        "y": 175,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "1.23 s",
+      "type": "status-value",
+      "bbox": {
+        "x": 200,
+        "y": 175,
+        "w": 42,
+        "h": 14
+      }
+    },
+    {
+      "value": "系统运行",
+      "type": "status-label",
+      "bbox": {
+        "x": 284,
+        "y": 175,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "23 天 14 小时",
+      "type": "status-value",
+      "bbox": {
+        "x": 350,
+        "y": 175,
+        "w": 92,
+        "h": 14
+      }
+    },
+    {
+      "value": "告警处理SLA",
+      "type": "status-label",
+      "bbox": {
+        "x": 506,
+        "y": 175,
+        "w": 86,
+        "h": 14
+      }
+    },
+    {
+      "value": "98.2 %",
+      "type": "status-value",
+      "bbox": {
+        "x": 608,
+        "y": 175,
+        "w": 48,
+        "h": 14
+      }
+    },
+    {
+      "value": "数据质量合格率",
+      "type": "status-label",
+      "bbox": {
+        "x": 724,
+        "y": 175,
+        "w": 98,
+        "h": 14
+      }
+    },
+    {
+      "value": "99.1%",
+      "type": "status-value",
+      "bbox": {
+        "x": 835,
+        "y": 175,
+        "w": 45,
+        "h": 14
+      }
+    },
+    {
+      "value": "存储使用",
+      "type": "status-label",
+      "bbox": {
+        "x": 944,
+        "y": 175,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "68.7 / 120 TB（57%）",
+      "type": "status-value",
+      "bbox": {
+        "x": 998,
+        "y": 175,
+        "w": 132,
+        "h": 14
+      }
+    },
+    {
+      "value": "带宽使用",
+      "type": "status-label",
+      "bbox": {
+        "x": 1202,
+        "y": 175,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "42.7 / 100 Gbps（43%）",
+      "type": "status-value",
+      "bbox": {
+        "x": 1278,
+        "y": 175,
+        "w": 145,
+        "h": 14
+      }
+    },
+    {
+      "value": "日志吞吐",
+      "type": "status-label",
+      "bbox": {
+        "x": 1462,
+        "y": 175,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "12.6 K EPS",
+      "type": "status-value",
+      "bbox": {
+        "x": 1530,
+        "y": 175,
+        "w": 74,
+        "h": 14
+      }
+    },
+    {
+      "value": "固定顺序：数据延迟 / 系统运行 / 告警处理SLA / 数据质量合格率 / 存储使用 / 带宽使用 / 日志吞吐 / 右侧全局动作区",
+      "type": "caption",
+      "bbox": {
+        "x": 80,
+        "y": 232,
+        "w": 920,
+        "h": 18
+      }
+    },
+    {
+      "value": "02 状态项拆分",
+      "type": "section-title",
+      "bbox": {
+        "x": 56,
+        "y": 299,
+        "w": 150,
+        "h": 22
+      }
+    },
+    {
+      "value": "fixed order",
+      "type": "section-tag",
+      "bbox": {
+        "x": 1150,
+        "y": 300,
+        "w": 70,
+        "h": 14
+      }
+    },
+    {
+      "value": "数据延迟",
+      "type": "split-label",
+      "bbox": {
+        "x": 104,
+        "y": 358,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "1.23 s",
+      "type": "split-value",
+      "bbox": {
+        "x": 100,
+        "y": 377,
+        "w": 52,
+        "h": 16
+      }
+    },
+    {
+      "value": "系统运行",
+      "type": "split-label",
+      "bbox": {
+        "x": 382,
+        "y": 358,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "23天14小时",
+      "type": "split-value",
+      "bbox": {
+        "x": 382,
+        "y": 377,
+        "w": 78,
+        "h": 16
+      }
+    },
+    {
+      "value": "告警处理SLA",
+      "type": "split-label",
+      "bbox": {
+        "x": 658,
+        "y": 358,
+        "w": 86,
+        "h": 14
+      }
+    },
+    {
+      "value": "98.2%",
+      "type": "split-value",
+      "bbox": {
+        "x": 660,
+        "y": 377,
+        "w": 54,
+        "h": 16
+      }
+    },
+    {
+      "value": "数据质量合格率",
+      "type": "split-label",
+      "bbox": {
+        "x": 936,
+        "y": 358,
+        "w": 98,
+        "h": 14
+      }
+    },
+    {
+      "value": "99.1%",
+      "type": "split-value",
+      "bbox": {
+        "x": 936,
+        "y": 377,
+        "w": 54,
+        "h": 16
+      }
+    },
+    {
+      "value": "存储使用",
+      "type": "split-label",
+      "bbox": {
+        "x": 104,
+        "y": 437,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "68.7/120TB",
+      "type": "split-value",
+      "bbox": {
+        "x": 104,
+        "y": 456,
+        "w": 85,
+        "h": 16
+      }
+    },
+    {
+      "value": "带宽使用",
+      "type": "split-label",
+      "bbox": {
+        "x": 382,
+        "y": 437,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "42.7/100Gbps",
+      "type": "split-value",
+      "bbox": {
+        "x": 382,
+        "y": 456,
+        "w": 95,
+        "h": 16
+      }
+    },
+    {
+      "value": "日志吞吐",
+      "type": "split-label",
+      "bbox": {
+        "x": 660,
+        "y": 437,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "12.6 K EPS",
+      "type": "split-value",
+      "bbox": {
+        "x": 660,
+        "y": 456,
+        "w": 78,
+        "h": 16
+      }
+    },
+    {
+      "value": "8. 全局动作区：通知角标 / 设置 / 全局配置 / 电源",
+      "type": "split-caption",
+      "bbox": {
+        "x": 916,
+        "y": 538,
+        "w": 300,
+        "h": 18
+      }
+    },
+    {
+      "value": "03 职责边界",
+      "type": "section-title",
+      "bbox": {
+        "x": 1286,
+        "y": 299,
+        "w": 140,
+        "h": 22
+      }
+    },
+    {
+      "value": "ownership",
+      "type": "section-tag",
+      "bbox": {
+        "x": 1793,
+        "y": 300,
+        "w": 73,
+        "h": 14
+      }
+    },
+    {
+      "value": "通知角标在底部右侧",
+      "type": "ownership-ok",
+      "bbox": {
+        "x": 1344,
+        "y": 356,
+        "w": 150,
+        "h": 14
+      }
+    },
+    {
+      "value": "顶部通知铃铛",
+      "type": "ownership-bad",
+      "bbox": {
+        "x": 1630,
+        "y": 356,
+        "w": 98,
+        "h": 14
+      }
+    },
+    {
+      "value": "设置/全局配置在底部",
+      "type": "ownership-ok",
+      "bbox": {
+        "x": 1344,
+        "y": 412,
+        "w": 150,
+        "h": 14
+      }
+    },
+    {
+      "value": "顶部用户头像",
+      "type": "ownership-bad",
+      "bbox": {
+        "x": 1630,
+        "y": 412,
+        "w": 98,
+        "h": 14
+      }
+    },
+    {
+      "value": "电源动作在底部",
+      "type": "ownership-ok",
+      "bbox": {
+        "x": 1344,
+        "y": 468,
+        "w": 112,
+        "h": 14
+      }
+    },
+    {
+      "value": "页面专属底栏",
+      "type": "ownership-bad",
+      "bbox": {
+        "x": 1630,
+        "y": 468,
+        "w": 98,
+        "h": 14
+      }
+    },
+    {
+      "value": "底部单栏是全局运行状态，不替换为页面业务状态栏。",
+      "type": "ownership-note",
+      "bbox": {
+        "x": 1300,
+        "y": 524,
+        "w": 420,
+        "h": 18
+      }
+    },
+    {
+      "value": "04 状态变体",
+      "type": "section-title",
+      "bbox": {
+        "x": 56,
+        "y": 598,
+        "w": 140,
+        "h": 22
+      }
+    },
+    {
+      "value": "正常运行",
+      "type": "variant-label",
+      "bbox": {
+        "x": 92,
+        "y": 655,
+        "w": 56,
+        "h": 16
+      }
+    },
+    {
+      "value": "1.23 s",
+      "type": "variant-value",
+      "bbox": {
+        "x": 218,
+        "y": 655,
+        "w": 52,
+        "h": 16
+      }
+    },
+    {
+      "value": "98.2%",
+      "type": "variant-value",
+      "bbox": {
+        "x": 388,
+        "y": 655,
+        "w": 54,
+        "h": 16
+      }
+    },
+    {
+      "value": "99.1%",
+      "type": "variant-value",
+      "bbox": {
+        "x": 538,
+        "y": 655,
+        "w": 54,
+        "h": 16
+      }
+    },
+    {
+      "value": "12.6 K EPS",
+      "type": "variant-value",
+      "bbox": {
+        "x": 688,
+        "y": 655,
+        "w": 82,
+        "h": 16
+      }
+    },
+    {
+      "value": "动作区位置不变",
+      "type": "variant-note",
+      "bbox": {
+        "x": 900,
+        "y": 655,
+        "w": 112,
+        "h": 16
+      }
+    },
+    {
+      "value": "延迟升高",
+      "type": "variant-label",
+      "bbox": {
+        "x": 92,
+        "y": 713,
+        "w": 56,
+        "h": 16
+      }
+    },
+    {
+      "value": "4.80 s",
+      "type": "variant-value",
+      "bbox": {
+        "x": 218,
+        "y": 713,
+        "w": 52,
+        "h": 16
+      }
+    },
+    {
+      "value": "96.4%",
+      "type": "variant-value",
+      "bbox": {
+        "x": 388,
+        "y": 713,
+        "w": 54,
+        "h": 16
+      }
+    },
+    {
+      "value": "98.7%",
+      "type": "variant-value",
+      "bbox": {
+        "x": 538,
+        "y": 713,
+        "w": 54,
+        "h": 16
+      }
+    },
+    {
+      "value": "10.2 K EPS",
+      "type": "variant-value",
+      "bbox": {
+        "x": 688,
+        "y": 713,
+        "w": 82,
+        "h": 16
+      }
+    },
+    {
+      "value": "链路降级",
+      "type": "variant-label",
+      "bbox": {
+        "x": 92,
+        "y": 771,
+        "w": 56,
+        "h": 16
+      }
+    },
+    {
+      "value": "8.12 s",
+      "type": "variant-value",
+      "bbox": {
+        "x": 218,
+        "y": 771,
+        "w": 52,
+        "h": 16
+      }
+    },
+    {
+      "value": "91.8%",
+      "type": "variant-value",
+      "bbox": {
+        "x": 388,
+        "y": 771,
+        "w": 54,
+        "h": 16
+      }
+    },
+    {
+      "value": "97.2%",
+      "type": "variant-value",
+      "bbox": {
+        "x": 538,
+        "y": 771,
+        "w": 54,
+        "h": 16
+      }
+    },
+    {
+      "value": "6.4 K EPS",
+      "type": "variant-value",
+      "bbox": {
+        "x": 688,
+        "y": 771,
+        "w": 74,
+        "h": 16
+      }
+    },
+    {
+      "value": "加载骨架",
+      "type": "variant-label",
+      "bbox": {
+        "x": 92,
+        "y": 829,
+        "w": 56,
+        "h": 16
+      }
+    },
+    {
+      "value": "y",
+      "type": "token-label",
+      "bbox": {
+        "x": 82,
+        "y": 875,
+        "w": 10,
+        "h": 16
+      }
+    },
+    {
+      "value": "997px",
+      "type": "token-value",
+      "bbox": {
+        "x": 154,
+        "y": 875,
+        "w": 54,
+        "h": 16
+      }
+    },
+    {
+      "value": "height",
+      "type": "token-label",
+      "bbox": {
+        "x": 326,
+        "y": 875,
+        "w": 44,
+        "h": 16
+      }
+    },
+    {
+      "value": "83px",
+      "type": "token-value",
+      "bbox": {
+        "x": 400,
+        "y": 875,
+        "w": 44,
+        "h": 16
+      }
+    },
+    {
+      "value": "radius",
+      "type": "token-label",
+      "bbox": {
+        "x": 552,
+        "y": 875,
+        "w": 46,
+        "h": 16
+      }
+    },
+    {
+      "value": "4-6px",
+      "type": "token-value",
+      "bbox": {
+        "x": 644,
+        "y": 875,
+        "w": 54,
+        "h": 16
+      }
+    },
+    {
+      "value": "divider",
+      "type": "token-label",
+      "bbox": {
+        "x": 798,
+        "y": 875,
+        "w": 50,
+        "h": 16
+      }
+    },
+    {
+      "value": "低透明青色",
+      "type": "token-value",
+      "bbox": {
+        "x": 888,
+        "y": 875,
+        "w": 84,
+        "h": 16
+      }
+    },
+    {
+      "value": "05 可实现拆分",
+      "type": "section-title",
+      "bbox": {
+        "x": 1204,
+        "y": 598,
+        "w": 150,
+        "h": 22
+      }
+    },
+    {
+      "value": "React 组件建议",
+      "type": "heading",
+      "bbox": {
+        "x": 1220,
+        "y": 643,
+        "w": 150,
+        "h": 24
+      }
+    },
+    {
+      "value": "<StatusItem kind=\"latency\" />",
+      "type": "code",
+      "bbox": {
+        "x": 1233,
+        "y": 690,
+        "w": 210,
+        "h": 14
+      }
+    },
+    {
+      "value": "<StatusItem kind=\"uptime\" />",
+      "type": "code",
+      "bbox": {
+        "x": 1538,
+        "y": 690,
+        "w": 205,
+        "h": 14
+      }
+    },
+    {
+      "value": "<StatusItem kind=\"sla\" />",
+      "type": "code",
+      "bbox": {
+        "x": 1233,
+        "y": 728,
+        "w": 190,
+        "h": 14
+      }
+    },
+    {
+      "value": "<StatusItem kind=\"quality\" />",
+      "type": "code",
+      "bbox": {
+        "x": 1538,
+        "y": 728,
+        "w": 215,
+        "h": 14
+      }
+    },
+    {
+      "value": "<StatusItem kind=\"storage\" />",
+      "type": "code",
+      "bbox": {
+        "x": 1233,
+        "y": 766,
+        "w": 215,
+        "h": 14
+      }
+    },
+    {
+      "value": "<StatusItem kind=\"bandwidth\" />",
+      "type": "code",
+      "bbox": {
+        "x": 1538,
+        "y": 766,
+        "w": 230,
+        "h": 14
+      }
+    },
+    {
+      "value": "<StatusItem kind=\"logs\" />",
+      "type": "code",
+      "bbox": {
+        "x": 1233,
+        "y": 804,
+        "w": 195,
+        "h": 14
+      }
+    },
+    {
+      "value": "<GlobalActions />",
+      "type": "code",
+      "bbox": {
+        "x": 1538,
+        "y": 804,
+        "w": 135,
+        "h": 14
+      }
+    },
+    {
+      "value": "全局动作区弹出的通知中心、设置、用户菜单等浮层仍按 overlay 新口径生成。",
+      "type": "react-note",
+      "bbox": {
+        "x": 1220,
+        "y": 854,
+        "w": 560,
+        "h": 18
+      }
+    },
+    {
+      "value": "这些浮层只画业务容器本体，不携带完整 AppShell。",
+      "type": "react-note",
+      "bbox": {
+        "x": 1220,
+        "y": 880,
+        "w": 430,
+        "h": 18
+      }
+    },
+    {
+      "value": "验收口径：底部状态栏必须固定在 y=997/h=83；不得改成页面专属指标栏；不得把通知/设置/电源移到顶部。",
+      "type": "footer-warning",
+      "bbox": {
+        "x": 42,
+        "y": 968,
+        "w": 940,
+        "h": 20
+      }
+    },
+    {
+      "value": "本图基于 screen.png 裁切重组，作为后续页面、状态图和组件板的底部单栏基准。",
+      "type": "footer-note",
+      "bbox": {
+        "x": 42,
+        "y": 1008,
+        "w": 720,
+        "h": 18
+      }
+    }
+  ],
+  "components": [
+    {
+      "id": "BottomStatusBarSpecBoard",
+      "region": "canvas",
+      "type": "component-specimen-wrapper",
+      "state": "default",
+      "implementation": "Standalone component board without AppShell."
+    },
+    {
+      "id": "BlueprintGridBackground",
+      "region": "canvas",
+      "type": "background",
+      "state": "default",
+      "implementation": "CSS linear-gradient grid."
+    },
+    {
+      "id": "ComponentSpecHeader",
+      "region": "header",
+      "type": "header",
+      "state": "default",
+      "implementation": "Title, subtitle and fixed global label."
+    },
+    {
+      "id": "BottomStatusBarSample",
+      "region": "bottom-statusbar-sample",
+      "type": "statusbar",
+      "state": "normal",
+      "implementation": "Fixed global bottom status bar cropped from screen.png."
+    },
+    {
+      "id": "StatusItemLatency",
+      "region": "sample-latency",
+      "type": "status-item",
+      "state": "success",
+      "implementation": "Data latency indicator."
+    },
+    {
+      "id": "StatusItemUptime",
+      "region": "sample-uptime",
+      "type": "status-item",
+      "state": "success",
+      "implementation": "System uptime indicator."
+    },
+    {
+      "id": "StatusItemSla",
+      "region": "sample-sla",
+      "type": "status-item",
+      "state": "success",
+      "implementation": "Alert handling SLA indicator."
+    },
+    {
+      "id": "StatusItemQuality",
+      "region": "sample-quality",
+      "type": "status-item",
+      "state": "success",
+      "implementation": "Data quality indicator."
+    },
+    {
+      "id": "StatusItemStorage",
+      "region": "sample-storage",
+      "type": "status-item",
+      "state": "info",
+      "implementation": "Storage usage indicator."
+    },
+    {
+      "id": "StatusItemBandwidth",
+      "region": "sample-bandwidth",
+      "type": "status-item",
+      "state": "info",
+      "implementation": "Bandwidth usage indicator."
+    },
+    {
+      "id": "StatusItemLogs",
+      "region": "sample-logs",
+      "type": "status-item",
+      "state": "success",
+      "implementation": "Log ingest throughput indicator."
+    },
+    {
+      "id": "GlobalActions",
+      "region": "sample-global-actions",
+      "type": "global-actions",
+      "state": "notification-settings-power",
+      "implementation": "Notification badge, settings, global config, power."
+    },
+    {
+      "id": "StatusItemSplitGrid",
+      "region": "section-02",
+      "type": "status-item-grid",
+      "state": "fixed-order",
+      "implementation": "Seven status item cards plus global actions."
+    },
+    {
+      "id": "OwnershipBoundaryPanel",
+      "region": "section-03",
+      "type": "ownership-rules",
+      "state": "ok-vs-bad",
+      "implementation": "Green allowed rows and red forbidden rows."
+    },
+    {
+      "id": "StatusVariantRows",
+      "region": "section-04",
+      "type": "variant-table",
+      "state": "normal-warning-danger-loading",
+      "implementation": "Normal, latency elevated, link degraded and loading skeleton variants."
+    },
+    {
+      "id": "StatusSkeleton",
+      "region": "variant-loading",
+      "type": "skeleton",
+      "state": "loading",
+      "implementation": "Four low-contrast skeleton bars."
+    },
+    {
+      "id": "DimensionTokenRow",
+      "region": "variant-token-row",
+      "type": "token-row",
+      "state": "reference",
+      "implementation": "y, height, radius and divider tokens."
+    },
+    {
+      "id": "ReactMappingPanel",
+      "region": "section-05",
+      "type": "implementation-reference",
+      "state": "default",
+      "implementation": "StatusItem and GlobalActions component split."
+    },
+    {
+      "id": "StatusItemCodeChip",
+      "region": "code-latency",
+      "type": "code-chip",
+      "state": "default",
+      "implementation": "React code chip for StatusItem."
+    },
+    {
+      "id": "AcceptanceFooter",
+      "region": "footer",
+      "type": "footer-warning",
+      "state": "acceptance",
+      "implementation": "Fixed y/h and ownership acceptance rule."
+    }
+  ],
+  "icons": [
+    {
+      "position": "sample-latency",
+      "icon": "green latency circle",
+      "implementation": "lucide/status icon or CSS circle",
+      "semantic": "healthy latency",
+      "custom_draw": false
+    },
+    {
+      "position": "sample-uptime",
+      "icon": "green lightning",
+      "implementation": "lucide Zap",
+      "semantic": "system uptime",
+      "custom_draw": false
+    },
+    {
+      "position": "sample-sla",
+      "icon": "green diamond",
+      "implementation": "lucide BadgeCheck-like icon",
+      "semantic": "SLA health",
+      "custom_draw": false
+    },
+    {
+      "position": "sample-quality",
+      "icon": "green heartbeat",
+      "implementation": "lucide Activity",
+      "semantic": "data quality",
+      "custom_draw": false
+    },
+    {
+      "position": "sample-storage",
+      "icon": "green storage case",
+      "implementation": "lucide Briefcase or Database",
+      "semantic": "storage usage",
+      "custom_draw": false
+    },
+    {
+      "position": "sample-bandwidth",
+      "icon": "green bandwidth circle",
+      "implementation": "lucide CircleEqual",
+      "semantic": "bandwidth usage",
+      "custom_draw": false
+    },
+    {
+      "position": "sample-logs",
+      "icon": "green log circle",
+      "implementation": "lucide CircleDot",
+      "semantic": "log throughput",
+      "custom_draw": false
+    },
+    {
+      "position": "sample-global-actions",
+      "icon": "notification bell with red badge",
+      "implementation": "lucide Bell plus badge",
+      "semantic": "notification center",
+      "custom_draw": false
+    },
+    {
+      "position": "sample-global-actions",
+      "icon": "settings gear",
+      "implementation": "lucide Settings",
+      "semantic": "settings",
+      "custom_draw": false
+    },
+    {
+      "position": "sample-global-actions",
+      "icon": "global config gear",
+      "implementation": "lucide Cog",
+      "semantic": "global configuration",
+      "custom_draw": false
+    },
+    {
+      "position": "sample-global-actions",
+      "icon": "power icon",
+      "implementation": "lucide Power",
+      "semantic": "power action",
+      "custom_draw": false
+    },
+    {
+      "position": "ownership-ok-1",
+      "icon": "green check circle",
+      "implementation": "CSS circle/check",
+      "semantic": "allowed ownership",
+      "custom_draw": false
+    },
+    {
+      "position": "ownership-bad-1",
+      "icon": "red ban circle",
+      "implementation": "lucide Ban",
+      "semantic": "forbidden ownership",
+      "custom_draw": false
+    },
+    {
+      "position": "variant-loading",
+      "icon": "skeleton bar",
+      "implementation": "CSS skeleton",
+      "semantic": "loading placeholder",
+      "custom_draw": false
+    },
+    {
+      "position": "code-actions",
+      "icon": "code chip",
+      "implementation": "pre/code styled chip",
+      "semantic": "React mapping",
+      "custom_draw": false
+    }
+  ],
+  "tokens": [
+    {
+      "name": "canvas.background",
+      "value": "#03111c",
+      "usage": "full canvas"
+    },
+    {
+      "name": "grid.line",
+      "value": "rgba(30,156,255,0.24)",
+      "usage": "blueprint grid"
+    },
+    {
+      "name": "panel.background",
+      "value": "rgba(6,28,43,0.86)",
+      "usage": "all sections"
+    },
+    {
+      "name": "panel.header.background",
+      "value": "#0b3c52",
+      "usage": "section header strips"
+    },
+    {
+      "name": "statusbar.y",
+      "value": "997px",
+      "usage": "fixed screen bottom status bar y coordinate"
+    },
+    {
+      "name": "statusbar.height",
+      "value": "83px",
+      "usage": "fixed screen bottom status bar height"
+    },
+    {
+      "name": "radius.statusbar",
+      "value": "4-6px",
+      "usage": "status bar and item radius"
+    },
+    {
+      "name": "divider.color",
+      "value": "rgba(32,200,232,0.28)",
+      "usage": "low opacity cyan dividers"
+    },
+    {
+      "name": "accent.success",
+      "value": "#36d66b",
+      "usage": "healthy status icons and allowed ownership"
+    },
+    {
+      "name": "accent.warning",
+      "value": "#ffe600",
+      "usage": "latency elevated and acceptance warning"
+    },
+    {
+      "name": "accent.danger",
+      "value": "#ff4d4f",
+      "usage": "link degraded and forbidden ownership"
+    },
+    {
+      "name": "accent.info",
+      "value": "#1e9cff",
+      "usage": "code chips and outlines"
+    },
+    {
+      "name": "text.primary",
+      "value": "#eaf7ff",
+      "usage": "titles and values"
+    },
+    {
+      "name": "text.secondary",
+      "value": "#9db9c9",
+      "usage": "labels and captions"
+    },
+    {
+      "name": "code.background",
+      "value": "#071f32",
+      "usage": "React code chips"
+    },
+    {
+      "name": "skeleton.fill",
+      "value": "rgba(157,185,201,0.35)",
+      "usage": "loading skeleton bars"
+    },
+    {
+      "name": "density.status.item",
+      "value": "31px",
+      "usage": "sample status item height"
+    },
+    {
+      "name": "density.variant.row",
+      "value": "43px",
+      "usage": "status variant row height"
+    },
+    {
+      "name": "spacing.grid",
+      "value": "8px",
+      "usage": "component baseline"
+    }
+  ],
+  "interactions": [
+    {
+      "component": "BottomStatusBar",
+      "state": "fixed-global",
+      "trigger": "app shell renders",
+      "expected": "Always fixed at screen bottom y=997/h=83 and keeps the fixed item order."
+    },
+    {
+      "component": "StatusItemLatency",
+      "state": "normal",
+      "trigger": "latency healthy",
+      "expected": "Shows 数据延迟 1.23 s with green health icon."
+    },
+    {
+      "component": "StatusItemLatency",
+      "state": "warning",
+      "trigger": "latency elevated",
+      "expected": "Shows 延迟升高 and 4.80 s without moving the global action area."
+    },
+    {
+      "component": "StatusItemLatency",
+      "state": "danger",
+      "trigger": "link degraded",
+      "expected": "Shows 链路降级 and 8.12 s with danger color."
+    },
+    {
+      "component": "BottomStatusBar",
+      "state": "loading",
+      "trigger": "status values loading",
+      "expected": "Uses skeleton bars while preserving row height and global action position."
+    },
+    {
+      "component": "GlobalActions",
+      "state": "notification",
+      "trigger": "notification center opened",
+      "expected": "Overlay is generated as a separate business container, not a full AppShell."
+    },
+    {
+      "component": "GlobalActions",
+      "state": "settings",
+      "trigger": "settings clicked",
+      "expected": "Settings and global config remain in bottom-right global action area."
+    },
+    {
+      "component": "GlobalActions",
+      "state": "power",
+      "trigger": "power clicked",
+      "expected": "Power action belongs to bottom global action area, not the top bar."
+    },
+    {
+      "component": "OwnershipBoundaryPanel",
+      "state": "allowed",
+      "trigger": "global action placement review",
+      "expected": "Notification badge, settings/global config and power action remain at the bottom."
+    },
+    {
+      "component": "OwnershipBoundaryPanel",
+      "state": "forbidden",
+      "trigger": "attempt to move actions to top or page-specific bar",
+      "expected": "Top notification bell, top avatar and page-specific bottom status bar are rejected by the component contract."
+    },
+    {
+      "component": "StatusItem",
+      "state": "developer-reference",
+      "trigger": "React implementation",
+      "expected": "Use StatusItem kind values latency, uptime, sla, quality, storage, bandwidth, logs."
+    },
+    {
+      "component": "GlobalActions",
+      "state": "developer-reference",
+      "trigger": "React implementation",
+      "expected": "Use a separate GlobalActions component after the fixed seven status items."
+    }
+  ],
+  "differences": [
+    {
+      "type": "scope",
+      "location": "production React implementation",
+      "current": "Pixel evidence will use reference-raster implementation.",
+      "expected": "Semantic implementation should build BottomStatusBar, StatusItem, GlobalActions, ownership rules and variant states from this record.",
+      "fix_suggestion": "Documented as scope boundary for this image; target PNG reproduction remains unchanged.",
+      "status": "documented"
+    },
+    {
+      "type": "production-detail",
+      "location": "global action overlays",
+      "current": "The target PNG only shows global action icons and says overlays are generated separately.",
+      "expected": "Production UI should implement notification center, settings, user menu or power overlays as separate business containers.",
+      "fix_suggestion": "Keep target PNG pixel reproduction unchanged; overlay screens are separate UI states.",
+      "status": "documented"
+    }
+  ]
+}

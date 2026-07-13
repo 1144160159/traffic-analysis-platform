@@ -1,0 +1,539 @@
+{
+  "package_id": "ui_windows_node_repl_env_matrix_smoke",
+  "result": "blocked_chrome_bridge",
+  "generated_at": "2026-07-02T20:27:30.814Z",
+  "windows": {
+    "host": "10.3.6.59",
+    "user": "LongShine"
+  },
+  "mcp_config": {
+    "result": "pass",
+    "enabled": true,
+    "transport_type": "stdio",
+    "env_keys": [
+      "NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER",
+      "BROWSER_USE_CODEX_APP_VERSION",
+      "NODE_REPL_NATIVE_PIPE_CONNECT_TIMEOUT_MS",
+      "BROWSER_USE_CODEX_APP_BUILD_FLAVOR",
+      "CODEX_HOME",
+      "SKY_CUA_NATIVE_PIPE_DIRECTORY",
+      "NODE_REPL_NODE_MODULE_DIRS",
+      "NODE_REPL_NODE_PATH",
+      "NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME",
+      "SKY_CUA_NATIVE_PIPE",
+      "NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S",
+      "NODE_REPL_TRUSTED_CODE_PATHS",
+      "BROWSER_USE_AVAILABLE_BACKENDS",
+      "CODEX_CLI_PATH"
+    ],
+    "env_inventory": {
+      "NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER": {
+        "present": true,
+        "length": 66
+      },
+      "BROWSER_USE_CODEX_APP_VERSION": {
+        "present": true,
+        "length": 12
+      },
+      "NODE_REPL_NATIVE_PIPE_CONNECT_TIMEOUT_MS": {
+        "present": true,
+        "length": 4
+      },
+      "BROWSER_USE_CODEX_APP_BUILD_FLAVOR": {
+        "present": true,
+        "length": 4
+      },
+      "CODEX_HOME": {
+        "present": true,
+        "length": 25
+      },
+      "SKY_CUA_NATIVE_PIPE_DIRECTORY": {
+        "present": true,
+        "length": 64
+      },
+      "NODE_REPL_NODE_MODULE_DIRS": {
+        "present": true,
+        "length": 97
+      },
+      "NODE_REPL_NODE_PATH": {
+        "present": true,
+        "length": 93
+      },
+      "NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME": {
+        "present": true,
+        "length": 199
+      },
+      "SKY_CUA_NATIVE_PIPE": {
+        "present": true,
+        "length": 1
+      },
+      "NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S": {
+        "present": true,
+        "length": 129
+      },
+      "NODE_REPL_TRUSTED_CODE_PATHS": {
+        "present": true,
+        "length": 25
+      },
+      "BROWSER_USE_AVAILABLE_BACKENDS": {
+        "present": true,
+        "length": 10
+      },
+      "CODEX_CLI_PATH": {
+        "present": true,
+        "length": 76
+      }
+    }
+  },
+  "counts": {
+    "js_pass_cases": 7,
+    "chrome_extension_ready_cases": 0,
+    "chrome_native_pipe_or_trust_cases": 4,
+    "chrome_sandbox_firewall_cases": 0
+  },
+  "matrix": [
+    {
+      "name": "none",
+      "env_keys": [],
+      "direct": {
+        "ssh_exit_code": 0,
+        "signal": null,
+        "stderr": "",
+        "tools": [
+          "js",
+          "js_add_node_module_dir",
+          "js_reset"
+        ],
+        "is_error": false,
+        "data": {
+          "ok": true,
+          "cwd": "C:\\Users\\LongShine",
+          "homeDir": "C:\\Users\\LongShine"
+        },
+        "classification": "pass"
+      },
+      "chrome": {
+        "ssh_exit_code": 0,
+        "signal": null,
+        "stderr": "",
+        "tools": [
+          "js",
+          "js_add_node_module_dir",
+          "js_reset"
+        ],
+        "is_error": false,
+        "data": {
+          "ok": false,
+          "step": "chrome-extension-target-smoke",
+          "error": "Error: privileged native pipe bridge is not available; browser-client is not trusted\n    at Module.VEe (C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\26.623.81905\\scripts\\browser-client.mjs:3246:3358)\n    at C:\\Users\\LongShine\\.node_repl_cell_0.mjs:10:29\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+        },
+        "classification": "native_pipe_or_trust_unavailable"
+      }
+    },
+    {
+      "name": "trusted-browser-client",
+      "env_keys": [
+        "NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S"
+      ],
+      "direct": {
+        "ssh_exit_code": 0,
+        "signal": null,
+        "stderr": "",
+        "tools": [
+          "js",
+          "js_add_node_module_dir",
+          "js_reset"
+        ],
+        "is_error": false,
+        "data": {
+          "ok": true,
+          "cwd": "C:\\Users\\LongShine",
+          "homeDir": "C:\\Users\\LongShine"
+        },
+        "classification": "pass"
+      },
+      "chrome": {
+        "ssh_exit_code": 0,
+        "signal": null,
+        "stderr": "2026-07-02T20:26:50.744906Z ERROR node_repl::diagnostics: codex app-server auth fetch failed auth_fetch_failure_reason=\"app_server_request_failed\" auth_method=missing auth_token_state=missing auth_status_keys= auth_status_field_kinds=authStatus:missing codex_cli_path_env_present=false target_os=\"windows\" target_arch=\"x86_64\"",
+        "tools": [
+          "js",
+          "js_add_node_module_dir",
+          "js_reset"
+        ],
+        "is_error": false,
+        "data": {
+          "ok": false,
+          "step": "chrome-extension-target-smoke",
+          "error": "Error: Missing required Codex turn metadata: session_id, turn_id\n    at nT (C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\26.623.81905\\scripts\\browser-client.mjs:126:41940)\n    at $k (C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\26.623.81905\\scripts\\browser-client.mjs:3244:9076)\n    at C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\26.623.81905\\scripts\\browser-client.mjs:3244:17170\n    at rp.refresh (C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\26.623.81905\\scripts\\browser-client.mjs:3244:17276)\n    at Gg (C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\26.623.81905\\scripts\\browser-client.mjs:2837:1014)\n    at C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\26.623.81905\\scripts\\browser-client.mjs:3246:4015\n    at Hf (C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\26.623.81905\\scripts\\browser-client.mjs:70:13073)\n    at C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\26.623.81905\\scripts\\browser-client.mjs:70:13335\n    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:63:14)\n    at du (C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\26.623.81905\\scripts\\browser-client.mjs:70:13314)"
+        },
+        "classification": "js_error"
+      }
+    },
+    {
+      "name": "trusted-code",
+      "env_keys": [
+        "NODE_REPL_TRUSTED_CODE_PATHS"
+      ],
+      "direct": {
+        "ssh_exit_code": 0,
+        "signal": null,
+        "stderr": "",
+        "tools": [
+          "js",
+          "js_add_node_module_dir",
+          "js_reset"
+        ],
+        "is_error": false,
+        "data": {
+          "ok": true,
+          "cwd": "C:\\Users\\LongShine",
+          "homeDir": "C:\\Users\\LongShine"
+        },
+        "classification": "pass"
+      },
+      "chrome": {
+        "ssh_exit_code": 0,
+        "signal": null,
+        "stderr": "2026-07-02T20:26:55.285345Z ERROR node_repl::diagnostics: codex app-server auth fetch failed auth_fetch_failure_reason=\"app_server_request_failed\" auth_method=missing auth_token_state=missing auth_status_keys= auth_status_field_kinds=authStatus:missing codex_cli_path_env_present=false target_os=\"windows\" target_arch=\"x86_64\"",
+        "tools": [
+          "js",
+          "js_add_node_module_dir",
+          "js_reset"
+        ],
+        "is_error": false,
+        "data": {
+          "ok": false,
+          "step": "chrome-extension-target-smoke",
+          "error": "Error: Missing required Codex turn metadata: session_id, turn_id\n    at nT (C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\26.623.81905\\scripts\\browser-client.mjs:126:41940)\n    at $k (C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\26.623.81905\\scripts\\browser-client.mjs:3244:9076)\n    at C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\26.623.81905\\scripts\\browser-client.mjs:3244:17170\n    at rp.refresh (C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\26.623.81905\\scripts\\browser-client.mjs:3244:17276)\n    at Gg (C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\26.623.81905\\scripts\\browser-client.mjs:2837:1014)\n    at C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\26.623.81905\\scripts\\browser-client.mjs:3246:4015\n    at Hf (C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\26.623.81905\\scripts\\browser-client.mjs:70:13073)\n    at C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\26.623.81905\\scripts\\browser-client.mjs:70:13335\n    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:63:14)\n    at du (C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\26.623.81905\\scripts\\browser-client.mjs:70:13314)"
+        },
+        "classification": "js_error"
+      }
+    },
+    {
+      "name": "native-pipe",
+      "env_keys": [
+        "SKY_CUA_NATIVE_PIPE",
+        "SKY_CUA_NATIVE_PIPE_DIRECTORY"
+      ],
+      "direct": {
+        "ssh_exit_code": 0,
+        "signal": null,
+        "stderr": "",
+        "tools": [
+          "js",
+          "js_add_node_module_dir",
+          "js_reset"
+        ],
+        "is_error": false,
+        "data": {
+          "ok": true,
+          "cwd": "C:\\Users\\LongShine",
+          "homeDir": "C:\\Users\\LongShine"
+        },
+        "classification": "pass"
+      },
+      "chrome": {
+        "ssh_exit_code": 0,
+        "signal": null,
+        "stderr": "",
+        "tools": [
+          "js",
+          "js_add_node_module_dir",
+          "js_reset"
+        ],
+        "is_error": false,
+        "data": {
+          "ok": false,
+          "step": "chrome-extension-target-smoke",
+          "error": "Error: privileged native pipe bridge is not available; browser-client is not trusted\n    at Module.VEe (C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\26.623.81905\\scripts\\browser-client.mjs:3246:3358)\n    at C:\\Users\\LongShine\\.node_repl_cell_0.mjs:10:29\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+        },
+        "classification": "native_pipe_or_trust_unavailable"
+      }
+    },
+    {
+      "name": "browser-backend-metadata",
+      "env_keys": [
+        "BROWSER_USE_AVAILABLE_BACKENDS",
+        "BROWSER_USE_CODEX_APP_VERSION",
+        "BROWSER_USE_CODEX_APP_BUILD_FLAVOR"
+      ],
+      "direct": {
+        "ssh_exit_code": 0,
+        "signal": null,
+        "stderr": "",
+        "tools": [
+          "js",
+          "js_add_node_module_dir",
+          "js_reset"
+        ],
+        "is_error": false,
+        "data": {
+          "ok": true,
+          "cwd": "C:\\Users\\LongShine",
+          "homeDir": "C:\\Users\\LongShine"
+        },
+        "classification": "pass"
+      },
+      "chrome": {
+        "ssh_exit_code": 0,
+        "signal": null,
+        "stderr": "",
+        "tools": [
+          "js",
+          "js_add_node_module_dir",
+          "js_reset"
+        ],
+        "is_error": false,
+        "data": {
+          "ok": false,
+          "step": "chrome-extension-target-smoke",
+          "error": "Error: privileged native pipe bridge is not available; browser-client is not trusted\n    at Module.VEe (C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\26.623.81905\\scripts\\browser-client.mjs:3246:3358)\n    at C:\\Users\\LongShine\\.node_repl_cell_0.mjs:10:29\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+        },
+        "classification": "native_pipe_or_trust_unavailable"
+      }
+    },
+    {
+      "name": "codex-context",
+      "env_keys": [
+        "CODEX_HOME",
+        "CODEX_CLI_PATH"
+      ],
+      "direct": {
+        "ssh_exit_code": 0,
+        "signal": null,
+        "stderr": "2026-07-02T20:27:03.407358Z ERROR node_repl::diagnostics: node_repl kernel terminated unexpectedly reason=\"stdout_eof\" stream_error=\"\" redacted_source_available=false redacted_source_exec_completed=false redacted_source=\"unavailable\" target_os=\"windows\" target_arch=\"x86_64\"",
+        "tools": [
+          "js",
+          "js_add_node_module_dir",
+          "js_reset"
+        ],
+        "is_error": true,
+        "data": {
+          "text_prefix": "node_repl kernel exited unexpectedly\n\nnode_repl diagnostics: {\"kernel_pid\":24788,\"kernel_status\":\"running\",\"kernel_stderr_tail\":\"windows sandbox failed: helper_firewall_rule_create_or_add_failed: SetRemotePorts failed: Error { code: HRESULT(0x80070005), message: \\\"拒绝访问。\\\" }\",\"reason\":\"stdout_eof\",\"stream_error\":null}"
+        },
+        "classification": "sandbox_firewall_denied"
+      },
+      "chrome": null
+    },
+    {
+      "name": "node-paths",
+      "env_keys": [
+        "NODE_REPL_NODE_PATH",
+        "NODE_REPL_NODE_MODULE_DIRS"
+      ],
+      "direct": {
+        "ssh_exit_code": 0,
+        "signal": null,
+        "stderr": "",
+        "tools": [
+          "js",
+          "js_add_node_module_dir",
+          "js_reset"
+        ],
+        "is_error": false,
+        "data": {
+          "ok": true,
+          "cwd": "C:\\Users\\LongShine",
+          "homeDir": "C:\\Users\\LongShine"
+        },
+        "classification": "pass"
+      },
+      "chrome": {
+        "ssh_exit_code": 0,
+        "signal": null,
+        "stderr": "",
+        "tools": [
+          "js",
+          "js_add_node_module_dir",
+          "js_reset"
+        ],
+        "is_error": false,
+        "data": {
+          "ok": false,
+          "step": "chrome-extension-target-smoke",
+          "error": "Error: privileged native pipe bridge is not available; browser-client is not trusted\n    at Module.VEe (C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\26.623.81905\\scripts\\browser-client.mjs:3246:3358)\n    at C:\\Users\\LongShine\\.node_repl_cell_0.mjs:10:29\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+        },
+        "classification": "native_pipe_or_trust_unavailable"
+      }
+    },
+    {
+      "name": "trust-and-pipe",
+      "env_keys": [
+        "NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S",
+        "NODE_REPL_TRUSTED_CODE_PATHS",
+        "SKY_CUA_NATIVE_PIPE",
+        "SKY_CUA_NATIVE_PIPE_DIRECTORY"
+      ],
+      "direct": {
+        "ssh_exit_code": 0,
+        "signal": null,
+        "stderr": "",
+        "tools": [
+          "js",
+          "js_add_node_module_dir",
+          "js_reset"
+        ],
+        "is_error": false,
+        "data": {
+          "ok": true,
+          "cwd": "C:\\Users\\LongShine",
+          "homeDir": "C:\\Users\\LongShine"
+        },
+        "classification": "pass"
+      },
+      "chrome": {
+        "ssh_exit_code": 0,
+        "signal": null,
+        "stderr": "2026-07-02T20:27:08.128309Z ERROR node_repl::diagnostics: codex app-server auth fetch failed auth_fetch_failure_reason=\"app_server_request_failed\" auth_method=missing auth_token_state=missing auth_status_keys= auth_status_field_kinds=authStatus:missing codex_cli_path_env_present=false target_os=\"windows\" target_arch=\"x86_64\"",
+        "tools": [
+          "js",
+          "js_add_node_module_dir",
+          "js_reset"
+        ],
+        "is_error": false,
+        "data": {
+          "ok": false,
+          "step": "chrome-extension-target-smoke",
+          "error": "Error: Missing required Codex turn metadata: session_id, turn_id\n    at nT (C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\26.623.81905\\scripts\\browser-client.mjs:126:41940)\n    at $k (C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\26.623.81905\\scripts\\browser-client.mjs:3244:9076)\n    at C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\26.623.81905\\scripts\\browser-client.mjs:3244:17170\n    at rp.refresh (C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\26.623.81905\\scripts\\browser-client.mjs:3244:17276)\n    at Gg (C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\26.623.81905\\scripts\\browser-client.mjs:2837:1014)\n    at C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\26.623.81905\\scripts\\browser-client.mjs:3246:4015\n    at Hf (C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\26.623.81905\\scripts\\browser-client.mjs:70:13073)\n    at C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\26.623.81905\\scripts\\browser-client.mjs:70:13335\n    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:63:14)\n    at du (C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\26.623.81905\\scripts\\browser-client.mjs:70:13314)"
+        },
+        "classification": "js_error"
+      }
+    },
+    {
+      "name": "trust-pipe-backend-codex",
+      "env_keys": [
+        "NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S",
+        "NODE_REPL_TRUSTED_CODE_PATHS",
+        "SKY_CUA_NATIVE_PIPE",
+        "SKY_CUA_NATIVE_PIPE_DIRECTORY",
+        "BROWSER_USE_AVAILABLE_BACKENDS",
+        "BROWSER_USE_CODEX_APP_VERSION",
+        "BROWSER_USE_CODEX_APP_BUILD_FLAVOR",
+        "CODEX_HOME",
+        "CODEX_CLI_PATH"
+      ],
+      "direct": {
+        "ssh_exit_code": 0,
+        "signal": null,
+        "stderr": "2026-07-02T20:27:13.721029Z ERROR node_repl::diagnostics: node_repl kernel terminated unexpectedly reason=\"stdout_eof\" stream_error=\"\" redacted_source_available=false redacted_source_exec_completed=false redacted_source=\"unavailable\" target_os=\"windows\" target_arch=\"x86_64\"",
+        "tools": [
+          "js",
+          "js_add_node_module_dir",
+          "js_reset"
+        ],
+        "is_error": true,
+        "data": {
+          "text_prefix": "node_repl kernel exited unexpectedly\n\nnode_repl diagnostics: {\"kernel_pid\":10380,\"kernel_status\":\"running\",\"kernel_stderr_tail\":\"windows sandbox failed: helper_firewall_rule_create_or_add_failed: SetRemotePorts failed: Error { code: HRESULT(0x80070005), message: \\\"拒绝访问。\\\" }\",\"reason\":\"stdout_eof\",\"stream_error\":null}"
+        },
+        "classification": "sandbox_firewall_denied"
+      },
+      "chrome": null
+    },
+    {
+      "name": "all-except-node-paths",
+      "env_keys": [
+        "NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER",
+        "BROWSER_USE_CODEX_APP_VERSION",
+        "NODE_REPL_NATIVE_PIPE_CONNECT_TIMEOUT_MS",
+        "BROWSER_USE_CODEX_APP_BUILD_FLAVOR",
+        "CODEX_HOME",
+        "SKY_CUA_NATIVE_PIPE_DIRECTORY",
+        "NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME",
+        "SKY_CUA_NATIVE_PIPE",
+        "NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S",
+        "NODE_REPL_TRUSTED_CODE_PATHS",
+        "BROWSER_USE_AVAILABLE_BACKENDS",
+        "CODEX_CLI_PATH"
+      ],
+      "direct": {
+        "ssh_exit_code": 0,
+        "signal": null,
+        "stderr": "2026-07-02T20:27:18.595455Z ERROR node_repl::diagnostics: node_repl kernel terminated unexpectedly reason=\"stdout_eof\" stream_error=\"\" redacted_source_available=false redacted_source_exec_completed=false redacted_source=\"unavailable\" target_os=\"windows\" target_arch=\"x86_64\"",
+        "tools": [
+          "js",
+          "js_add_node_module_dir",
+          "js_reset"
+        ],
+        "is_error": true,
+        "data": {
+          "text_prefix": "node_repl kernel exited unexpectedly\n\nnode_repl diagnostics: {\"kernel_pid\":25032,\"kernel_status\":\"running\",\"kernel_stderr_tail\":\"windows sandbox failed: helper_firewall_rule_create_or_add_failed: SetRemotePorts failed: Error { code: HRESULT(0x80070005), message: \\\"拒绝访问。\\\" }\",\"reason\":\"stdout_eof\",\"stream_error\":null}"
+        },
+        "classification": "sandbox_firewall_denied"
+      },
+      "chrome": null
+    },
+    {
+      "name": "all-except-native-pipe",
+      "env_keys": [
+        "NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER",
+        "BROWSER_USE_CODEX_APP_VERSION",
+        "NODE_REPL_NATIVE_PIPE_CONNECT_TIMEOUT_MS",
+        "BROWSER_USE_CODEX_APP_BUILD_FLAVOR",
+        "CODEX_HOME",
+        "NODE_REPL_NODE_MODULE_DIRS",
+        "NODE_REPL_NODE_PATH",
+        "NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME",
+        "NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S",
+        "NODE_REPL_TRUSTED_CODE_PATHS",
+        "BROWSER_USE_AVAILABLE_BACKENDS",
+        "CODEX_CLI_PATH"
+      ],
+      "direct": {
+        "ssh_exit_code": 0,
+        "signal": null,
+        "stderr": "2026-07-02T20:27:23.483093Z ERROR node_repl::diagnostics: node_repl kernel terminated unexpectedly reason=\"stdout_eof\" stream_error=\"\" redacted_source_available=false redacted_source_exec_completed=false redacted_source=\"unavailable\" target_os=\"windows\" target_arch=\"x86_64\"",
+        "tools": [
+          "js",
+          "js_add_node_module_dir",
+          "js_reset"
+        ],
+        "is_error": true,
+        "data": {
+          "text_prefix": "node_repl kernel exited unexpectedly\n\nnode_repl diagnostics: {\"kernel_pid\":24120,\"kernel_status\":\"running\",\"kernel_stderr_tail\":\"windows sandbox failed: helper_firewall_rule_create_or_add_failed: SetRemotePorts failed: Error { code: HRESULT(0x80070005), message: \\\"拒绝访问。\\\" }\",\"reason\":\"stdout_eof\",\"stream_error\":null}"
+        },
+        "classification": "sandbox_firewall_denied"
+      },
+      "chrome": null
+    },
+    {
+      "name": "full",
+      "env_keys": [
+        "NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER",
+        "BROWSER_USE_CODEX_APP_VERSION",
+        "NODE_REPL_NATIVE_PIPE_CONNECT_TIMEOUT_MS",
+        "BROWSER_USE_CODEX_APP_BUILD_FLAVOR",
+        "CODEX_HOME",
+        "SKY_CUA_NATIVE_PIPE_DIRECTORY",
+        "NODE_REPL_NODE_MODULE_DIRS",
+        "NODE_REPL_NODE_PATH",
+        "NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME",
+        "SKY_CUA_NATIVE_PIPE",
+        "NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S",
+        "NODE_REPL_TRUSTED_CODE_PATHS",
+        "BROWSER_USE_AVAILABLE_BACKENDS",
+        "CODEX_CLI_PATH"
+      ],
+      "direct": {
+        "ssh_exit_code": 0,
+        "signal": null,
+        "stderr": "2026-07-02T20:27:28.113135Z ERROR node_repl::diagnostics: node_repl kernel terminated unexpectedly reason=\"stdout_eof\" stream_error=\"\" redacted_source_available=false redacted_source_exec_completed=false redacted_source=\"unavailable\" target_os=\"windows\" target_arch=\"x86_64\"",
+        "tools": [
+          "js",
+          "js_add_node_module_dir",
+          "js_reset"
+        ],
+        "is_error": true,
+        "data": {
+          "text_prefix": "node_repl kernel exited unexpectedly\n\nnode_repl diagnostics: {\"kernel_pid\":22816,\"kernel_status\":\"running\",\"kernel_stderr_tail\":\"windows sandbox failed: helper_firewall_rule_create_or_add_failed: SetRemotePorts failed: Error { code: HRESULT(0x80070005), message: \\\"拒绝访问。\\\" }\",\"reason\":\"stdout_eof\",\"stream_error\":null}"
+        },
+        "classification": "sandbox_firewall_denied"
+      },
+      "chrome": null
+    }
+  ],
+  "acceptance_effect": "boundary_evidence_only_not_visual_acceptance",
+  "blockers": [
+    "No tested node_repl environment subset reached the Chrome extension backend from SSH stdio"
+  ]
+}

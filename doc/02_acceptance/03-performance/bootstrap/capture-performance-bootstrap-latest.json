@@ -1,0 +1,146 @@
+{
+  "run_id": "20260630-capture-performance-bootstrap-r1",
+  "result": "pass",
+  "generated_at": "2026-06-30T19:39:35+08:00",
+  "plan_dir": "tests/perf/100g_capture",
+  "bootstrap_dir": "doc/02_acceptance/runs/20260630-capture-performance-bootstrap-r1/capture-performance.bootstrap",
+  "stable_bootstrap_dir": "doc/02_acceptance/03-performance/bootstrap/latest",
+  "review_required": true,
+  "formal_gate_note": "review-required bootstrap only; does not satisfy GATE-P0-03 or GATE-P0-04",
+  "passed": 13,
+  "total": 13,
+  "blockers": 0,
+  "warnings": 0,
+  "checks": [
+    {
+      "ts": "2026-06-30T19:39:34+08:00",
+      "phase": "contract",
+      "name": "performance package README present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "tests/perf/100g_capture/README.md",
+      "artifact": "tests/perf/100g_capture/README.md"
+    },
+    {
+      "ts": "2026-06-30T19:39:34+08:00",
+      "phase": "contract",
+      "name": "capture performance plan present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "tests/perf/100g_capture/capture-performance-plan.yaml",
+      "artifact": "tests/perf/100g_capture/capture-performance-plan.yaml"
+    },
+    {
+      "ts": "2026-06-30T19:39:34+08:00",
+      "phase": "contract",
+      "name": "result schema present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "tests/perf/100g_capture/result-schema.json",
+      "artifact": "tests/perf/100g_capture/result-schema.json"
+    },
+    {
+      "ts": "2026-06-30T19:39:34+08:00",
+      "phase": "contract",
+      "name": "hardware inventory template present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "tests/perf/100g_capture/hardware-inventory.template.yaml",
+      "artifact": "tests/perf/100g_capture/hardware-inventory.template.yaml"
+    },
+    {
+      "ts": "2026-06-30T19:39:34+08:00",
+      "phase": "contract",
+      "name": "traffic profile template present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "tests/perf/100g_capture/traffic-profile.template.yaml",
+      "artifact": "tests/perf/100g_capture/traffic-profile.template.yaml"
+    },
+    {
+      "ts": "2026-06-30T19:39:34+08:00",
+      "phase": "context",
+      "name": "latest capture preflight context present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/03-performance/capture-performance-preflight-latest.json",
+      "artifact": "doc/02_acceptance/03-performance/capture-performance-preflight-latest.json"
+    },
+    {
+      "ts": "2026-06-30T19:39:34+08:00",
+      "phase": "context",
+      "name": "live node summary context present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/03-performance/live-node-summary-latest.json",
+      "artifact": "doc/02_acceptance/03-performance/live-node-summary-latest.json"
+    },
+    {
+      "ts": "2026-06-30T19:39:34+08:00",
+      "phase": "context",
+      "name": "live probe capture profile context present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/03-performance/live-probe-capture-profile-latest.json",
+      "artifact": "doc/02_acceptance/03-performance/live-probe-capture-profile-latest.json"
+    },
+    {
+      "ts": "2026-06-30T19:39:34+08:00",
+      "phase": "context",
+      "name": "repo 500k stress context present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/03-performance/repo-stress-500k-summary-latest.json",
+      "artifact": "doc/02_acceptance/03-performance/repo-stress-500k-summary-latest.json"
+    },
+    {
+      "ts": "2026-06-30T19:39:34+08:00",
+      "phase": "bootstrap",
+      "name": "Bootstrap manifest is review-required",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "evidence-manifest.bootstrap.json",
+      "artifact": "evidence-manifest.bootstrap.json"
+    },
+    {
+      "ts": "2026-06-30T19:39:34+08:00",
+      "phase": "bootstrap",
+      "name": "Review-required hardware and traffic drafts are present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "hardware/traffic bootstrap files",
+      "artifact": "capture-performance.bootstrap"
+    },
+    {
+      "ts": "2026-06-30T19:39:34+08:00",
+      "phase": "bootstrap",
+      "name": "Review result templates are present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "10x100g and 512mpps review templates",
+      "artifact": "results"
+    },
+    {
+      "ts": "2026-06-30T19:39:34+08:00",
+      "phase": "safety",
+      "name": "Bootstrap does not create formal gate artifacts",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "formal artifacts absent from bootstrap package",
+      "artifact": "capture-performance.bootstrap"
+    }
+  ]
+}

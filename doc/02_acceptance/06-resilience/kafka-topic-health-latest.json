@@ -1,0 +1,155 @@
+{
+  "topics": [
+    {
+      "topic": "dlq.pcap-index-job",
+      "partition_count": 3,
+      "replication_factor": 3
+    },
+    {
+      "topic": "rule.updates",
+      "partition_count": 1,
+      "replication_factor": 3
+    },
+    {
+      "topic": "user.events.v1",
+      "partition_count": 4,
+      "replication_factor": 3
+    },
+    {
+      "topic": "audit.logs",
+      "partition_count": 3,
+      "replication_factor": 3
+    },
+    {
+      "topic": "device.logs.v1",
+      "partition_count": 8,
+      "replication_factor": 3
+    },
+    {
+      "topic": "threat.intel.v1",
+      "partition_count": 3,
+      "replication_factor": 3
+    },
+    {
+      "topic": "dlq.session.ch.v1",
+      "partition_count": 6,
+      "replication_factor": 3
+    },
+    {
+      "topic": "l2.trigger.v1",
+      "partition_count": 4,
+      "replication_factor": 3
+    },
+    {
+      "topic": "alerts.v1",
+      "partition_count": 6,
+      "replication_factor": 3
+    },
+    {
+      "topic": "asset.bindings.v1",
+      "partition_count": 4,
+      "replication_factor": 3
+    },
+    {
+      "topic": "detections.business.v1",
+      "partition_count": 6,
+      "replication_factor": 3
+    },
+    {
+      "topic": "alert.feedback.v1",
+      "partition_count": 3,
+      "replication_factor": 3
+    },
+    {
+      "topic": "dlq.rule-job",
+      "partition_count": 2,
+      "replication_factor": 3
+    },
+    {
+      "topic": "session.late.v1",
+      "partition_count": 6,
+      "replication_factor": 3
+    },
+    {
+      "topic": "alert.events.v1",
+      "partition_count": 8,
+      "replication_factor": 3
+    },
+    {
+      "topic": "dlq.feature-job",
+      "partition_count": 2,
+      "replication_factor": 3
+    },
+    {
+      "topic": "detections.v1",
+      "partition_count": 6,
+      "replication_factor": 3
+    },
+    {
+      "topic": "detections.behavior.v1",
+      "partition_count": 6,
+      "replication_factor": 3
+    },
+    {
+      "topic": "dlq.cep-job",
+      "partition_count": 2,
+      "replication_factor": 3
+    },
+    {
+      "topic": "test-metadata",
+      "partition_count": 1,
+      "replication_factor": 1
+    },
+    {
+      "topic": "flow.events.v1",
+      "partition_count": 16,
+      "replication_factor": 3
+    },
+    {
+      "topic": "dlq.v1",
+      "partition_count": 4,
+      "replication_factor": 3
+    },
+    {
+      "topic": "pcap.index.v1",
+      "partition_count": 8,
+      "replication_factor": 3
+    },
+    {
+      "topic": "session.events.v1",
+      "partition_count": 8,
+      "replication_factor": 3
+    },
+    {
+      "topic": "campaigns.v1",
+      "partition_count": 6,
+      "replication_factor": 3
+    },
+    {
+      "topic": "feature.stat.v1",
+      "partition_count": 12,
+      "replication_factor": 3
+    },
+    {
+      "topic": "perf-test",
+      "partition_count": 1,
+      "replication_factor": 1
+    },
+    {
+      "topic": "model-updates",
+      "partition_count": 1,
+      "replication_factor": 3
+    },
+    {
+      "topic": "__consumer_offsets",
+      "partition_count": 50,
+      "replication_factor": 1
+    }
+  ],
+  "topic_count": 29,
+  "partition_count": 190,
+  "under_replicated_count": 0,
+  "offline_leader_count": 0,
+  "under_replicated": [],
+  "offline_leaders": []
+}

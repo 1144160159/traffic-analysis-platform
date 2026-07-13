@@ -1,0 +1,30 @@
+{
+  "package_id": "network_policy_enforcement_readiness_bootstrap",
+  "run_id": "20260630-network-policy-enforcement-readiness-r1",
+  "generated_at": "2026-06-30T20:48:03+08:00",
+  "review_required": true,
+  "formal_gate_note": "review-required CNI/NetworkPolicy readiness package; does not satisfy enforcement gate",
+  "current_state": {
+    "preflight": "doc/02_acceptance/05-security/network-policy-enforcement-preflight-latest.json",
+    "cni_summary": "doc/02_acceptance/05-security/live-cni-policy-capability-summary-latest.json",
+    "network_policy_file": "deployments/kubernetes/security/00-network-policies.yaml",
+    "policy_capable_count": 0,
+    "flannel_marker_count": 2,
+    "live_network_policy_count": 20
+  },
+  "required_formal_evidence": [
+    "network-policy-enforcement-preflight-latest.json result pass",
+    "policy_capable_count > 0",
+    "default-deny probe blocks isolated client",
+    "allow-list probe restores isolated client",
+    "production-security-preflight-latest.json has no NetworkPolicy/CNI blocker"
+  ],
+  "files": {
+    "runbook": "cni-migration-runbook.md",
+    "probe_review_template": "enforcement-probe.review-template.md",
+    "rollback_checklist": "rollback-checklist.review-template.md",
+    "cni_selection": "cni-selection.review-template.yaml",
+    "post_cni_preflight_command": "preflight-command.review-template.sh",
+    "evidence_manifest": "evidence-manifest.bootstrap.json"
+  }
+}

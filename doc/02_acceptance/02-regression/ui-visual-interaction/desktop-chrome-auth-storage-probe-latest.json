@@ -1,0 +1,42 @@
+{
+  "run_id": "20260702-desktop-chrome-auth-storage-probe-r1",
+  "generated_at": "2026-07-02T00:29:19+08:00",
+  "result": "blocked",
+  "scope": "Desktop Chrome authenticated business-route interaction for UI visual/interaction gate",
+  "route_probe": "alerts",
+  "backend_token_check": {
+    "endpoint": "/api/v1/auth/me",
+    "status_code": 200,
+    "username": "codex-ui-desktop-admin",
+    "token_echoed": false
+  },
+  "blockers": [
+    {
+      "id": "desktop_chrome_wrapped_tools_do_not_support_authenticated_business_route",
+      "evidence": "agent.md requires Desktop Chrome wrapper tools for browser smoke and forbids handwritten browser-client/tabs/goto plus login form submission; the wrappers only expose login open/read/claim/list/blank cleanup."
+    },
+    {
+      "id": "production_smoke_hash_disabled",
+      "evidence": "runtime config currently has DESKTOP_SMOKE_TOKEN_ENABLED=false, so /dashboard#codex_smoke_token=<redacted> is not an active accepted path."
+    },
+    {
+      "id": "extension_evaluate_storage_unavailable",
+      "evidence": "Desktop Chrome extension evaluate could read page href/title but window.localStorage was unavailable, so a short-lived JWT could not be injected into the real page session."
+    }
+  ],
+  "non_blockers": [
+    "JWT signing and backend /auth/me validation passed with the short-lived token.",
+    "No interaction.json pass file was written for alerts; capture plan remains interactions=1/28."
+  ],
+  "acceptance_effect": {
+    "ui_visual_targets_passed": "0/30",
+    "route_interactions_passed": "1/28",
+    "project_status": "blocked"
+  },
+  "remediation_options": [
+    "Expose an approved wrapped Desktop Chrome action that can set same-origin storage or open an authenticated smoke URL without form submission.",
+    "Temporarily enable DESKTOP_SMOKE_TOKEN_ENABLED for an explicit acceptance run, then revert and document the window.",
+    "Add a repo-native, non-production smoke callback that accepts only one-time receiver-issued tokens and records evidence without exposing token material."
+  ],
+  "sensitive_material": "No raw JWT, Authorization header, password, or refresh token is stored in this evidence."
+}

@@ -1,0 +1,157 @@
+{
+  "target_id": "not-found",
+  "route": "/__codex_visual_not_found__",
+  "status": "fail",
+  "generated_at": "2026-07-03T20:34:53.327173+08:00",
+  "layer_spec": "doc/04_assets/ui_suite_gpt_v1/specs/layers/not-found.json",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/not-found.png",
+  "actual_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-visual-targets-r17-runtime-fix/not-found/actual-1920.png",
+  "viewport": {
+    "source_width": 1920,
+    "source_height": 1080,
+    "actual_width": 1920,
+    "actual_height": 1080,
+    "size_ok": true
+  },
+  "summary": {
+    "layer_count": 5,
+    "failed_layer_count": 5,
+    "roles": {
+      "global-app-shell": {
+        "layer_count": 3,
+        "failed_count": 3,
+        "weighted_mismatch_pixels": 465152,
+        "weighted_compared_pixels": 465182,
+        "weighted_channel_delta": 6728032.75,
+        "weighted_pixel_max_delta": 11530994.0,
+        "pixel_mismatch_ratio": 0.9999355091125623,
+        "mean_channel_delta": 14.463226758559015,
+        "mean_pixel_max_delta": 24.78813453658998
+      },
+      "page-workspace": {
+        "layer_count": 1,
+        "failed_count": 1,
+        "weighted_mismatch_pixels": 1579063,
+        "weighted_compared_pixels": 1579074,
+        "weighted_channel_delta": 18985169.25,
+        "weighted_pixel_max_delta": 31440326.999999996,
+        "pixel_mismatch_ratio": 0.9999930338920152,
+        "mean_channel_delta": 12.02297628230216,
+        "mean_pixel_max_delta": 19.91061026905642
+      },
+      "closed-loop-rail": {
+        "layer_count": 1,
+        "failed_count": 1,
+        "weighted_mismatch_pixels": 361198,
+        "weighted_compared_pixels": 361200,
+        "weighted_channel_delta": 3506702.2499999995,
+        "weighted_pixel_max_delta": 5509579.0,
+        "pixel_mismatch_ratio": 0.9999944629014397,
+        "mean_channel_delta": 9.708477990033222,
+        "mean_pixel_max_delta": 15.253540974529347
+      }
+    }
+  },
+  "layers": [
+    {
+      "id": "topbar",
+      "role": "global-app-shell",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 80
+      },
+      "status": "fail",
+      "compared_pixels": 153600,
+      "mismatch_pixels": 153593,
+      "pixel_mismatch_ratio": 0.9999544270833334,
+      "max_pixel_ratio": 0.015,
+      "channel_tolerance": 0,
+      "max_channel_delta": 255,
+      "mean_channel_delta": 20.428751627604168,
+      "mean_pixel_max_delta": 36.11177734375,
+      "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-visual-targets-r17-runtime-fix/not-found/layers/topbar-diff.png"
+    },
+    {
+      "id": "sidebar",
+      "role": "global-app-shell",
+      "bbox": {
+        "x": 0,
+        "y": 80,
+        "w": 166,
+        "h": 917
+      },
+      "status": "fail",
+      "compared_pixels": 152222,
+      "mismatch_pixels": 152221,
+      "pixel_mismatch_ratio": 0.999993430647344,
+      "max_pixel_ratio": 0.015,
+      "channel_tolerance": 0,
+      "max_channel_delta": 255,
+      "mean_channel_delta": 13.313180749168977,
+      "mean_pixel_max_delta": 22.150306788769036,
+      "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-visual-targets-r17-runtime-fix/not-found/layers/sidebar-diff.png"
+    },
+    {
+      "id": "content",
+      "role": "page-workspace",
+      "bbox": {
+        "x": 198,
+        "y": 80,
+        "w": 1722,
+        "h": 917
+      },
+      "status": "fail",
+      "compared_pixels": 1579074,
+      "mismatch_pixels": 1579063,
+      "pixel_mismatch_ratio": 0.9999930338920152,
+      "max_pixel_ratio": 0.015,
+      "channel_tolerance": 0,
+      "max_channel_delta": 255,
+      "mean_channel_delta": 12.02297628230216,
+      "mean_pixel_max_delta": 19.91061026905642,
+      "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-visual-targets-r17-runtime-fix/not-found/layers/content-diff.png"
+    },
+    {
+      "id": "bottombar",
+      "role": "global-app-shell",
+      "bbox": {
+        "x": 0,
+        "y": 997,
+        "w": 1920,
+        "h": 83
+      },
+      "status": "fail",
+      "compared_pixels": 159360,
+      "mismatch_pixels": 159338,
+      "pixel_mismatch_ratio": 0.9998619477911647,
+      "max_pixel_ratio": 0.015,
+      "channel_tolerance": 0,
+      "max_channel_delta": 255,
+      "mean_channel_delta": 9.811856802208835,
+      "mean_pixel_max_delta": 16.393455070281124,
+      "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-visual-targets-r17-runtime-fix/not-found/layers/bottombar-diff.png"
+    },
+    {
+      "id": "right-rail",
+      "role": "closed-loop-rail",
+      "bbox": {
+        "x": 1460,
+        "y": 104,
+        "w": 420,
+        "h": 860
+      },
+      "status": "fail",
+      "compared_pixels": 361200,
+      "mismatch_pixels": 361198,
+      "pixel_mismatch_ratio": 0.9999944629014397,
+      "max_pixel_ratio": 0.015,
+      "channel_tolerance": 0,
+      "max_channel_delta": 255,
+      "mean_channel_delta": 9.708477990033222,
+      "mean_pixel_max_delta": 15.253540974529347,
+      "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-visual-targets-r17-runtime-fix/not-found/layers/right-rail-diff.png"
+    }
+  ]
+}
