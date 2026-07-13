@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.traffic</groupId>
+        <artifactId>flink-jobs</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>flink-log-job</artifactId>
+    <name>Flink Log Job - Syslog Parser &amp; Enricher</name>
+    <description>Consume device logs from Kafka, parse Syslog RFC 5424/3164, enrich with asset data, sink to Loki+OpenSearch</description>
+    <dependencies>
+        <dependency><groupId>com.traffic</groupId><artifactId>flink-common</artifactId><version>${project.version}</version></dependency>
+        <dependency><groupId>org.apache.flink</groupId><artifactId>flink-connector-kafka</artifactId></dependency>
+        <dependency><groupId>org.apache.flink</groupId><artifactId>flink-streaming-java</artifactId></dependency>
+        <dependency><groupId>org.apache.flink</groupId><artifactId>flink-connector-elasticsearch7</artifactId><version>3.1.0-1.18</version></dependency>
+        <dependency><groupId>org.apache.flink</groupId><artifactId>flink-test-utils</artifactId><scope>test</scope>
+            <exclusions><exclusion><groupId>org.junit.vintage</groupId><artifactId>junit-vintage-engine</artifactId></exclusion></exclusions>
+        </dependency>
+        <dependency><groupId>org.junit.platform</groupId><artifactId>junit-platform-engine</artifactId><version>1.10.1</version><scope>test</scope></dependency>
+        <dependency><groupId>org.junit.platform</groupId><artifactId>junit-platform-launcher</artifactId><version>1.10.1</version><scope>test</scope></dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-shade-plugin</artifactId><version>3.5.1</version>
+                <executions><execution><phase>package</phase><goals><goal>shade</goal></goals>
+                    <configuration><transformers><transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                        <mainClass>com.traffic.flink.log.LogJob</mainClass></transformer></transformers></configuration>
+                </execution></executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

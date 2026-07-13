@@ -1,0 +1,17 @@
+# ==============================================================================
+# Grafana Dashboard 配置
+# ==============================================================================
+
+apiVersion: 1
+
+providers:
+  - name: 'Flink Session Job'
+    orgId: 1
+    folder: 'Flink Jobs'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: true

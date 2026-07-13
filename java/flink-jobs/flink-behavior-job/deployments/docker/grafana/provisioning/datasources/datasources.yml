@@ -1,0 +1,37 @@
+################################################################################
+# FILE: docker/grafana/provisioning/datasources/datasources.yml
+#
+# Grafana 数据源配置
+################################################################################
+
+apiVersion: 1
+
+datasources:
+  # Prometheus 数据源
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      httpMethod: POST
+      manageAlerts: true
+      prometheusType: Prometheus
+      prometheusVersion: 2.47.0
+      timeInterval: 15s
+
+  # ClickHouse 数据源
+  - name: ClickHouse
+    type: grafana-clickhouse-datasource
+    access: proxy
+    url: http://clickhouse:8123
+    editable: false
+    jsonData:
+      defaultDatabase: traffic
+      port: 9000
+      server: clickhouse
+      username: default
+      tlsSkipVerify: true
+    secureJsonData:
+      password: ""

@@ -1,0 +1,169 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alert-generator-job-config
+  namespace: traffic-analysis
+  labels:
+    app: alert-generator-job
+data:
+  alert-generator-job.properties: |
+    # Kafka
+    kafka.brokers=kafka-headless.traffic-analysis.svc.cluster.local:9092
+    kafka.input.topic.behavior=detections.behavior.v1
+    kafka.input.topic.business=detections.business.v1
+    kafka.output.topic=alerts.v1
+    kafka.group.id=flink-alert-generator-job
+
+    # ClickHouse
+    clickhouse.url=clickhouse.traffic-analysis.svc.cluster.local:8123
+    clickhouse.database=traffic
+    clickhouse.alert.table=alerts_local
+    clickhouse.evidence.table=evidence_local
+    clickhouse.user=default
+    clickhouse.password=${CLICKHOUSE_PASSWORD}
+
+    # OpenSearch
+    opensearch.url=http://opensearch.traffic-analysis.svc.cluster.local:9200
+    opensearch.index=alerts
+    opensearch.user=admin
+    opensearch.password=${OPENSEARCH_PASSWORD}
+
+    # Arkime
+    arkime.url=http://arkime.traffic-analysis.svc.cluster.local:8005
+    arkime.window.before.sec=120
+    arkime.window.after.sec=120
+
+    # Checkpoint
+    checkpoint.path=s3://flink-checkpoints/checkpoints/alert-generator-job
+    checkpoint.interval.ms=60000
+
+    # Job
+    dedup.window.minutes=10
+    parallelism=4
+    evidence.strategy=only_first
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: alert-generator-job-secrets
+  namespace: traffic-analysis
+type: Opaque
+stringData:
+  clickhouse-password: ""
+  opensearch-password: ""
+
+---
+apiVersion: flink.apache.org/v1beta1
+kind: FlinkDeployment
+metadata:
+  name: alert-generator-job
+  namespace: traffic-analysis
+  labels:
+    app: alert-generator-job
+    component: flink-job
+spec:
+  image: registry.example.com/traffic-analysis/flink-alert-generator-job:1.0.0
+  imagePullPolicy: IfNotPresent
+  flinkVersion: v1_17
+  flinkConfiguration:
+    taskmanager.numberOfTaskSlots: "4"
+    state.backend: rocksdb
+    state.checkpoints.dir: s3://flink-checkpoints/checkpoints/alert-generator-job
+    execution.checkpointing.interval: "60000"
+    execution.checkpointing.mode: AT_LEAST_ONCE
+    execution.checkpointing.timeout: "120000"
+    execution.checkpointing.min-pause: "30000"
+    restart-strategy: fixed-delay
+    restart-strategy.fixed-delay.attempts: "3"
+    restart-strategy.fixed-delay.delay: "30s"
+    metrics.reporters: prometheus
+    metrics.reporter.prometheus.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
+    metrics.reporter.prometheus.port: "9249"
+  serviceAccount: flink
+  jobManager:
+    resource:
+      memory: "1024m"
+      cpu: 0.5
+    podTemplate:
+      spec:
+        containers:
+          - name: flink-main-container
+            envFrom:
+              - secretRef:
+                  name: alert-generator-job-secrets
+            volumeMounts:
+              - name: config
+                mountPath: /opt/flink/conf/alert-generator-job.properties
+                subPath: alert-generator-job.properties
+        volumes:
+          - name: config
+            configMap:
+              name: alert-generator-job-config
+  taskManager:
+    replicas: 2
+    resource:
+      memory: "2048m"
+      cpu: 1
+    podTemplate:
+      spec:
+        containers:
+          - name: flink-main-container
+            envFrom:
+              - secretRef:
+                  name: alert-generator-job-secrets
+            volumeMounts:
+              - name: config
+                mountPath: /opt/flink/conf/alert-generator-job.properties
+                subPath: alert-generator-job.properties
+        volumes:
+          - name: config
+            configMap:
+              name: alert-generator-job-config
+  job:
+    jarURI: local:///opt/flink/usrlib/flink-alert-generator-job-1.0.0-SNAPSHOT.jar
+    entryClass: com.traffic.flink.alert.AlertGeneratorJob
+    args:
+      - "--config.file=/opt/flink/conf/alert-generator-job.properties"
+    parallelism: 4
+    upgradeMode: savepoint
+    state: running
+    savepointTriggerNonce: 0
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alert-generator-job-rest
+  namespace: traffic-analysis
+  labels:
+    app: alert-generator-job
+spec:
+  type: ClusterIP
+  ports:
+    - name: rest
+      port: 8081
+      targetPort: 8081
+    - name: metrics
+      port: 9249
+      targetPort: 9249
+  selector:
+    app: alert-generator-job
+    component: jobmanager
+
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: alert-generator-job
+  namespace: traffic-analysis
+  labels:
+    app: alert-generator-job
+spec:
+  selector:
+    matchLabels:
+      app: alert-generator-job
+  endpoints:
+    - port: metrics
+      interval: 15s
+      path: /metrics

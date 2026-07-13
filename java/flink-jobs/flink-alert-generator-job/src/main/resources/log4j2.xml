@@ -1,0 +1,73 @@
+################################################################################
+FILE PATH: flink-jobs/flink-alert-generator-job/src/main/resources/log4j2.xml
+################################################################################
+
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Properties>
+        <Property name="LOG_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n</Property>
+        <Property name="LOG_DIR">${sys:flink.log.dir:-/var/log/flink}</Property>
+    </Properties>
+
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+        </Console>
+
+        <RollingFile name="RollingFile" 
+                     fileName="${LOG_DIR}/alert-generator-job.log"
+                     filePattern="${LOG_DIR}/alert-generator-job-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+                <SizeBasedTriggeringPolicy size="100MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="7"/>
+        </RollingFile>
+
+        <!-- Metrics 日志单独输出 -->
+        <RollingFile name="MetricsFile"
+                     fileName="${LOG_DIR}/alert-generator-metrics.log"
+                     filePattern="${LOG_DIR}/alert-generator-metrics-%d{yyyy-MM-dd}.log.gz">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} %msg%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+            <DefaultRolloverStrategy max="3"/>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <!-- Flink 内部日志 -->
+        <Logger name="org.apache.flink" level="INFO"/>
+        <Logger name="org.apache.flink.runtime.checkpoint" level="WARN"/>
+        <Logger name="org.apache.flink.runtime.state" level="WARN"/>
+        <Logger name="org.apache.flink.runtime.executiongraph" level="WARN"/>
+
+        <!-- Kafka -->
+        <Logger name="org.apache.kafka" level="WARN"/>
+        <Logger name="org.apache.kafka.clients.consumer" level="WARN"/>
+        <Logger name="org.apache.kafka.clients.producer" level="WARN"/>
+
+        <!-- ClickHouse -->
+        <Logger name="com.clickhouse" level="WARN"/>
+
+        <!-- Elasticsearch/OpenSearch -->
+        <Logger name="org.elasticsearch" level="WARN"/>
+        <Logger name="org.opensearch" level="WARN"/>
+
+        <!-- 应用日志 -->
+        <Logger name="com.traffic.flink.alert" level="INFO"/>
+        <Logger name="com.traffic.flink.alert.generator" level="DEBUG"/>
+
+        <!-- Metrics Logger -->
+        <Logger name="com.traffic.flink.metrics" level="INFO" additivity="false">
+            <AppenderRef ref="MetricsFile"/>
+        </Logger>
+
+        <Root level="INFO">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="RollingFile"/>
+        </Root>
+    </Loggers>
+</Configuration>

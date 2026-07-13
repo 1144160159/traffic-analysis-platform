@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" monitorInterval="30">
+    <Properties>
+        <Property name="LOG_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n</Property>
+    </Properties>
+
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
+        </Console>
+
+        <RollingFile name="RollingFile"
+                     fileName="logs/session-job.log"
+                     filePattern="logs/session-job-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="100MB"/>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+            <DefaultRolloverStrategy max="10"/>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <!-- Flink 框架日志 -->
+        <Logger name="org.apache.flink" level="INFO"/>
+        <Logger name="org.apache.kafka" level="WARN"/>
+        <Logger name="org.apache.flink.streaming.connectors.kafka" level="INFO"/>
+        
+        <!-- ClickHouse 日志 -->
+        <Logger name="com.clickhouse" level="INFO"/>
+        
+        <!-- 应用日志 -->
+        <Logger name="com.traffic.flink" level="DEBUG"/>
+        <Logger name="com.traffic.flink.session" level="INFO"/>
+        
+        <!-- 根日志 -->
+        <Root level="INFO">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="RollingFile"/>
+        </Root>
+    </Loggers>
+</Configuration>

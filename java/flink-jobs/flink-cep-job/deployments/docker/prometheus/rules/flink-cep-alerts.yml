@@ -1,0 +1,369 @@
+# =============================================================================
+# Prometheus 告警规则 - Flink CEP Job
+# =============================================================================
+
+groups:
+  # ===========================================================================
+  # Flink 集群健康告警
+  # ===========================================================================
+  - name: flink_cluster_health
+    interval: 30s
+    rules:
+      # JobManager 不可用
+      - alert: FlinkJobManagerDown
+        expr: up{job="flink-jobmanager"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: flink
+          job_name: cep-job
+        annotations:
+          summary: "Flink JobManager 不可用"
+          description: "JobManager {{ $labels.instance }} 已停止响应超过 1 分钟"
+          runbook_url: "https://wiki.example.com/flink/jobmanager-down"
+
+      # TaskManager 不可用
+      - alert: FlinkTaskManagerDown
+        expr: up{job="flink-taskmanager"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: flink
+          job_name: cep-job
+        annotations:
+          summary: "Flink TaskManager 不可用"
+          description: "TaskManager {{ $labels.instance }} 已停止响应超过 1 分钟"
+          runbook_url: "https://wiki.example.com/flink/taskmanager-down"
+
+      # TaskManager 数量不足
+      - alert: FlinkTaskManagerInsufficient
+        expr: flink_jobmanager_numRegisteredTaskManagers < 1
+        for: 2m
+        labels:
+          severity: warning
+          component: flink
+          job_name: cep-job
+        annotations:
+          summary: "Flink TaskManager 数量不足"
+          description: "当前注册的 TaskManager 数量为 {{ $value }}，低于预期"
+
+      # 可用 TaskSlots 不足
+      - alert: FlinkTaskSlotsLow
+        expr: flink_jobmanager_taskSlotsAvailable < 2
+        for: 5m
+        labels:
+          severity: warning
+          component: flink
+          job_name: cep-job
+        annotations:
+          summary: "可用 TaskSlots 不足"
+          description: "当前可用 TaskSlots: {{ $value }}，可能影响作业扩展"
+
+  # ===========================================================================
+  # CEP Job 运行状态告警
+  # ===========================================================================
+  - name: flink_cep_job_status
+    interval: 30s
+    rules:
+      # 作业失败
+      - alert: FlinkCepJobFailed
+        expr: flink_jobmanager_job_uptime == 0 and flink_jobmanager_job_numRestarts > 0
+        for: 1m
+        labels:
+          severity: critical
+          component: flink
+          job_name: cep-job
+        annotations:
+          summary: "CEP Job 运行失败"
+          description: "CEP Job 已停止运行，已重启 {{ $value }} 次"
+          runbook_url: "https://wiki.example.com/flink/job-failed"
+
+      # 作业重启频繁
+      - alert: FlinkCepJobRestartTooFrequent
+        expr: increase(flink_jobmanager_job_numRestarts[10m]) > 3
+        for: 1m
+        labels:
+          severity: warning
+          component: flink
+          job_name: cep-job
+        annotations:
+          summary: "CEP Job 重启过于频繁"
+          description: "CEP Job 在 10 分钟内重启了 {{ $value }} 次"
+          runbook_url: "https://wiki.example.com/flink/frequent-restarts"
+
+      # 作业运行时间过短
+      - alert: FlinkCepJobUptimeLow
+        expr: flink_jobmanager_job_uptime < 300000 and flink_jobmanager_job_numRestarts > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: flink
+          job_name: cep-job
+        annotations:
+          summary: "CEP Job 运行时间过短"
+          description: "CEP Job 运行时间不足 5 分钟就发生重启"
+
+  # ===========================================================================
+  # Checkpoint 告警
+  # ===========================================================================
+  - name: flink_checkpoint_alerts
+    interval: 30s
+    rules:
+      # Checkpoint 失败
+      - alert: FlinkCheckpointFailed
+        expr: increase(flink_jobmanager_job_numberOfFailedCheckpoints[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+          component: flink
+          job_name: cep-job
+        annotations:
+          summary: "Flink Checkpoint 失败"
+          description: "在过去 5 分钟内有 {{ $value }} 个 Checkpoint 失败"
+          runbook_url: "https://wiki.example.com/flink/checkpoint-failed"
+
+      # Checkpoint 持续失败
+      - alert: FlinkCheckpointFailedCritical
+        expr: increase(flink_jobmanager_job_numberOfFailedCheckpoints[15m]) > 3
+        for: 1m
+        labels:
+          severity: critical
+          component: flink
+          job_name: cep-job
+        annotations:
+          summary: "Flink Checkpoint 持续失败"
+          description: "在过去 15 分钟内有 {{ $value }} 个 Checkpoint 失败，数据可能丢失"
+          runbook_url: "https://wiki.example.com/flink/checkpoint-failed-critical"
+
+      # Checkpoint 耗时过长
+      - alert: FlinkCheckpointDurationHigh
+        expr: flink_jobmanager_job_lastCheckpointDuration > 120000
+        for: 5m
+        labels:
+          severity: warning
+          component: flink
+          job_name: cep-job
+        annotations:
+          summary: "Checkpoint 耗时过长"
+          description: "最近 Checkpoint 耗时 {{ $value | humanizeDuration }}，超过 2 分钟阈值"
+
+      # Checkpoint 大小异常
+      - alert: FlinkCheckpointSizeHigh
+        expr: flink_jobmanager_job_lastCheckpointSize > 10737418240
+        for: 5m
+        labels:
+          severity: warning
+          component: flink
+          job_name: cep-job
+        annotations:
+          summary: "Checkpoint 大小异常"
+          description: "最近 Checkpoint 大小为 {{ $value | humanize1024 }}B，超过 10GB 阈值"
+
+  # ===========================================================================
+  # 背压与延迟告警
+  # ===========================================================================
+  - name: flink_backpressure_latency
+    interval: 15s
+    rules:
+      # 背压告警
+      - alert: FlinkBackpressureHigh
+        expr: avg(flink_taskmanager_job_task_backPressuredTimeMsPerSecond) by (task_name) > 500
+        for: 3m
+        labels:
+          severity: warning
+          component: flink
+          job_name: cep-job
+        annotations:
+          summary: "Flink 任务背压过高"
+          description: "任务 {{ $labels.task_name }} 背压时间达到 {{ $value }}ms/s"
+          runbook_url: "https://wiki.example.com/flink/backpressure"
+
+      # 严重背压
+      - alert: FlinkBackpressureCritical
+        expr: avg(flink_taskmanager_job_task_backPressuredTimeMsPerSecond) by (task_name) > 800
+        for: 2m
+        labels:
+          severity: critical
+          component: flink
+          job_name: cep-job
+        annotations:
+          summary: "Flink 任务背压严重"
+          description: "任务 {{ $labels.task_name }} 背压时间达到 {{ $value }}ms/s，处理能力严重不足"
+
+      # Kafka 消费延迟
+      - alert: FlinkKafkaLagHigh
+        expr: flink_taskmanager_job_task_operator_KafkaSourceReader_KafkaConsumer_records_lag_max > 100000
+        for: 5m
+        labels:
+          severity: warning
+          component: flink
+          job_name: cep-job
+        annotations:
+          summary: "Kafka 消费延迟过高"
+          description: "Kafka 消费延迟达到 {{ $value }} 条消息"
+
+      # Kafka 消费延迟严重
+      - alert: FlinkKafkaLagCritical
+        expr: flink_taskmanager_job_task_operator_KafkaSourceReader_KafkaConsumer_records_lag_max > 1000000
+        for: 3m
+        labels:
+          severity: critical
+          component: flink
+          job_name: cep-job
+        annotations:
+          summary: "Kafka 消费延迟严重"
+          description: "Kafka 消费延迟达到 {{ $value }} 条消息，数据处理严重滞后"
+
+  # ===========================================================================
+  # 资源使用告警
+  # ===========================================================================
+  - name: flink_resource_alerts
+    interval: 30s
+    rules:
+      # JVM 堆内存使用过高
+      - alert: FlinkJvmHeapUsageHigh
+        expr: |
+          (flink_taskmanager_Status_JVM_Memory_Heap_Used / 
+           flink_taskmanager_Status_JVM_Memory_Heap_Max) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          component: flink
+          job_name: cep-job
+        annotations:
+          summary: "JVM 堆内存使用过高"
+          description: "TaskManager {{ $labels.instance }} 堆内存使用率达到 {{ $value | humanizePercentage }}"
+
+      # JVM 堆内存即将耗尽
+      - alert: FlinkJvmHeapUsageCritical
+        expr: |
+          (flink_taskmanager_Status_JVM_Memory_Heap_Used / 
+           flink_taskmanager_Status_JVM_Memory_Heap_Max) > 0.95
+        for: 2m
+        labels:
+          severity: critical
+          component: flink
+          job_name: cep-job
+        annotations:
+          summary: "JVM 堆内存即将耗尽"
+          description: "TaskManager {{ $labels.instance }} 堆内存使用率达到 {{ $value | humanizePercentage }}，可能导致 OOM"
+
+      # GC 时间过长
+      - alert: FlinkGcTimeHigh
+        expr: |
+          rate(flink_taskmanager_Status_JVM_GarbageCollector_G1_Old_Generation_Time[5m]) > 1000
+        for: 5m
+        labels:
+          severity: warning
+          component: flink
+          job_name: cep-job
+        annotations:
+          summary: "GC 时间过长"
+          description: "TaskManager {{ $labels.instance }} GC 时间过长，平均每分钟 {{ $value }}ms"
+
+      # Metaspace 使用过高
+      - alert: FlinkMetaspaceUsageHigh
+        expr: |
+          (flink_taskmanager_Status_JVM_Memory_Metaspace_Used / 
+           flink_taskmanager_Status_JVM_Memory_Metaspace_Max) > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          component: flink
+          job_name: cep-job
+        annotations:
+          summary: "Metaspace 使用过高"
+          description: "TaskManager {{ $labels.instance }} Metaspace 使用率达到 {{ $value | humanizePercentage }}"
+
+  # ===========================================================================
+  # CEP 模式匹配告警
+  # ===========================================================================
+  - name: flink_cep_pattern_alerts
+    interval: 30s
+    rules:
+      # CEP 模式匹配率过低
+      - alert: FlinkCepMatchRateLow
+        expr: |
+          rate(flink_taskmanager_job_task_operator_numRecordsOut{operator_name=~".*pattern.*"}[5m]) /
+          rate(flink_taskmanager_job_task_operator_numRecordsIn{operator_name=~".*pattern.*"}[5m]) < 0.001
+        for: 30m
+        labels:
+          severity: info
+          component: flink
+          job_name: cep-job
+        annotations:
+          summary: "CEP 模式匹配率过低"
+          description: "CEP 模式 {{ $labels.operator_name }} 匹配率低于 0.1%，请检查模式配置"
+
+      # Campaign 生成速率异常
+      - alert: FlinkCepCampaignRateZero
+        expr: |
+          rate(flink_taskmanager_job_task_operator_numRecordsOut{operator_name=~".*Campaign.*"}[10m]) == 0
+        for: 30m
+        labels:
+          severity: warning
+          component: flink
+          job_name: cep-job
+        annotations:
+          summary: "Campaign 生成速率为零"
+          description: "过去 30 分钟没有生成任何 Campaign，请检查输入数据和模式配置"
+
+      # DLQ 消息增长
+      - alert: FlinkCepDlqGrowing
+        expr: |
+          rate(flink_taskmanager_job_task_operator_numRecordsOut{operator_name=~".*dlq.*|.*DLQ.*"}[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: flink
+          job_name: cep-job
+        annotations:
+          summary: "DLQ 消息持续增长"
+          description: "DLQ 每秒接收 {{ $value }} 条消息，请检查数据质量"
+
+  # ===========================================================================
+  # 吞吐量告警
+  # ===========================================================================
+  - name: flink_throughput_alerts
+    interval: 30s
+    rules:
+      # 输入吞吐量下降
+      - alert: FlinkInputThroughputLow
+        expr: |
+          rate(flink_taskmanager_job_task_numRecordsIn[5m]) < 100
+        for: 10m
+        labels:
+          severity: warning
+          component: flink
+          job_name: cep-job
+        annotations:
+          summary: "输入吞吐量过低"
+          description: "当前输入吞吐量为 {{ $value }} records/s，低于预期"
+
+      # 输入吞吐量为零
+      - alert: FlinkInputThroughputZero
+        expr: |
+          rate(flink_taskmanager_job_task_numRecordsIn[5m]) == 0
+        for: 5m
+        labels:
+          severity: critical
+          component: flink
+          job_name: cep-job
+        annotations:
+          summary: "输入吞吐量为零"
+          description: "过去 5 分钟没有接收到任何数据，请检查 Kafka 连接"
+
+      # 输出吞吐量异常
+      - alert: FlinkOutputThroughputAbnormal
+        expr: |
+          abs(rate(flink_taskmanager_job_task_numRecordsOut[5m]) - 
+              avg_over_time(rate(flink_taskmanager_job_task_numRecordsOut[5m])[1h:5m])) > 
+          2 * stddev_over_time(rate(flink_taskmanager_job_task_numRecordsOut[5m])[1h:5m])
+        for: 10m
+        labels:
+          severity: info
+          component: flink
+          job_name: cep-job
+        annotations:
+          summary: "输出吞吐量异常波动"
+          description: "输出吞吐量与历史均值偏差超过 2 个标准差"

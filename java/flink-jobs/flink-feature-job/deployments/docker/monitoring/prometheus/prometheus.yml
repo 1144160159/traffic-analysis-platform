@@ -1,0 +1,130 @@
+# =============================================================================
+# Prometheus Configuration for Flink Feature Job
+# =============================================================================
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'traffic-analysis-platform'
+    environment: 'development'
+
+# ==================== Alertmanager 配置 ====================
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+# ==================== 告警规则 ====================
+rule_files:
+  - /etc/prometheus/alerts/*.yml
+
+# ==================== 抓取配置 ====================
+scrape_configs:
+  # ==================== Prometheus 自监控 ====================
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    metrics_path: /metrics
+
+  # ==================== Flink JobManager ====================
+  - job_name: 'flink-jobmanager'
+    static_configs:
+      - targets: ['jobmanager:9249']
+        labels:
+          flink_component: 'jobmanager'
+          job_name: 'feature-job'
+    metrics_path: /
+    honor_labels: true
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        regex: '([^:]+):\d+'
+        replacement: '${1}'
+
+  # ==================== Flink TaskManager ====================
+  - job_name: 'flink-taskmanager'
+    static_configs:
+      - targets: ['taskmanager:9249']
+        labels:
+          flink_component: 'taskmanager'
+          job_name: 'feature-job'
+    metrics_path: /
+    honor_labels: true
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        regex: '([^:]+):\d+'
+        replacement: '${1}'
+
+  # ==================== 动态发现（K8s 环境）====================
+  # - job_name: 'flink-kubernetes'
+  #   kubernetes_sd_configs:
+  #     - role: pod
+  #   relabel_configs:
+  #     - source_labels: [__meta_kubernetes_pod_label_app]
+  #       action: keep
+  #       regex: flink
+  #     - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+  #       action: keep
+  #       regex: true
+  #     - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+  #       action: replace
+  #       target_label: __metrics_path__
+  #       regex: (.+)
+  #     - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+  #       action: replace
+  #       regex: ([^:]+)(?::\d+)?;(\d+)
+  #       replacement: $1:$2
+  #       target_label: __address__
+
+  # ==================== Kafka ====================
+  - job_name: 'kafka'
+    static_configs:
+      - targets: ['kafka:9092']
+        labels:
+          service: 'kafka'
+    metrics_path: /metrics
+    # 注意：需要 Kafka 配置 JMX Exporter
+
+  # ==================== ClickHouse ====================
+  - job_name: 'clickhouse'
+    static_configs:
+      - targets: ['clickhouse:8123']
+        labels:
+          service: 'clickhouse'
+    metrics_path: /metrics
+    # 注意：ClickHouse 原生 Prometheus 端点
+
+  # ==================== PostgreSQL ====================
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:9187']
+        labels:
+          service: 'postgres'
+    # 注意：需要 postgres_exporter
+
+  # ==================== Redis ====================
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:9121']
+        labels:
+          service: 'redis'
+    # 注意：需要 redis_exporter
+
+  # ==================== Node Exporter（系统指标）====================
+  - job_name: 'node'
+    static_configs:
+      - targets: 
+          - 'node-exporter:9100'
+        labels:
+          environment: 'development'
+
+# ==================== 远程写入（可选）====================
+# remote_write:
+#   - url: "http://victoriametrics:8428/api/v1/write"
+#     queue_config:
+#       max_samples_per_send: 10000
+#       batch_send_deadline: 5s
+#       capacity: 100000

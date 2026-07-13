@@ -1,0 +1,236 @@
+################################################################################
+# FILE: docker/flink-conf.yaml
+#
+# Flink 配置文件 - 针对 Behavior Detection Job 优化
+# 适用于 Docker/Kubernetes 部署
+################################################################################
+
+#==============================================================================
+# 通用配置
+#==============================================================================
+
+# 集群 ID
+cluster.id: behavior-job-cluster
+
+# 并行度
+parallelism.default: 4
+
+#==============================================================================
+# JobManager 配置
+#==============================================================================
+
+# JobManager RPC 地址（K8s 中通过 Service 名称访问）
+jobmanager.rpc.address: flink-jobmanager
+jobmanager.rpc.port: 6123
+
+# JobManager 内存配置
+jobmanager.memory.process.size: 1600m
+jobmanager.memory.heap.size: 1024m
+jobmanager.memory.off-heap.size: 128m
+jobmanager.memory.jvm-metaspace.size: 256m
+jobmanager.memory.jvm-overhead.min: 192m
+jobmanager.memory.jvm-overhead.max: 192m
+
+# JobManager HA（生产环境启用）
+# high-availability: zookeeper
+# high-availability.storageDir: s3://bucket/flink/ha
+# high-availability.zookeeper.quorum: zk1:2181,zk2:2181,zk3:2181
+
+#==============================================================================
+# TaskManager 配置
+#==============================================================================
+
+# TaskManager 内存配置
+taskmanager.memory.process.size: 4096m
+taskmanager.memory.framework.heap.size: 128m
+taskmanager.memory.task.heap.size: 2048m
+taskmanager.memory.managed.size: 512m
+taskmanager.memory.network.min: 256m
+taskmanager.memory.network.max: 512m
+taskmanager.memory.jvm-metaspace.size: 256m
+taskmanager.memory.jvm-overhead.min: 256m
+taskmanager.memory.jvm-overhead.max: 512m
+
+# Task Slot 数量
+taskmanager.numberOfTaskSlots: 4
+
+# CPU 核心（K8s 资源限制）
+taskmanager.cpu.cores: 4
+
+# 网络配置
+taskmanager.network.memory.floating-buffers-per-gate: 8
+taskmanager.network.memory.buffers-per-channel: 2
+taskmanager.network.memory.max-buffers-per-channel: 10
+
+#==============================================================================
+# REST API 配置
+#==============================================================================
+
+rest.port: 8081
+rest.address: 0.0.0.0
+rest.bind-address: 0.0.0.0
+
+# CORS 配置（用于外部访问）
+rest.flamegraph.enabled: true
+
+# Web UI 刷新间隔
+web.refresh-interval: 3000
+web.backpressure.refresh-interval: 10000
+
+#==============================================================================
+# Checkpoint 配置
+#==============================================================================
+
+# Checkpoint 存储路径
+state.checkpoints.dir: file:///opt/flink/checkpoints
+# 生产环境建议使用 S3 或 HDFS:
+# state.checkpoints.dir: s3://bucket/flink/checkpoints/behavior-job
+
+# Savepoint 存储路径
+state.savepoints.dir: file:///opt/flink/savepoints
+# state.savepoints.dir: s3://bucket/flink/savepoints/behavior-job
+
+# 状态后端：RocksDB（推荐用于大状态）
+state.backend: rocksdb
+state.backend.rocksdb.localdir: /tmp/rocksdb
+
+# RocksDB 配置
+state.backend.rocksdb.memory.managed: true
+state.backend.rocksdb.memory.write-buffer-ratio: 0.5
+state.backend.rocksdb.checkpoint.transfer.thread.num: 4
+state.backend.rocksdb.predefined-options: SPINNING_DISK_OPTIMIZED_HIGH_MEM
+
+# 增量 Checkpoint
+state.backend.incremental: true
+
+# Checkpoint 保留数量
+state.checkpoints.num-retained: 3
+
+# 本地恢复
+state.backend.local-recovery: true
+taskmanager.state.local.root-dirs: /tmp/flink-local-recovery
+
+#==============================================================================
+# 容错配置
+#==============================================================================
+
+# 重启策略：failure-rate（失败率重启）
+restart-strategy: failure-rate
+restart-strategy.failure-rate.max-failures-per-interval: 3
+restart-strategy.failure-rate.failure-rate-interval: 5 min
+restart-strategy.failure-rate.delay: 30 s
+
+# 作业失败处理
+jobmanager.execution.failover-strategy: region
+
+# Task 失败重试
+task.execution.partition-discovery.interval: 10000
+
+#==============================================================================
+# Metrics 配置
+#==============================================================================
+
+# 启用 Prometheus 指标
+metrics.reporters: prom
+metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
+metrics.reporter.prom.port: 9249
+
+# 指标范围
+metrics.scope.jm: <host>.jobmanager
+metrics.scope.jm.job: <host>.jobmanager.<job_name>
+metrics.scope.tm: <host>.taskmanager.<tm_id>
+metrics.scope.tm.job: <host>.taskmanager.<tm_id>.<job_name>
+metrics.scope.task: <host>.taskmanager.<tm_id>.<job_name>.<task_name>.<subtask_index>
+metrics.scope.operator: <host>.taskmanager.<tm_id>.<job_name>.<operator_name>.<subtask_index>
+
+# 系统资源指标
+metrics.system-resource: true
+metrics.system-resource-probing-interval: 5000
+
+# 延迟追踪
+metrics.latency.interval: 2000
+metrics.latency.granularity: operator
+
+#==============================================================================
+# 日志配置
+#==============================================================================
+
+# 日志配置文件
+env.log.dir: /opt/flink/log
+env.log.max: 10
+
+# 异常日志
+taskmanager.debug.memory.log: true
+taskmanager.debug.memory.log-interval: 10000
+
+#==============================================================================
+# 网络配置
+#==============================================================================
+
+# Akka 配置
+akka.ask.timeout: 60 s
+akka.watch.heartbeat.interval: 10 s
+akka.watch.heartbeat.pause: 60 s
+akka.tcp.timeout: 60 s
+
+# 网络缓冲区
+taskmanager.network.request-backoff.initial: 100
+taskmanager.network.request-backoff.max: 10000
+
+# 心跳配置
+heartbeat.interval: 10000
+heartbeat.timeout: 50000
+
+#==============================================================================
+# 安全配置
+#==============================================================================
+
+# SSL 配置（生产环境建议启用）
+# security.ssl.enabled: true
+# security.ssl.internal.enabled: true
+# security.ssl.internal.keystore: /path/to/keystore
+# security.ssl.internal.keystore-password: xxx
+# security.ssl.internal.key-password: xxx
+# security.ssl.internal.truststore: /path/to/truststore
+# security.ssl.internal.truststore-password: xxx
+
+#==============================================================================
+# Kubernetes 配置（使用 Native K8s 部署时）
+#==============================================================================
+
+# kubernetes.cluster-id: behavior-job
+# kubernetes.namespace: flink
+# kubernetes.container.image: traffic-analysis/flink-behavior-job:v1.0.0
+# kubernetes.jobmanager.service-account: flink
+# kubernetes.taskmanager.service-account: flink
+# kubernetes.rest-service.exposed.type: LoadBalancer
+
+# 资源配置
+# kubernetes.jobmanager.cpu: 1
+# kubernetes.taskmanager.cpu: 2
+# kubernetes.jobmanager.memory: 1600m
+# kubernetes.taskmanager.memory: 4096m
+
+#==============================================================================
+# 作业特定配置
+#==============================================================================
+
+# Pipeline 配置
+pipeline.auto-generate-uids: false
+pipeline.max-parallelism: 128
+pipeline.object-reuse: true
+
+# 执行配置
+execution.checkpointing.interval: 60000
+execution.checkpointing.mode: EXACTLY_ONCE
+execution.checkpointing.timeout: 180000
+execution.checkpointing.min-pause: 30000
+execution.checkpointing.max-concurrent-checkpoints: 1
+execution.checkpointing.externalized-checkpoint-retention: RETAIN_ON_CANCELLATION
+execution.checkpointing.unaligned: true
+
+# Buffer 配置
+execution.buffer-timeout: 100 ms
+
+# 时间语义
+pipeline.time-characteristic: EventTime

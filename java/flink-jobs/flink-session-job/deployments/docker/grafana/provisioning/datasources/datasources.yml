@@ -1,0 +1,30 @@
+# ==============================================================================
+# Grafana 数据源配置
+# ==============================================================================
+
+apiVersion: 1
+
+datasources:
+  # Prometheus 数据源
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+    jsonData:
+      httpMethod: POST
+      timeInterval: 15s
+      queryTimeout: 60s
+      
+  # ClickHouse 数据源（可选）
+  - name: ClickHouse
+    type: vertamedia-clickhouse-datasource
+    access: proxy
+    url: http://clickhouse:8123
+    database: traffic
+    user: default
+    editable: true
+    jsonData:
+      defaultDatabase: traffic
+      useYandexCloudAuthorization: false

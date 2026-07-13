@@ -1,0 +1,152 @@
+# ==============================================================================
+# AlertManager 配置文件 - Flink Session Job
+# ==============================================================================
+
+global:
+  resolve_timeout: 5m
+  smtp_from: 'alertmanager@traffic-platform.local'
+  smtp_smarthost: 'smtp.example.com:587'
+  smtp_auth_username: 'alertmanager@traffic-platform.local'
+  smtp_auth_password: 'password'
+  smtp_require_tls: true
+
+# ==================== 模板 ====================
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# ==================== 路由规则 ====================
+route:
+  # 默认接收者
+  receiver: 'default-receiver'
+  
+  # 分组键（相同分组的告警会合并）
+  group_by: ['alertname', 'cluster', 'component', 'job']
+  
+  # 分组等待时间（等待同组告警一起发送）
+  group_wait: 30s
+  
+  # 分组间隔（已发送告警组再次发送的间隔）
+  group_interval: 5m
+  
+  # 重复告警间隔（同一告警重复发送的间隔）
+  repeat_interval: 4h
+
+  # 子路由（根据标签匹配）
+  routes:
+    # Critical 级别告警 → 立即通知
+    - match:
+        severity: critical
+      receiver: 'critical-receiver'
+      group_wait: 10s
+      group_interval: 2m
+      repeat_interval: 1h
+      continue: true
+
+    # Flink 作业告警
+    - match_re:
+        component: flink|session_job
+      receiver: 'flink-team'
+      group_by: ['alertname', 'job_name']
+      group_wait: 30s
+      repeat_interval: 2h
+
+    # ClickHouse 告警
+    - match:
+        component: clickhouse
+      receiver: 'storage-team'
+      group_wait: 1m
+      repeat_interval: 2h
+
+    # Kafka 告警
+    - match:
+        component: kafka
+      receiver: 'infra-team'
+      group_wait: 1m
+      repeat_interval: 2h
+
+    # Info 级别告警 → 延迟通知
+    - match:
+        severity: info
+      receiver: 'info-receiver'
+      group_wait: 5m
+      repeat_interval: 12h
+
+# ==================== 抑制规则 ====================
+inhibit_rules:
+  # 作业未运行时，抑制其他所有告警
+  - source_match:
+      alertname: FlinkJobNotRunning
+    target_match_re:
+      alertname: '.*'
+    equal: ['job_name']
+
+  # Critical 告警触发时，抑制 Warning 告警
+  - source_match:
+      severity: critical
+    target_match:
+      severity: warning
+    equal: ['alertname', 'component']
+
+  # TaskManager 内存高时，抑制 GC 告警
+  - source_match:
+      alertname: FlinkTaskManagerMemoryHigh
+    target_match:
+      alertname: FlinkTaskManagerGCTimeHigh
+    equal: ['tm_id']
+
+# ==================== 接收者配置 ====================
+receivers:
+  # 默认接收者（Webhook）
+  - name: 'default-receiver'
+    webhook_configs:
+      - url: 'http://webhook-receiver:8080/alert'
+        send_resolved: true
+
+  # Critical 告警接收者（多通道）
+  - name: 'critical-receiver'
+    email_configs:
+      - to: 'oncall-team@example.com'
+        headers:
+          Subject: '[CRITICAL] Flink Session Job Alert'
+        send_resolved: true
+    webhook_configs:
+      - url: 'http://webhook-receiver:8080/alert/critical'
+        send_resolved: true
+    # 可选：钉钉/企业微信/Slack 集成
+    # wechat_configs:
+    #   - corp_id: 'your-corp-id'
+    #     to_party: 'ops-team'
+    #     agent_id: 'alert-agent'
+    #     api_secret: 'your-secret'
+
+  # Flink 团队
+  - name: 'flink-team'
+    email_configs:
+      - to: 'flink-team@example.com'
+        headers:
+          Subject: '[Flink] Session Job Alert - {{ .GroupLabels.alertname }}'
+        send_resolved: true
+    webhook_configs:
+      - url: 'http://webhook-receiver:8080/alert/flink'
+
+  # 存储团队
+  - name: 'storage-team'
+    email_configs:
+      - to: 'storage-team@example.com'
+        headers:
+          Subject: '[Storage] Alert - {{ .GroupLabels.alertname }}'
+        send_resolved: true
+
+  # 基础设施团队
+  - name: 'infra-team'
+    email_configs:
+      - to: 'infra-team@example.com'
+        headers:
+          Subject: '[Infra] Alert - {{ .GroupLabels.alertname }}'
+        send_resolved: true
+
+  # Info 级别接收者（仅记录日志）
+  - name: 'info-receiver'
+    webhook_configs:
+      - url: 'http://webhook-receiver:8080/alert/info'
+        send_resolved: false

@@ -1,0 +1,27 @@
+# ============================================================================
+# Grafana Datasources Provisioning
+# ============================================================================
+
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      timeInterval: "15s"
+      httpMethod: POST
+
+  - name: ClickHouse
+    type: grafana-clickhouse-datasource
+    access: proxy
+    url: http://clickhouse:8123
+    editable: false
+    jsonData:
+      defaultDatabase: traffic
+      username: default
+    secureJsonData:
+      password: ""

@@ -1,0 +1,198 @@
+################################################################################
+# FILE: docker/alertmanager.yml
+#
+# AlertManager 配置文件
+# 用于处理 Flink Behavior Detection Job 的告警通知
+################################################################################
+
+global:
+  # 默认 SMTP 配置（邮件告警）
+  smtp_smarthost: 'smtp.example.com:587'
+  smtp_from: 'alertmanager@example.com'
+  smtp_auth_username: 'alertmanager@example.com'
+  smtp_auth_password: 'your-smtp-password'
+  smtp_require_tls: true
+  
+  # 默认 Slack 配置
+  slack_api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+  
+  # 解析超时
+  resolve_timeout: 5m
+
+# 告警路由
+route:
+  # 默认接收者
+  receiver: 'default-receiver'
+  
+  # 分组键：按告警名称、作业类型和严重程度分组
+  group_by: ['alertname', 'job_type', 'severity']
+  
+  # 分组等待时间
+  group_wait: 30s
+  
+  # 分组发送间隔
+  group_interval: 5m
+  
+  # 重复发送间隔
+  repeat_interval: 4h
+  
+  # 子路由
+  routes:
+    # Critical 告警：立即通知
+    - match:
+        severity: critical
+      receiver: 'critical-receiver'
+      group_wait: 10s
+      group_interval: 1m
+      repeat_interval: 1h
+      continue: false
+    
+    # Warning 告警：常规通知
+    - match:
+        severity: warning
+      receiver: 'warning-receiver'
+      group_wait: 1m
+      group_interval: 5m
+      repeat_interval: 4h
+      continue: false
+    
+    # Flink 相关告警
+    - match:
+        component: flink
+      receiver: 'flink-team'
+      continue: true
+    
+    # 行为检测相关告警
+    - match:
+        component: behavior-detection
+      receiver: 'security-team'
+      continue: true
+    
+    # 静默时间（维护窗口）
+    - match_re:
+        alertname: '^Flink.*'
+      mute_time_intervals:
+        - maintenance-window
+
+# 接收者配置
+receivers:
+  # 默认接收者
+  - name: 'default-receiver'
+    webhook_configs:
+      - url: 'http://localhost:8080/webhook/alert'
+        send_resolved: true
+
+  # Critical 告警接收者：多渠道通知
+  - name: 'critical-receiver'
+    email_configs:
+      - to: 'oncall@example.com'
+        send_resolved: true
+        headers:
+          Subject: '[CRITICAL] {{ .GroupLabels.alertname }}'
+    slack_configs:
+      - channel: '#alerts-critical'
+        send_resolved: true
+        title: '🚨 CRITICAL Alert'
+        text: |
+          *Alert:* {{ .GroupLabels.alertname }}
+          *Severity:* {{ .CommonLabels.severity }}
+          *Component:* {{ .CommonLabels.component }}
+          *Summary:* {{ .CommonAnnotations.summary }}
+          *Description:* {{ .CommonAnnotations.description }}
+          *Runbook:* {{ .CommonAnnotations.runbook_url }}
+        actions:
+          - type: button
+            text: 'View in Grafana'
+            url: 'http://localhost:3000/d/flink-behavior-job'
+          - type: button
+            text: 'Runbook'
+            url: '{{ .CommonAnnotations.runbook_url }}'
+    # PagerDuty 集成（可选）
+    # pagerduty_configs:
+    #   - service_key: 'your-pagerduty-service-key'
+    #     severity: critical
+    # 企业微信集成（可选）
+    # wechat_configs:
+    #   - api_url: 'https://qyapi.weixin.qq.com/cgi-bin/'
+    #     corp_id: 'your-corp-id'
+    #     api_secret: 'your-api-secret'
+    #     agent_id: '1000001'
+    #     to_party: '1'
+
+  # Warning 告警接收者
+  - name: 'warning-receiver'
+    slack_configs:
+      - channel: '#alerts-warning'
+        send_resolved: true
+        title: '⚠️ Warning Alert'
+        text: |
+          *Alert:* {{ .GroupLabels.alertname }}
+          *Severity:* {{ .CommonLabels.severity }}
+          *Component:* {{ .CommonLabels.component }}
+          *Summary:* {{ .CommonAnnotations.summary }}
+    email_configs:
+      - to: 'dev-team@example.com'
+        send_resolved: true
+
+  # Flink 团队接收者
+  - name: 'flink-team'
+    slack_configs:
+      - channel: '#flink-alerts'
+        send_resolved: true
+        title: '{{ if eq .Status "firing" }}🔥{{ else }}✅{{ end }} Flink Alert'
+        text: |
+          *Alert:* {{ .GroupLabels.alertname }}
+          *Status:* {{ .Status }}
+          *Job Type:* {{ .CommonLabels.job_type }}
+          *Summary:* {{ .CommonAnnotations.summary }}
+
+  # 安全团队接收者
+  - name: 'security-team'
+    slack_configs:
+      - channel: '#security-alerts'
+        send_resolved: true
+        title: '🔒 Security Alert'
+        text: |
+          *Alert:* {{ .GroupLabels.alertname }}
+          *Subsystem:* {{ .CommonLabels.subsystem }}
+          *Summary:* {{ .CommonAnnotations.summary }}
+    email_configs:
+      - to: 'security-team@example.com'
+        send_resolved: true
+
+# 抑制规则
+inhibit_rules:
+  # Critical 告警抑制同类 Warning 告警
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'component']
+  
+  # Job 不运行时抑制其他 Flink 告警
+  - source_match:
+      alertname: 'FlinkJobNotRunning'
+    target_match_re:
+      alertname: '^Flink.*'
+    equal: ['job_type']
+  
+  # TaskManager 丢失时抑制处理相关告警
+  - source_match:
+      alertname: 'FlinkTaskManagerLost'
+    target_match_re:
+      alertname: '^Flink(Throughput|Latency|Backpressure).*'
+    equal: ['component']
+
+# 静默时间配置
+time_intervals:
+  - name: maintenance-window
+    time_intervals:
+      # 每周日凌晨 2-6 点维护窗口
+      - weekdays: ['sunday']
+        times:
+          - start_time: '02:00'
+            end_time: '06:00'
+
+# 模板配置
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'

@@ -1,0 +1,300 @@
+# ==============================================================================
+# Prometheus 告警规则 - Flink Session Job
+# ==============================================================================
+
+groups:
+  # ==================== Flink 作业健康告警 ====================
+  - name: flink_job_health
+    interval: 30s
+    rules:
+      # 作业状态异常
+      - alert: FlinkJobNotRunning
+        expr: flink_jobmanager_job_uptime{job_name="Session Aggregation Job"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: flink
+          job: session
+        annotations:
+          summary: "Flink Session Job 未运行"
+          description: "作业 {{ $labels.job_name }} 已停止运行超过 2 分钟"
+
+      # 作业重启频繁
+      - alert: FlinkJobFrequentRestarts
+        expr: rate(flink_jobmanager_job_numRestarts{job_name="Session Aggregation Job"}[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: flink
+          job: session
+        annotations:
+          summary: "Flink Session Job 频繁重启"
+          description: "作业重启速率: {{ $value | humanize }} 次/分钟"
+
+      # Checkpoint 失败率高
+      - alert: FlinkCheckpointFailureRateHigh
+        expr: |
+          rate(flink_jobmanager_job_numberOfFailedCheckpoints{job_name="Session Aggregation Job"}[5m]) /
+          rate(flink_jobmanager_job_numberOfCompletedCheckpoints{job_name="Session Aggregation Job"}[5m]) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          component: flink
+          job: session
+        annotations:
+          summary: "Flink Checkpoint 失败率过高"
+          description: "Checkpoint 失败率: {{ $value | humanizePercentage }}"
+
+      # Checkpoint 时长过长
+      - alert: FlinkCheckpointDurationHigh
+        expr: flink_jobmanager_job_lastCheckpointDuration{job_name="Session Aggregation Job"} > 300000
+        for: 5m
+        labels:
+          severity: warning
+          component: flink
+          job: session
+        annotations:
+          summary: "Flink Checkpoint 耗时过长"
+          description: "最近一次 Checkpoint 耗时: {{ $value | humanizeDuration }}"
+
+  # ==================== Flink 资源告警 ====================
+  - name: flink_resource
+    interval: 30s
+    rules:
+      # TaskManager 数量不足
+      - alert: FlinkTaskManagerCountLow
+        expr: flink_jobmanager_numRegisteredTaskManagers < 2
+        for: 5m
+        labels:
+          severity: critical
+          component: flink
+        annotations:
+          summary: "Flink TaskManager 数量不足"
+          description: "当前 TaskManager 数量: {{ $value }}, 期望: >= 2"
+
+      # 内存使用率过高
+      - alert: FlinkTaskManagerMemoryHigh
+        expr: |
+          (flink_taskmanager_Status_JVM_Memory_Heap_Used / 
+           flink_taskmanager_Status_JVM_Memory_Heap_Max) > 0.85
+        for: 10m
+        labels:
+          severity: warning
+          component: flink
+        annotations:
+          summary: "TaskManager 堆内存使用率过高"
+          description: "TaskManager {{ $labels.tm_id }} 堆内存使用率: {{ $value | humanizePercentage }}"
+
+      # GC 时间过长
+      - alert: FlinkTaskManagerGCTimeHigh
+        expr: rate(flink_taskmanager_Status_JVM_GarbageCollector_G1_Old_Generation_Time[1m]) > 1000
+        for: 5m
+        labels:
+          severity: warning
+          component: flink
+        annotations:
+          summary: "TaskManager GC 时间过长"
+          description: "TaskManager {{ $labels.tm_id }} GC 时间: {{ $value }}ms/s"
+
+  # ==================== Session 处理性能告警 ====================
+  - name: session_processing
+    interval: 30s
+    rules:
+      # 处理延迟过高
+      - alert: SessionProcessingLagHigh
+        expr: |
+          flink_taskmanager_job_task_operator_currentInputWatermark{operator_name=~".*Sessionize.*"} -
+          flink_taskmanager_job_task_operator_currentOutputWatermark{operator_name=~".*Sessionize.*"} > 60000
+        for: 5m
+        labels:
+          severity: warning
+          component: session_job
+          job: session
+        annotations:
+          summary: "Session 处理延迟过高"
+          description: "Watermark 延迟: {{ $value | humanizeDuration }}"
+
+      # Flow 处理速率下降
+      - alert: FlowProcessingRateDropped
+        expr: |
+          rate(flink_taskmanager_job_task_operator_numRecordsIn{operator_name=~".*Kafka.*"}[5m]) < 1000
+        for: 10m
+        labels:
+          severity: warning
+          component: session_job
+          job: session
+        annotations:
+          summary: "Flow 处理速率下降"
+          description: "当前速率: {{ $value | humanize }} records/s"
+
+      # Late Data 数量过多
+      - alert: LateDataCountHigh
+        expr: rate(flink_taskmanager_job_task_operator_late_flow_total[5m]) > 100
+        for: 10m
+        labels:
+          severity: warning
+          component: session_job
+          job: session
+        annotations:
+          summary: "Late Data 数量过多"
+          description: "Late Data 速率: {{ $value | humanize }} records/s"
+
+  # ==================== ClickHouse Sink 告警 ====================
+  - name: clickhouse_sink
+    interval: 30s
+    rules:
+      # ClickHouse 写入失败率高
+      - alert: ClickHouseInsertFailureRateHigh
+        expr: |
+          rate(flink_taskmanager_job_task_operator_clickhouse_sink_insert_fail_total[5m]) /
+          (rate(flink_taskmanager_job_task_operator_clickhouse_sink_insert_success_total[5m]) + 
+           rate(flink_taskmanager_job_task_operator_clickhouse_sink_insert_fail_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          component: clickhouse
+          job: session
+        annotations:
+          summary: "ClickHouse 写入失败率过高"
+          description: "失败率: {{ $value | humanizePercentage }}"
+
+      # ClickHouse 写入重试次数过多
+      - alert: ClickHouseInsertRetryHigh
+        expr: rate(flink_taskmanager_job_task_operator_clickhouse_sink_insert_retry_total[5m]) > 10
+        for: 10m
+        labels:
+          severity: warning
+          component: clickhouse
+          job: session
+        annotations:
+          summary: "ClickHouse 写入重试次数过多"
+          description: "重试速率: {{ $value | humanize }} retries/s"
+
+      # ClickHouse 批量 Flush 延迟
+      - alert: ClickHouseBatchFlushSlow
+        expr: |
+          histogram_quantile(0.95, 
+            rate(flink_taskmanager_job_task_operator_clickhouse_sink_batch_flush_duration_bucket[5m])
+          ) > 5000
+        for: 10m
+        labels:
+          severity: warning
+          component: clickhouse
+          job: session
+        annotations:
+          summary: "ClickHouse 批量写入过慢"
+          description: "P95 Flush 延迟: {{ $value | humanizeDuration }}"
+
+  # ==================== OpenSearch Sink 告警 ====================
+  - name: opensearch_sink
+    interval: 30s
+    rules:
+      # OpenSearch 索引失败率高
+      - alert: OpenSearchIndexFailureRateHigh
+        expr: |
+          rate(flink_taskmanager_job_task_operator_opensearch_sink_index_fail_total[5m]) /
+          (rate(flink_taskmanager_job_task_operator_opensearch_sink_index_success_total[5m]) + 
+           rate(flink_taskmanager_job_task_operator_opensearch_sink_index_fail_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          component: opensearch
+          job: session
+        annotations:
+          summary: "OpenSearch 索引失败率过高"
+          description: "失败率: {{ $value | humanizePercentage }}"
+
+  # ==================== Kafka 告警 ====================
+  - name: kafka
+    interval: 30s
+    rules:
+      # Kafka Consumer Lag 过高
+      - alert: KafkaConsumerLagHigh
+        expr: kafka_consumer_lag{topic="flow.events.v1", group="flink-session-job"} > 1000000
+        for: 10m
+        labels:
+          severity: warning
+          component: kafka
+          job: session
+        annotations:
+          summary: "Kafka Consumer Lag 过高"
+          description: "当前 Lag: {{ $value | humanize }} records"
+
+      # Kafka Topic 分区异常
+      - alert: KafkaTopicPartitionOffline
+        expr: kafka_topic_partition_in_sync_replica{topic="session.events.v1"} < kafka_topic_partition_replicas
+        for: 5m
+        labels:
+          severity: critical
+          component: kafka
+        annotations:
+          summary: "Kafka Topic 分区副本异常"
+          description: "Topic {{ $labels.topic }} Partition {{ $labels.partition }} 副本数不足"
+
+  # ==================== 状态后端告警 ====================
+  - name: state_backend
+    interval: 30s
+    rules:
+      # RocksDB 状态大小过大
+      - alert: RocksDBStateSizeHigh
+        expr: flink_taskmanager_job_task_operator_rocksdb_bytes_written > 10737418240
+        for: 10m
+        labels:
+          severity: warning
+          component: state_backend
+          job: session
+        annotations:
+          summary: "RocksDB 状态大小过大"
+          description: "状态大小: {{ $value | humanize1024 }}B"
+
+      # 状态恢复时间过长
+      - alert: StateRestoreTimeHigh
+        expr: flink_jobmanager_job_lastCheckpointRestoreDuration > 300000
+        for: 5m
+        labels:
+          severity: warning
+          component: state_backend
+          job: session
+        annotations:
+          summary: "状态恢复时间过长"
+          description: "恢复时长: {{ $value | humanizeDuration }}"
+
+  # ==================== 业务指标告警 ====================
+  - name: business_metrics
+    interval: 30s
+    rules:
+      # Session 输出速率异常低
+      - alert: SessionEmittedRateLow
+        expr: rate(flink_taskmanager_job_task_operator_session_job_session_emitted_total[5m]) < 100
+        for: 15m
+        labels:
+          severity: warning
+          component: session_job
+          job: session
+        annotations:
+          summary: "Session 输出速率异常低"
+          description: "当前速率: {{ $value | humanize }} sessions/s"
+
+      # Idle Timeout 触发频繁
+      - alert: IdleTimeoutFrequent
+        expr: rate(flink_taskmanager_job_task_operator_session_job_idle_timeout_total[5m]) > 1000
+        for: 10m
+        labels:
+          severity: info
+          component: session_job
+          job: session
+        annotations:
+          summary: "Idle Timeout 触发频繁"
+          description: "触发速率: {{ $value | humanize }} timeouts/s，可能需要调整 session.gap.ms"
+
+      # Active Timeout 触发频繁
+      - alert: ActiveTimeoutFrequent
+        expr: rate(flink_taskmanager_job_task_operator_session_job_active_timeout_total[5m]) > 100
+        for: 10m
+        labels:
+          severity: info
+          component: session_job
+          job: session
+        annotations:
+          summary: "Active Timeout 触发频繁"
+          description: "触发速率: {{ $value | humanize }} timeouts/s，存在大量长流量"

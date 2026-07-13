@@ -1,0 +1,78 @@
+# =============================================================================
+# Prometheus 配置 - Flink PCAP Index Job 监控
+# =============================================================================
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'pcap-index-local'
+    env: 'development'
+
+# 告警规则文件
+rule_files:
+  - /etc/prometheus/rules/*.yml
+
+# Alertmanager 配置
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+      timeout: 10s
+
+# 抓取配置
+scrape_configs:
+  # ==================== Prometheus 自身 ====================
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    metrics_path: /metrics
+
+  # ==================== Flink JobManager ====================
+  - job_name: 'flink-jobmanager'
+    static_configs:
+      - targets: ['flink-jobmanager:9249']
+        labels:
+          component: 'jobmanager'
+          job_name: 'pcap-index-job'
+    metrics_path: /metrics
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    # 重要指标保留
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'flink_jobmanager.*|flink_taskmanager.*|pcap_.*|clickhouse_.*|dlq_.*'
+        action: keep
+
+  # ==================== Flink TaskManager ====================
+  - job_name: 'flink-taskmanager'
+    static_configs:
+      - targets: ['flink-taskmanager:9249']
+        labels:
+          component: 'taskmanager'
+          job_name: 'pcap-index-job'
+    metrics_path: /metrics
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'flink_jobmanager.*|flink_taskmanager.*|pcap_.*|clickhouse_.*|dlq_.*'
+        action: keep
+
+  # ==================== Kafka ====================
+  - job_name: 'kafka'
+    static_configs:
+      - targets: ['kafka:9092']
+        labels:
+          component: 'kafka'
+    # Kafka JMX Exporter 需要额外配置
+
+  # ==================== ClickHouse ====================
+  - job_name: 'clickhouse'
+    static_configs:
+      - targets: ['clickhouse:9363']
+        labels:
+          component: 'clickhouse'
+    metrics_path: /metrics
+    # 需要 ClickHouse 开启 Prometheus 端点

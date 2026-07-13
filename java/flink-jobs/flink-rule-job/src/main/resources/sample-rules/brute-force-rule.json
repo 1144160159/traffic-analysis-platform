@@ -1,0 +1,20 @@
+{
+  "rule_id": "rule-bruteforce-001",
+  "tenant_id": "tenant-1",
+  "name": "SSH Brute Force Detection",
+  "description": "Detect SSH brute force attacks based on high connection attempts",
+  "type": "brute_force",
+  "enabled": true,
+  "severity": "critical",
+  "priority": 95,
+  "conditions": {
+    "min_pps": 50,
+    "min_syn_cnt": 20,
+    "max_duration_ms": 60000,
+    "target_ports": "22,3389,21",
+    "min_conditions": 3
+  },
+  "labels": ["brute-force", "authentication", "ssh"],
+  "version": 1,
+  "action": "update"
+}

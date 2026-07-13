@@ -1,0 +1,21 @@
+{
+  "rule_id": "rule-portscan-001",
+  "tenant_id": "tenant-1",
+  "name": "Port Scan Detection (Reconnaissance)",
+  "description": "Detect port scanning activity using TCP SYN patterns",
+  "type": "port_scan",
+  "enabled": true,
+  "severity": "high",
+  "priority": 90,
+  "conditions": {
+    "min_pps": 100,
+    "max_pkt_len": 100,
+    "min_syn_cnt": 10,
+    "max_duration_ms": 60000,
+    "min_conditions": 3
+  },
+  "labels": ["reconnaissance", "scan", "nmap"],
+  "version": 1,
+  "action": "update",
+  "created_by": "security-team"
+}
