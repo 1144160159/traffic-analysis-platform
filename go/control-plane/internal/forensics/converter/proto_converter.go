@@ -277,19 +277,21 @@ func (p *CutRequestParams) ToIndexQuery() *index.IndexQuery {
 
 // JobResponse 任务响应
 type JobResponse struct {
-	JobID        string                 `json:"job_id"`
-	Status       string                 `json:"status"`
-	Progress     int                    `json:"progress"`
-	TotalPackets int64                  `json:"total_packets"`
-	TotalBytes   int64                  `json:"total_bytes"`
-	FilesScanned int                    `json:"files_scanned"`
-	DownloadURL  string                 `json:"download_url,omitempty"`
-	ExpiresAt    *int64                 `json:"expires_at,omitempty"`
-	ErrorMessage string                 `json:"error_message,omitempty"`
-	Params       map[string]interface{} `json:"params,omitempty"`
-	CreatedAt    int64                  `json:"created_at"`
-	UpdatedAt    int64                  `json:"updated_at"`
-	CompletedAt  *int64                 `json:"completed_at,omitempty"`
+	JobID         string                 `json:"job_id"`
+	Status        string                 `json:"status"`
+	Progress      int                    `json:"progress"`
+	TotalPackets  int64                  `json:"total_packets"`
+	TotalBytes    int64                  `json:"total_bytes"`
+	FilesScanned  int                    `json:"files_scanned"`
+	ResultFileKey string                 `json:"result_file_key,omitempty"`
+	SHA256        string                 `json:"sha256,omitempty"`
+	DownloadURL   string                 `json:"download_url,omitempty"`
+	ExpiresAt     *int64                 `json:"expires_at,omitempty"`
+	ErrorMessage  string                 `json:"error_message,omitempty"`
+	Params        map[string]interface{} `json:"params,omitempty"`
+	CreatedAt     int64                  `json:"created_at"`
+	UpdatedAt     int64                  `json:"updated_at"`
+	CompletedAt   *int64                 `json:"completed_at,omitempty"`
 }
 
 // FromTask 从 Task 实体转换
@@ -300,6 +302,8 @@ func (r *JobResponse) FromTask(task *repository.Task) {
 	r.TotalPackets = task.ResultPackets
 	r.TotalBytes = task.ResultBytes
 	r.FilesScanned = task.FilesScanned
+	r.ResultFileKey = task.ResultFileKey
+	r.SHA256 = task.ResultSHA256
 	r.ErrorMessage = task.ErrorMessage
 	r.CreatedAt = task.CreatedAt.UnixMilli()
 	r.UpdatedAt = task.UpdatedAt.UnixMilli()

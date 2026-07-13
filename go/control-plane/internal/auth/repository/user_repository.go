@@ -38,6 +38,11 @@ func NewUserRepository(db *sql.DB, logger *zap.Logger) *UserRepository {
 	}
 }
 
+// DB 返回底层数据库连接，供同一 auth 聚合内的轻量仓储复用。
+func (r *UserRepository) DB() *sql.DB {
+	return r.db
+}
+
 // Create 创建用户
 func (r *UserRepository) Create(ctx context.Context, user *model.User, password string) error {
 	if user == nil {
@@ -477,6 +482,26 @@ func (r *UserRepository) RemoveRole(ctx context.Context, userID, roleID uuid.UUI
 		zap.String("role_id", roleID.String()))
 
 	return nil
+}
+
+// GetRoleIDByName 根据角色名称获取角色 ID
+func (r *UserRepository) GetRoleIDByName(ctx context.Context, tenantID, roleName string) (uuid.UUID, error) {
+	query := `SELECT role_id FROM roles WHERE tenant_id = $1 AND name = $2`
+
+	var roleID uuid.UUID
+	err := r.db.QueryRowContext(ctx, query, tenantID, roleName).Scan(&roleID)
+	if err == sql.ErrNoRows {
+		return uuid.Nil, errors.Newf(errors.ErrCodeEntityNotFound, "role %s not found in tenant %s", roleName, tenantID)
+	}
+	if err != nil {
+		r.logger.Error("Failed to query role by name",
+			zap.String("tenant_id", tenantID),
+			zap.String("role_name", roleName),
+			zap.Error(err))
+		return uuid.Nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to query role by name")
+	}
+
+	return roleID, nil
 }
 
 // GetUsersByRole 获取拥有特定角色的所有用户（修复 #A5：新增方法）

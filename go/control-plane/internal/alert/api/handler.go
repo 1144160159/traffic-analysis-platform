@@ -6,6 +6,7 @@
 package api
 
 import (
+	"context"
 	"encoding/csv"
 	"encoding/json"
 	"net/http"
@@ -16,6 +17,7 @@ import (
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/audit"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/service"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/state"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/whitelist"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/errors"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/httpx"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/kafka"
@@ -29,6 +31,8 @@ type Handler struct {
 	alertService    *service.AlertService
 	feedbackHandler *FeedbackHandler
 	auditLogger     *audit.AlertAuditLogger
+	actionAudit     *AlertActionAuditWriter
+	consumerHealth  func(context.Context) error
 	logger          *zap.Logger
 }
 
@@ -69,25 +73,43 @@ func (h *Handler) SetFeedbackRepo(repo *FeedbackRepository) {
 	}
 }
 
+// SetFeedbackWhitelistRepo 设置误报反馈生成白名单草案所需的仓库。
+func (h *Handler) SetFeedbackWhitelistRepo(repo *whitelist.Repository) {
+	if h.feedbackHandler != nil {
+		h.feedbackHandler.whitelistRepo = repo
+	}
+}
+
+// SetActionAuditWriter 设置告警动作同步审计写入器。
+func (h *Handler) SetActionAuditWriter(writer *AlertActionAuditWriter) {
+	h.actionAudit = writer
+}
+
+// SetConsumerHealthCheck includes the asynchronous Kafka ingestion path in
+// readiness without making it a liveness dependency.
+func (h *Handler) SetConsumerHealthCheck(check func(context.Context) error) {
+	h.consumerHealth = check
+}
+
 // RegisterRoutes 注册路由
 func (h *Handler) RegisterRoutes(r *mux.Router) {
 	// 告警列表与详情
 	r.HandleFunc("/alerts", h.ListAlerts).Methods("GET")
 	r.HandleFunc("/alerts/search", h.SearchAlerts).Methods("POST")
-	r.HandleFunc("/alerts/{id}", h.GetAlert).Methods("GET")
-	r.HandleFunc("/alerts/{id}/evidence", h.GetAlertEvidence).Methods("GET")
-	// 告警操作
-	r.HandleFunc("/alerts/{id}/status", h.UpdateStatus).Methods("PUT")
-	r.HandleFunc("/alerts/{id}/assign", h.AssignAlert).Methods("PUT")
-	r.HandleFunc("/alerts/batch/status", h.BatchUpdateStatus).Methods("PUT")
-	r.HandleFunc("/alerts/{id}/close", h.CloseAlert).Methods("POST")
-	r.HandleFunc("/alerts/{id}/reopen", h.ReopenAlert).Methods("POST")
 	// 统计与趋势
 	r.HandleFunc("/alerts/stats", h.GetStats).Methods("GET")
 	r.HandleFunc("/alerts/trend", h.GetTrend).Methods("GET")
 	// 导出功能
 	r.HandleFunc("/alerts/export", h.ExportAlerts).Methods("POST")
 	r.HandleFunc("/alerts/export/csv", h.ExportAlertsCSV).Methods("POST")
+	// 告警操作
+	r.HandleFunc("/alerts/batch/status", h.BatchUpdateStatus).Methods("PUT")
+	r.HandleFunc("/alerts/{id}", h.GetAlert).Methods("GET")
+	r.HandleFunc("/alerts/{id}/evidence", h.GetAlertEvidence).Methods("GET")
+	r.HandleFunc("/alerts/{id}/status", h.UpdateStatus).Methods("PUT")
+	r.HandleFunc("/alerts/{id}/assign", h.AssignAlert).Methods("PUT")
+	r.HandleFunc("/alerts/{id}/close", h.CloseAlert).Methods("POST")
+	r.HandleFunc("/alerts/{id}/reopen", h.ReopenAlert).Methods("POST")
 	// 证据相关 API
 	r.HandleFunc("/evidence/{id}", h.GetEvidenceByID).Methods("GET")
 	r.HandleFunc("/evidence/alert/{alert_id}", h.GetEvidenceByAlertID).Methods("GET")
@@ -114,6 +136,16 @@ func (h *Handler) HealthCheck(w http.ResponseWriter, r *http.Request) {
 
 // ReadinessCheck 就绪检查
 func (h *Handler) ReadinessCheck(w http.ResponseWriter, r *http.Request) {
+	if h.consumerHealth != nil {
+		if err := h.consumerHealth(r.Context()); err != nil {
+			httpx.JSONError(w, r.Context(), http.StatusServiceUnavailable, "KAFKA_NOT_READY", err.Error())
+			return
+		}
+	}
+	if h.alertService == nil {
+		httpx.JSONError(w, r.Context(), http.StatusServiceUnavailable, "NOT_READY", "alert service is not configured")
+		return
+	}
 	status := h.alertService.GetStorageStatus()
 	// 至少一个存储可用即为就绪
 	ready := false
@@ -419,7 +451,10 @@ func (h *Handler) GetEvidenceByAlertID(w http.ResponseWriter, r *http.Request) {
 
 // UpdateStatusRequest 更新状态请求
 type UpdateStatusRequest struct {
-	Status string `json:"status"`
+	Status               string  `json:"status"`
+	Reason               string  `json:"reason,omitempty"`
+	StateVersion         *uint64 `json:"state_version,omitempty"`
+	ExpectedStateVersion *uint64 `json:"expected_state_version,omitempty"`
 }
 
 // UpdateStatus 更新告警状态
@@ -435,6 +470,9 @@ func (h *Handler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 			httpx.GetTraceID(ctx), r.URL.Path)
 		return
 	}
+	if !h.requireAlertWritePermission(w, r) {
+		return
+	}
 	var req UpdateStatusRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		errors.WriteError(w, errors.New(errors.ErrCodeInvalidRequest, "invalid request body"),
@@ -448,12 +486,24 @@ func (h *Handler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 			httpx.GetTraceID(ctx), r.URL.Path)
 		return
 	}
+	expectedVersion, err := parseExpectedStateVersion(req, r)
+	if err != nil {
+		errors.WriteError(w, err, httpx.GetTraceID(ctx), r.URL.Path)
+		return
+	}
+	reason := strings.TrimSpace(req.Reason)
+	if reason == "" {
+		errors.WriteError(w, errors.New(errors.ErrCodeMissingParameter, "reason is required"),
+			httpx.GetTraceID(ctx), r.URL.Path)
+		return
+	}
 	logger.Info("Update alert status request",
 		zap.String("alert_id", alertID),
 		zap.String("new_status", newStatus.String()),
+		zap.String("reason", reason),
 		zap.String("user_id", userID))
 	// 更新状态
-	oldStatus, err := h.alertService.UpdateStatus(ctx, tenantID, alertID, newStatus.String(), userID)
+	result, err := h.alertService.UpdateStatusWithExpectedVersion(ctx, tenantID, alertID, newStatus.String(), userID, reason, expectedVersion)
 	if err != nil {
 		if errors.IsCode(err, errors.ErrCodeAlertNotFound) {
 			errors.WriteErrorWithStatus(w, http.StatusNotFound,
@@ -467,25 +517,108 @@ func (h *Handler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 				httpx.GetTraceID(ctx), r.URL.Path)
 			return
 		}
+		if errors.IsCode(err, errors.ErrCodeVersionConflict) {
+			errors.WriteErrorWithStatus(w, http.StatusConflict,
+				errors.ErrCodeVersionConflict, err.Error(),
+				httpx.GetTraceID(ctx), r.URL.Path)
+			return
+		}
 		logger.Error("Failed to update alert status", zap.Error(err))
 		errors.WriteError(w, err, httpx.GetTraceID(ctx), r.URL.Path)
 		return
 	}
-	// 记录审计日志
-	if h.auditLogger != nil {
-		h.auditLogger.LogAlertStatusChange(ctx, alertID, tenantID, oldStatus, newStatus.String())
-	}
-	httpx.JSONSuccess(w, ctx, map[string]string{
-		"alert_id":   alertID,
-		"old_status": oldStatus,
-		"new_status": newStatus.String(),
+	httpx.JSONSuccess(w, ctx, map[string]interface{}{
+		"alert_id":      alertID,
+		"old_status":    result.OldStatus,
+		"new_status":    result.NewStatus,
+		"reason":        reason,
+		"state_version": result.StateVersion,
 	})
+	h.recordAlertActionAudit(ctx, r, AlertActionAuditRecord{
+		Action:       "ALERT_STATUS_UPDATED",
+		TenantID:     tenantID,
+		UserID:       userID,
+		AlertID:      alertID,
+		OldStatus:    result.OldStatus,
+		NewStatus:    result.NewStatus,
+		Reason:       reason,
+		StateVersion: result.StateVersion,
+		Result:       "success",
+	})
+}
+
+func parseExpectedStateVersion(req UpdateStatusRequest, r *http.Request) (*uint64, error) {
+	var expected *uint64
+	for _, candidate := range []struct {
+		name  string
+		value *uint64
+	}{
+		{name: "state_version", value: req.StateVersion},
+		{name: "expected_state_version", value: req.ExpectedStateVersion},
+	} {
+		if candidate.value == nil {
+			continue
+		}
+		if *candidate.value == 0 {
+			return nil, errors.Newf(errors.ErrCodeInvalidParameter, "%s must be a positive unix-millisecond version", candidate.name)
+		}
+		if expected != nil && *expected != *candidate.value {
+			return nil, errors.New(errors.ErrCodeInvalidParameter, "state_version and expected_state_version do not match")
+		}
+		value := *candidate.value
+		expected = &value
+	}
+
+	headerVersion, err := parseIfMatchStateVersion(r.Header.Get("If-Match"))
+	if err != nil {
+		return nil, err
+	}
+	if headerVersion != nil {
+		if *headerVersion == 0 {
+			return nil, errors.New(errors.ErrCodeInvalidParameter, "If-Match state_version must be positive")
+		}
+		if expected != nil && *expected != *headerVersion {
+			return nil, errors.New(errors.ErrCodeInvalidParameter, "If-Match does not match request state_version")
+		}
+		value := *headerVersion
+		expected = &value
+	}
+	return expected, nil
+}
+
+func parseIfMatchStateVersion(header string) (*uint64, error) {
+	header = strings.TrimSpace(header)
+	if header == "" {
+		return nil, nil
+	}
+	if strings.HasPrefix(header, "W/") || strings.HasPrefix(header, "w/") {
+		header = strings.TrimSpace(header[2:])
+	}
+	header = strings.Trim(header, `"`)
+	header = strings.TrimSpace(header)
+	if header == "" || strings.Contains(header, ",") {
+		return nil, errors.New(errors.ErrCodeInvalidParameter, "If-Match must contain a single numeric state_version")
+	}
+	value, err := strconv.ParseUint(header, 10, 64)
+	if err != nil {
+		return nil, errors.Newf(errors.ErrCodeInvalidParameter, "invalid If-Match state_version: %s", header)
+	}
+	return &value, nil
 }
 
 // BatchUpdateStatusRequest 批量更新状态请求
 type BatchUpdateStatusRequest struct {
-	AlertIDs []string `json:"alert_ids"`
-	Status   string   `json:"status"`
+	AlertIDs []string                 `json:"alert_ids"`
+	Items    []BatchStatusItemRequest `json:"items,omitempty"`
+	Status   string                   `json:"status"`
+	Reason   string                   `json:"reason,omitempty"`
+}
+
+// BatchStatusItemRequest 批量状态更新单项请求
+type BatchStatusItemRequest struct {
+	AlertID              string  `json:"alert_id"`
+	StateVersion         *uint64 `json:"state_version,omitempty"`
+	ExpectedStateVersion *uint64 `json:"expected_state_version,omitempty"`
 }
 
 // BatchUpdateStatus 批量更新告警状态
@@ -499,41 +632,118 @@ func (h *Handler) BatchUpdateStatus(w http.ResponseWriter, r *http.Request) {
 			httpx.GetTraceID(ctx), r.URL.Path)
 		return
 	}
+	if !h.requireAlertWritePermission(w, r) {
+		return
+	}
 	var req BatchUpdateStatusRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		errors.WriteError(w, errors.New(errors.ErrCodeInvalidRequest, "invalid request body"),
 			httpx.GetTraceID(ctx), r.URL.Path)
 		return
 	}
-	if len(req.AlertIDs) == 0 {
+	items, err := buildBatchStatusItems(req)
+	if err != nil {
+		errors.WriteError(w, err, httpx.GetTraceID(ctx), r.URL.Path)
+		return
+	}
+	if len(items) == 0 {
 		errors.WriteError(w, errors.New(errors.ErrCodeMissingParameter, "alert_ids is required"),
 			httpx.GetTraceID(ctx), r.URL.Path)
 		return
 	}
 	// 限制批量操作数量
-	if len(req.AlertIDs) > 100 {
+	if len(items) > 100 {
 		errors.WriteError(w, errors.New(errors.ErrCodeInvalidParameter, "alert_ids cannot exceed 100"),
 			httpx.GetTraceID(ctx), r.URL.Path)
 		return
 	}
+	reason := strings.TrimSpace(req.Reason)
+	if reason == "" {
+		errors.WriteError(w, errors.New(errors.ErrCodeMissingParameter, "reason is required"),
+			httpx.GetTraceID(ctx), r.URL.Path)
+		return
+	}
 	// 验证状态
-	_, err := state.ParseStatus(req.Status)
+	newStatus, err := state.ParseStatus(req.Status)
 	if err != nil {
 		errors.WriteError(w, errors.Newf(errors.ErrCodeInvalidParameter, "invalid status: %s", req.Status),
 			httpx.GetTraceID(ctx), r.URL.Path)
 		return
 	}
 	logger.Info("Batch update alert status request",
-		zap.Int("count", len(req.AlertIDs)),
-		zap.String("new_status", req.Status),
+		zap.Int("count", len(items)),
+		zap.String("new_status", newStatus.String()),
+		zap.String("reason", reason),
 		zap.String("user_id", userID))
-	result, err := h.alertService.BatchUpdateStatus(ctx, tenantID, req.AlertIDs, req.Status, userID)
+	result, err := h.alertService.BatchUpdateStatusWithExpectedVersions(ctx, tenantID, items, newStatus.String(), userID, reason)
 	if err != nil {
 		logger.Error("Failed to batch update alert status", zap.Error(err))
 		errors.WriteError(w, err, httpx.GetTraceID(ctx), r.URL.Path)
 		return
 	}
 	httpx.JSONSuccess(w, ctx, result)
+	h.recordAlertActionAudit(ctx, r, AlertActionAuditRecord{
+		Action:        "ALERT_BATCH_STATUS_UPDATED",
+		TenantID:      tenantID,
+		UserID:        userID,
+		AlertID:       batchAuditObjectID(result),
+		NewStatus:     newStatus.String(),
+		Reason:        reason,
+		SuccessCount:  result.SuccessCount,
+		FailedCount:   result.FailedCount,
+		SuccessIDs:    result.SuccessIDs,
+		FailedIDs:     result.FailedIDs,
+		ErrorCodes:    result.ErrorCodes,
+		StateVersions: result.StateVersions,
+		Result:        batchAuditResult(result),
+	})
+}
+
+func buildBatchStatusItems(req BatchUpdateStatusRequest) ([]service.BatchStatusUpdateItem, error) {
+	items := make([]service.BatchStatusUpdateItem, 0, len(req.AlertIDs)+len(req.Items))
+	for _, alertID := range req.AlertIDs {
+		alertID = strings.TrimSpace(alertID)
+		if alertID == "" {
+			return nil, errors.New(errors.ErrCodeInvalidParameter, "alert_ids must not contain empty values")
+		}
+		items = append(items, service.BatchStatusUpdateItem{AlertID: alertID})
+	}
+	for _, item := range req.Items {
+		alertID := strings.TrimSpace(item.AlertID)
+		if alertID == "" {
+			return nil, errors.New(errors.ErrCodeInvalidParameter, "items[].alert_id is required")
+		}
+		expectedVersion, err := expectedVersionFromBatchItem(item)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, service.BatchStatusUpdateItem{AlertID: alertID, ExpectedVersion: expectedVersion})
+	}
+	return items, nil
+}
+
+func expectedVersionFromBatchItem(item BatchStatusItemRequest) (*uint64, error) {
+	var expected *uint64
+	for _, candidate := range []struct {
+		name  string
+		value *uint64
+	}{
+		{name: "state_version", value: item.StateVersion},
+		{name: "expected_state_version", value: item.ExpectedStateVersion},
+	} {
+		if candidate.value == nil {
+			continue
+		}
+		if *candidate.value == 0 {
+			return nil, errors.Newf(errors.ErrCodeInvalidParameter, "items[].%s must be a positive unix-millisecond version", candidate.name)
+		}
+		if expected != nil && *expected != *candidate.value {
+			return nil, errors.New(errors.ErrCodeInvalidParameter, "items[].state_version and items[].expected_state_version do not match")
+		}
+		value := *candidate.value
+		expected = &value
+	}
+	return expected, nil
 }
 
 // AssignRequest 分配请求
@@ -554,12 +764,16 @@ func (h *Handler) AssignAlert(w http.ResponseWriter, r *http.Request) {
 			httpx.GetTraceID(ctx), r.URL.Path)
 		return
 	}
+	if !h.requireAlertWritePermission(w, r) {
+		return
+	}
 	var req AssignRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		errors.WriteError(w, errors.New(errors.ErrCodeInvalidRequest, "invalid request body"),
 			httpx.GetTraceID(ctx), r.URL.Path)
 		return
 	}
+	req.Assignee = strings.TrimSpace(req.Assignee)
 	if req.Assignee == "" {
 		errors.WriteError(w, errors.New(errors.ErrCodeMissingParameter, "assignee is required"),
 			httpx.GetTraceID(ctx), r.URL.Path)
@@ -581,14 +795,20 @@ func (h *Handler) AssignAlert(w http.ResponseWriter, r *http.Request) {
 		errors.WriteError(w, err, httpx.GetTraceID(ctx), r.URL.Path)
 		return
 	}
-	// 记录审计日志
-	if h.auditLogger != nil {
-		h.auditLogger.LogAlertAssign(ctx, alertID, tenantID, req.Assignee)
-	}
 	httpx.JSONSuccess(w, ctx, map[string]string{
 		"alert_id": alertID,
 		"assignee": req.Assignee,
 		"status":   state.StatusAssigned.String(),
+	})
+	h.recordAlertActionAudit(ctx, r, AlertActionAuditRecord{
+		Action:    "ALERT_ASSIGNED",
+		TenantID:  tenantID,
+		UserID:    userID,
+		AlertID:   alertID,
+		NewStatus: state.StatusAssigned.String(),
+		Assignee:  req.Assignee,
+		Reason:    "assign alert",
+		Result:    "success",
 	})
 }
 
@@ -610,14 +830,23 @@ func (h *Handler) CloseAlert(w http.ResponseWriter, r *http.Request) {
 			httpx.GetTraceID(ctx), r.URL.Path)
 		return
 	}
+	if !h.requireAlertWritePermission(w, r) {
+		return
+	}
 	var req CloseAlertRequest
 	// 允许空body
 	json.NewDecoder(r.Body).Decode(&req)
+	reason := strings.TrimSpace(req.Reason)
+	if reason == "" {
+		errors.WriteError(w, errors.New(errors.ErrCodeMissingParameter, "reason is required"),
+			httpx.GetTraceID(ctx), r.URL.Path)
+		return
+	}
 	logger.Info("Close alert request",
 		zap.String("alert_id", alertID),
-		zap.String("reason", req.Reason),
+		zap.String("reason", reason),
 		zap.String("user_id", userID))
-	if err := h.alertService.CloseAlert(ctx, tenantID, alertID, req.Reason, userID); err != nil {
+	if err := h.alertService.CloseAlert(ctx, tenantID, alertID, reason, userID); err != nil {
 		if errors.IsCode(err, errors.ErrCodeAlertNotFound) {
 			errors.WriteErrorWithStatus(w, http.StatusNotFound,
 				errors.ErrCodeAlertNotFound, "Alert not found",
@@ -637,7 +866,16 @@ func (h *Handler) CloseAlert(w http.ResponseWriter, r *http.Request) {
 	httpx.JSONSuccess(w, ctx, map[string]string{
 		"alert_id": alertID,
 		"status":   state.StatusClosed.String(),
-		"reason":   req.Reason,
+		"reason":   reason,
+	})
+	h.recordAlertActionAudit(ctx, r, AlertActionAuditRecord{
+		Action:    "ALERT_CLOSED",
+		TenantID:  tenantID,
+		UserID:    userID,
+		AlertID:   alertID,
+		NewStatus: state.StatusClosed.String(),
+		Reason:    reason,
+		Result:    "success",
 	})
 }
 
@@ -652,6 +890,9 @@ func (h *Handler) ReopenAlert(w http.ResponseWriter, r *http.Request) {
 	if tenantID == "" {
 		errors.WriteError(w, errors.New(errors.ErrCodeTenantNotFound, "tenant_id is required"),
 			httpx.GetTraceID(ctx), r.URL.Path)
+		return
+	}
+	if !h.requireAlertWritePermission(w, r) {
 		return
 	}
 	logger.Info("Reopen alert request",
@@ -677,6 +918,15 @@ func (h *Handler) ReopenAlert(w http.ResponseWriter, r *http.Request) {
 	httpx.JSONSuccess(w, ctx, map[string]string{
 		"alert_id": alertID,
 		"status":   state.StatusNew.String(),
+	})
+	h.recordAlertActionAudit(ctx, r, AlertActionAuditRecord{
+		Action:    "ALERT_REOPENED",
+		TenantID:  tenantID,
+		UserID:    userID,
+		AlertID:   alertID,
+		NewStatus: state.StatusNew.String(),
+		Reason:    "reopen",
+		Result:    "success",
 	})
 }
 

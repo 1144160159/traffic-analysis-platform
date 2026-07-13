@@ -13,11 +13,13 @@ package query
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync/atomic"
 	"time"
 
 	"go.uber.org/zap"
 
+	apperrors "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/errors"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/otel"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/storage"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/utils"
@@ -116,6 +118,33 @@ func NewGraphQuery(
 	}
 }
 
+func buildSessionConditions(tenantID, runID string, startTime, endTime int64) ([]string, []interface{}) {
+	conditions := []string{"tenant_id = ?"}
+	args := []interface{}{tenantID}
+
+	if runID != "" {
+		conditions = append(conditions, "run_id = ?")
+		args = append(args, runID)
+	}
+	if startTime > 0 {
+		conditions = append(conditions, "ts_end >= ?")
+		args = append(args, startTime)
+	}
+	if endTime > 0 {
+		conditions = append(conditions, "ts_end <= ?")
+		args = append(args, endTime)
+	}
+
+	return conditions, args
+}
+
+func formatMillis(ms int64) string {
+	if ms <= 0 {
+		return ""
+	}
+	return time.UnixMilli(ms).Format(time.RFC3339)
+}
+
 // Explore 图探索（修复：返回 *Graph 和缓存命中状态）
 func (g *GraphQuery) Explore(ctx context.Context, tenantID, centerIP string, depth int, startTime, endTime int64, runID string) (*Graph, error) {
 	ctx, span := otel.StartSpan(ctx, "GraphQuery.Explore")
@@ -131,9 +160,16 @@ func (g *GraphQuery) Explore(ctx context.Context, tenantID, centerIP string, dep
 		depth = g.config.MaxDepth
 	}
 
+	queryCtx := ctx
+	var cancel context.CancelFunc
+	if g.config.QueryTimeout > 0 {
+		queryCtx, cancel = context.WithTimeout(ctx, g.config.QueryTimeout)
+		defer cancel()
+	}
+
 	// 尝试从缓存获取
 	if g.cache != nil {
-		if cachedGraph := g.getGraphFromCache(ctx, tenantID, centerIP, depth, startTime, endTime, runID); cachedGraph != nil {
+		if cachedGraph := g.getGraphFromCache(queryCtx, tenantID, centerIP, depth, startTime, endTime, runID); cachedGraph != nil {
 			atomic.AddInt64(&g.metrics.CacheHits, 1)
 			cachedGraph.CacheHit = true
 			return cachedGraph, nil
@@ -142,17 +178,26 @@ func (g *GraphQuery) Explore(ctx context.Context, tenantID, centerIP string, dep
 	}
 
 	// 从数据库查询
-	graph, err := g.exploreFromDB(ctx, tenantID, centerIP, depth, startTime, endTime, runID)
+	graph, err := g.exploreFromDB(queryCtx, tenantID, centerIP, depth, startTime, endTime, runID)
 	if err != nil {
 		atomic.AddInt64(&g.metrics.FailedQueries, 1)
+		if queryCtx.Err() != nil {
+			atomic.AddInt64(&g.metrics.TimeoutQueries, 1)
+			return nil, apperrors.Wrap(queryCtx.Err(), apperrors.ErrCodeTimeout, "Graph exploration timed out")
+		}
 		return nil, err
+	}
+
+	if queryCtx.Err() != nil {
+		atomic.AddInt64(&g.metrics.TimeoutQueries, 1)
+		graph.Truncated = true
 	}
 
 	graph.CacheHit = false
 
 	// 缓存结果
 	if g.cache != nil {
-		g.cacheGraph(ctx, tenantID, centerIP, depth, startTime, endTime, runID, graph)
+		g.cacheGraph(queryCtx, tenantID, centerIP, depth, startTime, endTime, runID, graph)
 	}
 
 	return graph, nil
@@ -195,6 +240,10 @@ func (g *GraphQuery) exploreFromDB(ctx context.Context, tenantID, centerIP strin
 				g.logger.Error("Failed to query neighbors",
 					zap.String("node_ip", nodeIP),
 					zap.Error(err))
+				graph.Truncated = true
+				if ctx.Err() != nil {
+					goto done
+				}
 				continue
 			}
 
@@ -264,33 +313,26 @@ func (g *GraphQuery) queryNeighbors(ctx context.Context, tenantID, nodeIP string
 		}
 	}
 
-	sql := `
+	conditions, args := buildSessionConditions(tenantID, runID, startTime, endTime)
+	conditions = append(conditions, "(src_ip = ? OR dst_ip = ?)")
+	args = append(args, nodeIP, nodeIP)
+
+	sql := fmt.Sprintf(`
 		SELECT
-			if(client_ip = ?, server_ip, client_ip) as neighbor_ip,
+			if(src_ip = ?, dst_ip, src_ip) as neighbor_ip,
 			count() as session_count,
 			sum(bytes_total) as total_bytes,
 			max(ts_end) as last_seen
 		FROM traffic.sessions
-		WHERE tenant_id = ?
-		  AND run_id = ?
-		  AND (client_ip = ? OR server_ip = ?)
-		  AND ts_end >= toDateTime64(?, 3)
-		  AND ts_end <= toDateTime64(?, 3)
+		WHERE %s
 		GROUP BY neighbor_ip
 		ORDER BY session_count DESC
 		LIMIT ?
-	`
+	`, strings.Join(conditions, " AND "))
 
-	rows, err := g.client.Query(ctx, sql,
-		nodeIP,
-		tenantID,
-		runID,
-		nodeIP,
-		nodeIP,
-		time.UnixMilli(startTime),
-		time.UnixMilli(endTime),
-		limit,
-	)
+	queryArgs := append([]interface{}{nodeIP}, args...)
+	queryArgs = append(queryArgs, limit)
+	rows, err := g.client.Query(ctx, sql, queryArgs...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query neighbors: %w", err)
 	}
@@ -301,11 +343,12 @@ func (g *GraphQuery) queryNeighbors(ctx context.Context, tenantID, nodeIP string
 
 	for rows.Next() {
 		var node GraphNode
-		var lastSeen time.Time
+		var sessionCount uint64
+		var lastSeen int64
 
 		err := rows.Scan(
 			&node.IP,
-			&node.SessionCount,
+			&sessionCount,
 			&node.TotalBytes,
 			&lastSeen,
 		)
@@ -314,7 +357,8 @@ func (g *GraphQuery) queryNeighbors(ctx context.Context, tenantID, nodeIP string
 			continue
 		}
 
-		node.LastSeen = lastSeen.Format(time.RFC3339)
+		node.SessionCount = int(sessionCount)
+		node.LastSeen = formatMillis(lastSeen)
 		neighbors = append(neighbors, &node)
 
 		cacheInfos = append(cacheInfos, cache.NeighborInfo{
@@ -415,32 +459,27 @@ func (g *GraphQuery) GetEntityDetails(ctx context.Context, tenantID, entityID, e
 		}
 	}
 
-	sql := `
+	conditions, args := buildSessionConditions(tenantID, runID, startTime, endTime)
+	conditions = append(conditions, "(src_ip = ? OR dst_ip = ?)")
+	args = append(args, entityID, entityID)
+
+	sql := fmt.Sprintf(`
 		SELECT
 			count() as session_count,
 			sum(bytes_total) as total_bytes,
 			min(ts_start) as first_seen,
 			max(ts_end) as last_seen
 		FROM traffic.sessions
-		WHERE tenant_id = ?
-		  AND run_id = ?
-		  AND (client_ip = ? OR server_ip = ?)
-		  AND ts_end >= toDateTime64(?, 3)
-		  AND ts_end <= toDateTime64(?, 3)
-	`
+		WHERE %s
+	`, strings.Join(conditions, " AND "))
 
 	var details EntityDetails
-	var firstSeen, lastSeen time.Time
+	var sessionCount uint64
+	var firstSeen, lastSeen int64
 
-	row, err := g.client.QueryRow(ctx, sql,
-		tenantID,
-		runID,
-		entityID,
-		entityID,
-		time.UnixMilli(startTime),
-		time.UnixMilli(endTime))
+	row, err := g.client.QueryRow(ctx, sql, args...)
 	err = row.Scan(
-		&details.SessionCount,
+		&sessionCount,
 		&details.TotalBytes,
 		&firstSeen,
 		&lastSeen)
@@ -451,29 +490,36 @@ func (g *GraphQuery) GetEntityDetails(ctx context.Context, tenantID, entityID, e
 
 	details.EntityID = entityID
 	details.EntityType = entityType
-	details.FirstSeen = firstSeen.Format(time.RFC3339)
-	details.LastSeen = lastSeen.Format(time.RFC3339)
+	details.SessionCount = int(sessionCount)
+	details.FirstSeen = formatMillis(firstSeen)
+	details.LastSeen = formatMillis(lastSeen)
 
 	// 查询告警数量
-	alertSQL := `
+	alertConditions := []string{"tenant_id = ?", "(src_ip = ? OR dst_ip = ?)"}
+	alertArgs := []interface{}{tenantID, entityID, entityID}
+	if startTime > 0 {
+		alertConditions = append(alertConditions, "last_seen >= ?")
+		alertArgs = append(alertArgs, startTime)
+	}
+	if endTime > 0 {
+		alertConditions = append(alertConditions, "last_seen <= ?")
+		alertArgs = append(alertArgs, endTime)
+	}
+
+	alertSQL := fmt.Sprintf(`
 		SELECT count()
 		FROM traffic.alerts
-		WHERE tenant_id = ?
-		  AND (src_ip = ? OR dst_ip = ?)
-		  AND last_seen >= toDateTime64(?, 3)
-		  AND last_seen <= toDateTime64(?, 3)
-	`
+		WHERE %s
+	`, strings.Join(alertConditions, " AND "))
 
-	row, err = g.client.QueryRow(ctx, alertSQL,
-		tenantID,
-		entityID,
-		entityID,
-		time.UnixMilli(startTime),
-		time.UnixMilli(endTime))
-	err = row.Scan(&details.AlertCount)
+	row, err = g.client.QueryRow(ctx, alertSQL, alertArgs...)
+	var alertCount uint64
+	err = row.Scan(&alertCount)
 
 	if err != nil {
 		g.logger.Warn("Failed to query alert count", zap.Error(err))
+	} else {
+		details.AlertCount = int(alertCount)
 	}
 
 	// 缓存结果
@@ -501,14 +547,18 @@ func (g *GraphQuery) GetEntityTimeline(ctx context.Context, tenantID, entityID s
 	var interval string
 	switch granularity {
 	case "minute":
-		interval = "toStartOfMinute(ts_end)"
+		interval = "toStartOfMinute(fromUnixTimestamp64Milli(ts_end))"
 	case "hour":
-		interval = "toStartOfHour(ts_end)"
+		interval = "toStartOfHour(fromUnixTimestamp64Milli(ts_end))"
 	case "day":
-		interval = "toStartOfDay(ts_end)"
+		interval = "toStartOfDay(fromUnixTimestamp64Milli(ts_end))"
 	default:
-		interval = "toStartOfHour(ts_end)"
+		interval = "toStartOfHour(fromUnixTimestamp64Milli(ts_end))"
 	}
+
+	conditions, args := buildSessionConditions(tenantID, runID, startTime, endTime)
+	conditions = append(conditions, "(src_ip = ? OR dst_ip = ?)")
+	args = append(args, entityID, entityID)
 
 	sql := fmt.Sprintf(`
 		SELECT
@@ -516,23 +566,12 @@ func (g *GraphQuery) GetEntityTimeline(ctx context.Context, tenantID, entityID s
 			count() as session_count,
 			sum(bytes_total) as total_bytes
 		FROM traffic.sessions
-		WHERE tenant_id = ?
-		  AND run_id = ?
-		  AND (client_ip = ? OR server_ip = ?)
-		  AND ts_end >= toDateTime64(?, 3)
-		  AND ts_end <= toDateTime64(?, 3)
+		WHERE %s
 		GROUP BY timestamp
 		ORDER BY timestamp ASC
-	`, interval)
+	`, interval, strings.Join(conditions, " AND "))
 
-	rows, err := g.client.Query(ctx, sql,
-		tenantID,
-		runID,
-		entityID,
-		entityID,
-		time.UnixMilli(startTime),
-		time.UnixMilli(endTime),
-	)
+	rows, err := g.client.Query(ctx, sql, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query timeline: %w", err)
 	}
@@ -541,15 +580,17 @@ func (g *GraphQuery) GetEntityTimeline(ctx context.Context, tenantID, entityID s
 	timeline := make([]*TimelinePoint, 0)
 	for rows.Next() {
 		var point TimelinePoint
+		var sessionCount uint64
 		err := rows.Scan(
 			&point.Timestamp,
-			&point.SessionCount,
+			&sessionCount,
 			&point.TotalBytes,
 		)
 		if err != nil {
 			g.logger.Error("Failed to scan timeline point", zap.Error(err))
 			continue
 		}
+		point.SessionCount = int(sessionCount)
 		timeline = append(timeline, &point)
 	}
 
@@ -636,26 +677,21 @@ func (g *GraphQuery) GetStats(ctx context.Context, tenantID string, startTime, e
 	ctx, span := otel.StartSpan(ctx, "GraphQuery.GetStats")
 	defer span.End()
 
-	sql := `
+	conditions, args := buildSessionConditions(tenantID, runID, startTime, endTime)
+
+	sql := fmt.Sprintf(`
 		SELECT
-			uniq(client_ip, server_ip) as unique_ips,
+			uniq(src_ip, dst_ip) as unique_ips,
 			count() as total_sessions,
 			sum(bytes_total) as total_bytes
 		FROM traffic.sessions
-		WHERE tenant_id = ?
-		  AND run_id = ?
-		  AND ts_end >= toDateTime64(?, 3)
-		  AND ts_end <= toDateTime64(?, 3)
-	`
+		WHERE %s
+	`, strings.Join(conditions, " AND "))
 
 	var uniqueIPs, totalSessions uint64
 	var totalBytes uint64
 
-	row, err := g.client.QueryRow(ctx, sql,
-		tenantID,
-		runID,
-		time.UnixMilli(startTime),
-		time.UnixMilli(endTime))
+	row, err := g.client.QueryRow(ctx, sql, args...)
 	err = row.Scan(&uniqueIPs, &totalSessions, &totalBytes)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query stats: %w", err)

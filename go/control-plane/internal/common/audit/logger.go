@@ -11,6 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	commonkafka "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/kafka"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/logging"
 	"github.com/google/uuid"
 	"github.com/segmentio/kafka-go"
@@ -59,6 +60,7 @@ type Config struct {
 
 	EnableBatchOptimization bool          `env:"AUDIT_ENABLE_BATCH_OPTIMIZATION" envDefault:"true"`
 	MaxBatchWaitTime        time.Duration `env:"AUDIT_MAX_BATCH_WAIT_TIME" envDefault:"500ms"`
+	Security                commonkafka.SecurityConfig
 }
 
 func NewLogger(cfg Config, logger *zap.Logger) (*Logger, error) {
@@ -88,16 +90,21 @@ func NewLogger(cfg Config, logger *zap.Logger) (*Logger, error) {
 		cfg.MaxBatchWaitTime = 500 * time.Millisecond
 	}
 
-	writer := &kafka.Writer{
-		Addr:         kafka.TCP(cfg.KafkaBrokers...),
+	dialer, err := cfg.Security.Dialer(cfg.ServiceName + "-audit")
+	if err != nil {
+		return nil, fmt.Errorf("invalid Kafka audit security configuration: %w", err)
+	}
+	writer := kafka.NewWriter(kafka.WriterConfig{
+		Brokers:      cfg.KafkaBrokers,
 		Topic:        cfg.Topic,
+		Dialer:       dialer,
 		Balancer:     &kafka.Hash{},
 		BatchSize:    cfg.BatchSize,
 		BatchTimeout: cfg.FlushInterval,
-		RequiredAcks: kafka.RequireOne,
+		RequiredAcks: int(kafka.RequireOne),
 		Async:        false,
 		MaxAttempts:  cfg.MaxRetries,
-	}
+	})
 
 	l := &Logger{
 		kafkaWriter: writer,
@@ -148,7 +155,10 @@ func (l *Logger) initBackup() error {
 func (l *Logger) rotateBackupFile() error {
 	l.backupMu.Lock()
 	defer l.backupMu.Unlock()
+	return l.rotateBackupFileLocked()
+}
 
+func (l *Logger) rotateBackupFileLocked() error {
 	if l.backupFile == nil {
 		return l.initBackup()
 	}
@@ -185,7 +195,7 @@ func (l *Logger) writeToBackup(event *AuditEvent) error {
 	l.backupMu.Lock()
 	defer l.backupMu.Unlock()
 
-	if err := l.rotateBackupFile(); err != nil {
+	if err := l.rotateBackupFileLocked(); err != nil {
 		l.logger.Warn("Failed to rotate backup file", zap.Error(err))
 	}
 
@@ -213,7 +223,7 @@ func (l *Logger) writeToBackupBatch(events []*AuditEvent) error {
 	l.backupMu.Lock()
 	defer l.backupMu.Unlock()
 
-	if err := l.rotateBackupFile(); err != nil {
+	if err := l.rotateBackupFileLocked(); err != nil {
 		l.logger.Warn("Failed to rotate backup file", zap.Error(err))
 	}
 
@@ -290,6 +300,12 @@ func (l *Logger) Log(ctx context.Context, event *AuditEvent) {
 		event.Sensitivity = info.Sensitivity
 	}
 
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+	if atomic.LoadInt32(&l.closed) == 1 {
+		atomic.AddInt64(&l.droppedCount, 1)
+		return
+	}
 	select {
 	case l.buffer <- event:
 
@@ -344,6 +360,12 @@ func (l *Logger) LogBatch(ctx context.Context, events []*AuditEvent) {
 	}
 
 	droppedCount := 0
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+	if atomic.LoadInt32(&l.closed) == 1 {
+		atomic.AddInt64(&l.droppedCount, int64(len(events)))
+		return
+	}
 	for _, event := range events {
 		select {
 		case l.buffer <- event:
@@ -565,8 +587,9 @@ func (l *Logger) writeToKafkaBatch(events []*AuditEvent) error {
 }
 
 func (l *Logger) Close() error {
-
+	l.mu.Lock()
 	if !atomic.CompareAndSwapInt32(&l.closed, 0, 1) {
+		l.mu.Unlock()
 		return nil
 	}
 
@@ -576,6 +599,7 @@ func (l *Logger) Close() error {
 	remainingMessages := l.drainBuffer()
 
 	close(l.buffer)
+	l.mu.Unlock()
 
 	done := make(chan struct{})
 	go func() {
@@ -791,6 +815,10 @@ func (l *Logger) LogExport(ctx context.Context, eventType EventType, tenantID, u
 }
 
 func (l *Logger) LogAlertAction(ctx context.Context, eventType EventType, tenantID, userID, alertID string, oldStatus, newStatus string) {
+	l.LogAlertActionWithDetail(ctx, eventType, tenantID, userID, alertID, oldStatus, newStatus, nil)
+}
+
+func (l *Logger) LogAlertActionWithDetail(ctx context.Context, eventType EventType, tenantID, userID, alertID string, oldStatus, newStatus string, detail map[string]interface{}) {
 	l.Log(ctx, &AuditEvent{
 		EventType:    eventType,
 		TenantID:     tenantID,
@@ -798,6 +826,7 @@ func (l *Logger) LogAlertAction(ctx context.Context, eventType EventType, tenant
 		Action:       string(eventType),
 		ResourceType: "alert",
 		ResourceID:   alertID,
+		Detail:       detail,
 		OldValue:     map[string]string{"status": oldStatus},
 		NewValue:     map[string]string{"status": newStatus},
 		Result:       ResultSuccess,

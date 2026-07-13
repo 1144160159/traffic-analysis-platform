@@ -1,0 +1,11 @@
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+
+ARG SERVICE_NAME
+ARG SOURCE_REVISION=unknown
+ARG BUILD_ID=local
+LABEL org.opencontainers.image.revision=${SOURCE_REVISION} \
+      org.opencontainers.image.version=${BUILD_ID} \
+      org.opencontainers.image.title="traffic-analysis ${SERVICE_NAME}"
+
+COPY --chmod=0755 bin/release-20260712/${SERVICE_NAME} /usr/local/bin/app

@@ -413,7 +413,7 @@ func (a *AsyncCutter) processTask(task *repository.Task) {
 	completionCtx, completionCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer completionCancel()
 
-	if err := a.taskRepo.Complete(completionCtx, task.TaskID, outputKey, result.TotalPackets, result.TotalBytes, result.FilesScanned); err != nil {
+	if err := a.taskRepo.Complete(completionCtx, task.TaskID, outputKey, result.SHA256, result.TotalPackets, result.TotalBytes, result.FilesScanned); err != nil {
 		a.logger.Error("Failed to complete task",
 			zap.String("task_id", task.TaskID),
 			zap.Error(err))
@@ -422,6 +422,7 @@ func (a *AsyncCutter) processTask(task *repository.Task) {
 
 	a.logger.Info("Task completed",
 		zap.String("task_id", task.TaskID),
+		zap.String("sha256", result.SHA256),
 		zap.Int64("packets", result.TotalPackets),
 		zap.Int64("bytes", result.TotalBytes),
 		zap.Int("files", result.FilesScanned),

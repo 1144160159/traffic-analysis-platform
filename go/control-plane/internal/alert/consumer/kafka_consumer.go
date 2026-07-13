@@ -123,11 +123,13 @@ type Consumer struct {
 	flushInterval     time.Duration
 
 	// 状态管理
-	mu       sync.Mutex
-	closed   int32 // atomic
-	running  int32 // atomic
-	wg       sync.WaitGroup
-	stopChan chan struct{}
+	mu        sync.Mutex
+	closed    int32 // atomic
+	running   int32 // atomic
+	wg        sync.WaitGroup
+	stopChan  chan struct{}
+	stopOnce  sync.Once
+	runCancel context.CancelFunc
 
 	// 配置
 	generateEvidence bool
@@ -166,20 +168,7 @@ func NewConsumerWithEvidence(
 	logger *zap.Logger,
 ) *Consumer {
 	// 创建Kafka消费者
-	consumerCfg := kafka.ConsumerConfig{
-		Brokers:        kafkaCfg.Brokers,
-		Topic:          kafkaCfg.Topic,
-		GroupID:        kafkaCfg.GroupID,
-		MinBytes:       1024,
-		MaxBytes:       10 * 1024 * 1024, // 10MB
-		MaxWait:        500 * time.Millisecond,
-		CommitInterval: 0,  // 手动提交
-		StartOffset:    -2, // earliest
-		MaxRetries:     3,
-		RetryBackoff:   time.Second,
-		EnableDLQ:      true,
-		DLQTopicPrefix: "dlq.",
-	}
+	consumerCfg := buildKafkaConsumerConfig(kafkaCfg)
 
 	kafkaConsumer, err := kafka.NewConsumer(consumerCfg, logger)
 	if err != nil {
@@ -187,14 +176,9 @@ func NewConsumerWithEvidence(
 		return nil
 	}
 
-	// 创建DLQ Producer
-	dlqCfg := kafka.DLQConfig{
-		Brokers:     kafkaCfg.Brokers,
-		TopicPrefix: "dlq.",
-		BatchSize:   100,
-		MaxRetries:  3,
-	}
-	dlqProducer := kafka.NewDLQProducer(dlqCfg, "alert-service", logger)
+	// Alert processing maintains a dedicated DLQ writer in addition to the
+	// common consumer's per-message DLQ path.
+	dlqProducer := kafka.NewDLQProducer(buildKafkaDLQConfig(kafkaCfg), "alert-service", logger)
 
 	return &Consumer{
 		kafkaConsumer:     kafkaConsumer,
@@ -214,11 +198,46 @@ func NewConsumerWithEvidence(
 	}
 }
 
+func buildKafkaConsumerConfig(kafkaCfg config.KafkaConfig) kafka.ConsumerConfig {
+	return kafka.ConsumerConfig{
+		Brokers:        kafkaCfg.Brokers,
+		Topic:          kafkaCfg.Topic,
+		GroupID:        kafkaCfg.GroupID,
+		MinBytes:       1024,
+		MaxBytes:       10 * 1024 * 1024, // 10MB
+		MaxWait:        500 * time.Millisecond,
+		CommitInterval: 0,  // 手动提交
+		StartOffset:    -2, // earliest
+		MaxRetries:     3,
+		RetryBackoff:   time.Second,
+		EnableDLQ:      true,
+		DLQTopicPrefix: "dlq.",
+		Security:       kafkaCfg.Security,
+	}
+}
+
+func buildKafkaDLQConfig(kafkaCfg config.KafkaConfig) kafka.DLQConfig {
+	return kafka.DLQConfig{
+		Brokers:     kafkaCfg.Brokers,
+		TopicPrefix: "dlq.",
+		BatchSize:   100,
+		MaxRetries:  3,
+		Security:    kafkaCfg.Security,
+	}
+}
+
 // Start 启动消费者
 func (c *Consumer) Start(ctx context.Context) error {
+	if atomic.LoadInt32(&c.closed) == 1 {
+		return fmt.Errorf("consumer is closed")
+	}
 	if !atomic.CompareAndSwapInt32(&c.running, 0, 1) {
 		return fmt.Errorf("consumer already running")
 	}
+	consumeCtx, consumeCancel := context.WithCancel(ctx)
+	c.mu.Lock()
+	c.runCancel = consumeCancel
+	c.mu.Unlock()
 
 	c.logger.Info("Starting alert consumer",
 		zap.Int("batch_size", c.batchSize),
@@ -232,7 +251,7 @@ func (c *Consumer) Start(ctx context.Context) error {
 		defer c.wg.Done()
 		defer atomic.StoreInt32(&c.running, 0)
 
-		err := c.kafkaConsumer.BatchConsume(ctx, c.batchSize, c.flushInterval, c.processBatch)
+		err := c.kafkaConsumer.BatchConsume(consumeCtx, c.batchSize, c.flushInterval, c.processBatch)
 		if err != nil && err != context.Canceled {
 			c.logger.Error("Consumer detection consume error", zap.Error(err))
 		}
@@ -245,6 +264,7 @@ func (c *Consumer) Start(ctx context.Context) error {
 	case <-c.stopChan:
 		c.logger.Info("Consumer stopping due to stop signal")
 	}
+	consumeCancel()
 
 	return nil
 }
@@ -363,10 +383,9 @@ func (c *Consumer) processBatch(ctx context.Context, msgs []*kafka.ReceivedMessa
 
 	// ✅ 提交offset
 	if len(alerts) > 0 {
-		}
-	return nil
 	}
-
+	return nil
+}
 
 // processMessage 处理单条消息
 func (c *Consumer) processMessage(ctx context.Context, msg *kafka.ReceivedMessage) (*persistence.Alert, []*evidence.Evidence, error) {
@@ -639,12 +658,16 @@ func categorizeError(err error) string {
 
 // Stop 停止消费者
 func (c *Consumer) Stop() {
-	if atomic.LoadInt32(&c.closed) == 1 {
-		return
-	}
-
-	c.logger.Info("Stopping alert consumer...")
-	close(c.stopChan)
+	c.stopOnce.Do(func() {
+		c.logger.Info("Stopping alert consumer...")
+		close(c.stopChan)
+		c.mu.Lock()
+		cancel := c.runCancel
+		c.mu.Unlock()
+		if cancel != nil {
+			cancel()
+		}
+	})
 }
 
 // Close 关闭消费者（优雅关闭）- 修复版
@@ -766,6 +789,9 @@ func (c *Consumer) HealthCheck(ctx context.Context) error {
 
 	if !c.IsRunning() {
 		return fmt.Errorf("consumer is not running")
+	}
+	if err := c.kafkaConsumer.HealthCheck(); err != nil {
+		return err
 	}
 
 	// 检查 Redis 连接

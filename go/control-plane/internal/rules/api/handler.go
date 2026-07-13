@@ -70,6 +70,8 @@ func DefaultHandlerConfig() HandlerConfig {
 type Handler struct {
 	ruleService       *service.RuleService
 	deploymentService *service.DeploymentService
+	modelService      *service.ModelService
+	mlopsOrchestrator *service.MLOpsOrchestrator
 	auditLogger       *audit.Logger
 	rbacChecker       *rbac.Checker
 	config            HandlerConfig
@@ -80,6 +82,7 @@ type Handler struct {
 func NewHandler(
 	ruleService *service.RuleService,
 	deploymentService *service.DeploymentService,
+	modelService *service.ModelService,
 	auditLogger *audit.Logger,
 	rbacChecker *rbac.Checker,
 	logger *zap.Logger,
@@ -88,11 +91,17 @@ func NewHandler(
 	return &Handler{
 		ruleService:       ruleService,
 		deploymentService: deploymentService,
+		modelService:      modelService,
 		auditLogger:       auditLogger,
 		rbacChecker:       rbacChecker,
 		config:            config,
 		logger:            logger,
 	}
+}
+
+// SetOrchestrator 设置自编排引擎（可选注入）
+func (h *Handler) SetOrchestrator(orch *service.MLOpsOrchestrator) {
+	h.mlopsOrchestrator = orch
 }
 
 // RegisterRoutes 注册路由
@@ -131,6 +140,12 @@ func (h *Handler) RegisterRoutes(r *mux.Router) {
 	deployments.HandleFunc("/{id}/resume", h.ResumeDeployment).Methods("POST")
 	deployments.HandleFunc("/{id}/history", h.GetDeploymentHistory).Methods("GET")
 	deployments.HandleFunc("/{id}/progress", h.GetGrayProgress).Methods("GET")
+
+	// 模型管理
+	h.RegisterModelRoutes(r)
+
+	// MLOps 自编排
+	h.RegisterOrchestratorRoutes(r)
 }
 
 // =============================================================================
@@ -518,9 +533,15 @@ func (h *Handler) EnableRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.writeJSON(w, http.StatusOK, SuccessResponse{
+	rule, err := h.ruleService.GetRule(ctx, ruleID, opCtx)
+	if err != nil {
+		h.writeError(w, r, err)
+		return
+	}
+
+	h.writeJSON(w, http.StatusOK, RuleResponse{
 		Success: true,
-		Message: "rule enabled successfully",
+		Data:    h.ruleToDTO(rule),
 	})
 }
 
@@ -546,9 +567,15 @@ func (h *Handler) DisableRule(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.writeJSON(w, http.StatusOK, SuccessResponse{
+	rule, err := h.ruleService.GetRule(ctx, ruleID, opCtx)
+	if err != nil {
+		h.writeError(w, r, err)
+		return
+	}
+
+	h.writeJSON(w, http.StatusOK, RuleResponse{
 		Success: true,
-		Message: "rule disabled successfully",
+		Data:    h.ruleToDTO(rule),
 	})
 }
 
@@ -1441,5 +1468,13 @@ func (h *Handler) writeJSON(w http.ResponseWriter, statusCode int, data interfac
 // writeError 写入错误响应（统一使用 errors.WriteError）
 func (h *Handler) writeError(w http.ResponseWriter, r *http.Request, err error) {
 	traceID := httpx.GetTraceID(r.Context())
+	if errors.GetCode(err) == errors.ErrCodePermissionDenied {
+		errors.WriteErrorWithStatus(w, http.StatusForbidden, errors.ErrCodePermissionDenied, err.Error(), traceID, r.URL.Path)
+		return
+	}
+	if errors.GetCode(err) == errors.ErrCodeInvalidStateTransition {
+		errors.WriteErrorWithStatus(w, http.StatusConflict, errors.ErrCodeInvalidStateTransition, err.Error(), traceID, r.URL.Path)
+		return
+	}
 	errors.WriteError(w, err, traceID, r.URL.Path)
 }

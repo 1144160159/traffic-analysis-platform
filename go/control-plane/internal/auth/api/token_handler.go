@@ -72,6 +72,10 @@ func (h *TokenHandler) RegisterRoutes(r *mux.Router) {
 	// CRUD 操作
 	tokenRouter.HandleFunc("", h.ListTokens).Methods("GET")
 	tokenRouter.HandleFunc("", h.CreateToken).Methods("POST")
+	// 静态路由必须在 /{token_id} 之前注册，避免被动态参数路由吞掉。
+	tokenRouter.HandleFunc("/scopes", h.GetScopes).Methods("GET")
+	tokenRouter.HandleFunc("/scopes/probe", h.GetProbeScopes).Methods("GET")
+	tokenRouter.HandleFunc("/probe", h.CreateProbeToken).Methods("POST")
 	tokenRouter.HandleFunc("/{token_id}", h.GetToken).Methods("GET")
 	tokenRouter.HandleFunc("/{token_id}", h.UpdateToken).Methods("PUT") // ✅ 新增
 	tokenRouter.HandleFunc("/{token_id}", h.DeleteToken).Methods("DELETE")
@@ -79,15 +83,8 @@ func (h *TokenHandler) RegisterRoutes(r *mux.Router) {
 	tokenRouter.HandleFunc("/{token_id}/scopes", h.UpdateScopes).Methods("PUT")
 	tokenRouter.HandleFunc("/{token_id}/regenerate", h.RegenerateToken).Methods("POST")
 
-	// 探针专用端点
-	tokenRouter.HandleFunc("/probe", h.CreateProbeToken).Methods("POST")
-
 	// 验证端点（用于探针自检）
 	r.HandleFunc("/api/v1/tokens/validate", h.ValidateToken).Methods("POST")
-
-	// 获取有效 scopes 列表
-	tokenRouter.HandleFunc("/scopes", h.GetScopes).Methods("GET")
-	tokenRouter.HandleFunc("/scopes/probe", h.GetProbeScopes).Methods("GET")
 }
 
 // CreateTokenRequest 创建 Token 请求体

@@ -9,7 +9,10 @@ import (
 	"time"
 
 	"github.com/segmentio/kafka-go"
-	"github.com/segmentio/kafka-go/compress"
+	"github.com/segmentio/kafka-go/gzip"
+	"github.com/segmentio/kafka-go/lz4"
+	"github.com/segmentio/kafka-go/snappy"
+	"github.com/segmentio/kafka-go/zstd"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 
@@ -27,6 +30,7 @@ type ProducerConfig struct {
 	Compression   string        `env:"KAFKA_COMPRESSION" envDefault:"lz4"`
 	Async         bool          `env:"KAFKA_ASYNC" envDefault:"false"`
 	IdempotentKey string        `env:"KAFKA_IDEMPOTENT_KEY"`
+	Security      SecurityConfig
 }
 
 type Producer struct {
@@ -101,22 +105,28 @@ func NewProducer(cfg ProducerConfig, logger *zap.Logger) (*Producer, error) {
 		balancer = &kafka.RoundRobin{}
 	}
 
-	writer := &kafka.Writer{
-		Addr:         kafka.TCP(cfg.Brokers...),
-		Topic:        cfg.Topic,
-		Balancer:     balancer,
-		BatchSize:    cfg.BatchSize,
-		BatchTimeout: cfg.BatchTimeout,
-		MaxAttempts:  cfg.MaxAttempts,
-		RequiredAcks: requiredAcks,
-		Compression:  compression,
-		Async:        cfg.Async,
+	dialer, err := cfg.Security.Dialer("traffic-control-plane-producer")
+	if err != nil {
+		return nil, err
+	}
+
+	writer := kafka.NewWriter(kafka.WriterConfig{
+		Brokers:          cfg.Brokers,
+		Topic:            cfg.Topic,
+		Dialer:           dialer,
+		Balancer:         balancer,
+		BatchSize:        cfg.BatchSize,
+		BatchTimeout:     cfg.BatchTimeout,
+		MaxAttempts:      cfg.MaxAttempts,
+		RequiredAcks:     int(requiredAcks),
+		CompressionCodec: compression,
+		Async:            cfg.Async,
 		// 启用幂等写: 设置 transactional ID (非事务模式下为空字符串)
 		// 当 RequiredAcks=all 且 MaxAttempts>0 时，Kafka broker 自动提供幂等保证
 		ErrorLogger: kafka.LoggerFunc(func(msg string, args ...interface{}) {
 			logger.Error(fmt.Sprintf(msg, args...))
 		}),
-	}
+	})
 
 	return &Producer{
 		writer:     writer,
@@ -127,18 +137,18 @@ func NewProducer(cfg ProducerConfig, logger *zap.Logger) (*Producer, error) {
 	}, nil
 }
 
-func getCompression(name string) compress.Compression {
+func getCompression(name string) kafka.CompressionCodec {
 	switch name {
 	case "gzip":
-		return compress.Gzip
+		return gzip.NewCompressionCodec()
 	case "snappy":
-		return compress.Snappy
+		return snappy.NewCompressionCodec()
 	case "lz4":
-		return compress.Lz4
+		return lz4.NewCompressionCodec()
 	case "zstd":
-		return compress.Zstd
+		return zstd.NewCompressionCodec()
 	default:
-		return compress.None
+		return nil
 	}
 }
 

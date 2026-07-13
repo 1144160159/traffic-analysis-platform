@@ -1,11 +1,13 @@
 // NebulaGraph HTTP Client — 基于 HTTP API 的图数据库客户端
 //
-// 使用 NebulaGraph v3.6 的两种接入方式:
-//   1. HTTP Gateway API (需部署 nebula-http-gateway): /api/v1/execute
-//   2. nebula-console CLI (内置于 K8s Pod): stdin/stdout 通信
+// 使用 NebulaGraph v3.6 的三种接入方式:
+//   1. HTTP Gateway (nebula-http-gateway, port 18080): /api/v1/ngql，推荐生产使用
+//      部署: kubectl apply -f deployments/kubernetes/infrastructure/11-nebula-http-gateway.yaml
+//   2. Graph Service HTTP (port 19669): 仅 /status 健康检查，不支持 nGQL 执行
+//   3. Console Client (client_console.go): stdin/stdout 调用 nebula-console CLI
 //
-// 当前默认使用 Graph Service Status API (port 19669, /status) 进行健康检查。
-// 实际 nGQL 执行可通过部署 nebula-http-gateway 或使用 ConsoleClient (client_console.go)。
+// 当前默认使用 Graph Service Status API (port 19669) 进行健康检查。
+// 实际 nGQL 执行需部署 nebula-http-gateway 或使用 ConsoleClient。
 //
 // 特性:
 //   - HTTP 连接池 (Keep-Alive, MaxIdleConns)

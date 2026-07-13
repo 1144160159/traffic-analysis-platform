@@ -19,19 +19,22 @@ import (
 
 	"github.com/caarlos0/env/v10"
 	"go.uber.org/zap"
+
+	commonkafka "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/kafka"
 )
 
 // Config 总配置
 type Config struct {
-	ClickHouse ClickHouseConfig
-	PostgreSQL PostgreSQLConfig
-	Redis      RedisConfig
-	S3         S3Config
-	API        APIConfig
-	Cutter     CutterConfig
-	Task       TaskConfig
-	Kafka      KafkaConfig
-	Auth       AuthConfig
+	ClickHouse    ClickHouseConfig
+	PostgreSQL    PostgreSQLConfig
+	Redis         RedisConfig
+	S3            S3Config
+	API           APIConfig
+	Cutter        CutterConfig
+	Task          TaskConfig
+	Kafka         KafkaConfig
+	KafkaSecurity commonkafka.SecurityConfig
+	Auth          AuthConfig
 
 	mu sync.RWMutex // 保护配置热重载
 }
@@ -54,7 +57,7 @@ type ClickHouseConfig struct {
 
 // PostgreSQLConfig PostgreSQL 配置
 type PostgreSQLConfig struct {
-	Host            string        `env:"POSTGRES_HOST" envDefault:"localhost"`
+	Host            string        `env:"POSTGRES_HOST" envDefault:"postgres-primary.databases.svc"`
 	Port            int           `env:"POSTGRES_PORT" envDefault:"5432"`
 	Database        string        `env:"POSTGRES_DATABASE" envDefault:"traffic"`
 	Username        string        `env:"POSTGRES_USERNAME" envDefault:"postgres"`
@@ -121,7 +124,7 @@ func (c RedisConfig) GetAddrs() []string {
 	if c.Addr != "" {
 		return []string{c.Addr}
 	}
-	return []string{"localhost:6379"}
+	return []string{"redis-master.databases.svc:6379"}
 }
 
 // GetMode 获取 Redis 模式描述
@@ -137,11 +140,11 @@ func (c *RedisConfig) GetMode() string {
 
 // S3Config S3/MinIO 配置
 type S3Config struct {
-	Endpoint     string `env:"S3_ENDPOINT" envDefault:"minio:9000"`
-	Bucket       string `env:"S3_BUCKET" envDefault:"traffic-pcap"`
-	ResultBucket string `env:"S3_RESULT_BUCKET" envDefault:"forensics-results"`
-	AccessKey    string `env:"S3_ACCESS_KEY" envDefault:"minioadmin"`
-	SecretKey    string `env:"S3_SECRET_KEY" envDefault:"minioadmin"`
+	Endpoint     string `env:"S3_ENDPOINT" envDefault:"minio.minio.svc:9000"`
+	Bucket       string `env:"S3_BUCKET" envDefault:"pcap-archive"`
+	ResultBucket string `env:"S3_RESULT_BUCKET" envDefault:"pcap-archive"`
+	AccessKey    string `env:"S3_ACCESS_KEY"`
+	SecretKey    string `env:"S3_SECRET_KEY"`
 	UseSSL       bool   `env:"S3_USE_SSL" envDefault:"false"`
 	Region       string `env:"S3_REGION" envDefault:"us-east-1"`
 }
@@ -212,7 +215,7 @@ func Load() (*Config, error) {
 
 	// 设置 Kafka 默认值
 	if len(cfg.Kafka.Brokers) == 0 {
-		cfg.Kafka.Brokers = []string{"localhost:9092"}
+		cfg.Kafka.Brokers = []string{"kafka-bootstrap.middleware.svc:9092"}
 	}
 
 	// 设置 API 默认值

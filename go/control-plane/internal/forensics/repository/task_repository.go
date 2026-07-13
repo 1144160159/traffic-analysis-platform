@@ -44,6 +44,7 @@ type Task struct {
 	Progress      int        `db:"progress"`
 	ParamsJSON    []byte     `db:"params"`
 	ResultFileKey string     `db:"result_file_key"`
+	ResultSHA256  string     `db:"result_sha256"`
 	ResultPackets int64      `db:"result_packets"`
 	ResultBytes   int64      `db:"result_bytes"`
 	FilesScanned  int        `db:"files_scanned"`
@@ -84,12 +85,12 @@ func (r *TaskRepository) Create(ctx context.Context, task *Task) error {
 	task.UpdatedAt = time.Now()
 
 	query := `
-		INSERT INTO tasks (
-			task_id, tenant_id, task_type, status, progress, params,
-			result_file_key, result_packets, result_bytes, files_scanned,
-			error_message, run_id, created_by, created_at, updated_at
-		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-	`
+			INSERT INTO tasks (
+				task_id, tenant_id, task_type, status, progress, params,
+				result_file_key, result_sha256, result_packets, result_bytes, files_scanned,
+				error_message, run_id, created_by, created_at, updated_at
+			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+		`
 
 	_, err := r.client.Exec(ctx, query,
 		task.TaskID,
@@ -99,6 +100,7 @@ func (r *TaskRepository) Create(ctx context.Context, task *Task) error {
 		task.Progress,
 		task.ParamsJSON,
 		task.ResultFileKey,
+		task.ResultSHA256,
 		task.ResultPackets,
 		task.ResultBytes,
 		task.FilesScanned,
@@ -127,11 +129,11 @@ func (r *TaskRepository) GetByID(ctx context.Context, taskID string) (*Task, err
 	defer span.End()
 
 	query := `
-		SELECT
-			task_id, tenant_id, task_type, status, progress, params,
-			result_file_key, result_packets, result_bytes, files_scanned,
-			error_message, run_id, created_by, created_at, updated_at, completed_at
-		FROM tasks
+			SELECT
+				task_id, tenant_id, task_type, status, progress, params,
+				result_file_key, result_sha256, result_packets, result_bytes, files_scanned,
+				error_message, run_id, created_by, created_at, updated_at, completed_at
+			FROM tasks
 		WHERE task_id = $1
 	`
 
@@ -139,10 +141,30 @@ func (r *TaskRepository) GetByID(ctx context.Context, taskID string) (*Task, err
 	return r.scanTask(ctx, row)
 }
 
+// GetByResultFileKey 根据结果文件 key 获取任务，用于下载和完整性校验。
+func (r *TaskRepository) GetByResultFileKey(ctx context.Context, resultFileKey string) (*Task, error) {
+	ctx, span := otel.StartSpan(ctx, "TaskRepository.GetByResultFileKey")
+	defer span.End()
+
+	query := `
+		SELECT
+			task_id, tenant_id, task_type, status, progress, params,
+			result_file_key, result_sha256, result_packets, result_bytes, files_scanned,
+			error_message, run_id, created_by, created_at, updated_at, completed_at
+		FROM tasks
+		WHERE result_file_key = $1
+		ORDER BY completed_at DESC NULLS LAST, updated_at DESC
+		LIMIT 1
+	`
+
+	row := r.client.QueryRow(ctx, query, resultFileKey)
+	return r.scanTask(ctx, row)
+}
+
 // scanTask 扫描单个任务
 func (r *TaskRepository) scanTask(ctx context.Context, row *sql.Row) (*Task, error) {
 	var task Task
-	var resultFileKey, errorMessage, runID, createdBy sql.NullString
+	var resultFileKey, resultSHA256, errorMessage, runID, createdBy sql.NullString
 	var completedAt sql.NullTime
 
 	err := row.Scan(
@@ -153,6 +175,7 @@ func (r *TaskRepository) scanTask(ctx context.Context, row *sql.Row) (*Task, err
 		&task.Progress,
 		&task.ParamsJSON,
 		&resultFileKey,
+		&resultSHA256,
 		&task.ResultPackets,
 		&task.ResultBytes,
 		&task.FilesScanned,
@@ -174,6 +197,9 @@ func (r *TaskRepository) scanTask(ctx context.Context, row *sql.Row) (*Task, err
 	// 处理可空字段
 	if resultFileKey.Valid {
 		task.ResultFileKey = resultFileKey.String
+	}
+	if resultSHA256.Valid {
+		task.ResultSHA256 = resultSHA256.String
 	}
 	if errorMessage.Valid {
 		task.ErrorMessage = errorMessage.String
@@ -235,23 +261,24 @@ func (r *TaskRepository) UpdateProgress(ctx context.Context, taskID string, prog
 }
 
 // Complete 标记任务完成
-func (r *TaskRepository) Complete(ctx context.Context, taskID, resultFileKey string, packets, bytes int64, filesScanned int) error {
+func (r *TaskRepository) Complete(ctx context.Context, taskID, resultFileKey, resultSHA256 string, packets, bytes int64, filesScanned int) error {
 	ctx, span := otel.StartSpan(ctx, "TaskRepository.Complete")
 	defer span.End()
 
 	now := time.Now()
 
 	query := `
-		UPDATE tasks
-		SET status = $1, progress = 100, result_file_key = $2,
-			result_packets = $3, result_bytes = $4, files_scanned = $5,
-			updated_at = $6, completed_at = $7
-		WHERE task_id = $8
+			UPDATE tasks
+		SET status = $1, progress = 100, result_file_key = $2, result_sha256 = $3,
+			result_packets = $4, result_bytes = $5, files_scanned = $6,
+			updated_at = $7, completed_at = $8
+		WHERE task_id = $9
 	`
 
 	result, err := r.client.Exec(ctx, query,
 		TaskStatusCompleted,
 		resultFileKey,
+		resultSHA256,
 		packets,
 		bytes,
 		filesScanned,
@@ -380,10 +407,10 @@ func (r *TaskRepository) List(ctx context.Context, tenantID, status string, limi
 
 	// 列表查询
 	listQuery := `
-		SELECT
-			task_id, tenant_id, task_type, status, progress, params,
-			result_file_key, result_packets, result_bytes, files_scanned,
-			error_message, run_id, created_by, created_at, updated_at, completed_at
+			SELECT
+				task_id, tenant_id, task_type, status, progress, params,
+				result_file_key, result_sha256, result_packets, result_bytes, files_scanned,
+				error_message, run_id, created_by, created_at, updated_at, completed_at
 		FROM tasks
 		WHERE tenant_id = $1
 	`
@@ -413,7 +440,7 @@ func (r *TaskRepository) scanTasks(rows *sql.Rows) ([]*Task, int64, error) {
 	var tasks []*Task
 	for rows.Next() {
 		var task Task
-		var resultFileKey, errorMessage, runID, createdBy sql.NullString
+		var resultFileKey, resultSHA256, errorMessage, runID, createdBy sql.NullString
 		var completedAt sql.NullTime
 
 		err := rows.Scan(
@@ -424,6 +451,7 @@ func (r *TaskRepository) scanTasks(rows *sql.Rows) ([]*Task, int64, error) {
 			&task.Progress,
 			&task.ParamsJSON,
 			&resultFileKey,
+			&resultSHA256,
 			&task.ResultPackets,
 			&task.ResultBytes,
 			&task.FilesScanned,
@@ -440,6 +468,9 @@ func (r *TaskRepository) scanTasks(rows *sql.Rows) ([]*Task, int64, error) {
 
 		if resultFileKey.Valid {
 			task.ResultFileKey = resultFileKey.String
+		}
+		if resultSHA256.Valid {
+			task.ResultSHA256 = resultSHA256.String
 		}
 		if errorMessage.Valid {
 			task.ErrorMessage = errorMessage.String
@@ -489,9 +520,9 @@ func (r *TaskRepository) getPendingTasksWithLock(ctx context.Context, limit int)
 		SET status = $3, updated_at = $4
 		FROM selected_tasks s
 		WHERE t.task_id = s.task_id
-		RETURNING t.task_id, t.tenant_id, t.task_type, t.status, t.progress, t.params,
-			t.result_file_key, t.result_packets, t.result_bytes, t.files_scanned,
-			t.error_message, t.run_id, t.created_by, t.created_at, t.updated_at, t.completed_at
+			RETURNING t.task_id, t.tenant_id, t.task_type, t.status, t.progress, t.params,
+				t.result_file_key, t.result_sha256, t.result_packets, t.result_bytes, t.files_scanned,
+				t.error_message, t.run_id, t.created_by, t.created_at, t.updated_at, t.completed_at
 	`
 
 	rows, err := r.client.Query(ctx, query, TaskStatusQueued, limit, TaskStatusProcessing, time.Now())
@@ -503,7 +534,7 @@ func (r *TaskRepository) getPendingTasksWithLock(ctx context.Context, limit int)
 	var tasks []*Task
 	for rows.Next() {
 		var task Task
-		var resultFileKey, errorMessage, runID, createdBy sql.NullString
+		var resultFileKey, resultSHA256, errorMessage, runID, createdBy sql.NullString
 		var completedAt sql.NullTime
 
 		err := rows.Scan(
@@ -514,6 +545,7 @@ func (r *TaskRepository) getPendingTasksWithLock(ctx context.Context, limit int)
 			&task.Progress,
 			&task.ParamsJSON,
 			&resultFileKey,
+			&resultSHA256,
 			&task.ResultPackets,
 			&task.ResultBytes,
 			&task.FilesScanned,
@@ -530,6 +562,9 @@ func (r *TaskRepository) getPendingTasksWithLock(ctx context.Context, limit int)
 
 		if resultFileKey.Valid {
 			task.ResultFileKey = resultFileKey.String
+		}
+		if resultSHA256.Valid {
+			task.ResultSHA256 = resultSHA256.String
 		}
 		if errorMessage.Valid {
 			task.ErrorMessage = errorMessage.String

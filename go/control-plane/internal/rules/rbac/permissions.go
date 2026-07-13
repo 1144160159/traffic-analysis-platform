@@ -68,6 +68,22 @@ const (
 	PermRuleAll Permission = "rule:*"
 	// 所有部署权限
 	PermDeployAll Permission = "deploy:*"
+	// 所有模型权限
+	PermModelAll Permission = "model:*"
+)
+
+// =============================================================================
+// 模型权限常量
+// =============================================================================
+
+const (
+	PermModelRead     Permission = "model:read"
+	PermModelCreate   Permission = "model:create"
+	PermModelWrite    Permission = "model:write"
+	PermModelDelete   Permission = "model:delete"
+	PermModelActivate Permission = "model:activate"
+	PermModelExport   Permission = "model:export"
+	PermModelImport   Permission = "model:import"
 )
 
 // =============================================================================
@@ -94,6 +110,17 @@ var AllDeployPermissions = []Permission{
 	PermDeployCancel,
 }
 
+// AllModelPermissions 所有模型相关权限
+var AllModelPermissions = []Permission{
+	PermModelRead,
+	PermModelCreate,
+	PermModelWrite,
+	PermModelDelete,
+	PermModelActivate,
+	PermModelExport,
+	PermModelImport,
+}
+
 // AllAdminPermissions 所有管理权限
 var AllAdminPermissions = []Permission{
 	PermAdminRead,
@@ -102,7 +129,7 @@ var AllAdminPermissions = []Permission{
 }
 
 // AllPermissions 所有权限
-var AllPermissions = append(append(AllRulePermissions, AllDeployPermissions...), AllAdminPermissions...)
+var AllPermissions = append(append(append(AllRulePermissions, AllDeployPermissions...), AllModelPermissions...), AllAdminPermissions...)
 
 // =============================================================================
 // 角色定义
@@ -137,6 +164,10 @@ var RolePermissions = map[Role][]Permission{
 		PermDeployActivate,
 		PermDeployRollback,
 		PermDeployCancel,
+		PermModelRead,
+		PermModelCreate,
+		PermModelWrite,
+		PermModelActivate,
 	},
 	RoleAnalyst: {
 		// 规则权限
@@ -146,11 +177,13 @@ var RolePermissions = map[Role][]Permission{
 		// 部署权限
 		PermDeployRead,
 		PermDeployCreate,
+		PermModelRead,
 	},
 	RoleViewer: {
 		// 只读权限
 		PermRuleRead,
 		PermDeployRead,
+		PermModelRead,
 	},
 	RoleProbe: {
 		// 探针只能读取规则
@@ -271,6 +304,13 @@ func GetAllPermissionInfos() []PermissionInfo {
 		{PermDeployActivate, "Activate deployment", "deploy"},
 		{PermDeployRollback, "Rollback deployment", "deploy"},
 		{PermDeployCancel, "Cancel deployment", "deploy"},
+
+		// 模型权限
+		{PermModelRead, "Read models", "model"},
+		{PermModelCreate, "Create models", "model"},
+		{PermModelWrite, "Update models", "model"},
+		{PermModelDelete, "Delete models", "model"},
+		{PermModelActivate, "Activate model version", "model"},
 
 		// 管理权限
 		{PermAdminRead, "Read admin data", "admin"},

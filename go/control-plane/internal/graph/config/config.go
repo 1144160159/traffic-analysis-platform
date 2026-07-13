@@ -15,22 +15,24 @@ import (
 	"github.com/caarlos0/env/v10"
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/errors"
+	commonkafka "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/kafka"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/storage"
 )
 
 // Config 总配置
 type Config struct {
-	Server     ServerConfig             `envPrefix:"SERVER_"`
-	ClickHouse storage.ClickHouseConfig `envPrefix:"CLICKHOUSE_"`
-	Redis      RedisConfig              `envPrefix:"REDIS_"`
-	API        APIConfig                `envPrefix:"API_"`
-	Cache      CacheConfig              `envPrefix:"CACHE_"`
-	Query      QueryConfig              `envPrefix:"QUERY_"`
-	OTEL       OTELConfig               `envPrefix:"OTEL_"`
-	Audit      AuditConfig              `envPrefix:"AUDIT_"`
-	Kafka      KafkaConfig              `envPrefix:"KAFKA_"`
-	Security   SecurityConfig           `envPrefix:"SECURITY_"`
-	Auth       AuthConfig               `envPrefix:"AUTH_"`
+	Server        ServerConfig `envPrefix:"SERVER_"`
+	ClickHouse    storage.ClickHouseConfig
+	Redis         RedisConfig `envPrefix:"REDIS_"`
+	API           APIConfig   `envPrefix:"API_"`
+	Cache         CacheConfig `envPrefix:"CACHE_"`
+	Query         QueryConfig `envPrefix:"QUERY_"`
+	OTEL          OTELConfig  `envPrefix:"OTEL_"`
+	Audit         AuditConfig `envPrefix:"AUDIT_"`
+	Kafka         KafkaConfig `envPrefix:"KAFKA_"`
+	KafkaSecurity commonkafka.SecurityConfig
+	Security      SecurityConfig `envPrefix:"SECURITY_"`
+	Auth          AuthConfig     `envPrefix:"AUTH_"`
 }
 
 // ServerConfig HTTP 服务器配置
@@ -159,7 +161,7 @@ type OTELConfig struct {
 	ServiceName    string  `env:"SERVICE_NAME" envDefault:"graph-service"`
 	ServiceVersion string  `env:"SERVICE_VERSION" envDefault:"1.0.0"`
 	Environment    string  `env:"ENVIRONMENT" envDefault:"development"`
-	Endpoint       string  `env:"ENDPOINT" envDefault:"localhost:4317"`
+	Endpoint       string  `env:"ENDPOINT" envDefault:"victoria-metrics.observability.svc:4317"`
 	Insecure       bool    `env:"INSECURE" envDefault:"true"`
 	SampleRate     float64 `env:"SAMPLE_RATE" envDefault:"1.0"`
 }
@@ -177,7 +179,7 @@ type AuditConfig struct {
 
 // KafkaConfig Kafka 配置
 type KafkaConfig struct {
-	Brokers []string `env:"BROKERS" envSeparator:"," envDefault:"localhost:9092"`
+	Brokers []string `env:"BROKERS" envSeparator:"," envDefault:"kafka-bootstrap.middleware.svc:9092"`
 }
 
 // SecurityConfig 安全配置
@@ -232,7 +234,10 @@ func Load() (*Config, error) {
 func (c *Config) setDefaults() error {
 	// ClickHouse 默认值
 	if len(c.ClickHouse.Hosts) == 0 {
-		c.ClickHouse.Hosts = []string{"localhost:9000"}
+		c.ClickHouse.Hosts = []string{
+			"clickhouse-1.middleware.svc:9000",
+			"clickhouse-2.middleware.svc:9000",
+		}
 	}
 	if c.ClickHouse.Database == "" {
 		c.ClickHouse.Database = "traffic"

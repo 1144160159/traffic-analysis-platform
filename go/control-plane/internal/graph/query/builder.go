@@ -27,9 +27,10 @@ var allowedOrderByFields = map[string]bool{
 	"ts_start":         true,
 	"ts_end":           true,
 	"protocol":         true,
-	"server_port":      true,
-	"client_ip":        true,
-	"server_ip":        true,
+	"src_ip":           true,
+	"dst_ip":           true,
+	"src_port":         true,
+	"dst_port":         true,
 	"bytes_total":      true,
 	"packets_total":    true,
 	"duration_ms":      true,
@@ -47,18 +48,19 @@ var allowedOrderByFields = map[string]bool{
 }
 
 var allowedGroupByFields = map[string]bool{
-	"client_ip":   true,
-	"server_ip":   true,
-	"server_port": true,
-	"protocol":    true,
-	"severity":    true,
-	"alert_type":  true,
-	"tenant_id":   true,
-	"run_id":      true,
-	"probe_id":    true,
-	"status":      true,
-	"query_type":  true,
-	"error_type":  true,
+	"src_ip":     true,
+	"dst_ip":     true,
+	"src_port":   true,
+	"dst_port":   true,
+	"protocol":   true,
+	"severity":   true,
+	"alert_type": true,
+	"tenant_id":  true,
+	"run_id":     true,
+	"probe_id":   true,
+	"status":     true,
+	"query_type": true,
+	"error_type": true,
 }
 
 // 修复：允许的聚合函数白名单
@@ -133,11 +135,10 @@ func (qb *QueryBuilder) WhereTimeRange(startTime, endTime int64, field string) *
 		return qb
 	}
 
-	// 修复：正确使用 ClickHouse 时间函数
 	return qb.Where(
-		fmt.Sprintf("%s BETWEEN toDateTime64(?, 3) AND toDateTime64(?, 3)", field),
-		float64(startTime)/1000.0, // 修复：转换为秒（带小数）
-		float64(endTime)/1000.0,
+		fmt.Sprintf("%s BETWEEN ? AND ?", field),
+		startTime,
+		endTime,
 	)
 }
 
@@ -154,7 +155,7 @@ func (qb *QueryBuilder) WhereClientOrServerIP(ip string) *QueryBuilder {
 	if ip == "" {
 		return qb
 	}
-	return qb.Where("(client_ip = ? OR server_ip = ?)", ip, ip)
+	return qb.Where("(src_ip = ? OR dst_ip = ?)", ip, ip)
 }
 
 // WhereIn 添加 IN 条件（修复版：分批查询策略）
@@ -243,12 +244,12 @@ func (qb *QueryBuilder) WhereProtocol(protocol uint8) *QueryBuilder {
 
 // WherePort 添加端口条件
 func (qb *QueryBuilder) WherePort(port uint16) *QueryBuilder {
-	return qb.Where("server_port = ?", port)
+	return qb.Where("dst_port = ?", port)
 }
 
 // WherePortRange 添加端口范围条件
 func (qb *QueryBuilder) WherePortRange(minPort, maxPort uint16) *QueryBuilder {
-	return qb.Where("server_port BETWEEN ? AND ?", minPort, maxPort)
+	return qb.Where("dst_port BETWEEN ? AND ?", minPort, maxPort)
 }
 
 // WhereBytesGreaterThan 添加字节数大于条件

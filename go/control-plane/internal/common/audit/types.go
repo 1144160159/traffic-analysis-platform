@@ -31,13 +31,24 @@ const (
 	EventTypeDeployGray     EventType = "DEPLOY_GRAY"
 	EventTypeDeployActivate EventType = "DEPLOY_ACTIVATE"
 	EventTypeDeployRollback EventType = "DEPLOY_ROLLBACK"
+	EventTypeDeployPause    EventType = "DEPLOY_PAUSE"
+	EventTypeDeployResume   EventType = "DEPLOY_RESUME"
 
 	EventTypeAlertTriage   EventType = "ALERT_TRIAGE"
 	EventTypeAlertAssign   EventType = "ALERT_ASSIGN"
 	EventTypeAlertClose    EventType = "ALERT_CLOSE"
 	EventTypeAlertFeedback EventType = "ALERT_FEEDBACK"
 
+	// Model Registry audit events (MLOps integration)
+	EventTypeModelCreate           EventType = "MODEL_CREATE"
+	EventTypeModelUpdate           EventType = "MODEL_UPDATE"
+	EventTypeModelDelete           EventType = "MODEL_DELETE"
+	EventTypeModelVersionCreate    EventType = "MODEL_VERSION_CREATE"
+	EventTypeModelVersionActivate  EventType = "MODEL_VERSION_ACTIVATE"
+	EventTypeModelVersionDeprecate EventType = "MODEL_VERSION_DEPRECATE"
+
 	EventTypePcapCut      EventType = "PCAP_CUT"
+	EventTypePcapCancel   EventType = "PCAP_CANCEL"
 	EventTypePcapDownload EventType = "PCAP_DOWNLOAD"
 	EventTypeArkimeAccess EventType = "ARKIME_ACCESS"
 
@@ -153,6 +164,15 @@ var eventTypeRegistry = map[EventType]EventTypeInfo{
 	EventTypeDeployGray:     {EventTypeDeployGray, "Gray deployment started", SensitivityHigh, "deployment"},
 	EventTypeDeployActivate: {EventTypeDeployActivate, "Deployment activated", SensitivityHigh, "deployment"},
 	EventTypeDeployRollback: {EventTypeDeployRollback, "Deployment rolled back", SensitivityCritical, "deployment"},
+	EventTypeDeployPause:    {EventTypeDeployPause, "Deployment paused", SensitivityMedium, "deployment"},
+	EventTypeDeployResume:   {EventTypeDeployResume, "Deployment resumed", SensitivityMedium, "deployment"},
+
+	EventTypeModelCreate:           {EventTypeModelCreate, "Model created", SensitivityMedium, "model_registry"},
+	EventTypeModelUpdate:           {EventTypeModelUpdate, "Model updated", SensitivityMedium, "model_registry"},
+	EventTypeModelDelete:           {EventTypeModelDelete, "Model deleted", SensitivityHigh, "model_registry"},
+	EventTypeModelVersionCreate:    {EventTypeModelVersionCreate, "Model version registered", SensitivityMedium, "model_registry"},
+	EventTypeModelVersionActivate:  {EventTypeModelVersionActivate, "Model version activated", SensitivityHigh, "model_registry"},
+	EventTypeModelVersionDeprecate: {EventTypeModelVersionDeprecate, "Model version deprecated", SensitivityHigh, "model_registry"},
 
 	EventTypeAlertTriage:   {EventTypeAlertTriage, "Alert triaged", SensitivityLow, "alert"},
 	EventTypeAlertAssign:   {EventTypeAlertAssign, "Alert assigned", SensitivityLow, "alert"},
@@ -160,6 +180,7 @@ var eventTypeRegistry = map[EventType]EventTypeInfo{
 	EventTypeAlertFeedback: {EventTypeAlertFeedback, "Alert feedback", SensitivityMedium, "alert"},
 
 	EventTypePcapCut:      {EventTypePcapCut, "PCAP cut requested", SensitivityHigh, "forensics"},
+	EventTypePcapCancel:   {EventTypePcapCancel, "PCAP cut cancelled", SensitivityHigh, "forensics"},
 	EventTypePcapDownload: {EventTypePcapDownload, "PCAP downloaded", SensitivityCritical, "forensics"},
 	EventTypeArkimeAccess: {EventTypeArkimeAccess, "Arkime accessed", SensitivityHigh, "forensics"},
 

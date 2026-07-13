@@ -34,6 +34,7 @@ type PublisherConfig struct {
 	// Kafka 配置
 	Brokers    []string
 	RuleTopic  string
+	ModelTopic string
 	AuditTopic string
 
 	// 超时配置
@@ -54,6 +55,7 @@ type PublisherConfig struct {
 	// 可靠性配置
 	RequiredAcks string // none, one, all
 	Async        bool
+	Security     kafka.SecurityConfig
 }
 
 // DefaultPublisherConfig 默认配置
@@ -68,6 +70,7 @@ func DefaultPublisherConfig() PublisherConfig {
 		Compression:    "lz4",
 		RequiredAcks:   "all",
 		Async:          false,
+		ModelTopic:     "model-updates",
 	}
 }
 
@@ -90,14 +93,24 @@ type PublisherMetrics struct {
 	AuditLastSendTime  time.Time
 	AuditLastErrorTime time.Time
 
+	// 模型热更新发布指标
+	ModelMessagesSent  int64
+	ModelMessagesError int64
+	ModelBytesSent     int64
+	ModelLastSendTime  time.Time
+	ModelLastErrorTime time.Time
+	ModelLastError     string
+
 	// 发布延迟
 	RuleAvgLatencyMs  float64
 	AuditAvgLatencyMs float64
+	ModelAvgLatencyMs float64
 }
 
 // KafkaPublisher Kafka 发布器
 type KafkaPublisher struct {
 	ruleProducer  *kafka.Producer
+	modelProducer *kafka.Producer
 	auditProducer *kafka.Producer
 	config        PublisherConfig
 	logger        *zap.Logger
@@ -139,6 +152,7 @@ func NewKafkaPublisherWithConfig(cfg PublisherConfig, logger *zap.Logger) (*Kafk
 		RequiredAcks: cfg.RequiredAcks,
 		Compression:  cfg.Compression,
 		Async:        false, // 同步发送，确保可靠性
+		Security:     cfg.Security,
 	}
 
 	ruleProducer, err := kafka.NewProducer(ruleCfg, logger)
@@ -158,6 +172,7 @@ func NewKafkaPublisherWithConfig(cfg PublisherConfig, logger *zap.Logger) (*Kafk
 			RequiredAcks: "one", // 单副本确认即可
 			Compression:  cfg.Compression,
 			Async:        true, // 异步发送
+			Security:     cfg.Security,
 		}
 
 		auditProducer, err = kafka.NewProducer(auditCfg, logger)
@@ -167,13 +182,40 @@ func NewKafkaPublisherWithConfig(cfg PublisherConfig, logger *zap.Logger) (*Kafk
 		}
 	}
 
+	// 模型热更新 Producer - 单独写入 model-updates topic, 供 Behavior Job 广播消费
+	var modelProducer *kafka.Producer
+	if cfg.ModelTopic != "" {
+		modelCfg := kafka.ProducerConfig{
+			Brokers:      cfg.Brokers,
+			Topic:        cfg.ModelTopic,
+			BatchSize:    1,
+			BatchTimeout: 10 * time.Millisecond,
+			MaxAttempts:  cfg.MaxRetries,
+			RequiredAcks: cfg.RequiredAcks,
+			Compression:  cfg.Compression,
+			Async:        false,
+			Security:     cfg.Security,
+		}
+
+		modelProducer, err = kafka.NewProducer(modelCfg, logger)
+		if err != nil {
+			ruleProducer.Close()
+			if auditProducer != nil {
+				auditProducer.Close()
+			}
+			return nil, fmt.Errorf("failed to create model producer: %w", err)
+		}
+	}
+
 	logger.Info("Kafka publishers initialized",
 		zap.String("rule_topic", cfg.RuleTopic),
+		zap.String("model_topic", cfg.ModelTopic),
 		zap.String("audit_topic", cfg.AuditTopic),
 		zap.Strings("brokers", cfg.Brokers))
 
 	return &KafkaPublisher{
 		ruleProducer:  ruleProducer,
+		modelProducer: modelProducer,
 		auditProducer: auditProducer,
 		config:        cfg,
 		logger:        logger,
@@ -603,6 +645,52 @@ func (p *KafkaPublisher) PublishDeploymentEvent(ctx context.Context, deployment 
 	return nil
 }
 
+// PublishModelUpdate 发布模型更新事件到 Kafka（MLOps 热更新通知）
+func (p *KafkaPublisher) PublishModelUpdate(ctx context.Context, key string, value []byte) error {
+	if atomic.LoadInt32(&p.closed) == 1 {
+		return errors.New(errors.ErrCodeServiceUnavailable, "publisher is closed")
+	}
+	if p.modelProducer == nil {
+		return errors.New(errors.ErrCodeServiceUnavailable, "model update producer is not configured")
+	}
+
+	ctx, span := otel.StartSpan(ctx, "KafkaPublisher.PublishModelUpdate")
+	defer span.End()
+
+	eventID := uuid.New().String()
+	now := time.Now()
+	startTime := time.Now()
+
+	headers := []kafka.MessageHeader{
+		{Key: "event_id", Value: eventID},
+		{Key: "event_type", Value: "model_update"},
+		{Key: "action", Value: "update"},
+		{Key: "event_ts", Value: fmt.Sprintf("%d", now.UnixMilli())},
+		{Key: "content_type", Value: "application/json"},
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, p.config.SendTimeout)
+	defer cancel()
+
+	err := p.modelProducer.Send(ctx, key, value, headers...)
+	latency := time.Since(startTime)
+	p.recordModelMetrics(err, int64(len(value)), latency)
+	if err != nil {
+		p.logger.Error("Failed to publish model update event",
+			zap.String("topic", p.config.ModelTopic),
+			zap.String("key", key),
+			zap.Error(err))
+		return errors.Wrap(err, errors.ErrCodeKafkaError, "failed to publish model update event")
+	}
+
+	p.logger.Info("Model update event published",
+		zap.String("topic", p.config.ModelTopic),
+		zap.String("event_id", eventID),
+		zap.String("key", key))
+
+	return nil
+}
+
 // recordRuleMetrics 记录规则发布指标
 func (p *KafkaPublisher) recordRuleMetrics(err error, bytes int64, latency time.Duration) {
 	p.mu.Lock()
@@ -642,11 +730,80 @@ func (p *KafkaPublisher) recordAuditMetrics(err error, bytes int64, latency time
 	}
 }
 
+// recordModelMetrics 记录模型热更新发布指标
+func (p *KafkaPublisher) recordModelMetrics(err error, bytes int64, latency time.Duration) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if err != nil {
+		p.metrics.ModelMessagesError++
+		p.metrics.ModelLastErrorTime = time.Now()
+		p.metrics.ModelLastError = err.Error()
+	} else {
+		p.metrics.ModelMessagesSent++
+		p.metrics.ModelBytesSent += bytes
+		p.metrics.ModelLastSendTime = time.Now()
+
+		count := p.metrics.ModelMessagesSent
+		p.metrics.ModelAvgLatencyMs = (p.metrics.ModelAvgLatencyMs*float64(count-1) + float64(latency.Milliseconds())) / float64(count)
+	}
+}
+
 // GetMetrics 获取发布器指标
 func (p *KafkaPublisher) GetMetrics() PublisherMetrics {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.metrics
+}
+
+// PublishRaw 发布原始消息到已配置的 Kafka topic
+func (p *KafkaPublisher) PublishRaw(ctx context.Context, topic, key string, value []byte) error {
+	if atomic.LoadInt32(&p.closed) == 1 {
+		return errors.New(errors.ErrCodeServiceUnavailable, "publisher is closed")
+	}
+
+	ctx, span := otel.StartSpan(ctx, "KafkaPublisher.PublishRaw")
+	defer span.End()
+
+	// 使用 ruleProducer 的基础能力发送到任意 topic
+	headers := []kafka.MessageHeader{
+		{Key: "event_type", Value: "model_update"},
+		{Key: "event_ts", Value: fmt.Sprintf("%d", time.Now().UnixMilli())},
+		{Key: "content_type", Value: "application/json"},
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, p.config.SendTimeout)
+	defer cancel()
+
+	var producer *kafka.Producer
+	switch topic {
+	case p.config.RuleTopic:
+		producer = p.ruleProducer
+	case p.config.ModelTopic:
+		producer = p.modelProducer
+	case p.config.AuditTopic:
+		producer = p.auditProducer
+	default:
+		return errors.Newf(errors.ErrCodeInvalidParameter, "topic is not configured: %s", topic)
+	}
+	if producer == nil {
+		return errors.Newf(errors.ErrCodeServiceUnavailable, "producer is not configured for topic: %s", topic)
+	}
+
+	err := producer.Send(ctx, key, value, headers...)
+	if err != nil {
+		p.logger.Error("Failed to publish raw message",
+			zap.String("topic", topic),
+			zap.String("key", key),
+			zap.Error(err))
+		return errors.Wrap(err, errors.ErrCodeKafkaError, "failed to publish raw message")
+	}
+
+	p.logger.Debug("Raw message published",
+		zap.String("topic", topic),
+		zap.String("key", key))
+
+	return nil
 }
 
 // GetMetricsMap 获取发布器指标（map 格式，用于 API）
@@ -672,6 +829,16 @@ func (p *KafkaPublisher) GetMetricsMap() map[string]interface{} {
 			"avg_latency_ms":  metrics.AuditAvgLatencyMs,
 			"last_send_time":  metrics.AuditLastSendTime,
 			"last_error_time": metrics.AuditLastErrorTime,
+		},
+		"model_producer": map[string]interface{}{
+			"topic":           p.config.ModelTopic,
+			"messages_sent":   metrics.ModelMessagesSent,
+			"messages_error":  metrics.ModelMessagesError,
+			"bytes_sent":      metrics.ModelBytesSent,
+			"avg_latency_ms":  metrics.ModelAvgLatencyMs,
+			"last_send_time":  metrics.ModelLastSendTime,
+			"last_error_time": metrics.ModelLastErrorTime,
+			"last_error":      metrics.ModelLastError,
 		},
 	}
 }
@@ -716,6 +883,12 @@ func (p *KafkaPublisher) Close() error {
 		errs = append(errs, fmt.Errorf("failed to close rule producer: %w", err))
 	}
 
+	if p.modelProducer != nil {
+		if err := p.modelProducer.Close(); err != nil {
+			errs = append(errs, fmt.Errorf("failed to close model producer: %w", err))
+		}
+	}
+
 	if p.auditProducer != nil {
 		if err := p.auditProducer.Close(); err != nil {
 			errs = append(errs, fmt.Errorf("failed to close audit producer: %w", err))
@@ -728,6 +901,8 @@ func (p *KafkaPublisher) Close() error {
 		zap.Int64("rule_messages_sent", metrics.RuleMessagesSent),
 		zap.Int64("rule_messages_error", metrics.RuleMessagesError),
 		zap.Int64("rule_retries", metrics.RuleRetries),
+		zap.Int64("model_messages_sent", metrics.ModelMessagesSent),
+		zap.Int64("model_messages_error", metrics.ModelMessagesError),
 		zap.Int64("audit_messages_sent", metrics.AuditMessagesSent),
 		zap.Int64("audit_messages_error", metrics.AuditMessagesError))
 

@@ -9,7 +9,11 @@
 package cutter
 
 import (
+	"bufio"
 	"context"
+	"crypto/sha256"
+	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"strings"
@@ -17,6 +21,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcapgo"
 	"github.com/klauspost/compress/zstd"
@@ -85,6 +90,7 @@ type CutResult struct {
 	FilesScanned int
 	FileErrors   []FileError
 	Duration     time.Duration
+	SHA256       string
 }
 
 // FileError 文件处理错误
@@ -310,6 +316,11 @@ func (c *Cutter) CutPCAP(
 		return result, err
 	}
 
+	if result.FilesScanned == 0 && len(result.FileErrors) > 0 {
+		result.Duration = time.Since(startTime)
+		return result, fmt.Errorf("all PCAP files failed to process: %s", result.FileErrors[0].Error)
+	}
+
 	result.Duration = time.Since(startTime)
 
 	c.logger.Info("PCAP cutting completed",
@@ -354,7 +365,47 @@ func (c *Cutter) processFile(
 		defer closer.Close()
 	}
 
-	// 解析 PCAP
+	buffered := bufio.NewReaderSize(reader, c.bufferSize)
+	magic, err := buffered.Peek(4)
+	if err != nil {
+		if err == io.EOF {
+			return 0, 0, nil
+		}
+		return 0, 0, fmt.Errorf("failed to read PCAP header: %w", err)
+	}
+
+	if isPcapFileMagic(magic) {
+		return c.processPcapFile(ctx, buffered, filter, writer, writerMu, remainingPackets)
+	}
+
+	return c.processPcapRecordStream(ctx, buffered, filter, writer, writerMu, remainingPackets)
+}
+
+func isPcapFileMagic(magic []byte) bool {
+	if len(magic) < 4 {
+		return false
+	}
+	valueLE := binary.LittleEndian.Uint32(magic)
+	valueBE := binary.BigEndian.Uint32(magic)
+	switch valueLE {
+	case 0xa1b2c3d4, 0xa1b23c4d, 0x0a0d0d0a:
+		return true
+	}
+	switch valueBE {
+	case 0xa1b2c3d4, 0xa1b23c4d, 0x0a0d0d0a:
+		return true
+	}
+	return false
+}
+
+func (c *Cutter) processPcapFile(
+	ctx context.Context,
+	reader io.Reader,
+	filter *BPFFilter,
+	writer *pcapgo.Writer,
+	writerMu *sync.Mutex,
+	remainingPackets int64,
+) (int64, int64, error) {
 	pcapReader, err := pcapgo.NewReader(reader)
 	if err != nil {
 		return 0, 0, fmt.Errorf("failed to create PCAP reader: %w", err)
@@ -396,11 +447,109 @@ func (c *Cutter) processFile(
 	}
 
 	c.logger.Debug("File processed",
-		zap.String("file_key", file.FileKey),
 		zap.Int64("matched_packets", matchCount),
 		zap.Int64("bytes", totalBytes))
 
 	return matchCount, totalBytes, nil
+}
+
+func (c *Cutter) processPcapRecordStream(
+	ctx context.Context,
+	reader *bufio.Reader,
+	filter *BPFFilter,
+	writer *pcapgo.Writer,
+	writerMu *sync.Mutex,
+	remainingPackets int64,
+) (int64, int64, error) {
+	var matchCount, totalBytes int64
+	header := make([]byte, 16)
+
+	for matchCount < remainingPackets {
+		select {
+		case <-ctx.Done():
+			return matchCount, totalBytes, ctx.Err()
+		default:
+		}
+
+		if _, err := io.ReadFull(reader, header); err != nil {
+			if err == io.EOF || err == io.ErrUnexpectedEOF {
+				break
+			}
+			return matchCount, totalBytes, fmt.Errorf("failed to read packet record header: %w", err)
+		}
+
+		tsSec, tsSubsec, inclLen, origLen, ok := parsePcapRecordHeader(header)
+		if !ok {
+			return matchCount, totalBytes, fmt.Errorf("invalid packet record header")
+		}
+
+		data := make([]byte, inclLen)
+		if _, err := io.ReadFull(reader, data); err != nil {
+			return matchCount, totalBytes, fmt.Errorf("failed to read packet payload: %w", err)
+		}
+
+		timestamp := recordTimestamp(tsSec, tsSubsec)
+		if filter.Match(data, timestamp.UnixMilli()) {
+			ci := gopacket.CaptureInfo{
+				Timestamp:     timestamp,
+				CaptureLength: len(data),
+				Length:        int(origLen),
+			}
+
+			writerMu.Lock()
+			err := writer.WritePacket(ci, data)
+			writerMu.Unlock()
+			if err != nil {
+				return matchCount, totalBytes, fmt.Errorf("failed to write packet: %w", err)
+			}
+
+			matchCount++
+			totalBytes += int64(len(data))
+		}
+	}
+
+	c.logger.Debug("Raw PCAP record stream processed",
+		zap.Int64("matched_packets", matchCount),
+		zap.Int64("bytes", totalBytes))
+
+	return matchCount, totalBytes, nil
+}
+
+func parsePcapRecordHeader(header []byte) (uint32, uint32, uint32, uint32, bool) {
+	tsSec := binary.LittleEndian.Uint32(header[0:4])
+	tsSubsec := binary.LittleEndian.Uint32(header[4:8])
+	inclLen := binary.LittleEndian.Uint32(header[8:12])
+	origLen := binary.LittleEndian.Uint32(header[12:16])
+	if validPacketRecord(tsSec, tsSubsec, inclLen, origLen) {
+		return tsSec, tsSubsec, inclLen, origLen, true
+	}
+
+	tsSec = binary.BigEndian.Uint32(header[0:4])
+	tsSubsec = binary.BigEndian.Uint32(header[4:8])
+	inclLen = binary.BigEndian.Uint32(header[8:12])
+	origLen = binary.BigEndian.Uint32(header[12:16])
+	if validPacketRecord(tsSec, tsSubsec, inclLen, origLen) {
+		return tsSec, tsSubsec, inclLen, origLen, true
+	}
+
+	return 0, 0, 0, 0, false
+}
+
+func validPacketRecord(tsSec, tsSubsec, inclLen, origLen uint32) bool {
+	if tsSec < 1_500_000_000 || inclLen == 0 || inclLen > 262_144 {
+		return false
+	}
+	if origLen < inclLen || origLen > 262_144 {
+		return false
+	}
+	return tsSubsec < 1_000_000_000
+}
+
+func recordTimestamp(tsSec, tsSubsec uint32) time.Time {
+	if tsSubsec >= 1_000_000 {
+		return time.Unix(int64(tsSec), int64(tsSubsec))
+	}
+	return time.Unix(int64(tsSec), int64(tsSubsec)*int64(time.Microsecond))
 }
 
 // decompressReader 解压缩读取器（修复 M2: 忽略大小写，支持 zstd）
@@ -452,8 +601,10 @@ func (c *Cutter) CutToFile(
 		resultCh <- result
 	}()
 
-	// 上传到 S3（流式上传）
-	uploadErr := c.s3Client.PutObject(ctx, outputKey, pr, -1, "application/vnd.tcpdump.pcap")
+	// 上传到 S3（流式上传），同时计算结果文件完整性 hash。
+	hasher := sha256.New()
+	hashingReader := io.TeeReader(pr, hasher)
+	uploadErr := c.s3Client.PutObject(ctx, outputKey, hashingReader, -1, "application/vnd.tcpdump.pcap")
 	// 确保管道读取端关闭，避免裁剪 goroutine 阻塞
 	_ = pr.Close()
 
@@ -470,6 +621,7 @@ func (c *Cutter) CutToFile(
 	// 等待裁剪完成
 	select {
 	case result := <-resultCh:
+		result.SHA256 = hex.EncodeToString(hasher.Sum(nil))
 		return result, nil
 	case err := <-errCh:
 		return nil, err

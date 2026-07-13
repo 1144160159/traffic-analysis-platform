@@ -4,31 +4,31 @@ import "time"
 
 const (
 	// Kafka Topics — 对齐 common/kafka/create-topics.sh
-	TopicFlowEvents     = "flow.events.v1"      // Probe → Ingest → Flink
-	TopicSessionEvents  = "session.events.v1"   // Flink Session Job 产出
-	TopicPcapIndex      = "pcap.index.v1"       // Probe PCAP 元数据
-	TopicFeatureStat    = "feature.stat.v1"     // Flink Feature Job 产出
-	TopicDetections     = "detections.v1"       // Flink Detection Job 产出
-	TopicAlerts         = "alerts.v1"           // Flink Alert Job 产出
-	TopicRuleUpdates    = "rule.updates"        // Rule Manager → Flink
-	TopicAuditLogs      = "audit.logs"          // 审计日志
-	TopicAssetBindings  = "asset.bindings.v1"   // MAC→IP 绑定
-	TopicDeviceLogs     = "device.logs.v1"      // 设备 Syslog
-	TopicUserEvents     = "user.events.v1"      // 用户行为
-	TopicDLQ            = "dlq.v1"              // 死信队列
+	TopicFlowEvents    = "flow.events.v1"    // Probe → Ingest → Flink
+	TopicSessionEvents = "session.events.v1" // Flink Session Job 产出
+	TopicPcapIndex     = "pcap.index.v1"     // Probe PCAP 元数据
+	TopicFeatureStat   = "feature.stat.v1"   // Flink Feature Job 产出
+	TopicDetections    = "detections.v1"     // Flink Detection Job 产出
+	TopicAlerts        = "alerts.v1"         // Flink Alert Job 产出
+	TopicRuleUpdates   = "rule.updates"      // Rule Manager → Flink
+	TopicAuditLogs     = "audit.logs"        // 审计日志
+	TopicAssetBindings = "asset.bindings.v1" // MAC→IP 绑定
+	TopicDeviceLogs    = "device.logs.v1"    // 设备 Syslog
+	TopicUserEvents    = "user.events.v1"    // 用户行为
+	TopicDLQ           = "dlq.v1"            // 死信队列
 )
 
 const (
 	// Redis Key Prefixes — 对齐 common/redis/README.md
-	PrefixDedup      = "dedup:"       // 事件去重
-	PrefixQuota      = "quota:"       // 配额限流
-	PrefixSession    = "session:"     // 用户会话
-	PrefixProbe      = "probe:"       // 探针状态/配置
-	PrefixAlert      = "alert:"       // 告警去重/状态
-	PrefixAsset      = "asset:"       // 资产缓存
-	PrefixStats      = "stats:"       // Dashboard 统计
-	PrefixLock       = "lock:"        // 分布式锁
-	PrefixConfig     = "config:"      // 配置缓存
+	PrefixDedup   = "dedup:"   // 事件去重
+	PrefixQuota   = "quota:"   // 配额限流
+	PrefixSession = "session:" // 用户会话
+	PrefixProbe   = "probe:"   // 探针状态/配置
+	PrefixAlert   = "alert:"   // 告警去重/状态
+	PrefixAsset   = "asset:"   // 资产缓存
+	PrefixStats   = "stats:"   // Dashboard 统计
+	PrefixLock    = "lock:"    // 分布式锁
+	PrefixConfig  = "config:"  // 配置缓存
 
 	// Backward compatibility aliases
 	RedisTokenPrefix        = PrefixSession
@@ -44,7 +44,9 @@ const (
 	ScopeIngestRead  = "ingest:read"
 	ScopePcapWrite   = "pcap:write"
 	ScopePcapRead    = "pcap:read"
+	ScopeDLQReplay   = "dlq:replay"
 	ScopeAdminWrite  = "admin:write"
+	ScopeAdminAll    = "admin:*"
 	ScopeAdminRead   = "admin:read"
 	ScopeWildcard    = "*"
 )
@@ -199,13 +201,14 @@ const (
 )
 
 const (
-	DefaultDLQReplayInterval    = 5 * time.Minute
-	DefaultDLQReplayBatchSize   = 1000
-	DefaultDLQBatchSize         = 100
-	DefaultDLQRetryBackoff      = 100 * time.Millisecond
-	DefaultDLQReplaySuccessRate = 0.5
-	DefaultDLQMaxRetries        = 3
-	DLQMessageFormatVersion     = "v1"
+	DefaultDLQReplayInterval       = 5 * time.Minute
+	DefaultDLQReplayBatchSize      = 1000
+	DefaultDLQBatchSize            = 100
+	DefaultDLQRetryBackoff         = 100 * time.Millisecond
+	DefaultDLQReplaySuccessRate    = 0.5
+	DefaultDLQMaxRetries           = 3
+	DefaultDLQReplayIdempotencyTTL = 24 * time.Hour
+	DLQMessageFormatVersion        = "v1"
 )
 
 const (

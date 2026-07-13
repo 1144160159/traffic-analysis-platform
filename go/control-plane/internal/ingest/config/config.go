@@ -2,7 +2,11 @@ package config
 
 import (
 	"fmt"
+	"net/url"
+	"strconv"
 	"time"
+
+	kafkaCommon "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/kafka"
 )
 
 type Config struct {
@@ -60,12 +64,15 @@ type KafkaConfig struct {
 	RequiredAcks      string        `env:"KAFKA_REQUIRED_ACKS" envDefault:"all"`
 	MaxRetries        int           `env:"KAFKA_MAX_RETRIES" envDefault:"3"`
 	EnableIdempotence bool          `env:"KAFKA_ENABLE_IDEMPOTENCE" envDefault:"true"`
+	Security          kafkaCommon.SecurityConfig
 }
 
 type RedisConfig struct {
 	Addrs           []string      `env:"REDIS_ADDRS" envSeparator:","`
 	Password        string        `env:"REDIS_PASSWORD"`
 	DB              int           `env:"REDIS_DB" envDefault:"0"`
+	SentinelAddrs   []string      `env:"REDIS_SENTINEL_ADDRS" envSeparator:","`
+	SentinelMaster  string        `env:"REDIS_SENTINEL_MASTER"`
 	PoolSize        int           `env:"REDIS_POOL_SIZE" envDefault:"100"`
 	MinIdleConns    int           `env:"REDIS_MIN_IDLE_CONNS" envDefault:"10"`
 	DialTimeout     time.Duration `env:"REDIS_DIAL_TIMEOUT" envDefault:"5s"`
@@ -76,10 +83,50 @@ type RedisConfig struct {
 }
 
 type PostgresConfig struct {
-	DSN          string        `env:"POSTGRES_DSN"`
-	MaxOpenConns int           `env:"POSTGRES_MAX_OPEN_CONNS" envDefault:"10"`
-	MaxIdleConns int           `env:"POSTGRES_MAX_IDLE_CONNS" envDefault:"5"`
-	ConnLifetime time.Duration `env:"POSTGRES_CONN_LIFETIME" envDefault:"1h"`
+	DSN            string        `env:"POSTGRES_DSN"`
+	Host           string        `env:"POSTGRES_HOST" envDefault:"postgres-primary.databases.svc"`
+	Port           int           `env:"POSTGRES_PORT" envDefault:"5432"`
+	Database       string        `env:"POSTGRES_DATABASE" envDefault:"traffic_platform"`
+	Username       string        `env:"POSTGRES_USERNAME" envDefault:"postgres"`
+	Password       string        `env:"POSTGRES_PASSWORD"`
+	SSLMode        string        `env:"POSTGRES_SSL_MODE" envDefault:"disable"`
+	ConnectTimeout int           `env:"POSTGRES_CONNECT_TIMEOUT" envDefault:"10"`
+	MaxOpenConns   int           `env:"POSTGRES_MAX_OPEN_CONNS" envDefault:"10"`
+	MaxIdleConns   int           `env:"POSTGRES_MAX_IDLE_CONNS" envDefault:"5"`
+	ConnLifetime   time.Duration `env:"POSTGRES_CONN_LIFETIME" envDefault:"1h"`
+}
+
+func (c PostgresConfig) ConnectionString() string {
+	if c.DSN != "" {
+		return c.DSN
+	}
+	if c.Host == "" || c.Database == "" || c.Username == "" {
+		return ""
+	}
+	port := c.Port
+	if port == 0 {
+		port = 5432
+	}
+	sslMode := c.SSLMode
+	if sslMode == "" {
+		sslMode = "disable"
+	}
+	connectTimeout := c.ConnectTimeout
+	if connectTimeout == 0 {
+		connectTimeout = 10
+	}
+
+	dsn := url.URL{
+		Scheme: "postgres",
+		User:   url.UserPassword(c.Username, c.Password),
+		Host:   fmt.Sprintf("%s:%d", c.Host, port),
+		Path:   "/" + c.Database,
+	}
+	query := dsn.Query()
+	query.Set("sslmode", sslMode)
+	query.Set("connect_timeout", strconv.Itoa(connectTimeout))
+	dsn.RawQuery = query.Encode()
+	return dsn.String()
 }
 
 type AuthConfig struct {
@@ -212,7 +259,7 @@ func (c *Config) SetDefaults() {
 	}
 
 	if len(c.Redis.Addrs) == 0 {
-		c.Redis.Addrs = []string{"localhost:6379"}
+		c.Redis.Addrs = []string{"redis-master.databases.svc:6379"}
 	}
 	if c.Redis.PoolSize == 0 {
 		c.Redis.PoolSize = DefaultRedisPoolSize
@@ -238,6 +285,24 @@ func (c *Config) SetDefaults() {
 
 	if c.Postgres.MaxOpenConns == 0 {
 		c.Postgres.MaxOpenConns = 10
+	}
+	if c.Postgres.Host == "" {
+		c.Postgres.Host = "postgres-primary.databases.svc"
+	}
+	if c.Postgres.Port == 0 {
+		c.Postgres.Port = 5432
+	}
+	if c.Postgres.Database == "" {
+		c.Postgres.Database = "traffic_platform"
+	}
+	if c.Postgres.Username == "" {
+		c.Postgres.Username = "postgres"
+	}
+	if c.Postgres.SSLMode == "" {
+		c.Postgres.SSLMode = "disable"
+	}
+	if c.Postgres.ConnectTimeout == 0 {
+		c.Postgres.ConnectTimeout = 10
 	}
 	if c.Postgres.MaxIdleConns == 0 {
 		c.Postgres.MaxIdleConns = 5

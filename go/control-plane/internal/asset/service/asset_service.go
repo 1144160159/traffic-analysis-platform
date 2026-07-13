@@ -22,6 +22,7 @@ type AssetService struct {
 	logger *zap.Logger
 	// ouiCache 可选的 OUI 缓存（Redis），nil 时使用本地内置表
 	ouiCache OUILookup
+	scanner  DiscoveryScanner
 }
 
 // OUILookup OUI 厂商查询接口
@@ -38,22 +39,42 @@ func (l *localOUICache) LookupVendor(mac string) string {
 
 // New 创建 AssetService
 func New(cfg *config.Config, repo *repository.AssetRepository, logger *zap.Logger) *AssetService {
-	return &AssetService{
+	svc := &AssetService{
 		cfg:      cfg,
 		repo:     repo,
 		logger:   logger,
 		ouiCache: &localOUICache{},
 	}
+	if cfg != nil {
+		svc.scanner = NewSNMPDiscoveryScanner(cfg.Discovery, logger)
+	}
+	return svc
 }
 
 // NewWithOUICache 创建带 Redis OUI 缓存的 AssetService
 func NewWithOUICache(cfg *config.Config, repo *repository.AssetRepository, logger *zap.Logger, ouiCache OUILookup) *AssetService {
-	return &AssetService{
+	svc := &AssetService{
 		cfg:      cfg,
 		repo:     repo,
 		logger:   logger,
 		ouiCache: ouiCache,
 	}
+	if cfg != nil {
+		svc.scanner = NewSNMPDiscoveryScanner(cfg.Discovery, logger)
+	}
+	return svc
+}
+
+func (s *AssetService) WithDiscoveryScanner(scanner DiscoveryScanner) *AssetService {
+	s.scanner = scanner
+	return s
+}
+
+func (s *AssetService) JWTSigningKey() string {
+	if s == nil || s.cfg == nil {
+		return ""
+	}
+	return s.cfg.Auth.JWTSigningKey
 }
 
 // =============================================================================

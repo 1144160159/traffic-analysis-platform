@@ -28,6 +28,7 @@ func (r *AssetRepository) InitSchema(ctx context.Context) error {
 	CREATE TABLE IF NOT EXISTS assets (
 		asset_id    TEXT PRIMARY KEY,
 		tenant_id   TEXT NOT NULL,
+		ip          TEXT,
 		ip_address  TEXT,
 		mac_address TEXT NOT NULL,
 		hostname    TEXT,
@@ -36,22 +37,93 @@ func (r *AssetRepository) InitSchema(ctx context.Context) error {
 		source      TEXT NOT NULL DEFAULT 'manual',
 		vlan_id     TEXT,
 		switch_port TEXT,
+		tags        JSONB NOT NULL DEFAULT '{}'::jsonb,
+		criticality INT NOT NULL DEFAULT 0,
+		metadata    JSONB NOT NULL DEFAULT '{}'::jsonb,
 		first_seen  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 		last_seen   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-		UNIQUE(tenant_id, mac_address)
+		created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+		updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 	);
+	ALTER TABLE assets ADD COLUMN IF NOT EXISTS ip TEXT;
+	ALTER TABLE assets ADD COLUMN IF NOT EXISTS ip_address TEXT;
+	ALTER TABLE assets ADD COLUMN IF NOT EXISTS mac_address TEXT;
+	ALTER TABLE assets ADD COLUMN IF NOT EXISTS hostname TEXT;
+	ALTER TABLE assets ADD COLUMN IF NOT EXISTS vendor TEXT;
+	ALTER TABLE assets ADD COLUMN IF NOT EXISTS os_type TEXT;
+	ALTER TABLE assets ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'manual';
+	ALTER TABLE assets ADD COLUMN IF NOT EXISTS vlan_id TEXT;
+	ALTER TABLE assets ADD COLUMN IF NOT EXISTS switch_port TEXT;
+	ALTER TABLE assets ADD COLUMN IF NOT EXISTS tags JSONB NOT NULL DEFAULT '{}'::jsonb;
+	ALTER TABLE assets ADD COLUMN IF NOT EXISTS criticality INT NOT NULL DEFAULT 0;
+	ALTER TABLE assets ADD COLUMN IF NOT EXISTS metadata JSONB NOT NULL DEFAULT '{}'::jsonb;
+	ALTER TABLE assets ADD COLUMN IF NOT EXISTS first_seen TIMESTAMPTZ NOT NULL DEFAULT NOW();
+	ALTER TABLE assets ADD COLUMN IF NOT EXISTS last_seen TIMESTAMPTZ NOT NULL DEFAULT NOW();
+	ALTER TABLE assets ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+	ALTER TABLE assets ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+	ALTER TABLE assets ALTER COLUMN ip DROP NOT NULL;
+	UPDATE assets SET ip_address = ip WHERE (ip_address IS NULL OR ip_address = '') AND ip IS NOT NULL;
+	UPDATE assets SET ip = ip_address WHERE ip IS NULL AND ip_address IS NOT NULL;
 	CREATE TABLE IF NOT EXISTS asset_events (
 		event_id   SERIAL PRIMARY KEY,
-		asset_id   TEXT NOT NULL REFERENCES assets(asset_id),
+		asset_id   TEXT NOT NULL,
 		tenant_id  TEXT NOT NULL,
 		event_type TEXT NOT NULL,
 		old_value  JSONB,
 		new_value  JSONB,
 		created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 	);
+	CREATE TABLE IF NOT EXISTS asset_discovery_credentials (
+		credential_id TEXT PRIMARY KEY,
+		tenant_id     TEXT NOT NULL,
+		name          TEXT NOT NULL,
+		protocol      TEXT NOT NULL,
+		endpoint      TEXT,
+		secret_ref    TEXT NOT NULL,
+		created_by    TEXT,
+		created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+		updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+		UNIQUE (tenant_id, name)
+	);
+	CREATE TABLE IF NOT EXISTS asset_discovery_runs (
+		run_id            TEXT PRIMARY KEY,
+		tenant_id         TEXT NOT NULL,
+		mode              TEXT NOT NULL,
+		target_cidr       TEXT,
+		credential_id     TEXT,
+		status            TEXT NOT NULL DEFAULT 'queued',
+		requested_by      TEXT,
+		discovered_assets INT NOT NULL DEFAULT 0,
+		discovered_links  INT NOT NULL DEFAULT 0,
+		error_message     TEXT,
+		started_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+		completed_at      TIMESTAMPTZ
+	);
+	CREATE TABLE IF NOT EXISTS asset_topology_links (
+		link_id            TEXT PRIMARY KEY,
+		tenant_id          TEXT NOT NULL,
+		run_id             TEXT,
+		source_asset_id    TEXT,
+		source_mac         TEXT,
+		source_ip          TEXT,
+		source_interface   TEXT NOT NULL DEFAULT '',
+		neighbor_asset_id  TEXT,
+		neighbor_mac       TEXT NOT NULL DEFAULT '',
+		neighbor_ip        TEXT,
+		neighbor_interface TEXT NOT NULL DEFAULT '',
+		protocol           TEXT NOT NULL,
+		confidence         INT NOT NULL DEFAULT 80,
+		observed_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+		created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+		UNIQUE (tenant_id, source_mac, neighbor_mac, protocol, source_interface, neighbor_interface)
+	);
 	CREATE INDEX IF NOT EXISTS idx_assets_tenant ON assets(tenant_id);
-	CREATE INDEX IF NOT EXISTS idx_assets_mac ON assets(tenant_id, mac_address);
+	CREATE INDEX IF NOT EXISTS idx_assets_ip ON assets(tenant_id, ip_address);
+	CREATE UNIQUE INDEX IF NOT EXISTS idx_assets_tenant_mac_unique ON assets(tenant_id, mac_address) WHERE mac_address IS NOT NULL;
 	CREATE INDEX IF NOT EXISTS idx_asset_events_asset ON asset_events(asset_id);
+	CREATE INDEX IF NOT EXISTS idx_asset_discovery_runs_tenant ON asset_discovery_runs(tenant_id, started_at DESC);
+	CREATE INDEX IF NOT EXISTS idx_asset_topology_links_tenant ON asset_topology_links(tenant_id, observed_at DESC);
+	CREATE INDEX IF NOT EXISTS idx_asset_topology_links_asset ON asset_topology_links(tenant_id, source_asset_id, neighbor_asset_id);
 	`
 	_, err := r.db.ExecContext(ctx, ddl)
 	return err
@@ -132,10 +204,17 @@ func (r *AssetRepository) FindByID(ctx context.Context, assetID string) (*config
 	if err == sql.ErrNoRows {
 		return nil, errors.New(errors.ErrCodeTenantNotFound, "asset not found: "+assetID)
 	}
-	if err != nil { return nil, err }
-	a.IPAddress = ip.String; a.Hostname = host.String; a.Vendor = vendor.String
-	a.OSType = osType.String; a.VlanID = vlan.String; a.SwitchPort = swPort.String
-	a.FirstSeen = fs; a.LastSeen = ls
+	if err != nil {
+		return nil, err
+	}
+	a.IPAddress = ip.String
+	a.Hostname = host.String
+	a.Vendor = vendor.String
+	a.OSType = osType.String
+	a.VlanID = vlan.String
+	a.SwitchPort = swPort.String
+	a.FirstSeen = fs
+	a.LastSeen = ls
 	return &a, nil
 }
 
@@ -146,7 +225,9 @@ func (r *AssetRepository) ListByTenant(ctx context.Context, tenantID string, lim
 	rows, err := r.db.QueryContext(ctx,
 		`SELECT asset_id, tenant_id, ip_address, mac_address, hostname, vendor, os_type, source, vlan_id, switch_port, first_seen, last_seen
 		 FROM assets WHERE tenant_id=$1 ORDER BY last_seen DESC LIMIT $2 OFFSET $3`, tenantID, limit, offset)
-	if err != nil { return nil, 0, err }
+	if err != nil {
+		return nil, 0, err
+	}
 	defer rows.Close()
 
 	var result []*config.AssetRecord
@@ -155,9 +236,14 @@ func (r *AssetRepository) ListByTenant(ctx context.Context, tenantID string, lim
 		var ip, host, vendor, osType, vlan, swPort sql.NullString
 		var fs, ls time.Time
 		rows.Scan(&a.AssetID, &a.TenantID, &ip, &a.MACAddress, &host, &vendor, &osType, &a.Source, &vlan, &swPort, &fs, &ls)
-		a.IPAddress = ip.String; a.Hostname = host.String; a.Vendor = vendor.String
-		a.OSType = osType.String; a.VlanID = vlan.String; a.SwitchPort = swPort.String
-		a.FirstSeen = fs; a.LastSeen = ls
+		a.IPAddress = ip.String
+		a.Hostname = host.String
+		a.Vendor = vendor.String
+		a.OSType = osType.String
+		a.VlanID = vlan.String
+		a.SwitchPort = swPort.String
+		a.FirstSeen = fs
+		a.LastSeen = ls
 		result = append(result, &a)
 	}
 	return result, total, nil
@@ -167,14 +253,17 @@ func (r *AssetRepository) GetHistory(ctx context.Context, assetID string, limit 
 	rows, err := r.db.QueryContext(ctx,
 		`SELECT event_id, asset_id, tenant_id, event_type, old_value, new_value, created_at
 		 FROM asset_events WHERE asset_id=$1 ORDER BY created_at DESC LIMIT $2`, assetID, limit)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	defer rows.Close()
 	var result []*config.AssetEvent
 	for rows.Next() {
 		var e config.AssetEvent
 		var oldVal, newVal sql.NullString
 		rows.Scan(&e.EventID, &e.AssetID, &e.TenantID, &e.EventType, &oldVal, &newVal, &e.CreatedAt)
-		e.OldValue = oldVal.String; e.NewValue = newVal.String
+		e.OldValue = oldVal.String
+		e.NewValue = newVal.String
 		result = append(result, &e)
 	}
 	return result, nil
@@ -183,10 +272,21 @@ func (r *AssetRepository) GetHistory(ctx context.Context, assetID string, limit 
 func (r *AssetRepository) insertEvent(ctx context.Context, assetID, tenantID, eventType, oldVal, newVal string) {
 	_, err := r.db.ExecContext(ctx,
 		`INSERT INTO asset_events (asset_id, tenant_id, event_type, old_value, new_value) VALUES ($1,$2,$3,$4,$5)`,
-		assetID, tenantID, eventType, oldVal, newVal)
+		assetID, tenantID, eventType, jsonOrNil(oldVal), jsonOrNil(newVal))
 	if err != nil {
 		r.logger.Warn("failed to insert asset event", zap.String("asset_id", assetID), zap.Error(err))
 	}
+}
+
+func (r *AssetRepository) InsertEvent(ctx context.Context, assetID, tenantID, eventType, oldVal, newVal string) {
+	r.insertEvent(ctx, assetID, tenantID, eventType, oldVal, newVal)
+}
+
+func jsonOrNil(value string) any {
+	if value == "" {
+		return nil
+	}
+	return []byte(value)
 }
 
 // MarkInactiveSince 标记指定时间之前最后活跃的资产为 inactive
@@ -219,4 +319,3 @@ func assetToJSON(a *config.AssetRecord) string {
 	return fmt.Sprintf(`{"ip":"%s","mac":"%s","hostname":"%s","vendor":"%s"}`,
 		a.IPAddress, a.MACAddress, a.Hostname, a.Vendor)
 }
-

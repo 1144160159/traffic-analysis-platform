@@ -40,7 +40,22 @@ func (l *AlertAuditLogger) LogAlertCreate(ctx context.Context, alertID, tenantID
 
 // LogAlertStatusChange 记录告警状态变更
 func (l *AlertAuditLogger) LogAlertStatusChange(ctx context.Context, alertID, tenantID, oldStatus, newStatus string) {
-	l.logger.LogAlertAction(ctx, audit.EventTypeAlertTriage, tenantID, "", alertID, oldStatus, newStatus)
+	l.LogAlertStatusChangeWithReason(ctx, alertID, tenantID, "", oldStatus, newStatus, "")
+}
+
+// LogAlertStatusChangeWithReason 记录带原因的告警状态变更
+func (l *AlertAuditLogger) LogAlertStatusChangeWithReason(ctx context.Context, alertID, tenantID, userID, oldStatus, newStatus, reason string) {
+	lc := logging.LogContextFromContext(ctx)
+	if userID == "" {
+		userID = lc.UserID
+	}
+
+	var detail map[string]interface{}
+	if reason != "" {
+		detail = map[string]interface{}{"reason": reason}
+	}
+
+	l.logger.LogAlertActionWithDetail(ctx, audit.EventTypeAlertTriage, tenantID, userID, alertID, oldStatus, newStatus, detail)
 }
 
 // LogAlertAssign 记录告警分配

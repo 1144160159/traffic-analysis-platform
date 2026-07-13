@@ -51,6 +51,17 @@ const (
 	ScopeGraphRead = "graph:read"
 )
 
+// 资产管理权限
+const (
+	ScopeAssetRead     = "asset:read"
+	ScopeAssetDiscover = "asset:discover"
+)
+
+// 态势大屏权限
+const (
+	ScopeScreenView = "screen:view"
+)
+
 // 管理员权限
 const (
 	ScopeAdminAll         = "admin:*"
@@ -61,12 +72,18 @@ const (
 const (
 	ScopeProbeIngest  = "probe:ingest"
 	ScopeProbeMetrics = "probe:metrics"
+	ScopeProbeWrite   = "probe:write"
 )
 
 // Token 管理权限
 const (
 	ScopeTokenRead  = "token:read"
 	ScopeTokenWrite = "token:write"
+)
+
+// DLQ 运维权限
+const (
+	ScopeDLQReplay = "dlq:replay"
 )
 
 // 通配符
@@ -101,6 +118,7 @@ var AllValidScopes = []string{
 	// 探针权限
 	ScopeProbeIngest,
 	ScopeProbeMetrics,
+	ScopeProbeWrite,
 
 	// 用户权限
 	ScopeUserRead,
@@ -125,12 +143,17 @@ var AllValidScopes = []string{
 	ScopePcapCut,
 
 	ScopeGraphRead,
+	ScopeAssetRead,
+	ScopeAssetDiscover,
+	ScopeScreenView,
 
 	ScopeAdminAll,
 	ScopeAdminCrossTenant,
 
 	ScopeTokenRead,
 	ScopeTokenWrite,
+
+	ScopeDLQReplay,
 
 	// 通配符
 	ScopeAll,
@@ -153,6 +176,7 @@ func GetAllScopeInfos() []ScopeInfo {
 		// 探针权限
 		{Name: ScopeProbeIngest, Description: "Upload flow events and PCAP index", Category: "probe"},
 		{Name: ScopeProbeMetrics, Description: "Report probe metrics", Category: "probe"},
+		{Name: ScopeProbeWrite, Description: "Manage probe configuration, certificate rotation and upgrades", Category: "probe"},
 
 		// 用户权限
 		{Name: ScopeUserRead, Description: "Read users", Category: "user"},
@@ -177,12 +201,17 @@ func GetAllScopeInfos() []ScopeInfo {
 		{Name: ScopePcapCut, Description: "Cut PCAP files", Category: "pcap"},
 
 		{Name: ScopeGraphRead, Description: "Query threat graph", Category: "graph"},
+		{Name: ScopeAssetRead, Description: "Read asset inventory and topology", Category: "asset"},
+		{Name: ScopeAssetDiscover, Description: "Register discovery credentials and run active asset discovery", Category: "asset"},
+		{Name: ScopeScreenView, Description: "View readonly situational screen", Category: "screen"},
 
 		{Name: ScopeAdminAll, Description: "Full admin access", Category: "admin"},
 		{Name: ScopeAdminCrossTenant, Description: "Cross-tenant admin access", Category: "admin"},
 
 		{Name: ScopeTokenRead, Description: "Read API tokens", Category: "admin"},
 		{Name: ScopeTokenWrite, Description: "Manage API tokens", Category: "admin"},
+
+		{Name: ScopeDLQReplay, Description: "Approve and replay DLQ fallback records", Category: "admin"},
 
 		{Name: ScopeAll, Description: "Full access (all scopes)", Category: "admin"},
 	}
@@ -222,6 +251,7 @@ func IsProbeScope(scope string) bool {
 	probeScopes := map[string]bool{
 		ScopeProbeIngest:  true,
 		ScopeProbeMetrics: true,
+		ScopeProbeWrite:   true,
 	}
 	return probeScopes[scope]
 }

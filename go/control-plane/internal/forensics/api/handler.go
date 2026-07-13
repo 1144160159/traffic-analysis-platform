@@ -11,6 +11,9 @@ package api
 
 import (
 	"context"
+	"crypto/sha256"
+	"database/sql"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -21,6 +24,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 	"golang.org/x/time/rate"
@@ -42,6 +46,7 @@ type Handler struct {
 	s3Client    *s3client.S3Client
 	taskRepo    *repository.TaskRepository
 	auditLogger *audit.Logger
+	auditDB     *sql.DB
 	logger      *zap.Logger
 
 	// ========== 修复 L2: 添加限流器 ==========
@@ -71,6 +76,11 @@ func NewHandler(
 	}
 }
 
+// SetAuditDB enables synchronous audit_logs writes in addition to Kafka audit publishing.
+func (h *Handler) SetAuditDB(db *sql.DB) {
+	h.auditDB = db
+}
+
 // RegisterRoutes 注册路由
 func (h *Handler) RegisterRoutes(r *mux.Router) {
 	// 异步裁剪任务（推荐）
@@ -87,6 +97,9 @@ func (h *Handler) RegisterRoutes(r *mux.Router) {
 
 	// 预签名 URL
 	r.HandleFunc("/api/v1/pcap/presign", h.GetPresignedURL).Methods("POST")
+
+	// 完整性校验
+	r.HandleFunc("/api/v1/pcap/verify", h.VerifyPCAP).Methods("POST")
 
 	// 统计信息
 	r.HandleFunc("/api/v1/pcap/stats", h.GetStats).Methods("GET")
@@ -163,6 +176,98 @@ func (h *Handler) checkCrossTenantAccess(ctx context.Context, userTenantID, reso
 	}
 
 	return false
+}
+
+func (h *Handler) normalizeResultKey(rawKey string) (string, string, error) {
+	key, err := url.PathUnescape(rawKey)
+	if err != nil {
+		return "", "", fmt.Errorf("invalid key encoding")
+	}
+
+	key = filepath.Clean(key)
+	if key == "." ||
+		strings.Contains(key, "..") ||
+		strings.HasPrefix(key, "/") ||
+		strings.HasPrefix(key, "\\") ||
+		strings.Contains(key, "\\") {
+		return "", "", fmt.Errorf("invalid key format")
+	}
+
+	parts := strings.Split(key, "/")
+	if len(parts) < 4 || parts[0] != "results" || parts[1] == "" {
+		return "", "", fmt.Errorf("invalid result key format")
+	}
+
+	return key, parts[1], nil
+}
+
+func currentTenantID(ctx context.Context) string {
+	tenantID := httpx.GetTenantID(ctx)
+	if tenantID == "" {
+		return "default"
+	}
+	return tenantID
+}
+
+func (h *Handler) registeredResultSHA256(ctx context.Context, key string) string {
+	if h.taskRepo == nil {
+		return ""
+	}
+	task, err := h.taskRepo.GetByResultFileKey(ctx, key)
+	if err != nil || task == nil {
+		return ""
+	}
+	return strings.ToLower(strings.TrimSpace(task.ResultSHA256))
+}
+
+func (h *Handler) computeObjectSHA256(ctx context.Context, key string) (string, int64, error) {
+	obj, err := h.s3Client.GetObject(ctx, key)
+	if err != nil {
+		return "", 0, err
+	}
+	defer obj.Close()
+
+	hasher := sha256.New()
+	size, err := io.Copy(hasher, obj)
+	if err != nil {
+		return "", 0, err
+	}
+
+	return hex.EncodeToString(hasher.Sum(nil)), size, nil
+}
+
+func (h *Handler) recordPcapAudit(ctx context.Context, r *http.Request, eventType audit.EventType, tenantID, userID, fileKey string, detail map[string]interface{}) {
+	if h.auditLogger != nil {
+		h.auditLogger.LogPcapAccess(ctx, eventType, tenantID, userID, fileKey, detail)
+	}
+	if h.auditDB == nil {
+		return
+	}
+
+	if detail == nil {
+		detail = map[string]interface{}{}
+	}
+	detailJSON, err := json.Marshal(detail)
+	if err != nil {
+		h.logger.Warn("Failed to marshal PCAP audit detail", zap.Error(err))
+		detailJSON = []byte("{}")
+	}
+
+	var userIDValue interface{}
+	if parsed, err := uuid.Parse(userID); err == nil {
+		userIDValue = parsed.String()
+	}
+
+	if _, err := h.auditDB.ExecContext(ctx, `
+		INSERT INTO audit_logs (tenant_id, user_id, action, object_type, object_id, detail, ip_addr, user_agent)
+		VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8)
+	`, tenantID, userIDValue, string(eventType), "pcap", fileKey, string(detailJSON), httpx.GetClientIP(r), r.UserAgent()); err != nil {
+		h.logger.Warn("Failed to write PCAP audit log",
+			zap.String("tenant_id", tenantID),
+			zap.String("file_key", fileKey),
+			zap.String("action", string(eventType)),
+			zap.Error(err))
+	}
 }
 
 // ========== API 处理方法 ==========
@@ -415,6 +520,13 @@ func (h *Handler) CancelJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	h.recordPcapAudit(ctx, r, audit.EventTypePcapCancel, job.TenantID, httpx.GetUserID(ctx), jobID, map[string]interface{}{
+		"mode":            "cancel",
+		"job_id":          jobID,
+		"previous_status": job.Status,
+		"task_type":       job.TaskType,
+	})
+
 	rw.Success(map[string]string{
 		"job_id": jobID,
 		"status": "cancelled",
@@ -595,66 +707,18 @@ func (h *Handler) DownloadPCAP(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	key := vars["key"]
 
-	// ========== 修复 H2: 完整的路径遍历防护 ==========
-
-	// 1. URL 解码
-	key, err := url.PathUnescape(key)
+	key, fileTenantID, err := h.normalizeResultKey(key)
 	if err != nil {
-		h.logger.Warn("Invalid URL encoding in file key",
-			zap.String("original_key", vars["key"]),
+		h.logger.Warn("Invalid PCAP result key",
+			zap.String("key", vars["key"]),
+			zap.String("client_ip", maskIP(httpx.GetClientIP(r))),
 			zap.Error(err))
-		http.Error(w, "Invalid file key encoding", http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	// 2. 路径规范化
-	key = filepath.Clean(key)
-
-	// 3. 严格验证
-	if strings.Contains(key, "..") ||
-		strings.HasPrefix(key, "/") ||
-		strings.HasPrefix(key, "\\") ||
-		strings.Contains(key, "\\") {
-		h.logger.Warn("Path traversal attempt detected",
-			zap.String("key", key),
-			zap.String("client_ip", maskIP(httpx.GetClientIP(r))))
-		http.Error(w, "Invalid file key", http.StatusBadRequest)
-		return
-	}
-
-	// 4. 白名单验证
-	allowedPrefixes := []string{"results/", "forensics/"}
-	hasValidPrefix := false
-	for _, prefix := range allowedPrefixes {
-		if strings.HasPrefix(key, prefix) {
-			hasValidPrefix = true
-			break
-		}
-	}
-	if !hasValidPrefix {
-		h.logger.Warn("File key not in whitelist",
-			zap.String("key", key))
-		http.Error(w, "Invalid file key", http.StatusBadRequest)
-		return
-	}
-
-	// ========== 修复 H1: 提取租户信息并验证权限 ==========
-	userTenantID := httpx.GetTenantID(ctx)
-	if userTenantID == "" {
-		userTenantID = "default"
-	}
-
-	// 期望的 key 格式：results/{tenant_id}/{date}/{job_id}.pcap
-	parts := strings.Split(key, "/")
-	if len(parts) < 4 || parts[0] != "results" {
-		h.logger.Warn("Invalid file key format",
-			zap.String("key", key))
-		http.Error(w, "Invalid file key format", http.StatusBadRequest)
-		return
-	}
-	fileTenantID := parts[1]
 
 	// 租户隔离检查
+	userTenantID := currentTenantID(ctx)
 	if !h.checkCrossTenantAccess(ctx, userTenantID, fileTenantID) {
 		h.logger.Warn("Cross-tenant download denied",
 			zap.String("user_tenant", userTenantID),
@@ -681,14 +745,22 @@ func (h *Handler) DownloadPCAP(w http.ResponseWriter, r *http.Request) {
 	}
 	defer obj.Close()
 
-	// 记录审计日志
-	if h.auditLogger != nil {
-		userID := httpx.GetUserID(ctx)
-		h.auditLogger.LogPcapAccess(ctx, audit.EventTypePcapDownload, fileTenantID, userID, key, nil)
+	resultSHA256 := h.registeredResultSHA256(ctx, key)
+
+	userID := httpx.GetUserID(ctx)
+	detail := map[string]interface{}{
+		"mode": "download",
 	}
+	if resultSHA256 != "" {
+		detail["sha256"] = resultSHA256
+	}
+	h.recordPcapAudit(ctx, r, audit.EventTypePcapDownload, fileTenantID, userID, key, detail)
 
 	w.Header().Set("Content-Type", "application/vnd.tcpdump.pcap")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filepath.Base(key)))
+	if resultSHA256 != "" {
+		w.Header().Set("X-Content-SHA256", resultSHA256)
+	}
 
 	if _, err := io.Copy(w, obj); err != nil {
 		h.logger.Error("Failed to stream PCAP", zap.Error(err))
@@ -705,6 +777,8 @@ type PresignRequest struct {
 type PresignResponse struct {
 	URL       string `json:"url"`
 	ExpiresAt int64  `json:"expires_at"`
+	Key       string `json:"key"`
+	SHA256    string `json:"sha256,omitempty"`
 }
 
 // GetPresignedURL 获取预签名 URL（修复版：添加租户隔离）
@@ -723,41 +797,37 @@ func (h *Handler) GetPresignedURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// ========== 修复 H2: 路径验证 ==========
-	key, err := url.PathUnescape(req.Key)
+	key, fileTenantID, err := h.normalizeResultKey(req.Key)
 	if err != nil {
-		rw.Error(http.StatusBadRequest, "INVALID_PARAMETER", "invalid key encoding", nil)
-		return
-	}
-
-	key = filepath.Clean(key)
-
-	if strings.Contains(key, "..") || strings.HasPrefix(key, "/") || strings.Contains(key, "\\") {
 		h.logger.Warn("Path traversal in presign request",
-			zap.String("key", req.Key))
-		rw.Error(http.StatusBadRequest, "INVALID_PARAMETER", "invalid key format", nil)
+			zap.String("key", req.Key),
+			zap.Error(err))
+		rw.Error(http.StatusBadRequest, "INVALID_PARAMETER", err.Error(), nil)
 		return
 	}
 
 	// ========== 修复 H1: 租户隔离 ==========
-	userTenantID := httpx.GetTenantID(ctx)
-	if userTenantID == "" {
-		userTenantID = "default"
+	userTenantID := currentTenantID(ctx)
+	if !h.checkCrossTenantAccess(ctx, userTenantID, fileTenantID) {
+		h.logger.Warn("Cross-tenant presign denied",
+			zap.String("user_tenant", userTenantID),
+			zap.String("file_tenant", fileTenantID))
+		rw.Error(http.StatusForbidden, "FORBIDDEN", "Access denied", nil)
+		return
 	}
 
-	parts := strings.Split(key, "/")
-	if len(parts) >= 2 && parts[0] == "results" {
-		fileTenantID := parts[1]
-		if !h.checkCrossTenantAccess(ctx, userTenantID, fileTenantID) {
-			h.logger.Warn("Cross-tenant presign denied",
-				zap.String("user_tenant", userTenantID),
-				zap.String("file_tenant", fileTenantID))
-			rw.Error(http.StatusForbidden, "FORBIDDEN", "Access denied", nil)
-			return
-		}
+	exists, err := h.s3Client.ObjectExists(ctx, key)
+	if err != nil {
+		h.logger.Error("Failed to stat object before presign", zap.String("key", key), zap.Error(err))
+		rw.Error(http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to check object", nil)
+		return
+	}
+	if !exists {
+		rw.Error(http.StatusNotFound, "PCAP_NOT_FOUND", "File not found", nil)
+		return
 	}
 
-	if req.Expiry == 0 {
+	if req.Expiry <= 0 {
 		req.Expiry = 3600 // 1 小时默认
 	}
 	if req.Expiry > 86400 {
@@ -772,9 +842,117 @@ func (h *Handler) GetPresignedURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	resultSHA256 := h.registeredResultSHA256(ctx, key)
+	userID := httpx.GetUserID(ctx)
+	detail := map[string]interface{}{
+		"mode":           "presign",
+		"expiry_seconds": req.Expiry,
+		"expires_at":     time.Now().Add(expiry).Unix(),
+	}
+	if resultSHA256 != "" {
+		detail["sha256"] = resultSHA256
+	}
+	h.recordPcapAudit(ctx, r, audit.EventTypePcapDownload, fileTenantID, userID, key, detail)
+
 	rw.Success(PresignResponse{
 		URL:       url,
 		ExpiresAt: time.Now().Add(expiry).Unix(),
+		Key:       key,
+		SHA256:    resultSHA256,
+	})
+}
+
+// VerifyRequest PCAP 完整性校验请求
+type VerifyRequest struct {
+	Key            string `json:"key"`
+	ExpectedSHA256 string `json:"expected_sha256,omitempty"`
+}
+
+// VerifyResponse PCAP 完整性校验响应
+type VerifyResponse struct {
+	Key              string `json:"key"`
+	TenantID         string `json:"tenant_id"`
+	SHA256           string `json:"sha256"`
+	ExpectedSHA256   string `json:"expected_sha256,omitempty"`
+	RegisteredSHA256 string `json:"registered_sha256,omitempty"`
+	Verified         bool   `json:"verified"`
+	SizeBytes        int64  `json:"size_bytes"`
+}
+
+// VerifyPCAP 计算对象 SHA-256 并与请求值或任务登记值比对。
+func (h *Handler) VerifyPCAP(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	rw := httpx.NewResponseWriter(w, ctx)
+
+	var req VerifyRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		rw.Error(http.StatusBadRequest, "INVALID_REQUEST", "Invalid request body", nil)
+		return
+	}
+	if req.Key == "" {
+		rw.Error(http.StatusBadRequest, "INVALID_PARAMETER", "key is required", nil)
+		return
+	}
+
+	key, fileTenantID, err := h.normalizeResultKey(req.Key)
+	if err != nil {
+		rw.Error(http.StatusBadRequest, "INVALID_PARAMETER", err.Error(), nil)
+		return
+	}
+
+	userTenantID := currentTenantID(ctx)
+	if !h.checkCrossTenantAccess(ctx, userTenantID, fileTenantID) {
+		h.logger.Warn("Cross-tenant integrity verification denied",
+			zap.String("user_tenant", userTenantID),
+			zap.String("file_tenant", fileTenantID))
+		rw.Error(http.StatusForbidden, "FORBIDDEN", "Access denied", nil)
+		return
+	}
+
+	exists, err := h.s3Client.ObjectExists(ctx, key)
+	if err != nil {
+		h.logger.Error("Failed to stat object before verification", zap.String("key", key), zap.Error(err))
+		rw.Error(http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to check object", nil)
+		return
+	}
+	if !exists {
+		rw.Error(http.StatusNotFound, "PCAP_NOT_FOUND", "File not found", nil)
+		return
+	}
+
+	actualSHA256, sizeBytes, err := h.computeObjectSHA256(ctx, key)
+	if err != nil {
+		h.logger.Error("Failed to compute PCAP sha256", zap.String("key", key), zap.Error(err))
+		rw.Error(http.StatusInternalServerError, "INTEGRITY_CHECK_FAILED", "Failed to compute sha256", nil)
+		return
+	}
+
+	expectedSHA256 := strings.ToLower(strings.TrimSpace(req.ExpectedSHA256))
+	registeredSHA256 := h.registeredResultSHA256(ctx, key)
+	referenceSHA256 := expectedSHA256
+	if referenceSHA256 == "" {
+		referenceSHA256 = registeredSHA256
+	}
+	verified := referenceSHA256 == "" || actualSHA256 == referenceSHA256
+
+	userID := httpx.GetUserID(ctx)
+	h.recordPcapAudit(ctx, r, audit.EventTypePcapDownload, fileTenantID, userID, key, map[string]interface{}{
+		"mode":              "integrity_verify",
+		"sha256":            actualSHA256,
+		"expected_sha256":   expectedSHA256,
+		"registered_sha256": registeredSHA256,
+		"verified":          verified,
+		"size_bytes":        sizeBytes,
+	})
+
+	rw.Success(VerifyResponse{
+		Key:              key,
+		TenantID:         fileTenantID,
+		SHA256:           actualSHA256,
+		ExpectedSHA256:   expectedSHA256,
+		RegisteredSHA256: registeredSHA256,
+		Verified:         verified,
+		SizeBytes:        sizeBytes,
 	})
 }
 

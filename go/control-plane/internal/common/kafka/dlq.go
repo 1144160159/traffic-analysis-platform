@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/segmentio/kafka-go"
+	"github.com/segmentio/kafka-go/lz4"
 	"go.uber.org/zap"
 )
 
@@ -20,6 +21,7 @@ type DLQConfig struct {
 	BatchSize   int
 	MaxRetries  int
 	RetryDelay  time.Duration
+	Security    SecurityConfig
 }
 
 type DLQMessage struct {
@@ -91,15 +93,21 @@ func NewDLQProducer(config DLQConfig, serviceName string, logger *zap.Logger) *D
 		hostname = "unknown"
 	}
 
-	writer := &kafka.Writer{
-		Addr:         kafka.TCP(config.Brokers...),
-		Balancer:     &kafka.LeastBytes{},
-		BatchSize:    config.BatchSize,
-		BatchTimeout: 100 * time.Millisecond,
-		Compression:  kafka.Lz4,
-		MaxAttempts:  config.MaxRetries,
-		Async:        false,
+	dialer, err := config.Security.Dialer("traffic-control-plane-dlq")
+	if err != nil {
+		logger.Error("Invalid Kafka DLQ security configuration", zap.Error(err))
 	}
+
+	writer := kafka.NewWriter(kafka.WriterConfig{
+		Brokers:          config.Brokers,
+		Dialer:           dialer,
+		Balancer:         &kafka.LeastBytes{},
+		BatchSize:        config.BatchSize,
+		BatchTimeout:     100 * time.Millisecond,
+		CompressionCodec: lz4.NewCompressionCodec(),
+		MaxAttempts:      config.MaxRetries,
+		Async:            false,
+	})
 
 	return &DLQProducer{
 		writer:      writer,

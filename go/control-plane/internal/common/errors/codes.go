@@ -58,6 +58,8 @@ const (
 	ErrCodeSessionNotFound        ErrorCode = "BIZ_3009"
 	ErrCodeEntityNotFound         ErrorCode = "BIZ_3010"
 	ErrCodeDedupConflict          ErrorCode = "BIZ_3011"
+	ErrCodeModelNotFound          ErrorCode = "BIZ_3012"
+	ErrCodeModelVersionNotFound   ErrorCode = "BIZ_3013"
 
 	// 资源操作错误 (4xxx)
 	ErrCodeResourceNotFound ErrorCode = "RES_4001"
@@ -111,7 +113,7 @@ func (c ErrorCode) HTTPStatus() int {
 		return 401
 	case c >= "VALID_2001" && c <= "VALID_2006":
 		return 400
-	case c >= "BIZ_3001" && c <= "BIZ_3011":
+	case c >= "BIZ_3001" && c <= "BIZ_3013":
 		if c == ErrCodeVersionConflict || c == ErrCodeConcurrentModify {
 			return 409
 		}
@@ -400,6 +402,24 @@ func registerDefaultMessages() {
 	})
 
 	RegisterMessage(&ErrorMessage{
+		Code: ErrCodeModelNotFound,
+		Template: true,
+		Messages: map[Language]string{
+			LanguageEnglish: "Model not found: %s",
+			LanguageChinese: "Model not found: %s",
+		},
+	})
+
+	RegisterMessage(&ErrorMessage{
+		Code: ErrCodeModelVersionNotFound,
+		Template: true,
+		Messages: map[Language]string{
+			LanguageEnglish: "Model version not found: %s",
+			LanguageChinese: "Model version not found: %s",
+		},
+	})
+
+	RegisterMessage(&ErrorMessage{
 		Code: ErrCodeVersionConflict,
 		Messages: map[Language]string{
 			LanguageEnglish: "Version conflict detected",
@@ -577,6 +597,8 @@ func GetAllErrorCodes() []ErrorCode {
 		ErrCodeSessionNotFound,
 		ErrCodeEntityNotFound,
 		ErrCodeDedupConflict,
+		ErrCodeModelNotFound,
+		ErrCodeModelVersionNotFound,
 
 		// 资源操作
 		ErrCodeResourceNotFound,

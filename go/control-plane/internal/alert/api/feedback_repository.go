@@ -17,8 +17,8 @@ type FeedbackRecord struct {
 	AlertID        string    `json:"alert_id" ch:"alert_id"`
 	TenantID       string    `json:"tenant_id" ch:"tenant_id"`
 	UserID         string    `json:"user_id" ch:"user_id"`
-	Label          string    `json:"label" ch:"label"`                 // TP | FP
-	ReasonCode     string    `json:"reason_code" ch:"reason_code"`     // FP 原因码
+	Label          string    `json:"label" ch:"label"`             // TP | FP
+	ReasonCode     string    `json:"reason_code" ch:"reason_code"` // FP 原因码
 	Comment        string    `json:"comment" ch:"comment"`
 	AddToWhitelist bool      `json:"add_to_whitelist" ch:"add_to_whitelist"`
 	AlertType      string    `json:"alert_type" ch:"alert_type"`       // 告警类型（冗余，方便分析）
@@ -41,8 +41,8 @@ func NewFeedbackRepository(client *storage.ClickHouseClient, logger *zap.Logger)
 
 // InitSchema 初始化反馈表
 func (r *FeedbackRepository) InitSchema(ctx context.Context) error {
-	ddl := `
-	CREATE TABLE IF NOT EXISTS traffic.alert_feedback_local ON CLUSTER traffic_cluster (
+	localDDL := `
+	CREATE TABLE IF NOT EXISTS traffic.alert_feedback_local (
 		feedback_id     String,
 		alert_id        String,
 		tenant_id       String,
@@ -55,13 +55,22 @@ func (r *FeedbackRepository) InitSchema(ctx context.Context) error {
 		severity        LowCardinality(String),
 		model_version   String,
 		rule_version    String,
-		created_at      DateTime64(3)
+		created_at      DateTime
 	) ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/alert_feedback_local', '{replica}')
 	PARTITION BY toYYYYMM(created_at)
 	ORDER BY (tenant_id, alert_id, created_at)
 	TTL created_at + INTERVAL 365 DAY
 	`
-	return r.client.Exec(ctx, ddl)
+	if err := r.client.Exec(ctx, localDDL); err != nil {
+		return err
+	}
+
+	distributedDDL := `
+	CREATE TABLE IF NOT EXISTS traffic.alert_feedback
+	AS traffic.alert_feedback_local
+	ENGINE = Distributed(traffic_cluster, traffic, alert_feedback_local, rand())
+	`
+	return r.client.Exec(ctx, distributedDDL)
 }
 
 // Insert 插入反馈记录
@@ -77,7 +86,7 @@ func (r *FeedbackRepository) Insert(ctx context.Context, record *FeedbackRecord)
 
 // GetByAlertID 查询告警的所有反馈记录
 func (r *FeedbackRepository) GetByAlertID(ctx context.Context, tenantID, alertID string) ([]*FeedbackRecord, error) {
-	sql := `SELECT feedback_id, alert_id, tenant_id, user_id, label, reason_code, comment, add_to_whitelist, alert_type, severity, model_version, rule_version, created_at FROM traffic.alert_feedback FINAL WHERE tenant_id = ? AND alert_id = ? ORDER BY created_at DESC`
+	sql := `SELECT feedback_id, alert_id, tenant_id, user_id, label, reason_code, comment, add_to_whitelist, alert_type, severity, model_version, rule_version, created_at FROM traffic.alert_feedback WHERE tenant_id = ? AND alert_id = ? ORDER BY created_at DESC`
 	rows, err := r.client.Query(ctx, sql, tenantID, alertID)
 	if err != nil {
 		return nil, fmt.Errorf("query feedback: %w", err)
@@ -88,7 +97,7 @@ func (r *FeedbackRepository) GetByAlertID(ctx context.Context, tenantID, alertID
 
 // GetStats 获取反馈统计（按模型版本/规则版本聚合 TP/FP 分布）
 func (r *FeedbackRepository) GetStats(ctx context.Context, tenantID string, since time.Duration) (map[string]interface{}, error) {
-	sql := `SELECT label, count() as cnt, avg(if(label='FP',1,0)) as fp_rate FROM traffic.alert_feedback FINAL WHERE tenant_id = ? AND created_at >= now() - INTERVAL 30 DAY GROUP BY label`
+	sql := `SELECT label, count() as cnt FROM traffic.alert_feedback WHERE tenant_id = ? AND created_at >= now() - INTERVAL 30 DAY GROUP BY label`
 	rows, err := r.client.Query(ctx, sql, tenantID)
 	if err != nil {
 		return nil, fmt.Errorf("query feedback stats: %w", err)
@@ -98,14 +107,15 @@ func (r *FeedbackRepository) GetStats(ctx context.Context, tenantID string, sinc
 	stats := map[string]interface{}{"tp_count": int64(0), "fp_count": int64(0), "total": int64(0), "fp_rate": float64(0)}
 	for rows.Next() {
 		var label string
-		var cnt int64
+		var cnt uint64
 		if err := rows.Scan(&label, &cnt); err != nil {
 			continue
 		}
+		count := int64(cnt)
 		if label == "TP" {
-			stats["tp_count"] = cnt
+			stats["tp_count"] = count
 		} else if label == "FP" {
-			stats["fp_count"] = cnt
+			stats["fp_count"] = count
 		}
 	}
 	tp := stats["tp_count"].(int64)
@@ -123,23 +133,23 @@ func (r *FeedbackRepository) GetFPRanking(ctx context.Context, tenantID string, 
 	if limit <= 0 {
 		limit = 10
 	}
-	sql := `SELECT reason_code, count() as cnt FROM traffic.alert_feedback FINAL WHERE tenant_id = ? AND label = 'FP' AND created_at >= now() - INTERVAL 30 DAY GROUP BY reason_code ORDER BY cnt DESC LIMIT ?`
+	sql := `SELECT reason_code, count() as cnt FROM traffic.alert_feedback WHERE tenant_id = ? AND label = 'FP' AND created_at >= now() - INTERVAL 30 DAY GROUP BY reason_code ORDER BY cnt DESC LIMIT ?`
 	rows, err := r.client.Query(ctx, sql, tenantID, limit)
 	if err != nil {
 		return nil, fmt.Errorf("query fp ranking: %w", err)
 	}
 	defer rows.Close()
 
-	var ranking []map[string]interface{}
+	ranking := make([]map[string]interface{}, 0)
 	for rows.Next() {
 		var code string
-		var cnt int64
+		var cnt uint64
 		if err := rows.Scan(&code, &cnt); err != nil {
 			continue
 		}
 		ranking = append(ranking, map[string]interface{}{
 			"reason_code": code,
-			"count":       cnt,
+			"count":       int64(cnt),
 			"description": FPReasonCodes[code],
 		})
 	}

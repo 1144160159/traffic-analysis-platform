@@ -99,7 +99,8 @@ func main() {
 	listener := startGRPCServer(grpcServer, cfg.Server.GRPCAddr, logger)
 	defer listener.Close()
 
-	go startHealthEndpoint(producer, tokenCache, logger)
+	replayManager := initDLQReplayManager(dlqProducer, rdb, logger)
+	go startHealthEndpoint(producer, tokenCache, replayManager, cfg.JWT, logger)
 
 	gracefulShutdown(
 		logger,
@@ -149,6 +150,33 @@ func logConfigSummary(logger *zap.Logger, cfg *config.Config) {
 }
 
 func initRedis(cfg config.RedisConfig, logger *zap.Logger) redis.UniversalClient {
+	if len(cfg.SentinelAddrs) > 0 && cfg.SentinelMaster != "" {
+		rdb := redis.NewFailoverClient(&redis.FailoverOptions{
+			MasterName:    cfg.SentinelMaster,
+			SentinelAddrs: cfg.SentinelAddrs,
+			Password:      cfg.Password,
+			DB:            cfg.DB,
+			DialTimeout:   cfg.DialTimeout,
+			ReadTimeout:   cfg.ReadTimeout,
+			WriteTimeout:  cfg.WriteTimeout,
+			PoolSize:      cfg.PoolSize,
+			MinIdleConns:  cfg.MinIdleConns,
+		})
+
+		ctx, cancel := context.WithTimeout(context.Background(), config.HealthCheckTimeout)
+		defer cancel()
+
+		if err := rdb.Ping(ctx).Err(); err != nil {
+			logger.Warn("Failed to connect to Redis Sentinel master, will use fallback", zap.Error(err))
+			return nil
+		}
+
+		logger.Info("Connected to Redis Sentinel",
+			zap.Strings("sentinels", cfg.SentinelAddrs),
+			zap.String("master", cfg.SentinelMaster))
+		return rdb
+	}
+
 	if len(cfg.Addrs) == 0 || cfg.Addrs[0] == "" {
 		logger.Warn("Redis not configured, some features will be disabled")
 		return nil
@@ -178,11 +206,7 @@ func initRedis(cfg config.RedisConfig, logger *zap.Logger) redis.UniversalClient
 }
 
 func initPostgreSQL(cfg config.PostgresConfig, logger *zap.Logger) (*sql.DB, *auth.PGTokenValidator) {
-	pgDSN := os.Getenv(config.EnvPostgresDSN)
-	if pgDSN == "" {
-		pgDSN = cfg.DSN
-	}
-
+	pgDSN := cfg.ConnectionString()
 	if pgDSN == "" {
 		logger.Info("PostgreSQL not configured, token validation will rely on Redis only")
 		return nil, nil
@@ -275,6 +299,7 @@ func initKafkaProducer(cfg config.KafkaConfig, logger *zap.Logger) *queue.Produc
 		RequiredAcks:      cfg.RequiredAcks,
 		MaxRetries:        cfg.MaxRetries,
 		EnableIdempotence: cfg.EnableIdempotence,
+		Security:          cfg.Security,
 	}
 
 	producer, err := queue.NewProducer(producerCfg, logger)
@@ -295,6 +320,7 @@ func initDLQProducer(cfg *config.Config, logger *zap.Logger) *dlq.Producer {
 	dlqConfig.SessionTopic = cfg.Kafka.SessionTopic
 	dlqConfig.PcapTopic = cfg.Kafka.PcapTopic
 	dlqConfig.EnableFallback = true
+	dlqConfig.Security = cfg.Kafka.Security
 
 	fallbackDir := os.Getenv(config.EnvDLQFallbackDir)
 	if fallbackDir == "" {
@@ -302,13 +328,30 @@ func initDLQProducer(cfg *config.Config, logger *zap.Logger) *dlq.Producer {
 	}
 	dlqConfig.FallbackDir = fallbackDir
 
-	dlqProducer := dlq.NewProducer(dlqConfig, logger)
+	dlqProducer, err := dlq.NewProducer(dlqConfig, logger)
+	if err != nil {
+		logger.Fatal("Failed to create DLQ producer", zap.Error(err))
+	}
 
 	logger.Info("DLQ producer initialized",
 		zap.String("dlq_topic", dlqConfig.DLQTopic),
 		zap.String("fallback_dir", fallbackDir))
 
 	return dlqProducer
+}
+
+func initDLQReplayManager(dlqProducer *dlq.Producer, rdb redis.UniversalClient, logger *zap.Logger) *dlq.ReplayManager {
+	var store dlq.ReplayIdempotencyStore
+	if rdb != nil {
+		store = dlq.NewRedisReplayIdempotencyStore(rdb, "", config.DefaultDLQReplayIdempotencyTTL, logger)
+		logger.Info("DLQ replay idempotency store initialized",
+			zap.String("backend", "redis"),
+			zap.Duration("ttl", config.DefaultDLQReplayIdempotencyTTL))
+	} else {
+		store = dlq.NewMemoryReplayIdempotencyStore()
+		logger.Warn("DLQ replay idempotency store falling back to memory; duplicate suppression is process-local")
+	}
+	return dlq.NewReplayManager(dlqProducer, store, logger)
 }
 
 func initDeduplicator(cfg config.DedupConfig, rdb redis.UniversalClient, logger *zap.Logger) *dedup.Deduplicator {
@@ -607,7 +650,7 @@ func loadTLSConfig(cfg config.ServerConfig) (*tls.Config, error) {
 	}, nil
 }
 
-func startHealthEndpoint(producer *queue.Producer, tokenCache *auth.TokenCache, logger *zap.Logger) {
+func startHealthEndpoint(producer *queue.Producer, tokenCache *auth.TokenCache, replayManager *dlq.ReplayManager, jwtConfig config.JWTConfig, logger *zap.Logger) {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -660,6 +703,8 @@ func startHealthEndpoint(producer *queue.Producer, tokenCache *auth.TokenCache, 
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status":"alive"}`))
 	})
+
+	dlq.NewReplayHTTPHandler(replayManager, auth.NewReplayTokenValidator(tokenCache, jwtConfig, logger), logger).Register(mux)
 
 	healthAddr := os.Getenv(config.EnvHealthAddr)
 	if healthAddr == "" {

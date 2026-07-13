@@ -192,9 +192,14 @@ func (p *Provider) GetAuthURL(state string) string {
 	params.Set("client_id", p.config.ClientID)
 	params.Set("redirect_uri", p.config.RedirectURL)
 	params.Set("response_type", "code")
-	params.Set("scope", p.config.Scopes)
+	params.Set("scope", normalizeScopes(p.config.Scopes))
 	params.Set("state", state)
 	return p.authURL + "?" + params.Encode()
+}
+
+func normalizeScopes(scopes string) string {
+	parts := strings.Fields(strings.ReplaceAll(scopes, ",", " "))
+	return strings.Join(parts, " ")
 }
 
 // ExchangeCode 用授权码换取令牌
@@ -283,6 +288,7 @@ func (p *Provider) ValidateIDToken(tokenString string) (*model.OIDCClaims, error
 	}
 	if matchingKey == nil {
 		// Key not found, try refreshing JWKS
+		p.jwksExpiry.Store(time.Time{})
 		if err := p.refreshJWKS(); err != nil {
 			return nil, fmt.Errorf("failed to refresh JWKS: %w", err)
 		}
