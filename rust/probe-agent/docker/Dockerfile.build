@@ -1,0 +1,29 @@
+FROM rust:1.76-slim
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install OS packages needed for building eBPF and native crates
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential curl git pkg-config libelf-dev llvm clang clang-format \
+    libbpf-dev libssl-dev linux-headers-generic lld cmake ca-certificates tzdata && \
+    rm -rf /var/lib/apt/lists/*
+
+ENV PATH="/usr/local/cargo/bin:${PATH}"
+
+# Ensure rustup available and install nightly toolchain for bpf target
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y && \
+    export PATH=/root/.cargo/bin:$PATH && \
+    rustup default stable && rustup component add rustfmt clippy || true
+
+# Install a nightly toolchain and target for eBPF builds (may be overridden by .cargo/config)
+RUN /root/.cargo/bin/rustup toolchain install nightly-2025-12-01 && \
+    /root/.cargo/bin/rustup target add bpfel-unknown-none --toolchain nightly-2025-12-01 || true
+
+WORKDIR /workspace
+
+COPY . /workspace
+
+# Build entire workspace (including ebpf) using nightly when needed
+RUN /root/.cargo/bin/cargo build --release --workspace --verbose || true
+
+CMD ["/bin/bash"]

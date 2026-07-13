@@ -1,11 +1,12 @@
 # rust/probe-agent/probe-agent/ebpf/Cargo.toml
 [package]
-name = "probe-ebpf"
+name = "probe-agent-ebpf"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-aya-bpf = "0.1"
+aya-ebpf = "0.1"
+aya-log-ebpf = "0.1"
 
 [[bin]]
 name = "xdp_redirect"
@@ -14,10 +15,21 @@ path = "src/main.rs"
 [profile.dev]
 opt-level = 3
 debug = false
+debug-assertions = false
+overflow-checks = false
+lto = true
 panic = "abort"
+incremental = false
+codegen-units = 1
+rpath = false
 
 [profile.release]
-lto = true
 opt-level = 3
-codegen-units = 1
+debug = false
+debug-assertions = false
+overflow-checks = false
+lto = true
 panic = "abort"
+incremental = false
+codegen-units = 1
+rpath = false

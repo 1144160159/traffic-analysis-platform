@@ -1,56 +1,86 @@
-#!/usr/bin/env bash
-# rust/probe-agent/scripts/generate-mtls-certs.sh
+#!/bin/bash
+# =============================================================================
+# mTLS 证书生成 — Probe Agent ↔ Ingest Gateway 双向 TLS 认证
+#
+# 生成:
+#   ca-cert.pem  / ca-key.pem          (CA 根证书)
+#   server-cert.pem / server-key.pem    (Ingest Gateway 服务端)
+#   client-cert.pem / client-key.pem    (Probe Agent 客户端)
+#
+# 用法:
+#   ./scripts/generate-mtls-certs.sh
+#   kubectl create secret generic probe-agent-certs \
+#     --from-file=ca-cert.pem --from-file=client-cert.pem --from-file=client-key.pem \
+#     -n traffic-analysis
+#   kubectl create secret generic ingest-gateway-certs \
+#     --from-file=ca-cert.pem --from-file=server-cert.pem --from-file=server-key.pem \
+#     -n traffic-analysis
+# =============================================================================
 set -euo pipefail
 
-CERT_DIR="${CERT_DIR:-./certs}"
-VALIDITY_DAYS="${VALIDITY_DAYS:-365}"
+OUT_DIR="${1:-./certs}"
+mkdir -p "$OUT_DIR"
+cd "$OUT_DIR"
 
-log_info() {
-    echo -e "\033[0;32m[INFO]\033[0m $1"
-}
+echo "Generating mTLS certificates in $OUT_DIR..."
 
-mkdir -p "$CERT_DIR"
-cd "$CERT_DIR"
+# 1. CA 根证书
+openssl genrsa -out ca-key.pem 4096 2>/dev/null
+openssl req -new -x509 -days 3650 -key ca-key.pem -out ca-cert.pem \
+  -subj "/C=CN/ST=Beijing/L=Beijing/O=TrafficAnalysis/CN=Traffic Root CA" 2>/dev/null
+echo "  ✅ CA certificate"
 
-log_info "========================================="
-log_info " Generating mTLS Certificates"
-log_info "========================================="
+# 2. 服务端证书 (Ingest Gateway)
+openssl genrsa -out server-key.pem 2048 2>/dev/null
+cat > server-ext.cnf << EOF
+[req]
+distinguished_name = req_distinguished_name
+req_extensions = v3_req
+[req_distinguished_name]
+[v3_req]
+subjectAltName = DNS:ingest-gateway,DNS:ingest-gateway.traffic-analysis.svc,DNS:ingest-gateway.traffic-analysis.svc.cluster.local,IP:10.0.5.210
+keyUsage = digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth
+EOF
+openssl req -new -key server-key.pem -out server.csr \
+  -subj "/C=CN/ST=Beijing/L=Beijing/O=TrafficAnalysis/CN=ingest-gateway" 2>/dev/null
+openssl x509 -req -days 365 -in server.csr -CA ca-cert.pem -CAkey ca-key.pem \
+  -CAcreateserial -out server-cert.pem -extfile server-ext.cnf -extensions v3_req 2>/dev/null
+rm -f server.csr server-ext.cnf
+echo "  ✅ Server certificate (ingest-gateway)"
 
-# 1. 生成 CA
-log_info "Generating CA..."
-openssl genrsa -out ca.key 4096
-openssl req -new -x509 -days $VALIDITY_DAYS -key ca.key -out ca.crt \
-    -subj "/C=CN/ST=Beijing/L=Beijing/O=TrafficAnalysis/CN=CA"
+# 3. 客户端证书 (Probe Agent)
+openssl genrsa -out client-key.pem 2048 2>/dev/null
+cat > client-ext.cnf << EOF
+[req]
+distinguished_name = req_distinguished_name
+req_extensions = v3_req
+[req_distinguished_name]
+[v3_req]
+keyUsage = digitalSignature, keyEncipherment
+extendedKeyUsage = clientAuth
+EOF
+openssl req -new -key client-key.pem -out client.csr \
+  -subj "/C=CN/ST=Beijing/L=Beijing/O=TrafficAnalysis/CN=probe-agent" 2>/dev/null
+openssl x509 -req -days 365 -in client.csr -CA ca-cert.pem -CAkey ca-key.pem \
+  -CAcreateserial -out client-cert.pem -extfile client-ext.cnf -extensions v3_req 2>/dev/null
+rm -f client.csr client-ext.cnf
+echo "  ✅ Client certificate (probe-agent)"
 
-# 2. 生成服务端证书
-log_info "Generating server certificate..."
-openssl genrsa -out server.key 2048
-openssl req -new -key server.key -out server.csr \
-    -subj "/C=CN/ST=Beijing/L=Beijing/O=TrafficAnalysis/CN=ingest-gateway"
-openssl x509 -req -days $VALIDITY_DAYS -in server.csr \
-    -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt
-
-# 3. 生成客户端证书
-log_info "Generating client certificate..."
-openssl genrsa -out client.key 2048
-openssl req -new -key client.key -out client.csr \
-    -subj "/C=CN/ST=Beijing/L=Beijing/O=TrafficAnalysis/CN=probe-agent"
-openssl x509 -req -days $VALIDITY_DAYS -in client.csr \
-    -CA ca.crt -CAkey ca.key -CAcreateserial -out client.crt
-
-# 清理临时文件
-rm -f *.csr *.srl
-
-log_info "========================================="
-log_info "✓ Certificates generated successfully"
-log_info "========================================="
-log_info ""
-log_info "Files created in $CERT_DIR:"
-log_info "  ca.crt, ca.key       - Certificate Authority"
-log_info "  server.crt, server.key - Server certificates"
-log_info "  client.crt, client.key - Client certificates"
-log_info ""
-log_info "Usage:"
-log_info "  Server: --tls-cert=server.crt --tls-key=server.key --tls-ca=ca.crt"
-log_info "  Client: --tls-cert=client.crt --tls-key=client.key --tls-ca=ca.crt"
-log_info ""
+# Summary
+echo ""
+echo "=== Certificates Generated ==="
+ls -la *.pem 2>/dev/null
+echo ""
+echo "Probe Agent config.yaml:"
+echo "  tls_ca_cert: /etc/probe-agent/certs/ca-cert.pem"
+echo "  tls_client_cert: /etc/probe-agent/certs/client-cert.pem"
+echo "  tls_client_key: /etc/probe-agent/certs/client-key.pem"
+echo ""
+echo "K8s Secret creation:"
+echo "  kubectl create secret generic probe-agent-certs \\"
+echo "    --from-file=ca-cert.pem --from-file=client-cert.pem --from-file=client-key.pem \\"
+echo "    -n traffic-analysis"
+echo "  kubectl create secret generic ingest-gateway-certs \\"
+echo "    --from-file=ca-cert.pem --from-file=server-cert.pem --from-file=server-key.pem \\"
+echo "    -n traffic-analysis"

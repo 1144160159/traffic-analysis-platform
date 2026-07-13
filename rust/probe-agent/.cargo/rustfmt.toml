@@ -1,0 +1,11 @@
+# 设置最大行宽为 100 字符 (默认是 100，也可以设为 80 或 120)
+max_width = 200
+
+# 设置缩进风格 (Visual, Block, etc.)
+indent_style = "Block"
+
+# 是否把 import 排序 (std, external, crate)
+reorder_imports = true
+
+# 强制每行代码的结尾不留空格
+newline_style = "Unix"

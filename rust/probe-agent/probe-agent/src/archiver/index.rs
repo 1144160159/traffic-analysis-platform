@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-/// PCAP 索引元数据（将在 S1.8 发送到 Kafka）
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PcapIndexMeta {
     pub tenant_id: String,
