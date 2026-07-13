@@ -1,0 +1,41 @@
+{
+  "usage": "Login page left hero independent hologram shield emblem; includes shield, local rings, local data rain and pedestal glow only, not the page background, login panel, form, card or full screenshot.",
+  "source": {
+    "image": "evidence/ui-image-breakdowns/pages/login/target.png",
+    "bbox": {
+      "x": 220,
+      "y": 210,
+      "w": 515,
+      "h": 310
+    },
+    "policy": "independent hero emblem/icon crop only; target PNG remains evidence-only and is not served from web public assets"
+  },
+  "format": "bitmap screenshot icon",
+  "variants": [
+    {
+      "file": "login-hologram-shield-screenshot-24.png",
+      "width": 24,
+      "height": 24,
+      "scale": 1
+    },
+    {
+      "file": "login-hologram-shield-screenshot@2x.png",
+      "width": 48,
+      "height": 48,
+      "scale": 2
+    },
+    {
+      "file": "login-hologram-shield-screenshot@3x.png",
+      "width": 72,
+      "height": 72,
+      "scale": 3
+    },
+    {
+      "file": "login-hologram-shield-screenshot.png",
+      "width": 515,
+      "height": 310,
+      "scale": "display-source"
+    }
+  ],
+  "integration": "web/ui/src/pages/LoginPage.tsx uses this screenshot icon for the visual-target hologram shield; surrounding page background and login panel remain code-rendered."
+}

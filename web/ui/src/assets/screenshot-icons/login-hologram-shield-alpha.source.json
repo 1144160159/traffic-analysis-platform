@@ -1,0 +1,42 @@
+{
+  "usage": "Login page left hero independent hologram shield emblem with alpha-masked dark background. Content consistency is prioritized over exact brightness/opacity; removes hard rectangular crop background while preserving the shield, rings, data rain and pedestal glow.",
+  "source": {
+    "image": "evidence/ui-image-breakdowns/pages/login/target.png",
+    "bbox": {
+      "x": 220,
+      "y": 210,
+      "w": 515,
+      "h": 310
+    },
+    "alpha_processing": "OpenCV B/G/R brightness and cyan-score threshold with Gaussian feathering to remove the rectangular crop background before compositing.",
+    "policy": "independent hero emblem/icon crop only; target PNG remains evidence-only and is not served from web public assets"
+  },
+  "format": "bitmap screenshot icon with alpha channel",
+  "variants": [
+    {
+      "file": "login-hologram-shield-alpha-24.png",
+      "width": 24,
+      "height": 24,
+      "scale": 1
+    },
+    {
+      "file": "login-hologram-shield-alpha@2x.png",
+      "width": 48,
+      "height": 48,
+      "scale": 2
+    },
+    {
+      "file": "login-hologram-shield-alpha@3x.png",
+      "width": 72,
+      "height": 72,
+      "scale": 3
+    },
+    {
+      "file": "login-hologram-shield-alpha.png",
+      "width": 515,
+      "height": 310,
+      "scale": "display-source"
+    }
+  ],
+  "integration": "web/ui/src/pages/LoginPage.tsx uses this alpha screenshot icon for the visual-target hologram shield; surrounding page background and login panel are separate scoped resources or code-rendered controls according to the current gate."
+}

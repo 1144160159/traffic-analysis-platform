@@ -1,0 +1,47 @@
+{
+  "usage": "AppShell topbar brand logo strictly derived from the screen target topbar shield reference. Keeps only the dark blue outer shield and inner line emblem shown in the target image.",
+  "source": {
+    "image": "evidence/ui-image-breakdowns/pages/screen/target-topbar-logo-context-r53-crop.png",
+    "bbox": {
+      "x": 8,
+      "y": 10,
+      "w": 46,
+      "h": 56
+    },
+    "mask": "manual shield polygon alpha mask around the target topbar logo only",
+    "policy": "independent brand icon only; no page background, full page, card, panel, form, or API-driven business diagram is used as a resource"
+  },
+  "format": "bitmap screenshot icon",
+  "variants": [
+    {
+      "file": "screen-topbar-shield-exact-24.png",
+      "width": 24,
+      "height": 24,
+      "scale": 1
+    },
+    {
+      "file": "screen-topbar-shield-exact@2x.png",
+      "width": 48,
+      "height": 48,
+      "scale": 2
+    },
+    {
+      "file": "screen-topbar-shield-exact@3x.png",
+      "width": 72,
+      "height": 72,
+      "scale": 3
+    },
+    {
+      "file": "screen-topbar-shield-exact.png",
+      "width": 128,
+      "height": 128,
+      "scale": "preview-source"
+    }
+  ],
+  "constraints": {
+    "contains_business_page_ui": false,
+    "contains_business_dynamic_diagram": false,
+    "contains_page_background": false,
+    "contains_panel_or_card": false
+  }
+}

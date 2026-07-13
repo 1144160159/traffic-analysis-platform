@@ -1,0 +1,42 @@
+{
+  "usage": "Login page main shield independent screenshot icon; cropped to shield body and inner 中 emblem only.",
+  "source": {
+    "image": "evidence/ui-image-breakdowns/pages/login/target.png",
+    "bbox": {
+      "x": 390,
+      "y": 250,
+      "w": 195,
+      "h": 248
+    },
+    "mask": "tight polygon alpha mask follows shield outline; outer hologram rings, ground light, buildings, form, panel and page background are removed",
+    "policy": "independent icon/emblem only; target PNG remains evidence-only and is not served from public assets"
+  },
+  "format": "bitmap screenshot icon",
+  "variants": [
+    {
+      "file": "login-shield-screenshot-24.png",
+      "width": 24,
+      "height": 24,
+      "scale": 1
+    },
+    {
+      "file": "login-shield-screenshot@2x.png",
+      "width": 48,
+      "height": 48,
+      "scale": 2
+    },
+    {
+      "file": "login-shield-screenshot@3x.png",
+      "width": 72,
+      "height": 72,
+      "scale": 3
+    },
+    {
+      "file": "login-shield-screenshot.png",
+      "width": 195,
+      "height": 248,
+      "scale": "display-source"
+    }
+  ],
+  "integration": "web/ui/src/pages/LoginPage.tsx uses this screenshot icon inside .taf-login__shield-core; hologram rings and ambient effects stay code-rendered."
+}

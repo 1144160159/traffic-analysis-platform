@@ -1,0 +1,165 @@
+# =============================================================================
+# Kubernetes Deployment - Traffic Analysis Platform Web UI
+# =============================================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: traffic-ui
+  namespace: traffic-analysis
+  labels:
+    app: traffic-ui
+    component: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: traffic-ui
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: traffic-ui
+        component: frontend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9113"
+    spec:
+      containers:
+        - name: traffic-ui
+          image: traffic-analysis/web-ui:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          env:
+            - name: API_BACKEND_HOST
+              value: "apisix.gateway.svc"
+            - name: API_BACKEND_PORT
+              value: "9080"
+            - name: WS_BACKEND_HOST
+              value: "apisix.gateway.svc"
+            - name: WS_BACKEND_PORT
+              value: "9080"
+            - name: API_BASE_URL
+              value: "/api"
+            - name: WS_URL
+              value: "/ws"
+            - name: ARKIME_BASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: traffic-ui-config
+                  key: arkime-base-url
+            - name: AUTH_ENABLED
+              value: "true"
+            - name: USE_MOCK
+              value: "false"
+            - name: ENABLE_REALTIME
+              value: "true"
+            - name: SCREEN_ACCESS_MODE
+              value: "protected"
+            - name: DESKTOP_SMOKE_TOKEN_ENABLED
+              value: "true"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          volumeMounts:
+            - name: nginx-cache
+              mountPath: /var/cache/nginx
+            - name: nginx-run
+              mountPath: /var/run
+      volumes:
+        - name: nginx-cache
+          emptyDir: {}
+        - name: nginx-run
+          emptyDir: {}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: traffic-ui
+                topologyKey: kubernetes.io/hostname
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: traffic-ui
+  namespace: traffic-analysis
+  labels:
+    app: traffic-ui
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+  selector:
+    app: traffic-ui
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: traffic-ui-config
+  namespace: traffic-analysis
+data:
+  arkime-base-url: "http://arkime.traffic-analysis.svc.cluster.local:8005"
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: traffic-ui
+  namespace: traffic-analysis
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/websocket-services: "traffic-ui"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: traffic.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: traffic-ui
+                port:
+                  name: http
+  tls:
+    - hosts:
+        - traffic.example.com
+      secretName: traffic-ui-tls

@@ -1,0 +1,64 @@
+{
+  "usage": "Login page screenshot-derived page background layer. UI controls, text, shield, form panel, and footer panel regions are masked before inpainting so this is not a whole UI screenshot resource.",
+  "scope": "approved page background only for non-business login/auth route",
+  "resource_type": "page-background",
+  "contains_business_page_ui": false,
+  "contains_business_dynamic_diagram": false,
+  "source": {
+    "image": "evidence/ui-image-breakdowns/pages/login/target.png",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "masked_regions": [
+      {
+        "id": "right_auth_panel",
+        "x": 1000,
+        "y": 118,
+        "w": 760,
+        "h": 790,
+        "reason": "remove full login form/panel UI from background asset"
+      },
+      {
+        "id": "hero_hologram_shield",
+        "x": 220,
+        "y": 105,
+        "w": 590,
+        "h": 430,
+        "reason": "remove hero shield UI from background asset"
+      },
+      {
+        "id": "hero_title",
+        "x": 140,
+        "y": 522,
+        "w": 735,
+        "h": 126,
+        "reason": "remove product title and subtitle UI from background asset"
+      },
+      {
+        "id": "capability_buttons",
+        "x": 165,
+        "y": 650,
+        "w": 650,
+        "h": 92,
+        "reason": "remove capability buttons UI from background asset"
+      },
+      {
+        "id": "assurance_list",
+        "x": 245,
+        "y": 745,
+        "w": 505,
+        "h": 166,
+        "reason": "remove assurance text list UI from background asset"
+      }
+    ],
+    "processing": "OpenCV inpaint after masking UI regions; output remains a background layer and excludes business page UI screenshots."
+  },
+  "format": "bitmap screenshot-derived background",
+  "output": {
+    "file": "login-page-background.png",
+    "width": 1920,
+    "height": 1080
+  },
+  "policy": "Allowed by explicit relaxed gate: page backgrounds may be replicated; business-page UI screenshots and API-driven business diagrams remain forbidden as resources."
+}

@@ -1,0 +1,22 @@
+{
+  "usage": "Login page right panel bottom/footer area screenshot resource: remember-login checkbox, help links, and login submit button.",
+  "scope": "approved bottom/footer panel only",
+  "contains_business_dynamic_diagram": false,
+  "source": {
+    "image": "evidence/ui-image-breakdowns/pages/login/target.png",
+    "bbox": {
+      "x": 1050,
+      "y": 675,
+      "w": 655,
+      "h": 167
+    },
+    "policy": "explicitly approved screenshot panel resource; not a full page, global background, whole login form, full right panel asset, or API-driven business diagram"
+  },
+  "format": "bitmap screenshot panel",
+  "output": {
+    "file": "login-panel-footer.png",
+    "width": 655,
+    "height": 167
+  },
+  "integration": "web/ui/src/pages/LoginPage.tsx renders this only in visual-breakdown mode; normal login interactions keep native controls."
+}
