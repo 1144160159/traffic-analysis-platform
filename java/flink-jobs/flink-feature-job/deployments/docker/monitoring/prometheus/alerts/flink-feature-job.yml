@@ -1,0 +1,356 @@
+# =============================================================================
+# Prometheus Alert Rules for Flink Feature Job
+# =============================================================================
+
+groups:
+  # ==================== 作业健康告警 ====================
+  - name: flink-feature-job-health
+    interval: 30s
+    rules:
+      # 作业未运行
+      - alert: FlinkFeatureJobNotRunning
+        expr: |
+          absent(flink_jobmanager_job_uptime{job_name="feature-job"}) == 1
+        for: 2m
+        labels:
+          severity: critical
+          component: flink
+          job: feature-job
+        annotations:
+          summary: "Flink Feature Job is not running"
+          description: "The Feature Extraction Job has not been running for more than 2 minutes."
+          runbook_url: "https://wiki.example.com/runbooks/flink-feature-job-not-running"
+
+      # 作业重启过于频繁
+      - alert: FlinkFeatureJobRestartingFrequently
+        expr: |
+          increase(flink_jobmanager_job_numRestarts{job_name="feature-job"}[15m]) > 3
+        for: 5m
+        labels:
+          severity: warning
+          component: flink
+          job: feature-job
+        annotations:
+          summary: "Flink Feature Job restarting frequently"
+          description: "Feature Job has restarted {{ $value }} times in the last 15 minutes."
+          runbook_url: "https://wiki.example.com/runbooks/flink-job-restart"
+
+      # Checkpoint 失败
+      - alert: FlinkCheckpointFailing
+        expr: |
+          increase(flink_jobmanager_job_numberOfFailedCheckpoints{job_name="feature-job"}[10m]) > 3
+        for: 5m
+        labels:
+          severity: warning
+          component: flink
+          job: feature-job
+        annotations:
+          summary: "Flink Checkpoint failing"
+          description: "Feature Job has {{ $value }} failed checkpoints in the last 10 minutes."
+          runbook_url: "https://wiki.example.com/runbooks/flink-checkpoint-failure"
+
+      # Checkpoint 耗时过长
+      - alert: FlinkCheckpointDurationHigh
+        expr: |
+          flink_jobmanager_job_lastCheckpointDuration{job_name="feature-job"} > 120000
+        for: 10m
+        labels:
+          severity: warning
+          component: flink
+          job: feature-job
+        annotations:
+          summary: "Flink Checkpoint duration too high"
+          description: "Last checkpoint took {{ $value | humanizeDuration }}."
+          runbook_url: "https://wiki.example.com/runbooks/flink-checkpoint-slow"
+
+  # ==================== 处理性能告警 ====================
+  - name: flink-feature-job-performance
+    interval: 30s
+    rules:
+      # 处理速率过低
+      - alert: FlinkFeatureProcessingRateLow
+        expr: |
+          rate(flink_taskmanager_job_task_operator_feature_processed_total[5m]) < 100
+        for: 10m
+        labels:
+          severity: warning
+          component: flink
+          job: feature-job
+        annotations:
+          summary: "Feature processing rate is low"
+          description: "Processing rate is {{ $value | printf \"%.2f\" }}/s, expected > 100/s."
+          runbook_url: "https://wiki.example.com/runbooks/flink-low-throughput"
+
+      # 错误率过高
+      - alert: FlinkFeatureErrorRateHigh
+        expr: |
+          rate(flink_taskmanager_job_task_operator_feature_error_total[5m]) 
+          / 
+          rate(flink_taskmanager_job_task_operator_feature_processed_total[5m]) > 0.01
+        for: 5m
+        labels:
+          severity: warning
+          component: flink
+          job: feature-job
+        annotations:
+          summary: "Feature extraction error rate is high"
+          description: "Error rate is {{ $value | printf \"%.2f%%\" }}, threshold is 1%."
+          runbook_url: "https://wiki.example.com/runbooks/flink-high-error-rate"
+
+      # 跳过率过高
+      - alert: FlinkFeatureSkipRateHigh
+        expr: |
+          rate(flink_taskmanager_job_task_operator_feature_skipped_total[5m]) 
+          / 
+          rate(flink_taskmanager_job_task_operator_feature_processed_total[5m]) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          component: flink
+          job: feature-job
+        annotations:
+          summary: "Feature skip rate is high"
+          description: "Skip rate is {{ $value | printf \"%.2f%%\" }}, threshold is 10%."
+          runbook_url: "https://wiki.example.com/runbooks/flink-high-skip-rate"
+
+      # 端到端延迟过高
+      - alert: FlinkE2ELatencyHigh
+        expr: |
+          histogram_quantile(0.95, 
+            rate(flink_taskmanager_job_task_operator_e2e_latency_ms_bucket[5m])
+          ) > 30000
+        for: 10m
+        labels:
+          severity: warning
+          component: flink
+          job: feature-job
+        annotations:
+          summary: "End-to-end latency is high"
+          description: "P95 latency is {{ $value | humanizeDuration }}."
+          runbook_url: "https://wiki.example.com/runbooks/flink-high-latency"
+
+      # 端到端延迟严重
+      - alert: FlinkE2ELatencyCritical
+        expr: |
+          histogram_quantile(0.95, 
+            rate(flink_taskmanager_job_task_operator_e2e_latency_ms_bucket[5m])
+          ) > 60000
+        for: 5m
+        labels:
+          severity: critical
+          component: flink
+          job: feature-job
+        annotations:
+          summary: "End-to-end latency is critical"
+          description: "P95 latency is {{ $value | humanizeDuration }}, system may be backpressured."
+          runbook_url: "https://wiki.example.com/runbooks/flink-critical-latency"
+
+  # ==================== Backpressure 告警 ====================
+  - name: flink-feature-job-backpressure
+    interval: 30s
+    rules:
+      # Backpressure 检测
+      - alert: FlinkBackpressureDetected
+        expr: |
+          flink_taskmanager_job_task_backPressuredTimeMsPerSecond > 500
+        for: 5m
+        labels:
+          severity: warning
+          component: flink
+          job: feature-job
+        annotations:
+          summary: "Backpressure detected"
+          description: "Task {{ $labels.task_name }} is backpressured {{ $value }}ms/s."
+          runbook_url: "https://wiki.example.com/runbooks/flink-backpressure"
+
+      # 严重 Backpressure
+      - alert: FlinkBackpressureCritical
+        expr: |
+          flink_taskmanager_job_task_backPressuredTimeMsPerSecond > 800
+        for: 5m
+        labels:
+          severity: critical
+          component: flink
+          job: feature-job
+        annotations:
+          summary: "Critical backpressure detected"
+          description: "Task {{ $labels.task_name }} is severely backpressured ({{ $value }}ms/s)."
+          runbook_url: "https://wiki.example.com/runbooks/flink-backpressure-critical"
+
+  # ==================== 业务指标告警 ====================
+  - name: flink-feature-job-business
+    interval: 60s
+    rules:
+      # 高 PPS 流量激增
+      - alert: FlinkHighPPSSurge
+        expr: |
+          rate(flink_taskmanager_job_task_operator_feature_high_pps_total[5m]) > 100
+        for: 5m
+        labels:
+          severity: info
+          component: flink
+          job: feature-job
+        annotations:
+          summary: "High PPS traffic surge detected"
+          description: "{{ $value | printf \"%.2f\" }} high-PPS sessions/s detected."
+
+      # 加密流量激增
+      - alert: FlinkEncryptedTrafficSurge
+        expr: |
+          rate(flink_taskmanager_job_task_operator_feature_encrypted_total[5m]) 
+          / 
+          rate(flink_taskmanager_job_task_operator_feature_processed_total[5m]) > 0.8
+        for: 10m
+        labels:
+          severity: info
+          component: flink
+          job: feature-job
+        annotations:
+          summary: "High encrypted traffic ratio"
+          description: "{{ $value | printf \"%.2f%%\" }} of traffic appears to be encrypted."
+
+      # L2 触发率过高（可能需要调整阈值）
+      - alert: FlinkL2TriggerRateHigh
+        expr: |
+          rate(flink_taskmanager_job_task_operator_feature_l2_triggered_total[5m]) 
+          / 
+          rate(flink_taskmanager_job_task_operator_feature_processed_total[5m]) > 0.3
+        for: 15m
+        labels:
+          severity: warning
+          component: flink
+          job: feature-job
+        annotations:
+          summary: "L2 trigger rate is high"
+          description: "L2 trigger rate is {{ $value | printf \"%.2f%%\" }}, consider adjusting thresholds."
+          runbook_url: "https://wiki.example.com/runbooks/flink-l2-trigger-tuning"
+
+      # DLQ 写入过多
+      - alert: FlinkDLQWriteRateHigh
+        expr: |
+          rate(flink_taskmanager_job_task_operator_dlq_write_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          component: flink
+          job: feature-job
+        annotations:
+          summary: "DLQ write rate is high"
+          description: "{{ $value | printf \"%.2f\" }} records/s are being written to DLQ."
+          runbook_url: "https://wiki.example.com/runbooks/flink-dlq-investigation"
+
+  # ==================== Sink 告警 ====================
+  - name: flink-feature-job-sink
+    interval: 30s
+    rules:
+      # ClickHouse 写入失败
+      - alert: FlinkClickHouseWriteFailure
+        expr: |
+          increase(flink_taskmanager_job_task_operator_clickhouse_write_failure_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          component: flink
+          job: feature-job
+          sink: clickhouse
+        annotations:
+          summary: "ClickHouse write failures detected"
+          description: "{{ $value }} ClickHouse write failures in the last 5 minutes."
+          runbook_url: "https://wiki.example.com/runbooks/flink-clickhouse-failure"
+
+      # ClickHouse 连续失败
+      - alert: FlinkClickHouseConsecutiveFailure
+        expr: |
+          increase(flink_taskmanager_job_task_operator_clickhouse_write_failure_total[1m]) > 0
+          and
+          increase(flink_taskmanager_job_task_operator_clickhouse_write_success_total[1m]) == 0
+        for: 3m
+        labels:
+          severity: critical
+          component: flink
+          job: feature-job
+          sink: clickhouse
+        annotations:
+          summary: "ClickHouse consecutive write failures"
+          description: "ClickHouse has not had a successful write for 3 minutes."
+          runbook_url: "https://wiki.example.com/runbooks/flink-clickhouse-critical"
+
+      # ClickHouse 写入延迟高
+      - alert: FlinkClickHouseWriteLatencyHigh
+        expr: |
+          histogram_quantile(0.95, 
+            rate(flink_taskmanager_job_task_operator_clickhouse_write_latency_ms_bucket[5m])
+          ) > 5000
+        for: 10m
+        labels:
+          severity: warning
+          component: flink
+          job: feature-job
+          sink: clickhouse
+        annotations:
+          summary: "ClickHouse write latency is high"
+          description: "P95 write latency is {{ $value | humanizeDuration }}."
+          runbook_url: "https://wiki.example.com/runbooks/flink-clickhouse-latency"
+
+      # Kafka 写入失败
+      - alert: FlinkKafkaWriteFailure
+        expr: |
+          increase(flink_taskmanager_job_task_operator_kafka_write_failure_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          component: flink
+          job: feature-job
+          sink: kafka
+        annotations:
+          summary: "Kafka write failures detected"
+          description: "{{ $value }} Kafka write failures in the last 5 minutes."
+          runbook_url: "https://wiki.example.com/runbooks/flink-kafka-failure"
+
+  # ==================== 资源告警 ====================
+  - name: flink-feature-job-resources
+    interval: 30s
+    rules:
+      # TaskManager 内存使用过高
+      - alert: FlinkTaskManagerMemoryHigh
+        expr: |
+          flink_taskmanager_Status_JVM_Memory_Heap_Used 
+          / 
+          flink_taskmanager_Status_JVM_Memory_Heap_Max > 0.85
+        for: 10m
+        labels:
+          severity: warning
+          component: flink
+          job: feature-job
+        annotations:
+          summary: "TaskManager heap memory usage is high"
+          description: "Heap usage is {{ $value | printf \"%.2f%%\" }}."
+          runbook_url: "https://wiki.example.com/runbooks/flink-memory-pressure"
+
+      # TaskManager GC 时间过长
+      - alert: FlinkTaskManagerGCTimeHigh
+        expr: |
+          rate(flink_taskmanager_Status_JVM_GarbageCollector_G1_Young_Generation_Time[5m]) > 500
+        for: 10m
+        labels:
+          severity: warning
+          component: flink
+          job: feature-job
+        annotations:
+          summary: "TaskManager GC time is high"
+          description: "GC time is {{ $value }}ms/s."
+          runbook_url: "https://wiki.example.com/runbooks/flink-gc-tuning"
+
+      # RocksDB 内存使用过高
+      - alert: FlinkRocksDBMemoryHigh
+        expr: |
+          flink_taskmanager_job_task_operator_rocksdb_actual_size_all_mem_tables > 1073741824
+        for: 10m
+        labels:
+          severity: warning
+          component: flink
+          job: feature-job
+        annotations:
+          summary: "RocksDB memory usage is high"
+          description: "RocksDB memtable size is {{ $value | humanize }}."
+          runbook_url: "https://wiki.example.com/runbooks/flink-rocksdb-memory"

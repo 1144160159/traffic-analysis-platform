@@ -1,0 +1,36 @@
+# =============================================================================
+# Grafana Datasources Provisioning
+# =============================================================================
+
+apiVersion: 1
+
+datasources:
+  # ==================== Prometheus ====================
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      httpMethod: POST
+      manageAlerts: true
+      prometheusType: Prometheus
+      prometheusVersion: "2.47.0"
+      incrementalQuerying: true
+      incrementalQueryOverlapWindow: 10m
+
+  # ==================== ClickHouse ====================
+  - name: ClickHouse
+    type: grafana-clickhouse-datasource
+    access: proxy
+    url: http://clickhouse:8123
+    editable: false
+    jsonData:
+      defaultDatabase: traffic
+      port: 8123
+      server: clickhouse
+      username: default
+      tlsSkipVerify: true
+    secureJsonData:
+      password: ""

@@ -1,0 +1,20 @@
+{
+  "rule_id": "rule-anomaly-001",
+  "tenant_id": "tenant-1",
+  "name": "Statistical Anomaly Detection",
+  "description": "Detect traffic anomalies based on packet length and IAT variance",
+  "type": "anomaly",
+  "enabled": true,
+  "severity": "medium",
+  "priority": 70,
+  "conditions": {
+    "pktlen_std_threshold": 500.0,
+    "iat_std_threshold": 100.0,
+    "extreme_up_down_ratio": 100.0,
+    "min_anomalies": 2
+  },
+  "labels": ["anomaly", "statistical", "behavioral"],
+  "version": 1,
+  "action": "update",
+  "created_by": "ml-team"
+}

@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+################################################################################
+FILE PATH: flink-jobs/flink-behavior-job/src/main/resources/log4j2.xml
+################################################################################
+
+Behavior Detection Job 日志配置
+
+日志级别说明：
+- ERROR: 错误信息，需要立即关注
+- WARN:  警告信息，可能的问题
+- INFO:  关键信息，作业状态变更
+- DEBUG: 调试信息，详细执行过程
+- TRACE: 跟踪信息，最详细的日志
+
+生产环境建议：
+- Root level: INFO
+- Application level: INFO
+- 启用 RollingFile
+- 禁用 Console（除非需要）
+-->
+<Configuration status="WARN" monitorInterval="30">
+    
+    <Properties>
+        <!-- 日志格式 -->
+        <Property name="LOG_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n</Property>
+        <Property name="LOG_PATTERN_COLORED">%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight{%-5level} [%t] %style{%logger{36}}{cyan} - %msg%n</Property>
+        
+        <!-- 日志目录 - 使用环境变量或默认值 -->
+        <Property name="LOG_DIR">${env:FLINK_LOG_DIR:-/var/log/flink}</Property>
+        <Property name="LOG_FILE">behavior-job</Property>
+        
+        <!-- 日志保留策略 -->
+        <Property name="LOG_MAX_SIZE">100MB</Property>
+        <Property name="LOG_MAX_HISTORY">7</Property>
+        <Property name="LOG_TOTAL_SIZE">1GB</Property>
+    </Properties>
+
+    <Appenders>
+        <!-- 控制台输出 -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <ThresholdFilter level="INFO" onMatch="ACCEPT" onMismatch="DENY"/>
+        </Console>
+
+        <!-- 滚动文件输出 - 所有日志 -->
+        <RollingFile name="RollingFile" 
+                     fileName="${LOG_DIR}/${LOG_FILE}.log"
+                     filePattern="${LOG_DIR}/${LOG_FILE}-%d{yyyy-MM-dd}-%i.log.gz"
+                     immediateFlush="false">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <Policies>
+                <!-- 按时间滚动：每天 -->
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <!-- 按大小滚动 -->
+                <SizeBasedTriggeringPolicy size="${LOG_MAX_SIZE}"/>
+            </Policies>
+            <DefaultRolloverStrategy max="${LOG_MAX_HISTORY}">
+                <!-- 删除超过总大小限制的旧日志 -->
+                <Delete basePath="${LOG_DIR}" maxDepth="1">
+                    <IfFileName glob="${LOG_FILE}-*.log.gz"/>
+                    <IfAccumulatedFileSize exceeds="${LOG_TOTAL_SIZE}"/>
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+
+        <!-- 错误日志单独输出 -->
+        <RollingFile name="ErrorFile" 
+                     fileName="${LOG_DIR}/${LOG_FILE}-error.log"
+                     filePattern="${LOG_DIR}/${LOG_FILE}-error-%d{yyyy-MM-dd}-%i.log.gz"
+                     immediateFlush="true">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="DENY"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <SizeBasedTriggeringPolicy size="${LOG_MAX_SIZE}"/>
+            </Policies>
+            <DefaultRolloverStrategy max="${LOG_MAX_HISTORY}"/>
+        </RollingFile>
+
+        <!-- 模型推理日志 -->
+        <RollingFile name="InferenceFile" 
+                     fileName="${LOG_DIR}/${LOG_FILE}-inference.log"
+                     filePattern="${LOG_DIR}/${LOG_FILE}-inference-%d{yyyy-MM-dd}-%i.log.gz"
+                     immediateFlush="false">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <SizeBasedTriggeringPolicy size="${LOG_MAX_SIZE}"/>
+            </Policies>
+            <DefaultRolloverStrategy max="3"/>
+        </RollingFile>
+
+        <!-- 异步 Appender 包装（提高性能） -->
+        <Async name="AsyncFile" bufferSize="8192">
+            <AppenderRef ref="RollingFile"/>
+        </Async>
+    </Appenders>
+
+    <Loggers>
+        <!-- ==================== Flink 内部日志 ==================== -->
+        
+        <!-- Flink 核心 -->
+        <Logger name="org.apache.flink" level="INFO" additivity="false">
+            <AppenderRef ref="AsyncFile"/>
+            <AppenderRef ref="Console"/>
+        </Logger>
+        
+        <!-- Checkpoint 日志（减少噪音） -->
+        <Logger name="org.apache.flink.runtime.checkpoint" level="WARN"/>
+        
+        <!-- State 日志（减少噪音） -->
+        <Logger name="org.apache.flink.runtime.state" level="WARN"/>
+        
+        <!-- TaskManager 日志 -->
+        <Logger name="org.apache.flink.runtime.taskmanager" level="INFO"/>
+        
+        <!-- JobManager 日志 -->
+        <Logger name="org.apache.flink.runtime.jobmaster" level="INFO"/>
+
+        <!-- ==================== Kafka 连接器日志 ==================== -->
+        
+        <Logger name="org.apache.kafka" level="WARN"/>
+        <Logger name="org.apache.kafka.clients.consumer" level="WARN"/>
+        <Logger name="org.apache.kafka.clients.producer" level="WARN"/>
+        <Logger name="org.apache.flink.connector.kafka" level="INFO"/>
+
+        <!-- ==================== ClickHouse 日志 ==================== -->
+        
+        <Logger name="com.clickhouse" level="WARN"/>
+        <Logger name="com.clickhouse.jdbc" level="WARN"/>
+        <Logger name="org.apache.flink.connector.jdbc" level="INFO"/>
+
+        <!-- ==================== 应用日志 ==================== -->
+        
+        <!-- 主应用包 -->
+        <Logger name="com.traffic.flink" level="INFO" additivity="false">
+            <AppenderRef ref="AsyncFile"/>
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="ErrorFile"/>
+        </Logger>
+        
+        <!-- Behavior Job 主类 -->
+        <Logger name="com.traffic.flink.behavior.BehaviorDetectionJob" level="INFO"/>
+        
+        <!-- 模型注册表 -->
+        <Logger name="com.traffic.flink.behavior.detector.ModelRegistry" level="INFO"/>
+        
+        <!-- 模型推理日志（单独文件） -->
+        <Logger name="com.traffic.flink.behavior.detector.BehaviorDetectorFunction" level="INFO" additivity="false">
+            <AppenderRef ref="InferenceFile"/>
+            <AppenderRef ref="ErrorFile"/>
+        </Logger>
+        
+        <!-- 各检测模型 -->
+        <Logger name="com.traffic.flink.behavior.model" level="INFO" additivity="false">
+            <AppenderRef ref="InferenceFile"/>
+            <AppenderRef ref="ErrorFile"/>
+        </Logger>
+        
+        <!-- Sink 日志 -->
+        <Logger name="com.traffic.flink.behavior.sink" level="INFO"/>
+        
+        <!-- 配置日志 -->
+        <Logger name="com.traffic.flink.behavior.config" level="INFO"/>
+
+        <!-- ==================== 第三方库日志 ==================== -->
+        
+        <!-- Netty -->
+        <Logger name="io.netty" level="WARN"/>
+        
+        <!-- Akka -->
+        <Logger name="akka" level="WARN"/>
+        
+        <!-- Zookeeper -->
+        <Logger name="org.apache.zookeeper" level="WARN"/>
+        
+        <!-- Hadoop -->
+        <Logger name="org.apache.hadoop" level="WARN"/>
+
+        <!-- ==================== Root Logger ==================== -->
+        
+        <Root level="INFO">
+            <AppenderRef ref="AsyncFile"/>
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="ErrorFile"/>
+        </Root>
+    </Loggers>
+</Configuration>

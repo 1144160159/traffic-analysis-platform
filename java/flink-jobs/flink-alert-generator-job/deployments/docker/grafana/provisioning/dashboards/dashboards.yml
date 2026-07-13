@@ -1,0 +1,18 @@
+################################################################################
+# Grafana Dashboard 自动加载配置
+################################################################################
+
+apiVersion: 1
+
+providers:
+  - name: 'Alert Generator Job Dashboards'
+    orgId: 1
+    folder: 'Flink Jobs'
+    folderUid: 'flink-jobs'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false

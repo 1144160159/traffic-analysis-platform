@@ -1,0 +1,336 @@
+# ============================================================================
+# Kubernetes Deployment for Flink Rule Engine Job
+# ============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flink-rule-job-config
+  namespace: traffic-analysis
+  labels:
+    app: flink-rule-job
+    component: config
+data:
+  rule-job.properties: |
+    # Kafka
+    kafka.brokers=kafka-headless.traffic-analysis.svc.cluster.local:9092
+    kafka.feature.topic=feature.stat.v1
+    kafka.rule.topic=rule.updates
+    kafka.output.topic=detections.v1
+    kafka.dlq.topic=dlq.rule-job
+    kafka.group.id=flink-rule-job
+    
+    # ClickHouse
+    clickhouse.url=clickhouse-headless.traffic-analysis.svc.cluster.local:8123
+    clickhouse.database=traffic
+    clickhouse.table=detections_behavior_local
+    clickhouse.user=default
+    clickhouse.password=${CLICKHOUSE_PASSWORD}
+    
+    # Flink
+    parallelism=4
+    checkpoint.path=s3://flink-checkpoints/checkpoints/rule-job
+    checkpoint.interval.ms=60000
+    
+    # Metrics
+    metrics.enabled=true
+    metrics.reporter.prometheus.port=9250
+
+  log4j2.xml: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <Configuration status="WARN">
+      <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+          <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        </Console>
+      </Appenders>
+      <Loggers>
+        <Logger name="org.apache.flink" level="INFO"/>
+        <Logger name="org.apache.kafka" level="WARN"/>
+        <Logger name="com.traffic.flink.rule" level="INFO"/>
+        <Root level="INFO">
+          <AppenderRef ref="Console"/>
+        </Root>
+      </Loggers>
+    </Configuration>
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flink-rule-job-jobmanager
+  namespace: traffic-analysis
+  labels:
+    app: flink-rule-job
+    component: jobmanager
+spec:
+  type: ClusterIP
+  ports:
+    - name: rpc
+      port: 6123
+      targetPort: 6123
+    - name: blob
+      port: 6124
+      targetPort: 6124
+    - name: ui
+      port: 8081
+      targetPort: 8081
+    - name: metrics
+      port: 9250
+      targetPort: 9250
+  selector:
+    app: flink-rule-job
+    component: jobmanager
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flink-rule-job-jobmanager-rest
+  namespace: traffic-analysis
+  labels:
+    app: flink-rule-job
+    component: jobmanager
+spec:
+  type: NodePort
+  ports:
+    - name: rest
+      port: 8081
+      targetPort: 8081
+      nodePort: 30081
+  selector:
+    app: flink-rule-job
+    component: jobmanager
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flink-rule-job-jobmanager
+  namespace: traffic-analysis
+  labels:
+    app: flink-rule-job
+    component: jobmanager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flink-rule-job
+      component: jobmanager
+  template:
+    metadata:
+      labels:
+        app: flink-rule-job
+        component: jobmanager
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9250"
+        prometheus.io/path: "/metrics"
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: node-8
+      containers:
+        - name: jobmanager
+          image: registry.local/traffic-analysis/flink-rule-job:1.0.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - jobmanager
+          ports:
+            - containerPort: 6123
+              name: rpc
+            - containerPort: 6124
+              name: blob
+            - containerPort: 8081
+              name: ui
+            - containerPort: 9250
+              name: metrics
+          env:
+            - name: FLINK_PROPERTIES
+              value: |
+                jobmanager.rpc.address: flink-rule-job-jobmanager
+                jobmanager.rpc.port: 6123
+                jobmanager.memory.process.size: 8g
+                jobmanager.memory.jvm-overhead.max: 2g
+                taskmanager.numberOfTaskSlots: 4
+                parallelism.default: 4
+                state.backend: rocksdb
+                state.backend.incremental: true
+                state.checkpoints.dir: s3://flink-checkpoints/checkpoints/rule-job
+                state.savepoints.dir: s3://flink-checkpoints/savepoints/rule-job
+                execution.checkpointing.interval: 60000
+                execution.checkpointing.mode: EXACTLY_ONCE
+                restart-strategy: fixed-delay
+                restart-strategy.fixed-delay.attempts: 3
+                restart-strategy.fixed-delay.delay: 30s
+                metrics.reporter.prom.class: org.apache.flink.metrics.prometheus.PrometheusReporter
+                metrics.reporter.prom.port: 9250
+            - name: CLICKHOUSE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: clickhouse-secret
+                  key: password
+                  optional: true
+          volumeMounts:
+            - name: flink-config
+              mountPath: /opt/flink/conf/rule-job.properties
+              subPath: rule-job.properties
+            - name: flink-config
+              mountPath: /opt/flink/conf/log4j2.xml
+              subPath: log4j2.xml
+            - name: flink-storage
+              mountPath: /home/k8s-data/flink
+          resources:
+            requests:
+              cpu: "2"
+              memory: "8Gi"
+            limits:
+              cpu: "4"
+              memory: "12Gi"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8081
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+      volumes:
+        - name: flink-config
+          configMap:
+            name: flink-rule-job-config
+        - name: flink-storage
+          hostPath:
+            path: /home/k8s-data/flink
+            type: DirectoryOrCreate
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flink-rule-job-taskmanager
+  namespace: traffic-analysis
+  labels:
+    app: flink-rule-job
+    component: taskmanager
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: flink-rule-job
+      component: taskmanager
+  template:
+    metadata:
+      labels:
+        app: flink-rule-job
+        component: taskmanager
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9250"
+        prometheus.io/path: "/metrics"
+    spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              preference:
+                matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - node-8
+                      - node-9
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: flink-rule-job
+                    component: taskmanager
+                topologyKey: kubernetes.io/hostname
+      containers:
+        - name: taskmanager
+          image: registry.local/traffic-analysis/flink-rule-job:1.0.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - taskmanager
+          ports:
+            - containerPort: 6122
+              name: rpc
+            - containerPort: 9250
+              name: metrics
+          env:
+            - name: FLINK_PROPERTIES
+              value: |
+                jobmanager.rpc.address: flink-rule-job-jobmanager
+                taskmanager.memory.process.size: 16g
+                taskmanager.memory.managed.size: 8g
+                taskmanager.memory.network.min: 2g
+                taskmanager.memory.network.max: 4g
+                taskmanager.numberOfTaskSlots: 4
+                taskmanager.rpc.port: 6122
+                metrics.reporter.prom.class: org.apache.flink.metrics.prometheus.PrometheusReporter
+                metrics.reporter.prom.port: 9250
+            - name: CLICKHOUSE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: clickhouse-secret
+                  key: password
+                  optional: true
+          volumeMounts:
+            - name: flink-config
+              mountPath: /opt/flink/conf/rule-job.properties
+              subPath: rule-job.properties
+            - name: flink-config
+              mountPath: /opt/flink/conf/log4j2.xml
+              subPath: log4j2.xml
+            - name: flink-storage
+              mountPath: /home/k8s-data/flink
+          resources:
+            requests:
+              cpu: "4"
+              memory: "16Gi"
+            limits:
+              cpu: "8"
+              memory: "20Gi"
+          livenessProbe:
+            tcpSocket:
+              port: 6122
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          readinessProbe:
+            tcpSocket:
+              port: 6122
+            initialDelaySeconds: 30
+            periodSeconds: 10
+      volumes:
+        - name: flink-config
+          configMap:
+            name: flink-rule-job-config
+        - name: flink-storage
+          hostPath:
+            path: /home/k8s-data/flink
+            type: DirectoryOrCreate
+
+---
+# ServiceMonitor for Prometheus Operator
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: flink-rule-job-metrics
+  namespace: traffic-analysis
+  labels:
+    app: flink-rule-job
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: flink-rule-job
+  endpoints:
+    - port: metrics
+      interval: 30s
+      path: /metrics

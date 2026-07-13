@@ -1,0 +1,39 @@
+<!-- ClickHouse 自定义配置 (本地开发环境) -->
+<clickhouse>
+    <!-- 日志级别 -->
+    <logger>
+        <level>information</level>
+        <console>1</console>
+    </logger>
+    
+    <!-- 最大连接数 -->
+    <max_connections>1000</max_connections>
+    
+    <!-- 查询内存限制 -->
+    <max_memory_usage>2000000000</max_memory_usage>
+    
+    <!-- 查询超时 -->
+    <max_execution_time>300</max_execution_time>
+    
+    <!-- 启用异步插入 -->
+    <async_insert>1</async_insert>
+    <async_insert_threads>4</async_insert_threads>
+    <async_insert_max_data_size>10000000</async_insert_max_data_size>
+    <async_insert_busy_timeout_ms>1000</async_insert_busy_timeout_ms>
+    
+    <!-- 合并配置 -->
+    <merge_tree>
+        <max_bytes_to_merge_at_max_space_in_pool>161061273600</max_bytes_to_merge_at_max_space_in_pool>
+        <max_bytes_to_merge_at_min_space_in_pool>1048576</max_bytes_to_merge_at_min_space_in_pool>
+        <number_of_free_entries_in_pool_to_execute_mutation>10</number_of_free_entries_in_pool_to_execute_mutation>
+    </merge_tree>
+    
+    <!-- Prometheus 指标 -->
+    <prometheus>
+        <endpoint>/metrics</endpoint>
+        <port>9363</port>
+        <metrics>true</metrics>
+        <events>true</events>
+        <asynchronous_metrics>true</asynchronous_metrics>
+    </prometheus>
+</clickhouse>

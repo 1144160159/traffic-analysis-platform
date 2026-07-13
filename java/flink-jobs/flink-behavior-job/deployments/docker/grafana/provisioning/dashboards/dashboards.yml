@@ -1,0 +1,19 @@
+################################################################################
+# FILE: docker/grafana/provisioning/dashboards/dashboards.yml
+#
+# Grafana Dashboard 配置
+################################################################################
+
+apiVersion: 1
+
+providers:
+  - name: 'Flink Behavior Job Dashboards'
+    orgId: 1
+    folder: 'Flink'
+    folderUid: 'flink'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards

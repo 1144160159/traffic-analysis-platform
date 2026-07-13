@@ -1,0 +1,371 @@
+# =============================================================================
+# Flink CEP Job - Local Development Docker Compose
+# =============================================================================
+# 使用方式:
+#   启动: docker-compose up -d
+#   查看日志: docker-compose logs -f flink-cep-job
+#   停止: docker-compose down -v
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ==========================================================================
+  # Zookeeper (Kafka 依赖)
+  # ==========================================================================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: cep-zookeeper
+    hostname: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+      - zookeeper-logs:/var/lib/zookeeper/log
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cep-network
+
+  # ==========================================================================
+  # Kafka
+  # ==========================================================================
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: cep-kafka
+    hostname: kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_NUM_PARTITIONS: 4
+      KAFKA_LOG_RETENTION_HOURS: 24
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+      KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 300000
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    networks:
+      - cep-network
+
+  # ==========================================================================
+  # Kafka Topic 初始化
+  # ==========================================================================
+  kafka-init:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: cep-kafka-init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: ["/bin/bash", "-c"]
+    command: |
+      "
+      echo 'Creating Kafka topics...'
+      
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:9092 \
+        --topic alerts.v1 --partitions 4 --replication-factor 1
+      
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:9092 \
+        --topic campaigns.v1 --partitions 4 --replication-factor 1
+      
+      kafka-topics --create --if-not-exists --bootstrap-server kafka:9092 \
+        --topic dlq.cep-job --partitions 2 --replication-factor 1
+      
+      echo 'Topics created:'
+      kafka-topics --list --bootstrap-server kafka:9092
+      "
+    networks:
+      - cep-network
+
+  # ==========================================================================
+  # ClickHouse
+  # ==========================================================================
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.8
+    container_name: cep-clickhouse
+    hostname: clickhouse
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    environment:
+      CLICKHOUSE_DB: traffic
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: ""
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+      - ./clickhouse-init:/docker-entrypoint-initdb.d:ro
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cep-network
+
+  # ==========================================================================
+  # Redis (可选，用于缓存)
+  # ==========================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: cep-redis
+    hostname: redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cep-network
+
+  # ==========================================================================
+  # Flink JobManager
+  # ==========================================================================
+  flink-jobmanager:
+    image: flink-cep-job:latest
+    build:
+      context: ../../../..
+      dockerfile: flink-jobs/flink-cep-job/docker/Dockerfile
+    container_name: cep-flink-jobmanager
+    hostname: jobmanager
+    ports:
+      - "8081:8081"
+      - "6123:6123"
+      - "9249:9249"
+    environment:
+      FLINK_MODE: jobmanager
+      JOB_MANAGER_RPC_ADDRESS: jobmanager
+      JOB_MANAGER_MEMORY: 2048m
+      PARALLELISM: 4
+    volumes:
+      - flink-checkpoints:/opt/flink/checkpoints
+      - flink-savepoints:/opt/flink/savepoints
+      - flink-logs:/var/log/flink
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/overview"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - cep-network
+
+  # ==========================================================================
+  # Flink TaskManager
+  # ==========================================================================
+  flink-taskmanager:
+    image: flink-cep-job:latest
+    build:
+      context: ../../../..
+      dockerfile: flink-jobs/flink-cep-job/docker/Dockerfile
+    container_name: cep-flink-taskmanager
+    hostname: taskmanager
+    depends_on:
+      flink-jobmanager:
+        condition: service_healthy
+    ports:
+      - "9250:9249"
+    environment:
+      FLINK_MODE: taskmanager
+      JOB_MANAGER_RPC_ADDRESS: jobmanager
+      TASK_MANAGER_MEMORY: 4096m
+      TASK_SLOTS: 4
+    volumes:
+      - flink-checkpoints:/opt/flink/checkpoints
+      - flink-logs:/var/log/flink
+    networks:
+      - cep-network
+
+  # ==========================================================================
+  # CEP Job 提交
+  # ==========================================================================
+  flink-cep-job:
+    image: flink-cep-job:latest
+    build:
+      context: ../../../..
+      dockerfile: flink-jobs/flink-cep-job/docker/Dockerfile
+    container_name: cep-flink-job
+    depends_on:
+      flink-jobmanager:
+        condition: service_healthy
+      flink-taskmanager:
+        condition: service_started
+      kafka:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+    environment:
+      FLINK_MODE: submit
+      JOB_MANAGER_RPC_ADDRESS: jobmanager
+      KAFKA_BROKERS: kafka:9092
+      KAFKA_INPUT_TOPIC: alerts.v1
+      KAFKA_OUTPUT_TOPIC: campaigns.v1
+      CLICKHOUSE_URL: clickhouse:8123
+      CLICKHOUSE_DATABASE: traffic
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: ""
+      PARALLELISM: 4
+      CHECKPOINT_PATH: file:///opt/flink/checkpoints/cep-job
+    volumes:
+      - flink-checkpoints:/opt/flink/checkpoints
+    networks:
+      - cep-network
+
+  # ==========================================================================
+  # Prometheus (监控)
+  # ==========================================================================
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: cep-prometheus
+    hostname: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/rules:/etc/prometheus/rules:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=7d'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - cep-network
+
+  # ==========================================================================
+  # Grafana (可视化)
+  # ==========================================================================
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: cep-grafana
+    hostname: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_INSTALL_PLUGINS: grafana-clock-panel,grafana-piechart-panel
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - cep-network
+
+  # ==========================================================================
+  # Kafka UI (调试工具)
+  # ==========================================================================
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: cep-kafka-ui
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - cep-network
+
+  # ==========================================================================
+  # Alert 模拟器 (测试数据生成)
+  # ==========================================================================
+  alert-simulator:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: cep-alert-simulator
+    depends_on:
+      kafka:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+    profiles:
+      - simulator
+    entrypoint: ["/bin/bash", "-c"]
+    command: |
+      "
+      echo 'Starting alert simulator...'
+      
+      # 生成模拟告警数据
+      while true; do
+        # 这里可以替换为实际的 Protobuf 格式告警
+        echo 'Simulating alerts...'
+        sleep 10
+      done
+      "
+    networks:
+      - cep-network
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  cep-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  zookeeper-data:
+  zookeeper-logs:
+  kafka-data:
+  clickhouse-data:
+  redis-data:
+  flink-checkpoints:
+  flink-savepoints:
+  flink-logs:
+  prometheus-data:
+  grafana-data:

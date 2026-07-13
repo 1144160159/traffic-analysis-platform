@@ -1,0 +1,129 @@
+# =============================================================================
+# Alertmanager 配置 - Flink PCAP Index Job
+# =============================================================================
+
+global:
+  # 解决超时时间
+  resolve_timeout: 5m
+  
+  # SMTP 配置（邮件告警）
+  # smtp_smarthost: 'smtp.example.com:587'
+  # smtp_from: 'alertmanager@example.com'
+  # smtp_auth_username: 'alertmanager'
+  # smtp_auth_password: 'password'
+
+# 告警模板
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# 路由配置
+route:
+  # 默认接收者
+  receiver: 'default-receiver'
+  
+  # 分组等待时间
+  group_wait: 30s
+  
+  # 分组间隔
+  group_interval: 5m
+  
+  # 重复告警间隔
+  repeat_interval: 4h
+  
+  # 分组依据
+  group_by: ['alertname', 'severity', 'job']
+  
+  # 子路由
+  routes:
+    # Critical 告警：立即通知，短间隔重复
+    - match:
+        severity: critical
+      receiver: 'critical-receiver'
+      group_wait: 10s
+      group_interval: 1m
+      repeat_interval: 1h
+      continue: true
+    
+    # Warning 告警：正常间隔
+    - match:
+        severity: warning
+      receiver: 'warning-receiver'
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+      continue: true
+    
+    # 数据质量告警：发送给数据团队
+    - match:
+        category: data_quality
+      receiver: 'data-quality-receiver'
+      group_wait: 1m
+      group_interval: 10m
+      repeat_interval: 6h
+    
+    # 存储告警：发送给 DBA 团队
+    - match:
+        category: storage
+      receiver: 'storage-receiver'
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 2h
+
+# 抑制规则
+inhibit_rules:
+  # 如果作业未运行，抑制其他所有告警
+  - source_match:
+      alertname: 'PcapIndexJobNotRunning'
+    target_match_re:
+      alertname: 'PcapIndex.*'
+    equal: ['job']
+  
+  # Critical 抑制 Warning
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'job']
+
+# 接收者配置
+receivers:
+  # 默认接收者（Webhook）
+  - name: 'default-receiver'
+    webhook_configs:
+      - url: 'http://localhost:5001/webhook'
+        send_resolved: true
+
+  # Critical 告警接收者
+  - name: 'critical-receiver'
+    webhook_configs:
+      - url: 'http://localhost:5001/webhook/critical'
+        send_resolved: true
+    # 企业微信（可选）
+    # wechat_configs:
+    #   - corp_id: 'your-corp-id'
+    #     api_secret: 'your-api-secret'
+    #     agent_id: 'your-agent-id'
+    #     to_party: 'your-party-id'
+    # 钉钉（可选，需要第三方插件）
+    # PagerDuty（可选）
+    # pagerduty_configs:
+    #   - service_key: 'your-service-key'
+    #     severity: critical
+
+  # Warning 告警接收者
+  - name: 'warning-receiver'
+    webhook_configs:
+      - url: 'http://localhost:5001/webhook/warning'
+        send_resolved: true
+
+  # 数据质量告警接收者
+  - name: 'data-quality-receiver'
+    webhook_configs:
+      - url: 'http://localhost:5001/webhook/data-quality'
+        send_resolved: true
+
+  # 存储告警接收者
+  - name: 'storage-receiver'
+    webhook_configs:
+      - url: 'http://localhost:5001/webhook/storage'
+        send_resolved: true

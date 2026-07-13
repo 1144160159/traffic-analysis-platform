@@ -1,0 +1,378 @@
+################################################################################
+# FILE: flink-jobs/flink-behavior-job/docker-compose.yaml
+#
+# Flink Behavior Detection Job 本地开发环境
+#
+# 使用方法：
+#   # 启动完整环境
+#   docker-compose up -d
+#
+#   # 仅启动依赖服务（Kafka, ClickHouse 等）
+#   docker-compose up -d kafka clickhouse
+#
+#   # 查看日志
+#   docker-compose logs -f flink-jobmanager
+#
+#   # 提交作业
+#   docker-compose exec flink-jobmanager flink run -d /opt/flink/usrlib/flink-behavior-job-1.0.0.jar
+#
+#   # 停止环境
+#   docker-compose down -v
+################################################################################
+
+version: "3.8"
+
+services:
+  #=============================================================================
+  # Flink Cluster
+  #=============================================================================
+
+  flink-jobmanager:
+    image: flink:1.17.2-scala_2.12-java17
+    container_name: behavior-job-jobmanager
+    hostname: flink-jobmanager
+    ports:
+      - "8081:8081"      # Web UI
+      - "6123:6123"      # RPC
+      - "9249:9249"      # Prometheus metrics
+    environment:
+      JOB_MANAGER_RPC_ADDRESS: flink-jobmanager
+      FLINK_PROPERTIES: |
+        jobmanager.rpc.address: flink-jobmanager
+        jobmanager.rpc.port: 6123
+        jobmanager.memory.process.size: 1600m
+        state.backend: rocksdb
+        state.checkpoints.dir: file:///opt/flink/checkpoints
+        metrics.reporters: prom
+        metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
+        metrics.reporter.prom.port: 9249
+    volumes:
+      - ./target/flink-behavior-job-1.0.0.jar:/opt/flink/usrlib/flink-behavior-job-1.0.0.jar:ro
+      - ./src/main/resources/behavior-job.properties:/opt/flink/conf/behavior-job.properties:ro
+      - flink-checkpoints:/opt/flink/checkpoints
+      - flink-savepoints:/opt/flink/savepoints
+      - flink-logs:/opt/flink/log
+    command: jobmanager
+    networks:
+      - behavior-job-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/overview"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
+
+  flink-taskmanager:
+    image: flink:1.17.2-scala_2.12-java17
+    container_name: behavior-job-taskmanager
+    hostname: flink-taskmanager
+    environment:
+      JOB_MANAGER_RPC_ADDRESS: flink-jobmanager
+      FLINK_PROPERTIES: |
+        jobmanager.rpc.address: flink-jobmanager
+        taskmanager.numberOfTaskSlots: 4
+        taskmanager.memory.process.size: 4096m
+        taskmanager.memory.managed.size: 512m
+        state.backend: rocksdb
+        state.checkpoints.dir: file:///opt/flink/checkpoints
+        metrics.reporters: prom
+        metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
+        metrics.reporter.prom.port: 9249
+    ports:
+      - "9250:9249"      # Prometheus metrics (避免端口冲突)
+    volumes:
+      - ./target/flink-behavior-job-1.0.0.jar:/opt/flink/usrlib/flink-behavior-job-1.0.0.jar:ro
+      - flink-checkpoints:/opt/flink/checkpoints
+      - flink-tm-local:/tmp/flink-local-recovery
+    command: taskmanager
+    networks:
+      - behavior-job-network
+    depends_on:
+      - flink-jobmanager
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: "4"
+          memory: 4G
+    restart: unless-stopped
+
+  #=============================================================================
+  # Kafka (消息队列)
+  #=============================================================================
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: behavior-job-zookeeper
+    hostname: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+      - zookeeper-logs:/var/lib/zookeeper/log
+    networks:
+      - behavior-job-network
+    healthcheck:
+      test: ["CMD", "echo", "ruok", "|", "nc", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: behavior-job-kafka
+    hostname: kafka
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://localhost:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_NUM_PARTITIONS: 6
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+      KAFKA_LOG_RETENTION_HOURS: 24
+      KAFKA_LOG_RETENTION_BYTES: 1073741824
+      KAFKA_MESSAGE_MAX_BYTES: 10485760
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    networks:
+      - behavior-job-network
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  # Kafka 初始化（创建 Topics）
+  kafka-init:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: behavior-job-kafka-init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - behavior-job-network
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      "
+      echo 'Creating Kafka topics...'
+
+      # 等待 Kafka 完全启动
+      sleep 10
+
+      # 创建输入 Topic
+      kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists \
+        --topic feature.stat.v1 \
+        --partitions 6 \
+        --replication-factor 1 \
+        --config retention.ms=86400000 \
+        --config max.message.bytes=10485760
+
+      # 创建输出 Topic
+      kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists \
+        --topic detections.behavior.v1 \
+        --partitions 6 \
+        --replication-factor 1 \
+        --config retention.ms=604800000 \
+        --config max.message.bytes=10485760
+
+      echo 'Topics created successfully!'
+      kafka-topics --bootstrap-server kafka:9092 --list
+      "
+
+  #=============================================================================
+  # ClickHouse (OLAP 存储)
+  #=============================================================================
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.8-alpine
+    container_name: behavior-job-clickhouse
+    hostname: clickhouse
+    ports:
+      - "8123:8123"      # HTTP
+      - "9000:9000"      # Native TCP
+    environment:
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: ""
+      CLICKHOUSE_DB: traffic
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+      - clickhouse-logs:/var/log/clickhouse-server
+      - ./docker/clickhouse-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - behavior-job-network
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    restart: unless-stopped
+
+  #=============================================================================
+  # 监控组件
+  #=============================================================================
+
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: behavior-job-prometheus
+    hostname: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./docker/prometheus-rules.yml:/etc/prometheus/rules/flink-behavior-rules.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=7d"
+      - "--web.enable-lifecycle"
+      - "--web.enable-admin-api"
+    networks:
+      - behavior-job-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: behavior-job-grafana
+    hostname: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_ADMIN_PASSWORD:?set GRAFANA_ADMIN_PASSWORD}"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_INSTALL_PLUGINS: grafana-clickhouse-datasource
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./docker/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      - behavior-job-network
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  # AlertManager（告警通知）
+  alertmanager:
+    image: prom/alertmanager:v0.26.0
+    container_name: behavior-job-alertmanager
+    hostname: alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./docker/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager-data:/alertmanager
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+      - "--storage.path=/alertmanager"
+    networks:
+      - behavior-job-network
+    restart: unless-stopped
+
+  #=============================================================================
+  # 开发工具
+  #=============================================================================
+
+  # Kafka UI
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: behavior-job-kafka-ui
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    networks:
+      - behavior-job-network
+    depends_on:
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # 数据生成器（用于测试）
+  data-generator:
+    image: flink:1.17.2-scala_2.12-java17
+    container_name: behavior-job-data-generator
+    profiles:
+      - testing
+    environment:
+      KAFKA_BROKERS: kafka:9092
+      OUTPUT_TOPIC: feature.stat.v1
+      EVENTS_PER_SECOND: 100
+      TENANT_ID: tenant-001
+    volumes:
+      - ./docker/data-generator.py:/app/data-generator.py:ro
+    entrypoint: ["python3", "/app/data-generator.py"]
+    networks:
+      - behavior-job-network
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+#=============================================================================
+# Networks
+#=============================================================================
+
+networks:
+  behavior-job-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16
+
+#=============================================================================
+# Volumes
+#=============================================================================
+
+volumes:
+  flink-checkpoints:
+    driver: local
+  flink-savepoints:
+    driver: local
+  flink-logs:
+    driver: local
+  flink-tm-local:
+    driver: local
+  kafka-data:
+    driver: local
+  zookeeper-data:
+    driver: local
+  zookeeper-logs:
+    driver: local
+  clickhouse-data:
+    driver: local
+  clickhouse-logs:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+  alertmanager-data:
+    driver: local

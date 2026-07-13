@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- flink-feature-job/src/main/resources/log4j2.xml -->
+<Configuration status="WARN">
+    <Properties>
+        <Property name="LOG_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n</Property>
+    </Properties>
+
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+        </Console>
+
+        <RollingFile name="RollingFile" 
+                     fileName="/var/log/flink/feature-job.log"
+                     filePattern="/var/log/flink/feature-job-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+                <SizeBasedTriggeringPolicy size="100MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="7"/>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <!-- Flink 内部日志 -->
+        <Logger name="org.apache.flink" level="INFO"/>
+        <Logger name="org.apache.flink.runtime.checkpoint" level="WARN"/>
+        <Logger name="org.apache.flink.runtime.state" level="WARN"/>
+
+        <!-- Kafka 连接器 -->
+        <Logger name="org.apache.kafka" level="WARN"/>
+
+        <!-- ClickHouse -->
+        <Logger name="com.clickhouse" level="WARN"/>
+
+        <!-- 应用日志 -->
+        <Logger name="com.traffic.flink" level="INFO"/>
+
+        <Root level="INFO">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="RollingFile"/>
+        </Root>
+    </Loggers>
+</Configuration>

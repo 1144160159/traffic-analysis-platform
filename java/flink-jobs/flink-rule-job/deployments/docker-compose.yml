@@ -1,0 +1,339 @@
+# ============================================================================
+# Flink Rule Job - Local Development Docker Compose
+# ============================================================================
+# 
+# 使用方式：
+#   启动所有服务：  docker-compose up -d
+#   查看日志：      docker-compose logs -f flink-jobmanager
+#   提交作业：      docker-compose exec flink-jobmanager ./bin/flink run ...
+#   停止服务：      docker-compose down
+#   清理数据：      docker-compose down -v
+#
+# ============================================================================
+
+version: '3.8'
+
+x-flink-common: &flink-common
+  image: traffic-analysis/flink-rule-job:1.0.0-dev
+  build:
+    context: ../..
+    dockerfile: flink-rule-job/docker/Dockerfile
+  environment: &flink-env
+    KAFKA_BROKERS: kafka:9092
+    CLICKHOUSE_URL: clickhouse:8123
+    CLICKHOUSE_DATABASE: traffic
+    CLICKHOUSE_USER: default
+    CLICKHOUSE_PASSWORD: ""
+    PARALLELISM: "2"
+    TZ: Asia/Shanghai
+  networks:
+    - flink-network
+  depends_on:
+    kafka:
+      condition: service_healthy
+    clickhouse:
+      condition: service_healthy
+
+services:
+  # ==================== Flink Cluster ====================
+  
+  flink-jobmanager:
+    <<: *flink-common
+    container_name: flink-rule-jobmanager
+    hostname: jobmanager
+    command: jobmanager
+    ports:
+      - "8081:8081"     # Web UI
+      - "6123:6123"     # RPC
+      - "9250:9250"     # Prometheus Metrics
+    environment:
+      <<: *flink-env
+      JOB_MANAGER_RPC_ADDRESS: jobmanager
+    volumes:
+      - flink-checkpoints:/data/flink/checkpoints
+      - flink-savepoints:/data/flink/savepoints
+      - flink-logs:/opt/flink/log
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/overview"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  flink-taskmanager:
+    <<: *flink-common
+    container_name: flink-rule-taskmanager
+    hostname: taskmanager
+    command: taskmanager
+    environment:
+      <<: *flink-env
+      JOB_MANAGER_RPC_ADDRESS: jobmanager
+    volumes:
+      - flink-rocksdb:/data/flink/rocksdb
+      - flink-logs:/opt/flink/log
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+        reservations:
+          cpus: '2'
+          memory: 4G
+    depends_on:
+      flink-jobmanager:
+        condition: service_healthy
+
+  # ==================== Kafka ====================
+  
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper
+    hostname: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+      - zookeeper-logs:/var/lib/zookeeper/log
+    networks:
+      - flink-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka
+    hostname: kafka
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_NUM_PARTITIONS: 4
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+      KAFKA_LOG_RETENTION_HOURS: 24
+      KAFKA_LOG_RETENTION_BYTES: 1073741824
+      KAFKA_MESSAGE_MAX_BYTES: 10485760
+      KAFKA_COMPRESSION_TYPE: lz4
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    networks:
+      - flink-network
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  # Kafka 初始化（创建 Topics）
+  kafka-init:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka-init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - flink-network
+    entrypoint: ["/bin/bash", "-c"]
+    command: |
+      "
+      echo 'Creating Kafka topics...'
+      
+      kafka-topics --create --if-not-exists \
+        --bootstrap-server kafka:9092 \
+        --topic feature.stat.v1 \
+        --partitions 4 \
+        --replication-factor 1 \
+        --config retention.ms=86400000 \
+        --config compression.type=lz4
+      
+      kafka-topics --create --if-not-exists \
+        --bootstrap-server kafka:9092 \
+        --topic rule.updates \
+        --partitions 1 \
+        --replication-factor 1 \
+        --config retention.ms=-1 \
+        --config cleanup.policy=compact
+      
+      kafka-topics --create --if-not-exists \
+        --bootstrap-server kafka:9092 \
+        --topic detections.v1 \
+        --partitions 4 \
+        --replication-factor 1 \
+        --config retention.ms=604800000
+      
+      kafka-topics --create --if-not-exists \
+        --bootstrap-server kafka:9092 \
+        --topic dlq.rule-job \
+        --partitions 1 \
+        --replication-factor 1 \
+        --config retention.ms=2592000000
+      
+      echo 'Topics created:'
+      kafka-topics --list --bootstrap-server kafka:9092
+      "
+
+  # ==================== ClickHouse ====================
+  
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.8-alpine
+    container_name: clickhouse
+    hostname: clickhouse
+    ports:
+      - "8123:8123"   # HTTP
+      - "9000:9000"   # Native
+    environment:
+      CLICKHOUSE_DB: traffic
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: ""
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+      - clickhouse-logs:/var/log/clickhouse-server
+      - ./clickhouse-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - flink-network
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ==================== Redis ====================
+  
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    hostname: redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    networks:
+      - flink-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==================== 监控 ====================
+  
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: prometheus
+    hostname: prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=7d'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/rules:/etc/prometheus/rules:ro
+      - prometheus-data:/prometheus
+    networks:
+      - flink-network
+    depends_on:
+      - flink-jobmanager
+
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: grafana
+    hostname: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      - flink-network
+    depends_on:
+      - prometheus
+
+  # ==================== Kafka UI（可选） ====================
+  
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    networks:
+      - flink-network
+    depends_on:
+      kafka:
+        condition: service_healthy
+    profiles:
+      - tools
+
+# ==================== Networks ====================
+
+networks:
+  flink-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+# ==================== Volumes ====================
+
+volumes:
+  flink-checkpoints:
+    driver: local
+  flink-savepoints:
+    driver: local
+  flink-rocksdb:
+    driver: local
+  flink-logs:
+    driver: local
+  kafka-data:
+    driver: local
+  zookeeper-data:
+    driver: local
+  zookeeper-logs:
+    driver: local
+  clickhouse-data:
+    driver: local
+  clickhouse-logs:
+    driver: local
+  redis-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local

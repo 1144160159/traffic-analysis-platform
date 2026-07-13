@@ -1,0 +1,20 @@
+{
+  "rule_id": "rule-threshold-001",
+  "tenant_id": "tenant-1",
+  "name": "High PPS Detection (DDoS Indicator)",
+  "description": "Detect abnormally high packet rate indicating potential DDoS attack",
+  "type": "threshold",
+  "enabled": true,
+  "severity": "high",
+  "priority": 80,
+  "conditions": {
+    "feature": "pps",
+    "operator": ">",
+    "value": 100000
+  },
+  "labels": ["ddos", "anomaly", "high-traffic"],
+  "version": 1,
+  "action": "update",
+  "created_by": "system",
+  "updated_by": "admin-user"
+}

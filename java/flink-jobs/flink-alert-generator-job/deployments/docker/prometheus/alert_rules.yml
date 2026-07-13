@@ -1,0 +1,423 @@
+################################################################################
+# Prometheus 告警规则 - Flink Alert Generator Job
+# 
+# 告警分类:
+# 1. Job 健康状态 (flink_job_health)
+# 2. 性能指标 (flink_performance)
+# 3. 资源使用 (flink_resources)
+# 4. 业务指标 (alert_business_metrics)
+# 5. 依赖服务 (kafka_dependency, clickhouse_dependency, opensearch_dependency)
+# 6. State 管理 (flink_state)
+################################################################################
+
+groups:
+  # ============================================================================
+  # Job 健康状态告警
+  # ============================================================================
+  - name: flink_job_health
+    interval: 30s
+    rules:
+      # JobManager 宕机
+      - alert: FlinkJobManagerDown
+        expr: up{job="flink-jobmanager"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: flink
+          job: alert-generator-job
+        annotations:
+          summary: "Flink JobManager 不可用"
+          description: "JobManager 已宕机超过 2 分钟。作业: {{ $labels.flink_job }}"
+          runbook_url: "https://wiki.example.com/runbooks/flink-jobmanager-down"
+
+      # TaskManager 宕机
+      - alert: FlinkTaskManagerDown
+        expr: up{job="flink-taskmanager"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: flink
+          job: alert-generator-job
+        annotations:
+          summary: "Flink TaskManager 不可用"
+          description: "TaskManager 已宕机超过 2 分钟"
+
+      # 作业频繁重启
+      - alert: FlinkJobRestartLoop
+        expr: |
+          increase(flink_jobmanager_job_numRestarts[10m]) > 3
+        for: 5m
+        labels:
+          severity: critical
+          component: flink
+        annotations:
+          summary: "Flink 作业频繁重启"
+          description: "作业在过去 10 分钟内重启 {{ $value }} 次，可能存在系统性问题"
+
+      # TaskManager 数量不足
+      - alert: FlinkInsufficientTaskManagers
+        expr: |
+          flink_jobmanager_numRegisteredTaskManagers < 1
+        for: 5m
+        labels:
+          severity: warning
+          component: flink
+        annotations:
+          summary: "TaskManager 数量不足"
+          description: "当前注册的 TaskManager 数量: {{ $value }}，期望至少 1 个"
+
+      # Checkpoint 连续失败
+      - alert: FlinkCheckpointFailing
+        expr: |
+          increase(flink_jobmanager_job_numberOfFailedCheckpoints[10m]) > 3
+        for: 5m
+        labels:
+          severity: warning
+          component: flink
+        annotations:
+          summary: "Checkpoint 连续失败"
+          description: "过去 10 分钟内 Checkpoint 失败 {{ $value }} 次"
+
+      # Checkpoint 未完成
+      - alert: FlinkNoCompletedCheckpoints
+        expr: |
+          increase(flink_jobmanager_job_numberOfCompletedCheckpoints[30m]) == 0
+          and flink_jobmanager_job_uptime > 1800000
+        for: 10m
+        labels:
+          severity: warning
+          component: flink
+        annotations:
+          summary: "长时间无成功 Checkpoint"
+          description: "作业运行超过 30 分钟但无成功的 Checkpoint"
+
+  # ============================================================================
+  # 性能指标告警
+  # ============================================================================
+  - name: flink_performance
+    interval: 30s
+    rules:
+      # Checkpoint 耗时过长
+      - alert: FlinkCheckpointDurationHigh
+        expr: |
+          flink_jobmanager_job_lastCheckpointDuration > 120000
+        for: 10m
+        labels:
+          severity: warning
+          component: flink
+        annotations:
+          summary: "Checkpoint 耗时过长"
+          description: "最近 Checkpoint 耗时 {{ $value | humanizeDuration }}，超过 2 分钟阈值"
+
+      # 高背压
+      - alert: FlinkHighBackpressure
+        expr: |
+          flink_taskmanager_job_task_backPressuredTimeMsPerSecond > 800
+        for: 5m
+        labels:
+          severity: warning
+          component: flink
+        annotations:
+          summary: "检测到高背压"
+          description: "任务 {{ $labels.task_name }} 背压时间: {{ $value }}ms/s (阈值: 800ms/s)"
+
+      # 处理延迟过高
+      - alert: FlinkHighProcessingLatency
+        expr: |
+          (
+            flink_taskmanager_job_task_operator_currentInputWatermark > 0
+            and (time() * 1000 - flink_taskmanager_job_task_operator_currentInputWatermark) > 300000
+          )
+        for: 10m
+        labels:
+          severity: warning
+          component: flink
+        annotations:
+          summary: "事件处理延迟过高"
+          description: "Watermark 延迟超过 5 分钟，可能存在数据积压"
+
+      # 吞吐量过低
+      - alert: FlinkLowThroughput
+        expr: |
+          rate(flink_taskmanager_job_task_numRecordsIn[5m]) < 1
+          and flink_jobmanager_job_uptime > 600000
+        for: 15m
+        labels:
+          severity: warning
+          component: flink
+        annotations:
+          summary: "处理吞吐量过低"
+          description: "任务 {{ $labels.task_name }} 吞吐量: {{ $value }} records/s"
+
+  # ============================================================================
+  # 资源使用告警
+  # ============================================================================
+  - name: flink_resources
+    interval: 30s
+    rules:
+      # 堆内存使用率高
+      - alert: FlinkHighHeapMemoryUsage
+        expr: |
+          (
+            flink_taskmanager_Status_JVM_Memory_Heap_Used 
+            / flink_taskmanager_Status_JVM_Memory_Heap_Max
+          ) > 0.85
+        for: 10m
+        labels:
+          severity: warning
+          component: flink
+        annotations:
+          summary: "堆内存使用率过高"
+          description: "TaskManager {{ $labels.host }} 堆内存使用率: {{ $value | humanizePercentage }} (阈值: 85%)"
+
+      # 堆内存使用率危急
+      - alert: FlinkCriticalHeapMemoryUsage
+        expr: |
+          (
+            flink_taskmanager_Status_JVM_Memory_Heap_Used 
+            / flink_taskmanager_Status_JVM_Memory_Heap_Max
+          ) > 0.95
+        for: 5m
+        labels:
+          severity: critical
+          component: flink
+        annotations:
+          summary: "堆内存使用率危急"
+          description: "TaskManager {{ $labels.host }} 堆内存使用率: {{ $value | humanizePercentage }}，即将 OOM"
+
+      # CPU 使用率高
+      - alert: FlinkHighCPUUsage
+        expr: |
+          flink_taskmanager_Status_JVM_CPU_Load > 0.9
+        for: 15m
+        labels:
+          severity: warning
+          component: flink
+        annotations:
+          summary: "CPU 使用率过高"
+          description: "TaskManager {{ $labels.host }} CPU 使用率: {{ $value | humanizePercentage }}"
+
+      # GC 时间过长
+      - alert: FlinkHighGCTime
+        expr: |
+          rate(flink_taskmanager_Status_JVM_GarbageCollector_G1_Old_Generation_Time[5m]) > 200
+        for: 10m
+        labels:
+          severity: warning
+          component: flink
+        annotations:
+          summary: "GC 时间过长"
+          description: "TaskManager {{ $labels.host }} GC 时间: {{ $value }}ms/s (阈值: 200ms/s)"
+
+      # Full GC 频繁
+      - alert: FlinkFrequentFullGC
+        expr: |
+          increase(flink_taskmanager_Status_JVM_GarbageCollector_G1_Old_Generation_Count[5m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+          component: flink
+        annotations:
+          summary: "Full GC 过于频繁"
+          description: "TaskManager {{ $labels.host }} 5分钟内 Full GC {{ $value }} 次"
+
+  # ============================================================================
+  # 业务指标告警
+  # ============================================================================
+  - name: alert_business_metrics
+    interval: 30s
+    rules:
+      # 告警生成率过高
+      - alert: HighAlertGenerationRate
+        expr: |
+          rate(flink_taskmanager_job_task_operator_alerts_generated_total[5m]) > 1000
+        for: 10m
+        labels:
+          severity: warning
+          component: business
+        annotations:
+          summary: "告警生成率异常高"
+          description: "告警生成速率: {{ $value }} alerts/s，可能存在攻击或误报"
+
+      # 无告警生成
+      - alert: NoAlertsGenerated
+        expr: |
+          rate(flink_taskmanager_job_task_operator_alerts_generated_total[30m]) == 0
+          and flink_jobmanager_job_uptime > 1800000
+        for: 30m
+        labels:
+          severity: warning
+          component: business
+        annotations:
+          summary: "长时间无告警生成"
+          description: "过去 30 分钟内无告警生成，请检查上游检测作业"
+
+      # 去重率过高
+      - alert: HighDeduplicationRate
+        expr: |
+          (
+            rate(flink_taskmanager_job_task_operator_alerts_deduplicated_total[5m]) 
+            / (
+                rate(flink_taskmanager_job_task_operator_alerts_generated_total[5m]) 
+                + rate(flink_taskmanager_job_task_operator_alerts_deduplicated_total[5m])
+                + 0.001
+              )
+          ) > 0.9
+        for: 30m
+        labels:
+          severity: info
+          component: business
+        annotations:
+          summary: "去重率过高"
+          description: "去重率: {{ $value | humanizePercentage }}，请检查去重窗口配置"
+
+      # 证据生成率过低
+      - alert: LowEvidenceGenerationRate
+        expr: |
+          (
+            rate(flink_taskmanager_job_task_operator_evidences_generated_total[5m]) 
+            / (rate(flink_taskmanager_job_task_operator_alerts_generated_total[5m]) + 0.001)
+          ) < 0.5
+          and rate(flink_taskmanager_job_task_operator_alerts_generated_total[5m]) > 0.1
+        for: 15m
+        labels:
+          severity: warning
+          component: business
+        annotations:
+          summary: "证据生成率过低"
+          description: "证据/告警比率: {{ $value | humanizePercentage }}，请检查 Evidence 构建逻辑"
+
+  # ============================================================================
+  # Kafka 依赖告警
+  # ============================================================================
+  - name: kafka_dependency
+    interval: 30s
+    rules:
+      # Kafka 消费延迟过高
+      - alert: KafkaConsumerLagHigh
+        expr: |
+          flink_taskmanager_job_task_operator_KafkaSourceReader_KafkaConsumer_records_lag_max > 100000
+        for: 10m
+        labels:
+          severity: warning
+          component: kafka
+        annotations:
+          summary: "Kafka 消费延迟过高"
+          description: "Topic {{ $labels.topic }} 消费延迟: {{ $value }} records"
+
+      # Kafka 消费延迟危急
+      - alert: KafkaConsumerLagCritical
+        expr: |
+          flink_taskmanager_job_task_operator_KafkaSourceReader_KafkaConsumer_records_lag_max > 500000
+        for: 5m
+        labels:
+          severity: critical
+          component: kafka
+        annotations:
+          summary: "Kafka 消费延迟危急"
+          description: "Topic {{ $labels.topic }} 消费延迟: {{ $value }} records，需要立即处理"
+
+      # Kafka 连接错误
+      - alert: KafkaConnectionError
+        expr: |
+          increase(flink_taskmanager_job_task_operator_KafkaSourceReader_KafkaConsumer_failed_authentication_total[5m]) > 0
+          or increase(flink_taskmanager_job_task_operator_KafkaSourceReader_KafkaConsumer_connection_close_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: critical
+          component: kafka
+        annotations:
+          summary: "Kafka 连接异常"
+          description: "检测到 Kafka 连接错误或频繁断开"
+
+  # ============================================================================
+  # ClickHouse 依赖告警
+  # ============================================================================
+  - name: clickhouse_dependency
+    interval: 30s
+    rules:
+      # ClickHouse 写入错误
+      - alert: ClickHouseWriteError
+        expr: |
+          rate(flink_taskmanager_job_task_operator_numRecordsSendErrors{operator_name=~".*ClickHouse.*"}[5m]) > 0
+        for: 5m
+        labels:
+          severity: critical
+          component: clickhouse
+        annotations:
+          summary: "ClickHouse 写入错误"
+          description: "算子 {{ $labels.operator_name }} 写入错误率: {{ $value }}/s"
+
+      # ClickHouse 写入延迟高
+      - alert: ClickHouseSlowWrite
+        expr: |
+          histogram_quantile(0.95, 
+            rate(flink_taskmanager_job_task_operator_sinkWriteTime_bucket{operator_name=~".*ClickHouse.*"}[5m])
+          ) > 5000
+        for: 10m
+        labels:
+          severity: warning
+          component: clickhouse
+        annotations:
+          summary: "ClickHouse 写入延迟高"
+          description: "P95 写入延迟: {{ $value }}ms (阈值: 5000ms)"
+
+  # ============================================================================
+  # OpenSearch 依赖告警
+  # ============================================================================
+  - name: opensearch_dependency
+    interval: 30s
+    rules:
+      # OpenSearch 写入错误
+      - alert: OpenSearchWriteError
+        expr: |
+          rate(flink_taskmanager_job_task_operator_numRecordsSendErrors{operator_name=~".*OpenSearch.*|.*Elasticsearch.*"}[5m]) > 0
+        for: 5m
+        labels:
+          severity: critical
+          component: opensearch
+        annotations:
+          summary: "OpenSearch 写入错误"
+          description: "算子 {{ $labels.operator_name }} 写入错误率: {{ $value }}/s"
+
+      # OpenSearch Bulk 拒绝
+      - alert: OpenSearchBulkRejection
+        expr: |
+          rate(flink_taskmanager_job_task_operator_numRecordsOutErrors{operator_name=~".*OpenSearch.*|.*Elasticsearch.*"}[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          component: opensearch
+        annotations:
+          summary: "OpenSearch Bulk 请求被拒绝"
+          description: "Bulk 拒绝率: {{ $value }}/s"
+
+  # ============================================================================
+  # State 管理告警
+  # ============================================================================
+  - name: flink_state
+    interval: 60s
+    rules:
+      # State 大小过大
+      - alert: FlinkLargeStateSize
+        expr: |
+          flink_jobmanager_job_lastCheckpointSize > 10737418240
+        for: 30m
+        labels:
+          severity: warning
+          component: flink
+        annotations:
+          summary: "State 大小过大"
+          description: "Checkpoint 大小: {{ $value | humanize1024 }}B (阈值: 10GB)"
+
+      # State 持续增长
+      - alert: FlinkStateContinuousGrowth
+        expr: |
+          deriv(flink_jobmanager_job_lastCheckpointSize[1h]) > 104857600
+        for: 2h
+        labels:
+          severity: warning
+          component: flink
+        annotations:
+          summary: "State 持续增长"
+          description: "State 增长率: {{ $value | humanize1024 }}B/s，请检查 TTL 配置"

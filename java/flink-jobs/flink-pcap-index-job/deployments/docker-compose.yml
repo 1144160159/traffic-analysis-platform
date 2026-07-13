@@ -1,0 +1,350 @@
+# =============================================================================
+# Flink PCAP Index Job - 本地开发 Docker Compose
+# =============================================================================
+# 
+# 使用方法:
+#   启动所有服务:     docker-compose up -d
+#   查看日志:         docker-compose logs -f flink-jobmanager
+#   提交作业:         docker-compose exec flink-jobmanager flink run ...
+#   停止所有服务:     docker-compose down
+#   清理数据:         docker-compose down -v
+#
+# 访问地址:
+#   Flink Web UI:     http://localhost:8081
+#   Prometheus:       http://localhost:9090
+#   Grafana:          http://localhost:3000 (admin/admin)
+#   Kafka UI:         http://localhost:8080
+#   ClickHouse:       http://localhost:8123
+#
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ==================== Zookeeper ====================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: pcap-index-zookeeper
+    hostname: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+      - zookeeper-logs:/var/lib/zookeeper/log
+    networks:
+      - flink-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==================== Kafka ====================
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: pcap-index-kafka
+    hostname: kafka
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_NUM_PARTITIONS: 4
+      KAFKA_LOG_RETENTION_HOURS: 24
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+      KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 300000
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    networks:
+      - flink-network
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  # ==================== Kafka Topics 初始化 ====================
+  kafka-init:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: pcap-index-kafka-init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - flink-network
+    entrypoint: ["/bin/bash", "-c"]
+    command: |
+      "
+      echo 'Creating Kafka topics...'
+      
+      # 创建 PCAP Index 输入 Topic
+      kafka-topics --create --if-not-exists \
+        --bootstrap-server kafka:29092 \
+        --topic pcap.index.v1 \
+        --partitions 4 \
+        --replication-factor 1 \
+        --config retention.ms=86400000 \
+        --config segment.bytes=1073741824
+      
+      # 创建 DLQ Topic
+      kafka-topics --create --if-not-exists \
+        --bootstrap-server kafka:29092 \
+        --topic dlq.pcap-index-job \
+        --partitions 2 \
+        --replication-factor 1 \
+        --config retention.ms=604800000
+      
+      echo 'Kafka topics created successfully!'
+      kafka-topics --list --bootstrap-server kafka:29092
+      "
+
+  # ==================== Kafka UI ====================
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: pcap-index-kafka-ui
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    networks:
+      - flink-network
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  # ==================== ClickHouse ====================
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.8-alpine
+    container_name: pcap-index-clickhouse
+    hostname: clickhouse
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    environment:
+      CLICKHOUSE_DB: traffic
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: ""
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+      - ./init-scripts/clickhouse:/docker-entrypoint-initdb.d
+    networks:
+      - flink-network
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+
+  # ==================== Flink JobManager ====================
+  flink-jobmanager:
+    build:
+      context: ../../../..
+      dockerfile: flink-jobs/flink-pcap-index-job/docker/Dockerfile
+    image: traffic-platform/flink-pcap-index-job:latest
+    container_name: pcap-index-flink-jobmanager
+    hostname: flink-jobmanager
+    ports:
+      - "8081:8081"
+      - "9249:9249"
+    environment:
+      - FLINK_JOB_MANAGER=true
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: flink-jobmanager
+        jobmanager.memory.process.size: 1600m
+        taskmanager.memory.process.size: 2048m
+        taskmanager.numberOfTaskSlots: 2
+        parallelism.default: 2
+        state.backend: rocksdb
+        state.checkpoints.dir: file:///opt/flink/checkpoints
+        execution.checkpointing.interval: 30s
+        metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
+        metrics.reporter.prom.port: 9249
+      # 作业配置（覆盖默认值）
+      - KAFKA_BROKERS=kafka:29092
+      - KAFKA_INPUT_TOPIC=pcap.index.v1
+      - KAFKA_DLQ_TOPIC=dlq.pcap-index-job
+      - CLICKHOUSE_URL=clickhouse:8123
+      - CLICKHOUSE_DATABASE=traffic
+      - CLICKHOUSE_TABLE=pcap_index_local
+    command: jobmanager
+    volumes:
+      - flink-checkpoints:/opt/flink/checkpoints
+      - flink-logs:/var/log/flink
+    networks:
+      - flink-network
+    depends_on:
+      kafka:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/overview"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ==================== Flink TaskManager ====================
+  flink-taskmanager:
+    build:
+      context: ../../../..
+      dockerfile: flink-jobs/flink-pcap-index-job/docker/Dockerfile
+    image: traffic-platform/flink-pcap-index-job:latest
+    container_name: pcap-index-flink-taskmanager
+    hostname: flink-taskmanager
+    ports:
+      - "9250:9249"
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: flink-jobmanager
+        taskmanager.memory.process.size: 2048m
+        taskmanager.numberOfTaskSlots: 2
+        parallelism.default: 2
+        state.backend: rocksdb
+        metrics.reporter.prom.factory.class: org.apache.flink.metrics.prometheus.PrometheusReporterFactory
+        metrics.reporter.prom.port: 9249
+    command: taskmanager
+    volumes:
+      - flink-checkpoints:/opt/flink/checkpoints
+      - flink-logs:/var/log/flink
+    networks:
+      - flink-network
+    depends_on:
+      - flink-jobmanager
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          memory: 2560M
+        reservations:
+          memory: 2048M
+
+  # ==================== Prometheus ====================
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: pcap-index-prometheus
+    hostname: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/prometheus/rules:/etc/prometheus/rules
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=7d'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    networks:
+      - flink-network
+    depends_on:
+      - flink-jobmanager
+      - flink-taskmanager
+
+  # ==================== Alertmanager ====================
+  alertmanager:
+    image: prom/alertmanager:v0.26.0
+    container_name: pcap-index-alertmanager
+    hostname: alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+      - alertmanager-data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    networks:
+      - flink-network
+
+  # ==================== Grafana ====================
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: pcap-index-grafana
+    hostname: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-piechart-panel
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+      - grafana-data:/var/lib/grafana
+    networks:
+      - flink-network
+    depends_on:
+      - prometheus
+
+  # ==================== 测试数据生成器 ====================
+  test-producer:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: pcap-index-test-producer
+    profiles:
+      - test
+    networks:
+      - flink-network
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: ["/bin/bash", "-c"]
+    command: |
+      "
+      echo 'Waiting for Kafka to be ready...'
+      sleep 10
+      
+      echo 'Generating test PCAP index messages...'
+      for i in $$(seq 1 100); do
+        # 生成测试消息（需要实际的 Protobuf 编码，这里仅演示）
+        echo 'Test message $$i'
+        sleep 1
+      done
+      
+      echo 'Test data generation completed!'
+      "
+
+# ==================== Networks ====================
+networks:
+  flink-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+# ==================== Volumes ====================
+volumes:
+  zookeeper-data:
+  zookeeper-logs:
+  kafka-data:
+  clickhouse-data:
+  flink-checkpoints:
+  flink-logs:
+  prometheus-data:
+  alertmanager-data:
+  grafana-data:

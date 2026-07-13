@@ -1,0 +1,418 @@
+################################################################################
+# Docker Compose for Flink Alert Generator Job (本地开发环境)
+#
+# 启动命令:
+#   docker-compose up -d
+#   docker-compose logs -f flink-jobmanager
+#
+# 访问地址:
+#   Flink Web UI:  http://localhost:8081
+#   Grafana:       http://localhost:3000 (admin/admin)
+#   Prometheus:    http://localhost:9090
+#   Kafka UI:      http://localhost:8080
+#   ClickHouse:    http://localhost:8123
+#   OpenSearch:    http://localhost:9200
+################################################################################
+
+version: '3.8'
+
+x-flink-common: &flink-common
+  build:
+    context: .
+    dockerfile: Dockerfile
+  environment: &flink-env
+    KAFKA_BROKERS: kafka:9092
+    KAFKA_INPUT_TOPIC_BEHAVIOR: detections.behavior.v1
+    KAFKA_INPUT_TOPIC_BUSINESS: detections.business.v1
+    KAFKA_OUTPUT_TOPIC: alerts.v1
+    CLICKHOUSE_URL: clickhouse:8123
+    CLICKHOUSE_DB: traffic
+    CLICKHOUSE_ALERT_TABLE: alerts_local
+    CLICKHOUSE_EVIDENCE_TABLE: evidence_local
+    OPENSEARCH_URL: http://opensearch:9200
+    OPENSEARCH_INDEX: alerts
+    ARKIME_URL: http://arkime:8005
+    ARKIME_TIME_BUFFER: "120"
+    FLINK_CHECKPOINT_DIR: file:///opt/flink/checkpoints
+    FLINK_CHECKPOINT_INTERVAL: "60000"
+    DEDUP_WINDOW_MINUTES: "10"
+    SEVERITY_CRITICAL: "0.9"
+    SEVERITY_HIGH: "0.7"
+    SEVERITY_MEDIUM: "0.5"
+    SEVERITY_LOW: "0.3"
+    ENABLE_BUSINESS_DETECTION: "true"
+    DEBUG_PRINT: "false"
+  volumes:
+    - flink-checkpoints:/opt/flink/checkpoints
+    - flink-savepoints:/opt/flink/savepoints
+    - flink-logs:/opt/flink/log
+  networks:
+    - flink-network
+  restart: unless-stopped
+
+services:
+  # ==================== Zookeeper ====================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: alert-job-zookeeper
+    hostname: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_SYNC_LIMIT: 2
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+      - zookeeper-logs:/var/lib/zookeeper/log
+    networks:
+      - flink-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ==================== Kafka ====================
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: alert-job-kafka
+    hostname: kafka
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_RETENTION_HOURS: 24
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+      KAFKA_COMPRESSION_TYPE: lz4
+      KAFKA_MESSAGE_MAX_BYTES: 10485760
+      KAFKA_REPLICA_FETCH_MAX_BYTES: 10485760
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    networks:
+      - flink-network
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  # ==================== Kafka Topics 初始化 ====================
+  kafka-init:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: alert-job-kafka-init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - flink-network
+    entrypoint: ["/bin/bash", "-c"]
+    command: |
+      "
+      echo 'Creating Kafka topics...'
+
+      kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists \
+        --topic detections.behavior.v1 \
+        --partitions 6 --replication-factor 1 \
+        --config retention.ms=86400000 \
+        --config compression.type=lz4
+
+      kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists \
+        --topic detections.business.v1 \
+        --partitions 6 --replication-factor 1 \
+        --config retention.ms=86400000 \
+        --config compression.type=lz4
+
+      kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists \
+        --topic alerts.v1 \
+        --partitions 6 --replication-factor 1 \
+        --config retention.ms=604800000 \
+        --config compression.type=lz4
+
+      echo 'Kafka topics created successfully!'
+      kafka-topics --bootstrap-server kafka:9092 --list
+      "
+
+  # ==================== ClickHouse ====================
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.8-alpine
+    container_name: alert-job-clickhouse
+    hostname: clickhouse
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    environment:
+      CLICKHOUSE_DB: traffic
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: ""
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+      - clickhouse-logs:/var/log/clickhouse-server
+      - ./docker/clickhouse/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./docker/clickhouse/config.xml:/etc/clickhouse-server/config.d/custom.xml:ro
+    networks:
+      - flink-network
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ==================== OpenSearch ====================
+  opensearch:
+    image: opensearchproject/opensearch:2.11.0
+    container_name: alert-job-opensearch
+    hostname: opensearch
+    ports:
+      - "9200:9200"
+      - "9600:9600"
+    environment:
+      discovery.type: single-node
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+      DISABLE_INSTALL_DEMO_CONFIG: "true"
+      bootstrap.memory_lock: "true"
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    networks:
+      - flink-network
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:9200/_cluster/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+  # ==================== OpenSearch Index 初始化 ====================
+  opensearch-init:
+    image: curlimages/curl:8.5.0
+    container_name: alert-job-opensearch-init
+    depends_on:
+      opensearch:
+        condition: service_healthy
+    networks:
+      - flink-network
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      "
+      echo 'Creating OpenSearch index...'
+
+      curl -sf -X PUT 'http://opensearch:9200/alerts' \
+        -H 'Content-Type: application/json' \
+        -d '{
+          \"settings\": {
+            \"number_of_shards\": 3,
+            \"number_of_replicas\": 0,
+            \"refresh_interval\": \"5s\"
+          },
+          \"mappings\": {
+            \"properties\": {
+              \"tenant_id\": {\"type\": \"keyword\"},
+              \"alert_id\": {\"type\": \"keyword\"},
+              \"event_id\": {\"type\": \"keyword\"},
+              \"src_ip\": {\"type\": \"ip\"},
+              \"dst_ip\": {\"type\": \"ip\"},
+              \"src_port\": {\"type\": \"integer\"},
+              \"dst_port\": {\"type\": \"integer\"},
+              \"protocol\": {\"type\": \"integer\"},
+              \"protocol_name\": {\"type\": \"keyword\"},
+              \"alert_type\": {\"type\": \"keyword\"},
+              \"severity\": {\"type\": \"keyword\"},
+              \"score\": {\"type\": \"float\"},
+              \"labels\": {\"type\": \"keyword\"},
+              \"first_seen\": {\"type\": \"date\"},
+              \"last_seen\": {\"type\": \"date\"},
+              \"updated_ts\": {\"type\": \"date\"},
+              \"ingest_ts\": {\"type\": \"date\"},
+              \"status\": {\"type\": \"keyword\"},
+              \"assignee\": {\"type\": \"keyword\"},
+              \"count\": {\"type\": \"integer\"},
+              \"community_id\": {\"type\": \"keyword\"},
+              \"session_id\": {\"type\": \"keyword\"},
+              \"campaign_id\": {\"type\": \"keyword\"},
+              \"model_version\": {\"type\": \"keyword\"},
+              \"rule_version\": {\"type\": \"keyword\"},
+              \"evidence_ids\": {\"type\": \"keyword\"},
+              \"dedup_fingerprint\": {\"type\": \"keyword\"},
+              \"arkime_session_link\": {\"type\": \"text\", \"index\": false},
+              \"state_version\": {\"type\": \"long\"}
+            }
+          }
+        }' || true
+
+      echo 'OpenSearch index created!'
+      "
+
+  # ==================== Flink JobManager ====================
+  flink-jobmanager:
+    <<: *flink-common
+    container_name: alert-job-jobmanager
+    hostname: flink-jobmanager
+    ports:
+      - "8081:8081"
+      - "6123:6123"
+      - "9249:9249"
+    environment:
+      <<: *flink-env
+      FLINK_JM_HOST: flink-jobmanager
+      FLINK_JM_MEMORY: 2048m
+      FLINK_TM_MEMORY: 4096m
+      FLINK_TASK_SLOTS: "4"
+      FLINK_PARALLELISM: "4"
+      SINK_PARALLELISM: "2"
+      SKIP_HEALTH_CHECK: "false"
+    depends_on:
+      kafka:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      opensearch:
+        condition: service_healthy
+    command: ["standalone-job", "--job-classname", "com.traffic.flink.alert.AlertGeneratorJob"]
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8081/overview"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+  # ==================== Flink TaskManager ====================
+  flink-taskmanager:
+    <<: *flink-common
+    container_name: alert-job-taskmanager
+    hostname: flink-taskmanager
+    ports:
+      - "6121:6121"
+      - "6122:6122"
+      - "9250:9249"
+    environment:
+      <<: *flink-env
+      FLINK_JM_HOST: flink-jobmanager
+      FLINK_TM_MEMORY: 4096m
+      FLINK_TASK_SLOTS: "4"
+      SKIP_HEALTH_CHECK: "true"
+    depends_on:
+      flink-jobmanager:
+        condition: service_healthy
+    command: ["taskmanager"]
+    deploy:
+      replicas: 1
+
+  # ==================== Prometheus ====================
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: alert-job-prometheus
+    hostname: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./docker/prometheus/alert_rules.yml:/etc/prometheus/rules/alert_rules.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    networks:
+      - flink-network
+    depends_on:
+      - flink-jobmanager
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9090/-/healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ==================== Grafana ====================
+  grafana:
+    image: grafana/grafana:10.2.2
+    container_name: alert-job-grafana
+    hostname: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_INSTALL_PLUGINS: grafana-piechart-panel,grafana-clock-panel
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/alert-generator-overview.json
+    volumes:
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./docker/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    networks:
+      - flink-network
+    depends_on:
+      - prometheus
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ==================== Kafka UI ====================
+  kafka-ui:
+    image: provectuslabs/kafka-ui:v0.7.1
+    container_name: alert-job-kafka-ui
+    hostname: kafka-ui
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+      DYNAMIC_CONFIG_ENABLED: "true"
+    networks:
+      - flink-network
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+# ==================== Networks ====================
+networks:
+  flink-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+# ==================== Volumes ====================
+volumes:
+  zookeeper-data:
+  zookeeper-logs:
+  kafka-data:
+  clickhouse-data:
+  clickhouse-logs:
+  opensearch-data:
+  flink-checkpoints:
+  flink-savepoints:
+  flink-logs:
+  prometheus-data:
+  grafana-data:

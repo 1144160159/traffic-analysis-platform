@@ -1,0 +1,25 @@
+{
+  "rule_id": "rule-blacklist-001",
+  "tenant_id": "tenant-1",
+  "name": "Known Malicious IPs",
+  "description": "Block traffic from/to known malicious IP addresses from threat intelligence",
+  "type": "blacklist",
+  "enabled": true,
+  "severity": "critical",
+  "priority": 100,
+  "conditions": {
+    "ip_list": [
+      "192.168.100.100",
+      "10.0.0.99",
+      "172.16.0.50",
+      "203.0.113.50",
+      "198.51.100.10"
+    ],
+    "direction": "both"
+  },
+  "labels": ["malware", "c2", "threat-intel", "blacklist"],
+  "version": 2,
+  "action": "update",
+  "created_by": "security-team",
+  "updated_by": "admin-user"
+}

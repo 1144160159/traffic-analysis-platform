@@ -1,0 +1,102 @@
+################################################################################
+# Prometheus 配置 - Flink Alert Generator Job 监控
+#
+# 功能:
+# 1. 采集 Flink JobManager/TaskManager 指标
+# 2. 采集 Kafka/ClickHouse/OpenSearch 指标
+# 3. 加载告警规则
+################################################################################
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'flink-alert-generator-dev'
+    environment: 'development'
+    job_name: 'alert-generator-job'
+
+# ==================== 告警规则 ====================
+rule_files:
+  - '/etc/prometheus/rules/*.yml'
+
+# ==================== Alertmanager 配置 (可选) ====================
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets:
+#             - alertmanager:9093
+
+# ==================== 数据抓取配置 ====================
+scrape_configs:
+  # ==================== Prometheus 自监控 ====================
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          component: 'prometheus'
+
+  # ==================== Flink JobManager Metrics ====================
+  - job_name: 'flink-jobmanager'
+    static_configs:
+      - targets: ['flink-jobmanager:9249']
+        labels:
+          component: 'jobmanager'
+          flink_job: 'alert-generator-job'
+    metrics_path: /
+    scheme: http
+    scrape_interval: 10s
+    scrape_timeout: 8s
+    metric_relabel_configs:
+      # 添加 job_name 标签 (从 flink 指标中提取)
+      - source_labels: [job_name]
+        target_label: flink_job_name
+        regex: '(.+)'
+        replacement: '$1'
+
+  # ==================== Flink TaskManager Metrics ====================
+  - job_name: 'flink-taskmanager'
+    static_configs:
+      - targets: ['flink-taskmanager:9249']
+        labels:
+          component: 'taskmanager'
+          flink_job: 'alert-generator-job'
+    metrics_path: /
+    scheme: http
+    scrape_interval: 10s
+    scrape_timeout: 8s
+
+  # ==================== ClickHouse Metrics ====================
+  - job_name: 'clickhouse'
+    static_configs:
+      - targets: ['clickhouse:9363']
+        labels:
+          component: 'clickhouse'
+    metrics_path: /metrics
+    scheme: http
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+  # ==================== Kafka JMX Metrics (需要 JMX Exporter) ====================
+  # - job_name: 'kafka'
+  #   static_configs:
+  #     - targets: ['kafka:9101']
+  #       labels:
+  #         component: 'kafka'
+  #   metrics_path: /metrics
+  #   scheme: http
+  #   scrape_interval: 30s
+
+  # ==================== OpenSearch Metrics ====================
+  - job_name: 'opensearch'
+    static_configs:
+      - targets: ['opensearch:9200']
+        labels:
+          component: 'opensearch'
+    metrics_path: /_prometheus/metrics
+    scheme: http
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    # OpenSearch 可能不暴露 Prometheus 端点，使用 basic_auth
+    # basic_auth:
+    #   username: admin
+    #   password: admin

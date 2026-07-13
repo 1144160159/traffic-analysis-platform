@@ -1,0 +1,385 @@
+# ============================================================================
+# Prometheus Alert Rules for Flink Rule Job
+# ============================================================================
+
+groups:
+  # ============================================================================
+  # Job 健康状态告警
+  # ============================================================================
+  - name: flink_rule_job_health
+    interval: 30s
+    rules:
+      # Job 不在运行状态
+      - alert: FlinkRuleJobNotRunning
+        expr: |
+          absent(flink_jobmanager_job_uptime) 
+          or flink_jobmanager_job_uptime == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: flink
+          job_name: rule-engine
+        annotations:
+          summary: "Flink Rule Job 未运行"
+          description: "Rule Engine Job 已停止运行超过 2 分钟"
+          runbook_url: "https://wiki.example.com/flink/rule-job-not-running"
+
+      # Job 重启过于频繁
+      - alert: FlinkRuleJobRestartsTooFrequent
+        expr: |
+          increase(flink_jobmanager_job_numRestarts[30m]) > 3
+        for: 1m
+        labels:
+          severity: warning
+          team: flink
+          job_name: rule-engine
+        annotations:
+          summary: "Flink Rule Job 频繁重启"
+          description: "Rule Engine Job 在过去 30 分钟内重启了 {{ $value }} 次"
+          runbook_url: "https://wiki.example.com/flink/frequent-restarts"
+
+      # 没有 TaskManager
+      - alert: FlinkNoTaskManagers
+        expr: |
+          flink_jobmanager_numRegisteredTaskManagers == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: flink
+        annotations:
+          summary: "没有可用的 TaskManager"
+          description: "JobManager 没有注册的 TaskManager，Job 无法运行"
+
+  # ============================================================================
+  # Checkpoint 告警
+  # ============================================================================
+  - name: flink_checkpoint_alerts
+    interval: 60s
+    rules:
+      # Checkpoint 失败
+      - alert: FlinkCheckpointFailed
+        expr: |
+          increase(flink_jobmanager_job_numberOfFailedCheckpoints[10m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+          team: flink
+          job_name: rule-engine
+        annotations:
+          summary: "Flink Checkpoint 失败"
+          description: "过去 10 分钟内有 {{ $value }} 次 Checkpoint 失败"
+          runbook_url: "https://wiki.example.com/flink/checkpoint-failed"
+
+      # Checkpoint 持续失败
+      - alert: FlinkCheckpointConsecutiveFailures
+        expr: |
+          increase(flink_jobmanager_job_numberOfFailedCheckpoints[30m]) > 5
+        for: 5m
+        labels:
+          severity: critical
+          team: flink
+          job_name: rule-engine
+        annotations:
+          summary: "Flink Checkpoint 连续失败"
+          description: "过去 30 分钟内 Checkpoint 失败超过 5 次，数据可能丢失风险"
+
+      # Checkpoint 耗时过长
+      - alert: FlinkCheckpointDurationHigh
+        expr: |
+          flink_jobmanager_job_lastCheckpointDuration > 120000
+        for: 5m
+        labels:
+          severity: warning
+          team: flink
+          job_name: rule-engine
+        annotations:
+          summary: "Flink Checkpoint 耗时过长"
+          description: "最近一次 Checkpoint 耗时 {{ $value | humanizeDuration }}，超过 2 分钟阈值"
+
+      # Checkpoint 大小异常增长
+      - alert: FlinkCheckpointSizeAbnormal
+        expr: |
+          flink_jobmanager_job_lastCheckpointSize > 10737418240
+        for: 10m
+        labels:
+          severity: warning
+          team: flink
+        annotations:
+          summary: "Flink Checkpoint 大小异常"
+          description: "Checkpoint 大小为 {{ $value | humanize1024 }}B，超过 10GB 阈值"
+
+  # ============================================================================
+  # 吞吐量告警
+  # ============================================================================
+  - name: flink_throughput_alerts
+    interval: 30s
+    rules:
+      # 输入吞吐量下降
+      - alert: FlinkInputThroughputDrop
+        expr: |
+          rate(flink_taskmanager_job_task_numRecordsIn[5m]) 
+          < 0.5 * avg_over_time(rate(flink_taskmanager_job_task_numRecordsIn[5m])[1h:5m])
+        for: 10m
+        labels:
+          severity: warning
+          team: flink
+          job_name: rule-engine
+        annotations:
+          summary: "Flink 输入吞吐量下降"
+          description: "输入吞吐量比过去 1 小时平均值下降超过 50%"
+
+      # 输入吞吐量为零
+      - alert: FlinkNoInputData
+        expr: |
+          rate(flink_taskmanager_job_task_numRecordsIn[5m]) == 0
+        for: 10m
+        labels:
+          severity: warning
+          team: flink
+          job_name: rule-engine
+        annotations:
+          summary: "Flink 没有输入数据"
+          description: "过去 10 分钟没有接收到任何输入数据，请检查 Kafka 连接"
+
+      # 规则匹配率异常低
+      - alert: FlinkRuleMatchRateLow
+        expr: |
+          rate(flink_taskmanager_job_task_operator_rules_matched_total[5m]) 
+          / rate(flink_taskmanager_job_task_operator_features_processed_total[5m]) 
+          < 0.001
+        for: 30m
+        labels:
+          severity: info
+          team: flink
+          job_name: rule-engine
+        annotations:
+          summary: "规则匹配率异常低"
+          description: "规则匹配率低于 0.1%，可能规则配置有问题或流量正常"
+
+  # ============================================================================
+  # 延迟告警
+  # ============================================================================
+  - name: flink_latency_alerts
+    interval: 30s
+    rules:
+      # 处理延迟过高
+      - alert: FlinkProcessingLatencyHigh
+        expr: |
+          histogram_quantile(0.99, 
+            rate(flink_taskmanager_job_task_operator_last_match_time_ms[5m])
+          ) > 500
+        for: 5m
+        labels:
+          severity: warning
+          team: flink
+          job_name: rule-engine
+        annotations:
+          summary: "Flink 处理延迟过高"
+          description: "P99 处理延迟超过 500ms"
+
+      # Kafka 消费延迟
+      - alert: FlinkKafkaConsumerLagHigh
+        expr: |
+          flink_taskmanager_job_task_operator_KafkaSourceReader_KafkaConsumer_records_lag_max > 100000
+        for: 5m
+        labels:
+          severity: warning
+          team: flink
+          job_name: rule-engine
+        annotations:
+          summary: "Kafka 消费延迟过高"
+          description: "Kafka Consumer Lag 超过 100k 条记录"
+
+      # Kafka 消费延迟严重
+      - alert: FlinkKafkaConsumerLagCritical
+        expr: |
+          flink_taskmanager_job_task_operator_KafkaSourceReader_KafkaConsumer_records_lag_max > 1000000
+        for: 5m
+        labels:
+          severity: critical
+          team: flink
+          job_name: rule-engine
+        annotations:
+          summary: "Kafka 消费延迟严重"
+          description: "Kafka Consumer Lag 超过 1M 条记录，需要立即处理"
+
+  # ============================================================================
+  # 资源告警
+  # ============================================================================
+  - name: flink_resource_alerts
+    interval: 30s
+    rules:
+      # JVM 堆内存使用率高
+      - alert: FlinkJvmHeapUsageHigh
+        expr: |
+          flink_taskmanager_Status_JVM_Memory_Heap_Used 
+          / flink_taskmanager_Status_JVM_Memory_Heap_Max > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          team: flink
+        annotations:
+          summary: "TaskManager JVM 堆内存使用率高"
+          description: "TaskManager {{ $labels.tm_id }} 堆内存使用率超过 90%"
+
+      # JVM 堆内存使用率临界
+      - alert: FlinkJvmHeapUsageCritical
+        expr: |
+          flink_taskmanager_Status_JVM_Memory_Heap_Used 
+          / flink_taskmanager_Status_JVM_Memory_Heap_Max > 0.95
+        for: 2m
+        labels:
+          severity: critical
+          team: flink
+        annotations:
+          summary: "TaskManager JVM 堆内存临界"
+          description: "TaskManager {{ $labels.tm_id }} 堆内存使用率超过 95%，可能 OOM"
+
+      # GC 时间过长
+      - alert: FlinkGcTimeHigh
+        expr: |
+          rate(flink_taskmanager_Status_JVM_GarbageCollector_G1_Old_Generation_Time[5m]) > 5000
+        for: 5m
+        labels:
+          severity: warning
+          team: flink
+        annotations:
+          summary: "GC 时间过长"
+          description: "TaskManager GC 时间超过 5 秒/分钟"
+
+      # Managed Memory 使用率高
+      - alert: FlinkManagedMemoryHigh
+        expr: |
+          flink_taskmanager_Status_Flink_Memory_Managed_Used 
+          / flink_taskmanager_Status_Flink_Memory_Managed_Total > 0.9
+        for: 10m
+        labels:
+          severity: warning
+          team: flink
+        annotations:
+          summary: "Managed Memory 使用率高"
+          description: "TaskManager Managed Memory 使用率超过 90%"
+
+  # ============================================================================
+  # 规则引擎业务告警
+  # ============================================================================
+  - name: flink_rule_engine_business
+    interval: 30s
+    rules:
+      # 活跃规则数量为零
+      - alert: FlinkNoActiveRules
+        expr: |
+          flink_taskmanager_job_task_operator_active_rule_count == 0
+        for: 5m
+        labels:
+          severity: warning
+          team: security
+          job_name: rule-engine
+        annotations:
+          summary: "没有活跃的检测规则"
+          description: "当前没有启用的检测规则，安全检测可能无效"
+
+      # IP 提取失败率高
+      - alert: FlinkIpExtractionFailureHigh
+        expr: |
+          rate(flink_taskmanager_job_task_operator_ip_extraction_failed_total[5m]) 
+          / rate(flink_taskmanager_job_task_operator_features_processed_total[5m]) 
+          > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          team: flink
+          job_name: rule-engine
+        annotations:
+          summary: "IP 提取失败率高"
+          description: "超过 10% 的特征无法提取 IP 地址"
+
+      # 规则更新失败
+      - alert: FlinkRuleUpdateFailure
+        expr: |
+          increase(flink_taskmanager_job_task_operator_rules_updated_total[10m]) == 0
+          and 
+          increase(flink_taskmanager_job_task_operator_rules_deleted_total[10m]) == 0
+        for: 1h
+        labels:
+          severity: info
+          team: security
+        annotations:
+          summary: "长时间无规则更新"
+          description: "过去 1 小时没有规则更新操作"
+
+      # DLQ 消息数量增加
+      - alert: FlinkDLQMessagesIncreasing
+        expr: |
+          increase(kafka_consumer_records_consumed_total{topic="dlq.rule-job"}[10m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+          team: flink
+          job_name: rule-engine
+        annotations:
+          summary: "DLQ 有新消息"
+          description: "Rule Job DLQ 收到新的失败消息，请检查规则格式"
+
+  # ============================================================================
+  # ClickHouse Sink 告警
+  # ============================================================================
+  - name: flink_clickhouse_sink
+    interval: 30s
+    rules:
+      # ClickHouse 写入失败
+      - alert: FlinkClickHouseWriteFailure
+        expr: |
+          rate(flink_taskmanager_job_task_operator_numRecordsOutErrors[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          team: flink
+          job_name: rule-engine
+        annotations:
+          summary: "ClickHouse 写入失败"
+          description: "检测结果写入 ClickHouse 失败，请检查连接"
+
+      # ClickHouse 写入延迟
+      - alert: FlinkClickHouseSinkBackpressure
+        expr: |
+          flink_taskmanager_job_task_backPressuredTimeMsPerSecond{task_name=~".*ClickHouse.*"} > 500
+        for: 5m
+        labels:
+          severity: warning
+          team: flink
+        annotations:
+          summary: "ClickHouse Sink 背压"
+          description: "ClickHouse Sink 出现背压，写入速度可能跟不上"
+
+  # ============================================================================
+  # Kafka Sink 告警
+  # ============================================================================
+  - name: flink_kafka_sink
+    interval: 30s
+    rules:
+      # Kafka 写入失败
+      - alert: FlinkKafkaSinkFailure
+        expr: |
+          rate(flink_taskmanager_job_task_operator_KafkaSink_numRecordsSendErrors[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          team: flink
+          job_name: rule-engine
+        annotations:
+          summary: "Kafka 写入失败"
+          description: "检测结果写入 Kafka 失败"
+
+      # Kafka Producer Buffer 满
+      - alert: FlinkKafkaProducerBufferFull
+        expr: |
+          flink_taskmanager_job_task_operator_KafkaSink_KafkaProducer_buffer_available_bytes 
+          < 1048576
+        for: 5m
+        labels:
+          severity: warning
+          team: flink
+        annotations:
+          summary: "Kafka Producer Buffer 接近满"
+          description: "Kafka Producer Buffer 可用空间不足 1MB"

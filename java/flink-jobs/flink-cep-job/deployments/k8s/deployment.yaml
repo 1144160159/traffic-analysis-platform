@@ -1,0 +1,416 @@
+################################################################################
+# Flink CEP Job - Kubernetes Deployment (生产环境)
+# 部署模式: Application Mode (Standalone)
+################################################################################
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: flink-cep
+
+---
+################################################################################
+# ConfigMap: Flink 配置
+################################################################################
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flink-cep-config
+  namespace: flink-cep
+data:
+  cep-job.properties: |
+    # Kafka 配置
+    kafka.brokers=kafka-0.kafka.svc.cluster.local:9092,kafka-1.kafka.svc.cluster.local:9092,kafka-2.kafka.svc.cluster.local:9092
+    kafka.input.topic=alerts.v1
+    kafka.output.topic=campaigns.v1
+    kafka.dlq.topic=dlq.cep-job
+    kafka.group.id=flink-cep-job-prod
+    
+    # ClickHouse 配置
+    clickhouse.url=clickhouse-0.clickhouse.svc.cluster.local:8123
+    clickhouse.database=traffic
+    clickhouse.table=campaigns_local
+    clickhouse.user=default
+    clickhouse.password=
+    
+    # Checkpoint 配置
+    checkpoint.path=s3://flink-checkpoints/checkpoints/cep-job
+    checkpoint.interval.ms=60000
+    
+    # CEP Pattern 配置
+    pattern.scan_exploit.window_minutes=30
+    pattern.scan_exploit.min_scan_count=1
+    pattern.brute_force.window_minutes=10
+    pattern.brute_force.min_failed=5
+    pattern.lateral_movement.window_minutes=60
+    pattern.lateral_movement.min_hops=2
+    pattern.data_exfil.window_minutes=30
+    pattern.data_exfil.min_bytes=10485760
+    pattern.c2.window_minutes=120
+    pattern.c2.min_beacon_count=5
+    pattern.c2.beacon_interval_tolerance_ratio=0.1
+    
+    # 作业配置
+    parallelism=8
+    
+    # DLQ 配置
+    dlq.enabled=true
+    
+    # 调试配置
+    debug.print=false
+
+---
+################################################################################
+# Service: Flink JobManager
+################################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: flink-cep-jobmanager
+  namespace: flink-cep
+  labels:
+    app: flink-cep
+    component: jobmanager
+spec:
+  type: ClusterIP
+  ports:
+    - name: rpc
+      port: 6123
+      targetPort: 6123
+    - name: webui
+      port: 8081
+      targetPort: 8081
+    - name: metrics
+      port: 9249
+      targetPort: 9249
+  selector:
+    app: flink-cep
+    component: jobmanager
+
+---
+################################################################################
+# Service: Flink JobManager REST (NodePort for external access)
+################################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: flink-cep-jobmanager-rest
+  namespace: flink-cep
+  labels:
+    app: flink-cep
+    component: jobmanager
+spec:
+  type: NodePort
+  ports:
+    - name: webui
+      port: 8081
+      targetPort: 8081
+      nodePort: 30081
+  selector:
+    app: flink-cep
+    component: jobmanager
+
+---
+################################################################################
+# Deployment: Flink JobManager
+################################################################################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flink-cep-jobmanager
+  namespace: flink-cep
+  labels:
+    app: flink-cep
+    component: jobmanager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flink-cep
+      component: jobmanager
+  template:
+    metadata:
+      labels:
+        app: flink-cep
+        component: jobmanager
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9249"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: flink-cep
+      containers:
+        - name: jobmanager
+          image: registry.example.com/flink-cep-job:1.0.0
+          imagePullPolicy: Always
+          command: ["/docker-entrypoint.sh"]
+          args: ["jobmanager"]
+          env:
+            - name: FLINK_MODE
+              value: "jobmanager"
+            - name: FLINK_PARALLELISM
+              value: "8"
+            - name: JOBMANAGER_RPC_ADDRESS
+              value: "flink-cep-jobmanager"
+            - name: JOBMANAGER_MEMORY
+              value: "4096m"
+            - name: TASKMANAGER_MEMORY
+              value: "8192m"
+            - name: TASKMANAGER_SLOTS
+              value: "4"
+            - name: FLINK_CHECKPOINT_INTERVAL
+              value: "60000"
+            - name: FLINK_STATE_BACKEND
+              value: "rocksdb"
+            - name: CHECKPOINT_DIR
+              value: "s3://flink-checkpoints/checkpoints/cep-job"
+            - name: SAVEPOINT_DIR
+              value: "s3://flink-checkpoints/savepoints/cep-job"
+            - name: HA_MODE
+              value: "zookeeper"
+            - name: HA_STORAGE_DIR
+              value: "s3://flink-ha/cep-job"
+            - name: ZOOKEEPER_QUORUM
+              value: "zk-0.zk-hs.default.svc.cluster.local:2181,zk-1.zk-hs.default.svc.cluster.local:2181,zk-2.zk-hs.default.svc.cluster.local:2181"
+            - name: JVM_ARGS
+              value: "-Xms2g -Xmx4g -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+          ports:
+            - containerPort: 6123
+              name: rpc
+            - containerPort: 8081
+              name: webui
+            - containerPort: 9249
+              name: metrics
+          livenessProbe:
+            httpGet:
+              path: /overview
+              port: 8081
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /overview
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          resources:
+            requests:
+              cpu: "2"
+              memory: "4Gi"
+            limits:
+              cpu: "4"
+              memory: "8Gi"
+          volumeMounts:
+            - name: config
+              mountPath: /opt/flink/conf/cep-job.properties
+              subPath: cep-job.properties
+            - name: flink-logs
+              mountPath: /var/log/flink
+      volumes:
+        - name: config
+          configMap:
+            name: flink-cep-config
+        - name: flink-logs
+          emptyDir: {}
+
+---
+################################################################################
+# Deployment: Flink TaskManager
+################################################################################
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flink-cep-taskmanager
+  namespace: flink-cep
+  labels:
+    app: flink-cep
+    component: taskmanager
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: flink-cep
+      component: taskmanager
+  template:
+    metadata:
+      labels:
+        app: flink-cep
+        component: taskmanager
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9250"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: flink-cep
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - flink-cep
+                    - key: component
+                      operator: In
+                      values:
+                        - taskmanager
+                topologyKey: kubernetes.io/hostname
+      containers:
+        - name: taskmanager
+          image: registry.example.com/flink-cep-job:1.0.0
+          imagePullPolicy: Always
+          command: ["/docker-entrypoint.sh"]
+          args: ["taskmanager"]
+          env:
+            - name: FLINK_MODE
+              value: "taskmanager"
+            - name: JOBMANAGER_RPC_ADDRESS
+              value: "flink-cep-jobmanager"
+            - name: TASKMANAGER_MEMORY
+              value: "8192m"
+            - name: TASKMANAGER_SLOTS
+              value: "4"
+            - name: JVM_ARGS
+              value: "-Xms4g -Xmx8g -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+          ports:
+            - containerPort: 9250
+              name: metrics
+          livenessProbe:
+            tcpSocket:
+              port: 9250
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            tcpSocket:
+              port: 9250
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          resources:
+            requests:
+              cpu: "4"
+              memory: "8Gi"
+            limits:
+              cpu: "8"
+              memory: "16Gi"
+          volumeMounts:
+            - name: config
+              mountPath: /opt/flink/conf/cep-job.properties
+              subPath: cep-job.properties
+            - name: flink-logs
+              mountPath: /var/log/flink
+      volumes:
+        - name: config
+          configMap:
+            name: flink-cep-config
+        - name: flink-logs
+          emptyDir: {}
+
+---
+################################################################################
+# ServiceAccount
+################################################################################
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: flink-cep
+  namespace: flink-cep
+
+---
+################################################################################
+# PodDisruptionBudget: JobManager
+################################################################################
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: flink-cep-jobmanager-pdb
+  namespace: flink-cep
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: flink-cep
+      component: jobmanager
+
+---
+################################################################################
+# PodDisruptionBudget: TaskManager
+################################################################################
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: flink-cep-taskmanager-pdb
+  namespace: flink-cep
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: flink-cep
+      component: taskmanager
+
+---
+################################################################################
+# HorizontalPodAutoscaler: TaskManager (基于 CPU)
+################################################################################
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: flink-cep-taskmanager-hpa
+  namespace: flink-cep
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: flink-cep-taskmanager
+  minReplicas: 2
+  maxReplicas: 8
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 120
+
+---
+################################################################################
+# ServiceMonitor (Prometheus Operator)
+################################################################################
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: flink-cep-jobmanager
+  namespace: flink-cep
+  labels:
+    app: flink-cep
+    component: jobmanager
+spec:
+  selector:
+    matchLabels:
+      app: flink-cep
+      component: jobmanager
+  endpoints:
+    - port: metrics
+      interval: 15s
+      path: /metrics

@@ -1,0 +1,335 @@
+# =============================================================================
+# Prometheus 告警规则 - Flink PCAP Index Job
+# =============================================================================
+# 
+# 告警级别说明:
+#   - critical: 需要立即处理，影响生产
+#   - warning:  需要关注，可能演变为问题
+#   - info:     信息性告警，用于监控趋势
+#
+# 告警分类:
+#   - 作业健康: Flink 作业运行状态
+#   - 数据质量: 数据验证与完整性
+#   - 性能指标: 吞吐量与延迟
+#   - 存储健康: ClickHouse 写入状态
+#   - 资源使用: CPU/内存/GC
+#
+# =============================================================================
+
+groups:
+  # =============================================================================
+  # 作业健康告警
+  # =============================================================================
+  - name: pcap_index_job_health
+    interval: 30s
+    rules:
+      # ==================== 作业未运行 ====================
+      - alert: PcapIndexJobNotRunning
+        expr: |
+          absent(flink_jobmanager_job_uptime{job_name="pcap-index-job"}) == 1
+        for: 2m
+        labels:
+          severity: critical
+          component: flink
+          job: pcap-index-job
+        annotations:
+          summary: "PCAP Index Job 未运行"
+          description: "Flink PCAP Index Job 在过去 2 分钟内未检测到运行状态。请检查 JobManager 日志。"
+          runbook_url: "https://wiki.example.com/runbooks/pcap-index-job-not-running"
+          dashboard_url: "http://grafana:3000/d/pcap-index-overview"
+
+      # ==================== 作业频繁重启 ====================
+      - alert: PcapIndexJobFrequentRestarts
+        expr: |
+          increase(flink_jobmanager_job_numRestarts{job_name="pcap-index-job"}[30m]) > 3
+        for: 5m
+        labels:
+          severity: warning
+          component: flink
+          job: pcap-index-job
+        annotations:
+          summary: "PCAP Index Job 频繁重启"
+          description: "PCAP Index Job 在过去 30 分钟内重启超过 3 次。当前重启次数: {{ $value }}"
+          runbook_url: "https://wiki.example.com/runbooks/pcap-index-job-restarts"
+
+      # ==================== Checkpoint 失败 ====================
+      - alert: PcapIndexCheckpointFailed
+        expr: |
+          increase(flink_jobmanager_job_numberOfFailedCheckpoints{job_name="pcap-index-job"}[10m]) > 3
+        for: 5m
+        labels:
+          severity: warning
+          component: flink
+          job: pcap-index-job
+        annotations:
+          summary: "PCAP Index Job Checkpoint 失败"
+          description: "Checkpoint 在过去 10 分钟内失败超过 3 次。失败次数: {{ $value }}"
+          runbook_url: "https://wiki.example.com/runbooks/checkpoint-failures"
+
+      # ==================== Checkpoint 延迟过高 ====================
+      - alert: PcapIndexCheckpointDurationHigh
+        expr: |
+          flink_jobmanager_job_lastCheckpointDuration{job_name="pcap-index-job"} > 60000
+        for: 5m
+        labels:
+          severity: warning
+          component: flink
+          job: pcap-index-job
+        annotations:
+          summary: "PCAP Index Job Checkpoint 耗时过长"
+          description: "最近一次 Checkpoint 耗时 {{ $value | humanizeDuration }}，超过 60 秒阈值。"
+
+  # =============================================================================
+  # 数据质量告警
+  # =============================================================================
+  - name: pcap_index_data_quality
+    interval: 30s
+    rules:
+      # ==================== 无效数据比例过高 ====================
+      - alert: PcapIndexHighInvalidRate
+        expr: |
+          (
+            rate(pcap_index_invalid_total[5m]) / 
+            (rate(pcap_index_processed_total[5m]) + rate(pcap_index_invalid_total[5m]) + 0.001)
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          component: flink
+          job: pcap-index-job
+          category: data_quality
+        annotations:
+          summary: "PCAP Index 无效数据比例过高"
+          description: "无效数据比例达到 {{ $value | humanizePercentage }}，超过 5% 阈值。请检查探针上报数据质量。"
+          runbook_url: "https://wiki.example.com/runbooks/high-invalid-rate"
+
+      # ==================== DLQ 写入量激增 ====================
+      - alert: PcapIndexDLQSpike
+        expr: |
+          rate(dlq_write_total[5m]) > 10
+        for: 3m
+        labels:
+          severity: warning
+          component: flink
+          job: pcap-index-job
+          category: data_quality
+        annotations:
+          summary: "PCAP Index DLQ 写入量激增"
+          description: "DLQ 写入速率达到 {{ $value | printf \"%.2f\" }} 条/秒。请检查无效数据来源。"
+
+      # ==================== 缺失 Community IDs 比例过高 ====================
+      - alert: PcapIndexMissingCommunityIds
+        expr: |
+          (
+            rate(pcap_missing_community_ids_total[10m]) / 
+            (rate(pcap_index_processed_total[10m]) + 0.001)
+          ) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          component: flink
+          job: pcap-index-job
+          category: data_quality
+        annotations:
+          summary: "PCAP Index 缺失 Community IDs 比例过高"
+          description: "{{ $value | humanizePercentage }} 的记录缺失 Community IDs，可能影响取证能力。"
+
+      # ==================== 缺失 BloomFilter 比例过高 ====================
+      - alert: PcapIndexMissingBloomFilter
+        expr: |
+          (
+            rate(pcap_missing_bloom_filter_total[10m]) / 
+            (rate(pcap_index_processed_total[10m]) + 0.001)
+          ) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          component: flink
+          job: pcap-index-job
+          category: data_quality
+        annotations:
+          summary: "PCAP Index 缺失 BloomFilter 比例过高"
+          description: "{{ $value | humanizePercentage }} 的记录缺失 BloomFilter，IP 快速查询将不可用。"
+
+      # ==================== Community IDs 截断告警 ====================
+      - alert: PcapIndexCommunityIdsTruncated
+        expr: |
+          rate(pcap_community_ids_truncated_total[10m]) > 0.1
+        for: 5m
+        labels:
+          severity: info
+          component: flink
+          job: pcap-index-job
+          category: data_quality
+        annotations:
+          summary: "PCAP Index Community IDs 被截断"
+          description: "部分记录的 Community IDs 超过 1000 个限制，已被截断。速率: {{ $value | printf \"%.2f\" }} 条/秒"
+
+      # ==================== 时间范围异常 ====================
+      - alert: PcapIndexInvalidTimeRange
+        expr: |
+          rate(pcap_invalid_time_range_total[10m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+          component: flink
+          job: pcap-index-job
+          category: data_quality
+        annotations:
+          summary: "PCAP Index 时间范围异常"
+          description: "检测到异常时间范围的 PCAP 索引，速率: {{ $value | printf \"%.2f\" }} 条/秒。请检查探针时钟同步。"
+
+      # ==================== 大文件告警 ====================
+      - alert: PcapIndexLargeFiles
+        expr: |
+          rate(pcap_large_file_total[10m]) > 0.5
+        for: 5m
+        labels:
+          severity: info
+          component: flink
+          job: pcap-index-job
+          category: data_quality
+        annotations:
+          summary: "PCAP Index 检测到大文件"
+          description: "大文件（>10GB）检测速率: {{ $value | printf \"%.2f\" }} 条/秒。这可能导致取证下载缓慢。"
+
+  # =============================================================================
+  # 性能指标告警
+  # =============================================================================
+  - name: pcap_index_performance
+    interval: 30s
+    rules:
+      # ==================== 处理吞吐量过低 ====================
+      - alert: PcapIndexLowThroughput
+        expr: |
+          rate(pcap_index_processed_total[5m]) < 1
+        for: 10m
+        labels:
+          severity: warning
+          component: flink
+          job: pcap-index-job
+          category: performance
+        annotations:
+          summary: "PCAP Index 处理吞吐量过低"
+          description: "处理速率仅 {{ $value | printf \"%.2f\" }} 条/秒，低于 1 条/秒阈值。可能是上游数据中断或作业卡住。"
+
+      # ==================== 处理延迟过高 ====================
+      - alert: PcapIndexHighLatency
+        expr: |
+          (time() * 1000 - pcap_last_process_time) > 120000
+        for: 5m
+        labels:
+          severity: warning
+          component: flink
+          job: pcap-index-job
+          category: performance
+        annotations:
+          summary: "PCAP Index 处理延迟过高"
+          description: "最后一次处理时间距今超过 2 分钟，可能存在数据积压或作业暂停。"
+
+      # ==================== 错误率过高 ====================
+      - alert: PcapIndexHighErrorRate
+        expr: |
+          (
+            rate(pcap_index_error_total[5m]) / 
+            (rate(pcap_index_processed_total[5m]) + 0.001)
+          ) > 0.01
+        for: 5m
+        labels:
+          severity: critical
+          component: flink
+          job: pcap-index-job
+          category: performance
+        annotations:
+          summary: "PCAP Index 错误率过高"
+          description: "错误率达到 {{ $value | humanizePercentage }}，超过 1% 阈值。需要立即排查。"
+          runbook_url: "https://wiki.example.com/runbooks/high-error-rate"
+
+  # =============================================================================
+  # 存储健康告警
+  # =============================================================================
+  - name: pcap_index_storage
+    interval: 30s
+    rules:
+      # ==================== ClickHouse 写入失败 ====================
+      - alert: PcapIndexClickHouseWriteFailed
+        expr: |
+          rate(clickhouse_write_failure_total[5m]) > 0
+        for: 3m
+        labels:
+          severity: critical
+          component: clickhouse
+          job: pcap-index-job
+          category: storage
+        annotations:
+          summary: "PCAP Index ClickHouse 写入失败"
+          description: "ClickHouse 写入失败速率: {{ $value | printf \"%.2f\" }} 次/秒。请检查 ClickHouse 连接和表状态。"
+          runbook_url: "https://wiki.example.com/runbooks/clickhouse-write-failure"
+
+      # ==================== ClickHouse 写入成功率下降 ====================
+      - alert: PcapIndexClickHouseLowSuccessRate
+        expr: |
+          (
+            rate(clickhouse_write_success_total[5m]) / 
+            (rate(clickhouse_write_success_total[5m]) + rate(clickhouse_write_failure_total[5m]) + 0.001)
+          ) < 0.99
+        for: 5m
+        labels:
+          severity: warning
+          component: clickhouse
+          job: pcap-index-job
+          category: storage
+        annotations:
+          summary: "PCAP Index ClickHouse 写入成功率下降"
+          description: "ClickHouse 写入成功率降至 {{ $value | humanizePercentage }}，低于 99% 阈值。"
+
+  # =============================================================================
+  # 资源使用告警
+  # =============================================================================
+  - name: pcap_index_resources
+    interval: 30s
+    rules:
+      # ==================== TaskManager 内存使用过高 ====================
+      - alert: PcapIndexTaskManagerHighMemory
+        expr: |
+          (
+            flink_taskmanager_Status_JVM_Memory_Heap_Used / 
+            flink_taskmanager_Status_JVM_Memory_Heap_Max
+          ) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          component: flink
+          job: pcap-index-job
+          category: resources
+        annotations:
+          summary: "PCAP Index TaskManager 堆内存使用过高"
+          description: "TaskManager 堆内存使用率达到 {{ $value | humanizePercentage }}，超过 85% 阈值。"
+
+      # ==================== GC 时间占比过高 ====================
+      - alert: PcapIndexHighGCTime
+        expr: |
+          rate(flink_taskmanager_Status_JVM_GarbageCollector_G1_Young_Generation_Time[5m]) > 5000
+        for: 5m
+        labels:
+          severity: warning
+          component: flink
+          job: pcap-index-job
+          category: resources
+        annotations:
+          summary: "PCAP Index GC 时间过长"
+          description: "GC 时间占比过高，5分钟内累计 {{ $value | humanizeDuration }}，可能影响处理性能。"
+
+      # ==================== 背压告警 ====================
+      - alert: PcapIndexBackPressure
+        expr: |
+          flink_taskmanager_job_task_backPressuredTimeMsPerSecond > 500
+        for: 5m
+        labels:
+          severity: warning
+          component: flink
+          job: pcap-index-job
+          category: resources
+        annotations:
+          summary: "PCAP Index 检测到背压"
+          description: "Task 背压时间达到 {{ $value }}ms/秒，可能导致数据积压。"
