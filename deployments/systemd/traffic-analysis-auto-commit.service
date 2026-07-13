@@ -12,8 +12,7 @@ Environment=REMOTE=origin
 Environment=REMOTE_BRANCH=main
 Environment=STABLE_SECONDS=300
 Environment=AUTO_PUSH=1
-ExecStart=/home/wangwt/phase_2/code/traffic-analysis-platform/scripts/git_auto_commit.sh --run
+ExecStart=/usr/bin/bash /home/wangwt/phase_2/code/traffic-analysis-platform/scripts/git_auto_commit.sh --run
 Nice=10
 IOSchedulingClass=best-effort
 IOSchedulingPriority=7
-
