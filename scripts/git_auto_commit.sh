@@ -188,7 +188,7 @@ commit_batch() {
   local paths=("$@")
 
   git reset -q
-  git add -- "${paths[@]}" "${GLOBAL_EXCLUDES[@]}"
+  git add --ignore-errors -- "${paths[@]}" "${GLOBAL_EXCLUDES[@]}"
 
   if git diff --cached --quiet; then
     git reset -q
