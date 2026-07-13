@@ -1,0 +1,408 @@
+#!/usr/bin/env node
+import fs from 'node:fs';
+import path from 'node:path';
+
+const defaults = {
+  captureSession: 'doc/02_acceptance/02-regression/ui-visual-interaction/capture-session-windows-tunnel-25173.json',
+  outputJs: 'doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-payload-latest.js',
+  outputJson: 'doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-payload-latest.json',
+  outputMd: 'doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-payload-latest.md',
+  bridgeHostPreflight: 'doc/02_acceptance/02-regression/ui-visual-interaction/windows-desktop-bridge-host-preflight-latest.json',
+  chromeClientUrl: 'file:///C:/Users/11441/.codex/plugins/cache/openai-bundled/chrome/26.611.62324/scripts/browser-client.mjs',
+  captureKeyPlaceholder: '<CODEX_CAPTURE_KEY>',
+  smokeNoncePlaceholder: '<CODEX_SMOKE_NONCE>',
+  smokeRedirectBaseUrl: 'http://127.0.0.1:25175',
+  waitMs: '3500',
+  visualLimit: '0',
+  interactionLimit: '0',
+};
+
+const cliArgs = parseArgs(process.argv.slice(2));
+const args = { ...defaults, ...cliArgs };
+const root = process.cwd();
+
+function parseArgs(argv) {
+  const parsed = {};
+  for (let index = 0; index < argv.length; index += 1) {
+    const item = argv[index];
+    if (!item.startsWith('--')) throw new Error(`unexpected argument: ${item}`);
+    const key = item.slice(2).replace(/-([a-z])/g, (_, char) => char.toUpperCase());
+    const next = argv[index + 1];
+    if (next === undefined || next.startsWith('--')) {
+      parsed[key] = true;
+    } else {
+      parsed[key] = next;
+      index += 1;
+    }
+  }
+  return parsed;
+}
+
+function resolveRepo(file) {
+  return path.isAbsolute(file) ? file : path.join(root, file);
+}
+
+function repoRel(file) {
+  return path.relative(root, resolveRepo(file)).split(path.sep).join('/');
+}
+
+function readJson(file) {
+  return JSON.parse(fs.readFileSync(resolveRepo(file), 'utf8'));
+}
+
+function readOptionalJson(file) {
+  try {
+    return readJson(file);
+  } catch {
+    return null;
+  }
+}
+
+function ensureDirFor(file) {
+  fs.mkdirSync(path.dirname(resolveRepo(file)), { recursive: true });
+}
+
+function limited(items, limit) {
+  const number = Number(limit);
+  if (!Number.isFinite(number) || number <= 0) return items;
+  return items.slice(0, number);
+}
+
+function redactUrl(value) {
+  return String(value || '')
+    .replace(/codex_smoke_token=[^&#]+/g, 'codex_smoke_token=<redacted>')
+    .replace(/nonce=[^&#]+/g, 'nonce=<redacted>');
+}
+
+function normalizeSmokeRedirectBaseUrl(value) {
+  const raw = String(value || '').trim();
+  if (!raw || raw.includes('<SMOKE_REDIRECT_BASE_URL>')) return 'http://127.0.0.1:25175';
+  return raw.replace(/\/+$/, '');
+}
+
+function targetUrlTemplate(target, fallbackUrl) {
+  const wrapperUrl = target?.safe_wrapper_call?.args?.url;
+  return wrapperUrl || fallbackUrl || target?.url || '';
+}
+
+function withCapturePlaceholders(url) {
+  return String(url || '')
+    .replace(/<SMOKE_REDIRECT_BASE_URL>/g, normalizeSmokeRedirectBaseUrl(args.smokeRedirectBaseUrl))
+    .replace(/%3CCODEX_SMOKE_NONCE%3E/g, '${encodeURIComponent(CODEX_SMOKE_NONCE)}')
+    .replace(/<CODEX_SMOKE_NONCE>/g, '${CODEX_SMOKE_NONCE}');
+}
+
+const session = readJson(args.captureSession);
+const bridgeHostPreflight = readOptionalJson(args.bridgeHostPreflight);
+const selectedChromeClientUrl = !Object.prototype.hasOwnProperty.call(cliArgs, 'chromeClientUrl')
+  && bridgeHostPreflight?.selected_chrome_client_url
+  ? bridgeHostPreflight.selected_chrome_client_url
+  : args.chromeClientUrl;
+const visualBatch = limited(Array.isArray(session.visual_batch) ? session.visual_batch : [], args.visualLimit);
+const interactionBatch = limited(Array.isArray(session.interaction_batch) ? session.interaction_batch : [], args.interactionLimit);
+const expectedViewport = session.acceptance_contract?.expected_viewport || { width: 1920, height: 1080 };
+const bridgeResultUpload = session.bridge_result_upload || '';
+
+const payloadData = {
+  bridgeResultUpload,
+  visualTargets: visualBatch.map((target) => ({
+    target_id: target.target_id,
+    route_id: target.route_id,
+    requires_smoke_token: Boolean(target.requires_smoke_token),
+    url_template: withCapturePlaceholders(targetUrlTemplate(target, target.safe_redirect_url_pattern)),
+    receiver_upload: target.receiver_upload,
+  })),
+  interactionTargets: interactionBatch.map((route) => ({
+    route_id: route.route_id,
+    route: route.route,
+    expected_final_path: route.expected_final_path,
+    requires_smoke_token: Boolean(route.requires_smoke_token),
+    url_template: withCapturePlaceholders(targetUrlTemplate(route, route.safe_redirect_url_pattern)),
+    receiver_upload: route.receiver_upload,
+    interaction_screenshot_upload: route.interaction_screenshot_upload,
+    target_screenshot: String(route.output_path || '').replace(/interaction\.json$/, 'interaction.png'),
+    business_action_hint: route.business_action_hint,
+  })),
+};
+
+const payloadJs = `// Generated by tests/e2e/ui_desktop_chrome_bridge_payload.mjs
+// Execute inside mcp__codex_desktop_node_repl__js only. Backend must be Chrome extension, not iab.
+const CHROME_CLIENT_URL = ${JSON.stringify(selectedChromeClientUrl)};
+const CODEX_CAPTURE_KEY = ${JSON.stringify(args.captureKeyPlaceholder)};
+const CODEX_SMOKE_NONCE = ${JSON.stringify(args.smokeNoncePlaceholder)};
+const EXPECTED_VIEWPORT = ${JSON.stringify(expectedViewport)};
+const WAIT_MS = ${Number(args.waitMs)};
+const VISUAL_TARGETS = ${JSON.stringify(payloadData.visualTargets, null, 2)};
+const INTERACTION_TARGETS = ${JSON.stringify(payloadData.interactionTargets, null, 2)};
+const BRIDGE_RESULT_UPLOAD = ${JSON.stringify(payloadData.bridgeResultUpload)};
+const ALL_CAPTURE_TARGETS = [...VISUAL_TARGETS, ...INTERACTION_TARGETS];
+const PROTECTED_TARGET_COUNT = ALL_CAPTURE_TARGETS.filter((target) => target.requires_smoke_token).length;
+
+if (!CODEX_CAPTURE_KEY || CODEX_CAPTURE_KEY.startsWith('<')) {
+  throw new Error('Replace CODEX_CAPTURE_KEY before running this payload.');
+}
+if (PROTECTED_TARGET_COUNT > 0 && (!CODEX_SMOKE_NONCE || CODEX_SMOKE_NONCE.startsWith('<'))) {
+  throw new Error('Replace CODEX_SMOKE_NONCE before running protected-route captures.');
+}
+if (JSON.stringify(ALL_CAPTURE_TARGETS).includes('<CODEX_SMOKE_NONCE>')
+  || JSON.stringify(ALL_CAPTURE_TARGETS).includes('%3CCODEX_SMOKE_NONCE%3E')) {
+  throw new Error('Generated payload still contains an unresolved CODEX_SMOKE_NONCE marker.');
+}
+if (JSON.stringify(ALL_CAPTURE_TARGETS).includes('<SMOKE_REDIRECT_BASE_URL>')) {
+  throw new Error('Generated payload still contains an unresolved SMOKE_REDIRECT_BASE_URL marker.');
+}
+
+globalThis.tab = undefined;
+globalThis.desktopChromeTab = undefined;
+globalThis.remoteTab = undefined;
+
+const desktopChromeClient = await import(CHROME_CLIENT_URL);
+await desktopChromeClient.setupBrowserRuntime({ globals: globalThis });
+const targets = await agent.browsers.list();
+const extensionTargets = targets.filter((target) => target.type === 'extension');
+if (!extensionTargets.some((target) => target.name === 'Chrome' || target.type === 'extension')) {
+  throw new Error('Chrome extension backend is not available.');
+}
+const desktopChrome = await agent.browsers.get('extension');
+
+function materializeUrl(template) {
+  return String(template || '').replace(/\\$\\{encodeURIComponent\\(CODEX_SMOKE_NONCE\\)\\}/g, encodeURIComponent(CODEX_SMOKE_NONCE));
+}
+
+function sanitizeUrl(value) {
+  return String(value || '')
+    .replace(/codex_smoke_token=[^&#]+/g, 'codex_smoke_token=<redacted>')
+    .replace(/nonce=[^&#]+/g, 'nonce=<redacted>');
+}
+
+async function openClaimedTab(url) {
+  const rawTab = await desktopChrome.tabs.new();
+  const rawTabId = String(rawTab.id ?? '');
+  const userTabs = await desktopChrome.user.openTabs();
+  const userTab = userTabs.find((candidate) => String(candidate.id ?? '') === rawTabId);
+  if (!userTab) throw new Error('Created Chrome tab was not visible in openTabs.');
+  const claimed = await desktopChrome.user.claimTab(userTab);
+  const page = claimed.playwright;
+  if (page?.setViewportSize) {
+    await page.setViewportSize(EXPECTED_VIEWPORT).catch(() => undefined);
+  }
+  const runtime = {
+    console_errors: [],
+    page_errors: [],
+    request_failures: [],
+    server_errors: [],
+  };
+  page?.on?.('console', (message) => {
+    const type = typeof message.type === 'function' ? message.type() : message.type;
+    if (type === 'error') runtime.console_errors.push(String(typeof message.text === 'function' ? message.text() : message.text || 'console error').slice(0, 500));
+  });
+  page?.on?.('pageerror', (error) => runtime.page_errors.push(String(error?.message || error).slice(0, 500)));
+  page?.on?.('requestfailed', (request) => runtime.request_failures.push(String(typeof request.url === 'function' ? request.url() : request.url || 'requestfailed').slice(0, 500)));
+  page?.on?.('response', (response) => {
+    const status = typeof response.status === 'function' ? response.status() : response.status;
+    if (Number(status) >= 400) {
+      runtime.server_errors.push({ status, url: sanitizeUrl(typeof response.url === 'function' ? response.url() : response.url) });
+    }
+  });
+  await claimed.goto(url);
+  await page?.waitForLoadState?.({ state: 'domcontentloaded', timeoutMs: WAIT_MS }).catch(() => undefined);
+  await page?.waitForLoadState?.({ state: 'networkidle', timeoutMs: WAIT_MS }).catch(() => undefined);
+  await page?.waitForTimeout?.(WAIT_MS).catch(() => undefined);
+  return { tab: claimed, page, runtime };
+}
+
+async function pageMetrics(page) {
+  return page.evaluate(() => ({
+    viewport: { width: window.innerWidth, height: window.innerHeight },
+    device_pixel_ratio: window.devicePixelRatio,
+    final_url: window.location.href,
+    final_path: window.location.pathname,
+    title: document.title,
+    body_text: document.body?.innerText?.slice(0, 5000) || '',
+  }));
+}
+
+async function pngScreenshot(page) {
+  const shot = await page.screenshot({ type: 'png', fullPage: false });
+  return shot instanceof Uint8Array ? shot : new Uint8Array(shot);
+}
+
+async function postBytes(url, bytes, metrics) {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'image/png',
+      'X-Codex-Capture-Key': CODEX_CAPTURE_KEY,
+      'X-Codex-Desktop-Viewport-Width': String(metrics.viewport.width),
+      'X-Codex-Desktop-Viewport-Height': String(metrics.viewport.height),
+      'X-Codex-Desktop-Device-Pixel-Ratio': String(metrics.device_pixel_ratio),
+    },
+    body: bytes,
+  });
+  const text = await response.text().catch(() => '');
+  if (!response.ok) throw new Error('upload failed ' + response.status + ' ' + text);
+  return { status: response.status, text };
+}
+
+async function postJson(url, body) {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Codex-Capture-Key': CODEX_CAPTURE_KEY,
+    },
+    body: JSON.stringify(body),
+  });
+  const text = await response.text().catch(() => '');
+  if (!response.ok) throw new Error('json upload failed ' + response.status + ' ' + text);
+  return { status: response.status, text };
+}
+
+function interactionAssertions(route, metrics) {
+  if (route.route_id === 'login') {
+    return {
+      product_name_visible: metrics.body_text.includes('园区网络全流量采集与分析系统'),
+      account_password_tab_visible: metrics.body_text.includes('账号') || metrics.body_text.includes('密码'),
+      captcha_visible: metrics.body_text.includes('验证码'),
+      submit_visible: metrics.body_text.includes('登录'),
+      smoke_hash_absent: !metrics.final_url.includes('codex_smoke_token'),
+    };
+  }
+  return {
+    smoke_hash_consumed: !metrics.final_url.includes('codex_smoke_token'),
+    not_login_shell: metrics.final_path !== '/login',
+    access_denied_absent: !metrics.body_text.includes('无权限') && !metrics.body_text.includes('Forbidden'),
+  };
+}
+
+const results = {
+  ok: true,
+  backend: 'codex-desktop-chrome-extension',
+  expected_viewport: EXPECTED_VIEWPORT,
+  targets: targets.map((target) => ({ name: target.name, type: target.type, id: target.id, profileName: target.metadata?.profileName ?? null })),
+  visual: [],
+  interactions: [],
+};
+
+try {
+  for (const target of VISUAL_TARGETS) {
+    const url = materializeUrl(target.url_template);
+    const { page, runtime } = await openClaimedTab(url);
+    const metrics = await pageMetrics(page);
+    const bytes = await pngScreenshot(page);
+    const upload = await postBytes(target.receiver_upload, bytes, metrics);
+    const ok = metrics.viewport.width === EXPECTED_VIEWPORT.width
+      && metrics.viewport.height === EXPECTED_VIEWPORT.height
+      && runtime.console_errors.length === 0
+      && runtime.page_errors.length === 0
+      && runtime.request_failures.length === 0
+      && runtime.server_errors.length === 0;
+    results.ok = results.ok && ok;
+    results.visual.push({ target_id: target.target_id, ok, final_url: sanitizeUrl(metrics.final_url), viewport: metrics.viewport, upload, runtime });
+  }
+
+	  for (const route of INTERACTION_TARGETS) {
+    const url = materializeUrl(route.url_template);
+    const { page, runtime } = await openClaimedTab(url);
+    const metrics = await pageMetrics(page);
+    const bytes = await pngScreenshot(page);
+    const assertions = interactionAssertions(route, metrics);
+    const statusOk = metrics.viewport.width === EXPECTED_VIEWPORT.width
+      && metrics.viewport.height === EXPECTED_VIEWPORT.height
+      && runtime.console_errors.length === 0
+      && runtime.page_errors.length === 0
+      && runtime.request_failures.length === 0
+      && runtime.server_errors.length === 0
+      && metrics.final_path === route.expected_final_path
+      && Object.values(assertions).every(Boolean);
+    const interaction = {
+      status: statusOk ? 'pass' : 'fail',
+      route_id: route.route_id,
+      route: route.route,
+      final_url: sanitizeUrl(metrics.final_url),
+      business_action: route.business_action_hint,
+      desktop_backend: 'codex-desktop-chrome-extension',
+      desktop_chrome_backend_status: 'pass',
+      no_4xx_5xx: runtime.server_errors.length === 0,
+      no_requestfailed: runtime.request_failures.length === 0,
+      no_pageerror: runtime.page_errors.length === 0,
+      no_console_error: runtime.console_errors.length === 0,
+      target_screenshot: route.target_screenshot,
+      assertions,
+      runtime,
+    };
+    const jsonUpload = await postJson(route.receiver_upload, interaction);
+    const screenshotUpload = await postBytes(route.interaction_screenshot_upload, bytes, metrics);
+    results.ok = results.ok && statusOk;
+	    results.interactions.push({ route_id: route.route_id, ok: statusOk, final_url: interaction.final_url, viewport: metrics.viewport, jsonUpload, screenshotUpload, assertions, runtime });
+	  }
+	
+	  if (BRIDGE_RESULT_UPLOAD) {
+	    results.bridge_result_upload = await postJson(BRIDGE_RESULT_UPLOAD, results);
+	  }
+	} finally {
+  const controlledTabs = await desktopChrome.tabs.list().catch(() => []);
+  const keep = controlledTabs.map((tab) => ({ tab, status: 'deliverable' }));
+  await desktopChrome.tabs.finalize({ keep }).catch(() => undefined);
+}
+
+nodeRepl.write(JSON.stringify(results, null, 2));
+`;
+
+const summary = {
+  package_id: 'ui_desktop_chrome_bridge_payload',
+  generated_at: new Date().toISOString(),
+  capture_session: repoRel(args.captureSession),
+  output_js: repoRel(args.outputJs),
+  bridge_host_preflight: repoRel(args.bridgeHostPreflight),
+  chrome_client_url: selectedChromeClientUrl,
+  chrome_client_url_source: selectedChromeClientUrl === args.chromeClientUrl ? 'default-or-cli' : 'windows_desktop_bridge_host_preflight',
+  smoke_redirect_base_url: normalizeSmokeRedirectBaseUrl(args.smokeRedirectBaseUrl),
+  url_policy: 'all page, redirect, receiver, and upload URLs must use Windows-local 127.0.0.1 tunnel endpoints for the 10.3.6.59 Chrome run',
+  backend_required: 'codex-desktop-chrome-extension',
+  forbidden_backend: 'iab',
+  expected_viewport: expectedViewport,
+  placeholders: {
+    CODEX_CAPTURE_KEY: args.captureKeyPlaceholder,
+    CODEX_SMOKE_NONCE: args.smokeNoncePlaceholder,
+  },
+  visual_target_count: visualBatch.length,
+  interaction_target_count: interactionBatch.length,
+  screenshot_upload_count: visualBatch.length + interactionBatch.length,
+  bridge_result_upload_count: bridgeResultUpload ? 1 : 0,
+  receiver_upload_count: visualBatch.length + interactionBatch.length + (bridgeResultUpload ? 1 : 0),
+  smoke_redirect_url_count: [...visualBatch, ...interactionBatch].filter((item) => item.requires_smoke_token).length,
+  secret_policy: 'The generated payload contains placeholders only. Do not commit or write concrete capture keys, smoke tokens, or nonces.',
+};
+
+ensureDirFor(args.outputJs);
+fs.writeFileSync(resolveRepo(args.outputJs), payloadJs, 'utf8');
+ensureDirFor(args.outputJson);
+fs.writeFileSync(resolveRepo(args.outputJson), `${JSON.stringify(summary, null, 2)}\n`, 'utf8');
+ensureDirFor(args.outputMd);
+fs.writeFileSync(resolveRepo(args.outputMd), renderMarkdown(summary), 'utf8');
+
+console.log(`ui-desktop-chrome-bridge-payload visual=${summary.visual_target_count} interactions=${summary.interaction_target_count} js=${summary.output_js} json=${repoRel(args.outputJson)} md=${repoRel(args.outputMd)}`);
+
+function renderMarkdown(summaryData) {
+  return [
+    '# Desktop Chrome Bridge Payload',
+    '',
+    `- Generated: \`${summaryData.generated_at}\``,
+    `- Capture session: \`${summaryData.capture_session}\``,
+    `- Payload JS: \`${summaryData.output_js}\``,
+    `- Backend required: \`${summaryData.backend_required}\``,
+    `- Forbidden backend: \`${summaryData.forbidden_backend}\``,
+    `- Expected viewport: \`${summaryData.expected_viewport.width}x${summaryData.expected_viewport.height}\``,
+    `- Visual targets: \`${summaryData.visual_target_count}\``,
+    `- Interaction targets: \`${summaryData.interaction_target_count}\``,
+    `- Screenshot uploads: \`${summaryData.screenshot_upload_count}\``,
+    `- Bridge result uploads: \`${summaryData.bridge_result_upload_count}\``,
+    `- Receiver uploads: \`${summaryData.receiver_upload_count}\``,
+    '',
+    'The JS payload is an execution aid for `mcp__codex_desktop_node_repl__js`. It intentionally contains placeholders for `CODEX_CAPTURE_KEY` and `CODEX_SMOKE_NONCE`; concrete secrets must stay in process memory and out of repo files.',
+    '',
+    'After the payload runs, execute the generated metrics commands from the capture session and then run the visual interaction finalizer.',
+    '',
+  ].join('\n');
+}

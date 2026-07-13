@@ -1,0 +1,131 @@
+version: 1
+gate: GATE-P0-08
+name: live-ha-rto-rpo-drill
+scope:
+  cluster: live-k8s
+  components:
+    - kafka
+    - flink
+    - clickhouse
+    - postgresql
+    - minio
+    - apisix
+    - traffic-analysis-services
+policy:
+  destructive: true
+  requires_human_approval: true
+  requires_maintenance_window: true
+  preflight_script: tests/chaos/live_ha_readiness_preflight.sh
+  forbidden_without_approval:
+    - kubectl delete pod
+    - kubectl scale
+    - kubectl rollout restart
+    - patroni failover
+    - minio server restart
+acceptance_targets:
+  kafka:
+    rto_seconds: 180
+    rpo: zero_acknowledged_message_loss
+    consistency_checks:
+      - all_partitions_have_leader
+      - isr_recovers_to_replication_factor
+      - live_topic_catalog_unchanged
+      - consumer_offsets_continue
+  flink:
+    rto_seconds: 300
+    rpo: exactly_once_checkpoint_restore
+    consistency_checks:
+      - all_expected_jobs_return_running
+      - latest_completed_checkpoint_advances_after_recovery
+      - no_root_exceptions
+      - output_tables_do_not_duplicate_drill_records
+  clickhouse:
+    rto_seconds: 300
+    rpo: no_committed_row_loss
+    consistency_checks:
+      - system_replicas_not_readonly
+      - absolute_delay_returns_below_60s
+      - queue_size_returns_below_100
+      - drill_query_counts_match_before_after
+  postgresql:
+    rto_seconds: 300
+    rpo: no_committed_transaction_loss
+    consistency_checks:
+      - primary_or_promoted_primary_accepts_connections
+      - replicas_resume_streaming
+      - replay_lag_returns_to_zero_or_site_threshold
+      - control_plane_crud_smoke_passes
+  minio:
+    rto_seconds: 300
+    rpo: no_object_loss_for_completed_writes
+    consistency_checks:
+      - health_endpoint_recovers
+      - pcap_object_head_or_verify_passes
+      - presigned_download_still_matches_sha256
+      - lifecycle_or_retention_config_unchanged
+required_evidence:
+  - run_summary_json
+  - timeline_jsonl
+  - before_snapshot
+  - injection_log
+  - recovery_poll_log
+  - after_snapshot
+  - rto_rpo_table
+  - data_consistency_report
+  - operator_approval_record
+phases:
+  - id: preflight
+    destructive: false
+    commands:
+      - ALLOW_BLOCKERS=true tests/chaos/live_ha_readiness_preflight.sh
+    pass_condition: no_readiness_blockers_except_missing_drill_evidence
+  - id: kafka-broker-loss
+    destructive: true
+    injection: terminate_one_non_controller_kafka_pod_or_restart_one_broker
+    observe:
+      - partition_leader_recovery
+      - isr_shrink_and_recover
+      - producer_consumer_ack_continuity
+    rollback: wait_for_statefulset_ready_and_isr_full
+  - id: flink-taskmanager-loss
+    destructive: true
+    injection: terminate_one_flink_taskmanager_pod
+    observe:
+      - job_restart_or_failover_duration
+      - checkpoint_restore
+      - downstream_output_consistency
+    rollback: wait_for_jobmanager_and_taskmanagers_ready
+  - id: clickhouse-replica-loss
+    destructive: true
+    injection: terminate_one_clickhouse_replica_pod
+    observe:
+      - replicated_table_readonly_state
+      - replication_delay_and_queue
+      - query_consistency
+    rollback: wait_for_clickhouse_replica_ready_and_system_replicas_clean
+  - id: postgresql-replica-loss
+    destructive: true
+    injection: terminate_one_postgres_replica_pod_then_optionally_promote_in_manual_window
+    observe:
+      - streaming_replica_count
+      - replay_lag
+      - control_plane_read_write_smoke
+    rollback: wait_for_replicas_streaming_and_primary_known
+  - id: minio-pod-loss
+    destructive: true
+    injection: terminate_one_minio_pod
+    observe:
+      - health_endpoint
+      - object_verify
+      - pcap_download_sha256
+    rollback: wait_for_minio_statefulset_ready_and_health_200
+reporting:
+  run_dir: doc/02_acceptance/runs/<date>-ha-rto-rpo-drill
+  stable_dir: doc/02_acceptance/06-resilience
+  stable_reports:
+    - kafka-failover.md
+    - flink-failover.md
+    - clickhouse-failover.md
+    - postgres-failover.md
+    - minio-failover.md
+    - ha-rto-rpo-latest.json
