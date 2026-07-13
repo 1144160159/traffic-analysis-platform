@@ -1,0 +1,18 @@
+{
+  "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/exfiltration?limit=8",
+  "status": 200,
+  "hasToken": true,
+  "keys": [
+    "paths",
+    "risk_types",
+    "top_destinations",
+    "top_sources",
+    "total",
+    "trend"
+  ],
+  "destinationCount": 0,
+  "trendBucketCount": 0,
+  "sourceCount": 0,
+  "pathCount": 0,
+  "data_mode_expected": "simulated when destinations, paths, and sessions are empty"
+}

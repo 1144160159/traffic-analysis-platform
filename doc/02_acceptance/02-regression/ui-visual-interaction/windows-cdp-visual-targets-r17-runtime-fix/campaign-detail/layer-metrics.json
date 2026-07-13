@@ -1,0 +1,157 @@
+{
+  "target_id": "campaign-detail",
+  "route": "/campaigns/campaign-exfil-default-1782729598739-e1d2dc37",
+  "status": "fail",
+  "generated_at": "2026-07-03T20:33:05.023125+08:00",
+  "layer_spec": "doc/04_assets/ui_suite_gpt_v1/specs/layers/campaign-detail.json",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/campaign-detail.png",
+  "actual_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-visual-targets-r17-runtime-fix/campaign-detail/actual-1920.png",
+  "viewport": {
+    "source_width": 1920,
+    "source_height": 1080,
+    "actual_width": 1920,
+    "actual_height": 1080,
+    "size_ok": true
+  },
+  "summary": {
+    "layer_count": 5,
+    "failed_layer_count": 5,
+    "roles": {
+      "global-app-shell": {
+        "layer_count": 3,
+        "failed_count": 3,
+        "weighted_mismatch_pixels": 465140,
+        "weighted_compared_pixels": 465182,
+        "weighted_channel_delta": 6433383.25,
+        "weighted_pixel_max_delta": 10639897.0,
+        "pixel_mismatch_ratio": 0.9999097127575873,
+        "mean_channel_delta": 13.829819833957462,
+        "mean_pixel_max_delta": 22.87254665915706
+      },
+      "page-workspace": {
+        "layer_count": 1,
+        "failed_count": 1,
+        "weighted_mismatch_pixels": 1578989,
+        "weighted_compared_pixels": 1579074,
+        "weighted_channel_delta": 27716202.25,
+        "weighted_pixel_max_delta": 45666170.0,
+        "pixel_mismatch_ratio": 0.9999461709837538,
+        "mean_channel_delta": 17.552187072930085,
+        "mean_pixel_max_delta": 28.91958831568375
+      },
+      "closed-loop-rail": {
+        "layer_count": 1,
+        "failed_count": 1,
+        "weighted_mismatch_pixels": 361175,
+        "weighted_compared_pixels": 361200,
+        "weighted_channel_delta": 6370087.75,
+        "weighted_pixel_max_delta": 10247989.0,
+        "pixel_mismatch_ratio": 0.9999307862679956,
+        "mean_channel_delta": 17.63590185492802,
+        "mean_pixel_max_delta": 28.372062569213732
+      }
+    }
+  },
+  "layers": [
+    {
+      "id": "topbar",
+      "role": "global-app-shell",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 80
+      },
+      "status": "fail",
+      "compared_pixels": 153600,
+      "mismatch_pixels": 153580,
+      "pixel_mismatch_ratio": 0.9998697916666667,
+      "max_pixel_ratio": 0.015,
+      "channel_tolerance": 0,
+      "max_channel_delta": 255,
+      "mean_channel_delta": 17.552156575520833,
+      "mean_pixel_max_delta": 29.853463541666667,
+      "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-visual-targets-r17-runtime-fix/campaign-detail/layers/topbar-diff.png"
+    },
+    {
+      "id": "sidebar",
+      "role": "global-app-shell",
+      "bbox": {
+        "x": 0,
+        "y": 80,
+        "w": 166,
+        "h": 917
+      },
+      "status": "fail",
+      "compared_pixels": 152222,
+      "mismatch_pixels": 152219,
+      "pixel_mismatch_ratio": 0.9999802919420321,
+      "max_pixel_ratio": 0.015,
+      "channel_tolerance": 0,
+      "max_channel_delta": 255,
+      "mean_channel_delta": 14.033007712420018,
+      "mean_pixel_max_delta": 22.815887322463244,
+      "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-visual-targets-r17-runtime-fix/campaign-detail/layers/sidebar-diff.png"
+    },
+    {
+      "id": "content",
+      "role": "page-workspace",
+      "bbox": {
+        "x": 198,
+        "y": 80,
+        "w": 1722,
+        "h": 917
+      },
+      "status": "fail",
+      "compared_pixels": 1579074,
+      "mismatch_pixels": 1578989,
+      "pixel_mismatch_ratio": 0.9999461709837538,
+      "max_pixel_ratio": 0.015,
+      "channel_tolerance": 0,
+      "max_channel_delta": 255,
+      "mean_channel_delta": 17.552187072930085,
+      "mean_pixel_max_delta": 28.91958831568375,
+      "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-visual-targets-r17-runtime-fix/campaign-detail/layers/content-diff.png"
+    },
+    {
+      "id": "bottombar",
+      "role": "global-app-shell",
+      "bbox": {
+        "x": 0,
+        "y": 997,
+        "w": 1920,
+        "h": 83
+      },
+      "status": "fail",
+      "compared_pixels": 159360,
+      "mismatch_pixels": 159341,
+      "pixel_mismatch_ratio": 0.9998807730923694,
+      "max_pixel_ratio": 0.015,
+      "channel_tolerance": 0,
+      "max_channel_delta": 255,
+      "mean_channel_delta": 10.047938629518072,
+      "mean_pixel_max_delta": 16.198073544176708,
+      "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-visual-targets-r17-runtime-fix/campaign-detail/layers/bottombar-diff.png"
+    },
+    {
+      "id": "right-rail",
+      "role": "closed-loop-rail",
+      "bbox": {
+        "x": 1460,
+        "y": 104,
+        "w": 420,
+        "h": 860
+      },
+      "status": "fail",
+      "compared_pixels": 361200,
+      "mismatch_pixels": 361175,
+      "pixel_mismatch_ratio": 0.9999307862679956,
+      "max_pixel_ratio": 0.015,
+      "channel_tolerance": 0,
+      "max_channel_delta": 255,
+      "mean_channel_delta": 17.63590185492802,
+      "mean_pixel_max_delta": 28.372062569213732,
+      "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-visual-targets-r17-runtime-fix/campaign-detail/layers/right-rail-diff.png"
+    }
+  ]
+}

@@ -1,0 +1,110 @@
+{
+  "title": "园区网络全流量采集与分析系统",
+  "location": "http://10.0.5.8:30180/rules?fullRouteEvidenceTs=1783072666515",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "dpr": 1.0000000298023224
+  },
+  "scroll": {
+    "horizontalOverflow": 0,
+    "verticalOverflow": 0,
+    "bodyScrollWidth": 1920,
+    "bodyClientWidth": 1920,
+    "bodyScrollHeight": 1080,
+    "bodyClientHeight": 1080
+  },
+  "headings": [
+    "规则管理",
+    "规则列表（共 8/15）",
+    "规则编辑：a6a9873a-bb28-4a00-86bb-6b4c742a6ecd",
+    "条件构建器",
+    "例外条件（任意满足则排除）",
+    "DSL 表达式（自动生成）",
+    "生命周期",
+    "版本历史",
+    "审批清单（当前版本 v3.0）",
+    "发布控制",
+    "样本回放验证（近 7 天）",
+    "命中结果矩阵（近 7 天）",
+    "误报样本 Top5",
+    "性能影响（近 7 天）",
+    "白名单草案（命中高但低风险）",
+    "相关操作"
+  ],
+  "buttons": [
+    "移动端导航",
+    "PCAP检索",
+    "资产检索",
+    "规则检索",
+    "脚本中心",
+    "帮助中心",
+    "更多应用",
+    "Ccodex-ui-desktop-admin系统管理员在线",
+    "规则库",
+    "导入规则",
+    "导出规则",
+    "规则包管理",
+    "新建规则",
+    "规则编辑",
+    "规则详情",
+    "发布确认",
+    "1",
+    "2",
+    "3",
+    "4",
+    "74"
+  ],
+  "visibleText": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-03 17:57:47 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 采集监测 威胁分析 资产图谱 检测运营 规则管理 部署管理 模型管理 MLOps 编排 SOAR 剧本 白名单 审计配置 C codex-ui-desktop-admin 系统管理员 在线 规则管理 创建、测试、发布、命中、误报、回滚与审计闭环 规则库 导入规则 导出规则 规则包管理 新建规则 规则编辑 规则详情 发布确认 规则草稿 12 条 真实 API 待审核规则 0 条 真实 API 灰度规则 1 条 真实 API 启用规则 3 条 真实 API 回滚候选 5 条 真实 API 高耗时规则 2 条 真实 API 规则列表（共 8/15） 全部类型 全部状态 规则ID 规则名称 类型 严重级别 MITRE阶段 状态 版本 命中数 误报率 平均延时 a6a9873a-bb28-4a00-86bb-6b4c742a6ecd codex rule disable 20260629-rule-state-machine-r5-model-version-state custom 高危 指挥与控制 停用 v6.0 835 0.19% 22 ms 4ab44dc7-d39d-4f99-8284-e60c4c20d698 codex rule enable 20260629-rule-state-machine-r5-model-version-state custom 中危 横向移动 启用 v4.0 932 0.26% 23 ms e72f1ff8-dbb2-4c5f-ac71-7d7a820ac3b3 codex rule viewer 20260629-rule-state-machine-r5-model-version-state custom 低危 数据泄露 停用 v2.0 1.0K 0.33% 24 ms d0fd4d56-1151-4e05-b040-085e49a07bc2 codex rule disable 20260629-rule-state-machine-r4-deployment-state custom 高危 执行 停用 v6.0 1.3K 0.40% 31 ms b620ec0b-7606-42b4-aaa9-de9cdaf107da codex rule enable 20260629-rule-state-machine-r4-deployment-state custom 中危 侦察 启用 v4.0 1.",
+  "elements": {
+    "pageHero": {
+      "selector": ".taf-page-hero",
+      "visible": false
+    },
+    "panelHeader": {
+      "selector": ".taf-panel__header",
+      "visible": true,
+      "text": "规则列表（共 8/15）",
+      "x": 183,
+      "y": 250,
+      "right": 799,
+      "bottom": 280,
+      "w": 616,
+      "h": 30,
+      "display": "flex",
+      "overflowX": "visible",
+      "overflowY": "visible"
+    },
+    "table": {
+      "selector": ".ant-table, .taf-table, table",
+      "visible": true,
+      "text": "规则ID规则名称类型严重级别MITRE阶段状态版本命中数误报率平均延时a6a9873a-bb28-4a00-86bb-6b4c742a6ecdcodex rule disable 20260629-rule-state-machine-r5-model-version-statecustom高危指挥与控制停用v6.08350.19%22 ms4ab44dc7-d39d-4f99-8284-e60c4c20d698codex rule enable 20260629-rule-",
+      "x": 190,
+      "y": 324,
+      "right": 792,
+      "bottom": 634,
+      "w": 602,
+      "h": 309,
+      "display": "block",
+      "overflowX": "visible",
+      "overflowY": "visible"
+    },
+    "topicTitlebar": {
+      "selector": ".taf-topic-titlebar",
+      "visible": false
+    },
+    "topicFacts": {
+      "selector": ".taf-topic-facts",
+      "visible": false
+    },
+    "topicKpis": {
+      "selector": ".taf-topic-kpis",
+      "visible": false
+    },
+    "topicGrid": {
+      "selector": ".taf-topic-grid",
+      "visible": false
+    }
+  },
+  "overlapChecks": {}
+}

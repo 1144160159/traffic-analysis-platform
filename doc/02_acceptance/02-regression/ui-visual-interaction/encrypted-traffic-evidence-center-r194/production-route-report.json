@@ -1,0 +1,267 @@
+{
+  "target_id": "encrypted-traffic-evidence-center",
+  "route_id": "encrypted-traffic",
+  "route": "/encrypted-traffic",
+  "resolved_path": "/encrypted-traffic",
+  "navigation_url": "http://10.0.5.8:30180/encrypted-traffic?tab=evidence-center&windowsCdpEvidenceTs=1783688581138#codex_smoke_token=<redacted>",
+  "final_url": "http://10.0.5.8:30180/encrypted-traffic?tab=evidence-center&windowsCdpEvidenceTs=1783688581138",
+  "goto_error": null,
+  "bad_responses": [],
+  "resource_requests": [
+    {
+      "url": "http://10.0.5.8:30180/encrypted-traffic?tab=evidence-center&windowsCdpEvidenceTs=1783688581138",
+      "method": "GET",
+      "resource_type": "document"
+    },
+    {
+      "url": "http://10.0.5.8:30180/config.js?runtime=1",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/index--CMjDDoA.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-outvariant-BBS2yBlX.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-rettime-Dx7Zosze.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-react-DcxXCZkJ.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-is-node-process-BZ-2HBMI.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-misc-IOeGAkip.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-strict-event-emitter-CrFXw_VT.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-mswjs-interceptors-DhD__bBq.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-until-async-Bf6op_KE.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-path-to-regexp-wCvGX3Wm.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-tldts-core-CHyGRZbr.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-tldts-BrGjyBsC.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-set-cookie-parser-3_eJYb7L.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-headers-polyfill-BPLrDQpH.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-msw-CUNbvPfy.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-babel-runtime-DOsDFnm7.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-ant-design-fast-color-a4DwzfPV.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-dayjs-Csm2ddBZ.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-rc-D8Be7kXi.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-stylis-BmaM3nay.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-ant-design-9aWIuLjh.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-antd-Cukv-RvN.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-data-38j4_Kgc.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-remix-run-router-DTlRP5cs.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-router-CQ_4Ibzk.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/index-DMXp590Y.css",
+      "method": "GET",
+      "resource_type": "stylesheet"
+    },
+    {
+      "url": "http://10.0.5.8:30180/api/v1/auth/me",
+      "method": "GET",
+      "resource_type": "xhr"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/EncryptedTrafficPage-Ck1hKz6D.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/MetricTile-xE3uPL30.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/OverlayContractHost-D4FKuj0C.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/StatusTag-DGvGdyMq.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/WorkPanel-D5XyU7AQ.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/charts-CNwnC3bf.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-echarts-BRST3zhe.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-zrender-D9OC_hQO.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-echarts-react--n7d3flL.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-size-sensor-iY3GC-0X.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/screen-topbar-shield-exact@3x-BMBlSnq_.png",
+      "method": "GET",
+      "resource_type": "image"
+    },
+    {
+      "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/stats?limit=8&page_size=8",
+      "method": "GET",
+      "resource_type": "xhr"
+    },
+    {
+      "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/sessions?limit=8&page_size=8",
+      "method": "GET",
+      "resource_type": "xhr"
+    },
+    {
+      "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/ja3?limit=8&page_size=8",
+      "method": "GET",
+      "resource_type": "xhr"
+    },
+    {
+      "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/tunnels?limit=8&page_size=8",
+      "method": "GET",
+      "resource_type": "xhr"
+    },
+    {
+      "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/exfiltration?limit=8&page_size=8",
+      "method": "GET",
+      "resource_type": "xhr"
+    },
+    {
+      "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/evidence?limit=8&page_size=8",
+      "method": "GET",
+      "resource_type": "xhr"
+    }
+  ],
+  "forbidden_target_resource_requests": [],
+  "request_failures": [],
+  "console_errors": [],
+  "page_errors": [],
+  "metrics": {
+    "final_url": "http://10.0.5.8:30180/encrypted-traffic?tab=evidence-center&windowsCdpEvidenceTs=1783688581138",
+    "document_title": "园区网络全流量采集与分析系统",
+    "h1": "加密流量",
+    "body_text_sample": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-10 21:02:46 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 采集监测 威胁分析 告警中心 128 战役列表 攻击链分析 加密流量 取证分析 资产图谱 检测运营 审计配置 C codex-windows-cdp-admin 系统管理员 在线 加密流量 总览 指纹分析 隧道检测 外联画像 证据中心 时间范围 近 24 小时 刷新 30s 一键分析 指纹详情 证书详情 加密流量总量 6 会话 真实 API TLS 流量占比 66.7% 真实 API QUIC 流量占比 16.7% 真实 API 未知加密占比 16.7% 真实 API 异常证书数 1 张 真实 API 可疑 JA3 数 1 个 真实 API 未知 SNI 比例 33.3% 真实 API 仿真数据（API 空） 当前对象：s-8f7a2c16b9e0 关联 Session 6 仿真样本 PCAP 索引 4 仿真样本 证据计数 19 仿真样本 握手元数据 5 仿真样本 已索引 Hash 4 仿真样本 待补齐证据 1 仿真样本 取证任务 0 仿真样本 加密会话证据表",
+    "viewport_width": 2133,
+    "viewport_height": 1200,
+    "device_pixel_ratio": 0.8999999632438005,
+    "scroll_width": 2133,
+    "client_width": 2133,
+    "scroll_height": 1200,
+    "client_height": 1200,
+    "horizontal_overflow": false,
+    "vertical_scroll": false,
+    "error_alerts": [],
+    "visible_bad_geometry": []
+  },
+  "route_state_notes": [],
+  "protected_route": true,
+  "smoke_token_used": true,
+  "smoke_hash_consumed": true
+}

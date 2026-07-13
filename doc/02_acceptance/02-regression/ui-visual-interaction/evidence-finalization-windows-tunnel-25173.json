@@ -1,0 +1,835 @@
+{
+  "package_id": "ui_visual_interaction_evidence_finalization",
+  "run_id": "202607030-ui-visual-evidence-finalize-current-gap-r1",
+  "result": "blocked",
+  "generated_at": "2026-07-03T01:04:00.034334+08:00",
+  "capture_plan": "doc/02_acceptance/02-regression/ui-visual-interaction/capture-plan-windows-tunnel-25173.json",
+  "evidence_dir": "doc/02_acceptance/02-regression/ui-visual-interaction/latest",
+  "expected_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "max_pixel_ratio": 0.015,
+  "visual_target_count": 30,
+  "visual_passed_count": 0,
+  "interaction_route_count": 28,
+  "interaction_passed_count": 0,
+  "metrics_generated_count": 4,
+  "blockers": 58,
+  "visual_results": [
+    {
+      "target_id": "login",
+      "route_id": "login",
+      "status": "blocked",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/login.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/login/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/login/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/login/metrics.json",
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/login/capture-meta.json",
+      "metrics_status": "fail",
+      "pixel_mismatch_ratio": 0.9999099151449858,
+      "reasons": [
+        "actual screenshot size (2559, 1271) != 1920x1080",
+        "capture-meta status=blocked",
+        "uploaded screenshot 2559x1271 != 1920x1080",
+        "stored screenshot 2559x1271 != 1920x1080",
+        "Desktop Chrome viewport 2560x1271 != 1920x1080",
+        "source/actual size mismatch 1920x1080 vs 2559x1271",
+        "pixel mismatch ratio 0.9999099151449858 > 0.015"
+      ]
+    },
+    {
+      "target_id": "screen",
+      "route_id": "screen",
+      "status": "blocked",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/screen.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/screen/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/screen/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/screen/metrics.json",
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/screen/capture-meta.json",
+      "metrics_status": "fail",
+      "pixel_mismatch_ratio": 0.9999508069051117,
+      "reasons": [
+        "actual screenshot size (2559, 1271) != 1920x1080",
+        "capture-meta status=blocked",
+        "uploaded screenshot 2559x1271 != 1920x1080",
+        "stored screenshot 2559x1271 != 1920x1080",
+        "Desktop Chrome viewport 2560x1271 != 1920x1080",
+        "source/actual size mismatch 1920x1080 vs 2559x1271",
+        "pixel mismatch ratio 0.9999508069051117 > 0.015"
+      ]
+    },
+    {
+      "target_id": "dashboard",
+      "route_id": "dashboard",
+      "status": "blocked",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/dashboard.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/dashboard/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/dashboard/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/dashboard/metrics.json",
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/dashboard/capture-meta.json",
+      "metrics_status": "fail",
+      "pixel_mismatch_ratio": 0.9999188313934344,
+      "reasons": [
+        "actual screenshot size (2559, 1271) != 1920x1080",
+        "capture-meta status=blocked",
+        "uploaded screenshot 2559x1271 != 1920x1080",
+        "stored screenshot 2559x1271 != 1920x1080",
+        "Desktop Chrome viewport 2560x1271 != 1920x1080",
+        "source/actual size mismatch 1920x1080 vs 2559x1271",
+        "pixel mismatch ratio 0.9999188313934344 > 0.015"
+      ]
+    },
+    {
+      "target_id": "alerts",
+      "route_id": "alerts",
+      "status": "blocked",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/alerts.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/alerts/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/alerts/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/alerts/metrics.json",
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/alerts/capture-meta.json",
+      "metrics_status": "fail",
+      "pixel_mismatch_ratio": 0.9999425055703494,
+      "reasons": [
+        "actual screenshot size (2559, 1271) != 1920x1080",
+        "capture-meta status=blocked",
+        "uploaded screenshot 2559x1271 != 1920x1080",
+        "stored screenshot 2559x1271 != 1920x1080",
+        "Desktop Chrome viewport 2560x1271 != 1920x1080",
+        "source/actual size mismatch 1920x1080 vs 2559x1271",
+        "pixel mismatch ratio 0.9999425055703494 > 0.015"
+      ]
+    },
+    {
+      "target_id": "alert-detail",
+      "route_id": "alert-detail",
+      "status": "blocked",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/alert-detail.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/alert-detail/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/alert-detail/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/alert-detail/metrics.json",
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/alert-detail/capture-meta.json",
+      "metrics_status": "missing",
+      "pixel_mismatch_ratio": null,
+      "reasons": [
+        "actual screenshot missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/alert-detail/actual-1920.png",
+        "capture-meta missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/alert-detail/capture-meta.json"
+      ]
+    },
+    {
+      "target_id": "campaigns",
+      "route_id": "campaigns",
+      "status": "blocked",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/campaigns.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaigns/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaigns/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaigns/metrics.json",
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaigns/capture-meta.json",
+      "metrics_status": "missing",
+      "pixel_mismatch_ratio": null,
+      "reasons": [
+        "actual screenshot missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaigns/actual-1920.png",
+        "capture-meta missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaigns/capture-meta.json"
+      ]
+    },
+    {
+      "target_id": "campaign-detail",
+      "route_id": "campaign-detail",
+      "status": "blocked",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/campaign-detail.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaign-detail/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaign-detail/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaign-detail/metrics.json",
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaign-detail/capture-meta.json",
+      "metrics_status": "missing",
+      "pixel_mismatch_ratio": null,
+      "reasons": [
+        "actual screenshot missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaign-detail/actual-1920.png",
+        "capture-meta missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaign-detail/capture-meta.json"
+      ]
+    },
+    {
+      "target_id": "attack-chains",
+      "route_id": "attack-chains",
+      "status": "blocked",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/attack-chains.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/attack-chains/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/attack-chains/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/attack-chains/metrics.json",
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/attack-chains/capture-meta.json",
+      "metrics_status": "missing",
+      "pixel_mismatch_ratio": null,
+      "reasons": [
+        "actual screenshot missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/attack-chains/actual-1920.png",
+        "capture-meta missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/attack-chains/capture-meta.json"
+      ]
+    },
+    {
+      "target_id": "encrypted-traffic",
+      "route_id": "encrypted-traffic",
+      "status": "blocked",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/encrypted-traffic/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/encrypted-traffic/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/encrypted-traffic/metrics.json",
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/encrypted-traffic/capture-meta.json",
+      "metrics_status": "missing",
+      "pixel_mismatch_ratio": null,
+      "reasons": [
+        "actual screenshot missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/encrypted-traffic/actual-1920.png",
+        "capture-meta missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/encrypted-traffic/capture-meta.json"
+      ]
+    },
+    {
+      "target_id": "forensics",
+      "route_id": "forensics",
+      "status": "blocked",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/forensics.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/forensics/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/forensics/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/forensics/metrics.json",
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/forensics/capture-meta.json",
+      "metrics_status": "missing",
+      "pixel_mismatch_ratio": null,
+      "reasons": [
+        "actual screenshot missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/forensics/actual-1920.png",
+        "capture-meta missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/forensics/capture-meta.json"
+      ]
+    },
+    {
+      "target_id": "assets",
+      "route_id": "assets",
+      "status": "blocked",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/assets/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/assets/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/assets/metrics.json",
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/assets/capture-meta.json",
+      "metrics_status": "missing",
+      "pixel_mismatch_ratio": null,
+      "reasons": [
+        "actual screenshot missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/assets/actual-1920.png",
+        "capture-meta missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/assets/capture-meta.json"
+      ]
+    },
+    {
+      "target_id": "graph",
+      "route_id": "graph",
+      "status": "blocked",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/graph.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/graph/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/graph/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/graph/metrics.json",
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/graph/capture-meta.json",
+      "metrics_status": "missing",
+      "pixel_mismatch_ratio": null,
+      "reasons": [
+        "actual screenshot missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/graph/actual-1920.png",
+        "capture-meta missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/graph/capture-meta.json"
+      ]
+    },
+    {
+      "target_id": "fusion",
+      "route_id": "fusion",
+      "status": "blocked",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/fusion.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/fusion/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/fusion/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/fusion/metrics.json",
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/fusion/capture-meta.json",
+      "metrics_status": "missing",
+      "pixel_mismatch_ratio": null,
+      "reasons": [
+        "actual screenshot missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/fusion/actual-1920.png",
+        "capture-meta missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/fusion/capture-meta.json"
+      ]
+    },
+    {
+      "target_id": "baselines",
+      "route_id": "baselines",
+      "status": "blocked",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/baselines.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/baselines/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/baselines/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/baselines/metrics.json",
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/baselines/capture-meta.json",
+      "metrics_status": "missing",
+      "pixel_mismatch_ratio": null,
+      "reasons": [
+        "actual screenshot missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/baselines/actual-1920.png",
+        "capture-meta missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/baselines/capture-meta.json"
+      ]
+    },
+    {
+      "target_id": "probes",
+      "route_id": "probes",
+      "status": "blocked",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/probes.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/probes/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/probes/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/probes/metrics.json",
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/probes/capture-meta.json",
+      "metrics_status": "missing",
+      "pixel_mismatch_ratio": null,
+      "reasons": [
+        "actual screenshot missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/probes/actual-1920.png",
+        "capture-meta missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/probes/capture-meta.json"
+      ]
+    },
+    {
+      "target_id": "rules",
+      "route_id": "rules",
+      "status": "blocked",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/rules.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/rules/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/rules/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/rules/metrics.json",
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/rules/capture-meta.json",
+      "metrics_status": "missing",
+      "pixel_mismatch_ratio": null,
+      "reasons": [
+        "actual screenshot missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/rules/actual-1920.png",
+        "capture-meta missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/rules/capture-meta.json"
+      ]
+    },
+    {
+      "target_id": "deployments",
+      "route_id": "deployments",
+      "status": "blocked",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/deployments.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/deployments/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/deployments/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/deployments/metrics.json",
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/deployments/capture-meta.json",
+      "metrics_status": "missing",
+      "pixel_mismatch_ratio": null,
+      "reasons": [
+        "actual screenshot missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/deployments/actual-1920.png",
+        "capture-meta missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/deployments/capture-meta.json"
+      ]
+    },
+    {
+      "target_id": "models",
+      "route_id": "models",
+      "status": "blocked",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/models.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/models/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/models/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/models/metrics.json",
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/models/capture-meta.json",
+      "metrics_status": "missing",
+      "pixel_mismatch_ratio": null,
+      "reasons": [
+        "actual screenshot missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/models/actual-1920.png",
+        "capture-meta missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/models/capture-meta.json"
+      ]
+    },
+    {
+      "target_id": "mlops",
+      "route_id": "mlops",
+      "status": "blocked",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/mlops.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/mlops/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/mlops/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/mlops/metrics.json",
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/mlops/capture-meta.json",
+      "metrics_status": "missing",
+      "pixel_mismatch_ratio": null,
+      "reasons": [
+        "actual screenshot missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/mlops/actual-1920.png",
+        "capture-meta missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/mlops/capture-meta.json"
+      ]
+    },
+    {
+      "target_id": "data-quality",
+      "route_id": "data-quality",
+      "status": "blocked",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/data-quality.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/data-quality/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/data-quality/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/data-quality/metrics.json",
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/data-quality/capture-meta.json",
+      "metrics_status": "missing",
+      "pixel_mismatch_ratio": null,
+      "reasons": [
+        "actual screenshot missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/data-quality/actual-1920.png",
+        "capture-meta missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/data-quality/capture-meta.json"
+      ]
+    },
+    {
+      "target_id": "playbooks",
+      "route_id": "playbooks",
+      "status": "blocked",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/playbooks.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/playbooks/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/playbooks/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/playbooks/metrics.json",
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/playbooks/capture-meta.json",
+      "metrics_status": "missing",
+      "pixel_mismatch_ratio": null,
+      "reasons": [
+        "actual screenshot missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/playbooks/actual-1920.png",
+        "capture-meta missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/playbooks/capture-meta.json"
+      ]
+    },
+    {
+      "target_id": "whitelist",
+      "route_id": "whitelist",
+      "status": "blocked",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/whitelist.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/whitelist/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/whitelist/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/whitelist/metrics.json",
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/whitelist/capture-meta.json",
+      "metrics_status": "missing",
+      "pixel_mismatch_ratio": null,
+      "reasons": [
+        "actual screenshot missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/whitelist/actual-1920.png",
+        "capture-meta missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/whitelist/capture-meta.json"
+      ]
+    },
+    {
+      "target_id": "compliance",
+      "route_id": "compliance",
+      "status": "blocked",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/compliance.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/compliance/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/compliance/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/compliance/metrics.json",
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/compliance/capture-meta.json",
+      "metrics_status": "missing",
+      "pixel_mismatch_ratio": null,
+      "reasons": [
+        "actual screenshot missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/compliance/actual-1920.png",
+        "capture-meta missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/compliance/capture-meta.json"
+      ]
+    },
+    {
+      "target_id": "audit-log",
+      "route_id": "audit-log",
+      "status": "blocked",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/audit-log.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/audit-log/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/audit-log/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/audit-log/metrics.json",
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/audit-log/capture-meta.json",
+      "metrics_status": "missing",
+      "pixel_mismatch_ratio": null,
+      "reasons": [
+        "actual screenshot missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/audit-log/actual-1920.png",
+        "capture-meta missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/audit-log/capture-meta.json"
+      ]
+    },
+    {
+      "target_id": "notifications",
+      "route_id": "notifications",
+      "status": "blocked",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/notifications.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/notifications/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/notifications/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/notifications/metrics.json",
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/notifications/capture-meta.json",
+      "metrics_status": "missing",
+      "pixel_mismatch_ratio": null,
+      "reasons": [
+        "actual screenshot missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/notifications/actual-1920.png",
+        "capture-meta missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/notifications/capture-meta.json"
+      ]
+    },
+    {
+      "target_id": "settings",
+      "route_id": "settings",
+      "status": "blocked",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/settings.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/settings/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/settings/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/settings/metrics.json",
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/settings/capture-meta.json",
+      "metrics_status": "missing",
+      "pixel_mismatch_ratio": null,
+      "reasons": [
+        "actual screenshot missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/settings/actual-1920.png",
+        "capture-meta missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/settings/capture-meta.json"
+      ]
+    },
+    {
+      "target_id": "not-found",
+      "route_id": "not-found",
+      "status": "blocked",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/not-found.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/not-found/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/not-found/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/not-found/metrics.json",
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/not-found/capture-meta.json",
+      "metrics_status": "missing",
+      "pixel_mismatch_ratio": null,
+      "reasons": [
+        "actual screenshot missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/not-found/actual-1920.png",
+        "capture-meta missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/not-found/capture-meta.json"
+      ]
+    },
+    {
+      "target_id": "topics-encrypted-tunnel",
+      "route_id": "topics",
+      "status": "blocked",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/topics-encrypted-tunnel.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-encrypted-tunnel/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-encrypted-tunnel/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-encrypted-tunnel/metrics.json",
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-encrypted-tunnel/capture-meta.json",
+      "metrics_status": "missing",
+      "pixel_mismatch_ratio": null,
+      "reasons": [
+        "actual screenshot missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-encrypted-tunnel/actual-1920.png",
+        "capture-meta missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-encrypted-tunnel/capture-meta.json"
+      ]
+    },
+    {
+      "target_id": "topics-data-exfiltration",
+      "route_id": "topics",
+      "status": "blocked",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/topics-data-exfiltration.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-data-exfiltration/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-data-exfiltration/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-data-exfiltration/metrics.json",
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-data-exfiltration/capture-meta.json",
+      "metrics_status": "missing",
+      "pixel_mismatch_ratio": null,
+      "reasons": [
+        "actual screenshot missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-data-exfiltration/actual-1920.png",
+        "capture-meta missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-data-exfiltration/capture-meta.json"
+      ]
+    },
+    {
+      "target_id": "topics-apt-campaign",
+      "route_id": "topics",
+      "status": "blocked",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/topics-apt-campaign.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-apt-campaign/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-apt-campaign/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-apt-campaign/metrics.json",
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-apt-campaign/capture-meta.json",
+      "metrics_status": "missing",
+      "pixel_mismatch_ratio": null,
+      "reasons": [
+        "actual screenshot missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-apt-campaign/actual-1920.png",
+        "capture-meta missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-apt-campaign/capture-meta.json"
+      ]
+    }
+  ],
+  "interaction_results": [
+    {
+      "route_id": "login",
+      "route": "/login",
+      "status": "blocked",
+      "interaction": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/login/interaction.json",
+      "interaction_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/login/actual-1920.png",
+      "interaction_capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/login/interaction-capture-meta.json",
+      "reasons": [
+        "interaction screenshot size (2559, 1271) != 1920x1080",
+        "interaction-capture-meta missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/login/interaction-capture-meta.json"
+      ]
+    },
+    {
+      "route_id": "screen",
+      "route": "/screen",
+      "status": "blocked",
+      "interaction": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/screen/interaction.json",
+      "interaction_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/screen/actual-1920.png",
+      "interaction_capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/screen/interaction-capture-meta.json",
+      "reasons": [
+        "interaction screenshot size (2559, 1271) != 1920x1080",
+        "interaction-capture-meta missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/screen/interaction-capture-meta.json"
+      ]
+    },
+    {
+      "route_id": "dashboard",
+      "route": "/dashboard",
+      "status": "blocked",
+      "interaction": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/dashboard/interaction.json",
+      "interaction_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/dashboard/actual-1920.png",
+      "interaction_capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/dashboard/interaction-capture-meta.json",
+      "reasons": [
+        "interaction screenshot size (2559, 1271) != 1920x1080",
+        "interaction-capture-meta missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/dashboard/interaction-capture-meta.json"
+      ]
+    },
+    {
+      "route_id": "alerts",
+      "route": "/alerts",
+      "status": "blocked",
+      "interaction": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/alerts/interaction.json",
+      "interaction_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/alerts/actual-1920.png",
+      "interaction_capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/alerts/interaction-capture-meta.json",
+      "reasons": [
+        "interaction screenshot size (2559, 1271) != 1920x1080",
+        "interaction-capture-meta missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/alerts/interaction-capture-meta.json"
+      ]
+    },
+    {
+      "route_id": "alert-detail",
+      "route": "/alerts/:alertId",
+      "status": "blocked",
+      "interaction": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/alert-detail/interaction.json",
+      "interaction_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/alert-detail/interaction.png",
+      "interaction_capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/alert-detail/interaction-capture-meta.json",
+      "reasons": [
+        "interaction missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/alert-detail/interaction.json"
+      ]
+    },
+    {
+      "route_id": "campaigns",
+      "route": "/campaigns",
+      "status": "blocked",
+      "interaction": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaigns/interaction.json",
+      "interaction_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaigns/interaction.png",
+      "interaction_capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaigns/interaction-capture-meta.json",
+      "reasons": [
+        "interaction missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaigns/interaction.json"
+      ]
+    },
+    {
+      "route_id": "campaign-detail",
+      "route": "/campaigns/:campaignId",
+      "status": "blocked",
+      "interaction": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaign-detail/interaction.json",
+      "interaction_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaign-detail/interaction.png",
+      "interaction_capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaign-detail/interaction-capture-meta.json",
+      "reasons": [
+        "interaction missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaign-detail/interaction.json"
+      ]
+    },
+    {
+      "route_id": "attack-chains",
+      "route": "/attack-chains",
+      "status": "blocked",
+      "interaction": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/attack-chains/interaction.json",
+      "interaction_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/attack-chains/interaction.png",
+      "interaction_capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/attack-chains/interaction-capture-meta.json",
+      "reasons": [
+        "interaction missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/attack-chains/interaction.json"
+      ]
+    },
+    {
+      "route_id": "encrypted-traffic",
+      "route": "/encrypted-traffic",
+      "status": "blocked",
+      "interaction": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/encrypted-traffic/interaction.json",
+      "interaction_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/encrypted-traffic/interaction.png",
+      "interaction_capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/encrypted-traffic/interaction-capture-meta.json",
+      "reasons": [
+        "interaction missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/encrypted-traffic/interaction.json"
+      ]
+    },
+    {
+      "route_id": "forensics",
+      "route": "/forensics",
+      "status": "blocked",
+      "interaction": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/forensics/interaction.json",
+      "interaction_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/forensics/interaction.png",
+      "interaction_capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/forensics/interaction-capture-meta.json",
+      "reasons": [
+        "interaction missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/forensics/interaction.json"
+      ]
+    },
+    {
+      "route_id": "assets",
+      "route": "/assets",
+      "status": "blocked",
+      "interaction": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/assets/interaction.json",
+      "interaction_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/assets/interaction.png",
+      "interaction_capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/assets/interaction-capture-meta.json",
+      "reasons": [
+        "interaction missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/assets/interaction.json"
+      ]
+    },
+    {
+      "route_id": "graph",
+      "route": "/graph",
+      "status": "blocked",
+      "interaction": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/graph/interaction.json",
+      "interaction_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/graph/interaction.png",
+      "interaction_capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/graph/interaction-capture-meta.json",
+      "reasons": [
+        "interaction missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/graph/interaction.json"
+      ]
+    },
+    {
+      "route_id": "fusion",
+      "route": "/fusion",
+      "status": "blocked",
+      "interaction": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/fusion/interaction.json",
+      "interaction_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/fusion/interaction.png",
+      "interaction_capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/fusion/interaction-capture-meta.json",
+      "reasons": [
+        "interaction missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/fusion/interaction.json"
+      ]
+    },
+    {
+      "route_id": "baselines",
+      "route": "/baselines",
+      "status": "blocked",
+      "interaction": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/baselines/interaction.json",
+      "interaction_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/baselines/interaction.png",
+      "interaction_capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/baselines/interaction-capture-meta.json",
+      "reasons": [
+        "interaction missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/baselines/interaction.json"
+      ]
+    },
+    {
+      "route_id": "probes",
+      "route": "/probes",
+      "status": "blocked",
+      "interaction": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/probes/interaction.json",
+      "interaction_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/probes/interaction.png",
+      "interaction_capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/probes/interaction-capture-meta.json",
+      "reasons": [
+        "interaction missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/probes/interaction.json"
+      ]
+    },
+    {
+      "route_id": "rules",
+      "route": "/rules",
+      "status": "blocked",
+      "interaction": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/rules/interaction.json",
+      "interaction_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/rules/interaction.png",
+      "interaction_capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/rules/interaction-capture-meta.json",
+      "reasons": [
+        "interaction missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/rules/interaction.json"
+      ]
+    },
+    {
+      "route_id": "deployments",
+      "route": "/deployments",
+      "status": "blocked",
+      "interaction": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/deployments/interaction.json",
+      "interaction_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/deployments/interaction.png",
+      "interaction_capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/deployments/interaction-capture-meta.json",
+      "reasons": [
+        "interaction missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/deployments/interaction.json"
+      ]
+    },
+    {
+      "route_id": "models",
+      "route": "/models",
+      "status": "blocked",
+      "interaction": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/models/interaction.json",
+      "interaction_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/models/interaction.png",
+      "interaction_capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/models/interaction-capture-meta.json",
+      "reasons": [
+        "interaction missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/models/interaction.json"
+      ]
+    },
+    {
+      "route_id": "mlops",
+      "route": "/mlops",
+      "status": "blocked",
+      "interaction": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/mlops/interaction.json",
+      "interaction_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/mlops/interaction.png",
+      "interaction_capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/mlops/interaction-capture-meta.json",
+      "reasons": [
+        "interaction missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/mlops/interaction.json"
+      ]
+    },
+    {
+      "route_id": "data-quality",
+      "route": "/data-quality",
+      "status": "blocked",
+      "interaction": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/data-quality/interaction.json",
+      "interaction_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/data-quality/interaction.png",
+      "interaction_capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/data-quality/interaction-capture-meta.json",
+      "reasons": [
+        "interaction missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/data-quality/interaction.json"
+      ]
+    },
+    {
+      "route_id": "playbooks",
+      "route": "/playbooks",
+      "status": "blocked",
+      "interaction": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/playbooks/interaction.json",
+      "interaction_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/playbooks/interaction.png",
+      "interaction_capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/playbooks/interaction-capture-meta.json",
+      "reasons": [
+        "interaction missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/playbooks/interaction.json"
+      ]
+    },
+    {
+      "route_id": "whitelist",
+      "route": "/whitelist",
+      "status": "blocked",
+      "interaction": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/whitelist/interaction.json",
+      "interaction_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/whitelist/interaction.png",
+      "interaction_capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/whitelist/interaction-capture-meta.json",
+      "reasons": [
+        "interaction missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/whitelist/interaction.json"
+      ]
+    },
+    {
+      "route_id": "compliance",
+      "route": "/compliance",
+      "status": "blocked",
+      "interaction": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/compliance/interaction.json",
+      "interaction_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/compliance/interaction.png",
+      "interaction_capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/compliance/interaction-capture-meta.json",
+      "reasons": [
+        "interaction missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/compliance/interaction.json"
+      ]
+    },
+    {
+      "route_id": "audit-log",
+      "route": "/audit-log",
+      "status": "blocked",
+      "interaction": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/audit-log/interaction.json",
+      "interaction_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/audit-log/interaction.png",
+      "interaction_capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/audit-log/interaction-capture-meta.json",
+      "reasons": [
+        "interaction missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/audit-log/interaction.json"
+      ]
+    },
+    {
+      "route_id": "notifications",
+      "route": "/notifications",
+      "status": "blocked",
+      "interaction": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/notifications/interaction.json",
+      "interaction_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/notifications/interaction.png",
+      "interaction_capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/notifications/interaction-capture-meta.json",
+      "reasons": [
+        "interaction missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/notifications/interaction.json"
+      ]
+    },
+    {
+      "route_id": "settings",
+      "route": "/settings",
+      "status": "blocked",
+      "interaction": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/settings/interaction.json",
+      "interaction_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/settings/interaction.png",
+      "interaction_capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/settings/interaction-capture-meta.json",
+      "reasons": [
+        "interaction missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/settings/interaction.json"
+      ]
+    },
+    {
+      "route_id": "not-found",
+      "route": "*",
+      "status": "blocked",
+      "interaction": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/not-found/interaction.json",
+      "interaction_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/not-found/interaction.png",
+      "interaction_capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/not-found/interaction-capture-meta.json",
+      "reasons": [
+        "interaction missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/not-found/interaction.json"
+      ]
+    },
+    {
+      "route_id": "topics",
+      "route": "/topics",
+      "status": "blocked",
+      "interaction": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics/interaction.json",
+      "interaction_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics/interaction.png",
+      "interaction_capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics/interaction-capture-meta.json",
+      "reasons": [
+        "interaction missing: doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics/interaction.json"
+      ]
+    }
+  ]
+}

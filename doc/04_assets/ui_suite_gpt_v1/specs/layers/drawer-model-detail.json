@@ -1,0 +1,79 @@
+{
+  "id": "drawer-model-detail",
+  "title": "模型详情",
+  "type": "overlay",
+  "route": "/models",
+  "domain": "detection-ops",
+  "source": {
+    "targetFile": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-model-detail.png",
+    "promptFile": "doc/04_assets/ui_suite_gpt_v1/prompts/drawer-model-detail.prompt.txt",
+    "rawTraceFiles": [
+      "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-model-detail.raw-imagegen.png"
+    ],
+    "dimensions": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "implementation": {
+    "pageComponent": "ModelManagementPage",
+    "suggestedComponents": [
+      "Drawer",
+      "Button",
+      "Form",
+      "Alert",
+      "Tag"
+    ],
+    "apiEndpoints": [
+      "/api/v1/models"
+    ],
+    "workflows": [
+      "模型版本",
+      "特征解释",
+      "异常解释",
+      "样本示例",
+      "激活回滚"
+    ]
+  },
+  "layers": [
+    {
+      "id": "drawer-surface",
+      "role": "interaction-container",
+      "bbox": {
+        "x": 980,
+        "y": 48,
+        "w": 900,
+        "h": 984
+      }
+    },
+    {
+      "id": "action-bar",
+      "role": "cancel-confirm-actions",
+      "bbox": {
+        "x": 1240,
+        "y": 950,
+        "w": 560,
+        "h": 52
+      }
+    },
+    {
+      "id": "audit-strip",
+      "role": "audit-and-risk-hint",
+      "bbox": {
+        "x": 980,
+        "y": 950,
+        "w": 760,
+        "h": 52
+      }
+    }
+  ],
+  "acceptance": [
+    "最终 PNG 必须为 1920x1080",
+    "中文为主，只保留必要英文技术词和单位",
+    "状态色必须遵守 success/info/warning/danger/critical token",
+    "危险动作必须具备影响范围、权限提示和审计留痕",
+    "必须实现为 Drawer 或等价语义组件",
+    "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+    "确认类动作必须出现取消/确认，危险确认默认不可误触"
+  ]
+}

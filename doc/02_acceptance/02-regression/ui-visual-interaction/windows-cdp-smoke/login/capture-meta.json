@@ -1,0 +1,35 @@
+{
+  "status": "pass",
+  "backend": "windows-chrome-cdp",
+  "acceptance_eligible": false,
+  "reason": "Windows Chrome CDP evidence is separate from the older Codex Desktop extension receiver gate.",
+  "target_id": "login",
+  "route_id": "login",
+  "run_id": "windows-cdp-full-route-20260703101751",
+  "url": "http://10.0.5.8:30180/login?windowsCdpEvidenceTs=1783073871573",
+  "final_url": "http://10.0.5.8:30180/login?windowsCdpEvidenceTs=1783073871573",
+  "expected_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "desktop_viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "stored_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "uploaded_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "post_capture_resize": false,
+  "cdp_url": "http://127.0.0.1:9224",
+  "browser": "Chrome/150.0.7871.47",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/login.png",
+  "screenshot": "evidence/windows-chrome-cdp-20260703-script-smoke/login-1920x1080.png",
+  "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-smoke/login/actual-1920.png",
+  "captured_at": "2026-07-03T10:17:55.739Z",
+  "runtime_reasons": []
+}

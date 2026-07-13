@@ -1,0 +1,605 @@
+{
+  "package_id": "completion_blocker_closure_readiness",
+  "run_id": "202607030-completion-blocker-closure-bridge-tunnel-r25-103659-pass",
+  "generated_at": "2026-07-03T08:23:41.094334+08:00",
+  "source_audit": "doc/02_acceptance/09-completion/project-completion-audit-latest.json",
+  "source_audit_run_id": "202607030-project-audit-bridge-tunnel-r24-103659",
+  "source_audit_result": "blocked",
+  "review_required": true,
+  "formal_gate_note": "This package indexes blocker closure paths only; it does not close any acceptance gate.",
+  "blocker_count": 9,
+  "ready_input_count": 62,
+  "external_action_count": 9,
+  "formal_rerun_command_count": 44,
+  "closure_items": [
+    {
+      "gate": "desktop_browser_smoke",
+      "status": "blocked",
+      "owner": "QA / Desktop runtime",
+      "closure_state": "windows_tunnel_payload_ready_but_trusted_desktop_chrome_tool_missing",
+      "next_action": "run the regenerated Windows-local MCP tool-call template from the trusted Windows Codex Desktop / VSCode context or restore the current-session Desktop Chrome bridge tool; tunnel endpoints, payload self-test, and tool-call template self-test are ready, and direct SSH stdio plus a temporary local proxy bridge can list Node REPL plus desktop_chrome_* tools, but js execution and desktop_chrome_list_tabs are blocked by Windows sandbox/firewall permission in the SSH-spawned context, so Chrome extension capture still needs the trusted bridge execution path",
+      "external_action": true,
+      "artifact": "doc/02_acceptance/02-regression/ui-visual-interaction-preflight-latest.json",
+      "blocker_detail": "ui_contract_run_id=20260701-ui-contract-preflight-r17-desktop-login-pass-business-redirect-current browser_checks=2 browser_failed=1 visual_run_id=202607030-ui-visual-preflight-bridge-tunnel-r24-103659 desktop_chrome_status=missing desktop_chrome_artifact=missing business_interaction=0/28 visual_diff=0/30 node_repl_chrome_smoke=blocked_chrome_bridge direct_js=pass chrome_no_env_failure=native_pipe_or_trust_unavailable chrome_full_env_failure=sandbox_firewall_denied scheduled_chrome_smoke=blocked_node_repl_js scheduled_task_create_ok=false scheduled_chrome_first_blocker=scheduled task create failed: 错误:占位程序接收到错误数据。; current_desktop_detail=not provided by Codex Desktop Chrome wrapper",
+      "ready_inputs": [
+        {
+          "path": "02-regression/ui-contract-preflight-latest.json",
+          "exists": true,
+          "run_id": "20260701-ui-contract-preflight-r17-desktop-login-pass-business-redirect-current"
+        },
+        {
+          "path": "02-regression/ui-visual-interaction-preflight-latest.json",
+          "exists": true,
+          "run_id": "202607030-ui-visual-preflight-bridge-tunnel-r25-103659-pass"
+        },
+        {
+          "path": "02-regression/ui-visual-interaction-gap-report-latest.json",
+          "exists": true,
+          "run_id": "202607030-ui-visual-preflight-bridge-tunnel-r25-103659-pass"
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/capture-plan-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/capture-session-latest.json",
+          "exists": true,
+          "run_id": "ui-desktop-capture-session-windows-tunnel-latest"
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/capture-plan-windows-tunnel-25173.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/capture-session-windows-tunnel-25173.json",
+          "exists": true,
+          "run_id": "ui-desktop-capture-session-windows-tunnel-25173"
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/windows-tunnel-channel-preflight-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/windows-desktop-bridge-host-preflight-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/windows-codex-bridge-runtime-preflight-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/codex-bridge-tool-surface-preflight-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/windows-node-repl-active-execs-preflight-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/windows-node-repl-chrome-bridge-smoke-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/windows-node-repl-env-matrix-smoke-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/windows-node-repl-scheduled-chrome-smoke-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/windows-ssh-privilege-preflight-latest.json",
+          "exists": true,
+          "run_id": "windows-ssh-privilege-preflight-2026-07-02T18-38-08-783Z"
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/desktop-chrome-bridge-payload-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/desktop-chrome-bridge-payload-selftest-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/desktop-chrome-bridge-tool-call-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/desktop-chrome-bridge-execution-request-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/receiver-selftest-latest.json",
+          "exists": true,
+          "run_id": "ui-desktop-capture-receiver-selftest-latest"
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/evidence-finalization-latest.json",
+          "exists": true,
+          "run_id": "202607030-ui-visual-evidence-finalize-current-gap-r1"
+        }
+      ],
+      "ready_input_count": 22,
+      "missing_input_count": 0,
+      "formal_commands": [
+        "ssh -N -R 127.0.0.1:25173:127.0.0.1:5173 LongShine@10.3.6.59",
+        "ssh -N -R 127.0.0.1:25174:127.0.0.1:15174 -R 127.0.0.1:25175:127.0.0.1:15175 LongShine@10.3.6.59",
+        "SSHPASS=<redacted> node tests/e2e/ui_windows_tunnel_channel_preflight.mjs",
+        "SSHPASS=<redacted> node tests/e2e/ui_windows_desktop_bridge_host_preflight.mjs",
+        "SSHPASS=<redacted> node tests/e2e/ui_windows_codex_bridge_runtime_preflight.mjs",
+        "node tests/e2e/ui_codex_bridge_tool_surface_preflight.mjs",
+        "SSHPASS=<redacted> node tests/e2e/ui_windows_node_repl_active_execs_preflight.mjs",
+        "SSHPASS=<redacted> node tests/e2e/ui_windows_node_repl_chrome_bridge_smoke.mjs",
+        "SSHPASS=<redacted> node tests/e2e/ui_windows_node_repl_env_matrix_smoke.mjs",
+        "SSHPASS=<redacted> node tests/e2e/ui_windows_node_repl_scheduled_chrome_smoke.mjs",
+        "SSHPASS=<redacted> node tests/e2e/ui_windows_ssh_privilege_preflight.mjs",
+        "python3 tests/e2e/ui_desktop_capture_receiver_selftest.py",
+        "node tests/e2e/ui_desktop_smoke_token_preflight.mjs --base-url http://127.0.0.1:5173 --apisix-url http://10.0.5.8:30180 --route /dashboard --expected-path /dashboard",
+        "node tests/e2e/ui_desktop_chrome_bridge_payload_selftest.mjs",
+        "node tests/e2e/ui_desktop_chrome_bridge_tool_call.mjs",
+        "node tests/e2e/ui_desktop_chrome_bridge_execution_request.mjs",
+        "mcp__codex_desktop_node_repl__js with JSON arguments from doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-tool-call-latest.json after replacing placeholders",
+        "RUN_ID=<run-id> ALLOW_BLOCKERS=false python3 tests/e2e/ui_visual_interaction_evidence_finalize.py --capture-plan doc/02_acceptance/02-regression/ui-visual-interaction/capture-plan-windows-tunnel-25173.json",
+        "DESKTOP_CHROME_STATUS=pass CAPTURE_SESSION=doc/02_acceptance/02-regression/ui-visual-interaction/capture-session-windows-tunnel-25173.json ALLOW_BLOCKERS=false tests/e2e/live_ui_visual_interaction_preflight.sh"
+      ],
+      "required_evidence": [
+        "capture-plan-windows-tunnel-25173.json lists all 30 visual targets and 28 interaction routes for Windows localhost tunnel URLs",
+        "ui-visual-interaction-gap-report-latest.json enumerates current visual and interaction gaps plus route-safe rerun context",
+        "capture-session-windows-tunnel-25173.json binds receiver, redirect helper, visual batch, interaction batch, and formal rerun commands without replacing real evidence",
+        "windows-tunnel-channel-preflight-latest.json result pass for 10.3.6.59 Windows localhost endpoints",
+        "windows-desktop-bridge-host-preflight-latest.json result pass and selected Chrome client under C:/Users/LongShine",
+        "windows-codex-bridge-runtime-preflight-latest.json result pass with Chrome/Codex/VSCode process inventory, explicit codex.exe version, MCP list, and node_repl stdio config shape without storing env values",
+        "codex-bridge-tool-surface-preflight-latest.json result pass with local bridge plugin installed/enabled, proxy fallback initialized, no local 19998 backend listener, and current-session Desktop tool status recorded",
+        "windows-node-repl-active-execs-preflight-latest.json result pass with SSH-visible active_execs/proxy evidence proving whether old Node REPL metadata maps to a live node_repl.exe PID or 19998 listener",
+        "windows-node-repl-chrome-bridge-smoke-latest.json records direct SSH stdio node_repl minimal JS pass, no-env Chrome trust/native-pipe failure class, and full-env Chrome sandbox/firewall failure class without writing trusted env values",
+        "windows-node-repl-env-matrix-smoke-latest.json records selected node_repl env subsets and proves none reached Chrome extension backend from SSH stdio without writing trusted env values",
+        "windows-node-repl-scheduled-chrome-smoke-latest.json records the scheduled-task bridge launch attempt and whether /IT task creation can enter the Windows interactive context without writing trusted env values",
+        "windows-ssh-privilege-preflight-latest.json result pass with Administrators group enabled, high-integrity token, net session not access-denied, firewall service running, and Codex/Chrome/node_repl processes visible",
+        "desktop-chrome-bridge-payload-selftest-latest.json result pass with 21/21 checks, parseable Desktop Node REPL payload JS, Windows-local 127.0.0.1:25173/25174/25175 URL templates, 30 visual targets, 28 interaction targets, and 59 receiver uploads",
+        "desktop-chrome-bridge-tool-call-latest.json result pass with 9/9 checks, tool mcp__codex_desktop_node_repl__js, timeout 900000, payload SHA256 3f0f6d0128d0e4b8807e7addd52d9371a06f070cedceb2116f3a1148743a9e4a, and placeholder-only capture/smoke values",
+        "desktop-chrome-bridge-execution-request-latest.json result ready_for_trusted_context with all non-secret readiness checks passing and bridge-run evidence still explicitly missing",
+        "receiver-selftest-latest.json result pass proves receiver health, auth, viewport report, screenshot metadata, interaction upload, and sensitive-material rejection endpoints before Desktop capture",
+        "desktop-chrome-viewport-probe-latest.json result pass before any visual screenshot upload",
+        "evidence-finalization-latest.json proves all captured screenshots and interactions were finalized into strict metrics before preflight",
+        "mcp__codex_desktop_node_repl__js or desktop_chrome_open_url reaches Windows-local /login through Chrome extension backend",
+        "protected /dashboard or /alerts business page opens without login/403",
+        "UI contract preflight result pass",
+        "per-route real React actual-1920.png screenshots at 1920x1080",
+        "per-route diff-1920.png and metrics.json pass against UI source images",
+        "per-visual-target capture-meta.json proves the uploaded Desktop Chrome screenshot was 1920x1080 before storage and was not post-capture resized",
+        "per-route interaction.json proves no 4xx/5xx, requestfailed, pageerror, console error, and one route-specific business action"
+      ]
+    },
+    {
+      "gate": "ui_visual_interaction",
+      "status": "blocked",
+      "owner": "Frontend / QA",
+      "closure_state": "full_gap_capture_package_ready_but_trusted_desktop_chrome_execution_missing",
+      "next_action": "execute the full 30 visual / 28 interaction Windows tunnel payload in the trusted Desktop Chrome extension backend, upload 58 screenshots plus one bridge run summary, finalize evidence, then rerun the UI visual interaction gate",
+      "external_action": true,
+      "artifact": "doc/02_acceptance/02-regression/ui-visual-interaction-preflight-latest.json",
+      "blocker_detail": "run_id=202607030-ui-visual-preflight-bridge-tunnel-r24-103659 result=blocked blockers=5 warnings=1 desktop_chrome_status=missing desktop_chrome_artifact=missing components=28/28 source_images=30/30 design_image_reference_blockers=0 visual_diff=0/30 business_interaction=0/28 capture_session_path=doc/02_acceptance/02-regression/ui-visual-interaction/capture-session-latest.json capture_session_status=desktop_bridge_blocked capture_session_covers_current_gaps=true capture_session_run_id=ui-desktop-capture-session-windows-tunnel-latest capture_session_batch=30/28 bridge_runtime_preflight_ready=true bridge_runtime_preflight_result=pass bridge_runtime_preflight_path=doc/02_acceptance/02-regression/ui-visual-interaction/windows-codex-bridge-runtime-preflight-latest.json bridge_runtime_chrome_clients=2 bridge_runtime_explicit_codex_exists=true bridge_runtime_explicit_codex_version_count=1 bridge_runtime_mcp_list_line_count=2 bridge_runtime_node_repl_mcp=pass:stdio bridge_runtime_node_repl_mcp_env_keys=14 bridge_runtime_process_counts={\"chrome\":17,\"codex\":10,\"code\":18} tool_surface_preflight_ready=true tool_surface_preflight_result=pass tool_surface_preflight_path=doc/02_acceptance/02-regression/ui-visual-interaction/codex-bridge-tool-surface-preflight-latest.json tool_surface_plugin_installed_enabled=true tool_surface_backend_open=false tool_surface_tools_list_status=error: [Errno 111] Connection refused tool_surface_session_tool_status=not_exposed_in_current_chat_tool_surface active_execs_preflight_ready=true active_execs_preflight_result=pass active_execs_preflight_path=doc/02_acceptance/02-regression/ui-visual-interaction/windows-node-repl-active-execs-preflight-latest.json active_execs_channel_status=no_active_exec_metadata_or_proxy_listener active_execs_records=0 active_execs_live_records=0 active_execs_stale_records=0 active_execs_running_node_repl_pids=[\"20724\",\"10700\",\"19720\"] active_execs_port_19998_listeners=0 node_repl_chrome_smoke_ready=true node_repl_chrome_smoke_result=blocked_chrome_bridge node_repl_chrome_smoke_path=doc/02_acceptance/02-regression/ui-visual-interaction/windows-node-repl-chrome-bridge-smoke-latest.json node_repl_direct_js=pass node_repl_full_env_js=blocked node_repl_chrome_no_env=blocked:native_pipe_or_trust_unavailable node_repl_chrome_full_env=blocked:sandbox_firewall_denied node_repl_env_matrix_ready=true node_repl_env_matrix_result=blocked_chrome_bridge node_repl_env_matrix_path=doc/02_acceptance/02-regression/ui-visual-interaction/windows-node-repl-env-matrix-smoke-latest.json node_repl_env_matrix_js_pass=7/12 node_repl_env_matrix_chrome_ready=0 node_repl_env_matrix_native_pipe_or_trust=4 node_repl_env_matrix_sandbox_firewall=0 node_repl_env_matrix_first_blocker=No tested node_repl environment subset reached the Chrome extension backend from SSH stdio scheduled_chrome_smoke_ready=true scheduled_chrome_smoke_result=blocked_node_repl_js scheduled_chrome_smoke_path=doc/02_acceptance/02-regression/ui-visual-interaction/windows-node-repl-scheduled-chrome-smoke-latest.json scheduled_chrome_task_create_ok=false scheduled_chrome_task_run_ok=false scheduled_chrome_runner_result=unknown scheduled_chrome_first_blocker=scheduled task create failed: 错误:占位程序接收到错误数据。 ssh_privilege_preflight_ready=true ssh_privilege_preflight_result=pass ssh_privilege_preflight_path=doc/02_acceptance/02-regression/ui-visual-interaction/windows-ssh-privilege-preflight-latest.json ssh_privilege_high_integrity=true ssh_privilege_enabled_privileges=24 ssh_privilege_net_session=pass_no_sessions ssh_privilege_firewall_service_running=true ssh_privilege_process_counts={\"code\":18,\"codex\":10,\"chrome\":18,\"node_repl\":3,\"node\":0} ssh_privilege_powershell_blocked=true payload_selftest_ready=true payload_selftest_result=pass payload_selftest_path=doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-payload-selftest-latest.json payload_selftest_checks=21/21 payload_selftest_batch=30/28 payload_selftest_receiver_uploads=59 bridge_tool_call_ready=true bridge_tool_call_result=pass bridge_tool_call_path=doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-tool-call-latest.json bridge_tool_call_tool=mcp__codex_desktop_node_repl__js bridge_tool_call_checks=9/9 bridge_tool_call_timeout_ms=900000 bridge_tool_call_payload_sha256=3f0f6d0128d0e4b8807e7addd52d9371a06f070cedceb2116f3a1148743a9e4a bridge_tool_call_batch=30/28 bridge_tool_call_receiver_uploads=59 bridge_run_result_exists=false bridge_run_result_path=missing finalization_run_id=202607030-ui-visual-evidence-finalize-current-gap-r1 finalization_result=blocked finalization_visual=0/30 finalization_interaction=0/28; failing=config/Desktop smoke token is enabled in live runtime config: missing-or-disabled spawnSync curl EPERM; execution-package/latest Desktop Chrome viewport probe is pass at 1920x1080: blocked path=doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-viewport-probe-latest.json exists=true valid=true result=blocked viewport=2560x1271 source=window_metrics reason=viewport 2560x1271 != 1920x1080; execution-package/Desktop Chrome bridge run summary is present and matches capture batch: missing path=doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-run-latest.json exists=false valid=false result=missing backend=missing visual=missing/30 interaction=missing/28 reason=missing; visual-diff/every visual target has passing 1920x1080 screenshot diff evidence: missing-or-failing-evidence 30/30 visual targets missing or failing visual diff evidence: login, screen, dashboard, alerts, alert-detail, campaigns, campaign-detail, attack-chains, encrypted-traffic, forensics, assets, graph, fusion, baselines, probes, rules, deployments, models, mlops, data-quality, playbooks, whitelist, compliance, audit-log, notifications, settings, not-found, topics-encrypted-tunnel, topics-data-exfiltration, topics-apt-campaign; business-interaction/every route has passing business interaction evidence: missing-or-failing-evidence 28/28 routes missing or failing business interaction evidence: login, screen, dashboard, alerts, alert-detail, campaigns, campaign-detail, attack-chains, encrypted-traffic, forensics, assets, graph, fusion, baselines, probes, rules, deployments, models, mlops, data-quality, playbooks, whitelist, compliance, audit-log, notifications, settings, not-found, topics; desktop-chrome/Codex Desktop Chrome wrapper is available for screenshot and interaction capture: missing not provided by Codex Desktop Chrome wrapper; finalization_blocked=blocked",
+      "ready_inputs": [
+        {
+          "path": "02-regression/ui-visual-interaction-preflight-latest.json",
+          "exists": true,
+          "run_id": "202607030-ui-visual-preflight-bridge-tunnel-r25-103659-pass"
+        },
+        {
+          "path": "02-regression/ui-visual-interaction-gap-report-latest.json",
+          "exists": true,
+          "run_id": "202607030-ui-visual-preflight-bridge-tunnel-r25-103659-pass"
+        },
+        {
+          "path": "02-regression/ui-visual-interaction-matrix-latest.json",
+          "exists": true,
+          "run_id": "202607030-ui-visual-preflight-bridge-tunnel-r25-103659-pass"
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/capture-plan-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/capture-session-latest.json",
+          "exists": true,
+          "run_id": "ui-desktop-capture-session-windows-tunnel-latest"
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/capture-plan-windows-tunnel-25173.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/capture-session-windows-tunnel-25173.json",
+          "exists": true,
+          "run_id": "ui-desktop-capture-session-windows-tunnel-25173"
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/windows-tunnel-channel-preflight-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/windows-desktop-bridge-host-preflight-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/windows-codex-bridge-runtime-preflight-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/codex-bridge-tool-surface-preflight-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/windows-node-repl-active-execs-preflight-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/windows-node-repl-chrome-bridge-smoke-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/windows-node-repl-env-matrix-smoke-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/windows-node-repl-scheduled-chrome-smoke-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/windows-ssh-privilege-preflight-latest.json",
+          "exists": true,
+          "run_id": "windows-ssh-privilege-preflight-2026-07-02T18-38-08-783Z"
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/desktop-chrome-bridge-payload-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/desktop-chrome-bridge-payload-selftest-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/desktop-chrome-bridge-tool-call-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/desktop-chrome-bridge-execution-request-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/receiver-selftest-latest.json",
+          "exists": true,
+          "run_id": "ui-desktop-capture-receiver-selftest-latest"
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/evidence-finalization-latest.json",
+          "exists": true,
+          "run_id": "202607030-ui-visual-evidence-finalize-current-gap-r1"
+        }
+      ],
+      "ready_input_count": 22,
+      "missing_input_count": 0,
+      "formal_commands": [
+        "SSHPASS=<redacted> node tests/e2e/ui_windows_tunnel_channel_preflight.mjs",
+        "SSHPASS=<redacted> node tests/e2e/ui_windows_desktop_bridge_host_preflight.mjs",
+        "SSHPASS=<redacted> node tests/e2e/ui_windows_codex_bridge_runtime_preflight.mjs",
+        "node tests/e2e/ui_codex_bridge_tool_surface_preflight.mjs",
+        "SSHPASS=<redacted> node tests/e2e/ui_windows_node_repl_active_execs_preflight.mjs",
+        "SSHPASS=<redacted> node tests/e2e/ui_windows_node_repl_chrome_bridge_smoke.mjs",
+        "SSHPASS=<redacted> node tests/e2e/ui_windows_node_repl_env_matrix_smoke.mjs",
+        "SSHPASS=<redacted> node tests/e2e/ui_windows_node_repl_scheduled_chrome_smoke.mjs",
+        "SSHPASS=<redacted> node tests/e2e/ui_windows_ssh_privilege_preflight.mjs",
+        "python3 tests/e2e/ui_desktop_capture_receiver_selftest.py",
+        "node tests/e2e/ui_desktop_chrome_bridge_payload_selftest.mjs",
+        "node tests/e2e/ui_desktop_chrome_bridge_tool_call.mjs",
+        "node tests/e2e/ui_desktop_chrome_bridge_execution_request.mjs",
+        "mcp__codex_desktop_node_repl__js with JSON arguments from doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-tool-call-latest.json after replacing placeholders",
+        "RUN_ID=<run-id> ALLOW_BLOCKERS=false python3 tests/e2e/ui_visual_interaction_evidence_finalize.py --capture-plan doc/02_acceptance/02-regression/ui-visual-interaction/capture-plan-windows-tunnel-25173.json",
+        "DESKTOP_CHROME_STATUS=pass CAPTURE_SESSION=doc/02_acceptance/02-regression/ui-visual-interaction/capture-session-windows-tunnel-25173.json ALLOW_BLOCKERS=false tests/e2e/live_ui_visual_interaction_preflight.sh",
+        "ALLOW_BLOCKERS=false tests/e2e/live_project_completion_audit.sh"
+      ],
+      "required_evidence": [
+        "capture-plan-windows-tunnel-25173.json summary records 30 visual targets and 28 interaction routes",
+        "ui-visual-interaction-gap-report-latest.json groups current failures by cause and lists target-level metrics commands",
+        "capture-session-windows-tunnel-25173.json lists the exact pending visual and interaction batches to execute through Windows Codex Desktop Chrome",
+        "windows-codex-bridge-runtime-preflight-latest.json proves the Windows Codex runtime has explicit codex.exe, node_repl MCP enabled over stdio, and Chrome client files before trusted Desktop Chrome execution",
+        "codex-bridge-tool-surface-preflight-latest.json records local plugin/proxy/backend/current-session tool-surface boundaries before trusted Desktop Chrome execution",
+        "windows-node-repl-active-execs-preflight-latest.json records SSH-visible active_execs/proxy channel status before trusted Desktop Chrome execution",
+        "windows-node-repl-chrome-bridge-smoke-latest.json proves SSH stdio node_repl can execute minimal JS while Chrome extension discovery still fails outside the trusted Desktop native-pipe context",
+        "windows-node-repl-env-matrix-smoke-latest.json proves selected env-subset attempts were tested and still require the trusted current-session Desktop Chrome MCP context",
+        "windows-node-repl-scheduled-chrome-smoke-latest.json proves the automated scheduled-task route was tested before falling back to the trusted current-session Desktop Chrome MCP tool requirement",
+        "windows-ssh-privilege-preflight-latest.json proves the recurring Node REPL JS failure is not explained by missing admin group, low-integrity SSH token, stopped firewall service, or absent Codex/Chrome/node_repl processes",
+        "desktop-chrome-bridge-payload-latest.json requires codex-desktop-chrome-extension, forbids iab, and covers 58 screenshots plus bridge result upload",
+        "desktop-chrome-bridge-payload-selftest-latest.json result pass with 21/21 checks, parseable Desktop Node REPL payload JS, Windows-local 127.0.0.1:25173/25174/25175 URL templates, 30 visual targets, 28 interaction targets, and 59 receiver uploads",
+        "desktop-chrome-bridge-tool-call-latest.json result pass with 9/9 checks and the exact mcp__codex_desktop_node_repl__js arguments for the trusted Desktop Node REPL context",
+        "desktop-chrome-bridge-execution-request-latest.json result ready_for_trusted_context with all non-secret readiness checks passing and bridge-run evidence still explicitly missing",
+        "receiver-selftest-latest.json result pass proves receiver health, auth, viewport report, screenshot metadata, interaction upload, and sensitive-material rejection endpoints before Desktop capture",
+        "desktop-chrome-viewport-probe-latest.json result pass before actual-1920.png upload",
+        "evidence-finalization-latest.json result pass after generating diff and metrics from captured actual screenshots",
+        "30 visual targets each have 1920x1080 actual-1920.png, diff-1920.png, metrics.json with status pass, and capture-meta.json with original uploaded size 1920x1080",
+        "28 route ids each have interaction.json, interaction.png, and interaction-capture-meta.json with status pass; currently all remain missing or failing until payload execution",
+        "no direct use of source design PNGs as frontend page implementation",
+        "Desktop Chrome backend evidence is pass"
+      ]
+    },
+    {
+      "gate": "production_security",
+      "status": "blocked",
+      "owner": "Security / SRE",
+      "closure_state": "external_cni_and_waiver_required",
+      "next_action": "install or migrate to a policy-capable CNI, review runtime waivers for privileged/hostNetwork workloads, then rerun production security preflight",
+      "external_action": true,
+      "artifact": "doc/02_acceptance/05-security/production-security-preflight-latest.json",
+      "blocker_detail": "run_id=20260630-production-security-preflight-r49-waiver-registry result=blocked passed=20 total=21 blockers=1 warnings=0; failing=live/NetworkPolicy enforcement-capable CNI present: missing policy-capable CNI pods=0 flannel_markers=2",
+      "ready_inputs": [
+        {
+          "path": "05-security/production-security-preflight-latest.json",
+          "exists": true,
+          "run_id": "20260630-production-security-preflight-r49-waiver-registry"
+        },
+        {
+          "path": "05-security/network-policy-readiness/network-policy-enforcement-readiness-latest.json",
+          "exists": true,
+          "run_id": "20260630-network-policy-enforcement-readiness-r1"
+        }
+      ],
+      "ready_input_count": 2,
+      "missing_input_count": 0,
+      "formal_commands": [
+        "ALLOW_BLOCKERS=false tests/e2e/live_network_policy_enforcement_preflight.sh",
+        "ALLOW_BLOCKERS=false tests/e2e/live_production_security_preflight.sh"
+      ],
+      "required_evidence": [
+        "policy-capable CNI pods > 0",
+        "NetworkPolicy negative probe passes",
+        "production-security-preflight-latest.json result pass"
+      ]
+    },
+    {
+      "gate": "network_policy_enforcement",
+      "status": "blocked",
+      "owner": "Security / Network",
+      "closure_state": "external_cni_required",
+      "next_action": "use network-policy readiness package to migrate CNI, then run isolated default-deny and allow-list probe",
+      "external_action": true,
+      "artifact": "doc/02_acceptance/05-security/network-policy-enforcement-preflight-latest.json",
+      "blocker_detail": "run_id=20260630-network-policy-enforcement-preflight-r1-flannel-blocked result=blocked passed=2 total=4 blockers=2 warnings=0; readiness_run_id=20260630-network-policy-enforcement-readiness-r1 readiness_result=pass readiness_policy_capable_count=0 readiness_flannel_marker_count=2; failing=live/NetworkPolicy enforcement-capable CNI present: missing policy-capable CNI pods=0 flannel_markers=2; probe/NetworkPolicy default deny and allow-list enforcement: skipped_cni_missing policy-capable CNI pods=0; negative probe would be a false pass on Flannel",
+      "ready_inputs": [
+        {
+          "path": "05-security/network-policy-readiness/network-policy-enforcement-readiness-latest.json",
+          "exists": true,
+          "run_id": "20260630-network-policy-enforcement-readiness-r1"
+        },
+        {
+          "path": "05-security/network-policy-enforcement-preflight-latest.json",
+          "exists": true,
+          "run_id": "20260630-network-policy-enforcement-preflight-r1-flannel-blocked"
+        }
+      ],
+      "ready_input_count": 2,
+      "missing_input_count": 0,
+      "formal_commands": [
+        "ALLOW_BLOCKERS=false RUN_ENFORCEMENT_PROBE=auto tests/e2e/live_network_policy_enforcement_preflight.sh"
+      ],
+      "required_evidence": [
+        "policy-capable CNI pods > 0",
+        "default-deny blocks isolated client",
+        "allow-list restores isolated client"
+      ]
+    },
+    {
+      "gate": "ha_rto_rpo",
+      "status": "blocked",
+      "owner": "SRE / QA",
+      "closure_state": "maintenance_window_required",
+      "next_action": "execute destructive Kafka/Flink/ClickHouse/PostgreSQL/MinIO drills using HA bootstrap templates and publish formal RTO/RPO reports",
+      "external_action": true,
+      "artifact": "doc/02_acceptance/06-resilience/ha-readiness-preflight-latest.json",
+      "blocker_detail": "run_id=20260701-ha-readiness-preflight-r10-review-packet result=blocked passed=13 total=14 blockers=1 warnings=0; failing=acceptance/destructive RTO/RPO drill reports present: missing present=0 required=6 missing=kafka-failover.md flink-failover.md clickhouse-failover.md postgres-failover.md minio-failover.md ha-rto-rpo-latest.json",
+      "ready_inputs": [
+        {
+          "path": "06-resilience/bootstrap/ha-drill-evidence-bootstrap-latest.json",
+          "exists": true,
+          "run_id": "20260630-ha-drill-evidence-bootstrap-r1"
+        },
+        {
+          "path": "06-resilience/review/ha-drill-review-latest.json",
+          "exists": true,
+          "run_id": "20260701-ha-drill-review-r1"
+        },
+        {
+          "path": "06-resilience/ha-readiness-preflight-latest.json",
+          "exists": true,
+          "run_id": "20260701-ha-readiness-preflight-r10-review-packet"
+        }
+      ],
+      "ready_input_count": 3,
+      "missing_input_count": 0,
+      "formal_commands": [
+        "ALLOW_BLOCKERS=false tests/chaos/live_ha_readiness_preflight.sh"
+      ],
+      "required_evidence": [
+        "kafka-failover.md",
+        "flink-failover.md",
+        "clickhouse-failover.md",
+        "postgres-failover.md",
+        "minio-failover.md",
+        "ha-rto-rpo-latest.json"
+      ]
+    },
+    {
+      "gate": "capture_performance",
+      "status": "blocked",
+      "owner": "Performance / Probe",
+      "closure_state": "hardware_window_required",
+      "next_action": "fill hardware and traffic profiles, run 10 x 100Gbps and 512Mpps tests, then rerun capture performance preflight",
+      "external_action": true,
+      "artifact": "doc/02_acceptance/03-performance/capture-performance-preflight-latest.json",
+      "blocker_detail": "run_id=20260701-capture-performance-preflight-r4-review-packet result=blocked passed=11 total=18 blockers=4 warnings=3; failing=package/hardware inventory provided: missing tests/perf/100g_capture/hardware-inventory.yaml; package/traffic profile provided: missing tests/perf/100g_capture/traffic-profile.yaml; repo/existing 500k stress report is only non-acceptance context: insufficient 0.94Mpps/1.3Gbps class report, not GATE-P0-03/04; live/live probe capture mode is AF_XDP: not_acceptance_profile mode=af_packet; live/live probe CPU pinning has multi-queue capacity: small_profile cpu_cores=2; results/10x100g-line-rate result summary present: missing tests/perf/100g_capture/results/10x100g-summary.json; results/512mpps-small-packet result summary present: missing tests/perf/100g_capture/results/512mpps-summary.json",
+      "ready_inputs": [
+        {
+          "path": "03-performance/bootstrap/capture-performance-bootstrap-latest.json",
+          "exists": true,
+          "run_id": "20260630-capture-performance-bootstrap-r1"
+        },
+        {
+          "path": "03-performance/review/capture-performance-review-latest.json",
+          "exists": true,
+          "run_id": "20260701-capture-performance-review-r1"
+        },
+        {
+          "path": "03-performance/capture-performance-preflight-latest.json",
+          "exists": true,
+          "run_id": "20260701-capture-performance-preflight-r4-review-packet"
+        }
+      ],
+      "ready_input_count": 3,
+      "missing_input_count": 0,
+      "formal_commands": [
+        "ALLOW_BLOCKERS=false tests/perf/100g_capture/live_capture_performance_preflight.sh"
+      ],
+      "required_evidence": [
+        "tests/perf/100g_capture/hardware-inventory.yaml",
+        "tests/perf/100g_capture/traffic-profile.yaml",
+        "tests/perf/100g_capture/results/10x100g-summary.json",
+        "tests/perf/100g_capture/results/512mpps-summary.json"
+      ]
+    },
+    {
+      "gate": "detection_quality",
+      "status": "blocked",
+      "owner": "Algorithm / Third-party QA",
+      "closure_state": "third_party_adjudication_required",
+      "next_action": "freeze dataset, fill labels and predictions, lock thresholds, obtain third-party attestation, then rerun detection quality preflight",
+      "external_action": true,
+      "artifact": "doc/02_acceptance/04-detection-quality/detection-quality-preflight-latest.json",
+      "blocker_detail": "run_id=20260701-detection-quality-preflight-r5-review-packet result=blocked passed=5 total=10 blockers=5 warnings=0; failing=package/dataset manifest present: missing missing dataset-manifest.yaml; package/threshold lock present: missing missing threshold-lock.json; package/labels present: missing missing labels.csv; package/predictions present: missing missing predictions.csv; package/third party attestation present: missing missing third-party-attestation.yaml",
+      "ready_inputs": [
+        {
+          "path": "04-detection-quality/bootstrap/detection-quality-bootstrap-latest.json",
+          "exists": true,
+          "run_id": "20260630-detection-quality-bootstrap-r1"
+        },
+        {
+          "path": "04-detection-quality/review/detection-quality-review-latest.json",
+          "exists": true,
+          "run_id": "20260701-detection-quality-review-r1"
+        },
+        {
+          "path": "04-detection-quality/detection-quality-preflight-latest.json",
+          "exists": true,
+          "run_id": "20260701-detection-quality-preflight-r5-review-packet"
+        }
+      ],
+      "ready_input_count": 3,
+      "missing_input_count": 0,
+      "formal_commands": [
+        "ALLOW_BLOCKERS=false tests/e2e/live_detection_quality_preflight.sh"
+      ],
+      "required_evidence": [
+        "mlops/eval_packages/topic1_blind/dataset-manifest.yaml",
+        "mlops/eval_packages/topic1_blind/threshold-lock.json",
+        "mlops/eval_packages/topic1_blind/labels.csv",
+        "mlops/eval_packages/topic1_blind/predictions.csv",
+        "mlops/eval_packages/topic1_blind/third-party-attestation.yaml"
+      ]
+    },
+    {
+      "gate": "asset_discovery_coverage",
+      "status": "blocked",
+      "owner": "Implementation / Site owner",
+      "closure_state": "site_inventory_required",
+      "next_action": "review observed asset inventory bootstrap with site owner, produce authoritative SITE_ASSET_INVENTORY_JSON, then rerun coverage gate",
+      "external_action": true,
+      "artifact": "doc/02_acceptance/02-regression/asset-discovery-coverage-latest.json",
+      "blocker_detail": "run_id=20260701-asset-discovery-coverage-r3-review-packet-guard result=blocked passed=6 total=7 blockers=1 warnings=0; failing=coverage/Site inventory is approved for formal coverage: review_marker 27/27 coverage=100%; remove TBD/review-template/bootstrap markers before formal coverage",
+      "ready_inputs": [
+        {
+          "path": "02-regression/asset-discovery-site-inventory.bootstrap-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/asset-inventory-review/asset-inventory-review-latest.json",
+          "exists": true,
+          "run_id": "20260701-asset-inventory-review-r1"
+        },
+        {
+          "path": "02-regression/asset-discovery-coverage-latest.json",
+          "exists": true,
+          "run_id": "20260701-asset-discovery-coverage-r3-review-packet-guard"
+        }
+      ],
+      "ready_input_count": 3,
+      "missing_input_count": 0,
+      "formal_commands": [
+        "SITE_ASSET_INVENTORY_JSON=/path/to/site-assets.json MIN_DISCOVERY_COVERAGE_PCT=95 ALLOW_BLOCKERS=false tests/e2e/live_asset_discovery_coverage_report.sh"
+      ],
+      "required_evidence": [
+        "site-owner-reviewed SITE_ASSET_INVENTORY_JSON",
+        "asset-discovery-coverage-latest.json result pass"
+      ]
+    },
+    {
+      "gate": "trial_third_party_signoff",
+      "status": "template_only",
+      "owner": "Project manager / User / Third-party",
+      "closure_state": "signature_and_external_report_required",
+      "next_action": "fill signoff placeholders, resolve upstream exceptions, attach pilot/third-party/economic-benefit confirmations, then rerun project completion audit",
+      "external_action": true,
+      "artifact": "doc/02_acceptance/08-third-party/user-acceptance-signoff.md",
+      "blocker_detail": "signoff template still contains placeholders or pending signature markers; readiness_run_id=20260702-third-party-signoff-readiness-r26-ui-r40-receiver-selftest readiness_result=pass template_tbd_count=162 upstream_blocked_or_nonpass_inputs=9 readiness_release_run_id=20260701-release-manifest-r80-ha-review-r1 current_release_run_id=20260701-release-manifest-r80-ha-review-r1",
+      "ready_inputs": [
+        {
+          "path": "08-third-party/readiness/third-party-signoff-readiness-latest.json",
+          "exists": true,
+          "run_id": "20260702-third-party-signoff-readiness-r26-ui-r40-receiver-selftest"
+        },
+        {
+          "path": "08-third-party/user-acceptance-signoff.md",
+          "exists": true,
+          "run_id": ""
+        }
+      ],
+      "ready_input_count": 2,
+      "missing_input_count": 0,
+      "formal_commands": [
+        "ALLOW_BLOCKERS=false tests/e2e/live_project_completion_audit.sh"
+      ],
+      "required_evidence": [
+        "user-acceptance-signoff.md has no TBD placeholders",
+        "user or pilot owner signature",
+        "third-party report or formal exception decision",
+        "economic-benefit confirmation"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "generatedAt": "2026-07-03T10:24:23.280Z",
+  "sourceManifest": "doc/04_assets/ui_suite_gpt_v1/manifest.json",
+  "total": 181,
+  "counts": {
+    "foundation": 8,
+    "page": 27,
+    "overlay": 70,
+    "component": 48,
+    "state": 16,
+    "responsive": 12
+  },
+  "contractFiles": {
+    "tokens": "tokens.json",
+    "appShell": "app-shell.json",
+    "componentMap": "component-map.json",
+    "routePageMap": "route-page-map.json",
+    "visualAcceptance": "visual-acceptance.json",
+    "frontendDelta": "frontend-delta.md",
+    "implementationPlaybook": "IMPLEMENTATION_PLAYBOOK.md",
+    "frontendTaskMatrix": "FRONTEND_TASK_MATRIX.md",
+    "businessFlowAcceptance": "BUSINESS_FLOW_ACCEPTANCE.md",
+    "frontendDevChecklist": "FRONTEND_DEV_CHECKLIST.md",
+    "frontendImplementationMethods": "FRONTEND_IMPLEMENTATION_METHODS.md",
+    "frontendCodeGap": "FRONTEND_CODE_GAP.md",
+    "frontendFixQueue": "FRONTEND_FIX_QUEUE.md"
+  }
+}

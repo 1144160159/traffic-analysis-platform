@@ -1,0 +1,182 @@
+{
+  "run_id": "20260629-capture-performance-preflight-r1",
+  "generated_at": "2026-06-29T07:11:51+08:00",
+  "plan_dir": "tests/perf/100g_capture",
+  "result": "blocked",
+  "total_checks": 17,
+  "passed_checks": 10,
+  "blockers": 4,
+  "warnings": 3,
+  "checks": [
+    {
+      "ts": "2026-06-29T07:11:50+08:00",
+      "phase": "contract",
+      "name": "performance package README present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "tests/perf/100g_capture/README.md",
+      "artifact": "tests/perf/100g_capture/README.md"
+    },
+    {
+      "ts": "2026-06-29T07:11:50+08:00",
+      "phase": "contract",
+      "name": "capture performance plan present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "tests/perf/100g_capture/capture-performance-plan.yaml",
+      "artifact": "tests/perf/100g_capture/capture-performance-plan.yaml"
+    },
+    {
+      "ts": "2026-06-29T07:11:50+08:00",
+      "phase": "contract",
+      "name": "result schema present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "tests/perf/100g_capture/result-schema.json",
+      "artifact": "tests/perf/100g_capture/result-schema.json"
+    },
+    {
+      "ts": "2026-06-29T07:11:50+08:00",
+      "phase": "contract",
+      "name": "hardware inventory template present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "tests/perf/100g_capture/hardware-inventory.template.yaml",
+      "artifact": "tests/perf/100g_capture/hardware-inventory.template.yaml"
+    },
+    {
+      "ts": "2026-06-29T07:11:50+08:00",
+      "phase": "contract",
+      "name": "traffic profile template present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "tests/perf/100g_capture/traffic-profile.template.yaml",
+      "artifact": "tests/perf/100g_capture/traffic-profile.template.yaml"
+    },
+    {
+      "ts": "2026-06-29T07:11:50+08:00",
+      "phase": "package",
+      "name": "hardware inventory provided",
+      "severity": "blocker",
+      "passed": false,
+      "status": "missing",
+      "detail": "tests/perf/100g_capture/hardware-inventory.yaml",
+      "artifact": "tests/perf/100g_capture/hardware-inventory.yaml"
+    },
+    {
+      "ts": "2026-06-29T07:11:50+08:00",
+      "phase": "package",
+      "name": "traffic profile provided",
+      "severity": "blocker",
+      "passed": false,
+      "status": "missing",
+      "detail": "tests/perf/100g_capture/traffic-profile.yaml",
+      "artifact": "tests/perf/100g_capture/traffic-profile.yaml"
+    },
+    {
+      "ts": "2026-06-29T07:11:50+08:00",
+      "phase": "repo",
+      "name": "existing 500k stress report is only non-acceptance context",
+      "severity": "warn",
+      "passed": false,
+      "status": "insufficient",
+      "detail": "0.94Mpps/1.3Gbps class report, not GATE-P0-03/04",
+      "artifact": "repo-stress-500k-summary.json"
+    },
+    {
+      "ts": "2026-06-29T07:11:50+08:00",
+      "phase": "live",
+      "name": "probe-agent DaemonSet ready",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "ready=2 desired=2",
+      "artifact": "live-probe-daemonset.json"
+    },
+    {
+      "ts": "2026-06-29T07:11:50+08:00",
+      "phase": "live",
+      "name": "probe-agent hostNetwork enabled",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "hostNetwork=true",
+      "artifact": "live-probe-daemonset.json"
+    },
+    {
+      "ts": "2026-06-29T07:11:50+08:00",
+      "phase": "live",
+      "name": "probe-agent privileged capture enabled",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "privileged=true",
+      "artifact": "live-probe-daemonset.json"
+    },
+    {
+      "ts": "2026-06-29T07:11:50+08:00",
+      "phase": "live",
+      "name": "probe-agent metrics port declared",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "9091",
+      "artifact": "live-probe-daemonset.json"
+    },
+    {
+      "ts": "2026-06-29T07:11:50+08:00",
+      "phase": "live",
+      "name": "live probe capture mode is AF_XDP",
+      "severity": "warn",
+      "passed": false,
+      "status": "not_acceptance_profile",
+      "detail": "mode=af_packet",
+      "artifact": "live-probe-capture-profile.json"
+    },
+    {
+      "ts": "2026-06-29T07:11:50+08:00",
+      "phase": "live",
+      "name": "live probe CPU pinning has multi-queue capacity",
+      "severity": "warn",
+      "passed": false,
+      "status": "small_profile",
+      "detail": "cpu_cores=2",
+      "artifact": "live-probe-capture-profile.json"
+    },
+    {
+      "ts": "2026-06-29T07:11:51+08:00",
+      "phase": "live",
+      "name": "cluster nodes readable and ready",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "nodes=2",
+      "artifact": "live-node-summary.json"
+    },
+    {
+      "ts": "2026-06-29T07:11:51+08:00",
+      "phase": "results",
+      "name": "10x100g-line-rate result summary present",
+      "severity": "blocker",
+      "passed": false,
+      "status": "missing",
+      "detail": "tests/perf/100g_capture/results/10x100g-summary.json",
+      "artifact": "tests/perf/100g_capture/results/10x100g-summary.json"
+    },
+    {
+      "ts": "2026-06-29T07:11:51+08:00",
+      "phase": "results",
+      "name": "512mpps-small-packet result summary present",
+      "severity": "blocker",
+      "passed": false,
+      "status": "missing",
+      "detail": "tests/perf/100g_capture/results/512mpps-summary.json",
+      "artifact": "tests/perf/100g_capture/results/512mpps-summary.json"
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+profile_id,test_id,target_aggregate_gbps,target_aggregate_mpps,duration_seconds,packet_size_profile,protocol_mix,traffic_generator,ports,flow_cardinality,max_packet_loss_rate,min_parse_success_rate,kafka_max_lag_records,operator_decision,operator_comment
+ten_by_100g,10x100g-line-rate,1000,,3600,64/128/512/1024/1518 mixed,tcp=70 udp=30,trex,10,TBD,0.0001,0.9999,0,TBD: approve | modify,TBD
+small_packet_512mpps,512mpps-small-packet,,512,1800,64B or site-agreed small packet,TBD,trex,TBD,TBD,0.0001,0.9999,0,TBD: approve | modify,TBD

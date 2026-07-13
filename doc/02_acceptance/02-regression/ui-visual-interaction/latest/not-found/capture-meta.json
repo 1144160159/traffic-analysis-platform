@@ -1,0 +1,112 @@
+{
+  "status": "pass",
+  "acceptance_eligible": false,
+  "reason": "Windows Chrome CDP evidence. Formal legacy gate expects Desktop Chrome extension receiver metadata and pixel diff; this capture proves real Windows Chrome rendering, route, runtime events, viewport, and layout metrics.",
+  "backend": "windows-chrome-cdp",
+  "target_id": "not-found",
+  "route_id": "not-found",
+  "route": "*",
+  "resolved_path": "/__codex_visual_not_found__",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/not-found.png",
+  "final_url": "http://10.0.5.8:30180/__codex_visual_not_found__?fullRouteEvidenceTs=1783072712700",
+  "final_path": "/__codex_visual_not_found__",
+  "protected_route": true,
+  "smoke_hash_consumed": true,
+  "uploaded_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "stored_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "expected_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "desktop_viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "post_capture_resize": false,
+  "no_4xx_5xx": true,
+  "no_requestfailed": true,
+  "no_console_error": true,
+  "no_pageerror": true,
+  "errors": {
+    "requestfailed": [],
+    "badResponses": [],
+    "console": [],
+    "pageerror": []
+  },
+  "screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/doc/02_acceptance/02-regression/ui-visual-interaction/latest/not-found/actual-1920.png",
+  "mirror_screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/evidence/windows-chrome-cdp-20260703-full-route-desktop-r6/not-found-1920x1080.png",
+  "metrics": {
+    "title": "园区网络全流量采集与分析系统",
+    "location": "http://10.0.5.8:30180/__codex_visual_not_found__?fullRouteEvidenceTs=1783072712700",
+    "viewport": {
+      "width": 1920,
+      "height": 1080,
+      "dpr": 1.0000000298023224
+    },
+    "scroll": {
+      "horizontalOverflow": 0,
+      "verticalOverflow": 0,
+      "bodyScrollWidth": 1920,
+      "bodyClientWidth": 1920,
+      "bodyScrollHeight": 1080,
+      "bodyClientHeight": 1080
+    },
+    "headings": [
+      "404 页面不存在",
+      "返回入口",
+      "辅助操作",
+      "最近可用入口",
+      "相关系统状态"
+    ],
+    "buttons": [
+      "移动端导航",
+      "PCAP检索",
+      "资产检索",
+      "规则检索",
+      "脚本中心",
+      "帮助中心",
+      "更多应用",
+      "Ccodex-ui-desktop-admin系统管理员在线",
+      "返回上一页",
+      "复制追踪 ID"
+    ],
+    "visibleText": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-03 17:58:33 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 仪表盘 态势大屏 采集监测 威胁分析 资产图谱 检测运营 审计配置 C codex-ui-desktop-admin 系统管理员 在线 404 页面不存在 404 页面不存在 请求的页面不可用或已被移除。 追踪 ID trace-20260621-8F3A 时间 2026-06-21 14:30:22 当前租户 / 站点 园区A 访问来源 内网访问 返回入口 返回仪表盘 返回态势大屏 返回告警中心 返回上一页 安全提示 不展示内部路径、堆栈、凭据或接口细节。如反复出现此页面，请联系管理员并提供追踪 ID 以便快速定位问题。 辅助操作 查看审计日志 联系管理员 复制追踪 ID 最近可用入口 仪表盘 全局概览与关键指标 态势大屏 安全态势可视化大屏 告警中心 告警检索与处置中心 审计日志 操作审计与日志检索 相关系统状态 网关服务 正常 鉴权服务 正常 前端路由 正常 审计写入 正常 数据延迟 1.23 s 系统运行 23 天 14 小时 告警处理SLA 98.2% 数据质量合格率 99.1% 存储使用 68.7 / 120 TB (57%) 带宽使用 42.7 / 100 Gbps (43%) 日志吞吐 12.6 K EPS 实时通道 已连接 9",
+    "elements": {
+      "pageHero": {
+        "selector": ".taf-page-hero",
+        "visible": false
+      },
+      "panelHeader": {
+        "selector": ".taf-panel__header",
+        "visible": false
+      },
+      "table": {
+        "selector": ".ant-table, .taf-table, table",
+        "visible": false
+      },
+      "topicTitlebar": {
+        "selector": ".taf-topic-titlebar",
+        "visible": false
+      },
+      "topicFacts": {
+        "selector": ".taf-topic-facts",
+        "visible": false
+      },
+      "topicKpis": {
+        "selector": ".taf-topic-kpis",
+        "visible": false
+      },
+      "topicGrid": {
+        "selector": ".taf-topic-grid",
+        "visible": false
+      }
+    },
+    "overlapChecks": {}
+  }
+}

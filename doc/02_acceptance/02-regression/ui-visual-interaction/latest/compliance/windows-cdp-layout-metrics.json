@@ -1,0 +1,103 @@
+{
+  "title": "园区网络全流量采集与分析系统",
+  "location": "http://10.0.5.8:30180/compliance?fullRouteEvidenceTs=1783072696417",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "dpr": 1.0000000298023224
+  },
+  "scroll": {
+    "horizontalOverflow": 0,
+    "verticalOverflow": 0,
+    "bodyScrollWidth": 1920,
+    "bodyClientWidth": 1920,
+    "bodyScrollHeight": 1080,
+    "bodyClientHeight": 1080
+  },
+  "headings": [
+    "合规审计",
+    "A. 验收门禁矩阵",
+    "B. 指标映射追踪表",
+    "C. 证据包完整度",
+    "D. 运行报告预览（时间窗：2026-06-14 ~ 2026-06-21）",
+    "E. 缺口治理看板",
+    "F. 第三方评测批次"
+  ],
+  "buttons": [
+    "移动端导航",
+    "PCAP检索",
+    "资产检索",
+    "规则检索",
+    "脚本中心",
+    "帮助中心",
+    "更多应用",
+    "Ccodex-ui-desktop-admin系统管理员在线",
+    "生成验收报告",
+    "导出证据包",
+    "导出 PDF",
+    "导出 Word",
+    "创建整改任务",
+    "固化验收记录",
+    "门禁详情",
+    "证据包导出",
+    "运行报告导出",
+    "采集覆盖 >= 95%采集探针覆盖率采集监测 / 探针管理探针元数据采集感知通过",
+    "数据质量 >= 90%数据完整性、去重率采集监测 / 数据质量Kafka / Flink / ClickHouse采集监测通过",
+    "告警链路 <= 5 分钟告警闭环、关键证据率威胁分析 / 告警中心告警 / 关联引擎威胁分析待整改",
+    "PCAP 证据覆盖 >= 90%PCAP hash 命中率威胁分析 / PCAP 检索PCAP 存储威胁分析通过",
+    "模型效果 F1 >= 0.80模型效果评估检测运营 / 模型管理模型服务 / 反馈池检测运营待整改",
+    "审计链路完整操作留痕完整性审计配置 / 审计日志审计日志 / 操作日志审计配置通过"
+  ],
+  "visibleText": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-03 17:58:17 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 采集监测 威胁分析 资产图谱 检测运营 审计配置 合规审计 审计日志 通知配置 系统设置 C codex-ui-desktop-admin 系统管理员 在线 审计配置 / 合规审计 合规审计 生成验收报告 导出证据包 导出 PDF 导出 Word 创建整改任务 固化验收记录 门禁详情 证据包导出 运行报告导出 门禁通过率 100.0% 验收门禁 未达标项 0 项 0 阻断 证据完整度 100.0% 3/3 分项 复验通过率 100.0% 运行报告 第三方批次 4 批次 真实 API 报告生成数 4 份 8 审计 A. 验收门禁矩阵 维度 任务书指标(覆盖率) 测试项(通过/总数) 数据源(覆盖率) 证据状态(完整度) 最近复验(日期间) 结果 告警响应闭环 响应闭环 >= 80% 24 / 25 告警 / 处置链路 完整 48 / 总 52 06-29 20:04 通过 严重风险处置 SLA 违规 <= 3 28 / 30 告警 SLA critical_alerts 06-29 20:04 通过 误报反馈质量 误报反馈已留痕 15 / 18 反馈样本库 feedback_quality 06-29 20:04 通过 采集覆盖 采集覆盖 >= 95% 24 / 25 探针元数据 采集感知 2026-06-18 通过 数据质量 数据质量 >= 90% 28 / 30 Kafka / Flink / ClickHouse 质量报告 2026-06-19 通过 告警链路 告警链路 <= 5 分钟 15 / 18 告警 / 关联引擎 威胁分析 2026-06-17 待整改 PCAP 证据 PCAP hash 命中率 >= 90% 22 / 24 PCAP 存储 威胁分析 2026-06-18 通过 B. 指标映射追踪表 任务书指标 测试项 对应页面 对应数据源 责任模块 状态 采集覆盖 >= 95% 采集探针覆盖率 采集监测 / 探针管理 探针元数据 采集感知 通过 数据质量 >= 90% 数据完整性、去重率 采集监测 / 数据质量 Kafka / Flink / ClickHouse 采集监测 通过 告警链路 <= 5 分钟 告警闭环、关键证据率 威胁分析 / 告警中心 告警 / 关联引擎 威胁分析 待整改 PCAP 证据覆盖 >= 90% PCAP hash 命中率 威胁分析 / PCAP 检索 PCAP 存储 威胁分析 通过 模型效果 F",
+  "elements": {
+    "pageHero": {
+      "selector": ".taf-page-hero",
+      "visible": false
+    },
+    "panelHeader": {
+      "selector": ".taf-panel__header",
+      "visible": true,
+      "text": "A. 验收门禁矩阵",
+      "x": 183,
+      "y": 258,
+      "right": 1011,
+      "bottom": 290,
+      "w": 829,
+      "h": 32,
+      "display": "flex",
+      "overflowX": "visible",
+      "overflowY": "visible"
+    },
+    "table": {
+      "selector": ".ant-table, .taf-table, table",
+      "visible": true,
+      "text": "维度任务书指标(覆盖率)测试项(通过/总数)数据源(覆盖率)证据状态(完整度)最近复验(日期间)结果告警响应闭环响应闭环 >= 80%24 / 25告警 / 处置链路完整 48 / 总 5206-29 20:04通过严重风险处置SLA 违规 <= 328 / 30告警 SLAcritical_alerts06-29 20:04通过误报反馈质量误报反馈已留痕15 / 18反馈样本库feedback_quality06-29 20:04通过采集覆盖采集覆盖 >= 95%24 / ",
+      "x": 191,
+      "y": 298,
+      "right": 1003,
+      "bottom": 598,
+      "w": 813,
+      "h": 300,
+      "display": "block",
+      "overflowX": "visible",
+      "overflowY": "visible"
+    },
+    "topicTitlebar": {
+      "selector": ".taf-topic-titlebar",
+      "visible": false
+    },
+    "topicFacts": {
+      "selector": ".taf-topic-facts",
+      "visible": false
+    },
+    "topicKpis": {
+      "selector": ".taf-topic-kpis",
+      "visible": false
+    },
+    "topicGrid": {
+      "selector": ".taf-topic-grid",
+      "visible": false
+    }
+  },
+  "overlapChecks": {}
+}

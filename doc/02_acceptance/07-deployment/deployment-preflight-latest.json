@@ -1,0 +1,185 @@
+{
+  "run_id": "20260712-campaign-r302-r214-r3-deployment-r1",
+  "result": "blocked",
+  "report": "doc/02_acceptance/runs/20260712-campaign-r302-r214-r3-deployment-r1/live-deployment-preflight-20260712-campaign-r302-r214-r3-deployment-r1.ndjson",
+  "local_report": "doc/02_acceptance/runs/20260712-campaign-r302-r214-r3-deployment-r1/local-report.md",
+  "package_manifest": "doc/02_acceptance/runs/20260712-campaign-r302-r214-r3-deployment-r1/release-package-manifest.json",
+  "site_values": "deployments/kubernetes/site-values.template.yaml",
+  "total": 16,
+  "passed": 15,
+  "blockers": 1,
+  "warnings": 0,
+  "package_file_count": 190,
+  "repo_unpinned_image_count": 0,
+  "repo_image_lock_missing_count": 0,
+  "repo_mutable_image_count": 0,
+  "repo_service_exposure_blockers": 0,
+  "repo_service_external_ports": 1,
+  "apply_convergence_service_blockers": 0,
+  "apply_convergence_external_ports": 1,
+  "live_unpinned_image_count": 0,
+  "non_business_external_ports": 0,
+  "pending_pvc_count": 0,
+  "checks": [
+    {
+      "ts": "2026-07-12T17:49:10+08:00",
+      "phase": "repo",
+      "name": "site values template present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "deployments/kubernetes/site-values.template.yaml",
+      "artifact": "site-values.template.yaml"
+    },
+    {
+      "ts": "2026-07-12T17:49:12+08:00",
+      "phase": "repo",
+      "name": "core K8s manifests client dry-run",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "124 objects",
+      "artifact": "k8s-core-dry-run.txt"
+    },
+    {
+      "ts": "2026-07-12T17:49:12+08:00",
+      "phase": "repo",
+      "name": "release package manifest complete",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "190 files",
+      "artifact": "release-package-manifest.json"
+    },
+    {
+      "ts": "2026-07-12T17:49:12+08:00",
+      "phase": "repo",
+      "name": "repo K8s images have digest evidence lock",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "0 missing image lock lines",
+      "artifact": "repo-image-lock-summary.json"
+    },
+    {
+      "ts": "2026-07-12T17:49:13+08:00",
+      "phase": "repo",
+      "name": "repo Service exposure limited to APISIX business port",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "1 external service ports",
+      "artifact": "repo-service-exposure-summary.json"
+    },
+    {
+      "ts": "2026-07-12T17:49:16+08:00",
+      "phase": "repo",
+      "name": "kubectl apply convergence keeps APISIX-only Service exposure",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "1 external service ports",
+      "artifact": "apply-convergence-service-exposure-summary.json"
+    },
+    {
+      "ts": "2026-07-12T17:49:17+08:00",
+      "phase": "live",
+      "name": "cluster node baseline ready",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "2 nodes",
+      "artifact": "live-node-summary.json"
+    },
+    {
+      "ts": "2026-07-12T17:49:17+08:00",
+      "phase": "live",
+      "name": "expected runtime namespaces present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "12 namespaces",
+      "artifact": "live-namespaces.txt"
+    },
+    {
+      "ts": "2026-07-12T17:49:17+08:00",
+      "phase": "live",
+      "name": "required StorageClass local-hdd present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "local-hdd",
+      "artifact": "live-storageclasses.json"
+    },
+    {
+      "ts": "2026-07-12T17:49:17+08:00",
+      "phase": "live",
+      "name": "all PVCs bound",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "33 PVCs",
+      "artifact": "live-pvc-summary.json"
+    },
+    {
+      "ts": "2026-07-12T17:49:17+08:00",
+      "phase": "live",
+      "name": "PV states are bound or available",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "0 drift PVs",
+      "artifact": "live-pv-drift.json"
+    },
+    {
+      "ts": "2026-07-12T17:49:17+08:00",
+      "phase": "live",
+      "name": "required secret references present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "15 secrets",
+      "artifact": "secret-reference-readiness.json"
+    },
+    {
+      "ts": "2026-07-12T17:49:17+08:00",
+      "phase": "live",
+      "name": "external exposure limited to APISIX business port",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "only 30180",
+      "artifact": "live-external-service-ports.json"
+    },
+    {
+      "ts": "2026-07-12T17:49:17+08:00",
+      "phase": "live",
+      "name": "runtime workloads ready",
+      "severity": "blocker",
+      "passed": false,
+      "status": "not_ready",
+      "detail": "1 runtime workloads not ready",
+      "artifact": "live-unready-runtime-workloads.json"
+    },
+    {
+      "ts": "2026-07-12T17:49:17+08:00",
+      "phase": "live",
+      "name": "live workload spec images digest-pinned and avoid latest",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "0 containers",
+      "artifact": "live-unpinned-or-latest-images.json"
+    },
+    {
+      "ts": "2026-07-12T17:49:17+08:00",
+      "phase": "live",
+      "name": "APISIX business entry reachable",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "http://10.0.5.8:30180 http=200",
+      "artifact": "apisix-root.txt"
+    }
+  ]
+}

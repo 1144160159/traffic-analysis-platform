@@ -1,0 +1,104 @@
+{
+  "title": "园区网络全流量采集与分析系统",
+  "location": "http://10.0.5.8:30180/settings?fullRouteEvidenceTs=1783072708688",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "dpr": 1.0000000298023224
+  },
+  "scroll": {
+    "horizontalOverflow": 0,
+    "verticalOverflow": 0,
+    "bodyScrollWidth": 1920,
+    "bodyClientWidth": 1920,
+    "bodyScrollHeight": 1080,
+    "bodyClientHeight": 1080
+  },
+  "headings": [
+    "系统设置",
+    "A. 租户与站点",
+    "B. RBAC 权限矩阵",
+    "C. API 令牌",
+    "D. 数据留存策略",
+    "E. 集成配置健康",
+    "F. 安全策略与系统参数",
+    "G. 闭环动作入口"
+  ],
+  "buttons": [
+    "移动端导航",
+    "PCAP检索",
+    "资产检索",
+    "规则检索",
+    "脚本中心",
+    "帮助中心",
+    "更多应用",
+    "Ccodex-ui-desktop-admin系统管理员在线",
+    "保存配置",
+    "连接测试",
+    "创建令牌",
+    "轮换令牌",
+    "触发安全审计",
+    "查看影响范围",
+    "令牌配置",
+    "吊销确认",
+    "华东园区（主租户）已隔离",
+    "核心园区已隔离",
+    "分园区A已隔离",
+    "分园区B已隔离",
+    "研发网络隔离",
+    "教学网络隔离",
+    "测试网段隔离"
+  ],
+  "visibleText": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-03 17:58:29 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 采集监测 威胁分析 资产图谱 检测运营 审计配置 合规审计 审计日志 通知配置 系统设置 C codex-ui-desktop-admin 系统管理员 在线 审计配置 / 系统设置 系统设置 保存配置 连接测试 创建令牌 轮换令牌 触发安全审计 查看影响范围 令牌配置 吊销确认 租户数 1 个 tenant_id 角色策略 29 项 10 类 scope 有效令牌 0 个 tokens 即将过期令牌 0 个 7天内过期 集成健康 7/7 probe scopes 配置变更待审计 3 项 保存后写审计 A. 租户与站点 名称 隔离范围 / 状态 华东园区（主租户） 已隔离 核心园区 已隔离 分园区A 已隔离 分园区B 已隔离 研发网络 隔离 教学网络 隔离 测试网段 隔离 办公网段 隔离 生产网段 已隔离 华南园区 部分隔离 海外园区 未隔离 B. RBAC 权限矩阵 角色 告警查看 PCAP访问 规则发布 模型激活 脚本执行 证据导出 系统配置 安全值班员 研判员 管理员 审计员 只读大屏账号 C. API 令牌 令牌名称 权限范围 令牌指纹 过期时间 最近使用 轮换状态 操作 codex-live-token-manual-20260629093941-1631619 (regenerated) 告警查看、令牌读取 api_5esim9iblo8cjo****17 2026-06-29 01:44 2026-06-29 01:39 已吊销 轮换 / 吊销 codex-live-token-manual-20260629093941-1631619 告警查看、令牌读取 api_bbpgvjgg4jtakc****18 2026-06-29 01:44 2026-06-29 01:39 已吊销 轮换 / 吊销 codex-live-token-manual-20260629093428-1610509 (regenerated) 告警查看、令牌读取 c28f****a543 2026-06-29 01:39 2026-06-29 01:34 已吊销 轮换 / 吊销 codex-live-token-manual-20260629093428-1610509 告警查看、令牌读取 b488****a01f 2026-06-29 01:39 2026-06-29 01:34 已吊销 轮换 / 吊销 共 0 个 个有效令牌 codex-live-",
+  "elements": {
+    "pageHero": {
+      "selector": ".taf-page-hero",
+      "visible": false
+    },
+    "panelHeader": {
+      "selector": ".taf-panel__header",
+      "visible": true,
+      "text": "A. 租户与站点",
+      "x": 183,
+      "y": 258,
+      "right": 529,
+      "bottom": 289,
+      "w": 347,
+      "h": 31,
+      "display": "flex",
+      "overflowX": "visible",
+      "overflowY": "visible"
+    },
+    "table": {
+      "selector": ".ant-table, .taf-table, table",
+      "visible": true,
+      "text": "令牌名称权限范围令牌指纹过期时间最近使用轮换状态操作codex-live-token-manual-20260629093941-1631619 (regenerated)告警查看、令牌读取api_5esim9iblo8cjo****172026-06-29 01:442026-06-29 01:39已吊销轮换 / 吊销codex-live-token-manual-20260629093941-1631619告警查看、令牌读取api_bbpgvjgg4jtakc****18",
+      "x": 547,
+      "y": 573,
+      "right": 1344,
+      "bottom": 766,
+      "w": 797,
+      "h": 193,
+      "display": "block",
+      "overflowX": "visible",
+      "overflowY": "visible"
+    },
+    "topicTitlebar": {
+      "selector": ".taf-topic-titlebar",
+      "visible": false
+    },
+    "topicFacts": {
+      "selector": ".taf-topic-facts",
+      "visible": false
+    },
+    "topicKpis": {
+      "selector": ".taf-topic-kpis",
+      "visible": false
+    },
+    "topicGrid": {
+      "selector": ".taf-topic-grid",
+      "visible": false
+    }
+  },
+  "overlapChecks": {}
+}

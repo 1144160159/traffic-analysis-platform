@@ -1,0 +1,224 @@
+{
+  "run_id": "20260629-playbook-state-machine-r1",
+  "generated_at": "2026-06-29T10:59:39Z",
+  "apisix": "http://10.0.5.8:30180",
+  "result": "pass",
+  "total": 21,
+  "passed": 21,
+  "blockers": 0,
+  "warnings": 0,
+  "report": "doc/02_acceptance/runs/20260629-playbook-state-machine/live-playbook-state-machine-20260629-playbook-state-machine-r1.ndjson",
+  "local_report": "doc/02_acceptance/runs/20260629-playbook-state-machine/local-report.md",
+  "checks": [
+    {
+      "ts": "2026-06-29T18:59:35+08:00",
+      "phase": "contract",
+      "name": "frontend playbook action contract present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "pageApiPlans playbook execute/update actions",
+      "artifact": "web/ui/src/services/pageApiPlans.ts"
+    },
+    {
+      "ts": "2026-06-29T18:59:35+08:00",
+      "phase": "contract",
+      "name": "backend manual execute enforces max_runs",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "ExecuteByName returns max-runs error",
+      "artifact": "go/control-plane/internal/alert/playbook/playbook_engine.go"
+    },
+    {
+      "ts": "2026-06-29T18:59:35+08:00",
+      "phase": "api",
+      "name": "auth/me exposes playbook operator token",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "/api/v1/auth/me",
+      "artifact": "auth-me.json"
+    },
+    {
+      "ts": "2026-06-29T18:59:35+08:00",
+      "phase": "assert",
+      "name": "operator token has write scope",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "((.permissions // []) | index(\"alert:write\") != null) or ((.permissions // []) | index(\"*\") != null)",
+      "artifact": "auth-me.json"
+    },
+    {
+      "ts": "2026-06-29T18:59:35+08:00",
+      "phase": "api",
+      "name": "playbook catalog reachable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "/api/v1/playbooks/catalog",
+      "artifact": "playbook-catalog-before.json"
+    },
+    {
+      "ts": "2026-06-29T18:59:35+08:00",
+      "phase": "assert",
+      "name": "target playbook exists in catalog",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "--arg name log-lateral-movement .data.playbooks[] | select(.name == $name)",
+      "artifact": "playbook-catalog-before.json"
+    },
+    {
+      "ts": "2026-06-29T18:59:35+08:00",
+      "phase": "api",
+      "name": "disable playbook through APISIX",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "/api/v1/playbooks/log-lateral-movement",
+      "artifact": "playbook-disable-response.json"
+    },
+    {
+      "ts": "2026-06-29T18:59:35+08:00",
+      "phase": "assert",
+      "name": "disable response persisted",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.enabled == false",
+      "artifact": "playbook-disable-response.json"
+    },
+    {
+      "ts": "2026-06-29T18:59:35+08:00",
+      "phase": "api",
+      "name": "disabled playbook rejects execute",
+      "severity": "info",
+      "passed": true,
+      "status": "404",
+      "detail": "/api/v1/playbooks/log-lateral-movement/execute",
+      "artifact": "playbook-disabled-execute-response.json"
+    },
+    {
+      "ts": "2026-06-29T18:59:35+08:00",
+      "phase": "assert",
+      "name": "disabled execute response names disabled guard",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == false and (.message | contains(\"disabled\"))",
+      "artifact": "playbook-disabled-execute-response.json"
+    },
+    {
+      "ts": "2026-06-29T18:59:35+08:00",
+      "phase": "api",
+      "name": "enable playbook with one remaining slot",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "/api/v1/playbooks/log-lateral-movement",
+      "artifact": "playbook-limit-response.json"
+    },
+    {
+      "ts": "2026-06-29T18:59:35+08:00",
+      "phase": "assert",
+      "name": "limit response persisted",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "--argjson max_runs 1 .success == true and .data.enabled == true and .data.max_runs == $max_runs",
+      "artifact": "playbook-limit-response.json"
+    },
+    {
+      "ts": "2026-06-29T18:59:35+08:00",
+      "phase": "api",
+      "name": "first playbook execute succeeds",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "/api/v1/playbooks/log-lateral-movement/execute",
+      "artifact": "playbook-first-execute-response.json"
+    },
+    {
+      "ts": "2026-06-29T18:59:35+08:00",
+      "phase": "assert",
+      "name": "first execute returns actions",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "--arg name log-lateral-movement --arg alert codex-playbook-20260629-playbook-state-machine-r1 .success == true and .data.playbook == $name and .data.alert_id == $alert and (.data.success_actions // 0) >= 1 and (.execution.execution_id // \"\") != \"\"",
+      "artifact": "playbook-first-execute-response.json"
+    },
+    {
+      "ts": "2026-06-29T18:59:35+08:00",
+      "phase": "api",
+      "name": "second playbook execute hits max_runs",
+      "severity": "info",
+      "passed": true,
+      "status": "404",
+      "detail": "/api/v1/playbooks/log-lateral-movement/execute",
+      "artifact": "playbook-second-execute-response.json"
+    },
+    {
+      "ts": "2026-06-29T18:59:35+08:00",
+      "phase": "assert",
+      "name": "second execute response names max_runs guard",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == false and (.message | contains(\"max runs\"))",
+      "artifact": "playbook-second-execute-response.json"
+    },
+    {
+      "ts": "2026-06-29T18:59:35+08:00",
+      "phase": "api",
+      "name": "playbook executions API lists run",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "/api/v1/playbooks/executions?limit=10",
+      "artifact": "playbook-executions-response.json"
+    },
+    {
+      "ts": "2026-06-29T18:59:35+08:00",
+      "phase": "assert",
+      "name": "executions API includes current alert",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "--arg alert codex-playbook-20260629-playbook-state-machine-r1 --arg name log-lateral-movement .data.executions[] | select(.alert_id == $alert and .playbook == $name)",
+      "artifact": "playbook-executions-response.json"
+    },
+    {
+      "ts": "2026-06-29T18:59:35+08:00",
+      "phase": "postgres",
+      "name": "playbook execution row persisted",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "1 ",
+      "artifact": "playbook-pg-row-count.txt"
+    },
+    {
+      "ts": "2026-06-29T10:59:39.233Z",
+      "phase": "browser",
+      "name": "playbooks page renders catalog and executions",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "{\"url\":\"http://10.0.5.8:30180/playbooks\",\"hasScreenshot\":true}",
+      "artifact": "live-playbook-state-machine-20260629-playbook-state-machine-r1.png"
+    },
+    {
+      "ts": "2026-06-29T10:59:39.233Z",
+      "phase": "browser",
+      "name": "playbooks page has no runtime errors",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "{\"consoleErrors\":[],\"pageErrors\":[],\"requestFailures\":[],\"httpErrors\":[]}",
+      "artifact": ""
+    }
+  ]
+}

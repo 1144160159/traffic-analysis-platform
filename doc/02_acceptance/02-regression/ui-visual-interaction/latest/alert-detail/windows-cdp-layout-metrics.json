@@ -1,0 +1,106 @@
+{
+  "title": "园区网络全流量采集与分析系统",
+  "location": "http://10.0.5.8:30180/alerts/AL-20260620-000123?fullRouteEvidenceTs=1783072621049",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "dpr": 1.0000000298023224
+  },
+  "scroll": {
+    "horizontalOverflow": 0,
+    "verticalOverflow": 0,
+    "bodyScrollWidth": 1920,
+    "bodyClientWidth": 1920,
+    "bodyScrollHeight": 1080,
+    "bodyClientHeight": 1080
+  },
+  "headings": [
+    "告警详情",
+    "研判摘要",
+    "资产上下文",
+    "时间线",
+    "证据链（0）",
+    "攻击阶段轨迹",
+    "影响范围",
+    "处置与响应",
+    "状态流转门禁",
+    "反馈与学习"
+  ],
+  "buttons": [
+    "移动端导航",
+    "PCAP检索",
+    "资产检索",
+    "规则检索",
+    "脚本中心",
+    "帮助中心",
+    "更多应用",
+    "Ccodex-ui-desktop-admin系统管理员在线",
+    "返回告警列表",
+    "导出报告",
+    "标记为战役",
+    "加入白名单",
+    "更多操作",
+    "更新状态",
+    "提交反馈",
+    "证据详情",
+    "触发剧本",
+    "白名单草案",
+    "重 试",
+    "编辑标签",
+    "查看完整时间线",
+    "未处理后端状态机禁止",
+    "研判中后端状态机禁止"
+  ],
+  "visibleText": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-03 17:57:01 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 采集监测 威胁分析 告警中心 128 战役列表 攻击链分析 加密流量 取证分析 资产图谱 检测运营 审计配置 C codex-ui-desktop-admin 系统管理员 在线 威胁分析 / 告警中心 / 告警详情 告警详情 返回告警列表 导出报告 标记为战役 加入白名单 更多操作 更新状态 提交反馈 证据详情 触发剧本 白名单草案 真实 API 数据加载失败 Request failed with status code 404 重 试 研判摘要 编辑标签 0 高危 告警 ID AL-20260620-000123 告警名称 告警详情加载中 规则 / 模型 - 攻击阶段 - 严重级别 高危 置信度 - 当前状态 加载中 状态版本 - 责任人 - 首次发生 - 影响资产 2 台主机 业务系统 - 处置建议 - 资产上下文 时间线 查看完整时间线 证据链（0） 证据类型 文件 / 记录 内容摘要 大小 生成时间 状态 操作 暂无证据链数据 攻击阶段轨迹 查看攻击链 影响范围 查看资产图谱 影响主机 2 关联账户 1 业务系统 1 脆弱资产 0 源端主机 核心区 目的端 处置与响应 查看 SOAR 剧本 执行前请确认影响范围，所有操作将记录审计日志。 状态流转门禁 0 个可选下一态 未处理 后端状态机禁止 研判中 后端状态机禁止 已指派 后端状态机禁止 已关闭 后端状态机禁止 当前：加载中；可迁移到：无 提交状态变更 反馈与学习 判定结果 TP（真实告警） FP（误报） 待确认 误报原因 规则/模型误报 白名单草案 生成审批草案 样本回流 提交反馈 数据延迟 1.23 s 系统运行 23 天 14 小时 告警处理SLA 98.2% 数据质量合格率 99.1% 存储使用 68.7 / 120 TB (57%) 带宽使用 42.7 / 100 Gbps (43%) 日志吞吐 12.6 K EPS 实时通道 已连接 9",
+  "elements": {
+    "pageHero": {
+      "selector": ".taf-page-hero",
+      "visible": false
+    },
+    "panelHeader": {
+      "selector": ".taf-panel__header",
+      "visible": true,
+      "text": "研判摘要编辑标签",
+      "x": 175,
+      "y": 264,
+      "right": 1308,
+      "bottom": 298,
+      "w": 1133,
+      "h": 34,
+      "display": "flex",
+      "overflowX": "visible",
+      "overflowY": "visible"
+    },
+    "table": {
+      "selector": ".ant-table, .taf-table, table",
+      "visible": true,
+      "text": "证据类型文件 / 记录内容摘要大小生成时间状态操作暂无数据暂无证据链数据",
+      "x": 183,
+      "y": 625,
+      "right": 1300,
+      "bottom": 811,
+      "w": 1117,
+      "h": 186,
+      "display": "block",
+      "overflowX": "visible",
+      "overflowY": "visible"
+    },
+    "topicTitlebar": {
+      "selector": ".taf-topic-titlebar",
+      "visible": false
+    },
+    "topicFacts": {
+      "selector": ".taf-topic-facts",
+      "visible": false
+    },
+    "topicKpis": {
+      "selector": ".taf-topic-kpis",
+      "visible": false
+    },
+    "topicGrid": {
+      "selector": ".taf-topic-grid",
+      "visible": false
+    }
+  },
+  "overlapChecks": {}
+}

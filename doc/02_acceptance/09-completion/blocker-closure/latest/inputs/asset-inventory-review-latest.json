@@ -1,0 +1,65 @@
+{
+  "run_id": "20260701-asset-inventory-review-r1",
+  "result": "pass",
+  "generated_at": "2026-07-01T00:46:06+08:00",
+  "input_inventory": "doc/02_acceptance/02-regression/asset-discovery-site-inventory.bootstrap-latest.json",
+  "packet_dir": "doc/02_acceptance/runs/20260701-asset-inventory-review-r1/asset-inventory-review.packet",
+  "stable_packet_dir": "doc/02_acceptance/02-regression/asset-inventory-review/latest",
+  "review_required": true,
+  "formal_gate_note": "site inventory review packet only; does not close asset discovery coverage",
+  "asset_count": 27,
+  "duplicate_key_count": 0,
+  "passed": 3,
+  "total": 3,
+  "blockers": 0,
+  "warnings": 0,
+  "review_summary": {
+    "run_id": "20260701-asset-inventory-review-r1",
+    "generated_at": "2026-06-30T16:46:06.607975+00:00",
+    "input_inventory": "doc/02_acceptance/02-regression/asset-discovery-site-inventory.bootstrap-latest.json",
+    "site": "observed-live-campus",
+    "input_source": "live_assets_api",
+    "input_review_required": true,
+    "review_required": true,
+    "asset_count": 27,
+    "duplicate_key_count": 0,
+    "duplicate_groups": [],
+    "outputs": {
+      "review_assets_csv": "doc/02_acceptance/runs/20260701-asset-inventory-review-r1/asset-inventory-review.packet/review-assets.csv",
+      "formal_template_json": "doc/02_acceptance/runs/20260701-asset-inventory-review-r1/asset-inventory-review.packet/formal-site-inventory.template.json",
+      "review_checklist": "doc/02_acceptance/runs/20260701-asset-inventory-review-r1/asset-inventory-review.packet/review-checklist.md"
+    }
+  },
+  "checks": [
+    {
+      "ts": "2026-07-01T00:46:06+08:00",
+      "phase": "input",
+      "name": "input inventory exists",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/02-regression/asset-discovery-site-inventory.bootstrap-latest.json",
+      "artifact": "doc/02_acceptance/02-regression/asset-discovery-site-inventory.bootstrap-latest.json"
+    },
+    {
+      "ts": "2026-07-01T00:46:06+08:00",
+      "phase": "packet",
+      "name": "review packet generated",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "assets=27 duplicate_key_groups=0",
+      "artifact": "doc/02_acceptance/runs/20260701-asset-inventory-review-r1/asset-inventory-review.packet/review-summary.json"
+    },
+    {
+      "ts": "2026-07-01T00:46:06+08:00",
+      "phase": "packet",
+      "name": "review worklist and templates written",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/runs/20260701-asset-inventory-review-r1/asset-inventory-review.packet",
+      "artifact": "doc/02_acceptance/runs/20260701-asset-inventory-review-r1/asset-inventory-review.packet/review-assets.csv"
+    }
+  ]
+}

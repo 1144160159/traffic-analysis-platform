@@ -1,0 +1,189 @@
+# 业务页面全栈交付流程
+
+- 生效时间：`2026-07-12`
+- 适用范围：所有已登录业务页面、详情页和业务浮层。
+- 核心链路：`UI 拆解 -> 前端实现 -> 后端实现 -> 数据库仿真 -> Windows Chrome 真实路由 -> diff/metrics -> 智能体辅助审查 -> 主线程判断 -> 回修`。
+- 完成口径：视觉、交互、API、权限、审计和数据库数据必须同时闭环；任一项缺失都不能标记页面完成。
+- 学习闭环：页面达到本流程完成定义后，再按 `REINFORCEMENT_LEARNING_DELIVERY_LOOP.md` 计算多目标 reward、沉淀 episode 和执行离线经验回放；reward 不得替代本流程硬门禁。
+
+## 1. 数据模式
+
+每个页面必须明确当前数据模式，不允许混用后冒充真实链路。
+
+| 模式 | 数据来源 | 用途 | 可否作为业务验收 |
+|---|---|---|---|
+| `live` | 真实业务采集、任务或用户操作写入的数据库数据 | 生产运行与最终回归 | 可以 |
+| `seeded` | 可重复执行的 SQL/初始化任务写入真实数据库 | 开发、分页、边界状态和稳定回归 | 可以，证据中必须标明 seed 批次 |
+| `visual` | 为固定截图构造的确定性页面快照 | 目标图对齐和 ROI 计算 | 只可验收视觉，不可证明 API、分页、权限或审计 |
+| `fallback` | 前端 typed fallback | API 异常、空态和降级韧性 | 不可以 |
+
+基本规则：
+
+1. 正常生产路由默认使用 `live` 或 `seeded` 数据，必须经过 `services/api.ts -> APISIX -> Go API -> 数据库`。
+2. `visual` 模式只能用于锁定业务区截图，必须与正常生产路由分开采集。
+3. `fallback` 必须显式标注，且不得复制少量 API 行伪造总量、分页或统计结果。
+4. ECharts 的 series、legend、axis、tooltip 和空态均由 API 响应或同结构 typed fallback 驱动；拓扑继续使用原有 API 驱动 SVG 动图。
+
+## 2. 页面工作包
+
+开始实现前，为每个页面建立一个工作包，至少包含：
+
+- 页面 ID、生产路由、目标 PNG、业务 ROI 区域和关联浮层。
+- 页面状态：loading、error、empty、403、正常、数据边界状态。
+- UI 控件清单：筛选、分页、按钮、菜单、Drawer、Modal、导出和下钻。
+- API 契约：method、path、query/body、response、错误码、权限、审计动作和幂等策略。
+- 数据契约：数据库、表、主键、tenant 边界、时间字段、索引、分页排序和 seed 场景。
+- 验收用例：正常模式业务验收、视觉模式截图验收、权限负例和数据库核验。
+
+工作包的视觉部分落在 `image-breakdowns/` 和 `page-contracts/`；API 与数据契约应写入页面拆解记录，代码落点同时登记到 `route-page-map.json` 或对应 service 计划。
+
+## 3. 分阶段流程
+
+### 阶段 0：排队与影响面锁定
+
+1. 按 `PAGES_MENU_ORDER_QUEUE.md` 领取一个页面或一个明确 Tab。
+2. 读取 `agent.md`、页面拆解、目标图、全局 UI 约束和关联业务链路。
+3. 记录允许修改的业务组件、service、Go domain、SQL 和部署文件。
+4. 公共 AppShell 不属于单页业务开发范围；页面改动不得改变顶部、左侧和底部位置。
+
+门禁：页面目标、业务 ROI、API 所属服务、数据库归属和测试入口全部明确。
+
+### 阶段 1：UI 与三类契约设计
+
+在写代码前同时完成三个契约：
+
+1. **UI 契约**：布局、ECharts/SVG 类型、表格列、分页、滚动区、交互状态和浮层。
+2. **API 契约**：列表和详情读取、动作提交、分页/排序/筛选、RBAC、错误响应、审计记录。
+3. **数据契约**：表结构、字段语义、tenant 过滤、查询索引、稳定排序、seed 数量和边界样本。
+
+列表 API 必须定义 `limit/offset` 或 `page/page_size` 的唯一规范，并返回 `items + total + 当前分页参数`。动作 API 必须定义 `action_id`、业务对象、影响范围、`dry_run/simulation`、权限和审计结果。
+
+门禁：前端不会依赖尚未设计的字段，后端不会返回无法追溯的数据，seed 能覆盖全部可见状态。
+
+### 阶段 2：前端业务区实现
+
+1. 先实现 typed DTO、service 和 React Query，再实现页面组件。
+2. 图表使用真实 ECharts 实例并响应筛选、时间窗、选中对象和刷新；拓扑使用 API 驱动 SVG。
+3. 表格采用受控分页，翻页必须触发真实分页参数变化；内容溢出使用稳定滚动容器。
+4. 每个可见按钮都必须触发路由、筛选、浮层或 API 动作，不允许空处理器和仅延时成功提示。
+5. loading、error、empty、403 与动作进行中/成功/失败状态必须完整。
+6. `visual` 数据入口与正常路由隔离，生产交互测试不得开启视觉仿真模式。
+
+门禁：组件测试覆盖分页参数、图表数据变化、按钮行为、错误态和权限态。
+
+### 阶段 3：后端实现
+
+1. 按 `internal/<domain>/{api,service,repository}` 现有边界实现，handler 不承载业务逻辑。
+2. 所有查询强制 tenant 过滤，并使用确定性排序；total 与列表查询使用同一筛选条件。
+3. 请求参数、范围和对象存在性均在服务端校验，不能信任前端 RBAC 或前端状态。
+4. 动作接口在成功响应前完成权限检查和审计写入；审计失败时不得返回业务成功。
+5. 长任务返回可追踪 job ID；重复提交使用幂等键或服务端去重策略。
+6. API 路由、APISIX、配置和部署清单同步更新。
+
+门禁：Go 单元测试至少覆盖成功、参数错误、403、tenant 隔离、真实分页和审计失败。
+
+### 阶段 4：数据库结构与仿真数据
+
+数据库仿真不是前端 mock。它必须写入真实数据库，并由正式 repository 查询。
+
+1. Schema 真源继续放在 `common/sql/pg/`、`common/sql/ch/`；变更同步到 `deployments/kubernetes/init-jobs/` 和 docker init 合并文件。
+2. 页面 seed 按数据库放在 `common/sql/seed/pg/` 或 `common/sql/seed/ch/`，由独立、可重复执行的 K8s seed Job 调用，不混入生产默认数据。
+3. 每批 seed 使用固定 `scenario_id`、稳定业务 ID、tenant、相对时间锚点和版本号；使用 upsert 或先按 scenario 清理再插入。
+4. seed 至少覆盖：正常记录、第二页数据、空筛选结果、异常状态、长文本/边界值、图表多个时间点和可执行动作对象。
+5. 生成 seed 报告：脚本版本、scenario、各表预期/实际记录数、最小/最大时间、校验结果和清理方式。
+6. 禁止写入凭证、真实个人信息或跨 tenant 共享记录。
+
+建议的场景命名：`ui-<page-id>-v<version>`。时间敏感页面使用统一锚点参数派生时间，不把散落的 `now()` 结果作为截图基线。
+
+门禁：seed 连续执行两次结果一致；数据库计数、tenant 隔离、第二页记录和图表聚合均可直接查询证明。
+
+### 阶段 5：本地与契约验证
+
+按受影响范围执行：
+
+```bash
+cd go/control-plane && go test ./internal/<domain>/...
+cd web/ui && npm run test -- --run && npm run build
+node doc/04_assets/ui_suite_gpt_v1/validate_frontend_contracts.mjs
+```
+
+此外必须执行页面级 API 契约测试，确认前端 DTO 与真实响应一致；涉及 SQL 时执行 schema/seed 幂等检查和真实数据库查询。
+
+门禁：无跳过的关键用例，无以 mock 响应替代 repository/数据库集成的成功结论。
+
+### 阶段 6：部署顺序
+
+1. 先执行 schema migration/init 检查。
+2. 再执行指定的 seed scenario，并保存 seed 报告。
+3. 构建后端镜像，导入两个节点，更新清单并等待 rollout。
+4. 验证 API、权限、分页、动作和审计后，再构建和部署 Web UI。
+5. 检查 APISIX 生产路由，不以本地 Vite 代理替代生产入口。
+
+门禁：数据库、后端、前端 rollout 均 Ready，版本和证据中的镜像标签一致。
+
+### 阶段 7：Windows Chrome 双轨验收
+
+**业务轨：正常生产路由**
+
+- 从直接 APISIX 生产入口进入页面，不开启 `visual` 模式。
+- 验证 API 返回、真实 offset/page 参数、图表动态变化、按钮动作、RBAC 负例和审计查询。
+- 页面刷新后动作结果仍可从服务端或审计表查询，不能只存在于 React state/sessionStorage。
+- 记录 response、console、requestfailed、pageerror 和数据库核验结果。
+
+**视觉轨：确定性截图路由**
+
+- 使用同一代码和布局，仅锁定数据、时间、动画和焦点状态。
+- 采集 `implementation.png`、`diff.png`、`metrics.json` 和业务 ROI 指标。
+- 业务 ROI 必须严格 `<0.125`；公共 AppShell 只作整图诊断。
+
+门禁：业务轨和视觉轨分别通过。视觉通过不能覆盖业务失败，业务通过也不能覆盖 ROI 失败。
+
+### 阶段 8：审查、判断与回修
+
+1. 独立智能体基于代码、正常路由网络证据、数据库证据和截图 diff 给出 PASS/FAIL。
+2. 智能体只辅助发现问题，不负责最终验收。
+3. 主线程逐条判断问题是否成立，记录接受、驳回及证据。
+4. 对成立问题回到对应阶段修复，重新跑受影响门禁；禁止只改验收脚本让结果变绿。
+5. 最终同步页面拆解、全局约束、流程状态、镜像版本和 evidence 路径。
+
+页面完成后可进入强化学习闭环。只有主线程接受、生产稳定且学习证据完整的页面才能标记 `learning-eligible`；普通 `full-stack-accepted` 页面不能自动作为正向训练样本。
+
+## 4. 页面交付证据
+
+每个页面至少保留以下产物：
+
+| 类别 | 必需证据 |
+|---|---|
+| 契约 | 页面拆解、UI/API/数据契约、影响面 |
+| 数据库 | schema/seed 文件、seed 报告、计数与 tenant 校验 |
+| 后端 | 单元/集成测试、API 响应、分页和审计证据 |
+| 前端 | 组件测试、build、ECharts/SVG 与交互清单 |
+| 业务浏览器 | 正常生产路由 interaction JSON、网络与运行时错误清单 |
+| 视觉浏览器 | target、implementation、diff、metrics、业务 ROI |
+| 审查 | 独立审查结论、主线程判断、回修记录 |
+
+建议 evidence 目录：`evidence/ui-image-breakdowns/pages/<page-id>/`。业务与视觉证据必须使用可区分的文件名或批次号。
+
+## 5. 禁止的完成方式
+
+- 仅在 `pageApiPlans.ts` 声明 endpoint，但后端没有注册路由。
+- 使用 `setTimeout`、sessionStorage 或前端成功提示冒充服务端动作完成。
+- 复制少量 API 行、改 ID 后冒充真实分页数据。
+- 使用视觉仿真模式证明 API、权限、分页、审计或数据库通过。
+- 在前端实现 RBAC，而服务端不检查权限和 tenant。
+- 动作成功但没有可查询的 audit row、job ID 或业务状态。
+- 手工临时插数后截图，没有可重复 seed 和清理方式。
+- 只检查 HTTP 200，不验证响应语义、数据库结果和页面刷新后的持久状态。
+
+## 6. 页面完成定义
+
+只有同时满足以下条件，页面才可标记 `full-stack-accepted`：
+
+- UI 拆解和业务 ROI 区域已锁定。
+- 前端图表、分页、滚动和所有可见按钮真实可用。
+- API、RBAC、tenant、错误处理和审计均由后端实现并测试。
+- live 或 seeded 数据通过真实数据库返回，seed 可重复且有报告。
+- Windows Chrome 正常生产路由业务验收通过。
+- Windows Chrome 视觉截图业务 ROI 严格 `<0.125`。
+- 独立智能体审查完成，主线程已判断并关闭成立问题。
+- 代码、部署、文档和 evidence 已同步。

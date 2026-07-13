@@ -1,0 +1,29 @@
+{
+  "policy_capable_count": 0,
+  "flannel_marker_count": 2,
+  "networkpolicy_enforcement_ready": false,
+  "inventory": [
+    {
+      "namespace": "kube-flannel",
+      "pod": "kube-flannel-ds-m2qcp",
+      "node": "8-2tb",
+      "phase": "Running",
+      "images": [
+        "ghcr.io/flannel-io/flannel@sha256:5414132a5547ca336112dc00113530363aeeb7e8b59c1f6b8e5703c0ccb534e7"
+      ],
+      "policy_capable": false,
+      "flannel_only_marker": true
+    },
+    {
+      "namespace": "kube-flannel",
+      "pod": "kube-flannel-ds-ng87k",
+      "node": "zeus-server",
+      "phase": "Running",
+      "images": [
+        "ghcr.io/flannel-io/flannel@sha256:5414132a5547ca336112dc00113530363aeeb7e8b59c1f6b8e5703c0ccb534e7"
+      ],
+      "policy_capable": false,
+      "flannel_only_marker": true
+    }
+  ]
+}

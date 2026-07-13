@@ -1,0 +1,277 @@
+{
+  "package_id": "ui_windows_ssh_privilege_preflight",
+  "run_id": "windows-ssh-privilege-preflight-2026-07-02T18-38-08-783Z",
+  "result": "pass",
+  "generated_at": "2026-07-02T18:38:08.783Z",
+  "host": "10.3.6.59",
+  "user": "LongShine",
+  "ssh": {
+    "cmd_probe_status": 0,
+    "powershell_smoke_status": 1,
+    "powershell_smoke_blocked": true,
+    "powershell_smoke_output": "�ܾ����ʡ�"
+  },
+  "token": {
+    "users": [
+      {
+        "User Name": "laptop-a6rnjq68\\longshine",
+        "SID": "S-1-5-21-3819506267-3864776381-3719420930-1002"
+      }
+    ],
+    "administrator_group": {
+      "Group Name": "BUILTIN\\Administrators",
+      "Type": "Alias",
+      "SID": "S-1-5-32-544",
+      "Attributes": "Mandatory group, Enabled by default, Enabled group, Group owner"
+    },
+    "high_integrity": true,
+    "enabled_privilege_count": 24,
+    "net_session": {
+      "admin_check": "pass_no_sessions",
+      "detail": "There are no entries in the list."
+    }
+  },
+  "firewall": {
+    "service": {
+      "running": true,
+      "raw": "SERVICE_NAME: MpsSvc \r\n        TYPE               : 20  WIN32_SHARE_PROCESS  \r\n        STATE              : 4  RUNNING \r\n                                (NOT_STOPPABLE, NOT_PAUSABLE, IGNORES_SHUTDOWN)\r\n        WIN32_EXIT_CODE    : 0  (0x0)\r\n        SERVICE_EXIT_CODE  : 0  (0x0)\r\n        CHECKPOINT         : 0x0\r\n        WAIT_HINT          : 0x0"
+    },
+    "profiles": [
+      {
+        "name": "Domain",
+        "state": "OFF",
+        "firewall_policy": "AllowInbound,AllowOutbound",
+        "local_firewall_rules": "N/A (GPO-store only)",
+        "remote_management": "Disable"
+      },
+      {
+        "name": "Private",
+        "state": "OFF",
+        "firewall_policy": "AllowInbound,AllowOutbound",
+        "local_firewall_rules": "N/A (GPO-store only)",
+        "remote_management": "Disable"
+      },
+      {
+        "name": "Public",
+        "state": "ON",
+        "firewall_policy": "AllowInbound,AllowOutbound",
+        "local_firewall_rules": "N/A (GPO-store only)",
+        "remote_management": "Disable"
+      }
+    ]
+  },
+  "processes": {
+    "counts": {
+      "code": 18,
+      "codex": 10,
+      "chrome": 18,
+      "node_repl": 3,
+      "node": 0
+    },
+    "samples": {
+      "code": [
+        {
+          "image_name": "Code.exe",
+          "pid": 3744,
+          "session_name": "Console",
+          "session_number": 1,
+          "memory_usage": "288,448 K"
+        },
+        {
+          "image_name": "Code.exe",
+          "pid": 16660,
+          "session_name": "Console",
+          "session_number": 1,
+          "memory_usage": "35,792 K"
+        },
+        {
+          "image_name": "Code.exe",
+          "pid": 9448,
+          "session_name": "Console",
+          "session_number": 1,
+          "memory_usage": "52,024 K"
+        },
+        {
+          "image_name": "Code.exe",
+          "pid": 7692,
+          "session_name": "Console",
+          "session_number": 1,
+          "memory_usage": "361,660 K"
+        },
+        {
+          "image_name": "Code.exe",
+          "pid": 19124,
+          "session_name": "Console",
+          "session_number": 1,
+          "memory_usage": "811,376 K"
+        }
+      ],
+      "codex": [
+        {
+          "image_name": "codex.exe",
+          "pid": 18036,
+          "session_name": "Console",
+          "session_number": 1,
+          "memory_usage": "146,888 K"
+        },
+        {
+          "image_name": "Codex.exe",
+          "pid": 21284,
+          "session_name": "Console",
+          "session_number": 1,
+          "memory_usage": "301,408 K"
+        },
+        {
+          "image_name": "Codex.exe",
+          "pid": 18464,
+          "session_name": "Console",
+          "session_number": 1,
+          "memory_usage": "10,988 K"
+        },
+        {
+          "image_name": "Codex.exe",
+          "pid": 9392,
+          "session_name": "Console",
+          "session_number": 1,
+          "memory_usage": "8,152 K"
+        },
+        {
+          "image_name": "Codex.exe",
+          "pid": 23324,
+          "session_name": "Console",
+          "session_number": 1,
+          "memory_usage": "138,016 K"
+        }
+      ],
+      "chrome": [
+        {
+          "image_name": "chrome.exe",
+          "pid": 12536,
+          "session_name": "Console",
+          "session_number": 1,
+          "memory_usage": "383,676 K"
+        },
+        {
+          "image_name": "chrome.exe",
+          "pid": 19056,
+          "session_name": "Console",
+          "session_number": 1,
+          "memory_usage": "14,060 K"
+        },
+        {
+          "image_name": "chrome.exe",
+          "pid": 16376,
+          "session_name": "Console",
+          "session_number": 1,
+          "memory_usage": "330,596 K"
+        },
+        {
+          "image_name": "chrome.exe",
+          "pid": 13652,
+          "session_name": "Console",
+          "session_number": 1,
+          "memory_usage": "57,916 K"
+        },
+        {
+          "image_name": "chrome.exe",
+          "pid": 1084,
+          "session_name": "Console",
+          "session_number": 1,
+          "memory_usage": "21,768 K"
+        }
+      ],
+      "node_repl": [
+        {
+          "image_name": "node_repl.exe",
+          "pid": 20724,
+          "session_name": "Console",
+          "session_number": 1,
+          "memory_usage": "7,540 K"
+        },
+        {
+          "image_name": "node_repl.exe",
+          "pid": 10700,
+          "session_name": "Console",
+          "session_number": 1,
+          "memory_usage": "7,548 K"
+        },
+        {
+          "image_name": "node_repl.exe",
+          "pid": 19720,
+          "session_name": "Console",
+          "session_number": 1,
+          "memory_usage": "7,556 K"
+        }
+      ],
+      "node": []
+    }
+  },
+  "inference": "SSH reaches an elevated/high-integrity LongShine token with Codex, VSCode, Chrome, node_repl, and node processes visible in the interactive console session. The recurring node_repl JS failure is therefore not explained by a missing Windows host, missing admin group, stopped firewall service, or absent Desktop processes; it remains a trusted Desktop Node REPL / native-pipe / sandbox context boundary.",
+  "checks": [
+    {
+      "name": "SSH cmd probe returns structured output",
+      "passed": true,
+      "status": "ok",
+      "detail": "status=0",
+      "artifact": ""
+    },
+    {
+      "name": "SSH token is in Administrators group",
+      "passed": true,
+      "status": "ok",
+      "detail": "Mandatory group, Enabled by default, Enabled group, Group owner",
+      "artifact": ""
+    },
+    {
+      "name": "SSH token is high integrity",
+      "passed": true,
+      "status": "ok",
+      "detail": "S-1-16-12288 present",
+      "artifact": ""
+    },
+    {
+      "name": "net session admin check is not access-denied",
+      "passed": true,
+      "status": "ok",
+      "detail": "pass_no_sessions",
+      "artifact": ""
+    },
+    {
+      "name": "Windows firewall service is running",
+      "passed": true,
+      "status": "ok",
+      "detail": "MpsSvc RUNNING",
+      "artifact": ""
+    },
+    {
+      "name": "Codex Desktop processes are visible in console session",
+      "passed": true,
+      "status": "ok",
+      "detail": "codex=10",
+      "artifact": ""
+    },
+    {
+      "name": "Chrome processes are visible in console session",
+      "passed": true,
+      "status": "ok",
+      "detail": "chrome=18",
+      "artifact": ""
+    },
+    {
+      "name": "Windows Node REPL processes are visible in console session",
+      "passed": true,
+      "status": "ok",
+      "detail": "node_repl=3",
+      "artifact": ""
+    },
+    {
+      "name": "PowerShell smoke is blocked in SSH context",
+      "passed": true,
+      "status": "ok",
+      "detail": "status=1 output=�ܾ����ʡ�",
+      "artifact": ""
+    }
+  ],
+  "passed": 9,
+  "total": 9
+}

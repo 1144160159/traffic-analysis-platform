@@ -1,0 +1,38 @@
+{
+  "status": "pass",
+  "route_id": "alerts",
+  "route": "/alerts",
+  "generated_at": "2026-07-01T16:41:54.412Z",
+  "desktop_chrome_backend_status": "pass",
+  "desktop_backend": "extension",
+  "auth_mode": "desktop_smoke_hash_acceptance_window",
+  "final_url": "http://10.0.5.8:30180/alerts",
+  "title": "园区网络全流量采集与分析系统",
+  "business_action": "Authenticated Desktop Chrome session opened the alert triage list through the controlled smoke-token acceptance window and verified alert business content.",
+  "target_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/alerts/actual-1920.png",
+  "no_4xx_5xx": true,
+  "no_requestfailed": true,
+  "no_pageerror": true,
+  "no_console_error": true,
+  "assertions": {
+    "url_contains_alerts": true,
+    "smoke_hash_consumed": true,
+    "not_login_shell": true,
+    "alert_business_text_visible": true,
+    "realtime_or_quality_text_visible": true,
+    "resource_error_count": 0,
+    "screenshot_upload_status": 201,
+    "screenshot_bytes": 175502,
+    "viewport": {
+      "dpr": 1.5,
+      "height": 1271,
+      "width": 2560
+    }
+  },
+  "errors": {
+    "console_errors": [],
+    "page_errors": [],
+    "request_failures": [],
+    "response_errors": []
+  }
+}

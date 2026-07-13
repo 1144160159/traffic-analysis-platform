@@ -1,0 +1,16 @@
+Generate a 3840x2160 PNG static 4K background asset for traffic-analysis-platform.
+
+Use case: productivity-visual.
+Asset type: model governance and registry background.
+
+Scene:
+- A dark model governance visual showing model registry shelves, evaluation matrices, feature lineage, activation gates, drift monitoring, approval chain, and rollback-safe versioning.
+- Represent model artifacts as abstract luminous capsules and score surfaces without readable metrics.
+
+Style:
+- Enterprise ML governance plus cyber analytics, deep navy/black base, cyan lineage paths, blue model artifacts, green approved model state, amber drift warning, rare red failed evaluation.
+- High-detail, trustworthy, technical, not academic or decorative.
+
+Constraints:
+- No readable model names, scores, dataset names, personal data, credentials, real IPs, logos, people, browser chrome, buttons, or complete UI screen.
+

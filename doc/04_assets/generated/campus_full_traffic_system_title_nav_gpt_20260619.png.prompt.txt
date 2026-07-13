@@ -1,0 +1,15 @@
+Use case: precise-object-edit
+Asset type: enterprise cybersecurity SaaS UI mockup screenshot.
+Edit target: the first large screenshot showing “指挥研判台 / Command Workbench”.
+Reference image 1: the second narrow crop containing the desired product title/header: “园区网络全流量采集与分析系统” with shield logo.
+Reference image 2: the third narrow crop containing the desired two-level left navigation menu.
+
+Primary request: Edit the first large UI screenshot. Replace only two areas:
+1. Replace the top-left “指挥研判台 / Command Workbench” brand/title block with the title/header style and content from reference image 1. The visible title must be exactly “园区网络全流量采集与分析系统”. Keep the shield logo style consistent with reference image 1. Remove “指挥研判台 / Command Workbench”.
+2. Replace the left navigation/sidebar menu area with the menu from reference image 2. The first-level menu labels must be exactly: 综合态势, 威胁分析, 资产图谱, 检测运营, 审计配置. The active first-level item is 威胁分析. The second-level menu labels must be exactly: 告警中心, 战役列表, 攻击链分析, 加密流量, 取证分析. 告警中心 is active and shows badge 128. 战役列表 shows badge 12.
+
+Preserve everything else in the first large screenshot unchanged: top metric cards, time, quick entry icons, campus topology panel, collection pipeline, alert queue, alert timeline, correlated cluster, traffic trend, evidence list, right-side selected alert/detail rail, bottom status bar, dark blue cyber operations palette, spacing, borders, icons, data values, and layout.
+
+Style constraints: production-quality dark enterprise security UI, crisp Chinese text, native-looking replacement areas, same lighting/glow/border/radius as the original screenshot. No browser chrome, no marketing hero, no unrelated redesign, no added panels, no changed charts, no changed right rail, no English replacement for Chinese menu labels, no unreadably tiny text.
+
+Output: one polished 16:9 UI screenshot with only those two requested replacements.

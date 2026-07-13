@@ -1,0 +1,17 @@
+Generate a 3840x2160 PNG static 4K background asset for traffic-analysis-platform.
+
+Use case: productivity-visual.
+Asset type: MLOps workflow DAG background.
+
+Scene:
+- A dark Argo-style machine learning operations workflow shown as an abstract DAG: data extraction, feature build, training, evaluation, registry, activation, deployment, and monitoring.
+- Include checkpoint nodes, artifact streams, event triggers, retry paths, and evidence outputs as visual motifs, without readable text.
+- Leave broad overlay-safe space along the lower-right quadrant.
+
+Style:
+- Enterprise workflow orchestration, dark navy/black, cyan DAG edges, blue artifact nodes, green successful gates, amber retry states, sparse red failed node.
+- Precise 4K technical rendering, structured but not a literal diagram.
+
+Constraints:
+- No readable task names, workflow IDs, metrics, logs, credentials, IPs, logos, people, browser chrome, terminal output, or full UI screenshot.
+

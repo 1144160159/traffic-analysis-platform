@@ -1,0 +1,214 @@
+{
+  "target_id": "attack-chains",
+  "route_id": "attack-chains",
+  "route": "/attack-chains",
+  "resolved_path": "/attack-chains",
+  "navigation_url": "http://10.0.5.8:30180/attack-chains?__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1783668366211#codex_smoke_token=<redacted>",
+  "final_url": "http://10.0.5.8:30180/attack-chains?__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1783668366211#codex_smoke_token=<redacted>",
+  "goto_error": null,
+  "bad_responses": [],
+  "resource_requests": [
+    {
+      "url": "http://10.0.5.8:30180/attack-chains?__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1783668366211",
+      "method": "GET",
+      "resource_type": "document"
+    },
+    {
+      "url": "http://10.0.5.8:30180/config.js?runtime=1",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/index-DbVjU8Q3.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-outvariant-BBS2yBlX.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-rettime-Dx7Zosze.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-react-DcxXCZkJ.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-is-node-process-BZ-2HBMI.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-misc-IOeGAkip.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-strict-event-emitter-CrFXw_VT.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-mswjs-interceptors-DhD__bBq.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-until-async-Bf6op_KE.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-path-to-regexp-wCvGX3Wm.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-tldts-core-CHyGRZbr.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-tldts-BrGjyBsC.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-set-cookie-parser-3_eJYb7L.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-headers-polyfill-BPLrDQpH.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-msw-CUNbvPfy.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-babel-runtime-DOsDFnm7.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-ant-design-fast-color-a4DwzfPV.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-dayjs-Csm2ddBZ.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-rc-D8Be7kXi.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-stylis-BmaM3nay.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-ant-design-9aWIuLjh.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-antd-Cukv-RvN.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-data-38j4_Kgc.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-remix-run-router-DTlRP5cs.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-router-CQ_4Ibzk.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/index-DDPdgPfc.css",
+      "method": "GET",
+      "resource_type": "stylesheet"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/AttackChainAnalysisPage-xTpxax67.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/OverlayContractHost-D4FKuj0C.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/StatusTag-DGvGdyMq.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/WorkPanel-D5XyU7AQ.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/screen-topbar-shield-exact@3x-BMBlSnq_.png",
+      "method": "GET",
+      "resource_type": "image"
+    }
+  ],
+  "forbidden_target_resource_requests": [],
+  "request_failures": [],
+  "console_errors": [],
+  "page_errors": [],
+  "metrics": {
+    "final_url": "http://10.0.5.8:30180/attack-chains?__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1783668366211#codex_smoke_token=<redacted>",
+    "document_title": "园区网络全流量采集与分析系统",
+    "h1": "攻击链分析",
+    "body_text_sample": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-06-20 03:45:00 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 采集监测 威胁分析 告警中心 128 战役列表 攻击链分析 加密流量 取证分析 资产图谱 检测运营 审计配置 S sec_analyst 安全分析师 在线 攻击链分析 选择战役 疑似 C2 隧道通信 时间范围 2026-06-19 00:00:00 ~ 2026-06-20 03:45:00 资产范围 全部资产 视图模式 攻击链视图 导出报告 下钻图谱 触发响应 链路详情 攻击链画布 攻击阶段 MITRE ATT&CK 攻击阶段 实体 / 资产 告警事件 证据锚点 处置动作 1 侦察 TA0043 203.0.113.45 端口扫描探测 06-19 01:12:08 DNS 解析记录 pcap / sysmon / session 封禁源 IP 低影响 2 初始访问 TA0001 边界防火墙 FW-01 Web 漏洞利用 06-19 01:18:08 HTTP 请求包 pcap / sysmon / session WAF 规则加固 低影响 3 执行 TA00",
+    "viewport_width": 2133,
+    "viewport_height": 1200,
+    "device_pixel_ratio": 0.8999999632438005,
+    "scroll_width": 2133,
+    "client_width": 2133,
+    "scroll_height": 1200,
+    "client_height": 1200,
+    "horizontal_overflow": false,
+    "vertical_scroll": false,
+    "error_alerts": [],
+    "visible_bad_geometry": []
+  },
+  "route_state_notes": [],
+  "protected_route": true,
+  "smoke_token_used": true,
+  "smoke_hash_consumed": false,
+  "status": "strict-pixel-fail-documented",
+  "capture_runtime_status": "pass",
+  "strict_pixel_status": "fail",
+  "strict_pixel_judgment": "fail-documented",
+  "visual_diff": {
+    "status": "fail",
+    "pixel_mismatch_ratio": 0.9999156057098766,
+    "max_pixel_ratio": 0.015,
+    "channel_tolerance": 0,
+    "metrics": "evidence/ui-image-breakdowns/pages/attack-chains/metrics-strict-r179-final.json",
+    "diff": "evidence/ui-image-breakdowns/pages/attack-chains/diff-strict-r179-final.png"
+  }
+}

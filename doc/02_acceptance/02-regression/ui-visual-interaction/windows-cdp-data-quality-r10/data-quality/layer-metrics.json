@@ -1,0 +1,157 @@
+{
+  "target_id": "data-quality",
+  "route": "/data-quality",
+  "status": "fail",
+  "generated_at": "2026-07-03T19:25:42.686577+08:00",
+  "layer_spec": "doc/04_assets/ui_suite_gpt_v1/specs/layers/data-quality.json",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/data-quality.png",
+  "actual_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-data-quality-r10/data-quality/actual-1920.png",
+  "viewport": {
+    "source_width": 1920,
+    "source_height": 1080,
+    "actual_width": 1920,
+    "actual_height": 1080,
+    "size_ok": true
+  },
+  "summary": {
+    "layer_count": 5,
+    "failed_layer_count": 5,
+    "roles": {
+      "global-app-shell": {
+        "layer_count": 3,
+        "failed_count": 3,
+        "weighted_mismatch_pixels": 465166,
+        "weighted_compared_pixels": 465182,
+        "weighted_channel_delta": 7294611.25,
+        "weighted_pixel_max_delta": 12707023.0,
+        "pixel_mismatch_ratio": 0.9999656048600333,
+        "mean_channel_delta": 15.681198434161253,
+        "mean_pixel_max_delta": 27.31623966533529
+      },
+      "page-workspace": {
+        "layer_count": 1,
+        "failed_count": 1,
+        "weighted_mismatch_pixels": 1579071,
+        "weighted_compared_pixels": 1579074,
+        "weighted_channel_delta": 30335162.75,
+        "weighted_pixel_max_delta": 53571731.0,
+        "pixel_mismatch_ratio": 0.9999981001523678,
+        "mean_channel_delta": 19.210729041197563,
+        "mean_pixel_max_delta": 33.9260420980904
+      },
+      "closed-loop-rail": {
+        "layer_count": 1,
+        "failed_count": 1,
+        "weighted_mismatch_pixels": 361200,
+        "weighted_compared_pixels": 361200,
+        "weighted_channel_delta": 6486410.0,
+        "weighted_pixel_max_delta": 10932449.0,
+        "pixel_mismatch_ratio": 1.0,
+        "mean_channel_delta": 17.95794573643411,
+        "mean_pixel_max_delta": 30.26702380952381
+      }
+    }
+  },
+  "layers": [
+    {
+      "id": "topbar",
+      "role": "global-app-shell",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 80
+      },
+      "status": "fail",
+      "compared_pixels": 153600,
+      "mismatch_pixels": 153600,
+      "pixel_mismatch_ratio": 1.0,
+      "max_pixel_ratio": 0.015,
+      "channel_tolerance": 0,
+      "max_channel_delta": 255,
+      "mean_channel_delta": 22.038701171875,
+      "mean_pixel_max_delta": 39.8304296875,
+      "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-data-quality-r10/data-quality/layers/topbar-diff.png"
+    },
+    {
+      "id": "sidebar",
+      "role": "global-app-shell",
+      "bbox": {
+        "x": 0,
+        "y": 80,
+        "w": 166,
+        "h": 917
+      },
+      "status": "fail",
+      "compared_pixels": 152222,
+      "mismatch_pixels": 152222,
+      "pixel_mismatch_ratio": 1.0,
+      "max_pixel_ratio": 0.015,
+      "channel_tolerance": 0,
+      "max_channel_delta": 255,
+      "mean_channel_delta": 14.383313515786154,
+      "mean_pixel_max_delta": 24.612441040059913,
+      "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-data-quality-r10/data-quality/layers/sidebar-diff.png"
+    },
+    {
+      "id": "content",
+      "role": "page-workspace",
+      "bbox": {
+        "x": 198,
+        "y": 80,
+        "w": 1722,
+        "h": 917
+      },
+      "status": "fail",
+      "compared_pixels": 1579074,
+      "mismatch_pixels": 1579071,
+      "pixel_mismatch_ratio": 0.9999981001523678,
+      "max_pixel_ratio": 0.015,
+      "channel_tolerance": 0,
+      "max_channel_delta": 255,
+      "mean_channel_delta": 19.210729041197563,
+      "mean_pixel_max_delta": 33.9260420980904,
+      "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-data-quality-r10/data-quality/layers/content-diff.png"
+    },
+    {
+      "id": "bottombar",
+      "role": "global-app-shell",
+      "bbox": {
+        "x": 0,
+        "y": 997,
+        "w": 1920,
+        "h": 83
+      },
+      "status": "fail",
+      "compared_pixels": 159360,
+      "mismatch_pixels": 159344,
+      "pixel_mismatch_ratio": 0.9998995983935743,
+      "max_pixel_ratio": 0.015,
+      "channel_tolerance": 0,
+      "max_channel_delta": 255,
+      "mean_channel_delta": 10.793235441767068,
+      "mean_pixel_max_delta": 17.837060742971886,
+      "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-data-quality-r10/data-quality/layers/bottombar-diff.png"
+    },
+    {
+      "id": "right-rail",
+      "role": "closed-loop-rail",
+      "bbox": {
+        "x": 1460,
+        "y": 104,
+        "w": 420,
+        "h": 860
+      },
+      "status": "fail",
+      "compared_pixels": 361200,
+      "mismatch_pixels": 361200,
+      "pixel_mismatch_ratio": 1.0,
+      "max_pixel_ratio": 0.015,
+      "channel_tolerance": 0,
+      "max_channel_delta": 255,
+      "mean_channel_delta": 17.95794573643411,
+      "mean_pixel_max_delta": 30.26702380952381,
+      "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-data-quality-r10/data-quality/layers/right-rail-diff.png"
+    }
+  ]
+}

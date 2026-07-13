@@ -1,0 +1,25 @@
+# 资产台账 V2 十图生成补充规范
+
+本文件与 `assets.prompt.txt` 联合使用，公共 AppShell、视觉 Token、字号、颜色和密度全部继承主 prompt。
+
+## 五张分类工作台
+
+- `assets.png`：终端 active，选中 `PC-0082 / 实验楼-PC-0082`；终端清单、流量画像、协议分布、Top 对端、周期连接和证据。
+- `assets-server.png`：服务器 active，选中 `SRV-0007 / 实验楼-SRV-12`；服务器清单、端口矩阵、API/SVG 服务拓扑、开放服务、探针状态和归属。
+- `assets-network-device.png`：网络设备 active，选中 `NET-0001 / 核心交换机-CSW-01`；设备表、接口矩阵、API/SVG 链路拓扑、镜像口、配置变更和业务影响。
+- `assets-business-system.png`：业务系统 active，选中 `BIZ-0001 / 教学管理系统`；系统表、依赖关系、风险评分、关键服务、依赖健康和 SLA。
+- `assets-unknown.png`：未知资产 active，选中 `UNK-10.12.88.45 / 未知资产 10.12.88.45`；未知队列、发现时间线、指纹、归属候选、暴露面和工单闭环。
+
+分类页右侧只显示当前分类对象摘要和分类动作。除服务器页的“进入资产详情”入口外，不显示或伪造服务器详情 Tab。
+
+## 五张同一服务器详情 Drawer
+
+五张图统一身份 `SRV-0007 / 实验楼-SRV-12 / 10.12.4.12 / Ubuntu 22.04 / 高风险 / 在线`，统一五个等宽子 Tab。右侧 Drawer 后方保留服务器工作台和菜单上下文。
+
+- `assets-detail-basic.png`：基础信息 active；字段、健康度、标签和责任边界，较窄 Drawer。
+- `assets-detail-network-interface.png`：网络接口 active；六接口表、VLAN、模式、状态、速率、吞吐 ECharts 和接口健康，较宽 Drawer。
+- `assets-detail-open-services.png`：开放服务 active；服务表、端口矩阵、指纹、暴露面、风险、告警和 24h 会话 ECharts，较宽 Drawer。
+- `assets-detail-ownership.png`：归属信息 active；园区、部门、业务系统、资产组、数据域、责任角色、依赖归属和完整度，较窄 Drawer。
+- `assets-detail-history.png`：历史变更 active；变更时间线、字段 Diff、风险趋势、审批和回滚，较宽 Drawer。
+
+所有图必须为 1920x1080、中文、无浏览器边框、无水印；不得把告警 ID 写成资产 ID，不得在详情切换时改变资产身份。

@@ -1,0 +1,153 @@
+{
+  "package_id": "ui_windows_node_repl_chrome_bridge_smoke",
+  "result": "blocked_chrome_bridge",
+  "generated_at": "2026-07-02T20:21:21.508Z",
+  "windows": {
+    "host": "10.3.6.59",
+    "user": "LongShine",
+    "node_repl_command": "C:\\Users\\LongShine\\AppData\\Local\\OpenAI\\Codex\\runtimes\\cua_node\\1b23c930bdf84ed6\\bin\\node_repl.exe",
+    "chrome_client_url": "file:///C:/Users/LongShine/.codex/plugins/cache/openai-bundled/chrome/latest/scripts/browser-client.mjs"
+  },
+  "mcp_config": {
+    "result": "pass",
+    "enabled": true,
+    "transport_type": "stdio",
+    "env_keys": [
+      "NODE_REPL_TRUSTED_CODE_PATHS",
+      "NODE_REPL_NODE_PATH",
+      "NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S",
+      "CODEX_HOME",
+      "NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME",
+      "BROWSER_USE_CODEX_APP_BUILD_FLAVOR",
+      "NODE_REPL_NODE_MODULE_DIRS",
+      "SKY_CUA_NATIVE_PIPE",
+      "NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER",
+      "CODEX_CLI_PATH",
+      "NODE_REPL_NATIVE_PIPE_CONNECT_TIMEOUT_MS",
+      "BROWSER_USE_AVAILABLE_BACKENDS",
+      "BROWSER_USE_CODEX_APP_VERSION",
+      "SKY_CUA_NATIVE_PIPE_DIRECTORY"
+    ],
+    "env_inventory": {
+      "NODE_REPL_TRUSTED_CODE_PATHS": {
+        "present": true,
+        "length": 25
+      },
+      "NODE_REPL_NODE_PATH": {
+        "present": true,
+        "length": 93
+      },
+      "NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S": {
+        "present": true,
+        "length": 129
+      },
+      "CODEX_HOME": {
+        "present": true,
+        "length": 25
+      },
+      "NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME": {
+        "present": true,
+        "length": 199
+      },
+      "BROWSER_USE_CODEX_APP_BUILD_FLAVOR": {
+        "present": true,
+        "length": 4
+      },
+      "NODE_REPL_NODE_MODULE_DIRS": {
+        "present": true,
+        "length": 97
+      },
+      "SKY_CUA_NATIVE_PIPE": {
+        "present": true,
+        "length": 1
+      },
+      "NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER": {
+        "present": true,
+        "length": 66
+      },
+      "CODEX_CLI_PATH": {
+        "present": true,
+        "length": 76
+      },
+      "NODE_REPL_NATIVE_PIPE_CONNECT_TIMEOUT_MS": {
+        "present": true,
+        "length": 4
+      },
+      "BROWSER_USE_AVAILABLE_BACKENDS": {
+        "present": true,
+        "length": 10
+      },
+      "BROWSER_USE_CODEX_APP_VERSION": {
+        "present": true,
+        "length": 12
+      },
+      "SKY_CUA_NATIVE_PIPE_DIRECTORY": {
+        "present": true,
+        "length": 64
+      }
+    }
+  },
+  "direct_js_smoke": {
+    "result": "pass",
+    "ssh_exit_code": 0,
+    "tools": [
+      "js",
+      "js_add_node_module_dir",
+      "js_reset"
+    ],
+    "data": {
+      "ok": true,
+      "cwd": "C:\\Users\\LongShine",
+      "homeDir": "C:\\Users\\LongShine"
+    },
+    "is_error": false,
+    "stderr": ""
+  },
+  "full_env_js_smoke": {
+    "result": "blocked",
+    "ssh_exit_code": 0,
+    "data": {
+      "text_prefix": "node_repl kernel exited unexpectedly\n\nnode_repl diagnostics: {\"kernel_pid\":20440,\"kernel_status\":\"running\",\"kernel_stderr_tail\":\"windows sandbox failed: helper_firewall_rule_create_or_add_failed: SetRemotePorts failed: Error { code: HRESULT(0x80070005), message: \\\"拒绝访问。\\\" }\",\"reason\":\"stdout_eof\",\"stream_error\":null}"
+    },
+    "is_error": true,
+    "stderr": "\u001b[2m2026-07-02T20:21:13.330730Z\u001b[0m \u001b[31mERROR\u001b[0m \u001b[2mnode_repl::diagnostics\u001b[0m\u001b[2m:\u001b[0m node_repl kernel terminated unexpectedly \u001b[3mreason\u001b[0m\u001b[2m=\u001b[0m\"stdout_eof\" \u001b[3mstream_error\u001b[0m\u001b[2m=\u001b[0m\"\" \u001b[3mredacted_source_available\u001b[0m\u001b[2m=\u001b[0mfalse \u001b[3mredacted_source_exec_completed\u001b[0m\u001b[2m=\u001b[0mfalse \u001b[3mredacted_source\u001b[0m\u001b[2m=\u001b[0m\"unavailable\" \u001b[3mtarget_os\u001b[0m\u001b[2m=\u001b[0m\"windows\" \u001b[3mtarget_arch\u001b[0m\u001b[2m=\u001b[0m\"x86_64\""
+  },
+  "chrome_extension_no_env_smoke": {
+    "result": "blocked",
+    "failure_class": "native_pipe_or_trust_unavailable",
+    "ssh_exit_code": 0,
+    "tools": [
+      "js",
+      "js_add_node_module_dir",
+      "js_reset"
+    ],
+    "data": {
+      "ok": false,
+      "step": "chrome-extension-target-smoke",
+      "error": "Error: privileged native pipe bridge is not available; browser-client is not trusted\n    at Module.VEe (C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\26.623.81905\\scripts\\browser-client.mjs:3246:3358)\n    at C:\\Users\\LongShine\\.node_repl_cell_0.mjs:10:16\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+    },
+    "is_error": false,
+    "stderr": ""
+  },
+  "chrome_extension_smoke": {
+    "result": "blocked",
+    "failure_class": "sandbox_firewall_denied",
+    "ssh_exit_code": 0,
+    "tools": [
+      "js",
+      "js_add_node_module_dir",
+      "js_reset"
+    ],
+    "data": {
+      "text_prefix": "node_repl kernel exited unexpectedly\n\nnode_repl diagnostics: {\"kernel_pid\":20608,\"kernel_status\":\"running\",\"kernel_stderr_tail\":\"windows sandbox failed: helper_firewall_rule_create_or_add_failed: SetRemotePorts failed: Error { code: HRESULT(0x80070005), message: \\\"拒绝访问。\\\" }\",\"reason\":\"stdout_eof\",\"stream_error\":null}"
+    },
+    "is_error": true,
+    "stderr": "\u001b[2m2026-07-02T20:21:19.043238Z\u001b[0m \u001b[31mERROR\u001b[0m \u001b[2mnode_repl::diagnostics\u001b[0m\u001b[2m:\u001b[0m node_repl kernel terminated unexpectedly \u001b[3mreason\u001b[0m\u001b[2m=\u001b[0m\"stdout_eof\" \u001b[3mstream_error\u001b[0m\u001b[2m=\u001b[0m\"\" \u001b[3mredacted_source_available\u001b[0m\u001b[2m=\u001b[0mfalse \u001b[3mredacted_source_exec_completed\u001b[0m\u001b[2m=\u001b[0mfalse \u001b[3mredacted_source\u001b[0m\u001b[2m=\u001b[0m\"unavailable\" \u001b[3mtarget_os\u001b[0m\u001b[2m=\u001b[0m\"windows\" \u001b[3mtarget_arch\u001b[0m\u001b[2m=\u001b[0m\"x86_64\""
+  },
+  "acceptance_effect": "boundary_evidence_only_not_visual_acceptance",
+  "blockers": [
+    "Full-env SSH-spawned node_repl minimal JS smoke failed",
+    "No-env Chrome extension target smoke did not reach extension backend: native_pipe_or_trust_unavailable",
+    "Full-env Chrome extension target smoke did not reach extension backend: sandbox_firewall_denied"
+  ]
+}

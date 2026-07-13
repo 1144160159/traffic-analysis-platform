@@ -1,0 +1,5369 @@
+{
+  "run_id": "20260629-release-manifest-r6",
+  "generated_at": "2026-06-29T08:51:21+08:00",
+  "acceptance_type": "regression",
+  "scope_note": "Release/baseline regression evidence only; not a 10x100Gbps, 512Mpps, third-party, security-production, or HA acceptance pass.",
+  "git": {
+    "commit": "e3316aec4ac1d6592e28aefc86853128ecde7408",
+    "branch": "main",
+    "dirty_count": 620,
+    "status_file": "git-status.txt",
+    "diff_stat_file": "git-diff-stat.txt"
+  },
+  "live_targets": {
+    "apisix": "http://10.0.5.8:30180",
+    "tenant": "default"
+  },
+  "kubernetes": {
+    "core_manifest_dry_run_rc": 0,
+    "workloads": [
+      {
+        "namespace": "argo-events",
+        "kind": "Deployment",
+        "name": "controller-manager",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          {
+            "name": "controller-manager",
+            "image": "quay.io/argoproj/argo-events:v1.9.9"
+          }
+        ]
+      },
+      {
+        "namespace": "argo-events",
+        "kind": "Deployment",
+        "name": "mlops-retrain-smoke-sensor-nt5jm",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          {
+            "name": "main",
+            "image": "quay.io/argoproj/argo-events:v1.9.9"
+          }
+        ]
+      },
+      {
+        "namespace": "argo-events",
+        "kind": "Deployment",
+        "name": "mlops-webhook-eventsource-zcg54",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          {
+            "name": "main",
+            "image": "quay.io/argoproj/argo-events:v1.9.9"
+          }
+        ]
+      },
+      {
+        "namespace": "argo",
+        "kind": "Deployment",
+        "name": "argo-server",
+        "desired": 2,
+        "ready": 2,
+        "images": [
+          {
+            "name": "argo-server",
+            "image": "quay.io/argoproj/argocli:v3.5.5"
+          }
+        ]
+      },
+      {
+        "namespace": "argo",
+        "kind": "Deployment",
+        "name": "workflow-controller",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          {
+            "name": "workflow-controller",
+            "image": "quay.io/argoproj/workflow-controller:v3.5.5"
+          }
+        ]
+      },
+      {
+        "namespace": "cert-manager",
+        "kind": "Deployment",
+        "name": "cert-manager",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          {
+            "name": "cert-manager-controller",
+            "image": "quay.io/jetstack/cert-manager-controller:v1.14.5"
+          }
+        ]
+      },
+      {
+        "namespace": "cert-manager",
+        "kind": "Deployment",
+        "name": "cert-manager-cainjector",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          {
+            "name": "cert-manager-cainjector",
+            "image": "quay.io/jetstack/cert-manager-cainjector:v1.14.5"
+          }
+        ]
+      },
+      {
+        "namespace": "cert-manager",
+        "kind": "Deployment",
+        "name": "cert-manager-webhook",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          {
+            "name": "cert-manager-webhook",
+            "image": "quay.io/jetstack/cert-manager-webhook:v1.14.5"
+          }
+        ]
+      },
+      {
+        "namespace": "kube-system",
+        "kind": "Deployment",
+        "name": "coredns",
+        "desired": 2,
+        "ready": 2,
+        "images": [
+          {
+            "name": "coredns",
+            "image": "registry.k8s.io/coredns/coredns:v1.11.1"
+          }
+        ]
+      },
+      {
+        "namespace": "metallb-system",
+        "kind": "Deployment",
+        "name": "controller",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          {
+            "name": "controller",
+            "image": "quay.io/metallb/controller:v0.14.5"
+          }
+        ]
+      },
+      {
+        "namespace": "middleware",
+        "kind": "Deployment",
+        "name": "nebula-graph",
+        "desired": 3,
+        "ready": 3,
+        "images": [
+          {
+            "name": "graphd",
+            "image": "vesoft/nebula-graphd:v3.6.0"
+          }
+        ]
+      },
+      {
+        "namespace": "middleware",
+        "kind": "Deployment",
+        "name": "nebula-proxy",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          {
+            "name": "nginx",
+            "image": "nginx:alpine"
+          }
+        ]
+      },
+      {
+        "namespace": "middleware",
+        "kind": "Deployment",
+        "name": "nebula-studio",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          {
+            "name": "studio",
+            "image": "vesoft/nebula-graph-studio:v3.10.0"
+          }
+        ]
+      },
+      {
+        "namespace": "minio",
+        "kind": "Deployment",
+        "name": "minio-proxy",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          {
+            "name": "nginx",
+            "image": "nginx:alpine"
+          }
+        ]
+      },
+      {
+        "namespace": "streampark",
+        "kind": "Deployment",
+        "name": "streampark-proxy",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          {
+            "name": "nginx",
+            "image": "nginx:alpine"
+          }
+        ]
+      },
+      {
+        "namespace": "traffic-analysis",
+        "kind": "Deployment",
+        "name": "alert-service",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          {
+            "name": "alert-service",
+            "image": "docker.io/traffic/alert-service:latency-chain-20260629-r3"
+          }
+        ]
+      },
+      {
+        "namespace": "traffic-analysis",
+        "kind": "Deployment",
+        "name": "asset-service",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          {
+            "name": "asset-service",
+            "image": "traffic/asset-service:latest"
+          }
+        ]
+      },
+      {
+        "namespace": "traffic-analysis",
+        "kind": "Deployment",
+        "name": "auth-service",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          {
+            "name": "auth-service",
+            "image": "traffic/auth-service:screen-scope-20260629-r1"
+          }
+        ]
+      },
+      {
+        "namespace": "traffic-analysis",
+        "kind": "Deployment",
+        "name": "codex-loop-queue-service",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          {
+            "name": "queue-service",
+            "image": "traffic-analysis/codex-loop:local"
+          }
+        ]
+      },
+      {
+        "namespace": "traffic-analysis",
+        "kind": "Deployment",
+        "name": "forensics-service",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          {
+            "name": "forensics-service",
+            "image": "traffic/forensics-service:pcap-integrity-20260629-r1"
+          }
+        ]
+      },
+      {
+        "namespace": "traffic-analysis",
+        "kind": "Deployment",
+        "name": "graph-service",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          {
+            "name": "graph-service",
+            "image": "traffic/graph-service:business-flow-20260629-r1"
+          }
+        ]
+      },
+      {
+        "namespace": "traffic-analysis",
+        "kind": "Deployment",
+        "name": "ingest-gateway",
+        "desired": 2,
+        "ready": 2,
+        "images": [
+          {
+            "name": "init-dlq-fallback-dir",
+            "image": "traffic/ingest-gateway:dq-dlq-jwt-20260629-r1"
+          },
+          {
+            "name": "ingest-gateway",
+            "image": "traffic/ingest-gateway:dq-dlq-jwt-20260629-r1"
+          }
+        ]
+      },
+      {
+        "namespace": "traffic-analysis",
+        "kind": "Deployment",
+        "name": "rule-manager",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          {
+            "name": "rule-manager",
+            "image": "traffic/rule-manager:mlops-model-name-fix-20260617"
+          }
+        ]
+      },
+      {
+        "namespace": "traffic-analysis",
+        "kind": "Deployment",
+        "name": "threat-intel-service",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          {
+            "name": "threat-intel-service",
+            "image": "traffic/threat-intel-service:threat-intel-20260629-r6"
+          }
+        ]
+      },
+      {
+        "namespace": "traffic-analysis",
+        "kind": "Deployment",
+        "name": "web-ui",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          {
+            "name": "web-ui",
+            "image": "traffic/web-ui:fusion-threat-intel-20260629-r1"
+          }
+        ]
+      },
+      {
+        "namespace": "argo-events",
+        "kind": "StatefulSet",
+        "name": "eventbus-default-stan",
+        "desired": 3,
+        "ready": 3,
+        "images": [
+          {
+            "name": "stan",
+            "image": "nats-streaming:0.22.1"
+          },
+          {
+            "name": "metrics",
+            "image": "natsio/prometheus-nats-exporter:0.8.0"
+          }
+        ]
+      },
+      {
+        "namespace": "databases",
+        "kind": "StatefulSet",
+        "name": "postgres-primary",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          {
+            "name": "postgres",
+            "image": "postgres:16-alpine"
+          }
+        ]
+      },
+      {
+        "namespace": "databases",
+        "kind": "StatefulSet",
+        "name": "postgres-replica",
+        "desired": 2,
+        "ready": 2,
+        "images": [
+          {
+            "name": "init-replica",
+            "image": "postgres:16-alpine"
+          },
+          {
+            "name": "postgres",
+            "image": "postgres:16-alpine"
+          }
+        ]
+      },
+      {
+        "namespace": "databases",
+        "kind": "StatefulSet",
+        "name": "redis-master",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          {
+            "name": "redis",
+            "image": "redis:7-alpine"
+          }
+        ]
+      },
+      {
+        "namespace": "databases",
+        "kind": "StatefulSet",
+        "name": "redis-replica",
+        "desired": 2,
+        "ready": 2,
+        "images": [
+          {
+            "name": "redis",
+            "image": "redis:7-alpine"
+          }
+        ]
+      },
+      {
+        "namespace": "databases",
+        "kind": "StatefulSet",
+        "name": "redis-sentinel",
+        "desired": 3,
+        "ready": 3,
+        "images": [
+          {
+            "name": "sentinel",
+            "image": "redis:7-alpine"
+          }
+        ]
+      },
+      {
+        "namespace": "flink",
+        "kind": "StatefulSet",
+        "name": "flink-jobmanager",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          {
+            "name": "jobmanager",
+            "image": "flink:1.18-scala_2.12"
+          }
+        ]
+      },
+      {
+        "namespace": "flink",
+        "kind": "StatefulSet",
+        "name": "flink-taskmanager",
+        "desired": 2,
+        "ready": 2,
+        "images": [
+          {
+            "name": "taskmanager",
+            "image": "flink:1.18-scala_2.12"
+          }
+        ]
+      },
+      {
+        "namespace": "gateway",
+        "kind": "StatefulSet",
+        "name": "apisix",
+        "desired": 2,
+        "ready": 2,
+        "images": [
+          {
+            "name": "apisix",
+            "image": "apache/apisix:3.9.0-debian"
+          }
+        ]
+      },
+      {
+        "namespace": "iam",
+        "kind": "StatefulSet",
+        "name": "keycloak",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          {
+            "name": "keycloak",
+            "image": "quay.io/keycloak/keycloak:24.0"
+          }
+        ]
+      },
+      {
+        "namespace": "middleware",
+        "kind": "StatefulSet",
+        "name": "clickhouse-1",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          {
+            "name": "ch-init",
+            "image": "busybox:1.36"
+          },
+          {
+            "name": "clickhouse",
+            "image": "clickhouse/clickhouse-server:24.3"
+          }
+        ]
+      },
+      {
+        "namespace": "middleware",
+        "kind": "StatefulSet",
+        "name": "clickhouse-2",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          {
+            "name": "ch-init",
+            "image": "busybox:1.36"
+          },
+          {
+            "name": "clickhouse",
+            "image": "clickhouse/clickhouse-server:24.3"
+          }
+        ]
+      },
+      {
+        "namespace": "middleware",
+        "kind": "StatefulSet",
+        "name": "clickhouse-keeper",
+        "desired": 3,
+        "ready": 3,
+        "images": [
+          {
+            "name": "init-config",
+            "image": "busybox:1.36"
+          },
+          {
+            "name": "keeper",
+            "image": "clickhouse/clickhouse-server:24.3"
+          }
+        ]
+      },
+      {
+        "namespace": "middleware",
+        "kind": "StatefulSet",
+        "name": "clickhouse-replica",
+        "desired": 2,
+        "ready": 2,
+        "images": [
+          {
+            "name": "ch-init",
+            "image": "busybox:1.36"
+          },
+          {
+            "name": "clickhouse",
+            "image": "clickhouse/clickhouse-server:24.3"
+          }
+        ]
+      },
+      {
+        "namespace": "middleware",
+        "kind": "StatefulSet",
+        "name": "kafka",
+        "desired": 3,
+        "ready": 3,
+        "images": [
+          {
+            "name": "kafka",
+            "image": "apache/kafka:3.7.0"
+          }
+        ]
+      },
+      {
+        "namespace": "middleware",
+        "kind": "StatefulSet",
+        "name": "kafka-ui",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          {
+            "name": "kafka-ui",
+            "image": "provectuslabs/kafka-ui:latest"
+          }
+        ]
+      },
+      {
+        "namespace": "middleware",
+        "kind": "StatefulSet",
+        "name": "nebula-meta",
+        "desired": 3,
+        "ready": 3,
+        "images": [
+          {
+            "name": "metad",
+            "image": "vesoft/nebula-metad:v3.6.0"
+          }
+        ]
+      },
+      {
+        "namespace": "middleware",
+        "kind": "StatefulSet",
+        "name": "nebula-storage",
+        "desired": 3,
+        "ready": 3,
+        "images": [
+          {
+            "name": "init-dirs",
+            "image": "busybox:1.36"
+          },
+          {
+            "name": "storaged",
+            "image": "vesoft/nebula-storaged:v3.6.0"
+          }
+        ]
+      },
+      {
+        "namespace": "middleware",
+        "kind": "StatefulSet",
+        "name": "opensearch",
+        "desired": 3,
+        "ready": 3,
+        "images": [
+          {
+            "name": "opensearch",
+            "image": "opensearchproject/opensearch:2.14.0"
+          }
+        ]
+      },
+      {
+        "namespace": "minio",
+        "kind": "StatefulSet",
+        "name": "minio",
+        "desired": 4,
+        "ready": 4,
+        "images": [
+          {
+            "name": "minio",
+            "image": "quay.io/minio/minio:latest"
+          }
+        ]
+      },
+      {
+        "namespace": "nacos",
+        "kind": "StatefulSet",
+        "name": "nacos",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          {
+            "name": "nacos",
+            "image": "nacos/nacos-server:v2.3.2"
+          }
+        ]
+      },
+      {
+        "namespace": "observability",
+        "kind": "StatefulSet",
+        "name": "grafana",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          {
+            "name": "grafana",
+            "image": "grafana/grafana:10.4.0"
+          }
+        ]
+      },
+      {
+        "namespace": "observability",
+        "kind": "StatefulSet",
+        "name": "loki",
+        "desired": 2,
+        "ready": 2,
+        "images": [
+          {
+            "name": "loki",
+            "image": "grafana/loki:2.9.0"
+          }
+        ]
+      },
+      {
+        "namespace": "observability",
+        "kind": "StatefulSet",
+        "name": "victoria-metrics",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          {
+            "name": "vm",
+            "image": "docker.io/victoriametrics/victoria-metrics:latest"
+          }
+        ]
+      },
+      {
+        "namespace": "registry",
+        "kind": "StatefulSet",
+        "name": "apicurio",
+        "desired": 1,
+        "ready": 1,
+        "images": [
+          {
+            "name": "apicurio",
+            "image": "apicurio/apicurio-registry-mem:2.5.9.Final"
+          }
+        ]
+      },
+      {
+        "namespace": "streampark",
+        "kind": "StatefulSet",
+        "name": "streampark",
+        "desired": 2,
+        "ready": 2,
+        "images": [
+          {
+            "name": "streampark",
+            "image": "apache/streampark:latest"
+          }
+        ]
+      },
+      {
+        "namespace": "kube-flannel",
+        "kind": "DaemonSet",
+        "name": "kube-flannel-ds",
+        "desired": 2,
+        "ready": 2,
+        "images": [
+          {
+            "name": "install-cni-plugin",
+            "image": "ghcr.io/flannel-io/flannel-cni-plugin:v1.9.1-flannel1"
+          },
+          {
+            "name": "install-cni",
+            "image": "ghcr.io/flannel-io/flannel:v0.28.5"
+          },
+          {
+            "name": "kube-flannel",
+            "image": "ghcr.io/flannel-io/flannel:v0.28.5"
+          }
+        ]
+      },
+      {
+        "namespace": "kube-system",
+        "kind": "DaemonSet",
+        "name": "kube-proxy",
+        "desired": 2,
+        "ready": 2,
+        "images": [
+          {
+            "name": "kube-proxy",
+            "image": "registry.k8s.io/kube-proxy:v1.29.15"
+          }
+        ]
+      },
+      {
+        "namespace": "metallb-system",
+        "kind": "DaemonSet",
+        "name": "speaker",
+        "desired": 2,
+        "ready": 2,
+        "images": [
+          {
+            "name": "speaker",
+            "image": "quay.io/metallb/speaker:v0.14.5"
+          }
+        ]
+      },
+      {
+        "namespace": "traffic-analysis",
+        "kind": "DaemonSet",
+        "name": "probe-agent",
+        "desired": 2,
+        "ready": 2,
+        "images": [
+          {
+            "name": "probe-agent",
+            "image": "traffic/probe-agent:s3-multipart-cleanup-fix-20260617"
+          }
+        ]
+      }
+    ],
+    "pod_images": [
+      {
+        "namespace": "argo-events",
+        "pod": "controller-manager-6758df4c9-5rr8z",
+        "container": "controller-manager",
+        "image": "quay.io/argoproj/argo-events:v1.9.9",
+        "image_id": "quay.io/argoproj/argo-events@sha256:ee78d5a780cf449063003af241b3741d79bdde30840c1d5a2458b2cb1bbf3190",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo-events",
+        "pod": "eventbus-default-stan-0",
+        "container": "metrics",
+        "image": "docker.io/natsio/prometheus-nats-exporter:0.8.0",
+        "image_id": "docker.io/natsio/prometheus-nats-exporter@sha256:9d5f8e9e8e59896762fa7be7635badd242e4dbd3686e19ec6cf959366db0035e",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo-events",
+        "pod": "eventbus-default-stan-0",
+        "container": "stan",
+        "image": "docker.io/library/nats-streaming:0.22.1",
+        "image_id": "docker.io/library/nats-streaming@sha256:3dd7b21a7fceebc956629af8ad31b7e5dfb2cc717cba4be55e6b50f7ca726932",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo-events",
+        "pod": "eventbus-default-stan-1",
+        "container": "metrics",
+        "image": "docker.io/natsio/prometheus-nats-exporter:0.8.0",
+        "image_id": "docker.io/natsio/prometheus-nats-exporter@sha256:9d5f8e9e8e59896762fa7be7635badd242e4dbd3686e19ec6cf959366db0035e",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo-events",
+        "pod": "eventbus-default-stan-1",
+        "container": "stan",
+        "image": "docker.io/library/nats-streaming:0.22.1",
+        "image_id": "docker.io/library/nats-streaming@sha256:3dd7b21a7fceebc956629af8ad31b7e5dfb2cc717cba4be55e6b50f7ca726932",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo-events",
+        "pod": "eventbus-default-stan-2",
+        "container": "metrics",
+        "image": "docker.io/natsio/prometheus-nats-exporter:0.8.0",
+        "image_id": "docker.io/natsio/prometheus-nats-exporter@sha256:9d5f8e9e8e59896762fa7be7635badd242e4dbd3686e19ec6cf959366db0035e",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo-events",
+        "pod": "eventbus-default-stan-2",
+        "container": "stan",
+        "image": "docker.io/library/nats-streaming:0.22.1",
+        "image_id": "docker.io/library/nats-streaming@sha256:3dd7b21a7fceebc956629af8ad31b7e5dfb2cc717cba4be55e6b50f7ca726932",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo-events",
+        "pod": "mlops-retrain-smoke-sensor-nt5jm-756c74878f-j5ftt",
+        "container": "main",
+        "image": "quay.io/argoproj/argo-events:v1.9.9",
+        "image_id": "quay.io/argoproj/argo-events@sha256:ee78d5a780cf449063003af241b3741d79bdde30840c1d5a2458b2cb1bbf3190",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo-events",
+        "pod": "mlops-webhook-eventsource-zcg54-68b68f558-54mn7",
+        "container": "main",
+        "image": "quay.io/argoproj/argo-events:v1.9.9",
+        "image_id": "quay.io/argoproj/argo-events@sha256:ee78d5a780cf449063003af241b3741d79bdde30840c1d5a2458b2cb1bbf3190",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo",
+        "pod": "argo-server-66d5b9d998-8tksd",
+        "container": "argo-server",
+        "image": "quay.io/argoproj/argocli:v3.5.5",
+        "image_id": "quay.io/argoproj/argocli@sha256:91b9825f09a8d097cc7ca339ab3e8a6387d18a8c705819e37114600640d871b2",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo",
+        "pod": "argo-server-66d5b9d998-bqjzt",
+        "container": "argo-server",
+        "image": "docker.io/argoproj/argocli:v3.5.5",
+        "image_id": "docker.io/argoproj/argocli@sha256:91b9825f09a8d097cc7ca339ab3e8a6387d18a8c705819e37114600640d871b2",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo",
+        "pod": "mlops-event-smoke-thmlc",
+        "container": "init",
+        "image": "quay.io/argoproj/argoexec:v3.5.5",
+        "image_id": "quay.io/argoproj/argoexec@sha256:32a568bd1ecb2691a61aa4a646d90b08fe5c4606a2d5cbf264565b1ced98f12b",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo",
+        "pod": "mlops-event-smoke-thmlc",
+        "container": "main",
+        "image": "docker.io/library/alpine:3.19",
+        "image_id": "docker.io/library/alpine@sha256:6baf43584bcb78f2e5847d1de515f23499913ac9f12bdf834811a3145eb11ca1",
+        "ready": false,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo",
+        "pod": "mlops-event-smoke-thmlc",
+        "container": "wait",
+        "image": "quay.io/argoproj/argoexec:v3.5.5",
+        "image_id": "quay.io/argoproj/argoexec@sha256:32a568bd1ecb2691a61aa4a646d90b08fe5c4606a2d5cbf264565b1ced98f12b",
+        "ready": false,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo",
+        "pod": "mlops-manual-2dhvf-evaluate-model-1727408720",
+        "container": "init",
+        "image": "quay.io/argoproj/argoexec:v3.5.5",
+        "image_id": "quay.io/argoproj/argoexec@sha256:32a568bd1ecb2691a61aa4a646d90b08fe5c4606a2d5cbf264565b1ced98f12b",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo",
+        "pod": "mlops-manual-2dhvf-evaluate-model-1727408720",
+        "container": "main",
+        "image": "docker.io/traffic/mlops-trainer:full-pipeline-fix-20260617",
+        "image_id": "sha256:7d3f43afa16d6b0de9b0388c77279100140cb56f6db038677149e030336babc2",
+        "ready": false,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo",
+        "pod": "mlops-manual-2dhvf-evaluate-model-1727408720",
+        "container": "wait",
+        "image": "quay.io/argoproj/argoexec:v3.5.5",
+        "image_id": "quay.io/argoproj/argoexec@sha256:32a568bd1ecb2691a61aa4a646d90b08fe5c4606a2d5cbf264565b1ced98f12b",
+        "ready": false,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo",
+        "pod": "mlops-manual-2dhvf-extract-data-586011489",
+        "container": "init",
+        "image": "quay.io/argoproj/argoexec:v3.5.5",
+        "image_id": "quay.io/argoproj/argoexec@sha256:32a568bd1ecb2691a61aa4a646d90b08fe5c4606a2d5cbf264565b1ced98f12b",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo",
+        "pod": "mlops-manual-2dhvf-extract-data-586011489",
+        "container": "main",
+        "image": "docker.io/traffic/mlops-trainer:full-pipeline-fix-20260617",
+        "image_id": "sha256:7d3f43afa16d6b0de9b0388c77279100140cb56f6db038677149e030336babc2",
+        "ready": false,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo",
+        "pod": "mlops-manual-2dhvf-extract-data-586011489",
+        "container": "wait",
+        "image": "quay.io/argoproj/argoexec:v3.5.5",
+        "image_id": "quay.io/argoproj/argoexec@sha256:32a568bd1ecb2691a61aa4a646d90b08fe5c4606a2d5cbf264565b1ced98f12b",
+        "ready": false,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo",
+        "pod": "mlops-manual-2dhvf-preflight-check-1097874432",
+        "container": "init",
+        "image": "quay.io/argoproj/argoexec:v3.5.5",
+        "image_id": "quay.io/argoproj/argoexec@sha256:32a568bd1ecb2691a61aa4a646d90b08fe5c4606a2d5cbf264565b1ced98f12b",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo",
+        "pod": "mlops-manual-2dhvf-preflight-check-1097874432",
+        "container": "main",
+        "image": "docker.io/clickhouse/clickhouse-server:24.3",
+        "image_id": "sha256:cd3b547d16ce8ab9e122ff96fe3379564535b85d5d9a7ab8237dd8b65e964b4b",
+        "ready": false,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo",
+        "pod": "mlops-manual-2dhvf-preflight-check-1097874432",
+        "container": "wait",
+        "image": "quay.io/argoproj/argoexec:v3.5.5",
+        "image_id": "quay.io/argoproj/argoexec@sha256:32a568bd1ecb2691a61aa4a646d90b08fe5c4606a2d5cbf264565b1ced98f12b",
+        "ready": false,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo",
+        "pod": "mlops-manual-2dhvf-register-model-3002334335",
+        "container": "init",
+        "image": "quay.io/argoproj/argoexec:v3.5.5",
+        "image_id": "quay.io/argoproj/argoexec@sha256:32a568bd1ecb2691a61aa4a646d90b08fe5c4606a2d5cbf264565b1ced98f12b",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo",
+        "pod": "mlops-manual-2dhvf-register-model-3002334335",
+        "container": "main",
+        "image": "docker.io/traffic/mlops-trainer:full-pipeline-fix-20260617",
+        "image_id": "sha256:7d3f43afa16d6b0de9b0388c77279100140cb56f6db038677149e030336babc2",
+        "ready": false,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo",
+        "pod": "mlops-manual-2dhvf-register-model-3002334335",
+        "container": "wait",
+        "image": "quay.io/argoproj/argoexec:v3.5.5",
+        "image_id": "quay.io/argoproj/argoexec@sha256:32a568bd1ecb2691a61aa4a646d90b08fe5c4606a2d5cbf264565b1ced98f12b",
+        "ready": false,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo",
+        "pod": "mlops-manual-2dhvf-train-model-82620454",
+        "container": "init",
+        "image": "quay.io/argoproj/argoexec:v3.5.5",
+        "image_id": "quay.io/argoproj/argoexec@sha256:32a568bd1ecb2691a61aa4a646d90b08fe5c4606a2d5cbf264565b1ced98f12b",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo",
+        "pod": "mlops-manual-2dhvf-train-model-82620454",
+        "container": "main",
+        "image": "docker.io/traffic/mlops-trainer:full-pipeline-fix-20260617",
+        "image_id": "sha256:7d3f43afa16d6b0de9b0388c77279100140cb56f6db038677149e030336babc2",
+        "ready": false,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo",
+        "pod": "mlops-manual-2dhvf-train-model-82620454",
+        "container": "wait",
+        "image": "quay.io/argoproj/argoexec:v3.5.5",
+        "image_id": "quay.io/argoproj/argoexec@sha256:32a568bd1ecb2691a61aa4a646d90b08fe5c4606a2d5cbf264565b1ced98f12b",
+        "ready": false,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo",
+        "pod": "mlops-manual-jrf2g-preflight-check-3460644053",
+        "container": "init",
+        "image": "quay.io/argoproj/argoexec:v3.5.5",
+        "image_id": "quay.io/argoproj/argoexec@sha256:32a568bd1ecb2691a61aa4a646d90b08fe5c4606a2d5cbf264565b1ced98f12b",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo",
+        "pod": "mlops-manual-jrf2g-preflight-check-3460644053",
+        "container": "main",
+        "image": "docker.io/clickhouse/clickhouse-server:24.3",
+        "image_id": "sha256:cd3b547d16ce8ab9e122ff96fe3379564535b85d5d9a7ab8237dd8b65e964b4b",
+        "ready": false,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo",
+        "pod": "mlops-manual-jrf2g-preflight-check-3460644053",
+        "container": "wait",
+        "image": "quay.io/argoproj/argoexec:v3.5.5",
+        "image_id": "quay.io/argoproj/argoexec@sha256:32a568bd1ecb2691a61aa4a646d90b08fe5c4606a2d5cbf264565b1ced98f12b",
+        "ready": false,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo",
+        "pod": "mlops-manual-sh6nh-preflight-check-4201529413",
+        "container": "init",
+        "image": "quay.io/argoproj/argoexec:v3.5.5",
+        "image_id": "quay.io/argoproj/argoexec@sha256:32a568bd1ecb2691a61aa4a646d90b08fe5c4606a2d5cbf264565b1ced98f12b",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo",
+        "pod": "mlops-manual-sh6nh-preflight-check-4201529413",
+        "container": "main",
+        "image": "docker.io/clickhouse/clickhouse-server:24.3",
+        "image_id": "sha256:cd3b547d16ce8ab9e122ff96fe3379564535b85d5d9a7ab8237dd8b65e964b4b",
+        "ready": false,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo",
+        "pod": "mlops-manual-sh6nh-preflight-check-4201529413",
+        "container": "wait",
+        "image": "quay.io/argoproj/argoexec:v3.5.5",
+        "image_id": "quay.io/argoproj/argoexec@sha256:32a568bd1ecb2691a61aa4a646d90b08fe5c4606a2d5cbf264565b1ced98f12b",
+        "ready": false,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo",
+        "pod": "mlops-manual-vmkv8-preflight-check-2770320058",
+        "container": "init",
+        "image": "quay.io/argoproj/argoexec:v3.5.5",
+        "image_id": "quay.io/argoproj/argoexec@sha256:32a568bd1ecb2691a61aa4a646d90b08fe5c4606a2d5cbf264565b1ced98f12b",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo",
+        "pod": "mlops-manual-vmkv8-preflight-check-2770320058",
+        "container": "main",
+        "image": "docker.io/clickhouse/clickhouse-server:24.3",
+        "image_id": "sha256:cd3b547d16ce8ab9e122ff96fe3379564535b85d5d9a7ab8237dd8b65e964b4b",
+        "ready": false,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo",
+        "pod": "mlops-manual-vmkv8-preflight-check-2770320058",
+        "container": "wait",
+        "image": "quay.io/argoproj/argoexec:v3.5.5",
+        "image_id": "quay.io/argoproj/argoexec@sha256:32a568bd1ecb2691a61aa4a646d90b08fe5c4606a2d5cbf264565b1ced98f12b",
+        "ready": false,
+        "restart_count": 0
+      },
+      {
+        "namespace": "argo",
+        "pod": "workflow-controller-8475659b56-fzd9r",
+        "container": "workflow-controller",
+        "image": "quay.io/argoproj/workflow-controller:v3.5.5",
+        "image_id": "quay.io/argoproj/workflow-controller@sha256:6ab0da144235e4b808178f1d1baa34b236e2a25bf9c0b9d4f40aec0f93aaa85e",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "cert-manager",
+        "pod": "cert-manager-7ddd8cdb9f-4f4gp",
+        "container": "cert-manager-controller",
+        "image": "quay.io/jetstack/cert-manager-controller:v1.14.5",
+        "image_id": "quay.io/jetstack/cert-manager-controller@sha256:9c0527cab629b61bd60c20f0c25615a8593314d3504add968b42bc5b891b253a",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "cert-manager",
+        "pod": "cert-manager-cainjector-57cd76c845-wkp79",
+        "container": "cert-manager-cainjector",
+        "image": "quay.io/jetstack/cert-manager-cainjector:v1.14.5",
+        "image_id": "quay.io/jetstack/cert-manager-cainjector@sha256:4ffda7facb4da16dab20a88e7607b75ebdab4e6c9069a840216a89f47261ee0b",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "cert-manager",
+        "pod": "cert-manager-webhook-cf8f9f895-r7jnb",
+        "container": "cert-manager-webhook",
+        "image": "quay.io/jetstack/cert-manager-webhook:v1.14.5",
+        "image_id": "quay.io/jetstack/cert-manager-webhook@sha256:ef419261a209c5409fb1539dbd45c805d05936e955b4530b8ec4ac780577f151",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "databases",
+        "pod": "pg-failover-check-29711570-xrk5q",
+        "container": "failover-check",
+        "image": "docker.io/library/postgres:16-alpine",
+        "image_id": "sha256:fff3594bf464bea0f502788874403882d8bbbe618b3250f8649e7e42fd118020",
+        "ready": false,
+        "restart_count": 0
+      },
+      {
+        "namespace": "databases",
+        "pod": "pg-failover-check-29711571-j4pc5",
+        "container": "failover-check",
+        "image": "docker.io/library/postgres:16-alpine",
+        "image_id": "sha256:fff3594bf464bea0f502788874403882d8bbbe618b3250f8649e7e42fd118020",
+        "ready": false,
+        "restart_count": 0
+      },
+      {
+        "namespace": "databases",
+        "pod": "postgres-primary-0",
+        "container": "postgres",
+        "image": "docker.io/library/postgres:16-alpine",
+        "image_id": "sha256:fff3594bf464bea0f502788874403882d8bbbe618b3250f8649e7e42fd118020",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "databases",
+        "pod": "postgres-replica-0",
+        "container": "init-replica",
+        "image": "docker.io/library/postgres:16-alpine",
+        "image_id": "sha256:fff3594bf464bea0f502788874403882d8bbbe618b3250f8649e7e42fd118020",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "databases",
+        "pod": "postgres-replica-0",
+        "container": "postgres",
+        "image": "docker.io/library/postgres:16-alpine",
+        "image_id": "sha256:fff3594bf464bea0f502788874403882d8bbbe618b3250f8649e7e42fd118020",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "databases",
+        "pod": "postgres-replica-1",
+        "container": "init-replica",
+        "image": "docker.io/library/postgres:16-alpine",
+        "image_id": "sha256:fff3594bf464bea0f502788874403882d8bbbe618b3250f8649e7e42fd118020",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "databases",
+        "pod": "postgres-replica-1",
+        "container": "postgres",
+        "image": "docker.io/library/postgres:16-alpine",
+        "image_id": "sha256:fff3594bf464bea0f502788874403882d8bbbe618b3250f8649e7e42fd118020",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "databases",
+        "pod": "redis-master-0",
+        "container": "redis",
+        "image": "docker.io/library/redis:7-alpine",
+        "image_id": "sha256:487efc0616382465781b8fdc3d6d1db449e6fd80ae23bf48432a2da6b6929908",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "databases",
+        "pod": "redis-replica-0",
+        "container": "redis",
+        "image": "docker.io/library/redis:7-alpine",
+        "image_id": "sha256:487efc0616382465781b8fdc3d6d1db449e6fd80ae23bf48432a2da6b6929908",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "databases",
+        "pod": "redis-replica-1",
+        "container": "redis",
+        "image": "docker.io/library/redis:7-alpine",
+        "image_id": "sha256:487efc0616382465781b8fdc3d6d1db449e6fd80ae23bf48432a2da6b6929908",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "databases",
+        "pod": "redis-sentinel-0",
+        "container": "sentinel",
+        "image": "docker.io/library/redis:7-alpine",
+        "image_id": "sha256:487efc0616382465781b8fdc3d6d1db449e6fd80ae23bf48432a2da6b6929908",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "databases",
+        "pod": "redis-sentinel-1",
+        "container": "sentinel",
+        "image": "docker.io/library/redis:7-alpine",
+        "image_id": "sha256:487efc0616382465781b8fdc3d6d1db449e6fd80ae23bf48432a2da6b6929908",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "databases",
+        "pod": "redis-sentinel-2",
+        "container": "sentinel",
+        "image": "docker.io/library/redis:7-alpine",
+        "image_id": "sha256:487efc0616382465781b8fdc3d6d1db449e6fd80ae23bf48432a2da6b6929908",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "default",
+        "pod": "node-debug-8-2tb",
+        "container": "debug",
+        "image": "docker.io/library/busybox:1.36",
+        "image_id": "sha256:b116e155074440ffd9e449559433feb4cd2341eb3554b1da1c638c976e56451d",
+        "ready": true,
+        "restart_count": 343
+      },
+      {
+        "namespace": "flink",
+        "pod": "flink-jobmanager-0",
+        "container": "jobmanager",
+        "image": "docker.io/library/flink:1.18-scala_2.12",
+        "image_id": "docker.io/library/flink@sha256:f0e9ffd07f3d43291dfaf7e0609eb2871462193275d452affbe5fac091017ae3",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "flink",
+        "pod": "flink-log-job-6x99p",
+        "container": "flink-log-job",
+        "image": "docker.io/traffic/flink-log-job:latest",
+        "image_id": "sha256:e971330791443312ba212425a008d16df2b16726cf7d6460b1ef03b934238caf",
+        "ready": false,
+        "restart_count": 0
+      },
+      {
+        "namespace": "flink",
+        "pod": "flink-taskmanager-0",
+        "container": "taskmanager",
+        "image": "docker.io/library/flink:1.18-scala_2.12",
+        "image_id": "sha256:d88120c9477c2e9a8f4769c28d82daa35a116be9bf77323d3f05b7f56ad944c9",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "flink",
+        "pod": "flink-taskmanager-1",
+        "container": "taskmanager",
+        "image": "docker.io/library/flink:1.18-scala_2.12",
+        "image_id": "docker.io/library/flink@sha256:f0e9ffd07f3d43291dfaf7e0609eb2871462193275d452affbe5fac091017ae3",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "gateway",
+        "pod": "apisix-0",
+        "container": "apisix",
+        "image": "docker.io/apache/apisix:3.9.0-debian",
+        "image_id": "sha256:5e90db4294cdced6ada97b5961326d8956ffb5fd3f80756d425ba90cf0b32b54",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "gateway",
+        "pod": "apisix-1",
+        "container": "apisix",
+        "image": "docker.io/apache/apisix:3.9.0-debian",
+        "image_id": "docker.io/apache/apisix@sha256:d3de70b3ea6f29fc0d2d812649c0e4be20ba6c00357e839311eae57ba6bc0059",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "iam",
+        "pod": "keycloak-0",
+        "container": "keycloak",
+        "image": "quay.io/keycloak/keycloak:24.0",
+        "image_id": "quay.io/keycloak/keycloak@sha256:f8ade94c1d0ad2f2fa7734a455fee5392764f402c43ca35e9af6bf63a2541dc9",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "kube-flannel",
+        "pod": "kube-flannel-ds-qlt8n",
+        "container": "install-cni-plugin",
+        "image": "ghcr.io/flannel-io/flannel-cni-plugin:v1.9.1-flannel1",
+        "image_id": "ghcr.io/flannel-io/flannel-cni-plugin@sha256:7c3377e977b4b77b8efdad96e207ebee371537d6dcd7b9c40853cf0c0f0aade3",
+        "ready": true,
+        "restart_count": 1
+      },
+      {
+        "namespace": "kube-flannel",
+        "pod": "kube-flannel-ds-qlt8n",
+        "container": "install-cni",
+        "image": "ghcr.io/flannel-io/flannel:v0.28.5",
+        "image_id": "ghcr.io/flannel-io/flannel@sha256:5414132a5547ca336112dc00113530363aeeb7e8b59c1f6b8e5703c0ccb534e7",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "kube-flannel",
+        "pod": "kube-flannel-ds-qlt8n",
+        "container": "kube-flannel",
+        "image": "ghcr.io/flannel-io/flannel:v0.28.5",
+        "image_id": "ghcr.io/flannel-io/flannel@sha256:5414132a5547ca336112dc00113530363aeeb7e8b59c1f6b8e5703c0ccb534e7",
+        "ready": true,
+        "restart_count": 1
+      },
+      {
+        "namespace": "kube-flannel",
+        "pod": "kube-flannel-ds-qp9mg",
+        "container": "install-cni-plugin",
+        "image": "ghcr.io/flannel-io/flannel-cni-plugin:v1.9.1-flannel1",
+        "image_id": "ghcr.io/flannel-io/flannel-cni-plugin@sha256:7c3377e977b4b77b8efdad96e207ebee371537d6dcd7b9c40853cf0c0f0aade3",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "kube-flannel",
+        "pod": "kube-flannel-ds-qp9mg",
+        "container": "install-cni",
+        "image": "ghcr.io/flannel-io/flannel:v0.28.5",
+        "image_id": "ghcr.io/flannel-io/flannel@sha256:5414132a5547ca336112dc00113530363aeeb7e8b59c1f6b8e5703c0ccb534e7",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "kube-flannel",
+        "pod": "kube-flannel-ds-qp9mg",
+        "container": "kube-flannel",
+        "image": "ghcr.io/flannel-io/flannel:v0.28.5",
+        "image_id": "ghcr.io/flannel-io/flannel@sha256:5414132a5547ca336112dc00113530363aeeb7e8b59c1f6b8e5703c0ccb534e7",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "kube-system",
+        "pod": "coredns-76f75df574-bp26h",
+        "container": "coredns",
+        "image": "registry.aliyuncs.com/google_containers/coredns:v1.11.1",
+        "image_id": "sha256:cbb01a7bd410dc08ba382018ab909a674fb0e48687f0c00797ed5bc34fcc6bb4",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "kube-system",
+        "pod": "coredns-76f75df574-cmvk9",
+        "container": "coredns",
+        "image": "registry.aliyuncs.com/google_containers/coredns:v1.11.1",
+        "image_id": "sha256:cbb01a7bd410dc08ba382018ab909a674fb0e48687f0c00797ed5bc34fcc6bb4",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "kube-system",
+        "pod": "etcd-8-2tb",
+        "container": "etcd",
+        "image": "registry.aliyuncs.com/google_containers/etcd:3.5.16-0",
+        "image_id": "sha256:a9e7e6b294baf1695fccb862d956c5d3ad8510e1e4ca1535f35dc09f247abbfc",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "kube-system",
+        "pod": "kube-apiserver-8-2tb",
+        "container": "kube-apiserver",
+        "image": "registry.aliyuncs.com/google_containers/kube-apiserver:v1.29.15",
+        "image_id": "sha256:f44c6888a2d2435fd2ef57b391cac401d1e78e2c591aaab13b8f44191c88641e",
+        "ready": true,
+        "restart_count": 17
+      },
+      {
+        "namespace": "kube-system",
+        "pod": "kube-controller-manager-8-2tb",
+        "container": "kube-controller-manager",
+        "image": "registry.aliyuncs.com/google_containers/kube-controller-manager:v1.29.15",
+        "image_id": "sha256:b0cdcf76ac8e943ce81c273516f0d598e5436fed7a26dc1f1ab98a663b8766e7",
+        "ready": true,
+        "restart_count": 21
+      },
+      {
+        "namespace": "kube-system",
+        "pod": "kube-proxy-f77kg",
+        "container": "kube-proxy",
+        "image": "registry.aliyuncs.com/google_containers/kube-proxy:v1.29.15",
+        "image_id": "sha256:f71614796eb76613603180d6e6f99c8ef2948f25c512b4a3353c9a2a3f1e2961",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "kube-system",
+        "pod": "kube-proxy-v7mht",
+        "container": "kube-proxy",
+        "image": "registry.aliyuncs.com/google_containers/kube-proxy:v1.29.15",
+        "image_id": "sha256:f71614796eb76613603180d6e6f99c8ef2948f25c512b4a3353c9a2a3f1e2961",
+        "ready": true,
+        "restart_count": 1
+      },
+      {
+        "namespace": "kube-system",
+        "pod": "kube-scheduler-8-2tb",
+        "container": "kube-scheduler",
+        "image": "registry.aliyuncs.com/google_containers/kube-scheduler:v1.29.15",
+        "image_id": "sha256:9ea0bd82ed4f6ef1ae262fc8953176f05f1b574a06d1aef466520a15c7fdb9cd",
+        "ready": true,
+        "restart_count": 21
+      },
+      {
+        "namespace": "metallb-system",
+        "pod": "controller-56bb48dcd4-2rvd6",
+        "container": "controller",
+        "image": "quay.io/metallb/controller:v0.14.5",
+        "image_id": "quay.io/metallb/controller@sha256:3f776529447094c8d318baeb4f9efe024cf154859762ec3eefcd878b1fe8a01f",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "metallb-system",
+        "pod": "speaker-8zfls",
+        "container": "speaker",
+        "image": "quay.io/metallb/speaker:v0.14.5",
+        "image_id": "quay.io/metallb/speaker@sha256:34e9cc2db6d83ca3ad4d92a6e2eadaf6b78be65621798e90827041749898acc0",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "metallb-system",
+        "pod": "speaker-dfjq5",
+        "container": "speaker",
+        "image": "quay.io/metallb/speaker:v0.14.5",
+        "image_id": "quay.io/metallb/speaker@sha256:34e9cc2db6d83ca3ad4d92a6e2eadaf6b78be65621798e90827041749898acc0",
+        "ready": true,
+        "restart_count": 2
+      },
+      {
+        "namespace": "middleware",
+        "pod": "clickhouse-1-0",
+        "container": "ch-init",
+        "image": "docker.io/library/busybox:1.36",
+        "image_id": "sha256:b116e155074440ffd9e449559433feb4cd2341eb3554b1da1c638c976e56451d",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "middleware",
+        "pod": "clickhouse-1-0",
+        "container": "clickhouse",
+        "image": "docker.io/clickhouse/clickhouse-server:24.3",
+        "image_id": "sha256:cd3b547d16ce8ab9e122ff96fe3379564535b85d5d9a7ab8237dd8b65e964b4b",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "middleware",
+        "pod": "clickhouse-2-0",
+        "container": "ch-init",
+        "image": "docker.io/library/busybox:1.36",
+        "image_id": "docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "middleware",
+        "pod": "clickhouse-2-0",
+        "container": "clickhouse",
+        "image": "docker.io/clickhouse/clickhouse-server:24.3",
+        "image_id": "sha256:cd3b547d16ce8ab9e122ff96fe3379564535b85d5d9a7ab8237dd8b65e964b4b",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "middleware",
+        "pod": "clickhouse-keeper-0",
+        "container": "init-config",
+        "image": "docker.io/library/busybox:1.36",
+        "image_id": "sha256:b116e155074440ffd9e449559433feb4cd2341eb3554b1da1c638c976e56451d",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "middleware",
+        "pod": "clickhouse-keeper-0",
+        "container": "keeper",
+        "image": "docker.io/clickhouse/clickhouse-server:24.3",
+        "image_id": "sha256:cd3b547d16ce8ab9e122ff96fe3379564535b85d5d9a7ab8237dd8b65e964b4b",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "middleware",
+        "pod": "clickhouse-keeper-1",
+        "container": "init-config",
+        "image": "docker.io/library/busybox:1.36",
+        "image_id": "sha256:b116e155074440ffd9e449559433feb4cd2341eb3554b1da1c638c976e56451d",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "middleware",
+        "pod": "clickhouse-keeper-1",
+        "container": "keeper",
+        "image": "docker.io/clickhouse/clickhouse-server:24.3",
+        "image_id": "sha256:cd3b547d16ce8ab9e122ff96fe3379564535b85d5d9a7ab8237dd8b65e964b4b",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "middleware",
+        "pod": "clickhouse-keeper-2",
+        "container": "init-config",
+        "image": "docker.io/library/busybox:1.36",
+        "image_id": "docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "middleware",
+        "pod": "clickhouse-keeper-2",
+        "container": "keeper",
+        "image": "docker.io/clickhouse/clickhouse-server:24.3",
+        "image_id": "sha256:cd3b547d16ce8ab9e122ff96fe3379564535b85d5d9a7ab8237dd8b65e964b4b",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "middleware",
+        "pod": "clickhouse-replica-0",
+        "container": "ch-init",
+        "image": "docker.io/library/busybox:1.36",
+        "image_id": "docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "middleware",
+        "pod": "clickhouse-replica-0",
+        "container": "clickhouse",
+        "image": "docker.io/clickhouse/clickhouse-server:24.3",
+        "image_id": "sha256:cd3b547d16ce8ab9e122ff96fe3379564535b85d5d9a7ab8237dd8b65e964b4b",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "middleware",
+        "pod": "clickhouse-replica-1",
+        "container": "ch-init",
+        "image": "docker.io/library/busybox:1.36",
+        "image_id": "sha256:b116e155074440ffd9e449559433feb4cd2341eb3554b1da1c638c976e56451d",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "middleware",
+        "pod": "clickhouse-replica-1",
+        "container": "clickhouse",
+        "image": "docker.io/clickhouse/clickhouse-server:24.3",
+        "image_id": "sha256:cd3b547d16ce8ab9e122ff96fe3379564535b85d5d9a7ab8237dd8b65e964b4b",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "middleware",
+        "pod": "kafka-0",
+        "container": "kafka",
+        "image": "docker.io/apache/kafka:3.7.0",
+        "image_id": "sha256:fe7e6a65afa5de2930f54c3d31d517d50acf8ff20f29a6f506df021a901d754d",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "middleware",
+        "pod": "kafka-1",
+        "container": "kafka",
+        "image": "docker.io/apache/kafka:3.7.0",
+        "image_id": "sha256:fe7e6a65afa5de2930f54c3d31d517d50acf8ff20f29a6f506df021a901d754d",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "middleware",
+        "pod": "kafka-2",
+        "container": "kafka",
+        "image": "docker.io/apache/kafka:3.7.0",
+        "image_id": "sha256:fe7e6a65afa5de2930f54c3d31d517d50acf8ff20f29a6f506df021a901d754d",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "middleware",
+        "pod": "kafka-ui-0",
+        "container": "kafka-ui",
+        "image": "docker.io/provectuslabs/kafka-ui:latest",
+        "image_id": "sha256:99307ab28a49d7bfa4102e3f4961eccb607c7ad9a3aa83c604b14705e6ff0896",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "middleware",
+        "pod": "nebula-graph-55d6cbc79c-2bkqg",
+        "container": "graphd",
+        "image": "docker.io/vesoft/nebula-graphd:v3.6.0",
+        "image_id": "docker.io/vesoft/nebula-graphd@sha256:0457a789213499fbfa2a07fb01cbea174843e9617771536a5b67cd89d96bcbf9",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "middleware",
+        "pod": "nebula-graph-55d6cbc79c-hhx6z",
+        "container": "graphd",
+        "image": "docker.io/vesoft/nebula-graphd:v3.6.0",
+        "image_id": "docker.io/vesoft/nebula-graphd@sha256:0457a789213499fbfa2a07fb01cbea174843e9617771536a5b67cd89d96bcbf9",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "middleware",
+        "pod": "nebula-graph-55d6cbc79c-zrgzt",
+        "container": "graphd",
+        "image": "docker.io/vesoft/nebula-graphd:v3.6.0",
+        "image_id": "docker.io/vesoft/nebula-graphd@sha256:0457a789213499fbfa2a07fb01cbea174843e9617771536a5b67cd89d96bcbf9",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "middleware",
+        "pod": "nebula-meta-0",
+        "container": "metad",
+        "image": "docker.io/vesoft/nebula-metad:v3.6.0",
+        "image_id": "docker.io/vesoft/nebula-metad@sha256:6d72a76fd44a738d1353186d8f2a8d467752239f4f85030f56c1b53b657b21d8",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "middleware",
+        "pod": "nebula-meta-1",
+        "container": "metad",
+        "image": "docker.io/vesoft/nebula-metad:v3.6.0",
+        "image_id": "docker.io/vesoft/nebula-metad@sha256:6d72a76fd44a738d1353186d8f2a8d467752239f4f85030f56c1b53b657b21d8",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "middleware",
+        "pod": "nebula-meta-2",
+        "container": "metad",
+        "image": "docker.io/vesoft/nebula-metad:v3.6.0",
+        "image_id": "docker.io/vesoft/nebula-metad@sha256:6d72a76fd44a738d1353186d8f2a8d467752239f4f85030f56c1b53b657b21d8",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "middleware",
+        "pod": "nebula-proxy-79cdb56b5d-k69s8",
+        "container": "nginx",
+        "image": "docker.io/library/nginx:alpine",
+        "image_id": "docker.io/library/nginx@sha256:8b1e78743a03dbb2c95171cc58639fef29abc8816598e27fb910ed2e621e589a",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "middleware",
+        "pod": "nebula-storage-0",
+        "container": "init-dirs",
+        "image": "docker.io/library/busybox:1.36",
+        "image_id": "docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "middleware",
+        "pod": "nebula-storage-0",
+        "container": "storaged",
+        "image": "docker.io/vesoft/nebula-storaged:v3.6.0",
+        "image_id": "docker.io/vesoft/nebula-storaged@sha256:29b9dccaecc339ed0e98b21575105eb45afc44afe84b8ca0cc9b0dca03c14fae",
+        "ready": true,
+        "restart_count": 1
+      },
+      {
+        "namespace": "middleware",
+        "pod": "nebula-storage-1",
+        "container": "init-dirs",
+        "image": "docker.io/library/busybox:1.36",
+        "image_id": "docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "middleware",
+        "pod": "nebula-storage-1",
+        "container": "storaged",
+        "image": "docker.io/vesoft/nebula-storaged:v3.6.0",
+        "image_id": "docker.io/vesoft/nebula-storaged@sha256:29b9dccaecc339ed0e98b21575105eb45afc44afe84b8ca0cc9b0dca03c14fae",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "middleware",
+        "pod": "nebula-storage-2",
+        "container": "init-dirs",
+        "image": "docker.io/library/busybox:1.36",
+        "image_id": "sha256:b116e155074440ffd9e449559433feb4cd2341eb3554b1da1c638c976e56451d",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "middleware",
+        "pod": "nebula-storage-2",
+        "container": "storaged",
+        "image": "docker.io/vesoft/nebula-storaged:v3.6.0",
+        "image_id": "docker.io/vesoft/nebula-storaged@sha256:29b9dccaecc339ed0e98b21575105eb45afc44afe84b8ca0cc9b0dca03c14fae",
+        "ready": true,
+        "restart_count": 1
+      },
+      {
+        "namespace": "middleware",
+        "pod": "nebula-studio-6cb8f4cd8-t4xnm",
+        "container": "studio",
+        "image": "docker.io/vesoft/nebula-graph-studio:v3.10.0",
+        "image_id": "docker.io/vesoft/nebula-graph-studio@sha256:5c97db40af3ef5130a8cec8b7a4a499d5710779890a3ca5a3e7f016989bcf88e",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "middleware",
+        "pod": "opensearch-0",
+        "container": "opensearch",
+        "image": "docker.io/opensearchproject/opensearch:2.14.0",
+        "image_id": "sha256:bf1e1cd1fa30bd1da8596bff12630f5e67648dfb7720a52c773c495db1f0135a",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "middleware",
+        "pod": "opensearch-1",
+        "container": "opensearch",
+        "image": "docker.io/opensearchproject/opensearch:2.14.0",
+        "image_id": "sha256:bf1e1cd1fa30bd1da8596bff12630f5e67648dfb7720a52c773c495db1f0135a",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "middleware",
+        "pod": "opensearch-2",
+        "container": "opensearch",
+        "image": "docker.io/opensearchproject/opensearch:2.14.0",
+        "image_id": "sha256:bf1e1cd1fa30bd1da8596bff12630f5e67648dfb7720a52c773c495db1f0135a",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "minio",
+        "pod": "minio-0",
+        "container": "minio",
+        "image": "quay.io/minio/minio:latest",
+        "image_id": "quay.io/minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "minio",
+        "pod": "minio-1",
+        "container": "minio",
+        "image": "quay.io/minio/minio:latest",
+        "image_id": "quay.io/minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "minio",
+        "pod": "minio-2",
+        "container": "minio",
+        "image": "quay.io/minio/minio:latest",
+        "image_id": "quay.io/minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "minio",
+        "pod": "minio-3",
+        "container": "minio",
+        "image": "quay.io/minio/minio:latest",
+        "image_id": "quay.io/minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "minio",
+        "pod": "minio-proxy-7f54d4bf5d-xgwbm",
+        "container": "nginx",
+        "image": "docker.io/library/nginx:alpine",
+        "image_id": "docker.io/library/nginx@sha256:8b1e78743a03dbb2c95171cc58639fef29abc8816598e27fb910ed2e621e589a",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "nacos",
+        "pod": "nacos-0",
+        "container": "nacos",
+        "image": "docker.io/nacos/nacos-server:v2.3.2",
+        "image_id": "sha256:d3063c1db2bb923c190de1f01073abb861ef697be8f48cf822f9e1255ac2a7da",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "observability",
+        "pod": "grafana-0",
+        "container": "grafana",
+        "image": "docker.io/grafana/grafana:10.4.0",
+        "image_id": "sha256:c8b91775d855b99270fc5d22f3c6737e8cca01ef4c25c8b0362295e0746fa39b",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "observability",
+        "pod": "loki-0",
+        "container": "loki",
+        "image": "docker.io/grafana/loki:2.9.0",
+        "image_id": "sha256:21abbe8487a0cdbe357e1e90d804cdc02306a974b8eed9764e42a55b4a0406d8",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "observability",
+        "pod": "loki-1",
+        "container": "loki",
+        "image": "docker.io/grafana/loki:2.9.0",
+        "image_id": "sha256:21abbe8487a0cdbe357e1e90d804cdc02306a974b8eed9764e42a55b4a0406d8",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "observability",
+        "pod": "victoria-metrics-0",
+        "container": "vm",
+        "image": "docker.io/victoriametrics/victoria-metrics:latest",
+        "image_id": "sha256:907e0875a4f3a1b36a121fd4c5a81309d4a7eb8addde93e2a5d31d0d4b1bf83c",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "registry",
+        "pod": "apicurio-0",
+        "container": "apicurio",
+        "image": "docker.io/apicurio/apicurio-registry-mem:2.5.9.Final",
+        "image_id": "sha256:e997deeb993bf313c70ba2b9b364c6062c11e6f72117a4bca13f1d4b65b9345f",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "streampark",
+        "pod": "streampark-0",
+        "container": "streampark",
+        "image": "docker.io/apache/streampark:latest",
+        "image_id": "sha256:46c04c0e802a406e29d8f01505be7808a2ce4c2a525ba983389a230d537ea35e",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "streampark",
+        "pod": "streampark-1",
+        "container": "streampark",
+        "image": "docker.io/apache/streampark:latest",
+        "image_id": "sha256:46c04c0e802a406e29d8f01505be7808a2ce4c2a525ba983389a230d537ea35e",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "streampark",
+        "pod": "streampark-proxy-6d78c69985-lpszd",
+        "container": "nginx",
+        "image": "docker.io/library/nginx:alpine",
+        "image_id": "docker.io/library/nginx@sha256:8b1e78743a03dbb2c95171cc58639fef29abc8816598e27fb910ed2e621e589a",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "traffic-analysis",
+        "pod": "alert-service-d9fd69bcb-xdjvp",
+        "container": "alert-service",
+        "image": "docker.io/traffic/alert-service:latency-chain-20260629-r3",
+        "image_id": "sha256:d3c7c3f82e34a27dd491cd645ed1f2696437a959871d7dbc00fe2407cf60629b",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "traffic-analysis",
+        "pod": "asset-service-54478f4b55-rqqdg",
+        "container": "asset-service",
+        "image": "traffic/asset-service:latest",
+        "image_id": "",
+        "ready": false,
+        "restart_count": 0
+      },
+      {
+        "namespace": "traffic-analysis",
+        "pod": "asset-service-79745d74c-f7754",
+        "container": "asset-service",
+        "image": "docker.io/traffic/asset-service:asset-rest-bindings-fix-20260617",
+        "image_id": "sha256:794b1c2976db69dd7354473e9247d7f1f86c12e6b2955b969e2cef3c303fec26",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "traffic-analysis",
+        "pod": "auth-service-d6ccb6f9c-7bp7n",
+        "container": "auth-service",
+        "image": "docker.io/traffic/auth-service:screen-scope-20260629-r1",
+        "image_id": "sha256:92623584280d3b30fc411a2fc8bf329dfe10aa9b6d5436c065c95f961eece0b7",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "traffic-analysis",
+        "pod": "codex-loop-queue-service-7888799df4-lvmt7",
+        "container": "queue-service",
+        "image": "docker.io/traffic-analysis/codex-loop:local",
+        "image_id": "sha256:21fb6b12b894449942a4eeac08e40d46e71e485531d836a1da2f4353f4487f16",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "traffic-analysis",
+        "pod": "forensics-service-69b6977878-6snzj",
+        "container": "forensics-service",
+        "image": "docker.io/traffic/forensics-service:pcap-integrity-20260629-r1",
+        "image_id": "sha256:e36e69b85025c3c067ad2826554ea1be3c3d899eca873f2d57cbcaad81663046",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "traffic-analysis",
+        "pod": "graph-service-6b96dc948b-gq5wb",
+        "container": "graph-service",
+        "image": "docker.io/traffic/graph-service:business-flow-20260629-r1",
+        "image_id": "sha256:f250bfdbb7de96bf2085e30a797bc6ac8cccbf2f8ac0fc62f1e13a2bd029b29b",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "traffic-analysis",
+        "pod": "ingest-gateway-75dfc645df-7nckh",
+        "container": "init-dlq-fallback-dir",
+        "image": "docker.io/traffic/ingest-gateway:dq-dlq-jwt-20260629-r1",
+        "image_id": "sha256:be2e9f26ce06661a44793bdf55931b889ba6dc9aa864f3763cab424bdcf3d1d0",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "traffic-analysis",
+        "pod": "ingest-gateway-75dfc645df-7nckh",
+        "container": "ingest-gateway",
+        "image": "docker.io/traffic/ingest-gateway:dq-dlq-jwt-20260629-r1",
+        "image_id": "sha256:be2e9f26ce06661a44793bdf55931b889ba6dc9aa864f3763cab424bdcf3d1d0",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "traffic-analysis",
+        "pod": "ingest-gateway-75dfc645df-w6ps4",
+        "container": "init-dlq-fallback-dir",
+        "image": "docker.io/traffic/ingest-gateway:dq-dlq-jwt-20260629-r1",
+        "image_id": "sha256:be2e9f26ce06661a44793bdf55931b889ba6dc9aa864f3763cab424bdcf3d1d0",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "traffic-analysis",
+        "pod": "ingest-gateway-75dfc645df-w6ps4",
+        "container": "ingest-gateway",
+        "image": "docker.io/traffic/ingest-gateway:dq-dlq-jwt-20260629-r1",
+        "image_id": "sha256:be2e9f26ce06661a44793bdf55931b889ba6dc9aa864f3763cab424bdcf3d1d0",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "traffic-analysis",
+        "pod": "probe-agent-6zqfc",
+        "container": "probe-agent",
+        "image": "docker.io/traffic/probe-agent:s3-multipart-cleanup-fix-20260617",
+        "image_id": "sha256:18ae7f9fe28ab3408a087c67dbbb95e6b032bb0136afed539b3e90a23fb32df1",
+        "ready": true,
+        "restart_count": 1
+      },
+      {
+        "namespace": "traffic-analysis",
+        "pod": "probe-agent-zx88t",
+        "container": "probe-agent",
+        "image": "docker.io/traffic/probe-agent:s3-multipart-cleanup-fix-20260617",
+        "image_id": "sha256:18ae7f9fe28ab3408a087c67dbbb95e6b032bb0136afed539b3e90a23fb32df1",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "traffic-analysis",
+        "pod": "rule-manager-98468cc89-blrgh",
+        "container": "rule-manager",
+        "image": "docker.io/traffic/rule-manager:mlops-model-name-fix-20260617",
+        "image_id": "sha256:7cc3fbb5ccea05101e6ae8953835e8b9d4130b0ad278a01fc01a8efdc4bc76b8",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "traffic-analysis",
+        "pod": "threat-intel-service-c486c4448-npgs5",
+        "container": "threat-intel-service",
+        "image": "docker.io/traffic/threat-intel-service:threat-intel-20260629-r6",
+        "image_id": "sha256:00ae9996e4615daf1b826532a013364627095137fcff9db0221f8e9221547d8f",
+        "ready": true,
+        "restart_count": 0
+      },
+      {
+        "namespace": "traffic-analysis",
+        "pod": "web-ui-7577c4dbf9-r8mvx",
+        "container": "web-ui",
+        "image": "docker.io/traffic/web-ui:fusion-threat-intel-20260629-r1",
+        "image_id": "sha256:8be110062ef737221281e5d8b78d5da17a7e6bf2c03e636a7bf8eedff59f4367",
+        "ready": true,
+        "restart_count": 0
+      }
+    ]
+  },
+  "repo_sources": {
+    "file_hashes": [
+      {
+        "sha256": "a2799d0c0f510999cfe8949e40222b374b71ec1c8fb23105bd69cb3ad8b5fc66",
+        "path": "common/kafka/create-topics.sh"
+      },
+      {
+        "sha256": "2eb70afd2f7b883e2d79071ef705e64861030f5fb5b1309e0634195641537b8f",
+        "path": "common/sql/ch/00-all-tables.sql"
+      },
+      {
+        "sha256": "06160da7c1e38f504ea7726b62f13268ffba6fa97f0839e10218dcd0fcbac340",
+        "path": "common/sql/ch/01-extended.sql"
+      },
+      {
+        "sha256": "b226e1b314f373b869b22c94d5d88c97eef97456565dd8640d257157718f88b5",
+        "path": "common/sql/ch/02-latency-chain.sql"
+      },
+      {
+        "sha256": "3ef03f8bc63d80686885081c2b1d18a02c58bfdac3359c0b52a0119aa7a32756",
+        "path": "common/sql/pg/00-init.sql"
+      },
+      {
+        "sha256": "b43a78061b00e4fa3b2402b417ee91b870aa6a516d0c291ce4b96d6584a2a865",
+        "path": "common/sql/pg/01-assets.sql"
+      },
+      {
+        "sha256": "23f50fbbb4f7b74f6d5fae3c6e8af810a7b20d02f8cd4286d040793007fbf988",
+        "path": "common/sql/pg/02-features-rules.sql"
+      },
+      {
+        "sha256": "d54211c730a511f99b156e2309aa8df6bdcb5e5c2df1220116862f151d52adfa",
+        "path": "common/sql/pg/03-models-deploy.sql"
+      },
+      {
+        "sha256": "ab04e0d5a70df15fb7432788800d121bd8a5795817408e178ad1f319e5661a54",
+        "path": "common/sql/pg/04-tasks-audit.sql"
+      },
+      {
+        "sha256": "71b166c4620491c4d04f983aba22c359ca405f9bb5f591f5e9f13423d4df3b61",
+        "path": "common/sql/pg/05-default-data.sql"
+      },
+      {
+        "sha256": "7bb657b9a8c44732c8ebd750179383c2822e4d60c876c987b038d28d38f62cf2",
+        "path": "common/sql/pg/06-graph.sql"
+      },
+      {
+        "sha256": "e63e8e6b329faaad3252e87d1ceaf446c50d07c7dd61a3fd8fb6353f618bd1aa",
+        "path": "deployments/kubernetes/applications/go-services.yaml"
+      },
+      {
+        "sha256": "d1292cac4b42b9a608b7e11a58b0d61121b464480ed899f7dbd527831f8eb0de",
+        "path": "deployments/kubernetes/applications/probe-agent.yaml"
+      },
+      {
+        "sha256": "42d4a8a30d0e1f215e93afab66c27d941d521ded10f25597b56f5a05991d8801",
+        "path": "deployments/kubernetes/applications/web-ui.yaml"
+      },
+      {
+        "sha256": "6d1eb037c998c8510468c089947f1cbde6c9bff1d75acc154dd0931ab78492ba",
+        "path": "deployments/kubernetes/argo-events/00-namespace.yaml"
+      },
+      {
+        "sha256": "ce1b8b0166c6a77a04151f842e867699c3546ad897d0f75d9f1810cc7821507c",
+        "path": "deployments/kubernetes/argo-events/argo-artifact-repository.yaml"
+      },
+      {
+        "sha256": "d1d3cf79aa40057335c6b464178d941a3d2ccde943b2f11867da2d8294771656",
+        "path": "deployments/kubernetes/argo-events/argo-events-install-v1.9.9.yaml"
+      },
+      {
+        "sha256": "8ee9f380b3c1380e02147a4af1ca1a94bfbdc02d876bdcdfa2116ce7b159116c",
+        "path": "deployments/kubernetes/argo-events/eventbus-native.yaml"
+      },
+      {
+        "sha256": "d57de1266fb183d1d55eb7e971a2d17450795f2d7fd3107488c424363094d2ec",
+        "path": "deployments/kubernetes/argo-events/mlops-event-smoke.yaml"
+      },
+      {
+        "sha256": "adce91403ca056860b70ceb922f436389a92b2b8190ea2d0b849071c11b25b71",
+        "path": "deployments/kubernetes/argo-events/mlops-training-template.yaml"
+      },
+      {
+        "sha256": "b178d03e5ea6d133fc52fffa6fc5b0e68e23ac314b7e34a1b123b0a0b1e645eb",
+        "path": "deployments/kubernetes/configmaps/apisix-routes.yaml"
+      },
+      {
+        "sha256": "9b8258ba5154b2216e050a9aaf0669622b9f1f58479f4c361dc6438112454775",
+        "path": "deployments/kubernetes/configmaps/credentials-secret.yaml"
+      },
+      {
+        "sha256": "9d483c2e4ce8e1fa09958df1591d6825434e4cdbf51d40e9b3dad9edc7499be1",
+        "path": "deployments/kubernetes/deploy.sh"
+      },
+      {
+        "sha256": "0ca731350661e6f851e6a7782a636502b6546e0e6a9a528bce573a414f169deb",
+        "path": "deployments/kubernetes/flink/flink-configmap.yaml"
+      },
+      {
+        "sha256": "65ec0edf5644ca9ceedee7906fb620e8752c154792eeb960f19a19b273f634a1",
+        "path": "deployments/kubernetes/flink/flink-log-job.yaml"
+      },
+      {
+        "sha256": "a3a1dc12ce638f164cf4945982a96ee3bfae6ade81e31e1ebfa63c5952225976",
+        "path": "deployments/kubernetes/infrastructure/01-kafka.yaml"
+      },
+      {
+        "sha256": "94797cf993ba1243559714a72375f114b2e9dd4b123a40809c8323271dd72698",
+        "path": "deployments/kubernetes/infrastructure/02-clickhouse.yaml"
+      },
+      {
+        "sha256": "67979cf10d2d6e8e43aa99d779440e53effc67af99cc499b1ad7c67ea536c675",
+        "path": "deployments/kubernetes/infrastructure/03-postgresql.yaml"
+      },
+      {
+        "sha256": "af18d8aa90bbd7ce9beab97537bf2662ed2fc2ad08184481849011f865d69001",
+        "path": "deployments/kubernetes/infrastructure/04-redis.yaml"
+      },
+      {
+        "sha256": "e242435165b7029702de16d4790bf0e6053660bdd47ecccb14b6f6feaaaec097",
+        "path": "deployments/kubernetes/infrastructure/05-opensearch.yaml"
+      },
+      {
+        "sha256": "560b86bc891da158670f3a543eb9c2249e804c446fc02a1be056cf337ebeb031",
+        "path": "deployments/kubernetes/infrastructure/06-minio.yaml"
+      },
+      {
+        "sha256": "e68c89398201e81d7a480480b3704e2f88fe154cc42e39e9cb626ee32259e5a4",
+        "path": "deployments/kubernetes/infrastructure/07-flink.yaml"
+      },
+      {
+        "sha256": "72665c522e9100c04dbc4f2354eb6cd2caaea2128a8e3bbae80a9c3ed6cd6f4b",
+        "path": "deployments/kubernetes/infrastructure/08-gateway.yaml"
+      },
+      {
+        "sha256": "b375d6388eaae378c852f38a7c27e4195ca228eb4df524fb6b67287e95b45ec9",
+        "path": "deployments/kubernetes/infrastructure/09-nebula-graph.yaml"
+      },
+      {
+        "sha256": "028c79b5fc00b3f5f819daee5b6c6b9382c153d390764d1537eab6aac72f2332",
+        "path": "deployments/kubernetes/infrastructure/10-observability.yaml"
+      },
+      {
+        "sha256": "3fc55aa4353cc93ddcba160c598dd488310bddcf66acbc8b446ed6e95499db4b",
+        "path": "deployments/kubernetes/infrastructure/11-management.yaml"
+      },
+      {
+        "sha256": "dbcbd3d56b0e20a456851cd0689d92a13eb06a0238ca8c7760d235037488d20c",
+        "path": "deployments/kubernetes/infrastructure/12-nebula-services.yaml"
+      },
+      {
+        "sha256": "821509f27cff526b0d05c940c71b8aa13a44aa58cad7efeba279248e586e7716",
+        "path": "deployments/kubernetes/init-jobs/01-kafka-topics.yaml"
+      },
+      {
+        "sha256": "d30d987be61bddc9e0da8e000bb95feb4c574b9abac615af701c4b6ee190fe99",
+        "path": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml"
+      },
+      {
+        "sha256": "30f1c0a528c491b09090db1aae4ee79b16e88d0daba8956173df666800aa60d5",
+        "path": "deployments/kubernetes/init-jobs/03-clickhouse-schema.yaml"
+      },
+      {
+        "sha256": "ac378786a2ee38dea9222648ecbacbd1775da4374c64c3e2abb70781f73f2774",
+        "path": "deployments/kubernetes/init-jobs/04-opensearch-templates.yaml"
+      },
+      {
+        "sha256": "d332c9576b9a28687433c02a3046b969ae2c66e89f1c23aa9cf69e94141d2e43",
+        "path": "deployments/kubernetes/init-jobs/05-nebula-schema.yaml"
+      },
+      {
+        "sha256": "43ff579f7b5bd124a1d74a4fb6693648f45fe8eb8c9596a059be3781393248bb",
+        "path": "deployments/kubernetes/init-jobs/06-minio-lifecycle.yaml"
+      },
+      {
+        "sha256": "3b599d7c5018f6c73a45d824a95815f13df5f103f7631c1a0983c534ff963354",
+        "path": "deployments/kubernetes/security/00-network-policies.yaml"
+      },
+      {
+        "sha256": "2859e0038d78f46e1ece0aca904b2470a36d4b32f10d1f950621f35100550a8a",
+        "path": "deployments/kubernetes/security/external-secrets-template.yaml"
+      },
+      {
+        "sha256": "7a0f4cbfbfb2c5b7651562ff68d5940facb6ecad00412fa2c41e42303651db7a",
+        "path": "deployments/kubernetes/security/README.md"
+      },
+      {
+        "sha256": "54d17c47ed438e9804445ae1d49ea77f552cc7e170db9d49b1a94519040b4835",
+        "path": "deployments/kubernetes/site-values.template.yaml"
+      },
+      {
+        "sha256": "ee56e063b72d377014a432f7ef79d9f41b1f6fb914b46069a19f1287bea6ee4a",
+        "path": "mlops/workflows/cron-training-workflow.yaml"
+      },
+      {
+        "sha256": "c3832672796cf267ee7495cceea526aa95d25416728f04216465f9190a27b8d3",
+        "path": "mlops/workflows/mlops-configmap.yaml"
+      },
+      {
+        "sha256": "b63bd0de2418ad47ee02376218aab80acfe5ac95066db5a812188f9efdcf176d",
+        "path": "mlops/workflows/mlops-secrets.yaml"
+      },
+      {
+        "sha256": "d15361e3388266ee78da4733cb8f6fdd51ea63d6f1b60153e6e50722017d706b",
+        "path": "mlops/workflows/mlops-workflow-template.yaml"
+      },
+      {
+        "sha256": "939375c7e623cb7e1a66236cc46236c83a69d06a047fe3a9a72543920890ebb8",
+        "path": "mlops/workflows/training-workflow.yaml"
+      },
+      {
+        "sha256": "7e67c44af6a595af70c52fbb2f2571bea79560b5a09db3e17e2e8e4fcc16d2f7",
+        "path": "proto/traffic/v1/alert.proto"
+      },
+      {
+        "sha256": "15c3580be54fe008a4dee8732cce72d755cbef52e72c922e055c8557bebfad77",
+        "path": "proto/traffic/v1/asset.proto"
+      },
+      {
+        "sha256": "9fb28360b7869258419fd374f83c153fad4563db8337ddebe887153b15758006",
+        "path": "proto/traffic/v1/audit.proto"
+      },
+      {
+        "sha256": "1c281ffb713b91d2075b5df8d97a5f2978163c18220ac7b1cf22e3ecc2e143fa",
+        "path": "proto/traffic/v1/campaign.proto"
+      },
+      {
+        "sha256": "3bca72baa877339dd3b57440776a6daedae572b34c2e0ab216287cb6b39935db",
+        "path": "proto/traffic/v1/common.proto"
+      },
+      {
+        "sha256": "537a1deb19e94b751ca03d3f7e56faf8e7a785ff331599a7c7c45749e9d957f1",
+        "path": "proto/traffic/v1/detection.proto"
+      },
+      {
+        "sha256": "d12e0a5935b9d5235e8790dc7fa76097001bf4138f3923092a86816168a7f400",
+        "path": "proto/traffic/v1/feature.proto"
+      },
+      {
+        "sha256": "62a47b5aa90333bfcf252eb7e99cc653fa4270f14f3f1b57130a73e3c5126ae2",
+        "path": "proto/traffic/v1/flow.proto"
+      },
+      {
+        "sha256": "ab3c0939b1e96555616dc8fc4c9af65233b02c4c8285ef1651ffa3015f4a70f4",
+        "path": "proto/traffic/v1/graph.proto"
+      },
+      {
+        "sha256": "139ed2aae3143b1978765f98a70d5f3fcd8b1ff14a15f21549a45ae6c86c2a12",
+        "path": "proto/traffic/v1/ingest.proto"
+      },
+      {
+        "sha256": "2cbed5abd88de4b7188dfda1e58445df3bd282f447405df5a6dead22b1b2961d",
+        "path": "proto/traffic/v1/pcap.proto"
+      },
+      {
+        "sha256": "009a59bd5109897d18ba0933e3bcc12e35d531435bf0147ba8f301cd1dcbab19",
+        "path": "proto/traffic/v1/session.proto"
+      },
+      {
+        "sha256": "c88984ccb16fac0bca2cd0dd54bda9169f5a6c64794c131d190c10ab680aefaf",
+        "path": "rules/go.md"
+      },
+      {
+        "sha256": "adf70a425df7a76d345a5f7ccb94f32d963570b84434fbef6e098785ab0e74d4",
+        "path": "rules/java.md"
+      },
+      {
+        "sha256": "d51ccd460f7fa0e696a74b79541ca727d0203b45d532ea0d13943bec628372de",
+        "path": "rules/proto.md"
+      },
+      {
+        "sha256": "5a773de4c308f59fb8b124116723fe195f6ba3f2119e98ecdd75024ed0cfad5b",
+        "path": "rules/rust.md"
+      },
+      {
+        "sha256": "a6e7e99d44f99f88c928766b6410d6da948269e1496ccfd0c38bd124972e002e",
+        "path": "rules/security.md"
+      },
+      {
+        "sha256": "923e9dd280166b2c66fb1d53606e53ed9926de85398c74df9b93114e2c2b94dc",
+        "path": "rules/typescript.md"
+      },
+      {
+        "sha256": "0f47769edeba524f5db687539202007a94f8628689bd968c55c543cf648f0a73",
+        "path": "tests/e2e/live_100_round_smoke.sh"
+      },
+      {
+        "sha256": "b1b324aa0503dd66ba940ffaa26e1ae46d9864f6c11231be72cae582eb3f6d08",
+        "path": "tests/e2e/live_business_flow_api_preflight.sh"
+      },
+      {
+        "sha256": "0b849e76266de6f3627d0ef387a173f473685c7be3ddacc58fa240c71ba08bcc",
+        "path": "tests/e2e/live_data_quality_dlq_business.sh"
+      },
+      {
+        "sha256": "84d0f6a164190c7fd102ab532edb91716d14dd66184a2607c31832bf41655edc",
+        "path": "tests/e2e/live_deployment_preflight.sh"
+      },
+      {
+        "sha256": "2553fabb7ad02fac89cc605099743d13c76eb9902c2683d97e69f8ed455224c9",
+        "path": "tests/e2e/live_detection_quality_preflight.sh"
+      },
+      {
+        "sha256": "ef35996bf97ad8ba43b691485358d87c38a6c1c5a3369f05ad9b9c3e623e9c56",
+        "path": "tests/e2e/live_dlq_replay_failure_regression.sh"
+      },
+      {
+        "sha256": "3ef874d4fe71c0b17ab330b044b214324703bf7598ce001e3d6028ff8cd9e42e",
+        "path": "tests/e2e/live_dlq_replay_recovery.sh"
+      },
+      {
+        "sha256": "489785ba595778c19b9121b832a368150118e9d79f9fc04d1a1d5c14b4b50afc",
+        "path": "tests/e2e/live_fusion_threat_intel_contract.sh"
+      },
+      {
+        "sha256": "f5c7560e162735edc724d93c09a5cea4a0b4274b4a05121a6c6bee205b91410e",
+        "path": "tests/e2e/live_kafka_flink_bad_message_dlq.sh"
+      },
+      {
+        "sha256": "b6fb079f680a917d881c03281f89d9b68683850f753d1a575cd501d6e4f57582",
+        "path": "tests/e2e/live_latency_chain_report.sh"
+      },
+      {
+        "sha256": "dab2f142e84fe65cf1c70c64dd0bf08b6f5b790d682d79363bffaa396e75122c",
+        "path": "tests/e2e/live_pcap_forensics_integrity.sh"
+      },
+      {
+        "sha256": "b728ea3c35c2280e62532e183cf05dca56c97fd260c4bb20587cd08424022843",
+        "path": "tests/e2e/live_permission_matrix.sh"
+      },
+      {
+        "sha256": "78c175a2b4c60f0006a2cbb20d4b3ffc21e66dfe89b25c2aa870b15abb99c1df",
+        "path": "tests/e2e/live_production_security_preflight.sh"
+      },
+      {
+        "sha256": "6cc920a02e2ff84c774a5e0f40c6c1f8c504b1ca49f4ee489d1e95e5391600b2",
+        "path": "tests/e2e/live_realtime_appshell.sh"
+      },
+      {
+        "sha256": "bcf8ad60d7006261ebe434401b36e141c5806eadfc1b685ea1ee62415e7af43d",
+        "path": "tests/e2e/live_release_manifest.sh"
+      },
+      {
+        "sha256": "75017f0d5fddd18eb6da0c4d074ea7c85f5ebeeac01a17c84b96354dcfd6ff6e",
+        "path": "tests/e2e/live_screen_readonly_matrix.sh"
+      },
+      {
+        "sha256": "d10a6c4bbddb20f8995291488eb171bf845d328b1aff5b568c1e4729ca5ca279",
+        "path": "tests/e2e/live_threat_intel_service.sh"
+      },
+      {
+        "sha256": "5ba930169884b8a5088767965d9a99b210874d7f0b429b6f24756bb3b7f2bb28",
+        "path": "tests/e2e/live_ui_contract_preflight.sh"
+      },
+      {
+        "sha256": "ac3d10448064157225c267bbd3143c4798ef30810bbb42bffec5c99502e98855",
+        "path": "tests/e2e/logs/live-100-round-smoke-20260618213703-2391799.ndjson"
+      },
+      {
+        "sha256": "825b228481a5485645e0173b4ebdd23c2f481cd5389a75716e3c72bc2f80cde4",
+        "path": "tests/e2e/logs/live-100-round-smoke-20260618213703-2391799-summary.json"
+      },
+      {
+        "sha256": "31a90dd036063a06e6b212009bb376a74d5ee72d12c732273d54e225576e35e2",
+        "path": "tests/e2e/logs/live-100-round-smoke-20260618213727-2396857.ndjson"
+      },
+      {
+        "sha256": "1440ce47f48608028326ed2e3e7312e016cb568ef95b4d37b74e102146b2e7b9",
+        "path": "tests/e2e/logs/live-100-round-smoke-20260618213727-2396857-summary.json"
+      },
+      {
+        "sha256": "8b2028d21b7a4597431438fa993042b7613d08183f7296b9f95ab47a137b776d",
+        "path": "tests/e2e/logs/live-100-round-smoke-20260618213742-2399243.ndjson"
+      },
+      {
+        "sha256": "63cd528a3777a58ceba8cd3e905726d0b4365e2fdab7d380a8ce1b8b6d7eff7f",
+        "path": "tests/e2e/logs/live-100-round-smoke-20260618213943-2414466.ndjson"
+      },
+      {
+        "sha256": "eb7cbc506676e8c8840479297e9653ebffd405c1aeb0d71e6304e2ff845d6415",
+        "path": "tests/e2e/logs/live-100-round-smoke-20260618213943-2414466-summary.json"
+      },
+      {
+        "sha256": "eafd602326bcf52da0f88b1ab9d7ec8c84c6bc6601e6c84c49e4a63482786e2c",
+        "path": "tests/e2e/logs/live-100-round-smoke-20260618213957-2416337.ndjson"
+      },
+      {
+        "sha256": "1a60672bcc72405b9500d42234952c53ba81ba2fbd2f8dbafce9b0fc1020630c",
+        "path": "tests/e2e/logs/live-100-round-smoke-20260618214101-2424971.ndjson"
+      },
+      {
+        "sha256": "aec724205ad9e81195a9f3f89426e83bcfd18bf1f2accc616b940183642dfe71",
+        "path": "tests/e2e/logs/live-100-round-smoke-20260618214101-2424971-summary.json"
+      },
+      {
+        "sha256": "e693230fecac0db15439af04729040e97665d2d3d36471f1cd2b8b42f8965ff5",
+        "path": "tests/e2e/logs/live-100-round-smoke-20260618214111-2426096.ndjson"
+      },
+      {
+        "sha256": "04ee8b9904204578541644e165198aa4bac01a25ba475ad13846b18a4ab4c49b",
+        "path": "tests/e2e/logs/live-100-round-smoke-20260618214508-2486708.ndjson"
+      },
+      {
+        "sha256": "309ff58eac4857282c12d5e39f56b1b70a9ce1ed542a04b713d457809edddcc4",
+        "path": "tests/e2e/logs/live-100-round-smoke-20260618214508-2486708-summary.json"
+      },
+      {
+        "sha256": "9346da6b919f0fa1403bdf2635ab6ec50ebb41587e3e2a4c65e7df4cb9aca389",
+        "path": "tests/e2e/logs/live-100-round-smoke-20260618214518-2489292.ndjson"
+      },
+      {
+        "sha256": "1bcc24faf3041ede82d9d8efc86753e74d9de5b2d6751f1e5939b6a29be5417a",
+        "path": "tests/e2e/logs/live-100-round-smoke-20260618214518-2489292-summary.json"
+      },
+      {
+        "sha256": "bb8c1019a44a5f45bb4179b5218930f01909427f8476aa8baa70e1ed348d1a17",
+        "path": "tests/e2e/pipeline_test.sh"
+      },
+      {
+        "sha256": "b30ebcc12497e230532c71cfdc83ecda6cfefa96d57c44d6581bc5ae5c77248b",
+        "path": "web/ui/src/routes/access.test.ts"
+      },
+      {
+        "sha256": "a9cadc6857a6169d8fe77ad08f92aa41f3ec7c752a7ae12542d9dc1c98718beb",
+        "path": "web/ui/src/routes/access.ts"
+      },
+      {
+        "sha256": "acb879d7a710a1c4903dfb70c07a9bab12559399c14f64ec3dd324e4fbe40c6e",
+        "path": "web/ui/src/routes/routeManifest.test.ts"
+      },
+      {
+        "sha256": "3bd271bacccbfc2b11ad1189aaed5785243fcd07d72ed1dbdde908ea8fe26b8d",
+        "path": "web/ui/src/routes/routeManifest.tsx"
+      }
+    ],
+    "manifest_hash_count": 108
+  },
+  "kafka": {
+    "repo_topics": [
+      {
+        "name": "flow.events.v1",
+        "partitions": 16,
+        "retention_ms": 86400000,
+        "retention_bytes": 268435456,
+        "key": "tenant_id+community_id",
+        "message_type": "FlowEvent"
+      },
+      {
+        "name": "session.events.v1",
+        "partitions": 8,
+        "retention_ms": 86400000,
+        "retention_bytes": 268435456,
+        "key": "tenant_id+community_id",
+        "message_type": "SessionEvent"
+      },
+      {
+        "name": "feature.stat.v1",
+        "partitions": 12,
+        "retention_ms": 86400000,
+        "retention_bytes": 268435456,
+        "key": "tenant_id+community_id",
+        "message_type": "FeatureStatV1"
+      },
+      {
+        "name": "detections.v1",
+        "partitions": 6,
+        "retention_ms": 86400000,
+        "retention_bytes": 268435456,
+        "key": "tenant_id+community_id",
+        "message_type": "DetectionBatch"
+      },
+      {
+        "name": "alerts.v1",
+        "partitions": 8,
+        "retention_ms": 259200000,
+        "retention_bytes": 268435456,
+        "key": "tenant_id+alert_id",
+        "message_type": "Alert"
+      },
+      {
+        "name": "alert.feedback.v1",
+        "partitions": 3,
+        "retention_ms": 259200000,
+        "retention_bytes": 268435456,
+        "key": "tenant_id+alert_id",
+        "message_type": "AlertFeedback"
+      },
+      {
+        "name": "pcap.index.v1",
+        "partitions": 8,
+        "retention_ms": 259200000,
+        "retention_bytes": 536870912,
+        "key": "tenant_id+probe_id",
+        "message_type": "PcapIndexMeta"
+      },
+      {
+        "name": "rule.updates",
+        "partitions": 1,
+        "retention_ms": 86400000,
+        "retention_bytes": 134217728,
+        "key": "rule_id",
+        "message_type": "RuleCommand"
+      },
+      {
+        "name": "model-updates",
+        "partitions": 1,
+        "retention_ms": 86400000,
+        "retention_bytes": 134217728,
+        "key": "model_id",
+        "message_type": "ModelUpdateEvent"
+      },
+      {
+        "name": "audit.logs",
+        "partitions": 3,
+        "retention_ms": 259200000,
+        "retention_bytes": 268435456,
+        "key": "tenant_id",
+        "message_type": "AuditLog"
+      },
+      {
+        "name": "asset.bindings.v1",
+        "partitions": 4,
+        "retention_ms": 86400000,
+        "retention_bytes": 134217728,
+        "key": "tenant_id+mac",
+        "message_type": "MacIpBinding"
+      },
+      {
+        "name": "device.logs.v1",
+        "partitions": 8,
+        "retention_ms": 259200000,
+        "retention_bytes": 268435456,
+        "key": "tenant_id+device_ip",
+        "message_type": "DeviceLog"
+      },
+      {
+        "name": "user.events.v1",
+        "partitions": 4,
+        "retention_ms": 259200000,
+        "retention_bytes": 268435456,
+        "key": "tenant_id+user_id",
+        "message_type": "UserEvent"
+      },
+      {
+        "name": "threat.intel.v1",
+        "partitions": 3,
+        "retention_ms": 604800000,
+        "retention_bytes": 134217728,
+        "key": "tenant_id+indicator",
+        "message_type": "ThreatIntel"
+      },
+      {
+        "name": "dlq.v1",
+        "partitions": 4,
+        "retention_ms": 604800000,
+        "retention_bytes": 268435456,
+        "key": "tenant_id",
+        "message_type": "DeadLetter"
+      }
+    ],
+    "live_topics": [
+      "alert.events.v1",
+      "alert.feedback.v1",
+      "alerts.v1",
+      "asset.bindings.v1",
+      "audit.logs",
+      "campaigns.v1",
+      "__consumer_offsets",
+      "detections.behavior.v1",
+      "detections.business.v1",
+      "detections.v1",
+      "device.logs.v1",
+      "dlq.cep-job",
+      "dlq.feature-job",
+      "dlq.pcap-index-job",
+      "dlq.rule-job",
+      "dlq.session.ch.v1",
+      "dlq.v1",
+      "feature.stat.v1",
+      "flow.events.v1",
+      "l2.trigger.v1",
+      "model-updates",
+      "pcap.index.v1",
+      "perf-test",
+      "rule.updates",
+      "session.events.v1",
+      "session.late.v1",
+      "test-metadata",
+      "threat.intel.v1",
+      "user.events.v1"
+    ],
+    "missing_live_topics_from_repo": []
+  },
+  "api_catalogs": {
+    "models": {
+      "kind": "models",
+      "success": true,
+      "count": 5,
+      "items": [
+        {
+          "id": "1b141e22-fb9c-4739-b126-2cf4e19073ef",
+          "name": "behavior-classifier",
+          "type": "xgboost",
+          "version": "",
+          "status": "",
+          "updated_at": "2026-06-17T08:12:10Z"
+        },
+        {
+          "id": "bacdbd0e-f670-4d79-a20d-827401e8b96e",
+          "name": "scan",
+          "type": "xgboost",
+          "version": "",
+          "status": "",
+          "updated_at": "2026-06-17T04:34:50Z"
+        },
+        {
+          "id": "73d35c2d-00e5-4331-aa5a-c6e5a09432ee",
+          "name": "behavior-xgboost-v1",
+          "type": "gbdt",
+          "version": "",
+          "status": "",
+          "updated_at": "2026-06-17T04:16:29Z"
+        },
+        {
+          "id": "4081b918-0ea3-432e-bb94-e9c248e051a9",
+          "name": "business-rule-v1",
+          "type": "rules",
+          "version": "",
+          "status": "",
+          "updated_at": "2026-06-17T04:16:29Z"
+        },
+        {
+          "id": "21b0a70a-d237-4d8b-bddf-d23db8182e92",
+          "name": "vpn-detector-v1",
+          "type": "onnx",
+          "version": "",
+          "status": "",
+          "updated_at": "2026-06-17T04:16:29Z"
+        }
+      ]
+    },
+    "rules": {
+      "kind": "rules",
+      "success": true,
+      "count": 0,
+      "items": []
+    },
+    "deployments": {
+      "kind": "deployments",
+      "success": true,
+      "count": 0,
+      "items": []
+    }
+  },
+  "evidence_runs": [
+    {
+      "run_id": "20260624-loop-prepare-001-guidance",
+      "path": "doc/02_acceptance/runs/20260624-loop-prepare-001-guidance",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "20260624-loop-prepare-001-objective-stop",
+      "path": "doc/02_acceptance/runs/20260624-loop-prepare-001-objective-stop",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "20260624-loop-prepare-001-scout",
+      "path": "doc/02_acceptance/runs/20260624-loop-prepare-001-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "20260624-loop-prepare-001-workflow",
+      "path": "doc/02_acceptance/runs/20260624-loop-prepare-001-workflow",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "20260624-loop-prepare-002-guidance",
+      "path": "doc/02_acceptance/runs/20260624-loop-prepare-002-guidance",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "20260624-loop-prepare-002-objective-stop",
+      "path": "doc/02_acceptance/runs/20260624-loop-prepare-002-objective-stop",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "20260624-loop-prepare-002-scout",
+      "path": "doc/02_acceptance/runs/20260624-loop-prepare-002-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "20260624-loop-prepare-002-workflow",
+      "path": "doc/02_acceptance/runs/20260624-loop-prepare-002-workflow",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "20260628-alert-status-contract",
+      "path": "doc/02_acceptance/runs/20260628-alert-status-contract",
+      "summary_count": 1,
+      "has_local_report": true
+    },
+    {
+      "run_id": "20260628-dlq-replay-control",
+      "path": "doc/02_acceptance/runs/20260628-dlq-replay-control",
+      "summary_count": 1,
+      "has_local_report": true
+    },
+    {
+      "run_id": "20260629-alert-batch-state-version",
+      "path": "doc/02_acceptance/runs/20260629-alert-batch-state-version",
+      "summary_count": 0,
+      "has_local_report": true
+    },
+    {
+      "run_id": "20260629-alert-feedback-whitelist",
+      "path": "doc/02_acceptance/runs/20260629-alert-feedback-whitelist",
+      "summary_count": 0,
+      "has_local_report": true
+    },
+    {
+      "run_id": "20260629-alert-positive-audit",
+      "path": "doc/02_acceptance/runs/20260629-alert-positive-audit",
+      "summary_count": 0,
+      "has_local_report": true
+    },
+    {
+      "run_id": "20260629-alert-state-contract",
+      "path": "doc/02_acceptance/runs/20260629-alert-state-contract",
+      "summary_count": 1,
+      "has_local_report": true
+    },
+    {
+      "run_id": "20260629-alert-state-version",
+      "path": "doc/02_acceptance/runs/20260629-alert-state-version",
+      "summary_count": 0,
+      "has_local_report": true
+    },
+    {
+      "run_id": "20260629-business-flow-api-preflight",
+      "path": "doc/02_acceptance/runs/20260629-business-flow-api-preflight",
+      "summary_count": 3,
+      "has_local_report": true
+    },
+    {
+      "run_id": "20260629-capture-performance-preflight",
+      "path": "doc/02_acceptance/runs/20260629-capture-performance-preflight",
+      "summary_count": 3,
+      "has_local_report": false
+    },
+    {
+      "run_id": "20260629-data-quality-dlq-business",
+      "path": "doc/02_acceptance/runs/20260629-data-quality-dlq-business",
+      "summary_count": 1,
+      "has_local_report": true
+    },
+    {
+      "run_id": "20260629-data-quality-dlq-dryrun",
+      "path": "doc/02_acceptance/runs/20260629-data-quality-dlq-dryrun",
+      "summary_count": 1,
+      "has_local_report": true
+    },
+    {
+      "run_id": "20260629-deployment-preflight",
+      "path": "doc/02_acceptance/runs/20260629-deployment-preflight",
+      "summary_count": 3,
+      "has_local_report": true
+    },
+    {
+      "run_id": "20260629-detection-quality-preflight",
+      "path": "doc/02_acceptance/runs/20260629-detection-quality-preflight",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "20260629-dlq-replay-failure-regression",
+      "path": "doc/02_acceptance/runs/20260629-dlq-replay-failure-regression",
+      "summary_count": 3,
+      "has_local_report": true
+    },
+    {
+      "run_id": "20260629-dlq-replay-recovery",
+      "path": "doc/02_acceptance/runs/20260629-dlq-replay-recovery",
+      "summary_count": 5,
+      "has_local_report": true
+    },
+    {
+      "run_id": "20260629-fusion-threat-intel",
+      "path": "doc/02_acceptance/runs/20260629-fusion-threat-intel",
+      "summary_count": 5,
+      "has_local_report": true
+    },
+    {
+      "run_id": "20260629-ha-readiness-preflight",
+      "path": "doc/02_acceptance/runs/20260629-ha-readiness-preflight",
+      "summary_count": 2,
+      "has_local_report": true
+    },
+    {
+      "run_id": "20260629-kafka-flink-bad-message-dlq",
+      "path": "doc/02_acceptance/runs/20260629-kafka-flink-bad-message-dlq",
+      "summary_count": 1,
+      "has_local_report": true
+    },
+    {
+      "run_id": "20260629-latency-chain",
+      "path": "doc/02_acceptance/runs/20260629-latency-chain",
+      "summary_count": 15,
+      "has_local_report": true
+    },
+    {
+      "run_id": "20260629-live-permission-matrix",
+      "path": "doc/02_acceptance/runs/20260629-live-permission-matrix",
+      "summary_count": 1,
+      "has_local_report": true
+    },
+    {
+      "run_id": "20260629-pcap-forensics-integrity",
+      "path": "doc/02_acceptance/runs/20260629-pcap-forensics-integrity",
+      "summary_count": 1,
+      "has_local_report": true
+    },
+    {
+      "run_id": "20260629-production-security-preflight",
+      "path": "doc/02_acceptance/runs/20260629-production-security-preflight",
+      "summary_count": 2,
+      "has_local_report": true
+    },
+    {
+      "run_id": "20260629-realtime-appshell-live",
+      "path": "doc/02_acceptance/runs/20260629-realtime-appshell-live",
+      "summary_count": 1,
+      "has_local_report": true
+    },
+    {
+      "run_id": "20260629-realtime-ws-auth",
+      "path": "doc/02_acceptance/runs/20260629-realtime-ws-auth",
+      "summary_count": 1,
+      "has_local_report": true
+    },
+    {
+      "run_id": "20260629-release-manifest",
+      "path": "doc/02_acceptance/runs/20260629-release-manifest",
+      "summary_count": 9,
+      "has_local_report": true
+    },
+    {
+      "run_id": "20260629-screen-readonly-token",
+      "path": "doc/02_acceptance/runs/20260629-screen-readonly-token",
+      "summary_count": 1,
+      "has_local_report": true
+    },
+    {
+      "run_id": "20260629-threat-intel-service",
+      "path": "doc/02_acceptance/runs/20260629-threat-intel-service",
+      "summary_count": 6,
+      "has_local_report": true
+    },
+    {
+      "run_id": "20260629-ui-contract-preflight",
+      "path": "doc/02_acceptance/runs/20260629-ui-contract-preflight",
+      "summary_count": 2,
+      "has_local_report": true
+    },
+    {
+      "run_id": "mvp-0",
+      "path": "doc/02_acceptance/runs/mvp-0",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-0-route-dryrun",
+      "path": "doc/02_acceptance/runs/mvp-0-route-dryrun",
+      "summary_count": 1,
+      "has_local_report": true
+    },
+    {
+      "run_id": "mvp-0-route-plan",
+      "path": "doc/02_acceptance/runs/mvp-0-route-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-10-post-scout",
+      "path": "doc/02_acceptance/runs/mvp-10-post-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-10-scheduler",
+      "path": "doc/02_acceptance/runs/mvp-10-scheduler",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-10-worker",
+      "path": "doc/02_acceptance/runs/mvp-10-worker",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-10-worker-adapter-repair",
+      "path": "doc/02_acceptance/runs/mvp-10-worker-adapter-repair",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-10-worker-cle-p0-screen-001",
+      "path": "doc/02_acceptance/runs/mvp-10-worker-cle-p0-screen-001",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-11-daemon-lease",
+      "path": "doc/02_acceptance/runs/mvp-11-daemon-lease",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-11-daemon-lease-i1",
+      "path": "doc/02_acceptance/runs/mvp-11-daemon-lease-i1",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-11-daemon-lease-i1-scheduler",
+      "path": "doc/02_acceptance/runs/mvp-11-daemon-lease-i1-scheduler",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-11-daemon-lease-i1-scout",
+      "path": "doc/02_acceptance/runs/mvp-11-daemon-lease-i1-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-11-daemon-lease-i1-worker",
+      "path": "doc/02_acceptance/runs/mvp-11-daemon-lease-i1-worker",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-11-daemon-lease-i1-worker-cle-p0-screen-001",
+      "path": "doc/02_acceptance/runs/mvp-11-daemon-lease-i1-worker-cle-p0-screen-001",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-11-post-scout",
+      "path": "doc/02_acceptance/runs/mvp-11-post-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-12-persistent-queue-metrics",
+      "path": "doc/02_acceptance/runs/mvp-12-persistent-queue-metrics",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-12-persistent-queue-metrics-i1",
+      "path": "doc/02_acceptance/runs/mvp-12-persistent-queue-metrics-i1",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-12-persistent-queue-metrics-i1-metrics",
+      "path": "doc/02_acceptance/runs/mvp-12-persistent-queue-metrics-i1-metrics",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-12-persistent-queue-metrics-i1-scheduler",
+      "path": "doc/02_acceptance/runs/mvp-12-persistent-queue-metrics-i1-scheduler",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-12-persistent-queue-metrics-i1-scout",
+      "path": "doc/02_acceptance/runs/mvp-12-persistent-queue-metrics-i1-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-12-persistent-queue-metrics-i1-worker",
+      "path": "doc/02_acceptance/runs/mvp-12-persistent-queue-metrics-i1-worker",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-12-persistent-queue-metrics-i1-worker-cle-p0-screen-001",
+      "path": "doc/02_acceptance/runs/mvp-12-persistent-queue-metrics-i1-worker-cle-p0-screen-001",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-12-post-scout",
+      "path": "doc/02_acceptance/runs/mvp-12-post-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-13-final-metrics",
+      "path": "doc/02_acceptance/runs/mvp-13-final-metrics",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-13-final-scout",
+      "path": "doc/02_acceptance/runs/mvp-13-final-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-13-post-guidance-summary-scout",
+      "path": "doc/02_acceptance/runs/mvp-13-post-guidance-summary-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-13-post-scout",
+      "path": "doc/02_acceptance/runs/mvp-13-post-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-13-post-service-health",
+      "path": "doc/02_acceptance/runs/mvp-13-post-service-health",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-13-post-service-scout",
+      "path": "doc/02_acceptance/runs/mvp-13-post-service-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-13-service-health",
+      "path": "doc/02_acceptance/runs/mvp-13-service-health",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-13-service-once",
+      "path": "doc/02_acceptance/runs/mvp-13-service-once",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-13-service-once-daemon",
+      "path": "doc/02_acceptance/runs/mvp-13-service-once-daemon",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-13-service-once-daemon-i1",
+      "path": "doc/02_acceptance/runs/mvp-13-service-once-daemon-i1",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-13-service-once-daemon-i1-metrics",
+      "path": "doc/02_acceptance/runs/mvp-13-service-once-daemon-i1-metrics",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-13-service-once-daemon-i1-scheduler",
+      "path": "doc/02_acceptance/runs/mvp-13-service-once-daemon-i1-scheduler",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-13-service-once-daemon-i1-scout",
+      "path": "doc/02_acceptance/runs/mvp-13-service-once-daemon-i1-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-13-service-once-daemon-i1-worker",
+      "path": "doc/02_acceptance/runs/mvp-13-service-once-daemon-i1-worker",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-13-service-recover",
+      "path": "doc/02_acceptance/runs/mvp-13-service-recover",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-13-service-run-health",
+      "path": "doc/02_acceptance/runs/mvp-13-service-run-health",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-13-service-run-one",
+      "path": "doc/02_acceptance/runs/mvp-13-service-run-one",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-13-service-run-one-cycle1",
+      "path": "doc/02_acceptance/runs/mvp-13-service-run-one-cycle1",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-13-service-run-one-cycle1-i1",
+      "path": "doc/02_acceptance/runs/mvp-13-service-run-one-cycle1-i1",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-13-service-run-one-cycle1-i1-metrics",
+      "path": "doc/02_acceptance/runs/mvp-13-service-run-one-cycle1-i1-metrics",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-13-service-run-one-cycle1-i1-scheduler",
+      "path": "doc/02_acceptance/runs/mvp-13-service-run-one-cycle1-i1-scheduler",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-13-service-run-one-cycle1-i1-scout",
+      "path": "doc/02_acceptance/runs/mvp-13-service-run-one-cycle1-i1-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-13-service-run-one-cycle1-i1-worker",
+      "path": "doc/02_acceptance/runs/mvp-13-service-run-one-cycle1-i1-worker",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-14-deploy-plan",
+      "path": "doc/02_acceptance/runs/mvp-14-deploy-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-14-final-health",
+      "path": "doc/02_acceptance/runs/mvp-14-final-health",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-14-post-release-scout",
+      "path": "doc/02_acceptance/runs/mvp-14-post-release-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-14-release-freeze",
+      "path": "doc/02_acceptance/runs/mvp-14-release-freeze",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-15-final-sqlite-health",
+      "path": "doc/02_acceptance/runs/mvp-15-final-sqlite-health",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-15-post-sqlite-scout",
+      "path": "doc/02_acceptance/runs/mvp-15-post-sqlite-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-15-sqlite-deploy-plan",
+      "path": "doc/02_acceptance/runs/mvp-15-sqlite-deploy-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-15-sqlite-health",
+      "path": "doc/02_acceptance/runs/mvp-15-sqlite-health",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-15-sqlite-release-freeze",
+      "path": "doc/02_acceptance/runs/mvp-15-sqlite-release-freeze",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-15-sqlite-service-once",
+      "path": "doc/02_acceptance/runs/mvp-15-sqlite-service-once",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-15-sqlite-service-once-daemon",
+      "path": "doc/02_acceptance/runs/mvp-15-sqlite-service-once-daemon",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-15-sqlite-service-once-daemon-i1",
+      "path": "doc/02_acceptance/runs/mvp-15-sqlite-service-once-daemon-i1",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-15-sqlite-service-once-daemon-i1-metrics",
+      "path": "doc/02_acceptance/runs/mvp-15-sqlite-service-once-daemon-i1-metrics",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-15-sqlite-service-once-daemon-i1-scheduler",
+      "path": "doc/02_acceptance/runs/mvp-15-sqlite-service-once-daemon-i1-scheduler",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-15-sqlite-service-once-daemon-i1-scout",
+      "path": "doc/02_acceptance/runs/mvp-15-sqlite-service-once-daemon-i1-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-15-sqlite-service-once-daemon-i1-worker",
+      "path": "doc/02_acceptance/runs/mvp-15-sqlite-service-once-daemon-i1-worker",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-15-sqlite-service-once-daemon-i1-worker-cle-p0-screen-001",
+      "path": "doc/02_acceptance/runs/mvp-15-sqlite-service-once-daemon-i1-worker-cle-p0-screen-001",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-16-codex-runner-blocked",
+      "path": "doc/02_acceptance/runs/mvp-16-codex-runner-blocked",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-16-codex-runner-plan",
+      "path": "doc/02_acceptance/runs/mvp-16-codex-runner-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-16-post-codex-runner-scout",
+      "path": "doc/02_acceptance/runs/mvp-16-post-codex-runner-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-16-workflow-runner-prepare",
+      "path": "doc/02_acceptance/runs/mvp-16-workflow-runner-prepare",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-17-deploy-preflight-profile",
+      "path": "doc/02_acceptance/runs/mvp-17-deploy-preflight-profile",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-17-post-preflight-scout",
+      "path": "doc/02_acceptance/runs/mvp-17-post-preflight-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-17-preflight-smoke",
+      "path": "doc/02_acceptance/runs/mvp-17-preflight-smoke",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-17-release-preflight-freeze",
+      "path": "doc/02_acceptance/runs/mvp-17-release-preflight-freeze",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-17-service-health-preflight",
+      "path": "doc/02_acceptance/runs/mvp-17-service-health-preflight",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-17-service-once-preflight",
+      "path": "doc/02_acceptance/runs/mvp-17-service-once-preflight",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-17-service-once-preflight-daemon",
+      "path": "doc/02_acceptance/runs/mvp-17-service-once-preflight-daemon",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-17-service-once-preflight-daemon-i1",
+      "path": "doc/02_acceptance/runs/mvp-17-service-once-preflight-daemon-i1",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-17-service-once-preflight-daemon-i1-metrics",
+      "path": "doc/02_acceptance/runs/mvp-17-service-once-preflight-daemon-i1-metrics",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-17-service-once-preflight-daemon-i1-scheduler",
+      "path": "doc/02_acceptance/runs/mvp-17-service-once-preflight-daemon-i1-scheduler",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-17-service-once-preflight-daemon-i1-scout",
+      "path": "doc/02_acceptance/runs/mvp-17-service-once-preflight-daemon-i1-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-17-service-once-preflight-daemon-i1-worker",
+      "path": "doc/02_acceptance/runs/mvp-17-service-once-preflight-daemon-i1-worker",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-17-service-run-preflight",
+      "path": "doc/02_acceptance/runs/mvp-17-service-run-preflight",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-17-service-run-preflight-cycle1",
+      "path": "doc/02_acceptance/runs/mvp-17-service-run-preflight-cycle1",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-17-service-run-preflight-cycle1-i1",
+      "path": "doc/02_acceptance/runs/mvp-17-service-run-preflight-cycle1-i1",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-17-service-run-preflight-cycle1-i1-metrics",
+      "path": "doc/02_acceptance/runs/mvp-17-service-run-preflight-cycle1-i1-metrics",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-17-service-run-preflight-cycle1-i1-scheduler",
+      "path": "doc/02_acceptance/runs/mvp-17-service-run-preflight-cycle1-i1-scheduler",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-17-service-run-preflight-cycle1-i1-scout",
+      "path": "doc/02_acceptance/runs/mvp-17-service-run-preflight-cycle1-i1-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-17-service-run-preflight-cycle1-i1-worker",
+      "path": "doc/02_acceptance/runs/mvp-17-service-run-preflight-cycle1-i1-worker",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-18-post-sandbox-scout",
+      "path": "doc/02_acceptance/runs/mvp-18-post-sandbox-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-18-release-blocks-bad-sandbox",
+      "path": "doc/02_acceptance/runs/mvp-18-release-blocks-bad-sandbox",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-18-release-with-sandbox",
+      "path": "doc/02_acceptance/runs/mvp-18-release-with-sandbox",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-18-sandbox-execute-local-blocked",
+      "path": "doc/02_acceptance/runs/mvp-18-sandbox-execute-local-blocked",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-18-sandbox-k8s-plan",
+      "path": "doc/02_acceptance/runs/mvp-18-sandbox-k8s-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-18-sandbox-local-plan",
+      "path": "doc/02_acceptance/runs/mvp-18-sandbox-local-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-19-post-sandbox-executor-scout",
+      "path": "doc/02_acceptance/runs/mvp-19-post-sandbox-executor-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-19-release-blocks-planned-execution",
+      "path": "doc/02_acceptance/runs/mvp-19-release-blocks-planned-execution",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-19-sandbox-execution-blocked",
+      "path": "doc/02_acceptance/runs/mvp-19-sandbox-execution-blocked",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-19-sandbox-execution-plan",
+      "path": "doc/02_acceptance/runs/mvp-19-sandbox-execution-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-1-god-view",
+      "path": "doc/02_acceptance/runs/mvp-1-god-view",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-20-daemon-sandbox-plan",
+      "path": "doc/02_acceptance/runs/mvp-20-daemon-sandbox-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-20-daemon-sandbox-plan-i1",
+      "path": "doc/02_acceptance/runs/mvp-20-daemon-sandbox-plan-i1",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-20-daemon-sandbox-plan-i1-metrics",
+      "path": "doc/02_acceptance/runs/mvp-20-daemon-sandbox-plan-i1-metrics",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-20-daemon-sandbox-plan-i1-scheduler",
+      "path": "doc/02_acceptance/runs/mvp-20-daemon-sandbox-plan-i1-scheduler",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-20-daemon-sandbox-plan-i1-scout",
+      "path": "doc/02_acceptance/runs/mvp-20-daemon-sandbox-plan-i1-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-20-daemon-sandbox-plan-i1-worker",
+      "path": "doc/02_acceptance/runs/mvp-20-daemon-sandbox-plan-i1-worker",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-20-daemon-sandbox-plan-i1-worker-cle-p0-screen-001-sandbox",
+      "path": "doc/02_acceptance/runs/mvp-20-daemon-sandbox-plan-i1-worker-cle-p0-screen-001-sandbox",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-20-post-sandbox-worker-scout",
+      "path": "doc/02_acceptance/runs/mvp-20-post-sandbox-worker-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-20-release-with-sandbox-worker",
+      "path": "doc/02_acceptance/runs/mvp-20-release-with-sandbox-worker",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-20-sandbox-worker-exec-blocked",
+      "path": "doc/02_acceptance/runs/mvp-20-sandbox-worker-exec-blocked",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-20-sandbox-worker-exec-blocked-cle-p0-screen-001-sandbox",
+      "path": "doc/02_acceptance/runs/mvp-20-sandbox-worker-exec-blocked-cle-p0-screen-001-sandbox",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-20-sandbox-worker-exec-blocked-cle-p0-screen-001-sandbox-exec",
+      "path": "doc/02_acceptance/runs/mvp-20-sandbox-worker-exec-blocked-cle-p0-screen-001-sandbox-exec",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-20-sandbox-worker-plan",
+      "path": "doc/02_acceptance/runs/mvp-20-sandbox-worker-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-20-sandbox-worker-plan-cle-p0-screen-001-sandbox",
+      "path": "doc/02_acceptance/runs/mvp-20-sandbox-worker-plan-cle-p0-screen-001-sandbox",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-20-sandbox-worker-queue-guard",
+      "path": "doc/02_acceptance/runs/mvp-20-sandbox-worker-queue-guard",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-20-service-sandbox-plan",
+      "path": "doc/02_acceptance/runs/mvp-20-service-sandbox-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-20-service-sandbox-plan-daemon",
+      "path": "doc/02_acceptance/runs/mvp-20-service-sandbox-plan-daemon",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-20-service-sandbox-plan-daemon-i1",
+      "path": "doc/02_acceptance/runs/mvp-20-service-sandbox-plan-daemon-i1",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-20-service-sandbox-plan-daemon-i1-metrics",
+      "path": "doc/02_acceptance/runs/mvp-20-service-sandbox-plan-daemon-i1-metrics",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-20-service-sandbox-plan-daemon-i1-scheduler",
+      "path": "doc/02_acceptance/runs/mvp-20-service-sandbox-plan-daemon-i1-scheduler",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-20-service-sandbox-plan-daemon-i1-scout",
+      "path": "doc/02_acceptance/runs/mvp-20-service-sandbox-plan-daemon-i1-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-20-service-sandbox-plan-daemon-i1-worker",
+      "path": "doc/02_acceptance/runs/mvp-20-service-sandbox-plan-daemon-i1-worker",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-20-service-sandbox-plan-daemon-i1-worker-cle-p0-screen-001-sandbox",
+      "path": "doc/02_acceptance/runs/mvp-20-service-sandbox-plan-daemon-i1-worker-cle-p0-screen-001-sandbox",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-21-daemon-quota-sandbox-plan",
+      "path": "doc/02_acceptance/runs/mvp-21-daemon-quota-sandbox-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-21-daemon-quota-sandbox-plan-i1",
+      "path": "doc/02_acceptance/runs/mvp-21-daemon-quota-sandbox-plan-i1",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-21-daemon-quota-sandbox-plan-i1-metrics",
+      "path": "doc/02_acceptance/runs/mvp-21-daemon-quota-sandbox-plan-i1-metrics",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-21-daemon-quota-sandbox-plan-i1-scheduler",
+      "path": "doc/02_acceptance/runs/mvp-21-daemon-quota-sandbox-plan-i1-scheduler",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-21-daemon-quota-sandbox-plan-i1-scout",
+      "path": "doc/02_acceptance/runs/mvp-21-daemon-quota-sandbox-plan-i1-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-21-daemon-quota-sandbox-plan-i1-worker",
+      "path": "doc/02_acceptance/runs/mvp-21-daemon-quota-sandbox-plan-i1-worker",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-21-daemon-quota-sandbox-plan-i1-worker-cle-p0-screen-001-sandbox",
+      "path": "doc/02_acceptance/runs/mvp-21-daemon-quota-sandbox-plan-i1-worker-cle-p0-screen-001-sandbox",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-21-post-resource-quota-scout",
+      "path": "doc/02_acceptance/runs/mvp-21-post-resource-quota-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-21-post-resource-quota-scout-rerun",
+      "path": "doc/02_acceptance/runs/mvp-21-post-resource-quota-scout-rerun",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-21-preflight-quota-path",
+      "path": "doc/02_acceptance/runs/mvp-21-preflight-quota-path",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-21-quota-scheduler",
+      "path": "doc/02_acceptance/runs/mvp-21-quota-scheduler",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-21-quota-scheduler-json-persist",
+      "path": "doc/02_acceptance/runs/mvp-21-quota-scheduler-json-persist",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-21-quota-scheduler-sqlite-persist",
+      "path": "doc/02_acceptance/runs/mvp-21-quota-scheduler-sqlite-persist",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-21-release-with-resource-quota",
+      "path": "doc/02_acceptance/runs/mvp-21-release-with-resource-quota",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-21-resource-quota-guidance",
+      "path": "doc/02_acceptance/runs/mvp-21-resource-quota-guidance",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-21-resource-quota-scheduler-audit",
+      "path": "doc/02_acceptance/runs/mvp-21-resource-quota-scheduler-audit",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-22-deploy-sqlite-pool-plan",
+      "path": "doc/02_acceptance/runs/mvp-22-deploy-sqlite-pool-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-22-executor-pool-parallel-guard",
+      "path": "doc/02_acceptance/runs/mvp-22-executor-pool-parallel-guard",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-22-executor-pool-plan",
+      "path": "doc/02_acceptance/runs/mvp-22-executor-pool-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-22-executor-pool-plan-cle-p0-screen-001-sandbox-plan",
+      "path": "doc/02_acceptance/runs/mvp-22-executor-pool-plan-cle-p0-screen-001-sandbox-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-22-executor-pool-plan-cle-p0-screen-001-sandbox-plan-cle-p0-screen-001-sandbox",
+      "path": "doc/02_acceptance/runs/mvp-22-executor-pool-plan-cle-p0-screen-001-sandbox-plan-cle-p0-screen-001-sandbox",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-22-executor-pool-queue-plan",
+      "path": "doc/02_acceptance/runs/mvp-22-executor-pool-queue-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-22-executor-pool-queue-plan-cle-p0-screen-001-sandbox-plan",
+      "path": "doc/02_acceptance/runs/mvp-22-executor-pool-queue-plan-cle-p0-screen-001-sandbox-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-22-executor-pool-queue-plan-cle-p0-screen-001-sandbox-plan-cle-p0-screen-001-sandbox",
+      "path": "doc/02_acceptance/runs/mvp-22-executor-pool-queue-plan-cle-p0-screen-001-sandbox-plan-cle-p0-screen-001-sandbox",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-22-post-executor-pool-scout",
+      "path": "doc/02_acceptance/runs/mvp-22-post-executor-pool-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-22-preflight-sqlite-pool-plan",
+      "path": "doc/02_acceptance/runs/mvp-22-preflight-sqlite-pool-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-22-release-with-executor-pool",
+      "path": "doc/02_acceptance/runs/mvp-22-release-with-executor-pool",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-23-deploy-queue-service",
+      "path": "doc/02_acceptance/runs/mvp-23-deploy-queue-service",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-23-post-queue-service-auth-scout",
+      "path": "doc/02_acceptance/runs/mvp-23-post-queue-service-auth-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-23-post-queue-service-scout",
+      "path": "doc/02_acceptance/runs/mvp-23-post-queue-service-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-23-preflight-queue-service",
+      "path": "doc/02_acceptance/runs/mvp-23-preflight-queue-service",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-23-queue-service-smoke",
+      "path": "doc/02_acceptance/runs/mvp-23-queue-service-smoke",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-23-queue-service-smoke-auth",
+      "path": "doc/02_acceptance/runs/mvp-23-queue-service-smoke-auth",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-23-release-with-queue-service",
+      "path": "doc/02_acceptance/runs/mvp-23-release-with-queue-service",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-23-release-with-queue-service-auth",
+      "path": "doc/02_acceptance/runs/mvp-23-release-with-queue-service-auth",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-24-executor-pool-resource-admission",
+      "path": "doc/02_acceptance/runs/mvp-24-executor-pool-resource-admission",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-24-executor-pool-resource-admission-cle-p0-screen-001-sandbox-plan",
+      "path": "doc/02_acceptance/runs/mvp-24-executor-pool-resource-admission-cle-p0-screen-001-sandbox-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-24-executor-pool-resource-admission-cle-p0-screen-001-sandbox-plan-cle-p0-screen-001-sandbox",
+      "path": "doc/02_acceptance/runs/mvp-24-executor-pool-resource-admission-cle-p0-screen-001-sandbox-plan-cle-p0-screen-001-sandbox",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-24-metrics-resource-monitor",
+      "path": "doc/02_acceptance/runs/mvp-24-metrics-resource-monitor",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-24-post-resource-monitor-scout",
+      "path": "doc/02_acceptance/runs/mvp-24-post-resource-monitor-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-24-preflight-resource-monitor",
+      "path": "doc/02_acceptance/runs/mvp-24-preflight-resource-monitor",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-24-release-with-resource-monitor",
+      "path": "doc/02_acceptance/runs/mvp-24-release-with-resource-monitor",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-24-resource-monitor",
+      "path": "doc/02_acceptance/runs/mvp-24-resource-monitor",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-25-deploy-http-queue-worker",
+      "path": "doc/02_acceptance/runs/mvp-25-deploy-http-queue-worker",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-25-executor-pool-http-queue",
+      "path": "doc/02_acceptance/runs/mvp-25-executor-pool-http-queue",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-25-executor-pool-http-queue-cle-p0-screen-001-sandbox-plan",
+      "path": "doc/02_acceptance/runs/mvp-25-executor-pool-http-queue-cle-p0-screen-001-sandbox-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-25-executor-pool-http-queue-cle-p0-screen-001-sandbox-plan-cle-p0-screen-001-sandbox",
+      "path": "doc/02_acceptance/runs/mvp-25-executor-pool-http-queue-cle-p0-screen-001-sandbox-plan-cle-p0-screen-001-sandbox",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-25-http-queue-backend-smoke",
+      "path": "doc/02_acceptance/runs/mvp-25-http-queue-backend-smoke",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-25-http-queue-backend-smoke-2",
+      "path": "doc/02_acceptance/runs/mvp-25-http-queue-backend-smoke-2",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-25-post-http-queue-backend-scout",
+      "path": "doc/02_acceptance/runs/mvp-25-post-http-queue-backend-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-25-preflight-http-queue",
+      "path": "doc/02_acceptance/runs/mvp-25-preflight-http-queue",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-25-release-http-queue-backend",
+      "path": "doc/02_acceptance/runs/mvp-25-release-http-queue-backend",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-26-deploy-sqlite-pool-workspace-isolation",
+      "path": "doc/02_acceptance/runs/mvp-26-deploy-sqlite-pool-workspace-isolation",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-26-executor-pool-isolated",
+      "path": "doc/02_acceptance/runs/mvp-26-executor-pool-isolated",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-26-executor-pool-isolated-cle-p0-screen-001-sandbox-plan",
+      "path": "doc/02_acceptance/runs/mvp-26-executor-pool-isolated-cle-p0-screen-001-sandbox-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-26-executor-pool-isolated-cle-p0-screen-001-sandbox-plan-cle-p0-screen-001-sandbox",
+      "path": "doc/02_acceptance/runs/mvp-26-executor-pool-isolated-cle-p0-screen-001-sandbox-plan-cle-p0-screen-001-sandbox",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-26-final-workspace-isolation-scout",
+      "path": "doc/02_acceptance/runs/mvp-26-final-workspace-isolation-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-26-post-workspace-isolation-scout",
+      "path": "doc/02_acceptance/runs/mvp-26-post-workspace-isolation-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-26-preflight-workspace-isolation",
+      "path": "doc/02_acceptance/runs/mvp-26-preflight-workspace-isolation",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-26-release-with-workspace-isolation",
+      "path": "doc/02_acceptance/runs/mvp-26-release-with-workspace-isolation",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-26-workspace-isolation-plan",
+      "path": "doc/02_acceptance/runs/mvp-26-workspace-isolation-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-27-executor-pool-activation-blocked",
+      "path": "doc/02_acceptance/runs/mvp-27-executor-pool-activation-blocked",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-27-executor-pool-worktree-activated",
+      "path": "doc/02_acceptance/runs/mvp-27-executor-pool-worktree-activated",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-27-executor-pool-worktree-activated-cle-p0-screen-001-sandbox-plan",
+      "path": "doc/02_acceptance/runs/mvp-27-executor-pool-worktree-activated-cle-p0-screen-001-sandbox-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-27-executor-pool-worktree-activated-cle-p0-screen-001-sandbox-plan-cle-p0-screen-001-sandbox",
+      "path": "doc/02_acceptance/runs/mvp-27-executor-pool-worktree-activated-cle-p0-screen-001-sandbox-plan-cle-p0-screen-001-sandbox",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-28-deploy-sqlite-pool-default",
+      "path": "doc/02_acceptance/runs/mvp-28-deploy-sqlite-pool-default",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-28-executor-pool-worktree-activated",
+      "path": "doc/02_acceptance/runs/mvp-28-executor-pool-worktree-activated",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-28-executor-pool-worktree-activated-cle-p0-screen-001-sandbox-plan",
+      "path": "doc/02_acceptance/runs/mvp-28-executor-pool-worktree-activated-cle-p0-screen-001-sandbox-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-28-executor-pool-worktree-activated-cle-p0-screen-001-sandbox-plan-cle-p0-screen-001-sandbox",
+      "path": "doc/02_acceptance/runs/mvp-28-executor-pool-worktree-activated-cle-p0-screen-001-sandbox-plan-cle-p0-screen-001-sandbox",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-28-final-worktree-activation-scout",
+      "path": "doc/02_acceptance/runs/mvp-28-final-worktree-activation-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-28-release-worktree-activated",
+      "path": "doc/02_acceptance/runs/mvp-28-release-worktree-activated",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-28-release-worktree-activated-final",
+      "path": "doc/02_acceptance/runs/mvp-28-release-worktree-activated-final",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-29-final-workspace-cleanup-scout",
+      "path": "doc/02_acceptance/runs/mvp-29-final-workspace-cleanup-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-29-release-with-workspace-cleanup",
+      "path": "doc/02_acceptance/runs/mvp-29-release-with-workspace-cleanup",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-29-workspace-cleanup-execute-mvp27",
+      "path": "doc/02_acceptance/runs/mvp-29-workspace-cleanup-execute-mvp27",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-29-workspace-cleanup-execute-mvp28",
+      "path": "doc/02_acceptance/runs/mvp-29-workspace-cleanup-execute-mvp28",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-29-workspace-cleanup-plan",
+      "path": "doc/02_acceptance/runs/mvp-29-workspace-cleanup-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-2-guidance",
+      "path": "doc/02_acceptance/runs/mvp-2-guidance",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-30-executor-pool-stress",
+      "path": "doc/02_acceptance/runs/mvp-30-executor-pool-stress",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-30-executor-pool-stress-i001",
+      "path": "doc/02_acceptance/runs/mvp-30-executor-pool-stress-i001",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-30-executor-pool-stress-i001-cleanup",
+      "path": "doc/02_acceptance/runs/mvp-30-executor-pool-stress-i001-cleanup",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-30-executor-pool-stress-i002",
+      "path": "doc/02_acceptance/runs/mvp-30-executor-pool-stress-i002",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-30-executor-pool-stress-i002-cleanup",
+      "path": "doc/02_acceptance/runs/mvp-30-executor-pool-stress-i002-cleanup",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-31-executor-pool-stress-local-clone",
+      "path": "doc/02_acceptance/runs/mvp-31-executor-pool-stress-local-clone",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-31-executor-pool-stress-local-clone-i001",
+      "path": "doc/02_acceptance/runs/mvp-31-executor-pool-stress-local-clone-i001",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-31-executor-pool-stress-local-clone-i001-cleanup",
+      "path": "doc/02_acceptance/runs/mvp-31-executor-pool-stress-local-clone-i001-cleanup",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-31-executor-pool-stress-local-clone-i001-cle-p0-screen-001-sandbox-plan",
+      "path": "doc/02_acceptance/runs/mvp-31-executor-pool-stress-local-clone-i001-cle-p0-screen-001-sandbox-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-31-executor-pool-stress-local-clone-i001-cle-p0-screen-001-sandbox-plan-cle-p0-screen-001-sandbox",
+      "path": "doc/02_acceptance/runs/mvp-31-executor-pool-stress-local-clone-i001-cle-p0-screen-001-sandbox-plan-cle-p0-screen-001-sandbox",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-31-executor-pool-stress-local-clone-i002",
+      "path": "doc/02_acceptance/runs/mvp-31-executor-pool-stress-local-clone-i002",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-31-executor-pool-stress-local-clone-i002-cleanup",
+      "path": "doc/02_acceptance/runs/mvp-31-executor-pool-stress-local-clone-i002-cleanup",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-31-executor-pool-stress-local-clone-i002-cle-p0-screen-001-sandbox-plan",
+      "path": "doc/02_acceptance/runs/mvp-31-executor-pool-stress-local-clone-i002-cle-p0-screen-001-sandbox-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-31-executor-pool-stress-local-clone-i002-cle-p0-screen-001-sandbox-plan-cle-p0-screen-001-sandbox",
+      "path": "doc/02_acceptance/runs/mvp-31-executor-pool-stress-local-clone-i002-cle-p0-screen-001-sandbox-plan-cle-p0-screen-001-sandbox",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-32-executor-pool-stress-local-clone",
+      "path": "doc/02_acceptance/runs/mvp-32-executor-pool-stress-local-clone",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-32-executor-pool-stress-local-clone-i001",
+      "path": "doc/02_acceptance/runs/mvp-32-executor-pool-stress-local-clone-i001",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-32-executor-pool-stress-local-clone-i001-cleanup",
+      "path": "doc/02_acceptance/runs/mvp-32-executor-pool-stress-local-clone-i001-cleanup",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-32-executor-pool-stress-local-clone-i001-cle-p0-screen-001-sandbox-plan",
+      "path": "doc/02_acceptance/runs/mvp-32-executor-pool-stress-local-clone-i001-cle-p0-screen-001-sandbox-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-32-executor-pool-stress-local-clone-i001-cle-p0-screen-001-sandbox-plan-cle-p0-screen-001-sandbox",
+      "path": "doc/02_acceptance/runs/mvp-32-executor-pool-stress-local-clone-i001-cle-p0-screen-001-sandbox-plan-cle-p0-screen-001-sandbox",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-32-executor-pool-stress-local-clone-i002",
+      "path": "doc/02_acceptance/runs/mvp-32-executor-pool-stress-local-clone-i002",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-32-executor-pool-stress-local-clone-i002-cleanup",
+      "path": "doc/02_acceptance/runs/mvp-32-executor-pool-stress-local-clone-i002-cleanup",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-32-executor-pool-stress-local-clone-i002-cle-p0-screen-001-sandbox-plan",
+      "path": "doc/02_acceptance/runs/mvp-32-executor-pool-stress-local-clone-i002-cle-p0-screen-001-sandbox-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-32-executor-pool-stress-local-clone-i002-cle-p0-screen-001-sandbox-plan-cle-p0-screen-001-sandbox",
+      "path": "doc/02_acceptance/runs/mvp-32-executor-pool-stress-local-clone-i002-cle-p0-screen-001-sandbox-plan-cle-p0-screen-001-sandbox",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-32-release-with-executor-pool-stress",
+      "path": "doc/02_acceptance/runs/mvp-32-release-with-executor-pool-stress",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-33-executor-pool-stress-local-clone",
+      "path": "doc/02_acceptance/runs/mvp-33-executor-pool-stress-local-clone",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-33-executor-pool-stress-local-clone-i001",
+      "path": "doc/02_acceptance/runs/mvp-33-executor-pool-stress-local-clone-i001",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-33-executor-pool-stress-local-clone-i001-cleanup",
+      "path": "doc/02_acceptance/runs/mvp-33-executor-pool-stress-local-clone-i001-cleanup",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-33-executor-pool-stress-local-clone-i001-cle-p0-screen-001-sandbox-plan",
+      "path": "doc/02_acceptance/runs/mvp-33-executor-pool-stress-local-clone-i001-cle-p0-screen-001-sandbox-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-33-executor-pool-stress-local-clone-i001-cle-p0-screen-001-sandbox-plan-cle-p0-screen-001-sandbox",
+      "path": "doc/02_acceptance/runs/mvp-33-executor-pool-stress-local-clone-i001-cle-p0-screen-001-sandbox-plan-cle-p0-screen-001-sandbox",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-33-executor-pool-stress-local-clone-i002",
+      "path": "doc/02_acceptance/runs/mvp-33-executor-pool-stress-local-clone-i002",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-33-executor-pool-stress-local-clone-i002-cleanup",
+      "path": "doc/02_acceptance/runs/mvp-33-executor-pool-stress-local-clone-i002-cleanup",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-33-executor-pool-stress-local-clone-i002-cle-p0-screen-001-sandbox-plan",
+      "path": "doc/02_acceptance/runs/mvp-33-executor-pool-stress-local-clone-i002-cle-p0-screen-001-sandbox-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-33-executor-pool-stress-local-clone-i002-cle-p0-screen-001-sandbox-plan-cle-p0-screen-001-sandbox",
+      "path": "doc/02_acceptance/runs/mvp-33-executor-pool-stress-local-clone-i002-cle-p0-screen-001-sandbox-plan-cle-p0-screen-001-sandbox",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-33-final-executor-pool-stress-scout",
+      "path": "doc/02_acceptance/runs/mvp-33-final-executor-pool-stress-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-33-release-with-executor-pool-stress",
+      "path": "doc/02_acceptance/runs/mvp-33-release-with-executor-pool-stress",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-34-final-soak-scout",
+      "path": "doc/02_acceptance/runs/mvp-34-final-soak-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-34-release-with-soak",
+      "path": "doc/02_acceptance/runs/mvp-34-release-with-soak",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-34-soak-service-once",
+      "path": "doc/02_acceptance/runs/mvp-34-soak-service-once",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-34-soak-service-once-c001-health",
+      "path": "doc/02_acceptance/runs/mvp-34-soak-service-once-c001-health",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-34-soak-service-once-c001-metrics",
+      "path": "doc/02_acceptance/runs/mvp-34-soak-service-once-c001-metrics",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-34-soak-service-once-c001-resource-monitor",
+      "path": "doc/02_acceptance/runs/mvp-34-soak-service-once-c001-resource-monitor",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-34-soak-service-once-c001-runner",
+      "path": "doc/02_acceptance/runs/mvp-34-soak-service-once-c001-runner",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-34-soak-service-once-c001-runner-daemon",
+      "path": "doc/02_acceptance/runs/mvp-34-soak-service-once-c001-runner-daemon",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-34-soak-service-once-c001-runner-daemon-i1",
+      "path": "doc/02_acceptance/runs/mvp-34-soak-service-once-c001-runner-daemon-i1",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-34-soak-service-once-c001-runner-daemon-i1-metrics",
+      "path": "doc/02_acceptance/runs/mvp-34-soak-service-once-c001-runner-daemon-i1-metrics",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-34-soak-service-once-c001-runner-daemon-i1-scheduler",
+      "path": "doc/02_acceptance/runs/mvp-34-soak-service-once-c001-runner-daemon-i1-scheduler",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-34-soak-service-once-c001-runner-daemon-i1-scout",
+      "path": "doc/02_acceptance/runs/mvp-34-soak-service-once-c001-runner-daemon-i1-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-34-soak-service-once-c001-runner-daemon-i1-worker",
+      "path": "doc/02_acceptance/runs/mvp-34-soak-service-once-c001-runner-daemon-i1-worker",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-34-soak-service-once-c001-runner-daemon-i1-worker-cle-p0-screen-001-sandbox",
+      "path": "doc/02_acceptance/runs/mvp-34-soak-service-once-c001-runner-daemon-i1-worker-cle-p0-screen-001-sandbox",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-35-final-model-profile-scout",
+      "path": "doc/02_acceptance/runs/mvp-35-final-model-profile-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-35-model-profile-smoke",
+      "path": "doc/02_acceptance/runs/mvp-35-model-profile-smoke",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-35-release-with-model-profile",
+      "path": "doc/02_acceptance/runs/mvp-35-release-with-model-profile",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-35-workflow-model-profile",
+      "path": "doc/02_acceptance/runs/mvp-35-workflow-model-profile",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-36b-final-llm-reviewer-scout",
+      "path": "doc/02_acceptance/runs/mvp-36b-final-llm-reviewer-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-36b-release-with-llm-reviewer",
+      "path": "doc/02_acceptance/runs/mvp-36b-release-with-llm-reviewer",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-36b-workflow-llm-reviewer-docsync",
+      "path": "doc/02_acceptance/runs/mvp-36b-workflow-llm-reviewer-docsync",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-36-final-llm-reviewer-scout",
+      "path": "doc/02_acceptance/runs/mvp-36-final-llm-reviewer-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-36-llm-reviewer-smoke",
+      "path": "doc/02_acceptance/runs/mvp-36-llm-reviewer-smoke",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-36-release-with-llm-reviewer",
+      "path": "doc/02_acceptance/runs/mvp-36-release-with-llm-reviewer",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-36-workflow-llm-reviewer",
+      "path": "doc/02_acceptance/runs/mvp-36-workflow-llm-reviewer",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-37b-remote-pool-stress-smoke",
+      "path": "doc/02_acceptance/runs/mvp-37b-remote-pool-stress-smoke",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-37-final-remote-pool-stress-scout",
+      "path": "doc/02_acceptance/runs/mvp-37-final-remote-pool-stress-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-37-queue-service-smoke-after-lease-owner",
+      "path": "doc/02_acceptance/runs/mvp-37-queue-service-smoke-after-lease-owner",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-37-release-with-remote-pool-stress",
+      "path": "doc/02_acceptance/runs/mvp-37-release-with-remote-pool-stress",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-37-remote-pool-stress-release",
+      "path": "doc/02_acceptance/runs/mvp-37-remote-pool-stress-release",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-37-remote-pool-stress-smoke",
+      "path": "doc/02_acceptance/runs/mvp-37-remote-pool-stress-smoke",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-38-final-external-remote-pool-scout",
+      "path": "doc/02_acceptance/runs/mvp-38-final-external-remote-pool-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-38-release-with-external-remote-pool",
+      "path": "doc/02_acceptance/runs/mvp-38-release-with-external-remote-pool",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-38-remote-pool-embedded-regression",
+      "path": "doc/02_acceptance/runs/mvp-38-remote-pool-embedded-regression",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-38-remote-pool-external-service",
+      "path": "doc/02_acceptance/runs/mvp-38-remote-pool-external-service",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-38-remote-pool-nonloopback-guard",
+      "path": "doc/02_acceptance/runs/mvp-38-remote-pool-nonloopback-guard",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-39b-final-k8s-remote-pool-scout",
+      "path": "doc/02_acceptance/runs/mvp-39b-final-k8s-remote-pool-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-39-final-k8s-remote-pool-scout",
+      "path": "doc/02_acceptance/runs/mvp-39-final-k8s-remote-pool-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-39-release-with-k8s-remote-pool",
+      "path": "doc/02_acceptance/runs/mvp-39-release-with-k8s-remote-pool",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-39-remote-pool-k8s-plan",
+      "path": "doc/02_acceptance/runs/mvp-39-remote-pool-k8s-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-39-worker-only-smoke-worker-0",
+      "path": "doc/02_acceptance/runs/mvp-39-worker-only-smoke-worker-0",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-3-design-screen",
+      "path": "doc/02_acceptance/runs/mvp-3-design-screen",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-3-post-design-scout",
+      "path": "doc/02_acceptance/runs/mvp-3-post-design-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-40-k8s-readiness-scout",
+      "path": "doc/02_acceptance/runs/mvp-40-k8s-readiness-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-40-release-blocked-by-k8s-readiness",
+      "path": "doc/02_acceptance/runs/mvp-40-release-blocked-by-k8s-readiness",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-40-remote-pool-k8s-readiness",
+      "path": "doc/02_acceptance/runs/mvp-40-remote-pool-k8s-readiness",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-41-daemon-objective-stop-dry",
+      "path": "doc/02_acceptance/runs/mvp-41-daemon-objective-stop-dry",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-41-daemon-objective-stop-dry-i1",
+      "path": "doc/02_acceptance/runs/mvp-41-daemon-objective-stop-dry-i1",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-41-daemon-objective-stop-dry-i1-metrics",
+      "path": "doc/02_acceptance/runs/mvp-41-daemon-objective-stop-dry-i1-metrics",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-41-daemon-objective-stop-dry-i1-objective-stop",
+      "path": "doc/02_acceptance/runs/mvp-41-daemon-objective-stop-dry-i1-objective-stop",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-41-daemon-objective-stop-dry-i1-scheduler",
+      "path": "doc/02_acceptance/runs/mvp-41-daemon-objective-stop-dry-i1-scheduler",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-41-daemon-objective-stop-dry-i1-scout",
+      "path": "doc/02_acceptance/runs/mvp-41-daemon-objective-stop-dry-i1-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-41-daemon-objective-stop-dry-i1-worker",
+      "path": "doc/02_acceptance/runs/mvp-41-daemon-objective-stop-dry-i1-worker",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-41-final-objective-stop-scout",
+      "path": "doc/02_acceptance/runs/mvp-41-final-objective-stop-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-41-objective-stop-current",
+      "path": "doc/02_acceptance/runs/mvp-41-objective-stop-current",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-41-objective-stop-scout",
+      "path": "doc/02_acceptance/runs/mvp-41-objective-stop-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-41-release-blocked-by-objective-stop",
+      "path": "doc/02_acceptance/runs/mvp-41-release-blocked-by-objective-stop",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-42-final-k8s-bootstrap-scout",
+      "path": "doc/02_acceptance/runs/mvp-42-final-k8s-bootstrap-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-42-k8s-bootstrap-queue-service-plan",
+      "path": "doc/02_acceptance/runs/mvp-42-k8s-bootstrap-queue-service-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-42-k8s-bootstrap-scout",
+      "path": "doc/02_acceptance/runs/mvp-42-k8s-bootstrap-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-42-objective-stop-after-bootstrap",
+      "path": "doc/02_acceptance/runs/mvp-42-objective-stop-after-bootstrap",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-42-queue-service-k8s-deploy-plan",
+      "path": "doc/02_acceptance/runs/mvp-42-queue-service-k8s-deploy-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-42-release-with-k8s-bootstrap",
+      "path": "doc/02_acceptance/runs/mvp-42-release-with-k8s-bootstrap",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-43-control-only-k8s-guard",
+      "path": "doc/02_acceptance/runs/mvp-43-control-only-k8s-guard",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-43-final-after-release-readiness-scout",
+      "path": "doc/02_acceptance/runs/mvp-43-final-after-release-readiness-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-43-final-after-stop-scout",
+      "path": "doc/02_acceptance/runs/mvp-43-final-after-stop-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-43-final-created-at-scout",
+      "path": "doc/02_acceptance/runs/mvp-43-final-created-at-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-43-final-image-readiness-scout",
+      "path": "doc/02_acceptance/runs/mvp-43-final-image-readiness-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-43-final-k8s-path-scout",
+      "path": "doc/02_acceptance/runs/mvp-43-final-k8s-path-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-43-final-scout-after-objective",
+      "path": "doc/02_acceptance/runs/mvp-43-final-scout-after-objective",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-43-image-build-control-only",
+      "path": "doc/02_acceptance/runs/mvp-43-image-build-control-only",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-43-image-build-control-only-final",
+      "path": "doc/02_acceptance/runs/mvp-43-image-build-control-only-final",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-43-image-build-plan-only",
+      "path": "doc/02_acceptance/runs/mvp-43-image-build-plan-only",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-43-k8s-bootstrap-queue-service-plan",
+      "path": "doc/02_acceptance/runs/mvp-43-k8s-bootstrap-queue-service-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-43-objective-stop-after-image-readiness",
+      "path": "doc/02_acceptance/runs/mvp-43-objective-stop-after-image-readiness",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-43-objective-stop-after-k8s-path",
+      "path": "doc/02_acceptance/runs/mvp-43-objective-stop-after-k8s-path",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-43-objective-stop-after-release-readiness",
+      "path": "doc/02_acceptance/runs/mvp-43-objective-stop-after-release-readiness",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-43-objective-stop-created-at-final",
+      "path": "doc/02_acceptance/runs/mvp-43-objective-stop-created-at-final",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-43-objective-stop-final-image-readiness",
+      "path": "doc/02_acceptance/runs/mvp-43-objective-stop-final-image-readiness",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-43-objective-stop-missing-release-guard",
+      "path": "doc/02_acceptance/runs/mvp-43-objective-stop-missing-release-guard",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-43-queue-service-k8s-deploy-plan",
+      "path": "doc/02_acceptance/runs/mvp-43-queue-service-k8s-deploy-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-43-release-blocked-by-image-and-readiness",
+      "path": "doc/02_acceptance/runs/mvp-43-release-blocked-by-image-and-readiness",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-43-release-blocked-by-readiness",
+      "path": "doc/02_acceptance/runs/mvp-43-release-blocked-by-readiness",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-43-release-queue-health-guard",
+      "path": "doc/02_acceptance/runs/mvp-43-release-queue-health-guard",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-43-remote-pool-k8s-plan",
+      "path": "doc/02_acceptance/runs/mvp-43-remote-pool-k8s-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-43-remote-pool-k8s-readiness",
+      "path": "doc/02_acceptance/runs/mvp-43-remote-pool-k8s-readiness",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-44-final-runtime-ready-scout",
+      "path": "doc/02_acceptance/runs/mvp-44-final-runtime-ready-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-44-image-build-local-base",
+      "path": "doc/02_acceptance/runs/mvp-44-image-build-local-base",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-44-image-distribution",
+      "path": "doc/02_acceptance/runs/mvp-44-image-distribution",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-44-k8s-bootstrap-queue-service-apply",
+      "path": "doc/02_acceptance/runs/mvp-44-k8s-bootstrap-queue-service-apply",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-44-k8s-bootstrap-queue-service-apply-toleration",
+      "path": "doc/02_acceptance/runs/mvp-44-k8s-bootstrap-queue-service-apply-toleration",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-44-k8s-bootstrap-queue-service-plan-pv",
+      "path": "doc/02_acceptance/runs/mvp-44-k8s-bootstrap-queue-service-plan-pv",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-44-objective-stop-runtime-ready",
+      "path": "doc/02_acceptance/runs/mvp-44-objective-stop-runtime-ready",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-44-queue-service-k8s-deploy-plan",
+      "path": "doc/02_acceptance/runs/mvp-44-queue-service-k8s-deploy-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-44-queue-service-k8s-deploy-plan-pv",
+      "path": "doc/02_acceptance/runs/mvp-44-queue-service-k8s-deploy-plan-pv",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-44-queue-service-k8s-deploy-plan-pv-toleration",
+      "path": "doc/02_acceptance/runs/mvp-44-queue-service-k8s-deploy-plan-pv-toleration",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-44-release-with-k8s-runtime-ready",
+      "path": "doc/02_acceptance/runs/mvp-44-release-with-k8s-runtime-ready",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-44-remote-pool-k8s-execute",
+      "path": "doc/02_acceptance/runs/mvp-44-remote-pool-k8s-execute",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-44-remote-pool-k8s-plan",
+      "path": "doc/02_acceptance/runs/mvp-44-remote-pool-k8s-plan",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-44-remote-pool-k8s-plan-pv",
+      "path": "doc/02_acceptance/runs/mvp-44-remote-pool-k8s-plan-pv",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-44-remote-pool-k8s-plan-pv-toleration",
+      "path": "doc/02_acceptance/runs/mvp-44-remote-pool-k8s-plan-pv-toleration",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-44-remote-pool-k8s-readiness-after-apply",
+      "path": "doc/02_acceptance/runs/mvp-44-remote-pool-k8s-readiness-after-apply",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-44-remote-pool-k8s-readiness-ready",
+      "path": "doc/02_acceptance/runs/mvp-44-remote-pool-k8s-readiness-ready",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-45-objective-stop-final",
+      "path": "doc/02_acceptance/runs/mvp-45-objective-stop-final",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-45-objective-stop-with-explicit-target",
+      "path": "doc/02_acceptance/runs/mvp-45-objective-stop-with-explicit-target",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-45-service-objective-stop-continue",
+      "path": "doc/02_acceptance/runs/mvp-45-service-objective-stop-continue",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-45-service-objective-stop-continue-daemon",
+      "path": "doc/02_acceptance/runs/mvp-45-service-objective-stop-continue-daemon",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-45-service-objective-stop-continue-daemon-i1",
+      "path": "doc/02_acceptance/runs/mvp-45-service-objective-stop-continue-daemon-i1",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-45-service-objective-stop-continue-daemon-i1-metrics",
+      "path": "doc/02_acceptance/runs/mvp-45-service-objective-stop-continue-daemon-i1-metrics",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-45-service-objective-stop-continue-daemon-i1-objective-stop",
+      "path": "doc/02_acceptance/runs/mvp-45-service-objective-stop-continue-daemon-i1-objective-stop",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-45-service-objective-stop-continue-daemon-i1-scheduler",
+      "path": "doc/02_acceptance/runs/mvp-45-service-objective-stop-continue-daemon-i1-scheduler",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-45-service-objective-stop-continue-daemon-i1-scout",
+      "path": "doc/02_acceptance/runs/mvp-45-service-objective-stop-continue-daemon-i1-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-45-service-objective-stop-continue-daemon-i1-worker",
+      "path": "doc/02_acceptance/runs/mvp-45-service-objective-stop-continue-daemon-i1-worker",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-45-service-objective-stop-wiring",
+      "path": "doc/02_acceptance/runs/mvp-45-service-objective-stop-wiring",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-45-service-objective-stop-wiring-daemon",
+      "path": "doc/02_acceptance/runs/mvp-45-service-objective-stop-wiring-daemon",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-45-service-objective-stop-wiring-daemon-i1",
+      "path": "doc/02_acceptance/runs/mvp-45-service-objective-stop-wiring-daemon-i1",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-45-service-objective-stop-wiring-daemon-i1-metrics",
+      "path": "doc/02_acceptance/runs/mvp-45-service-objective-stop-wiring-daemon-i1-metrics",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-45-service-objective-stop-wiring-daemon-i1-objective-stop",
+      "path": "doc/02_acceptance/runs/mvp-45-service-objective-stop-wiring-daemon-i1-objective-stop",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-45-service-objective-stop-wiring-daemon-i1-scheduler",
+      "path": "doc/02_acceptance/runs/mvp-45-service-objective-stop-wiring-daemon-i1-scheduler",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-45-service-objective-stop-wiring-daemon-i1-scout",
+      "path": "doc/02_acceptance/runs/mvp-45-service-objective-stop-wiring-daemon-i1-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-45-service-objective-stop-wiring-daemon-i1-worker",
+      "path": "doc/02_acceptance/runs/mvp-45-service-objective-stop-wiring-daemon-i1-worker",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-46-production-maturity-audit",
+      "path": "doc/02_acceptance/runs/mvp-46-production-maturity-audit",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-47-cle-p0-screen-001-fix",
+      "path": "doc/02_acceptance/runs/mvp-47-cle-p0-screen-001-fix",
+      "summary_count": 1,
+      "has_local_report": true
+    },
+    {
+      "run_id": "mvp-47-final-objective-stop",
+      "path": "doc/02_acceptance/runs/mvp-47-final-objective-stop",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-47-loop-one-round-first-p0",
+      "path": "doc/02_acceptance/runs/mvp-47-loop-one-round-first-p0",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-47-loop-one-round-first-p0-daemon",
+      "path": "doc/02_acceptance/runs/mvp-47-loop-one-round-first-p0-daemon",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-47-loop-one-round-first-p0-daemon-i1",
+      "path": "doc/02_acceptance/runs/mvp-47-loop-one-round-first-p0-daemon-i1",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-47-loop-one-round-first-p0-daemon-i1-metrics",
+      "path": "doc/02_acceptance/runs/mvp-47-loop-one-round-first-p0-daemon-i1-metrics",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-47-loop-one-round-first-p0-daemon-i1-objective-stop",
+      "path": "doc/02_acceptance/runs/mvp-47-loop-one-round-first-p0-daemon-i1-objective-stop",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-47-loop-one-round-first-p0-daemon-i1-scheduler",
+      "path": "doc/02_acceptance/runs/mvp-47-loop-one-round-first-p0-daemon-i1-scheduler",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-47-loop-one-round-first-p0-daemon-i1-scout",
+      "path": "doc/02_acceptance/runs/mvp-47-loop-one-round-first-p0-daemon-i1-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-47-loop-one-round-first-p0-daemon-i1-worker",
+      "path": "doc/02_acceptance/runs/mvp-47-loop-one-round-first-p0-daemon-i1-worker",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-47-post-close-guidance",
+      "path": "doc/02_acceptance/runs/mvp-47-post-close-guidance",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-47-post-close-objective-stop",
+      "path": "doc/02_acceptance/runs/mvp-47-post-close-objective-stop",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-47-post-close-scout",
+      "path": "doc/02_acceptance/runs/mvp-47-post-close-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-47-screen-fix-guidance",
+      "path": "doc/02_acceptance/runs/mvp-47-screen-fix-guidance",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-47-screen-fix-scout",
+      "path": "doc/02_acceptance/runs/mvp-47-screen-fix-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-48-prereq-final-guidance",
+      "path": "doc/02_acceptance/runs/mvp-48-prereq-final-guidance",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-48-prereq-final-scheduler",
+      "path": "doc/02_acceptance/runs/mvp-48-prereq-final-scheduler",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-48-prereq-final-scout",
+      "path": "doc/02_acceptance/runs/mvp-48-prereq-final-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-48-prereq-reopen-guidance",
+      "path": "doc/02_acceptance/runs/mvp-48-prereq-reopen-guidance",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-48-prereq-reopen-scheduler",
+      "path": "doc/02_acceptance/runs/mvp-48-prereq-reopen-scheduler",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-48-prereq-reopen-scout",
+      "path": "doc/02_acceptance/runs/mvp-48-prereq-reopen-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-48-prereq-reopen-task-state",
+      "path": "doc/02_acceptance/runs/mvp-48-prereq-reopen-task-state",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-49-gpt55-ranking-guidance",
+      "path": "doc/02_acceptance/runs/mvp-49-gpt55-ranking-guidance",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-49-gpt55-ranking-scheduler",
+      "path": "doc/02_acceptance/runs/mvp-49-gpt55-ranking-scheduler",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-4-context-screen",
+      "path": "doc/02_acceptance/runs/mvp-4-context-screen",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-4-post-context-scout",
+      "path": "doc/02_acceptance/runs/mvp-4-post-context-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-50-loop-one-round-first-p0-route-daemon",
+      "path": "doc/02_acceptance/runs/mvp-50-loop-one-round-first-p0-route-daemon",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-50-loop-one-round-first-p0-route-daemon-i1",
+      "path": "doc/02_acceptance/runs/mvp-50-loop-one-round-first-p0-route-daemon-i1",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-50-loop-one-round-first-p0-route-daemon-i1-metrics",
+      "path": "doc/02_acceptance/runs/mvp-50-loop-one-round-first-p0-route-daemon-i1-metrics",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-50-loop-one-round-first-p0-route-daemon-i1-objective-stop",
+      "path": "doc/02_acceptance/runs/mvp-50-loop-one-round-first-p0-route-daemon-i1-objective-stop",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-50-loop-one-round-first-p0-route-daemon-i1-scheduler",
+      "path": "doc/02_acceptance/runs/mvp-50-loop-one-round-first-p0-route-daemon-i1-scheduler",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-50-loop-one-round-first-p0-route-daemon-i1-scout",
+      "path": "doc/02_acceptance/runs/mvp-50-loop-one-round-first-p0-route-daemon-i1-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-50-loop-one-round-first-p0-route-daemon-i1-worker",
+      "path": "doc/02_acceptance/runs/mvp-50-loop-one-round-first-p0-route-daemon-i1-worker",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-5-post-workflow-scout",
+      "path": "doc/02_acceptance/runs/mvp-5-post-workflow-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-5-workflow-screen",
+      "path": "doc/02_acceptance/runs/mvp-5-workflow-screen",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-6-guidance",
+      "path": "doc/02_acceptance/runs/mvp-6-guidance",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-6-post-task-state-scout",
+      "path": "doc/02_acceptance/runs/mvp-6-post-task-state-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-6-task-state",
+      "path": "doc/02_acceptance/runs/mvp-6-task-state",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-7-implementation-screen",
+      "path": "doc/02_acceptance/runs/mvp-7-implementation-screen",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-7-post-implementation-scout",
+      "path": "doc/02_acceptance/runs/mvp-7-post-implementation-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-7-workflow-screen",
+      "path": "doc/02_acceptance/runs/mvp-7-workflow-screen",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-8-evidence-repair",
+      "path": "doc/02_acceptance/runs/mvp-8-evidence-repair",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-8-post-evidence-repair-scout",
+      "path": "doc/02_acceptance/runs/mvp-8-post-evidence-repair-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-9-patch-review-scheduler",
+      "path": "doc/02_acceptance/runs/mvp-9-patch-review-scheduler",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-9-post-scout",
+      "path": "doc/02_acceptance/runs/mvp-9-post-scout",
+      "summary_count": 1,
+      "has_local_report": false
+    },
+    {
+      "run_id": "mvp-9-scheduler",
+      "path": "doc/02_acceptance/runs/mvp-9-scheduler",
+      "summary_count": 1,
+      "has_local_report": false
+    }
+  ],
+  "required_followups": [
+    "Kafka TLS/SASL/ACL and ExternalSecret production profile",
+    "NetworkPolicy default-deny and business allow-list negative tests",
+    "HA/RTO/RPO chaos drills",
+    "10 x 100Gbps and 512Mpps performance acceptance",
+    "95% detection and 5% false-positive third-party blind-test package"
+  ]
+}

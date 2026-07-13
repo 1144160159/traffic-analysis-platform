@@ -1,0 +1,40 @@
+{
+  "generated_at": "2026-07-10T14:29:00Z",
+  "browser": "Windows Chrome CDP",
+  "cdp_url": "http://127.0.0.1:9224",
+  "route": "/encrypted-traffic?tab=evidence-center",
+  "deployment": {
+    "alert_service": "traffic/alert-service:encrypted-evidence-center-20260710-r207",
+    "web_ui": "traffic/web-ui:ui-encrypted-traffic-evidence-center-20260710-r207"
+  },
+  "evidence_api": {
+    "endpoint": "/api/v1/encrypted-traffic/evidence?limit=8&page_size=8",
+    "http_status": 200,
+    "response_keys": [
+      "anomaly_trend",
+      "completeness",
+      "entropy_available",
+      "entropy_trend",
+      "pcap_indexes",
+      "pcap_trend",
+      "sessions",
+      "total"
+    ],
+    "entropy_available": false,
+    "entropy_trend_length": 0,
+    "anomaly_trend_length": 0,
+    "semantics": "Payload entropy is reserved but unavailable from traffic.sessions. Anomaly trend is returned separately and is not labeled as entropy."
+  },
+  "ui": {
+    "entropy_chart_canvas": true,
+    "entropy_source_hint": "仿真熵分",
+    "simulated_data_visible": true,
+    "horizontal_overflow": false
+  },
+  "visual_capture": {
+    "viewport": { "width": 1920, "height": 1080 },
+    "wait_ms": 11000,
+    "pixel_mismatch_ratio": 0.10848717206790123,
+    "strict_pixel_target": 0.015
+  }
+}

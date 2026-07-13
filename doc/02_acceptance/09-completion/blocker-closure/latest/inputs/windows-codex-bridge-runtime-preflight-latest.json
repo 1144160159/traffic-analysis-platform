@@ -1,0 +1,273 @@
+{
+  "package_id": "ui_windows_codex_bridge_runtime_preflight",
+  "result": "pass",
+  "generated_at": "2026-07-02T20:22:35.248Z",
+  "windows": {
+    "host": "10.3.6.59",
+    "user": "LongShine"
+  },
+  "host_preflight": {
+    "path": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-desktop-bridge-host-preflight-latest.json",
+    "exists": true,
+    "valid": true,
+    "result": "pass"
+  },
+  "command_results": {
+    "identity": {
+      "command": "sshpass -e ssh <ssh-options> LongShine@10.3.6.59 <identity>",
+      "passed": true,
+      "exit_code": 0,
+      "signal": null,
+      "stderr": "",
+      "duration_ms": 500
+    },
+    "roots": {
+      "command": "sshpass -e ssh <ssh-options> LongShine@10.3.6.59 <roots>",
+      "passed": true,
+      "exit_code": 0,
+      "signal": null,
+      "stderr": "",
+      "duration_ms": 465
+    },
+    "codexCommand": {
+      "command": "sshpass -e ssh <ssh-options> LongShine@10.3.6.59 <codexCommand>",
+      "passed": false,
+      "exit_code": 1,
+      "signal": null,
+      "stderr": "",
+      "duration_ms": 721
+    },
+    "codexVersion": {
+      "command": "sshpass -e ssh <ssh-options> LongShine@10.3.6.59 <codexVersion>",
+      "passed": false,
+      "exit_code": 1,
+      "signal": null,
+      "stderr": "",
+      "duration_ms": 418
+    },
+    "explicitCodexExists": {
+      "command": "sshpass -e ssh <ssh-options> LongShine@10.3.6.59 <explicitCodexExists>",
+      "passed": true,
+      "exit_code": 0,
+      "signal": null,
+      "stderr": "",
+      "duration_ms": 405
+    },
+    "explicitCodexVersion": {
+      "command": "sshpass -e ssh <ssh-options> LongShine@10.3.6.59 <explicitCodexVersion>",
+      "passed": true,
+      "exit_code": 0,
+      "signal": null,
+      "stderr": "",
+      "duration_ms": 488
+    },
+    "mcpList": {
+      "command": "sshpass -e ssh <ssh-options> LongShine@10.3.6.59 <mcpList>",
+      "passed": true,
+      "exit_code": 0,
+      "signal": null,
+      "stderr": "",
+      "duration_ms": 459
+    },
+    "nodeReplConfig": {
+      "command": "sshpass -e ssh <ssh-options> LongShine@10.3.6.59 <nodeReplConfig>",
+      "passed": true,
+      "exit_code": 0,
+      "signal": null,
+      "stderr": "",
+      "duration_ms": 523
+    },
+    "chromeClients": {
+      "command": "sshpass -e ssh <ssh-options> LongShine@10.3.6.59 <chromeClients>",
+      "passed": true,
+      "exit_code": 0,
+      "signal": null,
+      "stderr": "",
+      "duration_ms": 442
+    },
+    "desktopCandidates": {
+      "command": "sshpass -e ssh <ssh-options> LongShine@10.3.6.59 <desktopCandidates>",
+      "passed": false,
+      "exit_code": 1,
+      "signal": null,
+      "stderr": "",
+      "duration_ms": 848
+    },
+    "bridgeCandidates": {
+      "command": "sshpass -e ssh <ssh-options> LongShine@10.3.6.59 <bridgeCandidates>",
+      "passed": false,
+      "exit_code": 1,
+      "signal": null,
+      "stderr": "",
+      "duration_ms": 813
+    },
+    "nodeReplCandidates": {
+      "command": "sshpass -e ssh <ssh-options> LongShine@10.3.6.59 <nodeReplCandidates>",
+      "passed": false,
+      "exit_code": 1,
+      "signal": null,
+      "stderr": "",
+      "duration_ms": 808
+    },
+    "mcpFiles": {
+      "command": "sshpass -e ssh <ssh-options> LongShine@10.3.6.59 <mcpFiles>",
+      "passed": false,
+      "exit_code": 1,
+      "signal": null,
+      "stderr": "",
+      "duration_ms": 1329
+    },
+    "tasklist": {
+      "command": "sshpass -e ssh <ssh-options> LongShine@10.3.6.59 <tasklist>",
+      "passed": true,
+      "exit_code": 0,
+      "signal": null,
+      "stderr": "",
+      "duration_ms": 860
+    }
+  },
+  "runtime": {
+    "user": "longshine",
+    "user_profile": "C:\\Users\\LongShine",
+    "codex_root_exists": true,
+    "plugin_cache_exists": true,
+    "explicit_codex_path": "C:\\Users\\LongShine\\AppData\\Local\\OpenAI\\Codex\\bin\\ea1c60319a1dcb19\\codex.exe",
+    "explicit_codex_exists": true,
+    "codex_commands": [],
+    "codex_version_lines": [],
+    "explicit_codex_version_lines": [
+      "codex-cli 0.142.5"
+    ],
+    "mcp_list_lines": [
+      "Name       Command                                                                                             Args  Env                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        Cwd  Status   Auth",
+      "node_repl  C:\\Users\\LongShine\\AppData\\Local\\OpenAI\\Codex\\runtimes\\cua_node\\1b23c930bdf84ed6\\bin\\node_repl.exe  -     BROWSER_USE_AVAILABLE_BACKENDS=*****, BROWSER_USE_CODEX_APP_BUILD_FLAVOR=*****, BROWSER_USE_CODEX_APP_VERSION=*****, CODEX_CLI_PATH=*****, CODEX_HOME=*****, NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER=*****, NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME=*****, NODE_REPL_NATIVE_PIPE_CONNECT_TIMEOUT_MS=*****, NODE_REPL_NODE_MODULE_DIRS=*****, NODE_REPL_NODE_PATH=*****, NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S=*****, NODE_REPL_TRUSTED_CODE_PATHS=*****, SKY_CUA_NATIVE_PIPE=*****, SKY_CUA_NATIVE_PIPE_DIRECTORY=*****  -    enabled  Unsupported"
+    ],
+    "node_repl_mcp_config": {
+      "result": "pass",
+      "enabled": true,
+      "transport_type": "stdio",
+      "command_present": true,
+      "command_length": 98,
+      "env_keys": [
+        "CODEX_CLI_PATH",
+        "SKY_CUA_NATIVE_PIPE",
+        "NODE_REPL_NODE_MODULE_DIRS",
+        "CODEX_HOME",
+        "NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER",
+        "NODE_REPL_NATIVE_PIPE_CONNECT_TIMEOUT_MS",
+        "BROWSER_USE_AVAILABLE_BACKENDS",
+        "NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME",
+        "SKY_CUA_NATIVE_PIPE_DIRECTORY",
+        "NODE_REPL_NODE_PATH",
+        "NODE_REPL_TRUSTED_CODE_PATHS",
+        "BROWSER_USE_CODEX_APP_BUILD_FLAVOR",
+        "BROWSER_USE_CODEX_APP_VERSION",
+        "NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S"
+      ],
+      "env_inventory": {
+        "CODEX_CLI_PATH": {
+          "present": true,
+          "length": 76
+        },
+        "SKY_CUA_NATIVE_PIPE": {
+          "present": true,
+          "length": 1
+        },
+        "NODE_REPL_NODE_MODULE_DIRS": {
+          "present": true,
+          "length": 97
+        },
+        "CODEX_HOME": {
+          "present": true,
+          "length": 25
+        },
+        "NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER": {
+          "present": true,
+          "length": 66
+        },
+        "NODE_REPL_NATIVE_PIPE_CONNECT_TIMEOUT_MS": {
+          "present": true,
+          "length": 4
+        },
+        "BROWSER_USE_AVAILABLE_BACKENDS": {
+          "present": true,
+          "length": 10
+        },
+        "NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME": {
+          "present": true,
+          "length": 199
+        },
+        "SKY_CUA_NATIVE_PIPE_DIRECTORY": {
+          "present": true,
+          "length": 64
+        },
+        "NODE_REPL_NODE_PATH": {
+          "present": true,
+          "length": 93
+        },
+        "NODE_REPL_TRUSTED_CODE_PATHS": {
+          "present": true,
+          "length": 25
+        },
+        "BROWSER_USE_CODEX_APP_BUILD_FLAVOR": {
+          "present": true,
+          "length": 4
+        },
+        "BROWSER_USE_CODEX_APP_VERSION": {
+          "present": true,
+          "length": 12
+        },
+        "NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S": {
+          "present": true,
+          "length": 129
+        }
+      },
+      "parse_error": null
+    },
+    "chrome_clients": [
+      "C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\26.623.81905\\scripts\\browser-client.mjs",
+      "C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-bundled\\chrome\\latest\\scripts\\browser-client.mjs"
+    ],
+    "desktop_bridge_candidate_dirs": [],
+    "node_repl_candidate_dirs": [],
+    "mcp_config_files": [
+      "C:\\Users\\LongShine\\.codex\\.tmp\\plugins\\plugins\\build-ios-apps\\.mcp.json",
+      "C:\\Users\\LongShine\\.codex\\.tmp\\plugins\\plugins\\build-web-apps\\skills\\shadcn-best-practices\\mcp.md",
+      "C:\\Users\\LongShine\\.codex\\.tmp\\plugins\\plugins\\catalyst-by-zoho\\skills\\catalyst-by-zoho\\references\\zoho-mcp-tools.md",
+      "C:\\Users\\LongShine\\.codex\\.tmp\\plugins\\plugins\\chronograph-lp\\skills\\chronograph-cashflow-forecast\\references\\chronograph-mcp-map.md",
+      "C:\\Users\\LongShine\\.codex\\.tmp\\plugins\\plugins\\cloudflare\\.mcp.json",
+      "C:\\Users\\LongShine\\.codex\\.tmp\\plugins\\plugins\\cloudflare\\commands\\build-mcp.md",
+      "C:\\Users\\LongShine\\.codex\\.tmp\\plugins\\plugins\\cloudflare\\skills\\agents-sdk\\references\\mcp.md",
+      "C:\\Users\\LongShine\\.codex\\.tmp\\plugins\\plugins\\codex-security\\.mcp.json",
+      "C:\\Users\\LongShine\\.codex\\.tmp\\plugins\\plugins\\codex-security\\mcp\\mcp-app.html.br",
+      "C:\\Users\\LongShine\\.codex\\.tmp\\plugins\\plugins\\figma\\.mcp.json",
+      "C:\\Users\\LongShine\\.codex\\.tmp\\plugins\\plugins\\github\\.mcp.json",
+      "C:\\Users\\LongShine\\.codex\\.tmp\\plugins\\plugins\\google-drive\\skills\\google-slides\\references\\reference-google-slides-mcp-discovery.md",
+      "C:\\Users\\LongShine\\.codex\\.tmp\\plugins\\plugins\\linear\\.mcp.json",
+      "C:\\Users\\LongShine\\.codex\\.tmp\\plugins\\plugins\\notion\\.mcp.json",
+      "C:\\Users\\LongShine\\.codex\\.tmp\\plugins\\plugins\\openai-developers\\.mcp.json",
+      "C:\\Users\\LongShine\\.codex\\.tmp\\plugins\\plugins\\render\\skills\\render-migrate-from-heroku\\references\\mcp-setup.md",
+      "C:\\Users\\LongShine\\.codex\\plugins\\cache\\chatgpt-global\\openai-developers\\1.2.2\\.mcp.json",
+      "C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-curated\\figma\\3fdeeb49\\.mcp.json",
+      "C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-curated\\github\\3fdeeb49\\.mcp.json",
+      "C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-curated-remote\\figma\\2.0.12\\.mcp.json",
+      "C:\\Users\\LongShine\\.codex\\plugins\\cache\\openai-curated-remote\\openai-developers\\1.2.3\\.mcp.json",
+      "C:\\Users\\LongShine\\.codex\\skills\\figma\\references\\figma-mcp-config.md"
+    ],
+    "process_counts": {
+      "chrome": 17,
+      "codex": 10,
+      "code": 18
+    }
+  },
+  "codex_session_bridge_tool_exposure": {
+    "status": "not_proven_by_windows_runtime_preflight",
+    "required_tools": [
+      "desktop_chrome_open_url",
+      "desktop_chrome_list_tabs",
+      "desktop_chrome_claim_url",
+      "mcp__codex_desktop_node_repl__js"
+    ]
+  },
+  "blockers": []
+}

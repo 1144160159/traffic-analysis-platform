@@ -1,0 +1,28 @@
+{
+  "generated_at": "2026-07-10T12:57:00.000Z",
+  "route": "/encrypted-traffic?tab=evidence-center",
+  "browser_backend": "Windows Chrome CDP",
+  "endpoint": "/api/v1/encrypted-traffic/evidence?limit=8&page_size=8",
+  "status": 200,
+  "envelope_keys": [
+    "data",
+    "meta",
+    "success",
+    "timestamp"
+  ],
+  "data_keys": [
+    "completeness",
+    "pcap_indexes",
+    "pcap_trend",
+    "sessions",
+    "total"
+  ],
+  "counts": {
+    "sessions": 0,
+    "pcap_indexes": 0,
+    "pcap_trend": 0,
+    "completeness": 4,
+    "total": 0
+  },
+  "data_mode_expected": "simulated-fallback"
+}

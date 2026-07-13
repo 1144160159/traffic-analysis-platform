@@ -1,0 +1,86 @@
+{
+  "version": "2026-07-12.v1",
+  "mode": "constrained-offline",
+  "onlineProductionLearning": false,
+  "mainThreadDecisionRequired": true,
+  "hardGates": [
+    "business_semantics",
+    "functional_realization",
+    "tenant_rbac_audit",
+    "database_and_seed",
+    "runtime_clean",
+    "business_roi",
+    "required_tests",
+    "security_and_secrets",
+    "rollout_and_rollback"
+  ],
+  "reward": {
+    "scale": {
+      "min": 0,
+      "max": 100
+    },
+    "weights": {
+      "business": 0.25,
+      "function": 0.2,
+      "quality": 0.2,
+      "visual": 0.15,
+      "performance": 0.15,
+      "maintainability": 0.05
+    },
+    "penalties": [
+      "regression",
+      "cost",
+      "uncertainty"
+    ]
+  },
+  "globalThresholds": {
+    "businessRoiExclusiveMax": 0.125,
+    "web": {
+      "lcpMsMax": 2500,
+      "inpMsMax": 200,
+      "clsMax": 0.1,
+      "relativeRegressionMax": 0.1
+    },
+    "api": {
+      "readP95MsMax": 500,
+      "actionAcceptP95MsMax": 1000,
+      "serverErrorRateMax": 0.001
+    },
+    "kubernetes": {
+      "unjustifiedCpuMemoryRegressionMax": 0.15,
+      "requireReadyRollout": true,
+      "requireRollbackEvidence": true
+    },
+    "flink": {
+      "checkpointAgeIntervalsMax": 2,
+      "requireRunningJobs": true,
+      "requireNoNewSteadyWindowFailures": true
+    }
+  },
+  "experience": {
+    "positiveRequires": [
+      "all_hard_gates_passed",
+      "main_thread_accepted",
+      "production_stable",
+      "evidence_complete"
+    ],
+    "neutralReasons": [
+      "evidence_missing",
+      "external_blocker",
+      "causal_attribution_missing"
+    ],
+    "minimumAcceptedEpisodesBeforePolicyTraining": 20,
+    "holdoutRequired": true,
+    "shadowEvaluationRequired": true,
+    "stagingEvaluationRequired": true
+  },
+  "forbiddenOptimization": [
+    "hide_or_remove_functionality",
+    "replace_live_with_mock",
+    "weaken_tests",
+    "change_evaluator_after_results",
+    "increase_resources_without_bottleneck_evidence",
+    "use_visual_mode_for_business_acceptance",
+    "write_secrets_or_personal_data_to_experience"
+  ]
+}

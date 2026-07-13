@@ -1,0 +1,784 @@
+{
+  "id": "alert-detail-evidence-graph-path",
+  "order": 19,
+  "category": "pages",
+  "type": "menu-state",
+  "parent": "alerts",
+  "route": "/alerts",
+  "production_route": "/alerts/AL-20260620-000123?__codex_ui_breakdown_production=1&__codex_page_id=alert-detail-evidence-graph-path&evidenceView=graph-path",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/alert-detail-evidence-graph-path.png",
+  "target_ui": "doc/04_assets/ui_suite_gpt_v1/screens/pages/alert-detail-evidence-graph-path.png",
+  "evidence_dir": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-graph-path",
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "status": "evidence-ready",
+  "image_tag": "traffic/web-ui:ui-alert-detail-evidence-graph-path-visual-20260709-r142",
+  "title": "证据链（6）",
+  "observation": {
+    "layout": "Full-viewport graph path evidence panel for alert detail.",
+    "business_focus": "Evidence chain graph-path tab with API/fallback-driven evidence row, path relation graph, path statistics and related resources.",
+    "current_state": "图谱路径 tab active, one graph path evidence row displayed, AppShell visually hidden for the panel target while alerts parent menu remains selected in DOM.",
+    "acceptance_scope": "Production Windows Chrome screenshot at 1920x1080 with full/business visual diff and runtime checks."
+  },
+  "regions": [
+    {
+      "id": "canvas",
+      "name": "画布",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "layer": 0,
+      "purpose": "单屏业务面板"
+    },
+    {
+      "id": "outer-panel",
+      "name": "外层证据面板",
+      "bbox": {
+        "x": 7,
+        "y": 23,
+        "w": 1905,
+        "h": 1030
+      },
+      "layer": 1,
+      "purpose": "蓝色描边业务容器"
+    },
+    {
+      "id": "tab-title",
+      "name": "证据链标题",
+      "bbox": {
+        "x": 39,
+        "y": 58,
+        "w": 190,
+        "h": 76
+      },
+      "layer": 2,
+      "purpose": "证据链（6）"
+    },
+    {
+      "id": "evidence-tabs",
+      "name": "证据分类 tabs",
+      "bbox": {
+        "x": 260,
+        "y": 56,
+        "w": 1012,
+        "h": 80
+      },
+      "layer": 2,
+      "purpose": "全部/PCAP/Session/日志/图谱路径/文件分类，图谱路径激活"
+    },
+    {
+      "id": "table-frame",
+      "name": "图谱路径证据容器",
+      "bbox": {
+        "x": 22,
+        "y": 134,
+        "w": 1875,
+        "h": 895
+      },
+      "layer": 2,
+      "purpose": "表头、图谱路径行、路径关系图、资源区和底部入口"
+    },
+    {
+      "id": "table-head",
+      "name": "表头",
+      "bbox": {
+        "x": 36,
+        "y": 171,
+        "w": 1843,
+        "h": 101
+      },
+      "layer": 3,
+      "purpose": "表格列标题"
+    },
+    {
+      "id": "graph-row",
+      "name": "图谱路径证据行",
+      "bbox": {
+        "x": 36,
+        "y": 272,
+        "w": 1843,
+        "h": 171
+      },
+      "layer": 3,
+      "purpose": "单条图谱路径证据记录"
+    },
+    {
+      "id": "graph-detail",
+      "name": "路径关系图区",
+      "bbox": {
+        "x": 36,
+        "y": 443,
+        "w": 1843,
+        "h": 347
+      },
+      "layer": 3,
+      "purpose": "路径关系图与路径统计"
+    },
+    {
+      "id": "graph-map",
+      "name": "路径关系图",
+      "bbox": {
+        "x": 51,
+        "y": 476,
+        "w": 1331,
+        "h": 292
+      },
+      "layer": 4,
+      "purpose": "4 节点 3 边动态图示"
+    },
+    {
+      "id": "graph-stats",
+      "name": "路径统计",
+      "bbox": {
+        "x": 1406,
+        "y": 476,
+        "w": 447,
+        "h": 292
+      },
+      "layer": 4,
+      "purpose": "节点数、边数、平均边权重、风险评分"
+    },
+    {
+      "id": "related-resources",
+      "name": "关联资源",
+      "bbox": {
+        "x": 36,
+        "y": 790,
+        "w": 1843,
+        "h": 100
+      },
+      "layer": 3,
+      "purpose": "PCAP / Session / 日志资源入口"
+    },
+    {
+      "id": "footer-link",
+      "name": "查看全部入口",
+      "bbox": {
+        "x": 59,
+        "y": 925,
+        "w": 310,
+        "h": 48
+      },
+      "layer": 3,
+      "purpose": "查看全部 图谱路径 1 项"
+    }
+  ],
+  "texts": [
+    {
+      "must_match": true,
+      "region": "tab-title",
+      "value": "证据链（6）",
+      "type": "title"
+    },
+    {
+      "must_match": true,
+      "region": "evidence-tabs",
+      "value": "全部 6",
+      "type": "tab"
+    },
+    {
+      "must_match": true,
+      "region": "evidence-tabs",
+      "value": "PCAP 1",
+      "type": "tab"
+    },
+    {
+      "must_match": true,
+      "region": "evidence-tabs",
+      "value": "Session 2",
+      "type": "tab"
+    },
+    {
+      "must_match": true,
+      "region": "evidence-tabs",
+      "value": "日志 1",
+      "type": "tab"
+    },
+    {
+      "must_match": true,
+      "region": "evidence-tabs",
+      "value": "图谱路径 1",
+      "type": "tab"
+    },
+    {
+      "must_match": true,
+      "region": "evidence-tabs",
+      "value": "文件 1",
+      "type": "tab"
+    },
+    {
+      "must_match": true,
+      "region": "table-head",
+      "value": "证据类型",
+      "type": "table-header"
+    },
+    {
+      "must_match": true,
+      "region": "table-head",
+      "value": "路径文件",
+      "type": "table-header"
+    },
+    {
+      "must_match": true,
+      "region": "table-head",
+      "value": "路径摘要",
+      "type": "table-header"
+    },
+    {
+      "must_match": true,
+      "region": "table-head",
+      "value": "边权重",
+      "type": "table-header"
+    },
+    {
+      "must_match": true,
+      "region": "table-head",
+      "value": "关联实体",
+      "type": "table-header"
+    },
+    {
+      "must_match": true,
+      "region": "table-head",
+      "value": "生成时间",
+      "type": "table-header"
+    },
+    {
+      "must_match": true,
+      "region": "table-head",
+      "value": "状态",
+      "type": "table-header"
+    },
+    {
+      "must_match": true,
+      "region": "table-head",
+      "value": "操作",
+      "type": "table-header"
+    },
+    {
+      "must_match": true,
+      "region": "graph-row",
+      "value": "图谱路径",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "graph-row",
+      "overflow_policy": "title",
+      "value": "path-20260620-000123.json",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "graph-row",
+      "overflow_policy": "title",
+      "value": "172.16.5.10 -> 185.22.14.9",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "graph-row",
+      "value": "路径关系",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "graph-row",
+      "value": "0.86 / 横向访问",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "graph-row",
+      "value": "资产 DB-SRV-01",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "graph-row",
+      "value": "账号 svc_backup",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "graph-row",
+      "overflow_policy": "title",
+      "value": "域名 downloads.campus.local",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "graph-row",
+      "value": "06-20 03:43:10",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "graph-row",
+      "value": "已生成",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "graph-map",
+      "value": "路径关系图",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "graph-map",
+      "value": "通信",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "graph-map",
+      "value": "登录",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "graph-map",
+      "value": "访问",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "graph-map",
+      "value": "可疑外部IP",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "graph-map",
+      "value": "185.22.14.9",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "graph-map",
+      "value": "边界网关",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "graph-map",
+      "value": "10.20.0.1",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "graph-map",
+      "value": "核心业务服务器",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "graph-map",
+      "value": "10.20.4.18",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "graph-map",
+      "value": "账号",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "graph-map",
+      "value": "svc_backup",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "graph-stats",
+      "value": "路径统计",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "graph-stats",
+      "value": "节点数：4",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "graph-stats",
+      "value": "边数：3",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "graph-stats",
+      "value": "平均边权重：0.86",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "graph-stats",
+      "value": "风险评分：85（高风险）",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "related-resources",
+      "value": "关联资源",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "related-resources",
+      "value": "PCAP 1",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "related-resources",
+      "value": "Session 2",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "related-resources",
+      "value": "日志 1",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "footer-link",
+      "value": "查看全部 图谱路径 1 项",
+      "type": "label"
+    }
+  ],
+  "components": [
+    {
+      "name": "AlertEvidenceGraphPathFocusView",
+      "path": "web/ui/src/pages/AlertDetailPage.tsx",
+      "regions": [
+        "outer-panel",
+        "evidence-tabs",
+        "table-frame",
+        "graph-map"
+      ],
+      "data": "AlertDetailSnapshot.evidenceRows[].graphPath"
+    },
+    {
+      "name": "GraphPathEdges",
+      "path": "web/ui/src/pages/AlertDetailPage.tsx",
+      "regions": [
+        "graph-map"
+      ],
+      "data": "graphPath.edges"
+    },
+    {
+      "name": "fetchAlertDetailSnapshot",
+      "path": "web/ui/src/services/alertDetailApi.ts",
+      "regions": [
+        "graph-row",
+        "graph-map",
+        "graph-stats",
+        "related-resources"
+      ],
+      "data": "real API / typed fallback"
+    },
+    {
+      "name": "CSS panel layout",
+      "path": "web/ui/src/styles/pages.css",
+      "regions": [
+        "outer-panel",
+        "table-frame",
+        "graph-map"
+      ],
+      "data": "CSS grid and responsive constraints"
+    },
+    {
+      "name": "visual breakdown AppShell guard",
+      "path": "web/ui/src/styles/app-shell.css",
+      "regions": [
+        "canvas"
+      ],
+      "data": "panel-only target state"
+    },
+    {
+      "name": "RelatedEvidenceLinks",
+      "path": "web/ui/src/pages/AlertDetailPage.tsx",
+      "regions": [
+        "related-resources",
+        "footer-link"
+      ],
+      "data": "graphPath.resources"
+    }
+  ],
+  "visual_asset_classification": {
+    "business_dynamic_diagrams": [
+      {
+        "name": "路径关系图",
+        "source": "AlertDetailEvidenceRow.graphPath.nodes / graphPath.edges",
+        "implementation": "React + inline SVG lines/polygons + AntD node icons",
+        "refresh": "normal detail route refetches every 30s; visual capture state is deterministic",
+        "screenshot_substitution": false
+      }
+    ],
+    "business_tables": [
+      {
+        "name": "图谱路径证据表格",
+        "source": "AlertDetailSnapshot.evidenceRows",
+        "implementation": "React + CSS grid",
+        "screenshot_substitution": false
+      }
+    ],
+    "independent_icons": [
+      "NodeIndexOutlined",
+      "EyeOutlined",
+      "GlobalOutlined",
+      "SafetyCertificateOutlined",
+      "DatabaseOutlined",
+      "UserOutlined",
+      "PaperClipOutlined",
+      "LinkOutlined"
+    ],
+    "backgrounds": [
+      {
+        "name": "dark panel gradient and border glow",
+        "implementation": "CSS",
+        "contains_business_dynamic_diagram": false
+      }
+    ],
+    "forbidden_screenshot_resources": false
+  },
+  "data_contract": {
+    "entry": "fetchAlertDetailSnapshot(alertId)",
+    "typed_fallback": "buildMockAlertDetailSnapshot / derivedEvidence in web/ui/src/services/alertDetailApi.ts",
+    "fields": {
+      "type": "证据分类与证据类型",
+      "evidence_id": "路径文件",
+      "graphPath.pathFile": "路径文件",
+      "graphPath.pathSummary": "路径摘要",
+      "graphPath.edgeWeight": "边权重数值",
+      "graphPath.relationType": "边权重语义",
+      "graphPath.relatedEntities": "关联实体",
+      "graphPath.nodes": "路径关系图节点",
+      "graphPath.edges": "路径关系图边",
+      "graphPath.resources": "关联资源",
+      "graphPath.riskScore": "风险评分"
+    },
+    "counts": {
+      "all": 6,
+      "pcap": 1,
+      "session": 2,
+      "log": 1,
+      "graph": 1,
+      "files": 1
+    }
+  },
+  "verification": {
+    "status": "business-pixel-accepted",
+    "implementation": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-graph-path/implementation-r142-final.png",
+    "capture_meta": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-graph-path/capture-meta-r142-final.json",
+    "metrics": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-graph-path/metrics-r142.json",
+    "business_metrics": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-graph-path/metrics-business-r142.json",
+    "tab_regression": "evidence/ui-image-breakdowns/pages/data-quality-tabs-stable/tab-geometry-r142-tabs-final.json"
+  },
+  "icons": [
+    {
+      "icon": "DeploymentUnitOutlined",
+      "location": "graph-row",
+      "semantic": "图谱路径",
+      "source": "Ant Design Icons"
+    },
+    {
+      "icon": "GlobalOutlined",
+      "location": "graph-map",
+      "semantic": "可疑外部 IP",
+      "source": "Ant Design Icons"
+    },
+    {
+      "icon": "SafetyCertificateOutlined",
+      "location": "graph-map",
+      "semantic": "边界网关",
+      "source": "Ant Design Icons"
+    },
+    {
+      "icon": "DatabaseOutlined",
+      "location": "graph-map",
+      "semantic": "核心业务服务器",
+      "source": "Ant Design Icons"
+    },
+    {
+      "icon": "UserOutlined",
+      "location": "graph-map",
+      "semantic": "账号实体",
+      "source": "Ant Design Icons"
+    },
+    {
+      "icon": "EyeOutlined",
+      "location": "graph-row",
+      "semantic": "查看路径详情",
+      "source": "Ant Design Icons"
+    },
+    {
+      "icon": "LinkOutlined",
+      "location": "related-resources",
+      "semantic": "关联证据",
+      "source": "Ant Design Icons"
+    }
+  ],
+  "tokens": [
+    {
+      "name": "page-bg",
+      "value": "#03111c",
+      "usage": "画布"
+    },
+    {
+      "name": "panel-bg",
+      "value": "rgba(6,28,43,0.86)",
+      "usage": "路径面板"
+    },
+    {
+      "name": "panel-strong-bg",
+      "value": "#071f32",
+      "usage": "表头和统计"
+    },
+    {
+      "name": "border-weak",
+      "value": "rgba(56,151,201,0.22)",
+      "usage": "边框"
+    },
+    {
+      "name": "active-blue",
+      "value": "#1e9cff",
+      "usage": "激活和链接"
+    },
+    {
+      "name": "text-primary",
+      "value": "#eaf7ff",
+      "usage": "主文字"
+    },
+    {
+      "name": "text-secondary",
+      "value": "#9db9c9",
+      "usage": "辅助文字"
+    },
+    {
+      "name": "success",
+      "value": "#36d66b",
+      "usage": "已生成和账号节点"
+    },
+    {
+      "name": "danger",
+      "value": "#ff4d4f",
+      "usage": "高风险外部 IP"
+    },
+    {
+      "name": "warning",
+      "value": "#ffb020",
+      "usage": "待确认路径"
+    },
+    {
+      "name": "panel-radius",
+      "value": "6px",
+      "usage": "面板圆角"
+    },
+    {
+      "name": "panel-gap",
+      "value": "8px",
+      "usage": "区域间距"
+    }
+  ],
+  "interactions": [
+    {
+      "control": "graph-path-tab",
+      "trigger": "click",
+      "state": "selected",
+      "expected": "图谱路径 1 激活"
+    },
+    {
+      "control": "path-action",
+      "trigger": "click graph icon",
+      "state": "focused",
+      "expected": "聚焦当前路径"
+    },
+    {
+      "control": "view",
+      "trigger": "click eye",
+      "state": "detail-open",
+      "expected": "打开路径详情"
+    },
+    {
+      "control": "related-resource",
+      "trigger": "click",
+      "state": "navigated",
+      "expected": "打开关联 PCAP、Session 或日志"
+    },
+    {
+      "control": "node",
+      "trigger": "hover",
+      "state": "tooltip",
+      "expected": "显示实体摘要且布局不移动"
+    },
+    {
+      "control": "view-all",
+      "trigger": "click",
+      "state": "list-open",
+      "expected": "打开全部图谱路径"
+    }
+  ],
+  "implementation": {
+    "source": "/alerts/alert-default-1782752318016-1dd589c4",
+    "mode": "production-route",
+    "route": "/alerts/:alertId",
+    "pages": [
+      "web/ui/src/pages/AlertDetailPage.tsx"
+    ],
+    "components": [
+      "AlertEvidenceGraphPathFocusView",
+      "AlertDetailEvidenceRow.graphPathEvidence"
+    ],
+    "services": [
+      "web/ui/src/services/alertDetailApi.ts",
+      "web/ui/src/services/api.ts"
+    ],
+    "resolved_path": "/alerts/alert-default-1782752318016-1dd589c4",
+    "route_state": {},
+    "note": "implementation.png is captured from the real APISIX/Web UI production route through Windows Chrome CDP. It is not a raster replay of target.png."
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-graph-path/target.png",
+    "implementation": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-graph-path/implementation.png",
+    "diff": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-graph-path/diff.png",
+    "metrics": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-graph-path/metrics.json",
+    "evidence_mode": "production-route",
+    "capture_meta": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-graph-path/capture-meta.json",
+    "cdp_version": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-graph-path/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-graph-path/cdp-list.json",
+    "production_route_report": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-graph-path/production-route-report.json",
+    "url": "http://10.0.5.8:30180/alerts/alert-default-1782752318016-1dd589c4?windowsCdpEvidenceTs=1783853608360#codex_smoke_token=<redacted>",
+    "final_url": "http://10.0.5.8:30180/alerts/alert-default-1782752318016-1dd589c4?windowsCdpEvidenceTs=1783853608360",
+    "verification": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-graph-path/verification.json"
+  },
+  "accepted": false,
+  "differences": [
+    {
+      "type": "production-evidence-scope",
+      "location": "/alerts/alert-default-1782752318016-1dd589c4",
+      "current": "implementation.png is captured from the real APISIX/Web UI route in Windows Chrome CDP",
+      "expected": "no target.png raster replay is used as implementation evidence",
+      "status": "documented"
+    },
+    {
+      "type": "production-state-mapping",
+      "location": "/alerts/alert-default-1782752318016-1dd589c4",
+      "current": "no dedicated production state query is implemented for alert-detail-evidence-graph-path; captured host route alert-detail",
+      "expected": "target image has a deterministic implemented route state or interaction mapping",
+      "status": "open"
+    }
+  ],
+  "unresolved": [
+    "production-state-mapping:/alerts/alert-default-1782752318016-1dd589c4"
+  ]
+}

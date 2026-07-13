@@ -1,0 +1,16 @@
+Generate a 3840x2160 PNG static 4K background asset for traffic-analysis-platform.
+
+Use case: productivity-visual.
+Asset type: alert triage workbench background.
+
+Scene:
+- A dark SOC triage surface with abstract alert queues, risk scoring pulses, evidence attachments, timelines, severity colors, analyst workflow lanes, and feedback loops.
+- The background should imply structured alert handling without becoming a readable screen.
+
+Style:
+- Deep navy/black, cyan structural lines, blue evidence glow, amber warning clusters, red critical highlights, green resolved feedback states.
+- High-detail but quiet enough for real alert tables and drawers to overlay.
+
+Constraints:
+- No readable alert titles, names, ticket IDs, timestamps, IP addresses, credentials, buttons, menus, browser chrome, people, logos, or complete UI screenshot.
+

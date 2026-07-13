@@ -1,0 +1,38 @@
+{
+  "status": "pass",
+  "backend": "windows-chrome-cdp",
+  "acceptance_eligible": false,
+  "reason": "Windows Chrome CDP evidence is separate from the older Codex Desktop extension receiver gate.",
+  "target_id": "assets",
+  "route_id": "assets",
+  "run_id": "windows-cdp-full-route-20260703105531",
+  "url": "http://10.0.5.8:30180/assets?windowsCdpEvidenceTs=1783076131015#codex_smoke_token=<redacted>",
+  "final_url": "http://10.0.5.8:30180/assets?windowsCdpEvidenceTs=1783076131015",
+  "expected_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "desktop_viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "stored_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "uploaded_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "post_capture_resize": false,
+  "cdp_url": "http://127.0.0.1:9224",
+  "browser": "Chrome/150.0.7871.47",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets.png",
+  "screenshot": "evidence/windows-chrome-cdp-20260703-visual-target-full-r8/assets-1920x1080.png",
+  "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-visual-target-latest-r8/assets/actual-1920.png",
+  "protected_route": true,
+  "smoke_token_used": true,
+  "smoke_hash_consumed": true,
+  "captured_at": "2026-07-03T10:57:08.250Z",
+  "runtime_reasons": []
+}

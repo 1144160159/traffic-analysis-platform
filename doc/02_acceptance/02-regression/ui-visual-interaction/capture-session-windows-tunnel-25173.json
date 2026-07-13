@@ -1,0 +1,3170 @@
+{
+  "package_id": "ui_desktop_capture_session",
+  "run_id": "ui-desktop-capture-session-windows-tunnel-25173",
+  "session_id": "ui-desktop-capture-session-windows-tunnel-25173",
+  "generated_at": "2026-07-02T16:49:41.735Z",
+  "status": "blocked_desktop_transport_closed",
+  "note": "Execution package only. It does not prove visual or interaction acceptance until real Codex Desktop Chrome evidence is captured and the dual gate passes.",
+  "sources": {
+    "capture_plan": {
+      "path": "doc/02_acceptance/02-regression/ui-visual-interaction/capture-plan-windows-tunnel-25173.json",
+      "exists": true,
+      "valid": true,
+      "generated_at": "2026-07-02T16:03:06.334Z",
+      "summary": {
+        "route_count": 28,
+        "visual_target_count": 30,
+        "visual_passed_count": 0,
+        "visual_missing_or_failing_count": 30,
+        "interaction_count": 28,
+        "interaction_passed_count": 4,
+        "interaction_missing_or_failing_count": 24
+      }
+    },
+    "gap_report": {
+      "path": "doc/02_acceptance/02-regression/ui-visual-interaction-gap-report-latest.json",
+      "exists": true,
+      "valid": true,
+      "run_id": "20260703004436-ui-visual-interaction-preflight",
+      "summary": {
+        "visual_required_count": 30,
+        "visual_passed_count": 0,
+        "visual_gap_count": 30,
+        "interaction_required_count": 28,
+        "interaction_passed_count": 0,
+        "interaction_gap_count": 28
+      },
+      "reason_groups": {
+        "metrics_missing_or_failing": 30,
+        "visual_mismatch_threshold": 4,
+        "viewport_or_capture_size": 16,
+        "capture_meta_missing_or_failing": 34,
+        "missing_actual_screenshot": 26,
+        "missing_diff_image": 26,
+        "other": 8,
+        "interaction_missing_or_failing": 24,
+        "viewport_probe_blocked": 1
+      }
+    },
+    "desktop_bridge": {
+      "path": "doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-latest.json",
+      "exists": true,
+      "valid": true,
+      "result": "blocked",
+      "detail": null
+    },
+    "bridge_host_preflight": {
+      "path": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-desktop-bridge-host-preflight-latest.json",
+      "exists": true,
+      "valid": true,
+      "result": "pass",
+      "selected_chrome_client_url": "file:///C:/Users/LongShine/.codex/plugins/cache/openai-bundled/chrome/26.623.81905/scripts/browser-client.mjs",
+      "chrome_client_count": 2,
+      "chrome_process_count": 36,
+      "codex_process_count": 40
+    },
+    "bridge_runtime_preflight": {
+      "path": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-codex-bridge-runtime-preflight-latest.json",
+      "exists": true,
+      "valid": true,
+      "result": "pass",
+      "chrome_client_count": 2,
+      "desktop_bridge_candidate_count": 0,
+      "node_repl_candidate_count": 0,
+      "chrome_process_count": 18,
+      "codex_process_count": 10,
+      "code_process_count": 18
+    },
+    "viewport_probe": {
+      "path": "doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-viewport-probe-latest.json",
+      "exists": true,
+      "valid": true,
+      "result": "blocked",
+      "viewport": {
+        "width": 2560,
+        "height": 1271
+      },
+      "viewport_source": "window_metrics",
+      "window_metrics": {
+        "width": 2560,
+        "height": 1271
+      },
+      "screenshot_size": {
+        "width": 2559,
+        "height": 1271
+      },
+      "expected_size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "mismatch_reason": "viewport 2560x1271 != 1920x1080",
+      "acceptance_effect": "Current Desktop Chrome bridge can expose the Chrome extension target, open /login, and capture a real page before viewport-control experimentation. However, the only discovered viewport-control path is CDP, and the r3 CDP device metrics probe left tab control timing out. The 1:1 visual gate remains blocked until Desktop Chrome can reliably produce browser-generated 1920x1080 screenshots with receiver capture-meta.json proving uploaded/stored size and browser viewport."
+    },
+    "receiver_selftest": {
+      "path": "doc/02_acceptance/02-regression/ui-visual-interaction/receiver-selftest-latest.json",
+      "exists": true,
+      "valid": true,
+      "result": "pass",
+      "passed": 13,
+      "total": 13,
+      "acceptance_effect": "Proves the receiver endpoint behavior only; does not replace Desktop Chrome visual or interaction evidence."
+    },
+    "smoke_token_preflight": {
+      "path": "doc/02_acceptance/02-regression/ui-visual-interaction/desktop-smoke-token-preflight-latest.json",
+      "exists": true,
+      "valid": true,
+      "result": "pass",
+      "runtime": {
+        "VITE_AUTH_ENABLED": "true",
+        "VITE_USE_MOCK": "false",
+        "VITE_DESKTOP_SMOKE_TOKEN_ENABLED": "true"
+      },
+      "final_path": "/dashboard",
+      "acceptance_effect": "Local readiness check only. Formal acceptance still requires Windows Codex Desktop Chrome extension evidence."
+    }
+  },
+  "summary": {
+    "visual_target_count": 30,
+    "visual_passed_count": 0,
+    "visual_pending_count": 30,
+    "visual_batch_count": 30,
+    "interaction_route_count": 28,
+    "interaction_passed_count": 0,
+    "interaction_pending_count": 28,
+    "interaction_batch_count": 28,
+    "screenshot_upload_count": 58,
+    "bridge_result_upload_count": 1,
+    "receiver_upload_count": 59,
+    "smoke_redirect_open_count": 56
+  },
+  "acceptance_contract": {
+    "desktop_backend": "codex-desktop-chrome-extension",
+    "forbidden_backends": [
+      "iab"
+    ],
+    "expected_viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "required_visual_files": [
+      "actual-1920.png",
+      "diff-1920.png",
+      "metrics.json",
+      "capture-meta.json"
+    ],
+    "required_interaction_files": [
+      "interaction.json",
+      "interaction.png",
+      "interaction-capture-meta.json"
+    ],
+    "capture_meta_must_prove": [
+      "backend is codex-desktop-chrome-extension",
+      "uploaded screenshot is 1920x1080",
+      "stored screenshot is 1920x1080",
+      "Desktop Chrome viewport is 1920x1080",
+      "post_capture_resize is false"
+    ],
+    "pre_capture_viewport_calibration": [
+      "run ui_desktop_capture_receiver_selftest.py",
+      "start ui_desktop_capture_receiver.py",
+      "open /viewport-probe using mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+      "confirm desktop-chrome-viewport-probe-latest.json result is pass",
+      "do not upload visual screenshots while the probe reports any viewport other than 1920x1080"
+    ],
+    "interaction_must_prove": [
+      "Desktop Chrome backend status is pass",
+      "no 4xx or 5xx",
+      "no requestfailed",
+      "no pageerror",
+      "no console error",
+      "route-specific business action was performed",
+      "protected route hash was consumed",
+      "final URL does not contain smoke token material",
+      "protected route did not resolve to /login",
+      "interaction screenshot is 1920x1080",
+      "interaction-capture-meta proves Desktop Chrome backend and no post-capture resize",
+      "Desktop Chrome bridge run summary is uploaded to desktop-chrome-bridge-run-latest.json"
+    ]
+  },
+  "commands": {
+    "app_reverse_tunnel": "ssh -N -R 127.0.0.1:25173:127.0.0.1:5173 LongShine@10.3.6.59",
+    "evidence_reverse_tunnel": "ssh -N -R 127.0.0.1:25174:127.0.0.1:15174 -R 127.0.0.1:25175:127.0.0.1:15175 LongShine@10.3.6.59",
+    "windows_tunnel_channel_preflight": "SSHPASS=<redacted> node tests/e2e/ui_windows_tunnel_channel_preflight.mjs",
+    "windows_desktop_bridge_host_preflight": "SSHPASS=<redacted> node tests/e2e/ui_windows_desktop_bridge_host_preflight.mjs",
+    "windows_codex_bridge_runtime_preflight": "SSHPASS=<redacted> node tests/e2e/ui_windows_codex_bridge_runtime_preflight.mjs",
+    "receiver_selftest": "python3 tests/e2e/ui_desktop_capture_receiver_selftest.py",
+    "smoke_token_preflight": "node tests/e2e/ui_desktop_smoke_token_preflight.mjs --base-url http://127.0.0.1:5173 --apisix-url http://10.0.5.8:30180 --route /dashboard --expected-path /dashboard",
+    "receiver_start": "DESKTOP_SMOKE_TOKEN='<redacted>' CODEX_CAPTURE_KEY='<redacted>' tests/e2e/ui_desktop_capture_receiver.py --host 0.0.0.0 --port 15174 --evidence-dir doc/02_acceptance/02-regression/ui-visual-interaction/latest --max-uploads 59 --expected-width 1920 --expected-height 1080",
+    "viewport_probe_open": "mcp__codex_desktop_node_repl.desktop_chrome_open_url url=http://127.0.0.1:25174/viewport-probe keep=true wait_ms=1500",
+    "smoke_redirect_start": "DESKTOP_SMOKE_TOKEN='<redacted>' CODEX_SMOKE_NONCE='<redacted>' tests/e2e/ui_desktop_smoke_redirect.py --host 0.0.0.0 --port 15175 --app-base-url http://127.0.0.1:25173 --default-route /dashboard --max-redirects 56",
+    "bridge_result_upload": "http://127.0.0.1:25174/bridge-result",
+    "capture_plan_refresh": "tests/e2e/ui_desktop_capture_plan.mjs --base-url http://127.0.0.1:25173 --receiver-url http://127.0.0.1:25174",
+    "evidence_finalize": "ALLOW_BLOCKERS=false tests/e2e/ui_visual_interaction_evidence_finalize.py",
+    "ui_visual_interaction_preflight": "DESKTOP_CHROME_STATUS=pass ALLOW_BLOCKERS=false tests/e2e/live_ui_visual_interaction_preflight.sh",
+    "project_completion_audit": "ALLOW_BLOCKERS=false tests/e2e/live_project_completion_audit.sh"
+  },
+  "visual_batch": [
+    {
+      "order": 1,
+      "target_id": "login",
+      "route_id": "login",
+      "title": "登录",
+      "url": "http://127.0.0.1:25173/login?__taf_visual=1",
+      "requires_smoke_token": false,
+      "safe_redirect_url_pattern": "http://10.0.5.8:30180/login?__taf_visual=1",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25173/login?__taf_visual=1",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/upload/login",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/login.png",
+      "evidence": {
+        "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/login/actual-1920.png",
+        "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/login/diff-1920.png",
+        "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/login/metrics.json",
+        "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/login/capture-meta.json",
+        "actual_exists": true,
+        "diff_exists": true,
+        "metrics_exists": true,
+        "metrics_valid": true,
+        "metrics_passed": false,
+        "capture_meta_exists": true,
+        "capture_meta_valid": true,
+        "capture_meta_passed": false,
+        "capture_uploaded_size": {
+          "width": 2559,
+          "height": 1271
+        },
+        "capture_stored_size": {
+          "width": 2559,
+          "height": 1271
+        },
+        "capture_desktop_viewport_size": {
+          "width": 2560,
+          "height": 1271
+        },
+        "pixel_mismatch_ratio": 0.9999099151449858,
+        "viewport": {
+          "width": 2559,
+          "height": 1271
+        },
+        "passed": false,
+        "reasons": [
+          "metrics status=fail",
+          "pixel mismatch ratio 0.9999099151449858 > 0.015",
+          "viewport 2559x1271 != 1920x1080",
+          "capture-meta status=blocked",
+          "uploaded screenshot 2559x1271 != 1920x1080",
+          "stored screenshot 2559x1271 != 1920x1080",
+          "Desktop Chrome viewport 2560x1271 != 1920x1080"
+        ]
+      },
+      "metrics_command": "tests/e2e/ui_visual_diff_metrics.py --target-id login --route /login?__taf_visual=1 --source doc/04_assets/ui_suite_gpt_v1/screens/pages/login.png --actual doc/02_acceptance/02-regression/ui-visual-interaction/latest/login/actual-1920.png --diff doc/02_acceptance/02-regression/ui-visual-interaction/latest/login/diff-1920.png --metrics doc/02_acceptance/02-regression/ui-visual-interaction/latest/login/metrics.json",
+      "reasons": [
+        "metrics status=fail",
+        "pixel mismatch ratio 0.9999099151449858 > 0.015",
+        "viewport 2559x1271 != 1920x1080",
+        "capture-meta status=blocked",
+        "uploaded screenshot 2559x1271 != 1920x1080",
+        "stored screenshot 2559x1271 != 1920x1080",
+        "Desktop Chrome viewport 2560x1271 != 1920x1080"
+      ]
+    },
+    {
+      "order": 2,
+      "target_id": "screen",
+      "route_id": "screen",
+      "title": "态势大屏",
+      "url": "http://127.0.0.1:25173/screen",
+      "requires_smoke_token": true,
+      "safe_redirect_url_pattern": "<SMOKE_REDIRECT_BASE_URL>/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fscreen",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fscreen",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/upload/screen",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/screen.png",
+      "evidence": {
+        "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/screen/actual-1920.png",
+        "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/screen/diff-1920.png",
+        "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/screen/metrics.json",
+        "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/screen/capture-meta.json",
+        "actual_exists": true,
+        "diff_exists": true,
+        "metrics_exists": true,
+        "metrics_valid": true,
+        "metrics_passed": false,
+        "capture_meta_exists": true,
+        "capture_meta_valid": true,
+        "capture_meta_passed": false,
+        "capture_uploaded_size": {
+          "width": 2559,
+          "height": 1271
+        },
+        "capture_stored_size": {
+          "width": 2559,
+          "height": 1271
+        },
+        "capture_desktop_viewport_size": {
+          "width": 2560,
+          "height": 1271
+        },
+        "pixel_mismatch_ratio": 0.9999508069051117,
+        "viewport": {
+          "width": 2559,
+          "height": 1271
+        },
+        "passed": false,
+        "reasons": [
+          "metrics status=fail",
+          "pixel mismatch ratio 0.9999508069051117 > 0.015",
+          "viewport 2559x1271 != 1920x1080",
+          "capture-meta status=blocked",
+          "uploaded screenshot 2559x1271 != 1920x1080",
+          "stored screenshot 2559x1271 != 1920x1080",
+          "Desktop Chrome viewport 2560x1271 != 1920x1080"
+        ]
+      },
+      "metrics_command": "tests/e2e/ui_visual_diff_metrics.py --target-id screen --route /screen --source doc/04_assets/ui_suite_gpt_v1/screens/pages/screen.png --actual doc/02_acceptance/02-regression/ui-visual-interaction/latest/screen/actual-1920.png --diff doc/02_acceptance/02-regression/ui-visual-interaction/latest/screen/diff-1920.png --metrics doc/02_acceptance/02-regression/ui-visual-interaction/latest/screen/metrics.json",
+      "reasons": [
+        "metrics status=fail",
+        "pixel mismatch ratio 0.9999508069051117 > 0.015",
+        "viewport 2559x1271 != 1920x1080",
+        "capture-meta status=blocked",
+        "uploaded screenshot 2559x1271 != 1920x1080",
+        "stored screenshot 2559x1271 != 1920x1080",
+        "Desktop Chrome viewport 2560x1271 != 1920x1080"
+      ]
+    },
+    {
+      "order": 3,
+      "target_id": "dashboard",
+      "route_id": "dashboard",
+      "title": "仪表盘",
+      "url": "http://127.0.0.1:25173/dashboard",
+      "requires_smoke_token": true,
+      "safe_redirect_url_pattern": "<SMOKE_REDIRECT_BASE_URL>/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fdashboard",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fdashboard",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/upload/dashboard",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/dashboard.png",
+      "evidence": {
+        "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/dashboard/actual-1920.png",
+        "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/dashboard/diff-1920.png",
+        "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/dashboard/metrics.json",
+        "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/dashboard/capture-meta.json",
+        "actual_exists": true,
+        "diff_exists": true,
+        "metrics_exists": true,
+        "metrics_valid": true,
+        "metrics_passed": false,
+        "capture_meta_exists": true,
+        "capture_meta_valid": true,
+        "capture_meta_passed": false,
+        "capture_uploaded_size": {
+          "width": 2559,
+          "height": 1271
+        },
+        "capture_stored_size": {
+          "width": 2559,
+          "height": 1271
+        },
+        "capture_desktop_viewport_size": {
+          "width": 2560,
+          "height": 1271
+        },
+        "pixel_mismatch_ratio": 0.9999188313934344,
+        "viewport": {
+          "width": 2559,
+          "height": 1271
+        },
+        "passed": false,
+        "reasons": [
+          "metrics status=fail",
+          "pixel mismatch ratio 0.9999188313934344 > 0.015",
+          "viewport 2559x1271 != 1920x1080",
+          "capture-meta status=blocked",
+          "uploaded screenshot 2559x1271 != 1920x1080",
+          "stored screenshot 2559x1271 != 1920x1080",
+          "Desktop Chrome viewport 2560x1271 != 1920x1080"
+        ]
+      },
+      "metrics_command": "tests/e2e/ui_visual_diff_metrics.py --target-id dashboard --route /dashboard --source doc/04_assets/ui_suite_gpt_v1/screens/pages/dashboard.png --actual doc/02_acceptance/02-regression/ui-visual-interaction/latest/dashboard/actual-1920.png --diff doc/02_acceptance/02-regression/ui-visual-interaction/latest/dashboard/diff-1920.png --metrics doc/02_acceptance/02-regression/ui-visual-interaction/latest/dashboard/metrics.json",
+      "reasons": [
+        "metrics status=fail",
+        "pixel mismatch ratio 0.9999188313934344 > 0.015",
+        "viewport 2559x1271 != 1920x1080",
+        "capture-meta status=blocked",
+        "uploaded screenshot 2559x1271 != 1920x1080",
+        "stored screenshot 2559x1271 != 1920x1080",
+        "Desktop Chrome viewport 2560x1271 != 1920x1080"
+      ]
+    },
+    {
+      "order": 4,
+      "target_id": "alerts",
+      "route_id": "alerts",
+      "title": "告警中心",
+      "url": "http://127.0.0.1:25173/alerts",
+      "requires_smoke_token": true,
+      "safe_redirect_url_pattern": "<SMOKE_REDIRECT_BASE_URL>/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Falerts",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Falerts",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/upload/alerts",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/alerts.png",
+      "evidence": {
+        "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/alerts/actual-1920.png",
+        "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/alerts/diff-1920.png",
+        "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/alerts/metrics.json",
+        "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/alerts/capture-meta.json",
+        "actual_exists": true,
+        "diff_exists": true,
+        "metrics_exists": true,
+        "metrics_valid": true,
+        "metrics_passed": false,
+        "capture_meta_exists": true,
+        "capture_meta_valid": true,
+        "capture_meta_passed": false,
+        "capture_uploaded_size": {
+          "width": 2559,
+          "height": 1271
+        },
+        "capture_stored_size": {
+          "width": 2559,
+          "height": 1271
+        },
+        "capture_desktop_viewport_size": {
+          "width": 2560,
+          "height": 1271
+        },
+        "pixel_mismatch_ratio": 0.9999425055703494,
+        "viewport": {
+          "width": 2559,
+          "height": 1271
+        },
+        "passed": false,
+        "reasons": [
+          "metrics status=fail",
+          "pixel mismatch ratio 0.9999425055703494 > 0.015",
+          "viewport 2559x1271 != 1920x1080",
+          "capture-meta status=blocked",
+          "uploaded screenshot 2559x1271 != 1920x1080",
+          "stored screenshot 2559x1271 != 1920x1080",
+          "Desktop Chrome viewport 2560x1271 != 1920x1080"
+        ]
+      },
+      "metrics_command": "tests/e2e/ui_visual_diff_metrics.py --target-id alerts --route /alerts --source doc/04_assets/ui_suite_gpt_v1/screens/pages/alerts.png --actual doc/02_acceptance/02-regression/ui-visual-interaction/latest/alerts/actual-1920.png --diff doc/02_acceptance/02-regression/ui-visual-interaction/latest/alerts/diff-1920.png --metrics doc/02_acceptance/02-regression/ui-visual-interaction/latest/alerts/metrics.json",
+      "reasons": [
+        "metrics status=fail",
+        "pixel mismatch ratio 0.9999425055703494 > 0.015",
+        "viewport 2559x1271 != 1920x1080",
+        "capture-meta status=blocked",
+        "uploaded screenshot 2559x1271 != 1920x1080",
+        "stored screenshot 2559x1271 != 1920x1080",
+        "Desktop Chrome viewport 2560x1271 != 1920x1080"
+      ]
+    },
+    {
+      "order": 5,
+      "target_id": "alert-detail",
+      "route_id": "alert-detail",
+      "title": "告警详情",
+      "url": "http://127.0.0.1:25173/alerts/AL-20260620-000123",
+      "requires_smoke_token": true,
+      "safe_redirect_url_pattern": "<SMOKE_REDIRECT_BASE_URL>/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Falerts%2FAL-20260620-000123",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Falerts%2FAL-20260620-000123",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/upload/alert-detail",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/alert-detail.png",
+      "evidence": {
+        "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/alert-detail/actual-1920.png",
+        "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/alert-detail/diff-1920.png",
+        "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/alert-detail/metrics.json",
+        "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/alert-detail/capture-meta.json",
+        "actual_exists": false,
+        "diff_exists": false,
+        "metrics_exists": false,
+        "metrics_valid": false,
+        "metrics_passed": false,
+        "capture_meta_exists": false,
+        "capture_meta_valid": false,
+        "capture_meta_passed": false,
+        "capture_uploaded_size": null,
+        "capture_stored_size": null,
+        "capture_desktop_viewport_size": null,
+        "pixel_mismatch_ratio": null,
+        "viewport": null,
+        "passed": false,
+        "reasons": [
+          "missing actual-1920.png",
+          "missing diff-1920.png",
+          "metrics missing",
+          "capture-meta missing"
+        ]
+      },
+      "metrics_command": "tests/e2e/ui_visual_diff_metrics.py --target-id alert-detail --route /alerts/AL-20260620-000123 --source doc/04_assets/ui_suite_gpt_v1/screens/pages/alert-detail.png --actual doc/02_acceptance/02-regression/ui-visual-interaction/latest/alert-detail/actual-1920.png --diff doc/02_acceptance/02-regression/ui-visual-interaction/latest/alert-detail/diff-1920.png --metrics doc/02_acceptance/02-regression/ui-visual-interaction/latest/alert-detail/metrics.json",
+      "reasons": [
+        "missing actual-1920.png",
+        "missing diff-1920.png",
+        "metrics missing",
+        "capture-meta missing"
+      ]
+    },
+    {
+      "order": 6,
+      "target_id": "campaigns",
+      "route_id": "campaigns",
+      "title": "战役列表",
+      "url": "http://127.0.0.1:25173/campaigns",
+      "requires_smoke_token": true,
+      "safe_redirect_url_pattern": "<SMOKE_REDIRECT_BASE_URL>/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fcampaigns",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fcampaigns",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/upload/campaigns",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/campaigns.png",
+      "evidence": {
+        "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaigns/actual-1920.png",
+        "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaigns/diff-1920.png",
+        "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaigns/metrics.json",
+        "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaigns/capture-meta.json",
+        "actual_exists": false,
+        "diff_exists": false,
+        "metrics_exists": false,
+        "metrics_valid": false,
+        "metrics_passed": false,
+        "capture_meta_exists": false,
+        "capture_meta_valid": false,
+        "capture_meta_passed": false,
+        "capture_uploaded_size": null,
+        "capture_stored_size": null,
+        "capture_desktop_viewport_size": null,
+        "pixel_mismatch_ratio": null,
+        "viewport": null,
+        "passed": false,
+        "reasons": [
+          "missing actual-1920.png",
+          "missing diff-1920.png",
+          "metrics missing",
+          "capture-meta missing"
+        ]
+      },
+      "metrics_command": "tests/e2e/ui_visual_diff_metrics.py --target-id campaigns --route /campaigns --source doc/04_assets/ui_suite_gpt_v1/screens/pages/campaigns.png --actual doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaigns/actual-1920.png --diff doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaigns/diff-1920.png --metrics doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaigns/metrics.json",
+      "reasons": [
+        "missing actual-1920.png",
+        "missing diff-1920.png",
+        "metrics missing",
+        "capture-meta missing"
+      ]
+    },
+    {
+      "order": 7,
+      "target_id": "campaign-detail",
+      "route_id": "campaign-detail",
+      "title": "战役详情",
+      "url": "http://127.0.0.1:25173/campaigns/APT-20260619-001",
+      "requires_smoke_token": true,
+      "safe_redirect_url_pattern": "<SMOKE_REDIRECT_BASE_URL>/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fcampaigns%2FAPT-20260619-001",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fcampaigns%2FAPT-20260619-001",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/upload/campaign-detail",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/campaign-detail.png",
+      "evidence": {
+        "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaign-detail/actual-1920.png",
+        "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaign-detail/diff-1920.png",
+        "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaign-detail/metrics.json",
+        "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaign-detail/capture-meta.json",
+        "actual_exists": false,
+        "diff_exists": false,
+        "metrics_exists": false,
+        "metrics_valid": false,
+        "metrics_passed": false,
+        "capture_meta_exists": false,
+        "capture_meta_valid": false,
+        "capture_meta_passed": false,
+        "capture_uploaded_size": null,
+        "capture_stored_size": null,
+        "capture_desktop_viewport_size": null,
+        "pixel_mismatch_ratio": null,
+        "viewport": null,
+        "passed": false,
+        "reasons": [
+          "missing actual-1920.png",
+          "missing diff-1920.png",
+          "metrics missing",
+          "capture-meta missing"
+        ]
+      },
+      "metrics_command": "tests/e2e/ui_visual_diff_metrics.py --target-id campaign-detail --route /campaigns/APT-20260619-001 --source doc/04_assets/ui_suite_gpt_v1/screens/pages/campaign-detail.png --actual doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaign-detail/actual-1920.png --diff doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaign-detail/diff-1920.png --metrics doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaign-detail/metrics.json",
+      "reasons": [
+        "missing actual-1920.png",
+        "missing diff-1920.png",
+        "metrics missing",
+        "capture-meta missing"
+      ]
+    },
+    {
+      "order": 8,
+      "target_id": "attack-chains",
+      "route_id": "attack-chains",
+      "title": "攻击链分析",
+      "url": "http://127.0.0.1:25173/attack-chains",
+      "requires_smoke_token": true,
+      "safe_redirect_url_pattern": "<SMOKE_REDIRECT_BASE_URL>/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fattack-chains",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fattack-chains",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/upload/attack-chains",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/attack-chains.png",
+      "evidence": {
+        "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/attack-chains/actual-1920.png",
+        "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/attack-chains/diff-1920.png",
+        "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/attack-chains/metrics.json",
+        "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/attack-chains/capture-meta.json",
+        "actual_exists": false,
+        "diff_exists": false,
+        "metrics_exists": false,
+        "metrics_valid": false,
+        "metrics_passed": false,
+        "capture_meta_exists": false,
+        "capture_meta_valid": false,
+        "capture_meta_passed": false,
+        "capture_uploaded_size": null,
+        "capture_stored_size": null,
+        "capture_desktop_viewport_size": null,
+        "pixel_mismatch_ratio": null,
+        "viewport": null,
+        "passed": false,
+        "reasons": [
+          "missing actual-1920.png",
+          "missing diff-1920.png",
+          "metrics missing",
+          "capture-meta missing"
+        ]
+      },
+      "metrics_command": "tests/e2e/ui_visual_diff_metrics.py --target-id attack-chains --route /attack-chains --source doc/04_assets/ui_suite_gpt_v1/screens/pages/attack-chains.png --actual doc/02_acceptance/02-regression/ui-visual-interaction/latest/attack-chains/actual-1920.png --diff doc/02_acceptance/02-regression/ui-visual-interaction/latest/attack-chains/diff-1920.png --metrics doc/02_acceptance/02-regression/ui-visual-interaction/latest/attack-chains/metrics.json",
+      "reasons": [
+        "missing actual-1920.png",
+        "missing diff-1920.png",
+        "metrics missing",
+        "capture-meta missing"
+      ]
+    },
+    {
+      "order": 9,
+      "target_id": "encrypted-traffic",
+      "route_id": "encrypted-traffic",
+      "title": "加密流量",
+      "url": "http://127.0.0.1:25173/encrypted-traffic",
+      "requires_smoke_token": true,
+      "safe_redirect_url_pattern": "<SMOKE_REDIRECT_BASE_URL>/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fencrypted-traffic",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fencrypted-traffic",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/upload/encrypted-traffic",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic.png",
+      "evidence": {
+        "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/encrypted-traffic/actual-1920.png",
+        "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/encrypted-traffic/diff-1920.png",
+        "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/encrypted-traffic/metrics.json",
+        "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/encrypted-traffic/capture-meta.json",
+        "actual_exists": false,
+        "diff_exists": false,
+        "metrics_exists": false,
+        "metrics_valid": false,
+        "metrics_passed": false,
+        "capture_meta_exists": false,
+        "capture_meta_valid": false,
+        "capture_meta_passed": false,
+        "capture_uploaded_size": null,
+        "capture_stored_size": null,
+        "capture_desktop_viewport_size": null,
+        "pixel_mismatch_ratio": null,
+        "viewport": null,
+        "passed": false,
+        "reasons": [
+          "missing actual-1920.png",
+          "missing diff-1920.png",
+          "metrics missing",
+          "capture-meta missing"
+        ]
+      },
+      "metrics_command": "tests/e2e/ui_visual_diff_metrics.py --target-id encrypted-traffic --route /encrypted-traffic --source doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic.png --actual doc/02_acceptance/02-regression/ui-visual-interaction/latest/encrypted-traffic/actual-1920.png --diff doc/02_acceptance/02-regression/ui-visual-interaction/latest/encrypted-traffic/diff-1920.png --metrics doc/02_acceptance/02-regression/ui-visual-interaction/latest/encrypted-traffic/metrics.json",
+      "reasons": [
+        "missing actual-1920.png",
+        "missing diff-1920.png",
+        "metrics missing",
+        "capture-meta missing"
+      ]
+    },
+    {
+      "order": 10,
+      "target_id": "forensics",
+      "route_id": "forensics",
+      "title": "取证分析",
+      "url": "http://127.0.0.1:25173/forensics",
+      "requires_smoke_token": true,
+      "safe_redirect_url_pattern": "<SMOKE_REDIRECT_BASE_URL>/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fforensics",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fforensics",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/upload/forensics",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/forensics.png",
+      "evidence": {
+        "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/forensics/actual-1920.png",
+        "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/forensics/diff-1920.png",
+        "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/forensics/metrics.json",
+        "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/forensics/capture-meta.json",
+        "actual_exists": false,
+        "diff_exists": false,
+        "metrics_exists": false,
+        "metrics_valid": false,
+        "metrics_passed": false,
+        "capture_meta_exists": false,
+        "capture_meta_valid": false,
+        "capture_meta_passed": false,
+        "capture_uploaded_size": null,
+        "capture_stored_size": null,
+        "capture_desktop_viewport_size": null,
+        "pixel_mismatch_ratio": null,
+        "viewport": null,
+        "passed": false,
+        "reasons": [
+          "missing actual-1920.png",
+          "missing diff-1920.png",
+          "metrics missing",
+          "capture-meta missing"
+        ]
+      },
+      "metrics_command": "tests/e2e/ui_visual_diff_metrics.py --target-id forensics --route /forensics --source doc/04_assets/ui_suite_gpt_v1/screens/pages/forensics.png --actual doc/02_acceptance/02-regression/ui-visual-interaction/latest/forensics/actual-1920.png --diff doc/02_acceptance/02-regression/ui-visual-interaction/latest/forensics/diff-1920.png --metrics doc/02_acceptance/02-regression/ui-visual-interaction/latest/forensics/metrics.json",
+      "reasons": [
+        "missing actual-1920.png",
+        "missing diff-1920.png",
+        "metrics missing",
+        "capture-meta missing"
+      ]
+    },
+    {
+      "order": 11,
+      "target_id": "assets",
+      "route_id": "assets",
+      "title": "资产台账",
+      "url": "http://127.0.0.1:25173/assets",
+      "requires_smoke_token": true,
+      "safe_redirect_url_pattern": "<SMOKE_REDIRECT_BASE_URL>/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fassets",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fassets",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/upload/assets",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets.png",
+      "evidence": {
+        "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/assets/actual-1920.png",
+        "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/assets/diff-1920.png",
+        "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/assets/metrics.json",
+        "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/assets/capture-meta.json",
+        "actual_exists": false,
+        "diff_exists": false,
+        "metrics_exists": false,
+        "metrics_valid": false,
+        "metrics_passed": false,
+        "capture_meta_exists": false,
+        "capture_meta_valid": false,
+        "capture_meta_passed": false,
+        "capture_uploaded_size": null,
+        "capture_stored_size": null,
+        "capture_desktop_viewport_size": null,
+        "pixel_mismatch_ratio": null,
+        "viewport": null,
+        "passed": false,
+        "reasons": [
+          "missing actual-1920.png",
+          "missing diff-1920.png",
+          "metrics missing",
+          "capture-meta missing"
+        ]
+      },
+      "metrics_command": "tests/e2e/ui_visual_diff_metrics.py --target-id assets --route /assets --source doc/04_assets/ui_suite_gpt_v1/screens/pages/assets.png --actual doc/02_acceptance/02-regression/ui-visual-interaction/latest/assets/actual-1920.png --diff doc/02_acceptance/02-regression/ui-visual-interaction/latest/assets/diff-1920.png --metrics doc/02_acceptance/02-regression/ui-visual-interaction/latest/assets/metrics.json",
+      "reasons": [
+        "missing actual-1920.png",
+        "missing diff-1920.png",
+        "metrics missing",
+        "capture-meta missing"
+      ]
+    },
+    {
+      "order": 12,
+      "target_id": "graph",
+      "route_id": "graph",
+      "title": "实体图谱",
+      "url": "http://127.0.0.1:25173/graph",
+      "requires_smoke_token": true,
+      "safe_redirect_url_pattern": "<SMOKE_REDIRECT_BASE_URL>/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fgraph",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fgraph",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/upload/graph",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/graph.png",
+      "evidence": {
+        "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/graph/actual-1920.png",
+        "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/graph/diff-1920.png",
+        "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/graph/metrics.json",
+        "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/graph/capture-meta.json",
+        "actual_exists": false,
+        "diff_exists": false,
+        "metrics_exists": false,
+        "metrics_valid": false,
+        "metrics_passed": false,
+        "capture_meta_exists": false,
+        "capture_meta_valid": false,
+        "capture_meta_passed": false,
+        "capture_uploaded_size": null,
+        "capture_stored_size": null,
+        "capture_desktop_viewport_size": null,
+        "pixel_mismatch_ratio": null,
+        "viewport": null,
+        "passed": false,
+        "reasons": [
+          "missing actual-1920.png",
+          "missing diff-1920.png",
+          "metrics missing",
+          "capture-meta missing"
+        ]
+      },
+      "metrics_command": "tests/e2e/ui_visual_diff_metrics.py --target-id graph --route /graph --source doc/04_assets/ui_suite_gpt_v1/screens/pages/graph.png --actual doc/02_acceptance/02-regression/ui-visual-interaction/latest/graph/actual-1920.png --diff doc/02_acceptance/02-regression/ui-visual-interaction/latest/graph/diff-1920.png --metrics doc/02_acceptance/02-regression/ui-visual-interaction/latest/graph/metrics.json",
+      "reasons": [
+        "missing actual-1920.png",
+        "missing diff-1920.png",
+        "metrics missing",
+        "capture-meta missing"
+      ]
+    },
+    {
+      "order": 13,
+      "target_id": "fusion",
+      "route_id": "fusion",
+      "title": "数据融合",
+      "url": "http://127.0.0.1:25173/fusion",
+      "requires_smoke_token": true,
+      "safe_redirect_url_pattern": "<SMOKE_REDIRECT_BASE_URL>/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Ffusion",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Ffusion",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/upload/fusion",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/fusion.png",
+      "evidence": {
+        "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/fusion/actual-1920.png",
+        "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/fusion/diff-1920.png",
+        "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/fusion/metrics.json",
+        "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/fusion/capture-meta.json",
+        "actual_exists": false,
+        "diff_exists": false,
+        "metrics_exists": false,
+        "metrics_valid": false,
+        "metrics_passed": false,
+        "capture_meta_exists": false,
+        "capture_meta_valid": false,
+        "capture_meta_passed": false,
+        "capture_uploaded_size": null,
+        "capture_stored_size": null,
+        "capture_desktop_viewport_size": null,
+        "pixel_mismatch_ratio": null,
+        "viewport": null,
+        "passed": false,
+        "reasons": [
+          "missing actual-1920.png",
+          "missing diff-1920.png",
+          "metrics missing",
+          "capture-meta missing"
+        ]
+      },
+      "metrics_command": "tests/e2e/ui_visual_diff_metrics.py --target-id fusion --route /fusion --source doc/04_assets/ui_suite_gpt_v1/screens/pages/fusion.png --actual doc/02_acceptance/02-regression/ui-visual-interaction/latest/fusion/actual-1920.png --diff doc/02_acceptance/02-regression/ui-visual-interaction/latest/fusion/diff-1920.png --metrics doc/02_acceptance/02-regression/ui-visual-interaction/latest/fusion/metrics.json",
+      "reasons": [
+        "missing actual-1920.png",
+        "missing diff-1920.png",
+        "metrics missing",
+        "capture-meta missing"
+      ]
+    },
+    {
+      "order": 14,
+      "target_id": "baselines",
+      "route_id": "baselines",
+      "title": "行为基准",
+      "url": "http://127.0.0.1:25173/baselines",
+      "requires_smoke_token": true,
+      "safe_redirect_url_pattern": "<SMOKE_REDIRECT_BASE_URL>/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fbaselines",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fbaselines",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/upload/baselines",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/baselines.png",
+      "evidence": {
+        "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/baselines/actual-1920.png",
+        "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/baselines/diff-1920.png",
+        "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/baselines/metrics.json",
+        "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/baselines/capture-meta.json",
+        "actual_exists": false,
+        "diff_exists": false,
+        "metrics_exists": false,
+        "metrics_valid": false,
+        "metrics_passed": false,
+        "capture_meta_exists": false,
+        "capture_meta_valid": false,
+        "capture_meta_passed": false,
+        "capture_uploaded_size": null,
+        "capture_stored_size": null,
+        "capture_desktop_viewport_size": null,
+        "pixel_mismatch_ratio": null,
+        "viewport": null,
+        "passed": false,
+        "reasons": [
+          "missing actual-1920.png",
+          "missing diff-1920.png",
+          "metrics missing",
+          "capture-meta missing"
+        ]
+      },
+      "metrics_command": "tests/e2e/ui_visual_diff_metrics.py --target-id baselines --route /baselines --source doc/04_assets/ui_suite_gpt_v1/screens/pages/baselines.png --actual doc/02_acceptance/02-regression/ui-visual-interaction/latest/baselines/actual-1920.png --diff doc/02_acceptance/02-regression/ui-visual-interaction/latest/baselines/diff-1920.png --metrics doc/02_acceptance/02-regression/ui-visual-interaction/latest/baselines/metrics.json",
+      "reasons": [
+        "missing actual-1920.png",
+        "missing diff-1920.png",
+        "metrics missing",
+        "capture-meta missing"
+      ]
+    },
+    {
+      "order": 15,
+      "target_id": "probes",
+      "route_id": "probes",
+      "title": "探针管理",
+      "url": "http://127.0.0.1:25173/probes",
+      "requires_smoke_token": true,
+      "safe_redirect_url_pattern": "<SMOKE_REDIRECT_BASE_URL>/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fprobes",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fprobes",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/upload/probes",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/probes.png",
+      "evidence": {
+        "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/probes/actual-1920.png",
+        "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/probes/diff-1920.png",
+        "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/probes/metrics.json",
+        "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/probes/capture-meta.json",
+        "actual_exists": false,
+        "diff_exists": false,
+        "metrics_exists": false,
+        "metrics_valid": false,
+        "metrics_passed": false,
+        "capture_meta_exists": false,
+        "capture_meta_valid": false,
+        "capture_meta_passed": false,
+        "capture_uploaded_size": null,
+        "capture_stored_size": null,
+        "capture_desktop_viewport_size": null,
+        "pixel_mismatch_ratio": null,
+        "viewport": null,
+        "passed": false,
+        "reasons": [
+          "missing actual-1920.png",
+          "missing diff-1920.png",
+          "metrics missing",
+          "capture-meta missing"
+        ]
+      },
+      "metrics_command": "tests/e2e/ui_visual_diff_metrics.py --target-id probes --route /probes --source doc/04_assets/ui_suite_gpt_v1/screens/pages/probes.png --actual doc/02_acceptance/02-regression/ui-visual-interaction/latest/probes/actual-1920.png --diff doc/02_acceptance/02-regression/ui-visual-interaction/latest/probes/diff-1920.png --metrics doc/02_acceptance/02-regression/ui-visual-interaction/latest/probes/metrics.json",
+      "reasons": [
+        "missing actual-1920.png",
+        "missing diff-1920.png",
+        "metrics missing",
+        "capture-meta missing"
+      ]
+    },
+    {
+      "order": 16,
+      "target_id": "rules",
+      "route_id": "rules",
+      "title": "规则管理",
+      "url": "http://127.0.0.1:25173/rules",
+      "requires_smoke_token": true,
+      "safe_redirect_url_pattern": "<SMOKE_REDIRECT_BASE_URL>/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Frules",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Frules",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/upload/rules",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/rules.png",
+      "evidence": {
+        "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/rules/actual-1920.png",
+        "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/rules/diff-1920.png",
+        "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/rules/metrics.json",
+        "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/rules/capture-meta.json",
+        "actual_exists": false,
+        "diff_exists": false,
+        "metrics_exists": false,
+        "metrics_valid": false,
+        "metrics_passed": false,
+        "capture_meta_exists": false,
+        "capture_meta_valid": false,
+        "capture_meta_passed": false,
+        "capture_uploaded_size": null,
+        "capture_stored_size": null,
+        "capture_desktop_viewport_size": null,
+        "pixel_mismatch_ratio": null,
+        "viewport": null,
+        "passed": false,
+        "reasons": [
+          "missing actual-1920.png",
+          "missing diff-1920.png",
+          "metrics missing",
+          "capture-meta missing"
+        ]
+      },
+      "metrics_command": "tests/e2e/ui_visual_diff_metrics.py --target-id rules --route /rules --source doc/04_assets/ui_suite_gpt_v1/screens/pages/rules.png --actual doc/02_acceptance/02-regression/ui-visual-interaction/latest/rules/actual-1920.png --diff doc/02_acceptance/02-regression/ui-visual-interaction/latest/rules/diff-1920.png --metrics doc/02_acceptance/02-regression/ui-visual-interaction/latest/rules/metrics.json",
+      "reasons": [
+        "missing actual-1920.png",
+        "missing diff-1920.png",
+        "metrics missing",
+        "capture-meta missing"
+      ]
+    },
+    {
+      "order": 17,
+      "target_id": "deployments",
+      "route_id": "deployments",
+      "title": "部署管理",
+      "url": "http://127.0.0.1:25173/deployments",
+      "requires_smoke_token": true,
+      "safe_redirect_url_pattern": "<SMOKE_REDIRECT_BASE_URL>/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fdeployments",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fdeployments",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/upload/deployments",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/deployments.png",
+      "evidence": {
+        "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/deployments/actual-1920.png",
+        "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/deployments/diff-1920.png",
+        "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/deployments/metrics.json",
+        "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/deployments/capture-meta.json",
+        "actual_exists": false,
+        "diff_exists": false,
+        "metrics_exists": false,
+        "metrics_valid": false,
+        "metrics_passed": false,
+        "capture_meta_exists": false,
+        "capture_meta_valid": false,
+        "capture_meta_passed": false,
+        "capture_uploaded_size": null,
+        "capture_stored_size": null,
+        "capture_desktop_viewport_size": null,
+        "pixel_mismatch_ratio": null,
+        "viewport": null,
+        "passed": false,
+        "reasons": [
+          "missing actual-1920.png",
+          "missing diff-1920.png",
+          "metrics missing",
+          "capture-meta missing"
+        ]
+      },
+      "metrics_command": "tests/e2e/ui_visual_diff_metrics.py --target-id deployments --route /deployments --source doc/04_assets/ui_suite_gpt_v1/screens/pages/deployments.png --actual doc/02_acceptance/02-regression/ui-visual-interaction/latest/deployments/actual-1920.png --diff doc/02_acceptance/02-regression/ui-visual-interaction/latest/deployments/diff-1920.png --metrics doc/02_acceptance/02-regression/ui-visual-interaction/latest/deployments/metrics.json",
+      "reasons": [
+        "missing actual-1920.png",
+        "missing diff-1920.png",
+        "metrics missing",
+        "capture-meta missing"
+      ]
+    },
+    {
+      "order": 18,
+      "target_id": "models",
+      "route_id": "models",
+      "title": "模型管理",
+      "url": "http://127.0.0.1:25173/models",
+      "requires_smoke_token": true,
+      "safe_redirect_url_pattern": "<SMOKE_REDIRECT_BASE_URL>/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fmodels",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fmodels",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/upload/models",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/models.png",
+      "evidence": {
+        "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/models/actual-1920.png",
+        "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/models/diff-1920.png",
+        "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/models/metrics.json",
+        "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/models/capture-meta.json",
+        "actual_exists": false,
+        "diff_exists": false,
+        "metrics_exists": false,
+        "metrics_valid": false,
+        "metrics_passed": false,
+        "capture_meta_exists": false,
+        "capture_meta_valid": false,
+        "capture_meta_passed": false,
+        "capture_uploaded_size": null,
+        "capture_stored_size": null,
+        "capture_desktop_viewport_size": null,
+        "pixel_mismatch_ratio": null,
+        "viewport": null,
+        "passed": false,
+        "reasons": [
+          "missing actual-1920.png",
+          "missing diff-1920.png",
+          "metrics missing",
+          "capture-meta missing"
+        ]
+      },
+      "metrics_command": "tests/e2e/ui_visual_diff_metrics.py --target-id models --route /models --source doc/04_assets/ui_suite_gpt_v1/screens/pages/models.png --actual doc/02_acceptance/02-regression/ui-visual-interaction/latest/models/actual-1920.png --diff doc/02_acceptance/02-regression/ui-visual-interaction/latest/models/diff-1920.png --metrics doc/02_acceptance/02-regression/ui-visual-interaction/latest/models/metrics.json",
+      "reasons": [
+        "missing actual-1920.png",
+        "missing diff-1920.png",
+        "metrics missing",
+        "capture-meta missing"
+      ]
+    },
+    {
+      "order": 19,
+      "target_id": "mlops",
+      "route_id": "mlops",
+      "title": "MLOps 编排",
+      "url": "http://127.0.0.1:25173/mlops",
+      "requires_smoke_token": true,
+      "safe_redirect_url_pattern": "<SMOKE_REDIRECT_BASE_URL>/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fmlops",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fmlops",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/upload/mlops",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/mlops.png",
+      "evidence": {
+        "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/mlops/actual-1920.png",
+        "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/mlops/diff-1920.png",
+        "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/mlops/metrics.json",
+        "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/mlops/capture-meta.json",
+        "actual_exists": false,
+        "diff_exists": false,
+        "metrics_exists": false,
+        "metrics_valid": false,
+        "metrics_passed": false,
+        "capture_meta_exists": false,
+        "capture_meta_valid": false,
+        "capture_meta_passed": false,
+        "capture_uploaded_size": null,
+        "capture_stored_size": null,
+        "capture_desktop_viewport_size": null,
+        "pixel_mismatch_ratio": null,
+        "viewport": null,
+        "passed": false,
+        "reasons": [
+          "missing actual-1920.png",
+          "missing diff-1920.png",
+          "metrics missing",
+          "capture-meta missing"
+        ]
+      },
+      "metrics_command": "tests/e2e/ui_visual_diff_metrics.py --target-id mlops --route /mlops --source doc/04_assets/ui_suite_gpt_v1/screens/pages/mlops.png --actual doc/02_acceptance/02-regression/ui-visual-interaction/latest/mlops/actual-1920.png --diff doc/02_acceptance/02-regression/ui-visual-interaction/latest/mlops/diff-1920.png --metrics doc/02_acceptance/02-regression/ui-visual-interaction/latest/mlops/metrics.json",
+      "reasons": [
+        "missing actual-1920.png",
+        "missing diff-1920.png",
+        "metrics missing",
+        "capture-meta missing"
+      ]
+    },
+    {
+      "order": 20,
+      "target_id": "data-quality",
+      "route_id": "data-quality",
+      "title": "数据质量",
+      "url": "http://127.0.0.1:25173/data-quality",
+      "requires_smoke_token": true,
+      "safe_redirect_url_pattern": "<SMOKE_REDIRECT_BASE_URL>/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fdata-quality",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fdata-quality",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/upload/data-quality",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/data-quality.png",
+      "evidence": {
+        "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/data-quality/actual-1920.png",
+        "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/data-quality/diff-1920.png",
+        "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/data-quality/metrics.json",
+        "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/data-quality/capture-meta.json",
+        "actual_exists": false,
+        "diff_exists": false,
+        "metrics_exists": false,
+        "metrics_valid": false,
+        "metrics_passed": false,
+        "capture_meta_exists": false,
+        "capture_meta_valid": false,
+        "capture_meta_passed": false,
+        "capture_uploaded_size": null,
+        "capture_stored_size": null,
+        "capture_desktop_viewport_size": null,
+        "pixel_mismatch_ratio": null,
+        "viewport": null,
+        "passed": false,
+        "reasons": [
+          "missing actual-1920.png",
+          "missing diff-1920.png",
+          "metrics missing",
+          "capture-meta missing"
+        ]
+      },
+      "metrics_command": "tests/e2e/ui_visual_diff_metrics.py --target-id data-quality --route /data-quality --source doc/04_assets/ui_suite_gpt_v1/screens/pages/data-quality.png --actual doc/02_acceptance/02-regression/ui-visual-interaction/latest/data-quality/actual-1920.png --diff doc/02_acceptance/02-regression/ui-visual-interaction/latest/data-quality/diff-1920.png --metrics doc/02_acceptance/02-regression/ui-visual-interaction/latest/data-quality/metrics.json",
+      "reasons": [
+        "missing actual-1920.png",
+        "missing diff-1920.png",
+        "metrics missing",
+        "capture-meta missing"
+      ]
+    },
+    {
+      "order": 21,
+      "target_id": "playbooks",
+      "route_id": "playbooks",
+      "title": "SOAR 剧本",
+      "url": "http://127.0.0.1:25173/playbooks",
+      "requires_smoke_token": true,
+      "safe_redirect_url_pattern": "<SMOKE_REDIRECT_BASE_URL>/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fplaybooks",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fplaybooks",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/upload/playbooks",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/playbooks.png",
+      "evidence": {
+        "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/playbooks/actual-1920.png",
+        "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/playbooks/diff-1920.png",
+        "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/playbooks/metrics.json",
+        "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/playbooks/capture-meta.json",
+        "actual_exists": false,
+        "diff_exists": false,
+        "metrics_exists": false,
+        "metrics_valid": false,
+        "metrics_passed": false,
+        "capture_meta_exists": false,
+        "capture_meta_valid": false,
+        "capture_meta_passed": false,
+        "capture_uploaded_size": null,
+        "capture_stored_size": null,
+        "capture_desktop_viewport_size": null,
+        "pixel_mismatch_ratio": null,
+        "viewport": null,
+        "passed": false,
+        "reasons": [
+          "missing actual-1920.png",
+          "missing diff-1920.png",
+          "metrics missing",
+          "capture-meta missing"
+        ]
+      },
+      "metrics_command": "tests/e2e/ui_visual_diff_metrics.py --target-id playbooks --route /playbooks --source doc/04_assets/ui_suite_gpt_v1/screens/pages/playbooks.png --actual doc/02_acceptance/02-regression/ui-visual-interaction/latest/playbooks/actual-1920.png --diff doc/02_acceptance/02-regression/ui-visual-interaction/latest/playbooks/diff-1920.png --metrics doc/02_acceptance/02-regression/ui-visual-interaction/latest/playbooks/metrics.json",
+      "reasons": [
+        "missing actual-1920.png",
+        "missing diff-1920.png",
+        "metrics missing",
+        "capture-meta missing"
+      ]
+    },
+    {
+      "order": 22,
+      "target_id": "whitelist",
+      "route_id": "whitelist",
+      "title": "白名单",
+      "url": "http://127.0.0.1:25173/whitelist",
+      "requires_smoke_token": true,
+      "safe_redirect_url_pattern": "<SMOKE_REDIRECT_BASE_URL>/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fwhitelist",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fwhitelist",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/upload/whitelist",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/whitelist.png",
+      "evidence": {
+        "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/whitelist/actual-1920.png",
+        "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/whitelist/diff-1920.png",
+        "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/whitelist/metrics.json",
+        "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/whitelist/capture-meta.json",
+        "actual_exists": false,
+        "diff_exists": false,
+        "metrics_exists": false,
+        "metrics_valid": false,
+        "metrics_passed": false,
+        "capture_meta_exists": false,
+        "capture_meta_valid": false,
+        "capture_meta_passed": false,
+        "capture_uploaded_size": null,
+        "capture_stored_size": null,
+        "capture_desktop_viewport_size": null,
+        "pixel_mismatch_ratio": null,
+        "viewport": null,
+        "passed": false,
+        "reasons": [
+          "missing actual-1920.png",
+          "missing diff-1920.png",
+          "metrics missing",
+          "capture-meta missing"
+        ]
+      },
+      "metrics_command": "tests/e2e/ui_visual_diff_metrics.py --target-id whitelist --route /whitelist --source doc/04_assets/ui_suite_gpt_v1/screens/pages/whitelist.png --actual doc/02_acceptance/02-regression/ui-visual-interaction/latest/whitelist/actual-1920.png --diff doc/02_acceptance/02-regression/ui-visual-interaction/latest/whitelist/diff-1920.png --metrics doc/02_acceptance/02-regression/ui-visual-interaction/latest/whitelist/metrics.json",
+      "reasons": [
+        "missing actual-1920.png",
+        "missing diff-1920.png",
+        "metrics missing",
+        "capture-meta missing"
+      ]
+    },
+    {
+      "order": 23,
+      "target_id": "compliance",
+      "route_id": "compliance",
+      "title": "合规审计",
+      "url": "http://127.0.0.1:25173/compliance",
+      "requires_smoke_token": true,
+      "safe_redirect_url_pattern": "<SMOKE_REDIRECT_BASE_URL>/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fcompliance",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fcompliance",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/upload/compliance",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/compliance.png",
+      "evidence": {
+        "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/compliance/actual-1920.png",
+        "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/compliance/diff-1920.png",
+        "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/compliance/metrics.json",
+        "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/compliance/capture-meta.json",
+        "actual_exists": false,
+        "diff_exists": false,
+        "metrics_exists": false,
+        "metrics_valid": false,
+        "metrics_passed": false,
+        "capture_meta_exists": false,
+        "capture_meta_valid": false,
+        "capture_meta_passed": false,
+        "capture_uploaded_size": null,
+        "capture_stored_size": null,
+        "capture_desktop_viewport_size": null,
+        "pixel_mismatch_ratio": null,
+        "viewport": null,
+        "passed": false,
+        "reasons": [
+          "missing actual-1920.png",
+          "missing diff-1920.png",
+          "metrics missing",
+          "capture-meta missing"
+        ]
+      },
+      "metrics_command": "tests/e2e/ui_visual_diff_metrics.py --target-id compliance --route /compliance --source doc/04_assets/ui_suite_gpt_v1/screens/pages/compliance.png --actual doc/02_acceptance/02-regression/ui-visual-interaction/latest/compliance/actual-1920.png --diff doc/02_acceptance/02-regression/ui-visual-interaction/latest/compliance/diff-1920.png --metrics doc/02_acceptance/02-regression/ui-visual-interaction/latest/compliance/metrics.json",
+      "reasons": [
+        "missing actual-1920.png",
+        "missing diff-1920.png",
+        "metrics missing",
+        "capture-meta missing"
+      ]
+    },
+    {
+      "order": 24,
+      "target_id": "audit-log",
+      "route_id": "audit-log",
+      "title": "审计日志",
+      "url": "http://127.0.0.1:25173/audit-log",
+      "requires_smoke_token": true,
+      "safe_redirect_url_pattern": "<SMOKE_REDIRECT_BASE_URL>/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Faudit-log",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Faudit-log",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/upload/audit-log",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/audit-log.png",
+      "evidence": {
+        "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/audit-log/actual-1920.png",
+        "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/audit-log/diff-1920.png",
+        "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/audit-log/metrics.json",
+        "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/audit-log/capture-meta.json",
+        "actual_exists": false,
+        "diff_exists": false,
+        "metrics_exists": false,
+        "metrics_valid": false,
+        "metrics_passed": false,
+        "capture_meta_exists": false,
+        "capture_meta_valid": false,
+        "capture_meta_passed": false,
+        "capture_uploaded_size": null,
+        "capture_stored_size": null,
+        "capture_desktop_viewport_size": null,
+        "pixel_mismatch_ratio": null,
+        "viewport": null,
+        "passed": false,
+        "reasons": [
+          "missing actual-1920.png",
+          "missing diff-1920.png",
+          "metrics missing",
+          "capture-meta missing"
+        ]
+      },
+      "metrics_command": "tests/e2e/ui_visual_diff_metrics.py --target-id audit-log --route /audit-log --source doc/04_assets/ui_suite_gpt_v1/screens/pages/audit-log.png --actual doc/02_acceptance/02-regression/ui-visual-interaction/latest/audit-log/actual-1920.png --diff doc/02_acceptance/02-regression/ui-visual-interaction/latest/audit-log/diff-1920.png --metrics doc/02_acceptance/02-regression/ui-visual-interaction/latest/audit-log/metrics.json",
+      "reasons": [
+        "missing actual-1920.png",
+        "missing diff-1920.png",
+        "metrics missing",
+        "capture-meta missing"
+      ]
+    },
+    {
+      "order": 25,
+      "target_id": "notifications",
+      "route_id": "notifications",
+      "title": "通知配置",
+      "url": "http://127.0.0.1:25173/notifications",
+      "requires_smoke_token": true,
+      "safe_redirect_url_pattern": "<SMOKE_REDIRECT_BASE_URL>/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fnotifications",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fnotifications",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/upload/notifications",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/notifications.png",
+      "evidence": {
+        "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/notifications/actual-1920.png",
+        "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/notifications/diff-1920.png",
+        "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/notifications/metrics.json",
+        "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/notifications/capture-meta.json",
+        "actual_exists": false,
+        "diff_exists": false,
+        "metrics_exists": false,
+        "metrics_valid": false,
+        "metrics_passed": false,
+        "capture_meta_exists": false,
+        "capture_meta_valid": false,
+        "capture_meta_passed": false,
+        "capture_uploaded_size": null,
+        "capture_stored_size": null,
+        "capture_desktop_viewport_size": null,
+        "pixel_mismatch_ratio": null,
+        "viewport": null,
+        "passed": false,
+        "reasons": [
+          "missing actual-1920.png",
+          "missing diff-1920.png",
+          "metrics missing",
+          "capture-meta missing"
+        ]
+      },
+      "metrics_command": "tests/e2e/ui_visual_diff_metrics.py --target-id notifications --route /notifications --source doc/04_assets/ui_suite_gpt_v1/screens/pages/notifications.png --actual doc/02_acceptance/02-regression/ui-visual-interaction/latest/notifications/actual-1920.png --diff doc/02_acceptance/02-regression/ui-visual-interaction/latest/notifications/diff-1920.png --metrics doc/02_acceptance/02-regression/ui-visual-interaction/latest/notifications/metrics.json",
+      "reasons": [
+        "missing actual-1920.png",
+        "missing diff-1920.png",
+        "metrics missing",
+        "capture-meta missing"
+      ]
+    },
+    {
+      "order": 26,
+      "target_id": "settings",
+      "route_id": "settings",
+      "title": "系统设置",
+      "url": "http://127.0.0.1:25173/settings",
+      "requires_smoke_token": true,
+      "safe_redirect_url_pattern": "<SMOKE_REDIRECT_BASE_URL>/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fsettings",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fsettings",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/upload/settings",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/settings.png",
+      "evidence": {
+        "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/settings/actual-1920.png",
+        "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/settings/diff-1920.png",
+        "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/settings/metrics.json",
+        "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/settings/capture-meta.json",
+        "actual_exists": false,
+        "diff_exists": false,
+        "metrics_exists": false,
+        "metrics_valid": false,
+        "metrics_passed": false,
+        "capture_meta_exists": false,
+        "capture_meta_valid": false,
+        "capture_meta_passed": false,
+        "capture_uploaded_size": null,
+        "capture_stored_size": null,
+        "capture_desktop_viewport_size": null,
+        "pixel_mismatch_ratio": null,
+        "viewport": null,
+        "passed": false,
+        "reasons": [
+          "missing actual-1920.png",
+          "missing diff-1920.png",
+          "metrics missing",
+          "capture-meta missing"
+        ]
+      },
+      "metrics_command": "tests/e2e/ui_visual_diff_metrics.py --target-id settings --route /settings --source doc/04_assets/ui_suite_gpt_v1/screens/pages/settings.png --actual doc/02_acceptance/02-regression/ui-visual-interaction/latest/settings/actual-1920.png --diff doc/02_acceptance/02-regression/ui-visual-interaction/latest/settings/diff-1920.png --metrics doc/02_acceptance/02-regression/ui-visual-interaction/latest/settings/metrics.json",
+      "reasons": [
+        "missing actual-1920.png",
+        "missing diff-1920.png",
+        "metrics missing",
+        "capture-meta missing"
+      ]
+    },
+    {
+      "order": 27,
+      "target_id": "not-found",
+      "route_id": "not-found",
+      "title": "404 异常页",
+      "url": "http://127.0.0.1:25173/__codex_visual_not_found__",
+      "requires_smoke_token": true,
+      "safe_redirect_url_pattern": "<SMOKE_REDIRECT_BASE_URL>/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2F__codex_visual_not_found__",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2F__codex_visual_not_found__",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/upload/not-found",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/not-found.png",
+      "evidence": {
+        "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/not-found/actual-1920.png",
+        "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/not-found/diff-1920.png",
+        "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/not-found/metrics.json",
+        "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/not-found/capture-meta.json",
+        "actual_exists": false,
+        "diff_exists": false,
+        "metrics_exists": false,
+        "metrics_valid": false,
+        "metrics_passed": false,
+        "capture_meta_exists": false,
+        "capture_meta_valid": false,
+        "capture_meta_passed": false,
+        "capture_uploaded_size": null,
+        "capture_stored_size": null,
+        "capture_desktop_viewport_size": null,
+        "pixel_mismatch_ratio": null,
+        "viewport": null,
+        "passed": false,
+        "reasons": [
+          "missing actual-1920.png",
+          "missing diff-1920.png",
+          "metrics missing",
+          "capture-meta missing"
+        ]
+      },
+      "metrics_command": "tests/e2e/ui_visual_diff_metrics.py --target-id not-found --route /__codex_visual_not_found__ --source doc/04_assets/ui_suite_gpt_v1/screens/pages/not-found.png --actual doc/02_acceptance/02-regression/ui-visual-interaction/latest/not-found/actual-1920.png --diff doc/02_acceptance/02-regression/ui-visual-interaction/latest/not-found/diff-1920.png --metrics doc/02_acceptance/02-regression/ui-visual-interaction/latest/not-found/metrics.json",
+      "reasons": [
+        "missing actual-1920.png",
+        "missing diff-1920.png",
+        "metrics missing",
+        "capture-meta missing"
+      ]
+    },
+    {
+      "order": 28,
+      "target_id": "topics-encrypted-tunnel",
+      "route_id": "topics",
+      "title": "加密隧道专题",
+      "url": "http://127.0.0.1:25173/topics?topic=tunnel&tab=tunnel",
+      "requires_smoke_token": true,
+      "safe_redirect_url_pattern": "<SMOKE_REDIRECT_BASE_URL>/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Ftopics&query=topic%3Dtunnel%26tab%3Dtunnel",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Ftopics&query=topic%3Dtunnel%26tab%3Dtunnel",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/upload/topics-encrypted-tunnel",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/topics-encrypted-tunnel.png",
+      "evidence": {
+        "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-encrypted-tunnel/actual-1920.png",
+        "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-encrypted-tunnel/diff-1920.png",
+        "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-encrypted-tunnel/metrics.json",
+        "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-encrypted-tunnel/capture-meta.json",
+        "actual_exists": false,
+        "diff_exists": false,
+        "metrics_exists": false,
+        "metrics_valid": false,
+        "metrics_passed": false,
+        "capture_meta_exists": false,
+        "capture_meta_valid": false,
+        "capture_meta_passed": false,
+        "capture_uploaded_size": null,
+        "capture_stored_size": null,
+        "capture_desktop_viewport_size": null,
+        "pixel_mismatch_ratio": null,
+        "viewport": null,
+        "passed": false,
+        "reasons": [
+          "missing actual-1920.png",
+          "missing diff-1920.png",
+          "metrics missing",
+          "capture-meta missing"
+        ]
+      },
+      "metrics_command": "tests/e2e/ui_visual_diff_metrics.py --target-id topics-encrypted-tunnel --route /topics?topic=tunnel&tab=tunnel --source doc/04_assets/ui_suite_gpt_v1/screens/pages/topics-encrypted-tunnel.png --actual doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-encrypted-tunnel/actual-1920.png --diff doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-encrypted-tunnel/diff-1920.png --metrics doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-encrypted-tunnel/metrics.json",
+      "reasons": [
+        "missing actual-1920.png",
+        "missing diff-1920.png",
+        "metrics missing",
+        "capture-meta missing"
+      ]
+    },
+    {
+      "order": 29,
+      "target_id": "topics-data-exfiltration",
+      "route_id": "topics",
+      "title": "数据外传专题",
+      "url": "http://127.0.0.1:25173/topics?topic=exfil&tab=exfil",
+      "requires_smoke_token": true,
+      "safe_redirect_url_pattern": "<SMOKE_REDIRECT_BASE_URL>/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Ftopics&query=topic%3Dexfil%26tab%3Dexfil",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Ftopics&query=topic%3Dexfil%26tab%3Dexfil",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/upload/topics-data-exfiltration",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/topics-data-exfiltration.png",
+      "evidence": {
+        "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-data-exfiltration/actual-1920.png",
+        "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-data-exfiltration/diff-1920.png",
+        "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-data-exfiltration/metrics.json",
+        "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-data-exfiltration/capture-meta.json",
+        "actual_exists": false,
+        "diff_exists": false,
+        "metrics_exists": false,
+        "metrics_valid": false,
+        "metrics_passed": false,
+        "capture_meta_exists": false,
+        "capture_meta_valid": false,
+        "capture_meta_passed": false,
+        "capture_uploaded_size": null,
+        "capture_stored_size": null,
+        "capture_desktop_viewport_size": null,
+        "pixel_mismatch_ratio": null,
+        "viewport": null,
+        "passed": false,
+        "reasons": [
+          "missing actual-1920.png",
+          "missing diff-1920.png",
+          "metrics missing",
+          "capture-meta missing"
+        ]
+      },
+      "metrics_command": "tests/e2e/ui_visual_diff_metrics.py --target-id topics-data-exfiltration --route /topics?topic=exfil&tab=exfil --source doc/04_assets/ui_suite_gpt_v1/screens/pages/topics-data-exfiltration.png --actual doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-data-exfiltration/actual-1920.png --diff doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-data-exfiltration/diff-1920.png --metrics doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-data-exfiltration/metrics.json",
+      "reasons": [
+        "missing actual-1920.png",
+        "missing diff-1920.png",
+        "metrics missing",
+        "capture-meta missing"
+      ]
+    },
+    {
+      "order": 30,
+      "target_id": "topics-apt-campaign",
+      "route_id": "topics",
+      "title": "APT 战役专题",
+      "url": "http://127.0.0.1:25173/topics?topic=apt&tab=apt",
+      "requires_smoke_token": true,
+      "safe_redirect_url_pattern": "<SMOKE_REDIRECT_BASE_URL>/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Ftopics&query=topic%3Dapt%26tab%3Dapt",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Ftopics&query=topic%3Dapt%26tab%3Dapt",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/upload/topics-apt-campaign",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/topics-apt-campaign.png",
+      "evidence": {
+        "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-apt-campaign/actual-1920.png",
+        "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-apt-campaign/diff-1920.png",
+        "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-apt-campaign/metrics.json",
+        "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-apt-campaign/capture-meta.json",
+        "actual_exists": false,
+        "diff_exists": false,
+        "metrics_exists": false,
+        "metrics_valid": false,
+        "metrics_passed": false,
+        "capture_meta_exists": false,
+        "capture_meta_valid": false,
+        "capture_meta_passed": false,
+        "capture_uploaded_size": null,
+        "capture_stored_size": null,
+        "capture_desktop_viewport_size": null,
+        "pixel_mismatch_ratio": null,
+        "viewport": null,
+        "passed": false,
+        "reasons": [
+          "missing actual-1920.png",
+          "missing diff-1920.png",
+          "metrics missing",
+          "capture-meta missing"
+        ]
+      },
+      "metrics_command": "tests/e2e/ui_visual_diff_metrics.py --target-id topics-apt-campaign --route /topics?topic=apt&tab=apt --source doc/04_assets/ui_suite_gpt_v1/screens/pages/topics-apt-campaign.png --actual doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-apt-campaign/actual-1920.png --diff doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-apt-campaign/diff-1920.png --metrics doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics-apt-campaign/metrics.json",
+      "reasons": [
+        "missing actual-1920.png",
+        "missing diff-1920.png",
+        "metrics missing",
+        "capture-meta missing"
+      ]
+    }
+  ],
+  "interaction_batch": [
+    {
+      "order": 1,
+      "route_id": "login",
+      "title": "登录",
+      "route": "/login",
+      "requires_smoke_token": false,
+      "expected_final_path": "/login",
+      "safe_redirect_url_pattern": "http://127.0.0.1:25173/login",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25173/login",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/interaction/login",
+      "interaction_screenshot_upload": "http://127.0.0.1:25174/interaction-screenshot/login",
+      "interaction_template": "doc/02_acceptance/02-regression/ui-visual-interaction/templates/login/interaction.template.json",
+      "output_path": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/login/interaction.json",
+      "api_endpoints": [],
+      "business_action_hint": "render login form and captcha challenge without submitting credentials",
+      "interaction_requirements": {
+        "expected_final_path": "/login",
+        "required_assertions": [
+          "product_name_visible",
+          "account_password_tab_visible",
+          "captcha_visible",
+          "submit_visible",
+          "smoke_hash_absent"
+        ],
+        "forbidden_final_paths": []
+      },
+      "reasons": [
+        "desktop_backend extension != codex-desktop-chrome-extension",
+        "interaction screenshot 2559x1271 != 1920x1080",
+        "interaction-capture-meta missing"
+      ]
+    },
+    {
+      "order": 2,
+      "route_id": "screen",
+      "title": "态势大屏",
+      "route": "/screen",
+      "requires_smoke_token": true,
+      "expected_final_path": "/screen",
+      "safe_redirect_url_pattern": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fscreen",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fscreen",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/interaction/screen",
+      "interaction_screenshot_upload": "http://127.0.0.1:25174/interaction-screenshot/screen",
+      "interaction_template": "doc/02_acceptance/02-regression/ui-visual-interaction/templates/screen/interaction.template.json",
+      "output_path": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/screen/interaction.json",
+      "api_endpoints": [
+        "/api/v1/dashboard/stats",
+        "/api/v1/dashboard/encrypted/trend",
+        "/api/v1/dashboard/attack-phases"
+      ],
+      "business_action_hint": "态势大屏: verify live data from /api/v1/dashboard/stats, /api/v1/dashboard/encrypted/trend, /api/v1/dashboard/attack-phases; perform one route-specific read or safe UI action",
+      "interaction_requirements": {
+        "expected_final_path": "/screen",
+        "required_assertions": [
+          "smoke_hash_consumed",
+          "not_login_shell",
+          "access_denied_absent"
+        ],
+        "forbidden_final_paths": [
+          "/login"
+        ],
+        "expected_text_markers": [
+          "态势大屏"
+        ],
+        "api_endpoints": [
+          "/api/v1/dashboard/stats",
+          "/api/v1/dashboard/encrypted/trend",
+          "/api/v1/dashboard/attack-phases"
+        ]
+      },
+      "reasons": [
+        "desktop_backend extension != codex-desktop-chrome-extension",
+        "interaction screenshot 2559x1271 != 1920x1080",
+        "interaction-capture-meta missing"
+      ]
+    },
+    {
+      "order": 3,
+      "route_id": "dashboard",
+      "title": "仪表盘",
+      "route": "/dashboard",
+      "requires_smoke_token": true,
+      "expected_final_path": "/dashboard",
+      "safe_redirect_url_pattern": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fdashboard",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fdashboard",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/interaction/dashboard",
+      "interaction_screenshot_upload": "http://127.0.0.1:25174/interaction-screenshot/dashboard",
+      "interaction_template": "doc/02_acceptance/02-regression/ui-visual-interaction/templates/dashboard/interaction.template.json",
+      "output_path": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/dashboard/interaction.json",
+      "api_endpoints": [
+        "/api/v1/dashboard/stats",
+        "/api/v1/dashboard/alerts/trend",
+        "/api/v1/dashboard/attack-phases"
+      ],
+      "business_action_hint": "仪表盘: verify live data from /api/v1/dashboard/stats, /api/v1/dashboard/alerts/trend, /api/v1/dashboard/attack-phases; perform one route-specific read or safe UI action",
+      "interaction_requirements": {
+        "expected_final_path": "/dashboard",
+        "required_assertions": [
+          "smoke_hash_consumed",
+          "not_login_shell",
+          "access_denied_absent"
+        ],
+        "forbidden_final_paths": [
+          "/login"
+        ],
+        "expected_text_markers": [
+          "仪表盘"
+        ],
+        "api_endpoints": [
+          "/api/v1/dashboard/stats",
+          "/api/v1/dashboard/alerts/trend",
+          "/api/v1/dashboard/attack-phases"
+        ]
+      },
+      "reasons": [
+        "desktop_backend extension != codex-desktop-chrome-extension",
+        "interaction screenshot 2559x1271 != 1920x1080",
+        "interaction-capture-meta missing"
+      ]
+    },
+    {
+      "order": 4,
+      "route_id": "alerts",
+      "title": "告警中心",
+      "route": "/alerts",
+      "requires_smoke_token": true,
+      "expected_final_path": "/alerts",
+      "safe_redirect_url_pattern": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Falerts",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Falerts",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/interaction/alerts",
+      "interaction_screenshot_upload": "http://127.0.0.1:25174/interaction-screenshot/alerts",
+      "interaction_template": "doc/02_acceptance/02-regression/ui-visual-interaction/templates/alerts/interaction.template.json",
+      "output_path": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/alerts/interaction.json",
+      "api_endpoints": [
+        "/api/v1/alerts"
+      ],
+      "business_action_hint": "告警中心: verify live data from /api/v1/alerts; perform one route-specific read or safe UI action",
+      "interaction_requirements": {
+        "expected_final_path": "/alerts",
+        "required_assertions": [
+          "smoke_hash_consumed",
+          "not_login_shell",
+          "access_denied_absent"
+        ],
+        "forbidden_final_paths": [
+          "/login"
+        ],
+        "expected_text_markers": [
+          "告警中心"
+        ],
+        "api_endpoints": [
+          "/api/v1/alerts"
+        ]
+      },
+      "reasons": [
+        "desktop_backend extension != codex-desktop-chrome-extension",
+        "interaction screenshot 2559x1271 != 1920x1080",
+        "interaction-capture-meta missing"
+      ]
+    },
+    {
+      "order": 5,
+      "route_id": "alert-detail",
+      "title": "告警详情",
+      "route": "/alerts/:alertId",
+      "requires_smoke_token": true,
+      "expected_final_path": "/alerts/AL-20260620-000123",
+      "safe_redirect_url_pattern": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Falerts%2FAL-20260620-000123",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Falerts%2FAL-20260620-000123",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/interaction/alert-detail",
+      "interaction_screenshot_upload": "http://127.0.0.1:25174/interaction-screenshot/alert-detail",
+      "interaction_template": "doc/02_acceptance/02-regression/ui-visual-interaction/templates/alert-detail/interaction.template.json",
+      "output_path": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/alert-detail/interaction.json",
+      "api_endpoints": [
+        "/api/v1/alerts/{id}",
+        "/api/v1/alerts/{id}/evidence",
+        "/api/v1/alerts/{id}/feedback"
+      ],
+      "business_action_hint": "告警详情: verify live data from /api/v1/alerts/{id}, /api/v1/alerts/{id}/evidence, /api/v1/alerts/{id}/feedback; perform one route-specific read or safe UI action",
+      "interaction_requirements": {
+        "expected_final_path": "/alerts/AL-20260620-000123",
+        "required_assertions": [
+          "smoke_hash_consumed",
+          "not_login_shell",
+          "access_denied_absent"
+        ],
+        "forbidden_final_paths": [
+          "/login"
+        ],
+        "expected_text_markers": [
+          "告警详情"
+        ],
+        "api_endpoints": [
+          "/api/v1/alerts/{id}",
+          "/api/v1/alerts/{id}/evidence",
+          "/api/v1/alerts/{id}/feedback"
+        ]
+      },
+      "reasons": [
+        "interaction missing"
+      ]
+    },
+    {
+      "order": 6,
+      "route_id": "campaigns",
+      "title": "战役列表",
+      "route": "/campaigns",
+      "requires_smoke_token": true,
+      "expected_final_path": "/campaigns",
+      "safe_redirect_url_pattern": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fcampaigns",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fcampaigns",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/interaction/campaigns",
+      "interaction_screenshot_upload": "http://127.0.0.1:25174/interaction-screenshot/campaigns",
+      "interaction_template": "doc/02_acceptance/02-regression/ui-visual-interaction/templates/campaigns/interaction.template.json",
+      "output_path": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaigns/interaction.json",
+      "api_endpoints": [
+        "/api/v1/campaigns"
+      ],
+      "business_action_hint": "战役列表: verify live data from /api/v1/campaigns; perform one route-specific read or safe UI action",
+      "interaction_requirements": {
+        "expected_final_path": "/campaigns",
+        "required_assertions": [
+          "smoke_hash_consumed",
+          "not_login_shell",
+          "access_denied_absent"
+        ],
+        "forbidden_final_paths": [
+          "/login"
+        ],
+        "expected_text_markers": [
+          "战役列表"
+        ],
+        "api_endpoints": [
+          "/api/v1/campaigns"
+        ]
+      },
+      "reasons": [
+        "interaction missing"
+      ]
+    },
+    {
+      "order": 7,
+      "route_id": "campaign-detail",
+      "title": "战役详情",
+      "route": "/campaigns/:campaignId",
+      "requires_smoke_token": true,
+      "expected_final_path": "/campaigns/APT-20260619-001",
+      "safe_redirect_url_pattern": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fcampaigns%2FAPT-20260619-001",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fcampaigns%2FAPT-20260619-001",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/interaction/campaign-detail",
+      "interaction_screenshot_upload": "http://127.0.0.1:25174/interaction-screenshot/campaign-detail",
+      "interaction_template": "doc/02_acceptance/02-regression/ui-visual-interaction/templates/campaign-detail/interaction.template.json",
+      "output_path": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/campaign-detail/interaction.json",
+      "api_endpoints": [
+        "/api/v1/campaigns/{id}"
+      ],
+      "business_action_hint": "战役详情: verify live data from /api/v1/campaigns/{id}; perform one route-specific read or safe UI action",
+      "interaction_requirements": {
+        "expected_final_path": "/campaigns/APT-20260619-001",
+        "required_assertions": [
+          "smoke_hash_consumed",
+          "not_login_shell",
+          "access_denied_absent"
+        ],
+        "forbidden_final_paths": [
+          "/login"
+        ],
+        "expected_text_markers": [
+          "战役详情"
+        ],
+        "api_endpoints": [
+          "/api/v1/campaigns/{id}"
+        ]
+      },
+      "reasons": [
+        "interaction missing"
+      ]
+    },
+    {
+      "order": 8,
+      "route_id": "attack-chains",
+      "title": "攻击链分析",
+      "route": "/attack-chains",
+      "requires_smoke_token": true,
+      "expected_final_path": "/attack-chains",
+      "safe_redirect_url_pattern": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fattack-chains",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fattack-chains",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/interaction/attack-chains",
+      "interaction_screenshot_upload": "http://127.0.0.1:25174/interaction-screenshot/attack-chains",
+      "interaction_template": "doc/02_acceptance/02-regression/ui-visual-interaction/templates/attack-chains/interaction.template.json",
+      "output_path": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/attack-chains/interaction.json",
+      "api_endpoints": [
+        "/api/v1/attack-chains"
+      ],
+      "business_action_hint": "攻击链分析: verify live data from /api/v1/attack-chains; perform one route-specific read or safe UI action",
+      "interaction_requirements": {
+        "expected_final_path": "/attack-chains",
+        "required_assertions": [
+          "smoke_hash_consumed",
+          "not_login_shell",
+          "access_denied_absent"
+        ],
+        "forbidden_final_paths": [
+          "/login"
+        ],
+        "expected_text_markers": [
+          "攻击链分析"
+        ],
+        "api_endpoints": [
+          "/api/v1/attack-chains"
+        ]
+      },
+      "reasons": [
+        "interaction missing"
+      ]
+    },
+    {
+      "order": 9,
+      "route_id": "encrypted-traffic",
+      "title": "加密流量",
+      "route": "/encrypted-traffic",
+      "requires_smoke_token": true,
+      "expected_final_path": "/encrypted-traffic",
+      "safe_redirect_url_pattern": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fencrypted-traffic",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fencrypted-traffic",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/interaction/encrypted-traffic",
+      "interaction_screenshot_upload": "http://127.0.0.1:25174/interaction-screenshot/encrypted-traffic",
+      "interaction_template": "doc/02_acceptance/02-regression/ui-visual-interaction/templates/encrypted-traffic/interaction.template.json",
+      "output_path": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/encrypted-traffic/interaction.json",
+      "api_endpoints": [
+        "/api/v1/encrypted-traffic/stats",
+        "/api/v1/encrypted-traffic/sessions",
+        "/api/v1/encrypted-traffic/ja3",
+        "/api/v1/encrypted-traffic/tunnels",
+        "/api/v1/encrypted-traffic/exfiltration"
+      ],
+      "business_action_hint": "加密流量: verify live data from /api/v1/encrypted-traffic/stats, /api/v1/encrypted-traffic/sessions, /api/v1/encrypted-traffic/ja3, /api/v1/encrypted-traffic/tunnels, /api/v1/encrypted-traffic/exfiltration; perform one route-specific read or safe UI action",
+      "interaction_requirements": {
+        "expected_final_path": "/encrypted-traffic",
+        "required_assertions": [
+          "smoke_hash_consumed",
+          "not_login_shell",
+          "access_denied_absent"
+        ],
+        "forbidden_final_paths": [
+          "/login"
+        ],
+        "expected_text_markers": [
+          "加密流量"
+        ],
+        "api_endpoints": [
+          "/api/v1/encrypted-traffic/stats",
+          "/api/v1/encrypted-traffic/sessions",
+          "/api/v1/encrypted-traffic/ja3",
+          "/api/v1/encrypted-traffic/tunnels",
+          "/api/v1/encrypted-traffic/exfiltration"
+        ]
+      },
+      "reasons": [
+        "interaction missing"
+      ]
+    },
+    {
+      "order": 10,
+      "route_id": "forensics",
+      "title": "取证分析",
+      "route": "/forensics",
+      "requires_smoke_token": true,
+      "expected_final_path": "/forensics",
+      "safe_redirect_url_pattern": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fforensics",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fforensics",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/interaction/forensics",
+      "interaction_screenshot_upload": "http://127.0.0.1:25174/interaction-screenshot/forensics",
+      "interaction_template": "doc/02_acceptance/02-regression/ui-visual-interaction/templates/forensics/interaction.template.json",
+      "output_path": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/forensics/interaction.json",
+      "api_endpoints": [
+        "/api/v1/pcap/jobs",
+        "/api/v1/pcap/stats"
+      ],
+      "business_action_hint": "取证分析: verify live data from /api/v1/pcap/jobs, /api/v1/pcap/stats; perform one route-specific read or safe UI action",
+      "interaction_requirements": {
+        "expected_final_path": "/forensics",
+        "required_assertions": [
+          "smoke_hash_consumed",
+          "not_login_shell",
+          "access_denied_absent"
+        ],
+        "forbidden_final_paths": [
+          "/login"
+        ],
+        "expected_text_markers": [
+          "取证分析"
+        ],
+        "api_endpoints": [
+          "/api/v1/pcap/jobs",
+          "/api/v1/pcap/stats"
+        ]
+      },
+      "reasons": [
+        "interaction missing"
+      ]
+    },
+    {
+      "order": 11,
+      "route_id": "assets",
+      "title": "资产台账",
+      "route": "/assets",
+      "requires_smoke_token": true,
+      "expected_final_path": "/assets",
+      "safe_redirect_url_pattern": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fassets",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fassets",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/interaction/assets",
+      "interaction_screenshot_upload": "http://127.0.0.1:25174/interaction-screenshot/assets",
+      "interaction_template": "doc/02_acceptance/02-regression/ui-visual-interaction/templates/assets/interaction.template.json",
+      "output_path": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/assets/interaction.json",
+      "api_endpoints": [
+        "/api/v1/assets"
+      ],
+      "business_action_hint": "资产台账: verify live data from /api/v1/assets; perform one route-specific read or safe UI action",
+      "interaction_requirements": {
+        "expected_final_path": "/assets",
+        "required_assertions": [
+          "smoke_hash_consumed",
+          "not_login_shell",
+          "access_denied_absent"
+        ],
+        "forbidden_final_paths": [
+          "/login"
+        ],
+        "expected_text_markers": [
+          "资产台账"
+        ],
+        "api_endpoints": [
+          "/api/v1/assets"
+        ]
+      },
+      "reasons": [
+        "interaction missing"
+      ]
+    },
+    {
+      "order": 12,
+      "route_id": "graph",
+      "title": "实体图谱",
+      "route": "/graph",
+      "requires_smoke_token": true,
+      "expected_final_path": "/graph",
+      "safe_redirect_url_pattern": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fgraph",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fgraph",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/interaction/graph",
+      "interaction_screenshot_upload": "http://127.0.0.1:25174/interaction-screenshot/graph",
+      "interaction_template": "doc/02_acceptance/02-regression/ui-visual-interaction/templates/graph/interaction.template.json",
+      "output_path": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/graph/interaction.json",
+      "api_endpoints": [
+        "/api/v1/graph/explore"
+      ],
+      "business_action_hint": "实体图谱: verify live data from /api/v1/graph/explore; perform one route-specific read or safe UI action",
+      "interaction_requirements": {
+        "expected_final_path": "/graph",
+        "required_assertions": [
+          "smoke_hash_consumed",
+          "not_login_shell",
+          "access_denied_absent"
+        ],
+        "forbidden_final_paths": [
+          "/login"
+        ],
+        "expected_text_markers": [
+          "实体图谱"
+        ],
+        "api_endpoints": [
+          "/api/v1/graph/explore"
+        ]
+      },
+      "reasons": [
+        "interaction missing"
+      ]
+    },
+    {
+      "order": 13,
+      "route_id": "fusion",
+      "title": "数据融合",
+      "route": "/fusion",
+      "requires_smoke_token": true,
+      "expected_final_path": "/fusion",
+      "safe_redirect_url_pattern": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Ffusion",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Ffusion",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/interaction/fusion",
+      "interaction_screenshot_upload": "http://127.0.0.1:25174/interaction-screenshot/fusion",
+      "interaction_template": "doc/02_acceptance/02-regression/ui-visual-interaction/templates/fusion/interaction.template.json",
+      "output_path": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/fusion/interaction.json",
+      "api_endpoints": [
+        "/api/v1/fusion/stats",
+        "/api/v1/fusion/entities",
+        "/api/v1/fusion/value-report"
+      ],
+      "business_action_hint": "数据融合: verify live data from /api/v1/fusion/stats, /api/v1/fusion/entities, /api/v1/fusion/value-report; perform one route-specific read or safe UI action",
+      "interaction_requirements": {
+        "expected_final_path": "/fusion",
+        "required_assertions": [
+          "smoke_hash_consumed",
+          "not_login_shell",
+          "access_denied_absent"
+        ],
+        "forbidden_final_paths": [
+          "/login"
+        ],
+        "expected_text_markers": [
+          "数据融合"
+        ],
+        "api_endpoints": [
+          "/api/v1/fusion/stats",
+          "/api/v1/fusion/entities",
+          "/api/v1/fusion/value-report"
+        ]
+      },
+      "reasons": [
+        "interaction missing"
+      ]
+    },
+    {
+      "order": 14,
+      "route_id": "baselines",
+      "title": "行为基准",
+      "route": "/baselines",
+      "requires_smoke_token": true,
+      "expected_final_path": "/baselines",
+      "safe_redirect_url_pattern": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fbaselines",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fbaselines",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/interaction/baselines",
+      "interaction_screenshot_upload": "http://127.0.0.1:25174/interaction-screenshot/baselines",
+      "interaction_template": "doc/02_acceptance/02-regression/ui-visual-interaction/templates/baselines/interaction.template.json",
+      "output_path": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/baselines/interaction.json",
+      "api_endpoints": [
+        "/api/v1/baselines"
+      ],
+      "business_action_hint": "行为基准: verify live data from /api/v1/baselines; perform one route-specific read or safe UI action",
+      "interaction_requirements": {
+        "expected_final_path": "/baselines",
+        "required_assertions": [
+          "smoke_hash_consumed",
+          "not_login_shell",
+          "access_denied_absent"
+        ],
+        "forbidden_final_paths": [
+          "/login"
+        ],
+        "expected_text_markers": [
+          "行为基准"
+        ],
+        "api_endpoints": [
+          "/api/v1/baselines"
+        ]
+      },
+      "reasons": [
+        "interaction missing"
+      ]
+    },
+    {
+      "order": 15,
+      "route_id": "probes",
+      "title": "探针管理",
+      "route": "/probes",
+      "requires_smoke_token": true,
+      "expected_final_path": "/probes",
+      "safe_redirect_url_pattern": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fprobes",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fprobes",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/interaction/probes",
+      "interaction_screenshot_upload": "http://127.0.0.1:25174/interaction-screenshot/probes",
+      "interaction_template": "doc/02_acceptance/02-regression/ui-visual-interaction/templates/probes/interaction.template.json",
+      "output_path": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/probes/interaction.json",
+      "api_endpoints": [
+        "/api/v1/probes"
+      ],
+      "business_action_hint": "探针管理: verify live data from /api/v1/probes; perform one route-specific read or safe UI action",
+      "interaction_requirements": {
+        "expected_final_path": "/probes",
+        "required_assertions": [
+          "smoke_hash_consumed",
+          "not_login_shell",
+          "access_denied_absent"
+        ],
+        "forbidden_final_paths": [
+          "/login"
+        ],
+        "expected_text_markers": [
+          "探针管理"
+        ],
+        "api_endpoints": [
+          "/api/v1/probes"
+        ]
+      },
+      "reasons": [
+        "interaction missing"
+      ]
+    },
+    {
+      "order": 16,
+      "route_id": "rules",
+      "title": "规则管理",
+      "route": "/rules",
+      "requires_smoke_token": true,
+      "expected_final_path": "/rules",
+      "safe_redirect_url_pattern": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Frules",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Frules",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/interaction/rules",
+      "interaction_screenshot_upload": "http://127.0.0.1:25174/interaction-screenshot/rules",
+      "interaction_template": "doc/02_acceptance/02-regression/ui-visual-interaction/templates/rules/interaction.template.json",
+      "output_path": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/rules/interaction.json",
+      "api_endpoints": [
+        "/api/v1/rules"
+      ],
+      "business_action_hint": "规则管理: verify live data from /api/v1/rules; perform one route-specific read or safe UI action",
+      "interaction_requirements": {
+        "expected_final_path": "/rules",
+        "required_assertions": [
+          "smoke_hash_consumed",
+          "not_login_shell",
+          "access_denied_absent"
+        ],
+        "forbidden_final_paths": [
+          "/login"
+        ],
+        "expected_text_markers": [
+          "规则管理"
+        ],
+        "api_endpoints": [
+          "/api/v1/rules"
+        ]
+      },
+      "reasons": [
+        "interaction missing"
+      ]
+    },
+    {
+      "order": 17,
+      "route_id": "deployments",
+      "title": "部署管理",
+      "route": "/deployments",
+      "requires_smoke_token": true,
+      "expected_final_path": "/deployments",
+      "safe_redirect_url_pattern": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fdeployments",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fdeployments",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/interaction/deployments",
+      "interaction_screenshot_upload": "http://127.0.0.1:25174/interaction-screenshot/deployments",
+      "interaction_template": "doc/02_acceptance/02-regression/ui-visual-interaction/templates/deployments/interaction.template.json",
+      "output_path": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/deployments/interaction.json",
+      "api_endpoints": [
+        "/api/v1/deployments"
+      ],
+      "business_action_hint": "部署管理: verify live data from /api/v1/deployments; perform one route-specific read or safe UI action",
+      "interaction_requirements": {
+        "expected_final_path": "/deployments",
+        "required_assertions": [
+          "smoke_hash_consumed",
+          "not_login_shell",
+          "access_denied_absent"
+        ],
+        "forbidden_final_paths": [
+          "/login"
+        ],
+        "expected_text_markers": [
+          "部署管理"
+        ],
+        "api_endpoints": [
+          "/api/v1/deployments"
+        ]
+      },
+      "reasons": [
+        "interaction missing"
+      ]
+    },
+    {
+      "order": 18,
+      "route_id": "models",
+      "title": "模型管理",
+      "route": "/models",
+      "requires_smoke_token": true,
+      "expected_final_path": "/models",
+      "safe_redirect_url_pattern": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fmodels",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fmodels",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/interaction/models",
+      "interaction_screenshot_upload": "http://127.0.0.1:25174/interaction-screenshot/models",
+      "interaction_template": "doc/02_acceptance/02-regression/ui-visual-interaction/templates/models/interaction.template.json",
+      "output_path": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/models/interaction.json",
+      "api_endpoints": [
+        "/api/v1/models"
+      ],
+      "business_action_hint": "模型管理: verify live data from /api/v1/models; perform one route-specific read or safe UI action",
+      "interaction_requirements": {
+        "expected_final_path": "/models",
+        "required_assertions": [
+          "smoke_hash_consumed",
+          "not_login_shell",
+          "access_denied_absent"
+        ],
+        "forbidden_final_paths": [
+          "/login"
+        ],
+        "expected_text_markers": [
+          "模型管理"
+        ],
+        "api_endpoints": [
+          "/api/v1/models"
+        ]
+      },
+      "reasons": [
+        "interaction missing"
+      ]
+    },
+    {
+      "order": 19,
+      "route_id": "mlops",
+      "title": "MLOps 编排",
+      "route": "/mlops",
+      "requires_smoke_token": true,
+      "expected_final_path": "/mlops",
+      "safe_redirect_url_pattern": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fmlops",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fmlops",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/interaction/mlops",
+      "interaction_screenshot_upload": "http://127.0.0.1:25174/interaction-screenshot/mlops",
+      "interaction_template": "doc/02_acceptance/02-regression/ui-visual-interaction/templates/mlops/interaction.template.json",
+      "output_path": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/mlops/interaction.json",
+      "api_endpoints": [
+        "/api/v1/mlops/status",
+        "/api/v1/mlops/conditions"
+      ],
+      "business_action_hint": "MLOps 编排: verify live data from /api/v1/mlops/status, /api/v1/mlops/conditions; perform one route-specific read or safe UI action",
+      "interaction_requirements": {
+        "expected_final_path": "/mlops",
+        "required_assertions": [
+          "smoke_hash_consumed",
+          "not_login_shell",
+          "access_denied_absent"
+        ],
+        "forbidden_final_paths": [
+          "/login"
+        ],
+        "expected_text_markers": [
+          "MLOps 编排"
+        ],
+        "api_endpoints": [
+          "/api/v1/mlops/status",
+          "/api/v1/mlops/conditions"
+        ]
+      },
+      "reasons": [
+        "interaction missing"
+      ]
+    },
+    {
+      "order": 20,
+      "route_id": "data-quality",
+      "title": "数据质量",
+      "route": "/data-quality",
+      "requires_smoke_token": true,
+      "expected_final_path": "/data-quality",
+      "safe_redirect_url_pattern": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fdata-quality",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fdata-quality",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/interaction/data-quality",
+      "interaction_screenshot_upload": "http://127.0.0.1:25174/interaction-screenshot/data-quality",
+      "interaction_template": "doc/02_acceptance/02-regression/ui-visual-interaction/templates/data-quality/interaction.template.json",
+      "output_path": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/data-quality/interaction.json",
+      "api_endpoints": [
+        "/api/v1/data-quality"
+      ],
+      "business_action_hint": "数据质量: verify live data from /api/v1/data-quality; perform one route-specific read or safe UI action",
+      "interaction_requirements": {
+        "expected_final_path": "/data-quality",
+        "required_assertions": [
+          "smoke_hash_consumed",
+          "not_login_shell",
+          "access_denied_absent"
+        ],
+        "forbidden_final_paths": [
+          "/login"
+        ],
+        "expected_text_markers": [
+          "数据质量"
+        ],
+        "api_endpoints": [
+          "/api/v1/data-quality"
+        ]
+      },
+      "reasons": [
+        "interaction missing"
+      ]
+    },
+    {
+      "order": 21,
+      "route_id": "playbooks",
+      "title": "SOAR 剧本",
+      "route": "/playbooks",
+      "requires_smoke_token": true,
+      "expected_final_path": "/playbooks",
+      "safe_redirect_url_pattern": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fplaybooks",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fplaybooks",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/interaction/playbooks",
+      "interaction_screenshot_upload": "http://127.0.0.1:25174/interaction-screenshot/playbooks",
+      "interaction_template": "doc/02_acceptance/02-regression/ui-visual-interaction/templates/playbooks/interaction.template.json",
+      "output_path": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/playbooks/interaction.json",
+      "api_endpoints": [
+        "/api/v1/playbooks/catalog",
+        "/api/v1/playbooks/executions"
+      ],
+      "business_action_hint": "SOAR 剧本: verify live data from /api/v1/playbooks/catalog, /api/v1/playbooks/executions; perform one route-specific read or safe UI action",
+      "interaction_requirements": {
+        "expected_final_path": "/playbooks",
+        "required_assertions": [
+          "smoke_hash_consumed",
+          "not_login_shell",
+          "access_denied_absent"
+        ],
+        "forbidden_final_paths": [
+          "/login"
+        ],
+        "expected_text_markers": [
+          "SOAR 剧本"
+        ],
+        "api_endpoints": [
+          "/api/v1/playbooks/catalog",
+          "/api/v1/playbooks/executions"
+        ]
+      },
+      "reasons": [
+        "interaction missing"
+      ]
+    },
+    {
+      "order": 22,
+      "route_id": "whitelist",
+      "title": "白名单",
+      "route": "/whitelist",
+      "requires_smoke_token": true,
+      "expected_final_path": "/whitelist",
+      "safe_redirect_url_pattern": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fwhitelist",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fwhitelist",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/interaction/whitelist",
+      "interaction_screenshot_upload": "http://127.0.0.1:25174/interaction-screenshot/whitelist",
+      "interaction_template": "doc/02_acceptance/02-regression/ui-visual-interaction/templates/whitelist/interaction.template.json",
+      "output_path": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/whitelist/interaction.json",
+      "api_endpoints": [
+        "/api/v1/whitelist"
+      ],
+      "business_action_hint": "白名单: verify live data from /api/v1/whitelist; perform one route-specific read or safe UI action",
+      "interaction_requirements": {
+        "expected_final_path": "/whitelist",
+        "required_assertions": [
+          "smoke_hash_consumed",
+          "not_login_shell",
+          "access_denied_absent"
+        ],
+        "forbidden_final_paths": [
+          "/login"
+        ],
+        "expected_text_markers": [
+          "白名单"
+        ],
+        "api_endpoints": [
+          "/api/v1/whitelist"
+        ]
+      },
+      "reasons": [
+        "interaction missing"
+      ]
+    },
+    {
+      "order": 23,
+      "route_id": "compliance",
+      "title": "合规审计",
+      "route": "/compliance",
+      "requires_smoke_token": true,
+      "expected_final_path": "/compliance",
+      "safe_redirect_url_pattern": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fcompliance",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fcompliance",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/interaction/compliance",
+      "interaction_screenshot_upload": "http://127.0.0.1:25174/interaction-screenshot/compliance",
+      "interaction_template": "doc/02_acceptance/02-regression/ui-visual-interaction/templates/compliance/interaction.template.json",
+      "output_path": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/compliance/interaction.json",
+      "api_endpoints": [
+        "/api/v1/compliance/reports",
+        "/api/v1/compliance/audit-trail"
+      ],
+      "business_action_hint": "合规审计: verify live data from /api/v1/compliance/reports, /api/v1/compliance/audit-trail; perform one route-specific read or safe UI action",
+      "interaction_requirements": {
+        "expected_final_path": "/compliance",
+        "required_assertions": [
+          "smoke_hash_consumed",
+          "not_login_shell",
+          "access_denied_absent"
+        ],
+        "forbidden_final_paths": [
+          "/login"
+        ],
+        "expected_text_markers": [
+          "合规审计"
+        ],
+        "api_endpoints": [
+          "/api/v1/compliance/reports",
+          "/api/v1/compliance/audit-trail"
+        ]
+      },
+      "reasons": [
+        "interaction missing"
+      ]
+    },
+    {
+      "order": 24,
+      "route_id": "audit-log",
+      "title": "审计日志",
+      "route": "/audit-log",
+      "requires_smoke_token": true,
+      "expected_final_path": "/audit-log",
+      "safe_redirect_url_pattern": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Faudit-log",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Faudit-log",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/interaction/audit-log",
+      "interaction_screenshot_upload": "http://127.0.0.1:25174/interaction-screenshot/audit-log",
+      "interaction_template": "doc/02_acceptance/02-regression/ui-visual-interaction/templates/audit-log/interaction.template.json",
+      "output_path": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/audit-log/interaction.json",
+      "api_endpoints": [
+        "/api/v1/audit/logs"
+      ],
+      "business_action_hint": "审计日志: verify live data from /api/v1/audit/logs; perform one route-specific read or safe UI action",
+      "interaction_requirements": {
+        "expected_final_path": "/audit-log",
+        "required_assertions": [
+          "smoke_hash_consumed",
+          "not_login_shell",
+          "access_denied_absent"
+        ],
+        "forbidden_final_paths": [
+          "/login"
+        ],
+        "expected_text_markers": [
+          "审计日志"
+        ],
+        "api_endpoints": [
+          "/api/v1/audit/logs"
+        ]
+      },
+      "reasons": [
+        "interaction missing"
+      ]
+    },
+    {
+      "order": 25,
+      "route_id": "notifications",
+      "title": "通知配置",
+      "route": "/notifications",
+      "requires_smoke_token": true,
+      "expected_final_path": "/notifications",
+      "safe_redirect_url_pattern": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fnotifications",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fnotifications",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/interaction/notifications",
+      "interaction_screenshot_upload": "http://127.0.0.1:25174/interaction-screenshot/notifications",
+      "interaction_template": "doc/02_acceptance/02-regression/ui-visual-interaction/templates/notifications/interaction.template.json",
+      "output_path": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/notifications/interaction.json",
+      "api_endpoints": [
+        "/api/v1/notifications/settings"
+      ],
+      "business_action_hint": "通知配置: verify live data from /api/v1/notifications/settings; perform one route-specific read or safe UI action",
+      "interaction_requirements": {
+        "expected_final_path": "/notifications",
+        "required_assertions": [
+          "smoke_hash_consumed",
+          "not_login_shell",
+          "access_denied_absent"
+        ],
+        "forbidden_final_paths": [
+          "/login"
+        ],
+        "expected_text_markers": [
+          "通知配置"
+        ],
+        "api_endpoints": [
+          "/api/v1/notifications/settings"
+        ]
+      },
+      "reasons": [
+        "interaction missing"
+      ]
+    },
+    {
+      "order": 26,
+      "route_id": "settings",
+      "title": "系统设置",
+      "route": "/settings",
+      "requires_smoke_token": true,
+      "expected_final_path": "/settings",
+      "safe_redirect_url_pattern": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fsettings",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Fsettings",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/interaction/settings",
+      "interaction_screenshot_upload": "http://127.0.0.1:25174/interaction-screenshot/settings",
+      "interaction_template": "doc/02_acceptance/02-regression/ui-visual-interaction/templates/settings/interaction.template.json",
+      "output_path": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/settings/interaction.json",
+      "api_endpoints": [
+        "/api/v1/tokens/scopes",
+        "/api/v1/tokens",
+        "/api/v1/tokens/scopes/probe"
+      ],
+      "business_action_hint": "系统设置: verify live data from /api/v1/tokens/scopes, /api/v1/tokens, /api/v1/tokens/scopes/probe; perform one route-specific read or safe UI action",
+      "interaction_requirements": {
+        "expected_final_path": "/settings",
+        "required_assertions": [
+          "smoke_hash_consumed",
+          "not_login_shell",
+          "access_denied_absent"
+        ],
+        "forbidden_final_paths": [
+          "/login"
+        ],
+        "expected_text_markers": [
+          "系统设置"
+        ],
+        "api_endpoints": [
+          "/api/v1/tokens/scopes",
+          "/api/v1/tokens",
+          "/api/v1/tokens/scopes/probe"
+        ]
+      },
+      "reasons": [
+        "interaction missing"
+      ]
+    },
+    {
+      "order": 27,
+      "route_id": "not-found",
+      "title": "404 异常页",
+      "route": "*",
+      "requires_smoke_token": true,
+      "expected_final_path": "/__codex_visual_not_found__",
+      "safe_redirect_url_pattern": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2F__codex_visual_not_found__",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2F__codex_visual_not_found__",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/interaction/not-found",
+      "interaction_screenshot_upload": "http://127.0.0.1:25174/interaction-screenshot/not-found",
+      "interaction_template": "doc/02_acceptance/02-regression/ui-visual-interaction/templates/not-found/interaction.template.json",
+      "output_path": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/not-found/interaction.json",
+      "api_endpoints": [],
+      "business_action_hint": "render not-found recovery action and return navigation affordance",
+      "interaction_requirements": {
+        "expected_final_path": "/__codex_visual_not_found__",
+        "required_assertions": [
+          "smoke_hash_consumed",
+          "not_login_shell",
+          "access_denied_absent"
+        ],
+        "forbidden_final_paths": [
+          "/login"
+        ],
+        "expected_text_markers": [
+          "404 异常页"
+        ],
+        "api_endpoints": []
+      },
+      "reasons": [
+        "interaction missing"
+      ]
+    },
+    {
+      "order": 28,
+      "route_id": "topics",
+      "title": "专题面板",
+      "route": "/topics",
+      "requires_smoke_token": true,
+      "expected_final_path": "/topics",
+      "safe_redirect_url_pattern": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Ftopics",
+      "safe_wrapper_call": {
+        "tool": "mcp__codex_desktop_node_repl.desktop_chrome_open_url",
+        "args": {
+          "url": "http://127.0.0.1:25175/start?nonce=%3CCODEX_SMOKE_NONCE%3E&route=%2Ftopics",
+          "keep": true,
+          "wait_ms": 3500
+        }
+      },
+      "receiver_upload": "http://127.0.0.1:25174/interaction/topics",
+      "interaction_screenshot_upload": "http://127.0.0.1:25174/interaction-screenshot/topics",
+      "interaction_template": "doc/02_acceptance/02-regression/ui-visual-interaction/templates/topics/interaction.template.json",
+      "output_path": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/topics/interaction.json",
+      "api_endpoints": [
+        "/api/v1/topics/tunnel",
+        "/api/v1/topics/exfil",
+        "/api/v1/topics/apt"
+      ],
+      "business_action_hint": "专题面板: verify live data from /api/v1/topics/tunnel, /api/v1/topics/exfil, /api/v1/topics/apt; perform one route-specific read or safe UI action",
+      "interaction_requirements": {
+        "expected_final_path": "/topics",
+        "required_assertions": [
+          "smoke_hash_consumed",
+          "not_login_shell",
+          "access_denied_absent"
+        ],
+        "forbidden_final_paths": [
+          "/login"
+        ],
+        "expected_text_markers": [
+          "专题面板"
+        ],
+        "api_endpoints": [
+          "/api/v1/topics/tunnel",
+          "/api/v1/topics/exfil",
+          "/api/v1/topics/apt"
+        ]
+      },
+      "reasons": [
+        "interaction missing"
+      ]
+    }
+  ],
+  "bridge_result_upload": "http://127.0.0.1:25174/bridge-result",
+  "viewport_calibration": {
+    "required": true,
+    "url": "http://127.0.0.1:25174/viewport-probe",
+    "command": "mcp__codex_desktop_node_repl.desktop_chrome_open_url url=http://127.0.0.1:25174/viewport-probe keep=true wait_ms=1500",
+    "latest_probe": {
+      "path": "doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-viewport-probe-latest.json",
+      "exists": true,
+      "valid": true,
+      "result": "blocked",
+      "viewport": {
+        "width": 2560,
+        "height": 1271
+      },
+      "viewport_source": "window_metrics",
+      "window_metrics": {
+        "width": 2560,
+        "height": 1271
+      },
+      "screenshot_size": {
+        "width": 2559,
+        "height": 1271
+      },
+      "expected_size": {
+        "width": 1920,
+        "height": 1080
+      },
+      "mismatch_reason": "viewport 2560x1271 != 1920x1080",
+      "acceptance_effect": "Current Desktop Chrome bridge can expose the Chrome extension target, open /login, and capture a real page before viewport-control experimentation. However, the only discovered viewport-control path is CDP, and the r3 CDP device metrics probe left tab control timing out. The 1:1 visual gate remains blocked until Desktop Chrome can reliably produce browser-generated 1920x1080 screenshots with receiver capture-meta.json proving uploaded/stored size and browser viewport."
+    },
+    "failure_effect": "If this probe is missing or blocked, captured actual screenshots are expected to fail capture-meta size checks."
+  }
+}

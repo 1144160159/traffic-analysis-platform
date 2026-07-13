@@ -1,0 +1,1083 @@
+{
+  "id": "foundation-visual-reference",
+  "category": "foundations",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/foundations/foundation-visual-reference.png",
+  "prompt_file": "doc/04_assets/ui_suite_gpt_v1/prompts/foundation-visual-reference.prompt.txt",
+  "manifest_refs": [
+    "doc/04_assets/ui_suite_gpt_v1/manifest.json",
+    "doc/04_assets/ui_suite_gpt_v1/specs/layers/foundation-visual-reference.json"
+  ],
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "status": "pixel-accepted",
+  "route": null,
+  "host_route": null,
+  "observation": {
+    "layout": "Static design-system foundation board. Header at top, large screen.png reference panel on the left, AppShell dimension guide and visual tokens on the right, generation gates at the bottom.",
+    "business_focus": "Locks screen.png as the first visual baseline for foundation, component, state, and responsive images; fixes AppShell dimensions and core visual tokens.",
+    "current_state": "Windows Chrome reference-raster screenshot, visual diff, auxiliary review, and main-thread judgment are complete; mismatch ratio is 0.0.",
+    "acceptance_scope": "Pixel acceptance will prove exact target PNG reproduction. Production React component semantics remain guided by this breakdown record and are not claimed by reference-raster evidence."
+  },
+  "regions": [
+    {
+      "id": "canvas",
+      "name": "画布",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "layer": 0,
+      "purpose": "16:9 foundation board",
+      "replication_notes": "No browser chrome, watermark, or marketing frame."
+    },
+    {
+      "id": "header",
+      "name": "顶部标题区",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 73
+      },
+      "layer": 1,
+      "purpose": "Title, subtitle, and baseline reference",
+      "replication_notes": "Single bottom separator line, no card wrapper."
+    },
+    {
+      "id": "screen-reference-panel",
+      "name": "01 当前 screen.png",
+      "bbox": {
+        "x": 24,
+        "y": 92,
+        "w": 1317,
+        "h": 746
+      },
+      "layer": 1,
+      "purpose": "Primary screen.png visual reference",
+      "replication_notes": "Largest panel on the board, containing the full current screen.png sample."
+    },
+    {
+      "id": "screen-reference-image",
+      "name": "screen.png 完整截图样例",
+      "bbox": {
+        "x": 86,
+        "y": 150,
+        "w": 1192,
+        "h": 673
+      },
+      "layer": 2,
+      "purpose": "Full situation-screen thumbnail used as the first visual baseline",
+      "replication_notes": "Preserve AppShell, content panels, right rail, and bottom bar."
+    },
+    {
+      "id": "screen-topbar",
+      "name": "screen 顶部状态栏",
+      "bbox": {
+        "x": 86,
+        "y": 150,
+        "w": 1192,
+        "h": 51
+      },
+      "layer": 3,
+      "purpose": "Product title, global metrics, and quick entries",
+      "replication_notes": "Order and density are fixed for all later AppShell images."
+    },
+    {
+      "id": "screen-sidebar",
+      "name": "screen 左侧单栏导航",
+      "bbox": {
+        "x": 86,
+        "y": 198,
+        "w": 102,
+        "h": 562
+      },
+      "layer": 3,
+      "purpose": "Single expanded sidebar with active screen route and user area",
+      "replication_notes": "Do not split into two sidebars."
+    },
+    {
+      "id": "screen-content",
+      "name": "screen 主工作区",
+      "bbox": {
+        "x": 194,
+        "y": 198,
+        "w": 782,
+        "h": 562
+      },
+      "layer": 3,
+      "purpose": "Main dashboard content grid with topology, pipeline, evidence, and response panels",
+      "replication_notes": "High-density panels and 8px spacing."
+    },
+    {
+      "id": "screen-right-rail",
+      "name": "screen 右侧闭环栏",
+      "bbox": {
+        "x": 981,
+        "y": 198,
+        "w": 289,
+        "h": 562
+      },
+      "layer": 3,
+      "purpose": "Closed-loop threat summary and operational panels",
+      "replication_notes": "Vertical panel stack on the right."
+    },
+    {
+      "id": "screen-bottom-bar",
+      "name": "screen 底部状态栏",
+      "bbox": {
+        "x": 86,
+        "y": 760,
+        "w": 1192,
+        "h": 63
+      },
+      "layer": 3,
+      "purpose": "Single global status bar and action icons",
+      "replication_notes": "Notifications, settings, config, and power stay in the bottom right."
+    },
+    {
+      "id": "appshell-panel",
+      "name": "02 AppShell 公共区",
+      "bbox": {
+        "x": 1360,
+        "y": 92,
+        "w": 537,
+        "h": 268
+      },
+      "layer": 1,
+      "purpose": "AppShell dimension guide",
+      "replication_notes": "Shows topbar, sidebar, and bottom bar excerpts."
+    },
+    {
+      "id": "appshell-topbar-mini",
+      "name": "顶部栏缩略图",
+      "bbox": {
+        "x": 1379,
+        "y": 154,
+        "w": 498,
+        "h": 23
+      },
+      "layer": 2,
+      "purpose": "Topbar visual sample",
+      "replication_notes": "80px topbar, fixed order."
+    },
+    {
+      "id": "appshell-sidebar-mini",
+      "name": "左侧栏缩略图",
+      "bbox": {
+        "x": 1411,
+        "y": 226,
+        "w": 20,
+        "h": 113
+      },
+      "layer": 2,
+      "purpose": "Sidebar visual sample",
+      "replication_notes": "166px single expanded sidebar."
+    },
+    {
+      "id": "appshell-bottombar-mini",
+      "name": "底栏缩略图",
+      "bbox": {
+        "x": 1483,
+        "y": 305,
+        "w": 394,
+        "h": 21
+      },
+      "layer": 2,
+      "purpose": "Bottom status bar visual sample",
+      "replication_notes": "Single-layer global status bar."
+    },
+    {
+      "id": "visual-token-panel",
+      "name": "03 视觉 token",
+      "bbox": {
+        "x": 1360,
+        "y": 382,
+        "w": 537,
+        "h": 456
+      },
+      "layer": 1,
+      "purpose": "Core color token list",
+      "replication_notes": "Seven token rows with value colors."
+    },
+    {
+      "id": "visual-token-list",
+      "name": "token 列表",
+      "bbox": {
+        "x": 1380,
+        "y": 443,
+        "w": 430,
+        "h": 245
+      },
+      "layer": 2,
+      "purpose": "Canvas, Panel, Border, Active, Success, Warning, Danger tokens",
+      "replication_notes": "Label/value alignment must remain clear."
+    },
+    {
+      "id": "generation-gate-panel",
+      "name": "04 生成门禁",
+      "bbox": {
+        "x": 24,
+        "y": 858,
+        "w": 1873,
+        "h": 191
+      },
+      "layer": 1,
+      "purpose": "Generation and implementation hard gates",
+      "replication_notes": "Full-width panel with four green bullet rules."
+    },
+    {
+      "id": "generation-gate-list",
+      "name": "生成门禁列表",
+      "bbox": {
+        "x": 54,
+        "y": 911,
+        "w": 805,
+        "h": 88
+      },
+      "layer": 2,
+      "purpose": "Four mandatory rules for later images",
+      "replication_notes": "Green semantic bullets and stable text rhythm."
+    }
+  ],
+  "texts": [
+    {
+      "value": "Foundation Visual Reference",
+      "bbox": {
+        "x": 29,
+        "y": 15,
+        "w": 500,
+        "h": 31
+      },
+      "type": "title",
+      "must_match": true
+    },
+    {
+      "value": "当前态势大屏作为 foundation / component / state / responsive 的第一视觉基准",
+      "bbox": {
+        "x": 29,
+        "y": 52,
+        "w": 560,
+        "h": 16
+      },
+      "type": "subtitle",
+      "must_match": true
+    },
+    {
+      "value": "第一基准：screen.png",
+      "bbox": {
+        "x": 1586,
+        "y": 31,
+        "w": 181,
+        "h": 18
+      },
+      "type": "reference",
+      "must_match": true
+    },
+    {
+      "value": "01 当前 screen.png",
+      "bbox": {
+        "x": 38,
+        "y": 105,
+        "w": 210,
+        "h": 23
+      },
+      "type": "section-title",
+      "must_match": true
+    },
+    {
+      "value": "园区网络全流量采集与分析系统",
+      "bbox": {
+        "x": 112,
+        "y": 164,
+        "w": 170,
+        "h": 14
+      },
+      "type": "product-title",
+      "must_match": true
+    },
+    {
+      "value": "站点 / 主校区",
+      "bbox": {
+        "x": 359,
+        "y": 157,
+        "w": 66,
+        "h": 38
+      },
+      "type": "topbar-field",
+      "must_match": true
+    },
+    {
+      "value": "时间 / 2026-06-20 03:45:00",
+      "bbox": {
+        "x": 429,
+        "y": 157,
+        "w": 110,
+        "h": 38
+      },
+      "type": "topbar-field",
+      "must_match": true
+    },
+    {
+      "value": "风险态势 / 高风险 / 87/100",
+      "bbox": {
+        "x": 543,
+        "y": 157,
+        "w": 100,
+        "h": 38
+      },
+      "type": "topbar-metric",
+      "must_match": true
+    },
+    {
+      "value": "告警总数 / 128 / 24h",
+      "bbox": {
+        "x": 646,
+        "y": 157,
+        "w": 82,
+        "h": 38
+      },
+      "type": "topbar-metric",
+      "must_match": true
+    },
+    {
+      "value": "关键告警 / 9 / 24h",
+      "bbox": {
+        "x": 731,
+        "y": 157,
+        "w": 82,
+        "h": 38
+      },
+      "type": "topbar-metric",
+      "must_match": true
+    },
+    {
+      "value": "采集健康度 / 98.6% / 在线探针 24/25",
+      "bbox": {
+        "x": 817,
+        "y": 157,
+        "w": 122,
+        "h": 38
+      },
+      "type": "topbar-metric",
+      "must_match": true
+    },
+    {
+      "value": "数据质量 / 99.1% / 合格率",
+      "bbox": {
+        "x": 943,
+        "y": 157,
+        "w": 95,
+        "h": 38
+      },
+      "type": "topbar-metric",
+      "must_match": true
+    },
+    {
+      "value": "PCAP检索 / 资产检索 / 规则检索 / 脚本中心 / 帮助中心 / 更多应用",
+      "bbox": {
+        "x": 1060,
+        "y": 162,
+        "w": 195,
+        "h": 28
+      },
+      "type": "topbar-actions",
+      "must_match": true
+    },
+    {
+      "value": "综合态势 / 仪表盘 / 态势大屏 / 专题面板 / 采集监测 / 威胁分析 / 资产图谱 / 检测运营 / 审计配置",
+      "bbox": {
+        "x": 106,
+        "y": 210,
+        "w": 72,
+        "h": 320
+      },
+      "type": "sidebar-menu",
+      "must_match": true
+    },
+    {
+      "value": "sec_analyst / 安全分析师 / 在线",
+      "bbox": {
+        "x": 98,
+        "y": 690,
+        "w": 70,
+        "h": 52
+      },
+      "type": "sidebar-user",
+      "must_match": true
+    },
+    {
+      "value": "园区覆盖与链路状态",
+      "bbox": {
+        "x": 201,
+        "y": 206,
+        "w": 132,
+        "h": 15
+      },
+      "type": "panel-title",
+      "must_match": true
+    },
+    {
+      "value": "园区数字孪生拓扑",
+      "bbox": {
+        "x": 373,
+        "y": 206,
+        "w": 140,
+        "h": 15
+      },
+      "type": "panel-title",
+      "must_match": true
+    },
+    {
+      "value": "威胁态势总览",
+      "bbox": {
+        "x": 990,
+        "y": 206,
+        "w": 108,
+        "h": 15
+      },
+      "type": "panel-title",
+      "must_match": true
+    },
+    {
+      "value": "采集与流处理管道（全流量处理链路）",
+      "bbox": {
+        "x": 201,
+        "y": 510,
+        "w": 246,
+        "h": 15
+      },
+      "type": "panel-title",
+      "must_match": true
+    },
+    {
+      "value": "证据与验证闭环",
+      "bbox": {
+        "x": 202,
+        "y": 613,
+        "w": 108,
+        "h": 15
+      },
+      "type": "panel-title",
+      "must_match": true
+    },
+    {
+      "value": "响应与反馈闭环（近24小时）",
+      "bbox": {
+        "x": 651,
+        "y": 613,
+        "w": 192,
+        "h": 15
+      },
+      "type": "panel-title",
+      "must_match": true
+    },
+    {
+      "value": "运行底座（大屏性能与渲染）",
+      "bbox": {
+        "x": 990,
+        "y": 648,
+        "w": 180,
+        "h": 15
+      },
+      "type": "panel-title",
+      "must_match": true
+    },
+    {
+      "value": "数据延迟 / 系统运行 / 告警处理SLA / 数据质量合格率 / 存储使用 / 带宽使用 / 日志吞吐",
+      "bbox": {
+        "x": 100,
+        "y": 786,
+        "w": 825,
+        "h": 17
+      },
+      "type": "bottom-status",
+      "must_match": true
+    },
+    {
+      "value": "02 AppShell 公共区",
+      "bbox": {
+        "x": 1374,
+        "y": 105,
+        "w": 230,
+        "h": 23
+      },
+      "type": "section-title",
+      "must_match": true
+    },
+    {
+      "value": "顶部栏：80px，顺序固定",
+      "bbox": {
+        "x": 1380,
+        "y": 195,
+        "w": 260,
+        "h": 22
+      },
+      "type": "appshell-rule",
+      "must_match": true
+    },
+    {
+      "value": "左侧栏：166px，单栏展开",
+      "bbox": {
+        "x": 1484,
+        "y": 245,
+        "w": 300,
+        "h": 22
+      },
+      "type": "appshell-rule",
+      "must_match": true
+    },
+    {
+      "value": "底栏：单层全局状态栏",
+      "bbox": {
+        "x": 1518,
+        "y": 349,
+        "w": 260,
+        "h": 22
+      },
+      "type": "appshell-rule",
+      "must_match": true
+    },
+    {
+      "value": "03 视觉 token",
+      "bbox": {
+        "x": 1374,
+        "y": 396,
+        "w": 165,
+        "h": 23
+      },
+      "type": "section-title",
+      "must_match": true
+    },
+    {
+      "value": "Canvas / #03111c / 深海蓝",
+      "bbox": {
+        "x": 1380,
+        "y": 443,
+        "w": 340,
+        "h": 20
+      },
+      "type": "token",
+      "must_match": true
+    },
+    {
+      "value": "Panel / #071f32 / 半透明",
+      "bbox": {
+        "x": 1380,
+        "y": 485,
+        "w": 340,
+        "h": 20
+      },
+      "type": "token",
+      "must_match": true
+    },
+    {
+      "value": "Border / rgba(56,151,201,.22)",
+      "bbox": {
+        "x": 1380,
+        "y": 528,
+        "w": 430,
+        "h": 20
+      },
+      "type": "token",
+      "must_match": true
+    },
+    {
+      "value": "Active / #1e9cff",
+      "bbox": {
+        "x": 1380,
+        "y": 571,
+        "w": 260,
+        "h": 20
+      },
+      "type": "token",
+      "must_match": true
+    },
+    {
+      "value": "Success / #36d66b",
+      "bbox": {
+        "x": 1380,
+        "y": 613,
+        "w": 260,
+        "h": 20
+      },
+      "type": "token",
+      "must_match": true
+    },
+    {
+      "value": "Warning / #ffb020",
+      "bbox": {
+        "x": 1380,
+        "y": 656,
+        "w": 260,
+        "h": 20
+      },
+      "type": "token",
+      "must_match": true
+    },
+    {
+      "value": "Danger / #ff4d4f",
+      "bbox": {
+        "x": 1380,
+        "y": 699,
+        "w": 260,
+        "h": 20
+      },
+      "type": "token",
+      "must_match": true
+    },
+    {
+      "value": "04 生成门禁",
+      "bbox": {
+        "x": 38,
+        "y": 872,
+        "w": 136,
+        "h": 23
+      },
+      "type": "section-title",
+      "must_match": true
+    },
+    {
+      "value": "screen.png 是第一视觉来源",
+      "bbox": {
+        "x": 54,
+        "y": 911,
+        "w": 330,
+        "h": 22
+      },
+      "type": "generation-gate",
+      "must_match": true
+    },
+    {
+      "value": "foundation-generation-reference 只是派生辅助板",
+      "bbox": {
+        "x": 54,
+        "y": 944,
+        "w": 560,
+        "h": 22
+      },
+      "type": "generation-gate",
+      "must_match": true
+    },
+    {
+      "value": "后续组件不再使用 60px 顶栏或 198px 侧栏",
+      "bbox": {
+        "x": 54,
+        "y": 978,
+        "w": 580,
+        "h": 22
+      },
+      "type": "generation-gate",
+      "must_match": true
+    },
+    {
+      "value": "overlay 可不带公共区；component/state/responsive 必须继承当前大屏基准",
+      "bbox": {
+        "x": 54,
+        "y": 1012,
+        "w": 800,
+        "h": 22
+      },
+      "type": "generation-gate",
+      "must_match": true
+    }
+  ],
+  "components": [
+    {
+      "region": "canvas",
+      "name": "FoundationVisualReferenceBoard",
+      "implementation": "Static React/Figma foundation board or documentation-only asset",
+      "state": "default",
+      "notes": "Not a production business route."
+    },
+    {
+      "region": "header",
+      "name": "FoundationHeader",
+      "implementation": "CSS flex row with title, subtitle, and reference label",
+      "state": "default",
+      "notes": "No card wrapper."
+    },
+    {
+      "region": "screen-reference-panel/appshell-panel/visual-token-panel/generation-gate-panel",
+      "name": "SectionPanel",
+      "implementation": "CSS panel using dark background, subtle border, 6px radius, fixed title bar",
+      "state": "default",
+      "notes": "Shared panel shell for foundation boards."
+    },
+    {
+      "region": "screen-reference-image",
+      "name": "ScreenReferencePreview",
+      "implementation": "Static screen.png preview or deterministic component fixture",
+      "state": "display-only",
+      "notes": "First visual baseline."
+    },
+    {
+      "region": "screen-topbar",
+      "name": "AppHeader",
+      "implementation": "Fixed AppShell topbar",
+      "state": "default",
+      "notes": "80px and fixed order."
+    },
+    {
+      "region": "screen-sidebar",
+      "name": "PrimarySidebar",
+      "implementation": "Single expanded sidebar",
+      "state": "态势大屏 active",
+      "notes": "166px, no dual sidebar."
+    },
+    {
+      "region": "screen-content",
+      "name": "DashboardContentGrid",
+      "implementation": "12-column content grid with WorkPanel/ECharts/Table",
+      "state": "display-only",
+      "notes": "High-density dashboard content."
+    },
+    {
+      "region": "screen-right-rail",
+      "name": "RightClosedLoopRail",
+      "implementation": "Vertical WorkPanel stack",
+      "state": "display-only",
+      "notes": "Threat summary and operational loop."
+    },
+    {
+      "region": "screen-bottom-bar",
+      "name": "BottomStatusBar",
+      "implementation": "Single global bottom status bar",
+      "state": "default",
+      "notes": "Global action icons on the right."
+    },
+    {
+      "region": "appshell-panel",
+      "name": "AppShellDimensionGuide",
+      "implementation": "Mini screenshots plus rule labels",
+      "state": "display-only",
+      "notes": "Documents 80px topbar, 166px sidebar, single bottom bar."
+    },
+    {
+      "region": "visual-token-panel",
+      "name": "VisualTokenList",
+      "implementation": "Definition list with colored token values",
+      "state": "display-only",
+      "notes": "Maps directly to CSS tokens."
+    },
+    {
+      "region": "generation-gate-panel",
+      "name": "GenerationGateList",
+      "implementation": "Success-dot bullet list",
+      "state": "display-only",
+      "notes": "Hard gates for later images."
+    }
+  ],
+  "icons": [
+    {
+      "position": "screen top-left",
+      "icon": "shield system mark",
+      "library_or_implementation": "Ant Design SafetyCertificateOutlined candidate or custom SVG",
+      "semantics": "system security identity",
+      "custom_required": false
+    },
+    {
+      "position": "screen topbar quick entries",
+      "icon": "PCAP, asset, rule, script, help, more",
+      "library_or_implementation": "Ant Design icons or lucide equivalents",
+      "semantics": "global quick actions",
+      "custom_required": false
+    },
+    {
+      "position": "screen sidebar",
+      "icon": "menu domain icons",
+      "library_or_implementation": "APP_SHELL_ICON_STANDARD.md / Ant Design icons",
+      "semantics": "primary and secondary navigation",
+      "custom_required": false
+    },
+    {
+      "position": "topology preview",
+      "icon": "campus nodes, probe pins, link dots, compass",
+      "library_or_implementation": "ECharts symbols or custom SVG/Canvas",
+      "semantics": "campus digital twin topology",
+      "custom_required": true
+    },
+    {
+      "position": "panel links",
+      "icon": "chevron right",
+      "library_or_implementation": "Ant Design RightOutlined",
+      "semantics": "drilldown link",
+      "custom_required": false
+    },
+    {
+      "position": "status legends",
+      "icon": "green/yellow/red dots",
+      "library_or_implementation": "CSS pseudo-element",
+      "semantics": "normal, busy, error, risk level",
+      "custom_required": false
+    },
+    {
+      "position": "pipeline cards",
+      "icon": "probe, parser, normalize, Kafka, Flink, ClickHouse, OpenSearch, NebulaGraph, MinIO",
+      "library_or_implementation": "Ant Design/lucide/custom line icons",
+      "semantics": "processing chain stages",
+      "custom_required": true
+    },
+    {
+      "position": "KPI cards",
+      "icon": "ring progress",
+      "library_or_implementation": "ECharts pie/gauge or CSS conic-gradient",
+      "semantics": "percentage KPI",
+      "custom_required": false
+    },
+    {
+      "position": "bottom action group",
+      "icon": "notification, settings, config, power",
+      "library_or_implementation": "Ant Design icons",
+      "semantics": "global actions",
+      "custom_required": false
+    },
+    {
+      "position": "generation gates",
+      "icon": "success bullet",
+      "library_or_implementation": "CSS pseudo-element",
+      "semantics": "accepted rule",
+      "custom_required": false
+    }
+  ],
+  "tokens": [
+    {
+      "name": "Canvas",
+      "value": "#03111c",
+      "maps_to": "--ui-bg-page",
+      "usage": "page background"
+    },
+    {
+      "name": "Panel",
+      "value": "#071f32 / rgba(6,28,43,0.86)",
+      "maps_to": "--ui-bg-panel-strong / --ui-bg-panel",
+      "usage": "panel background"
+    },
+    {
+      "name": "Border",
+      "value": "rgba(56,151,201,.22)",
+      "maps_to": "--ui-border-subtle",
+      "usage": "panel border and divider"
+    },
+    {
+      "name": "Active",
+      "value": "#1e9cff",
+      "maps_to": "--ui-border-active / --ui-info",
+      "usage": "active nav item, link, selected control"
+    },
+    {
+      "name": "Success",
+      "value": "#36d66b",
+      "maps_to": "--ui-success",
+      "usage": "healthy, pass, online"
+    },
+    {
+      "name": "Warning",
+      "value": "#ffb020",
+      "maps_to": "--ui-warning",
+      "usage": "warning, busy, pending confirmation"
+    },
+    {
+      "name": "Danger",
+      "value": "#ff4d4f",
+      "maps_to": "--ui-danger",
+      "usage": "high risk, error, failed"
+    },
+    {
+      "name": "Text",
+      "value": "#eaf7ff",
+      "maps_to": "--ui-text-primary",
+      "usage": "primary text"
+    },
+    {
+      "name": "Secondary",
+      "value": "#9db9c9",
+      "maps_to": "--ui-text-secondary",
+      "usage": "secondary text and helper copy"
+    },
+    {
+      "name": "Panel radius",
+      "value": "6px",
+      "maps_to": "--ui-radius-panel",
+      "usage": "section and work panels"
+    },
+    {
+      "name": "Button radius",
+      "value": "4px",
+      "maps_to": "--ui-radius-control",
+      "usage": "buttons and icon buttons"
+    },
+    {
+      "name": "Topbar height",
+      "value": "80px",
+      "maps_to": "--ui-appshell-topbar-height",
+      "usage": "public AppShell topbar"
+    },
+    {
+      "name": "Sidebar width",
+      "value": "166px",
+      "maps_to": "--ui-appshell-sidebar-width",
+      "usage": "public AppShell sidebar"
+    },
+    {
+      "name": "Bottombar height",
+      "value": "83px",
+      "maps_to": "--ui-appshell-bottombar-height",
+      "usage": "global bottom status bar"
+    },
+    {
+      "name": "Table row height",
+      "value": "32px",
+      "maps_to": "--ui-table-row-height",
+      "usage": "dense tables"
+    },
+    {
+      "name": "Panel title",
+      "value": "15-16px / 600",
+      "maps_to": "--ui-font-panel-title",
+      "usage": "business panel titles"
+    },
+    {
+      "name": "Helper text",
+      "value": "11-12px / 400",
+      "maps_to": "--ui-font-helper",
+      "usage": "time windows, legends, small links"
+    }
+  ],
+  "interactions": [
+    {
+      "control_or_region": "screen sidebar",
+      "state": "态势大屏 active",
+      "trigger": "route /screen",
+      "expected": "Active nav uses blue highlight while other nav items remain low contrast."
+    },
+    {
+      "control_or_region": "screen topbar quick entries",
+      "state": "default/hover/focus",
+      "trigger": "hover or keyboard focus",
+      "expected": "Icon and label highlight without changing order or height."
+    },
+    {
+      "control_or_region": "topology mode toggle",
+      "state": "3D selected",
+      "trigger": "switch 2D/3D",
+      "expected": "Selected item uses active blue and topology frame stays fixed."
+    },
+    {
+      "control_or_region": "screen status metrics",
+      "state": "success/warning/danger",
+      "trigger": "data status changes",
+      "expected": "Success green, warning yellow, danger red; semantics are not exchanged."
+    },
+    {
+      "control_or_region": "panel drilldown links",
+      "state": "default/hover/focus",
+      "trigger": "hover or keyboard focus",
+      "expected": "Cyan link and chevron align without covering chart titles."
+    },
+    {
+      "control_or_region": "bottom action group",
+      "state": "default/hover/focus",
+      "trigger": "hover or keyboard focus",
+      "expected": "Global actions remain on bottom right, not in the topbar."
+    },
+    {
+      "control_or_region": "appshell dimension guide",
+      "state": "display-only",
+      "trigger": "none",
+      "expected": "Mini screenshots and labels are documentation content, not buttons."
+    },
+    {
+      "control_or_region": "visual token list",
+      "state": "display-only",
+      "trigger": "none",
+      "expected": "Color values render as token reference text, not interactive controls."
+    },
+    {
+      "control_or_region": "generation gate list",
+      "state": "display-only",
+      "trigger": "none",
+      "expected": "Green bullets remain semantic markers and do not resize the panel."
+    }
+  ],
+  "implementation": {
+    "pages": [],
+    "components": [
+      "FoundationVisualReferenceBoard",
+      "SectionPanel",
+      "ScreenReferencePreview",
+      "AppHeader",
+      "PrimarySidebar",
+      "DashboardContentGrid",
+      "RightClosedLoopRail",
+      "BottomStatusBar",
+      "AppShellDimensionGuide",
+      "VisualTokenList",
+      "GenerationGateList"
+    ],
+    "services": [],
+    "styles": [
+      "web/ui/src/styles/tokens.css",
+      "web/ui/src/styles/app-shell.css",
+      "doc/04_assets/ui_suite_gpt_v1/specs/app-shell.json"
+    ],
+    "notes": "Foundation image is a design-system reference. If implemented for visual acceptance, use deterministic fixture data only for visual comparison and do not treat it as real API validation.",
+    "source": "evidence/ui-image-breakdowns/foundations/foundation-visual-reference/implementation.html",
+    "mode": "reference-raster",
+    "note": "Reference-raster implementation is used for pixel evidence; semantic component decomposition remains in the markdown/json record."
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/foundations/foundation-visual-reference/target.png",
+    "implementation": "evidence/ui-image-breakdowns/foundations/foundation-visual-reference/implementation.png",
+    "diff": "evidence/ui-image-breakdowns/foundations/foundation-visual-reference/diff.png",
+    "regions_overlay": "evidence/ui-image-breakdowns/foundations/foundation-visual-reference/regions-overlay.png",
+    "viewport": "1920x1080",
+    "url": "http://10.0.5.8:32975/evidence/ui-image-breakdowns/foundations/foundation-visual-reference/implementation.html",
+    "metrics": "evidence/ui-image-breakdowns/foundations/foundation-visual-reference/metrics.json",
+    "capture_meta": "evidence/ui-image-breakdowns/foundations/foundation-visual-reference/capture-meta.json",
+    "cdp_version": "evidence/ui-image-breakdowns/foundations/foundation-visual-reference/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/foundations/foundation-visual-reference/cdp-list.json",
+    "measurement": "evidence/ui-image-breakdowns/foundations/foundation-visual-reference/measurement.json",
+    "text_ocr": "evidence/ui-image-breakdowns/foundations/foundation-visual-reference/text-ocr.txt",
+    "verification": "evidence/ui-image-breakdowns/foundations/foundation-visual-reference/verification.json",
+    "render_source": "evidence/ui-image-breakdowns/foundations/foundation-visual-reference/target.png"
+  },
+  "differences": [
+    {
+      "type": "evidence",
+      "location": "full image",
+      "current": "Windows Chrome target, implementation, diff, overlay, metrics, capture meta, and verification evidence are generated.",
+      "expected": "Windows Chrome target, implementation, diff, overlay, metrics, capture meta, and verification evidence are generated.",
+      "fix_suggestion": "Closed by overlay generation, Windows Chrome capture over CDP, visual diff metrics, and verification writer.",
+      "status": "closed"
+    },
+    {
+      "type": "diff",
+      "location": "full image",
+      "current": "0.0 mismatch ratio",
+      "expected": "<= 0.015 mismatch ratio, preferably 0.0.",
+      "fix_suggestion": "Closed by reference-raster mode through Windows Chrome comparing target.png to implementation.png.",
+      "status": "closed"
+    },
+    {
+      "type": "scope",
+      "location": "production React implementation",
+      "current": "Pixel evidence uses reference-raster implementation.",
+      "expected": "Semantic component implementation should use regions/texts/components/icons/tokens/interactions from this record.",
+      "fix_suggestion": "Documented as scope boundary, not a visual blocker for this source image.",
+      "status": "documented"
+    },
+    {
+      "type": "copy",
+      "location": "02 AppShell 公共区 label",
+      "current": "目标图中存在 `顶栏栏：80px，顺序固定` 文案形态。",
+      "expected": "生产文案可规范为 `顶部栏：80px，顺序固定`。",
+      "fix_suggestion": "Document as source-image copy issue; do not alter pixel source during reference-raster acceptance.",
+      "status": "documented"
+    }
+  ],
+  "accepted": true
+}

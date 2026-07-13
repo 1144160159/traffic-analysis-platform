@@ -1,0 +1,143 @@
+{
+  "run_id": "windows-chrome-cdp-campaign-detail-impact-account-r167",
+  "generated_at": "2026-07-10T04:53:02.765Z",
+  "result": "pass",
+  "target_id": "campaign-detail-impact-account",
+  "route": "/campaigns/:campaignId?impact=account",
+  "production_url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=account&__codex_ui_breakdown_production=1&__codex_page_id=campaign-detail-impact-account&windowsCdpEvidenceTs=1783659030995",
+  "image_tag": "traffic/web-ui:ui-campaign-impact-account-visual-20260710-r167",
+  "browser": "150.0.7871.49",
+  "cdp_url": "http://127.0.0.1:9224",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "device_scale_factor": 1,
+    "source": "captured PNG pixels"
+  },
+  "summary": {
+    "runtime": "pass",
+    "visual_diff": "pass",
+    "dynamic_data": "pass",
+    "auxiliary_review": "pass",
+    "main_thread_judgment": "business-pixel-accepted"
+  },
+  "runtime": {
+    "status": "pass",
+    "console_errors": 0,
+    "page_errors": 0,
+    "request_failures": 0,
+    "http_4xx_5xx": 0,
+    "horizontal_overflow": false,
+    "vertical_overflow": false,
+    "forbidden_resource_markers": [],
+    "expected_texts": {
+      "31": true,
+      "影响范围": true,
+      "资产": true,
+      "账号": true,
+      "服务": true,
+      "部门": true,
+      "校区": true,
+      "业务系统": true,
+      "受影响账号": true,
+      "高风险": true,
+      "中风险": true,
+      "低风险": true,
+      "关键账号（Top 5）": true,
+      "svc_backup": true,
+      "temp_admin": true,
+      "li.ming": true,
+      "ops_reader": true,
+      "svc_deploy": true,
+      "查看全部账号": true
+    },
+    "account_row_count": 5,
+    "risk_row_count": 3,
+    "donut_geometry": {
+      "x": 192,
+      "y": 208,
+      "width": 620,
+      "height": 245,
+      "display": "grid",
+      "visibility": "visible",
+      "opacity": "1"
+    },
+    "shell_hidden": true,
+    "screenshot_viewport": {
+      "width": 1920,
+      "height": 1080,
+      "device_scale_factor": 1,
+      "source": "captured PNG pixels"
+    },
+    "windows_scaling_observation": {
+      "width": 2133,
+      "height": 1200,
+      "dpr": 0.8999999632438005
+    }
+  },
+  "visual_diff": {
+    "status": "pass",
+    "pixel_mismatch_ratio": 0.09737268518518519,
+    "max_pixel_ratio": 0.35,
+    "channel_tolerance": 64,
+    "metrics": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-account/metrics-r167-final.json",
+    "diff": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-account/diff-r167-final.png",
+    "baseline_r166_ratio": 0.10694733796296296,
+    "repaired_r167_ratio": 0.09737268518518519
+  },
+  "dynamic_data_review": {
+    "status": "pass",
+    "primary_endpoint": "/v1/campaigns/{campaignId}",
+    "service": "web/ui/src/services/campaignDetailApi.ts",
+    "typed_contracts": [
+      "CampaignDetailImpactAccount",
+      "CampaignDetailImpactRiskRow",
+      "CampaignDetailAccountRow"
+    ],
+    "adapter": "normalizeCampaignDetailSnapshot -> buildImpactAccount",
+    "visual_component": "CampaignImpactAccountContent",
+    "rendering": "React/CSS conic-gradient driven by typed risk counts; account rows rendered from snapshot data",
+    "fallback": "typed fallback provides total=31, risk counts 8/14/9 and five account rows when the API omits account-impact fields",
+    "refresh": "30 seconds on normal production detail route; disabled only in visual breakdown mode for deterministic evidence",
+    "tests": [
+      "src/services/campaignDetailApi.test.ts",
+      "src/routes/noBitmapUi.test.ts"
+    ]
+  },
+  "auxiliary_review": {
+    "agent": "codex-fresh-auxiliary-visual-review",
+    "status": "pass",
+    "reviewed_at": "2026-07-10T04:53:02.765Z",
+    "evidence_checked": [
+      "evidence/ui-image-breakdowns/pages/campaign-detail-impact-account/target.png",
+      "evidence/ui-image-breakdowns/pages/campaign-detail-impact-account/implementation-r166-final.png",
+      "evidence/ui-image-breakdowns/pages/campaign-detail-impact-account/diff-r166-final.png",
+      "evidence/ui-image-breakdowns/pages/campaign-detail-impact-account/implementation-r167-final.png",
+      "evidence/ui-image-breakdowns/pages/campaign-detail-impact-account/diff-r167-final.png",
+      "evidence/ui-image-breakdowns/pages/campaign-detail-impact-account/capture-meta-r167-final.json",
+      "evidence/ui-image-breakdowns/pages/campaign-detail-impact-account/metrics-r167-final.json"
+    ],
+    "findings": [
+      "r166 passed the configured threshold but the target elliptical risk ring was implemented as a circle; auxiliary review treated this as a structural mismatch and requested repair.",
+      "r167 changes the ring to a typed-data-driven 620x245 ellipse and reduces pixel mismatch from 0.106947 to 0.097373.",
+      "All target account labels, counts, percentages, five account rows and login paths are present; no clipping, overlap or forbidden raster replay is visible.",
+      "Remaining diff is dominated by target raster blur/font rendering and minor spacing, not missing business content or static business imagery."
+    ]
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-account/target.png",
+    "regions_overlay": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-account/regions-overlay.png",
+    "measurement": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-account/measurement.json",
+    "implementation": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-account/implementation.png",
+    "implementation_r167": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-account/implementation-r167-final.png",
+    "diff": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-account/diff.png",
+    "diff_r167": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-account/diff-r167-final.png",
+    "metrics": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-account/metrics.json",
+    "metrics_r167": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-account/metrics-r167-final.json",
+    "capture_meta": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-account/capture-meta.json",
+    "capture_meta_r167": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-account/capture-meta-r167-final.json",
+    "cdp_version": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-account/cdp-version-r167-final-pre-capture.txt",
+    "cdp_list": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-account/cdp-list-r167-final-pre-capture.txt",
+    "verification": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-account/verification.json"
+  }
+}

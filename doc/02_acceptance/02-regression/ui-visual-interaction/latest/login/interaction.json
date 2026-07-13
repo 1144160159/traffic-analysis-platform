@@ -1,0 +1,33 @@
+{
+  "status": "pass",
+  "route_id": "login",
+  "route": "/login",
+  "generated_at": "2026-07-01T15:49:53.121Z",
+  "desktop_chrome_backend_status": "pass",
+  "desktop_backend": "extension",
+  "final_url": "http://10.0.5.8:30180/login",
+  "title": "园区网络全流量采集与分析系统",
+  "business_action": "rendered login form and captcha challenge without submitting credentials",
+  "target_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/latest/login/actual-1920.png",
+  "no_4xx_5xx": true,
+  "no_requestfailed": true,
+  "no_pageerror": true,
+  "no_console_error": true,
+  "assertions": {
+    "product_name_visible": true,
+    "account_password_tab_visible": true,
+    "tenant_input_visible": true,
+    "username_input_visible": true,
+    "password_input_visible": true,
+    "captcha_visible": true,
+    "submit_visible": true,
+    "access_denied_absent": true,
+    "smoke_hash_absent": true
+  },
+  "errors": {
+    "console_errors": [],
+    "page_errors": [],
+    "request_failures": [],
+    "response_errors": []
+  }
+}

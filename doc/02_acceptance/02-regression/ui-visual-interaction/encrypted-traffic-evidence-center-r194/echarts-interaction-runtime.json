@@ -1,0 +1,75 @@
+{
+  "generated_at": "2026-07-10T12:57:00.000Z",
+  "route": "/encrypted-traffic?tab=evidence-center",
+  "browser_backend": "Windows Chrome CDP",
+  "deployment": {
+    "alert_service": "traffic/alert-service:encrypted-evidence-center-20260710-r192",
+    "web_ui": "traffic/web-ui:ui-encrypted-traffic-evidence-center-20260710-r194"
+  },
+  "before": {
+    "canvasCount": 2,
+    "chartLabels": [
+      "PCAP检索",
+      "资产检索",
+      "规则检索",
+      "证据会话类型",
+      "PCAP 数据包字节趋势图",
+      "证据完整度环图"
+    ],
+    "availability": "仿真数据（API 空）",
+    "horizontalOverflow": false
+  },
+  "selection": {
+    "tls_row_count": 2,
+    "tls_selected": "s-7c6d5e4f3a2b",
+    "quic_row_count": 2,
+    "selected": "s-55d9e0c7a3b2",
+    "selected_row_count": 1,
+    "certificate_session_id": "s-55d9e0c7a3b2",
+    "rail_target": "s-55d9e0c7a3b2",
+    "synchronized": true
+  },
+  "action": {
+    "modal_target": "s-55d9e0c7a3b2",
+    "request": {
+      "endpoint": "http://10.0.5.8:30180/api/v1/encrypted-traffic/evidence-actions",
+      "method": "POST",
+      "body": {
+        "action": "write_audit",
+        "target": "s-55d9e0c7a3b2",
+        "data_mode": "simulated"
+      }
+    },
+    "response": {
+      "status": 200,
+      "body": {
+        "action": "write_audit",
+        "action_id": "evidence-1783688212059421231",
+        "audit_event": "ENCRYPTED_EVIDENCE_AUDIT_WRITTEN",
+        "status": "recorded",
+        "target": "s-55d9e0c7a3b2"
+      }
+    }
+  },
+  "audit": {
+    "status": 200,
+    "total": 1,
+    "trail": {
+      "action": "ENCRYPTED_EVIDENCE_AUDIT_WRITTEN",
+      "resource_type": "encrypted_evidence_action",
+      "resource_id": "evidence-1783688212059421231",
+      "details": {
+        "action": "write_audit",
+        "data_mode": "simulated",
+        "target": "s-55d9e0c7a3b2"
+      },
+      "result": "success"
+    }
+  },
+  "runtime": {
+    "bad_responses": [],
+    "request_failures": [],
+    "console_errors": [],
+    "page_errors": []
+  }
+}

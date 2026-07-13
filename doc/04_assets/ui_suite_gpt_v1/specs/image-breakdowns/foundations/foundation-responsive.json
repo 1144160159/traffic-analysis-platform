@@ -1,0 +1,1113 @@
+{
+  "id": "foundation-responsive",
+  "category": "foundations",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/foundations/foundation-responsive.png",
+  "prompt_file": "doc/04_assets/ui_suite_gpt_v1/prompts/foundation-responsive.prompt.txt",
+  "manifest_refs": [
+    "doc/04_assets/ui_suite_gpt_v1/manifest.json",
+    "doc/04_assets/ui_suite_gpt_v1/specs/layers/foundation-responsive.json"
+  ],
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "status": "pixel-accepted",
+  "accepted": true,
+  "route": null,
+  "host_route": null,
+  "observation": {
+    "layout": "Static design-system foundation board. Header spans the top, three upper panels compare 1920 desktop, 1440 desktop, and tablet/mobile behavior, and a bottom panel lists responsive gates.",
+    "business_focus": "Locks responsive strategy for AppShell hierarchy, sidebar compression, chart label reduction, table density, mobile drawer navigation, and 4K scaling.",
+    "current_state": "Windows Chrome reference-raster screenshot and zero-tolerance visual diff completed; mismatch ratio is 0.0.",
+    "acceptance_scope": "This foundation is a responsive strategy source. Pixel evidence reproduces the target PNG; production responsive CSS/React behavior must separately implement these rules."
+  },
+  "regions": [
+    {
+      "id": "canvas",
+      "name": "画布",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "layer": 0,
+      "purpose": "16:9 foundation board",
+      "replication_notes": "No browser chrome or external frame."
+    },
+    {
+      "id": "header",
+      "name": "顶部标题区",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 73
+      },
+      "layer": 1,
+      "purpose": "Board title, subtitle, baseline note",
+      "replication_notes": "Bottom separator line at y=72."
+    },
+    {
+      "id": "desktop-1920-panel",
+      "name": "01 桌面基准 1920",
+      "bbox": {
+        "x": 24,
+        "y": 92,
+        "w": 757,
+        "h": 721
+      },
+      "layer": 1,
+      "purpose": "Full desktop baseline behavior",
+      "replication_notes": "Largest upper panel; contains full AppShell preview and fixed desktop tokens."
+    },
+    {
+      "id": "desktop-1920-titlebar",
+      "name": "1920 面板标题栏",
+      "bbox": {
+        "x": 25,
+        "y": 93,
+        "w": 755,
+        "h": 43
+      },
+      "layer": 2,
+      "purpose": "Section title",
+      "replication_notes": "Text reads 01 桌面基准 1920."
+    },
+    {
+      "id": "desktop-1920-preview",
+      "name": "1920 桌面预览图",
+      "bbox": {
+        "x": 54,
+        "y": 149,
+        "w": 696,
+        "h": 392
+      },
+      "layer": 2,
+      "purpose": "Full 1920 AppShell screenshot reference",
+      "replication_notes": "Preserve full topbar/sidebar/content/statusbar hierarchy."
+    },
+    {
+      "id": "desktop-1920-specs",
+      "name": "1920 固定尺寸列表",
+      "bbox": {
+        "x": 69,
+        "y": 594,
+        "w": 420,
+        "h": 122
+      },
+      "layer": 2,
+      "purpose": "Desktop fixed dimensions",
+      "replication_notes": "Four rows: topbar, sidebar, statusbar, content area."
+    },
+    {
+      "id": "desktop-1440-panel",
+      "name": "02 1440 桌面",
+      "bbox": {
+        "x": 812,
+        "y": 92,
+        "w": 548,
+        "h": 721
+      },
+      "layer": 1,
+      "purpose": "Medium desktop strategy",
+      "replication_notes": "Panel contains scaled AppShell preview and four bullet rules."
+    },
+    {
+      "id": "desktop-1440-titlebar",
+      "name": "1440 面板标题栏",
+      "bbox": {
+        "x": 813,
+        "y": 93,
+        "w": 546,
+        "h": 43
+      },
+      "layer": 2,
+      "purpose": "Section title",
+      "replication_notes": "Text reads 02 1440 桌面."
+    },
+    {
+      "id": "desktop-1440-preview",
+      "name": "1440 桌面预览图",
+      "bbox": {
+        "x": 842,
+        "y": 151,
+        "w": 489,
+        "h": 276
+      },
+      "layer": 2,
+      "purpose": "1440 compressed desktop reference",
+      "replication_notes": "Retains AppShell order but reduces density."
+    },
+    {
+      "id": "desktop-1440-rules",
+      "name": "1440 规则列表",
+      "bbox": {
+        "x": 849,
+        "y": 496,
+        "w": 270,
+        "h": 158
+      },
+      "layer": 2,
+      "purpose": "Four medium-desktop rules",
+      "replication_notes": "Green bullets with 48px vertical rhythm."
+    },
+    {
+      "id": "tablet-mobile-panel",
+      "name": "03 平板 / 移动",
+      "bbox": {
+        "x": 1392,
+        "y": 92,
+        "w": 505,
+        "h": 721
+      },
+      "layer": 1,
+      "purpose": "Tablet/mobile responsive strategy",
+      "replication_notes": "Right panel contains a compressed preview and a mobile drawer sample."
+    },
+    {
+      "id": "tablet-mobile-titlebar",
+      "name": "平板移动标题栏",
+      "bbox": {
+        "x": 1393,
+        "y": 93,
+        "w": 503,
+        "h": 43
+      },
+      "layer": 2,
+      "purpose": "Section title",
+      "replication_notes": "Text reads 03 平板 / 移动."
+    },
+    {
+      "id": "tablet-preview",
+      "name": "平板内容预览",
+      "bbox": {
+        "x": 1443,
+        "y": 149,
+        "w": 401,
+        "h": 273
+      },
+      "layer": 2,
+      "purpose": "Tablet/compressed content preview",
+      "replication_notes": "Top/side/bottom hierarchy remains readable."
+    },
+    {
+      "id": "mobile-drawer-outer",
+      "name": "移动端导航抽屉外框",
+      "bbox": {
+        "x": 1564,
+        "y": 470,
+        "w": 161,
+        "h": 302
+      },
+      "layer": 2,
+      "purpose": "Mobile navigation drawer asset frame",
+      "replication_notes": "A bordered drawer sample, not a phone mockup."
+    },
+    {
+      "id": "mobile-drawer-inner",
+      "name": "移动端导航抽屉内容",
+      "bbox": {
+        "x": 1573,
+        "y": 477,
+        "w": 143,
+        "h": 286
+      },
+      "layer": 3,
+      "purpose": "Drawer menu vocabulary",
+      "replication_notes": "Keeps fixed menu terms and vertical spacing."
+    },
+    {
+      "id": "responsive-gate-panel",
+      "name": "04 响应式门禁",
+      "bbox": {
+        "x": 24,
+        "y": 842,
+        "w": 1873,
+        "h": 197
+      },
+      "layer": 1,
+      "purpose": "Responsive acceptance rules",
+      "replication_notes": "Wide bottom panel with four green-dot rules."
+    },
+    {
+      "id": "responsive-gate-titlebar",
+      "name": "响应式门禁标题栏",
+      "bbox": {
+        "x": 25,
+        "y": 843,
+        "w": 1871,
+        "h": 43
+      },
+      "layer": 2,
+      "purpose": "Section title",
+      "replication_notes": "Text reads 04 响应式门禁."
+    },
+    {
+      "id": "responsive-gate-list",
+      "name": "响应式门禁列表",
+      "bbox": {
+        "x": 58,
+        "y": 904,
+        "w": 870,
+        "h": 112
+      },
+      "layer": 2,
+      "purpose": "Four acceptance bullets",
+      "replication_notes": "Green bullets and compact text."
+    }
+  ],
+  "texts": [
+    {
+      "id": "text-001",
+      "value": "Foundation Responsive Strategy",
+      "type": "title",
+      "bbox": {
+        "x": 28,
+        "y": 14,
+        "w": 555,
+        "h": 34
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-002",
+      "value": "交付图仍为 1920x1080；画面表达不同断点下的 AppShell 与内容重排策略",
+      "type": "subtitle",
+      "bbox": {
+        "x": 29,
+        "y": 53,
+        "w": 570,
+        "h": 14
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-003",
+      "value": "第一基准：screen.png",
+      "type": "baseline-note",
+      "bbox": {
+        "x": 1586,
+        "y": 32,
+        "w": 181,
+        "h": 18
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-004",
+      "value": "01 桌面基准 1920",
+      "type": "section-title",
+      "bbox": {
+        "x": 38,
+        "y": 104,
+        "w": 207,
+        "h": 22
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-005",
+      "value": "顶部栏",
+      "type": "desktop-spec-label",
+      "bbox": {
+        "x": 70,
+        "y": 595,
+        "w": 56,
+        "h": 18
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-006",
+      "value": "80px fixed",
+      "type": "desktop-spec-value",
+      "bbox": {
+        "x": 248,
+        "y": 595,
+        "w": 104,
+        "h": 18
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-007",
+      "value": "左侧栏",
+      "type": "desktop-spec-label",
+      "bbox": {
+        "x": 70,
+        "y": 627,
+        "w": 56,
+        "h": 18
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-008",
+      "value": "166px single column",
+      "type": "desktop-spec-value",
+      "bbox": {
+        "x": 248,
+        "y": 627,
+        "w": 190,
+        "h": 18
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-009",
+      "value": "底部栏",
+      "type": "desktop-spec-label",
+      "bbox": {
+        "x": 70,
+        "y": 659,
+        "w": 56,
+        "h": 18
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-010",
+      "value": "83px fixed status",
+      "type": "desktop-spec-value",
+      "bbox": {
+        "x": 248,
+        "y": 659,
+        "w": 150,
+        "h": 18
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-011",
+      "value": "内容区",
+      "type": "desktop-spec-label",
+      "bbox": {
+        "x": 70,
+        "y": 691,
+        "w": 56,
+        "h": 18
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-012",
+      "value": "12-column dense panels",
+      "type": "desktop-spec-value",
+      "bbox": {
+        "x": 248,
+        "y": 691,
+        "w": 216,
+        "h": 18
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-013",
+      "value": "02 1440 桌面",
+      "type": "section-title",
+      "bbox": {
+        "x": 826,
+        "y": 104,
+        "w": 141,
+        "h": 22
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-014",
+      "value": "保持 AppShell 顺序",
+      "type": "responsive-rule",
+      "bbox": {
+        "x": 874,
+        "y": 495,
+        "w": 152,
+        "h": 19
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-015",
+      "value": "优先压缩右侧栏密度",
+      "type": "responsive-rule",
+      "bbox": {
+        "x": 874,
+        "y": 543,
+        "w": 178,
+        "h": 19
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-016",
+      "value": "图表减少标签",
+      "type": "responsive-rule",
+      "bbox": {
+        "x": 874,
+        "y": 591,
+        "w": 126,
+        "h": 19
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-017",
+      "value": "表格保持行高",
+      "type": "responsive-rule",
+      "bbox": {
+        "x": 874,
+        "y": 639,
+        "w": 126,
+        "h": 19
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-018",
+      "value": "03 平板 / 移动",
+      "type": "section-title",
+      "bbox": {
+        "x": 1412,
+        "y": 104,
+        "w": 165,
+        "h": 22
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-019",
+      "value": "移动端导航抽屉层",
+      "type": "drawer-title",
+      "bbox": {
+        "x": 1596,
+        "y": 507,
+        "w": 96,
+        "h": 14
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-020",
+      "value": "综合态势",
+      "type": "drawer-menu",
+      "bbox": {
+        "x": 1594,
+        "y": 550,
+        "w": 56,
+        "h": 14
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-021",
+      "value": "采集监测",
+      "type": "drawer-menu",
+      "bbox": {
+        "x": 1594,
+        "y": 589,
+        "w": 56,
+        "h": 14
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-022",
+      "value": "威胁分析",
+      "type": "drawer-menu",
+      "bbox": {
+        "x": 1594,
+        "y": 628,
+        "w": 56,
+        "h": 14
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-023",
+      "value": "资产图谱",
+      "type": "drawer-menu",
+      "bbox": {
+        "x": 1594,
+        "y": 667,
+        "w": 56,
+        "h": 14
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-024",
+      "value": "检测运营",
+      "type": "drawer-menu",
+      "bbox": {
+        "x": 1594,
+        "y": 706,
+        "w": 56,
+        "h": 14
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-025",
+      "value": "审计配置",
+      "type": "drawer-menu",
+      "bbox": {
+        "x": 1594,
+        "y": 745,
+        "w": 56,
+        "h": 14
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-026",
+      "value": "04 响应式门禁",
+      "type": "section-title",
+      "bbox": {
+        "x": 38,
+        "y": 855,
+        "w": 155,
+        "h": 22
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-027",
+      "value": "1440：保持顶部/左侧/底部层级，先压缩右侧栏再调整菜单",
+      "type": "gate-rule",
+      "bbox": {
+        "x": 82,
+        "y": 904,
+        "w": 510,
+        "h": 18
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-028",
+      "value": "平板：左侧菜单可变为抽屉，但词汇和图标固定",
+      "type": "gate-rule",
+      "bbox": {
+        "x": 82,
+        "y": 936,
+        "w": 418,
+        "h": 18
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-029",
+      "value": "移动端：使用 drawer-mobile-navigation 资产，不强塞完整桌面壳",
+      "type": "gate-rule",
+      "bbox": {
+        "x": 82,
+        "y": 968,
+        "w": 520,
+        "h": 18
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-030",
+      "value": "大屏 / 4K：放大内容节奏，不新增第二底栏或新配色",
+      "type": "gate-rule",
+      "bbox": {
+        "x": 82,
+        "y": 1000,
+        "w": 470,
+        "h": 18
+      },
+      "ocr_source": "manual-visual"
+    }
+  ],
+  "components": [
+    {
+      "id": "component-001",
+      "name": "FoundationBoardHeader",
+      "type": "layout-header",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 73
+      },
+      "implementation_mapping": "Static responsive strategy foundation header."
+    },
+    {
+      "id": "component-002",
+      "name": "Desktop1920Panel",
+      "type": "foundation-panel",
+      "bbox": {
+        "x": 24,
+        "y": 92,
+        "w": 757,
+        "h": 721
+      },
+      "implementation_mapping": "Desktop baseline comparison panel."
+    },
+    {
+      "id": "component-003",
+      "name": "Desktop1920Preview",
+      "type": "reference-screenshot",
+      "bbox": {
+        "x": 54,
+        "y": 149,
+        "w": 696,
+        "h": 392
+      },
+      "implementation_mapping": "Full desktop AppShell reference."
+    },
+    {
+      "id": "component-004",
+      "name": "Desktop1920SpecList",
+      "type": "spec-list",
+      "bbox": {
+        "x": 69,
+        "y": 594,
+        "w": 420,
+        "h": 122
+      },
+      "implementation_mapping": "Fixed desktop size tokens."
+    },
+    {
+      "id": "component-005",
+      "name": "Desktop1440Panel",
+      "type": "foundation-panel",
+      "bbox": {
+        "x": 812,
+        "y": 92,
+        "w": 548,
+        "h": 721
+      },
+      "implementation_mapping": "Medium desktop responsive strategy panel."
+    },
+    {
+      "id": "component-006",
+      "name": "Desktop1440Preview",
+      "type": "reference-screenshot",
+      "bbox": {
+        "x": 842,
+        "y": 151,
+        "w": 489,
+        "h": 276
+      },
+      "implementation_mapping": "Compressed 1440 layout reference."
+    },
+    {
+      "id": "component-007",
+      "name": "Desktop1440RuleList",
+      "type": "bullet-list",
+      "bbox": {
+        "x": 849,
+        "y": 496,
+        "w": 270,
+        "h": 158
+      },
+      "implementation_mapping": "Four 1440 desktop compression rules."
+    },
+    {
+      "id": "component-008",
+      "name": "TabletMobilePanel",
+      "type": "foundation-panel",
+      "bbox": {
+        "x": 1392,
+        "y": 92,
+        "w": 505,
+        "h": 721
+      },
+      "implementation_mapping": "Tablet/mobile strategy panel."
+    },
+    {
+      "id": "component-009",
+      "name": "TabletPreview",
+      "type": "reference-screenshot",
+      "bbox": {
+        "x": 1443,
+        "y": 149,
+        "w": 401,
+        "h": 273
+      },
+      "implementation_mapping": "Compressed tablet content preview."
+    },
+    {
+      "id": "component-010",
+      "name": "MobileNavigationDrawer",
+      "type": "drawer-sample",
+      "bbox": {
+        "x": 1564,
+        "y": 470,
+        "w": 161,
+        "h": 302
+      },
+      "implementation_mapping": "drawer-mobile-navigation responsive asset."
+    },
+    {
+      "id": "component-011",
+      "name": "MobileDrawerMenuList",
+      "type": "drawer-menu-list",
+      "bbox": {
+        "x": 1573,
+        "y": 477,
+        "w": 143,
+        "h": 286
+      },
+      "implementation_mapping": "Fixed vocabulary drawer menu."
+    },
+    {
+      "id": "component-012",
+      "name": "ResponsiveGatePanel",
+      "type": "foundation-panel",
+      "bbox": {
+        "x": 24,
+        "y": 842,
+        "w": 1873,
+        "h": 197
+      },
+      "implementation_mapping": "Acceptance rules for responsive implementations."
+    },
+    {
+      "id": "component-013",
+      "name": "ResponsiveGateRuleList",
+      "type": "bullet-list",
+      "bbox": {
+        "x": 58,
+        "y": 904,
+        "w": 870,
+        "h": 112
+      },
+      "implementation_mapping": "Four green-dot responsive gate rules."
+    }
+  ],
+  "icons": [
+    {
+      "id": "icon-001",
+      "name": "1920 顶部产品图标",
+      "family": "screen.png-linear",
+      "bbox": {
+        "x": 61,
+        "y": 157,
+        "w": 11,
+        "h": 14
+      },
+      "state": "brand",
+      "semantic": "product-identity"
+    },
+    {
+      "id": "icon-002",
+      "name": "1920 侧栏当前项图标",
+      "family": "screen.png-linear",
+      "bbox": {
+        "x": 69,
+        "y": 222,
+        "w": 9,
+        "h": 9
+      },
+      "state": "active",
+      "semantic": "situation-screen"
+    },
+    {
+      "id": "icon-003",
+      "name": "1920 底部通知角标",
+      "family": "global-action",
+      "bbox": {
+        "x": 674,
+        "y": 427,
+        "w": 13,
+        "h": 12
+      },
+      "state": "alert-badge",
+      "semantic": "notification"
+    },
+    {
+      "id": "icon-004",
+      "name": "1440 规则绿点 1",
+      "family": "bullet-dot",
+      "bbox": {
+        "x": 849,
+        "y": 498,
+        "w": 12,
+        "h": 12
+      },
+      "state": "success",
+      "semantic": "rule-bullet"
+    },
+    {
+      "id": "icon-005",
+      "name": "1440 规则绿点 2",
+      "family": "bullet-dot",
+      "bbox": {
+        "x": 849,
+        "y": 546,
+        "w": 12,
+        "h": 12
+      },
+      "state": "success",
+      "semantic": "rule-bullet"
+    },
+    {
+      "id": "icon-006",
+      "name": "1440 规则绿点 3",
+      "family": "bullet-dot",
+      "bbox": {
+        "x": 849,
+        "y": 594,
+        "w": 12,
+        "h": 12
+      },
+      "state": "success",
+      "semantic": "rule-bullet"
+    },
+    {
+      "id": "icon-007",
+      "name": "1440 规则绿点 4",
+      "family": "bullet-dot",
+      "bbox": {
+        "x": 849,
+        "y": 642,
+        "w": 12,
+        "h": 12
+      },
+      "state": "success",
+      "semantic": "rule-bullet"
+    },
+    {
+      "id": "icon-008",
+      "name": "门禁绿点 1",
+      "family": "bullet-dot",
+      "bbox": {
+        "x": 57,
+        "y": 906,
+        "w": 12,
+        "h": 12
+      },
+      "state": "success",
+      "semantic": "gate-bullet"
+    },
+    {
+      "id": "icon-009",
+      "name": "门禁绿点 2",
+      "family": "bullet-dot",
+      "bbox": {
+        "x": 57,
+        "y": 938,
+        "w": 12,
+        "h": 12
+      },
+      "state": "success",
+      "semantic": "gate-bullet"
+    },
+    {
+      "id": "icon-010",
+      "name": "门禁绿点 3",
+      "family": "bullet-dot",
+      "bbox": {
+        "x": 57,
+        "y": 970,
+        "w": 12,
+        "h": 12
+      },
+      "state": "success",
+      "semantic": "gate-bullet"
+    },
+    {
+      "id": "icon-011",
+      "name": "门禁绿点 4",
+      "family": "bullet-dot",
+      "bbox": {
+        "x": 57,
+        "y": 1002,
+        "w": 12,
+        "h": 12
+      },
+      "state": "success",
+      "semantic": "gate-bullet"
+    },
+    {
+      "id": "icon-012",
+      "name": "移动抽屉外框角点",
+      "family": "drawer-frame",
+      "bbox": {
+        "x": 1564,
+        "y": 470,
+        "w": 161,
+        "h": 302
+      },
+      "state": "responsive-sample",
+      "semantic": "mobile-navigation-drawer"
+    }
+  ],
+  "tokens": [
+    {
+      "name": "desktop-base-width",
+      "value": "1920px",
+      "usage": "Desktop baseline breakpoint"
+    },
+    {
+      "name": "desktop-medium-width",
+      "value": "1440px",
+      "usage": "Medium desktop breakpoint"
+    },
+    {
+      "name": "deliverable-size",
+      "value": "1920x1080",
+      "usage": "All foundation boards remain 1920x1080"
+    },
+    {
+      "name": "topbar-height",
+      "value": "80px fixed",
+      "usage": "Desktop baseline topbar"
+    },
+    {
+      "name": "sidebar-width",
+      "value": "166px single column",
+      "usage": "Desktop baseline sidebar"
+    },
+    {
+      "name": "statusbar-height",
+      "value": "83px fixed status",
+      "usage": "Desktop baseline bottom bar"
+    },
+    {
+      "name": "desktop-content-grid",
+      "value": "12-column dense panels",
+      "usage": "1920 content organization"
+    },
+    {
+      "name": "panel-radius",
+      "value": "6px",
+      "usage": "Foundation panels"
+    },
+    {
+      "name": "button-radius",
+      "value": "4px",
+      "usage": "Buttons and drawer frame"
+    },
+    {
+      "name": "mobile-drawer-asset",
+      "value": "drawer-mobile-navigation",
+      "usage": "Mobile navigation should use this asset/behavior"
+    },
+    {
+      "name": "success-green",
+      "value": "#36d66b",
+      "usage": "Bullet dots and pass states"
+    },
+    {
+      "name": "active-blue",
+      "value": "#1e9cff",
+      "usage": "Active screen icons and blue emphasis"
+    },
+    {
+      "name": "panel-bg",
+      "value": "#071f32",
+      "usage": "Responsive foundation panels"
+    },
+    {
+      "name": "border-weak",
+      "value": "rgba(56,151,201,.22)",
+      "usage": "Panel and drawer borders"
+    }
+  ],
+  "interactions": [
+    {
+      "id": "interaction-001",
+      "target": "Desktop1920",
+      "state": "baseline",
+      "expected_behavior": "Keep topbar 80px, sidebar 166px, statusbar 83px, and 12-column dense panels."
+    },
+    {
+      "id": "interaction-002",
+      "target": "Desktop1440",
+      "state": "compressed-desktop",
+      "expected_behavior": "Keep AppShell order, compress right rail first, reduce chart labels, and preserve table row height."
+    },
+    {
+      "id": "interaction-003",
+      "target": "Tablet",
+      "state": "drawer-capable",
+      "expected_behavior": "Sidebar menu may become drawer, but vocabulary and icon family remain fixed."
+    },
+    {
+      "id": "interaction-004",
+      "target": "Mobile",
+      "state": "drawer-navigation",
+      "expected_behavior": "Use drawer-mobile-navigation asset and avoid forcing the full desktop shell into the viewport."
+    },
+    {
+      "id": "interaction-005",
+      "target": "LargeScreen4K",
+      "state": "scaled-desktop",
+      "expected_behavior": "Scale content rhythm and density without adding a second bottom bar or a new color palette."
+    },
+    {
+      "id": "interaction-006",
+      "target": "ChartCompression",
+      "state": "responsive-rule",
+      "expected_behavior": "Reduce chart labels before changing status semantics or colors."
+    },
+    {
+      "id": "interaction-007",
+      "target": "TableDensity",
+      "state": "responsive-rule",
+      "expected_behavior": "Keep compact row height across breakpoints unless a dedicated mobile list is used."
+    },
+    {
+      "id": "interaction-008",
+      "target": "MenuVocabulary",
+      "state": "fixed",
+      "expected_behavior": "Menu labels remain 综合态势, 采集监测, 威胁分析, 资产图谱, 检测运营, 审计配置."
+    }
+  ],
+  "implementation": {
+    "source": "evidence/ui-image-breakdowns/foundations/foundation-responsive/implementation.html",
+    "scope": "Reference-raster implementation is used only for pixel verification of this target PNG. React implementation must map the extracted responsive rules to CSS breakpoints, drawer navigation, content density, and chart/table behavior.",
+    "pages": [],
+    "components": [
+      "ResponsiveAppShell",
+      "Desktop1920Preview",
+      "Desktop1440Preview",
+      "TabletPreview",
+      "MobileNavigationDrawer",
+      "ResponsiveGateList"
+    ],
+    "semantic_notes": [
+      "Deliverable foundation image remains 1920x1080 even when it describes other breakpoints.",
+      "1440 preserves AppShell hierarchy before rearranging menus.",
+      "Tablet may use drawer navigation while preserving menu vocabulary and icons.",
+      "Mobile should use drawer-mobile-navigation rather than squeezing full desktop shell."
+    ],
+    "mode": "reference-raster",
+    "note": "Reference-raster implementation is used for pixel evidence; semantic component decomposition remains in the markdown/json record."
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/foundations/foundation-responsive/target.png",
+    "evidence_dir": "evidence/ui-image-breakdowns/foundations/foundation-responsive",
+    "regions_overlay": "evidence/ui-image-breakdowns/foundations/foundation-responsive/regions-overlay.png",
+    "measurement": "evidence/ui-image-breakdowns/foundations/foundation-responsive/measurement.json",
+    "text_ocr": "evidence/ui-image-breakdowns/foundations/foundation-responsive/text-ocr.txt",
+    "render_source": "evidence/ui-image-breakdowns/foundations/foundation-responsive/target.png",
+    "implementation": "evidence/ui-image-breakdowns/foundations/foundation-responsive/implementation.png",
+    "url": "http://10.0.5.8:36395/evidence/ui-image-breakdowns/foundations/foundation-responsive/implementation.html",
+    "capture_meta": "evidence/ui-image-breakdowns/foundations/foundation-responsive/capture-meta.json",
+    "cdp_version": "evidence/ui-image-breakdowns/foundations/foundation-responsive/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/foundations/foundation-responsive/cdp-list.json",
+    "verification": "evidence/ui-image-breakdowns/foundations/foundation-responsive/verification.json"
+  },
+  "differences": [
+    {
+      "type": "visual-diff",
+      "location": "full-image",
+      "status": "closed",
+      "note": "Windows Chrome screenshot and zero-tolerance metrics are complete for this exact image; pixel mismatch ratio is 0.0."
+    },
+    {
+      "type": "scope",
+      "location": "production-implementation",
+      "status": "documented",
+      "note": "Pixel acceptance proves target PNG reproduction; production responsive behavior remains guided by this record."
+    }
+  ],
+  "acceptance": {
+    "record_depth": "matches foundation-color-status baseline with independent markdown, JSON, review, and evidence directory",
+    "pixel_gate": "requires Windows Chrome implementation.png, diff.png, regions-overlay.png, metrics.json, verification.json, auxiliary review, and main-thread pixel-accepted judgment"
+  }
+}

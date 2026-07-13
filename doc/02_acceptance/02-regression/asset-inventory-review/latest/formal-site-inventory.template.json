@@ -1,0 +1,228 @@
+{
+  "site": "observed-live-campus",
+  "snapshot_at": "2026-06-30T16:46:06.607756+00:00",
+  "source": "site-owner-review-template",
+  "review_required": false,
+  "approved_by": "TBD",
+  "approved_at": "TBD",
+  "approval_evidence": "TBD",
+  "usage": "Fill site_owner_decision for each row in review-assets.csv, remove excluded rows, replace all TBD fields, and only then use this as SITE_ASSET_INVENTORY_JSON.",
+  "assets": [
+    {
+      "asset_id": "c5b964e4-dd9f-4c6f-826a-4031ae87e9e2",
+      "mac_address": "02:cd:29:16:16:41",
+      "ip_address": "10.12.0.41",
+      "hostname": "codex-edge-sw-161647",
+      "expected_type": "observed-live-asset",
+      "location": ""
+    },
+    {
+      "asset_id": "d59a03f5-142e-4f93-a7b8-695558e78129",
+      "mac_address": "02:cd:29:16:16:31",
+      "ip_address": "10.12.0.31",
+      "hostname": "codex-core-sw-161647",
+      "expected_type": "observed-live-asset",
+      "location": ""
+    },
+    {
+      "asset_id": "8dada6c5-cb3a-4993-9612-69908437d195",
+      "mac_address": "02:cd:29:15:37:41",
+      "ip_address": "10.12.0.41",
+      "hostname": "codex-edge-sw-153752",
+      "expected_type": "observed-live-asset",
+      "location": ""
+    },
+    {
+      "asset_id": "be22ca45-1e24-4a59-94cd-996ab0ed9e74",
+      "mac_address": "02:cd:29:15:37:31",
+      "ip_address": "10.12.0.31",
+      "hostname": "codex-core-sw-153752",
+      "expected_type": "observed-live-asset",
+      "location": ""
+    },
+    {
+      "asset_id": "26357341-520f-4649-bd0c-2c7760a7de7a",
+      "mac_address": "02:cd:29:22:34:41",
+      "ip_address": "10.12.0.41",
+      "hostname": "codex-edge-sw-223447",
+      "expected_type": "observed-live-asset",
+      "location": ""
+    },
+    {
+      "asset_id": "d0ed7087-e778-453b-9702-1dea05693c5e",
+      "mac_address": "02:cd:29:22:34:31",
+      "ip_address": "10.12.0.31",
+      "hostname": "codex-core-sw-223447",
+      "expected_type": "observed-live-asset",
+      "location": ""
+    },
+    {
+      "asset_id": "c82e62fe-0f01-44b9-b998-5232065446aa",
+      "mac_address": "02:cd:29:22:33:41",
+      "ip_address": "10.12.0.41",
+      "hostname": "codex-edge-sw-223358",
+      "expected_type": "observed-live-asset",
+      "location": ""
+    },
+    {
+      "asset_id": "cb3e3475-4ea8-4d84-b319-00eff7e5ed2d",
+      "mac_address": "02:cd:29:22:33:31",
+      "ip_address": "10.12.0.31",
+      "hostname": "codex-core-sw-223358",
+      "expected_type": "observed-live-asset",
+      "location": ""
+    },
+    {
+      "asset_id": "fe9001e8-b589-40f9-a12e-ebfe617d1133",
+      "mac_address": "02:cd:29:22:28:21",
+      "ip_address": "10.12.0.21",
+      "hostname": "codex-edge-sw-222822",
+      "expected_type": "observed-live-asset",
+      "location": ""
+    },
+    {
+      "asset_id": "73c54c14-3fca-43ce-8117-ee7c11640688",
+      "mac_address": "02:cd:29:22:28:11",
+      "ip_address": "10.12.0.11",
+      "hostname": "codex-core-sw-222822",
+      "expected_type": "observed-live-asset",
+      "location": ""
+    },
+    {
+      "asset_id": "75c6532e-1745-4b78-8d37-85f502a176d7",
+      "mac_address": "02:42:ac:d0:9e:ca",
+      "ip_address": "10.66.5.202",
+      "hostname": "codex-smoke-20260624105507-1271578",
+      "expected_type": "observed-live-asset",
+      "location": ""
+    },
+    {
+      "asset_id": "e077fee7-7efb-4d6b-bbfe-bb1b7b499ae3",
+      "mac_address": "02:42:ac:33:1b:a9",
+      "ip_address": "10.66.150.148",
+      "hostname": "codex-smoke-20260624103232-1216855",
+      "expected_type": "observed-live-asset",
+      "location": ""
+    },
+    {
+      "asset_id": "ac1ca641-36cd-4292-9d5e-21714d2b8830",
+      "mac_address": "02:42:ac:82:bf:74",
+      "ip_address": "10.66.185.2",
+      "hostname": "codex-smoke-20260624103047-1209415",
+      "expected_type": "observed-live-asset",
+      "location": ""
+    },
+    {
+      "asset_id": "14f3fb8a-e092-4121-9f0d-fda9edde92c3",
+      "mac_address": "02:42:ac:95:0c:d6",
+      "ip_address": "10.66.99.33",
+      "hostname": "codex-smoke-20260619082043-4085535",
+      "expected_type": "observed-live-asset",
+      "location": ""
+    },
+    {
+      "asset_id": "320174b4-ce8e-4045-a790-006e66207125",
+      "mac_address": "02:42:ac:81:fe:8e",
+      "ip_address": "10.66.162.48",
+      "hostname": "codex-smoke-20260618231803-3162194",
+      "expected_type": "observed-live-asset",
+      "location": ""
+    },
+    {
+      "asset_id": "7b0c9447-65d6-4201-9397-f05aa4348d28",
+      "mac_address": "02:42:ac:85:ec:fe",
+      "ip_address": "10.66.16.59",
+      "hostname": "codex-smoke-20260618225108-2971242",
+      "expected_type": "observed-live-asset",
+      "location": ""
+    },
+    {
+      "asset_id": "9b3d428e-fa70-48af-acdf-ef3a769ca24e",
+      "mac_address": "02:42:ac:ad:2c:b8",
+      "ip_address": "10.66.217.90",
+      "hostname": "codex-smoke-20260618214518-2489292",
+      "expected_type": "observed-live-asset",
+      "location": ""
+    },
+    {
+      "asset_id": "48ebd60f-2efc-4c97-9238-a4594672d5b0",
+      "mac_address": "02:42:ac:49:07:f8",
+      "ip_address": "10.66.214.186",
+      "hostname": "codex-smoke-20260618214508-2486708",
+      "expected_type": "observed-live-asset",
+      "location": ""
+    },
+    {
+      "asset_id": "970007a3-d8bb-49a2-acf0-e1a557b91b37",
+      "mac_address": "02:42:ac:ed:b5:e1",
+      "ip_address": "10.66.113.19",
+      "hostname": "codex-smoke-20260618214111-2426096",
+      "expected_type": "observed-live-asset",
+      "location": ""
+    },
+    {
+      "asset_id": "c686848c-42b3-40a3-a0b3-693fb2d97983",
+      "mac_address": "02:42:ac:d2:89:62",
+      "ip_address": "10.66.100.196",
+      "hostname": "codex-smoke-20260618214101-2424971",
+      "expected_type": "observed-live-asset",
+      "location": ""
+    },
+    {
+      "asset_id": "6aaeb8ed-a596-4974-bf58-7f3a05e1e760",
+      "mac_address": "02:42:ac:8b:f0:74",
+      "ip_address": "10.66.215.20",
+      "hostname": "codex-smoke-20260618213957-2416337",
+      "expected_type": "observed-live-asset",
+      "location": ""
+    },
+    {
+      "asset_id": "7470f5cb-99e5-4ba9-bdb7-8dea5dd22025",
+      "mac_address": "02:42:ac:bb:56:11",
+      "ip_address": "10.66.175.113",
+      "hostname": "codex-smoke-20260618213943-2414466",
+      "expected_type": "observed-live-asset",
+      "location": ""
+    },
+    {
+      "asset_id": "88b4599d-98e1-42d3-8dad-ff50c1b67a4b",
+      "mac_address": "02:42:ac:08:5f:ed",
+      "ip_address": "10.66.7.73",
+      "hostname": "codex-smoke-20260618213742-2399243",
+      "expected_type": "observed-live-asset",
+      "location": ""
+    },
+    {
+      "asset_id": "e6c14935-998d-4e17-8b68-5ba43ab5b69d",
+      "mac_address": "02:42:ac:da:62:72",
+      "ip_address": "10.66.2.89",
+      "hostname": "codex-smoke-20260618213727-2396857",
+      "expected_type": "observed-live-asset",
+      "location": ""
+    },
+    {
+      "asset_id": "38a1b615-f865-4fcb-aa3f-80835a26a98a",
+      "mac_address": "02:42:ac:4e:ce:12",
+      "ip_address": "10.66.47.94",
+      "hostname": "codex-smoke-20260618213703-2391799",
+      "expected_type": "observed-live-asset",
+      "location": ""
+    },
+    {
+      "asset_id": "4247b5f7-cb4d-41ff-bf10-00fea055b33d",
+      "mac_address": "02:42:ac:11:09:06",
+      "ip_address": "10.244.250.151",
+      "hostname": "",
+      "expected_type": "observed-live-asset",
+      "location": ""
+    },
+    {
+      "asset_id": "51d7cde3-076f-426b-a104-d295131a3df0",
+      "mac_address": "02:42:ac:11:0f:06",
+      "ip_address": "10.244.250.247",
+      "hostname": "",
+      "expected_type": "observed-live-asset",
+      "location": ""
+    }
+  ]
+}

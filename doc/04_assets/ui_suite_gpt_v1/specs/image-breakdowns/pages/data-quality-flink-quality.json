@@ -1,0 +1,1113 @@
+{
+  "id": "data-quality-flink-quality",
+  "title": "数据质量 - Flink 质量",
+  "category": "pages",
+  "type": "menu-state",
+  "parent": "data-quality",
+  "route": "/data-quality?tab=flink-quality",
+  "host_route": "/data-quality",
+  "status": "evidence-ready",
+  "accepted": false,
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/data-quality-flink-quality.png",
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "observation": {
+    "layout": "八Tab数据质量外壳内的Flink质量态，业务区为七KPI、三上排面板、三下排面板和右侧动作栏。",
+    "business_focus": "作业运行、checkpoint、watermark、backpressure、迟到事件和四类sink写入质量。",
+    "visual_style": "深蓝高密度运维台，蓝绿趋势、琥珀告警与红色严重状态。"
+  },
+  "evidence_dir": "evidence/ui-image-breakdowns/pages/data-quality-flink-quality/",
+  "prompt_file": "doc/04_assets/ui_suite_gpt_v1/prompts/data-quality.prompt.txt",
+  "manifest_item": {
+    "page_id": "data-quality-flink-quality",
+    "order": 10,
+    "route": "/data-quality?tab=flink-quality",
+    "type": "menu-state",
+    "parent": "data-quality"
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/pages/data-quality-flink-quality/target.png",
+    "regions_overlay": "evidence/ui-image-breakdowns/pages/data-quality-flink-quality/regions-overlay.png",
+    "implementation": "evidence/ui-image-breakdowns/pages/data-quality-flink-quality/implementation.png",
+    "implementation_round": "evidence/ui-image-breakdowns/pages/data-quality-flink-quality/implementation-r117-final.png",
+    "diff": "evidence/ui-image-breakdowns/pages/data-quality-flink-quality/diff.png",
+    "diff_round": "evidence/ui-image-breakdowns/pages/data-quality-flink-quality/diff-r117.png",
+    "metrics": "evidence/ui-image-breakdowns/pages/data-quality-flink-quality/metrics.json",
+    "metrics_round": "evidence/ui-image-breakdowns/pages/data-quality-flink-quality/metrics-r117.json",
+    "target_business": "evidence/ui-image-breakdowns/pages/data-quality-flink-quality/target-business-r117.png",
+    "implementation_business": "evidence/ui-image-breakdowns/pages/data-quality-flink-quality/implementation-business-r117.png",
+    "diff_business": "evidence/ui-image-breakdowns/pages/data-quality-flink-quality/diff-business-r117.png",
+    "metrics_business": "evidence/ui-image-breakdowns/pages/data-quality-flink-quality/metrics-business-r117.json",
+    "measurement": "evidence/ui-image-breakdowns/pages/data-quality-flink-quality/measurement.json",
+    "capture_meta": "evidence/ui-image-breakdowns/pages/data-quality-flink-quality/capture-meta.json",
+    "capture_meta_round": "evidence/ui-image-breakdowns/pages/data-quality-flink-quality/capture-meta-r117-final.json",
+    "verification": "evidence/ui-image-breakdowns/pages/data-quality-flink-quality/verification.json",
+    "cdp_version": "evidence/ui-image-breakdowns/pages/data-quality-flink-quality/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/pages/data-quality-flink-quality/cdp-list.json",
+    "url": "http://10.0.5.8:30180/data-quality?tab=flink-quality&windowsCdpEvidenceTs=1783853533059#codex_smoke_token=<redacted>",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "image_tag": "traffic/web-ui:ui-data-quality-flink-quality-visual-20260708-r117",
+    "evidence_mode": "production-route",
+    "production_route_report": "evidence/ui-image-breakdowns/pages/data-quality-flink-quality/production-route-report.json",
+    "final_url": "http://10.0.5.8:30180/data-quality?tab=flink-quality&windowsCdpEvidenceTs=1783853533059"
+  },
+  "implementation": {
+    "source": "/data-quality",
+    "mode": "production-route",
+    "route": "/data-quality",
+    "pages": [
+      "web/ui/src/pages/DataQualityPage.tsx"
+    ],
+    "components": [
+      "FlinkQualityTab",
+      "DynamicEChart"
+    ],
+    "url": "http://10.0.5.8:30180/data-quality?tab=flink-quality&__codex_ui_breakdown_production=1&__capture=r117-final",
+    "route_state": {
+      "tab": "flink-quality"
+    },
+    "image_tag": "traffic/web-ui:ui-data-quality-flink-quality-visual-20260708-r117",
+    "files": [
+      "web/ui/src/pages/DataQualityPage.tsx",
+      "web/ui/src/services/mockData.ts",
+      "web/ui/src/styles/pages.css",
+      "deployments/kubernetes/applications/web-ui.yaml"
+    ],
+    "api_data_entry": "fetchPageSnapshot(route.id) -> PageSnapshot.visuals.dataQuality typed fallback/API snapshot",
+    "refresh": "React Query refetchInterval 30000ms for non-pagination business data",
+    "notes": [
+      "No breadcrumb/menu path is rendered inside business top area.",
+      "Flink 质量 tab keeps 数据质量 menu selected because it is a menu-state without independent menu route.",
+      "Business charts/tables are data-driven React/SVG/CSS, not raster screenshots."
+    ],
+    "resolved_path": "/data-quality",
+    "note": "implementation.png is captured from the real APISIX/Web UI production route through Windows Chrome CDP. It is not a raster replay of target.png."
+  },
+  "layout_regions": [
+    {
+      "id": "canvas",
+      "label": "画布",
+      "bbox": [
+        0,
+        0,
+        1920,
+        1080
+      ],
+      "role": "Viewport"
+    },
+    {
+      "id": "topbar",
+      "label": "顶部全局状态栏",
+      "bbox": [
+        0,
+        0,
+        1920,
+        80
+      ],
+      "role": "AppShell"
+    },
+    {
+      "id": "sidebar",
+      "label": "左侧导航",
+      "bbox": [
+        0,
+        80,
+        190,
+        917
+      ],
+      "role": "AppShell"
+    },
+    {
+      "id": "bottombar",
+      "label": "底部状态栏",
+      "bbox": [
+        0,
+        997,
+        1920,
+        83
+      ],
+      "role": "AppShell"
+    },
+    {
+      "id": "business-root",
+      "label": "业务内容区",
+      "bbox": [
+        198,
+        80,
+        1722,
+        917
+      ],
+      "role": "DataQualityPage"
+    },
+    {
+      "id": "title-tabs",
+      "label": "标题与 Tab",
+      "bbox": [
+        199,
+        81,
+        1428,
+        74
+      ],
+      "role": "TabNavigation"
+    },
+    {
+      "id": "filterbar",
+      "label": "时间与刷新筛选",
+      "bbox": [
+        199,
+        163,
+        1428,
+        32
+      ],
+      "role": "FilterBar"
+    },
+    {
+      "id": "kpi-strip",
+      "label": "Flink KPI 指标条",
+      "bbox": [
+        199,
+        203,
+        1428,
+        116
+      ],
+      "role": "MetricTileGroup"
+    },
+    {
+      "id": "upper-grid",
+      "label": "上半区三栏",
+      "bbox": [
+        199,
+        327,
+        1428,
+        318
+      ],
+      "role": "WorkGrid"
+    },
+    {
+      "id": "flink-job-table",
+      "label": "Flink 作业健康明细",
+      "bbox": [
+        206,
+        364,
+        551,
+        273
+      ],
+      "role": "DataTable"
+    },
+    {
+      "id": "checkpoint-watermark-trend",
+      "label": "Checkpoint 与 Watermark 趋势",
+      "bbox": [
+        781,
+        364,
+        436,
+        273
+      ],
+      "role": "SVGLineChart"
+    },
+    {
+      "id": "backpressure-heatmap",
+      "label": "Backpressure 热力图",
+      "bbox": [
+        1240,
+        364,
+        380,
+        273
+      ],
+      "role": "SVGGridHeatmap"
+    },
+    {
+      "id": "lower-grid",
+      "label": "下半区三栏",
+      "bbox": [
+        199,
+        653,
+        1428,
+        309
+      ],
+      "role": "WorkGrid"
+    },
+    {
+      "id": "late-window-panel",
+      "label": "迟到数据与窗口闭合",
+      "bbox": [
+        206,
+        690,
+        551,
+        264
+      ],
+      "role": "StackedBarsAndTable"
+    },
+    {
+      "id": "failure-top10-table",
+      "label": "异常与失败原因 Top10",
+      "bbox": [
+        781,
+        690,
+        436,
+        264
+      ],
+      "role": "DataTable"
+    },
+    {
+      "id": "sink-quality-cards",
+      "label": "Sink 写入质量",
+      "bbox": [
+        1240,
+        690,
+        380,
+        264
+      ],
+      "role": "MetricCardsWithSparklines"
+    },
+    {
+      "id": "right-rail",
+      "label": "Flink 质量右侧栏",
+      "bbox": [
+        1635,
+        113,
+        274,
+        846
+      ],
+      "role": "ActionRail"
+    }
+  ],
+  "regions": [
+    {
+      "id": "canvas",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "purpose": "viewport"
+    },
+    {
+      "id": "topbar",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 80
+      },
+      "purpose": "global header"
+    },
+    {
+      "id": "sidebar",
+      "bbox": {
+        "x": 0,
+        "y": 80,
+        "w": 190,
+        "h": 917
+      },
+      "purpose": "global navigation"
+    },
+    {
+      "id": "bottombar",
+      "bbox": {
+        "x": 0,
+        "y": 997,
+        "w": 1920,
+        "h": 83
+      },
+      "purpose": "global status footer"
+    },
+    {
+      "id": "business-root",
+      "bbox": {
+        "x": 198,
+        "y": 80,
+        "w": 1722,
+        "h": 917
+      },
+      "purpose": "Flink quality business area"
+    },
+    {
+      "id": "title-tabs",
+      "bbox": {
+        "x": 199,
+        "y": 81,
+        "w": 1428,
+        "h": 74
+      },
+      "purpose": "title and tabs"
+    },
+    {
+      "id": "filterbar",
+      "bbox": {
+        "x": 199,
+        "y": 163,
+        "w": 1428,
+        "h": 32
+      },
+      "purpose": "time and refresh controls"
+    },
+    {
+      "id": "kpi-strip",
+      "bbox": {
+        "x": 199,
+        "y": 203,
+        "w": 1428,
+        "h": 116
+      },
+      "purpose": "seven Flink metrics"
+    },
+    {
+      "id": "job-table",
+      "bbox": {
+        "x": 206,
+        "y": 364,
+        "w": 551,
+        "h": 273
+      },
+      "purpose": "paginated job health"
+    },
+    {
+      "id": "checkpoint-trend",
+      "bbox": {
+        "x": 781,
+        "y": 364,
+        "w": 436,
+        "h": 273
+      },
+      "purpose": "dynamic ECharts trend"
+    },
+    {
+      "id": "backpressure-heatmap",
+      "bbox": {
+        "x": 1240,
+        "y": 364,
+        "w": 380,
+        "h": 273
+      },
+      "purpose": "dynamic ECharts heatmap"
+    },
+    {
+      "id": "late-window",
+      "bbox": {
+        "x": 206,
+        "y": 690,
+        "w": 551,
+        "h": 264
+      },
+      "purpose": "late events and windows"
+    },
+    {
+      "id": "failure-table",
+      "bbox": {
+        "x": 781,
+        "y": 690,
+        "w": 436,
+        "h": 264
+      },
+      "purpose": "failure Top 10"
+    },
+    {
+      "id": "sink-cards",
+      "bbox": {
+        "x": 1240,
+        "y": 690,
+        "w": 380,
+        "h": 264
+      },
+      "purpose": "sink quality cards"
+    },
+    {
+      "id": "right-rail",
+      "bbox": {
+        "x": 1635,
+        "y": 113,
+        "w": 274,
+        "h": 846
+      },
+      "purpose": "action and evidence rail"
+    }
+  ],
+  "text_ledger": [
+    "数据质量",
+    "质量总览",
+    "Topic 健康",
+    "Flink 质量",
+    "字段质量",
+    "存储质量",
+    "重放对账",
+    "质量报告",
+    "质量设置",
+    "最近 24 小时",
+    "2025-06-25 15:30:45 ~ 2025-06-26 15:30:45",
+    "自动刷新",
+    "刷新",
+    "Flink 质量分",
+    "91 /100",
+    "运行作业",
+    "9",
+    "Checkpoint 成功率",
+    "99.2%",
+    "Watermark 延迟 P95",
+    "1.6s",
+    "Backpressure",
+    "0.38",
+    "迟到数据率",
+    "0.67%",
+    "异常事件",
+    "312",
+    "Flink 作业健康明细",
+    "session-job",
+    "feature-job",
+    "rule-job",
+    "pcap-index-job",
+    "behavior-job",
+    "alert-generator-job",
+    "log-job",
+    "user-behavior-job",
+    "Checkpoint 与 Watermark 趋势",
+    "Checkpoint 时长 (s)",
+    "Checkpoint Age (s)",
+    "Watermark 延迟 P95 (s)",
+    "Backpressure 热力图 (按作业 / Subtask)",
+    "迟到数据与窗口闭合（按来源 Topic）",
+    "异常与失败原因（Top 10）",
+    "Sink 写入质量（近 24h）",
+    "Flink 质量异常",
+    "快速定位",
+    "修复建议",
+    "快收证据与报告"
+  ],
+  "texts": [
+    {
+      "value": "数据质量",
+      "type": "title",
+      "bbox": {
+        "x": 198,
+        "y": 76,
+        "w": 120,
+        "h": 30
+      }
+    },
+    {
+      "value": "质量总览",
+      "type": "tab",
+      "bbox": {
+        "x": 197,
+        "y": 112,
+        "w": 121,
+        "h": 40
+      }
+    },
+    {
+      "value": "Topic 健康",
+      "type": "tab",
+      "bbox": {
+        "x": 318,
+        "y": 112,
+        "w": 124,
+        "h": 40
+      }
+    },
+    {
+      "value": "Flink 质量",
+      "type": "tab-active",
+      "bbox": {
+        "x": 442,
+        "y": 112,
+        "w": 126,
+        "h": 40
+      }
+    },
+    {
+      "value": "字段质量",
+      "type": "tab",
+      "bbox": {
+        "x": 568,
+        "y": 112,
+        "w": 123,
+        "h": 40
+      }
+    },
+    {
+      "value": "存储质量",
+      "type": "tab",
+      "bbox": {
+        "x": 691,
+        "y": 112,
+        "w": 122,
+        "h": 40
+      }
+    },
+    {
+      "value": "重放对账",
+      "type": "tab",
+      "bbox": {
+        "x": 813,
+        "y": 112,
+        "w": 122,
+        "h": 40
+      }
+    },
+    {
+      "value": "质量报告",
+      "type": "tab",
+      "bbox": {
+        "x": 935,
+        "y": 112,
+        "w": 122,
+        "h": 40
+      }
+    },
+    {
+      "value": "质量设置",
+      "type": "tab",
+      "bbox": {
+        "x": 1057,
+        "y": 112,
+        "w": 123,
+        "h": 40
+      }
+    },
+    {
+      "value": "最近 24 小时",
+      "type": "select-value",
+      "bbox": {
+        "x": 197,
+        "y": 162,
+        "w": 140,
+        "h": 28
+      }
+    },
+    {
+      "value": "自动刷新",
+      "type": "toggle-label",
+      "bbox": {
+        "x": 1456,
+        "y": 162,
+        "w": 74,
+        "h": 28
+      }
+    },
+    {
+      "value": "刷新",
+      "type": "button",
+      "bbox": {
+        "x": 1554,
+        "y": 162,
+        "w": 72,
+        "h": 28
+      }
+    },
+    {
+      "value": "Flink 质量分 91/100",
+      "type": "metric",
+      "bbox": {
+        "x": 210,
+        "y": 205,
+        "w": 160,
+        "h": 76
+      }
+    },
+    {
+      "value": "运行作业 9",
+      "type": "metric",
+      "bbox": {
+        "x": 399,
+        "y": 205,
+        "w": 180,
+        "h": 76
+      }
+    },
+    {
+      "value": "Checkpoint 成功率 99.2%",
+      "type": "metric",
+      "bbox": {
+        "x": 615,
+        "y": 205,
+        "w": 200,
+        "h": 76
+      }
+    },
+    {
+      "value": "Watermark 延迟 P95 1.6s",
+      "type": "metric",
+      "bbox": {
+        "x": 849,
+        "y": 205,
+        "w": 190,
+        "h": 76
+      }
+    },
+    {
+      "value": "Backpressure 0.38",
+      "type": "metric-warning",
+      "bbox": {
+        "x": 1070,
+        "y": 205,
+        "w": 190,
+        "h": 76
+      }
+    },
+    {
+      "value": "迟到数据率 0.67%",
+      "type": "metric",
+      "bbox": {
+        "x": 1280,
+        "y": 205,
+        "w": 190,
+        "h": 76
+      }
+    },
+    {
+      "value": "异常事件 312",
+      "type": "metric-alert",
+      "bbox": {
+        "x": 1490,
+        "y": 205,
+        "w": 135,
+        "h": 76
+      }
+    },
+    {
+      "value": "Flink 作业健康明细",
+      "type": "panel-title",
+      "bbox": {
+        "x": 208,
+        "y": 328,
+        "w": 210,
+        "h": 25
+      }
+    },
+    {
+      "value": "Checkpoint 与 Watermark 趋势",
+      "type": "panel-title",
+      "bbox": {
+        "x": 780,
+        "y": 328,
+        "w": 270,
+        "h": 25
+      }
+    },
+    {
+      "value": "Backpressure 热力图（按作业 / Subtask）",
+      "type": "panel-title",
+      "bbox": {
+        "x": 1238,
+        "y": 328,
+        "w": 330,
+        "h": 25
+      }
+    },
+    {
+      "value": "迟到数据与窗口闭合（按来源 Topic）",
+      "type": "panel-title",
+      "bbox": {
+        "x": 208,
+        "y": 659,
+        "w": 330,
+        "h": 25
+      }
+    },
+    {
+      "value": "异常与失败原因（Top 10）",
+      "type": "panel-title",
+      "bbox": {
+        "x": 780,
+        "y": 659,
+        "w": 250,
+        "h": 25
+      }
+    },
+    {
+      "value": "Sink 写入质量（近 24h）",
+      "type": "panel-title",
+      "bbox": {
+        "x": 1238,
+        "y": 659,
+        "w": 250,
+        "h": 25
+      }
+    },
+    {
+      "value": "Flink 质量异常",
+      "type": "rail-title",
+      "bbox": {
+        "x": 1648,
+        "y": 126,
+        "w": 150,
+        "h": 25
+      }
+    },
+    {
+      "value": "快速定位",
+      "type": "rail-title",
+      "bbox": {
+        "x": 1648,
+        "y": 359,
+        "w": 100,
+        "h": 25
+      }
+    },
+    {
+      "value": "修复建议",
+      "type": "rail-title",
+      "bbox": {
+        "x": 1648,
+        "y": 548,
+        "w": 100,
+        "h": 25
+      }
+    },
+    {
+      "value": "快收证据与报告",
+      "type": "rail-title",
+      "bbox": {
+        "x": 1648,
+        "y": 733,
+        "w": 160,
+        "h": 25
+      }
+    },
+    {
+      "value": "behavior-job",
+      "type": "table-cell-warning",
+      "bbox": {
+        "x": 207,
+        "y": 490,
+        "w": 90,
+        "h": 25
+      }
+    },
+    {
+      "value": "Checkpoint 耗时陡升",
+      "type": "annotation-alert",
+      "bbox": {
+        "x": 918,
+        "y": 416,
+        "w": 130,
+        "h": 44
+      }
+    },
+    {
+      "value": "Watermark 延迟升高",
+      "type": "annotation-warning",
+      "bbox": {
+        "x": 1080,
+        "y": 436,
+        "w": 130,
+        "h": 44
+      }
+    }
+  ],
+  "components": [
+    {
+      "name": "AppShell",
+      "region": "topbar/sidebar/bottombar",
+      "classification": "公共区，当前页不改"
+    },
+    {
+      "name": "DataQualityTabs",
+      "region": "title-tabs",
+      "classification": "menu-state tab"
+    },
+    {
+      "name": "FlinkQualityFilterBar",
+      "region": "filterbar",
+      "classification": "filter controls"
+    },
+    {
+      "name": "DataQualityMetricTile[]",
+      "region": "kpi-strip",
+      "classification": "business metric cards"
+    },
+    {
+      "name": "FlinkJobHealthTable",
+      "region": "flink-job-table",
+      "classification": "business table"
+    },
+    {
+      "name": "FlinkCheckpointWatermarkTrend",
+      "region": "checkpoint-watermark-trend",
+      "classification": "business dynamic SVG line chart"
+    },
+    {
+      "name": "FlinkBackpressureHeatmap",
+      "region": "backpressure-heatmap",
+      "classification": "business dynamic SVG/CSS heatmap"
+    },
+    {
+      "name": "LateWindowClosure",
+      "region": "late-window-panel",
+      "classification": "business stacked bars and table"
+    },
+    {
+      "name": "FlinkFailureTable",
+      "region": "failure-top10-table",
+      "classification": "business table"
+    },
+    {
+      "name": "SinkQualityCards",
+      "region": "sink-quality-cards",
+      "classification": "business metric cards and sparklines"
+    },
+    {
+      "name": "FlinkQualitySideRail",
+      "region": "right-rail",
+      "classification": "action/evidence rail"
+    }
+  ],
+  "business_dynamic_visuals": [
+    {
+      "name": "Checkpoint 与 Watermark 趋势",
+      "source": "PageSnapshot.visuals.dataQuality.flinkCheckpointTrend typed fallback / API snapshot",
+      "fields": [
+        "times",
+        "checkpointDuration",
+        "checkpointAge",
+        "watermarkP95",
+        "watermarkSla",
+        "checkpointSla"
+      ],
+      "refresh": "fetchPageSnapshot React Query 30s",
+      "implementation": "React SVG polyline",
+      "responsive": "viewBox + CSS grid minmax rows"
+    },
+    {
+      "name": "Backpressure 热力图",
+      "source": "PageSnapshot.visuals.dataQuality.flinkBackpressureRows typed fallback / API snapshot",
+      "fields": [
+        "label",
+        "values",
+        "flinkBackpressureBuckets"
+      ],
+      "refresh": "fetchPageSnapshot React Query 30s",
+      "implementation": "React/CSS heatmap cells",
+      "responsive": "repeat(18, minmax(0, 1fr))"
+    },
+    {
+      "name": "迟到数据与窗口闭合",
+      "source": "PageSnapshot.visuals.dataQuality.flinkLateTopicRows + flinkWindowRows",
+      "fields": [
+        "topic",
+        "normal",
+        "late",
+        "dropped",
+        "window",
+        "p95",
+        "dropRate"
+      ],
+      "refresh": "fetchPageSnapshot React Query 30s",
+      "implementation": "React stacked bars + table",
+      "responsive": "grid columns and title hover text"
+    },
+    {
+      "name": "Sink 写入质量 sparklines",
+      "source": "PageSnapshot.visuals.dataQuality.flinkSinkRows",
+      "fields": [
+        "name",
+        "status",
+        "eps",
+        "success",
+        "p95",
+        "retries",
+        "trend"
+      ],
+      "refresh": "fetchPageSnapshot React Query 30s",
+      "implementation": "React SVG mini trends",
+      "responsive": "viewBox preserveAspectRatio=none"
+    }
+  ],
+  "icons": [
+    {
+      "name": "SafetyCertificateOutlined",
+      "location": "score card",
+      "meaning": "quality score"
+    },
+    {
+      "name": "ReloadOutlined",
+      "location": "toolbar",
+      "meaning": "refresh"
+    },
+    {
+      "name": "SearchOutlined",
+      "location": "job row",
+      "meaning": "inspect job"
+    },
+    {
+      "name": "LineChartOutlined",
+      "location": "job row",
+      "meaning": "open metrics"
+    },
+    {
+      "name": "WarningFilled",
+      "location": "alerts",
+      "meaning": "warning"
+    },
+    {
+      "name": "ExportOutlined",
+      "location": "evidence rail",
+      "meaning": "export report"
+    }
+  ],
+  "tokens": [
+    {
+      "name": "canvas-bg",
+      "value": "#020e18",
+      "use": "background"
+    },
+    {
+      "name": "panel-bg",
+      "value": "#031723",
+      "use": "panels"
+    },
+    {
+      "name": "border",
+      "value": "#0c4261",
+      "use": "panel grid"
+    },
+    {
+      "name": "active",
+      "value": "#168cff",
+      "use": "active tab"
+    },
+    {
+      "name": "series-blue",
+      "value": "#2196f3",
+      "use": "checkpoint duration"
+    },
+    {
+      "name": "series-cyan",
+      "value": "#28c6df",
+      "use": "checkpoint age"
+    },
+    {
+      "name": "success",
+      "value": "#54c84d",
+      "use": "healthy jobs"
+    },
+    {
+      "name": "warning",
+      "value": "#f5a20b",
+      "use": "backpressure warning"
+    },
+    {
+      "name": "danger",
+      "value": "#f0443e",
+      "use": "severe heat cells"
+    },
+    {
+      "name": "font-body",
+      "value": "12px",
+      "use": "dense tables"
+    },
+    {
+      "name": "panel-radius",
+      "value": "4px",
+      "use": "panel corners"
+    },
+    {
+      "name": "space-unit",
+      "value": "8px",
+      "use": "layout rhythm"
+    }
+  ],
+  "interactions": [
+    {
+      "name": "Tab switch",
+      "selector": ".taf-data-quality-tabs button",
+      "state": "Flink 质量 selected"
+    },
+    {
+      "name": "Refresh",
+      "selector": ".taf-data-quality-flink-filterbar .ant-btn",
+      "effect": "refetch page snapshot"
+    },
+    {
+      "name": "Job inspect icons",
+      "selector": ".taf-data-quality-flink-job-actions",
+      "effect": "drilldown affordance"
+    },
+    {
+      "name": "Right rail actions",
+      "selector": ".taf-data-quality-flink-rail button",
+      "effect": "locate/repair/export affordance"
+    },
+    {
+      "name": "Heatmap inspect and table pagination",
+      "selector": ".taf-data-quality-flink-heatmap, .ant-pagination",
+      "effect": "show subtask tooltip or request next stable-height page"
+    }
+  ],
+  "implementation_mapping": {
+    "page": "web/ui/src/pages/DataQualityPage.tsx",
+    "jobs": "flinkJobRows -> paginated table",
+    "trend": "flinkCheckpointWatermarkTrend -> dynamic ECharts",
+    "heatmap": "flinkBackpressureRows -> ECharts heatmap",
+    "late_window": "flinkLateWindowRows -> stacked bars",
+    "failures": "flinkFailureRows -> Top 10 table",
+    "sinks": "flinkSinkRows -> health cards",
+    "rail": "flinkRail*Rows -> action rail"
+  },
+  "runtime": {
+    "status": "pass",
+    "console_errors": 0,
+    "page_errors": 0,
+    "requestfailed": 0,
+    "http4xx5xx": 0,
+    "overflow": 0,
+    "clipped_without_title": 0,
+    "svg_count": 111,
+    "canvas_count": 0,
+    "forbidden_resource_markers": [],
+    "missing_key_texts": []
+  },
+  "metrics": {
+    "full_status": "pass",
+    "full_ratio": 0.10951533564814815,
+    "business_status": "pass",
+    "business_ratio": 0.12123181054212785,
+    "max_pixel_ratio": 0.13,
+    "channel_tolerance": 90
+  },
+  "differences": [
+    {
+      "type": "data/time",
+      "location": "global AppShell topbar",
+      "note": "Global live topbar values differ from static target and are outside current page ownership."
+    },
+    {
+      "type": "anti-aliasing",
+      "location": "dense charts/tables/text",
+      "note": "Remaining heat is text/chart anti-aliasing and live rendering jitter; business diff passes threshold."
+    },
+    {
+      "type": "production-evidence-scope",
+      "location": "/data-quality",
+      "current": "implementation.png is captured from the real APISIX/Web UI route in Windows Chrome CDP",
+      "expected": "no target.png raster replay is used as implementation evidence",
+      "status": "documented"
+    }
+  ],
+  "review_gate": {
+    "status": "business-pixel-accepted",
+    "main_thread_judgment_required": true,
+    "updated_at": "2026-07-08T20:38:40.164978+08:00"
+  },
+  "r271_validation": {
+    "status": "business-pixel-accepted-r271",
+    "image_tag": "traffic/web-ui:ui-data-quality-tabs-query-20260711-r271",
+    "interaction_evidence": "evidence/ui-image-breakdowns/pages/data-quality/interaction-r271-all-tabs.json",
+    "screenshot": "evidence/ui-image-breakdowns/pages/data-quality/interaction-r271-flink-quality.png",
+    "metrics": "evidence/ui-image-breakdowns/pages/data-quality-flink-quality/metrics-business-r271.json",
+    "business_ratio": 0.12448878266629683,
+    "threshold": 0.125,
+    "canvas_count": 11,
+    "runtime_clean": true,
+    "all_tabs_geometry_stable": true,
+    "max_tab_geometry_delta": 0,
+    "field_quality_click_geometry_stable": true,
+    "field_quality_click_first_three_max_delta": 0
+  }
+}

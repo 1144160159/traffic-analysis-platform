@@ -1,0 +1,980 @@
+{
+  "id": "foundation-typography-density",
+  "category": "foundations",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/foundations/foundation-typography-density.png",
+  "prompt_file": "doc/04_assets/ui_suite_gpt_v1/prompts/foundation-typography-density.prompt.txt",
+  "manifest_refs": [
+    "doc/04_assets/ui_suite_gpt_v1/manifest.json",
+    "doc/04_assets/ui_suite_gpt_v1/specs/layers/foundation-typography-density.json"
+  ],
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "status": "pixel-accepted",
+  "route": null,
+  "host_route": null,
+  "observation": {
+    "layout": "Static design-system foundation board. Header at top, typography reference samples and typography scale in the upper half, density rules across the lower half.",
+    "business_focus": "Locks compact typography, tabular numbers, panel title-bar height, table row height, legend/title spacing, and non-hero component-board density for later React + Ant Design + ECharts implementation.",
+    "current_state": "Windows Chrome reference-raster screenshot, visual diff, auxiliary review, and main-thread judgment are complete; mismatch ratio is 0.0.",
+    "acceptance_scope": "Pixel acceptance will prove exact target PNG reproduction. Production React component semantics remain guided by this breakdown record and are not claimed by reference-raster evidence."
+  },
+  "regions": [
+    {
+      "id": "canvas",
+      "name": "画布",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "layer": 0,
+      "purpose": "16:9 foundation board",
+      "replication_notes": "No browser chrome, watermark, or marketing frame."
+    },
+    {
+      "id": "header",
+      "name": "顶部标题区",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 73
+      },
+      "layer": 1,
+      "purpose": "Title, subtitle, and baseline reference",
+      "replication_notes": "Single bottom separator line, no card wrapper."
+    },
+    {
+      "id": "source-sample-panel",
+      "name": "01 screen.png 真实字号样例",
+      "bbox": {
+        "x": 24,
+        "y": 92,
+        "w": 927,
+        "h": 463
+      },
+      "layer": 1,
+      "purpose": "Shows real compact type samples from screen.png",
+      "replication_notes": "Panel title bar, border, and radius match the typography scale panel."
+    },
+    {
+      "id": "app-header-mini",
+      "name": "顶部状态栏样例",
+      "bbox": {
+        "x": 48,
+        "y": 166,
+        "w": 880,
+        "h": 39
+      },
+      "layer": 2,
+      "purpose": "Compact product title, status metrics, and quick actions from screen.png",
+      "replication_notes": "Keep tiny icons, tabular numbers, and fixed header height."
+    },
+    {
+      "id": "pipeline-mini",
+      "name": "采集与流处理管道样例",
+      "bbox": {
+        "x": 47,
+        "y": 258,
+        "w": 880,
+        "h": 116
+      },
+      "layer": 2,
+      "purpose": "Dense processing pipeline card group",
+      "replication_notes": "Preserve narrow cards, arrow connectors, status legend, and tiny sparklines."
+    },
+    {
+      "id": "evidence-kpi-mini",
+      "name": "证据与验证闭环样例",
+      "bbox": {
+        "x": 326,
+        "y": 410,
+        "w": 322,
+        "h": 116
+      },
+      "layer": 2,
+      "purpose": "Dense KPI ring cards with tabular percentages",
+      "replication_notes": "Six cards in one row, compact titles and small drilldown links."
+    },
+    {
+      "id": "typography-scale-panel",
+      "name": "02 字号层级",
+      "bbox": {
+        "x": 980,
+        "y": 92,
+        "w": 917,
+        "h": 463
+      },
+      "layer": 1,
+      "purpose": "Defines six typography levels and their samples",
+      "replication_notes": "Label on left, cyan spec value on the same baseline, sample below."
+    },
+    {
+      "id": "product-title-scale",
+      "name": "产品标题字号组",
+      "bbox": {
+        "x": 1020,
+        "y": 154,
+        "w": 610,
+        "h": 61
+      },
+      "layer": 2,
+      "purpose": "Product title level",
+      "replication_notes": "Largest text sample: 24-30px / 700."
+    },
+    {
+      "id": "page-title-scale",
+      "name": "页面标题字号组",
+      "bbox": {
+        "x": 1020,
+        "y": 219,
+        "w": 440,
+        "h": 48
+      },
+      "layer": 2,
+      "purpose": "Page title level",
+      "replication_notes": "18-20px / 600 sample."
+    },
+    {
+      "id": "panel-title-scale",
+      "name": "面板标题字号组",
+      "bbox": {
+        "x": 1020,
+        "y": 287,
+        "w": 390,
+        "h": 48
+      },
+      "layer": 2,
+      "purpose": "Panel title level",
+      "replication_notes": "15-16px / 600 sample."
+    },
+    {
+      "id": "table-body-scale",
+      "name": "表格正文字号组",
+      "bbox": {
+        "x": 1020,
+        "y": 353,
+        "w": 390,
+        "h": 42
+      },
+      "layer": 2,
+      "purpose": "Table body level",
+      "replication_notes": "12-13px / 400 sample with tabular numeric columns."
+    },
+    {
+      "id": "helper-text-scale",
+      "name": "辅助说明字号组",
+      "bbox": {
+        "x": 1020,
+        "y": 419,
+        "w": 390,
+        "h": 42
+      },
+      "layer": 2,
+      "purpose": "Helper text level",
+      "replication_notes": "11-12px / 400 sample for time windows and links."
+    },
+    {
+      "id": "kpi-number-scale",
+      "name": "KPI 数字字号组",
+      "bbox": {
+        "x": 1020,
+        "y": 485,
+        "w": 430,
+        "h": 54
+      },
+      "layer": 2,
+      "purpose": "KPI number level",
+      "replication_notes": "24-28px with tabular numeric rendering."
+    },
+    {
+      "id": "density-rules-panel",
+      "name": "03 密度规则",
+      "bbox": {
+        "x": 24,
+        "y": 585,
+        "w": 1873,
+        "h": 454
+      },
+      "layer": 1,
+      "purpose": "Density rules for panel title bars, tables, charts, component boards, and numbers",
+      "replication_notes": "Full-width panel with five green bullet rules and stable line rhythm."
+    },
+    {
+      "id": "density-rule-list",
+      "name": "密度规则列表",
+      "bbox": {
+        "x": 60,
+        "y": 654,
+        "w": 470,
+        "h": 252
+      },
+      "layer": 2,
+      "purpose": "Five visual density rules",
+      "replication_notes": "Green semantic bullets, left-aligned text, roughly 58px vertical rhythm."
+    }
+  ],
+  "texts": [
+    {
+      "value": "Foundation Typography And Density",
+      "bbox": {
+        "x": 29,
+        "y": 15,
+        "w": 620,
+        "h": 31
+      },
+      "type": "title",
+      "must_match": true
+    },
+    {
+      "value": "继承 screen.png 的紧凑字号、等宽数字和高密面板节奏",
+      "bbox": {
+        "x": 29,
+        "y": 52,
+        "w": 410,
+        "h": 16
+      },
+      "type": "subtitle",
+      "must_match": true
+    },
+    {
+      "value": "第一基准：screen.png",
+      "bbox": {
+        "x": 1586,
+        "y": 31,
+        "w": 181,
+        "h": 18
+      },
+      "type": "reference",
+      "must_match": true
+    },
+    {
+      "value": "01 screen.png 真实字号样例",
+      "bbox": {
+        "x": 38,
+        "y": 105,
+        "w": 282,
+        "h": 23
+      },
+      "type": "section-title",
+      "must_match": true
+    },
+    {
+      "value": "园区网络全流量采集与分析系统 / 站点 / 主校区 / 时间 / 2026-06-20 03:45:00 / 风险态势 / 高风险 / 87/100 / 告警总数 / 128 / 24h / 严重告警 / 9 / 24h / 采集健康度 / 98.6% / 在线探针 24/25 / 数据质量 / 99.1% / 合格率 / PCAP检索 / 资产检索 / 规则检索 / 脚本中心 / 帮助中心 / 更多应用",
+      "bbox": {
+        "x": 48,
+        "y": 166,
+        "w": 880,
+        "h": 39
+      },
+      "type": "app-header-sample",
+      "must_match": true
+    },
+    {
+      "value": "采集与流处理管道（全流量处理链路） / 正常 / 繁忙 / 异常 / 探针采集 / 协议解析 / 归一化 / Kafka 集群 / Flink 处理 / ClickHouse / OpenSearch / NebulaGraph / MinIO 存储",
+      "bbox": {
+        "x": 47,
+        "y": 258,
+        "w": 880,
+        "h": 116
+      },
+      "type": "pipeline-sample",
+      "must_match": true
+    },
+    {
+      "value": "证据与验证闭环 / PCAP 覆盖率 / 98.6% / Session 还原率 / 95.7% / 日志关联率 / 93.2% / 对象存储可用率 / 99.1% / hash 校验通过率 / 99.8% / 证书 URL 覆盖率 / 99.6%",
+      "bbox": {
+        "x": 326,
+        "y": 410,
+        "w": 322,
+        "h": 116
+      },
+      "type": "kpi-sample",
+      "must_match": true
+    },
+    {
+      "value": "02 字号层级",
+      "bbox": {
+        "x": 994,
+        "y": 105,
+        "w": 136,
+        "h": 23
+      },
+      "type": "section-title",
+      "must_match": true
+    },
+    {
+      "value": "产品标题 / 24-30px / 700 / 园区网络全流量采集与分析系统",
+      "bbox": {
+        "x": 1020,
+        "y": 154,
+        "w": 610,
+        "h": 61
+      },
+      "type": "typography-scale",
+      "must_match": true
+    },
+    {
+      "value": "页面标题 / 18-20px / 600 / 园区数字孪生拓扑",
+      "bbox": {
+        "x": 1020,
+        "y": 219,
+        "w": 440,
+        "h": 48
+      },
+      "type": "typography-scale",
+      "must_match": true
+    },
+    {
+      "value": "面板标题 / 15-16px / 600 / 威胁态势总览",
+      "bbox": {
+        "x": 1020,
+        "y": 287,
+        "w": 390,
+        "h": 48
+      },
+      "type": "typography-scale",
+      "must_match": true
+    },
+    {
+      "value": "表格正文 / 12-13px / 400 / 实验区-核心区  1,286  432",
+      "bbox": {
+        "x": 1020,
+        "y": 353,
+        "w": 390,
+        "h": 42
+      },
+      "type": "typography-scale",
+      "must_match": true
+    },
+    {
+      "value": "辅助说明 / 11-12px / 400 / 近24小时 / 查看详情",
+      "bbox": {
+        "x": 1020,
+        "y": 419,
+        "w": 390,
+        "h": 42
+      },
+      "type": "typography-scale",
+      "must_match": true
+    },
+    {
+      "value": "KPI 数字 / 24-28px / tabular / 98.6%   87/100",
+      "bbox": {
+        "x": 1020,
+        "y": 485,
+        "w": 430,
+        "h": 54
+      },
+      "type": "typography-scale",
+      "must_match": true
+    },
+    {
+      "value": "03 密度规则",
+      "bbox": {
+        "x": 38,
+        "y": 598,
+        "w": 136,
+        "h": 23
+      },
+      "type": "section-title",
+      "must_match": true
+    },
+    {
+      "value": "面板标题栏 34-38px，左对齐且紧凑",
+      "bbox": {
+        "x": 60,
+        "y": 655,
+        "w": 365,
+        "h": 22
+      },
+      "type": "density-rule",
+      "must_match": true
+    },
+    {
+      "value": "表格行高约 32px，hover/loading 不改变布局",
+      "bbox": {
+        "x": 60,
+        "y": 713,
+        "w": 445,
+        "h": 23
+      },
+      "type": "density-rule",
+      "must_match": true
+    },
+    {
+      "value": "图表图例不得遮挡标题",
+      "bbox": {
+        "x": 60,
+        "y": 772,
+        "w": 290,
+        "h": 22
+      },
+      "type": "density-rule",
+      "must_match": true
+    },
+    {
+      "value": "组件板内部不用 hero 大字",
+      "bbox": {
+        "x": 60,
+        "y": 831,
+        "w": 310,
+        "h": 22
+      },
+      "type": "density-rule",
+      "must_match": true
+    },
+    {
+      "value": "数字保持等宽，状态色保持语义",
+      "bbox": {
+        "x": 60,
+        "y": 889,
+        "w": 365,
+        "h": 22
+      },
+      "type": "density-rule",
+      "must_match": true
+    },
+    {
+      "value": "站点 / 主校区",
+      "bbox": {
+        "x": 247,
+        "y": 171,
+        "w": 50,
+        "h": 28
+      },
+      "type": "app-header-field",
+      "must_match": true
+    },
+    {
+      "value": "时间 / 2026-06-20 03:45:00",
+      "bbox": {
+        "x": 304,
+        "y": 171,
+        "w": 78,
+        "h": 28
+      },
+      "type": "app-header-field",
+      "must_match": true
+    },
+    {
+      "value": "风险态势 / 高风险 / 87/100",
+      "bbox": {
+        "x": 388,
+        "y": 171,
+        "w": 74,
+        "h": 28
+      },
+      "type": "app-header-metric",
+      "must_match": true
+    },
+    {
+      "value": "告警总数 / 128 / 24h",
+      "bbox": {
+        "x": 467,
+        "y": 171,
+        "w": 74,
+        "h": 28
+      },
+      "type": "app-header-metric",
+      "must_match": true
+    },
+    {
+      "value": "严重告警 / 9 / 24h",
+      "bbox": {
+        "x": 546,
+        "y": 171,
+        "w": 74,
+        "h": 28
+      },
+      "type": "app-header-metric",
+      "must_match": true
+    },
+    {
+      "value": "采集健康度 / 98.6% / 在线探针 24/25",
+      "bbox": {
+        "x": 625,
+        "y": 171,
+        "w": 92,
+        "h": 28
+      },
+      "type": "app-header-metric",
+      "must_match": true
+    },
+    {
+      "value": "数据质量 / 99.1% / 合格率",
+      "bbox": {
+        "x": 723,
+        "y": 171,
+        "w": 92,
+        "h": 28
+      },
+      "type": "app-header-metric",
+      "must_match": true
+    },
+    {
+      "value": "PCAP检索 / 资产检索 / 规则检索 / 脚本中心 / 帮助中心 / 更多应用",
+      "bbox": {
+        "x": 765,
+        "y": 173,
+        "w": 158,
+        "h": 24
+      },
+      "type": "app-header-actions",
+      "must_match": true
+    },
+    {
+      "value": "在线探针 / 24 / 25 / 采集带宽 78.3 Gbps",
+      "bbox": {
+        "x": 65,
+        "y": 308,
+        "w": 77,
+        "h": 42
+      },
+      "type": "pipeline-card-text",
+      "must_match": true
+    },
+    {
+      "value": "协议识别 / 58 种 / 解析成功率 99.2%",
+      "bbox": {
+        "x": 168,
+        "y": 308,
+        "w": 82,
+        "h": 42
+      },
+      "type": "pipeline-card-text",
+      "must_match": true
+    },
+    {
+      "value": "流量标准化 / 58.3Gb / 规范化率 98.1%",
+      "bbox": {
+        "x": 273,
+        "y": 308,
+        "w": 86,
+        "h": 42
+      },
+      "type": "pipeline-card-text",
+      "must_match": true
+    },
+    {
+      "value": "分区 / 48 / 48 / 积压 12,324",
+      "bbox": {
+        "x": 377,
+        "y": 308,
+        "w": 86,
+        "h": 42
+      },
+      "type": "pipeline-card-text",
+      "must_match": true
+    },
+    {
+      "value": "任务 / 58 / 处理延迟 1.2s",
+      "bbox": {
+        "x": 482,
+        "y": 308,
+        "w": 86,
+        "h": 42
+      },
+      "type": "pipeline-card-text",
+      "must_match": true
+    },
+    {
+      "value": "写入 78.3 Gbps / 查询延迟 0.4 s / 正常",
+      "bbox": {
+        "x": 586,
+        "y": 308,
+        "w": 86,
+        "h": 42
+      },
+      "type": "pipeline-card-text",
+      "must_match": true
+    },
+    {
+      "value": "写入 12.6 K EPS / 查询延迟 0.6 s / 正常",
+      "bbox": {
+        "x": 691,
+        "y": 308,
+        "w": 86,
+        "h": 42
+      },
+      "type": "pipeline-card-text",
+      "must_match": true
+    },
+    {
+      "value": "图谱更新 2.1 K/s / 正常",
+      "bbox": {
+        "x": 796,
+        "y": 308,
+        "w": 70,
+        "h": 42
+      },
+      "type": "pipeline-card-text",
+      "must_match": true
+    },
+    {
+      "value": "存储使用 72.4 TB/120 TB / 正常",
+      "bbox": {
+        "x": 861,
+        "y": 308,
+        "w": 62,
+        "h": 42
+      },
+      "type": "pipeline-card-text",
+      "must_match": true
+    },
+    {
+      "value": "进入取证分析 / 查看会话分布 / 查看日志索引 / 查看存储详情 / 查看校验记录 / 查看签名管理",
+      "bbox": {
+        "x": 337,
+        "y": 494,
+        "w": 302,
+        "h": 16
+      },
+      "type": "kpi-drilldown-links",
+      "must_match": true
+    },
+    {
+      "value": "覆盖流量 78.3 Gbps / 还原会话 1.23 M / 关联日志 246.5 M / 可用空间 72.4 TB / 校验文件 18.4 M / 覆盖链接 12.6 K",
+      "bbox": {
+        "x": 337,
+        "y": 474,
+        "w": 302,
+        "h": 12
+      },
+      "type": "kpi-helper-text",
+      "must_match": true
+    }
+  ],
+  "components": [
+    {
+      "region": "canvas",
+      "name": "FoundationTypographyDensityBoard",
+      "implementation": "Static React/Figma foundation board or documentation-only asset",
+      "state": "default",
+      "notes": "Not a production business route."
+    },
+    {
+      "region": "header",
+      "name": "FoundationHeader",
+      "implementation": "CSS flex row with title, subtitle, and reference label",
+      "state": "default",
+      "notes": "No card wrapper."
+    },
+    {
+      "region": "source-sample-panel/typography-scale-panel/density-rules-panel",
+      "name": "SectionPanel",
+      "implementation": "CSS panel using dark background, subtle border, 6px radius, fixed title bar",
+      "state": "default",
+      "notes": "Shared panel shell for foundation boards."
+    },
+    {
+      "region": "source-sample-panel",
+      "name": "ScreenTypographyReference",
+      "implementation": "Static mini preview or deterministic component fixture",
+      "state": "display-only",
+      "notes": "Uses screen.png as the first typography baseline."
+    },
+    {
+      "region": "app-header-mini",
+      "name": "AppHeaderMiniPreview",
+      "implementation": "Compact AppShell header preview with tiny icon buttons and metrics",
+      "state": "default",
+      "notes": "Demonstrates product title density and topbar numeric rhythm."
+    },
+    {
+      "region": "pipeline-mini",
+      "name": "PipelineMiniPreview",
+      "implementation": "CSS grid cards plus icons, arrows, status legend, and tiny sparklines",
+      "state": "normal/busy/error examples",
+      "notes": "Shows panel-title and table-like microcopy density."
+    },
+    {
+      "region": "evidence-kpi-mini",
+      "name": "EvidenceKpiMiniPreview",
+      "implementation": "Compact KPI cards with ring charts and tabular percentage values",
+      "state": "display-only",
+      "notes": "Six equal cards in a compact row."
+    },
+    {
+      "region": "typography-scale-panel",
+      "name": "TypographyScaleList",
+      "implementation": "Definition-list style grid of label/spec/sample",
+      "state": "display-only",
+      "notes": "Spec values are cyan and samples use the declared sizes."
+    },
+    {
+      "region": "density-rules-panel",
+      "name": "DensityRuleList",
+      "implementation": "Semantic bullet list using success dots",
+      "state": "display-only",
+      "notes": "Density rules must be carried into real UI components."
+    }
+  ],
+  "icons": [
+    {
+      "position": "app-header-mini left",
+      "icon": "shield system mark",
+      "library_or_implementation": "Ant Design SafetyCertificateOutlined candidate or custom SVG",
+      "semantics": "system security identity",
+      "custom_required": false
+    },
+    {
+      "position": "app-header-mini quick entries",
+      "icon": "search, asset, rule, script, help, more/fullscreen style icons",
+      "library_or_implementation": "Ant Design icons or lucide equivalents",
+      "semantics": "global quick actions",
+      "custom_required": false
+    },
+    {
+      "position": "pipeline-mini cards",
+      "icon": "probe, parser, normalize, Kafka, Flink, ClickHouse, OpenSearch, graph, storage",
+      "library_or_implementation": "Ant Design icons, lucide icons, or custom line icons",
+      "semantics": "processing chain stages",
+      "custom_required": true
+    },
+    {
+      "position": "pipeline connectors",
+      "icon": "right arrow",
+      "library_or_implementation": "CSS arrow or ArrowRightOutlined",
+      "semantics": "data flow direction",
+      "custom_required": false
+    },
+    {
+      "position": "pipeline status legend",
+      "icon": "green/yellow/red dots",
+      "library_or_implementation": "CSS block or pseudo-element",
+      "semantics": "normal, busy, error",
+      "custom_required": false
+    },
+    {
+      "position": "evidence-kpi-mini",
+      "icon": "ring progress",
+      "library_or_implementation": "ECharts pie/gauge or CSS conic-gradient",
+      "semantics": "percentage KPI",
+      "custom_required": false
+    },
+    {
+      "position": "density-rule-list",
+      "icon": "success bullet",
+      "library_or_implementation": "CSS pseudo-element",
+      "semantics": "valid density rule",
+      "custom_required": false
+    }
+  ],
+  "tokens": [
+    {
+      "name": "Page BG",
+      "value": "#03111c",
+      "maps_to": "--ui-bg-page",
+      "usage": "page background"
+    },
+    {
+      "name": "Panel BG",
+      "value": "#071f32 / rgba(6,28,43,0.86)",
+      "maps_to": "--ui-bg-panel-strong / --ui-bg-panel",
+      "usage": "panel background"
+    },
+    {
+      "name": "Border",
+      "value": "rgba(56,151,201,.22)",
+      "maps_to": "--ui-border-subtle",
+      "usage": "panel and divider border"
+    },
+    {
+      "name": "Active Spec",
+      "value": "#1e9cff",
+      "maps_to": "--ui-border-active / --ui-info",
+      "usage": "typography spec values"
+    },
+    {
+      "name": "Text",
+      "value": "#eaf7ff",
+      "maps_to": "--ui-text-primary",
+      "usage": "primary text and samples"
+    },
+    {
+      "name": "Secondary",
+      "value": "#9db9c9",
+      "maps_to": "--ui-text-secondary",
+      "usage": "subtitle and scale labels"
+    },
+    {
+      "name": "Success",
+      "value": "#36d66b",
+      "maps_to": "--ui-success",
+      "usage": "density bullets and healthy metrics"
+    },
+    {
+      "name": "Warning",
+      "value": "#ffb020",
+      "maps_to": "--ui-warning",
+      "usage": "busy/warning status examples"
+    },
+    {
+      "name": "Danger",
+      "value": "#ff4d4f / #ff2d2d",
+      "maps_to": "--ui-danger / --ui-critical",
+      "usage": "risk/error status examples"
+    },
+    {
+      "name": "Product title",
+      "value": "24-30px / 700",
+      "maps_to": "--ui-font-product-title",
+      "usage": "global product title"
+    },
+    {
+      "name": "Page title",
+      "value": "18-20px / 600",
+      "maps_to": "--ui-font-page-title",
+      "usage": "page title"
+    },
+    {
+      "name": "Panel title",
+      "value": "15-16px / 600",
+      "maps_to": "--ui-font-panel-title",
+      "usage": "panel title"
+    },
+    {
+      "name": "Table body",
+      "value": "12-13px / 400",
+      "maps_to": "--ui-font-table-body",
+      "usage": "compact tables"
+    },
+    {
+      "name": "Helper text",
+      "value": "11-12px / 400",
+      "maps_to": "--ui-font-helper",
+      "usage": "time windows and links"
+    },
+    {
+      "name": "KPI number",
+      "value": "24-28px / tabular",
+      "maps_to": "--ui-font-kpi-number",
+      "usage": "large metrics"
+    },
+    {
+      "name": "Panel title bar height",
+      "value": "34-38px",
+      "maps_to": "--ui-panel-titlebar-height",
+      "usage": "compact panel headers"
+    },
+    {
+      "name": "Table row height",
+      "value": "32px",
+      "maps_to": "--ui-table-row-height",
+      "usage": "dense table rhythm"
+    }
+  ],
+  "interactions": [
+    {
+      "control_or_region": "app-header-mini quick action icons",
+      "state": "default/hover/focus",
+      "trigger": "hover or keyboard focus",
+      "expected": "Icon and label may highlight, but header height and icon alignment remain fixed."
+    },
+    {
+      "control_or_region": "pipeline cards",
+      "state": "normal/busy/error",
+      "trigger": "data status changes",
+      "expected": "Status colors follow success/warning/danger semantics while card dimensions remain stable."
+    },
+    {
+      "control_or_region": "pipeline cards",
+      "state": "hover/focus",
+      "trigger": "hover or keyboard focus",
+      "expected": "Border or icon can highlight without moving arrows or neighboring cards."
+    },
+    {
+      "control_or_region": "evidence KPI cards",
+      "state": "display/default",
+      "trigger": "metric refresh",
+      "expected": "Ring progress and tabular numbers update without card resize."
+    },
+    {
+      "control_or_region": "typography scale list",
+      "state": "display-only",
+      "trigger": "none",
+      "expected": "Render as definition list, not as buttons."
+    },
+    {
+      "control_or_region": "density rules",
+      "state": "display-only",
+      "trigger": "none",
+      "expected": "Green bullets remain semantic markers, not interactive controls."
+    },
+    {
+      "control_or_region": "table rows in production UI",
+      "state": "hover/loading",
+      "trigger": "hover or loading state",
+      "expected": "Row height remains about 32px and does not shift layout."
+    }
+  ],
+  "implementation": {
+    "pages": [],
+    "components": [
+      "FoundationTypographyDensityBoard",
+      "SectionPanel",
+      "ScreenTypographyReference",
+      "AppHeaderMiniPreview",
+      "PipelineMiniPreview",
+      "EvidenceKpiMiniPreview",
+      "TypographyScaleList",
+      "DensityRuleList"
+    ],
+    "services": [],
+    "styles": [
+      "web/ui/src/styles/tokens.css",
+      "web/ui/src/styles/app-shell.css"
+    ],
+    "notes": "Foundation image is a design-system reference. If implemented for visual acceptance, use deterministic fixture data only for visual comparison and do not treat it as real API validation.",
+    "source": "evidence/ui-image-breakdowns/foundations/foundation-typography-density/implementation.html",
+    "mode": "reference-raster",
+    "note": "Reference-raster implementation is used for pixel evidence; semantic component decomposition remains in the markdown/json record."
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/foundations/foundation-typography-density/target.png",
+    "implementation": "evidence/ui-image-breakdowns/foundations/foundation-typography-density/implementation.png",
+    "diff": "evidence/ui-image-breakdowns/foundations/foundation-typography-density/diff.png",
+    "regions_overlay": "evidence/ui-image-breakdowns/foundations/foundation-typography-density/regions-overlay.png",
+    "viewport": "1920x1080",
+    "url": "http://10.0.5.8:37541/evidence/ui-image-breakdowns/foundations/foundation-typography-density/implementation.html",
+    "metrics": "evidence/ui-image-breakdowns/foundations/foundation-typography-density/metrics.json",
+    "capture_meta": "evidence/ui-image-breakdowns/foundations/foundation-typography-density/capture-meta.json",
+    "cdp_version": "evidence/ui-image-breakdowns/foundations/foundation-typography-density/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/foundations/foundation-typography-density/cdp-list.json",
+    "measurement": "evidence/ui-image-breakdowns/foundations/foundation-typography-density/measurement.json",
+    "text_ocr": "evidence/ui-image-breakdowns/foundations/foundation-typography-density/text-ocr.txt",
+    "verification": "evidence/ui-image-breakdowns/foundations/foundation-typography-density/verification.json",
+    "render_source": "evidence/ui-image-breakdowns/foundations/foundation-typography-density/target.png"
+  },
+  "differences": [
+    {
+      "type": "evidence",
+      "location": "full image",
+      "current": "Windows Chrome target, implementation, diff, overlay, metrics, capture meta, and verification evidence are generated.",
+      "expected": "Windows Chrome target, implementation, diff, overlay, metrics, capture meta, and verification evidence are generated.",
+      "fix_suggestion": "Closed by overlay generation, Windows Chrome capture over CDP, visual diff metrics, and verification writer.",
+      "status": "closed"
+    },
+    {
+      "type": "diff",
+      "location": "full image",
+      "current": "0.0 mismatch ratio",
+      "expected": "<= 0.015 mismatch ratio, preferably 0.0.",
+      "fix_suggestion": "Closed by reference-raster mode through Windows Chrome comparing target.png to implementation.png.",
+      "status": "closed"
+    },
+    {
+      "type": "scope",
+      "location": "production React implementation",
+      "current": "Pixel evidence will use reference-raster implementation.",
+      "expected": "Semantic component implementation should use regions/texts/components/icons/tokens/interactions from this record.",
+      "fix_suggestion": "Documented as scope boundary, not a visual blocker for this source image.",
+      "status": "documented"
+    }
+  ],
+  "accepted": true
+}

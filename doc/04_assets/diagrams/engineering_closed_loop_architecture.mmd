@@ -1,0 +1,88 @@
+flowchart LR
+    subgraph client ["使用与采集入口"]
+        webUi["Web UI 工作台"]
+        situationScreen["态势大屏"]
+        probeAgent["Rust Probe Agent"]
+        operators["安全运营人员"]
+    end
+    subgraph gateway ["接入与网关"]
+        apisix["APISIX Gateway"]
+        mtlsEndpoint["mTLS Ingest Endpoint"]
+    end
+    subgraph service ["核心服务与流计算"]
+        authService["Auth Service"]
+        alertService["Alert Service"]
+        ruleManager["Rule Manager"]
+        forensicsService["Forensics Service"]
+        graphService["Graph Service"]
+        assetService["Asset Service"]
+        ingestGateway["Ingest Gateway"]
+        flinkSession["Flink Session Job"]
+        flinkFeature["Flink Feature Job"]
+        flinkDetection["Flink Rule Behavior CEP Alert Jobs"]
+        mlopsOrchestrator["MLOps Orchestrator"]
+    end
+    subgraph datastore ["数据与证据存储"]
+        postgres["PostgreSQL 元数据"]
+        clickhouse["ClickHouse 分析库"]
+        opensearch["OpenSearch 检索"]
+        nebula["NebulaGraph 图谱"]
+        redis["Redis 缓存限流"]
+        minio["MinIO PCAP 模型对象"]
+    end
+    subgraph async ["事件总线"]
+        kafka["Kafka Topics"]
+        dlq["DLQ Topics"]
+    end
+    subgraph external ["外部与平台能力"]
+        keycloak["Keycloak OIDC"]
+        argo["Argo Workflows Events"]
+        grafana["Grafana Loki VictoriaMetrics"]
+    end
+
+    webUi -->|"HTTPS API"| apisix
+    situationScreen -->|"Realtime Queries"| apisix
+    operators -->|"Login Ops"| apisix
+    probeAgent -->|"gRPC mTLS"| mtlsEndpoint
+    apisix -->|"Routes Auth"| authService
+    apisix -->|"Routes Alerts"| alertService
+    apisix -->|"Routes Rules Models"| ruleManager
+    apisix -->|"Routes PCAP"| forensicsService
+    apisix -->|"Routes Graph"| graphService
+    apisix -->|"Routes Assets"| assetService
+    mtlsEndpoint -->|"Accepts Flows"| ingestGateway
+    authService -->|"Reads Users"| postgres
+    authService -->|"Sessions Captcha"| redis
+    authService -.->|"AuthService: OIDC"| keycloak
+    ingestGateway -.->|"Produces Flow Asset PCAP"| kafka
+    ingestGateway -.->|"Writes Failures"| dlq
+    kafka -.->|"Consumes Flows"| flinkSession
+    flinkSession -.->|"Produces Sessions"| kafka
+    flinkSession -->|"Writes Sessions"| clickhouse
+    kafka -.->|"Consumes Sessions"| flinkFeature
+    flinkFeature -.->|"Produces Features"| kafka
+    flinkFeature -->|"Writes Features"| clickhouse
+    kafka -.->|"Consumes Features Rules Models"| flinkDetection
+    flinkDetection -.->|"Produces Detections Alerts"| kafka
+    flinkDetection -->|"Writes Detections"| clickhouse
+    kafka -.->|"Consumes Alerts"| alertService
+    alertService -->|"Reads Writes Alerts"| clickhouse
+    alertService -->|"Indexes Evidence"| opensearch
+    alertService -->|"Deduplicates"| redis
+    alertService -.->|"Produces Feedback"| kafka
+    kafka -.->|"Consumes Feedback"| mlopsOrchestrator
+    mlopsOrchestrator -->|"Reads Features Feedback"| clickhouse
+    mlopsOrchestrator -->|"Writes Model Metadata"| postgres
+    mlopsOrchestrator -->|"Stores Artifacts"| minio
+    mlopsOrchestrator -.->|"MLOps: Runs"| argo
+    mlopsOrchestrator -.->|"Produces Model Updates"| kafka
+    ruleManager -->|"Writes Rules Deployments"| postgres
+    ruleManager -.->|"Produces Rule Updates"| kafka
+    assetService -->|"Writes Assets"| postgres
+    assetService -.->|"Consumes Bindings"| kafka
+    forensicsService -->|"Reads PCAP Index"| clickhouse
+    forensicsService -->|"Reads Writes Objects"| minio
+    graphService -->|"Queries Graph"| nebula
+    graphService -->|"Caches Paths"| redis
+    alertService -.->|"Metrics Logs"| grafana
+    ruleManager -.->|"Metrics Logs"| grafana

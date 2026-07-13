@@ -1,0 +1,16 @@
+Generate a 3840x2160 PNG static 4K background asset for traffic-analysis-platform.
+
+Use case: productivity-visual.
+Asset type: whitelist and approval governance background.
+
+Scene:
+- A dark governance visual showing safe-list entries as protected abstract entities moving through request, validation, approval, expiry, exception review, and audit trace.
+- Include policy boundaries, trust zones, certificate-like approvals, and risk exception markers without readable text.
+
+Style:
+- Enterprise security policy governance, dark navy/black, cyan policy structure, blue identity and asset nodes, green approved exceptions, amber pending review, sparse red risky exception.
+- Clean, precise, high-detail 4K background with quiet overlay space.
+
+Constraints:
+- No readable hostnames, usernames, IP addresses, ticket IDs, policy names, credentials, logos, people, browser chrome, forms, tables, or full UI screenshot.
+

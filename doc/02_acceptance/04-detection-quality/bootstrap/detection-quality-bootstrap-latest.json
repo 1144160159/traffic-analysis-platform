@@ -1,0 +1,76 @@
+{
+  "run_id": "20260630-detection-quality-bootstrap-r1",
+  "result": "pass",
+  "generated_at": "2026-06-30T19:32:34+08:00",
+  "apisix": "http://10.0.5.8:30180",
+  "tenant_id": "default",
+  "bootstrap_dir": "doc/02_acceptance/runs/20260630-detection-quality-bootstrap-r1/blind-package.bootstrap",
+  "stable_bootstrap_dir": "doc/02_acceptance/04-detection-quality/bootstrap/latest",
+  "sample_count": 45,
+  "passed": 6,
+  "total": 6,
+  "blockers": 0,
+  "warnings": 0,
+  "checks": [
+    {
+      "ts": "2026-06-30T19:32:32+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/alerts?tenant_id=default&limit=100",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "/api/v1/alerts?tenant_id=default&limit=100",
+      "artifact": "alerts-response.json"
+    },
+    {
+      "ts": "2026-06-30T19:32:34+08:00",
+      "phase": "api",
+      "name": "GET /api/v1/fusion/value-report?window_hours=168",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "/api/v1/fusion/value-report?window_hours=168",
+      "artifact": "fusion-value-report-response.json"
+    },
+    {
+      "ts": "2026-06-30T19:32:34+08:00",
+      "phase": "bootstrap",
+      "name": "Live alert candidates exported",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "samples=45",
+      "artifact": "sample-index.bootstrap.csv"
+    },
+    {
+      "ts": "2026-06-30T19:32:34+08:00",
+      "phase": "bootstrap",
+      "name": "Bootstrap manifest is review-required",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "dataset-manifest.bootstrap.json",
+      "artifact": "dataset-manifest.bootstrap.json"
+    },
+    {
+      "ts": "2026-06-30T19:32:34+08:00",
+      "phase": "bootstrap",
+      "name": "Review templates are present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "labels/predictions/attestation templates",
+      "artifact": "blind-package.bootstrap"
+    },
+    {
+      "ts": "2026-06-30T19:32:34+08:00",
+      "phase": "safety",
+      "name": "Bootstrap does not create formal gate artifacts",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "formal artifacts absent",
+      "artifact": "blind-package.bootstrap"
+    }
+  ]
+}

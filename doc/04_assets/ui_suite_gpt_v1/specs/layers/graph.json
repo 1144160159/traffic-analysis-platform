@@ -1,0 +1,102 @@
+{
+  "id": "graph",
+  "title": "实体图谱",
+  "type": "page",
+  "route": "/graph",
+  "domain": "asset-graph",
+  "source": {
+    "targetFile": "doc/04_assets/ui_suite_gpt_v1/screens/pages/graph.png",
+    "promptFile": "doc/04_assets/ui_suite_gpt_v1/prompts/graph.prompt.txt",
+    "rawTraceFiles": [
+      "doc/04_assets/ui_suite_gpt_v1/screens/pages/graph.raw-imagegen.png"
+    ],
+    "dimensions": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "implementation": {
+    "pageComponent": "GraphEntityPage",
+    "suggestedComponents": [
+      "AppShell",
+      "WorkPanel",
+      "MetricTile",
+      "Table",
+      "Tabs",
+      "ECharts",
+      "StatusTag"
+    ],
+    "apiEndpoints": [
+      "/api/v1/graph/explore"
+    ],
+    "workflows": [
+      "实体关系图",
+      "路径分析",
+      "邻居扩展",
+      "风险边解释",
+      "证据跳转"
+    ]
+  },
+  "layers": [
+    {
+      "id": "topbar",
+      "role": "global-app-shell",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 80
+      }
+    },
+    {
+      "id": "sidebar",
+      "role": "global-app-shell",
+      "bbox": {
+        "x": 0,
+        "y": 80,
+        "w": 166,
+        "h": 917
+      }
+    },
+    {
+      "id": "content",
+      "role": "page-workspace",
+      "bbox": {
+        "x": 198,
+        "y": 80,
+        "w": 1722,
+        "h": 917
+      }
+    },
+    {
+      "id": "bottombar",
+      "role": "global-app-shell",
+      "bbox": {
+        "x": 0,
+        "y": 997,
+        "w": 1920,
+        "h": 83
+      }
+    },
+    {
+      "id": "right-rail",
+      "role": "closed-loop-rail",
+      "bbox": {
+        "x": 1460,
+        "y": 104,
+        "w": 420,
+        "h": 860
+      }
+    }
+  ],
+  "acceptance": [
+    "最终 PNG 必须为 1920x1080",
+    "中文为主，只保留必要英文技术词和单位",
+    "状态色必须遵守 success/info/warning/danger/critical token",
+    "危险动作必须具备影响范围、权限提示和审计留痕",
+    "公共 AppShell 必须与 screen.png 目标参数一致",
+    "页面主工作区不得复用相邻页面的业务组件组合",
+    "所有 API 调用必须经 services/api.ts 或现有服务封装",
+    "React Query 必须覆盖 loading/error/empty 状态"
+  ]
+}

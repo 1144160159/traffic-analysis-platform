@@ -1,0 +1,468 @@
+{
+  "run_id": "20260630-settings-governance-preflight-r1",
+  "result": "pass",
+  "apisix": "http://10.0.5.8:30180",
+  "tenant": "default",
+  "other_tenant": "tenant-b",
+  "admin_user_id": "0119603f-453b-49b4-a94d-1f5f150ce2c4",
+  "created_token_id": "faf0492c-9ad5-44d0-b96b-f6729286771a",
+  "regenerated_token_id": "ae49bb57-0bf8-4430-91dc-7ff3a12f09dd",
+  "report": "doc/02_acceptance/runs/20260630-settings-governance-preflight-r1/live-settings-governance-preflight-20260630-settings-governance-preflight-r1.ndjson",
+  "local_report": "doc/02_acceptance/runs/20260630-settings-governance-preflight-r1/local-report.md",
+  "total": 45,
+  "passed": 45,
+  "blockers": 0,
+  "warnings": 0,
+  "checks": [
+    {
+      "ts": "2026-06-30T14:22:59+08:00",
+      "phase": "contract",
+      "name": "frontend settings action contract present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "settings actions declared",
+      "artifact": "web/ui/src/services/pageApiPlans.ts"
+    },
+    {
+      "ts": "2026-06-30T14:22:59+08:00",
+      "phase": "api",
+      "name": "scope catalog readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"scopes\":[{\"name\":\"probe:ingest\",\"description\":\"Upload flow events and PCAP index\",\"category\":\"probe\"},{\"name\":\"probe:metrics\",\"description\":\"Report probe metrics\",\"category\":\"probe\"},{\"name\":\"user:read\",\"description\":\"Read users\",\"category\":\"user\"},{\"name\":\"user:write\",\"description\":\"Create and update users\",\"category\":\"user\"},{\"name\":\"user:delete\",\"description\":\"Delete users\",\"category\":\"user\"},{\"name\":\"alert:read\",\"description\":\"Read alerts\",\"category\":\"alert\"},{\"name\":\"alert:write\",\"description\":\"Update alert status and feedback\",\"category\":\"alert\"},{\"name\":\"alert:export\",\"description\":\"Export alerts\",\"category\":\"alert\"},{\"name\":\"rule:read\",\"description\":\"Read detection rules\",\"category\":\"rule\"},{\"name\":\"rule:write\",\"description\":\"Create and update detection rules\",\"category\":\"rule\"},{\"name\":\"rule:delete\",\"description\":\"Delete detection rules\",\"category\":\"rule\"},{\"name\":\"deploy:read\",\"description\":\"Read deployments\",\"category\":\"deploy\"},{\"name\":\"deploy:create\",\"description\":\"Create deployments\",\"category\":\"deploy\"},{\"name\":\"deploy:activate\",\"description\":\"Activate deployments\",\"category\":\"deploy\"},{\"name\":\"deploy:rollback\",\"description\":\"Rollback deployments\",\"category\":\"deplo",
+      "artifact": "token-scopes.json"
+    },
+    {
+      "ts": "2026-06-30T14:22:59+08:00",
+      "phase": "assert",
+      "name": "scope catalog includes token scopes",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "(.scopes // []) | map(.name) | (index(\"token:read\") != null and index(\"token:write\") != null)",
+      "artifact": "token-scopes.json"
+    },
+    {
+      "ts": "2026-06-30T14:22:59+08:00",
+      "phase": "api",
+      "name": "probe scope catalog readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"default_scopes\":[\"probe:ingest\",\"probe:metrics\"],\"full_scopes\":[\"probe:ingest\",\"probe:metrics\",\"pcap:read\"],\"minimal_scopes\":[\"probe:ingest\"],\"scopes\":[{\"name\":\"probe:ingest\",\"description\":\"Upload flow events and PCAP index\",\"category\":\"probe\"},{\"name\":\"probe:metrics\",\"description\":\"Report probe metrics\",\"category\":\"probe\"}]} ",
+      "artifact": "probe-token-scopes.json"
+    },
+    {
+      "ts": "2026-06-30T14:22:59+08:00",
+      "phase": "assert",
+      "name": "probe scope catalog includes defaults",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "(.default_scopes // []) | index(\"probe:ingest\") != null",
+      "artifact": "probe-token-scopes.json"
+    },
+    {
+      "ts": "2026-06-30T14:22:59+08:00",
+      "phase": "api",
+      "name": "token list readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"limit\":5,\"offset\":0,\"tokens\":[{\"token_id\":\"4e4eb07c-2922-4ab4-80bc-bb2dfe20c259\",\"tenant_id\":\"default\",\"name\":\"codex-live-token-manual-20260629093941-1631619 (regenerated)\",\"description\":\"Codex live lifecycle probe\",\"token_type\":\"api\",\"token_prefix\":\"api_5esim9iblo8cjo\",\"scopes\":[\"alert:read\",\"token:read\"],\"status\":\"revoked\",\"expires_at\":\"2026-06-29T01:44:41.078893Z\",\"last_used_at\":\"2026-06-29T01:39:41.356414Z\",\"usage_count\":1,\"created_by\":\"f19c52dd-e122-45f3-adb5-03346ae5d171\",\"created_at\":\"2026-06-29T01:39:41.23176Z\",\"updated_at\":\"2026-06-29T01:39:41.363385Z\",\"revoked_at\":\"2026-06-29T01:39:41.363385Z\",\"rotation_enabled\":false},{\"token_id\":\"c5da5110-3f24-401b-9d43-e9c20c02a9e0\",\"tenant_id\":\"default\",\"name\":\"codex-live-token-manual-20260629093941-1631619\",\"description\":\"Codex live lifecycle probe\",\"token_type\":\"api\",\"token_prefix\":\"api_bbpgvjgg4jtakc\",\"scopes\":[\"alert:read\",\"token:read\"],\"status\":\"revoked\",\"expires_at\":\"2026-06-29T01:44:41.078213Z\",\"last_used_at\":\"2026-06-29T01:39:41.219266Z\",\"usage_count\":1,\"created_by\":\"f19c52dd-e122-45f3-adb5-03346ae5d171\",\"created_at\":\"2026-06-29T01:39:41.078215Z\",\"updated_at\":\"2026-06-29T01:39:41.235029Z\",\"revoked_at\":\"2026-06-29T01:39:41.23",
+      "artifact": "tokens-list.json"
+    },
+    {
+      "ts": "2026-06-30T14:22:59+08:00",
+      "phase": "assert",
+      "name": "token list response shape",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "(.tokens | type == \"array\") and (.total | type == \"number\")",
+      "artifact": "tokens-list.json"
+    },
+    {
+      "ts": "2026-06-30T14:22:59+08:00",
+      "phase": "api",
+      "name": "display settings saved",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"category\":\"display\",\"settings\":{\"default_time_range\":\"last_24h\",\"page_size\":50,\"refresh_interval\":30,\"show_ws_status\":true,\"timezone\":\"Asia/Shanghai\"}} ",
+      "artifact": "settings-display-save.json"
+    },
+    {
+      "ts": "2026-06-30T14:22:59+08:00",
+      "phase": "assert",
+      "name": "display settings save response shape",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".category == \"display\" and .settings.page_size == 50 and .settings.refresh_interval == 30 and .settings.show_ws_status == true",
+      "artifact": "settings-display-save.json"
+    },
+    {
+      "ts": "2026-06-30T14:22:59+08:00",
+      "phase": "api",
+      "name": "display settings readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"category\":\"display\",\"settings\":{\"default_time_range\":\"last_24h\",\"page_size\":50,\"refresh_interval\":30,\"show_ws_status\":true,\"timezone\":\"Asia/Shanghai\"}} ",
+      "artifact": "settings-display-get.json"
+    },
+    {
+      "ts": "2026-06-30T14:22:59+08:00",
+      "phase": "assert",
+      "name": "display settings read response includes saved values",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".category == \"display\" and .settings.page_size == 50 and .settings.timezone == \"Asia/Shanghai\"",
+      "artifact": "settings-display-get.json"
+    },
+    {
+      "ts": "2026-06-30T14:22:59+08:00",
+      "phase": "api",
+      "name": "invalid settings category rejected",
+      "severity": "info",
+      "passed": true,
+      "status": "400",
+      "detail": "{\"code\":\"VALID_2003\",\"message\":\"invalid settings category\",\"trace_id\":\"de16aee2-cce0-4385-bf7c-c1f3aec8bda1\",\"timestamp\":\"2026-06-30T06:22:59Z\",\"path\":\"/api/v1/auth/settings/security\"} ",
+      "artifact": "settings-invalid-category.json"
+    },
+    {
+      "ts": "2026-06-30T14:22:59+08:00",
+      "phase": "assert",
+      "name": "invalid settings category mentions validation",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "((.error.message // .message // \"\")) | contains(\"invalid settings category\")",
+      "artifact": "settings-invalid-category.json"
+    },
+    {
+      "ts": "2026-06-30T14:23:00+08:00",
+      "phase": "postgres",
+      "name": "display settings persisted in PostgreSQL",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "pg-user-settings-display-count.txt"
+    },
+    {
+      "ts": "2026-06-30T14:23:00+08:00",
+      "phase": "api",
+      "name": "viewer cannot create token",
+      "severity": "info",
+      "passed": true,
+      "status": "403",
+      "detail": "{\"code\":\"AUTH_1004\",\"message\":\"Permission denied: admin:write or token:write required\",\"trace_id\":\"25f61141-effb-4282-a1d2-0fc8fe499e46\",\"timestamp\":\"2026-06-30T06:23:00Z\",\"path\":\"/api/v1/tokens\"} ",
+      "artifact": "token-create-viewer-denied.json"
+    },
+    {
+      "ts": "2026-06-30T14:23:00+08:00",
+      "phase": "assert",
+      "name": "viewer token create denial mentions permission",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "((.error.message // .message // \"\")) | contains(\"Permission denied\")",
+      "artifact": "token-create-viewer-denied.json"
+    },
+    {
+      "ts": "2026-06-30T14:23:00+08:00",
+      "phase": "api",
+      "name": "admin creates settings API token",
+      "severity": "info",
+      "passed": true,
+      "status": "201",
+      "detail": "{\"token_id\":\"faf0492c-9ad5-44d0-b96b-f6729286771a\",\"token\":\"<redacted>\",\"token_prefix\":\"api_tepqnnpfdvbx0j\",\"name\":\"codex-settings-token-20260630-settings-governance-preflight-r1\",\"scopes\":[\"alert:read\",\"token:read\"],\"expires_at\":\"2026-06-30T06:28:00.164746801Z\",\"created_at\":\"2026-06-30T06:23:00.164748138Z\"} ",
+      "artifact": "tmp.oPi5lMtNkY"
+    },
+    {
+      "ts": "2026-06-30T14:23:00+08:00",
+      "phase": "assert",
+      "name": "created token response hides hash",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".token_id and .token and .token_prefix and (.token_hash? == null) and ((.scopes // []) | index(\"alert:read\") != null)",
+      "artifact": "tmp.oPi5lMtNkY"
+    },
+    {
+      "ts": "2026-06-30T14:23:00+08:00",
+      "phase": "assert",
+      "name": "created token exposes expected safe prefix",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "token_id=faf0492c-9ad5-44d0-b96b-f6729286771a prefix=api_tepqnnpfdvbx0j",
+      "artifact": "settings-token-create-redacted.json"
+    },
+    {
+      "ts": "2026-06-30T14:23:00+08:00",
+      "phase": "postgres",
+      "name": "created token hash and scopes persisted",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "pg-settings-token-create-count.txt"
+    },
+    {
+      "ts": "2026-06-30T14:23:00+08:00",
+      "phase": "audit",
+      "name": "create token audit row exists",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "action=create_token object_id=faf0492c-9ad5-44d0-b96b-f6729286771a count=1",
+      "artifact": "pg-settings-token-create-audit-count.txt"
+    },
+    {
+      "ts": "2026-06-30T14:23:00+08:00",
+      "phase": "api",
+      "name": "other tenant cannot read settings token",
+      "severity": "info",
+      "passed": true,
+      "status": "404",
+      "detail": "{\"code\":\"BIZ_3010\",\"message\":\"Token not found\",\"trace_id\":\"3d3a8d27-c3bb-4ae9-a4e1-ea5727d9694a\",\"timestamp\":\"2026-06-30T06:23:00Z\",\"path\":\"/api/v1/tokens/faf0492c-9ad5-44d0-b96b-f6729286771a\"} ",
+      "artifact": "token-read-other-tenant.json"
+    },
+    {
+      "ts": "2026-06-30T14:23:00+08:00",
+      "phase": "assert",
+      "name": "other tenant token read is isolated",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "(.code // \"\") == \"BIZ_3010\"",
+      "artifact": "token-read-other-tenant.json"
+    },
+    {
+      "ts": "2026-06-30T14:23:00+08:00",
+      "phase": "api",
+      "name": "invalid token scope rejected",
+      "severity": "info",
+      "passed": true,
+      "status": "400",
+      "detail": "{\"code\":\"VALID_2003\",\"message\":\"invalid scopes: [invalid:scope]\",\"trace_id\":\"42537936-ecce-4507-9b10-c44fef1d6b33\",\"timestamp\":\"2026-06-30T06:23:00Z\",\"path\":\"/api/v1/tokens/faf0492c-9ad5-44d0-b96b-f6729286771a/scopes\"} ",
+      "artifact": "token-scope-invalid.json"
+    },
+    {
+      "ts": "2026-06-30T14:23:00+08:00",
+      "phase": "assert",
+      "name": "invalid scope response names invalid scope",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "((.error.message // .message // \"\")) | contains(\"invalid scopes\")",
+      "artifact": "token-scope-invalid.json"
+    },
+    {
+      "ts": "2026-06-30T14:23:00+08:00",
+      "phase": "api",
+      "name": "admin updates token scopes",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"message\":\"Scopes updated successfully\"} ",
+      "artifact": "token-scope-update.json"
+    },
+    {
+      "ts": "2026-06-30T14:23:00+08:00",
+      "phase": "assert",
+      "name": "scope update response confirms success",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "(.message // \"\") | contains(\"Scopes updated\")",
+      "artifact": "token-scope-update.json"
+    },
+    {
+      "ts": "2026-06-30T14:23:00+08:00",
+      "phase": "postgres",
+      "name": "updated token scopes persisted",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "pg-settings-token-scope-update-count.txt"
+    },
+    {
+      "ts": "2026-06-30T14:23:01+08:00",
+      "phase": "api",
+      "name": "created raw token validates after scope update",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"expires_at\":\"2026-06-30T06:28:00.164747Z\",\"name\":\"codex-settings-token-20260630-settings-governance-preflight-r1\",\"probe_id\":\"\",\"scopes\":[\"alert:read\"],\"tenant_id\":\"default\",\"valid\":true} ",
+      "artifact": "token-validate-created.json"
+    },
+    {
+      "ts": "2026-06-30T14:23:01+08:00",
+      "phase": "assert",
+      "name": "created token validate response reflects updated scope",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".valid == true and .tenant_id == $tenant and ((.scopes // []) | index(\"alert:read\") != null) and ((.scopes // []) | index(\"token:read\") == null)",
+      "artifact": "token-validate-created.json"
+    },
+    {
+      "ts": "2026-06-30T14:23:01+08:00",
+      "phase": "api",
+      "name": "admin regenerates settings token",
+      "severity": "info",
+      "passed": true,
+      "status": "201",
+      "detail": "{\"token_id\":\"ae49bb57-0bf8-4430-91dc-7ff3a12f09dd\",\"token\":\"<redacted>\",\"token_prefix\":\"api_5_ljkr7lik-iao\",\"name\":\"codex-settings-token-20260630-settings-governance-preflight-r1 (regenerated)\",\"scopes\":[\"alert:read\"],\"expires_at\":\"2026-06-30T06:28:00.165156053Z\",\"created_at\":\"2026-06-30T06:23:01.133477402Z\"} ",
+      "artifact": "tmp.nKA8e6vOZ1"
+    },
+    {
+      "ts": "2026-06-30T14:23:01+08:00",
+      "phase": "assert",
+      "name": "regenerated token response hides hash",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".token_id and .token and .token_prefix and (.token_hash? == null)",
+      "artifact": "tmp.nKA8e6vOZ1"
+    },
+    {
+      "ts": "2026-06-30T14:23:01+08:00",
+      "phase": "postgres",
+      "name": "old token revoked by regenerate",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "pg-settings-token-old-revoked-count.txt"
+    },
+    {
+      "ts": "2026-06-30T14:23:01+08:00",
+      "phase": "postgres",
+      "name": "regenerated token hash persisted",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "pg-settings-token-regenerate-count.txt"
+    },
+    {
+      "ts": "2026-06-30T14:23:01+08:00",
+      "phase": "audit",
+      "name": "regenerate token audit row exists",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "action=regenerate_token object_id=ae49bb57-0bf8-4430-91dc-7ff3a12f09dd count=1",
+      "artifact": "pg-settings-token-regenerate-audit-count.txt"
+    },
+    {
+      "ts": "2026-06-30T14:23:01+08:00",
+      "phase": "api",
+      "name": "old raw token rejected after regenerate",
+      "severity": "info",
+      "passed": true,
+      "status": "401",
+      "detail": "{\"code\":\"AUTH_1003\",\"message\":\"Invalid token\",\"trace_id\":\"4f595b97-d69a-4998-bcff-32b56777d6b6\",\"timestamp\":\"2026-06-30T06:23:01Z\",\"path\":\"/api/v1/tokens/validate\"} ",
+      "artifact": "token-validate-old-after-regenerate.json"
+    },
+    {
+      "ts": "2026-06-30T14:23:01+08:00",
+      "phase": "assert",
+      "name": "old token rejected response is invalid token",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "(.code // \"\") == \"AUTH_1003\"",
+      "artifact": "token-validate-old-after-regenerate.json"
+    },
+    {
+      "ts": "2026-06-30T14:23:01+08:00",
+      "phase": "api",
+      "name": "regenerated raw token validates",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"expires_at\":\"2026-06-30T06:28:00.165156Z\",\"name\":\"codex-settings-token-20260630-settings-governance-preflight-r1 (regenerated)\",\"probe_id\":\"\",\"scopes\":[\"alert:read\"],\"tenant_id\":\"default\",\"valid\":true} ",
+      "artifact": "token-validate-regenerated.json"
+    },
+    {
+      "ts": "2026-06-30T14:23:01+08:00",
+      "phase": "assert",
+      "name": "regenerated token validate response is tenant scoped",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".valid == true and .tenant_id == $tenant and ((.scopes // []) | index(\"alert:read\") != null)",
+      "artifact": "token-validate-regenerated.json"
+    },
+    {
+      "ts": "2026-06-30T14:23:01+08:00",
+      "phase": "api",
+      "name": "admin revokes regenerated token",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"message\":\"Token revoked successfully\"} ",
+      "artifact": "token-revoke-regenerated.json"
+    },
+    {
+      "ts": "2026-06-30T14:23:01+08:00",
+      "phase": "assert",
+      "name": "revoke response confirms success",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "(.message // \"\") | contains(\"revoked\")",
+      "artifact": "token-revoke-regenerated.json"
+    },
+    {
+      "ts": "2026-06-30T14:23:01+08:00",
+      "phase": "api",
+      "name": "revoked raw token rejected",
+      "severity": "info",
+      "passed": true,
+      "status": "401",
+      "detail": "{\"code\":\"AUTH_1003\",\"message\":\"Invalid token\",\"trace_id\":\"d27fa427-4dc8-4510-a063-1b76f416ce68\",\"timestamp\":\"2026-06-30T06:23:01Z\",\"path\":\"/api/v1/tokens/validate\"} ",
+      "artifact": "token-validate-after-revoke.json"
+    },
+    {
+      "ts": "2026-06-30T14:23:02+08:00",
+      "phase": "assert",
+      "name": "revoked token rejected response is invalid token",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "(.code // \"\") == \"AUTH_1003\"",
+      "artifact": "token-validate-after-revoke.json"
+    },
+    {
+      "ts": "2026-06-30T14:23:02+08:00",
+      "phase": "postgres",
+      "name": "revoked token state persisted",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "pg-settings-token-revoke-count.txt"
+    },
+    {
+      "ts": "2026-06-30T14:23:02+08:00",
+      "phase": "audit",
+      "name": "revoke token audit row exists",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "action=revoke_token object_id=ae49bb57-0bf8-4430-91dc-7ff3a12f09dd count=1",
+      "artifact": "pg-settings-token-revoke-audit-count.txt"
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "package": "topic1-pilot-and-third-party-materials",
+  "updated_at": "2026-07-02",
+  "status": "template_ready",
+  "scope": "园区网络全流量采集与分析系统试点、售前演示、第三方测试和经济效益材料",
+  "source_documents": [
+    "doc/01_design/课题一产品与技术总体设计.md",
+    "doc/02_acceptance/README.md",
+    "doc/03_review/专家深评整改清单.md",
+    "doc/05_status/未开发项梳理-2026-06-19.md",
+    "doc/05_status/代码实证状态核对-2026-06-19.md"
+  ],
+  "artifacts": [
+    {
+      "path": "doc/02_acceptance/08-third-party/README.md",
+      "type": "index",
+      "required_for": ["pilot", "third_party_package"]
+    },
+    {
+      "path": "doc/02_acceptance/08-third-party/pilot-deployment-proof.md",
+      "type": "template",
+      "required_for": ["entry", "deployment_proof"]
+    },
+    {
+      "path": "doc/02_acceptance/08-third-party/demo-script.md",
+      "type": "template",
+      "required_for": ["demo", "sales", "acceptance_walkthrough"]
+    },
+    {
+      "path": "doc/02_acceptance/08-third-party/pilot-weekly-report-template.md",
+      "type": "template",
+      "required_for": ["pilot_weekly_report"]
+    },
+    {
+      "path": "doc/02_acceptance/08-third-party/economic-benefit.md",
+      "type": "template",
+      "required_for": ["benefit_assessment"]
+    },
+    {
+      "path": "doc/02_acceptance/08-third-party/user-acceptance-signoff.md",
+      "type": "template",
+      "required_for": ["user_confirmation"]
+    },
+    {
+      "path": "doc/02_acceptance/08-third-party/ipr-index.md",
+      "type": "template",
+      "required_for": ["ipr", "achievement_conversion"]
+    }
+  ],
+  "evidence_inputs": {
+    "baseline": "doc/02_acceptance/00-baseline/release-manifest-latest.json",
+    "deployment": "doc/02_acceptance/07-deployment/deployment-preflight-latest.json",
+    "ui_contract": "doc/02_acceptance/02-regression/ui-contract-preflight-latest.json",
+    "ui_visual_interaction": "doc/02_acceptance/02-regression/ui-visual-interaction-preflight-latest.json",
+    "ui_visual_evidence_finalization": "doc/02_acceptance/02-regression/ui-visual-interaction/evidence-finalization-latest.json",
+    "business_flow": "doc/02_acceptance/02-regression/business-flow-api-preflight-latest.json",
+    "oidc_sso": "doc/02_acceptance/02-regression/oidc-sso/oidc-sso-preflight-latest.json",
+    "security": "doc/02_acceptance/05-security/production-security-preflight-latest.json",
+    "ha": "doc/02_acceptance/06-resilience/ha-readiness-preflight-latest.json",
+    "performance": "doc/02_acceptance/03-performance/capture-performance-preflight-latest.json",
+    "detection_quality": "doc/02_acceptance/04-detection-quality/detection-quality-preflight-latest.json",
+    "asset_discovery_coverage": "doc/02_acceptance/02-regression/asset-discovery-coverage-latest.json",
+    "completion_snapshot": "doc/02_acceptance/09-completion/project-completion-audit-latest.json"
+  },
+  "claim_policy": {
+    "may_claim": [
+      "模板包已建立",
+      "可按 release evidence package 填充试点材料",
+      "可追溯到现有功能回归、部署和专项预检证据"
+    ],
+    "must_not_claim_until_filled": [
+      "通过第三方测试",
+      "完成用户盖章验收",
+      "达到 10 x 100Gbps 或 512Mpps",
+      "达到 95% 检出率和 5% 误报率",
+      "生产安全或 HA 已验收通过"
+    ]
+  }
+}

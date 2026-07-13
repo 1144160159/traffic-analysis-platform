@@ -1,0 +1,515 @@
+{
+  "run_id": "20260629-threat-intel-service-r6",
+  "generated_at": "2026-06-29T00:46:56Z",
+  "apisix": "http://10.0.5.8:30180",
+  "result": "pass",
+  "side_effects": {
+    "postgres_rows_upserted": [
+      "codex-threat-intel-20260629-threat-intel-service-r6.example",
+      "codex-threat-intel-import-20260629-threat-intel-service-r6.example",
+      "codex-threat-intel-scheduled-20260629-threat-intel-service-r6.example",
+      "codex-threat-intel-other-20260629-threat-intel-service-r6.example"
+    ],
+    "source_tags": [
+      "codex-live-smoke",
+      "codex-live-import",
+      "codex-live-scheduled",
+      "codex-live-cross-tenant"
+    ]
+  },
+  "totals": {
+    "total": 47,
+    "passed": 47,
+    "failed": 0,
+    "blockers": 0,
+    "warnings": 0
+  },
+  "artifacts": {
+    "ndjson": "doc/02_acceptance/runs/20260629-threat-intel-service/live-threat-intel-service-20260629-threat-intel-service-r6.ndjson",
+    "k8s_deployment": "k8s-threat-intel-deployment.json",
+    "kafka_topic": "kafka-threat-intel-topic.txt",
+    "kafka_events": "kafka-threat-intel-events.txt",
+    "audit_upsert_count": "pg-audit-upsert-count.txt",
+    "audit_import_count": "pg-audit-import-count.txt",
+    "audit_scheduled_event_id": "pg-audit-scheduled-event-id.txt",
+    "scheduled_feed": "api-feed-list-scheduled.json",
+    "cross_tenant_lookup": "api-lookup-cross-tenant-default.json",
+    "expired_token_lookup": "api-lookup-expired-token.json",
+    "builtin_lookup": "api-lookup-builtin-c2.json",
+    "smoke_lookup": "api-lookup-smoke-entry.json",
+    "scheduled_lookup": "api-scheduled-feed-lookup.json",
+    "enrichment": "api-enrich-builtin-c2.json"
+  },
+  "checks": [
+    {
+      "ts": "2026-06-29T08:46:31+08:00",
+      "phase": "auth",
+      "name": "short-lived JWT tokens generated",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "admin and read-only smoke tokens",
+      "artifact": ""
+    },
+    {
+      "ts": "2026-06-29T08:46:31+08:00",
+      "phase": "contract",
+      "name": "threat intel service entrypoint exists",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "go/control-plane/cmd/threat-intel-service/main.go",
+      "artifact": "go/control-plane/cmd/threat-intel-service/main.go"
+    },
+    {
+      "ts": "2026-06-29T08:46:31+08:00",
+      "phase": "contract",
+      "name": "threat intel reusable module exists",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "go/control-plane/internal/alert/threatintel/threat_intel.go",
+      "artifact": "go/control-plane/internal/alert/threatintel/threat_intel.go"
+    },
+    {
+      "ts": "2026-06-29T08:46:31+08:00",
+      "phase": "contract",
+      "name": "threat intel service publishes Kafka events",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "go/control-plane/cmd/threat-intel-service/main.go",
+      "artifact": "go/control-plane/cmd/threat-intel-service/main.go"
+    },
+    {
+      "ts": "2026-06-29T08:46:31+08:00",
+      "phase": "contract",
+      "name": "threat intel service writes audit_logs",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "go/control-plane/cmd/threat-intel-service/main.go",
+      "artifact": "go/control-plane/cmd/threat-intel-service/main.go"
+    },
+    {
+      "ts": "2026-06-29T08:46:31+08:00",
+      "phase": "contract",
+      "name": "threat intel feed scheduler exists",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "go/control-plane/cmd/threat-intel-service/main.go",
+      "artifact": "go/control-plane/cmd/threat-intel-service/main.go"
+    },
+    {
+      "ts": "2026-06-29T08:46:31+08:00",
+      "phase": "contract",
+      "name": "threat intel feed source schema exists",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "go/control-plane/internal/alert/threatintel/threat_intel.go",
+      "artifact": "go/control-plane/internal/alert/threatintel/threat_intel.go"
+    },
+    {
+      "ts": "2026-06-29T08:46:31+08:00",
+      "phase": "contract",
+      "name": "Kafka topic contract includes threat.intel.v1",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "common/kafka/create-topics.sh",
+      "artifact": "common/kafka/create-topics.sh"
+    },
+    {
+      "ts": "2026-06-29T08:46:31+08:00",
+      "phase": "contract",
+      "name": "K8s manifest deploys threat-intel-service",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "deployments/kubernetes/applications/go-services.yaml",
+      "artifact": "deployments/kubernetes/applications/go-services.yaml"
+    },
+    {
+      "ts": "2026-06-29T08:46:31+08:00",
+      "phase": "contract",
+      "name": "APISIX routes threat intel API",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "deployments/kubernetes/configmaps/apisix-routes.yaml",
+      "artifact": "deployments/kubernetes/configmaps/apisix-routes.yaml"
+    },
+    {
+      "ts": "2026-06-29T08:46:31+08:00",
+      "phase": "k8s",
+      "name": "threat-intel-service deployment ready",
+      "severity": "info",
+      "passed": true,
+      "status": "ready=1/1",
+      "detail": "traffic/threat-intel-service:threat-intel-20260629-r6",
+      "artifact": "k8s-threat-intel-deployment.json"
+    },
+    {
+      "ts": "2026-06-29T08:46:31+08:00",
+      "phase": "k8s",
+      "name": "threat-intel-service recent logs clean",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "k8s-threat-intel-logs-tail.txt"
+    },
+    {
+      "ts": "2026-06-29T08:46:32+08:00",
+      "phase": "kafka",
+      "name": "threat.intel.v1 topic healthy",
+      "severity": "info",
+      "passed": true,
+      "status": "partition_count=3",
+      "detail": "",
+      "artifact": "kafka-threat-intel-topic.txt"
+    },
+    {
+      "ts": "2026-06-29T08:46:32+08:00",
+      "phase": "auth",
+      "name": "unauthenticated lookup is rejected",
+      "severity": "info",
+      "passed": true,
+      "status": "401",
+      "detail": "/api/v1/threat-intel/lookup?type=ip&value=185.130.5.253",
+      "artifact": "api-lookup-noauth.json"
+    },
+    {
+      "ts": "2026-06-29T08:46:32+08:00",
+      "phase": "auth",
+      "name": "expired token is rejected",
+      "severity": "info",
+      "passed": true,
+      "status": "401",
+      "detail": "/api/v1/threat-intel/lookup?type=ip&value=185.130.5.253",
+      "artifact": "api-lookup-expired-token.json"
+    },
+    {
+      "ts": "2026-06-29T08:46:32+08:00",
+      "phase": "auth",
+      "name": "read-only token can lookup threat intel",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "/api/v1/threat-intel/lookup?type=ip&value=185.130.5.253",
+      "artifact": "api-lookup-reader-c2.json"
+    },
+    {
+      "ts": "2026-06-29T08:46:33+08:00",
+      "phase": "assert",
+      "name": "read-only lookup returns c2 reputation",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "api-lookup-reader-c2.json"
+    },
+    {
+      "ts": "2026-06-29T08:46:33+08:00",
+      "phase": "api",
+      "name": "lookup builtin C2 IP through APISIX",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "/api/v1/threat-intel/lookup?type=ip&value=185.130.5.253",
+      "artifact": "api-lookup-builtin-c2.json"
+    },
+    {
+      "ts": "2026-06-29T08:46:33+08:00",
+      "phase": "assert",
+      "name": "builtin lookup returns c2 reputation",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "api-lookup-builtin-c2.json"
+    },
+    {
+      "ts": "2026-06-29T08:46:33+08:00",
+      "phase": "auth",
+      "name": "read-only token cannot upsert threat intel",
+      "severity": "info",
+      "passed": true,
+      "status": "403",
+      "detail": "/api/v1/threat-intel/entries",
+      "artifact": "api-upsert-reader-denied.json"
+    },
+    {
+      "ts": "2026-06-29T08:46:33+08:00",
+      "phase": "api",
+      "name": "upsert smoke threat intel entry",
+      "severity": "info",
+      "passed": true,
+      "status": "201",
+      "detail": "/api/v1/threat-intel/entries",
+      "artifact": "api-upsert-entry.json"
+    },
+    {
+      "ts": "2026-06-29T08:46:33+08:00",
+      "phase": "assert",
+      "name": "upsert echoes smoke entry and publishing evidence",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "api-upsert-entry.json"
+    },
+    {
+      "ts": "2026-06-29T08:46:33+08:00",
+      "phase": "api",
+      "name": "lookup persisted smoke entry",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "/api/v1/threat-intel/lookup?type=domain&value=codex-threat-intel-20260629-threat-intel-service-r6.example",
+      "artifact": "api-lookup-smoke-entry.json"
+    },
+    {
+      "ts": "2026-06-29T08:46:33+08:00",
+      "phase": "assert",
+      "name": "persisted smoke entry is found",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "api-lookup-smoke-entry.json"
+    },
+    {
+      "ts": "2026-06-29T08:46:33+08:00",
+      "phase": "api",
+      "name": "list codex-live-smoke entries",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "/api/v1/threat-intel/entries?source=codex-live-smoke&limit=20",
+      "artifact": "api-list-smoke-source.json"
+    },
+    {
+      "ts": "2026-06-29T08:46:33+08:00",
+      "phase": "assert",
+      "name": "list returns smoke entry",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "api-list-smoke-source.json"
+    },
+    {
+      "ts": "2026-06-29T08:46:33+08:00",
+      "phase": "auth",
+      "name": "other tenant can upsert isolated threat intel entry",
+      "severity": "info",
+      "passed": true,
+      "status": "201",
+      "detail": "/api/v1/threat-intel/entries",
+      "artifact": "api-upsert-other-tenant.json"
+    },
+    {
+      "ts": "2026-06-29T08:46:33+08:00",
+      "phase": "assert",
+      "name": "other tenant upsert records tenant id",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "api-upsert-other-tenant.json"
+    },
+    {
+      "ts": "2026-06-29T08:46:33+08:00",
+      "phase": "api",
+      "name": "default tenant cannot lookup other tenant threat intel entry",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "/api/v1/threat-intel/lookup?type=domain&value=codex-threat-intel-other-20260629-threat-intel-service-r6.example",
+      "artifact": "api-lookup-cross-tenant-default.json"
+    },
+    {
+      "ts": "2026-06-29T08:46:33+08:00",
+      "phase": "assert",
+      "name": "cross tenant lookup is not found",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "api-lookup-cross-tenant-default.json"
+    },
+    {
+      "ts": "2026-06-29T08:46:33+08:00",
+      "phase": "api",
+      "name": "default tenant list excludes other tenant source",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "/api/v1/threat-intel/entries?source=codex-live-cross-tenant&limit=20",
+      "artifact": "api-list-cross-tenant-default.json"
+    },
+    {
+      "ts": "2026-06-29T08:46:33+08:00",
+      "phase": "assert",
+      "name": "cross tenant source list is empty",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "api-list-cross-tenant-default.json"
+    },
+    {
+      "ts": "2026-06-29T08:46:34+08:00",
+      "phase": "api",
+      "name": "import threat intel feed entry",
+      "severity": "info",
+      "passed": true,
+      "status": "201",
+      "detail": "/api/v1/threat-intel/import",
+      "artifact": "api-import.json"
+    },
+    {
+      "ts": "2026-06-29T08:46:34+08:00",
+      "phase": "assert",
+      "name": "import reports one entry and publishing evidence",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "api-import.json"
+    },
+    {
+      "ts": "2026-06-29T08:46:34+08:00",
+      "phase": "api",
+      "name": "upsert scheduled threat intel feed",
+      "severity": "info",
+      "passed": true,
+      "status": "201",
+      "detail": "/api/v1/threat-intel/feeds",
+      "artifact": "api-feed-upsert.json"
+    },
+    {
+      "ts": "2026-06-29T08:46:34+08:00",
+      "phase": "assert",
+      "name": "scheduled feed is enabled",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "api-feed-upsert.json"
+    },
+    {
+      "ts": "2026-06-29T08:46:36+08:00",
+      "phase": "api",
+      "name": "scheduled feed imports entry",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "codex-threat-intel-scheduled-20260629-threat-intel-service-r6.example",
+      "artifact": "api-scheduled-feed-lookup.json"
+    },
+    {
+      "ts": "2026-06-29T08:46:36+08:00",
+      "phase": "api",
+      "name": "list scheduled threat intel feed",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "/api/v1/threat-intel/feeds?name=codex-live-scheduled",
+      "artifact": "api-feed-list-scheduled.json"
+    },
+    {
+      "ts": "2026-06-29T08:46:36+08:00",
+      "phase": "assert",
+      "name": "scheduled feed status records success run",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "api-feed-list-scheduled.json"
+    },
+    {
+      "ts": "2026-06-29T08:46:36+08:00",
+      "phase": "audit",
+      "name": "upsert writes audit_logs row",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "ti-e38c2293-c14b-479f-84d1-e91800c514fa",
+      "artifact": "pg-audit-upsert-count.txt"
+    },
+    {
+      "ts": "2026-06-29T08:46:36+08:00",
+      "phase": "audit",
+      "name": "import writes audit_logs row",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "ti-e9398db0-4e23-4cbb-9892-494413e8662d",
+      "artifact": "pg-audit-import-count.txt"
+    },
+    {
+      "ts": "2026-06-29T08:46:36+08:00",
+      "phase": "audit",
+      "name": "scheduled feed writes audit_logs row",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "ti-b8c16879-08cc-4aaa-b785-327000feb32a",
+      "artifact": "pg-audit-scheduled-event-id.txt"
+    },
+    {
+      "ts": "2026-06-29T08:46:56+08:00",
+      "phase": "kafka",
+      "name": "upsert event consumed from threat.intel.v1",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "ti-e38c2293-c14b-479f-84d1-e91800c514fa",
+      "artifact": "kafka-threat-intel-events.txt"
+    },
+    {
+      "ts": "2026-06-29T08:46:56+08:00",
+      "phase": "kafka",
+      "name": "import event consumed from threat.intel.v1",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "ti-e9398db0-4e23-4cbb-9892-494413e8662d",
+      "artifact": "kafka-threat-intel-events.txt"
+    },
+    {
+      "ts": "2026-06-29T08:46:56+08:00",
+      "phase": "kafka",
+      "name": "scheduled feed event consumed from threat.intel.v1",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "ti-b8c16879-08cc-4aaa-b785-327000feb32a",
+      "artifact": "kafka-threat-intel-events.txt"
+    },
+    {
+      "ts": "2026-06-29T08:46:56+08:00",
+      "phase": "api",
+      "name": "enrich alert tuple with threat intel",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "/api/v1/threat-intel/enrich?src_ip=185.130.5.253&dst_ip=10.0.0.1",
+      "artifact": "api-enrich-builtin-c2.json"
+    },
+    {
+      "ts": "2026-06-29T08:46:56+08:00",
+      "phase": "assert",
+      "name": "enrich adds C2 tag and risk",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "api-enrich-builtin-c2.json"
+    }
+  ]
+}

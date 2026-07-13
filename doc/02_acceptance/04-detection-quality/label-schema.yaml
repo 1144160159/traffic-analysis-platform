@@ -1,0 +1,53 @@
+version: 1
+files:
+  labels.csv:
+    path: labels/labels.csv
+    primary_key: sample_id
+    required_columns:
+      - sample_id
+      - ground_truth
+    optional_columns:
+      - attack_family
+      - is_unknown
+      - is_encrypted
+      - stratum
+      - capture_sha256
+      - feature_sha256
+      - labeler
+      - label_timestamp
+    allowed_ground_truth:
+      normal:
+        aliases: [normal, benign, clean, "0"]
+      known_attack:
+        aliases: [known_attack, attack, malicious, scan, c2, tunnel, exfiltration, lateral, bruteforce, botnet, exploit, "1"]
+      unknown_attack:
+        aliases: [unknown_attack]
+      encrypted_attack:
+        aliases: [encrypted_attack]
+  predictions.csv:
+    path: predictions/predictions.csv
+    primary_key: sample_id
+    required_columns:
+      - sample_id
+    prediction_columns:
+      - prediction
+      - predicted_label
+      - predicted_class
+      - score
+      - attack_score
+    optional_columns:
+      - threshold
+      - model_id
+      - model_version
+      - feature_set_id
+      - prediction_timestamp
+truth_rules:
+  attack_binary:
+    normal: false
+    known_attack: true
+    unknown_attack: true
+    encrypted_attack: true
+  unknown_attack:
+    true_when: is_unknown is true or ground_truth is unknown_attack
+  encrypted:
+    true_when: is_encrypted is true or ground_truth is encrypted_attack

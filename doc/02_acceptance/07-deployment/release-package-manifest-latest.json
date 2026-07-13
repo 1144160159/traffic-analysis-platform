@@ -1,0 +1,788 @@
+{
+  "required_directories": [
+    "deployments/kubernetes",
+    "common/kafka",
+    "common/sql",
+    "proto/traffic/v1",
+    "rules",
+    "mlops/workflows",
+    "tests/e2e",
+    "tests/chaos",
+    "web/ui/src/routes"
+  ],
+  "file_count": 190,
+  "directory_file_counts": {
+    "common/kafka": 1,
+    "common/sql": 10,
+    "deployments/kubernetes": 41,
+    "mlops/workflows": 5,
+    "proto/traffic/v1": 12,
+    "rules": 6,
+    "tests/chaos": 5,
+    "tests/e2e": 100,
+    "web/ui/src/routes": 10
+  },
+  "missing_required_directories": [],
+  "files": [
+    {
+      "sha256": "a2799d0c0f510999cfe8949e40222b374b71ec1c8fb23105bd69cb3ad8b5fc66",
+      "path": "common/kafka/create-topics.sh"
+    },
+    {
+      "sha256": "2eb70afd2f7b883e2d79071ef705e64861030f5fb5b1309e0634195641537b8f",
+      "path": "common/sql/ch/00-all-tables.sql"
+    },
+    {
+      "sha256": "06160da7c1e38f504ea7726b62f13268ffba6fa97f0839e10218dcd0fcbac340",
+      "path": "common/sql/ch/01-extended.sql"
+    },
+    {
+      "sha256": "b226e1b314f373b869b22c94d5d88c97eef97456565dd8640d257157718f88b5",
+      "path": "common/sql/ch/02-latency-chain.sql"
+    },
+    {
+      "sha256": "50f5d6bdee8c582a3b367eb17d1bcdca149c12f5485d59cd4751b69ccaa86a4a",
+      "path": "common/sql/pg/00-init.sql"
+    },
+    {
+      "sha256": "b43a78061b00e4fa3b2402b417ee91b870aa6a516d0c291ce4b96d6584a2a865",
+      "path": "common/sql/pg/01-assets.sql"
+    },
+    {
+      "sha256": "23f50fbbb4f7b74f6d5fae3c6e8af810a7b20d02f8cd4286d040793007fbf988",
+      "path": "common/sql/pg/02-features-rules.sql"
+    },
+    {
+      "sha256": "d54211c730a511f99b156e2309aa8df6bdcb5e5c2df1220116862f151d52adfa",
+      "path": "common/sql/pg/03-models-deploy.sql"
+    },
+    {
+      "sha256": "6ad2349af3d0b7a024c5e6bf5e361d38fb9f6eed7bb8bae471fbf887c2c20a19",
+      "path": "common/sql/pg/04-tasks-audit.sql"
+    },
+    {
+      "sha256": "71b166c4620491c4d04f983aba22c359ca405f9bb5f591f5e9f13423d4df3b61",
+      "path": "common/sql/pg/05-default-data.sql"
+    },
+    {
+      "sha256": "7bb657b9a8c44732c8ebd750179383c2822e4d60c876c987b038d28d38f62cf2",
+      "path": "common/sql/pg/06-graph.sql"
+    },
+    {
+      "sha256": "4895675c77acd9a56bdc0f11a7e1a8b0adc65c87137400de123f2c66d9feb767",
+      "path": "deployments/kubernetes/applications/go-services.yaml"
+    },
+    {
+      "sha256": "2b6d82afda9b3e970903c8d0647fc7034b477414eed9a2707ef35eaed9aa4061",
+      "path": "deployments/kubernetes/applications/probe-agent.yaml"
+    },
+    {
+      "sha256": "f8dd744075afa59c8fab86aafb8b94b4ab9232bd84e0693c9acd183de6567a79",
+      "path": "deployments/kubernetes/applications/web-ui.yaml"
+    },
+    {
+      "sha256": "6d1eb037c998c8510468c089947f1cbde6c9bff1d75acc154dd0931ab78492ba",
+      "path": "deployments/kubernetes/argo-events/00-namespace.yaml"
+    },
+    {
+      "sha256": "ce1b8b0166c6a77a04151f842e867699c3546ad897d0f75d9f1810cc7821507c",
+      "path": "deployments/kubernetes/argo-events/argo-artifact-repository.yaml"
+    },
+    {
+      "sha256": "be8ebe97453fbc0d0f3d80306538534fbbd682278ed96acf85d689223f38ad8f",
+      "path": "deployments/kubernetes/argo-events/argo-events-install-v1.9.9.yaml"
+    },
+    {
+      "sha256": "8ee9f380b3c1380e02147a4af1ca1a94bfbdc02d876bdcdfa2116ce7b159116c",
+      "path": "deployments/kubernetes/argo-events/eventbus-native.yaml"
+    },
+    {
+      "sha256": "d57de1266fb183d1d55eb7e971a2d17450795f2d7fd3107488c424363094d2ec",
+      "path": "deployments/kubernetes/argo-events/mlops-event-smoke.yaml"
+    },
+    {
+      "sha256": "adce91403ca056860b70ceb922f436389a92b2b8190ea2d0b849071c11b25b71",
+      "path": "deployments/kubernetes/argo-events/mlops-training-template.yaml"
+    },
+    {
+      "sha256": "86f9938071f94fbc7db5c548f179938b89c199300e474615cce4a1269612efd7",
+      "path": "deployments/kubernetes/configmaps/apisix-routes.yaml"
+    },
+    {
+      "sha256": "2753d5b4c7b6288d321d0c54a844e878b3a5918ac34f74d87fcb8002f60b4365",
+      "path": "deployments/kubernetes/configmaps/credentials-secret.yaml"
+    },
+    {
+      "sha256": "350ea48a9ae5c92da0e96ce3d7426a72e564fcc52c0023c10ddb8f8883922ce6",
+      "path": "deployments/kubernetes/deploy.sh"
+    },
+    {
+      "sha256": "0292d716fbf33044ceefa7a099f90ce305da5fbd239bfc4909929f4e2ff9d528",
+      "path": "deployments/kubernetes/flink/flink-configmap.yaml"
+    },
+    {
+      "sha256": "129bd3c66ccb58b2538795eaa7f1f61d9922ffe2b1da56e286209df6d2bcdd2f",
+      "path": "deployments/kubernetes/flink/flink-log-job.yaml"
+    },
+    {
+      "sha256": "2a2979c9e56a87a210303fa9e1dff2d2f3710f9e97fb7751a55c7d9f9f145b22",
+      "path": "deployments/kubernetes/image-digests.lock.json"
+    },
+    {
+      "sha256": "fe5ae4421e5adfef9bf98ba62188ce8f6220c8192c8d94695bae5bf0de538e2f",
+      "path": "deployments/kubernetes/infrastructure/01-kafka.yaml"
+    },
+    {
+      "sha256": "15ec64574139f984110952d8dd91c80b8d2a04fb956b406b981943af22a5b7c8",
+      "path": "deployments/kubernetes/infrastructure/02-clickhouse.yaml"
+    },
+    {
+      "sha256": "8902c8519ec4e36d794c8025f79e54522166bef312aa7b4b5c43c2b25430b5eb",
+      "path": "deployments/kubernetes/infrastructure/03-postgresql.yaml"
+    },
+    {
+      "sha256": "6ce3ebeeb42eacab1a603c62dc8ebd78f31a5080c86a77c4b53a3ff5b9c0ae87",
+      "path": "deployments/kubernetes/infrastructure/04-redis.yaml"
+    },
+    {
+      "sha256": "ad85a2209cf1d032dec570cac18f4de8fc3d416539d0cb09cf8983159aa19427",
+      "path": "deployments/kubernetes/infrastructure/05-opensearch.yaml"
+    },
+    {
+      "sha256": "2a0ccd77f24d2f1d30815d23ce64f54f8011f3a971c602371ab62c111d90a214",
+      "path": "deployments/kubernetes/infrastructure/06-minio.yaml"
+    },
+    {
+      "sha256": "710c12b79cbfc68dd90498a9d0702cd54069bdf53cfccf465f25a5885135e887",
+      "path": "deployments/kubernetes/infrastructure/07-flink.yaml"
+    },
+    {
+      "sha256": "687eaa2a0e2c31a5a46e493208ea946c7f596336c875df2ec3e74c29ed18d289",
+      "path": "deployments/kubernetes/infrastructure/08-gateway.yaml"
+    },
+    {
+      "sha256": "71bc9ec0b9909eaaec815a1e0b377ce3de7af0193fd61f4c521a42f19833bf2b",
+      "path": "deployments/kubernetes/infrastructure/09-nebula-graph.yaml"
+    },
+    {
+      "sha256": "8c2c1d390d40dac0096cf05cad025188603afd5698d8cd99d81d17f6f38ade24",
+      "path": "deployments/kubernetes/infrastructure/10-observability.yaml"
+    },
+    {
+      "sha256": "ffd6c4384fd8376c92083c292ae2eae9c4b2a562897a629ee58c3698840e34d5",
+      "path": "deployments/kubernetes/infrastructure/11-management.yaml"
+    },
+    {
+      "sha256": "fea57ec03646eb61c12ad3821f2ab08cf2affb5e16b1fd770a0a703fa82bbbf8",
+      "path": "deployments/kubernetes/infrastructure/12-nebula-services.yaml"
+    },
+    {
+      "sha256": "e35f9d99efdbc5efa1f8224e9f0115f74986c014eaa7ee9afd08c8f347be4b6d",
+      "path": "deployments/kubernetes/init-jobs/01-kafka-topics.yaml"
+    },
+    {
+      "sha256": "cff54dcbfa6bd5f0d84fd7caac8f7a17beda01e7dcfc7d94106836d1076e9621",
+      "path": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml"
+    },
+    {
+      "sha256": "f6f553bc0e9e0b6a5526910c51e8fe38b23785542910e28475632c58d3719054",
+      "path": "deployments/kubernetes/init-jobs/03-clickhouse-schema.yaml"
+    },
+    {
+      "sha256": "0f7b0a7603d404c5a67ff968488786994d451ef8cfa1300922f3177ffbcd7440",
+      "path": "deployments/kubernetes/init-jobs/04-opensearch-templates.yaml"
+    },
+    {
+      "sha256": "d332c9576b9a28687433c02a3046b969ae2c66e89f1c23aa9cf69e94141d2e43",
+      "path": "deployments/kubernetes/init-jobs/05-nebula-schema.yaml"
+    },
+    {
+      "sha256": "9477f6b61fb5a10cce931f680a479946ca63bbad0f80d140b7f504901b36369b",
+      "path": "deployments/kubernetes/init-jobs/06-minio-lifecycle.yaml"
+    },
+    {
+      "sha256": "1e87b151c25ed8774314b282bc31ff02e8a5a09fd86298d6e5040781e8c8e266",
+      "path": "deployments/kubernetes/scripts/ensure-keycloak-traffic-ui-client.sh"
+    },
+    {
+      "sha256": "89b9105ce1a6a40b7e1d59d1e83f219bdacea0cb055646501202e08b22fd2c38",
+      "path": "deployments/kubernetes/scripts/reconcile_service_exposure.py"
+    },
+    {
+      "sha256": "dc5c0ba8421d49bfb794af4a16191a8a94c3a4bf2feb3dbf50b325e988eff996",
+      "path": "deployments/kubernetes/security/00-network-policies.yaml"
+    },
+    {
+      "sha256": "3d36d7c650daede2ad467d48fb8212c97424aff41750c47d0052f4f64e6c3454",
+      "path": "deployments/kubernetes/security/README.md"
+    },
+    {
+      "sha256": "e095458c2f9b32323ef87ebaae4b2875666ab5d0bd0f946642a28ba7ab62dafb",
+      "path": "deployments/kubernetes/security/external-secrets-canary.yaml"
+    },
+    {
+      "sha256": "431c0e20ac2485d62ad55d0e8fbd9bd0cc0744489aa81e04ee203a90ac2144d9",
+      "path": "deployments/kubernetes/security/external-secrets-prod-store.yaml"
+    },
+    {
+      "sha256": "35cffa90177d14c4b03aed1b03a96e647baed838d3c91b6bf0cd0b75369c9554",
+      "path": "deployments/kubernetes/security/external-secrets-template.yaml"
+    },
+    {
+      "sha256": "ab2ec9cadc90671b17f94b31eca4cb92791d06eded7971e963331f6d4815a2d7",
+      "path": "deployments/kubernetes/site-values.template.yaml"
+    },
+    {
+      "sha256": "ee56e063b72d377014a432f7ef79d9f41b1f6fb914b46069a19f1287bea6ee4a",
+      "path": "mlops/workflows/cron-training-workflow.yaml"
+    },
+    {
+      "sha256": "c3832672796cf267ee7495cceea526aa95d25416728f04216465f9190a27b8d3",
+      "path": "mlops/workflows/mlops-configmap.yaml"
+    },
+    {
+      "sha256": "b63bd0de2418ad47ee02376218aab80acfe5ac95066db5a812188f9efdcf176d",
+      "path": "mlops/workflows/mlops-secrets.yaml"
+    },
+    {
+      "sha256": "d15361e3388266ee78da4733cb8f6fdd51ea63d6f1b60153e6e50722017d706b",
+      "path": "mlops/workflows/mlops-workflow-template.yaml"
+    },
+    {
+      "sha256": "939375c7e623cb7e1a66236cc46236c83a69d06a047fe3a9a72543920890ebb8",
+      "path": "mlops/workflows/training-workflow.yaml"
+    },
+    {
+      "sha256": "7e67c44af6a595af70c52fbb2f2571bea79560b5a09db3e17e2e8e4fcc16d2f7",
+      "path": "proto/traffic/v1/alert.proto"
+    },
+    {
+      "sha256": "15c3580be54fe008a4dee8732cce72d755cbef52e72c922e055c8557bebfad77",
+      "path": "proto/traffic/v1/asset.proto"
+    },
+    {
+      "sha256": "9fb28360b7869258419fd374f83c153fad4563db8337ddebe887153b15758006",
+      "path": "proto/traffic/v1/audit.proto"
+    },
+    {
+      "sha256": "1c281ffb713b91d2075b5df8d97a5f2978163c18220ac7b1cf22e3ecc2e143fa",
+      "path": "proto/traffic/v1/campaign.proto"
+    },
+    {
+      "sha256": "3bca72baa877339dd3b57440776a6daedae572b34c2e0ab216287cb6b39935db",
+      "path": "proto/traffic/v1/common.proto"
+    },
+    {
+      "sha256": "537a1deb19e94b751ca03d3f7e56faf8e7a785ff331599a7c7c45749e9d957f1",
+      "path": "proto/traffic/v1/detection.proto"
+    },
+    {
+      "sha256": "d12e0a5935b9d5235e8790dc7fa76097001bf4138f3923092a86816168a7f400",
+      "path": "proto/traffic/v1/feature.proto"
+    },
+    {
+      "sha256": "62a47b5aa90333bfcf252eb7e99cc653fa4270f14f3f1b57130a73e3c5126ae2",
+      "path": "proto/traffic/v1/flow.proto"
+    },
+    {
+      "sha256": "ab3c0939b1e96555616dc8fc4c9af65233b02c4c8285ef1651ffa3015f4a70f4",
+      "path": "proto/traffic/v1/graph.proto"
+    },
+    {
+      "sha256": "139ed2aae3143b1978765f98a70d5f3fcd8b1ff14a15f21549a45ae6c86c2a12",
+      "path": "proto/traffic/v1/ingest.proto"
+    },
+    {
+      "sha256": "2cbed5abd88de4b7188dfda1e58445df3bd282f447405df5a6dead22b1b2961d",
+      "path": "proto/traffic/v1/pcap.proto"
+    },
+    {
+      "sha256": "009a59bd5109897d18ba0933e3bcc12e35d531435bf0147ba8f301cd1dcbab19",
+      "path": "proto/traffic/v1/session.proto"
+    },
+    {
+      "sha256": "c88984ccb16fac0bca2cd0dd54bda9169f5a6c64794c131d190c10ab680aefaf",
+      "path": "rules/go.md"
+    },
+    {
+      "sha256": "adf70a425df7a76d345a5f7ccb94f32d963570b84434fbef6e098785ab0e74d4",
+      "path": "rules/java.md"
+    },
+    {
+      "sha256": "d51ccd460f7fa0e696a74b79541ca727d0203b45d532ea0d13943bec628372de",
+      "path": "rules/proto.md"
+    },
+    {
+      "sha256": "5a773de4c308f59fb8b124116723fe195f6ba3f2119e98ecdd75024ed0cfad5b",
+      "path": "rules/rust.md"
+    },
+    {
+      "sha256": "a6e7e99d44f99f88c928766b6410d6da948269e1496ccfd0c38bd124972e002e",
+      "path": "rules/security.md"
+    },
+    {
+      "sha256": "923e9dd280166b2c66fb1d53606e53ed9926de85398c74df9b93114e2c2b94dc",
+      "path": "rules/typescript.md"
+    },
+    {
+      "sha256": "3e3a9a8e353880b6f09a37d33d32ec129fad09f18248846d7df8a1e05802e900",
+      "path": "tests/chaos/README.md"
+    },
+    {
+      "sha256": "08600f4b5f7b0d59f5a3da9a1cddbd36885e99fb6ff52c79699a06d8ea33ec66",
+      "path": "tests/chaos/ha_drill_plan.yaml"
+    },
+    {
+      "sha256": "c0977eeb0c3cdd0a193fac06da3330bdb6b79cd5e631b18364be2588db9e0bf0",
+      "path": "tests/chaos/live_ha_drill_evidence_bootstrap.sh"
+    },
+    {
+      "sha256": "2ac334e6fd189b066645b0066eeb6d1dff81b3d32b7ef23033a5531f1f7e416e",
+      "path": "tests/chaos/live_ha_drill_review_packet.sh"
+    },
+    {
+      "sha256": "092e9c941f9e949927ec20eed9db010e887c8ae0bb70cf038117ec5648721145",
+      "path": "tests/chaos/live_ha_readiness_preflight.sh"
+    },
+    {
+      "sha256": "f5bfa6041a404c42af3b460792757a4a9d38ab1a4f24ab31cdafa7092ae0d320",
+      "path": "tests/e2e/business_ui_constraint_inventory.mjs"
+    },
+    {
+      "sha256": "62f93acefbf0a3165394f75029d73cf18ebaa31616d904d8c3663d4b2abe0549",
+      "path": "tests/e2e/image_digest_lock.py"
+    },
+    {
+      "sha256": "de94a181bb92565bc25ad4ae08f6db15d6cafb05be946c8f3e725981f43b7872",
+      "path": "tests/e2e/k8s_service_exposure.py"
+    },
+    {
+      "sha256": "0f47769edeba524f5db687539202007a94f8628689bd968c55c543cf648f0a73",
+      "path": "tests/e2e/live_100_round_smoke.sh"
+    },
+    {
+      "sha256": "863eb8932c414275c8dadad2ff20f44399ccd7279fc31af4a349c57ff79fbab6",
+      "path": "tests/e2e/live_asset_discovery_coverage_report.sh"
+    },
+    {
+      "sha256": "c3756630255425a59272b4627e7a61bb6288384eef80aeefdd9f87fd7f841fc7",
+      "path": "tests/e2e/live_asset_discovery_preflight.sh"
+    },
+    {
+      "sha256": "1eec7b3921c86ec77cb881e4d17b860c9543c4dd9c344f587617a7ec64090c23",
+      "path": "tests/e2e/live_asset_inventory_bootstrap.sh"
+    },
+    {
+      "sha256": "4bf4c80cb5c3168d400d63e1159d87afa5a0ccc51d2fda49cc2065910b92661b",
+      "path": "tests/e2e/live_asset_inventory_review_packet.sh"
+    },
+    {
+      "sha256": "59e36fdd6aa2cf6ebf5b5dc741bf69b818bf170864dcc3d28c9eb5335c1114d6",
+      "path": "tests/e2e/live_baseline_governance_preflight.sh"
+    },
+    {
+      "sha256": "b1b324aa0503dd66ba940ffaa26e1ae46d9864f6c11231be72cae582eb3f6d08",
+      "path": "tests/e2e/live_business_flow_api_preflight.sh"
+    },
+    {
+      "sha256": "4f94ab9b144801210e337f3c4b82f9010e3bfdf5daadd48f1a3f280cdc19eb2f",
+      "path": "tests/e2e/live_completion_blocker_closure_readiness.sh"
+    },
+    {
+      "sha256": "c7df3b25cc8b8e32a6f1ff10b3b2b052d984de22f9c75990a81bfc30c525e5bd",
+      "path": "tests/e2e/live_compliance_audit_preflight.sh"
+    },
+    {
+      "sha256": "0b849e76266de6f3627d0ef387a173f473685c7be3ddacc58fa240c71ba08bcc",
+      "path": "tests/e2e/live_data_quality_dlq_business.sh"
+    },
+    {
+      "sha256": "90e2320e606a8321039f8c5c123d67af3dd45700c2c7ac30591ddb0d0387e95c",
+      "path": "tests/e2e/live_deployment_preflight.sh"
+    },
+    {
+      "sha256": "403a6108a8c9c5cb143a2155af197e986f6f59a8a0df3d6b8f921b9e40337cd0",
+      "path": "tests/e2e/live_deployment_state_machine.sh"
+    },
+    {
+      "sha256": "94523888a94647f9c67c32ed7ea18ceea657f770093d769bd6123ac22e2dac5a",
+      "path": "tests/e2e/live_detection_quality_package_bootstrap.sh"
+    },
+    {
+      "sha256": "2553fabb7ad02fac89cc605099743d13c76eb9902c2683d97e69f8ed455224c9",
+      "path": "tests/e2e/live_detection_quality_preflight.sh"
+    },
+    {
+      "sha256": "626fb26372a9d427bfe3c0d7d146891c02a6c3cd7a13558415f7710e18e935a6",
+      "path": "tests/e2e/live_detection_quality_review_packet.sh"
+    },
+    {
+      "sha256": "ef35996bf97ad8ba43b691485358d87c38a6c1c5a3369f05ad9b9c3e623e9c56",
+      "path": "tests/e2e/live_dlq_replay_failure_regression.sh"
+    },
+    {
+      "sha256": "3ef874d4fe71c0b17ab330b044b214324703bf7598ce001e3d6028ff8cd9e42e",
+      "path": "tests/e2e/live_dlq_replay_recovery.sh"
+    },
+    {
+      "sha256": "9e151a15f47b9d2e7951433a12812ecfd222905029589a8d078ccdce560ff4ae",
+      "path": "tests/e2e/live_external_secret_operator_canary.sh"
+    },
+    {
+      "sha256": "9328e77a722c10235a40c030f59fb3b05dfb786202729fd1217a7f1087216115",
+      "path": "tests/e2e/live_external_secret_production_reconciliation.sh"
+    },
+    {
+      "sha256": "39757f8422d51a19b8e558652583ffc514842db265722f91434f2a4b71fee937",
+      "path": "tests/e2e/live_forensics_task_state_machine.sh"
+    },
+    {
+      "sha256": "6ec152eec012b04ef89860cf812599312279ea7187c84c56e6af6819e3d65e27",
+      "path": "tests/e2e/live_fusion_threat_intel_contract.sh"
+    },
+    {
+      "sha256": "7a9e6e89868c0c84d5041c584a29b93c1ca88238fed7f654d7edece64d98545b",
+      "path": "tests/e2e/live_fusion_value_report_preflight.sh"
+    },
+    {
+      "sha256": "f5c7560e162735edc724d93c09a5cea4a0b4274b4a05121a6c6bee205b91410e",
+      "path": "tests/e2e/live_kafka_flink_bad_message_dlq.sh"
+    },
+    {
+      "sha256": "a0a9aaa345f8f76a90e3ad028f8cefcb9b4c79527e866b15f6d6726e3de3c185",
+      "path": "tests/e2e/live_kafka_sasl_ssl_rollout.sh"
+    },
+    {
+      "sha256": "e10a0c839be83bce0896efc506243d7d53a0c705828dd25ea9270fab4754465b",
+      "path": "tests/e2e/live_kafka_security_rollout_preflight.sh"
+    },
+    {
+      "sha256": "b6fb079f680a917d881c03281f89d9b68683850f753d1a575cd501d6e4f57582",
+      "path": "tests/e2e/live_latency_chain_report.sh"
+    },
+    {
+      "sha256": "f25c1241796414fa93233b99aad7d2b67c7897f55353a0d374ed62400c5c3977",
+      "path": "tests/e2e/live_model_version_state_machine.sh"
+    },
+    {
+      "sha256": "a5686b72cf2c9570ac84d416cf86f82cc66e76b929a6523b55c9e3d83d8cda51",
+      "path": "tests/e2e/live_network_policy_enforcement_preflight.sh"
+    },
+    {
+      "sha256": "5943f77093df39c4fd2fde6f062555c31629c2d85ebcc5e521e19edf1591141f",
+      "path": "tests/e2e/live_network_policy_enforcement_readiness.sh"
+    },
+    {
+      "sha256": "73c337225a050f4df7621913189ab6c28e680b576dab35d46736b9ffb8051bc7",
+      "path": "tests/e2e/live_notification_governance_preflight.sh"
+    },
+    {
+      "sha256": "3ba33d9b38458bd342ac328aa51335bee0eb833244327579eddad49d83701bb3",
+      "path": "tests/e2e/live_oidc_sso_preflight.sh"
+    },
+    {
+      "sha256": "dab2f142e84fe65cf1c70c64dd0bf08b6f5b790d682d79363bffaa396e75122c",
+      "path": "tests/e2e/live_pcap_forensics_integrity.sh"
+    },
+    {
+      "sha256": "b728ea3c35c2280e62532e183cf05dca56c97fd260c4bb20587cd08424022843",
+      "path": "tests/e2e/live_permission_matrix.sh"
+    },
+    {
+      "sha256": "7285807eef1c87304e98a22feed5fce0632982ab7c13b9a8e30c4c050248d656",
+      "path": "tests/e2e/live_playbook_state_machine.sh"
+    },
+    {
+      "sha256": "84e7de4edb86518ba7ef45ab6e10229eaa88cba3c8a3ff39433aefa2795a8102",
+      "path": "tests/e2e/live_probe_ops_governance_preflight.sh"
+    },
+    {
+      "sha256": "2dc14b5f7b79d4bb290c730db668022658be074ddfacce08036b202fe7344328",
+      "path": "tests/e2e/live_production_security_preflight.sh"
+    },
+    {
+      "sha256": "53f355197f7621aaa79aa9e086f59888a63068fdec0ebe0adb03d5f1276c7ddc",
+      "path": "tests/e2e/live_project_completion_audit.sh"
+    },
+    {
+      "sha256": "6cc920a02e2ff84c774a5e0f40c6c1f8c504b1ca49f4ee489d1e95e5391600b2",
+      "path": "tests/e2e/live_realtime_appshell.sh"
+    },
+    {
+      "sha256": "7d151075c43b5320a8cf6c32b7d8a1ffecbccc7b116d074143e8c5e0a4dffd41",
+      "path": "tests/e2e/live_release_manifest.sh"
+    },
+    {
+      "sha256": "c8b37bf1f066ef920038519d0745ca348c192cce8c101d252b3f2513f0ae79df",
+      "path": "tests/e2e/live_rule_state_machine.sh"
+    },
+    {
+      "sha256": "75017f0d5fddd18eb6da0c4d074ea7c85f5ebeeac01a17c84b96354dcfd6ff6e",
+      "path": "tests/e2e/live_screen_readonly_matrix.sh"
+    },
+    {
+      "sha256": "d79ec2e4ba516f94c91611d2077ec17deeda56d74a43881a474fb811743e6565",
+      "path": "tests/e2e/live_settings_governance_preflight.sh"
+    },
+    {
+      "sha256": "050d5fe0a27fbb8202b9c4e61777c83f98b288af724ad5eb130334a2d0c0c335",
+      "path": "tests/e2e/live_third_party_signoff_readiness.sh"
+    },
+    {
+      "sha256": "d10a6c4bbddb20f8995291488eb171bf845d328b1aff5b568c1e4729ca5ca279",
+      "path": "tests/e2e/live_threat_intel_service.sh"
+    },
+    {
+      "sha256": "96d06154f5277b528812166f5ec910daabef8e33eebf1ec141920d3b365e20ee",
+      "path": "tests/e2e/live_token_lifecycle_matrix.sh"
+    },
+    {
+      "sha256": "dffab19d3696cf8779ff1e8bc02e5f8dc3155aacebbe374570eb0be0d12f980f",
+      "path": "tests/e2e/live_topic_governance_preflight.sh"
+    },
+    {
+      "sha256": "e98afbf710a3aca93fdb39e7d23cd7a2c8d6dff7acd206bd47f8ea02e3362d13",
+      "path": "tests/e2e/live_ui_contract_preflight.sh"
+    },
+    {
+      "sha256": "72493982d25f647e5a5a908bc5840a5217989b2b030269a6fe2fe950b916e0cf",
+      "path": "tests/e2e/live_ui_visual_interaction_preflight.sh"
+    },
+    {
+      "sha256": "02be5d924a1f099e3500c9625f512c3e3d5ee15c79d54c972b1a5567808365e9",
+      "path": "tests/e2e/live_whitelist_governance_preflight.sh"
+    },
+    {
+      "sha256": "bb8c1019a44a5f45bb4179b5218930f01909427f8476aa8baa70e1ed348d1a17",
+      "path": "tests/e2e/pipeline_test.sh"
+    },
+    {
+      "sha256": "8cf7e0df5cb59f3443c7a9c74d4aa63b01f10fff33e2574fe3f9a29d5b08a581",
+      "path": "tests/e2e/site_asset_inventory_formal_check.mjs"
+    },
+    {
+      "sha256": "c7eaa568d8962ef74a835d251ab0365004e22d6b6af0d1b9f01a1ac45e8b6c0f",
+      "path": "tests/e2e/test_ui_visual_diff_metrics.py"
+    },
+    {
+      "sha256": "c9b59a2e87354c104649015fde637fd80b6d84f3244147225a42373d2fa3b15b",
+      "path": "tests/e2e/ui_alert_detail_interactions.mjs"
+    },
+    {
+      "sha256": "8e322aa2d8f33b2fc6aefdce4d60ee87e974a8725bb770a28b0c96a4d7adef48",
+      "path": "tests/e2e/ui_alert_triage_interactions.mjs"
+    },
+    {
+      "sha256": "3613f71733c64e256a9047dcd24add1e7f34cfb3d5b94305aedf92bbcd198295",
+      "path": "tests/e2e/ui_audit_log_interactions.mjs"
+    },
+    {
+      "sha256": "6ea57fb2039b1e6b0792d48a9f817d4f002c7d86d3215713660fd87de8114d4b",
+      "path": "tests/e2e/ui_campaign_interactions.mjs"
+    },
+    {
+      "sha256": "7c56d7a2b508d6d35477f36c2860b69a8c311ef13451ce553c1bcaace16f5365",
+      "path": "tests/e2e/ui_codex_bridge_tool_surface_preflight.mjs"
+    },
+    {
+      "sha256": "d98eeab723847fafc4a78e76c7413ecc5befc4438aa90627d9b9922cc46ce7a7",
+      "path": "tests/e2e/ui_dashboard_interactions.mjs"
+    },
+    {
+      "sha256": "a299b595098cba4bb96fb9c01be4d155fb252d1d572aa425549773cd50e8356e",
+      "path": "tests/e2e/ui_data_quality_all_tabs_interactions.mjs"
+    },
+    {
+      "sha256": "d85acf1af575ce3efd7b52e7a07c6d4ad15f5081b7553040949dcea216034ae7",
+      "path": "tests/e2e/ui_data_quality_field_quality_interactions.mjs"
+    },
+    {
+      "sha256": "f6421ff9349cde57ccad585ba00e56956cd237236aab3fc9fc13d24193b1b1c6",
+      "path": "tests/e2e/ui_deployments_interactions.mjs"
+    },
+    {
+      "sha256": "ba26da25438e8a2ede064f70968198492360b6168b0a153c8ae677d2229fa238",
+      "path": "tests/e2e/ui_desktop_capture_plan.mjs"
+    },
+    {
+      "sha256": "4c7e91ccc5753da01e89744ea76ddf5fadc288d277b8976d04efa3dffe69ee2d",
+      "path": "tests/e2e/ui_desktop_capture_receiver.py"
+    },
+    {
+      "sha256": "d8163dc40215b9274dcacce947eba1ddad0f66c8d3172e940d14d972dd14eee1",
+      "path": "tests/e2e/ui_desktop_capture_receiver_selftest.py"
+    },
+    {
+      "sha256": "fedae39eaa1dd3a00a70ff3ccdc67e141c34b1b348dfac948b9f3d5c3e8fe904",
+      "path": "tests/e2e/ui_desktop_capture_session.mjs"
+    },
+    {
+      "sha256": "2436ebc0c3b7727c3951bb49cc28aef730ada57f46a7e505a8c83f3ee03407d2",
+      "path": "tests/e2e/ui_desktop_chrome_bridge_execution_request.mjs"
+    },
+    {
+      "sha256": "e1d58ac7d70d7f761cbc97ae78a0cc9e812bf83caadf482725c959dfa863d4bb",
+      "path": "tests/e2e/ui_desktop_chrome_bridge_payload.mjs"
+    },
+    {
+      "sha256": "983f696839d996bac915cd42e17b7fddbdfee6374ce7e56c95a5a7f20d2561d9",
+      "path": "tests/e2e/ui_desktop_chrome_bridge_payload_selftest.mjs"
+    },
+    {
+      "sha256": "93b52f6dea2da4f00b23ae9c008c06b8763e713e1fa9bdc3a043d70b998ea119",
+      "path": "tests/e2e/ui_desktop_chrome_bridge_tool_call.mjs"
+    },
+    {
+      "sha256": "755dc00cbf6f75c485b4c45ad201f3a30bdf1fb88d1fc34a7abca589f7aa0c2a",
+      "path": "tests/e2e/ui_desktop_smoke_redirect.py"
+    },
+    {
+      "sha256": "4feeba8ee3d3c57b2285e3b81dfae9e9eb8f1c2117b97bece22de840acba087e",
+      "path": "tests/e2e/ui_desktop_smoke_token_preflight.mjs"
+    },
+    {
+      "sha256": "9c61e870b2c77ea0e95f59233d2b984ff6b732c6dffbbc48a1391d78bd75f8a1",
+      "path": "tests/e2e/ui_encrypted_traffic_evidence_interactions.mjs"
+    },
+    {
+      "sha256": "641915894ddf4ecb34c2cdbd2da68b6d3b0582138230d3ec461ba274c5864f75",
+      "path": "tests/e2e/ui_forensics_interactions.mjs"
+    },
+    {
+      "sha256": "58ea5a06eae5738570de10e1e8b0f91d275efa1546b458c474e47ac163c3a0a6",
+      "path": "tests/e2e/ui_local_visual_contract_suite.mjs"
+    },
+    {
+      "sha256": "86cf69c388cee9745c0db056b50e8be6d76682d9fffa7eca9c27f07002641db1",
+      "path": "tests/e2e/ui_local_visual_iteration.mjs"
+    },
+    {
+      "sha256": "560da1b5ea61af25337b8ecd7a9c3b2b9b41c153d15bcf875d4b95e07bbd7f5d",
+      "path": "tests/e2e/ui_login_region_metrics.py"
+    },
+    {
+      "sha256": "1b4873cd2b930b963e7f035f7eb4bdb541d786bcf3943b8a3047471987f9e2cb",
+      "path": "tests/e2e/ui_mlops_interactions.mjs"
+    },
+    {
+      "sha256": "035215e7a6d50daed9aac7b2b6420b16d60867eb42aa8a8a73a2f8adab319875",
+      "path": "tests/e2e/ui_models_interactions.mjs"
+    },
+    {
+      "sha256": "b30f48307e74693fc99a426101a75a97c7d8b1d8bcfc31a5f09d177f7d378fb1",
+      "path": "tests/e2e/ui_notification_config_interactions.mjs"
+    },
+    {
+      "sha256": "be5c7b7f5ec6c0db49040fd60b414813e79dc6f68f116a1f9d3f9836d996aa48",
+      "path": "tests/e2e/ui_probes_management_interactions.mjs"
+    },
+    {
+      "sha256": "98ad9f826e9d5b2f0432115832e72ac888e5bafb0ab96fd130d9b61238554644",
+      "path": "tests/e2e/ui_rule_management_interactions.mjs"
+    },
+    {
+      "sha256": "2fb7b21b349b5dc61260b2bdd8c41ddc167316c2ebc4503b3fcade9328339cc9",
+      "path": "tests/e2e/ui_situational_screen_interactions.mjs"
+    },
+    {
+      "sha256": "57961a65fcbea6d0c56b111cb731d1f4248d5fd30caef1fbb19dcd62568cd6c8",
+      "path": "tests/e2e/ui_topic_apt_interactions.mjs"
+    },
+    {
+      "sha256": "7ce44065419c5c6564538fe48518ebe8f1b2f7ef29319c7d6762d9839ea91b98",
+      "path": "tests/e2e/ui_topic_workbench_interactions.mjs"
+    },
+    {
+      "sha256": "5f8df0df4835a3be2808d6d5e1e49a9ec388b2a2eca4bbf981c7f463b2ec5e71",
+      "path": "tests/e2e/ui_visual_diff_metrics.py"
+    },
+    {
+      "sha256": "583143b8946fe553ba924148b229bc09255c2e7bb40d1e243edd70c7abdf8385",
+      "path": "tests/e2e/ui_visual_interaction_evidence_finalize.py"
+    },
+    {
+      "sha256": "7764561411f8cd4f90db6d0ac9cc655436ab6415f57855185ff3e6e1d5102d68",
+      "path": "tests/e2e/ui_visual_layer_metrics.py"
+    },
+    {
+      "sha256": "17fcf3b7580ca4025fb39e1197384997915e195a6c7f684441b6bb0a4a9e0f2c",
+      "path": "tests/e2e/ui_whitelist_governance_interactions.mjs"
+    },
+    {
+      "sha256": "cd358602df4917f8fd7b120631ca3112ef58f1acae3ec445fa8d9c7cd44e3d08",
+      "path": "tests/e2e/ui_windows_chrome_cdp_full_route_capture.mjs"
+    },
+    {
+      "sha256": "dd23d202ce90deaa8cca32a025d720a6780de613a04237b8a7e28d421e0f3506",
+      "path": "tests/e2e/ui_windows_codex_bridge_runtime_preflight.mjs"
+    },
+    {
+      "sha256": "a63e9656abd7a2b21a056d0f50e4eb6f69d82839737c9456136b27d698382d06",
+      "path": "tests/e2e/ui_windows_desktop_bridge_host_preflight.mjs"
+    },
+    {
+      "sha256": "005beaf8d0e9a50536fdd94d569f4b0f198a7d32e06019398842e1d0be7ab162",
+      "path": "tests/e2e/ui_windows_node_repl_active_execs_preflight.mjs"
+    },
+    {
+      "sha256": "e211b7a4f11df71f523d36d6f736efa3bf309993aa1e9c82a01119de845930d3",
+      "path": "tests/e2e/ui_windows_node_repl_chrome_bridge_smoke.mjs"
+    },
+    {
+      "sha256": "577dc24c6b7fc72e793f2cdea98b556e17ed8e19083c04e95ac30858ddceeb39",
+      "path": "tests/e2e/ui_windows_node_repl_env_matrix_smoke.mjs"
+    },
+    {
+      "sha256": "31907e04c773f4d021b1b4a30cd600052bdd795989e8180ae1c4f3ee54f910ae",
+      "path": "tests/e2e/ui_windows_node_repl_scheduled_chrome_smoke.mjs"
+    },
+    {
+      "sha256": "b703589aff3591e5e9732d491408f614b0269a0abe6670d6fd2858df8d8b035f",
+      "path": "tests/e2e/ui_windows_ssh_privilege_preflight.mjs"
+    },
+    {
+      "sha256": "e6c25a514e27d5c90cd6f53a14c61a1354b632511a1cda2cd996558a62fb249a",
+      "path": "tests/e2e/ui_windows_tunnel_channel_preflight.mjs"
+    },
+    {
+      "sha256": "b30ebcc12497e230532c71cfdc83ecda6cfefa96d57c44d6581bc5ae5c77248b",
+      "path": "web/ui/src/routes/access.test.ts"
+    },
+    {
+      "sha256": "e285b3774b3752a9ecea7796034230ca7ad530eae24d304c606b5a59e580edd3",
+      "path": "web/ui/src/routes/access.ts"
+    },
+    {
+      "sha256": "4294a11f0b4831b140247d59bc232e9f6b12094c3b0bc01c3427c51dde8ff8bc",
+      "path": "web/ui/src/routes/attackChainCanvas.test.ts"
+    },
+    {
+      "sha256": "d087e75df3b8ac1d3611f54eaa29e48db391c123d13219e16a7f42ac134fc8c3",
+      "path": "web/ui/src/routes/campaignImpactFocus.test.ts"
+    },
+    {
+      "sha256": "b63abd211b3c738be31b1c8b8c99c3efe6c6f6e88ddf15a9c4529dbb686d9a96",
+      "path": "web/ui/src/routes/campaignWorkbench.test.ts"
+    },
+    {
+      "sha256": "b296602f99e4460c5809f3aad385e070aedfa15c15dfbfa760fd81a294e468c1",
+      "path": "web/ui/src/routes/dataQualityTabs.test.ts"
+    },
+    {
+      "sha256": "f22264271322a417aa41708677002a48a6ecb6d8c44763151f76d959c53800bb",
+      "path": "web/ui/src/routes/encryptedTrafficVisuals.test.ts"
+    },
+    {
+      "sha256": "90e07cd07c999b20a85b4edc48a5e8515c2ddc5f2c8c90ac804fb6518a038e75",
+      "path": "web/ui/src/routes/noBitmapUi.test.ts"
+    },
+    {
+      "sha256": "e58c05c28f00bae2db5ce545910a51c70295c3a9386e195ce1665b1d721d4be1",
+      "path": "web/ui/src/routes/routeManifest.test.ts"
+    },
+    {
+      "sha256": "067a590df1bbbe829806da5030f604fd3add6ee5fa0c47489cd7c79550f84e69",
+      "path": "web/ui/src/routes/routeManifest.tsx"
+    }
+  ]
+}

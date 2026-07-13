@@ -1,0 +1,1415 @@
+{
+  "id": "component-app-header",
+  "category": "components",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-app-header.png",
+  "prompt_file": "doc/04_assets/ui_suite_gpt_v1/prompts/component-app-header.prompt.txt",
+  "manifest_refs": [
+    "doc/04_assets/ui_suite_gpt_v1/manifest.json",
+    "doc/04_assets/ui_suite_gpt_v1/specs/layers/component-app-header.json"
+  ],
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "status": "pixel-accepted",
+  "route": null,
+  "host_route": null,
+  "observation": {
+    "layout": "Static topbar specification board with five numbered sections: baseline sample, structure breakdown, responsibility boundary, state variants, ownership relation, and acceptance notes.",
+    "business_focus": "Defines the AppHeader contract: topbar height is 80px, runtime metrics and quick entries stay in the header, user identity and notification/settings/power actions are forbidden from the header.",
+    "current_state": "Visual breakdown record prepared for Windows Chrome reference-raster evidence.",
+    "acceptance_scope": "Pixel acceptance proves exact target PNG reproduction. Production React component semantics remain guided by this breakdown record."
+  },
+  "regions": [
+    {
+      "id": "canvas",
+      "name": "画布",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "layer": 0,
+      "purpose": "spec board canvas",
+      "replication_notes": "Dark blueprint grid background."
+    },
+    {
+      "id": "title-band",
+      "name": "顶部说明区",
+      "bbox": {
+        "x": 40,
+        "y": 30,
+        "w": 1840,
+        "h": 50
+      },
+      "layer": 1,
+      "purpose": "page title, subtitle, and baseline badge",
+      "replication_notes": "No card wrapper."
+    },
+    {
+      "id": "section-01",
+      "name": "01 主样例面板",
+      "bbox": {
+        "x": 40,
+        "y": 92,
+        "w": 1840,
+        "h": 168
+      },
+      "layer": 1,
+      "purpose": "screen.png topbar baseline sample",
+      "replication_notes": "Includes 80px ruler and full topbar crop."
+    },
+    {
+      "id": "topbar-cutout",
+      "name": "主样例 topbar",
+      "bbox": {
+        "x": 80,
+        "y": 146,
+        "w": 1760,
+        "h": 74
+      },
+      "layer": 2,
+      "purpose": "baseline topbar crop",
+      "replication_notes": "Right edge stops at six quick entries."
+    },
+    {
+      "id": "measure-80px",
+      "name": "80px 标尺",
+      "bbox": {
+        "x": 56,
+        "y": 146,
+        "w": 25,
+        "h": 74
+      },
+      "layer": 3,
+      "purpose": "topbar height ruler",
+      "replication_notes": "Cyan vertical bracket with 80px label."
+    },
+    {
+      "id": "brand-block",
+      "name": "品牌标题块",
+      "bbox": {
+        "x": 96,
+        "y": 160,
+        "w": 380,
+        "h": 48
+      },
+      "layer": 3,
+      "purpose": "logo and product title",
+      "replication_notes": "No user identity here."
+    },
+    {
+      "id": "site-card",
+      "name": "站点卡",
+      "bbox": {
+        "x": 482,
+        "y": 155,
+        "w": 100,
+        "h": 57
+      },
+      "layer": 3,
+      "purpose": "site selector",
+      "replication_notes": "站点 / 主校区."
+    },
+    {
+      "id": "time-card",
+      "name": "时间卡",
+      "bbox": {
+        "x": 588,
+        "y": 155,
+        "w": 160,
+        "h": 57
+      },
+      "layer": 3,
+      "purpose": "current time",
+      "replication_notes": "2026-06-20 03:45:00."
+    },
+    {
+      "id": "risk-card",
+      "name": "风险态势卡",
+      "bbox": {
+        "x": 754,
+        "y": 155,
+        "w": 150,
+        "h": 57
+      },
+      "layer": 3,
+      "purpose": "risk score metric",
+      "replication_notes": "高风险 87/100."
+    },
+    {
+      "id": "alert-total-card",
+      "name": "告警总数卡",
+      "bbox": {
+        "x": 909,
+        "y": 155,
+        "w": 118,
+        "h": 57
+      },
+      "layer": 3,
+      "purpose": "alert count metric",
+      "replication_notes": "128 24h metric, not notification center."
+    },
+    {
+      "id": "critical-alert-card",
+      "name": "关键告警卡",
+      "bbox": {
+        "x": 1032,
+        "y": 155,
+        "w": 114,
+        "h": 57
+      },
+      "layer": 3,
+      "purpose": "critical alert metric",
+      "replication_notes": "9 24h metric."
+    },
+    {
+      "id": "health-card",
+      "name": "采集健康卡",
+      "bbox": {
+        "x": 1152,
+        "y": 155,
+        "w": 188,
+        "h": 57
+      },
+      "layer": 3,
+      "purpose": "collection health metric",
+      "replication_notes": "98.6% and online probes 24/25."
+    },
+    {
+      "id": "quality-card",
+      "name": "数据质量卡",
+      "bbox": {
+        "x": 1347,
+        "y": 155,
+        "w": 140,
+        "h": 57
+      },
+      "layer": 3,
+      "purpose": "data quality metric",
+      "replication_notes": "99.1% qualified rate."
+    },
+    {
+      "id": "quick-entry-group",
+      "name": "快捷入口组",
+      "bbox": {
+        "x": 1515,
+        "y": 160,
+        "w": 310,
+        "h": 48
+      },
+      "layer": 3,
+      "purpose": "six quick entries",
+      "replication_notes": "PCAP, asset, rule, script, help, more."
+    },
+    {
+      "id": "section-02",
+      "name": "02 顶部结构拆分",
+      "bbox": {
+        "x": 40,
+        "y": 287,
+        "w": 1201,
+        "h": 269
+      },
+      "layer": 1,
+      "purpose": "header structure decomposition",
+      "replication_notes": "Five crop segments and fixed order chips."
+    },
+    {
+      "id": "segment-brand",
+      "name": "品牌区切片",
+      "bbox": {
+        "x": 70,
+        "y": 346,
+        "w": 210,
+        "h": 50
+      },
+      "layer": 2,
+      "purpose": "brand segment",
+      "replication_notes": "Logo and product title segment."
+    },
+    {
+      "id": "segment-site-time",
+      "name": "站点与时间切片",
+      "bbox": {
+        "x": 300,
+        "y": 346,
+        "w": 210,
+        "h": 50
+      },
+      "layer": 2,
+      "purpose": "site and time segment",
+      "replication_notes": "Station and time cards."
+    },
+    {
+      "id": "segment-risk-alert",
+      "name": "风险与告警指标切片",
+      "bbox": {
+        "x": 530,
+        "y": 350,
+        "w": 210,
+        "h": 48
+      },
+      "layer": 2,
+      "purpose": "risk and alert segment",
+      "replication_notes": "Risk, total alerts, critical alerts."
+    },
+    {
+      "id": "segment-health-quality",
+      "name": "健康与质量切片",
+      "bbox": {
+        "x": 825,
+        "y": 350,
+        "w": 210,
+        "h": 48
+      },
+      "layer": 2,
+      "purpose": "health and quality segment",
+      "replication_notes": "Collection health and data quality."
+    },
+    {
+      "id": "segment-quick-entry",
+      "name": "六个快捷入口切片",
+      "bbox": {
+        "x": 1080,
+        "y": 356,
+        "w": 190,
+        "h": 43
+      },
+      "layer": 2,
+      "purpose": "quick entry segment",
+      "replication_notes": "Six icons."
+    },
+    {
+      "id": "fixed-order-chain",
+      "name": "固定顺序芯片链",
+      "bbox": {
+        "x": 78,
+        "y": 470,
+        "w": 1102,
+        "h": 37
+      },
+      "layer": 2,
+      "purpose": "fixed header order",
+      "replication_notes": "Brand through More order; PCAP is emphasized."
+    },
+    {
+      "id": "section-03",
+      "name": "03 职责边界",
+      "bbox": {
+        "x": 1270,
+        "y": 287,
+        "w": 610,
+        "h": 269
+      },
+      "layer": 1,
+      "purpose": "avoid duplicated responsibility",
+      "replication_notes": "Green allowed items and red forbidden items."
+    },
+    {
+      "id": "allowed-items",
+      "name": "顶部保留项",
+      "bbox": {
+        "x": 1301,
+        "y": 369,
+        "w": 599,
+        "h": 42
+      },
+      "layer": 2,
+      "purpose": "allowed header responsibilities",
+      "replication_notes": "运行指标, 站点时间, 快捷入口."
+    },
+    {
+      "id": "forbidden-items",
+      "name": "顶部禁止项",
+      "bbox": {
+        "x": 1301,
+        "y": 466,
+        "w": 569,
+        "h": 90
+      },
+      "layer": 2,
+      "purpose": "forbidden header responsibilities",
+      "replication_notes": "通知铃铛, 用户头像/菜单, 设置/电源."
+    },
+    {
+      "id": "section-04",
+      "name": "04 状态变体",
+      "bbox": {
+        "x": 40,
+        "y": 584,
+        "w": 1120,
+        "h": 318
+      },
+      "layer": 1,
+      "purpose": "state variants",
+      "replication_notes": "Only metric states change, no user zone added."
+    },
+    {
+      "id": "state-normal-row",
+      "name": "正常状态行",
+      "bbox": {
+        "x": 72,
+        "y": 644,
+        "w": 1046,
+        "h": 37
+      },
+      "layer": 2,
+      "purpose": "normal topbar variant",
+      "replication_notes": "Green state label."
+    },
+    {
+      "id": "state-high-row",
+      "name": "高危状态行",
+      "bbox": {
+        "x": 72,
+        "y": 697,
+        "w": 1046,
+        "h": 42
+      },
+      "layer": 2,
+      "purpose": "high risk variant",
+      "replication_notes": "Red state label and risk metrics."
+    },
+    {
+      "id": "state-loading-row",
+      "name": "加载状态行",
+      "bbox": {
+        "x": 72,
+        "y": 760,
+        "w": 1046,
+        "h": 37
+      },
+      "layer": 2,
+      "purpose": "loading variant",
+      "replication_notes": "Skeleton blocks over metric cards."
+    },
+    {
+      "id": "state-degraded-row",
+      "name": "离线降级状态行",
+      "bbox": {
+        "x": 72,
+        "y": 813,
+        "w": 1046,
+        "h": 37
+      },
+      "layer": 2,
+      "purpose": "offline/degraded variant",
+      "replication_notes": "Yellow boundary."
+    },
+    {
+      "id": "state-token-row",
+      "name": "状态 token 行",
+      "bbox": {
+        "x": 82,
+        "y": 870,
+        "w": 930,
+        "h": 20
+      },
+      "layer": 2,
+      "purpose": "topbar tokens",
+      "replication_notes": "topbar/font/border/radius."
+    },
+    {
+      "id": "section-05",
+      "name": "05 与左侧底部关系",
+      "bbox": {
+        "x": 1190,
+        "y": 584,
+        "w": 690,
+        "h": 318
+      },
+      "layer": 1,
+      "purpose": "ownership relation",
+      "replication_notes": "Shows user identity and global actions are outside topbar."
+    },
+    {
+      "id": "ownership-top",
+      "name": "顶部归属框",
+      "bbox": {
+        "x": 1245,
+        "y": 650,
+        "w": 560,
+        "h": 20
+      },
+      "layer": 2,
+      "purpose": "top ownership",
+      "replication_notes": "No user/notification action group."
+    },
+    {
+      "id": "ownership-user-zone",
+      "name": "左下用户身份区",
+      "bbox": {
+        "x": 1245,
+        "y": 774,
+        "w": 290,
+        "h": 62
+      },
+      "layer": 2,
+      "purpose": "left-bottom user identity area",
+      "replication_notes": "Green outline."
+    },
+    {
+      "id": "ownership-footer-actions",
+      "name": "底部全局动作区",
+      "bbox": {
+        "x": 1285,
+        "y": 821,
+        "w": 250,
+        "h": 58
+      },
+      "layer": 2,
+      "purpose": "footer global actions",
+      "replication_notes": "Notification, settings, power belong here."
+    },
+    {
+      "id": "ownership-user-card",
+      "name": "用户卡示意",
+      "bbox": {
+        "x": 1605,
+        "y": 744,
+        "w": 210,
+        "h": 137
+      },
+      "layer": 2,
+      "purpose": "user identity card example",
+      "replication_notes": "sec_analyst user card."
+    },
+    {
+      "id": "acceptance-footer",
+      "name": "底部验收口径",
+      "bbox": {
+        "x": 40,
+        "y": 944,
+        "w": 1840,
+        "h": 80
+      },
+      "layer": 1,
+      "purpose": "acceptance rule and trace note",
+      "replication_notes": "Yellow rule and gray trace note."
+    }
+  ],
+  "texts": [
+    {
+      "value": "component-app-header / 顶部状态栏组件规范",
+      "bbox": {
+        "x": 40,
+        "y": 31,
+        "w": 690,
+        "h": 28
+      },
+      "type": "title",
+      "must_match": true
+    },
+    {
+      "value": "基准：screen.png 实测 topbar=80px；顶部只承载运行态势与快捷入口，不承载通知/用户动作组",
+      "bbox": {
+        "x": 40,
+        "y": 67,
+        "w": 820,
+        "h": 18
+      },
+      "type": "subtitle",
+      "must_match": true
+    },
+    {
+      "value": "current screen baseline",
+      "bbox": {
+        "x": 1570,
+        "y": 38,
+        "w": 190,
+        "h": 18
+      },
+      "type": "badge",
+      "must_match": true
+    },
+    {
+      "value": "01 主样例：screen.png 顶部 80px 裁切",
+      "bbox": {
+        "x": 56,
+        "y": 104,
+        "w": 430,
+        "h": 20
+      },
+      "type": "panel-title",
+      "must_match": true
+    },
+    {
+      "value": "no user / no bell group",
+      "bbox": {
+        "x": 1698,
+        "y": 101,
+        "w": 170,
+        "h": 18
+      },
+      "type": "badge",
+      "must_match": true
+    },
+    {
+      "value": "80px",
+      "bbox": {
+        "x": 69,
+        "y": 175,
+        "w": 42,
+        "h": 16
+      },
+      "type": "measure",
+      "must_match": true
+    },
+    {
+      "value": "园区网络全流量采集与分析系统",
+      "bbox": {
+        "x": 135,
+        "y": 171,
+        "w": 330,
+        "h": 24
+      },
+      "type": "topbar-title",
+      "must_match": true
+    },
+    {
+      "value": "站点 / 主校区",
+      "bbox": {
+        "x": 495,
+        "y": 168,
+        "w": 76,
+        "h": 34
+      },
+      "type": "metric",
+      "must_match": true
+    },
+    {
+      "value": "时间 / 2026-06-20 03:45:00",
+      "bbox": {
+        "x": 600,
+        "y": 168,
+        "w": 140,
+        "h": 34
+      },
+      "type": "metric",
+      "must_match": true
+    },
+    {
+      "value": "风险态势 / 高风险 87/100",
+      "bbox": {
+        "x": 764,
+        "y": 168,
+        "w": 130,
+        "h": 34
+      },
+      "type": "metric",
+      "must_match": true
+    },
+    {
+      "value": "告警总数 / 128 / 24h",
+      "bbox": {
+        "x": 920,
+        "y": 168,
+        "w": 98,
+        "h": 34
+      },
+      "type": "metric",
+      "must_match": true
+    },
+    {
+      "value": "关键告警 / 9 / 24h",
+      "bbox": {
+        "x": 1045,
+        "y": 168,
+        "w": 92,
+        "h": 34
+      },
+      "type": "metric",
+      "must_match": true
+    },
+    {
+      "value": "采集健康度 / 98.6% / 在线探针 24/25",
+      "bbox": {
+        "x": 1164,
+        "y": 168,
+        "w": 165,
+        "h": 34
+      },
+      "type": "metric",
+      "must_match": true
+    },
+    {
+      "value": "数据质量 / 99.1% / 合格率",
+      "bbox": {
+        "x": 1358,
+        "y": 168,
+        "w": 120,
+        "h": 34
+      },
+      "type": "metric",
+      "must_match": true
+    },
+    {
+      "value": "PCAP检索 / 资产检索 / 规则检测 / 脚本中心 / 帮助中心 / 更多应用",
+      "bbox": {
+        "x": 1515,
+        "y": 168,
+        "w": 310,
+        "h": 34
+      },
+      "type": "quick-entry-group",
+      "must_match": true
+    },
+    {
+      "value": "包含：产品标题 / 站点 / 时间 / 风险态势 / 告警总数 / 关键告警 / 采集健康 / 数据质量 / PCAP-资产-规则-脚本-帮助-更多应用",
+      "bbox": {
+        "x": 80,
+        "y": 230,
+        "w": 900,
+        "h": 18
+      },
+      "type": "helper",
+      "must_match": true
+    },
+    {
+      "value": "02 顶部结构拆分",
+      "bbox": {
+        "x": 56,
+        "y": 299,
+        "w": 190,
+        "h": 20
+      },
+      "type": "panel-title",
+      "must_match": true
+    },
+    {
+      "value": "fixed order",
+      "bbox": {
+        "x": 1138,
+        "y": 294,
+        "w": 90,
+        "h": 20
+      },
+      "type": "badge",
+      "must_match": true
+    },
+    {
+      "value": "品牌区 / 站点与时间 / 风险与告警指标 / 健康与质量 / 六个快捷入口",
+      "bbox": {
+        "x": 70,
+        "y": 416,
+        "w": 1080,
+        "h": 20
+      },
+      "type": "structure-labels",
+      "must_match": true
+    },
+    {
+      "value": "品牌 / 站点 / 时间 / 风险 / 告警 / 关键 / 健康 / 质量 / PCAP / 资产 / 规则 / 脚本 / 帮助 / 更多",
+      "bbox": {
+        "x": 78,
+        "y": 470,
+        "w": 1102,
+        "h": 37
+      },
+      "type": "fixed-order-chain",
+      "must_match": true
+    },
+    {
+      "value": "03 职责边界：避免重复",
+      "bbox": {
+        "x": 1286,
+        "y": 299,
+        "w": 270,
+        "h": 20
+      },
+      "type": "panel-title",
+      "must_match": true
+    },
+    {
+      "value": "must",
+      "bbox": {
+        "x": 1818,
+        "y": 294,
+        "w": 50,
+        "h": 20
+      },
+      "type": "badge",
+      "must_match": true
+    },
+    {
+      "value": "顶部保留",
+      "bbox": {
+        "x": 1301,
+        "y": 340,
+        "w": 90,
+        "h": 20
+      },
+      "type": "section-label",
+      "must_match": true
+    },
+    {
+      "value": "运行指标 / 站点时间 / 快捷入口",
+      "bbox": {
+        "x": 1320,
+        "y": 383,
+        "w": 520,
+        "h": 18
+      },
+      "type": "allowed",
+      "must_match": true
+    },
+    {
+      "value": "顶部禁止",
+      "bbox": {
+        "x": 1301,
+        "y": 437,
+        "w": 90,
+        "h": 20
+      },
+      "type": "section-label",
+      "must_match": true
+    },
+    {
+      "value": "通知铃铛 / 用户头像/菜单 / 设置/电源",
+      "bbox": {
+        "x": 1320,
+        "y": 480,
+        "w": 520,
+        "h": 65
+      },
+      "type": "forbidden",
+      "must_match": true
+    },
+    {
+      "value": "告警数是态势指标，不是通知中心入口。",
+      "bbox": {
+        "x": 1301,
+        "y": 524,
+        "w": 320,
+        "h": 18
+      },
+      "type": "helper",
+      "must_match": true
+    },
+    {
+      "value": "04 状态变体：只改变指标状态，不新增用户区",
+      "bbox": {
+        "x": 56,
+        "y": 596,
+        "w": 520,
+        "h": 20
+      },
+      "type": "panel-title",
+      "must_match": true
+    },
+    {
+      "value": "states",
+      "bbox": {
+        "x": 1090,
+        "y": 593,
+        "w": 58,
+        "h": 20
+      },
+      "type": "badge",
+      "must_match": true
+    },
+    {
+      "value": "正常 / 高危 / 加载 / 离线降级",
+      "bbox": {
+        "x": 92,
+        "y": 654,
+        "w": 90,
+        "h": 190
+      },
+      "type": "state-labels",
+      "must_match": true
+    },
+    {
+      "value": "右端仍止于快捷入口",
+      "bbox": {
+        "x": 994,
+        "y": 650,
+        "w": 125,
+        "h": 190
+      },
+      "type": "state-rule",
+      "must_match": true
+    },
+    {
+      "value": "topbar 80px / font 12-24px / border #3897c9 22% / radius 4-6px",
+      "bbox": {
+        "x": 82,
+        "y": 870,
+        "w": 930,
+        "h": 20
+      },
+      "type": "token-summary",
+      "must_match": true
+    },
+    {
+      "value": "05 与左侧/底部区域的关系",
+      "bbox": {
+        "x": 1206,
+        "y": 596,
+        "w": 360,
+        "h": 20
+      },
+      "type": "panel-title",
+      "must_match": true
+    },
+    {
+      "value": "ownership",
+      "bbox": {
+        "x": 1782,
+        "y": 593,
+        "w": 88,
+        "h": 20
+      },
+      "type": "badge",
+      "must_match": true
+    },
+    {
+      "value": "顶部：无用户/通知动作组",
+      "bbox": {
+        "x": 1420,
+        "y": 652,
+        "w": 210,
+        "h": 18
+      },
+      "type": "ownership-label",
+      "must_match": true
+    },
+    {
+      "value": "左下：用户身份区",
+      "bbox": {
+        "x": 1306,
+        "y": 783,
+        "w": 160,
+        "h": 18
+      },
+      "type": "ownership-label",
+      "must_match": true
+    },
+    {
+      "value": "12.6 K EPS",
+      "bbox": {
+        "x": 1294,
+        "y": 842,
+        "w": 86,
+        "h": 18
+      },
+      "type": "footer-metric",
+      "must_match": true
+    },
+    {
+      "value": "sec_analyst / 安全分析师 / 在线",
+      "bbox": {
+        "x": 1668,
+        "y": 768,
+        "w": 120,
+        "h": 76
+      },
+      "type": "user-card",
+      "must_match": true
+    },
+    {
+      "value": "验收口径：如果顶部出现用户头像、用户名、通知铃铛、设置或电源，视为重复并判定不合格。",
+      "bbox": {
+        "x": 40,
+        "y": 968,
+        "w": 1120,
+        "h": 22
+      },
+      "type": "acceptance",
+      "must_match": true
+    },
+    {
+      "value": "保留 raw imagegen 版本作为追溯；此最终 PNG 为 screen.png 裁切重组的确定性修正版。",
+      "bbox": {
+        "x": 40,
+        "y": 1008,
+        "w": 860,
+        "h": 18
+      },
+      "type": "note",
+      "must_match": true
+    }
+  ],
+  "components": [
+    {
+      "region": "canvas",
+      "name": "ComponentAppHeaderSpecBoard",
+      "implementation": "Static specification board",
+      "state": "default",
+      "notes": "Not the runtime AppShell itself."
+    },
+    {
+      "region": "canvas",
+      "name": "BlueprintGridBackground",
+      "implementation": "CSS linear-gradient grid",
+      "state": "default",
+      "notes": "Blueprint background."
+    },
+    {
+      "region": "title-band",
+      "name": "SpecPageTitle",
+      "implementation": "Title and subtitle text",
+      "state": "default",
+      "notes": "Includes baseline badge."
+    },
+    {
+      "region": "section-01",
+      "name": "AppHeaderBaselinePanel",
+      "implementation": "Section panel",
+      "state": "baseline",
+      "notes": "Main topbar sample."
+    },
+    {
+      "region": "topbar-cutout",
+      "name": "TopbarCutout",
+      "implementation": "Cropped baseline image or equivalent component render",
+      "state": "baseline",
+      "notes": "80px topbar."
+    },
+    {
+      "region": "measure-80px",
+      "name": "TopbarMeasureRuler",
+      "implementation": "CSS ruler",
+      "state": "measurement",
+      "notes": "Shows 80px height."
+    },
+    {
+      "region": "brand-block",
+      "name": "ProductBrandBlock",
+      "implementation": "Logo and product title",
+      "state": "default",
+      "notes": "No user identity."
+    },
+    {
+      "region": "site-card",
+      "name": "SiteSelectorCard",
+      "implementation": "Metric card plus dropdown affordance",
+      "state": "default",
+      "notes": "Station selection belongs in header."
+    },
+    {
+      "region": "time-card",
+      "name": "TimeIndicatorCard",
+      "implementation": "Metric card",
+      "state": "realtime",
+      "notes": "Stable width."
+    },
+    {
+      "region": "risk-card",
+      "name": "RiskMetricCard",
+      "implementation": "Runtime metric card",
+      "state": "normal/high",
+      "notes": "Risk changes color."
+    },
+    {
+      "region": "alert-total-card",
+      "name": "AlertTotalMetricCard",
+      "implementation": "Runtime metric card",
+      "state": "warning/high",
+      "notes": "Metric, not notification center."
+    },
+    {
+      "region": "critical-alert-card",
+      "name": "CriticalAlertMetricCard",
+      "implementation": "Runtime metric card",
+      "state": "danger",
+      "notes": "Metric, not bell action."
+    },
+    {
+      "region": "health-card",
+      "name": "CollectionHealthMetricCard",
+      "implementation": "Runtime metric card",
+      "state": "success/degraded/loading",
+      "notes": "Probe health."
+    },
+    {
+      "region": "quality-card",
+      "name": "DataQualityMetricCard",
+      "implementation": "Runtime metric card",
+      "state": "success/degraded/loading",
+      "notes": "Data quality."
+    },
+    {
+      "region": "quick-entry-group",
+      "name": "QuickEntryGroup",
+      "implementation": "Six icon buttons",
+      "state": "default/hover/selected",
+      "notes": "Fixed order."
+    },
+    {
+      "region": "section-02",
+      "name": "HeaderStructurePanel",
+      "implementation": "Section panel",
+      "state": "default",
+      "notes": "Structure breakdown."
+    },
+    {
+      "region": "fixed-order-chain",
+      "name": "FixedOrderChipChain",
+      "implementation": "Chip sequence",
+      "state": "fixed",
+      "notes": "Brand through More."
+    },
+    {
+      "region": "section-03",
+      "name": "ResponsibilityBoundaryPanel",
+      "implementation": "Section panel",
+      "state": "must",
+      "notes": "Allowed and forbidden header responsibilities."
+    },
+    {
+      "region": "allowed-items",
+      "name": "AllowedHeaderItem",
+      "implementation": "Green rule bar",
+      "state": "allowed",
+      "notes": "Runtime metrics, site/time, quick entries."
+    },
+    {
+      "region": "forbidden-items",
+      "name": "ForbiddenHeaderItem",
+      "implementation": "Red rule bar",
+      "state": "forbidden",
+      "notes": "Bell, user, settings, power."
+    },
+    {
+      "region": "section-04",
+      "name": "HeaderStateVariantPanel",
+      "implementation": "Section panel",
+      "state": "states",
+      "notes": "State variants."
+    },
+    {
+      "region": "section-04",
+      "name": "HeaderStateRow",
+      "implementation": "Variant row",
+      "state": "normal/high/loading/degraded",
+      "notes": "Right edge remains quick entries."
+    },
+    {
+      "region": "section-05",
+      "name": "OwnershipPanel",
+      "implementation": "Section panel",
+      "state": "ownership",
+      "notes": "Relationship with left and footer areas."
+    },
+    {
+      "region": "ownership-user-card",
+      "name": "UserIdentityCard",
+      "implementation": "User card sample",
+      "state": "online",
+      "notes": "Belongs to left-bottom area, not header."
+    },
+    {
+      "region": "acceptance-footer",
+      "name": "AcceptanceRuleLine",
+      "implementation": "Critical text rule",
+      "state": "critical",
+      "notes": "Explicit rejection criteria."
+    }
+  ],
+  "icons": [
+    {
+      "position": "brand block",
+      "icon": "shield logo",
+      "library_or_implementation": "existing brand SVG/crop",
+      "semantics": "product brand",
+      "custom_required": true
+    },
+    {
+      "position": "site card",
+      "icon": "down arrow",
+      "library_or_implementation": "Ant Design DownOutlined",
+      "semantics": "site selector",
+      "custom_required": false
+    },
+    {
+      "position": "risk card",
+      "icon": "risk shield/flame",
+      "library_or_implementation": "Ant Design or existing icon",
+      "semantics": "risk posture metric",
+      "custom_required": false
+    },
+    {
+      "position": "alert total metric",
+      "icon": "bell icon inside metric card",
+      "library_or_implementation": "Ant Design BellOutlined",
+      "semantics": "alert count metric, not notification entry",
+      "custom_required": false
+    },
+    {
+      "position": "critical alert metric",
+      "icon": "critical alert icon",
+      "library_or_implementation": "Ant Design AlertOutlined",
+      "semantics": "critical alert metric",
+      "custom_required": false
+    },
+    {
+      "position": "health card",
+      "icon": "green health icon",
+      "library_or_implementation": "Ant Design CheckCircleOutlined",
+      "semantics": "collection health",
+      "custom_required": false
+    },
+    {
+      "position": "quality card",
+      "icon": "database icon",
+      "library_or_implementation": "Ant Design DatabaseOutlined",
+      "semantics": "data quality",
+      "custom_required": false
+    },
+    {
+      "position": "quick entries",
+      "icon": "PCAP/asset/rule/script/help/more icons",
+      "library_or_implementation": "Ant Design SearchOutlined/FileSearchOutlined/CodeOutlined/QuestionCircleOutlined/AppstoreOutlined",
+      "semantics": "quick navigation",
+      "custom_required": false
+    },
+    {
+      "position": "allowed items",
+      "icon": "check circle",
+      "library_or_implementation": "Ant Design CheckCircleOutlined",
+      "semantics": "allowed in header",
+      "custom_required": false
+    },
+    {
+      "position": "forbidden items",
+      "icon": "ban circle",
+      "library_or_implementation": "Ant Design StopOutlined",
+      "semantics": "forbidden in header",
+      "custom_required": false
+    },
+    {
+      "position": "footer action sample",
+      "icon": "notification/settings/power icons",
+      "library_or_implementation": "Ant Design BellOutlined/SettingOutlined/PoweroffOutlined",
+      "semantics": "belongs to footer global actions",
+      "custom_required": false
+    },
+    {
+      "position": "user identity card",
+      "icon": "avatar icon",
+      "library_or_implementation": "Ant Design UserOutlined or avatar image",
+      "semantics": "belongs to left-bottom user area",
+      "custom_required": false
+    }
+  ],
+  "tokens": [
+    {
+      "name": "Canvas",
+      "value": "#03111c",
+      "maps_to": "--ui-bg-page",
+      "usage": "page background"
+    },
+    {
+      "name": "Grid line",
+      "value": "rgba(30,156,255,0.22)",
+      "maps_to": "--ui-grid-line",
+      "usage": "blueprint background"
+    },
+    {
+      "name": "Panel BG",
+      "value": "#071f32 / rgba(6,28,43,0.86)",
+      "maps_to": "--ui-bg-panel",
+      "usage": "spec panels"
+    },
+    {
+      "name": "Border",
+      "value": "rgba(56,151,201,.22)",
+      "maps_to": "--ui-border-subtle",
+      "usage": "panel borders"
+    },
+    {
+      "name": "Strong cyan",
+      "value": "#00d5ff",
+      "maps_to": "--ui-accent-cyan",
+      "usage": "labels and outlines"
+    },
+    {
+      "name": "Text",
+      "value": "#eaf7ff",
+      "maps_to": "--ui-text-primary",
+      "usage": "primary text"
+    },
+    {
+      "name": "Secondary",
+      "value": "#9db9c9",
+      "maps_to": "--ui-text-secondary",
+      "usage": "helper text"
+    },
+    {
+      "name": "Success",
+      "value": "#36d66b",
+      "maps_to": "--ui-success",
+      "usage": "allowed and healthy"
+    },
+    {
+      "name": "Warning",
+      "value": "#ffb020",
+      "maps_to": "--ui-warning",
+      "usage": "acceptance note and degraded state"
+    },
+    {
+      "name": "Danger",
+      "value": "#ff4d4f",
+      "maps_to": "--ui-danger",
+      "usage": "forbidden and high risk"
+    },
+    {
+      "name": "Topbar height",
+      "value": "80px",
+      "maps_to": "--app-header-height",
+      "usage": "topbar"
+    },
+    {
+      "name": "Font range",
+      "value": "12-24px",
+      "maps_to": "--app-header-font-range",
+      "usage": "topbar text"
+    },
+    {
+      "name": "Border alpha",
+      "value": "#3897c9 22%",
+      "maps_to": "--app-header-border",
+      "usage": "topbar border"
+    },
+    {
+      "name": "Radius",
+      "value": "4-6px",
+      "maps_to": "--app-header-radius",
+      "usage": "topbar controls"
+    },
+    {
+      "name": "Grid unit",
+      "value": "8px",
+      "maps_to": "--ui-grid-step",
+      "usage": "component spacing"
+    }
+  ],
+  "interactions": [
+    {
+      "control_or_region": "AppHeader",
+      "state": "baseline",
+      "trigger": "open application shell",
+      "expected": "Topbar height is 80px and right edge stops at quick entries."
+    },
+    {
+      "control_or_region": "SiteSelectorCard",
+      "state": "default/hover",
+      "trigger": "click site",
+      "expected": "Site selection remains in header without adding user identity."
+    },
+    {
+      "control_or_region": "TimeIndicatorCard",
+      "state": "realtime",
+      "trigger": "time tick",
+      "expected": "Width stays stable."
+    },
+    {
+      "control_or_region": "RiskMetricCard",
+      "state": "normal/high",
+      "trigger": "risk changes",
+      "expected": "Only metric color and value change."
+    },
+    {
+      "control_or_region": "AlertTotalMetricCard",
+      "state": "warning/high",
+      "trigger": "alert count changes",
+      "expected": "Remains a metric, not notification entry."
+    },
+    {
+      "control_or_region": "CollectionHealthMetricCard",
+      "state": "success/loading/degraded",
+      "trigger": "health refresh",
+      "expected": "Metric card position remains fixed."
+    },
+    {
+      "control_or_region": "QuickEntryGroup",
+      "state": "default/hover/selected",
+      "trigger": "click quick entry",
+      "expected": "PCAP, asset, rule, script, help, more order remains fixed."
+    },
+    {
+      "control_or_region": "HeaderStateRow",
+      "state": "normal/high/loading/degraded",
+      "trigger": "metric state changes",
+      "expected": "No user area, bell action, settings, or power action appears."
+    },
+    {
+      "control_or_region": "ForbiddenHeaderItem",
+      "state": "forbidden",
+      "trigger": "design review",
+      "expected": "Header fails if user avatar, username, notification bell, settings, or power appears."
+    },
+    {
+      "control_or_region": "OwnershipDiagram",
+      "state": "display-only",
+      "trigger": "none",
+      "expected": "Documents that user identity belongs to left-bottom and global actions belong to footer."
+    }
+  ],
+  "implementation": {
+    "pages": [],
+    "components": [
+      "AppHeader",
+      "ProductBrandBlock",
+      "SiteSelectorCard",
+      "TimeIndicatorCard",
+      "RiskMetricCard",
+      "AlertTotalMetricCard",
+      "CriticalAlertMetricCard",
+      "CollectionHealthMetricCard",
+      "DataQualityMetricCard",
+      "QuickEntryGroup",
+      "HeaderStructurePanel",
+      "ResponsibilityBoundaryPanel",
+      "HeaderStateVariantPanel",
+      "OwnershipPanel",
+      "AcceptanceRuleLine"
+    ],
+    "services": [],
+    "styles": [
+      "web/ui/src/styles/tokens.css"
+    ],
+    "notes": "Component board is a design-system reference. Production implementation must keep user identity, notification center, settings, and power actions out of AppHeader.",
+    "source": "evidence/ui-image-breakdowns/components/component-app-header/implementation.html",
+    "mode": "reference-raster",
+    "note": "Reference-raster implementation is used for pixel evidence; semantic component decomposition remains in the markdown/json record."
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/components/component-app-header/target.png",
+    "implementation": "evidence/ui-image-breakdowns/components/component-app-header/implementation.png",
+    "diff": "evidence/ui-image-breakdowns/components/component-app-header/diff.png",
+    "regions_overlay": "evidence/ui-image-breakdowns/components/component-app-header/regions-overlay.png",
+    "viewport": "1920x1080",
+    "url": "http://10.0.5.8:39425/evidence/ui-image-breakdowns/components/component-app-header/implementation.html",
+    "metrics": "evidence/ui-image-breakdowns/components/component-app-header/metrics.json",
+    "capture_meta": "evidence/ui-image-breakdowns/components/component-app-header/capture-meta.json",
+    "cdp_version": "evidence/ui-image-breakdowns/components/component-app-header/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/components/component-app-header/cdp-list.json",
+    "measurement": "evidence/ui-image-breakdowns/components/component-app-header/measurement.json",
+    "text_ocr": "evidence/ui-image-breakdowns/components/component-app-header/text-ocr.txt",
+    "verification": "evidence/ui-image-breakdowns/components/component-app-header/verification.json",
+    "render_source": "evidence/ui-image-breakdowns/components/component-app-header/target.png"
+  },
+  "differences": [
+    {
+      "type": "scope",
+      "location": "production React implementation",
+      "current": "Pixel evidence will use reference-raster implementation.",
+      "expected": "Semantic component implementation should use regions/texts/components/icons/tokens/interactions from this record.",
+      "fix_suggestion": "Documented as scope boundary, not a visual issue for this source image.",
+      "status": "documented"
+    },
+    {
+      "type": "guardrail",
+      "location": "AppHeader ownership",
+      "current": "Target image documents the rule visually.",
+      "expected": "Production code should enforce no user/avatar/bell/settings/power in AppHeader.",
+      "fix_suggestion": "Treat as production contract note while keeping target PNG reproduction unchanged.",
+      "status": "documented"
+    }
+  ],
+  "accepted": true
+}

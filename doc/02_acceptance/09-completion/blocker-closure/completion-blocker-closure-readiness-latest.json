@@ -1,0 +1,352 @@
+{
+  "run_id": "202607030-completion-blocker-closure-bridge-tunnel-r25-103659-pass",
+  "result": "pass",
+  "generated_at": "2026-07-03T08:23:41+08:00",
+  "audit_json": "doc/02_acceptance/09-completion/project-completion-audit-latest.json",
+  "source_audit_run_id": "202607030-project-audit-bridge-tunnel-r24-103659",
+  "source_audit_result": "blocked",
+  "bootstrap_dir": "doc/02_acceptance/runs/202607030-completion-blocker-closure-bridge-tunnel-r25-103659-pass/completion-blocker-closure.bootstrap",
+  "stable_bootstrap_dir": "doc/02_acceptance/09-completion/blocker-closure/latest",
+  "review_required": true,
+  "formal_gate_note": "completion blocker closure readiness only; does not close any project completion blocker",
+  "blocker_count": 9,
+  "ready_input_count": 62,
+  "external_action_count": 9,
+  "formal_rerun_command_count": 44,
+  "passed": 33,
+  "total": 33,
+  "blockers": 0,
+  "warnings": 0,
+  "checks": [
+    {
+      "ts": "2026-07-03T08:23:40+08:00",
+      "phase": "inputs",
+      "name": "latest project completion audit present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/09-completion/project-completion-audit-latest.json",
+      "artifact": "doc/02_acceptance/09-completion/project-completion-audit-latest.json"
+    },
+    {
+      "ts": "2026-07-03T08:23:40+08:00",
+      "phase": "inputs",
+      "name": "latest UI contract preflight present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/02-regression/ui-contract-preflight-latest.json",
+      "artifact": "doc/02_acceptance/02-regression/ui-contract-preflight-latest.json"
+    },
+    {
+      "ts": "2026-07-03T08:23:40+08:00",
+      "phase": "inputs",
+      "name": "latest UI visual interaction dual gate present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/02-regression/ui-visual-interaction-preflight-latest.json",
+      "artifact": "doc/02_acceptance/02-regression/ui-visual-interaction-preflight-latest.json"
+    },
+    {
+      "ts": "2026-07-03T08:23:40+08:00",
+      "phase": "inputs",
+      "name": "latest UI visual interaction gap report present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/02-regression/ui-visual-interaction-gap-report-latest.json",
+      "artifact": "doc/02_acceptance/02-regression/ui-visual-interaction-gap-report-latest.json"
+    },
+    {
+      "ts": "2026-07-03T08:23:40+08:00",
+      "phase": "inputs",
+      "name": "latest UI Desktop capture session package present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/02-regression/ui-visual-interaction/capture-session-latest.json",
+      "artifact": "doc/02_acceptance/02-regression/ui-visual-interaction/capture-session-latest.json"
+    },
+    {
+      "ts": "2026-07-03T08:23:40+08:00",
+      "phase": "inputs",
+      "name": "Windows tunnel UI capture plan present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/02-regression/ui-visual-interaction/capture-plan-windows-tunnel-25173.json",
+      "artifact": "doc/02_acceptance/02-regression/ui-visual-interaction/capture-plan-windows-tunnel-25173.json"
+    },
+    {
+      "ts": "2026-07-03T08:23:40+08:00",
+      "phase": "inputs",
+      "name": "Windows tunnel UI capture session package present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/02-regression/ui-visual-interaction/capture-session-windows-tunnel-25173.json",
+      "artifact": "doc/02_acceptance/02-regression/ui-visual-interaction/capture-session-windows-tunnel-25173.json"
+    },
+    {
+      "ts": "2026-07-03T08:23:40+08:00",
+      "phase": "inputs",
+      "name": "Windows tunnel channel preflight present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-tunnel-channel-preflight-latest.json",
+      "artifact": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-tunnel-channel-preflight-latest.json"
+    },
+    {
+      "ts": "2026-07-03T08:23:40+08:00",
+      "phase": "inputs",
+      "name": "Windows Desktop bridge host preflight present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-desktop-bridge-host-preflight-latest.json",
+      "artifact": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-desktop-bridge-host-preflight-latest.json"
+    },
+    {
+      "ts": "2026-07-03T08:23:40+08:00",
+      "phase": "inputs",
+      "name": "Windows Codex bridge runtime preflight present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-codex-bridge-runtime-preflight-latest.json",
+      "artifact": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-codex-bridge-runtime-preflight-latest.json"
+    },
+    {
+      "ts": "2026-07-03T08:23:40+08:00",
+      "phase": "inputs",
+      "name": "Codex bridge tool surface preflight present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/02-regression/ui-visual-interaction/codex-bridge-tool-surface-preflight-latest.json",
+      "artifact": "doc/02_acceptance/02-regression/ui-visual-interaction/codex-bridge-tool-surface-preflight-latest.json"
+    },
+    {
+      "ts": "2026-07-03T08:23:40+08:00",
+      "phase": "inputs",
+      "name": "Windows Node REPL active execs preflight present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-node-repl-active-execs-preflight-latest.json",
+      "artifact": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-node-repl-active-execs-preflight-latest.json"
+    },
+    {
+      "ts": "2026-07-03T08:23:40+08:00",
+      "phase": "inputs",
+      "name": "Windows Node REPL Chrome bridge smoke present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-node-repl-chrome-bridge-smoke-latest.json",
+      "artifact": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-node-repl-chrome-bridge-smoke-latest.json"
+    },
+    {
+      "ts": "2026-07-03T08:23:40+08:00",
+      "phase": "inputs",
+      "name": "Windows Node REPL env matrix Chrome bridge smoke present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-node-repl-env-matrix-smoke-latest.json",
+      "artifact": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-node-repl-env-matrix-smoke-latest.json"
+    },
+    {
+      "ts": "2026-07-03T08:23:40+08:00",
+      "phase": "inputs",
+      "name": "Windows Node REPL scheduled Chrome bridge smoke present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-node-repl-scheduled-chrome-smoke-latest.json",
+      "artifact": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-node-repl-scheduled-chrome-smoke-latest.json"
+    },
+    {
+      "ts": "2026-07-03T08:23:40+08:00",
+      "phase": "inputs",
+      "name": "Windows SSH privilege preflight present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-ssh-privilege-preflight-latest.json",
+      "artifact": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-ssh-privilege-preflight-latest.json"
+    },
+    {
+      "ts": "2026-07-03T08:23:40+08:00",
+      "phase": "inputs",
+      "name": "Desktop Chrome bridge payload summary present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-payload-latest.json",
+      "artifact": "doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-payload-latest.json"
+    },
+    {
+      "ts": "2026-07-03T08:23:40+08:00",
+      "phase": "inputs",
+      "name": "Desktop Chrome bridge payload self-test present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-payload-selftest-latest.json",
+      "artifact": "doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-payload-selftest-latest.json"
+    },
+    {
+      "ts": "2026-07-03T08:23:40+08:00",
+      "phase": "inputs",
+      "name": "Desktop Chrome bridge MCP tool-call template present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-tool-call-latest.json",
+      "artifact": "doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-tool-call-latest.json"
+    },
+    {
+      "ts": "2026-07-03T08:23:40+08:00",
+      "phase": "inputs",
+      "name": "Desktop Chrome trusted execution request present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-execution-request-latest.json",
+      "artifact": "doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-execution-request-latest.json"
+    },
+    {
+      "ts": "2026-07-03T08:23:40+08:00",
+      "phase": "inputs",
+      "name": "latest UI Desktop receiver self-test present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/02-regression/ui-visual-interaction/receiver-selftest-latest.json",
+      "artifact": "doc/02_acceptance/02-regression/ui-visual-interaction/receiver-selftest-latest.json"
+    },
+    {
+      "ts": "2026-07-03T08:23:40+08:00",
+      "phase": "inputs",
+      "name": "latest UI visual interaction evidence finalization present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/02-regression/ui-visual-interaction/evidence-finalization-latest.json",
+      "artifact": "doc/02_acceptance/02-regression/ui-visual-interaction/evidence-finalization-latest.json"
+    },
+    {
+      "ts": "2026-07-03T08:23:40+08:00",
+      "phase": "inputs",
+      "name": "NetworkPolicy readiness package present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/05-security/network-policy-readiness/network-policy-enforcement-readiness-latest.json",
+      "artifact": "doc/02_acceptance/05-security/network-policy-readiness/network-policy-enforcement-readiness-latest.json"
+    },
+    {
+      "ts": "2026-07-03T08:23:40+08:00",
+      "phase": "inputs",
+      "name": "HA drill evidence bootstrap present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/06-resilience/bootstrap/ha-drill-evidence-bootstrap-latest.json",
+      "artifact": "doc/02_acceptance/06-resilience/bootstrap/ha-drill-evidence-bootstrap-latest.json"
+    },
+    {
+      "ts": "2026-07-03T08:23:40+08:00",
+      "phase": "inputs",
+      "name": "HA drill review packet present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/06-resilience/review/ha-drill-review-latest.json",
+      "artifact": "doc/02_acceptance/06-resilience/review/ha-drill-review-latest.json"
+    },
+    {
+      "ts": "2026-07-03T08:23:40+08:00",
+      "phase": "inputs",
+      "name": "capture performance bootstrap present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/03-performance/bootstrap/capture-performance-bootstrap-latest.json",
+      "artifact": "doc/02_acceptance/03-performance/bootstrap/capture-performance-bootstrap-latest.json"
+    },
+    {
+      "ts": "2026-07-03T08:23:40+08:00",
+      "phase": "inputs",
+      "name": "capture performance review packet present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/03-performance/review/capture-performance-review-latest.json",
+      "artifact": "doc/02_acceptance/03-performance/review/capture-performance-review-latest.json"
+    },
+    {
+      "ts": "2026-07-03T08:23:40+08:00",
+      "phase": "inputs",
+      "name": "detection quality bootstrap present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/04-detection-quality/bootstrap/detection-quality-bootstrap-latest.json",
+      "artifact": "doc/02_acceptance/04-detection-quality/bootstrap/detection-quality-bootstrap-latest.json"
+    },
+    {
+      "ts": "2026-07-03T08:23:40+08:00",
+      "phase": "inputs",
+      "name": "detection quality review packet present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/04-detection-quality/review/detection-quality-review-latest.json",
+      "artifact": "doc/02_acceptance/04-detection-quality/review/detection-quality-review-latest.json"
+    },
+    {
+      "ts": "2026-07-03T08:23:40+08:00",
+      "phase": "inputs",
+      "name": "asset inventory bootstrap present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/02-regression/asset-discovery-site-inventory.bootstrap-latest.json",
+      "artifact": "doc/02_acceptance/02-regression/asset-discovery-site-inventory.bootstrap-latest.json"
+    },
+    {
+      "ts": "2026-07-03T08:23:41+08:00",
+      "phase": "inputs",
+      "name": "asset inventory review packet present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/02-regression/asset-inventory-review/asset-inventory-review-latest.json",
+      "artifact": "doc/02_acceptance/02-regression/asset-inventory-review/asset-inventory-review-latest.json"
+    },
+    {
+      "ts": "2026-07-03T08:23:41+08:00",
+      "phase": "inputs",
+      "name": "third-party signoff readiness package present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/08-third-party/readiness/third-party-signoff-readiness-latest.json",
+      "artifact": "doc/02_acceptance/08-third-party/readiness/third-party-signoff-readiness-latest.json"
+    },
+    {
+      "ts": "2026-07-03T08:23:41+08:00",
+      "phase": "package",
+      "name": "completion blocker closure ledger written",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/runs/202607030-completion-blocker-closure-bridge-tunnel-r25-103659-pass/completion-blocker-closure.bootstrap",
+      "artifact": "closure-ledger.bootstrap.json"
+    }
+  ]
+}

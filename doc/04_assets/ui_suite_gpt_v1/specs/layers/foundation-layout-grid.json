@@ -1,0 +1,45 @@
+{
+  "id": "foundation-layout-grid",
+  "title": "布局与栅格规范",
+  "type": "foundation",
+  "route": null,
+  "domain": "global",
+  "source": {
+    "targetFile": "doc/04_assets/ui_suite_gpt_v1/screens/foundations/foundation-layout-grid.png",
+    "promptFile": "doc/04_assets/ui_suite_gpt_v1/prompts/foundation-layout-grid.prompt.txt",
+    "rawTraceFiles": [
+      "doc/04_assets/ui_suite_gpt_v1/screens/foundations/foundation-layout-grid.raw-imagegen.png"
+    ],
+    "dimensions": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "implementation": {
+    "pageComponent": null,
+    "suggestedComponents": [
+      "CSS token"
+    ],
+    "apiEndpoints": [],
+    "workflows": []
+  },
+  "layers": [
+    {
+      "id": "foundation-board",
+      "role": "design-system-foundation",
+      "bbox": {
+        "x": 80,
+        "y": 80,
+        "w": 1760,
+        "h": 920
+      }
+    }
+  ],
+  "acceptance": [
+    "最终 PNG 必须为 1920x1080",
+    "中文为主，只保留必要英文技术词和单位",
+    "状态色必须遵守 success/info/warning/danger/critical token",
+    "危险动作必须具备影响范围、权限提示和审计留痕",
+    "foundation 只能作为 token 和设计系统来源，不作为业务页面直接实现"
+  ]
+}

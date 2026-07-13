@@ -1,0 +1,166 @@
+{
+  "run_id": "windows-chrome-cdp-campaign-detail-impact-service-r178",
+  "generated_at": "2026-07-10T07:15:26.775Z",
+  "result": "business-pixel-accepted",
+  "target_id": "campaign-detail-impact-service",
+  "route": "/campaigns/:campaignId?impact=service",
+  "production_url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=service&__codex_page_id=campaign-detail-impact-service&__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1783667368172",
+  "normal_route_url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=service&windowsCdpEvidenceTs=1783667500931",
+  "image_tag": "traffic/web-ui:ui-campaign-impact-service-20260710-r178",
+  "browser": "Chrome/150.0.7871.49",
+  "cdp_url": "http://127.0.0.1:9224",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "source": "captured PNG pixels"
+  },
+  "summary": {
+    "runtime": "pass",
+    "normal_route_geometry": "pass",
+    "business_visual_diff": "pass",
+    "strict_visual_diff": "fail-documented",
+    "dynamic_data": "pass",
+    "auxiliary_review": "pass-after-addressed-findings",
+    "main_thread_judgment": "business-pixel-accepted"
+  },
+  "runtime": {
+    "status": "pass",
+    "console_errors": 0,
+    "page_errors": 0,
+    "request_failures": 0,
+    "bad_responses": 0,
+    "forbidden_target_resource_requests": 0,
+    "horizontal_overflow": false
+  },
+  "normal_business_route": {
+    "status": "pass",
+    "screenshot": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-service/normal-route-r178.png",
+    "runtime": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-service/normal-route-runtime-r178.json",
+    "checks": {
+      "app_shell": true,
+      "active_service_tab": true,
+      "service_table_present": true,
+      "service_rows": true,
+      "top5_content": true,
+      "all_link": true,
+      "no_horizontal_overflow": true,
+      "content_within_panel": true,
+      "no_4xx_5xx": true,
+      "no_request_failed": true,
+      "no_console_errors": true,
+      "no_page_errors": true,
+      "smoke_hash_consumed": true,
+      "goto_ok": true
+    },
+    "failed_checks": []
+  },
+  "visual_diff": {
+    "business": {
+      "status": "pass",
+      "pixel_mismatch_ratio": 0.07248697916666667,
+      "max_pixel_ratio": 0.35,
+      "channel_tolerance": 64,
+      "metrics": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-service/metrics-business-r178-final.json",
+      "diff": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-service/diff-business-r178-final.png"
+    },
+    "strict": {
+      "status": "fail-documented",
+      "pixel_mismatch_ratio": 0.9998230131172839,
+      "max_pixel_ratio": 0.015,
+      "channel_tolerance": 0,
+      "metrics": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-service/metrics-strict-r178-final.json",
+      "diff": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-service/diff-strict-r178-final.png",
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/campaign-detail-impact-service-r178/capture-meta-strict.json",
+      "production_route_report": "doc/02_acceptance/02-regression/ui-visual-interaction/campaign-detail-impact-service-r178/production-route-report-strict.json"
+    }
+  },
+  "dynamic_implementation": {
+    "endpoint": "GET /v1/campaigns/{campaignId}",
+    "adapter": "normalizeCampaignDetailSnapshot -> buildImpactService",
+    "components": [
+      "CampaignImpactServiceContent",
+      "ServiceImpactTable",
+      "CampaignImpactRiskSummary"
+    ],
+    "no_raster_replay": true
+  },
+  "evidence": {
+    "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/campaign-detail-impact-service-r178/actual-1920.png",
+    "normal_route": "doc/02_acceptance/02-regression/ui-visual-interaction/campaign-detail-impact-service-r178/normal-route-1920.png",
+    "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/campaign-detail-impact-service-r178/capture-meta.json",
+    "production_route_report": "doc/02_acceptance/02-regression/ui-visual-interaction/campaign-detail-impact-service-r178/production-route-report.json",
+    "metrics_business": "doc/02_acceptance/02-regression/ui-visual-interaction/campaign-detail-impact-service-r178/metrics-business.json",
+    "metrics_strict": "doc/02_acceptance/02-regression/ui-visual-interaction/campaign-detail-impact-service-r178/metrics-strict.json",
+    "diff_business": "doc/02_acceptance/02-regression/ui-visual-interaction/campaign-detail-impact-service-r178/diff-business-1920.png",
+    "diff_strict": "doc/02_acceptance/02-regression/ui-visual-interaction/campaign-detail-impact-service-r178/diff-strict-1920.png",
+    "normal_route_runtime": "doc/02_acceptance/02-regression/ui-visual-interaction/campaign-detail-impact-service-r178/normal-route-runtime.json",
+    "capture_meta_strict": "doc/02_acceptance/02-regression/ui-visual-interaction/campaign-detail-impact-service-r178/capture-meta-strict.json",
+    "production_route_report_strict": "doc/02_acceptance/02-regression/ui-visual-interaction/campaign-detail-impact-service-r178/production-route-report-strict.json",
+    "build_deploy": "doc/02_acceptance/02-regression/ui-visual-interaction/campaign-detail-impact-service-r178/build-deploy-evidence.json",
+    "npm_test_log": "doc/02_acceptance/02-regression/ui-visual-interaction/campaign-detail-impact-service-r178/npm-test.log",
+    "npm_build_log": "doc/02_acceptance/02-regression/ui-visual-interaction/campaign-detail-impact-service-r178/npm-build.log",
+    "docker_image_inspect": "doc/02_acceptance/02-regression/ui-visual-interaction/campaign-detail-impact-service-r178/docker-image-inspect.json",
+    "k8s_web_ui_deploy": "doc/02_acceptance/02-regression/ui-visual-interaction/campaign-detail-impact-service-r178/k8s-web-ui-deploy.json",
+    "apisix_http_status": "doc/02_acceptance/02-regression/ui-visual-interaction/campaign-detail-impact-service-r178/apisix-http-status.txt"
+  },
+  "tests": [
+    "npm --prefix web/ui test -- --run src/routes/campaignImpactFocus.test.ts src/routes/noBitmapUi.test.ts src/services/campaignDetailApi.test.ts",
+    "npm --prefix web/ui run build"
+  ],
+  "deployment": {
+    "image": "traffic/web-ui:ui-campaign-impact-service-20260710-r178",
+    "ready_replicas": "1/1",
+    "apisix_http": 200
+  },
+  "unresolved": [
+    "Strict pixel diff is documented and non-blocking for business-pixel acceptance."
+  ],
+  "build_deploy_evidence": {
+    "status": "pass",
+    "generated_at": "2026-07-10T07:18:13.967Z",
+    "commands": {
+      "tests": {
+        "command": "npm --prefix web/ui test -- --run src/routes/campaignImpactFocus.test.ts src/routes/noBitmapUi.test.ts src/services/campaignDetailApi.test.ts",
+        "log": "doc/02_acceptance/02-regression/ui-visual-interaction/campaign-detail-impact-service-r178/npm-test.log",
+        "result": "3 files, 7 tests passed"
+      },
+      "build": {
+        "command": "npm --prefix web/ui run build",
+        "log": "doc/02_acceptance/02-regression/ui-visual-interaction/campaign-detail-impact-service-r178/npm-build.log",
+        "result": "passed with existing Vite large chunk warning"
+      },
+      "docker_image": {
+        "image": "traffic/web-ui:ui-campaign-impact-service-20260710-r178",
+        "image_id": "sha256:3e7bc63980a22c8502e01df6d733b8a42806138d0afe318c62a95a8b5e662b46",
+        "created": "2026-07-10T15:07:50.01944119+08:00",
+        "inspect": "doc/02_acceptance/02-regression/ui-visual-interaction/campaign-detail-impact-service-r178/docker-image-inspect.json"
+      },
+      "rollout": {
+        "image": "traffic/web-ui:ui-campaign-impact-service-20260710-r178",
+        "ready_replicas": "1/1",
+        "updated_replicas": 1,
+        "deploy_json": "doc/02_acceptance/02-regression/ui-visual-interaction/campaign-detail-impact-service-r178/k8s-web-ui-deploy.json"
+      },
+      "apisix": {
+        "url": "http://10.0.5.8:30180/",
+        "http_status": 200,
+        "status_file": "doc/02_acceptance/02-regression/ui-visual-interaction/campaign-detail-impact-service-r178/apisix-http-status.txt"
+      }
+    }
+  },
+  "review": {
+    "auxiliary_agent": "019f4adf-7ec1-7c61-b039-d3af900abcd4",
+    "initial_status": "FAIL",
+    "disposition": "addressed-and-passed",
+    "addressed_findings": [
+      "strict-specific capture meta now uses status strict-pixel-fail-documented and preserves capture_runtime_status=pass",
+      "build, test, Docker image, rollout, and APISIX evidence files are persisted in the r178 acceptance directory",
+      "untracked status is expected for generated repo artifacts in this workspace and is listed in git status rather than treated as a runtime blocker"
+    ],
+    "final_status": "PASS",
+    "remaining_non_blocking_risks": [
+      "strict pixel mismatch remains 0.999823 > 0.015 and is documented as non-blocking for business-pixel acceptance"
+    ]
+  },
+  "status": "business-pixel-accepted"
+}

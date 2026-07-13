@@ -1,0 +1,13 @@
+Use case: ui-mockup
+Asset type: enterprise cybersecurity SaaS UI screenshot, 16:9 widescreen.
+Primary request: Edit the first provided full UI screenshot of “园区网络全流量采集与分析系统”. Preserve the whole screen composition, navigation, typography, dark cyber operations style, right-side alert/detail rail, tables, charts, colors, spacing, and all existing labels as much as possible. Change only the “园区拓扑总览（数字孪生）” / campus topology overview panel.
+Reference for the change: use the second provided narrow image as the style and content reference for campus information cards.
+Required change inside the campus topology overview panel: add a compact vertical set of four campus information cards, matching the second reference crop:
+1. 楼宇 — 28
+2. 终端数 — 18,642
+3. 关键资产 — 2,317
+4. 在线探针 — green status dot, 24 / 25
+Placement: place the cards inside the campus topology overview area, aligned to the left or right edge where they do not cover the key campus buildings, blue network lines, or legend. Make them look native to the existing UI: dark translucent panels, cyan borders, subtle glow, readable Chinese labels, white numeric values, green status for online probes.
+Text that must remain visible: “园区网络全流量采集与分析系统”, “综合态势”, “威胁分析”, “资产图谱”, “检测运营”, “审计配置”, “园区拓扑总览（数字孪生）”.
+Constraints: no marketing hero, no browser chrome, no decorative orbs, no cards inside cards beyond the requested campus stats mini-cards, no unrelated redesign, no additional sections, no changed product title, no English replacement for Chinese UI labels, no unreadably tiny text.
+Output: one polished production-quality UI mockup image, same visual direction as the first reference, with only the requested campus information cards added.

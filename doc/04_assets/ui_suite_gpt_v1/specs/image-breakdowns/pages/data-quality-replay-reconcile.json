@@ -1,0 +1,944 @@
+{
+  "id": "data-quality-replay-reconcile",
+  "category": "pages",
+  "order": 13,
+  "type": "menu-state",
+  "parent": "data-quality",
+  "route": "/data-quality?tab=replay-reconcile",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/data-quality-replay-reconcile.png",
+  "evidence_dir": "evidence/ui-image-breakdowns/pages/data-quality-replay-reconcile",
+  "status": "evidence-ready",
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "observation": {
+    "layout": "八Tab外壳内的重放对账态，上方七KPI，中部任务表、对账趋势、幂等检查，下部差异样本、动态链路和验收证据，右侧为异常闭环栏。",
+    "business_focus": "DLQ重放、源落端计数对账、幂等冲突、差异样本和可审计验收包。",
+    "visual_style": "深蓝密集运维台，数据流蓝、重试橙、失败红、验收绿。"
+  },
+  "production": {
+    "url": "http://10.0.5.8:30180/data-quality?tab=replay-reconcile&__codex_ui_breakdown_production=1&__capture=r128-final&windowsCdpEvidenceTs=1783555335274",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "image_tag": "traffic/web-ui:ui-data-quality-replay-reconcile-visual-20260709-r128"
+  },
+  "regions": [
+    {
+      "id": "canvas",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "purpose": "画布",
+      "role": "viewport"
+    },
+    {
+      "id": "topbar",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 80
+      },
+      "purpose": "顶部全局状态栏",
+      "role": "AppShell"
+    },
+    {
+      "id": "sidebar",
+      "bbox": {
+        "x": 0,
+        "y": 80,
+        "w": 190,
+        "h": 917
+      },
+      "purpose": "左侧导航",
+      "role": "AppShell"
+    },
+    {
+      "id": "bottombar",
+      "bbox": {
+        "x": 0,
+        "y": 997,
+        "w": 1920,
+        "h": 83
+      },
+      "purpose": "底部状态栏",
+      "role": "AppShell"
+    },
+    {
+      "id": "business-root",
+      "bbox": {
+        "x": 198,
+        "y": 80,
+        "w": 1722,
+        "h": 917
+      },
+      "purpose": "业务内容区",
+      "role": "business"
+    },
+    {
+      "id": "titlebar",
+      "bbox": {
+        "x": 199,
+        "y": 81,
+        "w": 1505,
+        "h": 74
+      },
+      "purpose": "标题和八 Tab",
+      "role": "business"
+    },
+    {
+      "id": "filterbar",
+      "bbox": {
+        "x": 199,
+        "y": 163,
+        "w": 1505,
+        "h": 32
+      },
+      "purpose": "筛选工具栏",
+      "role": "business"
+    },
+    {
+      "id": "kpis",
+      "bbox": {
+        "x": 199,
+        "y": 203,
+        "w": 1505,
+        "h": 116
+      },
+      "purpose": "重放对账 KPI 指标条",
+      "role": "business"
+    },
+    {
+      "id": "replayUpper",
+      "bbox": {
+        "x": 199,
+        "y": 327,
+        "w": 1505,
+        "h": 350
+      },
+      "purpose": "上排业务面板",
+      "role": "business"
+    },
+    {
+      "id": "replayLower",
+      "bbox": {
+        "x": 199,
+        "y": 684,
+        "w": 1505,
+        "h": 312
+      },
+      "purpose": "下排业务面板",
+      "role": "business"
+    },
+    {
+      "id": "taskTable",
+      "bbox": {
+        "x": 206,
+        "y": 364,
+        "w": 561,
+        "h": 304
+      },
+      "purpose": "DLQ 重放任务表",
+      "role": "table"
+    },
+    {
+      "id": "reconcileTrend",
+      "bbox": {
+        "x": 791,
+        "y": 364,
+        "w": 484,
+        "h": 304
+      },
+      "purpose": "时间窗对账报告趋势",
+      "role": "svg-chart"
+    },
+    {
+      "id": "idempotency",
+      "bbox": {
+        "x": 1298,
+        "y": 364,
+        "w": 398,
+        "h": 304
+      },
+      "purpose": "幂等检查与重复检测",
+      "role": "table"
+    },
+    {
+      "id": "differenceTable",
+      "bbox": {
+        "x": 206,
+        "y": 722,
+        "w": 553,
+        "h": 267
+      },
+      "purpose": "差异样本与原因表",
+      "role": "table"
+    },
+    {
+      "id": "flow",
+      "bbox": {
+        "x": 782,
+        "y": 722,
+        "w": 484,
+        "h": 267
+      },
+      "purpose": "重放链路状态",
+      "role": "react-flow"
+    },
+    {
+      "id": "evidence",
+      "bbox": {
+        "x": 1290,
+        "y": 722,
+        "w": 406,
+        "h": 267
+      },
+      "purpose": "验收证据与导出",
+      "role": "table/actions"
+    },
+    {
+      "id": "rail",
+      "bbox": {
+        "x": 1711,
+        "y": 81,
+        "w": 198,
+        "h": 916
+      },
+      "purpose": "右侧异常处置栏",
+      "role": "business-rail"
+    }
+  ],
+  "text_ledger": [
+    "数据质量",
+    "质量总览",
+    "Topic 健康",
+    "Flink 质量",
+    "字段质量",
+    "存储质量",
+    "重放对账",
+    "质量报告",
+    "质量设置",
+    "时间范围",
+    "近 24 小时",
+    "2025-06-25 15:30:45 ~ 2025-06-26 15:30:45",
+    "自动刷新",
+    "刷新",
+    "30s",
+    "对账通过率 99.12%",
+    "待重放 DLQ 12,845",
+    "重放成功率 98.6%",
+    "重复记录 2,136",
+    "幂等冲突 47",
+    "窗口差异率 0.31%",
+    "验收包 8",
+    "DLQ 重放任务表",
+    "flow_original",
+    "flow_enriched",
+    "dns_logs",
+    "asset_events",
+    "threat_alerts",
+    "pcap_index",
+    "时间窗对账报告（近 24 小时）",
+    "源端总数 3.21B",
+    "落库总数 3.20B",
+    "差异数量 9.95M",
+    "差异率 0.31%",
+    "阈值 1.00%",
+    "幂等检查与重复检测",
+    "幂等键一致性",
+    "Hash 碰撞检测",
+    "重复 session_id",
+    "重复 alert_id",
+    "重放批次重叠",
+    "幂等冲突写入",
+    "差异样本与原因（近 24 小时）",
+    "offset gap",
+    "schema mismatch",
+    "late event",
+    "duplicate key",
+    "sink timeout",
+    "重放链路状态",
+    "DLQ / Kafka",
+    "重放作业（Flink）",
+    "去重过滤（幂等）",
+    "落库目标",
+    "重试队列",
+    "校验检查点",
+    "验收门禁",
+    "验收证据与导出",
+    "对账报告",
+    "重放日志",
+    "投递快照摘要",
+    "差异样本还原",
+    "审计记录",
+    "重放对账异常",
+    "差异率超阈值窗口",
+    "重放失败任务",
+    "幂等冲突告警",
+    "重复记录激增",
+    "快速定位",
+    "定位 DLQ Topic",
+    "定位重放作业",
+    "定位差异窗口",
+    "查看对账详情",
+    "修复建议",
+    "重放失败重试",
+    "扩容重放作业",
+    "补齐幂等规则",
+    "优化幂等字段索引",
+    "延长对账时间窗",
+    "证据与报告",
+    "导出对账报告",
+    "生成验收包",
+    "查看验收历史",
+    "审计操作日志"
+  ],
+  "texts": [
+    {
+      "value": "数据质量",
+      "type": "title",
+      "bbox": {
+        "x": 198,
+        "y": 74,
+        "w": 120,
+        "h": 30
+      }
+    },
+    {
+      "value": "质量总览",
+      "type": "tab",
+      "bbox": {
+        "x": 193,
+        "y": 101,
+        "w": 117,
+        "h": 36
+      }
+    },
+    {
+      "value": "Topic 健康",
+      "type": "tab",
+      "bbox": {
+        "x": 310,
+        "y": 101,
+        "w": 119,
+        "h": 36
+      }
+    },
+    {
+      "value": "Flink 质量",
+      "type": "tab",
+      "bbox": {
+        "x": 429,
+        "y": 101,
+        "w": 121,
+        "h": 36
+      }
+    },
+    {
+      "value": "字段质量",
+      "type": "tab",
+      "bbox": {
+        "x": 550,
+        "y": 101,
+        "w": 119,
+        "h": 36
+      }
+    },
+    {
+      "value": "存储质量",
+      "type": "tab",
+      "bbox": {
+        "x": 669,
+        "y": 101,
+        "w": 119,
+        "h": 36
+      }
+    },
+    {
+      "value": "重放对账",
+      "type": "tab-active",
+      "bbox": {
+        "x": 788,
+        "y": 101,
+        "w": 121,
+        "h": 36
+      }
+    },
+    {
+      "value": "质量报告",
+      "type": "tab",
+      "bbox": {
+        "x": 909,
+        "y": 101,
+        "w": 117,
+        "h": 36
+      }
+    },
+    {
+      "value": "质量设置",
+      "type": "tab",
+      "bbox": {
+        "x": 1026,
+        "y": 101,
+        "w": 115,
+        "h": 36
+      }
+    },
+    {
+      "value": "时间范围",
+      "type": "filter-label",
+      "bbox": {
+        "x": 206,
+        "y": 145,
+        "w": 62,
+        "h": 26
+      }
+    },
+    {
+      "value": "近 24 小时",
+      "type": "select-value",
+      "bbox": {
+        "x": 268,
+        "y": 143,
+        "w": 112,
+        "h": 28
+      }
+    },
+    {
+      "value": "自动刷新",
+      "type": "toggle-label",
+      "bbox": {
+        "x": 1569,
+        "y": 143,
+        "w": 72,
+        "h": 28
+      }
+    },
+    {
+      "value": "刷新",
+      "type": "button",
+      "bbox": {
+        "x": 1677,
+        "y": 143,
+        "w": 70,
+        "h": 28
+      }
+    },
+    {
+      "value": "30s",
+      "type": "select-value",
+      "bbox": {
+        "x": 1757,
+        "y": 143,
+        "w": 140,
+        "h": 28
+      }
+    },
+    {
+      "value": "对账通过率 99.12%",
+      "type": "metric",
+      "bbox": {
+        "x": 207,
+        "y": 184,
+        "w": 205,
+        "h": 84
+      }
+    },
+    {
+      "value": "待重放 DLQ 12,845",
+      "type": "metric-alert",
+      "bbox": {
+        "x": 431,
+        "y": 184,
+        "w": 205,
+        "h": 84
+      }
+    },
+    {
+      "value": "重放成功率 98.6%",
+      "type": "metric",
+      "bbox": {
+        "x": 655,
+        "y": 184,
+        "w": 205,
+        "h": 84
+      }
+    },
+    {
+      "value": "重复记录 2,136",
+      "type": "metric-warning",
+      "bbox": {
+        "x": 879,
+        "y": 184,
+        "w": 205,
+        "h": 84
+      }
+    },
+    {
+      "value": "幂等冲突 47",
+      "type": "metric-alert",
+      "bbox": {
+        "x": 1103,
+        "y": 184,
+        "w": 205,
+        "h": 84
+      }
+    },
+    {
+      "value": "窗口差异率 0.31%",
+      "type": "metric",
+      "bbox": {
+        "x": 1327,
+        "y": 184,
+        "w": 205,
+        "h": 84
+      }
+    },
+    {
+      "value": "验收包 8",
+      "type": "metric",
+      "bbox": {
+        "x": 1551,
+        "y": 184,
+        "w": 205,
+        "h": 84
+      }
+    },
+    {
+      "value": "DLQ 重放任务表",
+      "type": "panel-title",
+      "bbox": {
+        "x": 204,
+        "y": 291,
+        "w": 190,
+        "h": 25
+      }
+    },
+    {
+      "value": "时间窗对账报告（近 24 小时）",
+      "type": "panel-title",
+      "bbox": {
+        "x": 780,
+        "y": 291,
+        "w": 280,
+        "h": 25
+      }
+    },
+    {
+      "value": "幂等检查与重复检测",
+      "type": "panel-title",
+      "bbox": {
+        "x": 1267,
+        "y": 291,
+        "w": 230,
+        "h": 25
+      }
+    },
+    {
+      "value": "差异样本与原因（近 24 小时）",
+      "type": "panel-title",
+      "bbox": {
+        "x": 204,
+        "y": 632,
+        "w": 280,
+        "h": 25
+      }
+    },
+    {
+      "value": "重放链路状态",
+      "type": "panel-title",
+      "bbox": {
+        "x": 780,
+        "y": 632,
+        "w": 180,
+        "h": 25
+      }
+    },
+    {
+      "value": "验收证据与导出",
+      "type": "panel-title",
+      "bbox": {
+        "x": 1296,
+        "y": 632,
+        "w": 190,
+        "h": 25
+      }
+    },
+    {
+      "value": "重放对账异常",
+      "type": "rail-title",
+      "bbox": {
+        "x": 1669,
+        "y": 292,
+        "w": 150,
+        "h": 25
+      }
+    },
+    {
+      "value": "快速定位",
+      "type": "rail-title",
+      "bbox": {
+        "x": 1669,
+        "y": 477,
+        "w": 100,
+        "h": 25
+      }
+    },
+    {
+      "value": "修复建议",
+      "type": "rail-title",
+      "bbox": {
+        "x": 1669,
+        "y": 588,
+        "w": 100,
+        "h": 25
+      }
+    },
+    {
+      "value": "证据与报告",
+      "type": "rail-title",
+      "bbox": {
+        "x": 1669,
+        "y": 782,
+        "w": 120,
+        "h": 25
+      }
+    },
+    {
+      "value": "阈值 1.00%",
+      "type": "chart-threshold",
+      "bbox": {
+        "x": 1110,
+        "y": 414,
+        "w": 100,
+        "h": 22
+      }
+    }
+  ],
+  "components": [
+    {
+      "name": "DataQualityPage",
+      "file": "web/ui/src/pages/DataQualityPage.tsx",
+      "role": "unified 8-tab shell and replay tab routing"
+    },
+    {
+      "name": "ReplayTaskTable",
+      "file": "web/ui/src/pages/DataQualityPage.tsx",
+      "role": "DLQ replay task table"
+    },
+    {
+      "name": "ReplayReconcileTrend",
+      "file": "web/ui/src/pages/DataQualityPage.tsx",
+      "role": "React SVG time-window reconciliation trend"
+    },
+    {
+      "name": "ReplayIdempotencyTable",
+      "file": "web/ui/src/pages/DataQualityPage.tsx",
+      "role": "idempotency and duplicate detection table"
+    },
+    {
+      "name": "ReplayDifferenceTable",
+      "file": "web/ui/src/pages/DataQualityPage.tsx",
+      "role": "difference sample and reason table"
+    },
+    {
+      "name": "ReplayFlowStatus",
+      "file": "web/ui/src/pages/DataQualityPage.tsx",
+      "role": "React/CSS replay flow state diagram"
+    },
+    {
+      "name": "ReplayEvidenceExport",
+      "file": "web/ui/src/pages/DataQualityPage.tsx",
+      "role": "acceptance evidence and export actions"
+    },
+    {
+      "name": "ReplayReconcileSideRail",
+      "file": "web/ui/src/pages/DataQualityPage.tsx",
+      "role": "replay anomaly, locate, repair and evidence rail"
+    }
+  ],
+  "icons": [
+    {
+      "name": "ReloadOutlined",
+      "location": "toolbar",
+      "meaning": "refresh"
+    },
+    {
+      "name": "PlayCircleOutlined",
+      "location": "task rows",
+      "meaning": "start replay"
+    },
+    {
+      "name": "CheckCircleFilled",
+      "location": "gates",
+      "meaning": "passed"
+    },
+    {
+      "name": "WarningFilled",
+      "location": "conflicts",
+      "meaning": "warning"
+    },
+    {
+      "name": "FileDoneOutlined",
+      "location": "evidence cards",
+      "meaning": "accepted artifact"
+    },
+    {
+      "name": "ExportOutlined",
+      "location": "evidence cards",
+      "meaning": "export"
+    }
+  ],
+  "tokens": [
+    {
+      "name": "canvas-bg",
+      "value": "#020e18",
+      "use": "background"
+    },
+    {
+      "name": "panel-bg",
+      "value": "#031723",
+      "use": "panels"
+    },
+    {
+      "name": "border",
+      "value": "#0c4261",
+      "use": "panel borders"
+    },
+    {
+      "name": "active",
+      "value": "#168cff",
+      "use": "active tab and links"
+    },
+    {
+      "name": "flow",
+      "value": "#1da1f2",
+      "use": "normal data flow"
+    },
+    {
+      "name": "success",
+      "value": "#54c84d",
+      "use": "passed checks"
+    },
+    {
+      "name": "warning",
+      "value": "#f5a20b",
+      "use": "retry and conflict"
+    },
+    {
+      "name": "danger",
+      "value": "#f0443e",
+      "use": "failure and threshold"
+    },
+    {
+      "name": "text-primary",
+      "value": "#dbe6ef",
+      "use": "primary text"
+    },
+    {
+      "name": "font-body",
+      "value": "12px",
+      "use": "tables"
+    },
+    {
+      "name": "panel-radius",
+      "value": "4px",
+      "use": "panels"
+    },
+    {
+      "name": "space-unit",
+      "value": "8px",
+      "use": "rhythm"
+    }
+  ],
+  "interactions": [
+    {
+      "name": "switch-tab",
+      "trigger": "click tab",
+      "result": "activate replay-reconcile query"
+    },
+    {
+      "name": "refresh",
+      "trigger": "click refresh",
+      "result": "refetch task and reconciliation data"
+    },
+    {
+      "name": "replay-task",
+      "trigger": "click replay",
+      "result": "submit audited DLQ replay job"
+    },
+    {
+      "name": "task-pagination",
+      "trigger": "click page control",
+      "result": "load next stable-height task page"
+    },
+    {
+      "name": "trend-granularity",
+      "trigger": "select hour/day",
+      "result": "redraw dynamic ECharts series"
+    },
+    {
+      "name": "inspect-difference",
+      "trigger": "click sample action",
+      "result": "open difference detail drawer"
+    },
+    {
+      "name": "export-evidence",
+      "trigger": "click PDF/log/JSON/sample",
+      "result": "download selected artifact"
+    }
+  ],
+  "implementation_mapping": {
+    "page": "web/ui/src/pages/DataQualityPage.tsx",
+    "tasks": "replayTaskRows -> paginated table",
+    "trend": "replayReconcileTrend -> ECharts line/bar chart",
+    "idempotency": "replayIdempotencyRows -> checks",
+    "differences": "replayDifferenceRows -> paginated samples",
+    "flow": "replayFlowNodes/Edges -> API-driven SVG",
+    "evidence": "replayEvidenceRows -> exports",
+    "rail": "replayRail*Rows -> action rail"
+  },
+  "dynamic_visuals": [
+    {
+      "id": "reconcile-trend",
+      "source": "snapshot.visuals.dataQuality.replayReconcileTrend",
+      "fields": [
+        "times",
+        "sourceTotal",
+        "sinkTotal",
+        "diffCount",
+        "diffRate",
+        "diffRateThreshold"
+      ],
+      "implementation": "React SVG polyline and bar chart",
+      "refresh": "React Query 30s",
+      "adaptive_strategy": "preserveAspectRatio=none inside fixed WorkPanel grid row"
+    },
+    {
+      "id": "replay-flow-status",
+      "source": "snapshot.visuals.dataQuality.replayFlowNodes / replayFlowEdges",
+      "fields": [
+        "id",
+        "label",
+        "detail",
+        "status",
+        "from",
+        "to"
+      ],
+      "implementation": "React/CSS nodes and data-driven edge legend",
+      "refresh": "React Query 30s",
+      "adaptive_strategy": "CSS grid top chain and bottom validation nodes"
+    }
+  ],
+  "data_mapping": {
+    "kpis": "replayKpis",
+    "task_table": "replayTaskRows",
+    "trend": "replayReconcileTrend",
+    "trend_summary": "replayReconcileSummary",
+    "idempotency_table": "replayIdempotencyRows",
+    "difference_table": "replayDifferenceRows",
+    "flow": [
+      "replayFlowNodes",
+      "replayFlowEdges"
+    ],
+    "evidence_exports": "replayEvidenceRows",
+    "right_rail": [
+      "replayRailAlerts",
+      "replayRailLocateRows",
+      "replayRailRepairRows",
+      "replayRailEvidenceRows"
+    ]
+  },
+  "implementation": {
+    "source": "/data-quality",
+    "mode": "production-route",
+    "route": "/data-quality",
+    "pages": [
+      "web/ui/src/pages/DataQualityPage.tsx"
+    ],
+    "components": [
+      "ReplayReconcileTab",
+      "DynamicEChart"
+    ],
+    "services": [
+      "web/ui/src/services/dataQualityApi.ts",
+      "web/ui/src/services/api.ts"
+    ],
+    "resolved_path": "/data-quality",
+    "route_state": {
+      "tab": "replay-reconcile"
+    },
+    "note": "implementation.png is captured from the real APISIX/Web UI production route through Windows Chrome CDP. It is not a raster replay of target.png."
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/pages/data-quality-replay-reconcile/target.png",
+    "regions_overlay": "evidence/ui-image-breakdowns/pages/data-quality-replay-reconcile/regions-overlay.png",
+    "implementation": "evidence/ui-image-breakdowns/pages/data-quality-replay-reconcile/implementation.png",
+    "diff": "evidence/ui-image-breakdowns/pages/data-quality-replay-reconcile/diff.png",
+    "metrics": "evidence/ui-image-breakdowns/pages/data-quality-replay-reconcile/metrics.json",
+    "evidence_mode": "production-route",
+    "capture_meta": "evidence/ui-image-breakdowns/pages/data-quality-replay-reconcile/capture-meta.json",
+    "cdp_version": "evidence/ui-image-breakdowns/pages/data-quality-replay-reconcile/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/pages/data-quality-replay-reconcile/cdp-list.json",
+    "production_route_report": "evidence/ui-image-breakdowns/pages/data-quality-replay-reconcile/production-route-report.json",
+    "url": "http://10.0.5.8:30180/data-quality?tab=replay-reconcile&windowsCdpEvidenceTs=1783853555683#codex_smoke_token=<redacted>",
+    "final_url": "http://10.0.5.8:30180/data-quality?tab=replay-reconcile&windowsCdpEvidenceTs=1783853555683",
+    "verification": "evidence/ui-image-breakdowns/pages/data-quality-replay-reconcile/verification.json"
+  },
+  "differences": [
+    {
+      "type": "rendering",
+      "location": "charts and dense text",
+      "note": "business diff passes; remaining heat is antialiasing and line density"
+    },
+    {
+      "type": "scope",
+      "location": "AppShell",
+      "note": "global live values are outside this tab ownership"
+    },
+    {
+      "type": "production-evidence-scope",
+      "location": "/data-quality",
+      "current": "implementation.png is captured from the real APISIX/Web UI route in Windows Chrome CDP",
+      "expected": "no target.png raster replay is used as implementation evidence",
+      "status": "documented"
+    }
+  ],
+  "conclusion": "business-pixel-accepted; breakdown record now separates target observation, API mapping, interaction and evidence.",
+  "verification": {
+    "implementation": "evidence/ui-image-breakdowns/pages/data-quality-replay-reconcile/implementation-r128-final.png",
+    "diff": "evidence/ui-image-breakdowns/pages/data-quality-replay-reconcile/diff-r128.png",
+    "metrics": "evidence/ui-image-breakdowns/pages/data-quality-replay-reconcile/metrics-r128.json",
+    "business_diff": "evidence/ui-image-breakdowns/pages/data-quality-replay-reconcile/diff-business-r128.png",
+    "business_metrics": "evidence/ui-image-breakdowns/pages/data-quality-replay-reconcile/metrics-business-r128.json",
+    "capture_meta": "evidence/ui-image-breakdowns/pages/data-quality-replay-reconcile/capture-meta-r128-final.json",
+    "full_ratio": 0.08337432484567901,
+    "business_ratio": 0.08638923824975904,
+    "threshold": 0.13,
+    "channel_tolerance": 90,
+    "runtime_clean": true,
+    "business_overflow": false
+  },
+  "r271_validation": {
+    "status": "business-pixel-accepted-r271",
+    "image_tag": "traffic/web-ui:ui-data-quality-tabs-query-20260711-r271",
+    "interaction_evidence": "evidence/ui-image-breakdowns/pages/data-quality/interaction-r271-all-tabs.json",
+    "screenshot": "evidence/ui-image-breakdowns/pages/data-quality/interaction-r271-replay-reconcile.png",
+    "metrics": "evidence/ui-image-breakdowns/pages/data-quality-replay-reconcile/metrics-business-r271.json",
+    "business_ratio": 0.08187963325341308,
+    "threshold": 0.125,
+    "canvas_count": 7,
+    "runtime_clean": true,
+    "all_tabs_geometry_stable": true,
+    "max_tab_geometry_delta": 0,
+    "field_quality_click_geometry_stable": true,
+    "field_quality_click_first_three_max_delta": 0
+  },
+  "accepted": false
+}

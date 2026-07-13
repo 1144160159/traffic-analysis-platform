@@ -1,0 +1,1160 @@
+{
+  "id": "state-page-loading",
+  "category": "states",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/states/state-page-loading.png",
+  "prompt_file": "doc/04_assets/ui_suite_gpt_v1/prompts/state-page-loading.prompt.txt",
+  "prompt_exact_match": true,
+  "manifest_refs": [
+    "doc/04_assets/ui_suite_gpt_v1/manifest.json",
+    "doc/04_assets/ui_suite_gpt_v1/specs/layers/state-page-loading.json"
+  ],
+  "manifest_item": {
+    "id": "state-page-loading",
+    "type": "state",
+    "title": "页面加载中",
+    "targetFile": "doc/04_assets/ui_suite_gpt_v1/screens/states/state-page-loading.png"
+  },
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "status": "pixel-accepted",
+  "route": null,
+  "host_route": null,
+  "title": "页面加载中",
+  "observation": {
+    "layout": "Standalone state experience",
+    "business_focus": "Defines loading/empty/error/forbidden/offline/degraded/success semantics with stable outer dimensions.",
+    "current_state": "Current target state is encoded by the image id and visible state copy.",
+    "acceptance_scope": "Pixel acceptance proves exact target PNG reproduction by Windows Chrome screenshot and diff. Semantic production implementation remains guided by this breakdown record."
+  },
+  "regions": [
+    {
+      "id": "canvas",
+      "name": "画布",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "layer": 0,
+      "purpose": "状态图画布",
+      "components": [
+        "Viewport"
+      ],
+      "replication_notes": "无浏览器边框"
+    },
+    {
+      "id": "state-page-bg",
+      "name": "状态背景",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "layer": 1,
+      "purpose": "深色系统背景",
+      "components": [
+        "StateBackground"
+      ],
+      "replication_notes": "沿用 foundation 背景色"
+    },
+    {
+      "id": "state-container",
+      "name": "状态容器",
+      "bbox": {
+        "x": 280,
+        "y": 160,
+        "w": 1360,
+        "h": 760
+      },
+      "layer": 2,
+      "purpose": "页面加载中",
+      "components": [
+        "ResultState",
+        "WorkPanel"
+      ],
+      "replication_notes": "容器尺寸稳定"
+    },
+    {
+      "id": "state-symbol",
+      "name": "状态图标/插画",
+      "bbox": {
+        "x": 760,
+        "y": 230,
+        "w": 400,
+        "h": 220
+      },
+      "layer": 3,
+      "purpose": "图标、骨架、空态或错误符号",
+      "components": [
+        "StatusIllustration"
+      ],
+      "replication_notes": "颜色匹配状态语义"
+    },
+    {
+      "id": "state-title",
+      "name": "状态标题",
+      "bbox": {
+        "x": 560,
+        "y": 470,
+        "w": 800,
+        "h": 58
+      },
+      "layer": 3,
+      "purpose": "状态标题文案",
+      "components": [
+        "ResultTitle"
+      ],
+      "replication_notes": "居中或按设计对齐"
+    },
+    {
+      "id": "state-description",
+      "name": "状态说明",
+      "bbox": {
+        "x": 560,
+        "y": 530,
+        "w": 800,
+        "h": 88
+      },
+      "layer": 3,
+      "purpose": "原因、影响范围和下一步",
+      "components": [
+        "ResultDescription"
+      ],
+      "replication_notes": "错误态含 trace 或下一步动作"
+    },
+    {
+      "id": "state-action-primary",
+      "name": "主动作",
+      "bbox": {
+        "x": 760,
+        "y": 660,
+        "w": 180,
+        "h": 44
+      },
+      "layer": 3,
+      "purpose": "重试、返回或查看详情",
+      "components": [
+        "Button"
+      ],
+      "replication_notes": "主按钮激活蓝"
+    },
+    {
+      "id": "state-action-secondary",
+      "name": "次动作",
+      "bbox": {
+        "x": 960,
+        "y": 660,
+        "w": 180,
+        "h": 44
+      },
+      "layer": 3,
+      "purpose": "辅助动作",
+      "components": [
+        "Button"
+      ],
+      "replication_notes": "次按钮弱描边"
+    },
+    {
+      "id": "state-detail-strip",
+      "name": "诊断信息条",
+      "bbox": {
+        "x": 520,
+        "y": 736,
+        "w": 880,
+        "h": 68
+      },
+      "layer": 3,
+      "purpose": "trace id、时间窗、服务或权限说明",
+      "components": [
+        "Alert",
+        "AuditTrail"
+      ],
+      "replication_notes": "敏感信息脱敏"
+    },
+    {
+      "id": "safe-boundary-top",
+      "name": "上安全边界",
+      "bbox": {
+        "x": 280,
+        "y": 160,
+        "w": 1360,
+        "h": 24
+      },
+      "layer": 3,
+      "purpose": "容器顶部留白",
+      "components": [
+        "Spacing"
+      ],
+      "replication_notes": "状态切换不改变外层高度"
+    },
+    {
+      "id": "safe-boundary-bottom",
+      "name": "下安全边界",
+      "bbox": {
+        "x": 280,
+        "y": 896,
+        "w": 1360,
+        "h": 24
+      },
+      "layer": 3,
+      "purpose": "容器底部留白",
+      "components": [
+        "Spacing"
+      ],
+      "replication_notes": "不贴底部边缘"
+    },
+    {
+      "id": "state-keyboard-focus",
+      "name": "键盘焦点态",
+      "bbox": {
+        "x": 758,
+        "y": 658,
+        "w": 184,
+        "h": 48
+      },
+      "layer": 4,
+      "purpose": "主动作 focus ring",
+      "components": [
+        "FocusRing"
+      ],
+      "replication_notes": "键盘操作可见"
+    }
+  ],
+  "texts": [
+    {
+      "value": "页面加载中",
+      "bbox": {
+        "x": 80,
+        "y": 54,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "state-page-loading",
+      "bbox": {
+        "x": 510,
+        "y": 54,
+        "w": 360,
+        "h": 24
+      },
+      "type": "subtitle",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "最终 PNG 必须为 1920x1080",
+      "bbox": {
+        "x": 940,
+        "y": 54,
+        "w": 360,
+        "h": 24
+      },
+      "type": "section",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "中文为主，只保留必要英文技术词和单位",
+      "bbox": {
+        "x": 1370,
+        "y": 54,
+        "w": 360,
+        "h": 24
+      },
+      "type": "label",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "状态色必须遵守 success/info/warning/danger/critical token",
+      "bbox": {
+        "x": 80,
+        "y": 96,
+        "w": 360,
+        "h": 24
+      },
+      "type": "metric",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "危险动作必须具备影响范围、权限提示和审计留痕",
+      "bbox": {
+        "x": 510,
+        "y": 96,
+        "w": 360,
+        "h": 24
+      },
+      "type": "button",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "401 与 403 必须分离，不能共用重试主动作",
+      "bbox": {
+        "x": 940,
+        "y": 96,
+        "w": 360,
+        "h": 24
+      },
+      "type": "status",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "画布比例 16:9，目标 1920x1080 px，单屏完整展示，不要出现浏览器边框、手机外壳、营销海报、水印或解释性外框。",
+      "bbox": {
+        "x": 1370,
+        "y": 96,
+        "w": 360,
+        "h": 24
+      },
+      "type": "legend",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "风格固定：深海军蓝 SOC 指挥台、青蓝描边、低饱和面板、细分割线、绿色健康、黄色中危、红色高危、克制发光、高密度表格、工程系统质感。",
+      "bbox": {
+        "x": 80,
+        "y": 138,
+        "w": 360,
+        "h": 24
+      },
+      "type": "hint",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "Foundation 硬门禁：生成图必须严格遵守参考图中的 8 张 foundations 规范板，不能只是风格相似。",
+      "bbox": {
+        "x": 510,
+        "y": 138,
+        "w": 360,
+        "h": 24
+      },
+      "type": "acceptance",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "必须锁定状态语义：健康/通过用绿色，信息/低危用蓝色，中危/待确认用黄色或琥珀色，高危/失败用红色；不得交换状态颜色。",
+      "bbox": {
+        "x": 940,
+        "y": 138,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "如果生成结果偏离 foundations 的布局、色彩、字号、圆角、表格密度、图表样式或状态语义，应视为不合格并重新生成。",
+      "bbox": {
+        "x": 1370,
+        "y": 138,
+        "w": 360,
+        "h": 24
+      },
+      "type": "subtitle",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "一级菜单固定为：综合态势、采集监测、威胁分析、资产图谱、检测运营、审计配置；不要使用“看见、研判、取证、治理、验收”等非规范菜单词。",
+      "bbox": {
+        "x": 80,
+        "y": 180,
+        "w": 360,
+        "h": 24
+      },
+      "type": "section",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "危险动作必须体现确认、权限、影响范围和审计提示。",
+      "bbox": {
+        "x": 510,
+        "y": 180,
+        "w": 360,
+        "h": 24
+      },
+      "type": "label",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "本图类型：通用状态规范图。",
+      "bbox": {
+        "x": 940,
+        "y": 180,
+        "w": 360,
+        "h": 24
+      },
+      "type": "metric",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "状态名称：页面加载中。",
+      "bbox": {
+        "x": 1370,
+        "y": 180,
+        "w": 360,
+        "h": 24
+      },
+      "type": "button",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "图片 ID：state-page-loading。",
+      "bbox": {
+        "x": 80,
+        "y": 222,
+        "w": 360,
+        "h": 24
+      },
+      "type": "status",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "状态图必须展示状态原因、可恢复动作、权限或审计提示，以及在页面、表格、图表或任务中的落位方式。",
+      "bbox": {
+        "x": 510,
+        "y": 222,
+        "w": 360,
+        "h": 24
+      },
+      "type": "legend",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "错误、异常、失败、高危状态必须能说明原因，并提供重试、查看详情、返回、联系管理员、跳转证据或写入审计等下一步动作。",
+      "bbox": {
+        "x": 940,
+        "y": 222,
+        "w": 360,
+        "h": 24
+      },
+      "type": "hint",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "不要使用空泛插画；使用工程化深色状态面板、图标、按钮、追踪 ID、时间窗和对象上下文。",
+      "bbox": {
+        "x": 1370,
+        "y": 222,
+        "w": 360,
+        "h": 24
+      },
+      "type": "acceptance",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "输出要求：只输出 UI 视觉效果图本身，不要额外解释，不要水印，不要伪造浏览器地址栏。画面需要能作为前端开发和 Figma 设计参考。",
+      "bbox": {
+        "x": 80,
+        "y": 264,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "重试",
+      "bbox": {
+        "x": 510,
+        "y": 264,
+        "w": 360,
+        "h": 24
+      },
+      "type": "subtitle",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "返回上一页",
+      "bbox": {
+        "x": 940,
+        "y": 264,
+        "w": 360,
+        "h": 24
+      },
+      "type": "section",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "查看详情",
+      "bbox": {
+        "x": 1370,
+        "y": 264,
+        "w": 360,
+        "h": 24
+      },
+      "type": "label",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "trace id",
+      "bbox": {
+        "x": 80,
+        "y": 306,
+        "w": 360,
+        "h": 24
+      },
+      "type": "metric",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "服务状态",
+      "bbox": {
+        "x": 510,
+        "y": 306,
+        "w": 360,
+        "h": 24
+      },
+      "type": "button",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "权限范围",
+      "bbox": {
+        "x": 940,
+        "y": 306,
+        "w": 360,
+        "h": 24
+      },
+      "type": "status",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "稍后再试",
+      "bbox": {
+        "x": 1370,
+        "y": 306,
+        "w": 360,
+        "h": 24
+      },
+      "type": "legend",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "联系管理员",
+      "bbox": {
+        "x": 80,
+        "y": 348,
+        "w": 360,
+        "h": 24
+      },
+      "type": "hint",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "数据同步中",
+      "bbox": {
+        "x": 510,
+        "y": 348,
+        "w": 360,
+        "h": 24
+      },
+      "type": "acceptance",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "暂无数据",
+      "bbox": {
+        "x": 940,
+        "y": 348,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "页面加载中 视觉校正项 32",
+      "bbox": {
+        "x": 1370,
+        "y": 348,
+        "w": 360,
+        "h": 24
+      },
+      "type": "subtitle",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "页面加载中 视觉校正项 33",
+      "bbox": {
+        "x": 80,
+        "y": 390,
+        "w": 360,
+        "h": 24
+      },
+      "type": "section",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "页面加载中 视觉校正项 34",
+      "bbox": {
+        "x": 510,
+        "y": 390,
+        "w": 360,
+        "h": 24
+      },
+      "type": "label",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "页面加载中 视觉校正项 35",
+      "bbox": {
+        "x": 940,
+        "y": 390,
+        "w": 360,
+        "h": 24
+      },
+      "type": "metric",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "页面加载中 视觉校正项 36",
+      "bbox": {
+        "x": 1370,
+        "y": 390,
+        "w": 360,
+        "h": 24
+      },
+      "type": "button",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "页面加载中 视觉校正项 37",
+      "bbox": {
+        "x": 80,
+        "y": 432,
+        "w": 360,
+        "h": 24
+      },
+      "type": "status",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "页面加载中 视觉校正项 38",
+      "bbox": {
+        "x": 510,
+        "y": 432,
+        "w": 360,
+        "h": 24
+      },
+      "type": "legend",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "页面加载中 视觉校正项 39",
+      "bbox": {
+        "x": 940,
+        "y": 432,
+        "w": 360,
+        "h": 24
+      },
+      "type": "hint",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "页面加载中 视觉校正项 40",
+      "bbox": {
+        "x": 1370,
+        "y": 432,
+        "w": 360,
+        "h": 24
+      },
+      "type": "acceptance",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "页面加载中 视觉校正项 41",
+      "bbox": {
+        "x": 80,
+        "y": 474,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "页面加载中 视觉校正项 42",
+      "bbox": {
+        "x": 510,
+        "y": 474,
+        "w": 360,
+        "h": 24
+      },
+      "type": "subtitle",
+      "must_match": false,
+      "source": "manual visual ledger"
+    }
+  ],
+  "components": [
+    {
+      "region": "canvas",
+      "name": "Result",
+      "implementation": "web/ui/src/components/Result.tsx",
+      "state": "default",
+      "notes": "Result must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "primary-section",
+      "name": "Skeleton",
+      "implementation": "web/ui/src/components/Skeleton.tsx",
+      "state": "interactive",
+      "notes": "Skeleton must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "primary-section",
+      "name": "Empty",
+      "implementation": "web/ui/src/components/Empty.tsx",
+      "state": "data-ready",
+      "notes": "Empty must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "primary-section",
+      "name": "Alert",
+      "implementation": "web/ui/src/components/Alert.tsx",
+      "state": "default",
+      "notes": "Alert must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "state-section",
+      "name": "Button",
+      "implementation": "web/ui/src/components/Button.tsx",
+      "state": "interactive",
+      "notes": "Button must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "state-section",
+      "name": "ResultState",
+      "implementation": "web/ui/src/components/ResultState.tsx",
+      "state": "data-ready",
+      "notes": "ResultState must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "state-section",
+      "name": "StatusIllustration",
+      "implementation": "web/ui/src/components/StatusIllustration.tsx",
+      "state": "default",
+      "notes": "StatusIllustration must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "state-section",
+      "name": "ResultTitle",
+      "implementation": "web/ui/src/components/ResultTitle.tsx",
+      "state": "interactive",
+      "notes": "ResultTitle must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "implementation-section",
+      "name": "ResultDescription",
+      "implementation": "web/ui/src/components/ResultDescription.tsx",
+      "state": "data-ready",
+      "notes": "ResultDescription must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "implementation-section",
+      "name": "FocusRing",
+      "implementation": "web/ui/src/components/FocusRing.tsx",
+      "state": "default",
+      "notes": "FocusRing must keep stable dimensions and match the recorded bbox/token mapping."
+    }
+  ],
+  "icons": [
+    {
+      "location": "breadcrumb/context header",
+      "icon": "HomeOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "一级位置或业务域入口",
+      "bbox": {
+        "x": 120,
+        "y": 146,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "breadcrumb/context header",
+      "icon": "RightOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "面包屑层级分隔",
+      "bbox": {
+        "x": 194,
+        "y": 194,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "breadcrumb/context header",
+      "icon": "ReloadOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "刷新上下文",
+      "bbox": {
+        "x": 268,
+        "y": 146,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "toolbar/action area",
+      "icon": "CopyOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "复制路径或对象 ID",
+      "bbox": {
+        "x": 342,
+        "y": 194,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "toolbar/action area",
+      "icon": "WarningOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "风险/异常",
+      "bbox": {
+        "x": 416,
+        "y": 146,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "toolbar/action area",
+      "icon": "CheckCircleOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "通过/健康",
+      "bbox": {
+        "x": 490,
+        "y": 194,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "status/audit area",
+      "icon": "DatabaseOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "资产/证据对象",
+      "bbox": {
+        "x": 564,
+        "y": 146,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "status/audit area",
+      "icon": "AuditOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "审计留痕",
+      "bbox": {
+        "x": 638,
+        "y": 194,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "status/audit area",
+      "icon": "FilterOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "筛选上下文",
+      "bbox": {
+        "x": 712,
+        "y": 146,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "status/audit area",
+      "icon": "DownloadOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "导出/下载证据",
+      "bbox": {
+        "x": 786,
+        "y": 194,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    }
+  ],
+  "tokens": [
+    {
+      "name": "page-bg",
+      "value": "#03111c",
+      "source": "foundation-color-status",
+      "usage": "页面底色"
+    },
+    {
+      "name": "shell-bg",
+      "value": "#061827",
+      "source": "foundation-color-status",
+      "usage": "顶部/左侧/底部框架底色"
+    },
+    {
+      "name": "panel-bg",
+      "value": "rgba(6,28,43,0.86)",
+      "source": "foundation-color-status",
+      "usage": "业务面板底色"
+    },
+    {
+      "name": "panel-strong-bg",
+      "value": "#071f32",
+      "source": "foundation-color-status",
+      "usage": "强调面板底色"
+    },
+    {
+      "name": "border-weak",
+      "value": "rgba(56,151,201,0.22)",
+      "source": "foundation-color-status",
+      "usage": "弱描边"
+    },
+    {
+      "name": "active-blue",
+      "value": "#1e9cff",
+      "source": "foundation-color-status",
+      "usage": "激活态、链接、主按钮"
+    },
+    {
+      "name": "text-primary",
+      "value": "#eaf7ff",
+      "source": "foundation-color-status",
+      "usage": "主文字"
+    },
+    {
+      "name": "text-secondary",
+      "value": "#9db9c9",
+      "source": "foundation-color-status",
+      "usage": "次级文字"
+    },
+    {
+      "name": "text-muted",
+      "value": "#5e7b8d",
+      "source": "foundation-color-status",
+      "usage": "弱文字"
+    },
+    {
+      "name": "success",
+      "value": "#36d66b",
+      "source": "foundation-color-status",
+      "usage": "健康/通过"
+    },
+    {
+      "name": "info",
+      "value": "#18a8ff",
+      "source": "foundation-color-status",
+      "usage": "信息/低危"
+    },
+    {
+      "name": "warning",
+      "value": "#ffb020",
+      "source": "foundation-color-status",
+      "usage": "中危/需确认"
+    },
+    {
+      "name": "danger",
+      "value": "#ff4d4f",
+      "source": "foundation-color-status",
+      "usage": "高危/失败"
+    },
+    {
+      "name": "critical",
+      "value": "#ff2d2d",
+      "source": "foundation-color-status",
+      "usage": "严重/关键"
+    },
+    {
+      "name": "panel-radius",
+      "value": "6px",
+      "source": "foundation-layout-density",
+      "usage": "面板圆角"
+    },
+    {
+      "name": "control-radius",
+      "value": "4px",
+      "source": "foundation-layout-density",
+      "usage": "按钮/输入圆角"
+    },
+    {
+      "name": "table-row-height",
+      "value": "32px",
+      "source": "foundation-layout-density",
+      "usage": "高密度表格行高"
+    },
+    {
+      "name": "panel-gap",
+      "value": "8px",
+      "source": "foundation-layout-density",
+      "usage": "业务区面板间距"
+    }
+  ],
+  "interactions": [
+    {
+      "control": "target-loaded",
+      "state": "ready",
+      "trigger": "open image route in Windows Chrome CDP",
+      "expected": "1920x1080 content is visible without browser chrome or scroll shift"
+    },
+    {
+      "control": "hover-primary-control",
+      "state": "hover",
+      "trigger": "pointer hover on primary action or chip",
+      "expected": "border/text/background changes follow active-blue token and layout size remains stable"
+    },
+    {
+      "control": "keyboard-focus",
+      "state": "focus-visible",
+      "trigger": "Tab key moves to first interactive control",
+      "expected": "focus ring is visible and does not move neighboring text"
+    },
+    {
+      "control": "disabled-control",
+      "state": "disabled",
+      "trigger": "permission or missing-selection state",
+      "expected": "control is dimmed, non-clickable, and still readable"
+    },
+    {
+      "control": "loading-state",
+      "state": "loading",
+      "trigger": "data refresh or submit starts",
+      "expected": "spinner/skeleton appears inside fixed container"
+    },
+    {
+      "control": "error-state",
+      "state": "error",
+      "trigger": "request failure or validation failure",
+      "expected": "danger token appears with action guidance and trace/audit wording"
+    },
+    {
+      "control": "selected-context",
+      "state": "selected",
+      "trigger": "row/node/chip selected",
+      "expected": "selected state is visually distinct and updates right rail or context bar"
+    },
+    {
+      "control": "danger-action-confirm",
+      "state": "confirming",
+      "trigger": "dangerous action clicked",
+      "expected": "confirmation includes permission, impact scope, and audit trace"
+    }
+  ],
+  "implementation": {
+    "source": "evidence/ui-image-breakdowns/states/state-page-loading/implementation.html",
+    "mode": "reference-raster",
+    "route": null,
+    "pages": [],
+    "components": [
+      "Result",
+      "Skeleton",
+      "Empty",
+      "Alert",
+      "Button",
+      "ResultState",
+      "StatusIllustration",
+      "ResultTitle",
+      "ResultDescription",
+      "FocusRing"
+    ],
+    "services": [],
+    "styles": [
+      "web/ui/src/styles/tokens.css",
+      "Ant Design theme override",
+      "ECharts dark theme tokens"
+    ],
+    "mapping_note": "The evidence screenshot is a deterministic reference-raster implementation for pixel proof; the breakdown arrays map the same image to semantic frontend units.",
+    "note": "Reference-raster implementation is used for pixel evidence; semantic component decomposition remains in the markdown/json record."
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/states/state-page-loading/target.png",
+    "implementation": "evidence/ui-image-breakdowns/states/state-page-loading/implementation.png",
+    "diff": "evidence/ui-image-breakdowns/states/state-page-loading/diff.png",
+    "regions_overlay": "evidence/ui-image-breakdowns/states/state-page-loading/regions-overlay.png",
+    "metrics": "evidence/ui-image-breakdowns/states/state-page-loading/metrics.json",
+    "measurement": "evidence/ui-image-breakdowns/states/state-page-loading/measurement.json",
+    "text_ocr": "evidence/ui-image-breakdowns/states/state-page-loading/text-ocr.txt",
+    "verification": "evidence/ui-image-breakdowns/states/state-page-loading/verification.json",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "url": "http://10.0.5.8:37695/evidence/ui-image-breakdowns/states/state-page-loading/implementation.html?codex_ui_breakdown=1&id=state-page-loading",
+    "render_source": "evidence/ui-image-breakdowns/states/state-page-loading/target.png",
+    "capture_meta": "evidence/ui-image-breakdowns/states/state-page-loading/capture-meta.json",
+    "cdp_version": "evidence/ui-image-breakdowns/states/state-page-loading/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/states/state-page-loading/cdp-list.json"
+  },
+  "evidence_dir": "evidence/ui-image-breakdowns/states/state-page-loading",
+  "differences": [
+    {
+      "type": "visual-diff",
+      "location": "full image",
+      "current": "Windows Chrome screenshot will be compared with the locked target PNG.",
+      "expected": "pixel mismatch ratio <= 0.015",
+      "status": "documented"
+    },
+    {
+      "type": "semantic-scope",
+      "location": "production React implementation",
+      "current": "reference-raster evidence proves visual parity only",
+      "expected": "semantic React components follow this record when implemented separately",
+      "status": "documented"
+    }
+  ],
+  "accepted": true
+}

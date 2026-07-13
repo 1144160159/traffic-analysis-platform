@@ -1,0 +1,16 @@
+Generate a 3840x2160 PNG static 4K background asset for traffic-analysis-platform.
+
+Use case: productivity-visual.
+Asset type: asset inventory and business context background.
+
+Scene:
+- A dark enterprise asset context map with servers, endpoints, network devices, applications, owners, risk posture, tags, and dependency relationships represented as abstract icons and nodes.
+- Show inventory discovery, asset binding, risk context, and service dependency layers without readable labels.
+
+Style:
+- Enterprise CMDB plus network security visual language, dark navy/black, cyan topology, blue asset halos, green trusted assets, amber risk context, rare red exposed node.
+- Detailed but organized and panel-safe.
+
+Constraints:
+- No readable hostnames, owner names, IP addresses, credentials, logos, people, browser chrome, tables, forms, or full UI screenshot.
+

@@ -1,0 +1,430 @@
+基础设施部署进度报告
+========================
+更新日期：2026年6月15日
+项目：面向园区网络的全流量采集分析系统 — 课题一配套基础设施
+
+2026-06-29 状态校正：
+  本文是 2026-06-15 基础设施初始部署记录，包含若干历史入口和初始凭据示例。
+  当前生产化口径以 K8s Secret/SecretRef、ExternalSecret 模板、site-values 模板和
+  `doc/02_acceptance/*-latest` 证据为准，不以本文中的历史明文示例作为现行配置。
+  最新 digest/Secret/验收同步见 `doc/05_status/live-digest-secret-docsync-2026-06-29.md`。
+
+说明：本文档记录基础设施层部署进度。基础设施层提供计算、存储、网络、数据库、
+消息队列、认证、网关、监控等平台能力，与具体业务应用（流量采集、会话化、
+特征提取、规则检测、告警生成等）独立。后续业务应用基于本基础设施之上开发部署。
+
+一、K8s 集群 — 计算底座
+─────────────────────────────────────────
+  版本：v1.29.15
+  节点：2（均 Ready）
+  网络：Flannel CNI + NodePort（外部统一入口 10.0.5.8，零额外 IP）
+  运行时：containerd（systemd cgroup）
+  证书：Cert-Manager 1.14.5
+
+  Node-8（8-2tb）：control-plane, 112C/2015GB, SSD 2.7T + HDD 120T, 18 Pod
+  Node-9（zeus-server）：worker, 112C/503GB, SSD 3.1T + HDD 120T, 17 Pod
+
+二、存储层 — 持久化数据底座
+─────────────────────────────────────────
+  策略：SSD 仅保留控制面状态，业务全量 HDD
+
+  SSD（/home/k8s-data）：
+    etcd（已从 root 分区迁移） + Flink RocksDB 目录
+
+  Node-8 HDD（/home/wangwt/task）：
+    Kafka×2, ClickHouse×2, OpenSearch×2, PostgreSQL×2,
+    Redis×3, MinIO×2, Nacos, Grafana, VictoriaMetrics
+
+  Node-9 HDD（/home/data）：
+    Kafka×1, ClickHouse×2, OpenSearch×1, PostgreSQL×1,
+    Redis×3, MinIO×2, 管理服务若干
+
+  存储类：local-hdd（no-provisioner），全部 Local PV 绑定
+
+三、消息队列 — 数据总线
+─────────────────────────────────────────
+  Kafka 3 Broker KRaft 集群（2:1 分布）
+    kafka-0: Node-9, kafka-1: Node-8, kafka-2: Node-8
+    客户端入口：kafka-bootstrap:9092（内部），外部 NodePort 10.0.5.8:30092
+    探针：TCP 9092 liveness + readiness
+    PDB：maxUnavailable=1
+
+四、OLAP 数据库 — 分析查询
+─────────────────────────────────────────
+  ClickHouse 24.3 集群（2 Shard × 2 Replica = 4 实例，2:2 分布）
+    ch-1(Node-8), ch-1-replica(Node-9)
+    ch-2(Node-9), ch-2-replica(Node-8)
+    集群名：traffic_cluster
+    HTTP：ch-1:8123, ch-2:8123
+    探针：HTTP /ping
+
+五、全文检索引擎 — 日志与审计检索
+─────────────────────────────────────────
+  OpenSearch 2.14.0 集群（3 节点，2:1 分布）
+    os-0(Node-9), os-1(Node-8), os-2(Node-8)
+    集群名：traffic-os，状态 Green
+    探针：HTTP /_cluster/health
+    PDB：maxUnavailable=1
+
+六、关系数据库 — 元数据存储
+─────────────────────────────────────────
+  PostgreSQL 16 集群（1 Primary + 2 Replica = 3 实例，2:1 分布）
+    Primary（读写）：Node-8
+    Replica-0（只读）：Node-9
+    Replica-1（只读）：Node-8
+    数据库实例：traffic_platform, streampark
+    探针：TCP 5432
+    PDB：maxUnavailable=1
+
+七、缓存 — 热数据与状态维护
+─────────────────────────────────────────
+  Redis 7 Sentinel 集群（1M + 2R + 3S = 6 实例，4:2 分布）
+    Master：Node-8
+    Replica-0：Node-9, Replica-1：Node-8
+    Sentinel-0,1,2：Node-8
+    自动故障转移，quorum=2
+    探针：TCP 6379
+    PDB：maxUnavailable=1
+
+八、对象存储 — PCAP 与文件归档
+─────────────────────────────────────────
+  MinIO 4-Drive 分布式（每节点 2 Drive）
+    Node-8：/home/wangwt/task/minio-{1,2}
+    Node-9：/home/data/minio-{3,4}
+    原始容量：200TB
+    探针：HTTP /minio/health/live
+    PDB：maxUnavailable=1
+
+九、流处理引擎 — 实时计算
+─────────────────────────────────────────
+  Flink 1.18 Session 集群
+    JobManager（Node-8）+ TaskManager×2（各节点1个）
+    UI：http://10.0.5.8:30172
+    StreamPark 2.1.6 作业管理（Node-9，PostgreSQL，http://10.0.5.8:30100）
+    2026-07-12：9 个在线作业的 checkpoint/savepoint 已从 SSD 本地目录迁移到
+      MinIO 大盘 `s3://flink-checkpoints/`；RocksDB 本地热状态继续使用 SSD
+      `/home/k8s-data/flink/rocksdb`。迁移后 9/9 作业 RUNNING，均已产生新的
+      S3 checkpoint，详见 `Flink热Checkpoint大盘迁移-2026-07-12.md`。
+
+十、API 网关与认证 — 服务入口
+─────────────────────────────────────────
+  API 网关：APISIX 3.9.0（Node-9，http://10.0.5.8:30180 端口 9080）
+  认证服务：Keycloak 24.0（Node-9，admin/admin123）
+  Schema 注册：Apicurio Registry 2.5.9（Node-9，API /apis/registry/v2）
+
+十一、配置与服务管理
+─────────────────────────────────────────
+  配置中心：Nacos 2.3.2（Node-8，http://10.0.5.8:32049/nacos）
+  任务编排：Argo Workflows 3.5.5（Node-8，http://10.0.5.8:30046）
+
+十二、可观测性 — 监控与日志
+─────────────────────────────────────────
+  指标存储：VictoriaMetrics（Node-8）
+  仪表板：Grafana 10.4.0（Node-8，admin/admin123）
+  日志聚合：Loki 2.9.0（Node-9）
+
+十三、管理控制台（NodePort 统一入口 10.0.5.8）
+─────────────────────────────────────────
+  MinIO Console      http://10.0.5.8:31728    admin/minioadmin123
+  Nacos              http://10.0.5.8:30048/nacos  nacos/nacos
+  Grafana            http://10.0.5.8:30300    admin/admin123
+  Flink Web UI       http://10.0.5.8:30172
+  Kafka-UI           http://10.0.5.8:30081
+  Keycloak Admin     http://10.0.5.8:30080    admin/admin123
+  StreamPark         http://10.0.5.8:30100    admin/streampark
+  Argo Server        http://10.0.5.8:30046
+  NebulaGraph Studio http://10.0.5.8:30701    root/root (连接 nebula-graph:9669)
+
+十四、全组件 Pod 及 Service 清单（NodePort 统一入口 10.0.5.8）
+─────────────────────────────────────────
+
+  【消息队列】Kafka 3 Broker KRaft
+    Pod: kafka-0              10.244.1.212  zeus-server  Svc: kafka-bootstrap  :30092 (9092)
+    Pod: kafka-1              10.244.0.143  8-2tb        Svc: kafka-0          :30093 (9092)
+    Pod: kafka-2              10.244.0.142  8-2tb        Svc: kafka-1          :30094 (9092)
+                                                         Svc: kafka-2          :30095 (9092)
+
+  【OLAP】ClickHouse 2Shard×2Replica
+    Pod: clickhouse-1-0       10.244.0.81   8-2tb        Svc: clickhouse-1     :30023 (8123)
+    Pod: clickhouse-2-0       10.244.1.52   zeus-server  Svc: clickhouse-2     :30123 (8123)
+    Pod: clickhouse-replica-0 10.244.1.57   zeus-server
+    Pod: clickhouse-replica-1 10.244.0.86   8-2tb
+
+  【搜索引擎】OpenSearch 3 Node
+    Pod: opensearch-0         10.244.1.60   zeus-server  Svc: opensearch       :30020 (9200)
+    Pod: opensearch-1         10.244.0.90   8-2tb
+    Pod: opensearch-2         10.244.0.87   8-2tb
+
+  【图数据库】NebulaGraph 3Meta+3Graph+3Storage
+    Pod: nebula-meta-0        10.244.1.150  zeus-server  Svc: nebula-graph      :30069 (9669 gRPC)
+    Pod: nebula-meta-1        10.244.1.151  zeus-server       nebula-graph      :31179 (19669 HTTP)
+    Pod: nebula-meta-2        10.244.0.131  8-2tb
+    Pod: nebula-graph-*-545j7 10.244.1.149  zeus-server  Svc: nebula-studio     :30701 (7001 Web)
+    Pod: nebula-graph-*-7v2bk 10.244.0.130  8-2tb             用户 root/root, 空间 traffic_graph
+    Pod: nebula-graph-*-k8jnw 10.244.1.148  zeus-server
+    Pod: nebula-storage-0     10.244.1.181  zeus-server
+    Pod: nebula-storage-1     10.244.1.180  zeus-server
+    Pod: nebula-storage-2     10.244.1.187  zeus-server
+    Pod: nebula-studio-*      10.244.1.203  zeus-server
+
+  【关系数据库】PostgreSQL 1P+2R
+    Pod: postgres-primary-0   10.244.0.77   8-2tb        Svc: postgres         :30032 (5432)
+    Pod: postgres-replica-0   10.244.1.53   zeus-server       traffic_platform / pgadmin123
+    Pod: postgres-replica-1   10.244.0.85   8-2tb
+
+  【缓存】Redis 7 Sentinel 1M+2R+3S
+    Pod: redis-master-0       10.244.0.152  8-2tb        Svc: redis            :30079 (6379 数据面)
+    Pod: redis-replica-0      10.244.1.219  zeus-server  Svc: redis-sentinel   :30279 (26379 哨兵面)
+    Pod: redis-replica-1      10.244.0.153  8-2tb             master_name=mymaster
+    Pod: redis-sentinel-0     10.244.0.146  8-2tb
+    Pod: redis-sentinel-1     10.244.0.147  8-2tb
+    Pod: redis-sentinel-2     10.244.0.148  8-2tb
+
+  【对象存储】MinIO 4-Drive
+    Pod: minio-0              10.244.0.93   8-2tb        Svc: minio            :30000 (9000 S3)
+    Pod: minio-1              10.244.1.64   zeus-server       admin / minioadmin123
+    Pod: minio-2              10.244.1.63   zeus-server
+    Pod: minio-3              10.244.0.92   8-2tb
+
+  【流处理】Flink 1.18.1 (1JM+2TM)
+    Pod: flink-jobmanager-0   10.244.0.79   8-2tb        Svc: flink-jobmanager :30082 (8081 UI)
+    Pod: flink-taskmanager-0  10.244.1.77   zeus-server
+    Pod: flink-taskmanager-1  10.244.0.100  8-2tb
+
+  【API 网关】APISIX
+    Pod: apisix-0             10.244.1.76   zeus-server  Svc: apisix           :30180 (9080)
+
+  【认证】Keycloak
+    Pod: keycloak-0           10.244.1.75   zeus-server  Svc: keycloak         :30080 (8080)
+
+  【监控】Grafana + Loki + VictoriaMetrics
+    Pod: grafana-0            10.244.0.98   8-2tb        Svc: grafana          :30300 (3000)
+    Pod: loki-0               10.244.1.73   zeus-server  Svc: loki             :30310 (3100)
+    Pod: victoria-metrics-0   10.244.0.99   8-2tb        Svc: victoria-metrics :30320 (8428)
+
+  【其他服务】
+    Pod: nacos-0              10.244.0.7    8-2tb        Svc: nacos            :30048 (8848)
+    Pod: argo-server-*        10.244.0.97   8-2tb        Svc: argo-server      :30046 (2746)
+    Pod: apicurio-0           10.244.1.80   zeus-server  Svc: apicurio         :30108 (8080)
+    Pod: streampark-0         10.244.1.87   zeus-server  Svc: streampark       :30100 (8080)
+    Pod: kafka-ui-0           10.244.1.74   zeus-server  Svc: kafka-ui         :30081 (8080)
+
+
+十五、自愈与高可用
+─────────────────────────────────────────
+  健康探针：12/19 StatefulSet 配置 liveness + readiness
+  PDB：5 个关键组件（Kafka/OS/MinIO/Redis/PG）
+  自愈：Pod 崩溃自动重建，探针 20-60s 检测挂死
+  资源保护：全组件 CPU/Memory limits
+
+十六、基础设施层定位
+─────────────────────────────────────────
+  本文档涵盖内容：计算、存储、网络、数据库、消息队列、缓存、对象存储、
+    流处理引擎、API网关、认证、监控、日志、配置中心
+
+  不涵盖内容（属业务应用层，后续基于本基础设施开发）：
+    · 探针采集（Probe Agent）
+    · 流量会话化（Flink Session Job）
+    · 特征提取（Flink Feature Job）
+    · 规则检测（Flink Rule Job）
+    · 告警生成（Alert Service）
+    · PCAP 取证（Forensics Service）
+    · Web 前端（Dashboard UI）
+    · 模型推理与热更新（MLOps）
+
+十七、图数据库 — 网络拓扑与攻击路径 🆕
+─────────────────────────────────────────
+  NebulaGraph 3.6 分布式图数据库集群（3 Meta + 3 Graph + 3 Storage = 9 实例）
+  主节点: Node-9 (zeus-server) — 承担主要负载，Meta leader 优先
+  调度策略: 软反亲和(preferred) (跨节点分散) + nodeAffinity(Node-9)，分布比 2:1
+
+    nebula-meta-0/1/2:     Node-9(2) + Node-8(1)，Raft leader 偏向 Node-9 ✅
+    nebula-graph-0/1/2:    Node-9(2) + Node-8(1)，查询负载侧重 Node-9 ✅
+    nebula-storage-0/1/2:  Node-9(3)，数据 I/O 侧重 Node-9 ✅
+    nebula-console:        (随用随建，不常驻)
+
+    集群名：traffic_graph
+    用户/密码：root / root
+    客户端入口：nebula-graph:9669（内部），外部 gRPC 10.0.5.8:30069 / HTTP 10.0.5.8:31179
+    HTTP API：nebula-graph:19669
+    Web 控制台：NebulaGraph Studio @ http://10.0.5.8:30701 (进入后添加连接: nebula-graph.middleware.svc:9669, root/root) 🆕
+    探针：TCP 9559(Meta) / 9669(Graph) / 9777(Storage)
+    PDB：maxUnavailable=1
+    前置标签：kubectl label node zeus-server nebula-primary=true
+
+  图空间 schema（初始化: init-nebula-schema Job + 2026-06-07 手动重建验证）：
+    5 Tags:  ip_address, session, alert, campaign, network_device
+    7 Edges: communicates, has_session, triggers_alert, includes_alert, belongs_to, connects_to, attack_path_hop
+    12 索引: Tag/Edge 复合索引 (tenant_id, community_id, alert_type, risk_score 等)
+    30 分区 × 3 副本 (replica_factor=3)，分布均匀，无 Losts
+    VID 类型: FIXED_STRING(32) — 要求 VID 精确 32 字节；Go 客户端使用 hashVID() (MD5→32 hex)
+
+  已知问题与修复 (2026-06-07)：
+    修复1: Storage META_ADDRS 未定义 → CrashLoopBackOff → 注入 env + 重建 Pod
+    修复2: Meta 中旧 Storage Host (IP 变更) → Machine not existed → DROP/ADD HOSTS
+    修复3: FIXED_STRING(32) VID 长度不匹配 → INSERT 成功但查询空集 → Go hashVID()策略
+
+  已知问题与修复 (2026-06-15) 🔧：
+    修复4: Storage PID 文件残留 → Process '10' already existed → CrashLoopBackOff
+           → 启动脚本增加 rm -f /usr/local/nebula/pids/nebula-storaged.pid
+    修复5: Meta 中 4 个旧 Host 全部 OFFLINE (127.0.0.1/10.244.1.136/139/140)
+           → DROP HOSTS 全部旧地址 → ADD HOSTS 3 个新 DNS Host
+    修复6: init-dirs 破坏性清理 (rm -rf /data/storage/*) → 改为 mkdir -p
+    修复7: init-nebula-schema Job /bin/bash 不存在 + 二进制路径错误
+           → /bin/sh + /usr/local/bin/nebula-console
+    修复8: Storage 全部集中在 zeus-server (0:3) → 回收 8-2tb Released PV
+           → storage-2 迁移至 8-2tb (1:2 分布达成)
+
+十八、状态汇总
+─────────────────────────────────────────
+  Pod 总数：72+（37 基础设施 + 9 NebulaGraph + 管理面 + traffic-analysis，全部 Running）
+  集群组件：7（Kafka/ClickHouse/OpenSearch/PostgreSQL/Redis/MinIO/NebulaGraph）
+  管理控制台：10（NodePort 统一入口 10.0.5.8）
+  节点分布比：8-2tb=37 : zeus-server=35（NG-Storage 1:2, NG-Meta 1:2, NG-Graph 1:2）
+  命名空间：12（+ traffic-analysis 应用层）
+  PDB 保护：9 个（Kafka/OpenSearch/ClickHouse/NG-Meta/NG-Graph/NG-Storage/PG/Redis/MinIO）
+  PV 总容量：305 Ti（已分配），可用约 1.2 Ti（pg-pv 1Ti + redis-pv 100Gi + NG-storage-pv-1 100Gi）
+
+  基础设施层：已完成（含 NebulaGraph 图数据库 + P0/P1 高可用加固）
+  应用层：开发进行中（traffic-analysis 命名空间 ImagePullBackOff，待镜像构建）
+
+十九、Go Control-Plane 开发进度（2026-06-07）
+─────────────────────────────────────────
+  编译通过：8/8 服务（ingest/auth/alert/asset/rule/graph/forensics/mock-ingest）
+  二进制输出：go/control-plane/bin/（8 文件，273MB）
+  核心模块：ingest(config/dedup/queue/auth/quota/dlq/server)
+           common(errors/logging/kafka/httpx/otel/storage)
+           alert(campaign/threatintel/geoip/dedup/evidence/whitelist)
+           graph(nebula/query/cache/monitoring/logging)
+           rules(evaluator/service/repository/converter)
+           asset(api/service/repository)
+           forensics(index/cutter/s3client/converter)
+  测试：30+ tests 全部通过
+  性能：Dedup 9.3M ops/s | Stress 4.0M ops/s
+  新增 2026-06-07：
+    - Campaign 攻击活动关联引擎 (4维13阶段8攻击链)
+    - GeoIP 威胁评估 (高风险国家+恶意ASN+不可能旅行)
+    - Rule 试运行评估引擎 (Dry-run+A/B对比+上线建议)
+    - NebulaGraph 客户端 + 图算法引擎 (Louvain/PageRank/Centrality/AttackPath)
+    - 8 二进制集中管理于 bin/ 目录
+
+二十、Java Flink 开发进度（2026-06-07）
+─────────────────────────────────────────
+  模块：11 个（common/session/feature/rule/pcap-index/cep/behavior/alert-generator/log/user-behavior/补充）
+  测试：264/264 (100% 通过)
+  编译：11 JAR (850MB)
+  新增匹配器（2026-06-07）：
+    - ProtocolAnomalyMatcher (6类：TCP标志位/状态机/UDP/ICMP/分片/流)
+    - TlsFingerprintMatcher (5类：JA3/JA3S/TLS版本/弱密码/SNI异常)
+
+二十一、Rust 探针开发进度（2026-06-07）
+─────────────────────────────────────────
+  编译：workspace 通过（probe-agent + proto-gen + xtask）
+  测试：39/39 全部通过
+  性能：5.65M pps (release+LTO), eBPF 条件编译
+  新增解析器（2026-06-07）：
+    - DNS Parser: 被动域名↔IP映射, DNS隧道检测, Shannon熵值分析
+    - DHCP Parser: MAC↔IP↔Hostname绑定, OS指纹(12种), VLAN发现
+    - ARP Parser: MAC↔IP绑定, 欺骗检测(4类), OUI厂商查询(35+)
+
+二十二、2026-06-15 基础设施加固 — 节点分布优化与高可用改造
+─────────────────────────────────────────
+  背景：基于 agent.md 约束及节点分布合理性分析，对 2 节点 K8s 集群
+  进行 P0/P1 级高可用加固。发现并修复多个组件存在的硬编码 nodeSelector
+  导致的单点集中问题。
+
+  【节点分布优化】
+  改进前核心问题：
+    - NG Storage 全部在 zeus-server (0:3) — 单节点故障图数据库不可用
+    - Redis Sentinel 全部在 8-2tb (3:0) — Redis 故障转移无哨兵
+    - APISIX 单副本 (zeus-server) — API 网关单点
+    - Keycloak 单副本 (zeus-server) — SSO 认证单点
+    - StreamPark/Loki 单副本 + 硬编码 nodeSelector
+
+  改进后分布：
+    NG-Storage:     8-2tb(1) : zeus-server(2)  ← 回收 Released PV 迁移 storage-2
+    Redis-Sentinel: 8-2tb(2) : zeus-server(1)  ← 移除 nodeSelector + topologySpreadConstraints
+    APISIX:         8-2tb(1) : zeus-server(1)  ← replica=2 + required antiAffinity
+    Keycloak:       8-2tb(1) : zeus-server(1)  ← replica=2 + 移除 nodeSelector
+    StreamPark:     8-2tb(1) : zeus-server(1)  ← replica=2 + 移除 nodeSelector
+    Loki:           8-2tb(1) : zeus-server(1)  ← replica=2 + 移除 nodeSelector
+    Argo:           8-2tb(1) : zeus-server(1)  ← replica=2 + 移除 nodeSelector
+    跨节点组件: 14/21 (vs 改进前 10/21)
+
+  【反复出现的根因模式】
+  多个组件存在硬编码 nodeSelector 强制绑定特定节点：
+    Keycloak:       nodeSelector: zeus-server         → 已移除
+    Redis Sentinel: nodeSelector: 8-2tb               → 已移除
+    StreamPark:     nodeSelector: zeus-server         → 已移除
+    Loki:           nodeSelector: zeus-server         → 已移除
+    Argo Server:    nodeSelector: 8-2tb               → 已移除
+    Flink JM:       nodeSelector: 8-2tb               → 已移除
+  这些 nodeSelector 是早期为解决调度问题而添加的临时约束。
+
+  【stray pods 清理】
+  删除 6 个残留/重复 Pod：
+    - middleware/keycloak (deploy) — 重复，正主在 iam/
+    - middleware/nacos (deploy) — 重复，正主在 nacos/
+    - observability/loki (deploy) — 重复，正主 loki-0 (sts)
+    - observability/victoria-metrics (deploy) — 重复，正主 vm-0 (sts)
+    - default/ 下 4 个已完成的 debug Pod
+
+  【YAML 文件修复】
+  修复 3 个部署文件，确保幂等可重复部署：
+    deployments/kubernetes/init-jobs/05-nebula-schema.yaml
+      - /bin/bash → /bin/sh (镜像内无 bash)
+      - /usr/local/nebula/bin/nebula-console → /usr/local/bin/nebula-console
+      - -addr nebula-graph → -addr nebula-graph.middleware.svc
+    deployments/kubernetes/infrastructure/09-nebula-graph.yaml
+      - init-dirs: rm -rf /data/storage/* → mkdir -p /data/storage /data/logs
+      - storaged 启动脚本: 增加 PID 文件清理 + 旧进程 kill
+    deployments/kubernetes/infrastructure/13-nebula-statefulsets.yaml
+      - init-dirs: rm -rf → mkdir -p (同上)
+      - storaged 启动脚本: 同上修复
+
+  【NG Storage 内存优化】
+  requests: 8Gi → 4Gi, limits: 16Gi → 10Gi
+  3 Pod 总 request: 24Gi → 12Gi (减少 50%)
+
+二十三、2026-06-15 P0/P1 高可用加固
+─────────────────────────────────────────
+
+  【P0-1: Flink K8s Native HA】
+  改进前: Flink JobManager 单点，无 HA。nodeSelector 硬绑定 8-2tb
+  改进后:
+    - 启用 high-availability.type: kubernetes (ConfigMap Leader Election)
+    - 创建 flink ServiceAccount + Role (ConfigMap 管理权限)
+    - 移除 nodeSelector，JM 可调度到任意节点
+    - HA ConfigMap: flink-traffic-cluster-config-map
+    - 宕机自动恢复: K8s 重启 Pod → 从 HA ConfigMap + S3 Checkpoint 恢复
+
+  【P0-2: PostgreSQL 流复制修复 + 自动 Failover】
+  发现: 两个 Replica 的 pg_is_in_recovery()=f，pg_stat_replication 0 rows
+        流复制完全未工作！Replica 作为独立实例运行，数据不一致
+  修复:
+    - Primary: 创建 replicator 复制用户 + 复制槽 replica_0/replica_1
+    - Replica: init container 检测 standby.signal → pg_basebackup 克隆
+    - 流复制确认: walreceiver streaming async × 2 ✅
+    - 数据一致性: INSERT on Primary → 出现在 Replica ✅
+  自动 Failover:
+    - CronJob pg-failover-check: 60s 检测 Primary 健康
+    - Primary 宕机 → 检查 Replica lag < 60s → SELECT pg_promote()
+    - 防脑裂: 120s lock file + lag threshold
+    - 手动恢复后需重建副本
+
+  【P1-1: PodDisruptionBudgets】
+  创建 9 个 PDB (maxUnavailable=1) 保护关键组件：
+    Kafka | OpenSearch | ClickHouse | NG-Meta | NG-Graph | NG-Storage
+    PostgreSQL | Redis | MinIO
+
+  【P1-2: PV 回收】
+  回收 3 个 Released/Available PV，释放约 1.2 Ti：
+    pg-pv (1Ti, 8-2tb)         Released → Available
+    redis-pv (100Gi, 8-2tb)    Available (已回收)
+    nebula-storage-pv-1 (100Gi, zeus-server) Available (已回收)
+
+  【P1-3: PV 节点标识规范】
+  审计全部 32 个 PV 的节点亲和性标识：
+    - 标准格式: kubernetes.io/hostname=<node-name>
+    - 5 个旧 Nebula PV 使用 nebula-primary=true (不可变，功能正常)
+    - 新 PV 统一使用 kubernetes.io/hostname 标准格式

@@ -1,0 +1,171 @@
+{
+  "status": "pass",
+  "target_id": "campaign-detail-impact-business-system",
+  "captured_at": "2026-07-10T05:18:30.404Z",
+  "image_tag": "traffic/web-ui:ui-campaign-impact-business-system-20260710-r171",
+  "browser_backend": "Windows Chrome CDP",
+  "cdp_url": "http://127.0.0.1:9224",
+  "browser": "150.0.7871.49",
+  "requested_url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=business-system&__codex_ui_breakdown_production=1&__codex_page_id=campaign-detail-impact-business-system&windowsCdpEvidenceTs=1783660704752",
+  "final_url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=business-system&__codex_ui_breakdown_production=1&__codex_page_id=campaign-detail-impact-business-system&windowsCdpEvidenceTs=1783660704752",
+  "screenshot": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-business-system/implementation-r171-final.png",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "device_scale_factor": 1,
+    "source": "captured PNG pixels"
+  },
+  "windows_scaling_observation": {
+    "width": 2133,
+    "height": 1200,
+    "dpr": 0.8999999632438005
+  },
+  "runtime": {
+    "href": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=business-system&__codex_ui_breakdown_production=1&__codex_page_id=campaign-detail-impact-business-system&windowsCdpEvidenceTs=1783660704752",
+    "title": "园区网络全流量采集与分析系统",
+    "css_viewport": {
+      "width": 2133,
+      "height": 1200,
+      "dpr": 0.8999999632438005
+    },
+    "document": {
+      "width": 2133,
+      "height": 1200
+    },
+    "overflow": {
+      "x": false,
+      "y": false
+    },
+    "focus": {
+      "x": 17.9976863861084,
+      "y": 8.993056297302246,
+      "width": 2096.99072265625,
+      "height": 1179.988525390625,
+      "display": "grid",
+      "visibility": "visible",
+      "opacity": "1"
+    },
+    "summary": {
+      "x": 68.47222900390625,
+      "y": 173.43751525878906,
+      "width": 1996.041748046875,
+      "height": 355.9953918457031,
+      "display": "grid",
+      "visibility": "visible",
+      "opacity": "1"
+    },
+    "donut": {
+      "x": 183.47222900390625,
+      "y": 199.93057250976562,
+      "width": 699.9884643554688,
+      "height": 302.9977111816406,
+      "display": "grid",
+      "visibility": "visible",
+      "opacity": "1"
+    },
+    "riskList": {
+      "x": 962.46533203125,
+      "y": 220.6990966796875,
+      "width": 1102.0487060546875,
+      "height": 253.46063232421875,
+      "display": "grid",
+      "visibility": "visible",
+      "opacity": "1"
+    },
+    "table": {
+      "x": 68.47222900390625,
+      "y": 611.3773193359375,
+      "width": 1996.041748046875,
+      "height": 460.9953918457031,
+      "display": "block",
+      "visibility": "visible",
+      "opacity": "1"
+    },
+    "riskTextGeometry": {
+      "label": {
+        "x": 1100.1851806640625,
+        "y": 259.0555725097656,
+        "width": 89.988525390625,
+        "height": 40,
+        "text": "高风险"
+      },
+      "count": {
+        "x": 1578.17138671875,
+        "y": 259.0555725097656,
+        "width": 18.5069580078125,
+        "height": 40,
+        "text": "3"
+      },
+      "percent": {
+        "x": 1819.1551513671875,
+        "y": 259.0555725097656,
+        "width": 86.67822265625,
+        "height": 40,
+        "text": "33.3%"
+      }
+    },
+    "topbar": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0,
+      "display": "none",
+      "visibility": "visible",
+      "opacity": "1"
+    },
+    "sidebar": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0,
+      "display": "none",
+      "visibility": "visible",
+      "opacity": "1"
+    },
+    "bottombar": {
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0,
+      "display": "none",
+      "visibility": "visible",
+      "opacity": "1"
+    },
+    "expectedTexts": {
+      "9": true,
+      "影响范围": true,
+      "资产": true,
+      "账号": true,
+      "服务": true,
+      "部门": true,
+      "校区": true,
+      "业务系统": true,
+      "受影响系统": true,
+      "高风险": true,
+      "中风险": true,
+      "低风险": true,
+      "关键业务系统（Top 5）": true,
+      "科研管理系统": true,
+      "数据分析平台": true,
+      "文件存储系统": true,
+      "统一认证平台": true,
+      "教工终端管理": true,
+      "DB/API": true,
+      "Spark/MinIO": true,
+      "NFS/SMB": true,
+      "LDAP/OIDC": true,
+      "Agent API": true,
+      "P0": true,
+      "P1": true,
+      "P2": true,
+      "查看全部业务系统": true
+    },
+    "forbiddenResourceMarkers": [],
+    "rowCount": 5,
+    "riskRowCount": 3
+  },
+  "consoleErrors": [],
+  "pageErrors": [],
+  "requestFailed": [],
+  "badResponses": []
+}

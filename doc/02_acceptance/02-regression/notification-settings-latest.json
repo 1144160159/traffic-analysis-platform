@@ -1,0 +1,1 @@
+{"data":{"channels":{"dingtalk":false,"email":true,"feishu":false,"slack":false,"webhook":false,"wechat":true},"enabled":true,"min_severity":"high","rate_limit_per_min":7,"secret_ref":"traffic-analysis/notification-secret"},"success":true}

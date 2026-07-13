@@ -1,0 +1,681 @@
+{
+  "generated_at": "2026-07-02T01:29:17.526Z",
+  "base_url": "http://127.0.0.1:4193/login?__taf_visual=1",
+  "results": [
+    {
+      "viewport": {
+        "name": "desktop-1920",
+        "width": 1920,
+        "height": 1080
+      },
+      "screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/doc/02_acceptance/02-regression/ui-visual-interaction/local-dev-login-capability-r1/login/desktop-1920.png",
+      "consoleErrors": [],
+      "heroDisplay": "flex",
+      "hero": {
+        "x": 72,
+        "y": 0,
+        "width": 819.828125,
+        "height": 1080,
+        "right": 891.828125,
+        "bottom": 1080
+      },
+      "panel": {
+        "x": 1017.609375,
+        "y": 131.75,
+        "width": 720,
+        "height": 766.140625,
+        "right": 1737.609375,
+        "bottom": 897.890625
+      },
+      "heroPanelOverlapArea": 0,
+      "capabilityItems": [
+        {
+          "text": "加密传输",
+          "item": {
+            "x": 171.90625,
+            "y": 671,
+            "width": 184.265625,
+            "height": 58,
+            "right": 356.171875,
+            "bottom": 729
+          },
+          "icon": {
+            "x": 208.03125,
+            "y": 683,
+            "width": 34,
+            "height": 34,
+            "right": 242.03125,
+            "bottom": 717
+          },
+          "label": {
+            "x": 252.03125,
+            "y": 691.5,
+            "width": 68,
+            "height": 17,
+            "right": 320.03125,
+            "bottom": 708.5
+          },
+          "iconLabelOverlapArea": 0,
+          "labelInsideItem": true,
+          "iconInsideItem": true
+        },
+        {
+          "text": "身份校验",
+          "item": {
+            "x": 389.765625,
+            "y": 671,
+            "width": 184.265625,
+            "height": 58,
+            "right": 574.03125,
+            "bottom": 729
+          },
+          "icon": {
+            "x": 425.890625,
+            "y": 683,
+            "width": 34,
+            "height": 34,
+            "right": 459.890625,
+            "bottom": 717
+          },
+          "label": {
+            "x": 469.890625,
+            "y": 691.5,
+            "width": 68,
+            "height": 17,
+            "right": 537.890625,
+            "bottom": 708.5
+          },
+          "iconLabelOverlapArea": 0,
+          "labelInsideItem": true,
+          "iconInsideItem": true
+        },
+        {
+          "text": "审计留痕",
+          "item": {
+            "x": 607.625,
+            "y": 671,
+            "width": 184.265625,
+            "height": 58,
+            "right": 791.890625,
+            "bottom": 729
+          },
+          "icon": {
+            "x": 643.75,
+            "y": 683,
+            "width": 34,
+            "height": 34,
+            "right": 677.75,
+            "bottom": 717
+          },
+          "label": {
+            "x": 687.75,
+            "y": 691.5,
+            "width": 68,
+            "height": 17,
+            "right": 755.75,
+            "bottom": 708.5
+          },
+          "iconLabelOverlapArea": 0,
+          "labelInsideItem": true,
+          "iconInsideItem": true
+        }
+      ],
+      "itemOverlaps": [
+        {
+          "pair": "加密传输/身份校验",
+          "area": 0
+        },
+        {
+          "pair": "加密传输/审计留痕",
+          "area": 0
+        },
+        {
+          "pair": "身份校验/审计留痕",
+          "area": 0
+        }
+      ],
+      "horizontalOverflow": false,
+      "verticalOverflow": false
+    },
+    {
+      "viewport": {
+        "name": "desktop-1440",
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/doc/02_acceptance/02-regression/ui-visual-interaction/local-dev-login-capability-r1/login/desktop-1440.png",
+      "consoleErrors": [],
+      "heroDisplay": "flex",
+      "hero": {
+        "x": 54,
+        "y": 0,
+        "width": 614.875,
+        "height": 900,
+        "right": 668.875,
+        "bottom": 900
+      },
+      "panel": {
+        "x": 763.203125,
+        "y": 109.796875,
+        "width": 540,
+        "height": 764,
+        "right": 1303.203125,
+        "bottom": 873.796875
+      },
+      "heroPanelOverlapArea": 0,
+      "capabilityItems": [
+        {
+          "text": "加密传输",
+          "item": {
+            "x": 54,
+            "y": 527.765625,
+            "width": 188.15625,
+            "height": 58,
+            "right": 242.15625,
+            "bottom": 585.765625
+          },
+          "icon": {
+            "x": 92.078125,
+            "y": 539.765625,
+            "width": 34,
+            "height": 34,
+            "right": 126.078125,
+            "bottom": 573.765625
+          },
+          "label": {
+            "x": 136.078125,
+            "y": 548.265625,
+            "width": 68,
+            "height": 17,
+            "right": 204.078125,
+            "bottom": 565.265625
+          },
+          "iconLabelOverlapArea": 0,
+          "labelInsideItem": true,
+          "iconInsideItem": true
+        },
+        {
+          "text": "身份校验",
+          "item": {
+            "x": 267.34375,
+            "y": 527.765625,
+            "width": 188.171875,
+            "height": 58,
+            "right": 455.515625,
+            "bottom": 585.765625
+          },
+          "icon": {
+            "x": 305.421875,
+            "y": 539.765625,
+            "width": 34,
+            "height": 34,
+            "right": 339.421875,
+            "bottom": 573.765625
+          },
+          "label": {
+            "x": 349.421875,
+            "y": 548.265625,
+            "width": 68,
+            "height": 17,
+            "right": 417.421875,
+            "bottom": 565.265625
+          },
+          "iconLabelOverlapArea": 0,
+          "labelInsideItem": true,
+          "iconInsideItem": true
+        },
+        {
+          "text": "审计留痕",
+          "item": {
+            "x": 480.703125,
+            "y": 527.765625,
+            "width": 188.171875,
+            "height": 58,
+            "right": 668.875,
+            "bottom": 585.765625
+          },
+          "icon": {
+            "x": 518.78125,
+            "y": 539.765625,
+            "width": 34,
+            "height": 34,
+            "right": 552.78125,
+            "bottom": 573.765625
+          },
+          "label": {
+            "x": 562.78125,
+            "y": 548.265625,
+            "width": 68,
+            "height": 17,
+            "right": 630.78125,
+            "bottom": 565.265625
+          },
+          "iconLabelOverlapArea": 0,
+          "labelInsideItem": true,
+          "iconInsideItem": true
+        }
+      ],
+      "itemOverlaps": [
+        {
+          "pair": "加密传输/身份校验",
+          "area": 0
+        },
+        {
+          "pair": "加密传输/审计留痕",
+          "area": 0
+        },
+        {
+          "pair": "身份校验/审计留痕",
+          "area": 0
+        }
+      ],
+      "horizontalOverflow": false,
+      "verticalOverflow": false
+    },
+    {
+      "viewport": {
+        "name": "desktop-1366",
+        "width": 1366,
+        "height": 768
+      },
+      "screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/doc/02_acceptance/02-regression/ui-visual-interaction/local-dev-login-capability-r1/login/desktop-1366.png",
+      "consoleErrors": [],
+      "heroDisplay": "flex",
+      "hero": {
+        "x": 51.21875,
+        "y": 0,
+        "width": 583.28125,
+        "height": 768,
+        "right": 634.5,
+        "bottom": 768
+      },
+      "panel": {
+        "x": 696.234375,
+        "y": 93.6875,
+        "width": 540,
+        "height": 764,
+        "right": 1236.234375,
+        "bottom": 857.6875
+      },
+      "heroPanelOverlapArea": 0,
+      "capabilityItems": [
+        {
+          "text": "加密传输",
+          "item": {
+            "x": 51.21875,
+            "y": 494.265625,
+            "width": 178.5,
+            "height": 58,
+            "right": 229.71875,
+            "bottom": 552.265625
+          },
+          "icon": {
+            "x": 84.46875,
+            "y": 506.265625,
+            "width": 34,
+            "height": 34,
+            "right": 118.46875,
+            "bottom": 540.265625
+          },
+          "label": {
+            "x": 128.46875,
+            "y": 514.765625,
+            "width": 68,
+            "height": 17,
+            "right": 196.46875,
+            "bottom": 531.765625
+          },
+          "iconLabelOverlapArea": 0,
+          "labelInsideItem": true,
+          "iconInsideItem": true
+        },
+        {
+          "text": "身份校验",
+          "item": {
+            "x": 253.609375,
+            "y": 494.265625,
+            "width": 178.5,
+            "height": 58,
+            "right": 432.109375,
+            "bottom": 552.265625
+          },
+          "icon": {
+            "x": 286.859375,
+            "y": 506.265625,
+            "width": 34,
+            "height": 34,
+            "right": 320.859375,
+            "bottom": 540.265625
+          },
+          "label": {
+            "x": 330.859375,
+            "y": 514.765625,
+            "width": 68,
+            "height": 17,
+            "right": 398.859375,
+            "bottom": 531.765625
+          },
+          "iconLabelOverlapArea": 0,
+          "labelInsideItem": true,
+          "iconInsideItem": true
+        },
+        {
+          "text": "审计留痕",
+          "item": {
+            "x": 456,
+            "y": 494.265625,
+            "width": 178.5,
+            "height": 58,
+            "right": 634.5,
+            "bottom": 552.265625
+          },
+          "icon": {
+            "x": 489.25,
+            "y": 506.265625,
+            "width": 34,
+            "height": 34,
+            "right": 523.25,
+            "bottom": 540.265625
+          },
+          "label": {
+            "x": 533.25,
+            "y": 514.765625,
+            "width": 68,
+            "height": 17,
+            "right": 601.25,
+            "bottom": 531.765625
+          },
+          "iconLabelOverlapArea": 0,
+          "labelInsideItem": true,
+          "iconInsideItem": true
+        }
+      ],
+      "itemOverlaps": [
+        {
+          "pair": "加密传输/身份校验",
+          "area": 0
+        },
+        {
+          "pair": "加密传输/审计留痕",
+          "area": 0
+        },
+        {
+          "pair": "身份校验/审计留痕",
+          "area": 0
+        }
+      ],
+      "horizontalOverflow": false,
+      "verticalOverflow": false
+    },
+    {
+      "viewport": {
+        "name": "tablet-1024",
+        "width": 1024,
+        "height": 768
+      },
+      "screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/doc/02_acceptance/02-regression/ui-visual-interaction/local-dev-login-capability-r1/login/tablet-1024.png",
+      "consoleErrors": [],
+      "heroDisplay": "none",
+      "hero": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "right": 0,
+        "bottom": 0
+      },
+      "panel": {
+        "x": 192,
+        "y": 28,
+        "width": 640,
+        "height": 730.140625,
+        "right": 832,
+        "bottom": 758.140625
+      },
+      "heroPanelOverlapArea": 0,
+      "capabilityItems": [
+        {
+          "text": "加密传输",
+          "item": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0,
+            "right": 0,
+            "bottom": 0
+          },
+          "icon": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0,
+            "right": 0,
+            "bottom": 0
+          },
+          "label": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0,
+            "right": 0,
+            "bottom": 0
+          },
+          "iconLabelOverlapArea": 0,
+          "labelInsideItem": true,
+          "iconInsideItem": true
+        },
+        {
+          "text": "身份校验",
+          "item": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0,
+            "right": 0,
+            "bottom": 0
+          },
+          "icon": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0,
+            "right": 0,
+            "bottom": 0
+          },
+          "label": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0,
+            "right": 0,
+            "bottom": 0
+          },
+          "iconLabelOverlapArea": 0,
+          "labelInsideItem": true,
+          "iconInsideItem": true
+        },
+        {
+          "text": "审计留痕",
+          "item": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0,
+            "right": 0,
+            "bottom": 0
+          },
+          "icon": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0,
+            "right": 0,
+            "bottom": 0
+          },
+          "label": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0,
+            "right": 0,
+            "bottom": 0
+          },
+          "iconLabelOverlapArea": 0,
+          "labelInsideItem": true,
+          "iconInsideItem": true
+        }
+      ],
+      "itemOverlaps": [
+        {
+          "pair": "加密传输/身份校验",
+          "area": 0
+        },
+        {
+          "pair": "加密传输/审计留痕",
+          "area": 0
+        },
+        {
+          "pair": "身份校验/审计留痕",
+          "area": 0
+        }
+      ],
+      "horizontalOverflow": false,
+      "verticalOverflow": true
+    },
+    {
+      "viewport": {
+        "name": "mobile-390",
+        "width": 390,
+        "height": 844
+      },
+      "screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/doc/02_acceptance/02-regression/ui-visual-interaction/local-dev-login-capability-r1/login/mobile-390.png",
+      "consoleErrors": [],
+      "heroDisplay": "none",
+      "hero": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "right": 0,
+        "bottom": 0
+      },
+      "panel": {
+        "x": 12,
+        "y": 20,
+        "width": 366,
+        "height": 987.09375,
+        "right": 378,
+        "bottom": 1007.09375
+      },
+      "heroPanelOverlapArea": 0,
+      "capabilityItems": [
+        {
+          "text": "加密传输",
+          "item": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0,
+            "right": 0,
+            "bottom": 0
+          },
+          "icon": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0,
+            "right": 0,
+            "bottom": 0
+          },
+          "label": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0,
+            "right": 0,
+            "bottom": 0
+          },
+          "iconLabelOverlapArea": 0,
+          "labelInsideItem": true,
+          "iconInsideItem": true
+        },
+        {
+          "text": "身份校验",
+          "item": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0,
+            "right": 0,
+            "bottom": 0
+          },
+          "icon": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0,
+            "right": 0,
+            "bottom": 0
+          },
+          "label": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0,
+            "right": 0,
+            "bottom": 0
+          },
+          "iconLabelOverlapArea": 0,
+          "labelInsideItem": true,
+          "iconInsideItem": true
+        },
+        {
+          "text": "审计留痕",
+          "item": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0,
+            "right": 0,
+            "bottom": 0
+          },
+          "icon": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0,
+            "right": 0,
+            "bottom": 0
+          },
+          "label": {
+            "x": 0,
+            "y": 0,
+            "width": 0,
+            "height": 0,
+            "right": 0,
+            "bottom": 0
+          },
+          "iconLabelOverlapArea": 0,
+          "labelInsideItem": true,
+          "iconInsideItem": true
+        }
+      ],
+      "itemOverlaps": [
+        {
+          "pair": "加密传输/身份校验",
+          "area": 0
+        },
+        {
+          "pair": "加密传输/审计留痕",
+          "area": 0
+        },
+        {
+          "pair": "身份校验/审计留痕",
+          "area": 0
+        }
+      ],
+      "horizontalOverflow": false,
+      "verticalOverflow": true
+    }
+  ]
+}

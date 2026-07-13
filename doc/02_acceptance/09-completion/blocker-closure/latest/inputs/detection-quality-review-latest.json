@@ -1,0 +1,107 @@
+{
+  "run_id": "20260701-detection-quality-review-r1",
+  "result": "pass",
+  "generated_at": "2026-07-01T01:08:48+08:00",
+  "input_bootstrap_dir": "doc/02_acceptance/04-detection-quality/bootstrap/latest",
+  "packet_dir": "doc/02_acceptance/runs/20260701-detection-quality-review-r1/detection-quality-review.packet",
+  "stable_packet_dir": "doc/02_acceptance/04-detection-quality/review/latest",
+  "review_required": true,
+  "formal_gate_note": "blind detection-quality review packet only; does not close GATE-P0-06",
+  "sample_count": 45,
+  "duplicate_sample_id_count": 0,
+  "review_template_file_count": 6,
+  "passed": 6,
+  "total": 6,
+  "blockers": 0,
+  "warnings": 0,
+  "review_summary": {
+    "package_id": "detection_quality_review_packet",
+    "run_id": "20260701-detection-quality-review-r1",
+    "generated_at": "2026-06-30T17:08:48Z",
+    "input_bootstrap_dir": "doc/02_acceptance/04-detection-quality/bootstrap/latest",
+    "review_required": true,
+    "formal_gate_note": "review packet only; does not close GATE-P0-06",
+    "sample_count": 45,
+    "duplicate_sample_ids": [],
+    "duplicate_sample_id_count": 0,
+    "review_template_file_count": 6,
+    "required_formal_artifacts": [
+      "mlops/eval_packages/topic1_blind/dataset-manifest.yaml",
+      "mlops/eval_packages/topic1_blind/threshold-lock.json",
+      "mlops/eval_packages/topic1_blind/labels/labels.csv",
+      "mlops/eval_packages/topic1_blind/predictions/predictions.csv",
+      "mlops/eval_packages/topic1_blind/third-party-attestation.yaml"
+    ],
+    "review_outputs": [
+      "sample-review.csv",
+      "labeling-worklist.csv",
+      "prediction-worklist.csv",
+      "formal-package-manifest.template.yaml",
+      "threshold-lock.template.json",
+      "third-party-attestation.template.yaml",
+      "review-checklist.md"
+    ]
+  },
+  "checks": [
+    {
+      "ts": "2026-07-01T01:08:48+08:00",
+      "phase": "input",
+      "name": "bootstrap directory exists",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/04-detection-quality/bootstrap/latest",
+      "artifact": "doc/02_acceptance/04-detection-quality/bootstrap/latest"
+    },
+    {
+      "ts": "2026-07-01T01:08:48+08:00",
+      "phase": "packet",
+      "name": "review packet generated",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "samples=45 duplicates=0",
+      "artifact": "review-summary.json"
+    },
+    {
+      "ts": "2026-07-01T01:08:48+08:00",
+      "phase": "packet",
+      "name": "candidate samples present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "45 samples",
+      "artifact": "sample-review.csv"
+    },
+    {
+      "ts": "2026-07-01T01:08:48+08:00",
+      "phase": "packet",
+      "name": "sample IDs are unique",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "duplicate_sample_id_count=0",
+      "artifact": "sample-review.csv"
+    },
+    {
+      "ts": "2026-07-01T01:08:48+08:00",
+      "phase": "packet",
+      "name": "review worklists and checklist present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "labeling/prediction/checklist",
+      "artifact": "doc/02_acceptance/runs/20260701-detection-quality-review-r1/detection-quality-review.packet"
+    },
+    {
+      "ts": "2026-07-01T01:08:48+08:00",
+      "phase": "safety",
+      "name": "formal blind package remains untouched",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "review packet did not create formal artifacts",
+      "artifact": "mlops/eval_packages/topic1_blind"
+    }
+  ]
+}

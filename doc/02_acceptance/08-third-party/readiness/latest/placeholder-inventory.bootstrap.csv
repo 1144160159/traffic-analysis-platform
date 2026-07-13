@@ -1,0 +1,89 @@
+file,line,count,owner,owner_reason,text
+doc/02_acceptance/08-third-party/pilot-deployment-proof.md,7,1,user_signoff,user acceptance or signature,| 试点单位 | 待用户填写 |
+doc/02_acceptance/08-third-party/pilot-deployment-proof.md,8,1,site_operations,site deployment or operation confirmation,| 试点站点/园区 | 待用户填写 |
+doc/02_acceptance/08-third-party/pilot-deployment-proof.md,9,1,user_signoff,user acceptance or signature,| 试点周期 | 待用户填写 |
+doc/02_acceptance/08-third-party/pilot-deployment-proof.md,11,1,user_signoff,user acceptance or signature,| 部署负责人 | 待用户填写 |
+doc/02_acceptance/08-third-party/pilot-deployment-proof.md,12,1,user_signoff,user acceptance or signature,| 用户联系人 | 待用户填写 |
+doc/02_acceptance/08-third-party/pilot-deployment-proof.md,13,1,site_operations,site deployment or operation confirmation,| 数据授权编号 | 待用户填写 |
+doc/02_acceptance/08-third-party/pilot-deployment-proof.md,19,1,site_operations,site deployment or operation confirmation,| TAP/SPAN/镜像点位已授权 | 待现场确认 | 授权单编号 |
+doc/02_acceptance/08-third-party/pilot-deployment-proof.md,20,1,site_operations,site deployment or operation confirmation,| site values 已确认 | 待现场确认 | `deployments/kubernetes/site-values.template.yaml` 的现场实例 |
+doc/02_acceptance/08-third-party/pilot-deployment-proof.md,21,1,site_operations,site deployment or operation confirmation,| 资源配额和保留期已确认 | 待现场确认 | CPU/内存/磁盘/PCAP retention 表 |
+doc/02_acceptance/08-third-party/pilot-deployment-proof.md,22,1,site_operations,site deployment or operation confirmation,| NTP/PTP 时间同步已确认 | 待现场确认 | 时间同步检查记录 |
+doc/02_acceptance/08-third-party/pilot-deployment-proof.md,23,1,site_operations,site deployment or operation confirmation,| 只读观测优先策略已确认 | 待现场确认 | 变更审批或会议纪要 |
+doc/02_acceptance/08-third-party/pilot-deployment-proof.md,30,1,site_operations,site deployment or operation confirmation,| 采集 | Probe Agent | 内部证据通过，待现场签认 | probe-ops governance r2、release manifest r72 |
+doc/02_acceptance/08-third-party/pilot-deployment-proof.md,31,1,site_operations,site deployment or operation confirmation,| 接入 | APISIX / Ingest Gateway | 内部证据通过，待现场签认 | deployment preflight r60、business flow API r26 |
+doc/02_acceptance/08-third-party/pilot-deployment-proof.md,32,1,site_operations,site deployment or operation confirmation,| 消息 | Kafka | TLS/SASL/ACL live rollout 已通过，待现场签认 | Kafka rollout r6、Kafka security preflight r9、release manifest r72 live topics |
+doc/02_acceptance/08-third-party/pilot-deployment-proof.md,33,1,site_operations,site deployment or operation confirmation,| 分析 | Flink jobs | 内部证据通过，待现场签认 | release manifest r72 workloads、HA readiness r9 non-destructive checks |
+doc/02_acceptance/08-third-party/pilot-deployment-proof.md,34,1,site_operations,site deployment or operation confirmation,| 存储 | PostgreSQL / ClickHouse / OpenSearch / MinIO | 内部证据通过，待现场签认 | release manifest r72、HA readiness r9 non-destructive checks |
+doc/02_acceptance/08-third-party/pilot-deployment-proof.md,35,1,site_operations,site deployment or operation confirmation,| 控制面 | Go API services | 内部证据通过，待现场签认 | deployment preflight r60、business flow API r26 |
+doc/02_acceptance/08-third-party/pilot-deployment-proof.md,64,1,site_operations,site deployment or operation confirmation,| 待试点周报填写 | 待试点周报填写 | Probe ready、Flink checkpoint、Kafka ISR、API 5xx、UI error | 待现场连续运行确认 | `pilot-weekly-report-template.md` |
+doc/02_acceptance/08-third-party/pilot-deployment-proof.md,81,3,user_signoff,user acceptance or signature,| 用户代表 | 待用户填写 | 待签字填写 | 待签字 |
+doc/02_acceptance/08-third-party/pilot-deployment-proof.md,82,3,user_signoff,user acceptance or signature,| 实施负责人 | 待填写 | 待签字填写 | 待签字 |
+doc/02_acceptance/08-third-party/pilot-deployment-proof.md,83,3,user_signoff,user acceptance or signature,| 项目经理 | 待填写 | 待签字填写 | 待签字 |
+doc/02_acceptance/08-third-party/pilot-weekly-report-template.md,7,1,user_signoff,user acceptance or signature,| 试点单位 | TBD |
+doc/02_acceptance/08-third-party/pilot-weekly-report-template.md,11,1,project_review,review fill-in value,| 本周结论 | TBD |
+doc/02_acceptance/08-third-party/pilot-weekly-report-template.md,17,3,project_review,review fill-in value,| 在线探针数 | TBD | TBD | TBD | Probe/API |
+doc/02_acceptance/08-third-party/pilot-weekly-report-template.md,18,3,project_review,review fill-in value,| Flow/Session 写入量 | TBD | TBD | TBD | ClickHouse/Kafka |
+doc/02_acceptance/08-third-party/pilot-weekly-report-template.md,19,3,project_review,review fill-in value,| Flink RUNNING job | TBD | TBD | TBD | Flink REST |
+doc/02_acceptance/08-third-party/pilot-weekly-report-template.md,20,3,project_review,review fill-in value,| 最新 checkpoint age | TBD | TBD | TBD | Flink REST |
+doc/02_acceptance/08-third-party/pilot-weekly-report-template.md,21,3,project_review,review fill-in value,| Kafka ISR/lag 异常 | TBD | TBD | TBD | Kafka CLI |
+doc/02_acceptance/08-third-party/pilot-weekly-report-template.md,22,3,project_review,review fill-in value,| P95 链路延迟 | TBD | TBD | TBD | latency-chain report |
+doc/02_acceptance/08-third-party/pilot-weekly-report-template.md,28,3,project_review,review fill-in value,| 告警总数 | TBD | TBD | TBD | 按严重级别拆分 |
+doc/02_acceptance/08-third-party/pilot-weekly-report-template.md,29,3,project_review,review fill-in value,| 高危告警 | TBD | TBD | TBD | 需要处置闭环 |
+doc/02_acceptance/08-third-party/pilot-weekly-report-template.md,30,3,project_review,review fill-in value,| 已关闭告警 | TBD | TBD | TBD | 含关闭原因 |
+doc/02_acceptance/08-third-party/pilot-weekly-report-template.md,31,3,project_review,review fill-in value,| 误报反馈 | TBD | TBD | TBD | 按原因码拆分 |
+doc/02_acceptance/08-third-party/pilot-weekly-report-template.md,32,3,project_review,review fill-in value,| 白名单草案 | TBD | TBD | TBD | 草案/启用/拒绝 |
+doc/02_acceptance/08-third-party/pilot-weekly-report-template.md,33,3,project_review,review fill-in value,| PCAP 取证任务 | TBD | TBD | TBD | completed/failed/canceled |
+doc/02_acceptance/08-third-party/pilot-weekly-report-template.md,39,3,project_review,review fill-in value,| 活跃资产数 | TBD | TBD | TBD | asset API |
+doc/02_acceptance/08-third-party/pilot-weekly-report-template.md,40,3,project_review,review fill-in value,| 新增资产 | TBD | TBD | TBD | asset history |
+doc/02_acceptance/08-third-party/pilot-weekly-report-template.md,41,3,project_review,review fill-in value,| 高风险资产 | TBD | TBD | TBD | graph/alert |
+doc/02_acceptance/08-third-party/pilot-weekly-report-template.md,42,3,project_review,review fill-in value,| Threat Intel 命中 | TBD | TBD | TBD | threat-intel API |
+doc/02_acceptance/08-third-party/pilot-weekly-report-template.md,43,3,project_review,review fill-in value,| Fusion 冲突处理 | TBD | TBD | TBD | fusion audit |
+doc/02_acceptance/08-third-party/pilot-weekly-report-template.md,49,4,project_review,review fill-in value,| TBD | TBD | 告警、PCAP、图谱、审计 | TBD | TBD |
+doc/02_acceptance/08-third-party/pilot-weekly-report-template.md,55,5,project_review,review fill-in value,| TBD | TBD | TBD | TBD | TBD |
+doc/02_acceptance/08-third-party/pilot-weekly-report-template.md,61,3,user_signoff,user acceptance or signature,| 用户代表 | TBD | TBD | TBD |
+doc/02_acceptance/08-third-party/pilot-weekly-report-template.md,62,3,project_team,project delivery ownership,| 项目经理 | TBD | TBD | TBD |
+doc/02_acceptance/08-third-party/economic-benefit.md,11,1,project_review,review fill-in value,| 安全分析人员平均小时成本 | C_h | 元/小时 | TBD | 用户财务或项目约定 |
+doc/02_acceptance/08-third-party/economic-benefit.md,12,1,project_review,review fill-in value,| 试点前平均研判耗时 | T_before | 小时/告警 | TBD | 历史工单或访谈 |
+doc/02_acceptance/08-third-party/economic-benefit.md,13,1,project_review,review fill-in value,| 试点后平均研判耗时 | T_after | 小时/告警 | TBD | 试点周报 |
+doc/02_acceptance/08-third-party/economic-benefit.md,14,1,project_review,review fill-in value,| 月均有效告警数 | A_valid | 条/月 | TBD | 告警状态机证据 |
+doc/02_acceptance/08-third-party/economic-benefit.md,15,1,third_party_lab,third-party quality or blind-test evidence,| 试点前误报率 | FPR_before | % | TBD | 用户历史/第三方基线 |
+doc/02_acceptance/08-third-party/economic-benefit.md,16,1,third_party_lab,third-party quality or blind-test evidence,| 试点后误报率 | FPR_after | % | TBD | 反馈闭环/检测质量报告 |
+doc/02_acceptance/08-third-party/economic-benefit.md,17,1,project_review,review fill-in value,| 单次取证平均耗时下降 | T_pcap_saved | 小时/次 | TBD | PCAP 取证任务证据 |
+doc/02_acceptance/08-third-party/economic-benefit.md,18,1,project_review,review fill-in value,| 月均取证次数 | N_pcap | 次/月 | TBD | Forensics evidence |
+doc/02_acceptance/08-third-party/economic-benefit.md,19,1,project_review,review fill-in value,| 资产盘点人工节省 | H_asset_saved | 小时/月 | TBD | 资产覆盖报告 |
+doc/02_acceptance/08-third-party/economic-benefit.md,36,2,project_review,review fill-in value,| 研判效率收益 | TBD | TBD | 告警状态机、审计、周报 |
+doc/02_acceptance/08-third-party/economic-benefit.md,37,2,third_party_lab,third-party quality or blind-test evidence,| 误报减少收益 | TBD | TBD | 反馈闭环、检测质量报告 |
+doc/02_acceptance/08-third-party/economic-benefit.md,38,2,project_review,review fill-in value,| PCAP 取证效率收益 | TBD | TBD | PCAP integrity、Forensics state |
+doc/02_acceptance/08-third-party/economic-benefit.md,39,2,project_review,review fill-in value,| 资产盘点效率收益 | TBD | TBD | asset/graph evidence |
+doc/02_acceptance/08-third-party/economic-benefit.md,40,2,project_review,review fill-in value,| 合计 | TBD | TBD | 用户确认 |
+doc/02_acceptance/08-third-party/economic-benefit.md,53,1,third_party_lab,third-party quality or blind-test evidence,> 在 YYYY-MM-DD 至 YYYY-MM-DD 的试点周期内，系统基于真实流量和真实业务闭环，将平均研判耗时从 `T_before` 小时降低至 `T_after` 小时，PCAP 取证平均节省 `T_pcap_saved` 小时/次，按用户确认的人力成本 `C_h` 元/小时估算，年化直接人力收益为 `TBD` 元。该结论仅覆盖本试点时间窗和已签认证据，不外推为第三方检测质量或生产安全结论。
+doc/02_acceptance/08-third-party/user-acceptance-signoff.md,7,1,user_signoff,user acceptance or signature,| 试点单位 | 待用户填写 |
+doc/02_acceptance/08-third-party/user-acceptance-signoff.md,10,1,user_signoff,user acceptance or signature,| 试点周期 | 待用户填写 |
+doc/02_acceptance/08-third-party/user-acceptance-signoff.md,11,1,user_signoff,user acceptance or signature,| 签认日期 | 待签字填写 |
+doc/02_acceptance/08-third-party/user-acceptance-signoff.md,17,1,user_signoff,user acceptance or signature,| 探针接入和采集健康 | 内部证据通过，待用户签认 | `20260630-probe-ops-governance-r2`、release manifest r80 |
+doc/02_acceptance/08-third-party/user-acceptance-signoff.md,18,1,user_signoff,user acceptance or signature,| 告警运营和状态闭环 | 内部证据通过，待用户签认 | alert state / Playbook / Whitelist / Baseline governance evidence |
+doc/02_acceptance/08-third-party/user-acceptance-signoff.md,19,1,user_signoff,user acceptance or signature,| PCAP 取证和完整性校验 | 内部证据通过，待用户签认 | `20260629-pcap-forensics-integrity`、Forensics task state machine |
+doc/02_acceptance/08-third-party/user-acceptance-signoff.md,20,1,site_operations,site deployment or operation confirmation,| 资产/图谱分析 | 内部证据通过，待现场资产清单签认 | business flow API r26、asset coverage r3 blocked on site inventory review |
+doc/02_acceptance/08-third-party/user-acceptance-signoff.md,21,1,user_signoff,user acceptance or signature,| 规则/模型/部署治理 | 内部证据通过，待用户签认 | rule/model/deployment state evidence |
+doc/02_acceptance/08-third-party/user-acceptance-signoff.md,22,1,user_signoff,user acceptance or signature,| 数据质量和 DLQ 重放 | 内部证据通过，待用户签认 | DLQ replay/recovery evidence、latency-chain r15 |
+doc/02_acceptance/08-third-party/user-acceptance-signoff.md,23,1,user_signoff,user acceptance or signature,| 审计追溯 | 内部证据通过，待用户签认 | compliance/notification/topic/whitelist/baseline/settings/probe audit evidence |
+doc/02_acceptance/08-third-party/user-acceptance-signoff.md,24,1,user_signoff,user acceptance or signature,| OIDC/SSO 登录入口 | 内部证据通过，待用户签认 | OIDC/SSO preflight r4：login entry、callback chunk、Keycloak authorization page 均通过 |
+doc/02_acceptance/08-third-party/user-acceptance-signoff.md,31,1,user_signoff,user acceptance or signature,| 功能回归 | 内部回归证据通过：business flow API、governance/state flows、Fusion value-report structure 均已 pass | 待用户签认 |
+doc/02_acceptance/08-third-party/user-acceptance-signoff.md,32,1,user_signoff,user acceptance or signature,| 可复现部署 | release manifest r80、deployment preflight r60 已 pass | 待用户签认 |
+doc/02_acceptance/08-third-party/user-acceptance-signoff.md,33,1,user_signoff,user acceptance or signature,| OIDC/SSO 登录 | oidc-sso preflight r4 已 pass | 待用户签认 |
+doc/02_acceptance/08-third-party/user-acceptance-signoff.md,34,1,user_signoff,user acceptance or signature,| UI 视觉和业务交互 | blocked：待 Desktop Chrome extension backend 恢复并补齐 30/30 视觉 diff 与 28/28 业务交互证据 | 待用户签认 |
+doc/02_acceptance/08-third-party/user-acceptance-signoff.md,35,1,user_signoff,user acceptance or signature,| P95 延迟链 | latency-chain r15 已记录 full chain closed | 待用户签认 |
+doc/02_acceptance/08-third-party/user-acceptance-signoff.md,36,2,performance_lab,hardware performance validation,| 10 x 100Gbps / 512Mpps | blocked：待专项验证和真实硬件窗口结果 | 待用户签认 |
+doc/02_acceptance/08-third-party/user-acceptance-signoff.md,37,3,third_party_lab,third-party quality or blind-test evidence,| 95%/5% 检测质量 | blocked：待第三方/盲测签认，正式 labels/predictions/attestation 未提供 | 待用户签认 |
+doc/02_acceptance/08-third-party/user-acceptance-signoff.md,38,2,user_signoff,user acceptance or signature,| 生产安全 | blocked：Kafka TLS/SASL/ACL、ExternalSecret、digest pin 和 waiver registry 已闭环；待 policy-capable CNI 与 NetworkPolicy 负例通过 | 待用户签认 |
+doc/02_acceptance/08-third-party/user-acceptance-signoff.md,39,2,maintenance_window,scheduled HA or destructive drill,| HA RTO/RPO | blocked：待维护窗口破坏性演练和 RTO/RPO 报告 | 待用户签认 |
+doc/02_acceptance/08-third-party/user-acceptance-signoff.md,57,3,user_signoff,user acceptance or signature,| 用户单位 | 业务负责人 | 待用户填写 | 待签字填写 | 待签字 |
+doc/02_acceptance/08-third-party/user-acceptance-signoff.md,58,3,user_signoff,user acceptance or signature,| 用户单位 | 技术负责人 | 待用户填写 | 待签字填写 | 待签字 |
+doc/02_acceptance/08-third-party/user-acceptance-signoff.md,59,3,user_signoff,user acceptance or signature,| 承建单位 | 项目经理 | 待填写 | 待签字填写 | 待签字 |
+doc/02_acceptance/08-third-party/user-acceptance-signoff.md,60,3,user_signoff,user acceptance or signature,| 承建单位 | 实施负责人 | 待填写 | 待签字填写 | 待签字 |
+doc/02_acceptance/08-third-party/ipr-index.md,7,2,project_review,review fill-in value,| 软件著作权 | TBD | Web UI / Go control-plane / Probe Agent / Flink jobs | release manifest、代码目录 | 待填写 |
+doc/02_acceptance/08-third-party/ipr-index.md,8,2,project_review,review fill-in value,| 专利 | TBD | 全流量采集、PCAP 证据链、反馈学习、模型热更新 | 技术设计、验证报告 | 待填写 |
+doc/02_acceptance/08-third-party/ipr-index.md,9,2,project_review,review fill-in value,| 论文 | TBD | 多源融合、未知攻击检测、流式检测 | 数据集、实验、混淆矩阵 | 待填写 |
+doc/02_acceptance/08-third-party/ipr-index.md,10,2,user_signoff,user acceptance or signature,| 试点证明 | TBD | 全系统 | 用户签认、周报、经济效益 | 待填写 |
+doc/02_acceptance/08-third-party/ipr-index.md,11,2,project_review,review fill-in value,| 经济效益 | TBD | 研判、取证、资产、误报治理 | `economic-benefit.md` | 待填写 |

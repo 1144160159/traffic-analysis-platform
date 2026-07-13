@@ -1,0 +1,29 @@
+{
+  "generated_at": "2026-07-10T08:51:41.976Z",
+  "target_id": "encrypted-traffic-egress-profile",
+  "route": "/encrypted-traffic?tab=egress-profile",
+  "image": "traffic/web-ui:ui-encrypted-traffic-egress-profile-20260710-r183",
+  "docker_image_id": "sha256:fa3658ce0e73e14837995cc2ef592f96c004e762bf4d6abb933a4380a13d65af",
+  "containerd_manifest_digest": "sha256:6aaceb4a9e30bdeef2cd503913c76e0e49f12aa9098ef4b14cdf370058f44d61",
+  "build": {
+    "dockerfile": "web/ui/deployments/Dockerfile.overlay",
+    "dist_chunk": "dist/assets/EncryptedTrafficPage-ClDHynEa.js",
+    "npm_build_log": "doc/02_acceptance/02-regression/ui-visual-interaction/encrypted-traffic-egress-profile-r183/npm-build.log",
+    "note": "Vite large chunk warning remains non-blocking."
+  },
+  "tests": {
+    "focused_log": "doc/02_acceptance/02-regression/ui-visual-interaction/encrypted-traffic-egress-profile-r183/npm-test.log",
+    "status": "pass"
+  },
+  "deployment": {
+    "manifest": "deployments/kubernetes/applications/web-ui.yaml",
+    "k8s_deploy_json": "doc/02_acceptance/02-regression/ui-visual-interaction/encrypted-traffic-egress-profile-r183/k8s-web-ui-deploy.json",
+    "ready_replicas": "1/1",
+    "apisix_route": "http://10.0.5.8:30180/encrypted-traffic?tab=egress-profile",
+    "apisix_http_status": 200,
+    "nodes_imported": [
+      "local containerd k8s.io",
+      "10.0.5.9 containerd k8s.io"
+    ]
+  }
+}

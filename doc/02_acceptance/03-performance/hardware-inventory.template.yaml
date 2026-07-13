@@ -1,0 +1,38 @@
+version: 1
+status: template
+test_lab:
+  name: ""
+  location: ""
+  operator: ""
+  approved_window: ""
+traffic_generators:
+  - host: ""
+    tool: trex
+    version: ""
+    ports:
+      - name: ""
+        pci: ""
+        speed_gbps: 100
+        numa_node: 0
+capture_hosts:
+  - node: ""
+    kernel: ""
+    probe_image: ""
+    nics:
+      - name: ""
+        pci: ""
+        driver: ""
+        firmware: ""
+        speed_gbps: 100
+        queues: 0
+        numa_node: 0
+cpu_pinning:
+  policy: ""
+  isolated_cores: []
+switch_path:
+  vendor: ""
+  model: ""
+  port_map: []
+immutable_artifacts:
+  uri: ""
+  sha256_manifest: ""

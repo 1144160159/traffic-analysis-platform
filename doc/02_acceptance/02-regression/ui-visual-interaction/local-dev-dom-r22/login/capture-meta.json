@@ -1,0 +1,22 @@
+{
+  "status": "local-dev-only",
+  "acceptance_eligible": false,
+  "reason": "Local Playwright capture is only for frontend visual iteration. Formal acceptance requires Codex Desktop Chrome extension capture-meta.json under latest/ with backend codex-desktop-chrome-extension.",
+  "target_id": "login",
+  "route_id": "login",
+  "url": "http://127.0.0.1:4193/login?__taf_visual=1",
+  "final_url": "http://127.0.0.1:4193/login?__taf_visual=1",
+  "title": "园区网络全流量采集与分析系统",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "device_scale_factor": 1,
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/login.png",
+  "screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/doc/02_acceptance/02-regression/ui-visual-interaction/local-dev-dom-r22/login/actual-1920.png",
+  "console_errors": [],
+  "page_errors": [],
+  "request_failures": [],
+  "server_errors": [],
+  "body_head": "中\n园区网络全流量采集与分析系统\n\n统一身份认证入口\n\n加密传输\n身份校验\n审计留痕\n请使用授权账号访问\n多因素校验已启用\ni\n登录失败请联系管理员\n账号密码登录\nOIDC / SSO\n租户 / 站点\n账号\n密码\n验证码\n记住登录\n忘记密码\n帮助中心\n隐私声明\n登 录"
+}

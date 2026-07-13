@@ -1,0 +1,10 @@
+{
+  "start_dev_args": 0,
+  "http_enabled_env": 0,
+  "direct_admin_password_env": 0,
+  "admin_password_secret_refs": 1,
+  "https_service_ports": 1,
+  "ready_endpoint_count": 1,
+  "https_root_http_code": "302",
+  "keycloak_live_profile_ready": true
+}

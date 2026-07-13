@@ -1,0 +1,98 @@
+version: 1
+status: "bootstrap_review_required"
+review_required: true
+formal_gate_note: "Do not rename this file to hardware-inventory.yaml until the lab operator reviews NICs, firmware, generator mapping, switch path, NUMA, and cable topology."
+run_id: "20260630-capture-performance-bootstrap-r1"
+generated_at: "2026-06-30T19:39:34.876775+08:00"
+source_context:
+  plan_dir: "tests/perf/100g_capture"
+  perf_dir: "doc/02_acceptance/03-performance"
+  input_artifacts:
+    capture_performance_plan: "inputs/capture-performance-plan.yaml"
+    hardware_inventory_template: "inputs/hardware-inventory.template.yaml"
+    traffic_profile_template: "inputs/traffic-profile.template.yaml"
+    result_schema: "inputs/result-schema.review-copy.json"
+    latest_preflight: "inputs/capture-performance-preflight-latest.json"
+    live_node_summary: "inputs/live-node-summary-latest.json"
+    live_probe_capture_profile: "inputs/live-probe-capture-profile-latest.json"
+    repo_stress_500k_summary: "inputs/repo-stress-500k-summary-latest.json"
+observed_live_cluster:
+  nodes:
+    -
+      name: "8-2tb"
+      internal_ip: "10.0.5.8"
+      kernel: "5.10.0-153.56.0.134.oe2203sp2.x86_64"
+      os: "openEuler 22.03 (LTS-SP2)"
+      ready: "True"
+    -
+      name: "zeus-server"
+      internal_ip: "10.0.5.9"
+      kernel: "5.10.0-153.56.0.134.oe2203sp2.x86_64"
+      os: "openEuler 22.03 (LTS-SP2)"
+      ready: "True"
+  current_probe_profile:
+    interface: "ens9f0"
+    mode: "af_packet"
+    queue_id: "0"
+    frame_count: "4096"
+    frame_size: "65536"
+    cpu_cores:
+      - "0"
+      - "1"
+    numa_aware: "true"
+  repo_stress_context:
+    source: "rust/probe-agent/tests/reports/stress_500k_report.txt"
+    packets: 500000.0
+    pps: 937403.0
+    mbps: 1305.9
+    parse_success_percent: 100.0
+    acceptance_note: "small offline PCAP stress only; not a 10x100Gbps or 512Mpps acceptance result"
+operator_review_required:
+  test_lab_name: ""
+  approved_window: ""
+  traffic_generator_hosts:
+    []
+  capture_hosts:
+    -
+      node: "8-2tb"
+      kernel: "5.10.0-153.56.0.134.oe2203sp2.x86_64"
+      os: "openEuler 22.03 (LTS-SP2)"
+      internal_ip: "10.0.5.8"
+      nics:
+        -
+          name: "ens9f0"
+          pci: ""
+          driver: ""
+          firmware: ""
+          speed_gbps: 100
+          queues: ""
+          numa_node: ""
+    -
+      node: "zeus-server"
+      kernel: "5.10.0-153.56.0.134.oe2203sp2.x86_64"
+      os: "openEuler 22.03 (LTS-SP2)"
+      internal_ip: "10.0.5.9"
+      nics:
+        -
+          name: "ens9f0"
+          pci: ""
+          driver: ""
+          firmware: ""
+          speed_gbps: 100
+          queues: ""
+          numa_node: ""
+  cpu_pinning:
+    current_live_cpu_cores:
+      - "0"
+      - "1"
+    acceptance_isolated_cores:
+      []
+    policy: ""
+  switch_path:
+    vendor: ""
+    model: ""
+    port_map:
+      []
+  immutable_artifacts:
+    uri: ""
+    sha256_manifest: ""

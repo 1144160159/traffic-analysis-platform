@@ -1,0 +1,22 @@
+Generate a 3840x2160 PNG static 4K background asset for traffic-analysis-platform.
+
+Use case:
+- Reusable dark AppShell background texture for enterprise web UI screens.
+- It must support overlaying dense navigation, data tables, charts, cards, and modals without visual noise.
+
+Scene:
+- A restrained dark technical grid with subtle circuit traces, packet paths, network topology hints, low-contrast scan lines, and quiet security telemetry patterns.
+- No single dominant object; the composition should feel like a stable product workspace surface.
+- Soft depth layers and faint perspective lines can suggest infrastructure scale.
+
+Visual style:
+- Dark navy and near-black base.
+- Cyan and blue fine-line data traces, with very subtle green and amber highlights.
+- Crisp, clean, matte enterprise finish.
+- Most detail should stay low contrast, with broad safe zones across the center and right side.
+
+Constraints:
+- Do not create a full UI screenshot or any real controls.
+- Do not include browser chrome, readable labels, real IP addresses, credentials, logos, people, marketing copy, decorative bokeh/orbs, or a bright gradient hero background.
+- Keep the result understated, reusable, and panel-safe.
+

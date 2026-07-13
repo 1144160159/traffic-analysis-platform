@@ -1,0 +1,10 @@
+{
+  "lock_file": "deployments/kubernetes/image-digests.lock.json",
+  "root": "deployments/kubernetes",
+  "image_lines": 66,
+  "missing_lock_lines": 0,
+  "missing_lock_files": 0,
+  "mutable_tag_lines": 0,
+  "digest_pinned_lines": 57,
+  "lock_covered_lines": 9
+}

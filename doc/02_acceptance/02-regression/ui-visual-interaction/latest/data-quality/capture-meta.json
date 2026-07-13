@@ -1,0 +1,152 @@
+{
+  "status": "pass",
+  "acceptance_eligible": false,
+  "reason": "Windows Chrome CDP evidence. Formal legacy gate expects Desktop Chrome extension receiver metadata and pixel diff; this capture proves real Windows Chrome rendering, route, runtime events, viewport, and layout metrics.",
+  "backend": "windows-chrome-cdp",
+  "target_id": "data-quality",
+  "route_id": "data-quality",
+  "route": "/data-quality",
+  "resolved_path": "/data-quality",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/data-quality.png",
+  "final_url": "http://10.0.5.8:30180/data-quality?fullRouteEvidenceTs=1783072683021",
+  "final_path": "/data-quality",
+  "protected_route": true,
+  "smoke_hash_consumed": true,
+  "uploaded_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "stored_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "expected_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "desktop_viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "post_capture_resize": false,
+  "no_4xx_5xx": true,
+  "no_requestfailed": true,
+  "no_console_error": true,
+  "no_pageerror": true,
+  "errors": {
+    "requestfailed": [],
+    "badResponses": [],
+    "console": [],
+    "pageerror": []
+  },
+  "screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/doc/02_acceptance/02-regression/ui-visual-interaction/latest/data-quality/actual-1920.png",
+  "mirror_screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/evidence/windows-chrome-cdp-20260703-full-route-desktop-r6/data-quality-1920x1080.png",
+  "metrics": {
+    "title": "园区网络全流量采集与分析系统",
+    "location": "http://10.0.5.8:30180/data-quality?fullRouteEvidenceTs=1783072683021",
+    "viewport": {
+      "width": 1920,
+      "height": 1080,
+      "dpr": 1.0000000298023224
+    },
+    "scroll": {
+      "horizontalOverflow": 0,
+      "verticalOverflow": 0,
+      "bodyScrollWidth": 1920,
+      "bodyClientWidth": 1920,
+      "bodyScrollHeight": 1080,
+      "bodyClientHeight": 1080
+    },
+    "headings": [
+      "数据质量",
+      "Kafka Topic 健康 (Top 10)",
+      "消费延迟趋势",
+      "Topic 分区倾斜热力图",
+      "Flink 处理质量概览",
+      "字段质量矩阵（近 24 小时）",
+      "存储写入质量",
+      "对账报告（近 24 小时）",
+      "质量异常告警（近 24 小时）",
+      "快速定位",
+      "质量修复建议",
+      "快收证据与报告"
+    ],
+    "buttons": [
+      "移动端导航",
+      "PCAP检索",
+      "资产检索",
+      "规则检索",
+      "脚本中心",
+      "帮助中心",
+      "更多应用",
+      "Ccodex-ui-desktop-admin系统管理员在线",
+      "数据重放",
+      "质量总览",
+      "Topic 健康",
+      "Flink 质量",
+      "字段质量",
+      "存储质量",
+      "重放对账",
+      "质量报告",
+      "质量设置",
+      "flow_id99.8%0.05%0.12%",
+      "src_ip98.9%0.38%0.21%",
+      "dst_ip98.7%0.41%0.24%",
+      "ja392.4%3.12%0.52%",
+      "asset_id96.1%1.14%0.18%",
+      "campaign_id88.6%6.42%0.75%"
+    ],
+    "visibleText": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-03 17:58:03 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 采集监测 探针管理 数据质量 2 威胁分析 资产图谱 检测运营 审计配置 C codex-ui-desktop-admin 系统管理员 在线 数据质量 Kafka、Flink、字段、存储和重放对账质量门禁 近 24 小时 全部管道 数据重放 质量总览 Topic 健康 Flink 质量 字段质量 存储质量 重放对账 质量报告 质量设置 质量总分 76 分 真实 API 完整性 96.3% 真实 API 及时性 91.7% 真实 API 准确性 94.0% 真实 API 重复率 0.4% 真实 API 字段缺失率 1.1% 真实 API DLQ 数量 12.8K 条 真实 API Kafka Topic 健康 (Top 10) Topic 分区数 当前吞吐量 消费延迟 积压量 积压趋势 消费延迟 P95 分区倾斜 消息延迟 P95 操作 Topic 分区数 当前吞吐量 消费延迟 积压量 积压趋势 消费延迟 P95 分区倾斜 消息延迟 P95 操作 flow_original 36 4.2K msg/min 2s 3.9K 波动 1600 ms 1.08x 1152 ms 重放 DLQ flow_enriched 24 3.4K msg/min 1s 2.5K 下降 1344 ms 1.15x 968 ms 定位 Flink session.events.v1 18 2.2K msg/min 1s 1.3K 下降 1152 ms 1.22x 829 ms 查看 Session feature.events.v1 18 2.0K msg/min 1s 1.0K 波动 1248 ms 1.29x 899 ms 检查字段 alerts.v1 12 504 msg/min 1s 702 下降 1472 ms 1.36x 1060 ms 下钻告警 pcap.index.v1 12 336 msg/min 1s 390 下降 1024 ms 1.43x 737 ms 校验 MinIO 消费延迟趋势 P50 / P95 / 阈值 10 8 6 4 2 0 5.6s 02:15 4.1s 10:08 15:30 19:30 23:30 03:30 07:30 11:30 15:30 Topic 分区倾斜热力图 76 分 Flink 处理质量概览 76% 质量总分 Checkpoint 28s Watermark 1.6s Backpressure 0.16",
+    "elements": {
+      "pageHero": {
+        "selector": ".taf-page-hero",
+        "visible": false
+      },
+      "panelHeader": {
+        "selector": ".taf-panel__header",
+        "visible": true,
+        "text": "Kafka Topic 健康 (Top 10)",
+        "x": 175,
+        "y": 293,
+        "right": 740,
+        "bottom": 323,
+        "w": 565,
+        "h": 30,
+        "display": "flex",
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      "table": {
+        "selector": ".ant-table, .taf-table, table",
+        "visible": true,
+        "text": "Topic分区数当前吞吐量消费延迟积压量积压趋势消费延迟 P95分区倾斜消息延迟 P95操作Topic分区数当前吞吐量消费延迟积压量积压趋势消费延迟 P95分区倾斜消息延迟 P95操作flow_original364.2K msg/min2s3.9K波动1600 ms1.08x1152 ms重放 DLQflow_enriched243.4K msg/min1s2.5K下降1344 ms1.15x968 ms定位 Flinksession.events.v1182.2K msg",
+        "x": 182,
+        "y": 330,
+        "right": 733,
+        "bottom": 605,
+        "w": 551,
+        "h": 275,
+        "display": "block",
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      "topicTitlebar": {
+        "selector": ".taf-topic-titlebar",
+        "visible": false
+      },
+      "topicFacts": {
+        "selector": ".taf-topic-facts",
+        "visible": false
+      },
+      "topicKpis": {
+        "selector": ".taf-topic-kpis",
+        "visible": false
+      },
+      "topicGrid": {
+        "selector": ".taf-topic-grid",
+        "visible": false
+      }
+    },
+    "overlapChecks": {}
+  }
+}

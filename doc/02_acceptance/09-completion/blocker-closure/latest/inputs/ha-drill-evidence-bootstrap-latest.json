@@ -1,0 +1,98 @@
+{
+  "run_id": "20260630-ha-drill-evidence-bootstrap-r1",
+  "result": "pass",
+  "generated_at": "2026-06-30T20:02:52+08:00",
+  "plan_file": "tests/chaos/ha_drill_plan.yaml",
+  "readiness_file": "doc/02_acceptance/06-resilience/ha-readiness-preflight-latest.json",
+  "bootstrap_dir": "doc/02_acceptance/runs/20260630-ha-drill-evidence-bootstrap-r1/ha-rto-rpo-drill.bootstrap",
+  "stable_bootstrap_dir": "doc/02_acceptance/06-resilience/bootstrap/latest",
+  "review_required": true,
+  "formal_gate_note": "HA drill evidence bootstrap only; does not execute destructive failover and does not satisfy GATE-P0-08",
+  "passed": 7,
+  "total": 8,
+  "blockers": 0,
+  "warnings": 1,
+  "formal_artifact_count": 0,
+  "checks": [
+    {
+      "ts": "2026-06-30T20:02:52+08:00",
+      "phase": "contract",
+      "name": "HA drill plan present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "tests/chaos/ha_drill_plan.yaml",
+      "artifact": "tests/chaos/ha_drill_plan.yaml"
+    },
+    {
+      "ts": "2026-06-30T20:02:52+08:00",
+      "phase": "contract",
+      "name": "chaos README present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "tests/chaos/README.md",
+      "artifact": "tests/chaos/README.md"
+    },
+    {
+      "ts": "2026-06-30T20:02:52+08:00",
+      "phase": "context",
+      "name": "latest HA readiness context present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/06-resilience/ha-readiness-preflight-latest.json",
+      "artifact": "doc/02_acceptance/06-resilience/ha-readiness-preflight-latest.json"
+    },
+    {
+      "ts": "2026-06-30T20:02:52+08:00",
+      "phase": "context",
+      "name": "latest HA readiness report present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "doc/02_acceptance/06-resilience/ha-readiness-preflight-latest.md",
+      "artifact": "doc/02_acceptance/06-resilience/ha-readiness-preflight-latest.md"
+    },
+    {
+      "ts": "2026-06-30T20:02:52+08:00",
+      "phase": "bootstrap",
+      "name": "Bootstrap manifest is review-required",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "evidence-manifest.bootstrap.json",
+      "artifact": "evidence-manifest.bootstrap.json"
+    },
+    {
+      "ts": "2026-06-30T20:02:52+08:00",
+      "phase": "bootstrap",
+      "name": "Review-required drill templates are present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "approval/rto-rpo/summary templates",
+      "artifact": "ha-rto-rpo-drill.bootstrap"
+    },
+    {
+      "ts": "2026-06-30T20:02:52+08:00",
+      "phase": "bootstrap",
+      "name": "Component failover report templates are present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "reports=5",
+      "artifact": "reports"
+    },
+    {
+      "ts": "2026-06-30T20:02:52+08:00",
+      "phase": "readiness",
+      "name": "Formal destructive drill evidence remains missing",
+      "severity": "warn",
+      "passed": false,
+      "status": "review_required",
+      "detail": "bootstrap only; approved maintenance-window drill has not been executed",
+      "artifact": "ha-rto-rpo-drill.bootstrap"
+    }
+  ]
+}

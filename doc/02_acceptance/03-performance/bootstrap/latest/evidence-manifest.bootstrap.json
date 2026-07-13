@@ -1,0 +1,27 @@
+{
+  "package_id": "capture_performance_bootstrap",
+  "status": "bootstrap_review_required",
+  "review_required": true,
+  "run_id": "20260630-capture-performance-bootstrap-r1",
+  "generated_at": "2026-06-30T19:39:34.876775+08:00",
+  "formal_gate_note": "This package is preparation material only. Formal GATE-P0-03/04 evidence still requires hardware-inventory.yaml, traffic-profile.yaml, results/10x100g-summary.json, and results/512mpps-summary.json in tests/perf/100g_capture/.",
+  "latest_preflight_result": "blocked",
+  "latest_preflight_blockers": 4,
+  "files": {
+    "hardware_inventory_bootstrap": "hardware-inventory.bootstrap.yaml",
+    "traffic_profile_bootstrap": "traffic-profile.bootstrap.yaml",
+    "ten_by_100g_result_template": "results/10x100g-summary.review-template.json",
+    "small_packet_result_template": "results/512mpps-summary.review-template.json",
+    "operator_runbook": "operator-runbook.md",
+    "input_artifacts": {
+      "capture_performance_plan": "inputs/capture-performance-plan.yaml",
+      "hardware_inventory_template": "inputs/hardware-inventory.template.yaml",
+      "traffic_profile_template": "inputs/traffic-profile.template.yaml",
+      "result_schema": "inputs/result-schema.review-copy.json",
+      "latest_preflight": "inputs/capture-performance-preflight-latest.json",
+      "live_node_summary": "inputs/live-node-summary-latest.json",
+      "live_probe_capture_profile": "inputs/live-probe-capture-profile-latest.json",
+      "repo_stress_500k_summary": "inputs/repo-stress-500k-summary-latest.json"
+    }
+  }
+}

@@ -1,0 +1,107 @@
+{
+  "title": "园区网络全流量采集与分析系统",
+  "location": "http://10.0.5.8:30180/encrypted-traffic?fullRouteEvidenceTs=1783072636905",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "dpr": 1.0000000298023224
+  },
+  "scroll": {
+    "horizontalOverflow": 0,
+    "verticalOverflow": 0,
+    "bodyScrollWidth": 1920,
+    "bodyClientWidth": 1920,
+    "bodyScrollHeight": 1080,
+    "bodyClientHeight": 1080
+  },
+  "headings": [
+    "加密流量",
+    "协议分布与趋势",
+    "指纹分析（Top JA3）",
+    "JA3 分布（流量 vs 会话数）",
+    "隧道检测与异常特征",
+    "异常隧道列表",
+    "证据与握手元数据（最新 200 条）",
+    "外联画像",
+    "处置与分析建议",
+    "关联与下钻",
+    "生成与导出"
+  ],
+  "buttons": [
+    "移动端导航",
+    "PCAP检索",
+    "资产检索",
+    "规则检索",
+    "脚本中心",
+    "帮助中心",
+    "更多应用",
+    "Ccodex-ui-desktop-admin系统管理员在线",
+    "总览",
+    "指纹分析",
+    "隧道检测",
+    "外联画像",
+    "证据中心",
+    "一键分析",
+    "指纹详情",
+    "证书详情",
+    "771,4865-4866-4867-4919...12.8%10.031218高危",
+    "cbd52c1eb6700091a3e2d4c...8.7%6.81989中危",
+    "e7d70S342S8a2c0d0e0a71d1...7.6%6.014512中危",
+    "4d7a28f00056bS87f06a4e3c2...6.2%4.91126低危",
+    "598c8ab3943e1e61065c2e8e...4.9%3.8987中危",
+    "f5a3d7c0eb2fe4e3c6fb101e9...3.8%3.0763低危",
+    "DNS over HTTPSDoH over TLS10.12.2.36cloudflare-dns.com3h 24m2.18高危"
+  ],
+  "visibleText": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-03 17:57:17 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 采集监测 威胁分析 告警中心 128 战役列表 攻击链分析 加密流量 取证分析 资产图谱 检测运营 审计配置 C codex-ui-desktop-admin 系统管理员 在线 加密流量 总览 指纹分析 隧道检测 外联画像 证据中心 时间范围 近 24 小时 刷新 30s 一键分析 指纹详情 证书详情 加密流量总量 0 会话 真实 API TLS 流量占比 0.0% 真实 API QUIC 流量占比 0.0% 真实 API 未知加密占比 100.0% 真实 API 异常证书数 0 张 真实 API 可疑 JA3 数 0 个 真实 API 未知 SNI 比例 0.0% 真实 API 协议分布与趋势 78.3 Gbps TLS 49.8 Gbps 63.7% QUIC 14.4 Gbps 18.4% 未知加密 14.1 Gbps 17.9% 指纹分析（Top JA3） JA3 指纹 流量占比 流量 (Gbps) SNI 数 关联告警 风险等级 771,4865-4866-4867-4919... 12.8% 10.0 312 18 高危 cbd52c1eb6700091a3e2d4c... 8.7% 6.8 198 9 中危 e7d70S342S8a2c0d0e0a71d1... 7.6% 6.0 145 12 中危 4d7a28f00056bS87f06a4e3c2... 6.2% 4.9 112 6 低危 598c8ab3943e1e61065c2e8e... 4.9% 3.8 98 7 中危 f5a3d7c0eb2fe4e3c6fb101e9... 3.8% 3.0 76 3 低危 JA3 分布（流量 vs 会话数） 高危 中危 低危 未知 会话数 (K) 流量 (Gbps) 隧道检测与异常特征 DNS over HTTPS 会话 412 +36 异常长连接（> 1h） 287 +21 高熵流量（> 7.5） 531 +58 低频流量（< 3.0） 76 +9 低流量心跳（疑似） 193 +14 疑似 VPN 会话 118 +13 异常隧道列表 类型 疑征 源 IP 目的域名 / IP 持续时间 流量 (Gbps) 风险等级 DNS over HTTPS DoH over TLS 10.12.2.36 cloudflare-dns.com 3h 24m 2.18 高危 异常长连接 长连接 > 1h 172.16.5.10 203.0.",
+  "elements": {
+    "pageHero": {
+      "selector": ".taf-page-hero",
+      "visible": false
+    },
+    "panelHeader": {
+      "selector": ".taf-panel__header",
+      "visible": true,
+      "text": "协议分布与趋势",
+      "x": 183,
+      "y": 223,
+      "right": 582,
+      "bottom": 251,
+      "w": 399,
+      "h": 28,
+      "display": "flex",
+      "overflowX": "visible",
+      "overflowY": "visible"
+    },
+    "table": {
+      "selector": ".ant-table, .taf-table, table",
+      "visible": true,
+      "text": "时间协议Session 摘要证书详情SNIJA3JA3SALPNTLS 版本密码套件证书 Issuer风险等级操作时间协议Session 摘要证书详情SNIJA3JA3SALPNTLS 版本密码套件证书 Issuer风险等级操作暂无数据暂无数据",
+      "x": 189,
+      "y": 754,
+      "right": 1459,
+      "bottom": 972,
+      "w": 1269,
+      "h": 218,
+      "display": "block",
+      "overflowX": "visible",
+      "overflowY": "visible"
+    },
+    "topicTitlebar": {
+      "selector": ".taf-topic-titlebar",
+      "visible": false
+    },
+    "topicFacts": {
+      "selector": ".taf-topic-facts",
+      "visible": false
+    },
+    "topicKpis": {
+      "selector": ".taf-topic-kpis",
+      "visible": false
+    },
+    "topicGrid": {
+      "selector": ".taf-topic-grid",
+      "visible": false
+    }
+  },
+  "overlapChecks": {}
+}

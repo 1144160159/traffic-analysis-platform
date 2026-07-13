@@ -1,0 +1,162 @@
+[
+  {
+    "namespace": "middleware",
+    "kind": "StatefulSet",
+    "name": "kafka",
+    "min_ready": 3,
+    "component": "kafka",
+    "desired": 3,
+    "ready": 3,
+    "status": "ready"
+  },
+  {
+    "namespace": "middleware",
+    "kind": "StatefulSet",
+    "name": "clickhouse-keeper",
+    "min_ready": 3,
+    "component": "clickhouse",
+    "desired": 3,
+    "ready": 3,
+    "status": "ready"
+  },
+  {
+    "namespace": "middleware",
+    "kind": "StatefulSet",
+    "name": "clickhouse-1",
+    "min_ready": 1,
+    "component": "clickhouse",
+    "desired": 1,
+    "ready": 1,
+    "status": "ready"
+  },
+  {
+    "namespace": "middleware",
+    "kind": "StatefulSet",
+    "name": "clickhouse-2",
+    "min_ready": 1,
+    "component": "clickhouse",
+    "desired": 1,
+    "ready": 1,
+    "status": "ready"
+  },
+  {
+    "namespace": "middleware",
+    "kind": "StatefulSet",
+    "name": "clickhouse-replica",
+    "min_ready": 2,
+    "component": "clickhouse",
+    "desired": 2,
+    "ready": 2,
+    "status": "ready"
+  },
+  {
+    "namespace": "databases",
+    "kind": "StatefulSet",
+    "name": "postgres-primary",
+    "min_ready": 1,
+    "component": "postgres",
+    "desired": 1,
+    "ready": 1,
+    "status": "ready"
+  },
+  {
+    "namespace": "databases",
+    "kind": "StatefulSet",
+    "name": "postgres-replica",
+    "min_ready": 2,
+    "component": "postgres",
+    "desired": 2,
+    "ready": 2,
+    "status": "ready"
+  },
+  {
+    "namespace": "databases",
+    "kind": "StatefulSet",
+    "name": "redis-master",
+    "min_ready": 1,
+    "component": "redis",
+    "desired": 1,
+    "ready": 1,
+    "status": "ready"
+  },
+  {
+    "namespace": "databases",
+    "kind": "StatefulSet",
+    "name": "redis-replica",
+    "min_ready": 2,
+    "component": "redis",
+    "desired": 2,
+    "ready": 2,
+    "status": "ready"
+  },
+  {
+    "namespace": "databases",
+    "kind": "StatefulSet",
+    "name": "redis-sentinel",
+    "min_ready": 3,
+    "component": "redis",
+    "desired": 3,
+    "ready": 3,
+    "status": "ready"
+  },
+  {
+    "namespace": "flink",
+    "kind": "StatefulSet",
+    "name": "flink-jobmanager",
+    "min_ready": 1,
+    "component": "flink",
+    "desired": 1,
+    "ready": 1,
+    "status": "ready"
+  },
+  {
+    "namespace": "flink",
+    "kind": "StatefulSet",
+    "name": "flink-taskmanager",
+    "min_ready": 2,
+    "component": "flink",
+    "desired": 2,
+    "ready": 2,
+    "status": "ready"
+  },
+  {
+    "namespace": "minio",
+    "kind": "StatefulSet",
+    "name": "minio",
+    "min_ready": 4,
+    "component": "minio",
+    "desired": 4,
+    "ready": 4,
+    "status": "ready"
+  },
+  {
+    "namespace": "gateway",
+    "kind": "StatefulSet",
+    "name": "apisix",
+    "min_ready": 2,
+    "component": "gateway",
+    "desired": 2,
+    "ready": 2,
+    "status": "ready"
+  },
+  {
+    "namespace": "traffic-analysis",
+    "kind": "Deployment",
+    "name": "alert-service",
+    "min_ready": 1,
+    "component": "traffic-analysis",
+    "desired": 1,
+    "ready": 1,
+    "status": "ready"
+  },
+  {
+    "namespace": "traffic-analysis",
+    "kind": "Deployment",
+    "name": "ingest-gateway",
+    "min_ready": 1,
+    "component": "traffic-analysis",
+    "desired": 2,
+    "ready": 2,
+    "status": "ready"
+  }
+]

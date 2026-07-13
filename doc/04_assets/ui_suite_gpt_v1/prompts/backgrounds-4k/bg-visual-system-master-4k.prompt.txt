@@ -1,0 +1,23 @@
+Generate a 3840x2160 PNG static 4K background asset for traffic-analysis-platform.
+
+Use case:
+- Master visual background for an enterprise full-traffic collection and security analytics platform.
+- It will sit behind UI panels, dashboards, or title overlays, so it must be detailed but panel-safe.
+
+Scene:
+- A dark enterprise cyber operations environment that shows the complete data and security loop as one coherent visual system.
+- Abstract campus network on the left, telemetry streams moving through collection and analysis layers in the center, detection and evidence areas on the right, and a subtle feedback loop back to policy and acceptance.
+- Include full-traffic signals, encrypted traffic fingerprints, risk pulses, graph relationships, evidence packets, and release/acceptance markers as abstract visual motifs.
+
+Visual style:
+- Professional SOC and network security product visual language.
+- Deep black and navy base, cyan and electric blue data streams, restrained green/amber/red semantic accents.
+- High-resolution, high-detail, crisp technical rendering with depth and atmospheric glow.
+- Balanced negative space in the top-left and center-right for future UI overlays.
+
+Constraints:
+- Do not create a full application screenshot.
+- Do not include browser chrome, menus, buttons, forms, readable text, real IP addresses, credentials, brand logos, people, or decorative bokeh/orbs.
+- Avoid tiny illegible labels; any markings must be abstract glyphs only.
+- Keep it static, polished, enterprise-grade, and suitable as a reusable background asset.
+

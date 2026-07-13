@@ -1,0 +1,119 @@
+{
+  "generated_by": "r194-main-thread-rework-verification",
+  "generated_at": "2026-07-10T13:03:13.805Z",
+  "id": "encrypted-traffic-evidence-center",
+  "category": "pages",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic-evidence-center.png",
+  "status": "evidence-ready",
+  "accepted": false,
+  "main_thread_judgment": "business-rework-verified",
+  "main_thread_decision_basis": "r194 closes the runtime/API/selection/write-audit defects found in the independent review. The production visual gate passes at the configured business threshold, but the mismatch ratio remains above the strict 0.015 target, so pixel acceptance is not granted.",
+  "browser": {
+    "backend": "Windows Chrome CDP",
+    "cdp_url": "http://127.0.0.1:9224",
+    "browser": "Chrome/150.0.7871.49",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+  },
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "url": "http://10.0.5.8:30180/encrypted-traffic?tab=evidence-center#codex_smoke_token=<redacted>",
+  "deployment": {
+    "alert_service": "traffic/alert-service:encrypted-evidence-center-20260710-r192",
+    "web_ui": "traffic/web-ui:ui-encrypted-traffic-evidence-center-20260710-r194"
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/pages/encrypted-traffic-evidence-center/target.png",
+    "implementation": "evidence/ui-image-breakdowns/pages/encrypted-traffic-evidence-center/implementation.png",
+    "diff": "evidence/ui-image-breakdowns/pages/encrypted-traffic-evidence-center/diff.png",
+    "metrics": "evidence/ui-image-breakdowns/pages/encrypted-traffic-evidence-center/metrics.json",
+    "capture_meta": "evidence/ui-image-breakdowns/pages/encrypted-traffic-evidence-center/capture-meta.json",
+    "production_route_report": "evidence/ui-image-breakdowns/pages/encrypted-traffic-evidence-center/production-route-report.json",
+    "echarts_interaction_runtime": "evidence/ui-image-breakdowns/pages/encrypted-traffic-evidence-center/normal-route-r194-echarts-interactions-runtime.json",
+    "evidence_api_runtime": "evidence/ui-image-breakdowns/pages/encrypted-traffic-evidence-center/r194-evidence-api-runtime.json",
+    "acceptance_bundle": "doc/02_acceptance/02-regression/ui-visual-interaction/encrypted-traffic-evidence-center-r194/"
+  },
+  "visual_diff": {
+    "status": "business-threshold-pass",
+    "pixel_mismatch_ratio": 0.11718605324074075,
+    "configured_max_pixel_ratio": 0.35,
+    "strict_pixel_target": 0.015,
+    "channel_tolerance": 64
+  },
+  "runtime": {
+    "status": "pass",
+    "bad_responses": 0,
+    "request_failures": 0,
+    "console_errors": 0,
+    "page_errors": 0,
+    "horizontal_overflow": false
+  },
+  "data_contract": {
+    "status": "pass",
+    "endpoint": "/api/v1/encrypted-traffic/evidence",
+    "response_keys": [
+      "sessions",
+      "pcap_indexes",
+      "pcap_trend",
+      "completeness",
+      "total"
+    ],
+    "live_counts": {
+      "sessions": 0,
+      "pcap_indexes": 0,
+      "pcap_trend": 0,
+      "completeness": 4
+    },
+    "fallback": "typed simulated values are used only when session, PCAP-index and PCAP-trend collections are all empty; the page labels this state as 仿真数据（API 空）"
+  },
+  "interaction": {
+    "status": "pass",
+    "canvas_count": 2,
+    "selected_session": "s-55d9e0c7a3b2",
+    "selection_shared_with_details_and_rail": true,
+    "write_action": {
+      "endpoint": "/api/v1/encrypted-traffic/evidence-actions",
+      "http_status": 200,
+      "action": "write_audit",
+      "audit_event": "ENCRYPTED_EVIDENCE_AUDIT_WRITTEN",
+      "recorded": true,
+      "audit_readback_status": 200,
+      "audit_result": "success"
+    }
+  },
+  "tests": {
+    "ui": "48 passed",
+    "build": "npm --prefix web/ui run build passed",
+    "alert_api": "go test ./internal/alert/api passed"
+  },
+  "auxiliary_agent_review": {
+    "agent": "Lagrange",
+    "status": "reviewed",
+    "scope": "r194 runtime, API, interaction and visual-threshold reassessment",
+    "conclusion": "Business implementation and interaction defects are closed. Strict pixel acceptance remains rejected because the current ratio exceeds 0.015."
+  },
+  "differences": [
+    {
+      "type": "strict-pixel-diff",
+      "location": "full image",
+      "current": "Windows Chrome mismatch ratio is 0.11718605324074075.",
+      "expected": "mismatch ratio <= 0.015 for strict pixel acceptance.",
+      "status": "rework-required"
+    },
+    {
+      "type": "live-evidence-availability",
+      "location": "/api/v1/encrypted-traffic/evidence",
+      "current": "The live response has zero Session, PCAP index and trend rows; simulated mode is visibly labeled.",
+      "expected": "When collections arrive, fields are mapped directly and optional fingerprint enrichment is used only when traffic.feature_fp exists.",
+      "status": "documented-nonblocking"
+    }
+  ],
+  "reproduction_steps": [
+    "Open the APISIX route in Windows Chrome through connectOverCDP(http://127.0.0.1:9224).",
+    "Use /encrypted-traffic?tab=evidence-center at 1920x1080 and capture implementation.png.",
+    "Select a QUIC Session and confirm the Session ID appears in the detail panel and right rail.",
+    "Submit 写入审计, then filter /api/v1/audit/logs by the returned action ID.",
+    "Compare target.png and implementation.png with tolerance 64 using both the configured business threshold and the strict 0.015 target."
+  ]
+}

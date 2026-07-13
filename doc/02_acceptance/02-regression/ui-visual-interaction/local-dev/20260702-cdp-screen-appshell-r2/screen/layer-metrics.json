@@ -1,0 +1,157 @@
+{
+  "target_id": "screen",
+  "route": "/screen",
+  "status": "fail",
+  "generated_at": "2026-07-02T19:36:10.676068+08:00",
+  "layer_spec": "doc/04_assets/ui_suite_gpt_v1/specs/layers/screen.json",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/screen.png",
+  "actual_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/local-dev/20260702-cdp-screen-appshell-r2/screen/actual-1920.png",
+  "viewport": {
+    "source_width": 1920,
+    "source_height": 1080,
+    "actual_width": 1920,
+    "actual_height": 1080,
+    "size_ok": true
+  },
+  "summary": {
+    "layer_count": 5,
+    "failed_layer_count": 5,
+    "roles": {
+      "global-app-shell": {
+        "layer_count": 3,
+        "failed_count": 3,
+        "weighted_mismatch_pixels": 465133,
+        "weighted_compared_pixels": 465182,
+        "weighted_channel_delta": 6098316.0,
+        "weighted_pixel_max_delta": 10956227.0,
+        "pixel_mismatch_ratio": 0.9998946648838519,
+        "mean_channel_delta": 13.109527023831532,
+        "mean_pixel_max_delta": 23.55256007326165
+      },
+      "page-workspace": {
+        "layer_count": 1,
+        "failed_count": 1,
+        "weighted_mismatch_pixels": 1578917,
+        "weighted_compared_pixels": 1579074,
+        "weighted_channel_delta": 30447788.750000004,
+        "weighted_pixel_max_delta": 58725705.0,
+        "pixel_mismatch_ratio": 0.9999005746405805,
+        "mean_channel_delta": 19.282053121006363,
+        "mean_pixel_max_delta": 37.18996386489803
+      },
+      "closed-loop-rail": {
+        "layer_count": 1,
+        "failed_count": 1,
+        "weighted_mismatch_pixels": 361177,
+        "weighted_compared_pixels": 361200,
+        "weighted_channel_delta": 6450306.0,
+        "weighted_pixel_max_delta": 13104573.0,
+        "pixel_mismatch_ratio": 0.9999363233665559,
+        "mean_channel_delta": 17.857990033222592,
+        "mean_pixel_max_delta": 36.2806561461794
+      }
+    }
+  },
+  "layers": [
+    {
+      "id": "topbar",
+      "role": "global-app-shell",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 80
+      },
+      "status": "fail",
+      "compared_pixels": 153600,
+      "mismatch_pixels": 153590,
+      "pixel_mismatch_ratio": 0.9999348958333333,
+      "max_pixel_ratio": 0.015,
+      "channel_tolerance": 0,
+      "max_channel_delta": 255,
+      "mean_channel_delta": 17.719161783854165,
+      "mean_pixel_max_delta": 32.40972005208334,
+      "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/local-dev/20260702-cdp-screen-appshell-r2/screen/layer-diffs/topbar-diff.png"
+    },
+    {
+      "id": "sidebar",
+      "role": "global-app-shell",
+      "bbox": {
+        "x": 0,
+        "y": 80,
+        "w": 166,
+        "h": 917
+      },
+      "status": "fail",
+      "compared_pixels": 152222,
+      "mismatch_pixels": 152222,
+      "pixel_mismatch_ratio": 1.0,
+      "max_pixel_ratio": 0.015,
+      "channel_tolerance": 0,
+      "max_channel_delta": 255,
+      "mean_channel_delta": 13.347178791501886,
+      "mean_pixel_max_delta": 24.72829814350094,
+      "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/local-dev/20260702-cdp-screen-appshell-r2/screen/layer-diffs/sidebar-diff.png"
+    },
+    {
+      "id": "content",
+      "role": "page-workspace",
+      "bbox": {
+        "x": 198,
+        "y": 80,
+        "w": 1722,
+        "h": 917
+      },
+      "status": "fail",
+      "compared_pixels": 1579074,
+      "mismatch_pixels": 1578917,
+      "pixel_mismatch_ratio": 0.9999005746405805,
+      "max_pixel_ratio": 0.015,
+      "channel_tolerance": 0,
+      "max_channel_delta": 255,
+      "mean_channel_delta": 19.282053121006363,
+      "mean_pixel_max_delta": 37.18996386489803,
+      "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/local-dev/20260702-cdp-screen-appshell-r2/screen/layer-diffs/content-diff.png"
+    },
+    {
+      "id": "bottombar",
+      "role": "global-app-shell",
+      "bbox": {
+        "x": 0,
+        "y": 997,
+        "w": 1920,
+        "h": 83
+      },
+      "status": "fail",
+      "compared_pixels": 159360,
+      "mismatch_pixels": 159321,
+      "pixel_mismatch_ratio": 0.9997552710843374,
+      "max_pixel_ratio": 0.015,
+      "channel_tolerance": 0,
+      "max_channel_delta": 255,
+      "mean_channel_delta": 8.439498619477911,
+      "mean_pixel_max_delta": 13.89246360441767,
+      "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/local-dev/20260702-cdp-screen-appshell-r2/screen/layer-diffs/bottombar-diff.png"
+    },
+    {
+      "id": "right-rail",
+      "role": "closed-loop-rail",
+      "bbox": {
+        "x": 1460,
+        "y": 104,
+        "w": 420,
+        "h": 860
+      },
+      "status": "fail",
+      "compared_pixels": 361200,
+      "mismatch_pixels": 361177,
+      "pixel_mismatch_ratio": 0.9999363233665559,
+      "max_pixel_ratio": 0.015,
+      "channel_tolerance": 0,
+      "max_channel_delta": 255,
+      "mean_channel_delta": 17.857990033222592,
+      "mean_pixel_max_delta": 36.2806561461794,
+      "diff_image": "doc/02_acceptance/02-regression/ui-visual-interaction/local-dev/20260702-cdp-screen-appshell-r2/screen/layer-diffs/right-rail-diff.png"
+    }
+  ]
+}

@@ -1,0 +1,103 @@
+{
+  "package_id": "ha_rto_rpo_drill_bootstrap",
+  "status": "bootstrap_review_required",
+  "review_required": true,
+  "run_id": "20260630-ha-drill-evidence-bootstrap-r1",
+  "generated_at": "2026-06-30T20:02:52.560183+08:00",
+  "formal_gate_note": "This package is preparation material only. Formal GATE-P0-08 evidence requires an approved destructive drill, filled timelines, RTO/RPO values, consistency reports, and operator signoff.",
+  "latest_readiness": {
+    "run_id": "20260630-ha-readiness-preflight-r7-secure-kafka-flink-9",
+    "result": "blocked",
+    "passed": 12,
+    "total": 13,
+    "blockers": 1,
+    "warnings": 0
+  },
+  "input_artifacts": {
+    "ha_drill_plan": "inputs/ha_drill_plan.yaml",
+    "ha_readiness_latest": "inputs/ha-readiness-preflight-latest.json"
+  },
+  "components": [
+    {
+      "component": "kafka",
+      "phase": "kafka-broker-loss",
+      "formal_report": "kafka-failover.md",
+      "target_rto_seconds": 180,
+      "target_rpo": "zero_acknowledged_message_loss",
+      "consistency_checks": [
+        "all_partitions_have_leader",
+        "isr_recovers_to_replication_factor",
+        "live_topic_catalog_unchanged",
+        "consumer_offsets_continue"
+      ]
+    },
+    {
+      "component": "flink",
+      "phase": "flink-taskmanager-loss",
+      "formal_report": "flink-failover.md",
+      "target_rto_seconds": 300,
+      "target_rpo": "exactly_once_checkpoint_restore",
+      "consistency_checks": [
+        "all_expected_jobs_return_running",
+        "latest_completed_checkpoint_advances_after_recovery",
+        "no_root_exceptions",
+        "output_tables_do_not_duplicate_drill_records"
+      ]
+    },
+    {
+      "component": "clickhouse",
+      "phase": "clickhouse-replica-loss",
+      "formal_report": "clickhouse-failover.md",
+      "target_rto_seconds": 300,
+      "target_rpo": "no_committed_row_loss",
+      "consistency_checks": [
+        "system_replicas_not_readonly",
+        "absolute_delay_returns_below_60s",
+        "queue_size_returns_below_100",
+        "drill_query_counts_match_before_after"
+      ]
+    },
+    {
+      "component": "postgresql",
+      "phase": "postgresql-replica-loss",
+      "formal_report": "postgres-failover.md",
+      "target_rto_seconds": 300,
+      "target_rpo": "no_committed_transaction_loss",
+      "consistency_checks": [
+        "primary_or_promoted_primary_accepts_connections",
+        "replicas_resume_streaming",
+        "replay_lag_returns_to_zero_or_site_threshold",
+        "control_plane_crud_smoke_passes"
+      ]
+    },
+    {
+      "component": "minio",
+      "phase": "minio-pod-loss",
+      "formal_report": "minio-failover.md",
+      "target_rto_seconds": 300,
+      "target_rpo": "no_object_loss_for_completed_writes",
+      "consistency_checks": [
+        "health_endpoint_recovers",
+        "pcap_object_head_or_verify_passes",
+        "presigned_download_still_matches_sha256",
+        "lifecycle_or_retention_config_unchanged"
+      ]
+    }
+  ],
+  "files": {
+    "operator_approval_template": "operator-approval.review-template.yaml",
+    "timeline_template": "timeline.review-template.jsonl",
+    "rto_rpo_table_template": "rto-rpo-table.review-template.csv",
+    "summary_template": "ha-rto-rpo-summary.review-template.json",
+    "data_consistency_template": "data-consistency-report.review-template.md",
+    "snapshot_index_template": "snapshot-index.review-template.json",
+    "component_report_templates": [
+      "reports/kafka-failover.review-template.md",
+      "reports/flink-failover.review-template.md",
+      "reports/clickhouse-failover.review-template.md",
+      "reports/postgresql-failover.review-template.md",
+      "reports/minio-failover.review-template.md"
+    ],
+    "runbook": "operator-runbook.md"
+  }
+}

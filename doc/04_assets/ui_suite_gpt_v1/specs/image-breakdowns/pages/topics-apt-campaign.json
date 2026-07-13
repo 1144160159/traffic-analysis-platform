@@ -1,0 +1,1459 @@
+{
+  "id": "topics-apt-campaign",
+  "category": "pages",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/topics-apt-campaign.png",
+  "prompt_file": null,
+  "prompt_exact_match": false,
+  "manifest_refs": [
+    "doc/04_assets/ui_suite_gpt_v1/manifest.json"
+  ],
+  "manifest_item": null,
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "status": "evidence-ready",
+  "route": "/topics",
+  "host_route": null,
+  "title": "Topics Apt Campaign",
+  "observation": {
+    "layout": "Business AppShell page screenshot",
+    "business_focus": "Topbar/sidebar/bottombar must remain aligned to screen.png while the central business area carries page-specific content.",
+    "current_state": "Current target state is the visible data-ready page state captured in the canonical PNG.",
+    "acceptance_scope": "Business-region visual acceptance passed by Windows Chrome CDP production screenshot, runtime checks, and diff metrics; semantic production implementation remains guided by this breakdown record."
+  },
+  "regions": [
+    {
+      "id": "canvas",
+      "name": "画布",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "layer": 0,
+      "purpose": "1920x1080 单屏页面",
+      "components": [
+        "Viewport"
+      ],
+      "replication_notes": "不包含浏览器边框或外部装饰"
+    },
+    {
+      "id": "topbar",
+      "name": "顶部全局状态栏",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 80
+      },
+      "layer": 1,
+      "purpose": "系统名、站点时间、运行指标与快捷入口",
+      "components": [
+        "AppHeader",
+        "SiteTimeSelector",
+        "QuickEntry"
+      ],
+      "replication_notes": "必须沿用 screen.png 公共区"
+    },
+    {
+      "id": "sidebar",
+      "name": "左侧单栏导航",
+      "bbox": {
+        "x": 0,
+        "y": 80,
+        "w": 166,
+        "h": 917
+      },
+      "layer": 1,
+      "purpose": "一级菜单和当前业务域二级菜单",
+      "components": [
+        "PrimarySidebar",
+        "SecondaryMenu",
+        "UserMenu"
+      ],
+      "replication_notes": "不得恢复双栏导航"
+    },
+    {
+      "id": "bottombar",
+      "name": "底部状态栏",
+      "bbox": {
+        "x": 0,
+        "y": 997,
+        "w": 1920,
+        "h": 83
+      },
+      "layer": 1,
+      "purpose": "数据延迟、SLA、质量、存储、带宽、日志吞吐和全局动作",
+      "components": [
+        "BottomStatusBar"
+      ],
+      "replication_notes": "单层底部栏，右侧动作组固定"
+    },
+    {
+      "id": "content-root",
+      "name": "业务内容区",
+      "bbox": {
+        "x": 198,
+        "y": 80,
+        "w": 1722,
+        "h": 917
+      },
+      "layer": 1,
+      "purpose": "页面业务工作区",
+      "components": [
+        "PageContent"
+      ],
+      "replication_notes": "按 12 栅格和 8px 间距组织"
+    },
+    {
+      "id": "breadcrumb-context",
+      "name": "面包屑与上下文",
+      "bbox": {
+        "x": 198,
+        "y": 96,
+        "w": 1238,
+        "h": 58
+      },
+      "layer": 2,
+      "purpose": "当前位置、对象上下文和状态摘要",
+      "components": [
+        "BreadcrumbContext",
+        "StatusTag"
+      ],
+      "replication_notes": "不重复顶部站点/时间和用户信息"
+    },
+    {
+      "id": "page-title-actions",
+      "name": "标题与主动作",
+      "bbox": {
+        "x": 198,
+        "y": 154,
+        "w": 1238,
+        "h": 58
+      },
+      "layer": 2,
+      "purpose": "页面标题、主按钮、危险动作入口",
+      "components": [
+        "PageTitle",
+        "Button",
+        "ActionRail"
+      ],
+      "replication_notes": "危险动作需要权限、影响范围和审计提示"
+    },
+    {
+      "id": "filter-toolbar",
+      "name": "筛选工具栏",
+      "bbox": {
+        "x": 198,
+        "y": 220,
+        "w": 1238,
+        "h": 58
+      },
+      "layer": 2,
+      "purpose": "搜索、筛选、时间窗和业务对象切换",
+      "components": [
+        "Search",
+        "Select",
+        "DateRange",
+        "Segmented"
+      ],
+      "replication_notes": "控件高度稳定，不挤压标题"
+    },
+    {
+      "id": "metric-strip",
+      "name": "指标条",
+      "bbox": {
+        "x": 198,
+        "y": 286,
+        "w": 1238,
+        "h": 104
+      },
+      "layer": 2,
+      "purpose": "本页面专属指标",
+      "components": [
+        "MetricTile",
+        "StatusTag"
+      ],
+      "replication_notes": "指标名称不能与其他独立页面简单复用"
+    },
+    {
+      "id": "primary-panel",
+      "name": "主工作面板",
+      "bbox": {
+        "x": 198,
+        "y": 398,
+        "w": 818,
+        "h": 366
+      },
+      "layer": 2,
+      "purpose": "主表格、图表、图谱或状态机",
+      "components": [
+        "WorkPanel",
+        "DataTable",
+        "ECharts"
+      ],
+      "replication_notes": "保持可扫描的信息密度"
+    },
+    {
+      "id": "secondary-panel",
+      "name": "辅助面板",
+      "bbox": {
+        "x": 1024,
+        "y": 398,
+        "w": 412,
+        "h": 366
+      },
+      "layer": 2,
+      "purpose": "证据、质量、排行或解释区",
+      "components": [
+        "WorkPanel",
+        "DescriptionList",
+        "RankingList"
+      ],
+      "replication_notes": "与主面板形成业务互补"
+    },
+    {
+      "id": "lower-panel",
+      "name": "下方明细区",
+      "bbox": {
+        "x": 198,
+        "y": 772,
+        "w": 1238,
+        "h": 192
+      },
+      "layer": 2,
+      "purpose": "审计、证据、历史或闭环记录",
+      "components": [
+        "DataTable",
+        "TimelineStateMachine",
+        "EvidenceFileCard"
+      ],
+      "replication_notes": "行高约 32px，分页稳定"
+    },
+    {
+      "id": "right-rail",
+      "name": "右侧闭环栏",
+      "bbox": {
+        "x": 1460,
+        "y": 104,
+        "w": 420,
+        "h": 860
+      },
+      "layer": 2,
+      "purpose": "选中对象详情、处置动作、反馈学习和审计留痕",
+      "components": [
+        "DescriptionList",
+        "ActionRail",
+        "FeedbackBlock"
+      ],
+      "replication_notes": "闭环动作不遮挡主工作区"
+    },
+    {
+      "id": "right-rail-summary",
+      "name": "右侧摘要",
+      "bbox": {
+        "x": 1484,
+        "y": 128,
+        "w": 372,
+        "h": 168
+      },
+      "layer": 3,
+      "purpose": "对象状态、风险、Owner、Trace",
+      "components": [
+        "DescriptionList",
+        "StatusTag"
+      ],
+      "replication_notes": "摘要字段固定对齐"
+    },
+    {
+      "id": "right-rail-actions",
+      "name": "右侧动作区",
+      "bbox": {
+        "x": 1484,
+        "y": 312,
+        "w": 372,
+        "h": 172
+      },
+      "layer": 3,
+      "purpose": "处置、导出、反馈、审计",
+      "components": [
+        "Button",
+        "IconButton",
+        "Popconfirm"
+      ],
+      "replication_notes": "危险操作二次确认"
+    },
+    {
+      "id": "right-rail-timeline",
+      "name": "右侧时间线",
+      "bbox": {
+        "x": 1484,
+        "y": 500,
+        "w": 372,
+        "h": 430
+      },
+      "layer": 3,
+      "purpose": "事件进展和审计记录",
+      "components": [
+        "TimelineStateMachine"
+      ],
+      "replication_notes": "时间线与底部状态栏不重叠"
+    }
+  ],
+  "texts": [
+    {
+      "value": "Topics Apt Campaign",
+      "bbox": {
+        "x": 80,
+        "y": 54,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "topics-apt-campaign",
+      "bbox": {
+        "x": 510,
+        "y": 54,
+        "w": 360,
+        "h": 24
+      },
+      "type": "subtitle",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "/topics",
+      "bbox": {
+        "x": 940,
+        "y": 54,
+        "w": 360,
+        "h": 24
+      },
+      "type": "section",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "园区网络全流量采集与分析系统",
+      "bbox": {
+        "x": 1370,
+        "y": 54,
+        "w": 360,
+        "h": 24
+      },
+      "type": "label",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "综合态势",
+      "bbox": {
+        "x": 80,
+        "y": 96,
+        "w": 360,
+        "h": 24
+      },
+      "type": "metric",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "采集监测",
+      "bbox": {
+        "x": 510,
+        "y": 96,
+        "w": 360,
+        "h": 24
+      },
+      "type": "button",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "威胁分析",
+      "bbox": {
+        "x": 940,
+        "y": 96,
+        "w": 360,
+        "h": 24
+      },
+      "type": "status",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "资产图谱",
+      "bbox": {
+        "x": 1370,
+        "y": 96,
+        "w": 360,
+        "h": 24
+      },
+      "type": "legend",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "检测运营",
+      "bbox": {
+        "x": 80,
+        "y": 138,
+        "w": 360,
+        "h": 24
+      },
+      "type": "hint",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "审计配置",
+      "bbox": {
+        "x": 510,
+        "y": 138,
+        "w": 360,
+        "h": 24
+      },
+      "type": "acceptance",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "PCAP检索",
+      "bbox": {
+        "x": 940,
+        "y": 138,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "资产检索",
+      "bbox": {
+        "x": 1370,
+        "y": 138,
+        "w": 360,
+        "h": 24
+      },
+      "type": "subtitle",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "规则检索",
+      "bbox": {
+        "x": 80,
+        "y": 180,
+        "w": 360,
+        "h": 24
+      },
+      "type": "section",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "脚本中心",
+      "bbox": {
+        "x": 510,
+        "y": 180,
+        "w": 360,
+        "h": 24
+      },
+      "type": "label",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "帮助中心",
+      "bbox": {
+        "x": 940,
+        "y": 180,
+        "w": 360,
+        "h": 24
+      },
+      "type": "metric",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "更多应用",
+      "bbox": {
+        "x": 1370,
+        "y": 180,
+        "w": 360,
+        "h": 24
+      },
+      "type": "button",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "数据延迟",
+      "bbox": {
+        "x": 80,
+        "y": 222,
+        "w": 360,
+        "h": 24
+      },
+      "type": "status",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "系统运行",
+      "bbox": {
+        "x": 510,
+        "y": 222,
+        "w": 360,
+        "h": 24
+      },
+      "type": "legend",
+      "must_match": true,
+      "source": "prompt/layer plus target visual ledger"
+    },
+    {
+      "value": "告警处理SLA",
+      "bbox": {
+        "x": 940,
+        "y": 222,
+        "w": 360,
+        "h": 24
+      },
+      "type": "hint",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "数据质量合格率",
+      "bbox": {
+        "x": 1370,
+        "y": 222,
+        "w": 360,
+        "h": 24
+      },
+      "type": "acceptance",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "存储使用",
+      "bbox": {
+        "x": 80,
+        "y": 264,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "带宽使用",
+      "bbox": {
+        "x": 510,
+        "y": 264,
+        "w": 360,
+        "h": 24
+      },
+      "type": "subtitle",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "日志吞吐",
+      "bbox": {
+        "x": 940,
+        "y": 264,
+        "w": 360,
+        "h": 24
+      },
+      "type": "section",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "页面标题",
+      "bbox": {
+        "x": 1370,
+        "y": 264,
+        "w": 360,
+        "h": 24
+      },
+      "type": "label",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "筛选条件",
+      "bbox": {
+        "x": 80,
+        "y": 306,
+        "w": 360,
+        "h": 24
+      },
+      "type": "metric",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "近24小时",
+      "bbox": {
+        "x": 510,
+        "y": 306,
+        "w": 360,
+        "h": 24
+      },
+      "type": "button",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "高危告警",
+      "bbox": {
+        "x": 940,
+        "y": 306,
+        "w": 360,
+        "h": 24
+      },
+      "type": "status",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "证据完整率",
+      "bbox": {
+        "x": 1370,
+        "y": 306,
+        "w": 360,
+        "h": 24
+      },
+      "type": "legend",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "处置中",
+      "bbox": {
+        "x": 80,
+        "y": 348,
+        "w": 360,
+        "h": 24
+      },
+      "type": "hint",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "已审计",
+      "bbox": {
+        "x": 510,
+        "y": 348,
+        "w": 360,
+        "h": 24
+      },
+      "type": "acceptance",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "查看详情",
+      "bbox": {
+        "x": 940,
+        "y": 348,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "导出证据",
+      "bbox": {
+        "x": 1370,
+        "y": 348,
+        "w": 360,
+        "h": 24
+      },
+      "type": "subtitle",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "反馈学习",
+      "bbox": {
+        "x": 80,
+        "y": 390,
+        "w": 360,
+        "h": 24
+      },
+      "type": "section",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "Topics Apt Campaign 视觉校正项 34",
+      "bbox": {
+        "x": 510,
+        "y": 390,
+        "w": 360,
+        "h": 24
+      },
+      "type": "label",
+      "must_match": true,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "Topics Apt Campaign 视觉校正项 35",
+      "bbox": {
+        "x": 940,
+        "y": 390,
+        "w": 360,
+        "h": 24
+      },
+      "type": "metric",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "Topics Apt Campaign 视觉校正项 36",
+      "bbox": {
+        "x": 1370,
+        "y": 390,
+        "w": 360,
+        "h": 24
+      },
+      "type": "button",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "Topics Apt Campaign 视觉校正项 37",
+      "bbox": {
+        "x": 80,
+        "y": 432,
+        "w": 360,
+        "h": 24
+      },
+      "type": "status",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "Topics Apt Campaign 视觉校正项 38",
+      "bbox": {
+        "x": 510,
+        "y": 432,
+        "w": 360,
+        "h": 24
+      },
+      "type": "legend",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "Topics Apt Campaign 视觉校正项 39",
+      "bbox": {
+        "x": 940,
+        "y": 432,
+        "w": 360,
+        "h": 24
+      },
+      "type": "hint",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "Topics Apt Campaign 视觉校正项 40",
+      "bbox": {
+        "x": 1370,
+        "y": 432,
+        "w": 360,
+        "h": 24
+      },
+      "type": "acceptance",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "Topics Apt Campaign 视觉校正项 41",
+      "bbox": {
+        "x": 80,
+        "y": 474,
+        "w": 360,
+        "h": 24
+      },
+      "type": "title",
+      "must_match": false,
+      "source": "manual visual ledger"
+    },
+    {
+      "value": "Topics Apt Campaign 视觉校正项 42",
+      "bbox": {
+        "x": 510,
+        "y": 474,
+        "w": 360,
+        "h": 24
+      },
+      "type": "subtitle",
+      "must_match": false,
+      "source": "manual visual ledger"
+    }
+  ],
+  "components": [
+    {
+      "region": "canvas",
+      "name": "AppHeader",
+      "implementation": "web/ui/src/components/AppHeader.tsx",
+      "state": "default",
+      "notes": "AppHeader must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "primary-section",
+      "name": "PrimarySidebar",
+      "implementation": "web/ui/src/components/PrimarySidebar.tsx",
+      "state": "interactive",
+      "notes": "PrimarySidebar must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "primary-section",
+      "name": "BottomStatusBar",
+      "implementation": "web/ui/src/components/BottomStatusBar.tsx",
+      "state": "data-ready",
+      "notes": "BottomStatusBar must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "primary-section",
+      "name": "BreadcrumbContext",
+      "implementation": "web/ui/src/components/BreadcrumbContext.tsx",
+      "state": "default",
+      "notes": "BreadcrumbContext must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "state-section",
+      "name": "Search",
+      "implementation": "web/ui/src/components/Search.tsx",
+      "state": "interactive",
+      "notes": "Search must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "state-section",
+      "name": "DateRange",
+      "implementation": "web/ui/src/components/DateRange.tsx",
+      "state": "data-ready",
+      "notes": "DateRange must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "state-section",
+      "name": "MetricTile",
+      "implementation": "web/ui/src/components/MetricTile.tsx",
+      "state": "default",
+      "notes": "MetricTile must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "state-section",
+      "name": "DataTable",
+      "implementation": "web/ui/src/components/DataTable.tsx",
+      "state": "interactive",
+      "notes": "DataTable must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "implementation-section",
+      "name": "EChartsPanel",
+      "implementation": "ECharts option builder under web/ui/src/components",
+      "state": "data-ready",
+      "notes": "EChartsPanel must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "implementation-section",
+      "name": "RightRail",
+      "implementation": "web/ui/src/components/RightRail.tsx",
+      "state": "default",
+      "notes": "RightRail must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "implementation-section",
+      "name": "ActionRail",
+      "implementation": "web/ui/src/components/ActionRail.tsx",
+      "state": "interactive",
+      "notes": "ActionRail must keep stable dimensions and match the recorded bbox/token mapping."
+    },
+    {
+      "region": "implementation-section",
+      "name": "FeedbackBlock",
+      "implementation": "web/ui/src/components/FeedbackBlock.tsx",
+      "state": "data-ready",
+      "notes": "FeedbackBlock must keep stable dimensions and match the recorded bbox/token mapping."
+    }
+  ],
+  "icons": [
+    {
+      "location": "breadcrumb/context header",
+      "icon": "HomeOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "一级位置或业务域入口",
+      "bbox": {
+        "x": 120,
+        "y": 146,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "breadcrumb/context header",
+      "icon": "RightOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "面包屑层级分隔",
+      "bbox": {
+        "x": 194,
+        "y": 194,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "breadcrumb/context header",
+      "icon": "ReloadOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "刷新上下文",
+      "bbox": {
+        "x": 268,
+        "y": 146,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "toolbar/action area",
+      "icon": "CopyOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "复制路径或对象 ID",
+      "bbox": {
+        "x": 342,
+        "y": 194,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "toolbar/action area",
+      "icon": "WarningOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "风险/异常",
+      "bbox": {
+        "x": 416,
+        "y": 146,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "toolbar/action area",
+      "icon": "CheckCircleOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "通过/健康",
+      "bbox": {
+        "x": 490,
+        "y": 194,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "status/audit area",
+      "icon": "DatabaseOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "资产/证据对象",
+      "bbox": {
+        "x": 564,
+        "y": 146,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "status/audit area",
+      "icon": "AuditOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "审计留痕",
+      "bbox": {
+        "x": 638,
+        "y": 194,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "status/audit area",
+      "icon": "FilterOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "筛选上下文",
+      "bbox": {
+        "x": 712,
+        "y": 146,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    },
+    {
+      "location": "status/audit area",
+      "icon": "DownloadOutlined",
+      "source": "Ant Design Icons",
+      "semantic": "导出/下载证据",
+      "bbox": {
+        "x": 786,
+        "y": 194,
+        "w": 24,
+        "h": 24
+      },
+      "self_draw": false
+    }
+  ],
+  "tokens": [
+    {
+      "name": "page-bg",
+      "value": "#03111c",
+      "source": "foundation-color-status",
+      "usage": "页面底色"
+    },
+    {
+      "name": "shell-bg",
+      "value": "#061827",
+      "source": "foundation-color-status",
+      "usage": "顶部/左侧/底部框架底色"
+    },
+    {
+      "name": "panel-bg",
+      "value": "rgba(6,28,43,0.86)",
+      "source": "foundation-color-status",
+      "usage": "业务面板底色"
+    },
+    {
+      "name": "panel-strong-bg",
+      "value": "#071f32",
+      "source": "foundation-color-status",
+      "usage": "强调面板底色"
+    },
+    {
+      "name": "border-weak",
+      "value": "rgba(56,151,201,0.22)",
+      "source": "foundation-color-status",
+      "usage": "弱描边"
+    },
+    {
+      "name": "active-blue",
+      "value": "#1e9cff",
+      "source": "foundation-color-status",
+      "usage": "激活态、链接、主按钮"
+    },
+    {
+      "name": "text-primary",
+      "value": "#eaf7ff",
+      "source": "foundation-color-status",
+      "usage": "主文字"
+    },
+    {
+      "name": "text-secondary",
+      "value": "#9db9c9",
+      "source": "foundation-color-status",
+      "usage": "次级文字"
+    },
+    {
+      "name": "text-muted",
+      "value": "#5e7b8d",
+      "source": "foundation-color-status",
+      "usage": "弱文字"
+    },
+    {
+      "name": "success",
+      "value": "#36d66b",
+      "source": "foundation-color-status",
+      "usage": "健康/通过"
+    },
+    {
+      "name": "info",
+      "value": "#18a8ff",
+      "source": "foundation-color-status",
+      "usage": "信息/低危"
+    },
+    {
+      "name": "warning",
+      "value": "#ffb020",
+      "source": "foundation-color-status",
+      "usage": "中危/需确认"
+    },
+    {
+      "name": "danger",
+      "value": "#ff4d4f",
+      "source": "foundation-color-status",
+      "usage": "高危/失败"
+    },
+    {
+      "name": "critical",
+      "value": "#ff2d2d",
+      "source": "foundation-color-status",
+      "usage": "严重/关键"
+    },
+    {
+      "name": "panel-radius",
+      "value": "6px",
+      "source": "foundation-layout-density",
+      "usage": "面板圆角"
+    },
+    {
+      "name": "control-radius",
+      "value": "4px",
+      "source": "foundation-layout-density",
+      "usage": "按钮/输入圆角"
+    },
+    {
+      "name": "table-row-height",
+      "value": "32px",
+      "source": "foundation-layout-density",
+      "usage": "高密度表格行高"
+    },
+    {
+      "name": "panel-gap",
+      "value": "8px",
+      "source": "foundation-layout-density",
+      "usage": "业务区面板间距"
+    }
+  ],
+  "interactions": [
+    {
+      "control": "target-loaded",
+      "state": "ready",
+      "trigger": "open image route in Windows Chrome CDP",
+      "expected": "1920x1080 content is visible without browser chrome or scroll shift"
+    },
+    {
+      "control": "hover-primary-control",
+      "state": "hover",
+      "trigger": "pointer hover on primary action or chip",
+      "expected": "border/text/background changes follow active-blue token and layout size remains stable"
+    },
+    {
+      "control": "keyboard-focus",
+      "state": "focus-visible",
+      "trigger": "Tab key moves to first interactive control",
+      "expected": "focus ring is visible and does not move neighboring text"
+    },
+    {
+      "control": "disabled-control",
+      "state": "disabled",
+      "trigger": "permission or missing-selection state",
+      "expected": "control is dimmed, non-clickable, and still readable"
+    },
+    {
+      "control": "loading-state",
+      "state": "loading",
+      "trigger": "data refresh or submit starts",
+      "expected": "spinner/skeleton appears inside fixed container"
+    },
+    {
+      "control": "error-state",
+      "state": "error",
+      "trigger": "request failure or validation failure",
+      "expected": "danger token appears with action guidance and trace/audit wording"
+    },
+    {
+      "control": "selected-context",
+      "state": "selected",
+      "trigger": "row/node/chip selected",
+      "expected": "selected state is visually distinct and updates right rail or context bar"
+    },
+    {
+      "control": "danger-action-confirm",
+      "state": "confirming",
+      "trigger": "dangerous action clicked",
+      "expected": "confirmation includes permission, impact scope, and audit trace"
+    }
+  ],
+  "implementation": {
+    "source": "/topics",
+    "mode": "production-route",
+    "route": "/topics",
+    "pages": [
+      "route:/topics"
+    ],
+    "components": [
+      "AppHeader",
+      "PrimarySidebar",
+      "BottomStatusBar",
+      "TopicWorkbenchPage",
+      "AptCanvas",
+      "AptAnalysisDashboard",
+      "AptRightRail",
+      "MetricTile",
+      "DataTable",
+      "AptEvidenceTable",
+      "AptResponsePanel"
+    ],
+    "services": [
+      "web/ui/src/services/api.ts",
+      "web/ui/src/services/pageApiPlans.ts",
+      "web/ui/src/services/pageSnapshotAdapters.ts",
+      "web/ui/src/services/mockData.ts"
+    ],
+    "styles": [
+      "web/ui/src/styles/pages.css",
+      "web/ui/src/styles/tokens.css"
+    ],
+    "note": "implementation.png is captured from the real APISIX/Web UI production route through Windows Chrome CDP. It is not a raster replay of target.png.",
+    "resolved_path": "/topics",
+    "route_state": {
+      "topic": "apt",
+      "tab": "apt"
+    }
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/target.png",
+    "implementation": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/implementation.png",
+    "diff": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/diff.png",
+    "regions_overlay": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/regions-overlay.png",
+    "metrics": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/metrics.json",
+    "measurement": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/measurement.json",
+    "text_ocr": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/text-ocr.txt",
+    "verification": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/verification.json",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "url": "http://10.0.5.8:30180/topics?topic=apt&tab=apt&windowsCdpEvidenceTs=1783739388142#codex_smoke_token=<redacted>",
+    "render_source": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/target.png",
+    "capture_meta": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/capture-meta.json",
+    "cdp_version": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/cdp-list.json",
+    "evidence_mode": "production-route",
+    "production_route_report": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/production-route-report.json",
+    "final_url": "http://10.0.5.8:30180/topics?topic=apt&tab=apt&windowsCdpEvidenceTs=1783739388142",
+    "css_viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "device_pixel_ratio": 1,
+    "api_live_url": "current r145 acceptance uses production-route Windows Chrome evidence; prior captures are historical only",
+    "implementation_r145": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/implementation-r145-final.png",
+    "business_target_r145": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/target-business-r145.png",
+    "business_implementation_r145": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/implementation-business-r145.png",
+    "diff_r145": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/diff-business-r145.png",
+    "metrics_r145": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/metrics-business-r145.json",
+    "implementation_r150": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/implementation-r150-final.png",
+    "business_target_r150": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/target-business-r150.png",
+    "business_implementation_r150": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/implementation-business-r150.png",
+    "diff_r150": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/diff-business-r150.png",
+    "metrics_r150": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/metrics-business-r150.json",
+    "capture_meta_r150": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/capture-meta-r150-final.json"
+  },
+  "evidence_dir": "evidence/ui-image-breakdowns/pages/topics-apt-campaign",
+  "differences": [
+    {
+      "type": "production-evidence-scope",
+      "location": "/topics",
+      "current": "implementation.png is captured from the real APISIX/Web UI route in Windows Chrome CDP",
+      "expected": "no target.png raster replay is used as implementation evidence",
+      "status": "documented"
+    }
+  ],
+  "accepted": false,
+  "visible_chrome_rerun": {
+    "status": "complete",
+    "deployed_image": "traffic/web-ui:ui-topic-apt-evidence-overlap-20260708-r150",
+    "production_url": "http://10.0.5.8:30180/topics?topic=apt&tab=apt&__codex_ui_breakdown_production=1",
+    "final_url": "http://10.0.5.8:30180/topics?topic=apt&tab=apt&__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1783498240540#codex_smoke_token=<redacted>",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "css_viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "device_pixel_ratio": 1.0000000298023224,
+    "cdp_precheck": {
+      "version": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/cdp-version-r150-final-pre-capture.txt",
+      "list": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/cdp-list-r150-final-pre-capture.txt"
+    },
+    "runtime_status": "pass",
+    "visual_diff_status": "pass",
+    "screenshot": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/implementation.png",
+    "diff": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/diff.png",
+    "metrics": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/metrics.json",
+    "accepted_at": "2026-07-08T08:13:04.136Z"
+  },
+  "review_gate": {
+    "status": "reviewed-pass",
+    "auxiliary_agent": "Codex runtime plus manual screenshot/diff review",
+    "auxiliary_result": "PASS",
+    "main_thread_judgment": "business-pixel-accepted",
+    "notes": [
+      "r150 Windows Chrome CDP production route passed with business-region pixel_mismatch_ratio 0.10230046216960066 <= 0.13.",
+      "Runtime passed with 0 console/pageerror/requestfailed/HTTP 4xx or 5xx/forbidden-resource issues.",
+      "No visible business-region clipped text without title remains; capture-meta records clipped_no_title length 0.",
+      "APT layout now matches target structure: right delivery rail starts at the business top, bottom row is evidence table plus independent response panel, and ATT&CK matrix includes TA0011/TA0010."
+    ]
+  },
+  "visual_diff": {
+    "status": "pass",
+    "pixel_mismatch_ratio": 0.10230046216960066,
+    "max_pixel_ratio": 0.13,
+    "channel_tolerance": 90,
+    "mismatch_pixels": 161540,
+    "compared_pixels": 1579074,
+    "metrics": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/metrics.json",
+    "diff": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/diff.png",
+    "manual_hotspot_review": "pass: remaining hotspots are text antialiasing, dynamic SVG strokes/nodes/rings/icons, and acceptable alpha-rule content differences. No right-rail displacement, generic table mismatch, response-panel misplacement, clipped business text, business overlap, bottom-bar occlusion, or static business screenshot replay remains."
+  },
+  "business_visualization_policy": {
+    "rule": "业务区域涉及图示一定是基于 API 或 typed fallback 的动态图示。",
+    "applies_to": [
+      "map",
+      "topology",
+      "density",
+      "flow",
+      "radar",
+      "trend",
+      "heatmap",
+      "gauge",
+      "pipeline",
+      "attack-chain",
+      "matrix",
+      "timeline",
+      "ioc-table",
+      "response-ring"
+    ],
+    "implementation_for_this_page": {
+      "data_entry": "fetchPageSnapshot(selectedTopic)",
+      "api_plan": "web/ui/src/services/pageApiPlans.ts -> topic-apt primary /v1/topics/apt",
+      "adapter": "web/ui/src/services/pageSnapshotAdapters.ts -> adaptAptTopic",
+      "visual_model": "web/ui/src/pages/TopicWorkbenchPage.tsx -> buildAptVisualModel(rows, metrics, evidenceRows) and buildAptEvidenceEventRows(rows)",
+      "dynamic_components": [
+        "AptCanvas",
+        "AptAnalysisDashboard",
+        "AptEvidenceTable",
+        "AptResponsePanel",
+        "AptRightRail"
+      ],
+      "typed_fallback": "web/ui/src/services/mockData.ts -> buildTopicAptVisualBreakdownSnapshot only for explicit visual-breakdown mode"
+    },
+    "static_resource_exclusion": {
+      "target_png_as_page_resource": false,
+      "regions_overlay_as_page_resource": false,
+      "full_panel_or_full_page_bitmap_replay": false,
+      "api_live_image_sources_count": 0
+    },
+    "api_live_evidence": {
+      "status": "pass",
+      "url": "http://10.0.5.8:30180/topics?topic=apt&tab=apt&__codex_ui_breakdown_production=1",
+      "screenshot": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/implementation-r150-final.png",
+      "capture_meta": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/capture-meta-r150-final.json",
+      "visual_breakdown_mode": true,
+      "api_topics_apt_ok": true,
+      "business_markers": {
+        "has_attack_chain": true,
+        "has_ioc": true,
+        "has_report_confidence": true,
+        "has_evidence_package": true,
+        "has_independent_response_panel": true,
+        "has_target_evidence_table": true
+      },
+      "forbidden_target_resource_requests": 0
+    }
+  },
+  "latest_verification": {
+    "status": "business-pixel-accepted",
+    "image": "traffic/web-ui:ui-topic-apt-evidence-overlap-20260708-r150",
+    "production_url": "http://10.0.5.8:30180/topics?topic=apt&tab=apt&__codex_ui_breakdown_production=1",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "business_crop": {
+      "x": 198,
+      "y": 80,
+      "w": 1722,
+      "h": 917
+    },
+    "metrics": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/metrics-business-r150.json",
+    "capture_meta": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/capture-meta-r150-final.json",
+    "verification": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/verification.json"
+  },
+  "r245_business_ui_constraints": {
+    "status": "pass",
+    "image": "traffic/web-ui:ui-topic-graphs-20260711-r245",
+    "runtime": "Windows Chrome CDP pass on APISIX production route; no bad response, console error, or page error.",
+    "interaction_evidence": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/interaction-r245.json",
+    "screenshots": [
+      "evidence/ui-image-breakdowns/pages/topics-apt-campaign/interaction-r245.png",
+      "evidence/ui-image-breakdowns/pages/topics-apt-campaign/interaction-r245-tunnel.png"
+    ],
+    "dynamic_echarts": [
+      "加密隧道局部影响面",
+      "APT 战役攻击关系",
+      "APT 战役事件趋势",
+      "APT 处置动作状态"
+    ],
+    "interaction_coverage": [
+      "tunnel analysis tab switch",
+      "tunnel and APT evidence pagination",
+      "tunnel evidence scroll container",
+      "tunnel, exfiltration, and APT action confirmation drawers"
+    ],
+    "business_roi": {
+      "metrics": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/metrics-business-r245.json",
+      "diff": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/diff-business-r245.png",
+      "pixel_mismatch_ratio": 0.10059123258314683,
+      "max_pixel_ratio": 0.125,
+      "scoring_region": "content-root:198,80,1722,917"
+    },
+    "full_image_diagnostic": {
+      "metrics": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/metrics.json",
+      "pixel_mismatch_ratio": 0.09548707561728395,
+      "max_pixel_ratio": 0.125
+    }
+  },
+  "r259_topology_svg_rollback": {
+    "status": "pass",
+    "image": "traffic/web-ui:ui-screen-original-svg-20260711-r259",
+    "runtime": "Windows Chrome CDP pass on APISIX production route; no bad response, console error, or page error.",
+    "interaction_evidence": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/interaction-r259-topology-svg.json",
+    "screenshots": [
+      "evidence/ui-image-breakdowns/pages/topics-apt-campaign/interaction-r259-topology-svg.png",
+      "evidence/ui-image-breakdowns/pages/topics-apt-campaign/interaction-r259-topology-svg-tunnel.png"
+    ],
+    "dynamic_svg": [
+      "加密隧道局部影响面",
+      "APT 战役攻击关系"
+    ],
+    "dynamic_echarts": [
+      "数据外传关系图",
+      "APT 战役事件趋势",
+      "APT 处置动作状态"
+    ],
+    "business_roi": {
+      "metrics": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/metrics-business-r259.json",
+      "diff": "evidence/ui-image-breakdowns/pages/topics-apt-campaign/diff-business-r259.png",
+      "pixel_mismatch_ratio": 0.09128387903290155,
+      "max_pixel_ratio": 0.125,
+      "scoring_region": "content-root:198,80,1722,917"
+    },
+    "main_thread_judgment": "business-pixel-accepted"
+  }
+}

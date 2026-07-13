@@ -1,0 +1,148 @@
+{
+  "status": "pass",
+  "acceptance_eligible": false,
+  "reason": "Windows Chrome CDP evidence. Formal legacy gate expects Desktop Chrome extension receiver metadata and pixel diff; this capture proves real Windows Chrome rendering, route, runtime events, viewport, and layout metrics.",
+  "backend": "windows-chrome-cdp",
+  "target_id": "assets",
+  "route_id": "assets",
+  "route": "/assets",
+  "resolved_path": "/assets",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets.png",
+  "final_url": "http://10.0.5.8:30180/assets?fullRouteEvidenceTs=1783072644929",
+  "final_path": "/assets",
+  "protected_route": true,
+  "smoke_hash_consumed": true,
+  "uploaded_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "stored_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "expected_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "desktop_viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "post_capture_resize": false,
+  "no_4xx_5xx": true,
+  "no_requestfailed": true,
+  "no_console_error": true,
+  "no_pageerror": true,
+  "errors": {
+    "requestfailed": [],
+    "badResponses": [],
+    "console": [],
+    "pageerror": []
+  },
+  "screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/doc/02_acceptance/02-regression/ui-visual-interaction/latest/assets/actual-1920.png",
+  "mirror_screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/evidence/windows-chrome-cdp-20260703-full-route-desktop-r6/assets-1920x1080.png",
+  "metrics": {
+    "title": "园区网络全流量采集与分析系统",
+    "location": "http://10.0.5.8:30180/assets?fullRouteEvidenceTs=1783072644929",
+    "viewport": {
+      "width": 1920,
+      "height": 1080,
+      "dpr": 1.0000000298023224
+    },
+    "scroll": {
+      "horizontalOverflow": 0,
+      "verticalOverflow": 0,
+      "bodyScrollWidth": 1920,
+      "bodyClientWidth": 1920,
+      "bodyScrollHeight": 1080,
+      "bodyClientHeight": 1080
+    },
+    "headings": [
+      "资产台账",
+      "资产台账",
+      "资产台账（终端）",
+      "流量画像（codex-core-sw-161647）",
+      "协议分布",
+      "Top 对端（按流量）",
+      "周期性连接（最近 7 天）",
+      "关联证据与上下文",
+      "资产详情",
+      "风险画像",
+      "资产上下文"
+    ],
+    "buttons": [
+      "移动端导航",
+      "PCAP检索",
+      "资产检索",
+      "规则检索",
+      "脚本中心",
+      "帮助中心",
+      "更多应用",
+      "Ccodex-ui-desktop-admin系统管理员在线",
+      "收 起",
+      "编辑资产",
+      "重 置",
+      "查 询",
+      "批量更新",
+      "导出",
+      "新增资产",
+      "导出",
+      "关联告警12 条codex-core-sw-161647",
+      "PCAP 证据23 条codex-core-sw-161647",
+      "Session 记录186 条codex-core-sw-161647",
+      "DNS 日志342 条codex-core-sw-161647"
+    ],
+    "visibleText": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-03 17:57:25 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 采集监测 威胁分析 资产图谱 资产台账 实体图谱 数据融合 行为基准 检测运营 审计配置 C codex-ui-desktop-admin 系统管理员 在线 资产图谱 / 资产台账 资产台账 收 起 编辑资产 终端 服务器 网络设备 业务系统 未知资产 园区 全部 网段 全部 资产类型 全部 重要性 全部 风险等级 全部 最近活跃 全部 重 置 查 询 批量更新 导出 已识别终端 2,416 +38 在线终端 2,231 +24 漂移终端 87 +12 长期离线 64 -8 高风险终端 31 +5 资产台账（终端） 新增资产 导出 资产 ID IP/MAC 主机名 类型 园区/部门 操作系统 重要性 最近活跃 暴露端口 风险标签 c5b964e4-dd9f-4c6f-826a-4031ae87e9e2 10.12.0.41 / 02:cd:29:16:16:41 codex-edge-sw-161647 - default - - 2026-06-30T08:16:47.959981Z - 低风险 d59a03f5-142e-4f93-a7b8-695558e78129 10.12.0.31 / 02:cd:29:16:16:31 codex-core-sw-161647 switch default switch - 2026-06-30T08:16:47.956453Z - 低风险 8dada6c5-cb3a-4993-9612-69908437d195 10.12.0.41 / 02:cd:29:15:37:41 codex-edge-sw-153752 - default - - 2026-06-30T07:37:52.514525Z - 低风险 be22ca45-1e24-4a59-94cd-996ab0ed9e74 10.12.0.31 / 02:cd:29:15:37:31 codex-core-sw-153752 switch default switch - 2026-06-30T07:37:52.507172Z - 低风险 26357341-520f-4649-bd0c-2c7760a7de7a 10.12.0.41 / 02:cd:29:22:34:41 codex-edge-sw-223447 - default - - 2026-06-29T14:34:47.609969Z - 低风险 1 2 流量画像（cod",
+    "elements": {
+      "pageHero": {
+        "selector": ".taf-page-hero",
+        "visible": false
+      },
+      "panelHeader": {
+        "selector": ".taf-panel__header",
+        "visible": false,
+        "text": "资产台账",
+        "x": 0,
+        "y": 0,
+        "right": 0,
+        "bottom": 0,
+        "w": 0,
+        "h": 0,
+        "display": "none",
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      "table": {
+        "selector": ".ant-table, .taf-table, table",
+        "visible": true,
+        "text": "资产 IDIP/MAC主机名类型园区/部门操作系统重要性最近活跃暴露端口风险标签c5b964e4-dd9f-4c6f-826a-4031ae87e9e210.12.0.41 / 02:cd:29:16:16:41codex-edge-sw-161647-default--2026-06-30T08:16:47.959981Z-低风险d59a03f5-142e-4f93-a7b8-695558e7812910.12.0.31 / 02:cd:29:16:16:31codex-c",
+        "x": 185,
+        "y": 468,
+        "right": 1396,
+        "bottom": 703,
+        "w": 1211,
+        "h": 235,
+        "display": "block",
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      "topicTitlebar": {
+        "selector": ".taf-topic-titlebar",
+        "visible": false
+      },
+      "topicFacts": {
+        "selector": ".taf-topic-facts",
+        "visible": false
+      },
+      "topicKpis": {
+        "selector": ".taf-topic-kpis",
+        "visible": false
+      },
+      "topicGrid": {
+        "selector": ".taf-topic-grid",
+        "visible": false
+      }
+    },
+    "overlapChecks": {}
+  }
+}

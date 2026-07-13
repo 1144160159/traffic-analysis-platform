@@ -1,0 +1,152 @@
+{
+  "status": "pass",
+  "backend": "Windows Chrome CDP",
+  "route_kind": "normal production business route without visual-focus query",
+  "image": "traffic/web-ui:ui-campaign-impact-campus-20260710-r176",
+  "screenshot": "normal-route-r176.png",
+  "geometry": {
+    "final_url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=campus&windowsCdpEvidenceTs=1783664598326",
+    "viewport": {
+      "width": 2133,
+      "height": 1200,
+      "device_pixel_ratio": 0.8999999632438005
+    },
+    "shell": {
+      "topbar": true,
+      "sidebar": true,
+      "bottombar": true
+    },
+    "active_impact": "campus",
+    "panel": {
+      "x": 1094.1551513671875,
+      "y": 489.4328918457031,
+      "width": 583.1944580078125,
+      "height": 360.3703918457031,
+      "right": 1677.349609375,
+      "bottom": 849.8032836914062
+    },
+    "panel_body": {
+      "x": 1094.8958740234375,
+      "y": 524.1666870117188,
+      "width": 581.7130126953125,
+      "height": 324.8958435058594,
+      "right": 1676.60888671875,
+      "bottom": 849.0625305175781
+    },
+    "content": {
+      "x": 1102.8935546875,
+      "y": 641.13427734375,
+      "width": 565.7175903320312,
+      "height": 207.68519592285156,
+      "right": 1668.6111450195312,
+      "bottom": 848.8194732666016
+    },
+    "table": {
+      "x": 1360.5787353515625,
+      "y": 671.1227416992188,
+      "width": 299.29400634765625,
+      "height": 151.41204833984375,
+      "right": 1659.8727416992188,
+      "bottom": 822.5347900390625
+    },
+    "rows": [
+      {
+        "index": 0,
+        "text": "校区/楼宇覆盖资产风险链路",
+        "rect": {
+          "x": 1361.3194580078125,
+          "y": 671.8634643554688,
+          "width": 297.8125,
+          "height": 24.988426208496094,
+          "right": 1659.1319580078125,
+          "bottom": 696.8518905639648
+        }
+      },
+      {
+        "index": 1,
+        "text": "主校区-数据中心26高危核心链路",
+        "rect": {
+          "x": 1361.3194580078125,
+          "y": 696.8518676757812,
+          "width": 297.8125,
+          "height": 24.988426208496094,
+          "right": 1659.1319580078125,
+          "bottom": 721.8402938842773
+        }
+      },
+      {
+        "index": 2,
+        "text": "主校区-科研楼18中危东西向",
+        "rect": {
+          "x": 1361.3194580078125,
+          "y": 721.84033203125,
+          "width": 297.8125,
+          "height": 24.988426208496094,
+          "right": 1659.1319580078125,
+          "bottom": 746.8287582397461
+        }
+      },
+      {
+        "index": 3,
+        "text": "东校区-办公楼9中危VPN 链路",
+        "rect": {
+          "x": 1361.3194580078125,
+          "y": 746.8287353515625,
+          "width": 297.8125,
+          "height": 24.988426208496094,
+          "right": 1659.1319580078125,
+          "bottom": 771.8171615600586
+        }
+      },
+      {
+        "index": 4,
+        "text": "南校区-教学楼7中危无线网",
+        "rect": {
+          "x": 1361.3194580078125,
+          "y": 771.817138671875,
+          "width": 297.8125,
+          "height": 24.988426208496094,
+          "right": 1659.1319580078125,
+          "bottom": 796.8055648803711
+        }
+      },
+      {
+        "index": 5,
+        "text": "西校区-图书馆5低危出口链路",
+        "rect": {
+          "x": 1361.3194580078125,
+          "y": 796.8056030273438,
+          "width": 297.8125,
+          "height": 24.988426208496094,
+          "right": 1659.1319580078125,
+          "bottom": 821.7940292358398
+        }
+      }
+    ],
+    "data_row_count": 5,
+    "all_rows_within_panel_body": true,
+    "link": {
+      "text": "查看全部校区 >",
+      "rect": {
+        "x": 1468.0208740234375,
+        "y": 826.52783203125,
+        "width": 84.40972900390625,
+        "height": 15.555556297302246,
+        "right": 1552.4306030273438,
+        "bottom": 842.0833883285522
+      }
+    },
+    "link_within_panel_body": true,
+    "content_within_panel_body": true,
+    "horizontal_overflow": false,
+    "vertical_scroll": false,
+    "route_impact_query": "campus",
+    "campus_content_visible": true
+  },
+  "runtime": {
+    "console_errors": [],
+    "page_errors": [],
+    "request_failures": [],
+    "bad_responses": []
+  }
+}

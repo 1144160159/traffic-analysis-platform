@@ -1,0 +1,17 @@
+Generate a 3840x2160 PNG static 4K background asset for traffic-analysis-platform.
+
+Use case: productivity-visual.
+Asset type: operations dashboard workbench background.
+
+Scene:
+- A dark cyber operations workbench showing abstract KPI energy, alert density, traffic trend waves, topology fragments, queue pressure, evidence packets, and service health pulses.
+- The composition should feel like the environment behind a dashboard, not the dashboard itself.
+- Leave safe zones in the center-left and top-right for real UI panels.
+
+Style:
+- Deep black/navy base with cyan and blue telemetry, green normal-state accents, amber and red risk points used sparingly.
+- Crisp enterprise data visualization atmosphere, high detail, restrained and production-ready.
+
+Constraints:
+- No readable numbers, labels, charts with text, buttons, menus, browser chrome, logos, people, credentials, real IPs, or complete UI screens.
+

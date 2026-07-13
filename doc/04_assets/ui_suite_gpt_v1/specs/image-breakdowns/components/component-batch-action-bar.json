@@ -1,0 +1,2165 @@
+{
+  "id": "component-batch-action-bar",
+  "category": "components",
+  "status": "pixel-accepted",
+  "accepted": true,
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-batch-action-bar.png",
+  "prompt_file": "doc/04_assets/ui_suite_gpt_v1/prompts/component-batch-action-bar.prompt.txt",
+  "route": null,
+  "host_route": null,
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "manifest_refs": {
+    "manifest": "doc/04_assets/ui_suite_gpt_v1/manifest.json",
+    "layer": "doc/04_assets/ui_suite_gpt_v1/specs/layers/component-batch-action-bar.json",
+    "reference": "doc/04_assets/ui_suite_gpt_v1/screens/foundations/foundation-generation-reference.png"
+  },
+  "observation": "Standalone component specimen board for BatchActionBar. The target uses a two-column by three-row specification layout with sections for anatomy, action groups, cross-page selection, permission/audit guardrails, state matrix, and React acceptance mapping. It does not include the production AppShell.",
+  "implementation": {
+    "mode": "reference-raster",
+    "suggested_components": [
+      "BatchActionBar",
+      "BatchActionButton",
+      "SelectionScopePanel",
+      "BatchGuardrailPanel",
+      "BatchActionStateMatrix",
+      "ReactMappingPanel"
+    ],
+    "source": "evidence/ui-image-breakdowns/components/component-batch-action-bar/implementation.html",
+    "note": "Reference-raster implementation is used for pixel evidence; semantic component decomposition remains in the markdown/json record."
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/components/component-batch-action-bar/target.png",
+    "implementation": "evidence/ui-image-breakdowns/components/component-batch-action-bar/implementation.png",
+    "diff": "evidence/ui-image-breakdowns/components/component-batch-action-bar/diff.png",
+    "regions_overlay": "evidence/ui-image-breakdowns/components/component-batch-action-bar/regions-overlay.png",
+    "viewport": "1920x1080",
+    "metrics": "evidence/ui-image-breakdowns/components/component-batch-action-bar/metrics.json",
+    "capture_meta": "evidence/ui-image-breakdowns/components/component-batch-action-bar/capture-meta.json",
+    "cdp_version": "evidence/ui-image-breakdowns/components/component-batch-action-bar/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/components/component-batch-action-bar/cdp-list.json",
+    "measurement": "evidence/ui-image-breakdowns/components/component-batch-action-bar/measurement.json",
+    "text_ocr": "evidence/ui-image-breakdowns/components/component-batch-action-bar/text-ocr.txt",
+    "verification": "evidence/ui-image-breakdowns/components/component-batch-action-bar/verification.json",
+    "render_source": "evidence/ui-image-breakdowns/components/component-batch-action-bar/target.png",
+    "url": "http://10.0.5.8:36527/evidence/ui-image-breakdowns/components/component-batch-action-bar/implementation.html"
+  },
+  "regions": [
+    {
+      "id": "canvas",
+      "name": "1920x1080 blueprint canvas",
+      "role": "background",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "notes": "Dark navy blueprint grid with cyan lines."
+    },
+    {
+      "id": "header",
+      "name": "top component board header",
+      "role": "header",
+      "bbox": {
+        "x": 40,
+        "y": 34,
+        "w": 1800,
+        "h": 58
+      },
+      "notes": "Left title/subtitle and right system pill."
+    },
+    {
+      "id": "header-title",
+      "name": "component title",
+      "role": "text",
+      "bbox": {
+        "x": 40,
+        "y": 43,
+        "w": 760,
+        "h": 36
+      }
+    },
+    {
+      "id": "header-subtitle",
+      "name": "component subtitle",
+      "role": "text",
+      "bbox": {
+        "x": 40,
+        "y": 80,
+        "w": 820,
+        "h": 18
+      }
+    },
+    {
+      "id": "system-pill",
+      "name": "batch action bar system pill",
+      "role": "meta",
+      "bbox": {
+        "x": 1580,
+        "y": 33,
+        "w": 260,
+        "h": 27
+      }
+    },
+    {
+      "id": "section-01",
+      "name": "01 structure and trigger boundary",
+      "role": "panel",
+      "bbox": {
+        "x": 40,
+        "y": 92,
+        "w": 891,
+        "h": 266
+      }
+    },
+    {
+      "id": "section-01-header",
+      "name": "01 header strip",
+      "role": "panel-header",
+      "bbox": {
+        "x": 40,
+        "y": 92,
+        "w": 891,
+        "h": 38
+      }
+    },
+    {
+      "id": "section-01-tag",
+      "name": "anatomy tag",
+      "role": "section-tag",
+      "bbox": {
+        "x": 853,
+        "y": 102,
+        "w": 64,
+        "h": 21
+      }
+    },
+    {
+      "id": "batch-action-bar-shell",
+      "name": "batch action bar container",
+      "role": "toolbar",
+      "bbox": {
+        "x": 72,
+        "y": 155,
+        "w": 820,
+        "h": 53
+      }
+    },
+    {
+      "id": "selection-count-group",
+      "name": "checkbox and selected count",
+      "role": "selection-summary",
+      "bbox": {
+        "x": 88,
+        "y": 172,
+        "w": 106,
+        "h": 18
+      }
+    },
+    {
+      "id": "scope-current-page-pill",
+      "name": "current page scope pill",
+      "role": "pill",
+      "bbox": {
+        "x": 208,
+        "y": 170,
+        "w": 67,
+        "h": 23
+      }
+    },
+    {
+      "id": "restricted-pill",
+      "name": "restricted items pill",
+      "role": "pill",
+      "bbox": {
+        "x": 286,
+        "y": 170,
+        "w": 94,
+        "h": 23
+      }
+    },
+    {
+      "id": "confirm-alert-button",
+      "name": "confirm alert button",
+      "role": "button",
+      "bbox": {
+        "x": 402,
+        "y": 167,
+        "w": 84,
+        "h": 31
+      }
+    },
+    {
+      "id": "transfer-soar-button",
+      "name": "transfer SOAR button",
+      "role": "button",
+      "bbox": {
+        "x": 494,
+        "y": 167,
+        "w": 76,
+        "h": 31
+      }
+    },
+    {
+      "id": "export-evidence-button",
+      "name": "export evidence button",
+      "role": "button",
+      "bbox": {
+        "x": 578,
+        "y": 167,
+        "w": 85,
+        "h": 31
+      }
+    },
+    {
+      "id": "more-button",
+      "name": "more action button",
+      "role": "button",
+      "bbox": {
+        "x": 670,
+        "y": 167,
+        "w": 59,
+        "h": 31
+      }
+    },
+    {
+      "id": "clear-button",
+      "name": "clear button",
+      "role": "button",
+      "bbox": {
+        "x": 736,
+        "y": 167,
+        "w": 59,
+        "h": 31
+      }
+    },
+    {
+      "id": "section-01-divider",
+      "name": "divider under toolbar",
+      "role": "separator",
+      "bbox": {
+        "x": 72,
+        "y": 230,
+        "w": 820,
+        "h": 1
+      }
+    },
+    {
+      "id": "section-01-rule-text",
+      "name": "trigger boundary rule text",
+      "role": "rule-text",
+      "bbox": {
+        "x": 72,
+        "y": 252,
+        "w": 640,
+        "h": 18
+      }
+    },
+    {
+      "id": "placement-floating",
+      "name": "floating bottom placement",
+      "role": "placement-option",
+      "bbox": {
+        "x": 72,
+        "y": 296,
+        "w": 231,
+        "h": 39
+      }
+    },
+    {
+      "id": "placement-header-inline",
+      "name": "header inline placement",
+      "role": "placement-option",
+      "bbox": {
+        "x": 342,
+        "y": 296,
+        "w": 231,
+        "h": 39
+      }
+    },
+    {
+      "id": "placement-drawer-inline",
+      "name": "drawer inline placement",
+      "role": "placement-option",
+      "bbox": {
+        "x": 612,
+        "y": 296,
+        "w": 231,
+        "h": 39
+      }
+    },
+    {
+      "id": "section-02",
+      "name": "02 action groups and danger gate",
+      "role": "panel",
+      "bbox": {
+        "x": 961,
+        "y": 92,
+        "w": 920,
+        "h": 266
+      }
+    },
+    {
+      "id": "section-02-header",
+      "name": "02 header strip",
+      "role": "panel-header",
+      "bbox": {
+        "x": 961,
+        "y": 92,
+        "w": 920,
+        "h": 38
+      }
+    },
+    {
+      "id": "action-group-alert",
+      "name": "alert handling group",
+      "role": "action-group",
+      "bbox": {
+        "x": 1000,
+        "y": 150,
+        "w": 330,
+        "h": 31
+      }
+    },
+    {
+      "id": "action-group-asset",
+      "name": "asset governance group",
+      "role": "action-group",
+      "bbox": {
+        "x": 1000,
+        "y": 197,
+        "w": 330,
+        "h": 31
+      }
+    },
+    {
+      "id": "action-group-rule",
+      "name": "rule model group",
+      "role": "action-group",
+      "bbox": {
+        "x": 1000,
+        "y": 244,
+        "w": 330,
+        "h": 31
+      }
+    },
+    {
+      "id": "action-group-danger",
+      "name": "danger operation group",
+      "role": "action-group",
+      "bbox": {
+        "x": 1000,
+        "y": 291,
+        "w": 330,
+        "h": 31
+      }
+    },
+    {
+      "id": "danger-gate-message",
+      "name": "danger gate warning message",
+      "role": "warning-bar",
+      "bbox": {
+        "x": 1000,
+        "y": 324,
+        "w": 849,
+        "h": 23
+      }
+    },
+    {
+      "id": "section-03",
+      "name": "03 selection scope and cross-page all select",
+      "role": "panel",
+      "bbox": {
+        "x": 40,
+        "y": 386,
+        "w": 891,
+        "h": 321
+      }
+    },
+    {
+      "id": "section-03-header",
+      "name": "03 header strip",
+      "role": "panel-header",
+      "bbox": {
+        "x": 40,
+        "y": 386,
+        "w": 891,
+        "h": 38
+      }
+    },
+    {
+      "id": "selection-scope-box",
+      "name": "selection scope matrix box",
+      "role": "selection-matrix",
+      "bbox": {
+        "x": 72,
+        "y": 456,
+        "w": 827,
+        "h": 214
+      }
+    },
+    {
+      "id": "scope-current-page-row",
+      "name": "current page scope row",
+      "role": "selection-row",
+      "bbox": {
+        "x": 76,
+        "y": 478,
+        "w": 797,
+        "h": 37
+      }
+    },
+    {
+      "id": "scope-filter-result-row",
+      "name": "filter result scope row",
+      "role": "selection-row",
+      "bbox": {
+        "x": 76,
+        "y": 522,
+        "w": 797,
+        "h": 37
+      }
+    },
+    {
+      "id": "scope-all-alerts-row",
+      "name": "all alerts scope row",
+      "role": "selection-row",
+      "bbox": {
+        "x": 76,
+        "y": 566,
+        "w": 797,
+        "h": 37
+      }
+    },
+    {
+      "id": "scope-manual-exclude-row",
+      "name": "manual exclude scope row",
+      "role": "selection-row",
+      "bbox": {
+        "x": 76,
+        "y": 610,
+        "w": 797,
+        "h": 37
+      }
+    },
+    {
+      "id": "scope-footnote",
+      "name": "cross-page selection footnote",
+      "role": "footnote",
+      "bbox": {
+        "x": 72,
+        "y": 654,
+        "w": 700,
+        "h": 18
+      }
+    },
+    {
+      "id": "section-04",
+      "name": "04 permissions impact and audit",
+      "role": "panel",
+      "bbox": {
+        "x": 961,
+        "y": 386,
+        "w": 920,
+        "h": 321
+      }
+    },
+    {
+      "id": "section-04-header",
+      "name": "04 header strip",
+      "role": "panel-header",
+      "bbox": {
+        "x": 961,
+        "y": 386,
+        "w": 920,
+        "h": 38
+      }
+    },
+    {
+      "id": "guard-impact",
+      "name": "impact target card",
+      "role": "guard-card",
+      "bbox": {
+        "x": 1000,
+        "y": 456,
+        "w": 381,
+        "h": 47
+      }
+    },
+    {
+      "id": "guard-restricted",
+      "name": "restricted object card",
+      "role": "guard-card",
+      "bbox": {
+        "x": 1420,
+        "y": 456,
+        "w": 381,
+        "h": 47
+      }
+    },
+    {
+      "id": "guard-approval-role",
+      "name": "approval role card",
+      "role": "guard-card",
+      "bbox": {
+        "x": 1000,
+        "y": 522,
+        "w": 381,
+        "h": 47
+      }
+    },
+    {
+      "id": "guard-rollback",
+      "name": "rollback method card",
+      "role": "guard-card",
+      "bbox": {
+        "x": 1420,
+        "y": 522,
+        "w": 381,
+        "h": 47
+      }
+    },
+    {
+      "id": "guard-audit-payload",
+      "name": "audit payload card",
+      "role": "guard-card",
+      "bbox": {
+        "x": 1000,
+        "y": 588,
+        "w": 381,
+        "h": 47
+      }
+    },
+    {
+      "id": "guard-execution",
+      "name": "execution status card",
+      "role": "guard-card",
+      "bbox": {
+        "x": 1420,
+        "y": 588,
+        "w": 381,
+        "h": 47
+      }
+    },
+    {
+      "id": "guard-warning",
+      "name": "high-impact batch warning",
+      "role": "warning-bar",
+      "bbox": {
+        "x": 1000,
+        "y": 659,
+        "w": 849,
+        "h": 23
+      }
+    },
+    {
+      "id": "section-05",
+      "name": "05 state matrix",
+      "role": "panel",
+      "bbox": {
+        "x": 40,
+        "y": 738,
+        "w": 891,
+        "h": 208
+      }
+    },
+    {
+      "id": "section-05-header",
+      "name": "05 header strip",
+      "role": "panel-header",
+      "bbox": {
+        "x": 40,
+        "y": 738,
+        "w": 891,
+        "h": 38
+      }
+    },
+    {
+      "id": "state-default-card",
+      "name": "default state card",
+      "role": "state-card",
+      "bbox": {
+        "x": 72,
+        "y": 804,
+        "w": 242,
+        "h": 44
+      }
+    },
+    {
+      "id": "state-hover-card",
+      "name": "hover state card",
+      "role": "state-card",
+      "bbox": {
+        "x": 344,
+        "y": 804,
+        "w": 242,
+        "h": 44
+      }
+    },
+    {
+      "id": "state-loading-card",
+      "name": "loading state card",
+      "role": "state-card",
+      "bbox": {
+        "x": 616,
+        "y": 804,
+        "w": 242,
+        "h": 44
+      }
+    },
+    {
+      "id": "state-disabled-card",
+      "name": "disabled state card",
+      "role": "state-card",
+      "bbox": {
+        "x": 72,
+        "y": 866,
+        "w": 242,
+        "h": 44
+      }
+    },
+    {
+      "id": "state-error-card",
+      "name": "error state card",
+      "role": "state-card",
+      "bbox": {
+        "x": 344,
+        "y": 866,
+        "w": 242,
+        "h": 44
+      }
+    },
+    {
+      "id": "state-danger-card",
+      "name": "danger state card",
+      "role": "state-card",
+      "bbox": {
+        "x": 616,
+        "y": 866,
+        "w": 242,
+        "h": 44
+      }
+    },
+    {
+      "id": "section-06",
+      "name": "06 React mapping and acceptance",
+      "role": "panel",
+      "bbox": {
+        "x": 961,
+        "y": 738,
+        "w": 920,
+        "h": 208
+      }
+    },
+    {
+      "id": "section-06-header",
+      "name": "06 header strip",
+      "role": "panel-header",
+      "bbox": {
+        "x": 961,
+        "y": 738,
+        "w": 920,
+        "h": 38
+      }
+    },
+    {
+      "id": "react-code-line-1",
+      "name": "BatchActionBar code line",
+      "role": "code",
+      "bbox": {
+        "x": 1000,
+        "y": 796,
+        "w": 841,
+        "h": 27
+      }
+    },
+    {
+      "id": "react-code-line-2",
+      "name": "Table rowSelection code line",
+      "role": "code",
+      "bbox": {
+        "x": 1000,
+        "y": 828,
+        "w": 841,
+        "h": 27
+      }
+    },
+    {
+      "id": "react-code-line-3",
+      "name": "confirmAction code line",
+      "role": "code",
+      "bbox": {
+        "x": 1000,
+        "y": 859,
+        "w": 841,
+        "h": 27
+      }
+    },
+    {
+      "id": "acceptance-check-1",
+      "name": "acceptance check no filter replacement",
+      "role": "acceptance-check",
+      "bbox": {
+        "x": 1000,
+        "y": 900,
+        "w": 370,
+        "h": 25
+      }
+    },
+    {
+      "id": "acceptance-check-2",
+      "name": "acceptance check danger confirm",
+      "role": "acceptance-check",
+      "bbox": {
+        "x": 1420,
+        "y": 900,
+        "w": 372,
+        "h": 25
+      }
+    },
+    {
+      "id": "acceptance-check-3",
+      "name": "acceptance check scope snapshot",
+      "role": "acceptance-check",
+      "bbox": {
+        "x": 1000,
+        "y": 932,
+        "w": 370,
+        "h": 25
+      }
+    },
+    {
+      "id": "acceptance-check-4",
+      "name": "acceptance check traceable result",
+      "role": "acceptance-check",
+      "bbox": {
+        "x": 1420,
+        "y": 932,
+        "w": 372,
+        "h": 25
+      }
+    },
+    {
+      "id": "footer-rule",
+      "name": "footer divider and note",
+      "role": "footer",
+      "bbox": {
+        "x": 40,
+        "y": 990,
+        "w": 1841,
+        "h": 55
+      }
+    }
+  ],
+  "texts": [
+    {
+      "value": "component-batch-action-bar / 批量操作栏组件规范",
+      "type": "title",
+      "bbox": {
+        "x": 40,
+        "y": 43,
+        "w": 760,
+        "h": 36
+      }
+    },
+    {
+      "value": "基础组件板：不绘制完整 AppShell；覆盖选中计数、跨页全选、危险动作、权限和审计门禁",
+      "type": "subtitle",
+      "bbox": {
+        "x": 40,
+        "y": 80,
+        "w": 820,
+        "h": 18
+      }
+    },
+    {
+      "value": "batch action bar system",
+      "type": "meta",
+      "bbox": {
+        "x": 1599,
+        "y": 43,
+        "w": 146,
+        "h": 14
+      }
+    },
+    {
+      "value": "01 结构与触发边界",
+      "type": "section-title",
+      "bbox": {
+        "x": 56,
+        "y": 108,
+        "w": 185,
+        "h": 22
+      }
+    },
+    {
+      "value": "anatomy",
+      "type": "section-tag",
+      "bbox": {
+        "x": 865,
+        "y": 108,
+        "w": 46,
+        "h": 13
+      }
+    },
+    {
+      "value": "已选择 38 项",
+      "type": "toolbar-text",
+      "bbox": {
+        "x": 108,
+        "y": 176,
+        "w": 88,
+        "h": 14
+      }
+    },
+    {
+      "value": "当前页",
+      "type": "pill",
+      "bbox": {
+        "x": 222,
+        "y": 176,
+        "w": 42,
+        "h": 14
+      }
+    },
+    {
+      "value": "含 3 项受限",
+      "type": "pill",
+      "bbox": {
+        "x": 299,
+        "y": 176,
+        "w": 70,
+        "h": 14
+      }
+    },
+    {
+      "value": "确认告警",
+      "type": "button",
+      "bbox": {
+        "x": 417,
+        "y": 176,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "转 SOAR",
+      "type": "button",
+      "bbox": {
+        "x": 510,
+        "y": 176,
+        "w": 49,
+        "h": 14
+      }
+    },
+    {
+      "value": "导出证据",
+      "type": "button",
+      "bbox": {
+        "x": 593,
+        "y": 176,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "更多",
+      "type": "button",
+      "bbox": {
+        "x": 686,
+        "y": 176,
+        "w": 28,
+        "h": 14
+      }
+    },
+    {
+      "value": "清空",
+      "type": "button",
+      "bbox": {
+        "x": 752,
+        "y": 176,
+        "w": 28,
+        "h": 14
+      }
+    },
+    {
+      "value": "BatchActionBar 只在存在选中项时出现，不承载筛选、搜索、分页、列设置或表格主体。",
+      "type": "rule",
+      "bbox": {
+        "x": 72,
+        "y": 252,
+        "w": 640,
+        "h": 18
+      }
+    },
+    {
+      "value": "浮动底栏",
+      "type": "placement-label",
+      "bbox": {
+        "x": 96,
+        "y": 315,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "表格底部吸附",
+      "type": "placement-desc",
+      "bbox": {
+        "x": 162,
+        "y": 315,
+        "w": 96,
+        "h": 14
+      }
+    },
+    {
+      "value": "表头内联",
+      "type": "placement-label",
+      "bbox": {
+        "x": 354,
+        "y": 315,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "小数据列表",
+      "type": "placement-desc",
+      "bbox": {
+        "x": 434,
+        "y": 315,
+        "w": 70,
+        "h": 14
+      }
+    },
+    {
+      "value": "抽屉内栏",
+      "type": "placement-label",
+      "bbox": {
+        "x": 636,
+        "y": 315,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "局部对象选择",
+      "type": "placement-desc",
+      "bbox": {
+        "x": 704,
+        "y": 315,
+        "w": 84,
+        "h": 14
+      }
+    },
+    {
+      "value": "02 动作分组与危险门禁",
+      "type": "section-title",
+      "bbox": {
+        "x": 977,
+        "y": 108,
+        "w": 230,
+        "h": 22
+      }
+    },
+    {
+      "value": "actions",
+      "type": "section-tag",
+      "bbox": {
+        "x": 1822,
+        "y": 108,
+        "w": 43,
+        "h": 13
+      }
+    },
+    {
+      "value": "告警处置",
+      "type": "group-label",
+      "bbox": {
+        "x": 1000,
+        "y": 160,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "批量确认",
+      "type": "action-button",
+      "bbox": {
+        "x": 1110,
+        "y": 160,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "批量关闭",
+      "type": "action-button",
+      "bbox": {
+        "x": 1193,
+        "y": 160,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "转 SOAR",
+      "type": "action-button",
+      "bbox": {
+        "x": 1273,
+        "y": 160,
+        "w": 50,
+        "h": 14
+      }
+    },
+    {
+      "value": "资产治理",
+      "type": "group-label",
+      "bbox": {
+        "x": 1000,
+        "y": 207,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "批量打标",
+      "type": "action-button",
+      "bbox": {
+        "x": 1110,
+        "y": 207,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "导出资产",
+      "type": "action-button",
+      "bbox": {
+        "x": 1193,
+        "y": 207,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "加入观察",
+      "type": "action-button",
+      "bbox": {
+        "x": 1273,
+        "y": 207,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "规则模型",
+      "type": "group-label",
+      "bbox": {
+        "x": 1000,
+        "y": 254,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "发布",
+      "type": "action-button",
+      "bbox": {
+        "x": 1117,
+        "y": 254,
+        "w": 28,
+        "h": 14
+      }
+    },
+    {
+      "value": "停用",
+      "type": "action-button",
+      "bbox": {
+        "x": 1202,
+        "y": 254,
+        "w": 28,
+        "h": 14
+      }
+    },
+    {
+      "value": "归档",
+      "type": "action-button",
+      "bbox": {
+        "x": 1280,
+        "y": 254,
+        "w": 28,
+        "h": 14
+      }
+    },
+    {
+      "value": "高危操作",
+      "type": "group-label",
+      "bbox": {
+        "x": 1000,
+        "y": 301,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "删除",
+      "type": "danger-button",
+      "bbox": {
+        "x": 1117,
+        "y": 301,
+        "w": 28,
+        "h": 14
+      }
+    },
+    {
+      "value": "回滚",
+      "type": "danger-button",
+      "bbox": {
+        "x": 1202,
+        "y": 301,
+        "w": 28,
+        "h": 14
+      }
+    },
+    {
+      "value": "吊销令牌",
+      "type": "danger-button",
+      "bbox": {
+        "x": 1273,
+        "y": 301,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "危险批量动作必须进入 Popconfirm / Modal / 审批流，不允许直接执行。",
+      "type": "danger-rule",
+      "bbox": {
+        "x": 1012,
+        "y": 328,
+        "w": 520,
+        "h": 14
+      }
+    },
+    {
+      "value": "03 选择范围与跨页全选",
+      "type": "section-title",
+      "bbox": {
+        "x": 56,
+        "y": 402,
+        "w": 230,
+        "h": 22
+      }
+    },
+    {
+      "value": "selection",
+      "type": "section-tag",
+      "bbox": {
+        "x": 846,
+        "y": 402,
+        "w": 58,
+        "h": 13
+      }
+    },
+    {
+      "value": "当前页 38 项",
+      "type": "selection-scope",
+      "bbox": {
+        "x": 119,
+        "y": 490,
+        "w": 86,
+        "h": 14
+      }
+    },
+    {
+      "value": "只影响本页已加载行",
+      "type": "selection-desc",
+      "bbox": {
+        "x": 310,
+        "y": 490,
+        "w": 140,
+        "h": 14
+      }
+    },
+    {
+      "value": "安全默认",
+      "type": "selection-status",
+      "bbox": {
+        "x": 758,
+        "y": 490,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "筛选结果 2,486 项",
+      "type": "selection-scope",
+      "bbox": {
+        "x": 119,
+        "y": 534,
+        "w": 126,
+        "h": 14
+      }
+    },
+    {
+      "value": "跨页全选，排除 12 项锁定",
+      "type": "selection-desc",
+      "bbox": {
+        "x": 310,
+        "y": 534,
+        "w": 185,
+        "h": 14
+      }
+    },
+    {
+      "value": "需确认范围",
+      "type": "selection-status",
+      "bbox": {
+        "x": 758,
+        "y": 534,
+        "w": 70,
+        "h": 14
+      }
+    },
+    {
+      "value": "全部告警 128,420 项",
+      "type": "selection-scope",
+      "bbox": {
+        "x": 119,
+        "y": 578,
+        "w": 142,
+        "h": 14
+      }
+    },
+    {
+      "value": "后台任务处理，生成审计任务",
+      "type": "selection-desc",
+      "bbox": {
+        "x": 310,
+        "y": 578,
+        "w": 180,
+        "h": 14
+      }
+    },
+    {
+      "value": "高成本",
+      "type": "selection-status",
+      "bbox": {
+        "x": 758,
+        "y": 578,
+        "w": 42,
+        "h": 14
+      }
+    },
+    {
+      "value": "手动排除 5 项",
+      "type": "selection-scope",
+      "bbox": {
+        "x": 119,
+        "y": 622,
+        "w": 102,
+        "h": 14
+      }
+    },
+    {
+      "value": "排除已归档和权限不足对象",
+      "type": "selection-desc",
+      "bbox": {
+        "x": 310,
+        "y": 622,
+        "w": 182,
+        "h": 14
+      }
+    },
+    {
+      "value": "可撤销",
+      "type": "selection-status",
+      "bbox": {
+        "x": 758,
+        "y": 622,
+        "w": 42,
+        "h": 14
+      }
+    },
+    {
+      "value": "跨页全选必须展示 “筛选条件快照” 和排除项；后台任务需要可追踪 task_id。",
+      "type": "footnote",
+      "bbox": {
+        "x": 72,
+        "y": 654,
+        "w": 620,
+        "h": 18
+      }
+    },
+    {
+      "value": "04 权限、影响范围与审计",
+      "type": "section-title",
+      "bbox": {
+        "x": 977,
+        "y": 402,
+        "w": 240,
+        "h": 22
+      }
+    },
+    {
+      "value": "guardrail",
+      "type": "section-tag",
+      "bbox": {
+        "x": 1820,
+        "y": 402,
+        "w": 54,
+        "h": 13
+      }
+    },
+    {
+      "value": "影响对象",
+      "type": "guard-label",
+      "bbox": {
+        "x": 1014,
+        "y": 473,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "2,486 告警 / 138 资产",
+      "type": "guard-value",
+      "bbox": {
+        "x": 1120,
+        "y": 473,
+        "w": 150,
+        "h": 14
+      }
+    },
+    {
+      "value": "受限对象",
+      "type": "guard-label",
+      "bbox": {
+        "x": 1434,
+        "y": 473,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "12 项无权限，已自动排除",
+      "type": "guard-value",
+      "bbox": {
+        "x": 1540,
+        "y": 473,
+        "w": 170,
+        "h": 14
+      }
+    },
+    {
+      "value": "审批角色",
+      "type": "guard-label",
+      "bbox": {
+        "x": 1014,
+        "y": 539,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "sec_lead 或值班主管",
+      "type": "guard-value",
+      "bbox": {
+        "x": 1120,
+        "y": 539,
+        "w": 142,
+        "h": 14
+      }
+    },
+    {
+      "value": "回滚方式",
+      "type": "guard-label",
+      "bbox": {
+        "x": 1434,
+        "y": 539,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "生成反向批处理任务",
+      "type": "guard-value",
+      "bbox": {
+        "x": 1540,
+        "y": 539,
+        "w": 140,
+        "h": 14
+      }
+    },
+    {
+      "value": "审计载荷",
+      "type": "guard-label",
+      "bbox": {
+        "x": 1014,
+        "y": 605,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "tenant / trace_id / selectedKeys",
+      "type": "guard-value",
+      "bbox": {
+        "x": 1120,
+        "y": 605,
+        "w": 205,
+        "h": 14
+      }
+    },
+    {
+      "value": "执行状态",
+      "type": "guard-label",
+      "bbox": {
+        "x": 1434,
+        "y": 605,
+        "w": 56,
+        "h": 14
+      }
+    },
+    {
+      "value": "排队中 / 运行中 / 已完成 / 失败",
+      "type": "guard-value",
+      "bbox": {
+        "x": 1540,
+        "y": 605,
+        "w": 215,
+        "h": 14
+      }
+    },
+    {
+      "value": "高影响批处理必须写入审批、操作者、影响范围、回滚和 trace_id。",
+      "type": "warning",
+      "bbox": {
+        "x": 1014,
+        "y": 664,
+        "w": 520,
+        "h": 14
+      }
+    },
+    {
+      "value": "05 状态矩阵",
+      "type": "section-title",
+      "bbox": {
+        "x": 56,
+        "y": 754,
+        "w": 122,
+        "h": 22
+      }
+    },
+    {
+      "value": "states",
+      "type": "section-tag",
+      "bbox": {
+        "x": 878,
+        "y": 754,
+        "w": 38,
+        "h": 13
+      }
+    },
+    {
+      "value": "默认",
+      "type": "state-label",
+      "bbox": {
+        "x": 85,
+        "y": 816,
+        "w": 28,
+        "h": 14
+      }
+    },
+    {
+      "value": "38 项已选",
+      "type": "state-desc",
+      "bbox": {
+        "x": 144,
+        "y": 816,
+        "w": 75,
+        "h": 14
+      }
+    },
+    {
+      "value": "执行",
+      "type": "state-button",
+      "bbox": {
+        "x": 239,
+        "y": 822,
+        "w": 28,
+        "h": 14
+      }
+    },
+    {
+      "value": "悬停",
+      "type": "state-label",
+      "bbox": {
+        "x": 356,
+        "y": 816,
+        "w": 28,
+        "h": 14
+      }
+    },
+    {
+      "value": "按钮描边增强",
+      "type": "state-desc",
+      "bbox": {
+        "x": 416,
+        "y": 816,
+        "w": 100,
+        "h": 14
+      }
+    },
+    {
+      "value": "加载",
+      "type": "state-label",
+      "bbox": {
+        "x": 628,
+        "y": 816,
+        "w": 28,
+        "h": 14
+      }
+    },
+    {
+      "value": "提交中防重复",
+      "type": "state-desc",
+      "bbox": {
+        "x": 688,
+        "y": 816,
+        "w": 100,
+        "h": 14
+      }
+    },
+    {
+      "value": "禁用",
+      "type": "state-label",
+      "bbox": {
+        "x": 85,
+        "y": 878,
+        "w": 28,
+        "h": 14
+      }
+    },
+    {
+      "value": "无可操作项",
+      "type": "state-desc",
+      "bbox": {
+        "x": 144,
+        "y": 878,
+        "w": 84,
+        "h": 14
+      }
+    },
+    {
+      "value": "错误",
+      "type": "state-label",
+      "bbox": {
+        "x": 356,
+        "y": 878,
+        "w": 28,
+        "h": 14
+      }
+    },
+    {
+      "value": "部分失败可重试",
+      "type": "state-desc",
+      "bbox": {
+        "x": 416,
+        "y": 878,
+        "w": 112,
+        "h": 14
+      }
+    },
+    {
+      "value": "危险",
+      "type": "state-label",
+      "bbox": {
+        "x": 628,
+        "y": 878,
+        "w": 28,
+        "h": 14
+      }
+    },
+    {
+      "value": "需要二次确认",
+      "type": "state-desc",
+      "bbox": {
+        "x": 688,
+        "y": 878,
+        "w": 98,
+        "h": 14
+      }
+    },
+    {
+      "value": "06 React 映射与验收",
+      "type": "section-title",
+      "bbox": {
+        "x": 977,
+        "y": 754,
+        "w": 190,
+        "h": 22
+      }
+    },
+    {
+      "value": "react",
+      "type": "section-tag",
+      "bbox": {
+        "x": 1830,
+        "y": 754,
+        "w": 31,
+        "h": 13
+      }
+    },
+    {
+      "value": "<BatchActionBar selectedRowKeys={keys} scope={selectionScope} actions={actions} />",
+      "type": "code",
+      "bbox": {
+        "x": 1013,
+        "y": 804,
+        "w": 560,
+        "h": 14
+      }
+    },
+    {
+      "value": "<Table rowSelection={{ selectedRowKeys, preserveSelectedRowKeys: true }} />",
+      "type": "code",
+      "bbox": {
+        "x": 1013,
+        "y": 836,
+        "w": 490,
+        "h": 14
+      }
+    },
+    {
+      "value": "confirmAction({ impact, permission, auditPayload, rollbackPlan })",
+      "type": "code",
+      "bbox": {
+        "x": 1013,
+        "y": 867,
+        "w": 440,
+        "h": 14
+      }
+    },
+    {
+      "value": "不替代表格筛选/分页",
+      "type": "acceptance-check",
+      "bbox": {
+        "x": 1029,
+        "y": 907,
+        "w": 155,
+        "h": 14
+      }
+    },
+    {
+      "value": "危险动作进入确认流",
+      "type": "acceptance-check",
+      "bbox": {
+        "x": 1449,
+        "y": 907,
+        "w": 140,
+        "h": 14
+      }
+    },
+    {
+      "value": "跨页全选有范围快照",
+      "type": "acceptance-check",
+      "bbox": {
+        "x": 1029,
+        "y": 939,
+        "w": 155,
+        "h": 14
+      }
+    },
+    {
+      "value": "执行结果可追踪",
+      "type": "acceptance-check",
+      "bbox": {
+        "x": 1449,
+        "y": 939,
+        "w": 112,
+        "h": 14
+      }
+    },
+    {
+      "value": "本图为批量操作栏基础组件板，公共 AppShell 仅作为 token 参考，不作为画面结构。",
+      "type": "footer",
+      "bbox": {
+        "x": 42,
+        "y": 1032,
+        "w": 640,
+        "h": 16
+      }
+    }
+  ],
+  "components": [
+    {
+      "id": "BatchActionBarSpecBoard",
+      "region": "canvas",
+      "type": "component-specimen-wrapper",
+      "state": "default",
+      "implementation": "Standalone wrapper without AppShell."
+    },
+    {
+      "id": "BlueprintGridBackground",
+      "region": "canvas",
+      "type": "background",
+      "state": "default",
+      "implementation": "CSS linear-gradient grid."
+    },
+    {
+      "id": "ComponentSpecHeader",
+      "region": "header",
+      "type": "header",
+      "state": "default",
+      "implementation": "Title, subtitle and system pill."
+    },
+    {
+      "id": "SpecSectionPanel",
+      "region": "section-01",
+      "type": "panel",
+      "state": "default",
+      "implementation": "Reusable section panel with dark header strip."
+    },
+    {
+      "id": "BatchActionBar",
+      "region": "batch-action-bar-shell",
+      "type": "toolbar",
+      "state": "selected",
+      "implementation": "Appears only when table rows are selected."
+    },
+    {
+      "id": "SelectionSummary",
+      "region": "selection-count-group",
+      "type": "selection-summary",
+      "state": "checked",
+      "implementation": "Checkbox plus selected count."
+    },
+    {
+      "id": "ScopePill",
+      "region": "scope-current-page-pill",
+      "type": "pill",
+      "state": "info",
+      "implementation": "Current page scope indicator."
+    },
+    {
+      "id": "RestrictedPill",
+      "region": "restricted-pill",
+      "type": "pill",
+      "state": "warning",
+      "implementation": "Restricted item count."
+    },
+    {
+      "id": "BatchActionButton",
+      "region": "confirm-alert-button",
+      "type": "button",
+      "state": "success",
+      "implementation": "Primary safe batch action."
+    },
+    {
+      "id": "BatchSecondaryButton",
+      "region": "transfer-soar-button",
+      "type": "button",
+      "state": "info",
+      "implementation": "Secondary workflow action."
+    },
+    {
+      "id": "BatchClearButton",
+      "region": "clear-button",
+      "type": "button",
+      "state": "muted",
+      "implementation": "Clear selected rows."
+    },
+    {
+      "id": "PlacementOption",
+      "region": "placement-floating",
+      "type": "placement-card",
+      "state": "info",
+      "implementation": "Supported placement description."
+    },
+    {
+      "id": "ActionGroup",
+      "region": "action-group-alert",
+      "type": "action-group",
+      "state": "success",
+      "implementation": "Grouped batch action buttons."
+    },
+    {
+      "id": "DangerActionGroup",
+      "region": "action-group-danger",
+      "type": "action-group",
+      "state": "danger",
+      "implementation": "Danger actions requiring confirm or approval."
+    },
+    {
+      "id": "SelectionScopeMatrix",
+      "region": "selection-scope-box",
+      "type": "selection-scope-list",
+      "state": "mixed",
+      "implementation": "Current page, filter result, full alert set and manual exclusion rows."
+    },
+    {
+      "id": "SelectionScopeRow",
+      "region": "scope-filter-result-row",
+      "type": "selection-row",
+      "state": "warning",
+      "implementation": "Cross-page selection row with confirmation."
+    },
+    {
+      "id": "GuardrailCard",
+      "region": "guard-impact",
+      "type": "guard-card",
+      "state": "warning",
+      "implementation": "Impact target card."
+    },
+    {
+      "id": "AuditPayloadCard",
+      "region": "guard-audit-payload",
+      "type": "guard-card",
+      "state": "info",
+      "implementation": "Audit payload field card."
+    },
+    {
+      "id": "BatchStateMatrix",
+      "region": "section-05",
+      "type": "state-matrix",
+      "state": "default-hover-loading-disabled-error-danger",
+      "implementation": "Six production states with action buttons."
+    },
+    {
+      "id": "StateCard",
+      "region": "state-default-card",
+      "type": "state-card",
+      "state": "default",
+      "implementation": "Default selected state."
+    },
+    {
+      "id": "StateLoadingCard",
+      "region": "state-loading-card",
+      "type": "state-card",
+      "state": "loading",
+      "implementation": "Loading state with spinner."
+    },
+    {
+      "id": "StateDangerCard",
+      "region": "state-danger-card",
+      "type": "state-card",
+      "state": "danger",
+      "implementation": "Danger state with red execute button."
+    },
+    {
+      "id": "ReactMappingPanel",
+      "region": "section-06",
+      "type": "implementation-reference",
+      "state": "default",
+      "implementation": "Code snippets plus acceptance checks."
+    },
+    {
+      "id": "AcceptanceChecklist",
+      "region": "acceptance-check-1",
+      "type": "checklist",
+      "state": "success",
+      "implementation": "Four green acceptance rows."
+    }
+  ],
+  "icons": [
+    {
+      "position": "selection-count-group",
+      "icon": "checked checkbox",
+      "implementation": "Ant Design Checkbox or CSS square with check mark",
+      "semantic": "selected rows exist",
+      "custom_draw": false
+    },
+    {
+      "position": "scope-current-page-pill",
+      "icon": "blue scope pill",
+      "implementation": "CSS pill",
+      "semantic": "current page selection scope",
+      "custom_draw": false
+    },
+    {
+      "position": "restricted-pill",
+      "icon": "yellow restricted pill",
+      "implementation": "CSS pill",
+      "semantic": "restricted selected items",
+      "custom_draw": false
+    },
+    {
+      "position": "confirm-alert-button",
+      "icon": "green action button",
+      "implementation": "Ant Design Button",
+      "semantic": "safe batch confirmation",
+      "custom_draw": false
+    },
+    {
+      "position": "transfer-soar-button",
+      "icon": "blue action button",
+      "implementation": "Ant Design Button",
+      "semantic": "SOAR workflow action",
+      "custom_draw": false
+    },
+    {
+      "position": "danger-gate-message",
+      "icon": "red warning bar",
+      "implementation": "Alert or inline warning",
+      "semantic": "danger action gate",
+      "custom_draw": false
+    },
+    {
+      "position": "scope-current-page-row",
+      "icon": "checked checkbox",
+      "implementation": "Checkbox",
+      "semantic": "safe current page scope",
+      "custom_draw": false
+    },
+    {
+      "position": "scope-all-alerts-row",
+      "icon": "unchecked checkbox",
+      "implementation": "Checkbox",
+      "semantic": "full corpus scope not selected",
+      "custom_draw": false
+    },
+    {
+      "position": "guard-warning",
+      "icon": "yellow warning strip",
+      "implementation": "Alert",
+      "semantic": "approval/audit requirement",
+      "custom_draw": false
+    },
+    {
+      "position": "state-loading-card",
+      "icon": "loading spinner",
+      "implementation": "Ant Design loading icon",
+      "semantic": "submit in progress",
+      "custom_draw": false
+    },
+    {
+      "position": "state-disabled-card",
+      "icon": "muted disabled button",
+      "implementation": "disabled Button",
+      "semantic": "no actionable items",
+      "custom_draw": false
+    },
+    {
+      "position": "state-error-card",
+      "icon": "red error button",
+      "implementation": "danger Button",
+      "semantic": "partial failure retry",
+      "custom_draw": false
+    },
+    {
+      "position": "state-danger-card",
+      "icon": "red danger button",
+      "implementation": "danger Button plus confirm flow",
+      "semantic": "secondary confirmation required",
+      "custom_draw": false
+    },
+    {
+      "position": "acceptance-check-1",
+      "icon": "green check square",
+      "implementation": "Checkbox-like success marker",
+      "semantic": "acceptance criterion pass",
+      "custom_draw": false
+    },
+    {
+      "position": "react-code-line-1",
+      "icon": "code line container",
+      "implementation": "pre/code block",
+      "semantic": "React API mapping",
+      "custom_draw": false
+    }
+  ],
+  "tokens": [
+    {
+      "name": "canvas.background",
+      "value": "#03111c",
+      "usage": "full canvas"
+    },
+    {
+      "name": "grid.line",
+      "value": "rgba(30,156,255,0.24)",
+      "usage": "blueprint grid"
+    },
+    {
+      "name": "panel.background",
+      "value": "rgba(6,28,43,0.86)",
+      "usage": "section panels"
+    },
+    {
+      "name": "panel.header.background",
+      "value": "#0b3c52",
+      "usage": "section header strips"
+    },
+    {
+      "name": "panel.border",
+      "value": "rgba(32,200,232,0.55)",
+      "usage": "panel and control outlines"
+    },
+    {
+      "name": "text.primary",
+      "value": "#eaf7ff",
+      "usage": "titles and main labels"
+    },
+    {
+      "name": "text.secondary",
+      "value": "#9db9c9",
+      "usage": "descriptions and helper text"
+    },
+    {
+      "name": "accent.info",
+      "value": "#1e9cff",
+      "usage": "normal secondary actions and tags"
+    },
+    {
+      "name": "accent.success",
+      "value": "#00ff80",
+      "usage": "safe checks and confirmation actions"
+    },
+    {
+      "name": "accent.warning",
+      "value": "#ffe600",
+      "usage": "restricted scope and confirmation range"
+    },
+    {
+      "name": "accent.danger",
+      "value": "#ff3030",
+      "usage": "danger actions and error state"
+    },
+    {
+      "name": "control.background",
+      "value": "#08253a",
+      "usage": "toolbar and state cards"
+    },
+    {
+      "name": "code.background",
+      "value": "#051928",
+      "usage": "React mapping code strips"
+    },
+    {
+      "name": "radius.panel",
+      "value": "6px",
+      "usage": "section panels"
+    },
+    {
+      "name": "radius.button",
+      "value": "4px",
+      "usage": "buttons and pills"
+    },
+    {
+      "name": "density.button.height",
+      "value": "31px",
+      "usage": "toolbar and grouped buttons"
+    },
+    {
+      "name": "density.selection.row",
+      "value": "37px",
+      "usage": "selection scope rows"
+    },
+    {
+      "name": "density.state.card",
+      "value": "44px",
+      "usage": "state matrix cards"
+    },
+    {
+      "name": "spacing.grid",
+      "value": "8px",
+      "usage": "component baseline"
+    }
+  ],
+  "interactions": [
+    {
+      "component": "BatchActionBar",
+      "state": "hidden",
+      "trigger": "selectedRowKeys is empty",
+      "expected": "The toolbar does not appear and does not replace table filters, search, pagination or column settings."
+    },
+    {
+      "component": "BatchActionBar",
+      "state": "selected",
+      "trigger": "38 rows selected",
+      "expected": "Shows selected count, current scope, restricted count and available actions."
+    },
+    {
+      "component": "ScopePill",
+      "state": "current-page",
+      "trigger": "current page selection",
+      "expected": "Only loaded rows on the current page are affected."
+    },
+    {
+      "component": "SelectionScopeMatrix",
+      "state": "cross-page",
+      "trigger": "filter result scope selected",
+      "expected": "Shows filter snapshot and excluded items before execution."
+    },
+    {
+      "component": "SelectionScopeMatrix",
+      "state": "full-corpus",
+      "trigger": "all alerts selected",
+      "expected": "Uses backend batch task and writes audit task_id."
+    },
+    {
+      "component": "DangerActionGroup",
+      "state": "danger",
+      "trigger": "delete, rollback or revoke token clicked",
+      "expected": "Must enter Popconfirm, Modal or approval workflow; direct execution is forbidden by design."
+    },
+    {
+      "component": "GuardrailCard",
+      "state": "permission-filtered",
+      "trigger": "restricted objects exist",
+      "expected": "Automatically excludes unauthorized objects and exposes impact count."
+    },
+    {
+      "component": "AuditPayloadCard",
+      "state": "audit-required",
+      "trigger": "high impact batch processing",
+      "expected": "Writes tenant, trace_id, selectedKeys, operator, impact scope and rollback plan."
+    },
+    {
+      "component": "StateLoadingCard",
+      "state": "loading",
+      "trigger": "submit action is in progress",
+      "expected": "Prevents duplicate submission and displays loading affordance."
+    },
+    {
+      "component": "StateDisabledCard",
+      "state": "disabled",
+      "trigger": "no actionable items",
+      "expected": "Execute button is visually muted and should expose disabled reason in production."
+    },
+    {
+      "component": "StateErrorCard",
+      "state": "error",
+      "trigger": "partial failure",
+      "expected": "Allows retry without losing selection context or audit trail."
+    },
+    {
+      "component": "ReactMappingPanel",
+      "state": "developer-reference",
+      "trigger": "developer implements component",
+      "expected": "Maps selectedRowKeys, selectionScope, actions, preserveSelectedRowKeys and confirmAction payload."
+    }
+  ],
+  "differences": [
+    {
+      "type": "scope",
+      "location": "production React implementation",
+      "current": "Pixel evidence will use reference-raster implementation.",
+      "expected": "Semantic implementation should build BatchActionBar, scope handling, action gating, guardrails and React mapping from this record.",
+      "fix_suggestion": "Documented as scope boundary for this image; target PNG reproduction remains unchanged.",
+      "status": "documented"
+    },
+    {
+      "type": "production-detail",
+      "location": "more menu, confirm dialog, approval workflow and task progress",
+      "current": "The target PNG documents the contract but does not show expanded overlays.",
+      "expected": "Production UI should implement menu contents, confirm modal, approval detail and traceable task progress.",
+      "fix_suggestion": "Keep target PNG pixel reproduction unchanged; treat overlays as separate UI states or future images.",
+      "status": "documented"
+    }
+  ]
+}

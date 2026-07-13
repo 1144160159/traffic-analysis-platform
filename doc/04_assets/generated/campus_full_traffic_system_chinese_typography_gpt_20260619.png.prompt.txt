@@ -1,0 +1,40 @@
+Use case: precise-object-edit
+Asset type: enterprise cybersecurity SaaS UI screenshot, 16:9, dense SOC command workstation.
+Edit target: the provided screenshot of “园区网络全流量采集与分析系统”.
+
+Primary request: Edit the screenshot by removing English title subtitles and unifying the page typography scale. Preserve the visual style and layout.
+
+Text cleanup requirements:
+- Remove all English subtitle fragments after slashes in panel titles and section titles.
+- Keep all panel titles Chinese-only.
+- Replace these title patterns exactly:
+  “选中告警详情 / Selected Alert” -> “选中告警详情”
+  “资产上下文 / Asset Context” -> “资产上下文”
+  “风险评分 / Risk Score” -> “风险评分”
+  “响应处置 / Response Actions” -> “响应处置”
+  “反馈与学习 / Feedback” -> “反馈与学习”
+  “模型状态 / Model Status” -> “模型状态”
+  “验收证据 / Acceptance Evidence” -> “验收证据状态”
+  “告警时间线 / Alert Timeline” -> “告警时间线”
+  “关联告警簇 / Correlated Cluster” -> “关联告警簇”
+  “流量趋势 / Traffic Trend” -> “流量趋势”
+  “流量拓扑 / Traffic Topology” -> “流量拓扑”
+  “证据列表 / Evidence List” -> “证据列表”
+- If any other English subtitle appears after a slash in a heading, remove the English and slash. Keep technical product/protocol names such as Kafka, Flink, ClickHouse, OpenSearch, NebulaGraph, MinIO, PCAP, TLS, IP, DNS because they are technical identifiers rather than English subtitles.
+
+Typography requirements:
+- Use a consistent Chinese enterprise UI font rhythm across the page.
+- Product title: about 24 px, bold.
+- Primary navigation labels: about 16 px, medium weight.
+- Secondary menu labels and panel titles: about 15 px, semibold.
+- Body/table text: about 12-13 px, regular.
+- Metric numbers and risk score: keep larger but consistent, about 20-28 px depending on existing card scale.
+- Avoid random mixed font sizes; align similar labels to the same size and weight.
+- Keep text readable, not tiny, no overlapping, no clipped labels.
+
+Preserve unchanged:
+- Overall composition, dark blue cyber SOC visual style, product title “园区网络全流量采集与分析系统”, sidebar, menu selection, top KPI cards, campus topology map, campus stats cards, collection pipeline, alert queue, timeline, cluster graph, traffic charts, evidence table, right rail structure, bottom status bar, colors, spacing, icons, borders, glow, and all numeric data values.
+
+Constraints: no unrelated redesign, no new panels, no changed product name, no browser chrome, no watermark, no decorative orbs, no English subtitle headings, no unreadably tiny text.
+
+Output: one polished production-quality UI screenshot with Chinese-only headings and unified typography.

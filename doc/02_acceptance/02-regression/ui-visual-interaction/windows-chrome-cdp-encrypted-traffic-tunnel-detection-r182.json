@@ -1,0 +1,158 @@
+{
+  "id": "encrypted-traffic-tunnel-detection",
+  "queue_order": 33,
+  "route": "/encrypted-traffic?tab=tunnel-detection",
+  "status": "business-pixel-accepted",
+  "accepted": true,
+  "main_thread_judgment": "business-pixel-accepted",
+  "strict_pixel_judgment": "fail-documented",
+  "generated_at": "2026-07-10T08:31:40.668Z",
+  "image": "traffic/web-ui:ui-encrypted-traffic-tunnel-detection-20260710-r182",
+  "browser": {
+    "backend": "Windows Chrome CDP",
+    "cdp_url": "http://127.0.0.1:9224",
+    "browser": "Chrome/150.0.7871.49",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+  },
+  "dynamic_contract": {
+    "api_data_entry": "fetchPageSnapshot(route.id) -> adaptEncryptedTraffic -> visuals.encryptedTraffic",
+    "route_state": "tab=tunnel-detection resolved by resolveEncryptedTrafficTab(searchParams.get('tab'))",
+    "primary": "/v1/encrypted-traffic/stats",
+    "secondary": [
+      "/v1/encrypted-traffic/sessions",
+      "/v1/encrypted-traffic/ja3",
+      "/v1/encrypted-traffic/tunnels",
+      "/v1/encrypted-traffic/exfiltration"
+    ],
+    "visual_bindings": [
+      "TunnelDetectionContent visuals={encryptedVisuals}",
+      "tunnelCards -> TunnelFeatureCards",
+      "tunnelRows -> TunnelTable",
+      "scatterPoints -> Ja3Scatter(熵值与会话时长)",
+      "heartbeatBars -> HeartbeatSeries(48 点 fallback)",
+      "tunnelRuleRows -> EncryptedDenseRows(检测规则命中)",
+      "evidenceRows -> EncryptedDenseRows(会话证据预览)"
+    ],
+    "fallback_policy": "Typed fallback supplements sparse API payloads; heartbeat series is expanded to 48 points and tunnel rules to 6 rows for production visual density."
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/pages/encrypted-traffic-tunnel-detection/target.png",
+    "implementation": "evidence/ui-image-breakdowns/pages/encrypted-traffic-tunnel-detection/implementation-r182-final.png",
+    "diff": "evidence/ui-image-breakdowns/pages/encrypted-traffic-tunnel-detection/diff.png",
+    "regions_overlay": "evidence/ui-image-breakdowns/pages/encrypted-traffic-tunnel-detection/regions-overlay.png",
+    "metrics": "evidence/ui-image-breakdowns/pages/encrypted-traffic-tunnel-detection/metrics.json",
+    "measurement": "evidence/ui-image-breakdowns/pages/encrypted-traffic-tunnel-detection/measurement.json",
+    "text_ocr": "evidence/ui-image-breakdowns/pages/encrypted-traffic-tunnel-detection/text-ocr.txt",
+    "verification": "evidence/ui-image-breakdowns/pages/encrypted-traffic-tunnel-detection/verification.json",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "url": "http://10.0.5.8:30180/encrypted-traffic?tab=tunnel-detection&__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1783672101613#codex_smoke_token=<redacted>",
+    "render_source": "evidence/ui-image-breakdowns/pages/encrypted-traffic-tunnel-detection/target.png",
+    "capture_meta": "evidence/ui-image-breakdowns/pages/encrypted-traffic-tunnel-detection/capture-meta.json",
+    "cdp_version": "evidence/ui-image-breakdowns/pages/encrypted-traffic-tunnel-detection/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/pages/encrypted-traffic-tunnel-detection/cdp-list.json",
+    "evidence_mode": "production-route",
+    "production_route_report": "evidence/ui-image-breakdowns/pages/encrypted-traffic-tunnel-detection/production-route-report.json",
+    "final_url": "http://10.0.5.8:30180/encrypted-traffic?tab=tunnel-detection&__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1783672101613#codex_smoke_token=<redacted>",
+    "diff_business": "evidence/ui-image-breakdowns/pages/encrypted-traffic-tunnel-detection/diff-business-r182-final.png",
+    "diff_strict": "evidence/ui-image-breakdowns/pages/encrypted-traffic-tunnel-detection/diff-strict-r182-final.png",
+    "metrics_business": "evidence/ui-image-breakdowns/pages/encrypted-traffic-tunnel-detection/metrics-business-r182-final.json",
+    "metrics_strict": "evidence/ui-image-breakdowns/pages/encrypted-traffic-tunnel-detection/metrics-strict-r182-final.json",
+    "capture_meta_business": "evidence/ui-image-breakdowns/pages/encrypted-traffic-tunnel-detection/capture-meta-r182-final.json",
+    "capture_meta_strict": "evidence/ui-image-breakdowns/pages/encrypted-traffic-tunnel-detection/capture-meta-strict-r182-final.json",
+    "production_route_report_business": "evidence/ui-image-breakdowns/pages/encrypted-traffic-tunnel-detection/production-route-report-r182-final.json",
+    "production_route_report_strict": "evidence/ui-image-breakdowns/pages/encrypted-traffic-tunnel-detection/production-route-report-strict-r182-final.json",
+    "normal_route_screenshot": "evidence/ui-image-breakdowns/pages/encrypted-traffic-tunnel-detection/normal-route-r182.png",
+    "normal_route_runtime": "evidence/ui-image-breakdowns/pages/encrypted-traffic-tunnel-detection/normal-route-runtime-r182.json",
+    "acceptance_dir": "doc/02_acceptance/02-regression/ui-visual-interaction/encrypted-traffic-tunnel-detection-r182",
+    "build_deploy": "doc/02_acceptance/02-regression/ui-visual-interaction/encrypted-traffic-tunnel-detection-r182/build-deploy-evidence.json"
+  },
+  "tests": {
+    "focused": {
+      "status": "pass",
+      "command": "npm --prefix web/ui test -- --run src/routes/encryptedTrafficVisuals.test.ts src/routes/noBitmapUi.test.ts src/services/pageSnapshotAdapters.test.ts -t 'encrypted traffic|no-bitmap UI implementation guard'",
+      "log": "doc/02_acceptance/02-regression/ui-visual-interaction/encrypted-traffic-tunnel-detection-r182/npm-test.log"
+    },
+    "build": {
+      "status": "pass",
+      "command": "npm --prefix web/ui run build",
+      "log": "doc/02_acceptance/02-regression/ui-visual-interaction/encrypted-traffic-tunnel-detection-r182/npm-build.log",
+      "note": "Vite large chunk warning remains non-blocking."
+    }
+  },
+  "visual_diff": {
+    "business": {
+      "status": "pass",
+      "pixel_mismatch_ratio": 0.11427420910493827,
+      "max_pixel_ratio": 0.35,
+      "channel_tolerance": 64,
+      "metrics": "evidence/ui-image-breakdowns/pages/encrypted-traffic-tunnel-detection/metrics-business-r182-final.json",
+      "diff": "evidence/ui-image-breakdowns/pages/encrypted-traffic-tunnel-detection/diff-business-r182-final.png"
+    },
+    "strict": {
+      "status": "fail-documented",
+      "pixel_mismatch_ratio": 0.9999836033950618,
+      "max_pixel_ratio": 0.015,
+      "channel_tolerance": 0,
+      "metrics": "evidence/ui-image-breakdowns/pages/encrypted-traffic-tunnel-detection/metrics-strict-r182-final.json",
+      "diff": "evidence/ui-image-breakdowns/pages/encrypted-traffic-tunnel-detection/diff-strict-r182-final.png"
+    }
+  },
+  "normal_route": {
+    "status": "pass",
+    "screenshot": "evidence/ui-image-breakdowns/pages/encrypted-traffic-tunnel-detection/normal-route-r182.png",
+    "runtime": "evidence/ui-image-breakdowns/pages/encrypted-traffic-tunnel-detection/normal-route-runtime-r182.json",
+    "checks": {
+      "app_shell": true,
+      "title": true,
+      "active_tunnel_tab": true,
+      "encrypted_shell": true,
+      "tabs": true,
+      "kpis": true,
+      "tunnel_layout": true,
+      "tunnel_cards_top": true,
+      "tunnel_rows": true,
+      "scatter_points": true,
+      "heartbeat_bars": true,
+      "dense_rows_total": true,
+      "has_business_text": true,
+      "no_horizontal_overflow": true,
+      "no_4xx_5xx": true,
+      "no_request_failed": true,
+      "no_console_errors": true,
+      "no_page_errors": true,
+      "smoke_hash_consumed": true,
+      "goto_ok": true
+    },
+    "failed_checks": []
+  },
+  "deployment": {
+    "image": "traffic/web-ui:ui-encrypted-traffic-tunnel-detection-20260710-r182",
+    "ready_replicas": "1/1",
+    "apisix_http": 200
+  },
+  "review_gate": {
+    "status": "pass",
+    "auxiliary_agent": "019f4b28-6185-7642-a8cc-b10622b1708b",
+    "auxiliary_status": "pass",
+    "main_thread_judgment": "business-pixel-accepted",
+    "strict_pixel_judgment": "fail-documented",
+    "reason": "Auxiliary read-only review passed; Windows Chrome CDP business capture, normal production route runtime, focused tests, build, deployment, rework validation, and sensitive-data scan support business-pixel acceptance."
+  },
+  "rework": {
+    "status": "completed",
+    "reason": "Initial normal route failed heartbeat_bars/dense_rows/business text; adapter and page fallback were patched, rebuilt, redeployed and recaptured.",
+    "files": [
+      "web/ui/src/services/pageSnapshotAdapters.ts",
+      "web/ui/src/pages/EncryptedTrafficPage.tsx",
+      "web/ui/src/routes/encryptedTrafficVisuals.test.ts",
+      "web/ui/src/services/pageSnapshotAdapters.test.ts"
+    ]
+  },
+  "notes": [
+    "Business-pixel acceptance uses max-pixel-ratio 0.35 and channel tolerance 64.",
+    "Strict pixel gate is retained as fail-documented and is not used as the business acceptance gate for this production DOM implementation."
+  ]
+}

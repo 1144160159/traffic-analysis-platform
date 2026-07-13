@@ -1,0 +1,8 @@
+{
+  "input": "doc/02_acceptance/runs/20260630-production-security-preflight-r49-waiver-registry/k8s-core-apply-convergence.json",
+  "service_ports": 80,
+  "external_service_ports": 1,
+  "blocked_external_service_ports": 0,
+  "missing_namespace_service_ports": 0,
+  "allowed_external_service_ports": 1
+}

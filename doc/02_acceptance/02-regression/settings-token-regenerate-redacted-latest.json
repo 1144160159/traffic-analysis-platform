@@ -1,0 +1,11 @@
+{
+  "token_id": "ae49bb57-0bf8-4430-91dc-7ff3a12f09dd",
+  "token": "<redacted>",
+  "token_prefix": "api_5_ljkr7lik-iao",
+  "name": "codex-settings-token-20260630-settings-governance-preflight-r1 (regenerated)",
+  "scopes": [
+    "alert:read"
+  ],
+  "expires_at": "2026-06-30T06:28:00.165156053Z",
+  "created_at": "2026-06-30T06:23:01.133477402Z"
+}

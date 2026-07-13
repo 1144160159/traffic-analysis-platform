@@ -1,0 +1,200 @@
+{
+  "run_id": "20260629-model-version-state-machine-r1",
+  "result": "pass",
+  "tenant": "codex-model-state",
+  "other_tenant": "codex-model-cross",
+  "model_id": "2c65ca3e-95bb-4856-944c-8c1f45efb383",
+  "registered_version": "mv-20260629-model-version-state-machine-r1-registered",
+  "previous_active_version": "mv-20260629-model-version-state-machine-r1-previous-active",
+  "invalid_version": "mv-20260629-model-version-state-machine-r1-invalid-registered",
+  "cross_version": "mv-20260629-model-version-state-machine-r1-cross-active",
+  "viewer_version": "mv-20260629-model-version-state-machine-r1-viewer-registered",
+  "total": 20,
+  "passed": 20,
+  "failed": 0,
+  "blockers": 0,
+  "warnings": 0,
+  "report": "doc/02_acceptance/runs/20260629-model-version-state-machine/live-model-version-state-machine-20260629-model-version-state-machine-r1.ndjson",
+  "checks": [
+    {
+      "ts": "2026-06-29T22:06:36+08:00",
+      "phase": "fixture",
+      "name": "seed model version state-machine fixtures",
+      "ok": true,
+      "status": "ok",
+      "detail": "2c65ca3e-95bb-4856-944c-8c1f45efb383,mv-20260629-model-version-state-machine-r1-previous-active,mv-20260629-model-version-state-machine-r1-invalid-registered,mv-20260629-model-version-state-machine-r1-viewer-registered,mv-20260629-model-version-state-machine-r1-cross-active",
+      "artifact": ""
+    },
+    {
+      "ts": "2026-06-29T22:06:36+08:00",
+      "phase": "api",
+      "name": "register model version",
+      "ok": true,
+      "status": "201",
+      "detail": "POST /api/v1/models/2c65ca3e-95bb-4856-944c-8c1f45efb383/versions",
+      "artifact": "doc/02_acceptance/runs/20260629-model-version-state-machine/20260629-model-version-state-machine-r1-register-model-version.json"
+    },
+    {
+      "ts": "2026-06-29T22:06:36+08:00",
+      "phase": "db",
+      "name": "registered version persisted",
+      "ok": true,
+      "status": "ok",
+      "detail": "registered|true",
+      "artifact": "doc/02_acceptance/runs/20260629-model-version-state-machine/20260629-model-version-state-machine-r1-registered-version-persisted.txt"
+    },
+    {
+      "ts": "2026-06-29T22:06:36+08:00",
+      "phase": "api",
+      "name": "activate registered model version",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/models/2c65ca3e-95bb-4856-944c-8c1f45efb383/versions/mv-20260629-model-version-state-machine-r1-registered/activate",
+      "artifact": "doc/02_acceptance/runs/20260629-model-version-state-machine/20260629-model-version-state-machine-r1-activate-registered-model-version.json"
+    },
+    {
+      "ts": "2026-06-29T22:06:37+08:00",
+      "phase": "db",
+      "name": "registered version activated",
+      "ok": true,
+      "status": "ok",
+      "detail": "active",
+      "artifact": "doc/02_acceptance/runs/20260629-model-version-state-machine/20260629-model-version-state-machine-r1-registered-version-activated.txt"
+    },
+    {
+      "ts": "2026-06-29T22:06:37+08:00",
+      "phase": "db",
+      "name": "previous active version deprecated",
+      "ok": true,
+      "status": "ok",
+      "detail": "deprecated",
+      "artifact": "doc/02_acceptance/runs/20260629-model-version-state-machine/20260629-model-version-state-machine-r1-previous-active-version-deprecated.txt"
+    },
+    {
+      "ts": "2026-06-29T22:06:37+08:00",
+      "phase": "db",
+      "name": "only one active version remains after activation",
+      "ok": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "doc/02_acceptance/runs/20260629-model-version-state-machine/20260629-model-version-state-machine-r1-only-one-active-version-remains-after-activation.txt"
+    },
+    {
+      "ts": "2026-06-29T22:06:37+08:00",
+      "phase": "api",
+      "name": "deprecate active model version",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/models/2c65ca3e-95bb-4856-944c-8c1f45efb383/versions/mv-20260629-model-version-state-machine-r1-registered/deprecate",
+      "artifact": "doc/02_acceptance/runs/20260629-model-version-state-machine/20260629-model-version-state-machine-r1-deprecate-active-model-version.json"
+    },
+    {
+      "ts": "2026-06-29T22:06:37+08:00",
+      "phase": "db",
+      "name": "active version deprecated",
+      "ok": true,
+      "status": "ok",
+      "detail": "deprecated",
+      "artifact": "doc/02_acceptance/runs/20260629-model-version-state-machine/20260629-model-version-state-machine-r1-active-version-deprecated.txt"
+    },
+    {
+      "ts": "2026-06-29T22:06:37+08:00",
+      "phase": "api",
+      "name": "registered deprecate rejected",
+      "ok": true,
+      "status": "409",
+      "detail": "POST /api/v1/models/2c65ca3e-95bb-4856-944c-8c1f45efb383/versions/mv-20260629-model-version-state-machine-r1-invalid-registered/deprecate",
+      "artifact": "doc/02_acceptance/runs/20260629-model-version-state-machine/20260629-model-version-state-machine-r1-registered-deprecate-rejected.json"
+    },
+    {
+      "ts": "2026-06-29T22:06:37+08:00",
+      "phase": "db",
+      "name": "registered deprecate unchanged",
+      "ok": true,
+      "status": "ok",
+      "detail": "registered",
+      "artifact": "doc/02_acceptance/runs/20260629-model-version-state-machine/20260629-model-version-state-machine-r1-registered-deprecate-unchanged.txt"
+    },
+    {
+      "ts": "2026-06-29T22:06:37+08:00",
+      "phase": "api",
+      "name": "cross tenant activate rejected",
+      "ok": true,
+      "status": "403",
+      "detail": "POST /api/v1/models/2c21a845-68cc-4e89-bdd2-b66f5962e415/versions/mv-20260629-model-version-state-machine-r1-cross-active/activate",
+      "artifact": "doc/02_acceptance/runs/20260629-model-version-state-machine/20260629-model-version-state-machine-r1-cross-tenant-activate-rejected.json"
+    },
+    {
+      "ts": "2026-06-29T22:06:37+08:00",
+      "phase": "db",
+      "name": "cross tenant model version unchanged",
+      "ok": true,
+      "status": "ok",
+      "detail": "active",
+      "artifact": "doc/02_acceptance/runs/20260629-model-version-state-machine/20260629-model-version-state-machine-r1-cross-tenant-model-version-unchanged.txt"
+    },
+    {
+      "ts": "2026-06-29T22:06:37+08:00",
+      "phase": "api",
+      "name": "viewer activate rejected",
+      "ok": true,
+      "status": "403",
+      "detail": "POST /api/v1/models/2c65ca3e-95bb-4856-944c-8c1f45efb383/versions/mv-20260629-model-version-state-machine-r1-viewer-registered/activate",
+      "artifact": "doc/02_acceptance/runs/20260629-model-version-state-machine/20260629-model-version-state-machine-r1-viewer-activate-rejected.json"
+    },
+    {
+      "ts": "2026-06-29T22:06:37+08:00",
+      "phase": "db",
+      "name": "viewer rejected model version unchanged",
+      "ok": true,
+      "status": "ok",
+      "detail": "registered",
+      "artifact": "doc/02_acceptance/runs/20260629-model-version-state-machine/20260629-model-version-state-machine-r1-viewer-rejected-model-version-unchanged.txt"
+    },
+    {
+      "ts": "2026-06-29T22:06:37+08:00",
+      "phase": "api",
+      "name": "audit trail query",
+      "ok": true,
+      "status": "200",
+      "detail": "GET /api/v1/audit/logs?object_type=model_version&limit=200",
+      "artifact": "doc/02_acceptance/runs/20260629-model-version-state-machine/20260629-model-version-state-machine-r1-audit-trail-query.json"
+    },
+    {
+      "ts": "2026-06-29T22:06:38+08:00",
+      "phase": "db",
+      "name": "model version create audit persisted",
+      "ok": true,
+      "status": "ok",
+      "detail": "true",
+      "artifact": "doc/02_acceptance/runs/20260629-model-version-state-machine/20260629-model-version-state-machine-r1-model-version-create-audit-persisted.txt"
+    },
+    {
+      "ts": "2026-06-29T22:06:38+08:00",
+      "phase": "db",
+      "name": "model version activate audit persisted",
+      "ok": true,
+      "status": "ok",
+      "detail": "true",
+      "artifact": "doc/02_acceptance/runs/20260629-model-version-state-machine/20260629-model-version-state-machine-r1-model-version-activate-audit-persisted.txt"
+    },
+    {
+      "ts": "2026-06-29T22:06:38+08:00",
+      "phase": "db",
+      "name": "model version deprecate audit persisted",
+      "ok": true,
+      "status": "ok",
+      "detail": "true",
+      "artifact": "doc/02_acceptance/runs/20260629-model-version-state-machine/20260629-model-version-state-machine-r1-model-version-deprecate-audit-persisted.txt"
+    },
+    {
+      "ts": "2026-06-29T22:06:38+08:00",
+      "phase": "db",
+      "name": "model version failure audit persisted",
+      "ok": true,
+      "status": "ok",
+      "detail": "true",
+      "artifact": "doc/02_acceptance/runs/20260629-model-version-state-machine/20260629-model-version-state-machine-r1-model-version-failure-audit-persisted.txt"
+    }
+  ]
+}

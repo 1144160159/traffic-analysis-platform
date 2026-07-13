@@ -1,0 +1,1823 @@
+{
+  "id": "foundation-icons-actions",
+  "category": "foundations",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/foundations/foundation-icons-actions.png",
+  "prompt_file": "doc/04_assets/ui_suite_gpt_v1/prompts/foundation-icons-actions.prompt.txt",
+  "manifest_refs": [
+    "doc/04_assets/ui_suite_gpt_v1/manifest.json",
+    "doc/04_assets/ui_suite_gpt_v1/specs/layers/foundation-icons-actions.json"
+  ],
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "status": "pixel-accepted",
+  "accepted": true,
+  "route": null,
+  "host_route": null,
+  "observation": {
+    "layout": "Static design-system foundation board. Header spans the top, left column demonstrates the fixed AppShell navigation icon stack, center column documents top quick entries, bottom status/global actions, and action semantics, and right column locks fixed first-level menu vocabulary.",
+    "business_focus": "Locks icon family, menu word order, active states, quick-entry actions, bottom metric/action semantics, and dangerous-action rules for later React + Ant Design implementation.",
+    "current_state": "Windows Chrome reference-raster screenshot and zero-tolerance visual diff completed; mismatch ratio is 0.0.",
+    "acceptance_scope": "This foundation is a token and semantic source. Pixel evidence reproduces the target PNG; production components must separately implement these icon and action semantics."
+  },
+  "regions": [
+    {
+      "id": "canvas",
+      "name": "画布",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "layer": 0,
+      "purpose": "16:9 foundation board",
+      "replication_notes": "No browser chrome, watermark, marketing frame, or external explanation."
+    },
+    {
+      "id": "header",
+      "name": "顶部标题区",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 73
+      },
+      "layer": 1,
+      "purpose": "Board title, subtitle, and baseline note",
+      "replication_notes": "Keep one thin cyan separator at y=72 and no surrounding card."
+    },
+    {
+      "id": "header-title",
+      "name": "英文主标题",
+      "bbox": {
+        "x": 28,
+        "y": 14,
+        "w": 503,
+        "h": 34
+      },
+      "layer": 2,
+      "purpose": "Foundation board name",
+      "replication_notes": "Large semibold light text, zero negative letter spacing."
+    },
+    {
+      "id": "header-subtitle",
+      "name": "中文副标题",
+      "bbox": {
+        "x": 29,
+        "y": 53,
+        "w": 360,
+        "h": 14
+      },
+      "layer": 2,
+      "purpose": "Scope and baseline rule",
+      "replication_notes": "Small secondary text; must stay one line."
+    },
+    {
+      "id": "header-baseline",
+      "name": "右上基准说明",
+      "bbox": {
+        "x": 1586,
+        "y": 32,
+        "w": 181,
+        "h": 18
+      },
+      "layer": 2,
+      "purpose": "Names screen.png as icon baseline",
+      "replication_notes": "Cyan text, filename brighter and bold."
+    },
+    {
+      "id": "left-panel",
+      "name": "01 左侧导航图标",
+      "bbox": {
+        "x": 24,
+        "y": 92,
+        "w": 477,
+        "h": 947
+      },
+      "layer": 1,
+      "purpose": "Shows fixed left navigation icon vocabulary and active states",
+      "replication_notes": "Large empty deep-blue panel with thin cyan border and 6px radius."
+    },
+    {
+      "id": "left-panel-titlebar",
+      "name": "左侧导航标题栏",
+      "bbox": {
+        "x": 25,
+        "y": 93,
+        "w": 475,
+        "h": 43
+      },
+      "layer": 2,
+      "purpose": "Section title row",
+      "replication_notes": "Number and title on same baseline, bottom divider line."
+    },
+    {
+      "id": "sidebar-shell",
+      "name": "单栏导航模拟器",
+      "bbox": {
+        "x": 174,
+        "y": 149,
+        "w": 155,
+        "h": 842
+      },
+      "layer": 2,
+      "purpose": "Compact visual sample of the AppShell left rail",
+      "replication_notes": "Do not split into narrow icon rail plus second menu; it is one expanded rail."
+    },
+    {
+      "id": "sidebar-active-parent",
+      "name": "综合态势父级激活",
+      "bbox": {
+        "x": 184,
+        "y": 150,
+        "w": 141,
+        "h": 48
+      },
+      "layer": 3,
+      "purpose": "Parent domain active/expanded state",
+      "replication_notes": "Left cyan vertical bar and bright grid icon; not the current route selection."
+    },
+    {
+      "id": "sidebar-dashboard-item",
+      "name": "仪表盘菜单项",
+      "bbox": {
+        "x": 188,
+        "y": 205,
+        "w": 134,
+        "h": 35
+      },
+      "layer": 3,
+      "purpose": "Normal secondary menu item",
+      "replication_notes": "Muted icon and text without filled active box."
+    },
+    {
+      "id": "sidebar-screen-active",
+      "name": "态势大屏当前项",
+      "bbox": {
+        "x": 188,
+        "y": 245,
+        "w": 135,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "Current child route active state",
+      "replication_notes": "Blue icon, blue text, blue border, darker active fill."
+    },
+    {
+      "id": "sidebar-topic-item",
+      "name": "专题面板菜单项",
+      "bbox": {
+        "x": 189,
+        "y": 290,
+        "w": 133,
+        "h": 34
+      },
+      "layer": 3,
+      "purpose": "Normal secondary menu item",
+      "replication_notes": "Checklist-style icon and muted label."
+    },
+    {
+      "id": "sidebar-primary-items",
+      "name": "一级菜单余项",
+      "bbox": {
+        "x": 188,
+        "y": 350,
+        "w": 135,
+        "h": 268
+      },
+      "layer": 3,
+      "purpose": "Remaining fixed first-level domains",
+      "replication_notes": "采集监测、威胁分析、资产图谱、检测运营、审计配置 keep their icon order and spacing."
+    },
+    {
+      "id": "sidebar-user-zone",
+      "name": "底部用户区",
+      "bbox": {
+        "x": 184,
+        "y": 896,
+        "w": 142,
+        "h": 75
+      },
+      "layer": 3,
+      "purpose": "User identity, role, online status, and local action",
+      "replication_notes": "Avatar, two text lines, green status dot, and small action icon stay inside sidebar bottom."
+    },
+    {
+      "id": "quick-panel",
+      "name": "02 顶部快捷入口",
+      "bbox": {
+        "x": 528,
+        "y": 92,
+        "w": 843,
+        "h": 319
+      },
+      "layer": 1,
+      "purpose": "Documents fixed top quick-entry actions",
+      "replication_notes": "Wide center panel, titlebar and content spacing match other panels."
+    },
+    {
+      "id": "quick-titlebar",
+      "name": "顶部快捷入口标题栏",
+      "bbox": {
+        "x": 529,
+        "y": 93,
+        "w": 841,
+        "h": 43
+      },
+      "layer": 2,
+      "purpose": "Section heading",
+      "replication_notes": "No extra badge or toolbar."
+    },
+    {
+      "id": "quick-icon-strip",
+      "name": "快捷入口小图标组",
+      "bbox": {
+        "x": 758,
+        "y": 159,
+        "w": 382,
+        "h": 82
+      },
+      "layer": 2,
+      "purpose": "Compact icon-button sample with labels",
+      "replication_notes": "This is a compact visual sample, separate from the large text row below."
+    },
+    {
+      "id": "quick-text-row",
+      "name": "快捷入口大文字行",
+      "bbox": {
+        "x": 575,
+        "y": 296,
+        "w": 672,
+        "h": 18
+      },
+      "layer": 2,
+      "purpose": "Full-size label vocabulary for top quick entries",
+      "replication_notes": "Six labels evenly spaced with no icons in this row."
+    },
+    {
+      "id": "status-panel",
+      "name": "03 底部状态与全局动作",
+      "bbox": {
+        "x": 528,
+        "y": 438,
+        "w": 843,
+        "h": 305
+      },
+      "layer": 1,
+      "purpose": "Documents fixed bottom status bar and global action order",
+      "replication_notes": "The status strip is a miniature of the bottom AppShell, not a business card."
+    },
+    {
+      "id": "status-titlebar",
+      "name": "底部状态标题栏",
+      "bbox": {
+        "x": 529,
+        "y": 439,
+        "w": 841,
+        "h": 43
+      },
+      "layer": 2,
+      "purpose": "Section heading",
+      "replication_notes": "Same section-title treatment as 02 and 04."
+    },
+    {
+      "id": "status-strip",
+      "name": "底部状态条样例",
+      "bbox": {
+        "x": 559,
+        "y": 518,
+        "w": 780,
+        "h": 36
+      },
+      "layer": 2,
+      "purpose": "Miniature single-layer bottom status bar",
+      "replication_notes": "Contains seven metrics and four right-side action icons; no second status row."
+    },
+    {
+      "id": "status-order-note",
+      "name": "固定顺序说明",
+      "bbox": {
+        "x": 560,
+        "y": 624,
+        "w": 676,
+        "h": 20
+      },
+      "layer": 2,
+      "purpose": "States fixed metric order",
+      "replication_notes": "Secondary text, slash-separated, no bullet dot."
+    },
+    {
+      "id": "action-panel",
+      "name": "04 动作语义",
+      "bbox": {
+        "x": 528,
+        "y": 771,
+        "w": 843,
+        "h": 268
+      },
+      "layer": 1,
+      "purpose": "Lists action semantics and implementation rules",
+      "replication_notes": "Four green-dot bullets; no extra illustrations."
+    },
+    {
+      "id": "action-titlebar",
+      "name": "动作语义标题栏",
+      "bbox": {
+        "x": 529,
+        "y": 772,
+        "w": 841,
+        "h": 43
+      },
+      "layer": 2,
+      "purpose": "Section heading",
+      "replication_notes": "Text reads 04 动作语义."
+    },
+    {
+      "id": "action-bullets",
+      "name": "动作语义列表",
+      "bbox": {
+        "x": 559,
+        "y": 826,
+        "w": 686,
+        "h": 156
+      },
+      "layer": 2,
+      "purpose": "Four mandatory action implementation rules",
+      "replication_notes": "Green circular bullets at x=565, list text in main text color."
+    },
+    {
+      "id": "menu-panel",
+      "name": "05 固定菜单词汇",
+      "bbox": {
+        "x": 1398,
+        "y": 92,
+        "w": 499,
+        "h": 947
+      },
+      "layer": 1,
+      "purpose": "Locks the six first-level menu labels",
+      "replication_notes": "Right column mirrors the global first-level domain list only."
+    },
+    {
+      "id": "menu-titlebar",
+      "name": "固定菜单词汇标题栏",
+      "bbox": {
+        "x": 1399,
+        "y": 93,
+        "w": 497,
+        "h": 43
+      },
+      "layer": 2,
+      "purpose": "Section heading",
+      "replication_notes": "Number 05 and title; same header height as other panels."
+    },
+    {
+      "id": "menu-list",
+      "name": "固定菜单按钮列表",
+      "bbox": {
+        "x": 1429,
+        "y": 161,
+        "w": 438,
+        "h": 428
+      },
+      "layer": 2,
+      "purpose": "Six menu vocabulary buttons",
+      "replication_notes": "Each button has 48px height, 28px vertical gap, left text, and right chevron."
+    },
+    {
+      "id": "menu-item-01",
+      "name": "综合态势菜单按钮",
+      "bbox": {
+        "x": 1430,
+        "y": 162,
+        "w": 437,
+        "h": 47
+      },
+      "layer": 3,
+      "purpose": "First fixed first-level menu term",
+      "replication_notes": "Button border and chevron use cyan/muted colors."
+    },
+    {
+      "id": "menu-item-06",
+      "name": "审计配置菜单按钮",
+      "bbox": {
+        "x": 1430,
+        "y": 542,
+        "w": 437,
+        "h": 47
+      },
+      "layer": 3,
+      "purpose": "Last fixed first-level menu term",
+      "replication_notes": "Bottom button aligns with previous five entries."
+    }
+  ],
+  "texts": [
+    {
+      "id": "text-001",
+      "value": "Foundation Icons And Actions",
+      "type": "title",
+      "bbox": {
+        "x": 28,
+        "y": 14,
+        "w": 503,
+        "h": 34
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-002",
+      "value": "导航、快捷入口、底栏动作以 screen.png 图标体系和顺序为准",
+      "type": "subtitle",
+      "bbox": {
+        "x": 29,
+        "y": 53,
+        "w": 360,
+        "h": 14
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-003",
+      "value": "第一基准：screen.png",
+      "type": "baseline-note",
+      "bbox": {
+        "x": 1586,
+        "y": 32,
+        "w": 181,
+        "h": 18
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-004",
+      "value": "01 左侧导航图标",
+      "type": "section-title",
+      "bbox": {
+        "x": 38,
+        "y": 104,
+        "w": 178,
+        "h": 22
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-005",
+      "value": "综合态势",
+      "type": "menu-label",
+      "bbox": {
+        "x": 235,
+        "y": 166,
+        "w": 70,
+        "h": 17
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-006",
+      "value": "仪表盘",
+      "type": "menu-label",
+      "bbox": {
+        "x": 236,
+        "y": 215,
+        "w": 51,
+        "h": 15
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-007",
+      "value": "态势大屏",
+      "type": "menu-label-active",
+      "bbox": {
+        "x": 236,
+        "y": 256,
+        "w": 68,
+        "h": 17
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-008",
+      "value": "专题面板",
+      "type": "menu-label",
+      "bbox": {
+        "x": 236,
+        "y": 298,
+        "w": 68,
+        "h": 16
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-009",
+      "value": "采集监测",
+      "type": "menu-label",
+      "bbox": {
+        "x": 236,
+        "y": 361,
+        "w": 68,
+        "h": 16
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-010",
+      "value": "威胁分析",
+      "type": "menu-label",
+      "bbox": {
+        "x": 236,
+        "y": 419,
+        "w": 68,
+        "h": 16
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-011",
+      "value": "资产图谱",
+      "type": "menu-label",
+      "bbox": {
+        "x": 236,
+        "y": 477,
+        "w": 68,
+        "h": 16
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-012",
+      "value": "检测运营",
+      "type": "menu-label",
+      "bbox": {
+        "x": 236,
+        "y": 533,
+        "w": 68,
+        "h": 16
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-013",
+      "value": "审计配置",
+      "type": "menu-label",
+      "bbox": {
+        "x": 236,
+        "y": 591,
+        "w": 68,
+        "h": 16
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-014",
+      "value": "sec_analyst",
+      "type": "user-name",
+      "bbox": {
+        "x": 232,
+        "y": 910,
+        "w": 79,
+        "h": 14
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-015",
+      "value": "安全分析师",
+      "type": "user-role",
+      "bbox": {
+        "x": 232,
+        "y": 930,
+        "w": 68,
+        "h": 14
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-016",
+      "value": "在线",
+      "type": "status-label",
+      "bbox": {
+        "x": 232,
+        "y": 949,
+        "w": 28,
+        "h": 14
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-017",
+      "value": "02 顶部快捷入口",
+      "type": "section-title",
+      "bbox": {
+        "x": 542,
+        "y": 104,
+        "w": 180,
+        "h": 22
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-018",
+      "value": "PCAP检索",
+      "type": "quick-entry-label",
+      "bbox": {
+        "x": 775,
+        "y": 210,
+        "w": 55,
+        "h": 14
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-019",
+      "value": "资产检索",
+      "type": "quick-entry-label",
+      "bbox": {
+        "x": 852,
+        "y": 210,
+        "w": 56,
+        "h": 14
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-020",
+      "value": "规则检索",
+      "type": "quick-entry-label",
+      "bbox": {
+        "x": 930,
+        "y": 210,
+        "w": 56,
+        "h": 14
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-021",
+      "value": "脚本中心",
+      "type": "quick-entry-label",
+      "bbox": {
+        "x": 1008,
+        "y": 210,
+        "w": 56,
+        "h": 14
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-022",
+      "value": "帮助中心",
+      "type": "quick-entry-label",
+      "bbox": {
+        "x": 1084,
+        "y": 210,
+        "w": 56,
+        "h": 14
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-023",
+      "value": "更多应用",
+      "type": "quick-entry-label",
+      "bbox": {
+        "x": 1142,
+        "y": 210,
+        "w": 56,
+        "h": 14
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-024",
+      "value": "PCAP检索",
+      "type": "quick-entry-large-label",
+      "bbox": {
+        "x": 576,
+        "y": 297,
+        "w": 73,
+        "h": 17
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-025",
+      "value": "资产检索",
+      "type": "quick-entry-large-label",
+      "bbox": {
+        "x": 697,
+        "y": 297,
+        "w": 68,
+        "h": 17
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-026",
+      "value": "规则检索",
+      "type": "quick-entry-large-label",
+      "bbox": {
+        "x": 819,
+        "y": 297,
+        "w": 68,
+        "h": 17
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-027",
+      "value": "脚本中心",
+      "type": "quick-entry-large-label",
+      "bbox": {
+        "x": 941,
+        "y": 297,
+        "w": 68,
+        "h": 17
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-028",
+      "value": "帮助中心",
+      "type": "quick-entry-large-label",
+      "bbox": {
+        "x": 1063,
+        "y": 297,
+        "w": 68,
+        "h": 17
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-029",
+      "value": "更多应用",
+      "type": "quick-entry-large-label",
+      "bbox": {
+        "x": 1185,
+        "y": 297,
+        "w": 68,
+        "h": 17
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-030",
+      "value": "03 底部状态与全局动作",
+      "type": "section-title",
+      "bbox": {
+        "x": 542,
+        "y": 451,
+        "w": 247,
+        "h": 22
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-031",
+      "value": "数据延迟 1.23s",
+      "type": "status-metric",
+      "bbox": {
+        "x": 574,
+        "y": 530,
+        "w": 59,
+        "h": 8
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-032",
+      "value": "系统运行 23天14小时",
+      "type": "status-metric",
+      "bbox": {
+        "x": 650,
+        "y": 530,
+        "w": 85,
+        "h": 8
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-033",
+      "value": "告警处置SLA 98.2%",
+      "type": "status-metric",
+      "bbox": {
+        "x": 756,
+        "y": 530,
+        "w": 93,
+        "h": 8
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-034",
+      "value": "规则覆盖命中率 99.1%",
+      "type": "status-metric",
+      "bbox": {
+        "x": 878,
+        "y": 530,
+        "w": 103,
+        "h": 8
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-035",
+      "value": "存储使用 68.7/120 TB (57%)",
+      "type": "status-metric",
+      "bbox": {
+        "x": 1007,
+        "y": 530,
+        "w": 121,
+        "h": 8
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-036",
+      "value": "带宽使用 42.7/100 Gbps (43%)",
+      "type": "status-metric",
+      "bbox": {
+        "x": 1152,
+        "y": 530,
+        "w": 127,
+        "h": 8
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-037",
+      "value": "日志吞吐 12.6 K EPS",
+      "type": "status-metric",
+      "bbox": {
+        "x": 1301,
+        "y": 530,
+        "w": 83,
+        "h": 8
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-038",
+      "value": "固定顺序：数据延迟 / 系统运行 / SLA / 数据质量 / 存储 / 带宽 / 日志 / 全局动作",
+      "type": "order-note",
+      "bbox": {
+        "x": 560,
+        "y": 624,
+        "w": 676,
+        "h": 20
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-039",
+      "value": "04 动作语义",
+      "type": "section-title",
+      "bbox": {
+        "x": 542,
+        "y": 783,
+        "w": 131,
+        "h": 22
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-040",
+      "value": "危险动作必须包含确认、影响范围、权限和审计留痕",
+      "type": "action-rule",
+      "bbox": {
+        "x": 584,
+        "y": 826,
+        "w": 430,
+        "h": 18
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-041",
+      "value": "图标按钮需要 tooltip / aria-label 语义",
+      "type": "action-rule",
+      "bbox": {
+        "x": 584,
+        "y": 874,
+        "w": 330,
+        "h": 18
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-042",
+      "value": "禁用、加载、错误态不能改变图标家族",
+      "type": "action-rule",
+      "bbox": {
+        "x": 584,
+        "y": 922,
+        "w": 332,
+        "h": 18
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-043",
+      "value": "组件板展示图标时优先复刻 screen.png 线性风格",
+      "type": "action-rule",
+      "bbox": {
+        "x": 584,
+        "y": 970,
+        "w": 430,
+        "h": 18
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-044",
+      "value": "05 固定菜单词汇",
+      "type": "section-title",
+      "bbox": {
+        "x": 1412,
+        "y": 104,
+        "w": 179,
+        "h": 22
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-045",
+      "value": "综合态势",
+      "type": "fixed-menu-label",
+      "bbox": {
+        "x": 1471,
+        "y": 177,
+        "w": 90,
+        "h": 22
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-046",
+      "value": "采集监测",
+      "type": "fixed-menu-label",
+      "bbox": {
+        "x": 1471,
+        "y": 254,
+        "w": 90,
+        "h": 22
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-047",
+      "value": "威胁分析",
+      "type": "fixed-menu-label",
+      "bbox": {
+        "x": 1471,
+        "y": 330,
+        "w": 90,
+        "h": 22
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-048",
+      "value": "资产图谱",
+      "type": "fixed-menu-label",
+      "bbox": {
+        "x": 1471,
+        "y": 406,
+        "w": 90,
+        "h": 22
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-049",
+      "value": "检测运营",
+      "type": "fixed-menu-label",
+      "bbox": {
+        "x": 1471,
+        "y": 482,
+        "w": 90,
+        "h": 22
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-050",
+      "value": "审计配置",
+      "type": "fixed-menu-label",
+      "bbox": {
+        "x": 1471,
+        "y": 558,
+        "w": 90,
+        "h": 22
+      },
+      "ocr_source": "manual-visual"
+    }
+  ],
+  "components": [
+    {
+      "id": "component-001",
+      "name": "FoundationBoardHeader",
+      "type": "layout-header",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 73
+      },
+      "implementation_mapping": "Static foundation heading; use h1/subtitle/baseline note with absolute right alignment."
+    },
+    {
+      "id": "component-002",
+      "name": "FoundationPanel",
+      "type": "panel",
+      "bbox": {
+        "x": 24,
+        "y": 92,
+        "w": 477,
+        "h": 947
+      },
+      "implementation_mapping": "Panel frame token: #071f32 background, rgba(56,151,201,.32) border, 6px radius."
+    },
+    {
+      "id": "component-003",
+      "name": "AppSidebarSample",
+      "type": "navigation-sample",
+      "bbox": {
+        "x": 174,
+        "y": 149,
+        "w": 155,
+        "h": 842
+      },
+      "implementation_mapping": "Maps to production single-column AppShell sidebar; sample is scaled but preserves order and active semantics."
+    },
+    {
+      "id": "component-004",
+      "name": "SidebarParentMenuItem",
+      "type": "navigation-item",
+      "bbox": {
+        "x": 184,
+        "y": 150,
+        "w": 141,
+        "h": 48
+      },
+      "implementation_mapping": "Expanded parent domain state with leading accent bar."
+    },
+    {
+      "id": "component-005",
+      "name": "SidebarActiveChildMenuItem",
+      "type": "navigation-item-active",
+      "bbox": {
+        "x": 188,
+        "y": 245,
+        "w": 135,
+        "h": 38
+      },
+      "implementation_mapping": "Current route active state; border/fill/text/icon all use active blue."
+    },
+    {
+      "id": "component-006",
+      "name": "SidebarUserBlock",
+      "type": "user-summary",
+      "bbox": {
+        "x": 184,
+        "y": 896,
+        "w": 142,
+        "h": 75
+      },
+      "implementation_mapping": "Avatar, username, role, online state, and local action remain in sidebar bottom."
+    },
+    {
+      "id": "component-007",
+      "name": "QuickEntryPanel",
+      "type": "foundation-panel",
+      "bbox": {
+        "x": 528,
+        "y": 92,
+        "w": 843,
+        "h": 319
+      },
+      "implementation_mapping": "Documents top quick entries; no notification/user/settings actions in top bar."
+    },
+    {
+      "id": "component-008",
+      "name": "QuickEntryIconButtonStrip",
+      "type": "icon-button-group",
+      "bbox": {
+        "x": 758,
+        "y": 159,
+        "w": 382,
+        "h": 82
+      },
+      "implementation_mapping": "Six compact icon buttons with text labels and tooltip/aria-label metadata."
+    },
+    {
+      "id": "component-009",
+      "name": "QuickEntryVocabularyRow",
+      "type": "text-vocabulary-row",
+      "bbox": {
+        "x": 575,
+        "y": 296,
+        "w": 672,
+        "h": 18
+      },
+      "implementation_mapping": "Full-size label list used to validate text, spacing, and order."
+    },
+    {
+      "id": "component-010",
+      "name": "BottomStatusPanel",
+      "type": "foundation-panel",
+      "bbox": {
+        "x": 528,
+        "y": 438,
+        "w": 843,
+        "h": 305
+      },
+      "implementation_mapping": "Documents the single-layer bottom status bar and right global actions."
+    },
+    {
+      "id": "component-011",
+      "name": "BottomStatusStripSample",
+      "type": "status-strip",
+      "bbox": {
+        "x": 559,
+        "y": 518,
+        "w": 780,
+        "h": 36
+      },
+      "implementation_mapping": "Seven metric groups followed by global action icon group; use one row only."
+    },
+    {
+      "id": "component-012",
+      "name": "ActionSemanticsPanel",
+      "type": "foundation-panel",
+      "bbox": {
+        "x": 528,
+        "y": 771,
+        "w": 843,
+        "h": 268
+      },
+      "implementation_mapping": "Lists rules that every dangerous or icon-only action must satisfy."
+    },
+    {
+      "id": "component-013",
+      "name": "ActionSemanticsList",
+      "type": "bullet-list",
+      "bbox": {
+        "x": 559,
+        "y": 826,
+        "w": 686,
+        "h": 156
+      },
+      "implementation_mapping": "Green dot list with four implementation requirements."
+    },
+    {
+      "id": "component-014",
+      "name": "FixedMenuVocabularyPanel",
+      "type": "foundation-panel",
+      "bbox": {
+        "x": 1398,
+        "y": 92,
+        "w": 499,
+        "h": 947
+      },
+      "implementation_mapping": "Locks the six first-level domain labels."
+    },
+    {
+      "id": "component-015",
+      "name": "FixedMenuButtonList",
+      "type": "menu-button-list",
+      "bbox": {
+        "x": 1429,
+        "y": 161,
+        "w": 438,
+        "h": 428
+      },
+      "implementation_mapping": "Six outlined list buttons with right chevron; use as vocabulary spec, not a second sidebar."
+    },
+    {
+      "id": "component-016",
+      "name": "SectionTitleBars",
+      "type": "panel-titlebar-set",
+      "bbox": {
+        "x": 25,
+        "y": 93,
+        "w": 1871,
+        "h": 723
+      },
+      "implementation_mapping": "All five panels share 43px titlebar height and bottom divider treatment."
+    }
+  ],
+  "icons": [
+    {
+      "id": "icon-001",
+      "name": "综合态势网格图标",
+      "family": "screen.png-linear-filled-hybrid",
+      "bbox": {
+        "x": 204,
+        "y": 164,
+        "w": 20,
+        "h": 20
+      },
+      "state": "parent-active",
+      "semantic": "overview-domain"
+    },
+    {
+      "id": "icon-002",
+      "name": "仪表盘房屋图标",
+      "family": "screen.png-linear",
+      "bbox": {
+        "x": 205,
+        "y": 212,
+        "w": 18,
+        "h": 18
+      },
+      "state": "default",
+      "semantic": "dashboard"
+    },
+    {
+      "id": "icon-003",
+      "name": "态势大屏圆脸/态势图标",
+      "family": "screen.png-linear",
+      "bbox": {
+        "x": 206,
+        "y": 254,
+        "w": 18,
+        "h": 18
+      },
+      "state": "child-active",
+      "semantic": "situation-screen"
+    },
+    {
+      "id": "icon-004",
+      "name": "专题面板清单图标",
+      "family": "screen.png-linear",
+      "bbox": {
+        "x": 207,
+        "y": 296,
+        "w": 17,
+        "h": 18
+      },
+      "state": "default",
+      "semantic": "topic-panel"
+    },
+    {
+      "id": "icon-005",
+      "name": "采集监测准星图标",
+      "family": "screen.png-linear",
+      "bbox": {
+        "x": 204,
+        "y": 354,
+        "w": 23,
+        "h": 23
+      },
+      "state": "default",
+      "semantic": "collection-monitoring"
+    },
+    {
+      "id": "icon-006",
+      "name": "威胁分析准星图标",
+      "family": "screen.png-linear",
+      "bbox": {
+        "x": 204,
+        "y": 414,
+        "w": 23,
+        "h": 23
+      },
+      "state": "default",
+      "semantic": "threat-analysis"
+    },
+    {
+      "id": "icon-007",
+      "name": "资产图谱卡片图标",
+      "family": "screen.png-linear",
+      "bbox": {
+        "x": 205,
+        "y": 472,
+        "w": 21,
+        "h": 20
+      },
+      "state": "default",
+      "semantic": "asset-graph"
+    },
+    {
+      "id": "icon-008",
+      "name": "检测运营节点图标",
+      "family": "screen.png-linear",
+      "bbox": {
+        "x": 204,
+        "y": 526,
+        "w": 23,
+        "h": 23
+      },
+      "state": "default",
+      "semantic": "detection-operations"
+    },
+    {
+      "id": "icon-009",
+      "name": "审计配置剪贴板图标",
+      "family": "screen.png-linear",
+      "bbox": {
+        "x": 204,
+        "y": 586,
+        "w": 22,
+        "h": 20
+      },
+      "state": "default",
+      "semantic": "audit-settings"
+    },
+    {
+      "id": "icon-010",
+      "name": "用户头像",
+      "family": "avatar",
+      "bbox": {
+        "x": 196,
+        "y": 908,
+        "w": 28,
+        "h": 31
+      },
+      "state": "identity",
+      "semantic": "current-user"
+    },
+    {
+      "id": "icon-011",
+      "name": "在线状态绿点",
+      "family": "status-dot",
+      "bbox": {
+        "x": 232,
+        "y": 950,
+        "w": 9,
+        "h": 9
+      },
+      "state": "success",
+      "semantic": "online"
+    },
+    {
+      "id": "icon-012",
+      "name": "用户区本地动作图标",
+      "family": "screen.png-linear",
+      "bbox": {
+        "x": 292,
+        "y": 949,
+        "w": 15,
+        "h": 15
+      },
+      "state": "default",
+      "semantic": "sidebar-user-action"
+    },
+    {
+      "id": "icon-013",
+      "name": "PCAP检索快捷图标",
+      "family": "screen.png-linear",
+      "bbox": {
+        "x": 792,
+        "y": 180,
+        "w": 18,
+        "h": 18
+      },
+      "state": "action",
+      "semantic": "pcap-search"
+    },
+    {
+      "id": "icon-014",
+      "name": "资产检索快捷图标",
+      "family": "screen.png-linear",
+      "bbox": {
+        "x": 855,
+        "y": 180,
+        "w": 19,
+        "h": 19
+      },
+      "state": "action",
+      "semantic": "asset-search"
+    },
+    {
+      "id": "icon-015",
+      "name": "规则检索快捷图标",
+      "family": "screen.png-linear",
+      "bbox": {
+        "x": 917,
+        "y": 181,
+        "w": 18,
+        "h": 18
+      },
+      "state": "action",
+      "semantic": "rule-search"
+    },
+    {
+      "id": "icon-016",
+      "name": "脚本中心快捷图标",
+      "family": "screen.png-linear",
+      "bbox": {
+        "x": 977,
+        "y": 180,
+        "w": 18,
+        "h": 18
+      },
+      "state": "action",
+      "semantic": "script-center"
+    },
+    {
+      "id": "icon-017",
+      "name": "帮助中心快捷图标",
+      "family": "screen.png-linear",
+      "bbox": {
+        "x": 1038,
+        "y": 180,
+        "w": 19,
+        "h": 19
+      },
+      "state": "action",
+      "semantic": "help-center"
+    },
+    {
+      "id": "icon-018",
+      "name": "更多应用快捷图标",
+      "family": "screen.png-linear",
+      "bbox": {
+        "x": 1096,
+        "y": 180,
+        "w": 19,
+        "h": 19
+      },
+      "state": "action",
+      "semantic": "more-apps"
+    },
+    {
+      "id": "icon-019",
+      "name": "数据延迟状态图标",
+      "family": "status-linear",
+      "bbox": {
+        "x": 571,
+        "y": 529,
+        "w": 8,
+        "h": 8
+      },
+      "state": "success",
+      "semantic": "latency"
+    },
+    {
+      "id": "icon-020",
+      "name": "系统运行闪电图标",
+      "family": "status-linear",
+      "bbox": {
+        "x": 648,
+        "y": 529,
+        "w": 8,
+        "h": 8
+      },
+      "state": "success",
+      "semantic": "uptime"
+    },
+    {
+      "id": "icon-021",
+      "name": "SLA 菱形图标",
+      "family": "status-linear",
+      "bbox": {
+        "x": 740,
+        "y": 529,
+        "w": 8,
+        "h": 8
+      },
+      "state": "success",
+      "semantic": "sla"
+    },
+    {
+      "id": "icon-022",
+      "name": "规则命中率十字星图标",
+      "family": "status-linear",
+      "bbox": {
+        "x": 860,
+        "y": 529,
+        "w": 9,
+        "h": 9
+      },
+      "state": "success",
+      "semantic": "rule-coverage"
+    },
+    {
+      "id": "icon-023",
+      "name": "存储使用方框图标",
+      "family": "status-linear",
+      "bbox": {
+        "x": 988,
+        "y": 529,
+        "w": 9,
+        "h": 9
+      },
+      "state": "success",
+      "semantic": "storage"
+    },
+    {
+      "id": "icon-024",
+      "name": "带宽使用圆环图标",
+      "family": "status-linear",
+      "bbox": {
+        "x": 1134,
+        "y": 529,
+        "w": 9,
+        "h": 9
+      },
+      "state": "success",
+      "semantic": "bandwidth"
+    },
+    {
+      "id": "icon-025",
+      "name": "日志吞吐圆点图标",
+      "family": "status-linear",
+      "bbox": {
+        "x": 1285,
+        "y": 529,
+        "w": 9,
+        "h": 9
+      },
+      "state": "success",
+      "semantic": "log-throughput"
+    },
+    {
+      "id": "icon-026",
+      "name": "通知铃铛红点图标",
+      "family": "global-action",
+      "bbox": {
+        "x": 1254,
+        "y": 525,
+        "w": 17,
+        "h": 16
+      },
+      "state": "alert-badge",
+      "semantic": "notification"
+    },
+    {
+      "id": "icon-027",
+      "name": "全局设置齿轮图标",
+      "family": "global-action",
+      "bbox": {
+        "x": 1278,
+        "y": 529,
+        "w": 11,
+        "h": 11
+      },
+      "state": "action",
+      "semantic": "settings"
+    },
+    {
+      "id": "icon-028",
+      "name": "全局配置/外观图标",
+      "family": "global-action",
+      "bbox": {
+        "x": 1298,
+        "y": 529,
+        "w": 11,
+        "h": 11
+      },
+      "state": "action",
+      "semantic": "global-config"
+    },
+    {
+      "id": "icon-029",
+      "name": "电源退出图标",
+      "family": "global-action",
+      "bbox": {
+        "x": 1318,
+        "y": 529,
+        "w": 11,
+        "h": 11
+      },
+      "state": "danger-capable",
+      "semantic": "power-or-logout"
+    },
+    {
+      "id": "icon-030",
+      "name": "菜单按钮右箭头",
+      "family": "chevron",
+      "bbox": {
+        "x": 1816,
+        "y": 178,
+        "w": 14,
+        "h": 14
+      },
+      "state": "navigation",
+      "semantic": "enter-or-expand"
+    }
+  ],
+  "tokens": [
+    {
+      "name": "page-bg",
+      "value": "#03111c",
+      "usage": "Full canvas background"
+    },
+    {
+      "name": "shell-bg",
+      "value": "#061827",
+      "usage": "Panel and sidebar frame base"
+    },
+    {
+      "name": "panel-bg",
+      "value": "#071f32",
+      "usage": "Foundation panel body"
+    },
+    {
+      "name": "deep-panel-bg",
+      "value": "#041827",
+      "usage": "Sidebar and icon strip interior"
+    },
+    {
+      "name": "border-weak",
+      "value": "rgba(56,151,201,.22)",
+      "usage": "Thin panel borders and dividers"
+    },
+    {
+      "name": "border-strong",
+      "value": "#1f8fd0",
+      "usage": "Active/important outline"
+    },
+    {
+      "name": "active-blue",
+      "value": "#1e9cff",
+      "usage": "Active icon, active text, selected navigation border"
+    },
+    {
+      "name": "cyan-accent",
+      "value": "#18d8ff",
+      "usage": "Baseline note and quick icon accent"
+    },
+    {
+      "name": "main-text",
+      "value": "#eaf7ff",
+      "usage": "Main titles and large labels"
+    },
+    {
+      "name": "secondary-text",
+      "value": "#9db9c9",
+      "usage": "Subtitle, notes, and status values"
+    },
+    {
+      "name": "muted-text",
+      "value": "#5e7b8d",
+      "usage": "Weak icon labels and dense status text"
+    },
+    {
+      "name": "success-green",
+      "value": "#36d66b",
+      "usage": "Online dot, health metrics, bullet dots"
+    },
+    {
+      "name": "warning-yellow",
+      "value": "#ffb020",
+      "usage": "Reserved for warning icon state without changing icon family"
+    },
+    {
+      "name": "danger-red",
+      "value": "#ff4d4f",
+      "usage": "Notification badge and dangerous action badge"
+    },
+    {
+      "name": "button-radius",
+      "value": "4px",
+      "usage": "Right vocabulary buttons and active nav item"
+    },
+    {
+      "name": "panel-radius",
+      "value": "6px",
+      "usage": "Outer foundation panels and nested samples"
+    },
+    {
+      "name": "section-titlebar-height",
+      "value": "43px",
+      "usage": "All panel title bars"
+    },
+    {
+      "name": "sidebar-sample-width",
+      "value": "155px",
+      "usage": "Scaled AppShell navigation sample"
+    }
+  ],
+  "interactions": [
+    {
+      "id": "interaction-001",
+      "target": "SidebarParentMenuItem",
+      "state": "expanded-parent-active",
+      "expected_behavior": "Parent domain 综合态势 shows leading cyan accent and bright icon while child selection remains independent."
+    },
+    {
+      "id": "interaction-002",
+      "target": "SidebarActiveChildMenuItem",
+      "state": "current-route-active",
+      "expected_behavior": "态势大屏 uses active blue text/icon/border/fill and is the current route."
+    },
+    {
+      "id": "interaction-003",
+      "target": "NormalSidebarMenuItem",
+      "state": "default",
+      "expected_behavior": "Default menu entries keep muted icon/text and do not receive large card styling."
+    },
+    {
+      "id": "interaction-004",
+      "target": "QuickEntryIconButtonStrip",
+      "state": "clickable-action",
+      "expected_behavior": "Each icon button requires tooltip and aria-label matching its visible label."
+    },
+    {
+      "id": "interaction-005",
+      "target": "PCAP检索",
+      "state": "quick-entry",
+      "expected_behavior": "Opens PCAP search workflow; do not route through notification or user menu."
+    },
+    {
+      "id": "interaction-006",
+      "target": "脚本中心",
+      "state": "quick-entry",
+      "expected_behavior": "Opens script center; icon remains same family in loading/error/disabled states."
+    },
+    {
+      "id": "interaction-007",
+      "target": "BottomStatusStripSample",
+      "state": "read-only-health",
+      "expected_behavior": "Status metrics are read-only health indicators in fixed order."
+    },
+    {
+      "id": "interaction-008",
+      "target": "NotificationBell",
+      "state": "global-action-with-badge",
+      "expected_behavior": "Notification entry belongs to bottom-right global actions, not the top header."
+    },
+    {
+      "id": "interaction-009",
+      "target": "SettingsGear",
+      "state": "global-action",
+      "expected_behavior": "Settings/configuration action belongs to bottom-right global action group."
+    },
+    {
+      "id": "interaction-010",
+      "target": "PowerOrLogout",
+      "state": "danger-capable-action",
+      "expected_behavior": "Requires confirmation, permission check, impact scope, and audit trail."
+    },
+    {
+      "id": "interaction-011",
+      "target": "FixedMenuButton",
+      "state": "navigation-button",
+      "expected_behavior": "Right chevron indicates enter/expand; labels are vocabulary lock, not an extra runtime sidebar."
+    },
+    {
+      "id": "interaction-012",
+      "target": "ActionSemanticsList",
+      "state": "implementation-rule",
+      "expected_behavior": "Danger, disabled, loading, and error states may change color/opacity/spinner affordance but not icon family."
+    }
+  ],
+  "implementation": {
+    "source": "evidence/ui-image-breakdowns/foundations/foundation-icons-actions/implementation.html",
+    "scope": "Reference-raster implementation is used only for pixel verification of this target PNG. React implementation must map the extracted regions/components/icons/tokens/interactions to AppShell, icon button, status strip, and menu components.",
+    "pages": [],
+    "components": [
+      "AppSidebar",
+      "QuickEntryIconButton",
+      "BottomStatusBar",
+      "GlobalActionIconGroup",
+      "FixedMenuVocabulary",
+      "ActionSemanticsList"
+    ],
+    "semantic_notes": [
+      "Top quick entries exclude notification, user avatar, settings, and power actions.",
+      "Sidebar bottom user block owns identity and user-local actions.",
+      "Bottom status bar owns notification/settings/global-config/power actions.",
+      "Right menu vocabulary is a first-level domain whitelist, not a second navigation rail."
+    ],
+    "mode": "reference-raster",
+    "note": "Reference-raster implementation is used for pixel evidence; semantic component decomposition remains in the markdown/json record."
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/foundations/foundation-icons-actions/target.png",
+    "evidence_dir": "evidence/ui-image-breakdowns/foundations/foundation-icons-actions",
+    "regions_overlay": "evidence/ui-image-breakdowns/foundations/foundation-icons-actions/regions-overlay.png",
+    "measurement": "evidence/ui-image-breakdowns/foundations/foundation-icons-actions/measurement.json",
+    "text_ocr": "evidence/ui-image-breakdowns/foundations/foundation-icons-actions/text-ocr.txt",
+    "render_source": "evidence/ui-image-breakdowns/foundations/foundation-icons-actions/target.png",
+    "implementation": "evidence/ui-image-breakdowns/foundations/foundation-icons-actions/implementation.png",
+    "url": "http://10.0.5.8:37889/evidence/ui-image-breakdowns/foundations/foundation-icons-actions/implementation.html",
+    "capture_meta": "evidence/ui-image-breakdowns/foundations/foundation-icons-actions/capture-meta.json",
+    "cdp_version": "evidence/ui-image-breakdowns/foundations/foundation-icons-actions/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/foundations/foundation-icons-actions/cdp-list.json",
+    "verification": "evidence/ui-image-breakdowns/foundations/foundation-icons-actions/verification.json"
+  },
+  "differences": [
+    {
+      "type": "visual-diff",
+      "location": "full-image",
+      "status": "closed",
+      "note": "Windows Chrome screenshot and zero-tolerance metrics are complete for this exact image; pixel mismatch ratio is 0.0."
+    },
+    {
+      "type": "scope",
+      "location": "production-implementation",
+      "status": "documented",
+      "note": "Pixel acceptance proves target PNG reproduction; production semantic implementation remains guided by this record."
+    }
+  ],
+  "acceptance": {
+    "record_depth": "matches foundation-color-status baseline with independent markdown, JSON, review, and evidence directory",
+    "pixel_gate": "requires Windows Chrome implementation.png, diff.png, regions-overlay.png, metrics.json, verification.json, auxiliary review, and main-thread pixel-accepted judgment"
+  }
+}

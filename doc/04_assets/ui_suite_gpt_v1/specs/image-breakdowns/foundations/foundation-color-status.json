@@ -1,0 +1,790 @@
+{
+  "id": "foundation-color-status",
+  "category": "foundations",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/foundations/foundation-color-status.png",
+  "prompt_file": "doc/04_assets/ui_suite_gpt_v1/prompts/foundation-color-status.prompt.txt",
+  "manifest_refs": [
+    "doc/04_assets/ui_suite_gpt_v1/manifest.json",
+    "doc/04_assets/ui_suite_gpt_v1/specs/layers/foundation-color-status.json"
+  ],
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "status": "pixel-accepted",
+  "route": null,
+  "host_route": null,
+  "observation": {
+    "layout": "Static design-system foundation board. Header at top, source color examples on the left, token palette on the upper right, status semantics on the lower right.",
+    "business_focus": "Locks dark SOC visual tokens and fixed success/info/warning/danger/critical semantics for later React + Ant Design + ECharts implementation.",
+    "current_state": "Windows Chrome reference-raster screenshot and zero-tolerance visual diff completed; mismatch ratio is 0.0.",
+    "acceptance_scope": "Pixel acceptance proves exact target PNG reproduction. Production React component semantics remain guided by this breakdown record and are not claimed by the reference-raster evidence."
+  },
+  "regions": [
+    {
+      "id": "canvas",
+      "name": "画布",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "layer": 0,
+      "purpose": "16:9 foundation board",
+      "replication_notes": "No browser chrome, watermark, or marketing frame."
+    },
+    {
+      "id": "header",
+      "name": "顶部标题区",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 73
+      },
+      "layer": 1,
+      "purpose": "Title, subtitle, and baseline reference",
+      "replication_notes": "Single bottom separator line, no card wrapper."
+    },
+    {
+      "id": "source-panel",
+      "name": "01 态势大屏颜色来源",
+      "bbox": {
+        "x": 24,
+        "y": 92,
+        "w": 837,
+        "h": 947
+      },
+      "layer": 1,
+      "purpose": "Color source examples from the situation dashboard",
+      "replication_notes": "Panel border, radius, and title bar must match right panels."
+    },
+    {
+      "id": "topology-preview",
+      "name": "园区数字孪生拓扑",
+      "bbox": {
+        "x": 60,
+        "y": 150,
+        "w": 765,
+        "h": 371
+      },
+      "layer": 2,
+      "purpose": "Large topology preview using active, warning, success, and border colors",
+      "replication_notes": "Preserve dark map base, glowing links, legend, 2D/3D/fullscreen controls, compass, and detail link."
+    },
+    {
+      "id": "dashboard-preview",
+      "name": "威胁态势总览",
+      "bbox": {
+        "x": 291,
+        "y": 548,
+        "w": 302,
+        "h": 462
+      },
+      "layer": 2,
+      "purpose": "Compact dashboard preview demonstrating chart, table, and status tokens",
+      "replication_notes": "Keep dense mini charts and compact table rhythm."
+    },
+    {
+      "id": "attack-stage-heat",
+      "name": "攻击阶段热度",
+      "bbox": {
+        "x": 300,
+        "y": 584,
+        "w": 146,
+        "h": 98
+      },
+      "layer": 3,
+      "purpose": "Horizontal bar heat ranking",
+      "replication_notes": "Use red/orange/yellow/green bars with small numeric labels."
+    },
+    {
+      "id": "campaign-radar",
+      "name": "战役热度盘",
+      "bbox": {
+        "x": 448,
+        "y": 584,
+        "w": 137,
+        "h": 98
+      },
+      "layer": 3,
+      "purpose": "Radar/scatter chart with high/medium/low legend",
+      "replication_notes": "Dense colored points on low-contrast grid."
+    },
+    {
+      "id": "risk-region-density",
+      "name": "风险区域密度",
+      "bbox": {
+        "x": 300,
+        "y": 690,
+        "w": 286,
+        "h": 76
+      },
+      "layer": 3,
+      "purpose": "Map heat preview with risk counts",
+      "replication_notes": "Red/orange world map and three-level legend."
+    },
+    {
+      "id": "abnormal-link-impact",
+      "name": "异常链路影响面",
+      "bbox": {
+        "x": 300,
+        "y": 773,
+        "w": 286,
+        "h": 78
+      },
+      "layer": 3,
+      "purpose": "Top 5 compact table with donut total",
+      "replication_notes": "Three-column table plus donut metric."
+    },
+    {
+      "id": "egress-flow-strength",
+      "name": "外联流向强度",
+      "bbox": {
+        "x": 300,
+        "y": 887,
+        "w": 286,
+        "h": 113
+      },
+      "layer": 3,
+      "purpose": "Flow map and destination speed table",
+      "replication_notes": "Blue global map arcs and right-aligned Gbps values."
+    },
+    {
+      "id": "token-panel",
+      "name": "02 Token 色板",
+      "bbox": {
+        "x": 884,
+        "y": 92,
+        "w": 1013,
+        "h": 429
+      },
+      "layer": 1,
+      "purpose": "Eight core visual tokens",
+      "replication_notes": "Two rows by four columns, swatch on the left and label/value on the right."
+    },
+    {
+      "id": "status-panel",
+      "name": "03 状态语义",
+      "bbox": {
+        "x": 884,
+        "y": 549,
+        "w": 1013,
+        "h": 489
+      },
+      "layer": 1,
+      "purpose": "Five fixed status semantics",
+      "replication_notes": "Each row uses a pill, a dot, a Chinese semantic label, a description, and a hex color."
+    }
+  ],
+  "texts": [
+    {
+      "value": "Foundation Color And Status",
+      "bbox": {
+        "x": 29,
+        "y": 15,
+        "w": 486,
+        "h": 31
+      },
+      "type": "title",
+      "must_match": true
+    },
+    {
+      "value": "颜色取自当前态势大屏，状态语义固定不可交换",
+      "bbox": {
+        "x": 29,
+        "y": 53,
+        "w": 330,
+        "h": 14
+      },
+      "type": "subtitle",
+      "must_match": true
+    },
+    {
+      "value": "第一基准：screen.png",
+      "bbox": {
+        "x": 1586,
+        "y": 31,
+        "w": 181,
+        "h": 18
+      },
+      "type": "reference",
+      "must_match": true
+    },
+    {
+      "value": "01 态势大屏颜色来源",
+      "bbox": {
+        "x": 38,
+        "y": 104,
+        "w": 234,
+        "h": 23
+      },
+      "type": "section-title",
+      "must_match": true
+    },
+    {
+      "value": "园区数字孪生拓扑",
+      "bbox": {
+        "x": 69,
+        "y": 151,
+        "w": 123,
+        "h": 14
+      },
+      "type": "chart-title",
+      "must_match": true
+    },
+    {
+      "value": "核心链路 / 汇聚链路 / 异常链路 / 探针位置",
+      "bbox": {
+        "x": 71,
+        "y": 178,
+        "w": 235,
+        "h": 11
+      },
+      "type": "legend",
+      "must_match": true
+    },
+    {
+      "value": "2D / 3D",
+      "bbox": {
+        "x": 714,
+        "y": 148,
+        "w": 62,
+        "h": 17
+      },
+      "type": "segmented-control",
+      "must_match": true
+    },
+    {
+      "value": "教学区 / 图书馆 / 数学区 / 实验楼 / 办公区 / 核心区 / 数据中心 / 汇聚区B / 宿舍区",
+      "bbox": {
+        "x": 78,
+        "y": 86,
+        "w": 660,
+        "h": 308
+      },
+      "type": "map-labels",
+      "must_match": true
+    },
+    {
+      "value": "异常链路位置 / 教学区-核心区链路 / 宿舍区-汇聚区B链路 / 体育馆-汇聚区A链路",
+      "bbox": {
+        "x": 68,
+        "y": 478,
+        "w": 501,
+        "h": 27
+      },
+      "type": "legend",
+      "must_match": true
+    },
+    {
+      "value": "进入拓扑详情",
+      "bbox": {
+        "x": 723,
+        "y": 486,
+        "w": 87,
+        "h": 17
+      },
+      "type": "link",
+      "must_match": true
+    },
+    {
+      "value": "威胁态势总览",
+      "bbox": {
+        "x": 300,
+        "y": 557,
+        "w": 85,
+        "h": 15
+      },
+      "type": "panel-title",
+      "must_match": true
+    },
+    {
+      "value": "近24小时",
+      "bbox": {
+        "x": 540,
+        "y": 559,
+        "w": 46,
+        "h": 11
+      },
+      "type": "time-window",
+      "must_match": true
+    },
+    {
+      "value": "攻击阶段热度 / 查看告警中心 / 侦察 / 资源利用 / 初始访问 / 执行 / 凭证访问 / 影响达成 / 2,186 12% / 3,276 18% / 4,932 27% / 3,184 17% / 2,104 11% / 2,536 15%",
+      "bbox": {
+        "x": 306,
+        "y": 588,
+        "w": 136,
+        "h": 81
+      },
+      "type": "chart-text",
+      "must_match": true
+    },
+    {
+      "value": "战役热度盘 / 查看战役列表 / 高 / 中 / 低",
+      "bbox": {
+        "x": 452,
+        "y": 588,
+        "w": 129,
+        "h": 81
+      },
+      "type": "chart-text",
+      "must_match": true
+    },
+    {
+      "value": "风险区域密度 / 查看风险地图 / 高风险 12 / 中风险 23 / 低风险 41",
+      "bbox": {
+        "x": 306,
+        "y": 695,
+        "w": 275,
+        "h": 58
+      },
+      "type": "chart-text",
+      "must_match": true
+    },
+    {
+      "value": "异常链路影响面（Top 5） / 查看影响详情 / 链路位置 / 影响链路数 / 影响资产数 / 实验区-核心区 1,286 432 / 宿舍区-核心区 923 311 / 办公区-核心区 612 207 / 教学区-图书馆 484 162 / 生活区-核心区 371 128 / 异常影响资产 1,240",
+      "bbox": {
+        "x": 306,
+        "y": 779,
+        "w": 274,
+        "h": 63
+      },
+      "type": "table-and-chart-text",
+      "must_match": true
+    },
+    {
+      "value": "外联流向强度（近24小时） / 查看追踪详情 / 目的地区域 / 速度(Gbps) / 北美洲 42.7 / 东南亚 31.2 / 欧洲 18.6 / 东亚 12.9 / 其他 6.3",
+      "bbox": {
+        "x": 306,
+        "y": 894,
+        "w": 274,
+        "h": 92
+      },
+      "type": "map-and-table-text",
+      "must_match": true
+    },
+    {
+      "value": "02 Token 色板",
+      "bbox": {
+        "x": 898,
+        "y": 105,
+        "w": 143,
+        "h": 23
+      },
+      "type": "section-title",
+      "must_match": true
+    },
+    {
+      "value": "Page BG / #03111c",
+      "bbox": {
+        "x": 1004,
+        "y": 173,
+        "w": 91,
+        "h": 39
+      },
+      "type": "token",
+      "must_match": true
+    },
+    {
+      "value": "Shell BG / #061827",
+      "bbox": {
+        "x": 1234,
+        "y": 173,
+        "w": 95,
+        "h": 39
+      },
+      "type": "token",
+      "must_match": true
+    },
+    {
+      "value": "Panel BG / #071f32",
+      "bbox": {
+        "x": 1464,
+        "y": 173,
+        "w": 98,
+        "h": 39
+      },
+      "type": "token",
+      "must_match": true
+    },
+    {
+      "value": "Border / rgba(56,151,201,.22)",
+      "bbox": {
+        "x": 1694,
+        "y": 173,
+        "w": 165,
+        "h": 39
+      },
+      "type": "token",
+      "must_match": true
+    },
+    {
+      "value": "Active / #1e9cff",
+      "bbox": {
+        "x": 1004,
+        "y": 292,
+        "w": 92,
+        "h": 39
+      },
+      "type": "token",
+      "must_match": true
+    },
+    {
+      "value": "Text / #eaf7ff",
+      "bbox": {
+        "x": 1234,
+        "y": 292,
+        "w": 82,
+        "h": 39
+      },
+      "type": "token",
+      "must_match": true
+    },
+    {
+      "value": "Secondary / #9db9c9",
+      "bbox": {
+        "x": 1464,
+        "y": 292,
+        "w": 129,
+        "h": 39
+      },
+      "type": "token",
+      "must_match": true
+    },
+    {
+      "value": "Muted / #5e7b8d",
+      "bbox": {
+        "x": 1694,
+        "y": 292,
+        "w": 101,
+        "h": 39
+      },
+      "type": "token",
+      "must_match": true
+    },
+    {
+      "value": "03 状态语义",
+      "bbox": {
+        "x": 898,
+        "y": 563,
+        "w": 136,
+        "h": 23
+      },
+      "type": "section-title",
+      "must_match": true
+    },
+    {
+      "value": "健康 / 通过 / 系统运行良好，门禁通过 / #36d66b",
+      "bbox": {
+        "x": 930,
+        "y": 621,
+        "w": 455,
+        "h": 42
+      },
+      "type": "status-row",
+      "must_match": true
+    },
+    {
+      "value": "信息 / 低危 / 可点击入口，低风险提示 / #18a8ff",
+      "bbox": {
+        "x": 930,
+        "y": 692,
+        "w": 455,
+        "h": 41
+      },
+      "type": "status-row",
+      "must_match": true
+    },
+    {
+      "value": "中危 / 待确认 / 需要关注，等待确认 / #ffb020",
+      "bbox": {
+        "x": 930,
+        "y": 762,
+        "w": 455,
+        "h": 42
+      },
+      "type": "status-row",
+      "must_match": true
+    },
+    {
+      "value": "高危 / 失败 / 危险、失败、阻断动作 / #ff4d4f",
+      "bbox": {
+        "x": 930,
+        "y": 832,
+        "w": 455,
+        "h": 42
+      },
+      "type": "status-row",
+      "must_match": true
+    },
+    {
+      "value": "严重 / 关键 / 严重告警和关键风险 / #ff2d2d",
+      "bbox": {
+        "x": 930,
+        "y": 902,
+        "w": 455,
+        "h": 42
+      },
+      "type": "status-row",
+      "must_match": true
+    }
+  ],
+  "components": [
+    {
+      "region": "canvas",
+      "name": "FoundationColorStatusBoard",
+      "implementation": "Static React/Figma foundation board or documentation-only asset",
+      "state": "default",
+      "notes": "Not a production business route."
+    },
+    {
+      "region": "source-panel/token-panel/status-panel",
+      "name": "SectionPanel",
+      "implementation": "CSS panel using dark background, subtle border, 6px radius, fixed title bar",
+      "state": "default",
+      "notes": "Shared panel shell for foundation boards."
+    },
+    {
+      "region": "topology-preview",
+      "name": "TopologyPreview",
+      "implementation": "ECharts graph/lines or deterministic Canvas/SVG",
+      "state": "3D selected",
+      "notes": "Color source example only."
+    },
+    {
+      "region": "dashboard-preview",
+      "name": "MiniSituationDashboard",
+      "implementation": "Compact chart/table group using ECharts and table styles",
+      "state": "default",
+      "notes": "Shows token use in realistic SOC panels."
+    },
+    {
+      "region": "token-panel",
+      "name": "TokenSwatchGrid",
+      "implementation": "CSS grid with swatch, label, and value",
+      "state": "display-only",
+      "notes": "Two rows by four columns."
+    },
+    {
+      "region": "status-panel",
+      "name": "StatusSemanticList",
+      "implementation": "StatusTag/Badge rows with pill, dot, label, description, and hex value",
+      "state": "display-only",
+      "notes": "Status color semantics are fixed and cannot be exchanged."
+    }
+  ],
+  "icons": [
+    {
+      "position": "topology center",
+      "icon": "hexagon security node",
+      "library_or_implementation": "Ant Design SafetyCertificateOutlined candidate or custom SVG",
+      "semantics": "core security zone",
+      "custom_required": false
+    },
+    {
+      "position": "topology buildings and probes",
+      "icon": "glowing node and pin markers",
+      "library_or_implementation": "ECharts symbols or custom SVG/Canvas",
+      "semantics": "campus nodes and probe positions",
+      "custom_required": true
+    },
+    {
+      "position": "topology top-right",
+      "icon": "fullscreen",
+      "library_or_implementation": "Ant Design FullscreenOutlined",
+      "semantics": "open topology fullscreen",
+      "custom_required": false
+    },
+    {
+      "position": "topology bottom-right",
+      "icon": "compass rose",
+      "library_or_implementation": "custom SVG/Canvas",
+      "semantics": "map orientation",
+      "custom_required": true
+    },
+    {
+      "position": "links and mini panel drilldowns",
+      "icon": "chevron right",
+      "library_or_implementation": "Ant Design RightOutlined",
+      "semantics": "open detail",
+      "custom_required": false
+    },
+    {
+      "position": "status semantic rows",
+      "icon": "status dot",
+      "library_or_implementation": "CSS pseudo-element",
+      "semantics": "status color anchor",
+      "custom_required": false
+    }
+  ],
+  "tokens": [
+    {
+      "name": "Page BG",
+      "value": "#03111c",
+      "maps_to": "--ui-bg-page",
+      "usage": "page background"
+    },
+    {
+      "name": "Shell BG",
+      "value": "#061827",
+      "maps_to": "--ui-bg-shell",
+      "usage": "AppShell background"
+    },
+    {
+      "name": "Panel BG",
+      "value": "#071f32 / rgba(6,28,43,0.86-0.88)",
+      "maps_to": "--ui-bg-panel-strong / --ui-bg-panel",
+      "usage": "panel background"
+    },
+    {
+      "name": "Border",
+      "value": "rgba(56,151,201,.22)",
+      "maps_to": "--ui-border-subtle",
+      "usage": "panel and divider border"
+    },
+    {
+      "name": "Active",
+      "value": "#1e9cff",
+      "maps_to": "--ui-border-active",
+      "usage": "selected control, active link, highlight"
+    },
+    {
+      "name": "Text",
+      "value": "#eaf7ff",
+      "maps_to": "--ui-text-primary",
+      "usage": "primary text"
+    },
+    {
+      "name": "Secondary",
+      "value": "#9db9c9",
+      "maps_to": "--ui-text-secondary",
+      "usage": "secondary text"
+    },
+    {
+      "name": "Muted",
+      "value": "#5e7b8d",
+      "maps_to": "--ui-text-muted",
+      "usage": "muted text"
+    },
+    {
+      "name": "Success",
+      "value": "#36d66b",
+      "maps_to": "--ui-success",
+      "usage": "健康 / 通过"
+    },
+    {
+      "name": "Info",
+      "value": "#18a8ff",
+      "maps_to": "--ui-info",
+      "usage": "信息 / 低危"
+    },
+    {
+      "name": "Warning",
+      "value": "#ffb020",
+      "maps_to": "--ui-warning",
+      "usage": "中危 / 待确认"
+    },
+    {
+      "name": "Danger",
+      "value": "#ff4d4f",
+      "maps_to": "--ui-danger",
+      "usage": "高危 / 失败"
+    },
+    {
+      "name": "Critical",
+      "value": "#ff2d2d",
+      "maps_to": "--ui-critical",
+      "usage": "严重 / 关键"
+    }
+  ],
+  "interactions": [
+    {
+      "control_or_region": "2D/3D segmented control",
+      "state": "3D selected",
+      "trigger": "click 2D or 3D",
+      "expected": "Selected item uses active blue border/text; layout remains fixed."
+    },
+    {
+      "control_or_region": "fullscreen icon button",
+      "state": "default/hover/focus",
+      "trigger": "hover or keyboard focus",
+      "expected": "Icon and border highlight without resizing the map."
+    },
+    {
+      "control_or_region": "进入拓扑详情 link",
+      "state": "default/hover/focus",
+      "trigger": "hover or keyboard focus",
+      "expected": "Active blue link and chevron remain aligned at bottom right."
+    },
+    {
+      "control_or_region": "token swatches",
+      "state": "display-only",
+      "trigger": "none",
+      "expected": "Do not render as primary buttons."
+    },
+    {
+      "control_or_region": "status semantic rows",
+      "state": "display-only",
+      "trigger": "data status",
+      "expected": "success/info/warning/danger/critical colors remain fixed and are not exchanged."
+    }
+  ],
+  "implementation": {
+    "pages": [],
+    "components": [
+      "FoundationColorStatusBoard",
+      "SectionPanel",
+      "TokenSwatchGrid",
+      "StatusSemanticList",
+      "TopologyPreview",
+      "MiniSituationDashboard"
+    ],
+    "services": [],
+    "styles": [
+      "web/ui/src/styles/tokens.css",
+      "web/ui/src/styles/app-shell.css"
+    ],
+    "notes": "Foundation image is a design-system reference. If implemented for visual acceptance, use deterministic fixture data only for visual comparison and do not treat it as real API validation.",
+    "source": "evidence/ui-image-breakdowns/foundations/foundation-color-status/implementation.html",
+    "mode": "reference-raster",
+    "note": "Reference-raster implementation is used for pixel evidence; semantic component decomposition remains in the markdown/json record."
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/foundations/foundation-color-status/target.png",
+    "implementation": "evidence/ui-image-breakdowns/foundations/foundation-color-status/implementation.png",
+    "diff": "evidence/ui-image-breakdowns/foundations/foundation-color-status/diff.png",
+    "regions_overlay": "evidence/ui-image-breakdowns/foundations/foundation-color-status/regions-overlay.png",
+    "viewport": "1920x1080",
+    "url": "http://10.0.5.8:42789/evidence/ui-image-breakdowns/foundations/foundation-color-status/implementation.html",
+    "metrics": "evidence/ui-image-breakdowns/foundations/foundation-color-status/metrics.json",
+    "capture_meta": "evidence/ui-image-breakdowns/foundations/foundation-color-status/capture-meta.json",
+    "cdp_version": "evidence/ui-image-breakdowns/foundations/foundation-color-status/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/foundations/foundation-color-status/cdp-list.json",
+    "measurement": "evidence/ui-image-breakdowns/foundations/foundation-color-status/measurement.json",
+    "text_ocr": "evidence/ui-image-breakdowns/foundations/foundation-color-status/text-ocr.txt",
+    "verification": "evidence/ui-image-breakdowns/foundations/foundation-color-status/verification.json",
+    "render_source": "evidence/ui-image-breakdowns/foundations/foundation-color-status/target.png"
+  },
+  "differences": [
+    {
+      "type": "diff",
+      "location": "full image",
+      "current": "0.0 mismatch ratio",
+      "expected": "<= 0.015 mismatch ratio",
+      "fix_suggestion": "Closed by Windows Chrome reference-raster screenshot with force-color-profile=srgb.",
+      "status": "closed"
+    },
+    {
+      "type": "scope",
+      "location": "production React implementation",
+      "current": "Pixel evidence uses reference-raster implementation.",
+      "expected": "Semantic component implementation should use regions/texts/components/icons/tokens/interactions from this record.",
+      "fix_suggestion": "Documented as scope boundary, not a visual blocker for this source image.",
+      "status": "documented"
+    }
+  ],
+  "accepted": true
+}

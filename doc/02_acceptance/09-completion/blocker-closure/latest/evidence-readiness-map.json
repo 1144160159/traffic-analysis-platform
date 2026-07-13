@@ -1,0 +1,424 @@
+{
+  "run_id": "202607030-completion-blocker-closure-bridge-tunnel-r25-103659-pass",
+  "generated_at": "2026-07-03T08:23:41.094334+08:00",
+  "source_audit": "doc/02_acceptance/09-completion/project-completion-audit-latest.json",
+  "entries": [
+    {
+      "gate": "desktop_browser_smoke",
+      "ready_input_status": [
+        {
+          "path": "02-regression/ui-contract-preflight-latest.json",
+          "exists": true,
+          "run_id": "20260701-ui-contract-preflight-r17-desktop-login-pass-business-redirect-current"
+        },
+        {
+          "path": "02-regression/ui-visual-interaction-preflight-latest.json",
+          "exists": true,
+          "run_id": "202607030-ui-visual-preflight-bridge-tunnel-r25-103659-pass"
+        },
+        {
+          "path": "02-regression/ui-visual-interaction-gap-report-latest.json",
+          "exists": true,
+          "run_id": "202607030-ui-visual-preflight-bridge-tunnel-r25-103659-pass"
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/capture-plan-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/capture-session-latest.json",
+          "exists": true,
+          "run_id": "ui-desktop-capture-session-windows-tunnel-latest"
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/capture-plan-windows-tunnel-25173.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/capture-session-windows-tunnel-25173.json",
+          "exists": true,
+          "run_id": "ui-desktop-capture-session-windows-tunnel-25173"
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/windows-tunnel-channel-preflight-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/windows-desktop-bridge-host-preflight-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/windows-codex-bridge-runtime-preflight-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/codex-bridge-tool-surface-preflight-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/windows-node-repl-active-execs-preflight-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/windows-node-repl-chrome-bridge-smoke-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/windows-node-repl-env-matrix-smoke-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/windows-node-repl-scheduled-chrome-smoke-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/windows-ssh-privilege-preflight-latest.json",
+          "exists": true,
+          "run_id": "windows-ssh-privilege-preflight-2026-07-02T18-38-08-783Z"
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/desktop-chrome-bridge-payload-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/desktop-chrome-bridge-payload-selftest-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/desktop-chrome-bridge-tool-call-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/desktop-chrome-bridge-execution-request-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/receiver-selftest-latest.json",
+          "exists": true,
+          "run_id": "ui-desktop-capture-receiver-selftest-latest"
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/evidence-finalization-latest.json",
+          "exists": true,
+          "run_id": "202607030-ui-visual-evidence-finalize-current-gap-r1"
+        }
+      ],
+      "formal_commands": [
+        "ssh -N -R 127.0.0.1:25173:127.0.0.1:5173 LongShine@10.3.6.59",
+        "ssh -N -R 127.0.0.1:25174:127.0.0.1:15174 -R 127.0.0.1:25175:127.0.0.1:15175 LongShine@10.3.6.59",
+        "SSHPASS=<redacted> node tests/e2e/ui_windows_tunnel_channel_preflight.mjs",
+        "SSHPASS=<redacted> node tests/e2e/ui_windows_desktop_bridge_host_preflight.mjs",
+        "SSHPASS=<redacted> node tests/e2e/ui_windows_codex_bridge_runtime_preflight.mjs",
+        "node tests/e2e/ui_codex_bridge_tool_surface_preflight.mjs",
+        "SSHPASS=<redacted> node tests/e2e/ui_windows_node_repl_active_execs_preflight.mjs",
+        "SSHPASS=<redacted> node tests/e2e/ui_windows_node_repl_chrome_bridge_smoke.mjs",
+        "SSHPASS=<redacted> node tests/e2e/ui_windows_node_repl_env_matrix_smoke.mjs",
+        "SSHPASS=<redacted> node tests/e2e/ui_windows_node_repl_scheduled_chrome_smoke.mjs",
+        "SSHPASS=<redacted> node tests/e2e/ui_windows_ssh_privilege_preflight.mjs",
+        "python3 tests/e2e/ui_desktop_capture_receiver_selftest.py",
+        "node tests/e2e/ui_desktop_smoke_token_preflight.mjs --base-url http://127.0.0.1:5173 --apisix-url http://10.0.5.8:30180 --route /dashboard --expected-path /dashboard",
+        "node tests/e2e/ui_desktop_chrome_bridge_payload_selftest.mjs",
+        "node tests/e2e/ui_desktop_chrome_bridge_tool_call.mjs",
+        "node tests/e2e/ui_desktop_chrome_bridge_execution_request.mjs",
+        "mcp__codex_desktop_node_repl__js with JSON arguments from doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-tool-call-latest.json after replacing placeholders",
+        "RUN_ID=<run-id> ALLOW_BLOCKERS=false python3 tests/e2e/ui_visual_interaction_evidence_finalize.py --capture-plan doc/02_acceptance/02-regression/ui-visual-interaction/capture-plan-windows-tunnel-25173.json",
+        "DESKTOP_CHROME_STATUS=pass CAPTURE_SESSION=doc/02_acceptance/02-regression/ui-visual-interaction/capture-session-windows-tunnel-25173.json ALLOW_BLOCKERS=false tests/e2e/live_ui_visual_interaction_preflight.sh"
+      ]
+    },
+    {
+      "gate": "ui_visual_interaction",
+      "ready_input_status": [
+        {
+          "path": "02-regression/ui-visual-interaction-preflight-latest.json",
+          "exists": true,
+          "run_id": "202607030-ui-visual-preflight-bridge-tunnel-r25-103659-pass"
+        },
+        {
+          "path": "02-regression/ui-visual-interaction-gap-report-latest.json",
+          "exists": true,
+          "run_id": "202607030-ui-visual-preflight-bridge-tunnel-r25-103659-pass"
+        },
+        {
+          "path": "02-regression/ui-visual-interaction-matrix-latest.json",
+          "exists": true,
+          "run_id": "202607030-ui-visual-preflight-bridge-tunnel-r25-103659-pass"
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/capture-plan-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/capture-session-latest.json",
+          "exists": true,
+          "run_id": "ui-desktop-capture-session-windows-tunnel-latest"
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/capture-plan-windows-tunnel-25173.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/capture-session-windows-tunnel-25173.json",
+          "exists": true,
+          "run_id": "ui-desktop-capture-session-windows-tunnel-25173"
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/windows-tunnel-channel-preflight-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/windows-desktop-bridge-host-preflight-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/windows-codex-bridge-runtime-preflight-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/codex-bridge-tool-surface-preflight-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/windows-node-repl-active-execs-preflight-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/windows-node-repl-chrome-bridge-smoke-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/windows-node-repl-env-matrix-smoke-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/windows-node-repl-scheduled-chrome-smoke-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/windows-ssh-privilege-preflight-latest.json",
+          "exists": true,
+          "run_id": "windows-ssh-privilege-preflight-2026-07-02T18-38-08-783Z"
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/desktop-chrome-bridge-payload-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/desktop-chrome-bridge-payload-selftest-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/desktop-chrome-bridge-tool-call-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/desktop-chrome-bridge-execution-request-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/receiver-selftest-latest.json",
+          "exists": true,
+          "run_id": "ui-desktop-capture-receiver-selftest-latest"
+        },
+        {
+          "path": "02-regression/ui-visual-interaction/evidence-finalization-latest.json",
+          "exists": true,
+          "run_id": "202607030-ui-visual-evidence-finalize-current-gap-r1"
+        }
+      ],
+      "formal_commands": [
+        "SSHPASS=<redacted> node tests/e2e/ui_windows_tunnel_channel_preflight.mjs",
+        "SSHPASS=<redacted> node tests/e2e/ui_windows_desktop_bridge_host_preflight.mjs",
+        "SSHPASS=<redacted> node tests/e2e/ui_windows_codex_bridge_runtime_preflight.mjs",
+        "node tests/e2e/ui_codex_bridge_tool_surface_preflight.mjs",
+        "SSHPASS=<redacted> node tests/e2e/ui_windows_node_repl_active_execs_preflight.mjs",
+        "SSHPASS=<redacted> node tests/e2e/ui_windows_node_repl_chrome_bridge_smoke.mjs",
+        "SSHPASS=<redacted> node tests/e2e/ui_windows_node_repl_env_matrix_smoke.mjs",
+        "SSHPASS=<redacted> node tests/e2e/ui_windows_node_repl_scheduled_chrome_smoke.mjs",
+        "SSHPASS=<redacted> node tests/e2e/ui_windows_ssh_privilege_preflight.mjs",
+        "python3 tests/e2e/ui_desktop_capture_receiver_selftest.py",
+        "node tests/e2e/ui_desktop_chrome_bridge_payload_selftest.mjs",
+        "node tests/e2e/ui_desktop_chrome_bridge_tool_call.mjs",
+        "node tests/e2e/ui_desktop_chrome_bridge_execution_request.mjs",
+        "mcp__codex_desktop_node_repl__js with JSON arguments from doc/02_acceptance/02-regression/ui-visual-interaction/desktop-chrome-bridge-tool-call-latest.json after replacing placeholders",
+        "RUN_ID=<run-id> ALLOW_BLOCKERS=false python3 tests/e2e/ui_visual_interaction_evidence_finalize.py --capture-plan doc/02_acceptance/02-regression/ui-visual-interaction/capture-plan-windows-tunnel-25173.json",
+        "DESKTOP_CHROME_STATUS=pass CAPTURE_SESSION=doc/02_acceptance/02-regression/ui-visual-interaction/capture-session-windows-tunnel-25173.json ALLOW_BLOCKERS=false tests/e2e/live_ui_visual_interaction_preflight.sh",
+        "ALLOW_BLOCKERS=false tests/e2e/live_project_completion_audit.sh"
+      ]
+    },
+    {
+      "gate": "production_security",
+      "ready_input_status": [
+        {
+          "path": "05-security/production-security-preflight-latest.json",
+          "exists": true,
+          "run_id": "20260630-production-security-preflight-r49-waiver-registry"
+        },
+        {
+          "path": "05-security/network-policy-readiness/network-policy-enforcement-readiness-latest.json",
+          "exists": true,
+          "run_id": "20260630-network-policy-enforcement-readiness-r1"
+        }
+      ],
+      "formal_commands": [
+        "ALLOW_BLOCKERS=false tests/e2e/live_network_policy_enforcement_preflight.sh",
+        "ALLOW_BLOCKERS=false tests/e2e/live_production_security_preflight.sh"
+      ]
+    },
+    {
+      "gate": "network_policy_enforcement",
+      "ready_input_status": [
+        {
+          "path": "05-security/network-policy-readiness/network-policy-enforcement-readiness-latest.json",
+          "exists": true,
+          "run_id": "20260630-network-policy-enforcement-readiness-r1"
+        },
+        {
+          "path": "05-security/network-policy-enforcement-preflight-latest.json",
+          "exists": true,
+          "run_id": "20260630-network-policy-enforcement-preflight-r1-flannel-blocked"
+        }
+      ],
+      "formal_commands": [
+        "ALLOW_BLOCKERS=false RUN_ENFORCEMENT_PROBE=auto tests/e2e/live_network_policy_enforcement_preflight.sh"
+      ]
+    },
+    {
+      "gate": "ha_rto_rpo",
+      "ready_input_status": [
+        {
+          "path": "06-resilience/bootstrap/ha-drill-evidence-bootstrap-latest.json",
+          "exists": true,
+          "run_id": "20260630-ha-drill-evidence-bootstrap-r1"
+        },
+        {
+          "path": "06-resilience/review/ha-drill-review-latest.json",
+          "exists": true,
+          "run_id": "20260701-ha-drill-review-r1"
+        },
+        {
+          "path": "06-resilience/ha-readiness-preflight-latest.json",
+          "exists": true,
+          "run_id": "20260701-ha-readiness-preflight-r10-review-packet"
+        }
+      ],
+      "formal_commands": [
+        "ALLOW_BLOCKERS=false tests/chaos/live_ha_readiness_preflight.sh"
+      ]
+    },
+    {
+      "gate": "capture_performance",
+      "ready_input_status": [
+        {
+          "path": "03-performance/bootstrap/capture-performance-bootstrap-latest.json",
+          "exists": true,
+          "run_id": "20260630-capture-performance-bootstrap-r1"
+        },
+        {
+          "path": "03-performance/review/capture-performance-review-latest.json",
+          "exists": true,
+          "run_id": "20260701-capture-performance-review-r1"
+        },
+        {
+          "path": "03-performance/capture-performance-preflight-latest.json",
+          "exists": true,
+          "run_id": "20260701-capture-performance-preflight-r4-review-packet"
+        }
+      ],
+      "formal_commands": [
+        "ALLOW_BLOCKERS=false tests/perf/100g_capture/live_capture_performance_preflight.sh"
+      ]
+    },
+    {
+      "gate": "detection_quality",
+      "ready_input_status": [
+        {
+          "path": "04-detection-quality/bootstrap/detection-quality-bootstrap-latest.json",
+          "exists": true,
+          "run_id": "20260630-detection-quality-bootstrap-r1"
+        },
+        {
+          "path": "04-detection-quality/review/detection-quality-review-latest.json",
+          "exists": true,
+          "run_id": "20260701-detection-quality-review-r1"
+        },
+        {
+          "path": "04-detection-quality/detection-quality-preflight-latest.json",
+          "exists": true,
+          "run_id": "20260701-detection-quality-preflight-r5-review-packet"
+        }
+      ],
+      "formal_commands": [
+        "ALLOW_BLOCKERS=false tests/e2e/live_detection_quality_preflight.sh"
+      ]
+    },
+    {
+      "gate": "asset_discovery_coverage",
+      "ready_input_status": [
+        {
+          "path": "02-regression/asset-discovery-site-inventory.bootstrap-latest.json",
+          "exists": true,
+          "run_id": ""
+        },
+        {
+          "path": "02-regression/asset-inventory-review/asset-inventory-review-latest.json",
+          "exists": true,
+          "run_id": "20260701-asset-inventory-review-r1"
+        },
+        {
+          "path": "02-regression/asset-discovery-coverage-latest.json",
+          "exists": true,
+          "run_id": "20260701-asset-discovery-coverage-r3-review-packet-guard"
+        }
+      ],
+      "formal_commands": [
+        "SITE_ASSET_INVENTORY_JSON=/path/to/site-assets.json MIN_DISCOVERY_COVERAGE_PCT=95 ALLOW_BLOCKERS=false tests/e2e/live_asset_discovery_coverage_report.sh"
+      ]
+    },
+    {
+      "gate": "trial_third_party_signoff",
+      "ready_input_status": [
+        {
+          "path": "08-third-party/readiness/third-party-signoff-readiness-latest.json",
+          "exists": true,
+          "run_id": "20260702-third-party-signoff-readiness-r26-ui-r40-receiver-selftest"
+        },
+        {
+          "path": "08-third-party/user-acceptance-signoff.md",
+          "exists": true,
+          "run_id": ""
+        }
+      ],
+      "formal_commands": [
+        "ALLOW_BLOCKERS=false tests/e2e/live_project_completion_audit.sh"
+      ]
+    }
+  ]
+}

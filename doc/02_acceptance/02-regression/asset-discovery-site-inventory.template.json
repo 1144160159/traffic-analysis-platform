@@ -1,0 +1,14 @@
+{
+  "site": "example-campus",
+  "snapshot_at": "2026-06-30T00:00:00+08:00",
+  "assets": [
+    {
+      "asset_id": "SITE-ASSET-001",
+      "mac_address": "00:11:22:33:44:55",
+      "ip_address": "10.12.0.31",
+      "hostname": "core-switch-01",
+      "expected_type": "network-device",
+      "location": "main-campus-core-room"
+    }
+  ]
+}

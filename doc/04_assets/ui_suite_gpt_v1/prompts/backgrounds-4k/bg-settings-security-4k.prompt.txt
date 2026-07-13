@@ -1,0 +1,17 @@
+Generate a 3840x2160 PNG static 4K background asset for traffic-analysis-platform.
+
+Use case: productivity-visual.
+Asset type: settings and security administration background.
+
+Scene:
+- A dark administration control surface with abstract tenant boundaries, roles and permissions, API tokens, certificates, system settings, policy locks, and configuration change paths.
+- Show secure configuration as layered panels and shielded nodes, without readable settings.
+- Leave a broad calm area on the left for overlaid settings panels.
+
+Style:
+- Enterprise admin security, deep navy/black, cyan configuration lines, blue permission nodes, green valid configuration, amber warning, sparse red revoked token marker.
+- High-detail 4K, professional, restrained.
+
+Constraints:
+- No readable setting names, API keys, token strings, certificates, usernames, IP addresses, credentials, logos, people, browser chrome, forms, or complete UI screen.
+

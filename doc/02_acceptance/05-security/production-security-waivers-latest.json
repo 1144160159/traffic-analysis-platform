@@ -1,0 +1,124 @@
+{
+  "apiVersion": "traffic.platform/v1",
+  "kind": "ProductionSecurityWaiverRegistry",
+  "metadata": {
+    "name": "production-security-waivers",
+    "updated_at": "2026-06-30",
+    "scope": "acceptance-security-preflight",
+    "note": "These entries explain non-production examples and required host-level Kubernetes workloads. They do not waive the formal NetworkPolicy-capable CNI blocker or any production Secret/TLS requirement.\n"
+  },
+  "waivers": {
+    "local_kafka_plaintext": [
+      {
+        "path": "go/control-plane/docker-compose.yml",
+        "owner": "platform-engineering",
+        "review_status": "accepted-for-local-dev-only",
+        "reason": "Local docker-compose bootstrap keeps PLAINTEXT listeners for developer-only control-plane tests; production Kafka is validated separately through SASL_SSL/TLS live evidence."
+      },
+      {
+        "path": "java/flink-jobs/flink-cep-job/deployments/docker-compose.yaml",
+        "owner": "stream-processing",
+        "review_status": "accepted-for-local-dev-only",
+        "reason": "Module docker-compose fixture is not part of the production K8s release package and is used only for local CEP job development."
+      },
+      {
+        "path": "go/control-plane/deployments/kubernetes/graph-service.yaml",
+        "owner": "platform-engineering",
+        "review_status": "accepted-for-legacy-dev-manifest-only",
+        "reason": "Legacy module-level Kubernetes sample is outside the current production release root; production manifests use the secured Kafka profile and image lock evidence."
+      },
+      {
+        "path": "go/control-plane/deployments/kubernetes/auth-service.yaml",
+        "owner": "platform-engineering",
+        "review_status": "accepted-for-legacy-dev-manifest-only",
+        "reason": "Legacy module-level Kubernetes sample is outside the current production release root; production manifests use the secured Kafka profile and image lock evidence."
+      },
+      {
+        "path": "java/flink-jobs/flink-alert-generator-job/deployments/docker-compose.yml",
+        "owner": "stream-processing",
+        "review_status": "accepted-for-local-dev-only",
+        "reason": "Module docker-compose fixture is not part of the production K8s release package and is used only for local alert-generator job development."
+      },
+      {
+        "path": "java/flink-jobs/flink-session-job/deployments/docker-compose.yml",
+        "owner": "stream-processing",
+        "review_status": "accepted-for-local-dev-only",
+        "reason": "Module docker-compose fixture is not part of the production K8s release package and is used only for local session job development."
+      },
+      {
+        "path": "java/flink-jobs/flink-pcap-index-job/deployments/docker-compose.yml",
+        "owner": "stream-processing",
+        "review_status": "accepted-for-local-dev-only",
+        "reason": "Module docker-compose fixture is not part of the production K8s release package and is used only for local PCAP index job development."
+      },
+      {
+        "path": "java/flink-jobs/flink-rule-job/deployments/docker-compose.yml",
+        "owner": "stream-processing",
+        "review_status": "accepted-for-local-dev-only",
+        "reason": "Module docker-compose fixture is not part of the production K8s release package and is used only for local rule job development."
+      }
+    ],
+    "raw_secret_manifests": [
+      {
+        "path": "deployments/kubernetes/configmaps/credentials-secret.yaml",
+        "owner": "security-sre",
+        "review_status": "accepted-as-template-only",
+        "reason": "This file contains placeholder `<GENERATED_BASE64>` values and documented kubectl generation commands; live production credentials are reconciled through ExternalSecrets and verified by production ExternalSecret reconciliation evidence."
+      }
+    ],
+    "privileged_containers": [
+      {
+        "namespace": "kube-system",
+        "kind": "DaemonSet",
+        "workload": "kube-proxy",
+        "container": "kube-proxy",
+        "owner": "cluster-platform",
+        "review_status": "accepted-cluster-networking-component",
+        "reason": "kube-proxy requires privileged node networking access as part of the Kubernetes data plane and is not an application workload."
+      },
+      {
+        "namespace": "traffic-analysis",
+        "kind": "DaemonSet",
+        "workload": "probe-agent",
+        "container": "probe-agent",
+        "owner": "probe-engineering",
+        "review_status": "accepted-capture-plane-component",
+        "reason": "Probe Agent requires host packet capture capabilities for full-traffic collection; this exception must remain isolated to the DaemonSet and covered by NetworkPolicy/CNI and mTLS controls."
+      }
+    ],
+    "host_namespace_workloads": [
+      {
+        "namespace": "kube-flannel",
+        "kind": "DaemonSet",
+        "workload": "kube-flannel-ds",
+        "owner": "cluster-platform",
+        "review_status": "accepted-cluster-networking-component",
+        "reason": "Flannel requires host networking as the current cluster CNI; this does not close the NetworkPolicy enforcement blocker because Flannel is not policy-capable."
+      },
+      {
+        "namespace": "kube-system",
+        "kind": "DaemonSet",
+        "workload": "kube-proxy",
+        "owner": "cluster-platform",
+        "review_status": "accepted-cluster-networking-component",
+        "reason": "kube-proxy requires host networking as part of the Kubernetes node data plane and is not an application workload."
+      },
+      {
+        "namespace": "metallb-system",
+        "kind": "DaemonSet",
+        "workload": "speaker",
+        "owner": "cluster-platform",
+        "review_status": "accepted-load-balancer-component",
+        "reason": "MetalLB speaker requires host networking to announce service addresses on the local network; it is an infrastructure component outside the application namespace."
+      },
+      {
+        "namespace": "traffic-analysis",
+        "kind": "DaemonSet",
+        "workload": "probe-agent",
+        "owner": "probe-engineering",
+        "review_status": "accepted-capture-plane-component",
+        "reason": "Probe Agent requires hostNetwork and hostPID for full-traffic capture and interface visibility; this exception must remain limited to probe capture nodes and does not waive CNI enforcement."
+      }
+    ]
+  }
+}

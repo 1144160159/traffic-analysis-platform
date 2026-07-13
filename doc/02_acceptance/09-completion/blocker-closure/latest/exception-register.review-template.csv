@@ -1,0 +1,10 @@
+gate,exception_requested,reason,risk,approver,expiration,replacement_evidence
+desktop_browser_smoke,false,TBD,TBD,TBD,TBD,TBD
+ui_visual_interaction,false,TBD,TBD,TBD,TBD,TBD
+production_security,false,TBD,TBD,TBD,TBD,TBD
+network_policy_enforcement,false,TBD,TBD,TBD,TBD,TBD
+ha_rto_rpo,false,TBD,TBD,TBD,TBD,TBD
+capture_performance,false,TBD,TBD,TBD,TBD,TBD
+detection_quality,false,TBD,TBD,TBD,TBD,TBD
+asset_discovery_coverage,false,TBD,TBD,TBD,TBD,TBD
+trial_third_party_signoff,false,TBD,TBD,TBD,TBD,TBD

@@ -1,0 +1,98 @@
+{
+  "title": "园区网络全流量采集与分析系统",
+  "location": "http://10.0.5.8:30180/dashboard?fullRouteEvidenceTs=1783072612201",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "dpr": 1.0000000298023224
+  },
+  "scroll": {
+    "horizontalOverflow": 0,
+    "verticalOverflow": 0,
+    "bodyScrollWidth": 1920,
+    "bodyClientWidth": 1920,
+    "bodyScrollHeight": 1080,
+    "bodyClientHeight": 1080
+  },
+  "headings": [
+    "仪表盘",
+    "脱敏运营 KPI",
+    "优先级待办队列",
+    "采集与数据健康门禁",
+    "验收缺口与建议动作",
+    "告警处置阶段工作篮",
+    "证据与反馈质量摘要",
+    "Top Talkers 风险贡献"
+  ],
+  "buttons": [
+    "移动端导航",
+    "PCAP检索",
+    "资产检索",
+    "规则检索",
+    "脚本中心",
+    "帮助中心",
+    "更多应用",
+    "Ccodex-ui-desktop-admin系统管理员在线",
+    "创建闭环任务",
+    "全局搜索",
+    "KPI 详情",
+    "任务详情",
+    "补齐证据",
+    "回流样本",
+    "完善留痕",
+    "跟进处理",
+    "修复门禁"
+  ],
+  "visibleText": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-03 17:56:53 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 仪表盘 态势大屏 采集监测 威胁分析 资产图谱 检测运营 审计配置 C codex-ui-desktop-admin 系统管理员 在线 综合态势 / 仪表盘 仪表盘 创建闭环任务 全局搜索 KPI 详情 任务详情 脱敏运营 KPI 超时 SLA 0 项 真实 API 临近超时 0 条 真实 API 高危未处理 0 条 真实 API 待取证 0 项 真实 API 待反馈 0 项 真实 API 待复核 0 项 真实 API 队列积压 0 msg 真实 API 闭环进度 0.0% 真实 API 优先级待办队列 事件 ID 风险级别 资产组 业务系统 处置阶段 剩余时间 证据状态 DASHBOARD-HEALTH-GATE 中危 0 个对象 采集分析链路 健康门禁 0 ms P95 待补齐 1 采集与数据健康门禁 组件 健康状态 失败原因 影响范围 更新时间 Probe 正常 - - 实时 Kafka 正常 - - 实时 Flink 告警 Checkpoint 延迟 部分任务 1 分钟前 ClickHouse 正常 - - 实时 OpenSearch 正常 - - 实时 NebulaGraph 告警 查询延迟偏高 部分图空间 2 分钟前 MinIO 异常 对象存储可用区不可用 部分存储桶 3 分钟前 PostgreSQL 正常 - - 实时 正常 5 告警 2 异常 1 验收缺口与建议动作 待补证据数 0 项 较昨日 +18 补齐证据 待回流样本数 0 项 较昨日 -9 回流样本 审计留痕缺口 0 项 较昨日 +4 完善留痕 工单逾期数 0 条 较昨日 +6 跟进处理 合规门禁缺口 7 较昨日 +1 修复门禁 告警处置阶段工作篮 今日必处理 0 条 SLA 达成率 76% 处理中 0 条 SLA 达成率 82% 待反馈 0 项 SLA 达成率 85% 待取证 0 项 SLA 达成率 78% 待复核 0 项 SLA 达成率 86% 需审计留痕 0 项 SLA 达成率 71% 证据与反馈质量摘要 /v1/dashboard/stats Dashboard API 0 点 告警趋势 2 类 攻击阶段 18% 证据完整度缺口 64% 反馈覆盖率 Top Talkers 风险贡献 0 个对象 32% 数据延迟 1.23 s 系统运行 23 天 14 小时 告警处理SLA 98.2% 数据质量合格率 99.1% 存储使用 68.7 / 120 TB (57",
+  "elements": {
+    "pageHero": {
+      "selector": ".taf-page-hero",
+      "visible": false
+    },
+    "panelHeader": {
+      "selector": ".taf-panel__header",
+      "visible": true,
+      "text": "脱敏运营 KPI",
+      "x": 175,
+      "y": 89,
+      "right": 1909,
+      "bottom": 125,
+      "w": 1735,
+      "h": 36,
+      "display": "flex",
+      "overflowX": "visible",
+      "overflowY": "visible"
+    },
+    "table": {
+      "selector": ".ant-table, .taf-table, table",
+      "visible": true,
+      "text": "事件 ID风险级别资产组业务系统处置阶段剩余时间证据状态DASHBOARD-HEALTH-GATE中危0 个对象采集分析链路健康门禁0 ms P95待补齐",
+      "x": 185,
+      "y": 349,
+      "right": 910,
+      "bottom": 427,
+      "w": 725,
+      "h": 78,
+      "display": "block",
+      "overflowX": "visible",
+      "overflowY": "visible"
+    },
+    "topicTitlebar": {
+      "selector": ".taf-topic-titlebar",
+      "visible": false
+    },
+    "topicFacts": {
+      "selector": ".taf-topic-facts",
+      "visible": false
+    },
+    "topicKpis": {
+      "selector": ".taf-topic-kpis",
+      "visible": false
+    },
+    "topicGrid": {
+      "selector": ".taf-topic-grid",
+      "visible": false
+    }
+  },
+  "overlapChecks": {}
+}

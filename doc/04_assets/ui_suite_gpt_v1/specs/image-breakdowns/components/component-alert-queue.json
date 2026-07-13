@@ -1,0 +1,1319 @@
+{
+  "id": "component-alert-queue",
+  "category": "components",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/components/component-alert-queue.png",
+  "prompt_file": "doc/04_assets/ui_suite_gpt_v1/prompts/component-alert-queue.prompt.txt",
+  "manifest_refs": [
+    "doc/04_assets/ui_suite_gpt_v1/manifest.json",
+    "doc/04_assets/ui_suite_gpt_v1/specs/layers/component-alert-queue.json"
+  ],
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "status": "pixel-accepted",
+  "route": null,
+  "host_route": null,
+  "observation": {
+    "layout": "Static component-specimen board with a blueprint grid background, alert queue table in the left panel, shared state matrix on the right, and semantic tiles at the bottom.",
+    "business_focus": "Defines a compact alert queue component with alert id, severity, asset, attack stage, and action columns for investigation, forensics, and whitelist workflows.",
+    "current_state": "Visual breakdown record prepared for Windows Chrome reference-raster evidence.",
+    "acceptance_scope": "Pixel acceptance proves exact target PNG reproduction. Production React component semantics remain guided by this breakdown record."
+  },
+  "regions": [
+    {
+      "id": "canvas",
+      "name": "画布",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "layer": 0,
+      "purpose": "component board canvas",
+      "replication_notes": "Dark blueprint grid background."
+    },
+    {
+      "id": "header",
+      "name": "顶部标题区",
+      "bbox": {
+        "x": 48,
+        "y": 39,
+        "w": 1784,
+        "h": 80
+      },
+      "layer": 1,
+      "purpose": "title, subtitle, and meta pills",
+      "replication_notes": "Left title and right aligned meta pills."
+    },
+    {
+      "id": "main-panel",
+      "name": "组件主视觉面板",
+      "bbox": {
+        "x": 48,
+        "y": 146,
+        "w": 1263,
+        "h": 669
+      },
+      "layer": 1,
+      "purpose": "alert queue specimen",
+      "replication_notes": "Large left panel with title, helper text, and table."
+    },
+    {
+      "id": "alert-table",
+      "name": "告警队列表格",
+      "bbox": {
+        "x": 86,
+        "y": 263,
+        "w": 1120,
+        "h": 206
+      },
+      "layer": 2,
+      "purpose": "five-column alert queue",
+      "replication_notes": "Header plus three rows."
+    },
+    {
+      "id": "table-header",
+      "name": "表头行",
+      "bbox": {
+        "x": 86,
+        "y": 263,
+        "w": 1120,
+        "h": 24
+      },
+      "layer": 3,
+      "purpose": "column labels",
+      "replication_notes": "Muted text and subtle bottom divider."
+    },
+    {
+      "id": "alert-row-high",
+      "name": "高危告警行",
+      "bbox": {
+        "x": 86,
+        "y": 298,
+        "w": 1120,
+        "h": 54
+      },
+      "layer": 3,
+      "purpose": "A-271 high severity row",
+      "replication_notes": "Contains A-271, 高危, 10.20.3.8, 横向移动, 研判."
+    },
+    {
+      "id": "alert-row-medium",
+      "name": "中危告警行",
+      "bbox": {
+        "x": 86,
+        "y": 356,
+        "w": 1120,
+        "h": 54
+      },
+      "layer": 3,
+      "purpose": "A-288 medium severity row",
+      "replication_notes": "Contains A-288, 中危, server-12, 外联, 取证."
+    },
+    {
+      "id": "alert-row-low",
+      "name": "低危告警行",
+      "bbox": {
+        "x": 86,
+        "y": 414,
+        "w": 1120,
+        "h": 54
+      },
+      "layer": 3,
+      "purpose": "A-302 low severity row",
+      "replication_notes": "Contains A-302, 低危, pc-09, 扫描, 白名单."
+    },
+    {
+      "id": "alert-id-column",
+      "name": "告警列",
+      "bbox": {
+        "x": 98,
+        "y": 263,
+        "w": 120,
+        "h": 206
+      },
+      "layer": 4,
+      "purpose": "alert ids",
+      "replication_notes": "A-271, A-288, A-302."
+    },
+    {
+      "id": "severity-column",
+      "name": "严重度列",
+      "bbox": {
+        "x": 321,
+        "y": 263,
+        "w": 120,
+        "h": 206
+      },
+      "layer": 4,
+      "purpose": "severity text",
+      "replication_notes": "高危, 中危, 低危."
+    },
+    {
+      "id": "asset-column",
+      "name": "资产列",
+      "bbox": {
+        "x": 546,
+        "y": 263,
+        "w": 170,
+        "h": 206
+      },
+      "layer": 4,
+      "purpose": "asset identifier",
+      "replication_notes": "IP and host values."
+    },
+    {
+      "id": "stage-column",
+      "name": "阶段列",
+      "bbox": {
+        "x": 770,
+        "y": 263,
+        "w": 170,
+        "h": 206
+      },
+      "layer": 4,
+      "purpose": "attack stage",
+      "replication_notes": "横向移动, 外联, 扫描."
+    },
+    {
+      "id": "action-column",
+      "name": "动作列",
+      "bbox": {
+        "x": 994,
+        "y": 263,
+        "w": 140,
+        "h": 206
+      },
+      "layer": 4,
+      "purpose": "response action",
+      "replication_notes": "研判, 取证, 白名单."
+    },
+    {
+      "id": "state-panel",
+      "name": "状态矩阵面板",
+      "bbox": {
+        "x": 1334,
+        "y": 146,
+        "w": 539,
+        "h": 669
+      },
+      "layer": 1,
+      "purpose": "state matrix examples and rules",
+      "replication_notes": "Right side vertical state examples."
+    },
+    {
+      "id": "state-list",
+      "name": "状态列表",
+      "bbox": {
+        "x": 1370,
+        "y": 225,
+        "w": 469,
+        "h": 416
+      },
+      "layer": 2,
+      "purpose": "normal/hover/selected/loading/empty/warning/error/locked states",
+      "replication_notes": "Each row has dot, label, border, and background."
+    },
+    {
+      "id": "state-normal",
+      "name": "正常状态行",
+      "bbox": {
+        "x": 1370,
+        "y": 225,
+        "w": 469,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "success/normal state",
+      "replication_notes": "Green border and dot."
+    },
+    {
+      "id": "state-hover",
+      "name": "Hover 状态行",
+      "bbox": {
+        "x": 1370,
+        "y": 279,
+        "w": 469,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "hover state",
+      "replication_notes": "Blue border and dot."
+    },
+    {
+      "id": "state-selected",
+      "name": "Selected 状态行",
+      "bbox": {
+        "x": 1370,
+        "y": 333,
+        "w": 469,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "selected state",
+      "replication_notes": "Cyan border and dot."
+    },
+    {
+      "id": "state-loading",
+      "name": "Loading 状态行",
+      "bbox": {
+        "x": 1370,
+        "y": 387,
+        "w": 469,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "loading state",
+      "replication_notes": "Muted gray-blue."
+    },
+    {
+      "id": "state-empty",
+      "name": "Empty 状态行",
+      "bbox": {
+        "x": 1370,
+        "y": 441,
+        "w": 469,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "empty state",
+      "replication_notes": "Muted gray-blue."
+    },
+    {
+      "id": "state-warning",
+      "name": "Warning 状态行",
+      "bbox": {
+        "x": 1370,
+        "y": 495,
+        "w": 469,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "warning state",
+      "replication_notes": "Yellow border and dot."
+    },
+    {
+      "id": "state-error",
+      "name": "Error 状态行",
+      "bbox": {
+        "x": 1370,
+        "y": 549,
+        "w": 469,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "error state",
+      "replication_notes": "Red border and dot."
+    },
+    {
+      "id": "state-locked",
+      "name": "Locked 状态行",
+      "bbox": {
+        "x": 1370,
+        "y": 603,
+        "w": 469,
+        "h": 38
+      },
+      "layer": 3,
+      "purpose": "locked/permission state",
+      "replication_notes": "Red-family locked state."
+    },
+    {
+      "id": "state-checklist",
+      "name": "状态规则 checklist",
+      "bbox": {
+        "x": 1371,
+        "y": 674,
+        "w": 420,
+        "h": 94
+      },
+      "layer": 2,
+      "purpose": "four state implementation rules",
+      "replication_notes": "Display-only square bullets."
+    },
+    {
+      "id": "semantics-panel",
+      "name": "结构交互语义面板",
+      "bbox": {
+        "x": 48,
+        "y": 837,
+        "w": 1825,
+        "h": 195
+      },
+      "layer": 1,
+      "purpose": "structure, interaction, and icon semantics",
+      "replication_notes": "Full-width bottom panel."
+    },
+    {
+      "id": "semantics-tile-group",
+      "name": "语义卡片组",
+      "bbox": {
+        "x": 75,
+        "y": 918,
+        "w": 1748,
+        "h": 75
+      },
+      "layer": 2,
+      "purpose": "six semantic tiles",
+      "replication_notes": "Equal-height cards with cyan labels."
+    }
+  ],
+  "texts": [
+    {
+      "value": "告警队列 / component-alert-queue",
+      "bbox": {
+        "x": 48,
+        "y": 45,
+        "w": 650,
+        "h": 28
+      },
+      "type": "title",
+      "must_match": true
+    },
+    {
+      "value": "组件板只展示业务组件本体，不绘制完整 AppShell；用于 React + Ant Design + ECharts 实现参考。",
+      "bbox": {
+        "x": 48,
+        "y": 82,
+        "w": 650,
+        "h": 16
+      },
+      "type": "subtitle",
+      "must_match": true
+    },
+    {
+      "value": "component-alert-queue",
+      "bbox": {
+        "x": 1570,
+        "y": 39,
+        "w": 261,
+        "h": 28
+      },
+      "type": "meta-pill",
+      "must_match": true
+    },
+    {
+      "value": "1920 x 1080 / deterministic",
+      "bbox": {
+        "x": 1570,
+        "y": 73,
+        "w": 261,
+        "h": 26
+      },
+      "type": "meta-pill",
+      "must_match": true
+    },
+    {
+      "value": "组件主视觉",
+      "bbox": {
+        "x": 72,
+        "y": 171,
+        "w": 130,
+        "h": 20
+      },
+      "type": "panel-title",
+      "must_match": true
+    },
+    {
+      "value": "覆盖正常、悬停、选中、禁用、加载、错误或危险等关键状态。",
+      "bbox": {
+        "x": 72,
+        "y": 197,
+        "w": 420,
+        "h": 14
+      },
+      "type": "helper",
+      "must_match": true
+    },
+    {
+      "value": "告警",
+      "bbox": {
+        "x": 98,
+        "y": 263,
+        "w": 50,
+        "h": 18
+      },
+      "type": "table-header",
+      "must_match": true
+    },
+    {
+      "value": "严重度",
+      "bbox": {
+        "x": 321,
+        "y": 263,
+        "w": 58,
+        "h": 18
+      },
+      "type": "table-header",
+      "must_match": true
+    },
+    {
+      "value": "资产",
+      "bbox": {
+        "x": 546,
+        "y": 263,
+        "w": 50,
+        "h": 18
+      },
+      "type": "table-header",
+      "must_match": true
+    },
+    {
+      "value": "阶段",
+      "bbox": {
+        "x": 770,
+        "y": 263,
+        "w": 50,
+        "h": 18
+      },
+      "type": "table-header",
+      "must_match": true
+    },
+    {
+      "value": "动作",
+      "bbox": {
+        "x": 994,
+        "y": 263,
+        "w": 50,
+        "h": 18
+      },
+      "type": "table-header",
+      "must_match": true
+    },
+    {
+      "value": "A-271",
+      "bbox": {
+        "x": 98,
+        "y": 310,
+        "w": 55,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "高危",
+      "bbox": {
+        "x": 321,
+        "y": 310,
+        "w": 46,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "10.20.3.8",
+      "bbox": {
+        "x": 546,
+        "y": 310,
+        "w": 90,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "横向移动",
+      "bbox": {
+        "x": 770,
+        "y": 310,
+        "w": 82,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "研判",
+      "bbox": {
+        "x": 994,
+        "y": 310,
+        "w": 46,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "A-288",
+      "bbox": {
+        "x": 98,
+        "y": 368,
+        "w": 55,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "中危",
+      "bbox": {
+        "x": 321,
+        "y": 368,
+        "w": 46,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "server-12",
+      "bbox": {
+        "x": 546,
+        "y": 368,
+        "w": 82,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "外联",
+      "bbox": {
+        "x": 770,
+        "y": 368,
+        "w": 46,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "取证",
+      "bbox": {
+        "x": 994,
+        "y": 368,
+        "w": 46,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "A-302",
+      "bbox": {
+        "x": 98,
+        "y": 426,
+        "w": 55,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "低危",
+      "bbox": {
+        "x": 321,
+        "y": 426,
+        "w": 46,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "pc-09",
+      "bbox": {
+        "x": 546,
+        "y": 426,
+        "w": 56,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "扫描",
+      "bbox": {
+        "x": 770,
+        "y": 426,
+        "w": 46,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "白名单",
+      "bbox": {
+        "x": 994,
+        "y": 426,
+        "w": 58,
+        "h": 18
+      },
+      "type": "table-cell",
+      "must_match": true
+    },
+    {
+      "value": "状态矩阵",
+      "bbox": {
+        "x": 1358,
+        "y": 171,
+        "w": 130,
+        "h": 20
+      },
+      "type": "panel-title",
+      "must_match": true
+    },
+    {
+      "value": "状态色固定：绿=健康，蓝=信息，黄=待确认，红=失败/高危。",
+      "bbox": {
+        "x": 1358,
+        "y": 197,
+        "w": 440,
+        "h": 14
+      },
+      "type": "helper",
+      "must_match": true
+    },
+    {
+      "value": "正常",
+      "bbox": {
+        "x": 1410,
+        "y": 239,
+        "w": 45,
+        "h": 14
+      },
+      "type": "state-label",
+      "must_match": true
+    },
+    {
+      "value": "Hover",
+      "bbox": {
+        "x": 1410,
+        "y": 293,
+        "w": 52,
+        "h": 14
+      },
+      "type": "state-label",
+      "must_match": true
+    },
+    {
+      "value": "Selected",
+      "bbox": {
+        "x": 1410,
+        "y": 347,
+        "w": 70,
+        "h": 14
+      },
+      "type": "state-label",
+      "must_match": true
+    },
+    {
+      "value": "Loading",
+      "bbox": {
+        "x": 1410,
+        "y": 401,
+        "w": 68,
+        "h": 14
+      },
+      "type": "state-label",
+      "must_match": true
+    },
+    {
+      "value": "Empty",
+      "bbox": {
+        "x": 1410,
+        "y": 455,
+        "w": 56,
+        "h": 14
+      },
+      "type": "state-label",
+      "must_match": true
+    },
+    {
+      "value": "Warning",
+      "bbox": {
+        "x": 1410,
+        "y": 509,
+        "w": 68,
+        "h": 14
+      },
+      "type": "state-label",
+      "must_match": true
+    },
+    {
+      "value": "Error",
+      "bbox": {
+        "x": 1410,
+        "y": 563,
+        "w": 50,
+        "h": 14
+      },
+      "type": "state-label",
+      "must_match": true
+    },
+    {
+      "value": "Locked",
+      "bbox": {
+        "x": 1410,
+        "y": 617,
+        "w": 60,
+        "h": 14
+      },
+      "type": "state-label",
+      "must_match": true
+    },
+    {
+      "value": "权限、影响范围、审计留痕可见",
+      "bbox": {
+        "x": 1371,
+        "y": 675,
+        "w": 250,
+        "h": 18
+      },
+      "type": "checklist",
+      "must_match": true
+    },
+    {
+      "value": "动作图标必须带 tooltip",
+      "bbox": {
+        "x": 1371,
+        "y": 704,
+        "w": 210,
+        "h": 18
+      },
+      "type": "checklist",
+      "must_match": true
+    },
+    {
+      "value": "不承载宿主页面公共区",
+      "bbox": {
+        "x": 1371,
+        "y": 733,
+        "w": 220,
+        "h": 18
+      },
+      "type": "checklist",
+      "must_match": true
+    },
+    {
+      "value": "尺寸和状态可复用",
+      "bbox": {
+        "x": 1371,
+        "y": 762,
+        "w": 180,
+        "h": 18
+      },
+      "type": "checklist",
+      "must_match": true
+    },
+    {
+      "value": "结构、交互与小图标语义",
+      "bbox": {
+        "x": 72,
+        "y": 861,
+        "w": 260,
+        "h": 20
+      },
+      "type": "panel-title",
+      "must_match": true
+    },
+    {
+      "value": "组件必须能拆成前端组件，危险动作进入确认和审计，不做装饰图。",
+      "bbox": {
+        "x": 72,
+        "y": 887,
+        "w": 520,
+        "h": 14
+      },
+      "type": "helper",
+      "must_match": true
+    },
+    {
+      "value": "尺寸 / 组件网格 8px",
+      "bbox": {
+        "x": 88,
+        "y": 938,
+        "w": 190,
+        "h": 40
+      },
+      "type": "semantic-tile",
+      "must_match": true
+    },
+    {
+      "value": "状态 / 状态色不可交换",
+      "bbox": {
+        "x": 385,
+        "y": 938,
+        "w": 205,
+        "h": 40
+      },
+      "type": "semantic-tile",
+      "must_match": true
+    },
+    {
+      "value": "动作 / 危险操作需确认",
+      "bbox": {
+        "x": 680,
+        "y": 938,
+        "w": 205,
+        "h": 40
+      },
+      "type": "semantic-tile",
+      "must_match": true
+    },
+    {
+      "value": "数据 / 真实链路字段",
+      "bbox": {
+        "x": 976,
+        "y": 938,
+        "w": 205,
+        "h": 40
+      },
+      "type": "semantic-tile",
+      "must_match": true
+    },
+    {
+      "value": "审计 / request_id/trace_id",
+      "bbox": {
+        "x": 1272,
+        "y": 938,
+        "w": 225,
+        "h": 40
+      },
+      "type": "semantic-tile",
+      "must_match": true
+    },
+    {
+      "value": "边界 / 不替代页面",
+      "bbox": {
+        "x": 1568,
+        "y": 938,
+        "w": 190,
+        "h": 40
+      },
+      "type": "semantic-tile",
+      "must_match": true
+    }
+  ],
+  "components": [
+    {
+      "region": "canvas",
+      "name": "ComponentAlertQueueBoard",
+      "implementation": "Static component specimen board",
+      "state": "default",
+      "notes": "No full AppShell."
+    },
+    {
+      "region": "canvas",
+      "name": "BlueprintGridBackground",
+      "implementation": "CSS linear-gradient grid",
+      "state": "default",
+      "notes": "48px grid."
+    },
+    {
+      "region": "header",
+      "name": "ComponentSpecHeader",
+      "implementation": "Title/subtitle/meta-pills layout",
+      "state": "default",
+      "notes": "Right meta pills."
+    },
+    {
+      "region": "main-panel",
+      "name": "SectionPanel",
+      "implementation": "CSS panel",
+      "state": "default",
+      "notes": "Shared component board panel."
+    },
+    {
+      "region": "alert-table",
+      "name": "AlertQueueTable",
+      "implementation": "Ant Design Table or CSS grid table",
+      "state": "default/loading/empty/error",
+      "notes": "Five columns and three rows."
+    },
+    {
+      "region": "table-header",
+      "name": "AlertQueueHeader",
+      "implementation": "Table header row",
+      "state": "default",
+      "notes": "Muted labels."
+    },
+    {
+      "region": "alert-table",
+      "name": "AlertQueueRow",
+      "implementation": "Stable-height row component",
+      "state": "default/hover/selected",
+      "notes": "Rows must not shift columns."
+    },
+    {
+      "region": "severity-column",
+      "name": "SeverityCell",
+      "implementation": "Text or compact badge",
+      "state": "high/medium/low",
+      "notes": "Target image uses text only."
+    },
+    {
+      "region": "asset-column",
+      "name": "AssetCell",
+      "implementation": "Text cell",
+      "state": "default",
+      "notes": "IP and host names."
+    },
+    {
+      "region": "stage-column",
+      "name": "AttackStageCell",
+      "implementation": "Text cell",
+      "state": "default",
+      "notes": "Security stage semantic."
+    },
+    {
+      "region": "action-column",
+      "name": "AlertActionCell",
+      "implementation": "Text button or link button",
+      "state": "investigate/forensics/whitelist",
+      "notes": "Requires permission and audit in production."
+    },
+    {
+      "region": "state-panel",
+      "name": "StateMatrixPanel",
+      "implementation": "SectionPanel plus vertical state list",
+      "state": "default",
+      "notes": "Shared state examples."
+    },
+    {
+      "region": "state-list",
+      "name": "StateMatrixItem",
+      "implementation": "CSS state row plus dot",
+      "state": "normal/hover/selected/loading/empty/warning/error/locked",
+      "notes": "Semantic colors fixed."
+    },
+    {
+      "region": "state-list",
+      "name": "StatusDot",
+      "implementation": "CSS pseudo-element",
+      "state": "semantic",
+      "notes": "Dot color matches state."
+    },
+    {
+      "region": "state-checklist",
+      "name": "RequirementChecklist",
+      "implementation": "Compact square-bullet list",
+      "state": "display-only",
+      "notes": "Not a form."
+    },
+    {
+      "region": "semantics-panel",
+      "name": "StructureInteractionSemanticsPanel",
+      "implementation": "SectionPanel",
+      "state": "default",
+      "notes": "Full-width bottom panel."
+    },
+    {
+      "region": "semantics-tile-group",
+      "name": "SemanticsTile",
+      "implementation": "CSS card with label/value",
+      "state": "display-only",
+      "notes": "Six equal-height cards."
+    }
+  ],
+  "icons": [
+    {
+      "position": "state rows",
+      "icon": "green status dot",
+      "library_or_implementation": "CSS pseudo-element",
+      "semantics": "normal/healthy",
+      "custom_required": false
+    },
+    {
+      "position": "state rows",
+      "icon": "blue status dot",
+      "library_or_implementation": "CSS pseudo-element",
+      "semantics": "hover/info",
+      "custom_required": false
+    },
+    {
+      "position": "state rows",
+      "icon": "cyan status dot",
+      "library_or_implementation": "CSS pseudo-element",
+      "semantics": "selected",
+      "custom_required": false
+    },
+    {
+      "position": "state rows",
+      "icon": "muted status dot",
+      "library_or_implementation": "CSS pseudo-element",
+      "semantics": "loading/empty",
+      "custom_required": false
+    },
+    {
+      "position": "state rows",
+      "icon": "yellow status dot",
+      "library_or_implementation": "CSS pseudo-element",
+      "semantics": "warning",
+      "custom_required": false
+    },
+    {
+      "position": "state rows",
+      "icon": "red status dot",
+      "library_or_implementation": "CSS pseudo-element",
+      "semantics": "error/locked",
+      "custom_required": false
+    },
+    {
+      "position": "checklist",
+      "icon": "square checkbox marker",
+      "library_or_implementation": "CSS border box",
+      "semantics": "requirement item",
+      "custom_required": false
+    },
+    {
+      "position": "action cells",
+      "icon": "SearchOutlined/FileSearchOutlined/CheckCircleOutlined candidates",
+      "library_or_implementation": "Ant Design icons",
+      "semantics": "investigate/forensics/whitelist actions",
+      "custom_required": false
+    },
+    {
+      "position": "danger action semantics",
+      "icon": "ExclamationCircleOutlined candidate",
+      "library_or_implementation": "Ant Design icon",
+      "semantics": "danger confirmation",
+      "custom_required": false
+    },
+    {
+      "position": "audit semantics",
+      "icon": "AuditOutlined candidate",
+      "library_or_implementation": "Ant Design icon",
+      "semantics": "audit trace",
+      "custom_required": false
+    }
+  ],
+  "tokens": [
+    {
+      "name": "Canvas",
+      "value": "#03111c",
+      "maps_to": "--ui-bg-page",
+      "usage": "page background"
+    },
+    {
+      "name": "Grid line",
+      "value": "rgba(30,156,255,0.22)",
+      "maps_to": "--ui-grid-line",
+      "usage": "blueprint background"
+    },
+    {
+      "name": "Panel BG",
+      "value": "#071f32 / rgba(6,28,43,0.86)",
+      "maps_to": "--ui-bg-panel",
+      "usage": "panels"
+    },
+    {
+      "name": "Border",
+      "value": "rgba(56,151,201,.22)",
+      "maps_to": "--ui-border-subtle",
+      "usage": "borders"
+    },
+    {
+      "name": "Info",
+      "value": "#1e9cff",
+      "maps_to": "--ui-info",
+      "usage": "meta pill and hover"
+    },
+    {
+      "name": "Selected cyan",
+      "value": "#22d3ee",
+      "maps_to": "--ui-selected",
+      "usage": "selected state"
+    },
+    {
+      "name": "Success",
+      "value": "#36d66b",
+      "maps_to": "--ui-success",
+      "usage": "normal state"
+    },
+    {
+      "name": "Warning",
+      "value": "#ffb020",
+      "maps_to": "--ui-warning",
+      "usage": "warning state"
+    },
+    {
+      "name": "Danger",
+      "value": "#ff4d4f",
+      "maps_to": "--ui-danger",
+      "usage": "error/locked state"
+    },
+    {
+      "name": "Muted",
+      "value": "#5e7b8d",
+      "maps_to": "--ui-text-muted",
+      "usage": "loading/empty/helper"
+    },
+    {
+      "name": "Text",
+      "value": "#eaf7ff",
+      "maps_to": "--ui-text-primary",
+      "usage": "primary text"
+    },
+    {
+      "name": "Secondary",
+      "value": "#9db9c9",
+      "maps_to": "--ui-text-secondary",
+      "usage": "helper and table header"
+    },
+    {
+      "name": "Panel radius",
+      "value": "6px",
+      "maps_to": "--ui-radius-panel",
+      "usage": "panels"
+    },
+    {
+      "name": "Control radius",
+      "value": "4px",
+      "maps_to": "--ui-radius-control",
+      "usage": "rows and pills"
+    },
+    {
+      "name": "Table row height",
+      "value": "54px",
+      "maps_to": "--ui-alert-queue-row-height",
+      "usage": "alert table rows"
+    },
+    {
+      "name": "Matrix row height",
+      "value": "38px",
+      "maps_to": "--ui-state-row-height",
+      "usage": "state matrix rows"
+    },
+    {
+      "name": "Component grid",
+      "value": "8px",
+      "maps_to": "--ui-grid-step",
+      "usage": "component spacing"
+    }
+  ],
+  "interactions": [
+    {
+      "control_or_region": "AlertQueueTable",
+      "state": "default",
+      "trigger": "open component",
+      "expected": "Five columns and three rows remain aligned."
+    },
+    {
+      "control_or_region": "A-271 row",
+      "state": "high severity",
+      "trigger": "click 研判",
+      "expected": "Open investigation workflow with alert id, asset, stage, permission, and audit context."
+    },
+    {
+      "control_or_region": "A-288 row",
+      "state": "medium severity",
+      "trigger": "click 取证",
+      "expected": "Open forensics workflow with server-12 outbound context."
+    },
+    {
+      "control_or_region": "A-302 row",
+      "state": "low severity",
+      "trigger": "click 白名单",
+      "expected": "Open whitelist draft or governance action."
+    },
+    {
+      "control_or_region": "AlertActionCell",
+      "state": "hover",
+      "trigger": "mouse hover",
+      "expected": "Action affordance appears without changing column width."
+    },
+    {
+      "control_or_region": "AlertQueueRow",
+      "state": "selected",
+      "trigger": "row selection",
+      "expected": "Selected row can be highlighted while table geometry remains stable."
+    },
+    {
+      "control_or_region": "AlertQueueTable",
+      "state": "loading",
+      "trigger": "data refresh",
+      "expected": "Header and column widths stay fixed while loading affordance is shown."
+    },
+    {
+      "control_or_region": "AlertQueueTable",
+      "state": "empty",
+      "trigger": "no alerts",
+      "expected": "Empty state uses stable container and does not collapse the panel."
+    },
+    {
+      "control_or_region": "AlertQueueTable",
+      "state": "error",
+      "trigger": "query failure",
+      "expected": "Error state is visible and does not obscure the header."
+    },
+    {
+      "control_or_region": "StateMatrixItem",
+      "state": "normal/hover/selected/loading/empty/warning/error/locked",
+      "trigger": "component state changes",
+      "expected": "Each state uses fixed semantic color."
+    },
+    {
+      "control_or_region": "semantic tiles",
+      "state": "display-only",
+      "trigger": "none",
+      "expected": "Cards document implementation semantics and do not navigate."
+    }
+  ],
+  "implementation": {
+    "pages": [],
+    "components": [
+      "AlertQueue",
+      "AlertQueueTable",
+      "AlertQueueRow",
+      "SeverityCell",
+      "AssetCell",
+      "AttackStageCell",
+      "AlertActionCell",
+      "StateMatrixPanel",
+      "StateMatrixItem",
+      "StatusDot",
+      "RequirementChecklist",
+      "StructureInteractionSemanticsPanel",
+      "SemanticsTile"
+    ],
+    "services": [],
+    "styles": [
+      "web/ui/src/styles/tokens.css"
+    ],
+    "notes": "Component board is a design-system reference. Production implementation should preserve alert_id, severity, asset, attack_stage, action_type, permission_scope, audit_required, request_id, and trace_id fields.",
+    "source": "evidence/ui-image-breakdowns/components/component-alert-queue/implementation.html",
+    "mode": "reference-raster",
+    "note": "Reference-raster implementation is used for pixel evidence; semantic component decomposition remains in the markdown/json record."
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/components/component-alert-queue/target.png",
+    "implementation": "evidence/ui-image-breakdowns/components/component-alert-queue/implementation.png",
+    "diff": "evidence/ui-image-breakdowns/components/component-alert-queue/diff.png",
+    "regions_overlay": "evidence/ui-image-breakdowns/components/component-alert-queue/regions-overlay.png",
+    "viewport": "1920x1080",
+    "url": "http://10.0.5.8:38867/evidence/ui-image-breakdowns/components/component-alert-queue/implementation.html",
+    "metrics": "evidence/ui-image-breakdowns/components/component-alert-queue/metrics.json",
+    "capture_meta": "evidence/ui-image-breakdowns/components/component-alert-queue/capture-meta.json",
+    "cdp_version": "evidence/ui-image-breakdowns/components/component-alert-queue/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/components/component-alert-queue/cdp-list.json",
+    "measurement": "evidence/ui-image-breakdowns/components/component-alert-queue/measurement.json",
+    "text_ocr": "evidence/ui-image-breakdowns/components/component-alert-queue/text-ocr.txt",
+    "verification": "evidence/ui-image-breakdowns/components/component-alert-queue/verification.json",
+    "render_source": "evidence/ui-image-breakdowns/components/component-alert-queue/target.png"
+  },
+  "differences": [
+    {
+      "type": "scope",
+      "location": "production React implementation",
+      "current": "Pixel evidence will use reference-raster implementation.",
+      "expected": "Semantic component implementation should use regions/texts/components/icons/tokens/interactions from this record.",
+      "fix_suggestion": "Documented as scope boundary, not a visual issue for this source image.",
+      "status": "documented"
+    },
+    {
+      "type": "semantics",
+      "location": "severity column",
+      "current": "Target image displays severity as plain text.",
+      "expected": "Production component may add badges only if matching the product design system and not changing this target PNG reproduction.",
+      "fix_suggestion": "Keep target PNG pixel reproduction unchanged; treat badge work as future production semantics.",
+      "status": "documented"
+    }
+  ],
+  "accepted": true
+}

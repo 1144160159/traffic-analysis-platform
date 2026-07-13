@@ -1,0 +1,225 @@
+{
+  "run_id": "20260701-ui-contract-preflight-r17-desktop-login-pass-business-redirect-current",
+  "generated_at": "2026-07-01T15:40:08Z",
+  "apisix": "http://10.0.5.8:30180",
+  "result": "blocked",
+  "total": 21,
+  "passed": 20,
+  "blockers": 1,
+  "warnings": 0,
+  "report": "doc/02_acceptance/runs/20260701-ui-contract-preflight-r17-desktop-login-pass-business-redirect-current/live-ui-contract-preflight-20260701-ui-contract-preflight-r17-desktop-login-pass-business-redirect-current.ndjson",
+  "contract_matrix": "doc/02_acceptance/runs/20260701-ui-contract-preflight-r17-desktop-login-pass-business-redirect-current/ui-contract-matrix.json",
+  "local_report": "doc/02_acceptance/runs/20260701-ui-contract-preflight-r17-desktop-login-pass-business-redirect-current/local-report.md",
+  "checks": [
+    {
+      "ts": "2026-07-01T23:40:02+08:00",
+      "phase": "repo",
+      "name": "UI suite frontend contracts validate",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "validated UI frontend contracts: 181 manifest items, 28 route contracts, 70 overlay contracts errors: 0, warnings: 0 ",
+      "artifact": "validate-frontend-contracts.out"
+    },
+    {
+      "ts": "2026-07-01T23:40:02+08:00",
+      "phase": "contract",
+      "name": "UI suite validator has zero errors and zero warnings",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "errors: 0, warnings: 0",
+      "artifact": "validate-frontend-contracts.out"
+    },
+    {
+      "ts": "2026-07-01T23:40:06+08:00",
+      "phase": "test",
+      "name": "routeManifest and route access Vitest",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": " > traffic-analysis-ui@2.0.0 test > vitest --run src/routes/routeManifest.test.ts src/routes/access.test.ts    RUN  v1.6.1 /home/wangwt/phase_2/code/traffic-analysis-platform/web/ui   ✓ src/routes/access.test.ts  (3 tests) 4ms  ✓ src/routes/routeManifest.test.ts  (8 tests) 8ms   Test Files  2 passed (2)       Tests  11 passed (11)    Start at  23:40:03    Duration  3.05s (transform 274ms, setup 105ms, collect 771ms, tests 12ms, environment 3.53s, prepare 782ms)  ",
+      "artifact": "web-route-vitest.out"
+    },
+    {
+      "ts": "2026-07-01T23:40:06+08:00",
+      "phase": "live",
+      "name": "APISIX login HTML reachable by HTTP GET",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "<!doctype html> <html lang=\"zh-CN\">   <head>     <meta charset=\"UTF-8\" />     <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />     <meta name=\"theme-color\" content=\"#03111c\" />     <title>园区网络全流量采集与分析系统</title>     <script src=\"/config.js?runtime=1\"></script>     <script type=\"module\" crossorigin src=\"/assets/index-BRGxm7xx.js\"></script>     <link rel=\"modulepreload\" crossorigin href=\"/assets/vendor-outvariant-BBS2yBlX.js\">     <link rel=\"modulepreload\" crossorigin href=\"/assets/vendor-rettime-Dx7Zosze.js\">     <link rel=\"modulepreload\" crossorigin href=\"/assets/vendor-react-DcxXCZkJ.js\">     <link rel=\"modulepreload\" crossorigin href=\"/assets/vendor-is-node-process-BZ-2HBMI.js\">     <link rel=\"modulepreload\" crossorigin href=\"/assets/vendor-misc-IOeGAkip.js\">     <link rel=\"modulepreload\" crossorigin href=\"/assets/vendor-strict-event-emitter-CrFXw_VT.js\">     <link rel=\"modulepreload\" crossorigin href=\"/assets/vendor-mswjs-interceptors-DhD__bBq.js\">     <link rel=\"modulepreload\" crossorigin href=\"/assets/vendor-until-async-Bf6op_KE.js\">     <link rel=\"modulepreload\" crossorigin href=\"/assets/vendor-path-to-regexp-wCvGX3Wm.js\">   ",
+      "artifact": "apisix-login-get.out"
+    },
+    {
+      "ts": "2026-07-01T23:40:06+08:00",
+      "phase": "live",
+      "name": "APISIX login returns Web UI shell",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "http://10.0.5.8:30180/login",
+      "artifact": "apisix-login-get.out"
+    },
+    {
+      "ts": "2026-07-01T23:40:06+08:00",
+      "phase": "browser",
+      "name": "Desktop Chrome wrapper opened login page",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "url=http://10.0.5.8:30180/login title=园区网络全流量采集与分析系统",
+      "artifact": ""
+    },
+    {
+      "ts": "2026-07-01T23:40:06+08:00",
+      "phase": "browser",
+      "name": "Desktop Chrome wrapper opened protected business page",
+      "severity": "blocker",
+      "passed": false,
+      "status": "redirected_to_login",
+      "detail": "Current desktop_chrome_open_url for /alerts returned ok but final URL was /login; authenticated Desktop Chrome business-page state is still missing.",
+      "artifact": ""
+    },
+    {
+      "ts": "2026-07-01T23:40:06+08:00",
+      "phase": "contract",
+      "name": "routeManifest top-level groups match design order",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "{\"expected\":[[\"overview\",\"综合态势\"],[\"collection-monitoring\",\"采集监测\"],[\"threat-analysis\",\"威胁分析\"],[\"asset-graph\",\"资产图谱\"],[\"detection-ops\",\"检测运营\"],[\"audit-config\",\"审计配置\"]],\"actual\":[[\"overview\",\"综合态势\"],[\"collection-monitoring\",\"采集监测\"],[\"threat-analysis\",\"威胁分析\"],[\"asset-graph\",\"资产图谱\"],[\"detection-ops\",\"检测运营\"],[\"audit-config\",\"审计配置\"]]}",
+      "artifact": "web/ui/src/routes/routeManifest.tsx"
+    },
+    {
+      "ts": "2026-07-01T23:40:06+08:00",
+      "phase": "contract",
+      "name": "design menu table extracts 24 active second-level routes",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "{\"count\":24,\"routes\":[\"/dashboard\",\"/screen\",\"/topics\",\"/probes\",\"/data-quality\",\"/alerts\",\"/campaigns\",\"/attack-chains\",\"/encrypted-traffic\",\"/forensics\",\"/assets\",\"/graph\",\"/fusion\",\"/baselines\",\"/rules\",\"/deployments\",\"/models\",\"/mlops\",\"/playbooks\",\"/whitelist\",\"/compliance\",\"/audit-log\",\"/notifications\",\"/settings\"]}",
+      "artifact": "doc/01_design/面向园区网络的全流量采集分析系统-左侧菜单信息架构.md"
+    },
+    {
+      "ts": "2026-07-01T23:40:07+08:00",
+      "phase": "contract",
+      "name": "routeManifest keeps all 24 menu routes in designed group and order",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "{\"expected\":[[\"综合态势\",\"仪表盘\",\"/dashboard\"],[\"综合态势\",\"态势大屏\",\"/screen\"],[\"综合态势\",\"专题面板\",\"/topics\"],[\"采集监测\",\"探针管理\",\"/probes\"],[\"采集监测\",\"数据质量\",\"/data-quality\"],[\"威胁分析\",\"告警中心\",\"/alerts\"],[\"威胁分析\",\"战役列表\",\"/campaigns\"],[\"威胁分析\",\"攻击链分析\",\"/attack-chains\"],[\"威胁分析\",\"加密流量\",\"/encrypted-traffic\"],[\"威胁分析\",\"取证分析\",\"/forensics\"],[\"资产图谱\",\"资产台账\",\"/assets\"],[\"资产图谱\",\"实体图谱\",\"/graph\"],[\"资产图谱\",\"数据融合\",\"/fusion\"],[\"资产图谱\",\"行为基准\",\"/baselines\"],[\"检测运营\",\"规则管理\",\"/rules\"],[\"检测运营\",\"部署管理\",\"/deployments\"],[\"检测运营\",\"模型管理\",\"/models\"],[\"检测运营\",\"MLOps 编排\",\"/mlops\"],[\"检测运营\",\"SOAR 剧本\",\"/playbooks\"],[\"检测运营\",\"白名单\",\"/whitelist\"],[\"审计配置\",\"合规审计\",\"/compliance\"],[\"审计配置\",\"审计日志\",\"/audit-log\"],[\"审计配置\",\"通知配置\",\"/notifications\"],[\"审计配置\",\"系统设置\",\"/settings\"]],\"actual\":[[\"综合态势\",\"仪表盘\",\"/dashboard\"],[\"综合态势\",\"态势大屏\",\"/screen\"],[\"综合态势\",\"专题面板\",\"/topics\"],[\"采集监测\",\"探针管理\",\"/probes\"],[\"采集监测\",\"数据质量\",\"/data-quality\"],[\"威胁分析\",\"告警中心\",\"/alerts\"],[\"威胁分析\",\"战役列表\",\"/campaigns\"],[\"威胁分析\",\"攻击链分析\",\"/attack-chains\"],[\"威胁分析\",\"加密流量\",\"/encrypted-traffic\"],[\"威胁分析\",\"取证分析\",\"/forensics\"],[\"资产图谱\",\"资产台账\",\"/assets\"],[\"资产图谱\",\"实体图谱\",\"/graph\"],[\"资产图谱\",\"数据融合\",\"/fusion\"],[\"资产图谱\",\"行为基准\",\"/baselines\"],[\"检测运营\",\"规则管理\",\"/rules\"],[\"检测运营\",\"部署管理\",\"/deployments\"],[\"检测运营\",\"模型管理\",\"/models\"],[\"检测运营\",\"MLOps 编排\",\"/mlops\"],[\"检测运营\",\"SOAR 剧本\",\"/playbooks\"],[\"检测运营\",\"白名单\",\"/whitelist\"],[\"审计配置\",\"合规审计\",\"/compliance\"],[\"审计配置\",\"审计日志\",\"/audit-log\"],[\"审计配置\",\"通知配置\",\"/notifications\"],[\"审计配置\",\"系统设置\",\"/settings\"]]}",
+      "artifact": "web/ui/src/routes/routeManifest.tsx"
+    },
+    {
+      "ts": "2026-07-01T23:40:07+08:00",
+      "phase": "contract",
+      "name": "legacy topic deep links are not left-nav items",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "{\"legacyExpected\":[\"/topics/tunnel\",\"/topics/exfil\",\"/topics/apt\"],\"navPaths\":[\"/dashboard\",\"/screen\",\"/topics\",\"/probes\",\"/data-quality\",\"/alerts\",\"/campaigns\",\"/attack-chains\",\"/encrypted-traffic\",\"/forensics\",\"/assets\",\"/graph\",\"/fusion\",\"/baselines\",\"/rules\",\"/deployments\",\"/models\",\"/mlops\",\"/playbooks\",\"/whitelist\",\"/compliance\",\"/audit-log\",\"/notifications\",\"/settings\"]}",
+      "artifact": "web/ui/src/routes/routeManifest.tsx"
+    },
+    {
+      "ts": "2026-07-01T23:40:07+08:00",
+      "phase": "contract",
+      "name": "legacy topic deep links remain registered for redirect compatibility",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "{\"expected\":[\"/topics/tunnel\",\"/topics/exfil\",\"/topics/apt\"],\"actual\":[\"/topics/tunnel\",\"/topics/exfil\",\"/topics/apt\"]}",
+      "artifact": "web/ui/src/routes/routeManifest.tsx"
+    },
+    {
+      "ts": "2026-07-01T23:40:07+08:00",
+      "phase": "contract",
+      "name": "detail routes are registered outside the left navigation",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "{\"expected\":[\"/alerts/:alertId\",\"/campaigns/:campaignId\"],\"actual\":[\"/alerts/:alertId\",\"/campaigns/:campaignId\"]}",
+      "artifact": "web/ui/src/routes/routeManifest.tsx"
+    },
+    {
+      "ts": "2026-07-01T23:40:07+08:00",
+      "phase": "contract",
+      "name": "UI suite route-page-map covers every left-nav route",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "{\"missing\":[],\"routeMapCount\":28}",
+      "artifact": "doc/04_assets/ui_suite_gpt_v1/specs/route-page-map.json"
+    },
+    {
+      "ts": "2026-07-01T23:40:07+08:00",
+      "phase": "contract",
+      "name": "UI suite page contracts exist for route-page-map entries",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "{\"missing\":[]}",
+      "artifact": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts"
+    },
+    {
+      "ts": "2026-07-01T23:40:07+08:00",
+      "phase": "contract",
+      "name": "business-flow acceptance covers login, all menu routes, and detail routes",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "{\"missing\":[],\"flowCount\":7}",
+      "artifact": "doc/04_assets/ui_suite_gpt_v1/specs/business-flow-acceptance.json"
+    },
+    {
+      "ts": "2026-07-01T23:40:08+08:00",
+      "phase": "contract",
+      "name": "frontend task matrix keeps expected page and overlay contract counts",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "{\"manifestItems\":181,\"pages\":28,\"overlays\":70,\"components\":48,\"states\":16,\"responsive\":12,\"methods\":5}",
+      "artifact": "doc/04_assets/ui_suite_gpt_v1/specs/frontend-task-matrix.json"
+    },
+    {
+      "ts": "2026-07-01T23:40:08+08:00",
+      "phase": "contract",
+      "name": "frontend code gap has no route gaps or direct fetch violations",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "{\"routeGaps\":0,\"directFetchViolations\":0}",
+      "artifact": "doc/04_assets/ui_suite_gpt_v1/specs/frontend-code-gap.json"
+    },
+    {
+      "ts": "2026-07-01T23:40:08+08:00",
+      "phase": "contract",
+      "name": "frontend code gap covers all planned API endpoints",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "{\"covered\":46,\"total\":46}",
+      "artifact": "doc/04_assets/ui_suite_gpt_v1/specs/frontend-code-gap.json"
+    },
+    {
+      "ts": "2026-07-01T23:40:08+08:00",
+      "phase": "contract",
+      "name": "frontend code gap keeps AppShell token deltas at zero",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "{\"appShellTokenGaps\":0}",
+      "artifact": "doc/04_assets/ui_suite_gpt_v1/specs/frontend-code-gap.json"
+    },
+    {
+      "ts": "2026-07-01T23:40:08+08:00",
+      "phase": "contract",
+      "name": "frontend code gap has all overlay contracts statically traceable",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "{\"overlaysConfirmed\":70,\"overlaysPartial\":0,\"overlaysMissing\":0}",
+      "artifact": "doc/04_assets/ui_suite_gpt_v1/specs/frontend-code-gap.json"
+    }
+  ]
+}

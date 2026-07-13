@@ -1,0 +1,59 @@
+{
+  "ok": true,
+  "run_id": "20260629-desktop-chrome-business-smoke-r4",
+  "backend": "extension",
+  "requested_path": "/dashboard#codex_smoke_token=<redacted>",
+  "clicked_path": "/alerts",
+  "previous_action_artifact": "proxy-output-r4.jsonl",
+  "claim_artifact": "proxy-output-r4-claim.jsonl",
+  "client": "file:///C:/Users/11441/.codex/plugins/cache/openai-bundled/chrome/latest/scripts/browser-client.mjs",
+  "targets": [
+    {
+      "name": "Chrome",
+      "type": "extension",
+      "id": "-868b-4ec8-9a58-613f66ba23f1",
+      "profileName": "用户1"
+    }
+  ],
+  "requestMeta": {
+    "plugin_id": "codex-desktop-iab-bridge",
+    "threadId": "019ed4d4-2edc-7f22-aee0-abed9a347c81",
+    "x-codex-turn-metadata": {
+      "sandbox": "none",
+      "session_id": "019ed4d4-2edc-7f22-aee0-abed9a347c81",
+      "thread_id": "019ed4d4-2edc-7f22-aee0-abed9a347c81",
+      "thread_source": "codex-desktop",
+      "turn_id": "019f10ad-7cde-7230-9e11-e29c3a13762c",
+      "workspace_kind": "project"
+    }
+  },
+  "matchCount": 1,
+  "matches": [
+    {
+      "id": "388697369",
+      "title": "园区网络全流量采集与分析系统",
+      "url": "http://10.0.5.8:30180/alerts"
+    }
+  ],
+  "finalUrl": "http://10.0.5.8:30180/alerts",
+  "finalTitle": "园区网络全流量采集与分析系统",
+  "counts": {
+    "alertText": 15,
+    "dispositionText": 2,
+    "feedbackText": 4,
+    "realtimeText": 1,
+    "dataQualityText": 2,
+    "loginText": 0,
+    "forbiddenText": 0
+  },
+  "finalContains": {
+    "alerts": true,
+    "disposition": true,
+    "appShell": true,
+    "login": false,
+    "accessDenied": false,
+    "smokeHashVisible": false
+  },
+  "snapshotHead": "- banner:\n  - link \"返回仪表盘\":\n    - /url: /dashboard\n    - img \"safety\":\n    - generic: 园区网络全流量采集与分析系统\n  - generic: 站点\n  - combobox\n  - generic \"主园区\"\n  - generic: 时间\n  - strong: 2026-06-29 10:24:26\n  - generic: 风险态势\n  - strong:\n    - img \"safety\":\n    - text: 高风险 87/100\n  - generic: 告警总数\n  - strong:\n    - img \"bell\":\n    - text: 128 / 24h\n  - generic: 关键告警\n  - strong:\n    - img \"radar-chart\":\n    - text: 9 / 24h\n  - generic: 采集健康度\n  - strong: 98.6% 在线探针 24/25\n  - generic: 数据质量\n  - strong: 99.1% 合格率\n  - generic: 实时通道\n  - strong:\n    - img \"thunderbolt\":\n    - text: 已连接\n  - button \"PCAP检索\":\n    - img \"file-search\":\n    - generic: PCAP检索\n  - button \"资产检索\":\n    - img \"search\":\n    - generic: 资产检索\n  - button \"规则检索\":\n    - img \"tool\":\n    - generic: 规则检索\n  - button \"脚本中心\":\n    - img \"database\":\n    - generic: 脚本中心\n  - button \"帮助中心\":\n    - img \"question-circle\":\n    - generic: 帮助中心\n  - button \"更多应用\":\n    - img \"expand\":\n    - generic: 更多应用\n- complementary:\n  - navigation \"主导航\":\n    - link \"appstore 综合态势\":\n      - /url: /dashboard\n      - img \"appstore\":\n      - generic: 综合态势\n    - link \"radar-chart 采集监测\":\n      - /url: /probes\n      - img \"radar-chart\":\n      - generic: 采集监测\n    - link \"alert 威胁分析\" [active]:\n      - /url: /alerts\n      - img \"alert\":\n      - generic: 威胁分析\n    - link \"bell 告警中心 1 2 8\":\n      - /url: /alerts\n      - img \"bell\":\n      - generic: 告警中心\n      - superscript:\n        - generic: \"1\"\n        - generic: \"2\"\n        - generic: \"8\"\n    - link \"build 战役列表\":\n      - /url: /campaigns\n      - img \"build\":\n      - generic: 战役列表\n    - link \"fork 攻击链分析\":\n      - /url: ",
+  "finalize": "kept"
+}

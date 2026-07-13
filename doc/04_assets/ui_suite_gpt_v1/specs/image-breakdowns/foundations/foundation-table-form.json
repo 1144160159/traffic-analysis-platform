@@ -1,0 +1,1176 @@
+{
+  "id": "foundation-table-form",
+  "category": "foundations",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/foundations/foundation-table-form.png",
+  "prompt_file": "doc/04_assets/ui_suite_gpt_v1/prompts/foundation-table-form.prompt.txt",
+  "manifest_refs": [
+    "doc/04_assets/ui_suite_gpt_v1/manifest.json",
+    "doc/04_assets/ui_suite_gpt_v1/specs/layers/foundation-table-form.json"
+  ],
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "status": "pixel-accepted",
+  "accepted": true,
+  "route": null,
+  "host_route": null,
+  "observation": {
+    "layout": "Static design-system foundation board. Header spans the top, left upper panel shows a dense table, right upper panel shows compact filter/form controls and action buttons, and the bottom panel lists density rules.",
+    "business_focus": "Locks high-density table row rhythm, compact filter/form layout, action hierarchy, risk/status color semantics, and dangerous-action audit requirements for later Ant Design implementation.",
+    "current_state": "Windows Chrome reference-raster screenshot and zero-tolerance visual diff completed; mismatch ratio is 0.0.",
+    "acceptance_scope": "This foundation is a table/form density source. Pixel evidence reproduces the target PNG; production table/form semantics must separately implement these rules."
+  },
+  "regions": [
+    {
+      "id": "canvas",
+      "name": "画布",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "layer": 0,
+      "purpose": "16:9 foundation board",
+      "replication_notes": "No browser chrome or external frame."
+    },
+    {
+      "id": "header",
+      "name": "顶部标题区",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 73
+      },
+      "layer": 1,
+      "purpose": "Board title, subtitle, baseline note",
+      "replication_notes": "Bottom separator at y=72."
+    },
+    {
+      "id": "table-panel",
+      "name": "01 高密表格模式",
+      "bbox": {
+        "x": 24,
+        "y": 92,
+        "w": 1237,
+        "h": 549
+      },
+      "layer": 1,
+      "purpose": "Dense table example",
+      "replication_notes": "Panel contains one table without nested cards."
+    },
+    {
+      "id": "table-titlebar",
+      "name": "表格面板标题栏",
+      "bbox": {
+        "x": 25,
+        "y": 93,
+        "w": 1235,
+        "h": 43
+      },
+      "layer": 2,
+      "purpose": "Section title",
+      "replication_notes": "Text reads 01 高密表格模式."
+    },
+    {
+      "id": "dense-table",
+      "name": "高密表格",
+      "bbox": {
+        "x": 54,
+        "y": 155,
+        "w": 1176,
+        "h": 455
+      },
+      "layer": 2,
+      "purpose": "Nine-column compact table with four rows",
+      "replication_notes": "Header and rows use stable widths; no card-per-row treatment."
+    },
+    {
+      "id": "table-header",
+      "name": "表头",
+      "bbox": {
+        "x": 54,
+        "y": 155,
+        "w": 1176,
+        "h": 39
+      },
+      "layer": 3,
+      "purpose": "Column labels",
+      "replication_notes": "Darker header background and vertical separators."
+    },
+    {
+      "id": "table-row-1",
+      "name": "表格行 AL-0001",
+      "bbox": {
+        "x": 54,
+        "y": 194,
+        "w": 1176,
+        "h": 58
+      },
+      "layer": 3,
+      "purpose": "High-risk blocking row",
+      "replication_notes": "Risk text red, audit recorded green."
+    },
+    {
+      "id": "table-row-2",
+      "name": "表格行 AL-0002",
+      "bbox": {
+        "x": 54,
+        "y": 252,
+        "w": 1176,
+        "h": 58
+      },
+      "layer": 3,
+      "purpose": "Medium-risk review row",
+      "replication_notes": "Risk text yellow, audit pending."
+    },
+    {
+      "id": "table-row-3",
+      "name": "表格行 AS-1038",
+      "bbox": {
+        "x": 54,
+        "y": 310,
+        "w": 1176,
+        "h": 58
+      },
+      "layer": 3,
+      "purpose": "Low-risk normal row",
+      "replication_notes": "Risk/status/audit use green semantics."
+    },
+    {
+      "id": "table-row-4",
+      "name": "表格行 EV-2891",
+      "bbox": {
+        "x": 54,
+        "y": 368,
+        "w": 1176,
+        "h": 58
+      },
+      "layer": 3,
+      "purpose": "Healthy evidence row",
+      "replication_notes": "Hash OK and pass status are green."
+    },
+    {
+      "id": "form-panel",
+      "name": "02 筛选与表单控件",
+      "bbox": {
+        "x": 1290,
+        "y": 92,
+        "w": 607,
+        "h": 549
+      },
+      "layer": 1,
+      "purpose": "Filter/form controls and action hierarchy",
+      "replication_notes": "Compact tool panel, not marketing cards."
+    },
+    {
+      "id": "form-titlebar",
+      "name": "表单面板标题栏",
+      "bbox": {
+        "x": 1291,
+        "y": 93,
+        "w": 605,
+        "h": 43
+      },
+      "layer": 2,
+      "purpose": "Section title",
+      "replication_notes": "Text reads 02 筛选与表单控件."
+    },
+    {
+      "id": "form-fields",
+      "name": "筛选表单字段",
+      "bbox": {
+        "x": 1326,
+        "y": 152,
+        "w": 533,
+        "h": 321
+      },
+      "layer": 2,
+      "purpose": "Five label/input rows",
+      "replication_notes": "Labels left, long controls right, vertical rhythm around 70px."
+    },
+    {
+      "id": "form-field-time",
+      "name": "时间窗字段",
+      "bbox": {
+        "x": 1326,
+        "y": 152,
+        "w": 533,
+        "h": 41
+      },
+      "layer": 3,
+      "purpose": "Time range filter",
+      "replication_notes": "Value 近 24 小时."
+    },
+    {
+      "id": "form-field-asset",
+      "name": "资产/IP 字段",
+      "bbox": {
+        "x": 1326,
+        "y": 222,
+        "w": 533,
+        "h": 41
+      },
+      "layer": 3,
+      "purpose": "Asset/IP scope filter",
+      "replication_notes": "Value 10.12.0.0/16."
+    },
+    {
+      "id": "form-field-risk",
+      "name": "风险等级字段",
+      "bbox": {
+        "x": 1326,
+        "y": 292,
+        "w": 533,
+        "h": 41
+      },
+      "layer": 3,
+      "purpose": "Risk level filter",
+      "replication_notes": "Value 高 / 中 / 低."
+    },
+    {
+      "id": "form-field-evidence",
+      "name": "证据类型字段",
+      "bbox": {
+        "x": 1326,
+        "y": 362,
+        "w": 533,
+        "h": 41
+      },
+      "layer": 3,
+      "purpose": "Evidence type filter",
+      "replication_notes": "Value PCAP / Session / 日志."
+    },
+    {
+      "id": "form-field-approval",
+      "name": "审批原因字段",
+      "bbox": {
+        "x": 1326,
+        "y": 432,
+        "w": 533,
+        "h": 41
+      },
+      "layer": 3,
+      "purpose": "Approval/audit reason",
+      "replication_notes": "Required context for dangerous action."
+    },
+    {
+      "id": "button-row",
+      "name": "按钮组",
+      "bbox": {
+        "x": 1326,
+        "y": 550,
+        "w": 507,
+        "h": 42
+      },
+      "layer": 2,
+      "purpose": "Action hierarchy",
+      "replication_notes": "Reset, save, submit, danger action; colors show hierarchy."
+    },
+    {
+      "id": "density-rules-panel",
+      "name": "03 密度规则",
+      "bbox": {
+        "x": 24,
+        "y": 670,
+        "w": 1873,
+        "h": 369
+      },
+      "layer": 1,
+      "purpose": "Density implementation rules",
+      "replication_notes": "Bottom wide panel with five green-dot rules."
+    },
+    {
+      "id": "density-rules-titlebar",
+      "name": "密度规则标题栏",
+      "bbox": {
+        "x": 25,
+        "y": 671,
+        "w": 1871,
+        "h": 43
+      },
+      "layer": 2,
+      "purpose": "Section title",
+      "replication_notes": "Text reads 03 密度规则."
+    },
+    {
+      "id": "density-rule-list",
+      "name": "密度规则列表",
+      "bbox": {
+        "x": 59,
+        "y": 738,
+        "w": 620,
+        "h": 221
+      },
+      "layer": 2,
+      "purpose": "Five mandatory density rules",
+      "replication_notes": "Green bullets and fixed vertical rhythm."
+    }
+  ],
+  "texts": [
+    {
+      "id": "text-001",
+      "value": "Foundation Table And Form Density",
+      "type": "title",
+      "bbox": {
+        "x": 28,
+        "y": 14,
+        "w": 650,
+        "h": 34
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-002",
+      "value": "用 screen.png token 构造高密表格、筛选和表单状态规范",
+      "type": "subtitle",
+      "bbox": {
+        "x": 29,
+        "y": 53,
+        "w": 440,
+        "h": 14
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-003",
+      "value": "第一基准：screen.png",
+      "type": "baseline-note",
+      "bbox": {
+        "x": 1586,
+        "y": 32,
+        "w": 181,
+        "h": 18
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-004",
+      "value": "01 高密表格模式",
+      "type": "section-title",
+      "bbox": {
+        "x": 38,
+        "y": 104,
+        "w": 177,
+        "h": 22
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-005",
+      "value": "ID",
+      "type": "table-header",
+      "bbox": {
+        "x": 64,
+        "y": 169,
+        "w": 18,
+        "h": 14
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-006",
+      "value": "对象",
+      "type": "table-header",
+      "bbox": {
+        "x": 153,
+        "y": 169,
+        "w": 28,
+        "h": 14
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-007",
+      "value": "风险",
+      "type": "table-header",
+      "bbox": {
+        "x": 343,
+        "y": 169,
+        "w": 28,
+        "h": 14
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-008",
+      "value": "来源",
+      "type": "table-header",
+      "bbox": {
+        "x": 493,
+        "y": 169,
+        "w": 28,
+        "h": 14
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-009",
+      "value": "状态",
+      "type": "table-header",
+      "bbox": {
+        "x": 634,
+        "y": 169,
+        "w": 28,
+        "h": 14
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-010",
+      "value": "证据",
+      "type": "table-header",
+      "bbox": {
+        "x": 774,
+        "y": 169,
+        "w": 28,
+        "h": 14
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-011",
+      "value": "时间窗",
+      "type": "table-header",
+      "bbox": {
+        "x": 904,
+        "y": 169,
+        "w": 42,
+        "h": 14
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-012",
+      "value": "动作",
+      "type": "table-header",
+      "bbox": {
+        "x": 1034,
+        "y": 169,
+        "w": 28,
+        "h": 14
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-013",
+      "value": "审计",
+      "type": "table-header",
+      "bbox": {
+        "x": 1164,
+        "y": 169,
+        "w": 28,
+        "h": 14
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-014",
+      "value": "AL-0001 / 实验区-核心区 / 高危 / 规则+模型 / 处理中 / PCAP 1 / 24h / 阻断 / 已记录",
+      "type": "table-row",
+      "bbox": {
+        "x": 64,
+        "y": 214,
+        "w": 1135,
+        "h": 16
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-015",
+      "value": "AL-0002 / 宿舍区-汇聚B / 中危 / 行为基准 / 待确认 / Session 2 / 24h / 复核 / 待补",
+      "type": "table-row",
+      "bbox": {
+        "x": 64,
+        "y": 272,
+        "w": 1135,
+        "h": 16
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-016",
+      "value": "AS-1038 / 核心交换机 / 低危 / 资产台账 / 正常 / 日志 4 / 7d / 查看 / 已记录",
+      "type": "table-row",
+      "bbox": {
+        "x": 64,
+        "y": 330,
+        "w": 1135,
+        "h": 16
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-017",
+      "value": "EV-2891 / 对象存储 / 健康 / 取证分析 / 通过 / Hash OK / 30d / 下载 / 授权",
+      "type": "table-row",
+      "bbox": {
+        "x": 64,
+        "y": 388,
+        "w": 1135,
+        "h": 16
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-018",
+      "value": "02 筛选与表单控件",
+      "type": "section-title",
+      "bbox": {
+        "x": 1304,
+        "y": 104,
+        "w": 200,
+        "h": 22
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-019",
+      "value": "时间窗",
+      "type": "form-label",
+      "bbox": {
+        "x": 1326,
+        "y": 165,
+        "w": 42,
+        "h": 14
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-020",
+      "value": "近 24 小时",
+      "type": "form-value",
+      "bbox": {
+        "x": 1446,
+        "y": 166,
+        "w": 86,
+        "h": 18
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-021",
+      "value": "资产/IP",
+      "type": "form-label",
+      "bbox": {
+        "x": 1326,
+        "y": 235,
+        "w": 55,
+        "h": 14
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-022",
+      "value": "10.12.0.0/16",
+      "type": "form-value",
+      "bbox": {
+        "x": 1446,
+        "y": 236,
+        "w": 105,
+        "h": 18
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-023",
+      "value": "风险等级",
+      "type": "form-label",
+      "bbox": {
+        "x": 1326,
+        "y": 305,
+        "w": 56,
+        "h": 14
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-024",
+      "value": "高 / 中 / 低",
+      "type": "form-value",
+      "bbox": {
+        "x": 1446,
+        "y": 306,
+        "w": 93,
+        "h": 18
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-025",
+      "value": "证据类型",
+      "type": "form-label",
+      "bbox": {
+        "x": 1326,
+        "y": 375,
+        "w": 56,
+        "h": 14
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-026",
+      "value": "PCAP / Session / 日志",
+      "type": "form-value",
+      "bbox": {
+        "x": 1446,
+        "y": 376,
+        "w": 167,
+        "h": 18
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-027",
+      "value": "审批原因",
+      "type": "form-label",
+      "bbox": {
+        "x": 1326,
+        "y": 445,
+        "w": 56,
+        "h": 14
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-028",
+      "value": "用于取证闭环复核",
+      "type": "form-value",
+      "bbox": {
+        "x": 1446,
+        "y": 446,
+        "w": 143,
+        "h": 18
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-029",
+      "value": "重置",
+      "type": "button-label",
+      "bbox": {
+        "x": 1358,
+        "y": 564,
+        "w": 32,
+        "h": 16
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-030",
+      "value": "保存视图",
+      "type": "button-label",
+      "bbox": {
+        "x": 1489,
+        "y": 564,
+        "w": 64,
+        "h": 16
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-031",
+      "value": "提交审批",
+      "type": "button-label",
+      "bbox": {
+        "x": 1619,
+        "y": 564,
+        "w": 64,
+        "h": 16
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-032",
+      "value": "危险执行",
+      "type": "button-label",
+      "bbox": {
+        "x": 1751,
+        "y": 564,
+        "w": 64,
+        "h": 16
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-033",
+      "value": "03 密度规则",
+      "type": "section-title",
+      "bbox": {
+        "x": 38,
+        "y": 683,
+        "w": 132,
+        "h": 22
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-034",
+      "value": "表格行高以 32px 为目标，hover 不导致扩张",
+      "type": "density-rule",
+      "bbox": {
+        "x": 85,
+        "y": 738,
+        "w": 403,
+        "h": 20
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-035",
+      "value": "筛选区尽量横向紧凑，不做营销卡片",
+      "type": "density-rule",
+      "bbox": {
+        "x": 85,
+        "y": 790,
+        "w": 363,
+        "h": 20
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-036",
+      "value": "危险动作必须具备权限、影响范围和审计原因",
+      "type": "density-rule",
+      "bbox": {
+        "x": 85,
+        "y": 842,
+        "w": 415,
+        "h": 20
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-037",
+      "value": "空/加载/错误状态保持同样容器几何",
+      "type": "density-rule",
+      "bbox": {
+        "x": 85,
+        "y": 894,
+        "w": 360,
+        "h": 20
+      },
+      "ocr_source": "manual-visual"
+    },
+    {
+      "id": "text-038",
+      "value": "禁止卡片套卡片，重复项才使用卡片承载",
+      "type": "density-rule",
+      "bbox": {
+        "x": 85,
+        "y": 946,
+        "w": 395,
+        "h": 20
+      },
+      "ocr_source": "manual-visual"
+    }
+  ],
+  "components": [
+    {
+      "id": "component-001",
+      "name": "FoundationBoardHeader",
+      "type": "layout-header",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 73
+      },
+      "implementation_mapping": "Static table/form density foundation header."
+    },
+    {
+      "id": "component-002",
+      "name": "DenseTablePanel",
+      "type": "foundation-panel",
+      "bbox": {
+        "x": 24,
+        "y": 92,
+        "w": 1237,
+        "h": 549
+      },
+      "implementation_mapping": "Foundation panel for high-density table sample."
+    },
+    {
+      "id": "component-003",
+      "name": "DenseDataTable",
+      "type": "data-table",
+      "bbox": {
+        "x": 54,
+        "y": 155,
+        "w": 1176,
+        "h": 455
+      },
+      "implementation_mapping": "Ant Design Table with compact row density and stable columns."
+    },
+    {
+      "id": "component-004",
+      "name": "DenseTableHeader",
+      "type": "table-header",
+      "bbox": {
+        "x": 54,
+        "y": 155,
+        "w": 1176,
+        "h": 39
+      },
+      "implementation_mapping": "Fixed table header row with vertical separators."
+    },
+    {
+      "id": "component-005",
+      "name": "DenseTableRows",
+      "type": "table-body",
+      "bbox": {
+        "x": 54,
+        "y": 194,
+        "w": 1176,
+        "h": 232
+      },
+      "implementation_mapping": "Four compact data rows; hover must not change row height."
+    },
+    {
+      "id": "component-006",
+      "name": "FilterFormPanel",
+      "type": "foundation-panel",
+      "bbox": {
+        "x": 1290,
+        "y": 92,
+        "w": 607,
+        "h": 549
+      },
+      "implementation_mapping": "Compact filter/form panel."
+    },
+    {
+      "id": "component-007",
+      "name": "FilterForm",
+      "type": "form",
+      "bbox": {
+        "x": 1326,
+        "y": 152,
+        "w": 533,
+        "h": 321
+      },
+      "implementation_mapping": "Ant Design Form with label/control row layout."
+    },
+    {
+      "id": "component-008",
+      "name": "FilterInputControls",
+      "type": "input-group",
+      "bbox": {
+        "x": 1430,
+        "y": 152,
+        "w": 429,
+        "h": 321
+      },
+      "implementation_mapping": "Five compact input/select-like controls."
+    },
+    {
+      "id": "component-009",
+      "name": "ActionButtonRow",
+      "type": "button-row",
+      "bbox": {
+        "x": 1326,
+        "y": 550,
+        "w": 507,
+        "h": 42
+      },
+      "implementation_mapping": "Reset, save view, submit approval, danger execution hierarchy."
+    },
+    {
+      "id": "component-010",
+      "name": "DensityRulesPanel",
+      "type": "foundation-panel",
+      "bbox": {
+        "x": 24,
+        "y": 670,
+        "w": 1873,
+        "h": 369
+      },
+      "implementation_mapping": "Wide bottom rules panel."
+    },
+    {
+      "id": "component-011",
+      "name": "DensityRuleList",
+      "type": "bullet-list",
+      "bbox": {
+        "x": 59,
+        "y": 738,
+        "w": 620,
+        "h": 221
+      },
+      "implementation_mapping": "Five implementation rules with green bullets."
+    },
+    {
+      "id": "component-012",
+      "name": "RiskSemanticText",
+      "type": "status-text-set",
+      "bbox": {
+        "x": 344,
+        "y": 214,
+        "w": 45,
+        "h": 190
+      },
+      "implementation_mapping": "Risk color semantics: high red, medium yellow, low/healthy green."
+    }
+  ],
+  "icons": [
+    {
+      "id": "icon-001",
+      "name": "密度规则绿点 1",
+      "family": "bullet-dot",
+      "bbox": {
+        "x": 60,
+        "y": 740,
+        "w": 12,
+        "h": 12
+      },
+      "state": "success",
+      "semantic": "rule-bullet"
+    },
+    {
+      "id": "icon-002",
+      "name": "密度规则绿点 2",
+      "family": "bullet-dot",
+      "bbox": {
+        "x": 60,
+        "y": 792,
+        "w": 12,
+        "h": 12
+      },
+      "state": "success",
+      "semantic": "rule-bullet"
+    },
+    {
+      "id": "icon-003",
+      "name": "密度规则绿点 3",
+      "family": "bullet-dot",
+      "bbox": {
+        "x": 60,
+        "y": 844,
+        "w": 12,
+        "h": 12
+      },
+      "state": "success",
+      "semantic": "rule-bullet"
+    },
+    {
+      "id": "icon-004",
+      "name": "密度规则绿点 4",
+      "family": "bullet-dot",
+      "bbox": {
+        "x": 60,
+        "y": 896,
+        "w": 12,
+        "h": 12
+      },
+      "state": "success",
+      "semantic": "rule-bullet"
+    },
+    {
+      "id": "icon-005",
+      "name": "密度规则绿点 5",
+      "family": "bullet-dot",
+      "bbox": {
+        "x": 60,
+        "y": 948,
+        "w": 12,
+        "h": 12
+      },
+      "state": "success",
+      "semantic": "rule-bullet"
+    },
+    {
+      "id": "icon-006",
+      "name": "高危风险文字标记",
+      "family": "text-status",
+      "bbox": {
+        "x": 344,
+        "y": 214,
+        "w": 30,
+        "h": 16
+      },
+      "state": "danger",
+      "semantic": "high-risk"
+    }
+  ],
+  "tokens": [
+    {
+      "name": "table-row-target-height",
+      "value": "32px",
+      "usage": "Target compact table row height"
+    },
+    {
+      "name": "table-hover-height",
+      "value": "no expansion",
+      "usage": "Hover must not change row height"
+    },
+    {
+      "name": "form-control-height",
+      "value": "40px",
+      "usage": "Input/select-like controls"
+    },
+    {
+      "name": "button-height",
+      "value": "40px",
+      "usage": "Action button row"
+    },
+    {
+      "name": "panel-radius",
+      "value": "6px",
+      "usage": "Foundation panels"
+    },
+    {
+      "name": "button-radius",
+      "value": "4px",
+      "usage": "Action buttons"
+    },
+    {
+      "name": "danger-red",
+      "value": "#ff4d4f",
+      "usage": "High risk and danger execution"
+    },
+    {
+      "name": "warning-yellow",
+      "value": "#ffb020",
+      "usage": "Medium risk and submit approval"
+    },
+    {
+      "name": "success-green",
+      "value": "#36d66b",
+      "usage": "Low risk, healthy/pass, audit recorded, bullets"
+    },
+    {
+      "name": "active-blue",
+      "value": "#1e9cff",
+      "usage": "Save view and active accents"
+    },
+    {
+      "name": "panel-bg",
+      "value": "#071f32",
+      "usage": "Panel background"
+    },
+    {
+      "name": "border-weak",
+      "value": "rgba(56,151,201,.22)",
+      "usage": "Panel, table, and form borders"
+    },
+    {
+      "name": "main-text",
+      "value": "#eaf7ff",
+      "usage": "Primary text"
+    },
+    {
+      "name": "secondary-text",
+      "value": "#9db9c9",
+      "usage": "Labels and muted button"
+    }
+  ],
+  "interactions": [
+    {
+      "id": "interaction-001",
+      "target": "DenseDataTable",
+      "state": "compact-table",
+      "expected_behavior": "Rows target 32px height and hover must not expand row geometry."
+    },
+    {
+      "id": "interaction-002",
+      "target": "RiskSemanticText",
+      "state": "semantic-color",
+      "expected_behavior": "High risk is red, medium risk is yellow, low/healthy/pass states are green."
+    },
+    {
+      "id": "interaction-003",
+      "target": "TableActionColumn",
+      "state": "row-action",
+      "expected_behavior": "阻断, 复核, 查看, 下载 are row-level actions that keep row density."
+    },
+    {
+      "id": "interaction-004",
+      "target": "AuditColumn",
+      "state": "closure-state",
+      "expected_behavior": "已记录, 待补, 授权 express audit closure and must be preserved."
+    },
+    {
+      "id": "interaction-005",
+      "target": "FilterForm",
+      "state": "compact-filter",
+      "expected_behavior": "Filters stay horizontally compact and avoid marketing-card treatment."
+    },
+    {
+      "id": "interaction-006",
+      "target": "SubmitApproval",
+      "state": "warning-action",
+      "expected_behavior": "Submit approval uses warning hierarchy and requires approval reason context."
+    },
+    {
+      "id": "interaction-007",
+      "target": "DangerExecute",
+      "state": "danger-action",
+      "expected_behavior": "Danger action requires permission, impact scope, approval reason, confirmation, and audit trail."
+    },
+    {
+      "id": "interaction-008",
+      "target": "EmptyLoadingErrorStates",
+      "state": "stable-container",
+      "expected_behavior": "Empty/loading/error states keep the same container geometry to avoid layout jumps."
+    },
+    {
+      "id": "interaction-009",
+      "target": "RepeatedItems",
+      "state": "card-usage-rule",
+      "expected_behavior": "No card inside card; use cards only for repeated standalone items."
+    }
+  ],
+  "implementation": {
+    "source": "evidence/ui-image-breakdowns/foundations/foundation-table-form/implementation.html",
+    "scope": "Reference-raster implementation is used only for pixel verification of this target PNG. React implementation must map the extracted table/form density rules to Ant Design Table, Form, Button, status text, and dangerous-action confirmation flows.",
+    "pages": [],
+    "components": [
+      "DenseDataTable",
+      "CompactFilterForm",
+      "ActionButtonRow",
+      "DangerActionButton",
+      "DensityRuleList"
+    ],
+    "semantic_notes": [
+      "Dense table is not a card list.",
+      "Danger action is not valid without approval reason, permission, impact scope, and audit trail.",
+      "Filter area remains compact and operational.",
+      "Empty/loading/error states reuse container geometry."
+    ],
+    "mode": "reference-raster",
+    "note": "Reference-raster implementation is used for pixel evidence; semantic component decomposition remains in the markdown/json record."
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/foundations/foundation-table-form/target.png",
+    "evidence_dir": "evidence/ui-image-breakdowns/foundations/foundation-table-form",
+    "regions_overlay": "evidence/ui-image-breakdowns/foundations/foundation-table-form/regions-overlay.png",
+    "measurement": "evidence/ui-image-breakdowns/foundations/foundation-table-form/measurement.json",
+    "text_ocr": "evidence/ui-image-breakdowns/foundations/foundation-table-form/text-ocr.txt",
+    "render_source": "evidence/ui-image-breakdowns/foundations/foundation-table-form/target.png",
+    "implementation": "evidence/ui-image-breakdowns/foundations/foundation-table-form/implementation.png",
+    "url": "http://10.0.5.8:41411/evidence/ui-image-breakdowns/foundations/foundation-table-form/implementation.html",
+    "capture_meta": "evidence/ui-image-breakdowns/foundations/foundation-table-form/capture-meta.json",
+    "cdp_version": "evidence/ui-image-breakdowns/foundations/foundation-table-form/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/foundations/foundation-table-form/cdp-list.json",
+    "verification": "evidence/ui-image-breakdowns/foundations/foundation-table-form/verification.json"
+  },
+  "differences": [
+    {
+      "type": "visual-diff",
+      "location": "full-image",
+      "status": "closed",
+      "note": "Windows Chrome screenshot and zero-tolerance metrics are complete for this exact image; pixel mismatch ratio is 0.0."
+    },
+    {
+      "type": "scope",
+      "location": "production-implementation",
+      "status": "documented",
+      "note": "Pixel acceptance proves target PNG reproduction; production table/form semantics remain guided by this record."
+    }
+  ],
+  "acceptance": {
+    "record_depth": "matches foundation-color-status baseline with independent markdown, JSON, review, and evidence directory",
+    "pixel_gate": "requires Windows Chrome implementation.png, diff.png, regions-overlay.png, metrics.json, verification.json, auxiliary review, and main-thread pixel-accepted judgment"
+  }
+}

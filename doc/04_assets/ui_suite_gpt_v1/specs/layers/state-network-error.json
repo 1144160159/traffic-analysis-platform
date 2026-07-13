@@ -1,0 +1,59 @@
+{
+  "id": "state-network-error",
+  "title": "网络异常",
+  "type": "state",
+  "route": null,
+  "domain": "global",
+  "source": {
+    "targetFile": "doc/04_assets/ui_suite_gpt_v1/screens/states/state-network-error.png",
+    "promptFile": "doc/04_assets/ui_suite_gpt_v1/prompts/state-network-error.prompt.txt",
+    "rawTraceFiles": [
+      "doc/04_assets/ui_suite_gpt_v1/screens/states/state-network-error.raw-deterministic.png"
+    ],
+    "dimensions": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "implementation": {
+    "pageComponent": null,
+    "suggestedComponents": [
+      "Result",
+      "Skeleton",
+      "Empty",
+      "Alert",
+      "Button"
+    ],
+    "apiEndpoints": [],
+    "workflows": []
+  },
+  "layers": [
+    {
+      "id": "state-canvas",
+      "role": "reusable-state-pattern",
+      "bbox": {
+        "x": 280,
+        "y": 170,
+        "w": 1360,
+        "h": 740
+      }
+    },
+    {
+      "id": "primary-action",
+      "role": "state-action",
+      "bbox": {
+        "x": 980,
+        "y": 780,
+        "w": 240,
+        "h": 44
+      }
+    }
+  ],
+  "acceptance": [
+    "最终 PNG 必须为 1920x1080",
+    "中文为主，只保留必要英文技术词和单位",
+    "状态色必须遵守 success/info/warning/danger/critical token",
+    "危险动作必须具备影响范围、权限提示和审计留痕",
+    "401 与 403 必须分离，不能共用重试主动作"
+  ]
+}

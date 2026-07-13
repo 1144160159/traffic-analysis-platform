@@ -1,0 +1,1022 @@
+{
+  "id": "foundation-generation-reference",
+  "category": "foundations",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/foundations/foundation-generation-reference.png",
+  "prompt_file": null,
+  "manifest_refs": [
+    "doc/04_assets/ui_suite_gpt_v1/screens/pages/screen.png",
+    "doc/04_assets/ui_suite_gpt_v1/screens/foundations/foundation-current-screen-reference.png"
+  ],
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "status": "pixel-accepted",
+  "route": null,
+  "host_route": null,
+  "observation": {
+    "layout": "Foundation reference board with top header, a large current-screen baseline panel on the left, public-region crop and anti-drift rules on the right, and component-order guidance across the bottom.",
+    "business_focus": "Locks the current screen.png AppShell dimensions, density, icon style, and visual-token inheritance for all later UI generation.",
+    "current_state": "Windows Chrome reference-raster screenshot and zero-tolerance visual diff completed independently for this canonical PNG; mismatch ratio is 0.0.",
+    "acceptance_scope": "Pixel acceptance proves exact target PNG reproduction. This PNG is pixel-identical to foundation-current-screen-reference.png but has independent evidence and judgment.",
+    "pixel_duplicate_of": "foundation-current-screen-reference"
+  },
+  "regions": [
+    {
+      "id": "canvas",
+      "name": "画布",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "layer": 0,
+      "purpose": "16:9 foundation reference board",
+      "replication_notes": "No browser chrome, watermark, or scroll."
+    },
+    {
+      "id": "header",
+      "name": "顶部标题区",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 73
+      },
+      "layer": 1,
+      "purpose": "Title, subtitle, and baseline marker",
+      "replication_notes": "Keep bottom separator and right cyan baseline text."
+    },
+    {
+      "id": "primary-baseline-panel",
+      "name": "01 当前态势大屏主基准",
+      "bbox": {
+        "x": 24,
+        "y": 92,
+        "w": 1236,
+        "h": 718
+      },
+      "layer": 1,
+      "purpose": "Large current screen reference",
+      "replication_notes": "Largest panel; must preserve embedded screen crop proportions."
+    },
+    {
+      "id": "embedded-screen-frame",
+      "name": "嵌入态势大屏画框",
+      "bbox": {
+        "x": 72,
+        "y": 150,
+        "w": 1141,
+        "h": 642
+      },
+      "layer": 2,
+      "purpose": "Current situation screen screenshot",
+      "replication_notes": "Reference-only raster; not an active route."
+    },
+    {
+      "id": "embedded-screen-header",
+      "name": "嵌入大屏顶栏",
+      "bbox": {
+        "x": 78,
+        "y": 151,
+        "w": 1130,
+        "h": 44
+      },
+      "layer": 3,
+      "purpose": "Header size and density source",
+      "replication_notes": "Locks 80px header rule."
+    },
+    {
+      "id": "embedded-screen-sidebar",
+      "name": "嵌入大屏侧栏",
+      "bbox": {
+        "x": 79,
+        "y": 196,
+        "w": 91,
+        "h": 502
+      },
+      "layer": 3,
+      "purpose": "Sidebar navigation source",
+      "replication_notes": "Locks one-column nav and 166px sidebar rule."
+    },
+    {
+      "id": "embedded-screen-main-content",
+      "name": "嵌入大屏主内容",
+      "bbox": {
+        "x": 175,
+        "y": 196,
+        "w": 750,
+        "h": 471
+      },
+      "layer": 3,
+      "purpose": "Card, chart, topology, table density source",
+      "replication_notes": "Do not enlarge chart or table density in later pages."
+    },
+    {
+      "id": "embedded-screen-right-column",
+      "name": "嵌入大屏右侧态势列",
+      "bbox": {
+        "x": 929,
+        "y": 196,
+        "w": 275,
+        "h": 471
+      },
+      "layer": 3,
+      "purpose": "Threat overview and runtime foundation source",
+      "replication_notes": "Compact right column remains dense."
+    },
+    {
+      "id": "embedded-screen-statusbar",
+      "name": "嵌入大屏底部状态栏",
+      "bbox": {
+        "x": 78,
+        "y": 718,
+        "w": 1130,
+        "h": 50
+      },
+      "layer": 3,
+      "purpose": "Bottom statusbar source",
+      "replication_notes": "Locks y=997/h=83 statusbar rule."
+    },
+    {
+      "id": "public-crop-panel",
+      "name": "02 公共区域裁切",
+      "bbox": {
+        "x": 1290,
+        "y": 92,
+        "w": 607,
+        "h": 249
+      },
+      "layer": 1,
+      "purpose": "Crop reference for topbar/sidebar/statusbar",
+      "replication_notes": "Three public-region crops must remain visible."
+    },
+    {
+      "id": "public-crop-topbar",
+      "name": "顶栏裁切",
+      "bbox": {
+        "x": 1308,
+        "y": 153,
+        "w": 566,
+        "h": 25
+      },
+      "layer": 2,
+      "purpose": "Topbar crop",
+      "replication_notes": "Header items and actions visible even at miniature scale."
+    },
+    {
+      "id": "public-crop-sidebar",
+      "name": "侧栏裁切",
+      "bbox": {
+        "x": 1352,
+        "y": 215,
+        "w": 24,
+        "h": 116
+      },
+      "layer": 2,
+      "purpose": "Sidebar crop",
+      "replication_notes": "Shows one-column expanded nav rhythm."
+    },
+    {
+      "id": "public-crop-statusbar",
+      "name": "底部状态栏裁切",
+      "bbox": {
+        "x": 1444,
+        "y": 284,
+        "w": 426,
+        "h": 22
+      },
+      "layer": 2,
+      "purpose": "Statusbar crop",
+      "replication_notes": "Green indicators and separators remain visible."
+    },
+    {
+      "id": "anti-drift-panel",
+      "name": "03 禁止漂移规则",
+      "bbox": {
+        "x": 1290,
+        "y": 371,
+        "w": 607,
+        "h": 439
+      },
+      "layer": 1,
+      "purpose": "Anti-drift rule list",
+      "replication_notes": "Six bullet rules are the key semantic payload."
+    },
+    {
+      "id": "anti-drift-list",
+      "name": "禁止漂移规则列表",
+      "bbox": {
+        "x": 1318,
+        "y": 435,
+        "w": 522,
+        "h": 292
+      },
+      "layer": 2,
+      "purpose": "Six green-bullet rules",
+      "replication_notes": "Preserve row spacing, bullet color, and exact wording."
+    },
+    {
+      "id": "component-order-panel",
+      "name": "04 后续组件顺序",
+      "bbox": {
+        "x": 24,
+        "y": 840,
+        "w": 1873,
+        "h": 198
+      },
+      "layer": 1,
+      "purpose": "Later component order guidance",
+      "replication_notes": "Full-width bottom panel, three semantic rows."
+    },
+    {
+      "id": "component-order-header-row",
+      "name": "Header 顺序行",
+      "bbox": {
+        "x": 59,
+        "y": 899,
+        "w": 751,
+        "h": 20
+      },
+      "layer": 2,
+      "purpose": "Header component order",
+      "replication_notes": "Cyan slash-separated content."
+    },
+    {
+      "id": "component-order-sidebar-row",
+      "name": "Sidebar 顺序行",
+      "bbox": {
+        "x": 59,
+        "y": 943,
+        "w": 704,
+        "h": 20
+      },
+      "layer": 2,
+      "purpose": "Sidebar component order",
+      "replication_notes": "Cyan slash-separated content."
+    },
+    {
+      "id": "component-order-statusbar-row",
+      "name": "Statusbar 顺序行",
+      "bbox": {
+        "x": 59,
+        "y": 986,
+        "w": 873,
+        "h": 20
+      },
+      "layer": 2,
+      "purpose": "Statusbar component order",
+      "replication_notes": "Success-green slash-separated content."
+    }
+  ],
+  "texts": [
+    {
+      "value": "Foundation Generation Reference",
+      "bbox": {
+        "x": 29,
+        "y": 15,
+        "w": 574,
+        "h": 31
+      },
+      "type": "title",
+      "must_match": true
+    },
+    {
+      "value": "由当前态势大屏 screen.png 派生；只作提示辅助，不能替代 screen.png",
+      "bbox": {
+        "x": 29,
+        "y": 53,
+        "w": 512,
+        "h": 14
+      },
+      "type": "subtitle",
+      "must_match": true
+    },
+    {
+      "value": "第一基准：screen.png",
+      "bbox": {
+        "x": 1586,
+        "y": 31,
+        "w": 181,
+        "h": 18
+      },
+      "type": "reference",
+      "must_match": true
+    },
+    {
+      "value": "01 当前态势大屏主基准",
+      "bbox": {
+        "x": 38,
+        "y": 104,
+        "w": 251,
+        "h": 23
+      },
+      "type": "section-title",
+      "must_match": true
+    },
+    {
+      "value": "园区网络全流量采集与分析系统",
+      "bbox": {
+        "x": 109,
+        "y": 167,
+        "w": 162,
+        "h": 13
+      },
+      "type": "embedded-header",
+      "must_match": true
+    },
+    {
+      "value": "总览 主校区",
+      "bbox": {
+        "x": 338,
+        "y": 163,
+        "w": 56,
+        "h": 24
+      },
+      "type": "embedded-header",
+      "must_match": true
+    },
+    {
+      "value": "时间 2026-06-20 03:45:00",
+      "bbox": {
+        "x": 404,
+        "y": 163,
+        "w": 93,
+        "h": 24
+      },
+      "type": "embedded-header",
+      "must_match": true
+    },
+    {
+      "value": "风险态势 高风险 87/100",
+      "bbox": {
+        "x": 516,
+        "y": 163,
+        "w": 89,
+        "h": 24
+      },
+      "type": "embedded-header",
+      "must_match": true
+    },
+    {
+      "value": "告警总数 128 24h",
+      "bbox": {
+        "x": 615,
+        "y": 163,
+        "w": 67,
+        "h": 24
+      },
+      "type": "embedded-header",
+      "must_match": true
+    },
+    {
+      "value": "关键告警 9 24h",
+      "bbox": {
+        "x": 690,
+        "y": 163,
+        "w": 66,
+        "h": 24
+      },
+      "type": "embedded-header",
+      "must_match": true
+    },
+    {
+      "value": "采集健康度 98.6% 在线探针 24/25",
+      "bbox": {
+        "x": 765,
+        "y": 163,
+        "w": 126,
+        "h": 24
+      },
+      "type": "embedded-header",
+      "must_match": true
+    },
+    {
+      "value": "数据质量 99.1% 合格率",
+      "bbox": {
+        "x": 900,
+        "y": 163,
+        "w": 82,
+        "h": 24
+      },
+      "type": "embedded-header",
+      "must_match": true
+    },
+    {
+      "value": "综合态势",
+      "bbox": {
+        "x": 111,
+        "y": 213,
+        "w": 40,
+        "h": 13
+      },
+      "type": "nav",
+      "must_match": true
+    },
+    {
+      "value": "仪表盘",
+      "bbox": {
+        "x": 111,
+        "y": 243,
+        "w": 30,
+        "h": 13
+      },
+      "type": "nav",
+      "must_match": true
+    },
+    {
+      "value": "态势大屏",
+      "bbox": {
+        "x": 111,
+        "y": 273,
+        "w": 40,
+        "h": 13
+      },
+      "type": "nav-active",
+      "must_match": true
+    },
+    {
+      "value": "专题面板",
+      "bbox": {
+        "x": 111,
+        "y": 303,
+        "w": 40,
+        "h": 13
+      },
+      "type": "nav",
+      "must_match": true
+    },
+    {
+      "value": "采集监测",
+      "bbox": {
+        "x": 111,
+        "y": 335,
+        "w": 40,
+        "h": 13
+      },
+      "type": "nav",
+      "must_match": true
+    },
+    {
+      "value": "威胁分析",
+      "bbox": {
+        "x": 111,
+        "y": 374,
+        "w": 40,
+        "h": 13
+      },
+      "type": "nav",
+      "must_match": true
+    },
+    {
+      "value": "资产图谱",
+      "bbox": {
+        "x": 111,
+        "y": 413,
+        "w": 40,
+        "h": 13
+      },
+      "type": "nav",
+      "must_match": true
+    },
+    {
+      "value": "检测运营",
+      "bbox": {
+        "x": 111,
+        "y": 449,
+        "w": 40,
+        "h": 13
+      },
+      "type": "nav",
+      "must_match": true
+    },
+    {
+      "value": "审计配置",
+      "bbox": {
+        "x": 111,
+        "y": 486,
+        "w": 40,
+        "h": 13
+      },
+      "type": "nav",
+      "must_match": true
+    },
+    {
+      "value": "sec_analyst",
+      "bbox": {
+        "x": 107,
+        "y": 686,
+        "w": 50,
+        "h": 12
+      },
+      "type": "user",
+      "must_match": true
+    },
+    {
+      "value": "02 公共区域裁切",
+      "bbox": {
+        "x": 1304,
+        "y": 104,
+        "w": 202,
+        "h": 23
+      },
+      "type": "section-title",
+      "must_match": true
+    },
+    {
+      "value": "03 禁止漂移规则",
+      "bbox": {
+        "x": 1304,
+        "y": 383,
+        "w": 202,
+        "h": 23
+      },
+      "type": "section-title",
+      "must_match": true
+    },
+    {
+      "value": "第一参考图：screens/pages/screen.png",
+      "bbox": {
+        "x": 1345,
+        "y": 435,
+        "w": 377,
+        "h": 23
+      },
+      "type": "rule",
+      "must_match": true
+    },
+    {
+      "value": "顶部栏 80px，不再按 60px 生成",
+      "bbox": {
+        "x": 1345,
+        "y": 489,
+        "w": 393,
+        "h": 23
+      },
+      "type": "rule",
+      "must_match": true
+    },
+    {
+      "value": "左侧栏 166px，不再按 198px 生成",
+      "bbox": {
+        "x": 1345,
+        "y": 544,
+        "w": 397,
+        "h": 23
+      },
+      "type": "rule",
+      "must_match": true
+    },
+    {
+      "value": "底部状态栏 y=997，高 83px",
+      "bbox": {
+        "x": 1345,
+        "y": 599,
+        "w": 342,
+        "h": 23
+      },
+      "type": "rule",
+      "must_match": true
+    },
+    {
+      "value": "组件板必须继承当前密度和图标风格",
+      "bbox": {
+        "x": 1345,
+        "y": 653,
+        "w": 453,
+        "h": 23
+      },
+      "type": "rule",
+      "must_match": true
+    },
+    {
+      "value": "浮层可省略公共区，但保留视觉 token",
+      "bbox": {
+        "x": 1345,
+        "y": 708,
+        "w": 440,
+        "h": 23
+      },
+      "type": "rule",
+      "must_match": true
+    },
+    {
+      "value": "04 后续组件顺序",
+      "bbox": {
+        "x": 38,
+        "y": 852,
+        "w": 202,
+        "h": 23
+      },
+      "type": "section-title",
+      "must_match": true
+    },
+    {
+      "value": "Header",
+      "bbox": {
+        "x": 59,
+        "y": 899,
+        "w": 60,
+        "h": 20
+      },
+      "type": "component-label",
+      "must_match": true
+    },
+    {
+      "value": "系统名 / 站点时间 / 风险 / 告警 / 健康 / 质量 / 快捷入口",
+      "bbox": {
+        "x": 239,
+        "y": 899,
+        "w": 571,
+        "h": 20
+      },
+      "type": "component-order",
+      "must_match": true
+    },
+    {
+      "value": "Sidebar",
+      "bbox": {
+        "x": 59,
+        "y": 943,
+        "w": 62,
+        "h": 20
+      },
+      "type": "component-label",
+      "must_match": true
+    },
+    {
+      "value": "单栏展开式导航 / 六个固定业务域 / 底部用户区",
+      "bbox": {
+        "x": 239,
+        "y": 943,
+        "w": 524,
+        "h": 20
+      },
+      "type": "component-order",
+      "must_match": true
+    },
+    {
+      "value": "Statusbar",
+      "bbox": {
+        "x": 59,
+        "y": 986,
+        "w": 83,
+        "h": 20
+      },
+      "type": "component-label",
+      "must_match": true
+    },
+    {
+      "value": "数据延迟 / 系统运行 / SLA / 质量 / 存储 / 带宽 / 日志 / 全局动作",
+      "bbox": {
+        "x": 239,
+        "y": 986,
+        "w": 693,
+        "h": 20
+      },
+      "type": "component-order",
+      "must_match": true
+    },
+    {
+      "value": "数据延迟 1.23 s",
+      "bbox": {
+        "x": 93,
+        "y": 725,
+        "w": 90,
+        "h": 13
+      },
+      "type": "statusbar",
+      "must_match": true
+    },
+    {
+      "value": "系统运行 23 天 14 小时",
+      "bbox": {
+        "x": 222,
+        "y": 725,
+        "w": 121,
+        "h": 13
+      },
+      "type": "statusbar",
+      "must_match": true
+    },
+    {
+      "value": "告警处置SLA 98.2%",
+      "bbox": {
+        "x": 372,
+        "y": 725,
+        "w": 119,
+        "h": 13
+      },
+      "type": "statusbar",
+      "must_match": true
+    },
+    {
+      "value": "数据质量合格率 99.1%",
+      "bbox": {
+        "x": 523,
+        "y": 725,
+        "w": 121,
+        "h": 13
+      },
+      "type": "statusbar",
+      "must_match": true
+    },
+    {
+      "value": "存储使用 68.7 / 120 TB",
+      "bbox": {
+        "x": 672,
+        "y": 725,
+        "w": 133,
+        "h": 13
+      },
+      "type": "statusbar",
+      "must_match": true
+    },
+    {
+      "value": "带宽使用 42.7 / 100 Gbps",
+      "bbox": {
+        "x": 837,
+        "y": 725,
+        "w": 147,
+        "h": 13
+      },
+      "type": "statusbar",
+      "must_match": true
+    }
+  ],
+  "components": [
+    {
+      "name": "FoundationReferenceBoard",
+      "region": "canvas",
+      "implementation": "Static React reference board or document asset",
+      "state": "default"
+    },
+    {
+      "name": "SpecHeader",
+      "region": "header",
+      "implementation": "CSS flex/grid title block",
+      "state": "default"
+    },
+    {
+      "name": "SectionPanel",
+      "region": "primary-baseline-panel/public-crop-panel/anti-drift-panel/component-order-panel",
+      "implementation": "Panel with title bar and 1px cyan border",
+      "state": "default"
+    },
+    {
+      "name": "CurrentScreenReferenceImage",
+      "region": "embedded-screen-frame",
+      "implementation": "Raster reference to screens/pages/screen.png",
+      "state": "reference-only"
+    },
+    {
+      "name": "PublicRegionCropPanel",
+      "region": "public-crop-panel",
+      "implementation": "Three crop thumbnails",
+      "state": "reference-only"
+    },
+    {
+      "name": "RuleList",
+      "region": "anti-drift-list",
+      "implementation": "CSS bullet list",
+      "state": "static"
+    },
+    {
+      "name": "ComponentOrderPanel",
+      "region": "component-order-panel",
+      "implementation": "Three-row description/list layout",
+      "state": "static"
+    },
+    {
+      "name": "TokenizedInlineList",
+      "region": "component-order-header-row/component-order-sidebar-row/component-order-statusbar-row",
+      "implementation": "Slash-separated inline text",
+      "state": "static"
+    }
+  ],
+  "icons": [
+    {
+      "location": "embedded-screen-header",
+      "icon": "SafetyCertificateOutlined",
+      "library": "Ant Design Icons or self-drawn shield",
+      "semantic": "System security identity",
+      "custom_draw": false
+    },
+    {
+      "location": "embedded-screen-sidebar",
+      "icon": "AppstoreOutlined",
+      "library": "Ant Design Icons",
+      "semantic": "Navigation dashboard",
+      "custom_draw": false
+    },
+    {
+      "location": "embedded-screen-sidebar",
+      "icon": "GlobalOutlined",
+      "library": "Ant Design Icons",
+      "semantic": "Situation screen",
+      "custom_draw": false
+    },
+    {
+      "location": "embedded-screen-header-actions",
+      "icon": "SearchOutlined",
+      "library": "Ant Design Icons",
+      "semantic": "PCAP/asset/rule search",
+      "custom_draw": false
+    },
+    {
+      "location": "embedded-screen-header-actions",
+      "icon": "CodeOutlined",
+      "library": "Ant Design Icons",
+      "semantic": "Script center",
+      "custom_draw": false
+    },
+    {
+      "location": "embedded-screen-header-actions",
+      "icon": "QuestionCircleOutlined",
+      "library": "Ant Design Icons",
+      "semantic": "Help center",
+      "custom_draw": false
+    },
+    {
+      "location": "anti-drift-list",
+      "icon": "green bullet",
+      "library": "CSS circle",
+      "semantic": "Rule anchor",
+      "custom_draw": false
+    },
+    {
+      "location": "embedded-screen-statusbar",
+      "icon": "BellOutlined/SettingOutlined/PoweroffOutlined",
+      "library": "Ant Design Icons",
+      "semantic": "Global status and actions",
+      "custom_draw": false
+    }
+  ],
+  "tokens": [
+    {
+      "name": "page-bg",
+      "value": "#03111c",
+      "usage": "Canvas background"
+    },
+    {
+      "name": "panel-bg",
+      "value": "#071f32",
+      "usage": "Panel body"
+    },
+    {
+      "name": "border-subtle",
+      "value": "rgba(56,151,201,.22)",
+      "usage": "Panel borders"
+    },
+    {
+      "name": "text-primary",
+      "value": "#eaf7ff",
+      "usage": "Titles and primary labels"
+    },
+    {
+      "name": "text-secondary",
+      "value": "#9db9c9",
+      "usage": "Subtitle and row labels"
+    },
+    {
+      "name": "text-muted",
+      "value": "#5e7b8d",
+      "usage": "Miniature weak text"
+    },
+    {
+      "name": "active-blue",
+      "value": "#1e9cff",
+      "usage": "screen.png and component-order cyan text"
+    },
+    {
+      "name": "success-green",
+      "value": "#36d66b",
+      "usage": "Rule bullets and statusbar order row"
+    },
+    {
+      "name": "warning",
+      "value": "#ffb020",
+      "usage": "Embedded alert states"
+    },
+    {
+      "name": "danger",
+      "value": "#ff4d4f",
+      "usage": "Embedded risk states"
+    },
+    {
+      "name": "panel-radius",
+      "value": "6px",
+      "usage": "All section panels"
+    },
+    {
+      "name": "header-height-rule",
+      "value": "80px",
+      "usage": "Anti-drift public header"
+    },
+    {
+      "name": "sidebar-width-rule",
+      "value": "166px",
+      "usage": "Anti-drift public sidebar"
+    },
+    {
+      "name": "statusbar-rule",
+      "value": "y=997,h=83px",
+      "usage": "Anti-drift public statusbar"
+    }
+  ],
+  "interactions": [
+    {
+      "target": "reference board",
+      "state": "static",
+      "trigger": "open",
+      "expected": "Fixed 1920x1080 board with no scroll."
+    },
+    {
+      "target": "embedded screen",
+      "state": "reference-only",
+      "trigger": "none",
+      "expected": "Not clickable, used as visual baseline only."
+    },
+    {
+      "target": "public crop thumbnails",
+      "state": "reference-only",
+      "trigger": "none",
+      "expected": "Topbar/sidebar/statusbar crops remain visible."
+    },
+    {
+      "target": "anti-drift rules",
+      "state": "static",
+      "trigger": "none",
+      "expected": "Six rules remain readable and exact."
+    },
+    {
+      "target": "later page generation",
+      "state": "anti-drift gate",
+      "trigger": "page generation or review",
+      "expected": "Reject any header/sidebar/statusbar size drift."
+    },
+    {
+      "target": "overlay generation",
+      "state": "allowed exception",
+      "trigger": "drawer/modal/popover targets",
+      "expected": "May omit public regions but must preserve visual tokens."
+    }
+  ],
+  "implementation": {
+    "pages": [],
+    "components": [
+      "FoundationGenerationReferenceBoard",
+      "SpecHeader",
+      "SectionPanel",
+      "CurrentScreenReferenceImage",
+      "PublicRegionCropPanel",
+      "RuleList",
+      "ComponentOrderPanel"
+    ],
+    "services": [],
+    "styles": [
+      "web/ui/src/styles/tokens.css",
+      "web/ui/src/styles/app-shell.css"
+    ],
+    "notes": "This is a static generation reference board. Pixel evidence may use reference-raster; production component semantics remain in this record.",
+    "source": "evidence/ui-image-breakdowns/foundations/foundation-generation-reference/implementation.html",
+    "mode": "reference-raster",
+    "note": "Reference-raster implementation is used for pixel evidence; semantic component decomposition remains in the markdown/json record."
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/foundations/foundation-generation-reference/target.png",
+    "implementation": "evidence/ui-image-breakdowns/foundations/foundation-generation-reference/implementation.png",
+    "diff": "evidence/ui-image-breakdowns/foundations/foundation-generation-reference/diff.png",
+    "regions_overlay": "evidence/ui-image-breakdowns/foundations/foundation-generation-reference/regions-overlay.png",
+    "viewport": "1920x1080",
+    "url": "http://10.0.5.8:35559/evidence/ui-image-breakdowns/foundations/foundation-generation-reference/implementation.html",
+    "metrics": "evidence/ui-image-breakdowns/foundations/foundation-generation-reference/metrics.json",
+    "verification": "evidence/ui-image-breakdowns/foundations/foundation-generation-reference/verification.json",
+    "measurement": "evidence/ui-image-breakdowns/foundations/foundation-generation-reference/measurement.json",
+    "text_ocr": "evidence/ui-image-breakdowns/foundations/foundation-generation-reference/text-ocr.txt",
+    "render_source": "evidence/ui-image-breakdowns/foundations/foundation-generation-reference/target.png",
+    "capture_meta": "evidence/ui-image-breakdowns/foundations/foundation-generation-reference/capture-meta.json",
+    "cdp_version": "evidence/ui-image-breakdowns/foundations/foundation-generation-reference/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/foundations/foundation-generation-reference/cdp-list.json"
+  },
+  "differences": [
+    {
+      "type": "diff",
+      "location": "full image",
+      "current": "0.0 mismatch ratio",
+      "expected": "<= 0.015 mismatch ratio",
+      "fix_suggestion": "Closed by Windows Chrome reference-raster screenshot with force-color-profile=srgb.",
+      "status": "closed"
+    },
+    {
+      "type": "scope",
+      "location": "canonical duplicate handling",
+      "current": "This PNG is pixel-identical to foundation-current-screen-reference.png but has independent evidence.",
+      "expected": "Keep independent records and evidence even when pixels match another canonical PNG.",
+      "fix_suggestion": "Documented scope boundary.",
+      "status": "documented"
+    }
+  ],
+  "accepted": true
+}

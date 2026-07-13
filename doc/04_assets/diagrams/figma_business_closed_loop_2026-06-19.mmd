@@ -1,0 +1,36 @@
+flowchart LR
+    start([园区镜像流量]) --> capture[采集探针]
+    capture --> normalize[解析归一化]
+    normalize --> session[会话与特征]
+    session --> detect[规则行为CEP检测]
+    detect --> alert[告警生成]
+    alert --> triage{研判结论}
+
+    triage -->|真实威胁| forensics[PCAP取证]
+    triage -->|真实威胁| graphNode[图谱攻击链]
+    triage -->|误报| feedback[反馈标注]
+    triage -->|规则问题| ruleReview[规则复审]
+    triage -->|模型问题| modelGate[MLOps门禁]
+
+    forensics --> report[报告与审计]
+    graphNode --> report
+    feedback --> reason[原因码与样本]
+    reason --> whitelist[白名单草案]
+    reason --> ruleReview
+    reason --> modelGate
+    ruleReview --> ruleUpdate[rule.updates]
+    modelGate --> modelUpdate[model-updates]
+    whitelist --> detect
+    ruleUpdate --> detect
+    modelUpdate --> detect
+    report --> metrics[验收指标]
+    metrics --> quality{达标?}
+    quality -->|是| close([证据归档])
+    quality -->|否| improve[专项补强]
+    improve --> capture
+
+    style start fill:#C2E5FF,stroke:#3DADFF
+    style triage fill:#FFECBD,stroke:#FFC943
+    style quality fill:#FFECBD,stroke:#FFC943
+    style close fill:#CDF4D3,stroke:#66D575
+    style improve fill:#FFCDC2,stroke:#FF7556

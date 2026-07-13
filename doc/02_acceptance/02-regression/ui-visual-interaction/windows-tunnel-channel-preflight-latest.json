@@ -1,0 +1,162 @@
+{
+  "package_id": "ui_windows_tunnel_channel_preflight",
+  "result": "pass",
+  "generated_at": "2026-07-03T00:22:20.119Z",
+  "windows": {
+    "host": "10.3.6.59",
+    "user": "LongShine"
+  },
+  "endpoint_checks": [
+    {
+      "scope": "linux",
+      "name": "app",
+      "url": "http://127.0.0.1:5173/screen",
+      "command": "curl --noproxy '*' -s -o /dev/null -w '%{http_code}' http://127.0.0.1:5173/screen",
+      "status": "200",
+      "passed": true,
+      "exit_code": 0,
+      "stderr": "",
+      "duration_ms": 18
+    },
+    {
+      "scope": "linux",
+      "name": "runtime-config",
+      "url": "http://127.0.0.1:5173/src/config/runtime.ts",
+      "command": "curl --noproxy '*' -fsSL http://127.0.0.1:5173/src/config/runtime.ts",
+      "status": "200",
+      "passed": true,
+      "exit_code": 0,
+      "stderr": "",
+      "duration_ms": 15,
+      "runtime": {
+        "VITE_AUTH_ENABLED": "true",
+        "VITE_USE_MOCK": "false",
+        "VITE_DESKTOP_SMOKE_TOKEN_ENABLED": "true"
+      },
+      "detail": "runtime config ready for protected-route smoke capture"
+    },
+    {
+      "scope": "linux",
+      "name": "receiver-health",
+      "url": "http://127.0.0.1:15174/health",
+      "command": "curl --noproxy '*' -s -o /dev/null -w '%{http_code}' http://127.0.0.1:15174/health",
+      "status": "200",
+      "passed": true,
+      "exit_code": 0,
+      "stderr": "",
+      "duration_ms": 13
+    },
+    {
+      "scope": "linux",
+      "name": "viewport-probe",
+      "url": "http://127.0.0.1:15174/viewport-probe",
+      "command": "curl --noproxy '*' -s -o /dev/null -w '%{http_code}' http://127.0.0.1:15174/viewport-probe",
+      "status": "200",
+      "passed": true,
+      "exit_code": 0,
+      "stderr": "",
+      "duration_ms": 12
+    },
+    {
+      "scope": "linux",
+      "name": "redirect-health",
+      "url": "http://127.0.0.1:15175/health",
+      "command": "curl --noproxy '*' -s -o /dev/null -w '%{http_code}' http://127.0.0.1:15175/health",
+      "status": "200",
+      "passed": true,
+      "exit_code": 0,
+      "stderr": "",
+      "duration_ms": 11
+    },
+    {
+      "scope": "windows",
+      "name": "app",
+      "url": "http://127.0.0.1:25173/screen",
+      "command": "sshpass -e ssh '<ssh-options>' LongShine@10.3.6.59 'curl.exe --noproxy * -s -o nul -w %{http_code} http://127.0.0.1:25173/screen'",
+      "status": "200",
+      "passed": true,
+      "exit_code": 0,
+      "stderr": "Warning: Permanently added '10.3.6.59' (ED25519) to the list of known hosts.",
+      "duration_ms": 767
+    },
+    {
+      "scope": "windows",
+      "name": "runtime-config",
+      "url": "http://127.0.0.1:25173/src/config/runtime.ts",
+      "command": "sshpass -e ssh '<ssh-options>' LongShine@10.3.6.59 'curl.exe --noproxy * -fsSL http://127.0.0.1:25173/src/config/runtime.ts'",
+      "status": "200",
+      "passed": true,
+      "exit_code": 0,
+      "stderr": "Warning: Permanently added '10.3.6.59' (ED25519) to the list of known hosts.",
+      "duration_ms": 875,
+      "runtime": {
+        "VITE_AUTH_ENABLED": "true",
+        "VITE_USE_MOCK": "false",
+        "VITE_DESKTOP_SMOKE_TOKEN_ENABLED": "true"
+      },
+      "detail": "runtime config ready for protected-route smoke capture"
+    },
+    {
+      "scope": "windows",
+      "name": "receiver-health",
+      "url": "http://127.0.0.1:25174/health",
+      "command": "sshpass -e ssh '<ssh-options>' LongShine@10.3.6.59 'curl.exe --noproxy * -s -o nul -w %{http_code} http://127.0.0.1:25174/health'",
+      "status": "200",
+      "passed": true,
+      "exit_code": 0,
+      "stderr": "Warning: Permanently added '10.3.6.59' (ED25519) to the list of known hosts.",
+      "duration_ms": 722
+    },
+    {
+      "scope": "windows",
+      "name": "viewport-probe",
+      "url": "http://127.0.0.1:25174/viewport-probe",
+      "command": "sshpass -e ssh '<ssh-options>' LongShine@10.3.6.59 'curl.exe --noproxy * -s -o nul -w %{http_code} http://127.0.0.1:25174/viewport-probe'",
+      "status": "200",
+      "passed": true,
+      "exit_code": 0,
+      "stderr": "Warning: Permanently added '10.3.6.59' (ED25519) to the list of known hosts.",
+      "duration_ms": 829
+    },
+    {
+      "scope": "windows",
+      "name": "redirect-health",
+      "url": "http://127.0.0.1:25175/health",
+      "command": "sshpass -e ssh '<ssh-options>' LongShine@10.3.6.59 'curl.exe --noproxy * -s -o nul -w %{http_code} http://127.0.0.1:25175/health'",
+      "status": "200",
+      "passed": true,
+      "exit_code": 0,
+      "stderr": "Warning: Permanently added '10.3.6.59' (ED25519) to the list of known hosts.",
+      "duration_ms": 789
+    }
+  ],
+  "capture_plan": {
+    "path": "doc/02_acceptance/02-regression/ui-visual-interaction/capture-plan-windows-tunnel-25173.json",
+    "exists": true,
+    "valid": true,
+    "passed": true,
+    "base_url": "http://127.0.0.1:25173",
+    "receiver_url": "http://127.0.0.1:25174",
+    "visual_target_count": 30,
+    "visual_passed_count": 0,
+    "visual_missing_or_failing_count": 30,
+    "interaction_count": 28,
+    "interaction_passed_count": 4,
+    "interaction_missing_or_failing_count": 24
+  },
+  "capture_session": {
+    "path": "doc/02_acceptance/02-regression/ui-visual-interaction/capture-session-windows-tunnel-25173.json",
+    "exists": true,
+    "valid": true,
+    "passed": true,
+    "status": "blocked_desktop_transport_closed",
+    "visual_pending_count": 30,
+    "interaction_pending_count": 28,
+    "receiver_selftest": "pass",
+    "viewport_probe": "blocked",
+    "has_app_reverse_tunnel_command": true,
+    "has_evidence_reverse_tunnel_command": true,
+    "has_viewport_probe_command": true
+  },
+  "acceptance_effect": "Readiness only. Formal acceptance still requires Codex Desktop Chrome extension capture metadata and interaction evidence."
+}

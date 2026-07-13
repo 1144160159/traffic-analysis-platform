@@ -1,0 +1,176 @@
+{
+  "run_id": "20260630-baseline-governance-preflight-r2",
+  "result": "pass",
+  "apisix": "http://10.0.5.8:30180",
+  "tenant": "default",
+  "other_tenant": "tenant-b",
+  "baseline_id": "ip:10.0.5.8",
+  "report": "doc/02_acceptance/runs/20260630-baseline-governance-preflight-r2/live-baseline-governance-preflight-20260630-baseline-governance-preflight-r2.ndjson",
+  "local_report": "doc/02_acceptance/runs/20260630-baseline-governance-preflight-r2/local-report.md",
+  "total": 16,
+  "passed": 16,
+  "blockers": 0,
+  "warnings": 0,
+  "checks": [
+    {
+      "ts": "2026-06-30T14:05:29+08:00",
+      "phase": "contract",
+      "name": "frontend baseline action contract present",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "baseline reset action declared",
+      "artifact": "web/ui/src/services/pageApiPlans.ts"
+    },
+    {
+      "ts": "2026-06-30T14:05:29+08:00",
+      "phase": "api",
+      "name": "behavior baselines readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"baselines\":[{\"baseline_id\":\"ip:10.0.5.8\",\"tenant_id\":\"default\",\"name\":\"IP行为基线 10.0.5.8\",\"entity_type\":\"ip\",\"entity_id\":\"10.0.5.8\",\"baseline_type\":\"dynamic\",\"metrics\":[],\"status\":\"active\",\"created_at\":1782194729379,\"updated_at\":1782757323525,\"version\":1},{\"baseline_id\":\"ip:fe80::5a11:22ff:fea1:622b\",\"tenant_id\":\"default\",\"name\":\"IP行为基线 fe80::5a11:22ff:fea1:622b\",\"entity_type\":\"ip\",\"entity_id\":\"fe80::5a11:22ff:fea1:622b\",\"baseline_type\":\"dynamic\",\"metrics\":[],\"status\":\"active\",\"created_at\":1782194729379,\"updated_at\":1782757322230,\"version\":1},{\"baseline_id\":\"ip:fe80::5054:ff:feb0:a65d\",\"tenant_id\":\"default\",\"name\":\"IP行为基线 fe80::5054:ff:feb0:a65d\",\"entity_type\":\"ip\",\"entity_id\":\"fe80::5054:ff:feb0:a65d\",\"baseline_type\":\"dynamic\",\"metrics\":[],\"status\":\"active\",\"created_at\":1782194729379,\"updated_at\":1782757320208,\"version\":1},{\"baseline_id\":\"ip:fe80::9e69:b4ff:fe67:31c5\",\"tenant_id\":\"default\",\"name\":\"IP行为基线 fe80::9e69:b4ff:fe67:31c5\",\"entity_type\":\"ip\",\"entity_id\":\"fe80::9e69:b4ff:fe67:31c5\",\"baseline_type\":\"dynamic\",\"metrics\":[],\"status\":\"active\",\"created_at\":1782194729379,\"updated_at\":1782757319949,\"version\":1},{\"baseline_id\":\"",
+      "artifact": "baselines-list.json"
+    },
+    {
+      "ts": "2026-06-30T14:05:29+08:00",
+      "phase": "assert",
+      "name": "behavior baselines response shape",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and (.data.baselines | type == \"array\") and (.data.total | type == \"number\")",
+      "artifact": "baselines-list.json"
+    },
+    {
+      "ts": "2026-06-30T14:05:29+08:00",
+      "phase": "precondition",
+      "name": "behavior baseline sample exists",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "ip:10.0.5.8",
+      "artifact": "baselines-list.json"
+    },
+    {
+      "ts": "2026-06-30T14:05:29+08:00",
+      "phase": "api",
+      "name": "behavior baseline detail readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"baseline_id\":\"ip:10.0.5.8\",\"tenant_id\":\"default\",\"name\":\"IP行为基线 10.0.5.8\",\"entity_type\":\"ip\",\"entity_id\":\"10.0.5.8\",\"baseline_type\":\"dynamic\",\"metrics\":[{\"metric_name\":\"bytes_per_session\",\"unit\":\"bytes\",\"normal_range\":[0,0],\"mean\":0,\"std_dev\":0,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}},{\"metric_name\":\"packets_per_session\",\"unit\":\"packets\",\"normal_range\":[0,0],\"mean\":0,\"std_dev\":0,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}},{\"metric_name\":\"duration_ms\",\"unit\":\"ms\",\"normal_range\":[0,0],\"mean\":0,\"std_dev\":0,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}}],\"status\":\"learning\",\"created_at\":1782799499318,\"updated_at\":0,\"version\":1},\"meta\":{\"request_id\":\"4772c3ef-c266-4415-897d-1d7286ff112f\",\"trace_id\":\"4772c3ef-c266-4415-897d-1d7286ff112f\"},\"timestamp\":\"2026-06-30T06:05:29Z\"} ",
+      "artifact": "baseline-detail.json"
+    },
+    {
+      "ts": "2026-06-30T14:05:29+08:00",
+      "phase": "assert",
+      "name": "behavior baseline detail response shape",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.baseline_id == $baseline_id and (.data.metrics | type == \"array\")",
+      "artifact": "baseline-detail.json"
+    },
+    {
+      "ts": "2026-06-30T14:05:29+08:00",
+      "phase": "api",
+      "name": "admin can reset behavior baseline",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"baseline_id\":\"ip:10.0.5.8\",\"tenant_id\":\"default\",\"name\":\"IP行为基线 10.0.5.8\",\"entity_type\":\"ip\",\"entity_id\":\"10.0.5.8\",\"baseline_type\":\"dynamic\",\"metrics\":[{\"metric_name\":\"bytes_per_session\",\"unit\":\"bytes\",\"normal_range\":[0,0],\"mean\":0,\"std_dev\":0,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}},{\"metric_name\":\"packets_per_session\",\"unit\":\"packets\",\"normal_range\":[0,0],\"mean\":0,\"std_dev\":0,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}},{\"metric_name\":\"duration_ms\",\"unit\":\"ms\",\"normal_range\":[0,0],\"mean\":0,\"std_dev\":0,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}}],\"status\":\"learning\",\"created_at\":1782799529648,\"updated_at\":0,\"version\":1},\"meta\":{\"request_id\":\"803f386d-0e3f-4e87-a4d9-39ebb12a14f6\",\"trace_id\":\"803f386d-0e3f-4e87-a4d9-39ebb12a14f6\"},\"timestamp\":\"2026-06-30T06:05:29Z\"} ",
+      "artifact": "baseline-reset-admin.json"
+    },
+    {
+      "ts": "2026-06-30T14:05:29+08:00",
+      "phase": "assert",
+      "name": "baseline reset response is tenant scoped and learning",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.baseline_id == $baseline_id and .data.tenant_id == $tenant and .data.status == \"learning\"",
+      "artifact": "baseline-reset-admin.json"
+    },
+    {
+      "ts": "2026-06-30T14:05:29+08:00",
+      "phase": "api",
+      "name": "viewer cannot reset behavior baseline",
+      "severity": "info",
+      "passed": true,
+      "status": "403",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"permission denied: alert:write required\"},\"meta\":{\"request_id\":\"d6625aba-9398-476a-be2f-7761060b629a\",\"trace_id\":\"d6625aba-9398-476a-be2f-7761060b629a\"},\"timestamp\":\"2026-06-30T06:05:29Z\"} ",
+      "artifact": "baseline-reset-viewer.json"
+    },
+    {
+      "ts": "2026-06-30T14:05:29+08:00",
+      "phase": "assert",
+      "name": "viewer reset denial mentions alert write",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "((.error.message // .message // \"\")) | contains(\"alert:write\")",
+      "artifact": "baseline-reset-viewer.json"
+    },
+    {
+      "ts": "2026-06-30T14:05:29+08:00",
+      "phase": "api",
+      "name": "audit log page API has baseline reset event",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"total\":3,\"trails\":[{\"log_id\":\"audit-20260630060529.654988102\",\"tenant_id\":\"default\",\"user_id\":\"40d1a6a9-e9d1-4b77-93eb-9fda63d217ea\",\"action\":\"BEHAVIOR_BASELINE_RESET\",\"resource_type\":\"baseline\",\"resource_id\":\"ip:10.0.5.8\",\"details\":{\"status\":\"reset\"},\"ip_address\":\"10.244.0.0\",\"timestamp\":1782799529652,\"result\":\"success\"},{\"log_id\":\"audit-20260630060459.329282919\",\"tenant_id\":\"default\",\"user_id\":\"edc03db0-a844-452c-880e-b4b53d85c37f\",\"action\":\"BEHAVIOR_BASELINE_RESET\",\"resource_type\":\"baseline\",\"resource_id\":\"ip:10.0.5.8\",\"details\":{\"status\":\"reset\"},\"ip_address\":\"10.244.0.0\",\"timestamp\":1782799499327,\"result\":\"success\"},{\"log_id\":\"audit-24355586-a1cb-482b-9a8c-9cf8026f8d91\",\"tenant_id\":\"default\",\"user_id\":\"21b340f4-4833-4610-8659-8718d4d8eb52\",\"action\":\"BEHAVIOR_BASELINE_RESET\",\"resource_type\":\"baseline\",\"resource_id\":\"ip:10.0.5.8\",\"details\":{\"status\":\"reset\"},\"ip_address\":\"10.244.0.0\",\"timestamp\":1781633592751,\"result\":\"success\"}]},\"meta\":{\"request_id\":\"1ba5cfcb-d717-4ae5-9bab-b0a51c79bdf2\",\"trace_id\":\"1ba5cfcb-d717-4ae5-9bab-b0a51c79bdf2\"},\"timestamp\":\"2026-06-30T06:05:29Z\"} ",
+      "artifact": "baseline-audit-reset.json"
+    },
+    {
+      "ts": "2026-06-30T14:05:29+08:00",
+      "phase": "assert",
+      "name": "audit log contains baseline reset event",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and (.data.total >= 1) and ([.data.trails[] | select(.resource_id == $baseline_id and .action == \"BEHAVIOR_BASELINE_RESET\")] | length) >= 1",
+      "artifact": "baseline-audit-reset.json"
+    },
+    {
+      "ts": "2026-06-30T14:05:29+08:00",
+      "phase": "api",
+      "name": "other tenant cannot see baseline reset audit",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"total\":0,\"trails\":[]},\"meta\":{\"request_id\":\"1b44706a-7920-48c5-852c-a0371ede4566\",\"trace_id\":\"1b44706a-7920-48c5-852c-a0371ede4566\"},\"timestamp\":\"2026-06-30T06:05:29Z\"} ",
+      "artifact": "baseline-audit-other-tenant.json"
+    },
+    {
+      "ts": "2026-06-30T14:05:29+08:00",
+      "phase": "assert",
+      "name": "baseline reset audit is tenant isolated",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.total == 0",
+      "artifact": "baseline-audit-other-tenant.json"
+    },
+    {
+      "ts": "2026-06-30T14:05:30+08:00",
+      "phase": "postgres",
+      "name": "behavior baseline reset persisted in PostgreSQL",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "pg-behavior-baseline-reset-count.txt"
+    },
+    {
+      "ts": "2026-06-30T14:05:30+08:00",
+      "phase": "postgres",
+      "name": "behavior baseline reset audit persisted",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "3",
+      "artifact": "pg-behavior-baseline-audit-count.txt"
+    }
+  ]
+}

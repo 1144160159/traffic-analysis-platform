@@ -1,0 +1,19 @@
+status: review-template
+review_required: true
+package_id: topic1_blind
+reviewer:
+  organization: TBD
+  lab_accreditation: TBD
+  contact: TBD
+evidence:
+  dataset_manifest_sha256: TBD
+  labels_sha256: TBD
+  predictions_sha256: TBD
+  threshold_lock_sha256: TBD
+  evaluation_summary_sha256: TBD
+signature:
+  signed_by: TBD
+  signed_at: TBD
+  signature_uri: TBD
+notes:
+  - This is a review template, not an attestation.

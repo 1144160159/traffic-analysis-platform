@@ -1,0 +1,989 @@
+{
+  "id": "campaign-detail-impact-campus",
+  "category": "pages",
+  "title": "战役详情 - 影响范围 - 校区",
+  "route": "/campaigns/:campaignId?impact=campus",
+  "host_route": "/campaigns/:campaignId",
+  "type": "menu-state",
+  "parent": "campaigns",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/campaign-detail-impact-campus.png",
+  "prompt_file": "doc/04_assets/ui_suite_gpt_v1/prompts/campaign-detail.prompt.txt",
+  "manifest_item": "campaign-detail-impact-campus",
+  "manifest_refs": [
+    "doc/04_assets/ui_suite_gpt_v1/manifest.json",
+    "doc/04_assets/ui_suite_gpt_v1/specs/pages-menu-order-queue.json"
+  ],
+  "evidence_dir": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/",
+  "status": "evidence-ready",
+  "accepted": false,
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "observation": {
+    "layout": "目标图是战役详情内影响范围模块的校区焦点态，不是生产全屏弹窗。画布内仅包含影响范围标题、六个对象 Tab、校区风险环、风险分布、Top 5 校区表和下钻链接。",
+    "menu_state": "正常生产路由保持威胁分析 / 战役列表父菜单选中；焦点截图态仅为视觉验收状态。",
+    "business_focus": "展示受影响校区总数、高中低风险占比、覆盖资产、校区风险等级和核心/VPN/无线/出口链路。",
+    "visual_style": "深海军蓝背景、细青蓝边框、白色高密度文字；高风险红、中风险琥珀、低风险绿色；校区 Tab 使用蓝色激活态。",
+    "responsive_rule": "焦点态采用 2133x1200 语义设计画布并根据真实 CSS viewport 等比缩放；正常生产详情使用 AppShell 自适应布局。"
+  },
+  "regions": [
+    {
+      "id": "canvas",
+      "name": "1920x1080 画布",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "components": [
+        "CampaignImpactCampusPanel"
+      ],
+      "notes": "Windows Chrome 生产路由截图像素画布"
+    },
+    {
+      "id": "focus-frame",
+      "name": "影响范围焦点框",
+      "bbox": {
+        "x": 15,
+        "y": 8,
+        "w": 1892,
+        "h": 1062
+      },
+      "components": [
+        "CampaignImpactCampusPanel"
+      ],
+      "notes": "圆角青蓝边框，包裹全部业务内容"
+    },
+    {
+      "id": "title",
+      "name": "影响范围标题",
+      "bbox": {
+        "x": 60,
+        "y": 31,
+        "w": 350,
+        "h": 42
+      },
+      "components": [
+        "Heading"
+      ],
+      "notes": "左对齐，白色粗体"
+    },
+    {
+      "id": "impact-tabs",
+      "name": "影响对象 Tab 条",
+      "bbox": {
+        "x": 58,
+        "y": 88,
+        "w": 1807,
+        "h": 58
+      },
+      "components": [
+        "ImpactTabs"
+      ],
+      "notes": "资产、账号、服务、部门、校区、业务系统六等分"
+    },
+    {
+      "id": "active-campus-tab",
+      "name": "校区激活 Tab",
+      "bbox": {
+        "x": 1241,
+        "y": 88,
+        "w": 280,
+        "h": 58
+      },
+      "components": [
+        "ImpactTab"
+      ],
+      "notes": "蓝色激活背景和发光边框"
+    },
+    {
+      "id": "risk-summary",
+      "name": "校区风险汇总",
+      "bbox": {
+        "x": 58,
+        "y": 181,
+        "w": 1800,
+        "h": 303
+      },
+      "components": [
+        "CampaignImpactRiskSummary"
+      ],
+      "notes": "左侧风险环，右侧三行风险分布"
+    },
+    {
+      "id": "risk-donut",
+      "name": "受影响校区风险环",
+      "bbox": {
+        "x": 157,
+        "y": 184,
+        "w": 647,
+        "h": 276
+      },
+      "components": [
+        "CSSConicGradientDonut"
+      ],
+      "notes": "由高中低风险数量动态计算角度"
+    },
+    {
+      "id": "risk-breakdown",
+      "name": "高中低风险分布",
+      "bbox": {
+        "x": 884,
+        "y": 198,
+        "w": 971,
+        "h": 233
+      },
+      "components": [
+        "RiskBreakdownRow"
+      ],
+      "notes": "标签、数量、百分比三行固定对齐"
+    },
+    {
+      "id": "summary-divider",
+      "name": "汇总与表格分隔线",
+      "bbox": {
+        "x": 60,
+        "y": 483,
+        "w": 1798,
+        "h": 2
+      },
+      "components": [
+        "Divider"
+      ],
+      "notes": "低对比度青蓝分隔线"
+    },
+    {
+      "id": "table-title",
+      "name": "关键校区标题",
+      "bbox": {
+        "x": 95,
+        "y": 507,
+        "w": 520,
+        "h": 43
+      },
+      "components": [
+        "Heading"
+      ],
+      "notes": "关键校区（Top 5）"
+    },
+    {
+      "id": "campus-table",
+      "name": "关键校区 Top 5 表",
+      "bbox": {
+        "x": 60,
+        "y": 558,
+        "w": 1798,
+        "h": 418
+      },
+      "components": [
+        "CampusImpactTable"
+      ],
+      "notes": "四列、表头一行、数据五行"
+    },
+    {
+      "id": "all-campus-link",
+      "name": "查看全部校区链接",
+      "bbox": {
+        "x": 728,
+        "y": 1003,
+        "w": 468,
+        "h": 39
+      },
+      "components": [
+        "RouterLink"
+      ],
+      "notes": "下钻到资产台账校区状态"
+    }
+  ],
+  "texts": [
+    {
+      "value": "影响范围",
+      "type": "title",
+      "bbox": {
+        "x": 60,
+        "y": 31,
+        "w": 350,
+        "h": 42
+      },
+      "must_match": true
+    },
+    {
+      "value": "资产",
+      "type": "tab",
+      "bbox": {
+        "x": 58,
+        "y": 88,
+        "w": 310,
+        "h": 58
+      },
+      "must_match": true
+    },
+    {
+      "value": "账号",
+      "type": "tab",
+      "bbox": {
+        "x": 371,
+        "y": 88,
+        "w": 288,
+        "h": 58
+      },
+      "must_match": true
+    },
+    {
+      "value": "服务",
+      "type": "tab",
+      "bbox": {
+        "x": 662,
+        "y": 88,
+        "w": 300,
+        "h": 58
+      },
+      "must_match": true
+    },
+    {
+      "value": "部门",
+      "type": "tab",
+      "bbox": {
+        "x": 965,
+        "y": 88,
+        "w": 276,
+        "h": 58
+      },
+      "must_match": true
+    },
+    {
+      "value": "校区",
+      "type": "tab-active",
+      "bbox": {
+        "x": 1241,
+        "y": 88,
+        "w": 280,
+        "h": 58
+      },
+      "must_match": true
+    },
+    {
+      "value": "业务系统",
+      "type": "tab",
+      "bbox": {
+        "x": 1524,
+        "y": 88,
+        "w": 341,
+        "h": 58
+      },
+      "must_match": true
+    },
+    {
+      "value": "4",
+      "type": "metric",
+      "bbox": {
+        "x": 430,
+        "y": 271,
+        "w": 100,
+        "h": 61
+      },
+      "must_match": true
+    },
+    {
+      "value": "受影响校区",
+      "type": "metric-label",
+      "bbox": {
+        "x": 334,
+        "y": 338,
+        "w": 292,
+        "h": 38
+      },
+      "must_match": true
+    },
+    {
+      "value": "高风险",
+      "type": "risk-label",
+      "bbox": {
+        "x": 1006,
+        "y": 222,
+        "w": 190,
+        "h": 37
+      },
+      "must_match": true
+    },
+    {
+      "value": "1",
+      "type": "risk-count",
+      "bbox": {
+        "x": 1407,
+        "y": 222,
+        "w": 55,
+        "h": 37
+      },
+      "must_match": true
+    },
+    {
+      "value": "25.0%",
+      "type": "risk-percent",
+      "bbox": {
+        "x": 1630,
+        "y": 222,
+        "w": 190,
+        "h": 37
+      },
+      "must_match": true
+    },
+    {
+      "value": "中风险",
+      "type": "risk-label",
+      "bbox": {
+        "x": 1006,
+        "y": 302,
+        "w": 190,
+        "h": 37
+      },
+      "must_match": true
+    },
+    {
+      "value": "2",
+      "type": "risk-count",
+      "bbox": {
+        "x": 1407,
+        "y": 302,
+        "w": 55,
+        "h": 37
+      },
+      "must_match": true
+    },
+    {
+      "value": "50.0%",
+      "type": "risk-percent",
+      "bbox": {
+        "x": 1630,
+        "y": 302,
+        "w": 190,
+        "h": 37
+      },
+      "must_match": true
+    },
+    {
+      "value": "低风险",
+      "type": "risk-label",
+      "bbox": {
+        "x": 1006,
+        "y": 381,
+        "w": 190,
+        "h": 37
+      },
+      "must_match": true
+    },
+    {
+      "value": "1",
+      "type": "risk-count",
+      "bbox": {
+        "x": 1407,
+        "y": 381,
+        "w": 55,
+        "h": 37
+      },
+      "must_match": true
+    },
+    {
+      "value": "25.0%",
+      "type": "risk-percent",
+      "bbox": {
+        "x": 1630,
+        "y": 381,
+        "w": 190,
+        "h": 37
+      },
+      "must_match": true
+    },
+    {
+      "value": "关键校区（Top 5）",
+      "type": "section-title",
+      "bbox": {
+        "x": 95,
+        "y": 507,
+        "w": 520,
+        "h": 43
+      },
+      "must_match": true
+    },
+    {
+      "value": "校区/楼宇",
+      "type": "table-header",
+      "bbox": {
+        "x": 60,
+        "y": 558,
+        "w": 528,
+        "h": 67
+      },
+      "must_match": true
+    },
+    {
+      "value": "覆盖资产",
+      "type": "table-header",
+      "bbox": {
+        "x": 588,
+        "y": 558,
+        "w": 414,
+        "h": 67
+      },
+      "must_match": true
+    },
+    {
+      "value": "风险",
+      "type": "table-header",
+      "bbox": {
+        "x": 1002,
+        "y": 558,
+        "w": 358,
+        "h": 67
+      },
+      "must_match": true
+    },
+    {
+      "value": "链路",
+      "type": "table-header",
+      "bbox": {
+        "x": 1360,
+        "y": 558,
+        "w": 498,
+        "h": 67
+      },
+      "must_match": true
+    },
+    {
+      "value": "主校区-数据中心",
+      "type": "table-cell",
+      "bbox": {
+        "x": 60,
+        "y": 625,
+        "w": 528,
+        "h": 72
+      },
+      "must_match": true
+    },
+    {
+      "value": "26",
+      "type": "table-cell",
+      "bbox": {
+        "x": 588,
+        "y": 625,
+        "w": 414,
+        "h": 72
+      },
+      "must_match": true
+    },
+    {
+      "value": "高危",
+      "type": "table-cell-status",
+      "bbox": {
+        "x": 1002,
+        "y": 625,
+        "w": 358,
+        "h": 72
+      },
+      "must_match": true
+    },
+    {
+      "value": "核心链路",
+      "type": "table-cell-link",
+      "bbox": {
+        "x": 1408,
+        "y": 640,
+        "w": 390,
+        "h": 43
+      },
+      "must_match": true
+    },
+    {
+      "value": "主校区-科研楼",
+      "type": "table-cell",
+      "bbox": {
+        "x": 60,
+        "y": 697,
+        "w": 528,
+        "h": 70
+      },
+      "must_match": true
+    },
+    {
+      "value": "18",
+      "type": "table-cell",
+      "bbox": {
+        "x": 588,
+        "y": 697,
+        "w": 414,
+        "h": 70
+      },
+      "must_match": true
+    },
+    {
+      "value": "中危",
+      "type": "table-cell-status",
+      "bbox": {
+        "x": 1002,
+        "y": 697,
+        "w": 358,
+        "h": 70
+      },
+      "must_match": true
+    },
+    {
+      "value": "东西向",
+      "type": "table-cell-link",
+      "bbox": {
+        "x": 1408,
+        "y": 712,
+        "w": 390,
+        "h": 43
+      },
+      "must_match": true
+    },
+    {
+      "value": "东校区-办公楼",
+      "type": "table-cell",
+      "bbox": {
+        "x": 60,
+        "y": 767,
+        "w": 528,
+        "h": 70
+      },
+      "must_match": true
+    },
+    {
+      "value": "9",
+      "type": "table-cell",
+      "bbox": {
+        "x": 588,
+        "y": 767,
+        "w": 414,
+        "h": 70
+      },
+      "must_match": true
+    },
+    {
+      "value": "中危",
+      "type": "table-cell-status",
+      "bbox": {
+        "x": 1002,
+        "y": 767,
+        "w": 358,
+        "h": 70
+      },
+      "must_match": true
+    },
+    {
+      "value": "VPN 链路",
+      "type": "table-cell-link",
+      "bbox": {
+        "x": 1408,
+        "y": 782,
+        "w": 390,
+        "h": 43
+      },
+      "must_match": true
+    },
+    {
+      "value": "南校区-教学楼",
+      "type": "table-cell",
+      "bbox": {
+        "x": 60,
+        "y": 837,
+        "w": 528,
+        "h": 70
+      },
+      "must_match": true
+    },
+    {
+      "value": "7",
+      "type": "table-cell",
+      "bbox": {
+        "x": 588,
+        "y": 837,
+        "w": 414,
+        "h": 70
+      },
+      "must_match": true
+    },
+    {
+      "value": "中危",
+      "type": "table-cell-status",
+      "bbox": {
+        "x": 1002,
+        "y": 837,
+        "w": 358,
+        "h": 70
+      },
+      "must_match": true
+    },
+    {
+      "value": "无线网",
+      "type": "table-cell-link",
+      "bbox": {
+        "x": 1408,
+        "y": 852,
+        "w": 390,
+        "h": 43
+      },
+      "must_match": true
+    },
+    {
+      "value": "西校区-图书馆",
+      "type": "table-cell",
+      "bbox": {
+        "x": 60,
+        "y": 907,
+        "w": 528,
+        "h": 69
+      },
+      "must_match": true
+    },
+    {
+      "value": "5",
+      "type": "table-cell",
+      "bbox": {
+        "x": 588,
+        "y": 907,
+        "w": 414,
+        "h": 69
+      },
+      "must_match": true
+    },
+    {
+      "value": "低危",
+      "type": "table-cell-status",
+      "bbox": {
+        "x": 1002,
+        "y": 907,
+        "w": 358,
+        "h": 69
+      },
+      "must_match": true
+    },
+    {
+      "value": "出口链路",
+      "type": "table-cell-link",
+      "bbox": {
+        "x": 1408,
+        "y": 922,
+        "w": 390,
+        "h": 43
+      },
+      "must_match": true
+    },
+    {
+      "value": "查看全部校区 >",
+      "type": "navigation-link",
+      "bbox": {
+        "x": 728,
+        "y": 1003,
+        "w": 468,
+        "h": 39
+      },
+      "must_match": true
+    }
+  ],
+  "components": [
+    {
+      "name": "CampaignDetailPage",
+      "path": "web/ui/src/pages/CampaignDetailPage.tsx",
+      "role": "路由状态和普通/焦点形态切换"
+    },
+    {
+      "name": "CampaignImpactCampusPanel",
+      "path": "web/ui/src/pages/CampaignDetailPage.tsx",
+      "role": "校区影响范围焦点容器"
+    },
+    {
+      "name": "ImpactTabs",
+      "path": "web/ui/src/pages/CampaignDetailPage.tsx",
+      "role": "六个影响对象状态切换"
+    },
+    {
+      "name": "CampaignImpactRiskSummary",
+      "path": "web/ui/src/pages/CampaignDetailPage.tsx",
+      "role": "风险环和风险分布"
+    },
+    {
+      "name": "RiskBreakdownRow",
+      "path": "web/ui/src/pages/CampaignDetailPage.tsx",
+      "role": "高中低风险标签、数量和比例"
+    },
+    {
+      "name": "CampusImpactTable",
+      "path": "web/ui/src/pages/CampaignDetailPage.tsx",
+      "role": "Top 5 校区表格"
+    },
+    {
+      "name": "fetchCampaignDetailSnapshot",
+      "path": "web/ui/src/services/campaignDetailApi.ts",
+      "role": "真实 API 与 typed fallback 数据入口"
+    },
+    {
+      "name": "windowFrameState",
+      "path": "web/ui/src/utils/windowFrameState.ts",
+      "role": "浏览器与 Windows 外层窗口状态"
+    }
+  ],
+  "icons": [
+    {
+      "name": "LinkOutlined",
+      "usage": "核心链路",
+      "source": "@ant-design/icons",
+      "dynamic": false
+    },
+    {
+      "name": "SwapOutlined",
+      "usage": "东西向链路",
+      "source": "@ant-design/icons",
+      "dynamic": false
+    },
+    {
+      "name": "SafetyOutlined",
+      "usage": "VPN 链路",
+      "source": "@ant-design/icons",
+      "dynamic": false
+    },
+    {
+      "name": "WifiOutlined",
+      "usage": "无线网",
+      "source": "@ant-design/icons",
+      "dynamic": false
+    },
+    {
+      "name": "UploadOutlined",
+      "usage": "出口链路",
+      "source": "@ant-design/icons",
+      "dynamic": false
+    }
+  ],
+  "tokens": [
+    {
+      "name": "canvas-bg",
+      "value": "#020c14",
+      "usage": "焦点态背景"
+    },
+    {
+      "name": "panel-bg",
+      "value": "rgba(4,22,36,.72)",
+      "usage": "风险与表格面板"
+    },
+    {
+      "name": "border-primary",
+      "value": "rgba(28,118,205,.82)",
+      "usage": "外框"
+    },
+    {
+      "name": "border-subtle",
+      "value": "rgba(56,151,201,.24)",
+      "usage": "行分隔"
+    },
+    {
+      "name": "text-primary",
+      "value": "rgba(245,248,252,.92)",
+      "usage": "标题和关键值"
+    },
+    {
+      "name": "text-secondary",
+      "value": "rgba(236,244,250,.84)",
+      "usage": "Tab 与正文"
+    },
+    {
+      "name": "text-muted",
+      "value": "#7da9c8",
+      "usage": "表头"
+    },
+    {
+      "name": "status-high",
+      "value": "#ff4149",
+      "usage": "高风险和核心链路"
+    },
+    {
+      "name": "status-medium",
+      "value": "#ffb020",
+      "usage": "中风险链路"
+    },
+    {
+      "name": "status-low",
+      "value": "#75c743",
+      "usage": "低风险和出口链路"
+    },
+    {
+      "name": "active-tab",
+      "value": "rgba(11,62,126,.9)",
+      "usage": "校区激活 Tab"
+    },
+    {
+      "name": "focus-design-canvas",
+      "value": "2133x1200",
+      "usage": "按真实 viewport 等比缩放"
+    }
+  ],
+  "interactions": [
+    {
+      "trigger": "点击资产/账号/服务/部门/校区/业务系统 Tab",
+      "result": "更新 impact query 并渲染对应 typed 状态",
+      "component": "ImpactTabs"
+    },
+    {
+      "trigger": "打开 impact=campus",
+      "result": "显示校区风险和 Top 5 校区",
+      "component": "CampaignImpactCampusContent"
+    },
+    {
+      "trigger": "点击查看全部校区",
+      "result": "下钻 /assets?tab=campus",
+      "component": "RouterLink"
+    },
+    {
+      "trigger": "正常生产路由刷新",
+      "result": "每 30 秒通过 React Query 刷新战役快照",
+      "component": "useQuery"
+    },
+    {
+      "trigger": "视觉验收 query",
+      "result": "冻结定时刷新并显示确定性焦点态",
+      "component": "isVisualBreakdownMode"
+    },
+    {
+      "trigger": "Windows/浏览器窗口变化",
+      "result": "焦点设计画布等比缩放，正常 AppShell 按窗口类重排",
+      "component": "CSS viewport scale + windowFrameState"
+    }
+  ],
+  "implementation": {
+    "mode": "production-route",
+    "source": "/campaigns/campaign-exfil-default-1782729598739-e1d2dc37",
+    "route_state": {
+      "impact": "campus",
+      "__codex_page_id": "campaign-detail-impact-campus"
+    },
+    "primary_endpoint": "/v1/campaigns/{campaignId}",
+    "service": "web/ui/src/services/campaignDetailApi.ts",
+    "typed_contracts": [
+      "CampaignDetailImpactCampus",
+      "CampaignDetailCampusRow",
+      "CampaignDetailImpactRiskRow"
+    ],
+    "adapter": "normalizeCampaignDetailSnapshot -> buildImpactCampus",
+    "rendering": "React/CSS conic-gradient and DOM table driven by snapshot.impactCampus",
+    "refresh": "30 seconds on normal route; disabled only in visual evidence mode",
+    "bitmap_substitution": false,
+    "normal_route_policy": "正常生产详情保留 AppShell、父菜单和底栏；focus 状态只用于目标图验收，不作为全屏生产弹窗。",
+    "route": "/campaigns/:campaignId",
+    "resolved_path": "/campaigns/campaign-exfil-default-1782729598739-e1d2dc37",
+    "note": "implementation.png is captured from the real APISIX/Web UI production route through Windows Chrome CDP. It is not a raster replay of target.png."
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/target.png",
+    "regions_overlay": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/regions-overlay.png",
+    "measurement": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/measurement.json",
+    "text_ocr": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/text-ocr.txt",
+    "implementation": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/implementation.png",
+    "implementation_r176": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/implementation-r176-final.png",
+    "diff_business": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/diff-business-r176-final.png",
+    "diff_strict": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/diff-strict-r176-final.png",
+    "metrics": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/metrics.json",
+    "metrics_business": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/metrics-business-r176-final.json",
+    "metrics_strict": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/metrics-strict-r176-final.json",
+    "capture_meta": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/capture-meta.json",
+    "production_route_report": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/production-route-report.json",
+    "normal_route_screenshot": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/normal-route-r176.png",
+    "normal_route_runtime": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/normal-route-runtime-r176.json",
+    "cdp_version": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/cdp-list.json",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "css_viewport": {
+      "width": 2133,
+      "height": 1200,
+      "device_pixel_ratio": 0.9
+    },
+    "image_tag": "traffic/web-ui:ui-campaign-impact-campus-20260710-r176",
+    "evidence_mode": "production-route",
+    "url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=campus&__codex_page_id=campaign-detail-impact-campus&windowsCdpEvidenceTs=1783853715705#codex_smoke_token=<redacted>",
+    "final_url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=campus&__codex_page_id=campaign-detail-impact-campus&windowsCdpEvidenceTs=1783853715705",
+    "diff": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/diff.png",
+    "verification": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/verification.json"
+  },
+  "differences": [
+    {
+      "type": "font-rendering",
+      "status": "review",
+      "notes": "目标生成图与 Windows Chrome 字体字形、抗锯齿和 glow 存在差异。"
+    },
+    {
+      "type": "icon-shape",
+      "status": "review",
+      "notes": "链路图标采用 Ant Design 语义图标，轮廓与生成图略有差异。"
+    },
+    {
+      "type": "target-vs-production-context",
+      "status": "documented",
+      "notes": "目标是模块焦点态；正常生产路由保留 AppShell，另有正常路由证据。"
+    },
+    {
+      "type": "production-evidence-scope",
+      "location": "/campaigns/campaign-exfil-default-1782729598739-e1d2dc37",
+      "current": "implementation.png is captured from the real APISIX/Web UI route in Windows Chrome CDP",
+      "expected": "no target.png raster replay is used as implementation evidence",
+      "status": "documented"
+    }
+  ],
+  "review_gate": {
+    "status": "pass",
+    "reason": "Fresh r176 auxiliary review and main-thread recheck pass for business tolerance; strict pixel remains explicitly failed.",
+    "auxiliary_review": {
+      "status": "pass",
+      "agent_id": "019f4ab3-4f56-7ac1-9408-dffccb4f118f"
+    },
+    "main_thread_judgment": "business-pixel-accepted",
+    "strict_pixel_status": "fail-documented"
+  },
+  "visible_chrome_rerun": {
+    "status": "pass",
+    "browser": "Chrome/150.0.7871.49 on Windows",
+    "cdp_url": "http://127.0.0.1:9224",
+    "image_tag": "traffic/web-ui:ui-campaign-impact-campus-20260710-r176",
+    "evidence": [
+      "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/cdp-version-r176-final.json",
+      "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/cdp-list-r176-final.json"
+    ]
+  },
+  "dual_visual_gate": {
+    "business_tolerance": {
+      "status": "pass",
+      "mismatch_pixels": 148200,
+      "compared_pixels": 2073600,
+      "pixel_mismatch_ratio": 0.07146990740740741,
+      "max_pixel_ratio": 0.35,
+      "channel_tolerance": 64
+    },
+    "strict_pixel": {
+      "status": "fail",
+      "mismatch_pixels": 2073421,
+      "compared_pixels": 2073600,
+      "pixel_mismatch_ratio": 0.9999136766975308,
+      "max_pixel_ratio": 0.015,
+      "channel_tolerance": 0
+    },
+    "policy": "business-pixel-accepted 仅表示业务容差门通过；不得表述为 strict pixel pass 或 pixel-perfect。"
+  },
+  "normal_route_geometry": {
+    "status": "pass",
+    "app_shell": {
+      "topbar": true,
+      "sidebar": true,
+      "bottombar": true
+    },
+    "active_impact": "campus",
+    "data_row_count": 5,
+    "all_rows_within_panel_body": true,
+    "link_within_panel_body": true,
+    "content_within_panel_body": true,
+    "horizontal_overflow": false,
+    "runtime_errors": 0
+  }
+}

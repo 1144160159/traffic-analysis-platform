@@ -1,0 +1,38 @@
+{
+  "status": "pass",
+  "backend": "windows-chrome-cdp",
+  "acceptance_eligible": false,
+  "reason": "Windows Chrome CDP evidence is separate from the older Codex Desktop extension receiver gate.",
+  "target_id": "playbooks",
+  "route_id": "playbooks",
+  "run_id": "windows-cdp-full-route-20260703103134",
+  "url": "http://10.0.5.8:30180/playbooks?windowsCdpEvidenceTs=1783074694946#codex_smoke_token=<redacted>",
+  "final_url": "http://10.0.5.8:30180/playbooks?windowsCdpEvidenceTs=1783074694946",
+  "expected_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "desktop_viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "stored_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "uploaded_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "post_capture_resize": false,
+  "cdp_url": "http://127.0.0.1:9224",
+  "browser": "Chrome/150.0.7871.47",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/playbooks.png",
+  "screenshot": "evidence/windows-chrome-cdp-20260703-script-full-r3/playbooks-1920x1080.png",
+  "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/playbooks/actual-1920.png",
+  "protected_route": true,
+  "smoke_token_used": true,
+  "smoke_hash_consumed": true,
+  "captured_at": "2026-07-03T10:34:46.429Z",
+  "runtime_reasons": []
+}

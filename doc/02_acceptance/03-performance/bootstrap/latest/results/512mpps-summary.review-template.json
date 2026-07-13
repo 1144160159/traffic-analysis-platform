@@ -1,0 +1,40 @@
+{
+  "test_id": "512mpps-small-packet",
+  "status": "template_review_required",
+  "review_required": true,
+  "formal_gate_note": "Operator must replace this review template with a real completed result summary before formal preflight can pass.",
+  "started_at": "",
+  "duration_seconds": null,
+  "minimum_duration_seconds": 1800,
+  "traffic_generator": {
+    "tool": "trex",
+    "version": "",
+    "ports": ""
+  },
+  "probe": {
+    "capture_mode": "af_packet",
+    "nodes": [
+      "8-2tb",
+      "zeus-server"
+    ]
+  },
+  "metrics": {
+    "aggregate_gbps": null,
+    "aggregate_mpps": null,
+    "packet_loss_rate": null,
+    "probe_drop_rate": null,
+    "parse_success_rate": null,
+    "kafka_max_lag_records": null,
+    "flink_backpressure": "",
+    "cpu_max_percent": null,
+    "numa_remote_memory_percent": null,
+    "target_aggregate_mpps": 512
+  },
+  "artifacts": {
+    "raw_generator_logs_uri": "",
+    "switch_telemetry_uri": "",
+    "prometheus_snapshot_uri": "",
+    "signed_report_uri": "",
+    "sha256_manifest": ""
+  }
+}

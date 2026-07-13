@@ -1,0 +1,16 @@
+Generate a 3840x2160 PNG static 4K background asset for traffic-analysis-platform.
+
+Use case: productivity-visual.
+Asset type: attack chain lane background.
+
+Scene:
+- A dark multi-lane attack chain visualization showing stages such as discovery, initial access, lateral movement, command channel, exfiltration, and containment only as abstract unlabeled visual stages.
+- Include connected evidence fragments, event bursts, blocked paths, and response checkpoints.
+
+Style:
+- SOC investigation lane map, deep black/navy, cyan lane structure, blue event nodes, amber suspicious transitions, red critical path, green containment.
+- High-detail but not a literal UI component.
+
+Constraints:
+- No readable stage labels, tactic names, malware names, real IP addresses, credentials, logos, people, browser chrome, buttons, or complete page screenshot.
+

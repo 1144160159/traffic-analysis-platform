@@ -1,0 +1,153 @@
+{
+  "run_id": "20260629-rule-state-machine-r5-model-version-state",
+  "result": "pass",
+  "tenant": "default",
+  "other_tenant": "campus-a",
+  "enable_rule_id": "4ab44dc7-d39d-4f99-8284-e60c4c20d698",
+  "disable_rule_id": "a6a9873a-bb28-4a00-86bb-6b4c742a6ecd",
+  "cross_rule_id": "2f161794-747b-4382-9aab-ec7d359ac82f",
+  "viewer_rule_id": "e72f1ff8-dbb2-4c5f-ac71-7d7a820ac3b3",
+  "total": 15,
+  "passed": 15,
+  "failed": 0,
+  "blockers": 0,
+  "warnings": 0,
+  "report": "doc/02_acceptance/runs/20260629-rule-state-machine/live-rule-state-machine-20260629-rule-state-machine-r5-model-version-state.ndjson",
+  "checks": [
+    {
+      "ts": "2026-06-29T22:07:12+08:00",
+      "phase": "fixture",
+      "name": "seed rules for enable disable cross viewer",
+      "ok": true,
+      "status": "ok",
+      "detail": "4ab44dc7-d39d-4f99-8284-e60c4c20d698,a6a9873a-bb28-4a00-86bb-6b4c742a6ecd,2f161794-747b-4382-9aab-ec7d359ac82f,e72f1ff8-dbb2-4c5f-ac71-7d7a820ac3b3",
+      "artifact": ""
+    },
+    {
+      "ts": "2026-06-29T22:07:12+08:00",
+      "phase": "api",
+      "name": "enable disabled rule",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/rules/4ab44dc7-d39d-4f99-8284-e60c4c20d698/enable",
+      "artifact": "doc/02_acceptance/runs/20260629-rule-state-machine/20260629-rule-state-machine-r5-model-version-state-enable-disabled-rule.json"
+    },
+    {
+      "ts": "2026-06-29T22:07:12+08:00",
+      "phase": "db",
+      "name": "enable rule persisted",
+      "ok": true,
+      "status": "ok",
+      "detail": "true|active|4|true",
+      "artifact": "doc/02_acceptance/runs/20260629-rule-state-machine/20260629-rule-state-machine-r5-model-version-state-enable-rule-persisted.txt"
+    },
+    {
+      "ts": "2026-06-29T22:07:12+08:00",
+      "phase": "db",
+      "name": "enable version row persisted",
+      "ok": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "doc/02_acceptance/runs/20260629-rule-state-machine/20260629-rule-state-machine-r5-model-version-state-enable-version-row-persisted.txt"
+    },
+    {
+      "ts": "2026-06-29T22:07:12+08:00",
+      "phase": "db",
+      "name": "enable outbox persisted",
+      "ok": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "doc/02_acceptance/runs/20260629-rule-state-machine/20260629-rule-state-machine-r5-model-version-state-enable-outbox-persisted.txt"
+    },
+    {
+      "ts": "2026-06-29T22:07:12+08:00",
+      "phase": "api",
+      "name": "disable active rule",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/rules/a6a9873a-bb28-4a00-86bb-6b4c742a6ecd/disable",
+      "artifact": "doc/02_acceptance/runs/20260629-rule-state-machine/20260629-rule-state-machine-r5-model-version-state-disable-active-rule.json"
+    },
+    {
+      "ts": "2026-06-29T22:07:12+08:00",
+      "phase": "db",
+      "name": "disable rule persisted",
+      "ok": true,
+      "status": "ok",
+      "detail": "false|disabled|6|true",
+      "artifact": "doc/02_acceptance/runs/20260629-rule-state-machine/20260629-rule-state-machine-r5-model-version-state-disable-rule-persisted.txt"
+    },
+    {
+      "ts": "2026-06-29T22:07:12+08:00",
+      "phase": "db",
+      "name": "disable version row persisted",
+      "ok": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "doc/02_acceptance/runs/20260629-rule-state-machine/20260629-rule-state-machine-r5-model-version-state-disable-version-row-persisted.txt"
+    },
+    {
+      "ts": "2026-06-29T22:07:12+08:00",
+      "phase": "db",
+      "name": "disable outbox persisted",
+      "ok": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "doc/02_acceptance/runs/20260629-rule-state-machine/20260629-rule-state-machine-r5-model-version-state-disable-outbox-persisted.txt"
+    },
+    {
+      "ts": "2026-06-29T22:07:12+08:00",
+      "phase": "api",
+      "name": "cross tenant disable rejected",
+      "ok": true,
+      "status": "403",
+      "detail": "POST /api/v1/rules/2f161794-747b-4382-9aab-ec7d359ac82f/disable",
+      "artifact": "doc/02_acceptance/runs/20260629-rule-state-machine/20260629-rule-state-machine-r5-model-version-state-cross-tenant-disable-rejected.json"
+    },
+    {
+      "ts": "2026-06-29T22:07:12+08:00",
+      "phase": "db",
+      "name": "cross tenant rule unchanged",
+      "ok": true,
+      "status": "ok",
+      "detail": "true|active|7",
+      "artifact": "doc/02_acceptance/runs/20260629-rule-state-machine/20260629-rule-state-machine-r5-model-version-state-cross-tenant-rule-unchanged.txt"
+    },
+    {
+      "ts": "2026-06-29T22:07:12+08:00",
+      "phase": "api",
+      "name": "viewer enable rejected",
+      "ok": true,
+      "status": "403",
+      "detail": "POST /api/v1/rules/e72f1ff8-dbb2-4c5f-ac71-7d7a820ac3b3/enable",
+      "artifact": "doc/02_acceptance/runs/20260629-rule-state-machine/20260629-rule-state-machine-r5-model-version-state-viewer-enable-rejected.json"
+    },
+    {
+      "ts": "2026-06-29T22:07:13+08:00",
+      "phase": "db",
+      "name": "viewer rejected rule unchanged",
+      "ok": true,
+      "status": "ok",
+      "detail": "false|disabled|2",
+      "artifact": "doc/02_acceptance/runs/20260629-rule-state-machine/20260629-rule-state-machine-r5-model-version-state-viewer-rejected-rule-unchanged.txt"
+    },
+    {
+      "ts": "2026-06-29T22:07:13+08:00",
+      "phase": "api",
+      "name": "audit trail query",
+      "ok": true,
+      "status": "200",
+      "detail": "GET /api/v1/audit/logs?object_type=rule&limit=100",
+      "artifact": "doc/02_acceptance/runs/20260629-rule-state-machine/20260629-rule-state-machine-r5-model-version-state-audit-trail-query.json"
+    },
+    {
+      "ts": "2026-06-29T22:07:13+08:00",
+      "phase": "audit",
+      "name": "rule enable disable audit queryable",
+      "ok": true,
+      "status": "ok",
+      "detail": "4ab44dc7-d39d-4f99-8284-e60c4c20d698,a6a9873a-bb28-4a00-86bb-6b4c742a6ecd",
+      "artifact": "doc/02_acceptance/runs/20260629-rule-state-machine/20260629-rule-state-machine-r5-model-version-state-audit.json"
+    }
+  ]
+}

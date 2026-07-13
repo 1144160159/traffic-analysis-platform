@@ -1,0 +1,207 @@
+{
+  "target_id": "encrypted-traffic-tunnel-detection",
+  "route_id": "encrypted-traffic",
+  "route": "/encrypted-traffic",
+  "resolved_path": "/encrypted-traffic",
+  "navigation_url": "http://10.0.5.8:30180/encrypted-traffic?tab=tunnel-detection&__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1783672101613#codex_smoke_token=<redacted>",
+  "final_url": "http://10.0.5.8:30180/encrypted-traffic?tab=tunnel-detection&__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1783672101613#codex_smoke_token=<redacted>",
+  "goto_error": null,
+  "bad_responses": [],
+  "resource_requests": [
+    {
+      "url": "http://10.0.5.8:30180/encrypted-traffic?tab=tunnel-detection&__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1783672101613",
+      "method": "GET",
+      "resource_type": "document"
+    },
+    {
+      "url": "http://10.0.5.8:30180/config.js?runtime=1",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/index-e1ewMV4o.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-outvariant-BBS2yBlX.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-rettime-Dx7Zosze.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-react-DcxXCZkJ.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-is-node-process-BZ-2HBMI.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-misc-IOeGAkip.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-strict-event-emitter-CrFXw_VT.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-mswjs-interceptors-DhD__bBq.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-until-async-Bf6op_KE.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-path-to-regexp-wCvGX3Wm.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-tldts-core-CHyGRZbr.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-tldts-BrGjyBsC.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-set-cookie-parser-3_eJYb7L.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-headers-polyfill-BPLrDQpH.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-msw-CUNbvPfy.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-babel-runtime-DOsDFnm7.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-ant-design-fast-color-a4DwzfPV.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-dayjs-Csm2ddBZ.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-rc-D8Be7kXi.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-stylis-BmaM3nay.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-ant-design-9aWIuLjh.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-antd-Cukv-RvN.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-data-38j4_Kgc.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-remix-run-router-DTlRP5cs.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-router-CQ_4Ibzk.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/index-DDPdgPfc.css",
+      "method": "GET",
+      "resource_type": "stylesheet"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/EncryptedTrafficPage-CTQpGcH7.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/MetricTile-xE3uPL30.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/OverlayContractHost-D4FKuj0C.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/StatusTag-DGvGdyMq.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/WorkPanel-D5XyU7AQ.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/screen-topbar-shield-exact@3x-BMBlSnq_.png",
+      "method": "GET",
+      "resource_type": "image"
+    }
+  ],
+  "forbidden_target_resource_requests": [],
+  "request_failures": [],
+  "console_errors": [],
+  "page_errors": [],
+  "metrics": {
+    "final_url": "http://10.0.5.8:30180/encrypted-traffic?tab=tunnel-detection&__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1783672101613#codex_smoke_token=<redacted>",
+    "document_title": "园区网络全流量采集与分析系统",
+    "h1": "加密流量",
+    "body_text_sample": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-06-20 03:45:00 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 采集监测 威胁分析 告警中心 128 战役列表 攻击链分析 加密流量 取证分析 资产图谱 检测运营 审计配置 S sec_analyst 安全分析师 在线 加密流量 总览 指纹分析 隧道检测 外联画像 证据中心 时间范围 近 24 小时 刷新 30s 一键分析 指纹详情 证书详情 加密流量总量 38 +12 TLS 流量占比 55 -3 QUIC 流量占比 72 +4.8% 未知加密占比 89 +12 异常证书数 106 -3 可疑 JA3 数 123 +4.8% 未知 SNI 比例 140 +12 隧道告警与异常特征 DNS over HTTPS 会话 412 +36 异常长连接（> 1h） 287 +21 高熵流量（> 7.5） 531 +58 低频流量（< 3.0） 76 +9 低流量心跳（疑似） 193 +14 疑似 VPN 会话 118 +13 隧道异常列表 类型 疑征 源 IP 目的域名 / IP 持续时间 流量 (Gbps) 风险等级 DNS o",
+    "viewport_width": 2133,
+    "viewport_height": 1200,
+    "device_pixel_ratio": 0.8999999632438005,
+    "scroll_width": 2133,
+    "client_width": 2133,
+    "scroll_height": 1200,
+    "client_height": 1200,
+    "horizontal_overflow": false,
+    "vertical_scroll": false,
+    "error_alerts": [],
+    "visible_bad_geometry": []
+  },
+  "route_state_notes": [],
+  "protected_route": true,
+  "smoke_token_used": true,
+  "smoke_hash_consumed": false
+}

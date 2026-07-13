@@ -1,0 +1,31 @@
+sequenceDiagram
+    title Alert forensics feedback sequence
+    participant RustProbe
+    participant IngestGateway
+    participant Kafka
+    participant FlinkSession
+    participant FlinkFeature
+    participant DetectionJobs
+    participant AlertGenerator
+    participant DataStores
+    participant GoAPI
+    participant WebUI
+    participant Analyst
+
+    RustProbe->>IngestGateway: RegisterProbe and UploadFlows
+    IngestGateway->>Kafka: Produce flow.events.v1
+    Kafka->>FlinkSession: Consume FlowEvent
+    FlinkSession->>Kafka: Produce session.events.v1
+    Kafka->>FlinkFeature: Consume SessionEvent
+    FlinkFeature->>Kafka: Produce feature.stat.v1
+    Kafka->>DetectionJobs: Consume features and updates
+    DetectionJobs->>Kafka: Produce detection event
+    Kafka->>AlertGenerator: Consume detections
+    AlertGenerator->>DataStores: Write alerts and evidence
+    WebUI->>GoAPI: GET alerts and evidence
+    GoAPI->>DataStores: Query alert context
+    GoAPI-->>WebUI: Return alert detail
+    Analyst->>WebUI: Mark TP FP and request PCAP
+    WebUI->>GoAPI: POST feedback and PCAP job
+    GoAPI->>Kafka: Produce alert.feedback.v1
+    GoAPI->>DataStores: Write audit and task status

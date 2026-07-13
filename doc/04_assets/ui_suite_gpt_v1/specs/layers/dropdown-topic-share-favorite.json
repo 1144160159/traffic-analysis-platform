@@ -1,0 +1,82 @@
+{
+  "id": "dropdown-topic-share-favorite",
+  "title": "专题分享收藏菜单",
+  "type": "overlay",
+  "route": "/topics",
+  "domain": "overview",
+  "source": {
+    "targetFile": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/dropdown-topic-share-favorite.png",
+    "promptFile": "doc/04_assets/ui_suite_gpt_v1/prompts/dropdown-topic-share-favorite.prompt.txt",
+    "rawTraceFiles": [
+      "doc/04_assets/ui_suite_gpt_v1/screens/overlays/dropdown-topic-share-favorite.raw-imagegen.png"
+    ],
+    "dimensions": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "implementation": {
+    "pageComponent": "TopicWorkbenchPage",
+    "suggestedComponents": [
+      "Dropdown/Menu",
+      "Button",
+      "Form",
+      "Alert",
+      "Tag"
+    ],
+    "apiEndpoints": [
+      "/api/v1/topics/tunnel",
+      "/api/v1/topics/exfil",
+      "/api/v1/topics/apt"
+    ],
+    "workflows": [
+      "专题范围定义",
+      "专题专属 KPI",
+      "局部影响面",
+      "专题分析",
+      "关联事件与证据",
+      "专题报告与交付"
+    ]
+  },
+  "layers": [
+    {
+      "id": "dropdown-surface",
+      "role": "interaction-container",
+      "bbox": {
+        "x": 1280,
+        "y": 96,
+        "w": 480,
+        "h": 720
+      }
+    },
+    {
+      "id": "action-bar",
+      "role": "cancel-confirm-actions",
+      "bbox": {
+        "x": 1240,
+        "y": 950,
+        "w": 560,
+        "h": 52
+      }
+    },
+    {
+      "id": "audit-strip",
+      "role": "audit-and-risk-hint",
+      "bbox": {
+        "x": 1280,
+        "y": 950,
+        "w": 760,
+        "h": 52
+      }
+    }
+  ],
+  "acceptance": [
+    "最终 PNG 必须为 1920x1080",
+    "中文为主，只保留必要英文技术词和单位",
+    "状态色必须遵守 success/info/warning/danger/critical token",
+    "危险动作必须具备影响范围、权限提示和审计留痕",
+    "必须实现为 Dropdown/Menu 或等价语义组件",
+    "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+    "确认类动作必须出现取消/确认，危险确认默认不可误触"
+  ]
+}

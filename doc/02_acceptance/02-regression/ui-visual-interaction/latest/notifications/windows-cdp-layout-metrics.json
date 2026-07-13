@@ -1,0 +1,98 @@
+{
+  "title": "园区网络全流量采集与分析系统",
+  "location": "http://10.0.5.8:30180/notifications?fullRouteEvidenceTs=1783072704633",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "dpr": 1.0000000298023224
+  },
+  "scroll": {
+    "horizontalOverflow": 0,
+    "verticalOverflow": 0,
+    "bodyScrollWidth": 1920,
+    "bodyClientWidth": 1920,
+    "bodyScrollHeight": 1080,
+    "bodyClientHeight": 1080
+  },
+  "headings": [
+    "通知配置",
+    "A. 通知渠道健康",
+    "B. 订阅规则",
+    "C. 条件构造器",
+    "D. 升级策略流程",
+    "E. 模板管理",
+    "F. 发送历史",
+    "G. 抑制与静默"
+  ],
+  "buttons": [
+    "移动端导航",
+    "PCAP检索",
+    "资产检索",
+    "规则检索",
+    "脚本中心",
+    "帮助中心",
+    "更多应用",
+    "Ccodex-ui-desktop-admin系统管理员在线",
+    "新增渠道",
+    "测试发送",
+    "保存订阅策略",
+    "新建升级策略",
+    "静默窗口",
+    "导入审计",
+    "渠道编辑",
+    "模板测试",
+    "静默规则"
+  ],
+  "visibleText": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-03 17:58:25 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 采集监测 威胁分析 资产图谱 检测运营 审计配置 合规审计 审计日志 通知配置 系统设置 C codex-ui-desktop-admin 系统管理员 在线 审计配置 / 通知配置 通知配置 新增渠道 测试发送 保存订阅策略 新建升级策略 静默窗口 导入审计 渠道编辑 模板测试 静默规则 启用渠道 2 个 settings 订阅规则 28 条 路由策略 待确认通知 82 条 SLA 队列 失败通知 21 条 需重试 升级策略 2 条 7/min 静默窗口 1 个 secret_ref A. 通知渠道健康 邮件 成功率 99.32% 延迟 0.8s 失败数 3 测试发送 短信 成功率 98.12% 延迟 1.6s 失败数 7 测试发送 Webhook 成功率 99.06% 延迟 0.5s 失败数 7 测试发送 企业微信 成功率 98.76% 延迟 0.5s 失败数 2 测试发送 钉钉 成功率 98.45% 延迟 1.0s 失败数 6 测试发送 工单系统 成功率 97.66% 延迟 2.1s 失败数 9 测试发送 B. 订阅规则 规则 严重级别 告警类型 资产组/园区 时间窗 渠道 升级策略 静默 状态 操作 codex notification silence 20260630-notification-governance-preflight-r1 高危 维护窗口 main-campus 2026-06-30T04:21:27Z ~ 2026-06-30T08:21:27Z 邮件 / 企业微信 night-escalation codex live notification governance preflight 停用 规则 / 更多 共 28 条 条 1 2 3 22 10 条/页 C. 条件构造器 严重级别 严重 高危 + 告警类型 维护窗口 资产组 园区 时间窗 全天 时间段 自定义 接收角色 安全值班组 + 选择角色 更多条件 D. 升级策略流程 策略：夜间升级策略 启用 SLA 超时 15 分钟 升级至 安全值班组 未确认 30 分钟 升级至 安全值班组 处置失败 30 分钟 升级至 安全值班组 重复告警 3 次 / 30 分钟 升级至 安全值班组 验收缺口 24 小时 升级至 安全值班组 策略说明：满足任一阶段条件后，按时间间隔升级，直至人工确认或处置完成。 编辑策略 E. 模板管理 新建模板 模板类型 模板名称 版本 变",
+  "elements": {
+    "pageHero": {
+      "selector": ".taf-page-hero",
+      "visible": false
+    },
+    "panelHeader": {
+      "selector": ".taf-panel__header",
+      "visible": true,
+      "text": "A. 通知渠道健康",
+      "x": 183,
+      "y": 258,
+      "right": 1211,
+      "bottom": 289,
+      "w": 1029,
+      "h": 31,
+      "display": "flex",
+      "overflowX": "visible",
+      "overflowY": "visible"
+    },
+    "table": {
+      "selector": ".ant-table, .taf-table, table",
+      "visible": true,
+      "text": "规则严重级别告警类型资产组/园区时间窗渠道升级策略静默状态操作codex notification silence 20260630-notification-governance-preflight-r1高危维护窗口main-campus2026-06-30T04:21:27Z ~ 2026-06-30T08:21:27Z邮件 / 企业微信night-escalationcodex live notification governance preflight停用规则 / 更",
+      "x": 191,
+      "y": 489,
+      "right": 865,
+      "bottom": 566,
+      "w": 675,
+      "h": 77,
+      "display": "block",
+      "overflowX": "visible",
+      "overflowY": "visible"
+    },
+    "topicTitlebar": {
+      "selector": ".taf-topic-titlebar",
+      "visible": false
+    },
+    "topicFacts": {
+      "selector": ".taf-topic-facts",
+      "visible": false
+    },
+    "topicKpis": {
+      "selector": ".taf-topic-kpis",
+      "visible": false
+    },
+    "topicGrid": {
+      "selector": ".taf-topic-grid",
+      "visible": false
+    }
+  },
+  "overlapChecks": {}
+}

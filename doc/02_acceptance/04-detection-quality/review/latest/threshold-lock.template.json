@@ -1,0 +1,11 @@
+{
+  "status": "review-template",
+  "review_required": true,
+  "generated_from_review_packet": "20260701-detection-quality-review-r1",
+  "model_id": "behavior-classifier",
+  "feature_set_id": "v1",
+  "threshold": "TBD",
+  "locked_by": "TBD",
+  "locked_at": "TBD",
+  "lock_evidence": "TBD"
+}

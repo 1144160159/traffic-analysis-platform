@@ -1,0 +1,924 @@
+{
+  "id": "alert-detail-evidence-pcap",
+  "page_id": "alert-detail-evidence-pcap",
+  "category": "pages",
+  "group": "threat-analysis",
+  "parent_id": "alerts",
+  "type": "menu-state",
+  "route": "/alerts",
+  "resolved_route": "/alerts/AL-20260620-000123?evidenceView=pcap",
+  "target_ui": "doc/04_assets/ui_suite_gpt_v1/screens/pages/alert-detail-evidence-pcap.png",
+  "evidence_dir": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-pcap",
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "status": "evidence-ready",
+  "title": "alert-detail-evidence-pcap",
+  "target_observation": {
+    "layout": "Full-screen evidence-chain focus panel, not an AppShell page crop.",
+    "selected_state": "PCAP evidence tab active inside alert-detail evidence-chain state.",
+    "business_focus": "One PCAP slice evidence item with object path, SHA256 verification, download audit, and actions.",
+    "menu_policy": "Parent menu remains alerts because this detail state has no independent menu page."
+  },
+  "regions": [
+    {
+      "id": "canvas",
+      "name": "画布",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "layer": 0,
+      "purpose": "1920x1080 单屏证据链 focus 画布",
+      "components": [
+        "Viewport"
+      ],
+      "replication_notes": "不包含浏览器边框；本页为 menu-state focus 面板"
+    },
+    {
+      "id": "focus-root",
+      "name": "证据链 Focus 根节点",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "layer": 1,
+      "purpose": "隐藏 AppShell 公共区后的证据链业务区域",
+      "components": [
+        "AlertEvidencePcapFocusView"
+      ],
+      "replication_notes": "宽高随浏览器/Windows 窗口自适应，1920x1080 为验收视口"
+    },
+    {
+      "id": "outer-card",
+      "name": "外层发光边框",
+      "bbox": {
+        "x": 12,
+        "y": 28,
+        "w": 1897,
+        "h": 1025
+      },
+      "layer": 2,
+      "purpose": "承载全部 PCAP 证据链内容的主卡片",
+      "components": [
+        "CSS frame"
+      ],
+      "replication_notes": "圆角 8px，蓝色描边和内发光"
+    },
+    {
+      "id": "tabs-bar",
+      "name": "证据分类 Tab 区",
+      "bbox": {
+        "x": 14,
+        "y": 30,
+        "w": 1893,
+        "h": 132
+      },
+      "layer": 3,
+      "purpose": "标题与 6 个证据分类 Tab",
+      "components": [
+        "h1",
+        "button"
+      ],
+      "replication_notes": "PCAP Tab 高亮；长度和位置稳定"
+    },
+    {
+      "id": "title",
+      "name": "标题 证据链（6）",
+      "bbox": {
+        "x": 44,
+        "y": 86,
+        "w": 190,
+        "h": 44
+      },
+      "layer": 4,
+      "purpose": "证据链总数标题",
+      "components": [
+        "h1"
+      ],
+      "replication_notes": "文本必须完整显示"
+    },
+    {
+      "id": "tab-all",
+      "name": "Tab 全部 6",
+      "bbox": {
+        "x": 270,
+        "y": 72,
+        "w": 159,
+        "h": 90
+      },
+      "layer": 4,
+      "purpose": "全部证据计数",
+      "components": [
+        "button"
+      ],
+      "replication_notes": "未选中"
+    },
+    {
+      "id": "tab-pcap",
+      "name": "Tab PCAP 1",
+      "bbox": {
+        "x": 429,
+        "y": 72,
+        "w": 178,
+        "h": 90
+      },
+      "layer": 4,
+      "purpose": "PCAP 分类计数",
+      "components": [
+        "button"
+      ],
+      "replication_notes": "当前选中态蓝色渐变"
+    },
+    {
+      "id": "tab-session",
+      "name": "Tab Session 2",
+      "bbox": {
+        "x": 607,
+        "y": 72,
+        "w": 186,
+        "h": 90
+      },
+      "layer": 4,
+      "purpose": "Session 分类计数",
+      "components": [
+        "button"
+      ],
+      "replication_notes": "未选中"
+    },
+    {
+      "id": "tab-log",
+      "name": "Tab 日志 1",
+      "bbox": {
+        "x": 793,
+        "y": 72,
+        "w": 150,
+        "h": 90
+      },
+      "layer": 4,
+      "purpose": "日志分类计数",
+      "components": [
+        "button"
+      ],
+      "replication_notes": "未选中"
+    },
+    {
+      "id": "tab-graph-path",
+      "name": "Tab 图谱路径 1",
+      "bbox": {
+        "x": 943,
+        "y": 72,
+        "w": 202,
+        "h": 90
+      },
+      "layer": 4,
+      "purpose": "图谱路径分类计数",
+      "components": [
+        "button"
+      ],
+      "replication_notes": "未选中"
+    },
+    {
+      "id": "tab-file",
+      "name": "Tab 文件 1",
+      "bbox": {
+        "x": 1145,
+        "y": 72,
+        "w": 145,
+        "h": 90
+      },
+      "layer": 4,
+      "purpose": "文件分类计数",
+      "components": [
+        "button"
+      ],
+      "replication_notes": "未选中"
+    },
+    {
+      "id": "evidence-table",
+      "name": "证据表格容器",
+      "bbox": {
+        "x": 31,
+        "y": 162,
+        "w": 1859,
+        "h": 865
+      },
+      "layer": 3,
+      "purpose": "表头、PCAP 行、对象路径/SHA 详情和底部入口",
+      "components": [
+        "CSS grid table"
+      ],
+      "replication_notes": "无横向/纵向溢出"
+    },
+    {
+      "id": "table-head",
+      "name": "表头",
+      "bbox": {
+        "x": 33,
+        "y": 164,
+        "w": 1855,
+        "h": 156
+      },
+      "layer": 4,
+      "purpose": "8 列表头",
+      "components": [
+        "grid row"
+      ],
+      "replication_notes": "列宽固定，自适应只缩放卡片外层"
+    },
+    {
+      "id": "pcap-row",
+      "name": "PCAP 证据行",
+      "bbox": {
+        "x": 33,
+        "y": 320,
+        "w": 1855,
+        "h": 172
+      },
+      "layer": 4,
+      "purpose": "PCAP 文件记录与校验/下载/操作",
+      "components": [
+        "grid row"
+      ],
+      "replication_notes": "文件名完整显示；状态色为绿色"
+    },
+    {
+      "id": "detail-panel",
+      "name": "对象路径与 SHA 明细",
+      "bbox": {
+        "x": 33,
+        "y": 492,
+        "w": 1855,
+        "h": 330
+      },
+      "layer": 4,
+      "purpose": "PCAP 对象路径和 SHA256 校验值",
+      "components": [
+        "CSS grid detail"
+      ],
+      "replication_notes": "对象路径一行，SHA256 下一行"
+    },
+    {
+      "id": "footer-link",
+      "name": "查看全部 PCAP 入口",
+      "bbox": {
+        "x": 33,
+        "y": 822,
+        "w": 1855,
+        "h": 203
+      },
+      "layer": 4,
+      "purpose": "查看全部 PCAP 1 项",
+      "components": [
+        "footer link"
+      ],
+      "replication_notes": "链接左下对齐"
+    },
+    {
+      "id": "column-1",
+      "name": "列：证据类型",
+      "bbox": {
+        "x": 33,
+        "y": 164,
+        "w": 160,
+        "h": 328
+      },
+      "layer": 5,
+      "purpose": "证据类型 表头与数据列",
+      "components": [
+        "grid column"
+      ],
+      "replication_notes": "列宽锁定，解释 diff 热点"
+    },
+    {
+      "id": "column-2",
+      "name": "列：文件 / 记录",
+      "bbox": {
+        "x": 193,
+        "y": 164,
+        "w": 333,
+        "h": 328
+      },
+      "layer": 5,
+      "purpose": "文件 / 记录 表头与数据列",
+      "components": [
+        "grid column"
+      ],
+      "replication_notes": "列宽锁定，解释 diff 热点"
+    },
+    {
+      "id": "column-3",
+      "name": "列：内容摘要",
+      "bbox": {
+        "x": 526,
+        "y": 164,
+        "w": 386,
+        "h": 328
+      },
+      "layer": 5,
+      "purpose": "内容摘要 表头与数据列",
+      "components": [
+        "grid column"
+      ],
+      "replication_notes": "列宽锁定，解释 diff 热点"
+    },
+    {
+      "id": "column-4",
+      "name": "列：大小",
+      "bbox": {
+        "x": 912,
+        "y": 164,
+        "w": 158,
+        "h": 328
+      },
+      "layer": 5,
+      "purpose": "大小 表头与数据列",
+      "components": [
+        "grid column"
+      ],
+      "replication_notes": "列宽锁定，解释 diff 热点"
+    },
+    {
+      "id": "column-5",
+      "name": "列：生成时间",
+      "bbox": {
+        "x": 1070,
+        "y": 164,
+        "w": 184,
+        "h": 328
+      },
+      "layer": 5,
+      "purpose": "生成时间 表头与数据列",
+      "components": [
+        "grid column"
+      ],
+      "replication_notes": "列宽锁定，解释 diff 热点"
+    },
+    {
+      "id": "column-6",
+      "name": "列：校验状态",
+      "bbox": {
+        "x": 1254,
+        "y": 164,
+        "w": 226,
+        "h": 328
+      },
+      "layer": 5,
+      "purpose": "校验状态 表头与数据列",
+      "components": [
+        "grid column"
+      ],
+      "replication_notes": "列宽锁定，解释 diff 热点"
+    },
+    {
+      "id": "column-7",
+      "name": "列：下载审计",
+      "bbox": {
+        "x": 1480,
+        "y": 164,
+        "w": 242,
+        "h": 328
+      },
+      "layer": 5,
+      "purpose": "下载审计 表头与数据列",
+      "components": [
+        "grid column"
+      ],
+      "replication_notes": "列宽锁定，解释 diff 热点"
+    },
+    {
+      "id": "column-8",
+      "name": "列：操作",
+      "bbox": {
+        "x": 1722,
+        "y": 164,
+        "w": 166,
+        "h": 328
+      },
+      "layer": 5,
+      "purpose": "操作 表头与数据列",
+      "components": [
+        "grid column"
+      ],
+      "replication_notes": "列宽锁定，解释 diff 热点"
+    },
+    {
+      "id": "object-label",
+      "name": "对象路径标签",
+      "bbox": {
+        "x": 64,
+        "y": 556,
+        "w": 170,
+        "h": 86
+      },
+      "layer": 5,
+      "purpose": "对象路径字段标签",
+      "components": [
+        "label",
+        "FileTextOutlined"
+      ],
+      "replication_notes": "灰白图标+文字"
+    },
+    {
+      "id": "object-path",
+      "name": "对象路径值",
+      "bbox": {
+        "x": 256,
+        "y": 556,
+        "w": 840,
+        "h": 86
+      },
+      "layer": 5,
+      "purpose": "minio 对象路径",
+      "components": [
+        "value pill",
+        "CopyOutlined"
+      ],
+      "replication_notes": "长文本 title 保留全文"
+    },
+    {
+      "id": "sha-label",
+      "name": "SHA256 标签",
+      "bbox": {
+        "x": 64,
+        "y": 672,
+        "w": 170,
+        "h": 86
+      },
+      "layer": 5,
+      "purpose": "SHA256 字段标签",
+      "components": [
+        "label"
+      ],
+      "replication_notes": "# 号与 SHA256 文本"
+    },
+    {
+      "id": "sha-value",
+      "name": "SHA256 值",
+      "bbox": {
+        "x": 256,
+        "y": 672,
+        "w": 382,
+        "h": 86
+      },
+      "layer": 5,
+      "purpose": "SHA256 截断值",
+      "components": [
+        "value pill",
+        "CopyOutlined"
+      ],
+      "replication_notes": "title 保留全文"
+    }
+  ],
+  "texts": [
+    {
+      "must_match": true,
+      "value": "证据链（6）",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "value": "全部 6",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "value": "PCAP 1",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "value": "Session 2",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "value": "日志 1",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "value": "图谱路径 1",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "value": "文件 1",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "value": "证据类型 | 文件 / 记录 | 内容摘要 | 大小 | 生成时间 | 校验状态 | 下载审计 | 操作",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "value": "PCAP | AL-20260620-000123.pcap | PCAP 切片，TLS over HTTP 隧道，疑似隧道通信 | 24.8 MB | 06-20 03:43:05 | 已生成 / SHA256通过 | sec_analyst 03:44 下载 | 下载 / 查看",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "value": "对象路径  minio://traffic-evidence/alerts/2026/06/20/AL-20260620-000123.pcap",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "value": "# SHA256  1a2b3c4d5bef79a8h9i0j...",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "value": "查看全部 PCAP 1 项 >",
+      "type": "label"
+    },
+    {
+      "value": "证据类型",
+      "type": "table-header"
+    },
+    {
+      "value": "文件 / 记录",
+      "type": "table-header"
+    },
+    {
+      "value": "内容摘要",
+      "type": "table-header"
+    },
+    {
+      "value": "大小",
+      "type": "table-header"
+    },
+    {
+      "value": "生成时间",
+      "type": "table-header"
+    },
+    {
+      "value": "校验状态",
+      "type": "table-header"
+    },
+    {
+      "value": "下载审计",
+      "type": "table-header"
+    },
+    {
+      "value": "操作",
+      "type": "table-header"
+    },
+    {
+      "value": "PCAP",
+      "type": "evidence-type"
+    },
+    {
+      "value": "AL-20260620-000123.pcap",
+      "type": "link"
+    },
+    {
+      "value": "PCAP 切片",
+      "type": "summary"
+    },
+    {
+      "value": "TLS over HTTP 隧道",
+      "type": "summary"
+    },
+    {
+      "value": "疑似隧道通信",
+      "type": "summary"
+    },
+    {
+      "value": "24.8 MB",
+      "type": "metric"
+    },
+    {
+      "value": "06-20 03:43:05",
+      "type": "time"
+    },
+    {
+      "value": "已生成",
+      "type": "status"
+    },
+    {
+      "value": "SHA256通过",
+      "type": "status"
+    },
+    {
+      "value": "sec_analyst 03:44 下载",
+      "type": "audit"
+    },
+    {
+      "value": "对象路径",
+      "type": "label"
+    },
+    {
+      "value": "minio://traffic-evidence/alerts/2026/06/20/AL-20260620-000123.pcap",
+      "type": "path"
+    },
+    {
+      "value": "SHA256",
+      "type": "label"
+    },
+    {
+      "value": "1a2b3c4d5bef79a8h9i0j...",
+      "type": "hash"
+    },
+    {
+      "value": "下载",
+      "type": "action"
+    },
+    {
+      "value": "查看",
+      "type": "action"
+    }
+  ],
+  "components": [
+    {
+      "id": "AlertEvidencePcapFocusView",
+      "file": "web/ui/src/pages/AlertDetailPage.tsx",
+      "role": "focus page component",
+      "data_source": "fetchAlertDetailSnapshot(alertId) with typed fallback"
+    },
+    {
+      "id": "pcapEvidenceFrom",
+      "file": "web/ui/src/services/alertDetailApi.ts",
+      "role": "API/fallback mapper for pcap_evidence fields"
+    },
+    {
+      "id": "taf-alert-evidence-pcap-*",
+      "file": "web/ui/src/styles/pages.css",
+      "role": "fixed-grid visual implementation"
+    },
+    {
+      "id": "AppShell focus hide rule",
+      "file": "web/ui/src/styles/app-shell.css",
+      "role": "hide public shell only for focus evidence states"
+    },
+    {
+      "id": "EvidenceTabs",
+      "file": "web/ui/src/pages/AlertDetailPage.tsx",
+      "role": "six evidence category tabs",
+      "data_source": "evidence type counts"
+    },
+    {
+      "id": "PcapEvidenceActions",
+      "file": "web/ui/src/pages/AlertDetailPage.tsx",
+      "role": "download, view and copy actions",
+      "data_source": "signed URL, object path and SHA256"
+    }
+  ],
+  "diagram_classification": {
+    "business_dynamic_diagrams": [],
+    "independent_icons": [
+      "ApiOutlined",
+      "CheckCircleOutlined",
+      "CloudDownloadOutlined",
+      "EyeOutlined",
+      "FileTextOutlined",
+      "CopyOutlined",
+      "ArrowLeftOutlined"
+    ],
+    "background_or_decoration": [
+      {
+        "type": "CSS gradient/frame",
+        "source_manifest": "web/ui/src/styles/pages.css",
+        "contains_business_data": false
+      }
+    ],
+    "forbidden_bitmap_usage": "No target screenshot, full-card bitmap, table bitmap, or chart bitmap is used in implementation."
+  },
+  "data_mapping": {
+    "api": "fetchAlertDetailSnapshot(alertId)",
+    "typed_fallback": "mock/derived alert detail snapshot in web/ui/src/services/alertDetailApi.ts",
+    "refresh": "30s in normal mode; disabled only under visual breakdown capture to keep deterministic screenshots",
+    "fields": {
+      "counts": "evidenceBucketCounts(snapshot.evidenceRows)",
+      "fileName": "pcapEvidence.fileName",
+      "contentSummary": "pcapEvidence.contentSummary",
+      "size": "pcapEvidence.size",
+      "generatedAt": "pcapEvidence.generatedAt -> compactDateTime",
+      "statusLines": "pcapEvidence.statusLines",
+      "downloadAudit": "pcapEvidence.downloadAudit",
+      "objectPath": "pcapEvidence.objectPath",
+      "sha256": "pcapEvidence.sha256"
+    }
+  },
+  "runtime_acceptance": {
+    "production_url": "http://10.0.5.8:30180/alerts/AL-20260620-000123?__codex_ui_breakdown_production=1&__codex_page_id=alert-detail-evidence-pcap&evidenceView=pcap&__capture=r152-final&windowsCdpEvidenceTs=1783582819722",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "image_tag": "traffic/web-ui:ui-alert-detail-evidence-pcap-visual-20260709-r152",
+    "capture_meta": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-pcap/capture-meta.json",
+    "metrics": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-pcap/metrics.json",
+    "diff": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-pcap/diff.png",
+    "status": "pass",
+    "mismatch_ratio": 0.07255111882716049,
+    "threshold": 0.12
+  },
+  "responsive_strategy": {
+    "root": "100% viewport focus panel; no fixed browser-window assumption beyond 1920x1080 acceptance shot",
+    "table": "CSS grid columns with stable measured widths; overflow hidden and titles for long values",
+    "long_text": "file/path/SHA/summary/audit all expose full title when visually constrained"
+  },
+  "updated_at": "2026-07-09T15:45:31+08:00",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/alert-detail-evidence-pcap.png",
+  "observation": {
+    "layout": "Full-viewport PCAP evidence panel",
+    "business_focus": "PCAP tab with one evidence row, object path, SHA256, download audit and actions",
+    "current_state": "PCAP 1 active",
+    "acceptance_scope": "Breakdown plus independent Windows Chrome runtime and pixel evidence"
+  },
+  "icons": [
+    {
+      "icon": "FundProjectionScreenOutlined",
+      "location": "pcap-row",
+      "semantic": "PCAP 证据"
+    },
+    {
+      "icon": "CheckCircleOutlined",
+      "location": "pcap-row",
+      "semantic": "SHA256 校验通过"
+    },
+    {
+      "icon": "DownloadOutlined",
+      "location": "pcap-row",
+      "semantic": "下载并审计"
+    },
+    {
+      "icon": "EyeOutlined",
+      "location": "pcap-row",
+      "semantic": "查看 PCAP"
+    },
+    {
+      "icon": "FileOutlined",
+      "location": "detail-panel",
+      "semantic": "对象路径"
+    },
+    {
+      "icon": "NumberOutlined",
+      "location": "detail-panel",
+      "semantic": "SHA256"
+    },
+    {
+      "icon": "CopyOutlined",
+      "location": "detail-panel",
+      "semantic": "复制完整值"
+    }
+  ],
+  "tokens": [
+    {
+      "name": "page-bg",
+      "value": "#03111c",
+      "usage": "画布"
+    },
+    {
+      "name": "panel-bg",
+      "value": "rgba(6,28,43,0.86)",
+      "usage": "证据面板"
+    },
+    {
+      "name": "panel-strong-bg",
+      "value": "#071f32",
+      "usage": "表头和值框"
+    },
+    {
+      "name": "border-weak",
+      "value": "rgba(56,151,201,0.22)",
+      "usage": "表格线"
+    },
+    {
+      "name": "active-blue",
+      "value": "#1e9cff",
+      "usage": "激活和链接"
+    },
+    {
+      "name": "text-primary",
+      "value": "#eaf7ff",
+      "usage": "主文字"
+    },
+    {
+      "name": "text-secondary",
+      "value": "#9db9c9",
+      "usage": "辅助文字"
+    },
+    {
+      "name": "success",
+      "value": "#36d66b",
+      "usage": "校验通过"
+    },
+    {
+      "name": "info",
+      "value": "#18a8ff",
+      "usage": "信息动作"
+    },
+    {
+      "name": "panel-radius",
+      "value": "6px",
+      "usage": "面板圆角"
+    },
+    {
+      "name": "control-radius",
+      "value": "4px",
+      "usage": "控件圆角"
+    },
+    {
+      "name": "panel-gap",
+      "value": "8px",
+      "usage": "间距"
+    }
+  ],
+  "interactions": [
+    {
+      "control": "pcap-tab",
+      "trigger": "click",
+      "state": "selected",
+      "expected": "PCAP 1 激活"
+    },
+    {
+      "control": "download",
+      "trigger": "click",
+      "state": "audited",
+      "expected": "下载文件并记录操作者"
+    },
+    {
+      "control": "view",
+      "trigger": "click",
+      "state": "detail-open",
+      "expected": "打开 PCAP 详情"
+    },
+    {
+      "control": "copy-object-path",
+      "trigger": "click",
+      "state": "copied",
+      "expected": "复制完整 MinIO URI"
+    },
+    {
+      "control": "copy-sha256",
+      "trigger": "click",
+      "state": "copied",
+      "expected": "复制完整 SHA256"
+    },
+    {
+      "control": "view-all",
+      "trigger": "click",
+      "state": "list-open",
+      "expected": "打开全部 PCAP"
+    }
+  ],
+  "implementation": {
+    "source": "/alerts/alert-default-1782752318016-1dd589c4",
+    "mode": "production-route",
+    "route": "/alerts/:alertId",
+    "pages": [
+      "web/ui/src/pages/AlertDetailPage.tsx"
+    ],
+    "components": [
+      "AlertEvidencePcapFocusView",
+      "AlertDetailEvidenceRow.pcapEvidence"
+    ],
+    "services": [
+      "web/ui/src/services/alertDetailApi.ts",
+      "web/ui/src/services/api.ts"
+    ],
+    "resolved_path": "/alerts/alert-default-1782752318016-1dd589c4",
+    "route_state": {},
+    "note": "implementation.png is captured from the real APISIX/Web UI production route through Windows Chrome CDP. It is not a raster replay of target.png."
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-pcap/target.png",
+    "implementation": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-pcap/implementation.png",
+    "diff": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-pcap/diff.png",
+    "metrics": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-pcap/metrics.json",
+    "evidence_mode": "production-route",
+    "capture_meta": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-pcap/capture-meta.json",
+    "cdp_version": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-pcap/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-pcap/cdp-list.json",
+    "production_route_report": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-pcap/production-route-report.json",
+    "url": "http://10.0.5.8:30180/alerts/alert-default-1782752318016-1dd589c4?windowsCdpEvidenceTs=1783853628488#codex_smoke_token=<redacted>",
+    "final_url": "http://10.0.5.8:30180/alerts/alert-default-1782752318016-1dd589c4?windowsCdpEvidenceTs=1783853628488",
+    "verification": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-pcap/verification.json"
+  },
+  "accepted": false,
+  "differences": [
+    {
+      "type": "production-evidence-scope",
+      "location": "/alerts/alert-default-1782752318016-1dd589c4",
+      "current": "implementation.png is captured from the real APISIX/Web UI route in Windows Chrome CDP",
+      "expected": "no target.png raster replay is used as implementation evidence",
+      "status": "documented"
+    },
+    {
+      "type": "production-state-mapping",
+      "location": "/alerts/alert-default-1782752318016-1dd589c4",
+      "current": "no dedicated production state query is implemented for alert-detail-evidence-pcap; captured host route alert-detail",
+      "expected": "target image has a deterministic implemented route state or interaction mapping",
+      "status": "open"
+    }
+  ],
+  "unresolved": [
+    "production-state-mapping:/alerts/alert-default-1782752318016-1dd589c4"
+  ]
+}

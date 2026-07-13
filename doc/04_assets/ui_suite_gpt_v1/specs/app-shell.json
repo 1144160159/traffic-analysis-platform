@@ -1,0 +1,40 @@
+{
+  "target": {
+    "topbar": {
+      "x": 0,
+      "y": 0,
+      "w": 1920,
+      "h": 80
+    },
+    "sidebar": {
+      "x": 0,
+      "y": 80,
+      "w": 166,
+      "h": 917
+    },
+    "content": {
+      "x": 198,
+      "y": 80,
+      "w": 1722,
+      "h": 917
+    },
+    "bottombar": {
+      "x": 0,
+      "y": 997,
+      "w": 1920,
+      "h": 83
+    }
+  },
+  "currentCodeTokens": {
+    "shellTopbar": "80px",
+    "shellSidebar": "166px",
+    "shellBottombar": "83px",
+    "panelRadius": "6px"
+  },
+  "rules": [
+    "顶部栏不得承载通知铃铛、用户头像、用户菜单、设置或电源动作组",
+    "左侧必须为单栏展开式导航，禁止窄一级栏 + 独立二级栏",
+    "底部右侧承载通知、设置、全局配置、电源",
+    "除 login 和明确独立浮层外，公共区按 screen.png 目标参数验收"
+  ]
+}

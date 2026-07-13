@@ -1,0 +1,8 @@
+{
+  "keystore_pkcs12_rc": 0,
+  "truststore_pkcs12_rc": 0,
+  "ca_certificate_rc": 0,
+  "truststore_keytool_rc": 0,
+  "truststore_has_trusted_cert": true,
+  "tls_validation_blockers": 0
+}

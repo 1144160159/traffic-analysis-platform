@@ -1,0 +1,17 @@
+Generate a 3840x2160 PNG static 4K background asset for traffic-analysis-platform.
+
+Use case: productivity-visual.
+Asset type: secure login and identity background for an enterprise network traffic analysis platform.
+
+Scene:
+- A dark secure identity gateway, campus boundary, zero-trust access path, certificate chain, MFA signal, and session token flow as abstract visual motifs.
+- The image should support a login form overlay, with broad quiet space on the right-center.
+
+Style:
+- Enterprise SOC, dark navy/black base, cyan identity lines, blue certificate glow, restrained green trust accents, very small amber warning hints.
+- Polished, high-detail, realistic technical rendering, not a marketing hero.
+
+Constraints:
+- No actual form, browser chrome, readable text, people, faces, logos, passwords, QR codes, real IP addresses, credentials, or full UI screenshot.
+- Keep all text-like marks abstract and unreadable.
+

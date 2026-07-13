@@ -1,0 +1,74 @@
+[
+  {
+    "description": "",
+    "devtoolsFrontendUrl": "https://chrome-devtools-frontend.appspot.com/serve_rev/@7ab03afd1c9903523ed81ffbb459a307bcb8a0bf/inspector.html?ws=127.0.0.1:9224/devtools/page/649DAB07EB9511717DC532A8BCCB202B",
+    "id": "649DAB07EB9511717DC532A8BCCB202B",
+    "title": "园区网络全流量采集与分析系统",
+    "type": "page",
+    "url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=department&__codex_page_id=campaign-detail-impact-department&__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1783666024345#codex_smoke_token=<redacted>",
+    "webSocketDebuggerUrl": "ws://127.0.0.1:9224/devtools/page/649DAB07EB9511717DC532A8BCCB202B"
+  },
+  {
+    "description": "",
+    "devtoolsFrontendUrl": "https://chrome-devtools-frontend.appspot.com/serve_rev/@7ab03afd1c9903523ed81ffbb459a307bcb8a0bf/inspector.html?ws=127.0.0.1:9224/devtools/page/587D0733F70F0258FAF7BEC254E68C12",
+    "id": "587D0733F70F0258FAF7BEC254E68C12",
+    "title": "园区网络全流量采集与分析系统",
+    "type": "page",
+    "url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=campus&windowsCdpEvidenceTs=1783664598326",
+    "webSocketDebuggerUrl": "ws://127.0.0.1:9224/devtools/page/587D0733F70F0258FAF7BEC254E68C12"
+  },
+  {
+    "description": "",
+    "devtoolsFrontendUrl": "https://chrome-devtools-frontend.appspot.com/serve_rev/@7ab03afd1c9903523ed81ffbb459a307bcb8a0bf/inspector.html?ws=127.0.0.1:9224/devtools/page/7BE646F5706168F9C07ADBC34698E335",
+    "id": "7BE646F5706168F9C07ADBC34698E335",
+    "title": "园区网络全流量采集与分析系统",
+    "type": "page",
+    "url": "http://10.0.5.8:30180/login",
+    "webSocketDebuggerUrl": "ws://127.0.0.1:9224/devtools/page/7BE646F5706168F9C07ADBC34698E335"
+  },
+  {
+    "description": "",
+    "devtoolsFrontendUrl": "https://chrome-devtools-frontend.appspot.com/serve_rev/@7ab03afd1c9903523ed81ffbb459a307bcb8a0bf/inspector.html?ws=127.0.0.1:9224/devtools/page/E0C3D75308D6A05851B196F5F9461085",
+    "id": "E0C3D75308D6A05851B196F5F9461085",
+    "title": "127.0.0.1:9225/json/version",
+    "type": "page",
+    "url": "http://127.0.0.1:9225/json/version",
+    "webSocketDebuggerUrl": "ws://127.0.0.1:9224/devtools/page/E0C3D75308D6A05851B196F5F9461085"
+  },
+  {
+    "description": "",
+    "devtoolsFrontendUrl": "https://chrome-devtools-frontend.appspot.com/serve_rev/@7ab03afd1c9903523ed81ffbb459a307bcb8a0bf/inspector.html?ws=127.0.0.1:9224/devtools/page/7D28468A9B9269B31AA9C4B56531110C",
+    "id": "7D28468A9B9269B31AA9C4B56531110C",
+    "title": "127.0.0.1",
+    "type": "page",
+    "url": "http://127.0.0.1:9224/json/version",
+    "webSocketDebuggerUrl": "ws://127.0.0.1:9224/devtools/page/7D28468A9B9269B31AA9C4B56531110C"
+  },
+  {
+    "description": "",
+    "devtoolsFrontendUrl": "https://chrome-devtools-frontend.appspot.com/serve_rev/@7ab03afd1c9903523ed81ffbb459a307bcb8a0bf/worker_app.html?ws=127.0.0.1:9224/devtools/page/99E859D2185A9B4FFEAFCA7D07426523",
+    "id": "99E859D2185A9B4FFEAFCA7D07426523",
+    "title": "Service Worker chrome-extension://cndglokmgjecikflojjieeeajbljgfae/background.js",
+    "type": "service_worker",
+    "url": "chrome-extension://cndglokmgjecikflojjieeeajbljgfae/background.js",
+    "webSocketDebuggerUrl": "ws://127.0.0.1:9224/devtools/page/99E859D2185A9B4FFEAFCA7D07426523"
+  },
+  {
+    "description": "",
+    "devtoolsFrontendUrl": "https://chrome-devtools-frontend.appspot.com/serve_rev/@7ab03afd1c9903523ed81ffbb459a307bcb8a0bf/worker_app.html?ws=127.0.0.1:9224/devtools/page/DB3108AA84B5598392CC15D202EF923E",
+    "id": "DB3108AA84B5598392CC15D202EF923E",
+    "title": "Service Worker chrome-extension://aapbdbdomjkkjkaonfhkkikfgjllcleb/main_compiled.js",
+    "type": "service_worker",
+    "url": "chrome-extension://aapbdbdomjkkjkaonfhkkikfgjllcleb/main_compiled.js",
+    "webSocketDebuggerUrl": "ws://127.0.0.1:9224/devtools/page/DB3108AA84B5598392CC15D202EF923E"
+  },
+  {
+    "description": "",
+    "devtoolsFrontendUrl": "https://chrome-devtools-frontend.appspot.com/serve_rev/@7ab03afd1c9903523ed81ffbb459a307bcb8a0bf/worker_app.html?ws=127.0.0.1:9224/devtools/page/320DFDB6ED8CFDBF8531C9B36ED3721C",
+    "id": "320DFDB6ED8CFDBF8531C9B36ED3721C",
+    "title": "Service Worker chrome-extension://kbfnbcaeplbcioakkpcpgfkobkghlhen/sw.js",
+    "type": "service_worker",
+    "url": "chrome-extension://kbfnbcaeplbcioakkpcpgfkobkghlhen/sw.js",
+    "webSocketDebuggerUrl": "ws://127.0.0.1:9224/devtools/page/320DFDB6ED8CFDBF8531C9B36ED3721C"
+  }
+]

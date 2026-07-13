@@ -1,0 +1,207 @@
+{
+  "target_id": "campaign-detail-impact-service",
+  "route_id": "campaign-detail",
+  "route": "/campaigns/:campaignId",
+  "resolved_path": "/campaigns/campaign-exfil-default-1782729598739-e1d2dc37",
+  "navigation_url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=service&__codex_page_id=campaign-detail-impact-service&__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1783667368172#codex_smoke_token=<redacted>",
+  "final_url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=service&__codex_page_id=campaign-detail-impact-service&__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1783667368172#codex_smoke_token=<redacted>",
+  "goto_error": null,
+  "bad_responses": [],
+  "resource_requests": [
+    {
+      "url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=service&__codex_page_id=campaign-detail-impact-service&__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1783667368172",
+      "method": "GET",
+      "resource_type": "document"
+    },
+    {
+      "url": "http://10.0.5.8:30180/config.js?runtime=1",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/index-DbVjU8Q3.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-outvariant-BBS2yBlX.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-rettime-Dx7Zosze.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-react-DcxXCZkJ.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-is-node-process-BZ-2HBMI.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-misc-IOeGAkip.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-strict-event-emitter-CrFXw_VT.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-mswjs-interceptors-DhD__bBq.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-until-async-Bf6op_KE.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-path-to-regexp-wCvGX3Wm.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-tldts-core-CHyGRZbr.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-tldts-BrGjyBsC.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-set-cookie-parser-3_eJYb7L.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-headers-polyfill-BPLrDQpH.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-msw-CUNbvPfy.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-babel-runtime-DOsDFnm7.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-ant-design-fast-color-a4DwzfPV.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-dayjs-Csm2ddBZ.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-rc-D8Be7kXi.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-stylis-BmaM3nay.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-ant-design-9aWIuLjh.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-antd-Cukv-RvN.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-data-38j4_Kgc.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-remix-run-router-DTlRP5cs.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/vendor-router-CQ_4Ibzk.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/index-DDPdgPfc.css",
+      "method": "GET",
+      "resource_type": "stylesheet"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/CampaignDetailPage-DP4euqUY.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/MetricTile-xE3uPL30.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/OverlayContractHost-D4FKuj0C.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/StatusTag-DGvGdyMq.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/WorkPanel-D5XyU7AQ.js",
+      "method": "GET",
+      "resource_type": "script"
+    },
+    {
+      "url": "http://10.0.5.8:30180/assets/screen-topbar-shield-exact@3x-BMBlSnq_.png",
+      "method": "GET",
+      "resource_type": "image"
+    }
+  ],
+  "forbidden_target_resource_requests": [],
+  "request_failures": [],
+  "console_errors": [],
+  "page_errors": [],
+  "metrics": {
+    "final_url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=service&__codex_page_id=campaign-detail-impact-service&__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1783667368172#codex_smoke_token=<redacted>",
+    "document_title": "园区网络全流量采集与分析系统",
+    "h1": "影响范围",
+    "body_text_sample": "影响范围 资产 账号 服务 部门 校区 业务系统 42 受影响服务 高风险 11 26.2% 中风险 18 42.9% 低风险 13 30.9% 关键服务（Top 5） 服务名称 端口/协议 风险 依赖关系 PostgreSQL 5432/TCP 高危 科研管理系统 MinIO API 9000/TCP 高危 证据归档 LDAP 389/TCP 中危 统一认证 NFS 2049/TCP 中危 文件共享 Redis 6379/TCP 中危 会话缓存 查看全部服务 >",
+    "viewport_width": 2133,
+    "viewport_height": 1200,
+    "device_pixel_ratio": 0.8999999632438005,
+    "scroll_width": 2133,
+    "client_width": 2133,
+    "scroll_height": 1200,
+    "client_height": 1200,
+    "horizontal_overflow": false,
+    "vertical_scroll": false,
+    "error_alerts": [],
+    "visible_bad_geometry": []
+  },
+  "route_state_notes": [],
+  "protected_route": true,
+  "smoke_token_used": true,
+  "smoke_hash_consumed": false
+}

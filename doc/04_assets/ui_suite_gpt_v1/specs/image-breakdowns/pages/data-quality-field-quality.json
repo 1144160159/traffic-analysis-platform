@@ -1,0 +1,824 @@
+{
+  "id": "data-quality-field-quality",
+  "category": "pages",
+  "page_id": "data-quality-field-quality",
+  "route": "/data-quality?tab=field-quality",
+  "type": "menu-state",
+  "parent": "data-quality",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/data-quality-field-quality.png",
+  "target_ui": "doc/04_assets/ui_suite_gpt_v1/screens/pages/data-quality-field-quality.png",
+  "evidence_dir": "evidence/ui-image-breakdowns/pages/data-quality-field-quality/",
+  "status": "evidence-ready",
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "production": {
+    "url": "http://10.0.5.8:30180/data-quality?tab=field-quality",
+    "image_tag": "traffic/web-ui:ui-data-quality-field-quality-20260711-r234",
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "observation": {
+    "layout": "DataQuality menu-state field-quality tab with AppShell, title/tabs, filter bar, 7 KPI cards, two business rows, and 198px right rail.",
+    "menu_state": "采集监测展开，数据质量菜单保持选中；字段质量是 /data-quality tab state, not an independent menu route.",
+    "breadcrumb_rule": "业务区域顶部无菜单路径；本 tab state 不需要返回箭头；左侧标题说明当前页面为 数据质量。",
+    "business_focus": "字段质量页强调字段完整性、格式合规、一致性、异常字段、影响记录、待修复任务、community_id 校验、异常样本、血缘映射和修复建议。"
+  },
+  "regions": [
+    {
+      "id": "canvas",
+      "name": "画布",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "components": [
+        "Viewport"
+      ],
+      "notes": "1920x1080 Windows Chrome CDP capture"
+    },
+    {
+      "id": "topbar",
+      "name": "顶部全局状态栏",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 80
+      },
+      "components": [
+        "AppHeader"
+      ],
+      "notes": "公共区沿用 AppShell，不属于本页回修范围"
+    },
+    {
+      "id": "sidebar",
+      "name": "左侧菜单",
+      "bbox": {
+        "x": 0,
+        "y": 80,
+        "w": 190,
+        "h": 917
+      },
+      "components": [
+        "PrimarySidebar"
+      ],
+      "notes": "采集监测展开，数据质量选中；menu-state 保持父菜单选中"
+    },
+    {
+      "id": "bottom-status",
+      "name": "底部状态栏",
+      "bbox": {
+        "x": 0,
+        "y": 997,
+        "w": 1920,
+        "h": 83
+      },
+      "components": [
+        "BottomStatusBar"
+      ],
+      "notes": "公共底栏，不遮挡业务模块"
+    },
+    {
+      "id": "content-root",
+      "name": "业务内容区",
+      "bbox": {
+        "x": 198,
+        "y": 80,
+        "w": 1722,
+        "h": 917
+      },
+      "components": [
+        "DataQualityPage"
+      ],
+      "notes": "当前 diff 主审业务区"
+    },
+    {
+      "id": "title-tabs",
+      "name": "标题与 Tab",
+      "bbox": {
+        "x": 198,
+        "y": 80,
+        "w": 1506,
+        "h": 75
+      },
+      "components": [
+        "PageTitle",
+        "Tabs"
+      ],
+      "notes": "左侧说明为 数据质量，字段质量 tab 选中；无菜单路径"
+    },
+    {
+      "id": "filterbar",
+      "name": "时间筛选与刷新",
+      "bbox": {
+        "x": 198,
+        "y": 157,
+        "w": 1506,
+        "h": 32
+      },
+      "components": [
+        "Select",
+        "DateRange",
+        "AutoRefresh",
+        "Button"
+      ],
+      "notes": "时间范围、近24小时、日期区间、自动刷新、刷新"
+    },
+    {
+      "id": "field-kpis",
+      "name": "字段质量 KPI",
+      "bbox": {
+        "x": 198,
+        "y": 197,
+        "w": 1506,
+        "h": 116
+      },
+      "components": [
+        "MetricTile",
+        "SVG Sparkline"
+      ],
+      "notes": "7 张 KPI：字段质量分、完整率、格式合规、一致性、异常字段、影响记录、待修复任务"
+    },
+    {
+      "id": "field-matrix",
+      "name": "关键字段质量矩阵",
+      "bbox": {
+        "x": 198,
+        "y": 322,
+        "w": 507,
+        "h": 366
+      },
+      "components": [
+        "React Heatmap Table"
+      ],
+      "notes": "五元组、community_id、tenant、asset_id 等字段多维质量热力矩阵"
+    },
+    {
+      "id": "field-trend",
+      "name": "字段异常趋势",
+      "bbox": {
+        "x": 713,
+        "y": 322,
+        "w": 433,
+        "h": 366
+      },
+      "components": [
+        "DataQualityFieldTrendChart",
+        "ECharts Canvas"
+      ],
+      "notes": "缺失值、格式不合法、映射不一致、时间漂移、未知协议，ECharts 阈值线和汇总"
+    },
+    {
+      "id": "community-check",
+      "name": "五元组与 community_id 校验",
+      "bbox": {
+        "x": 1153,
+        "y": 322,
+        "w": 550,
+        "h": 366
+      },
+      "components": [
+        "React Flow",
+        "DataTable"
+      ],
+      "notes": "校验状态、匹配率、不匹配数、哈希碰撞告警、校验明细和不匹配样例"
+    },
+    {
+      "id": "anomaly-samples",
+      "name": "异常样本表",
+      "bbox": {
+        "x": 198,
+        "y": 696,
+        "w": 518,
+        "h": 282
+      },
+      "components": [
+        "DataTable"
+      ],
+      "notes": "按影响时间排序，含 Topic、字段、异常类型、原始值、归一化值、影响资产、处置"
+    },
+    {
+      "id": "lineage-mapping",
+      "name": "字段血缘与映射",
+      "bbox": {
+        "x": 727,
+        "y": 696,
+        "w": 419,
+        "h": 282
+      },
+      "components": [
+        "React Pipeline"
+      ],
+      "notes": "Kafka Topic -> Flink -> 归一化映射 -> Sink，状态色表达正常/警告/异常"
+    },
+    {
+      "id": "repair-tasks",
+      "name": "修复任务与规则建议",
+      "bbox": {
+        "x": 1154,
+        "y": 696,
+        "w": 549,
+        "h": 282
+      },
+      "components": [
+        "DataTable"
+      ],
+      "notes": "任务名称、异常字段、建议映射/修复规则、负责人、状态、SLA、验证结果、操作"
+    },
+    {
+      "id": "right-rail",
+      "name": "右侧处置与证据栏",
+      "bbox": {
+        "x": 1711,
+        "y": 157,
+        "w": 198,
+        "h": 822
+      },
+      "components": [
+        "ActionRail"
+      ],
+      "notes": "字段质量异常、快速定位、修复建议、证据与报告"
+    }
+  ],
+  "text_ledger": [
+    {
+      "value": "数据质量",
+      "must_match": true
+    },
+    {
+      "value": "字段质量",
+      "must_match": true
+    },
+    {
+      "value": "时间范围",
+      "must_match": true
+    },
+    {
+      "value": "近 24 小时",
+      "must_match": true
+    },
+    {
+      "value": "2025-06-25 15:30:45 ~ 2025-06-26 15:30:45",
+      "must_match": true
+    },
+    {
+      "value": "自动刷新",
+      "must_match": true
+    },
+    {
+      "value": "刷新",
+      "must_match": true
+    },
+    {
+      "value": "字段质量分",
+      "must_match": true
+    },
+    {
+      "value": "94/100",
+      "must_match": true
+    },
+    {
+      "value": "完整率",
+      "must_match": true
+    },
+    {
+      "value": "98.7%",
+      "must_match": true
+    },
+    {
+      "value": "格式合规",
+      "must_match": true
+    },
+    {
+      "value": "97.9%",
+      "must_match": true
+    },
+    {
+      "value": "一致性",
+      "must_match": true
+    },
+    {
+      "value": "96.4%",
+      "must_match": true
+    },
+    {
+      "value": "异常字段",
+      "must_match": true
+    },
+    {
+      "value": "23 项",
+      "must_match": true
+    },
+    {
+      "value": "影响记录",
+      "must_match": true
+    },
+    {
+      "value": "18.4K 条",
+      "must_match": true
+    },
+    {
+      "value": "待修复任务",
+      "must_match": true
+    },
+    {
+      "value": "7 个",
+      "must_match": true
+    },
+    {
+      "value": "关键字段质量矩阵",
+      "must_match": true
+    },
+    {
+      "value": "五元组",
+      "must_match": true
+    },
+    {
+      "value": "community_id",
+      "must_match": true
+    },
+    {
+      "value": "tenant",
+      "must_match": true
+    },
+    {
+      "value": "asset_id",
+      "must_match": true
+    },
+    {
+      "value": "protocol",
+      "must_match": true
+    },
+    {
+      "value": "timestamp",
+      "must_match": true
+    },
+    {
+      "value": "direction",
+      "must_match": true
+    },
+    {
+      "value": "bytes",
+      "must_match": true
+    },
+    {
+      "value": "packets",
+      "must_match": true
+    },
+    {
+      "value": "alert_id",
+      "must_match": true
+    },
+    {
+      "value": "字段异常趋势（近 24 小时）",
+      "must_match": true
+    },
+    {
+      "value": "缺失值",
+      "must_match": true
+    },
+    {
+      "value": "格式不合法",
+      "must_match": true
+    },
+    {
+      "value": "映射不一致",
+      "must_match": true
+    },
+    {
+      "value": "时间漂移",
+      "must_match": true
+    },
+    {
+      "value": "未知协议",
+      "must_match": true
+    },
+    {
+      "value": "五元组与 community_id 校验",
+      "must_match": true
+    },
+    {
+      "value": "校验状态",
+      "must_match": true
+    },
+    {
+      "value": "匹配率",
+      "must_match": true
+    },
+    {
+      "value": "不匹配数",
+      "must_match": true
+    },
+    {
+      "value": "哈希碰撞告警",
+      "must_match": true
+    },
+    {
+      "value": "异常样本表（按影响时间排序）",
+      "must_match": true
+    },
+    {
+      "value": "字段血缘与映射",
+      "must_match": true
+    },
+    {
+      "value": "修复任务与规则建议",
+      "must_match": true
+    },
+    {
+      "value": "字段质量异常（近 24 小时）",
+      "must_match": true
+    },
+    {
+      "value": "快速定位",
+      "must_match": true
+    },
+    {
+      "value": "修复建议",
+      "must_match": true
+    },
+    {
+      "value": "证据与报告",
+      "must_match": true
+    },
+    {
+      "value": "字段质量证据中心",
+      "must_match": true
+    }
+  ],
+  "texts": [
+    {"value":"数据质量","type":"title","bbox":{"x":200,"y":76,"w":120,"h":30}},
+    {"value":"质量总览","type":"tab","bbox":{"x":200,"y":111,"w":122,"h":38}},
+    {"value":"Topic 健康","type":"tab","bbox":{"x":322,"y":111,"w":127,"h":38}},
+    {"value":"Flink 质量","type":"tab","bbox":{"x":449,"y":111,"w":124,"h":38}},
+    {"value":"字段质量","type":"tab-active","bbox":{"x":573,"y":111,"w":122,"h":38}},
+    {"value":"存储质量","type":"tab","bbox":{"x":695,"y":111,"w":120,"h":38}},
+    {"value":"重放对账","type":"tab","bbox":{"x":815,"y":111,"w":122,"h":38}},
+    {"value":"质量报告","type":"tab","bbox":{"x":937,"y":111,"w":120,"h":38}},
+    {"value":"质量设置","type":"tab","bbox":{"x":1057,"y":111,"w":121,"h":38}},
+    {"value":"时间范围","type":"filter-label","bbox":{"x":211,"y":161,"w":61,"h":24}},
+    {"value":"近 24 小时","type":"select-value","bbox":{"x":278,"y":158,"w":116,"h":28}},
+    {"value":"自动刷新","type":"toggle-label","bbox":{"x":1532,"y":158,"w":70,"h":28}},
+    {"value":"刷新","type":"button","bbox":{"x":1628,"y":157,"w":72,"h":30}},
+    {"value":"字段质量分","type":"metric-label","bbox":{"x":214,"y":211,"w":100,"h":24}},
+    {"value":"94/100","type":"metric-value","bbox":{"x":216,"y":238,"w":100,"h":42}},
+    {"value":"完整率 98.7%","type":"metric","bbox":{"x":430,"y":211,"w":170,"h":69}},
+    {"value":"格式合规 97.9%","type":"metric","bbox":{"x":662,"y":211,"w":180,"h":69}},
+    {"value":"一致性 96.4%","type":"metric","bbox":{"x":897,"y":211,"w":170,"h":69}},
+    {"value":"异常字段 23 项","type":"metric-alert","bbox":{"x":1136,"y":211,"w":160,"h":69}},
+    {"value":"影响记录 18.4K 条","type":"metric-warning","bbox":{"x":1342,"y":211,"w":170,"h":69}},
+    {"value":"待修复任务 7 个","type":"metric-warning","bbox":{"x":1539,"y":211,"w":160,"h":69}},
+    {"value":"关键字段质量矩阵","type":"panel-title","bbox":{"x":212,"y":332,"w":220,"h":25}},
+    {"value":"字段异常趋势（近 24 小时）","type":"panel-title","bbox":{"x":724,"y":332,"w":260,"h":25}},
+    {"value":"五元组与 community_id 校验","type":"panel-title","bbox":{"x":1162,"y":332,"w":300,"h":25}},
+    {"value":"异常样本表（按影响时间排序）","type":"panel-title","bbox":{"x":212,"y":702,"w":300,"h":25}},
+    {"value":"字段血缘与映射","type":"panel-title","bbox":{"x":724,"y":702,"w":220,"h":25}},
+    {"value":"修复任务与规则建议","type":"panel-title","bbox":{"x":1162,"y":735,"w":240,"h":25}},
+    {"value":"字段质量异常（近 24 小时）","type":"rail-title","bbox":{"x":1724,"y":163,"w":180,"h":25}},
+    {"value":"快速定位","type":"rail-title","bbox":{"x":1724,"y":346,"w":100,"h":25}},
+    {"value":"修复建议","type":"rail-title","bbox":{"x":1724,"y":531,"w":100,"h":25}},
+    {"value":"证据与报告","type":"rail-title","bbox":{"x":1724,"y":778,"w":120,"h":25}},
+    {"value":"缺失值","type":"legend","bbox":{"x":735,"y":363,"w":62,"h":20}},
+    {"value":"格式不合法","type":"legend","bbox":{"x":801,"y":363,"w":92,"h":20}},
+    {"value":"映射不一致","type":"legend","bbox":{"x":900,"y":363,"w":92,"h":20}},
+    {"value":"时间漂移","type":"legend","bbox":{"x":998,"y":363,"w":76,"h":20}},
+    {"value":"未知协议","type":"legend","bbox":{"x":1080,"y":363,"w":76,"h":20}}
+  ],
+  "components": [
+    {"name":"DataQualityTabs","region":"title-tabs","role":"eight stable tabs"},
+    {"name":"FieldQualityKpiStrip","region":"kpi-strip","role":"seven metrics with sparklines"},
+    {"name":"FieldQualityMatrix","region":"quality-matrix","role":"field by dimension heatmap"},
+    {"name":"DataQualityFieldTrendChart","region":"field-trend","role":"dynamic ECharts multi-line trend"},
+    {"name":"CommunityIdValidation","region":"community-check","role":"tuple hash verification and mismatch table"},
+    {"name":"FieldAnomalyTable","region":"sample-table","role":"paginated anomaly samples"},
+    {"name":"FieldLineageMap","region":"lineage","role":"API-driven lineage SVG"},
+    {"name":"FieldRepairTable","region":"repair-table","role":"paginated repair tasks"},
+    {"name":"FieldQualityActionRail","region":"right-rail","role":"locate repair evidence actions"}
+  ],
+  "icons": [
+    {"name":"SafetyCertificateOutlined","location":"quality score","meaning":"quality shield"},
+    {"name":"ReloadOutlined","location":"toolbar","meaning":"refetch snapshot"},
+    {"name":"CheckCircleFilled","location":"pipeline sink","meaning":"healthy"},
+    {"name":"WarningFilled","location":"mapping nodes","meaning":"mapping warning"},
+    {"name":"FileSearchOutlined","location":"right rail","meaning":"inspect sample"},
+    {"name":"ToolOutlined","location":"right rail","meaning":"create repair task"}
+  ],
+  "tokens": [
+    {"name":"canvas-bg","value":"#020e18","use":"business canvas"},
+    {"name":"panel-bg","value":"#031723","use":"panel fill"},
+    {"name":"border","value":"#0c4261","use":"1px panel border"},
+    {"name":"active","value":"#168cff","use":"active tab and links"},
+    {"name":"text-primary","value":"#dbe6ef","use":"titles and values"},
+    {"name":"text-secondary","value":"#8299aa","use":"labels"},
+    {"name":"success","value":"#54c84d","use":"pass and >=98%"},
+    {"name":"warning","value":"#f5a20b","use":"95%-98% and repair"},
+    {"name":"danger","value":"#f0443e","use":"<95% and anomalies"},
+    {"name":"font-body","value":"13px","use":"dense tables"},
+    {"name":"panel-radius","value":"4px","use":"operational panels"},
+    {"name":"space-unit","value":"8px","use":"grid rhythm"}
+  ],
+  "interactions": [
+    {"name":"switch-tab","trigger":"click data quality tab","result":"query tab changes without geometry drift"},
+    {"name":"refresh","trigger":"click refresh","result":"React Query refetch and ECharts update"},
+    {"name":"auto-refresh","trigger":"toggle","result":"enable or disable 30s polling"},
+    {"name":"matrix-cell","trigger":"click quality cell","result":"filter anomaly samples by field and dimension"},
+    {"name":"sample-page","trigger":"pagination","result":"request next page without resizing table"},
+    {"name":"repair-action","trigger":"click create task","result":"open audited repair workflow"},
+    {"name":"export-report","trigger":"click evidence report","result":"download current filtered report"}
+  ],
+  "implementation_mapping": {"page":"web/ui/src/pages/DataQualityPage.tsx","snapshot":"snapshot.visuals.dataQuality","trend":"fieldTrend -> ECharts series","matrix":"fieldQualityRows -> heatmap","tables":"fieldAnomalyRows/fieldRepairRows -> paginated tables","lineage":"fieldLineageRows -> API-driven SVG","rail":"fieldRail*Rows -> action rail"},
+  "dynamic_visuals": [
+    {
+      "id": "field-kpis",
+      "kind": "metric-cards-and-sparklines",
+      "data_source": "PageSnapshot.visuals.dataQuality.fieldKpis typed fallback via fetchPageSnapshot/services/api.ts",
+      "fields": [
+        "label",
+        "value",
+        "delta",
+        "status"
+      ],
+      "refresh": "React Query 30s refetchInterval",
+      "implementation": "React cards + inline SVG sparkline",
+      "responsive": "CSS grid, minmax columns, title attributes for truncated text"
+    },
+    {
+      "id": "field-matrix",
+      "kind": "quality-heatmap-table",
+      "data_source": "DataQualityVisuals.fieldQualityRows",
+      "fields": [
+        "field",
+        "completeness",
+        "format",
+        "enum",
+        "crossTableConsistency",
+        "timing",
+        "lineage"
+      ],
+      "refresh": "30s page snapshot refresh",
+      "implementation": "React grid heatmap, no bitmap",
+      "responsive": "grid rows/columns with ellipsis and title"
+    },
+    {
+      "id": "field-trend",
+      "kind": "multi-line-trend",
+      "data_source": "DataQualityVisuals.fieldTrend + fieldTrendSummary",
+      "fields": [
+        "times",
+        "missing",
+        "format",
+        "mapping",
+        "timeDrift",
+        "unknownProtocol"
+      ],
+      "refresh": "30s page snapshot refresh",
+      "implementation": "DataQualityFieldTrendChart ECharts line series with markLine threshold",
+      "responsive": "container-sized ECharts canvas and fixed panel grid"
+    },
+    {
+      "id": "community-check",
+      "kind": "flow-and-check-tables",
+      "data_source": "DataQualityVisuals.communityCheckRows + communityMismatchRows",
+      "fields": [
+        "total",
+        "matched",
+        "unmatched",
+        "rate",
+        "session_id",
+        "computed_cid",
+        "origin_cid",
+        "reason"
+      ],
+      "refresh": "30s page snapshot refresh",
+      "implementation": "React flow boxes + tables",
+      "responsive": "panel-local grid, title on every row"
+    },
+    {
+      "id": "lineage-mapping",
+      "kind": "pipeline",
+      "data_source": "DataQualityVisuals.fieldLineageRows",
+      "fields": [
+        "sourceTopic",
+        "flinkStage",
+        "mappingRule",
+        "sink",
+        "tone"
+      ],
+      "refresh": "30s page snapshot refresh",
+      "implementation": "React pipeline grid",
+      "responsive": "single-panel grid, media query collapses below 1440"
+    },
+    {
+      "id": "repair-tasks",
+      "kind": "data-table",
+      "data_source": "DataQualityVisuals.fieldRepairRows",
+      "fields": [
+        "task",
+        "field",
+        "rule",
+        "owner",
+        "status",
+        "sla",
+        "validation",
+        "action"
+      ],
+      "refresh": "30s page snapshot refresh",
+      "implementation": "React data rows",
+      "responsive": "ellipsis + title for full text"
+    }
+  ],
+  "resources_policy": {
+    "business_dynamic_diagrams_are_bitmaps": false,
+    "forbidden_resource_markers": [],
+    "no_bitmap_ui_test": "pass"
+  },
+  "runtime": {
+    "status": "pass",
+    "console_errors": 0,
+    "page_errors": 0,
+    "requestfailed": 0,
+    "http_errors": 0,
+    "overflow_items": 0,
+    "clipped_without_title": 0,
+    "svg_count": 85,
+    "canvas_count": 7,
+    "echarts_count": 7
+  },
+  "metrics": {
+    "full": {
+      "size_ok": true,
+      "source_width": 1920,
+      "source_height": 1080,
+      "actual_width": 1920,
+      "actual_height": 1080,
+      "compared_pixels": 2073600,
+      "total_pixels": 2073600,
+      "mismatch_pixels": 225870,
+      "pixel_mismatch_ratio": 0.10892650462962963,
+      "max_pixel_ratio": 0.125,
+      "channel_tolerance": 90,
+      "max_channel_delta": 255
+    },
+    "business": {
+      "size_ok": true,
+      "source_width": 1722,
+      "source_height": 917,
+      "actual_width": 1722,
+      "actual_height": 917,
+      "compared_pixels": 1579074,
+      "total_pixels": 1579074,
+      "mismatch_pixels": 189514,
+      "pixel_mismatch_ratio": 0.12001590805750711,
+      "max_pixel_ratio": 0.125,
+      "channel_tolerance": 90,
+      "max_channel_delta": 255
+    }
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/pages/data-quality-field-quality/target.png",
+    "implementation": "evidence/ui-image-breakdowns/pages/data-quality-field-quality/implementation.png",
+    "implementation_alias": "evidence/ui-image-breakdowns/pages/data-quality-field-quality/implementation.png",
+    "diff": "evidence/ui-image-breakdowns/pages/data-quality-field-quality/diff.png",
+    "diff_alias": "evidence/ui-image-breakdowns/pages/data-quality-field-quality/diff.png",
+    "metrics": "evidence/ui-image-breakdowns/pages/data-quality-field-quality/metrics.json",
+    "metrics_alias": "evidence/ui-image-breakdowns/pages/data-quality-field-quality/metrics.json",
+    "business_target": "evidence/ui-image-breakdowns/pages/data-quality-field-quality/target-business-r124.png",
+    "business_implementation": "evidence/ui-image-breakdowns/pages/data-quality-field-quality/implementation-business-r124.png",
+    "business_diff": "evidence/ui-image-breakdowns/pages/data-quality-field-quality/diff-business-r124.png",
+    "business_metrics": "evidence/ui-image-breakdowns/pages/data-quality-field-quality/metrics-business-r124.json",
+    "capture_meta": "evidence/ui-image-breakdowns/pages/data-quality-field-quality/capture-meta.json",
+    "capture_meta_alias": "evidence/ui-image-breakdowns/pages/data-quality-field-quality/capture-meta.json",
+    "cdp_version": "evidence/ui-image-breakdowns/pages/data-quality-field-quality/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/pages/data-quality-field-quality/cdp-list.json",
+    "tabs_unified_capture_meta": "evidence/ui-image-breakdowns/pages/data-quality-tabs-unified/capture-meta-r124.json",
+    "tabs_unified_sheet": "evidence/ui-image-breakdowns/pages/data-quality-tabs-unified/implementation-tabs-r124-sheet.png",
+    "regions_overlay": "evidence/ui-image-breakdowns/pages/data-quality-field-quality/regions-overlay.png",
+    "measurement": "evidence/ui-image-breakdowns/pages/data-quality-field-quality/measurement.json",
+    "verification": "evidence/ui-image-breakdowns/pages/data-quality-field-quality/verification.json",
+    "tabs_fixed_geometry": "evidence/ui-image-breakdowns/pages/data-quality-tabs-stable/tab-geometry-r147-tabs-stability.json",
+    "tabs_fixed_geometry_capture_meta": "evidence/ui-image-breakdowns/pages/data-quality-tabs-stable/capture-meta-r147-tabs-stability.json",
+    "tabs_fixed_geometry_implementation": "evidence/ui-image-breakdowns/pages/data-quality-tabs-stable/implementation-r147-tabs-stability-1920x1080-field-quality.png",
+    "tabs_fixed_geometry_verification": "evidence/ui-image-breakdowns/pages/data-quality-tabs-stable/verification.json",
+    "interaction": "evidence/ui-image-breakdowns/pages/data-quality-field-quality/interaction-r235.json",
+    "interaction_screenshot": "evidence/ui-image-breakdowns/pages/data-quality-field-quality/interaction-r235.png",
+    "evidence_mode": "production-route",
+    "production_route_report": "evidence/ui-image-breakdowns/pages/data-quality-field-quality/production-route-report.json",
+    "url": "http://10.0.5.8:30180/data-quality?tab=field-quality&windowsCdpEvidenceTs=1783733570876#codex_smoke_token=<redacted>",
+    "final_url": "http://10.0.5.8:30180/data-quality?tab=field-quality&windowsCdpEvidenceTs=1783733570876"
+  },
+  "updated_at": "2026-07-11T09:33:04+08:00",
+  "r235_verification": {
+    "deployment_image": "traffic/web-ui:ui-data-quality-field-quality-20260711-r235",
+    "field_trend": "DataQualityFieldTrendChart uses ECharts and DataQualityVisuals.fieldTrend API/typed fallback data.",
+    "field_kpi_trends": "Six DataQualityKpiSparklineChart ECharts canvases use the DataQualityVisuals.fieldKpiTrends API/typed fallback contract.",
+    "refresh_control": "The field-quality auto-refresh control toggles the React Query 30s refetch interval; the interval and disabled suppression are verified against GET /api/v1/data-quality.",
+    "time_range_contract": "Changing the filter sends time_range, start_time and end_time to /api/v1/data-quality.",
+    "interaction": "evidence/ui-image-breakdowns/pages/data-quality-field-quality/interaction-r235.json",
+    "field_actions": "异常样本、修复任务和右侧快捷入口均打开字段详情 Drawer；创建/导出类入口提供确认动作和成功反馈；跳转重放对账切换到对应业务 Tab。",
+    "field_tables": "异常样本表和修复任务表使用 5 条每页的受控分页，并在内容区提供稳定的 overflow-y:auto 滚动容器。",
+    "business_roi": {
+      "region": "content-root",
+      "bbox": {
+        "x": 198,
+        "y": 80,
+        "width": 1722,
+        "height": 917
+      },
+      "pixel_mismatch_ratio": 0.12001590805750711,
+      "max_pixel_ratio": 0.125,
+      "channel_tolerance": 90,
+      "status": "pass"
+    },
+    "full_image_diagnostic": 0.10892650462962963
+  },
+  "pixel_diff": {
+    "strict_scoring_scope": "business-content-only",
+    "strict_scoring_region": {
+      "region_id": "content-root",
+      "description": "业务 ROI 只计算字段质量内容区；公共 topbar、sidebar、bottombar 仅保留为整图诊断。"
+    }
+  },
+  "tab_geometry_regression": {
+    "status": "pass",
+    "image_tag": "traffic/web-ui:ui-data-quality-tabs-stable-20260709-r147",
+    "production_url": "http://10.0.5.8:30180/data-quality",
+    "viewports": [
+      {
+        "width": 1920,
+        "height": 1080
+      },
+      {
+        "width": 1366,
+        "height": 768
+      }
+    ],
+    "max_geometry_delta": 0,
+    "evidence": "evidence/ui-image-breakdowns/pages/data-quality-tabs-stable/tab-geometry-r147-tabs-stability.json",
+    "capture_meta": "evidence/ui-image-breakdowns/pages/data-quality-tabs-stable/capture-meta-r147-tabs-stability.json",
+    "implementation": "evidence/ui-image-breakdowns/pages/data-quality-tabs-stable/implementation-r147-tabs-stability-1920x1080-field-quality.png",
+    "cdp_version": "evidence/ui-image-breakdowns/pages/data-quality-tabs-stable/cdp-version-r147-tabs-stability-pre-capture.txt",
+    "cdp_list": "evidence/ui-image-breakdowns/pages/data-quality-tabs-stable/cdp-list-r147-tabs-stability-pre-capture.txt",
+    "static_guard": "web/ui/src/routes/dataQualityTabs.test.ts",
+    "notes": "All 8 data-quality tabs use fixed equal slots in the same viewport/window; x/y/width/height delta is 0 across overview, topic-health, flink-quality, field-quality, storage-quality, replay-reconcile, report and settings. Text ellipsizes in-slot and has title text."
+  },
+  "responsive": {
+    "browser_and_windows_window_adaptive": true,
+    "data_quality_tabs_fixed_slots": true,
+    "tabs_window_geometry_evidence": "evidence/ui-image-breakdowns/pages/data-quality-tabs-stable/tab-geometry-r147-tabs-stability.json",
+    "notes": "The 8 data-quality tabs divide the available titlebar width into fixed equal slots and keep zero geometry delta across 1920x1080 and 1366x768 Windows Chrome windows."
+  },
+  "implementation": {
+    "source": "/data-quality",
+    "mode": "production-route",
+    "route": "/data-quality",
+    "resolved_path": "/data-quality",
+    "route_state": {
+      "tab": "field-quality"
+    },
+    "note": "implementation.png is captured from the real APISIX/Web UI production route through Windows Chrome CDP. It is not a raster replay of target.png."
+  },
+  "accepted": false,
+  "differences": [
+    {
+      "type": "production-evidence-scope",
+      "location": "/data-quality",
+      "current": "implementation.png is captured from the real APISIX/Web UI route in Windows Chrome CDP",
+      "expected": "no target.png raster replay is used as implementation evidence",
+      "status": "documented"
+    }
+  ],
+  "r271_validation": {
+    "status": "business-pixel-accepted-r271",
+    "image_tag": "traffic/web-ui:ui-data-quality-tabs-query-20260711-r271",
+    "interaction_evidence": "evidence/ui-image-breakdowns/pages/data-quality/interaction-r271-all-tabs.json",
+    "screenshot": "evidence/ui-image-breakdowns/pages/data-quality/interaction-r271-field-quality.png",
+    "metrics": "evidence/ui-image-breakdowns/pages/data-quality-field-quality/metrics-business-r271.json",
+    "business_ratio": 0.11759296904388268,
+    "threshold": 0.125,
+    "canvas_count": 7,
+    "runtime_clean": true,
+    "all_tabs_geometry_stable": true,
+    "max_tab_geometry_delta": 0,
+    "field_quality_click_geometry_stable": true,
+    "field_quality_click_first_three_max_delta": 0
+  },
+  "r292_validation": {
+    "status": "interaction-accepted-r292",
+    "image_tag": "traffic/web-ui:ui-data-quality-tabs-stable-20260712-r292",
+    "interaction_evidence": "evidence/ui-image-breakdowns/pages/data-quality/interaction-r292-all-tabs.json",
+    "screenshot": "evidence/ui-image-breakdowns/pages/data-quality/interaction-r292-field-quality.png",
+    "browser": "Chrome/150.0.7871.49",
+    "runtime_clean": true,
+    "all_tabs_geometry_stable": true,
+    "max_tab_geometry_delta": 0,
+    "field_quality_click_geometry_stable": true,
+    "field_quality_click_first_three_max_delta": 0,
+    "business_pixel_judgment": "business-pixel-accepted-r271"
+  }
+}

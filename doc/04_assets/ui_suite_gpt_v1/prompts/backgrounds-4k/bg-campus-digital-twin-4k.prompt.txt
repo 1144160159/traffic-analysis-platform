@@ -1,0 +1,21 @@
+Generate a 3840x2160 PNG static 4K background asset for traffic-analysis-platform.
+
+Use case:
+- Campus network digital twin background for a security large screen, topology overview, or situational awareness page.
+
+Scene:
+- A high-detail nighttime campus digital twin viewed from an elevated oblique angle.
+- Include buildings, roads, perimeter boundary, data center zone, access layer, aggregation layer, core switches, edge gateways, probes, and external internet boundary as abstract physical and network elements.
+- Show network links as luminous paths, traffic flows as fine particle streams, and risk areas as subtle heat glows.
+- Keep the campus believable but not tied to a real location.
+
+Visual style:
+- Enterprise digital twin, cyber security operations, precise and cinematic but not game-like.
+- Deep blue/black base with cyan topology links, green healthy signals, amber warnings, and rare red risk hotspots.
+- High-detail 4K rendering with crisp edges and depth.
+- Leave room in the upper-left and lower-right for overlaying UI panels.
+
+Constraints:
+- Do not include readable map labels, real place names, real IP addresses, credentials, logos, people, vehicles as focus objects, browser chrome, or UI controls.
+- Do not create a full application page; this is a background image only.
+

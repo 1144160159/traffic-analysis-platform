@@ -1,0 +1,18 @@
+{
+  "run_id": "20260630-network-policy-enforcement-readiness-r1",
+  "generated_at": "2026-06-30T20:48:03+08:00",
+  "package_dir": "doc/02_acceptance/runs/20260630-network-policy-enforcement-readiness-r1/network-policy-enforcement-readiness.bootstrap",
+  "review_required": true,
+  "artifacts": [
+    "cni-migration-readiness.bootstrap.json",
+    "cni-migration-runbook.md",
+    "enforcement-probe.review-template.md",
+    "rollback-checklist.review-template.md",
+    "cni-selection.review-template.yaml",
+    "preflight-command.review-template.sh",
+    "inputs/network-policy-enforcement-preflight-latest.json",
+    "inputs/live-cni-policy-capability-summary-latest.json",
+    "inputs/network-policy-live-latest.json",
+    "inputs/00-network-policies.yaml"
+  ]
+}

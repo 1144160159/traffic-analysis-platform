@@ -1,0 +1,28 @@
+{
+  "target_id": "encrypted-traffic-egress-profile",
+  "route": "/encrypted-traffic",
+  "status": "pass",
+  "generated_at": "2026-07-10T16:43:11.795708+08:00",
+  "desktop_chrome_backend_status": "Windows Chrome CDP pass",
+  "source_image": "/home/wangwt/phase_2/code/traffic-analysis-platform/evidence/ui-image-breakdowns/pages/encrypted-traffic-egress-profile/target.png",
+  "actual_screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/evidence/ui-image-breakdowns/pages/encrypted-traffic-egress-profile/implementation.png",
+  "diff_image": "/home/wangwt/phase_2/code/traffic-analysis-platform/evidence/ui-image-breakdowns/pages/encrypted-traffic-egress-profile/diff.png",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "visual_diff": {
+    "size_ok": true,
+    "source_width": 1920,
+    "source_height": 1080,
+    "actual_width": 1920,
+    "actual_height": 1080,
+    "compared_pixels": 2073600,
+    "total_pixels": 2073600,
+    "mismatch_pixels": 254315,
+    "pixel_mismatch_ratio": 0.1226441936728395,
+    "max_pixel_ratio": 0.35,
+    "channel_tolerance": 64,
+    "max_channel_delta": 255
+  }
+}

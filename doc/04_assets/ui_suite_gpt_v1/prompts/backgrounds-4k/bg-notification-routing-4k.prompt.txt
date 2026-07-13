@@ -1,0 +1,16 @@
+Generate a 3840x2160 PNG static 4K background asset for traffic-analysis-platform.
+
+Use case: productivity-visual.
+Asset type: notification routing and escalation background.
+
+Scene:
+- A dark notification routing system where alert events fan out through channels, severity filters, escalation paths, acknowledgements, quiet hours, and feedback loops.
+- Represent messages as abstract packets and rings, with route decisions and delivery states as visual motifs.
+
+Style:
+- Enterprise incident notification, dark navy/black, cyan route lines, blue channel nodes, green acknowledged states, amber pending escalation, sparse red critical notification.
+- Polished 4K technical background, clear but not too busy.
+
+Constraints:
+- No readable message text, phone numbers, emails, usernames, channel names, credentials, IPs, logos, people, browser chrome, forms, or full UI screenshot.
+

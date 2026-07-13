@@ -1,0 +1,80 @@
+{
+  "id": "dropdown-alert-row-actions",
+  "title": "告警行操作下拉",
+  "type": "overlay",
+  "route": "/alerts",
+  "domain": "threat-analysis",
+  "source": {
+    "targetFile": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/dropdown-alert-row-actions.png",
+    "promptFile": "doc/04_assets/ui_suite_gpt_v1/prompts/dropdown-alert-row-actions.prompt.txt",
+    "rawTraceFiles": [
+      "doc/04_assets/ui_suite_gpt_v1/screens/overlays/dropdown-alert-row-actions.raw-imagegen.png"
+    ],
+    "dimensions": {
+      "width": 1920,
+      "height": 1080
+    }
+  },
+  "implementation": {
+    "pageComponent": "AlertTriagePage",
+    "suggestedComponents": [
+      "Dropdown/Menu",
+      "Button",
+      "Form",
+      "Alert",
+      "Tag"
+    ],
+    "apiEndpoints": [
+      "/api/v1/alerts"
+    ],
+    "workflows": [
+      "告警队列",
+      "筛选检索",
+      "选中告警摘要",
+      "研判时间线",
+      "关联告警簇",
+      "处置与反馈"
+    ]
+  },
+  "layers": [
+    {
+      "id": "dropdown-surface",
+      "role": "interaction-container",
+      "bbox": {
+        "x": 1280,
+        "y": 96,
+        "w": 480,
+        "h": 720
+      }
+    },
+    {
+      "id": "action-bar",
+      "role": "cancel-confirm-actions",
+      "bbox": {
+        "x": 1240,
+        "y": 950,
+        "w": 560,
+        "h": 52
+      }
+    },
+    {
+      "id": "audit-strip",
+      "role": "audit-and-risk-hint",
+      "bbox": {
+        "x": 1280,
+        "y": 950,
+        "w": 760,
+        "h": 52
+      }
+    }
+  ],
+  "acceptance": [
+    "最终 PNG 必须为 1920x1080",
+    "中文为主，只保留必要英文技术词和单位",
+    "状态色必须遵守 success/info/warning/danger/critical token",
+    "危险动作必须具备影响范围、权限提示和审计留痕",
+    "必须实现为 Dropdown/Menu 或等价语义组件",
+    "浮层只承载当前交互容器本体，不恢复完整宿主 AppShell",
+    "确认类动作必须出现取消/确认，危险确认默认不可误触"
+  ]
+}

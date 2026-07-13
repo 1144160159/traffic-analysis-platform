@@ -1,0 +1,85 @@
+{
+  "id": "campaign-detail-impact-service",
+  "image_tag": "traffic/web-ui:ui-campaign-impact-service-20260710-r178",
+  "status": "pass",
+  "generated_at": "2026-07-10T07:11:47.286Z",
+  "cdp_url": "http://127.0.0.1:9224",
+  "browser": "Chrome/150.0.7871.49",
+  "route": "/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=service",
+  "url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=service&windowsCdpEvidenceTs=1783667500931#codex_smoke_token=<redacted>",
+  "final_url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=service&windowsCdpEvidenceTs=1783667500931",
+  "duration_ms": 5544,
+  "screenshot": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-service/normal-route-r178.png",
+  "checks": {
+    "app_shell": true,
+    "active_service_tab": true,
+    "service_table_present": true,
+    "service_rows": true,
+    "top5_content": true,
+    "all_link": true,
+    "no_horizontal_overflow": true,
+    "content_within_panel": true,
+    "no_4xx_5xx": true,
+    "no_request_failed": true,
+    "no_console_errors": true,
+    "no_page_errors": true,
+    "smoke_hash_consumed": true,
+    "goto_ok": true
+  },
+  "failed_checks": [],
+  "goto_error": null,
+  "bad_responses": [],
+  "request_failures": [],
+  "console_errors": [],
+  "page_errors": [],
+  "metrics": {
+    "final_url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=service&windowsCdpEvidenceTs=1783667500931",
+    "document_title": "园区网络全流量采集与分析系统",
+    "app_shell": true,
+    "active_tab": "服务42 个",
+    "service_content": true,
+    "service_table": true,
+    "service_rows": 5,
+    "service_row_texts": [
+      "PostgreSQL5432/TCP高危科研管理系统",
+      "MinIO API9000/TCP高危证据归档",
+      "LDAP389/TCP中危统一认证",
+      "NFS2049/TCP中危文件共享",
+      "Redis6379/TCP中危会话缓存"
+    ],
+    "all_link": "查看全部服务 >",
+    "panel_rect": {
+      "x": 1094.1551513671875,
+      "y": 489.4328918457031,
+      "width": 583.1944580078125,
+      "height": 360.3703918457031,
+      "right": 1677.349609375,
+      "bottom": 849.8032836914062
+    },
+    "content_rect": {
+      "x": 1102.8935546875,
+      "y": 641.13427734375,
+      "width": 565.7175903320312,
+      "height": 207.68519592285156,
+      "right": 1668.6111450195312,
+      "bottom": 848.8194732666016
+    },
+    "table_rect": {
+      "x": 1360.5787353515625,
+      "y": 671.1227416992188,
+      "width": 299.29400634765625,
+      "height": 151.41204833984375,
+      "right": 1659.8727416992188,
+      "bottom": 822.5347900390625
+    },
+    "content_within_panel": true,
+    "horizontal_overflow": false,
+    "scroll_width": 2133,
+    "client_width": 2133,
+    "viewport": {
+      "width": 2133,
+      "height": 1200
+    },
+    "body_text_sample": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-10 15:11:24 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 采集监测 威胁分析 告警中心 128 战役列表 攻击链分析 加密流量 取证分析 资产图谱 检测运营 审计配置 C codex-windows-cdp-admin 系统管理员 在线 战役详情 导出战役包 生成战役报告 写入审计 更多 报告导出 campaign-exfil-default-1782729598739-e1d2dc37 检测到数据外泄攻击链：主机 cid:1:wFz... 检测到数据外泄攻击链：主机 cid:1:wFzAUL 进行了 1 次大量数据传输，最终通过外部通道传输至 cid:Vd4LpooJh+IX5DWBudQ3E= data_exfiltration v1.0 60 数据外传 战役 ID campaign-exfil-default-1782729598739-e1d2dc37 风险评分 60/100 当前阶段 数据外传 持续时间 1小时 首次发现 2026-06-29 18:39:58 最近活动 2026-06-29 18:40:27 当前状态 观察中 负责人 sec_analyst 关联告警 2 条 影响资产 2 台 风险评分 60/100 数据外传 关联告警 2 alert-service 影响资产 2 asset graph 攻击阶段 7 ATT&CK 证据完整度 68% evidence bundle 处置进度 68% 观察中 攻击时间轴（从发现到闭环） 下钻攻击链 06-19 09:12 初始访问 邮件投递与 VPN 异常登录 1 告警 3 证据 06-19 10:42 执行 脚本执行与工具落地 1 告警 4 证据 06-19 13:18 持久化 计划任务与服务注册 1 告警 5 证据 06-19 18:33 横向移动 SMB / RDP 横向移动 1 告警 6 证据 06-20 02:16 C2通信 TLS 隧道与 DNS Beacon 1 告警 7 证据 06-20 03:42 数据外传 科研数据压缩外"
+  }
+}

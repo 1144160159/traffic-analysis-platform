@@ -1,0 +1,36 @@
+{
+  "route": "/encrypted-traffic",
+  "destination": "104.16.12.34",
+  "selected": "104.16.12.34",
+  "mapLabel": "外联目的地全球流向图，当前选中 104.16.12.34",
+  "graphLabel": "外联实体关联图，当前选中 104.16.12.34",
+  "modalText": "写入审计日志确认将把 104.16.12.34 的外联研判写入服务端审计日志。对象：104.16.12.34；确认后将校验 RBAC、租户边界并持久化审计记录，接口失败不会显示成功。取 消确认提交",
+  "post": {
+    "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/egress-actions",
+    "status": 200,
+    "actionId": "egress-1783683775624391567",
+    "action": "write_audit",
+    "auditEvent": "ENCRYPTED_EGRESS_AUDIT_WRITTEN",
+    "recorded": "recorded"
+  },
+  "audit": {
+    "status": 200,
+    "total": 1,
+    "trail": {
+      "action": "ENCRYPTED_EGRESS_AUDIT_WRITTEN",
+      "resource_id": "egress-1783683775624391567",
+      "details": {
+        "action": "write_audit",
+        "data_mode": "simulated",
+        "target": "104.16.12.34"
+      },
+      "result": "success"
+    }
+  },
+  "messageText": "外联研判已写入服务端审计。",
+  "badResponses": [],
+  "requestFailures": [],
+  "consoleErrors": [],
+  "pageErrors": [],
+  "horizontalOverflow": false
+}

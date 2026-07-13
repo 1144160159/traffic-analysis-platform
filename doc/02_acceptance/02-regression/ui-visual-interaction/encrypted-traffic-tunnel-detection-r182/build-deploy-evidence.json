@@ -1,0 +1,21 @@
+{
+  "page_id": "encrypted-traffic-tunnel-detection",
+  "queue_order": 33,
+  "route": "/encrypted-traffic?tab=tunnel-detection",
+  "image": "traffic/web-ui:ui-encrypted-traffic-tunnel-detection-20260710-r182",
+  "ready": "1/1",
+  "apisix_status": "200",
+  "tests": {
+    "vitest_log": "npm-test.log",
+    "vitest_sha256": "11bbcaa8c6189e537aa66964e11b92808ec76a0429d4b0044ac296fc9dfb534e",
+    "build_log": "npm-build.log",
+    "build_sha256": "b73ee1d850058d558cbc8e3d71fc5e37a8a4dcd6586810c9f6d770b0e7396fe1"
+  },
+  "docker": {
+    "inspect": "docker-image-inspect.json"
+  },
+  "kubernetes": {
+    "deployment": "k8s-web-ui-deploy.json"
+  },
+  "generated_at": "2026-07-10T08:27:14.474Z"
+}

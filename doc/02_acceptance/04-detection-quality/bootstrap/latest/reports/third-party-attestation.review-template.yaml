@@ -1,0 +1,20 @@
+status: template_review_required
+review_required: true
+package_id: topic1_blind
+reviewer:
+  organization: ""
+  lab_accreditation: ""
+  contact: ""
+evidence:
+  dataset_manifest_sha256: ""
+  labels_sha256: ""
+  predictions_sha256: ""
+  threshold_lock_sha256: ""
+  evaluation_summary_sha256: ""
+signature:
+  signed_by: ""
+  signed_at: ""
+  signature_uri: ""
+notes:
+  - This template is not an attestation.
+  - GATE-P0-06 remains blocked until the reviewer fills and signs the final attestation.

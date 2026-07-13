@@ -1,0 +1,670 @@
+{
+  "id": "alert-detail-evidence-files",
+  "order": 18,
+  "category": "pages",
+  "type": "menu-state",
+  "parent": "alerts",
+  "route": "/alerts",
+  "production_route": "/alerts/AL-20260620-000123?__codex_ui_breakdown_production=1&__codex_page_id=alert-detail-evidence-files&evidenceView=files",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/alert-detail-evidence-files.png",
+  "target_ui": "doc/04_assets/ui_suite_gpt_v1/screens/pages/alert-detail-evidence-files.png",
+  "evidence_dir": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-files",
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "status": "evidence-ready",
+  "image_tag": "traffic/web-ui:ui-alert-detail-evidence-files-visual-20260709-r141",
+  "title": "证据链（6）",
+  "observation": {
+    "layout": "Full-viewport evidence files panel for alert detail.",
+    "business_focus": "Evidence chain file tab with API/fallback-driven evidence rows, file hash, signed URL status, file tags and footer entry.",
+    "current_state": "文件 tab active, one file evidence row displayed, AppShell visually hidden for the panel target while alerts parent menu remains selected in DOM.",
+    "acceptance_scope": "Production Windows Chrome screenshot at 1920x1080 with full/business visual diff and runtime checks."
+  },
+  "regions": [
+    {
+      "id": "canvas",
+      "name": "画布",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "w": 1920,
+        "h": 1080
+      },
+      "layer": 0,
+      "purpose": "单屏业务面板"
+    },
+    {
+      "id": "outer-panel",
+      "name": "外层证据面板",
+      "bbox": {
+        "x": 5,
+        "y": 12,
+        "w": 1910,
+        "h": 1055
+      },
+      "layer": 1,
+      "purpose": "蓝色描边业务容器"
+    },
+    {
+      "id": "tab-title",
+      "name": "证据链标题",
+      "bbox": {
+        "x": 42,
+        "y": 58,
+        "w": 190,
+        "h": 82
+      },
+      "layer": 2,
+      "purpose": "证据链（6）"
+    },
+    {
+      "id": "evidence-tabs",
+      "name": "证据分类 tabs",
+      "bbox": {
+        "x": 274,
+        "y": 58,
+        "w": 1090,
+        "h": 112
+      },
+      "layer": 2,
+      "purpose": "全部/PCAP/Session/日志/图谱路径/文件分类，文件激活"
+    },
+    {
+      "id": "table-frame",
+      "name": "文件证据表格容器",
+      "bbox": {
+        "x": 24,
+        "y": 172,
+        "w": 1873,
+        "h": 868
+      },
+      "layer": 2,
+      "purpose": "表头、文件行、标签区和底部入口"
+    },
+    {
+      "id": "table-head",
+      "name": "表头",
+      "bbox": {
+        "x": 40,
+        "y": 224,
+        "w": 1840,
+        "h": 132
+      },
+      "layer": 3,
+      "purpose": "证据类型/文件名/类型/hash/大小/时间/状态/操作"
+    },
+    {
+      "id": "file-row",
+      "name": "文件证据行",
+      "bbox": {
+        "x": 40,
+        "y": 357,
+        "w": 1840,
+        "h": 243
+      },
+      "layer": 3,
+      "purpose": "单条文件证据记录"
+    },
+    {
+      "id": "tag-row",
+      "name": "文件标签区",
+      "bbox": {
+        "x": 40,
+        "y": 600,
+        "w": 1840,
+        "h": 202
+      },
+      "layer": 3,
+      "purpose": "标签和签名 URL 预览"
+    },
+    {
+      "id": "footer-link",
+      "name": "查看全部入口",
+      "bbox": {
+        "x": 62,
+        "y": 881,
+        "w": 274,
+        "h": 50
+      },
+      "layer": 3,
+      "purpose": "查看全部 文件 1 项"
+    },
+    {
+      "id": "hash-cell",
+      "name": "hash 与签名 URL",
+      "bbox": {
+        "x": 788,
+        "y": 357,
+        "w": 430,
+        "h": 243
+      },
+      "layer": 4,
+      "purpose": "摘要与可用状态"
+    },
+    {
+      "id": "status-cell",
+      "name": "校验状态",
+      "bbox": {
+        "x": 1518,
+        "y": 357,
+        "w": 203,
+        "h": 243
+      },
+      "layer": 4,
+      "purpose": "已计算和可访问"
+    },
+    {
+      "id": "action-cell",
+      "name": "操作按钮",
+      "bbox": {
+        "x": 1721,
+        "y": 357,
+        "w": 159,
+        "h": 243
+      },
+      "layer": 4,
+      "purpose": "下载和查看"
+    }
+  ],
+  "texts": [
+    {
+      "must_match": true,
+      "region": "tab-title",
+      "value": "证据链（6）",
+      "type": "title"
+    },
+    {
+      "must_match": true,
+      "region": "evidence-tabs",
+      "value": "全部 6",
+      "type": "tab"
+    },
+    {
+      "must_match": true,
+      "region": "evidence-tabs",
+      "value": "PCAP 1",
+      "type": "tab"
+    },
+    {
+      "must_match": true,
+      "region": "evidence-tabs",
+      "value": "Session 2",
+      "type": "tab"
+    },
+    {
+      "must_match": true,
+      "region": "evidence-tabs",
+      "value": "日志 1",
+      "type": "tab"
+    },
+    {
+      "must_match": true,
+      "region": "evidence-tabs",
+      "value": "图谱路径 1",
+      "type": "tab"
+    },
+    {
+      "must_match": true,
+      "region": "evidence-tabs",
+      "value": "文件 1",
+      "type": "tab"
+    },
+    {
+      "must_match": true,
+      "region": "table-head",
+      "value": "证据类型",
+      "type": "table-header"
+    },
+    {
+      "must_match": true,
+      "region": "table-head",
+      "value": "文件名",
+      "type": "table-header"
+    },
+    {
+      "must_match": true,
+      "region": "table-head",
+      "value": "类型",
+      "type": "table-header"
+    },
+    {
+      "must_match": true,
+      "region": "table-head",
+      "value": "hash / 签名 URL",
+      "type": "table-header"
+    },
+    {
+      "must_match": true,
+      "region": "table-head",
+      "value": "大小",
+      "type": "table-header"
+    },
+    {
+      "must_match": true,
+      "region": "table-head",
+      "value": "生成时间",
+      "type": "table-header"
+    },
+    {
+      "must_match": true,
+      "region": "table-head",
+      "value": "校验状态",
+      "type": "table-header"
+    },
+    {
+      "must_match": true,
+      "region": "table-head",
+      "value": "操作",
+      "type": "table-header"
+    },
+    {
+      "must_match": true,
+      "region": "file-row",
+      "value": "文件",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "file-row",
+      "overflow_policy": "title",
+      "value": "hash-1a2b3c4d5bef79a8h9i0j.txt",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "file-row",
+      "value": "hash 清单 / 附件",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "file-row",
+      "value": "SHA256: 1a2b3c4d5bef79a8h9i0j...",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "file-row",
+      "value": "signed-url 可用",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "file-row",
+      "value": "64 B",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "file-row",
+      "value": "06-20 03:43:04",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "file-row",
+      "value": "已计算 / 可访问",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "tag-row",
+      "value": "文件标签",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "tag-row",
+      "value": "报告附件",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "tag-row",
+      "value": "导出脚本",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "tag-row",
+      "value": "hash 校验",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "tag-row",
+      "overflow_policy": "title",
+      "value": "下载审计 sec_analyst 03:45",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "tag-row",
+      "value": "签名 URL 预览",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "tag-row",
+      "overflow_policy": "title",
+      "value": "https://evidence.campus.local/signed/AL-20260620-000123",
+      "type": "label"
+    },
+    {
+      "must_match": true,
+      "region": "footer-link",
+      "value": "查看全部 文件 1 项",
+      "type": "label"
+    }
+  ],
+  "components": [
+    {
+      "name": "AlertEvidenceFilesFocusView",
+      "path": "web/ui/src/pages/AlertDetailPage.tsx",
+      "regions": [
+        "outer-panel",
+        "evidence-tabs",
+        "table-frame"
+      ],
+      "data": "AlertDetailSnapshot.evidenceRows"
+    },
+    {
+      "name": "fetchAlertDetailSnapshot",
+      "path": "web/ui/src/services/alertDetailApi.ts",
+      "regions": [
+        "file-row",
+        "tag-row"
+      ],
+      "data": "real API / typed fallback"
+    },
+    {
+      "name": "CSS panel layout",
+      "path": "web/ui/src/styles/pages.css",
+      "regions": [
+        "outer-panel",
+        "table-frame"
+      ],
+      "data": "CSS grid and responsive constraints"
+    },
+    {
+      "name": "visual breakdown AppShell guard",
+      "path": "web/ui/src/styles/app-shell.css",
+      "regions": [
+        "canvas"
+      ],
+      "data": "panel-only target state"
+    },
+    {
+      "name": "EvidenceTabs",
+      "path": "web/ui/src/pages/AlertDetailPage.tsx",
+      "regions": [
+        "evidence-tabs"
+      ],
+      "data": "type counts and active evidenceView"
+    },
+    {
+      "name": "EvidenceFileActions",
+      "path": "web/ui/src/pages/AlertDetailPage.tsx",
+      "regions": [
+        "action-cell",
+        "tag-row"
+      ],
+      "data": "signedUrl and audit metadata"
+    }
+  ],
+  "visual_asset_classification": {
+    "business_dynamic_diagrams": [],
+    "business_tables": [
+      {
+        "name": "文件证据表格",
+        "source": "AlertDetailSnapshot.evidenceRows",
+        "implementation": "React + CSS grid",
+        "refresh": "normal detail route refetches every 30s; visual capture state is deterministic",
+        "screenshot_substitution": false
+      }
+    ],
+    "independent_icons": [
+      "FileTextOutlined",
+      "CodeOutlined",
+      "LinkOutlined",
+      "CheckCircleOutlined",
+      "CloudDownloadOutlined",
+      "EyeOutlined",
+      "PaperClipOutlined",
+      "SafetyCertificateOutlined",
+      "CopyOutlined"
+    ],
+    "backgrounds": [
+      {
+        "name": "dark panel gradient and border glow",
+        "implementation": "CSS",
+        "contains_business_dynamic_diagram": false
+      }
+    ],
+    "forbidden_screenshot_resources": false
+  },
+  "data_contract": {
+    "entry": "fetchAlertDetailSnapshot(alertId)",
+    "typed_fallback": "buildMockAlertDetailSnapshot / derivedEvidence in web/ui/src/services/alertDetailApi.ts",
+    "fields": {
+      "type": "证据分类与证据类型",
+      "evidence_id": "文件名",
+      "evidenceKind": "类型",
+      "hashValue": "SHA256 摘要",
+      "signedUrl": "签名 URL",
+      "size": "大小",
+      "timestamp": "生成时间",
+      "status": "校验状态",
+      "fileTags": "文件标签"
+    },
+    "counts": {
+      "all": 6,
+      "pcap": 1,
+      "session": 2,
+      "log": 1,
+      "graph": 1,
+      "files": 1
+    }
+  },
+  "verification": {
+    "status": "business-pixel-accepted",
+    "implementation": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-files/implementation-r141-final.png",
+    "capture_meta": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-files/capture-meta-r141-final.json",
+    "metrics": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-files/metrics-r141.json",
+    "business_metrics": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-files/metrics-business-r141.json",
+    "tab_regression": "evidence/ui-image-breakdowns/pages/data-quality-tabs-stable/tab-geometry-r141-tabs-final.json"
+  },
+  "icons": [
+    {
+      "icon": "FileTextOutlined",
+      "location": "file-row",
+      "semantic": "文件证据",
+      "source": "Ant Design Icons"
+    },
+    {
+      "icon": "NumberOutlined",
+      "location": "hash-cell",
+      "semantic": "SHA256 摘要",
+      "source": "Ant Design Icons"
+    },
+    {
+      "icon": "LinkOutlined",
+      "location": "hash-cell",
+      "semantic": "签名 URL",
+      "source": "Ant Design Icons"
+    },
+    {
+      "icon": "DownloadOutlined",
+      "location": "action-cell",
+      "semantic": "下载证据",
+      "source": "Ant Design Icons"
+    },
+    {
+      "icon": "EyeOutlined",
+      "location": "action-cell",
+      "semantic": "查看详情",
+      "source": "Ant Design Icons"
+    },
+    {
+      "icon": "CopyOutlined",
+      "location": "tag-row",
+      "semantic": "复制签名 URL",
+      "source": "Ant Design Icons"
+    }
+  ],
+  "tokens": [
+    {
+      "name": "page-bg",
+      "value": "#03111c",
+      "usage": "画布"
+    },
+    {
+      "name": "panel-bg",
+      "value": "rgba(6,28,43,0.86)",
+      "usage": "证据面板"
+    },
+    {
+      "name": "panel-strong-bg",
+      "value": "#071f32",
+      "usage": "表头和 hash 块"
+    },
+    {
+      "name": "border-weak",
+      "value": "rgba(56,151,201,0.22)",
+      "usage": "表格分隔"
+    },
+    {
+      "name": "active-blue",
+      "value": "#1e9cff",
+      "usage": "激活 tab 与链接"
+    },
+    {
+      "name": "text-primary",
+      "value": "#eaf7ff",
+      "usage": "主文字"
+    },
+    {
+      "name": "text-secondary",
+      "value": "#9db9c9",
+      "usage": "辅助文字"
+    },
+    {
+      "name": "success",
+      "value": "#36d66b",
+      "usage": "校验通过"
+    },
+    {
+      "name": "danger",
+      "value": "#ff4d4f",
+      "usage": "文件对象图标"
+    },
+    {
+      "name": "panel-radius",
+      "value": "6px",
+      "usage": "面板圆角"
+    },
+    {
+      "name": "control-radius",
+      "value": "4px",
+      "usage": "控件圆角"
+    },
+    {
+      "name": "panel-gap",
+      "value": "8px",
+      "usage": "面板间距"
+    }
+  ],
+  "interactions": [
+    {
+      "control": "files-tab",
+      "trigger": "click",
+      "state": "selected",
+      "expected": "文件 1 激活且 tab 几何稳定"
+    },
+    {
+      "control": "evidence-tab",
+      "trigger": "click sibling tab",
+      "state": "navigated",
+      "expected": "切换对应证据分类并保留告警 ID"
+    },
+    {
+      "control": "download",
+      "trigger": "click",
+      "state": "audited",
+      "expected": "下载签名 URL 并写审计"
+    },
+    {
+      "control": "view",
+      "trigger": "click",
+      "state": "detail-open",
+      "expected": "打开文件详情"
+    },
+    {
+      "control": "copy-url",
+      "trigger": "click",
+      "state": "copied",
+      "expected": "复制完整签名 URL"
+    },
+    {
+      "control": "view-all",
+      "trigger": "click",
+      "state": "list-open",
+      "expected": "打开文件证据列表"
+    }
+  ],
+  "implementation": {
+    "source": "/alerts/alert-default-1782752318016-1dd589c4",
+    "mode": "production-route",
+    "route": "/alerts/:alertId",
+    "pages": [
+      "web/ui/src/pages/AlertDetailPage.tsx"
+    ],
+    "components": [
+      "AlertEvidenceFilesFocusView",
+      "AlertDetailEvidenceRow.fileEvidence"
+    ],
+    "services": [
+      "web/ui/src/services/alertDetailApi.ts",
+      "web/ui/src/services/api.ts"
+    ],
+    "resolved_path": "/alerts/alert-default-1782752318016-1dd589c4",
+    "route_state": {},
+    "note": "implementation.png is captured from the real APISIX/Web UI production route through Windows Chrome CDP. It is not a raster replay of target.png."
+  },
+  "evidence": {
+    "target": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-files/target.png",
+    "implementation": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-files/implementation.png",
+    "diff": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-files/diff.png",
+    "metrics": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-files/metrics.json",
+    "evidence_mode": "production-route",
+    "capture_meta": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-files/capture-meta.json",
+    "cdp_version": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-files/cdp-version.json",
+    "cdp_list": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-files/cdp-list.json",
+    "production_route_report": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-files/production-route-report.json",
+    "url": "http://10.0.5.8:30180/alerts/alert-default-1782752318016-1dd589c4?windowsCdpEvidenceTs=1783853598805#codex_smoke_token=<redacted>",
+    "final_url": "http://10.0.5.8:30180/alerts/alert-default-1782752318016-1dd589c4?windowsCdpEvidenceTs=1783853598805",
+    "verification": "evidence/ui-image-breakdowns/pages/alert-detail-evidence-files/verification.json"
+  },
+  "accepted": false,
+  "differences": [
+    {
+      "type": "production-evidence-scope",
+      "location": "/alerts/alert-default-1782752318016-1dd589c4",
+      "current": "implementation.png is captured from the real APISIX/Web UI route in Windows Chrome CDP",
+      "expected": "no target.png raster replay is used as implementation evidence",
+      "status": "documented"
+    },
+    {
+      "type": "production-state-mapping",
+      "location": "/alerts/alert-default-1782752318016-1dd589c4",
+      "current": "no dedicated production state query is implemented for alert-detail-evidence-files; captured host route alert-detail",
+      "expected": "target image has a deterministic implemented route state or interaction mapping",
+      "status": "open"
+    }
+  ],
+  "unresolved": [
+    "production-state-mapping:/alerts/alert-default-1782752318016-1dd589c4"
+  ]
+}

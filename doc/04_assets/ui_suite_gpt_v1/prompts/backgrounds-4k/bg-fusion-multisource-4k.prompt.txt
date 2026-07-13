@@ -1,0 +1,16 @@
+Generate a 3840x2160 PNG static 4K background asset for traffic-analysis-platform.
+
+Use case: productivity-visual.
+Asset type: multi-source fusion background.
+
+Scene:
+- A dark fusion engine visual where network flows, device logs, user events, asset context, rule hits, model scores, and evidence objects converge into a unified risk graph.
+- Include stream ribbons, confidence blending, conflict markers, deduplication clusters, and correlated entity relationships as abstract motifs.
+
+Style:
+- Enterprise data fusion and security analytics, deep navy/black, cyan and blue source streams, green confirmed correlations, amber conflicts, sparse red critical fusion result.
+- High-detail 4K rendering with balanced negative space.
+
+Constraints:
+- No readable source names, field names, rule IDs, real IPs, credentials, logos, people, browser chrome, buttons, or full UI screenshot.
+

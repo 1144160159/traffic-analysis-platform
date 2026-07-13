@@ -1,0 +1,207 @@
+{
+  "run_id": "20260630-compliance-audit-preflight-r1",
+  "result": "pass",
+  "apisix": "http://10.0.5.8:30180",
+  "tenant": "default",
+  "other_tenant": "tenant-b",
+  "report_type": "codex-live-compliance-20260630-compliance-audit-preflight-r1",
+  "report_id": "b531bbfb-70bf-46e6-8908-d2c882b67e6a",
+  "report": "doc/02_acceptance/runs/20260630-compliance-audit-preflight-r1/live-compliance-audit-preflight-20260630-compliance-audit-preflight-r1.ndjson",
+  "local_report": "doc/02_acceptance/runs/20260630-compliance-audit-preflight-r1/local-report.md",
+  "total": 19,
+  "passed": 19,
+  "blockers": 0,
+  "warnings": 0,
+  "checks": [
+    {
+      "ts": "2026-06-30T04:04:24+08:00",
+      "phase": "api",
+      "name": "compliance reports list is readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"reports\":[{\"report_id\":\"0864aa91-350c-4ebf-8e0c-6adea25b4bb0\",\"tenant_id\":\"default\",\"report_type\":\"daily\",\"time_range\":{\"end\":1781633592829,\"start\":1781547192829},\"generated_at\":1781633592840,\"status\":\"completed\",\"summary\":{\"total_alerts\":0,\"critical_alerts\":0,\"resolved_alerts\":0,\"false_positives\":0,\"avg_response_time_min\":0,\"sla_violations\":0},\"sections\":[{\"section_name\":\"alert_response\",\"title\":\"告警响应闭环\",\"content\":{\"resolution_rate\":1,\"resolved_alerts\":0,\"total_alerts\":0},\"status\":\"pass\"},{\"section_name\":\"critical_alerts\",\"title\":\"严重风险处置\",\"content\":{\"critical_alerts\":0,\"sla_violations\":0},\"status\":\"pass\"},{\"section_name\":\"feedback_quality\",\"title\":\"误报反馈质量\",\"content\":{\"false_positives\":0},\"status\":\"pass\"}]},{\"report_id\":\"18ff8efe-a31b-424b-a6c3-ef7c4ffef92c\",\"tenant_id\":\"default\",\"report_type\":\"daily\",\"time_range\":{\"end\":1781620124772,\"start\":1781533724772},\"generated_at\":1781620124785,\"status\":\"completed\",\"summary\":{\"total_a",
+      "artifact": "compliance-reports-before.json"
+    },
+    {
+      "ts": "2026-06-30T04:04:24+08:00",
+      "phase": "assert",
+      "name": "compliance reports response shape",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and (.data.reports | type == \"array\") and (.data.total | type == \"number\")",
+      "artifact": "compliance-reports-before.json"
+    },
+    {
+      "ts": "2026-06-30T04:04:24+08:00",
+      "phase": "api",
+      "name": "compliance audit trail is readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"total\":2379,\"trails\":[{\"log_id\":\"audit-9de1eb45-2eb0-4acb-a41c-976c3fd1ebb5\",\"tenant_id\":\"default\",\"user_id\":\"\",\"action\":\"THREAT_INTEL_FEED_SCHEDULED_IMPORT\",\"resource_type\":\"threat_intel\",\"resource_id\":\"codex-live-scheduled\",\"details\":{\"count\":1,\"event_id\":\"ti-deaf5b37-4771-45a5-bcdb-e7516979ab33\",\"event_type\":\"threat_intel.feed_scheduled_imported\",\"kafka_topic\":\"threat.intel.v1\",\"request_id\":\"\",\"source\":\"codex-live-scheduled\",\"trace_id\":\"\"},\"ip_address\":\"\",\"timestamp\":1782763447659,\"result\":\"success\"},{\"log_id\":\"audit-d3a28c2a-e266-404a-a8e4-e179ccc1b773\",\"tenant_id\":\"default\",\"user_id\":\"\",\"action\":\"THREAT_INTEL_FEED_SCHEDULED_IMPORT\",\"resource_type\":\"threat_intel\",\"resource_id\":\"codex-live-scheduled\",\"details\":{\"count\":1,\"event_id\":\"ti-354c6036-338e-4efa-960a-9e5813fb774a\",\"event_type\":\"threat_intel.feed_scheduled_imported\",\"kafka_topic\":\"threat.intel.v1\",\"request_id\":\"\",\"source\":\"codex-live-scheduled\",\"trace_id\":\"\"},\"ip_address\":\"\",\"timestamp\":1782763417631",
+      "artifact": "compliance-audit-trail-before.json"
+    },
+    {
+      "ts": "2026-06-30T04:04:24+08:00",
+      "phase": "assert",
+      "name": "compliance audit trail response shape",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and (.data.trails | type == \"array\") and (.data.total | type == \"number\")",
+      "artifact": "compliance-audit-trail-before.json"
+    },
+    {
+      "ts": "2026-06-30T04:04:25+08:00",
+      "phase": "api",
+      "name": "audit log page API is readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"total\":2379,\"trails\":[{\"log_id\":\"audit-9de1eb45-2eb0-4acb-a41c-976c3fd1ebb5\",\"tenant_id\":\"default\",\"user_id\":\"\",\"action\":\"THREAT_INTEL_FEED_SCHEDULED_IMPORT\",\"resource_type\":\"threat_intel\",\"resource_id\":\"codex-live-scheduled\",\"details\":{\"count\":1,\"event_id\":\"ti-deaf5b37-4771-45a5-bcdb-e7516979ab33\",\"event_type\":\"threat_intel.feed_scheduled_imported\",\"kafka_topic\":\"threat.intel.v1\",\"request_id\":\"\",\"source\":\"codex-live-scheduled\",\"trace_id\":\"\"},\"ip_address\":\"\",\"timestamp\":1782763447659,\"result\":\"success\"},{\"log_id\":\"audit-d3a28c2a-e266-404a-a8e4-e179ccc1b773\",\"tenant_id\":\"default\",\"user_id\":\"\",\"action\":\"THREAT_INTEL_FEED_SCHEDULED_IMPORT\",\"resource_type\":\"threat_intel\",\"resource_id\":\"codex-live-scheduled\",\"details\":{\"count\":1,\"event_id\":\"ti-354c6036-338e-4efa-960a-9e5813fb774a\",\"event_type\":\"threat_intel.feed_scheduled_imported\",\"kafka_topic\":\"threat.intel.v1\",\"request_id\":\"\",\"source\":\"codex-live-scheduled\",\"trace_id\":\"\"},\"ip_address\":\"\",\"timestamp\":1782763417631",
+      "artifact": "audit-logs-before.json"
+    },
+    {
+      "ts": "2026-06-30T04:04:25+08:00",
+      "phase": "assert",
+      "name": "audit log response shape",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and (.data.trails | type == \"array\") and (.data.total | type == \"number\")",
+      "artifact": "audit-logs-before.json"
+    },
+    {
+      "ts": "2026-06-30T04:04:25+08:00",
+      "phase": "api",
+      "name": "admin can generate compliance report",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"report_id\":\"b531bbfb-70bf-46e6-8908-d2c882b67e6a\",\"tenant_id\":\"default\",\"report_type\":\"codex-live-compliance-20260630-compliance-audit-preflight-r1\",\"time_range\":{\"end\":1782763465122,\"start\":1782158665122},\"generated_at\":1782763465415,\"status\":\"completed\",\"summary\":{\"total_alerts\":0,\"critical_alerts\":0,\"resolved_alerts\":0,\"false_positives\":0,\"avg_response_time_min\":0,\"sla_violations\":0},\"sections\":[{\"section_name\":\"alert_response\",\"title\":\"告警响应闭环\",\"content\":{\"resolution_rate\":1,\"resolved_alerts\":0,\"total_alerts\":0},\"status\":\"pass\"},{\"section_name\":\"critical_alerts\",\"title\":\"严重风险处置\",\"content\":{\"critical_alerts\":0,\"sla_violations\":0},\"status\":\"pass\"},{\"section_name\":\"feedback_quality\",\"title\":\"误报反馈质量\",\"content\":{\"false_positives\":0},\"status\":\"pass\"}]},\"meta\":{\"request_id\":\"85930673-e2a2-4525-9a17-194c5eaf0615\",\"trace_id\":\"85930673-e2a2-4525-9a17-194c5eaf0615\"},\"timestamp\":\"2026-06-29T20:04:25Z\"} ",
+      "artifact": "compliance-generate-admin.json"
+    },
+    {
+      "ts": "2026-06-30T04:04:25+08:00",
+      "phase": "assert",
+      "name": "generated compliance report has persisted identity",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and (.data.report_id | type == \"string\" and length > 0) and .data.report_type == $report_type and .data.status == \"completed\"",
+      "artifact": "compliance-generate-admin.json"
+    },
+    {
+      "ts": "2026-06-30T04:04:25+08:00",
+      "phase": "api",
+      "name": "generated compliance report is queryable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"reports\":[{\"report_id\":\"b531bbfb-70bf-46e6-8908-d2c882b67e6a\",\"tenant_id\":\"default\",\"report_type\":\"codex-live-compliance-20260630-compliance-audit-preflight-r1\",\"time_range\":{\"end\":1782763465122,\"start\":1782158665122},\"generated_at\":1782763465415,\"status\":\"completed\",\"summary\":{\"total_alerts\":0,\"critical_alerts\":0,\"resolved_alerts\":0,\"false_positives\":0,\"avg_response_time_min\":0,\"sla_violations\":0},\"sections\":[{\"section_name\":\"alert_response\",\"title\":\"告警响应闭环\",\"content\":{\"resolution_rate\":1,\"resolved_alerts\":0,\"total_alerts\":0},\"status\":\"pass\"},{\"section_name\":\"critical_alerts\",\"title\":\"严重风险处置\",\"content\":{\"critical_alerts\":0,\"sla_violations\":0},\"status\":\"pass\"},{\"section_name\":\"feedback_quality\",\"title\":\"误报反馈质量\",\"content\":{\"false_positives\":0},\"status\":\"pass\"}]}],\"total\":1},\"meta\":{\"request_id\":\"1fd28de1-7d50-4391-a9c2-4c45ced89eaf\",\"trace_id\":\"1fd28de1-7d50-4391-a9c2-4c45ced89eaf\"},\"timestamp\":\"2026-06-29T20:04:25Z\"} ",
+      "artifact": "compliance-reports-after.json"
+    },
+    {
+      "ts": "2026-06-30T04:04:25+08:00",
+      "phase": "assert",
+      "name": "generated report appears in compliance report list",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and ([.data.reports[] | select(.report_id == $report_id)] | length) == 1",
+      "artifact": "compliance-reports-after.json"
+    },
+    {
+      "ts": "2026-06-30T04:04:25+08:00",
+      "phase": "api",
+      "name": "compliance audit trail has generated report event",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"total\":1,\"trails\":[{\"log_id\":\"audit-20260629200425.420771019\",\"tenant_id\":\"default\",\"user_id\":\"5837d930-30b9-4052-ae14-6679c6043322\",\"action\":\"COMPLIANCE_REPORT_GENERATED\",\"resource_type\":\"compliance_report\",\"resource_id\":\"b531bbfb-70bf-46e6-8908-d2c882b67e6a\",\"details\":{\"report_type\":\"codex-live-compliance-20260630-compliance-audit-preflight-r1\"},\"ip_address\":\"10.244.0.1\",\"timestamp\":1782763465420,\"result\":\"success\"}]},\"meta\":{\"request_id\":\"7d59ae7a-c815-4395-85d8-c0a29afeebfd\",\"trace_id\":\"7d59ae7a-c815-4395-85d8-c0a29afeebfd\"},\"timestamp\":\"2026-06-29T20:04:25Z\"} ",
+      "artifact": "compliance-audit-trail-generated.json"
+    },
+    {
+      "ts": "2026-06-30T04:04:25+08:00",
+      "phase": "assert",
+      "name": "compliance audit trail contains generated event",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and (.data.total >= 1) and ([.data.trails[] | select(.resource_id == $report_id and .action == \"COMPLIANCE_REPORT_GENERATED\")] | length) >= 1",
+      "artifact": "compliance-audit-trail-generated.json"
+    },
+    {
+      "ts": "2026-06-30T04:04:25+08:00",
+      "phase": "api",
+      "name": "audit log page API has generated report event",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"total\":1,\"trails\":[{\"log_id\":\"audit-20260629200425.420771019\",\"tenant_id\":\"default\",\"user_id\":\"5837d930-30b9-4052-ae14-6679c6043322\",\"action\":\"COMPLIANCE_REPORT_GENERATED\",\"resource_type\":\"compliance_report\",\"resource_id\":\"b531bbfb-70bf-46e6-8908-d2c882b67e6a\",\"details\":{\"report_type\":\"codex-live-compliance-20260630-compliance-audit-preflight-r1\"},\"ip_address\":\"10.244.0.1\",\"timestamp\":1782763465420,\"result\":\"success\"}]},\"meta\":{\"request_id\":\"f7cf361b-1530-4672-907e-6d1d3359ec83\",\"trace_id\":\"f7cf361b-1530-4672-907e-6d1d3359ec83\"},\"timestamp\":\"2026-06-29T20:04:25Z\"} ",
+      "artifact": "audit-logs-generated.json"
+    },
+    {
+      "ts": "2026-06-30T04:04:25+08:00",
+      "phase": "assert",
+      "name": "audit log page API contains generated event",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and (.data.total >= 1) and ([.data.trails[] | select(.resource_id == $report_id and .action == \"COMPLIANCE_REPORT_GENERATED\")] | length) >= 1",
+      "artifact": "audit-logs-generated.json"
+    },
+    {
+      "ts": "2026-06-30T04:04:25+08:00",
+      "phase": "postgres",
+      "name": "generated compliance report persisted in PostgreSQL",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "b531bbfb-70bf-46e6-8908-d2c882b67e6a",
+      "artifact": "pg-compliance-report-count.txt"
+    },
+    {
+      "ts": "2026-06-30T04:04:25+08:00",
+      "phase": "postgres",
+      "name": "generated compliance audit row persisted in PostgreSQL",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "b531bbfb-70bf-46e6-8908-d2c882b67e6a",
+      "artifact": "pg-compliance-audit-count.txt"
+    },
+    {
+      "ts": "2026-06-30T04:04:25+08:00",
+      "phase": "api",
+      "name": "other tenant cannot see generated audit row",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"total\":0,\"trails\":[]},\"meta\":{\"request_id\":\"0183eafc-a9a8-441f-8ef2-1b5411cd7d37\",\"trace_id\":\"0183eafc-a9a8-441f-8ef2-1b5411cd7d37\"},\"timestamp\":\"2026-06-29T20:04:25Z\"} ",
+      "artifact": "other-tenant-audit-logs-generated.json"
+    },
+    {
+      "ts": "2026-06-30T04:04:26+08:00",
+      "phase": "assert",
+      "name": "audit log query is tenant isolated",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.total == 0",
+      "artifact": "other-tenant-audit-logs-generated.json"
+    },
+    {
+      "ts": "2026-06-30T04:04:26+08:00",
+      "phase": "api",
+      "name": "viewer cannot generate compliance report",
+      "severity": "info",
+      "passed": true,
+      "status": "403",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"permission denied: admin:* required\"},\"meta\":{\"request_id\":\"28a124cc-fdac-40c5-986b-daf85b05e41d\",\"trace_id\":\"28a124cc-fdac-40c5-986b-daf85b05e41d\"},\"timestamp\":\"2026-06-29T20:04:26Z\"} ",
+      "artifact": "compliance-generate-viewer.json"
+    }
+  ]
+}

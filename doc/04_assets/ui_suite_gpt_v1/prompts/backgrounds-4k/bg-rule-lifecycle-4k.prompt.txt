@@ -1,0 +1,17 @@
+Generate a 3840x2160 PNG static 4K background asset for traffic-analysis-platform.
+
+Use case: productivity-visual.
+Asset type: rule lifecycle and publish governance background.
+
+Scene:
+- A dark security rule lifecycle environment showing rule draft, validation, simulation, review, publish, hot update, feedback, and rollback as abstract connected stages.
+- Include detection logic blocks, rule dependency traces, risk scoring pulses, canary publish lanes, and version lineage, but no readable labels.
+- Leave safe negative space on the right-center for real UI panels.
+
+Style:
+- Enterprise SOC governance, deep navy/black base, cyan lifecycle lines, blue rule blocks, green approved states, amber review states, sparse red rollback or failure markers.
+- High-detail 4K technical rendering, calm and precise.
+
+Constraints:
+- No readable rule names, SQL, code, regex, tactic labels, version numbers, credentials, real IP addresses, logos, people, browser chrome, buttons, or full UI screenshot.
+
