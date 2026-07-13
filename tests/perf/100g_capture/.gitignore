@@ -1,0 +1,5 @@
+results/*.pcap
+results/*.pcapng
+results/*.log
+results/raw/
+*.tmp

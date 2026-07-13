@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Traffic Analysis Capture Performance Result",
+  "type": "object",
+  "required": ["test_id", "status", "duration_seconds", "metrics"],
+  "properties": {
+    "test_id": {
+      "type": "string",
+      "enum": ["10x100g-line-rate", "512mpps-small-packet"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["completed", "aborted", "failed"]
+    },
+    "started_at": {"type": "string"},
+    "duration_seconds": {"type": "number"},
+    "traffic_generator": {
+      "type": "object",
+      "properties": {
+        "tool": {"type": "string"},
+        "version": {"type": "string"},
+        "ports": {"type": "number"}
+      }
+    },
+    "probe": {
+      "type": "object",
+      "properties": {
+        "capture_mode": {"type": "string"},
+        "nodes": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "aggregate_gbps": {"type": "number"},
+        "aggregate_mpps": {"type": "number"},
+        "packet_loss_rate": {"type": "number"},
+        "probe_drop_rate": {"type": "number"},
+        "parse_success_rate": {"type": "number"},
+        "kafka_max_lag_records": {"type": "number"},
+        "flink_backpressure": {"type": "string"},
+        "cpu_max_percent": {"type": "number"},
+        "numa_remote_memory_percent": {"type": "number"}
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": {"type": "string"}
+    }
+  }
+}
