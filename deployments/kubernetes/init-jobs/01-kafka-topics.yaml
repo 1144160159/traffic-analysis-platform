@@ -1,0 +1,94 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: init-kafka-topics
+  namespace: middleware
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: init-topics
+        image: docker.io/apache/kafka@sha256:32217f809d3fba75ee46e93b1fdbea4aacc0821139443efb73691a913948c31a
+        command: ["bash", "-c"]
+        args:
+        - |
+          echo "Creating Kafka topics..."
+          KAFKA_HOME=${KAFKA_HOME:-/opt/kafka}
+          KAFKA_BIN="$KAFKA_HOME/bin/kafka-topics.sh"
+          ACL_BIN="$KAFKA_HOME/bin/kafka-acls.sh"
+          BROKER_API_BIN="$KAFKA_HOME/bin/kafka-broker-api-versions.sh"
+          BOOTSTRAP=kafka-bootstrap.middleware.svc:9092
+          CLIENT_CONFIG=/tmp/kafka-client.properties
+          cat > "$CLIENT_CONFIG" <<EOF
+          security.protocol=SASL_SSL
+          sasl.mechanism=SCRAM-SHA-512
+          sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="${KAFKA_INTER_BROKER_USERNAME}" password="${KAFKA_INTER_BROKER_PASSWORD}";
+          ssl.truststore.location=/etc/kafka/tls/kafka.truststore.p12
+          ssl.truststore.type=PKCS12
+          ssl.truststore.password=${KAFKA_TLS_TRUSTSTORE_PASSWORD}
+          EOF
+          BROKER_COUNT=$("$BROKER_API_BIN" --bootstrap-server $BOOTSTRAP --command-config "$CLIENT_CONFIG" 2>/dev/null | grep -c 'id: ' || true)
+          [ -z "$BROKER_COUNT" ] || [ "$BROKER_COUNT" -lt 1 ] && BROKER_COUNT=1
+          REPLICATION_FACTOR=${KAFKA_REPLICATION_FACTOR:-$BROKER_COUNT}
+          [ "$REPLICATION_FACTOR" -gt 3 ] && REPLICATION_FACTOR=3
+          [ "$REPLICATION_FACTOR" -lt 1 ] && REPLICATION_FACTOR=1
+          echo "Using replication-factor=${REPLICATION_FACTOR} (brokers=${BROKER_COUNT})"
+          for entry in \
+            "flow.events.v1:12:86400000:268435456" \
+            "session.events.v1:12:86400000:268435456" \
+            "feature.stat.v1:12:86400000:268435456" \
+            "detections.v1:6:86400000:268435456" \
+            "detections.behavior.v1:6:259200000:268435456" \
+            "detections.business.v1:6:259200000:268435456" \
+            "alerts.v1:6:259200000:268435456" \
+            "alert.feedback.v1:3:259200000:268435456" \
+            "campaigns.v1:6:259200000:268435456" \
+            "pcap.index.v1:6:259200000:536870912" \
+            "rule.updates:1:86400000:134217728" \
+            "model-updates:1:86400000:134217728" \
+            "audit.logs:3:259200000:268435456" \
+            "asset.bindings.v1:4:86400000:134217728" \
+            "device.logs.v1:8:259200000:268435456" \
+            "user.events.v1:4:259200000:268435456" \
+            "l2.trigger.v1:4:86400000:134217728" \
+            "dlq.v1:4:604800000:268435456" \
+            "dlq.feature-job:2:604800000:268435456" \
+            "dlq.rule-job:2:604800000:268435456" \
+            "dlq.cep-job:2:604800000:268435456"; do
+            name=$(echo $entry | cut -d: -f1)
+            parts=$(echo $entry | cut -d: -f2)
+            ret=$(echo $entry | cut -d: -f3)
+            ret_bytes=$(echo $entry | cut -d: -f4)
+            echo "  Creating $name (partitions=$parts, retention=${ret}ms, retention.bytes=${ret_bytes})"
+            $KAFKA_BIN --bootstrap-server $BOOTSTRAP --command-config "$CLIENT_CONFIG" --create --if-not-exists \
+              --topic $name --partitions $parts --replication-factor $REPLICATION_FACTOR \
+              --config retention.ms=$ret \
+              --config retention.bytes=$ret_bytes 2>&1 | grep -v WARNING
+          done
+          echo "Granting Kafka ACLs to application client..."
+          $ACL_BIN --bootstrap-server "$BOOTSTRAP" --command-config "$CLIENT_CONFIG" \
+            --add --allow-principal "User:${KAFKA_CLIENT_USERNAME}" --operation All --cluster 2>&1 | grep -v WARNING || true
+          $ACL_BIN --bootstrap-server "$BOOTSTRAP" --command-config "$CLIENT_CONFIG" \
+            --add --allow-principal "User:${KAFKA_CLIENT_USERNAME}" --operation All --topic '*' 2>&1 | grep -v WARNING || true
+          $ACL_BIN --bootstrap-server "$BOOTSTRAP" --command-config "$CLIENT_CONFIG" \
+            --add --allow-principal "User:${KAFKA_CLIENT_USERNAME}" --operation All --group '*' 2>&1 | grep -v WARNING || true
+          echo "Topics created."
+        env:
+        - name: KAFKA_CLIENT_USERNAME
+          valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_USERNAME}}
+        - name: KAFKA_INTER_BROKER_USERNAME
+          valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_INTER_BROKER_USERNAME}}
+        - name: KAFKA_INTER_BROKER_PASSWORD
+          valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_INTER_BROKER_PASSWORD}}
+        - name: KAFKA_TLS_TRUSTSTORE_PASSWORD
+          valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_TLS_TRUSTSTORE_PASSWORD}}
+        volumeMounts:
+        - {name: kafka-client-tls, mountPath: /etc/kafka/tls, readOnly: true}
+      volumes:
+      - name: kafka-client-tls
+        secret:
+          secretName: kafka-client-tls
+          optional: false

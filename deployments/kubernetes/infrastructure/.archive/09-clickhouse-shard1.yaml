@@ -1,0 +1,103 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: clickhouse-1
+  namespace: middleware
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: clickhouse
+      instance: ch-1
+  serviceName: clickhouse-1
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: clickhouse
+        instance: ch-1
+    spec:
+      containers:
+      - image: clickhouse/clickhouse-server:24.3
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /ping
+            port: 8123
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: clickhouse
+        ports:
+        - containerPort: 8123
+          protocol: TCP
+        - containerPort: 9000
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /ping
+            port: 8123
+            scheme: HTTP
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: '16'
+            memory: 64Gi
+          requests:
+            cpu: '2'
+            memory: 4Gi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /var/lib/clickhouse
+          name: data
+        - mountPath: /etc/clickhouse-server/config.d/cluster.xml
+          name: config
+          subPath: cluster.xml
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        kubernetes.io/hostname: 8-2tb
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: clickhouse-config
+        name: config
+  updateStrategy:
+    rollingUpdate:
+      partition: 0
+    type: RollingUpdate
+  volumeClaimTemplates:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      creationTimestamp: null
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Ti
+      selector:
+        matchLabels:
+          app: clickhouse
+      storageClassName: local-hdd
+      volumeMode: Filesystem
+    status:
+      phase: Pending
+

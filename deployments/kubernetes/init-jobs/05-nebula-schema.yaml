@@ -1,0 +1,92 @@
+---
+# NebulaGraph Schema 初始化 Job
+# 创建图空间、Tag、Edge Type、索引
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: init-nebula-schema
+  namespace: middleware
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: OnFailure
+      initContainers:
+      - name: wait-for-nebula
+        image: busybox:1.36
+        command:
+        - /bin/sh
+        - -c
+        - |
+          echo "Waiting for NebulaGraph services..."
+          echo "  Checking nebula-graph (9669)..."
+          until nc -z nebula-graph.middleware.svc 9669; do
+            echo "  nebula-graph not ready yet..."
+            sleep 5
+          done
+
+          # Also verify storage headless DNS resolves (pods may not be ready but DNS should work)
+          echo "  Checking nebula-storage DNS..."
+          for i in 0 1 2; do
+            until nslookup nebula-storage-$i.nebula-storage-headless.middleware.svc 2>/dev/null | grep -q "Address"; do
+              echo "  nebula-storage-$i DNS not resolving yet..."
+              sleep 5
+            done
+          done
+
+          echo "NebulaGraph all services ready!"
+      containers:
+      - name: init-schema
+        image: vesoft/nebula-console:v3.6.0
+        env:
+        - {name: NEBULA_GRAPH_ADDR, value: "nebula-graph.middleware.svc"}
+        - {name: NEBULA_GRAPH_PORT, value: "9669"}
+        command:
+        - /bin/sh
+        - -c
+        - |
+          echo "Initializing NebulaGraph schema..."
+          sleep 10
+
+          # 使用 nebula-console 执行 nGQL，并在任一语句报错时让 Job 失败
+          output="$(cat <<'NGQL' | /usr/local/bin/nebula-console -addr nebula-graph.middleware.svc -port 9669 -u root -p root
+          CREATE SPACE IF NOT EXISTS traffic_graph(vid_type=FIXED_STRING(32), replica_factor=3, partition_num=30);
+          USE traffic_graph;
+          CREATE TAG IF NOT EXISTS ip_address(tenant_id STRING NOT NULL, ip STRING NOT NULL, mac_address STRING, hostname STRING, vendor STRING, os_type STRING, is_gateway BOOL DEFAULT false, risk_score DOUBLE DEFAULT 0.0, first_seen INT64, last_seen INT64, alert_count INT64 DEFAULT 0);
+          CREATE TAG IF NOT EXISTS session(tenant_id STRING NOT NULL, community_id STRING NOT NULL, protocol INT8, src_port INT32, dst_port INT32, packets_fwd INT64, packets_bwd INT64, bytes_fwd INT64, bytes_bwd INT64, duration_ms INT32, ts_start INT64, ts_end INT64, alert_count INT64 DEFAULT 0);
+          CREATE TAG IF NOT EXISTS alert(tenant_id STRING NOT NULL, alert_type STRING NOT NULL, severity STRING, score DOUBLE, labels STRING, first_seen INT64, last_seen INT64, status STRING DEFAULT 'new');
+          CREATE TAG IF NOT EXISTS campaign(tenant_id STRING NOT NULL, campaign_type STRING, title STRING, description STRING, severity STRING, score DOUBLE, phase_progress DOUBLE DEFAULT 0.0, start_time INT64, end_time INT64);
+          CREATE TAG IF NOT EXISTS network_device(tenant_id STRING NOT NULL, device_type STRING, mgmt_ip STRING, hostname STRING, vendor STRING, model STRING, software_ver STRING, ports_count INT32 DEFAULT 0);
+          CREATE EDGE IF NOT EXISTS communicates(tenant_id STRING NOT NULL, community_id STRING, protocol INT8, session_count INT64 DEFAULT 1, total_bytes INT64, total_packets INT64, first_seen INT64, last_seen INT64, direction STRING);
+          CREATE EDGE IF NOT EXISTS has_session(tenant_id STRING NOT NULL, role STRING NOT NULL, ts INT64);
+          CREATE EDGE IF NOT EXISTS triggers_alert(tenant_id STRING NOT NULL, alert_id STRING NOT NULL, ts INT64);
+          CREATE EDGE IF NOT EXISTS includes_alert(tenant_id STRING NOT NULL, alert_id STRING, ts INT64);
+          CREATE EDGE IF NOT EXISTS belongs_to(tenant_id STRING NOT NULL, subnet STRING, asn INT32, ts INT64);
+          CREATE EDGE IF NOT EXISTS connects_to(tenant_id STRING NOT NULL, port STRING, vlan_id INT32, bandwidth INT64, ts INT64);
+          CREATE EDGE IF NOT EXISTS attack_path_hop(tenant_id STRING NOT NULL, campaign_id STRING, hop_order INT32, ts INT64);
+          CREATE TAG INDEX IF NOT EXISTS ip_tenant_idx ON ip_address(tenant_id(32));
+          CREATE TAG INDEX IF NOT EXISTS ip_address_idx ON ip_address(ip(32));
+          CREATE TAG INDEX IF NOT EXISTS ip_risk_idx ON ip_address(risk_score);
+          CREATE TAG INDEX IF NOT EXISTS session_tenant_idx ON session(tenant_id(32));
+          CREATE TAG INDEX IF NOT EXISTS session_comm_idx ON session(community_id(32));
+          CREATE TAG INDEX IF NOT EXISTS alert_tenant_idx ON alert(tenant_id(32));
+          CREATE TAG INDEX IF NOT EXISTS alert_type_idx ON alert(alert_type(32));
+          CREATE TAG INDEX IF NOT EXISTS alert_severity_idx ON alert(severity(16));
+          CREATE TAG INDEX IF NOT EXISTS campaign_tenant_idx ON campaign(tenant_id(32));
+          CREATE EDGE INDEX IF NOT EXISTS comm_tenant_idx ON communicates(tenant_id(32));
+          CREATE EDGE INDEX IF NOT EXISTS comm_dst_idx ON communicates(tenant_id(32));
+          CREATE EDGE INDEX IF NOT EXISTS trigger_alert_idx ON triggers_alert(alert_id(32));
+          CREATE EDGE INDEX IF NOT EXISTS att_path_camp_idx ON attack_path_hop(campaign_id(32));
+          SHOW SPACES;
+          SHOW TAGS;
+          SHOW EDGES;
+          NGQL
+          )"
+
+          echo "$output"
+          if echo "$output" | grep '\[ERROR' | grep -v 'StatementEmpty' >/dev/null; then
+            echo "NebulaGraph schema initialization failed."
+            exit 1
+          fi
+
+          echo "NebulaGraph schema initialized!"

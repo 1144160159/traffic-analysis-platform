@@ -1,0 +1,63 @@
+id: CLE-P0-BASELINE-001
+title: 生成 baseline/release manifest 草案
+priority: P0
+status: DISCOVERED
+lane:
+  primary: Mission / Acceptance
+  dependent:
+    - Deploy / SRE / Security
+source:
+  - "doc/01_design/自动开发Loop引擎设计.md#14"
+  - "doc/02_acceptance/README.md#3"
+acceptance_type: regression
+subsystems:
+  - deployments
+  - doc/02_acceptance
+risk:
+  level: medium
+  reasons:
+    - release evidence affects acceptance language
+execution:
+  mode: plan
+  allow_live_write: false
+workspace:
+  allowed_paths:
+    - doc/02_acceptance/
+    - scripts/codex_loop/
+contracts:
+  proto: false
+  kafka_topics: false
+  database_schema: false
+  apisix_routes: false
+data_plan:
+  mode: live_existing
+  tenant: default
+  cleanup: none
+verification:
+  local:
+    - "python scripts/codex_loop/collect_evidence.py --run-id ${run_id}"
+  live_readonly:
+    - "curl --noproxy '*' http://10.0.5.8:30180/login"
+review:
+  required: true
+  perspectives:
+    - code_correctness
+    - product_logic
+    - technical_design
+    - acceptance_evidence
+  design_update_allowed:
+    - doc/01_design/
+    - doc/02_acceptance/
+    - doc/05_status/
+evidence:
+  run_dir: "doc/02_acceptance/runs/${run_id}"
+  required:
+    - run-summary.json
+    - plan.md
+    - local-report.md
+    - review-report.md
+    - evidence-report.md
+close_when:
+  - "commit, manifest, DDL, Topic, model and rule versions are listed"
+  - "release evidence is marked regression, not acceptance"
+  - git status snapshot is captured

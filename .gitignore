@@ -1,0 +1,46 @@
+.artifacts/
+tests/e2e/logs/
+
+# Build and dependency outputs
+node_modules/
+dist/
+dist-codex-preview/
+target/
+.gocache/
+/.vite/
+*.o
+
+# Local Go build outputs commonly produced from go/control-plane
+/go/control-plane/alert-service
+/go/control-plane/asset-service
+/go/control-plane/auth-service
+/go/control-plane/forensics-service
+/go/control-plane/graph-service
+/go/control-plane/rule-manager
+/go/control-plane/mock-ingest
+
+# Test runner outputs
+coverage/
+playwright-report/
+test-results/
+*.log
+*.pid
+
+# Python caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local-only assistant/editor state
+/.agents/
+/.claude/
+/.vscode/
+/.mcp.json
+/codex.sh
+/skills-lock.json
+/design-qa.md
+
+# Local visual/e2e scratch evidence
+/evidence/
+/web/ui/dist-codex-preview/
+/web/ui_legacy_*/

@@ -1,0 +1,73 @@
+id: CLE-P0-P95-001
+title: 完整 P95 时间戳链设计与埋点计划
+priority: P0
+status: DISCOVERED
+lane:
+  primary: Go Control-plane
+  dependent:
+    - Proto / Kafka / Flink
+    - UI Rebuild
+    - Mission / Acceptance
+source:
+  - "doc/05_status/代码实证状态核对-2026-06-19.md#3"
+  - "doc/03_review/专家深评整改清单.md#ARCH-04"
+acceptance_type: acceptance-prep
+subsystems:
+  - go/control-plane
+  - java/flink-jobs
+  - web/ui
+  - proto
+risk:
+  level: high
+  reasons:
+    - "can affect proto, Flink and UI semantics"
+execution:
+  mode: plan
+  allow_live_write: false
+workspace:
+  allowed_paths:
+    - go/control-plane/
+    - java/flink-jobs/
+    - web/ui/src/
+    - proto/traffic/v1/
+    - doc/02_acceptance/
+    - doc/01_design/
+contracts:
+  proto: true
+  kafka_topics: false
+  database_schema: true
+  apisix_routes: false
+data_plan:
+  mode: live_existing
+  tenant: default
+  cleanup: none
+verification:
+  local:
+    - tests/run_tests.sh go
+    - tests/run_tests.sh java
+    - tests/run_tests.sh web
+  live_readonly:
+    - "curl --noproxy '*' http://10.0.5.8:30180/login"
+review:
+  required: true
+  perspectives:
+    - code_correctness
+    - product_logic
+    - technical_design
+    - acceptance_evidence
+  design_update_allowed:
+    - doc/01_design/
+    - doc/02_acceptance/
+    - doc/05_status/
+evidence:
+  run_dir: "doc/02_acceptance/runs/${run_id}"
+  required:
+    - run-summary.json
+    - plan.md
+    - local-report.md
+    - review-report.md
+    - evidence-report.md
+close_when:
+  - "event_ts, ingest_ts, kafka_ts, flink_out_ts, api_seen_ts and ui_seen_ts are defined"
+  - P50/P90/P95/P99 report shape is specified
+  - existing dashboard metric is not mislabeled as full end-to-end P95

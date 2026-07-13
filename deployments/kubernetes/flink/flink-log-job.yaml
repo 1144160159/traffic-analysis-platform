@@ -1,0 +1,30 @@
+---
+# Flink Log Job — Syslog 解析 + 富化 + Loki/OpenSearch
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: flink-log-job
+  namespace: flink
+  labels: {app: flink-log-job}
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: flink-log-job
+        image: traffic/flink-log-job:log-job-20260629-r1
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: KAFKA_BROKERS
+          value: "kafka-bootstrap.middleware.svc:9092"
+        - name: LOKI_URL
+          value: "http://loki.observability.svc:3100"
+        - name: OPENSEARCH_HOST
+          value: "opensearch.middleware.svc"
+        - name: OPENSEARCH_PORT
+          value: "9200"
+        - name: CHECKPOINT_PATH
+          value: "s3://flink-checkpoints/checkpoints/log-job"
+        resources:
+          requests: {cpu: "1", memory: "1Gi"}
+          limits:   {cpu: "2", memory: "2Gi"}

@@ -1,0 +1,448 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: traffic-model-training-
+  namespace: traffic-analysis
+  labels:
+    workflows.argoproj.io/archive-strategy: "true"
+    app: mlops-training
+spec:
+  entrypoint: training-pipeline
+  
+  # S3 artifact repository (MinIO)
+  artifactRepositoryRef:
+    configMap: artifact-repositories
+    key: minio
+  
+  # 工作流参数
+  arguments:
+    parameters:
+    - name: model-type
+      value: "xgboost"
+    - name: model-id
+      value: "behavior-classifier"
+    - name: feature-set-id
+      value: "v1"
+    - name: tenant-id
+      value: "campus-net"
+    - name: lookback-days
+      value: "7"
+    - name: test-size
+      value: "0.2"
+    - name: min-f1-score
+      value: "0.85"
+  
+  # 服务账号
+  serviceAccountName: argo-workflow
+  
+  # 主流程定义
+  templates:
+  
+  # ========================================
+  # 主流程编排
+  # ========================================
+  - name: training-pipeline
+    steps:
+    # Step 1: 数据提取
+    - - name: extract-data
+        template: extract-data-step
+    
+    # Step 2: 模型训练
+    - - name: train-model
+        template: train-model-step
+        arguments:
+          artifacts:
+          - name: training-data
+            from: "{{steps.extract-data.outputs.artifacts.train-data}}"
+          - name: metadata
+            from: "{{steps.extract-data.outputs.artifacts.metadata}}"
+    
+    # Step 3: 模型评估
+    - - name: evaluate-model
+        template: evaluate-model-step
+        arguments:
+          artifacts:
+          - name: model
+            from: "{{steps.train-model.outputs.artifacts.model}}"
+          - name: test-data
+            from: "{{steps.extract-data.outputs.artifacts.test-data}}"
+          - name: metadata
+            from: "{{steps.extract-data.outputs.artifacts.metadata}}"
+    
+    # Step 4: 模型注册 (条件执行)
+    - - name: register-model
+        template: register-model-step
+        arguments:
+          artifacts:
+          - name: model-dir
+            from: "{{steps.train-model.outputs.artifacts.model-dir}}"
+          parameters:
+          - name: metrics
+            value: "{{steps.evaluate-model.outputs.parameters.metrics}}"
+          - name: f1-score
+            value: "{{steps.evaluate-model.outputs.parameters.f1-score}}"
+        when: "{{steps.evaluate-model.outputs.parameters.f1-score}} > {{workflow.parameters.min-f1-score}}"
+    
+    # Step 5: 发送通知 (可选)
+    - - name: send-notification
+        template: notification-step
+        arguments:
+          parameters:
+          - name: status
+            value: "{{steps.register-model.status}}"
+          - name: f1-score
+            value: "{{steps.evaluate-model.outputs.parameters.f1-score}}"
+  
+  # ========================================
+  # Step 1: 数据提取
+  # ========================================
+  - name: extract-data-step
+    container:
+      image: python:3.11-slim
+      command: [bash, -c]
+      args:
+      - |
+        set -e
+        echo "Installing dependencies..."
+        pip install --no-cache-dir -r /scripts/requirements.txt
+        
+        echo "Running data extraction..."
+        python /scripts/extract_data.py
+      env:
+      - name: CLICKHOUSE_HOST
+        value: "clickhouse"
+      - name: CLICKHOUSE_PORT
+        value: "9000"
+      - name: CLICKHOUSE_DB
+        value: "traffic"
+      - name: CLICKHOUSE_USER
+        valueFrom:
+          secretKeyRef:
+            name: clickhouse-secret
+            key: username
+      - name: CLICKHOUSE_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: clickhouse-secret
+            key: password
+      - name: FEATURE_SET_ID
+        value: "{{workflow.parameters.feature-set-id}}"
+      - name: TENANT_ID
+        value: "{{workflow.parameters.tenant-id}}"
+      - name: LOOKBACK_DAYS
+        value: "{{workflow.parameters.lookback-days}}"
+      - name: TEST_SIZE
+        value: "{{workflow.parameters.test-size}}"
+      - name: OUTPUT_DIR
+        value: "/output"
+      volumeMounts:
+      - name: scripts
+        mountPath: /scripts
+      - name: output
+        mountPath: /output
+      resources:
+        requests:
+          memory: "2Gi"
+          cpu: "1"
+        limits:
+          memory: "4Gi"
+          cpu: "2"
+    
+    outputs:
+      artifacts:
+      - name: train-data
+        path: /output/train.parquet
+        s3:
+          key: "mlops/{{workflow.name}}/data/train.parquet"
+      - name: test-data
+        path: /output/test.parquet
+        s3:
+          key: "mlops/{{workflow.name}}/data/test.parquet"
+      - name: metadata
+        path: /output/metadata.json
+        s3:
+          key: "mlops/{{workflow.name}}/data/metadata.json"
+    
+    volumes:
+    - name: scripts
+      configMap:
+        name: mlops-scripts
+    - name: output
+      emptyDir: {}
+  
+  # ========================================
+  # Step 2: 模型训练
+  # ========================================
+  - name: train-model-step
+    inputs:
+      artifacts:
+      - name: training-data
+        path: /data/train.parquet
+      - name: metadata
+        path: /data/metadata.json
+    
+    container:
+      image: python:3.11-slim
+      command: [bash, -c]
+      args:
+      - |
+        set -e
+        echo "Installing dependencies..."
+        pip install --no-cache-dir -r /scripts/requirements.txt
+        
+        echo "Training model..."
+        python /scripts/train_model.py
+      env:
+      - name: MODEL_TYPE
+        value: "{{workflow.parameters.model-type}}"
+      - name: DATA_DIR
+        value: "/data"
+      - name: OUTPUT_DIR
+        value: "/output"
+      volumeMounts:
+      - name: scripts
+        mountPath: /scripts
+      - name: data
+        mountPath: /data
+      - name: output
+        mountPath: /output
+      resources:
+        requests:
+          memory: "4Gi"
+          cpu: "2"
+        limits:
+          memory: "8Gi"
+          cpu: "4"
+    
+    outputs:
+      artifacts:
+      - name: model
+        path: /output/model.json
+        s3:
+          key: "mlops/{{workflow.name}}/model/model.json"
+      - name: model-dir
+        path: /output
+        archive:
+          none: {}
+        s3:
+          key: "mlops/{{workflow.name}}/model"
+    
+    volumes:
+    - name: scripts
+      configMap:
+        name: mlops-scripts
+    - name: data
+      emptyDir: {}
+    - name: output
+      emptyDir: {}
+  
+  # ========================================
+  # Step 3: 模型评估
+  # ========================================
+  - name: evaluate-model-step
+    inputs:
+      artifacts:
+      - name: model
+        path: /model/model.json
+      - name: test-data
+        path: /data/test.parquet
+      - name: metadata
+        path: /data/metadata.json
+    
+    container:
+      image: python:3.11-slim
+      command: [bash, -c]
+      args:
+      - |
+        set -e
+        echo "Installing dependencies..."
+        pip install --no-cache-dir -r /scripts/requirements.txt
+        
+        echo "Evaluating model..."
+        python /scripts/evaluate_model.py
+      env:
+      - name: MODEL_TYPE
+        value: "{{workflow.parameters.model-type}}"
+      - name: MODEL_DIR
+        value: "/model"
+      - name: DATA_DIR
+        value: "/data"
+      - name: OUTPUT_DIR
+        value: "/output"
+      - name: MIN_F1_SCORE
+        value: "{{workflow.parameters.min-f1-score}}"
+      volumeMounts:
+      - name: scripts
+        mountPath: /scripts
+      - name: model
+        mountPath: /model
+      - name: data
+        mountPath: /data
+      - name: output
+        mountPath: /output
+      resources:
+        requests:
+          memory: "2Gi"
+          cpu: "1"
+        limits:
+          memory: "4Gi"
+          cpu: "2"
+    
+    outputs:
+      parameters:
+      - name: f1-score
+        valueFrom:
+          path: /output/f1_score.txt
+      - name: metrics
+        valueFrom:
+          path: /output/metrics.json
+      artifacts:
+      - name: metrics
+        path: /output/metrics.json
+        s3:
+          key: "mlops/{{workflow.name}}/evaluation/metrics.json"
+      - name: summary
+        path: /output/summary.json
+        s3:
+          key: "mlops/{{workflow.name}}/evaluation/summary.json"
+    
+    volumes:
+    - name: scripts
+      configMap:
+        name: mlops-scripts
+    - name: model
+      emptyDir: {}
+    - name: data
+      emptyDir: {}
+    - name: output
+      emptyDir: {}
+  
+  # ========================================
+  # Step 4: 模型注册
+  # ========================================
+  - name: register-model-step
+    inputs:
+      artifacts:
+      - name: model-dir
+        path: /model
+      parameters:
+      - name: metrics
+      - name: f1-score
+    
+    container:
+      image: python:3.11-slim
+      command: [bash, -c]
+      args:
+      - |
+        set -e
+        echo "Installing dependencies..."
+        pip install --no-cache-dir -r /scripts/requirements.txt
+        
+        echo "Registering model..."
+        python /scripts/register_model.py \
+          --metrics '{{inputs.parameters.metrics}}' \
+          --model-id '{{workflow.parameters.model-id}}' \
+          --model-type '{{workflow.parameters.model-type}}'
+      env:
+      - name: MODEL_DIR
+        value: "/model"
+      - name: FEATURE_SET_ID
+        value: "{{workflow.parameters.feature-set-id}}"
+      - name: TENANT_ID
+        value: "{{workflow.parameters.tenant-id}}"
+      - name: MODEL_VERSION
+        value: "{{workflow.name}}"
+      - name: MINIO_ENDPOINT
+        value: "minio:9000"
+      - name: MINIO_ACCESS_KEY
+        valueFrom:
+          secretKeyRef:
+            name: minio-secret
+            key: accesskey
+      - name: MINIO_SECRET_KEY
+        valueFrom:
+          secretKeyRef:
+            name: minio-secret
+            key: secretkey
+      - name: MINIO_BUCKET
+        value: "traffic-models"
+      - name: MODEL_REGISTRY_URL
+        value: "http://rule-manager:8080"
+      - name: API_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: api-token
+            key: token
+            optional: true
+      - name: KAFKA_BOOTSTRAP_SERVERS
+        value: "kafka:9092"
+      - name: MODEL_UPDATE_TOPIC
+        value: "model-updates"
+      - name: NOTIFICATION_METHOD
+        value: "kafka"
+      volumeMounts:
+      - name: scripts
+        mountPath: /scripts
+      - name: model
+        mountPath: /model
+      resources:
+        requests:
+          memory: "1Gi"
+          cpu: "500m"
+        limits:
+          memory: "2Gi"
+          cpu: "1"
+    
+    volumes:
+    - name: scripts
+      configMap:
+        name: mlops-scripts
+    - name: model
+      emptyDir: {}
+  
+  # ========================================
+  # Step 5: 发送通知
+  # ========================================
+  - name: notification-step
+    inputs:
+      parameters:
+      - name: status
+      - name: f1-score
+    
+    container:
+      image: curlimages/curl:latest
+      command: [sh, -c]
+      args:
+      - |
+        echo "Workflow completed with status: {{inputs.parameters.status}}"
+        echo "F1 Score: {{inputs.parameters.f1-score}}"
+        
+        # 可以在这里发送 Slack/Email 通知
+        # curl -X POST https://hooks.slack.com/... -d '{"text":"Model training completed"}'
+      resources:
+        requests:
+          memory: "64Mi"
+          cpu: "100m"
+        limits:
+          memory: "128Mi"
+          cpu: "200m"
+
+---
+# Artifact Repository ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: artifact-repositories
+  namespace: traffic-analysis
+data:
+  minio: |
+    s3:
+      bucket: argo-artifacts
+      endpoint: minio:9000
+      insecure: true
+      accessKeySecret:
+        name: minio-secret
+        key: accesskey
+      secretKeySecret:
+        name: minio-secret
+        key: secretkey

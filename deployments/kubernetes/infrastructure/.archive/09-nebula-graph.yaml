@@ -1,0 +1,247 @@
+---
+# NebulaGraph 3.6 — Node-9 primary, tolerates control-plane
+---
+apiVersion: v1
+kind: Service
+metadata: {name: nebula-meta, namespace: middleware, labels: {app: nebula, component: meta}}
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  selector: {app: nebula, component: meta}
+  ports: [{name: thrift, port: 9559}, {name: http, port: 19559}]
+---
+apiVersion: v1
+kind: Service
+metadata: {name: nebula-graph, namespace: middleware}
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 10.0.5.224
+  selector: {app: nebula, component: graph}
+  ports: [{name: thrift, port: 9669}, {name: http, port: 19669}]
+---
+apiVersion: v1
+kind: Service
+metadata: {name: nebula-graph-headless, namespace: middleware}
+spec:
+  clusterIP: None
+  selector: {app: nebula, component: graph}
+  ports: [{name: thrift, port: 9669}, {name: http, port: 19669}]
+---
+apiVersion: v1
+kind: Service
+metadata: {name: nebula-storage-headless, namespace: middleware}
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  selector: {app: nebula, component: storage}
+  ports: [{name: thrift, port: 9777}, {name: admin, port: 9778}, {name: http, port: 19779}]
+---
+# Meta StatefulSet (3 replicas, Node-9 preferred)
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: nebula-meta, namespace: middleware}
+spec:
+  serviceName: nebula-meta
+  replicas: 3
+  selector: {matchLabels: {app: nebula, component: meta}}
+  podManagementPolicy: Parallel
+  template:
+    metadata: {labels: {app: nebula, component: meta}}
+    spec:
+      tolerations:
+      - {key: node-role.kubernetes.io/control-plane, operator: Exists, effect: NoSchedule}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector: {matchLabels: {app: nebula, component: meta}}
+              topologyKey: kubernetes.io/hostname
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference: {matchExpressions: [{key: nebula-primary, operator: In, values: ["true"]}]}
+      containers:
+      - name: metad
+        image: vesoft/nebula-metad:v3.6.0
+        ports: [{containerPort: 9559}, {containerPort: 19559}]
+        command:
+        - /bin/sh
+        - -c
+        args:
+        - |
+          echo "--meta_server_addrs=nebula-meta-0.nebula-meta.middleware.svc:9559,nebula-meta-1.nebula-meta.middleware.svc:9559,nebula-meta-2.nebula-meta.middleware.svc:9559
+          --local_ip=$(POD_NAME).nebula-meta.middleware.svc
+          --port=9559
+          --ws_http_port=19559
+          --data_path=/data/meta
+          --log_dir=/data/logs
+          --v=1" > /tmp/metad.conf
+          while true; do
+            echo "$(date +%T) Starting metad..."
+            /usr/local/nebula/bin/nebula-metad --flagfile=/tmp/metad.conf 2>&1
+            echo "$(date +%T) metad exited($?), restart in 5s..."
+            sleep 5
+          done
+        env:
+        - {name: USER, value: "root"}
+        - {name: TZ, value: "Asia/Shanghai"}
+        - name: POD_NAME
+          valueFrom: {fieldRef: {fieldPath: metadata.name}}
+        resources: {requests: {cpu: "1", memory: 2Gi}, limits: {cpu: "2", memory: 4Gi}}
+        livenessProbe:  {tcpSocket: {port: 9559}, initialDelaySeconds: 30, periodSeconds: 15}
+        readinessProbe: {tcpSocket: {port: 9559}, initialDelaySeconds: 15, periodSeconds: 10}
+        volumeMounts: [{name: data, mountPath: /data}]
+  volumeClaimTemplates:
+  - metadata: {name: data}
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: local-hdd
+      resources: {requests: {storage: 20Gi}}
+---
+# Graph Deployment (3 replicas, Node-9 preferred)
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: nebula-graph, namespace: middleware}
+spec:
+  replicas: 3
+  selector: {matchLabels: {app: nebula, component: graph}}
+  template:
+    metadata: {labels: {app: nebula, component: graph}}
+    spec:
+      tolerations:
+      - {key: node-role.kubernetes.io/control-plane, operator: Exists, effect: NoSchedule}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector: {matchLabels: {app: nebula, component: graph}}
+              topologyKey: kubernetes.io/hostname
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference: {matchExpressions: [{key: nebula-primary, operator: In, values: ["true"]}]}
+      containers:
+      - name: graphd
+        image: vesoft/nebula-graphd:v3.6.0
+        ports: [{containerPort: 9669}, {containerPort: 19669}]
+        command:
+        - /bin/sh
+        - -c
+        args:
+        - |
+          echo "--meta_server_addrs=nebula-meta-0.nebula-meta.middleware.svc:9559,nebula-meta-1.nebula-meta.middleware.svc:9559,nebula-meta-2.nebula-meta.middleware.svc:9559
+          --local_ip=${POD_IP}
+          --port=9669
+          --ws_http_port=19669
+          --log_dir=/data/logs
+          --v=1" > /tmp/graphd.conf
+          while true; do
+            echo "$(date +%T) Starting graphd..."
+            /usr/local/nebula/bin/nebula-graphd --flagfile=/tmp/graphd.conf 2>&1
+            echo "$(date +%T) graphd exited($?), restart in 5s..."
+            sleep 5
+          done
+        env:
+        - {name: USER, value: "root"}
+        - {name: TZ, value: "Asia/Shanghai"}
+        - name: POD_IP
+          valueFrom: {fieldRef: {fieldPath: status.podIP}}
+        resources: {requests: {cpu: "2", memory: 4Gi}, limits: {cpu: "4", memory: 8Gi}}
+        volumeMounts: [{name: data, mountPath: /data}]
+        livenessProbe:  {tcpSocket: {port: 9669}, initialDelaySeconds: 30, periodSeconds: 15}
+        readinessProbe: {tcpSocket: {port: 9669}, initialDelaySeconds: 15, periodSeconds: 10}
+      volumes:
+      - {name: data, emptyDir: {}}
+---
+# Storage StatefulSet (3 replicas, Node-9 preferred)
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: nebula-storage, namespace: middleware}
+spec:
+  serviceName: nebula-storage-headless
+  replicas: 3
+  selector: {matchLabels: {app: nebula, component: storage}}
+  podManagementPolicy: Parallel
+  template:
+    metadata: {labels: {app: nebula, component: storage}}
+    spec:
+      tolerations:
+      - {key: node-role.kubernetes.io/control-plane, operator: Exists, effect: NoSchedule}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector: {matchLabels: {app: nebula, component: storage}}
+              topologyKey: kubernetes.io/hostname
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector: {matchLabels: {app: nebula, component: storage}}
+      initContainers:
+      - name: init-dirs
+        image: busybox:1.36
+        command: ["sh", "-c", "mkdir -p /data/storage /data/logs"]
+        volumeMounts: [{name: data, mountPath: /data}]
+      containers:
+      - name: storaged
+        image: vesoft/nebula-storaged:v3.6.0
+        ports: [{containerPort: 9777}, {containerPort: 9778}, {containerPort: 19779}]
+        command:
+        - /bin/sh
+        - -c
+        args:
+        - |
+          echo "--meta_server_addrs=nebula-meta-0.nebula-meta.middleware.svc:9559,nebula-meta-1.nebula-meta.middleware.svc:9559,nebula-meta-2.nebula-meta.middleware.svc:9559
+          --local_ip=$(POD_NAME).nebula-storage-headless.middleware.svc
+          --port=9777
+          --ws_http_port=19779
+          --data_path=/data/storage
+          --log_dir=/data/logs
+          --v=1" > /tmp/storaged.conf
+          while true; do
+            echo "$(date +%T) Starting storaged..."
+            rm -f /usr/local/nebula/pids/nebula-storaged.pid
+            kill -9 $(pgrep nebula-storaged) 2>/dev/null; sleep 2
+            /usr/local/nebula/bin/nebula-storaged --flagfile=/tmp/storaged.conf 2>&1
+            echo "$(date +%T) storaged exited($?), restart in 10s..."
+            sleep 10
+          done
+        env:
+        - {name: USER, value: "root"}
+        - {name: TZ, value: "Asia/Shanghai"}
+        - name: POD_NAME
+          valueFrom: {fieldRef: {fieldPath: metadata.name}}
+        resources: {requests: {cpu: "2", memory: 4Gi}, limits: {cpu: "4", memory: 10Gi}}
+        livenessProbe:  {tcpSocket: {port: 9777}, initialDelaySeconds: 60, periodSeconds: 15}
+        readinessProbe: {tcpSocket: {port: 9777}, initialDelaySeconds: 30, periodSeconds: 10}
+        volumeMounts: [{name: data, mountPath: /data}]
+  volumeClaimTemplates:
+  - metadata: {name: data}
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: local-hdd
+      resources: {requests: {storage: 100Gi}}
+---
+# Console (fixed Node-9)
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: nebula-console, namespace: middleware}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: nebula-console}}
+  template:
+    metadata: {labels: {app: nebula-console}}
+    spec:
+      nodeSelector: {nebula-primary: "true"}
+      containers:
+      - name: console
+        image: vesoft/nebula-console:v3.6.0
+        command: ["/bin/bash", "-c", "while true; do sleep 3600; done"]
+        env:
+        - {name: NEBULA_GRAPH_ADDR, value: "nebula-graph.middleware.svc"}
+        - {name: NEBULA_GRAPH_PORT, value: "9669"}
+        resources: {requests: {cpu: 100m, memory: 256Mi}, limits: {cpu: 500m, memory: 512Mi}}

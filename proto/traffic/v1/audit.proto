@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package traffic.v1;
+
+option go_package = "github.com/1144160159/traffic-analysis-platform/go/control-plane/pkg/proto/traffic/v1;trafficv1";
+option java_multiple_files = true;
+option java_package = "com.traffic.proto.traffic.v1";
+
+// AuditLog — 审计事件 (Kafka: audit.logs)
+message AuditLog {
+  string event_id = 1;
+  string tenant_id = 2;
+  string user_id = 3;
+  string action = 4;
+  string object_type = 5;
+  string object_id = 6;
+  string detail = 7;       // JSON
+  string ip_addr = 8;
+  string user_agent = 9;
+  int64 created_at = 10;   // unix ms
+}
+
+// UserEvent — 用户行为 (Kafka: user.events.v1)
+message UserEvent {
+  string event_id = 1;
+  string tenant_id = 2;
+  string user_id = 3;
+  string username = 4;
+  string event_type = 5;   // login/logout/token_refresh/api_access
+  string source_ip = 6;
+  string user_agent = 7;
+  string resource = 8;
+  string action = 9;
+  string result = 10;      // success/denied/error
+  int64 timestamp = 11;    // unix ms
+}
+
+// DeviceLog — 设备日志 (Kafka: device.logs.v1)
+message DeviceLog {
+  string log_id = 1;
+  string tenant_id = 2;
+  string device_ip = 3;
+  string device_type = 4;  // switch/router/firewall/server
+  uint32 facility = 5;
+  uint32 severity = 6;
+  int64 timestamp = 7;     // unix ms
+  string message = 8;
+  string parsed = 9;        // JSON, structured parse result
+  string source = 10;       // syslog/snmp_trap/netflow
+}
+
+// DeadLetter — 死信队列 (Kafka: dlq.v1)
+message DeadLetter {
+  string event_id = 1;
+  string tenant_id = 2;
+  string source_topic = 3;
+  string source_key = 4;
+  string error_msg = 5;
+  string raw_payload = 6;
+  uint32 retry_count = 7;
+  int64 created_at = 8;    // unix ms
+}
+
+// AuditLogBatch / UserEventBatch / DeviceLogBatch / DeadLetterBatch
+message AuditLogBatch { repeated AuditLog events = 1; }
+message UserEventBatch { repeated UserEvent events = 1; }
+message DeviceLogBatch { repeated DeviceLog events = 1; }
+message DeadLetterBatch { repeated DeadLetter events = 1; }

@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: codex-loop-workspace
+  namespace: traffic-analysis
+  labels:
+    app.kubernetes.io/name: codex-loop
+    app.kubernetes.io/component: automation-supervisor
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: {storage_class}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: codex-loop
+      app.kubernetes.io/component: automation-supervisor
+  resources:
+    requests:
+      storage: "{storage_request}"

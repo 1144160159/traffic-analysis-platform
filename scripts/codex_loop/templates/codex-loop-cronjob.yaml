@@ -1,0 +1,69 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: codex-loop-supervisor
+  namespace: traffic-analysis
+  labels:
+    app.kubernetes.io/name: codex-loop
+    app.kubernetes.io/component: automation-supervisor
+spec:
+  schedule: "{schedule}"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: codex-loop
+            app.kubernetes.io/component: automation-supervisor
+        spec:
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: codex-loop
+              image: {image}
+              imagePullPolicy: IfNotPresent
+              workingDir: {app_root}
+              command:
+{k8s_command_yaml}
+              resources:
+                requests:
+                  cpu: "{cpu_request}"
+                  memory: "{memory_request}"
+                limits:
+                  cpu: "{cpu_limit}"
+                  memory: "{memory_limit}"
+              env:
+                - name: PYTHONUNBUFFERED
+                  value: "1"
+                - name: CODEX_LOOP_REPO_ROOT
+                  value: "{app_root}"
+                - name: CODEX_LOOP_SCRIPT_ROOT
+                  value: "{script_root}"
+                - name: CODEX_LOOP_RUNS_ROOT
+                  value: "{runs_root}"
+{queue_token_env_yaml}
+              volumeMounts:
+                - name: workspace
+                  mountPath: {state_root}
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+          volumes:
+            - name: workspace
+              persistentVolumeClaim:
+                claimName: codex-loop-workspace
+          tolerations:
+            - key: node-role.kubernetes.io/control-plane
+              operator: Exists

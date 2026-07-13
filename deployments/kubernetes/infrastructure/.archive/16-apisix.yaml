@@ -1,0 +1,70 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: apisix
+  namespace: gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: apisix
+  serviceName: apisix-headless
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/restartedAt: '2026-06-12T09:46:33+08:00'
+      creationTimestamp: null
+      labels:
+        app: apisix
+    spec:
+      containers:
+      - args:
+        - "cp /standalone-config/config.yaml  /usr/local/apisix/conf/config.yaml\n\
+          cp /standalone-config/apisix.yaml /usr/local/apisix/conf/apisix.yaml\n#\
+          \ Inject APISIX admin_key from K8s Secret (replace placeholder in config.yaml)\n\
+          if [ -n \"${APISIX_ADMIN_KEY}\" ]; then\n  sed -i \"s/__APISIX_ADMIN_KEY__/${APISIX_ADMIN_KEY}/g\"\
+          \ /usr/local/apisix/conf/config.yaml\nfi\n/usr/bin/apisix init\nexec /usr/local/openresty/bin/openresty\
+          \ -p /usr/local/apisix -g 'daemon off;'\n"
+        command:
+        - sh
+        - -c
+        env:
+        - name: APISIX_STAND_ALONE
+          value: 'true'
+        - name: APISIX_ADMIN_KEY
+          valueFrom:
+            secretKeyRef:
+              key: APISIX_ADMIN_KEY
+              name: traffic-credentials
+        image: apache/apisix:3.9.0-debian
+        imagePullPolicy: IfNotPresent
+        name: apisix
+        ports:
+        - containerPort: 9080
+          name: http
+          protocol: TCP
+        - containerPort: 9180
+          name: admin
+          protocol: TCP
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /standalone-config
+          name: apisix-config
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: apisix-routes
+        name: apisix-config
+  updateStrategy:
+    rollingUpdate:
+      partition: 0
+    type: RollingUpdate
+

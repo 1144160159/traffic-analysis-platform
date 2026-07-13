@@ -1,0 +1,347 @@
+---
+apiVersion: v1
+items:
+- apiVersion: apps/v1
+  kind: StatefulSet
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"apps/v1","kind":"StatefulSet","metadata":{"annotations":{},"name":"redis-master","namespace":"databases"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"redis","role":"master"}},"serviceName":"redis-master","template":{"metadata":{"labels":{"app":"redis","role":"master"}},"spec":{"containers":[{"args":["redis-server","--appendonly","yes","--maxmemory","4gb","--maxmemory-policy","allkeys-lru","--bind","0.0.0.0"],"image":"redis:7-alpine","name":"redis","ports":[{"containerPort":6379}],"resources":{"limits":{"cpu":"4000m","memory":"8Gi"},"requests":{"cpu":"500m","memory":"1Gi"}},"volumeMounts":[{"mountPath":"/data","name":"data"}]}],"nodeSelector":{"kubernetes.io/hostname":"8-2tb"},"tolerations":[{"key":"node-role.kubernetes.io/control-plane","operator":"Exists"}]}},"volumeClaimTemplates":[{"metadata":{"name":"data"},"spec":{"accessModes":["ReadWriteOnce"],"resources":{"requests":{"storage":"100Gi"}},"selector":{"matchLabels":{"app":"redis-master"}},"storageClassName":"local-hdd"}}]}}
+
+        '
+    creationTimestamp: '2026-06-05T10:40:48Z'
+    generation: 4
+    name: redis-master
+    namespace: databases
+    resourceVersion: '874761'
+    uid: 6ceca9bb-b563-4e96-90ef-dd14afa9d5c7
+  spec:
+    persistentVolumeClaimRetentionPolicy:
+      whenDeleted: Retain
+      whenScaled: Retain
+    podManagementPolicy: OrderedReady
+    replicas: 1
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: redis
+        role: master
+    serviceName: redis-master
+    template:
+      metadata:
+        annotations:
+          kubectl.kubernetes.io/restartedAt: '2026-06-11T10:04:52+08:00'
+        creationTimestamp: null
+        labels:
+          app: redis
+          redis-type: server
+          role: master
+      spec:
+        containers:
+        - args:
+          - redis-server
+          - --appendonly
+          - 'yes'
+          - --maxmemory
+          - 4gb
+          - --maxmemory-policy
+          - allkeys-lru
+          - --bind
+          - 0.0.0.0
+          image: redis:7-alpine
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 6379
+            timeoutSeconds: 1
+          name: redis
+          ports:
+          - containerPort: 6379
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            successThreshold: 1
+            tcpSocket:
+              port: 6379
+            timeoutSeconds: 1
+          resources:
+            limits:
+              cpu: '4'
+              memory: 8Gi
+            requests:
+              cpu: 500m
+              memory: 1Gi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /data
+            name: data
+        dnsPolicy: ClusterFirst
+        nodeSelector:
+          kubernetes.io/hostname: 8-2tb
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+    updateStrategy:
+      rollingUpdate:
+        partition: 0
+      type: RollingUpdate
+    volumeClaimTemplates:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        creationTimestamp: null
+        name: data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 100Gi
+        selector:
+          matchLabels:
+            app: redis-master
+        storageClassName: local-hdd
+        volumeMode: Filesystem
+      status:
+        phase: Pending
+  status:
+    availableReplicas: 1
+    collisionCount: 0
+    currentReplicas: 1
+    currentRevision: redis-master-7dcdf787fb
+    observedGeneration: 4
+    readyReplicas: 1
+    replicas: 1
+    updateRevision: redis-master-7dcdf787fb
+    updatedReplicas: 1
+- apiVersion: apps/v1
+  kind: StatefulSet
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"apps/v1","kind":"StatefulSet","metadata":{"annotations":{},"name":"redis-replica","namespace":"databases"},"spec":{"replicas":2,"selector":{"matchLabels":{"app":"redis","role":"replica"}},"serviceName":"redis-replica","template":{"metadata":{"labels":{"app":"redis","role":"replica"}},"spec":{"containers":[{"args":["redis-server","--appendonly","yes","--maxmemory","4gb","--replicaof","redis-master.databases.svc.cluster.local","6379","--bind","0.0.0.0"],"image":"redis:7-alpine","name":"redis","ports":[{"containerPort":6379}],"resources":{"limits":{"cpu":"4000m","memory":"8Gi"},"requests":{"cpu":"500m","memory":"1Gi"}},"volumeMounts":[{"mountPath":"/data","name":"data"}]}],"tolerations":[{"key":"node-role.kubernetes.io/control-plane","operator":"Exists"}]}},"volumeClaimTemplates":[{"metadata":{"name":"data"},"spec":{"accessModes":["ReadWriteOnce"],"resources":{"requests":{"storage":"100Gi"}},"storageClassName":"local-hdd"}}]}}
+
+        '
+    creationTimestamp: '2026-06-05T10:46:12Z'
+    generation: 6
+    name: redis-replica
+    namespace: databases
+    resourceVersion: '874822'
+    uid: b55af1fa-4dd1-4ea7-84f2-22faf1094daa
+  spec:
+    persistentVolumeClaimRetentionPolicy:
+      whenDeleted: Retain
+      whenScaled: Retain
+    podManagementPolicy: OrderedReady
+    replicas: 2
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: redis
+        role: replica
+    serviceName: redis-replica
+    template:
+      metadata:
+        annotations:
+          kubectl.kubernetes.io/restartedAt: '2026-06-11T10:04:52+08:00'
+        creationTimestamp: null
+        labels:
+          app: redis
+          redis-type: server
+          role: replica
+      spec:
+        containers:
+        - args:
+          - redis-server
+          - --appendonly
+          - 'yes'
+          - --maxmemory
+          - 4gb
+          - --replicaof
+          - redis-master.databases.svc.cluster.local
+          - '6379'
+          - --bind
+          - 0.0.0.0
+          image: redis:7-alpine
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 6379
+            timeoutSeconds: 1
+          name: redis
+          ports:
+          - containerPort: 6379
+            protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            successThreshold: 1
+            tcpSocket:
+              port: 6379
+            timeoutSeconds: 1
+          resources:
+            limits:
+              cpu: '4'
+              memory: 8Gi
+            requests:
+              cpu: 500m
+              memory: 1Gi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /data
+            name: data
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+    updateStrategy:
+      rollingUpdate:
+        partition: 0
+      type: RollingUpdate
+    volumeClaimTemplates:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        creationTimestamp: null
+        name: data
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 100Gi
+        storageClassName: local-hdd
+        volumeMode: Filesystem
+      status:
+        phase: Pending
+  status:
+    availableReplicas: 2
+    collisionCount: 0
+    currentReplicas: 2
+    currentRevision: redis-replica-6d7b97c896
+    observedGeneration: 6
+    readyReplicas: 2
+    replicas: 2
+    updateRevision: redis-replica-6d7b97c896
+    updatedReplicas: 2
+- apiVersion: apps/v1
+  kind: StatefulSet
+  metadata:
+    annotations:
+      kubectl.kubernetes.io/last-applied-configuration: '{"apiVersion":"apps/v1","kind":"StatefulSet","metadata":{"annotations":{},"name":"redis-sentinel","namespace":"databases"},"spec":{"replicas":3,"selector":{"matchLabels":{"app":"redis","component":"sentinel"}},"serviceName":"redis-sentinel-svc","template":{"metadata":{"labels":{"app":"redis","component":"sentinel"}},"spec":{"affinity":{"podAntiAffinity":{"preferredDuringSchedulingIgnoredDuringExecution":[{"podAffinityTerm":{"labelSelector":{"matchLabels":{"app":"redis","component":"sentinel"}},"topologyKey":"kubernetes.io/hostname"},"weight":100}]}},"containers":[{"args":["cp
+        /conf/sentinel.conf /tmp/sentinel.conf \u0026\u0026 exec redis-sentinel /tmp/sentinel.conf"],"command":["sh","-c"],"image":"redis:7-alpine","name":"sentinel","ports":[{"containerPort":26379}],"resources":{"requests":{"cpu":"100m","memory":"128Mi"}},"volumeMounts":[{"mountPath":"/conf","name":"config"}]}],"tolerations":[{"key":"node-role.kubernetes.io/control-plane","operator":"Exists"}],"volumes":[{"configMap":{"name":"sentinel-conf"},"name":"config"}]}}}}
+
+        '
+    creationTimestamp: '2026-06-05T10:40:48Z'
+    generation: 2
+    name: redis-sentinel
+    namespace: databases
+    resourceVersion: '873138'
+    uid: 87275da0-f5d4-4b43-9ad5-3b8aaf78e667
+  spec:
+    persistentVolumeClaimRetentionPolicy:
+      whenDeleted: Retain
+      whenScaled: Retain
+    podManagementPolicy: OrderedReady
+    replicas: 3
+    revisionHistoryLimit: 10
+    selector:
+      matchLabels:
+        app: redis
+        component: sentinel
+    serviceName: redis-sentinel-svc
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: redis
+          component: sentinel
+      spec:
+        affinity:
+          podAntiAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: redis
+                    component: sentinel
+                topologyKey: kubernetes.io/hostname
+              weight: 100
+        containers:
+        - args:
+          - cp /conf/sentinel.conf /tmp/sentinel.conf && exec redis-sentinel /tmp/sentinel.conf
+          command:
+          - sh
+          - -c
+          image: redis:7-alpine
+          imagePullPolicy: IfNotPresent
+          name: sentinel
+          ports:
+          - containerPort: 26379
+            protocol: TCP
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+          - mountPath: /conf
+            name: config
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        schedulerName: default-scheduler
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+        topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: redis
+              component: sentinel
+        volumes:
+        - configMap:
+            defaultMode: 420
+            name: sentinel-conf
+          name: config
+    updateStrategy:
+      rollingUpdate:
+        partition: 0
+      type: RollingUpdate
+  status:
+    availableReplicas: 3
+    collisionCount: 0
+    currentReplicas: 3
+    currentRevision: redis-sentinel-7b795f6cbc
+    observedGeneration: 2
+    readyReplicas: 3
+    replicas: 3
+    updateRevision: redis-sentinel-7b795f6cbc
+    updatedReplicas: 3
+kind: List
+metadata: {}
+

@@ -1,0 +1,196 @@
+# Site values template for a reproducible traffic-analysis-platform deployment.
+# Keep secrets as references only. Do not put plaintext credentials in this file.
+apiVersion: traffic.analysis.local/v1alpha1
+kind: SiteValues
+metadata:
+  name: traffic-analysis-site-values
+  version: 2026-06-29
+cluster:
+  kubernetesVersion: ">=1.29"
+  nodes:
+    minCount: 2
+    requiredLabels:
+      - kubernetes.io/arch=amd64
+      - kubernetes.io/os=linux
+  cni:
+    provider: flannel
+  loadBalancer:
+    provider: metallb
+    addressPool: 10.0.5.200-10.0.5.250
+namespaces:
+  runtime:
+    - traffic-analysis
+    - gateway
+    - middleware
+    - databases
+    - flink
+    - minio
+    - observability
+  management:
+    - argo
+    - argo-events
+    - iam
+    - nacos
+    - streampark
+storage:
+  defaultClass: local-hdd
+  requiredClasses:
+    - local-hdd
+  localPaths:
+    clickhouse: /home/data/clickhouse
+    kafka: /home/data/kafka
+    postgres: /home/data/postgres
+    redis: /home/data/redis
+    minio: /home/data/minio
+    flink: /home/k8s-data/flink # RocksDB local state only
+  objectStoragePaths:
+    flinkCheckpoints: s3://flink-checkpoints/checkpoints
+    flinkSavepoints: s3://flink-checkpoints/savepoints
+network:
+  publicBusinessEntry:
+    service: gateway/apisix
+    port: 9080
+    nodePort: 30180
+  managementAccess:
+    mode: vpn-or-bastion
+    note: Management NodePorts must not be exposed as public business entry points.
+  expectedNodePorts:
+    apisixHttp: 30180
+    kafkaBootstrap: 30092
+    clickhouseHttp: 30023
+    clickhouseNative: 31609
+    postgres: 30032
+    redis: 30079
+    redisSentinel: 30279
+    minioApi: 30000
+    keycloak: 30080
+    argoServer: 30046
+    streampark: 30100
+secrets:
+  strategy: external-secret-or-sealed-secret
+  sharedSecretName: traffic-credentials
+  requiredReferences:
+    - namespace: middleware
+      name: traffic-credentials
+      keys:
+        - CLICKHOUSE_PASSWORD
+        - REDIS_PASSWORD
+        - JWT_SECRET
+        - APISIX_ADMIN_KEY
+        - OPENSEARCH_ADMIN_PASSWORD
+        - KAFKA_CLIENT_USERNAME
+        - KAFKA_CLIENT_PASSWORD
+        - KAFKA_CLIENT_JAAS_CONFIG
+        - KAFKA_INTER_BROKER_USERNAME
+        - KAFKA_INTER_BROKER_PASSWORD
+        - KAFKA_TLS_KEYSTORE_PASSWORD
+        - KAFKA_TLS_TRUSTSTORE_PASSWORD
+    - namespace: middleware
+      name: kafka-broker-tls
+      keys:
+        - kafka.keystore.p12
+        - kafka.truststore.p12
+        - ca.crt
+    - namespace: middleware
+      name: kafka-client-tls
+      keys:
+        - kafka.truststore.p12
+        - ca.crt
+    - namespace: traffic-analysis
+      name: traffic-credentials
+      keys:
+        - PG_PASSWORD
+        - POSTGRES_DSN
+        - CLICKHOUSE_PASSWORD
+        - REDIS_PASSWORD
+        - MINIO_ACCESS_KEY
+        - MINIO_SECRET_KEY
+        - JWT_SECRET
+        - OIDC_CLIENT_SECRET
+        - OPENSEARCH_ADMIN_PASSWORD
+        - KAFKA_CLIENT_USERNAME
+        - KAFKA_CLIENT_PASSWORD
+        - KAFKA_TLS_TRUSTSTORE_PASSWORD
+    - namespace: traffic-analysis
+      name: kafka-client-tls
+      keys:
+        - kafka.truststore.p12
+        - ca.crt
+    - namespace: databases
+      name: traffic-credentials
+      keys:
+        - PG_PASSWORD
+        - PG_REPLICATION_PASSWORD
+        - REDIS_PASSWORD
+    - namespace: gateway
+      name: traffic-credentials
+      keys:
+        - APISIX_ADMIN_KEY
+    - namespace: flink
+      name: traffic-credentials
+      keys:
+        - CLICKHOUSE_PASSWORD
+        - MINIO_ACCESS_KEY
+        - MINIO_SECRET_KEY
+        - OPENSEARCH_ADMIN_PASSWORD
+        - KAFKA_CLIENT_USERNAME
+        - KAFKA_CLIENT_PASSWORD
+        - KAFKA_TLS_TRUSTSTORE_PASSWORD
+    - namespace: flink
+      name: kafka-client-tls
+      keys:
+        - kafka.truststore.p12
+        - ca.crt
+    - namespace: minio
+      name: traffic-credentials
+      keys:
+        - MINIO_ACCESS_KEY
+        - MINIO_SECRET_KEY
+    - namespace: observability
+      name: traffic-credentials
+      keys:
+        - GRAFANA_ADMIN_PASSWORD
+    - namespace: iam
+      name: traffic-credentials
+      keys:
+        - KEYCLOAK_ADMIN_PASSWORD
+    - namespace: iam
+      name: keycloak-tls
+      keys:
+        - tls.crt
+        - tls.key
+images:
+  policy:
+    requireDigestPinned: true
+    forbidLatestTag: true
+  localRegistryFallback:
+    enabled: true
+    runtime: containerd
+releasePackage:
+  requiredDirectories:
+    - deployments/kubernetes
+    - common/kafka
+    - common/sql
+    - proto/traffic/v1
+    - rules
+    - mlops/workflows
+    - tests/e2e
+    - tests/chaos
+    - web/ui/src/routes
+  requiredEvidence:
+    - doc/02_acceptance/00-baseline/release-manifest-latest.json
+    - doc/02_acceptance/05-security/production-security-preflight-latest.json
+    - doc/02_acceptance/06-resilience/ha-readiness-preflight-latest.json
+    - doc/02_acceptance/07-deployment/deployment-preflight-latest.json
+verification:
+  dryRun:
+    - deployments/kubernetes/applications
+    - deployments/kubernetes/configmaps
+    - deployments/kubernetes/infrastructure
+    - deployments/kubernetes/init-jobs
+    - deployments/kubernetes/flink
+  liveReadiness:
+    requireAllRuntimePodsReady: true
+    requireNoPendingCriticalPVC: true
+    requireAPISIXBusinessEntryReachable: true
+    requireReleasePackageManifest: true

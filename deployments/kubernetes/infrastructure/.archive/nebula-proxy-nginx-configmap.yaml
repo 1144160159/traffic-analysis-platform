@@ -1,0 +1,40 @@
+apiVersion: v1
+data:
+  default.conf: |
+    server {
+        listen 7002;
+        server_name _;
+        location / {
+            proxy_pass http://nebula-studio.middleware.svc:7001;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header Accept-Encoding "";
+            sub_filter_types text/html application/javascript text/javascript text/css;
+            # CSS url() asset paths (no quotes)
+            sub_filter 'url(/assets/' 'url(/nebula/assets/';
+            sub_filter_once off;
+            # Generic: catch ALL "/assets/ references (JS strings, workers, etc.)
+            sub_filter '"/assets/' '"/nebula/assets/';
+            # Relative asset paths (Vite preload deps: "assets/ -> "nebula/assets/)
+            sub_filter '"assets/' '"nebula/assets/';
+            # HTML attributes (belt-and-suspenders, may be redundant with above)
+            sub_filter 'src="/assets/'  'src="/nebula/assets/';
+            sub_filter 'href="/assets/'  'href="/nebula/assets/';
+            # JS API paths (api-nebula first to avoid /api/ false match)
+            sub_filter '"/api-nebula/' '"/nebula/api-nebula/';
+            sub_filter '"/api/' '"/nebula/api/';
+            # JS hardcoded redirect/login paths
+            sub_filter '"/login' '"/nebula/login';
+            sub_filter '"/redirect' '"/nebula/redirect';
+        }
+    }
+kind: ConfigMap
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","data":{"default.conf":"server {\n    listen 7002;\n    server_name _;\n    location / {\n        proxy_pass http://nebula-studio.middleware.svc:7001;\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;\n        proxy_set_header Accept-Encoding \"\";\n        sub_filter_types text/html application/javascript text/javascript text/css;\n        # CSS url() asset paths (no quotes)\n        sub_filter 'url(/assets/' 'url(/nebula/assets/';\n        sub_filter_once off;\n        # Generic: catch ALL \"/assets/ references (JS strings, workers, etc.)\n        sub_filter '\"/assets/' '\"/nebula/assets/';\n        # Relative asset paths (Vite preload deps: \"assets/ -\u003e \"nebula/assets/)\n        sub_filter '\"assets/' '\"nebula/assets/';\n        # HTML attributes (belt-and-suspenders, may be redundant with above)\n        sub_filter 'src=\"/assets/'  'src=\"/nebula/assets/';\n        sub_filter 'href=\"/assets/'  'href=\"/nebula/assets/';\n        # JS API paths (api-nebula first to avoid /api/ false match)\n        sub_filter '\"/api-nebula/' '\"/nebula/api-nebula/';\n        sub_filter '\"/api/' '\"/nebula/api/';\n        # JS hardcoded redirect/login paths\n        sub_filter '\"/login' '\"/nebula/login';\n        sub_filter '\"/redirect' '\"/nebula/redirect';\n    }\n}\n"},"kind":"ConfigMap","metadata":{"annotations":{},"creationTimestamp":"2026-06-12T02:34:07Z","name":"nebula-proxy-nginx","namespace":"middleware","resourceVersion":"1033271","uid":"6435cfcc-3706-4a4e-807c-392e3f47c2d7"}}
+  creationTimestamp: "2026-06-12T02:34:07Z"
+  name: nebula-proxy-nginx
+  namespace: middleware
+  resourceVersion: "1033453"
+  uid: 6435cfcc-3706-4a4e-807c-392e3f47c2d7

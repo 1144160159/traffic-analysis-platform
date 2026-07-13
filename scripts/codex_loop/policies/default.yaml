@@ -1,0 +1,33 @@
+version: 1
+default_mode: plan
+evidence_layers:
+  - smoke
+  - regression
+  - acceptance
+  - third-party
+required_gates:
+  - G0 Intake
+  - G1 Scope
+  - G5 Local
+  - G6 Reviewer
+  - G8 Evidence
+dangerous_command_fragments:
+  - git reset
+  - git checkout
+  - kubectl delete
+  - helm uninstall
+  - rm -rf
+  - docker push
+  - truncate
+  - DROP DATABASE
+  - DROP TABLE
+live_write_requires:
+  - run_id
+  - tenant
+  - cleanup
+  - human_gate
+evidence_rules:
+  - smoke cannot close acceptance
+  - regression cannot close third-party
+  - third-party must reference an external report
+  - code changes require changed-files.txt and local-report.md

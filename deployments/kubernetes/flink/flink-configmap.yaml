@@ -1,0 +1,68 @@
+---
+# Flink Job 生产环境 ConfigMap — 集群模式
+# ClickHouse 集群: 2 Shard x 2 Replica + 3 Keeper
+# 写入 Distributed 表 (自动分布到各 shard)
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flink-job-config
+  namespace: flink
+data:
+  # ====== Kafka 端点 ======
+  kafka.brokers: "kafka-bootstrap.middleware.svc:9092"
+  kafka.security.protocol: "SASL_SSL"
+  kafka.sasl.mechanism: "SCRAM-SHA-512"
+  kafka.ssl.truststore.location: "/etc/kafka/tls/kafka.truststore.p12"
+  kafka.ssl.truststore.type: "PKCS12"
+
+  # ====== ClickHouse 集群端点 (多 shard) ======
+  # Shard 1 端点 (主写入入口)
+  clickhouse.host: "clickhouse-1.middleware.svc"
+  clickhouse.port: "8123"
+  clickhouse.jdbc.url: "jdbc:clickhouse://clickhouse-1.middleware.svc:8123,clickhouse-2.middleware.svc:8123/traffic"
+  # 备用 shard 端点 (连接池 failover)
+  clickhouse.hosts: "clickhouse-1.middleware.svc:8123,clickhouse-2.middleware.svc:8123"
+  clickhouse.database: "traffic"
+  clickhouse.user: "default"
+  clickhouse.password: ""
+  # 集群模式: 写入 Distributed 表 (flows_raw/sessions/alerts/...)
+  # 不使用 _local 后缀
+  clickhouse.cluster.mode: "true"
+  # 批量写入配置
+  clickhouse.batch.size: "5000"
+  clickhouse.batch.interval.ms: "2000"
+  clickhouse.connection.timeout: "30000"
+  clickhouse.socket.timeout: "300000"
+
+  # ====== Checkpoint (rules/java.md 规范: ≤60s) ======
+  checkpoint.path: "s3://flink-checkpoints/checkpoints/flink-traffic"
+  checkpoint.interval.ms: "30000"
+  checkpoint.timeout.ms: "600000"
+
+  # ====== Session 超时 (低延迟验收 profile: idle=5s, watermark=5s, active=1800s) ======
+  session.gap.ms: "5000"
+  active.timeout.ms: "1800000"
+  watermark.delay.ms: "5000"
+  state.ttl.ms: "1800000"
+  state.ttl.enabled: "true"
+  flow.raw.sink.enabled: "true"
+  flow.raw.clickhouse.table: "flows_raw"
+
+  # ====== 并行度 ======
+  parallelism: "12"
+  max.parallelism: "128"
+
+  # ====== OpenSearch (可选) ======
+  opensearch.enabled: "false"
+  opensearch.hosts: "opensearch.middleware.svc:9200"
+  opensearch.port: "9200"
+  opensearch.index: "sessions_v1"
+  opensearch.user: "admin"
+  opensearch.password: "${OPENSEARCH_ADMIN_PASSWORD}"
+
+  # ====== MinIO (S3 Checkpoint) ======
+  s3.endpoint: "http://minio.minio.svc:9000"
+  s3.access.key: "${MINIO_ACCESS_KEY}"
+  s3.secret.key: "${MINIO_SECRET_KEY}"
+  s3.bucket.checkpoints: "flink-checkpoints"

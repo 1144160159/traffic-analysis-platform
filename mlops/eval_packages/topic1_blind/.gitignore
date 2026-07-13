@@ -1,0 +1,8 @@
+labels/*
+predictions/*
+reports/*
+samples/*
+!labels/.gitkeep
+!predictions/.gitkeep
+!reports/.gitkeep
+!samples/.gitkeep

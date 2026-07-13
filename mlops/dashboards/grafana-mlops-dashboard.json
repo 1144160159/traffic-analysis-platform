@@ -1,0 +1,302 @@
+{
+  "dashboard": {
+    "title": "MLOps \u2014 Model Training & Inference Monitoring",
+    "uid": "mlops-overview",
+    "tags": [
+      "mlops",
+      "traffic-analysis"
+    ],
+    "panels": [
+      {
+        "id": 1,
+        "title": "Model F1 Score (Last 10 Runs)",
+        "type": "timeseries",
+        "gridPos": {
+          "x": 0,
+          "y": 0,
+          "w": 12,
+          "h": 6
+        },
+        "targets": [
+          {
+            "expr": "model_evaluation_f1_score",
+            "legendFormat": "F1 Score"
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Training Pipeline Success Rate",
+        "type": "stat",
+        "gridPos": {
+          "x": 12,
+          "y": 0,
+          "w": 6,
+          "h": 3
+        },
+        "targets": [
+          {
+            "expr": "workflows_completed_total{status='Succeeded'} / workflows_completed_total"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "steps": [
+                {
+                  "value": 0,
+                  "color": "red"
+                },
+                {
+                  "value": 0.8,
+                  "color": "yellow"
+                },
+                {
+                  "value": 0.95,
+                  "color": "green"
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "Active Model Versions",
+        "type": "stat",
+        "gridPos": {
+          "x": 18,
+          "y": 0,
+          "w": 6,
+          "h": 3
+        },
+        "targets": [
+          {
+            "expr": "model_versions_total{status='active'}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "thresholds": {
+              "steps": [
+                {
+                  "value": 0,
+                  "color": "red"
+                },
+                {
+                  "value": 1,
+                  "color": "green"
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Feature Drift \u2014 PSI Values",
+        "type": "table",
+        "gridPos": {
+          "x": 0,
+          "y": 6,
+          "w": 8,
+          "h": 6
+        },
+        "targets": [
+          {
+            "expr": "model_drift_psi"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "cellOptions": {
+                "type": "color-background"
+              }
+            },
+            "thresholds": {
+              "steps": [
+                {
+                  "value": 0,
+                  "color": "green"
+                },
+                {
+                  "value": 0.1,
+                  "color": "yellow"
+                },
+                {
+                  "value": 0.25,
+                  "color": "red"
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "Feedback Rate",
+        "type": "timeseries",
+        "gridPos": {
+          "x": 8,
+          "y": 6,
+          "w": 8,
+          "h": 6
+        },
+        "targets": [
+          {
+            "expr": "rate(alert_feedback_total[1h])",
+            "legendFormat": "Feedback/min"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "FP Rate (24h)",
+        "type": "timeseries",
+        "gridPos": {
+          "x": 16,
+          "y": 6,
+          "w": 8,
+          "h": 6
+        },
+        "targets": [
+          {
+            "expr": "alert_feedback_fp_total / alert_feedback_total",
+            "legendFormat": "FP Rate"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Orchestrator Checks",
+        "type": "timeseries",
+        "gridPos": {
+          "x": 0,
+          "y": 12,
+          "w": 12,
+          "h": 6
+        },
+        "targets": [
+          {
+            "expr": "mlops_checks_total{trigger='feedback'}",
+            "legendFormat": "Feedback"
+          },
+          {
+            "expr": "mlops_checks_total{trigger='fp_rate'}",
+            "legendFormat": "FP Rate"
+          },
+          {
+            "expr": "mlops_checks_total{trigger='drift'}",
+            "legendFormat": "Drift"
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Inference Latency (P50/P95/P99)",
+        "type": "timeseries",
+        "gridPos": {
+          "x": 12,
+          "y": 12,
+          "w": 12,
+          "h": 6
+        },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, model_inference_duration_seconds_bucket)",
+            "legendFormat": "P50"
+          },
+          {
+            "expr": "histogram_quantile(0.95, model_inference_duration_seconds_bucket)",
+            "legendFormat": "P95"
+          },
+          {
+            "expr": "histogram_quantile(0.99, model_inference_duration_seconds_bucket)",
+            "legendFormat": "P99"
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Data Quality Checks",
+        "type": "table",
+        "gridPos": {
+          "x": 0,
+          "y": 18,
+          "w": 8,
+          "h": 5
+        },
+        "targets": [
+          {
+            "expr": "data_quality_check"
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Model Versions",
+        "type": "stat",
+        "gridPos": {
+          "x": 8,
+          "y": 18,
+          "w": 4,
+          "h": 5
+        },
+        "targets": [
+          {
+            "expr": "model_versions_total"
+          }
+        ]
+      },
+      {
+        "id": 11,
+        "title": "Asset Risk Distribution",
+        "type": "piechart",
+        "gridPos": {
+          "x": 12,
+          "y": 18,
+          "w": 12,
+          "h": 5
+        },
+        "targets": [
+          {
+            "expr": "asset_risk_total{level='critical'}",
+            "legendFormat": "Critical"
+          },
+          {
+            "expr": "asset_risk_total{level='high'}",
+            "legendFormat": "High"
+          },
+          {
+            "expr": "asset_risk_total{level='medium'}",
+            "legendFormat": "Medium"
+          },
+          {
+            "expr": "asset_risk_total{level='low'}",
+            "legendFormat": "Low"
+          }
+        ]
+      },
+      {
+        "id": 12,
+        "title": "Pipeline Duration (min)",
+        "type": "timeseries",
+        "gridPos": {
+          "x": 0,
+          "y": 23,
+          "w": 12,
+          "h": 5
+        },
+        "targets": [
+          {
+            "expr": "workflow_duration_seconds / 60",
+            "legendFormat": "Duration"
+          }
+        ]
+      }
+    ]
+  },
+  "folderUid": "mlops",
+  "overwrite": true
+}

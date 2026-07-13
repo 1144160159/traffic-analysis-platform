@@ -1,51 +1,118 @@
+// =============================================================================
+// FILE: proto/traffic/v1/common.proto
+// =============================================================================
+
 syntax = "proto3";
 
 package traffic.v1;
 
 option go_package = "github.com/1144160159/traffic-analysis-platform/go/control-plane/pkg/proto/traffic/v1;trafficv1";
-option java_package = "com.traffic.proto.v1";
+option java_package = "com.traffic.proto.traffic.v1";
 option java_multiple_files = true;
 
-// EventHeader 是所有事件的通用头部
-// 包含用于追踪、租户隔离和幂等处理的关键字段
+// EventHeader 事件头（所有事件的公共字段）
 message EventHeader {
-  // event_id: UUID v4，全局唯一，用于幂等处理
   string event_id = 1;
-  
-  // tenant_id: 租户标识，用于数据隔离
   string tenant_id = 2;
-  
-  // run_id: 运行批次ID，用于区分实时流量与回放流量
   string run_id = 3;
-  
-  // event_ts: 事件发生时间戳 (毫秒)
   int64 event_ts = 4;
-  
-  // ingest_ts: 接入网关接收时间戳 (毫秒)
   int64 ingest_ts = 5;
-  
-  // probe_id: 探针标识
   string probe_id = 6;
-  
-  // feature_set_id: 特征集版本，用于模型训练一致性
   string feature_set_id = 7;
+  // kafka_ts is the millisecond timestamp assigned immediately before the event is published to Kafka.
+  int64 kafka_ts = 8;
+  // flink_out_ts is the millisecond timestamp assigned when a Flink job emits or persists the derived event.
+  int64 flink_out_ts = 9;
 }
 
-// FiveTuple 网络五元组
+// FiveTuple 五元组
 message FiveTuple {
-  string src_ip = 1;      // 源 IP (IPv4/IPv6 字符串格式)
-  string dst_ip = 2;      // 目的 IP
-  uint32 src_port = 3;    // 源端口
-  uint32 dst_port = 4;    // 目的端口
-  uint32 protocol = 5;    // 协议号: 6=TCP, 17=UDP, 1=ICMP
+  string src_ip = 1;
+  string dst_ip = 2;
+  uint32 src_port = 3;
+  uint32 dst_port = 4;
+  uint32 protocol = 5;
 }
 
-// TcpFlags TCP 标志位统计
-message TcpFlags {
-  uint32 syn = 1;
-  uint32 ack = 2;
-  uint32 fin = 3;
-  uint32 rst = 4;
-  uint32 psh = 5;
-  uint32 urg = 6;
+// PacketLengthStats 包长度统计
+message PacketLengthStats {
+  uint32 min = 1;
+  uint32 max = 2;
+  float mean = 3;
+  float std = 4;
+}
+
+// InterArrivalStats 到达间隔统计
+message InterArrivalStats {
+  float min_ms = 1;
+  float max_ms = 2;
+  float mean_ms = 3;
+  float std_ms = 4;
+}
+
+// ActiveIdleStats Active/Idle 时间统计
+message ActiveIdleStats {
+  float min_ms = 1;
+  float mean_ms = 2;
+  float max_ms = 3;
+  float std_ms = 4;
+}
+
+// FlowDirection 流方向
+enum FlowDirection {
+  FLOW_DIRECTION_UNSPECIFIED = 0;
+  FLOW_DIRECTION_FORWARD = 1;
+  FLOW_DIRECTION_BACKWARD = 2;
+  FLOW_DIRECTION_BIDIRECTIONAL = 3;
+}
+
+// Severity 严重程度
+enum Severity {
+  SEVERITY_UNSPECIFIED = 0;
+  SEVERITY_INFO = 1;
+  SEVERITY_LOW = 2;
+  SEVERITY_MEDIUM = 3;
+  SEVERITY_HIGH = 4;
+  SEVERITY_CRITICAL = 5;
+}
+
+// AlertStatus 告警状态
+enum AlertStatus {
+  ALERT_STATUS_UNSPECIFIED = 0;
+  ALERT_STATUS_NEW = 1;
+  ALERT_STATUS_TRIAGE = 2;
+  ALERT_STATUS_ASSIGNED = 3;
+  ALERT_STATUS_IN_PROGRESS = 4;
+  ALERT_STATUS_RESOLVED = 5;
+  ALERT_STATUS_CLOSED = 6;
+  ALERT_STATUS_FALSE_POSITIVE = 7;
+}
+
+// DeploymentStatus 部署状态
+enum DeploymentStatus {
+  DEPLOYMENT_STATUS_UNSPECIFIED = 0;
+  DEPLOYMENT_STATUS_PLANNED = 1;
+  DEPLOYMENT_STATUS_GRAY = 2;
+  DEPLOYMENT_STATUS_ACTIVE = 3;
+  DEPLOYMENT_STATUS_PAUSED = 4;
+  DEPLOYMENT_STATUS_ROLLED_BACK = 5;
+}
+
+// TaskType 任务类型
+enum TaskType {
+  TASK_TYPE_UNSPECIFIED = 0;
+  TASK_TYPE_REPLAY = 1;
+  TASK_TYPE_TRAIN = 2;
+  TASK_TYPE_EVAL = 3;
+  TASK_TYPE_PCAP_CUT = 4;
+}
+
+// TaskStatus 任务状态
+enum TaskStatus {
+  TASK_STATUS_UNSPECIFIED = 0;
+  TASK_STATUS_QUEUED = 1;
+  TASK_STATUS_RUNNING = 2;
+  TASK_STATUS_SUCCEEDED = 3;
+  TASK_STATUS_FAILED = 4;
+  TASK_STATUS_CANCELED = 5;
 }

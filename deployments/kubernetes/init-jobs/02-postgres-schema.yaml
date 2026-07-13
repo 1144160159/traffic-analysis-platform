@@ -1,0 +1,330 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-sql
+  namespace: databases
+data:
+  00-init.sql: |
+    BEGIN;
+    CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+    CREATE TABLE IF NOT EXISTS tenants (tenant_id TEXT PRIMARY KEY, name TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'active', created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now());
+    ALTER TABLE tenants ADD COLUMN IF NOT EXISTS tenant_name TEXT;
+    ALTER TABLE tenants ADD COLUMN IF NOT EXISTS name TEXT;
+    UPDATE tenants SET name = COALESCE(NULLIF(name, ''), NULLIF(tenant_name, ''), tenant_id) WHERE name IS NULL OR name = '';
+    ALTER TABLE tenants ALTER COLUMN name SET NOT NULL;
+    ALTER TABLE tenants ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active';
+    ALTER TABLE tenants ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now();
+    ALTER TABLE tenants ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+    CREATE TABLE IF NOT EXISTS users (user_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE, username TEXT NOT NULL, email TEXT, status TEXT NOT NULL DEFAULT 'active', password_hash TEXT, external_id TEXT, last_login_at TIMESTAMPTZ, created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), UNIQUE (tenant_id, username));
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active';
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS external_id TEXT;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMPTZ;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now();
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_users_tenant_username ON users (tenant_id, username);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_users_external_id ON users (external_id) WHERE external_id IS NOT NULL;
+    CREATE TABLE IF NOT EXISTS roles (role_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE, name TEXT NOT NULL, description TEXT NOT NULL DEFAULT '', permissions JSONB NOT NULL DEFAULT '{}'::jsonb, is_system BOOLEAN NOT NULL DEFAULT false, created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), UNIQUE (tenant_id, name));
+    ALTER TABLE roles ADD COLUMN IF NOT EXISTS description TEXT NOT NULL DEFAULT '';
+    ALTER TABLE roles ADD COLUMN IF NOT EXISTS permissions JSONB NOT NULL DEFAULT '{}'::jsonb;
+    ALTER TABLE roles ADD COLUMN IF NOT EXISTS is_system BOOLEAN NOT NULL DEFAULT false;
+    ALTER TABLE roles ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now();
+    ALTER TABLE roles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_roles_tenant_name ON roles (tenant_id, name);
+    CREATE TABLE IF NOT EXISTS user_roles (user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE, role_id UUID NOT NULL REFERENCES roles(role_id) ON DELETE CASCADE, created_at TIMESTAMPTZ NOT NULL DEFAULT now(), PRIMARY KEY (user_id, role_id));
+    ALTER TABLE user_roles ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now();
+    CREATE TABLE IF NOT EXISTS user_settings (tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE, user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE, category TEXT NOT NULL, settings JSONB NOT NULL DEFAULT '{}'::jsonb, created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), PRIMARY KEY (tenant_id, user_id, category));
+    ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS settings JSONB NOT NULL DEFAULT '{}'::jsonb;
+    ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now();
+    ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+    CREATE INDEX IF NOT EXISTS idx_user_settings_user ON user_settings (tenant_id, user_id);
+    CREATE TABLE IF NOT EXISTS api_tokens (token_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE, user_id UUID REFERENCES users(user_id) ON DELETE SET NULL, name TEXT NOT NULL, description TEXT, token_type TEXT NOT NULL DEFAULT 'api', token_hash TEXT NOT NULL, token_prefix TEXT, scopes JSONB NOT NULL DEFAULT '[]'::jsonb, status TEXT NOT NULL DEFAULT 'active', expires_at TIMESTAMPTZ, last_used_at TIMESTAMPTZ, usage_count BIGINT NOT NULL DEFAULT 0, created_by UUID REFERENCES users(user_id), created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), revoked_at TIMESTAMPTZ, rotation_enabled BOOLEAN NOT NULL DEFAULT false, rotation_interval INT, last_rotated_at TIMESTAMPTZ, previous_token_id UUID, ip_whitelist JSONB NOT NULL DEFAULT '[]'::jsonb, metadata JSONB NOT NULL DEFAULT '{}'::jsonb, probe_id TEXT);
+    ALTER TABLE api_tokens ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(user_id) ON DELETE SET NULL;
+    ALTER TABLE api_tokens ADD COLUMN IF NOT EXISTS description TEXT;
+    ALTER TABLE api_tokens ADD COLUMN IF NOT EXISTS token_type TEXT NOT NULL DEFAULT 'api';
+    ALTER TABLE api_tokens ADD COLUMN IF NOT EXISTS token_prefix TEXT;
+    ALTER TABLE api_tokens ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ;
+    ALTER TABLE api_tokens ADD COLUMN IF NOT EXISTS last_used_at TIMESTAMPTZ;
+    ALTER TABLE api_tokens ADD COLUMN IF NOT EXISTS usage_count BIGINT NOT NULL DEFAULT 0;
+    ALTER TABLE api_tokens ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES users(user_id);
+    ALTER TABLE api_tokens ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now();
+    ALTER TABLE api_tokens ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+    ALTER TABLE api_tokens ADD COLUMN IF NOT EXISTS revoked_at TIMESTAMPTZ;
+    ALTER TABLE api_tokens ADD COLUMN IF NOT EXISTS rotation_enabled BOOLEAN NOT NULL DEFAULT false;
+    ALTER TABLE api_tokens ADD COLUMN IF NOT EXISTS rotation_interval INT;
+    ALTER TABLE api_tokens ADD COLUMN IF NOT EXISTS last_rotated_at TIMESTAMPTZ;
+    ALTER TABLE api_tokens ADD COLUMN IF NOT EXISTS previous_token_id UUID;
+    ALTER TABLE api_tokens ADD COLUMN IF NOT EXISTS ip_whitelist JSONB NOT NULL DEFAULT '[]'::jsonb;
+    ALTER TABLE api_tokens ADD COLUMN IF NOT EXISTS metadata JSONB NOT NULL DEFAULT '{}'::jsonb;
+    ALTER TABLE api_tokens ADD COLUMN IF NOT EXISTS probe_id TEXT;
+    ALTER TABLE api_tokens ALTER COLUMN scopes TYPE JSONB USING COALESCE(to_jsonb(scopes), '[]'::jsonb);
+    ALTER TABLE api_tokens ALTER COLUMN scopes SET DEFAULT '[]'::jsonb;
+    ALTER TABLE api_tokens ALTER COLUMN scopes SET NOT NULL;
+    CREATE INDEX IF NOT EXISTS idx_api_tokens_hash ON api_tokens (token_hash);
+    CREATE INDEX IF NOT EXISTS idx_api_tokens_tenant_status ON api_tokens (tenant_id, status);
+    CREATE INDEX IF NOT EXISTS idx_api_tokens_probe ON api_tokens (probe_id);
+    CREATE TABLE IF NOT EXISTS revoked_sessions (session_id TEXT PRIMARY KEY, user_id UUID, tenant_id TEXT NOT NULL DEFAULT '', revoked_at TIMESTAMPTZ NOT NULL DEFAULT now(), expires_at TIMESTAMPTZ NOT NULL, reason TEXT NOT NULL DEFAULT '');
+    ALTER TABLE revoked_sessions ADD COLUMN IF NOT EXISTS user_id UUID;
+    ALTER TABLE revoked_sessions ADD COLUMN IF NOT EXISTS tenant_id TEXT NOT NULL DEFAULT '';
+    ALTER TABLE revoked_sessions ADD COLUMN IF NOT EXISTS revoked_at TIMESTAMPTZ NOT NULL DEFAULT now();
+    ALTER TABLE revoked_sessions ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ NOT NULL DEFAULT now();
+    ALTER TABLE revoked_sessions ADD COLUMN IF NOT EXISTS reason TEXT NOT NULL DEFAULT '';
+    CREATE INDEX IF NOT EXISTS idx_revoked_sessions_expires ON revoked_sessions (expires_at);
+    CREATE INDEX IF NOT EXISTS idx_revoked_sessions_tenant ON revoked_sessions (tenant_id, revoked_at DESC);
+    CREATE TABLE IF NOT EXISTS probes (probe_id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE, name TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'active', hardware_info JSONB, software_version TEXT, last_heartbeat TIMESTAMPTZ, created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now());
+    ALTER TABLE probes ADD COLUMN IF NOT EXISTS tenant_id TEXT;
+    ALTER TABLE probes ADD COLUMN IF NOT EXISTS name TEXT NOT NULL DEFAULT '';
+    ALTER TABLE probes ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active';
+    ALTER TABLE probes ADD COLUMN IF NOT EXISTS hardware_info JSONB;
+    ALTER TABLE probes ADD COLUMN IF NOT EXISTS software_version TEXT;
+    ALTER TABLE probes ADD COLUMN IF NOT EXISTS last_heartbeat TIMESTAMPTZ;
+    ALTER TABLE probes ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now();
+    ALTER TABLE probes ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+    CREATE TABLE IF NOT EXISTS probe_operations (operation_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), tenant_id TEXT NOT NULL, probe_id TEXT NOT NULL, operation_type TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'completed', requested_by TEXT NOT NULL DEFAULT '', request JSONB NOT NULL DEFAULT '{}'::jsonb, result JSONB NOT NULL DEFAULT '{}'::jsonb, created_at TIMESTAMPTZ NOT NULL DEFAULT now());
+    CREATE INDEX IF NOT EXISTS idx_probe_operations_tenant_probe_time ON probe_operations (tenant_id, probe_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_probe_operations_tenant_type_time ON probe_operations (tenant_id, operation_type, created_at DESC);
+    INSERT INTO tenants (tenant_id, tenant_name, name) VALUES ('default', '默认租户', '默认租户') ON CONFLICT (tenant_id) DO UPDATE SET tenant_name = COALESCE(NULLIF(tenants.tenant_name, ''), EXCLUDED.tenant_name), name = COALESCE(NULLIF(tenants.name, ''), EXCLUDED.name);
+    COMMIT;
+  01-assets.sql: |
+    BEGIN;
+    CREATE TABLE IF NOT EXISTS asset_groups (group_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE, name TEXT NOT NULL, selector JSONB NOT NULL DEFAULT '{}'::jsonb, created_at TIMESTAMPTZ NOT NULL DEFAULT now(), UNIQUE (tenant_id, name));
+    CREATE TABLE IF NOT EXISTS assets (asset_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE, ip TEXT, ip_address TEXT, mac_address TEXT, hostname TEXT, vendor TEXT, os_type TEXT, source TEXT NOT NULL DEFAULT 'manual', vlan_id TEXT, switch_port TEXT, tags JSONB NOT NULL DEFAULT '{}'::jsonb, criticality INT NOT NULL DEFAULT 0, metadata JSONB NOT NULL DEFAULT '{}'::jsonb, first_seen TIMESTAMPTZ NOT NULL DEFAULT now(), last_seen TIMESTAMPTZ NOT NULL DEFAULT now(), created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now());
+    ALTER TABLE assets ADD COLUMN IF NOT EXISTS ip TEXT;
+    ALTER TABLE assets ADD COLUMN IF NOT EXISTS ip_address TEXT;
+    ALTER TABLE assets ADD COLUMN IF NOT EXISTS mac_address TEXT;
+    ALTER TABLE assets ADD COLUMN IF NOT EXISTS hostname TEXT;
+    ALTER TABLE assets ADD COLUMN IF NOT EXISTS vendor TEXT;
+    ALTER TABLE assets ADD COLUMN IF NOT EXISTS os_type TEXT;
+    ALTER TABLE assets ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'manual';
+    ALTER TABLE assets ADD COLUMN IF NOT EXISTS vlan_id TEXT;
+    ALTER TABLE assets ADD COLUMN IF NOT EXISTS switch_port TEXT;
+    ALTER TABLE assets ADD COLUMN IF NOT EXISTS tags JSONB NOT NULL DEFAULT '{}'::jsonb;
+    ALTER TABLE assets ADD COLUMN IF NOT EXISTS criticality INT NOT NULL DEFAULT 0;
+    ALTER TABLE assets ADD COLUMN IF NOT EXISTS metadata JSONB NOT NULL DEFAULT '{}'::jsonb;
+    ALTER TABLE assets ADD COLUMN IF NOT EXISTS first_seen TIMESTAMPTZ NOT NULL DEFAULT now();
+    ALTER TABLE assets ADD COLUMN IF NOT EXISTS last_seen TIMESTAMPTZ NOT NULL DEFAULT now();
+    ALTER TABLE assets ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now();
+    ALTER TABLE assets ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+    ALTER TABLE assets ALTER COLUMN ip DROP NOT NULL;
+    UPDATE assets SET ip_address = ip WHERE (ip_address IS NULL OR ip_address = '') AND ip IS NOT NULL;
+    UPDATE assets SET ip = ip_address WHERE ip IS NULL AND ip_address IS NOT NULL;
+    CREATE TABLE IF NOT EXISTS asset_events (event_id SERIAL PRIMARY KEY, asset_id UUID NOT NULL REFERENCES assets(asset_id) ON DELETE CASCADE, tenant_id TEXT NOT NULL, event_type TEXT NOT NULL, old_value JSONB, new_value JSONB, created_at TIMESTAMPTZ NOT NULL DEFAULT now());
+    CREATE TABLE IF NOT EXISTS asset_discovery_credentials (credential_id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, name TEXT NOT NULL, protocol TEXT NOT NULL, endpoint TEXT, secret_ref TEXT NOT NULL, created_by TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), UNIQUE (tenant_id, name));
+    CREATE TABLE IF NOT EXISTS asset_discovery_runs (run_id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, mode TEXT NOT NULL, target_cidr TEXT, credential_id TEXT, status TEXT NOT NULL DEFAULT 'queued', requested_by TEXT, discovered_assets INT NOT NULL DEFAULT 0, discovered_links INT NOT NULL DEFAULT 0, error_message TEXT, started_at TIMESTAMPTZ NOT NULL DEFAULT now(), completed_at TIMESTAMPTZ);
+    CREATE TABLE IF NOT EXISTS asset_topology_links (link_id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, run_id TEXT, source_asset_id TEXT, source_mac TEXT, source_ip TEXT, source_interface TEXT NOT NULL DEFAULT '', neighbor_asset_id TEXT, neighbor_mac TEXT NOT NULL DEFAULT '', neighbor_ip TEXT, neighbor_interface TEXT NOT NULL DEFAULT '', protocol TEXT NOT NULL, confidence INT NOT NULL DEFAULT 80, observed_at TIMESTAMPTZ NOT NULL DEFAULT now(), created_at TIMESTAMPTZ NOT NULL DEFAULT now(), UNIQUE (tenant_id, source_mac, neighbor_mac, protocol, source_interface, neighbor_interface));
+    CREATE INDEX IF NOT EXISTS idx_asset_events_asset ON asset_events(asset_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_assets_tenant ON assets(tenant_id);
+    CREATE INDEX IF NOT EXISTS idx_assets_ip ON assets(tenant_id, ip_address);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_assets_tenant_ip_unique ON assets(tenant_id, ip) WHERE ip IS NOT NULL;
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_assets_tenant_mac_unique ON assets(tenant_id, mac_address) WHERE mac_address IS NOT NULL;
+    CREATE INDEX IF NOT EXISTS idx_asset_discovery_runs_tenant ON asset_discovery_runs(tenant_id, started_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_asset_topology_links_tenant ON asset_topology_links(tenant_id, observed_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_asset_topology_links_asset ON asset_topology_links(tenant_id, source_asset_id, neighbor_asset_id);
+    COMMIT;
+  02-features-rules.sql: |
+    BEGIN;
+    CREATE TABLE IF NOT EXISTS feature_sets (feature_set_id TEXT PRIMARY KEY, tenant_id TEXT, name TEXT NOT NULL, params JSONB NOT NULL DEFAULT '{}'::jsonb, schema_version TEXT NOT NULL DEFAULT 'v1', status TEXT NOT NULL DEFAULT 'active', created_by UUID REFERENCES users(user_id), created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now());
+    ALTER TABLE feature_sets ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+    CREATE TABLE IF NOT EXISTS tenant_config (tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE, config_key TEXT NOT NULL, config_value JSONB NOT NULL DEFAULT '{}'::jsonb, description TEXT, updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), PRIMARY KEY (tenant_id, config_key));
+    CREATE TABLE IF NOT EXISTS rules (rule_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE, name TEXT NOT NULL, rule_type TEXT NOT NULL DEFAULT 'custom', engine TEXT NOT NULL DEFAULT 'internal', description TEXT NOT NULL DEFAULT '', conditions JSONB NOT NULL DEFAULT '{}'::jsonb, labels TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[], severity TEXT NOT NULL DEFAULT 'medium', enabled BOOLEAN NOT NULL DEFAULT false, priority INT NOT NULL DEFAULT 50, version BIGINT NOT NULL DEFAULT 1, status TEXT NOT NULL DEFAULT 'draft', created_by TEXT NOT NULL DEFAULT '', updated_by TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), UNIQUE (tenant_id, name));
+    ALTER TABLE rules ADD COLUMN IF NOT EXISTS rule_type TEXT NOT NULL DEFAULT 'custom';
+    ALTER TABLE rules ADD COLUMN IF NOT EXISTS conditions JSONB NOT NULL DEFAULT '{}'::jsonb;
+    ALTER TABLE rules ADD COLUMN IF NOT EXISTS labels TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];
+    ALTER TABLE rules ADD COLUMN IF NOT EXISTS severity TEXT NOT NULL DEFAULT 'medium';
+    ALTER TABLE rules ADD COLUMN IF NOT EXISTS enabled BOOLEAN NOT NULL DEFAULT false;
+    ALTER TABLE rules ADD COLUMN IF NOT EXISTS priority INT NOT NULL DEFAULT 50;
+    ALTER TABLE rules ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
+    ALTER TABLE rules ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'draft';
+    ALTER TABLE rules ADD COLUMN IF NOT EXISTS created_by TEXT NOT NULL DEFAULT '';
+    ALTER TABLE rules ADD COLUMN IF NOT EXISTS updated_by TEXT NOT NULL DEFAULT '';
+    ALTER TABLE rules ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+    CREATE TABLE IF NOT EXISTS rule_versions (rule_version TEXT PRIMARY KEY, rule_id UUID NOT NULL REFERENCES rules(rule_id) ON DELETE CASCADE, tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE, version BIGINT NOT NULL DEFAULT 1, content_uri TEXT NOT NULL, checksum TEXT, status TEXT NOT NULL DEFAULT 'registered', change_log TEXT NOT NULL DEFAULT '', created_by TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT now());
+    ALTER TABLE rule_versions ADD COLUMN IF NOT EXISTS version BIGINT NOT NULL DEFAULT 1;
+    ALTER TABLE rule_versions ADD COLUMN IF NOT EXISTS change_log TEXT NOT NULL DEFAULT '';
+    DO $$
+    DECLARE
+      constraint_name TEXT;
+    BEGIN
+      FOR constraint_name IN
+        SELECT conname
+        FROM pg_constraint
+        WHERE conrelid = 'rule_versions'::regclass
+          AND contype = 'f'
+          AND pg_get_constraintdef(oid) LIKE '%created_by%'
+      LOOP
+        EXECUTE format('ALTER TABLE rule_versions DROP CONSTRAINT %I', constraint_name);
+      END LOOP;
+    END $$;
+    ALTER TABLE rule_versions ADD COLUMN IF NOT EXISTS created_by TEXT NOT NULL DEFAULT '';
+    ALTER TABLE rule_versions ALTER COLUMN created_by TYPE TEXT USING created_by::TEXT;
+    ALTER TABLE rule_versions ALTER COLUMN created_by SET DEFAULT '';
+    ALTER TABLE rule_versions ALTER COLUMN created_by SET NOT NULL;
+    CREATE TABLE IF NOT EXISTS rule_outbox (id BIGSERIAL PRIMARY KEY, rule_id UUID NOT NULL REFERENCES rules(rule_id) ON DELETE CASCADE, event_type TEXT NOT NULL, payload JSONB NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now(), published BOOLEAN NOT NULL DEFAULT false, published_at TIMESTAMPTZ, retry_count INT NOT NULL DEFAULT 0, last_error TEXT NOT NULL DEFAULT '', next_retry TIMESTAMPTZ);
+    CREATE INDEX IF NOT EXISTS idx_rule_outbox_pending ON rule_outbox (published, next_retry, created_at) WHERE published = false;
+    CREATE INDEX IF NOT EXISTS idx_rule_outbox_rule_id ON rule_outbox (rule_id);
+    COMMIT;
+  03-models-deploy.sql: |
+    BEGIN;
+    CREATE TABLE IF NOT EXISTS models (model_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE, name TEXT NOT NULL, model_type TEXT NOT NULL, description TEXT, metadata JSONB NOT NULL DEFAULT '{}'::jsonb, created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), UNIQUE (tenant_id, name));
+    ALTER TABLE models ADD COLUMN IF NOT EXISTS metadata JSONB NOT NULL DEFAULT '{}'::jsonb;
+    ALTER TABLE models ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+    UPDATE models SET metadata = '{}'::jsonb WHERE metadata IS NULL;
+    UPDATE models SET updated_at = created_at WHERE updated_at IS NULL;
+    CREATE TABLE IF NOT EXISTS model_versions (model_version TEXT PRIMARY KEY, model_id UUID NOT NULL REFERENCES models(model_id) ON DELETE CASCADE, tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE, feature_set_id TEXT NOT NULL REFERENCES feature_sets(feature_set_id), artifact_uri TEXT NOT NULL, metrics JSONB NOT NULL DEFAULT '{}'::jsonb, status TEXT NOT NULL DEFAULT 'registered', created_by UUID REFERENCES users(user_id), created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now());
+    ALTER TABLE model_versions ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES users(user_id);
+    ALTER TABLE model_versions ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+    UPDATE model_versions SET updated_at = created_at WHERE updated_at IS NULL;
+    CREATE INDEX IF NOT EXISTS idx_models_tenant ON models(tenant_id);
+    CREATE INDEX IF NOT EXISTS idx_model_versions_model ON model_versions(model_id);
+    CREATE INDEX IF NOT EXISTS idx_model_versions_status ON model_versions(status);
+    CREATE INDEX IF NOT EXISTS idx_model_versions_feature_set ON model_versions(feature_set_id);
+    CREATE TABLE IF NOT EXISTS deployments (deployment_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE, name TEXT NOT NULL DEFAULT '', description TEXT NOT NULL DEFAULT '', model_version TEXT REFERENCES model_versions(model_version), rule_version TEXT REFERENCES rule_versions(rule_version), feature_set_id TEXT REFERENCES feature_sets(feature_set_id), scope JSONB NOT NULL DEFAULT '{}'::jsonb, status TEXT NOT NULL DEFAULT 'planned', created_by UUID REFERENCES users(user_id), created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), gray_started_at TIMESTAMPTZ, gray_expired_at TIMESTAMPTZ, activated_at TIMESTAMPTZ, rolled_back_at TIMESTAMPTZ, rollback_from TEXT, rollback_reason TEXT NOT NULL DEFAULT '', metadata JSONB NOT NULL DEFAULT '{}'::jsonb, error_message TEXT NOT NULL DEFAULT '');
+    ALTER TABLE deployments ADD COLUMN IF NOT EXISTS name TEXT NOT NULL DEFAULT '';
+    ALTER TABLE deployments ADD COLUMN IF NOT EXISTS description TEXT NOT NULL DEFAULT '';
+    ALTER TABLE deployments ADD COLUMN IF NOT EXISTS gray_started_at TIMESTAMPTZ;
+    ALTER TABLE deployments ADD COLUMN IF NOT EXISTS gray_expired_at TIMESTAMPTZ;
+    ALTER TABLE deployments ADD COLUMN IF NOT EXISTS activated_at TIMESTAMPTZ;
+    ALTER TABLE deployments ADD COLUMN IF NOT EXISTS rolled_back_at TIMESTAMPTZ;
+    ALTER TABLE deployments ADD COLUMN IF NOT EXISTS rollback_from TEXT;
+    ALTER TABLE deployments ADD COLUMN IF NOT EXISTS rollback_reason TEXT NOT NULL DEFAULT '';
+    ALTER TABLE deployments ADD COLUMN IF NOT EXISTS metadata JSONB NOT NULL DEFAULT '{}'::jsonb;
+    ALTER TABLE deployments ADD COLUMN IF NOT EXISTS error_message TEXT NOT NULL DEFAULT '';
+    ALTER TABLE deployments ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES users(user_id);
+    CREATE INDEX IF NOT EXISTS idx_deploy_tenant_time ON deployments (tenant_id, created_at DESC);
+    CREATE TABLE IF NOT EXISTS deployment_history (id BIGSERIAL PRIMARY KEY, deployment_id UUID NOT NULL REFERENCES deployments(deployment_id) ON DELETE CASCADE, action TEXT NOT NULL, operator_id TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT now(), detail JSONB NOT NULL DEFAULT '{}'::jsonb);
+    CREATE INDEX IF NOT EXISTS idx_deployment_history_deployment ON deployment_history (deployment_id, created_at DESC);
+    COMMIT;
+  04-tasks-audit.sql: |
+    BEGIN;
+    CREATE TABLE IF NOT EXISTS tasks (task_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE, name TEXT NOT NULL DEFAULT '', task_type TEXT NOT NULL, params JSONB NOT NULL DEFAULT '{}'::jsonb, status TEXT NOT NULL DEFAULT 'queued', progress INT NOT NULL DEFAULT 0, result_file_key TEXT NOT NULL DEFAULT '', result_packets BIGINT NOT NULL DEFAULT 0, result_bytes BIGINT NOT NULL DEFAULT 0, files_scanned INT NOT NULL DEFAULT 0, error_message TEXT NOT NULL DEFAULT '', run_id TEXT NOT NULL DEFAULT '', created_by TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), started_at TIMESTAMPTZ, completed_at TIMESTAMPTZ);
+    ALTER TABLE tasks ADD COLUMN IF NOT EXISTS name TEXT NOT NULL DEFAULT '';
+    ALTER TABLE tasks ADD COLUMN IF NOT EXISTS progress INT NOT NULL DEFAULT 0;
+    ALTER TABLE tasks ADD COLUMN IF NOT EXISTS result_file_key TEXT NOT NULL DEFAULT '';
+    ALTER TABLE tasks ADD COLUMN IF NOT EXISTS result_packets BIGINT NOT NULL DEFAULT 0;
+    ALTER TABLE tasks ADD COLUMN IF NOT EXISTS result_bytes BIGINT NOT NULL DEFAULT 0;
+    ALTER TABLE tasks ADD COLUMN IF NOT EXISTS files_scanned INT NOT NULL DEFAULT 0;
+    ALTER TABLE tasks ADD COLUMN IF NOT EXISTS error_message TEXT NOT NULL DEFAULT '';
+    ALTER TABLE tasks ADD COLUMN IF NOT EXISTS run_id TEXT NOT NULL DEFAULT '';
+    ALTER TABLE tasks ADD COLUMN IF NOT EXISTS created_by TEXT NOT NULL DEFAULT '';
+    ALTER TABLE tasks ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+    ALTER TABLE tasks ADD COLUMN IF NOT EXISTS started_at TIMESTAMPTZ;
+    ALTER TABLE tasks ADD COLUMN IF NOT EXISTS completed_at TIMESTAMPTZ;
+    DO $$
+    DECLARE
+      constraint_name TEXT;
+    BEGIN
+      FOR constraint_name IN
+        SELECT conname
+        FROM pg_constraint
+        WHERE conrelid = 'tasks'::regclass
+          AND contype = 'f'
+          AND pg_get_constraintdef(oid) LIKE '%created_by%'
+      LOOP
+        EXECUTE format('ALTER TABLE tasks DROP CONSTRAINT %I', constraint_name);
+      END LOOP;
+    END $$;
+    ALTER TABLE tasks ALTER COLUMN created_by TYPE TEXT USING created_by::TEXT;
+    ALTER TABLE tasks ALTER COLUMN created_by SET DEFAULT '';
+    ALTER TABLE tasks ALTER COLUMN created_by SET NOT NULL;
+    ALTER TABLE tasks ALTER COLUMN run_id SET DEFAULT '';
+    UPDATE tasks SET run_id = '' WHERE run_id IS NULL;
+    ALTER TABLE tasks ALTER COLUMN run_id SET NOT NULL;
+    CREATE TABLE IF NOT EXISTS audit_logs (id BIGSERIAL PRIMARY KEY, event_id TEXT NOT NULL DEFAULT ('audit-' || uuid_generate_v4()::text), tenant_id TEXT NOT NULL, user_id TEXT, action TEXT NOT NULL, object_type TEXT, object_id TEXT, detail JSONB, ip_addr TEXT, user_agent TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT now());
+    ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS event_id TEXT;
+    UPDATE audit_logs SET event_id = 'audit-' || id::TEXT WHERE event_id IS NULL OR event_id = '';
+    ALTER TABLE audit_logs ALTER COLUMN event_id SET DEFAULT ('audit-' || uuid_generate_v4()::text);
+    ALTER TABLE audit_logs ALTER COLUMN event_id SET NOT NULL;
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_audit_event_id ON audit_logs(event_id);
+    CREATE INDEX IF NOT EXISTS idx_audit_tenant ON audit_logs(tenant_id);
+    CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_logs(created_at);
+    CREATE TABLE IF NOT EXISTS campaign_action_jobs (job_id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, campaign_id TEXT NOT NULL, action_id TEXT NOT NULL, target TEXT NOT NULL, metadata JSONB NOT NULL DEFAULT '{}'::jsonb, simulation BOOLEAN NOT NULL DEFAULT true, dry_run BOOLEAN NOT NULL DEFAULT true, status TEXT NOT NULL CHECK (status IN ('queued', 'running', 'completed', 'failed')), result JSONB NOT NULL DEFAULT '{}'::jsonb, error_message TEXT NOT NULL DEFAULT '', created_by TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT now(), completed_at TIMESTAMPTZ);
+    CREATE INDEX IF NOT EXISTS idx_campaign_action_jobs_tenant_time ON campaign_action_jobs(tenant_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_campaign_action_jobs_campaign_time ON campaign_action_jobs(tenant_id, campaign_id, created_at DESC);
+    CREATE TABLE IF NOT EXISTS whitelist (id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), tenant_id TEXT NOT NULL, type TEXT NOT NULL CHECK (type IN ('ip','domain','fingerprint','subnet')), value TEXT NOT NULL, reason TEXT NOT NULL DEFAULT '', description TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'active', approval_status TEXT NOT NULL DEFAULT 'approved', source_alert_id TEXT NOT NULL DEFAULT '', feedback_id TEXT NOT NULL DEFAULT '', owner_role TEXT NOT NULL DEFAULT '', created_by TEXT NOT NULL DEFAULT '', approved_by TEXT NOT NULL DEFAULT '', approved_at TIMESTAMPTZ, disabled_at TIMESTAMPTZ, expires_at TIMESTAMPTZ, created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), UNIQUE (tenant_id, type, value));
+    ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active';
+    ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS approval_status TEXT NOT NULL DEFAULT 'approved';
+    ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS source_alert_id TEXT NOT NULL DEFAULT '';
+    ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS feedback_id TEXT NOT NULL DEFAULT '';
+    ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS owner_role TEXT NOT NULL DEFAULT '';
+    ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS approved_by TEXT NOT NULL DEFAULT '';
+    ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ;
+    ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS disabled_at TIMESTAMPTZ;
+    ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+    CREATE INDEX IF NOT EXISTS idx_whitelist_tenant ON whitelist (tenant_id);
+    CREATE INDEX IF NOT EXISTS idx_whitelist_entries_tenant_status ON whitelist (tenant_id, status, updated_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_whitelist_entries_approval ON whitelist (tenant_id, approval_status, updated_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_whitelist_source_alert ON whitelist (tenant_id, source_alert_id) WHERE source_alert_id <> '';
+    CREATE INDEX IF NOT EXISTS idx_whitelist_expires ON whitelist (expires_at) WHERE expires_at IS NOT NULL;
+    CREATE TABLE IF NOT EXISTS behavior_baseline_resets (tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE, baseline_id TEXT NOT NULL, reset_at TIMESTAMPTZ NOT NULL DEFAULT now(), requested_by TEXT NOT NULL DEFAULT '', PRIMARY KEY (tenant_id, baseline_id));
+    CREATE TABLE IF NOT EXISTS fusion_conflict_resolutions (tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE, conflict_id TEXT NOT NULL, object_id TEXT NOT NULL DEFAULT '', object_type TEXT NOT NULL DEFAULT 'entity', field_name TEXT NOT NULL, selected_source TEXT NOT NULL, selected_value TEXT NOT NULL, strategy TEXT NOT NULL DEFAULT 'manual', note TEXT NOT NULL DEFAULT '', rule_id TEXT NOT NULL DEFAULT '', state_version BIGINT NOT NULL DEFAULT 1, resolved_by TEXT NOT NULL DEFAULT '', resolved_at TIMESTAMPTZ NOT NULL DEFAULT now(), detail JSONB NOT NULL DEFAULT '{}'::jsonb, PRIMARY KEY (tenant_id, conflict_id));
+    CREATE INDEX IF NOT EXISTS idx_fusion_conflict_resolutions_time ON fusion_conflict_resolutions(tenant_id, resolved_at DESC);
+    CREATE TABLE IF NOT EXISTS fusion_rule_overrides (tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE, rule_id TEXT NOT NULL, rule_name TEXT NOT NULL DEFAULT '', version BIGINT NOT NULL DEFAULT 1, status TEXT NOT NULL DEFAULT 'draft', strategy TEXT NOT NULL DEFAULT 'manual-review', confidence_threshold DOUBLE PRECISION NOT NULL DEFAULT 0.85, note TEXT NOT NULL DEFAULT '', updated_by TEXT NOT NULL DEFAULT '', updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), detail JSONB NOT NULL DEFAULT '{}'::jsonb, PRIMARY KEY (tenant_id, rule_id));
+    CREATE INDEX IF NOT EXISTS idx_fusion_rule_overrides_time ON fusion_rule_overrides(tenant_id, updated_at DESC);
+    CREATE TABLE IF NOT EXISTS compliance_reports (report_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE, report_type TEXT NOT NULL, time_start BIGINT NOT NULL, time_end BIGINT NOT NULL, status TEXT NOT NULL DEFAULT 'completed', summary JSONB NOT NULL DEFAULT '{}'::jsonb, sections JSONB NOT NULL DEFAULT '[]'::jsonb, generated_by TEXT NOT NULL DEFAULT '', generated_at TIMESTAMPTZ NOT NULL DEFAULT now());
+    CREATE INDEX IF NOT EXISTS idx_compliance_reports_tenant_time ON compliance_reports (tenant_id, generated_at DESC);
+    CREATE TABLE IF NOT EXISTS notification_silence_rules (rule_id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, name TEXT NOT NULL, scope TEXT NOT NULL DEFAULT '', starts_at TIMESTAMPTZ NOT NULL, ends_at TIMESTAMPTZ NOT NULL, affected_targets JSONB NOT NULL DEFAULT '[]'::jsonb, policy TEXT NOT NULL DEFAULT 'all', reason TEXT NOT NULL DEFAULT '', enabled BOOLEAN NOT NULL DEFAULT true, created_by TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now());
+    CREATE INDEX IF NOT EXISTS idx_notification_silence_tenant_time ON notification_silence_rules (tenant_id, starts_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_notification_silence_tenant_enabled ON notification_silence_rules (tenant_id, enabled, starts_at DESC);
+    CREATE TABLE IF NOT EXISTS topic_saved_views (view_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), tenant_id TEXT NOT NULL, topic TEXT NOT NULL, name TEXT NOT NULL, filters JSONB NOT NULL DEFAULT '{}'::jsonb, visibility TEXT NOT NULL DEFAULT 'private', favorite BOOLEAN NOT NULL DEFAULT false, shared BOOLEAN NOT NULL DEFAULT false, share_token TEXT, created_by TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now());
+    CREATE INDEX IF NOT EXISTS idx_topic_saved_views_tenant_topic ON topic_saved_views (tenant_id, topic, updated_at DESC);
+    CREATE TABLE IF NOT EXISTS topic_scope_overrides (tenant_id TEXT NOT NULL, topic TEXT NOT NULL, scope_name TEXT NOT NULL DEFAULT '', included_assets JSONB NOT NULL DEFAULT '[]'::jsonb, excluded_assets JSONB NOT NULL DEFAULT '[]'::jsonb, risk_levels JSONB NOT NULL DEFAULT '[]'::jsonb, time_window TEXT NOT NULL DEFAULT '24h', detail JSONB NOT NULL DEFAULT '{}'::jsonb, updated_by TEXT NOT NULL DEFAULT '', updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), PRIMARY KEY (tenant_id, topic));
+    CREATE TABLE IF NOT EXISTS topic_subscriptions (subscription_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), tenant_id TEXT NOT NULL, topic TEXT NOT NULL, channel TEXT NOT NULL, threshold TEXT NOT NULL DEFAULT 'high', schedule TEXT NOT NULL DEFAULT 'realtime', recipients JSONB NOT NULL DEFAULT '[]'::jsonb, enabled BOOLEAN NOT NULL DEFAULT true, created_by TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), detail JSONB NOT NULL DEFAULT '{}'::jsonb);
+    CREATE INDEX IF NOT EXISTS idx_topic_subscriptions_tenant_topic ON topic_subscriptions (tenant_id, topic, updated_at DESC);
+    CREATE TABLE IF NOT EXISTS topic_exports (export_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), tenant_id TEXT NOT NULL, topic TEXT NOT NULL, export_type TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'completed', parameters JSONB NOT NULL DEFAULT '{}'::jsonb, result JSONB NOT NULL DEFAULT '{}'::jsonb, generated_by TEXT NOT NULL DEFAULT '', generated_at TIMESTAMPTZ NOT NULL DEFAULT now());
+    CREATE INDEX IF NOT EXISTS idx_topic_exports_tenant_time ON topic_exports (tenant_id, generated_at DESC);
+    COMMIT;
+  05-default-data.sql: |
+    BEGIN;
+    INSERT INTO roles (role_id, tenant_id, name, permissions) VALUES (uuid_generate_v4(), 'default', 'admin', '{"*":"*"}'::jsonb), (uuid_generate_v4(), 'default', 'viewer', '{"alert":"read","flow":"read","dashboard":"read"}'::jsonb), (uuid_generate_v4(), 'default', 'operator', '{"alert":"*","flow":"read","pcap":"read"}'::jsonb), (uuid_generate_v4(), 'default', 'probe', '{"probe":"ingest","probe":"metrics"}'::jsonb) ON CONFLICT (tenant_id, name) DO NOTHING;
+    INSERT INTO feature_sets (feature_set_id, name, params, schema_version) VALUES ('v1-l1-default', 'L1 Flow Statistics', '{"window":"flow","features":["packets","bytes","duration","pps","bps","pktlen_stats","iat_stats","tcp_flags","tos"]}'::jsonb, 'v1') ON CONFLICT (feature_set_id) DO NOTHING;
+    INSERT INTO models (model_id, tenant_id, name, model_type, description) VALUES (uuid_generate_v4(), 'default', 'behavior-xgboost-v1', 'gbdt', 'XGBoost behavioral detection model'), (uuid_generate_v4(), 'default', 'business-rule-v1', 'rules', 'Business rule detection engine'), (uuid_generate_v4(), 'default', 'vpn-detector-v1', 'onnx', 'VPN traffic classifier') ON CONFLICT (tenant_id, name) DO NOTHING;
+    COMMIT;
+  06-graph.sql: |
+    BEGIN;
+    CREATE TABLE IF NOT EXISTS graph_cache_config (config_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE, neighbor_ttl_sec INT NOT NULL DEFAULT 300, entity_ttl_sec INT NOT NULL DEFAULT 300, graph_ttl_sec INT NOT NULL DEFAULT 120, max_nodes_per_cache INT NOT NULL DEFAULT 500, max_edges_per_cache INT NOT NULL DEFAULT 1000, time_granularity_sec INT NOT NULL DEFAULT 300, enabled BOOLEAN NOT NULL DEFAULT true, created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), UNIQUE (tenant_id));
+    CREATE TABLE IF NOT EXISTS graph_query_config (config_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE, max_depth INT NOT NULL DEFAULT 5, default_depth INT NOT NULL DEFAULT 2, max_nodes INT NOT NULL DEFAULT 500, max_neighbors_per_hop INT NOT NULL DEFAULT 50, default_time_range_hours INT NOT NULL DEFAULT 24, max_batch_explore_ips INT NOT NULL DEFAULT 10, max_path_search_hops INT NOT NULL DEFAULT 10, alert_batch_size INT NOT NULL DEFAULT 100, query_timeout_sec INT NOT NULL DEFAULT 30, max_concurrent_queries INT NOT NULL DEFAULT 10, created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), UNIQUE (tenant_id));
+    CREATE TABLE IF NOT EXISTS graph_hot_ips (hot_ip_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE, ip TEXT NOT NULL, query_count BIGINT NOT NULL DEFAULT 0, last_query_at TIMESTAMPTZ NOT NULL DEFAULT now(), priority INT NOT NULL DEFAULT 0, warmed_up BOOLEAN NOT NULL DEFAULT false, last_warmup_at TIMESTAMPTZ, created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), UNIQUE (tenant_id, ip));
+    CREATE INDEX IF NOT EXISTS idx_graph_hot_ips_tenant_priority ON graph_hot_ips (tenant_id, priority DESC, last_query_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_graph_hot_ips_tenant_ip ON graph_hot_ips (tenant_id, ip);
+    CREATE TABLE IF NOT EXISTS graph_query_history (query_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE, user_id UUID REFERENCES users(user_id), query_type TEXT NOT NULL, center_ip TEXT, center_ips TEXT[], depth INT, run_id TEXT, start_time TIMESTAMPTZ, end_time TIMESTAMPTZ, node_count INT, edge_count INT, path_count INT, duration_ms BIGINT NOT NULL, cache_hit BOOLEAN NOT NULL DEFAULT false, status TEXT NOT NULL, error_message TEXT, created_at TIMESTAMPTZ NOT NULL DEFAULT now());
+    CREATE INDEX IF NOT EXISTS idx_graph_query_history_tenant_time ON graph_query_history (tenant_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_graph_query_history_type_status ON graph_query_history (query_type, status, created_at DESC);
+    COMMIT;
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: init-postgres-schema
+  namespace: databases
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: init-pg
+        image: docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7
+        command: ["bash", "-c"]
+        env:
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: PG_PASSWORD
+        args:
+        - |
+          echo "Initializing PostgreSQL schema..."
+          cd /sql
+          for f in 00-init.sql 01-assets.sql 02-features-rules.sql 03-models-deploy.sql 04-tasks-audit.sql 05-default-data.sql 06-graph.sql; do
+            echo "  Running $f..."
+            psql -h postgres-primary.databases.svc -U postgres -d traffic_platform -f "/sql/$f"
+          done
+          echo "PostgreSQL schema initialized."
+        volumeMounts:
+        - {name: init-sql, mountPath: /sql}
+      volumes:
+      - name: init-sql
+        configMap:
+          name: postgres-init-sql

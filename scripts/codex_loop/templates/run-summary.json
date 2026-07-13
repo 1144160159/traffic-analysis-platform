@@ -1,0 +1,12 @@
+{
+  "run_id": "${run_id}",
+  "task_id": "${task_id}",
+  "status": "DISCOVERED",
+  "evidence_type": "regression",
+  "commit": "${commit}",
+  "created_at": "${created_at}",
+  "conclusion": "pending",
+  "warnings": [
+    "Do not interpret this summary as acceptance or third-party evidence."
+  ]
+}

@@ -1,0 +1,471 @@
+---
+# ClickHouse 24.3 集群模式 — 2 Shard x 2 Replica + 3 Keeper
+# 外部接入: ch-distributed.middleware.svc (Distributed 表读写)
+# HTTP: 10.0.5.206:8123 (shard1), 10.0.5.207:8123 (shard2)
+# Native: 10.0.5.206:9000 (shard1), 10.0.5.207:9000 (shard2)
+# Keeper: clickhouse-keeper-{0,1,2}.clickhouse-headless.middleware.svc:9181
+---
+# =============================================================================
+# ClickHouse Keeper — 替代 Zookeeper 的协调服务 (3 节点)
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: clickhouse-keeper-config
+  namespace: middleware
+data:
+  keeper.xml: |
+    <clickhouse>
+      <keeper_server>
+        <tcp_port>9181</tcp_port>
+        <server_id from_env="KEEPER_SERVER_ID"/>
+        <log_storage_path>/var/lib/clickhouse/keeper/coordination/log</log_storage_path>
+        <snapshot_storage_path>/var/lib/clickhouse/keeper/coordination/snapshots</snapshot_storage_path>
+        <coordination_settings>
+          <operation_timeout_ms>10000</operation_timeout_ms>
+          <session_timeout_ms>30000</session_timeout_ms>
+          <raft_logs_level>information</raft_logs_level>
+        </coordination_settings>
+        <raft_configuration>
+          <server>
+            <id>1</id>
+            <hostname>clickhouse-keeper-0.clickhouse-headless.middleware.svc</hostname>
+            <port>9444</port>
+          </server>
+          <server>
+            <id>2</id>
+            <hostname>clickhouse-keeper-1.clickhouse-headless.middleware.svc</hostname>
+            <port>9444</port>
+          </server>
+          <server>
+            <id>3</id>
+            <hostname>clickhouse-keeper-2.clickhouse-headless.middleware.svc</hostname>
+            <port>9444</port>
+          </server>
+        </raft_configuration>
+      </keeper_server>
+    </clickhouse>
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: clickhouse-keeper
+  namespace: middleware
+  labels:
+    app: clickhouse-keeper
+spec:
+  serviceName: clickhouse-headless
+  replicas: 3
+  selector:
+    matchLabels:
+      app: clickhouse-keeper
+  template:
+    metadata:
+      labels:
+        app: clickhouse-keeper
+    spec:
+      containers:
+      - name: keeper
+        image: clickhouse/clickhouse-server:24.3
+        command: ["clickhouse-keeper"]
+        args: ["--config=/etc/clickhouse-server/config.d/keeper.xml"]
+        env:
+        - name: KEEPER_SERVER_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        ports:
+        - containerPort: 9181
+          name: keeper-tcp
+        - containerPort: 9444
+          name: keeper-raft
+        resources:
+          requests: {cpu: "1", memory: "2Gi"}
+          limits:   {cpu: "2", memory: "4Gi"}
+        livenessProbe:
+          tcpSocket:
+            port: 9181
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          tcpSocket:
+            port: 9181
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        volumeMounts:
+        - name: ch-keeper-data
+          mountPath: /var/lib/clickhouse/keeper
+        - name: keeper-config
+          mountPath: /etc/clickhouse-server/config.d
+      volumes:
+      - name: keeper-config
+        configMap:
+          name: clickhouse-keeper-config
+  volumeClaimTemplates:
+  - metadata:
+      name: ch-keeper-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: local-hdd
+      resources:
+        requests: {storage: 20Gi}
+---
+# =============================================================================
+# ClickHouse 集群配置 ConfigMap
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: clickhouse-cluster-config
+  namespace: middleware
+data:
+  remote_servers.xml: |
+    <clickhouse>
+      <remote_servers>
+        <traffic_cluster>
+          <shard>
+            <internal_replication>true</internal_replication>
+            <replica>
+              <host>clickhouse-1-0.clickhouse-headless.middleware.svc</host>
+              <port>9000</port>
+            </replica>
+            <replica>
+              <host>clickhouse-1-1.clickhouse-headless.middleware.svc</host>
+              <port>9000</port>
+            </replica>
+          </shard>
+          <shard>
+            <internal_replication>true</internal_replication>
+            <replica>
+              <host>clickhouse-2-0.clickhouse-headless.middleware.svc</host>
+              <port>9000</port>
+            </replica>
+            <replica>
+              <host>clickhouse-2-1.clickhouse-headless.middleware.svc</host>
+              <port>9000</port>
+            </replica>
+          </shard>
+        </traffic_cluster>
+      </remote_servers>
+    </clickhouse>
+  keeper_connection.xml: |
+    <clickhouse>
+      <zookeeper>
+        <node>
+          <host>clickhouse-keeper-0.clickhouse-headless.middleware.svc</host>
+          <port>9181</port>
+        </node>
+        <node>
+          <host>clickhouse-keeper-1.clickhouse-headless.middleware.svc</host>
+          <port>9181</port>
+        </node>
+        <node>
+          <host>clickhouse-keeper-2.clickhouse-headless.middleware.svc</host>
+          <port>9181</port>
+        </node>
+      </zookeeper>
+    </clickhouse>
+---
+# =============================================================================
+# Service: clickhouse-headless (Pod 间通信)
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: clickhouse-headless
+  namespace: middleware
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+  - {name: http, port: 8123}
+  - {name: native, port: 9000}
+  - {name: interserver, port: 9009}
+  - {name: keeper, port: 9181}
+  - {name: keeper-raft, port: 9444}
+  selector:
+    app: clickhouse
+---
+# =============================================================================
+# Service: Shard 1 LoadBalancer
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: clickhouse-1
+  namespace: middleware
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 10.0.5.206
+  ports:
+  - {name: http, port: 8123}
+  - {name: native, port: 9000}
+  selector:
+    app: clickhouse
+    shard: "1"
+---
+# =============================================================================
+# Service: Shard 2 LoadBalancer
+# =============================================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: clickhouse-2
+  namespace: middleware
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 10.0.5.207
+  ports:
+  - {name: http, port: 8123}
+  - {name: native, port: 9000}
+  selector:
+    app: clickhouse
+    shard: "2"
+---
+# =============================================================================
+# StatefulSet: Shard 1 (2 replicas)
+# =============================================================================
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: clickhouse-1
+  namespace: middleware
+spec:
+  serviceName: clickhouse-headless
+  replicas: 2
+  selector:
+    matchLabels:
+      app: clickhouse
+      shard: "1"
+  template:
+    metadata:
+      labels:
+        app: clickhouse
+        shard: "1"
+    spec:
+      containers:
+      - name: clickhouse
+        image: clickhouse/clickhouse-server:24.3
+        env:
+        - name: CLICKHOUSE_DB
+          value: "traffic"
+        - name: CLICKHOUSE_USER
+          value: "default"
+        - name: CLICKHOUSE_PASSWORD
+          valueFrom: {secretKeyRef: {name: traffic-credentials, key: CLICKHOUSE_PASSWORD}}
+        - name: CLICKHOUSE_CLUSTER_NAME
+          value: "traffic_cluster"
+        - name: SHARD
+          value: "1"
+        ports:
+        - {containerPort: 8123, name: http}
+        - {containerPort: 9000, name: native}
+        - {containerPort: 9009, name: interserver}
+        resources:
+          requests: {cpu: "4", memory: "16Gi"}
+          limits:   {cpu: "8", memory: "32Gi"}
+        livenessProbe:
+          httpGet: {path: /ping, port: 8123}
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        readinessProbe:
+          httpGet: {path: /ping, port: 8123}
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        volumeMounts:
+        - name: ch-data
+          mountPath: /var/lib/clickhouse
+        - name: ch-cluster-config
+          mountPath: /etc/clickhouse-server/config.d/remote_servers.xml
+          subPath: remote_servers.xml
+        - name: ch-cluster-config
+          mountPath: /etc/clickhouse-server/config.d/keeper_connection.xml
+          subPath: keeper_connection.xml
+        - name: ch-macros
+          mountPath: /etc/clickhouse-server/config.d/macros.xml
+          subPath: macros.xml
+      - name: ch-macro-sidecar
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - |
+          SHARD="1"
+          POD_NAME=$(hostname)
+          # POD_NAME format: clickhouse-1-0, clickhouse-1-1
+          REPLICA=$(echo $POD_NAME | sed 's/.*-//')
+          mkdir -p /etc/clickhouse-server/config.d
+          cat > /etc/clickhouse-server/config.d/macros.xml << XMLEOF
+          <clickhouse>
+            <macros>
+              <shard>${SHARD}</shard>
+              <replica>replica_${SHARD}_${REPLICA}</replica>
+              <cluster>traffic_cluster</cluster>
+            </macros>
+          </clickhouse>
+          XMLEOF
+          # Copy to shared volume
+          cp /etc/clickhouse-server/config.d/macros.xml /shared/
+        volumeMounts:
+        - name: ch-macros
+          mountPath: /shared
+      initContainers:
+      - name: init-macros
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - |
+          SHARD="1"
+          POD_NAME=$(hostname)
+          REPLICA=$(echo $POD_NAME | sed 's/.*-//')
+          cat > /shared/macros.xml << XMLEOF
+          <clickhouse>
+            <macros>
+              <shard>${SHARD}</shard>
+              <replica>replica_${SHARD}_${REPLICA}</replica>
+              <cluster>traffic_cluster</cluster>
+            </macros>
+          </clickhouse>
+          XMLEOF
+          echo "Generated macros: shard=${SHARD}, replica=replica_${SHARD}_${REPLICA}"
+        volumeMounts:
+        - name: ch-macros
+          mountPath: /shared
+      volumes:
+      - name: ch-cluster-config
+        configMap:
+          name: clickhouse-cluster-config
+      - name: ch-macros
+        emptyDir: {}
+  volumeClaimTemplates:
+  - metadata:
+      name: ch-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: local-hdd
+      resources:
+        requests: {storage: 2Ti}
+---
+# =============================================================================
+# StatefulSet: Shard 2 (2 replicas)
+# =============================================================================
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: clickhouse-2
+  namespace: middleware
+spec:
+  serviceName: clickhouse-headless
+  replicas: 2
+  selector:
+    matchLabels:
+      app: clickhouse
+      shard: "2"
+  template:
+    metadata:
+      labels:
+        app: clickhouse
+        shard: "2"
+    spec:
+      containers:
+      - name: clickhouse
+        image: clickhouse/clickhouse-server:24.3
+        env:
+        - name: CLICKHOUSE_DB
+          value: "traffic"
+        - name: CLICKHOUSE_USER
+          value: "default"
+        - name: CLICKHOUSE_PASSWORD
+          valueFrom: {secretKeyRef: {name: traffic-credentials, key: CLICKHOUSE_PASSWORD}}
+        - name: CLICKHOUSE_CLUSTER_NAME
+          value: "traffic_cluster"
+        - name: SHARD
+          value: "2"
+        ports:
+        - {containerPort: 8123, name: http}
+        - {containerPort: 9000, name: native}
+        - {containerPort: 9009, name: interserver}
+        resources:
+          requests: {cpu: "4", memory: "16Gi"}
+          limits:   {cpu: "8", memory: "32Gi"}
+        livenessProbe:
+          httpGet: {path: /ping, port: 8123}
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        readinessProbe:
+          httpGet: {path: /ping, port: 8123}
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        volumeMounts:
+        - name: ch-data
+          mountPath: /var/lib/clickhouse
+        - name: ch-cluster-config
+          mountPath: /etc/clickhouse-server/config.d/remote_servers.xml
+          subPath: remote_servers.xml
+        - name: ch-cluster-config
+          mountPath: /etc/clickhouse-server/config.d/keeper_connection.xml
+          subPath: keeper_connection.xml
+        - name: ch-macros
+          mountPath: /etc/clickhouse-server/config.d/macros.xml
+          subPath: macros.xml
+      - name: ch-macro-sidecar
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - |
+          SHARD="2"
+          POD_NAME=$(hostname)
+          REPLICA=$(echo $POD_NAME | sed 's/.*-//')
+          mkdir -p /etc/clickhouse-server/config.d
+          cat > /etc/clickhouse-server/config.d/macros.xml << XMLEOF
+          <clickhouse>
+            <macros>
+              <shard>${SHARD}</shard>
+              <replica>replica_${SHARD}_${REPLICA}</replica>
+              <cluster>traffic_cluster</cluster>
+            </macros>
+          </clickhouse>
+          XMLEOF
+          cp /etc/clickhouse-server/config.d/macros.xml /shared/
+        volumeMounts:
+        - name: ch-macros
+          mountPath: /shared
+      initContainers:
+      - name: init-macros
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - |
+          SHARD="2"
+          POD_NAME=$(hostname)
+          REPLICA=$(echo $POD_NAME | sed 's/.*-//')
+          cat > /shared/macros.xml << XMLEOF
+          <clickhouse>
+            <macros>
+              <shard>${SHARD}</shard>
+              <replica>replica_${SHARD}_${REPLICA}</replica>
+              <cluster>traffic_cluster</cluster>
+            </macros>
+          </clickhouse>
+          XMLEOF
+          echo "Generated macros: shard=${SHARD}, replica=replica_${SHARD}_${REPLICA}"
+        volumeMounts:
+        - name: ch-macros
+          mountPath: /shared
+      volumes:
+      - name: ch-cluster-config
+        configMap:
+          name: clickhouse-cluster-config
+      - name: ch-macros
+        emptyDir: {}
+  volumeClaimTemplates:
+  - metadata:
+      name: ch-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: local-hdd
+      resources:
+        requests: {storage: 2Ti}

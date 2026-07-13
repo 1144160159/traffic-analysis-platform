@@ -1,0 +1,40 @@
+version: 1
+default_profile: gpt5_conservative_patch
+profiles:
+  gpt5_conservative_patch:
+    description: Conservative default for scoped patch generation.
+    model: gpt-5
+    sandbox: read-only
+    timeout_seconds: 1800
+    include_output_schema: true
+    prompt: "Read and follow the Codex patch request at {prompt}. Return only output matching the provided schema and do not apply changes."
+    reviewer: diff-aware
+    execute_default: false
+  gpt5_high_risk_patch:
+    description: P0, high-risk, or contract-impacting tasks require the strongest default profile and explicit review evidence.
+    model: gpt-5
+    sandbox: read-only
+    timeout_seconds: 2400
+    include_output_schema: true
+    prompt: "Read and follow the high-risk Codex patch request at {prompt}. Return only output matching the provided schema. Highlight contract, security, evidence, and rollback risks."
+    reviewer: diff-aware+semantic
+    execute_default: false
+  gpt5_docs_loop_patch:
+    description: Documentation and loop-control changes still use structured output but keep the same safety boundary.
+    model: gpt-5
+    sandbox: read-only
+    timeout_seconds: 1500
+    include_output_schema: true
+    prompt: "Read and follow the Codex patch request at {prompt}. Prefer minimal repo-native documentation or loop-control changes and return only output matching the provided schema."
+    reviewer: diff-aware+semantic
+    execute_default: false
+selection:
+  high_risk_priorities:
+    - P0
+  high_risk_levels:
+    - high
+  docs_prefixes:
+    - doc/
+    - scripts/codex_loop/
+  contract_profile: gpt5_high_risk_patch
+  docs_profile: gpt5_docs_loop_patch

@@ -1,75 +1,249 @@
+// =============================================================================
+// FILE: proto/traffic/v1/alert.proto
+// =============================================================================
+
 syntax = "proto3";
 
 package traffic.v1;
 
-option go_package = "github.com/1144160159/traffic-analysis-platform/go/control-plane/pkg/proto/traffic/v1;trafficv1";
-option java_package = "com.traffic.proto.v1";
-option java_multiple_files = true;
-
 import "traffic/v1/common.proto";
 
-// Alert 告警对象
-// 由 Alert Service 从 DetectionEvent 聚合生成
+option go_package = "github.com/1144160159/traffic-analysis-platform/go/control-plane/pkg/proto/traffic/v1;trafficv1";
+option java_package = "com.traffic.proto.traffic.v1";
+option java_multiple_files = true;
+
+// Alert 告警事件
 message Alert {
-  // 基础标识
-  string alert_id = 1;
-  string tenant_id = 2;
-  
-  // 去重指纹 (MD5(alert_type + src_ip + dst_ip + dst_port))
-  string fingerprint = 3;
-  
-  // ==================== 关联信息 ====================
-  string community_id = 10;
-  string session_id = 11;
-  string campaign_id = 12;      // 所属战役ID (可选)
-  
-  // ==================== 网络信息 ====================
-  FiveTuple tuple = 20;
-  
-  // ==================== 分类信息 ====================
-  string alert_type = 30;       // 告警类型
-  repeated string labels = 31;  // 标签列表
-  float score = 32;             // 综合评分
-  string severity = 33;         // 严重程度
-  
-  // ==================== 时间信息 ====================
-  int64 first_seen = 40;        // 首次发现时间
-  int64 last_seen = 41;         // 最后发现时间
-  int32 count = 42;             // 聚合计数
-  
-  // ==================== 状态管理 ====================
-  // status: "new" | "triage" | "assigned" | "closed"
-  string status = 50;
-  string assignee = 51;         // 分配给谁处理
-  
-  // ==================== 证据 ====================
-  repeated string evidence_ids = 60;
-  
-  // ==================== 版本信息 ====================
-  string rule_version = 70;
-  string model_version = 71;
-  string feature_set_id = 72;
+  string tenant_id = 1;
+  string alert_id = 2;
+  int64 first_seen = 3;
+  int64 last_seen = 4;
+  Severity severity = 5;
+  string alert_type = 6;
+  float score = 7;
+  repeated string labels = 8;
+  string src_ip = 9;
+  string dst_ip = 10;
+  uint32 src_port = 11;
+  uint32 dst_port = 12;
+  uint32 protocol = 13;
+  string community_id = 14;
+  string session_id = 15;
+  string campaign_id = 16;
+  string model_version = 17;
+  string rule_version = 18;
+  string feature_set_id = 19;
+  AlertStatus status = 20;
+  string assignee = 21;
+  repeated string evidence_ids = 22;
+  string dedup_fingerprint = 23;
+  int64 updated_ts = 24;
+  string event_id = 25;
+  int64 ingest_ts = 26;
+  string protocol_name = 27;
+  int32 count = 28;
+  string arkime_session_link = 29;
+  string feedback_label = 30;
+  uint32 feedback_count = 31;
+  uint64 state_version = 32;
 }
 
-// AlertFeedback 告警反馈
-// 用于回灌标注
-message AlertFeedback {
+// Evidence 证据
+message Evidence {
+  string tenant_id = 1;
+  string evidence_id = 2;
+  string alert_id = 3;
+  int64 ts = 4;
+  string type = 5;
+  string summary = 6;
+  string metrics_json = 7;
+  string snippet_ref_json = 8;
+  string arkime_link = 9;
+  float confidence = 10;
+  string event_id = 11;
+  int64 ingest_ts = 12;
+  string visualization_url = 13;
+}
+
+// Campaign 战役
+message Campaign {
+  string tenant_id = 1;
+  string campaign_id = 2;
+  int64 ts_start = 3;
+  int64 ts_end = 4;
+  repeated string entities = 5;
+  repeated string alerts = 6;
+  float score = 7;
+  string summary = 8;
+  string event_id = 9;
+  int64 ingest_ts = 10;
+  EventHeader header = 11;
+  string campaign_type = 12;
+  repeated string attack_phases = 13;
+  repeated string rule_ids = 14;
+  repeated string model_ids = 15;
+}
+
+// AlertBatch 告警批次
+message AlertBatch {
+  repeated Alert alerts = 1;
+  repeated Evidence evidences = 2;
+  repeated Campaign campaigns = 3;
+  string batch_id = 4;
+  string tenant_id = 5;
+  int64 created_at = 6;
+}
+
+// AlertUpdate 告警更新
+message AlertUpdate {
   string alert_id = 1;
+  AlertStatus status = 2;
+  string assignee = 3;
+  string comment = 4;
+  string updated_by = 5;
+  int64 updated_at = 6;
+}
+
+// AlertFeedback 用户反馈
+message AlertFeedback {
+  string tenant_id = 1;
+  string feedback_id = 2;
+  string alert_id = 3;
+  string user_id = 4;
+  string label = 5;
+  string reason_code = 6;
+  string comment = 7;
+  uint32 add_to_whitelist = 8;
+  string alert_type = 9;
+  string severity = 10;
+  string model_version = 11;
+  string rule_version = 12;
+  int64 ts = 13;
+  int64 ingest_ts = 14;
+}
+
+// WhitelistRule 白名单规则
+message WhitelistRule {
+  string tenant_id = 1;
+  string rule_id = 2;
+  string rule_type = 3;
+  string src_ip = 4;
+  string dst_ip = 5;
+  uint32 src_port = 6;
+  uint32 dst_port = 7;
+  uint32 protocol = 8;
+  string alert_type = 9;
+  string reason_code = 10;
+  string comment = 11;
+  string status = 12;
+  string created_by = 13;
+  int64 created_ts = 14;
+  int64 updated_ts = 15;
+  int64 expires_at = 16;
+  int64 ingest_ts = 17;
+}
+
+// AlertStateTransition 告警状态转换
+message AlertStateTransition {
+  string tenant_id = 1;
+  string alert_id = 2;
+  string transition_id = 3;
+  string old_status = 4;
+  string new_status = 5;
+  string old_assignee = 6;
+  string new_assignee = 7;
+  string changed_by = 8;
+  string change_reason = 9;
+  uint64 state_version = 10;
+  int64 ts = 11;
+  int64 ingest_ts = 12;
+}
+
+// DedupStats 去重统计
+message DedupStats {
+  string tenant_id = 1;
+  string fingerprint = 2;
+  string alert_type = 3;
+  string severity = 4;
+  string src_ip = 5;
+  string dst_ip = 6;
+  uint32 dst_port = 7;
+  int64 first_seen = 8;
+  int64 last_seen = 9;
+  uint64 occurrence_count = 10;
+  repeated string sample_alert_ids = 11;
+  int64 ingest_ts = 12;
+}
+
+// StorageHealthEvent 存储健康状态事件
+message StorageHealthEvent {
+  string storage_type = 1;
+  string storage_name = 2;
+  string status = 3;
+  string error_message = 4;
+  uint32 consecutive_failures = 5;
+  int64 ts = 6;
+  int64 ingest_ts = 7;
+}
+
+// ModelFeedbackMetrics 模型反馈指标聚合
+message ModelFeedbackMetrics {
+  string tenant_id = 1;
+  string model_version = 2;
+  string alert_type = 3;
+  int64 hour = 4;
+  uint64 total_alerts = 5;
+  uint64 tp_count = 6;
+  uint64 fp_count = 7;
+  uint64 unlabeled_count = 8;
+  float precision = 9;
+  float recall = 10;
+  float f1_score = 11;
+  int64 ingest_ts = 12;
+}
+
+// AlertCorrelationEdge 告警关联边
+message AlertCorrelationEdge {
+  string tenant_id = 1;
+  string edge_id = 2;
+  string source_alert_id = 3;
+  string target_alert_id = 4;
+  string correlation_type = 5;
+  float correlation_score = 6;
+  repeated string shared_entities = 7;
+  int64 time_delta_ms = 8;
+  int64 ts = 9;
+  int64 ingest_ts = 10;
+}
+
+// NotificationEvent 通知事件
+message NotificationEvent {
+  string tenant_id = 1;
+  string notification_id = 2;
+  string alert_id = 3;
+  string channel = 4;
+  string status = 5;
+  string error_message = 6;
+  string rule_id = 7;
+  string recipient = 8;
+  int64 sent_at = 9;
+  int64 ingest_ts = 10;
+}
+
+// AlertExtendedBatch 扩展批次
+message AlertExtendedBatch {
+  string batch_id = 1;
   string tenant_id = 2;
-  
-  // label: "TP" (True Positive) | "FP" (False Positive)
-  string label = 3;
-  
-  // 误报原因码
-  string reason_code = 4;
-  
-  // 备注
-  string comment = 5;
-  
-  // 操作者
-  string user_id = 6;
-  int64 timestamp = 7;
-  
-  // 是否加入白名单
-  bool add_to_whitelist = 8;
+  int64 created_at = 3;
+  repeated Alert alerts = 10;
+  repeated Evidence evidences = 11;
+  repeated Campaign campaigns = 12;
+  repeated AlertFeedback feedbacks = 13;
+  repeated WhitelistRule whitelist_rules = 14;
+  repeated AlertStateTransition state_transitions = 15;
+  repeated DedupStats dedup_stats = 16;
+  repeated StorageHealthEvent storage_health_events = 17;
+  repeated ModelFeedbackMetrics model_feedback_metrics = 18;
+  repeated AlertCorrelationEdge correlation_edges = 19;
+  repeated NotificationEvent notification_events = 20;
 }

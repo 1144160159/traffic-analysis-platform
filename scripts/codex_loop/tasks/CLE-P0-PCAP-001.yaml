@@ -1,0 +1,70 @@
+id: CLE-P0-PCAP-001
+title: PCAP hash、签名 URL、跨租户拒绝、下载审计
+priority: P0
+status: DISCOVERED
+lane:
+  primary: Go Control-plane
+  dependent:
+    - Rust Probe
+    - Mission / Acceptance
+    - Deploy / SRE / Security
+source:
+  - "doc/05_status/代码实证状态核对-2026-06-19.md#4"
+  - "doc/03_review/专家深评整改清单.md#SUB-CTO-09"
+acceptance_type: regression
+subsystems:
+  - go/control-plane/internal/forensics
+  - rust/probe-agent
+  - proto
+risk:
+  level: high
+  reasons:
+    - touches forensic evidence and tenant boundary
+execution:
+  mode: plan
+  allow_live_write: false
+workspace:
+  allowed_paths:
+    - go/control-plane/internal/forensics/
+    - rust/probe-agent/
+    - proto/traffic/v1/
+    - doc/02_acceptance/
+contracts:
+  proto: true
+  kafka_topics: false
+  database_schema: true
+  apisix_routes: false
+data_plan:
+  mode: live_existing
+  tenant: default
+  cleanup: none
+verification:
+  local:
+    - tests/run_tests.sh go
+    - tests/run_tests.sh rust
+  live_readonly:
+    - "curl --noproxy '*' http://10.0.5.8:30180/login"
+review:
+  required: true
+  perspectives:
+    - code_correctness
+    - product_logic
+    - technical_design
+    - acceptance_evidence
+  design_update_allowed:
+    - doc/01_design/
+    - doc/02_acceptance/
+    - doc/05_status/
+evidence:
+  run_dir: "doc/02_acceptance/runs/${run_id}"
+  required:
+    - run-summary.json
+    - plan.md
+    - local-report.md
+    - review-report.md
+    - evidence-report.md
+close_when:
+  - downloaded PCAP hash can be verified against index
+  - expired presigned URL fails
+  - cross-tenant access returns expected denial
+  - download audit evidence exists

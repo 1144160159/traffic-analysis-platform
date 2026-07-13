@@ -1,0 +1,47 @@
+name: Capture tests (probe-agent)
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  capture-tests:
+    name: Run capture integration tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Run capture test harness (with physical iface preference)
+        env:
+          PREFER_PHYSICAL_IFACE: '1'
+          CI: '1'
+        run: |
+          set -euxo pipefail
+          # Ensure tests run with root privileges (scripts require root to manipulate network)
+          sudo bash -lc 'cd "$GITHUB_WORKSPACE" && rust/probe-agent/scripts/run_all_tests.sh'
+
+      - name: Upload test-results artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: probe-agent-test-results
+          path: |
+            rust/probe-agent/test-results/**
+
+      - name: Check for XDP->AF_PACKET fallback and warn
+        if: always()
+        run: |
+          set -eo pipefail
+          grep -R --line-number -E "Fallback to AF_PACKET|AF_PACKET capturer created|Failed to initialize XDP capturer" rust/probe-agent/test-results || true
+          if grep -R -q -E "Fallback to AF_PACKET|AF_PACKET capturer created|Failed to initialize XDP capturer" rust/probe-agent/test-results; then
+            echo "::warning::Detected XDP -> AF_PACKET fallback in capture tests. See uploaded artifacts 'probe-agent-test-results' for logs." 
+          else
+            echo "No XDP->AF_PACKET fallback lines found in test-results."
+          fi

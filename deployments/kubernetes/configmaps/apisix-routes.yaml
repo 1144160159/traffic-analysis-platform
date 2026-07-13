@@ -1,0 +1,76 @@
+apiVersion: v1
+data:
+  apisix.yaml: "routes:\n  # ============================================================\n  # 基础设施 UI 路由 (每个服务两条: /prefix\
+    \ + /prefix/*)\n  # 主页用 proxy-rewrite uri, 子资源用 regex_uri 剥离前缀\n  # ============================================================\n\
+    \n  # --- Grafana (支持子路径, 转发时不剥离前缀) ---\n  - id: 1\n    uri: /grafana\n    upstream:\n      type: roundrobin\n      nodes:\n\
+    \        \"grafana.observability.svc:3000\": 1\n  - id: 101\n    uri: /grafana/*\n    upstream:\n      type: roundrobin\n\
+    \      nodes:\n        \"grafana.observability.svc:3000\": 1\n\n  # --- Nacos (自带 /nacos context path, 无斜杠重定向) ---\n \
+    \ - id: 2\n    uri: /nacos\n    plugins:\n      redirect:\n        uri: \"/nacos/\"\n        ret_code: 301\n  - id: 102\n\
+    \    uri: /nacos/*\n    plugins:\n      proxy-rewrite:\n        regex_uri: [\"^/nacos(.*)\", \"/nacos$1\"]\n    upstream:\n\
+    \      type: roundrobin\n      nodes:\n        \"nacos.nacos.svc:8848\": 1\n\n  # --- Flink (无斜杠重定向到 /flink/) ---\n  -\
+    \ id: 3\n    uri: /flink\n    plugins:\n      redirect:\n        uri: \"/flink/\"\n        ret_code: 301\n  - id: 103\n\
+    \    uri: /flink/*\n    plugins:\n      proxy-rewrite:\n        regex_uri: [\"^/flink(.*)\", \"$1\"]\n    upstream:\n\
+    \      type: roundrobin\n      nodes:\n        \"flink-jobmanager.flink.svc:8081\": 1\n\n  # --- Kafka-UI (支持 SERVER_SERVLET_CONTEXT_PATH,\
+    \ 转发时不剥离前缀) ---\n  - id: 4\n    uri: /kafka-ui\n    upstream:\n      type: roundrobin\n      nodes:\n        \"kafka-ui.middleware.svc:8080\"\
+    : 1\n  - id: 104\n    uri: /kafka-ui/*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"kafka-ui.middleware.svc:8080\"\
+    : 1\n\n  # --- Keycloak (无斜杠重定向到 /auth/) ---\n  - id: 5\n    uri: /auth\n    plugins:\n      redirect:\n        uri: \"\
+    /auth/\"\n        ret_code: 301\n  - id: 105\n    uri: /auth/*\n    plugins:\n      proxy-rewrite:\n        regex_uri:\
+    \ [\"^/auth(.*)\", \"$1\"]\n    upstream:\n      type: roundrobin\n      scheme: https\n      nodes:\n        \"keycloak.iam.svc:8443\": 1\n\
+    \n  - id: 111\n    uri: /realms*\n    upstream:\n      type: roundrobin\n      scheme: https\n      nodes:\n        \"keycloak.iam.svc:8443\": 1\n  - id: 112\n    uri: /resources*\n    upstream:\n      type: roundrobin\n      scheme: https\n      nodes:\n        \"keycloak.iam.svc:8443\": 1\n  - id: 113\n    uri: /login-actions*\n    upstream:\n      type: roundrobin\n      scheme: https\n      nodes:\n        \"keycloak.iam.svc:8443\": 1\n\
+    \n  # --- StreamPark (nginx proxy, 无斜杠重定向) ---\n  - id: 6\n    uri: /streampark\n    plugins:\n      redirect:\n     \
+    \   uri: \"/streampark/\"\n        ret_code: 301\n  - id: 106\n    uri: /streampark/*\n    plugins:\n      proxy-rewrite:\n\
+    \        regex_uri: [\"^/streampark(.*)\", \"$1\"]\n    upstream:\n      type: roundrobin\n      nodes:\n        \"streampark-proxy.streampark.svc:8080\"\
+    : 1\n\n  # --- Argo (--basehref=/argo/, 无斜杠重定向) ---\n  - id: 7\n    uri: /argo\n    plugins:\n      redirect:\n      \
+    \  uri: \"/argo/\"\n        ret_code: 301\n  - id: 107\n    uri: /argo/*\n    plugins:\n      proxy-rewrite:\n       \
+    \ regex_uri: [\"^/argo(.*)\", \"$1\"]\n    upstream:\n      type: roundrobin\n      nodes:\n        \"argo-server.argo.svc:2746\"\
+    : 1\n\n  # --- Nebula Studio (nginx proxy, 无斜杠重定向) ---\n  - id: 8\n    uri: /nebula\n    plugins:\n      redirect:\n \
+    \       uri: \"/nebula/\"\n        ret_code: 301\n  - id: 108\n    uri: /nebula/*\n    plugins:\n      proxy-rewrite:\n\
+    \        regex_uri: [\"^/nebula(.*)\", \"$1\"]\n    upstream:\n      type: roundrobin\n      nodes:\n        \"nebula-proxy.middleware.svc:7002\"\
+    : 1\n\n  # --- MinIO (nginx proxy, 无斜杠重定向) ---\n  - id: 9\n    uri: /minio\n    plugins:\n      redirect:\n        uri:\
+    \ \"/minio/\"\n        ret_code: 301\n  - id: 109\n    uri: /minio/*\n    plugins:\n      proxy-rewrite:\n        regex_uri:\
+    \ [\"^/minio(.*)\", \"$1\"]\n    upstream:\n      type: roundrobin\n      nodes:\n        \"minio-proxy.minio.svc:9002\"\
+    : 1\n\n  # --- Apicurio (Spring Boot / Quarkus, 支持 context path) ---\n  - id: 10\n    uri: /apicurio\n    upstream:\n\
+    \      type: roundrobin\n      nodes:\n        \"apicurio.registry.svc:8080\": 1\n  - id: 110\n    uri: /apicurio/*\n\
+    \    upstream:\n      type: roundrobin\n      nodes:\n        \"apicurio.registry.svc:8080\": 1\n\n  # ============================================================\n\
+    \  # 业务 API 路由 (预配置, traffic-analysis 服务就绪后生效)\n  # ============================================================\n  -\
+    \ id: 11\n    uri: /api/v1/alerts*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"alert-service.traffic-analysis.svc:8082\"\
+    : 1\n  - id: 12\n    uri: /api/v1/auth*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"auth-service.traffic-analysis.svc:8081\"\
+    : 1\n  - id: 13\n    uri: /api/v1/graph*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"graph-service.traffic-analysis.svc:8085\"\
+    : 1\n  - id: 14\n    uri: /api/v1/rules*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"rule-manager.traffic-analysis.svc:8084\"\
+    : 1\n  - id: 15\n    uri: /api/v1/forensics*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"forensics-service.traffic-analysis.svc:8086\"\
+    : 1\n  - id: 21\n    uri: /api/v1/pcap*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"forensics-service.traffic-analysis.svc:8086\"\
+    : 1\n  - id: 16\n    uri: /api/v1/assets*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"asset-service.traffic-analysis.svc:8083\"\
+    : 1\n  - id: 17\n    uri: /api/v1/dashboard*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"alert-service.traffic-analysis.svc:8082\"\
+    : 1\n  - id: 18\n    uri: /api/v1/campaigns*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"alert-service.traffic-analysis.svc:8082\"\
+    : 1\n  - id: 19\n    uri: /api/v1/attack-chains*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"alert-service.traffic-analysis.svc:8082\"\
+    : 1\n  - id: 22\n    uri: /api/v1/deployments*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"rule-manager.traffic-analysis.svc:8084\"\
+    : 1\n  - id: 33\n    uri: /api/v1/models*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"rule-manager.traffic-analysis.svc:8084\"\
+    : 1\n  - id: 34\n    uri: /api/v1/mlops*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"rule-manager.traffic-analysis.svc:8084\"\
+    : 1\n  - id: 35\n    uri: /api/v1/feedback*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"alert-service.traffic-analysis.svc:8082\"\
+    : 1\n  - id: 23\n    uri: /api/v1/whitelist*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"alert-service.traffic-analysis.svc:8082\"\
+    : 1\n  - id: 24\n    uri: /api/v1/probes*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"alert-service.traffic-analysis.svc:8082\"\
+    : 1\n  - id: 44\n    uri: /api/v1/probes/*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"alert-service.traffic-analysis.svc:8082\"\
+    : 1\n  - id: 25\n    uri: /api/v1/encrypted-traffic*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"alert-service.traffic-analysis.svc:8082\"\
+    : 1\n  - id: 26\n    uri: /api/v1/fusion*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"alert-service.traffic-analysis.svc:8082\"\
+    : 1\n  - id: 27\n    uri: /api/v1/baselines*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"alert-service.traffic-analysis.svc:8082\"\
+    : 1\n  - id: 28\n    uri: /api/v1/compliance*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"alert-service.traffic-analysis.svc:8082\"\
+    : 1\n  - id: 29\n    uri: /api/v1/tokens*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"auth-service.traffic-analysis.svc:8081\"\
+    : 1\n  - id: 30\n    uri: /api/v1/topics*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"alert-service.traffic-analysis.svc:8082\"\
+    : 1\n  - id: 31\n    uri: /api/v1/audit*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"alert-service.traffic-analysis.svc:8082\"\
+    : 1\n  - id: 32\n    uri: /api/v1/evidence*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"alert-service.traffic-analysis.svc:8082\"\
+    : 1\n  - id: 36\n    uri: /api/v1/risk*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"alert-service.traffic-analysis.svc:8082\"\
+    : 1\n  - id: 37\n    uri: /api/v1/playbooks*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"alert-service.traffic-analysis.svc:8082\"\
+    : 1\n  - id: 38\n    uri: /api/v1/data-quality*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"alert-service.traffic-analysis.svc:8082\"\
+    : 1\n  - id: 39\n    uri: /api/v1/notify*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"alert-service.traffic-analysis.svc:8082\"\
+    : 1\n  - id: 40\n    uri: /api/v1/notifications*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"alert-service.traffic-analysis.svc:8082\"\
+    : 1\n  - id: 41\n    uri: /api/v1/dlq*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"ingest-gateway.traffic-analysis.svc:8080\"\
+    : 1\n  - id: 43\n    uri: /api/v1/threat-intel*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"threat-intel-service.traffic-analysis.svc:8087\"\
+    : 1\n  - id: 42\n    uri: /ws*\n    enable_websocket: true\n    upstream:\n      type: roundrobin\n      nodes:\n        \"alert-service.traffic-analysis.svc:8082\"\
+    : 1\n\n  - id: 20\n    uri: /*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"web-ui.traffic-analysis.svc:80\"\
+    : 1\n#END\n"
+  config.yaml: "nginx_config:\n  worker_processes: 4\n\ndeployment:\n  role: data_plane\n  role_data_plane:\n    config_provider: yaml\n  admin:\n    admin_key:\n\
+    \      - name: admin\n        key: __APISIX_ADMIN_KEY__\n        role: admin\n"
+kind: ConfigMap
+metadata:
+  name: apisix-routes
+  namespace: gateway

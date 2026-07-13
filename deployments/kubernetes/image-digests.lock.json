@@ -1,0 +1,350 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-12T17:43:20+08:00",
+  "scope": "deployments/kubernetes non-archive image references",
+  "note": "Evidence lock for release-package reproducibility. repo_digest entries are pullable registry digests when observed; image_id-only entries are local/live container image IDs and are not a substitute for rolling workload specs to pullable image@sha256 references.",
+  "workflow_parameters": {
+    "trainer-image": "traffic/mlops-trainer:full-pipeline-fix-20260617"
+  },
+  "images": [
+    {
+      "reference": "alpine:3.19",
+      "normalized": "docker.io/library/alpine:3.19",
+      "repo_digest": "docker.io/library/alpine@sha256:6baf43584bcb78f2e5847d1de515f23499913ac9f12bdf834811a3145eb11ca1",
+      "image_id": "",
+      "source": "live-pod-image-id",
+      "mutable_tag": false
+    },
+    {
+      "reference": "apache/apisix:3.9.0-debian",
+      "normalized": "docker.io/apache/apisix:3.9.0-debian",
+      "repo_digest": "docker.io/apache/apisix@sha256:d3de70b3ea6f29fc0d2d812649c0e4be20ba6c00357e839311eae57ba6bc0059",
+      "image_id": "sha256:5e90db4294cdced6ada97b5961326d8956ffb5fd3f80756d425ba90cf0b32b54",
+      "source": "live-pod-image-id",
+      "mutable_tag": false
+    },
+    {
+      "reference": "apache/kafka:3.7.0",
+      "normalized": "docker.io/apache/kafka:3.7.0",
+      "repo_digest": "docker.io/apache/kafka@sha256:32217f809d3fba75ee46e93b1fdbea4aacc0821139443efb73691a913948c31a",
+      "image_id": "sha256:fe7e6a65afa5de2930f54c3d31d517d50acf8ff20f29a6f506df021a901d754d",
+      "source": "local-cri-manifest-dual-node",
+      "mutable_tag": false
+    },
+    {
+      "reference": "apache/streampark:latest",
+      "normalized": "docker.io/apache/streampark:latest",
+      "repo_digest": "docker.io/apache/streampark@sha256:c288e20ced36cec7a897f8f3806a04170a1916cba20feae1d5dc6e2d9770f920",
+      "image_id": "sha256:46c04c0e802a406e29d8f01505be7808a2ce4c2a525ba983389a230d537ea35e",
+      "source": "registry-manifest-and-local-cri",
+      "mutable_tag": true
+    },
+    {
+      "reference": "apicurio/apicurio-registry-mem:2.5.9.Final",
+      "normalized": "docker.io/apicurio/apicurio-registry-mem:2.5.9.Final",
+      "repo_digest": "docker.io/apicurio/apicurio-registry-mem@sha256:25be1769b688af7d3d7d35404429869bb0db89375b5a4751de4d584049c39c84",
+      "image_id": "sha256:e997deeb993bf313c70ba2b9b364c6062c11e6f72117a4bca13f1d4b65b9345f",
+      "source": "registry-manifest-and-local-cri",
+      "mutable_tag": false
+    },
+    {
+      "reference": "busybox:1.36",
+      "normalized": "docker.io/library/busybox:1.36",
+      "repo_digest": "docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662",
+      "image_id": "sha256:b116e155074440ffd9e449559433feb4cd2341eb3554b1da1c638c976e56451d",
+      "source": "live-pod-image-id-and-local-cri",
+      "mutable_tag": false
+    },
+    {
+      "reference": "clickhouse/clickhouse-server:24.3",
+      "normalized": "docker.io/clickhouse/clickhouse-server:24.3",
+      "repo_digest": "docker.io/clickhouse/clickhouse-server@sha256:b052ae89097c2d0f718b15ba1f4ce1c2a781eda8375980cf1cddd8f203981b58",
+      "image_id": "sha256:cd3b547d16ce8ab9e122ff96fe3379564535b85d5d9a7ab8237dd8b65e964b4b",
+      "source": "live-pod-image-id-and-local-cri",
+      "mutable_tag": false
+    },
+    {
+      "reference": "curlimages/curl:latest",
+      "normalized": "docker.io/curlimages/curl:latest",
+      "repo_digest": "docker.io/curlimages/curl@sha256:1ab04d023ece37e6ec991bf3306ad04e0ef0084e94a5c6b6563cfcb9563169db",
+      "image_id": "",
+      "source": "registry-manifest",
+      "mutable_tag": true
+    },
+    {
+      "reference": "docker.io/victoriametrics/victoria-metrics:latest",
+      "normalized": "docker.io/victoriametrics/victoria-metrics:latest",
+      "repo_digest": "docker.io/victoriametrics/victoria-metrics@sha256:b8703ff12ed437effad4fc36492fec14824277f2890a5876b8a9e6cfe5139839",
+      "image_id": "sha256:907e0875a4f3a1b36a121fd4c5a81309d4a7eb8addde93e2a5d31d0d4b1bf83c",
+      "source": "registry-manifest-and-local-cri",
+      "mutable_tag": true
+    },
+    {
+      "reference": "flink:1.18-scala_2.12",
+      "normalized": "docker.io/library/flink:1.18-scala_2.12",
+      "repo_digest": "docker.io/library/flink@sha256:f0e9ffd07f3d43291dfaf7e0609eb2871462193275d452affbe5fac091017ae3",
+      "image_id": "sha256:d88120c9477c2e9a8f4769c28d82daa35a116be9bf77323d3f05b7f56ad944c9",
+      "source": "live-pod-image-id-and-local-cri",
+      "mutable_tag": false
+    },
+    {
+      "reference": "grafana/grafana:10.4.0",
+      "normalized": "docker.io/grafana/grafana:10.4.0",
+      "repo_digest": "docker.io/grafana/grafana@sha256:f9811e4e687ffecf1a43adb9b64096c50bc0d7a782f8608530f478b6542de7d5",
+      "image_id": "sha256:c8b91775d855b99270fc5d22f3c6737e8cca01ef4c25c8b0362295e0746fa39b",
+      "source": "registry-manifest-and-local-cri",
+      "mutable_tag": false
+    },
+    {
+      "reference": "grafana/loki:2.9.0",
+      "normalized": "docker.io/grafana/loki:2.9.0",
+      "repo_digest": "docker.io/grafana/loki@sha256:b025a0220f390baaab01578aea2fe0ba677584d9f248c3fe5af15f84dd1de60d",
+      "image_id": "sha256:21abbe8487a0cdbe357e1e90d804cdc02306a974b8eed9764e42a55b4a0406d8",
+      "source": "registry-manifest-and-local-cri",
+      "mutable_tag": false
+    },
+    {
+      "reference": "minio/mc:latest",
+      "normalized": "docker.io/minio/mc:latest",
+      "repo_digest": "docker.io/minio/mc@sha256:eb4ea9884b77704230e2423e9004d2fa738dc272876b9cc41a297d29443b8780",
+      "image_id": "",
+      "source": "registry-manifest",
+      "mutable_tag": true
+    },
+    {
+      "reference": "nacos/nacos-server:v2.3.2",
+      "normalized": "docker.io/nacos/nacos-server:v2.3.2",
+      "repo_digest": "docker.io/nacos/nacos-server@sha256:d70b20546fe59aeb86add0754db1dbc3a3067363e18599329c5163d0d8cd9cd8",
+      "image_id": "sha256:d3063c1db2bb923c190de1f01073abb861ef697be8f48cf822f9e1255ac2a7da",
+      "source": "registry-manifest-and-local-cri",
+      "mutable_tag": false
+    },
+    {
+      "reference": "nginx:alpine",
+      "normalized": "docker.io/library/nginx:alpine",
+      "repo_digest": "docker.io/library/nginx@sha256:8b1e78743a03dbb2c95171cc58639fef29abc8816598e27fb910ed2e621e589a",
+      "image_id": "sha256:da954fb959a34e2195e6bf622e6396bf338f99e0fe6d8e641b302d9aaa1f0645",
+      "source": "live-pod-image-id-and-local-cri",
+      "mutable_tag": false
+    },
+    {
+      "reference": "opensearchproject/opensearch:2.14.0",
+      "normalized": "docker.io/opensearchproject/opensearch:2.14.0",
+      "repo_digest": "docker.io/opensearchproject/opensearch@sha256:61846553903d59d51914afbc31eae4653111b585d7ca7b2a1da91c5e8b897b28",
+      "image_id": "sha256:bf1e1cd1fa30bd1da8596bff12630f5e67648dfb7720a52c773c495db1f0135a",
+      "source": "local-cri",
+      "mutable_tag": false
+    },
+    {
+      "reference": "postgres:16-alpine",
+      "normalized": "docker.io/library/postgres:16-alpine",
+      "repo_digest": "docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7",
+      "image_id": "sha256:fff3594bf464bea0f502788874403882d8bbbe618b3250f8649e7e42fd118020",
+      "source": "live-pod-image-id-and-local-cri",
+      "mutable_tag": false
+    },
+    {
+      "reference": "provectuslabs/kafka-ui:latest",
+      "normalized": "docker.io/provectuslabs/kafka-ui:latest",
+      "repo_digest": "docker.io/provectuslabs/kafka-ui@sha256:8f2ff02d64b0a7a2b71b6b3b3148b85f66d00ec20ad40c30bdcd415d46d31818",
+      "image_id": "sha256:99307ab28a49d7bfa4102e3f4961eccb607c7ad9a3aa83c604b14705e6ff0896",
+      "source": "registry-manifest-and-local-cri",
+      "mutable_tag": true
+    },
+    {
+      "reference": "quay.io/argoproj/argo-events:v1.9.9",
+      "normalized": "quay.io/argoproj/argo-events:v1.9.9",
+      "repo_digest": "quay.io/argoproj/argo-events@sha256:ee78d5a780cf449063003af241b3741d79bdde30840c1d5a2458b2cb1bbf3190",
+      "image_id": "",
+      "source": "live-pod-image-id",
+      "mutable_tag": false
+    },
+    {
+      "reference": "quay.io/argoproj/argocli:v3.5.5",
+      "normalized": "quay.io/argoproj/argocli:v3.5.5",
+      "aliases": [
+        "docker.io/argoproj/argocli:v3.5.5"
+      ],
+      "repo_digest": "quay.io/argoproj/argocli@sha256:91b9825f09a8d097cc7ca339ab3e8a6387d18a8c705819e37114600640d871b2",
+      "image_id": "sha256:92577aa2d56121a51948a3f92d2952b9052bd2c3fecda21c816fb71b8d03988a",
+      "source": "live-pod-image-id-and-local-cri",
+      "mutable_tag": false
+    },
+    {
+      "reference": "quay.io/argoproj/workflow-controller:v3.5.5",
+      "normalized": "quay.io/argoproj/workflow-controller:v3.5.5",
+      "repo_digest": "quay.io/argoproj/workflow-controller@sha256:6ab0da144235e4b808178f1d1baa34b236e2a25bf9c0b9d4f40aec0f93aaa85e",
+      "image_id": "sha256:1354147633ea2a64c184a6136350ac8989c8469aeefa6c366d713e28d25b3e0c",
+      "source": "live-pod-image-id-and-local-cri",
+      "mutable_tag": false
+    },
+    {
+      "reference": "quay.io/keycloak/keycloak:24.0",
+      "normalized": "quay.io/keycloak/keycloak:24.0",
+      "repo_digest": "quay.io/keycloak/keycloak@sha256:f8ade94c1d0ad2f2fa7734a455fee5392764f402c43ca35e9af6bf63a2541dc9",
+      "image_id": "sha256:dd64cdcd1abdfcfa26d2e5db3ec90757f8fc31de19caa0c4721e6f8dc0cfbba2",
+      "source": "live-pod-image-id-and-local-cri",
+      "mutable_tag": false
+    },
+    {
+      "reference": "quay.io/minio/minio:latest",
+      "normalized": "quay.io/minio/minio:latest",
+      "repo_digest": "quay.io/minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+      "image_id": "sha256:69b2ec208575b69597784255eec6fa6a2985ee9e1a47f4411a51f7f5fdd193a9",
+      "source": "live-pod-image-id-and-local-cri",
+      "mutable_tag": true
+    },
+    {
+      "reference": "redis:7-alpine",
+      "normalized": "docker.io/library/redis:7-alpine",
+      "repo_digest": "docker.io/library/redis@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99",
+      "image_id": "sha256:487efc0616382465781b8fdc3d6d1db449e6fd80ae23bf48432a2da6b6929908",
+      "source": "registry-manifest-and-local-cri",
+      "mutable_tag": false
+    },
+    {
+      "reference": "traffic-analysis/codex-loop:local",
+      "normalized": "docker.io/traffic-analysis/codex-loop:local",
+      "repo_digest": "docker.io/traffic-analysis/codex-loop@sha256:8c5b02614836432992780e6a8e7550d73fbffabd13f834150f960f8f374a4ee7",
+      "image_id": "",
+      "source": "local-cri-manifest-single-node",
+      "mutable_tag": false
+    },
+    {
+      "reference": "traffic/alert-service:campaign-fullstack-20260712-r214",
+      "normalized": "docker.io/traffic/alert-service:campaign-fullstack-20260712-r214",
+      "repo_digest": "docker.io/traffic/alert-service@sha256:ebb5cc36b3badeba8b9973b1a04851f1f3e49b15bed48a195ff72166150bad91",
+      "image_id": "sha256:88fbd67dae4012e9c21c9366a05ce53dd2a9f38a222e2740d5b13f9e88044238",
+      "source": "local-cri-manifest-dual-node",
+      "mutable_tag": false
+    },
+    {
+      "reference": "traffic/asset-service:asset-discovery-rbac-20260630-r1",
+      "normalized": "docker.io/traffic/asset-service:asset-discovery-rbac-20260630-r1",
+      "repo_digest": "docker.io/traffic/asset-service@sha256:0ff5bc4b1084b610e8508e47195dddbc692d8a10ff28daa653508a00af5b95bd",
+      "image_id": "sha256:5604b982ce3bcbee77c997808d8c666ff53e017949a69de179856c668d36a245",
+      "source": "local-cri-manifest-dual-node",
+      "mutable_tag": false
+    },
+    {
+      "reference": "traffic/auth-service:kafka-security-20260712-r2",
+      "normalized": "docker.io/traffic/auth-service:kafka-security-20260712-r2",
+      "repo_digest": "docker.io/traffic/auth-service@sha256:dbaba705c7309a36e3e8cac8aa4dbd1ff06794afcd3e72e33fa963a9bd5823b5",
+      "image_id": "sha256:1331d24129415f9df2bb0eb3aa59105ee785e40228f60cc4ff58aaf9d992fbc8",
+      "source": "local-cri-manifest-dual-node",
+      "mutable_tag": false
+    },
+    {
+      "reference": "traffic/flink-log-job:log-job-20260629-r1",
+      "normalized": "docker.io/traffic/flink-log-job:log-job-20260629-r1",
+      "repo_digest": "",
+      "image_id": "sha256:e971330791443312ba212425a008d16df2b16726cf7d6460b1ef03b934238caf",
+      "source": "local-cri-dual-node-import",
+      "mutable_tag": false
+    },
+    {
+      "reference": "traffic/forensics-service:kafka-security-20260712-r2",
+      "normalized": "docker.io/traffic/forensics-service:kafka-security-20260712-r2",
+      "repo_digest": "docker.io/traffic/forensics-service@sha256:31a224080db7d2bd8aabb3c6e100a00ce91bcea280c291bb82dbee83d7bc80a4",
+      "image_id": "sha256:39f2dcbeacd9bb0adf150433131addc68ed4cce8ce9577c7ddde1250c64f892e",
+      "source": "local-cri-manifest-dual-node",
+      "mutable_tag": false
+    },
+    {
+      "reference": "traffic/graph-service:kafka-security-20260712-r2",
+      "normalized": "docker.io/traffic/graph-service:kafka-security-20260712-r2",
+      "repo_digest": "docker.io/traffic/graph-service@sha256:43b44faa0ec00f54c8c3087c908eae0d7e7d9d76313583ad9e95ee863b87284f",
+      "image_id": "sha256:31d0d34e877fba919cf3556dc7710aaf8eada61abfa2432c4797a1b4319511f5",
+      "source": "local-cri-manifest-dual-node",
+      "mutable_tag": false
+    },
+    {
+      "reference": "traffic/ingest-gateway:kafka-security-20260712-r3",
+      "normalized": "docker.io/traffic/ingest-gateway:kafka-security-20260712-r3",
+      "repo_digest": "docker.io/traffic/ingest-gateway@sha256:7e5895b2402581820859acbf48c5a0a532237ab2352826cfcf199d0c2a1f5d0a",
+      "image_id": "sha256:f56724d746daa6580723bcfc2fa18be0c49b5d30ca39844f5b6edcaf4689369b",
+      "source": "local-cri-manifest-dual-node",
+      "mutable_tag": false
+    },
+    {
+      "reference": "traffic/mlops-trainer:full-pipeline-fix-20260617",
+      "normalized": "docker.io/traffic/mlops-trainer:full-pipeline-fix-20260617",
+      "repo_digest": "",
+      "image_id": "sha256:7d3f43afa16d6b0de9b0388c77279100140cb56f6db038677149e030336babc2",
+      "source": "local-cri",
+      "mutable_tag": false
+    },
+    {
+      "reference": "traffic/probe-agent:s3-multipart-cleanup-fix-20260617",
+      "normalized": "docker.io/traffic/probe-agent:s3-multipart-cleanup-fix-20260617",
+      "repo_digest": "docker.io/traffic/probe-agent@sha256:1760b0cfd6ff0666e221bb055d5a6abb7df69b2c7dbb0e856517d6be1adbcec7",
+      "image_id": "sha256:18ae7f9fe28ab3408a087c67dbbb95e6b032bb0136afed539b3e90a23fb32df1",
+      "source": "local-cri-manifest-dual-node",
+      "mutable_tag": false
+    },
+    {
+      "reference": "traffic/rule-manager:kafka-security-20260712-r2",
+      "normalized": "docker.io/traffic/rule-manager:kafka-security-20260712-r2",
+      "repo_digest": "docker.io/traffic/rule-manager@sha256:4b487c15120fe634ba6316d0fa5fff170b3f8d5a9a12d84c1a1c4ca9a84cdbd7",
+      "image_id": "sha256:48f669882de332e6e16550b9a3f4c295d44bd41f3c2cb18ece883c04b2f46ab6",
+      "source": "local-cri-manifest-dual-node",
+      "mutable_tag": false
+    },
+    {
+      "reference": "traffic/threat-intel-service:kafka-security-20260712-r2",
+      "normalized": "docker.io/traffic/threat-intel-service:kafka-security-20260712-r2",
+      "repo_digest": "docker.io/traffic/threat-intel-service@sha256:d87ccc7066dbd2d04aa55db16c1e2ca271e0d5274373ba0ca5159b513c0c629c",
+      "image_id": "sha256:4bf5a4c9d18d190243b52adab83925df2a424535b218b99c46287a548c45b4a2",
+      "source": "local-cri-manifest-dual-node",
+      "mutable_tag": false
+    },
+    {
+      "reference": "traffic/web-ui:ui-assets-ledger-v2-20260713-r303",
+      "normalized": "docker.io/traffic/web-ui:ui-assets-ledger-v2-20260713-r303",
+      "repo_digest": "docker.io/traffic/web-ui@sha256:5f722ffad20890c208eba0037d9eab4157220e1350989f1172b84d61b1af4b80",
+      "image_id": "sha256:37f93eb632d8d494fc9efbce7e0d794a9a80fad506c73ab5c1ff7136938f9135",
+      "source": "local-cri-manifest-dual-node",
+      "mutable_tag": false
+    },
+    {
+      "reference": "vesoft/nebula-console:v3.6.0",
+      "normalized": "docker.io/vesoft/nebula-console:v3.6.0",
+      "repo_digest": "docker.io/vesoft/nebula-console@sha256:0bc9e8ee62ac62b85959d7ed9538238ae34c33cea9e291ee124184f55be7048c",
+      "image_id": "sha256:73dde089847b2e7be0b3e12a438aa50dab9d29587a3f37512daf74271d6f7eb1",
+      "source": "local-cri",
+      "mutable_tag": false
+    },
+    {
+      "reference": "vesoft/nebula-graph-studio:v3.10.0",
+      "normalized": "docker.io/vesoft/nebula-graph-studio:v3.10.0",
+      "repo_digest": "docker.io/vesoft/nebula-graph-studio@sha256:5c97db40af3ef5130a8cec8b7a4a499d5710779890a3ca5a3e7f016989bcf88e",
+      "image_id": "",
+      "source": "live-pod-image-id",
+      "mutable_tag": false
+    },
+    {
+      "reference": "vesoft/nebula-graphd:v3.6.0",
+      "normalized": "docker.io/vesoft/nebula-graphd:v3.6.0",
+      "repo_digest": "docker.io/vesoft/nebula-graphd@sha256:0457a789213499fbfa2a07fb01cbea174843e9617771536a5b67cd89d96bcbf9",
+      "image_id": "sha256:9ffa939c73f4ba97750f4ac071b50e51c71737aba2ed37f9e07933f1f5d63231",
+      "source": "live-pod-image-id-and-local-cri",
+      "mutable_tag": false
+    },
+    {
+      "reference": "vesoft/nebula-metad:v3.6.0",
+      "normalized": "docker.io/vesoft/nebula-metad:v3.6.0",
+      "repo_digest": "docker.io/vesoft/nebula-metad@sha256:6d72a76fd44a738d1353186d8f2a8d467752239f4f85030f56c1b53b657b21d8",
+      "image_id": "sha256:e160f99aa8b44e4a70ae1dcdf09d08ffc2a8e9d5b555b7fb0248bdc351322151",
+      "source": "live-pod-image-id-and-local-cri",
+      "mutable_tag": false
+    },
+    {
+      "reference": "vesoft/nebula-storaged:v3.6.0",
+      "normalized": "docker.io/vesoft/nebula-storaged:v3.6.0",
+      "repo_digest": "docker.io/vesoft/nebula-storaged@sha256:29b9dccaecc339ed0e98b21575105eb45afc44afe84b8ca0cc9b0dca03c14fae",
+      "image_id": "sha256:6121adf9100c3ee832b370d2c8769f91d25368a5b0035c8dcea8981962168ac1",
+      "source": "live-pod-image-id-and-local-cri",
+      "mutable_tag": false
+    }
+  ]
+}

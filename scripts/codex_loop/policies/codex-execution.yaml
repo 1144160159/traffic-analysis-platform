@@ -1,0 +1,56 @@
+version: 1
+default_timeout_seconds: 1800
+allow_execute_env: CODEX_LOOP_ALLOW_EXTERNAL_CODEX
+required_prompt_placeholder: "{prompt}"
+allowed_binaries:
+  - codex
+  - npx
+allowed_command_prefixes:
+  - codex exec
+  - npx codex exec
+env_allowlist:
+  - HOME
+  - PATH
+  - USER
+  - LOGNAME
+  - LANG
+  - LC_ALL
+  - CODEX_HOME
+  - OPENAI_API_KEY
+  - OPENAI_BASE_URL
+  - HTTP_PROXY
+  - HTTPS_PROXY
+  - NO_PROXY
+  - http_proxy
+  - https_proxy
+  - no_proxy
+  - SSL_CERT_FILE
+  - REQUESTS_CA_BUNDLE
+secret_name_patterns:
+  - KEY
+  - TOKEN
+  - SECRET
+  - PASSWORD
+  - CREDENTIAL
+  - COOKIE
+denied_fragments:
+  - "&&"
+  - "||"
+  - ";"
+  - "|"
+  - "`"
+  - "$("
+  - ">"
+  - "<"
+  - "\n"
+  - git reset
+  - git checkout
+  - rm -rf
+  - kubectl delete
+  - helm uninstall
+  - docker push
+  - truncate
+  - DROP DATABASE
+  - DROP TABLE
+max_prompt_bytes: 262144
+max_output_chars: 120000

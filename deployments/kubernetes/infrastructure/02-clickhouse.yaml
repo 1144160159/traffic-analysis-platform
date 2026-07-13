@@ -1,0 +1,866 @@
+---
+# =============================================================================
+# ClickHouse Cluster — 2 Shard × 2 Replica + 3 Keeper
+#
+# Architecture:
+#   Keeper:   3 nodes (clickhouse-keeper-{0,1,2}) — Raft coordination
+#   Shard 01: clickhouse-1-0 (replica-1) + clickhouse-replica-0 (replica-2)
+#   Shard 02: clickhouse-2-0 (replica-1) + clickhouse-replica-1 (replica-2)
+#
+# Tables: ReplicatedMergeTree (_local) + Distributed
+# Config:  Init containers write cluster.xml + macros.xml to shared emptyDir;
+#          main container mounts emptyDir at /etc/clickhouse-server/config.d
+#
+# CRITICAL: Keeper MUST use PVC (not emptyDir). Pod restart wipes all metadata.
+# =============================================================================
+
+# =============================================================================
+# ConfigMaps
+# =============================================================================
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: clickhouse-config
+  namespace: middleware
+data:
+  cluster.xml: |
+    <clickhouse>
+      <zookeeper>
+        <node>
+          <host>clickhouse-keeper-0.clickhouse-keeper-headless.middleware.svc</host>
+          <port>9181</port>
+        </node>
+        <node>
+          <host>clickhouse-keeper-1.clickhouse-keeper-headless.middleware.svc</host>
+          <port>9181</port>
+        </node>
+        <node>
+          <host>clickhouse-keeper-2.clickhouse-keeper-headless.middleware.svc</host>
+          <port>9181</port>
+        </node>
+      </zookeeper>
+      <remote_servers>
+        <traffic_cluster>
+          <shard>
+            <internal_replication>true</internal_replication>
+            <replica>
+              <host>clickhouse-1.middleware.svc</host>
+              <port>9000</port>
+              <user>default</user>
+              <password>__CLICKHOUSE_PASSWORD__</password>
+            </replica>
+            <replica>
+              <host>clickhouse-replica-0.clickhouse-replica.middleware.svc</host>
+              <port>9000</port>
+              <user>default</user>
+              <password>__CLICKHOUSE_PASSWORD__</password>
+            </replica>
+          </shard>
+          <shard>
+            <internal_replication>true</internal_replication>
+            <replica>
+              <host>clickhouse-2.middleware.svc</host>
+              <port>9000</port>
+              <user>default</user>
+              <password>__CLICKHOUSE_PASSWORD__</password>
+            </replica>
+            <replica>
+              <host>clickhouse-replica-1.clickhouse-replica.middleware.svc</host>
+              <port>9000</port>
+              <user>default</user>
+              <password>__CLICKHOUSE_PASSWORD__</password>
+            </replica>
+          </shard>
+        </traffic_cluster>
+      </remote_servers>
+    </clickhouse>
+  resource-limits.xml: |
+    <clickhouse>
+      <max_server_memory_usage>17179869184</max_server_memory_usage>
+      <mark_cache_size>1073741824</mark_cache_size>
+      <uncompressed_cache_size>536870912</uncompressed_cache_size>
+    </clickhouse>
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: clickhouse-keeper-config
+  namespace: middleware
+data:
+  keeper_config.xml: |
+    <clickhouse>
+      <listen_host>0.0.0.0</listen_host>
+      <logger>
+        <level>information</level>
+        <log>/var/log/clickhouse-server/clickhouse-keeper.log</log>
+        <errorlog>/var/log/clickhouse-server/clickhouse-keeper.err.log</errorlog>
+      </logger>
+      <keeper_server>
+        <tcp_port>9181</tcp_port>
+        <server_id>__KEEPER_ID__</server_id>
+        <log_storage_path>/data/keeper/log</log_storage_path>
+        <snapshot_storage_path>/data/keeper/snapshots</snapshot_storage_path>
+        <coordination_settings>
+          <operation_timeout_ms>10000</operation_timeout_ms>
+          <session_timeout_ms>30000</session_timeout_ms>
+        </coordination_settings>
+        <raft_configuration>
+          <server>
+            <id>1</id>
+            <hostname>clickhouse-keeper-0.clickhouse-keeper-headless.middleware.svc</hostname>
+            <port>9444</port>
+          </server>
+          <server>
+            <id>2</id>
+            <hostname>clickhouse-keeper-1.clickhouse-keeper-headless.middleware.svc</hostname>
+            <port>9444</port>
+          </server>
+          <server>
+            <id>3</id>
+            <hostname>clickhouse-keeper-2.clickhouse-keeper-headless.middleware.svc</hostname>
+            <port>9444</port>
+          </server>
+        </raft_configuration>
+      </keeper_server>
+    </clickhouse>
+
+# =============================================================================
+# Keeper Cluster — 3 nodes (Raft)
+# =============================================================================
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: clickhouse-keeper-headless
+  namespace: middleware
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+  - name: client
+    port: 9181
+    protocol: TCP
+    targetPort: 9181
+  - name: raft
+    port: 9444
+    protocol: TCP
+    targetPort: 9444
+  selector:
+    app: clickhouse-keeper
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: clickhouse-keeper
+  namespace: middleware
+spec:
+  podManagementPolicy: Parallel
+  replicas: 3
+  selector:
+    matchLabels:
+      app: clickhouse-keeper
+  serviceName: clickhouse-keeper-headless
+  template:
+    metadata:
+      labels:
+        app: clickhouse-keeper
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: clickhouse-keeper
+              topologyKey: kubernetes.io/hostname
+            weight: 100
+      initContainers:
+      - command:
+        - sh
+        - -c
+        - |
+          ID=$(echo $HOSTNAME | grep -o '[0-9]\+')
+          ID=$((ID + 1))
+          sed "s/__KEEPER_ID__/$ID/g" /tmp/keeper_config.xml > /etc/clickhouse-keeper/keeper_config.xml
+          mkdir -p /data/keeper/log /data/keeper/snapshots
+          echo "Keeper ID=$ID ready (hostname=$HOSTNAME)"
+        image: docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662
+        imagePullPolicy: IfNotPresent
+        name: init-config
+        resources: {}
+        volumeMounts:
+        - mountPath: /tmp
+          name: config-src
+        - mountPath: /etc/clickhouse-keeper
+          name: config
+        - mountPath: /data
+          name: data
+      containers:
+      - args:
+        - --config
+        - /etc/clickhouse-keeper/keeper_config.xml
+        command:
+        - clickhouse-keeper
+        image: docker.io/clickhouse/clickhouse-server@sha256:b052ae89097c2d0f718b15ba1f4ce1c2a781eda8375980cf1cddd8f203981b58
+        imagePullPolicy: IfNotPresent
+        name: keeper
+        ports:
+        - containerPort: 9181
+          name: client
+          protocol: TCP
+        - containerPort: 9444
+          name: raft
+          protocol: TCP
+        resources:
+          limits:
+            cpu: "2"
+            memory: 2Gi
+          requests:
+            cpu: 500m
+            memory: 512Mi
+        volumeMounts:
+        - mountPath: /etc/clickhouse-keeper
+          name: config
+        - mountPath: /data
+          name: data
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+      volumes:
+      - configMap:
+          name: clickhouse-keeper-config
+        name: config-src
+      - emptyDir: {}
+        name: config
+  volumeClaimTemplates:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 20Gi
+      storageClassName: local-hdd
+      volumeMode: Filesystem
+
+# =============================================================================
+# Shard 01 — Primary: clickhouse-1
+# =============================================================================
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: clickhouse-1
+  namespace: middleware
+spec:
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+  podManagementPolicy: OrderedReady
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: clickhouse
+      instance: ch-1
+  serviceName: clickhouse-1
+  template:
+    metadata:
+      labels:
+        app: clickhouse
+        instance: ch-1
+        shard: "1"
+    spec:
+      initContainers:
+      - command:
+        - sh
+        - -c
+        - |
+          sed "s|__CLICKHOUSE_PASSWORD__|${CLICKHOUSE_PASSWORD}|g" /config-src/cluster.xml > /ch-config/cluster.xml
+          cp /config-src/resource-limits.xml /ch-config/resource-limits.xml
+          cat > /ch-config/docker_related_config.xml << XEOF
+          <clickhouse>
+            <listen_host>::</listen_host>
+            <listen_host>0.0.0.0</listen_host>
+            <listen_try>1</listen_try>
+          </clickhouse>
+          XEOF
+          cat > /ch-config/macros.xml << XEOF
+          <clickhouse>
+            <macros>
+              <shard>01</shard>
+              <replica>replica-1</replica>
+              <cluster>traffic_cluster</cluster>
+            </macros>
+          </clickhouse>
+          XEOF
+          echo "Init: shard=01 replica=replica-1"
+          ls -la /ch-config/
+        env:
+        - name: CLICKHOUSE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: CLICKHOUSE_PASSWORD
+              name: traffic-credentials
+        image: docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662
+        imagePullPolicy: IfNotPresent
+        name: ch-init
+        resources: {}
+        volumeMounts:
+        - mountPath: /config-src
+          name: config
+        - mountPath: /ch-config
+          name: ch-config
+      containers:
+      - env:
+        - name: CLICKHOUSE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: CLICKHOUSE_PASSWORD
+              name: traffic-credentials
+        image: docker.io/clickhouse/clickhouse-server@sha256:b052ae89097c2d0f718b15ba1f4ce1c2a781eda8375980cf1cddd8f203981b58
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /ping
+            port: 8123
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: clickhouse
+        ports:
+        - containerPort: 8123
+          name: http
+          protocol: TCP
+        - containerPort: 9000
+          name: native
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /ping
+            port: 8123
+            scheme: HTTP
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: '16'
+            memory: 24Gi
+          requests:
+            cpu: '2'
+            memory: 4Gi
+        volumeMounts:
+        - mountPath: /var/lib/clickhouse
+          name: data
+        - mountPath: /etc/clickhouse-server/config.d
+          name: ch-config
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        kubernetes.io/hostname: 8-2tb
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: clickhouse-config
+        name: config
+      - emptyDir: {}
+        name: ch-config
+  updateStrategy:
+    rollingUpdate:
+      partition: 0
+    type: RollingUpdate
+  volumeClaimTemplates:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Ti
+      selector:
+        matchLabels:
+          app: clickhouse
+      storageClassName: local-hdd
+      volumeMode: Filesystem
+
+# =============================================================================
+# Shard 02 — Primary: clickhouse-2
+# =============================================================================
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: clickhouse-2
+  namespace: middleware
+spec:
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+  podManagementPolicy: OrderedReady
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: clickhouse
+      instance: ch-2
+  serviceName: clickhouse-2
+  template:
+    metadata:
+      labels:
+        app: clickhouse
+        instance: ch-2
+        shard: "2"
+    spec:
+      initContainers:
+      - command:
+        - sh
+        - -c
+        - |
+          sed "s|__CLICKHOUSE_PASSWORD__|${CLICKHOUSE_PASSWORD}|g" /config-src/cluster.xml > /ch-config/cluster.xml
+          cp /config-src/resource-limits.xml /ch-config/resource-limits.xml
+          cat > /ch-config/docker_related_config.xml << XEOF
+          <clickhouse>
+            <listen_host>::</listen_host>
+            <listen_host>0.0.0.0</listen_host>
+            <listen_try>1</listen_try>
+          </clickhouse>
+          XEOF
+          cat > /ch-config/macros.xml << XEOF
+          <clickhouse>
+            <macros>
+              <shard>02</shard>
+              <replica>replica-1</replica>
+              <cluster>traffic_cluster</cluster>
+            </macros>
+          </clickhouse>
+          XEOF
+          echo "Init: shard=02 replica=replica-1"
+          ls -la /ch-config/
+        env:
+        - name: CLICKHOUSE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: CLICKHOUSE_PASSWORD
+              name: traffic-credentials
+        image: docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662
+        imagePullPolicy: IfNotPresent
+        name: ch-init
+        resources: {}
+        volumeMounts:
+        - mountPath: /config-src
+          name: config
+        - mountPath: /ch-config
+          name: ch-config
+      containers:
+      - env:
+        - name: CLICKHOUSE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: CLICKHOUSE_PASSWORD
+              name: traffic-credentials
+        image: docker.io/clickhouse/clickhouse-server@sha256:b052ae89097c2d0f718b15ba1f4ce1c2a781eda8375980cf1cddd8f203981b58
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /ping
+            port: 8123
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: clickhouse
+        ports:
+        - containerPort: 8123
+          name: http
+          protocol: TCP
+        - containerPort: 9000
+          name: native
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /ping
+            port: 8123
+            scheme: HTTP
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: '16'
+            memory: 24Gi
+          requests:
+            cpu: '2'
+            memory: 4Gi
+        volumeMounts:
+        - mountPath: /var/lib/clickhouse
+          name: data
+        - mountPath: /etc/clickhouse-server/config.d
+          name: ch-config
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        kubernetes.io/hostname: zeus-server
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: clickhouse-config
+        name: config
+      - emptyDir: {}
+        name: ch-config
+  updateStrategy:
+    rollingUpdate:
+      partition: 0
+    type: RollingUpdate
+  volumeClaimTemplates:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Ti
+      selector:
+        matchLabels:
+          app: clickhouse
+      storageClassName: local-hdd
+      volumeMode: Filesystem
+
+# =============================================================================
+# Replica Set — clickhouse-replica (1 per shard)
+#   replica-0 → Shard 01 (replica-2)
+#   replica-1 → Shard 02 (replica-2)
+# =============================================================================
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: clickhouse-replica
+  namespace: middleware
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+  - name: http
+    port: 8123
+    protocol: TCP
+    targetPort: 8123
+  - name: native
+    port: 9000
+    protocol: TCP
+    targetPort: 9000
+  - name: interserver
+    port: 9009
+    protocol: TCP
+    targetPort: 9009
+  selector:
+    app: clickhouse
+    role: replica
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: clickhouse-replica
+  namespace: middleware
+spec:
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+  podManagementPolicy: OrderedReady
+  replicas: 2
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: clickhouse
+      role: replica
+  serviceName: clickhouse-replica
+  template:
+    metadata:
+      labels:
+        app: clickhouse
+        role: replica
+    spec:
+      initContainers:
+      - command:
+        - sh
+        - -c
+        - |
+          REPLICA_ID=$((${HOSTNAME##*-} + 1))
+          SHARD_ID=1
+          if [ "$REPLICA_ID" = "2" ]; then SHARD_ID=2; fi
+          sed "s|__CLICKHOUSE_PASSWORD__|${CLICKHOUSE_PASSWORD}|g" /config-src/cluster.xml > /ch-config/cluster.xml
+          cp /config-src/resource-limits.xml /ch-config/resource-limits.xml
+          cat > /ch-config/docker_related_config.xml << XEOF
+          <clickhouse>
+            <listen_host>::</listen_host>
+            <listen_host>0.0.0.0</listen_host>
+            <listen_try>1</listen_try>
+          </clickhouse>
+          XEOF
+          cat > /ch-config/macros.xml << XEOF
+          <clickhouse>
+            <macros>
+              <shard>0${SHARD_ID}</shard>
+              <replica>replica-2</replica>
+              <cluster>traffic_cluster</cluster>
+            </macros>
+          </clickhouse>
+          XEOF
+          echo "Init: shard=0${SHARD_ID} replica=replica-2"
+          ls -la /ch-config/
+        env:
+        - name: CLICKHOUSE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: CLICKHOUSE_PASSWORD
+              name: traffic-credentials
+        image: docker.io/library/busybox@sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662
+        imagePullPolicy: IfNotPresent
+        name: ch-init
+        resources: {}
+        volumeMounts:
+        - mountPath: /config-src
+          name: config
+        - mountPath: /ch-config
+          name: ch-config
+      containers:
+      - env:
+        - name: CLICKHOUSE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: CLICKHOUSE_PASSWORD
+              name: traffic-credentials
+        image: docker.io/clickhouse/clickhouse-server@sha256:b052ae89097c2d0f718b15ba1f4ce1c2a781eda8375980cf1cddd8f203981b58
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /ping
+            port: 8123
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: clickhouse
+        ports:
+        - containerPort: 8123
+          name: http
+          protocol: TCP
+        - containerPort: 9000
+          name: native
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /ping
+            port: 8123
+            scheme: HTTP
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: '16'
+            memory: 24Gi
+          requests:
+            cpu: '2'
+            memory: 4Gi
+        volumeMounts:
+        - mountPath: /var/lib/clickhouse
+          name: data
+        - mountPath: /etc/clickhouse-server/config.d
+          name: ch-config
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: clickhouse-config
+        name: config
+      - emptyDir: {}
+        name: ch-config
+  updateStrategy:
+    rollingUpdate:
+      partition: 0
+    type: RollingUpdate
+  volumeClaimTemplates:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Ti
+      selector:
+        matchLabels:
+          app: clickhouse-replica
+      storageClassName: local-hdd
+      volumeMode: Filesystem
+
+# =============================================================================
+# Services
+# =============================================================================
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: clickhouse-1
+  namespace: middleware
+spec:
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - name: http
+    port: 8123
+    protocol: TCP
+    targetPort: 8123
+  - name: native
+    port: 9000
+    protocol: TCP
+    targetPort: 9000
+  selector:
+    app: clickhouse
+    shard: "1"
+  sessionAffinity: None
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: clickhouse-2
+  namespace: middleware
+spec:
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - name: http
+    port: 8123
+    protocol: TCP
+    targetPort: 8123
+  - name: native
+    port: 9000
+    protocol: TCP
+    targetPort: 9000
+  selector:
+    app: clickhouse
+    shard: "2"
+  sessionAffinity: None
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: clickhouse-headless
+  namespace: middleware
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+  - name: http
+    port: 8123
+    protocol: TCP
+    targetPort: 8123
+  - name: native
+    port: 9000
+    protocol: TCP
+    targetPort: 9000
+  - name: interserver
+    port: 9009
+    protocol: TCP
+    targetPort: 9009
+  - name: keeper
+    port: 9181
+    protocol: TCP
+    targetPort: 9181
+  - name: keeper-raft
+    port: 9444
+    protocol: TCP
+    targetPort: 9444
+  selector:
+    app: clickhouse
+  type: ClusterIP
+
+# =============================================================================
+# PodDisruptionBudget
+# =============================================================================
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: clickhouse-pdb
+  namespace: middleware
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: clickhouse
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: clickhouse-keeper-pdb
+  namespace: middleware
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: clickhouse-keeper

@@ -1,0 +1,83 @@
+{
+  "index_patterns": ["audit-*"],
+  "template": {
+    "settings": {
+      "number_of_shards": 3,
+      "number_of_replicas": 1,
+      "index.lifecycle.name": "30-day-retention"
+    },
+    "mappings": {
+      "properties": {
+        "tenant_id":    {"type": "keyword"},
+        "user_id":      {"type": "keyword"},
+        "action":       {"type": "keyword"},
+        "object_type":  {"type": "keyword"},
+        "object_id":    {"type": "keyword"},
+        "detail":       {"type": "object", "enabled": false},
+        "ip_addr":      {"type": "ip"},
+        "created_at":   {"type": "date"}
+      }
+    }
+  }
+}
+---
+{
+  "index_patterns": ["alerts-*"],
+  "template": {
+    "settings": {"number_of_shards": 6, "number_of_replicas": 1},
+    "mappings": {
+      "properties": {
+        "tenant_id":      {"type": "keyword"},
+        "alert_id":       {"type": "keyword"},
+        "community_id":   {"type": "keyword"},
+        "src_ip":         {"type": "ip"},
+        "dst_ip":         {"type": "ip"},
+        "alert_type":     {"type": "keyword"},
+        "severity":       {"type": "keyword"},
+        "score":          {"type": "float"},
+        "status":         {"type": "keyword"},
+        "first_seen":     {"type": "date"},
+        "last_seen":      {"type": "date"},
+        "labels":         {"type": "keyword"},
+        "dedup_fingerprint": {"type": "keyword"}
+      }
+    }
+  }
+}
+---
+{
+  "index_patterns": ["device-logs-*"],
+  "template": {
+    "settings": {"number_of_shards": 3, "number_of_replicas": 1},
+    "mappings": {
+      "properties": {
+        "tenant_id":   {"type": "keyword"},
+        "device_ip":   {"type": "ip"},
+        "device_type": {"type": "keyword"},
+        "severity":    {"type": "integer"},
+        "timestamp":   {"type": "date"},
+        "message":     {"type": "text"},
+        "source":      {"type": "keyword"}
+      }
+    }
+  }
+}
+---
+{
+  "index_patterns": ["evidence-*"],
+  "template": {
+    "settings": {"number_of_shards": 3, "number_of_replicas": 1},
+    "mappings": {
+      "properties": {
+        "tenant_id":    {"type": "keyword"},
+        "evidence_id":  {"type": "keyword"},
+        "alert_id":     {"type": "keyword"},
+        "type":         {"type": "keyword"},
+        "summary":      {"type": "text"},
+        "confidence":   {"type": "float"},
+        "metrics_json": {"type": "text"},
+        "ts":           {"type": "date"}
+      }
+    }
+  }
+}

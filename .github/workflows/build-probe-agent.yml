@@ -1,0 +1,54 @@
+name: Build probe-agent (full workspace, eBPF)
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  build-ebpf:
+    name: Build probe-agent (with eBPF)
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache cargo registry + target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install OS packages (for eBPF build)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential clang llvm libelf-dev libbpf-dev libssl-dev pkg-config cmake lld linux-headers-$(uname -r)
+
+      - name: Setup Rust toolchains
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Install nightly and bpf target
+        run: |
+          rustup toolchain install nightly-2025-12-01
+          rustup target add bpfel-unknown-none --toolchain nightly-2025-12-01 || true
+
+      - name: Build full workspace (release)
+        run: |
+          cargo build --release --workspace --verbose
+
+      - name: Package artifacts
+        run: |
+          mkdir -p release-artifacts
+          tar -C target/release -czf release-artifacts/probe-agent-release.tar.gz .
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: probe-agent-release
+          path: release-artifacts/probe-agent-release.tar.gz

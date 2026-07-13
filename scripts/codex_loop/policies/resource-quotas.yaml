@@ -1,0 +1,54 @@
+version: 1
+enabled: true
+description: Conservative lane and resource quotas for production Codex Loop scheduling.
+default_weight: 1
+default_lane_limit: 1
+default_subsystem_limit: 2
+max_total_weight: 4
+live_generated_limit: 1
+release_freeze_limit: 1
+lane_limits:
+  Mission / Acceptance:
+    max_selected: 2
+    weight: 1
+    group: evidence
+  Product Design:
+    max_selected: 1
+    weight: 1
+    group: design
+  UI Rebuild:
+    max_selected: 1
+    weight: 2
+    group: frontend
+  Go Control-plane:
+    max_selected: 1
+    weight: 2
+    group: backend
+  Rust Probe:
+    max_selected: 1
+    weight: 2
+    group: capture
+  Proto / Kafka / Flink:
+    max_selected: 1
+    weight: 2
+    group: stream
+  Storage / Data Quality:
+    max_selected: 1
+    weight: 2
+    group: data
+  MLOps:
+    max_selected: 1
+    weight: 2
+    group: mlops
+  Deploy / SRE / Security:
+    max_selected: 1
+    weight: 2
+    group: deploy
+mode_limits:
+  plan: 3
+  review: 2
+  backup: 1
+  local: 1
+  live-readonly: 1
+  live-generated: 1
+  release-freeze: 1

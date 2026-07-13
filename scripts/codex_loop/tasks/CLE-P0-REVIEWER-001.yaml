@@ -1,0 +1,62 @@
+id: CLE-P0-REVIEWER-001
+title: 开启第三视角 Reviewer Gate
+priority: P0
+status: DISCOVERED
+lane:
+  primary: Mission / Acceptance
+  dependent:
+    - Product Design
+source:
+  - "doc/01_design/自动开发Loop引擎设计.md#9"
+acceptance_type: regression
+subsystems:
+  - doc/02_acceptance
+  - scripts/codex_loop
+risk:
+  level: medium
+  reasons:
+    - review gate controls task closure
+execution:
+  mode: review
+  allow_live_write: false
+workspace:
+  allowed_paths:
+    - doc/02_acceptance/
+    - scripts/codex_loop/
+contracts:
+  proto: false
+  kafka_topics: false
+  database_schema: false
+  apisix_routes: false
+data_plan:
+  mode: live_existing
+  tenant: default
+  cleanup: none
+verification:
+  local:
+    - "python scripts/codex_loop/review.py --task scripts/codex_loop/tasks/CLE-P0-REVIEWER-001.yaml --run-id ${run_id}"
+  live_readonly:
+    - "curl --noproxy '*' http://10.0.5.8:30180/login"
+review:
+  required: true
+  perspectives:
+    - code_correctness
+    - product_logic
+    - technical_design
+    - acceptance_evidence
+  design_update_allowed:
+    - doc/01_design/
+    - doc/02_acceptance/
+    - doc/05_status/
+evidence:
+  run_dir: "doc/02_acceptance/runs/${run_id}"
+  required:
+    - run-summary.json
+    - plan.md
+    - local-report.md
+    - review-report.md
+    - evidence-report.md
+close_when:
+  - review-report.md exists
+  - design-delta.md exists
+  - review decision cannot close P0/P1 blockers silently

@@ -1,57 +1,51 @@
+// =============================================================================
+// FILE: proto/traffic/v1/detection.proto
+// =============================================================================
+
 syntax = "proto3";
 
 package traffic.v1;
 
-option go_package = "github.com/1144160159/traffic-analysis-platform/go/control-plane/pkg/proto/traffic/v1;trafficv1";
-option java_package = "com.traffic.proto.v1";
-option java_multiple_files = true;
-
 import "traffic/v1/common.proto";
 
-// DetectionEvent 检测结果事件
-// 由规则引擎或模型推理产生
-message DetectionEvent {
+option go_package = "github.com/1144160159/traffic-analysis-platform/go/control-plane/pkg/proto/traffic/v1;trafficv1";
+option java_package = "com.traffic.proto.traffic.v1";
+option java_multiple_files = true;
+
+// DetectionBehavior 行为检测结果
+message DetectionBehavior {
   EventHeader header = 1;
-  
-  // 检测标识
-  string detection_id = 2;
+  string model_version = 2;
   string community_id = 3;
-  
-  // 来源信息
-  string rule_id = 10;          // 规则ID (规则检测时)
-  string rule_version = 11;     // 规则版本
-  string model_id = 12;         // 模型ID (模型检测时)
-  string model_version = 13;    // 模型版本
-  
-  // ==================== 检测结果 ====================
-  // detection_type: "rule" | "behavior" | "business" | "anomaly"
-  string detection_type = 20;
-  
-  // 标签列表 (如 ["PortScan", "Reconnaissance"])
-  repeated string labels = 21;
-  
-  // 置信度得分 (0.0 - 1.0)
-  float score = 22;
-  
-  // 严重程度: "low" | "medium" | "high" | "critical"
-  string severity = 23;
-  
-  // ==================== 上下文信息 ====================
-  FiveTuple tuple = 30;
-  int64 ts_start = 31;
-  int64 ts_end = 32;
-  
-  // ==================== 证据数据 ====================
-  // evidence 包含用于解释检测结果的关键信息
-  repeated EvidenceEntry evidence = 40;
-  
-  // 关联的 session/flow ID
-  string session_id = 41;
-  string flow_id = 42;
+  string object_type = 4;
+  string object_id = 5;
+  int64 ts = 6;
+  repeated string labels = 7;
+  repeated float scores = 8;
+  string top_label = 9;
+  float top_score = 10;
 }
 
-// EvidenceEntry 证据键值对
-message EvidenceEntry {
-  string key = 1;
-  string value = 2;
+// DetectionBusiness 业务检测结果
+message DetectionBusiness {
+  EventHeader header = 1;
+  string model_version = 2;
+  string rule_version = 3;
+  int64 ts = 4;
+  string community_id = 5;
+  string session_id = 6;
+  string campaign_id = 7;
+  string detection_type = 8;
+  string label = 9;
+  float score = 10;
+}
+
+// DetectionBatch 检测结果批次
+message DetectionBatch {
+  repeated DetectionBehavior behaviors = 1;
+  repeated DetectionBusiness businesses = 2;
+  string batch_id = 3;
+  string tenant_id = 4;
+  string run_id = 5;
+  int64 created_at = 6;
 }

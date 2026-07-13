@@ -1,0 +1,573 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress-egress
+  namespace: traffic-analysis
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-egress
+  namespace: traffic-analysis
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - {protocol: UDP, port: 53}
+    - {protocol: TCP, port: 53}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-same-namespace
+  namespace: traffic-analysis
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+  ingress:
+  - from:
+    - podSelector: {}
+  egress:
+  - to:
+    - podSelector: {}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-apisix-to-control-plane
+  namespace: traffic-analysis
+spec:
+  podSelector:
+    matchExpressions:
+    - key: app
+      operator: In
+      values:
+      - alert-service
+      - asset-service
+      - auth-service
+      - forensics-service
+      - graph-service
+      - ingest-gateway
+      - rule-manager
+      - web-ui
+  policyTypes: [Ingress]
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: gateway
+      podSelector:
+        matchLabels:
+          app: apisix
+    ports:
+    - {protocol: TCP, port: 80}
+    - {protocol: TCP, port: 8080}
+    - {protocol: TCP, port: 8081}
+    - {protocol: TCP, port: 8082}
+    - {protocol: TCP, port: 8083}
+    - {protocol: TCP, port: 8084}
+    - {protocol: TCP, port: 8085}
+    - {protocol: TCP, port: 8086}
+    - {protocol: TCP, port: 8087}
+    - {protocol: TCP, port: 50051}
+    - {protocol: TCP, port: 50053}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-probe-agent-to-ingest
+  namespace: traffic-analysis
+spec:
+  podSelector:
+    matchLabels:
+      app: ingest-gateway
+  policyTypes: [Ingress]
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: probe-agent
+    ports:
+    - {protocol: TCP, port: 50051}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-control-plane-egress-to-runtime
+  namespace: traffic-analysis
+spec:
+  podSelector: {}
+  policyTypes: [Egress]
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: middleware
+    ports:
+    - {protocol: TCP, port: 9092}
+    - {protocol: TCP, port: 8123}
+    - {protocol: TCP, port: 9000}
+    - {protocol: TCP, port: 9200}
+    - {protocol: TCP, port: 9669}
+    - {protocol: TCP, port: 7002}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: databases
+    ports:
+    - {protocol: TCP, port: 5432}
+    - {protocol: TCP, port: 6379}
+    - {protocol: TCP, port: 26379}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: minio
+    ports:
+    - {protocol: TCP, port: 9000}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: iam
+    ports:
+    - {protocol: TCP, port: 8443}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: argo
+    ports:
+    - {protocol: TCP, port: 2746}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: gateway
+      podSelector:
+        matchLabels:
+          app: apisix
+    ports:
+    - {protocol: TCP, port: 9080}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress-egress
+  namespace: gateway
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-apisix-public-http
+  namespace: gateway
+spec:
+  podSelector:
+    matchLabels:
+      app: apisix
+  policyTypes: [Ingress]
+  ingress:
+  - from:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+    ports:
+    - {protocol: TCP, port: 9080}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-apisix-dns-and-upstream-egress
+  namespace: gateway
+spec:
+  podSelector:
+    matchLabels:
+      app: apisix
+  policyTypes: [Egress]
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - {protocol: UDP, port: 53}
+    - {protocol: TCP, port: 53}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: traffic-analysis
+    ports:
+    - {protocol: TCP, port: 80}
+    - {protocol: TCP, port: 8080}
+    - {protocol: TCP, port: 8081}
+    - {protocol: TCP, port: 8082}
+    - {protocol: TCP, port: 8083}
+    - {protocol: TCP, port: 8084}
+    - {protocol: TCP, port: 8085}
+    - {protocol: TCP, port: 8086}
+    - {protocol: TCP, port: 8087}
+    - {protocol: TCP, port: 50051}
+    - {protocol: TCP, port: 50053}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: iam
+    ports:
+    - {protocol: TCP, port: 8443}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: observability
+    ports:
+    - {protocol: TCP, port: 3000}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: nacos
+    ports:
+    - {protocol: TCP, port: 8848}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: flink
+    ports:
+    - {protocol: TCP, port: 8081}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: middleware
+    ports:
+    - {protocol: TCP, port: 8080}
+    - {protocol: TCP, port: 7002}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: streampark
+    ports:
+    - {protocol: TCP, port: 8080}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: argo
+    ports:
+    - {protocol: TCP, port: 2746}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: minio
+    ports:
+    - {protocol: TCP, port: 9002}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: registry
+    ports:
+    - {protocol: TCP, port: 8080}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress-egress
+  namespace: middleware
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-middleware-runtime-traffic
+  namespace: middleware
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: traffic-analysis
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: flink
+    ports:
+    - {protocol: TCP, port: 9092}
+    - {protocol: TCP, port: 8123}
+    - {protocol: TCP, port: 9000}
+    - {protocol: TCP, port: 9200}
+    - {protocol: TCP, port: 9669}
+    - {protocol: TCP, port: 7002}
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: gateway
+    ports:
+    - {protocol: TCP, port: 8080}
+    - {protocol: TCP, port: 7002}
+  - from:
+    - podSelector: {}
+  egress:
+  - to:
+    - podSelector: {}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - {protocol: UDP, port: 53}
+    - {protocol: TCP, port: 53}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress-egress
+  namespace: databases
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-database-runtime-traffic
+  namespace: databases
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: traffic-analysis
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: flink
+    ports:
+    - {protocol: TCP, port: 5432}
+    - {protocol: TCP, port: 6379}
+    - {protocol: TCP, port: 26379}
+  - from:
+    - podSelector: {}
+  egress:
+  - to:
+    - podSelector: {}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - {protocol: UDP, port: 53}
+    - {protocol: TCP, port: 53}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress-egress
+  namespace: minio
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-minio-runtime-traffic
+  namespace: minio
+spec:
+  podSelector:
+    matchLabels:
+      app: minio
+  policyTypes: [Ingress, Egress]
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: traffic-analysis
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: flink
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: argo
+    ports:
+    - {protocol: TCP, port: 9000}
+  - from:
+    - podSelector: {}
+  egress:
+  - to:
+    - podSelector: {}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - {protocol: UDP, port: 53}
+    - {protocol: TCP, port: 53}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress-egress
+  namespace: flink
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-flink-runtime-traffic
+  namespace: flink
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: traffic-analysis
+    - podSelector: {}
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: gateway
+    ports:
+    - {protocol: TCP, port: 8081}
+  egress:
+  - to:
+    - podSelector: {}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: middleware
+    ports:
+    - {protocol: TCP, port: 9092}
+    - {protocol: TCP, port: 8123}
+    - {protocol: TCP, port: 9000}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: databases
+    ports:
+    - {protocol: TCP, port: 5432}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: minio
+    ports:
+    - {protocol: TCP, port: 9000}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - {protocol: UDP, port: 53}
+    - {protocol: TCP, port: 53}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-minio-proxy-from-apisix
+  namespace: minio
+spec:
+  podSelector:
+    matchLabels:
+      app: minio-proxy
+  policyTypes: [Ingress, Egress]
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: gateway
+      podSelector:
+        matchLabels:
+          app: apisix
+    ports:
+    - {protocol: TCP, port: 9002}
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: minio
+    ports:
+    - {protocol: TCP, port: 9000}
+    - {protocol: TCP, port: 9001}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - {protocol: UDP, port: 53}
+    - {protocol: TCP, port: 53}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress-egress
+  namespace: iam
+spec:
+  podSelector: {}
+  policyTypes: [Ingress, Egress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-keycloak-runtime-traffic
+  namespace: iam
+spec:
+  podSelector:
+    matchLabels:
+      app: keycloak
+  policyTypes: [Ingress, Egress]
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: gateway
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: traffic-analysis
+    ports:
+    - {protocol: TCP, port: 8443}
+  - from:
+    - podSelector: {}
+  egress:
+  - to:
+    - podSelector: {}
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - {protocol: UDP, port: 53}
+    - {protocol: TCP, port: 53}

@@ -1,0 +1,356 @@
+---
+# ClickHouse Schema Init Job — 集群模式 (2 Shard × 2 Replica + 3 Keeper)
+#
+# 在所有 Pod Ready 后执行，通过 ON CLUSTER 在所有节点创建:
+#   - ReplicatedMergeTree _local 表 (Keeper 协调副本)
+#   - Distributed 表 (跨 Shard 读写入口)
+#
+# 前置条件:
+#   - Keeper 3/3 Running (clickhouse-keeper-{0,1,2})
+#   - CH Shard1: clickhouse-1-0 + clickhouse-replica-0 Ready
+#   - CH Shard2: clickhouse-2-0 + clickhouse-replica-1 Ready
+#   - clickhouse-config ConfigMap 已配置 (含 Keeper DNS + 集群拓扑 + 节点间认证)
+#
+# 注意:
+#   - ON CLUSTER DDL 需要所有节点可互访问 (Keeper DNS 已稳定)
+#   - device_logs/user_events/dlq_events 使用 DateTime (非 DateTime64) 以兼容 TTL
+#   - distributed_ddl_task_timeout 设为 600s (默认 180s 可能在大型集群超时)
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: init-clickhouse-schema
+  namespace: middleware
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: init-ch
+        image: docker.io/clickhouse/clickhouse-server@sha256:b052ae89097c2d0f718b15ba1f4ce1c2a781eda8375980cf1cddd8f203981b58
+        env:
+        - name: CLICKHOUSE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: CLICKHOUSE_PASSWORD
+              name: traffic-credentials
+        command: ["bash", "-c"]
+        args:
+        - |
+          set -e
+          CH="clickhouse-client -h clickhouse-1.middleware.svc --password \"${CLICKHOUSE_PASSWORD}\" --database=traffic --multiquery"
+
+          echo "Waiting for Keeper to be ready..."
+          for i in $(seq 1 30); do
+            if clickhouse-client -h clickhouse-keeper-0.clickhouse-keeper-headless.middleware.svc --port 9181 --query "SELECT 1" &>/dev/null; then
+              echo "Keeper is ready."
+              break
+            fi
+            echo "Waiting for Keeper... ($i/30)"
+            sleep 5
+          done
+
+          echo "Creating database..."
+          $CH "SET distributed_ddl_task_timeout = 600; CREATE DATABASE IF NOT EXISTS traffic ON CLUSTER traffic_cluster"
+
+          # =========================
+          # 1. flows_raw (FlowEvent)
+          # =========================
+          echo "Creating flows_raw..."
+          $CH "
+          CREATE TABLE IF NOT EXISTS traffic.flows_raw_local ON CLUSTER traffic_cluster (
+            event_id String, tenant_id String, probe_id String,
+            community_id String,
+            src_ip String, dst_ip String, src_port UInt32, dst_port UInt32, protocol UInt8,
+            direction String,
+            ts_start Int64, ts_end Int64, duration_ms UInt32,
+            packets_fwd UInt32, packets_bwd UInt32,
+            bytes_fwd UInt64, bytes_bwd UInt64,
+            pps Float32, bps Float32,
+            tcp_flags_fwd UInt32, tcp_flags_bwd UInt32, tos UInt32,
+            run_id String, feature_set_id String, event_ts Int64, ingest_ts Int64,
+            kafka_ts Int64, flink_out_ts Int64,
+            pktlen_min UInt32, pktlen_max UInt32, pktlen_mean Float32, pktlen_std Float32,
+            iat_min_ms Float32, iat_max_ms Float32, iat_mean_ms Float32, iat_std_ms Float32,
+            active_min_ms Float32, active_max_ms Float32, active_mean_ms Float32, active_std_ms Float32,
+            idle_min_ms Float32, idle_max_ms Float32, idle_mean_ms Float32, idle_std_ms Float32,
+            subflow_count UInt32
+          )
+          ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/flows_raw', '{replica}')
+          PARTITION BY toYYYYMMDD(toDateTime(ts_start / 1000))
+          ORDER BY (tenant_id, ts_end, community_id)
+          TTL toDateTime(ts_end / 1000) + toIntervalDay(30)
+          SETTINGS index_granularity = 8192;
+
+          CREATE TABLE IF NOT EXISTS traffic.flows_raw ON CLUSTER traffic_cluster
+          AS traffic.flows_raw_local
+          ENGINE = Distributed(traffic_cluster, traffic, flows_raw_local, rand());
+          "
+
+          # =========================
+          # 2. sessions (SessionEvent)
+          # =========================
+          echo "Creating sessions..."
+          $CH "
+          CREATE TABLE IF NOT EXISTS traffic.sessions_local ON CLUSTER traffic_cluster (
+            session_id String, tenant_id String, community_id String,
+            ts_start Int64, ts_end Int64, duration_ms UInt32,
+            packets_fwd UInt32, packets_bwd UInt32,
+            bytes_fwd UInt64, bytes_bwd UInt64,
+            event_id String, run_id String, feature_set_id String,
+            event_ts Int64, ingest_ts Int64, kafka_ts Int64, flink_out_ts Int64, probe_id String,
+            src_ip String, dst_ip String, src_port UInt32, dst_port UInt32, protocol UInt8,
+            bytes_total UInt64, up_down_ratio Float32,
+            num_pkts UInt32, avg_payload Float32, min_payload UInt32, max_payload UInt32, std_payload Float32,
+            mean_iat_ms Float32, min_iat_ms Float32, max_iat_ms Float32, std_iat_ms Float32,
+            flags_syn UInt32, flags_ack UInt32, flags_fin UInt32, flags_psh UInt32, flags_rst UInt32,
+            dns_pkt_cnt UInt32, tcp_pkt_cnt UInt32, udp_pkt_cnt UInt32, icmp_pkt_cnt UInt32,
+            has_syn UInt8, has_fin UInt8, has_rst UInt8, is_established UInt8,
+            evidence_count UInt32, flow_ids Array(String), end_reason String
+          )
+          ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/sessions', '{replica}')
+          PARTITION BY toYYYYMMDD(toDateTime(ts_start / 1000))
+          ORDER BY (tenant_id, ts_end, community_id)
+          TTL toDateTime(ts_end / 1000) + toIntervalDay(90)
+          SETTINGS index_granularity = 8192;
+
+          CREATE TABLE IF NOT EXISTS traffic.sessions ON CLUSTER traffic_cluster
+          AS traffic.sessions_local
+          ENGINE = Distributed(traffic_cluster, traffic, sessions_local, rand());
+          "
+
+          # =========================
+          # 3. feature_stat (FeatureStat)
+          # =========================
+          echo "Creating feature_stat..."
+          $CH "
+          CREATE TABLE IF NOT EXISTS traffic.feature_stat_local ON CLUSTER traffic_cluster (
+            tenant_id String, run_id String, feature_set_id String,
+            schema_version String, event_id String,
+            object_type String, object_id String, community_id String,
+            ts DateTime64(3),
+            protocol UInt8, duration_ms UInt32,
+            pps Float32, bps Float32, up_down_ratio Float32,
+            pktlen_mean Float32, pktlen_std Float32,
+            iat_mean_ms Float32, iat_std_ms Float32,
+            active_mean_ms Float32, idle_mean_ms Float32,
+            tcp_flag_syn_cnt UInt16, tcp_flag_ack_cnt UInt16,
+            tcp_init_win_bytes_fwd UInt32, tcp_init_win_bytes_bwd UInt32,
+            extra Array(Float32),
+            ingest_ts DateTime64(3) DEFAULT now64(3)
+          )
+          ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/feature_stat', '{replica}')
+          PARTITION BY toDate(ts)
+          ORDER BY (tenant_id, ts, community_id, object_type, object_id)
+          TTL toDateTime(ts) + INTERVAL 30 DAY
+          SETTINGS index_granularity = 8192;
+
+          CREATE TABLE IF NOT EXISTS traffic.feature_stat ON CLUSTER traffic_cluster
+          AS traffic.feature_stat_local
+          ENGINE = Distributed(traffic_cluster, traffic, feature_stat_local, rand());
+          "
+
+          # =========================
+          # 4. detections_behavior (DetectionBehavior)
+          # =========================
+          echo "Creating detections_behavior..."
+          $CH "
+          CREATE TABLE IF NOT EXISTS traffic.detections_behavior_local ON CLUSTER traffic_cluster (
+            tenant_id String, run_id String, feature_set_id String,
+            model_version String, event_id String,
+            community_id String, object_type String, object_id String,
+            ts DateTime64(3),
+            labels Array(String), scores Array(Float32),
+            top_label String, top_score Float32,
+            ingest_ts DateTime64(3) DEFAULT now64(3)
+          )
+          ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/detections_behavior', '{replica}')
+          PARTITION BY toDate(ts)
+          ORDER BY (tenant_id, ts, community_id, top_label, object_type, object_id)
+          TTL toDateTime(ts) + INTERVAL 30 DAY
+          SETTINGS index_granularity = 8192;
+
+          CREATE TABLE IF NOT EXISTS traffic.detections_behavior ON CLUSTER traffic_cluster
+          AS traffic.detections_behavior_local
+          ENGINE = Distributed(traffic_cluster, traffic, detections_behavior_local, rand());
+          "
+
+          # =========================
+          # 5. alerts (Alert)
+          # =========================
+          echo "Creating alerts..."
+          $CH "
+          CREATE TABLE IF NOT EXISTS traffic.alerts_local ON CLUSTER traffic_cluster (
+            tenant_id String, alert_id String, dedup_fingerprint String,
+            community_id String, session_id String, campaign_id String, feature_set_id String,
+            src_ip String, dst_ip String, src_port UInt32, dst_port UInt32, protocol UInt32,
+            protocol_name String, alert_type String, labels Array(String),
+            severity String, score Float32, status String, assignee String,
+            evidence_ids Array(String), arkime_session_link String,
+            feedback_label String, feedback_count UInt32,
+            first_seen Int64, last_seen Int64, count Int32,
+            model_version String, rule_version String, state_version UInt64,
+            event_id String, kafka_ts Int64, flink_out_ts Int64, created_at Int64, updated_at Int64
+          )
+          ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/alerts', '{replica}')
+          PARTITION BY toYYYYMMDD(toDateTime(last_seen / 1000))
+          ORDER BY (tenant_id, last_seen, severity, alert_type, alert_id)
+          TTL toDateTime(last_seen / 1000) + toIntervalDay(30)
+          SETTINGS index_granularity = 8192;
+
+          CREATE TABLE IF NOT EXISTS traffic.alerts ON CLUSTER traffic_cluster
+          AS traffic.alerts_local
+          ENGINE = Distributed(traffic_cluster, traffic, alerts_local, rand());
+          "
+
+          echo "Ensuring latency-chain columns..."
+          $CH "
+          ALTER TABLE traffic.flows_raw_local ON CLUSTER traffic_cluster ADD COLUMN IF NOT EXISTS kafka_ts Int64 AFTER ingest_ts;
+          ALTER TABLE traffic.flows_raw_local ON CLUSTER traffic_cluster ADD COLUMN IF NOT EXISTS flink_out_ts Int64 AFTER kafka_ts;
+          ALTER TABLE traffic.flows_raw ON CLUSTER traffic_cluster ADD COLUMN IF NOT EXISTS kafka_ts Int64 AFTER ingest_ts;
+          ALTER TABLE traffic.flows_raw ON CLUSTER traffic_cluster ADD COLUMN IF NOT EXISTS flink_out_ts Int64 AFTER kafka_ts;
+          ALTER TABLE traffic.sessions_local ON CLUSTER traffic_cluster ADD COLUMN IF NOT EXISTS kafka_ts Int64 AFTER ingest_ts;
+          ALTER TABLE traffic.sessions_local ON CLUSTER traffic_cluster ADD COLUMN IF NOT EXISTS flink_out_ts Int64 AFTER kafka_ts;
+          ALTER TABLE traffic.sessions ON CLUSTER traffic_cluster ADD COLUMN IF NOT EXISTS kafka_ts Int64 AFTER ingest_ts;
+          ALTER TABLE traffic.sessions ON CLUSTER traffic_cluster ADD COLUMN IF NOT EXISTS flink_out_ts Int64 AFTER kafka_ts;
+          ALTER TABLE traffic.alerts_local ON CLUSTER traffic_cluster ADD COLUMN IF NOT EXISTS kafka_ts Int64 AFTER event_id;
+          ALTER TABLE traffic.alerts_local ON CLUSTER traffic_cluster ADD COLUMN IF NOT EXISTS flink_out_ts Int64 AFTER kafka_ts;
+          ALTER TABLE traffic.alerts ON CLUSTER traffic_cluster ADD COLUMN IF NOT EXISTS kafka_ts Int64 AFTER event_id;
+          ALTER TABLE traffic.alerts ON CLUSTER traffic_cluster ADD COLUMN IF NOT EXISTS flink_out_ts Int64 AFTER kafka_ts;
+          "
+
+          # =========================
+          # 4. evidence (Evidence)
+          # =========================
+          echo "Creating evidence..."
+          $CH "
+          CREATE TABLE IF NOT EXISTS traffic.evidence_local ON CLUSTER traffic_cluster (
+            tenant_id String, evidence_id String, alert_id String,
+            ts Int64, type String, summary String,
+            metrics_json String, snippet_ref_json String, arkime_link String,
+            confidence Float32, event_id String, ingest_ts Int64,
+            visualization_url String
+          )
+          ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/evidence', '{replica}')
+          PARTITION BY toYYYYMMDD(toDateTime(ts / 1000))
+          ORDER BY (tenant_id, ts, alert_id, evidence_id)
+          TTL toDateTime(ts / 1000) + toIntervalDay(30)
+          SETTINGS index_granularity = 8192;
+
+          CREATE TABLE IF NOT EXISTS traffic.evidence ON CLUSTER traffic_cluster
+          AS traffic.evidence_local
+          ENGINE = Distributed(traffic_cluster, traffic, evidence_local, rand());
+          "
+
+          # =========================
+          # 5. campaigns (Campaign)
+          # =========================
+          echo "Creating campaigns..."
+          $CH "
+          CREATE TABLE IF NOT EXISTS traffic.campaigns_local ON CLUSTER traffic_cluster (
+            tenant_id String, campaign_id String,
+            ts_start Int64, ts_end Int64,
+            entities Array(String), alerts Array(String),
+            score Float32, summary String,
+            event_id String, ingest_ts Int64,
+            campaign_type String, attack_phases Array(String),
+            rule_ids Array(String), model_ids Array(String),
+            header_event_id String, header_tenant_id String, header_run_id String,
+            header_event_ts Int64, header_ingest_ts Int64,
+            header_probe_id String, header_feature_set_id String
+          )
+          ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/campaigns', '{replica}')
+          PARTITION BY toYYYYMMDD(toDateTime(ts_start / 1000))
+          ORDER BY (tenant_id, ts_end, campaign_id)
+          TTL toDateTime(ts_end / 1000) + toIntervalDay(30)
+          SETTINGS index_granularity = 8192;
+
+          CREATE TABLE IF NOT EXISTS traffic.campaigns ON CLUSTER traffic_cluster
+          AS traffic.campaigns_local
+          ENGINE = Distributed(traffic_cluster, traffic, campaigns_local, rand());
+          "
+
+          # =========================
+          # 6. pcap_index (PcapIndexMeta)
+          # =========================
+          echo "Creating pcap_index..."
+          $CH "
+          CREATE TABLE IF NOT EXISTS traffic.pcap_index_local ON CLUSTER traffic_cluster (
+            tenant_id String, probe_id String, file_key String,
+            ts_start Int64, ts_end Int64,
+            packet_count UInt64, byte_count UInt64,
+            community_ids Array(String), s3_path String, compressed_size UInt64,
+            byte_size UInt64, zstd_level UInt8, sha256 String,
+            bloom_filter_b64 String, flow_id String,
+            offset_start UInt64, offset_end UInt64, created_ts Int64
+          )
+          ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/pcap_index', '{replica}')
+          PARTITION BY toYYYYMMDD(toDateTime(ts_start / 1000))
+          ORDER BY (tenant_id, ts_start, probe_id, file_key)
+          TTL toDateTime(ts_start / 1000) + toIntervalDay(30)
+          SETTINGS index_granularity = 8192;
+
+          CREATE TABLE IF NOT EXISTS traffic.pcap_index ON CLUSTER traffic_cluster
+          AS traffic.pcap_index_local
+          ENGINE = Distributed(traffic_cluster, traffic, pcap_index_local, rand());
+          "
+
+          # =========================
+          # 7-9. 扩展表 (device_logs, user_events, dlq_events)
+          # =========================
+          echo "Creating device_logs..."
+          $CH "
+          CREATE TABLE IF NOT EXISTS traffic.device_logs_local ON CLUSTER traffic_cluster (
+            log_id String, tenant_id String, device_ip String, device_type String,
+            facility UInt8, severity UInt8, timestamp DateTime,
+            message String, parsed String, source String
+          )
+          ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/device_logs', '{replica}')
+          PARTITION BY toDate(timestamp)
+          ORDER BY (tenant_id, timestamp, device_ip, severity)
+          TTL timestamp + INTERVAL 30 DAY;
+
+          CREATE TABLE IF NOT EXISTS traffic.device_logs ON CLUSTER traffic_cluster
+          AS traffic.device_logs_local
+          ENGINE = Distributed(traffic_cluster, traffic, device_logs_local, rand());
+          "
+
+          echo "Creating user_events..."
+          $CH "
+          CREATE TABLE IF NOT EXISTS traffic.user_events_local ON CLUSTER traffic_cluster (
+            event_id String, tenant_id String, user_id String, username String,
+            event_type String, source_ip String, user_agent String,
+            resource String, action String, result String, timestamp DateTime
+          )
+          ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/user_events', '{replica}')
+          PARTITION BY toDate(timestamp)
+          ORDER BY (tenant_id, timestamp, user_id, event_type)
+          TTL timestamp + INTERVAL 180 DAY;
+
+          CREATE TABLE IF NOT EXISTS traffic.user_events ON CLUSTER traffic_cluster
+          AS traffic.user_events_local
+          ENGINE = Distributed(traffic_cluster, traffic, user_events_local, rand());
+          "
+
+          echo "Creating dlq_events..."
+          $CH "
+          CREATE TABLE IF NOT EXISTS traffic.dlq_events_local ON CLUSTER traffic_cluster (
+            event_id String, tenant_id String, source_topic String, source_key String,
+            error_msg String, raw_payload String,
+            retry_count UInt32 DEFAULT 0, created_at DateTime DEFAULT now()
+          )
+          ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/dlq_events', '{replica}')
+          PARTITION BY toDate(created_at)
+          ORDER BY (tenant_id, created_at, source_topic)
+          TTL created_at + INTERVAL 7 DAY;
+
+          CREATE TABLE IF NOT EXISTS traffic.dlq_events ON CLUSTER traffic_cluster
+          AS traffic.dlq_events_local
+          ENGINE = Distributed(traffic_cluster, traffic, dlq_events_local, rand());
+          "
+
+          echo ""
+          echo "=== ClickHouse cluster schema initialized ==="
+          echo "Shards: 2, Replicas: 2/shard, Tables: 9"
+          echo "Distributed tables ready for read/write."

@@ -1,0 +1,415 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-headless
+  namespace: middleware
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+  - name: kafka
+    port: 9092
+    protocol: TCP
+    targetPort: 9092
+  - name: controller
+    port: 9093
+    protocol: TCP
+    targetPort: 9093
+  selector:
+    app: kafka
+  type: ClusterIP
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kafka
+  namespace: middleware
+spec:
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+  podManagementPolicy: Parallel
+  replicas: 3
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: kafka
+  serviceName: kafka-headless
+  template:
+    metadata:
+      labels:
+        app: kafka
+        component: kafka
+    spec:
+      containers:
+      - args:
+        - 'NODE_ID=$((${HOSTNAME##*-} + 1))
+
+          sed -i "s|log.dirs=.*|log.dirs=/data|" /opt/kafka/config/kraft/server.properties
+
+          cat >> /opt/kafka/config/kraft/server.properties << CONF
+
+          node.id=$NODE_ID
+
+          controller.quorum.voters=1@kafka-0.kafka-headless.middleware.svc.cluster.local:9093,2@kafka-1.kafka-headless.middleware.svc.cluster.local:9093,3@kafka-2.kafka-headless.middleware.svc.cluster.local:9093
+
+          listeners=SASL_SSL://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+
+          advertised.listeners=SASL_SSL://${HOSTNAME}.kafka-headless.middleware.svc.cluster.local:9092
+
+          listener.security.protocol.map=SASL_SSL:SASL_SSL,CONTROLLER:SSL
+
+          controller.listener.names=CONTROLLER
+
+          inter.broker.listener.name=SASL_SSL
+
+          sasl.enabled.mechanisms=SCRAM-SHA-512
+
+          sasl.mechanism.inter.broker.protocol=SCRAM-SHA-512
+
+          listener.name.sasl_ssl.scram-sha-512.sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="${KAFKA_INTER_BROKER_USERNAME}" password="${KAFKA_INTER_BROKER_PASSWORD}";
+
+          ssl.keystore.location=/etc/kafka/tls/kafka.keystore.p12
+
+          ssl.keystore.type=PKCS12
+
+          ssl.keystore.password=${KAFKA_TLS_KEYSTORE_PASSWORD}
+
+          ssl.key.password=${KAFKA_TLS_KEYSTORE_PASSWORD}
+
+          ssl.truststore.location=/etc/kafka/tls/kafka.truststore.p12
+
+          ssl.truststore.type=PKCS12
+
+          ssl.truststore.password=${KAFKA_TLS_TRUSTSTORE_PASSWORD}
+
+          ssl.client.auth=none
+
+          listener.name.controller.ssl.keystore.location=/etc/kafka/tls/kafka.keystore.p12
+
+          listener.name.controller.ssl.keystore.type=PKCS12
+
+          listener.name.controller.ssl.keystore.password=${KAFKA_TLS_KEYSTORE_PASSWORD}
+
+          listener.name.controller.ssl.key.password=${KAFKA_TLS_KEYSTORE_PASSWORD}
+
+          listener.name.controller.ssl.truststore.location=/etc/kafka/tls/kafka.truststore.p12
+
+          listener.name.controller.ssl.truststore.type=PKCS12
+
+          listener.name.controller.ssl.truststore.password=${KAFKA_TLS_TRUSTSTORE_PASSWORD}
+
+          listener.name.controller.ssl.client.auth=required
+
+          authorizer.class.name=org.apache.kafka.metadata.authorizer.StandardAuthorizer
+
+          super.users=User:${KAFKA_INTER_BROKER_USERNAME};User:CN=kafka-bootstrap.middleware.svc
+
+          allow.everyone.if.no.acl.found=false
+
+          CONF
+
+          /opt/kafka/bin/kafka-storage.sh format -t ciWo7IWazngRchmPES6q5A -c /opt/kafka/config/kraft/server.properties --ignore-formatted \
+            --add-scram "SCRAM-SHA-512=[name=${KAFKA_INTER_BROKER_USERNAME},password=${KAFKA_INTER_BROKER_PASSWORD}]" \
+            --add-scram "SCRAM-SHA-512=[name=${KAFKA_CLIENT_USERNAME},password=${KAFKA_CLIENT_PASSWORD}]"
+
+          exec /opt/kafka/bin/kafka-server-start.sh /opt/kafka/config/kraft/server.properties
+
+          '
+        command:
+        - sh
+        - -c
+        env:
+        - name: KAFKA_CLIENT_USERNAME
+          valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_USERNAME}}
+        - name: KAFKA_CLIENT_PASSWORD
+          valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_PASSWORD}}
+        - name: KAFKA_INTER_BROKER_USERNAME
+          valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_INTER_BROKER_USERNAME}}
+        - name: KAFKA_INTER_BROKER_PASSWORD
+          valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_INTER_BROKER_PASSWORD}}
+        - name: KAFKA_TLS_KEYSTORE_PASSWORD
+          valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_TLS_KEYSTORE_PASSWORD}}
+        - name: KAFKA_TLS_TRUSTSTORE_PASSWORD
+          valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_TLS_TRUSTSTORE_PASSWORD}}
+        image: docker.io/apache/kafka@sha256:32217f809d3fba75ee46e93b1fdbea4aacc0821139443efb73691a913948c31a
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 5
+          initialDelaySeconds: 60
+          periodSeconds: 20
+          successThreshold: 1
+          tcpSocket:
+            port: 9092
+          timeoutSeconds: 1
+        name: kafka
+        ports:
+        - containerPort: 9092
+          protocol: TCP
+        - containerPort: 9093
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          successThreshold: 1
+          tcpSocket:
+            port: 9092
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: '8'
+            memory: 16Gi
+          requests:
+            cpu: '1'
+            memory: 2Gi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /data
+          name: data
+        - mountPath: /etc/kafka/tls
+          name: kafka-broker-tls
+          readOnly: true
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+      volumes:
+      - name: kafka-broker-tls
+        secret:
+          secretName: kafka-broker-tls
+          optional: false
+  updateStrategy:
+    rollingUpdate:
+      partition: 0
+    type: RollingUpdate
+  volumeClaimTemplates:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Ti
+      selector:
+        matchLabels:
+          app: kafka
+      storageClassName: local-hdd
+      volumeMode: Filesystem
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kafka-ui
+  namespace: middleware
+spec:
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+  podManagementPolicy: OrderedReady
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: kafka-ui
+  serviceName: kafka-ui
+  template:
+    metadata:
+      labels:
+        app: kafka-ui
+    spec:
+      containers:
+      - env:
+        - name: KAFKA_CLUSTERS_0_NAME
+          value: traffic-platform
+        - name: KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS
+          value: kafka-0.kafka-headless.middleware.svc.cluster.local:9092,kafka-1.kafka-headless.middleware.svc.cluster.local:9092,kafka-2.kafka-headless.middleware.svc.cluster.local:9092
+        - name: KAFKA_CLUSTERS_0_PROPERTIES_SECURITY_PROTOCOL
+          value: SASL_SSL
+        - name: KAFKA_CLUSTERS_0_PROPERTIES_SASL_MECHANISM
+          value: SCRAM-SHA-512
+        - name: KAFKA_CLUSTERS_0_PROPERTIES_SASL_JAAS_CONFIG
+          valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_JAAS_CONFIG}}
+        - name: KAFKA_CLUSTERS_0_PROPERTIES_SSL_TRUSTSTORE_LOCATION
+          value: /etc/kafka/tls/kafka.truststore.p12
+        - name: KAFKA_CLUSTERS_0_PROPERTIES_SSL_TRUSTSTORE_PASSWORD
+          valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_TLS_TRUSTSTORE_PASSWORD}}
+        - name: KAFKA_CLUSTERS_0_PROPERTIES_SSL_TRUSTSTORE_TYPE
+          value: PKCS12
+        - name: SERVER_SERVLET_CONTEXT_PATH
+          value: /kafka-ui
+        image: docker.io/provectuslabs/kafka-ui@sha256:8f2ff02d64b0a7a2b71b6b3b3148b85f66d00ec20ad40c30bdcd415d46d31818
+        imagePullPolicy: IfNotPresent
+        name: kafka-ui
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 200m
+            memory: 256Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /etc/kafka/tls
+          name: kafka-client-tls
+          readOnly: true
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        kubernetes.io/hostname: zeus-server
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+      volumes:
+      - name: kafka-client-tls
+        secret:
+          secretName: kafka-client-tls
+          optional: false
+  updateStrategy:
+    rollingUpdate:
+      partition: 0
+    type: RollingUpdate
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-bootstrap
+  namespace: middleware
+spec:
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - name: kafka
+    port: 9092
+    protocol: TCP
+    targetPort: 9092
+  selector:
+    app: kafka
+  sessionAffinity: None
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-0
+  namespace: middleware
+spec:
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - name: kafka
+    port: 9092
+    protocol: TCP
+    targetPort: 9092
+  selector:
+    statefulset.kubernetes.io/pod-name: kafka-0
+  sessionAffinity: None
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-1
+  namespace: middleware
+spec:
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - name: kafka
+    port: 9092
+    protocol: TCP
+    targetPort: 9092
+  - name: controller
+    port: 9093
+    protocol: TCP
+    targetPort: 9093
+  selector:
+    statefulset.kubernetes.io/pod-name: kafka-1
+  sessionAffinity: None
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-2
+  namespace: middleware
+spec:
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - name: kafka
+    port: 9092
+    protocol: TCP
+    targetPort: 9092
+  - name: controller
+    port: 9093
+    protocol: TCP
+    targetPort: 9093
+  selector:
+    statefulset.kubernetes.io/pod-name: kafka-2
+  sessionAffinity: None
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-ui
+  namespace: middleware
+spec:
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: kafka-ui
+  sessionAffinity: None
+  type: ClusterIP
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: kafka-pdb
+  namespace: middleware
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: kafka
+
+---

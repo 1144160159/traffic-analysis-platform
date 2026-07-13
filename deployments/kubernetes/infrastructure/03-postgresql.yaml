@@ -1,0 +1,406 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-primary
+  namespace: databases
+spec:
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+  podManagementPolicy: OrderedReady
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: postgres
+      role: primary
+  serviceName: postgres-primary
+  template:
+    metadata:
+      labels:
+        app: postgres
+        role: primary
+    spec:
+      containers:
+      - env:
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: PG_PASSWORD
+        - name: POSTGRES_DB
+          value: traffic_platform
+        image: docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          successThreshold: 1
+          tcpSocket:
+            port: 5432
+          timeoutSeconds: 1
+        name: postgres
+        ports:
+        - containerPort: 5432
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 15
+          periodSeconds: 5
+          successThreshold: 1
+          tcpSocket:
+            port: 5432
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: '4'
+            memory: 4Gi
+          requests:
+            cpu: 500m
+            memory: 512Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: data
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        kubernetes.io/hostname: 8-2tb
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+  updateStrategy:
+    rollingUpdate:
+      partition: 0
+    type: RollingUpdate
+  volumeClaimTemplates:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Ti
+      selector:
+        matchLabels:
+          app: pg-primary
+      storageClassName: local-hdd
+      volumeMode: Filesystem
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-replica
+  namespace: databases
+spec:
+  persistentVolumeClaimRetentionPolicy:
+    whenDeleted: Retain
+    whenScaled: Retain
+  podManagementPolicy: OrderedReady
+  replicas: 2
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: postgres
+      role: replica
+  serviceName: postgres-replica
+  template:
+    metadata:
+      labels:
+        app: postgres
+        role: replica
+    spec:
+      containers:
+      - env:
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: PG_PASSWORD
+        - name: POSTGRES_REPLICATE_FROM
+          value: postgres-primary.databases.svc
+        image: docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          successThreshold: 1
+          tcpSocket:
+            port: 5432
+          timeoutSeconds: 1
+        name: postgres
+        ports:
+        - containerPort: 5432
+          protocol: TCP
+        resources:
+          limits:
+            cpu: '4'
+            memory: 4Gi
+          requests:
+            cpu: 500m
+            memory: 512Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: data
+      dnsPolicy: ClusterFirst
+      initContainers:
+      - args:
+        - |
+          if [ ! -f /var/lib/postgresql/data/standby.signal ]; then
+            echo "Not a replica - cloning from primary..."
+            rm -rf /var/lib/postgresql/data/*
+            export PGPASSWORD="$PG_REPLICATION_PASSWORD"
+            pg_basebackup -h postgres-primary.databases.svc -p 5432 -U replicator -D /var/lib/postgresql/data -R --no-password
+            echo "Clone done"
+          else
+            echo "Replica data exists"
+          fi
+          chmod 700 /var/lib/postgresql/data
+        command:
+        - /bin/sh
+        - -c
+        env:
+        - name: PG_REPLICATION_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: PG_REPLICATION_PASSWORD
+        image: docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7
+        imagePullPolicy: IfNotPresent
+        name: init-replica
+        resources: {}
+        securityContext:
+          runAsGroup: 70
+          runAsUser: 70
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: data
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext:
+        fsGroup: 70
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+  updateStrategy:
+    rollingUpdate:
+      partition: 0
+    type: RollingUpdate
+  volumeClaimTemplates:
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 1Ti
+      storageClassName: local-hdd
+      volumeMode: Filesystem
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: databases
+spec:
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - port: 5432
+    protocol: TCP
+    targetPort: 5432
+  selector:
+    app: postgres
+    role: primary
+  sessionAffinity: None
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-primary
+  namespace: databases
+spec:
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - port: 5432
+    protocol: TCP
+    targetPort: 5432
+  selector:
+    app: postgres
+    role: primary
+  sessionAffinity: None
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-replica
+  namespace: databases
+spec:
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - port: 5432
+    protocol: TCP
+    targetPort: 5432
+  selector:
+    app: postgres
+    role: replica
+  sessionAffinity: None
+  type: ClusterIP
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: postgres-pdb
+  namespace: databases
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: postgres
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: pg-failover-check
+  namespace: databases
+spec:
+  concurrencyPolicy: Allow
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    metadata:
+      creationTimestamp: null
+    spec:
+      template:
+        metadata:
+          creationTimestamp: null
+        spec:
+          containers:
+          - command:
+            - /bin/sh
+            - /scripts/failover.sh
+            env:
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: traffic-credentials
+                  key: PG_PASSWORD
+            image: docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7
+            imagePullPolicy: IfNotPresent
+            name: failover-check
+            resources: {}
+            terminationMessagePath: /dev/termination-log
+            terminationMessagePolicy: File
+            volumeMounts:
+            - mountPath: /scripts
+              name: script
+          dnsPolicy: ClusterFirst
+          restartPolicy: OnFailure
+          schedulerName: default-scheduler
+          securityContext: {}
+          terminationGracePeriodSeconds: 30
+          volumes:
+          - configMap:
+              defaultMode: 493
+              name: pg-failover-script
+            name: script
+  schedule: '*/1 * * * *'
+  successfulJobsHistoryLimit: 2
+  suspend: false
+
+---
+apiVersion: v1
+data:
+  failover.sh: |
+    #!/bin/sh
+    # PG Auto-Failover Script
+    # Checks primary health and promotes replica if primary is down
+
+    set -eu
+
+    PRIMARY_SVC="postgres-primary.databases.svc"
+    REPLICA_HOST="postgres-replica-0.postgres-replica.databases.svc"
+    LOCK_FILE="/tmp/pg-failover.lock"
+    export PGPASSWORD="${PGPASSWORD:?PGPASSWORD env is required}"
+
+    # Check if primary is reachable
+    if psql -h "$PRIMARY_SVC" -p 5432 -U postgres -c "SELECT 1;" -t 2>/dev/null; then
+      echo "$(date): Primary is healthy"
+      exit 0
+    fi
+
+    echo "$(date): Primary is DOWN! Checking if we should promote..."
+
+    # Prevent concurrent promotions (simple lock via file)
+    if [ -f "$LOCK_FILE" ]; then
+      LOCK_AGE=$(($(date +%s) - $(stat -c %Y "$LOCK_FILE" 2>/dev/null || echo 0)))
+      if [ "$LOCK_AGE" -lt 120 ]; then
+        echo "$(date): Another promotion was attempted recently ($LOCK_AGE seconds ago). Skipping."
+        exit 0
+      fi
+    fi
+
+    touch "$LOCK_FILE"
+
+    # Check if the replica we're promoting is healthy
+    IS_RECOVERY=$(psql -h "$REPLICA_HOST" -p 5432 -U postgres -c "SELECT pg_is_in_recovery();" -t 2>/dev/null | tr -d ' ')
+    if [ "$IS_RECOVERY" != "t" ]; then
+      echo "$(date): Replica is NOT in recovery mode - cannot promote"
+      exit 1
+    fi
+
+    # Check replication lag
+    LAG=$(psql -h "$REPLICA_HOST" -p 5432 -U postgres -c "SELECT COALESCE(EXTRACT(EPOCH FROM replay_lag), 999) FROM pg_stat_replication WHERE application_name='walreceiver';" -t 2>/dev/null | tr -d ' ')
+    if [ -n "$LAG" ] && [ "$(echo "$LAG > 60" | bc 2>/dev/null || echo 0)" = "1" ]; then
+      echo "$(date): Replication lag too high ($LAG sec). Skipping promotion."
+      exit 0
+    fi
+
+    echo "$(date): PROMOTING replica-0 to primary..."
+    psql -h "$REPLICA_HOST" -p 5432 -U postgres -c "SELECT pg_promote();" 2>&1
+    PROMOTE_RESULT=$?
+
+    if [ "$PROMOTE_RESULT" -eq 0 ]; then
+      echo "$(date): Promotion successful!"
+      echo "$(date): Note: Service re-pointing requires K8s API access"
+    else
+      echo "$(date): Promotion failed with code $PROMOTE_RESULT"
+    fi
+kind: ConfigMap
+metadata:
+  name: pg-failover-script
+  namespace: databases
+
+---

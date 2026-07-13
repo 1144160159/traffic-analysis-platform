@@ -1,0 +1,121 @@
+// =============================================================================
+// FILE: proto/traffic/v1/graph.proto
+// =============================================================================
+
+syntax = "proto3";
+
+package traffic.v1;
+
+option go_package = "github.com/1144160159/traffic-analysis-platform/go/control-plane/pkg/proto/traffic/v1;trafficv1";
+option java_package = "com.traffic.proto.traffic.v1";
+option java_multiple_files = true;
+
+// GraphQueryLog 图查询日志
+message GraphQueryLog {
+  string tenant_id = 1;
+  string query_id = 2;
+  string user_id = 3;
+  string query_type = 4;
+  string center_ip = 5;
+  repeated string center_ips = 6;
+  uint32 depth = 7;
+  string run_id = 8;
+  int64 query_start_time = 9;
+  int64 query_end_time = 10;
+  uint32 node_count = 11;
+  uint32 edge_count = 12;
+  uint32 path_count = 13;
+  uint64 result_size_bytes = 14;
+  uint32 duration_ms = 15;
+  uint32 cache_hit = 16;
+  uint32 ch_query_count = 17;
+  uint32 ch_total_duration_ms = 18;
+  uint64 ch_rows_read = 19;
+  uint64 ch_bytes_read = 20;
+  string status = 21;
+  string error_code = 22;
+  string error_message = 23;
+  string trace_id = 24;
+  string client_ip = 25;
+  string user_agent = 26;
+  int64 created_at = 27;
+}
+
+// GraphCacheStats 缓存命中率统计
+message GraphCacheStats {
+  string tenant_id = 1;
+  int64 hour = 2;
+  string query_type = 3;
+  uint64 total_queries = 4;
+  uint64 cache_hits = 5;
+  uint64 cache_misses = 6;
+  float avg_duration_ms = 7;
+  float p95_duration_ms = 8;
+  float p99_duration_ms = 9;
+  uint64 total_nodes = 10;
+  uint64 total_edges = 11;
+  uint64 error_count = 12;
+  uint64 timeout_count = 13;
+}
+
+// GraphHotIP 热点 IP 统计
+message GraphHotIP {
+  string tenant_id = 1;
+  int64 date = 2;
+  string ip = 3;
+  uint64 query_count = 4;
+  uint64 total_neighbors = 5;
+  float avg_session_count = 6;
+  int64 last_query_time = 7;
+}
+
+// GraphSlowQuery 慢查询
+message GraphSlowQuery {
+  string tenant_id = 1;
+  string query_id = 2;
+  string query_type = 3;
+  string center_ip = 4;
+  uint32 depth = 5;
+  string run_id = 6;
+  uint32 duration_ms = 7;
+  uint32 node_count = 8;
+  uint32 edge_count = 9;
+  uint64 ch_rows_read = 10;
+  uint64 ch_bytes_read = 11;
+  string error_message = 12;
+  int64 created_at = 13;
+}
+
+// GraphIPAffinity IP 关系强度
+message GraphIPAffinity {
+  string tenant_id = 1;
+  int64 date = 2;
+  string ip_a = 3;
+  string ip_b = 4;
+  uint32 session_count = 5;
+  uint64 total_bytes = 6;
+  float avg_duration_ms = 7;
+  uint32 a_to_b_count = 8;
+  uint32 b_to_a_count = 9;
+  int64 first_seen = 10;
+  int64 last_seen = 11;
+}
+
+// GraphQueryLogBatch 批量上报图查询日志
+message GraphQueryLogBatch {
+  repeated GraphQueryLog logs = 1;
+  string batch_id = 2;
+  string tenant_id = 3;
+  int64 created_at = 4;
+}
+
+// GraphStatsBatch 批量上报图统计
+message GraphStatsBatch {
+  repeated GraphCacheStats cache_stats = 1;
+  repeated GraphHotIP hot_ips = 2;
+  repeated GraphSlowQuery slow_queries = 3;
+  repeated GraphIPAffinity ip_affinities = 4;
+  string batch_id = 5;
+  string tenant_id = 6;
+  int64 created_at = 7;
+}
