@@ -1,259 +1,206 @@
+# Canonical standalone WorkflowTemplate mirror.
+# Keep this resource identical to the WorkflowTemplate document in
+# deployments/kubernetes/argo-events/mlops-training-template.yaml.
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate
 metadata:
   name: mlops-training-template
-  namespace: traffic-analysis
+  namespace: argo
   labels:
     app: mlops-training
     component: self-orchestration
 spec:
   entrypoint: orchestrator-pipeline
-
-  # =============================================
-  # Pipeline parameters
-  # =============================================
+  serviceAccountName: argo-workflow
   arguments:
     parameters:
     - name: model-type
-      value: "xgboost"
+      value: xgboost
     - name: model-id
-      value: "behavior-classifier"
+      value: behavior-classifier
     - name: feature-set-id
-      value: "v1"
+      value: v1
     - name: tenant-id
-      value: "campus-net"
+      value: default
     - name: lookback-days
       value: "7"
     - name: test-size
       value: "0.2"
+    - name: min-feedback-count
+      value: "100"
+    - name: min-feature-count
+      value: "1000"
     - name: min-f1-score
       value: "0.85"
     - name: auto-activate
       value: "false"
     - name: trigger
-      value: "manual"
+      value: manual
     - name: trigger-reason
       value: ""
     - name: trainer-image
-      value: "registry.example.com/traffic/mlops-trainer:latest"
-
-  serviceAccountName: argo-workflow
-
-  # =============================================
-  # Self-Orchestration Pipeline
-  # =============================================
+      value: docker.io/traffic/mlops-trainer@sha256:4f40de900eed37b8fa169660edda9e53626cd596b53a0aeaf677b08e1e6b4011
   templates:
-
-  # --- Entrypoint: Pre-flight checks → Train → Evaluate → Register ---
   - name: orchestrator-pipeline
     steps:
-    # Step 0: Pre-flight checks (data validation)
     - - name: preflight-check
-        template: preflight-check-step
+        template: preflight-check
+    - - name: run-training-pipeline
+        template: training-pipeline
+        when: "{{steps.preflight-check.outputs.parameters.training-ready}} == true"
 
-    # Step 1: Data extraction from ClickHouse
+  # Keep every artifact-producing/consuming step inside one conditional
+  # boundary. When preflight says there is not enough data, Argo skips this
+  # template as a unit instead of trying to resolve artifacts from a skipped
+  # extract-data step.
+  - name: training-pipeline
+    steps:
     - - name: extract-data
-        template: extract-data-step
-        when: "{{steps.preflight-check.outputs.parameters.data-ready}} == true"
-
-    # Step 2: Model training
+        template: extract-data
     - - name: train-model
-        template: train-model-step
+        template: train-model
         arguments:
           artifacts:
-          - name: training-data
+          - name: train-data
             from: "{{steps.extract-data.outputs.artifacts.train-data}}"
           - name: metadata
             from: "{{steps.extract-data.outputs.artifacts.metadata}}"
-
-    # Step 3: Model evaluation
     - - name: evaluate-model
-        template: evaluate-model-step
+        template: evaluate-model
         arguments:
           artifacts:
-          - name: model
-            from: "{{steps.train-model.outputs.artifacts.model}}"
+          - name: model-file
+            from: "{{steps.train-model.outputs.artifacts.model-file}}"
           - name: test-data
             from: "{{steps.extract-data.outputs.artifacts.test-data}}"
           - name: metadata
             from: "{{steps.extract-data.outputs.artifacts.metadata}}"
-
-    # Step 4: Drift detection (after evaluation, before register)
-    - - name: drift-check
-        template: drift-check-step
-        arguments:
-          parameters:
-          - name: f1-score
-            value: "{{steps.evaluate-model.outputs.parameters.f1-score}}"
-
-    # Step 4.5: Model Explainability (SHAP)
-    - - name: explain-model
-        template: explain-model-step
-        arguments:
-          artifacts:
-          - name: model
-            from: "{{steps.train-model.outputs.artifacts.model}}"
-          - name: test-data
-            from: "{{steps.extract-data.outputs.artifacts.test-data}}"
-          - name: metadata
-            from: "{{steps.extract-data.outputs.artifacts.metadata}}"
-
-    # Step 5: Model registration (conditional on F1 > threshold)
     - - name: register-model
-        template: register-model-step
+        template: register-model
+        when: "{{steps.evaluate-model.outputs.parameters.f1-score}} >= {{workflow.parameters.min-f1-score}}"
         arguments:
           artifacts:
-          - name: model-dir
-            from: "{{steps.train-model.outputs.artifacts.model-dir}}"
-          parameters:
-          - name: metrics
-            value: "{{steps.evaluate-model.outputs.parameters.metrics}}"
-          - name: f1-score
-            value: "{{steps.evaluate-model.outputs.parameters.f1-score}}"
-        when: "{{steps.evaluate-model.outputs.parameters.f1-score}} > {{workflow.parameters.min-f1-score}}"
+          - name: model-file
+            from: "{{steps.train-model.outputs.artifacts.model-file}}"
+          - name: feature-columns
+            from: "{{steps.train-model.outputs.artifacts.feature-columns}}"
+          - name: feature-importance
+            from: "{{steps.train-model.outputs.artifacts.feature-importance}}"
+          - name: train-metrics
+            from: "{{steps.train-model.outputs.artifacts.train-metrics}}"
+          - name: eval-metrics
+            from: "{{steps.evaluate-model.outputs.artifacts.metrics}}"
 
-    # Step 6: Auto-activate (conditional)
-    - - name: auto-activate
-        template: auto-activate-step
-        arguments:
-          parameters:
-          - name: model-id
-            value: "{{workflow.parameters.model-id}}"
-          - name: f1-score
-            value: "{{steps.evaluate-model.outputs.parameters.f1-score}}"
-        when: "{{workflow.parameters.auto-activate}} == true && {{steps.evaluate-model.outputs.parameters.f1-score}} > {{workflow.parameters.min-f1-score}}"
-
-    # Step 7: Notification
-    - - name: send-notification
-        template: notification-step
-        arguments:
-          parameters:
-          - name: trigger
-            value: "{{workflow.parameters.trigger}}"
-          - name: f1-score
-            value: "{{steps.evaluate-model.outputs.parameters.f1-score}}"
-
-  # =============================================
-  # Step 0: Pre-flight Check
-  # =============================================
-  - name: preflight-check-step
+  - name: preflight-check
     container:
-      image: python:3.11-slim
-      command: [bash, -c]
+      image: clickhouse/clickhouse-server:24.3
+      imagePullPolicy: IfNotPresent
+      command: ["/bin/sh", "-c"]
       args:
       - |
-        set -e
-        pip install --no-cache-dir clickhouse-driver==0.2.7
+        set -eu
+        mkdir -p /tmp/mlops
+        tenant_escaped=$(printf "%s" "$TENANT_ID" | sed "s/'/''/g")
+        days="$LOOKBACK_DAYS"
+        query_error=false
+        feedback_count=$(clickhouse-client \
+          --host "$CLICKHOUSE_HOST" \
+          --port "$CLICKHOUSE_PORT" \
+          --user "$CLICKHOUSE_USER" \
+          --password "$CLICKHOUSE_PASSWORD" \
+          --query "SELECT count() FROM traffic.alert_feedback WHERE tenant_id = '${tenant_escaped}' AND label IN ('TP','FP') AND created_at >= now() - INTERVAL ${days} DAY") || query_error=true
+        feature_count=$(clickhouse-client \
+          --host "$CLICKHOUSE_HOST" \
+          --port "$CLICKHOUSE_PORT" \
+          --user "$CLICKHOUSE_USER" \
+          --password "$CLICKHOUSE_PASSWORD" \
+          --query "SELECT count() FROM traffic.feature_stat WHERE tenant_id = '${tenant_escaped}' AND ts >= now() - INTERVAL ${days} DAY") || query_error=true
 
-        python3 << 'PYEOF'
-        import os, json, sys
-        from clickhouse_driver import Client
+        if [ "$query_error" = "true" ]; then
+          feedback_count=${feedback_count:-0}
+          feature_count=${feature_count:-0}
+        fi
 
-        ch = Client(
-            host=os.getenv('CLICKHOUSE_HOST', 'clickhouse'),
-            port=int(os.getenv('CLICKHOUSE_PORT', '9000')),
-            database=os.getenv('CLICKHOUSE_DB', 'traffic'),
-            user=os.getenv('CLICKHOUSE_USER', 'default'),
-            password=os.getenv('CLICKHOUSE_PASSWORD', ''),
-        )
+        ready=false
+        reason="insufficient_data"
+        if [ "$query_error" = "true" ]; then
+          reason="query_error"
+        elif [ "$feedback_count" -ge "$MIN_FEEDBACK_COUNT" ] && [ "$feature_count" -ge "$MIN_FEATURE_COUNT" ]; then
+          ready=true
+          reason="ready"
+        fi
 
-        lookback_days = int(os.getenv('LOOKBACK_DAYS', '7'))
-        tenant_id = os.getenv('TENANT_ID', 'campus-net')
-
-        # Check 1: Feedback data sufficiency
-        feedback_count = ch.execute("""
-            SELECT count() FROM traffic.alert_feedback
-            WHERE tenant_id = %(tenant)s AND label IN ('TP', 'FP')
-              AND created_at >= now() - INTERVAL %(days)s DAY
-        """, {'tenant': tenant_id, 'days': lookback_days})[0][0]
-
-        # Check 2: Feature data availability
-        feature_count = ch.execute("""
-            SELECT count() FROM traffic.feature_stat
-            WHERE tenant_id = %(tenant)s
-              AND ts >= now() - INTERVAL %(days)s DAY
-        """, {'tenant': tenant_id, 'days': lookback_days})[0][0]
-
-        data_ready = feedback_count >= 100 and feature_count >= 1000
-
-        result = {
-            'data_ready': data_ready,
-            'feedback_count': feedback_count,
-            'feature_count': feature_count,
-            'reason': 'ok' if data_ready else f'insufficient_data: feedback={feedback_count}, features={feature_count}'
-        }
-
-        print(json.dumps(result, indent=2))
-
-        with open('/output/preflight.json', 'w') as f:
-            json.dump(result, f)
-        with open('/output/data_ready.txt', 'w') as f:
-            f.write('true' if data_ready else 'false')
-        PYEOF
+        printf "%s" "$ready" > /tmp/mlops/training_ready.txt
+        printf "%s" "$feedback_count" > /tmp/mlops/feedback_count.txt
+        printf "%s" "$feature_count" > /tmp/mlops/feature_count.txt
+        cat > /tmp/mlops/preflight.json <<EOF
+        {"tenant_id":"${TENANT_ID}","model_id":"${MODEL_ID}","feature_set_id":"${FEATURE_SET_ID}","lookback_days":${LOOKBACK_DAYS},"feedback_count":${feedback_count},"feature_count":${feature_count},"training_ready":${ready},"reason":"${reason}","trigger":"${TRIGGER}","trigger_reason":"${TRIGGER_REASON}"}
+        EOF
+        cat /tmp/mlops/preflight.json
       env:
       - name: CLICKHOUSE_HOST
-        value: "clickhouse-1.middleware.svc"
+        value: clickhouse-1.middleware.svc
       - name: CLICKHOUSE_PORT
         value: "9000"
-      - name: CLICKHOUSE_DB
-        value: "traffic"
       - name: CLICKHOUSE_USER
-        valueFrom:
-          secretKeyRef:
-            name: clickhouse-secret
-            key: username
+        value: default
       - name: CLICKHOUSE_PASSWORD
         valueFrom:
           secretKeyRef:
-            name: clickhouse-secret
-            key: password
-      - name: LOOKBACK_DAYS
-        value: "{{workflow.parameters.lookback-days}}"
+            name: traffic-credentials
+            key: CLICKHOUSE_PASSWORD
       - name: TENANT_ID
         value: "{{workflow.parameters.tenant-id}}"
-      volumeMounts:
-      - name: output
-        mountPath: /output
-      resources:
-        requests:
-          memory: "512Mi"
-          cpu: "250m"
-        limits:
-          memory: "1Gi"
-          cpu: "500m"
+      - name: MODEL_ID
+        value: "{{workflow.parameters.model-id}}"
+      - name: FEATURE_SET_ID
+        value: "{{workflow.parameters.feature-set-id}}"
+      - name: LOOKBACK_DAYS
+        value: "{{workflow.parameters.lookback-days}}"
+      - name: MIN_FEEDBACK_COUNT
+        value: "{{workflow.parameters.min-feedback-count}}"
+      - name: MIN_FEATURE_COUNT
+        value: "{{workflow.parameters.min-feature-count}}"
+      - name: TRIGGER
+        value: "{{workflow.parameters.trigger}}"
+      - name: TRIGGER_REASON
+        value: "{{workflow.parameters.trigger-reason}}"
     outputs:
       parameters:
-      - name: data-ready
+      - name: training-ready
         valueFrom:
-          path: /output/data_ready.txt
-    volumes:
-    - name: output
-      emptyDir: {}
+          path: /tmp/mlops/training_ready.txt
+      - name: feedback-count
+        valueFrom:
+          path: /tmp/mlops/feedback_count.txt
+      - name: feature-count
+        valueFrom:
+          path: /tmp/mlops/feature_count.txt
+      artifacts:
+      - name: preflight-report
+        path: /tmp/mlops/preflight.json
+        s3:
+          key: mlops/{{workflow.name}}/preflight.json
 
-  # =============================================
-  # Step 1: Data Extraction
-  # =============================================
-  - name: extract-data-step
+  - name: extract-data
     container:
       image: "{{workflow.parameters.trainer-image}}"
-      command: [python, /app/scripts/extract_data.py]
+      imagePullPolicy: IfNotPresent
+      command: ["python", "/app/scripts/extract_data.py"]
       env:
       - name: CLICKHOUSE_HOST
-        value: "clickhouse-1.middleware.svc"
+        value: clickhouse-1.middleware.svc
       - name: CLICKHOUSE_PORT
         value: "9000"
       - name: CLICKHOUSE_DB
-        value: "traffic"
+        value: traffic
       - name: CLICKHOUSE_USER
-        valueFrom:
-          secretKeyRef:
-            name: clickhouse-secret
-            key: username
+        value: default
       - name: CLICKHOUSE_PASSWORD
         valueFrom:
           secretKeyRef:
-            name: clickhouse-secret
-            key: password
+            name: traffic-credentials
+            key: CLICKHOUSE_PASSWORD
       - name: FEATURE_SET_ID
         value: "{{workflow.parameters.feature-set-id}}"
       - name: TENANT_ID
@@ -263,470 +210,162 @@ spec:
       - name: TEST_SIZE
         value: "{{workflow.parameters.test-size}}"
       - name: OUTPUT_DIR
-        value: "/output"
-      volumeMounts:
-      - name: scripts
-        mountPath: /scripts
-      - name: output
-        mountPath: /output
-      resources:
-        requests:
-          memory: "2Gi"
-          cpu: "1"
-        limits:
-          memory: "4Gi"
-          cpu: "2"
+        value: /tmp/mlops
     outputs:
       artifacts:
       - name: train-data
-        path: /output/train.parquet
+        path: /tmp/mlops/train.parquet
         s3:
-          key: "mlops/{{workflow.name}}/data/train.parquet"
+          key: mlops/{{workflow.name}}/data/train.parquet
       - name: test-data
-        path: /output/test.parquet
+        path: /tmp/mlops/test.parquet
         s3:
-          key: "mlops/{{workflow.name}}/data/test.parquet"
+          key: mlops/{{workflow.name}}/data/test.parquet
       - name: metadata
-        path: /output/metadata.json
+        path: /tmp/mlops/metadata.json
         s3:
-          key: "mlops/{{workflow.name}}/data/metadata.json"
-    volumes:
-    - name: scripts
-      configMap:
-        name: mlops-scripts
-    - name: output
-      emptyDir: {}
+          key: mlops/{{workflow.name}}/data/metadata.json
 
-  # =============================================
-  # Step 2: Model Training
-  # =============================================
-  - name: train-model-step
+  - name: train-model
     inputs:
       artifacts:
-      - name: training-data
-        path: /data/train.parquet
+      - name: train-data
+        path: /tmp/data/train.parquet
       - name: metadata
-        path: /data/metadata.json
+        path: /tmp/data/metadata.json
     container:
       image: "{{workflow.parameters.trainer-image}}"
-      command: [python, /app/scripts/train_model.py]
+      imagePullPolicy: IfNotPresent
+      command: ["python", "/app/scripts/train_model.py"]
       env:
       - name: MODEL_TYPE
         value: "{{workflow.parameters.model-type}}"
       - name: DATA_DIR
-        value: "/data"
+        value: /tmp/data
       - name: OUTPUT_DIR
-        value: "/output"
-      volumeMounts:
-      - name: scripts
-        mountPath: /scripts
-      - name: data
-        mountPath: /data
-      - name: output
-        mountPath: /output
-      resources:
-        requests:
-          memory: "4Gi"
-          cpu: "2"
-        limits:
-          memory: "8Gi"
-          cpu: "4"
+        value: /tmp/model
     outputs:
       artifacts:
-      - name: model
-        path: /output/model.json
+      - name: model-file
+        path: /tmp/model/model.json
         s3:
-          key: "mlops/{{workflow.name}}/model/model.json"
-      - name: model-dir
-        path: /output
-        archive:
-          none: {}
+          key: mlops/{{workflow.name}}/model/model.json
+      - name: feature-columns
+        path: /tmp/model/feature_columns.json
         s3:
-          key: "mlops/{{workflow.name}}/model"
-    volumes:
-    - name: scripts
-      configMap:
-        name: mlops-scripts
-    - name: data
-      emptyDir: {}
-    - name: output
-      emptyDir: {}
+          key: mlops/{{workflow.name}}/model/feature_columns.json
+      - name: feature-importance
+        path: /tmp/model/feature_importance.json
+        s3:
+          key: mlops/{{workflow.name}}/model/feature_importance.json
+      - name: train-metrics
+        path: /tmp/model/train_metrics.json
+        s3:
+          key: mlops/{{workflow.name}}/model/train_metrics.json
 
-  # =============================================
-  # Step 3: Model Evaluation
-  # =============================================
-  - name: evaluate-model-step
+  - name: evaluate-model
     inputs:
       artifacts:
-      - name: model
-        path: /model/model.json
+      - name: model-file
+        path: /tmp/model/model.json
       - name: test-data
-        path: /data/test.parquet
+        path: /tmp/data/test.parquet
       - name: metadata
-        path: /data/metadata.json
+        path: /tmp/data/metadata.json
     container:
       image: "{{workflow.parameters.trainer-image}}"
-      command: [python, /app/scripts/evaluate_model.py]
+      imagePullPolicy: IfNotPresent
+      command: ["python", "/app/scripts/evaluate_model.py"]
       env:
       - name: MODEL_TYPE
         value: "{{workflow.parameters.model-type}}"
       - name: MODEL_DIR
-        value: "/model"
+        value: /tmp/model
       - name: DATA_DIR
-        value: "/data"
+        value: /tmp/data
       - name: OUTPUT_DIR
-        value: "/output"
+        value: /tmp/evaluation
       - name: MIN_F1_SCORE
         value: "{{workflow.parameters.min-f1-score}}"
-      volumeMounts:
-      - name: scripts
-        mountPath: /scripts
-      - name: model
-        mountPath: /model
-      - name: data
-        mountPath: /data
-      - name: output
-        mountPath: /output
-      resources:
-        requests:
-          memory: "2Gi"
-          cpu: "1"
-        limits:
-          memory: "4Gi"
-          cpu: "2"
     outputs:
       parameters:
       - name: f1-score
         valueFrom:
-          path: /output/f1_score.txt
-      - name: metrics
-        valueFrom:
-          path: /output/metrics.json
+          path: /tmp/evaluation/f1_score.txt
       artifacts:
       - name: metrics
-        path: /output/metrics.json
+        path: /tmp/evaluation/metrics.json
         s3:
-          key: "mlops/{{workflow.name}}/evaluation/metrics.json"
+          key: mlops/{{workflow.name}}/evaluation/metrics.json
       - name: summary
-        path: /output/summary.json
+        path: /tmp/evaluation/summary.json
         s3:
-          key: "mlops/{{workflow.name}}/evaluation/summary.json"
-    volumes:
-    - name: scripts
-      configMap:
-        name: mlops-scripts
-    - name: model
-      emptyDir: {}
-    - name: data
-      emptyDir: {}
-    - name: output
-      emptyDir: {}
+          key: mlops/{{workflow.name}}/evaluation/summary.json
+      - name: error-analysis
+        path: /tmp/evaluation/error_analysis.json
+        s3:
+          key: mlops/{{workflow.name}}/evaluation/error_analysis.json
 
-  # =============================================
-  # Step 4: Drift Detection (New)
-  # =============================================
-  - name: drift-check-step
+  - name: register-model
     inputs:
-      parameters:
-      - name: f1-score
+      artifacts:
+      - name: model-file
+        path: /model/model.json
+      - name: feature-columns
+        path: /model/feature_columns.json
+      - name: feature-importance
+        path: /model/feature_importance.json
+      - name: train-metrics
+        path: /model/train_metrics.json
+      - name: eval-metrics
+        path: /metrics/metrics.json
     container:
-      image: python:3.11-slim
-      command: [bash, -c]
+      image: "{{workflow.parameters.trainer-image}}"
+      imagePullPolicy: IfNotPresent
+      command: ["/bin/sh", "-c"]
       args:
       - |
-        set -e
-        pip install --no-cache-dir clickhouse-driver==0.2.7 numpy==1.26.3 scipy==1.11.4
-
-        python3 << 'PYEOF'
-        import os, json, sys, math
-        import numpy as np
-        from clickhouse_driver import Client
-
-        ch = Client(
-            host=os.getenv('CLICKHOUSE_HOST', 'clickhouse'),
-            port=int(os.getenv('CLICKHOUSE_PORT', '9000')),
-            database=os.getenv('CLICKHOUSE_DB', 'traffic'),
-            user=os.getenv('CLICKHOUSE_USER', 'default'),
-            password=os.getenv('CLICKHOUSE_PASSWORD', ''),
-        )
-        tenant_id = os.getenv('TENANT_ID', 'campus-net')
-        f1_score = float('{{inputs.parameters.f1-score}}')
-
-        # Feature columns for drift detection
-        feature_cols = ['pps', 'bps', 'pktlen_mean', 'iat_mean_ms', 'duration_ms',
-                       'active_mean_ms', 'idle_mean_ms']
-
-        drift_report = {'has_drift': False, 'drifted_features': [], 'psi_values': {}}
-
-        for col in feature_cols:
-            # Recent distribution (last 24h)
-            recent = ch.execute(f"""
-                SELECT {col} FROM traffic.feature_stat
-                WHERE tenant_id = %(tenant)s AND ts >= now() - INTERVAL 24 HOUR
-                LIMIT 10000
-            """, {'tenant': tenant_id})
-            recent_vals = np.array([r[0] for r in recent if r[0] is not None])
-
-            # Baseline distribution (7d ago)
-            baseline = ch.execute(f"""
-                SELECT {col} FROM traffic.feature_stat
-                WHERE tenant_id = %(tenant)s
-                  AND ts BETWEEN now() - INTERVAL 30 DAY AND now() - INTERVAL 7 DAY
-                LIMIT 10000
-            """, {'tenant': tenant_id})
-            baseline_vals = np.array([b[0] for b in baseline if b[0] is not None])
-
-            if len(recent_vals) < 100 or len(baseline_vals) < 100:
-                continue
-
-            # Compute PSI (Population Stability Index)
-            bins = 20
-            hist_recent, _ = np.histogram(recent_vals, bins=bins, density=True)
-            hist_baseline, _ = np.histogram(baseline_vals, bins=bins, density=True)
-
-            # Add epsilon to avoid log(0)
-            eps = 1e-10
-            hist_recent = np.clip(hist_recent, eps, None)
-            hist_baseline = np.clip(hist_baseline, eps, None)
-
-            psi = np.sum((hist_recent - hist_baseline) * np.log(hist_recent / hist_baseline))
-
-            drift_report['psi_values'][col] = round(float(psi), 4)
-
-            if psi > 0.25:
-                drift_report['drifted_features'].append(col)
-                drift_report['has_drift'] = True
-
-        drift_report['f1_score'] = f1_score
-        drift_report['drifted_count'] = len(drift_report['drifted_features'])
-
-        print(json.dumps(drift_report, indent=2))
-
-        os.makedirs('/output', exist_ok=True)
-        with open('/output/drift_report.json', 'w') as f:
-            json.dump(drift_report, f, indent=2)
-        with open('/output/has_drift.txt', 'w') as f:
-            f.write('true' if drift_report['has_drift'] else 'false')
-        PYEOF
-      env:
-      - name: CLICKHOUSE_HOST
-        value: "clickhouse-1.middleware.svc"
-      - name: CLICKHOUSE_PORT
-        value: "9000"
-      - name: CLICKHOUSE_DB
-        value: "traffic"
-      - name: CLICKHOUSE_USER
-        valueFrom:
-          secretKeyRef:
-            name: clickhouse-secret
-            key: username
-      - name: CLICKHOUSE_PASSWORD
-        valueFrom:
-          secretKeyRef:
-            name: clickhouse-secret
-            key: password
-      - name: TENANT_ID
-        value: "{{workflow.parameters.tenant-id}}"
-      volumeMounts:
-      - name: output
-        mountPath: /output
-      resources:
-        requests:
-          memory: "1Gi"
-          cpu: "500m"
-        limits:
-          memory: "2Gi"
-          cpu: "1"
-    outputs:
-      parameters:
-      - name: has-drift
-        valueFrom:
-          path: /output/has_drift.txt
-      artifacts:
-      - name: drift-report
-        path: /output/drift_report.json
-        s3:
-          key: "mlops/{{workflow.name}}/drift/drift_report.json"
-    volumes:
-    - name: output
-      emptyDir: {}
-
-  # =============================================
-
-  # =============================================
-  # Step 4.5: Model Explainability (SHAP) — NEW
-  # =============================================
-  - name: explain-model-step
-    inputs:
-      artifacts:
-      - name: model
-        path: /model/model.json
-      - name: test-data
-        path: /data/test.parquet
-      - name: metadata
-        path: /data/metadata.json
-    container:
-      image: "{{workflow.parameters.trainer-image}}"
-      command: [python, /app/scripts/explain_model.py]
-      args: ["--model", "/model/model.json",
-             "--data", "/data/test.parquet",
-             "--metadata", "/data/metadata.json",
-             "--output", "/output/explain"]
-      volumeMounts:
-      - name: model
-        mountPath: /model
-      - name: data
-        mountPath: /data
-      - name: output
-        mountPath: /output
-      resources:
-        requests:
-          memory: "2Gi"
-          cpu: "1"
-        limits:
-          memory: "4Gi"
-          cpu: "2"
-    outputs:
-      artifacts:
-      - name: explain-report
-        path: /output/explain
-        archive:
-          none: {}
-        s3:
-          key: "mlops/{{workflow.name}}/explain"
-    volumes:
-    - name: model
-      emptyDir: {}
-    - name: data
-      emptyDir: {}
-    - name: output
-      emptyDir: {}
-
-  # Step 5: Model Registration
-  # =============================================
-  - name: register-model-step
-    inputs:
-      artifacts:
-      - name: model-dir
-        path: /model
-      parameters:
-      - name: metrics
-      - name: f1-score
-    container:
-      image: "{{workflow.parameters.trainer-image}}"
-      command: [python, /app/scripts/register_model.py]
-      args: ["--metrics", "{{inputs.parameters.metrics}}",
-             "--model-id", "{{workflow.parameters.model-id}}",
-             "--model-type", "{{workflow.parameters.model-type}}"]
+        set -eu
+        python /app/scripts/register_model.py \
+          --metrics "$(cat /metrics/metrics.json)" \
+          --model-id "{{workflow.parameters.model-id}}" \
+          --model-type "{{workflow.parameters.model-type}}"
       env:
       - name: MODEL_DIR
-        value: "/model"
+        value: /model
       - name: FEATURE_SET_ID
         value: "{{workflow.parameters.feature-set-id}}"
       - name: TENANT_ID
         value: "{{workflow.parameters.tenant-id}}"
       - name: MODEL_VERSION
         value: "{{workflow.name}}"
+      - name: AUTO_ACTIVATE
+        value: "{{workflow.parameters.auto-activate}}"
       - name: MINIO_ENDPOINT
-        value: "minio.minio.svc:9000"
+        value: minio.minio.svc:9000
       - name: MINIO_ACCESS_KEY
         valueFrom:
           secretKeyRef:
-            name: minio-secret
-            key: accesskey
+            name: traffic-credentials
+            key: MINIO_ACCESS_KEY
       - name: MINIO_SECRET_KEY
         valueFrom:
           secretKeyRef:
-            name: minio-secret
-            key: secretkey
+            name: traffic-credentials
+            key: MINIO_SECRET_KEY
       - name: MINIO_BUCKET
-        value: "traffic-models"
+        value: traffic-models
       - name: MODEL_REGISTRY_URL
-        value: "http://rule-manager.traffic-analysis.svc:8080"
+        value: http://rule-manager.traffic-analysis.svc:8084
+      - name: API_TOKEN
+        valueFrom:
+          secretKeyRef:
+            name: mlops-api-token
+            key: token
+            optional: true
       - name: KAFKA_BOOTSTRAP_SERVERS
-        value: "kafka.middleware.svc:9092"
+        value: kafka-bootstrap.middleware.svc:9092
       - name: MODEL_UPDATE_TOPIC
-        value: "model-updates"
+        value: model-updates
       - name: NOTIFICATION_METHOD
-        value: "kafka"
-      volumeMounts:
-      - name: scripts
-        mountPath: /scripts
-      - name: model
-        mountPath: /model
-      resources:
-        requests:
-          memory: "1Gi"
-          cpu: "500m"
-        limits:
-          memory: "2Gi"
-          cpu: "1"
-    volumes:
-    - name: scripts
-      configMap:
-        name: mlops-scripts
-    - name: model
-      emptyDir: {}
-
-  # =============================================
-  # Step 6: Auto-Activate (new)
-  # =============================================
-  - name: auto-activate-step
-    inputs:
-      parameters:
-      - name: model-id
-      - name: f1-score
-    container:
-      image: curlimages/curl:latest
-      command: [sh, -c]
-      args:
-      - |
-        echo "Auto-activating model version {{workflow.name}}"
-        echo "F1 Score: {{inputs.parameters.f1-score}}"
-
-        # Call Go Model Registry API to activate this version
-        curl -X POST \
-          "http://rule-manager.traffic-analysis.svc:8080/api/v1/models/{{inputs.parameters.model-id}}/versions/{{workflow.name}}/activate" \
-          -H "Content-Type: application/json" \
-          -H "X-Tenant-ID: {{workflow.parameters.tenant-id}}" \
-          -H "X-User-ID: mlops-orchestrator" \
-          --max-time 30
-
-        echo ""
-        echo "Auto-activation request sent"
-      resources:
-        requests:
-          memory: "64Mi"
-          cpu: "100m"
-        limits:
-          memory: "128Mi"
-          cpu: "200m"
-
-  # =============================================
-  # Step 7: Notification
-  # =============================================
-  - name: notification-step
-    inputs:
-      parameters:
-      - name: trigger
-      - name: f1-score
-    container:
-      image: curlimages/curl:latest
-      command: [sh, -c]
-      args:
-      - |
-        echo "=========================================="
-        echo "MLOps Training Pipeline Completed"
-        echo "=========================================="
-        echo "Trigger: {{inputs.parameters.trigger}}"
-        echo "F1 Score: {{inputs.parameters.f1-score}}"
-        echo "Workflow: {{workflow.name}}"
-        echo "=========================================="
-        # Webhook/slack notification can be added here
-      resources:
-        requests:
-          memory: "64Mi"
-          cpu: "100m"
-        limits:
-          memory: "128Mi"
-          cpu: "200m"
+        value: none

@@ -1,0 +1,10 @@
+ARG BASE_IMAGE=traffic/mlops-trainer:mlops-r331-20260719
+FROM ${BASE_IMAGE}
+
+ARG SOURCE_REVISION=unknown
+ARG BUILD_ID=local
+LABEL org.opencontainers.image.revision=${SOURCE_REVISION} \
+      org.opencontainers.image.version=${BUILD_ID} \
+      org.opencontainers.image.title="MLOps Trainer"
+
+COPY scripts/extract_data.py /app/scripts/extract_data.py

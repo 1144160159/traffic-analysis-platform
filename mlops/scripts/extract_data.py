@@ -79,6 +79,12 @@ def extract_features_with_labels(client, feature_set_id, lookback_days, tenant_i
     tenant_escaped = escape_clickhouse_string(tenant_id)
     feature_set_escaped = escape_clickhouse_string(feature_set_id)
     lookback_days = int(lookback_days)
+    # The distributed feature table can contain hundreds of millions of rows.
+    # Sorting the entire lookback window before LIMIT caused ClickHouse to hit
+    # the cluster-wide 16 GiB memory ceiling. Training is order-independent, so
+    # cap an unsorted sample and constrain read parallelism instead.
+    max_extract_rows = int(os.getenv('MAX_EXTRACT_ROWS', '100000'))
+    max_extract_rows = max(1000, min(max_extract_rows, 1000000))
 
     query = f"""
         WITH labeled_alerts AS (
@@ -172,14 +178,15 @@ def extract_features_with_labels(client, feature_set_id, lookback_days, tenant_i
           AND fs.feature_set_id = '{feature_set_escaped}'
           AND fs.ts >= now() - INTERVAL {lookback_days} DAY
           AND asm.label IS NOT NULL
-        ORDER BY fs.ts DESC
-        LIMIT 1000000
+        LIMIT {max_extract_rows}
+        SETTINGS max_threads = 1, max_block_size = 2048
     """
     
     logger.info(f"Executing feature extraction query:")
     logger.info(f"  - Tenant: {tenant_id}")
     logger.info(f"  - Feature Set: {feature_set_id}")
     logger.info(f"  - Lookback: {lookback_days} days")
+    logger.info(f"  - Maximum Samples: {max_extract_rows}")
     
     try:
         df = client.query_dataframe(query)

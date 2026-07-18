@@ -15,14 +15,18 @@
 
 package com.traffic.flink.behavior.detector;
 
+import com.traffic.flink.behavior.config.BehaviorJobConfig;
 import com.traffic.flink.behavior.model.ModelUpdateEvent;
+import com.traffic.flink.behavior.model.ModelUpdateAppliedAck;
 import com.traffic.proto.traffic.v1.FeatureStat;
 
 import org.apache.flink.api.common.state.BroadcastState;
 import org.apache.flink.api.common.state.MapStateDescriptor;
 import org.apache.flink.api.common.state.ReadOnlyBroadcastState;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.co.BroadcastProcessFunction;
 import org.apache.flink.util.Collector;
+import org.apache.flink.util.OutputTag;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,97 +62,189 @@ public class ModelUpdateBroadcastHandler
                     ModelUpdateState.class   // Value: version + artifact info
             );
 
+    public static final MapStateDescriptor<String, Long> PROCESSED_EVENT_STATE =
+            new MapStateDescriptor<>("model-update-processed-events", String.class, Long.class);
+
+    public static final OutputTag<ModelUpdateAppliedAck> MODEL_UPDATE_ACK_TAG =
+            new OutputTag<ModelUpdateAppliedAck>("model-update-applied-acks") {};
+
+    private static final int MAX_PROCESSED_EVENTS = 2048;
+
+    private final BehaviorJobConfig registryConfig;
     private transient ModelRegistry taskManagerRegistry;
 
     public ModelUpdateBroadcastHandler() {
+        this.registryConfig = null;
     }
 
     public ModelUpdateBroadcastHandler(ModelRegistry registry) {
+        this.registryConfig = null;
         this.taskManagerRegistry = registry;
+    }
+
+    public ModelUpdateBroadcastHandler(BehaviorJobConfig registryConfig) {
+        this.registryConfig = registryConfig;
+    }
+
+    @Override
+    public void open(Configuration parameters) throws Exception {
+        super.open(parameters);
+        if (taskManagerRegistry == null) {
+            if (registryConfig == null) {
+                LOG.info("Model update handler opened without a registry; activation events will fail closed");
+                return;
+            }
+            // Function instances are serialized between the submitting client and
+            // TaskManagers. Construct the runtime registry here instead of trying
+            // to serialize native model/loader state from the client JVM.
+            taskManagerRegistry = new ModelRegistry(registryConfig);
+            LOG.info("TaskManager ModelRegistry initialized for model update broadcast subtask {}",
+                    getRuntimeContext().getIndexOfThisSubtask());
+        }
+    }
+
+    @Override
+    public void close() throws Exception {
+        if (taskManagerRegistry != null) {
+            taskManagerRegistry.close();
+            taskManagerRegistry = null;
+        }
+        super.close();
     }
 
     @Override
     public void processElement(FeatureStat value, ReadOnlyContext ctx, Collector<FeatureStat> out) throws Exception {
-        // 从 Broadcast State 获取当前活跃的模型版本
-        ReadOnlyBroadcastState<String, ModelUpdateState> state =
-                ctx.getBroadcastState(MODEL_UPDATE_STATE);
-
-        // 检查是否有模型更新需要加载
-        for (Map.Entry<String, ModelUpdateState> entry : state.immutableEntries()) {
-            String modelId = entry.getKey();
-            ModelUpdateState updateState = entry.getValue();
-            if (updateState != null && updateState.isPending()) {
-                // 触发模型热重载
-                if (taskManagerRegistry != null) {
-                    LOG.info("Triggering model reload: modelId={}, version={}, artifact={}",
-                            modelId, updateState.getVersion(), updateState.getArtifactUri());
-                    taskManagerRegistry.applyModelUpdate(
-                            modelId,
-                            updateState.getModelType(),
-                            updateState.getVersion(),
-                            updateState.getArtifactUri());
-                    updateState.setPending(false);
-                }
-            }
-        }
-
         out.collect(value);
     }
 
     @Override
     public void processBroadcastElement(ModelUpdateEvent event, Context ctx, Collector<FeatureStat> out) throws Exception {
-        LOG.info("Received model update broadcast: model={}, version={}, action={}",
-                event.getModelName(), event.getVersion(), event.getAction());
+        LOG.info("Received model update broadcast: eventId={}, tenant={}, modelId={}, model={}, version={}, action={}",
+                event.getEventId(), event.getTenantId(), event.getModelId(), event.getModelName(),
+                event.getVersion(), event.getAction());
 
         BroadcastState<String, ModelUpdateState> state =
                 ctx.getBroadcastState(MODEL_UPDATE_STATE);
+        BroadcastState<String, Long> processedEvents =
+                ctx.getBroadcastState(PROCESSED_EVENT_STATE);
+
+        String processedKey = processedEventKey(event);
+        if (event.getEventId() != null && !event.getEventId().isBlank()
+                && processedEvents.contains(processedKey)) {
+            LOG.info("Ignoring processed model update event replay: eventId={}, tenant={}, modelId={}",
+                    event.getEventId(), event.getTenantId(), event.getModelId());
+            return;
+        }
+
+        int subtaskIndex = getRuntimeContext().getIndexOfThisSubtask();
+        int parallelism = getRuntimeContext().getNumberOfParallelSubtasks();
+        String modelKey = modelStateKey(event);
 
         switch (event.getAction()) {
             case "activated":
             case "activate":
-                // 激活新模型版本
-                ModelUpdateState updateState = new ModelUpdateState(
-                        event.getModelType(),
-                        event.getVersion(),
-                        event.getArtifactUri(),
-                        event.getAction(),
-                        System.currentTimeMillis()
-                );
-                updateState.setPending(true);
-                state.put(event.getModelName(), updateState);
-                LOG.info("Model activation broadcast stored: model={}, version={}",
-                        event.getModelName(), event.getVersion());
-                ModelRegistry.applyGlobalModelUpdate(
-                        event.getModelName(),
-                        event.getModelType(),
-                        event.getVersion(),
-                        event.getArtifactUri());
-                if (taskManagerRegistry != null) {
-                    taskManagerRegistry.applyModelUpdate(
-                            event.getModelName(),
-                            event.getModelType(),
-                            event.getVersion(),
-                            event.getArtifactUri());
+            case "rollback-activated":
+                try {
+                    if (taskManagerRegistry == null) {
+                        throw new IllegalStateException("TaskManager ModelRegistry is unavailable");
+                    }
+                    ModelRegistry.ApplyReceipt receipt = taskManagerRegistry.applyModelUpdate(
+                            event.getTenantId(), event.getModelId(), event.getModelName(),
+                            event.getModelType(), event.getVersion(), event.getArtifactUri(),
+                            event.getArtifactSha256(), event.getThreshold(0.5f));
+                    ModelUpdateState updateState = new ModelUpdateState(
+                            event.getModelType(), event.getVersion(), event.getArtifactUri(),
+                            event.getAction(), event.getEventId(), System.currentTimeMillis());
                     updateState.setPending(false);
+                    state.put(modelKey, updateState);
+                    recordProcessedEvent(processedEvents, processedKey);
+                    ctx.output(MODEL_UPDATE_ACK_TAG, ModelUpdateAppliedAck.applied(
+                            event,
+                            new ModelUpdateAppliedAck.ModelRegistryReceipt(
+                                    receipt.getArtifactSha256(), receipt.getWarmupScore()),
+                            subtaskIndex, parallelism));
+                    LOG.info("Model artifact applied and acknowledged: eventId={}, tenant={}, modelId={}, "
+                                    + "version={}, sha256={}, warmupScore={}, subtask={}/{}",
+                            event.getEventId(), event.getTenantId(), event.getModelId(), event.getVersion(),
+                            receipt.getArtifactSha256(), receipt.getWarmupScore(),
+                            subtaskIndex, parallelism);
+                } catch (Exception applyError) {
+                    ctx.output(MODEL_UPDATE_ACK_TAG, ModelUpdateAppliedAck.failed(
+                            event, applyError.getMessage(), subtaskIndex, parallelism));
+                    LOG.error("Model artifact application failed: eventId={}, tenant={}, modelId={}, version={}",
+                            event.getEventId(), event.getTenantId(), event.getModelId(),
+                            event.getVersion(), applyError);
                 }
                 break;
 
             case "deprecated":
             case "deprecate":
                 // 移除弃用的模型版本
-                state.remove(event.getModelName());
-                LOG.info("Model deprecation broadcast: removed model={}", event.getModelName());
+                state.remove(modelKey);
+                if (taskManagerRegistry != null) {
+                    taskManagerRegistry.removeTenantModel(event.getTenantId(), event.getModelId());
+                }
+                recordProcessedEvent(processedEvents, processedKey);
+                LOG.info("Model deprecation broadcast: tenant={}, modelId={}",
+                        event.getTenantId(), event.getModelId());
                 break;
 
             case "registered":
                 // 新版本注册但不自动激活
                 LOG.info("Model registration broadcast received: model={}, version={} (pending activation)",
                         event.getModelName(), event.getVersion());
+                recordProcessedEvent(processedEvents, processedKey);
                 break;
 
             default:
                 LOG.warn("Unknown model update action: {}", event.getAction());
         }
+    }
+
+    private static String modelStateKey(ModelUpdateEvent event) {
+        return safe(event.getTenantId()) + '\u001f' + safe(event.getModelId());
+    }
+
+    private static String processedEventKey(ModelUpdateEvent event) {
+        return modelStateKey(event) + '\u001f' + safe(event.getEventId());
+    }
+
+    private static String safe(String value) {
+        return value == null ? "" : value;
+    }
+
+    private static void recordProcessedEvent(BroadcastState<String, Long> state, String key) throws Exception {
+        if (key.endsWith("\u001f")) {
+            return;
+        }
+        state.put(key, System.currentTimeMillis());
+        int size = 0;
+        String oldestKey = null;
+        long oldestTimestamp = Long.MAX_VALUE;
+        for (Map.Entry<String, Long> entry : state.entries()) {
+            size++;
+            long timestamp = entry.getValue() == null ? 0L : entry.getValue();
+            if (timestamp < oldestTimestamp) {
+                oldestTimestamp = timestamp;
+                oldestKey = entry.getKey();
+            }
+        }
+        if (size > MAX_PROCESSED_EVENTS && oldestKey != null && !oldestKey.equals(key)) {
+            state.remove(oldestKey);
+        }
+    }
+
+    static boolean isActivationAction(String action) {
+        return "activated".equals(action)
+                || "activate".equals(action)
+                || "rollback-activated".equals(action);
+    }
+
+    static boolean isDuplicateEvent(ModelUpdateState currentState, ModelUpdateEvent event) {
+        return currentState != null
+                && event.getEventId() != null
+                && !event.getEventId().isBlank()
+                && event.getEventId().equals(currentState.getEventId());
     }
 
     /**
@@ -173,17 +269,19 @@ public class ModelUpdateBroadcastHandler
         private String version;
         private String artifactUri;
         private String action;
+        private String eventId;
         private long timestamp;
         private boolean pending;
 
         public ModelUpdateState() {}
 
         public ModelUpdateState(String modelType, String version, String artifactUri,
-                               String action, long timestamp) {
+                               String action, String eventId, long timestamp) {
             this.modelType = modelType;
             this.version = version;
             this.artifactUri = artifactUri;
             this.action = action;
+            this.eventId = eventId;
             this.timestamp = timestamp;
             this.pending = true;
         }
@@ -199,6 +297,9 @@ public class ModelUpdateBroadcastHandler
 
         public String getAction() { return action; }
         public void setAction(String action) { this.action = action; }
+
+        public String getEventId() { return eventId; }
+        public void setEventId(String eventId) { this.eventId = eventId; }
 
         public long getTimestamp() { return timestamp; }
         public void setTimestamp(long timestamp) { this.timestamp = timestamp; }

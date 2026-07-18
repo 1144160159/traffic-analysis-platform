@@ -10,8 +10,10 @@ import com.traffic.flink.behavior.detector.ModelRegistry;
 import com.traffic.flink.behavior.detector.ModelUpdateBroadcastHandler;
 import com.traffic.flink.behavior.detector.SyncBehaviorDetector;
 import com.traffic.flink.behavior.model.ModelUpdateEvent;
+import com.traffic.flink.behavior.model.ModelUpdateAppliedAck;
 import com.traffic.flink.behavior.sink.BehaviorClickHouseSinkFactory;
 import com.traffic.flink.behavior.sink.BehaviorKafkaSinkFactory;
+import com.traffic.flink.behavior.sink.ModelUpdateAckKafkaSinkFactory;
 import com.traffic.flink.common.ProtoDeserializer;
 import com.traffic.proto.traffic.v1.DetectionBehavior;
 import com.traffic.proto.traffic.v1.FeatureStat;
@@ -154,11 +156,20 @@ public class BehaviorDetectionJob {
                 .uid("kafka-model-update-source")
                 .name("Kafka Source (model-updates)");
 
-        DataStream<FeatureStat> featuresWithModelUpdates = validFeatureStream
-                .connect(modelUpdateStream.broadcast(ModelUpdateBroadcastHandler.MODEL_UPDATE_STATE))
-                .process(new ModelUpdateBroadcastHandler(modelRegistry))
+        SingleOutputStreamOperator<FeatureStat> featuresWithModelUpdates = validFeatureStream
+                .connect(modelUpdateStream.broadcast(
+                        ModelUpdateBroadcastHandler.MODEL_UPDATE_STATE,
+                        ModelUpdateBroadcastHandler.PROCESSED_EVENT_STATE))
+                .process(new ModelUpdateBroadcastHandler(config))
                 .uid("model-update-broadcast")
                 .name("Model Update Broadcast");
+
+        DataStream<ModelUpdateAppliedAck> modelAppliedAcks =
+                featuresWithModelUpdates.getSideOutput(ModelUpdateBroadcastHandler.MODEL_UPDATE_ACK_TAG);
+        modelAppliedAcks.sinkTo(ModelUpdateAckKafkaSinkFactory.createSink(
+                        config.getKafkaBrokers(), config.getModelAppliedTopic()))
+                .uid("model-update-applied-ack-sink")
+                .name("Kafka Sink (model-update-applied.v1)");
 
         // 行为检测（使用异步 I/O 进行模型推理）
         SingleOutputStreamOperator<DetectionBehavior> detectionStream;
@@ -332,6 +343,7 @@ public class BehaviorDetectionJob {
         LOG.info("  Input Topic: {}", config.getInputTopic());
         LOG.info("  Output Topic: {}", config.getOutputTopic());
         LOG.info("  Model Update Topic: {}", config.getModelUpdateTopic());
+        LOG.info("  Model Applied Topic: {}", config.getModelAppliedTopic());
         LOG.info("  Consumer Group: {}", config.getConsumerGroupId());
         LOG.info("  Parallelism: {}", config.getParallelism());
         LOG.info("  Max Parallelism: {}", config.getMaxParallelism());

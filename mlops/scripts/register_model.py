@@ -8,6 +8,7 @@ import os
 import sys
 import json
 import argparse
+import hashlib
 import requests
 from datetime import datetime
 from minio import Minio
@@ -32,7 +33,14 @@ def auth_headers():
     return headers
 
 
-def upload_to_minio(model_path, model_type, version):
+def artifact_prefix(tenant_id, model_id, version, artifact_sha256):
+    """Build a tenant/model scoped, content-addressed object prefix."""
+    segments = [tenant_id, model_id, version, artifact_sha256]
+    encoded = [quote(str(segment), safe='') for segment in segments]
+    return f"tenants/{encoded[0]}/models/{encoded[1]}/versions/{encoded[2]}/{encoded[3]}"
+
+
+def upload_to_minio(model_path, model_type, tenant_id, model_id, version, artifact_sha256):
     """上传模型到 MinIO"""
     
     # MinIO 配置
@@ -65,7 +73,7 @@ def upload_to_minio(model_path, model_type, version):
     else:
         file_ext = 'model'
     
-    object_name = f"models/{version}/model.{file_ext}"
+    object_name = f"{artifact_prefix(tenant_id, model_id, version, artifact_sha256)}/model.{file_ext}"
     
     # 上传模型
     logger.info(f"Uploading model to s3://{bucket_name}/{object_name}")
@@ -85,7 +93,7 @@ def upload_to_minio(model_path, model_type, version):
     return s3_uri
 
 
-def upload_artifacts(model_dir, version):
+def upload_artifacts(model_dir, tenant_id, model_id, version, artifact_sha256):
     """上传模型相关的所有文件"""
     
     endpoint = os.getenv('MINIO_ENDPOINT', 'minio:9000')
@@ -104,21 +112,21 @@ def upload_artifacts(model_dir, version):
     # 上传特征列表
     feature_cols_path = os.path.join(model_dir, 'feature_columns.json')
     if os.path.exists(feature_cols_path):
-        object_name = f"models/{version}/feature_columns.json"
+        object_name = f"{artifact_prefix(tenant_id, model_id, version, artifact_sha256)}/feature_columns.json"
         client.fput_object(bucket_name, object_name, feature_cols_path)
         logger.info(f"Uploaded feature_columns.json")
     
     # 上传特征重要性
     importance_path = os.path.join(model_dir, 'feature_importance.json')
     if os.path.exists(importance_path):
-        object_name = f"models/{version}/feature_importance.json"
+        object_name = f"{artifact_prefix(tenant_id, model_id, version, artifact_sha256)}/feature_importance.json"
         client.fput_object(bucket_name, object_name, importance_path)
         logger.info(f"Uploaded feature_importance.json")
     
     # 上传训练指标
     train_metrics_path = os.path.join(model_dir, 'train_metrics.json')
     if os.path.exists(train_metrics_path):
-        object_name = f"models/{version}/train_metrics.json"
+        object_name = f"{artifact_prefix(tenant_id, model_id, version, artifact_sha256)}/train_metrics.json"
         client.fput_object(bucket_name, object_name, train_metrics_path)
         logger.info(f"Uploaded train_metrics.json")
 
@@ -304,11 +312,17 @@ def main():
         
         if not os.path.exists(model_path):
             raise FileNotFoundError(f"Model file not found: {model_path}")
+
+        artifact_sha256 = hashlib.sha256()
+        with open(model_path, 'rb') as artifact_file:
+            for chunk in iter(lambda: artifact_file.read(1024 * 1024), b''):
+                artifact_sha256.update(chunk)
+        artifact_sha256 = artifact_sha256.hexdigest()
         
-        s3_uri = upload_to_minio(model_path, args.model_type, version)
+        s3_uri = upload_to_minio(model_path, args.model_type, tenant_id, args.model_id, version, artifact_sha256)
         
         # 2. 上传其他文件
-        upload_artifacts(model_dir, version)
+        upload_artifacts(model_dir, tenant_id, args.model_id, version, artifact_sha256)
         
         # 3. 构建模型元数据
         model_metadata = {
@@ -326,6 +340,8 @@ def main():
                 'auc_roc': metrics.get('auc_roc'),
                 'auc_pr': metrics.get('auc_pr'),
                 'accuracy': metrics.get('accuracy'),
+                'threshold': metrics.get('threshold', 0.5),
+                'artifact_sha256': artifact_sha256,
             },
             'status': 'registered',
             'created_at': datetime.now().isoformat(),

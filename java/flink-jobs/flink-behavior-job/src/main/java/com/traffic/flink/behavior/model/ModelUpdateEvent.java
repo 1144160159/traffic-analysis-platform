@@ -31,6 +31,15 @@ public class ModelUpdateEvent implements Serializable {
     @JsonProperty("model_id")
     private String modelId;
 
+    @JsonProperty("tenant_id")
+    private String tenantId;
+
+    @JsonProperty("event_id")
+    private String eventId;
+
+    @JsonProperty("schema_version")
+    private int schemaVersion;
+
     @JsonProperty("model_name")
     private String modelName;
 
@@ -89,6 +98,15 @@ public class ModelUpdateEvent implements Serializable {
     public String getModelId() { return modelId; }
     public void setModelId(String modelId) { this.modelId = modelId; }
 
+    public String getTenantId() { return tenantId; }
+    public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+
+    public String getEventId() { return eventId; }
+    public void setEventId(String eventId) { this.eventId = eventId; }
+
+    public int getSchemaVersion() { return schemaVersion; }
+    public void setSchemaVersion(int schemaVersion) { this.schemaVersion = schemaVersion; }
+
     public String getModelName() { return modelName; }
     public void setModelName(String modelName) { this.modelName = modelName; }
 
@@ -113,7 +131,9 @@ public class ModelUpdateEvent implements Serializable {
     // ==================== Helpers ====================
 
     public boolean isActivation() {
-        return "activated".equals(action) || "activate".equals(action);
+        return "activated".equals(action)
+                || "activate".equals(action)
+                || "rollback-activated".equals(action);
     }
 
     public boolean isDeprecation() {
@@ -130,9 +150,25 @@ public class ModelUpdateEvent implements Serializable {
         return 0.0f;
     }
 
+    public String getArtifactSha256() {
+        if (metrics == null) {
+            return "";
+        }
+        Object value = metrics.get("artifact_sha256");
+        return value == null ? "" : String.valueOf(value);
+    }
+
+    public float getThreshold(float defaultValue) {
+        if (metrics == null) {
+            return defaultValue;
+        }
+        Object value = metrics.get("threshold");
+        return value instanceof Number ? ((Number) value).floatValue() : defaultValue;
+    }
+
     @Override
     public String toString() {
-        return String.format("ModelUpdateEvent{model=%s, version=%s, action=%s, artifact=%s}",
-                modelName, version, action, artifactUri);
+        return String.format("ModelUpdateEvent{eventId=%s, model=%s, version=%s, action=%s, artifact=%s}",
+                eventId, modelName, version, action, artifactUri);
     }
 }

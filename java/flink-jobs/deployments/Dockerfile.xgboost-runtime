@@ -1,0 +1,12 @@
+FROM docker.io/library/flink@sha256:f0e9ffd07f3d43291dfaf7e0609eb2871462193275d452affbe5fac091017ae3
+
+USER root
+
+# XGBoost4J's bundled native library links against the GNU OpenMP runtime.
+# Keep this dependency in the TaskManager image so model activation cannot
+# depend on mutable, per-pod package installation.
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+USER flink

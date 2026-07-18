@@ -53,7 +53,8 @@ public class SyncBehaviorDetector implements FlatMapFunction<FeatureStat, Detect
 
 	private List<ModelInferenceResult> runAllModels(FeatureStat feature) {
 		List<ModelInferenceResult> results = new ArrayList<>();
-		for (Map.Entry<String, BehaviorModel> entry : registry.getAllModels().entrySet()) {
+		String tenantId = feature.hasHeader() ? feature.getHeader().getTenantId() : "";
+		for (Map.Entry<String, BehaviorModel> entry : registry.getModelsForTenant(tenantId).entrySet()) {
 			String modelName = entry.getKey();
 			BehaviorModel model = entry.getValue();
 			try {
@@ -111,7 +112,8 @@ public class SyncBehaviorDetector implements FlatMapFunction<FeatureStat, Detect
 			headerBuilder.setFeatureSetId(inputHeader.getFeatureSetId());
 		}
 
-		String modelVersion = registry.getModelVersion(result.getModelName());
+		String tenantId = input.hasHeader() ? input.getHeader().getTenantId() : "";
+		String modelVersion = registry.getModelVersion(tenantId, result.getModelName());
 		if (modelVersion == null || modelVersion.isEmpty()) {
 			modelVersion = result.getModelVersion();
 		}
