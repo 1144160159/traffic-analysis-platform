@@ -508,6 +508,8 @@ impl Eviction {
                 ingest_ts: chrono::Utc::now().timestamp_millis(),
                 probe_id: self.config.probe_id.clone(),
                 feature_set_id: self.config.feature_set_id.clone(),
+                kafka_ts: 0,
+                flink_out_ts: 0,
             }),
             flow_id: uuid::Uuid::new_v4().to_string(),
             community_id: key.community_id().to_string(),
