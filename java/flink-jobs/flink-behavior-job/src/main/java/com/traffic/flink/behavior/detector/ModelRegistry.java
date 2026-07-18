@@ -11,6 +11,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -61,7 +64,16 @@ public class ModelRegistry implements Serializable, AutoCloseable {
      * Flink 会为 broadcast operator 和 detector operator 分别反序列化函数实例；
      * 使用 JVM 级版本表可让同一 TaskManager 内的检测函数立即看到广播热更新。
      */
-    private static final Map<String, String> activeModelVersions = new ConcurrentHashMap<>();
+    private static final Map<String, BehaviorModel> activeTenantModels = new ConcurrentHashMap<>();
+    private static final Map<String, String> activeTenantVersions = new ConcurrentHashMap<>();
+    private static final Map<String, String> activeTenantArtifactSha256 = new ConcurrentHashMap<>();
+    private static final Map<String, Object> modelSwapLocks = new ConcurrentHashMap<>();
+    private static final ScheduledExecutorService retiredModelCloser =
+            Executors.newSingleThreadScheduledExecutor(runnable -> {
+                Thread thread = new Thread(runnable, "retired-model-closer");
+                thread.setDaemon(true);
+                return thread;
+            });
 
     /**
      * 模型调用统计：模型名称 -> 调用次数
@@ -82,6 +94,7 @@ public class ModelRegistry implements Serializable, AutoCloseable {
      * 模型重加载调度器
      */
     private transient ScheduledExecutorService reloadScheduler;
+    private transient MinioModelLoader artifactLoader;
 
     /**
      * 初始化时间
@@ -216,6 +229,18 @@ public class ModelRegistry implements Serializable, AutoCloseable {
         return models;
     }
 
+    /** Built-in models plus only the calling tenant's dynamically activated models. */
+    public Map<String, BehaviorModel> getModelsForTenant(String tenantId) {
+        Map<String, BehaviorModel> scoped = new HashMap<>(models);
+        String prefix = scopePrefix(tenantId);
+        activeTenantModels.forEach((key, model) -> {
+            if (key.startsWith(prefix)) {
+                scoped.put(key.substring(prefix.length()), model);
+            }
+        });
+        return scoped;
+    }
+
     /**
      * 获取模型数量
      */
@@ -234,76 +259,151 @@ public class ModelRegistry implements Serializable, AutoCloseable {
      * 获取模型版本
      */
     public String getModelVersion(String name) {
-        String activeVersion = activeModelVersions.get(name);
-        if (activeVersion != null && !activeVersion.isEmpty()) {
-            return activeVersion;
-        }
         return modelVersions.get(name);
+    }
+
+    public String getModelVersion(String tenantId, String modelId) {
+        String active = activeTenantVersions.get(scopeKey(tenantId, modelId));
+        return active == null || active.isBlank() ? getModelVersion(modelId) : active;
     }
 
     /**
      * 应用 JVM 级模型热更新，供 broadcast operator 与 detector operator 共享。
      */
-    public static void applyGlobalModelUpdate(String modelName, String modelType, String version, String artifactUri) {
-        if (modelName == null || modelName.isEmpty()) {
-            LOG.warn("Ignoring global model update with empty model name: version={}, artifact={}", version, artifactUri);
-            return;
-        }
-        if (version == null || version.isEmpty()) {
-            LOG.warn("Ignoring global model update for {} with empty version", modelName);
-            return;
+    /**
+     * Downloads, verifies, initializes and warms a real inference model before
+     * atomically exposing it to detector operators in the same TaskManager JVM.
+     */
+    public ApplyReceipt applyModelUpdate(String tenantId, String modelId, String modelName,
+                                         String modelType, String version, String artifactUri,
+                                         String expectedSha256, float threshold) throws Exception {
+        requireValue(tenantId, "tenant_id");
+        requireValue(modelId, "model_id");
+        requireValue(version, "version");
+        requireValue(artifactUri, "artifact_uri");
+        if (!"xgboost".equalsIgnoreCase(modelType)) {
+            throw new IllegalArgumentException("Unsupported production model_type: " + modelType);
         }
 
-        String previousVersion = activeModelVersions.put(modelName, version);
-        LOG.info("Applied hot model update: model={}, type={}, version {} -> {}, artifact={}",
-                modelName, modelType, previousVersion, version, artifactUri);
+        String scopedKey = scopeKey(tenantId, modelId);
+        Object lock = modelSwapLocks.computeIfAbsent(scopedKey, ignored -> new Object());
+        synchronized (lock) {
+            String currentVersion = activeTenantVersions.get(scopedKey);
+            String currentSha = activeTenantArtifactSha256.get(scopedKey);
+            if (version.equals(currentVersion)
+                    && expectedSha256 != null && !expectedSha256.isBlank()
+                    && expectedSha256.equalsIgnoreCase(currentSha)) {
+                BehaviorModel current = activeTenantModels.get(scopedKey);
+                float score = current instanceof XGBoostModelWrapper
+                        ? ((XGBoostModelWrapper) current).getWarmupScore() : Float.NaN;
+                return new ApplyReceipt(currentVersion, currentSha, score, false);
+            }
+
+            MinioModelLoader loader = artifactLoader();
+            Path localArtifact = loader.downloadModel(artifactUri);
+            String actualSha256 = loader.verifySha256(localArtifact, expectedSha256);
+            String[] columns = new com.fasterxml.jackson.databind.ObjectMapper().readValue(
+                    loader.getFeatureColumnsPath(localArtifact).toFile(), String[].class);
+            XGBoostModelWrapper candidate = new XGBoostModelWrapper(
+                    modelId, version, artifactUri, localArtifact, List.of(columns), threshold);
+            candidate.initialize();
+
+            BehaviorModel previous = activeTenantModels.put(scopedKey, candidate);
+            String previousVersion = activeTenantVersions.put(scopedKey, version);
+            activeTenantArtifactSha256.put(scopedKey, actualSha256);
+            modelInvocations.computeIfAbsent(modelId, ignored -> new AtomicLong());
+            modelErrors.computeIfAbsent(modelId, ignored -> new AtomicLong());
+            if (previous != null && previous != candidate) {
+                // Readers can hold a snapshot reference while the map is swapped.
+                // Close after a grace period longer than the configured inference
+                // timeout so no in-flight inference sees a disposed native booster.
+                retiredModelCloser.schedule(() -> {
+                    try {
+                        previous.close();
+                    } catch (Exception closeError) {
+                        LOG.warn("Retired model close failed: {}", closeError.getMessage());
+                    }
+                }, 30, TimeUnit.SECONDS);
+            }
+            LOG.info("Applied real model artifact: tenant={}, modelId={}, modelName={}, type={}, "
+                            + "version {} -> {}, sha256={}, warmupScore={}",
+                    tenantId, modelId, modelName, modelType, previousVersion, version,
+                    actualSha256, candidate.getWarmupScore());
+            return new ApplyReceipt(previousVersion, actualSha256, candidate.getWarmupScore(), true);
+        }
     }
 
-    /**
-     * 应用来自 model-updates topic 的模型热更新事件。
-     *
-     * 当前内置行为模型以规则/统计模型为主，外部 artifact 由注册中心追踪；
-     * 这里将活跃版本写入运行时 registry，保证所有 TaskManager 对新版本可见。
-     */
-    public void applyModelUpdate(String modelName, String modelType, String version, String artifactUri) {
-        if (modelName == null || modelName.isEmpty()) {
-            LOG.warn("Ignoring model update with empty model name: version={}, artifact={}", version, artifactUri);
-            return;
+    public void removeTenantModel(String tenantId, String modelId) {
+        String key = scopeKey(tenantId, modelId);
+        BehaviorModel removed = activeTenantModels.remove(key);
+        activeTenantVersions.remove(key);
+        activeTenantArtifactSha256.remove(key);
+        if (removed != null) {
+            retiredModelCloser.schedule(() -> {
+                try {
+                    removed.close();
+                } catch (Exception e) {
+                    LOG.warn("Failed to close deprecated model {}: {}", key, e.getMessage());
+                }
+            }, 30, TimeUnit.SECONDS);
         }
-        if (version == null || version.isEmpty()) {
-            LOG.warn("Ignoring model update for {} with empty version", modelName);
-            return;
+    }
+
+    private MinioModelLoader artifactLoader() {
+        if (artifactLoader == null) {
+            artifactLoader = new MinioModelLoader(config.getModelPath(), config.getModelCacheSize());
+            artifactLoader.initialize();
+        }
+        return artifactLoader;
+    }
+
+    private static void requireValue(String value, String name) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(name + " is required");
+        }
+    }
+
+    private static String scopePrefix(String tenantId) {
+        return (tenantId == null ? "" : tenantId) + '\u001f';
+    }
+
+    private static String scopeKey(String tenantId, String modelId) {
+        return scopePrefix(tenantId) + (modelId == null ? "" : modelId);
+    }
+
+    public static class ApplyReceipt implements Serializable {
+        private static final long serialVersionUID = 1L;
+        private final String previousVersion;
+        private final String artifactSha256;
+        private final float warmupScore;
+        private final boolean switched;
+
+        public ApplyReceipt(String previousVersion, String artifactSha256,
+                            float warmupScore, boolean switched) {
+            this.previousVersion = previousVersion;
+            this.artifactSha256 = artifactSha256;
+            this.warmupScore = warmupScore;
+            this.switched = switched;
         }
 
-        String previousVersion = modelVersions.put(modelName, version);
-        activeModelVersions.put(modelName, version);
-        if (models.containsKey(modelName)) {
-            LOG.info("Applied hot model update: model={}, type={}, version {} -> {}, artifact={}",
-                    modelName, modelType, previousVersion, version, artifactUri);
-        } else {
-            LOG.warn("Applied version marker for unknown model: model={}, type={}, version={}, artifact={}",
-                    modelName, modelType, version, artifactUri);
-        }
+        public String getPreviousVersion() { return previousVersion; }
+        public String getArtifactSha256() { return artifactSha256; }
+        public float getWarmupScore() { return warmupScore; }
+        public boolean isSwitched() { return switched; }
     }
 
     /**
      * 记录模型调用
      */
     public void recordInvocation(String modelName) {
-        AtomicLong counter = modelInvocations.get(modelName);
-        if (counter != null) {
-            counter.incrementAndGet();
-        }
+        modelInvocations.computeIfAbsent(modelName, ignored -> new AtomicLong()).incrementAndGet();
     }
 
     /**
      * 记录模型错误
      */
     public void recordError(String modelName) {
-        AtomicLong counter = modelErrors.get(modelName);
-        if (counter != null) {
-            counter.incrementAndGet();
-        }
+        modelErrors.computeIfAbsent(modelName, ignored -> new AtomicLong()).incrementAndGet();
     }
 
     /**
@@ -471,6 +571,9 @@ public class ModelRegistry implements Serializable, AutoCloseable {
         }
 
         models.clear();
+        if (artifactLoader != null) {
+            artifactLoader.close();
+        }
         LOG.info("Model registry closed");
     }
 

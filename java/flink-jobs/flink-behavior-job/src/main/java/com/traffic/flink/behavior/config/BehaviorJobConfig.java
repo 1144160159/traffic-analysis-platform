@@ -47,6 +47,7 @@ public class BehaviorJobConfig implements Serializable {
     private final String inputTopic;
     private final String outputTopic;
     private final String modelUpdateTopic;
+    private final String modelAppliedTopic;
     private final String consumerGroupId;
 
     // ==================== ClickHouse 配置 ====================
@@ -116,6 +117,7 @@ public class BehaviorJobConfig implements Serializable {
         this.inputTopic = builder.inputTopic;
         this.outputTopic = builder.outputTopic;
         this.modelUpdateTopic = builder.modelUpdateTopic;
+        this.modelAppliedTopic = builder.modelAppliedTopic;
         this.consumerGroupId = builder.consumerGroupId;
         this.clickhouseUrl = builder.clickhouseUrl;
         this.clickhouseDatabase = builder.clickhouseDatabase;
@@ -185,6 +187,8 @@ public class BehaviorJobConfig implements Serializable {
                         getEnv("KAFKA_MODEL_UPDATE_TOPIC",
                                 getEnv("MODEL_UPDATE_TOPIC",
                                         getEnv("KAFKA_MODEL_TOPIC", "model-updates")))))
+                .modelAppliedTopic(getConfig(params, fileProps, "kafka.model.applied.topic",
+                        getEnv("KAFKA_MODEL_APPLIED_TOPIC", "model-update-applied.v1")))
                 .consumerGroupId(getConfig(params, fileProps, "kafka.group.id", 
                         getEnv("KAFKA_GROUP_ID", "flink-behavior-job")))
                 
@@ -363,6 +367,7 @@ public class BehaviorJobConfig implements Serializable {
     public String getInputTopic() { return inputTopic; }
     public String getOutputTopic() { return outputTopic; }
     public String getModelUpdateTopic() { return modelUpdateTopic; }
+    public String getModelAppliedTopic() { return modelAppliedTopic; }
     public String getConsumerGroupId() { return consumerGroupId; }
     public String getClickhouseUrl() { return clickhouseUrl; }
     public String getClickhouseDatabase() { return clickhouseDatabase; }
@@ -458,6 +463,7 @@ public class BehaviorJobConfig implements Serializable {
         private String inputTopic = "feature.stat.v1";
         private String outputTopic = "detections.behavior.v1";
         private String modelUpdateTopic = "model-updates";
+        private String modelAppliedTopic = "model-update-applied.v1";
         private String consumerGroupId = "flink-behavior-job";
         private String clickhouseUrl = "clickhouse-1.middleware.svc:8123,clickhouse-2.middleware.svc:8123";
         private String clickhouseDatabase = "traffic";
@@ -511,6 +517,7 @@ public class BehaviorJobConfig implements Serializable {
         public Builder inputTopic(String val) { inputTopic = val; return this; }
         public Builder outputTopic(String val) { outputTopic = val; return this; }
         public Builder modelUpdateTopic(String val) { modelUpdateTopic = val; return this; }
+        public Builder modelAppliedTopic(String val) { modelAppliedTopic = val; return this; }
         public Builder consumerGroupId(String val) { consumerGroupId = val; return this; }
         public Builder clickhouseUrl(String val) { clickhouseUrl = val; return this; }
         public Builder clickhouseDatabase(String val) { clickhouseDatabase = val; return this; }

@@ -156,7 +156,8 @@ public class BehaviorDetectorFunction extends RichAsyncFunction<FeatureStat, Det
      */
     private List<ModelInferenceResult> runAllModels(FeatureStat feature) {
         List<ModelInferenceResult> results = new ArrayList<>();
-        Map<String, BehaviorModel> models = modelRegistry.getAllModels();
+        String tenantId = feature.hasHeader() ? feature.getHeader().getTenantId() : "";
+        Map<String, BehaviorModel> models = modelRegistry.getModelsForTenant(tenantId);
 
         for (Map.Entry<String, BehaviorModel> entry : models.entrySet()) {
             String modelName = entry.getKey();
@@ -231,7 +232,8 @@ public class BehaviorDetectorFunction extends RichAsyncFunction<FeatureStat, Det
         }
 
         // 构建 DetectionBehavior
-        String modelVersion = modelRegistry.getModelVersion(result.getModelName());
+        String tenantId = input.hasHeader() ? input.getHeader().getTenantId() : "";
+        String modelVersion = modelRegistry.getModelVersion(tenantId, result.getModelName());
         if (modelVersion == null || modelVersion.isEmpty()) {
             modelVersion = result.getModelVersion();
         }
