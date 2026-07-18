@@ -24,4 +24,9 @@ describe('route access', () => {
     expect(analystGroups.map((group) => group.id)).toContain('detection-ops');
     expect(analystGroups.map((group) => group.id)).not.toContain('audit-config');
   });
+
+  it('requires the asset read scope independently from graph access', () => {
+    expect(hasRouteAccess(findRouteById('assets')!, { username: 'graph-reader', permissions: ['graph:read'] })).toBe(false);
+    expect(hasRouteAccess(findRouteById('assets')!, { username: 'asset-reader', permissions: ['asset:read'] })).toBe(true);
+  });
 });

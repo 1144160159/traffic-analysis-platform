@@ -74,6 +74,7 @@ describe('pageSnapshotAdapters', () => {
             probe_id: 'PROBE-DC-01',
             hostname: 'probe-dc-01',
             ip_address: '10.12.0.11',
+            location: '数据中心机房 A',
             status: 'online',
             health_score: 100,
             cpu_usage: 28.7,
@@ -81,6 +82,11 @@ describe('pageSnapshotAdapters', () => {
             drop_rate: 0.0002,
             bandwidth_mbps: 18600,
             capture_mode: 'hybrid_l2_l3',
+            interfaces: ['eth2', 'eth3'],
+            parse_rate: 99.21,
+            disk_usage: 56.1,
+            archive_path: 's3://pcap-archive/probe-dc-01/',
+            mtls_enabled: true,
             config_version: 'v3.4.7',
             last_heartbeat: 1792886700000,
           },
@@ -88,6 +94,7 @@ describe('pageSnapshotAdapters', () => {
             probe_id: 'PROBE-SPORT-01',
             hostname: 'probe-sport-01',
             ip_address: '10.12.8.51',
+            location: '体育馆',
             status: 'degraded',
             health_score: 60,
             cpu_usage: 72.6,
@@ -95,6 +102,7 @@ describe('pageSnapshotAdapters', () => {
             drop_rate: 0.0112,
             bandwidth_mbps: 3800,
             capture_mode: 'l2',
+            interfaces: ['eth2', 'eth3'],
             config_version: 'v3.4.5',
             last_heartbeat: 1792886699000,
           },
@@ -102,6 +110,7 @@ describe('pageSnapshotAdapters', () => {
             probe_id: 'PROBE-DORM-01',
             hostname: 'probe-dorm-01',
             ip_address: '10.12.9.22',
+            location: '宿舍区',
             status: 'offline',
             health_score: 0,
             cpu_usage: 0,
@@ -119,7 +128,8 @@ describe('pageSnapshotAdapters', () => {
     );
 
     expect(snapshot?.metrics.find((item) => item.label === '探针总数')?.value).toBe('25 台');
-    expect(snapshot?.metrics.find((item) => item.label === '在线探针')?.value).toBe('1 在线');
+    expect(snapshot?.metrics.find((item) => item.label === '在线探针')?.value).toBe('2 在线');
+    expect(snapshot?.metrics.find((item) => item.label === '采集网卡')?.value).toBe('4 张');
     expect(snapshot?.metrics.find((item) => item.label === '告警探针')?.value).toBe('1 台');
     expect(snapshot?.metrics.find((item) => item.label === '离线探针')?.value).toBe('1 台');
     expect(snapshot?.rows[0]['探针 ID']).toBe('PROBE-DC-01');
@@ -127,6 +137,8 @@ describe('pageSnapshotAdapters', () => {
     expect(snapshot?.rows[0]['状态']).toBe('在线');
     expect(snapshot?.rows[0]['采集模式']).toBe('混合 (L2+L3)');
     expect(snapshot?.rows[0]['采集带宽']).toBe('18.6 Gbps');
+    expect(snapshot?.rows[0]['采集网卡']).toBe('eth2, eth3');
+    expect(snapshot?.rows[0]['归档路径']).toBe('s3://pcap-archive/probe-dc-01/');
     expect(snapshot?.rows[1]['状态']).toBe('告警');
     expect(snapshot?.evidence.map((item) => item.label)).toContain('Probes API');
     expect(snapshot?.evidence.map((item) => item.label)).toContain('mTLS');
@@ -270,17 +282,44 @@ describe('pageSnapshotAdapters', () => {
             ip_address: '10.12.1.33',
             mac_address: '00:11:22:33:44:55',
             hostname: 'SRV-001',
+            vendor: 'Huawei',
             os_type: 'Linux',
             department: '数据中心',
             criticality: 91,
             open_ports: 8,
             risk_level: 'high',
+            status: 'inactive',
             last_seen: '2026-06-25T09:40:00Z',
+            metadata: {
+              device_role: '核心交换',
+              network_interfaces: [{ name: 'GE0/1', status: 'up' }],
+              business_domain: '教学教务',
+              system_level: '核心',
+              key_services: [{ name: '教务 API' }],
+              dependency_health: [{ type: '服务器', total: 12 }],
+              sla_current: '99.2%',
+              suspected_type: '临时主机',
+              confidence: 72,
+              ticket_status: '待确认',
+            },
           },
         ],
         pagination: { total: 1 },
       },
       [
+        {
+          data: {
+            total: 1,
+            active: 0,
+            inactive: 1,
+            unknown: 0,
+            high_criticality: 1,
+            unowned: 1,
+            open_services: 8,
+            network_interfaces: 0,
+            context_records: 8,
+          },
+        },
         {
           data: [
             {
@@ -304,12 +343,27 @@ describe('pageSnapshotAdapters', () => {
       ],
     );
 
-    expect(snapshot?.metrics.find((item) => item.label === '漂移资产')?.value).toBe('1 个');
-    expect(snapshot?.metrics.find((item) => item.label === '暴露服务数')?.value).toBe('8 个');
+    expect(snapshot?.metrics.find((item) => item.label === '分类资产总数')?.value).toBe('1 个');
+    expect(snapshot?.metrics.find((item) => item.label === '活跃资产')?.value).toBe('0 个');
+    expect(snapshot?.metrics.find((item) => item.label === '暴露服务数')?.value).toBe('8 条');
+    expect(snapshot?.metrics.find((item) => item.label === '高风险资产')?.value).toBe('1 个');
+    expect(snapshot?.metrics.find((item) => item.label === '未归属资产')?.value).toBe('1 个');
+    expect(snapshot?.metrics.find((item) => item.label === '分类观测记录')?.value).toBe('8 条');
     expect(snapshot?.rows[0]['资产 ID']).toBe('ASSET-001');
     expect(snapshot?.rows[0]['IP/MAC']).toContain('10.12.1.33');
     expect(snapshot?.rows[0]['主机名']).toBe('SRV-001');
     expect(snapshot?.rows[0]['操作系统']).toBe('Linux');
+    expect(snapshot?.rows[0]['厂商']).toBe('Huawei');
+    expect(snapshot?.rows[0]['设备角色']).toBe('核心交换');
+    expect(snapshot?.rows[0]['接口数']).toBe(1);
+    expect(snapshot?.rows[0]['业务域']).toBe('教学教务');
+    expect(snapshot?.rows[0]['系统等级']).toBe('核心');
+    expect(snapshot?.rows[0]['关键服务']).toBe(1);
+    expect(snapshot?.rows[0]['依赖资产']).toBe(12);
+    expect(snapshot?.rows[0]['SLA']).toBe('99.2%');
+    expect(snapshot?.rows[0]['疑似类型']).toBe('临时主机');
+    expect(snapshot?.rows[0]['置信度']).toBe('72%');
+    expect(snapshot?.rows[0]['工单状态']).toBe('待确认');
     expect(snapshot?.rows[0].__discoveryRunId).toBe('run-snmp-lldp-001');
     expect(snapshot?.rows[0].__discoveryRunStatus).toBe('已完成');
     expect(snapshot?.rows[0].__topologyNeighborCount).toBe(1);
@@ -791,16 +845,15 @@ describe('pageSnapshotAdapters', () => {
     expect(snapshot?.rows[1]['证书详情']).toBe('缺失证书');
     expect(snapshot?.evidence.map((item) => item.label)).toContain('Tunnel Analytics API');
     expect(snapshot?.evidence.map((item) => item.label)).toContain('Exfiltration API');
-    expect(snapshot?.visuals?.encryptedTraffic?.protocolRows[0]).toEqual(['TLS', '50.1 Gbps', '64.0%', 'is-info']);
+    expect(snapshot?.visuals?.encryptedTraffic?.protocolRows[0]).toEqual(['TLS', '0.0 Gbps', '64.0%', 'is-info']);
     expect(snapshot?.visuals?.encryptedTraffic?.ja3Rows[0][0]).toBe('771,4865-4866');
-    expect(snapshot?.visuals?.encryptedTraffic?.tunnelCards[0][0]).toBe('DNS over HTTPS 会话');
-    expect(snapshot?.visuals?.encryptedTraffic?.tunnelRuleRows).toHaveLength(6);
-    expect(snapshot?.visuals?.encryptedTraffic?.tunnelRuleRows.map((row) => row[0])).toContain('DoH over HTTPS');
-    expect(snapshot?.visuals?.encryptedTraffic?.tunnelRuleRows.map((row) => row[0])).toContain('低熵心跳通信');
-    expect(snapshot?.visuals?.encryptedTraffic?.heartbeatBars).toHaveLength(48);
+    expect(snapshot?.visuals?.encryptedTraffic?.tunnelCards[0][0]).toBe('高频 DNS 候选');
+    expect(snapshot?.visuals?.encryptedTraffic?.tunnelRuleRows).toHaveLength(1);
+    expect(snapshot?.visuals?.encryptedTraffic?.tunnelRuleRows.map((row) => row[0])).toContain('高频 DNS 候选规则');
+    expect(snapshot?.visuals?.encryptedTraffic?.heartbeatBars).toHaveLength(0);
     expect(snapshot?.visuals?.encryptedTraffic?.destinationRows[0][0]).toBe('203.0.113.45');
     expect(snapshot?.visuals?.encryptedTraffic?.evidenceRows[0][5]).toBe('高危');
-    expect(snapshot?.visuals?.encryptedTraffic?.evidenceCenter.availability.state).toBe('live');
+    expect(snapshot?.visuals?.encryptedTraffic?.evidenceCenter.availability.state).toBe('partial');
     expect(snapshot?.visuals?.encryptedTraffic?.evidenceCenter.sessions[0].sessionId).toBe('evidence-001');
     expect(snapshot?.visuals?.encryptedTraffic?.evidenceCenter.sessions[0].sni).toBe('update.example.com');
     expect(snapshot?.visuals?.encryptedTraffic?.evidenceCenter.sessions[0].certificateHash).toBe('90ab');
@@ -810,7 +863,7 @@ describe('pageSnapshotAdapters', () => {
     expect(snapshot?.visuals?.encryptedTraffic?.evidenceCenter.entropyTrend[0].value).toBe(7.8);
   });
 
-  it('marks simulated egress chart data when all egress APIs are empty', () => {
+  it('keeps encrypted traffic empty when all source APIs are empty', () => {
     const route = findRouteById('encrypted-traffic');
     expect(route).toBeTruthy();
 
@@ -826,19 +879,19 @@ describe('pageSnapshotAdapters', () => {
     );
 
     const visuals = snapshot?.visuals?.encryptedTraffic;
-    expect(visuals?.egressAvailability.state).toBe('simulated');
-    expect(visuals?.egressAvailability.detail).toContain('类型化仿真样本');
-    expect(visuals?.egressMapNodes).toHaveLength(5);
-    expect(visuals?.egressDomainCards).toHaveLength(5);
-    expect(visuals?.egressTrend.labels.length).toBeGreaterThan(0);
-    expect(visuals?.egressTrend.series).toHaveLength(5);
-    expect(visuals?.egressKpis[0]).toEqual(['境外目的地', '5', '仿真样本']);
-    expect(visuals?.evidenceCenter.availability.state).toBe('simulated');
-    expect(visuals?.evidenceCenter.kpis[0]).toEqual(['关联 Session', '1,284', '仿真样本']);
-    expect(visuals?.evidenceCenter.sessions).toHaveLength(9);
-    expect(visuals?.evidenceCenter.pcapRows).toHaveLength(6);
-    expect(visuals?.evidenceCenter.pcapTrend.length).toBeGreaterThan(0);
-    expect(visuals?.evidenceCenter.completeness.find((item) => item.label === 'Session')).toMatchObject({ complete: 6, total: 6 });
+    expect(visuals?.egressAvailability.state).toBe('unavailable');
+    expect(visuals?.egressAvailability.detail).toContain('未生成任何替代数据');
+    expect(visuals?.egressMapNodes).toHaveLength(0);
+    expect(visuals?.egressDomainCards).toHaveLength(0);
+    expect(visuals?.egressTrend.labels).toHaveLength(0);
+    expect(visuals?.egressTrend.series).toHaveLength(0);
+    expect(visuals?.egressKpis[0]).toEqual(['公网目的地', '—', '等待外传 API']);
+    expect(visuals?.evidenceCenter.availability.state).toBe('unavailable');
+    expect(visuals?.evidenceCenter.kpis[0]).toEqual(['会话证据', '0', '证据 API']);
+    expect(visuals?.evidenceCenter.sessions).toHaveLength(0);
+    expect(visuals?.evidenceCenter.pcapRows).toHaveLength(0);
+    expect(visuals?.evidenceCenter.pcapTrend).toHaveLength(0);
+    expect(visuals?.evidenceCenter.completeness.find((item) => item.label === 'Session')).toMatchObject({ complete: 0, total: 0 });
   });
 
   it('uses real destination and time-bucket fields without synthesizing egress trend categories', () => {
@@ -1004,6 +1057,8 @@ describe('pageSnapshotAdapters', () => {
     expect(snapshot?.rows[0].严重级别).toBe('高危');
     expect(snapshot?.rows[0].MITRE阶段).toBe('TA0011');
     expect(snapshot?.rows[0].状态).toBe('启用');
+    expect(snapshot?.rows[0].最近状态变更).toBe('2026-06-19 17:28');
+    expect(snapshot?.rows[0].状态操作人).toBe('system');
     expect(snapshot?.evidence.map((item) => item.label)).toContain('Rules API');
     expect(snapshot?.evidence.map((item) => item.label)).toContain('发布门禁');
   });
@@ -1630,5 +1685,31 @@ describe('pageSnapshotAdapters', () => {
     expect(snapshot?.evidence.map((item) => item.label)).toContain('Token Scopes API');
     expect(snapshot?.evidence.map((item) => item.label)).toContain('Token List API');
     expect(snapshot?.evidence.map((item) => item.label)).toContain('Probe Scopes API');
+  });
+
+  it('maps forensics jobs, sessions, PCAP indexes and audit without invented fallbacks', () => {
+    const route = findRouteById('forensics');
+    expect(route).toBeTruthy();
+    const snapshot = adaptKnownPageSnapshot(
+      route!.page,
+      { data: [{ job_id: 'job-live-1', status: 'completed', progress: 100, result_file_key: 'default/result/job-live-1.pcap', sha256: 'a'.repeat(64), total_bytes: 4096, total_packets: 12, files_scanned: 1, params: { src_ip: '10.0.0.8', dst_ip: '8.8.8.8', dst_port: 443, asset_id: 'asset-live' }, created_at: 1784100000000, completed_at: 1784100060000 }], pagination: { total: 11 } },
+      [
+        { data: { task_stats: { completed: 11 }, worker_stats: { workers: 2 } } },
+        { data: { sessions: [{ session_id: 'session-live-1', src_ip: '10.0.0.8', dst_ip: '8.8.8.8', dst_port: 443, protocol: 'TLS', byte_count: 2048, packet_count: 8, start_time: 1784100000000, end_time: 1784100005000, risk_level: 'high' }] } },
+        { data: { pcap_indexes: [{ file_key: 'default/result/job-live-1.pcap', storage_path: 's3://pcap/default/result/job-live-1.pcap', probe_id: 'probe-live', byte_count: 4096, packet_count: 12, sha256: 'a'.repeat(64), start_time: 1784100000000, end_time: 1784100060000 }], pcap_trend: [{ bucket_start: 1784100000000, byte_count: 4096 }], completeness: [{ label: '索引Hash', complete: 1, total: 1 }] } },
+        { data: { trails: [{ log_id: 'audit-live-1', user_id: 'analyst', action: 'PCAP_DOWNLOAD', resource_type: 'pcap', resource_id: 'default/result/job-live-1.pcap', result: 'success', timestamp: 1784100060000 }], total: 1 } },
+      ],
+    );
+
+    expect(snapshot?.total).toBe(11);
+    expect(snapshot?.rows[0]['任务 ID']).toBe('job-live-1');
+    expect(snapshot?.rows[0]['告警/战役 ID']).toBe('-');
+    expect(snapshot?.rows[0].资产).toBe('asset-live');
+    expect(snapshot?.visuals?.forensics?.sessions[0].sessionId).toBe('session-live-1');
+    expect(snapshot?.visuals?.forensics?.pcapIndexes[0].fileKey).toBe('default/result/job-live-1.pcap');
+    expect(snapshot?.visuals?.forensics?.hashRows[0].sha256).toHaveLength(64);
+    expect(snapshot?.visuals?.forensics?.auditRows[0].target).toBe('default/result/job-live-1.pcap');
+    expect(JSON.stringify(snapshot)).not.toContain('办公区-WS-1024');
+    expect(JSON.stringify(snapshot)).not.toContain('AL-20260620-');
   });
 });

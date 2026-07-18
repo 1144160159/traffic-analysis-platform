@@ -1,0 +1,1 @@
+import{j as t}from"./vendor-react-DcxXCZkJ.js";import{f as i}from"./vendor-antd-CnkGNktw.js";function o({value:n}){const e=String(n),s=e.includes("高")||e.includes("失败")||e.includes("未处理")?"red":e.includes("中")||e.includes("警")||e.includes("处理中")?"gold":e.includes("低")?"blue":"green";return t.jsx(i,{color:s,children:e})}export{o as S};

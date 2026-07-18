@@ -18,14 +18,6 @@ export const assetDetailTabs = [
 
 export type AssetDetailSlug = (typeof assetDetailTabs)[number]['slug'];
 
-export const defaultAssetIdByTab: Record<AssetTabSlug, string> = {
-  endpoint: 'PC-0082',
-  server: 'SRV-0007',
-  'network-device': 'NET-0001',
-  'business-system': 'BIZ-0001',
-  unknown: 'UNK-10.12.88.45',
-};
-
 export const resolveAssetTab = (value: string | null): AssetTabSlug =>
   assetTabs.find((item) => item.slug === value)?.slug ?? 'endpoint';
 
@@ -39,12 +31,12 @@ export function assetSearchParams(input: {
 }) {
   const params = new URLSearchParams();
   params.set('tab', input.tab);
-  params.set('assetId', input.assetId || defaultAssetIdByTab[input.tab]);
+  if (input.assetId) params.set('assetId', input.assetId);
   if (input.detail) params.set('detail', input.detail);
   return params;
 }
 
 export const canOpenAssetDetail = (tab: AssetTabSlug, assetId: string) =>
-  tab === 'server' && assetId.startsWith('SRV-');
+  tab === 'server' && assetId.length > 0;
 
 export const assetBreakdownId = (detail: AssetDetailSlug) => `assets-detail-${detail}`;

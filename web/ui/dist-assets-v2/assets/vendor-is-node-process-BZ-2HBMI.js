@@ -1,0 +1,1 @@
+function r(){if(typeof navigator<"u"&&navigator.product==="ReactNative")return!0;if(typeof process<"u"){const e=process.type;return e==="renderer"||e==="worker"?!1:!!(process.versions&&process.versions.node)}return!1}export{r as i};

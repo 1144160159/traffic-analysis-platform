@@ -1,4 +1,5 @@
 import { ArrowDownOutlined, ArrowUpOutlined } from '@ant-design/icons';
+import type { ReactNode } from 'react';
 import type { PageSnapshot } from '@/services/mockData';
 
 const toneClass = {
@@ -8,10 +9,11 @@ const toneClass = {
   info: 'is-info',
 };
 
-export function MetricTile({ metric }: { metric: PageSnapshot['metrics'][number] }) {
+export function MetricTile({ metric, icon }: { metric: PageSnapshot['metrics'][number]; icon?: ReactNode }) {
   const up = !metric.delta.startsWith('-');
   return (
     <div className={`taf-metric ${toneClass[metric.status]}`}>
+      {icon ? <span className="taf-metric__icon" aria-hidden="true">{icon}</span> : null}
       <span>{metric.label}</span>
       <strong>{metric.value}</strong>
       {metric.delta ? (

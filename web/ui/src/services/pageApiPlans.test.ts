@@ -254,14 +254,14 @@ describe('pageApiPlans', () => {
     expect(endpoints).toContain('/v1/probes/{id}/certificates/rotate');
     expect(batchUpgradeAction?.method).toBe('POST');
     expect(batchUpgradeAction?.requiredScopes).toContain('probe:write');
-    expect(batchUpgradeAction?.auditEvent).toBe('PROBE_BATCH_UPGRADE');
-    expect(batchUpgradeAction?.guardrails).toContain('batch upgrades must persist probe_operations rows and update probes.software_version');
-    expect(configAction?.auditEvent).toBe('PROBE_CONFIG_PUSH');
+    expect(batchUpgradeAction?.auditEvent).toBe('PROBE_BATCH_UPGRADE_QUEUED');
+    expect(batchUpgradeAction?.guardrails).toContain('batch upgrades must persist queued probe_operations rows without claiming agent completion');
+    expect(configAction?.auditEvent).toBe('PROBE_CONFIG_PUSH_QUEUED');
     expect(configAction?.defaultBody).toMatchObject({ capture_mode: 'af_packet' });
     expect(configAction?.guardrails).toContain('tenant_id must come from the authenticated token for write operations');
-    expect(connectivityAction?.auditEvent).toBe('PROBE_CONNECTIVITY_TEST');
+    expect(connectivityAction?.auditEvent).toBe('PROBE_CONNECTIVITY_TEST_QUEUED');
     expect(connectivityAction?.guardrails).toContain('cross-tenant probe operations must return 404');
-    expect(certAction?.auditEvent).toBe('PROBE_CERT_ROTATE');
+    expect(certAction?.auditEvent).toBe('PROBE_CERT_ROTATE_QUEUED');
     expect(certAction?.defaultBody).toMatchObject({ secret_ref: 'k8s://traffic-analysis/traffic-credentials#PROBE_MTLS_CERT' });
     expect(certAction?.guardrails).toContain('plaintext certificate, private_key, token or password fields must be rejected');
     expect(isCoveredByApisix('/v1/probes')).toBe(true);
@@ -346,10 +346,10 @@ describe('pageApiPlans', () => {
     expect(activateAction?.guardrails).toContain('activation must deprecate any previous active version for the same model');
     expect(deprecateAction?.auditEvent).toBe('MODEL_VERSION_DEPRECATE');
     expect(deprecateAction?.guardrails).toContain('registered versions must return 409 until they enter an allowed state');
-    expect(feedbackAction?.auditEvent).toBe('MODEL_FEEDBACK_SAMPLES_APPENDED');
+    expect(feedbackAction?.auditEvent).toBe('MODEL_FEEDBACK_INGEST_REQUESTED');
     expect(retrainAction?.requiredScopes).toContain('model:write');
     expect(evaluationAction?.auditEvent).toBe('MODEL_EVALUATION_REQUESTED');
-    expect(rollbackAction?.auditEvent).toBe('MODEL_VERSION_ROLLED_BACK');
+    expect(rollbackAction?.auditEvent).toBe('MODEL_VERSION_ROLLBACK_REQUESTED');
     expect(contextAction?.auditEvent).toBe('MODEL_CONTEXT_ACTION_REQUESTED');
     expect(isCoveredByApisix('/v1/models/model-001/versions')).toBe(true);
     expect(isCoveredByApisix('/v1/models/model-001/versions/v2/activate')).toBe(true);
@@ -368,14 +368,15 @@ describe('pageApiPlans', () => {
     const register = getPageActionPlan('mlops', 'mlops-model-register');
 
     expect(endpoints).toContain('/v1/mlops/retrain');
-    expect(endpoints).toContain('/v1/mlops/tasks/{id}/stop');
+    expect(endpoints).toContain('/v1/mlops/workflows/{id}/stop');
+    expect(endpoints).toContain('/v1/mlops/workflows/{id}/retry');
     expect(endpoints).toContain('/v1/models/{id}/versions');
-    expect(retrain?.auditEvent).toBe('MLOPS_RETRAIN_REQUESTED');
+    expect(retrain?.auditEvent).toBe('MLOPS_RETRAIN_SUBMITTED');
     expect(stop?.guardrails).toContain('stop requires explicit confirmation');
     expect(stop?.requiredScopes).toContain('model:write');
     expect(register?.requiredScopes).toContain('model:create');
     expect(isCoveredByApisix('/v1/mlops/retrain')).toBe(true);
-    expect(isCoveredByApisix('/v1/mlops/tasks/TR-001/stop')).toBe(true);
+    expect(isCoveredByApisix('/v1/mlops/workflows/mlops-manual-live/stop')).toBe(true);
   });
 
   it('binds compliance report generation to an audited admin action', () => {

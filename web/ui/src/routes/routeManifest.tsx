@@ -239,7 +239,7 @@ const pageOverrides: Record<string, Partial<PageSpec>> = {
   forensics: {
     variant: 'queue',
     subtitle: '围绕告警、资产、时间窗完成 PCAP、Session、日志证据检索与下载审计。',
-    tabs: ['取证任务', 'PCAP 索引', '会话复放', '完整性', '证据导出'],
+    tabs: [],
     kpis: ['取证任务', '处理中', '已完成', 'PCAP 文件', 'Hash 通过', '签名 URL', '审计成功'],
     tableTitle: '取证任务队列',
     tableColumns: ['任务 ID', '告警/战役 ID', '资产', '五元组', '时间窗', '证据包', '状态', '操作'],
@@ -448,8 +448,10 @@ const domainScopes: Record<RouteDomain, string[]> = {
 
 const routeScopes: Record<string, string[]> = {
   screen: ['screen:view'],
+  assets: ['asset:read'],
   forensics: ['pcap:read'],
   deployments: ['deploy:read'],
+  mlops: ['model:read'],
   settings: ['admin:*', 'token:read'],
   'audit-log': ['admin:*', 'user:read'],
   compliance: ['admin:*', 'user:read'],

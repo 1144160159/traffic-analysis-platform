@@ -14,9 +14,9 @@ import {
   ThunderboltOutlined,
 } from '@ant-design/icons';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Alert, Button, Input, Modal, Select, Table, Tooltip, message } from 'antd';
+import { Alert, Button, Empty, Input, Modal, Pagination, Select, Table, Tooltip, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { MetricTile } from '@/components/MetricTile';
@@ -28,39 +28,6 @@ import type { NavRoute } from '@/routes/routeManifest';
 import { fetchPageSnapshot, submitEncryptedTrafficEgressAction, submitEncryptedTrafficEvidenceAction } from '@/services/api';
 import type { EncryptedTrafficTimeRange } from '@/services/api';
 import type { EncryptedTrafficVisuals, PageSnapshot, SnapshotRow } from '@/services/mockData';
-
-const protocolRows = [
-  ['TLS', '49.8 Gbps', '63.7%', 'is-info'],
-  ['QUIC', '14.4 Gbps', '18.4%', 'is-warn'],
-  ['未知加密', '14.1 Gbps', '17.9%', 'is-risk'],
-];
-
-const ja3Rows = [
-  ['771,4865-4866-4867-4919...', '12.8%', '10.0', '312', '18', '高危'],
-  ['cbd52c1eb6700091a3e2d4c...', '8.7%', '6.8', '198', '9', '中危'],
-  ['e7d70S342S8a2c0d0e0a71d1...', '7.6%', '6.0', '145', '12', '中危'],
-  ['4d7a28f00056bS87f06a4e3c2...', '6.2%', '4.9', '112', '6', '低危'],
-  ['598c8ab3943e1e61065c2e8e...', '4.9%', '3.8', '98', '7', '中危'],
-  ['f5a3d7c0eb2fe4e3c6fb101e9...', '3.8%', '3.0', '76', '3', '低危'],
-];
-
-const tunnelCards = [
-  ['DNS over HTTPS 会话', '412', '+36', 'warn'],
-  ['异常长连接（> 1h）', '287', '+21', 'risk'],
-  ['高熵流量（> 7.5）', '531', '+58', 'risk'],
-  ['低频流量（< 3.0）', '76', '+9', 'info'],
-  ['低流量心跳（疑似）', '193', '+14', 'warn'],
-  ['疑似 VPN 会话', '118', '+13', 'warn'],
-];
-
-const tunnelRows = [
-  ['DNS over HTTPS', 'DoH over TLS', '10.12.2.36', 'cloudflare-dns.com', '3h 24m', '2.18', '高危'],
-  ['异常长连接', '长连接 > 1h', '172.16.5.10', '203.0.113.45', '6h 12m', '3.47', '高危'],
-  ['心跳隧道', '固定周期 60s', '10.10.8.45', '198.51.100.27', '2h 53m', '0.96', '中危'],
-  ['高熵流量', '熵值 > 7.8', '10.10.9.33', '198.16.12.34', '1h 41m', '9.66', '中危'],
-  ['低频黑噪', '频率 < 1/min', '10.11.3.22', '185.22.14.9', '4h 30m', '0.42', '低危'],
-  ['疑似 VPN', 'TLS over 443', '10.12.6.77', '37.120.196.12', '5h 18m', '1.02', '中危'],
-];
 
 const encryptedTrafficTabs = [
   { label: '总览', slug: 'overview' },
@@ -186,29 +153,6 @@ const resolveEncryptedTrafficTab = (param: string | null): EncryptedTrafficTabSl
   encryptedTrafficTabs.find((item) => item.slug === param)?.slug ?? 'overview'
 );
 
-const certificateRows = [
-  ['DigiCert Global Root', '203.0.113.45', 'TLS 1.3', 'h2', '18', '高危'],
-  ['Cloudflare Inc ECC', '104.16.12.34', 'TLS 1.3', 'h3', '9', '中危'],
-  ['Unknown Issuer', '185.22.14.9', 'TLS 1.2', 'http/1.1', '12', '中危'],
-  ['Let’s Encrypt R3', '198.51.100.27', 'TLS 1.3', 'h2', '3', '低危'],
-];
-
-const tunnelRuleRows = [
-  ['DoH over HTTPS', 'SNI=DNS, ALPN=h2/h3', '会话 > 3', '287', '95%', '创建告警'],
-  ['DoH over QUIC', 'ALPN=h3, 端口=443/853', '会话 > 2', '121', '93%', '创建告警'],
-  ['异常长连接', '持续时间 > 2h', '> 2h', '531', '90%', '创建告警'],
-  ['低熵心跳通信', '熵值 < 3.5 且周期稳定', '周期 +-20%', '76', '91%', '调整规则'],
-  ['高熵可疑流量', '熵值 > 7.0 & 流量 >100MB', '>100MB', '193', '88%', '调整规则'],
-  ['可疑 VPN / Proxy', '特征端口/协议指纹', '会话 > 2', '118', '89%', '创建告警'],
-];
-
-const evidenceRows = [
-  ['10.10.10.23:52344', 'cloudflare-dns.com', 'TLS 1.3', '771,4865...', 'pcap-20250626-000512', '高危'],
-  ['172.16.5.18:44710', 'unknown-sni', 'TLS 1.2', 'cbd52c1e...', 'pcap-20250626-000624', '高危'],
-  ['10.10.40.12:55320', 'dns.google', 'QUIC', 'e7d70S34...', 'pcap-20250626-000701', '中危'],
-  ['10.12.6.77:40112', 'vpn.example.net', 'UDP', '4d7a28f0...', 'pcap-20250626-000744', '中危'],
-];
-
 const encryptedTrafficOverlays: OverlayContract[] = [
   {
     id: 'drawer-encrypted-fingerprint',
@@ -226,22 +170,20 @@ const encryptedTrafficOverlays: OverlayContract[] = [
   },
 ];
 
-const scatterPoints: EncryptedTrafficVisuals['scatterPoints'] = Array.from({ length: 34 }, (_, index) => ({
-  left: 7 + ((index * 11) % 86),
-  top: 12 + ((index * 17) % 70),
-  tone: index % 7 === 0 ? 'risk' : index % 5 === 0 ? 'warn' : index % 3 === 0 ? 'info' : 'ok',
-}));
-
 export function EncryptedTrafficPage({ route }: { route: NavRoute }) {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = resolveEncryptedTrafficTab(searchParams.get('tab'));
-  const [selectedEgressDestination, setSelectedEgressDestination] = useState('');
+  const destinationFromUrl = searchParams.get('destination')?.trim() ?? '';
+  const [selectedEgressDestination, setSelectedEgressDestination] = useState(destinationFromUrl);
   const [selectedEvidenceSession, setSelectedEvidenceSession] = useState('');
   const [egressAction, setEgressAction] = useState<EgressAction>();
   const [evidenceAction, setEvidenceAction] = useState<EvidenceAction>();
   const [timeRange, setTimeRange] = useState<EncryptedTrafficTimeRange>('近 24 小时');
-  const [evidenceLocateFilters, setEvidenceLocateFilters] = useState<EvidenceLocateFilters>(initialEvidenceLocateFilters);
+  const [evidenceLocateFilters, setEvidenceLocateFilters] = useState<EvidenceLocateFilters>({
+    ...initialEvidenceLocateFilters,
+    query: destinationFromUrl,
+  });
   const [isAnalysisRunning, setIsAnalysisRunning] = useState(false);
   const { data, error, isError, isLoading, refetch } = useQuery({
     queryKey: ['page-snapshot', route.id, timeRange],
@@ -262,6 +204,16 @@ export function EncryptedTrafficPage({ route }: { route: NavRoute }) {
     || locatedEvidenceSessions[0]?.sessionId
     || (!hasActiveEvidenceLocateFilters ? evidenceSessions[0]?.sessionId : '')
     || '证据中心-未选择对象';
+  useEffect(() => {
+    if (selectedEgressDestination && !encryptedVisuals?.destinationRows.some((row) => row[0] === selectedEgressDestination)) {
+      setSelectedEgressDestination('');
+    }
+  }, [encryptedVisuals?.destinationRows, selectedEgressDestination]);
+  useEffect(() => {
+    if (selectedEvidenceSession && !evidenceSessions.some((item) => item.sessionId === selectedEvidenceSession)) {
+      setSelectedEvidenceSession('');
+    }
+  }, [evidenceSessions, selectedEvidenceSession]);
   const egressActionMutation = useMutation({
     mutationFn: (action: EgressAction) => submitEncryptedTrafficEgressAction({
       actionId: action.id,
@@ -334,11 +286,11 @@ export function EncryptedTrafficPage({ route }: { route: NavRoute }) {
   };
 
   return (
-    <div className={`taf-page taf-encrypted taf-encrypted--${activeTab}`}>
+    <div className={`taf-page taf-encrypted taf-encrypted--${activeTab}`} data-tab-slug={activeTab}>
       <section className="taf-encrypted-shell">
         <header className="taf-encrypted-titlebar">
           <h1>{route.page.title}</h1>
-          <div className="taf-encrypted-tabs">
+          <div className="taf-encrypted-tabs" role="tablist" aria-label="加密流量分析视图">
             {encryptedTrafficTabs.map((tab) => (
               <button
                 key={tab.slug}
@@ -346,7 +298,11 @@ export function EncryptedTrafficPage({ route }: { route: NavRoute }) {
                 className={tab.slug === activeTab ? 'is-active' : ''}
                 aria-selected={tab.slug === activeTab}
                 role="tab"
-                onClick={() => setSearchParams({ tab: tab.slug })}
+                onClick={() => setSearchParams((current) => {
+                  const next = new URLSearchParams(current);
+                  next.set('tab', tab.slug);
+                  return next;
+                })}
               >
                 {tab.label}
               </button>
@@ -375,22 +331,12 @@ export function EncryptedTrafficPage({ route }: { route: NavRoute }) {
           />
         )}
 
-        {activeTab === 'evidence-center' ? (
-          <div className="taf-encrypted-kpis taf-encrypted-kpis--evidence">
-            {evidenceKpis.map(([label, value, source]) => (
-              <div key={label}>
-                <span className="taf-evidence-kpi-icon" aria-hidden="true">{evidenceKpiIcon(label)}</span>
-                <span>{label}</span>
-                <strong>{value}</strong>
-                <small>{source}</small>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="taf-encrypted-kpis">
-            {metrics.map((metric) => <MetricTile key={metric.label} metric={metric} />)}
-          </div>
-        )}
+        <EncryptedTrafficKpis
+          activeTab={activeTab}
+          metrics={metrics}
+          evidenceKpis={evidenceKpis}
+          visuals={encryptedVisuals}
+        />
 
         <div className="taf-encrypted-grid">
           <main className="taf-encrypted-main">
@@ -430,24 +376,22 @@ export function EncryptedTrafficPage({ route }: { route: NavRoute }) {
                   setEvidenceLocateFilters(filters);
                   const matchingSession = evidenceSessions.find((item) => matchesEvidenceLocateFilters(item, filters));
                   setSelectedEvidenceSession(matchingSession?.sessionId ?? '');
-                  message.success('已按条件定位证据会话。');
+                  if (matchingSession) message.success('已按条件定位证据会话。');
+                  else message.warning('当前时间窗没有匹配的证据会话。');
                 }}
               />
+            ) : activeTab === 'fingerprint' ? (
+              <FingerprintRail visuals={encryptedVisuals} target={currentEgressTarget} onAction={openEgressAction} onNavigate={(path) => navigate(path)} />
+            ) : activeTab === 'tunnel-detection' ? (
+              <TunnelDetectionRail visuals={encryptedVisuals} target={currentEgressTarget} onAction={openEgressAction} onNavigate={(path) => navigate(path)} />
             ) : (
-              <>
-                <WorkPanel title="外联画像" extra={<Button size="small" type="link">查看详情</Button>}>
-                  <EgressProfile visuals={encryptedVisuals} />
-                </WorkPanel>
-                <WorkPanel title="处置与分析建议">
-                  <AdviceList rows={encryptedVisuals?.adviceRows} />
-                </WorkPanel>
-                <WorkPanel title="关联与下钻">
-                  <LinkActions />
-                </WorkPanel>
-                <WorkPanel title="生成与导出">
-                  <ExportActions />
-                </WorkPanel>
-              </>
+              <EncryptedContextRail
+                activeTab={activeTab}
+                visuals={encryptedVisuals}
+                target={currentEgressTarget}
+                onAction={openEgressAction}
+                onNavigate={(path) => navigate(path)}
+              />
             )}
           </aside>
         </div>
@@ -503,6 +447,59 @@ export function EncryptedTrafficPage({ route }: { route: NavRoute }) {
   );
 }
 
+function EncryptedTrafficKpis({
+  activeTab,
+  metrics,
+  evidenceKpis,
+  visuals,
+}: {
+  activeTab: EncryptedTrafficTabSlug;
+  metrics: PageSnapshot['metrics'];
+  evidenceKpis: string[][];
+  visuals?: EncryptedTrafficVisuals;
+}) {
+  if (activeTab === 'overview') {
+    return <div className="taf-encrypted-kpis">{metrics.map((metric) => <MetricTile key={metric.label} metric={metric} />)}</div>;
+  }
+  const fingerprintRisk = visuals?.ja3Rows.filter((row) => row[5]?.includes('高')).length ?? 0;
+  const weakSuites = visuals?.tlsSuiteRows.filter((row) => row[3]?.includes('risk')).length ?? 0;
+  const tabRows: string[][] = activeTab === 'fingerprint'
+    ? (visuals?.tabKpis.fingerprint ?? [
+      ['指纹总数', String(visuals?.ja3Rows.length ?? 0), '真实 JA3 API'],
+      ['可疑 JA3', String(fingerprintRisk), '风险指纹'],
+      ['未知 SNI', metrics.find((item) => item.label.includes('SNI'))?.value ?? '0', '会话观测'],
+      ['异常 Issuer', String(visuals?.certificateRows.length ?? 0), '证书字段'],
+      ['TLS1.0/1.1', String(weakSuites), '弱版本'],
+      ['弱密码套件', String(weakSuites), '协议风险'],
+      ['关联规则', String(visuals?.tunnelRuleRows.length ?? 0), '检测规则'],
+    ])
+    : activeTab === 'tunnel-detection'
+      ? (visuals?.tabKpis.tunnelDetection ?? [
+        ['隧道告警', String(visuals?.tunnelRows.length ?? 0), '当前窗口'],
+        ['DoH 会话', String(visuals?.tunnelRows.filter((row) => row[0]?.includes('DoH')).length ?? 0), '隧道候选'],
+        ['异常长连接', String(visuals?.tunnelRows.filter((row) => row[0]?.includes('长连接')).length ?? 0), '持续时间'],
+        ['高熵流量', String(visuals?.tunnelRows.filter((row) => row[0]?.includes('高熵')).length ?? 0), '载荷熵值'],
+        ['低熵心跳', String(visuals?.tunnelRows.filter((row) => row[0]?.includes('心跳')).length ?? 0), '周期通信'],
+        ['疑似 VPN', String(visuals?.tunnelRows.filter((row) => row[0]?.includes('VPN')).length ?? 0), '协议候选'],
+        ['已创建告警', String(visuals?.tunnelRows.filter((row) => row[6]?.includes('高')).length ?? 0), '待审核'],
+      ])
+      : activeTab === 'egress-profile'
+        ? (visuals?.egressKpis ?? []).slice(0, 7)
+        : evidenceKpis;
+  return (
+    <div className={`taf-encrypted-kpis taf-encrypted-kpis--${activeTab === 'evidence-center' ? 'evidence' : 'tab'}`}>
+      {tabRows.map(([label, value, source]) => (
+        <div key={label}>
+          <span className="taf-evidence-kpi-icon" aria-hidden="true">{evidenceKpiIcon(label)}</span>
+          <span>{label}</span>
+          <strong>{value}</strong>
+          <small>{source || '真实 API'}</small>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function EncryptedTrafficTabView({
   activeTab,
   columns,
@@ -530,8 +527,8 @@ function EncryptedTrafficTabView({
   onEvidenceAction: (label: string, target: string) => void;
   evidenceLocateFilters: EvidenceLocateFilters;
 }) {
-  if (activeTab === 'fingerprint') return <FingerprintContent visuals={encryptedVisuals} />;
-  if (activeTab === 'tunnel-detection') return <TunnelDetectionContent visuals={encryptedVisuals} />;
+  if (activeTab === 'fingerprint') return <FingerprintContent visuals={encryptedVisuals} onAction={onEgressAction} />;
+  if (activeTab === 'tunnel-detection') return <TunnelDetectionContent visuals={encryptedVisuals} onAction={onEgressAction} />;
   if (activeTab === 'egress-profile') {
     return (
       <EgressProfileContent
@@ -611,72 +608,73 @@ function EncryptedOverviewContent({
   );
 }
 
-function FingerprintContent({ visuals }: { visuals?: EncryptedTrafficVisuals }) {
+function FingerprintContent({ visuals, onAction }: { visuals?: EncryptedTrafficVisuals; onAction: (label: string, target?: string, description?: string) => void }) {
   return (
-    <>
-      <div className="taf-encrypted-fingerprint-layout">
-        <WorkPanel title="JA3 / JA3S 指纹排行">
-          <Ja3Table rows={visuals?.ja3Rows} />
+    <div className="taf-fingerprint-board">
+      <div className="taf-fingerprint-board-top">
+        <WorkPanel title="JA3/JA3S 指纹明细（Top 20）">
+          <Ja3Table rows={visuals?.ja3Rows} pageSize={7} />
         </WorkPanel>
-        <WorkPanel title="JA3 分布（流量 vs 会话数）">
+        <WorkPanel title="指纹分布与聚类（按 JA3 聚簇）">
           <Ja3Scatter points={visuals?.scatterPoints} />
         </WorkPanel>
-      </div>
-      <div className="taf-encrypted-tab-grid">
-        <WorkPanel title="证书 Issuer 异常">
-          <EncryptedDenseRows
-            columns={['Issuer', '目的 IP', 'TLS', 'ALPN', '告警', '风险']}
-            rows={visuals?.certificateRows ?? certificateRows}
-          />
-        </WorkPanel>
-        <WorkPanel title="TLS 版本与密码套件">
-          <TlsSuiteMatrix />
-        </WorkPanel>
-        <WorkPanel title="指纹处置建议">
-          <AdviceList rows={visuals?.adviceRows} />
+        <WorkPanel title="证书 Issuer 与 SNI 分布">
+          <FingerprintCertificateOverview visuals={visuals} />
         </WorkPanel>
       </div>
-    </>
+      <div className="taf-fingerprint-board-bottom">
+        <WorkPanel title="TLS 版本与密码套件（会话数热力）">
+          <TlsSuiteMatrix rows={visuals?.tlsSuiteRows} />
+        </WorkPanel>
+        <WorkPanel title="指纹关联规则（Top 匹配）">
+          <EncryptedDenseRows columns={['规则名称', '匹配指纹', '匹配类型', '置信度', '状态']} rows={visuals?.tunnelRuleRows ?? []} pageSize={5} />
+        </WorkPanel>
+        <WorkPanel title="证书详情预览（点击左侧行查看）">
+          <FingerprintCertificatePreview visuals={visuals} onAction={onAction} />
+        </WorkPanel>
+      </div>
+    </div>
   );
 }
 
-function TunnelDetectionContent({ visuals }: { visuals?: EncryptedTrafficVisuals }) {
+function TunnelDetectionContent({ visuals, onAction }: { visuals?: EncryptedTrafficVisuals; onAction: (label: string, target?: string, description?: string) => void }) {
   return (
-    <>
-      <div className="taf-encrypted-middle">
-        <WorkPanel title="隧道告警与异常特征">
-          <TunnelFeatureCards rows={visuals?.tunnelCards} />
-        </WorkPanel>
+    <div className="taf-tunnel-board">
+      <div className="taf-tunnel-board-top">
         <WorkPanel title="隧道异常列表">
-          <TunnelTable rows={visuals?.tunnelRows} />
+          <TunnelTable rows={visuals?.tunnelRows} pageSize={8} />
         </WorkPanel>
-      </div>
-      <div className="taf-encrypted-tunnel-layout">
         <WorkPanel title="熵值与会话时长散点图">
           <Ja3Scatter points={visuals?.scatterPoints} />
         </WorkPanel>
         <WorkPanel title="心跳通信时间序列">
-          <HeartbeatSeries bars={visuals?.heartbeatBars} />
+          <HeartbeatSeries bars={visuals?.heartbeatBars} summary={visuals?.heartbeatSummary} />
         </WorkPanel>
       </div>
-      <div className="taf-encrypted-tab-grid">
+      <div className="taf-tunnel-board-bottom">
         <WorkPanel title="DoH 与隧道特征">
           <TunnelFeatureCards rows={visuals?.tunnelCards} />
         </WorkPanel>
         <WorkPanel title="检测规则命中">
           <EncryptedDenseRows
             columns={['规则名称', '特征', '阈值', '命中数', '置信度', '处置']}
-            rows={visuals?.tunnelRuleRows ?? tunnelRuleRows}
+            rows={visuals?.tunnelRuleRows ?? []}
+            pageSize={6}
           />
         </WorkPanel>
         <WorkPanel title="会话证据预览">
           <EncryptedDenseRows
             columns={['源 IP', '目的域名', '协议', 'JA3', 'PCAP 索引', '风险']}
-            rows={(visuals?.evidenceRows ?? evidenceRows).slice(0, 3)}
+            rows={visuals?.evidenceRows ?? []}
+            pageSize={6}
           />
         </WorkPanel>
       </div>
-    </>
+      <div className="taf-encrypted-inline-actions">
+        <Button size="small" onClick={() => onAction('生成调查规则', visuals?.tunnelRows[0]?.[2])}>生成调查规则</Button>
+        <Button size="small" onClick={() => onAction('提交专家复核', visuals?.tunnelRows[0]?.[2])}>提交专家复核</Button>
+      </div>
+    </div>
   );
 }
 
@@ -706,27 +704,27 @@ function EgressProfileContent({
           />
         </WorkPanel>
         <div className="taf-egress-board-stack">
-          <WorkPanel title="域名画像卡" extra={<span className="taf-egress-panel-hint">实时对象</span>}>
+          <WorkPanel title="域名画像卡" extra={<Button size="small" type="link" onClick={() => onAction('查看更多域名画像', selectedDestination || undefined)}>{'更多 >'}</Button>}>
             <DomainCards
               visuals={visuals}
               selectedDestination={selectedDestination}
               onSelectDestination={onSelectDestination}
             />
           </WorkPanel>
-          <WorkPanel title="外联会话风险趋势" extra={<span className="taf-egress-panel-hint">真实时间桶</span>}>
-            <EgressAnomalyTrend trend={visuals?.egressTrend} availability={visuals?.egressAvailability} />
-          </WorkPanel>
         </div>
       </div>
       <div className="taf-egress-board-bottom">
-        <WorkPanel title="Top 外联目的地" extra={<span className="taf-egress-panel-hint">点击行以定位地图</span>}>
+        <WorkPanel title="Top 外联目的地" extra={<Button size="small" type="link" onClick={() => onAction('查看更多外联目的地', selectedDestination || undefined)}>{'更多 >'}</Button>}>
           <EgressDestinationTable
             rows={visuals?.destinationRows ?? []}
             selectedDestination={selectedDestination}
             onSelectDestination={onSelectDestination}
           />
         </WorkPanel>
-        <WorkPanel title="实体图谱入口" extra={<Button size="small" type="link" onClick={() => onAction('查看实体图谱', selectedDestination || undefined)}>查看详情</Button>}>
+        <WorkPanel title="首次出现与异常域名趋势" extra={<span className="taf-egress-panel-hint">真实时间桶</span>}>
+          <EgressAnomalyTrend trend={visuals?.egressTrend} availability={visuals?.egressAvailability} />
+        </WorkPanel>
+        <WorkPanel title="实体图谱入口" extra={<Button size="small" type="link" onClick={() => onAction('查看实体图谱', selectedDestination || undefined)}>{'更多 >'}</Button>}>
           <EgressEntityGraph
             visuals={visuals}
             selectedDestination={selectedDestination}
@@ -741,15 +739,18 @@ function EgressProfileContent({
 function OverviewEvidenceTable({ columns, isLoading, rows }: { columns: ColumnsType<SnapshotRow>; isLoading: boolean; rows: SnapshotRow[] }) {
   return (
     <WorkPanel title="证据与握手元数据（最新 200 条）" className="taf-encrypted-evidence-panel">
-      <Table
-        rowKey={(record) => String(record['Session 摘要'] ?? JSON.stringify(record))}
-        size="small"
-        loading={isLoading}
-        pagination={false}
-        columns={columns}
-        dataSource={rows.slice(0, 5)}
-        scroll={{ x: 1280 }}
-      />
+      <div className="taf-encrypted-ant-table-slot" data-paginated-table="overview-evidence">
+        <Table
+          className="taf-encrypted-fixed-ant-table"
+          rowKey={(record) => String(record['Session 摘要'] ?? JSON.stringify(record))}
+          size="small"
+          loading={isLoading}
+          pagination={{ pageSize: 5, showSizeChanger: false, hideOnSinglePage: false, position: ['bottomRight'], showTotal: (count) => `共 ${count} 条` }}
+          columns={columns}
+          dataSource={rows}
+          scroll={{ x: 1280 }}
+        />
+      </div>
     </WorkPanel>
   );
 }
@@ -769,14 +770,9 @@ function EvidenceCenterContent({
   onAction: (label: string, target: string) => void;
   locateFilters: EvidenceLocateFilters;
 }) {
-  const [evidenceTab, setEvidenceTab] = useState<'tls' | 'quic' | 'session'>('tls');
   const evidence = encryptedVisuals?.evidenceCenter;
   const allSessions = evidence?.sessions ?? [];
-  const sessions = allSessions.filter((item) => (
-    evidenceTab === 'tls' ? item.protocol.includes('TLS') : evidenceTab === 'quic' ? item.protocol.includes('QUIC') : true
-  ));
-  const activeSessions = sessions.length ? sessions : allSessions;
-  const visibleSessions = activeSessions.filter((item) => matchesEvidenceLocateFilters(item, locateFilters));
+  const visibleSessions = allSessions.filter((item) => matchesEvidenceLocateFilters(item, locateFilters));
   const selectedEvidenceSession = visibleSessions.find((item) => item.sessionId === selectedSession) ?? visibleSessions[0];
   const currentTarget = selectedEvidenceSession?.sessionId || '证据中心-未选择对象';
   const usesAdaptedEvidenceDetails = selectedEvidenceSession?.sessionId === evidence?.sessions[0]?.sessionId;
@@ -802,6 +798,7 @@ function EvidenceCenterContent({
   const total = evidence?.completeness.reduce((sum, item) => sum + item.total, 0) ?? 0;
   const completed = evidence?.completeness.reduce((sum, item) => sum + item.complete, 0) ?? 0;
   const completenessPercent = total ? Math.round((completed / total) * 100) : 0;
+  const currentPcapTarget = evidence?.pcapRows[0]?.[0] ?? '';
 
   return (
     <div className="taf-evidence-center">
@@ -811,30 +808,21 @@ function EvidenceCenterContent({
           extra={(
             <span className="taf-evidence-panel-status">
               <EvidenceAvailability availability={evidence?.availability} />
-              <span className="taf-evidence-source-hint">{evidence?.availability.state === 'simulated' ? '仿真证据样本' : '证据 API'}</span>
+              <span className="taf-evidence-source-hint">证据 API</span>
             </span>
           )}
         >
-          <div className="taf-encrypted-evidence-tabs" role="tablist" aria-label="证据会话类型">
-            {[
-              ['tls', 'TLS 握手'],
-              ['quic', 'QUIC 握手'],
-              ['session', 'Session 摘要'],
-            ].map(([value, label]) => (
-              <button key={value} type="button" role="tab" aria-selected={evidenceTab === value} className={evidenceTab === value ? 'is-active' : ''} onClick={() => { setEvidenceTab(value as 'tls' | 'quic' | 'session'); onSelectSession(''); }}>{label}</button>
-            ))}
-          </div>
           <EvidenceSessionTable rows={visibleSessions} loading={isLoading} selectedSession={selectedEvidenceSession?.sessionId ?? ''} onSelect={onSelectSession} />
         </WorkPanel>
-        <WorkPanel title="PCAP 索引与切片" extra={<span className="taf-evidence-source-hint">{evidence?.availability.state === 'simulated' ? '仿真波形' : 'PCAP 索引 API'}</span>}>
+        <WorkPanel title="时间窗内 PCAP 索引（独立数据源）" extra={<span className="taf-evidence-source-hint">尚未自动关联当前会话</span>}>
           <EncryptedDenseRows columns={['对象路径', '时间窗', '大小', '包数', '来源', 'sha256', '状态']} rows={evidence?.pcapRows ?? []} />
           <div className="taf-evidence-pcap-trend">
             <PcapPacketTrendChart points={evidence?.pcapTrend ?? []} ariaLabel="PCAP 数据包字节趋势图" />
           </div>
           <div className="taf-evidence-pcap-actions">
-            <Button size="small" onClick={() => onAction('下载 PCAP', currentTarget)}>下载</Button>
-            <Button size="small" onClick={() => onAction('校验证据 Hash', currentTarget)}>校验</Button>
-            <Button size="small" type="primary" onClick={() => onAction('生成取证任务', currentTarget)}>生成取证任务</Button>
+            <Button size="small" disabled={!currentPcapTarget} onClick={() => onAction('下载 PCAP', currentPcapTarget)}>申请下载</Button>
+            <Button size="small" disabled={!currentPcapTarget} onClick={() => onAction('校验证据 Hash', currentPcapTarget)}>申请校验</Button>
+            <Button size="small" type="primary" disabled={!currentPcapTarget} onClick={() => onAction('生成取证任务', currentPcapTarget)}>生成取证任务</Button>
           </div>
         </WorkPanel>
         <EvidenceAnchorPanel
@@ -886,6 +874,7 @@ function EvidenceAnchorPanel({
   onAction: (label: string, target: string) => void;
 }) {
   const target = session?.sessionId || '证据中心-未选择对象';
+  const hasTarget = Boolean(session?.sessionId);
   const facts = [
     ['Session ID', target],
     ['时间', session?.time || '未返回'],
@@ -896,11 +885,7 @@ function EvidenceAnchorPanel({
     ['证书 Hash', session?.certificateHash || '未返回'],
     ['PCAP 索引', session?.pcapIndex || '未返回'],
   ];
-  const sourceHint = availability?.state === 'simulated'
-    ? '仿真熵分'
-    : entropyTrend.length
-      ? 'Payload entropy API'
-      : 'Payload entropy 未返回';
+  const sourceHint = entropyTrend.length ? 'Payload entropy API' : 'Payload entropy 未返回';
   return (
     <WorkPanel title="证据锚点概览" extra={<StatusTag value={session?.risk || '未知'} />}>
       <div className="taf-evidence-anchor">
@@ -913,8 +898,8 @@ function EvidenceAnchorPanel({
           <div><EvidenceEntropyTrendChart points={entropyTrend} ariaLabel="加密证据会话熵分趋势图" /></div>
         </div>
         <div className="taf-evidence-anchor__actions">
-          <Button size="small" onClick={() => onAction('校验证据 Hash', target)}>校验证据 Hash</Button>
-          <Button size="small" onClick={() => onAction('关联证据分析', target)}>关联证据分析</Button>
+          <Button size="small" disabled={!hasTarget || !session?.certificateHash || session.certificateHash === '-'} onClick={() => onAction('校验证据 Hash', target)}>校验证据 Hash</Button>
+          <Button size="small" disabled={!hasTarget} onClick={() => onAction('关联证据分析', target)}>关联证据分析</Button>
         </div>
       </div>
     </WorkPanel>
@@ -927,9 +912,7 @@ function EvidenceAvailability({ availability }: { availability?: EncryptedTraffi
     ? '证据 API 已接入'
     : state === 'partial'
       ? '真实证据部分返回'
-      : state === 'simulated'
-        ? '仿真数据（API 空）'
-        : '证据数据未返回';
+      : '证据数据未返回';
   return <span className={`taf-evidence-availability is-${state}`} title={availability?.detail}>{label}</span>;
 }
 
@@ -945,33 +928,31 @@ function EvidenceSessionTable({
   onSelect: (sessionId: string) => void;
 }) {
   const columns: ColumnsType<EncryptedTrafficVisuals['evidenceCenter']['sessions'][number]> = [
-    { title: '时间', dataIndex: 'time', width: 126, ellipsis: true },
-    { title: 'Session ID', dataIndex: 'sessionId', width: 120, ellipsis: true },
-    { title: '源 IP', dataIndex: 'source', width: 104, ellipsis: true },
+    { title: '时间', dataIndex: 'time', width: 92, ellipsis: true },
+    { title: 'Session ID', dataIndex: 'sessionId', width: 132, ellipsis: true },
+    { title: '源 IP', dataIndex: 'source', width: 96, ellipsis: true },
     { title: '目的地址', dataIndex: 'destination', width: 120, ellipsis: true },
-    { title: '协议', dataIndex: 'protocol', width: 72, ellipsis: true },
-    { title: 'SNI/Hash', dataIndex: 'sni', width: 138, ellipsis: true },
-    { title: 'JA3', dataIndex: 'ja3', width: 114, ellipsis: true },
-    { title: 'ALPN', dataIndex: 'alpn', width: 60, ellipsis: true },
-    { title: 'PCAP 索引', dataIndex: 'pcapIndex', width: 126, ellipsis: true },
-    { title: '风险', dataIndex: 'risk', width: 66, render: (value) => <StatusTag value={String(value)} /> },
+    { title: '协议', dataIndex: 'protocol', width: 76, ellipsis: true },
+    { title: '风险', dataIndex: 'risk', width: 70, render: (value) => <StatusTag value={String(value)} /> },
   ];
   return (
-    <Table
-      rowKey="sessionId"
-      size="small"
-      loading={loading}
-      columns={columns}
-      dataSource={rows}
-      pagination={false}
-      scroll={{ x: 1_050, y: 300 }}
-      rowClassName={(record) => record.sessionId === selectedSession ? 'taf-evidence-selected-row' : ''}
-      onRow={(record) => ({ onClick: () => onSelect(record.sessionId) })}
-    />
+    <div className="taf-encrypted-ant-table-slot" data-paginated-table="evidence-sessions">
+      <Table
+        className="taf-encrypted-fixed-ant-table taf-evidence-session-table"
+        rowKey="sessionId"
+        size="small"
+        loading={loading}
+        columns={columns}
+        dataSource={rows}
+        pagination={{ pageSize: 6, showSizeChanger: false, hideOnSinglePage: false, position: ['bottomRight'], showTotal: (count) => `共 ${count} 条` }}
+        rowClassName={(record) => record.sessionId === selectedSession ? 'taf-evidence-selected-row' : ''}
+        onRow={(record) => ({ onClick: () => onSelect(record.sessionId) })}
+      />
+    </div>
   );
 }
 
-function ProtocolDistribution({ rows = protocolRows, trend }: { rows?: string[][]; trend?: number[] }) {
+function ProtocolDistribution({ rows = [], trend }: { rows?: string[][]; trend?: number[] }) {
   const items = rows.map(([label, , ratio, tone]) => ({
     label,
     value: Number.parseFloat(ratio) || 0,
@@ -985,9 +966,11 @@ function ProtocolDistribution({ rows = protocolRows, trend }: { rows?: string[][
   );
 }
 
-function Ja3Table({ rows = ja3Rows }: { rows?: string[][] }) {
+function Ja3Table({ rows = [], pageSize = 5 }: { rows?: string[][]; pageSize?: number }) {
+  const pagination = useFixedTablePagination(rows, pageSize);
+  if (!rows.length) return <div className="taf-encrypted-ja3-table" data-paginated-table="ja3"><div className="taf-encrypted-table-empty"><EncryptedEmptyState description="JA3 API 暂无指纹数据" /></div><FixedTablePagination {...pagination} /></div>;
   return (
-    <div className="taf-encrypted-ja3-table">
+    <div className="taf-encrypted-ja3-table" data-paginated-table="ja3">
       <div>
         <span>JA3 指纹</span>
         <span>流量占比</span>
@@ -996,8 +979,8 @@ function Ja3Table({ rows = ja3Rows }: { rows?: string[][] }) {
         <span>关联告警</span>
         <span>风险等级</span>
       </div>
-      {rows.map(([hash, ratio, flow, sni, alerts, risk]) => (
-        <button key={hash} type="button">
+      {pagination.rows.map(([hash, ratio, flow, sni, alerts, risk]) => (
+        <button key={hash} type="button" disabled title="请使用顶部“指纹详情”查看完整证据">
           <strong>{hash}</strong>
           <span>{ratio}</span>
           <span>{flow}</span>
@@ -1006,11 +989,13 @@ function Ja3Table({ rows = ja3Rows }: { rows?: string[][] }) {
           <StatusTag value={risk} />
         </button>
       ))}
+      <FixedTablePagination {...pagination} />
     </div>
   );
 }
 
-function Ja3Scatter({ points = scatterPoints }: { points?: EncryptedTrafficVisuals['scatterPoints'] }) {
+function Ja3Scatter({ points = [] }: { points?: EncryptedTrafficVisuals['scatterPoints'] }) {
+  if (!points.length) return <EncryptedEmptyState description="暂无包含流量与会话计数的指纹数据" />;
   return (
     <div className="taf-encrypted-scatter taf-echarts-scatter">
       <EncryptedJa3ScatterChart
@@ -1021,7 +1006,8 @@ function Ja3Scatter({ points = scatterPoints }: { points?: EncryptedTrafficVisua
   );
 }
 
-function TunnelFeatureCards({ rows = tunnelCards }: { rows?: string[][] }) {
+function TunnelFeatureCards({ rows = [] }: { rows?: string[][] }) {
+  if (!rows.length) return <EncryptedEmptyState description="隧道分析 API 暂无聚合数据" />;
   return (
     <div className="taf-encrypted-tunnel-cards">
       {rows.map(([label, value, delta, tone]) => (
@@ -1035,9 +1021,11 @@ function TunnelFeatureCards({ rows = tunnelCards }: { rows?: string[][] }) {
   );
 }
 
-function TunnelTable({ rows = tunnelRows }: { rows?: string[][] }) {
+function TunnelTable({ rows = [], pageSize = 5 }: { rows?: string[][]; pageSize?: number }) {
+  const pagination = useFixedTablePagination(rows, pageSize);
+  if (!rows.length) return <div className="taf-encrypted-tunnel-table" data-paginated-table="tunnel-candidates"><div className="taf-encrypted-table-empty"><EncryptedEmptyState description="隧道候选 API 暂无待研判记录" /></div><FixedTablePagination {...pagination} /></div>;
   return (
-    <div className="taf-encrypted-tunnel-table">
+    <div className="taf-encrypted-tunnel-table" data-paginated-table="tunnel-candidates">
       <div>
         <span>类型</span>
         <span>疑征</span>
@@ -1047,8 +1035,8 @@ function TunnelTable({ rows = tunnelRows }: { rows?: string[][] }) {
         <span>流量 (Gbps)</span>
         <span>风险等级</span>
       </div>
-      {rows.map(([type, feature, src, dst, duration, flow, risk]) => (
-        <button key={`${type}-${src}-${dst}`} type="button">
+      {pagination.rows.map(([type, feature, src, dst, duration, flow, risk]) => (
+        <button key={`${type}-${src}-${dst}`} type="button" disabled title="待后端返回候选会话标识后可下钻">
           <strong>{type}</strong>
           <span>{feature}</span>
           <span>{src}</span>
@@ -1058,37 +1046,33 @@ function TunnelTable({ rows = tunnelRows }: { rows?: string[][] }) {
           <StatusTag value={risk} />
         </button>
       ))}
+      <FixedTablePagination {...pagination} />
     </div>
   );
 }
 
-function EncryptedDenseRows({ columns, rows }: { columns: string[]; rows: string[][] }) {
+function EncryptedDenseRows({ columns, rows, pageSize = 5 }: { columns: string[]; rows: string[][]; pageSize?: number }) {
+  const pagination = useFixedTablePagination(rows, pageSize);
   return (
-    <div className="taf-encrypted-dense-rows" style={{ '--encrypted-columns': columns.length } as CSSProperties}>
+    <div className="taf-encrypted-dense-rows" data-paginated-table="dense" style={{ '--encrypted-columns': columns.length } as CSSProperties}>
       <div className="taf-encrypted-dense-head">
         {columns.map((column) => <span key={column}>{column}</span>)}
       </div>
-      {rows.map((row) => (
+      {!rows.length ? <div className="taf-encrypted-table-empty"><EncryptedEmptyState description="当前接口未返回可展示记录" /></div> : pagination.rows.map((row) => (
         <div key={row.join('-')} className="taf-encrypted-dense-row">
           {row.map((cell, index) => <span key={`${cell}-${index}`}>{cell}</span>)}
         </div>
       ))}
+      <FixedTablePagination {...pagination} />
     </div>
   );
 }
 
-function TlsSuiteMatrix() {
-  const items = [
-    ['TLS 1.3', '4865 / AES128-GCM', '48.2%', 'ok'],
-    ['TLS 1.3', '4867 / CHACHA20', '21.6%', 'ok'],
-    ['TLS 1.2', '49195 / ECDHE', '18.4%', 'warn'],
-    ['TLS 1.2', 'RSA legacy', '7.2%', 'risk'],
-    ['QUIC', 'h3 / 443', '14.9%', 'warn'],
-    ['Unknown', 'unknown-sni', '6.8%', 'risk'],
-  ];
+function TlsSuiteMatrix({ rows = [] }: { rows?: string[][] }) {
+  if (!rows.length) return <EncryptedEmptyState description="会话 API 暂无 TLS 版本或密码套件字段" />;
   return (
     <div className="taf-encrypted-suite-matrix">
-      {items.map(([version, suite, ratio, tone]) => (
+      {rows.map(([version, suite, ratio, tone]) => (
         <div key={`${version}-${suite}`} className={`is-${tone}`}>
           <strong>{version}</strong>
           <span>{suite}</span>
@@ -1099,17 +1083,59 @@ function TlsSuiteMatrix() {
   );
 }
 
-function HeartbeatSeries({ bars }: { bars?: number[] }) {
-  const fallbackBars = Array.from({ length: 48 }, (_, index) => 18 + ((index * 19) % 70));
-  const heartbeatBars = bars && bars.length >= 24 ? bars : fallbackBars;
+function FingerprintCertificateOverview({ visuals }: { visuals?: EncryptedTrafficVisuals }) {
+  const certificates = visuals?.certificateRows ?? [];
+  const known = certificates.filter((row) => row[0] && row[0] !== '-').length;
+  const unknown = Math.max(0, certificates.length - known);
+  const weak = visuals?.tlsSuiteRows.filter((row) => row[3]?.includes('risk')).length ?? 0;
+  const items = [
+    ['Issuer 覆盖', `${known}/${certificates.length || 0}`, 'is-info'],
+    ['未知 Issuer', String(unknown), 'is-warn'],
+    ['弱协议', String(weak), 'is-risk'],
+    ['证书样本', String(certificates.length), 'is-ok'],
+  ];
+  return (
+    <div className="taf-fingerprint-cert-overview">
+      {items.map(([label, value, tone]) => <div key={label} className={tone}><span>{label}</span><strong>{value}</strong></div>)}
+      <EncryptedDenseRows columns={['Issuer', '目的 IP', '风险']} rows={certificates.map((row) => [row[0] || '-', row[1] || '-', row[5] || '正常'])} pageSize={3} />
+    </div>
+  );
+}
+
+function FingerprintCertificatePreview({ visuals, onAction }: { visuals?: EncryptedTrafficVisuals; onAction: (label: string, target?: string, description?: string) => void }) {
+  const certificate = visuals?.certificateRows[0] ?? [];
+  const target = certificate[1] || visuals?.ja3Rows[0]?.[0] || '未选择证书';
+  return (
+    <div className="taf-fingerprint-cert-preview">
+      <div className="taf-fingerprint-cert-preview__title"><SafetyCertificateOutlined /><strong>{target}</strong><StatusTag value={certificate[5] || '未知'} /></div>
+      <div className="taf-fingerprint-cert-preview__facts">
+        <span>Issuer</span><strong>{certificate[0] || '未返回'}</strong>
+        <span>TLS / ALPN</span><strong>{`${certificate[2] || '-'} / ${certificate[3] || '-'}`}</strong>
+        <span>关联告警</span><strong>{certificate[4] || '0'}</strong>
+        <span>证书状态</span><strong>{certificate[5] || '未知'}</strong>
+      </div>
+      <div className="taf-fingerprint-cert-preview__actions">
+        <Button size="small" onClick={() => onAction('查看完整证书', target)}>查看完整证书</Button>
+        <Button size="small" type="primary" onClick={() => onAction('创建证据', target)}>创建证据</Button>
+      </div>
+    </div>
+  );
+}
+
+function HeartbeatSeries({ bars, summary }: { bars?: number[]; summary?: EncryptedTrafficVisuals['heartbeatSummary'] }) {
+  const heartbeatBars = bars ?? [];
+  if (!heartbeatBars.length) return <EncryptedEmptyState description="会话 API 暂无可计算的持续时间数据" />;
+  const sorted = [...heartbeatBars].sort((left, right) => left - right);
+  const p95 = sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95))] ?? 0;
+  const average = heartbeatBars.reduce((sum, value) => sum + value, 0) / heartbeatBars.length;
 
   return (
     <div className="taf-encrypted-heartbeat">
       <div className="taf-encrypted-heartbeat-kpis">
         {[
-          ['P95 间隔', '60.4s'],
-          ['抖动 P95', '0.82s'],
-          ['包数', '2,486'],
+          ['P95 间隔', summary ? `${summary.intervalP95Seconds.toFixed(1)}s` : `${p95.toFixed(1)} min`],
+          ['抖动 (P95)', summary ? `${summary.jitterP95Seconds.toFixed(2)}s` : `${average.toFixed(1)} min`],
+          ['包数', summary ? summary.packetCount.toLocaleString('zh-CN') : String(heartbeatBars.length)],
         ].map(([label, value]) => (
           <span key={label}>
             <b>{label}</b>
@@ -1120,6 +1146,51 @@ function HeartbeatSeries({ bars }: { bars?: number[] }) {
       <div className="taf-encrypted-heartbeat-bars">
         <HeartbeatTrendChart values={heartbeatBars} ariaLabel="心跳通信时间序列图" />
       </div>
+    </div>
+  );
+}
+
+function EncryptedEmptyState({ description }: { description: string }) {
+  return <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={description} />;
+}
+
+function useFixedTablePagination<T>(sourceRows: T[], pageSize = 5) {
+  const [page, setPage] = useState(1);
+  const pageCount = Math.max(1, Math.ceil(sourceRows.length / pageSize));
+  useEffect(() => setPage((current) => Math.min(current, pageCount)), [pageCount]);
+  const offset = (page - 1) * pageSize;
+  return {
+    rows: sourceRows.slice(offset, offset + pageSize),
+    page,
+    pageSize,
+    total: sourceRows.length,
+    onChange: setPage,
+  };
+}
+
+function FixedTablePagination({
+  page,
+  pageSize,
+  total,
+  onChange,
+}: {
+  rows: unknown[];
+  page: number;
+  pageSize: number;
+  total: number;
+  onChange: (page: number) => void;
+}) {
+  return (
+    <div className="taf-encrypted-table-pagination">
+      <Pagination
+        size="small"
+        current={page}
+        pageSize={pageSize}
+        total={total}
+        showSizeChanger={false}
+        hideOnSinglePage={false}
+        onChange={onChange}
+      />
     </div>
   );
 }
@@ -1168,10 +1239,9 @@ function EgressProfile({
   selectedDestination?: string;
   onSelectDestination?: (destination: string) => void;
 }) {
-  const kpis = visuals?.egressKpis ?? [];
   const nodes = visuals?.egressMapNodes ?? [];
   const mapPoints = [
-    { name: '园区出口', coord: [500, 265] as [number, number], value: 1, level: 'low' as const },
+    { name: '园区出口', coord: [745, 225] as [number, number], value: 1, level: 'low' as const },
     ...nodes.map((node) => ({
       name: node.label,
       coord: [Math.round(node.x * 10), Math.round(node.y * 5)] as [number, number],
@@ -1182,7 +1252,7 @@ function EgressProfile({
   ];
   const mapFlows = nodes.map((node) => ({
     name: `园区出口 -> ${node.label}`,
-    from: [500, 265] as [number, number],
+    from: [745, 225] as [number, number],
     to: [Math.round(node.x * 10), Math.round(node.y * 5)] as [number, number],
     value: Math.max(1, Number.parseFloat(node.flow) || Number.parseFloat(node.sessions) || 1),
     level: egressWorldLevel(node.risk),
@@ -1191,15 +1261,6 @@ function EgressProfile({
 
   return (
     <div className="taf-encrypted-egress">
-      <div className="taf-encrypted-egress-kpis">
-        {kpis.map(([label, value, delta]) => (
-          <div key={label}>
-            <span>{label}</span>
-            <strong>{value}</strong>
-            <em>{delta}</em>
-          </div>
-        ))}
-      </div>
       <div className="taf-encrypted-map">
         <WorldActivityMap
           variant="egress"
@@ -1231,9 +1292,7 @@ function EgressAvailability({ availability }: { availability?: EncryptedTrafficV
     ? '外传 API 已接入'
     : state === 'partial'
       ? '会话补全中'
-      : state === 'simulated'
-        ? '仿真数据（API 空）'
-        : '外传数据未返回';
+      : '外传数据未返回';
   return <span className={`taf-egress-availability is-${state}`} title={availability?.detail}>{label}</span>;
 }
 
@@ -1250,9 +1309,10 @@ function EgressDestinationTable({
   selectedDestination: string;
   onSelectDestination: (destination: string) => void;
 }) {
-  if (!rows.length) return <EgressEmptyState message="外传分析接口未返回目的地排行。" />;
+  const pagination = useFixedTablePagination(rows);
+  if (!rows.length) return <div className="taf-encrypted-destinations" data-paginated-table="egress-destinations"><div className="taf-encrypted-table-empty"><EgressEmptyState message="外传分析接口未返回目的地排行。" /></div><FixedTablePagination {...pagination} /></div>;
   return (
-    <div className="taf-encrypted-destinations">
+    <div className="taf-encrypted-destinations" data-paginated-table="egress-destinations">
       <div>
         <span>目的 IP / 域名</span>
         <span>位置 / ASN</span>
@@ -1260,7 +1320,7 @@ function EgressDestinationTable({
         <span>会话数</span>
         <span>风险</span>
       </div>
-      {rows.map(([ip, location, flow, sessions, risk]) => (
+      {pagination.rows.map(([ip, location, flow, sessions, risk]) => (
         <button key={`${ip}-${location}`} type="button" className={ip === selectedDestination ? 'is-selected' : ''} onClick={() => onSelectDestination(ip)}>
           <strong>{ip}</strong>
           <span>{location}</span>
@@ -1269,6 +1329,7 @@ function EgressDestinationTable({
           <StatusTag value={risk} />
         </button>
       ))}
+      <FixedTablePagination {...pagination} />
     </div>
   );
 }
@@ -1360,14 +1421,14 @@ function EgressActionRail({
   onExport: () => void;
   onNavigate: (path: string) => void;
 }) {
-  const highRisk = visuals?.destinationRows.filter((row) => row[4]?.includes('高')).length ?? 0;
+  const highRisk = visuals?.egressRiskScore ?? visuals?.destinationRows.filter((row) => row[4]?.includes('高')).length ?? 0;
   return (
     <div className="taf-egress-action-rail">
       <WorkPanel title="外联风险">
         <div className="taf-egress-risk-gauge">
           <strong>{highRisk}</strong>
-          <span>高风险目的地</span>
-          <em>{visuals?.egressAvailability.state === 'live' ? '外传 API 已接入' : '数据状态待补全'}</em>
+          <span>{visuals?.egressRiskScore ? '高风险' : '高风险目的地'}</span>
+          <em>{visuals?.egressRiskDelta || (visuals?.egressAvailability.state === 'live' ? '外传 API 已接入' : '数据状态待补全')}</em>
         </div>
       </WorkPanel>
       <WorkPanel title="快速定位">
@@ -1415,6 +1476,7 @@ function EvidenceCenterRail({
   const [protocol, setProtocol] = useState('全部');
   const [risk, setRisk] = useState('全部');
   const [sniScope, setSniScope] = useState('全部');
+  const hasTarget = Boolean(target && !target.includes('未选择对象'));
 
   useEffect(() => setQuery(target), [target]);
 
@@ -1428,7 +1490,7 @@ function EvidenceCenterRail({
           <div className="taf-evidence-rail-summary__details">
             <strong>{completion}%</strong>
             <span>证据完整度</span>
-            <em>{evidence?.availability.state === 'live' ? '真实证据 API 已接入' : evidence?.availability.state === 'simulated' ? '仿真证据样本' : '证据数据补全中'}</em>
+            <em>{evidence?.availability.state === 'live' ? '真实证据 API 已接入' : evidence?.availability.state === 'partial' ? '真实证据部分返回' : '证据数据未返回'}</em>
           </div>
         </div>
       </WorkPanel>
@@ -1444,18 +1506,18 @@ function EvidenceCenterRail({
       </WorkPanel>
       <WorkPanel title="证据动作">
         <div className="taf-evidence-quick-actions">
-          <Button size="small" onClick={() => onAction('生成取证任务', target)}>生成取证任务</Button>
-          <Button size="small" onClick={() => onAction('申请证据保全', target)}>申请证据保全</Button>
-          <Button size="small" onClick={() => onAction('关联告警', target)}>关联告警</Button>
-          <Button size="small" onClick={() => onAction('发起专家复核', target)}>发起专家复核</Button>
-          <Button size="small" onClick={() => onAction('标记证据缺口', target)}>标记证据缺口</Button>
-          <Button size="small" onClick={() => onAction('提交处置建议', target)}>提交处置建议</Button>
+          <Button size="small" disabled={!hasTarget} onClick={() => onAction('生成取证任务', target)}>生成取证任务</Button>
+          <Button size="small" disabled={!hasTarget} onClick={() => onAction('申请证据保全', target)}>申请证据保全</Button>
+          <Button size="small" disabled={!hasTarget} onClick={() => onAction('关联告警', target)}>关联告警</Button>
+          <Button size="small" disabled={!hasTarget} onClick={() => onAction('发起专家复核', target)}>发起专家复核</Button>
+          <Button size="small" disabled={!hasTarget} onClick={() => onAction('标记证据缺口', target)}>标记证据缺口</Button>
+          <Button size="small" disabled={!hasTarget} onClick={() => onAction('提交处置建议', target)}>提交处置建议</Button>
         </div>
       </WorkPanel>
       <WorkPanel title="报告与审计">
         <div className="taf-evidence-quick-actions">
-          <Button size="small" onClick={() => onAction('导出证据报告', target)}>导出证据报告</Button>
-          <Button size="small" onClick={() => onAction('写入审计日志', target)}>写入审计日志</Button>
+          <Button size="small" disabled={!hasTarget} onClick={() => onAction('导出证据报告', target)}>导出证据报告</Button>
+          <Button size="small" disabled={!hasTarget} onClick={() => onAction('写入审计日志', target)}>写入审计日志</Button>
         </div>
       </WorkPanel>
       <WorkPanel title="证据缺口 Top5">
@@ -1467,41 +1529,215 @@ function EvidenceCenterRail({
   );
 }
 
-function LinkActions() {
-  const actions = [
-    ['关联告警 (18)', <ApiOutlined />],
-    ['关联战役 (2)', <RadarChartOutlined />],
-    ['攻击链分析', <ThunderboltOutlined />],
-    ['实体图谱', <GlobalOutlined />],
-    ['取证分析', <FileSearchOutlined />],
-    ['PCAP 检索', <EyeOutlined />],
+function FingerprintRail({
+  visuals,
+  target,
+  onAction,
+  onNavigate,
+}: {
+  visuals?: EncryptedTrafficVisuals;
+  target: string;
+  onAction: (label: string, target?: string, description?: string) => void;
+  onNavigate: (path: string) => void;
+}) {
+  const fingerprintKpis = new Map((visuals?.tabKpis.fingerprint ?? []).map((row) => [row[0], row[1]]));
+  const suspicious = fingerprintKpis.get('可疑 JA3') ?? visuals?.ja3Rows.filter((row) => row[5]?.includes('高')).length ?? 0;
+  const anomalyRows = [
+    ['可疑 JA3', suspicious],
+    ['未知 SNI', fingerprintKpis.get('未知 SNI') ?? 0],
+    ['异常 Issuer', fingerprintKpis.get('异常 Issuer') ?? 0],
+    ['TLS1.0/1.1 会话', fingerprintKpis.get('TLS1.0/1.1') ?? 0],
+    ['弱密码套件', fingerprintKpis.get('弱密码套件') ?? 0],
   ];
   return (
-    <div className="taf-encrypted-action-grid">
-      {actions.map(([label, icon]) => <Button key={String(label)} size="small" icon={icon}>{label}</Button>)}
+    <div className="taf-fingerprint-action-rail">
+      <WorkPanel title="指纹异常（近 24 小时）" extra={<Button size="small" type="link" onClick={() => onNavigate('/encrypted-traffic?tab=fingerprint')}>{'查看全部异常 >'}</Button>}>
+        <div className="taf-encrypted-rail-stat-list">{anomalyRows.map(([label, value]) => <div key={String(label)}><span>{label}</span><strong>{value}</strong></div>)}</div>
+      </WorkPanel>
+      <WorkPanel title="快速定位">
+        <div className="taf-encrypted-rail-actions">
+          <Button size="small" onClick={() => onAction('创建 JA3 规则', visuals?.ja3Rows[0]?.[0] || target)}>创建 JA3 规则</Button>
+          <Button size="small" onClick={() => onNavigate(`/encrypted-traffic?tab=evidence-center&destination=${encodeURIComponent(target)}`)}>查看证书证据</Button>
+          <Button size="small" onClick={() => onAction('导出指纹报告', target)}>导出指纹报告</Button>
+          <Button size="small" onClick={() => onAction('加入观察名单', target)}>加入观察名单</Button>
+        </div>
+      </WorkPanel>
+      <WorkPanel title="修复建议">
+        <AdviceList rows={visuals?.adviceRows} onAction={(label) => onAction(label, target)} />
+      </WorkPanel>
+      <WorkPanel title="证据与报告">
+        <div className="taf-encrypted-rail-actions">
+          <Button size="small" onClick={() => onAction('指纹分析报告', target)}>指纹分析报告</Button>
+          <Button size="small" onClick={() => onNavigate(`/forensics?query=${encodeURIComponent(target)}`)}>PCAP 证据检索</Button>
+          <Button size="small" onClick={() => onAction('写入审计日志', target)}>审计与证据导出</Button>
+        </div>
+      </WorkPanel>
     </div>
   );
 }
 
-function ExportActions() {
-  const actions = [
-    ['创建告警', <LockOutlined />],
-    ['创建战役', <RadarChartOutlined />],
-    ['生成报告', <FileSearchOutlined />],
-    ['导出 PCAP 索引', <DownloadOutlined />],
-    ['导出证书', <SafetyCertificateOutlined />],
-    ['写入审计日志', <CalendarOutlined />],
+function TunnelDetectionRail({
+  visuals,
+  target,
+  onAction,
+  onNavigate,
+}: {
+  visuals?: EncryptedTrafficVisuals;
+  target: string;
+  onAction: (label: string, target?: string, description?: string) => void;
+  onNavigate: (path: string) => void;
+}) {
+  const distribution = visuals?.tunnelRiskDistribution ?? [];
+  const highRisk = distribution.find((item) => item.status === 'risk')?.value ?? visuals?.tunnelRows.filter((row) => row[6]?.includes('高')).length ?? 0;
+  return (
+    <div className="taf-tunnel-action-rail">
+      <WorkPanel title="隧道异常">
+        <div className="taf-egress-risk-gauge"><strong>{highRisk}</strong><span>高风险候选</span><em>{visuals?.tabKpis.tunnelDetection?.[0]?.[1] ?? visuals?.tunnelRows.length ?? 0} 条待研判</em></div>
+      </WorkPanel>
+      <WorkPanel title="快速定位">
+        <div className="taf-encrypted-rail-actions">
+          <Button size="small" danger onClick={() => onAction('创建隧道告警', target)}>创建隧道告警</Button>
+          <Button size="small" onClick={() => onNavigate(`/encrypted-traffic?tab=evidence-center&destination=${encodeURIComponent(target)}`)}>查看会话证据</Button>
+          <Button size="small" onClick={() => onAction('加入观察名单', target)}>加入观察名单</Button>
+        </div>
+      </WorkPanel>
+      <WorkPanel title="修复建议">
+        <AdviceList rows={visuals?.adviceRows} onAction={(label) => onAction(label, target)} />
+      </WorkPanel>
+      <WorkPanel title="证据与报告">
+        <div className="taf-encrypted-rail-actions">
+          <Button size="small" onClick={() => onAction('导出隧道检测报告', target)}>导出隧道检测报告</Button>
+          <Button size="small" onClick={() => onNavigate(`/forensics?query=${encodeURIComponent(target)}`)}>跳转证据中心</Button>
+        </div>
+      </WorkPanel>
+    </div>
+  );
+}
+
+function EncryptedContextRail({
+  activeTab,
+  visuals,
+  target,
+  onAction,
+  onNavigate,
+}: {
+  activeTab: EncryptedTrafficTabSlug;
+  visuals?: EncryptedTrafficVisuals;
+  target: string;
+  onAction: (label: string, target?: string, description?: string) => void;
+  onNavigate: (path: string) => void;
+}) {
+  const fingerprintTarget = visuals?.ja3Rows[0]?.[0] || target;
+  const tunnelTarget = visuals?.tunnelRows[0]?.[2] || target;
+  const contextTarget = activeTab === 'fingerprint' ? fingerprintTarget : activeTab === 'tunnel-detection' ? tunnelTarget : target;
+  if (activeTab === 'overview') {
+    return <OverviewEgressRail visuals={visuals} target={contextTarget} onAction={onAction} onNavigate={onNavigate} />;
+  }
+  const title = activeTab === 'fingerprint' ? '指纹分析摘要' : activeTab === 'tunnel-detection' ? '隧道候选摘要' : '外联画像';
+  const summary = activeTab === 'fingerprint'
+    ? `${visuals?.ja3Rows.length ?? 0} 个当前返回指纹，点击指纹详情查看字段证据。`
+    : activeTab === 'tunnel-detection'
+      ? `${visuals?.tunnelRows.length ?? 0} 个待研判候选；候选不等同于已确认告警。`
+      : `${visuals?.destinationRows.length ?? 0} 个公网外联候选目的地。`;
+  return (
+    <div className={`taf-encrypted-context-rail taf-encrypted-context-rail--${activeTab}`}>
+      <WorkPanel title={title} extra={<Button size="small" type="link" onClick={() => onNavigate(`/encrypted-traffic?tab=${activeTab}`)}>查看详情</Button>}>
+        <div className="taf-encrypted-context-summary"><strong>{contextTarget || '未选择对象'}</strong><span>{summary}</span></div>
+      </WorkPanel>
+      <WorkPanel title="处置与分析建议">
+        <AdviceList rows={visuals?.adviceRows} onAction={(label) => onAction(label, contextTarget)} />
+      </WorkPanel>
+      <WorkPanel title="关联与下钻">
+        <LinkActions target={contextTarget} onNavigate={onNavigate} />
+      </WorkPanel>
+      <WorkPanel title="生成与导出">
+        <ExportActions target={contextTarget} onAction={onAction} onNavigate={onNavigate} />
+      </WorkPanel>
+    </div>
+  );
+}
+
+function OverviewEgressRail({
+  visuals,
+  target,
+  onAction,
+  onNavigate,
+}: {
+  visuals?: EncryptedTrafficVisuals;
+  target: string;
+  onAction: (label: string, target?: string, description?: string) => void;
+  onNavigate: (path: string) => void;
+}) {
+  const nodes = visuals?.egressMapNodes ?? [];
+  const mapPoints = [
+    { name: '园区出口', coord: [745, 225] as [number, number], value: 1, level: 'low' as const },
+    ...nodes.map((node) => ({
+      name: node.label,
+      coord: [Math.round(node.x * 10), Math.round(node.y * 5)] as [number, number],
+      value: Math.max(1, Number.parseFloat(node.flow) || 1),
+      level: egressWorldLevel(node.risk),
+    })),
+  ];
+  const mapFlows = nodes.map((node) => ({
+    name: `园区出口 -> ${node.label}`,
+    from: [745, 225] as [number, number],
+    to: [Math.round(node.x * 10), Math.round(node.y * 5)] as [number, number],
+    value: Math.max(1, Number.parseFloat(node.flow) || 1),
+    level: egressWorldLevel(node.risk),
+  }));
+  return (
+    <div className="taf-encrypted-context-rail taf-encrypted-overview-rail">
+      <WorkPanel title="外联画像" extra={<Button size="small" type="link" onClick={() => onNavigate('/encrypted-traffic?tab=egress-profile')}>{'查看详情 >'}</Button>}>
+        <div className="taf-encrypted-overview-rail__kpis">
+          {(visuals?.egressKpis ?? []).slice(0, 4).map(([label, value, delta]) => <div key={label}><span>{label}</span><strong>{value}</strong><em>{delta}</em></div>)}
+        </div>
+        <div className="taf-encrypted-overview-rail__map">
+          <WorldActivityMap variant="egress" points={mapPoints} flows={mapFlows} ariaLabel="总览外联目的地地图" />
+        </div>
+        <EgressDestinationTable rows={(visuals?.destinationRows ?? []).slice(0, 7)} selectedDestination="" onSelectDestination={() => {}} />
+      </WorkPanel>
+      <WorkPanel title="处置与分析建议"><AdviceList rows={visuals?.adviceRows} onAction={(label) => onAction(label, target)} /></WorkPanel>
+      <WorkPanel title="关联与下钻"><LinkActions target={target} onNavigate={onNavigate} /></WorkPanel>
+      <WorkPanel title="生成与导出"><ExportActions target={target} onAction={onAction} onNavigate={onNavigate} /></WorkPanel>
+    </div>
+  );
+}
+
+function LinkActions({ target, onNavigate }: { target: string; onNavigate: (path: string) => void }) {
+  const actions: Array<[string, ReactNode, string]> = [
+    ['关联告警（18）', <ApiOutlined />, `/alerts?encrypted=${encodeURIComponent(target)}`],
+    ['关联战役（2）', <RadarChartOutlined />, `/campaigns?encrypted=${encodeURIComponent(target)}`],
+    ['攻击链分析', <ThunderboltOutlined />, `/attack-chains?encrypted=${encodeURIComponent(target)}`],
+    ['实体图谱', <GlobalOutlined />, `/graph?focus=${encodeURIComponent(target)}`],
+    ['取证分析', <FileSearchOutlined />, `/forensics?encrypted=${encodeURIComponent(target)}`],
+    ['PCAP 检索', <EyeOutlined />, `/forensics?query=${encodeURIComponent(target)}`],
   ];
   return (
     <div className="taf-encrypted-action-grid">
-      {actions.map(([label, icon]) => <Button key={String(label)} size="small" icon={icon}>{label}</Button>)}
+      {actions.map(([label, icon, path]) => <Button key={String(label)} size="small" icon={icon} onClick={() => onNavigate(String(path))}>{label}</Button>)}
+    </div>
+  );
+}
+
+function ExportActions({ target, onAction, onNavigate }: { target: string; onAction: (label: string, target?: string, description?: string) => void; onNavigate: (path: string) => void }) {
+  const actions: Array<[string, ReactNode, () => void]> = [
+    ['创建告警', <LockOutlined />, () => onAction('创建外联告警', target)],
+    ['创建战役', <RadarChartOutlined />, () => onNavigate(`/campaigns?createFrom=${encodeURIComponent(target)}`)],
+    ['生成报告', <FileSearchOutlined />, () => onAction('生成分析报告', target)],
+    ['导出 PCAP 索引', <DownloadOutlined />, () => onNavigate(`/forensics?query=${encodeURIComponent(target)}`)],
+    ['导出证书', <SafetyCertificateOutlined />, () => onNavigate(`/encrypted-traffic?tab=evidence-center&destination=${encodeURIComponent(target)}`)],
+    ['写入审计日志', <CalendarOutlined />, () => onAction('写入审计日志', target)],
+  ];
+  return (
+    <div className="taf-encrypted-action-grid">
+      {actions.map(([label, icon, handler]) => <Button key={String(label)} size="small" icon={icon} onClick={handler}>{label}</Button>)}
     </div>
   );
 }
 
 function renderEncryptedCell(column: string, value: unknown) {
   if (column === '风险等级') return <StatusTag value={value} />;
-  if (column === '操作') return <Button size="small" type="link">下钻</Button>;
+  if (column === '操作') return <Button size="small" type="link" disabled title="请在证据中心选择会话后下钻">待关联</Button>;
   if (column === '协议') return <span className="taf-encrypted-protocol-cell"><CloudServerOutlined />{String(value)}</span>;
   if (column === 'JA3' || column === 'JA3S') return <span className="taf-encrypted-hash"><KeyOutlined />{String(value)}</span>;
   if (column === '证书详情') return <StatusTag value={value} />;

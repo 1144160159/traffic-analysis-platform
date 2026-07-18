@@ -1,0 +1,368 @@
+{
+  "capturedAt": "2026-07-06T13:43:57.021Z",
+  "cdp": "http://127.0.0.1:9224",
+  "cases": [
+    {
+      "url": "http://10.0.5.8:4196/login",
+      "title": "园区网络全流量采集与分析系统",
+      "devicePixelRatio": 1.250000037252903,
+      "viewport": {
+        "width": 1229,
+        "height": 691
+      },
+      "rootClass": "taf-login",
+      "visualMode": false,
+      "hologram": {
+        "selector": ".taf-login__hologram",
+        "pseudo": null,
+        "display": "grid",
+        "visibility": "visible",
+        "opacity": "1",
+        "position": "relative",
+        "left": "0px",
+        "top": "0px",
+        "width": "235.925px",
+        "height": "235.925px",
+        "transform": "none",
+        "objectFit": "fill",
+        "backgroundImage": "none",
+        "clipPath": "none",
+        "zIndex": "auto",
+        "rect": {
+          "x": 192.3833465576172,
+          "y": 132,
+          "width": 235.92501831054688,
+          "height": 235.92501831054688,
+          "top": 132,
+          "right": 428.30836486816406,
+          "bottom": 367.9250183105469,
+          "left": 192.3833465576172
+        },
+        "src": null
+      },
+      "hologramScreenshot": {
+        "selector": ".taf-login__hologram-screenshot",
+        "pseudo": null,
+        "display": "none",
+        "visibility": "visible",
+        "opacity": "1",
+        "position": "static",
+        "left": "auto",
+        "top": "auto",
+        "width": "auto",
+        "height": "auto",
+        "transform": "none",
+        "objectFit": "fill",
+        "backgroundImage": "none",
+        "clipPath": "none",
+        "zIndex": "auto",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "src": "http://10.0.5.8:4196/src/assets/screenshot-icons/login-hologram-shield-alpha.png"
+      },
+      "shieldCore": {
+        "selector": ".taf-login__shield-core",
+        "pseudo": null,
+        "display": "grid",
+        "visibility": "visible",
+        "opacity": "1",
+        "position": "relative",
+        "left": "0px",
+        "top": "0px",
+        "width": "148px",
+        "height": "176px",
+        "transform": "none",
+        "objectFit": "fill",
+        "backgroundImage": "linear-gradient(155deg, rgba(24, 128, 255, 0.24), rgba(0, 38, 86, 0.44)), none",
+        "clipPath": "polygon(50% 0px, 93% 14%, 88% 70%, 50% 100%, 12% 70%, 7% 14%)",
+        "zIndex": "1",
+        "rect": {
+          "x": 236.3416748046875,
+          "y": 161.95834350585938,
+          "width": 148.00001525878906,
+          "height": 176.00001525878906,
+          "top": 161.95834350585938,
+          "right": 384.34169006347656,
+          "bottom": 337.95835876464844,
+          "left": 236.3416748046875
+        },
+        "src": null
+      },
+      "shieldIcon": {
+        "selector": ".taf-login__shield-icon--screenshot",
+        "pseudo": null,
+        "display": "block",
+        "visibility": "visible",
+        "opacity": "1",
+        "position": "relative",
+        "left": "0px",
+        "top": "0px",
+        "width": "144.8px",
+        "height": "184.15px",
+        "transform": "none",
+        "objectFit": "fill",
+        "backgroundImage": "none",
+        "clipPath": "none",
+        "zIndex": "2",
+        "rect": {
+          "x": 237.94168090820312,
+          "y": 163.55833435058594,
+          "width": 144.8000030517578,
+          "height": 184.15000915527344,
+          "top": 163.55833435058594,
+          "right": 382.74168395996094,
+          "bottom": 347.7083435058594,
+          "left": 237.94168090820312
+        },
+        "src": "http://10.0.5.8:4196/src/assets/screenshot-icons/login-shield-screenshot.png"
+      },
+      "hologramBefore": {
+        "selector": ".taf-login__hologram",
+        "pseudo": "::before",
+        "display": "block",
+        "content": "\"\"",
+        "opacity": "1",
+        "width": "192.408px",
+        "height": "192.408px",
+        "transform": "none",
+        "backgroundImage": "none",
+        "clipPath": "none"
+      },
+      "hologramAfter": {
+        "selector": ".taf-login__hologram",
+        "pseudo": "::after",
+        "display": "block",
+        "content": "\"\"",
+        "opacity": "1",
+        "width": "187.675px",
+        "height": "42.4583px",
+        "transform": "matrix3d(1, 0, 0, 0, 0, 0.309017, 0.951057, -0.00365791, 0, -0.951057, 0.309017, -0.00118853, 0, 0, 0, 1)",
+        "backgroundImage": "none",
+        "clipPath": "none"
+      },
+      "cropClip": {
+        "x": 102,
+        "y": 42,
+        "width": 416,
+        "height": 416
+      },
+      "screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/web/ui/evidence/ui-image-breakdowns/pages/login/login-shield-normal-full.png",
+      "cropScreenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/web/ui/evidence/ui-image-breakdowns/pages/login/login-shield-normal.png",
+      "runtime": {
+        "console": [
+          {
+            "type": "debug",
+            "text": "[vite] connecting..."
+          },
+          {
+            "type": "debug",
+            "text": "[vite] connected."
+          },
+          {
+            "type": "info",
+            "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+          },
+          {
+            "type": "warning",
+            "text": "⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition."
+          },
+          {
+            "type": "warning",
+            "text": "⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath."
+          }
+        ],
+        "pageerror": [],
+        "requestfailed": []
+      }
+    },
+    {
+      "url": "http://10.0.5.8:4196/login?loginDefaultSiteAlign=1&__taf_visual=1",
+      "title": "园区网络全流量采集与分析系统",
+      "devicePixelRatio": 1.250000037252903,
+      "viewport": {
+        "width": 1229,
+        "height": 691
+      },
+      "rootClass": "taf-login taf-login--visual-target",
+      "visualMode": true,
+      "hologram": {
+        "selector": ".taf-login__hologram",
+        "pseudo": null,
+        "display": "grid",
+        "visibility": "visible",
+        "opacity": "1",
+        "position": "relative",
+        "left": "0px",
+        "top": "0px",
+        "width": "515px",
+        "height": "368px",
+        "transform": "matrix(1, 0, 0, 1, -4, 0)",
+        "objectFit": "fill",
+        "backgroundImage": "none",
+        "clipPath": "none",
+        "zIndex": "auto",
+        "rect": {
+          "x": 48.841670989990234,
+          "y": 132,
+          "width": 515,
+          "height": 368.0000305175781,
+          "top": 132,
+          "right": 563.8416709899902,
+          "bottom": 500.0000305175781,
+          "left": 48.841670989990234
+        },
+        "src": null
+      },
+      "hologramScreenshot": {
+        "selector": ".taf-login__hologram-screenshot",
+        "pseudo": null,
+        "display": "block",
+        "visibility": "visible",
+        "opacity": "1",
+        "position": "absolute",
+        "left": "0px",
+        "top": "30px",
+        "width": "515px",
+        "height": "310px",
+        "transform": "none",
+        "objectFit": "cover",
+        "backgroundImage": "none",
+        "clipPath": "none",
+        "zIndex": "3",
+        "rect": {
+          "x": 48.841670989990234,
+          "y": 162.00001525878906,
+          "width": 515,
+          "height": 310.0000305175781,
+          "top": 162.00001525878906,
+          "right": 563.8416709899902,
+          "bottom": 472.0000457763672,
+          "left": 48.841670989990234
+        },
+        "src": "http://10.0.5.8:4196/src/assets/screenshot-icons/login-hologram-shield-alpha.png"
+      },
+      "shieldCore": {
+        "selector": ".taf-login__shield-core",
+        "pseudo": null,
+        "display": "none",
+        "visibility": "visible",
+        "opacity": "1",
+        "position": "relative",
+        "left": "auto",
+        "top": "auto",
+        "width": "214px",
+        "height": "260px",
+        "transform": "none",
+        "objectFit": "fill",
+        "backgroundImage": "none",
+        "clipPath": "none",
+        "zIndex": "1",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "src": null
+      },
+      "shieldIcon": {
+        "selector": ".taf-login__shield-icon--screenshot",
+        "pseudo": null,
+        "display": "block",
+        "visibility": "visible",
+        "opacity": "1",
+        "position": "relative",
+        "left": "auto",
+        "top": "auto",
+        "width": "100%",
+        "height": "100%",
+        "transform": "none",
+        "objectFit": "contain",
+        "backgroundImage": "none",
+        "clipPath": "none",
+        "zIndex": "2",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0,
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        },
+        "src": "http://10.0.5.8:4196/src/assets/screenshot-icons/login-shield-screenshot.png"
+      },
+      "hologramBefore": {
+        "selector": ".taf-login__hologram",
+        "pseudo": "::before",
+        "display": "none",
+        "content": "\"\"",
+        "opacity": "1",
+        "width": "auto",
+        "height": "auto",
+        "transform": "none",
+        "backgroundImage": "linear-gradient(rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 10%, rgba(0, 141, 255, 0.2) 10.2%, rgba(0, 141, 255, 0.2) 10.6%, rgba(0, 0, 0, 0) 10.8%, rgba(0, 0, 0, 0) 100%), linear-gradient(rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 24%, rgba(0, 141, 255, 0.18) 24.2%, rgba(0, 141, 255, 0.18) 24.6%, rgba(0, 0, 0, 0) 24.8%, rgba(0, 0, 0, 0) 100%), repeating-linear-gradient(rgba(0, 126, 255, 0.11) 0px, rgba(0, 126, 255, 0.11) 4px, rgba(0, 0, 0, 0) 4px, rgba(0, 0, 0, 0) 13px), repeating-linear-gradient(rgba(0, 126, 255, 0.09) 0px, rgba(0, 126, 255, 0.09) 4px, rgba(0, 0, 0, 0) 4px, rgba(0, 0, 0, 0) 13px), radial-gradient(circle, rgba(0, 166, 255, 0.46) 0px, rgba(0, 166, 255, 0.46) 1.2px, rgba(0, 0, 0, 0) 2px), radial-gradient(circle, rgba(0, 166, 255, 0.38) 0px, rgba(0, 166, 255, 0.38) 1.2px, rgba(0, 0, 0, 0) 2px), repeating-linear-gradient(rgba(0, 116, 226, 0.16) 0px, rgba(0, 116, 226, 0.16) 5px, rgba(0, 0, 0, 0) 5px, rgba(0, 0, 0, 0) 15px), repeating-linear-gradient(rgba(0, 116, 226, 0.13) 0px, rgba(0, 116, 226, 0.13) 5px, rgba(0, 0, 0, 0) 5px, rgba(0, 0, 0, 0) 15px), repeating-linear-gradient(rgba(0, 116, 226, 0.1) 0px, rgba(0, 116, 226, 0.1) 5px, rgba(0, 0, 0, 0) 5px, rgba(0, 0, 0, 0) 15px), repeating-radial-gradient(circle at 50% 58%, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 26px, rgba(0, 130, 255, 0.08) 27px, rgba(0, 130, 255, 0.08) 28px, rgba(0, 0, 0, 0) 29px, rgba(0, 0, 0, 0) 40px), radial-gradient(circle at 50% 58%, rgba(0, 0, 0, 0) 0px, rgba(0, 0, 0, 0) 39%, rgba(0, 126, 255, 0.05) 40%, rgba(0, 0, 0, 0) 62%)",
+        "clipPath": "none"
+      },
+      "hologramAfter": {
+        "selector": ".taf-login__hologram",
+        "pseudo": "::after",
+        "display": "none",
+        "content": "\"\"",
+        "opacity": "1",
+        "width": "auto",
+        "height": "20%",
+        "transform": "none",
+        "backgroundImage": "none",
+        "clipPath": "none"
+      },
+      "cropClip": {
+        "x": 0,
+        "y": 42,
+        "width": 696,
+        "height": 549
+      },
+      "screenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/web/ui/evidence/ui-image-breakdowns/pages/login/login-shield-visual-target-full.png",
+      "cropScreenshot": "/home/wangwt/phase_2/code/traffic-analysis-platform/web/ui/evidence/ui-image-breakdowns/pages/login/login-shield-visual-target.png",
+      "runtime": {
+        "console": [
+          {
+            "type": "debug",
+            "text": "[vite] connecting..."
+          },
+          {
+            "type": "debug",
+            "text": "[vite] connected."
+          },
+          {
+            "type": "info",
+            "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+          },
+          {
+            "type": "warning",
+            "text": "⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition."
+          },
+          {
+            "type": "warning",
+            "text": "⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath."
+          }
+        ],
+        "pageerror": [],
+        "requestfailed": []
+      }
+    }
+  ]
+}

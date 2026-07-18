@@ -53,6 +53,7 @@ const baselineOverlays: OverlayContract[] = [
 
 export function BaselineWorkbenchPage({ route }: { route: NavRoute }) {
   const [searchParams, setSearchParams] = useSearchParams();
+  const sourceAssetId = searchParams.get('assetId') ?? '';
   const activeTab = resolveBaselineTab(searchParams.get('tab'), route.page.tabs);
   const { data, error, isError, isLoading, refetch } = useQuery({
     queryKey: ['page-snapshot', route.id],
@@ -101,6 +102,8 @@ export function BaselineWorkbenchPage({ route }: { route: NavRoute }) {
         />
       )}
 
+      {sourceAssetId && <Alert showIcon type="info" message="已限定资产台账上下文" description={`当前基线范围资产 ID：${sourceAssetId}`} />}
+
       <Tabs
         className="taf-baseline-tabs"
         activeKey={activeTab}
@@ -115,7 +118,7 @@ export function BaselineWorkbenchPage({ route }: { route: NavRoute }) {
       <div className="taf-baseline-filter">
         <label>
           <span>资产组</span>
-          <Select size="small" value="全部资产组" options={[{ value: '全部资产组' }, { value: '实验楼' }, { value: '办公区' }]} />
+          <Select size="small" value={sourceAssetId || '全部资产组'} options={[{ value: sourceAssetId || '全部资产组', label: sourceAssetId || '全部资产组' }]} />
         </label>
         <label>
           <span>历史窗口</span>
