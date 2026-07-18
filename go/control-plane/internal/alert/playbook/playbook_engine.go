@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -35,6 +36,23 @@ type Playbook struct {
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+
+	ApprovalPolicy ApprovalPolicy `json:"approval_policy"`
+	RollbackPolicy RollbackPolicy `json:"rollback_policy"`
+}
+
+// ApprovalPolicy and RollbackPolicy are durable safety controls. Keeping them
+// in the definition prevents the UI from inferring authorization semantics
+// from labels or action names.
+type ApprovalPolicy struct {
+	Required       bool   `json:"required"`
+	MinimumRole   string `json:"minimum_role"`
+	TwoPersonRule bool   `json:"two_person_rule"`
+}
+
+type RollbackPolicy struct {
+	Supported bool `json:"supported"`
+	Automatic bool `json:"automatic"`
 }
 
 type Trigger struct {
@@ -168,7 +186,7 @@ func (e *PlaybookEngine) Evaluate(ctx context.Context, alert *AlertContext) []*E
 		}
 
 		// 执行 Actions
-		result := e.executePlaybook(ctx, pb, alert)
+		result := e.executePlaybook(ctx, pb, alert, false)
 		results = append(results, result)
 		e.mu.Lock()
 		pb.RunCount++
@@ -203,7 +221,23 @@ func (e *PlaybookEngine) ExecuteByName(ctx context.Context, name string, alert *
 	pb.RunCount++
 	e.mu.Unlock()
 
-	return e.executePlaybook(ctx, pb, alert), nil
+	return e.executePlaybook(ctx, pb, alert, false), nil
+}
+
+// Drill evaluates a tenant-owned definition without applying an external
+// network, endpoint or notification mutation. The API persists the result as
+// a drill execution and must not represent it as a live response action.
+func (e *PlaybookEngine) Drill(ctx context.Context, pb *Playbook, alert *AlertContext) (*ExecutionResult, error) {
+	if e == nil || e.executor == nil {
+		return nil, fmt.Errorf("playbook engine is not available")
+	}
+	if pb == nil || alert == nil {
+		return nil, fmt.Errorf("playbook definition and alert context are required")
+	}
+	if strings.TrimSpace(pb.Name) == "" {
+		return nil, fmt.Errorf("playbook name is required")
+	}
+	return e.executePlaybook(ctx, pb, alert, true), nil
 }
 
 func (e *PlaybookEngine) matchTrigger(pb *Playbook, alert *AlertContext) bool {
@@ -243,7 +277,7 @@ func (e *PlaybookEngine) evaluateCondition(cond Condition, alert *AlertContext) 
 	return true // 默认通过
 }
 
-func (e *PlaybookEngine) executePlaybook(ctx context.Context, pb *Playbook, alert *AlertContext) *ExecutionResult {
+func (e *PlaybookEngine) executePlaybook(ctx context.Context, pb *Playbook, alert *AlertContext, drill bool) *ExecutionResult {
 	e.logger.Info("Executing playbook",
 		zap.String("playbook", pb.Name),
 		zap.String("alert_id", alert.AlertID))
@@ -252,11 +286,17 @@ func (e *PlaybookEngine) executePlaybook(ctx context.Context, pb *Playbook, aler
 		PlaybookName: pb.Name,
 		AlertID:      alert.AlertID,
 		StartTime:    time.Now(),
+		Mode:         map[bool]string{true: "drill", false: "live"}[drill],
 	}
 
 	for _, action := range pb.Actions {
 		actionCtx, cancel := context.WithTimeout(ctx, action.Timeout)
-		actionResult := e.executor.Execute(actionCtx, action, alert)
+		var actionResult ActionResult
+		if drill {
+			actionResult = e.executor.Drill(actionCtx, action, alert)
+		} else {
+			actionResult = e.executor.Execute(actionCtx, action, alert)
+		}
 		result.Actions = append(result.Actions, actionResult)
 		cancel()
 
