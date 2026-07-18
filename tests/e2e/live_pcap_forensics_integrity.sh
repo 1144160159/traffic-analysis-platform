@@ -117,6 +117,7 @@ PY
 }
 
 AUDIT_TOKEN="$(make_token codex-pcap-auditor '["admin"]' '["*","admin:*","audit:read","pcap:read","pcap:download"]')"
+CROSS_TOKEN="$(TENANT="$OTHER_TENANT" make_token codex-pcap-cross-tenant '["admin"]' '["pcap:read","pcap:download"]')"
 
 python3 - "$PCAP_FILE" <<'PY'
 from pathlib import Path
@@ -174,22 +175,22 @@ curl_json_check() {
   [[ "$ok" == true ]]
 }
 
-curl_json_check "jobs expose sha256" "GET" "/api/v1/pcap/jobs?status=completed&limit=10" "200" "" \
-  '.success == true and any(.data[]; .result_file_key == env.KEY and .sha256 == env.SHA)'
+curl_json_check "jobs expose sha256" "GET" "/api/v1/pcap/jobs?task_id=$TASK_ID&limit=10" "200" "" \
+  '.success == true and any(.data[]; .result_file_key == env.KEY and .sha256 == env.SHA)' "$AUDIT_TOKEN"
 
 curl_json_check "presign caps expiry and exposes sha256" "POST" "/api/v1/pcap/presign" "200" \
   "{\"key\":\"$KEY\",\"expiry_seconds\":999999}" \
-  '.success == true and .data.key == env.KEY and .data.sha256 == env.SHA and ((.data.expires_at - now) <= 86410)'
+  '.success == true and .data.key == env.KEY and .data.sha256 == env.SHA and ((.data.expires_at - now) <= 86410)' "$AUDIT_TOKEN"
 
 curl_json_check "verify matches registered sha256" "POST" "/api/v1/pcap/verify" "200" \
   "{\"key\":\"$KEY\",\"expected_sha256\":\"$SHA\"}" \
-  '.success == true and .data.verified == true and .data.sha256 == env.SHA and .data.registered_sha256 == env.SHA and .data.size_bytes == 24'
+  '.success == true and .data.verified == true and .data.sha256 == env.SHA and .data.registered_sha256 == env.SHA and .data.size_bytes == 24' "$AUDIT_TOKEN"
 
 curl_json_check "presign rejects path traversal" "POST" "/api/v1/pcap/presign" "400" \
-  '{"key":"../etc/passwd"}' ''
+  '{"key":"../etc/passwd"}' '' "$AUDIT_TOKEN"
 
 body_file="$LOG_DIR/$RUN_SLUG-cross-tenant-presign.json"
-code="$(curl --noproxy '*' -sS -m 20 -o "$body_file" -w '%{http_code}' -H "X-Tenant-ID: $OTHER_TENANT" -H "Content-Type: application/json" --data "{\"key\":\"$KEY\"}" "$APISIX/api/v1/pcap/presign")"
+code="$(curl --noproxy '*' -sS -m 20 -o "$body_file" -w '%{http_code}' -H "Authorization: Bearer $CROSS_TOKEN" -H "X-Tenant-ID: $OTHER_TENANT" -H "Content-Type: application/json" --data "{\"key\":\"$KEY\"}" "$APISIX/api/v1/pcap/presign")"
 if [[ "$code" == "403" ]]; then
   json_log "api" "presign rejects cross tenant" true "$code" "$OTHER_TENANT -> $KEY"
 else
@@ -197,7 +198,7 @@ else
   exit 1
 fi
 
-curl --noproxy '*' -sS -m 20 -D "$DOWNLOAD_HEADERS" -H "X-Tenant-ID: $TENANT" -H "X-User-ID: 00000000-0000-4000-8000-000000000001" "$APISIX/api/v1/pcap/download/$KEY" -o "$DOWNLOAD_FILE"
+curl --noproxy '*' -sS -m 20 -D "$DOWNLOAD_HEADERS" -H "Authorization: Bearer $AUDIT_TOKEN" -H "X-Tenant-ID: $TENANT" -H "X-User-ID: 00000000-0000-4000-8000-000000000001" "$APISIX/api/v1/pcap/download/$KEY" -o "$DOWNLOAD_FILE"
 DOWN_SHA="$(sha256sum "$DOWNLOAD_FILE" | awk '{print $1}')"
 HEADER_SHA="$(awk 'BEGIN{IGNORECASE=1} /^X-Content-SHA256:/ {gsub("\r", "", $2); print $2}' "$DOWNLOAD_HEADERS")"
 if [[ "$DOWN_SHA" == "$SHA" && "$HEADER_SHA" == "$SHA" ]]; then
