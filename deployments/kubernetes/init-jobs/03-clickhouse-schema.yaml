@@ -1,7 +1,7 @@
 ---
 # ClickHouse Schema Init Job — 集群模式 (2 Shard × 2 Replica + 3 Keeper)
 #
-# 在所有 Pod Ready 后执行，通过 ON CLUSTER 在所有节点创建:
+# 在所有 Pod Ready 后执行，对四个节点逐一幂等创建:
 #   - ReplicatedMergeTree _local 表 (Keeper 协调副本)
 #   - Distributed 表 (跨 Shard 读写入口)
 #
@@ -12,7 +12,7 @@
 #   - clickhouse-config ConfigMap 已配置 (含 Keeper DNS + 集群拓扑 + 节点间认证)
 #
 # 注意:
-#   - ON CLUSTER DDL 需要所有节点可互访问 (Keeper DNS 已稳定)
+#   - 四个 ClickHouse 服务 DNS 可达，Keeper DNS 已稳定
 #   - device_logs/user_events/dlq_events 使用 DateTime (非 DateTime64) 以兼容 TTL
 #   - distributed_ddl_task_timeout 设为 600s (默认 180s 可能在大型集群超时)
 ---
@@ -39,27 +39,55 @@ spec:
         args:
         - |
           set -e
-          CH="clickhouse-client -h clickhouse-1.middleware.svc --password \"${CLICKHOUSE_PASSWORD}\" --database=traffic --multiquery"
+          # Broadcast each idempotent statement directly to every node.  The
+          # primary services do not identify themselves as their service DNS
+          # names in the distributed DDL worker, so ON CLUSTER leaves their
+          # queue entries inactive.  Direct execution keeps all four nodes in
+          # sync and also preserves the password as one shell argument.
+          ch() {
+            for host in \
+              clickhouse-1.middleware.svc \
+              clickhouse-replica-0.clickhouse-replica.middleware.svc \
+              clickhouse-2.middleware.svc \
+              clickhouse-replica-1.clickhouse-replica.middleware.svc; do
+              echo "Applying schema statement on $host..."
+              attempt=1
+              until clickhouse-client -h "$host" --password "$CLICKHOUSE_PASSWORD" --database=traffic --multiquery "$@"; do
+                if [ "$attempt" -ge 6 ]; then
+                  echo "Schema statement failed on $host after $attempt attempts."
+                  return 1
+                fi
+                attempt=$((attempt + 1))
+                echo "Retrying $host after replica metadata convergence ($attempt/6)..."
+                sleep 5
+              done
+            done
+          }
+          CH=ch
 
-          echo "Waiting for Keeper to be ready..."
+          echo "Waiting for the ClickHouse cluster entrypoint to be ready..."
           for i in $(seq 1 30); do
-            if clickhouse-client -h clickhouse-keeper-0.clickhouse-keeper-headless.middleware.svc --port 9181 --query "SELECT 1" &>/dev/null; then
-              echo "Keeper is ready."
+            if clickhouse-client -h clickhouse-1.middleware.svc --password "$CLICKHOUSE_PASSWORD" --query "SELECT 1" &>/dev/null; then
+              echo "ClickHouse is ready."
               break
             fi
-            echo "Waiting for Keeper... ($i/30)"
+            echo "Waiting for ClickHouse... ($i/30)"
+            if [ "$i" -eq 30 ]; then
+              echo "ClickHouse did not become ready in time."
+              exit 1
+            fi
             sleep 5
           done
 
           echo "Creating database..."
-          $CH "SET distributed_ddl_task_timeout = 600; CREATE DATABASE IF NOT EXISTS traffic ON CLUSTER traffic_cluster"
+          $CH "SET distributed_ddl_task_timeout = 600; CREATE DATABASE IF NOT EXISTS traffic"
 
           # =========================
           # 1. flows_raw (FlowEvent)
           # =========================
           echo "Creating flows_raw..."
           $CH "
-          CREATE TABLE IF NOT EXISTS traffic.flows_raw_local ON CLUSTER traffic_cluster (
+          CREATE TABLE IF NOT EXISTS traffic.flows_raw_local (
             event_id String, tenant_id String, probe_id String,
             community_id String,
             src_ip String, dst_ip String, src_port UInt32, dst_port UInt32, protocol UInt8,
@@ -83,7 +111,7 @@ spec:
           TTL toDateTime(ts_end / 1000) + toIntervalDay(30)
           SETTINGS index_granularity = 8192;
 
-          CREATE TABLE IF NOT EXISTS traffic.flows_raw ON CLUSTER traffic_cluster
+          CREATE TABLE IF NOT EXISTS traffic.flows_raw
           AS traffic.flows_raw_local
           ENGINE = Distributed(traffic_cluster, traffic, flows_raw_local, rand());
           "
@@ -93,7 +121,7 @@ spec:
           # =========================
           echo "Creating sessions..."
           $CH "
-          CREATE TABLE IF NOT EXISTS traffic.sessions_local ON CLUSTER traffic_cluster (
+          CREATE TABLE IF NOT EXISTS traffic.sessions_local (
             session_id String, tenant_id String, community_id String,
             ts_start Int64, ts_end Int64, duration_ms UInt32,
             packets_fwd UInt32, packets_bwd UInt32,
@@ -115,7 +143,7 @@ spec:
           TTL toDateTime(ts_end / 1000) + toIntervalDay(90)
           SETTINGS index_granularity = 8192;
 
-          CREATE TABLE IF NOT EXISTS traffic.sessions ON CLUSTER traffic_cluster
+          CREATE TABLE IF NOT EXISTS traffic.sessions
           AS traffic.sessions_local
           ENGINE = Distributed(traffic_cluster, traffic, sessions_local, rand());
           "
@@ -125,7 +153,7 @@ spec:
           # =========================
           echo "Creating feature_stat..."
           $CH "
-          CREATE TABLE IF NOT EXISTS traffic.feature_stat_local ON CLUSTER traffic_cluster (
+          CREATE TABLE IF NOT EXISTS traffic.feature_stat_local (
             tenant_id String, run_id String, feature_set_id String,
             schema_version String, event_id String,
             object_type String, object_id String, community_id String,
@@ -146,9 +174,42 @@ spec:
           TTL toDateTime(ts) + INTERVAL 30 DAY
           SETTINGS index_granularity = 8192;
 
-          CREATE TABLE IF NOT EXISTS traffic.feature_stat ON CLUSTER traffic_cluster
+          CREATE TABLE IF NOT EXISTS traffic.feature_stat
           AS traffic.feature_stat_local
           ENGINE = Distributed(traffic_cluster, traffic, feature_stat_local, rand());
+          "
+
+          # =========================
+          # 3b. feature_fp (FeatureFingerprint)
+          # =========================
+          echo "Creating feature_fp..."
+          $CH "
+          CREATE TABLE IF NOT EXISTS traffic.feature_fp_local (
+            tenant_id String, run_id String, feature_set_id String, event_id String,
+            community_id String, session_id String,
+            ts DateTime64(3),
+            is_encrypted UInt8,
+            tls_version LowCardinality(String),
+            ja3 LowCardinality(String),
+            sni_hash String,
+            cert_sha256 String,
+            cert_is_self_signed UInt8,
+            pubkey_len UInt16,
+            hex_freq Array(Float32),
+            hex_ratio Array(Float32),
+            entropy_payload Float32,
+            chi_square_bfd Float32,
+            ingest_ts DateTime64(3) DEFAULT now64(3)
+          )
+          ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/feature_fp', '{replica}')
+          PARTITION BY toDate(ts)
+          ORDER BY (tenant_id, ts, community_id, session_id)
+          TTL toDateTime(ts) + INTERVAL 30 DAY
+          SETTINGS index_granularity = 8192;
+
+          CREATE TABLE IF NOT EXISTS traffic.feature_fp
+          AS traffic.feature_fp_local
+          ENGINE = Distributed(traffic_cluster, traffic, feature_fp_local, cityHash64(tenant_id, community_id));
           "
 
           # =========================
@@ -156,7 +217,7 @@ spec:
           # =========================
           echo "Creating detections_behavior..."
           $CH "
-          CREATE TABLE IF NOT EXISTS traffic.detections_behavior_local ON CLUSTER traffic_cluster (
+          CREATE TABLE IF NOT EXISTS traffic.detections_behavior_local (
             tenant_id String, run_id String, feature_set_id String,
             model_version String, event_id String,
             community_id String, object_type String, object_id String,
@@ -171,7 +232,7 @@ spec:
           TTL toDateTime(ts) + INTERVAL 30 DAY
           SETTINGS index_granularity = 8192;
 
-          CREATE TABLE IF NOT EXISTS traffic.detections_behavior ON CLUSTER traffic_cluster
+          CREATE TABLE IF NOT EXISTS traffic.detections_behavior
           AS traffic.detections_behavior_local
           ENGINE = Distributed(traffic_cluster, traffic, detections_behavior_local, rand());
           "
@@ -181,7 +242,7 @@ spec:
           # =========================
           echo "Creating alerts..."
           $CH "
-          CREATE TABLE IF NOT EXISTS traffic.alerts_local ON CLUSTER traffic_cluster (
+          CREATE TABLE IF NOT EXISTS traffic.alerts_local (
             tenant_id String, alert_id String, dedup_fingerprint String,
             community_id String, session_id String, campaign_id String, feature_set_id String,
             src_ip String, dst_ip String, src_port UInt32, dst_port UInt32, protocol UInt32,
@@ -199,25 +260,25 @@ spec:
           TTL toDateTime(last_seen / 1000) + toIntervalDay(30)
           SETTINGS index_granularity = 8192;
 
-          CREATE TABLE IF NOT EXISTS traffic.alerts ON CLUSTER traffic_cluster
+          CREATE TABLE IF NOT EXISTS traffic.alerts
           AS traffic.alerts_local
           ENGINE = Distributed(traffic_cluster, traffic, alerts_local, rand());
           "
 
           echo "Ensuring latency-chain columns..."
           $CH "
-          ALTER TABLE traffic.flows_raw_local ON CLUSTER traffic_cluster ADD COLUMN IF NOT EXISTS kafka_ts Int64 AFTER ingest_ts;
-          ALTER TABLE traffic.flows_raw_local ON CLUSTER traffic_cluster ADD COLUMN IF NOT EXISTS flink_out_ts Int64 AFTER kafka_ts;
-          ALTER TABLE traffic.flows_raw ON CLUSTER traffic_cluster ADD COLUMN IF NOT EXISTS kafka_ts Int64 AFTER ingest_ts;
-          ALTER TABLE traffic.flows_raw ON CLUSTER traffic_cluster ADD COLUMN IF NOT EXISTS flink_out_ts Int64 AFTER kafka_ts;
-          ALTER TABLE traffic.sessions_local ON CLUSTER traffic_cluster ADD COLUMN IF NOT EXISTS kafka_ts Int64 AFTER ingest_ts;
-          ALTER TABLE traffic.sessions_local ON CLUSTER traffic_cluster ADD COLUMN IF NOT EXISTS flink_out_ts Int64 AFTER kafka_ts;
-          ALTER TABLE traffic.sessions ON CLUSTER traffic_cluster ADD COLUMN IF NOT EXISTS kafka_ts Int64 AFTER ingest_ts;
-          ALTER TABLE traffic.sessions ON CLUSTER traffic_cluster ADD COLUMN IF NOT EXISTS flink_out_ts Int64 AFTER kafka_ts;
-          ALTER TABLE traffic.alerts_local ON CLUSTER traffic_cluster ADD COLUMN IF NOT EXISTS kafka_ts Int64 AFTER event_id;
-          ALTER TABLE traffic.alerts_local ON CLUSTER traffic_cluster ADD COLUMN IF NOT EXISTS flink_out_ts Int64 AFTER kafka_ts;
-          ALTER TABLE traffic.alerts ON CLUSTER traffic_cluster ADD COLUMN IF NOT EXISTS kafka_ts Int64 AFTER event_id;
-          ALTER TABLE traffic.alerts ON CLUSTER traffic_cluster ADD COLUMN IF NOT EXISTS flink_out_ts Int64 AFTER kafka_ts;
+          ALTER TABLE traffic.flows_raw_local ADD COLUMN IF NOT EXISTS kafka_ts Int64 AFTER ingest_ts;
+          ALTER TABLE traffic.flows_raw_local ADD COLUMN IF NOT EXISTS flink_out_ts Int64 AFTER kafka_ts;
+          ALTER TABLE traffic.flows_raw ADD COLUMN IF NOT EXISTS kafka_ts Int64 AFTER ingest_ts;
+          ALTER TABLE traffic.flows_raw ADD COLUMN IF NOT EXISTS flink_out_ts Int64 AFTER kafka_ts;
+          ALTER TABLE traffic.sessions_local ADD COLUMN IF NOT EXISTS kafka_ts Int64 AFTER ingest_ts;
+          ALTER TABLE traffic.sessions_local ADD COLUMN IF NOT EXISTS flink_out_ts Int64 AFTER kafka_ts;
+          ALTER TABLE traffic.sessions ADD COLUMN IF NOT EXISTS kafka_ts Int64 AFTER ingest_ts;
+          ALTER TABLE traffic.sessions ADD COLUMN IF NOT EXISTS flink_out_ts Int64 AFTER kafka_ts;
+          ALTER TABLE traffic.alerts_local ADD COLUMN IF NOT EXISTS kafka_ts Int64 AFTER event_id;
+          ALTER TABLE traffic.alerts_local ADD COLUMN IF NOT EXISTS flink_out_ts Int64 AFTER kafka_ts;
+          ALTER TABLE traffic.alerts ADD COLUMN IF NOT EXISTS kafka_ts Int64 AFTER event_id;
+          ALTER TABLE traffic.alerts ADD COLUMN IF NOT EXISTS flink_out_ts Int64 AFTER kafka_ts;
           "
 
           # =========================
@@ -225,7 +286,7 @@ spec:
           # =========================
           echo "Creating evidence..."
           $CH "
-          CREATE TABLE IF NOT EXISTS traffic.evidence_local ON CLUSTER traffic_cluster (
+          CREATE TABLE IF NOT EXISTS traffic.evidence_local (
             tenant_id String, evidence_id String, alert_id String,
             ts Int64, type String, summary String,
             metrics_json String, snippet_ref_json String, arkime_link String,
@@ -238,7 +299,7 @@ spec:
           TTL toDateTime(ts / 1000) + toIntervalDay(30)
           SETTINGS index_granularity = 8192;
 
-          CREATE TABLE IF NOT EXISTS traffic.evidence ON CLUSTER traffic_cluster
+          CREATE TABLE IF NOT EXISTS traffic.evidence
           AS traffic.evidence_local
           ENGINE = Distributed(traffic_cluster, traffic, evidence_local, rand());
           "
@@ -248,7 +309,7 @@ spec:
           # =========================
           echo "Creating campaigns..."
           $CH "
-          CREATE TABLE IF NOT EXISTS traffic.campaigns_local ON CLUSTER traffic_cluster (
+          CREATE TABLE IF NOT EXISTS traffic.campaigns_local (
             tenant_id String, campaign_id String,
             ts_start Int64, ts_end Int64,
             entities Array(String), alerts Array(String),
@@ -266,7 +327,7 @@ spec:
           TTL toDateTime(ts_end / 1000) + toIntervalDay(30)
           SETTINGS index_granularity = 8192;
 
-          CREATE TABLE IF NOT EXISTS traffic.campaigns ON CLUSTER traffic_cluster
+          CREATE TABLE IF NOT EXISTS traffic.campaigns
           AS traffic.campaigns_local
           ENGINE = Distributed(traffic_cluster, traffic, campaigns_local, rand());
           "
@@ -276,7 +337,7 @@ spec:
           # =========================
           echo "Creating pcap_index..."
           $CH "
-          CREATE TABLE IF NOT EXISTS traffic.pcap_index_local ON CLUSTER traffic_cluster (
+          CREATE TABLE IF NOT EXISTS traffic.pcap_index_local (
             tenant_id String, probe_id String, file_key String,
             ts_start Int64, ts_end Int64,
             packet_count UInt64, byte_count UInt64,
@@ -291,7 +352,7 @@ spec:
           TTL toDateTime(ts_start / 1000) + toIntervalDay(30)
           SETTINGS index_granularity = 8192;
 
-          CREATE TABLE IF NOT EXISTS traffic.pcap_index ON CLUSTER traffic_cluster
+          CREATE TABLE IF NOT EXISTS traffic.pcap_index
           AS traffic.pcap_index_local
           ENGINE = Distributed(traffic_cluster, traffic, pcap_index_local, rand());
           "
@@ -301,7 +362,7 @@ spec:
           # =========================
           echo "Creating device_logs..."
           $CH "
-          CREATE TABLE IF NOT EXISTS traffic.device_logs_local ON CLUSTER traffic_cluster (
+          CREATE TABLE IF NOT EXISTS traffic.device_logs_local (
             log_id String, tenant_id String, device_ip String, device_type String,
             facility UInt8, severity UInt8, timestamp DateTime,
             message String, parsed String, source String
@@ -311,14 +372,14 @@ spec:
           ORDER BY (tenant_id, timestamp, device_ip, severity)
           TTL timestamp + INTERVAL 30 DAY;
 
-          CREATE TABLE IF NOT EXISTS traffic.device_logs ON CLUSTER traffic_cluster
+          CREATE TABLE IF NOT EXISTS traffic.device_logs
           AS traffic.device_logs_local
           ENGINE = Distributed(traffic_cluster, traffic, device_logs_local, rand());
           "
 
           echo "Creating user_events..."
           $CH "
-          CREATE TABLE IF NOT EXISTS traffic.user_events_local ON CLUSTER traffic_cluster (
+          CREATE TABLE IF NOT EXISTS traffic.user_events_local (
             event_id String, tenant_id String, user_id String, username String,
             event_type String, source_ip String, user_agent String,
             resource String, action String, result String, timestamp DateTime
@@ -328,14 +389,14 @@ spec:
           ORDER BY (tenant_id, timestamp, user_id, event_type)
           TTL timestamp + INTERVAL 180 DAY;
 
-          CREATE TABLE IF NOT EXISTS traffic.user_events ON CLUSTER traffic_cluster
+          CREATE TABLE IF NOT EXISTS traffic.user_events
           AS traffic.user_events_local
           ENGINE = Distributed(traffic_cluster, traffic, user_events_local, rand());
           "
 
           echo "Creating dlq_events..."
           $CH "
-          CREATE TABLE IF NOT EXISTS traffic.dlq_events_local ON CLUSTER traffic_cluster (
+          CREATE TABLE IF NOT EXISTS traffic.dlq_events_local (
             event_id String, tenant_id String, source_topic String, source_key String,
             error_msg String, raw_payload String,
             retry_count UInt32 DEFAULT 0, created_at DateTime DEFAULT now()
@@ -345,7 +406,7 @@ spec:
           ORDER BY (tenant_id, created_at, source_topic)
           TTL created_at + INTERVAL 7 DAY;
 
-          CREATE TABLE IF NOT EXISTS traffic.dlq_events ON CLUSTER traffic_cluster
+          CREATE TABLE IF NOT EXISTS traffic.dlq_events
           AS traffic.dlq_events_local
           ENGINE = Distributed(traffic_cluster, traffic, dlq_events_local, rand());
           "

@@ -82,7 +82,61 @@ ALTER TABLE audit_logs ALTER COLUMN event_id SET DEFAULT ('audit-' || uuid_gener
 ALTER TABLE audit_logs ALTER COLUMN event_id SET NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_audit_event_id ON audit_logs(event_id);
 CREATE INDEX IF NOT EXISTS idx_audit_tenant_time ON audit_logs (tenant_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS data_quality_actions (
+  action_id       UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  tenant_id       TEXT NOT NULL,
+  view_name       TEXT NOT NULL,
+  action_name     TEXT NOT NULL,
+  target          TEXT NOT NULL,
+  dry_run         BOOLEAN NOT NULL DEFAULT TRUE,
+  status          TEXT NOT NULL DEFAULT 'dry_run',
+  requested_by    TEXT NOT NULL DEFAULT '',
+  request_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_data_quality_actions_tenant_created ON data_quality_actions (tenant_id, created_at DESC);
+
+-- Explicitly activated canonical UI dataset for the eight data-quality views.
+-- Default schema creation does not activate or seed any tenant.
+CREATE TABLE IF NOT EXISTS data_quality_ui_fixtures (
+  tenant_id       TEXT PRIMARY KEY,
+  fixture_version TEXT NOT NULL,
+  payload         JSONB NOT NULL,
+  active          BOOLEAN NOT NULL DEFAULT false,
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_data_quality_ui_fixtures_active
+  ON data_quality_ui_fixtures (tenant_id, active);
 CREATE INDEX IF NOT EXISTS idx_tasks_tenant_time ON tasks (tenant_id, created_at DESC);
+
+-- Explicitly activated, database-backed canonical UI fixture for encrypted traffic.
+-- No row is installed by the default schema; live APIs remain the fallback.
+CREATE TABLE IF NOT EXISTS encrypted_traffic_ui_fixtures (
+  tenant_id      TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE,
+  endpoint       TEXT NOT NULL CHECK (endpoint IN ('stats','sessions','ja3','tunnels','exfiltration','evidence')),
+  fixture_version TEXT NOT NULL,
+  payload        JSONB NOT NULL,
+  active         BOOLEAN NOT NULL DEFAULT false,
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (tenant_id, endpoint)
+);
+CREATE INDEX IF NOT EXISTS idx_encrypted_traffic_ui_fixtures_active
+  ON encrypted_traffic_ui_fixtures (tenant_id, active, endpoint);
+
+-- Explicitly activated, database-backed canonical UI fixture for the forensics workbench.
+-- No rows are installed by the default schema; production data remains the fallback.
+CREATE TABLE IF NOT EXISTS forensics_ui_fixtures (
+  tenant_id       TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE,
+  endpoint        TEXT NOT NULL CHECK (endpoint IN ('jobs','stats')),
+  fixture_version TEXT NOT NULL,
+  payload         JSONB NOT NULL,
+  active          BOOLEAN NOT NULL DEFAULT false,
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (tenant_id, endpoint)
+);
+CREATE INDEX IF NOT EXISTS idx_forensics_ui_fixtures_active
+  ON forensics_ui_fixtures (tenant_id, active, endpoint);
 
 CREATE TABLE IF NOT EXISTS campaign_action_jobs (
   job_id        TEXT PRIMARY KEY,

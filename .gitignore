@@ -44,3 +44,15 @@ __pycache__/
 /evidence/
 /web/ui/dist-codex-preview/
 /web/ui_legacy_*/
+
+# traffic-analysis local private/generated exclusions
+/tmp/
+/doc/02_acceptance/runs/
+/common/config/credentials.yaml
+/deployments/kubernetes/configmaps/credentials-secret.yaml
+/mlops/workflows/mlops-secrets.yaml
+/web/ui/.env*
+/rust/probe-agent/config.yaml
+/rust/probe-agent/probe-agent/config.yaml
+/go/control-plane/*.bin
+/go/control-plane/deployments/docker/alert-service

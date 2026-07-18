@@ -15,7 +15,10 @@ CREATE TABLE IF NOT EXISTS asset_groups (
 
 CREATE TABLE IF NOT EXISTS assets (
   asset_id    UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  display_code TEXT,
   tenant_id   TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE,
+  asset_type  TEXT NOT NULL DEFAULT 'unknown',
+  status      TEXT NOT NULL DEFAULT 'active',
   ip          TEXT,
   ip_address  TEXT,
   mac_address TEXT,
@@ -25,6 +28,9 @@ CREATE TABLE IF NOT EXISTS assets (
   source      TEXT NOT NULL DEFAULT 'manual',
   vlan_id     TEXT,
   switch_port TEXT,
+  department  TEXT,
+  campus      TEXT,
+  owner       TEXT,
   tags        JSONB NOT NULL DEFAULT '{}'::jsonb,
   criticality INT NOT NULL DEFAULT 0,
   metadata    JSONB NOT NULL DEFAULT '{}'::jsonb,
@@ -35,6 +41,9 @@ CREATE TABLE IF NOT EXISTS assets (
 );
 
 ALTER TABLE assets ADD COLUMN IF NOT EXISTS ip TEXT;
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS display_code TEXT;
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS asset_type TEXT NOT NULL DEFAULT 'unknown';
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active';
 ALTER TABLE assets ADD COLUMN IF NOT EXISTS ip_address TEXT;
 ALTER TABLE assets ADD COLUMN IF NOT EXISTS mac_address TEXT;
 ALTER TABLE assets ADD COLUMN IF NOT EXISTS hostname TEXT;
@@ -43,6 +52,9 @@ ALTER TABLE assets ADD COLUMN IF NOT EXISTS os_type TEXT;
 ALTER TABLE assets ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'manual';
 ALTER TABLE assets ADD COLUMN IF NOT EXISTS vlan_id TEXT;
 ALTER TABLE assets ADD COLUMN IF NOT EXISTS switch_port TEXT;
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS department TEXT;
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS campus TEXT;
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS owner TEXT;
 ALTER TABLE assets ADD COLUMN IF NOT EXISTS tags JSONB NOT NULL DEFAULT '{}'::jsonb;
 ALTER TABLE assets ADD COLUMN IF NOT EXISTS criticality INT NOT NULL DEFAULT 0;
 ALTER TABLE assets ADD COLUMN IF NOT EXISTS metadata JSONB NOT NULL DEFAULT '{}'::jsonb;
@@ -52,7 +64,12 @@ ALTER TABLE assets ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFA
 ALTER TABLE assets ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
 ALTER TABLE assets ALTER COLUMN ip DROP NOT NULL;
 UPDATE assets SET ip_address = ip WHERE (ip_address IS NULL OR ip_address = '') AND ip IS NOT NULL;
-UPDATE assets SET ip = ip_address WHERE ip IS NULL AND ip_address IS NOT NULL;
+UPDATE assets AS candidate
+SET ip = candidate.ip_address
+WHERE candidate.ip IS NULL
+  AND candidate.ip_address IS NOT NULL
+  AND (SELECT COUNT(*) FROM assets AS peer WHERE peer.tenant_id = candidate.tenant_id AND peer.ip_address = candidate.ip_address) = 1
+  AND NOT EXISTS (SELECT 1 FROM assets AS peer WHERE peer.tenant_id = candidate.tenant_id AND peer.ip = candidate.ip_address);
 
 -- 资产变更事件
 CREATE TABLE IF NOT EXISTS asset_events (
@@ -67,6 +84,8 @@ CREATE TABLE IF NOT EXISTS asset_events (
 
 CREATE INDEX IF NOT EXISTS idx_asset_events_asset ON asset_events(asset_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_assets_tenant ON assets(tenant_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_assets_tenant_display_code_unique ON assets(tenant_id, display_code) WHERE display_code IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_assets_tenant_type_status ON assets(tenant_id, asset_type, status, last_seen DESC);
 CREATE INDEX IF NOT EXISTS idx_assets_ip ON assets(tenant_id, ip_address);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_assets_tenant_ip_unique ON assets(tenant_id, ip) WHERE ip IS NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_assets_tenant_mac_unique ON assets(tenant_id, mac_address) WHERE mac_address IS NOT NULL;

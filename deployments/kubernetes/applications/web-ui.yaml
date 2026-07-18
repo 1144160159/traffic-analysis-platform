@@ -16,8 +16,8 @@ metadata:
   name: web-ui
   namespace: traffic-analysis
   annotations:
-    kubernetes.io/change-cause: "Asset ledger classification/detail drawers, UI gap closure and Windows Chrome evidence r303"
-    traffic.analysis/source-revision: "worktree-20260713"
+    kubernetes.io/change-cause: "MLOps version-history trend and r333 Windows Chrome acceptance"
+    traffic.analysis/source-revision: "9715ff1904701d1ab1930309eca54ec2121999ab1f43c00cc14adceee9c8d309"
 spec:
   replicas: 1
   selector: {matchLabels: {app: web-ui}}
@@ -25,12 +25,14 @@ spec:
     metadata:
       labels: {app: web-ui}
       annotations:
-        traffic.analysis/build-id: "ui-assets-ledger-v2-20260713-r303-worktree"
+        traffic.analysis/build-id: "mlops-r333-20260719-r5"
+        traffic.analysis/source-digest: "9715ff1904701d1ab1930309eca54ec2121999ab1f43c00cc14adceee9c8d309"
+        traffic.analysis/image-digest: "sha256:7ded10737d650ce698dbbcfbeb3595375fac4fe3d9a98d0615fd028ba518eff3"
     spec:
       terminationGracePeriodSeconds: 30
       containers:
       - name: web-ui
-        image: docker.io/traffic/web-ui@sha256:5f722ffad20890c208eba0037d9eab4157220e1350989f1172b84d61b1af4b80
+        image: docker.io/traffic/web-ui@sha256:7ded10737d650ce698dbbcfbeb3595375fac4fe3d9a98d0615fd028ba518eff3
         imagePullPolicy: Never
         ports: [{containerPort: 80}]
         lifecycle:

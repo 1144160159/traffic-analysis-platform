@@ -112,4 +112,37 @@ CREATE TABLE IF NOT EXISTS rule_outbox (
 CREATE INDEX IF NOT EXISTS idx_rule_outbox_pending ON rule_outbox (published, next_retry, created_at) WHERE published = false;
 CREATE INDEX IF NOT EXISTS idx_rule_outbox_rule_id ON rule_outbox (rule_id);
 
+CREATE TABLE IF NOT EXISTS rule_workbench_items (
+  item_id      TEXT PRIMARY KEY,
+  tenant_id    TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE,
+  rule_id      TEXT NOT NULL,
+  category     TEXT NOT NULL,
+  ordinal      INT NOT NULL DEFAULT 0,
+  payload      JSONB NOT NULL DEFAULT '{}'::jsonb,
+  scenario_id  TEXT NOT NULL DEFAULT 'live',
+  occurred_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (tenant_id, rule_id, category, ordinal, scenario_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_rule_workbench_lookup
+  ON rule_workbench_items (tenant_id, rule_id, category, ordinal);
+
+CREATE TABLE IF NOT EXISTS rule_action_jobs (
+  job_id       TEXT PRIMARY KEY,
+  action_id    TEXT NOT NULL UNIQUE,
+  tenant_id    TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE,
+  rule_id      TEXT NOT NULL,
+  action       TEXT NOT NULL,
+  target       TEXT NOT NULL,
+  payload      JSONB NOT NULL DEFAULT '{}'::jsonb,
+  status       TEXT NOT NULL DEFAULT 'queued',
+  requested_by TEXT NOT NULL,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_rule_action_jobs_lookup
+  ON rule_action_jobs (tenant_id, rule_id, created_at DESC);
+
 COMMIT;

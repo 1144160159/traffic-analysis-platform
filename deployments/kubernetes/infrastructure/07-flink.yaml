@@ -300,7 +300,7 @@ spec:
             kubernetes.cluster-id: flink-traffic
 
             kubernetes.namespace: flink'
-        image: docker.io/library/flink@sha256:f0e9ffd07f3d43291dfaf7e0609eb2871462193275d452affbe5fac091017ae3
+        image: docker.io/traffic/flink@sha256:8c9b090b84435355bce4b7209e5920b17811e90c07029215ac80e50de4c771f9
         imagePullPolicy: IfNotPresent
         name: taskmanager
         ports:

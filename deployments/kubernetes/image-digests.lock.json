@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-07-12T17:43:20+08:00",
+  "generated_at": "2026-07-19T02:12:00+08:00",
   "scope": "deployments/kubernetes non-archive image references",
   "note": "Evidence lock for release-package reproducibility. repo_digest entries are pullable registry digests when observed; image_id-only entries are local/live container image IDs and are not a substitute for rolling workload specs to pullable image@sha256 references.",
   "workflow_parameters": {
-    "trainer-image": "traffic/mlops-trainer:full-pipeline-fix-20260617"
+    "trainer-image": "docker.io/traffic/mlops-trainer@sha256:4f40de900eed37b8fa169660edda9e53626cd596b53a0aeaf677b08e1e6b4011"
   },
   "images": [
     {
@@ -85,6 +85,14 @@
       "repo_digest": "docker.io/library/flink@sha256:f0e9ffd07f3d43291dfaf7e0609eb2871462193275d452affbe5fac091017ae3",
       "image_id": "sha256:d88120c9477c2e9a8f4769c28d82daa35a116be9bf77323d3f05b7f56ad944c9",
       "source": "live-pod-image-id-and-local-cri",
+      "mutable_tag": false
+    },
+    {
+      "reference": "traffic/flink:1.18-xgboost-runtime-20260718-r1",
+      "normalized": "docker.io/traffic/flink:1.18-xgboost-runtime-20260718-r1",
+      "repo_digest": "docker.io/traffic/flink@sha256:8c9b090b84435355bce4b7209e5920b17811e90c07029215ac80e50de4c771f9",
+      "image_id": "sha256:3b4b2425c0b7091f5a0d39aaa6c910141daf4480cc3e2d767ad30a054f8ed4bd",
+      "source": "local-cri-manifest-dual-node",
       "mutable_tag": false
     },
     {
@@ -267,11 +275,11 @@
       "mutable_tag": false
     },
     {
-      "reference": "traffic/mlops-trainer:full-pipeline-fix-20260617",
-      "normalized": "docker.io/traffic/mlops-trainer:full-pipeline-fix-20260617",
-      "repo_digest": "",
-      "image_id": "sha256:7d3f43afa16d6b0de9b0388c77279100140cb56f6db038677149e030336babc2",
-      "source": "local-cri",
+      "reference": "traffic/mlops-trainer:mlops-r331-20260719",
+      "normalized": "docker.io/traffic/mlops-trainer:mlops-r331-20260719",
+      "repo_digest": "docker.io/traffic/mlops-trainer@sha256:4e230efa121e896d6ca674f3bc333734939c2b080faf0cb4eb5b5a2e80ccde53",
+      "image_id": "sha256:afd985bf6e70edfe83035e9f6691fc3f9399a8511e69438bd4eae16d0f58f468",
+      "source": "local-cri-manifest-dual-node",
       "mutable_tag": false
     },
     {
@@ -344,6 +352,113 @@
       "repo_digest": "docker.io/vesoft/nebula-storaged@sha256:29b9dccaecc339ed0e98b21575105eb45afc44afe84b8ca0cc9b0dca03c14fae",
       "image_id": "sha256:6121adf9100c3ee832b370d2c8769f91d25368a5b0035c8dcea8981962168ac1",
       "source": "live-pod-image-id-and-local-cri",
+      "mutable_tag": false
+    },
+    {
+      "reference": "traffic/rule-manager:model-management-20260718-r11",
+      "normalized": "docker.io/traffic/rule-manager:model-management-20260718-r11",
+      "repo_digest": "docker.io/traffic/rule-manager@sha256:ff2f2ed519bf8f945fea22efa5147e29e0b3522ecf0874c970b47f0a2e793ca9",
+      "image_id": "sha256:6fc668052259a2a74954147b6e3aed18d719c6114cf2b81bca2276cc38409bdd",
+      "source": "offline-build-and-two-node-local-cri",
+      "source_revision": "0d80aeaa99eaf2af560d61970b660f6d47036620c312ea2815d9c80f0670a09c",
+      "offline_archive_digest": "sha256:94c3272a877b8d03a0bcdc09066338d75c05be7547aba420f354bf4b6de40f83",
+      "mutable_tag": false
+    },
+    {
+      "reference": "traffic/web-ui:model-management-20260718-r12",
+      "normalized": "docker.io/traffic/web-ui:model-management-20260718-r12",
+      "repo_digest": "docker.io/traffic/web-ui@sha256:93bb268dd8bfe8f1b7c61e40a21994b56745da1eae7ddc38ea91b743f6e72209",
+      "image_id": "sha256:c4fc340a2f47fcfcf5b7ed551a86d6770b877b9a584007065e989567a8bf5b93",
+      "source": "offline-build-and-two-node-local-cri",
+      "source_revision": "642361a1811cee5497af98891180629f06bf6f12376d158f2c2fbc81d887f4b8",
+      "mutable_tag": false
+    },
+    {
+      "reference": "traffic/rule-manager:mlops-r332-20260719-r6",
+      "normalized": "docker.io/traffic/rule-manager:mlops-r332-20260719-r6",
+      "repo_digest": "docker.io/traffic/rule-manager@sha256:40016468610cd06855bd9a0b347a6567efa48da3816359557effae36ea40b44a",
+      "image_id": "sha256:7c0e6aece729c8c51c95dbe8ea6529c1ab5399994cac1c3cd248e13559b33722",
+      "source": "offline-build-and-two-node-local-cri",
+      "source_revision": "2d0ed8bd9cc4a7cac3dde558e697ac4dbcc5fbd7fb874edbd0b2e7beebc757a9",
+      "mutable_tag": false
+    },
+    {
+      "reference": "traffic/web-ui:mlops-r331-20260719-r4",
+      "normalized": "docker.io/traffic/web-ui:mlops-r331-20260719-r4",
+      "repo_digest": "docker.io/traffic/web-ui@sha256:0a756d9d1117c0ad6673f32046dafa6a2a14b42500c4458fa3f70712b47a4eb2",
+      "image_id": "sha256:8ee222a3c60ba8b9fea21cb8cabc634ea6fb8f0f14e7d577c06552bca28bc02d",
+      "source": "offline-build-and-two-node-local-cri",
+      "source_revision": "e408f40b3cf2d2a7eae8d2b16f4d56d92bd1a4d51816cd21c62cc012621f18bb",
+      "mutable_tag": false
+    },
+    {
+      "reference": "traffic/rule-manager:mlops-r333-20260719-r7",
+      "normalized": "docker.io/traffic/rule-manager:mlops-r333-20260719-r7",
+      "repo_digest": "docker.io/traffic/rule-manager@sha256:e1dc8980b6b6721f5ebc7f333898517cd7402ce78095d5d65c3cdc7120bfad16",
+      "image_id": "sha256:9b763f101f2404d716894ac924f6cadcbd7160cf2c9956b49a7ad4a65c111508",
+      "source": "offline-build-and-two-node-local-cri",
+      "source_revision": "d62c0a606f5b21fa6adbe983b040e42f9d09b156d5c9e09bd76ab13f5eab8a8b",
+      "offline_archive_digest": "sha256:5fbda337acd3721df19b5df1bbd32068877957c7eb0d89cd703847827a724572",
+      "mutable_tag": false
+    },
+    {
+      "reference": "traffic/web-ui:mlops-r333-20260719-r5",
+      "normalized": "docker.io/traffic/web-ui:mlops-r333-20260719-r5",
+      "repo_digest": "docker.io/traffic/web-ui@sha256:7ded10737d650ce698dbbcfbeb3595375fac4fe3d9a98d0615fd028ba518eff3",
+      "image_id": "sha256:6c6ba34bfbf2b4b266648b59cd8acfad517b8a1ef86533956491312d57d9a94c",
+      "source": "offline-build-and-two-node-local-cri",
+      "source_revision": "9715ff1904701d1ab1930309eca54ec2121999ab1f43c00cc14adceee9c8d309",
+      "offline_archive_digest": "sha256:57d3fd58455f7a74e30ca847fe8a5c3b8faf11743cc9e5136869c880dea9fd3e",
+      "mutable_tag": false
+    },
+    {
+      "reference": "traffic/rule-manager:mlops-r334-20260719-r8",
+      "normalized": "docker.io/traffic/rule-manager:mlops-r334-20260719-r8",
+      "repo_digest": "docker.io/traffic/rule-manager@sha256:718411de4802a4a732b7e044cf5c331e2f6cd7a45806ad3473cc3e82551e6d66",
+      "image_id": "sha256:318fce63c03b95a621ccab66b81dd00162465dcceae556d6ea1068794b7cd1d8",
+      "source": "offline-build-and-two-node-local-cri",
+      "source_revision": "5c65327a55dc76ea291668acd0716ac62f82c377c22ad0f8328797390e310b00",
+      "offline_archive_digest": "sha256:1b797ec4d4a9fc5a0ddee8aed13c0ff85c1397904324d0b879b314904a0b2c12",
+      "mutable_tag": false
+    },
+    {
+      "reference": "traffic/rule-manager:mlops-r335-20260719-r9",
+      "normalized": "docker.io/traffic/rule-manager:mlops-r335-20260719-r9",
+      "repo_digest": "docker.io/traffic/rule-manager@sha256:cc89cd9ce552a3dba879eb22be394e9ffabadf38511b5e556b1d78540bb3ab3f",
+      "image_id": "sha256:5726168b4ae116df6271a315f7897bd7478b44995fd7c48ebe05bae1f5f2ccc1",
+      "source": "offline-build-and-two-node-local-cri",
+      "source_revision": "0a01e099109eab5f63fbb2fd1817e2597061291b73213c642f95c9e19ba46060",
+      "offline_archive_digest": "sha256:307d01b77acb0e044019b18281fef985fb11e67680282a2c2403481c92e3f98a",
+      "mutable_tag": false
+    },
+    {
+      "reference": "traffic/rule-manager:mlops-r336-20260719-r10",
+      "normalized": "docker.io/traffic/rule-manager:mlops-r336-20260719-r10",
+      "repo_digest": "docker.io/traffic/rule-manager@sha256:0ab4b3733d1f4f424b6f53e5cc231fc77743a5459cd654a8b79be0dbddf509ed",
+      "image_id": "sha256:92668675f45979be5be6a99e7e5c0934f224908f2ce0749695a219092d768b06",
+      "source": "offline-build-and-two-node-local-cri",
+      "source_revision": "87031a7dabbbd3cdb2f0c609825f98bede983dcc1867d5ce50b3d6323be45202",
+      "offline_archive_digest": "sha256:4db921d8cf5b85e1f067cf1ea75fd61488244994813e50e7a4e9b08a58945dce",
+      "mutable_tag": false
+    },
+    {
+      "reference": "traffic/rule-manager:mlops-r337-20260719-r11",
+      "normalized": "docker.io/traffic/rule-manager:mlops-r337-20260719-r11",
+      "repo_digest": "docker.io/traffic/rule-manager@sha256:27f53d3029d9bc6d2d304c7e6b0e0c7f8428910638e01f47e78f1a4177bc818d",
+      "image_id": "sha256:b25b9dca94e5fdbc2fc9dd87145c8dd5fb241f002aa504a283b7b1fdfe717202",
+      "source": "offline-build-and-two-node-local-cri",
+      "source_revision": "bce58660940ecde859e612fb1167aeaf344f52f9f2051864f9c708198e91403d",
+      "offline_archive_digest": "sha256:b0c2c9003cd686fb0d87b1dc2c97b95cbc537ab23e915f8a2c65934542e978d6",
+      "mutable_tag": false
+    },
+    {
+      "reference": "traffic/mlops-trainer:mlops-r337-20260719-r2",
+      "normalized": "docker.io/traffic/mlops-trainer:mlops-r337-20260719-r2",
+      "repo_digest": "docker.io/traffic/mlops-trainer@sha256:4f40de900eed37b8fa169660edda9e53626cd596b53a0aeaf677b08e1e6b4011",
+      "image_id": "sha256:f7d9be0ad2e36ba8764e2787a695352410d986021356806097289b0c4f5f8886",
+      "source": "offline-build-and-two-node-local-cri",
+      "source_revision": "8441d1eb21f86745f11786760792c8aff68d0cb5cb6df7753f609a73dfa99759",
+      "offline_archive_digest": "sha256:0a6bc0c37d25862b34073b6a32eae11d08e077e29c3a2f2382693822a75ff67e",
       "mutable_tag": false
     }
   ]

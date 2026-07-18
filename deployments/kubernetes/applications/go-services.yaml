@@ -155,20 +155,20 @@ metadata:
   name: alert-service
   namespace: traffic-analysis
   annotations:
-    kubernetes.io/change-cause: "Campaign atomic actions and Kafka audit TLS r214 from e3316aec worktree"
-    traffic.analysis/source-revision: "e3316aec4ac1d6592e28aefc86853128ecde7408"
+    kubernetes.io/change-cause: "Probe management real operations and canonical UI fixture r219"
+    traffic.analysis/source-revision: "worktree-20260716"
 spec:
   replicas: 1
   selector: {matchLabels: {app: alert-service}}
   template:
     metadata:
       labels: {app: alert-service}
-      annotations: {prometheus.io/scrape: "true", prometheus.io/port: "9093", traffic.analysis/build-id: "campaign-fullstack-20260712-r214-worktree"}
+      annotations: {prometheus.io/scrape: "true", prometheus.io/port: "9093", traffic.analysis/build-id: "probe-topology-api-svg-20260716-r225-worktree"}
     spec:
       terminationGracePeriodSeconds: 120
       containers:
       - name: alert-service
-        image: docker.io/traffic/alert-service@sha256:ebb5cc36b3badeba8b9973b1a04851f1f3e49b15bed48a195ff72166150bad91
+        image: docker.io/traffic/alert-service:data-quality-daily-report-api-20260716-r229
         imagePullPolicy: Never
         ports: [{containerPort: 8082}, {containerPort: 9093}]
         lifecycle:
@@ -281,12 +281,17 @@ spec:
   replicas: 1
   selector: {matchLabels: {app: rule-manager}}
   template:
-    metadata: {labels: {app: rule-manager}}
+    metadata:
+      labels: {app: rule-manager}
+      annotations:
+        traffic.analysis/build-id: "mlops-r337-20260719-r11"
+        traffic.analysis/source-digest: "bce58660940ecde859e612fb1167aeaf344f52f9f2051864f9c708198e91403d"
+        traffic.analysis/image-digest: "sha256:27f53d3029d9bc6d2d304c7e6b0e0c7f8428910638e01f47e78f1a4177bc818d"
     spec:
       securityContext: {fsGroup: 1000, fsGroupChangePolicy: OnRootMismatch}
       containers:
       - name: rule-manager
-        image: docker.io/traffic/rule-manager@sha256:4b487c15120fe634ba6316d0fa5fff170b3f8d5a9a12d84c1a1c4ca9a84cdbd7
+        image: docker.io/traffic/rule-manager@sha256:27f53d3029d9bc6d2d304c7e6b0e0c7f8428910638e01f47e78f1a4177bc818d
         imagePullPolicy: Never
         ports: [{containerPort: 8084}]
         env:
@@ -310,11 +315,17 @@ spec:
         - {name: KAFKA_TLS_SERVER_NAME, value: "kafka-bootstrap.middleware.svc"}
         - {name: KAFKA_RULE_TOPIC, value: "rule.updates"}
         - {name: KAFKA_MODEL_TOPIC, value: "model-updates"}
+        - {name: KAFKA_MODEL_ACTION_TOPIC, value: "model-actions.v1"}
+        - {name: KAFKA_MODEL_APPLIED_TOPIC, value: "model-update-applied.v1"}
+        - {name: MODEL_APPLIED_ACK_EXPECTED_PARALLELISM, value: "4"}
+        - {name: KAFKA_DEPLOYMENT_TOPIC, value: "deployment.events.v1"}
         - {name: KAFKA_AUDIT_TOPIC, value: "audit.logs"}
         - {name: AUDIT_TOPIC, value: "audit.logs"}
         - {name: MLOPS_ARGO_NAMESPACE, value: "argo"}
         - {name: MLOPS_ARGO_SERVER_URL, value: "http://argo-server.argo.svc:2746"}
         - {name: MLOPS_WORKFLOW_TEMPLATE, value: "mlops-training-template"}
+        - {name: MLOPS_AUTOMATED_TENANT_ID, value: "default"}
+        - {name: MLOPS_AUTOMATED_MODEL_NAME, value: "behavior-classifier"}
         - {name: JWT_SECRET_KEY, valueFrom: {secretKeyRef: {name: traffic-credentials, key: JWT_SECRET}}}
         - {name: LOG_LEVEL, value: "info"}
         resources: {requests: {cpu: 200m, memory: 256Mi}, limits: {cpu: 500m, memory: 512Mi}}
@@ -456,7 +467,7 @@ spec:
     spec:
       containers:
       - name: forensics-service
-        image: docker.io/traffic/forensics-service@sha256:31a224080db7d2bd8aabb3c6e100a00ce91bcea280c291bb82dbee83d7bc80a4
+        image: docker.io/traffic/forensics-service:forensics-canonical-v1-20260716-r7
         imagePullPolicy: Never
         ports: [{containerPort: 8086}]
         env:
@@ -474,6 +485,9 @@ spec:
         - {name: S3_SECRET_KEY, valueFrom: {secretKeyRef: {name: traffic-credentials, key: MINIO_SECRET_KEY}}}
         - {name: REDIS_SENTINEL_ADDRS, value: "redis-sentinel.databases.svc:26379"}
         - {name: REDIS_SENTINEL_MASTER, value: "mymaster"}
+        - {name: AUTH_ENABLED, value: "true"}
+        - {name: JWT_SIGNING_KEY, valueFrom: {secretKeyRef: {name: traffic-credentials, key: JWT_SECRET}}}
+        - {name: JWT_ISSUER, value: "traffic-auth-service"}
         - {name: KAFKA_BROKERS, value: "kafka-bootstrap.middleware.svc:9092"}
         - {name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL"}
         - {name: KAFKA_SASL_MECHANISM, value: "SCRAM-SHA-512"}

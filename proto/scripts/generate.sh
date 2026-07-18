@@ -189,12 +189,8 @@ generate_rust_lib() {
 /// Traffic v1 protocol definitions
 pub mod traffic {
     pub mod v1 {
-        // Common types (EventHeader, FiveTuple, Enums, etc.)
+        // Generated messages plus pbjson/tonic includes.
         include!("traffic.v1.rs");
-        
-        // Include serde implementations if generated
-        #[cfg(feature = "serde")]
-        include!("traffic.v1.serde.rs");
     }
 }
 

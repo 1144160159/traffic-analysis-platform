@@ -20,6 +20,9 @@ for entry in \
   "pcap.index.v1:8:259200000:536870912:tenant_id+probe_id:PcapIndexMeta" \
   "rule.updates:1:86400000:134217728:rule_id:RuleCommand" \
   "model-updates:1:86400000:134217728:model_id:ModelUpdateEvent" \
+  "model-update-applied.v1:4:259200000:134217728:event_id:ModelUpdateAppliedAckV1Json" \
+  "model-actions.v1:3:259200000:134217728:model_id:ModelActionRequestedV1Json" \
+  "deployment.events.v1:6:259200000:268435456:deployment_id:DeploymentEventV1Json" \
   "audit.logs:3:259200000:268435456:tenant_id:AuditLog" \
   "asset.bindings.v1:4:86400000:134217728:tenant_id+mac:MacIpBinding" \
   "device.logs.v1:8:259200000:268435456:tenant_id+device_ip:DeviceLog" \
