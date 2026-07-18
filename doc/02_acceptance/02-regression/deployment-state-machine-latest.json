@@ -1,243 +1,648 @@
 {
-  "run_id": "20260629-deployment-state-machine-r3-model-version-state",
+  "run_id": "20260718182953-deployment-state-machine",
   "result": "pass",
   "tenant": "codex-deployment-state",
   "other_tenant": "codex-deployment-cross",
-  "deployment_id": "e4cec613-5a60-4574-b20e-90dc97637870",
-  "invalid_deployment_id": "41e8575e-65cb-40f4-9c59-6a0506248ac9",
-  "cross_deployment_id": "2af74ab0-050e-4a34-a3ce-11e680ef24be",
-  "viewer_deployment_id": "c0e677a1-2e3d-4a9c-84cb-3e3220d972ea",
-  "total": 25,
-  "passed": 25,
+  "deployment_id": "4e034fb8-3cf9-4714-a4e0-66f5bbcf7446",
+  "invalid_deployment_id": "6bc47ff9-ba5c-4967-8d43-f816e9947cc3",
+  "cross_deployment_id": "377e10ae-244c-4599-a59c-61b823c296b1",
+  "viewer_deployment_id": "c21db9d6-10b6-4d17-ab14-687a10dd19b0",
+  "total": 70,
+  "passed": 70,
   "failed": 0,
   "blockers": 0,
   "warnings": 0,
-  "report": "doc/02_acceptance/runs/20260629-deployment-state-machine/live-deployment-state-machine-20260629-deployment-state-machine-r3-model-version-state.ndjson",
+  "report": "doc/02_acceptance/runs/20260629-deployment-state-machine/live-deployment-state-machine-20260718182953-deployment-state-machine.ndjson",
   "checks": [
     {
-      "ts": "2026-06-29T22:07:12+08:00",
+      "ts": "2026-07-18T18:29:54+08:00",
       "phase": "fixture",
       "name": "seed deployment state-machine fixtures",
       "ok": true,
       "status": "ok",
-      "detail": "e4cec613-5a60-4574-b20e-90dc97637870,c3c538b4-c0a2-4245-aebf-6728b4e49504,41e8575e-65cb-40f4-9c59-6a0506248ac9,2af74ab0-050e-4a34-a3ce-11e680ef24be,c0e677a1-2e3d-4a9c-84cb-3e3220d972ea",
+      "detail": "4e034fb8-3cf9-4714-a4e0-66f5bbcf7446,bd6efe89-c64f-4051-8773-18ff616c6ae8,6bc47ff9-ba5c-4967-8d43-f816e9947cc3,377e10ae-244c-4599-a59c-61b823c296b1,c21db9d6-10b6-4d17-ab14-687a10dd19b0,a71d469e-593f-459e-b929-1959a3ddbe02,03ce4818-f1d3-472a-ba60-8bc6c8de56bd,be12f858-282e-4d48-8002-4a0c9cf7975a,4d125c24-3b18-412e-991c-a04d92a88b38",
       "artifact": ""
     },
     {
-      "ts": "2026-06-29T22:07:12+08:00",
+      "ts": "2026-07-18T18:29:54+08:00",
+      "phase": "api",
+      "name": "save deploy workflow draft",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/deployments/4e034fb8-3cf9-4714-a4e0-66f5bbcf7446/workflow",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-save-deploy-workflow-draft.json"
+    },
+    {
+      "ts": "2026-07-18T18:29:54+08:00",
+      "phase": "api",
+      "name": "run deploy precheck",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/deployments/4e034fb8-3cf9-4714-a4e0-66f5bbcf7446/workflow",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-run-deploy-precheck.json"
+    },
+    {
+      "ts": "2026-07-18T18:29:54+08:00",
+      "phase": "api",
+      "name": "submit deploy approval",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/deployments/4e034fb8-3cf9-4714-a4e0-66f5bbcf7446/workflow",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-submit-deploy-approval.json"
+    },
+    {
+      "ts": "2026-07-18T18:29:55+08:00",
+      "phase": "api",
+      "name": "requester self approval rejected",
+      "ok": true,
+      "status": "403",
+      "detail": "POST /api/v1/deployments/4e034fb8-3cf9-4714-a4e0-66f5bbcf7446/workflow",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-requester-self-approval-rejected.json"
+    },
+    {
+      "ts": "2026-07-18T18:29:55+08:00",
+      "phase": "db",
+      "name": "requester self approval failure audited",
+      "ok": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-requester-self-approval-failure-audited.txt"
+    },
+    {
+      "ts": "2026-07-18T18:29:55+08:00",
+      "phase": "api",
+      "name": "pending deploy cannot start gray",
+      "ok": true,
+      "status": "409",
+      "detail": "POST /api/v1/deployments/4e034fb8-3cf9-4714-a4e0-66f5bbcf7446/gray",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-pending-deploy-cannot-start-gray.json"
+    },
+    {
+      "ts": "2026-07-18T18:29:55+08:00",
+      "phase": "db",
+      "name": "pending deploy remains planned",
+      "ok": true,
+      "status": "ok",
+      "detail": "planned|approval_pending",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-pending-deploy-remains-planned.txt"
+    },
+    {
+      "ts": "2026-07-18T18:29:55+08:00",
+      "phase": "api",
+      "name": "approve deploy workflow",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/deployments/4e034fb8-3cf9-4714-a4e0-66f5bbcf7446/workflow",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-approve-deploy-workflow.json"
+    },
+    {
+      "ts": "2026-07-18T18:29:55+08:00",
+      "phase": "db",
+      "name": "approved deploy workflow persisted",
+      "ok": true,
+      "status": "ok",
+      "detail": "approved|deploy",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-approved-deploy-workflow-persisted.txt"
+    },
+    {
+      "ts": "2026-07-18T18:29:55+08:00",
+      "phase": "api",
+      "name": "planned partial deployment cannot bypass gray",
+      "ok": true,
+      "status": "409",
+      "detail": "POST /api/v1/deployments/4e034fb8-3cf9-4714-a4e0-66f5bbcf7446/activate",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-planned-partial-deployment-cannot-bypass-gray.json"
+    },
+    {
+      "ts": "2026-07-18T18:29:55+08:00",
       "phase": "api",
       "name": "start gray deployment",
       "ok": true,
       "status": "200",
-      "detail": "POST /api/v1/deployments/e4cec613-5a60-4574-b20e-90dc97637870/gray",
-      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-start-gray-deployment.json"
+      "detail": "POST /api/v1/deployments/4e034fb8-3cf9-4714-a4e0-66f5bbcf7446/gray",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-start-gray-deployment.json"
     },
     {
-      "ts": "2026-06-29T22:07:12+08:00",
+      "ts": "2026-07-18T18:29:55+08:00",
       "phase": "db",
       "name": "gray status persisted",
       "ok": true,
       "status": "ok",
       "detail": "gray|true|true",
-      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-gray-status-persisted.txt"
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-gray-status-persisted.txt"
     },
     {
-      "ts": "2026-06-29T22:07:12+08:00",
+      "ts": "2026-07-18T18:29:56+08:00",
       "phase": "db",
       "name": "gray history persisted",
       "ok": true,
       "status": "ok",
       "detail": "1",
-      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-gray-history-persisted.txt"
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-gray-history-persisted.txt"
     },
     {
-      "ts": "2026-06-29T22:07:12+08:00",
+      "ts": "2026-07-18T18:29:56+08:00",
       "phase": "api",
       "name": "activate deployment",
       "ok": true,
       "status": "200",
-      "detail": "POST /api/v1/deployments/e4cec613-5a60-4574-b20e-90dc97637870/activate",
-      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-activate-deployment.json"
+      "detail": "POST /api/v1/deployments/4e034fb8-3cf9-4714-a4e0-66f5bbcf7446/activate",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-activate-deployment.json"
     },
     {
-      "ts": "2026-06-29T22:07:12+08:00",
+      "ts": "2026-07-18T18:29:56+08:00",
       "phase": "db",
       "name": "active status persisted",
       "ok": true,
       "status": "ok",
       "detail": "active|true",
-      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-active-status-persisted.txt"
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-active-status-persisted.txt"
     },
     {
-      "ts": "2026-06-29T22:07:12+08:00",
+      "ts": "2026-07-18T18:29:56+08:00",
+      "phase": "db",
+      "name": "approved execution plan persisted",
+      "ok": true,
+      "status": "ok",
+      "detail": "true|10",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-approved-execution-plan-persisted.txt"
+    },
+    {
+      "ts": "2026-07-18T18:29:56+08:00",
       "phase": "db",
       "name": "previous active superseded",
       "ok": true,
       "status": "ok",
       "detail": "superseded",
-      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-previous-active-superseded.txt"
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-previous-active-superseded.txt"
     },
     {
-      "ts": "2026-06-29T22:07:12+08:00",
+      "ts": "2026-07-18T18:29:56+08:00",
       "phase": "db",
       "name": "activate history persisted",
       "ok": true,
       "status": "ok",
       "detail": "1",
-      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-activate-history-persisted.txt"
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-activate-history-persisted.txt"
     },
     {
-      "ts": "2026-06-29T22:07:12+08:00",
+      "ts": "2026-07-18T18:29:56+08:00",
       "phase": "api",
       "name": "pause active deployment",
       "ok": true,
       "status": "200",
-      "detail": "POST /api/v1/deployments/e4cec613-5a60-4574-b20e-90dc97637870/pause",
-      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-pause-active-deployment.json"
+      "detail": "POST /api/v1/deployments/4e034fb8-3cf9-4714-a4e0-66f5bbcf7446/pause",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-pause-active-deployment.json"
     },
     {
-      "ts": "2026-06-29T22:07:13+08:00",
+      "ts": "2026-07-18T18:29:56+08:00",
       "phase": "db",
       "name": "pause status persisted",
       "ok": true,
       "status": "ok",
       "detail": "paused",
-      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-pause-status-persisted.txt"
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-pause-status-persisted.txt"
     },
     {
-      "ts": "2026-06-29T22:07:13+08:00",
+      "ts": "2026-07-18T18:29:57+08:00",
       "phase": "db",
       "name": "pause history persisted",
       "ok": true,
       "status": "ok",
       "detail": "1",
-      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-pause-history-persisted.txt"
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-pause-history-persisted.txt"
     },
     {
-      "ts": "2026-06-29T22:07:13+08:00",
+      "ts": "2026-07-18T18:29:57+08:00",
       "phase": "api",
       "name": "resume paused deployment",
       "ok": true,
       "status": "200",
-      "detail": "POST /api/v1/deployments/e4cec613-5a60-4574-b20e-90dc97637870/resume",
-      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-resume-paused-deployment.json"
+      "detail": "POST /api/v1/deployments/4e034fb8-3cf9-4714-a4e0-66f5bbcf7446/resume",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-resume-paused-deployment.json"
     },
     {
-      "ts": "2026-06-29T22:07:13+08:00",
+      "ts": "2026-07-18T18:29:57+08:00",
       "phase": "db",
       "name": "resume status persisted",
       "ok": true,
       "status": "ok",
       "detail": "active",
-      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-resume-status-persisted.txt"
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-resume-status-persisted.txt"
     },
     {
-      "ts": "2026-06-29T22:07:13+08:00",
+      "ts": "2026-07-18T18:29:57+08:00",
       "phase": "db",
       "name": "resume history persisted",
       "ok": true,
       "status": "ok",
       "detail": "1",
-      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-resume-history-persisted.txt"
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-resume-history-persisted.txt"
     },
     {
-      "ts": "2026-06-29T22:07:13+08:00",
+      "ts": "2026-07-18T18:29:57+08:00",
+      "phase": "api",
+      "name": "save rollback workflow draft",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/deployments/4e034fb8-3cf9-4714-a4e0-66f5bbcf7446/workflow",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-save-rollback-workflow-draft.json"
+    },
+    {
+      "ts": "2026-07-18T18:29:57+08:00",
+      "phase": "api",
+      "name": "run rollback precheck",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/deployments/4e034fb8-3cf9-4714-a4e0-66f5bbcf7446/workflow",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-run-rollback-precheck.json"
+    },
+    {
+      "ts": "2026-07-18T18:29:57+08:00",
+      "phase": "api",
+      "name": "submit rollback approval",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/deployments/4e034fb8-3cf9-4714-a4e0-66f5bbcf7446/workflow",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-submit-rollback-approval.json"
+    },
+    {
+      "ts": "2026-07-18T18:29:57+08:00",
+      "phase": "api",
+      "name": "pending rollback cannot execute",
+      "ok": true,
+      "status": "409",
+      "detail": "POST /api/v1/deployments/4e034fb8-3cf9-4714-a4e0-66f5bbcf7446/rollback",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-pending-rollback-cannot-execute.json"
+    },
+    {
+      "ts": "2026-07-18T18:29:57+08:00",
+      "phase": "api",
+      "name": "approve rollback workflow",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/deployments/4e034fb8-3cf9-4714-a4e0-66f5bbcf7446/workflow",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-approve-rollback-workflow.json"
+    },
+    {
+      "ts": "2026-07-18T18:29:58+08:00",
       "phase": "api",
       "name": "rollback active deployment",
       "ok": true,
       "status": "200",
-      "detail": "POST /api/v1/deployments/e4cec613-5a60-4574-b20e-90dc97637870/rollback",
-      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-rollback-active-deployment.json"
+      "detail": "POST /api/v1/deployments/4e034fb8-3cf9-4714-a4e0-66f5bbcf7446/rollback",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-rollback-active-deployment.json"
     },
     {
-      "ts": "2026-06-29T22:07:13+08:00",
+      "ts": "2026-07-18T18:29:58+08:00",
       "phase": "db",
       "name": "rollback status persisted",
       "ok": true,
       "status": "ok",
-      "detail": "rolled_back|true",
-      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-rollback-status-persisted.txt"
+      "detail": "rolled_back|true|自动化验收回滚原因不少于十个字",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-rollback-status-persisted.txt"
     },
     {
-      "ts": "2026-06-29T22:07:13+08:00",
+      "ts": "2026-07-18T18:29:58+08:00",
       "phase": "db",
       "name": "rollback history persisted",
       "ok": true,
       "status": "ok",
       "detail": "1",
-      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-rollback-history-persisted.txt"
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-rollback-history-persisted.txt"
     },
     {
-      "ts": "2026-06-29T22:07:13+08:00",
+      "ts": "2026-07-18T18:29:58+08:00",
+      "phase": "api",
+      "name": "concurrent gray one save workflow",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/deployments/be12f858-282e-4d48-8002-4a0c9cf7975a/workflow",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-concurrent-gray-one-save-workflow.json"
+    },
+    {
+      "ts": "2026-07-18T18:29:58+08:00",
+      "phase": "api",
+      "name": "concurrent gray one precheck",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/deployments/be12f858-282e-4d48-8002-4a0c9cf7975a/workflow",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-concurrent-gray-one-precheck.json"
+    },
+    {
+      "ts": "2026-07-18T18:29:58+08:00",
+      "phase": "api",
+      "name": "concurrent gray one submit approval",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/deployments/be12f858-282e-4d48-8002-4a0c9cf7975a/workflow",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-concurrent-gray-one-submit-approval.json"
+    },
+    {
+      "ts": "2026-07-18T18:29:58+08:00",
+      "phase": "api",
+      "name": "concurrent gray one independent approval",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/deployments/be12f858-282e-4d48-8002-4a0c9cf7975a/workflow",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-concurrent-gray-one-independent-approval.json"
+    },
+    {
+      "ts": "2026-07-18T18:29:58+08:00",
+      "phase": "api",
+      "name": "concurrent gray two save workflow",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/deployments/4d125c24-3b18-412e-991c-a04d92a88b38/workflow",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-concurrent-gray-two-save-workflow.json"
+    },
+    {
+      "ts": "2026-07-18T18:29:59+08:00",
+      "phase": "api",
+      "name": "concurrent gray two precheck",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/deployments/4d125c24-3b18-412e-991c-a04d92a88b38/workflow",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-concurrent-gray-two-precheck.json"
+    },
+    {
+      "ts": "2026-07-18T18:29:59+08:00",
+      "phase": "api",
+      "name": "concurrent gray two submit approval",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/deployments/4d125c24-3b18-412e-991c-a04d92a88b38/workflow",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-concurrent-gray-two-submit-approval.json"
+    },
+    {
+      "ts": "2026-07-18T18:29:59+08:00",
+      "phase": "api",
+      "name": "concurrent gray two independent approval",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/deployments/4d125c24-3b18-412e-991c-a04d92a88b38/workflow",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-concurrent-gray-two-independent-approval.json"
+    },
+    {
+      "ts": "2026-07-18T18:29:59+08:00",
+      "phase": "api",
+      "name": "gray resume save workflow",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/deployments/a71d469e-593f-459e-b929-1959a3ddbe02/workflow",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-gray-resume-save-workflow.json"
+    },
+    {
+      "ts": "2026-07-18T18:29:59+08:00",
+      "phase": "api",
+      "name": "gray resume precheck",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/deployments/a71d469e-593f-459e-b929-1959a3ddbe02/workflow",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-gray-resume-precheck.json"
+    },
+    {
+      "ts": "2026-07-18T18:29:59+08:00",
+      "phase": "api",
+      "name": "gray resume submit approval",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/deployments/a71d469e-593f-459e-b929-1959a3ddbe02/workflow",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-gray-resume-submit-approval.json"
+    },
+    {
+      "ts": "2026-07-18T18:29:59+08:00",
+      "phase": "api",
+      "name": "gray resume independent approval",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/deployments/a71d469e-593f-459e-b929-1959a3ddbe02/workflow",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-gray-resume-independent-approval.json"
+    },
+    {
+      "ts": "2026-07-18T18:29:59+08:00",
+      "phase": "concurrency",
+      "name": "cross-record simultaneous gray commits once",
+      "ok": true,
+      "status": "ok",
+      "detail": "200,409",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-concurrent-gray-one.json,doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-concurrent-gray-two.json"
+    },
+    {
+      "ts": "2026-07-18T18:29:59+08:00",
+      "phase": "db",
+      "name": "cross-record gray singleton persisted",
+      "ok": true,
+      "status": "ok",
+      "detail": "1|1",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-cross-record-gray-singleton-persisted.txt"
+    },
+    {
+      "ts": "2026-07-18T18:30:00+08:00",
+      "phase": "api",
+      "name": "start gray resume fixture",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/deployments/a71d469e-593f-459e-b929-1959a3ddbe02/gray",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-start-gray-resume-fixture.json"
+    },
+    {
+      "ts": "2026-07-18T18:30:00+08:00",
+      "phase": "concurrency",
+      "name": "simultaneous pause commits once",
+      "ok": true,
+      "status": "ok",
+      "detail": "200,409",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-concurrent-pause-one.json,doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-concurrent-pause-two.json"
+    },
+    {
+      "ts": "2026-07-18T18:30:00+08:00",
+      "phase": "db",
+      "name": "concurrent pause persisted once",
+      "ok": true,
+      "status": "ok",
+      "detail": "paused|gray|1",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-concurrent-pause-persisted-once.txt"
+    },
+    {
+      "ts": "2026-07-18T18:30:00+08:00",
+      "phase": "api",
+      "name": "resume gray deployment",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/deployments/a71d469e-593f-459e-b929-1959a3ddbe02/resume",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-resume-gray-deployment.json"
+    },
+    {
+      "ts": "2026-07-18T18:30:00+08:00",
+      "phase": "db",
+      "name": "gray resume restores gray",
+      "ok": true,
+      "status": "ok",
+      "detail": "gray|",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-gray-resume-restores-gray.txt"
+    },
+    {
+      "ts": "2026-07-18T18:30:00+08:00",
+      "phase": "api",
+      "name": "activate restored gray deployment",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/deployments/a71d469e-593f-459e-b929-1959a3ddbe02/activate",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-activate-restored-gray-deployment.json"
+    },
+    {
+      "ts": "2026-07-18T18:30:01+08:00",
+      "phase": "api",
+      "name": "audit failure rejects pause",
+      "ok": true,
+      "status": "500",
+      "detail": "POST /api/v1/deployments/03ce4818-f1d3-472a-ba60-8bc6c8de56bd/pause",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-audit-failure-rejects-pause.json"
+    },
+    {
+      "ts": "2026-07-18T18:30:01+08:00",
+      "phase": "db",
+      "name": "audit failure rolls back status and history",
+      "ok": true,
+      "status": "ok",
+      "detail": "gray|0",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-audit-failure-rolls-back-status-and-history.txt"
+    },
+    {
+      "ts": "2026-07-18T18:30:01+08:00",
       "phase": "api",
       "name": "planned rollback rejected",
       "ok": true,
       "status": "409",
-      "detail": "POST /api/v1/deployments/41e8575e-65cb-40f4-9c59-6a0506248ac9/rollback",
-      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-planned-rollback-rejected.json"
+      "detail": "POST /api/v1/deployments/6bc47ff9-ba5c-4967-8d43-f816e9947cc3/rollback",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-planned-rollback-rejected.json"
     },
     {
-      "ts": "2026-06-29T22:07:13+08:00",
+      "ts": "2026-07-18T18:30:01+08:00",
       "phase": "db",
       "name": "planned rollback unchanged",
       "ok": true,
       "status": "ok",
       "detail": "planned",
-      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-planned-rollback-unchanged.txt"
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-planned-rollback-unchanged.txt"
     },
     {
-      "ts": "2026-06-29T22:07:13+08:00",
+      "ts": "2026-07-18T18:30:01+08:00",
       "phase": "api",
       "name": "cross tenant rollback rejected",
       "ok": true,
       "status": "403",
-      "detail": "POST /api/v1/deployments/2af74ab0-050e-4a34-a3ce-11e680ef24be/rollback",
-      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-cross-tenant-rollback-rejected.json"
+      "detail": "POST /api/v1/deployments/377e10ae-244c-4599-a59c-61b823c296b1/rollback",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-cross-tenant-rollback-rejected.json"
     },
     {
-      "ts": "2026-06-29T22:07:14+08:00",
+      "ts": "2026-07-18T18:30:01+08:00",
       "phase": "db",
       "name": "cross tenant deployment unchanged",
       "ok": true,
       "status": "ok",
       "detail": "active",
-      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-cross-tenant-deployment-unchanged.txt"
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-cross-tenant-deployment-unchanged.txt"
     },
     {
-      "ts": "2026-06-29T22:07:14+08:00",
+      "ts": "2026-07-18T18:30:01+08:00",
       "phase": "api",
       "name": "viewer gray rejected",
       "ok": true,
       "status": "403",
-      "detail": "POST /api/v1/deployments/c0e677a1-2e3d-4a9c-84cb-3e3220d972ea/gray",
-      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-viewer-gray-rejected.json"
+      "detail": "POST /api/v1/deployments/c21db9d6-10b6-4d17-ab14-687a10dd19b0/gray",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-viewer-gray-rejected.json"
     },
     {
-      "ts": "2026-06-29T22:07:14+08:00",
+      "ts": "2026-07-18T18:30:01+08:00",
       "phase": "db",
       "name": "viewer deployment unchanged",
       "ok": true,
       "status": "ok",
       "detail": "planned",
-      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-viewer-deployment-unchanged.txt"
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-viewer-deployment-unchanged.txt"
     },
     {
-      "ts": "2026-06-29T22:07:14+08:00",
+      "ts": "2026-07-18T18:30:02+08:00",
+      "phase": "api",
+      "name": "quota rollback save workflow",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/deployments/d15dfdf8-6a35-42d1-97b0-b6f669624b69/workflow",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-quota-rollback-save-workflow.json"
+    },
+    {
+      "ts": "2026-07-18T18:30:02+08:00",
+      "phase": "api",
+      "name": "quota rollback precheck",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/deployments/d15dfdf8-6a35-42d1-97b0-b6f669624b69/workflow",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-quota-rollback-precheck.json"
+    },
+    {
+      "ts": "2026-07-18T18:30:02+08:00",
+      "phase": "api",
+      "name": "quota rollback submit approval",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/deployments/d15dfdf8-6a35-42d1-97b0-b6f669624b69/workflow",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-quota-rollback-submit-approval.json"
+    },
+    {
+      "ts": "2026-07-18T18:30:02+08:00",
+      "phase": "api",
+      "name": "quota rollback independent approval",
+      "ok": true,
+      "status": "200",
+      "detail": "POST /api/v1/deployments/d15dfdf8-6a35-42d1-97b0-b6f669624b69/workflow",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-quota-rollback-independent-approval.json"
+    },
+    {
+      "ts": "2026-07-18T18:30:02+08:00",
+      "phase": "api",
+      "name": "paused rollback target reactivation respects quota",
+      "ok": true,
+      "status": "429",
+      "detail": "POST /api/v1/deployments/d15dfdf8-6a35-42d1-97b0-b6f669624b69/rollback",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-paused-rollback-target-reactivation-respects-quota.json"
+    },
+    {
+      "ts": "2026-07-18T18:30:02+08:00",
+      "phase": "db",
+      "name": "quota rollback failure audited",
+      "ok": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-quota-rollback-failure-audited.txt"
+    },
+    {
+      "ts": "2026-07-18T18:30:02+08:00",
+      "phase": "db",
+      "name": "quota rollback leaves source and target unchanged",
+      "ok": true,
+      "status": "ok",
+      "detail": "1a0dfc35-0af5-4aa8-b9e3-28feefc813b8=superseded,d15dfdf8-6a35-42d1-97b0-b6f669624b69=paused",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-quota-rollback-leaves-source-and-target-unchanged.txt"
+    },
+    {
+      "ts": "2026-07-18T18:30:03+08:00",
       "phase": "api",
       "name": "audit trail query",
       "ok": true,
       "status": "200",
       "detail": "GET /api/v1/audit/logs?object_type=deployment&limit=200",
-      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-audit-trail-query.json"
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-audit-trail-query.json"
     },
     {
-      "ts": "2026-06-29T22:07:14+08:00",
+      "ts": "2026-07-18T18:30:03+08:00",
       "phase": "audit",
       "name": "deployment action audit queryable",
       "ok": true,
       "status": "ok",
-      "detail": "e4cec613-5a60-4574-b20e-90dc97637870",
-      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260629-deployment-state-machine-r3-model-version-state-audit.json"
+      "detail": "4e034fb8-3cf9-4714-a4e0-66f5bbcf7446",
+      "artifact": "doc/02_acceptance/runs/20260629-deployment-state-machine/20260718182953-deployment-state-machine-audit.json"
     }
   ]
 }

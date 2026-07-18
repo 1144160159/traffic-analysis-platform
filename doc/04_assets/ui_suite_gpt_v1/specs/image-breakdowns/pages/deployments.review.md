@@ -87,3 +87,18 @@ This image is ready for the automated Windows Chrome screenshot and visual diff 
 | Business ROI | pass | `metrics-business-r259.json`: `0.07075855849694188 <= 0.125`. |
 
 Main-thread judgment is `business-pixel-accepted` for r259. The previous visible-Chrome rerun requirement is now satisfied by `interaction-r259.png` from Windows Chrome CDP on the direct APISIX production route; auxiliary-agent review is recorded separately after its independent pass completes.
+
+## r264 Final Production Review
+
+| Check | Result | Evidence |
+|---|---|---|
+| Windows Chrome path | pass | Xshell CDP `127.0.0.1:9224`, Chrome 150, direct APISIX `/deployments` |
+| Exact viewport | pass | `full-stack-r264.json`: 1920×1080, DPR approximately 1 |
+| Business interactions | pass | 43/43; real PostgreSQL, approval separation, gray/rollback, evidence download and audit |
+| State and audit | pass | `deployment-state-machine-latest.json`: 70/70, including quota rollback failure audit |
+| Kafka/outbox | pass | `deployment-outbox-kafka-latest.json`: 4/4 actual broker consumption |
+| Main visual | pass | `main-metrics-r20.json`: `0.110578 <= 0.125` |
+| Runtime | pass | 0 bad responses, console errors and page errors |
+| Layout | pass | 6/6 rows visible; rollback reason and all actions inside viewport |
+
+Terminal logic, layout and overall reviews have no open P0/P1. Main-thread decision is `accepted`; evaluated learning episode is positive with 11/11 hard gates.

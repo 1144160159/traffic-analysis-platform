@@ -2,7 +2,7 @@
   "target_id": "assets",
   "route": "/assets",
   "status": "fail",
-  "generated_at": "2026-07-03T18:33:17.753669+08:00",
+  "generated_at": "2026-07-13T17:02:30.222913+08:00",
   "desktop_chrome_backend_status": "pass",
   "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets.png",
   "actual_screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/assets/actual-1920.png",
@@ -13,16 +13,31 @@
   },
   "visual_diff": {
     "size_ok": true,
+    "comparison_scope": "full-image",
+    "scoring_region": {
+      "id": "full-image",
+      "x": 0,
+      "y": 0,
+      "width": 1920,
+      "height": 1080
+    },
     "source_width": 1920,
     "source_height": 1080,
     "actual_width": 1920,
     "actual_height": 1080,
     "compared_pixels": 2073600,
     "total_pixels": 2073600,
-    "mismatch_pixels": 2073539,
-    "pixel_mismatch_ratio": 0.9999705825617284,
+    "mismatch_pixels": 2073414,
+    "pixel_mismatch_ratio": 0.9999103009259259,
     "max_pixel_ratio": 0.015,
     "channel_tolerance": 0,
-    "max_channel_delta": 255
+    "max_channel_delta": 255,
+    "full_image_diagnostic": {
+      "compared_pixels": 2073600,
+      "total_pixels": 2073600,
+      "mismatch_pixels": 2073414,
+      "pixel_mismatch_ratio": 0.9999103009259259,
+      "max_channel_delta": 255
+    }
   }
 }

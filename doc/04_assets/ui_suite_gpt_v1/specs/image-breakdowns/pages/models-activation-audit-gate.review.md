@@ -1,5 +1,12 @@
 # models-activation-audit-gate.png review
 
+
+## r328 Production Route Review Gate
+
+- Captured in Windows Chrome 150 over the Xshell CDP tunnel from the direct APISIX route at exact 1920x1080 / DPR 1.
+- Evidence: `evidence/ui-image-breakdowns/pages/models/state-r328-activation-audit-gate.png`, `visual-r328/activation-audit-gate-side-by-side.png`, and `interaction-r328.json`.
+- Raw diff: `0.07979263117283951 <= 0.15` with tolerance 64; the server-side gate probe remains 409 / BIZ_3004.
+- Current main-thread status: `accepted-r328`.
 ## Review Status
 
 - Status: `breakdown-ready`

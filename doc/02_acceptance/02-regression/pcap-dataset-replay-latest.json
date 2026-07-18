@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-15T08:05:54.055992+00:00",
+  "result": "pass",
+  "runner": "probe-agent PcapReplayer + PacketParser",
+  "read_only_source": true,
+  "samples": [
+    {
+      "path": "/home/wangwt/task/datasets/cic/EdgeIIoT/Edge-IIoTset dataset/Attack traffic/OS Fingerprinting attack.pcap",
+      "exists": true,
+      "file_bytes": 114041,
+      "sha256": "68c0464ac92f1d08a050f4e013dd5e0d0e870f39b8f70f26acde133b6d7e00c4",
+      "result": "pass",
+      "captured": 1176,
+      "parsed": 1094,
+      "replay_bytes": 95201
+    },
+    {
+      "path": "/home/wangwt/task/datasets/cic/EdgeIIoT/Edge-IIoTset dataset/Attack traffic/MITM (ARP spoofing + DNS) Attack.pcap",
+      "exists": true,
+      "file_bytes": 127852,
+      "sha256": "ef952aff57dd30f04a98511cae2f34f642a64720fcde31df8b2f6dcf0351d536",
+      "result": "pass",
+      "captured": 1229,
+      "parsed": 888,
+      "replay_bytes": 108164
+    }
+  ]
+}

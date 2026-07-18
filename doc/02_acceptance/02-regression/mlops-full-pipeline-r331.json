@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-19T02:12:00+08:00",
+  "result": "pass",
+  "workflow": {
+    "namespace": "argo",
+    "name": "mlops-r331-final-j5w4t",
+    "uid": "60011d65-882b-4f22-8c5e-297452def0d6",
+    "template": "mlops-training-template",
+    "phase": "Succeeded",
+    "started_at": "2026-07-18T18:08:25Z",
+    "finished_at": "2026-07-18T18:09:59Z",
+    "parameters": {
+      "model-id": "behavior-classifier",
+      "tenant-id": "default",
+      "trigger": "acceptance",
+      "trigger-reason": "full_pipeline_r331_final"
+    },
+    "required_nodes": {
+      "preflight-check": "Succeeded",
+      "extract-data": "Succeeded",
+      "train-model": "Succeeded",
+      "evaluate-model": "Succeeded",
+      "register-model": "Succeeded"
+    }
+  },
+  "acceptance_fixture": {
+    "source": "scripts/seed_mlops_training_acceptance_fixture.sql",
+    "tenant_id": "default",
+    "marker": "mlops-accept-r331",
+    "feedback_rows": 200,
+    "alert_rows": 200,
+    "feature_rows": 200,
+    "preflight_feedback_count": 200,
+    "preflight_feature_count": 222336443,
+    "explicitly_non_production": true
+  },
+  "model_version": {
+    "model_version": "mlops-r331-final-j5w4t",
+    "model_id": "1b141e22-fb9c-4739-b126-2cf4e19073ef",
+    "tenant_id": "default",
+    "status": "registered",
+    "artifact_uri": "s3://traffic-models/tenants/default/models/behavior-classifier/versions/mlops-r331-final-j5w4t/bb530105dbdbcd5c81182c9ed70c060d2f66546cb50e39b208ac51aa29ac97e0/model.json",
+    "artifact_sha256": "bb530105dbdbcd5c81182c9ed70c060d2f66546cb50e39b208ac51aa29ac97e0",
+    "metrics": {
+      "accuracy": 1,
+      "precision": 1,
+      "recall": 1,
+      "f1_score": 1,
+      "auc": 1,
+      "threshold": 0.5
+    }
+  },
+  "minio_verification": {
+    "object_exists": true,
+    "size": "36 KiB",
+    "content_sha256": "bb530105dbdbcd5c81182c9ed70c060d2f66546cb50e39b208ac51aa29ac97e0",
+    "database_hash_matches_object": true,
+    "tenant_model_version_hash_scoped": true
+  },
+  "runtime_images": {
+    "trainer": "docker.io/traffic/mlops-trainer@sha256:4e230efa121e896d6ca674f3bc333734939c2b080faf0cb4eb5b5a2e80ccde53",
+    "rule_manager": "docker.io/traffic/rule-manager@sha256:943ab249e9b25e09f7d5dc58d6254150b51c8a0cb60173a944d15607f3d082b4",
+    "web_ui": "docker.io/traffic/web-ui@sha256:0a756d9d1117c0ad6673f32046dafa6a2a14b42500c4458fa3f70712b47a4eb2",
+    "two_node_local_cri": true,
+    "deployments_ready": true
+  },
+  "service_auth": {
+    "secret": "argo/mlops-api-token",
+    "rotation_script": "scripts/rotate_mlops_api_token.sh",
+    "token_material_committed": false,
+    "rotation_window_seconds": 604800
+  }
+}

@@ -1,0 +1,148 @@
+{
+  "schema_version": 2,
+  "updated_at": "2026-07-18T23:58:00+08:00",
+  "menu": "模型管理",
+  "route": "/models",
+  "menu_sequence_position": 7,
+  "status": "accepted",
+  "implementation": {
+    "frontend_build_id": "model-management-20260718-r12",
+    "frontend_image": "docker.io/traffic/web-ui@sha256:93bb268dd8bfe8f1b7c61e40a21994b56745da1eae7ddc38ea91b743f6e72209",
+    "backend_build_id": "model-management-20260718-r11",
+    "backend_image": "docker.io/traffic/rule-manager@sha256:ff2f2ed519bf8f945fea22efa5147e29e0b3522ecf0874c970b47f0a2e793ca9",
+    "images_imported_to_nodes": ["8-2tb", "zeus-server"],
+    "simulation_rows_removed": true,
+    "session_storage_action_queue_removed": true,
+    "model_action_jobs_table": true,
+    "atomic_action_job_and_request_audit": true,
+    "durable_action_worker": true,
+    "dedicated_model_action_kafka_topic": "model-actions.v1",
+    "transactional_activate_and_deprecate_audit": true,
+    "server_side_review_gate_enforcement": true,
+    "registry_activation_percentage": "100 only; staged traffic is delegated to deployment orchestration",
+    "zero_review_gates_fail_closed": true,
+    "dedicated_transactional_rollback": true,
+    "rollback_terminal_after_model_update_broker_ack": false,
+    "transactional_model_update_outbox": true,
+    "deterministic_model_update_event_id": true,
+    "atomic_outbox_ack_job_terminal_and_completion_audit": true,
+    "rollback_terminal_after_all_data_plane_applied_acks": true,
+    "model_update_applied_topic": "model-update-applied.v1",
+    "model_update_applied_ack_table": true,
+    "periodic_stale_job_recovery_excluding_linked_outbox": true,
+    "flink_rollback_activation_consumer": true,
+    "flink_stable_event_id_replay_guard": true,
+    "flink_behavior_job_id": "f7b85d363aa31f7d1e8721ae05f6bcc6",
+    "flink_stateful_upgrade": "canonical savepoint restore without allowNonRestoredState; checkpoint 54151 completed 12/12",
+    "flink_real_minio_artifact_download_and_sha_validation": true,
+    "flink_xgboost_load_warmup_and_atomic_swap": true,
+    "flink_tenant_model_scope": "tenant_id + model_id",
+    "flink_data_plane_acknowledgements": "4/4 applied before control-plane completion",
+    "server_controlled_applied_ack_parallelism": 4,
+    "applied_ack_artifact_contract": "all applied ACKs must match outbox artifact_uri and metrics.artifact_sha256",
+    "flink_taskmanager_runtime_image": "docker.io/traffic/flink@sha256:8c9b090b84435355bce4b7209e5920b17811e90c07029215ac80e50de4c771f9",
+    "feedback_retrain_evaluation_payload_validation": true,
+    "duplicate_retrain_serialized_and_rejected": true,
+    "tenant_scoped_model_update": true,
+    "path_authority_for_version_registration": true,
+    "unsafe_placeholder_import_disabled": true,
+    "candidate_only_activation_controls": true,
+    "deprecated_version_only_rollback_controls": true
+  },
+  "database": {
+    "workbench_source": "postgresql/acceptance-bootstrap",
+    "bootstrap_scenario": "acceptance-bootstrap-v2",
+    "rows": 210,
+    "models": 5,
+    "variants": 5,
+    "lineage_and_observed_metrics_present": true,
+    "production_claim": "Explicit acceptance bootstrap data only; not represented as production training truth. Model registry, versions, actions and audits are live PostgreSQL records."
+  },
+  "verification": {
+    "browser_path": "Xshell tunnel -> 127.0.0.1:9224 -> Windows Chrome 150 -> direct APISIX http://10.0.5.8:30180/models",
+    "viewport": "1920x1080",
+    "device_pixel_ratio": 1.0000000298023224,
+    "windows_chrome_report": "evidence/ui-image-breakdowns/pages/models/interaction-r328.json",
+    "state_machine_report": "evidence/ui-image-breakdowns/pages/models/state-machine-r328.json",
+    "build_provenance": "evidence/ui-image-breakdowns/pages/models/build-provenance-r328.json",
+    "flink_consumer_report": "evidence/ui-image-breakdowns/pages/models/flink-consumer-r328.json",
+    "fresh_schema_report": "evidence/ui-image-breakdowns/pages/models/fresh-schema-r325.json",
+    "windows_chrome_status": "pass",
+    "api_total": 5,
+    "rendered_rows": 5,
+    "server_activation_gate": "409 / BIZ_3004",
+    "cross_tenant_update": "403 and model unchanged",
+    "live_actions": "3/3 returned 202 with durable job ids and reached completed",
+    "database_action_audits": "request plus completion or Kafka dispatch audit present for all 3 actions",
+    "semantic_visuals": "rule positive/negative contributions visible; TP/FP distinct; passed/pending gates distinct",
+    "main_layout": "scrollHeight=clientHeight=917; right rail and recent operation are above the fixed bottom bar",
+    "state_machine": "11/11 pass: rollback completed only after real MinIO artifact download, SHA validation, XGBoost warmup and 4/4 Flink applied acknowledgements",
+    "visual_metrics": "evidence/ui-image-breakdowns/pages/models/visual-r328/metrics.json",
+    "visual_adjudication": "doc/02_acceptance/02-regression/model-management-visual-adjudication-latest.json",
+    "visual_cases": {
+      "main": "0.103220 <= 0.125",
+      "activation_audit_gate": "0.079793 <= 0.15",
+      "rule_contribution": "0.108913 <= 0.15",
+      "anomaly_explanation": "0.089881 <= 0.15",
+      "sample_examples": "0.106493 <= 0.15"
+    },
+    "frontend_tests": "33/33",
+    "frontend_build": "pass",
+    "go_model_packages": "pass",
+    "flink_behavior_tests": "92/92",
+    "flink_common_tests": "12/12",
+    "application_runtime_errors": 0,
+    "application_request_failures": 0
+  },
+  "closed_blockers": [
+    "SIM-MODEL fabricated pagination rows",
+    "sessionStorage-only model action audit",
+    "one static explanation chart reused by all tabs",
+    "static Champion, dataset, gate and recent-operation panels",
+    "queued actions without a worker",
+    "rollback request marked completed before execution",
+    "activation allowed without server-side review gates",
+    "cross-tenant UpdateModel mutation",
+    "path and request body model authority ambiguity",
+    "rule contribution chart hiding negative values",
+    "TP/FP and passed/pending states sharing misleading colors",
+    "unsafe placeholder import and current-version activation controls",
+    "persisted Windows Chrome 90 percent zoom"
+    ,"rollback through generic transition and completion before broker acknowledgement"
+    ,"partial registry activation falsely represented as gray release"
+    ,"empty review gates accepted by the activation path"
+    ,"unvalidated action payloads and duplicate active retrain requests"
+    ,"model workbench content scrolling beneath the fixed bottom bar"
+    ,"rule contribution bar chart incorrectly labelled as a waterfall"
+    ,"rollback state commit and durable job terminal separated by a crash window"
+    ,"Kafka publication before database commit created a dual-write inconsistency window"
+    ,"missing UUID registration path could auto-create a different model identifier"
+    ,"mutable image tags and incomplete source digest weakened evidence provenance"
+    ,"Kubernetes fresh-cluster PostgreSQL init omitted model_update_outbox"
+    ,"rollback-activated was acknowledged by Kafka but ignored by the Flink hot-reload consumer"
+    ,"Flink consumer dropped the stable model-update event_id needed for replay suppression"
+    ,"Flink consumer updated only version markers without downloading, loading or swapping the artifact"
+    ,"Control plane completed rollback after broker acknowledgement instead of data-plane apply"
+    ,"Dynamic model registry was keyed without tenant isolation"
+    ,"Replay suppression only covered the immediately previous event"
+    ,"Broadcast operator runtime ModelRegistry was null after transient serialization"
+    ,"Flink TaskManager image lacked the XGBoost4J GNU OpenMP runtime dependency"
+    ,"Consumer-reported parallelism could reduce the control-plane completion threshold"
+    ,"Applied acknowledgements were not bound to the outbox artifact URI and SHA-256"
+    ,"Windows Chrome evidence did not bind the final Rule Manager digest and complete reviewed source set"
+  ],
+  "open_non_blocking_items": [
+    "ListModels still performs per-model version enrichment and can be optimized to a bulk query",
+    "Production MLOps consumers downstream of model-actions.v1 are outside this page acceptance; broker acknowledgement and dispatch audit are proven",
+    "A production-safe model import form remains disabled until artifact and feature-set selection are bound to real registries",
+    "Acceptance bootstrap workbench content should be replaced by production pipeline output before production data-readiness sign-off",
+    "Add a PostgreSQL-backed integration test that injects missing or duplicate ACK sets and proves the action remains non-terminal"
+  ],
+  "reviews": {
+    "comprehensive": "ACCEPT on r328; P0=0, P1=0",
+    "logic": "ACCEPT; prior logic review remains valid and r328 only hardens the control-plane ACK gate",
+    "layout": "ACCEPT; Windows Chrome r328 visual and layout gates pass",
+    "main_thread": "accepted"
+  },
+  "next_step": "Model management is accepted; retain the listed P2 hardening items and continue with the next repository-defined development scope."
+}

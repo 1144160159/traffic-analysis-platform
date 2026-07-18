@@ -1,0 +1,19 @@
+{
+  "schema_version": "2026-07-18.v1",
+  "route": "/deployments",
+  "status": "accepted_contract_exception",
+  "governing_rule": "agent.md:115",
+  "decision": "Desktop deployment workflows use a small, scrollable Modal that preserves surrounding business context.",
+  "exceptions": [
+    {
+      "target_id": "deployments-create-precheck-r20",
+      "reference_geometry_status": "superseded",
+      "required_actual_modal": { "max_width": 960, "max_height": 760 }
+    },
+    {
+      "target_id": "deployments-rollback-precheck-r20",
+      "reference_geometry_status": "superseded",
+      "required_actual_modal": { "max_width": 960, "max_height": 760 }
+    }
+  ]
+}

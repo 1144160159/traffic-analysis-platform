@@ -79,3 +79,17 @@ The r246 production image is `traffic/web-ui:ui-probes-echarts-20260711-r246`. S
 | Business ROI | pass | `metrics-business-r259.json`: `0.06007381541333719 <= 0.125`. |
 
 Main-thread judgment: `business-pixel-accepted`. The current production image is `traffic/web-ui:ui-screen-original-svg-20260711-r259`; the r246 ECharts topology record is historical and no longer describes the deployed topology implementation.
+
+## 2026-07-16 Dedicated Topology API + Dynamic SVG Review
+
+| Check | Result | Evidence |
+|---|---|---|
+| Dedicated graph API | pass | `GET /v1/probes/topology?mode=2d|3d` returns PostgreSQL-backed nodes, edges, zones and both API-calculated layouts. |
+| Static-image removal | pass | Production DOM contains one topology SVG and zero `.taf-probes-campus-image` elements. |
+| 2D/3D interaction | pass | Mode switch changes API request, node coordinates and edge paths; selection, zoom and reset are observable. |
+| Dense graph readability | pass | API guarantees at least 7 normalized units between nodes after normalization; only five priority labels plus selected/hover/focus labels remain visible. |
+| Authorization and isolation | pass | `probe:metrics` is rejected with 403, invalid mode with 400, and another tenant receives an empty topology graph. |
+| Windows Chrome runtime | pass | `windows-chrome-cdp-probes-latest.json`: 39/39, no bad responses, console errors, page errors or request failures; 2D and 3D captures are both 1920x1080, and 2D content completeness is machine-checked. |
+| Business ROI | pass | `windows-cdp-latest/probes/metrics.json`: `0.10098092746850873 <= 0.12`. |
+
+Production images: `traffic/alert-service:probe-topology-api-svg-20260716-r225` and `traffic/web-ui:probe-topology-api-svg-20260716-r81`.

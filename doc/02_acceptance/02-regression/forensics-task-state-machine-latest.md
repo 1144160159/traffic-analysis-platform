@@ -1,16 +1,16 @@
 # Forensics task state-machine live 预检
 
-- Run ID：`20260629-forensics-task-state-machine-r1`
+- Run ID：`20260716082451-1013412`
 - 结果：`pass`
 - APISIX：`http://10.0.5.8:30180`
-- 取消任务：`fa60e6c6-ce27-41cb-884f-c1e06290f066`
+- 取消任务：`b997fa93-9166-4eda-bf2f-a5bfb9733509`
 - 检查数：7/7 passed，blockers=0，warnings=0
 
 ## 证据
 
-- NDJSON：`doc/02_acceptance/runs/20260629-forensics-task-state-machine/live-forensics-task-state-machine-20260629-forensics-task-state-machine-r1.ndjson`
-- Summary：`doc/02_acceptance/runs/20260629-forensics-task-state-machine/live-forensics-task-state-machine-20260629-forensics-task-state-machine-r1-summary.json`
-- API/DB/Audit 响应：`doc/02_acceptance/runs/20260629-forensics-task-state-machine/20260629-forensics-task-state-machine-r1-*.json`、`doc/02_acceptance/runs/20260629-forensics-task-state-machine/20260629-forensics-task-state-machine-r1-*.txt`
+- NDJSON：`doc/02_acceptance/runs/20260629-forensics-task-state-machine/live-forensics-task-state-machine-20260716082451-1013412.ndjson`
+- Summary：`doc/02_acceptance/runs/20260629-forensics-task-state-machine/live-forensics-task-state-machine-20260716082451-1013412-summary.json`
+- API/DB/Audit 响应：`doc/02_acceptance/runs/20260629-forensics-task-state-machine/20260716082451-1013412-*.json`、`doc/02_acceptance/runs/20260629-forensics-task-state-machine/20260716082451-1013412-*.txt`
 
 ## 口径
 

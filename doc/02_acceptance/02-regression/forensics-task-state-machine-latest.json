@@ -1,80 +1,80 @@
 {
-  "run_id": "20260629-forensics-task-state-machine-r1",
+  "run_id": "20260716082451-1013412",
   "result": "pass",
   "tenant": "default",
   "other_tenant": "campus-a",
-  "cancel_task_id": "fa60e6c6-ce27-41cb-884f-c1e06290f066",
-  "completed_task_id": "4ce53a3c-e11a-4a0e-b95c-b331b6deac7d",
-  "cross_task_id": "160e4abd-1c3a-444c-91fe-d62ae16a14f9",
+  "cancel_task_id": "b997fa93-9166-4eda-bf2f-a5bfb9733509",
+  "completed_task_id": "f0256d48-4d16-46ec-8b2f-43282aba3daf",
+  "cross_task_id": "807304fd-5d11-4ed0-b017-bc682a5dfc26",
   "total": 7,
   "passed": 7,
   "failed": 0,
   "blockers": 0,
   "warnings": 0,
-  "report": "doc/02_acceptance/runs/20260629-forensics-task-state-machine/live-forensics-task-state-machine-20260629-forensics-task-state-machine-r1.ndjson",
+  "report": "doc/02_acceptance/runs/20260629-forensics-task-state-machine/live-forensics-task-state-machine-20260716082451-1013412.ndjson",
   "checks": [
     {
-      "ts": "2026-06-29T19:37:04+08:00",
+      "ts": "2026-07-16T08:24:51+08:00",
       "phase": "fixture",
       "name": "seed processing/completed/cross-tenant tasks",
       "ok": true,
       "status": "ok",
-      "detail": "fa60e6c6-ce27-41cb-884f-c1e06290f066,4ce53a3c-e11a-4a0e-b95c-b331b6deac7d,160e4abd-1c3a-444c-91fe-d62ae16a14f9",
+      "detail": "b997fa93-9166-4eda-bf2f-a5bfb9733509,f0256d48-4d16-46ec-8b2f-43282aba3daf,807304fd-5d11-4ed0-b017-bc682a5dfc26",
       "artifact": ""
     },
     {
-      "ts": "2026-06-29T19:37:04+08:00",
+      "ts": "2026-07-16T08:24:51+08:00",
       "phase": "api",
       "name": "cancel processing task",
       "ok": true,
       "status": "200",
-      "detail": "POST /api/v1/pcap/jobs/fa60e6c6-ce27-41cb-884f-c1e06290f066/cancel",
-      "artifact": "doc/02_acceptance/runs/20260629-forensics-task-state-machine/20260629-forensics-task-state-machine-r1-cancel-processing-task.json"
+      "detail": "POST /api/v1/pcap/jobs/b997fa93-9166-4eda-bf2f-a5bfb9733509/cancel",
+      "artifact": "doc/02_acceptance/runs/20260629-forensics-task-state-machine/20260716082451-1013412-cancel-processing-task.json"
     },
     {
-      "ts": "2026-06-29T19:37:04+08:00",
+      "ts": "2026-07-16T08:24:51+08:00",
       "phase": "db",
       "name": "cancelled task persisted with completed_at",
       "ok": true,
       "status": "ok",
       "detail": "cancelled|true",
-      "artifact": "doc/02_acceptance/runs/20260629-forensics-task-state-machine/20260629-forensics-task-state-machine-r1-cancel-db-status.txt"
+      "artifact": "doc/02_acceptance/runs/20260629-forensics-task-state-machine/20260716082451-1013412-cancel-db-status.txt"
     },
     {
-      "ts": "2026-06-29T19:37:04+08:00",
+      "ts": "2026-07-16T08:24:51+08:00",
       "phase": "api",
       "name": "completed task cannot be cancelled",
       "ok": true,
       "status": "409",
-      "detail": "POST /api/v1/pcap/jobs/4ce53a3c-e11a-4a0e-b95c-b331b6deac7d/cancel",
-      "artifact": "doc/02_acceptance/runs/20260629-forensics-task-state-machine/20260629-forensics-task-state-machine-r1-completed-task-cannot-be-cancelled.json"
+      "detail": "POST /api/v1/pcap/jobs/f0256d48-4d16-46ec-8b2f-43282aba3daf/cancel",
+      "artifact": "doc/02_acceptance/runs/20260629-forensics-task-state-machine/20260716082451-1013412-completed-task-cannot-be-cancelled.json"
     },
     {
-      "ts": "2026-06-29T19:37:04+08:00",
+      "ts": "2026-07-16T08:24:51+08:00",
       "phase": "api",
       "name": "cross tenant cancel rejected",
       "ok": true,
       "status": "403",
-      "detail": "POST /api/v1/pcap/jobs/160e4abd-1c3a-444c-91fe-d62ae16a14f9/cancel",
-      "artifact": "doc/02_acceptance/runs/20260629-forensics-task-state-machine/20260629-forensics-task-state-machine-r1-cross-tenant-cancel-rejected.json"
+      "detail": "POST /api/v1/pcap/jobs/807304fd-5d11-4ed0-b017-bc682a5dfc26/cancel",
+      "artifact": "doc/02_acceptance/runs/20260629-forensics-task-state-machine/20260716082451-1013412-cross-tenant-cancel-rejected.json"
     },
     {
-      "ts": "2026-06-29T19:37:04+08:00",
+      "ts": "2026-07-16T08:24:51+08:00",
       "phase": "db",
       "name": "cross tenant task remains processing",
       "ok": true,
       "status": "ok",
       "detail": "processing",
-      "artifact": "doc/02_acceptance/runs/20260629-forensics-task-state-machine/20260629-forensics-task-state-machine-r1-cross-db-status.txt"
+      "artifact": "doc/02_acceptance/runs/20260629-forensics-task-state-machine/20260716082451-1013412-cross-db-status.txt"
     },
     {
-      "ts": "2026-06-29T19:37:04+08:00",
+      "ts": "2026-07-16T08:24:51+08:00",
       "phase": "audit",
       "name": "pcap cancel audit queryable",
       "ok": true,
       "status": "200",
-      "detail": "fa60e6c6-ce27-41cb-884f-c1e06290f066",
-      "artifact": "doc/02_acceptance/runs/20260629-forensics-task-state-machine/20260629-forensics-task-state-machine-r1-audit.json"
+      "detail": "b997fa93-9166-4eda-bf2f-a5bfb9733509",
+      "artifact": "doc/02_acceptance/runs/20260629-forensics-task-state-machine/20260716082451-1013412-audit.json"
     }
   ]
 }

@@ -134,11 +134,18 @@
       "/api/v1/encrypted-traffic/sessions",
       "/api/v1/encrypted-traffic/ja3",
       "/api/v1/encrypted-traffic/tunnels",
-      "/api/v1/encrypted-traffic/exfiltration"
+      "/api/v1/encrypted-traffic/exfiltration",
+      "/api/v1/encrypted-traffic/evidence",
+      "/api/v1/encrypted-traffic/egress-actions",
+      "/api/v1/encrypted-traffic/evidence-actions"
     ],
     "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic.png",
     "sourceImages": [
-      "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic.png"
+      "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic.png",
+      "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic-fingerprint.png",
+      "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic-tunnel-detection.png",
+      "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic-egress-profile.png",
+      "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic-evidence-center.png"
     ],
     "contract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/encrypted-traffic.md"
   },
@@ -169,7 +176,16 @@
     ],
     "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets.png",
     "sourceImages": [
-      "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets.png"
+      "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets.png",
+      "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets-network-device.png",
+      "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets-server.png",
+      "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets-unknown.png",
+      "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets-business-system.png",
+      "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets-detail-basic.png",
+      "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets-detail-network-interface.png",
+      "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets-detail-open-services.png",
+      "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets-detail-ownership.png",
+      "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets-detail-history.png"
     ],
     "contract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/assets.md"
   },
@@ -302,11 +318,21 @@
     "domain": "collection-monitoring",
     "pageComponent": "DataQualityPage",
     "apiEndpoints": [
-      "/api/v1/data-quality"
+      "/api/v1/data-quality",
+      "/api/v1/data-quality/tables/{dataset}",
+      "/api/v1/data-quality/actions",
+      "/api/v1/dlq/replay/fallback"
     ],
     "sourceImage": "doc/04_assets/ui_suite_gpt_v1/screens/pages/data-quality.png",
     "sourceImages": [
-      "doc/04_assets/ui_suite_gpt_v1/screens/pages/data-quality.png"
+      "doc/04_assets/ui_suite_gpt_v1/screens/pages/data-quality.png",
+      "doc/04_assets/ui_suite_gpt_v1/screens/pages/data-quality-topic-health.png",
+      "doc/04_assets/ui_suite_gpt_v1/screens/pages/data-quality-flink-quality.png",
+      "doc/04_assets/ui_suite_gpt_v1/screens/pages/data-quality-field-quality.png",
+      "doc/04_assets/ui_suite_gpt_v1/screens/pages/data-quality-storage-quality.png",
+      "doc/04_assets/ui_suite_gpt_v1/screens/pages/data-quality-replay-reconcile.png",
+      "doc/04_assets/ui_suite_gpt_v1/screens/pages/data-quality-report.png",
+      "doc/04_assets/ui_suite_gpt_v1/screens/pages/data-quality-settings.png"
     ],
     "contract": "doc/04_assets/ui_suite_gpt_v1/specs/page-contracts/data-quality.md"
   },

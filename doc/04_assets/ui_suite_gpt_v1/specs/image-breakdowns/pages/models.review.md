@@ -1,5 +1,15 @@
 # models.png review
 
+
+## r328 Production Route Review Gate
+
+- Windows Chrome path: Xshell CDP `127.0.0.1:9224` -> Chrome 150 -> direct APISIX `http://10.0.5.8:30180/models`.
+- Runtime evidence: `evidence/ui-image-breakdowns/pages/models/interaction-r328.json`; digest-pinned r11/r12 deployment, exact 1920x1080 at DPR 1, 5 API rows = 5 UI rows, zero application runtime/request failures, and all main-layout assertions pass.
+- State-machine evidence: `state-machine-r328.json`; 11/11 real artifact, trusted exact-subtask 4/4 ACK, activation, fail-closed, validation, missing-path, duplicate-request, audit and cleanup checks pass.
+- Consumer/schema evidence: `flink-consumer-r328.json` proves the current job is 12/12 RUNNING with checkpoint 54186 complete and binds r328's real MinIO/SHA/XGBoost apply; `fresh-schema-r325.json` proves clean-cluster outbox DDL.
+- Production raw diff: `0.1032204861111111 <= 0.125` with tolerance 64; side-by-side and diff are under `visual-r328/`.
+- Provenance: `build-provenance-r328.json` binds Rule Manager r11, Web UI r12, XGBoost runtime, Pod imageID, dual-node manifests, Flink JAR, OCI labels and the complete reviewed source set.
+- Current main-thread status: `accepted-r328`; strict comprehensive re-review returned P0=0 and P1=0.
 ## Review Status
 
 - Status: `breakdown-ready`

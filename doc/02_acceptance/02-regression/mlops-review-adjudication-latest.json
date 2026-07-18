@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-19T04:00:00+08:00",
+  "menu": "MLOps 编排",
+  "route": "/mlops",
+  "revision": "r337",
+  "result": "pass",
+  "review_sequence": [
+    "comprehensive_agent_review",
+    "page_logic_agent_review",
+    "page_layout_agent_review",
+    "main_thread_adjudication"
+  ],
+  "comprehensive_review": {
+    "verdict": "pass",
+    "open_p0": 0,
+    "open_p1": 0,
+    "open_p2": 0,
+    "evidence": [
+      "session advisory lock covers the full automatic mutation critical section",
+      "dual orchestrator test proves exactly one Argo POST",
+      "live retry workflow Succeeded 5/5",
+      "final runtime imageIDs match manifest and digest lock"
+    ]
+  },
+  "logic_review": {
+    "verdict": "pass",
+    "open_p0": 0,
+    "open_p1": 0,
+    "open_p2": 0,
+    "closed_blockers": [
+      "cross-instance duplicate automatic submission race",
+      "manual retry accepted without successful terminal completion",
+      "ClickHouse extraction OOM on full-window sort"
+    ],
+    "evidence": "doc/02_acceptance/02-regression/mlops-full-pipeline-r337.json"
+  },
+  "layout_review": {
+    "verdict": "pass",
+    "open_p0": 0,
+    "open_p1": 0,
+    "open_p2": 0,
+    "checks": [
+      "1920x1080 has no clipping, overflow or overlap",
+      "six task action groups retain three visible actions beside long workflow ids",
+      "1440, 1536, 1600 and 1920 responsive states pass",
+      "feedback, registry and gate-result content remains contained",
+      "trend charts use the seven latest real model versions ordered by created_at"
+    ],
+    "evidence": "evidence/ui-image-breakdowns/pages/mlops/interaction-r337.json"
+  },
+  "visual_adjudication": {
+    "status": "pass",
+    "pixel_mismatch_ratio": 0.08858102913479672,
+    "maximum": 0.125,
+    "target": "evidence/ui-image-breakdowns/pages/mlops/target.png",
+    "actual": "evidence/ui-image-breakdowns/pages/mlops/implementation-r337.png",
+    "side_by_side": "evidence/ui-image-breakdowns/pages/mlops/side-by-side-business-r337.png",
+    "diff": "evidence/ui-image-breakdowns/pages/mlops/diff-business-r337.png"
+  },
+  "main_thread_adjudication": {
+    "blocking_gates": {
+      "real_api_postgresql_argo": "pass",
+      "tenant_rbac_and_audit": "pass",
+      "manual_and_automatic_state_logic": "pass",
+      "real_training_pipeline": "pass: Succeeded 5/5",
+      "windows_chrome_interaction": "pass",
+      "responsive_layout": "pass",
+      "visual_contract": "pass",
+      "runtime_and_tests": "pass",
+      "immutable_runtime_provenance": "pass"
+    },
+    "final_decision": "mlops_orchestration_accepted_r337"
+  },
+  "progress_report": "doc/02_acceptance/02-regression/mlops-development-progress-latest.json"
+}

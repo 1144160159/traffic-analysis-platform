@@ -172,8 +172,10 @@
     },
     "critics": {
       "type": "object",
-      "required": ["design", "business", "quality", "performance"],
+      "required": ["page_logic", "page_layout", "design", "business", "quality", "performance"],
       "properties": {
+        "page_logic": {"$ref": "#/$defs/critic"},
+        "page_layout": {"$ref": "#/$defs/critic"},
         "design": {"$ref": "#/$defs/critic"},
         "business": {"$ref": "#/$defs/critic"},
         "quality": {"$ref": "#/$defs/critic"},
@@ -190,11 +192,17 @@
           "type": "array",
           "items": {
             "type": "object",
-            "required": ["finding_id", "decision", "reason"],
+            "required": ["finding_id", "source_critic", "decision", "reason", "evidence"],
             "properties": {
               "finding_id": {"type": "string"},
+              "source_critic": {"enum": ["page_logic", "page_layout", "design", "business", "quality", "performance"]},
               "decision": {"enum": ["accepted", "rejected", "deferred"]},
-              "reason": {"type": "string"}
+              "reason": {"type": "string"},
+              "evidence": {
+                "type": "array",
+                "items": {"type": "string"},
+                "minItems": 1
+              }
             },
             "additionalProperties": false
           }

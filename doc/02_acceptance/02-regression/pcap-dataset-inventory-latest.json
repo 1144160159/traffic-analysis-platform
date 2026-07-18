@@ -1,0 +1,134 @@
+{
+  "generated_at": "2026-07-15T08:03:33.943335+00:00",
+  "dataset_root": "/home/wangwt/task/datasets",
+  "read_only": true,
+  "pcap_count": 420,
+  "total_bytes": 749369667837,
+  "candidate_policy": {
+    "limit": 20,
+    "max_bytes": 67108864,
+    "ordering": "size_then_path"
+  },
+  "candidates": [
+    {
+      "path": "/home/wangwt/task/datasets/cic/EdgeIIoT/Edge-IIoTset dataset/Attack traffic/OS Fingerprinting attack.pcap",
+      "bytes": 114041,
+      "sha256": "68c0464ac92f1d08a050f4e013dd5e0d0e870f39b8f70f26acde133b6d7e00c4",
+      "label": "fingerprint"
+    },
+    {
+      "path": "/home/wangwt/task/datasets/cic/EdgeIIoT/Edge-IIoTset dataset/Attack traffic/MITM (ARP spoofing + DNS) Attack.pcap",
+      "bytes": 127852,
+      "sha256": "ef952aff57dd30f04a98511cae2f34f642a64720fcde31df8b2f6dcf0351d536",
+      "label": "mitm,dns"
+    },
+    {
+      "path": "/home/wangwt/task/datasets/cic/EdgeIIoT/Edge-IIoTset dataset/Attack traffic/Port Scanning attack.pcap",
+      "bytes": 1801807,
+      "sha256": "9fa4c8527951c2ea935b1ae5e932063c1b7fb8cc1e2b0f24defbe3a7b99058d9",
+      "label": "scan"
+    },
+    {
+      "path": "/home/wangwt/task/datasets/cic/EdgeIIoT/Edge-IIoTset dataset/Attack traffic/XSS attacks.pcap",
+      "bytes": 2068899,
+      "sha256": "9e155d46254db96acdf0f97245da6734a7de2c82a0c3e31936c9e5792fc8f92e",
+      "label": "xss"
+    },
+    {
+      "path": "/home/wangwt/task/datasets/cic/EdgeIIoT/Edge-IIoTset dataset/Attack traffic/Ransomware attack.pcap",
+      "bytes": 2842688,
+      "sha256": "f38a731096f61391384adad975537de2de6cea89f38e1c1421e5b328f4b17116",
+      "label": "ransomware"
+    },
+    {
+      "path": "/home/wangwt/task/datasets/cic/CIC_IOT_Dataset2023/CIC_IOT_Dataset2023_PCAP/PCAP/Uploading_Attack/Uploading_Attack.pcap",
+      "bytes": 3326177,
+      "sha256": "13eb2c9478cb3d54921766436808cc89623f25179565241ece3c20a95ca71ee8",
+      "label": "upload"
+    },
+    {
+      "path": "/home/wangwt/task/datasets/cic/EdgeIIoT/Edge-IIoTset dataset/Attack traffic/Uploading attack.pcap",
+      "bytes": 5488666,
+      "sha256": "29a16de3410e3c2ff5c3dad8a54d0092dd98c63ea3c13994f4416414bd74d490",
+      "label": "upload"
+    },
+    {
+      "path": "/home/wangwt/task/datasets/cic/EdgeIIoT/Edge-IIoTset dataset/Attack traffic/Backdoor_attack.pcap",
+      "bytes": 6694092,
+      "sha256": "2f22c751442017f745397d517df9837da378362f670ad238faeac0decd58e3e9",
+      "label": "backdoor"
+    },
+    {
+      "path": "/home/wangwt/task/datasets/cic/CIC_IOT_Dataset2023/CIC_IOT_Dataset2023_PCAP/PCAP/Recon-PingSweep/Recon-PingSweep.pcap",
+      "bytes": 7853566,
+      "sha256": "1aaf410fcc6dbfefa48b680b401344f0fa7b6e04c2acc9af427b5b7728b0ee89",
+      "label": "unclassified"
+    },
+    {
+      "path": "/home/wangwt/task/datasets/cic/EdgeIIoT/Edge-IIoTset dataset/Attack traffic/SQL injection attack.pcap",
+      "bytes": 8173215,
+      "sha256": "374b06418c3dddd831561a8b5521c18a47bd1cd9bfa83f83e33b70d134517491",
+      "label": "sql"
+    },
+    {
+      "path": "/home/wangwt/task/datasets/cic/CIC_IOT_Dataset2023/CIC_IOT_Dataset2023_PCAP/PCAP/SqlInjection/SqlInjection.pcap",
+      "bytes": 9823016,
+      "sha256": "712750bd64f8250861bd8a76bd1c33a44a4fe8d3dc2f34e2043c208edc19bde7",
+      "label": "sql"
+    },
+    {
+      "path": "/home/wangwt/task/datasets/cic/CIC_IOT_Dataset2023/CIC_IOT_Dataset2023_PCAP/PCAP/Backdoor_Malware/Backdoor_Malware.pcap",
+      "bytes": 10544806,
+      "sha256": "7b0a7cb3a9c569939526e3bc97e29ddfd1599e2c7af099b0e04d50ca8a4e3bd8",
+      "label": "backdoor"
+    },
+    {
+      "path": "/home/wangwt/task/datasets/LSNM2024/Dataset-Ready (Use This)/Malicious/Exploiting FTP/FTP-EXP1.pcap",
+      "bytes": 12482925,
+      "sha256": "16f2fd56abfe05d2048fad5c18377e8990ca928b00e9e2c05ffdc420a42c8660",
+      "label": "unclassified"
+    },
+    {
+      "path": "/home/wangwt/task/datasets/cic/CIC_IOT_Dataset2023/CIC_IOT_Dataset2023_PCAP/PCAP/XSS/XSS.pcap",
+      "bytes": 12571710,
+      "sha256": "62a9d0ca316f3e5eb9c910fc8c21dc169ef76033bafa22d17f85f53e64809bf0",
+      "label": "xss"
+    },
+    {
+      "path": "/home/wangwt/task/datasets/cic/EdgeIIoT/Edge-IIoTset dataset/Normal traffic/Heart_Rate/Heart_Rate.pcap",
+      "bytes": 12840229,
+      "sha256": "45af68c5dc56f1e135102069ee6d86a62e5d2b14dd23cac0bee39dcc40e832fb",
+      "label": "normal"
+    },
+    {
+      "path": "/home/wangwt/task/datasets/cic/EdgeIIoT/Edge-IIoTset dataset/Normal traffic/Modbus/Modbus.pcap",
+      "bytes": 21040950,
+      "sha256": "1e9d186b5846402cd52e6048a39423f104cb19d68de501ad0a0ac8dbb2cc63c9",
+      "label": "normal"
+    },
+    {
+      "path": "/home/wangwt/task/datasets/cic/EdgeIIoT/Edge-IIoTset dataset/Attack traffic/DDoS HTTP Flood Attacks.pcap",
+      "bytes": 28307602,
+      "sha256": "2fb2558d51defd1704a54a7a76df787048e9281d2efd8177703d66a7f78620ba",
+      "label": "ddos,dos"
+    },
+    {
+      "path": "/home/wangwt/task/datasets/cic/CIC_IOT_Dataset2023/CIC_IOT_Dataset2023_PCAP/PCAP/CommandInjection/CommandInjection.pcap",
+      "bytes": 28585606,
+      "sha256": "151c761536d530d8432589e35ed09f2162e51c78a28995fc2a7dbeae32082b13",
+      "label": "unclassified"
+    },
+    {
+      "path": "/home/wangwt/task/datasets/cic/CIC_IOT_Dataset2023/CIC_IOT_Dataset2023_PCAP/PCAP/BrowserHijacking/BrowserHijacking.pcap",
+      "bytes": 35038616,
+      "sha256": "aeac45ba4fdb14575af2e8193d3ef99783e15760eea76696a9155655f5c99138",
+      "label": "unclassified"
+    },
+    {
+      "path": "/home/wangwt/task/datasets/cic/CIC_IOT_Dataset2023/CIC_IOT_Dataset2023_PCAP/PCAP/DictionaryBruteForce/DictionaryBruteForce.pcap",
+      "bytes": 39130622,
+      "sha256": "09ad3cfabd139b950da3078fec0f0fd196fe36cd82237d898035437f4c69161b",
+      "label": "bruteforce"
+    }
+  ]
+}

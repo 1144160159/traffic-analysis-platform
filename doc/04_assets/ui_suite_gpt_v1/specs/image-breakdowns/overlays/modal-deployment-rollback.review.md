@@ -59,3 +59,13 @@
 ## Decision
 
 This image is ready for the automated Windows Chrome screenshot and visual diff close. Pixel acceptance is recorded only after `verification.json` reports `pixel-accepted`.
+
+## r264 Contract Adjudication
+
+- Raw metric remains `fail`: `0.100451 > 0.08` in `rollback-metrics-r20.json`.
+- Effective result is `pass_with_contract_exception` only for target `deployments-rollback-precheck-r20`.
+- The reference uses a near-full-screen overlay and is marked superseded by `deployment-modal-size-adjudication.json` because it conflicts with `agent.md:115`.
+- Windows Chrome r264 measures the production Modal at approximately `959.99×759.99`, satisfying the machine limit `<=960×760` while preserving surrounding business context.
+- An unregistered raw failure or nonconforming geometry makes the comparator exit non-zero.
+
+Main-thread decision: accept the production Modal and retain the raw mismatch until a repository-compliant reference replaces the superseded image.

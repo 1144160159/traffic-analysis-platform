@@ -1,0 +1,104 @@
+{
+  "package_id": "windows_chrome_cdp_full_route_capture",
+  "run_id": "asset-inventory-v3-20260713-xshell-postfix",
+  "result": "pass",
+  "runtime_result": "pass",
+  "visual_diff_result": "fail",
+  "generated_at": "2026-07-13T09:02:30.346Z",
+  "base_url": "http://10.0.5.8:30180",
+  "cdp_url": "http://127.0.0.1:9224",
+  "cdp_version": {
+    "Browser": "Chrome/150.0.7871.101",
+    "Protocol-Version": "1.3",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+    "V8-Version": "15.0.245.13",
+    "WebKit-Version": "537.36 (@51b83660c3609f271ccbbd65785bf7e50a21312d)",
+    "webSocketDebuggerUrl": "ws://127.0.0.1:9224/devtools/browser/eb2bd176-11da-4f4c-b445-c70bf449dc16"
+  },
+  "cdp_targets_count": 7,
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "evidence_dir": "evidence/learning/asset-inventory/20260713-windows-xshell-postfix/asset-inventory-v3-20260713-xshell-postfix",
+  "acceptance_dir": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest",
+  "target_mode": "routes",
+  "capture_plan": "doc/02_acceptance/02-regression/ui-visual-interaction/capture-plan-latest.json",
+  "output_json": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-asset-latest.json",
+  "output_md": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-asset-latest.md",
+  "alert_id": "alert-default-1782752318016-1dd589c4",
+  "campaign_id": "campaign-exfil-default-1782729598739-e1d2dc37",
+  "auth": {
+    "strategy": "hash-smoke-token",
+    "smoke_token_source": "generated-from-k8s-secret",
+    "smoke_token_env": "DESKTOP_SMOKE_TOKEN",
+    "token_material_redacted": true
+  },
+  "max_pixel_ratio": 0.015,
+  "channel_tolerance": 0,
+  "summary": {
+    "total": 1,
+    "runtime_pass": 1,
+    "runtime_fail": 0,
+    "visual_diff_total": 1,
+    "visual_diff_pass": 0,
+    "visual_diff_fail": 1,
+    "failed_runtime_routes": [],
+    "failed_visual_diff_routes": [
+      "assets"
+    ]
+  },
+  "routes": [
+    {
+      "id": "assets",
+      "route_id": "assets",
+      "title": "资产台账",
+      "route": "/assets",
+      "resolved_path": "/assets",
+      "url": "http://10.0.5.8:30180/assets?windowsCdpEvidenceTs=1783933344379#codex_smoke_token=<redacted>",
+      "final_url": "http://10.0.5.8:30180/assets?tab=endpoint&assetId=491edde0-98db-8deb-74db-59f8e7fb5200",
+      "screenshot": "evidence/learning/asset-inventory/20260713-windows-xshell-postfix/asset-inventory-v3-20260713-xshell-postfix/assets-1920x1080.png",
+      "acceptance_actual": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/assets/actual-1920.png",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets.png",
+      "duration_ms": 4492,
+      "goto_error": null,
+      "bad_responses": [],
+      "request_failures": [],
+      "console_errors": [],
+      "page_errors": [
+        {
+          "message": "Cannot read properties of null (reading 'disconnect')"
+        }
+      ],
+      "metrics": {
+        "final_url": "http://10.0.5.8:30180/assets?tab=endpoint&assetId=491edde0-98db-8deb-74db-59f8e7fb5200",
+        "document_title": "园区网络全流量采集与分析系统",
+        "h1": "资产台账",
+        "body_text_sample": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-13 17:01:56 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 采集监测 威胁分析 资产图谱 资产台账 实体图谱 数据融合 行为基准 检测运营 审计配置 C codex-windows-cdp-admin 系统管理员 在线 资产台账 收起筛选 终端 服务器 网络设备 业务系统 未知资产 关键词 状态 全部状态 园区 部门 重 置 查询 已识别资产 8 个 真实 API 未知资产 0 个 真实 API 漂移资产 2 个 真实 API 长期离线资产 0 个 真实 API 暴露服务数 0 个 真实 API 终端资产清单（共 8 条） 资产 ID IP/MAC 主机名 类型 园区/部门 操作系统 重要性 最近活跃 风险标签 资产 ID IP/MAC 主机名 类型 园区/部门 操作系统 重要性 最近活跃 风险标签 END-0001 10.12.1.11 / 02:00:00:00:01:01 ENDPOINT-01 endpoint 教务处 Windows 11 30 2026-07-13T08:19:17.798961Z 低风险 ",
+        "scroll_width": 2133,
+        "client_width": 2133,
+        "scroll_height": 1200,
+        "client_height": 1200,
+        "horizontal_overflow": false,
+        "error_alerts": [],
+        "visible_bad_geometry": []
+      },
+      "protected_route": true,
+      "smoke_token_used": true,
+      "smoke_hash_consumed": true,
+      "runtime_status": "pass",
+      "runtime_reasons": [],
+      "visual_diff": {
+        "skipped": false,
+        "status": "fail",
+        "exit_code": 1,
+        "pixel_mismatch_ratio": 0.9999103009259259,
+        "stdout": "{\"status\": \"fail\", \"target_id\": \"assets\", \"pixel_mismatch_ratio\": 0.9999103009259259, \"comparison_scope\": \"full-image\", \"scoring_region\": {\"id\": \"full-image\", \"x\": 0, \"y\": 0, \"width\": 1920, \"height\": 1080}}",
+        "stderr": "",
+        "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/assets/metrics.json",
+        "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/assets/diff-1920.png"
+      },
+      "capture_meta": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/assets/capture-meta.json"
+    }
+  ]
+}

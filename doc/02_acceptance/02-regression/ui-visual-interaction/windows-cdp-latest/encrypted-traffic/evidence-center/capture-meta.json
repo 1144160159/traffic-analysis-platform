@@ -1,0 +1,374 @@
+{
+  "slug": "evidence-center",
+  "label": "证据中心",
+  "url": "http://10.0.5.8:30180/encrypted-traffic?tab=evidence-center",
+  "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic-evidence-center.png",
+  "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/encrypted-traffic/evidence-center/actual-1920.png",
+  "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/encrypted-traffic/evidence-center/diff-1920.png",
+  "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/encrypted-traffic/evidence-center/metrics.json",
+  "side_by_side": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/encrypted-traffic/evidence-center/canonical-side-by-side-1920.png",
+  "layout": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080,
+      "device_pixel_ratio": 0.9998436310887371
+    },
+    "active_slug": "evidence-center",
+    "root_horizontal_overflow": false,
+    "app_main_scroll": {
+      "scroll_height": 917,
+      "client_height": 917,
+      "scrollable": false
+    },
+    "business": {
+      "x": 173.99305725097656,
+      "y": 87.98611450195312,
+      "width": 1736.0185546875,
+      "height": 901.0185546875,
+      "right": 1910.0116119384766,
+      "bottom": 989.0046691894531
+    },
+    "grid": {
+      "x": 173.99305725097656,
+      "y": 279.9537048339844,
+      "width": 1736.0185546875,
+      "height": 709.0509643554688,
+      "right": 1910.0116119384766,
+      "bottom": 989.0046691894531
+    },
+    "main": {
+      "x": 173.99305725097656,
+      "y": 279.9537048339844,
+      "width": 1474.9306640625,
+      "height": 709.0509643554688,
+      "right": 1648.9237213134766,
+      "bottom": 989.0046691894531
+    },
+    "rail": {
+      "x": 1658.912109375,
+      "y": 279.9537048339844,
+      "width": 239.98843383789062,
+      "height": 709.0509643554688,
+      "right": 1898.9005432128906,
+      "bottom": 989.0046691894531
+    },
+    "grid_overflow_y": "auto",
+    "grid_scrollbar_width": 11,
+    "scatter_canvas_count": 0,
+    "egress_map_canvas_count": 0,
+    "egress_map_panel": null,
+    "egress_map_body": null,
+    "egress_map": null,
+    "egress_map_canvas": null,
+    "overview_action_panels": [],
+    "titlebar": {
+      "x": 173.99305725097656,
+      "y": 87.98611450195312,
+      "width": 1736.0185546875,
+      "height": 91.9907455444336,
+      "right": 1910.0116119384766,
+      "bottom": 179.97686004638672
+    },
+    "tabs": {
+      "x": 182.98611450195312,
+      "y": 130.98379516601562,
+      "width": 463.9699401855469,
+      "height": 29.988428115844727,
+      "right": 646.9560546875,
+      "bottom": 160.97222328186035
+    },
+    "controls": {
+      "x": 1488.1597900390625,
+      "y": 93.98148345947266,
+      "width": 421.85186767578125,
+      "height": 41.53935241699219,
+      "right": 1910.0116577148438,
+      "bottom": 135.52083587646484
+    },
+    "panels": [
+      {
+        "title": "加密会话证据表",
+        "x": 173.99305725097656,
+        "y": 279.9537048339844,
+        "width": 716.84033203125,
+        "height": 455.9953918457031,
+        "right": 890.8333892822266,
+        "bottom": 735.9490966796875
+      },
+      {
+        "title": "时间窗内 PCAP 索引（独立数据源）",
+        "x": 896.8287353515625,
+        "y": 279.9537048339844,
+        "width": 438.8773498535156,
+        "height": 455.9953918457031,
+        "right": 1335.7060852050781,
+        "bottom": 735.9490966796875
+      },
+      {
+        "title": "证据锚点概览",
+        "x": 1341.701416015625,
+        "y": 279.9537048339844,
+        "width": 307.22222900390625,
+        "height": 455.9953918457031,
+        "right": 1648.9236450195312,
+        "bottom": 735.9490966796875
+      },
+      {
+        "title": "证书详情与握手元数据",
+        "x": 173.99305725097656,
+        "y": 741.9444580078125,
+        "width": 512.0255126953125,
+        "height": 366.9907531738281,
+        "right": 686.0185699462891,
+        "bottom": 1108.9352111816406
+      },
+      {
+        "title": "证据完整度",
+        "x": 692.013916015625,
+        "y": 741.9444580078125,
+        "width": 292.5810241699219,
+        "height": 366.9907531738281,
+        "right": 984.5949401855469,
+        "bottom": 1108.9352111816406
+      },
+      {
+        "title": "Hash 与审计校验",
+        "x": 990.59033203125,
+        "y": 741.9444580078125,
+        "width": 658.3333740234375,
+        "height": 366.9907531738281,
+        "right": 1648.9237060546875,
+        "bottom": 1108.9352111816406
+      },
+      {
+        "title": "证据概览",
+        "x": 1658.912109375,
+        "y": 279.9537048339844,
+        "width": 239.98843383789062,
+        "height": 103.46065521240234,
+        "right": 1898.9005432128906,
+        "bottom": 383.4143600463867
+      },
+      {
+        "title": "快速定位",
+        "x": 1658.912109375,
+        "y": 389.40972900390625,
+        "width": 239.98843383789062,
+        "height": 205.55557250976562,
+        "right": 1898.9005432128906,
+        "bottom": 594.9653015136719
+      },
+      {
+        "title": "证据动作",
+        "x": 1658.912109375,
+        "y": 600.960693359375,
+        "width": 239.98843383789062,
+        "height": 210.37037658691406,
+        "right": 1898.9005432128906,
+        "bottom": 811.3310699462891
+      },
+      {
+        "title": "报告与审计",
+        "x": 1658.912109375,
+        "y": 817.326416015625,
+        "width": 239.98843383789062,
+        "height": 94.44445037841797,
+        "right": 1898.9005432128906,
+        "bottom": 911.770866394043
+      },
+      {
+        "title": "证据缺口 Top5",
+        "x": 1658.912109375,
+        "y": 917.7662353515625,
+        "width": 239.98843383789062,
+        "height": 139.20140075683594,
+        "right": 1898.9005432128906,
+        "bottom": 1056.9676361083984
+      }
+    ],
+    "overlaps": [],
+    "horizontally_clipped": [],
+    "pagination": [
+      {
+        "x": 180.7291717529297,
+        "y": 593.6806030273438,
+        "width": 703.3681030273438,
+        "height": 31.990741729736328,
+        "right": 884.0972747802734,
+        "bottom": 625.6713447570801
+      },
+      {
+        "x": 903.5648803710938,
+        "y": 518.692138671875,
+        "width": 425.4051208496094,
+        "height": 31.990741729736328,
+        "right": 1328.9700012207031,
+        "bottom": 550.6828804016113
+      },
+      {
+        "x": 1232.997802734375,
+        "y": 524.6875,
+        "width": 95.97222900390625,
+        "height": 23.993057250976562,
+        "right": 1328.9700317382812,
+        "bottom": 548.6805572509766
+      },
+      {
+        "x": 997.326416015625,
+        "y": 980.6829223632812,
+        "width": 644.8611450195312,
+        "height": 31.990741729736328,
+        "right": 1642.1875610351562,
+        "bottom": 1012.6736640930176
+      },
+      {
+        "x": 1546.21533203125,
+        "y": 986.6782836914062,
+        "width": 95.97222900390625,
+        "height": 23.993057250976562,
+        "right": 1642.1875610351562,
+        "bottom": 1010.6713409423828
+      }
+    ],
+    "table_layouts": [
+      {
+        "id": "evidence-sessions",
+        "panel_title": "加密会话证据表",
+        "table": {
+          "x": 180.7291717529297,
+          "y": 314.6875,
+          "width": 703.3681030273438,
+          "height": 326.97918701171875,
+          "right": 884.0972747802734,
+          "bottom": 641.6666870117188
+        },
+        "pagination": {
+          "x": 180.7291717529297,
+          "y": 593.6806030273438,
+          "width": 703.3681030273438,
+          "height": 31.990741729736328,
+          "right": 884.0972747802734,
+          "bottom": 625.6713447570801
+        },
+        "last_row": {
+          "x": 180.7291717529297,
+          "y": 539.7800903320312,
+          "width": 703.3681030273438,
+          "height": 38.217594146728516,
+          "right": 884.0972747802734,
+          "bottom": 577.9976844787598
+        },
+        "pagination_below_rows": true,
+        "pagination_inside_table": true
+      },
+      {
+        "id": "dense",
+        "panel_title": "时间窗内 PCAP 索引（独立数据源）",
+        "table": {
+          "x": 903.5648803710938,
+          "y": 314.6875,
+          "width": 425.4051208496094,
+          "height": 235.99537658691406,
+          "right": 1328.9700012207031,
+          "bottom": 550.6828765869141
+        },
+        "pagination": {
+          "x": 903.5648803710938,
+          "y": 518.692138671875,
+          "width": 425.4051208496094,
+          "height": 31.990741729736328,
+          "right": 1328.9700012207031,
+          "bottom": 550.6828804016113
+        },
+        "last_row": {
+          "x": 903.5648803710938,
+          "y": 479.6180725097656,
+          "width": 425.4051208496094,
+          "height": 30.995372772216797,
+          "right": 1328.9700012207031,
+          "bottom": 510.6134452819824
+        },
+        "pagination_below_rows": true,
+        "pagination_inside_table": true
+      },
+      {
+        "id": "dense",
+        "panel_title": "Hash 与审计校验",
+        "table": {
+          "x": 997.326416015625,
+          "y": 776.6782836914062,
+          "width": 644.8611450195312,
+          "height": 235.99537658691406,
+          "right": 1642.1875610351562,
+          "bottom": 1012.6736602783203
+        },
+        "pagination": {
+          "x": 997.326416015625,
+          "y": 980.6829223632812,
+          "width": 644.8611450195312,
+          "height": 31.990741729736328,
+          "right": 1642.1875610351562,
+          "bottom": 1012.6736640930176
+        },
+        "last_row": {
+          "x": 997.326416015625,
+          "y": 941.6088256835938,
+          "width": 644.8611450195312,
+          "height": 30.995372772216797,
+          "right": 1642.1875610351562,
+          "bottom": 972.6041984558105
+        },
+        "pagination_below_rows": true,
+        "pagination_inside_table": true
+      }
+    ],
+    "evidence_session_scroll": {
+      "has_scroll_body": false,
+      "body_overflow_y": null,
+      "content_overflow_y": "visible",
+      "scroll_height": 263,
+      "client_height": 263
+    },
+    "paginated_table_count": 3,
+    "unpaged_table_count": 0,
+    "error_alerts": [],
+    "table_rows": 6,
+    "custom_rows": 10,
+    "canvas_count": 4,
+    "script_resources": [
+      "http://10.0.5.8:30180/assets/index-cW6ImlD1.js",
+      "http://10.0.5.8:30180/assets/EncryptedTrafficPage-DNxK8Uzv.js"
+    ],
+    "text": "加密流量总览指纹分析隧道检测外联画像证据中心时间范围近 24 小时一键分析指纹详情证书详情关联 Session1,284完整会话PCAP 索引436时间窗证书样本218证书链握手元数据9,642TLS/QUIC已校验 Hash391校验通过取证任务57执行中待补齐证据23需处理加密会话证据表证据 API 已接入证据 API时间Session ID源 IP目的地址协议风险06-20 03:45session-ui-000110.12.2.36104.16.248.249TLS高危06-20 03:44session-ui-000210.18.4.5203.0.113.45TLS中危06-20 03:43session-ui-0003172.16.5.10185.22.14.9TLS中危06-20 03:42session-ui-000410.12.9.33198.51.100.27TLS中危06-20 03:41session-ui-000510.11.3.2237.120.196.12QUIC低危06-20 03:40session-ui-000610.10.2.36172.67.219.23TLS高危共 9 条12时间窗内 PCAP 索引（独立数据源）尚未自动关联当前会话对象路径时间窗大小包数来源sha256状态pcap-20250620-00001.pcap10:15 - 10:1611.7 MB28,341pcap-prod00000001ab...已校验pcap-20250620-00002.pcap10:16 - 10:1714.7 MB25,171pcap-prod00000002ab...已校验pcap-20250620-00003.pcap10:17 - 10:1817.7 MB22,001pcap-prod00000003ab...已校验pcap-20250620-00004.pcap10:18 - 10:1920.7 MB18,831pcap-prod00000004ab...已校验pcap-20250620-00005.pcap10:19 - 10:2023.7 MB15,661pcap-prod00000005ab...已校验12申请下载申请校验生成取证任务证据锚点概览高危Session IDsession-ui-0001时间06-20 03:45源 / 目的10.12.2.36 -> 104.16.248.249协议TLS / h2SNI / 域名cdn.example.comJA3771,4865-4866-4867-49195-49196,0-11-10-23,0证书 Hashcert000000000000000000000000000000000000000000000000000000000001PCAP 索引pcap-20250620-00001Payload EntropyPayload entropy API校验证据 Hash关联证据分析证书详情与握手元数据SubjectCN=update.example.comIssuerR3 (Let's Encrypt)Serial04:2A:78:9E:3CNot Before2025-04-10 03:12:00Not After2025-07-09 03:12:00SignatureECDSA with SHA25610:15:01.321ClientHelloTLS 1.3, SNI update.example.com10:15:01.340ServerHelloTLS_AES_128_GCM_SHA25610:15:01.359Encrypted ExtensionsALPN h210:15:01.378CertificateR3 Let's Encrypt10:15:01.397Certificate VerifyECDSA P-25610:15:01.416FinishedHandshake complete10:15:01.435ClientHelloTLS 1.3, SNI update.example.com10:15:01.454ServerHelloTLS_AES_128_GCM_SHA256证据完整度Session1284/1284PCAP关联1012/1284证书218/236握手9642/9820索引Hash391/436Hash 与审计校验申请校验Hash 摘要对象路径时间来源状态0000000000000000...pcap/2025/06/20/0001.pcap10:16:00admin通过0000000000000000...pcap/2025/06/20/0002.pcap10:16:05admin通过0000000000000000...pcap/2025/06/20/0003.pcap10:16:10admin通过0000000000000000...pcap/2025/06/20/0004.pcap10:16:15admin通过0000000000000000...pcap/2025/06/20/0005.pcap10:16:20admin通过12证据概览96%证据完整度真实证据 API 已接入快速定位检索 Session ID / 域名 / IP时间范围近 24 小时协议类型全部风险等级全部SNI / 域名全部定 位证据动作生成取证任务申请证据保全关联告警发起专家复核标记证据缺口提交处置建议报告与审计导出证据报告写入审计日志证据缺口 Top5Session0PCAP关联272证书18握手178索引Hash45"
+  },
+  "visual_diff": {
+    "size_ok": true,
+    "comparison_scope": "scoring-region",
+    "scoring_region": {
+      "id": "encrypted-traffic-business-roi-v1",
+      "x": 198,
+      "y": 78,
+      "width": 1712,
+      "height": 920
+    },
+    "source_width": 1920,
+    "source_height": 1080,
+    "actual_width": 1920,
+    "actual_height": 1080,
+    "compared_pixels": 1575040,
+    "total_pixels": 1575040,
+    "mismatch_pixels": 211940,
+    "pixel_mismatch_ratio": 0.13456166192604632,
+    "max_pixel_ratio": 0.18,
+    "channel_tolerance": 64,
+    "max_channel_delta": 255,
+    "full_image_diagnostic": {
+      "compared_pixels": 2073600,
+      "total_pixels": 2073600,
+      "mismatch_pixels": 259519,
+      "pixel_mismatch_ratio": 0.1251538387345679,
+      "max_channel_delta": 255
+    }
+  },
+  "visual_status": "pass"
+}

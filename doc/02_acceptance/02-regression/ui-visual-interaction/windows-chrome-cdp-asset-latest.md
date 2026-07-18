@@ -1,0 +1,37 @@
+# Windows Chrome CDP Full Route Evidence
+
+- Run ID: `asset-inventory-v3-20260713-xshell-postfix`
+- Result: `pass`
+- Runtime routes passed: `1/1`
+- Visual diff passed: `0/1`
+- CDP URL: `http://127.0.0.1:9224`
+- Browser: `Chrome/150.0.7871.101`
+- Viewport: `1920x1080`
+- Evidence dir: `evidence/learning/asset-inventory/20260713-windows-xshell-postfix/asset-inventory-v3-20260713-xshell-postfix`
+- Acceptance dir: `doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest`
+
+This evidence is captured through Windows Chrome CDP. It is intentionally separate from the older Codex Desktop extension receiver gate.
+
+## Runtime Findings
+
+- No runtime blockers: no 4xx/5xx, requestfailed, console/pageerror, page error alerts, or page-level horizontal overflow.
+
+## Visual Diff Gaps
+
+- `assets`: mismatch=0.999910, screenshot=`evidence/learning/asset-inventory/20260713-windows-xshell-postfix/asset-inventory-v3-20260713-xshell-postfix/assets-1920x1080.png`, diff=`doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/assets/diff-1920.png`
+
+## Route Evidence
+
+| route | runtime | visual diff | mismatch | screenshot | final URL |
+|---|---:|---:|---:|---|---|
+| `assets` | pass | fail | 0.999910 | `evidence/learning/asset-inventory/20260713-windows-xshell-postfix/asset-inventory-v3-20260713-xshell-postfix/assets-1920x1080.png` | `http://10.0.5.8:30180/assets?tab=endpoint&assetId=491edde0-98db-8deb-74db-59f8e7fb5200` |
+
+## Reproduce
+
+```bash
+curl http://127.0.0.1:9224/json/version
+curl http://127.0.0.1:9224/json/list
+env -u HTTP_PROXY -u HTTPS_PROXY -u ALL_PROXY -u http_proxy -u https_proxy -u all_proxy \
+  node tests/e2e/ui_windows_chrome_cdp_full_route_capture.mjs
+```
+

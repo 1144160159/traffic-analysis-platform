@@ -428,3 +428,26 @@
     - 标准格式: kubernetes.io/hostname=<node-name>
     - 5 个旧 Nebula PV 使用 nebula-primary=true (不可变，功能正常)
     - 新 PV 统一使用 kubernetes.io/hostname 标准格式
+
+二十四、2026-07-15 ClickHouse Schema Init 与加密流量数据入口修复
+─────────────────────────────────────────
+
+  【问题】
+  alert-service 同时连接 clickhouse-1/clickhouse-2，但第二分片曾缺少
+  sessions、pcap_index 等 Distributed 入口，导致同一页面接口按连接节点
+  偶发返回空数据。原 init-clickhouse-schema Job 还存在两项问题：
+    - 把带转义引号的密码拼入命令字符串，实际密码参数包含引号；
+    - 主节点 DDL worker 无法把服务 DNS 识别为本机，ON CLUSTER 队列长期 Inactive。
+
+  【修复】
+    - 密码通过 shell 函数独立参数传递；
+    - Schema Job 改为向 2 主 + 2 副本逐节点广播幂等 DDL；
+    - 为 ReplicatedMergeTree ALTER 增加最多 6 次元数据收敛重试；
+    - 就绪检查改为对 ClickHouse 9000 执行 SELECT 1，不再用客户端误探测 Keeper 9181。
+
+  【验证】
+    - job/init-clickhouse-schema condition=complete；
+    - 四个 ClickHouse 节点均有 14 个 Distributed 表；
+    - sessions、pcap_index、feature_fp 在 4/4 节点存在；
+    - clickhouse-1 与 clickhouse-2 的近 24 小时加密会话和 PCAP 索引计数一致；
+    - Windows Chrome 加密流量五 Tab 验收 44/44 通过，运行态错误 0。

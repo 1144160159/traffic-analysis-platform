@@ -1,0 +1,483 @@
+{
+  "package_id": "probes_windows_chrome_xshell_acceptance",
+  "generated_at": "2026-07-16T17:09:54.797Z",
+  "result": "pass",
+  "browser_path": "Xshell tunnel -> 127.0.0.1:9224 -> Windows Chrome -> direct APISIX",
+  "browser": "Chrome/150.0.7871.115",
+  "route": "http://10.0.5.8:30180/probes?windowsCdpAcceptanceTs=1784221715165#codex_smoke_token=<redacted>",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "device_scale_factor": 1
+  },
+  "summary": {
+    "checks": 39,
+    "pass": 39,
+    "fail": 0,
+    "visual_status": "pass"
+  },
+  "failures": [],
+  "checks": [
+    {
+      "id": "xshell-windows-cdp-preflight",
+      "browser": "Chrome/150.0.7871.115",
+      "target_count": 6,
+      "status": "pass"
+    },
+    {
+      "id": "real-probe-api-25-canonical-rows",
+      "status": "pass",
+      "total": 25,
+      "returned": 25,
+      "simulated_ids": []
+    },
+    {
+      "id": "dedicated-topology-api-contract",
+      "status": "pass",
+      "source": "postgres.probes.hardware_info",
+      "nodes": 25,
+      "dual_layout_nodes": 25,
+      "edges": 13,
+      "zones": 4
+    },
+    {
+      "id": "topology-api-minimum-node-spacing",
+      "minimum_2d": 7.001357765094632,
+      "minimum_3d": 7.0399999999999885,
+      "status": "pass"
+    },
+    {
+      "id": "metric-total",
+      "expected": "25 台",
+      "status": "pass"
+    },
+    {
+      "id": "metric-online",
+      "expected": "24 在线",
+      "status": "pass"
+    },
+    {
+      "id": "metric-nic",
+      "expected": "48 张",
+      "status": "pass"
+    },
+    {
+      "id": "metric-modes",
+      "expected": "4 种",
+      "status": "pass"
+    },
+    {
+      "id": "metric-cpu",
+      "expected": "32.6%",
+      "status": "pass"
+    },
+    {
+      "id": "metric-memory",
+      "expected": "41.3%",
+      "status": "pass"
+    },
+    {
+      "id": "metric-warning",
+      "expected": "3 台",
+      "status": "pass"
+    },
+    {
+      "id": "metric-offline",
+      "expected": "1 台",
+      "status": "pass"
+    },
+    {
+      "id": "api-svg-topology-and-echarts-rendered",
+      "topology_svg_count": 1,
+      "topology_node_count": 25,
+      "topology_api_node_count": 25,
+      "topology_link_count": 13,
+      "topology_api_edge_count": 13,
+      "static_campus_image_count": 0,
+      "trend_canvas_count": 2,
+      "status": "pass"
+    },
+    {
+      "id": "topology-2d-switch",
+      "path_3d": "M228.98739987010177 221.9268907563025Q274.1608140290106 133.622268907563 319.3342281879195 93.31764705882354",
+      "path_2d": "M171.40330429558426 218.94441641445647L338.5453890057074 112.18180233220647",
+      "source": "postgres.probes.hardware_info",
+      "status": "pass"
+    },
+    {
+      "id": "topology-2d-screenshot-1920x1080",
+      "width": 1920,
+      "height": 1080,
+      "status": "pass"
+    },
+    {
+      "id": "topology-2d-screenshot-content-complete",
+      "bytes": 727477,
+      "shell": 1919.988525390625,
+      "kpis": 8,
+      "panels": 6,
+      "nodes": 25,
+      "detail": true,
+      "status": "pass"
+    },
+    {
+      "id": "topology-node-selection-detail",
+      "selected_before": "PROBE-BRANCH-01",
+      "selected_after": "PROBE-CAMPUS-03",
+      "detail": "探针 ID\nPROBE-CAMPUS-03\n所在位置\n主园区节点 03\n采集网卡\neth2, eth3\n采集模式\n混合 (L2+L3)\n版本\nv3.4.7\n运行时长\n8d 6h\nCPU 使用率\n32.6%\n内存使用率\n41.3%\n磁盘使用率\n46.7%\n采集带宽\n11.7 Gbps / 40 Gbps\n丢包率\n0.02%\n解析率\n99.27%\n运行状态\n在线\nmTLS\n已启用\n归档状态\n已配置\n心跳状态\n10h",
+      "status": "pass"
+    },
+    {
+      "id": "topology-zoom-reset",
+      "initial_view_box": "0 0 1000 420",
+      "zoomed_view_box": "80 33.599999999999994 840 352.8",
+      "reset_view_box": "0 0 1000 420",
+      "status": "pass"
+    },
+    {
+      "id": "trend-range-switch",
+      "status": "pass"
+    },
+    {
+      "id": "pagination-fixed-position-and-real-page",
+      "before": {
+        "x": 181.72454833984375,
+        "y": 1164.2476806640625,
+        "width": 645.0925903320312,
+        "height": 27.997802734375
+      },
+      "after": {
+        "x": 181.72454833984375,
+        "y": 1164.2476806640625,
+        "width": 645.0925903320312,
+        "height": 27.997802734375
+      },
+      "first_page_id": "PROBE-DC-01",
+      "second_page_id": "PROBE-CAMPUS-01",
+      "status": "pass"
+    },
+    {
+      "id": "batch-upgrade-real-backend-operation",
+      "http_status": 200,
+      "operation_ids": [
+        "2378b4da-1f7a-4ac4-b4c4-77d8d37c5c6c",
+        "f07048a3-613a-4925-924a-2907773be7da",
+        "eb5aa152-22ad-4ded-9ecb-e366166469a3",
+        "8c1535c5-9d14-48b9-8f23-0fd1bea79ce1",
+        "4b4574fc-093f-4291-96a9-ab924161e441",
+        "7b487e5b-30a4-4cca-9a33-d9aca096be42",
+        "2098e493-6b5e-42b0-932a-806b60475904",
+        "0905dc60-51d5-4334-85f7-ba984d1c860b",
+        "223d8d53-80c1-42f1-a85d-e9464f9cc2fa",
+        "437a0aed-48dd-4fcd-8927-4747243f01a9",
+        "c600cc5f-6f98-439a-ac50-ecc164a0ccbf",
+        "902b3490-aad7-4890-932d-96ae18054c9b",
+        "17f74ad5-2aac-425d-8d4a-7eb60a71a9ea",
+        "b9719d0a-76f5-45bd-9cfe-103e57f8dbf4",
+        "1cac91fb-a50a-484f-984d-c38a3436fa6c",
+        "84e3cd04-e093-4e7a-bb5a-9fba8d88a693",
+        "f70d368e-926e-4b72-90ae-b3f13fc05818",
+        "4ee10b76-c714-4f10-92bc-b7b5545069ec",
+        "992b1742-94fa-49f8-bd18-530d9101c220",
+        "3ef7ecb1-df47-44ff-9923-69a8bc0e689a",
+        "c8077d59-9278-46fc-b5d0-f818806f5fb9",
+        "f2ccd61b-d4ad-4a5e-8fa1-ae6a8f548e65",
+        "ba894c4a-4b06-4b83-81de-e5a138180b66",
+        "9b76042d-7ae6-4c68-8219-b2c885678328",
+        "6b7af3a5-2aa9-4cb0-892a-c7b880a3ef89"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "batch-state-real-backend-operation",
+      "http_status": 200,
+      "operation_ids": [
+        "a243d1a0-7a78-4569-a8f2-af83a7a2e60b",
+        "5ebaf97d-3941-44a7-951d-d19cf49d4a89",
+        "e16269f8-3c83-4c13-afe3-0c30df757b06",
+        "89094058-f62d-4f28-804f-acdc615fa21e",
+        "98de12d5-0f3b-428f-8155-ec455d106408",
+        "121509dc-fd72-419a-94bb-6613cad05b9b",
+        "42d8dcb7-7146-4343-bef0-53ea9bed2313",
+        "b3762f5d-634a-4255-a09c-33700af3e0a1",
+        "b750fa7e-6544-4706-b410-7ec7f950e852",
+        "d88ee914-e325-4e32-ad80-341de9e58cfe",
+        "4895a879-9194-42f1-8cff-8b201d089ff4",
+        "8f709414-75c4-48d9-b1a0-1a1549407685",
+        "c72fbcf4-a772-4af4-919d-7cca019cf6c6",
+        "cc3b5588-0c55-4962-b70e-23b397076185",
+        "9f4aff1b-ddb6-413b-890a-d6d005f49b6b",
+        "08b5bdcb-d45e-4ac4-807e-f28d0f0b0379",
+        "3096b79b-93f8-4a2b-9868-4c8125d66a17",
+        "d1f6d863-d754-4a6d-8e33-2a6446374c0e",
+        "25f9b20f-b8e1-4e31-af8f-62c51dc3ffc6",
+        "e5c27c97-f47a-44b5-a62d-e64849b4766c",
+        "02cabe89-8385-4692-b8f0-18293bac909b",
+        "b8234dbf-c12b-4e47-ba8c-032b74a93575",
+        "8242e26c-cc96-4af5-bdfe-0bae391035e0",
+        "3007fa52-81ae-4cd6-b3ce-770d1aa81c5d",
+        "1190902c-54b5-4d4f-b045-80b22f14e9b7"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "config-push-real-backend-operation",
+      "http_status": 200,
+      "operation_ids": [
+        "455b5394-2baf-45fa-8204-bc56d549e3ee"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "connectivity-real-backend-operation",
+      "http_status": 200,
+      "operation_ids": [
+        "3ce458c4-df99-406a-9d32-144929d094da"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "cert-rotate-real-backend-operation",
+      "http_status": 200,
+      "operation_ids": [
+        "2572c766-9df4-417e-9721-08a21940e5ac"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "restart-real-backend-operation",
+      "http_status": 200,
+      "operation_ids": [
+        "d9304396-0128-4eea-aff0-9cf806338377"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "viewer-write-forbidden",
+      "http_status": 403,
+      "status": "pass"
+    },
+    {
+      "id": "metrics-only-topology-forbidden",
+      "http_status": 403,
+      "status": "pass"
+    },
+    {
+      "id": "invalid-topology-mode-rejected",
+      "http_status": 400,
+      "status": "pass"
+    },
+    {
+      "id": "cross-tenant-probe-hidden",
+      "http_status": 404,
+      "status": "pass"
+    },
+    {
+      "id": "cross-tenant-topology-isolated",
+      "http_status": 200,
+      "node_count": 0,
+      "status": "pass"
+    },
+    {
+      "id": "queued-operations-persisted",
+      "expected": 54,
+      "persisted": 54,
+      "status": "pass"
+    },
+    {
+      "id": "queued-operation-audits-persisted",
+      "expected": 6,
+      "persisted": 6,
+      "actions": [
+        "PROBE_BATCH_UPGRADE_QUEUED",
+        "PROBE_BATCH_STATE_QUEUED",
+        "PROBE_CONFIG_PUSH_QUEUED",
+        "PROBE_CONNECTIVITY_TEST_QUEUED",
+        "PROBE_CERT_ROTATE_QUEUED",
+        "PROBE_RESTART_QUEUED"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "row-config-dialog-exposes-real-endpoint",
+      "status": "pass"
+    },
+    {
+      "id": "fullscreen-matrix-reachable",
+      "status": "pass"
+    },
+    {
+      "id": "canonical-state-restored",
+      "status": "pass"
+    },
+    {
+      "id": "layout-scrollable-contained-and-aligned",
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "root_horizontal_overflow": false,
+      "business": {
+        "x": 173.99305725097656,
+        "y": 87.98611450195312,
+        "width": 1736.0185546875,
+        "height": 901.0185546875,
+        "right": 1910.0116119384766,
+        "bottom": 989.0046691894531
+      },
+      "shell": {
+        "x": 173.99305725097656,
+        "y": -131.2731475830078,
+        "width": 1724.907470703125,
+        "height": 1119.988525390625,
+        "right": 1898.9005279541016,
+        "bottom": 988.7153778076172
+      },
+      "main": {
+        "x": 173.99305725097656,
+        "y": -131.2731475830078,
+        "width": 1108.9237060546875,
+        "height": 1111.9908447265625,
+        "right": 1282.916763305664,
+        "bottom": 980.7176971435547
+      },
+      "rail": {
+        "x": 1290.9144287109375,
+        "y": -131.2731475830078,
+        "width": 599.9884643554688,
+        "height": 1111.9908447265625,
+        "right": 1890.9028930664062,
+        "bottom": 980.7176971435547
+      },
+      "pagination": {
+        "x": 181.72454833984375,
+        "y": 944.9884643554688,
+        "width": 645.0926513671875,
+        "height": 27.9976863861084,
+        "right": 826.8171997070312,
+        "bottom": 972.9861507415771
+      },
+      "matrix": {
+        "x": 181.72454833984375,
+        "y": 436.42364501953125,
+        "width": 645.0926513671875,
+        "height": 508.5648498535156,
+        "right": 826.8171997070312,
+        "bottom": 944.9884948730469
+      },
+      "horizontally_clipped": [],
+      "overflow_y": "auto",
+      "client_height": 901,
+      "scroll_height": 1120,
+      "scroll_top": 219.25927734375,
+      "bottom_reachable": true,
+      "trend_bottom_visible": true,
+      "heartbeat_bottom_visible": true,
+      "threshold_visible": true,
+      "text": "探针总览探针总数25 台真实 API在线探针24 在线真实 API采集网卡48 张真实 API采集模式4 种真实 API平均 CPU32.6%真实 API平均内存41.3%真实 API告警探针3 台真实 API离线探针1 台真实 API部署拓扑2D3D在线离线告警采集镜像交换机链路镜像口10-40 Gbps≥ 40 Gbps公共服务区教学办公区核心机房生活区42G40G主园区节点 03边缘探针 · 11.7GPROBE-CAMPUS-03 · 公共服务区 · 在线 · 11.7 Gbps主园区节点 11边缘探针 · 16.6GPROBE-CAMPUS-11 · 公共服务区 · 在线 · 16.6 Gbps实验楼边缘探针 · 9.2GPROBE-LAB-01 · 公共服务区 · 在线 · 9.2 Gbps体育馆边缘探针 · 7.3GPROBE-SPORT-01 · 生活区 · 在线 · 7.3 Gbps数据中心机房 A汇聚探针 · 4.2GPROBE-DC-01 · 核心机房 · 在线 · 4.2 Gbps主园区节点 07边缘探针 · 14.1GPROBE-CAMPUS-07 · 公共服务区 · 在线 · 14.1 Gbps主园区节点 15边缘探针 · 0.0GPROBE-CAMPUS-15 · 公共服务区 · 离线 · 0.0 Gbps主园区节点 04边缘探针 · 12.3GPROBE-CAMPUS-04 · 公共服务区 · 在线 · 12.3 Gbps主园区节点 12边缘探针 · 17.2GPROBE-CAMPUS-12 · 公共服务区 · 告警 · 17.2 Gbps宿舍区边缘探针 · 7.9GPROBE-DORM-01 · 公共服务区 · 在线 · 7.9 Gbps汇聚区 B边缘探针 · 9.8GPROBE-BRANCH-01 · 公共服务区 · 在线 · 9.8 Gbps主园区节点 08边缘探针 · 14.8GPROBE-CAMPUS-08 · 公共服务区 · 在线 · 14.8 Gbps办公区接入探针 · 6.7GPROBE-OFFICE-01 · 教学办公区 · 在线 · 6.7 Gbps教学楼 A接入探针 · 5.5GPROBE-BUILD-01 · 教学办公区 · 在线 · 5.5 Gbps主园区节点 05边缘探针 · 12.9GPROBE-CAMPUS-05 · 公共服务区 · 在线 · 12.9 Gbps主园区节点 13边缘探针 · 17.9GPROBE-CAMPUS-13 · 公共服务区 · 告警 · 17.9 Gbps主园区节点 01边缘探针 · 10.4GPROBE-CAMPUS-01 · 公共服务区 · 在线 · 10.4 Gbps主园区节点 09边缘探针 · 15.4GPROBE-CAMPUS-09 · 公共服务区 · 在线 · 15.4 Gbps图书馆边缘探针 · 8.6GPROBE-LIB-01 · 公共服务区 · 在线 · 8.6 Gbps教学楼 B接入探针 · 6.1GPROBE-BUILD-02 · 教学办公区 · 在线 · 6.1 Gbps主园区节点 06边缘探针 · 13.5GPROBE-CAMPUS-06 · 公共服务区 · 在线 · 13.5 Gbps主园区节点 14边缘探针 · 18.5GPROBE-CAMPUS-14 · 公共服务区 · 告警 · 18.5 Gbps数据中心机房 B汇聚探针 · 4.8GPROBE-DC-02 · 核心机房 · 在线 · 4.8 Gbps主园区节点 10边缘探针 · 16.0GPROBE-CAMPUS-10 · 公共服务区 · 在线 · 16.0 Gbps主园区节点 02边缘探针 · 11.0GPROBE-CAMPUS-02 · 公共服务区 · 在线 · 11.0 GbpsAPI · 25 节点 / 13 链路探针交换机链路镜像口探针状态矩阵自动刷新 15s探针 ID位置状态采集模式采集带宽丢包率解析率CPU内存运行时长版本操作PROBE-DC-01数据中心机房 A在线混合 (L2+L3)4.2 Gbps0.02%99.41%20.6%29.3%5d 6hv3.4.7PROBE-DC-02数据中心机房 B在线L2 全量4.8 Gbps0.03%99.34%21.6%30.3%5d 12hv3.4.7PROBE-BUILD-01教学楼 A在线L3 全量5.5 Gbps0.04%99.27%22.6%31.3%5d 18hv3.4.7PROBE-BUILD-02教学楼 B在线流量聚合6.1 Gbps0.01%99.20%23.6%32.3%6d 0hv3.4.7PROBE-OFFICE-01办公区在线混合 (L2+L3)6.7 Gbps0.02%99.48%24.6%33.3%6d 6hv3.4.6PROBE-SPORT-01体育馆在线L2 全量7.3 Gbps0.03%99.41%25.6%34.3%6d 12hv3.4.7PROBE-DORM-01宿舍区在线L3 全量7.9 Gbps0.04%99.34%26.6%35.3%6d 18hv3.4.7PROBE-LIB-01图书馆在线流量聚合8.6 Gbps0.01%99.27%27.6%36.3%7d 0hv3.4.7PROBE-LAB-01实验楼在线混合 (L2+L3)9.2 Gbps0.02%99.20%28.6%37.3%7d 6hv3.4.7PROBE-BRANCH-01汇聚区 B在线L2 全量9.8 Gbps0.03%99.48%29.6%38.3%7d 12hv3.4.6共 25 条‹123›10 条/页吞吐与丢包趋势近 6 小时近 6 小时PPS (K)1,303实时聚合丢包率4.14%实时均值解析率95.12%实时均值采集带宽272.4G25 台探针批量发送带宽 (Gbps)DC-01 阈值线 (30 Gbps)选中探针详情在线探针 IDPROBE-CAMPUS-03所在位置主园区节点 03采集网卡eth2, eth3采集模式混合 (L2+L3)版本v3.4.7运行时长8d 6hCPU 使用率32.6%内存使用率41.3%磁盘使用率46.7%采集带宽11.7 Gbps / 40 Gbps丢包率0.02%解析率99.27%运行状态在线mTLS已启用归档状态已配置心跳状态10h批量运维编辑采集网卡eth2, eth3过滤策略由配置下发接口管理PCAP 归档已启用归档路径s3://pcap-archive/probe-campus-03/mTLS已启用CPU 使用率32.6%采集模式混合 (L2+L3)采集带宽11.7 Gbps批量升级批量启停策略下发连通性测试证书轮换重启探针心跳与日志更多时间探针 ID延迟状态详情14:44:46PROBE-DC-0110h正常心跳同步14:44:45PROBE-DC-0210h正常心跳同步14:44:44PROBE-BUILD-0110h正常心跳同步14:44:47PROBE-BUILD-0210h正常心跳同步14:44:46PROBE-OFFICE-0110h正常心跳同步14:44:45PROBE-SPORT-0110h正常心跳同步14:44:44PROBE-DORM-0110h正常心跳同步",
+      "observed_viewport_before_calibration": {
+        "width": 2133,
+        "height": 1200
+      },
+      "zoom_calibration": 0.90014064697609,
+      "status": "pass"
+    },
+    {
+      "id": "canonical-visual-diff",
+      "pixel_mismatch_ratio": 0.09860701950426656,
+      "max_pixel_ratio": 0.12,
+      "stdout": "{\"status\": \"pass\", \"target_id\": \"probes\", \"pixel_mismatch_ratio\": 0.09860701950426656, \"comparison_scope\": \"scoring-region\", \"scoring_region\": {\"id\": \"probes-business-roi-v1\", \"x\": 198, \"y\": 78, \"width\": 1712, \"height\": 920}}",
+      "stderr": "",
+      "status": "pass"
+    },
+    {
+      "id": "runtime-clean",
+      "bad_responses": [],
+      "console_errors": [],
+      "page_errors": [],
+      "request_failures": [],
+      "status": "pass"
+    }
+  ],
+  "layout": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "root_horizontal_overflow": false,
+    "business": {
+      "x": 173.99305725097656,
+      "y": 87.98611450195312,
+      "width": 1736.0185546875,
+      "height": 901.0185546875,
+      "right": 1910.0116119384766,
+      "bottom": 989.0046691894531
+    },
+    "shell": {
+      "x": 173.99305725097656,
+      "y": -131.2731475830078,
+      "width": 1724.907470703125,
+      "height": 1119.988525390625,
+      "right": 1898.9005279541016,
+      "bottom": 988.7153778076172
+    },
+    "main": {
+      "x": 173.99305725097656,
+      "y": -131.2731475830078,
+      "width": 1108.9237060546875,
+      "height": 1111.9908447265625,
+      "right": 1282.916763305664,
+      "bottom": 980.7176971435547
+    },
+    "rail": {
+      "x": 1290.9144287109375,
+      "y": -131.2731475830078,
+      "width": 599.9884643554688,
+      "height": 1111.9908447265625,
+      "right": 1890.9028930664062,
+      "bottom": 980.7176971435547
+    },
+    "pagination": {
+      "x": 181.72454833984375,
+      "y": 944.9884643554688,
+      "width": 645.0926513671875,
+      "height": 27.9976863861084,
+      "right": 826.8171997070312,
+      "bottom": 972.9861507415771
+    },
+    "matrix": {
+      "x": 181.72454833984375,
+      "y": 436.42364501953125,
+      "width": 645.0926513671875,
+      "height": 508.5648498535156,
+      "right": 826.8171997070312,
+      "bottom": 944.9884948730469
+    },
+    "horizontally_clipped": [],
+    "overflow_y": "auto",
+    "client_height": 901,
+    "scroll_height": 1120,
+    "scroll_top": 219.25927734375,
+    "bottom_reachable": true,
+    "trend_bottom_visible": true,
+    "heartbeat_bottom_visible": true,
+    "threshold_visible": true,
+    "text": "探针总览探针总数25 台真实 API在线探针24 在线真实 API采集网卡48 张真实 API采集模式4 种真实 API平均 CPU32.6%真实 API平均内存41.3%真实 API告警探针3 台真实 API离线探针1 台真实 API部署拓扑2D3D在线离线告警采集镜像交换机链路镜像口10-40 Gbps≥ 40 Gbps公共服务区教学办公区核心机房生活区42G40G主园区节点 03边缘探针 · 11.7GPROBE-CAMPUS-03 · 公共服务区 · 在线 · 11.7 Gbps主园区节点 11边缘探针 · 16.6GPROBE-CAMPUS-11 · 公共服务区 · 在线 · 16.6 Gbps实验楼边缘探针 · 9.2GPROBE-LAB-01 · 公共服务区 · 在线 · 9.2 Gbps体育馆边缘探针 · 7.3GPROBE-SPORT-01 · 生活区 · 在线 · 7.3 Gbps数据中心机房 A汇聚探针 · 4.2GPROBE-DC-01 · 核心机房 · 在线 · 4.2 Gbps主园区节点 07边缘探针 · 14.1GPROBE-CAMPUS-07 · 公共服务区 · 在线 · 14.1 Gbps主园区节点 15边缘探针 · 0.0GPROBE-CAMPUS-15 · 公共服务区 · 离线 · 0.0 Gbps主园区节点 04边缘探针 · 12.3GPROBE-CAMPUS-04 · 公共服务区 · 在线 · 12.3 Gbps主园区节点 12边缘探针 · 17.2GPROBE-CAMPUS-12 · 公共服务区 · 告警 · 17.2 Gbps宿舍区边缘探针 · 7.9GPROBE-DORM-01 · 公共服务区 · 在线 · 7.9 Gbps汇聚区 B边缘探针 · 9.8GPROBE-BRANCH-01 · 公共服务区 · 在线 · 9.8 Gbps主园区节点 08边缘探针 · 14.8GPROBE-CAMPUS-08 · 公共服务区 · 在线 · 14.8 Gbps办公区接入探针 · 6.7GPROBE-OFFICE-01 · 教学办公区 · 在线 · 6.7 Gbps教学楼 A接入探针 · 5.5GPROBE-BUILD-01 · 教学办公区 · 在线 · 5.5 Gbps主园区节点 05边缘探针 · 12.9GPROBE-CAMPUS-05 · 公共服务区 · 在线 · 12.9 Gbps主园区节点 13边缘探针 · 17.9GPROBE-CAMPUS-13 · 公共服务区 · 告警 · 17.9 Gbps主园区节点 01边缘探针 · 10.4GPROBE-CAMPUS-01 · 公共服务区 · 在线 · 10.4 Gbps主园区节点 09边缘探针 · 15.4GPROBE-CAMPUS-09 · 公共服务区 · 在线 · 15.4 Gbps图书馆边缘探针 · 8.6GPROBE-LIB-01 · 公共服务区 · 在线 · 8.6 Gbps教学楼 B接入探针 · 6.1GPROBE-BUILD-02 · 教学办公区 · 在线 · 6.1 Gbps主园区节点 06边缘探针 · 13.5GPROBE-CAMPUS-06 · 公共服务区 · 在线 · 13.5 Gbps主园区节点 14边缘探针 · 18.5GPROBE-CAMPUS-14 · 公共服务区 · 告警 · 18.5 Gbps数据中心机房 B汇聚探针 · 4.8GPROBE-DC-02 · 核心机房 · 在线 · 4.8 Gbps主园区节点 10边缘探针 · 16.0GPROBE-CAMPUS-10 · 公共服务区 · 在线 · 16.0 Gbps主园区节点 02边缘探针 · 11.0GPROBE-CAMPUS-02 · 公共服务区 · 在线 · 11.0 GbpsAPI · 25 节点 / 13 链路探针交换机链路镜像口探针状态矩阵自动刷新 15s探针 ID位置状态采集模式采集带宽丢包率解析率CPU内存运行时长版本操作PROBE-DC-01数据中心机房 A在线混合 (L2+L3)4.2 Gbps0.02%99.41%20.6%29.3%5d 6hv3.4.7PROBE-DC-02数据中心机房 B在线L2 全量4.8 Gbps0.03%99.34%21.6%30.3%5d 12hv3.4.7PROBE-BUILD-01教学楼 A在线L3 全量5.5 Gbps0.04%99.27%22.6%31.3%5d 18hv3.4.7PROBE-BUILD-02教学楼 B在线流量聚合6.1 Gbps0.01%99.20%23.6%32.3%6d 0hv3.4.7PROBE-OFFICE-01办公区在线混合 (L2+L3)6.7 Gbps0.02%99.48%24.6%33.3%6d 6hv3.4.6PROBE-SPORT-01体育馆在线L2 全量7.3 Gbps0.03%99.41%25.6%34.3%6d 12hv3.4.7PROBE-DORM-01宿舍区在线L3 全量7.9 Gbps0.04%99.34%26.6%35.3%6d 18hv3.4.7PROBE-LIB-01图书馆在线流量聚合8.6 Gbps0.01%99.27%27.6%36.3%7d 0hv3.4.7PROBE-LAB-01实验楼在线混合 (L2+L3)9.2 Gbps0.02%99.20%28.6%37.3%7d 6hv3.4.7PROBE-BRANCH-01汇聚区 B在线L2 全量9.8 Gbps0.03%99.48%29.6%38.3%7d 12hv3.4.6共 25 条‹123›10 条/页吞吐与丢包趋势近 6 小时近 6 小时PPS (K)1,303实时聚合丢包率4.14%实时均值解析率95.12%实时均值采集带宽272.4G25 台探针批量发送带宽 (Gbps)DC-01 阈值线 (30 Gbps)选中探针详情在线探针 IDPROBE-CAMPUS-03所在位置主园区节点 03采集网卡eth2, eth3采集模式混合 (L2+L3)版本v3.4.7运行时长8d 6hCPU 使用率32.6%内存使用率41.3%磁盘使用率46.7%采集带宽11.7 Gbps / 40 Gbps丢包率0.02%解析率99.27%运行状态在线mTLS已启用归档状态已配置心跳状态10h批量运维编辑采集网卡eth2, eth3过滤策略由配置下发接口管理PCAP 归档已启用归档路径s3://pcap-archive/probe-campus-03/mTLS已启用CPU 使用率32.6%采集模式混合 (L2+L3)采集带宽11.7 Gbps批量升级批量启停策略下发连通性测试证书轮换重启探针心跳与日志更多时间探针 ID延迟状态详情14:44:46PROBE-DC-0110h正常心跳同步14:44:45PROBE-DC-0210h正常心跳同步14:44:44PROBE-BUILD-0110h正常心跳同步14:44:47PROBE-BUILD-0210h正常心跳同步14:44:46PROBE-OFFICE-0110h正常心跳同步14:44:45PROBE-SPORT-0110h正常心跳同步14:44:44PROBE-DORM-0110h正常心跳同步"
+  },
+  "runtime_errors": {
+    "bad_responses": [],
+    "console_errors": [],
+    "page_errors": [],
+    "request_failures": []
+  },
+  "artifacts": {
+    "baseline": "doc/04_assets/ui_suite_gpt_v1/screens/pages/probes.png",
+    "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/probes/actual-1920.png",
+    "actual_bottom": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/probes/actual-bottom-1920.png",
+    "topology_2d": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/probes/topology-2d-1920.png",
+    "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/probes/diff-1920.png",
+    "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/probes/metrics.json",
+    "side_by_side": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/probes/canonical-side-by-side-1920.png"
+  },
+  "token_material_redacted": true
+}

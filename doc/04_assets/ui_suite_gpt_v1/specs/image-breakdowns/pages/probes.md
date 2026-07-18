@@ -452,3 +452,11 @@ OCR 辅助结果以本表人工校正值为准；实现时关键文案按 `must_
 - 当前生产镜像：`traffic/web-ui:ui-screen-original-svg-20260711-r259`。部署拓扑已由 ECharts graph 回退为 `TopicTopologyGraph` 的 API/typed fallback 驱动 SVG；采集带宽和批量发送带宽仍由 ECharts 趋势图承担。
 - `interaction-r259-topology-svg.json` 验证 1 个拓扑 SVG、8 个动态节点、2 个趋势 canvas、2D 状态、近 24 小时切换、矩阵第 2 页、纵向滚动、批量/行级 Drawer 和全屏矩阵；运行时错误数组均为空。
 - `metrics-business-r259.json` 的业务 ROI 为 `0.06007381541333719 <= 0.125`，diff 为 `diff-business-r259.png`，评分区域为 `content-root:198,80,1722,917`。
+
+## 2026-07-16 独立拓扑 API 与动态 SVG 重开发
+
+- 新增 `/v1/probes/topology`，由 PostgreSQL `probes.hardware_info` 构造渲染中立图契约，返回节点、链路、分区以及 `position_2d` / `position_3d` 双布局。
+- 前端不再读取静态园区底图，也不从页面表格行拼接拓扑；API 图通过 SVG 绘制园区、分区、链路、楼宇/平面节点和状态标记。
+- API 对重复坐标做确定性展开并把布局归一到完整视区；前端限制常驻标签密度，选中、hover、focus 时展示详情。
+- Windows Chrome Xshell CDP 验收 39/39；业务 ROI `0.10098092746850873 <= 0.12`，运行时错误数组均为空；`actual-1920.png` 与 `topology-2d-1920.png` 均为 1920x1080，2D 截图内容完整性门禁同时校验 AppShell、8 个 KPI、6 个面板、25 个节点和详情栏。
+- 最终回修补齐拓扑专用权限、跨租户隔离、非法 mode、归一化后最小节点间距、双向链路合并、动态首节点选择和 2D 截图尺寸门禁。

@@ -1,5 +1,12 @@
 # models-feature-anomaly-explanation.png review
 
+
+## r328 Production Route Review Gate
+
+- Captured in Windows Chrome 150 over the Xshell CDP tunnel from the direct APISIX route at exact 1920x1080 / DPR 1.
+- Evidence: `evidence/ui-image-breakdowns/pages/models/state-r328-anomaly-explanation.png`, `visual-r328/anomaly-explanation-side-by-side.png`, and `interaction-r328.json`.
+- Raw diff: `0.08988136574074074 <= 0.15` with tolerance 64; the focus state is full viewport and workbench-backed.
+- Current main-thread status: `accepted-r328`.
 ## Review Status
 
 - Status: `breakdown-ready`

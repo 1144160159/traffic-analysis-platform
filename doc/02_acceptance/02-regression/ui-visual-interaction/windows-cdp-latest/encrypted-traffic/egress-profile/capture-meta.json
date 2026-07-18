@@ -1,0 +1,294 @@
+{
+  "slug": "egress-profile",
+  "label": "外联画像",
+  "url": "http://10.0.5.8:30180/encrypted-traffic?tab=egress-profile",
+  "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic-egress-profile.png",
+  "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/encrypted-traffic/egress-profile/actual-1920.png",
+  "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/encrypted-traffic/egress-profile/diff-1920.png",
+  "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/encrypted-traffic/egress-profile/metrics.json",
+  "side_by_side": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/encrypted-traffic/egress-profile/canonical-side-by-side-1920.png",
+  "layout": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080,
+      "device_pixel_ratio": 0.9998436310887371
+    },
+    "active_slug": "egress-profile",
+    "root_horizontal_overflow": false,
+    "app_main_scroll": {
+      "scroll_height": 917,
+      "client_height": 917,
+      "scrollable": false
+    },
+    "business": {
+      "x": 173.99305725097656,
+      "y": 87.98611450195312,
+      "width": 1736.0185546875,
+      "height": 901.0185546875,
+      "right": 1910.0116119384766,
+      "bottom": 989.0046691894531
+    },
+    "grid": {
+      "x": 173.99305725097656,
+      "y": 283.9583435058594,
+      "width": 1736.0185546875,
+      "height": 705.0463256835938,
+      "right": 1910.0116119384766,
+      "bottom": 989.0046691894531
+    },
+    "main": {
+      "x": 173.99305725097656,
+      "y": 283.9583435058594,
+      "width": 1478.9237060546875,
+      "height": 705.0463256835938,
+      "right": 1652.916763305664,
+      "bottom": 989.0046691894531
+    },
+    "rail": {
+      "x": 1658.912109375,
+      "y": 283.9583435058594,
+      "width": 239.98843383789062,
+      "height": 705.0463256835938,
+      "right": 1898.9005432128906,
+      "bottom": 989.0046691894531
+    },
+    "grid_overflow_y": "auto",
+    "grid_scrollbar_width": 11,
+    "scatter_canvas_count": 0,
+    "egress_map_canvas_count": 3,
+    "egress_map_panel": {
+      "x": 173.99305725097656,
+      "y": 283.9583435058594,
+      "width": 913.2060546875,
+      "height": 519.9884643554688,
+      "right": 1087.1991119384766,
+      "bottom": 803.9468078613281
+    },
+    "egress_map_body": {
+      "x": 174.7338104248047,
+      "y": 312.69677734375,
+      "width": 911.724609375,
+      "height": 490.4977111816406,
+      "right": 1086.4584197998047,
+      "bottom": 803.1944885253906
+    },
+    "egress_map": {
+      "x": 180.7291717529297,
+      "y": 318.692138671875,
+      "width": 899.7338256835938,
+      "height": 478.5069580078125,
+      "right": 1080.4629974365234,
+      "bottom": 797.1990966796875
+    },
+    "egress_map_canvas": {
+      "x": 181.46990966796875,
+      "y": 319.4328918457031,
+      "width": 897.9977416992188,
+      "height": 476.9907531738281,
+      "right": 1079.4676513671875,
+      "bottom": 796.4236450195312
+    },
+    "overview_action_panels": [],
+    "titlebar": {
+      "x": 173.99305725097656,
+      "y": 87.98611450195312,
+      "width": 1736.0185546875,
+      "height": 91.9907455444336,
+      "right": 1910.0116119384766,
+      "bottom": 179.97686004638672
+    },
+    "tabs": {
+      "x": 182.98611450195312,
+      "y": 130.98379516601562,
+      "width": 463.9699401855469,
+      "height": 29.988428115844727,
+      "right": 646.9560546875,
+      "bottom": 160.97222328186035
+    },
+    "controls": {
+      "x": 1488.1597900390625,
+      "y": 93.98148345947266,
+      "width": 421.85186767578125,
+      "height": 41.53935241699219,
+      "right": 1910.0116577148438,
+      "bottom": 135.52083587646484
+    },
+    "panels": [
+      {
+        "title": "外联目的地地图",
+        "x": 173.99305725097656,
+        "y": 283.9583435058594,
+        "width": 913.2060546875,
+        "height": 519.9884643554688,
+        "right": 1087.1991119384766,
+        "bottom": 803.9468078613281
+      },
+      {
+        "title": "域名画像卡",
+        "x": 1093.1944580078125,
+        "y": 283.9583435058594,
+        "width": 559.7222290039062,
+        "height": 519.9884643554688,
+        "right": 1652.9166870117188,
+        "bottom": 803.9468078613281
+      },
+      {
+        "title": "Top 外联目的地",
+        "x": 173.99305725097656,
+        "y": 809.942138671875,
+        "width": 602.6852416992188,
+        "height": 283.9930725097656,
+        "right": 776.6782989501953,
+        "bottom": 1093.9352111816406
+      },
+      {
+        "title": "首次出现与异常域名趋势",
+        "x": 782.6736450195312,
+        "y": 809.942138671875,
+        "width": 375.2662353515625,
+        "height": 283.9930725097656,
+        "right": 1157.9398803710938,
+        "bottom": 1093.9352111816406
+      },
+      {
+        "title": "实体图谱入口",
+        "x": 1163.9351806640625,
+        "y": 809.942138671875,
+        "width": 488.98150634765625,
+        "height": 283.9930725097656,
+        "right": 1652.9166870117188,
+        "bottom": 1093.9352111816406
+      },
+      {
+        "title": "外联风险",
+        "x": 1658.912109375,
+        "y": 283.9583435058594,
+        "width": 239.98843383789062,
+        "height": 119.46759796142578,
+        "right": 1898.9005432128906,
+        "bottom": 403.42594146728516
+      },
+      {
+        "title": "快速定位",
+        "x": 1658.912109375,
+        "y": 409.42132568359375,
+        "width": 239.98843383789062,
+        "height": 125.4398193359375,
+        "right": 1898.9005432128906,
+        "bottom": 534.8611450195312
+      },
+      {
+        "title": "处置建议",
+        "x": 1658.912109375,
+        "y": 540.8565063476562,
+        "width": 239.98843383789062,
+        "height": 346.701416015625,
+        "right": 1898.9005432128906,
+        "bottom": 887.5579223632812
+      },
+      {
+        "title": "关联与导出",
+        "x": 1658.912109375,
+        "y": 893.5532836914062,
+        "width": 239.98843383789062,
+        "height": 95.4513931274414,
+        "right": 1898.9005432128906,
+        "bottom": 989.0046768188477
+      }
+    ],
+    "overlaps": [],
+    "horizontally_clipped": [],
+    "pagination": [
+      {
+        "x": 180.7291717529297,
+        "y": 1055.19677734375,
+        "width": 589.2130126953125,
+        "height": 31.990741729736328,
+        "right": 769.9421844482422,
+        "bottom": 1087.1875190734863
+      },
+      {
+        "x": 673.9699096679688,
+        "y": 1061.192138671875,
+        "width": 95.97222900390625,
+        "height": 23.993057250976562,
+        "right": 769.942138671875,
+        "bottom": 1085.1851959228516
+      }
+    ],
+    "table_layouts": [
+      {
+        "id": "egress-destinations",
+        "panel_title": "Top 外联目的地",
+        "table": {
+          "x": 180.7291717529297,
+          "y": 844.6759643554688,
+          "width": 589.2130126953125,
+          "height": 242.51158142089844,
+          "right": 769.9421844482422,
+          "bottom": 1087.1875457763672
+        },
+        "pagination": {
+          "x": 180.7291717529297,
+          "y": 1055.19677734375,
+          "width": 589.2130126953125,
+          "height": 31.990741729736328,
+          "right": 769.9421844482422,
+          "bottom": 1087.1875190734863
+        },
+        "last_row": {
+          "x": 180.7291717529297,
+          "y": 977.4884643554688,
+          "width": 589.2130126953125,
+          "height": 22.962963104248047,
+          "right": 769.9421844482422,
+          "bottom": 1000.4514274597168
+        },
+        "pagination_below_rows": true,
+        "pagination_inside_table": true
+      }
+    ],
+    "evidence_session_scroll": null,
+    "paginated_table_count": 1,
+    "unpaged_table_count": 0,
+    "error_alerts": [],
+    "table_rows": 0,
+    "custom_rows": 5,
+    "canvas_count": 5,
+    "script_resources": [
+      "http://10.0.5.8:30180/assets/index-cW6ImlD1.js",
+      "http://10.0.5.8:30180/assets/EncryptedTrafficPage-DNxK8Uzv.js"
+    ],
+    "text": "加密流量总览指纹分析隧道检测外联画像证据中心时间范围近 24 小时一键分析指纹详情证书详情境外目的地362较昨日 ↑ 18%CDN / 云服务284较昨日 ↑ 12%异常域名198较昨日 ↑ 21%首次出现目的地156较昨日 ↑ 9%高风险国家/地区17较昨日 ↓ 5%外联资产428较昨日 ↑ 7%图谱待查39较昨日 ↑ 14%外联目的地地图外传 API 已接入高风险目的地待确认目的地已观测目的地域名画像卡更多 >cloudflare-dns.comCloudflare · 104.16.248.249 · AS1333512,845 会话 · 18.7 GB低风险dns.googleGoogle LLC · 8.8.8.8 · AS151699,762 会话 · 11.3 GB低风险cdn-update.exampleUnknown · 45.77.88.102 · AS2092424,321 会话 · 6.2 GB高风险api.storage-cloud.netAmazon AWS · 52.223.31.45 · AS165096,251 会话 · 9.9 GB中风险suspicious-tunnel.orgPrivacy Protect LLC · 172.67.219.232,187 会话 · 3.1 GB高风险first-seen-cdn.netUnknown · 103.53.49.76 · AS1407091,945 会话 · 2.4 GB中风险Top 外联目的地更多 >目的 IP / 域名位置 / ASN流量会话数风险52.223.31.45美国 / AWS · AS165099.90 GB6,251中危104.16.248.249美国 / Cloudflare · AS1333518.70 GB12,845低危8.8.8.8美国 / Google · AS1516911.30 GB9,762低危20.190.128.1美国 / Azure · AS80756.60 GB4,117中危47.246.16.23新加坡 / Alibaba · AS379635.10 GB3,892低危12首次出现与异常域名趋势真实时间桶实体图谱入口更多 >外联风险78高风险较昨日 ↑ 12快速定位创建外联告警查看目的地证据跳转实体图谱处置建议阻断高风险国家/地区 17 个访问。生成规则隔离高风险主机 10.10.8.45。隔离主机评估异常域名 198 个并加入观察名单。评估名单检查首次出现目的地 156 个。检查目的地关联与导出关联告警实体图谱导出画像写入审计"
+  },
+  "visual_diff": {
+    "size_ok": true,
+    "comparison_scope": "scoring-region",
+    "scoring_region": {
+      "id": "encrypted-traffic-business-roi-v1",
+      "x": 198,
+      "y": 78,
+      "width": 1712,
+      "height": 920
+    },
+    "source_width": 1920,
+    "source_height": 1080,
+    "actual_width": 1920,
+    "actual_height": 1080,
+    "compared_pixels": 1575040,
+    "total_pixels": 1575040,
+    "mismatch_pixels": 220708,
+    "pixel_mismatch_ratio": 0.1401285046728972,
+    "max_pixel_ratio": 0.18,
+    "channel_tolerance": 64,
+    "max_channel_delta": 255,
+    "full_image_diagnostic": {
+      "compared_pixels": 2073600,
+      "total_pixels": 2073600,
+      "mismatch_pixels": 269435,
+      "pixel_mismatch_ratio": 0.12993586033950616,
+      "max_channel_delta": 255
+    }
+  },
+  "visual_status": "pass"
+}

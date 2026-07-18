@@ -1,10 +1,17 @@
 {
-  "version": "2026-07-12.v1",
+  "version": "2026-07-13.v2",
   "mode": "constrained-offline",
   "onlineProductionLearning": false,
   "mainThreadDecisionRequired": true,
+  "criticIndependenceRequired": true,
+  "requiredPageCritics": [
+    "page_logic",
+    "page_layout"
+  ],
   "hardGates": [
     "business_semantics",
+    "page_logic_critic_and_main_thread_decision",
+    "page_layout_critic_and_main_thread_decision",
     "functional_realization",
     "tenant_rbac_audit",
     "database_and_seed",
@@ -60,6 +67,9 @@
   "experience": {
     "positiveRequires": [
       "all_hard_gates_passed",
+      "page_logic_critic_passed_or_findings_closed",
+      "page_layout_critic_passed_or_findings_closed",
+      "all_p0_p1_critic_findings_decided_and_closed",
       "main_thread_accepted",
       "production_stable",
       "evidence_complete"

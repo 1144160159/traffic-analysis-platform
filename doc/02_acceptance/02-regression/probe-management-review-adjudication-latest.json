@@ -1,0 +1,51 @@
+{
+  "package_id": "probe-management-review-adjudication",
+  "generated_at": "2026-07-16T08:27:06.049Z",
+  "result": "accepted_with_explicit_runtime_boundary",
+  "reviews": {
+    "logic": {
+      "closed": [
+        "topology trend PPS and thresholds are sourced from API and PostgreSQL fields",
+        "six operation forms submit real control-plane requests and persist queued records",
+        "probe read and write permissions plus tenant isolation are enforced",
+        "operation and audit writes now share one PostgreSQL transaction",
+        "fixture conflicts do not overwrite non-fixture probe rows",
+        "six queued audit actions are verified in the live database",
+        "topology excludes probe:metrics tokens and isolates tenant graph reads",
+        "near-colliding nodes retain at least seven normalized coordinate units after layout normalization",
+        "bidirectional links merge by maximum bandwidth and worst status"
+      ],
+      "open": [
+        "probe control-channel consumer and ACK callback are not implemented, so queued operations do not transition to completed"
+      ]
+    },
+    "layout": {
+      "closed": [
+        "default screenshot state is 3D and near 6 hours",
+        "2D and 3D use distinct API-coordinate SVG paths",
+        "topology includes online warning and offline representative nodes",
+        "KPI values are not clipped",
+        "status matrix uses 10 rows per page with a fixed pagination slot",
+        "main and right rail bottoms align without module coverage",
+        "trend series names are compacted to preserve legend room",
+        "both 2D and 3D evidence captures are fixed at 1920x1080",
+        "duplicate topology detail overlay was removed and status colors are consistent"
+      ],
+      "open": [
+        "the API SVG is a schematic topology and does not reproduce every decorative building and switch asset from the target raster pixel-for-pixel"
+      ]
+    }
+  },
+  "adjudication": {
+    "implemented_scope": "accepted",
+    "reason": "dynamic topology data, 2D and 3D projections, status semantics, interactions, persistence, audit and visual containment are proven in Windows Chrome",
+    "runtime_completion_claim": "not made",
+    "next_backend_scope": "implement the probe command consumer, agent execution protocol, ACK callback and queued-to-completed or failed state machine"
+  },
+  "evidence": {
+    "acceptance_report": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-probes-latest.json",
+    "side_by_side": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/probes/canonical-side-by-side-1920.png",
+    "checks": "39/39",
+    "visual_roi_mismatch_ratio": 0.10098092746850873
+  }
+}
