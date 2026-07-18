@@ -35,6 +35,8 @@ const (
 const (
 	ScopeDeployRead     = "deploy:read"
 	ScopeDeployCreate   = "deploy:create"
+	ScopeDeployGray     = "deploy:gray"
+	ScopeDeployApprove  = "deploy:approve"
 	ScopeDeployActivate = "deploy:activate"
 	ScopeDeployRollback = "deploy:rollback"
 )
@@ -72,6 +74,7 @@ const (
 const (
 	ScopeProbeIngest  = "probe:ingest"
 	ScopeProbeMetrics = "probe:metrics"
+	ScopeProbeRead    = "probe:read"
 	ScopeProbeWrite   = "probe:write"
 )
 
@@ -84,6 +87,12 @@ const (
 // DLQ 运维权限
 const (
 	ScopeDLQReplay = "dlq:replay"
+)
+
+// 数据质量权限
+const (
+	ScopeDataQualityRead  = "data-quality:read"
+	ScopeDataQualityWrite = "data-quality:write"
 )
 
 // 通配符
@@ -118,6 +127,7 @@ var AllValidScopes = []string{
 	// 探针权限
 	ScopeProbeIngest,
 	ScopeProbeMetrics,
+	ScopeProbeRead,
 	ScopeProbeWrite,
 
 	// 用户权限
@@ -135,6 +145,8 @@ var AllValidScopes = []string{
 
 	ScopeDeployRead,
 	ScopeDeployCreate,
+	ScopeDeployGray,
+	ScopeDeployApprove,
 	ScopeDeployActivate,
 	ScopeDeployRollback,
 
@@ -154,6 +166,8 @@ var AllValidScopes = []string{
 	ScopeTokenWrite,
 
 	ScopeDLQReplay,
+	ScopeDataQualityRead,
+	ScopeDataQualityWrite,
 
 	// 通配符
 	ScopeAll,
@@ -176,6 +190,7 @@ func GetAllScopeInfos() []ScopeInfo {
 		// 探针权限
 		{Name: ScopeProbeIngest, Description: "Upload flow events and PCAP index", Category: "probe"},
 		{Name: ScopeProbeMetrics, Description: "Report probe metrics", Category: "probe"},
+		{Name: ScopeProbeRead, Description: "Read probe inventory, health and operations", Category: "probe"},
 		{Name: ScopeProbeWrite, Description: "Manage probe configuration, certificate rotation and upgrades", Category: "probe"},
 
 		// 用户权限
@@ -193,6 +208,8 @@ func GetAllScopeInfos() []ScopeInfo {
 
 		{Name: ScopeDeployRead, Description: "Read deployments", Category: "deploy"},
 		{Name: ScopeDeployCreate, Description: "Create deployments", Category: "deploy"},
+		{Name: ScopeDeployGray, Description: "Start deployment gray rollout", Category: "deploy"},
+		{Name: ScopeDeployApprove, Description: "Independently approve deployment workflows", Category: "deploy"},
 		{Name: ScopeDeployActivate, Description: "Activate deployments", Category: "deploy"},
 		{Name: ScopeDeployRollback, Description: "Rollback deployments", Category: "deploy"},
 
@@ -212,6 +229,8 @@ func GetAllScopeInfos() []ScopeInfo {
 		{Name: ScopeTokenWrite, Description: "Manage API tokens", Category: "admin"},
 
 		{Name: ScopeDLQReplay, Description: "Approve and replay DLQ fallback records", Category: "admin"},
+		{Name: ScopeDataQualityRead, Description: "Read data quality health, evidence and reports", Category: "data-quality"},
+		{Name: ScopeDataQualityWrite, Description: "Create audited data quality repair and export actions", Category: "data-quality"},
 
 		{Name: ScopeAll, Description: "Full access (all scopes)", Category: "admin"},
 	}
@@ -251,6 +270,7 @@ func IsProbeScope(scope string) bool {
 	probeScopes := map[string]bool{
 		ScopeProbeIngest:  true,
 		ScopeProbeMetrics: true,
+		ScopeProbeRead:    true,
 		ScopeProbeWrite:   true,
 	}
 	return probeScopes[scope]

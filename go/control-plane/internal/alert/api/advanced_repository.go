@@ -60,6 +60,36 @@ type NotificationSilenceRule struct {
 	UpdatedAt       time.Time `json:"updated_at"`
 }
 
+type DataQualityActionRecord struct {
+	ActionID    string                 `json:"action_id"`
+	TenantID    string                 `json:"tenant_id"`
+	View        string                 `json:"view"`
+	Action      string                 `json:"action"`
+	Target      string                 `json:"target"`
+	DryRun      bool                   `json:"dry_run"`
+	Status      string                 `json:"status"`
+	RequestedBy string                 `json:"requested_by"`
+	Request     map[string]interface{} `json:"request"`
+	CreatedAt   time.Time              `json:"created_at"`
+}
+
+type DataQualityUIFixture struct {
+	TenantID       string                 `json:"tenant_id"`
+	FixtureVersion string                 `json:"fixture_version"`
+	Payload        map[string]interface{} `json:"payload"`
+	UpdatedAt      time.Time              `json:"updated_at"`
+}
+
+type DataQualityTablePage struct {
+	TenantID       string        `json:"tenant_id"`
+	FixtureVersion string        `json:"fixture_version"`
+	Dataset        string        `json:"dataset"`
+	Items          []interface{} `json:"items"`
+	Total          int           `json:"total"`
+	Page           int           `json:"page"`
+	PageSize       int           `json:"page_size"`
+}
+
 func NewAdvancedRepository(db *sql.DB, logger *zap.Logger) *AdvancedRepository {
 	return &AdvancedRepository{db: db, logger: logger}
 }
@@ -113,6 +143,29 @@ func (r *AdvancedRepository) InitSchema(ctx context.Context) error {
 			created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
 			updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 		)`,
+		`CREATE TABLE IF NOT EXISTS data_quality_actions (
+			action_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			tenant_id TEXT NOT NULL,
+			view_name TEXT NOT NULL,
+			action_name TEXT NOT NULL,
+			target TEXT NOT NULL,
+			dry_run BOOLEAN NOT NULL DEFAULT TRUE,
+			status TEXT NOT NULL DEFAULT 'dry_run',
+			requested_by TEXT NOT NULL DEFAULT '',
+			request_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+			created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_data_quality_actions_tenant_created
+			ON data_quality_actions (tenant_id, created_at DESC)`,
+		`CREATE TABLE IF NOT EXISTS data_quality_ui_fixtures (
+			tenant_id TEXT PRIMARY KEY,
+			fixture_version TEXT NOT NULL,
+			payload JSONB NOT NULL,
+			active BOOLEAN NOT NULL DEFAULT false,
+			updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_data_quality_ui_fixtures_active
+			ON data_quality_ui_fixtures (tenant_id, active)`,
 		`CREATE INDEX IF NOT EXISTS idx_notification_silence_tenant_time
 			ON notification_silence_rules (tenant_id, starts_at DESC)`,
 		`CREATE INDEX IF NOT EXISTS idx_notification_silence_tenant_enabled
@@ -484,6 +537,141 @@ func (r *AdvancedRepository) RecordAuditLog(
 		ip,
 		userAgent)
 	return err
+}
+
+func (r *AdvancedRepository) CreateDataQualityAction(
+	ctx context.Context,
+	req *http.Request,
+	record DataQualityActionRecord,
+) (*DataQualityActionRecord, error) {
+	if r == nil || r.db == nil {
+		return nil, fmt.Errorf("data quality action repository is not available")
+	}
+	if record.ActionID == "" {
+		record.ActionID = uuid.NewString()
+	}
+	if record.CreatedAt.IsZero() {
+		record.CreatedAt = time.Now().UTC()
+	}
+	payload, err := json.Marshal(record.Request)
+	if err != nil {
+		return nil, fmt.Errorf("marshal data quality action: %w", err)
+	}
+
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("begin data quality action: %w", err)
+	}
+	defer tx.Rollback()
+	if _, err := tx.ExecContext(ctx, `
+		INSERT INTO data_quality_actions (
+			action_id, tenant_id, view_name, action_name, target,
+			dry_run, status, requested_by, request_payload, created_at
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10)
+	`, record.ActionID, record.TenantID, record.View, record.Action, record.Target,
+		record.DryRun, record.Status, record.RequestedBy, string(payload), record.CreatedAt); err != nil {
+		return nil, fmt.Errorf("insert data quality action: %w", err)
+	}
+
+	var userID interface{}
+	if parsed, parseErr := uuid.Parse(record.RequestedBy); parseErr == nil {
+		userID = parsed
+	}
+	detail := map[string]interface{}{
+		"view": record.View, "action": record.Action, "target": record.Target,
+		"dry_run": record.DryRun, "status": record.Status,
+	}
+	detailJSON, err := json.Marshal(detail)
+	if err != nil {
+		return nil, fmt.Errorf("marshal data quality audit: %w", err)
+	}
+	ip, userAgent := "", ""
+	if req != nil {
+		ip, userAgent = clientIP(req), req.UserAgent()
+	}
+	if _, err := tx.ExecContext(ctx, `
+		INSERT INTO audit_logs (
+			event_id, tenant_id, user_id, action, object_type, object_id,
+			detail, ip_addr, user_agent, created_at
+		) VALUES ($1, $2, $3, 'DATA_QUALITY_ACTION_REQUESTED', 'data_quality_action', $4, $5::jsonb, $6, $7, $8)
+	`, "audit-"+uuid.NewString(), record.TenantID, userID, record.ActionID, string(detailJSON), ip, userAgent, record.CreatedAt); err != nil {
+		return nil, fmt.Errorf("insert data quality action audit: %w", err)
+	}
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("commit data quality action: %w", err)
+	}
+	return &record, nil
+}
+
+func (r *AdvancedRepository) GetDataQualityUIFixture(ctx context.Context, tenantID string) (*DataQualityUIFixture, bool, error) {
+	if r == nil || r.db == nil {
+		return nil, false, nil
+	}
+	var fixture DataQualityUIFixture
+	var payload []byte
+	err := r.db.QueryRowContext(ctx, `
+		SELECT tenant_id, fixture_version, payload, updated_at
+		FROM data_quality_ui_fixtures
+		WHERE tenant_id = $1 AND active = TRUE
+	`, tenantID).Scan(&fixture.TenantID, &fixture.FixtureVersion, &payload, &fixture.UpdatedAt)
+	if err == sql.ErrNoRows {
+		return nil, false, nil
+	}
+	if err != nil {
+		return nil, false, fmt.Errorf("load data quality UI fixture: %w", err)
+	}
+	if err := json.Unmarshal(payload, &fixture.Payload); err != nil {
+		return nil, false, fmt.Errorf("decode data quality UI fixture: %w", err)
+	}
+	return &fixture, true, nil
+}
+
+func (r *AdvancedRepository) GetDataQualityTablePage(
+	ctx context.Context,
+	tenantID string,
+	dataset string,
+	page int,
+	pageSize int,
+) (*DataQualityTablePage, bool, error) {
+	if r == nil || r.db == nil {
+		return nil, false, nil
+	}
+	offset := (page - 1) * pageSize
+	var result DataQualityTablePage
+	var items []byte
+	err := r.db.QueryRowContext(ctx, `
+		SELECT
+			tenant_id,
+			fixture_version,
+			COALESCE(jsonb_array_length(payload -> $2), 0) AS total,
+			COALESCE((
+				SELECT jsonb_agg(entry.value ORDER BY entry.ordinality)
+				FROM jsonb_array_elements(payload -> $2) WITH ORDINALITY AS entry(value, ordinality)
+				WHERE entry.ordinality > $3 AND entry.ordinality <= $3 + $4
+			), '[]'::jsonb) AS items
+		FROM data_quality_ui_fixtures
+		WHERE tenant_id = $1
+		  AND active = TRUE
+		  AND jsonb_typeof(payload -> $2) = 'array'
+	`, tenantID, dataset, offset, pageSize).Scan(
+		&result.TenantID,
+		&result.FixtureVersion,
+		&result.Total,
+		&items,
+	)
+	if err == sql.ErrNoRows {
+		return nil, false, nil
+	}
+	if err != nil {
+		return nil, false, fmt.Errorf("load data quality table page: %w", err)
+	}
+	if err := json.Unmarshal(items, &result.Items); err != nil {
+		return nil, false, fmt.Errorf("decode data quality table page: %w", err)
+	}
+	result.Dataset = dataset
+	result.Page = page
+	result.PageSize = pageSize
+	return &result, true, nil
 }
 
 func decodeJSONMap(payload []byte) map[string]interface{} {

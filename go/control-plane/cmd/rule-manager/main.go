@@ -39,6 +39,7 @@ import (
 	authservice "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/service"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/audit"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/httpx"
+	commonkafka "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/kafka"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/logging"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/storage"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/rules/api"
@@ -261,17 +262,19 @@ func main() {
 	// 7. 初始化 Kafka Publisher
 	// =========================================================================
 	publisherCfg := publisher.PublisherConfig{
-		Brokers:        cfg.Kafka.Brokers,
-		RuleTopic:      cfg.Kafka.RuleTopic,
-		ModelTopic:     cfg.Kafka.ModelTopic,
-		AuditTopic:     cfg.Kafka.AuditTopic,
-		SendTimeout:    cfg.Kafka.SendTimeout,
-		PublishTimeout: cfg.Kafka.PublishTimeout,
-		MaxRetries:     cfg.Kafka.MaxRetries,
-		RetryBackoff:   cfg.Kafka.RetryBackoff,
-		Compression:    cfg.Kafka.Compression,
-		RequiredAcks:   cfg.Kafka.RequiredAcks,
-		Security:       cfg.Kafka.Security,
+		Brokers:          cfg.Kafka.Brokers,
+		RuleTopic:        cfg.Kafka.RuleTopic,
+		ModelTopic:       cfg.Kafka.ModelTopic,
+		ModelActionTopic: cfg.Kafka.ModelActionTopic,
+		DeploymentTopic:  cfg.Kafka.DeploymentTopic,
+		AuditTopic:       cfg.Kafka.AuditTopic,
+		SendTimeout:      cfg.Kafka.SendTimeout,
+		PublishTimeout:   cfg.Kafka.PublishTimeout,
+		MaxRetries:       cfg.Kafka.MaxRetries,
+		RetryBackoff:     cfg.Kafka.RetryBackoff,
+		Compression:      cfg.Kafka.Compression,
+		RequiredAcks:     cfg.Kafka.RequiredAcks,
+		Security:         cfg.Kafka.Security,
 	}
 
 	kafkaPublisher, err := publisher.NewKafkaPublisherWithConfig(publisherCfg, logger)
@@ -288,6 +291,8 @@ func main() {
 	logger.Info("Kafka publisher initialized",
 		zap.String("rule_topic", cfg.Kafka.RuleTopic),
 		zap.String("model_topic", cfg.Kafka.ModelTopic),
+		zap.String("model_action_topic", cfg.Kafka.ModelActionTopic),
+		zap.String("deployment_topic", cfg.Kafka.DeploymentTopic),
 		zap.Strings("brokers", cfg.Kafka.Brokers))
 
 	// =========================================================================
@@ -353,9 +358,11 @@ func main() {
 		logger,
 		deploymentServiceCfg,
 	)
+	defer deploymentService.Close()
 
 	// Model Service (MLOps)
 	modelServiceCfg := service.DefaultModelServiceConfig()
+	modelServiceCfg.AppliedAckExpectedParallelism = cfg.Kafka.ModelAppliedExpectedParallelism
 	modelService := service.NewModelService(
 		pgClient.DB(),
 		kafkaPublisher,
@@ -364,6 +371,32 @@ func main() {
 		logger,
 		modelServiceCfg,
 	)
+	modelService.StartActionWorker(context.Background())
+	defer modelService.Close()
+
+	modelAppliedConsumer, err := commonkafka.NewConsumer(commonkafka.ConsumerConfig{
+		Brokers:              cfg.Kafka.Brokers,
+		Topic:                cfg.Kafka.ModelAppliedTopic,
+		GroupID:              "rule-manager-model-applied-v1",
+		MinBytes:             1,
+		MaxWait:              500 * time.Millisecond,
+		RetryBackoff:         time.Second,
+		Security:             cfg.Kafka.Security,
+		CommitOnHandlerError: false,
+	}, logger)
+	if err != nil {
+		logger.Fatal("Failed to create model applied acknowledgement consumer", zap.Error(err))
+	}
+	modelAppliedCtx, cancelModelApplied := context.WithCancel(context.Background())
+	defer cancelModelApplied()
+	defer modelAppliedConsumer.Close()
+	go func() {
+		if err := modelAppliedConsumer.Consume(modelAppliedCtx, func(ctx context.Context, message *commonkafka.ReceivedMessage) error {
+			return modelService.HandleModelAppliedAck(ctx, message.Value)
+		}); err != nil && err != context.Canceled {
+			logger.Error("Model applied acknowledgement consumer stopped", zap.Error(err))
+		}
+	}()
 	// =========================================================================
 	// 11. 初始化健康检查器
 	// =========================================================================
@@ -416,6 +449,7 @@ func main() {
 	// MLOps Self-Orchestrator
 	mlopsOrchConfig := loadMLOpsOrchestratorConfigFromEnv()
 	mlopsOrchestrator := service.NewMLOpsOrchestrator(chDB, pgClient.DB(), mlopsOrchConfig, logger)
+	mlopsOrchestrator.SetAuditService(modelService)
 	handler.SetOrchestrator(mlopsOrchestrator)
 	go mlopsOrchestrator.Start(context.Background())
 	defer mlopsOrchestrator.Stop()
@@ -693,6 +727,8 @@ func loadMLOpsOrchestratorConfigFromEnv() service.MLOpsOrchestratorConfig {
 	cfg.ArgoNamespace = getEnv("MLOPS_ARGO_NAMESPACE", cfg.ArgoNamespace)
 	cfg.ArgoServerURL = getEnv("MLOPS_ARGO_SERVER_URL", cfg.ArgoServerURL)
 	cfg.WorkflowTemplate = getEnv("MLOPS_WORKFLOW_TEMPLATE", cfg.WorkflowTemplate)
+	cfg.AutomatedTenantID = getEnv("MLOPS_AUTOMATED_TENANT_ID", cfg.AutomatedTenantID)
+	cfg.AutomatedModelName = getEnv("MLOPS_AUTOMATED_MODEL_NAME", cfg.AutomatedModelName)
 	return cfg
 }
 

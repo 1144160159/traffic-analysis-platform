@@ -72,10 +72,13 @@ func (h *SystemHandler) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/attack-chains/{id}", h.GetAttackChain).Methods("GET")
 	r.HandleFunc("/attack-chains/{id}/phases", h.GetAttackChainPhases).Methods("GET")
 	r.HandleFunc("/probes", h.ListProbes).Methods("GET")
+	r.HandleFunc("/probes/topology", h.GetProbeTopology).Methods("GET")
 	r.HandleFunc("/probes/batch-upgrade", h.BatchUpgradeProbes).Methods("POST")
+	r.HandleFunc("/probes/batch-state", h.BatchSetProbeState).Methods("POST")
 	r.HandleFunc("/probes/{id}/config", h.PushProbeConfig).Methods("POST")
 	r.HandleFunc("/probes/{id}/connectivity-test", h.RunProbeConnectivityTest).Methods("POST")
 	r.HandleFunc("/probes/{id}/certificates/rotate", h.RotateProbeCertificate).Methods("POST")
+	r.HandleFunc("/probes/{id}/restart", h.RestartProbe).Methods("POST")
 	r.HandleFunc("/encrypted-traffic/stats", h.GetEncryptedTrafficStats).Methods("GET")
 	r.HandleFunc("/encrypted-traffic/sessions", h.ListEncryptedTrafficSessions).Methods("GET")
 	r.HandleFunc("/encrypted-traffic/ja3", h.ListJA3Fingerprints).Methods("GET")
@@ -396,17 +399,37 @@ type attackEventDTO struct {
 }
 
 type probeDTO struct {
-	ProbeID       string  `json:"probe_id"`
-	Hostname      string  `json:"hostname"`
-	IPAddress     string  `json:"ip_address"`
-	Status        string  `json:"status"`
-	HealthScore   int     `json:"health_score"`
-	CPUUsage      float64 `json:"cpu_usage"`
-	DropRate      float64 `json:"drop_rate"`
-	BandwidthMbps float64 `json:"bandwidth_mbps"`
-	CaptureMode   string  `json:"capture_mode"`
-	ConfigVersion string  `json:"config_version"`
-	LastHeartbeat int64   `json:"last_heartbeat"`
+	ProbeID                string    `json:"probe_id"`
+	Hostname               string    `json:"hostname"`
+	IPAddress              string    `json:"ip_address"`
+	Location               string    `json:"location"`
+	Status                 string    `json:"status"`
+	HealthScore            int       `json:"health_score"`
+	CPUUsage               float64   `json:"cpu_usage"`
+	MemoryUsage            float64   `json:"memory_usage"`
+	DiskUsage              float64   `json:"disk_usage"`
+	DropRate               float64   `json:"drop_rate"`
+	ParseRate              float64   `json:"parse_rate"`
+	BandwidthMbps          float64   `json:"bandwidth_mbps"`
+	CaptureMode            string    `json:"capture_mode"`
+	Interfaces             []string  `json:"interfaces"`
+	UptimeSeconds          int64     `json:"uptime_seconds"`
+	ArchivePath            string    `json:"archive_path"`
+	MTLSEnabled            bool      `json:"mtls_enabled"`
+	TopologyX              float64   `json:"topology_x"`
+	TopologyY              float64   `json:"topology_y"`
+	TopologyZ              float64   `json:"topology_z"`
+	TopologyZone           string    `json:"topology_zone"`
+	TopologyRole           string    `json:"topology_role"`
+	TopologyLinks          []string  `json:"topology_links"`
+	TopologyLinkBandwidths []float64 `json:"topology_link_bandwidths_gbps"`
+	TrendLabels            []string  `json:"trend_labels"`
+	BandwidthTrend         []float64 `json:"bandwidth_trend"`
+	BatchTrend             []float64 `json:"batch_trend"`
+	PPSK                   float64   `json:"pps_k"`
+	BandwidthThresholdGbps float64   `json:"bandwidth_threshold_gbps"`
+	ConfigVersion          string    `json:"config_version"`
+	LastHeartbeat          int64     `json:"last_heartbeat"`
 }
 
 func (h *SystemHandler) ListCampaigns(w http.ResponseWriter, r *http.Request) {
@@ -514,6 +537,9 @@ func (h *SystemHandler) ListProbes(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	if h.pgDB == nil {
 		httpx.JSONError(w, ctx, http.StatusServiceUnavailable, "SERVICE_UNAVAILABLE", "postgres is not configured")
+		return
+	}
+	if !h.requireProbeReadPermission(w, r) {
 		return
 	}
 	tenantID := queryTenantID(r)
@@ -794,7 +820,7 @@ func scanProbe(scanner interface {
 	if lastHeartbeat.Valid {
 		heartbeatMs = lastHeartbeat.Time.UnixMilli()
 	}
-	normalizedStatus := normalizeProbeStatus(status, lastHeartbeat)
+	normalizedStatus := normalizeProbeStatus(status, lastHeartbeat, hardware)
 	hostname := stringFromMap(hardware, "hostname")
 	if hostname == "" {
 		hostname = name
@@ -804,10 +830,21 @@ func scanProbe(scanner interface {
 	}
 	return probeDTO{
 		ProbeID: probeID, Hostname: hostname, IPAddress: firstNonEmpty(stringFromMap(hardware, "ip_address"), stringFromMap(hardware, "ip")),
-		Status: normalizedStatus, HealthScore: probeHealthScore(normalizedStatus, lastHeartbeat, hardware),
-		CPUUsage: numberFromMap(hardware, "cpu_usage"), DropRate: numberFromMap(hardware, "drop_rate"),
+		Location: stringFromMap(hardware, "location"),
+		Status:   normalizedStatus, HealthScore: probeHealthScore(normalizedStatus, lastHeartbeat, hardware),
+		CPUUsage: numberFromMap(hardware, "cpu_usage"), MemoryUsage: numberFromMap(hardware, "memory_usage"),
+		DiskUsage: numberFromMap(hardware, "disk_usage"), DropRate: numberFromMap(hardware, "drop_rate"),
+		ParseRate:     numberFromMap(hardware, "parse_rate"),
 		BandwidthMbps: numberFromMap(hardware, "bandwidth_mbps"),
 		CaptureMode:   firstNonEmpty(stringFromMap(hardware, "capture_mode"), stringFromMap(hardware, "mode")),
+		Interfaces:    stringSliceFromMap(hardware, "interfaces"), UptimeSeconds: int64(numberFromMap(hardware, "uptime_seconds")),
+		ArchivePath: stringFromMap(hardware, "archive_path"), MTLSEnabled: boolFromMap(hardware, "mtls_enabled"),
+		TopologyX: numberFromMap(hardware, "topology_x"), TopologyY: numberFromMap(hardware, "topology_y"),
+		TopologyZ: numberFromMap(hardware, "topology_z"), TopologyZone: stringFromMap(hardware, "topology_zone"),
+		TopologyRole: stringFromMap(hardware, "topology_role"), TopologyLinks: stringSliceFromMap(hardware, "topology_links"),
+		TopologyLinkBandwidths: numberSliceFromMap(hardware, "topology_link_bandwidths_gbps"), TrendLabels: stringSliceFromMap(hardware, "trend_labels"),
+		BandwidthTrend: numberSliceFromMap(hardware, "bandwidth_trend"), BatchTrend: numberSliceFromMap(hardware, "batch_trend"),
+		PPSK: numberFromMap(hardware, "pps_k"), BandwidthThresholdGbps: numberFromMap(hardware, "bandwidth_threshold_gbps"),
 		ConfigVersion: softwareVersion.String, LastHeartbeat: heartbeatMs,
 	}, nil
 }
@@ -851,7 +888,17 @@ func parseInt64Query(r *http.Request, key string) int64 {
 	return value
 }
 
-func normalizeProbeStatus(status string, lastHeartbeat sql.NullTime) string {
+func normalizeProbeStatus(status string, lastHeartbeat sql.NullTime, hardware map[string]interface{}) string {
+	if stringFromMap(hardware, "fixture") == "probes-ui-v1" {
+		switch strings.ToLower(status) {
+		case "degraded", "warning":
+			return "degraded"
+		case "offline", "inactive", "disabled":
+			return "offline"
+		default:
+			return "online"
+		}
+	}
 	switch strings.ToLower(status) {
 	case "degraded", "warning":
 		return "degraded"
@@ -925,6 +972,44 @@ func numberFromMap(values map[string]interface{}, key string) float64 {
 	default:
 		return 0
 	}
+}
+
+func boolFromMap(values map[string]interface{}, key string) bool {
+	value, _ := values[key].(bool)
+	return value
+}
+
+func stringSliceFromMap(values map[string]interface{}, key string) []string {
+	raw, ok := values[key].([]interface{})
+	if !ok {
+		return []string{}
+	}
+	result := make([]string, 0, len(raw))
+	for _, value := range raw {
+		if text, ok := value.(string); ok && strings.TrimSpace(text) != "" {
+			result = append(result, text)
+		}
+	}
+	return result
+}
+
+func numberSliceFromMap(values map[string]interface{}, key string) []float64 {
+	raw, ok := values[key].([]interface{})
+	if !ok {
+		return []float64{}
+	}
+	result := make([]float64, 0, len(raw))
+	for _, value := range raw {
+		switch typed := value.(type) {
+		case float64:
+			result = append(result, typed)
+		case json.Number:
+			if parsed, err := typed.Float64(); err == nil {
+				result = append(result, parsed)
+			}
+		}
+	}
+	return result
 }
 
 func mathRound(value float64) float64 {

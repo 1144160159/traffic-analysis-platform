@@ -14,10 +14,12 @@ import (
 	authmodel "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/model"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/httpx"
 	"github.com/gorilla/mux"
+	"go.uber.org/zap"
 )
 
 type encryptedTrafficStatsDTO struct {
 	TotalSessions       int64   `json:"total_sessions"`
+	ObservedSessions    int64   `json:"observed_sessions"`
 	EncryptedRatio      float64 `json:"encrypted_ratio"`
 	TLSSessions         int64   `json:"tls_sessions"`
 	QUICSessions        int64   `json:"quic_sessions"`
@@ -51,6 +53,16 @@ type encryptedTrafficSessionDTO struct {
 	HasHandshakeMetadata  bool    `json:"has_handshake_metadata"`
 	StartTime             int64   `json:"start_time"`
 	EndTime               int64   `json:"end_time"`
+}
+
+type encryptedJA3FingerprintDTO struct {
+	JA3Fingerprint string  `json:"ja3"`
+	TLSVersion     string  `json:"tls_version"`
+	SessionCount   uint64  `json:"session_count"`
+	SNICount       uint64  `json:"sni_count"`
+	TrafficRatio   float64 `json:"traffic_ratio"`
+	EntropyAverage float64 `json:"entropy_average"`
+	RiskLevel      string  `json:"risk_level"`
 }
 
 type encryptedTunnelProtocolDTO struct {
@@ -489,6 +501,9 @@ type auditTrailDTO struct {
 func (h *SystemHandler) GetEncryptedTrafficStats(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	tenantID := writeTenantID(r)
+	if h.serveEncryptedTrafficReferenceFixture(w, r, tenantID, "stats") {
+		return
+	}
 	start, end := queryTimeRange(r, 24*time.Hour)
 
 	var total, tls, quic, ssh uint64
@@ -510,13 +525,29 @@ func (h *SystemHandler) GetEncryptedTrafficStats(w http.ResponseWriter, r *http.
 
 	encrypted := tls + quic + ssh
 	stats := encryptedTrafficStatsDTO{
-		TotalSessions:   int64(total),
-		TLSSessions:     int64(tls),
-		QUICSessions:    int64(quic),
-		JA3Fingerprints: 0,
+		TotalSessions:    int64(encrypted),
+		ObservedSessions: int64(total),
+		TLSSessions:      int64(tls),
+		QUICSessions:     int64(quic),
+		JA3Fingerprints:  0,
 	}
 	if total > 0 {
 		stats.EncryptedRatio = float64(encrypted) / float64(total)
+	}
+	if h.encryptedEvidenceFingerprintTableAvailable(ctx) {
+		row, queryErr := h.chClient.QueryRow(ctx, `
+			SELECT uniqExact(ja3),
+			       uniqExactIf(ja3, entropy_payload >= 7.5 OR cert_is_self_signed = 1)
+			FROM traffic.feature_fp
+			WHERE tenant_id=? AND is_encrypted=1 AND ja3!=''
+			  AND toUnixTimestamp64Milli(ts)>=? AND toUnixTimestamp64Milli(ts)<=?`, tenantID, start, end)
+		if queryErr == nil {
+			var fingerprints, malicious uint64
+			if scanErr := row.Scan(&fingerprints, &malicious); scanErr == nil {
+				stats.JA3Fingerprints = int64(fingerprints)
+				stats.MaliciousJA3Matches = int64(malicious)
+			}
+		}
 	}
 	httpx.JSONSuccess(w, ctx, stats)
 }
@@ -524,6 +555,9 @@ func (h *SystemHandler) GetEncryptedTrafficStats(w http.ResponseWriter, r *http.
 func (h *SystemHandler) ListEncryptedTrafficSessions(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	tenantID := writeTenantID(r)
+	if h.serveEncryptedTrafficReferenceFixture(w, r, tenantID, "sessions") {
+		return
+	}
 	limit, offset := parsePageLimitOffset(r, 20, 200)
 	start, end := queryTimeRange(r, 24*time.Hour)
 	riskFilter := r.URL.Query().Get("risk_level")
@@ -572,19 +606,95 @@ func (h *SystemHandler) ListEncryptedTrafficSessions(w http.ResponseWriter, r *h
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
 		return
 	}
+	if h.encryptedEvidenceFingerprintTableAvailable(ctx) {
+		h.enrichEncryptedEvidenceFingerprints(ctx, tenantID, sessions)
+	}
 	httpx.JSONSuccess(w, ctx, map[string]interface{}{"sessions": sessions, "total": len(sessions)})
 }
 
 func (h *SystemHandler) ListJA3Fingerprints(w http.ResponseWriter, r *http.Request) {
-	httpx.JSONSuccess(w, r.Context(), map[string]interface{}{
-		"fingerprints": []interface{}{},
-		"total":        0,
+	ctx := r.Context()
+	tenantID := writeTenantID(r)
+	if h.serveEncryptedTrafficReferenceFixture(w, r, tenantID, "ja3") {
+		return
+	}
+	if !h.encryptedEvidenceFingerprintTableAvailable(ctx) {
+		httpx.JSONSuccess(w, ctx, map[string]interface{}{
+			"fingerprints": []encryptedJA3FingerprintDTO{},
+			"total":        0,
+			"source_state": "unavailable",
+		})
+		return
+	}
+
+	limit, offset := parsePageLimitOffset(r, 20, 200)
+	start, end := queryTimeRange(r, 24*time.Hour)
+	var total, totalSessions uint64
+	countRow, err := h.chClient.QueryRow(ctx, `
+		SELECT uniqExact(ja3), uniqExact(session_id)
+		FROM traffic.feature_fp
+		WHERE tenant_id=? AND is_encrypted=1 AND ja3!=''
+		  AND toUnixTimestamp64Milli(ts)>=? AND toUnixTimestamp64Milli(ts)<=?`, tenantID, start, end)
+	if err != nil || countRow.Scan(&total, &totalSessions) != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", "failed to query JA3 fingerprint totals")
+		return
+	}
+
+	rows, err := h.chClient.Query(ctx, `
+		SELECT ja3,
+		       any(tls_version),
+		       uniqExact(session_id) AS session_count,
+		       uniqExactIf(sni_hash, sni_hash!='') AS sni_count,
+		       avg(entropy_payload) AS entropy_average,
+		       max(cert_is_self_signed) AS has_self_signed
+		FROM traffic.feature_fp
+		WHERE tenant_id=? AND is_encrypted=1 AND ja3!=''
+		  AND toUnixTimestamp64Milli(ts)>=? AND toUnixTimestamp64Milli(ts)<=?
+		GROUP BY ja3
+		ORDER BY session_count DESC, ja3 ASC
+		LIMIT ? OFFSET ?`, tenantID, start, end, limit, offset)
+	if err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
+	defer rows.Close()
+
+	fingerprints := make([]encryptedJA3FingerprintDTO, 0, limit)
+	for rows.Next() {
+		var item encryptedJA3FingerprintDTO
+		var selfSigned uint8
+		if err := rows.Scan(&item.JA3Fingerprint, &item.TLSVersion, &item.SessionCount, &item.SNICount, &item.EntropyAverage, &selfSigned); err != nil {
+			httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+			return
+		}
+		if totalSessions > 0 {
+			item.TrafficRatio = float64(item.SessionCount) / float64(totalSessions)
+		}
+		item.RiskLevel = "normal"
+		if selfSigned == 1 || item.EntropyAverage >= 7.5 {
+			item.RiskLevel = "malicious"
+		} else if item.EntropyAverage >= 6.5 {
+			item.RiskLevel = "suspicious"
+		}
+		fingerprints = append(fingerprints, item)
+	}
+	if err := rows.Err(); err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
+	httpx.JSONSuccess(w, ctx, map[string]interface{}{
+		"fingerprints": fingerprints,
+		"total":        total,
+		"source_state": "live",
 	})
 }
 
 func (h *SystemHandler) GetEncryptedTunnelAnalytics(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	tenantID := writeTenantID(r)
+	if h.serveEncryptedTrafficReferenceFixture(w, r, tenantID, "tunnels") {
+		return
+	}
 	start, end := queryTimeRange(r, 24*time.Hour)
 
 	protocols, err := h.queryTunnelProtocols(ctx, tenantID, start, end)
@@ -608,6 +718,9 @@ func (h *SystemHandler) GetEncryptedTunnelAnalytics(w http.ResponseWriter, r *ht
 func (h *SystemHandler) GetEncryptedExfiltrationAnalytics(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	tenantID := writeTenantID(r)
+	if h.serveEncryptedTrafficReferenceFixture(w, r, tenantID, "exfiltration") {
+		return
+	}
 	limit, _ := parsePageLimitOffset(r, 10, 50)
 	start, end := queryTimeRange(r, 24*time.Hour)
 
@@ -651,6 +764,9 @@ func (h *SystemHandler) GetEncryptedExfiltrationAnalytics(w http.ResponseWriter,
 func (h *SystemHandler) GetEncryptedTrafficEvidence(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	tenantID := writeTenantID(r)
+	if h.serveEncryptedTrafficReferenceFixture(w, r, tenantID, "evidence") {
+		return
+	}
 	limit, _ := parsePageLimitOffset(r, 12, 50)
 	start, end := queryTimeRange(r, 24*time.Hour)
 
@@ -669,18 +785,54 @@ func (h *SystemHandler) GetEncryptedTrafficEvidence(w http.ResponseWriter, r *ht
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
 		return
 	}
+	entropyTrend := []encryptedEvidenceEntropyTrendDTO{}
+	entropyAvailable := false
+	if h.encryptedEvidenceFingerprintTableAvailable(ctx) {
+		entropyTrend, err = h.queryEncryptedEvidenceEntropyTrend(ctx, tenantID, start, end)
+		if err != nil {
+			httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+			return
+		}
+		entropyAvailable = true
+	}
 
 	completeness := encryptedEvidenceCompleteness(sessions, pcapIndexes)
 	httpx.JSONSuccess(w, ctx, map[string]interface{}{
 		"sessions":          sessions,
 		"pcap_indexes":      pcapIndexes,
 		"pcap_trend":        pcapTrend,
-		"entropy_trend":     []encryptedEvidenceEntropyTrendDTO{},
-		"entropy_available": false,
+		"entropy_trend":     entropyTrend,
+		"entropy_available": entropyAvailable,
 		"anomaly_trend":     encryptedEvidenceAnomalyTrend(sessions),
 		"completeness":      completeness,
 		"total":             len(sessions),
 	})
+}
+
+// serveEncryptedTrafficReferenceFixture exposes an explicitly activated, database-backed
+// canonical UI dataset. Absence of the fixture always falls through to the live ClickHouse path.
+func (h *SystemHandler) serveEncryptedTrafficReferenceFixture(w http.ResponseWriter, r *http.Request, tenantID, endpoint string) bool {
+	if h.pgDB == nil {
+		return false
+	}
+	var payload []byte
+	err := h.pgDB.QueryRowContext(r.Context(), `
+		SELECT payload
+		FROM encrypted_traffic_ui_fixtures
+		WHERE tenant_id=$1 AND endpoint=$2 AND active=true
+		LIMIT 1`, tenantID, endpoint).Scan(&payload)
+	if err != nil {
+		return false
+	}
+	var decoded interface{}
+	if err := json.Unmarshal(payload, &decoded); err != nil {
+		if h.logger != nil {
+			h.logger.Warn("invalid encrypted traffic UI fixture", zap.String("tenant_id", tenantID), zap.String("endpoint", endpoint), zap.Error(err))
+		}
+		return false
+	}
+	httpx.JSONSuccess(w, r.Context(), decoded)
+	return true
 }
 
 func (h *SystemHandler) queryEncryptedEvidenceSessions(ctx context.Context, tenantID string, start, end int64, limit int) ([]encryptedTrafficSessionDTO, error) {
@@ -759,10 +911,13 @@ func (h *SystemHandler) enrichEncryptedEvidenceFingerprints(ctx context.Context,
 
 func (h *SystemHandler) queryEncryptedEvidencePcapIndexes(ctx context.Context, tenantID string, start, end int64, limit int) ([]encryptedEvidencePcapDTO, error) {
 	rows, err := h.chClient.Query(ctx, `
-		SELECT file_key, probe_id, ts_start, ts_end, packet_count, byte_count, s3_path, sha256, compressed_size
+		WITH
+			multiIf(ts_start >= 100000000000000000, intDiv(ts_start, 1000000), ts_start >= 100000000000000, intDiv(ts_start, 1000), ts_start) AS start_ms,
+			multiIf(ts_end >= 100000000000000000, intDiv(ts_end, 1000000), ts_end >= 100000000000000, intDiv(ts_end, 1000), ts_end) AS end_ms
+		SELECT file_key, probe_id, start_ms, end_ms, packet_count, byte_count, s3_path, sha256, compressed_size
 		FROM traffic.pcap_index
-		WHERE tenant_id=? AND ts_start>=? AND ts_start<=?
-		ORDER BY ts_end DESC
+		WHERE tenant_id=? AND start_ms>=? AND start_ms<=?
+		ORDER BY end_ms DESC
 		LIMIT ?`, tenantID, start, end, limit)
 	if err != nil {
 		return nil, err
@@ -784,9 +939,10 @@ func (h *SystemHandler) queryEncryptedEvidencePcapIndexes(ctx context.Context, t
 
 func (h *SystemHandler) queryEncryptedEvidencePcapTrend(ctx context.Context, tenantID string, start, end int64) ([]encryptedEvidenceTrendDTO, error) {
 	rows, err := h.chClient.Query(ctx, `
-		SELECT intDiv(ts_start, 300000) * 300000 AS bucket_start, sum(byte_count), sum(packet_count)
+		WITH multiIf(ts_start >= 100000000000000000, intDiv(ts_start, 1000000), ts_start >= 100000000000000, intDiv(ts_start, 1000), ts_start) AS start_ms
+		SELECT intDiv(start_ms, 300000) * 300000 AS bucket_start, sum(byte_count), sum(packet_count)
 		FROM traffic.pcap_index
-		WHERE tenant_id=? AND ts_start>=? AND ts_start<=?
+		WHERE tenant_id=? AND start_ms>=? AND start_ms<=?
 		GROUP BY bucket_start
 		ORDER BY bucket_start
 		LIMIT 48`, tenantID, start, end)
@@ -808,11 +964,40 @@ func (h *SystemHandler) queryEncryptedEvidencePcapTrend(ctx context.Context, ten
 	return trend, rows.Err()
 }
 
+func (h *SystemHandler) queryEncryptedEvidenceEntropyTrend(ctx context.Context, tenantID string, start, end int64) ([]encryptedEvidenceEntropyTrendDTO, error) {
+	rows, err := h.chClient.Query(ctx, `
+		SELECT intDiv(toUnixTimestamp64Milli(ts), 300000) * 300000 AS bucket_start,
+		       avg(entropy_payload) AS entropy_score
+		FROM traffic.feature_fp
+		WHERE tenant_id=? AND is_encrypted=1
+		  AND toUnixTimestamp64Milli(ts)>=? AND toUnixTimestamp64Milli(ts)<=?
+		GROUP BY bucket_start
+		ORDER BY bucket_start
+		LIMIT 48`, tenantID, start, end)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	trend := make([]encryptedEvidenceEntropyTrendDTO, 0, 48)
+	for rows.Next() {
+		var item encryptedEvidenceEntropyTrendDTO
+		if err := rows.Scan(&item.BucketStart, &item.EntropyScore); err != nil {
+			return nil, err
+		}
+		trend = append(trend, item)
+	}
+	return trend, rows.Err()
+}
+
 func encryptedEvidenceCompleteness(sessions []encryptedTrafficSessionDTO, pcaps []encryptedEvidencePcapDTO) []encryptedEvidenceCompletenessDTO {
-	var sessionComplete, metadataComplete, hashComplete int64
+	var sessionComplete, pcapLinked, metadataComplete, hashComplete int64
 	for _, item := range sessions {
 		if item.SessionID != "" && item.SrcIP != "" && item.DstIP != "" {
 			sessionComplete++
+		}
+		if item.PcapIndex != "" {
+			pcapLinked++
 		}
 		if item.HasHandshakeMetadata {
 			metadataComplete++
@@ -825,9 +1010,9 @@ func encryptedEvidenceCompleteness(sessions []encryptedTrafficSessionDTO, pcaps 
 	}
 	return []encryptedEvidenceCompletenessDTO{
 		{Label: "Session", Complete: sessionComplete, Total: int64(len(sessions))},
-		{Label: "PCAP", Complete: int64(len(pcaps)), Total: int64(len(pcaps))},
+		{Label: "PCAP关联", Complete: pcapLinked, Total: int64(len(sessions))},
 		{Label: "握手", Complete: metadataComplete, Total: int64(len(sessions))},
-		{Label: "Hash", Complete: hashComplete, Total: int64(len(pcaps))},
+		{Label: "索引Hash", Complete: hashComplete, Total: int64(len(pcaps))},
 	}
 }
 
@@ -2729,16 +2914,18 @@ func (h *SystemHandler) queryTunnelProtocols(ctx context.Context, tenantID strin
 		SELECT tunnel_protocol, count(), sum(bytes_total)
 		FROM (
 			SELECT multiIf(
-				dst_port = 53 OR dns_pkt_cnt >= 20, 'DNS',
-				dst_port = 22, 'SSH',
-				protocol = 17 AND dst_port IN (443, 8443), 'QUIC',
-				dst_port IN (443, 8443, 853, 993, 995, 465), 'TLS',
+				dns_pkt_cnt >= 20, 'DNS_HIGH_FREQUENCY',
+				dst_port = 22 AND duration_ms >= 600000, 'SSH_LONG_LIVED',
+				protocol = 17 AND dst_port IN (443, 8443) AND duration_ms >= 600000, 'QUIC_LONG_LIVED',
+				dst_port IN (443, 8443, 853, 993, 995, 465) AND duration_ms >= 600000 AND bytes_total >= 104857600, 'TLS_LARGE_LONG_LIVED',
 				'OTHER'
 			) AS tunnel_protocol, bytes_total
 			FROM traffic.sessions
 			WHERE tenant_id=? AND ts_start>=? AND ts_start<=?
-			  AND (dst_port IN (22, 53, 443, 8443, 853, 993, 995, 465)
-			       OR dns_pkt_cnt >= 20 OR duration_ms >= 600000)
+			  AND (dns_pkt_cnt >= 20
+			       OR (dst_port = 22 AND duration_ms >= 600000)
+			       OR (protocol = 17 AND dst_port IN (443, 8443) AND duration_ms >= 600000)
+			       OR (dst_port IN (443, 8443, 853, 993, 995, 465) AND duration_ms >= 600000 AND bytes_total >= 104857600))
 		)
 		WHERE tunnel_protocol != 'OTHER'
 		GROUP BY tunnel_protocol
@@ -2767,16 +2954,18 @@ func (h *SystemHandler) queryTunnelUsers(ctx context.Context, tenantID string, s
 		FROM (
 			SELECT src_ip, ts_end, bytes_total,
 			       multiIf(
-			           dst_port = 53 OR dns_pkt_cnt >= 20, 'DNS',
-			           dst_port = 22, 'SSH',
-			           protocol = 17 AND dst_port IN (443, 8443), 'QUIC',
-			           dst_port IN (443, 8443, 853, 993, 995, 465), 'TLS',
+			           dns_pkt_cnt >= 20, 'DNS_HIGH_FREQUENCY',
+			           dst_port = 22 AND duration_ms >= 600000, 'SSH_LONG_LIVED',
+			           protocol = 17 AND dst_port IN (443, 8443) AND duration_ms >= 600000, 'QUIC_LONG_LIVED',
+			           dst_port IN (443, 8443, 853, 993, 995, 465) AND duration_ms >= 600000 AND bytes_total >= 104857600, 'TLS_LARGE_LONG_LIVED',
 			           'OTHER'
 			       ) AS tunnel_protocol
 			FROM traffic.sessions
 			WHERE tenant_id=? AND ts_start>=? AND ts_start<=?
-			  AND (dst_port IN (22, 53, 443, 8443, 853, 993, 995, 465)
-			       OR dns_pkt_cnt >= 20 OR duration_ms >= 600000)
+			  AND (dns_pkt_cnt >= 20
+			       OR (dst_port = 22 AND duration_ms >= 600000)
+			       OR (protocol = 17 AND dst_port IN (443, 8443) AND duration_ms >= 600000)
+			       OR (dst_port IN (443, 8443, 853, 993, 995, 465) AND duration_ms >= 600000 AND bytes_total >= 104857600))
 		)
 		WHERE tunnel_protocol != 'OTHER'
 		GROUP BY src_ip, tunnel_protocol
@@ -2808,6 +2997,14 @@ func (h *SystemHandler) queryExfiltrationSources(ctx context.Context, tenantID s
 		WHERE tenant_id=? AND ts_start>=? AND ts_start<=?
 		  AND dst_port IN (22, 443, 8443, 853, 993, 995, 465)
 		  AND bytes_fwd > 0
+		  AND NOT (
+			startsWith(dst_ip, '10.') OR startsWith(dst_ip, '192.168.')
+			OR match(dst_ip, '^172\\.(1[6-9]|2[0-9]|3[01])\\.')
+			OR startsWith(dst_ip, '127.') OR startsWith(dst_ip, '169.254.')
+			OR dst_ip IN ('', '0.0.0.0', '::1')
+			OR startsWith(lower(dst_ip), 'fc') OR startsWith(lower(dst_ip), 'fd')
+			OR startsWith(lower(dst_ip), 'fe80:')
+		  )
 		GROUP BY src_ip
 		ORDER BY sum(bytes_fwd) DESC
 		LIMIT ?`, tenantID, start, end, limit)
@@ -2838,6 +3035,14 @@ func (h *SystemHandler) queryExfiltrationDestinations(ctx context.Context, tenan
 		WHERE tenant_id=? AND ts_start>=? AND ts_start<=?
 		  AND dst_port IN (22, 443, 8443, 853, 993, 995, 465)
 		  AND bytes_fwd > 0
+		  AND NOT (
+			startsWith(dst_ip, '10.') OR startsWith(dst_ip, '192.168.')
+			OR match(dst_ip, '^172\\.(1[6-9]|2[0-9]|3[01])\\.')
+			OR startsWith(dst_ip, '127.') OR startsWith(dst_ip, '169.254.')
+			OR dst_ip IN ('', '0.0.0.0', '::1')
+			OR startsWith(lower(dst_ip), 'fc') OR startsWith(lower(dst_ip), 'fd')
+			OR startsWith(lower(dst_ip), 'fe80:')
+		  )
 		GROUP BY dst_ip
 		ORDER BY sum(bytes_fwd) DESC
 		LIMIT ?`, tenantID, start, end, limit)
@@ -2872,6 +3077,14 @@ func (h *SystemHandler) queryExfiltrationTrend(ctx context.Context, tenantID str
 		FROM traffic.sessions
 		WHERE tenant_id=? AND ts_start>=? AND ts_start<=?
 		  AND dst_port IN (22, 443, 8443, 853, 993, 995, 465)
+		  AND NOT (
+			startsWith(dst_ip, '10.') OR startsWith(dst_ip, '192.168.')
+			OR match(dst_ip, '^172\\.(1[6-9]|2[0-9]|3[01])\\.')
+			OR startsWith(dst_ip, '127.') OR startsWith(dst_ip, '169.254.')
+			OR dst_ip IN ('', '0.0.0.0', '::1')
+			OR startsWith(lower(dst_ip), 'fc') OR startsWith(lower(dst_ip), 'fd')
+			OR startsWith(lower(dst_ip), 'fe80:')
+		  )
 		GROUP BY bucket_start
 		ORDER BY bucket_start
 		LIMIT 24`, uint64(100*1024*1024), uint32(3600*1000), tenantID, start, end)
@@ -2910,7 +3123,15 @@ func (h *SystemHandler) queryExfiltrationRisks(ctx context.Context, tenantID str
 			sumIf(bytes_fwd, dst_port IN (22, 8443, 853, 993, 995, 465))
 		FROM traffic.sessions
 		WHERE tenant_id=? AND ts_start>=? AND ts_start<=?
-		  AND dst_port IN (22, 443, 8443, 853, 993, 995, 465)`,
+		  AND dst_port IN (22, 443, 8443, 853, 993, 995, 465)
+		  AND NOT (
+			startsWith(dst_ip, '10.') OR startsWith(dst_ip, '192.168.')
+			OR match(dst_ip, '^172\\.(1[6-9]|2[0-9]|3[01])\\.')
+			OR startsWith(dst_ip, '127.') OR startsWith(dst_ip, '169.254.')
+			OR dst_ip IN ('', '0.0.0.0', '::1')
+			OR startsWith(lower(dst_ip), 'fc') OR startsWith(lower(dst_ip), 'fd')
+			OR startsWith(lower(dst_ip), 'fe80:')
+		  )`,
 		uint64(100*1024*1024), uint64(100*1024*1024), uint32(3600*1000), uint32(3600*1000), tenantID, start, end)
 	if err != nil {
 		return nil, err
@@ -2932,6 +3153,14 @@ func (h *SystemHandler) queryExfiltrationPaths(ctx context.Context, tenantID str
 		WHERE tenant_id=? AND ts_start>=? AND ts_start<=?
 		  AND dst_port IN (22, 443, 8443, 853, 993, 995, 465)
 		  AND bytes_fwd > 0
+		  AND NOT (
+			startsWith(dst_ip, '10.') OR startsWith(dst_ip, '192.168.')
+			OR match(dst_ip, '^172\\.(1[6-9]|2[0-9]|3[01])\\.')
+			OR startsWith(dst_ip, '127.') OR startsWith(dst_ip, '169.254.')
+			OR dst_ip IN ('', '0.0.0.0', '::1')
+			OR startsWith(lower(dst_ip), 'fc') OR startsWith(lower(dst_ip), 'fd')
+			OR startsWith(lower(dst_ip), 'fe80:')
+		  )
 		GROUP BY src_ip, dst_ip
 		ORDER BY sum(bytes_fwd) DESC
 		LIMIT ?`, tenantID, start, end, limit)

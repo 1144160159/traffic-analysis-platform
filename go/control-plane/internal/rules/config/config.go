@@ -106,16 +106,20 @@ type ClickHouseConfig struct {
 
 // KafkaConfig Kafka 配置
 type KafkaConfig struct {
-	Brokers        []string      `env:"KAFKA_BROKERS" envSeparator:","`
-	RuleTopic      string        `env:"KAFKA_RULE_TOPIC" envDefault:"rule.updates"`
-	ModelTopic     string        `env:"KAFKA_MODEL_TOPIC" envDefault:"model-updates"`
-	AuditTopic     string        `env:"KAFKA_AUDIT_TOPIC" envDefault:"audit.logs"`
-	DLQTopicPrefix string        `env:"KAFKA_DLQ_TOPIC_PREFIX" envDefault:"dlq."`
-	BatchSize      int           `env:"KAFKA_BATCH_SIZE" envDefault:"100"`
-	BatchTimeout   time.Duration `env:"KAFKA_BATCH_TIMEOUT" envDefault:"100ms"`
-	MaxRetries     int           `env:"KAFKA_MAX_RETRIES" envDefault:"3"`
-	RequiredAcks   string        `env:"KAFKA_REQUIRED_ACKS" envDefault:"all"`
-	Compression    string        `env:"KAFKA_COMPRESSION" envDefault:"lz4"`
+	Brokers                         []string      `env:"KAFKA_BROKERS" envSeparator:","`
+	RuleTopic                       string        `env:"KAFKA_RULE_TOPIC" envDefault:"rule.updates"`
+	ModelTopic                      string        `env:"KAFKA_MODEL_TOPIC" envDefault:"model-updates"`
+	ModelActionTopic                string        `env:"KAFKA_MODEL_ACTION_TOPIC" envDefault:"model-actions.v1"`
+	ModelAppliedTopic               string        `env:"KAFKA_MODEL_APPLIED_TOPIC" envDefault:"model-update-applied.v1"`
+	ModelAppliedExpectedParallelism int           `env:"MODEL_APPLIED_ACK_EXPECTED_PARALLELISM" envDefault:"4"`
+	DeploymentTopic                 string        `env:"KAFKA_DEPLOYMENT_TOPIC" envDefault:"deployment.events.v1"`
+	AuditTopic                      string        `env:"KAFKA_AUDIT_TOPIC" envDefault:"audit.logs"`
+	DLQTopicPrefix                  string        `env:"KAFKA_DLQ_TOPIC_PREFIX" envDefault:"dlq."`
+	BatchSize                       int           `env:"KAFKA_BATCH_SIZE" envDefault:"100"`
+	BatchTimeout                    time.Duration `env:"KAFKA_BATCH_TIMEOUT" envDefault:"100ms"`
+	MaxRetries                      int           `env:"KAFKA_MAX_RETRIES" envDefault:"3"`
+	RequiredAcks                    string        `env:"KAFKA_REQUIRED_ACKS" envDefault:"all"`
+	Compression                     string        `env:"KAFKA_COMPRESSION" envDefault:"lz4"`
 	// Producer 超时
 	ProduceTimeout time.Duration `env:"KAFKA_PRODUCE_TIMEOUT" envDefault:"10s"`
 	SendTimeout    time.Duration `env:"KAFKA_SEND_TIMEOUT" envDefault:"5s"`

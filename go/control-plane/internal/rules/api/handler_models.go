@@ -20,6 +20,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -27,6 +28,7 @@ import (
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/errors"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/rules/model"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/rules/rbac"
 )
 
 // =============================================================================
@@ -44,12 +46,18 @@ func (h *Handler) RegisterModelRoutes(r *mux.Router) {
 	models.HandleFunc("/{id}", h.UpdateModel).Methods("PUT")
 	models.HandleFunc("/{id}", h.DeleteModel).Methods("DELETE")
 	models.HandleFunc("/{id}/summary", h.GetModelSummary).Methods("GET")
+	models.HandleFunc("/{id}/workbench", h.GetModelWorkbench).Methods("GET")
 	models.HandleFunc("/{id}/versions", h.ListModelVersions).Methods("GET")
 	models.HandleFunc("/{id}/versions", h.RegisterModelVersion).Methods("POST")
 	models.HandleFunc("/{id}/versions/active", h.GetActiveModelVersion).Methods("GET")
 	models.HandleFunc("/{id}/versions/{version}", h.GetModelVersion).Methods("GET")
 	models.HandleFunc("/{id}/versions/{version}/activate", h.ActivateModelVersion).Methods("POST")
 	models.HandleFunc("/{id}/versions/{version}/deprecate", h.DeprecateModelVersion).Methods("POST")
+	models.HandleFunc("/{id}/feedback-samples", h.AppendModelFeedbackSamples).Methods("POST")
+	models.HandleFunc("/{id}/retrain", h.RequestModelRetraining).Methods("POST")
+	models.HandleFunc("/{id}/versions/{version}/evaluate", h.RequestModelEvaluation).Methods("POST")
+	models.HandleFunc("/{id}/versions/{version}/rollback", h.RollbackModelVersion).Methods("POST")
+	models.HandleFunc("/{id}/actions", h.SubmitModelContextAction).Methods("POST")
 }
 
 // =============================================================================
@@ -224,7 +232,24 @@ func (h *Handler) ListModels(w http.ResponseWriter, r *http.Request) {
 
 	dtos := make([]*ModelDTO, len(models))
 	for i, m := range models {
-		dtos[i] = h.modelToDTO(m)
+		dto := h.modelToDTO(m)
+		versions, _, versionErr := h.modelService.ListModelVersions(ctx, opCtx.TenantID, m.ModelID, &model.ModelVersionFilter{Limit: 100}, opCtx)
+		if versionErr == nil && len(versions) > 0 {
+			latest := versions[0]
+			dto.ModelVersion = latest.ModelVersion
+			dto.Status = latest.Status
+			dto.Metrics = latest.Metrics
+			for _, version := range versions {
+				if version.Status == string(model.ModelStatusActive) && dto.ActiveVersion == "" {
+					dto.ActiveVersion = version.ModelVersion
+					continue
+				}
+				if version.Status == string(model.ModelStatusDeprecated) && dto.PreviousVersion == "" {
+					dto.PreviousVersion = version.ModelVersion
+				}
+			}
+		}
+		dtos[i] = dto
 	}
 
 	h.writeJSON(w, http.StatusOK, ModelListResponse{
@@ -267,6 +292,34 @@ func (h *Handler) GetModelSummary(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (h *Handler) GetModelWorkbench(w http.ResponseWriter, r *http.Request) {
+	opCtx, err := h.extractOperationContext(r)
+	if err != nil {
+		h.writeError(w, r, err)
+		return
+	}
+	modelID := mux.Vars(r)["id"]
+	if modelID == "" {
+		h.writeError(w, r, errors.New(errors.ErrCodeMissingParameter, "model id is required"))
+		return
+	}
+	workbench, err := h.modelService.GetModelWorkbench(r.Context(), modelID, opCtx)
+	if err != nil {
+		h.writeError(w, r, err)
+		return
+	}
+	h.writeJSON(w, http.StatusOK, map[string]interface{}{
+		"success": true,
+		"data": map[string]interface{}{
+			"model":    h.modelToDTO(workbench.Model),
+			"versions": workbench.Versions,
+			"items":    workbench.Items,
+			"actions":  workbench.Actions,
+			"source":   workbench.Source,
+		},
+	})
+}
+
 // =============================================================================
 // 模型版本 Handlers
 // =============================================================================
@@ -289,13 +342,10 @@ func (h *Handler) RegisterModelVersion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 覆盖 model_id 和 tenant_id（从路径和上下文提取）
-	if req.ModelID == "" {
-		req.ModelID = modelID
-	}
-	if req.TenantID == "" {
-		req.TenantID = opCtx.TenantID
-	}
+	// Path and authenticated context are authoritative even when the JSON body
+	// attempts to name a different model or tenant.
+	req.ModelID = modelID
+	req.TenantID = opCtx.TenantID
 
 	mv, err := h.modelService.RegisterModelVersion(ctx, &req, opCtx)
 	if err != nil {
@@ -328,6 +378,10 @@ func (h *Handler) GetModelVersion(w http.ResponseWriter, r *http.Request) {
 	mv, err := h.modelService.GetModelVersion(ctx, version, opCtx)
 	if err != nil {
 		h.writeError(w, r, err)
+		return
+	}
+	if modelID := mux.Vars(r)["id"]; modelID == "" || mv.ModelID != modelID {
+		h.writeError(w, r, errors.Newf(errors.ErrCodeModelVersionNotFound, "model version not found under model: %s", modelID))
 		return
 	}
 
@@ -402,15 +456,24 @@ func (h *Handler) ActivateModelVersion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	modelID := mux.Vars(r)["id"]
+	request := struct {
+		GrayPercent int `json:"gray_percent"`
+	}{GrayPercent: 100}
+	if r.ContentLength != 0 {
+		if err := h.decodeJSON(r, &request); err != nil {
+			h.writeError(w, r, errors.Wrap(err, errors.ErrCodeInvalidRequest, "invalid request body"))
+			return
+		}
+	}
 
-	if err := h.modelService.ActivateModelVersion(ctx, modelID, version, opCtx); err != nil {
+	if err := h.modelService.ActivateModelVersion(ctx, modelID, version, request.GrayPercent, opCtx); err != nil {
 		h.writeError(w, r, err)
 		return
 	}
 
 	h.writeJSON(w, http.StatusOK, SuccessResponse{
 		Success: true,
-		Message: "model version activated",
+		Message: fmt.Sprintf("model version activation accepted at %d%%", request.GrayPercent),
 	})
 }
 
@@ -470,6 +533,79 @@ func (h *Handler) GetActiveModelVersion(w http.ResponseWriter, r *http.Request) 
 	})
 }
 
+// AppendModelFeedbackSamples queues a tenant-scoped feedback ingestion job.
+func (h *Handler) AppendModelFeedbackSamples(w http.ResponseWriter, r *http.Request) {
+	h.submitQueuedModelAction(w, r, "append-feedback-samples", rbac.PermModelWrite, "MODEL_FEEDBACK_INGEST_REQUESTED")
+}
+
+// RequestModelRetraining queues a tenant-scoped retraining job.
+func (h *Handler) RequestModelRetraining(w http.ResponseWriter, r *http.Request) {
+	h.submitQueuedModelAction(w, r, "request-retraining", rbac.PermModelWrite, "MODEL_RETRAIN_REQUESTED")
+}
+
+// RequestModelEvaluation queues a version evaluation job.
+func (h *Handler) RequestModelEvaluation(w http.ResponseWriter, r *http.Request) {
+	h.submitQueuedModelAction(w, r, "request-evaluation", rbac.PermModelWrite, "MODEL_EVALUATION_REQUESTED")
+}
+
+// RollbackModelVersion queues an explicitly audited rollback request. The
+// worker applies the validated target version; this endpoint no longer claims
+// a client-only success.
+func (h *Handler) RollbackModelVersion(w http.ResponseWriter, r *http.Request) {
+	h.submitQueuedModelAction(w, r, "rollback-version", rbac.PermModelActivate, "MODEL_VERSION_ROLLBACK_REQUESTED")
+}
+
+// SubmitModelContextAction queues a model workbench action chosen by the UI.
+func (h *Handler) SubmitModelContextAction(w http.ResponseWriter, r *http.Request) {
+	h.submitQueuedModelAction(w, r, "inspect-context", rbac.PermModelWrite, "MODEL_CONTEXT_ACTION_REQUESTED")
+}
+
+func (h *Handler) submitQueuedModelAction(w http.ResponseWriter, r *http.Request, action string, permission rbac.Permission, auditAction string) {
+	opCtx, err := h.extractOperationContext(r)
+	if err != nil {
+		h.writeError(w, r, err)
+		return
+	}
+	modelID := mux.Vars(r)["id"]
+	if modelID == "" {
+		h.writeError(w, r, errors.New(errors.ErrCodeMissingParameter, "model id is required"))
+		return
+	}
+
+	payload := map[string]interface{}{}
+	if err := h.decodeJSON(r, &payload); err != nil {
+		h.writeError(w, r, errors.Wrap(err, errors.ErrCodeInvalidRequest, "invalid request body"))
+		return
+	}
+	target := modelID
+	if value, ok := payload["target"].(string); ok && value != "" {
+		target = value
+	}
+	version := mux.Vars(r)["version"]
+	if version == "" {
+		if value, ok := payload["version"].(string); ok {
+			version = value
+		}
+	}
+	actionID, _ := payload["action_id"].(string)
+	if value, ok := payload["action"].(string); ok && value != "" && auditAction == "MODEL_CONTEXT_ACTION_REQUESTED" {
+		action = value
+	}
+
+	job, err := h.modelService.SubmitModelAction(r.Context(), modelID, &model.ModelActionRequest{
+		ActionID: actionID,
+		Action:   action,
+		Target:   target,
+		Version:  version,
+		Payload:  payload,
+	}, permission, auditAction, opCtx)
+	if err != nil {
+		h.writeError(w, r, err)
+		return
+	}
+	h.writeJSON(w, http.StatusAccepted, map[string]interface{}{"success": true, "data": job})
+}
+
 // =============================================================================
 // Request / Response DTOs
 // =============================================================================
@@ -507,14 +643,19 @@ type UpdateModelRequest struct {
 
 // ModelDTO 模型 DTO
 type ModelDTO struct {
-	ModelID     string                 `json:"model_id"`
-	TenantID    string                 `json:"tenant_id"`
-	Name        string                 `json:"name"`
-	ModelType   string                 `json:"model_type"`
-	Description string                 `json:"description,omitempty"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
-	CreatedAt   string                 `json:"created_at"`
-	UpdatedAt   string                 `json:"updated_at"`
+	ModelID         string                 `json:"model_id"`
+	TenantID        string                 `json:"tenant_id"`
+	Name            string                 `json:"name"`
+	ModelType       string                 `json:"model_type"`
+	Description     string                 `json:"description,omitempty"`
+	Metadata        map[string]interface{} `json:"metadata,omitempty"`
+	ModelVersion    string                 `json:"model_version,omitempty"`
+	ActiveVersion   string                 `json:"active_version,omitempty"`
+	PreviousVersion string                 `json:"previous_version,omitempty"`
+	Status          string                 `json:"status,omitempty"`
+	Metrics         map[string]interface{} `json:"metrics,omitempty"`
+	CreatedAt       string                 `json:"created_at"`
+	UpdatedAt       string                 `json:"updated_at"`
 }
 
 // ModelVersionDTO 模型版本 DTO

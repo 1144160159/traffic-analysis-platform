@@ -23,6 +23,7 @@ import (
 
 type DataQualityReport struct {
 	Timestamp time.Time          `json:"timestamp"`
+	TenantID  string             `json:"tenant_id"`
 	Overall   string             `json:"overall"` // healthy | degraded | unhealthy
 	Checks    []QualityCheck     `json:"checks"`
 	Metrics   map[string]float64 `json:"metrics"`
@@ -166,30 +167,34 @@ func (m *Monitor) CheckLatencyChain(ctx context.Context, tenantID string, lookba
 
 // CheckAll 执行全量数据质量检查
 // 要求 ClickHouse 连接可用
-func (m *Monitor) CheckAll(ctx context.Context) (*DataQualityReport, error) {
+func (m *Monitor) CheckAll(ctx context.Context, tenantID string) (*DataQualityReport, error) {
 	if m.db == nil {
 		return nil, fmt.Errorf("data quality monitor requires ClickHouse connection")
+	}
+	if tenantID == "" {
+		tenantID = "default"
 	}
 
 	report := &DataQualityReport{
 		Timestamp: time.Now(),
+		TenantID:  tenantID,
 		Metrics:   make(map[string]float64),
 	}
 
 	// Check 1: 数据流入率 (flows_raw 最近 15 分钟)
-	m.checkFlowRate(ctx, report)
+	m.checkFlowRate(ctx, tenantID, report)
 
 	// Check 2: 数据缺失 (feature_stat 与 sessions 对比)
-	m.checkMissingData(ctx, report)
+	m.checkMissingData(ctx, tenantID, report)
 
 	// Check 3: 端到端延迟 (ingest_ts → event_ts)
-	m.checkEndToEndLatency(ctx, report)
+	m.checkEndToEndLatency(ctx, tenantID, report)
 
 	// Check 4: Schema 漂移 (特征列数量)
 	m.checkSchemaDrift(ctx, report)
 
 	// Check 5: Kafka 积压
-	m.checkKafkaLag(ctx, report)
+	m.checkKafkaLag(ctx, tenantID, report)
 
 	// 评估总体状态
 	report.Overall = m.evaluateOverall(report)
@@ -200,14 +205,15 @@ func (m *Monitor) CheckAll(ctx context.Context) (*DataQualityReport, error) {
 // Check 1: 数据流入率
 // =============================================================================
 
-func (m *Monitor) checkFlowRate(ctx context.Context, report *DataQualityReport) {
+func (m *Monitor) checkFlowRate(ctx context.Context, tenantID string, report *DataQualityReport) {
 	query := `
 		SELECT count() / 15.0 AS flows_per_min
 		FROM traffic.flows_raw
-		WHERE ingest_ts >= toUnixTimestamp64Milli(now64(3) - INTERVAL 15 MINUTE)
+		WHERE tenant_id = ?
+		  AND ingest_ts >= toUnixTimestamp64Milli(now64(3) - INTERVAL 15 MINUTE)
 	`
 	var flowRate float64
-	err := m.db.QueryRowContext(ctx, query).Scan(&flowRate)
+	err := m.db.QueryRowContext(ctx, query, tenantID).Scan(&flowRate)
 	status := "pass"
 	msg := fmt.Sprintf("Flow rate: %.1f flows/min", flowRate)
 	if err != nil {
@@ -237,14 +243,14 @@ func (m *Monitor) checkFlowRate(ctx context.Context, report *DataQualityReport) 
 // Check 2: 数据缺失检测
 // =============================================================================
 
-func (m *Monitor) checkMissingData(ctx context.Context, report *DataQualityReport) {
+func (m *Monitor) checkMissingData(ctx context.Context, tenantID string, report *DataQualityReport) {
 	query := `
 		SELECT
-			(SELECT count() FROM traffic.sessions WHERE ts_start >= toUnixTimestamp64Milli(now64(3) - INTERVAL 1 HOUR)) AS sessions,
-			(SELECT count() FROM traffic.feature_stat WHERE ts >= now() - INTERVAL 1 HOUR) AS features
+			(SELECT count() FROM traffic.sessions WHERE tenant_id = ? AND ts_start >= toUnixTimestamp64Milli(now64(3) - INTERVAL 1 HOUR)) AS sessions,
+			(SELECT count() FROM traffic.feature_stat WHERE tenant_id = ? AND ts >= now() - INTERVAL 1 HOUR) AS features
 	`
 	var rawSessions, rawFeatures interface{}
-	err := m.db.QueryRowContext(ctx, query).Scan(&rawSessions, &rawFeatures)
+	err := m.db.QueryRowContext(ctx, query, tenantID, tenantID).Scan(&rawSessions, &rawFeatures)
 	sessions := finiteOrZero(dbNumeric(rawSessions))
 	features := finiteOrZero(dbNumeric(rawFeatures))
 	status := "pass"
@@ -277,14 +283,15 @@ func (m *Monitor) checkMissingData(ctx context.Context, report *DataQualityRepor
 // Check 3: 端到端延迟 P95
 // =============================================================================
 
-func (m *Monitor) checkEndToEndLatency(ctx context.Context, report *DataQualityReport) {
+func (m *Monitor) checkEndToEndLatency(ctx context.Context, tenantID string, report *DataQualityReport) {
 	query := `
 		SELECT quantile(0.95)(ingest_ts - event_ts) / 1000 AS p95_latency_ms
 		FROM traffic.flows_raw
-		WHERE ingest_ts >= toUnixTimestamp64Milli(now64(3) - INTERVAL 15 MINUTE)
+		WHERE tenant_id = ?
+		  AND ingest_ts >= toUnixTimestamp64Milli(now64(3) - INTERVAL 15 MINUTE)
 	`
 	var latencyMs float64
-	err := m.db.QueryRowContext(ctx, query).Scan(&latencyMs)
+	err := m.db.QueryRowContext(ctx, query, tenantID).Scan(&latencyMs)
 	status := "pass"
 	latencyMs = finiteOrZero(latencyMs)
 	msg := fmt.Sprintf("P95 latency: %.0f ms", latencyMs)
@@ -416,15 +423,16 @@ func (m *Monitor) checkSchemaDrift(ctx context.Context, report *DataQualityRepor
 // Check 5: Kafka 消费积压
 // =============================================================================
 
-func (m *Monitor) checkKafkaLag(ctx context.Context, report *DataQualityReport) {
+func (m *Monitor) checkKafkaLag(ctx context.Context, tenantID string, report *DataQualityReport) {
 	// ClickHouse 可近似监测: 最近 5 分钟写入率
 	query := `
 		SELECT count() / 5.0 AS inserts_per_min
 		FROM traffic.flows_raw
-		WHERE ingest_ts >= toUnixTimestamp64Milli(now64(3) - INTERVAL 5 MINUTE)
+		WHERE tenant_id = ?
+		  AND ingest_ts >= toUnixTimestamp64Milli(now64(3) - INTERVAL 5 MINUTE)
 	`
 	var rate float64
-	err := m.db.QueryRowContext(ctx, query).Scan(&rate)
+	err := m.db.QueryRowContext(ctx, query, tenantID).Scan(&rate)
 	status := "pass"
 	msg := fmt.Sprintf("Insert rate: %.0f/min", rate)
 

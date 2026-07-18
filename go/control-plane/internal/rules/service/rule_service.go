@@ -154,13 +154,14 @@ func (s *RuleService) Stop() {
 
 // OperationContext 操作上下文（包含用户信息用于权限检查和审计）
 type OperationContext struct {
-	TenantID    string
-	UserID      string
-	Username    string
-	Roles       []string
-	Permissions []string
-	IPAddr      string
-	UserAgent   string
+	TenantID      string
+	UserID        string
+	Username      string
+	Roles         []string
+	Permissions   []string
+	Authenticated bool
+	IPAddr        string
+	UserAgent     string
 }
 
 // =============================================================================
@@ -305,6 +306,7 @@ func (s *RuleService) UpdateRule(ctx context.Context, rule *model.Rule, opCtx *O
 	rule.CreatedBy = oldRule.CreatedBy
 	rule.CreatedAt = oldRule.CreatedAt
 	rule.Status = oldRule.Status
+	rule.Enabled = oldRule.Enabled
 	currentVersion := oldRule.Version
 
 	// 4. 验证规则
@@ -390,7 +392,7 @@ func (s *RuleService) DeleteRule(ctx context.Context, ruleID string, opCtx *Oper
 	}
 
 	// 2. 权限检查
-	if err := s.checkPermission(ctx, opCtx, rbac.PermissionRuleWrite, rule.TenantID); err != nil {
+	if err := s.checkPermission(ctx, opCtx, rbac.PermRuleDelete, rule.TenantID); err != nil {
 		s.recordAuditFailure(ctx, opCtx, audit.EventTypeRuleDelete, "rule", ruleID, err.Error())
 		return err
 	}
@@ -651,6 +653,99 @@ func (s *RuleService) GetRuleVersions(ctx context.Context, ruleID string, opCtx 
 	}
 
 	return s.repo.GetVersions(ctx, ruleID)
+}
+
+// GetRuleWorkbench loads the selected rule and all visible workbench modules
+// from tenant-scoped PostgreSQL data. No frontend fixture participates here.
+func (s *RuleService) GetRuleWorkbench(ctx context.Context, ruleID string, opCtx *OperationContext) (*model.RuleWorkbench, error) {
+	rule, err := s.GetRule(ctx, ruleID, opCtx)
+	if err != nil {
+		return nil, err
+	}
+	versions, err := s.repo.GetVersions(ctx, ruleID)
+	if err != nil {
+		return nil, err
+	}
+	items, err := s.repo.ListWorkbenchItems(ctx, opCtx.TenantID, ruleID)
+	if err != nil {
+		return nil, err
+	}
+
+	grouped := make(map[string][]json.RawMessage)
+	seenSpecific := make(map[string]bool)
+	for _, item := range items {
+		if item.RuleID == ruleID {
+			if !seenSpecific[item.Category] {
+				grouped[item.Category] = nil
+				seenSpecific[item.Category] = true
+			}
+			grouped[item.Category] = append(grouped[item.Category], item.Payload)
+			continue
+		}
+		if !seenSpecific[item.Category] {
+			grouped[item.Category] = append(grouped[item.Category], item.Payload)
+		}
+	}
+
+	return &model.RuleWorkbench{
+		Rule:     rule,
+		Versions: versions,
+		Items:    grouped,
+		Source:   "postgresql",
+	}, nil
+}
+
+// SubmitRuleWorkbenchAction creates a durable job and an audit row in the same
+// transaction. It intentionally queues domain actions rather than claiming a
+// client-only success.
+func (s *RuleService) SubmitRuleWorkbenchAction(ctx context.Context, ruleID string, req *model.RuleWorkbenchActionRequest, opCtx *OperationContext) (*model.RuleWorkbenchActionJob, error) {
+	if err := s.checkPermission(ctx, opCtx, rbac.PermissionRuleWrite, opCtx.TenantID); err != nil {
+		return nil, err
+	}
+	if _, err := s.GetRule(ctx, ruleID, opCtx); err != nil {
+		return nil, err
+	}
+	req.Action = strings.TrimSpace(req.Action)
+	req.Target = strings.TrimSpace(req.Target)
+	if req.Action == "" || len(req.Action) > 64 || !isSafeWorkbenchAction(req.Action) {
+		return nil, errors.New(errors.ErrCodeInvalidParameter, "invalid rule workbench action")
+	}
+	if req.Target == "" || len(req.Target) > 512 {
+		return nil, errors.New(errors.ErrCodeInvalidParameter, "invalid rule workbench target")
+	}
+	if req.ActionID == "" {
+		req.ActionID = uuid.NewString()
+	}
+	if _, err := uuid.Parse(req.ActionID); err != nil {
+		return nil, errors.New(errors.ErrCodeInvalidParameter, "action_id must be a UUID")
+	}
+
+	job := &model.RuleWorkbenchActionJob{
+		JobID:       uuid.NewString(),
+		ActionID:    req.ActionID,
+		TenantID:    opCtx.TenantID,
+		RuleID:      ruleID,
+		Action:      req.Action,
+		Target:      req.Target,
+		Payload:     req.Payload,
+		Status:      "queued",
+		RequestedBy: opCtx.UserID,
+		CreatedAt:   time.Now().UTC(),
+	}
+	if err := s.repo.CreateWorkbenchAction(ctx, job, opCtx.IPAddr, opCtx.UserAgent); err != nil {
+		return nil, err
+	}
+	return job, nil
+}
+
+func isSafeWorkbenchAction(value string) bool {
+	for _, char := range value {
+		if (char >= 'a' && char <= 'z') || (char >= '0' && char <= '9') || char == '-' {
+			continue
+		}
+		return false
+	}
+	return true
 }
 
 // =============================================================================

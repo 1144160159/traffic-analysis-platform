@@ -127,6 +127,8 @@ func (h *Handler) RegisterRoutes(r *mux.Router) {
 	rules.HandleFunc("/{id}/enable", h.EnableRule).Methods("POST")
 	rules.HandleFunc("/{id}/disable", h.DisableRule).Methods("POST")
 	rules.HandleFunc("/{id}/versions", h.GetRuleVersions).Methods("GET")
+	rules.HandleFunc("/{id}/workbench", h.GetRuleWorkbench).Methods("GET")
+	rules.HandleFunc("/{id}/actions", h.SubmitRuleWorkbenchAction).Methods("POST")
 
 	// 部署管理
 	deployments := api.PathPrefix("/deployments").Subrouter()
@@ -140,6 +142,10 @@ func (h *Handler) RegisterRoutes(r *mux.Router) {
 	deployments.HandleFunc("/{id}/resume", h.ResumeDeployment).Methods("POST")
 	deployments.HandleFunc("/{id}/history", h.GetDeploymentHistory).Methods("GET")
 	deployments.HandleFunc("/{id}/progress", h.GetGrayProgress).Methods("GET")
+	deployments.HandleFunc("/{id}/workbench", h.GetDeploymentWorkbench).Methods("GET")
+	deployments.HandleFunc("/{id}/scope", h.UpdateDeploymentScope).Methods("PUT")
+	deployments.HandleFunc("/{id}/evidence/export", h.ExportDeploymentEvidence).Methods("POST")
+	deployments.HandleFunc("/{id}/workflow", h.UpdateDeploymentWorkflow).Methods("POST")
 
 	// 模型管理
 	h.RegisterModelRoutes(r)
@@ -212,13 +218,14 @@ func (h *Handler) extractOperationContext(r *http.Request) (*service.OperationCo
 
 	// 构建操作上下文
 	opCtx := &service.OperationContext{
-		TenantID:    tenantID,
-		UserID:      userID,
-		Username:    username,
-		Roles:       roles,
-		Permissions: permissions,
-		IPAddr:      httpx.GetClientIP(r),
-		UserAgent:   r.Header.Get("User-Agent"),
+		TenantID:      tenantID,
+		UserID:        userID,
+		Username:      username,
+		Roles:         roles,
+		Permissions:   permissions,
+		Authenticated: httpx.GetClaims(ctx) != nil,
+		IPAddr:        httpx.GetClientIP(r),
+		UserAgent:     r.Header.Get("User-Agent"),
 	}
 
 	// 日志记录（用于调试）
@@ -608,6 +615,61 @@ func (h *Handler) GetRuleVersions(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// GetRuleWorkbench returns database-backed data for every visible workbench
+// module under the selected rule.
+func (h *Handler) GetRuleWorkbench(w http.ResponseWriter, r *http.Request) {
+	opCtx, err := h.extractOperationContext(r)
+	if err != nil {
+		h.writeError(w, r, err)
+		return
+	}
+	ruleID := mux.Vars(r)["id"]
+	if ruleID == "" {
+		h.writeError(w, r, errors.New(errors.ErrCodeMissingParameter, "rule id is required"))
+		return
+	}
+	workbench, err := h.ruleService.GetRuleWorkbench(r.Context(), ruleID, opCtx)
+	if err != nil {
+		h.writeError(w, r, err)
+		return
+	}
+	h.writeJSON(w, http.StatusOK, map[string]interface{}{
+		"success": true,
+		"data": map[string]interface{}{
+			"rule":     h.ruleToDTO(workbench.Rule),
+			"versions": workbench.Versions,
+			"items":    workbench.Items,
+			"source":   workbench.Source,
+		},
+	})
+}
+
+// SubmitRuleWorkbenchAction queues a durable rule action. The repository
+// atomically writes the job and audit row before this handler returns 202.
+func (h *Handler) SubmitRuleWorkbenchAction(w http.ResponseWriter, r *http.Request) {
+	opCtx, err := h.extractOperationContext(r)
+	if err != nil {
+		h.writeError(w, r, err)
+		return
+	}
+	ruleID := mux.Vars(r)["id"]
+	if ruleID == "" {
+		h.writeError(w, r, errors.New(errors.ErrCodeMissingParameter, "rule id is required"))
+		return
+	}
+	var req model.RuleWorkbenchActionRequest
+	if err := h.decodeJSON(r, &req); err != nil {
+		h.writeError(w, r, errors.Wrap(err, errors.ErrCodeInvalidRequest, "invalid request body"))
+		return
+	}
+	job, err := h.ruleService.SubmitRuleWorkbenchAction(r.Context(), ruleID, &req, opCtx)
+	if err != nil {
+		h.writeError(w, r, err)
+		return
+	}
+	h.writeJSON(w, http.StatusAccepted, map[string]interface{}{"success": true, "data": job})
+}
+
 // BatchEnableRules 批量启用规则
 func (h *Handler) BatchEnableRules(w http.ResponseWriter, r *http.Request) {
 	h.handleBatchEnable(w, r, true)
@@ -871,7 +933,7 @@ func (h *Handler) GetDeployment(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	// ✅ 修复：检查 extractOperationContext 的错误（用于后续权限检查）
-	_, err := h.extractOperationContext(r)
+	opCtx, err := h.extractOperationContext(r)
 	if err != nil {
 		h.writeError(w, r, err)
 		return
@@ -883,7 +945,7 @@ func (h *Handler) GetDeployment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	deployment, err := h.deploymentService.GetDeployment(ctx, deploymentID)
+	deployment, err := h.deploymentService.GetDeploymentForOperation(ctx, deploymentID, opCtx)
 	if err != nil {
 		h.writeError(w, r, err)
 		return
@@ -1013,8 +1075,15 @@ func (h *Handler) RollbackDeployment(w http.ResponseWriter, r *http.Request) {
 		h.writeError(w, r, errors.New(errors.ErrCodeMissingParameter, "deployment id is required"))
 		return
 	}
+	var req RollbackDeploymentRequest
+	if r.Body != nil && r.ContentLength != 0 {
+		if err := h.decodeJSON(r, &req); err != nil {
+			h.writeError(w, r, errors.Wrap(err, errors.ErrCodeInvalidRequest, "invalid request body"))
+			return
+		}
+	}
 
-	if err := h.deploymentService.RollbackDeployment(ctx, deploymentID, opCtx); err != nil {
+	if err := h.deploymentService.RollbackDeployment(ctx, deploymentID, req.TargetDeploymentID, req.Reason, opCtx); err != nil {
 		h.writeError(w, r, err)
 		return
 	}
@@ -1023,6 +1092,105 @@ func (h *Handler) RollbackDeployment(w http.ResponseWriter, r *http.Request) {
 		Success: true,
 		Message: "deployment rolled back",
 	})
+}
+
+// GetDeploymentWorkbench returns data-backed health, evidence, version-diff,
+// rollback and history panels for the selected deployment.
+func (h *Handler) GetDeploymentWorkbench(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	opCtx, err := h.extractOperationContext(r)
+	if err != nil {
+		h.writeError(w, r, err)
+		return
+	}
+	deploymentID := mux.Vars(r)["id"]
+	if deploymentID == "" {
+		h.writeError(w, r, errors.New(errors.ErrCodeMissingParameter, "deployment id is required"))
+		return
+	}
+	workbench, err := h.deploymentService.GetDeploymentWorkbench(ctx, deploymentID, opCtx)
+	if err != nil {
+		h.writeError(w, r, err)
+		return
+	}
+	h.writeJSON(w, http.StatusOK, map[string]interface{}{
+		"success": true,
+		"data":    workbench,
+	})
+}
+
+// UpdateDeploymentScope persists the gray strategy selected in the page rail.
+func (h *Handler) UpdateDeploymentScope(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	opCtx, err := h.extractOperationContext(r)
+	if err != nil {
+		h.writeError(w, r, err)
+		return
+	}
+	deploymentID := mux.Vars(r)["id"]
+	if deploymentID == "" {
+		h.writeError(w, r, errors.New(errors.ErrCodeMissingParameter, "deployment id is required"))
+		return
+	}
+	var req UpdateDeploymentScopeRequest
+	if err := h.decodeJSON(r, &req); err != nil {
+		h.writeError(w, r, errors.Wrap(err, errors.ErrCodeInvalidRequest, "invalid request body"))
+		return
+	}
+	if len(req.Scope) == 0 {
+		h.writeError(w, r, errors.New(errors.ErrCodeMissingParameter, "scope is required"))
+		return
+	}
+	deployment, err := h.deploymentService.UpdateDeploymentScope(ctx, deploymentID, req.Scope, opCtx)
+	if err != nil {
+		h.writeError(w, r, err)
+		return
+	}
+	h.writeJSON(w, http.StatusOK, DeploymentResponse{Success: true, Data: h.deploymentToDTO(deployment)})
+}
+
+// UpdateDeploymentWorkflow persists precheck and approval stages instead of
+// presenting them as client-only controls.
+func (h *Handler) UpdateDeploymentWorkflow(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	opCtx, err := h.extractOperationContext(r)
+	if err != nil {
+		h.writeError(w, r, err)
+		return
+	}
+	deploymentID := mux.Vars(r)["id"]
+	var req UpdateDeploymentWorkflowRequest
+	if err := h.decodeJSON(r, &req); err != nil {
+		h.writeError(w, r, errors.Wrap(err, errors.ErrCodeInvalidRequest, "invalid request body"))
+		return
+	}
+	workflow, err := h.deploymentService.UpdateDeploymentWorkflow(ctx, deploymentID, req.Stage, req.Operation, req.Configuration, opCtx)
+	if err != nil {
+		h.writeError(w, r, err)
+		return
+	}
+	h.writeJSON(w, http.StatusOK, map[string]interface{}{"success": true, "data": workflow})
+}
+
+// ExportDeploymentEvidence returns an audited server-generated JSON bundle.
+func (h *Handler) ExportDeploymentEvidence(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	opCtx, err := h.extractOperationContext(r)
+	if err != nil {
+		h.writeError(w, r, err)
+		return
+	}
+	deploymentID := mux.Vars(r)["id"]
+	if deploymentID == "" {
+		h.writeError(w, r, errors.New(errors.ErrCodeMissingParameter, "deployment id is required"))
+		return
+	}
+	bundle, err := h.deploymentService.ExportDeploymentEvidence(ctx, deploymentID, opCtx)
+	if err != nil {
+		h.writeError(w, r, err)
+		return
+	}
+	h.writeJSON(w, http.StatusOK, map[string]interface{}{"success": true, "data": bundle})
 }
 
 // PauseDeployment 暂停部署
@@ -1248,6 +1416,21 @@ type CreateDeploymentRequest struct {
 	Scope        map[string]interface{} `json:"scope,omitempty"`
 }
 
+type RollbackDeploymentRequest struct {
+	Reason             string `json:"reason"`
+	TargetDeploymentID string `json:"target_deployment_id"`
+}
+
+type UpdateDeploymentScopeRequest struct {
+	Scope map[string]interface{} `json:"scope"`
+}
+
+type UpdateDeploymentWorkflowRequest struct {
+	Stage         string                 `json:"stage"`
+	Operation     string                 `json:"operation"`
+	Configuration map[string]interface{} `json:"configuration,omitempty"`
+}
+
 // Validate 验证创建部署请求
 func (r *CreateDeploymentRequest) Validate() error {
 	if r.RuleVersion == "" && r.ModelVersion == "" {
@@ -1285,18 +1468,26 @@ type RuleDTO struct {
 
 // DeploymentDTO 部署 DTO
 type DeploymentDTO struct {
-	DeploymentID string                 `json:"deployment_id"`
-	TenantID     string                 `json:"tenant_id"`
-	Name         string                 `json:"name,omitempty"`
-	Description  string                 `json:"description,omitempty"`
-	RuleVersion  string                 `json:"rule_version,omitempty"`
-	ModelVersion string                 `json:"model_version,omitempty"`
-	FeatureSetID string                 `json:"feature_set_id,omitempty"`
-	Scope        map[string]interface{} `json:"scope,omitempty"`
-	Status       string                 `json:"status"`
-	CreatedBy    string                 `json:"created_by"`
-	CreatedAt    string                 `json:"created_at"`
-	UpdatedAt    string                 `json:"updated_at"`
+	DeploymentID   string                 `json:"deployment_id"`
+	TenantID       string                 `json:"tenant_id"`
+	Name           string                 `json:"name,omitempty"`
+	Description    string                 `json:"description,omitempty"`
+	RuleVersion    string                 `json:"rule_version,omitempty"`
+	ModelVersion   string                 `json:"model_version,omitempty"`
+	FeatureSetID   string                 `json:"feature_set_id,omitempty"`
+	Scope          map[string]interface{} `json:"scope,omitempty"`
+	Status         string                 `json:"status"`
+	Metadata       map[string]interface{} `json:"metadata,omitempty"`
+	GrayStartedAt  *string                `json:"gray_started_at,omitempty"`
+	GrayExpiredAt  *string                `json:"gray_expired_at,omitempty"`
+	ActivatedAt    *string                `json:"activated_at,omitempty"`
+	RolledBackAt   *string                `json:"rolled_back_at,omitempty"`
+	RollbackFrom   *string                `json:"rollback_from,omitempty"`
+	RollbackReason string                 `json:"rollback_reason,omitempty"`
+	ErrorMessage   string                 `json:"error_message,omitempty"`
+	CreatedBy      string                 `json:"created_by"`
+	CreatedAt      string                 `json:"created_at"`
+	UpdatedAt      string                 `json:"updated_at"`
 }
 
 // RuleResponse 规则响应
@@ -1380,20 +1571,41 @@ func (h *Handler) deploymentToDTO(d *model.Deployment) *DeploymentDTO {
 	if d == nil {
 		return nil
 	}
-	return &DeploymentDTO{
-		DeploymentID: d.DeploymentID,
-		TenantID:     d.TenantID,
-		Name:         d.Name,
-		Description:  d.Description,
-		RuleVersion:  d.RuleVersion,
-		ModelVersion: d.ModelVersion,
-		FeatureSetID: d.FeatureSetID,
-		Scope:        d.Scope,
-		Status:       d.Status,
-		CreatedBy:    d.CreatedBy,
-		CreatedAt:    d.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:    d.UpdatedAt.Format(time.RFC3339),
+	dto := &DeploymentDTO{
+		DeploymentID:   d.DeploymentID,
+		TenantID:       d.TenantID,
+		Name:           d.Name,
+		Description:    d.Description,
+		RuleVersion:    d.RuleVersion,
+		ModelVersion:   d.ModelVersion,
+		FeatureSetID:   d.FeatureSetID,
+		Scope:          d.Scope,
+		Status:         d.Status,
+		Metadata:       d.Metadata,
+		RollbackFrom:   d.RollbackFrom,
+		RollbackReason: d.RollbackReason,
+		ErrorMessage:   d.ErrorMessage,
+		CreatedBy:      d.CreatedBy,
+		CreatedAt:      d.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:      d.UpdatedAt.Format(time.RFC3339),
 	}
+	if d.GrayStartedAt != nil {
+		value := d.GrayStartedAt.Format(time.RFC3339)
+		dto.GrayStartedAt = &value
+	}
+	if d.GrayExpiredAt != nil {
+		value := d.GrayExpiredAt.Format(time.RFC3339)
+		dto.GrayExpiredAt = &value
+	}
+	if d.ActivatedAt != nil {
+		value := d.ActivatedAt.Format(time.RFC3339)
+		dto.ActivatedAt = &value
+	}
+	if d.RolledBackAt != nil {
+		value := d.RolledBackAt.Format(time.RFC3339)
+		dto.RolledBackAt = &value
+	}
+	return dto
 }
 
 // parseRuleFilter 解析规则过滤参数

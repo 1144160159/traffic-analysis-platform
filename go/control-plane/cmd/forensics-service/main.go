@@ -97,11 +97,17 @@ func main() {
 	if cfg.Redis.Addr != "" || len(cfg.Redis.ClusterAddrs) > 0 || cfg.Redis.IsSentinelMode() {
 		rdb, err = initRedis(cfg.Redis, logger)
 		if err != nil {
+			if cfg.Auth.Enabled {
+				logger.Fatal("Failed to connect to Redis while authentication is enabled", zap.Error(err))
+			}
 			logger.Warn("Failed to connect to Redis, caching disabled", zap.Error(err))
 		} else {
 			defer rdb.Close()
 			logger.Info("Connected to Redis")
 		}
+	}
+	if cfg.Auth.Enabled && rdb == nil {
+		logger.Fatal("Authentication is enabled but Redis is unavailable")
 	}
 
 	// 初始化 Index Client
@@ -399,12 +405,16 @@ func buildMiddlewareChain(cfg *config.Config, logger *zap.Logger, db *sql.DB, rd
 	)
 
 	// 如果启用认证，添加 Auth 中间件
-	if cfg.Auth.Enabled && db != nil && rdb != nil {
-		authMw := buildAuthMiddleware(cfg.Auth, logger, db, rdb)
-		if authMw != nil {
-			chain = chain.Append(authMw.Authenticate)
-			logger.Info("Auth middleware enabled")
+	if cfg.Auth.Enabled {
+		if db == nil || rdb == nil {
+			panic("authentication dependencies are unavailable")
 		}
+		authMw := buildAuthMiddleware(cfg.Auth, logger, db, rdb)
+		if authMw == nil {
+			panic("authentication middleware initialization failed")
+		}
+		chain = chain.Append(authMw.Authenticate)
+		logger.Info("Auth middleware enabled")
 	} else {
 		logger.Warn("Auth middleware disabled - API endpoints are not protected")
 	}

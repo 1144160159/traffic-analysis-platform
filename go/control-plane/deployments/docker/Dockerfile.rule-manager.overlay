@@ -1,0 +1,13 @@
+ARG BASE_IMAGE=traffic/rule-manager:deployment-management-20260717-r6
+FROM ${BASE_IMAGE}
+
+ARG SOURCE_REVISION=unknown
+ARG BUILD_ID=local
+LABEL org.opencontainers.image.revision=${SOURCE_REVISION} \
+      org.opencontainers.image.version=${BUILD_ID} \
+      org.opencontainers.image.title="traffic-analysis rule-manager"
+
+COPY rule-manager.bin /usr/local/bin/app
+
+USER appuser
+ENTRYPOINT ["/usr/local/bin/app"]

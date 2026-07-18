@@ -30,6 +30,7 @@ import (
 type CutTaskRequest struct {
 	TenantID    string `json:"tenant_id"`
 	UserID      string `json:"user_id"`
+	AssetID     string `json:"asset_id,omitempty"`
 	ProbeID     string `json:"probe_id,omitempty"`
 	SrcIP       string `json:"src_ip,omitempty"`
 	DstIP       string `json:"dst_ip,omitempty"`
@@ -524,7 +525,7 @@ func (a *AsyncCutter) cleanupExpiredTasks() {
 	if a.s3Client != nil {
 		cutoffTime := time.Now().Add(-72 * time.Hour)
 		// 查询已完成的任务 (复用 List API, 后续可优化为专用 expired query)
-		completedTasks, _, err := a.taskRepo.List(ctx, "", "completed", 50, 0)
+		completedTasks, _, err := a.taskRepo.List(ctx, "", "completed", "", 50, 0)
 		if err != nil {
 			a.logger.Warn("Failed to list tasks for S3 cleanup", zap.Error(err))
 		} else {

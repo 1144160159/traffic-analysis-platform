@@ -385,8 +385,24 @@ func (r *TaskRepository) Cancel(ctx context.Context, taskID string) error {
 	return nil
 }
 
-// List 列出任务
-func (r *TaskRepository) List(ctx context.Context, tenantID, status string, limit, offset int) ([]*Task, int64, error) {
+type TaskListFilter struct {
+	Status   string
+	AssetID  string
+	SrcIP    string
+	DstIP    string
+	Protocol string
+	Port     string
+	Tuple    string
+	TaskID   string
+}
+
+// List preserves the worker-facing compact API.
+func (r *TaskRepository) List(ctx context.Context, tenantID, status, assetID string, limit, offset int) ([]*Task, int64, error) {
+	return r.ListFiltered(ctx, tenantID, TaskListFilter{Status: status, AssetID: assetID}, limit, offset)
+}
+
+// ListFiltered lists tenant tasks with the filters exposed by the forensics workbench.
+func (r *TaskRepository) ListFiltered(ctx context.Context, tenantID string, filter TaskListFilter, limit, offset int) ([]*Task, int64, error) {
 	ctx, span := otel.StartSpan(ctx, "TaskRepository.List")
 	defer span.End()
 
@@ -394,10 +410,18 @@ func (r *TaskRepository) List(ctx context.Context, tenantID, status string, limi
 	countQuery := `SELECT COUNT(*) FROM tasks WHERE tenant_id = $1`
 	countArgs := []interface{}{tenantID}
 
-	if status != "" {
-		countQuery += ` AND status = $2`
-		countArgs = append(countArgs, status)
+	countArgIndex := 2
+	if filter.Status != "" {
+		countQuery += fmt.Sprintf(` AND status = $%d`, countArgIndex)
+		countArgs = append(countArgs, filter.Status)
+		countArgIndex++
 	}
+	if filter.AssetID != "" {
+		countQuery += fmt.Sprintf(` AND params->>'asset_id' = $%d`, countArgIndex)
+		countArgs = append(countArgs, filter.AssetID)
+		countArgIndex++
+	}
+	countQuery, countArgs, _ = appendTaskFilters(countQuery, countArgs, countArgIndex, filter)
 
 	var total int64
 	row := r.client.QueryRow(ctx, countQuery, countArgs...)
@@ -417,13 +441,19 @@ func (r *TaskRepository) List(ctx context.Context, tenantID, status string, limi
 	listArgs := []interface{}{tenantID}
 	argIndex := 2
 
-	if status != "" {
+	if filter.Status != "" {
 		listQuery += fmt.Sprintf(` AND status = $%d`, argIndex)
-		listArgs = append(listArgs, status)
+		listArgs = append(listArgs, filter.Status)
 		argIndex++
 	}
+	if filter.AssetID != "" {
+		listQuery += fmt.Sprintf(` AND params->>'asset_id' = $%d`, argIndex)
+		listArgs = append(listArgs, filter.AssetID)
+		argIndex++
+	}
+	listQuery, listArgs, argIndex = appendTaskFilters(listQuery, listArgs, argIndex, filter)
 
-	listQuery += fmt.Sprintf(` ORDER BY created_at DESC LIMIT $%d OFFSET $%d`, argIndex, argIndex+1)
+	listQuery += fmt.Sprintf(` ORDER BY created_at DESC, task_id DESC LIMIT $%d OFFSET $%d`, argIndex, argIndex+1)
 	listArgs = append(listArgs, limit, offset)
 
 	rows, err := r.client.Query(ctx, listQuery, listArgs...)
@@ -432,7 +462,39 @@ func (r *TaskRepository) List(ctx context.Context, tenantID, status string, limi
 	}
 	defer rows.Close()
 
-	return r.scanTasks(rows)
+	tasks, _, err := r.scanTasks(rows)
+	if err != nil {
+		return nil, 0, err
+	}
+	return tasks, total, nil
+}
+
+func appendTaskFilters(query string, args []interface{}, argIndex int, filter TaskListFilter) (string, []interface{}, int) {
+	filters := []struct {
+		value          string
+		sql            string
+		repeatedArgRef bool
+	}{
+		{filter.SrcIP, `params->>'src_ip' = $%d`, false},
+		{filter.DstIP, `params->>'dst_ip' = $%d`, false},
+		{filter.Protocol, `lower(params->>'protocol') = lower($%d)`, false},
+		{filter.Port, `(params->>'src_port' = $%d OR params->>'dst_port' = $%d)`, true},
+		{filter.TaskID, `task_id::text ILIKE '%%' || $%d || '%%'`, false},
+		{filter.Tuple, `concat_ws(' ', params->>'src_ip', params->>'src_port', params->>'dst_ip', params->>'dst_port', params->>'protocol') ILIKE '%%' || $%d || '%%'`, false},
+	}
+	for _, item := range filters {
+		if item.value == "" {
+			continue
+		}
+		if item.repeatedArgRef {
+			query += fmt.Sprintf(` AND `+item.sql, argIndex, argIndex)
+		} else {
+			query += fmt.Sprintf(` AND `+item.sql, argIndex)
+		}
+		args = append(args, item.value)
+		argIndex++
+	}
+	return query, args, argIndex
 }
 
 // scanTasks 扫描多个任务

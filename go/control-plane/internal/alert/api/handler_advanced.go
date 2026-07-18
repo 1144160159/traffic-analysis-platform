@@ -73,8 +73,12 @@ func (h *AdvancedHandler) RegisterAPIRoutes(api *mux.Router) {
 	// 数据质量
 	dqRouter := api.PathPrefix("/data-quality").Subrouter()
 	dqRouter.HandleFunc("", h.GetDataQuality).Methods("GET")
+	dqRouter.HandleFunc("/tables/{dataset}", h.GetDataQualityTable).Methods("GET")
+	dqRouter.HandleFunc("/reports/daily", h.GetDataQualityDailyReport).Methods("GET")
+	dqRouter.HandleFunc("/reports/daily/download", h.DownloadDataQualityDailyReport).Methods("GET")
 	dqRouter.HandleFunc("/latency-chain", h.GetLatencyChain).Methods("GET")
 	dqRouter.HandleFunc("/baseline", h.UpdateBaseline).Methods("POST")
+	dqRouter.HandleFunc("/actions", h.CreateDataQualityAction).Methods("POST")
 
 	// 通知配置与测试
 	notificationRouter := api.PathPrefix("/notifications").Subrouter()
@@ -85,6 +89,67 @@ func (h *AdvancedHandler) RegisterAPIRoutes(api *mux.Router) {
 	notificationRouter.HandleFunc("/silence-rules", h.CreateNotificationSilenceRule).Methods("POST")
 	notificationRouter.HandleFunc("/silence-rules/{id}", h.PatchNotificationSilenceRule).Methods("PATCH")
 	api.HandleFunc("/notify/test", h.TestNotification).Methods("POST")
+}
+
+var dataQualityTableDatasets = map[string]struct{}{
+	"consumerRows": {}, "messageSizeTopicRows": {}, "partitionQueueRows": {},
+	"flinkJobRows": {}, "flinkWindowRows": {}, "flinkFailureRows": {},
+	"fieldQualityRows": {}, "communityCheckRows": {}, "communityMismatchRows": {},
+	"fieldAnomalyRows": {}, "fieldLineageRows": {}, "fieldRepairRows": {},
+	"storageComponentRows": {}, "storageFailureRows": {}, "storageReplicaRows": {},
+	"storagePartitionRows": {}, "storageObjectRows": {}, "replayTaskRows": {},
+	"replayIdempotencyRows": {}, "replayDifferenceRows": {}, "replayEvidenceRows": {},
+}
+
+func (h *AdvancedHandler) GetDataQualityTable(w http.ResponseWriter, r *http.Request) {
+	if !h.requireDataQualityReadPermission(w, r) {
+		return
+	}
+	if h.advancedRepo == nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]interface{}{"success": false, "message": "data quality repository is not available"})
+		return
+	}
+
+	dataset := mux.Vars(r)["dataset"]
+	if _, ok := dataQualityTableDatasets[dataset]; !ok {
+		writeJSON(w, http.StatusBadRequest, map[string]interface{}{"success": false, "message": "unsupported data quality table dataset"})
+		return
+	}
+	page, pageSize, err := dataQualityPagination(r)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]interface{}{"success": false, "message": err.Error()})
+		return
+	}
+
+	result, ok, err := h.advancedRepo.GetDataQualityTablePage(r.Context(), tenantIDFromRequest(r), dataset, page, pageSize)
+	if err != nil {
+		httpx.JSONError(w, r.Context(), http.StatusInternalServerError, "DATA_QUALITY_TABLE_LOAD_FAILED", err.Error())
+		return
+	}
+	if !ok {
+		writeJSON(w, http.StatusNotFound, map[string]interface{}{"success": false, "message": "active data quality table dataset was not found"})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]interface{}{"success": true, "data": result})
+}
+
+func dataQualityPagination(r *http.Request) (int, int, error) {
+	page, pageSize := 1, 5
+	if raw := r.URL.Query().Get("page"); raw != "" {
+		value, err := strconv.Atoi(raw)
+		if err != nil || value < 1 {
+			return 0, 0, errors.New("page must be a positive integer")
+		}
+		page = value
+	}
+	if raw := r.URL.Query().Get("page_size"); raw != "" {
+		value, err := strconv.Atoi(raw)
+		if err != nil || value < 1 || value > 100 {
+			return 0, 0, errors.New("page_size must be between 1 and 100")
+		}
+		pageSize = value
+	}
+	return page, pageSize, nil
 }
 
 // =============================================================================
@@ -309,20 +374,54 @@ func (h *AdvancedHandler) ExecutePlaybook(w http.ResponseWriter, r *http.Request
 // =============================================================================
 
 func (h *AdvancedHandler) GetDataQuality(w http.ResponseWriter, r *http.Request) {
+	if !h.requireDataQualityReadPermission(w, r) {
+		return
+	}
 	if h.dqMonitor == nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]interface{}{"success": false, "message": "data quality monitor is not available"})
 		return
 	}
 
-	report, err := h.dqMonitor.CheckAll(r.Context())
+	tenantID := tenantIDFromRequest(r)
+	report, err := h.dqMonitor.CheckAll(r.Context(), tenantID)
 	if err != nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]interface{}{"success": false, "message": err.Error()})
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]interface{}{"success": true, "data": report})
+	data := map[string]interface{}{
+		"timestamp": report.Timestamp,
+		"tenant_id": report.TenantID,
+		"overall":   report.Overall,
+		"checks":    report.Checks,
+		"metrics":   report.Metrics,
+		"data_source": map[string]interface{}{
+			"monitor": "clickhouse-live",
+			"visuals": "unconfigured",
+		},
+	}
+	if h.advancedRepo != nil {
+		fixture, ok, fixtureErr := h.advancedRepo.GetDataQualityUIFixture(r.Context(), tenantID)
+		if fixtureErr != nil {
+			httpx.JSONError(w, r.Context(), http.StatusInternalServerError, "UI_FIXTURE_LOAD_FAILED", fixtureErr.Error())
+			return
+		}
+		if ok {
+			data["visuals"] = map[string]interface{}{"dataQuality": fixture.Payload}
+			data["data_source"] = map[string]interface{}{
+				"monitor":         "clickhouse-live",
+				"visuals":         "postgres-activated-fixture",
+				"fixture_version": fixture.FixtureVersion,
+				"updated_at":      fixture.UpdatedAt,
+			}
+		}
+	}
+	writeJSON(w, http.StatusOK, map[string]interface{}{"success": true, "data": data})
 }
 
 func (h *AdvancedHandler) GetLatencyChain(w http.ResponseWriter, r *http.Request) {
+	if !h.requireDataQualityReadPermission(w, r) {
+		return
+	}
 	if h.dqMonitor == nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]interface{}{"success": false, "message": "data quality monitor is not available"})
 		return
@@ -347,6 +446,9 @@ func (h *AdvancedHandler) GetLatencyChain(w http.ResponseWriter, r *http.Request
 }
 
 func (h *AdvancedHandler) UpdateBaseline(w http.ResponseWriter, r *http.Request) {
+	if !h.requireDataQualityWritePermission(w, r) {
+		return
+	}
 	if h.dqMonitor == nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]interface{}{"success": false, "message": "data quality monitor is not available"})
 		return
@@ -357,6 +459,90 @@ func (h *AdvancedHandler) UpdateBaseline(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]interface{}{"success": true, "message": "baseline updated"})
+}
+
+type dataQualityActionRequest struct {
+	View       string                 `json:"view"`
+	Action     string                 `json:"action"`
+	Target     string                 `json:"target"`
+	DryRun     *bool                  `json:"dry_run"`
+	Confirmed  bool                   `json:"confirmed"`
+	Reason     string                 `json:"reason"`
+	Parameters map[string]interface{} `json:"parameters"`
+}
+
+var dataQualityViews = map[string]struct{}{
+	"overview": {}, "topic-health": {}, "flink-quality": {}, "field-quality": {},
+	"storage-quality": {}, "replay-reconcile": {}, "report": {}, "settings": {},
+}
+
+func (h *AdvancedHandler) CreateDataQualityAction(w http.ResponseWriter, r *http.Request) {
+	if !h.requireDataQualityWritePermission(w, r) {
+		return
+	}
+	ctx := r.Context()
+	var payload dataQualityActionRequest
+	decoder := json.NewDecoder(io.LimitReader(r.Body, 64<<10))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&payload); err != nil {
+		httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_REQUEST", "invalid data quality action payload")
+		return
+	}
+	payload.View = strings.TrimSpace(payload.View)
+	payload.Action = strings.TrimSpace(payload.Action)
+	payload.Target = strings.TrimSpace(payload.Target)
+	payload.Reason = strings.TrimSpace(payload.Reason)
+	if _, ok := dataQualityViews[payload.View]; !ok {
+		httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_VIEW", "view must be a supported data quality view")
+		return
+	}
+	if payload.Action == "" || len(payload.Action) > 120 || payload.Target == "" || len(payload.Target) > 240 {
+		httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_ACTION", "action and target are required")
+		return
+	}
+	dryRun := true
+	if payload.DryRun != nil {
+		dryRun = *payload.DryRun
+	}
+	if !dryRun && (!payload.Confirmed || len([]rune(payload.Reason)) < 8) {
+		httpx.JSONError(w, ctx, http.StatusBadRequest, "CONFIRMATION_REQUIRED", "non-dry-run actions require confirmation and a reason of at least 8 characters")
+		return
+	}
+	if h.advancedRepo == nil {
+		httpx.JSONError(w, ctx, http.StatusServiceUnavailable, "SERVICE_UNAVAILABLE", "data quality action repository is not available")
+		return
+	}
+	record, err := h.advancedRepo.CreateDataQualityAction(ctx, r, DataQualityActionRecord{
+		TenantID: tenantIDFromRequest(r), View: payload.View, Action: payload.Action,
+		Target: payload.Target, DryRun: dryRun, Status: map[bool]string{true: "dry_run", false: "queued"}[dryRun],
+		RequestedBy: httpx.GetUserID(ctx),
+		Request: map[string]interface{}{
+			"reason": payload.Reason, "confirmed": payload.Confirmed, "parameters": payload.Parameters,
+		},
+	})
+	if err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "ACTION_PERSIST_FAILED", err.Error())
+		return
+	}
+	writeJSON(w, http.StatusAccepted, map[string]interface{}{"success": true, "data": record})
+}
+
+func (h *AdvancedHandler) requireDataQualityReadPermission(w http.ResponseWriter, r *http.Request) bool {
+	ctx := r.Context()
+	if hasSystemPermission(ctx, authmodel.ScopeDataQualityRead) || hasSystemPermission(ctx, authmodel.ScopeDataQualityWrite) || hasSystemPermission(ctx, authmodel.ScopeAdminAll) {
+		return true
+	}
+	httpx.JSONError(w, ctx, http.StatusForbidden, "PERMISSION_DENIED", "permission denied: data-quality:read required")
+	return false
+}
+
+func (h *AdvancedHandler) requireDataQualityWritePermission(w http.ResponseWriter, r *http.Request) bool {
+	ctx := r.Context()
+	if hasSystemPermission(ctx, authmodel.ScopeDataQualityWrite) || hasSystemPermission(ctx, authmodel.ScopeAdminAll) {
+		return true
+	}
+	httpx.JSONError(w, ctx, http.StatusForbidden, "PERMISSION_DENIED", "permission denied: data-quality:write required")
+	return false
 }
 
 // =============================================================================

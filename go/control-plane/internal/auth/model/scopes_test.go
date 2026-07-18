@@ -63,3 +63,22 @@ func TestAssetDiscoveryScopeIsValidAndRoleBounded(t *testing.T) {
 		t.Fatalf("viewer role should include %s", ScopeAssetRead)
 	}
 }
+
+func TestDeploymentWorkflowScopesAreValidAndDocumented(t *testing.T) {
+	want := []string{ScopeDeployGray, ScopeDeployApprove}
+	valid, invalid := ValidateScopes(want)
+	if len(invalid) != 0 || len(valid) != len(want) {
+		t.Fatalf("deployment workflow scopes valid=%v invalid=%v, want all valid", valid, invalid)
+	}
+	documented := map[string]bool{}
+	for _, info := range GetAllScopeInfos() {
+		if info.Category == "deploy" {
+			documented[info.Name] = true
+		}
+	}
+	for _, scope := range want {
+		if !documented[scope] {
+			t.Fatalf("%s missing from deployment scope infos", scope)
+		}
+	}
+}
