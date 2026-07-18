@@ -591,6 +591,78 @@ func (r *RuleRepository) GetVersion(ctx context.Context, ruleID string, version 
 	return &v, nil
 }
 
+// ListWorkbenchItems returns only tenant-scoped rows for the selected rule.
+// A rule_id of "*" is a seeded default shared by rules in the same tenant;
+// rule-specific rows take precedence through the stable ordering.
+func (r *RuleRepository) ListWorkbenchItems(ctx context.Context, tenantID, ruleID string) ([]*model.RuleWorkbenchItem, error) {
+	query := `
+		SELECT item_id, tenant_id, rule_id, category, ordinal, payload, scenario_id, occurred_at
+		FROM rule_workbench_items
+		WHERE tenant_id = $1 AND rule_id IN ($2, '*')
+		ORDER BY category, CASE WHEN rule_id = $2 THEN 0 ELSE 1 END, ordinal, item_id
+	`
+	rows, err := r.db.QueryContext(ctx, query, tenantID, ruleID)
+	if err != nil {
+		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to query rule workbench items")
+	}
+	defer rows.Close()
+
+	items := make([]*model.RuleWorkbenchItem, 0)
+	for rows.Next() {
+		var item model.RuleWorkbenchItem
+		if err := rows.Scan(&item.ItemID, &item.TenantID, &item.RuleID, &item.Category, &item.Ordinal, &item.Payload, &item.ScenarioID, &item.OccurredAt); err != nil {
+			return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to scan rule workbench item")
+		}
+		items = append(items, &item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to iterate rule workbench items")
+	}
+	return items, nil
+}
+
+// CreateWorkbenchAction persists both the action job and its audit row in one
+// transaction. A successful response therefore cannot outlive a failed audit.
+func (r *RuleRepository) CreateWorkbenchAction(ctx context.Context, job *model.RuleWorkbenchActionJob, ipAddr, userAgent string) error {
+	payload, err := json.Marshal(job.Payload)
+	if err != nil {
+		return errors.Wrap(err, errors.ErrCodeSerializationError, "failed to marshal rule workbench action payload")
+	}
+	return r.Transaction(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		result, err := tx.ExecContext(ctx, `
+			INSERT INTO rule_action_jobs (
+				job_id, action_id, tenant_id, rule_id, action, target, payload, status, requested_by, created_at
+			)
+			SELECT $1, $2, $3, rule_id::text, $5, $6, $7::jsonb, $8, $9, $10
+			FROM rules
+			WHERE rule_id::text = $4 AND tenant_id = $3 AND status != 'deleted'
+		`, job.JobID, job.ActionID, job.TenantID, job.RuleID, job.Action, job.Target, string(payload), job.Status, job.RequestedBy, job.CreatedAt)
+		if err != nil {
+			return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to create rule action job")
+		}
+		if affected, _ := result.RowsAffected(); affected != 1 {
+			return errors.Newf(errors.ErrCodeRuleNotFound, "rule not found for tenant: %s", job.RuleID)
+		}
+
+		detail, err := json.Marshal(map[string]interface{}{
+			"action_id": job.ActionID,
+			"job_id":    job.JobID,
+			"target":    job.Target,
+			"status":    job.Status,
+		})
+		if err != nil {
+			return errors.Wrap(err, errors.ErrCodeSerializationError, "failed to marshal rule action audit detail")
+		}
+		if _, err := tx.ExecContext(ctx, `
+			INSERT INTO audit_logs (tenant_id, user_id, action, object_type, object_id, detail, ip_addr, user_agent)
+			VALUES ($1, $2, 'RULE_WORKBENCH_ACTION', 'rule', $3, $4::jsonb, $5, $6)
+		`, job.TenantID, job.RequestedBy, job.RuleID, string(detail), ipAddr, userAgent); err != nil {
+			return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to persist rule action audit")
+		}
+		return nil
+	})
+}
+
 // =============================================================================
 // 批量操作
 // =============================================================================

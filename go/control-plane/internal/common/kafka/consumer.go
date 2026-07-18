@@ -25,8 +25,9 @@ type ConsumerConfig struct {
 	EnableDLQ      bool
 	DLQTopicPrefix string
 
-	CommitOnDLQSuccess bool
-	Security           SecurityConfig
+	CommitOnDLQSuccess   bool
+	CommitOnHandlerError bool
+	Security             SecurityConfig
 }
 
 type Consumer struct {
@@ -378,8 +379,10 @@ func (c *Consumer) Consume(ctx context.Context, handler MessageHandler) error {
 						zap.Bool("will_commit", shouldCommit))
 				}
 			} else {
-
-				shouldCommit = false
+				// At-least-once consumers must not lose a message on a transient
+				// handler or database failure. Callers can explicitly opt into the
+				// old commit-on-error behavior when required.
+				shouldCommit = c.config.CommitOnHandlerError
 			}
 
 			if !shouldCommit {

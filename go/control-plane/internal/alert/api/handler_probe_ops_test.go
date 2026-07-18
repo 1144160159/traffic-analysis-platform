@@ -25,3 +25,24 @@ func TestProbeOperationRoutesMatchAPIPrefix(t *testing.T) {
 		t.Fatalf("status = %d, want %d", rr.Code, http.StatusServiceUnavailable)
 	}
 }
+
+func TestProbeExtendedOperationRoutesMatchAPIPrefix(t *testing.T) {
+	router := mux.NewRouter()
+	apiRouter := router.PathPrefix("/api/v1").Subrouter()
+	NewSystemHandler(nil, nil, zap.NewNop()).RegisterRoutes(apiRouter)
+
+	for _, target := range []string{
+		"/api/v1/probes/batch-state",
+		"/api/v1/probes/probe-001/restart",
+	} {
+		req := httptest.NewRequest(http.MethodPost, target, nil)
+		rr := httptest.NewRecorder()
+		router.ServeHTTP(rr, req)
+		if rr.Code == http.StatusNotFound {
+			t.Fatalf("probe operation route %s returned 404; route was not matched", target)
+		}
+		if rr.Code != http.StatusServiceUnavailable {
+			t.Fatalf("route %s status = %d, want %d", target, rr.Code, http.StatusServiceUnavailable)
+		}
+	}
+}

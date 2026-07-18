@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -139,6 +140,9 @@ func (s *AssetService) UpsertAsset(ctx context.Context, rec *config.AssetRecord)
 
 // GetAsset 获取单个资产（按 ID 或 MAC）
 func (s *AssetService) GetAsset(ctx context.Context, tenantID, assetID, macAddress string) (*config.AssetRecord, error) {
+	if tenantID == "" {
+		return nil, errors.New(errors.ErrCodeInvalidParameter, "tenant_id is required")
+	}
 	if assetID == "" && macAddress == "" {
 		return nil, errors.New(errors.ErrCodeInvalidParameter, "asset_id or mac_address required")
 	}
@@ -147,7 +151,7 @@ func (s *AssetService) GetAsset(ctx context.Context, tenantID, assetID, macAddre
 	var err error
 
 	if assetID != "" {
-		rec, err = s.repo.FindByID(ctx, assetID)
+		rec, err = s.repo.FindByID(ctx, tenantID, assetID)
 	} else {
 		rec, err = s.repo.FindByMAC(ctx, tenantID, macAddress)
 	}
@@ -161,8 +165,21 @@ func (s *AssetService) GetAsset(ctx context.Context, tenantID, assetID, macAddre
 
 // ListAssets 列出租户资产
 func (s *AssetService) ListAssets(ctx context.Context, tenantID string, limit, offset int) ([]*config.AssetRecord, int, error) {
+	return s.ListAssetsByType(ctx, tenantID, "", limit, offset)
+}
+
+// ListAssetsByType 按 canonical 资产类型列出租户资产；空类型表示全部资产。
+func (s *AssetService) ListAssetsByType(ctx context.Context, tenantID, assetType string, limit, offset int) ([]*config.AssetRecord, int, error) {
+	return s.ListAssetsFiltered(ctx, tenantID, config.AssetListFilter{AssetType: assetType}, limit, offset)
+}
+
+// ListAssetsFiltered 按租户、类型和治理字段查询资产，不允许客户端覆盖租户范围。
+func (s *AssetService) ListAssetsFiltered(ctx context.Context, tenantID string, filter config.AssetListFilter, limit, offset int) ([]*config.AssetRecord, int, error) {
 	if tenantID == "" {
 		return nil, 0, errors.New(errors.ErrCodeInvalidParameter, "tenant_id is required")
+	}
+	if filter.AssetType != "" && !IsAssetType(filter.AssetType) {
+		return nil, 0, errors.New(errors.ErrCodeInvalidParameter, "invalid asset_type")
 	}
 	if limit <= 0 || limit > 100 {
 		limit = 50
@@ -171,7 +188,7 @@ func (s *AssetService) ListAssets(ctx context.Context, tenantID string, limit, o
 		offset = 0
 	}
 
-	recs, total, err := s.repo.ListByTenant(ctx, tenantID, limit, offset)
+	recs, total, err := s.repo.ListByTenantFiltered(ctx, tenantID, filter, limit, offset)
 	if err != nil {
 		s.logger.Error("ListAssets failed",
 			zap.String("tenant", tenantID),
@@ -180,6 +197,15 @@ func (s *AssetService) ListAssets(ctx context.Context, tenantID string, limit, o
 	}
 
 	return recs, total, nil
+}
+
+func IsAssetType(assetType string) bool {
+	switch assetType {
+	case "endpoint", "server", "network-device", "business-system", "unknown":
+		return true
+	default:
+		return false
+	}
 }
 
 // RecordMacIpBinding 批量记录 MAC→IP 绑定（来自探针 ARP/DHCP 被动发现）
@@ -226,7 +252,10 @@ func (s *AssetService) RecordMacIpBinding(ctx context.Context, bindings []*confi
 }
 
 // GetAssetHistory 获取资产变更历史
-func (s *AssetService) GetAssetHistory(ctx context.Context, assetID string, limit int) ([]*config.AssetEvent, error) {
+func (s *AssetService) GetAssetHistory(ctx context.Context, tenantID, assetID string, limit int) ([]*config.AssetEvent, error) {
+	if tenantID == "" {
+		return nil, errors.New(errors.ErrCodeInvalidParameter, "tenant_id is required")
+	}
 	if assetID == "" {
 		return nil, errors.New(errors.ErrCodeInvalidParameter, "asset_id is required")
 	}
@@ -234,7 +263,7 @@ func (s *AssetService) GetAssetHistory(ctx context.Context, assetID string, limi
 		limit = 20
 	}
 
-	events, err := s.repo.GetHistory(ctx, assetID, limit)
+	events, err := s.repo.GetHistory(ctx, tenantID, assetID, limit)
 	if err != nil {
 		s.logger.Error("GetAssetHistory failed",
 			zap.String("asset_id", assetID),
@@ -243,6 +272,226 @@ func (s *AssetService) GetAssetHistory(ctx context.Context, assetID string, limi
 	}
 
 	return events, nil
+}
+
+// GetAssetDetails returns persisted interface, service and ownership context.
+// The detail payload is stored with the canonical asset record so tenant and
+// asset identity checks stay identical to the base detail endpoint.
+func (s *AssetService) GetAssetDetails(ctx context.Context, tenantID, assetID string) (*config.AssetDetails, error) {
+	asset, err := s.GetAsset(ctx, tenantID, assetID, "")
+	if err != nil {
+		return nil, err
+	}
+	details := &config.AssetDetails{
+		AssetID:      asset.AssetID,
+		DataContract: "canonical-asset-detail-v1",
+		Ownership: config.AssetOwnership{
+			Campus:     asset.Campus,
+			Department: asset.Department,
+			Owner:      asset.Owner,
+		},
+		ObservedAt: asset.LastSeen,
+	}
+	if len(asset.Metadata) == 0 {
+		return details, nil
+	}
+	encoded, marshalErr := json.Marshal(asset.Metadata)
+	if marshalErr != nil {
+		return nil, fmt.Errorf("encode asset detail metadata: %w", marshalErr)
+	}
+	var stored struct {
+		DataContract      string                         `json:"data_contract"`
+		NetworkInterfaces []config.AssetNetworkInterface `json:"network_interfaces"`
+		OpenServices      []config.AssetOpenService      `json:"open_services"`
+		Ownership         config.AssetOwnership          `json:"ownership"`
+	}
+	if unmarshalErr := json.Unmarshal(encoded, &stored); unmarshalErr != nil {
+		return nil, fmt.Errorf("decode asset detail metadata: %w", unmarshalErr)
+	}
+	if stored.DataContract != "" {
+		details.DataContract = stored.DataContract
+	}
+	details.NetworkInterfaces = stored.NetworkInterfaces
+	details.OpenServices = stored.OpenServices
+	if stored.Ownership.Campus != "" {
+		details.Ownership.Campus = stored.Ownership.Campus
+	}
+	if stored.Ownership.Department != "" {
+		details.Ownership.Department = stored.Ownership.Department
+	}
+	if stored.Ownership.Owner != "" {
+		details.Ownership.Owner = stored.Ownership.Owner
+	}
+	details.Ownership.BusinessSystems = stored.Ownership.BusinessSystems
+	details.Ownership.AssetGroups = stored.Ownership.AssetGroups
+	details.Ownership.DataDomains = stored.Ownership.DataDomains
+	details.Ownership.Responsibilities = stored.Ownership.Responsibilities
+	details.Ownership.PendingFields = stored.Ownership.PendingFields
+	return details, nil
+}
+
+// GetAssetTopology returns a render-neutral graph for one tenant-scoped asset.
+// Discovery links win when available; persisted topology_graph metadata is the
+// fallback for asset types whose relationships originate in a CMDB/business API.
+func (s *AssetService) GetAssetTopology(ctx context.Context, tenantID, assetID string) (*config.AssetTopologyGraph, error) {
+	asset, err := s.GetAsset(ctx, tenantID, assetID, "")
+	if err != nil {
+		return nil, err
+	}
+	graph := &config.AssetTopologyGraph{
+		AssetID:     asset.AssetID,
+		Source:      "empty",
+		FixtureMode: asset.Source == "acceptance-fixture",
+		ObservedAt:  asset.LastSeen,
+		Nodes: []config.AssetTopologyNode{{
+			ID: asset.AssetID, Label: firstNonEmpty(asset.Hostname, asset.DisplayCode, asset.AssetID), Kind: asset.AssetType, Status: asset.Status,
+		}},
+		Edges: []config.AssetTopologyEdge{},
+	}
+
+	links, linkErr := s.repo.ListTopologyLinks(ctx, tenantID, assetID, 100)
+	if linkErr != nil {
+		return nil, fmt.Errorf("list topology links: %w", linkErr)
+	}
+	if len(links) > 0 {
+		graph.Source = "discovery_neighbors"
+		nodeIDs := map[string]struct{}{asset.AssetID: {}}
+		for index, link := range links {
+			sourceID := firstNonEmpty(link.SourceAssetID, prefixedIdentity("ip", link.SourceIP), prefixedIdentity("mac", link.SourceMAC), fmt.Sprintf("link-%s-source", link.LinkID))
+			targetID := firstNonEmpty(link.NeighborAssetID, prefixedIdentity("ip", link.NeighborIP), prefixedIdentity("mac", link.NeighborMAC), fmt.Sprintf("link-%s-neighbor", link.LinkID))
+			for _, node := range []config.AssetTopologyNode{
+				{ID: sourceID, Label: firstNonEmpty(link.SourceIP, link.SourceMAC, shortIdentity(sourceID)), Kind: "asset", Status: "observed"},
+				{ID: targetID, Label: firstNonEmpty(link.NeighborIP, link.NeighborMAC, shortIdentity(targetID)), Kind: "asset", Status: "observed"},
+			} {
+				if _, exists := nodeIDs[node.ID]; exists {
+					continue
+				}
+				nodeIDs[node.ID] = struct{}{}
+				graph.Nodes = append(graph.Nodes, node)
+			}
+			health := "healthy"
+			if link.Confidence > 0 && link.Confidence < 60 {
+				health = "warning"
+			}
+			graph.Edges = append(graph.Edges, config.AssetTopologyEdge{
+				ID: firstNonEmpty(link.LinkID, fmt.Sprintf("discovery-%d", index)), Source: sourceID, Target: targetID,
+				Relationship: "neighbor", Direction: "directed", Protocol: link.Protocol, Health: health,
+				Confidence: link.Confidence, ObservedAt: link.ObservedAt,
+			})
+			if link.ObservedAt.After(graph.ObservedAt) {
+				graph.ObservedAt = link.ObservedAt
+			}
+		}
+		return graph, nil
+	}
+
+	if len(asset.Metadata) == 0 {
+		return graph, nil
+	}
+	encoded, marshalErr := json.Marshal(asset.Metadata)
+	if marshalErr != nil {
+		return nil, fmt.Errorf("encode asset topology metadata: %w", marshalErr)
+	}
+	var stored struct {
+		TopologyGraph struct {
+			Nodes []config.AssetTopologyNode `json:"nodes"`
+			Edges []config.AssetTopologyEdge `json:"edges"`
+		} `json:"topology_graph"`
+		TopologyNodes []string `json:"topology_nodes"`
+	}
+	if unmarshalErr := json.Unmarshal(encoded, &stored); unmarshalErr != nil {
+		return nil, fmt.Errorf("decode asset topology metadata: %w", unmarshalErr)
+	}
+	if len(stored.TopologyGraph.Nodes) > 0 || len(stored.TopologyGraph.Edges) > 0 {
+		graph.Source = "asset_metadata_graph"
+		nodeIDs := map[string]struct{}{asset.AssetID: {}}
+		for index, node := range stored.TopologyGraph.Nodes {
+			if node.ID == "" || node.ID == "self" {
+				node.ID = fmt.Sprintf("metadata-node-%d", index)
+			}
+			if node.Label == "" {
+				node.Label = shortIdentity(node.ID)
+			}
+			if _, exists := nodeIDs[node.ID]; exists {
+				continue
+			}
+			nodeIDs[node.ID] = struct{}{}
+			graph.Nodes = append(graph.Nodes, node)
+		}
+		for index, edge := range stored.TopologyGraph.Edges {
+			if edge.Source == "self" {
+				edge.Source = asset.AssetID
+			}
+			if edge.Target == "self" {
+				edge.Target = asset.AssetID
+			}
+			if edge.ID == "" {
+				edge.ID = fmt.Sprintf("metadata-edge-%d", index)
+			}
+			if edge.Relationship == "" {
+				edge.Relationship = "related_to"
+			}
+			if _, sourceOK := nodeIDs[edge.Source]; !sourceOK {
+				continue
+			}
+			if _, targetOK := nodeIDs[edge.Target]; !targetOK {
+				continue
+			}
+			graph.Edges = append(graph.Edges, edge)
+		}
+		return graph, nil
+	}
+
+	if len(stored.TopologyNodes) > 0 {
+		graph.Source = "legacy_asset_metadata"
+		for index, label := range stored.TopologyNodes {
+			nodeID := fmt.Sprintf("metadata-node-%d", index)
+			graph.Nodes = append(graph.Nodes, config.AssetTopologyNode{ID: nodeID, Label: label, Kind: "related", Status: "unknown"})
+			graph.Edges = append(graph.Edges, config.AssetTopologyEdge{
+				ID: fmt.Sprintf("metadata-edge-%d", index), Source: asset.AssetID, Target: nodeID,
+				Relationship: "related_to", Direction: "directed", Health: "unknown",
+			})
+		}
+	}
+	return graph, nil
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if strings.TrimSpace(value) != "" {
+			return strings.TrimSpace(value)
+		}
+	}
+	return ""
+}
+
+func prefixedIdentity(prefix, value string) string {
+	if strings.TrimSpace(value) == "" {
+		return ""
+	}
+	return prefix + ":" + strings.TrimSpace(value)
+}
+
+func shortIdentity(value string) string {
+	if len(value) <= 18 {
+		return value
+	}
+	return value[:8]
+}
+
+func (s *AssetService) GetAssetStats(ctx context.Context, tenantID, assetType string) (*config.AssetStats, error) {
+	return s.GetAssetStatsFiltered(ctx, tenantID, config.AssetListFilter{AssetType: assetType})
+}
+
+// GetAssetStatsFiltered returns KPIs for exactly the same scope as the visible list.
+func (s *AssetService) GetAssetStatsFiltered(ctx context.Context, tenantID string, filter config.AssetListFilter) (*config.AssetStats, error) {
+	if tenantID == "" {
+		return nil, errors.New(errors.ErrCodeInvalidParameter, "tenant_id is required")
+	}
+	if filter.AssetType != "" && !IsAssetType(filter.AssetType) {
+		return nil, errors.New(errors.ErrCodeInvalidParameter, "invalid asset_type")
+	}
+	return s.repo.GetStatsFiltered(ctx, tenantID, filter)
 }
 
 // MarkInactiveAssets 标记 7 天无活跃的资产为 inactive（定时任务调用）

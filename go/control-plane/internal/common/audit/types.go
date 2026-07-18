@@ -27,12 +27,15 @@ const (
 	EventTypeRuleEnable  EventType = "RULE_ENABLE"
 	EventTypeRuleDisable EventType = "RULE_DISABLE"
 
-	EventTypeDeployCreate   EventType = "DEPLOY_CREATE"
-	EventTypeDeployGray     EventType = "DEPLOY_GRAY"
-	EventTypeDeployActivate EventType = "DEPLOY_ACTIVATE"
-	EventTypeDeployRollback EventType = "DEPLOY_ROLLBACK"
-	EventTypeDeployPause    EventType = "DEPLOY_PAUSE"
-	EventTypeDeployResume   EventType = "DEPLOY_RESUME"
+	EventTypeDeployCreate         EventType = "DEPLOY_CREATE"
+	EventTypeDeployGray           EventType = "DEPLOY_GRAY"
+	EventTypeDeployActivate       EventType = "DEPLOY_ACTIVATE"
+	EventTypeDeployRollback       EventType = "DEPLOY_ROLLBACK"
+	EventTypeDeployPause          EventType = "DEPLOY_PAUSE"
+	EventTypeDeployResume         EventType = "DEPLOY_RESUME"
+	EventTypeDeployScopeUpdate    EventType = "DEPLOY_SCOPE_UPDATE"
+	EventTypeDeployEvidenceExport EventType = "DEPLOY_EVIDENCE_EXPORT"
+	EventTypeDeployWorkflowUpdate EventType = "DEPLOY_WORKFLOW_UPDATE"
 
 	EventTypeAlertTriage   EventType = "ALERT_TRIAGE"
 	EventTypeAlertAssign   EventType = "ALERT_ASSIGN"
@@ -46,11 +49,17 @@ const (
 	EventTypeModelVersionCreate    EventType = "MODEL_VERSION_CREATE"
 	EventTypeModelVersionActivate  EventType = "MODEL_VERSION_ACTIVATE"
 	EventTypeModelVersionDeprecate EventType = "MODEL_VERSION_DEPRECATE"
+	EventTypeModelFeedbackAppend   EventType = "MODEL_FEEDBACK_SAMPLES_APPENDED"
+	EventTypeModelRetrainRequest   EventType = "MODEL_RETRAIN_REQUESTED"
+	EventTypeModelEvaluation       EventType = "MODEL_EVALUATION_REQUESTED"
+	EventTypeModelVersionRollback  EventType = "MODEL_VERSION_ROLLED_BACK"
+	EventTypeModelContextAction    EventType = "MODEL_CONTEXT_ACTION_REQUESTED"
 
-	EventTypePcapCut      EventType = "PCAP_CUT"
-	EventTypePcapCancel   EventType = "PCAP_CANCEL"
-	EventTypePcapDownload EventType = "PCAP_DOWNLOAD"
-	EventTypeArkimeAccess EventType = "ARKIME_ACCESS"
+	EventTypePcapCut             EventType = "PCAP_CUT"
+	EventTypePcapCancel          EventType = "PCAP_CANCEL"
+	EventTypePcapDownload        EventType = "PCAP_DOWNLOAD"
+	EventTypePcapIntegrityVerify EventType = "PCAP_INTEGRITY_VERIFY"
+	EventTypeArkimeAccess        EventType = "ARKIME_ACCESS"
 
 	EventTypeExportAlerts   EventType = "EXPORT_ALERTS"
 	EventTypeExportSessions EventType = "EXPORT_SESSIONS"
@@ -160,12 +169,14 @@ var eventTypeRegistry = map[EventType]EventTypeInfo{
 	EventTypeRuleEnable:  {EventTypeRuleEnable, "Rule enabled", SensitivityMedium, "rule_management"},
 	EventTypeRuleDisable: {EventTypeRuleDisable, "Rule disabled", SensitivityMedium, "rule_management"},
 
-	EventTypeDeployCreate:   {EventTypeDeployCreate, "Deployment created", SensitivityMedium, "deployment"},
-	EventTypeDeployGray:     {EventTypeDeployGray, "Gray deployment started", SensitivityHigh, "deployment"},
-	EventTypeDeployActivate: {EventTypeDeployActivate, "Deployment activated", SensitivityHigh, "deployment"},
-	EventTypeDeployRollback: {EventTypeDeployRollback, "Deployment rolled back", SensitivityCritical, "deployment"},
-	EventTypeDeployPause:    {EventTypeDeployPause, "Deployment paused", SensitivityMedium, "deployment"},
-	EventTypeDeployResume:   {EventTypeDeployResume, "Deployment resumed", SensitivityMedium, "deployment"},
+	EventTypeDeployCreate:         {EventTypeDeployCreate, "Deployment created", SensitivityMedium, "deployment"},
+	EventTypeDeployGray:           {EventTypeDeployGray, "Gray deployment started", SensitivityHigh, "deployment"},
+	EventTypeDeployActivate:       {EventTypeDeployActivate, "Deployment activated", SensitivityHigh, "deployment"},
+	EventTypeDeployRollback:       {EventTypeDeployRollback, "Deployment rolled back", SensitivityCritical, "deployment"},
+	EventTypeDeployPause:          {EventTypeDeployPause, "Deployment paused", SensitivityMedium, "deployment"},
+	EventTypeDeployResume:         {EventTypeDeployResume, "Deployment resumed", SensitivityMedium, "deployment"},
+	EventTypeDeployScopeUpdate:    {EventTypeDeployScopeUpdate, "Deployment scope updated", SensitivityHigh, "deployment"},
+	EventTypeDeployEvidenceExport: {EventTypeDeployEvidenceExport, "Deployment evidence exported", SensitivityHigh, "deployment"},
 
 	EventTypeModelCreate:           {EventTypeModelCreate, "Model created", SensitivityMedium, "model_registry"},
 	EventTypeModelUpdate:           {EventTypeModelUpdate, "Model updated", SensitivityMedium, "model_registry"},
@@ -173,6 +184,11 @@ var eventTypeRegistry = map[EventType]EventTypeInfo{
 	EventTypeModelVersionCreate:    {EventTypeModelVersionCreate, "Model version registered", SensitivityMedium, "model_registry"},
 	EventTypeModelVersionActivate:  {EventTypeModelVersionActivate, "Model version activated", SensitivityHigh, "model_registry"},
 	EventTypeModelVersionDeprecate: {EventTypeModelVersionDeprecate, "Model version deprecated", SensitivityHigh, "model_registry"},
+	EventTypeModelFeedbackAppend:   {EventTypeModelFeedbackAppend, "Model feedback samples appended", SensitivityMedium, "model_registry"},
+	EventTypeModelRetrainRequest:   {EventTypeModelRetrainRequest, "Model retraining requested", SensitivityHigh, "model_registry"},
+	EventTypeModelEvaluation:       {EventTypeModelEvaluation, "Model evaluation requested", SensitivityMedium, "model_registry"},
+	EventTypeModelVersionRollback:  {EventTypeModelVersionRollback, "Model version rollback requested", SensitivityHigh, "model_registry"},
+	EventTypeModelContextAction:    {EventTypeModelContextAction, "Model context action requested", SensitivityMedium, "model_registry"},
 
 	EventTypeAlertTriage:   {EventTypeAlertTriage, "Alert triaged", SensitivityLow, "alert"},
 	EventTypeAlertAssign:   {EventTypeAlertAssign, "Alert assigned", SensitivityLow, "alert"},

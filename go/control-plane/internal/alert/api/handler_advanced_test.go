@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/notification"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/playbook"
+	authmodel "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/model"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/dataquality"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/httpx"
 )
@@ -88,6 +90,38 @@ func decodeAdvancedBody(t *testing.T, rr *httptest.ResponseRecorder) map[string]
 	return body
 }
 
+func TestDataQualityTablePaginationValidation(t *testing.T) {
+	router := newAdvancedTestRouter(NewAdvancedHandler(nil, nil, nil, nil, &AdvancedRepository{}))
+	tests := []struct {
+		name string
+		path string
+		want int
+	}{
+		{name: "supported dataset defaults pagination", path: "/api/v1/data-quality/tables/fieldQualityRows", want: http.StatusNotFound},
+		{name: "unsupported dataset", path: "/api/v1/data-quality/tables/privateRows", want: http.StatusBadRequest},
+		{name: "page must be positive", path: "/api/v1/data-quality/tables/fieldQualityRows?page=0", want: http.StatusBadRequest},
+		{name: "page must be numeric", path: "/api/v1/data-quality/tables/fieldQualityRows?page=next", want: http.StatusBadRequest},
+		{name: "page size must be positive", path: "/api/v1/data-quality/tables/fieldQualityRows?page_size=0", want: http.StatusBadRequest},
+		{name: "page size is bounded", path: "/api/v1/data-quality/tables/fieldQualityRows?page_size=101", want: http.StatusBadRequest},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			rr := doAdvancedRequestWithPermissions(
+				t,
+				router,
+				http.MethodGet,
+				tc.path,
+				"",
+				[]string{"viewer"},
+				[]string{authmodel.ScopeDataQualityRead},
+			)
+			if rr.Code != tc.want {
+				t.Fatalf("status=%d want=%d body=%s", rr.Code, tc.want, rr.Body.String())
+			}
+		})
+	}
+}
+
 func TestAdvancedHandlerUnavailableDependenciesReturnJSON(t *testing.T) {
 	router := newAdvancedTestRouter(NewAdvancedHandler(nil, nil, nil, nil, nil))
 
@@ -101,6 +135,7 @@ func TestAdvancedHandlerUnavailableDependenciesReturnJSON(t *testing.T) {
 		{name: "data quality unavailable", method: http.MethodGet, path: "/api/v1/data-quality", want: http.StatusServiceUnavailable},
 		{name: "latency chain unavailable", method: http.MethodGet, path: "/api/v1/data-quality/latency-chain", want: http.StatusServiceUnavailable},
 		{name: "data quality baseline unavailable", method: http.MethodPost, path: "/api/v1/data-quality/baseline", want: http.StatusServiceUnavailable},
+		{name: "data quality action unavailable", method: http.MethodPost, path: "/api/v1/data-quality/actions", want: http.StatusServiceUnavailable},
 		{name: "playbook catalog unavailable", method: http.MethodGet, path: "/api/v1/playbooks/catalog", want: http.StatusServiceUnavailable},
 		{name: "playbook executions empty without repo", method: http.MethodGet, path: "/api/v1/playbooks/executions", want: http.StatusOK},
 		{name: "notification test unavailable", method: http.MethodPost, path: "/api/v1/notifications/test", want: http.StatusServiceUnavailable},
@@ -111,6 +146,16 @@ func TestAdvancedHandlerUnavailableDependenciesReturnJSON(t *testing.T) {
 			var rr *httptest.ResponseRecorder
 			if tc.path == "/api/v1/notifications/test" {
 				rr = doAdvancedRequestWithPermissions(t, router, tc.method, tc.path, "", []string{"admin"}, []string{"admin:*"})
+			} else if strings.HasPrefix(tc.path, "/api/v1/data-quality") {
+				permission := authmodel.ScopeDataQualityRead
+				body := ""
+				if tc.method == http.MethodPost {
+					permission = authmodel.ScopeDataQualityWrite
+				}
+				if tc.path == "/api/v1/data-quality/actions" {
+					body = `{"view":"overview","action":"inspect","target":"current-selection","dry_run":true}`
+				}
+				rr = doAdvancedRequestWithPermissions(t, router, tc.method, tc.path, body, []string{"operator"}, []string{permission})
 			} else {
 				rr = doAdvancedRequest(t, router, tc.method, tc.path, "")
 			}
@@ -173,13 +218,38 @@ func TestAdvancedHandlerLatencyChainRejectsInvalidLookback(t *testing.T) {
 	monitor := dataquality.NewMonitor(nil, dataquality.MonitorConfig{}, zap.NewNop())
 	router := newAdvancedTestRouter(NewAdvancedHandler(nil, nil, nil, monitor, nil))
 
-	rr := doAdvancedRequest(t, router, http.MethodGet, "/api/v1/data-quality/latency-chain?lookback_minutes=0", "")
+	rr := doAdvancedRequestWithPermissions(t, router, http.MethodGet, "/api/v1/data-quality/latency-chain?lookback_minutes=0", "", []string{"viewer"}, []string{authmodel.ScopeDataQualityRead})
 	if rr.Code != http.StatusBadRequest {
 		t.Fatalf("status=%d want=%d body=%s", rr.Code, http.StatusBadRequest, rr.Body.String())
 	}
 	body := decodeAdvancedBody(t, rr)
 	if body["success"] != false {
 		t.Fatalf("response should fail for invalid lookback: %#v", body)
+	}
+}
+
+func TestDataQualityPermissionAndActionValidation(t *testing.T) {
+	router := newAdvancedTestRouter(NewAdvancedHandler(nil, nil, nil, nil, nil))
+
+	readDenied := doAdvancedRequestWithPermissions(t, router, http.MethodGet, "/api/v1/data-quality", "", []string{"viewer"}, []string{authmodel.ScopeAlertRead})
+	if readDenied.Code != http.StatusForbidden {
+		t.Fatalf("read without scope status=%d body=%s", readDenied.Code, readDenied.Body.String())
+	}
+	tableDenied := doAdvancedRequestWithPermissions(t, router, http.MethodGet, "/api/v1/data-quality/tables/fieldQualityRows?page=2&page_size=5", "", []string{"viewer"}, []string{authmodel.ScopeAlertRead})
+	if tableDenied.Code != http.StatusForbidden {
+		t.Fatalf("table read without scope status=%d body=%s", tableDenied.Code, tableDenied.Body.String())
+	}
+	actionDenied := doAdvancedRequestWithPermissions(t, router, http.MethodPost, "/api/v1/data-quality/actions", `{"view":"overview","action":"inspect","target":"current-selection","dry_run":true}`, []string{"viewer"}, []string{authmodel.ScopeDataQualityRead})
+	if actionDenied.Code != http.StatusForbidden {
+		t.Fatalf("write with read scope status=%d body=%s", actionDenied.Code, actionDenied.Body.String())
+	}
+	invalidView := doAdvancedRequestWithPermissions(t, router, http.MethodPost, "/api/v1/data-quality/actions", `{"view":"unknown","action":"inspect","target":"current-selection","dry_run":true}`, []string{"operator"}, []string{authmodel.ScopeDataQualityWrite})
+	if invalidView.Code != http.StatusBadRequest {
+		t.Fatalf("invalid view status=%d body=%s", invalidView.Code, invalidView.Body.String())
+	}
+	unconfirmed := doAdvancedRequestWithPermissions(t, router, http.MethodPost, "/api/v1/data-quality/actions", `{"view":"overview","action":"repair","target":"dlq.v1","dry_run":false,"reason":"short"}`, []string{"operator"}, []string{authmodel.ScopeDataQualityWrite})
+	if unconfirmed.Code != http.StatusBadRequest {
+		t.Fatalf("unconfirmed write status=%d body=%s", unconfirmed.Code, unconfirmed.Body.String())
 	}
 }
 

@@ -155,11 +155,11 @@ func (r *ModelRepository) UpdateModel(ctx context.Context, m *model.Model) error
 
 	query := `
 		UPDATE models SET name = $1, model_type = $2, description = $3, metadata = $4, updated_at = $5
-		WHERE model_id = $6
+		WHERE model_id = $6 AND tenant_id = $7
 	`
 
 	result, err := r.db.ExecContext(ctx, query,
-		m.Name, m.ModelType, m.Description, m.MetadataJSON, m.UpdatedAt, m.ModelID,
+		m.Name, m.ModelType, m.Description, m.MetadataJSON, m.UpdatedAt, m.ModelID, m.TenantID,
 	)
 	if err != nil {
 		r.logger.Error("Failed to update model", zap.Error(err))
@@ -186,6 +186,246 @@ func (r *ModelRepository) DeleteModel(ctx context.Context, tenantID, modelID str
 	rows, _ := result.RowsAffected()
 	if rows == 0 {
 		return errors.Newf(errors.ErrCodeModelNotFound, "model not found: %s", modelID)
+	}
+	return nil
+}
+
+// CreateModelAction persists a queued model action and its audit row in one
+// transaction. Returning 202 is therefore impossible when audit persistence
+// fails.
+func (r *ModelRepository) CreateModelAction(ctx context.Context, job *model.ModelActionJob, auditAction, ipAddr, userAgent string) error {
+	payload, err := json.Marshal(job.Payload)
+	if err != nil {
+		return errors.Wrap(err, errors.ErrCodeSerializationError, "failed to marshal model action payload")
+	}
+
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to begin model action transaction")
+	}
+	defer tx.Rollback()
+
+	if job.Action == "request-retraining" {
+		lockKey := fmt.Sprintf("model-retrain:%s:%s", job.TenantID, job.ModelID)
+		if _, err := tx.ExecContext(ctx, `SELECT pg_advisory_xact_lock(hashtext($1))`, lockKey); err != nil {
+			return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to lock model retraining request")
+		}
+		var duplicate bool
+		if err := tx.QueryRowContext(ctx, `
+			SELECT EXISTS (
+				SELECT 1 FROM model_action_jobs
+				WHERE tenant_id = $1 AND model_id = $2::uuid
+				  AND action = 'request-retraining' AND status IN ('queued', 'running')
+			)
+		`, job.TenantID, job.ModelID).Scan(&duplicate); err != nil {
+			return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to check duplicate model retraining request")
+		}
+		if duplicate {
+			return errors.New(errors.ErrCodeInvalidStateTransition, "a retraining job is already queued or running for this model")
+		}
+	}
+
+	result, err := tx.ExecContext(ctx, `
+		INSERT INTO model_action_jobs (
+			job_id, action_id, tenant_id, model_id, version, action, target,
+			payload, status, requested_by, created_at
+		)
+		SELECT $1, $2, $3, model_id, $5, $6, $7, $8::jsonb, $9, $10, $11
+		FROM models
+		WHERE model_id = $4::uuid AND tenant_id = $3
+	`, job.JobID, job.ActionID, job.TenantID, job.ModelID, job.Version, job.Action,
+		job.Target, string(payload), job.Status, job.RequestedBy, job.CreatedAt)
+	if err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to create model action job")
+	}
+	if affected, _ := result.RowsAffected(); affected != 1 {
+		return errors.Newf(errors.ErrCodeModelNotFound, "model not found for tenant: %s", job.ModelID)
+	}
+
+	detail, err := json.Marshal(map[string]interface{}{
+		"action_id": job.ActionID,
+		"job_id":    job.JobID,
+		"version":   job.Version,
+		"target":    job.Target,
+		"status":    job.Status,
+	})
+	if err != nil {
+		return errors.Wrap(err, errors.ErrCodeSerializationError, "failed to marshal model action audit detail")
+	}
+	if _, err := tx.ExecContext(ctx, `
+		INSERT INTO audit_logs (tenant_id, user_id, action, object_type, object_id, detail, ip_addr, user_agent)
+		VALUES ($1, $2, $3, 'model', $4, $5::jsonb, $6, $7)
+	`, job.TenantID, job.RequestedBy, auditAction, job.ModelID, string(detail), ipAddr, userAgent); err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to persist model action audit")
+	}
+
+	if err := tx.Commit(); err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to commit model action transaction")
+	}
+	return nil
+}
+
+func (r *ModelRepository) ListModelWorkbenchItems(ctx context.Context, tenantID, modelID string) ([]*model.ModelWorkbenchItem, error) {
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT item_id, tenant_id, model_id::text, category, ordinal, payload, scenario_id, occurred_at
+		FROM model_workbench_items
+		WHERE tenant_id = $1 AND model_id = $2::uuid
+		ORDER BY category, ordinal, occurred_at DESC
+	`, tenantID, modelID)
+	if err != nil {
+		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to query model workbench items")
+	}
+	defer rows.Close()
+	items := make([]*model.ModelWorkbenchItem, 0)
+	for rows.Next() {
+		item := &model.ModelWorkbenchItem{}
+		if err := rows.Scan(&item.ItemID, &item.TenantID, &item.ModelID, &item.Category, &item.Ordinal, &item.Payload, &item.ScenarioID, &item.OccurredAt); err != nil {
+			return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to scan model workbench item")
+		}
+		items = append(items, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to iterate model workbench items")
+	}
+	return items, nil
+}
+
+func (r *ModelRepository) ListModelActions(ctx context.Context, tenantID, modelID string, limit int) ([]*model.ModelActionJob, error) {
+	if limit <= 0 || limit > 100 {
+		limit = 20
+	}
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT job_id, action_id, tenant_id, model_id::text, version, action, target,
+		       payload, status, requested_by, created_at
+		FROM model_action_jobs
+		WHERE tenant_id = $1 AND model_id = $2::uuid
+		ORDER BY created_at DESC
+		LIMIT $3
+	`, tenantID, modelID, limit)
+	if err != nil {
+		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to query model actions")
+	}
+	defer rows.Close()
+	actions := make([]*model.ModelActionJob, 0)
+	for rows.Next() {
+		job := &model.ModelActionJob{}
+		var payload []byte
+		if err := rows.Scan(&job.JobID, &job.ActionID, &job.TenantID, &job.ModelID, &job.Version, &job.Action,
+			&job.Target, &payload, &job.Status, &job.RequestedBy, &job.CreatedAt); err != nil {
+			return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to scan model action")
+		}
+		if len(payload) > 0 {
+			if err := json.Unmarshal(payload, &job.Payload); err != nil {
+				return nil, errors.Wrap(err, errors.ErrCodeSerializationError, "failed to decode model action payload")
+			}
+		}
+		actions = append(actions, job)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to iterate model actions")
+	}
+	return actions, nil
+}
+
+// ClaimNextModelAction atomically assigns one queued job to this worker. The
+// SKIP LOCKED claim is safe when rule-manager has multiple replicas.
+func (r *ModelRepository) ClaimNextModelAction(ctx context.Context) (*model.ModelActionJob, error) {
+	job := &model.ModelActionJob{}
+	var payload []byte
+	err := r.db.QueryRowContext(ctx, `
+		WITH next_job AS (
+			SELECT job_id
+			FROM model_action_jobs
+			WHERE status = 'queued'
+			ORDER BY created_at
+			FOR UPDATE SKIP LOCKED
+			LIMIT 1
+		)
+		UPDATE model_action_jobs AS jobs
+		SET status = 'running', updated_at = now()
+		FROM next_job
+		WHERE jobs.job_id = next_job.job_id
+		RETURNING jobs.job_id, jobs.action_id, jobs.tenant_id, jobs.model_id::text,
+		          jobs.version, jobs.action, jobs.target, jobs.payload, jobs.status,
+		          jobs.requested_by, jobs.created_at
+	`).Scan(&job.JobID, &job.ActionID, &job.TenantID, &job.ModelID, &job.Version,
+		&job.Action, &job.Target, &payload, &job.Status, &job.RequestedBy, &job.CreatedAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to claim model action")
+	}
+	if len(payload) > 0 {
+		if err := json.Unmarshal(payload, &job.Payload); err != nil {
+			return nil, errors.Wrap(err, errors.ErrCodeSerializationError, "failed to decode claimed model action")
+		}
+	}
+	return job, nil
+}
+
+func (r *ModelRepository) RecoverStaleModelActions(ctx context.Context, age time.Duration) error {
+	if age <= 0 {
+		age = 5 * time.Minute
+	}
+	_, err := r.db.ExecContext(ctx, `
+		UPDATE model_action_jobs
+		SET status = 'queued', updated_at = now()
+		WHERE status = 'running' AND updated_at < now() - ($1 * interval '1 second')
+		  AND NOT EXISTS (
+			SELECT 1 FROM model_update_outbox
+			WHERE action_job_id = model_action_jobs.job_id
+			  AND status IN ('pending', 'processing')
+		  )
+	`, age.Seconds())
+	if err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to recover stale model actions")
+	}
+	return nil
+}
+
+// FinishModelAction persists the terminal job state and matching audit row in
+// one transaction. For asynchronous MLOps actions, completed means the durable
+// Kafka dispatch was acknowledged, not that training itself finished.
+func (r *ModelRepository) FinishModelAction(ctx context.Context, job *model.ModelActionJob, status, auditAction, failure string) error {
+	if status != "completed" && status != "failed" {
+		return errors.New(errors.ErrCodeInvalidParameter, "invalid model action terminal status")
+	}
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to begin model action completion")
+	}
+	defer tx.Rollback()
+	result, err := tx.ExecContext(ctx, `
+		UPDATE model_action_jobs SET status = $1, updated_at = now()
+		WHERE job_id = $2 AND status = 'running'
+	`, status, job.JobID)
+	if err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to finish model action")
+	}
+	if affected, _ := result.RowsAffected(); affected != 1 {
+		return errors.New(errors.ErrCodeConcurrentModify, "model action is no longer running")
+	}
+	detail, err := json.Marshal(map[string]interface{}{
+		"action_id": job.ActionID,
+		"job_id":    job.JobID,
+		"action":    job.Action,
+		"version":   job.Version,
+		"status":    status,
+		"failure":   failure,
+		"stage":     "dispatcher",
+	})
+	if err != nil {
+		return errors.Wrap(err, errors.ErrCodeSerializationError, "failed to marshal model action completion audit")
+	}
+	if _, err := tx.ExecContext(ctx, `
+		INSERT INTO audit_logs (tenant_id, user_id, action, object_type, object_id, detail)
+		VALUES ($1, $2, $3, 'model', $4, $5::jsonb)
+	`, job.TenantID, job.RequestedBy, auditAction, job.ModelID, string(detail)); err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to persist model action completion audit")
+	}
+	if err := tx.Commit(); err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to commit model action completion")
 	}
 	return nil
 }
@@ -286,14 +526,13 @@ func (r *ModelRepository) CreateModelVersion(ctx context.Context, mv *model.Mode
 	query := `
 		INSERT INTO model_versions (model_version, model_id, tenant_id, feature_set_id, artifact_uri,
 		                           metrics, status, created_by, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-		ON CONFLICT (model_version) DO UPDATE SET
-			artifact_uri = EXCLUDED.artifact_uri,
-			metrics = EXCLUDED.metrics,
-			updated_at = EXCLUDED.updated_at
+		VALUES ($1, $2, $3, $4, $5, $6, $7,
+		        (SELECT user_id FROM users WHERE user_id::text = $8 AND tenant_id = $3 LIMIT 1),
+		        $9, $10)
+		ON CONFLICT (model_version) DO NOTHING
 	`
 
-	_, err := r.db.ExecContext(ctx, query,
+	result, err := r.db.ExecContext(ctx, query,
 		mv.ModelVersion, mv.ModelID, mv.TenantID, mv.FeatureSetID,
 		mv.ArtifactURI, mv.MetricsJSON, mv.Status, mv.CreatedBy,
 		mv.CreatedAt, mv.UpdatedAt,
@@ -301,6 +540,13 @@ func (r *ModelRepository) CreateModelVersion(ctx context.Context, mv *model.Mode
 	if err != nil {
 		r.logger.Error("Failed to create model version", zap.Error(err))
 		return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to create model version")
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to confirm model version creation")
+	}
+	if rows != 1 {
+		return errors.Newf(errors.ErrCodeVersionConflict, "model version already exists: %s", mv.ModelVersion)
 	}
 	return nil
 }
@@ -610,8 +856,8 @@ func (r *ModelRepository) ExportModel(ctx context.Context, modelID string) (map[
 	}
 
 	export := map[string]interface{}{
-		"model":    m,
-		"versions": versions,
+		"model":       m,
+		"versions":    versions,
 		"exported_at": time.Now().UTC().Format(time.RFC3339),
 	}
 
@@ -643,9 +889,9 @@ func (r *ModelRepository) ImportModelVersions(ctx context.Context, versions []*m
 
 // ModelExport 模型导出结构
 type ModelExport struct {
-	Models    []*model.Model        `json:"models"`
-	Versions  []*model.ModelVersion `json:"versions"`
-	ExportedAt string               `json:"exported_at"`
+	Models     []*model.Model        `json:"models"`
+	Versions   []*model.ModelVersion `json:"versions"`
+	ExportedAt string                `json:"exported_at"`
 }
 
 // MarshalExport 序列化导出数据

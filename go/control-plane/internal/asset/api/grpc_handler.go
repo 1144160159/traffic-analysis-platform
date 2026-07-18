@@ -147,7 +147,7 @@ func (h *AssetHandler) GetAssetHistory(ctx context.Context, req *pb.GetAssetHist
 		limit = 20
 	}
 
-	events, err := h.svc.GetAssetHistory(ctx, req.AssetId, limit)
+	events, err := h.svc.GetAssetHistory(ctx, req.TenantId, req.AssetId, limit)
 	if err != nil {
 		h.logError("GetAssetHistory failed", zap.String("asset_id", req.AssetId), zap.Error(err))
 		return nil, status.Error(codes.Internal, err.Error())

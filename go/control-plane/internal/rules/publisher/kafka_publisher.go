@@ -15,6 +15,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -32,10 +33,12 @@ import (
 // PublisherConfig 发布器配置
 type PublisherConfig struct {
 	// Kafka 配置
-	Brokers    []string
-	RuleTopic  string
-	ModelTopic string
-	AuditTopic string
+	Brokers          []string
+	RuleTopic        string
+	ModelTopic       string
+	ModelActionTopic string
+	DeploymentTopic  string
+	AuditTopic       string
 
 	// 超时配置
 	SendTimeout    time.Duration
@@ -61,16 +64,18 @@ type PublisherConfig struct {
 // DefaultPublisherConfig 默认配置
 func DefaultPublisherConfig() PublisherConfig {
 	return PublisherConfig{
-		SendTimeout:    5 * time.Second,
-		PublishTimeout: 30 * time.Second,
-		MaxRetries:     3,
-		RetryBackoff:   100 * time.Millisecond,
-		BatchSize:      100,
-		BatchTimeout:   100 * time.Millisecond,
-		Compression:    "lz4",
-		RequiredAcks:   "all",
-		Async:          false,
-		ModelTopic:     "model-updates",
+		SendTimeout:      5 * time.Second,
+		PublishTimeout:   30 * time.Second,
+		MaxRetries:       3,
+		RetryBackoff:     100 * time.Millisecond,
+		BatchSize:        100,
+		BatchTimeout:     100 * time.Millisecond,
+		Compression:      "lz4",
+		RequiredAcks:     "all",
+		Async:            false,
+		ModelTopic:       "model-updates",
+		ModelActionTopic: "model-actions.v1",
+		DeploymentTopic:  "deployment.events.v1",
 	}
 }
 
@@ -109,11 +114,13 @@ type PublisherMetrics struct {
 
 // KafkaPublisher Kafka 发布器
 type KafkaPublisher struct {
-	ruleProducer  *kafka.Producer
-	modelProducer *kafka.Producer
-	auditProducer *kafka.Producer
-	config        PublisherConfig
-	logger        *zap.Logger
+	ruleProducer        *kafka.Producer
+	modelProducer       *kafka.Producer
+	modelActionProducer *kafka.Producer
+	deploymentProducer  *kafka.Producer
+	auditProducer       *kafka.Producer
+	config              PublisherConfig
+	logger              *zap.Logger
 
 	// 指标
 	metrics PublisherMetrics
@@ -207,19 +214,94 @@ func NewKafkaPublisherWithConfig(cfg PublisherConfig, logger *zap.Logger) (*Kafk
 		}
 	}
 
+	// 模型操作请求使用独立契约，避免污染只承载热更新事件的 model-updates。
+	var modelActionProducer *kafka.Producer
+	if cfg.ModelActionTopic != "" {
+		actionCfg := kafka.ProducerConfig{
+			Brokers: cfg.Brokers, Topic: cfg.ModelActionTopic, BatchSize: 1,
+			BatchTimeout: 10 * time.Millisecond, MaxAttempts: cfg.MaxRetries,
+			RequiredAcks: cfg.RequiredAcks, Compression: cfg.Compression, Async: false,
+			Security: cfg.Security,
+		}
+		modelActionProducer, err = kafka.NewProducer(actionCfg, logger)
+		if err != nil {
+			ruleProducer.Close()
+			if auditProducer != nil {
+				auditProducer.Close()
+			}
+			if modelProducer != nil {
+				modelProducer.Close()
+			}
+			return nil, fmt.Errorf("failed to create model action producer: %w", err)
+		}
+	}
+
+	// 部署生命周期事件使用独立 topic，避免污染只承载 RuleCommand 的
+	// rule.updates 契约。该 producer 同步确认，durable outbox 负责重试。
+	var deploymentProducer *kafka.Producer
+	if cfg.DeploymentTopic != "" {
+		deploymentCfg := kafka.ProducerConfig{
+			Brokers: cfg.Brokers, Topic: cfg.DeploymentTopic, BatchSize: 1,
+			BatchTimeout: 10 * time.Millisecond, MaxAttempts: cfg.MaxRetries,
+			RequiredAcks: cfg.RequiredAcks, Compression: cfg.Compression, Async: false,
+			Security: cfg.Security,
+		}
+		deploymentProducer, err = kafka.NewProducer(deploymentCfg, logger)
+		if err != nil {
+			ruleProducer.Close()
+			if auditProducer != nil {
+				auditProducer.Close()
+			}
+			if modelProducer != nil {
+				modelProducer.Close()
+			}
+			if modelActionProducer != nil {
+				modelActionProducer.Close()
+			}
+			return nil, fmt.Errorf("failed to create deployment producer: %w", err)
+		}
+	}
+
 	logger.Info("Kafka publishers initialized",
 		zap.String("rule_topic", cfg.RuleTopic),
 		zap.String("model_topic", cfg.ModelTopic),
+		zap.String("model_action_topic", cfg.ModelActionTopic),
+		zap.String("deployment_topic", cfg.DeploymentTopic),
 		zap.String("audit_topic", cfg.AuditTopic),
 		zap.Strings("brokers", cfg.Brokers))
 
 	return &KafkaPublisher{
-		ruleProducer:  ruleProducer,
-		modelProducer: modelProducer,
-		auditProducer: auditProducer,
-		config:        cfg,
-		logger:        logger,
+		ruleProducer:        ruleProducer,
+		modelProducer:       modelProducer,
+		modelActionProducer: modelActionProducer,
+		deploymentProducer:  deploymentProducer,
+		auditProducer:       auditProducer,
+		config:              cfg,
+		logger:              logger,
 	}, nil
+}
+
+// PublishModelAction publishes a durable MLOps work request to the dedicated
+// model-actions topic. This topic has a different schema from model-updates.
+func (p *KafkaPublisher) PublishModelAction(ctx context.Context, key string, value []byte) error {
+	if atomic.LoadInt32(&p.closed) == 1 {
+		return errors.New(errors.ErrCodeServiceUnavailable, "publisher is closed")
+	}
+	if p.modelActionProducer == nil {
+		return errors.New(errors.ErrCodeServiceUnavailable, "model action producer is not configured")
+	}
+	ctx, cancel := context.WithTimeout(ctx, p.config.SendTimeout)
+	defer cancel()
+	headers := []kafka.MessageHeader{
+		{Key: "event_id", Value: uuid.NewString()},
+		{Key: "event_type", Value: "model_action_requested"},
+		{Key: "event_ts", Value: fmt.Sprintf("%d", time.Now().UnixMilli())},
+		{Key: "content_type", Value: "application/json"},
+	}
+	if err := p.modelActionProducer.Send(ctx, key, value, headers...); err != nil {
+		return errors.Wrap(err, errors.ErrCodeKafkaError, "failed to publish model action")
+	}
+	return nil
 }
 
 // PublishRuleCommand 发布规则命令
@@ -584,18 +666,13 @@ func (p *KafkaPublisher) PublishBatchRuleCommands(ctx context.Context, commands 
 
 // PublishDeploymentEvent 发布部署事件
 func (p *KafkaPublisher) PublishDeploymentEvent(ctx context.Context, deployment *model.Deployment, action, operatorID string) error {
-	if atomic.LoadInt32(&p.closed) == 1 {
-		return errors.New(errors.ErrCodeServiceUnavailable, "publisher is closed")
-	}
+	return p.PublishDeploymentEventWithID(ctx, deployment, action, operatorID, uuid.New().String(), time.Now().UTC())
+}
 
-	ctx, span := otel.StartSpan(ctx, "KafkaPublisher.PublishDeploymentEvent")
-	defer span.End()
-
-	eventID := uuid.New().String()
-	now := time.Now()
-
-	event := map[string]interface{}{
+func buildDeploymentEventPayload(deployment *model.Deployment, action, operatorID, eventID string, occurredAt time.Time) map[string]interface{} {
+	return map[string]interface{}{
 		"event_id":       eventID,
+		"schema_version": 1,
 		"event_type":     "deployment_event",
 		"action":         action,
 		"deployment_id":  deployment.DeploymentID,
@@ -606,8 +683,29 @@ func (p *KafkaPublisher) PublishDeploymentEvent(ctx context.Context, deployment 
 		"scope":          deployment.Scope,
 		"status":         deployment.Status,
 		"operator_id":    operatorID,
-		"timestamp":      now.UnixMilli(),
+		"timestamp":      occurredAt.UnixMilli(),
 	}
+}
+
+// PublishDeploymentEventWithID publishes a durable outbox envelope without
+// regenerating identity or occurrence time on retry. This keeps downstream
+// consumer deduplication stable under at-least-once delivery.
+func (p *KafkaPublisher) PublishDeploymentEventWithID(ctx context.Context, deployment *model.Deployment, action, operatorID, eventID string, occurredAt time.Time) error {
+	if atomic.LoadInt32(&p.closed) == 1 {
+		return errors.New(errors.ErrCodeServiceUnavailable, "publisher is closed")
+	}
+
+	ctx, span := otel.StartSpan(ctx, "KafkaPublisher.PublishDeploymentEvent")
+	defer span.End()
+
+	if strings.TrimSpace(eventID) == "" {
+		eventID = uuid.New().String()
+	}
+	if occurredAt.IsZero() {
+		occurredAt = time.Now().UTC()
+	}
+
+	event := buildDeploymentEventPayload(deployment, action, operatorID, eventID, occurredAt)
 
 	value, err := json.Marshal(event)
 	if err != nil {
@@ -616,18 +714,22 @@ func (p *KafkaPublisher) PublishDeploymentEvent(ctx context.Context, deployment 
 
 	headers := []kafka.MessageHeader{
 		{Key: "event_id", Value: eventID},
+		{Key: "schema_version", Value: "1"},
 		{Key: "event_type", Value: "deployment_event"},
 		{Key: "action", Value: action},
 		{Key: "tenant_id", Value: deployment.TenantID},
 		{Key: "deployment_id", Value: deployment.DeploymentID},
-		{Key: "event_ts", Value: fmt.Sprintf("%d", now.UnixMilli())},
+		{Key: "event_ts", Value: fmt.Sprintf("%d", occurredAt.UnixMilli())},
 	}
 
 	// 设置超时
 	ctx, cancel := context.WithTimeout(ctx, p.config.SendTimeout)
 	defer cancel()
 
-	err = p.ruleProducer.Send(ctx, deployment.DeploymentID, value, headers...)
+	if p.deploymentProducer == nil {
+		return errors.New(errors.ErrCodeServiceUnavailable, "deployment event producer is not configured")
+	}
+	err = p.deploymentProducer.Send(ctx, deployment.DeploymentID, value, headers...)
 	if err != nil {
 		p.logger.Error("Failed to publish deployment event",
 			zap.String("deployment_id", deployment.DeploymentID),
@@ -647,6 +749,13 @@ func (p *KafkaPublisher) PublishDeploymentEvent(ctx context.Context, deployment 
 
 // PublishModelUpdate 发布模型更新事件到 Kafka（MLOps 热更新通知）
 func (p *KafkaPublisher) PublishModelUpdate(ctx context.Context, key string, value []byte) error {
+	return p.PublishModelUpdateWithID(ctx, key, value, uuid.NewString(), time.Now().UTC())
+}
+
+// PublishModelUpdateWithID publishes an outbox-backed model update with a
+// deterministic event identity. A database acknowledgement failure may cause
+// an at-least-once retry, so consumers can deduplicate by event_id.
+func (p *KafkaPublisher) PublishModelUpdateWithID(ctx context.Context, key string, value []byte, eventID string, occurredAt time.Time) error {
 	if atomic.LoadInt32(&p.closed) == 1 {
 		return errors.New(errors.ErrCodeServiceUnavailable, "publisher is closed")
 	}
@@ -657,15 +766,19 @@ func (p *KafkaPublisher) PublishModelUpdate(ctx context.Context, key string, val
 	ctx, span := otel.StartSpan(ctx, "KafkaPublisher.PublishModelUpdate")
 	defer span.End()
 
-	eventID := uuid.New().String()
-	now := time.Now()
+	if strings.TrimSpace(eventID) == "" {
+		return errors.New(errors.ErrCodeInvalidParameter, "model update event_id is required")
+	}
+	if occurredAt.IsZero() {
+		occurredAt = time.Now().UTC()
+	}
 	startTime := time.Now()
 
 	headers := []kafka.MessageHeader{
 		{Key: "event_id", Value: eventID},
 		{Key: "event_type", Value: "model_update"},
 		{Key: "action", Value: "update"},
-		{Key: "event_ts", Value: fmt.Sprintf("%d", now.UnixMilli())},
+		{Key: "event_ts", Value: fmt.Sprintf("%d", occurredAt.UnixMilli())},
 		{Key: "content_type", Value: "application/json"},
 	}
 
@@ -886,6 +999,16 @@ func (p *KafkaPublisher) Close() error {
 	if p.modelProducer != nil {
 		if err := p.modelProducer.Close(); err != nil {
 			errs = append(errs, fmt.Errorf("failed to close model producer: %w", err))
+		}
+	}
+	if p.modelActionProducer != nil {
+		if err := p.modelActionProducer.Close(); err != nil {
+			errs = append(errs, fmt.Errorf("failed to close model action producer: %w", err))
+		}
+	}
+	if p.deploymentProducer != nil {
+		if err := p.deploymentProducer.Close(); err != nil {
+			errs = append(errs, fmt.Errorf("failed to close deployment producer: %w", err))
 		}
 	}
 

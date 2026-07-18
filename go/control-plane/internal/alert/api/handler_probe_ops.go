@@ -22,6 +22,8 @@ const (
 	probeOperationConnectivityTest = "connectivity_test"
 	probeOperationCertRotate       = "cert_rotate"
 	probeOperationBatchUpgrade     = "batch_upgrade"
+	probeOperationBatchState       = "batch_state"
+	probeOperationRestart          = "restart"
 )
 
 type probeConfigPushRequest struct {
@@ -52,15 +54,22 @@ type probeBatchUpgradeRequest struct {
 	Reason          string   `json:"reason"`
 }
 
-type probeConnectivityCheck struct {
-	Target    string `json:"target"`
-	Status    string `json:"status"`
-	LatencyMS int    `json:"latency_ms"`
-	Detail    string `json:"detail"`
+type probeBatchStateRequest struct {
+	ProbeIDs     []string `json:"probe_ids"`
+	DesiredState string   `json:"desired_state"`
+	Reason       string   `json:"reason"`
+}
+
+type probeRestartRequest struct {
+	Reason string `json:"reason"`
 }
 
 type probeOperationInserter interface {
 	QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row
+}
+
+type probeAuditExecutor interface {
+	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
 }
 
 func (h *SystemHandler) PushProbeConfig(w http.ResponseWriter, r *http.Request) {
@@ -95,39 +104,22 @@ func (h *SystemHandler) PushProbeConfig(w http.ResponseWriter, r *http.Request) 
 		req.Interfaces = []string{"eth2"}
 	}
 
-	appliedAt := time.Now().UTC()
-	patch := map[string]interface{}{
-		"config_version":       req.ConfigVersion,
-		"capture_mode":         req.CaptureMode,
-		"interfaces":           req.Interfaces,
-		"archive_path":         req.ArchivePath,
-		"batch_send_mbps":      req.BatchSendMbps,
-		"last_config_push_at":  appliedAt.Format(time.RFC3339),
-		"last_config_push_by":  httpx.GetUserID(ctx),
-		"last_config_push_via": "control-plane",
-	}
-	if err := h.patchProbeHardware(ctx, tenantID, probeID, patch); err != nil {
-		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
-		return
-	}
-
+	requestedAt := time.Now().UTC()
 	result := map[string]interface{}{
 		"probe_id":       probeID,
-		"status":         "completed",
-		"applied":        true,
+		"status":         "queued",
+		"applied":        false,
 		"config_version": req.ConfigVersion,
-		"applied_at":     appliedAt.Format(time.RFC3339),
+		"requested_at":   requestedAt.Format(time.RFC3339),
 	}
-	operationID, err := h.insertProbeOperation(ctx, h.pgDB, tenantID, probeID, probeOperationConfigPush, req, result)
+	operationID, err := h.insertProbeOperationWithAudit(ctx, tenantID, probeID, probeOperationConfigPush, req, result, "PROBE_CONFIG_PUSH_QUEUED", "probe", probeID, map[string]interface{}{
+		"config_version": req.ConfigVersion,
+		"capture_mode":   req.CaptureMode,
+	}, r)
 	if err != nil {
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
 		return
 	}
-	_ = h.insertAuditLog(ctx, tenantID, httpx.GetUserID(ctx), "PROBE_CONFIG_PUSH", "probe", probeID, map[string]interface{}{
-		"operation_id":   operationID,
-		"config_version": req.ConfigVersion,
-		"capture_mode":   req.CaptureMode,
-	}, r)
 
 	result["operation_id"] = operationID
 	httpx.JSONSuccess(w, ctx, result)
@@ -158,30 +150,19 @@ func (h *SystemHandler) RunProbeConnectivityTest(w http.ResponseWriter, r *http.
 		req.Targets = []string{"ingest-gateway", "kafka", "clickhouse"}
 	}
 
-	checks := make([]probeConnectivityCheck, 0, len(req.Targets))
-	for idx, target := range req.Targets {
-		checks = append(checks, probeConnectivityCheck{
-			Target:    target,
-			Status:    "pass",
-			LatencyMS: 8 + idx*3,
-			Detail:    "control-plane reachability probe completed",
-		})
-	}
 	result := map[string]interface{}{
-		"probe_id":   probeID,
-		"status":     "completed",
-		"checked_at": time.Now().UTC().Format(time.RFC3339),
-		"checks":     checks,
+		"probe_id":     probeID,
+		"status":       "queued",
+		"requested_at": time.Now().UTC().Format(time.RFC3339),
+		"targets":      req.Targets,
 	}
-	operationID, err := h.insertProbeOperation(ctx, h.pgDB, tenantID, probeID, probeOperationConnectivityTest, req, result)
+	operationID, err := h.insertProbeOperationWithAudit(ctx, tenantID, probeID, probeOperationConnectivityTest, req, result, "PROBE_CONNECTIVITY_TEST_QUEUED", "probe", probeID, map[string]interface{}{
+		"targets": req.Targets,
+	}, r)
 	if err != nil {
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
 		return
 	}
-	_ = h.insertAuditLog(ctx, tenantID, httpx.GetUserID(ctx), "PROBE_CONNECTIVITY_TEST", "probe", probeID, map[string]interface{}{
-		"operation_id": operationID,
-		"targets":      req.Targets,
-	}, r)
 
 	result["operation_id"] = operationID
 	httpx.JSONSuccess(w, ctx, result)
@@ -222,35 +203,22 @@ func (h *SystemHandler) RotateProbeCertificate(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	rotatedAt := time.Now().UTC()
-	patch := map[string]interface{}{
-		"mtls_secret_ref":       req.SecretRef,
-		"cert_rotation_window":  req.RotationWindow,
-		"last_cert_rotation_at": rotatedAt.Format(time.RFC3339),
-		"last_cert_rotation_by": httpx.GetUserID(ctx),
-	}
-	if err := h.patchProbeHardware(ctx, tenantID, probeID, patch); err != nil {
-		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
-		return
-	}
-
+	requestedAt := time.Now().UTC()
 	result := map[string]interface{}{
 		"probe_id":        probeID,
-		"status":          "completed",
+		"status":          "queued",
 		"secret_ref":      req.SecretRef,
 		"rotation_window": req.RotationWindow,
-		"rotated_at":      rotatedAt.Format(time.RFC3339),
+		"requested_at":    requestedAt.Format(time.RFC3339),
 	}
-	operationID, err := h.insertProbeOperation(ctx, h.pgDB, tenantID, probeID, probeOperationCertRotate, req, result)
+	operationID, err := h.insertProbeOperationWithAudit(ctx, tenantID, probeID, probeOperationCertRotate, req, result, "PROBE_CERT_ROTATE_QUEUED", "probe", probeID, map[string]interface{}{
+		"secret_ref":      req.SecretRef,
+		"rotation_window": req.RotationWindow,
+	}, r)
 	if err != nil {
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
 		return
 	}
-	_ = h.insertAuditLog(ctx, tenantID, httpx.GetUserID(ctx), "PROBE_CERT_ROTATE", "probe", probeID, map[string]interface{}{
-		"operation_id":    operationID,
-		"secret_ref":      req.SecretRef,
-		"rotation_window": req.RotationWindow,
-	}, r)
 
 	result["operation_id"] = operationID
 	httpx.JSONSuccess(w, ctx, result)
@@ -306,27 +274,12 @@ func (h *SystemHandler) BatchUpgradeProbes(w http.ResponseWriter, r *http.Reques
 		}
 	}()
 
-	if _, err := tx.ExecContext(ctx, `
-		UPDATE probes
-		SET software_version=$3,
-		    hardware_info = COALESCE(hardware_info, '{}'::jsonb) || $4::jsonb,
-		    updated_at=now()
-		WHERE tenant_id=$1 AND probe_id = ANY($2)`,
-		tenantID, pq.Array(req.ProbeIDs), req.TargetVersion, mustJSON(map[string]interface{}{
-			"last_upgrade_batch_id": batchID,
-			"last_upgrade_strategy": req.RolloutStrategy,
-			"last_upgrade_at":       time.Now().UTC().Format(time.RFC3339),
-		})); err != nil {
-		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
-		return
-	}
-
 	operationIDs := make([]string, 0, len(req.ProbeIDs))
 	for _, probeID := range req.ProbeIDs {
 		result := map[string]interface{}{
 			"batch_id":         batchID,
 			"probe_id":         probeID,
-			"status":           "completed",
+			"status":           "queued",
 			"target_version":   req.TargetVersion,
 			"rollout_strategy": req.RolloutStrategy,
 		}
@@ -342,28 +295,139 @@ func (h *SystemHandler) BatchUpgradeProbes(w http.ResponseWriter, r *http.Reques
 		}
 		operationIDs = append(operationIDs, operationID)
 	}
+	if err := h.insertProbeAuditLog(ctx, tx, tenantID, httpx.GetUserID(ctx), "PROBE_BATCH_UPGRADE_QUEUED", "probe_operation", batchID, map[string]interface{}{
+		"operation_ids":    operationIDs,
+		"probe_ids":        req.ProbeIDs,
+		"target_version":   req.TargetVersion,
+		"rollout_strategy": req.RolloutStrategy,
+	}, r); err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "AUDIT_FAILED", err.Error())
+		return
+	}
 	if err := tx.Commit(); err != nil {
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
 		return
 	}
 	committed = true
 
-	_ = h.insertAuditLog(ctx, tenantID, httpx.GetUserID(ctx), "PROBE_BATCH_UPGRADE", "probe_operation", batchID, map[string]interface{}{
-		"operation_ids":    operationIDs,
-		"probe_ids":        req.ProbeIDs,
-		"target_version":   req.TargetVersion,
-		"rollout_strategy": req.RolloutStrategy,
-	}, r)
-
 	httpx.JSONSuccess(w, ctx, map[string]interface{}{
 		"batch_id":         batchID,
 		"operation_ids":    operationIDs,
-		"upgraded_count":   len(req.ProbeIDs),
+		"queued_count":     len(req.ProbeIDs),
 		"probe_ids":        req.ProbeIDs,
 		"target_version":   req.TargetVersion,
 		"rollout_strategy": req.RolloutStrategy,
-		"status":           "completed",
+		"status":           "queued",
 	})
+}
+
+func (h *SystemHandler) BatchSetProbeState(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	if !h.requirePostgres(w, ctx) || !h.requireProbeWritePermission(w, r) || !h.ensureProbeOperationSchema(w, ctx) {
+		return
+	}
+
+	tenantID := writeTenantID(r)
+	var req probeBatchStateRequest
+	if !decodeRequiredProbeJSON(w, r, &req) {
+		return
+	}
+	req.ProbeIDs = normalizeStringList(req.ProbeIDs)
+	req.DesiredState = strings.ToLower(strings.TrimSpace(req.DesiredState))
+	if len(req.ProbeIDs) == 0 {
+		httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_REQUEST", "probe_ids is required")
+		return
+	}
+	if len(req.ProbeIDs) > 100 {
+		httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_REQUEST", "probe_ids cannot exceed 100 items")
+		return
+	}
+	if req.DesiredState != "active" && req.DesiredState != "inactive" {
+		httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_REQUEST", "desired_state must be active or inactive")
+		return
+	}
+	missing, err := h.missingTenantProbes(ctx, tenantID, req.ProbeIDs)
+	if err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
+	if len(missing) > 0 {
+		httpx.JSONError(w, ctx, http.StatusNotFound, "NOT_FOUND", fmt.Sprintf("probe not found for tenant: %s", strings.Join(missing, ",")))
+		return
+	}
+
+	tx, err := h.pgDB.BeginTx(ctx, nil)
+	if err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
+	committed := false
+	defer func() {
+		if !committed {
+			_ = tx.Rollback()
+		}
+	}()
+
+	requestedAt := time.Now().UTC()
+	operationIDs := make([]string, 0, len(req.ProbeIDs))
+	for _, probeID := range req.ProbeIDs {
+		result := map[string]interface{}{
+			"probe_id": probeID, "status": "queued", "desired_state": req.DesiredState,
+			"requested_at": requestedAt.Format(time.RFC3339),
+		}
+		operationID, insertErr := h.insertProbeOperation(ctx, tx, tenantID, probeID, probeOperationBatchState, req, result)
+		if insertErr != nil {
+			httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", insertErr.Error())
+			return
+		}
+		operationIDs = append(operationIDs, operationID)
+	}
+	if err := h.insertProbeAuditLog(ctx, tx, tenantID, httpx.GetUserID(ctx), "PROBE_BATCH_STATE_QUEUED", "probe_operation", operationIDs[0], map[string]interface{}{
+		"operation_ids": operationIDs, "probe_ids": req.ProbeIDs, "desired_state": req.DesiredState,
+	}, r); err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "AUDIT_FAILED", err.Error())
+		return
+	}
+	if err := tx.Commit(); err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
+	committed = true
+	httpx.JSONSuccess(w, ctx, map[string]interface{}{
+		"operation_ids": operationIDs, "probe_ids": req.ProbeIDs, "desired_state": req.DesiredState,
+		"queued_count": len(req.ProbeIDs), "status": "queued", "requested_at": requestedAt.Format(time.RFC3339),
+	})
+}
+
+func (h *SystemHandler) RestartProbe(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	if !h.requirePostgres(w, ctx) || !h.requireProbeWritePermission(w, r) || !h.ensureProbeOperationSchema(w, ctx) {
+		return
+	}
+	probeID := strings.TrimSpace(mux.Vars(r)["id"])
+	tenantID := writeTenantID(r)
+	if probeID == "" {
+		httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_REQUEST", "probe id is required")
+		return
+	}
+	if !h.requireProbeInTenant(w, ctx, tenantID, probeID) {
+		return
+	}
+	var req probeRestartRequest
+	if !decodeOptionalProbeJSON(w, r, &req) {
+		return
+	}
+	requestedAt := time.Now().UTC()
+	result := map[string]interface{}{
+		"probe_id": probeID, "status": "queued", "requested_at": requestedAt.Format(time.RFC3339),
+	}
+	operationID, err := h.insertProbeOperationWithAudit(ctx, tenantID, probeID, probeOperationRestart, req, result, "PROBE_RESTART_QUEUED", "probe", probeID, map[string]interface{}{}, r)
+	if err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
+	result["operation_id"] = operationID
+	httpx.JSONSuccess(w, ctx, result)
 }
 
 func (h *SystemHandler) requireProbeWritePermission(w http.ResponseWriter, r *http.Request) bool {
@@ -372,6 +436,15 @@ func (h *SystemHandler) requireProbeWritePermission(w http.ResponseWriter, r *ht
 		return true
 	}
 	httpx.JSONError(w, ctx, http.StatusForbidden, "PERMISSION_DENIED", "permission denied: probe:write required")
+	return false
+}
+
+func (h *SystemHandler) requireProbeReadPermission(w http.ResponseWriter, r *http.Request) bool {
+	ctx := r.Context()
+	if hasAnySystemPermission(ctx, authmodel.ScopeProbeRead, authmodel.ScopeProbeMetrics, authmodel.ScopeProbeWrite, authmodel.ScopeAdminAll) {
+		return true
+	}
+	httpx.JSONError(w, ctx, http.StatusForbidden, "PERMISSION_DENIED", "permission denied: probe:read required")
 	return false
 }
 
@@ -385,7 +458,7 @@ func (h *SystemHandler) ensureProbeOperationSchema(w http.ResponseWriter, ctx co
 			tenant_id TEXT NOT NULL,
 			probe_id TEXT NOT NULL,
 			operation_type TEXT NOT NULL,
-			status TEXT NOT NULL DEFAULT 'completed',
+			status TEXT NOT NULL DEFAULT 'queued',
 			requested_by TEXT NOT NULL DEFAULT '',
 			request JSONB NOT NULL DEFAULT '{}'::jsonb,
 			result JSONB NOT NULL DEFAULT '{}'::jsonb,
@@ -458,13 +531,69 @@ func (h *SystemHandler) patchProbeHardware(ctx context.Context, tenantID, probeI
 func (h *SystemHandler) insertProbeOperation(ctx context.Context, db probeOperationInserter, tenantID, probeID, operationType string, request, result interface{}) (string, error) {
 	requestJSON, _ := json.Marshal(request)
 	resultJSON, _ := json.Marshal(result)
+	status := "queued"
+	if values, ok := result.(map[string]interface{}); ok {
+		if value, ok := values["status"].(string); ok && strings.TrimSpace(value) != "" {
+			status = strings.TrimSpace(value)
+		}
+	}
 	var operationID string
 	err := db.QueryRowContext(ctx, `
 		INSERT INTO probe_operations (tenant_id, probe_id, operation_type, status, requested_by, request, result)
-		VALUES ($1, $2, $3, 'completed', $4, $5::jsonb, $6::jsonb)
+		VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb)
 		RETURNING operation_id::text`,
-		tenantID, probeID, operationType, httpx.GetUserID(ctx), string(requestJSON), string(resultJSON)).Scan(&operationID)
+		tenantID, probeID, operationType, status, httpx.GetUserID(ctx), string(requestJSON), string(resultJSON)).Scan(&operationID)
 	return operationID, err
+}
+
+func (h *SystemHandler) insertProbeOperationWithAudit(
+	ctx context.Context,
+	tenantID, probeID, operationType string,
+	request, result interface{},
+	auditAction, objectType, objectID string,
+	auditDetail map[string]interface{},
+	r *http.Request,
+) (string, error) {
+	tx, err := h.pgDB.BeginTx(ctx, nil)
+	if err != nil {
+		return "", err
+	}
+	defer func() { _ = tx.Rollback() }()
+	operationID, err := h.insertProbeOperation(ctx, tx, tenantID, probeID, operationType, request, result)
+	if err != nil {
+		return "", err
+	}
+	detail := make(map[string]interface{}, len(auditDetail)+1)
+	for key, value := range auditDetail {
+		detail[key] = value
+	}
+	detail["operation_id"] = operationID
+	if err := h.insertProbeAuditLog(ctx, tx, tenantID, httpx.GetUserID(ctx), auditAction, objectType, objectID, detail, r); err != nil {
+		return "", err
+	}
+	if err := tx.Commit(); err != nil {
+		return "", err
+	}
+	return operationID, nil
+}
+
+func (h *SystemHandler) insertProbeAuditLog(ctx context.Context, db probeAuditExecutor, tenantID, userID, action, objectType, objectID string, detail map[string]interface{}, r *http.Request) error {
+	detailJSON, _ := json.Marshal(detail)
+	ip := clientIP(r)
+	userAgent := r.UserAgent()
+	if h.pgColumnExists(ctx, "audit_logs", "event_id") {
+		eventID := "audit-probe-" + time.Now().UTC().Format("20060102150405.000000000")
+		_, err := db.ExecContext(ctx, `
+			INSERT INTO audit_logs (event_id, tenant_id, user_id, action, object_type, object_id, detail, ip_addr, user_agent)
+			VALUES ($1, $2, NULLIF($3, '')::uuid, $4, $5, $6, $7::jsonb, $8, $9)`,
+			eventID, tenantID, userID, action, objectType, objectID, string(detailJSON), ip, userAgent)
+		return err
+	}
+	_, err := db.ExecContext(ctx, `
+		INSERT INTO audit_logs (tenant_id, user_id, action, object_type, object_id, detail, ip_addr, user_agent)
+		VALUES ($1, NULLIF($2, '')::uuid, $3, $4, $5, $6::jsonb, $7, $8)`,
+		tenantID, userID, action, objectType, objectID, string(detailJSON), ip, userAgent)
+	return err
 }
 
 func decodeRequiredProbeJSON(w http.ResponseWriter, r *http.Request, dest interface{}) bool {

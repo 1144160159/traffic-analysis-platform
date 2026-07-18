@@ -117,6 +117,7 @@ var DefaultRoleScopes = map[string][]string{
 		ScopeAdminAll,
 		ScopeTokenRead, ScopeTokenWrite,
 		ScopeDeployRead, ScopeDeployCreate, ScopeDeployActivate, ScopeDeployRollback,
+		ScopeDataQualityRead, ScopeDataQualityWrite,
 		ScopeUserRead, ScopeUserWrite, ScopeUserDelete,
 		ScopeAll,
 	},
@@ -127,6 +128,7 @@ var DefaultRoleScopes = map[string][]string{
 		ScopeGraphRead,
 		ScopeAssetRead,
 		ScopeScreenView,
+		ScopeDataQualityRead,
 	},
 	"viewer": {
 		ScopeAlertRead,
@@ -134,6 +136,7 @@ var DefaultRoleScopes = map[string][]string{
 		ScopeGraphRead,
 		ScopeAssetRead,
 		ScopeScreenView,
+		ScopeDataQualityRead,
 	},
 	"operator": {
 		ScopeAlertRead, ScopeAlertWrite,
@@ -143,6 +146,7 @@ var DefaultRoleScopes = map[string][]string{
 		ScopeAssetRead, ScopeAssetDiscover,
 		ScopeScreenView,
 		ScopeDeployRead,
+		ScopeDataQualityRead, ScopeDataQualityWrite,
 	},
 }
 

@@ -78,18 +78,56 @@ func (c KafkaConfig) BrokerList() []string {
 }
 
 type AssetRecord struct {
-	AssetID    string    `json:"asset_id"`
-	TenantID   string    `json:"tenant_id"`
-	IPAddress  string    `json:"ip_address"`
-	MACAddress string    `json:"mac_address"`
-	Hostname   string    `json:"hostname,omitempty"`
-	Vendor     string    `json:"vendor,omitempty"`
-	OSType     string    `json:"os_type,omitempty"`
-	Source     string    `json:"source"`
-	VlanID     string    `json:"vlan_id,omitempty"`
-	SwitchPort string    `json:"switch_port,omitempty"`
-	FirstSeen  time.Time `json:"first_seen"`
-	LastSeen   time.Time `json:"last_seen"`
+	AssetID     string         `json:"asset_id"`
+	DisplayCode string         `json:"display_code"`
+	TenantID    string         `json:"tenant_id"`
+	AssetType   string         `json:"asset_type"`
+	Status      string         `json:"status"`
+	IPAddress   string         `json:"ip_address"`
+	MACAddress  string         `json:"mac_address"`
+	Hostname    string         `json:"hostname,omitempty"`
+	Vendor      string         `json:"vendor,omitempty"`
+	OSType      string         `json:"os_type,omitempty"`
+	Source      string         `json:"source"`
+	VlanID      string         `json:"vlan_id,omitempty"`
+	SwitchPort  string         `json:"switch_port,omitempty"`
+	Department  string         `json:"department,omitempty"`
+	Campus      string         `json:"campus,omitempty"`
+	Owner       string         `json:"owner,omitempty"`
+	Criticality int            `json:"criticality"`
+	Tags        map[string]any `json:"tags,omitempty"`
+	Metadata    map[string]any `json:"metadata,omitempty"`
+	FirstSeen   time.Time      `json:"first_seen"`
+	LastSeen    time.Time      `json:"last_seen"`
+}
+
+type AssetListFilter struct {
+	AssetType  string
+	Status     string
+	Search     string
+	Department string
+	Campus     string
+}
+
+type AssetStats struct {
+	Total                int `json:"total"`
+	Active               int `json:"active"`
+	Inactive             int `json:"inactive"`
+	Unknown              int `json:"unknown"`
+	HighCriticality      int `json:"high_criticality"`
+	CriticalAssets       int `json:"critical_assets"`
+	Unowned              int `json:"unowned"`
+	OpenServices         int `json:"open_services"`
+	HighRiskServices     int `json:"high_risk_services"`
+	WeakPasswords        int `json:"weak_passwords"`
+	NetworkInterfaces    int `json:"network_interfaces"`
+	ConfigurationChanges int `json:"configuration_changes"`
+	DependencyAssets     int `json:"dependency_assets"`
+	KeyServices          int `json:"key_services"`
+	SLAAtRisk            int `json:"sla_at_risk"`
+	OwnershipCandidates  int `json:"ownership_candidates"`
+	PendingTickets       int `json:"pending_tickets"`
+	ContextRecords       int `json:"context_records"`
 }
 
 type AssetEvent struct {
@@ -100,6 +138,102 @@ type AssetEvent struct {
 	OldValue  string    `json:"old_value,omitempty"`
 	NewValue  string    `json:"new_value,omitempty"`
 	CreatedAt time.Time `json:"created_at"`
+}
+
+// AssetNetworkInterface is a persisted network observation attached to an asset.
+// Values originate from discovery/probe metadata and are never synthesized by the UI.
+type AssetNetworkInterface struct {
+	Name          string  `json:"name"`
+	Adapter       string  `json:"adapter"`
+	IPAddress     string  `json:"ip_address"`
+	MACAddress    string  `json:"mac_address"`
+	VlanID        string  `json:"vlan_id"`
+	MirrorMode    string  `json:"mirror_mode"`
+	Status        string  `json:"status"`
+	Speed         string  `json:"speed"`
+	Duplex        string  `json:"duplex"`
+	IngressBytes  uint64  `json:"ingress_bytes"`
+	EgressBytes   uint64  `json:"egress_bytes"`
+	PacketLossPct float64 `json:"packet_loss_pct"`
+	ErrorCount    int     `json:"error_count"`
+	ProbeID       string  `json:"probe_id"`
+}
+
+type AssetOpenService struct {
+	Port              int    `json:"port"`
+	Protocol          string `json:"protocol"`
+	Service           string `json:"service"`
+	Version           string `json:"version"`
+	ExposureScope     string `json:"exposure_scope"`
+	AccessSourceCount int    `json:"access_source_count"`
+	RiskLevel         string `json:"risk_level"`
+	AlertCount        int    `json:"alert_count"`
+}
+
+type AssetOwnershipLink struct {
+	Name   string `json:"name"`
+	Role   string `json:"role"`
+	Owner  string `json:"owner"`
+	Status string `json:"status"`
+}
+
+type AssetResponsibility struct {
+	Role   string `json:"role"`
+	Owner  string `json:"owner"`
+	Status string `json:"status"`
+}
+
+type AssetOwnership struct {
+	Campus           string                `json:"campus"`
+	Department       string                `json:"department"`
+	Owner            string                `json:"owner"`
+	BusinessSystems  []AssetOwnershipLink  `json:"business_systems"`
+	AssetGroups      []AssetOwnershipLink  `json:"asset_groups"`
+	DataDomains      []AssetOwnershipLink  `json:"data_domains"`
+	Responsibilities []AssetResponsibility `json:"responsibilities"`
+	PendingFields    []string              `json:"pending_fields"`
+}
+
+type AssetDetails struct {
+	AssetID           string                  `json:"asset_id"`
+	DataContract      string                  `json:"data_contract"`
+	NetworkInterfaces []AssetNetworkInterface `json:"network_interfaces"`
+	OpenServices      []AssetOpenService      `json:"open_services"`
+	Ownership         AssetOwnership          `json:"ownership"`
+	ObservedAt        time.Time               `json:"observed_at"`
+}
+
+// AssetTopologyNode is a render-neutral node returned by the asset topology API.
+// The UI computes positions, while identity and business state remain API data.
+type AssetTopologyNode struct {
+	ID     string `json:"id"`
+	Label  string `json:"label"`
+	Kind   string `json:"kind,omitempty"`
+	Status string `json:"status,omitempty"`
+	Risk   string `json:"risk,omitempty"`
+}
+
+// AssetTopologyEdge preserves source/target and observed relationship semantics.
+// It must not be replaced by a UI-generated star relationship.
+type AssetTopologyEdge struct {
+	ID           string    `json:"id"`
+	Source       string    `json:"source"`
+	Target       string    `json:"target"`
+	Relationship string    `json:"relationship"`
+	Direction    string    `json:"direction,omitempty"`
+	Protocol     string    `json:"protocol,omitempty"`
+	Health       string    `json:"health,omitempty"`
+	Confidence   int       `json:"confidence,omitempty"`
+	ObservedAt   time.Time `json:"observed_at,omitempty"`
+}
+
+type AssetTopologyGraph struct {
+	AssetID     string              `json:"asset_id"`
+	Source      string              `json:"source"`
+	FixtureMode bool                `json:"fixture_mode"`
+	Nodes       []AssetTopologyNode `json:"nodes"`
+	Edges       []AssetTopologyEdge `json:"edges"`
+	ObservedAt  time.Time           `json:"observed_at"`
 }
 
 // MacIpBinding MAC→IP 绑定（来自 ARP/DHCP 被动发现）

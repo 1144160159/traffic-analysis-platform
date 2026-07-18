@@ -43,6 +43,8 @@ const (
 	PermDeployActivate Permission = "deploy:activate"
 	// 部署回滚
 	PermDeployRollback Permission = "deploy:rollback"
+	// 部署审批。审批与发起/执行分离，避免请求人自批。
+	PermDeployApprove Permission = "deploy:approve"
 	// 部署取消
 	PermDeployCancel Permission = "deploy:cancel"
 	// 部署写入（别名）
@@ -107,6 +109,7 @@ var AllDeployPermissions = []Permission{
 	PermDeployGray,
 	PermDeployActivate,
 	PermDeployRollback,
+	PermDeployApprove,
 	PermDeployCancel,
 }
 
@@ -163,6 +166,7 @@ var RolePermissions = map[Role][]Permission{
 		PermDeployGray,
 		PermDeployActivate,
 		PermDeployRollback,
+		PermDeployApprove,
 		PermDeployCancel,
 		PermModelRead,
 		PermModelCreate,

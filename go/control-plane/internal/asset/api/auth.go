@@ -12,13 +12,33 @@ import (
 	authmodel "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/model"
 )
 
-const requiredAssetDiscoverScope = authmodel.ScopeAssetDiscover
+const (
+	requiredAssetReadScope     = authmodel.ScopeAssetRead
+	requiredAssetDiscoverScope = authmodel.ScopeAssetDiscover
+)
 
 type requestIdentity struct {
 	TenantID string
 	UserID   string
 	Username string
 	Scopes   []string
+}
+
+func (h *HTTPHandler) requireAssetRead(w http.ResponseWriter, r *http.Request) (requestIdentity, bool) {
+	identity, status, message := h.requestIdentity(r)
+	if status != 0 {
+		writeError(w, status, message)
+		return requestIdentity{}, false
+	}
+	if !hasAssetReadScope(identity.Scopes) {
+		writeError(w, http.StatusForbidden, requiredAssetReadScope+" scope required")
+		return requestIdentity{}, false
+	}
+	if identity.TenantID == "" {
+		writeError(w, http.StatusForbidden, "verified tenant identity required")
+		return requestIdentity{}, false
+	}
+	return identity, true
 }
 
 func (h *HTTPHandler) requireAssetDiscoveryWrite(w http.ResponseWriter, r *http.Request) (requestIdentity, bool) {
@@ -32,7 +52,8 @@ func (h *HTTPHandler) requireAssetDiscoveryWrite(w http.ResponseWriter, r *http.
 		return requestIdentity{}, false
 	}
 	if identity.TenantID == "" {
-		identity.TenantID = tenantFromRequest(r)
+		writeError(w, http.StatusForbidden, "verified tenant identity required")
+		return requestIdentity{}, false
 	}
 	return identity, true
 }
@@ -60,16 +81,7 @@ func (h *HTTPHandler) requestIdentity(r *http.Request) (requestIdentity, int, st
 		}, 0, ""
 	}
 
-	scopes := headerScopes(r)
-	if len(scopes) == 0 {
-		return requestIdentity{}, http.StatusUnauthorized, "authorization required"
-	}
-	return requestIdentity{
-		TenantID: tenantFromRequest(r),
-		UserID:   actorFromRequest(r),
-		Username: r.Header.Get("X-Username"),
-		Scopes:   scopes,
-	}, 0, ""
+	return requestIdentity{}, http.StatusUnauthorized, "authorization required"
 }
 
 func bearerToken(r *http.Request) string {
@@ -84,49 +96,17 @@ func bearerToken(r *http.Request) string {
 	return strings.TrimSpace(parts[1])
 }
 
-func headerScopes(r *http.Request) []string {
-	var scopes []string
-	for _, header := range []string{"X-Scopes", "X-Permissions", "X-User-Scopes", "X-User-Permissions"} {
-		scopes = append(scopes, splitScopes(r.Header.Get(header))...)
-	}
-	return dedupeScopes(scopes)
-}
-
-func splitScopes(value string) []string {
-	if value == "" {
-		return nil
-	}
-	fields := strings.FieldsFunc(value, func(r rune) bool {
-		return r == ',' || r == ' ' || r == '\t' || r == '\n' || r == ';'
-	})
-	scopes := make([]string, 0, len(fields))
-	for _, field := range fields {
-		scope := strings.TrimSpace(field)
-		if scope != "" {
-			scopes = append(scopes, scope)
-		}
-	}
-	return scopes
-}
-
-func dedupeScopes(scopes []string) []string {
-	if len(scopes) == 0 {
-		return nil
-	}
-	seen := map[string]struct{}{}
-	result := make([]string, 0, len(scopes))
-	for _, scope := range scopes {
-		if _, ok := seen[scope]; ok {
-			continue
-		}
-		seen[scope] = struct{}{}
-		result = append(result, scope)
-	}
-	return result
-}
-
 func hasDiscoveryWriteScope(scopes []string) bool {
 	for _, accepted := range []string{authmodel.ScopeAssetDiscover, "asset:*", authmodel.ScopeAdminAll, authmodel.ScopeAll} {
+		if authmodel.HasScope(scopes, accepted) {
+			return true
+		}
+	}
+	return false
+}
+
+func hasAssetReadScope(scopes []string) bool {
+	for _, accepted := range []string{authmodel.ScopeAssetRead, "asset:*", authmodel.ScopeAdminAll, authmodel.ScopeAll} {
 		if authmodel.HasScope(scopes, accepted) {
 			return true
 		}

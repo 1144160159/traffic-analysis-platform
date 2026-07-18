@@ -15,6 +15,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/errors"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/validation"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/forensics/cutter"
@@ -66,6 +68,7 @@ var (
 // CutRequestParams API 裁剪请求参数
 type CutRequestParams struct {
 	TenantID    string `json:"tenant_id,omitempty"`
+	AssetID     string `json:"asset_id,omitempty"`
 	ProbeID     string `json:"probe_id,omitempty"`
 	SrcIP       string `json:"src_ip,omitempty"`
 	DstIP       string `json:"dst_ip,omitempty"`
@@ -80,6 +83,12 @@ type CutRequestParams struct {
 
 // Validate 验证请求参数（修复版：完整验证）
 func (p *CutRequestParams) Validate() error {
+	if p.AssetID != "" {
+		p.AssetID = strings.TrimSpace(p.AssetID)
+		if _, err := uuid.Parse(p.AssetID); err != nil {
+			return errors.New(errors.ErrCodeInvalidParameter, "asset_id must be a valid UUID")
+		}
+	}
 	// ========== 1. 时间戳合法性验证 ==========
 	now := time.Now().UnixMilli()
 

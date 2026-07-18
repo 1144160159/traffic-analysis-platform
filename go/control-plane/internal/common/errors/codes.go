@@ -62,11 +62,11 @@ const (
 	ErrCodeModelVersionNotFound   ErrorCode = "BIZ_3013"
 
 	// 资源操作错误 (4xxx)
-	ErrCodeResourceNotFound ErrorCode = "RES_4001"
-	ErrCodeResourceExists   ErrorCode = "RES_4002"
-	ErrCodeResourceLocked   ErrorCode = "RES_4003"
-	ErrCodeResourceDeleted  ErrorCode = "RES_4004"
-	ErrCodeConcurrentModify ErrorCode = "RES_4005"
+	ErrCodeResourceNotFound  ErrorCode = "RES_4001"
+	ErrCodeResourceExists    ErrorCode = "RES_4002"
+	ErrCodeResourceLocked    ErrorCode = "RES_4003"
+	ErrCodeResourceDeleted   ErrorCode = "RES_4004"
+	ErrCodeConcurrentModify  ErrorCode = "RES_4005"
 	ErrCodeGraphNodeNotFound ErrorCode = "RES_4006"
 	ErrCodeGraphEdgeNotFound ErrorCode = "RES_4007"
 	ErrCodeSpaceNotFound     ErrorCode = "RES_4008"
@@ -114,7 +114,7 @@ func (c ErrorCode) HTTPStatus() int {
 	case c >= "VALID_2001" && c <= "VALID_2006":
 		return 400
 	case c >= "BIZ_3001" && c <= "BIZ_3013":
-		if c == ErrCodeVersionConflict || c == ErrCodeConcurrentModify {
+		if c == ErrCodeVersionConflict || c == ErrCodeConcurrentModify || c == ErrCodeGrayDeploymentActive {
 			return 409
 		}
 		return 404
@@ -402,7 +402,7 @@ func registerDefaultMessages() {
 	})
 
 	RegisterMessage(&ErrorMessage{
-		Code: ErrCodeModelNotFound,
+		Code:     ErrCodeModelNotFound,
 		Template: true,
 		Messages: map[Language]string{
 			LanguageEnglish: "Model not found: %s",
@@ -411,7 +411,7 @@ func registerDefaultMessages() {
 	})
 
 	RegisterMessage(&ErrorMessage{
-		Code: ErrCodeModelVersionNotFound,
+		Code:     ErrCodeModelVersionNotFound,
 		Template: true,
 		Messages: map[Language]string{
 			LanguageEnglish: "Model version not found: %s",

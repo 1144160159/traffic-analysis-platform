@@ -351,6 +351,30 @@ func TestTopicGovernanceRoutesAreRegisteredUnderAPIV1(t *testing.T) {
 	}
 }
 
+func TestEncryptedEvidenceCompletenessDoesNotTreatUnlinkedPcapAsSessionEvidence(t *testing.T) {
+	sessions := []encryptedTrafficSessionDTO{
+		{SessionID: "session-1", SrcIP: "10.0.0.1", DstIP: "203.0.113.10", HasHandshakeMetadata: true},
+		{SessionID: "session-2", SrcIP: "10.0.0.2", DstIP: "203.0.113.11", PcapIndex: "pcap/session-2.pcap"},
+	}
+	pcaps := []encryptedEvidencePcapDTO{
+		{FileKey: "pcap/unlinked-1.pcap", SHA256: "hash-1"},
+		{FileKey: "pcap/unlinked-2.pcap", SHA256: "hash-2"},
+	}
+
+	items := encryptedEvidenceCompleteness(sessions, pcaps)
+	byLabel := make(map[string]encryptedEvidenceCompletenessDTO, len(items))
+	for _, item := range items {
+		byLabel[item.Label] = item
+	}
+
+	if got := byLabel["PCAP关联"]; got.Complete != 1 || got.Total != 2 {
+		t.Fatalf("expected only the explicitly linked session to count, got %+v", got)
+	}
+	if got := byLabel["索引Hash"]; got.Complete != 2 || got.Total != 2 {
+		t.Fatalf("expected independent index hashes to remain observable, got %+v", got)
+	}
+}
+
 func requestWithClaims(req *http.Request, claims testClaims) *http.Request {
 	ctx := context.WithValue(req.Context(), httpx.ContextKeyClaims, claims)
 	ctx = context.WithValue(ctx, httpx.ContextKeyUserID, claims.userID)

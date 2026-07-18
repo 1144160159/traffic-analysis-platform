@@ -61,6 +61,12 @@ func (h *HTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		h.listTopologyLinks(w, r)
+	case path == "/stats":
+		if r.Method != http.MethodGet {
+			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+			return
+		}
+		h.getAssetStats(w, r)
 	case strings.HasSuffix(path, "/history"):
 		if r.Method != http.MethodGet {
 			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -68,6 +74,20 @@ func (h *HTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		assetID := strings.TrimSuffix(strings.Trim(path, "/"), "/history")
 		h.getAssetHistory(w, r, assetID)
+	case strings.HasSuffix(path, "/details"):
+		if r.Method != http.MethodGet {
+			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+			return
+		}
+		assetID := strings.TrimSuffix(strings.Trim(path, "/"), "/details")
+		h.getAssetDetails(w, r, assetID)
+	case strings.HasSuffix(path, "/topology"):
+		if r.Method != http.MethodGet {
+			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+			return
+		}
+		assetID := strings.TrimSuffix(strings.Trim(path, "/"), "/topology")
+		h.getAssetTopology(w, r, assetID)
 	default:
 		if r.Method != http.MethodGet {
 			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
@@ -78,11 +98,25 @@ func (h *HTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HTTPHandler) listAssets(w http.ResponseWriter, r *http.Request) {
-	tenantID := tenantFromRequest(r)
+	identity, ok := h.requireAssetRead(w, r)
+	if !ok {
+		return
+	}
 	limit := intQuery(r, "limit", 50)
 	offset := intQuery(r, "offset", 0)
+	assetType := r.URL.Query().Get("asset_type")
+	if assetType != "" && !service.IsAssetType(assetType) {
+		writeError(w, http.StatusBadRequest, "invalid asset_type")
+		return
+	}
 
-	assets, total, err := h.svc.ListAssets(r.Context(), tenantID, limit, offset)
+	assets, total, err := h.svc.ListAssetsFiltered(r.Context(), identity.TenantID, config.AssetListFilter{
+		AssetType:  assetType,
+		Status:     strings.TrimSpace(r.URL.Query().Get("status")),
+		Search:     strings.TrimSpace(r.URL.Query().Get("search")),
+		Department: strings.TrimSpace(r.URL.Query().Get("department")),
+		Campus:     strings.TrimSpace(r.URL.Query().Get("campus")),
+	}, limit, offset)
 	if err != nil {
 		h.logger.Warn("list assets failed", zap.Error(err))
 		writeError(w, http.StatusInternalServerError, err.Error())
@@ -101,11 +135,15 @@ func (h *HTTPHandler) listAssets(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HTTPHandler) getAsset(w http.ResponseWriter, r *http.Request, assetID string) {
+	identity, ok := h.requireAssetRead(w, r)
+	if !ok {
+		return
+	}
 	if assetID == "" {
 		writeError(w, http.StatusBadRequest, "asset id required")
 		return
 	}
-	asset, err := h.svc.GetAsset(r.Context(), tenantFromRequest(r), assetID, r.URL.Query().Get("mac_address"))
+	asset, err := h.svc.GetAsset(r.Context(), identity.TenantID, assetID, r.URL.Query().Get("mac_address"))
 	if err != nil {
 		h.logger.Warn("get asset failed", zap.String("asset_id", assetID), zap.Error(err))
 		writeError(w, http.StatusNotFound, "asset not found")
@@ -114,18 +152,77 @@ func (h *HTTPHandler) getAsset(w http.ResponseWriter, r *http.Request, assetID s
 	writeJSON(w, http.StatusOK, map[string]any{"data": asset})
 }
 
+func (h *HTTPHandler) getAssetStats(w http.ResponseWriter, r *http.Request) {
+	identity, ok := h.requireAssetRead(w, r)
+	if !ok {
+		return
+	}
+	stats, err := h.svc.GetAssetStatsFiltered(r.Context(), identity.TenantID, config.AssetListFilter{
+		AssetType:  strings.TrimSpace(r.URL.Query().Get("asset_type")),
+		Status:     strings.TrimSpace(r.URL.Query().Get("status")),
+		Search:     strings.TrimSpace(r.URL.Query().Get("search")),
+		Department: strings.TrimSpace(r.URL.Query().Get("department")),
+		Campus:     strings.TrimSpace(r.URL.Query().Get("campus")),
+	})
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"data": stats})
+}
+
 func (h *HTTPHandler) getAssetHistory(w http.ResponseWriter, r *http.Request, assetID string) {
+	identity, ok := h.requireAssetRead(w, r)
+	if !ok {
+		return
+	}
 	if assetID == "" {
 		writeError(w, http.StatusBadRequest, "asset id required")
 		return
 	}
-	events, err := h.svc.GetAssetHistory(r.Context(), assetID, intQuery(r, "limit", 20))
+	events, err := h.svc.GetAssetHistory(r.Context(), identity.TenantID, assetID, intQuery(r, "limit", 20))
 	if err != nil {
 		h.logger.Warn("get asset history failed", zap.String("asset_id", assetID), zap.Error(err))
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"data": events})
+}
+
+func (h *HTTPHandler) getAssetDetails(w http.ResponseWriter, r *http.Request, assetID string) {
+	identity, ok := h.requireAssetRead(w, r)
+	if !ok {
+		return
+	}
+	if assetID == "" {
+		writeError(w, http.StatusBadRequest, "asset id required")
+		return
+	}
+	details, err := h.svc.GetAssetDetails(r.Context(), identity.TenantID, assetID)
+	if err != nil {
+		h.logger.Warn("get asset details failed", zap.String("asset_id", assetID), zap.Error(err))
+		writeError(w, http.StatusNotFound, "asset details not found")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"data": details})
+}
+
+func (h *HTTPHandler) getAssetTopology(w http.ResponseWriter, r *http.Request, assetID string) {
+	identity, ok := h.requireAssetRead(w, r)
+	if !ok {
+		return
+	}
+	if assetID == "" {
+		writeError(w, http.StatusBadRequest, "asset id required")
+		return
+	}
+	graph, err := h.svc.GetAssetTopology(r.Context(), identity.TenantID, assetID)
+	if err != nil {
+		h.logger.Warn("get asset topology failed", zap.String("asset_id", assetID), zap.Error(err))
+		writeError(w, http.StatusNotFound, "asset topology not found")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"data": graph})
 }
 
 func (h *HTTPHandler) registerDiscoveryCredential(w http.ResponseWriter, r *http.Request) {
@@ -156,7 +253,11 @@ func (h *HTTPHandler) registerDiscoveryCredential(w http.ResponseWriter, r *http
 }
 
 func (h *HTTPHandler) listDiscoveryCredentials(w http.ResponseWriter, r *http.Request) {
-	items, err := h.svc.ListDiscoveryCredentials(r.Context(), tenantFromRequest(r), intQuery(r, "limit", 20))
+	identity, ok := h.requireAssetRead(w, r)
+	if !ok {
+		return
+	}
+	items, err := h.svc.ListDiscoveryCredentials(r.Context(), identity.TenantID, intQuery(r, "limit", 20))
 	if err != nil {
 		h.logger.Warn("list discovery credentials failed", zap.Error(err))
 		writeError(w, http.StatusInternalServerError, err.Error())
@@ -198,7 +299,11 @@ func (h *HTTPHandler) runActiveDiscovery(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *HTTPHandler) listDiscoveryRuns(w http.ResponseWriter, r *http.Request) {
-	runs, err := h.svc.ListDiscoveryRuns(r.Context(), tenantFromRequest(r), intQuery(r, "limit", 20))
+	identity, ok := h.requireAssetRead(w, r)
+	if !ok {
+		return
+	}
+	runs, err := h.svc.ListDiscoveryRuns(r.Context(), identity.TenantID, intQuery(r, "limit", 20))
 	if err != nil {
 		h.logger.Warn("list discovery runs failed", zap.Error(err))
 		writeError(w, http.StatusInternalServerError, err.Error())
@@ -208,7 +313,11 @@ func (h *HTTPHandler) listDiscoveryRuns(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *HTTPHandler) listTopologyLinks(w http.ResponseWriter, r *http.Request) {
-	links, err := h.svc.ListTopologyLinks(r.Context(), tenantFromRequest(r), r.URL.Query().Get("asset_id"), intQuery(r, "limit", 50))
+	identity, ok := h.requireAssetRead(w, r)
+	if !ok {
+		return
+	}
+	links, err := h.svc.ListTopologyLinks(r.Context(), identity.TenantID, r.URL.Query().Get("asset_id"), intQuery(r, "limit", 50))
 	if err != nil {
 		h.logger.Warn("list topology links failed", zap.Error(err))
 		writeError(w, http.StatusInternalServerError, err.Error())
@@ -218,13 +327,10 @@ func (h *HTTPHandler) listTopologyLinks(w http.ResponseWriter, r *http.Request) 
 }
 
 func tenantFromRequest(r *http.Request) string {
-	if tenantID := r.URL.Query().Get("tenant_id"); tenantID != "" {
-		return tenantID
-	}
 	if tenantID := r.Header.Get("X-Tenant-ID"); tenantID != "" {
 		return tenantID
 	}
-	return "default"
+	return ""
 }
 
 func actorFromRequest(r *http.Request) string {

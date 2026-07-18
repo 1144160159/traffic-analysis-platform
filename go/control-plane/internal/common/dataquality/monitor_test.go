@@ -25,7 +25,7 @@ func TestNewMonitor(t *testing.T) {
 func TestCheckAllWithoutDB(t *testing.T) {
 	monitor := NewMonitor(nil, MonitorConfig{MinFlowRate: 100, MaxLatencyP95: 60000}, zap.NewNop())
 
-	report, err := monitor.CheckAll(context.Background())
+	report, err := monitor.CheckAll(context.Background(), "tenant-test")
 	if err == nil {
 		t.Fatal("CheckAll with nil DB MUST return error, not fake results")
 	}
