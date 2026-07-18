@@ -102,7 +102,8 @@ describe('routeManifest', () => {
   it('keeps every page explainable with tabs, actions, and evidence hints', () => {
     for (const route of allRoutes) {
       expect(route.page.title).toBe(route.title);
-      expect(route.page.tabs.length).toBeGreaterThan(0);
+      if (route.id === 'forensics') expect(route.page.tabs).toHaveLength(0);
+      else expect(route.page.tabs.length).toBeGreaterThan(0);
       expect(route.page.actions.length).toBeGreaterThan(0);
       expect(route.page.apiHints.length).toBeGreaterThan(0);
       expect(route.requiredScopes.length).toBeGreaterThan(0);

@@ -3,27 +3,21 @@ import {
   assetBreakdownId,
   assetSearchParams,
   canOpenAssetDetail,
-  defaultAssetIdByTab,
   resolveAssetDetail,
   resolveAssetTab,
 } from './assetInventoryState';
 
 describe('asset inventory route state', () => {
   it('keeps asset category and detail state independent', () => {
-    const params = assetSearchParams({ tab: 'server', assetId: 'SRV-0007', detail: 'open-services' });
+    const assetId = '96343e2f-b391-4bc4-95e2-3343ab0ea94d';
+    const params = assetSearchParams({ tab: 'server', assetId, detail: 'open-services' });
     expect(params.get('tab')).toBe('server');
-    expect(params.get('assetId')).toBe('SRV-0007');
+    expect(params.get('assetId')).toBe(assetId);
     expect(params.get('detail')).toBe('open-services');
   });
 
-  it('uses deterministic selected assets for every category', () => {
-    expect(defaultAssetIdByTab).toEqual({
-      endpoint: 'PC-0082',
-      server: 'SRV-0007',
-      'network-device': 'NET-0001',
-      'business-system': 'BIZ-0001',
-      unknown: 'UNK-10.12.88.45',
-    });
+  it('does not invent a display id before the API selects a canonical asset', () => {
+    expect(assetSearchParams({ tab: 'unknown' }).toString()).toBe('tab=unknown');
   });
 
   it('rejects unknown category and detail values without coupling them', () => {
@@ -34,8 +28,8 @@ describe('asset inventory route state', () => {
   });
 
   it('only opens the server detail workspace for a selected server', () => {
-    expect(canOpenAssetDetail('server', 'SRV-0007')).toBe(true);
-    expect(canOpenAssetDetail('server', 'NET-0001')).toBe(false);
+    expect(canOpenAssetDetail('server', '96343e2f-b391-4bc4-95e2-3343ab0ea94d')).toBe(true);
+    expect(canOpenAssetDetail('server', '')).toBe(false);
     expect(canOpenAssetDetail('endpoint', 'PC-0082')).toBe(false);
     expect(canOpenAssetDetail('unknown', 'UNK-10.12.88.45')).toBe(false);
   });

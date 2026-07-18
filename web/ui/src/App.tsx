@@ -11,7 +11,6 @@ import { hasRouteAccess } from '@/routes/access';
 import { fetchCurrentUser, localBypassUser } from '@/services/api';
 import { appConfig } from '@/config/runtime';
 import { consumeDesktopSmokeToken, getAuthToken } from '@/services/authStorage';
-import { isVisualBreakdownMode } from '@/utils/visualBreakdownMode';
 import { useDocumentWindowFrameCssVars } from '@/utils/windowFrameState';
 
 const routerBasename = import.meta.env.BASE_URL === '/' ? undefined : import.meta.env.BASE_URL.replace(/\/$/, '');
@@ -97,13 +96,12 @@ function AccessDenied({ route }: { route?: NavRoute }) {
 }
 
 function ProtectedRoute({ children, route }: { children: ReactNode; route?: NavRoute }) {
-  const visualBreakdownMode = isVisualBreakdownMode();
-  const tokenPresent = visualBreakdownMode || hasLocalSession();
+  const tokenPresent = hasLocalSession();
   const screenMaskedDemo = isScreenMaskedDemoRoute(route);
   const session = useQuery({
     queryKey: ['current-user'],
     queryFn: fetchCurrentUser,
-    enabled: appConfig.authEnabled && tokenPresent && !screenMaskedDemo && !visualBreakdownMode,
+    enabled: appConfig.authEnabled && tokenPresent && !screenMaskedDemo,
     retry: false,
     staleTime: 60_000,
   });
@@ -112,7 +110,7 @@ function ProtectedRoute({ children, route }: { children: ReactNode; route?: NavR
   if (session.isLoading) return <RouteLoading />;
   if (session.isError) return <Navigate to="/login" replace />;
 
-  const currentUser = screenMaskedDemo ? screenDemoUser : visualBreakdownMode || !appConfig.authEnabled ? localBypassUser : session.data;
+  const currentUser = screenMaskedDemo ? screenDemoUser : !appConfig.authEnabled ? localBypassUser : session.data;
   if (route && !hasRouteAccess(route, currentUser)) {
     return (
       <AppShell currentUser={currentUser}>

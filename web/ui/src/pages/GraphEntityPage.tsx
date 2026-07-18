@@ -16,12 +16,13 @@ import { useQuery } from '@tanstack/react-query';
 import { Alert, Button, Input, Select, Space, Table, Tabs, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { MetricTile } from '@/components/MetricTile';
 import { OverlayContractHost, type OverlayContract } from '@/components/OverlayContractHost';
 import { StatusTag } from '@/components/StatusTag';
 import { WorkPanel } from '@/components/WorkPanel';
 import type { NavRoute } from '@/routes/routeManifest';
-import { fetchPageSnapshot } from '@/services/api';
+import { fetchAsset, fetchPageSnapshot } from '@/services/api';
 import type { SnapshotRow } from '@/services/mockData';
 
 const graphNodes = [
@@ -65,11 +66,19 @@ const graphOverlays: OverlayContract[] = [
 ];
 
 export function GraphEntityPage({ route }: { route: NavRoute }) {
+  const [searchParams] = useSearchParams();
+  const sourceAssetId = searchParams.get('assetId') ?? '';
   const [activePath, setActivePath] = useState(route.page.tabs[0]);
   const [selectedRowKey, setSelectedRowKey] = useState<string>();
+  const sourceAsset = useQuery({
+    queryKey: ['asset', sourceAssetId],
+    queryFn: () => fetchAsset(sourceAssetId),
+    enabled: Boolean(sourceAssetId),
+  });
   const { data, error, isError, isLoading, refetch } = useQuery({
-    queryKey: ['page-snapshot', route.id],
-    queryFn: () => fetchPageSnapshot(route.id),
+    queryKey: ['page-snapshot', route.id, sourceAssetId, sourceAsset.data?.ip_address],
+    queryFn: () => fetchPageSnapshot(route.id, { sourceAssetIp: sourceAsset.data?.ip_address }),
+    enabled: !sourceAssetId || Boolean(sourceAsset.data?.ip_address),
   });
 
   const rows = useMemo(() => data?.rows ?? [], [data?.rows]);
@@ -116,8 +125,10 @@ export function GraphEntityPage({ route }: { route: NavRoute }) {
         />
       )}
 
+      {sourceAssetId && <Alert showIcon type={sourceAsset.isError ? 'error' : 'info'} message={sourceAsset.isError ? '资产上下文解析失败' : '已接收资产台账上下文'} description={sourceAsset.isError ? '无法从资产服务解析中心实体 IP。' : `中心实体资产 ID：${sourceAssetId}${sourceAsset.data?.ip_address ? ` · IP：${sourceAsset.data.ip_address}` : ' · 正在解析 IP'}`} />}
+
       <div className="taf-graph-toolbar">
-        <Input prefix={<SearchOutlined />} placeholder="搜索 IP / 账号 / 主机 / 域名 / 服务 / 告警 ID / 资产 ID" value="10.20.4.18" readOnly />
+        <Input prefix={<SearchOutlined />} placeholder="搜索 IP / 账号 / 主机 / 域名 / 服务 / 告警 ID / 资产 ID" value={sourceAssetId} readOnly />
         <Select size="small" value="近24小时" options={[{ value: '近24小时' }, { value: '近7天' }, { value: '自定义' }]} />
         <Select size="small" value="主园区" options={[{ value: '主园区' }, { value: '实验楼' }, { value: '全部园区' }]} />
         <Select size="small" value="实体类型：全部" options={[{ value: '实体类型：全部' }, { value: '主机' }, { value: '账号' }, { value: '告警' }]} />

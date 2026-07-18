@@ -51,6 +51,26 @@ export type EvidenceRingItem = {
   level?: 'low' | 'medium' | 'high';
 };
 
+export type AssetProtocolShareItem = {
+  label: string;
+  value: number;
+};
+
+export type AssetMetricRingItem = {
+  label: string;
+  value: number;
+  max: number;
+  color: string;
+  suffix?: string;
+};
+
+export type AssetDistributionItem = {
+  label: string;
+  value: number;
+  color?: string;
+  detail?: string;
+};
+
 export type DashboardStageChartItem = {
   label: string;
   value: number;
@@ -94,6 +114,11 @@ export type DataQualityTrendSeries = {
 };
 
 export type DataQualityKpiSparklineTone = 'ok' | 'warn' | 'risk' | 'info';
+
+export type DataQualityHeatmapRow = {
+  label: string;
+  values: DataQualityKpiSparklineTone[];
+};
 
 export type ExfilSankeyNode = {
   name: string;
@@ -236,9 +261,9 @@ export function WorldActivityMap({
   ariaLabel: string;
   onNodeClick?: (name: string) => void;
 }) {
-  const landFill = variant === 'risk' ? 'rgba(255, 77, 79, 0.24)' : 'rgba(24, 168, 255, 0.34)';
-  const landStroke = variant === 'risk' ? 'rgba(255, 112, 82, 0.88)' : 'rgba(127, 212, 255, 0.84)';
-  const glow = variant === 'risk' ? 'rgba(255, 77, 79, 0.58)' : 'rgba(24, 168, 255, 0.62)';
+  const landFill = variant === 'risk' ? 'rgba(255, 77, 79, 0.24)' : 'rgba(24, 168, 255, 0.16)';
+  const landStroke = variant === 'risk' ? 'rgba(255, 112, 82, 0.88)' : 'rgba(127, 212, 255, 0.62)';
+  const glow = variant === 'risk' ? 'rgba(255, 77, 79, 0.58)' : 'rgba(24, 168, 255, 0.38)';
   const pointData = points.map((point) => ({
     name: point.name,
     value: [point.coord[0], point.coord[1], point.value],
@@ -770,6 +795,407 @@ export function ExfilPieChart({
   );
 }
 
+const assetProtocolPalette = ['#1688ff', '#27b8e6', '#4bc06a', '#d1c94a', '#ff9f2f', '#7a8ff5', '#8a9aaa'];
+
+export function AssetTrafficProfileChart({
+  inbound,
+  outbound,
+  eastWest,
+  labels,
+  ariaLabel,
+}: {
+  inbound: number[];
+  outbound: number[];
+  eastWest: number[];
+  labels: string[];
+  ariaLabel: string;
+}) {
+  const pointCount = Math.max(inbound.length, outbound.length, eastWest.length, 1);
+  const normalizedLabels = Array.from({ length: pointCount }, (_, index) => labels[index] || `${String((index * 2 + 3) % 24).padStart(2, '0')}:00`);
+  const normalize = (values: number[]) => Array.from({ length: pointCount }, (_, index) => values[index] ?? 0);
+  const inboundValues = normalize(inbound);
+  const outboundValues = normalize(outbound);
+  const eastWestValues = normalize(eastWest);
+  const peak = Math.max(1, ...inboundValues, ...outboundValues, ...eastWestValues);
+  const axisMax = Math.max(100, Math.ceil(peak / 20) * 20);
+  const option: ChartOption = {
+    backgroundColor: 'transparent',
+    animation: false,
+    color: ['#1688ff', '#39c978', '#7a8ff5'],
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'line' },
+      confine: true,
+      backgroundColor: 'rgba(3, 17, 28, 0.96)',
+      borderColor: 'rgba(127, 212, 255, 0.3)',
+      textStyle: { color: '#eaf7ff', fontSize: 11 },
+      valueFormatter: (value) => `${Number(value).toFixed(1)} Mbps`,
+    },
+    legend: {
+      top: 0,
+      right: 3,
+      itemWidth: 8,
+      itemHeight: 8,
+      itemGap: 10,
+      icon: 'rect',
+      textStyle: { color: '#9db8c8', fontSize: 10 },
+      data: ['入站', '出站', '东西向'],
+    },
+    grid: { left: 33, right: 5, top: 25, bottom: 22, containLabel: false },
+    xAxis: {
+      type: 'category',
+      data: normalizedLabels,
+      axisLine: { lineStyle: { color: 'rgba(127, 212, 255, 0.28)' } },
+      axisTick: { show: false },
+      axisLabel: {
+        color: '#7f9dad',
+        fontSize: 9,
+        interval: 1,
+        hideOverlap: true,
+      },
+    },
+    yAxis: {
+      type: 'value',
+      min: 0,
+      max: axisMax,
+      interval: 20,
+      name: 'Mbps',
+      nameLocation: 'end',
+      nameGap: 6,
+      nameTextStyle: { color: '#9db8c8', fontSize: 10, align: 'right' },
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: { color: '#7f9dad', fontSize: 9 },
+      splitLine: { lineStyle: { color: 'rgba(56, 151, 201, 0.15)', type: 'solid' } },
+    },
+    series: [
+      { name: '入站', type: 'line', data: inboundValues, smooth: 0.28, showSymbol: false, lineStyle: { width: 2 }, areaStyle: { opacity: 0.13 } },
+      { name: '出站', type: 'line', data: outboundValues, smooth: 0.28, showSymbol: false, lineStyle: { width: 2 }, areaStyle: { opacity: 0.1 } },
+      { name: '东西向', type: 'line', data: eastWestValues, smooth: 0.28, showSymbol: false, lineStyle: { width: 1.6, type: 'dashed' }, areaStyle: { opacity: 0.05 } },
+    ],
+  };
+
+  return (
+    <div className="taf-asset-traffic" data-series-count="3" data-series-types="line,line,line" data-point-count={pointCount}>
+      <EChartsReactCore aria-label={ariaLabel} echarts={echarts} style={{ height: '100%', width: '100%' }} option={option} notMerge lazyUpdate />
+    </div>
+  );
+}
+
+export function AssetProtocolDistributionChart({
+  items,
+  totalLabel,
+  ariaLabel,
+}: {
+  items: AssetProtocolShareItem[];
+  totalLabel: string;
+  ariaLabel: string;
+}) {
+  const valuesByName = Object.fromEntries(items.map((item) => [item.label, item.value]));
+  const option: ChartOption = {
+    backgroundColor: 'transparent',
+    animation: false,
+    tooltip: {
+      trigger: 'item',
+      confine: true,
+      backgroundColor: 'rgba(3, 17, 28, 0.96)',
+      borderColor: 'rgba(127, 212, 255, 0.3)',
+      textStyle: { color: '#eaf7ff', fontSize: 11 },
+      formatter: '{b}<br/>{c}%',
+    },
+    title: {
+      text: '总流量',
+      subtext: totalLabel,
+      left: '27%',
+      top: '34%',
+      textAlign: 'center',
+      itemGap: 2,
+      textStyle: { color: '#a9c4d3', fontSize: 10, fontWeight: 500 },
+      subtextStyle: { color: '#eaf7ff', fontSize: 12, fontWeight: 700 },
+    },
+    legend: {
+      orient: 'vertical',
+      top: 'center',
+      right: 2,
+      itemWidth: 8,
+      itemHeight: 8,
+      itemGap: 5,
+      icon: 'rect',
+      selectedMode: false,
+      data: items.map((item) => item.label),
+      formatter: (name: string) => `{name|${name}} {value|${(valuesByName[name] ?? 0).toFixed(1)}%}`,
+      textStyle: {
+        color: '#9db8c8',
+        fontSize: 9,
+        rich: {
+          name: { width: 67, color: '#9db8c8', fontSize: 9 },
+          value: { width: 36, align: 'right', color: '#b8ccd8', fontSize: 9 },
+        },
+      },
+    },
+    series: [
+      {
+        name: '协议占比',
+        type: 'pie',
+      center: ['27%', '53%'],
+      radius: ['42%', '64%'],
+        startAngle: 90,
+        clockwise: true,
+        avoidLabelOverlap: true,
+        label: { show: false },
+        labelLine: { show: false },
+        itemStyle: { borderColor: 'rgba(3, 17, 28, 0.78)', borderWidth: 1 },
+        data: items.map((item, index) => ({
+          name: item.label,
+          value: item.value,
+          itemStyle: { color: assetProtocolPalette[index % assetProtocolPalette.length] },
+        })),
+      },
+    ],
+  };
+
+  return (
+    <div className="taf-asset-protocol" data-protocol-count={items.length} data-total-label={totalLabel} data-chart-center="27%" data-chart-radius="42%-64%" data-legend-region="right">
+      <EChartsReactCore aria-label={ariaLabel} echarts={echarts} style={{ height: '100%', width: '100%' }} option={option} notMerge lazyUpdate />
+    </div>
+  );
+}
+
+const assetDistributionPalette = ['#ff4d4f', '#ff8a34', '#f2c94c', '#39c978', '#1688ff', '#7a8ff5', '#27b8e6'];
+
+export function AssetMetricRingsChart({ items, ariaLabel }: { items: AssetMetricRingItem[]; ariaLabel: string }) {
+  const centers = items.map((_, index) => `${(index + 0.5) * (100 / Math.max(items.length, 1))}%`);
+  const option: ChartOption = {
+    backgroundColor: 'transparent',
+    animation: false,
+    tooltip: { show: false },
+    series: items.map((item, index) => ({
+      name: item.label,
+      type: 'gauge',
+      center: [centers[index], '40%'],
+      radius: '50%',
+      min: 0,
+      max: Math.max(item.max, 1),
+      startAngle: 90,
+      endAngle: -269.9,
+      pointer: { show: false },
+      progress: { show: true, roundCap: true, width: 5, itemStyle: { color: item.color } },
+      axisLine: { roundCap: true, lineStyle: { width: 5, color: [[1, 'rgba(91, 132, 154, 0.2)']] } },
+      axisTick: { show: false },
+      splitLine: { show: false },
+      axisLabel: { show: false },
+      anchor: { show: false },
+      title: { show: true, offsetCenter: [0, '145%'], color: '#91adbd', fontSize: 10 },
+      detail: {
+        valueAnimation: false,
+        offsetCenter: [0, '0%'],
+        color: item.color,
+        fontSize: 18,
+        fontWeight: 700,
+        formatter: `${item.value}${item.suffix ?? ''}`,
+      },
+      data: [{ value: item.value, name: item.label }],
+    })),
+  };
+  return (
+    <div className="taf-asset-metric-rings" data-metric-count={items.length} data-ring-radius="50%" data-title-offset="145%">
+      <EChartsReactCore aria-label={ariaLabel} echarts={echarts} style={{ height: '100%', width: '100%' }} option={option} notMerge lazyUpdate />
+    </div>
+  );
+}
+
+export function AssetDistributionDonutChart({
+  items,
+  centerLabel,
+  centerValue,
+  ariaLabel,
+  tone = 'standard',
+}: {
+  items: AssetDistributionItem[];
+  centerLabel: string;
+  centerValue: string;
+  ariaLabel: string;
+  tone?: 'standard' | 'risk';
+}) {
+  const total = Math.max(1, items.reduce((sum, item) => sum + item.value, 0));
+  const valuesByName = Object.fromEntries(items.map((item) => [item.label, item]));
+  const option: ChartOption = {
+    backgroundColor: 'transparent',
+    animation: false,
+    tooltip: {
+      trigger: 'item',
+      confine: true,
+      backgroundColor: 'rgba(3, 17, 28, 0.96)',
+      borderColor: 'rgba(127, 212, 255, 0.3)',
+      textStyle: { color: '#eaf7ff', fontSize: 11 },
+      formatter: (rawParams) => {
+        const params = rawParams as { name?: string; value?: number };
+        const detail = valuesByName[params.name ?? '']?.detail;
+        return `${params.name ?? '-'}<br/>${params.value ?? 0}${detail ? ` · ${detail}` : ''}`;
+      },
+    },
+    title: {
+      text: centerValue,
+      subtext: centerLabel,
+      left: '21%',
+      top: '35%',
+      textAlign: 'center',
+      itemGap: 2,
+      textStyle: { color: tone === 'risk' ? '#ff6b67' : '#eaf7ff', fontSize: 20, fontWeight: 700 },
+      subtextStyle: { color: '#8ca9ba', fontSize: 10 },
+    },
+    legend: {
+      orient: 'vertical',
+      top: 'center',
+      right: 4,
+      itemWidth: 8,
+      itemHeight: 8,
+      itemGap: 6,
+      icon: 'rect',
+      selectedMode: false,
+      data: items.map((item) => item.label),
+      formatter: (name: string) => {
+        const item = valuesByName[name];
+        const percent = ((item?.value ?? 0) / total) * 100;
+        return `{name|${name}} {value|${item?.detail || `${item?.value ?? 0}  ${percent.toFixed(1)}%`}}`;
+      },
+      textStyle: {
+        color: '#9db8c8',
+        fontSize: 9,
+        rich: {
+          name: { width: 54, color: '#9db8c8', fontSize: 9 },
+          value: { width: 60, align: 'right', color: '#d7e8f1', fontSize: 9 },
+        },
+      },
+    },
+    series: [{
+      name: centerLabel,
+      type: 'pie',
+      center: ['21%', '52%'],
+      radius: ['40%', '58%'],
+      startAngle: 90,
+      clockwise: true,
+      label: { show: false },
+      labelLine: { show: false },
+      itemStyle: { borderColor: 'rgba(3, 17, 28, 0.86)', borderWidth: 2 },
+      data: items.map((item, index) => ({
+        name: item.label,
+        value: item.value,
+        itemStyle: { color: item.color || assetDistributionPalette[index % assetDistributionPalette.length] },
+      })),
+    }],
+  };
+  return (
+    <div className="taf-asset-distribution" data-segment-count={items.length} data-chart-center="21%" data-chart-radius="40%-58%" data-legend-region="right" data-legend-safe-gap="12">
+      <EChartsReactCore aria-label={ariaLabel} echarts={echarts} style={{ height: '100%', width: '100%' }} option={option} notMerge lazyUpdate />
+    </div>
+  );
+}
+
+export function AssetDiscoveryActivityChart({
+  labels,
+  discovered,
+  pending,
+  ariaLabel,
+}: {
+  labels: string[];
+  discovered: number[];
+  pending: number[];
+  ariaLabel: string;
+}) {
+  const pointCount = Math.max(labels.length, discovered.length, pending.length, 1);
+  const xLabels = Array.from({ length: pointCount }, (_, index) => labels[index] || `${String(index * 2).padStart(2, '0')}:00`);
+  const discoveredValues = Array.from({ length: pointCount }, (_, index) => discovered[index] ?? 0);
+  const pendingValues = Array.from({ length: pointCount }, (_, index) => pending[index] ?? 0);
+  const option: ChartOption = {
+    backgroundColor: 'transparent',
+    animation: false,
+    color: ['#1688ff', '#ffb020'],
+    tooltip: {
+      trigger: 'axis',
+      confine: true,
+      backgroundColor: 'rgba(3, 17, 28, 0.96)',
+      borderColor: 'rgba(127, 212, 255, 0.3)',
+      textStyle: { color: '#eaf7ff', fontSize: 11 },
+    },
+    legend: { top: 0, right: 4, itemWidth: 8, itemHeight: 8, textStyle: { color: '#9db8c8', fontSize: 10 } },
+    grid: { left: 34, right: 34, top: 27, bottom: 24 },
+    xAxis: {
+      type: 'category',
+      data: xLabels,
+      axisTick: { show: false },
+      axisLine: { lineStyle: { color: 'rgba(127, 212, 255, 0.28)' } },
+      axisLabel: { color: '#7f9dad', fontSize: 9, hideOverlap: true },
+    },
+    yAxis: [
+      { type: 'value', min: 0, axisLine: { show: false }, axisTick: { show: false }, axisLabel: { color: '#7f9dad', fontSize: 9 }, splitLine: { lineStyle: { color: 'rgba(56, 151, 201, 0.15)' } } },
+      { type: 'value', min: 0, max: 100, axisLine: { show: false }, axisTick: { show: false }, axisLabel: { color: '#7f9dad', fontSize: 9, formatter: '{value}%' }, splitLine: { show: false } },
+    ],
+    series: [
+      { name: '发现资产', type: 'bar', data: discoveredValues, barMaxWidth: 16, itemStyle: { color: '#1688ff' } },
+      { name: '待归属率', type: 'line', yAxisIndex: 1, data: pendingValues, smooth: true, symbolSize: 5, lineStyle: { width: 2, color: '#ffb020' }, itemStyle: { color: '#ffb020' } },
+    ],
+  };
+  return (
+    <div className="taf-asset-discovery-chart" data-point-count={pointCount}>
+      <EChartsReactCore aria-label={ariaLabel} echarts={echarts} style={{ height: '100%', width: '100%' }} option={option} notMerge lazyUpdate />
+    </div>
+  );
+}
+
+export function AssetPeriodicHeatmapChart({ values, ariaLabel }: { values: number[]; ariaLabel: string }) {
+  const days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+  const slots = values.length >= 7 ? Math.floor(values.length / 7) : 0;
+  const labels = Array.from({ length: slots }, (_, index) => `${String(Math.round((24 / Math.max(slots, 1)) * index)).padStart(2, '0')}:00`);
+  const data = days.flatMap((_, day) => Array.from({ length: slots }, (__, slot) => [slot, day, values[day * slots + slot] ?? 0]));
+  const max = Math.max(1, ...values);
+  const option: ChartOption = {
+    backgroundColor: 'transparent',
+    animation: false,
+    tooltip: {
+      position: 'top',
+      confine: true,
+      backgroundColor: 'rgba(3, 17, 28, 0.96)',
+      borderColor: 'rgba(127, 212, 255, 0.3)',
+      textStyle: { color: '#eaf7ff', fontSize: 11 },
+      formatter: (rawParams) => {
+        const params = rawParams as { value?: unknown[] };
+        const value = Array.isArray(params.value) ? params.value : [];
+        return `${days[Number(value[1])] ?? '-'} ${labels[Number(value[0])] ?? '-'}<br/>连接强度：${value[2] ?? 0}`;
+      },
+    },
+    grid: { left: 38, right: 6, top: 4, bottom: 22 },
+    xAxis: {
+      type: 'category',
+      data: labels,
+      axisLine: { lineStyle: { color: 'rgba(127, 212, 255, 0.2)' } },
+      axisTick: { show: false },
+      axisLabel: { color: '#7f9dad', fontSize: 9, interval: Math.max(0, Math.floor(slots / 4) - 1) },
+    },
+    yAxis: {
+      type: 'category',
+      data: days,
+      inverse: true,
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: { color: '#91adbd', fontSize: 10, interval: 0, margin: 8 },
+    },
+    visualMap: { show: false, min: 0, max, inRange: { color: ['#0b3551', '#17679c', '#29a8e8', '#75d1ff'] } },
+    series: [{
+      name: '周期性连接',
+      type: 'heatmap',
+      data,
+      itemStyle: { borderColor: '#071a27', borderWidth: 2, borderRadius: 2 },
+      emphasis: { itemStyle: { borderColor: '#eaf7ff', borderWidth: 1 } },
+    }],
+  };
+  return (
+    <div className="taf-asset-periodic-chart" data-slot-count={slots} data-day-count="7" data-y-axis-fill="monday-to-sunday">
+      <EChartsReactCore aria-label={ariaLabel} echarts={echarts} style={{ height: '100%', width: '100%' }} option={option} notMerge lazyUpdate />
+    </div>
+  );
+}
+
 export function ExfilLineChart({
   points,
   ariaLabel,
@@ -1130,6 +1556,64 @@ export function DataQualityKpiSparklineChart({
   return <EChartsReactCore aria-label={ariaLabel} className={className} echarts={echarts} style={{ height: '100%', width: '100%' }} option={option} notMerge lazyUpdate />;
 }
 
+export function ForensicsSessionTimelineChart({
+  ariaLabel,
+  rows,
+}: {
+  ariaLabel: string;
+  rows: Array<{ time: string; protocol: string; packetCount: number }>;
+}) {
+  const source = rows.length ? rows : [{ time: '-', protocol: '其他', packetCount: 0 }];
+  const labelInterval = Math.max(0, Math.ceil(source.length / 6) - 1);
+  const packetCeiling = Math.max(...source.map((item) => Math.log10(Math.max(item.packetCount, 0) + 1)), 1) * 1.4;
+  const protocols = [
+    { name: 'TLS', color: '#18a8ff' },
+    { name: 'HTTP', color: '#36d66b' },
+    { name: 'DNS', color: '#ffb020' },
+    { name: '其他', color: '#6f8796' },
+  ];
+  const option: ChartOption = {
+    backgroundColor: 'transparent',
+    animation: false,
+    tooltip: {
+      trigger: 'axis',
+      confine: true,
+      backgroundColor: 'rgba(3, 17, 28, 0.94)',
+      borderColor: 'rgba(127, 212, 255, 0.26)',
+      textStyle: { color: '#eaf7ff', fontSize: 10 },
+    },
+    legend: {
+      bottom: 0,
+      itemWidth: 8,
+      itemHeight: 6,
+      itemGap: 14,
+      textStyle: { color: '#8ca6b7', fontSize: 9 },
+    },
+    grid: { left: 4, right: 4, top: 4, bottom: 22 },
+    xAxis: {
+      type: 'category',
+      data: source.map((_, index) => String(index)),
+      axisLine: { lineStyle: { color: 'rgba(56, 151, 201, 0.22)' } },
+      axisTick: { show: false },
+      axisLabel: { color: '#6f8796', fontSize: 9, interval: labelInterval, formatter: (value: string) => source[Number(value)]?.time ?? '' },
+    },
+    yAxis: { type: 'value', min: 0, max: packetCeiling, show: false },
+    series: protocols.map((protocol) => ({
+      name: protocol.name,
+      type: 'bar',
+      stack: 'session-packets',
+      barMaxWidth: 7,
+      data: source.map((item) => {
+        const name = ['TLS', 'HTTP', 'DNS'].includes(item.protocol.toUpperCase()) ? item.protocol.toUpperCase() : '其他';
+        return name === protocol.name ? Math.log10(Math.max(item.packetCount, 0) + 1) : 0;
+      }),
+      itemStyle: { color: protocol.color, borderRadius: [2, 2, 0, 0] },
+    } as BarSeriesOption)),
+  };
+
+  return <EChartsReactCore aria-label={ariaLabel} echarts={echarts} style={{ height: '100%', width: '100%' }} option={option} notMerge lazyUpdate />;
+}
+
 export function DataQualityTrendChart({
   ariaLabel,
   categories,
@@ -1146,7 +1630,10 @@ export function DataQualityTrendChart({
   const maxLength = Math.max(...series.map((item) => item.values.length), 1);
   const axisLabels = Array.from({ length: maxLength }, (_, index) => categories[index % Math.max(categories.length, 1)] ?? `${index + 1}`);
   const values = series.flatMap((item) => item.values);
-  const max = Math.max(...values, 1);
+  const dataMax = values.length ? Math.max(...values) : 1;
+  const dataMin = values.length ? Math.min(...values) : 0;
+  const max = dataMax > 0 ? dataMax * 1.12 : 0;
+  const min = dataMin < 0 ? dataMin * 1.12 : 0;
   const option: ChartOption = {
     backgroundColor: 'transparent',
     animation: false,
@@ -1175,8 +1662,8 @@ export function DataQualityTrendChart({
     },
     yAxis: {
       type: 'value',
-      min: 0,
-      max: Math.ceil(max * 1.08),
+      min,
+      max: max === min ? min + 1 : max,
       splitNumber: 4,
       axisLine: { show: false },
       axisTick: { show: false },
@@ -1195,6 +1682,126 @@ export function DataQualityTrendChart({
       areaStyle: item.area ? { color: `${item.color}18` } : undefined,
       emphasis: { disabled: true },
     })) as Array<LineSeriesOption | BarSeriesOption>,
+  };
+
+  return <EChartsReactCore aria-label={ariaLabel} className={className} echarts={echarts} style={{ height: '100%', width: '100%' }} option={option} notMerge lazyUpdate />;
+}
+
+export function DataQualityHeatmapChart({
+  ariaLabel,
+  cellLabels,
+  className,
+  mode = 'skew',
+  rows,
+  times,
+}: {
+  ariaLabel: string;
+  cellLabels?: string[][];
+  className?: string;
+  mode?: 'skew' | 'field-quality' | 'backpressure';
+  rows: DataQualityHeatmapRow[];
+  times: string[];
+}) {
+  const toneValue: Record<DataQualityKpiSparklineTone, number> = { ok: 0, info: 0.58, warn: 1.22, risk: 2 };
+  const toneLabel = (value: number) => {
+    if (mode === 'field-quality') return value >= 1.7 ? '较差' : value >= 0.9 ? '中等' : value >= 0.2 ? '不适用' : '优秀';
+    if (mode === 'backpressure') return value >= 1.7 ? '严重背压' : value >= 0.9 ? '轻度背压' : '空闲';
+    return value >= 1.7 ? '严重倾斜' : value >= 0.9 ? '轻度倾斜' : value >= 0.2 ? '需关注' : '均衡';
+  };
+  const visualPieces = mode === 'field-quality'
+    ? [
+        { min: 0, max: 0.15, label: '优秀 (>=98%)', color: '#29924f' },
+        { min: 0.16, max: 0.85, label: '不适用', color: '#526574' },
+        { min: 0.86, max: 1.6, label: '中等 (95%-98%)', color: '#c4870a' },
+        { min: 1.61, max: 2.1, label: '较差 (<95%)', color: '#cf4450' },
+      ]
+    : mode === 'backpressure'
+      ? [
+          { min: 0, max: 0.85, label: '空闲 (0-0.1)', color: '#23a566' },
+          { min: 0.86, max: 1.6, label: '轻度背压 (0.1-0.5)', color: '#ffb020' },
+          { min: 1.61, max: 2.1, label: '严重背压 (>0.5)', color: '#ff4d4f' },
+        ]
+      : [
+          { min: 0, max: 0.15, label: '均衡', color: '#237b9b' },
+          { min: 0.16, max: 0.85, label: '需关注', color: '#3e9bb4' },
+          { min: 0.86, max: 1.6, label: '轻度倾斜', color: '#c58a2a' },
+          { min: 1.61, max: 2.1, label: '严重倾斜', color: '#c94c5d' },
+        ];
+  const columnCount = Math.max(...rows.map((row) => row.values.length), 1);
+  const categories = Array.from({ length: columnCount }, (_, index) => String(index));
+  const values = rows.flatMap((row, rowIndex) => row.values.map((tone, columnIndex) => [columnIndex, rowIndex, toneValue[tone]] as [number, number, number]));
+  const option: ChartOption = {
+    backgroundColor: 'transparent',
+    animation: false,
+    tooltip: {
+      trigger: 'item',
+      confine: true,
+      backgroundColor: 'rgba(3, 17, 28, 0.96)',
+      borderColor: 'rgba(127, 212, 255, 0.3)',
+      textStyle: { color: '#eaf7ff', fontSize: 11 },
+      formatter: (params: unknown) => {
+        const value = (params as { value?: unknown }).value;
+        if (!Array.isArray(value)) return '';
+        const columnIndex = Number(value[0] ?? 0);
+        const rowIndex = Number(value[1] ?? 0);
+        const level = Number(value[2] ?? 0);
+        const time = times[Math.round(columnIndex * Math.max(times.length - 1, 0) / Math.max(columnCount - 1, 1))] ?? '--';
+        return `${rows[rowIndex]?.label ?? '--'}<br/>${time} · ${toneLabel(level)}`;
+      },
+    },
+    grid: { left: mode === 'backpressure' ? 112 : mode === 'field-quality' ? 92 : 54, right: 16, top: 14, bottom: 58, containLabel: false },
+    xAxis: {
+      type: 'category',
+      data: categories,
+      splitArea: { show: false },
+      axisLine: { lineStyle: { color: 'rgba(83, 188, 241, 0.34)' } },
+      axisTick: { show: false },
+      axisLabel: {
+        color: '#a7c2d2',
+        fontSize: 10,
+        margin: 10,
+        interval: Math.max(0, Math.ceil(columnCount / 7) - 1),
+        formatter: (_value: string, index: number) => times[Math.round(index * Math.max(times.length - 1, 0) / Math.max(columnCount - 1, 1))] ?? '',
+      },
+    },
+    yAxis: {
+      type: 'category',
+      data: rows.map((row) => row.label),
+      inverse: true,
+      splitArea: { show: false },
+      axisLine: { lineStyle: { color: 'rgba(83, 188, 241, 0.34)' } },
+      axisTick: { show: false },
+      axisLabel: { color: '#bdd4e0', fontSize: 10, margin: 11 },
+    },
+    visualMap: {
+      type: 'piecewise',
+      orient: 'horizontal',
+      left: 'center',
+      bottom: 6,
+      itemWidth: 14,
+      itemHeight: 9,
+      itemGap: 12,
+      textStyle: { color: '#b8ceda', fontSize: 9 },
+      pieces: visualPieces,
+    } as VisualMapComponentOption,
+    series: [{
+      name: mode === 'field-quality' ? '字段质量' : mode === 'backpressure' ? 'Backpressure' : '分区倾斜',
+      type: 'heatmap',
+      data: values,
+      label: cellLabels ? {
+        show: true,
+        color: '#f1fbff',
+        fontSize: 10,
+        fontWeight: 650,
+        formatter: (params: unknown) => {
+          const value = (params as { value?: unknown }).value;
+          if (!Array.isArray(value)) return '';
+          return cellLabels[Number(value[1])]?.[Number(value[0])] ?? '';
+        },
+      } : undefined,
+      itemStyle: { borderColor: 'rgba(3, 17, 28, 0.9)', borderWidth: 2, borderRadius: 4, shadowBlur: 3, shadowColor: 'rgba(0, 0, 0, 0.28)' },
+      emphasis: { itemStyle: { borderColor: '#d9f4ff', borderWidth: 1, shadowBlur: 12, shadowColor: 'rgba(24, 168, 255, 0.58)' } },
+    } as HeatmapSeriesOption],
   };
 
   return <EChartsReactCore aria-label={ariaLabel} className={className} echarts={echarts} style={{ height: '100%', width: '100%' }} option={option} notMerge lazyUpdate />;
@@ -2286,11 +2893,13 @@ export function RingChart({
   height = 160,
   className,
   ariaLabel = '环形仪表图',
+  suffix = '%',
 }: {
   value?: number;
   height?: number | string;
   className?: string;
   ariaLabel?: string;
+  suffix?: string;
 }) {
   const option: ChartOption = {
     backgroundColor: 'transparent',
@@ -2307,7 +2916,7 @@ export function RingChart({
         axisTick: { show: false },
         splitLine: { show: false },
         axisLabel: { show: false },
-        detail: { valueAnimation: true, color: '#eaf7ff', fontSize: 24, formatter: '{value}%' },
+        detail: { valueAnimation: true, color: '#eaf7ff', fontSize: 24, formatter: `{value}${suffix}` },
         data: [{ value }],
       },
     ],
@@ -2322,4 +2931,101 @@ export function RingChart({
       option={option}
     />
   );
+}
+
+export function RuleHitComparisonChart({ ariaLabel = '规则生效前后命中差异' }: { ariaLabel?: string }) {
+  const option: ChartOption = {
+    backgroundColor: 'transparent',
+    animationDuration: 320,
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    legend: { right: 2, top: 0, textStyle: { color: '#9fb9ca', fontSize: 7 }, itemWidth: 10, itemHeight: 4, itemGap: 6 },
+    grid: { left: 32, right: 8, top: 18, bottom: 2 },
+    xAxis: { type: 'value', show: false, max: 1800 },
+    yAxis: {
+      type: 'category',
+      data: ['命中率', '命中数'],
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: { color: '#b9ceda', fontSize: 7 },
+    },
+    series: [
+      {
+        name: '规则生效前',
+        type: 'bar',
+        data: [1102, 1102],
+        barWidth: 6,
+        itemStyle: { color: '#2493ff', borderRadius: [0, 5, 5, 0] },
+        label: { show: true, position: 'insideRight', color: '#d8efff', fontSize: 7, formatter: (params: { dataIndex?: number }) => params.dataIndex === 0 ? '55.1%' : '1,102' },
+      },
+      {
+        name: '规则生效后',
+        type: 'bar',
+        data: [1568, 1568],
+        barWidth: 6,
+        itemStyle: { color: '#50c73f', borderRadius: [0, 5, 5, 0] },
+        label: { show: true, position: 'insideRight', color: '#e6ffe1', fontSize: 7, formatter: (params: { dataIndex?: number }) => params.dataIndex === 0 ? '78.5%' : '1,568' },
+      },
+    ],
+  };
+  return <EChartsReactCore aria-label={ariaLabel} echarts={echarts} style={{ width: '100%', height: '100%' }} option={option} notMerge lazyUpdate />;
+}
+
+export function RuleDependencyGraphChart({ ruleId, ariaLabel = '规则依赖引用图' }: { ruleId: string; ariaLabel?: string }) {
+  const ruleLabel = `RULE\n${ruleId.replace(/_v(\d+)$/i, '\nv$1')}`;
+  const label = (type: string, name: string, badge: string, position: 'top' | 'bottom' | 'left' | 'right', color: string) => ({
+    show: true,
+    position,
+    formatter: `{type|${type}}\n{name|${name}}\n{badge|${badge}}`,
+    rich: {
+      type: { color, fontSize: 8, fontWeight: 700, lineHeight: 10 },
+      name: { color: '#eaf7ff', fontSize: 8, fontWeight: 600, lineHeight: 10 },
+      badge: { color, fontSize: 7, fontWeight: 700, lineHeight: 9, backgroundColor: 'rgba(3,17,28,0.88)', borderColor: color, borderWidth: 1, borderRadius: 2, padding: [1, 3] },
+    },
+  });
+  const data = [
+    { id: 'rule', name: ruleLabel, value: ruleId, x: 50, y: 50, symbol: 'roundRect', symbolSize: [68, 50], category: 0, itemStyle: { color: '#072b46', borderColor: '#18a8ff', borderWidth: 2.5, shadowBlur: 14, shadowColor: 'rgba(24,168,255,0.62)' }, label: { position: 'inside' as const, color: '#eaf7ff', fontSize: 8, fontWeight: 700, lineHeight: 10 } },
+    { id: 'model', name: 'Model-XGB-17', value: '关联模型 Model-XGB-17 v2.3.1', x: 25, y: 27, symbolSize: 33, category: 1, label: label('关联模型', 'Model-XGB-17', 'v2.3.1', 'top', '#c084fc') },
+    { id: 'whitelist', name: 'WL-VPN-003', value: '白名单 WL-VPN-003 生效中', x: 75, y: 27, symbolSize: 33, category: 2, label: label('白名单', 'WL-VPN-003', '生效中', 'top', '#59d75d') },
+    { id: 'deploy', name: 'PROD-北区', value: '部署环境 PROD-北区 生产', x: 14, y: 50, symbolSize: 33, category: 3, label: label('部署环境', 'PROD-北区', '生产', 'left', '#31b6ff') },
+    { id: 'source', name: 'detections.v1', value: '数据源 detections.v1 实时', x: 86, y: 50, symbolSize: 33, category: 4, label: label('数据源', 'detections.v1', '实时', 'right', '#ffb21c') },
+    { id: 'fields', name: 'src_ip / dst_port', value: '关键字段 src_ip / dst_port 映射完整', x: 27, y: 73, symbolSize: 33, category: 5, label: label('关键字段', 'src_ip/dst_port', '映射完整', 'bottom', '#ff851b') },
+    { id: 'alert', name: 'C2 Beacon', value: '告警类型 C2 Beacon 高危', x: 73, y: 73, symbolSize: 33, category: 6, label: label('告警类型', 'C2 Beacon', '高危', 'bottom', '#ff5454') },
+  ];
+  const option: ChartOption = {
+    backgroundColor: 'transparent',
+    animationDuration: 420,
+    tooltip: { trigger: 'item', backgroundColor: 'rgba(3,17,28,0.96)', borderColor: 'rgba(56,151,201,0.4)', textStyle: { color: '#eaf7ff', fontSize: 11 } },
+    series: [{
+      type: 'graph',
+      layout: 'none',
+      left: 66,
+      right: 66,
+      top: 36,
+      bottom: 36,
+      roam: true,
+      scaleLimit: { min: 0.85, max: 1.8 },
+      data,
+      links: data.slice(1).map((node, index) => ({
+        source: 'rule',
+        target: node.id,
+        lineStyle: { color: ['#a866f2', '#59d75d', '#31b6ff', '#ffb21c', '#ff851b', '#ff5454'][index] },
+      })),
+      categories: [
+        { name: '规则', itemStyle: { color: '#072b46', borderColor: '#18a8ff', borderWidth: 2 } },
+        { name: '模型', itemStyle: { color: '#160d25', borderColor: '#a866f2', borderWidth: 2, shadowBlur: 8, shadowColor: 'rgba(168,102,242,0.45)' } },
+        { name: '白名单', itemStyle: { color: '#0c2517', borderColor: '#59d75d', borderWidth: 2, shadowBlur: 8, shadowColor: 'rgba(89,215,93,0.4)' } },
+        { name: '部署', itemStyle: { color: '#092136', borderColor: '#31b6ff', borderWidth: 2, shadowBlur: 8, shadowColor: 'rgba(49,182,255,0.4)' } },
+        { name: '数据源', itemStyle: { color: '#2a2108', borderColor: '#ffb21c', borderWidth: 2, shadowBlur: 8, shadowColor: 'rgba(255,178,28,0.4)' } },
+        { name: '字段', itemStyle: { color: '#2a1608', borderColor: '#ff851b', borderWidth: 2, shadowBlur: 8, shadowColor: 'rgba(255,133,27,0.4)' } },
+        { name: '告警', itemStyle: { color: '#2b0d12', borderColor: '#ff5454', borderWidth: 2, shadowBlur: 8, shadowColor: 'rgba(255,84,84,0.4)' } },
+      ],
+      symbol: 'circle',
+      edgeSymbol: ['none', 'arrow'],
+      edgeSymbolSize: [0, 6],
+      label: { show: true, color: '#d7e9f4', fontSize: 8, lineHeight: 10, distance: 6, overflow: 'truncate' },
+      lineStyle: { width: 1.8, type: 'dashed', opacity: 0.88, curveness: 0.04 },
+      emphasis: { focus: 'adjacency', lineStyle: { width: 3, opacity: 1 } },
+    }],
+  };
+  return <EChartsReactCore aria-label={ariaLabel} echarts={echarts} style={{ width: '100%', height: '100%' }} option={option} notMerge lazyUpdate />;
 }

@@ -1,43 +1,17 @@
-import {
-  ApiOutlined,
-  ArrowDownOutlined,
-  ArrowUpOutlined,
-  CheckCircleOutlined,
-  CloseOutlined,
-  DatabaseOutlined,
-  DownloadOutlined,
-  FileSearchOutlined,
-  FileDoneOutlined,
-  FullscreenOutlined,
-  FieldTimeOutlined,
-  PrinterOutlined,
-  ReloadOutlined,
-  LeftOutlined,
-  RightOutlined,
-  SafetyCertificateOutlined,
-  SearchOutlined,
-  SettingOutlined,
-  SyncOutlined,
-  WarningOutlined,
-} from '@ant-design/icons';
+import { ApiOutlined, ArrowDownOutlined, ArrowUpOutlined, CheckCircleOutlined, CloseOutlined, DatabaseOutlined, DownloadOutlined, FileSearchOutlined, FileDoneOutlined, FullscreenOutlined, FieldTimeOutlined, PrinterOutlined, ReloadOutlined, LeftOutlined, RightOutlined, SafetyCertificateOutlined, SearchOutlined, SettingOutlined, SyncOutlined, WarningOutlined } from '@ant-design/icons';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Alert, Button, Drawer, Form, Input, Modal, Select, Space, Switch, Table, Tooltip, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { CSSProperties, MouseEvent, ReactNode } from 'react';
-import { useMemo, useState } from 'react';
+import { createContext, useContext, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { OverlayContractHost, type OverlayContract } from '@/components/OverlayContractHost';
 import { StatusTag } from '@/components/StatusTag';
 import { WorkPanel } from '@/components/WorkPanel';
-import { DataQualityDonutChart, DataQualityFieldTrendChart, DataQualityKpiSparklineChart, DataQualityTrendChart } from '@/components/charts';
+import { DataQualityDonutChart, DataQualityFieldTrendChart, DataQualityHeatmapChart, DataQualityKpiSparklineChart, DataQualityTrendChart, RingChart } from '@/components/charts';
 import type { NavRoute } from '@/routes/routeManifest';
-import { fetchPageSnapshot, type DataQualityTimeRange } from '@/services/api';
-import {
-  buildDLQReplayDryRunRequest,
-  requestDLQFallbackReplay,
-  type DLQReplayFallbackRequest,
-  type DLQReplayFallbackResult,
-} from '@/services/dlqReplayApi';
+import { downloadDataQualityDailyReport, fetchDataQualityDailyReport, fetchDataQualityTablePage, fetchPageSnapshot, submitDataQualityAction, type DataQualityDailyReport, type DataQualityTableDataset, type DataQualityTimeRange } from '@/services/api';
+import { buildDLQReplayDryRunRequest, requestDLQFallbackReplay, type DLQReplayFallbackRequest, type DLQReplayFallbackResult } from '@/services/dlqReplayApi';
 import type { DataQualityVisuals, PageSnapshot, SnapshotRow } from '@/services/mockData';
 import { getPageActionPlan, type ActionEndpointPlan } from '@/services/pageApiPlans';
 
@@ -85,11 +59,9 @@ const replayRows = [
 const dlqReplayActionPlan = getPageActionPlan('data-quality', 'dlq-fallback-replay');
 const dataQualityContextActionPlan = getPageActionPlan('data-quality', 'data-quality-context-action');
 
-const actionEndpointLabel = (action: ActionEndpointPlan | undefined) =>
-  action ? `${action.method} ${action.endpoint}` : 'POST /v1/dlq/replay/fallback';
+const actionEndpointLabel = (action: ActionEndpointPlan | undefined) => (action ? `${action.method} ${action.endpoint}` : 'POST /v1/dlq/replay/fallback');
 
-const actionScopeLabel = (action: ActionEndpointPlan | undefined) =>
-  (action?.acceptedScopes ?? action?.requiredScopes ?? ['dlq:replay']).join(' / ');
+const actionScopeLabel = (action: ActionEndpointPlan | undefined) => (action?.acceptedScopes ?? action?.requiredScopes ?? ['dlq:replay']).join(' / ');
 
 const dlqSampleDrawerWidth = 'min(720px, calc(var(--taf-window-inner-width, 100dvw) - 40px))';
 const dlqReplayModalWidth = 'min(760px, calc(var(--taf-window-inner-width, 100dvw) - 64px))';
@@ -132,14 +104,6 @@ const flinkJobs = [
   ['alert-generator', '24s', '1.1s', '0.03', '99.1%', 'ok'],
 ];
 
-const reportRows = [
-  ['质量基线', '92.6%', '已归档', 'S3://quality/baseline'],
-  ['Kafka Topic', '19 项', '已采样', 'offset + lag'],
-  ['Flink Checkpoint', '94.6%', '已校验', 'latest checkpoint'],
-  ['字段矩阵', '33 项', '待复核', 'missing + duplicate'],
-  ['存储写入', '96.6%', '已归档', 'CH/OS/Nebula/MinIO'],
-];
-
 const reportMetricLabels = ['日报评分', '验收通过率', '异常归因', '待补证据', '已导出', 'SLA 达成'];
 
 const reportMetrics: PageSnapshot['metrics'] = [
@@ -149,33 +113,6 @@ const reportMetrics: PageSnapshot['metrics'] = [
   { label: '待补证据', value: '5 项', delta: '较昨日 ↓ 1', status: 'warn' },
   { label: '已导出', value: '23 份', delta: '较昨日 ↑ 6', status: 'info' },
   { label: 'SLA 达成', value: '97.8%', delta: '较昨日 ↑ 0.9%', status: 'ok' },
-];
-
-const reportChapterRows = [
-  ['1', '总览', '完成 100%', 'ok'],
-  ['2', 'Topic 健康', '完成 100%', 'ok'],
-  ['3', 'Flink 质量', '完成 100%', 'ok'],
-  ['4', '字段质量', '完成 100%', 'ok'],
-  ['5', '存储质量', '完成 100%', 'ok'],
-  ['6', '重放对账', '完成 95%', 'warn'],
-  ['7', '验收结论', '完成 100%', 'ok'],
-];
-
-const reportAnomalyRows = [
-  ['DLQ 增长', 'behavior-job 下游写入超时导致重试失败进入 DLQ', 'sec_analyst', '12,845 条 (69.7%)', '修复中'],
-  ['字段缺失', 'tenant / asset_id 映射缺失影响字段完整度', 'data_analyst', '3,214 条 (17.4%)', '修复中'],
-  ['存储写入延迟', 'ClickHouse Distributed 队列积压导致写入慢于常态', 'ops_engineer', '全量数据 (100%)', '处理中'],
-  ['Flink backpressure', 'feature-job sink 写入校验上游并发超限', 'flink_owner', '6 个作业 (52%)', '已修复'],
-  ['Topic 分区倾斜', 'flow_original p23 分区写入流量过高，倾斜明显', 'kafka_owner', 'p23 分区 (4.1%)', '处理中'],
-];
-
-const reportExportRows = [
-  ['2025-06-26 15:12', 'PDF', 'sec_analyst', '已审批', 'security_team', '查看'],
-  ['2025-06-26 10:25', 'JSON', 'data_analyst', '已审批', 'data_team', '查看'],
-  ['2025-06-26 08:10', 'CSV', 'ops_engineer', '已审批', 'ops_team', '查看'],
-  ['2025-06-25 23:30', 'PDF', 'sec_analyst', '已审批', 'management', '补齐'],
-  ['2025-06-25 16:05', 'JSON', 'flink_owner', '待审批', 'flink_team', '复核'],
-  ['2025-06-25 16:02', 'PDF', 'data_analyst', '已驳回', 'data_team', '查看'],
 ];
 
 const reportRailAnomalies = [
@@ -216,7 +153,12 @@ const settingsMetrics: PageSnapshot['metrics'] = [
   { label: '告警策略', value: '12 条', delta: '较昨日 ↑ 1', status: 'ok' },
   { label: '报告周期', value: '6 个', delta: '较昨日 --', status: 'info' },
   { label: '待审批变更', value: '3 项', delta: '较昨日 ↓ 1', status: 'warn' },
-  { label: '最近保存', value: '15:20', delta: '保存人 sec_analyst', status: 'info' },
+  {
+    label: '最近保存',
+    value: '15:20',
+    delta: '保存人 sec_analyst',
+    status: 'info',
+  },
   { label: '审计完整', value: '100%', delta: '较昨日 --', status: 'ok' },
 ];
 
@@ -325,21 +267,61 @@ const dataQualityTabs = [
 
 const topicHealthFallbackMetrics: PageSnapshot['metrics'] = [
   { label: 'Topic 健康分', value: '88/100', delta: '较昨日 ↑ 3', status: 'ok' },
-  { label: '总 offset', value: '412.7M', delta: '24h 变化 ↑ 18.6M', status: 'info' },
-  { label: '积压消息', value: '3.21M', delta: '较昨日 ↑ 0.72M', status: 'warn' },
-  { label: '消费延迟 P95', value: '1.4s', delta: '较昨日 ↓ 0.6s', status: 'ok' },
+  {
+    label: '总 offset',
+    value: '412.7M',
+    delta: '24h 变化 ↑ 18.6M',
+    status: 'info',
+  },
+  {
+    label: '积压消息',
+    value: '3.21M',
+    delta: '较昨日 ↑ 0.72M',
+    status: 'warn',
+  },
+  {
+    label: '消费延迟 P95',
+    value: '1.4s',
+    delta: '较昨日 ↓ 0.6s',
+    status: 'ok',
+  },
   { label: '分区倾斜', value: '2.15', delta: '较昨日 ↑ 0.38', status: 'warn' },
-  { label: '平均消息大小', value: '1.6KB', delta: '较昨日 ↑ 0.1KB', status: 'info' },
+  {
+    label: '平均消息大小',
+    value: '1.6KB',
+    delta: '较昨日 ↑ 0.1KB',
+    status: 'info',
+  },
   { label: '异常 Topic', value: '3', delta: '较昨日 ↑ 1', status: 'risk' },
 ];
 
 const flinkQualityFallbackMetrics: PageSnapshot['metrics'] = [
   { label: 'Flink 质量分', value: '91/100', delta: '较昨日 ↑ 2', status: 'ok' },
   { label: '运行作业', value: '9', delta: '较昨日 --', status: 'info' },
-  { label: 'Checkpoint 成功率', value: '99.2%', delta: '较昨日 ↑ 0.6%', status: 'ok' },
-  { label: 'Watermark 延迟 P95', value: '1.6s', delta: '较昨日 ↓ 0.3s', status: 'ok' },
-  { label: 'Backpressure', value: '0.38', delta: '较昨日 ↑ 0.08', status: 'warn' },
-  { label: '迟到数据率', value: '0.67%', delta: '较昨日 ↓ 0.12%', status: 'ok' },
+  {
+    label: 'Checkpoint 成功率',
+    value: '99.2%',
+    delta: '较昨日 ↑ 0.6%',
+    status: 'ok',
+  },
+  {
+    label: 'Watermark 延迟 P95',
+    value: '1.6s',
+    delta: '较昨日 ↓ 0.3s',
+    status: 'ok',
+  },
+  {
+    label: 'Backpressure',
+    value: '0.38',
+    delta: '较昨日 ↑ 0.08',
+    status: 'warn',
+  },
+  {
+    label: '迟到数据率',
+    value: '0.67%',
+    delta: '较昨日 ↓ 0.12%',
+    status: 'ok',
+  },
   { label: '异常事件', value: '312', delta: '较昨日 ↑ 48', status: 'risk' },
 ];
 
@@ -349,7 +331,12 @@ const fieldQualityFallbackMetrics: PageSnapshot['metrics'] = [
   { label: '格式合规', value: '97.9%', delta: '较昨日 ↑ 1.2%', status: 'ok' },
   { label: '一致性', value: '96.4%', delta: '较昨日 ↑ 0.6%', status: 'ok' },
   { label: '异常字段', value: '23 项', delta: '较昨日 ↑ 5', status: 'risk' },
-  { label: '影响记录', value: '18.4K 条', delta: '较昨日 ↑ 2.1K', status: 'warn' },
+  {
+    label: '影响记录',
+    value: '18.4K 条',
+    delta: '较昨日 ↑ 2.1K',
+    status: 'warn',
+  },
   { label: '待修复任务', value: '7 个', delta: '较昨日 ↓ 1', status: 'warn' },
 ];
 
@@ -437,10 +424,25 @@ const fieldRepairFallbackRows: DataQualityVisuals['fieldRepairRows'] = [
 
 const storageQualityFallbackMetrics: PageSnapshot['metrics'] = [
   { label: '存储质量分', value: '93/100', delta: '较昨日 ↑ 4', status: 'ok' },
-  { label: '写入成功率', value: '99.84%', delta: '较昨日 ↑ 0.12%', status: 'ok' },
-  { label: '写入延迟 P95', value: '420 ms', delta: '较昨日 ↓ 80 ms', status: 'ok' },
+  {
+    label: '写入成功率',
+    value: '99.84%',
+    delta: '较昨日 ↑ 0.12%',
+    status: 'ok',
+  },
+  {
+    label: '写入延迟 P95',
+    value: '420 ms',
+    delta: '较昨日 ↓ 80 ms',
+    status: 'ok',
+  },
   { label: '失败写入', value: '186 条', delta: '较昨日 ↑ 34', status: 'warn' },
-  { label: '索引滞后', value: '2.1 s', delta: '较昨日 ↑ 0.4 s', status: 'warn' },
+  {
+    label: '索引滞后',
+    value: '2.1 s',
+    delta: '较昨日 ↑ 0.4 s',
+    status: 'warn',
+  },
   { label: '归档成功率', value: '99.7%', delta: '较昨日 ↑ 0.2%', status: 'ok' },
   { label: '容量水位', value: '72.6%', delta: '较昨日 ↑ 1.8%', status: 'info' },
 ];
@@ -480,12 +482,37 @@ const storageFailureFallbackRows: DataQualityVisuals['storageFailureRows'] = [
 ];
 
 const storagePipelineFallbackRows: DataQualityVisuals['storagePipelineRows'] = [
-  { from: 'Kafka / Flink', to: 'ClickHouse', label: 'session/events 写入', status: 'warn' },
-  { from: 'Kafka / Flink', to: 'OpenSearch', label: 'log/index bulk', status: 'risk' },
-  { from: 'Kafka / Flink', to: 'NebulaGraph', label: 'entity/edge upsert', status: 'ok' },
-  { from: 'Kafka / Flink', to: 'MinIO', label: 'pcap archive multipart', status: 'warn' },
+  {
+    from: 'Kafka / Flink',
+    to: 'ClickHouse',
+    label: 'session/events 写入',
+    status: 'warn',
+  },
+  {
+    from: 'Kafka / Flink',
+    to: 'OpenSearch',
+    label: 'log/index bulk',
+    status: 'risk',
+  },
+  {
+    from: 'Kafka / Flink',
+    to: 'NebulaGraph',
+    label: 'entity/edge upsert',
+    status: 'ok',
+  },
+  {
+    from: 'Kafka / Flink',
+    to: 'MinIO',
+    label: 'pcap archive multipart',
+    status: 'warn',
+  },
   { from: 'ClickHouse', to: '写入确认', label: 'ack 99.82%', status: 'warn' },
-  { from: 'OpenSearch', to: '重试队列 / DLQ', label: 'bulk reject', status: 'risk' },
+  {
+    from: 'OpenSearch',
+    to: '重试队列 / DLQ',
+    label: 'bulk reject',
+    status: 'risk',
+  },
   { from: 'NebulaGraph', to: '写入确认', label: 'raft commit', status: 'ok' },
   { from: 'MinIO', to: '归档重试', label: 'multipart retry', status: 'warn' },
 ];
@@ -529,12 +556,32 @@ const storageRailRepairFallbackRows: DataQualityVisuals['storageRailRepairRows']
 const storageRailEvidenceFallbackRows: DataQualityVisuals['storageRailEvidenceRows'] = ['导出存储质量报告', '导出异常明细', '延迟报告下载', '近期历史报告', '证据包快照'];
 
 const replayReconcileFallbackMetrics: PageSnapshot['metrics'] = [
-  { label: '对账通过率', value: '99.12%', delta: '较昨日 ↑ 0.42%', status: 'ok' },
-  { label: '待重放 DLQ', value: '12,845', delta: '较昨日 ↓ 843', status: 'warn' },
-  { label: '重放成功率', value: '98.6%', delta: '较昨日 ↑ 0.61%', status: 'ok' },
+  {
+    label: '对账通过率',
+    value: '99.12%',
+    delta: '较昨日 ↑ 0.42%',
+    status: 'ok',
+  },
+  {
+    label: '待重放 DLQ',
+    value: '12,845',
+    delta: '较昨日 ↓ 843',
+    status: 'warn',
+  },
+  {
+    label: '重放成功率',
+    value: '98.6%',
+    delta: '较昨日 ↑ 0.61%',
+    status: 'ok',
+  },
   { label: '重复记录', value: '2,136', delta: '较昨日 ↓ 256', status: 'warn' },
   { label: '幂等冲突', value: '47', delta: '较昨日 ↓ 12', status: 'ok' },
-  { label: '窗口差异率', value: '0.31%', delta: '较昨日 ↓ 0.08%', status: 'ok' },
+  {
+    label: '窗口差异率',
+    value: '0.31%',
+    delta: '较昨日 ↓ 0.08%',
+    status: 'ok',
+  },
   { label: '验收包', value: '8', delta: '较昨日 ↑ 1', status: 'info' },
 ];
 
@@ -582,20 +629,70 @@ const replayDifferenceFallbackRows: DataQualityVisuals['replayDifferenceRows'] =
 ];
 
 const replayFlowFallbackNodes: DataQualityVisuals['replayFlowNodes'] = [
-  { id: 'dlq', label: 'DLQ / Kafka', detail: '待重放 12,845 / Topic 6 个 / 最早 offset 15:26:11', status: 'warn' },
-  { id: 'flink', label: '重放作业（Flink）', detail: 'Job: replay-job / 并行度 8 / RUNNING / Checkpoint 3m ago', status: 'ok' },
-  { id: 'idempotent', label: '去重过滤（幂等）', detail: '幂等键 6 规则 / 过滤率 0.72% / 冲突 47', status: 'warn' },
-  { id: 'sink', label: '落库目标', detail: 'ClickHouse / OpenSearch / NebulaGraph / MinIO', status: 'ok' },
-  { id: 'retry', label: '重试队列', detail: '失败任务 2 / 回退策略 offset batch', status: 'risk' },
-  { id: 'checkpoint', label: '校验检查点', detail: '对账窗口 24h / 差异率 0.31%', status: 'ok' },
-  { id: 'gate', label: '验收门禁', detail: '验收包 8 / 审计记录完整', status: 'ok' },
+  {
+    id: 'dlq',
+    label: 'DLQ / Kafka',
+    detail: '待重放 12,845 / Topic 6 个 / 最早 offset 15:26:11',
+    status: 'warn',
+  },
+  {
+    id: 'flink',
+    label: '重放作业（Flink）',
+    detail: 'Job: replay-job / 并行度 8 / RUNNING / Checkpoint 3m ago',
+    status: 'ok',
+  },
+  {
+    id: 'idempotent',
+    label: '去重过滤（幂等）',
+    detail: '幂等键 6 规则 / 过滤率 0.72% / 冲突 47',
+    status: 'warn',
+  },
+  {
+    id: 'sink',
+    label: '落库目标',
+    detail: 'ClickHouse / OpenSearch / NebulaGraph / MinIO',
+    status: 'ok',
+  },
+  {
+    id: 'retry',
+    label: '重试队列',
+    detail: '失败任务 2 / 回退策略 offset batch',
+    status: 'risk',
+  },
+  {
+    id: 'checkpoint',
+    label: '校验检查点',
+    detail: '对账窗口 24h / 差异率 0.31%',
+    status: 'ok',
+  },
+  {
+    id: 'gate',
+    label: '验收门禁',
+    detail: '验收包 8 / 审计记录完整',
+    status: 'ok',
+  },
 ];
 
 const replayFlowFallbackEdges: DataQualityVisuals['replayFlowEdges'] = [
-  { from: 'DLQ / Kafka', to: '重放作业（Flink）', label: '数据流', status: 'ok' },
-  { from: '重放作业（Flink）', to: '去重过滤（幂等）', label: '校验流', status: 'info' },
+  {
+    from: 'DLQ / Kafka',
+    to: '重放作业（Flink）',
+    label: '数据流',
+    status: 'ok',
+  },
+  {
+    from: '重放作业（Flink）',
+    to: '去重过滤（幂等）',
+    label: '校验流',
+    status: 'info',
+  },
   { from: '去重过滤（幂等）', to: '落库目标', label: '数据流', status: 'ok' },
-  { from: '重放作业（Flink）', to: '重试队列', label: '异常/重试', status: 'risk' },
+  {
+    from: '重放作业（Flink）',
+    to: '重试队列',
+    label: '异常/重试',
+    status: 'risk',
+  },
   { from: '落库目标', to: '校验检查点', label: '校验流', status: 'info' },
   { from: '校验检查点', to: '验收门禁', label: '控制流', status: 'warn' },
 ];
@@ -642,14 +739,38 @@ const flinkCheckpointTrendFallback: DataQualityVisuals['flinkCheckpointTrend'] =
 const flinkBackpressureFallbackBuckets = ['0-7', '8-15', '16-23', '24-31', '32-39', '40-47'];
 
 const flinkBackpressureFallbackRows: DataQualityVisuals['flinkBackpressureRows'] = [
-  { label: 'session-job', values: ['ok', 'ok', 'ok', 'info', 'ok', 'info', 'ok', 'ok', 'ok', 'ok', 'info', 'ok', 'ok', 'info', 'ok', 'ok', 'info', 'ok'] },
-  { label: 'feature-job', values: ['ok', 'ok', 'info', 'ok', 'warn', 'info', 'ok', 'ok', 'warn', 'warn', 'info', 'ok', 'ok', 'ok', 'info', 'ok', 'info', 'ok'] },
-  { label: 'rule-job', values: ['ok', 'info', 'ok', 'ok', 'info', 'ok', 'ok', 'info', 'ok', 'ok', 'ok', 'info', 'ok', 'ok', 'info', 'ok', 'ok', 'info'] },
-  { label: 'pcap-index-job', values: ['info', 'info', 'info', 'info', 'info', 'info', 'info', 'info', 'info', 'info', 'info', 'info', 'info', 'info', 'info', 'info', 'info', 'info'] },
-  { label: 'behavior-job', values: ['warn', 'warn', 'warn', 'risk', 'risk', 'warn', 'warn', 'risk', 'risk', 'risk', 'risk', 'risk', 'risk', 'risk', 'risk', 'risk', 'risk', 'risk'] },
-  { label: 'alert-generator-job', values: ['warn', 'warn', 'warn', 'warn', 'warn', 'warn', 'warn', 'warn', 'warn', 'warn', 'warn', 'warn', 'warn', 'warn', 'warn', 'warn', 'warn', 'warn'] },
-  { label: 'log-job', values: ['ok', 'info', 'ok', 'ok', 'ok', 'info', 'ok', 'ok', 'ok', 'info', 'ok', 'ok', 'ok', 'info', 'ok', 'ok', 'ok', 'info'] },
-  { label: 'user-behavior-job', values: ['ok', 'ok', 'info', 'ok', 'ok', 'ok', 'info', 'ok', 'ok', 'ok', 'info', 'ok', 'ok', 'ok', 'info', 'ok', 'ok', 'ok'] },
+  {
+    label: 'session-job',
+    values: ['ok', 'ok', 'ok', 'info', 'ok', 'info', 'ok', 'ok', 'ok', 'ok', 'info', 'ok', 'ok', 'info', 'ok', 'ok', 'info', 'ok'],
+  },
+  {
+    label: 'feature-job',
+    values: ['ok', 'ok', 'info', 'ok', 'warn', 'info', 'ok', 'ok', 'warn', 'warn', 'info', 'ok', 'ok', 'ok', 'info', 'ok', 'info', 'ok'],
+  },
+  {
+    label: 'rule-job',
+    values: ['ok', 'info', 'ok', 'ok', 'info', 'ok', 'ok', 'info', 'ok', 'ok', 'ok', 'info', 'ok', 'ok', 'info', 'ok', 'ok', 'info'],
+  },
+  {
+    label: 'pcap-index-job',
+    values: ['info', 'info', 'info', 'info', 'info', 'info', 'info', 'info', 'info', 'info', 'info', 'info', 'info', 'info', 'info', 'info', 'info', 'info'],
+  },
+  {
+    label: 'behavior-job',
+    values: ['warn', 'warn', 'warn', 'risk', 'risk', 'warn', 'warn', 'risk', 'risk', 'risk', 'risk', 'risk', 'risk', 'risk', 'risk', 'risk', 'risk', 'risk'],
+  },
+  {
+    label: 'alert-generator-job',
+    values: ['warn', 'warn', 'warn', 'warn', 'warn', 'warn', 'warn', 'warn', 'warn', 'warn', 'warn', 'warn', 'warn', 'warn', 'warn', 'warn', 'warn', 'warn'],
+  },
+  {
+    label: 'log-job',
+    values: ['ok', 'info', 'ok', 'ok', 'ok', 'info', 'ok', 'ok', 'ok', 'info', 'ok', 'ok', 'ok', 'info', 'ok', 'ok', 'ok', 'info'],
+  },
+  {
+    label: 'user-behavior-job',
+    values: ['ok', 'ok', 'info', 'ok', 'ok', 'ok', 'info', 'ok', 'ok', 'ok', 'info', 'ok', 'ok', 'ok', 'info', 'ok', 'ok', 'ok'],
+  },
 ];
 
 const flinkLateTopicFallbackRows: DataQualityVisuals['flinkLateTopicRows'] = [
@@ -680,10 +801,42 @@ const flinkFailureFallbackRows: DataQualityVisuals['flinkFailureRows'] = [
 ];
 
 const flinkSinkFallbackRows: DataQualityVisuals['flinkSinkRows'] = [
-  { name: 'ClickHouse', status: '正常', eps: '18,734', success: '99.95%', p95: '36 ms', retries: '128', trend: [68, 70, 69, 72, 71, 73, 70, 74, 73, 76, 72, 75, 78, 74, 82, 76] },
-  { name: 'OpenSearch', status: '正常', eps: '15,962', success: '99.91%', p95: '52 ms', retries: '215', trend: [70, 68, 72, 69, 71, 73, 72, 76, 75, 74, 77, 73, 79, 76, 80, 78] },
-  { name: 'NebulaGraph', status: '正常', eps: '8,521', success: '99.97%', p95: '41 ms', retries: '74', trend: [74, 73, 75, 72, 76, 74, 77, 78, 75, 80, 76, 82, 79, 83, 81, 84] },
-  { name: 'MinIO', status: '正常', eps: '6,342', success: '99.98%', p95: '28 ms', retries: '31', trend: [78, 76, 79, 77, 80, 79, 82, 81, 83, 82, 85, 83, 86, 84, 87, 86] },
+  {
+    name: 'ClickHouse',
+    status: '正常',
+    eps: '18,734',
+    success: '99.95%',
+    p95: '36 ms',
+    retries: '128',
+    trend: [68, 70, 69, 72, 71, 73, 70, 74, 73, 76, 72, 75, 78, 74, 82, 76],
+  },
+  {
+    name: 'OpenSearch',
+    status: '正常',
+    eps: '15,962',
+    success: '99.91%',
+    p95: '52 ms',
+    retries: '215',
+    trend: [70, 68, 72, 69, 71, 73, 72, 76, 75, 74, 77, 73, 79, 76, 80, 78],
+  },
+  {
+    name: 'NebulaGraph',
+    status: '正常',
+    eps: '8,521',
+    success: '99.97%',
+    p95: '41 ms',
+    retries: '74',
+    trend: [74, 73, 75, 72, 76, 74, 77, 78, 75, 80, 76, 82, 79, 83, 81, 84],
+  },
+  {
+    name: 'MinIO',
+    status: '正常',
+    eps: '6,342',
+    success: '99.98%',
+    p95: '28 ms',
+    retries: '31',
+    trend: [78, 76, 79, 77, 80, 79, 82, 81, 83, 82, 85, 83, 86, 84, 87, 86],
+  },
 ];
 
 type DataQualityTabSlug = (typeof dataQualityTabs)[number]['slug'];
@@ -695,6 +848,8 @@ type FieldQualityDetail = {
   rows: string[][];
   actionLabel?: string;
   actionSuccessMessage?: string;
+  actionName?: string;
+  actionTarget?: string;
 };
 
 type OpenFieldQualityDetail = (detail: FieldQualityDetail, focusSelector?: string) => void;
@@ -709,12 +864,13 @@ const metricToneClass = {
 const metricTrendFallback = (value: string, index: number) => {
   const numeric = Number.parseFloat(value.replace(/[^0-9.]/g, '')) || 1;
   const seed = [0.96, 0.99, 0.97, 1.01, 0.98, 1.02, 1, 1.03];
-  return seed.map((factor, offset) => Number((numeric * factor + ((index + offset) % 3 - 1) * Math.max(numeric * 0.008, 0.2)).toFixed(2)));
+  return seed.map((factor, offset) => Number((numeric * factor + (((index + offset) % 3) - 1) * Math.max(numeric * 0.008, 0.2)).toFixed(2)));
 };
 
-const resolveDataQualityTab = (param: string | null): DataQualityTabSlug => (
-  dataQualityTabs.find((item) => item.slug === param)?.slug ?? 'overview'
-);
+const resolveDataQualityTab = (param: string | null): DataQualityTabSlug => dataQualityTabs.find((item) => item.slug === param)?.slug ?? 'overview';
+
+const DataQualityServerPaginationContext = createContext(false);
+const DataQualityScrollTablesContext = createContext(false);
 
 export function DataQualityPage({ route }: { route: NavRoute }) {
   const [dlqReplayForm] = Form.useForm<DLQReplayFallbackRequest>();
@@ -732,11 +888,18 @@ export function DataQualityPage({ route }: { route: NavRoute }) {
   const isFieldQualityTab = activeTab === 'field-quality';
   const isStorageQualityTab = activeTab === 'storage-quality';
   const isReplayReconcileTab = activeTab === 'replay-reconcile';
+  const useScrollTables = true;
   const { data, error, isError, isLoading, refetch } = useQuery({
     queryKey: ['page-snapshot', route.id, timeRange],
     queryFn: () => fetchPageSnapshot(route.id, { dataQualityTimeRange: timeRange }),
     refetchInterval: autoRefresh && !isVisualBreakdown ? 30_000 : false,
     refetchIntervalInBackground: autoRefresh && !isVisualBreakdown,
+  });
+  const dailyReportQuery = useQuery({
+    queryKey: ['data-quality-daily-report', timeRange],
+    queryFn: () => fetchDataQualityDailyReport(timeRange),
+    enabled: activeTab === 'report' && !isVisualBreakdown,
+    staleTime: 15_000,
   });
   const dlqReplayMutation = useMutation({
     mutationFn: requestDLQFallbackReplay,
@@ -749,10 +912,39 @@ export function DataQualityPage({ route }: { route: NavRoute }) {
       message.error(errorText(mutationError));
     },
   });
+  const dataQualityActionMutation = useMutation({
+    mutationFn: submitDataQualityAction,
+    onSuccess: async (result) => {
+      message.success(`${result.action} 已提交（${result.status}），审计记录已生成`);
+      setFieldDetail(null);
+      await refetch();
+    },
+    onError: (mutationError) => {
+      message.error(errorText(mutationError));
+    },
+  });
+  const downloadDailyReport = async (format: 'pdf' | 'json' | 'csv') => {
+    try {
+      const { blob, filename } = await downloadDataQualityDailyReport(timeRange, format);
+      const href = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = href;
+      anchor.download = filename;
+      anchor.style.display = 'none';
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(href);
+      message.success(`数据质量日报已下载：${filename}`);
+    } catch (downloadError) {
+      message.error(errorText(downloadError));
+    }
+  };
 
   const snapshot = data;
   const rows = useMemo(() => snapshot?.rows ?? [], [snapshot?.rows]);
   const dataQualityVisuals = snapshot?.visuals?.dataQuality;
+  const visualDatasetUnavailable = !isVisualBreakdown && !isLoading && !isError && !dataQualityVisuals;
   const activeTabLabel = dataQualityTabs.find((tab) => tab.slug === activeTab)?.label ?? '质量总览';
   const topicMetricSource = dataQualityVisuals?.topicMetrics ?? topicHealthFallbackMetrics;
   const topicMetricLabels = topicMetricSource.map((item) => item.label);
@@ -766,7 +958,9 @@ export function DataQualityPage({ route }: { route: NavRoute }) {
   const replayMetricSource = dataQualityVisuals?.replayKpis ?? replayReconcileFallbackMetrics;
   const replayMetricLabels = replayMetricSource.map((item) => item.label);
   const metricLabels = activeTab === 'report' ? reportMetricLabels : activeTab === 'settings' ? settingsMetricLabels : isTopicHealthTab ? topicMetricLabels : isFlinkQualityTab ? flinkMetricLabels : isFieldQualityTab ? fieldMetricLabels : isStorageQualityTab ? storageMetricLabels : isReplayReconcileTab ? replayMetricLabels : route.page.kpis;
-  const metricSource = activeTab === 'report' ? reportMetrics : activeTab === 'settings' ? settingsMetrics : isTopicHealthTab ? topicMetricSource : isFlinkQualityTab ? flinkMetricSource : isFieldQualityTab ? fieldMetricSource : isStorageQualityTab ? storageMetricSource : isReplayReconcileTab ? replayMetricSource : snapshot?.metrics ?? [];
+  const metricSource = activeTab === 'report'
+    ? (dailyReportQuery.data?.kpis.map((item) => ({ ...item, delta: item.delta ?? '实时生成' })) ?? reportMetrics)
+    : activeTab === 'settings' ? settingsMetrics : isTopicHealthTab ? topicMetricSource : isFlinkQualityTab ? flinkMetricSource : isFieldQualityTab ? fieldMetricSource : isStorageQualityTab ? storageMetricSource : isReplayReconcileTab ? replayMetricSource : (snapshot?.metrics ?? []);
   const metrics = metricLabels.map((label) => metricSource.find((item) => item.label === label) ?? fallbackMetric(label));
   const qualityScore = Number.parseFloat(metrics[0]?.value ?? '0') || 92;
   const columns: ColumnsType<SnapshotRow> = route.page.tableColumns.map((column) => ({
@@ -785,20 +979,18 @@ export function DataQualityPage({ route }: { route: NavRoute }) {
     }
   };
   const submitDlqReplay = (values: DLQReplayFallbackRequest) => {
-    dlqReplayMutation.mutate(buildDLQReplayDryRunRequest({
-      ...values,
-      requested_at_unix: Math.floor(Date.now() / 1000),
-    }));
+    dlqReplayMutation.mutate(
+      buildDLQReplayDryRunRequest({
+        ...values,
+        requested_at_unix: Math.floor(Date.now() / 1000),
+      }),
+    );
   };
   const openFieldDetail: OpenFieldQualityDetail = (detail, focusSelector) => {
     setFieldDetail({
       ...detail,
       columns: [...detail.columns, '接口预留', '审计事件'],
-      rows: detail.rows.map((row) => [
-        ...row,
-        actionEndpointLabel(dataQualityContextActionPlan),
-        dataQualityContextActionPlan?.auditEvent ?? 'DATA_QUALITY_ACTION_REQUESTED',
-      ]),
+      rows: detail.rows.map((row) => [...row, actionEndpointLabel(dataQualityContextActionPlan), dataQualityContextActionPlan?.auditEvent ?? 'DATA_QUALITY_ACTION_REQUESTED']),
     });
     if (focusSelector) {
       window.setTimeout(() => {
@@ -821,26 +1013,21 @@ export function DataQualityPage({ route }: { route: NavRoute }) {
     const actionable = /创建|导出|修复|保存|同步|更新|配置|审批|重放|重试|回滚|清理/.test(label);
     setFieldDetail({
       title: label,
-      description: actionable
-        ? `已加载“${label}”的操作预览；确认后将通过预留接口提交数据质量模拟业务动作并返回审计反馈。`
-        : `已打开“${label}”的业务上下文，可继续查看当前 ${activeTabLabel} 数据。`,
+      description: actionable ? `已加载“${label}”的操作预览；确认后将通过预留接口提交数据质量模拟业务动作并返回审计反馈。` : `已打开“${label}”的业务上下文，可继续查看当前 ${activeTabLabel} 数据。`,
       columns: ['操作', '当前视图', '接口预留', '审计事件', '处理结果'],
-      rows: [[
-        label,
-        activeTabLabel,
-        actionEndpointLabel(dataQualityContextActionPlan),
-        dataQualityContextActionPlan?.auditEvent ?? 'DATA_QUALITY_ACTION_REQUESTED',
-        actionable ? '确认后提交模拟任务' : '已定位关联业务数据',
-      ]],
+      rows: [[label, activeTabLabel, actionEndpointLabel(dataQualityContextActionPlan), dataQualityContextActionPlan?.auditEvent ?? 'DATA_QUALITY_ACTION_REQUESTED', actionable ? '确认后提交模拟任务' : '已定位关联业务数据']],
       actionLabel: actionable ? '确认提交' : undefined,
       actionSuccessMessage: actionable ? `${label}已提交，审计记录已生成` : undefined,
+      actionName: label,
+      actionTarget: activeTabLabel,
     });
   };
 
   return (
-    <div className="taf-page taf-data-quality" data-business-action-delegate="data-quality-context" onClick={openUnboundBusinessAction}>
-      <section className={`taf-data-quality-shell is-unified-tabs${activeTab === 'report' ? ' is-report-tab' : ''}${activeTab === 'settings' ? ' is-settings-tab' : ''}${isTopicHealthTab ? ' is-topic-health-tab' : ''}${isFlinkQualityTab ? ' is-flink-quality-tab' : ''}${isFieldQualityTab ? ' is-field-quality-tab' : ''}${isStorageQualityTab ? ' is-storage-quality-tab' : ''}${isReplayReconcileTab ? ' is-replay-reconcile-tab' : ''}`}>
-        <main className="taf-data-quality-main">
+    <DataQualityServerPaginationContext.Provider value={!isVisualBreakdown && Boolean(dataQualityVisuals)}>
+      <DataQualityScrollTablesContext.Provider value={useScrollTables}>
+      <div className="taf-page taf-data-quality" data-business-action-delegate="data-quality-context" onClick={openUnboundBusinessAction}>
+        <section className={`taf-data-quality-shell is-unified-tabs${useScrollTables ? ' is-scroll-table-mode' : ''}${activeTab === 'report' ? ' is-report-tab' : ''}${activeTab === 'settings' ? ' is-settings-tab' : ''}${isTopicHealthTab ? ' is-topic-health-tab' : ''}${isFlinkQualityTab ? ' is-flink-quality-tab' : ''}${isFieldQualityTab ? ' is-field-quality-tab' : ''}${isStorageQualityTab ? ' is-storage-quality-tab' : ''}${isReplayReconcileTab ? ' is-replay-reconcile-tab' : ''}`}>
           <header className="taf-data-quality-titlebar">
             <div className="taf-data-quality-heading">
               <h1 title={route.page.title}>{route.page.title}</h1>
@@ -859,11 +1046,13 @@ export function DataQualityPage({ route }: { route: NavRoute }) {
                   role="tab"
                   title={tab.label}
                   data-dq-action-managed="true"
-                  onClick={() => setSearchParams((current) => {
-                    const next = new URLSearchParams(current);
-                    next.set('tab', tab.slug);
-                    return next;
-                  })}
+                  onClick={() =>
+                    setSearchParams((current) => {
+                      const next = new URLSearchParams(current);
+                      next.set('tab', tab.slug);
+                      return next;
+                    })
+                  }
                 >
                   {tab.label}
                 </button>
@@ -900,193 +1089,172 @@ export function DataQualityPage({ route }: { route: NavRoute }) {
             </Space>
           </header>
 
-          {!isVisualBreakdown && isError && (
-            <Alert
-              type="error"
-              showIcon
-              message="真实 API 数据加载失败"
-              description={error instanceof Error ? error.message : '请检查 /v1/data-quality、APISIX 路由或 alert-service dataquality monitor。'}
-              action={<Button size="small" danger onClick={() => void refetch()}>重试</Button>}
-            />
-          )}
-
-          <DataQualityFilterBar activeTab={activeTab} autoRefresh={autoRefresh} onAutoRefreshChange={setAutoRefresh} onRefresh={() => void refetch()} timeRange={timeRange} onTimeRangeChange={setTimeRange} />
-
-          <div className={`taf-data-quality-kpis is-unified${activeTab === 'report' ? ' is-report' : ''}${activeTab === 'settings' ? ' is-settings' : ''}${isFlinkQualityTab ? ' is-flink' : ''}${isFieldQualityTab ? ' is-field' : ''}${isStorageQualityTab ? ' is-storage' : ''}${isReplayReconcileTab ? ' is-replay' : ''}`}>
-            {metrics.map((metric, index) => (
-              <DataQualityMetricTile key={metric.label} metric={metric} index={index} fieldKpiTrend={isFieldQualityTab ? fieldKpiTrends[index] : undefined} />
-            ))}
-          </div>
-
-          <DataQualityTabView
-            activeTab={activeTab}
-            columns={columns}
-            evidence={snapshot?.evidence ?? []}
-            dataQualityVisuals={dataQualityVisuals}
-            isLoading={!isVisualBreakdown && isLoading}
-            onOpenFieldDetail={openFieldDetail}
-            onOpenReplay={openDlqReplay}
-            qualityScore={qualityScore}
-            rows={rows}
-          />
-        </main>
-
-        {activeTab === 'report' ? (
-          <ReportSideRail onOpenReplay={openDlqReplay} />
-        ) : activeTab === 'settings' ? (
-          <SettingsSideRail />
-        ) : activeTab === 'topic-health' ? (
-          <TopicHealthSideRail onOpenDlqSample={() => setDlqSampleOpen(true)} onReplay={openDlqReplay} />
-        ) : isFlinkQualityTab ? (
-          <FlinkQualitySideRail />
-        ) : isFieldQualityTab ? (
-          <FieldQualitySideRail onOpenDetail={openFieldDetail} onOpenReplayReconcile={openReplayReconcile} />
-        ) : isStorageQualityTab ? (
-          <StorageQualitySideRail dataQualityVisuals={dataQualityVisuals} />
-        ) : isReplayReconcileTab ? (
-          <ReplayReconcileSideRail dataQualityVisuals={dataQualityVisuals} />
-        ) : (
-          <aside className="taf-data-quality-rail">
-            <WorkPanel title="质量异常告警（近 24 小时）">
-              <QualityAnomalies />
-            </WorkPanel>
-            <WorkPanel title="快速定位">
-              <QuickLocate onOpenDlqSample={() => setDlqSampleOpen(true)} />
-            </WorkPanel>
-            <WorkPanel title="质量修复建议">
-              <RepairAdvice onReplay={openDlqReplay} />
-            </WorkPanel>
-            <WorkPanel title="快收证据与报告">
-              <EvidenceActions evidence={snapshot?.evidence ?? []} />
-            </WorkPanel>
-          </aside>
-        )}
-      </section>
-      <Drawer
-        className="taf-data-quality-dlq-sample-drawer"
-        title="DLQ 样本详情"
-        placement="right"
-        width={dlqSampleDrawerWidth}
-        open={dlqSampleOpen}
-        closeIcon={<CloseOutlined title="关闭弹窗" />}
-        onClose={() => setDlqSampleOpen(false)}
-      >
-        <Alert
-          type="info"
-          showIcon
-          message="DLQ 样本只读预检"
-          description={`影响范围：dlq.v1 待重放样本；${actionEndpointLabel(dlqReplayActionPlan)} 需要 ${actionScopeLabel(dlqReplayActionPlan)}，执行前必须完成 schema drift 校验、审批确认、幂等 key 和审计 trace。`}
-        />
-        <DenseRows columns={['任务', '来源', '数量', '状态', '策略']} rows={replayRows} />
-        <DenseRows
-          columns={['字段', '异常值', '样本窗口', '处置建议']}
-          rows={[
-            ['schema_version', '缺失', 'offset 12892-13021', '先验 schema'],
-            ['tenant_id', '默认值', 'offset 13022-13046', '租户隔离复核'],
-            ['event_time', '乱序', 'offset 13047-13092', '按窗口重排'],
-          ]}
-        />
-      </Drawer>
-      <Drawer
-        className="taf-data-quality-field-detail-drawer"
-        title={fieldDetail?.title ?? '字段质量详情'}
-        placement="right"
-        width={fieldDetailDrawerWidth}
-        open={Boolean(fieldDetail)}
-        closeIcon={<CloseOutlined title="关闭详情" />}
-        onClose={() => setFieldDetail(null)}
-      >
-        {fieldDetail && (
-          <>
-            <Alert type="info" showIcon message={fieldDetail.title} description={fieldDetail.description} />
-            <DenseRows columns={fieldDetail.columns} rows={fieldDetail.rows} />
-            {fieldDetail.actionLabel && (
-              <Button
-                type="primary"
-                block
-                className="taf-data-quality-field-detail-action"
-                onClick={() => {
-                  message.success(fieldDetail.actionSuccessMessage ?? `${fieldDetail.actionLabel}已提交`);
-                  setFieldDetail(null);
-                }}
-              >
-                {fieldDetail.actionLabel}
-              </Button>
+          <main className="taf-data-quality-main">
+            {!isVisualBreakdown && isError && (
+              <Alert
+                type="error"
+                showIcon
+                message="真实 API 数据加载失败"
+                description={error instanceof Error ? error.message : '请检查 /v1/data-quality、APISIX 路由或 alert-service dataquality monitor。'}
+                action={
+                  <Button size="small" danger onClick={() => void refetch()}>
+                    重试
+                  </Button>
+                }
+              />
             )}
-          </>
-        )}
-      </Drawer>
-      <Modal
-        className="taf-data-quality-replay-modal"
-        title="DLQ fallback replay dry-run"
-        open={dlqReplayOpen}
-        width={dlqReplayModalWidth}
-        closeIcon={<CloseOutlined title="关闭弹窗" />}
-        onCancel={() => setDlqReplayOpen(false)}
-        onOk={() => dlqReplayForm.submit()}
-        okText="执行 dry-run 预检"
-        cancelText="关闭"
-        confirmLoading={dlqReplayMutation.isPending}
-      >
-        <Alert
-          type="warning"
-          showIcon
-          message="高风险重放动作默认只做 dry-run"
-          description={`${actionEndpointLabel(dlqReplayActionPlan)} 会验证审批人、修复摘要、幂等键、scope 和审计链；切换执行模式前应先完成 dry-run 证据归档。`}
-        />
-        <Form
-          className="taf-data-quality-replay-form"
-          form={dlqReplayForm}
-          layout="vertical"
-          onFinish={submitDlqReplay}
-        >
-          <div className="taf-data-quality-replay-form-grid">
-            <Form.Item label="审批人" name="approved_by" rules={[{ required: true, message: '请输入审批人' }]}>
-              <Input placeholder="operator-2" />
+
+            {visualDatasetUnavailable && <Alert type="warning" showIcon message="数据质量可视化数据集未激活" description="实时 ClickHouse 质量检查已返回，但 PostgreSQL 中没有当前租户的激活式 data_quality_ui_fixtures 数据；页面不会使用前端静态数据替代生产 API。" />}
+
+            <DataQualityFilterBar activeTab={activeTab} autoRefresh={autoRefresh} onAutoRefreshChange={setAutoRefresh} onRefresh={() => void refetch()} timeRange={timeRange} onTimeRangeChange={setTimeRange} />
+
+            {!visualDatasetUnavailable && (
+              <>
+                <div className={`taf-data-quality-kpis is-unified${activeTab === 'report' ? ' is-report' : ''}${activeTab === 'settings' ? ' is-settings' : ''}${isFlinkQualityTab ? ' is-flink' : ''}${isFieldQualityTab ? ' is-field' : ''}${isStorageQualityTab ? ' is-storage' : ''}${isReplayReconcileTab ? ' is-replay' : ''}`}>
+                  {metrics.map((metric, index) => (
+                    <DataQualityMetricTile key={metric.label} metric={metric} index={index} fieldKpiTrend={isFieldQualityTab ? fieldKpiTrends[index] : undefined} />
+                  ))}
+                </div>
+
+                <DataQualityTabView
+                  activeTab={activeTab}
+                  columns={columns}
+                  dailyReport={dailyReportQuery.data}
+                  dailyReportError={dailyReportQuery.error}
+                  dataQualityVisuals={dataQualityVisuals}
+                  evidence={snapshot?.evidence ?? []}
+                  isLoading={!isVisualBreakdown && isLoading}
+                  isReportLoading={dailyReportQuery.isLoading}
+                  onDownloadReport={downloadDailyReport}
+                  onOpenFieldDetail={openFieldDetail}
+                  onOpenReplay={openDlqReplay}
+                  qualityScore={qualityScore}
+                  rows={rows}
+                />
+              </>
+            )}
+          </main>
+
+          {visualDatasetUnavailable ? (
+            <aside className="taf-data-quality-rail">
+              <WorkPanel title="数据来源">
+                <Alert type="warning" showIcon message="等待激活租户数据集" />
+              </WorkPanel>
+            </aside>
+          ) : activeTab === 'report' ? (
+            <ReportSideRail onOpenReplay={openDlqReplay} />
+          ) : activeTab === 'settings' ? (
+            <SettingsSideRail />
+          ) : activeTab === 'topic-health' ? (
+            <TopicHealthSideRail onOpenDlqSample={() => setDlqSampleOpen(true)} onReplay={openDlqReplay} />
+          ) : isFlinkQualityTab ? (
+            <FlinkQualitySideRail />
+          ) : isFieldQualityTab ? (
+            <FieldQualitySideRail onOpenDetail={openFieldDetail} onOpenReplayReconcile={openReplayReconcile} />
+          ) : isStorageQualityTab ? (
+            <StorageQualitySideRail dataQualityVisuals={dataQualityVisuals} />
+          ) : isReplayReconcileTab ? (
+            <ReplayReconcileSideRail dataQualityVisuals={dataQualityVisuals} />
+          ) : (
+            <aside className="taf-data-quality-rail">
+              <WorkPanel title="质量异常告警（近 24 小时）">
+                <QualityAnomalies />
+              </WorkPanel>
+              <WorkPanel title="快速定位">
+                <QuickLocate onOpenDlqSample={() => setDlqSampleOpen(true)} />
+              </WorkPanel>
+              <WorkPanel title="质量修复建议">
+                <RepairAdvice onReplay={openDlqReplay} />
+              </WorkPanel>
+              <WorkPanel title="快收证据与报告">
+                <EvidenceActions evidence={snapshot?.evidence ?? []} />
+              </WorkPanel>
+            </aside>
+          )}
+        </section>
+        <Drawer className="taf-data-quality-dlq-sample-drawer" title="DLQ 样本详情" placement="right" width={dlqSampleDrawerWidth} open={dlqSampleOpen} closeIcon={<CloseOutlined title="关闭弹窗" />} onClose={() => setDlqSampleOpen(false)}>
+          <Alert type="info" showIcon message="DLQ 样本只读预检" description={`影响范围：dlq.v1 待重放样本；${actionEndpointLabel(dlqReplayActionPlan)} 需要 ${actionScopeLabel(dlqReplayActionPlan)}，执行前必须完成 schema drift 校验、审批确认、幂等 key 和审计 trace。`} />
+          <DenseRows columns={['任务', '来源', '数量', '状态', '策略']} rows={replayRows} />
+          <DenseRows
+            columns={['字段', '异常值', '样本窗口', '处置建议']}
+            rows={[
+              ['schema_version', '缺失', 'offset 12892-13021', '先验 schema'],
+              ['tenant_id', '默认值', 'offset 13022-13046', '租户隔离复核'],
+              ['event_time', '乱序', 'offset 13047-13092', '按窗口重排'],
+            ]}
+          />
+        </Drawer>
+        <Drawer className="taf-data-quality-field-detail-drawer" title={fieldDetail?.title ?? '字段质量详情'} placement="right" width={fieldDetailDrawerWidth} open={Boolean(fieldDetail)} closeIcon={<CloseOutlined title="关闭详情" />} onClose={() => setFieldDetail(null)}>
+          {fieldDetail && (
+            <>
+              <Alert type="info" showIcon message={fieldDetail.title} description={fieldDetail.description} />
+              <DenseRows columns={fieldDetail.columns} rows={fieldDetail.rows} />
+              {fieldDetail.actionLabel && (
+                <Button
+                  type="primary"
+                  block
+                  className="taf-data-quality-field-detail-action"
+                  loading={dataQualityActionMutation.isPending}
+                  onClick={() => {
+                    dataQualityActionMutation.mutate({
+                      view: activeTab,
+                      action: fieldDetail.actionName ?? fieldDetail.title,
+                      target: fieldDetail.actionTarget ?? fieldDetail.title,
+                      dry_run: true,
+                      reason: `从${activeTabLabel}页面提交的操作预检`,
+                      parameters: {
+                        source: 'data-quality-workspace',
+                        label: fieldDetail.actionLabel,
+                      },
+                    });
+                  }}
+                >
+                  {fieldDetail.actionLabel}
+                </Button>
+              )}
+            </>
+          )}
+        </Drawer>
+        <Modal className="taf-data-quality-replay-modal" title="DLQ fallback replay dry-run" open={dlqReplayOpen} width={dlqReplayModalWidth} closeIcon={<CloseOutlined title="关闭弹窗" />} onCancel={() => setDlqReplayOpen(false)} onOk={() => dlqReplayForm.submit()} okText="执行 dry-run 预检" cancelText="关闭" confirmLoading={dlqReplayMutation.isPending}>
+          <Alert type="warning" showIcon message="高风险重放动作默认只做 dry-run" description={`${actionEndpointLabel(dlqReplayActionPlan)} 会验证审批人、修复摘要、幂等键、scope 和审计链；切换执行模式前应先完成 dry-run 证据归档。`} />
+          <Form className="taf-data-quality-replay-form" form={dlqReplayForm} layout="vertical" onFinish={submitDlqReplay}>
+            <div className="taf-data-quality-replay-form-grid">
+              <Form.Item label="审批人" name="approved_by" rules={[{ required: true, message: '请输入审批人' }]}>
+                <Input placeholder="operator-2" />
+              </Form.Item>
+              <Form.Item label="审批单号" name="approval_id" rules={[{ required: true, message: '请输入审批单号' }]}>
+                <Input placeholder="APPROVAL-20260629-DQ-001" />
+              </Form.Item>
+              <Form.Item label="幂等键" name="idempotency_key" rules={[{ required: true, message: '请输入幂等键' }]}>
+                <Input placeholder="tenant-a:APPROVAL-20260629-DQ-001:dry-run" />
+              </Form.Item>
+              <Form.Item label="dry-run" name="dry_run" valuePropName="checked">
+                <Switch checkedChildren="预检" unCheckedChildren="执行" />
+              </Form.Item>
+            </div>
+            <Form.Item label="重放原因" name="reason" rules={[{ required: true, message: '请输入重放原因' }]}>
+              <Input.TextArea rows={2} placeholder="schema repair 后验证 fallback 文件可安全回放" />
             </Form.Item>
-            <Form.Item label="审批单号" name="approval_id" rules={[{ required: true, message: '请输入审批单号' }]}>
-              <Input placeholder="APPROVAL-20260629-DQ-001" />
+            <Form.Item label="修复摘要" name="repair_summary" rules={[{ required: true, message: '请输入修复摘要' }]}>
+              <Input.TextArea rows={2} placeholder="已修复 malformed event payload，先执行 dry-run 预检" />
             </Form.Item>
-            <Form.Item label="幂等键" name="idempotency_key" rules={[{ required: true, message: '请输入幂等键' }]}>
-              <Input placeholder="tenant-a:APPROVAL-20260629-DQ-001:dry-run" />
-            </Form.Item>
-            <Form.Item label="dry-run" name="dry_run" valuePropName="checked">
-              <Switch checkedChildren="预检" unCheckedChildren="执行" />
-            </Form.Item>
-          </div>
-          <Form.Item label="重放原因" name="reason" rules={[{ required: true, message: '请输入重放原因' }]}>
-            <Input.TextArea rows={2} placeholder="schema repair 后验证 fallback 文件可安全回放" />
-          </Form.Item>
-          <Form.Item label="修复摘要" name="repair_summary" rules={[{ required: true, message: '请输入修复摘要' }]}>
-            <Input.TextArea rows={2} placeholder="已修复 malformed event payload，先执行 dry-run 预检" />
-          </Form.Item>
-        </Form>
-        {dlqReplayResult && (
-          <div className="taf-data-quality-replay-result">
-            <Alert
-              type={dlqReplayResult.failed_files ? 'warning' : 'success'}
-              showIcon
-              message={`Replay ${dlqReplayResult.status}`}
-              description={`replay_id=${dlqReplayResult.replay_id}，fallback 文件 ${dlqReplayResult.pre_fallback_files}，待重放字节 ${formatBytes(dlqReplayResult.pre_fallback_bytes)}，审计 ${dlqReplayResult.audit_trail.length} 条。`}
-            />
-          </div>
-        )}
-      </Modal>
-    </div>
+          </Form>
+          {dlqReplayResult && (
+            <div className="taf-data-quality-replay-result">
+              <Alert type={dlqReplayResult.failed_files ? 'warning' : 'success'} showIcon message={`Replay ${dlqReplayResult.status}`} description={`replay_id=${dlqReplayResult.replay_id}，fallback 文件 ${dlqReplayResult.pre_fallback_files}，待重放字节 ${formatBytes(dlqReplayResult.pre_fallback_bytes)}，审计 ${dlqReplayResult.audit_trail.length} 条。`} />
+            </div>
+          )}
+        </Modal>
+      </div>
+      </DataQualityScrollTablesContext.Provider>
+    </DataQualityServerPaginationContext.Provider>
   );
 }
 
-function DataQualityMetricTile({
-  fieldKpiTrend,
-  metric,
-  index,
-}: {
-  fieldKpiTrend?: number[];
-  metric: PageSnapshot['metrics'][number];
-  index: number;
-}) {
+function DataQualityMetricTile({ fieldKpiTrend, metric, index }: { fieldKpiTrend?: number[]; metric: PageSnapshot['metrics'][number]; index: number }) {
   const up = !metric.delta.includes('↓') && !metric.delta.startsWith('-');
   const isScore = index === 0;
+  const isOverallScore = metric.label === '质量总分';
   const isReportScore = metric.label === '日报评分';
   const isSettingsScore = metric.label === '启用规则';
   const isTopicScore = metric.label === 'Topic 健康分';
@@ -1096,6 +1264,21 @@ function DataQualityMetricTile({
   const isReplayScore = metric.label === '对账通过率';
   const trendValues = fieldKpiTrend ?? metricTrendFallback(metric.value, index);
   const scoreParts = isScore ? metric.value.match(/^(\d+(?:\.\d+)?)(.*)$/) : null;
+  if (isOverallScore) {
+    const scoreValue = Math.max(0, Math.min(100, Number.parseFloat(scoreParts?.[1] ?? metric.value) || 0));
+    return (
+      <div className={`taf-metric taf-data-quality-metric is-score is-overall-score ${metricToneClass[metric.status]}`} title={`${metric.label} ${metric.value} ${metric.delta}`}>
+        <span>{metric.label}</span>
+        <div className="taf-data-quality-overall-score-ring">
+          <RingChart value={scoreValue} height="100%" suffix="分" ariaLabel={`质量总分 ${scoreValue} 分`} />
+        </div>
+        <div className="taf-data-quality-overall-score-copy">
+          <strong>{scoreValue >= 90 ? '良好' : scoreValue >= 75 ? '关注' : '异常'}</strong>
+          <small>{up ? <ArrowUpOutlined /> : <ArrowDownOutlined />}{metric.delta}</small>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className={`taf-metric taf-data-quality-metric ${metricToneClass[metric.status]}${isScore ? ' is-score' : ''}${isReportScore ? ' is-report-score' : ''}${isSettingsScore ? ' is-settings-score' : ''}${isFlinkScore ? ' is-flink-score' : ''}${isFieldScore ? ' is-field-score' : ''}${isStorageScore ? ' is-storage-score' : ''}${isReplayScore ? ' is-replay-score' : ''}`} title={`${metric.label} ${metric.value} ${metric.delta}`}>
       <span>{metric.label}</span>
@@ -1105,7 +1288,9 @@ function DataQualityMetricTile({
             <b>{scoreParts[1]}</b>
             <em>{scoreParts[2].trim()}</em>
           </>
-        ) : metric.value}
+        ) : (
+          metric.value
+        )}
       </strong>
       <small>
         {up ? <ArrowUpOutlined /> : <ArrowDownOutlined />}
@@ -1123,62 +1308,40 @@ function DataQualityMetricTile({
   );
 }
 
-function DataQualityFilterBar({
-  activeTab,
-  autoRefresh,
-  onAutoRefreshChange,
-  onRefresh,
-  onTimeRangeChange,
-  timeRange,
-}: {
-  activeTab: DataQualityTabSlug;
-  autoRefresh: boolean;
-  onAutoRefreshChange: (enabled: boolean) => void;
-  onRefresh: () => void;
-  onTimeRangeChange: (range: DataQualityTimeRange) => void;
-  timeRange: DataQualityTimeRange;
-}) {
+function DataQualityFilterBar({ activeTab, autoRefresh, onAutoRefreshChange, onRefresh, onTimeRangeChange, timeRange }: { activeTab: DataQualityTabSlug; autoRefresh: boolean; onAutoRefreshChange: (enabled: boolean) => void; onRefresh: () => void; onTimeRangeChange: (range: DataQualityTimeRange) => void; timeRange: DataQualityTimeRange }) {
   const activeTabLabel = dataQualityTabs.find((tab) => tab.slug === activeTab)?.label ?? '质量总览';
   const rangeLabel = '2025-06-25 15:30:45 ~ 2025-06-26 15:30:45';
   return (
     <div className="taf-data-quality-filterbar" data-tab={activeTab}>
       <span title="时间范围">时间范围</span>
       <Select<DataQualityTimeRange> size="small" value={timeRange} options={[{ value: '近 24 小时' }, { value: '近 7 天' }]} onChange={onTimeRangeChange} />
-      <button type="button" className="taf-data-quality-filter-range" title={`${activeTabLabel} ${rangeLabel}`}>{rangeLabel} <FieldTimeOutlined /></button>
+      <button type="button" className="taf-data-quality-filter-range" title={`${activeTabLabel} ${rangeLabel}`}>
+        {rangeLabel} <FieldTimeOutlined />
+      </button>
       <span className="taf-data-quality-filter-spacer" />
       <span title="自动刷新">自动刷新</span>
-      <button
-        type="button"
-        className={`taf-data-quality-auto-toggle${autoRefresh ? '' : ' is-off'}`}
-        title={`自动刷新 已${autoRefresh ? '开启' : '关闭'}`}
-        aria-label={`自动刷新 已${autoRefresh ? '开启' : '关闭'}`}
-        aria-pressed={autoRefresh}
-        data-dq-action-managed="true"
-        onClick={() => onAutoRefreshChange(!autoRefresh)}
-      ><span /></button>
+      <button type="button" className={`taf-data-quality-auto-toggle${autoRefresh ? '' : ' is-off'}`} title={`自动刷新 已${autoRefresh ? '开启' : '关闭'}`} aria-label={`自动刷新 已${autoRefresh ? '开启' : '关闭'}`} aria-pressed={autoRefresh} data-dq-action-managed="true" onClick={() => onAutoRefreshChange(!autoRefresh)}>
+        <span />
+      </button>
       <Tooltip title={`刷新${activeTabLabel}数据`}>
-        <Button size="small" icon={<ReloadOutlined />} data-dq-action-managed="true" onClick={onRefresh}>刷新</Button>
+        <Button size="small" icon={<ReloadOutlined />} data-dq-action-managed="true" onClick={onRefresh}>
+          刷新
+        </Button>
       </Tooltip>
     </div>
   );
 }
 
-function DataQualityTabView({
-  activeTab,
-  columns,
-  dataQualityVisuals,
-  evidence,
-  isLoading,
-  onOpenFieldDetail,
-  onOpenReplay,
-  qualityScore,
-  rows,
-}: {
+function DataQualityTabView({ activeTab, columns, dailyReport, dailyReportError, dataQualityVisuals, evidence, isLoading, isReportLoading, onDownloadReport, onOpenFieldDetail, onOpenReplay, qualityScore, rows }: {
   activeTab: DataQualityTabSlug;
   columns: ColumnsType<SnapshotRow>;
+  dailyReport?: DataQualityDailyReport;
+  dailyReportError: Error | null;
   dataQualityVisuals?: DataQualityVisuals;
   evidence: PageSnapshot['evidence'];
   isLoading: boolean;
+  isReportLoading: boolean;
+  onDownloadReport: (format: 'pdf' | 'json' | 'csv') => Promise<void>;
   onOpenFieldDetail: OpenFieldQualityDetail;
   onOpenReplay: () => void;
   qualityScore: number;
@@ -1200,7 +1363,7 @@ function DataQualityTabView({
     return <ReplayReconcileContent dataQualityVisuals={dataQualityVisuals} onOpenReplay={onOpenReplay} />;
   }
   if (activeTab === 'report') {
-    return <ReportContent evidence={evidence} />;
+    return <ReportContent error={dailyReportError} isLoading={isReportLoading} onDownload={onDownloadReport} report={dailyReport} />;
   }
   if (activeTab === 'settings') {
     return <SettingsContent />;
@@ -1208,26 +1371,12 @@ function DataQualityTabView({
   return <QualityOverviewContent columns={columns} dataQualityVisuals={dataQualityVisuals} evidence={evidence} isLoading={isLoading} qualityScore={qualityScore} rows={rows} />;
 }
 
-function QualityOverviewContent({
-  columns,
-  dataQualityVisuals,
-  evidence,
-  isLoading,
-  qualityScore,
-  rows,
-}: {
-  columns: ColumnsType<SnapshotRow>;
-  dataQualityVisuals?: DataQualityVisuals;
-  evidence: PageSnapshot['evidence'];
-  isLoading: boolean;
-  qualityScore: number;
-  rows: SnapshotRow[];
-}) {
+function QualityOverviewContent({ columns, dataQualityVisuals, evidence, isLoading, qualityScore, rows }: { columns: ColumnsType<SnapshotRow>; dataQualityVisuals?: DataQualityVisuals; evidence: PageSnapshot['evidence']; isLoading: boolean; qualityScore: number; rows: SnapshotRow[] }) {
   return (
     <>
       <div className="taf-data-quality-overview-grid">
         <WorkPanel title="Kafka Topic 健康 (Top 10)" className="taf-data-quality-topic-panel taf-data-quality-overview-topic">
-          <DataQualityTopicGrid isLoading={isLoading} rows={rows.slice(0, 7)} />
+          <DataQualityTopicGrid isLoading={isLoading} rows={rows} />
         </WorkPanel>
         <WorkPanel title="Topic 分区倾斜热力图" className="taf-data-quality-overview-heat" extra={<span className="taf-data-quality-score">{qualityScore.toFixed(0)} 分</span>}>
           <TopicHeatmap rows={rows} visuals={dataQualityVisuals} />
@@ -1249,18 +1398,7 @@ function QualityOverviewContent({
   );
 }
 
-const overviewTopicColumns = [
-  'Topic',
-  '分区数',
-  '当前吞吐量',
-  '消费延迟',
-  '积压量',
-  '积压趋势',
-  '消费延迟 P95',
-  '分区倾斜',
-  '消息延迟 P95',
-  '操作',
-];
+const overviewTopicColumns = ['Topic', '分区数', '当前吞吐量', '消费延迟', '积压量', '积压趋势', '消费延迟 P95', '分区倾斜', '消息延迟 P95', '操作'];
 
 function DataQualityTopicGrid({ isLoading, rows }: { isLoading: boolean; rows: SnapshotRow[] }) {
   if (isLoading && rows.length === 0) {
@@ -1268,32 +1406,38 @@ function DataQualityTopicGrid({ isLoading, rows }: { isLoading: boolean; rows: S
   }
 
   return (
-    <div className="taf-data-quality-topic-grid" style={{ '--dq-topic-columns': overviewTopicColumns.length } as CSSProperties}>
+    <div className="taf-data-quality-topic-grid taf-data-quality-scroll-table" style={{ '--dq-topic-columns': overviewTopicColumns.length } as CSSProperties}>
       <div className="taf-data-quality-topic-grid-head">
-        {overviewTopicColumns.map((column) => <span key={column} title={column}>{column}</span>)}
+        {overviewTopicColumns.map((column) => (
+          <span key={column} title={column}>
+            {column}
+          </span>
+        ))}
       </div>
-      {rows.map((row, index) => (
-        <div key={String(row.Topic ?? index)} className="taf-data-quality-topic-grid-row">
-          {overviewTopicColumns.map((column) => {
-            const value = String(row[column] ?? '--');
-            if (column === 'Topic') {
-              return <strong key={column} title={value}>{value}</strong>;
-            }
-            if (column === '积压趋势') {
-              return (
-                <span key={column} className={`taf-data-quality-topic-trend ${value === '上升' ? 'is-risk' : value === '波动' ? 'is-warn' : 'is-ok'}`} title={value}>
-                  <TopicSparkline index={index} tone={value} />
-                  <em>{value}</em>
-                </span>
-              );
-            }
-            if (column === '操作') {
-              return <span key={column} className={`taf-data-quality-topic-state ${value === '危急' ? 'is-risk' : value === '中等' ? 'is-warn' : 'is-ok'}`} title={value}>{value}</span>;
-            }
-            return <span key={column} title={value}>{value}</span>;
-          })}
-        </div>
-      ))}
+      <div className="taf-data-quality-scroll-body">
+        {rows.slice(0, 10).map((row, index) => (
+          <div key={String(row.Topic ?? index)} className="taf-data-quality-topic-grid-row">
+            {overviewTopicColumns.map((column) => {
+              const value = String(row[column] ?? '--');
+              if (column === 'Topic') {
+                return <strong key={column} title={value}>{value}</strong>;
+              }
+              if (column === '积压趋势') {
+                return (
+                  <span key={column} className={`taf-data-quality-topic-trend ${value === '上升' ? 'is-risk' : value === '波动' ? 'is-warn' : 'is-ok'}`} title={value}>
+                    <TopicSparkline index={index} tone={value} />
+                    <em>{value}</em>
+                  </span>
+                );
+              }
+              if (column === '操作') {
+                return <span key={column} className={`taf-data-quality-topic-state ${value === '危急' ? 'is-risk' : value === '中等' ? 'is-warn' : 'is-ok'}`} title={value}>{value}</span>;
+              }
+              return <span key={column} title={value}>{value}</span>;
+            })}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -1309,21 +1453,7 @@ function TopicSparkline({ index, tone }: { index: number; tone: string }) {
   return <DataQualityKpiSparklineChart ariaLabel="Topic 趋势" className="taf-data-quality-topic-echart" tone={status} values={values} />;
 }
 
-function TopicHealthContent({
-  columns,
-  compact = false,
-  dataQualityVisuals,
-  isLoading,
-  qualityScore,
-  rows,
-}: {
-  columns: ColumnsType<SnapshotRow>;
-  compact?: boolean;
-  dataQualityVisuals?: DataQualityVisuals;
-  isLoading: boolean;
-  qualityScore: number;
-  rows: SnapshotRow[];
-}) {
+function TopicHealthContent({ columns, compact = false, dataQualityVisuals, isLoading, qualityScore, rows }: { columns: ColumnsType<SnapshotRow>; compact?: boolean; dataQualityVisuals?: DataQualityVisuals; isLoading: boolean; qualityScore: number; rows: SnapshotRow[] }) {
   return (
     <>
       <div className="taf-data-quality-upper">
@@ -1331,11 +1461,7 @@ function TopicHealthContent({
           {isLoading && rows.length === 0 ? <div className="taf-data-quality-topic-grid is-loading">加载 Topic 健康数据...</div> : <TopicHealthTable rows={rows} />}
         </WorkPanel>
 
-        <WorkPanel
-          title="消费延迟趋势"
-          className="taf-data-quality-trend-panel"
-          extra={<span className="taf-data-quality-trend-legend">P50 / P95 / 阈值</span>}
-        >
+        <WorkPanel title="消费延迟趋势" className="taf-data-quality-trend-panel" extra={<span className="taf-data-quality-trend-legend">P50 / P95 / 阈值</span>}>
           <LatencyTrend />
         </WorkPanel>
 
@@ -1346,20 +1472,21 @@ function TopicHealthContent({
       {!compact && (
         <div className="taf-data-quality-tab-grid">
           <WorkPanel title="Consumer Group 健康">
-            <DenseRows
-              columns={['Consumer Group', '当前 Lag', 'Rebalance', '最后提交', '状态']}
-              rows={dataQualityVisuals?.consumerRows ?? consumerRows}
-            />
+            <DenseRows columns={['Consumer Group', '当前 Lag', 'Rebalance', '最后提交', '状态']} dataset="consumerRows" rows={dataQualityVisuals?.consumerRows ?? consumerRows} />
           </WorkPanel>
           <WorkPanel title="消息大小吞吐分布（24h）">
             <MessageSizeDistribution visuals={dataQualityVisuals} />
           </WorkPanel>
           <WorkPanel title="异常分区处置队列">
-            <PartitionQueue rows={dataQualityVisuals?.partitionQueueRows ?? [
-              ['dlq_topic', '2', '消费延迟 18.2s', '下游消息异常积压', '消息组复位', '定位'],
-              ['dlq_topic', '5', '消费延迟 15.1s', '消费链路处理堆积', '扩容消费者并优化处理', '修复'],
-              ['threat_alerts', '7', '倾斜度 3.12', '分区数据分布不均', '评估扩分区重新分配数据', '评估'],
-            ]} />
+            <PartitionQueue
+              rows={
+                dataQualityVisuals?.partitionQueueRows ?? [
+                  ['dlq_topic', '2', '消费延迟 18.2s', '下游消息异常积压', '消息组复位', '定位'],
+                  ['dlq_topic', '5', '消费延迟 15.1s', '消费链路处理堆积', '扩容消费者并优化处理', '修复'],
+                  ['threat_alerts', '7', '倾斜度 3.12', '分区数据分布不均', '评估扩分区重新分配数据', '评估'],
+                ]
+              }
+            />
           </WorkPanel>
         </div>
       )}
@@ -1370,44 +1497,41 @@ function TopicHealthContent({
 const topicHealthColumns = ['Topic', '分区数', '当前 offset', '积压', '消费延迟P95', '分区倾斜', '消息大小', '状态', '操作'];
 
 function TopicHealthTable({ rows }: { rows: SnapshotRow[] }) {
-  const pageSize = 7;
-  const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
-  const [page, setPage] = useState(1);
-  const currentPage = Math.min(page, totalPages);
-  const visibleRows = rows.slice((currentPage - 1) * pageSize, currentPage * pageSize);
   return (
-    <div className="taf-data-quality-topic-health-table" style={{ '--dq-topic-health-columns': topicHealthColumns.length } as CSSProperties}>
+    <div
+      className="taf-data-quality-topic-health-table taf-data-quality-scroll-table"
+      style={
+        {
+          '--dq-topic-health-columns': topicHealthColumns.length,
+        } as CSSProperties
+      }
+    >
       <div className="taf-data-quality-topic-health-head">
-        {topicHealthColumns.map((column) => <span key={column} title={column}>{column}</span>)}
+        {topicHealthColumns.map((column) => (
+          <span key={column} title={column}>
+            {column}
+          </span>
+        ))}
       </div>
-      {visibleRows.map((row) => (
-        <div key={String(row.Topic)} className="taf-data-quality-topic-health-row">
-          {topicHealthColumns.map((column) => {
-            const rawValue = column === '分区倾斜' ? row.分区倾斜度 : row[column];
-            const value = String(rawValue ?? '--');
-            if (column === 'Topic') return <strong key={column} title={value}>{value}</strong>;
-            if (column === '状态') return <span key={column} className={`taf-data-quality-topic-health-state ${value === '严重' ? 'is-risk' : value === '告警' ? 'is-warn' : 'is-ok'}`} title={value}>{value}</span>;
-            if (column === '操作') return <span key={column} className="taf-data-quality-topic-health-op" title={`查看 ${String(row.Topic)}`}><FileSearchOutlined /></span>;
-            return <span key={column} className={(column.includes('延迟') || column === '分区倾斜') && (value.includes('15') || value.includes('2.') || value.includes('5.')) ? 'is-warn' : ''} title={value}>{value}</span>;
-          })}
-        </div>
-      ))}
-      <div className="taf-data-quality-topic-health-footer">
-        <span>共 {rows.length} 条</span>
-        <button type="button" title="上一页" aria-label="Topic 健康上一页" data-dq-action-managed="true" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}><LeftOutlined /></button>
-        {Array.from({ length: totalPages }, (_, index) => index + 1).map((item) => <button key={item} type="button" data-dq-action-managed="true" className={item === currentPage ? 'is-active' : ''} aria-current={item === currentPage ? 'page' : undefined} onClick={() => setPage(item)}>{item}</button>)}
-        <button type="button" title="下一页" aria-label="Topic 健康下一页" data-dq-action-managed="true" disabled={currentPage === totalPages} onClick={() => setPage(currentPage + 1)}><RightOutlined /></button>
-        <span>{pageSize} 条/页</span>
+      <div className="taf-data-quality-scroll-body">
+        {rows.map((row) => (
+          <div key={String(row.Topic)} className="taf-data-quality-topic-health-row">
+            {topicHealthColumns.map((column) => {
+              const rawValue = column === '分区倾斜' ? row.分区倾斜度 : row[column];
+              const value = String(rawValue ?? '--');
+              if (column === 'Topic') return <strong key={column} title={value}>{value}</strong>;
+              if (column === '状态') return <span key={column} className={`taf-data-quality-topic-health-state ${value === '严重' ? 'is-risk' : value === '告警' ? 'is-warn' : 'is-ok'}`} title={value}>{value}</span>;
+              if (column === '操作') return <span key={column} className="taf-data-quality-topic-health-op" title={`查看 ${String(row.Topic)}`}><FileSearchOutlined /></span>;
+              return <span key={column} className={(column.includes('延迟') || column === '分区倾斜') && (value.includes('15') || value.includes('2.') || value.includes('5.')) ? 'is-warn' : ''} title={value}>{value}</span>;
+            })}
+          </div>
+        ))}
       </div>
     </div>
   );
 }
 
-function FlinkQualityContent({
-  dataQualityVisuals,
-}: {
-  dataQualityVisuals?: DataQualityVisuals;
-}) {
+function FlinkQualityContent({ dataQualityVisuals }: { dataQualityVisuals?: DataQualityVisuals }) {
   return (
     <>
       <div className="taf-data-quality-flink-upper">
@@ -1440,24 +1564,38 @@ const flinkJobColumns = ['作业', '状态', '并行度', 'Checkpoint', 'Waterma
 
 function FlinkJobHealthTable({ rows }: { rows?: DataQualityVisuals['flinkJobRows'] }) {
   const jobRows = rows?.length ? rows : flinkJobFallbackRows;
-  const pageSize = 5;
-  const totalPages = Math.max(1, Math.ceil(jobRows.length / pageSize));
-  const [page, setPage] = useState(1);
-  const currentPage = Math.min(page, totalPages);
-  const visibleRows = jobRows.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const paging = useDataQualityPagination(jobRows, 5, 'flinkJobRows');
   return (
-    <div className="taf-data-quality-flink-job-table">
+    <div className="taf-data-quality-flink-job-table taf-data-quality-paged-table">
       <div className="taf-data-quality-flink-job-head">
-        {flinkJobColumns.map((column) => <span key={column} title={column}>{column}</span>)}
+        {flinkJobColumns.map((column) => (
+          <span key={column} title={column}>
+            {column}
+          </span>
+        ))}
       </div>
-      {visibleRows.map((row) => {
+      {paging.visibleRows.map((row) => {
         const tone = row[1] === '背压中' ? 'warn' : row[1] === '重启中' ? 'info' : 'ok';
         return (
           <div key={row[0]} className={`taf-data-quality-flink-job-row is-${tone}`} title={row.join(' ')}>
             {row.map((cell, index) => {
-              if (index === 0) return <strong key={`${row[0]}-${index}`} title={cell}>{cell}</strong>;
-              if (index === 1) return <span key={`${row[0]}-${index}`} className="taf-data-quality-flink-job-state" title={cell}>{cell}</span>;
-              return <span key={`${row[0]}-${index}`} title={cell}>{cell}</span>;
+              if (index === 0)
+                return (
+                  <strong key={`${row[0]}-${index}`} title={cell}>
+                    {cell}
+                  </strong>
+                );
+              if (index === 1)
+                return (
+                  <span key={`${row[0]}-${index}`} className="taf-data-quality-flink-job-state" title={cell}>
+                    {cell}
+                  </span>
+                );
+              return (
+                <span key={`${row[0]}-${index}`} title={cell}>
+                  {cell}
+                </span>
+              );
             })}
             <span className="taf-data-quality-flink-job-actions" title={`查看 ${row[0]}`}>
               <FileSearchOutlined />
@@ -1466,13 +1604,7 @@ function FlinkJobHealthTable({ rows }: { rows?: DataQualityVisuals['flinkJobRows
           </div>
         );
       })}
-      <div className="taf-data-quality-flink-job-footer">
-        <span>共 {jobRows.length} 条</span>
-        <button type="button" title="上一页" aria-label="Flink 作业上一页" data-dq-action-managed="true" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}><LeftOutlined /></button>
-        {Array.from({ length: totalPages }, (_, index) => index + 1).map((item) => <button key={item} type="button" data-dq-action-managed="true" className={item === currentPage ? 'is-active' : ''} aria-current={item === currentPage ? 'page' : undefined} onClick={() => setPage(item)}>{item}</button>)}
-        <button type="button" title="下一页" aria-label="Flink 作业下一页" data-dq-action-managed="true" disabled={currentPage === totalPages} onClick={() => setPage(currentPage + 1)}><RightOutlined /></button>
-        <span>{pageSize} 条/页</span>
-      </div>
+      <DataQualityPagination label="Flink 作业" {...paging} />
     </div>
   );
 }
@@ -1488,18 +1620,44 @@ function FlinkCheckpointWatermarkTrend({ trend }: { trend?: DataQualityVisuals['
           ['Watermark 延迟 P95 (s)', 'watermark'],
           ['Watermark SLA 阈值 (s)', 'watermark-sla'],
           ['Checkpoint SLA 阈值 (s)', 'checkpoint-sla'],
-        ].map(([label, tone]) => <span key={label} className={`is-${tone}`} title={label}>{label}</span>)}
+        ].map(([label, tone]) => (
+          <span key={label} className={`is-${tone}`} title={label}>
+            {label}
+          </span>
+        ))}
       </div>
       <DataQualityTrendChart
         ariaLabel="Checkpoint 与 Watermark 趋势"
         className="taf-data-quality-flink-checkpoint-echart"
         categories={chart.times}
         series={[
-          { name: 'Checkpoint 时长', color: '#18a8ff', values: chart.checkpointDuration },
-          { name: 'Checkpoint Age', color: '#40d98a', values: chart.checkpointAge },
-          { name: 'Watermark P95', color: '#ffb020', values: chart.watermarkP95 },
-          { name: 'Watermark SLA', color: '#ff4d4f', dashed: true, values: chart.watermarkSla },
-          { name: 'Checkpoint SLA', color: '#a78bfa', dashed: true, values: chart.checkpointSla },
+          {
+            name: 'Checkpoint 时长',
+            color: '#18a8ff',
+            values: chart.checkpointDuration,
+          },
+          {
+            name: 'Checkpoint Age',
+            color: '#40d98a',
+            values: chart.checkpointAge,
+          },
+          {
+            name: 'Watermark P95',
+            color: '#ffb020',
+            values: chart.watermarkP95,
+          },
+          {
+            name: 'Watermark SLA',
+            color: '#ff4d4f',
+            dashed: true,
+            values: chart.watermarkSla,
+          },
+          {
+            name: 'Checkpoint SLA',
+            color: '#a78bfa',
+            dashed: true,
+            values: chart.checkpointSla,
+          },
         ]}
         valueFormatter={(value) => `${value}s`}
       />
@@ -1507,54 +1665,42 @@ function FlinkCheckpointWatermarkTrend({ trend }: { trend?: DataQualityVisuals['
   );
 }
 
-function FlinkBackpressureHeatmap({
-  buckets,
-  rows,
-}: {
-  buckets?: string[];
-  rows?: DataQualityVisuals['flinkBackpressureRows'];
-}) {
+function FlinkBackpressureHeatmap({ buckets, rows }: { buckets?: string[]; rows?: DataQualityVisuals['flinkBackpressureRows'] }) {
   const heatRows = rows?.length ? rows : flinkBackpressureFallbackRows;
   const bucketLabels = buckets?.length ? buckets : flinkBackpressureFallbackBuckets;
   return (
     <div className="taf-data-quality-flink-backpressure">
-      <div className="taf-data-quality-flink-backpressure-head">
-        <span>Subtask</span>
-        {bucketLabels.map((bucket) => <em key={bucket} title={bucket}>{bucket}</em>)}
-      </div>
-      {heatRows.map((row) => (
-        <div key={row.label} className="taf-data-quality-flink-backpressure-row" title={`${row.label} Backpressure`}>
-          <strong title={row.label}>{row.label}</strong>
-          <div>
-            {row.values.map((value, index) => <i key={`${row.label}-${index}`} className={`is-${value}`} title={`${row.label} subtask ${index} ${value}`} />)}
-          </div>
-        </div>
-      ))}
-      <div className="taf-data-quality-flink-backpressure-legend">
-        <span><i className="is-ok" />空闲 (0-0.1)</span>
-        <span><i className="is-warn" />轻度背压 (0.1-0.5)</span>
-        <span><i className="is-risk" />严重背压 (&gt;0.5)</span>
-      </div>
+      <DataQualityHeatmapChart
+        ariaLabel="Backpressure 热力图（按作业和 Subtask）"
+        className="taf-data-quality-flink-backpressure-echart"
+        mode="backpressure"
+        rows={heatRows}
+        times={bucketLabels}
+      />
     </div>
   );
 }
 
-function LateWindowClosure({
-  topicRows,
-  windowRows,
-}: {
-  topicRows?: DataQualityVisuals['flinkLateTopicRows'];
-  windowRows?: DataQualityVisuals['flinkWindowRows'];
-}) {
+function LateWindowClosure({ topicRows, windowRows }: { topicRows?: DataQualityVisuals['flinkLateTopicRows']; windowRows?: DataQualityVisuals['flinkWindowRows'] }) {
   const topics = topicRows?.length ? topicRows : flinkLateTopicFallbackRows;
   const windows = windowRows?.length ? windowRows : flinkWindowFallbackRows;
+  const windowPaging = useDataQualityPagination(windows, 4, 'flinkWindowRows');
   return (
     <div className="taf-data-quality-flink-late-window">
       <div className="taf-data-quality-flink-late-bars">
         <div className="taf-data-quality-flink-late-legend">
-          <span><i className="is-normal" />正常事件</span>
-          <span><i className="is-late" />迟到事件 (side-output)</span>
-          <span><i className="is-severe" />丢弃事件</span>
+          <span>
+            <i className="is-normal" />
+            正常事件
+          </span>
+          <span>
+            <i className="is-late" />
+            迟到事件 (side-output)
+          </span>
+          <span>
+            <i className="is-severe" />
+            丢弃事件
+          </span>
         </div>
         {topics.map(([topic, normal, late, dropped], index) => {
           const normalWidth = [60, 61, 58, 59, 57, 56][index] ?? 58;
@@ -1564,25 +1710,36 @@ function LateWindowClosure({
             <div key={topic} className="taf-data-quality-flink-late-row" title={`${topic} 正常 ${normal} 迟到 ${late} 丢弃 ${dropped}`}>
               <strong title={topic}>{topic}</strong>
               <div>
-                <span className="is-normal" style={{ width: `${normalWidth}%` }}>{normal}</span>
-                <span className="is-late" style={{ width: `${lateWidth}%` }}>{late}</span>
-                <span className="is-severe" style={{ width: `${droppedWidth}%` }}>{dropped}</span>
+                <span className="is-normal" style={{ width: `${normalWidth}%` }}>
+                  {normal}
+                </span>
+                <span className="is-late" style={{ width: `${lateWidth}%` }}>
+                  {late}
+                </span>
+                <span className="is-severe" style={{ width: `${droppedWidth}%` }}>
+                  {dropped}
+                </span>
               </div>
             </div>
           );
         })}
       </div>
-      <div className="taf-data-quality-flink-window-table">
+      <div className="taf-data-quality-flink-window-table taf-data-quality-paged-table">
         <div>
           <span title="窗口大小">窗口大小</span>
           <span title="窗口闭合延迟 P95">窗口闭合延迟 P95</span>
           <span title="丢弃率">丢弃率</span>
         </div>
-        {windows.map((row) => (
+        {windowPaging.visibleRows.map((row) => (
           <div key={row[0]} title={row.join(' ')}>
-            {row.map((cell) => <span key={cell} title={cell}>{cell}</span>)}
+            {row.map((cell) => (
+              <span key={cell} title={cell}>
+                {cell}
+              </span>
+            ))}
           </div>
         ))}
+        <DataQualityPagination label="窗口闭合" {...windowPaging} />
       </div>
     </div>
   );
@@ -1594,15 +1751,25 @@ function FlinkFailureTable({ rows }: { rows?: DataQualityVisuals['flinkFailureRo
   return (
     <div className="taf-data-quality-flink-failure-table">
       <div>
-        {columns.map((column) => <span key={column} title={column}>{column}</span>)}
+        {columns.map((column) => (
+          <span key={column} title={column}>
+            {column}
+          </span>
+        ))}
       </div>
-      {failureRows.map((row) => (
+      {failureRows.slice(0, 10).map((row) => (
         <button key={`${row[0]}-${row[2]}`} type="button" title={row.join(' ')}>
-          {row.map((cell) => <span key={cell} title={cell}>{cell}</span>)}
+          {row.map((cell) => (
+            <span key={cell} title={cell}>
+              {cell}
+            </span>
+          ))}
         </button>
       ))}
-      <footer>
-        <button type="button" title="查看更多异常与失败原因">查看更多 <ArrowUpOutlined /></button>
+      <footer className="taf-data-quality-table-actions">
+        <button type="button" title="查看更多异常与失败原因">
+          查看更多 <ArrowUpOutlined />
+        </button>
       </footer>
     </div>
   );
@@ -1616,12 +1783,26 @@ function SinkQualityCards({ rows }: { rows?: DataQualityVisuals['flinkSinkRows']
         <section key={sink.name} title={`${sink.name} ${sink.status} 写入 EPS ${sink.eps} 成功率 ${sink.success} P95 写入延迟 ${sink.p95} 重试次数 ${sink.retries}`}>
           <header>
             <strong title={sink.name}>{sink.name}</strong>
-            <span><CheckCircleOutlined /> {sink.status}</span>
+            <span>
+              <CheckCircleOutlined /> {sink.status}
+            </span>
           </header>
-          <p><span>写入 EPS</span><b>{sink.eps}</b></p>
-          <p><span>成功率</span><b>{sink.success}</b></p>
-          <p><span>P95 写入延迟</span><b>{sink.p95}</b></p>
-          <p><span>重试次数</span><b>{sink.retries}</b></p>
+          <p>
+            <span>写入 EPS</span>
+            <b>{sink.eps}</b>
+          </p>
+          <p>
+            <span>成功率</span>
+            <b>{sink.success}</b>
+          </p>
+          <p>
+            <span>P95 写入延迟</span>
+            <b>{sink.p95}</b>
+          </p>
+          <p>
+            <span>重试次数</span>
+            <b>{sink.retries}</b>
+          </p>
           <MiniTrend values={sink.trend} />
         </section>
       ))}
@@ -1633,13 +1814,7 @@ function MiniTrend({ values }: { values: number[] }) {
   return <DataQualityKpiSparklineChart ariaLabel="Sink 写入趋势" className="taf-data-quality-flink-mini-echart" tone="ok" values={values} />;
 }
 
-function FieldQualityContent({
-  dataQualityVisuals,
-  onOpenDetail,
-}: {
-  dataQualityVisuals?: DataQualityVisuals;
-  onOpenDetail: OpenFieldQualityDetail;
-}) {
+function FieldQualityContent({ dataQualityVisuals, onOpenDetail }: { dataQualityVisuals?: DataQualityVisuals; onOpenDetail: OpenFieldQualityDetail }) {
   return (
     <>
       <div className="taf-data-quality-field-upper">
@@ -1692,15 +1867,17 @@ function FieldQualityMatrix({ rows }: { rows?: DataQualityVisuals['fieldQualityR
       <div className="taf-data-quality-field-matrix-head">
         {columns.map((column) => <span key={column} title={column}>{column}</span>)}
       </div>
-      {matrixRows.map((row) => (
-        <div key={row[0]} className="taf-data-quality-field-matrix-row" title={row.join(' ')}>
-          <strong title={row[0]}>{row[0]}</strong>
-          {row.slice(1).map((cell, index) => (
-            <span key={`${row[0]}-${index}`} className={`is-${fieldQualityTone(cell)}`} title={`${columns[index + 1]} ${cell}`}>{cell}</span>
-          ))}
-        </div>
-      ))}
-      <footer>
+      <div className="taf-data-quality-field-matrix-scroll">
+        {matrixRows.map((row) => (
+          <div key={row[0]} className="taf-data-quality-field-matrix-row" title={row.join(' ')}>
+            <strong title={row[0]}>{row[0]}</strong>
+            {row.slice(1).map((cell, index) => (
+              <span key={`${row[0]}-${index}`} className={`is-${fieldQualityTone(cell)}`} title={`${columns[index + 1]} ${cell}`}>{cell}</span>
+            ))}
+          </div>
+        ))}
+      </div>
+      <footer className="taf-data-quality-table-legend">
         <span><i className="is-ok" />优秀 (&gt;=98%)</span>
         <span><i className="is-warn" />中等 (95%-98%)</span>
         <span><i className="is-risk" />较差 (&lt;95%)</span>
@@ -1718,47 +1895,49 @@ const fieldTrendSeries = [
   ['未知协议', 'unknownProtocol', '#2f80ed'],
 ] as const;
 
-function FieldAnomalyTrend({
-  summary,
-  trend,
-}: {
-  summary?: DataQualityVisuals['fieldTrendSummary'];
-  trend?: DataQualityVisuals['fieldTrend'];
-}) {
+function FieldAnomalyTrend({ summary, trend }: { summary?: DataQualityVisuals['fieldTrendSummary']; trend?: DataQualityVisuals['fieldTrend'] }) {
   const chart = trend ?? fieldTrendFallback;
   const summaryRows = summary?.length ? summary : fieldTrendSummaryFallback;
   return (
     <div className="taf-data-quality-field-trend-panel">
       <div className="taf-data-quality-field-trend-legend">
         {fieldTrendSeries.map(([label, key, color]) => (
-          <span key={key} style={{ color }} title={label}><i />{label}</span>
+          <span key={key} style={{ color }} title={label}>
+            <i />
+            {label}
+          </span>
         ))}
       </div>
       <DataQualityFieldTrendChart
         ariaLabel="字段异常趋势"
         threshold={2000}
         times={chart.times}
-        series={fieldTrendSeries.map(([name, key, color]) => ({ name, color, values: chart[key] }))}
+        series={fieldTrendSeries.map(([name, key, color]) => ({
+          name,
+          color,
+          values: chart[key],
+        }))}
       />
       <footer>
-        {chart.times.map((time) => <span key={time} title={time}>{time}</span>)}
+        {chart.times.map((time) => (
+          <span key={time} title={time}>
+            {time}
+          </span>
+        ))}
       </footer>
       <div className="taf-data-quality-field-trend-summary">
         {summaryRows.map(([label, value, tone]) => (
-          <span key={label} className={`is-${tone}`} title={`${label} ${value}`}><em>{label}</em><strong>{value}</strong></span>
+          <span key={label} className={`is-${tone}`} title={`${label} ${value}`}>
+            <em>{label}</em>
+            <strong>{value}</strong>
+          </span>
         ))}
       </div>
     </div>
   );
 }
 
-function CommunityIdCheck({
-  mismatches,
-  rows,
-}: {
-  mismatches?: DataQualityVisuals['communityMismatchRows'];
-  rows?: DataQualityVisuals['communityCheckRows'];
-}) {
+function CommunityIdCheck({ mismatches, rows }: { mismatches?: DataQualityVisuals['communityMismatchRows']; rows?: DataQualityVisuals['communityCheckRows'] }) {
   const checkRows = rows?.length ? rows : fieldCommunityCheckFallbackRows;
   const mismatchRows = mismatches?.length ? mismatches : fieldCommunityMismatchFallbackRows;
   return (
@@ -1770,188 +1949,216 @@ function CommunityIdCheck({
           ['不匹配数', '512', 'risk'],
           ['哈希碰撞告警', '3', 'risk'],
         ].map(([label, value, tone]) => (
-          <span key={label} className={`is-${tone}`} title={`${label} ${value}`}><em>{label}</em><strong>{value}</strong></span>
+          <span key={label} className={`is-${tone}`} title={`${label} ${value}`}>
+            <em>{label}</em>
+            <strong>{value}</strong>
+          </span>
         ))}
       </div>
       <div className="taf-data-quality-community-flow">
-        <span title="五元组 src_ip dst_ip src_port dst_port protocol">五元组<small>src_ip<br />dst_ip<br />src_port<br />dst_port<br />protocol</small></span>
+        <span title="五元组 src_ip dst_ip src_port dst_port protocol">
+          五元组
+          <small>
+            src_ip
+            <br />
+            dst_ip
+            <br />
+            src_port
+            <br />
+            dst_port
+            <br />
+            protocol
+          </small>
+        </span>
         <i />
-        <span title="社区 ID 计算 SHA-1">社区 ID 计算<small>社区哈希 (SHA-1)</small></span>
+        <span title="社区 ID 计算 SHA-1">
+          社区 ID 计算<small>社区哈希 (SHA-1)</small>
+        </span>
         <i />
         <span title="community_id">community_id</span>
       </div>
-      <div className="taf-data-quality-community-detail">
-        <div>{['校验明细', '总记录数', '匹配数', '不匹配数', '匹配率'].map((column) => <span key={column} title={column}>{column}</span>)}</div>
-        {checkRows.map((row) => (
-          <div key={row[0]} title={row.join(' ')}>
-            {row.map((cell, index) => <span key={`${row[0]}-${index}`} className={index === 3 ? 'is-risk' : ''} title={cell}>{cell}</span>)}
-          </div>
-        ))}
+      <div className="taf-data-quality-community-detail taf-data-quality-scroll-table">
+        <div>
+          {['校验明细', '总记录数', '匹配数', '不匹配数', '匹配率'].map((column) => (
+            <span key={column} title={column}>
+              {column}
+            </span>
+          ))}
+        </div>
+        <div className="taf-data-quality-scroll-body">
+          {checkRows.map((row) => (
+            <div key={row[0]} title={row.join(' ')}>
+              {row.map((cell, index) => (
+                <span key={`${row[0]}-${index}`} className={index === 3 ? 'is-risk' : ''} title={cell}>{cell}</span>
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
-      <div className="taf-data-quality-community-mismatch">
+      <div className="taf-data-quality-community-mismatch taf-data-quality-scroll-table">
         <h4>不匹配样例（Top 5）</h4>
-        <div>{['时间', 'session_id', 'src_ip:src_port', 'dst_ip:dst_port', 'protocol', '计算 cid', '原始 cid', '原因'].map((column) => <span key={column} title={column}>{column}</span>)}</div>
-        {mismatchRows.map((row) => (
-          <div key={`${row[0]}-${row[1]}`} title={row.join(' ')}>
-            {row.map((cell, index) => <span key={`${row[1]}-${index}`} className={index === 7 ? 'is-risk' : ''} title={cell}>{cell}</span>)}
-          </div>
-        ))}
+        <div>
+          {['时间', 'session_id', 'src_ip:src_port', 'dst_ip:dst_port', 'protocol', '计算 cid', '原始 cid', '原因'].map((column) => (
+            <span key={column} title={column}>
+              {column}
+            </span>
+          ))}
+        </div>
+        <div className="taf-data-quality-scroll-body">
+          {mismatchRows.map((row) => (
+            <div key={`${row[0]}-${row[1]}`} title={row.join(' ')}>
+              {row.map((cell, index) => (
+                <span key={`${row[1]}-${index}`} className={index === 7 ? 'is-risk' : ''} title={cell}>{cell}</span>
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
 
-function FieldAnomalySampleTable({
-  onOpenDetail,
-  rows,
-}: {
-  onOpenDetail: OpenFieldQualityDetail;
-  rows?: DataQualityVisuals['fieldAnomalyRows'];
-}) {
+function FieldAnomalySampleTable({ onOpenDetail, rows }: { onOpenDetail: OpenFieldQualityDetail; rows?: DataQualityVisuals['fieldAnomalyRows'] }) {
   const sampleRows = rows?.length ? rows : fieldAnomalyFallbackRows;
   const columns = ['时间', 'Topic', '字段', '异常类型', '原始值', '归一化值', '影响资产', '处置'];
-  const pageSize = 5;
-  const totalPages = Math.max(1, Math.ceil(sampleRows.length / pageSize));
-  const [page, setPage] = useState(1);
-  const currentPage = Math.min(page, totalPages);
-  const visibleRows = sampleRows.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const paging = useDataQualityPagination(sampleRows, 5, 'fieldAnomalyRows');
   return (
-    <div className="taf-data-quality-field-sample-table">
-      <div className="taf-data-quality-field-table-head">{columns.map((column) => <span key={column} title={column}>{column}</span>)}</div>
+    <div className="taf-data-quality-field-sample-table taf-data-quality-paged-table">
+      <div className="taf-data-quality-field-table-head">
+        {columns.map((column) => (
+          <span key={column} title={column}>
+            {column}
+          </span>
+        ))}
+      </div>
       <div className="taf-data-quality-field-table-rows" aria-label="字段异常样本">
-        {visibleRows.map((row) => (
+        {paging.visibleRows.map((row) => (
           <button
             key={`${row[0]}-${row[2]}-${row[4]}`}
             type="button"
             className="taf-data-quality-field-table-row"
             title={row.join(' ')}
-            onClick={() => onOpenDetail({
-              title: `字段异常详情：${row[2]}`,
-              description: `${row[1]} 在 ${row[0]} 发现 ${row[3]}；当前处置建议为 ${row[7]}。`,
-              columns,
-              rows: [row],
-              actionLabel: row[7] === '创建任务' ? '创建字段修复任务' : undefined,
-              actionSuccessMessage: row[7] === '创建任务' ? `已为 ${row[2]} 创建字段修复任务` : undefined,
-            })}
+            onClick={() =>
+              onOpenDetail({
+                title: `字段异常详情：${row[2]}`,
+                description: `${row[1]} 在 ${row[0]} 发现 ${row[3]}；当前处置建议为 ${row[7]}。`,
+                columns,
+                rows: [row],
+                actionLabel: row[7] === '创建任务' ? '创建字段修复任务' : undefined,
+                actionSuccessMessage: row[7] === '创建任务' ? `已为 ${row[2]} 创建字段修复任务` : undefined,
+              })
+            }
           >
-            {row.map((cell, index) => <span key={`${row[0]}-${index}`} className={index === 3 ? 'is-risk' : index === 7 ? 'is-link' : ''} title={cell}>{cell}</span>)}
+            {row.map((cell, index) => (
+              <span key={`${row[0]}-${index}`} className={index === 3 ? 'is-risk' : index === 7 ? 'is-link' : ''} title={cell}>
+                {cell}
+              </span>
+            ))}
           </button>
         ))}
       </div>
-      <FieldTablePagination currentPage={currentPage} label="异常样本" onChange={setPage} total={sampleRows.length} totalPages={totalPages} />
+      <DataQualityPagination label="异常样本" {...paging} />
     </div>
   );
 }
 
-function FieldLineageMapping({
-  onOpenDetail,
-  rows,
-}: {
-  onOpenDetail: OpenFieldQualityDetail;
-  rows?: DataQualityVisuals['fieldLineageRows'];
-}) {
+function FieldLineageMapping({ onOpenDetail, rows }: { onOpenDetail: OpenFieldQualityDetail; rows?: DataQualityVisuals['fieldLineageRows'] }) {
   const lineageRows = rows?.length ? rows : fieldLineageFallbackRows;
   const columns = ['数据源（Kafka Topic）', '处理链路（Flink）', '归一化映射', '数据落地（Sink）'];
+  const paging = useDataQualityPagination(lineageRows, 5, 'fieldLineageRows');
   return (
-    <div className="taf-data-quality-field-lineage">
+    <div className="taf-data-quality-field-lineage taf-data-quality-paged-table">
       <div className="taf-data-quality-field-lineage-head">
-        {columns.map((column) => <span key={column} title={column}>{column}</span>)}
+        {columns.map((column) => (
+          <span key={column} title={column}>
+            {column}
+          </span>
+        ))}
       </div>
-      {lineageRows.map(([source, flink, mapping, sink, tone]) => (
+      {paging.visibleRows.map(([source, flink, mapping, sink, tone]) => (
         <div key={source} className={`is-${tone}`} title={`${source} ${flink} ${mapping} ${sink}`}>
-          {[source, flink, mapping, sink].map((cell) => <span key={cell} title={cell}>{cell}</span>)}
+          {[source, flink, mapping, sink].map((cell) => (
+            <span key={cell} title={cell}>
+              {cell}
+            </span>
+          ))}
         </div>
       ))}
-      <footer>
-        <span><i className="is-ok" />正常</span>
-        <span><i className="is-warn" />警告</span>
-        <span><i className="is-risk" />异常</span>
+      <footer className="taf-data-quality-table-legend">
+        <span>
+          <i className="is-ok" />
+          正常
+        </span>
+        <span>
+          <i className="is-warn" />
+          警告
+        </span>
+        <span>
+          <i className="is-risk" />
+          异常
+        </span>
         <button
           type="button"
-          onClick={() => onOpenDetail({
-            title: '字段映射修复任务',
-            description: '已识别到异常映射链路；创建后将进入字段质量修复队列并保留审计信息。',
-            columns: ['数据源', '处理链路', '建议动作'],
-            rows: [['traffic_session_raw', '会话构建', '创建字段映射修复任务']],
-            actionLabel: '创建字段修复任务',
-            actionSuccessMessage: '字段映射修复任务已创建',
-          })}
-        >当前链路存在异常映射，建议创建修复任务</button>
+          onClick={() =>
+            onOpenDetail({
+              title: '字段映射修复任务',
+              description: '已识别到异常映射链路；创建后将进入字段质量修复队列并保留审计信息。',
+              columns: ['数据源', '处理链路', '建议动作'],
+              rows: [['traffic_session_raw', '会话构建', '创建字段映射修复任务']],
+              actionLabel: '创建字段修复任务',
+              actionSuccessMessage: '字段映射修复任务已创建',
+            })
+          }
+        >
+          当前链路存在异常映射，建议创建修复任务
+        </button>
       </footer>
+      <DataQualityPagination label="字段血缘与映射" {...paging} />
     </div>
   );
 }
 
-function FieldRepairTasks({
-  onOpenDetail,
-  rows,
-}: {
-  onOpenDetail: OpenFieldQualityDetail;
-  rows?: DataQualityVisuals['fieldRepairRows'];
-}) {
+function FieldRepairTasks({ onOpenDetail, rows }: { onOpenDetail: OpenFieldQualityDetail; rows?: DataQualityVisuals['fieldRepairRows'] }) {
   const repairRows = rows?.length ? rows : fieldRepairFallbackRows;
   const columns = ['任务名称', '异常字段', '建议映射 / 修复规则', '负责人', '状态', 'SLA', '验证结果', '操作'];
-  const pageSize = 5;
-  const totalPages = Math.max(1, Math.ceil(repairRows.length / pageSize));
-  const [page, setPage] = useState(1);
-  const currentPage = Math.min(page, totalPages);
-  const visibleRows = repairRows.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const paging = useDataQualityPagination(repairRows, 5, 'fieldRepairRows');
   return (
-    <div className="taf-data-quality-field-repair-table">
-      <div className="taf-data-quality-field-table-head">{columns.map((column) => <span key={column} title={column}>{column}</span>)}</div>
+    <div className="taf-data-quality-field-repair-table taf-data-quality-paged-table">
+      <div className="taf-data-quality-field-table-head">
+        {columns.map((column) => (
+          <span key={column} title={column}>
+            {column}
+          </span>
+        ))}
+      </div>
       <div className="taf-data-quality-field-table-rows" aria-label="字段修复任务">
-        {visibleRows.map((row) => (
+        {paging.visibleRows.map((row) => (
           <button
             key={`${row[0]}-${row[1]}`}
             type="button"
             className="taf-data-quality-field-table-row"
             title={row.join(' ')}
-            onClick={() => onOpenDetail({
-              title: `字段修复任务：${row[0]}`,
-              description: `${row[1]} 的修复规则由 ${row[3]} 负责，当前状态为 ${row[4]}。`,
-              columns,
-              rows: [row],
-              actionLabel: row[7] === '创建' ? '创建修复任务' : undefined,
-              actionSuccessMessage: row[7] === '创建' ? `${row[0]} 已创建并进入待处理队列` : undefined,
-            })}
+            onClick={() =>
+              onOpenDetail({
+                title: `字段修复任务：${row[0]}`,
+                description: `${row[1]} 的修复规则由 ${row[3]} 负责，当前状态为 ${row[4]}。`,
+                columns,
+                rows: [row],
+                actionLabel: row[7] === '创建' ? '创建修复任务' : undefined,
+                actionSuccessMessage: row[7] === '创建' ? `${row[0]} 已创建并进入待处理队列` : undefined,
+              })
+            }
           >
-            {row.map((cell, index) => <span key={`${row[0]}-${index}`} className={index === 4 ? fieldTaskStatusClass(cell) : index === 6 && cell === '通过' ? 'is-ok' : index === 7 ? 'is-link' : ''} title={cell}>{cell}</span>)}
+            {row.map((cell, index) => (
+              <span key={`${row[0]}-${index}`} className={index === 4 ? fieldTaskStatusClass(cell) : index === 6 && cell === '通过' ? 'is-ok' : index === 7 ? 'is-link' : ''} title={cell}>
+                {cell}
+              </span>
+            ))}
           </button>
         ))}
       </div>
-      <FieldTablePagination currentPage={currentPage} label="修复任务" onChange={setPage} total={repairRows.length} totalPages={totalPages} />
+      <DataQualityPagination label="修复任务" {...paging} />
     </div>
-  );
-}
-
-function FieldTablePagination({
-  currentPage,
-  label,
-  onChange,
-  total,
-  totalPages,
-}: {
-  currentPage: number;
-  label: string;
-  onChange: (page: number) => void;
-  total: number;
-  totalPages: number;
-}) {
-  return (
-    <footer className="taf-data-quality-field-pagination" aria-label={`${label}分页`}>
-      <span>共 {total} 条</span>
-      <div>
-        <Tooltip title="上一页">
-          <button type="button" aria-label={`${label}上一页`} disabled={currentPage === 1} onClick={() => onChange(currentPage - 1)}><LeftOutlined /></button>
-        </Tooltip>
-        {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
-          <button key={page} type="button" aria-current={page === currentPage ? 'page' : undefined} onClick={() => onChange(page)}>{page}</button>
-        ))}
-        <Tooltip title="下一页">
-          <button type="button" aria-label={`${label}下一页`} disabled={currentPage === totalPages} onClick={() => onChange(currentPage + 1)}><RightOutlined /></button>
-        </Tooltip>
-      </div>
-    </footer>
   );
 }
 
@@ -1977,12 +2184,7 @@ function StorageQualityContent({ dataQualityVisuals }: { dataQualityVisuals?: Da
           <StoragePipelineFlow rows={dataQualityVisuals?.storagePipelineRows} />
         </WorkPanel>
         <WorkPanel title="副本、分片与对象健康">
-          <StorageReplicaHealth
-            indexHealth={dataQualityVisuals?.storageIndexHealth}
-            objectRows={dataQualityVisuals?.storageObjectRows}
-            partitionRows={dataQualityVisuals?.storagePartitionRows}
-            replicaRows={dataQualityVisuals?.storageReplicaRows}
-          />
+          <StorageReplicaHealth indexHealth={dataQualityVisuals?.storageIndexHealth} objectRows={dataQualityVisuals?.storageObjectRows} partitionRows={dataQualityVisuals?.storagePartitionRows} replicaRows={dataQualityVisuals?.storageReplicaRows} />
         </WorkPanel>
       </div>
     </>
@@ -2000,19 +2202,27 @@ function storageStatusClass(value: string | undefined) {
 function StorageComponentHealthTable({ rows }: { rows?: DataQualityVisuals['storageComponentRows'] }) {
   const tableRows = rows?.length ? rows : storageComponentFallbackRows;
   const columns = ['组件', '状态', '写入速率', '成功率', 'P95 延迟', '积压/队列', '容量', '副本/分片', '操作'];
+  const paging = useDataQualityPagination(tableRows, 5, 'storageComponentRows');
   return (
-    <div className="taf-data-quality-storage-component-table">
+    <div className="taf-data-quality-storage-component-table taf-data-quality-paged-table">
       <div className="taf-data-quality-storage-component-head">
-        {columns.map((column) => <span key={column} title={column}>{column}</span>)}
+        {columns.map((column) => (
+          <span key={column} title={column}>
+            {column}
+          </span>
+        ))}
       </div>
-      {tableRows.map((row) => (
+      {paging.visibleRows.map((row) => (
         <button key={row[0]} type="button" className={`is-${storageStatusClass(row[1])}`} title={row.join(' ')}>
           <strong title={row[0]}>{row[0]}</strong>
           {row.slice(1).map((cell, index) => (
-            <span key={`${row[0]}-${index}`} className={index === 0 ? `is-${storageStatusClass(cell)}` : index === 7 ? 'is-link' : ''} title={cell}>{cell}</span>
+            <span key={`${row[0]}-${index}`} className={index === 0 ? `is-${storageStatusClass(cell)}` : index === 7 ? 'is-link' : ''} title={cell}>
+              {cell}
+            </span>
           ))}
         </button>
       ))}
+      <DataQualityPagination label="存储组件健康" {...paging} />
     </div>
   );
 }
@@ -2027,11 +2237,13 @@ const storageTrendSeries = [
 ] as const;
 
 function buildStorageLinePoints(values: number[], maxValue: number, width = 420, height = 142, left = 34, top = 12) {
-  return values.map((value, index) => {
-    const x = left + (index / Math.max(values.length - 1, 1)) * width;
-    const y = top + height - (value / Math.max(maxValue, 1)) * height;
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  }).join(' ');
+  return values
+    .map((value, index) => {
+      const x = left + (index / Math.max(values.length - 1, 1)) * width;
+      const y = top + height - (value / Math.max(maxValue, 1)) * height;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(' ');
 }
 
 function StorageWriteTrend({ trend }: { trend?: DataQualityVisuals['storageTrend'] }) {
@@ -2040,14 +2252,22 @@ function StorageWriteTrend({ trend }: { trend?: DataQualityVisuals['storageTrend
     <div className="taf-data-quality-storage-trend">
       <div className="taf-data-quality-storage-trend-legend">
         {storageTrendSeries.map(([label, key, color]) => (
-          <span key={key} style={{ color }} title={label}><i />{label}</span>
+          <span key={key} style={{ color }} title={label}>
+            <i />
+            {label}
+          </span>
         ))}
       </div>
       <DataQualityTrendChart
         ariaLabel="写入速率与延迟趋势"
         className="taf-data-quality-storage-echart"
         categories={chart.times}
-        series={storageTrendSeries.map(([name, key, color]) => ({ name, color, values: chart[key], dashed: key === 'latencySla' }))}
+        series={storageTrendSeries.map(([name, key, color]) => ({
+          name,
+          color,
+          values: chart[key],
+          dashed: key === 'latencySla',
+        }))}
       />
     </div>
   );
@@ -2080,14 +2300,23 @@ function StorageCapacityTrend({ trend }: { trend?: DataQualityVisuals['storageCa
     <div className="taf-data-quality-storage-capacity">
       <div className="taf-data-quality-storage-trend-legend">
         {storageCapacitySeries.map(([label, key, color]) => (
-          <span key={key} style={{ color }} title={label}><i />{label}</span>
+          <span key={key} style={{ color }} title={label}>
+            <i />
+            {label}
+          </span>
         ))}
       </div>
       <DataQualityTrendChart
         ariaLabel="容量与水位趋势"
         className="taf-data-quality-storage-echart"
         categories={chart.days}
-        series={storageCapacitySeries.map(([name, key, color]) => ({ name, color, values: chart[key], dashed: key === 'threshold', area: key !== 'threshold' }))}
+        series={storageCapacitySeries.map(([name, key, color]) => ({
+          name,
+          color,
+          values: chart[key],
+          dashed: key === 'threshold',
+          area: key !== 'threshold',
+        }))}
         valueFormatter={(value) => `${value}%`}
       />
     </div>
@@ -2097,16 +2326,26 @@ function StorageCapacityTrend({ trend }: { trend?: DataQualityVisuals['storageCa
 function StorageFailureTable({ rows }: { rows?: DataQualityVisuals['storageFailureRows'] }) {
   const failureRows = rows?.length ? rows : storageFailureFallbackRows;
   const columns = ['时间', '组件', '目标表/索引/Bucket', '失败原因', '影响记录', '重试', '状态', '处置'];
+  const paging = useDataQualityPagination(failureRows, 5, 'storageFailureRows');
   return (
-    <div className="taf-data-quality-storage-failure-table">
-      <div>{columns.map((column) => <span key={column} title={column}>{column}</span>)}</div>
-      {failureRows.map((row) => (
+    <div className="taf-data-quality-storage-failure-table taf-data-quality-paged-table">
+      <div>
+        {columns.map((column) => (
+          <span key={column} title={column}>
+            {column}
+          </span>
+        ))}
+      </div>
+      {paging.visibleRows.map((row) => (
         <button key={`${row[0]}-${row[1]}-${row[2]}`} type="button" className={`is-${storageStatusClass(row[6])}`} title={row.join(' ')}>
           {row.map((cell, index) => (
-            <span key={`${row[0]}-${index}`} className={index === 6 ? `is-${storageStatusClass(cell)}` : index === 7 ? 'is-link' : ''} title={cell}>{cell}</span>
+            <span key={`${row[0]}-${index}`} className={index === 6 ? `is-${storageStatusClass(cell)}` : index === 7 ? 'is-link' : ''} title={cell}>
+              {cell}
+            </span>
           ))}
         </button>
       ))}
+      <DataQualityPagination label="失败写入与原因" {...paging} />
     </div>
   );
 }
@@ -2151,25 +2390,18 @@ function StoragePipelineNode({ detail, label, status }: { detail: string; label:
   );
 }
 
-function StorageReplicaHealth({
-  indexHealth,
-  objectRows,
-  partitionRows,
-  replicaRows,
-}: {
-  indexHealth?: DataQualityVisuals['storageIndexHealth'];
-  objectRows?: DataQualityVisuals['storageObjectRows'];
-  partitionRows?: DataQualityVisuals['storagePartitionRows'];
-  replicaRows?: DataQualityVisuals['storageReplicaRows'];
-}) {
+function StorageReplicaHealth({ indexHealth, objectRows, partitionRows, replicaRows }: { indexHealth?: DataQualityVisuals['storageIndexHealth']; objectRows?: DataQualityVisuals['storageObjectRows']; partitionRows?: DataQualityVisuals['storagePartitionRows']; replicaRows?: DataQualityVisuals['storageReplicaRows'] }) {
   const replicas = replicaRows?.length ? replicaRows : storageReplicaFallbackRows;
   const indexes = indexHealth?.length ? indexHealth : storageIndexHealthFallback;
   const partitions = partitionRows?.length ? partitionRows : storagePartitionFallbackRows;
   const objects = objectRows?.length ? objectRows : storageObjectFallbackRows;
+  const replicaPaging = useDataQualityPagination(replicas, 4, 'storageReplicaRows');
+  const partitionPaging = useDataQualityPagination(partitions, 4, 'storagePartitionRows');
+  const objectPaging = useDataQualityPagination(objects, 4, 'storageObjectRows');
   return (
     <div className="taf-data-quality-storage-health">
-      <div className="taf-data-quality-storage-replica-list">
-        {replicas.map((row) => (
+      <div className="taf-data-quality-storage-replica-list taf-data-quality-paged-table">
+        {replicaPaging.visibleRows.map((row) => (
           <button key={row[0]} type="button" className={`is-${storageStatusClass(row[4])}`} title={row.join(' ')}>
             <strong>{row[0]}</strong>
             <span>{row[1]}</span>
@@ -2177,6 +2409,7 @@ function StorageReplicaHealth({
             <em>{row[3]}</em>
           </button>
         ))}
+        <DataQualityPagination label="副本健康" {...replicaPaging} />
       </div>
       <div className="taf-data-quality-storage-donut-block">
         <StorageIndexDonut rows={indexes} />
@@ -2191,13 +2424,26 @@ function StorageReplicaHealth({
         </div>
       </div>
       <div className="taf-data-quality-storage-health-tables">
-        <section>
+        <section className="taf-data-quality-paged-table">
           <h4>分区健康</h4>
-          {partitions.map((row) => <p key={row[1]} title={row.join(' ')}>{row.map((cell) => <span key={cell}>{cell}</span>)}</p>)}
+          {partitionPaging.visibleRows.map((row) => (
+            <p key={row[1]} title={row.join(' ')}>
+              {row.map((cell) => (
+                <span key={cell}>{cell}</span>
+              ))}
+            </p>
+          ))}
+          <DataQualityPagination label="分区健康" {...partitionPaging} />
         </section>
-        <section>
+        <section className="taf-data-quality-paged-table">
           <h4>对象生命周期</h4>
-          {objects.map(([label, value]) => <p key={label} title={`${label} ${value}`}><span>{label}</span><b>{value}</b></p>)}
+          {objectPaging.visibleRows.map(([label, value]) => (
+            <p key={label} title={`${label} ${value}`}>
+              <span>{label}</span>
+              <b>{value}</b>
+            </p>
+          ))}
+          <DataQualityPagination label="对象生命周期" {...objectPaging} />
         </section>
       </div>
     </div>
@@ -2205,52 +2451,56 @@ function StorageReplicaHealth({
 }
 
 function StorageIndexDonut({ rows }: { rows: DataQualityVisuals['storageIndexHealth'] }) {
-  const colorMap = { ok: '#52c41a', info: '#1890ff', warn: '#faad14', risk: '#ff4d4f' };
+  const colorMap = {
+    ok: '#52c41a',
+    info: '#1890ff',
+    warn: '#faad14',
+    risk: '#ff4d4f',
+  };
   return (
     <DataQualityDonutChart
       ariaLabel="OpenSearch 索引健康"
       className="taf-data-quality-storage-donut"
-      rows={rows.map((item) => ({ label: item.label, value: item.value, color: colorMap[item.status] }))}
+      rows={rows.map((item) => ({
+        label: item.label,
+        value: item.value,
+        color: colorMap[item.status],
+      }))}
     />
   );
 }
 
 function StorageQualityOverview({ rows }: { rows?: DataQualityVisuals['storageComponentRows'] }) {
   const overviewRows = (rows?.length ? rows : storageComponentFallbackRows).map((row) => [row[0], row[1], row[2], row[3], row[4], row[5]]);
-  return (
-    <DenseRows columns={['组件', '状态', '写入速率', '成功率', 'P95', '积压']} rows={overviewRows} />
-  );
+  return <DenseRows columns={['组件', '状态', '写入速率', '成功率', 'P95', '积压']} pageSize={3} rows={overviewRows} />;
 }
 
-function ReplayReconcileContent({
-  dataQualityVisuals,
-  onOpenReplay,
-}: {
-  dataQualityVisuals?: DataQualityVisuals;
-  onOpenReplay: () => void;
-}) {
+function ReplayReconcileContent({ dataQualityVisuals, onOpenReplay }: { dataQualityVisuals?: DataQualityVisuals; onOpenReplay: () => void }) {
   return (
     <>
       <div className="taf-data-quality-replay-upper">
         <WorkPanel
           title="DLQ 重放任务表"
-          extra={<Button size="small" icon={<SyncOutlined />} onClick={onOpenReplay}>重放</Button>}
+          extra={
+            <Button size="small" icon={<SyncOutlined />} onClick={onOpenReplay}>
+              重放
+            </Button>
+          }
         >
           <ReplayTaskTable rows={dataQualityVisuals?.replayTaskRows} />
         </WorkPanel>
         <WorkPanel
           title="时间窗对账报告（近 24 小时）"
-          extra={(
+          extra={
             <Space className="taf-data-quality-replay-panel-tools" size={4}>
               <Button size="small">按小时</Button>
-              <Button size="small" icon={<DownloadOutlined />}>导出图表</Button>
+              <Button size="small" icon={<DownloadOutlined />}>
+                导出图表
+              </Button>
             </Space>
-          )}
+          }
         >
-          <ReplayReconcileTrend
-            summary={dataQualityVisuals?.replayReconcileSummary}
-            trend={dataQualityVisuals?.replayReconcileTrend}
-          />
+          <ReplayReconcileTrend summary={dataQualityVisuals?.replayReconcileSummary} trend={dataQualityVisuals?.replayReconcileTrend} />
         </WorkPanel>
         <WorkPanel title="幂等检查与重复检测">
           <ReplayIdempotencyTable rows={dataQualityVisuals?.replayIdempotencyRows} />
@@ -2283,10 +2533,17 @@ function replayStatusClass(value: string | undefined) {
 
 function ReplayTaskTable({ rows }: { rows?: DataQualityVisuals['replayTaskRows'] }) {
   const taskRows = rows?.length ? rows : replayTaskFallbackRows;
+  const paging = useDataQualityPagination(taskRows, 5, 'replayTaskRows');
   return (
-    <div className="taf-data-quality-replay-task-table">
-      <div>{replayTaskColumns.map((column) => <span key={column} title={column}>{column}</span>)}</div>
-      {taskRows.map((row) => (
+    <div className="taf-data-quality-replay-task-table taf-data-quality-paged-table">
+      <div>
+        {replayTaskColumns.map((column) => (
+          <span key={column} title={column}>
+            {column}
+          </span>
+        ))}
+      </div>
+      {paging.visibleRows.map((row) => (
         <button key={`${row[0]}-${row[1]}`} type="button" className={`is-${replayStatusClass(row[6])}`} title={row.join(' ')}>
           {row.map((cell, index) => (
             <span key={`${row[0]}-${index}`} className={index === 6 ? `is-${replayStatusClass(cell)}` : index === 7 ? 'is-link' : ''} title={cell}>
@@ -2295,17 +2552,12 @@ function ReplayTaskTable({ rows }: { rows?: DataQualityVisuals['replayTaskRows']
           ))}
         </button>
       ))}
+      <DataQualityPagination label="DLQ 重放任务" {...paging} />
     </div>
   );
 }
 
-function ReplayReconcileTrend({
-  summary,
-  trend,
-}: {
-  summary?: DataQualityVisuals['replayReconcileSummary'];
-  trend?: DataQualityVisuals['replayReconcileTrend'];
-}) {
+function ReplayReconcileTrend({ summary, trend }: { summary?: DataQualityVisuals['replayReconcileSummary']; trend?: DataQualityVisuals['replayReconcileTrend'] }) {
   const chart = trend ?? replayReconcileTrendFallback;
   const summaryRows = summary?.length ? summary : replayReconcileSummaryFallback;
   return (
@@ -2317,7 +2569,12 @@ function ReplayReconcileTrend({
           ['差异数量', 'diff'],
           ['差异率（%）', 'rate'],
           ['阈值 1.00%', 'threshold'],
-        ].map(([label, tone]) => <span key={label} className={`is-${tone}`} title={label}><i />{label}</span>)}
+        ].map(([label, tone]) => (
+          <span key={label} className={`is-${tone}`} title={label}>
+            <i />
+            {label}
+          </span>
+        ))}
       </div>
       <DataQualityTrendChart
         ariaLabel="时间窗对账报告趋势"
@@ -2326,15 +2583,28 @@ function ReplayReconcileTrend({
         series={[
           { name: '源端总数', color: '#18a8ff', values: chart.sourceTotal },
           { name: '落库总数', color: '#4ade80', values: chart.sinkTotal },
-          { name: '差异数量', color: '#ffb020', type: 'bar', values: chart.diffCount },
+          {
+            name: '差异数量',
+            color: '#ffb020',
+            type: 'bar',
+            values: chart.diffCount,
+          },
           { name: '差异率', color: '#ff4d4f', values: chart.diffRate },
-          { name: '阈值', color: '#a78bfa', dashed: true, values: chart.diffRateThreshold },
+          {
+            name: '阈值',
+            color: '#a78bfa',
+            dashed: true,
+            values: chart.diffRateThreshold,
+          },
         ]}
       />
       <div className="taf-data-quality-replay-summary">
         <strong title="汇总（近24小时）">汇总（近24小时）</strong>
         {summaryRows.map(([label, value, tone]) => (
-          <span key={label} className={`is-${tone}`} title={`${label} ${value}`}>{label}<b>{value}</b></span>
+          <span key={label} className={`is-${tone}`} title={`${label} ${value}`}>
+            {label}
+            <b>{value}</b>
+          </span>
         ))}
       </div>
     </div>
@@ -2343,41 +2613,57 @@ function ReplayReconcileTrend({
 
 function ReplayIdempotencyTable({ rows }: { rows?: DataQualityVisuals['replayIdempotencyRows'] }) {
   const checkRows = rows?.length ? rows : replayIdempotencyFallbackRows;
+  const paging = useDataQualityPagination(checkRows, 5, 'replayIdempotencyRows');
   return (
-    <div className="taf-data-quality-replay-idempotency">
-      <div>{['检查项', '规则', '状态', '命中', '操作'].map((column) => <span key={column} title={column}>{column}</span>)}</div>
-      {checkRows.map((row) => (
+    <div className="taf-data-quality-replay-idempotency taf-data-quality-paged-table">
+      <div>
+        {['检查项', '规则', '状态', '命中', '操作'].map((column) => (
+          <span key={column} title={column}>
+            {column}
+          </span>
+        ))}
+      </div>
+      {paging.visibleRows.map((row) => (
         <button key={`${row[0]}-${row[1]}`} type="button" className={`is-${replayStatusClass(row[2])}`} title={row.join(' ')}>
-          {row.map((cell, index) => <span key={`${row[0]}-${index}`} className={index === 2 ? `is-${replayStatusClass(cell)}` : index === 4 ? 'is-link' : ''} title={cell}>{cell}</span>)}
+          {row.map((cell, index) => (
+            <span key={`${row[0]}-${index}`} className={index === 2 ? `is-${replayStatusClass(cell)}` : index === 4 ? 'is-link' : ''} title={cell}>
+              {cell}
+            </span>
+          ))}
         </button>
       ))}
-      <footer><button type="button" title="查看全部检查项">查看全部检查项 <ArrowUpOutlined /></button></footer>
+      <DataQualityPagination label="幂等检查" {...paging} />
     </div>
   );
 }
 
 function ReplayDifferenceTable({ rows }: { rows?: DataQualityVisuals['replayDifferenceRows'] }) {
   const sampleRows = rows?.length ? rows : replayDifferenceFallbackRows;
+  const paging = useDataQualityPagination(sampleRows, 5, 'replayDifferenceRows');
   return (
-    <div className="taf-data-quality-replay-difference">
-      <div>{['时间窗', 'Topic', '差异类型', 'Trace ID', '源端值', '落库值', '原因', '操作'].map((column) => <span key={column} title={column}>{column}</span>)}</div>
-      {sampleRows.map((row) => (
+    <div className="taf-data-quality-replay-difference taf-data-quality-paged-table">
+      <div>
+        {['时间窗', 'Topic', '差异类型', 'Trace ID', '源端值', '落库值', '原因', '操作'].map((column) => (
+          <span key={column} title={column}>
+            {column}
+          </span>
+        ))}
+      </div>
+      {paging.visibleRows.map((row) => (
         <button key={`${row[0]}-${row[1]}-${row[3]}`} type="button" title={row.join(' ')}>
-          {row.map((cell, index) => <span key={`${row[3]}-${index}`} className={index === 7 ? 'is-link' : index === 2 && (cell.includes('duplicate') || cell.includes('timeout')) ? 'is-warn' : ''} title={cell}>{cell}</span>)}
+          {row.map((cell, index) => (
+            <span key={`${row[3]}-${index}`} className={index === 7 ? 'is-link' : index === 2 && (cell.includes('duplicate') || cell.includes('timeout')) ? 'is-warn' : ''} title={cell}>
+              {cell}
+            </span>
+          ))}
         </button>
       ))}
-      <footer><button type="button" title="查看更多差异样本">查看更多差异样本 <ArrowUpOutlined /></button></footer>
+      <DataQualityPagination label="差异样本" {...paging} />
     </div>
   );
 }
 
-function ReplayFlowStatus({
-  edges,
-  nodes,
-}: {
-  edges?: DataQualityVisuals['replayFlowEdges'];
-  nodes?: DataQualityVisuals['replayFlowNodes'];
-}) {
+function ReplayFlowStatus({ edges, nodes }: { edges?: DataQualityVisuals['replayFlowEdges']; nodes?: DataQualityVisuals['replayFlowNodes'] }) {
   const flowNodes = nodes?.length ? nodes : replayFlowFallbackNodes;
   const flowEdges = edges?.length ? edges : replayFlowFallbackEdges;
   const topNodes = flowNodes.slice(0, 4);
@@ -2385,10 +2671,14 @@ function ReplayFlowStatus({
   return (
     <div className="taf-data-quality-replay-flow" title="重放链路状态">
       <div className="taf-data-quality-replay-flow-chain">
-        {topNodes.map((node, index) => <ReplayFlowNode key={node.id} node={node} step={index} />)}
+        {topNodes.map((node, index) => (
+          <ReplayFlowNode key={node.id} node={node} step={index} />
+        ))}
       </div>
       <div className="taf-data-quality-replay-flow-bottom">
-        {bottomNodes.map((node, index) => <ReplayFlowNode key={node.id} node={node} step={index + topNodes.length} compact />)}
+        {bottomNodes.map((node, index) => (
+          <ReplayFlowNode key={node.id} node={node} step={index + topNodes.length} compact />
+        ))}
       </div>
       <footer>
         {flowEdges.map((edge) => (
@@ -2397,43 +2687,53 @@ function ReplayFlowStatus({
             {edge.label}
           </span>
         ))}
-        <button type="button" title="查看链路详情">查看链路详情 <ArrowUpOutlined /></button>
+        <button type="button" title="查看链路详情">
+          查看链路详情 <ArrowUpOutlined />
+        </button>
       </footer>
     </div>
   );
 }
 
-function ReplayFlowNode({
-  compact = false,
-  node,
-  step,
-}: {
-  compact?: boolean;
-  node: DataQualityVisuals['replayFlowNodes'][number];
-  step: number;
-}) {
-  const details = node.detail.split('/').map((item) => item.trim()).filter(Boolean).slice(0, compact ? 2 : 3);
+function ReplayFlowNode({ compact = false, node, step }: { compact?: boolean; node: DataQualityVisuals['replayFlowNodes'][number]; step: number }) {
+  const details = node.detail
+    .split('/')
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, compact ? 2 : 3);
   return (
     <section className={`taf-data-quality-replay-flow-node is-${node.status}${compact ? ' is-compact' : ''}`} title={`${node.label} ${node.detail}`} style={{ '--replay-step': step } as CSSProperties}>
       <strong title={node.label}>{node.label}</strong>
-      {details.map((detail) => <span key={detail} title={detail}>{detail}</span>)}
+      {details.map((detail) => (
+        <span key={detail} title={detail}>
+          {detail}
+        </span>
+      ))}
     </section>
   );
 }
 
 function ReplayEvidenceExport({ rows }: { rows?: DataQualityVisuals['replayEvidenceRows'] }) {
   const evidenceRows = rows?.length ? rows : replayEvidenceFallbackRows;
+  const paging = useDataQualityPagination(evidenceRows, 4, 'replayEvidenceRows');
   return (
-    <div className="taf-data-quality-replay-evidence">
-      {evidenceRows.map((row) => (
+    <div className="taf-data-quality-replay-evidence taf-data-quality-paged-table">
+      {paging.visibleRows.map((row) => (
         <button key={row[0]} type="button" className={`is-${replayStatusClass(row[3])}`} title={row.join(' ')}>
           <CheckCircleOutlined />
           <strong title={row[0]}>{row[0]}</strong>
-          <span title={`${row[1]} ${row[2]}`}>{row[1]} · {row[2]}</span>
+          <span title={`${row[1]} ${row[2]}`}>
+            {row[1]} · {row[2]}
+          </span>
           <em title={row[4]}>{row[4]}</em>
         </button>
       ))}
-      <footer><button type="button" title="查看验收历史">查看验收历史 <ArrowUpOutlined /></button></footer>
+      <footer>
+        <button type="button" title="查看验收历史">
+          查看验收历史 <ArrowUpOutlined />
+        </button>
+      </footer>
+      <DataQualityPagination label="证据导出" {...paging} />
     </div>
   );
 }
@@ -2468,18 +2768,14 @@ function ReplayRailAlerts({ rows }: { rows?: DataQualityVisuals['replayRailAlert
           <b title={value}>{value}</b>
         </button>
       ))}
-      <a href="#replay-all-alerts" title="查看全部异常">查看全部异常 <ArrowUpOutlined /></a>
+      <a href="#replay-all-alerts" title="查看全部异常">
+        查看全部异常 <ArrowUpOutlined />
+      </a>
     </div>
   );
 }
 
-function ReplayRailLinks({
-  icon,
-  rows,
-}: {
-  icon: 'download' | 'search' | 'sync';
-  rows?: string[];
-}) {
+function ReplayRailLinks({ icon, rows }: { icon: 'download' | 'search' | 'sync'; rows?: string[] }) {
   const fallbackRows = icon === 'download' ? replayRailEvidenceFallbackRows : icon === 'sync' ? replayRailRepairFallbackRows : replayRailLocateFallbackRows;
   const items = rows?.length ? rows : fallbackRows;
   const iconNode = icon === 'download' ? <DownloadOutlined /> : icon === 'sync' ? <SyncOutlined /> : <SearchOutlined />;
@@ -2496,60 +2792,62 @@ function ReplayRailLinks({
   );
 }
 
-function ReportContent({ evidence }: { evidence: PageSnapshot['evidence'] }) {
+function ReportContent({ error, isLoading, onDownload, report }: { error: Error | null; isLoading: boolean; onDownload: (format: 'pdf' | 'json' | 'csv') => Promise<void>; report?: DataQualityDailyReport }) {
+  if (isLoading) {
+    return <Alert type="info" showIcon message="正在通过 API 动态生成数据质量日报" />;
+  }
+  if (error || !report) {
+    return <Alert type="error" showIcon message="数据质量日报生成失败" description={error?.message ?? '日报 API 未返回数据'} />;
+  }
   return (
     <div className="taf-data-quality-report-workspace">
       <WorkPanel title="质量报告预览" className="taf-data-quality-report-preview-panel">
-        <QualityReportPreview />
+        <QualityReportPreview onDownload={onDownload} report={report} />
       </WorkPanel>
       <WorkPanel title="报告章节" className="taf-data-quality-report-chapters">
-        <ReportChapters />
+        <ReportChapters report={report} />
       </WorkPanel>
       <WorkPanel title="异常归因摘要（近 24 小时）" className="taf-data-quality-report-anomaly-panel">
-        <DenseRows
+        <ReportPlainTable
           columns={['异常类型', '根因分析', '负责人', '影响范围', '修复状态']}
-          rows={reportAnomalyRows}
+          rows={report.anomalies.map((item) => [item.type, item.root_cause, item.owner, item.scope, item.status])}
         />
-        <div className="taf-data-quality-report-more">查看全部异常归因 <ArrowUpOutlined /></div>
       </WorkPanel>
       <WorkPanel title="导出记录" className="taf-data-quality-report-export-panel">
-        <DenseRows
-          columns={['导出时间', '来源', '申请人', '审批状态', '接收团队', '操作']}
-          rows={reportExportRows}
-        />
-        <div className="taf-data-quality-report-more">查看全部导出记录 <ArrowUpOutlined /></div>
+        <ReportExportTable onDownload={onDownload} report={report} />
       </WorkPanel>
       <WorkPanel title="验收报告与审批" className="taf-data-quality-report-approval-panel">
-        <ReportApproval evidence={evidence} />
+        <ReportApproval report={report} />
       </WorkPanel>
     </div>
   );
 }
 
-function QualityReportPreview() {
+function QualityReportPreview({ onDownload, report }: { onDownload: (format: 'pdf' | 'json' | 'csv') => Promise<void>; report: DataQualityDailyReport }) {
+  const trendPoints = (key: 'completeness' | 'timeliness' | 'consistency' | 'availability') => report.trend
+    .map((item, index) => `${(index / Math.max(report.trend.length - 1, 1)) * 340},${128 - Math.max(0, Math.min(100, item[key])) * 1.05}`)
+    .join(' ');
+  const anomalyTotal = report.anomalies.length;
   return (
     <div className="taf-data-quality-report-preview">
       <article className="taf-data-quality-report-sheet">
         <header>
           <SafetyCertificateOutlined />
           <div>
-            <h2 title="数据质量日报">数据质量日报</h2>
-            <p>统计时间：2025-06-25 15:30:45 ~ 2025-06-26 15:30:45</p>
+            <h2 title={report.title}>{report.title}</h2>
+            <p>统计时间：{formatReportTimestamp(report.period_start)} ~ {formatReportTimestamp(report.period_end)}</p>
           </div>
-          <span>版本：v2026.06.26<br />生成时间：2025-06-26 15:10:12</span>
+          <span>
+            版本：{report.version}
+            <br />
+            生成时间：{formatReportTimestamp(report.generated_at)}
+          </span>
         </header>
         <section className="taf-data-quality-report-score-strip">
-          {[
-            ['质量评分', '92/100'],
-            ['完整性', '96.3%'],
-            ['及时性', '91.7%'],
-            ['一致性', '95.8%'],
-            ['可用性', '98.2%'],
-            ['安全合规', '100%'],
-          ].map(([label, value]) => (
-            <div key={label}>
-              <span>{label}</span>
-              <strong>{value}</strong>
+          {report.scores.map((item) => (
+            <div key={item.label} className={`is-${item.status}`}>
+              <span>{item.label}</span>
+              <strong>{item.value}</strong>
             </div>
           ))}
         </section>
@@ -2557,75 +2855,75 @@ function QualityReportPreview() {
           <section className="taf-data-quality-report-line">
             <h3>二、质量趋势（近 24 小时）</h3>
             <svg viewBox="0 0 340 142" preserveAspectRatio="none" aria-label="质量趋势">
-              {[24, 50, 76, 102, 128].map((y) => <line key={y} x1="0" x2="340" y1={y} y2={y} />)}
-              <polyline className="is-blue" points="0,40 28,42 56,35 84,39 112,31 140,37 168,29 196,34 224,32 252,38 280,30 308,35 340,28" />
-              <polyline className="is-green" points="0,58 28,55 56,61 84,52 112,56 140,50 168,55 196,47 224,51 252,49 280,45 308,48 340,43" />
-              <polyline className="is-orange" points="0,82 28,78 56,84 84,80 112,75 140,79 168,73 196,76 224,72 252,74 280,70 308,73 340,68" />
-              <polyline className="is-purple" points="0,101 28,96 56,104 84,99 112,93 140,97 168,91 196,94 224,90 252,92 280,86 308,89 340,84" />
+              {[24, 50, 76, 102, 128].map((y) => (
+                <line key={y} x1="0" x2="340" y1={y} y2={y} />
+              ))}
+              <polyline className="is-blue" points={trendPoints('completeness')} />
+              <polyline className="is-green" points={trendPoints('timeliness')} />
+              <polyline className="is-orange" points={trendPoints('consistency')} />
+              <polyline className="is-purple" points={trendPoints('availability')} />
             </svg>
           </section>
           <section className="taf-data-quality-report-donut">
             <h3>三、异常概览</h3>
             <div>
-              <strong>23</strong>
+              <strong>{anomalyTotal}</strong>
               <span>异常总数</span>
             </div>
             <ul>
-              <li><i className="is-blue" />字段质量 <b>9 (39%)</b></li>
-              <li><i className="is-orange" />Flink 质量 <b>6 (26%)</b></li>
-              <li><i className="is-green" />存储质量 <b>5 (22%)</b></li>
-              <li><i className="is-purple" />Topic 健康 <b>2 (9%)</b></li>
+              {report.anomalies.slice(0, 4).map((item, index) => (
+                <li key={`${item.type}-${index}`} title={item.root_cause}>
+                  <i className={['is-blue', 'is-orange', 'is-green', 'is-purple'][index]} />
+                  {item.type} <b>{item.status}</b>
+                </li>
+              ))}
             </ul>
           </section>
           <section>
             <h3>四、关键指标对比</h3>
-            <ReportMiniTable rows={[
-              ['事件总量', '18.4K', '17.2K', '↑ 6.9%'],
-              ['DLQ 数量', '12.8K', '13.6K', '↓ 5.8%'],
-              ['写入成功率', '99.84%', '99.71%', '↑ 0.13%'],
-              ['写入延迟 P95', '420ms', '460ms', '↓ 40ms'],
-              ['Backpressure', '0.38', '0.46', '↓ 0.08'],
-            ]} />
+            <ReportMiniTable rows={report.key_metrics} />
           </section>
           <section>
             <h3>五、存储写入质量</h3>
-            <ReportMiniTable rows={[
-              ['ClickHouse', '42.7K EPS', '99.82%', '380ms'],
-              ['OpenSearch', '12.6K docs/s', '99.71%', '560ms'],
-              ['NebulaGraph', '2.1K edges/s', '99.46%', '210ms'],
-              ['MinIO', '1.8K objects/s', '99.64%', '690ms'],
-            ]} />
+            <ReportMiniTable rows={report.storage_rows.map((row) => row.slice(0, 4))} />
           </section>
         </div>
         <footer>
           <section>
             <h3>六、重放对账结果</h3>
             <div className="taf-data-quality-report-conclusion-grid">
-              <span title="对账通过率 99.12%">对账通过率 <b title="99.12%">99.12%</b></span>
-              <span title="窗口错序 0.31%">窗口错序 <b title="0.31%">0.31%</b></span>
-              <span title="重复记录 2,136">重复记录 <b title="2,136">2,136</b></span>
-              <span title="异常冲突 47">异常冲突 <b title="47">47</b></span>
+              {report.reconcile.map((item) => (
+                <span key={item.label} title={`${item.label} ${item.value}`}>
+                  {item.label} <b>{item.value}</b>
+                </span>
+              ))}
             </div>
           </section>
           <section>
             <h3>七、验收结论</h3>
             <div className="taf-data-quality-report-conclusion">
-              <strong>通过</strong>
-              <span title="SLA 97.8% 达成，数据质量总体健康。">SLA 97.8% 达成，数据质量总体健康。</span>
-              <small title="建议：字段缺失与存储延迟需持续优化跟踪。">建议：字段缺失与存储延迟需持续优化跟踪。</small>
+              <strong>{report.conclusion.result}</strong>
+              <span title={report.conclusion.summary}>{report.conclusion.summary}</span>
+              <small title={report.conclusion.suggestion}>{report.conclusion.suggestion}</small>
             </div>
           </section>
         </footer>
       </article>
       <div className="taf-data-quality-report-viewerbar">
-        <Button size="small" type="text">‹</Button>
+        <Button size="small" type="text">
+          ‹
+        </Button>
         <span className="is-page">1</span>
         <span>/ 16</span>
-        <Button size="small" type="text">›</Button>
+        <Button size="small" type="text">
+          ›
+        </Button>
         <i />
         <span>100%</span>
-        <Button size="small" type="text">+</Button>
-        <Button size="small" type="text" icon={<DownloadOutlined />} />
+        <Button size="small" type="text">
+          +
+        </Button>
+        <Tooltip title="下载 PDF 日报"><Button size="small" type="text" data-dq-action-managed="true" icon={<DownloadOutlined />} onClick={() => void onDownload('pdf')} /></Tooltip>
         <Button size="small" type="text" icon={<PrinterOutlined />} />
         <Button size="small" type="text" icon={<FullscreenOutlined />} />
       </div>
@@ -2636,23 +2934,25 @@ function QualityReportPreview() {
 function ReportMiniTable({ rows }: { rows: string[][] }) {
   return (
     <div className="taf-data-quality-report-mini-table">
-      {rows.map((row) => (
-        <span key={row.join('-')}>
-          {row.map((cell) => <b key={cell}>{cell}</b>)}
+      {rows.map((row, rowIndex) => (
+        <span key={`${row.join('-')}-${rowIndex}`}>
+          {row.map((cell, cellIndex) => (
+            <b key={`${cell}-${cellIndex}`}>{cell}</b>
+          ))}
         </span>
       ))}
     </div>
   );
 }
 
-function ReportChapters() {
+function ReportChapters({ report }: { report: DataQualityDailyReport }) {
   return (
     <div className="taf-data-quality-report-chapter-list">
-      {reportChapterRows.map(([index, label, value, tone]) => (
-        <button key={label} type="button" className={`is-${tone}`}>
-          <b>{index}</b>
-          <span>{label}</span>
-          <em>{value}</em>
+      {report.chapters.map((item) => (
+        <button key={item.label} type="button" className={`is-${item.status}`}>
+          <b>{item.index}</b>
+          <span>{item.label}</span>
+          <em>完成 {item.progress}%</em>
           <CheckCircleOutlined />
         </button>
       ))}
@@ -2660,37 +2960,78 @@ function ReportChapters() {
   );
 }
 
-function ReportApproval({ evidence }: { evidence: PageSnapshot['evidence'] }) {
+function ReportApproval({ report }: { report: DataQualityDailyReport }) {
   return (
     <div className="taf-data-quality-report-approval">
       <section>
         <h3>验收包信息</h3>
-        <p>验收包：数据质量验收包 #20250626</p>
-        <p>版本：v2026.06.26</p>
-        <p>生成时间：2025-06-26 15:10:12</p>
-        <p>内容：报告 + 证据清单 + 对账报告 + 日志快照</p>
+        <p>验收包：{report.approval.package_id}</p>
+        <p>版本：{report.approval.version}</p>
+        <p>生成时间：{formatReportTimestamp(report.approval.generated_at)}</p>
+        <p>内容：{report.approval.contents.join(' + ')}</p>
       </section>
       <section className="taf-data-quality-report-sla">
         <span>SLA Gate</span>
-        <strong title="97.8%">97.8%</strong>
+        <strong title={`${report.approval.sla_gate.toFixed(1)}%`}>{report.approval.sla_gate.toFixed(1)}%</strong>
         <em>达成（&gt;= 95%）</em>
       </section>
       <section className="taf-data-quality-report-audit">
         <h3>审批流转</h3>
-        <p><CheckCircleOutlined />提交 sec_analyst 2025-06-26 15:12</p>
-        <p><SyncOutlined />审核中 data_manager 2025-06-26 15:18</p>
-        <p><FieldTimeOutlined />终审 security_manager 待处理</p>
+        {report.approval.flow.map((item, index) => <p key={item}>{index === 0 ? <CheckCircleOutlined /> : index === 1 ? <SyncOutlined /> : <FieldTimeOutlined />}{item}</p>)}
       </section>
       <section>
         <h3>风控 / 例外</h3>
-        <p>存储延迟未完全恢复</p>
-        <p>影响 ClickHouse Distributed 队列 <b>低</b></p>
+        <p>{report.approval.risk}</p>
+        <p>数据源：{report.source.monitor}</p>
+        <p>版本：{report.source.fixture_version}</p>
       </section>
       <div className="taf-data-quality-report-approval-evidence">
-        {evidence.slice(0, 3).map((item) => <span key={item.label}>{item.label}<b>{item.value}</b></span>)}
+        {report.evidence.map((item) => (
+          <span key={item.label}>
+            {item.label}
+            <b>{item.value}</b>
+          </span>
+        ))}
       </div>
     </div>
   );
+}
+
+function ReportPlainTable({ columns, rows }: { columns: string[]; rows: string[][] }) {
+  return (
+    <div className="taf-data-quality-report-api-table" style={{ '--dq-columns': columns.length } as CSSProperties}>
+      <div className="taf-data-quality-report-api-head">{columns.map((column) => <span key={column}>{column}</span>)}</div>
+      {rows.map((row, rowIndex) => (
+        <div key={`${row.join('-')}-${rowIndex}`} className="taf-data-quality-report-api-row">
+          {row.map((cell, cellIndex) => <span key={`${cell}-${cellIndex}`} title={cell}>{cell}</span>)}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ReportExportTable({ onDownload, report }: { onDownload: (format: 'pdf' | 'json' | 'csv') => Promise<void>; report: DataQualityDailyReport }) {
+  return (
+    <div className="taf-data-quality-report-api-table is-export" style={{ '--dq-columns': 6 } as CSSProperties}>
+      <div className="taf-data-quality-report-api-head">{['导出时间', '格式', '申请人', '状态', '接收团队', '操作'].map((column) => <span key={column}>{column}</span>)}</div>
+      {report.exports.map((item) => (
+        <div key={item.export_id} className="taf-data-quality-report-api-row">
+          <span title={formatReportTimestamp(item.time)}>{formatReportTimestamp(item.time)}</span>
+          <span>{item.format}</span>
+          <span>{item.applicant}</span>
+          <span>{item.status}</span>
+          <span>{item.recipient}</span>
+          <button type="button" data-dq-action-managed="true" onClick={() => void onDownload(item.format.toLowerCase() as 'pdf' | 'json' | 'csv')}><DownloadOutlined /> 下载</button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function formatReportTimestamp(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-');
 }
 
 const topicHealthRailAlerts = [
@@ -2795,7 +3136,9 @@ function TopicHealthSideRail({ onOpenDlqSample, onReplay }: { onOpenDlqSample: (
               <em>{time}</em>
             </button>
           ))}
-          <button type="button" className="is-link" title="查看全部告警（3）">查看全部告警（3） <ArrowUpOutlined /></button>
+          <button type="button" className="is-link" title="查看全部告警（3）">
+            查看全部告警（3） <ArrowUpOutlined />
+          </button>
         </div>
       </WorkPanel>
       <WorkPanel title="快速定位">
@@ -2811,13 +3154,7 @@ function TopicHealthSideRail({ onOpenDlqSample, onReplay }: { onOpenDlqSample: (
   );
 }
 
-function FieldQualitySideRail({
-  onOpenDetail,
-  onOpenReplayReconcile,
-}: {
-  onOpenDetail: OpenFieldQualityDetail;
-  onOpenReplayReconcile: () => void;
-}) {
+function FieldQualitySideRail({ onOpenDetail, onOpenReplayReconcile }: { onOpenDetail: OpenFieldQualityDetail; onOpenReplayReconcile: () => void }) {
   return (
     <aside className="taf-data-quality-rail taf-data-quality-field-rail">
       <WorkPanel title="字段质量异常（近 24 小时）">
@@ -2828,12 +3165,14 @@ function FieldQualitySideRail({
               type="button"
               className={index > 1 ? 'is-risk' : 'is-info'}
               title={`${label} ${value}`}
-              onClick={() => onOpenDetail({
-                title: `${label}详情`,
-                description: '当前统计来自字段质量实时快照，可继续查看关联异常样本与修复任务。',
-                columns: ['指标', '当前值', '建议入口'],
-                rows: [[label, value, index > 1 ? '查看修复任务' : '查看异常样本']],
-              })}
+              onClick={() =>
+                onOpenDetail({
+                  title: `${label}详情`,
+                  description: '当前统计来自字段质量实时快照，可继续查看关联异常样本与修复任务。',
+                  columns: ['指标', '当前值', '建议入口'],
+                  rows: [[label, value, index > 1 ? '查看修复任务' : '查看异常样本']],
+                })
+              }
             >
               <span>{label}</span>
               <b>{value}</b>
@@ -2854,38 +3193,25 @@ function FieldQualitySideRail({
   );
 }
 
-function FieldQualityRailLinks({
-  onOpenDetail,
-  onOpenReplayReconcile,
-  rows,
-}: {
-  onOpenDetail: OpenFieldQualityDetail;
-  onOpenReplayReconcile?: () => void;
-  rows: Array<[string, ReactNode]>;
-}) {
+function FieldQualityRailLinks({ onOpenDetail, onOpenReplayReconcile, rows }: { onOpenDetail: OpenFieldQualityDetail; onOpenReplayReconcile?: () => void; rows: Array<[string, ReactNode]> }) {
   const openLink = (label: string) => {
     if (label === '跳转重放对账' && onOpenReplayReconcile) {
       onOpenReplayReconcile();
       return;
     }
-    const focusSelector = label.includes('样本') || label.includes('Topic') || label.includes('资产')
-      ? '.taf-data-quality-field-samples-panel'
-      : label.includes('趋势')
-        ? '.taf-data-quality-field-upper > .taf-panel:nth-child(2)'
-        : label.includes('修复') || label.includes('映射') || label.includes('校验') || label.includes('时间校准')
-          ? '.taf-data-quality-field-repairs-panel'
-          : undefined;
+    const focusSelector = label.includes('样本') || label.includes('Topic') || label.includes('资产') ? '.taf-data-quality-field-samples-panel' : label.includes('趋势') ? '.taf-data-quality-field-upper > .taf-panel:nth-child(2)' : label.includes('修复') || label.includes('映射') || label.includes('校验') || label.includes('时间校准') ? '.taf-data-quality-field-repairs-panel' : undefined;
     const actionable = label.startsWith('创建') || label.startsWith('导出') || label.startsWith('同步') || label.startsWith('更新') || label.startsWith('配置');
-    onOpenDetail({
-      title: label,
-      description: actionable
-        ? '已加载字段质量操作预览；确认后将写入模拟任务队列，并保留操作审计。'
-        : '已定位到对应字段质量业务区域，可继续查看实时数据与关联记录。',
-      columns: ['操作', '当前视图', '处理建议'],
-      rows: [[label, '字段质量', actionable ? '确认后提交模拟任务' : '查看关联业务数据']],
-      actionLabel: actionable ? (label.startsWith('导出') ? '生成导出任务' : '提交操作') : undefined,
-      actionSuccessMessage: actionable ? `${label}已提交` : undefined,
-    }, focusSelector);
+    onOpenDetail(
+      {
+        title: label,
+        description: actionable ? '已加载字段质量操作预览；确认后将写入模拟任务队列，并保留操作审计。' : '已定位到对应字段质量业务区域，可继续查看实时数据与关联记录。',
+        columns: ['操作', '当前视图', '处理建议'],
+        rows: [[label, '字段质量', actionable ? '确认后提交模拟任务' : '查看关联业务数据']],
+        actionLabel: actionable ? (label.startsWith('导出') ? '生成导出任务' : '提交操作') : undefined,
+        actionSuccessMessage: actionable ? `${label}已提交` : undefined,
+      },
+      focusSelector,
+    );
   };
   return (
     <div className="taf-data-quality-topic-rail-links">
@@ -2960,7 +3286,9 @@ function FlinkQualitySideRail() {
               <em>{time}</em>
             </button>
           ))}
-          <button type="button" className="is-link" title="查看全部告警（12）">查看全部告警（12） <ArrowUpOutlined /></button>
+          <button type="button" className="is-link" title="查看全部告警（12）">
+            查看全部告警（12） <ArrowUpOutlined />
+          </button>
         </div>
       </WorkPanel>
       <WorkPanel title="快速定位">
@@ -3002,7 +3330,9 @@ function ReportSideRail({ onOpenReplay }: { onOpenReplay: () => void }) {
               <b>{value}</b>
             </button>
           ))}
-          <button type="button" className="is-link">查看全部异常 <ArrowUpOutlined /></button>
+          <button type="button" className="is-link">
+            查看全部异常 <ArrowUpOutlined />
+          </button>
         </div>
       </WorkPanel>
       <WorkPanel title="快速定位">
@@ -3020,7 +3350,9 @@ function ReportSideRail({ onOpenReplay }: { onOpenReplay: () => void }) {
             ['提交审批', <SafetyCertificateOutlined key="approve" />],
             ['查看导出历史', <DatabaseOutlined key="history" />],
           ].map(([label, icon]) => (
-            <Button key={String(label)} size="small" icon={icon}>{label}</Button>
+            <Button key={String(label)} size="small" icon={icon}>
+              {label}
+            </Button>
           ))}
         </div>
       </WorkPanel>
@@ -3040,7 +3372,9 @@ function SettingsSideRail() {
               <b>{value}</b>
             </button>
           ))}
-          <button type="button" className="is-link">查看全部异常 <ArrowUpOutlined /></button>
+          <button type="button" className="is-link">
+            查看全部异常 <ArrowUpOutlined />
+          </button>
         </div>
       </WorkPanel>
       <WorkPanel title="快速定位">
@@ -3058,7 +3392,9 @@ function SettingsSideRail() {
             ['查看审计记录', <DatabaseOutlined key="audit" />],
             ['回滚上个版本', <SyncOutlined key="rollback" />],
           ].map(([label, icon]) => (
-            <Button key={String(label)} size="small" icon={icon}>{label}</Button>
+            <Button key={String(label)} size="small" icon={icon}>
+              {label}
+            </Button>
           ))}
         </div>
       </WorkPanel>
@@ -3066,15 +3402,7 @@ function SettingsSideRail() {
   );
 }
 
-function ReportRailButtons({
-  icon,
-  onPrimary,
-  rows,
-}: {
-  icon: ReactNode;
-  onPrimary?: () => void;
-  rows: string[][];
-}) {
+function ReportRailButtons({ icon, onPrimary, rows }: { icon: ReactNode; onPrimary?: () => void; rows: string[][] }) {
   return (
     <div className="taf-data-quality-report-rail-buttons">
       {rows.map(([label], index) => (
@@ -3094,10 +3422,26 @@ function SettingsContent() {
       <WorkPanel title="质量阈值配置" className="taf-data-quality-settings-threshold-panel" extra={<span className="taf-data-quality-settings-mini-select">默认阈值组</span>}>
         <SettingsThresholdTable />
       </WorkPanel>
-      <WorkPanel title="检测规则分组" className="taf-data-quality-settings-rules-panel" extra={<Button size="small" type="text">+ 新建规则组</Button>}>
+      <WorkPanel
+        title="检测规则分组"
+        className="taf-data-quality-settings-rules-panel"
+        extra={
+          <Button size="small" type="text">
+            + 新建规则组
+          </Button>
+        }
+      >
         <SettingsRuleGroups />
       </WorkPanel>
-      <WorkPanel title="告警策略与路由" className="taf-data-quality-settings-strategy-panel" extra={<Button size="small" type="text">+ 新建策略</Button>}>
+      <WorkPanel
+        title="告警策略与路由"
+        className="taf-data-quality-settings-strategy-panel"
+        extra={
+          <Button size="small" type="text">
+            + 新建策略
+          </Button>
+        }
+      >
         <SettingsAlertStrategy />
       </WorkPanel>
       <WorkPanel title="报告周期与模板" className="taf-data-quality-settings-template-panel">
@@ -3114,12 +3458,15 @@ function SettingsContent() {
 }
 
 function SettingsThresholdTable() {
+  const paging = useDataQualityPagination(settingsThresholdRows);
   return (
-    <div className="taf-data-quality-settings-threshold">
+    <div className="taf-data-quality-settings-threshold taf-data-quality-paged-table">
       <div>
-        {['指标', '适用范围', '告警阈值', '阻断阈值', 'SLA', '启用', '负责人', '操作'].map((item) => <span key={item}>{item}</span>)}
+        {['指标', '适用范围', '告警阈值', '阻断阈值', 'SLA', '启用', '负责人', '操作'].map((item) => (
+          <span key={item}>{item}</span>
+        ))}
       </div>
-      {settingsThresholdRows.map((row) => (
+      {paging.visibleRows.map((row) => (
         <button key={row[0]} type="button">
           <strong>{row[0]}</strong>
           <span>{row[1]}</span>
@@ -3131,13 +3478,7 @@ function SettingsThresholdTable() {
           <b>{row[7]}</b>
         </button>
       ))}
-      <footer>
-        <span>共 8 条</span>
-        <b>‹</b>
-        <strong>1</strong>
-        <b>›</b>
-        <span>10 条/页</span>
-      </footer>
+      <DataQualityPagination label="质量阈值" {...paging} />
     </div>
   );
 }
@@ -3169,31 +3510,41 @@ function SettingsRuleGroups() {
 }
 
 function SettingsAlertStrategy() {
+  const paging = useDataQualityPagination(settingsAlertRoutes, 3);
   return (
-    <div className="taf-data-quality-settings-strategy">
+    <div className="taf-data-quality-settings-strategy taf-data-quality-paged-table">
       <div>
-        {['严重级别', '通知渠道', '负责人', '升级策略', 'Webhook / 抄送', '工单规则', '静默期', 'SLA 倒计时'].map((item) => <span key={item}>{item}</span>)}
+        {['严重级别', '通知渠道', '负责人', '升级策略', 'Webhook / 抄送', '工单规则', '静默期', 'SLA 倒计时'].map((item) => (
+          <span key={item}>{item}</span>
+        ))}
       </div>
-      {settingsAlertRoutes.map((row) => (
+      {paging.visibleRows.map((row) => (
         <button key={row[0]} type="button" className={row[0] === '严重' ? 'is-risk' : row[0] === '告警' ? 'is-warn' : row[0] === '中危' ? 'is-mid' : 'is-ok'}>
-          {row.map((cell, index) => index === 0 ? <strong key={cell}>{cell}</strong> : <span key={`${cell}-${index}`}>{cell}</span>)}
+          {row.map((cell, index) => (index === 0 ? <strong key={cell}>{cell}</strong> : <span key={`${cell}-${index}`}>{cell}</span>))}
         </button>
       ))}
+      <DataQualityPagination label="告警策略" {...paging} />
     </div>
   );
 }
 
 function SettingsReportTemplates() {
+  const paging = useDataQualityPagination(settingsReportRows, 3);
   return (
-    <div className="taf-data-quality-settings-template">
+    <div className="taf-data-quality-settings-template taf-data-quality-paged-table">
       <div>
-        {['类型', '时间', 'cron 表达式', '接收人组', '模板', '证据包', '导出格式'].map((item) => <span key={item}>{item}</span>)}
+        {['类型', '时间', 'cron 表达式', '接收人组', '模板', '证据包', '导出格式'].map((item) => (
+          <span key={item}>{item}</span>
+        ))}
       </div>
-      {settingsReportRows.map((row) => (
+      {paging.visibleRows.map((row) => (
         <button key={row[0]} type="button">
-          {row.map((cell, index) => <span key={`${cell}-${index}`}>{cell}</span>)}
+          {row.map((cell, index) => (
+            <span key={`${cell}-${index}`}>{cell}</span>
+          ))}
         </button>
       ))}
+      <DataQualityPagination label="报告周期与模板" {...paging} />
     </div>
   );
 }
@@ -3203,28 +3554,36 @@ function SettingsImpactAssessment() {
     <div className="taf-data-quality-settings-impact">
       <section>
         <h3>变更摘要（本次变更 12 项）</h3>
-        {[
-          '1. 完整率 告警阈值 95% -> 96%',
-          '2. Watermark P95 告警 3s -> 2.5s',
-          '3. DLQ 数量 阻断 5000 -> 3000',
-          '4. 新增规则：存储写入延迟检测',
-          '5. 告警策略：严重级别升级5分钟',
-          '6. 报告：周报接收人组增加 ciso',
-        ].map((item) => <p key={item}>{item}</p>)}
+        {['1. 完整率 告警阈值 95% -> 96%', '2. Watermark P95 告警 3s -> 2.5s', '3. DLQ 数量 阻断 5000 -> 3000', '4. 新增规则：存储写入延迟检测', '5. 告警策略：严重级别升级5分钟', '6. 报告：周报接收人组增加 ciso'].map((item) => (
+          <p key={item}>{item}</p>
+        ))}
       </section>
       <section>
         <h3>影响评估</h3>
-        <p>预计告警量变化 <b className="is-warn">+12.6%（1 个中等）</b></p>
-        <p>预计阻断次数变化 <b className="is-ok">-8.3%（↓降低）</b></p>
-        <p>受影响模块 <b>5 个</b></p>
-        <p>需要审批 <b>是（变更较大）</b></p>
+        <p>
+          预计告警量变化 <b className="is-warn">+12.6%（1 个中等）</b>
+        </p>
+        <p>
+          预计阻断次数变化 <b className="is-ok">-8.3%（↓降低）</b>
+        </p>
+        <p>
+          受影响模块 <b>5 个</b>
+        </p>
+        <p>
+          需要审批 <b>是（变更较大）</b>
+        </p>
       </section>
       <section>
         <h3>校验结果</h3>
-        <p><CheckCircleOutlined />通过 配置校验全部通过</p>
+        <p>
+          <CheckCircleOutlined />
+          通过 配置校验全部通过
+        </p>
       </section>
       <footer>
-        <Button size="small" type="primary">保存并提交审批</Button>
+        <Button size="small" type="primary">
+          保存并提交审批
+        </Button>
         <Button size="small">仅保存草稿</Button>
       </footer>
     </div>
@@ -3234,20 +3593,7 @@ function SettingsImpactAssessment() {
 function SettingsAuditRecords() {
   return (
     <div className="taf-data-quality-settings-audit">
-      <DenseRows
-        columns={['时间', '操作者', '变更项', '变更内容（前 -> 后）', '审批状态', '操作']}
-        rows={settingsAuditRows}
-      />
-      <footer>
-        <span>共 28 条</span>
-        <b>‹</b>
-        <strong>1</strong>
-        <span>2</span>
-        <span>3</span>
-        <span>7</span>
-        <b>›</b>
-        <span>10 条/页</span>
-      </footer>
+      <DenseRows columns={['时间', '操作者', '变更项', '变更内容（前 -> 后）', '审批状态', '操作']} rows={settingsAuditRows} />
     </div>
   );
 }
@@ -3255,36 +3601,9 @@ function SettingsAuditRecords() {
 function TopicHeatmap({ rows = [], visuals }: { rows?: SnapshotRow[]; visuals?: DataQualityVisuals }) {
   const heatmap = visuals?.heatmap ?? buildFallbackHeatmap(rows);
   const times = visuals?.heatmapTimes ?? ['03:40', '07:40', '11:40', '15:40', '19:40', '23:40', '03:40'];
-  const legend = visuals?.heatmapLegend ?? [
-    { label: 'S0', status: 'ok' as const },
-    { label: '均衡', status: 'info' as const },
-    { label: '轻度倾斜', status: 'warn' as const },
-    { label: '严重倾斜', status: 'risk' as const },
-  ];
   return (
-    <div className="taf-data-quality-heatmap" style={{ '--dq-heat-columns': heatmap[0]?.values.length ?? 12 } as CSSProperties}>
-      <div className="taf-data-quality-heatmap-body">
-        {heatmap.map((row) => (
-          <div key={row.label} className="taf-data-quality-heatmap-row">
-            <b title={`分区 ${row.label}`}>{row.label}</b>
-            {row.values.map((tone, columnIndex) => (
-              <span key={`${row.label}-${columnIndex}`} className={`is-${tone}`} title={`分区 ${row.label} / ${times[columnIndex % times.length]} / ${tone}`} />
-            ))}
-          </div>
-        ))}
-        <div className="taf-data-quality-heatmap-axis">
-          <i />
-          {times.map((time, index) => <span key={`${time}-${index}`}>{time}</span>)}
-        </div>
-      </div>
-      <div className="taf-data-quality-heatmap-legend">
-        {legend.map(({ label, status }) => (
-          <span key={label}>
-            <i className={`is-${status}`} />
-            {label}
-          </span>
-        ))}
-      </div>
+    <div className="taf-data-quality-heatmap">
+      <DataQualityHeatmapChart ariaLabel="Topic 分区倾斜热力图" className="taf-data-quality-heatmap-echart" rows={heatmap} times={times} />
     </div>
   );
 }
@@ -3293,13 +3612,13 @@ function buildFallbackHeatmap(rows: SnapshotRow[]): DataQualityVisuals['heatmap'
   const labels = ['0-7', '8-15', '16-23', '24-31', '32-39', '40-47'];
   return labels.map((label, rowIndex) => ({
     label,
-    values: Array.from({ length: 12 }, (_, columnIndex) => {
+    values: Array.from({ length: 18 }, (_, columnIndex) => {
       const source = rows[(rowIndex + columnIndex) % Math.max(rows.length, 1)];
       const skew = Number.parseFloat(String(source?.分区倾斜 ?? '1'));
       const trend = String(source?.积压趋势 ?? '');
-      if (trend.includes('上升') || skew > 1.25 || (rowIndex * 12 + columnIndex) % 17 === 0) return 'risk';
-      if (trend.includes('波动') || skew > 1.12 || (rowIndex * 12 + columnIndex) % 11 === 0) return 'warn';
-      if ((rowIndex * 12 + columnIndex) % 7 === 0) return 'info';
+      if (trend.includes('上升') || skew > 1.25 || (rowIndex * 18 + columnIndex) % 17 === 0) return 'risk';
+      if (trend.includes('波动') || skew > 1.12 || (rowIndex * 18 + columnIndex) % 11 === 0) return 'warn';
+      if ((rowIndex * 18 + columnIndex) % 7 === 0) return 'info';
       return 'ok';
     }),
   }));
@@ -3327,17 +3646,77 @@ function LatencyTrend() {
   );
 }
 
-function DenseRows({ columns, rows }: { columns: string[]; rows: string[][] }) {
+function useDataQualityPagination<T>(rows: readonly T[], pageSize = 5, dataset?: DataQualityTableDataset) {
+  const [page, setPage] = useState(1);
+  const useScrollTables = useContext(DataQualityScrollTablesContext);
+  const serverPaginationEnabled = useContext(DataQualityServerPaginationContext) && Boolean(dataset);
+  const requestPage = useScrollTables ? 1 : page;
+  const requestPageSize = useScrollTables ? 100 : pageSize;
+  const serverPage = useQuery({
+    queryKey: ['data-quality-table-page', dataset, requestPage, requestPageSize],
+    queryFn: () => fetchDataQualityTablePage<T>(dataset as DataQualityTableDataset, requestPage, requestPageSize),
+    enabled: serverPaginationEnabled,
+    placeholderData: (previous) => previous,
+  });
+  const total = serverPaginationEnabled && serverPage.data ? serverPage.data.total : rows.length;
+  const totalPages = useScrollTables ? 1 : Math.max(1, Math.ceil(total / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  return {
+    currentPage,
+    dataset,
+    pageSize,
+    total,
+    totalPages,
+    visibleRows: serverPaginationEnabled && serverPage.data ? serverPage.data.items : useScrollTables ? rows : rows.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    onChange: setPage,
+  };
+}
+
+function DataQualityPagination({ currentPage, dataset, label, onChange, pageSize, total, totalPages }: { currentPage: number; dataset?: DataQualityTableDataset; label: string; onChange: (page: number) => void; pageSize: number; total: number; totalPages: number }) {
+  const useScrollTables = useContext(DataQualityScrollTablesContext);
+  if (useScrollTables) return null;
   return (
-    <div className="taf-data-quality-dense-rows" style={{ '--dq-columns': columns.length } as CSSProperties}>
-      <div className="taf-data-quality-dense-head">
-        {columns.map((column) => <span key={column} title={column}>{column}</span>)}
+    <footer className="taf-data-quality-table-pagination" aria-label={`${label}分页`} data-pagination-source={dataset ? 'server' : 'local'} data-pagination-dataset={dataset}>
+      <span>共 {total} 条</span>
+      <div>
+        <button type="button" title="上一页" aria-label={`${label}上一页`} data-dq-action-managed="true" disabled={currentPage === 1} onClick={() => onChange(currentPage - 1)}>
+          <LeftOutlined />
+        </button>
+        {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+          <button key={page} type="button" data-dq-action-managed="true" className={page === currentPage ? 'is-active' : ''} aria-current={page === currentPage ? 'page' : undefined} onClick={() => onChange(page)}>
+            {page}
+          </button>
+        ))}
+        <button type="button" title="下一页" aria-label={`${label}下一页`} data-dq-action-managed="true" disabled={currentPage === totalPages} onClick={() => onChange(currentPage + 1)}>
+          <RightOutlined />
+        </button>
       </div>
-      {rows.map((row) => (
+      <span>{pageSize} 条/页</span>
+    </footer>
+  );
+}
+
+function DenseRows({ columns, dataset, pageSize = 5, rows }: { columns: string[]; dataset?: DataQualityTableDataset; pageSize?: number; rows: string[][] }) {
+  const paging = useDataQualityPagination(rows, pageSize, dataset);
+  return (
+    <div className="taf-data-quality-dense-rows taf-data-quality-paged-table" style={{ '--dq-columns': columns.length } as CSSProperties}>
+      <div className="taf-data-quality-dense-head">
+        {columns.map((column) => (
+          <span key={column} title={column}>
+            {column}
+          </span>
+        ))}
+      </div>
+      {paging.visibleRows.map((row) => (
         <div key={row.join('-')} className="taf-data-quality-dense-row">
-          {row.map((cell, index) => <span key={`${cell}-${index}`} title={cell}>{cell}</span>)}
+          {row.map((cell, index) => (
+            <span key={`${cell}-${index}`} title={cell}>
+              {cell}
+            </span>
+          ))}
         </div>
       ))}
+      <DataQualityPagination label={columns[0] ?? '数据'} {...paging} />
     </div>
   );
 }
@@ -3371,21 +3750,34 @@ function MessageSizeDistribution({ visuals }: { visuals?: DataQualityVisuals }) 
           </div>
         ))}
       </div>
-      <DenseRows
-        columns={['Topic', '平均大小(KB)', '最大大小(KB)', '吞吐 EPS', '压缩比']}
-        rows={topicRows}
-      />
+      <div className="taf-data-quality-dense-rows taf-data-quality-scroll-table taf-data-quality-message-size-rows" style={{ '--dq-columns': 5 } as CSSProperties}>
+        <div className="taf-data-quality-dense-head">
+          {['Topic', '平均大小(KB)', '最大大小(KB)', '吞吐 EPS', '压缩比'].map((column) => <span key={column} title={column}>{column}</span>)}
+        </div>
+        <div className="taf-data-quality-scroll-body">
+          {topicRows.map((row) => (
+            <div key={row.join('-')} className="taf-data-quality-dense-row">
+              {row.map((cell, index) => <span key={`${cell}-${index}`} title={cell}>{cell}</span>)}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
 
 function PartitionQueue({ rows }: { rows: string[][] }) {
+  const paging = useDataQualityPagination(rows, 5, 'partitionQueueRows');
   return (
-    <div className="taf-data-quality-partition-queue">
+    <div className="taf-data-quality-partition-queue taf-data-quality-paged-table">
       <div className="taf-data-quality-partition-head">
-        {['Topic', '分区', '异常指标', '根因分析', '建议动作', '操作'].map((column) => <span key={column} title={column}>{column}</span>)}
+        {['Topic', '分区', '异常指标', '根因分析', '建议动作', '操作'].map((column) => (
+          <span key={column} title={column}>
+            {column}
+          </span>
+        ))}
       </div>
-      {rows.map(([topic, partition, metric, reason, action, operation]) => (
+      {paging.visibleRows.map(([topic, partition, metric, reason, action, operation]) => (
         <div key={`${topic}-${partition}`} className="taf-data-quality-partition-row">
           <strong title={topic}>{topic}</strong>
           <span title={partition}>{partition}</span>
@@ -3395,11 +3787,18 @@ function PartitionQueue({ rows }: { rows: string[][] }) {
           <em title={`${operation} ${topic} 分区 ${partition}`}>{operation}</em>
         </div>
       ))}
-      <footer>
-        <span title="定位 Kafka Topic"><SearchOutlined /> 定位 Kafka Topic</span>
-        <span title="定位 Flink 作业"><ApiOutlined /> 定位 Flink 作业</span>
-        <span title="创建修复任务"><SafetyCertificateOutlined /> 创建修复任务</span>
+      <footer className="taf-data-quality-partition-actions">
+        <span title="定位 Kafka Topic">
+          <SearchOutlined /> 定位 Kafka Topic
+        </span>
+        <span title="定位 Flink 作业">
+          <ApiOutlined /> 定位 Flink 作业
+        </span>
+        <span title="创建修复任务">
+          <SafetyCertificateOutlined /> 创建修复任务
+        </span>
       </footer>
+      <DataQualityPagination label="异常分区处置队列" {...paging} />
     </div>
   );
 }
@@ -3410,9 +3809,15 @@ function FlinkJobCards() {
       {flinkJobs.map(([job, checkpoint, watermark, backpressure, pass, tone]) => (
         <div key={job} className={`is-${tone}`}>
           <strong>{job}</strong>
-          <span>Checkpoint <b>{checkpoint}</b></span>
-          <span>Watermark <b>{watermark}</b></span>
-          <span>Backpressure <b>{backpressure}</b></span>
+          <span>
+            Checkpoint <b>{checkpoint}</b>
+          </span>
+          <span>
+            Watermark <b>{watermark}</b>
+          </span>
+          <span>
+            Backpressure <b>{backpressure}</b>
+          </span>
           <em>{pass}</em>
         </div>
       ))}
@@ -3488,12 +3893,42 @@ function FlinkQuality({ score, evidence, visuals }: { score: number; evidence: P
 function buildFallbackFlinkMetrics(score: number, evidence: PageSnapshot['evidence']): DataQualityVisuals['flinkMetrics'] {
   const checkpoint = evidence.find((item) => item.label.includes('Checkpoint'))?.value ?? '99.2%';
   return [
-    { label: '运行作业', value: '58', description: score >= 90 ? '全部 RUNNING' : '存在告警', status: score >= 90 ? 'ok' : 'warn' },
-    { label: 'Checkpoint 成功率', value: checkpoint, description: '最近 15 分钟', status: checkpoint.includes('异常') ? 'risk' : 'ok' },
-    { label: 'Backpressure', value: '0.38', description: '6 个 task 观察', status: 'warn' },
-    { label: 'Watermark 延迟 P95', value: '1.6s', description: '阈值 3s', status: 'ok' },
-    { label: '迟到数据率', value: '0.67%', description: '较昨日 ↓ 0.09%', status: 'warn' },
-    { label: '错误事件数', value: '312', description: '近 24 小时', status: 'risk' },
+    {
+      label: '运行作业',
+      value: '58',
+      description: score >= 90 ? '全部 RUNNING' : '存在告警',
+      status: score >= 90 ? 'ok' : 'warn',
+    },
+    {
+      label: 'Checkpoint 成功率',
+      value: checkpoint,
+      description: '最近 15 分钟',
+      status: checkpoint.includes('异常') ? 'risk' : 'ok',
+    },
+    {
+      label: 'Backpressure',
+      value: '0.38',
+      description: '6 个 task 观察',
+      status: 'warn',
+    },
+    {
+      label: 'Watermark 延迟 P95',
+      value: '1.6s',
+      description: '阈值 3s',
+      status: 'ok',
+    },
+    {
+      label: '迟到数据率',
+      value: '0.67%',
+      description: '较昨日 ↓ 0.09%',
+      status: 'warn',
+    },
+    {
+      label: '错误事件数',
+      value: '312',
+      description: '近 24 小时',
+      status: 'risk',
+    },
   ];
 }
 
@@ -3517,7 +3952,12 @@ function FlinkWatermarkTrend({ evidence, trend }: { evidence: PageSnapshot['evid
         series={[
           { name: 'P50', color: '#18a8ff', values: chart.p50 },
           { name: 'P95', color: '#ffb020', values: chart.p95 },
-          { name: '阈值', color: '#ff4d4f', dashed: true, values: chart.threshold },
+          {
+            name: '阈值',
+            color: '#ff4d4f',
+            dashed: true,
+            values: chart.threshold,
+          },
         ]}
       />
     </div>
@@ -3525,8 +3965,9 @@ function FlinkWatermarkTrend({ evidence, trend }: { evidence: PageSnapshot['evid
 }
 
 function FieldQuality() {
+  const paging = useDataQualityPagination(fieldRows);
   return (
-    <div className="taf-data-quality-field">
+    <div className="taf-data-quality-field taf-data-quality-paged-table">
       <div>
         <span title="字段">字段</span>
         <span title="完整率">完整率</span>
@@ -3538,7 +3979,7 @@ function FieldQuality() {
         <span title="状态">状态</span>
         <span title="操作">操作</span>
       </div>
-      {fieldRows.map(([field, completeness, accuracy, missing, abnormal, uniqueRate, status, action, tone], index) => (
+      {paging.visibleRows.map(([field, completeness, accuracy, missing, abnormal, uniqueRate, status, action, tone], index) => (
         <button key={field} type="button" className={`is-${tone}`} title={`${field} 完整率 ${completeness} 准确率 ${accuracy} 缺失率 ${missing} 异常率 ${abnormal} 唯一值占比 ${uniqueRate} 状态 ${status}`}>
           <strong title={field}>{field}</strong>
           <span title={completeness}>{completeness}</span>
@@ -3550,9 +3991,12 @@ function FieldQuality() {
             <TopicSparkline index={index} tone={tone === 'risk' ? '上升' : tone === 'warn' ? '波动' : '下降'} />
           </span>
           <span title={status}>{status}</span>
-          <span className="taf-data-quality-field-action" title={action}><FileSearchOutlined /></span>
+          <span className="taf-data-quality-field-action" title={action}>
+            <FileSearchOutlined />
+          </span>
         </button>
       ))}
+      <DataQualityPagination label="字段质量矩阵" {...paging} />
     </div>
   );
 }
@@ -3561,6 +4005,7 @@ function ReconciliationReport() {
   return (
     <DenseRows
       columns={['时间窗', '采集总量', '入库总量', '差异量', '差异率', '状态']}
+      pageSize={2}
       rows={[
         ['06-20 02:00 - 03:00', '1.28 B', '1.27 B', '12.6 M', '0.98%', '通过'],
         ['06-20 01:00 - 02:00', '1.31 B', '1.30 B', '13.2 M', '1.01%', '通过'],
@@ -3578,7 +4023,10 @@ function QualityAnomalies() {
           <i aria-hidden="true" />
           <strong title={title}>{title}</strong>
           <span title={target}>{target}</span>
-          <em title={`${value} ${time}`}>{value}<b title={time}>{time}</b></em>
+          <em title={`${value} ${time}`}>
+            {value}
+            <b title={time}>{time}</b>
+          </em>
         </button>
       ))}
     </div>
@@ -3615,7 +4063,9 @@ function RepairAdvice({ onReplay }: { onReplay?: () => void }) {
           <em title={action}>{action}</em>
         </button>
       ))}
-      <a className="taf-data-quality-advice-more" href="#quality-advice-all" title="查看全部建议">查看全部建议 <ArrowUpOutlined /></a>
+      <a className="taf-data-quality-advice-more" href="#quality-advice-all" title="查看全部建议">
+        查看全部建议 <ArrowUpOutlined />
+      </a>
     </div>
   );
 }
@@ -3631,7 +4081,9 @@ function EvidenceActions({ evidence }: { evidence: PageSnapshot['evidence'] }) {
     <div className="taf-data-quality-actions" title={evidence.map((item) => `${item.label} ${item.value}`).join(' / ')}>
       <div className="taf-data-quality-action-grid">
         {actions.map(([label, icon]) => (
-          <Button key={String(label)} size="small" icon={icon} title={String(label)}>{label}</Button>
+          <Button key={String(label)} size="small" icon={icon} title={String(label)}>
+            {label}
+          </Button>
         ))}
       </div>
     </div>
@@ -3639,9 +4091,20 @@ function EvidenceActions({ evidence }: { evidence: PageSnapshot['evidence'] }) {
 }
 
 const renderQualityCell = (column: string, value: unknown) => {
-  if (column === 'Topic') return <span className="taf-data-quality-topic" title={String(value)}><ApiOutlined />{String(value)}</span>;
+  if (column === 'Topic')
+    return (
+      <span className="taf-data-quality-topic" title={String(value)}>
+        <ApiOutlined />
+        {String(value)}
+      </span>
+    );
   if (column === '积压趋势' || column === '操作') return <StatusTag value={value} />;
-  if (column.includes('延迟') || column.includes('倾斜')) return <span className="taf-data-quality-warn" title={String(value)}>{String(value)}</span>;
+  if (column.includes('延迟') || column.includes('倾斜'))
+    return (
+      <span className="taf-data-quality-warn" title={String(value)}>
+        {String(value)}
+      </span>
+    );
   return <span title={String(value)}>{String(value)}</span>;
 };
 

@@ -218,6 +218,10 @@ export type DataQualityVisuals = {
 };
 
 export type EncryptedTrafficVisuals = {
+  tabKpis: {
+    fingerprint: string[][];
+    tunnelDetection: string[][];
+  };
   protocolRows: string[][];
   protocolTrend: number[];
   ja3Rows: string[][];
@@ -227,6 +231,7 @@ export type EncryptedTrafficVisuals = {
   destinationRows: string[][];
   adviceRows: string[][];
   certificateRows: string[][];
+  tlsSuiteRows: string[][];
   tunnelRuleRows: string[][];
   evidenceRows: string[][];
   egressKpis: string[][];
@@ -250,13 +255,21 @@ export type EncryptedTrafficVisuals = {
     }>;
   };
   egressAvailability: {
-    state: 'live' | 'partial' | 'simulated' | 'unavailable';
+    state: 'live' | 'partial' | 'unavailable';
     detail: string;
   };
+  egressRiskScore?: number;
+  egressRiskDelta?: string;
   heartbeatBars: number[];
+  heartbeatSummary?: {
+    intervalP95Seconds: number;
+    jitterP95Seconds: number;
+    packetCount: number;
+  };
+  tunnelRiskDistribution?: Array<{ label: string; value: number; ratio: string; status: 'ok' | 'warn' | 'risk' | 'info' }>;
   evidenceCenter: {
     availability: {
-      state: 'live' | 'partial' | 'simulated' | 'unavailable';
+      state: 'live' | 'partial' | 'unavailable';
       detail: string;
     };
     kpis: string[][];
@@ -281,7 +294,68 @@ export type EncryptedTrafficVisuals = {
     handshakeTimeline: Array<{ time: string; event: string; detail: string; status: 'ok' | 'warn' | 'risk' | 'info' }>;
     completeness: Array<{ label: string; complete: number; total: number; status: 'ok' | 'warn' | 'risk' | 'info' }>;
     hashRows: string[][];
+    overviewSegments?: Array<{ label: string; value: number; ratio: string; status: 'ok' | 'warn' | 'risk' | 'info' }>;
   };
+};
+
+export type ForensicsVisuals = {
+  totals?: {
+    jobs: number;
+    pcapIndexes: number;
+    sessions: number;
+    exportRows: number;
+    hashRows: number;
+  };
+  availability: {
+    jobs: 'live' | 'unavailable';
+    sessions: 'live' | 'unavailable';
+    pcap: 'live' | 'unavailable';
+    audit: 'live' | 'unavailable';
+  };
+  stateCounts: Array<{ label: string; value: number; status: 'ok' | 'warn' | 'risk' | 'info' }>;
+  jobs: Array<{
+    id: string;
+    status: string;
+    progress: number;
+    resultKey: string;
+    sha256: string;
+    totalBytes: number;
+    totalPackets: number;
+    filesScanned: number;
+    downloadUrl: string;
+    expiresAt: number;
+    errorMessage: string;
+  }>;
+  pcapIndexes: Array<{
+    fileKey: string;
+    storagePath: string;
+    probeId: string;
+    sizeBytes: number;
+    sha256: string;
+    startTime: string;
+    endTime: string;
+    packetCount: number;
+    status: string;
+  }>;
+  pcapTrend: Array<{ label: string; value: number }>;
+  sessions: Array<{
+    sessionId: string;
+    time: string;
+    protocol: string;
+    source: string;
+    destination: string;
+    byteCount: number;
+    packetCount: number;
+    duration: string;
+    risk: string;
+    sni: string;
+    ja3: string;
+  }>;
+  completeness: Array<{ label: string; complete: number; total: number; status: 'ok' | 'warn' | 'risk' | 'info' }>;
+  hashRows: Array<{ fileKey: string; sha256: string; status: string; checkedAt: string }>;
+  signedUrls: Array<{ type?: string; key: string; url: string; expiresAt: string; status: string }>;
+  exportRows: Array<{ id: string; content: string; files: number; sizeBytes: number; status: string; resultKey: string }>;
+  auditRows: Array<{ time: string; user: string; action: string; target: string; result: string }>;
 };
 
 export type PageSnapshot = {
@@ -296,6 +370,7 @@ export type PageSnapshot = {
     screen?: ScreenVisuals;
     dataQuality?: DataQualityVisuals;
     encryptedTraffic?: EncryptedTrafficVisuals;
+    forensics?: ForensicsVisuals;
   };
 };
 
@@ -506,7 +581,7 @@ const qualityTopicSnapshotRow = (
   状态: state,
 });
 
-const buildDataQualityVisuals = (): DataQualityVisuals => {
+export const buildDataQualityVisuals = (): DataQualityVisuals => {
   const heatmapValues: DataQualityVisuals['heatmap'][number]['values'][] = [
     ['info', 'info', 'ok', 'info', 'ok', 'ok', 'ok', 'info', 'info', 'info', 'ok', 'info', 'warn', 'ok', 'info', 'info'],
     ['info', 'info', 'info', 'ok', 'warn', 'ok', 'ok', 'info', 'ok', 'ok', 'info', 'warn', 'risk', 'info', 'ok', 'info'],
@@ -1341,20 +1416,21 @@ const dataQualityCellValue = (column: string, row: number) => {
 };
 
 const assetCellValue = (column: string, row: number) => {
-  const hostnames = ['实验楼-PC-0082', 'SRV-12', 'SW-07', 'NAS-03', 'AP-15', 'FIN-PC-0082', 'DB-SRV-07', 'CAM-022'];
-  const types = ['终端', '服务器', '网络设备', '服务器', '网络设备', '终端', '服务器', '终端'];
-  const departments = ['实验楼 / 计算中心', '实验楼 / 计算中心', '核心区', '图书馆', '办公区', '财务部', '计算中心 / 数据库组', '安防系统'];
-  const systems = ['Windows 11', 'Ubuntu 22.04', 'Huawei VRP', 'Synology DSM 7', 'ArubaOS 8.7', 'Windows 11', 'CentOS 7.9', 'Linux 4.x'];
-  const risks = ['弱口令', '漏洞 / 暴露服务', '高危端口', '暴露服务', '弱口令', '未打补丁', '漏洞 / 高危端口', '默认凭据'];
-  if (column === '资产 ID') return row === 0 ? 'PC-0082' : `ASSET-${String(420 + row).padStart(4, '0')}`;
-  if (column === 'IP/MAC') return row === 0 ? '10.12.8.82 / 00:50:56:AA:08:82' : `10.12.${row + 3}.${45 + row} / 00:50:56:AA:${String(12 + row).padStart(2, '0')}:34`;
+  const ids = ['PC-0421', 'PC-0082', 'AP-15', 'FIN-PC-0082', 'CAM-022', 'PC-1021', 'NAS-03', 'SW-07'];
+  const hostnames = ['LAPTOP-8645', 'lab-srv-12', 'AP-15', 'FIN-PC-0082', 'CAM-022', 'DESKTOP-2277', 'NAS-03', 'SW-07'];
+  const types = ['笔记本', '台式机', '接入终端', '台式机', '摄像头', '台式机', '存储终端', '网络交换机'];
+  const departments = ['教学区 / 计算中心', '实验楼 / 信息中心', '办公区', '财务部', '安防系统', '科研楼 / 实验室', '图书馆', '核心区'];
+  const systems = ['Windows 11', 'Ubuntu 22.04', 'ArubaOS 8.7', 'Windows 10', 'Linux 4.x', 'Windows 11', 'Synology DSM 7', 'Huawei VRP'];
+  const risks = ['弱口令 / 远程服务', '高风险端口 / 敏感服务', '弱口令', '未打补丁', '默认凭据', '高风险端口 / 弱口令', '暴露服务', '高风险端口 / 未授权访问'];
+  if (column === '资产 ID') return ids[row % ids.length];
+  if (column === 'IP/MAC') return row === 0 ? '10.12.3.45 / 00:50:56:AA:12:34' : row === 1 ? '10.12.6.82 / 00:18:3E:42:AC:11' : `10.12.${row + 3}.${45 + row} / 00:50:56:AA:${String(12 + row).padStart(2, '0')}:34`;
   if (column === '主机名') return hostnames[row % hostnames.length];
   if (column === '类型') return types[row % types.length];
   if (column === '园区/部门') return departments[row % departments.length];
   if (column === '操作系统') return systems[row % systems.length];
   if (column === '重要性') return ['中', '高', '高', '中', '低', '中', '高', '低'][row % 8];
-  if (column === '最近活跃') return `2026-06-25 09:${String(38 + row).padStart(2, '0')}:21`;
-  if (column === '暴露端口') return [3, 8, 2, 5, 1, 2, 6, 3][row % 8];
+  if (column === '最近活跃') return `2026-06-20 03:${String(42 + row).padStart(2, '0')}:${String(11 + row * 6).padStart(2, '0')}`;
+  if (column === '暴露端口') return [8, 12, 1, 2, 3, 6, 5, 8][row % 8];
   if (column === '风险标签') return risks[row % risks.length];
   return `${column}-${row + 1}`;
 };

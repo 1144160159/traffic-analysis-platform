@@ -1,0 +1,1 @@
+import{j as a}from"./vendor-react-DcxXCZkJ.js";function i({title:e,extra:s,children:n,className:l=""}){return a.jsxs("section",{className:`taf-panel ${l}`,children:[a.jsxs("div",{className:"taf-panel__header",children:[a.jsx("h2",{children:e}),s&&a.jsx("div",{className:"taf-panel__extra",children:s})]}),a.jsx("div",{className:"taf-panel__body",children:n})]})}export{i as W};

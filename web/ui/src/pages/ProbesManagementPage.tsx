@@ -15,64 +15,22 @@ import {
   SyncOutlined,
   ThunderboltOutlined,
   WarningOutlined,
+  ZoomInOutlined,
+  ZoomOutOutlined,
 } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
-import { Alert, Button, Drawer, Modal, Progress, Select, Space, Tooltip } from 'antd';
-import type { ReactNode } from 'react';
-import { useMemo, useState } from 'react';
-import { DataQualityTrendChart, TopicTopologyGraph } from '@/components/charts';
+import { Alert, Button, Drawer, Input, Modal, Progress, Select, Space, Tooltip } from 'antd';
+import type { KeyboardEvent, PointerEvent as ReactPointerEvent, ReactNode, WheelEvent as ReactWheelEvent } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { DataQualityTrendChart } from '@/components/charts';
 import { MetricTile } from '@/components/MetricTile';
 import { StatusTag } from '@/components/StatusTag';
 import { WorkPanel } from '@/components/WorkPanel';
 import type { NavRoute } from '@/routes/routeManifest';
-import { fetchPageSnapshot } from '@/services/api';
+import { fetchPageSnapshot, fetchProbeTopology, submitProbeOperation } from '@/services/api';
+import type { ProbeOperationActionId, ProbeOperationResult, ProbeTopologyGraph, ProbeTopologyNode, ProbeTopologyPoint } from '@/services/api';
 import { pageApiPlans } from '@/services/pageApiPlans';
 import type { PageSnapshot, SnapshotRow } from '@/services/mockData';
-
-const topologyNodes = [
-  { id: 'library', label: '图书馆', probe: 'PROBE-LIB-01', x: 32, y: 25, tone: 'ok' },
-  { id: 'teaching', label: '教学区', probe: 'PROBE-BUILD-01', x: 14, y: 48, tone: 'ok' },
-  { id: 'office', label: '办公区', probe: 'PROBE-OFFICE-01', x: 30, y: 69, tone: 'ok' },
-  { id: 'core', label: '核心区', probe: 'CORE-SW-01', x: 51, y: 49, tone: 'info' },
-  { id: 'datacenter', label: '数据中心', probe: 'PROBE-DC-01', x: 51, y: 78, tone: 'ok' },
-  { id: 'lab', label: '实验楼', probe: 'PROBE-LAB-01', x: 78, y: 26, tone: 'ok' },
-  { id: 'dorm', label: '宿舍区', probe: 'PROBE-DORM-01', x: 91, y: 49, tone: 'warn' },
-  { id: 'branch', label: '汇聚区 B', probe: 'PROBE-BRANCH-01', x: 78, y: 73, tone: 'risk' },
-];
-
-const topologyLinks = [
-  { source: 'teaching', target: 'core', tone: 'info' as const },
-  { source: 'library', target: 'core', tone: 'ok' as const },
-  { source: 'office', target: 'core', tone: 'ok' as const },
-  { source: 'datacenter', target: 'core', tone: 'info' as const },
-  { source: 'lab', target: 'core', tone: 'info' as const },
-  { source: 'dorm', target: 'core', tone: 'risk' as const },
-  { source: 'branch', target: 'core', tone: 'risk' as const },
-  { source: 'office', target: 'datacenter', tone: 'ok' as const },
-  { source: 'teaching', target: 'datacenter', tone: 'info' as const },
-  { source: 'datacenter', target: 'dorm', tone: 'ok' as const },
-];
-
-const heartbeatRows = [
-  ['03:45:00', 'PROBE-DC-01', '1s', '正常', '心跳同步'],
-  ['03:44:59', 'PROBE-DC-02', '1s', '正常', '心跳同步'],
-  ['03:44:58', 'PROBE-BUILD-01', '2s', '正常', '心跳同步'],
-  ['03:44:57', 'PROBE-BUILD-02', '1s', '正常', '心跳同步'],
-  ['03:44:56', 'PROBE-OFFICE-01', '1s', '正常', '心跳同步'],
-  ['03:44:54', 'PROBE-SPORT-01', '1s', '告警', '丢包率 1.12%'],
-  ['03:44:49', 'PROBE-DORM-01', '-', '离线', '超时 3m21s'],
-];
-
-const configItems = [
-  ['采集网卡', 'eth2, eth3', <ApiOutlined key="nic" />],
-  ['过滤策略', '办公网_全量_20260601', <ControlOutlined key="filter" />],
-  ['PCAP 归档', '已启用 (MinIO)', <FileProtectOutlined key="pcap" />],
-  ['归档路径', 's3://pcap-archive/probe-dc-01/', <CloudUploadOutlined key="archive" />],
-  ['mTLS', '已启用', <SafetyCertificateOutlined key="mtls" />],
-  ['CPU 亲和', '0, 1, 2, 3', <DashboardOutlined key="cpu" />],
-  ['缓冲区大小', '4096 MB', <DeploymentUnitOutlined key="buffer" />],
-  ['批量发送', '2.0 Gbps', <ThunderboltOutlined key="batch" />],
-];
 
 const actionItems: Array<[string, ReactNode]> = [
   ['批量升级', <CloudUploadOutlined key="upgrade" />],
@@ -83,53 +41,111 @@ const actionItems: Array<[string, ReactNode]> = [
   ['重启探针', <ReloadOutlined key="restart" />],
 ];
 
+const probeMetricIcons: Record<string, ReactNode> = {
+  探针总数: <DeploymentUnitOutlined />,
+  在线探针: <SafetyCertificateOutlined />,
+  采集网卡: <ApiOutlined />,
+  采集模式: <ControlOutlined />,
+  '平均 CPU': <DashboardOutlined />,
+  平均内存: <ThunderboltOutlined />,
+  告警探针: <WarningOutlined />,
+  离线探针: <PoweroffOutlined />,
+};
+
 type TopologyMode = '2d' | '3d';
 
 type ProbeAction = {
+  id?: ProbeOperationActionId;
   title: string;
-  target: string;
+  targets: string[];
   endpoint: string;
   auditEvent: string;
+  readOnly: boolean;
+  payload: Record<string, unknown>;
 };
 
 export function ProbesManagementPage({ route }: { route: NavRoute }) {
   const [selectedKey, setSelectedKey] = useState<string>();
-  const [selectedTopologyId, setSelectedTopologyId] = useState('datacenter');
+  const [selectedTopologyId, setSelectedTopologyId] = useState('');
   const [topologyMode, setTopologyMode] = useState<TopologyMode>('3d');
   const [matrixPage, setMatrixPage] = useState(1);
   const [trendRange, setTrendRange] = useState<'6h' | '24h'>('6h');
   const [matrixExpanded, setMatrixExpanded] = useState(false);
   const [action, setAction] = useState<ProbeAction>();
   const [actionSubmitted, setActionSubmitted] = useState(false);
+  const [actionPending, setActionPending] = useState(false);
+  const [actionError, setActionError] = useState('');
+  const [actionResult, setActionResult] = useState<ProbeOperationResult>();
   const { data, error, isError, isLoading, refetch } = useQuery({
     queryKey: ['page-snapshot', route.id],
     queryFn: () => fetchPageSnapshot(route.id),
     refetchInterval: 15_000,
     refetchIntervalInBackground: true,
   });
+  const {
+    data: topologyGraph,
+    error: topologyError,
+    isError: isTopologyError,
+    isLoading: isTopologyLoading,
+    refetch: refetchTopology,
+  } = useQuery({
+    queryKey: ['probe-topology', topologyMode],
+    queryFn: () => fetchProbeTopology(topologyMode),
+    refetchInterval: 15_000,
+    refetchIntervalInBackground: true,
+  });
 
   const rows = useMemo(() => data?.rows ?? [], [data?.rows]);
   const probeRows = useMemo(() => buildProbeRows(rows), [rows]);
-  const pageSize = 7;
+  const pageSize = 10;
   const pageCount = Math.max(1, Math.ceil(probeRows.length / pageSize));
   const visibleRows = probeRows.slice((matrixPage - 1) * pageSize, matrixPage * pageSize);
   const selected = useMemo(() => probeRows.find((row) => rowKey(row) === selectedKey) ?? probeRows[0], [probeRows, selectedKey]);
   const metrics = route.page.kpis.map((label) => data?.metrics.find((item) => item.label === label) ?? fallbackMetric(label));
-  const openAction = (title: string, target: string) => {
+  const probeIds = useMemo(() => probeRows.map((row) => rowKey(row)).filter(Boolean), [probeRows]);
+  const openAction = (title: string, target: string | string[]) => {
     setActionSubmitted(false);
-    setAction(createProbeAction(title, target));
+    setActionPending(false);
+    setActionError('');
+    setActionResult(undefined);
+    setAction(createProbeAction(title, Array.isArray(target) ? target : [target]));
   };
   const actionUsesModal = Boolean(action && /配置|升级|证书/.test(action.title));
   const closeAction = () => {
     setAction(undefined);
     setActionSubmitted(false);
+    setActionPending(false);
+    setActionError('');
+    setActionResult(undefined);
+  };
+  const submitAction = async () => {
+    if (!action?.id || action.readOnly || actionPending) return;
+    setActionPending(true);
+    setActionError('');
+    try {
+      const result = await submitProbeOperation(action.id, action.targets, action.payload);
+      setActionResult(result);
+      setActionSubmitted(true);
+      await refetch();
+    } catch (submitError) {
+      setActionError(submitError instanceof Error ? submitError.message : '探针运维请求失败');
+    } finally {
+      setActionPending(false);
+    }
   };
   const selectTopology = (id: string) => {
     setSelectedTopologyId(id);
-    const index = topologyNodes.findIndex((node) => node.id === id);
-    const target = probeRows[index];
+    const target = probeRows.find((row) => rowKey(row) === id);
     if (target) setSelectedKey(rowKey(target));
   };
+  useEffect(() => {
+    const nodes = topologyGraph?.nodes ?? [];
+    if (!nodes.length || nodes.some((node) => node.id === selectedTopologyId)) return;
+    const nextId = nodes[0].id;
+    setSelectedTopologyId(nextId);
+    const target = probeRows.find((row) => rowKey(row) === nextId);
+    if (target) setSelectedKey(rowKey(target));
+  }, [probeRows, selectedTopologyId, topologyGraph]);
 
   return (
     <div className="taf-page taf-probes">
@@ -150,7 +166,7 @@ export function ProbesManagementPage({ route }: { route: NavRoute }) {
               <h1>探针总览</h1>
             </div>
             <div className="taf-probes-kpis">
-              {metrics.map((metric) => <MetricTile key={metric.label} metric={metric} />)}
+              {metrics.map((metric) => <MetricTile key={metric.label} metric={metric} icon={probeMetricIcons[metric.label]} />)}
             </div>
           </section>
 
@@ -160,11 +176,11 @@ export function ProbesManagementPage({ route }: { route: NavRoute }) {
               <Space size={6}>
                 <Button size="small" type={topologyMode === '2d' ? 'primary' : 'default'} aria-pressed={topologyMode === '2d'} onClick={() => setTopologyMode('2d')}>2D</Button>
                 <Button size="small" type={topologyMode === '3d' ? 'primary' : 'default'} aria-pressed={topologyMode === '3d'} onClick={() => setTopologyMode('3d')}>3D</Button>
-                <Tooltip title="刷新部署拓扑"><Button size="small" icon={<SyncOutlined />} aria-label="刷新部署拓扑" onClick={() => void refetch()} /></Tooltip>
+                <Tooltip title="刷新部署拓扑"><Button size="small" icon={<SyncOutlined />} aria-label="刷新部署拓扑" onClick={() => void Promise.all([refetch(), refetchTopology()])} /></Tooltip>
               </Space>
             )}
           >
-            <DeploymentTopology rows={probeRows} mode={topologyMode} selectedNodeId={selectedTopologyId} onSelect={selectTopology} />
+            <DeploymentTopology graph={topologyGraph} loading={isTopologyLoading} error={isTopologyError ? topologyError : undefined} mode={topologyMode} selectedNodeId={selectedTopologyId} onSelect={selectTopology} />
           </WorkPanel>
 
           <div className="taf-probes-bottom">
@@ -213,11 +229,11 @@ export function ProbesManagementPage({ route }: { route: NavRoute }) {
 
         <aside className="taf-probes-rail">
           <ProbeDetail selected={selected} />
-          <WorkPanel title="批量运维" extra={<Button size="small" type="link" onClick={() => openAction('编辑批量运维', textValue(selected, '探针 ID') || '当前探针组')}>编辑</Button>}>
-            <BatchOperations onAction={(title) => openAction(title, textValue(selected, '探针 ID') || '当前探针组')} />
+          <WorkPanel title="批量运维" extra={<Button size="small" type="link" onClick={() => openAction('编辑批量运维', textValue(selected, '探针 ID') || probeIds[0] || '当前探针组')}>编辑</Button>}>
+            <BatchOperations selected={selected} onAction={(title) => openAction(title, title.includes('批量') ? probeIds : textValue(selected, '探针 ID') || probeIds[0] || '当前探针组')} />
           </WorkPanel>
           <WorkPanel title="心跳与日志" extra={<Button size="small" type="link" onClick={() => openAction('查看全部心跳与日志', textValue(selected, '探针 ID') || '当前探针组')}>更多</Button>}>
-            <HeartbeatLog onSelect={(probe) => openAction('查看心跳详情', probe)} />
+            <HeartbeatLog rows={probeRows} onSelect={(probe) => openAction('查看心跳详情', probe)} />
           </WorkPanel>
         </aside>
       </section>
@@ -227,9 +243,9 @@ export function ProbesManagementPage({ route }: { route: NavRoute }) {
         open={Boolean(action && !actionUsesModal)}
         width="min(520px, calc(var(--taf-window-inner-width, 100dvw) - 40px))"
         onClose={closeAction}
-        extra={<Button size="small" type="primary" disabled={actionSubmitted} onClick={() => setActionSubmitted(true)}>{actionSubmitted ? '已写入任务队列' : '确认提交'}</Button>}
+        extra={action && !action.readOnly ? <Button size="small" type="primary" loading={actionPending} disabled={actionSubmitted} onClick={() => void submitAction()}>{actionSubmitted ? '后端已受理' : '确认提交'}</Button> : undefined}
       >
-        {action && <ProbeActionBody action={action} submitted={actionSubmitted} />}
+        {action && <ProbeActionBody action={action} onPayloadChange={(payload) => setAction({ ...action, payload: { ...action.payload, ...payload } })} submitted={actionSubmitted} pending={actionPending} error={actionError} result={actionResult} />}
       </Drawer>
       <Modal
         className="taf-probe-action-modal"
@@ -239,10 +255,10 @@ export function ProbesManagementPage({ route }: { route: NavRoute }) {
         onCancel={closeAction}
         footer={[
           <Button key="cancel" onClick={closeAction}>取消</Button>,
-          <Button key="submit" type="primary" disabled={actionSubmitted} onClick={() => setActionSubmitted(true)}>{actionSubmitted ? '已写入任务队列' : '确认提交'}</Button>,
+          <Button key="submit" type="primary" loading={actionPending} disabled={actionSubmitted} onClick={() => void submitAction()}>{actionSubmitted ? '后端已受理' : '确认提交'}</Button>,
         ]}
       >
-        {action && <ProbeActionBody action={action} submitted={actionSubmitted} />}
+        {action && <ProbeActionBody action={action} onPayloadChange={(payload) => setAction({ ...action, payload: { ...action.payload, ...payload } })} submitted={actionSubmitted} pending={actionPending} error={actionError} result={actionResult} />}
       </Modal>
       <Drawer title="探针状态矩阵" placement="bottom" height="72%" open={matrixExpanded} onClose={() => setMatrixExpanded(false)}>
         <ProbeStatusMatrix columns={route.page.tableColumns} rows={visibleRows} isLoading={isLoading} onSelect={(record) => setSelectedKey(rowKey(record))} onAction={(title, record) => openAction(title, rowKey(record))} />
@@ -251,18 +267,61 @@ export function ProbesManagementPage({ route }: { route: NavRoute }) {
   );
 }
 
-function ProbeActionBody({ action, submitted }: { action: ProbeAction; submitted: boolean }) {
+function ProbeActionBody({
+  action,
+  onPayloadChange,
+  submitted,
+  pending,
+  error,
+  result,
+}: {
+  action: ProbeAction;
+  onPayloadChange: (payload: Record<string, unknown>) => void;
+  submitted: boolean;
+  pending: boolean;
+  error: string;
+  result?: ProbeOperationResult;
+}) {
   return (
     <div className="taf-alert-detail-action-body">
-      <p>将为探针对象创建“{action.title}”任务；执行前校验租户、权限、版本兼容性和影响范围，并保留操作者与审计上下文。</p>
+      <p>{action.readOnly ? '当前抽屉展示真实探针 API 返回的对象上下文。' : `将通过控制面 API 创建“${action.title}”任务；执行前校验租户、权限、版本兼容性和影响范围，并保留操作者与审计上下文。`}</p>
       <dl>
-        <dt>操作对象</dt><dd>{action.target}</dd>
-        <dt>接口预留</dt><dd>{action.endpoint}</dd>
+        <dt>操作对象</dt><dd>{action.targets.join('、')}</dd>
+        <dt>真实接口</dt><dd>{action.endpoint}</dd>
         <dt>审计事件</dt><dd>{action.auditEvent}</dd>
       </dl>
-      {submitted && <Alert type="success" showIcon message="探针业务操作已进入仿真任务队列" description={`目标：${action.target}；动作：${action.title}`} />}
+      {!action.readOnly && <ProbeActionFields action={action} onChange={onPayloadChange} />}
+      {pending && <Alert type="info" showIcon message="正在提交探针运维请求" />}
+      {error && <Alert type="error" showIcon message="探针运维请求失败" description={error} />}
+      {submitted && <Alert type="success" showIcon message="探针业务操作已由后端受理" description={`状态：${result?.status || 'completed'}；操作 ID：${result?.operation_id || result?.operation_ids?.join(', ') || result?.batch_id || '-'}`} />}
     </div>
   );
+}
+
+function ProbeActionFields({ action, onChange }: { action: ProbeAction; onChange: (payload: Record<string, unknown>) => void }) {
+  if (action.id === 'probe-batch-state') return (
+    <label className="taf-probe-action-field">目标状态<Select value={String(action.payload.desired_state || 'active')} options={[{ value: 'active', label: '启用' }, { value: 'inactive', label: '停用' }]} onChange={(desired_state) => onChange({ desired_state })} /></label>
+  );
+  if (action.id === 'probe-batch-upgrade') return (
+    <label className="taf-probe-action-field">目标版本<Input value={String(action.payload.target_version || '')} onChange={(event) => onChange({ target_version: event.target.value })} /></label>
+  );
+  if (action.id === 'probe-config-push') return (
+    <div className="taf-probe-action-fields">
+      <label className="taf-probe-action-field">配置版本<Input value={String(action.payload.config_version || '')} onChange={(event) => onChange({ config_version: event.target.value })} /></label>
+      <label className="taf-probe-action-field">采集模式<Select value={String(action.payload.capture_mode || 'af_packet')} options={[{ value: 'af_packet', label: 'AF_PACKET' }, { value: 'af_xdp', label: 'AF_XDP' }, { value: 'hybrid_l2_l3', label: '混合 L2+L3' }]} onChange={(capture_mode) => onChange({ capture_mode })} /></label>
+      <label className="taf-probe-action-field">归档路径<Input value={String(action.payload.archive_path || '')} onChange={(event) => onChange({ archive_path: event.target.value })} /></label>
+    </div>
+  );
+  if (action.id === 'probe-connectivity-test') return (
+    <label className="taf-probe-action-field">测试目标<Input value={Array.isArray(action.payload.targets) ? action.payload.targets.join(',') : ''} onChange={(event) => onChange({ targets: event.target.value.split(',').map((item) => item.trim()).filter(Boolean) })} /></label>
+  );
+  if (action.id === 'probe-cert-rotate') return (
+    <div className="taf-probe-action-fields">
+      <label className="taf-probe-action-field">证书引用<Input value={String(action.payload.secret_ref || '')} onChange={(event) => onChange({ secret_ref: event.target.value })} /></label>
+      <label className="taf-probe-action-field">轮换窗口<Select value={String(action.payload.rotation_window || 'immediate')} options={[{ value: 'immediate', label: '立即' }, { value: 'maintenance', label: '维护窗口' }]} onChange={(rotation_window) => onChange({ rotation_window })} /></label>
+    </div>
+  );
+  return <label className="taf-probe-action-field">原因<Input value={String(action.payload.reason || '')} onChange={(event) => onChange({ reason: event.target.value })} /></label>;
 }
 
 function ProbeStatusMatrix({
@@ -306,17 +365,23 @@ function ProbeStatusMatrix({
 }
 
 function DeploymentTopology({
-  rows,
+  graph,
+  loading,
+  error,
   mode,
   selectedNodeId,
   onSelect,
 }: {
-  rows: SnapshotRow[];
+  graph?: ProbeTopologyGraph;
+  loading: boolean;
+  error?: unknown;
   mode: TopologyMode;
   selectedNodeId: string;
   onSelect: (id: string) => void;
 }) {
-  const nodes = buildProbeTopologyNodes(rows, mode, selectedNodeId);
+  if (loading && !graph) return <div className="taf-probes-empty">正在读取部署拓扑 API…</div>;
+  if (error && !graph) return <div className="taf-probes-empty is-error">部署拓扑 API 不可用</div>;
+  if (!graph?.nodes.length) return <div className="taf-probes-empty">部署拓扑 API 暂无可定位节点</div>;
   return (
     <div className="taf-probes-topology">
       <div className="taf-probes-legend">
@@ -332,8 +397,9 @@ function DeploymentTopology({
       </div>
       <div className="taf-probes-map">
         <div className="taf-probes-topology-svg">
-          <TopicTopologyGraph ariaLabel="探针部署拓扑" nodes={nodes} links={topologyLinks} onNodeClick={onSelect} />
+          <ProbeDeploymentSvg graph={graph} mode={mode} selectedNodeId={selectedNodeId} onSelect={onSelect} />
         </div>
+        <span className="taf-probes-topology-source" title={`revision ${graph.revision}`}>API · {graph.nodes.length} 节点 / {graph.edges.length} 链路</span>
         <div className="taf-probes-map-note">
           <span><i className="is-ok" />探针</span>
           <span><i />交换机</span>
@@ -347,6 +413,10 @@ function DeploymentTopology({
 
 function ThroughputTrends({ rows, range }: { rows: SnapshotRow[]; range: '6h' | '24h' }) {
   const trend = buildProbeTrend(rows, range);
+  const avgDrop = averageRowValue(rows, '丢包率');
+  const avgParse = averageRowValue(rows, '解析率');
+  const totalBandwidth = rows.reduce((total, row) => total + numericValue(textValue(row, '采集带宽')), 0);
+  const pps = Math.round(rows.reduce((total, row) => total + Number(row.PPS || 0), 0));
   return (
     <div className="taf-probes-trends">
       <div className="taf-probes-linechart">
@@ -354,10 +424,10 @@ function ThroughputTrends({ rows, range }: { rows: SnapshotRow[]; range: '6h' | 
       </div>
       <div className="taf-probes-trend-kpis">
         {[
-          ['PPS (K)', '1,286', '+8.2%'],
-          ['丢包率', '0.02%', '-0.01%'],
-          ['解析率', '99.18%', '+0.16%'],
-          ['背压率', '0.06%', '+0.02%'],
+          ['PPS (K)', pps.toLocaleString(), '实时聚合'],
+          ['丢包率', `${avgDrop.toFixed(2)}%`, '实时均值'],
+          ['解析率', `${avgParse.toFixed(2)}%`, '实时均值'],
+          ['采集带宽', `${totalBandwidth.toFixed(1)}G`, `${rows.length} 台探针`],
         ].map(([label, value, delta]) => (
           <div key={label}><span>{label}</span><strong>{value}</strong><em>{delta}</em></div>
         ))}
@@ -365,7 +435,7 @@ function ThroughputTrends({ rows, range }: { rows: SnapshotRow[]; range: '6h' | 
       <div className="taf-probes-threshold">
         <div className="taf-probes-threshold-head">
           <span>批量发送带宽 (Gbps)</span>
-          <em><i />PROBE-DC-01 <b />阈值线 (30 Gbps)</em>
+          <em><i />{trend.batchSeries[0]?.name || '-'} <b />阈值线 ({trend.threshold} Gbps)</em>
         </div>
         <DataQualityTrendChart ariaLabel="批量发送带宽" className="taf-probes-trend-echart" categories={trend.categories} series={trend.batchSeries} valueFormatter={(value) => `${value}G`} />
       </div>
@@ -374,36 +444,38 @@ function ThroughputTrends({ rows, range }: { rows: SnapshotRow[]; range: '6h' | 
 }
 
 function ProbeDetail({ selected }: { selected?: SnapshotRow }) {
-  const status = textValue(selected, '状态') || '在线';
-  const cpu = numericPercent(textValue(selected, 'CPU')) || 28.7;
-  const memory = numericPercent(textValue(selected, '内存')) || 38.2;
-  const drop = textValue(selected, '丢包率') || '0.02%';
-  const bandwidth = textValue(selected, '采集带宽') || '18.6 Gbps';
+  const status = textValue(selected, '状态') || '未知';
+  const cpu = numericPercent(textValue(selected, 'CPU'));
+  const memory = numericPercent(textValue(selected, '内存'));
+  const disk = numericPercent(textValue(selected, '磁盘'));
+  const drop = textValue(selected, '丢包率') || '-';
+  const bandwidth = textValue(selected, '采集带宽') || '-';
+  const heartbeatAge = heartbeatAgeLabel(Number(selected?.['最后心跳'] ?? 0));
   return (
     <WorkPanel title="选中探针详情" extra={<span className={`taf-probes-online is-${status === '离线' ? 'risk' : status === '告警' ? 'warn' : 'ok'}`}>{status}</span>}>
       <div className="taf-probes-detail">
         <div className="taf-probes-detail-grid">
-          <span>探针 ID</span><strong>{textValue(selected, '探针 ID') || 'PROBE-DC-01'}</strong>
-          <span>所在位置</span><strong>{textValue(selected, '位置') || '数据中心机房 A'}</strong>
-          <span>采集网卡</span><strong>eth2 (100G)</strong>
-          <span>采集模式</span><strong>{textValue(selected, '采集模式') || '混合 (L2+L3)'}</strong>
-          <span>版本</span><strong>{textValue(selected, '版本') || 'v3.4.7'}</strong>
-          <span>运行时长</span><strong>{textValue(selected, '运行时长') || '12d 14h'}</strong>
+          <span>探针 ID</span><strong>{textValue(selected, '探针 ID') || '-'}</strong>
+          <span>所在位置</span><strong>{textValue(selected, '位置') || '-'}</strong>
+          <span>采集网卡</span><strong>{textValue(selected, '采集网卡') || '-'}</strong>
+          <span>采集模式</span><strong>{textValue(selected, '采集模式') || '-'}</strong>
+          <span>版本</span><strong>{textValue(selected, '版本') || '-'}</strong>
+          <span>运行时长</span><strong>{textValue(selected, '运行时长') || '-'}</strong>
         </div>
         <div className="taf-probes-resource">
           <ResourceBar label="CPU 使用率" value={cpu} />
           <ResourceBar label="内存使用率" value={memory} />
-          <ResourceBar label="磁盘使用率" value={56.1} />
+          <ResourceBar label="磁盘使用率" value={disk} />
           <div><span>采集带宽</span><strong>{bandwidth} / 40 Gbps</strong></div>
           <div><span>丢包率</span><strong className={drop.startsWith('0.') ? 'is-ok' : 'is-warn'}>{drop}</strong></div>
-          <div><span>解析率</span><strong className="is-ok">{textValue(selected, '解析率') || '99.21%'}</strong></div>
+          <div><span>解析率</span><strong className="is-ok">{textValue(selected, '解析率') || '-'}</strong></div>
         </div>
         <div className="taf-probes-gates">
           {[
-            ['运行状态', '剩余 63 天', 'ok'],
-            ['mTLS', '已启用', 'ok'],
-            ['时间同步', '正常', 'ok'],
-            ['心跳状态', '正常 1s 前', 'ok'],
+            ['运行状态', status, status === '离线' ? 'risk' : status === '告警' ? 'warn' : 'ok'],
+            ['mTLS', textValue(selected, 'mTLS') || '-', textValue(selected, 'mTLS') === '已启用' ? 'ok' : 'warn'],
+            ['归档状态', textValue(selected, '归档路径') === '-' ? '未配置' : '已配置', textValue(selected, '归档路径') === '-' ? 'warn' : 'ok'],
+            ['心跳状态', heartbeatAge, status === '离线' ? 'risk' : 'ok'],
           ].map(([label, value, gateStatus]) => (
             <div key={label}><CheckIcon status={gateStatus as PageSnapshot['evidence'][number]['status']} /><span>{label}</span><strong>{value}</strong></div>
           ))}
@@ -427,7 +499,17 @@ function CheckIcon({ status }: { status: PageSnapshot['evidence'][number]['statu
   return status === 'risk' ? <WarningOutlined /> : status === 'warn' ? <FieldTimeOutlined /> : <SafetyCertificateOutlined />;
 }
 
-function BatchOperations({ onAction }: { onAction: (title: string) => void }) {
+function BatchOperations({ selected, onAction }: { selected?: SnapshotRow; onAction: (title: string) => void }) {
+  const configItems: Array<[string, string, ReactNode]> = [
+    ['采集网卡', textValue(selected, '采集网卡') || '-', <ApiOutlined key="nic" />],
+    ['过滤策略', '由配置下发接口管理', <ControlOutlined key="filter" />],
+    ['PCAP 归档', textValue(selected, '归档路径') === '-' ? '未配置' : '已启用', <FileProtectOutlined key="pcap" />],
+    ['归档路径', textValue(selected, '归档路径') || '-', <CloudUploadOutlined key="archive" />],
+    ['mTLS', textValue(selected, 'mTLS') || '-', <SafetyCertificateOutlined key="mtls" />],
+    ['CPU 使用率', textValue(selected, 'CPU') || '-', <DashboardOutlined key="cpu" />],
+    ['采集模式', textValue(selected, '采集模式') || '-', <DeploymentUnitOutlined key="buffer" />],
+    ['采集带宽', textValue(selected, '采集带宽') || '-', <ThunderboltOutlined key="batch" />],
+  ];
   return (
     <div className="taf-probes-batch">
       <div className="taf-probes-config">
@@ -442,7 +524,13 @@ function BatchOperations({ onAction }: { onAction: (title: string) => void }) {
   );
 }
 
-function HeartbeatLog({ onSelect }: { onSelect: (probe: string) => void }) {
+function HeartbeatLog({ rows, onSelect }: { rows: SnapshotRow[]; onSelect: (probe: string) => void }) {
+  const heartbeatRows = rows.slice(0, 7).map((row) => {
+    const heartbeat = Number(row['最后心跳'] ?? 0);
+    const status = textValue(row, '状态');
+    const detail = status === '告警' ? `丢包率 ${textValue(row, '丢包率')}` : status === '离线' ? '心跳超时' : '心跳同步';
+    return [heartbeatTime(heartbeat), rowKey(row), heartbeatAgeLabel(heartbeat), status === '在线' ? '正常' : status, detail];
+  });
   return (
     <div className="taf-probes-heartbeat">
       <div><span>时间</span><span>探针 ID</span><span>延迟</span><span>状态</span><span>详情</span></div>
@@ -494,79 +582,277 @@ function columnToClass(column: string) {
 }
 
 function buildProbeRows(rows: SnapshotRow[]) {
-  const source = rows.length ? rows : [
-    { '探针 ID': 'PROBE-DC-01', 位置: '数据中心', 状态: '在线', CPU: '28.7%', 内存: '38.2%', '丢包率': '0.02%', '采集带宽': '18.6 Gbps', '采集模式': '混合 (L2+L3)', 版本: 'v3.4.7', '运行时长': '12d 14h', '解析率': '99.21%' },
-  ];
-  if (source.length >= 25) return source;
-  return Array.from({ length: 25 }, (_, index) => {
-    const row = source[index % source.length];
-    if (index < source.length) return row;
-    return { ...row, '探针 ID': `${rowKey(row)}-SIM${String(Math.floor(index / source.length) + 1).padStart(2, '0')}` };
-  });
+  return rows;
 }
 
-function buildProbeTopologyNodes(rows: SnapshotRow[], mode: TopologyMode, selectedNodeId: string) {
-  return topologyNodes.map((node, index) => {
-    const row = rows[index % Math.max(rows.length, 1)];
-    const status = textValue(row, '状态') || (node.tone === 'risk' ? '离线' : node.tone === 'warn' ? '告警' : '在线');
-    const tone: 'risk' | 'proxy' | 'protocol' | 'probe' = status === '离线' ? 'risk' : status === '告警' ? 'proxy' : node.id === 'core' ? 'protocol' : 'probe';
-    const offset = mode === '3d' ? (index % 2 === 0 ? -2 : 2) : 0;
-    return {
-      id: node.id,
-      label: textValue(row, '位置') || node.label,
-      detail: `${textValue(row, '探针 ID') || node.probe} | ${status}`,
-      x: node.x + offset,
-      y: node.y - (mode === '3d' ? (index % 3) * 2 : 0),
-      tone,
-      size: [112, 42] as [number, number],
-      selected: node.id === selectedNodeId,
-    };
-  });
+function ProbeDeploymentSvg({
+  mode,
+  graph,
+  selectedNodeId,
+  onSelect,
+}: {
+  mode: TopologyMode;
+  graph: ProbeTopologyGraph;
+  selectedNodeId: string;
+  onSelect: (id: string) => void;
+}) {
+  const [viewBox, setViewBox] = useState({ x: 0, y: 0, width: 1000, height: 420 });
+  const dragRef = useRef<{ pointerId: number; x: number; y: number; viewX: number; viewY: number }>();
+  const nodes = useMemo(() => [...graph.nodes].sort((left, right) => topologyPosition(left, mode).y - topologyPosition(right, mode).y), [graph.nodes, mode]);
+  const projected = useMemo(() => new Map(nodes.map((node) => [node.id, topologyCanvasPoint(topologyPosition(node, mode))])), [nodes, mode]);
+  const labeledNodeIds = useMemo(() => new Set([...graph.nodes]
+    .sort((left, right) => (right.kind === 'core' ? 100 : 0) + right.bandwidth_gbps - ((left.kind === 'core' ? 100 : 0) + left.bandwidth_gbps))
+    .slice(0, 5)
+    .map((node) => node.id)), [graph.nodes]);
+  const activate = (event: KeyboardEvent<SVGGElement>, id: string) => {
+    if (event.key === 'Enter' || event.key === ' ') onSelect(id);
+  };
+  const resetView = () => setViewBox({ x: 0, y: 0, width: 1000, height: 420 });
+  const zoom = (factor: number, focusX = viewBox.x + viewBox.width / 2, focusY = viewBox.y + viewBox.height / 2) => {
+    const width = Math.max(480, Math.min(1400, viewBox.width * factor));
+    const height = width * 0.42;
+    const scale = width / viewBox.width;
+    setViewBox({
+      x: focusX - (focusX - viewBox.x) * scale,
+      y: focusY - (focusY - viewBox.y) * scale,
+      width,
+      height,
+    });
+  };
+  const onWheel = (event: ReactWheelEvent<SVGSVGElement>) => {
+    event.preventDefault();
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = viewBox.x + ((event.clientX - rect.left) / rect.width) * viewBox.width;
+    const y = viewBox.y + ((event.clientY - rect.top) / rect.height) * viewBox.height;
+    zoom(event.deltaY > 0 ? 1.12 : 0.88, x, y);
+  };
+  const onPointerDown = (event: ReactPointerEvent<SVGSVGElement>) => {
+    if ((event.target as Element).closest('.taf-probe-deployment-svg__node')) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    dragRef.current = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, viewX: viewBox.x, viewY: viewBox.y };
+  };
+  const onPointerMove = (event: ReactPointerEvent<SVGSVGElement>) => {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    setViewBox((current) => ({ ...current, x: drag.viewX - ((event.clientX - drag.x) / rect.width) * current.width, y: drag.viewY - ((event.clientY - drag.y) / rect.height) * current.height }));
+  };
+  const onPointerUp = (event: ReactPointerEvent<SVGSVGElement>) => {
+    if (dragRef.current?.pointerId === event.pointerId) dragRef.current = undefined;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+  };
+  return (
+    <div className="taf-probe-deployment-stage">
+      <div className="taf-probe-deployment-controls" aria-label="拓扑缩放控制">
+        <Tooltip title="放大"><button type="button" aria-label="放大部署拓扑" onClick={() => zoom(0.84)}><ZoomInOutlined /></button></Tooltip>
+        <Tooltip title="缩小"><button type="button" aria-label="缩小部署拓扑" onClick={() => zoom(1.18)}><ZoomOutOutlined /></button></Tooltip>
+        <Tooltip title="重置视图"><button type="button" aria-label="重置部署拓扑" onClick={resetView}><FullscreenOutlined /></button></Tooltip>
+      </div>
+      <svg
+        className={`taf-probe-deployment-svg is-${mode}`}
+        viewBox={`${viewBox.x} ${viewBox.y} ${viewBox.width} ${viewBox.height}`}
+        preserveAspectRatio="xMidYMid meet"
+        role="img"
+        aria-label={`探针部署拓扑${mode.toUpperCase()}动态图`}
+        data-topology-mode={mode}
+        data-topology-source={graph.source}
+        data-topology-revision={graph.revision}
+        data-node-count={nodes.length}
+        data-link-count={graph.edges.length}
+        onWheel={onWheel}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+      >
+        <defs>
+          <linearGradient id={`probe-ground-${mode}`} x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#0b3148" stopOpacity=".82" />
+            <stop offset="1" stopColor="#03111d" stopOpacity=".42" />
+          </linearGradient>
+          <pattern id={`probe-grid-${mode}`} width="34" height="34" patternUnits="userSpaceOnUse">
+            <path d="M34 0H0V34" fill="none" stroke="#3485ad" strokeOpacity=".14" strokeWidth="1" />
+          </pattern>
+          <filter id={`probe-glow-${mode}`} x="-80%" y="-80%" width="260%" height="260%">
+            <feGaussianBlur stdDeviation="4" result="blur" />
+            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+          <marker id={`probe-arrow-${mode}`} markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+            <path d="M0 0L10 5 0 10Z" fill="#7fd4ff" fillOpacity=".9" />
+          </marker>
+        </defs>
+
+        <rect className="taf-probe-deployment-svg__canvas" width="1000" height="420" fill={`url(#probe-grid-${mode})`} />
+        <path className="taf-probe-deployment-svg__campus" d={mode === '3d' ? 'M72 145L475 24 938 158 561 395 90 310Z' : 'M40 32H960V388H40Z'} fill={`url(#probe-ground-${mode})`} />
+        <g className="taf-probe-deployment-svg__roads">
+          <path d="M90 286C265 222 414 220 566 195S796 134 925 157" />
+          <path d="M112 330C284 274 430 279 578 309S787 354 914 307" />
+          <path d="M264 69C339 151 410 211 566 195S716 234 830 335" />
+        </g>
+
+        <g className="taf-probe-deployment-svg__zones">
+          {graph.zones.map((zone, index) => {
+            const polygon = mode === '3d' ? zone.polygon_3d : zone.polygon_2d;
+            const points = polygon.map(topologyCanvasPoint);
+            const labelPoint = points[0] ?? { x: 0, y: 0 };
+            return <g key={zone.id} className={`taf-probe-deployment-svg__zone zone-${index % 4} is-${zone.status}`} data-zone-id={zone.id}><polygon points={points.map((point) => `${point.x},${point.y}`).join(' ')} /><text x={labelPoint.x + 10} y={labelPoint.y + 19}>{zone.label}</text></g>;
+          })}
+        </g>
+
+        <g className="taf-probe-deployment-svg__links">
+          {graph.edges.map((link) => {
+            const source = projected.get(link.source);
+            const target = projected.get(link.target);
+            if (!source || !target) return null;
+            const middleX = (source.x + target.x) / 2;
+            const middleY = (source.y + target.y) / 2 - (mode === '3d' ? 24 : 0);
+            const path = mode === '3d' ? `M${source.x} ${source.y}Q${middleX} ${middleY} ${target.x} ${target.y}` : `M${source.x} ${source.y}L${target.x} ${target.y}`;
+            return (
+              <g key={link.id} className={`is-${link.status} is-${link.kind}`} data-bandwidth-gbps={link.bandwidth_gbps}>
+                <path d={path} markerEnd={`url(#probe-arrow-${mode})`} />
+                {link.bandwidth_gbps >= 40 && <text x={middleX} y={middleY - 7}>{link.bandwidth_gbps.toFixed(0)}G</text>}
+              </g>
+            );
+          })}
+        </g>
+
+        <g className="taf-probe-deployment-svg__nodes">
+          {nodes.map((node) => {
+            const point = projected.get(node.id)!;
+            const selected = node.id === selectedNodeId;
+            const height = mode === '3d' ? Math.max(24, node.elevation * 3.2) : 0;
+            const labelY = mode === '3d'
+              ? (point.y - height < 70 ? 30 : -height - 48)
+              : (point.y < 66 ? 32 : -42);
+            return (
+              <g key={node.id} className={`taf-probe-deployment-svg__node is-${node.status} is-${node.kind} ${selected ? 'is-selected' : ''} ${labeledNodeIds.has(node.id) ? 'is-labeled' : ''}`} transform={`translate(${point.x} ${point.y})`} role="button" tabIndex={0} data-probe-id={node.id} data-api-position={JSON.stringify(topologyPosition(node, mode))} onClick={() => onSelect(node.id)} onKeyDown={(event) => activate(event, node.id)}>
+                <rect className="taf-probe-deployment-svg__click-target" x="-60" y={mode === '3d' ? -height - 66 : -58} width="120" height={mode === '3d' ? height + 84 : 82} />
+                {mode === '3d' ? (
+                  <g className="taf-probe-deployment-svg__building">
+                    <ellipse className="is-pad" cx="0" cy="9" rx="34" ry="13" />
+                    <path className="is-left" d={`M-25 0L0 11V${11 - height}L-25 ${-height}Z`} />
+                    <path className="is-right" d={`M0 11L25 0V${-height}L0 ${11 - height}Z`} />
+                    <path className="is-roof" d={`M-25 ${-height}L0 ${-height - 12}L25 ${-height}L0 ${11 - height}Z`} />
+                    {Array.from({ length: 4 }, (_, windowIndex) => <rect key={windowIndex} className="is-window" x={-18 + windowIndex * 10} y={-height + 10} width="5" height="5" />)}
+                  </g>
+                ) : (
+                  <g className="taf-probe-deployment-svg__flat-node">
+                    <rect x="-24" y="-17" width="48" height="34" rx="6" />
+                    <path d="M-14-5H14M-14 3H14M-8 11H8" />
+                  </g>
+                )}
+                <circle className="taf-probe-deployment-svg__halo" cy={mode === '3d' ? -height - 13 : 0} r={selected ? 25 : 18} />
+                <circle className="taf-probe-deployment-svg__pin" cy={mode === '3d' ? -height - 13 : 0} r="6" filter={`url(#probe-glow-${mode})`} />
+                <g className="taf-probe-deployment-svg__label" transform={`translate(0 ${labelY})`}>
+                  <rect x="-58" y="-15" width="116" height="34" rx="5" />
+                  <text className="is-title" textAnchor="middle" y="-1">{compactTopologyLabel(node.label)}</text>
+                  <text className="is-detail" textAnchor="middle" y="13">{node.role} · {node.bandwidth_gbps.toFixed(1)}G</text>
+                </g>
+                <title>{`${node.probe_id} · ${node.zone} · ${topologyStatusLabel(node.status)} · ${node.bandwidth_gbps.toFixed(1)} Gbps`}</title>
+              </g>
+            );
+          })}
+        </g>
+      </svg>
+    </div>
+  );
 }
+
+const topologyPosition = (node: ProbeTopologyNode, mode: TopologyMode): ProbeTopologyPoint => mode === '3d' ? node.position_3d : node.position_2d;
+
+const topologyCanvasPoint = (point: ProbeTopologyPoint) => ({ x: 40 + point.x * 9.2, y: 20 + point.y * 3.8 });
+
+const topologyStatusLabel = (status: string) => status === 'risk' ? '离线' : status === 'warn' ? '告警' : '在线';
+
+const compactTopologyLabel = (value: string) => value.length > 10 ? `${value.slice(0, 9)}…` : value;
 
 function buildProbeTrend(rows: SnapshotRow[], range: '6h' | '24h') {
   const points = range === '6h' ? 22 : 24;
-  const bandwidth = Math.max(12, Math.round(rows.reduce((total, row) => total + numericValue(textValue(row, '采集带宽')), 0) / Math.max(rows.length, 1)) || 18);
-  const cpu = Math.max(8, Math.round(rows.reduce((total, row) => total + numericPercent(textValue(row, 'CPU')), 0) / Math.max(rows.length, 1)) || 22);
-  const categories = Array.from({ length: points }, (_, index) => {
-    const hour = range === '6h' ? 21 + Math.floor(index * 6 / Math.max(points - 1, 1)) : index;
-    return `${String(hour % 24).padStart(2, '0')}:${index % 2 ? '30' : '00'}`;
-  });
-  const series = (base: number, amplitude: number, phase: number) => Array.from({ length: points }, (_, index) => {
-    const value = base + Math.sin((index + phase) * 0.72) * amplitude + ((index * 5 + phase) % 4) - 1.5;
-    return Math.max(0, Math.round(value * 10) / 10);
-  });
+  const sourceRows = rows.filter((row) => parseNumberArray(textValue(row, '带宽序列')).length > 0);
+  const labels = parseStringArray(textValue(sourceRows[0], '趋势标签')).slice(-points);
+  const threshold = Number(sourceRows[0]?.['带宽阈值'] || 0);
   return {
-    categories,
-    bandwidthSeries: [
-      { name: 'PROBE-DC-01', color: '#36d66b', values: series(bandwidth, 4.8, 0), area: true },
-      { name: 'PROBE-BUILD-01', color: '#18a8ff', values: series(Math.max(6, bandwidth * 0.52), 2.5, 2) },
-      { name: 'PROBE-OFFICE-01', color: '#ffb020', values: series(Math.max(4, bandwidth * 0.36), 1.8, 4) },
-    ],
-    batchSeries: [
-      { name: 'PROBE-DC-01', color: '#18a8ff', values: series(Math.max(12, bandwidth + cpu * 0.22), 3.8, 1), area: true },
-      { name: '阈值线 (30 Gbps)', color: '#ff4d4f', values: Array.from({ length: points }, () => 30), dashed: true },
-    ],
+    categories: labels,
+    threshold,
+    bandwidthSeries: sourceRows.slice(0, 3).map((row, index) => ({
+      name: compactProbeSeriesName(rowKey(row)),
+      color: ['#36d66b', '#18a8ff', '#ffb020'][index],
+      values: parseNumberArray(textValue(row, '带宽序列')).slice(-points),
+      area: index === 0,
+    })),
+    batchSeries: sourceRows.length ? [
+      { name: compactProbeSeriesName(rowKey(sourceRows[0])), color: '#18a8ff', values: parseNumberArray(textValue(sourceRows[0], '批量序列')).slice(-points), area: true },
+      { name: `阈值线 (${threshold} Gbps)`, color: '#ff4d4f', values: Array.from({ length: labels.length }, () => threshold), dashed: true },
+    ] : [],
   };
 }
 
-function createProbeAction(title: string, target: string): ProbeAction {
+function compactProbeSeriesName(id: string) {
+  return id.replace('PROBE-', '').replace('BUILD-', 'B-').replace('OFFICE-', 'O-').replace('BRANCH-', 'R-');
+}
+
+function createProbeAction(title: string, targets: string[]): ProbeAction {
   const actions = pageApiPlans.probes.actions ?? [];
-  const plan = actions.find((item) =>
-    (title.includes('升级') && item.id === 'probe-batch-upgrade')
-    || (title.includes('策略') || title.includes('配置')) && item.id === 'probe-config-push'
-    || title.includes('连通') && item.id === 'probe-connectivity-test'
-    || title.includes('证书') && item.id === 'probe-cert-rotate',
-  );
+  const readOnly = title.includes('查看') || title.includes('心跳') || title.includes('日志');
+  const actionId: ProbeOperationActionId | undefined = readOnly ? undefined
+    : title.includes('升级') ? 'probe-batch-upgrade'
+      : title.includes('启停') ? 'probe-batch-state'
+        : title.includes('策略') || title.includes('配置') || title.includes('编辑') ? 'probe-config-push'
+          : title.includes('连通') || title.includes('刷新') ? 'probe-connectivity-test'
+            : title.includes('证书') ? 'probe-cert-rotate'
+              : title.includes('重启') ? 'probe-restart'
+                : undefined;
+  const plan = actions.find((item) => item.id === actionId);
   return {
+    id: actionId,
     title,
-    target,
-    endpoint: plan?.endpoint ?? '/v1/probes/{id}/operations',
-    auditEvent: plan?.auditEvent ?? 'PROBE_OPERATION_SIMULATED',
+    targets: [...new Set(targets.filter(Boolean))],
+    endpoint: plan?.endpoint ?? '/v1/probes',
+    auditEvent: plan?.auditEvent ?? 'PROBE_READ',
+    readOnly,
+    payload: { ...(plan?.defaultBody ?? {}) },
   };
 }
 
 function numericValue(value: string) {
   const parsed = Number.parseFloat(value.replace(/[^\d.]/g, ''));
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function parseStringArray(value: string) {
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.map(String).filter(Boolean) : [];
+  } catch {
+    return [];
+  }
+}
+
+function parseNumberArray(value: string) {
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.map(Number).filter(Number.isFinite) : [];
+  } catch {
+    return [];
+  }
+}
+
+function averageRowValue(rows: SnapshotRow[], key: string) {
+  if (!rows.length) return 0;
+  return rows.reduce((total, row) => total + numericValue(textValue(row, key)), 0) / rows.length;
+}
+
+function heartbeatTime(value: number) {
+  if (!value) return '--:--:--';
+  const milliseconds = value > 10_000_000_000 ? value : value * 1000;
+  return new Date(milliseconds).toLocaleTimeString('zh-CN', { hour12: false });
+}
+
+function heartbeatAgeLabel(value: number) {
+  if (!value) return '-';
+  const milliseconds = value > 10_000_000_000 ? value : value * 1000;
+  const seconds = Math.max(0, Math.round((Date.now() - milliseconds) / 1000));
+  if (seconds < 60) return `${seconds}s`;
+  if (seconds < 3600) return `${Math.round(seconds / 60)}m`;
+  return `${Math.round(seconds / 3600)}h`;
 }

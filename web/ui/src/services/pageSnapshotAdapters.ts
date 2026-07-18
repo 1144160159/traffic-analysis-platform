@@ -6,7 +6,9 @@ import type {
   DashboardStage,
   DashboardTalker,
   DashboardVisuals,
+  DataQualityVisuals,
   EncryptedTrafficVisuals,
+  ForensicsVisuals,
   PageSnapshot,
   ScreenVisualNode,
   ScreenVisualPoint,
@@ -55,7 +57,7 @@ const adaptProbes = (page: PageSpec, primaryPayload: unknown): PageSnapshot => {
   const envelope = unwrapEnvelope(primaryPayload);
   const probes = extractList(primaryPayload, ['probes', 'data', 'items']);
   const total = totalFromEnvelope(envelope, probes.length);
-  const online = probes.filter((item) => probeStatusLabel(textFrom(item, ['status'])) === '在线').length;
+  const online = probes.filter((item) => probeStatusLabel(textFrom(item, ['status'])) !== '离线').length;
   const degraded = probes.filter((item) => probeStatusLabel(textFrom(item, ['status'])) === '告警').length;
   const offline = probes.filter((item) => probeStatusLabel(textFrom(item, ['status'])) === '离线').length;
   const avgCpu = averageNumbers(probes, ['cpu_usage']);
@@ -63,10 +65,12 @@ const adaptProbes = (page: PageSpec, primaryPayload: unknown): PageSnapshot => {
   const totalBandwidth = sumNumbers(probes, ['bandwidth_mbps']);
   const avgDrop = averageNumbers(probes, ['drop_rate']);
   const modes = new Set(probes.map((item) => probeCaptureMode(item)).filter(Boolean));
-  const nicCount = Math.max(probes.length * 2, probes.filter((item) => probeCaptureMode(item).includes('混合')).length * 2);
+  const nicCount = sumArrayLengths(probes, ['interfaces']);
+  const mtlsEnabled = probes.filter((item) => Boolean(valueAt(item, ['mtls_enabled']))).length;
 
   return {
     id: page.id,
+    total,
     metrics: [
       metric('探针总数', total, '台', total ? 'info' : 'warn'),
       metric('在线探针', online, '在线', online === total && total ? 'ok' : online ? 'warn' : 'risk'),
@@ -77,19 +81,36 @@ const adaptProbes = (page: PageSpec, primaryPayload: unknown): PageSnapshot => {
       metric('告警探针', degraded, '台', degraded ? 'warn' : 'ok'),
       metric('离线探针', offline, '台', offline ? 'risk' : 'ok'),
     ],
-    rows: probes.slice(0, 8).map((item, index) =>
+    rows: probes.map((item, index) =>
       makeRow(page, {
-        '探针 ID': textFrom(item, ['probe_id', 'id']) || `PROBE-${String(index + 1).padStart(2, '0')}`,
+        '探针 ID': textFrom(item, ['probe_id', 'id']) || '-',
         位置: probeLocation(item, index),
         状态: probeStatusLabel(textFrom(item, ['status'])),
         采集模式: probeCaptureMode(item),
-        采集带宽: `${(numberFrom(item, ['bandwidth_mbps']) / 1000 || probeBandwidthFallback(index)).toFixed(1)} Gbps`,
+        采集带宽: `${(numberFrom(item, ['bandwidth_mbps']) / 1000).toFixed(1)} Gbps`,
         丢包率: `${ratioAt(item, ['drop_rate']).toFixed(2)}%`,
-        解析率: `${Math.max(0, 99.5 - ratioAt(item, ['drop_rate']) * 3).toFixed(2)}%`,
+        解析率: `${numberFrom(item, ['parse_rate']).toFixed(2)}%`,
         CPU: `${numberFrom(item, ['cpu_usage']).toFixed(1)}%`,
-        内存: `${(numberFrom(item, ['memory_usage', 'memory_percent']) || 35 + index * 2.7).toFixed(1)}%`,
+        内存: `${numberFrom(item, ['memory_usage', 'memory_percent']).toFixed(1)}%`,
         运行时长: probeUptime(item, index),
-        版本: textFrom(item, ['config_version', 'software_version', 'version']) || 'v3.4.7',
+        版本: textFrom(item, ['config_version', 'software_version', 'version']) || '-',
+        磁盘: `${numberFrom(item, ['disk_usage']).toFixed(1)}%`,
+        采集网卡: stringArrayFrom(item, ['interfaces']).join(', '),
+        归档路径: textFrom(item, ['archive_path']) || '-',
+        mTLS: Boolean(valueAt(item, ['mtls_enabled'])) ? '已启用' : '未启用',
+        最后心跳: numberFrom(item, ['last_heartbeat']),
+        拓扑X: numberFrom(item, ['topology_x']),
+        拓扑Y: numberFrom(item, ['topology_y']),
+        拓扑Z: numberFrom(item, ['topology_z']),
+        拓扑区域: textFrom(item, ['topology_zone']),
+        拓扑角色: textFrom(item, ['topology_role']),
+        拓扑链路: JSON.stringify(stringArrayFrom(item, ['topology_links'])),
+        拓扑链路带宽: JSON.stringify(numberArrayFrom(item, ['topology_link_bandwidths_gbps'])),
+        趋势标签: JSON.stringify(stringArrayFrom(item, ['trend_labels'])),
+        带宽序列: JSON.stringify(numberArrayFrom(item, ['bandwidth_trend'])),
+        批量序列: JSON.stringify(numberArrayFrom(item, ['batch_trend'])),
+        PPS: numberFrom(item, ['pps_k']),
+        带宽阈值: numberFrom(item, ['bandwidth_threshold_gbps']),
         操作: '详情',
       }),
     ),
@@ -102,10 +123,10 @@ const adaptProbes = (page: PageSpec, primaryPayload: unknown): PageSnapshot => {
     evidence: [
       evidence('Probes API', `/v1/probes ${probes.length}/${total}`, probes.length ? 'ok' : 'warn'),
       evidence('心跳同步', `${online} 在线`, online ? 'ok' : 'risk'),
-      evidence('mTLS', '已启用', 'ok'),
+      evidence('mTLS', `${mtlsEnabled}/${probes.length} 已启用`, mtlsEnabled === probes.length && probes.length ? 'ok' : 'warn'),
       evidence('接口状态', `${nicCount} 张网卡`, nicCount ? 'ok' : 'warn'),
       evidence('批量发送', `${(totalBandwidth / 1000).toFixed(1)} Gbps`, totalBandwidth ? 'ok' : 'info'),
-      evidence('审计记录', '配置下发写入 audit_logs', 'ok'),
+      evidence('运维队列', '写操作进入 probe_operations，等待探针 ACK', 'info'),
     ],
   };
 };
@@ -127,6 +148,13 @@ const adaptDataQuality = (page: PageSpec, primaryPayload: unknown): PageSnapshot
   const dlqCount = Math.round(Math.max(12_845, kafkaLag * 2.8));
   const score = qualityScore(checks, report);
   const topics = buildQualityTopics(page, metrics, checks);
+  const visualsEnvelope = isRecord(report) && isRecord(report.visuals) ? report.visuals : undefined;
+  const dataQualityVisuals = visualsEnvelope && isRecord(visualsEnvelope.dataQuality)
+    ? visualsEnvelope.dataQuality as DataQualityVisuals
+    : undefined;
+  const source = isRecord(report) && isRecord(report.data_source) ? report.data_source : {};
+  const visualSource = textFrom(source, ['visuals']) || 'unconfigured';
+  const fixtureVersion = textFrom(source, ['fixture_version']);
 
   return {
     id: page.id,
@@ -157,7 +185,9 @@ const adaptDataQuality = (page: PageSpec, primaryPayload: unknown): PageSnapshot
       evidence('字段矩阵', `${fieldMissing.toFixed(2)}% 缺失`, fieldMissing > 5 ? 'risk' : 'ok'),
       evidence('存储写入', `${formatNumber(numberAt(metrics, ['insert_rate_per_min']))}/min`, numberAt(metrics, ['insert_rate_per_min']) ? 'ok' : 'info'),
       evidence('重放对账', `${formatNumber(dlqCount)} DLQ`, dlqCount > 20_000 ? 'risk' : 'warn'),
+      evidence('可视化数据源', fixtureVersion ? `${visualSource} / ${fixtureVersion}` : visualSource, dataQualityVisuals ? 'ok' : 'risk'),
     ],
+    visuals: dataQualityVisuals ? { dataQuality: dataQualityVisuals } : undefined,
   };
 };
 
@@ -965,13 +995,12 @@ const adaptAlerts = (page: PageSpec, primaryPayload: unknown): PageSnapshot => {
 const adaptAssets = (page: PageSpec, primaryPayload: unknown, secondaryPayloads: unknown[]): PageSnapshot => {
   const envelope = unwrapEnvelope(primaryPayload);
   const assets = extractList(primaryPayload, ['assets', 'data']);
-  const discoveryRuns = extractList(secondaryPayloads[0], ['runs', 'data']);
-  const topologyLinks = extractList(secondaryPayloads[1], ['links', 'data']);
+  const statsPayload = unwrapPayload(secondaryPayloads[0]);
+  const stats = isRecord(statsPayload) ? statsPayload : {};
+  const discoveryRuns = extractList(secondaryPayloads[1], ['runs', 'data']);
+  const topologyLinks = extractList(secondaryPayloads[2], ['links', 'data']);
   const total = totalFromEnvelope(envelope, assets.length);
-  const highRisk = assets.filter((item) => numberAt(item, ['criticality']) >= 80).length;
-  const unknown = assets.filter((item) => !textAt(item, ['hostname']) && !textAt(item, ['vendor'])).length;
-  const drifted = assets.filter((item) => textFrom(item, ['risk_level', 'status']).toLowerCase().includes('drift')).length;
-  const offline = assets.filter((item) => textFrom(item, ['status', 'asset_status']).toLowerCase().includes('offline')).length;
+  const highRisk = assets.filter((item) => numberAt(isRecord(item.metadata) ? item.metadata : {}, ['risk_score']) >= 80).length;
   const completedRuns = discoveryRuns.filter((item) => textFrom(item, ['status']).toLowerCase() === 'completed').length;
   const failedRuns = discoveryRuns.filter((item) => textFrom(item, ['status']).toLowerCase() === 'failed').length;
   const latestRun = discoveryRuns[0];
@@ -988,29 +1017,81 @@ const adaptAssets = (page: PageSpec, primaryPayload: unknown, secondaryPayloads:
 
   return {
     id: page.id,
+    total,
     metrics: [
-      metric('已识别资产', total, '个', 'info'),
-      metric('未知资产', unknown, '个', unknown ? 'warn' : 'ok'),
-      metric('漂移资产', drifted || highRisk, '个', drifted || highRisk ? 'risk' : 'ok'),
-      metric('长期离线资产', offline, '个', offline ? 'warn' : 'ok'),
-      metric('暴露服务数', sumNumbers(assets, ['open_ports', 'ports_count', 'exposed_services']), '个', 'info'),
+      metric('分类资产总数', numberAt(stats, ['total']) || total, '个', 'info'),
+      metric('活跃资产', numberAt(stats, ['active']), '个', 'ok'),
+      metric('离线资产', numberAt(stats, ['inactive']), '个', numberAt(stats, ['inactive']) ? 'warn' : 'ok'),
+      metric('未知状态资产', numberAt(stats, ['unknown']), '个', numberAt(stats, ['unknown']) ? 'warn' : 'ok'),
+      metric('高风险资产', numberAt(stats, ['high_criticality']) || highRisk, '个', (numberAt(stats, ['high_criticality']) || highRisk) ? 'risk' : 'ok'),
+      metric('关键资产', numberAt(stats, ['critical_assets']), '个', numberAt(stats, ['critical_assets']) ? 'warn' : 'ok'),
+      metric('未归属资产', numberAt(stats, ['unowned']), '个', numberAt(stats, ['unowned']) ? 'warn' : 'ok'),
+      metric('暴露服务数', numberAt(stats, ['open_services']), '条', numberAt(stats, ['open_services']) ? 'warn' : 'ok'),
+      metric('高危服务数', numberAt(stats, ['high_risk_services']), '个', numberAt(stats, ['high_risk_services']) ? 'risk' : 'ok'),
+      metric('弱口令疑似', numberAt(stats, ['weak_passwords']), '个', numberAt(stats, ['weak_passwords']) ? 'risk' : 'ok'),
+      metric('网络接口数', numberAt(stats, ['network_interfaces']), '个', 'info'),
+      metric('配置变更数', numberAt(stats, ['configuration_changes']), '条', numberAt(stats, ['configuration_changes']) ? 'warn' : 'ok'),
+      metric('依赖资产数', numberAt(stats, ['dependency_assets']), '个', 'info'),
+      metric('关键服务数', numberAt(stats, ['key_services']), '个', numberAt(stats, ['key_services']) ? 'warn' : 'ok'),
+      metric('SLA 临近', numberAt(stats, ['sla_at_risk']), '个', numberAt(stats, ['sla_at_risk']) ? 'warn' : 'ok'),
+      metric('归属候选数', numberAt(stats, ['ownership_candidates']), '个', 'info'),
+      metric('待处理工单', numberAt(stats, ['pending_tickets']), '个', numberAt(stats, ['pending_tickets']) ? 'warn' : 'ok'),
+      metric('分类观测记录', numberAt(stats, ['context_records']), '条', 'info'),
     ],
-    rows: assets.slice(0, 8).map((item, index) => {
+    rows: assets.slice(0, 10).map((item, index) => {
       const assetID = textFrom(item, ['asset_id', 'id']) || `ASSET-${index + 1}`;
+      const displayCode = textFrom(item, ['display_code']) || assetID;
       const links = topologyByAsset[assetID] ?? [];
       const firstLink = links[0];
+      const metadata = isRecord(item.metadata) ? item.metadata : {};
+      const services = extractList(metadata, ['open_services']);
+      const interfaces = extractList(metadata, ['network_interfaces']);
+      const keyServices = extractList(metadata, ['key_services']);
+      const ownership = isRecord(metadata.ownership) ? metadata.ownership : {};
+      const businessSystems = extractList(ownership, ['business_systems']);
+      const exposure = isRecord(metadata.exposure) ? metadata.exposure : {};
+      const exposedPorts = services.length || numberAt(item, ['open_ports']) || numberAt(item, ['ports_count']);
+      const highServices = services.filter((service) => textFrom(service, ['risk_level', 'risk']).includes('高')).length;
+      const riskScore = numberAt(metadata, ['risk_score']);
       return makeRow(page, {
-        '资产 ID': textFrom(item, ['asset_id', 'id']) || `ASSET-${index + 1}`,
+        '资产 ID': displayCode,
         'IP/MAC': [textFrom(item, ['ip_address', 'ip']), textFrom(item, ['mac_address', 'mac'])].filter(Boolean).join(' / ') || '-',
         主机名: textFrom(item, ['hostname', 'name', 'asset_name']) || '-',
         类型: textFrom(item, ['asset_type', 'type', 'os_type']) || '-',
-        '园区/部门': textFrom(item, ['department', 'campus', 'tenant_id', 'vlan_id']) || '-',
+        '园区/部门': [textFrom(item, ['campus']), textFrom(item, ['department'])].filter(Boolean).join(' / ') || '-',
         操作系统: textFrom(item, ['os', 'os_type', 'operating_system']) || '-',
         重要性: String(numberAt(item, ['criticality']) || '-'),
-        暴露端口: String(numberAt(item, ['open_ports']) || numberAt(item, ['ports_count']) || '-'),
+        暴露端口: String(exposedPorts || '-'),
         风险标签: assetRiskLabel(item),
         最近活跃: textFrom(item, ['last_seen', 'updated_at']) || '-',
+        资产状态: textFrom(item, ['status', 'asset_status']) || 'unknown',
+        业务系统: textFrom(businessSystems[0], ['name']) || textFrom(metadata, ['business_system']) || '-',
+        高危服务: highServices,
+        弱口令疑似: numberAt(exposure, ['weak_password']),
+        厂商: textFrom(item, ['vendor']) || '-',
+        管理IP: textFrom(item, ['ip_address', 'ip']) || '-',
+        设备角色: textFrom(metadata, ['device_role', 'role']) || textFrom(item, ['asset_type']) || '-',
+        接口数: interfaces.length,
+        配置变更: extractList(metadata, ['config_changes']).length,
+        业务域: textFrom(metadata, ['business_domain']) || '-',
+        系统等级: textFrom(metadata, ['system_level']) || '-',
+        责任部门: textFrom(item, ['department']) || '-',
+        关键服务: keyServices.length,
+        依赖资产: extractList(metadata, ['dependency_health']).reduce((sum, dependency) => sum + numberAt(dependency, ['total']), 0),
+        风险评分: riskScore,
+        SLA: textFrom(metadata, ['sla_current']) || '-',
+        来源: textFrom(item, ['source']) || '-',
+        疑似类型: textFrom(metadata, ['suspected_type']) || '-',
+        置信度: numberAt(metadata, ['confidence']) ? `${numberAt(metadata, ['confidence'])}%` : '-',
+        首次发现: textFrom(item, ['first_seen']) || '-',
+        工单状态: textFrom(metadata, ['ticket_status']) || '-',
         __assetId: assetID,
+        __displayCode: displayCode,
+        __assetType: textFrom(item, ['asset_type', 'type']) || 'unknown',
+        __status: textFrom(item, ['status', 'asset_status']) || 'unknown',
+        __owner: textFrom(item, ['owner']) || '',
+        __metadataJson: JSON.stringify(metadata),
+        __firstSeen: textFrom(item, ['first_seen']) || '-',
         __discoveryRunId: latestRunID,
         __discoveryRunStatus: latestRunStatus,
         __discoveryAssets: latestRunAssetCount,
@@ -1018,6 +1099,7 @@ const adaptAssets = (page: PageSpec, primaryPayload: unknown, secondaryPayloads:
         __topologyNeighborCount: links.length,
         __topologyNeighbor: topologyNeighborLabel(firstLink),
         __topologyProtocol: textFrom(firstLink, ['protocol']) || 'LLDP/SNMP',
+        __topologyLinksJson: JSON.stringify(links),
       });
     }),
     timeline: [
@@ -1359,29 +1441,58 @@ const adaptEncryptedTraffic = (page: PageSpec, primaryPayload: unknown, secondar
   const evidencePcapTrend = extractNamedList(secondaryPayloads[4], ['pcap_trend']);
   const evidenceEntropyTrend = extractNamedList(secondaryPayloads[4], ['entropy_trend']);
   const evidenceCompleteness = extractNamedList(secondaryPayloads[4], ['completeness']);
-  const sessionRows = sessions.length ? sessions : encryptedFallbackSessions;
-  const fingerprintRows = takeWithFallback(fingerprints, encryptedFallbackFingerprints, 6);
-  const tunnelProtocolRows = takeWithFallback(tunnelProtocols, encryptedFallbackTunnelProtocols, 6);
-  const exfilRiskTypeRows = takeWithFallback(exfilRiskTypes, encryptedFallbackRiskTypes, 5);
+  const sessionRows = sessions;
+  const fingerprintRows = fingerprints.slice(0, 6);
+  const tunnelProtocolRows = tunnelProtocols.slice(0, 6);
+  const exfilRiskTypeRows = exfilRiskTypes.slice(0, 5);
   const totalSessions = numberAt(stats, ['total_sessions']) || sessionRows.length;
   const tlsSessions = numberAt(stats, ['tls_sessions']) || sessionRows.filter((item) => encryptedProtocol(item).includes('TLS')).length;
   const quicSessions = numberAt(stats, ['quic_sessions']) || sessionRows.filter((item) => encryptedProtocol(item).includes('QUIC')).length;
-  const tlsRatio = totalSessions ? (tlsSessions / totalSessions) * 100 : ratioAt(stats, ['encrypted_ratio']);
-  const quicRatio = totalSessions ? (quicSessions / totalSessions) * 100 : 0;
-  const unknownRatio = Math.max(0, 100 - tlsRatio - quicRatio);
-  const expiredOrMissingCerts = sessionRows.filter((item) => certificateRisk(item)).length;
+  const tlsRatio = numberAt(stats, ['tls_ratio']) || (totalSessions ? (tlsSessions / totalSessions) * 100 : ratioAt(stats, ['encrypted_ratio']));
+  const quicRatio = numberAt(stats, ['quic_ratio']) || (totalSessions ? (quicSessions / totalSessions) * 100 : 0);
+  const unknownRatio = numberAt(stats, ['unknown_encrypted_ratio']) || Math.max(0, 100 - tlsRatio - quicRatio);
+  const expiredOrMissingCerts = numberAt(stats, ['abnormal_certificate_count']) || sessionRows.filter((item) => certificateRisk(item)).length;
   const maliciousJA3 = numberAt(stats, ['malicious_ja3_matches']) || fingerprintRows.filter((item) => encryptedRisk(item).includes('高')).length;
   const missingSni = sessionRows.filter((item) => !textFrom(item, ['sni', 'SNI'])).length;
-  const unknownSniRatio = sessionRows.length ? (missingSni / sessionRows.length) * 100 : 0;
+  const unknownSniRatio = numberAt(stats, ['unknown_sni_ratio']) || (sessionRows.length ? (missingSni / sessionRows.length) * 100 : 0);
   const externalDestinations = exfilDestinations.length || exfilPaths.length || sessions.filter((item) => textFrom(item, ['dst_ip', 'destination_ip'])).length;
+  const trafficGbps = numberFrom(stats, ['traffic_gbps', 'total_gbps', 'throughput_gbps']);
+  const generatedVisuals = buildEncryptedTrafficVisuals({
+    stats,
+    sessions: sessionRows,
+    fingerprints: fingerprintRows,
+    tunnelProtocols: tunnelProtocolRows,
+    rawTunnelUsers: tunnelUsers,
+    exfilRiskTypes: exfilRiskTypeRows,
+    rawEgressSources: exfilSources,
+    rawEgressDestinations: exfilDestinations,
+    rawEgressRiskTypes: exfilRiskTypes,
+    rawEgressPaths: exfilPaths,
+    rawEgressTrend: exfilTrend,
+    rawEgressSessions: sessions,
+    rawEvidenceSessions: evidenceSessions,
+    rawEvidencePcapIndexes: evidencePcapIndexes,
+    rawEvidencePcapTrend: evidencePcapTrend,
+    rawEvidenceEntropyTrend: evidenceEntropyTrend,
+    rawEvidenceCompleteness: evidenceCompleteness,
+    totalSessions,
+    tlsRatio,
+    quicRatio,
+    unknownRatio,
+    maliciousJA3,
+  });
+  const referenceVisuals = isRecord(stats) && isRecord(stats.ui_reference_visuals)
+    ? stats.ui_reference_visuals as unknown as EncryptedTrafficVisuals
+    : undefined;
+  const encryptedVisuals = referenceVisuals?.protocolRows?.length ? referenceVisuals : generatedVisuals;
 
   return {
     id: page.id,
     metrics: [
-      metric('加密流量总量', totalSessions, '会话', totalSessions ? 'info' : 'warn'),
+      metric('加密流量总量', trafficGbps || totalSessions, trafficGbps ? 'Gbps' : '会话', totalSessions ? 'info' : 'warn'),
       metric('TLS 流量占比', tlsRatio, '%', tlsRatio >= 50 ? 'ok' : 'warn'),
       metric('QUIC 流量占比', quicRatio, '%', quicRatio >= 20 ? 'info' : 'ok'),
-      metric('未知加密占比', unknownRatio, '%', unknownRatio >= 20 ? 'risk' : unknownRatio >= 10 ? 'warn' : 'ok'),
+      metric('未知加密占比', unknownRatio, '%', unknownRatio >= 20 ? 'info' : 'ok'),
       metric('异常证书数', expiredOrMissingCerts, '张', expiredOrMissingCerts ? 'warn' : 'ok'),
       metric('可疑 JA3 数', maliciousJA3, '个', maliciousJA3 ? 'risk' : 'ok'),
       metric('未知 SNI 比例', unknownSniRatio, '%', unknownSniRatio >= 10 ? 'warn' : 'ok'),
@@ -1418,29 +1529,7 @@ const adaptEncryptedTraffic = (page: PageSpec, primaryPayload: unknown, secondar
       evidence('Encrypted Evidence API', `${evidenceSessions.length + evidencePcapIndexes.length + evidencePcapTrend.length} 项`, evidenceSessions.length || evidencePcapIndexes.length || evidencePcapTrend.length ? 'ok' : 'info'),
     ],
     visuals: {
-      encryptedTraffic: buildEncryptedTrafficVisuals({
-        stats,
-        sessions: sessionRows,
-        fingerprints: fingerprintRows,
-        tunnelProtocols: tunnelProtocolRows,
-        exfilRiskTypes: exfilRiskTypeRows,
-        rawEgressSources: exfilSources,
-        rawEgressDestinations: exfilDestinations,
-        rawEgressRiskTypes: exfilRiskTypes,
-        rawEgressPaths: exfilPaths,
-        rawEgressTrend: exfilTrend,
-        rawEgressSessions: sessions,
-        rawEvidenceSessions: evidenceSessions,
-        rawEvidencePcapIndexes: evidencePcapIndexes,
-        rawEvidencePcapTrend: evidencePcapTrend,
-        rawEvidenceEntropyTrend: evidenceEntropyTrend,
-        rawEvidenceCompleteness: evidenceCompleteness,
-        totalSessions,
-        tlsRatio,
-        quicRatio,
-        unknownRatio,
-        maliciousJA3,
-      }),
+      encryptedTraffic: encryptedVisuals,
     },
   };
 };
@@ -1450,6 +1539,7 @@ const buildEncryptedTrafficVisuals = ({
   sessions,
   fingerprints,
   tunnelProtocols,
+  rawTunnelUsers,
   exfilRiskTypes,
   rawEgressSources,
   rawEgressDestinations,
@@ -1472,6 +1562,7 @@ const buildEncryptedTrafficVisuals = ({
   sessions: Record<string, unknown>[];
   fingerprints: Record<string, unknown>[];
   tunnelProtocols: Record<string, unknown>[];
+  rawTunnelUsers: Record<string, unknown>[];
   exfilRiskTypes: Record<string, unknown>[];
   rawEgressSources: Record<string, unknown>[];
   rawEgressDestinations: Record<string, unknown>[];
@@ -1490,107 +1581,117 @@ const buildEncryptedTrafficVisuals = ({
   unknownRatio: number;
   maliciousJA3: number;
 }): EncryptedTrafficVisuals => {
-  const totalGbps = numberAt(stats, ['traffic_gbps', 'total_gbps', 'throughput_gbps']) || Math.max(12, totalSessions * 0.783);
+  const totalGbps = numberAt(stats, ['traffic_gbps', 'total_gbps', 'throughput_gbps']);
   const tlsGbps = totalGbps * tlsRatio / 100;
   const quicGbps = totalGbps * quicRatio / 100;
   const unknownGbps = Math.max(0, totalGbps - tlsGbps - quicGbps);
   const protocolRows = [
     ['TLS', `${tlsGbps.toFixed(1)} Gbps`, `${tlsRatio.toFixed(1)}%`, 'is-info'],
     ['QUIC', `${quicGbps.toFixed(1)} Gbps`, `${quicRatio.toFixed(1)}%`, 'is-warn'],
-    ['未知加密', `${unknownGbps.toFixed(1)} Gbps`, `${unknownRatio.toFixed(1)}%`, 'is-risk'],
+    ['其他加密', `${unknownGbps.toFixed(1)} Gbps`, `${unknownRatio.toFixed(1)}%`, 'is-info'],
   ];
-  const protocolTrend = Array.from({ length: 34 }, (_, index) => 18 + Math.round(((totalGbps || 1) * (index + 3)) % 44));
-  const ja3Source = takeWithFallback(
-    fingerprints.length ? fingerprints : sessions.filter((item) => textFrom(item, ['ja3_fingerprint', 'ja3', 'JA3Fingerprint'])),
-    encryptedFallbackFingerprints,
-    6,
-  );
+  const protocolTrend: number[] = [];
+  const ja3Source = (fingerprints.length
+    ? fingerprints
+    : sessions.filter((item) => textFrom(item, ['ja3_fingerprint', 'ja3', 'JA3Fingerprint']))).slice(0, 6);
   const ja3Rows = ja3Source.slice(0, 6).map((item, index) => {
     const risk = encryptedRisk(item);
-    const flow = numberFrom(item, ['traffic_gbps', 'flow_gbps', 'gbps']) || Math.max(1.2, totalGbps * (0.128 - index * 0.017));
-    const ratio = ratioAt(item, ['traffic_ratio']) || ratioAt(item, ['ratio']) || Math.max(2.1, 12.8 - index * 1.3);
+    const flow = numberFrom(item, ['traffic_gbps', 'flow_gbps', 'gbps']);
+    const ratio = ratioAt(item, ['traffic_ratio']) || ratioAt(item, ['ratio']);
     return [
-      textFrom(item, ['ja3_fingerprint', 'ja3', 'fingerprint', 'JA3Fingerprint']) || `ja3-dynamic-${index + 1}`,
+      textFrom(item, ['ja3_fingerprint', 'ja3', 'fingerprint', 'JA3Fingerprint']) || '-',
       `${ratio.toFixed(1)}%`,
       flow.toFixed(1),
-      formatNumber(numberFrom(item, ['sni_count', 'sni', 'domains']) || Math.max(51, 312 - index * 47)),
-      formatNumber(numberFrom(item, ['alert_count', 'alerts', 'matches']) || (risk.includes('高') ? 18 : 3 + index)),
+      formatNumber(numberFrom(item, ['sni_count', 'sni', 'domains'])),
+      formatNumber(numberFrom(item, ['alert_count', 'alerts', 'matches'])),
       risk,
     ];
   });
-  const tunnelCards = takeWithFallback(tunnelProtocols.length ? tunnelProtocols : exfilRiskTypes, encryptedFallbackTunnelProtocols, 6).map((item, index) => {
+  const tunnelCards = (tunnelProtocols.length ? tunnelProtocols : exfilRiskTypes).slice(0, 6).map((item, index) => {
     const label = encryptedTunnelLabel(textFrom(item, ['name', 'protocol', 'type', 'risk_type']), index);
-    const value = numberFrom(item, ['count', 'sessions', 'session_count']) || [412, 287, 531, 76, 193, 118][index % 6];
+    const value = numberFrom(item, ['count', 'sessions', 'session_count']);
     const risk = severityLabel(textFrom(item, ['risk', 'risk_level', 'severity']));
-    return [label, formatNumber(value), `+${formatNumber(Math.max(3, Math.round(value * 0.08)))}`, toneFromRisk(risk, index)];
+    return [label, formatNumber(value), '当前窗口', toneFromRisk(risk, index)];
   });
-  const tunnelRows = sessions.slice(0, 6).map((item, index) => {
-    const protocol = encryptedProtocol(item);
-    const risk = encryptedRisk(item);
+  const tunnelRows = rawTunnelUsers.slice(0, 6).map((item, index) => {
+    const protocol = textFrom(item, ['protocol']) || '候选特征';
+    const risk = severityLabel(textFrom(item, ['risk', 'risk_level', 'severity'])) || '待研判';
+    const count = numberFrom(item, ['count', 'session_count']);
+    const totalBytes = numberFrom(item, ['total_bytes', 'bytes']);
     return [
-      protocol === 'QUIC' ? 'DoH over QUIC' : protocol === 'TLS' ? (textFrom(item, ['sni']).includes('dns') ? 'DNS over HTTPS' : '异常长连接') : '未知加密',
-      textFrom(item, ['feature', 'pattern']) || (numberFrom(item, ['entropy_score']) >= 7.5 ? '高熵 > 7.5' : protocol === 'QUIC' ? 'ALPN=h3' : 'TLS over 443'),
-      textFrom(item, ['src_ip', 'source_ip']) || `10.12.${index + 2}.${36 + index}`,
-      textFrom(item, ['sni', 'dst_ip', 'destination_ip']) || 'unknown-sni',
-      durationLabel(numberFrom(item, ['duration_seconds', 'duration_sec', 'duration'])),
-      (numberFrom(item, ['traffic_gbps', 'flow_gbps', 'gbps']) || Math.max(0.42, 3.47 - index * 0.38)).toFixed(2),
+      encryptedTunnelLabel(protocol, index),
+      `聚合命中 ${formatNumber(count)} 个会话`,
+      textFrom(item, ['ip', 'src_ip', 'source_ip']) || '-',
+      '待下钻会话',
+      '当前时间窗',
+      (totalBytes / 1024 / 1024 / 1024).toFixed(2),
       risk,
     ];
   });
-  const useSimulatedEgress = !rawEgressDestinations.length && !rawEgressPaths.length && !rawEgressSessions.length;
   const egressSources = rawEgressSources;
-  const egressDestinations = useSimulatedEgress ? encryptedFallbackExfilDestinations : rawEgressDestinations;
-  const egressPaths = useSimulatedEgress ? encryptedFallbackPaths : rawEgressPaths;
-  const egressRiskTypes = useSimulatedEgress ? encryptedFallbackRiskTypes : rawEgressRiskTypes;
+  const egressDestinations = rawEgressDestinations;
+  const egressPaths = rawEgressPaths;
+  const egressRiskTypes = rawEgressRiskTypes;
   const egressSessions = rawEgressSessions;
   const destinationRows = encryptedDestinationRows(egressDestinations, egressPaths, egressSessions);
   const egressHasExfiltrationData = Boolean(rawEgressDestinations.length || rawEgressPaths.length);
   const egressHasSessionData = Boolean(rawEgressSessions.length);
   const egressAvailability = {
-    state: (egressHasExfiltrationData ? 'live' : egressHasSessionData || rawEgressSources.length || rawEgressTrend.length ? 'partial' : useSimulatedEgress ? 'simulated' : 'unavailable') as 'live' | 'partial' | 'simulated' | 'unavailable',
+    state: (egressHasExfiltrationData ? 'live' : egressHasSessionData || rawEgressSources.length || rawEgressTrend.length ? 'partial' : 'unavailable') as 'live' | 'partial' | 'unavailable',
     detail: egressHasExfiltrationData
-      ? `外传分析 API 返回 ${rawEgressDestinations.length + rawEgressPaths.length} 条目的地/路径数据。`
+      ? `公网外联候选 API 返回 ${rawEgressDestinations.length + rawEgressPaths.length} 条目的地/路径数据；风险仍需规则或人工确认。`
       : egressHasSessionData || rawEgressSources.length || rawEgressTrend.length
         ? `目的地聚合未完整返回，当前仅展示 ${rawEgressSessions.length} 条会话与 ${rawEgressTrend.length} 个真实趋势桶。`
-        : '外传分析 API 与加密会话均为空，当前展示类型化仿真样本，仅用于演示与验收视觉。',
+        : '外传分析 API 与加密会话均为空，未生成任何替代数据。',
   };
   const highRiskSession = egressSessions.find((item) => encryptedRisk(item).includes('高'));
   const highRiskDestination = destinationRows.find((row) => row[4].includes('高'))?.[0] ?? destinationRows[0]?.[0];
   const highRiskSource = highRiskSession ? textFrom(highRiskSession, ['src_ip', 'source_ip']) : '';
   const adviceRows = highRiskDestination
     ? [
-        [`为 ${highRiskDestination} 生成外联阻断规则草案。`, '生成规则'],
-        [highRiskSource ? `对源主机 ${highRiskSource} 发起隔离处置确认。` : '核查关联源主机后发起隔离处置确认。', '隔离主机'],
+        [`为 ${highRiskDestination} 生成外联调查规则草案。`, '生成规则'],
+        [highRiskSource ? `核查源主机 ${highRiskSource} 与目的地的真实业务关系。` : '核查关联源主机与目的地的真实业务关系。', '检查源主机'],
         [`关联 ${highRiskDestination} 的告警、证据和实体关系。`, '关联告警'],
         [`检查 ${highRiskDestination} 的目的地信誉、流量分布和溯源证据。`, '检查目的地'],
       ]
     : [['外传分析接口未返回可处置对象。', '查看数据源']];
-  const certificateRows = sessions.slice(0, 4).map((item, index) => [
-    textFrom(item, ['certificate_issuer', 'CertificateIssuer']) || (encryptedCertificateLabel(item) === '缺失证书' ? 'Unknown Issuer' : 'DigiCert Global Root'),
-    textFrom(item, ['dst_ip', 'destination_ip']) || `203.0.113.${45 + index}`,
-    textFrom(item, ['tls_version', 'TLSVersion']) || (encryptedProtocol(item) === 'QUIC' ? 'QUIC' : 'TLS 1.3'),
+  const certificateRows = sessions.slice(0, 4).map((item) => [
+    textFrom(item, ['certificate_issuer', 'CertificateIssuer']) || '-',
+    textFrom(item, ['dst_ip', 'destination_ip']) || '-',
+    textFrom(item, ['tls_version', 'TLSVersion']) || '-',
     textFrom(item, ['alpn']) || encryptedAlpnFallback(item),
-    formatNumber(numberFrom(item, ['alert_count', 'alerts']) || (encryptedRisk(item).includes('高') ? 18 : 3 + index)),
+    formatNumber(numberFrom(item, ['alert_count', 'alerts'])),
     encryptedRisk(item),
   ]);
-  const tunnelRuleRows = takeWithFallback(
-    tunnelProtocols.length ? tunnelProtocols : exfilRiskTypes,
-    encryptedFallbackTunnelProtocols,
-    6,
-  ).map((item, index) => [
+  const tlsSuiteCounts = new Map<string, { count: number; risk: string }>();
+  sessions.forEach((item) => {
+    const version = textFrom(item, ['tls_version', 'TLSVersion']) || encryptedProtocol(item);
+    const suite = textFrom(item, ['cipher_suite', 'CipherSuite', 'alpn']) || '-';
+    const key = `${version}\u0000${suite}`;
+    const current = tlsSuiteCounts.get(key) ?? { count: 0, risk: encryptedRisk(item) };
+    current.count += 1;
+    if (encryptedRisk(item).includes('高')) current.risk = encryptedRisk(item);
+    tlsSuiteCounts.set(key, current);
+  });
+  const tlsSuiteRows = [...tlsSuiteCounts.entries()].slice(0, 6).map(([key, item]) => {
+    const [version, suite] = key.split('\u0000');
+    const ratio = sessions.length ? item.count / sessions.length * 100 : 0;
+    return [version, suite, `${ratio.toFixed(1)}%`, toneFromRisk(item.risk, 0)];
+  });
+  const tunnelRuleRows = (tunnelProtocols.length ? tunnelProtocols : exfilRiskTypes).slice(0, 6).map((item, index) => [
     encryptedTunnelRuleLabel(textFrom(item, ['name', 'protocol', 'type', 'risk_type']), index),
-    textFrom(item, ['feature', 'condition']) || ['SNI=DNS, ALPN=h2/h3', 'ALPN=h3, 端口=443/853', '持续时间 > 2h', '熵值 < 3.5 且周期稳定', '熵值 > 7.0 & 流量 >100MB', '特征端口/协议指纹'][index % 6],
-    textFrom(item, ['threshold']) || ['会话 > 3', '会话 > 2', '> 2h', '周期 +-20%', '>100MB', '会话 > 2'][index % 6],
-    formatNumber(numberFrom(item, ['count', 'sessions', 'session_count']) || [287, 121, 531, 76, 193, 118][index % 6]),
-    `${Math.max(88, 96 - index * 2)}%`,
-    index === 3 || index === 4 ? '调整规则' : '创建告警',
+    textFrom(item, ['feature', 'condition']) || '接口未返回检测特征',
+    textFrom(item, ['threshold']) || '-',
+    formatNumber(numberFrom(item, ['count', 'sessions', 'session_count'])),
+    textFrom(item, ['confidence']) || '-',
+    '查看详情',
   ]);
-  const evidenceRows = sessions.slice(0, 4).map((item, index) => [
-    textFrom(item, ['src_ip', 'source_ip']) || `10.10.${10 + index}.${23 + index}:52344`,
-    textFrom(item, ['sni', 'dst_ip', 'destination_ip']) || 'unknown-sni',
+  const evidenceRows = sessions.slice(0, 4).map((item) => [
+    textFrom(item, ['src_ip', 'source_ip']) || '-',
+    textFrom(item, ['sni', 'dst_ip', 'destination_ip']) || '-',
     encryptedProtocol(item),
-    textFrom(item, ['ja3_fingerprint', 'ja3', 'JA3Fingerprint']) || `ja3-${index + 1}`,
-    textFrom(item, ['pcap_index', 'pcap_id', 'evidence_id']) || `pcap-20250626-000${512 + index}`,
+    textFrom(item, ['ja3_fingerprint', 'ja3', 'JA3Fingerprint']) || '-',
+    textFrom(item, ['pcap_index', 'pcap_id', 'evidence_id']) || '-',
     encryptedRisk(item),
   ]);
   const egressDomainCards = destinationRows.map(([destination, location, flow, sessions, risk]) => [
@@ -1604,42 +1705,47 @@ const buildEncryptedTrafficVisuals = ({
   const sourceAssets = new Set([...egressSources, ...egressSessions].map((item) => textFrom(item, ['src_ip', 'source_ip'])).filter(Boolean)).size;
   const egressKpis = egressAvailability.state === 'unavailable'
     ? [
-        ['境外目的地', '—', '等待外传 API'],
+        ['公网目的地', '—', '等待外传 API'],
         ['CDN / 云服务', '—', '等待外传 API'],
         ['异常域名', '—', '等待风险字段'],
-        ['首次出现目的地', '—', '等待路径字段'],
+        ['外联路径', '—', '等待路径字段'],
         ['高风险目的地', '—', '等待风险字段'],
         ['外联源资产', '—', '等待会话 API'],
         ['待关联风险类型', '—', '等待外传 API'],
       ]
     : [
-        ['境外目的地', formatNumber(destinationRows.length), useSimulatedEgress ? '仿真样本' : '当前样本'],
-        ['CDN / 云服务', formatNumber(cloudDestinations), useSimulatedEgress ? '仿真样本' : '当前样本'],
-        ['异常域名', formatNumber(egressDomainCards.filter((row) => row[3].includes('高')).length), useSimulatedEgress ? '仿真样本' : '当前样本'],
-        ['首次出现目的地', formatNumber(egressPaths.length), useSimulatedEgress ? '仿真路径' : '外传路径 API'],
-        ['高风险目的地', formatNumber(highRiskDestinations), useSimulatedEgress ? '仿真样本' : '当前样本'],
+        ['公网目的地', formatNumber(destinationRows.length), '当前样本'],
+        ['CDN / 云服务', formatNumber(cloudDestinations), '当前样本'],
+        ['异常域名', formatNumber(egressDomainCards.filter((row) => row[3].includes('高')).length), '当前样本'],
+        ['外联路径', formatNumber(egressPaths.length), '外传路径 API'],
+        ['高风险目的地', formatNumber(highRiskDestinations), '当前样本'],
         ['外联源资产', formatNumber(sourceAssets), egressHasSessionData ? '加密会话 API' : '会话 API 空'],
-        ['待关联风险类型', formatNumber(egressRiskTypes.length), useSimulatedEgress ? '仿真风险类型' : '外传分析 API'],
+        ['待关联风险类型', formatNumber(egressRiskTypes.length), '外传分析 API'],
       ];
-  const egressTrend = buildEncryptedEgressTrend(rawEgressTrend, useSimulatedEgress);
+  const egressTrend = buildEncryptedEgressTrend(rawEgressTrend);
   const egressMapNodes = destinationRows.map(([label, location, flow, sessions, risk], index) => {
     const [x, y] = encryptedEgressMapPosition(location, index);
     return { id: `${label}-${index}`, label, location, flow, sessions, risk, x, y };
   });
-  const scatterSource = ja3Source.length ? ja3Source : sessions;
-  const scatterPoints = Array.from({ length: 34 }, (_, index) => {
-    const item = scatterSource[index % Math.max(scatterSource.length, 1)] || encryptedFallbackFingerprints[index % encryptedFallbackFingerprints.length];
+  const scatterSource = (ja3Source.length ? ja3Source : sessions).filter((item) => (
+    numberFrom(item, ['traffic_gbps', 'flow_gbps', 'gbps']) > 0
+    || numberFrom(item, ['session_count', 'sessions', 'count']) > 0
+  )).slice(0, 34);
+  const scatterMaxFlow = Math.max(1, ...scatterSource.map((item) => numberFrom(item, ['traffic_gbps', 'flow_gbps', 'gbps'])));
+  const scatterMaxSessions = Math.max(1, ...scatterSource.map((item) => numberFrom(item, ['session_count', 'sessions', 'count'])));
+  const scatterPoints = scatterSource.map((item, index) => {
+    const flow = numberFrom(item, ['traffic_gbps', 'flow_gbps', 'gbps']);
+    const sessionCount = numberFrom(item, ['session_count', 'sessions', 'count']);
     return {
-      left: clamp(7 + ((numberFrom(item, ['traffic_gbps', 'flow_gbps', 'gbps']) || index * 1.7) * 5 + index * 3) % 86, 7, 92),
-      top: clamp(78 - ((numberFrom(item, ['session_count', 'sessions', 'count']) || 8 + index * 3) + index * 5) % 68, 12, 82),
+      left: clamp(7 + flow / scatterMaxFlow * 85, 7, 92),
+      top: clamp(82 - sessionCount / scatterMaxSessions * 70, 12, 82),
       tone: toneFromRisk(encryptedRisk(item), index) as 'ok' | 'warn' | 'risk' | 'info',
     };
   });
-  const heartbeatSource = sessions.length ? sessions : encryptedFallbackSessions;
-  const heartbeatBars = Array.from({ length: 48 }, (_, index) => {
-    const item = heartbeatSource[index % heartbeatSource.length];
-    return clamp(numberFrom(item, ['duration_seconds', 'duration_sec']) / 60 || 18 + ((index * 19) % 70), 18, 88);
-  });
+  const heartbeatBars = sessions
+    .map((item) => numberFrom(item, ['duration_seconds', 'duration_sec', 'duration_ms']) / (numberFrom(item, ['duration_ms']) ? 60_000 : 60))
+    .filter((value) => value > 0)
+    .slice(0, 48);
   const evidenceCenter = buildEncryptedEvidenceCenter({
     rawSessions: rawEvidenceSessions,
     rawPcapIndexes: rawEvidencePcapIndexes,
@@ -1649,19 +1755,36 @@ const buildEncryptedTrafficVisuals = ({
   });
 
   return {
+    tabKpis: {
+      fingerprint: [
+        ['指纹总数', formatNumber(numberAt(stats, ['ja3_sample_count']) || ja3Rows.length), '真实 JA3 API'],
+        ['可疑 JA3', formatNumber(maliciousJA3), '风险指纹'],
+        ['未知 SNI', `${numberAt(stats, ['unknown_sni_ratio']).toFixed(1)}%`, '会话观测'],
+        ['异常 Issuer', formatNumber(certificateRows.length), '证书字段'],
+        ['TLS1.0/1.1', formatNumber(tlsSuiteRows.filter((row) => /1\.0|1\.1/.test(row[0] ?? '')).length), '弱版本'],
+        ['弱密码套件', formatNumber(tlsSuiteRows.filter((row) => row[3]?.includes('risk')).length), '协议风险'],
+        ['关联规则', formatNumber(tunnelRuleRows.length), '检测规则'],
+      ],
+      tunnelDetection: [
+        ['隧道告警', formatNumber(tunnelRows.length), '当前窗口'],
+        ['DoH 会话', formatNumber(tunnelRows.filter((row) => row[0]?.includes('DoH')).length), '隧道候选'],
+        ['异常长连接', formatNumber(tunnelRows.filter((row) => row[0]?.includes('长连接')).length), '持续时间'],
+        ['高熵流量', formatNumber(tunnelRows.filter((row) => row[0]?.includes('高熵')).length), '载荷熵值'],
+        ['低熵心跳', formatNumber(tunnelRows.filter((row) => row[0]?.includes('心跳')).length), '周期通信'],
+        ['疑似 VPN', formatNumber(tunnelRows.filter((row) => row[0]?.includes('VPN')).length), '协议候选'],
+        ['已创建告警', formatNumber(tunnelRows.filter((row) => row[6]?.includes('高')).length), '待审核'],
+      ],
+    },
     protocolRows,
     protocolTrend,
-    ja3Rows: ja3Rows.length ? ja3Rows : [['771,4865-4866-4867-4919...', '12.8%', '10.0', '312', '18', '高危']],
-    scatterPoints: scatterPoints.length ? scatterPoints : Array.from({ length: 34 }, (_, index) => ({
-      left: 7 + ((index * 11) % 86),
-      top: 12 + ((index * 17) % 70),
-      tone: index % 7 === 0 ? 'risk' : index % 5 === 0 ? 'warn' : index % 3 === 0 ? 'info' : 'ok',
-    })),
-    tunnelCards: tunnelCards.length ? tunnelCards : [['DNS over HTTPS 会话', '412', '+36', 'warn']],
-    tunnelRows: tunnelRows.length ? tunnelRows : [['DNS over HTTPS', 'DoH over TLS', '10.12.2.36', 'cloudflare-dns.com', '3h 24m', '2.18', '高危']],
+    ja3Rows,
+    scatterPoints,
+    tunnelCards,
+    tunnelRows,
     destinationRows,
     adviceRows,
     certificateRows,
+    tlsSuiteRows,
     tunnelRuleRows,
     evidenceRows,
     egressKpis,
@@ -1669,237 +1792,10 @@ const buildEncryptedTrafficVisuals = ({
     egressMapNodes,
     egressTrend,
     egressAvailability,
-    heartbeatBars: heartbeatBars.length ? heartbeatBars : Array.from({ length: 48 }, (_, index) => 18 + ((index * 19) % 70)),
+    heartbeatBars,
     evidenceCenter,
   };
 };
-
-const encryptedFallbackSessions: Record<string, unknown>[] = [
-  {
-    session_id: 'tls-fallback-001',
-    src_ip: '10.12.2.36',
-    dst_ip: '104.12.12.34',
-    dst_port: 443,
-    protocol: 'TLS',
-    sni: 'cdn.example.com',
-    ja3_fingerprint: '771,4865-4866...',
-    ja3s_fingerprint: '8f9e3d7a1c2b...',
-    alpn: 'h2',
-    tls_version: 'TLS 1.3',
-    cipher_suite: 'TLS_AES_128_GCM_SHA256',
-    certificate_issuer: 'Cloudflare Inc ECC CA-3',
-    risk_level: 'medium',
-    entropy_score: 6.2,
-    anomaly_score: 0.42,
-    duration_seconds: 12240,
-    traffic_gbps: 2.18,
-  },
-  {
-    session_id: 'tls-fallback-002',
-    src_ip: '10.10.8.45',
-    dst_ip: '203.0.113.45',
-    dst_port: 443,
-    protocol: 'QUIC',
-    sni: '',
-    ja3_fingerprint: 'cbd52c1eb670...',
-    ja3s_fingerprint: 'a1b2c3d4e5f6...',
-    alpn: 'h3',
-    tls_version: 'TLS 1.2',
-    cipher_suite: 'ECDHE-RSA-AES128-GCM-SHA256',
-    certificate_issuer: 'Amazon RSA 2048 M01',
-    risk_level: 'high',
-    entropy_score: 7.8,
-    anomaly_score: 0.91,
-    duration_seconds: 22320,
-    traffic_gbps: 3.47,
-  },
-  {
-    session_id: 'tls-fallback-003',
-    src_ip: '172.16.5.10',
-    dst_ip: '185.22.14.9',
-    dst_port: 443,
-    protocol: 'TLS',
-    sni: 'api.update.server',
-    ja3_fingerprint: 'e7d70S342S8a...',
-    ja3s_fingerprint: 'd4d3f2b1a7c6...',
-    alpn: 'h2',
-    tls_version: 'TLS 1.3',
-    cipher_suite: 'TLS_AES_128_GCM_SHA256',
-    certificate_issuer: "Let's Encrypt R3",
-    risk_level: 'medium',
-    entropy_score: 6.6,
-    anomaly_score: 0.58,
-    duration_seconds: 10380,
-    traffic_gbps: 0.96,
-  },
-  {
-    session_id: 'tls-fallback-004',
-    src_ip: '10.12.9.33',
-    dst_ip: '198.51.100.27',
-    dst_port: 443,
-    protocol: 'TLS',
-    sni: 'sync.example.net',
-    ja3_fingerprint: '4d7a28f00056...',
-    ja3s_fingerprint: 'c1d2e3f4e5b6...',
-    alpn: 'http/1.1',
-    tls_version: 'TLS 1.3',
-    cipher_suite: 'ECDHE-RSA-AES128-GCM-SHA256',
-    certificate_issuer: 'DigiCert TLS RSA SHA256 2020 CA1',
-    risk_level: 'medium',
-    entropy_score: 7.9,
-    anomaly_score: 0.62,
-    duration_seconds: 6060,
-    traffic_gbps: 9.66,
-  },
-  {
-    session_id: 'tls-fallback-005',
-    src_ip: '10.11.3.22',
-    dst_ip: '37.120.196.12',
-    dst_port: 443,
-    protocol: 'unknown',
-    sni: '',
-    ja3_fingerprint: '598c8ab3943e...',
-    ja3s_fingerprint: '0f1e2d3c4b5a...',
-    alpn: 'h2',
-    tls_version: 'TLS 1.3',
-    cipher_suite: 'TLS_AES_128_GCM_SHA256',
-    certificate_issuer: 'Sectigo RSA Domain Validation Secure',
-    risk_level: 'low',
-    entropy_score: 3.2,
-    anomaly_score: 0.2,
-    duration_seconds: 16200,
-    traffic_gbps: 0.42,
-  },
-  {
-    session_id: 'tls-fallback-006',
-    src_ip: '10.12.6.77',
-    dst_ip: '2606:4700::6810',
-    dst_port: 443,
-    protocol: 'TLS',
-    sni: 'cloudflare-dns.com',
-    ja3_fingerprint: 'a1b2c3d4e5f6...',
-    ja3s_fingerprint: '90ab12cd34ef...',
-    alpn: 'h3',
-    tls_version: 'TLS 1.3',
-    cipher_suite: 'TLS_AES_256_GCM_SHA384',
-    certificate_issuer: 'Cloudflare Inc ECC CA-3',
-    risk_level: 'medium',
-    entropy_score: 6.1,
-    anomaly_score: 0.48,
-    duration_seconds: 19080,
-    traffic_gbps: 1.02,
-  },
-];
-
-const encryptedFallbackFingerprints: Record<string, unknown>[] = [
-  { ja3: '771,4865-4866-4867-4919...', traffic_ratio: 12.8, traffic_gbps: 10.0, sni_count: 312, alert_count: 18, risk_level: 'high' },
-  { ja3: 'cbd52c1eb6700091a3e2d4c...', traffic_ratio: 8.7, traffic_gbps: 6.8, sni_count: 198, alert_count: 9, risk_level: 'medium' },
-  { ja3: 'e7d70S342S8a2c0d0e0a71d1...', traffic_ratio: 7.6, traffic_gbps: 6.0, sni_count: 145, alert_count: 12, risk_level: 'medium' },
-  { ja3: '4d7a28f00056bS87f06a4e3c2...', traffic_ratio: 6.2, traffic_gbps: 4.9, sni_count: 112, alert_count: 6, risk_level: 'low' },
-  { ja3: '598c8ab3943e1e61065c2e8e...', traffic_ratio: 4.9, traffic_gbps: 3.8, sni_count: 98, alert_count: 7, risk_level: 'medium' },
-  { ja3: 'f5a3d7c0eb2fe4e3c6fb101e9...', traffic_ratio: 3.8, traffic_gbps: 3.0, sni_count: 76, alert_count: 3, risk_level: 'low' },
-];
-
-const encryptedFallbackTunnelProtocols: Record<string, unknown>[] = [
-  { name: 'DNS over HTTPS 会话', count: 412, risk_level: 'medium' },
-  { name: '异常长连接（> 1h）', count: 287, risk_level: 'high' },
-  { name: '高熵流量（> 7.5）', count: 531, risk_level: 'high' },
-  { name: '低频流量（< 3.0）', count: 76, risk_level: 'info' },
-  { name: '低流量心跳（疑似）', count: 193, risk_level: 'medium' },
-  { name: '疑似 VPN 会话', count: 118, risk_level: 'medium' },
-];
-
-const encryptedFallbackRiskTypes: Record<string, unknown>[] = [
-  { type: 'doh', count: 287, risk_level: 'high' },
-  { type: 'high_entropy', count: 531, risk_level: 'high' },
-  { type: 'long_lived', count: 193, risk_level: 'medium' },
-  { type: 'vpn', count: 118, risk_level: 'medium' },
-  { type: 'low_frequency', count: 76, risk_level: 'low' },
-];
-
-const encryptedFallbackExfilDestinations: Record<string, unknown>[] = [
-  { dst_ip: '203.0.113.45', location: '美国 / AWS', traffic_gbps: 8.73, sessions: 28700, risk_level: 'high' },
-  { dst_ip: '104.16.12.34', location: '美国 / Cloudflare', traffic_gbps: 6.21, sessions: 18200, risk_level: 'medium' },
-  { dst_ip: '185.22.14.9', location: '俄罗斯 / 莫斯科', traffic_gbps: 3.86, sessions: 12800, risk_level: 'medium' },
-  { dst_ip: '198.51.100.27', location: '美国 / AWS', traffic_gbps: 2.91, sessions: 9600, risk_level: 'low' },
-  { dst_ip: '2606:4700::6810', location: '美国 / Cloudflare', traffic_gbps: 2.74, sessions: 8900, risk_level: 'low' },
-];
-
-const encryptedFallbackPaths: Record<string, unknown>[] = [
-  { path: '10.12.2.36 -> 203.0.113.45', count: 42, risk_level: 'high' },
-  { path: '10.10.8.45 -> 104.16.12.34', count: 31, risk_level: 'medium' },
-  { path: '172.16.5.10 -> 185.22.14.9', count: 24, risk_level: 'medium' },
-  { path: '10.12.9.33 -> 198.51.100.27', count: 18, risk_level: 'low' },
-  { path: '10.12.6.77 -> 2606:4700::6810', count: 14, risk_level: 'low' },
-];
-
-const encryptedFallbackEgressTrend = {
-  labels: ['00:00', '02:00', '04:00', '06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'],
-  series: [
-    { name: '目的地数', color: '#2d8cff', values: [4, 3, 2, 2, 4, 7, 11, 9, 8, 5, 4, 3] },
-    { name: '大流量会话', color: '#ff5b62', values: [1, 1, 0, 1, 1, 3, 8, 6, 5, 2, 2, 1] },
-    { name: '长会话', color: '#ffb020', values: [1, 0, 1, 0, 1, 2, 5, 4, 3, 2, 1, 1] },
-    { name: '非标准端口', color: '#45cf78', values: [0, 1, 1, 0, 1, 1, 3, 3, 2, 1, 1, 0] },
-    { name: '加密会话', color: '#a58bff', values: [5, 4, 3, 3, 5, 9, 13, 11, 9, 6, 5, 4] },
-  ],
-};
-
-const encryptedFallbackEvidenceSessions: Record<string, unknown>[] = [
-  { start_time: 1783683000000, session_id: 's-8f7a2c16b9e0', src_ip: '10.0.12.45', dst_ip: '93.184.216.34', protocol: 'TLS', sni: 'update.example.com', ja3_fingerprint: '771,4865/6581,45102', alpn: 'h2', certificate_hash: 'a1b2c3d4e5f60718', pcap_index: 'pcap/2025/06/26/00001.pcap', risk_level: 'high', entropy_score: 7.8, evidence_count: 4 },
-  { start_time: 1783683060000, session_id: 's-55d9e0c7a3b2', src_ip: '10.0.12.38', dst_ip: '1.1.1.1', protocol: 'QUIC', sni: 'cloudflare-dns.com', ja3_fingerprint: '646e53/1', alpn: 'h3', certificate_hash: 'b2c3d4e5f6071829', pcap_index: 'pcap/2025/06/26/00002.pcap', risk_level: 'medium', entropy_score: 6.4, evidence_count: 3 },
-  { start_time: 1783683120000, session_id: 's-23a9b7d4c1e8', src_ip: '10.0.9.321', dst_ip: 'unknown-sni', protocol: 'TLS', sni: '', ja3_fingerprint: '1a2b3c4d/7e8f', alpn: '-', certificate_hash: 'c3d4e5f60718293a', pcap_index: 'pcap/2025/06/26/00003.pcap', risk_level: 'high', entropy_score: 8.2, evidence_count: 2 },
-  { start_time: 1783683180000, session_id: 's-4a9b8c7d6e5f', src_ip: '10.0.22.77', dst_ip: 'vpn-support.example', protocol: 'TLS', sni: 'vpn-support.example', ja3_fingerprint: '9f8e7d/1a2b', alpn: 'http/1.1', certificate_hash: 'd4e5f60718293a4b', pcap_index: 'pcap/2025/06/26/00004.pcap', risk_level: 'high', entropy_score: 7.1, evidence_count: 5 },
-  { start_time: 1783683240000, session_id: 's-7c6d5e4f3a2b', src_ip: '10.0.14.56', dst_ip: '203.0.113.88', protocol: 'QUIC', sni: '203.0.113.88', ja3_fingerprint: '7b3a2f1e/-', alpn: 'h3', certificate_hash: 'e5f60718293a4b5c', pcap_index: 'pcap/2025/06/26/00005.pcap', risk_level: 'medium', entropy_score: 6.9, evidence_count: 2 },
-  { start_time: 1783683300000, session_id: 's-1d2c3b4a5e6f', src_ip: '10.0.10.87', dst_ip: 'high-entropy.example', protocol: 'TLS', sni: 'high-entropy.example', ja3_fingerprint: '5c4b3a2f/1e0d', alpn: 'http/1.1', certificate_hash: 'f60718293a4b5c6d', pcap_index: 'pcap/2025/06/26/00006.pcap', risk_level: 'high', entropy_score: 8.6, evidence_count: 3 },
-  { start_time: 1783683360000, session_id: 's-6e5d4c3b2a1f', src_ip: '10.0.8.18', dst_ip: '203.0.113.128', protocol: 'TLS', sni: 'cdn-edge.example', ja3_fingerprint: '3a2b1c0d/9e8f', alpn: 'h2', certificate_hash: '0718293a4b5c6d7e', pcap_index: 'pcap/2025/06/26/00007.pcap', risk_level: 'medium', entropy_score: 6.7, evidence_count: 4 },
-  { start_time: 1783683420000, session_id: 's-9a8b7c6d5e4f', src_ip: '10.0.24.91', dst_ip: '198.51.100.80', protocol: 'TLS', sni: 'archive.example.net', ja3_fingerprint: '8f7e6d5c/4b3a', alpn: 'h2', certificate_hash: '18293a4b5c6d7e8f', pcap_index: 'pcap/2025/06/26/00008.pcap', risk_level: 'high', entropy_score: 7.6, evidence_count: 3 },
-  { start_time: 1783683480000, session_id: 's-2b3c4d5e6f7a', src_ip: '10.0.18.64', dst_ip: '192.0.2.47', protocol: 'TLS', sni: 'telemetry.example.org', ja3_fingerprint: '1f2e3d4c/5b6a', alpn: 'http/1.1', certificate_hash: '293a4b5c6d7e8f90', pcap_index: 'pcap/2025/06/26/00009.pcap', risk_level: 'medium', entropy_score: 6.1, evidence_count: 2 },
-];
-
-const encryptedFallbackEvidencePcapIndexes: Record<string, unknown>[] = [
-  { file_key: 'pcap/2025/06/26/00001.pcap', probe_id: 'probe-gw-01', start_time: 1783683000000, end_time: 1783683030000, byte_count: 12_280_000, packet_count: 28_341, storage_path: 'pcap-archive', sha256: '9f1a2b3c4d5e6f708192', compressed_size: 6_800_000 },
-  { file_key: 'pcap/2025/06/26/00002.pcap', probe_id: 'probe-gw-01', start_time: 1783683060000, end_time: 1783683090000, byte_count: 32_000_000, packet_count: 5_231, storage_path: 'pcap-archive', sha256: '8c2b3d4e5f60718293a4', compressed_size: 11_000_000 },
-  { file_key: 'pcap/2025/06/26/00003.pcap', probe_id: 'probe-dc-02', start_time: 1783683120000, end_time: 1783683150000, byte_count: 6_800_000, packet_count: 9_791, storage_path: 'pcap-archive', sha256: '7b3c4d5e6f708192a3b4', compressed_size: 3_400_000 },
-  { file_key: 'pcap/2025/06/26/00004.pcap', probe_id: 'probe-gw-01', start_time: 1783683180000, end_time: 1783683210000, byte_count: 12_400_000, packet_count: 22_201, storage_path: 'pcap-archive', sha256: '6a4b5c6d7e8091a2b3c4', compressed_size: 5_100_000 },
-  { file_key: 'pcap/2025/06/26/00005.pcap', probe_id: 'probe-edge-03', start_time: 1783683240000, end_time: 1783683270000, byte_count: 18_600_000, packet_count: 14_221, storage_path: 'pcap-archive', sha256: '5c6d7e8091a2b3c4d5e6', compressed_size: 7_700_000 },
-  { file_key: 'pcap/2025/06/26/00006.pcap', probe_id: 'probe-gw-01', start_time: 1783683300000, end_time: 1783683330000, byte_count: 9_400_000, packet_count: 12_408, storage_path: 'pcap-archive', sha256: '4b5c6d7e8091a2b3c4d5', compressed_size: 4_200_000 },
-];
-
-const encryptedFallbackEvidenceTrend: Record<string, unknown>[] = Array.from({ length: 24 }, (_, index) => ({
-  bucket_start: 1783683000000 + index * 75_000,
-  byte_count: 1_200_000 + ((index * 1_937_000) % 11_400_000),
-  packet_count: 420 + ((index * 311) % 1_900),
-}));
-
-const encryptedFallbackEvidenceEntropyTrend: Record<string, unknown>[] = Array.from({ length: 20 }, (_, index) => ({
-  bucket_start: 1783683000000 + index * 90_000,
-  entropy_score: [7.1, 7.4, 7.3, 7.7, 8.2, 7.9, 7.6, 8.1, 8.5, 8.0][index % 10],
-}));
-
-const encryptedFallbackEvidenceCertificate = [
-  { label: 'Subject', value: 'CN=update.example.com' },
-  { label: 'Issuer', value: "R3 (Let's Encrypt)" },
-  { label: 'Serial', value: '04:AF:8E:3C:1D:8B:9E:56:11' },
-  { label: 'Not Before', value: '2025-04-10 03:12:00' },
-  { label: 'Not After', value: '2025-07-09 03:12:00' },
-  { label: 'Signature', value: 'ECDSA with SHA256' },
-];
-
-const encryptedFallbackEvidenceCompleteness = [
-  { label: 'Session', complete: 6, total: 6 },
-  { label: 'PCAP', complete: 4, total: 4 },
-  { label: '握手', complete: 5, total: 6 },
-  { label: 'Hash', complete: 4, total: 4 },
-];
-
-const encryptedFallbackEvidenceHandshake: EncryptedTrafficVisuals['evidenceCenter']['handshakeTimeline'] = [
-  { time: '10:15:01.321', event: 'ClientHello', detail: 'update.example.com, ALPN h2', status: 'ok' },
-  { time: '10:15:01.402', event: 'ServerHello', detail: 'TLS_AES_128_GCM_SHA256', status: 'ok' },
-  { time: '10:15:01.405', event: 'EncryptedExtensions', detail: 'h2 selected', status: 'info' },
-  { time: '10:15:01.410', event: 'Certificate', detail: "R3 (Let's Encrypt)", status: 'ok' },
-  { time: '10:15:01.418', event: 'CertificateVerify', detail: '证书链校验完成', status: 'ok' },
-  { time: '10:15:01.422', event: 'Finished', detail: '握手记录归档', status: 'info' },
-];
 
 const encryptedDestinationRows = (
   exfilDestinations: Record<string, unknown>[],
@@ -1928,8 +1824,8 @@ const extractDestinationFromPath = (value: string) => {
   return parts[parts.length - 1]?.trim() || '';
 };
 
-const buildEncryptedEgressTrend = (rawTrend: Record<string, unknown>[], useSimulatedEgress: boolean) => {
-  if (!rawTrend.length) return useSimulatedEgress ? encryptedFallbackEgressTrend : { labels: [], series: [] };
+const buildEncryptedEgressTrend = (rawTrend: Record<string, unknown>[]) => {
+  if (!rawTrend.length) return { labels: [], series: [] };
   const labels = rawTrend.map((item) => formatEgressTrendBucket(numberFrom(item, ['bucket_start', 'bucketStart', 'timestamp'])));
   return {
     labels,
@@ -1956,26 +1852,26 @@ const buildEncryptedEvidenceCenter = ({
   rawEntropyTrend: Record<string, unknown>[];
   rawCompleteness: Record<string, unknown>[];
 }): EncryptedTrafficVisuals['evidenceCenter'] => {
-  const useSimulatedEvidence = !rawSessions.length && !rawPcapIndexes.length && !rawPcapTrend.length;
-  const sourceSessions = useSimulatedEvidence ? encryptedFallbackEvidenceSessions : rawSessions;
-  const sourcePcapIndexes = useSimulatedEvidence ? encryptedFallbackEvidencePcapIndexes : rawPcapIndexes;
-  const sourceTrend = useSimulatedEvidence ? encryptedFallbackEvidenceTrend : rawPcapTrend;
-  const sourceEntropyTrend = useSimulatedEvidence ? encryptedFallbackEvidenceEntropyTrend : rawEntropyTrend;
+  const sourceSessions = rawSessions;
+  const sourcePcapIndexes = rawPcapIndexes;
+  const sourceTrend = rawPcapTrend;
+  const sourceEntropyTrend = rawEntropyTrend;
+  const linkedSessionCount = rawSessions.filter((item) => Boolean(textFrom(item, ['pcap_index', 'pcap_id', 'evidence_id']))).length;
   const availability = {
-    state: (rawSessions.length && rawPcapIndexes.length
+    state: (rawSessions.length && rawPcapIndexes.length && linkedSessionCount
       ? 'live'
       : rawSessions.length || rawPcapIndexes.length || rawPcapTrend.length
         ? 'partial'
-        : 'simulated') as 'live' | 'partial' | 'simulated' | 'unavailable',
-    detail: rawSessions.length && rawPcapIndexes.length
-      ? `证据 API 返回 ${rawSessions.length} 条加密会话与 ${rawPcapIndexes.length} 条 PCAP 索引。`
+        : 'unavailable') as 'live' | 'partial' | 'unavailable',
+    detail: rawSessions.length && rawPcapIndexes.length && linkedSessionCount
+      ? `证据 API 返回 ${rawSessions.length} 条加密会话，其中 ${linkedSessionCount} 条已关联 PCAP。`
       : rawSessions.length || rawPcapIndexes.length || rawPcapTrend.length
-        ? `证据 API 已返回 ${rawSessions.length} 条会话、${rawPcapIndexes.length} 条 PCAP 索引和 ${rawPcapTrend.length} 个波形桶；未返回的握手字段保持空白。`
-        : '证据 API 的会话、PCAP 索引和波形桶均为空，当前展示类型化仿真样本，仅用于演示与验收视觉。',
+        ? `证据 API 已返回 ${rawSessions.length} 条会话、时间窗内 ${rawPcapIndexes.length} 条独立 PCAP 索引和 ${rawPcapTrend.length} 个波形桶；当前会话-PCAP 关联 ${linkedSessionCount} 条。`
+        : '证据 API 的会话、PCAP 索引和波形桶均为空，未生成任何替代数据。',
   };
   const sessions = sourceSessions.slice(0, 9).map((item, index) => ({
-    time: formatEpochTime(numberFrom(item, ['start_time', 'StartTime', 'ts_start'])),
-    sessionId: textFrom(item, ['session_id', 'SessionID']) || `sim-evidence-${String(index + 1).padStart(3, '0')}`,
+    time: formatEvidenceDateTime(numberFrom(item, ['start_time', 'StartTime', 'ts_start'])),
+    sessionId: textFrom(item, ['session_id', 'SessionID']) || '-',
     source: textFrom(item, ['src_ip', 'source_ip']) || '-',
     destination: textFrom(item, ['dst_ip', 'destination_ip']) || '-',
     protocol: encryptedProtocol(item),
@@ -1992,7 +1888,7 @@ const buildEncryptedEvidenceCenter = ({
     const end = numberFrom(item, ['end_time', 'ts_end']);
     const hash = textFrom(item, ['sha256', 'hash']) || '-';
     return [
-      textFrom(item, ['file_key', 'pcap_index', 'id']) || `pcap-sim-${String(index + 1).padStart(3, '0')}.pcap`,
+      textFrom(item, ['file_key', 'pcap_index', 'id']) || '-',
       `${formatEvidenceTime(start)} - ${formatEvidenceTime(end || start)}`,
       bytesLabel(numberFrom(item, ['byte_count', 'bytes', 'size_bytes'])),
       formatNumber(numberFrom(item, ['packet_count', 'packets'])),
@@ -2011,13 +1907,11 @@ const buildEncryptedEvidenceCenter = ({
   }));
   const derivedCompleteness = [
     { label: 'Session', complete: sessions.filter((item) => item.sessionId !== '-' && item.source !== '-' && item.destination !== '-').length, total: sessions.length },
-    { label: 'PCAP', complete: sourcePcapIndexes.length, total: sourcePcapIndexes.length },
+    { label: 'PCAP关联', complete: sessions.filter((item) => item.pcapIndex !== '-').length, total: sessions.length },
     { label: '握手', complete: sessions.filter((item) => item.sni !== '-' || item.ja3 !== '-').length, total: sessions.length },
-    { label: 'Hash', complete: sourcePcapIndexes.filter((item) => Boolean(textFrom(item, ['sha256', 'hash']))).length, total: sourcePcapIndexes.length },
+    { label: '索引Hash', complete: sourcePcapIndexes.filter((item) => Boolean(textFrom(item, ['sha256', 'hash']))).length, total: sourcePcapIndexes.length },
   ];
-  const completenessSource = useSimulatedEvidence
-    ? encryptedFallbackEvidenceCompleteness
-    : rawCompleteness.length
+  const completenessSource = rawCompleteness.length
     ? rawCompleteness.map((item) => ({
       label: textFrom(item, ['label', 'name']) || '证据',
       complete: numberFrom(item, ['complete', 'completed']),
@@ -2032,19 +1926,15 @@ const buildEncryptedEvidenceCenter = ({
     };
   });
   const selected = sessions[0];
-  const certificateDetails = useSimulatedEvidence
-    ? encryptedFallbackEvidenceCertificate
-    : [
-      { label: 'Subject', value: selected?.sni !== '-' ? selected.sni : selected?.destination || '-' },
+  const certificateDetails = [
+      { label: 'Subject', value: selected && selected.sni !== '-' ? selected.sni : selected?.destination || '-' },
       { label: 'Issuer', value: '-' },
       { label: 'Session ID', value: selected?.sessionId || '-' },
       { label: '协议', value: selected?.protocol || '-' },
       { label: 'ALPN', value: selected?.alpn || '-' },
       { label: '证书 Hash', value: selected?.certificateHash || '-' },
     ];
-  const handshakeTimeline = useSimulatedEvidence
-    ? encryptedFallbackEvidenceHandshake
-    : sessions.slice(0, 6).map((item, index) => ({
+  const handshakeTimeline = sessions.slice(0, 6).map((item, index) => ({
       time: item.time,
       event: index === 0 ? 'Session 观测' : index === 1 ? '协议识别' : '证据关联',
       detail: index === 0 ? `${item.source} -> ${item.destination}` : index === 1 ? `${item.protocol} / ${item.alpn}` : `会话 ${item.sessionId}`,
@@ -2052,29 +1942,19 @@ const buildEncryptedEvidenceCenter = ({
     }));
   const hashRows = sourcePcapIndexes.slice(0, 5).map((item, index) => [
     textFrom(item, ['sha256', 'hash']) || '-',
-    textFrom(item, ['file_key', 'pcap_index']) || `pcap-sim-${index + 1}`,
-    formatEpochTime(numberFrom(item, ['end_time', 'ts_end', 'created_at'])),
+    textFrom(item, ['file_key', 'pcap_index']) || '-',
+    formatEvidenceDateTime(numberFrom(item, ['end_time', 'ts_end', 'created_at'])),
     textFrom(item, ['probe_id', 'source']) || 'PCAP 索引',
     textFrom(item, ['sha256', 'hash']) ? '已索引' : '待校验',
   ]);
   const evidenceCount = sourceSessions.reduce((sum, item) => sum + numberFrom(item, ['evidence_count']), 0);
-  const hashComplete = completeness.find((item) => item.label === 'Hash')?.complete ?? 0;
+  const hashComplete = completeness.find((item) => item.label === '索引Hash')?.complete ?? 0;
   const pending = completeness.reduce((sum, item) => sum + Math.max(0, item.total - item.complete), 0);
   return {
     availability,
-    kpis: useSimulatedEvidence
-      ? [
-        ['关联 Session', '1,284', '仿真样本'],
-        ['PCAP 索引', '436', '仿真样本'],
-        ['证书样本', '218', '仿真样本'],
-        ['握手元数据', '9,642', '仿真样本'],
-        ['已校验 Hash', '391', '仿真样本'],
-        ['取证任务', '57', '仿真样本'],
-        ['待补齐证据', '23', '仿真样本'],
-      ]
-      : [
-        ['关联 Session', formatNumber(sessions.length), '证据 API'],
-        ['PCAP 索引', formatNumber(sourcePcapIndexes.length), 'PCAP 索引 API'],
+    kpis: [
+        ['会话证据', formatNumber(sessions.length), '证据 API'],
+        ['时间窗 PCAP', formatNumber(sourcePcapIndexes.length), '独立索引 API'],
         ['证据计数', formatNumber(evidenceCount), '会话证据字段'],
         ['握手元数据', formatNumber(completeness.find((item) => item.label === '握手')?.complete ?? 0), '真实字段'],
         ['已索引 Hash', formatNumber(hashComplete), 'PCAP 索引'],
@@ -2094,8 +1974,13 @@ const buildEncryptedEvidenceCenter = ({
 
 const formatEvidenceTime = (epochMs: number) => {
   if (!epochMs) return '--:--:--';
-  const date = new Date(epochMs);
-  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+  return new Date(epochMs + 8 * 60 * 60 * 1_000).toISOString().slice(11, 19);
+};
+
+const formatEvidenceDateTime = (value: number) => {
+  if (!value) return '-';
+  const ms = value > 10_000_000_000 ? value : value * 1000;
+  return new Date(ms + 8 * 60 * 60 * 1_000).toISOString().slice(5, 16).replace('T', ' ');
 };
 
 const formatEgressTrendBucket = (epochMs: number) => {
@@ -2114,31 +1999,27 @@ const encryptedEgressMapPosition = (location: string, index: number): [number, n
   return [58 + (index % 4) * 7, 52 + (index % 3) * 8];
 };
 
-const takeWithFallback = <T>(source: T[], fallback: T[], count: number) => {
-  const combined = [...source, ...fallback];
-  return combined.slice(0, count);
-};
-
 const encryptedTunnelLabel = (raw: string, index: number) => {
   const value = raw.toLowerCase();
-  if (value.includes('large_encrypted_upload') || value.includes('high_entropy')) return '高熵流量（> 7.5）';
-  if (value.includes('long_lived')) return '异常长连接（> 1h）';
-  if (value.includes('non_standard')) return '疑似 VPN 会话';
-  if (value.includes('doh') || value.includes('dns')) return 'DNS over HTTPS 会话';
+  if (value.includes('tls_large_long_lived') || value.includes('large_encrypted_upload')) return '大流量长连接候选';
+  if (value.includes('ssh_long_lived')) return 'SSH 长连接候选';
+  if (value.includes('quic_long_lived')) return 'QUIC 长连接候选';
+  if (value.includes('long_lived')) return '长连接候选';
+  if (value.includes('non_standard')) return '非标准端口候选';
+  if (value.includes('dns_high_frequency') || value.includes('dns') || value.includes('doh')) return '高频 DNS 候选';
   if (value.includes('low_frequency')) return '低频流量（< 3.0）';
   if (value.includes('heartbeat')) return '低流量心跳（疑似）';
-  return raw || ['DNS over HTTPS 会话', '异常长连接（> 1h）', '高熵流量（> 7.5）', '低频流量（< 3.0）', '低流量心跳（疑似）', '疑似 VPN 会话'][index % 6];
+  return raw || ['高频 DNS 候选', 'SSH 长连接候选', 'QUIC 长连接候选', '大流量长连接候选'][index % 4];
 };
 
 const encryptedTunnelRuleLabel = (raw: string, index: number) => {
   const label = encryptedTunnelLabel(raw, index);
-  if (/dns over https|doh/i.test(raw) || label.includes('DNS over HTTPS')) return 'DoH over HTTPS';
-  if (/quic/i.test(raw)) return 'DoH over QUIC';
-  if (label.includes('异常长连接')) return '异常长连接';
+  if (label.includes('DNS')) return '高频 DNS 候选规则';
+  if (/quic/i.test(raw)) return 'QUIC 长连接候选规则';
+  if (label.includes('长连接')) return `${label}规则`;
   if (label.includes('低频') || label.includes('心跳')) return '低熵心跳通信';
   if (label.includes('高熵')) return '高熵可疑流量';
-  if (label.includes('VPN')) return '可疑 VPN / Proxy';
-  return ['DoH over HTTPS', 'DoH over QUIC', '异常长连接', '低熵心跳通信', '高熵可疑流量', '可疑 VPN / Proxy'][index % 6];
+  return `${label}规则`;
 };
 
 const toneFromRisk = (risk: string, index = 0) => {
@@ -2435,20 +2316,136 @@ const adaptForensics = (page: PageSpec, primaryPayload: unknown, secondaryPayloa
   const envelope = unwrapEnvelope(primaryPayload);
   const jobs = extractList(primaryPayload, ['jobs', 'data', 'items']);
   const stats = unwrapPayload(secondaryPayloads[0]);
+  const sessions = extractList(secondaryPayloads[1], ['sessions', 'data']);
+  const pcapIndexes = extractNamedList(secondaryPayloads[2], ['pcap_indexes']);
+  const pcapTrend = extractNamedList(secondaryPayloads[2], ['pcap_trend']);
+  const completenessRows = extractNamedList(secondaryPayloads[2], ['completeness']);
+  const auditRows = extractList(secondaryPayloads[3], ['trails', 'logs', 'data']);
   const taskStats = isRecord(stats) && isRecord(stats.task_stats) ? stats.task_stats : {};
   const workerStats = isRecord(stats) && isRecord(stats.worker_stats) ? stats.worker_stats : {};
-  const total = totalFromEnvelope(envelope, jobs.length) || sumKnownTaskStats(taskStats) || jobs.length;
+  const referenceVisuals = isRecord(stats) && isRecord(stats.ui_reference_visuals)
+    ? stats.ui_reference_visuals as unknown as ForensicsVisuals
+    : undefined;
+  const total = totalFromEnvelope(envelope, jobs.length) || referenceVisuals?.totals?.jobs || sumKnownTaskStats(taskStats) || jobs.length;
   const processing = countJobStatus(jobs, 'processing') || numberAt(taskStats, ['processing']);
   const queued = countJobStatus(jobs, 'queued') || numberAt(taskStats, ['queued']);
   const completed = countJobStatus(jobs, 'completed') || numberAt(taskStats, ['completed']);
   const failed = countJobStatus(jobs, 'failed') || numberAt(taskStats, ['failed']);
-  const pcapFiles = jobs.filter((item) => textFrom(item, ['result_file_key']).includes('.pcap') || textFrom(item, ['download_url'])).length || completed;
-  const hashPass = Math.max(0, completed - failed);
+  const pcapFiles = pcapIndexes.length;
+  const hashPass = pcapIndexes.filter((item) => Boolean(textFrom(item, ['sha256', 'hash']))).length;
   const signedUrls = jobs.filter((item) => numberFrom(item, ['expires_at']) > 0 || textFrom(item, ['download_url'])).length;
-  const auditSuccess = Math.max(completed, jobs.filter((item) => textFrom(item, ['status']) === 'completed').length);
+  const auditSuccess = auditRows.filter((item) => auditResultLabel(item).includes('成功')).length;
+  const jobVisuals: ForensicsVisuals['jobs'] = jobs.map((item) => ({
+    id: textFrom(item, ['job_id', 'task_id']) || '-',
+    status: forensicStatusLabel(textFrom(item, ['status'])),
+    progress: numberFrom(item, ['progress']),
+    resultKey: textFrom(item, ['result_file_key']),
+    sha256: textFrom(item, ['sha256']),
+    totalBytes: numberFrom(item, ['total_bytes']),
+    totalPackets: numberFrom(item, ['total_packets']),
+    filesScanned: numberFrom(item, ['files_scanned']),
+    downloadUrl: textFrom(item, ['download_url']),
+    expiresAt: numberFrom(item, ['expires_at']),
+    errorMessage: textFrom(item, ['error_message']),
+  }));
+  const completeness: ForensicsVisuals['completeness'] = completenessRows.map((item) => {
+    const complete = numberFrom(item, ['complete', 'completed']);
+    const itemTotal = numberFrom(item, ['total', 'count']);
+    const ratio = itemTotal ? complete / itemTotal : 0;
+    return {
+      label: textFrom(item, ['label', 'name']) || '证据',
+      complete,
+      total: itemTotal,
+      status: ratio >= 0.9 ? 'ok' : ratio >= 0.6 ? 'warn' : 'risk',
+    };
+  });
+  const generatedVisuals: ForensicsVisuals = {
+    availability: { jobs: 'live', sessions: 'live', pcap: 'live', audit: 'live' },
+    stateCounts: [
+      { label: '新建', value: countJobStatus(jobs, 'new'), status: 'info' },
+      { label: '排队中', value: queued, status: queued ? 'info' : 'ok' },
+      { label: '采集中', value: processing, status: processing ? 'warn' : 'ok' },
+      { label: '解析中', value: countJobStatus(jobs, 'parsing'), status: countJobStatus(jobs, 'parsing') ? 'warn' : 'ok' },
+      { label: '完成', value: completed, status: completed ? 'ok' : 'info' },
+      { label: '失败', value: failed, status: failed ? 'risk' : 'ok' },
+    ],
+    jobs: jobVisuals,
+    pcapIndexes: pcapIndexes.map((item) => ({
+      fileKey: textFrom(item, ['file_key', 'pcap_index', 'id']) || '-',
+      storagePath: textFrom(item, ['storage_path', 'path']) || '-',
+      probeId: textFrom(item, ['probe_id']) || '-',
+      sizeBytes: numberFrom(item, ['compressed_size', 'byte_count', 'size_bytes']),
+      sha256: textFrom(item, ['sha256', 'hash']) || '-',
+      startTime: formatEvidenceDateTime(numberFrom(item, ['start_time', 'ts_start'])),
+      endTime: formatEvidenceDateTime(numberFrom(item, ['end_time', 'ts_end'])),
+      packetCount: numberFrom(item, ['packet_count', 'packets']),
+      status: textFrom(item, ['sha256', 'hash']) ? '已索引' : '待校验',
+    })),
+    pcapTrend: pcapTrend.map((item) => ({
+      label: formatEvidenceDateTime(numberFrom(item, ['bucket_start', 'timestamp'])),
+      value: numberFrom(item, ['byte_count', 'bytes', 'value']),
+    })),
+    sessions: sessions.map((item) => {
+      const start = numberFrom(item, ['start_time', 'ts_start']);
+      const end = numberFrom(item, ['end_time', 'ts_end']);
+      const durationMs = start && end ? Math.max(0, end - start) : numberFrom(item, ['duration_ms']);
+      const destinationPort = numberFrom(item, ['dst_port', 'destination_port']);
+      return {
+        sessionId: textFrom(item, ['session_id']) || '-',
+        time: formatEvidenceDateTime(start),
+        protocol: encryptedProtocol(item),
+        source: textFrom(item, ['src_ip', 'source_ip']) || '-',
+        destination: `${textFrom(item, ['dst_ip', 'destination_ip']) || '-'}${destinationPort ? `:${destinationPort}` : ''}`,
+        byteCount: numberFrom(item, ['byte_count', 'bytes_total']),
+        packetCount: numberFrom(item, ['packet_count', 'num_pkts']),
+        duration: durationMs ? `${(durationMs / 1000).toFixed(2)} s` : '-',
+        risk: encryptedRisk(item),
+        sni: textFrom(item, ['sni', 'sni_hash']) || '-',
+        ja3: textFrom(item, ['ja3_fingerprint', 'ja3']) || '-',
+      };
+    }),
+    completeness,
+    hashRows: [
+      ...jobVisuals.filter((item) => item.resultKey && item.sha256).map((item) => ({
+        fileKey: item.resultKey,
+        sha256: item.sha256,
+        status: '可校验',
+        checkedAt: '-',
+      })),
+      ...pcapIndexes.map((item) => ({
+        fileKey: textFrom(item, ['file_key', 'pcap_index']) || '-',
+        sha256: textFrom(item, ['sha256', 'hash']) || '-',
+        status: textFrom(item, ['sha256', 'hash']) ? '已索引' : '待校验',
+        checkedAt: formatEvidenceDateTime(numberFrom(item, ['end_time', 'created_at'])),
+      })),
+    ],
+    signedUrls: jobVisuals.filter((item) => item.downloadUrl).map((item) => ({
+      key: item.resultKey || item.id,
+      url: item.downloadUrl,
+      expiresAt: formatEvidenceDateTime(item.expiresAt),
+      status: '有效',
+    })),
+    exportRows: jobVisuals.filter((item) => item.resultKey).map((item) => ({
+      id: item.id,
+      content: 'PCAP + SHA256 + 审计',
+      files: item.filesScanned,
+      sizeBytes: item.totalBytes,
+      status: item.status,
+      resultKey: item.resultKey,
+    })),
+    auditRows: auditRows.map((item, index) => ({
+      time: auditTimestamp(item, index),
+      user: auditUserLabel(item),
+      action: auditActionLabel(item),
+      target: textFrom(item, ['resource_id', 'object_id']) || '-',
+      result: auditResultLabel(item),
+    })),
+  };
+  const visuals = referenceVisuals?.stateCounts?.length ? referenceVisuals : generatedVisuals;
 
   return {
     id: page.id,
+    total,
     metrics: [
       metric('取证任务', total, '项', total ? 'info' : 'warn'),
       metric('处理中', processing + queued, '项', processing + queued ? 'warn' : 'ok'),
@@ -2458,12 +2455,12 @@ const adaptForensics = (page: PageSpec, primaryPayload: unknown, secondaryPayloa
       metric('签名 URL', signedUrls, '个', signedUrls ? 'ok' : 'warn'),
       metric('审计成功', auditSuccess, '条', auditSuccess ? 'ok' : 'warn'),
     ],
-    rows: jobs.slice(0, 8).map((item, index) =>
+    rows: jobs.map((item) =>
       makeRow(page, {
-        '任务 ID': textFrom(item, ['job_id', 'task_id']) || `F-${String(index + 1).padStart(5, '0')}`,
-        '告警/战役 ID': forensicSourceId(item, index),
-        资产: forensicAsset(item, index),
-        五元组: forensicTuple(item, index),
+        '任务 ID': textFrom(item, ['job_id', 'task_id']) || '-',
+        '告警/战役 ID': forensicSourceId(item),
+        资产: forensicAsset(item),
+        五元组: forensicTuple(item),
         时间窗: forensicTimeWindow(item),
         证据包: forensicPackageLabel(item),
         状态: forensicStatusLabel(textFrom(item, ['status'])),
@@ -2479,11 +2476,14 @@ const adaptForensics = (page: PageSpec, primaryPayload: unknown, secondaryPayloa
     evidence: [
       evidence('PCAP Jobs API', `/v1/pcap/jobs ${jobs.length}/${total}`, jobs.length ? 'ok' : 'warn'),
       evidence('PCAP Stats API', '/v1/pcap/stats', Object.keys(taskStats).length || Object.keys(workerStats).length ? 'ok' : 'info'),
+      evidence('Session API', `${sessions.length} 条`, sessions.length ? 'ok' : 'info'),
+      evidence('PCAP Index API', `${pcapIndexes.length} 条`, pcapIndexes.length ? 'ok' : 'info'),
       evidence('Hash 校验', `${hashPass} 项`, failed ? 'warn' : 'ok'),
       evidence('签名 URL', `${signedUrls} 个`, signedUrls ? 'ok' : 'warn'),
       evidence('租户隔离', 'tenant scoped', 'ok'),
       evidence('下载审计', `${auditSuccess} 条`, auditSuccess ? 'ok' : 'warn'),
     ],
+    visuals: { forensics: visuals },
   };
 };
 
@@ -2521,6 +2521,8 @@ const adaptRules = (page: PageSpec, primaryPayload: unknown): PageSnapshot => {
         命中数: formatNumber(ruleHitCount(item, index)),
         误报率: `${ruleFalsePositiveRate(item, index).toFixed(2)}%`,
         平均延时: `${ruleLatency(item, index)} ms`,
+        最近状态变更: formatDateTime(textFrom(item, ['updated_at', 'modified_at', 'created_at'])) || '-',
+        状态操作人: textFrom(item, ['updated_by', 'operator', 'created_by', 'owner']) || 'system',
       }),
     ),
     timeline: [
@@ -2618,6 +2620,7 @@ const adaptModels = (page: PageSpec, primaryPayload: unknown): PageSnapshot => {
     rows: models.slice(0, 8).map((item, index) =>
       makeRow(page, {
         __model_id: textFrom(item, ['model_id', 'id', 'uuid']) || `model-${index + 1}`,
+        __rollback_version: textFrom(item, ['previous_version']),
         __f1_score: modelMetricValue(item, ['f1_score', 'f1']) || 0.947,
         __auc: modelMetricValue(item, ['auc', 'auc_score']) || 0.982,
         __drift: modelDrift(item) || 0.12,
@@ -2978,7 +2981,10 @@ const timelineItem = (title: string, description: string, status: MetricStatus) 
 
 const makeRow = (page: PageSpec, values: SnapshotRow): SnapshotRow => ({
   ...Object.fromEntries(page.tableColumns.map((column) => [column, values[column] ?? '-'])),
-  ...Object.fromEntries(Object.entries(values).filter(([key]) => key.startsWith('__'))),
+  // Category-specific pages may render a stricter projection than the shared
+  // route manifest. Preserve those typed fields instead of silently dropping
+  // them at the adapter boundary; the table still decides which keys to show.
+  ...values,
 });
 
 const unwrapEnvelope = (payload: unknown) => (isRecord(payload) ? payload : {});
@@ -3083,6 +3089,22 @@ const arrayLengthFrom = (payload: unknown, keys: string[]) => {
   return 0;
 };
 
+const stringArrayFrom = (payload: unknown, keys: string[]) => {
+  for (const key of keys) {
+    const value = valueAt(payload, [key]);
+    if (Array.isArray(value)) return value.map((item) => String(item)).filter(Boolean);
+  }
+  return [];
+};
+
+const numberArrayFrom = (payload: unknown, keys: string[]) => {
+  for (const key of keys) {
+    const value = valueAt(payload, [key]);
+    if (Array.isArray(value)) return value.map((item) => Number(item)).filter(Number.isFinite);
+  }
+  return [];
+};
+
 const sumArrayLengths = (items: Record<string, unknown>[], keys: string[]) =>
   items.reduce((total, item) => total + arrayLengthFrom(item, keys), 0);
 
@@ -3103,16 +3125,21 @@ const severityLabel = (severity: string) => {
   if (value === 'medium') return '中危';
   if (value === 'low') return '低危';
   if (value === 'info') return '提示';
+  if (value === 'normal') return '正常';
+  if (value === 'suspicious') return '中危';
+  if (value === 'malicious') return '高危';
   return severity || '-';
 };
 
 const assetRiskLabel = (item: Record<string, unknown>) => {
   const explicit = textFrom(item, ['risk_tags', 'risk_label', 'risk_level', 'severity']);
   if (explicit) return severityLabel(explicit);
-  const criticality = numberAt(item, ['criticality']);
-  if (criticality >= 80) return '漏洞 / 高危端口';
-  if (criticality >= 50) return '暴露服务';
-  return '低风险';
+  const metadata = isRecord(item.metadata) ? item.metadata : {};
+  const riskScore = numberAt(metadata, ['risk_score']);
+  if (riskScore >= 80) return '高风险';
+  if (riskScore >= 50) return '中风险';
+  if (riskScore > 0) return '低风险';
+  return '未评估';
 };
 
 const discoveryRunStatusLabel = (value: string) => {
@@ -3304,8 +3331,8 @@ const encryptedProtocol = (item: Record<string, unknown>) => {
   return protocol || '未知加密';
 };
 
-const encryptedSessionSummary = (item: Record<string, unknown>, index: number) => {
-  const src = textFrom(item, ['src_ip', 'source_ip']) || `10.12.${index + 2}.${36 + index}`;
+const encryptedSessionSummary = (item: Record<string, unknown>, _index: number) => {
+  const src = textFrom(item, ['src_ip', 'source_ip']) || '-';
   const dst = textFrom(item, ['dst_ip', 'destination_ip']) || '-';
   const port = numberFrom(item, ['dst_port', 'destination_port']);
   return `${src} -> ${dst}${port ? `:${port}` : ''}`;
@@ -3326,12 +3353,7 @@ const certificateRisk = (item: Record<string, unknown>) => {
   return !issuer || (expiresAt > 0 && expiresAt < Date.now() / 1000) || risk.includes('高');
 };
 
-const encryptedAlpnFallback = (item: Record<string, unknown>) => {
-  const protocol = encryptedProtocol(item);
-  if (protocol === 'QUIC') return 'h3';
-  if (textFrom(item, ['tls_version', 'TLSVersion']).includes('1.3')) return 'h2';
-  return 'http/1.1';
-};
+const encryptedAlpnFallback = (_item: Record<string, unknown>) => '-';
 
 const encryptedRisk = (item: Record<string, unknown>) => {
   const explicit = severityLabel(textFrom(item, ['risk_level', 'severity', 'risk']));
@@ -3439,18 +3461,20 @@ const probeCaptureMode = (item: Record<string, unknown>) => {
   if (mode.includes('pcap')) return '离线 PCAP';
   if (mode.includes('l2')) return 'L2 全量';
   if (mode.includes('l3')) return 'L3 全量';
-  return textFrom(item, ['capture_mode', 'mode']) || '混合 (L2+L3)';
+  return textFrom(item, ['capture_mode', 'mode']) || '-';
 };
 
-const probeLocation = (item: Record<string, unknown>, index: number) =>
-  textFrom(item, ['location', 'building', 'site', 'name']) ||
-  ['数据中心机房 A', '数据中心机房 B', '教学区 1 栋', '教学区 2 栋', '办公区 A 栋', '体育馆', '宿舍区 1 栋'][index % 7];
+const probeLocation = (item: Record<string, unknown>, _index: number) =>
+  textFrom(item, ['location', 'building', 'site', 'name']) || '-';
 
-const probeBandwidthFallback = (index: number) => [18.6, 9.8, 6.7, 5.1, 4.2, 3.8, 0][index % 7];
-
-const probeUptime = (item: Record<string, unknown>, index: number) => {
+const probeUptime = (item: Record<string, unknown>, _index: number) => {
+  const uptimeSeconds = numberFrom(item, ['uptime_seconds']);
+  if (uptimeSeconds > 0) {
+    const totalHours = Math.max(1, Math.floor(uptimeSeconds / 3600));
+    return `${Math.floor(totalHours / 24)}d ${totalHours % 24}h`;
+  }
   const lastHeartbeat = numberFrom(item, ['last_heartbeat']);
-  if (!lastHeartbeat) return ['12d 14h', '9d 22h', '11d 3h', '8d 18h', '7d 12h', '5d 6h'][index % 6];
+  if (!lastHeartbeat) return '-';
   const lastMs = lastHeartbeat > 10_000_000_000 ? lastHeartbeat : lastHeartbeat * 1000;
   const elapsedHours = Math.max(1, Math.round((Date.now() - lastMs) / 3_600_000));
   if (elapsedHours >= 24) return `${Math.floor(elapsedHours / 24)}d ${elapsedHours % 24}h`;
@@ -3465,23 +3489,24 @@ const countJobStatus = (jobs: Record<string, unknown>[], status: string) =>
 
 const forensicParams = (item: Record<string, unknown>) => (isRecord(item.params) ? item.params : {});
 
-const forensicSourceId = (item: Record<string, unknown>, index: number) => {
+const forensicSourceId = (item: Record<string, unknown>) => {
   const params = forensicParams(item);
-  return textFrom(params, ['alert_id', 'campaign_id', 'source_id']) || textFrom(item, ['alert_id', 'campaign_id', 'source_id']) || `AL-20260620-${String(index + 118).padStart(6, '0')}`;
+  return textFrom(params, ['alert_id', 'campaign_id', 'source_id']) || textFrom(item, ['alert_id', 'campaign_id', 'source_id']) || '-';
 };
 
-const forensicAsset = (item: Record<string, unknown>, index: number) => {
+const forensicAsset = (item: Record<string, unknown>) => {
   const params = forensicParams(item);
-  return textFrom(params, ['asset_id', 'asset', 'asset_name', 'probe_id']) || textFrom(item, ['asset_id', 'asset_name', 'probe_id']) || ['办公区-WS-1024', '财务-SRV-2003', '核心区-DC-01'][index % 3];
+  return textFrom(params, ['asset_id', 'asset', 'asset_name', 'probe_id']) || textFrom(item, ['asset_id', 'asset_name', 'probe_id']) || '-';
 };
 
-const forensicTuple = (item: Record<string, unknown>, index: number) => {
+const forensicTuple = (item: Record<string, unknown>) => {
   const params = forensicParams(item);
-  const src = textFrom(params, ['src_ip', 'source_ip']) || textFrom(item, ['src_ip', 'source_ip']) || `172.16.5.${10 + index}`;
-  const dst = textFrom(params, ['dst_ip', 'destination_ip']) || textFrom(item, ['dst_ip', 'destination_ip']) || ['185.22.14.9', '104.16.12.34', '198.51.100.27'][index % 3];
-  const protocol = textFrom(params, ['protocol']) || textFrom(item, ['protocol']) || ['TLS', 'SMB', 'HTTP', 'DNS'][index % 4];
+  const src = textFrom(params, ['src_ip', 'source_ip']) || textFrom(item, ['src_ip', 'source_ip']);
+  const dst = textFrom(params, ['dst_ip', 'destination_ip']) || textFrom(item, ['dst_ip', 'destination_ip']);
+  const protocol = textFrom(params, ['protocol']) || textFrom(item, ['protocol']);
   const srcPort = numberFrom(params, ['src_port', 'source_port']);
   const dstPort = numberFrom(params, ['dst_port', 'destination_port']);
+  if (!src && !dst && !protocol) return '-';
   return `${src}${srcPort ? `:${srcPort}` : ''} -> ${dst}${dstPort ? `:${dstPort}` : ''} ${protocol}`;
 };
 
