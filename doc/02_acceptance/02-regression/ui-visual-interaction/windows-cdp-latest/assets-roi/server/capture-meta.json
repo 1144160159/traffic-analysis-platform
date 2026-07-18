@@ -1,0 +1,145 @@
+{
+  "status": "fail",
+  "browser_backend": "windows-chrome-cdp-via-xshell",
+  "cdp_url": "http://127.0.0.1:9224",
+  "browser": "Chrome/150.0.7871.115",
+  "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+  "cdp_targets": 10,
+  "url": "http://10.0.5.8:30180/assets?tab=server&__codex_ui_breakdown_production=1&assetVisualTs=1784095823388#codex_smoke_token=<redacted>",
+  "final_url": "http://10.0.5.8:30180/assets?tab=server&assetId=fa767f03-4cb5-23b8-0bf3-9cc29de32ea5&__codex_ui_breakdown_production=1",
+  "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets-server.png",
+  "actual": "evidence/learning/asset-inventory/20260715-five-layout-r30-visual-roi/server/assets-server-actual-1920x1080.png",
+  "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/assets-roi/server/diff-1920.png",
+  "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/assets-roi/server/metrics.json",
+  "roi": {
+    "size_ok": true,
+    "comparison_scope": "scoring-region",
+    "scoring_region": {
+      "id": "assets-business-roi-v1",
+      "x": 198,
+      "y": 78,
+      "width": 1712,
+      "height": 920
+    },
+    "source_width": 1920,
+    "source_height": 1080,
+    "actual_width": 1920,
+    "actual_height": 1080,
+    "compared_pixels": 1575040,
+    "total_pixels": 1575040,
+    "mismatch_pixels": 201587,
+    "pixel_mismatch_ratio": 0.12798849553027225,
+    "max_pixel_ratio": 0.12,
+    "channel_tolerance": 64,
+    "max_channel_delta": 255,
+    "full_image_diagnostic": {
+      "compared_pixels": 2073600,
+      "total_pixels": 2073600,
+      "mismatch_pixels": 249333,
+      "pixel_mismatch_ratio": 0.12024160879629629,
+      "max_channel_delta": 255
+    }
+  },
+  "layout": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080,
+      "device_pixel_ratio": 0.9998436310887371
+    },
+    "page": {
+      "x": 194.98843383789062,
+      "y": 78.99305725097656,
+      "width": 1715.023193359375,
+      "height": 912.9398803710938,
+      "right": 1910.0116271972656,
+      "bottom": 991.9329376220703
+    },
+    "grid": {
+      "x": 194.98843383789062,
+      "y": 78.99305725097656,
+      "width": 1723.0208740234375,
+      "height": 912.9398803710938,
+      "right": 1918.0093078613281,
+      "bottom": 991.9329376220703
+    },
+    "main": {
+      "x": 194.98843383789062,
+      "y": 78.99305725097656,
+      "width": 1315.0347900390625,
+      "height": 912.9398803710938,
+      "right": 1510.0232238769531,
+      "bottom": 991.9329376220703
+    },
+    "rail": {
+      "x": 1518.0208740234375,
+      "y": 78.99305725097656,
+      "width": 399.9884338378906,
+      "height": 912.9398803710938,
+      "right": 1918.0093078613281,
+      "bottom": 991.9329376220703
+    },
+    "ledger_panel": {
+      "x": 194.98843383789062,
+      "y": 307.97454833984375,
+      "width": 1315.0347900390625,
+      "height": 331.9907531738281,
+      "right": 1510.0232238769531,
+      "bottom": 639.9653015136719
+    },
+    "ledger": {
+      "x": 203.72686767578125,
+      "y": 336.7129821777344,
+      "width": 1297.5579833984375,
+      "height": 269.88427734375,
+      "right": 1501.2848510742188,
+      "bottom": 606.5972595214844
+    },
+    "category_workspace": {
+      "x": 194.98843383789062,
+      "y": 648.9583740234375,
+      "width": 1315.0347900390625,
+      "height": 342.97454833984375,
+      "right": 1510.0232238769531,
+      "bottom": 991.9329223632812
+    },
+    "observability": null,
+    "work_grid": {
+      "x": 194.98843383789062,
+      "y": 648.9583740234375,
+      "width": 1315.0347900390625,
+      "height": 209.98843383789062,
+      "right": 1510.0232238769531,
+      "bottom": 858.9468078613281
+    },
+    "lower_grid": {
+      "x": 194.98843383789062,
+      "y": 866.9444580078125,
+      "width": 1315.0347900390625,
+      "height": 124.98843383789062,
+      "right": 1510.0232238769531,
+      "bottom": 991.9328918457031
+    },
+    "network_modules": null,
+    "unknown_main_grid": null,
+    "evidence": {
+      "x": 944.849609375,
+      "y": 866.9444580078125,
+      "width": 565.1736450195312,
+      "height": 124.98843383789062,
+      "right": 1510.0232543945312,
+      "bottom": 991.9328918457031
+    },
+    "row_count": 10,
+    "expected_visual_rows": 10,
+    "visual_mode": true,
+    "horizontal_overflow": false,
+    "final_url": "http://10.0.5.8:30180/assets?tab=server&assetId=fa767f03-4cb5-23b8-0bf3-9cc29de32ea5&__codex_ui_breakdown_production=1"
+  },
+  "runtime": {
+    "bad_responses": [],
+    "request_failures": [],
+    "console_errors": [],
+    "page_errors": [],
+    "external_extension_errors": []
+  }
+}

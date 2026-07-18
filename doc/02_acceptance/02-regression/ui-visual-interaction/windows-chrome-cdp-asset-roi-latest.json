@@ -1,0 +1,117 @@
+{
+  "status": "pass",
+  "browser_backend": "windows-chrome-cdp-via-xshell",
+  "cdp_url": "http://127.0.0.1:9224",
+  "browser": "Chrome/150.0.7871.101",
+  "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+  "cdp_targets": 5,
+  "url": "http://10.0.5.8:30180/assets?tab=endpoint&__codex_ui_breakdown_production=1&assetVisualTs=1783951512470#codex_smoke_token=<redacted>",
+  "final_url": "http://10.0.5.8:30180/assets?tab=endpoint&assetId=PC-0082&__codex_ui_breakdown_production=1",
+  "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets.png",
+  "actual": "evidence/learning/asset-inventory/20260713-ui-clone-roi-01/assets-actual-1920x1080.png",
+  "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/assets-roi/diff-1920.png",
+  "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/assets-roi/metrics.json",
+  "roi": {
+    "size_ok": true,
+    "comparison_scope": "scoring-region",
+    "scoring_region": {
+      "id": "assets-business-roi-v1",
+      "x": 198,
+      "y": 78,
+      "width": 1712,
+      "height": 920
+    },
+    "source_width": 1920,
+    "source_height": 1080,
+    "actual_width": 1920,
+    "actual_height": 1080,
+    "compared_pixels": 1575040,
+    "total_pixels": 1575040,
+    "mismatch_pixels": 186244,
+    "pixel_mismatch_ratio": 0.11824715562779357,
+    "max_pixel_ratio": 0.12,
+    "channel_tolerance": 64,
+    "max_channel_delta": 255,
+    "full_image_diagnostic": {
+      "compared_pixels": 2073600,
+      "total_pixels": 2073600,
+      "mismatch_pixels": 232063,
+      "pixel_mismatch_ratio": 0.11191309799382716,
+      "max_channel_delta": 255
+    }
+  },
+  "layout": {
+    "viewport": {
+      "width": 2133,
+      "height": 1200,
+      "device_pixel_ratio": 0.8999999632438005
+    },
+    "page": {
+      "x": 227.98611450195312,
+      "y": 96.9907455444336,
+      "width": 1895.35888671875,
+      "height": 1011.0070190429688,
+      "right": 2123.345001220703,
+      "bottom": 1107.9977645874023
+    },
+    "grid": {
+      "x": 227.98611450195312,
+      "y": 96.9907455444336,
+      "width": 1895.35888671875,
+      "height": 1011.0070190429688,
+      "right": 2123.345001220703,
+      "bottom": 1107.9977645874023
+    },
+    "main": {
+      "x": 227.98611450195312,
+      "y": 96.9907455444336,
+      "width": 1427.372802734375,
+      "height": 1011.0070190429688,
+      "right": 1655.3589172363281,
+      "bottom": 1107.9977645874023
+    },
+    "rail": {
+      "x": 1663.3565673828125,
+      "y": 96.9907455444336,
+      "width": 459.9884338378906,
+      "height": 1011.0070190429688,
+      "right": 2123.345001220703,
+      "bottom": 1107.9977645874023
+    },
+    "ledger": {
+      "x": 227.98611450195312,
+      "y": 357.9629821777344,
+      "width": 1427.372802734375,
+      "height": 409.9884338378906,
+      "right": 1655.3589172363281,
+      "bottom": 767.951416015625
+    },
+    "observability": {
+      "x": 227.98611450195312,
+      "y": 776.9444580078125,
+      "width": 1427.372802734375,
+      "height": 211.99075317382812,
+      "right": 1655.3589172363281,
+      "bottom": 988.9352111816406
+    },
+    "evidence": {
+      "x": 227.98611450195312,
+      "y": 997.9282836914062,
+      "width": 1427.372802734375,
+      "height": 108.99305725097656,
+      "right": 1655.3589172363281,
+      "bottom": 1106.9213409423828
+    },
+    "row_count": 8,
+    "visual_mode": true,
+    "horizontal_overflow": false,
+    "final_url": "http://10.0.5.8:30180/assets?tab=endpoint&assetId=PC-0082&__codex_ui_breakdown_production=1"
+  },
+  "runtime": {
+    "bad_responses": [],
+    "request_failures": [],
+    "console_errors": [],
+    "page_errors": [],
+    "external_extension_errors": []
+  }
+}

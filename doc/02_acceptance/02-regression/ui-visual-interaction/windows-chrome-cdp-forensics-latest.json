@@ -1,0 +1,985 @@
+{
+  "generated_at": "2026-07-16T00:24:10.428Z",
+  "result": "pass",
+  "browser_backend": "Windows Chrome via Xshell CDP",
+  "route": "http://10.0.5.8:30180/forensics",
+  "image": "docker.io/traffic/web-ui:forensics-canonical-v1-20260716-r64",
+  "canonical_target": "doc/04_assets/ui_suite_gpt_v1/screens/pages/forensics.png",
+  "visual_policy": {
+    "max_pixel_ratio": 0.125,
+    "channel_tolerance": 64,
+    "scoring_region": "198,80,1722,917",
+    "scoring_region_id": "forensics-business-roi-v1"
+  },
+  "checks_total": 14,
+  "checks_passed": 14,
+  "checks_failed": 0,
+  "checks": [
+    {
+      "id": "xshell-windows-cdp-preflight",
+      "browser": "Chrome/150.0.7871.115",
+      "target_count": 7,
+      "status": "pass"
+    },
+    {
+      "id": "windows-chrome-css-viewport",
+      "observed": {
+        "width": 2133,
+        "height": 1200,
+        "dpr": 0.8999999632438005
+      },
+      "calibrated": 0.90014064697609,
+      "enforced": {
+        "width": 1920,
+        "height": 1080,
+        "dpr": 0.9998436310887371
+      },
+      "status": "pass"
+    },
+    {
+      "id": "canonical-single-workbench",
+      "tab_navigation_count": 0,
+      "required_modules": [
+        "取证任务状态机",
+        "会话复放（Session）",
+        "会话请求 / 响应与协议摘要",
+        "取证任务列表",
+        "PCAP 索引",
+        "证据导出包",
+        "Hash 校验结果",
+        "证据完整性",
+        "签名 URL 与有效期",
+        "取证操作",
+        "审计日志"
+      ],
+      "panel_titles": [
+        "取证任务状态机",
+        "取证任务列表（共 190 条）",
+        "PCAP 索引（共 1,256 条）",
+        "会话复放（Session）",
+        "会话请求 / 响应与协议摘要",
+        "证据导出包",
+        "Hash 校验结果（最近 20 条）",
+        "返回来源",
+        "证据完整性",
+        "签名 URL 与有效期",
+        "取证操作",
+        "审计日志（近 24 小时）"
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "canonical-reference-content",
+      "pass": true,
+      "expected": [
+        "新建 12",
+        "排队中 5",
+        "采集中 8",
+        "解析中 6",
+        "完成 156",
+        "失败 3",
+        "取证任务列表（共 190 条）",
+        "PCAP 索引（共 1,256 条）",
+        "100/100",
+        "PCAP",
+        "Session",
+        "日志",
+        "证据导出包",
+        "Hash 校验结果",
+        "下载 PCAP",
+        "导出 CSV",
+        "校验 hash",
+        "生成签名 URL"
+      ],
+      "missing": [],
+      "status": "pass"
+    },
+    {
+      "id": "five-independent-fixed-pagers",
+      "pagination_count": 5,
+      "status": "pass"
+    },
+    {
+      "id": "all-business-data-ready",
+      "task_rows": 5,
+      "pcap_rows": 5,
+      "session_rows": 6,
+      "hash_rows": 3,
+      "export_rows": 3,
+      "status": "pass"
+    },
+    {
+      "id": "workbench-layout",
+      "overlaps": [],
+      "reachability": {
+        "pass": true,
+        "scroll_top": 0.7407407760620117,
+        "scroll_height": 917,
+        "client_height": 917,
+        "last_panel_bottom": 982.9283142089844,
+        "viewport_bottom": 1080
+      },
+      "error_alerts": [],
+      "return_items_visible": true,
+      "return_items": [
+        {
+          "x": 1244.9190673828125,
+          "y": 830.3704223632812,
+          "width": 183.5301055908203,
+          "height": 27.9976863861084,
+          "right": 1428.4491729736328,
+          "bottom": 858.3681087493896,
+          "visible": true
+        },
+        {
+          "x": 1244.9190673828125,
+          "y": 861.3657836914062,
+          "width": 183.5301055908203,
+          "height": 27.9976863861084,
+          "right": 1428.4491729736328,
+          "bottom": 889.3634700775146,
+          "visible": true
+        },
+        {
+          "x": 1244.9190673828125,
+          "y": 892.3611450195312,
+          "width": 183.5301055908203,
+          "height": 27.9976863861084,
+          "right": 1428.4491729736328,
+          "bottom": 920.3588314056396,
+          "visible": true
+        },
+        {
+          "x": 1244.9190673828125,
+          "y": 923.3565063476562,
+          "width": 183.5301055908203,
+          "height": 27.9976863861084,
+          "right": 1428.4491729736328,
+          "bottom": 951.3541927337646,
+          "visible": true
+        },
+        {
+          "x": 1244.9190673828125,
+          "y": 954.3518676757812,
+          "width": 183.5301055908203,
+          "height": 27.9976863861084,
+          "right": 1428.4491729736328,
+          "bottom": 982.3495540618896,
+          "visible": true
+        }
+      ],
+      "inner_tables": [
+        {
+          "selector": ".taf-forensics-pcap",
+          "client_width": 609,
+          "scroll_width": 609,
+          "overflow": false
+        },
+        {
+          "selector": ".taf-forensics-export",
+          "client_width": 524,
+          "scroll_width": 524,
+          "overflow": false
+        },
+        {
+          "selector": ".taf-forensics-hash",
+          "client_width": 494,
+          "scroll_width": 494,
+          "overflow": false
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "canonical-geometry",
+      "main": {
+        "x": 187.7314910888672,
+        "y": 85.71759796142578,
+        "width": 1246.44677734375,
+        "height": 897.951416015625,
+        "right": 1434.1782684326172,
+        "bottom": 983.6690139770508
+      },
+      "grid": {
+        "x": 187.7314910888672,
+        "y": 257.6736145019531,
+        "width": 1246.44677734375,
+        "height": 725.9954223632812,
+        "right": 1434.1782684326172,
+        "bottom": 983.6690368652344
+      },
+      "rail": {
+        "x": 1439.166748046875,
+        "y": 113.71528625488281,
+        "width": 464.9884338378906,
+        "height": 869.9537353515625,
+        "right": 1904.1551818847656,
+        "bottom": 983.6690216064453
+      },
+      "target": {
+        "main_x": 188,
+        "main_width": 1246,
+        "grid_y": 258,
+        "rail_x": 1439,
+        "rail_width": 465,
+        "rail_bottom": 984
+      },
+      "status": "pass"
+    },
+    {
+      "id": "canonical-target-visual",
+      "size_ok": true,
+      "comparison_scope": "scoring-region",
+      "scoring_region": {
+        "id": "forensics-business-roi-v1",
+        "x": 198,
+        "y": 80,
+        "width": 1722,
+        "height": 917
+      },
+      "source_width": 1920,
+      "source_height": 1080,
+      "actual_width": 1920,
+      "actual_height": 1080,
+      "compared_pixels": 1579074,
+      "total_pixels": 1579074,
+      "mismatch_pixels": 189023,
+      "pixel_mismatch_ratio": 0.11970496632836714,
+      "max_pixel_ratio": 0.125,
+      "channel_tolerance": 64,
+      "max_channel_delta": 255,
+      "full_image_diagnostic": {
+        "compared_pixels": 2073600,
+        "total_pixels": 2073600,
+        "mismatch_pixels": 237817,
+        "pixel_mismatch_ratio": 0.11468798225308642,
+        "max_channel_delta": 255
+      },
+      "status": "pass",
+      "stdout": "{\"status\": \"pass\", \"target_id\": \"forensics\", \"pixel_mismatch_ratio\": 0.11970496632836714, \"comparison_scope\": \"scoring-region\", \"scoring_region\": {\"id\": \"forensics-business-roi-v1\", \"x\": 198, \"y\": 80, \"width\": 1722, \"height\": 917}}"
+    },
+    {
+      "id": "real-verify-action",
+      "status": "pass"
+    },
+    {
+      "id": "real-create-job-action",
+      "status": "pass"
+    },
+    {
+      "id": "five-pagers-advance-and-hold-fixed-position",
+      "pagers": [
+        {
+          "label": "取证任务",
+          "before": {
+            "content_y": 170.26620483398438,
+            "width": 609.2708740234375,
+            "height": 23.993057250976562,
+            "active": "1"
+          },
+          "after": {
+            "content_y": 170.26620483398438,
+            "width": 609.2708740234375,
+            "height": 23.993057250976562,
+            "active": "2"
+          },
+          "fixed": true,
+          "advanced": true,
+          "pagination_mode": "server",
+          "request_verified": true,
+          "responses": [
+            {
+              "method": "GET",
+              "status": 200,
+              "url": "http://10.0.5.8:30180/api/v1/pcap/jobs?limit=5&page_size=5&page=2&offset=5"
+            }
+          ]
+        },
+        {
+          "label": "PCAP 索引",
+          "before": {
+            "content_y": 170.2662353515625,
+            "width": 609.2708740234375,
+            "height": 23.993057250976562,
+            "active": "1"
+          },
+          "after": {
+            "content_y": 170.2662353515625,
+            "width": 609.2708740234375,
+            "height": 23.993057250976562,
+            "active": "2"
+          },
+          "fixed": true,
+          "advanced": true,
+          "pagination_mode": "database-snapshot-client-slice",
+          "request_verified": true,
+          "responses": []
+        },
+        {
+          "label": "会话复放",
+          "before": {
+            "content_y": 202.71994018554688,
+            "width": 609.2708740234375,
+            "height": 23.993057250976562,
+            "active": "1"
+          },
+          "after": {
+            "content_y": 202.71994018554688,
+            "width": 609.2708740234375,
+            "height": 23.993057250976562,
+            "active": "2"
+          },
+          "fixed": true,
+          "advanced": true,
+          "pagination_mode": "database-snapshot-client-slice",
+          "request_verified": true,
+          "responses": []
+        },
+        {
+          "label": "证据导出包",
+          "before": {
+            "content_y": 156.27313232421875,
+            "width": 524.4444580078125,
+            "height": 23.993057250976562,
+            "active": "1"
+          },
+          "after": {
+            "content_y": 156.27313232421875,
+            "width": 524.4444580078125,
+            "height": 23.993057250976562,
+            "active": "2"
+          },
+          "fixed": true,
+          "advanced": true,
+          "pagination_mode": "database-snapshot-client-slice",
+          "request_verified": true,
+          "responses": []
+        },
+        {
+          "label": "Hash 校验结果",
+          "before": {
+            "content_y": 156.27313232421875,
+            "width": 494.1203918457031,
+            "height": 23.993057250976562,
+            "active": "1"
+          },
+          "after": {
+            "content_y": 156.27313232421875,
+            "width": 494.1203918457031,
+            "height": 23.993057250976562,
+            "active": "2"
+          },
+          "fixed": true,
+          "advanced": true,
+          "pagination_mode": "database-snapshot-client-slice",
+          "request_verified": true,
+          "responses": []
+        }
+      ],
+      "status": "pass"
+    },
+    {
+      "id": "task-filter-bound-to-server-query",
+      "status": "pass",
+      "url": "http://10.0.5.8:30180/api/v1/pcap/jobs?limit=5&page_size=5&page=1&offset=0&task_id=F-20260620-000128",
+      "title": "取证任务列表（共 1 条）",
+      "rows": 1
+    },
+    {
+      "id": "runtime-clean",
+      "bad_responses": [],
+      "request_failures": [],
+      "console_errors": [],
+      "page_errors": [],
+      "api_responses": [
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/auth/me"
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/evidence?limit=50&page_size=50&start_time=1784075021289&end_time=1784161421289"
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/sessions?limit=50&page_size=50&start_time=1784075021288&end_time=1784161421288"
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/audit/logs?limit=50&page_size=50&object_type=pcap"
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/pcap/jobs?limit=5&page_size=5&page=1&offset=0"
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/pcap/stats?limit=50&page_size=50"
+        },
+        {
+          "method": "POST",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/pcap/verify"
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/sessions?limit=50&page_size=50&start_time=1784075038901&end_time=1784161438901"
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/evidence?limit=50&page_size=50&start_time=1784075038901&end_time=1784161438901"
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/pcap/jobs?limit=5&page_size=5&page=1&offset=0"
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/pcap/stats?limit=50&page_size=50"
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/audit/logs?limit=50&page_size=50&object_type=pcap"
+        },
+        {
+          "method": "POST",
+          "status": 201,
+          "url": "http://10.0.5.8:30180/api/v1/pcap/jobs"
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/sessions?limit=50&page_size=50&start_time=1784075040742&end_time=1784161440742"
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/evidence?limit=50&page_size=50&start_time=1784075040742&end_time=1784161440742"
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/pcap/jobs?limit=5&page_size=5&page=1&offset=0"
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/audit/logs?limit=50&page_size=50&object_type=pcap"
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/pcap/stats?limit=50&page_size=50"
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/sessions?limit=50&page_size=50&start_time=1784075042340&end_time=1784161442340"
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/evidence?limit=50&page_size=50&start_time=1784075042340&end_time=1784161442340"
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/pcap/jobs?limit=5&page_size=5&page=2&offset=5"
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/pcap/stats?limit=50&page_size=50"
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/audit/logs?limit=50&page_size=50&object_type=pcap"
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/pcap/jobs?limit=5&page_size=5&page=1&offset=0&task_id=F-20260620-000128"
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/evidence?limit=50&page_size=50&start_time=1784075049026&end_time=1784161449026"
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/sessions?limit=50&page_size=50&start_time=1784075049026&end_time=1784161449026"
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/pcap/stats?limit=50&page_size=50"
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/audit/logs?limit=50&page_size=50&object_type=pcap"
+        }
+      ],
+      "status": "pass"
+    }
+  ],
+  "states": [
+    {
+      "slug": "workbench",
+      "label": "取证分析单页工作台",
+      "metrics": {
+        "viewport": {
+          "width": 1920,
+          "height": 1080,
+          "dpr": 0.9998436310887371
+        },
+        "root_horizontal_overflow": false,
+        "business": {
+          "x": 173.99305725097656,
+          "y": 79.9884262084961,
+          "width": 1736.898193359375,
+          "height": 909.4097900390625,
+          "right": 1910.8912506103516,
+          "bottom": 989.3982162475586
+        },
+        "titlebar": {
+          "x": 187.7314910888672,
+          "y": 85.71759796142578,
+          "width": 1246.44677734375,
+          "height": 71.9907455444336,
+          "right": 1434.1782684326172,
+          "bottom": 157.70834350585938
+        },
+        "filter": {
+          "x": 187.7314910888672,
+          "y": 162.69676208496094,
+          "width": 1246.44677734375,
+          "height": 89.98843383789062,
+          "right": 1434.1782684326172,
+          "bottom": 252.68519592285156
+        },
+        "grid": {
+          "x": 187.7314910888672,
+          "y": 257.6736145019531,
+          "width": 1246.44677734375,
+          "height": 725.9954223632812,
+          "right": 1434.1782684326172,
+          "bottom": 983.6690368652344
+        },
+        "main": {
+          "x": 187.7314910888672,
+          "y": 85.71759796142578,
+          "width": 1246.44677734375,
+          "height": 897.951416015625,
+          "right": 1434.1782684326172,
+          "bottom": 983.6690139770508
+        },
+        "rail": {
+          "x": 1439.166748046875,
+          "y": 113.71528625488281,
+          "width": 464.9884338378906,
+          "height": 869.9537353515625,
+          "right": 1904.1551818847656,
+          "bottom": 983.6690216064453
+        },
+        "panels": [
+          {
+            "title": "取证任务状态机",
+            "x": 187.7314910888672,
+            "y": 257.6736145019531,
+            "width": 620.7291870117188,
+            "height": 124.98843383789062,
+            "right": 808.4606781005859,
+            "bottom": 382.66204833984375
+          },
+          {
+            "title": "取证任务列表（共 190 条）",
+            "x": 187.7314910888672,
+            "y": 387.6504821777344,
+            "width": 620.7291870117188,
+            "height": 199.98843383789062,
+            "right": 808.4606781005859,
+            "bottom": 587.638916015625
+          },
+          {
+            "title": "PCAP 索引（共 1,256 条）",
+            "x": 187.7314910888672,
+            "y": 592.6273193359375,
+            "width": 620.7291870117188,
+            "height": 199.98843383789062,
+            "right": 808.4606781005859,
+            "bottom": 792.6157531738281
+          },
+          {
+            "title": "会话复放（Session）",
+            "x": 813.4490966796875,
+            "y": 257.6736145019531,
+            "width": 620.7291870117188,
+            "height": 329.9884338378906,
+            "right": 1434.1782836914062,
+            "bottom": 587.6620483398438
+          },
+          {
+            "title": "会话请求 / 响应与协议摘要",
+            "x": 813.4490966796875,
+            "y": 592.6505126953125,
+            "width": 620.7291870117188,
+            "height": 199.98843383789062,
+            "right": 1434.1782836914062,
+            "bottom": 792.6389465332031
+          },
+          {
+            "title": "证据导出包",
+            "x": 187.7314910888672,
+            "y": 797.6505126953125,
+            "width": 535.90283203125,
+            "height": 185.99537658691406,
+            "right": 723.6343231201172,
+            "bottom": 983.6458892822266
+          },
+          {
+            "title": "Hash 校验结果（最近 20 条）",
+            "x": 728.6227416992188,
+            "y": 797.6505126953125,
+            "width": 505.5787353515625,
+            "height": 185.99537658691406,
+            "right": 1234.2014770507812,
+            "bottom": 983.6458892822266
+          },
+          {
+            "title": "返回来源",
+            "x": 1239.1898193359375,
+            "y": 797.6505126953125,
+            "width": 194.98843383789062,
+            "height": 185.99537658691406,
+            "right": 1434.1782531738281,
+            "bottom": 983.6458892822266
+          },
+          {
+            "title": "证据完整性",
+            "x": 1439.166748046875,
+            "y": 113.71528625488281,
+            "width": 464.9884338378906,
+            "height": 254.98843383789062,
+            "right": 1904.1551818847656,
+            "bottom": 368.70372009277344
+          },
+          {
+            "title": "签名 URL 与有效期",
+            "x": 1439.166748046875,
+            "y": 373.692138671875,
+            "width": 464.9884338378906,
+            "height": 154.98843383789062,
+            "right": 1904.1551818847656,
+            "bottom": 528.6805725097656
+          },
+          {
+            "title": "取证操作",
+            "x": 1439.166748046875,
+            "y": 533.6690063476562,
+            "width": 464.9884338378906,
+            "height": 129.98843383789062,
+            "right": 1904.1551818847656,
+            "bottom": 663.6574401855469
+          },
+          {
+            "title": "审计日志（近 24 小时）",
+            "x": 1439.166748046875,
+            "y": 668.6458740234375,
+            "width": 464.9884338378906,
+            "height": 315.0231628417969,
+            "right": 1904.1551818847656,
+            "bottom": 983.6690368652344
+          }
+        ],
+        "overlaps": [],
+        "pagination": {
+          "x": 193.46066284179688,
+          "y": 557.9166870117188,
+          "width": 609.2708740234375,
+          "height": 23.993057250976562,
+          "right": 802.7315368652344,
+          "bottom": 581.9097442626953
+        },
+        "pagination_count": 5,
+        "tab_navigation_count": 0,
+        "error_alerts": [],
+        "task_rows": 5,
+        "pcap_rows": 5,
+        "session_rows": 6,
+        "hash_rows": 3,
+        "export_rows": 3,
+        "inner_tables": [
+          {
+            "selector": ".taf-forensics-pcap",
+            "client_width": 609,
+            "scroll_width": 609,
+            "overflow": false
+          },
+          {
+            "selector": ".taf-forensics-export",
+            "client_width": 524,
+            "scroll_width": 524,
+            "overflow": false
+          },
+          {
+            "selector": ".taf-forensics-hash",
+            "client_width": 494,
+            "scroll_width": 494,
+            "overflow": false
+          }
+        ],
+        "return_items": [
+          {
+            "x": 1244.9190673828125,
+            "y": 830.3704223632812,
+            "width": 183.5301055908203,
+            "height": 27.9976863861084,
+            "right": 1428.4491729736328,
+            "bottom": 858.3681087493896,
+            "visible": true
+          },
+          {
+            "x": 1244.9190673828125,
+            "y": 861.3657836914062,
+            "width": 183.5301055908203,
+            "height": 27.9976863861084,
+            "right": 1428.4491729736328,
+            "bottom": 889.3634700775146,
+            "visible": true
+          },
+          {
+            "x": 1244.9190673828125,
+            "y": 892.3611450195312,
+            "width": 183.5301055908203,
+            "height": 27.9976863861084,
+            "right": 1428.4491729736328,
+            "bottom": 920.3588314056396,
+            "visible": true
+          },
+          {
+            "x": 1244.9190673828125,
+            "y": 923.3565063476562,
+            "width": 183.5301055908203,
+            "height": 27.9976863861084,
+            "right": 1428.4491729736328,
+            "bottom": 951.3541927337646,
+            "visible": true
+          },
+          {
+            "x": 1244.9190673828125,
+            "y": 954.3518676757812,
+            "width": 183.5301055908203,
+            "height": 27.9976863861084,
+            "right": 1428.4491729736328,
+            "bottom": 982.3495540618896,
+            "visible": true
+          }
+        ],
+        "return_items_visible": true,
+        "text": "取证分析证据检索、会话复放、完整性校验与受控导出来源上下文任务（F-20260620-000128）资产（未指定）会话（session-20260620-0001）图谱路径 >清空条件时间窗近 24 小时资产全部资产源 IP目的 IP协议全部端口全部五元组任务 ID重 置查询取证任务状态机新建任务新建12排队中5采集中8解析中6完成156失败3取证任务列表（共 190 条）任务 ID告警/战役 ID资产五元组时间窗证据包状态操作F-20260620-000128AL-20260620-000122办公区-WS-1024172.16.5.10:44221 -> 185.22.14.9:443 TLS06-19 00:05 ~ 06-19 01:05evidence.pcap完成查看F-20260620-000127AL-20260620-000122财务部-SRV-200310.12.8.45:44222 -> 10.12.9.33:445 SMB06-19 00:10 ~ 06-19 01:10evidence.pcap完成查看F-20260620-000126AL-20260620-000122核心区-DC-01172.16.1.77:44223 -> 198.51.100.27:80 HTTP06-19 00:15 ~ 06-19 01:15evidence.pcap完成查看F-20260620-000125AL-20260620-000119研发区-PC-3056192.168.3.55:44224 -> 203.0.113.45:443 TLS06-19 00:20 ~ 06-19 01:20evidence.pcap完成查看F-20260620-000124AL-20260620-000118办公区-WS-201110.12.36.53:44225 -> 8.8.8.8:53 DNS06-19 00:25 ~ 06-19 01:25evidence.pcap完成查看‹1234567›5 条/页，共 190 条PCAP 索引（共 1,256 条）查看全部 PCAP >对象键MinIO 路径大小SHA256时间窗状态20260620/000123/001evidence/pcap/000123/001.pcap19.00 MB647755ab3bee…3bb6ecab06-19 00:00 ~ 06-19 01:00已索引20260620/000123/002evidence/pcap/000123/002.pcap20.00 MB9a956216bc2d…8e5a3de606-19 01:00 ~ 06-19 02:00已索引20260620/000123/003evidence/pcap/000123/003.pcap21.00 MB51f9c135cc72…0b7aed3006-19 02:00 ~ 06-19 03:00已索引20260620/000123/004evidence/pcap/000123/004.pcap22.00 MB6871a349637c…2518bd7206-19 03:00 ~ 06-19 04:00已索引20260620/000123/005evidence/pcap/000123/005.pcap23.00 MBf8cf91db4cf4…0bdf698506-19 04:00 ~ 06-19 05:00已索引‹1234567›5 条/页，共 1256 条会话复放（Session）查看全部会话 >开始时间协议源地址目的地址字节/包持续时间03:41:55TLS172.16.5.10:44221185.22.14.9:4431.23 MB / 5512.45 s03:41:20TLS172.16.5.10:44222185.22.14.9:443512.0 KB / 625.16 s03:39:44TLS172.16.5.10:44223104.16.12.34:443845.0 KB / 698.37 s03:38:31DNS172.16.5.10:442248.8.8.8:532.1 KB / 760.21 s03:38:12HTTP172.16.5.10:44225198.51.100.27:803.21 MB / 8314.82 s03:37:05TLS172.16.5.10:44226203.0.113.45:4431.05 MB / 907.03 s‹1234›6 条/页，共 24 条会话请求 / 响应与协议摘要请求（Client → Server） Session: session-20260620-0001 Source: 172.16.5.10:44221 Protocol: TLS Started: 03:41:55响应（Server → Client） Destination: 185.22.14.9:443 Bytes: 1.23 MB Packets: 55 Duration: 12.45 s会话 IDsession-20260620-0001SNIupdate.example.comJA3771,4865-4866-4867,0-11-10,23-24,0风险低危证据导出包查看全部导出 >任务 ID类型内容文件数大小状态操作PKG-20260620-0001PCAP 证据PCAP+Session+日志+报告10160.00 MB完成PKG-20260620-0002PCAP 证据Session+日志(CSV)12192.00 MB完成PKG-20260620-0003PCAP 证据PCAP 原始包14224.00 MB完成‹1234›3 条/页，共 12 条Hash 校验结果（最近 20 条）查看全部校验 >对象键算法索引值实时校验状态索引时间results/default/F-20260620-000128/000001.pcapSHA25616f2fd56abfe…a42c8660调用 /verify匹配06-20 03:44:21results/default/F-20260620-000128/000002.pcapSHA256ecd5fdfd5580…b2b303a2调用 /verify匹配06-20 03:44:20results/default/F-20260620-000128/000003.pcapSHA2565868946e2d20…424a0747调用 /verify匹配06-20 03:44:19‹1234567›3 条/页，共 20 条返回来源返回告警详情session-20260620-0001 >返回战役详情查看关联战役 >返回资产详情172.16.5.10:44221 >返回实体图谱查看路径 >返回取证设置查看模板 >证据完整性查看详情 >完整性评分100/100来自 /encrypted-traffic/evidence原始文件校验100 / 100通过文件 hash 校验 (SHA256)100 / 100通过数字签名验证100 / 100通过签名人100 / 100通过证书有效期100 / 100通过签名 URL 与有效期查看全部签名 >类型签名 URL过期时间状态PCAPhttps://minio.local/signed/pcap/0001282026-06-27 03:45有效Sessionhttps://minio.local/signed/session/0001282026-06-27 03:45有效日志https://minio.local/signed/log/0001282026-06-27 03:45有效取证操作新建取证追加时间窗关联战役关联告警进入图谱进入取证审计日志（近 24 小时）查看全部 >时间操作人操作对象结果06-20 03:44:58sec_analyst下载 PCAPF-20260620-000128成功06-20 03:44:21sec_analyst导出 CSVF-20260620-000128成功06-20 03:43:50sec_analyst校验 hashF-20260620-000128成功06-20 03:42:31system生成签名 URLF-20260620-000128成功06-20 03:41:12sec_analyst新建取证任务F-20260620-000128成功"
+      },
+      "reachability": {
+        "pass": true,
+        "scroll_top": 0.7407407760620117,
+        "scroll_height": 917,
+        "client_height": 917,
+        "last_panel_bottom": 982.9283142089844,
+        "viewport_bottom": 1080
+      },
+      "screenshot": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/forensics/actual-1920.png",
+      "side_by_side": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/forensics/canonical-side-by-side-1920.png",
+      "canonical_metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/forensics/canonical-metrics.json",
+      "visual": {
+        "size_ok": true,
+        "comparison_scope": "scoring-region",
+        "scoring_region": {
+          "id": "forensics-business-roi-v1",
+          "x": 198,
+          "y": 80,
+          "width": 1722,
+          "height": 917
+        },
+        "source_width": 1920,
+        "source_height": 1080,
+        "actual_width": 1920,
+        "actual_height": 1080,
+        "compared_pixels": 1579074,
+        "total_pixels": 1579074,
+        "mismatch_pixels": 189023,
+        "pixel_mismatch_ratio": 0.11970496632836714,
+        "max_pixel_ratio": 0.125,
+        "channel_tolerance": 64,
+        "max_channel_delta": 255,
+        "full_image_diagnostic": {
+          "compared_pixels": 2073600,
+          "total_pixels": 2073600,
+          "mismatch_pixels": 237817,
+          "pixel_mismatch_ratio": 0.11468798225308642,
+          "max_channel_delta": 255
+        }
+      }
+    }
+  ],
+  "runtime": {
+    "bad_responses": [],
+    "request_failures": [],
+    "console_errors": [],
+    "page_errors": [],
+    "api_responses": [
+      {
+        "method": "GET",
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/auth/me"
+      },
+      {
+        "method": "GET",
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/evidence?limit=50&page_size=50&start_time=1784075021289&end_time=1784161421289"
+      },
+      {
+        "method": "GET",
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/sessions?limit=50&page_size=50&start_time=1784075021288&end_time=1784161421288"
+      },
+      {
+        "method": "GET",
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/audit/logs?limit=50&page_size=50&object_type=pcap"
+      },
+      {
+        "method": "GET",
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/pcap/jobs?limit=5&page_size=5&page=1&offset=0"
+      },
+      {
+        "method": "GET",
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/pcap/stats?limit=50&page_size=50"
+      },
+      {
+        "method": "POST",
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/pcap/verify"
+      },
+      {
+        "method": "GET",
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/sessions?limit=50&page_size=50&start_time=1784075038901&end_time=1784161438901"
+      },
+      {
+        "method": "GET",
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/evidence?limit=50&page_size=50&start_time=1784075038901&end_time=1784161438901"
+      },
+      {
+        "method": "GET",
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/pcap/jobs?limit=5&page_size=5&page=1&offset=0"
+      },
+      {
+        "method": "GET",
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/pcap/stats?limit=50&page_size=50"
+      },
+      {
+        "method": "GET",
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/audit/logs?limit=50&page_size=50&object_type=pcap"
+      },
+      {
+        "method": "POST",
+        "status": 201,
+        "url": "http://10.0.5.8:30180/api/v1/pcap/jobs"
+      },
+      {
+        "method": "GET",
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/sessions?limit=50&page_size=50&start_time=1784075040742&end_time=1784161440742"
+      },
+      {
+        "method": "GET",
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/evidence?limit=50&page_size=50&start_time=1784075040742&end_time=1784161440742"
+      },
+      {
+        "method": "GET",
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/pcap/jobs?limit=5&page_size=5&page=1&offset=0"
+      },
+      {
+        "method": "GET",
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/audit/logs?limit=50&page_size=50&object_type=pcap"
+      },
+      {
+        "method": "GET",
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/pcap/stats?limit=50&page_size=50"
+      },
+      {
+        "method": "GET",
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/sessions?limit=50&page_size=50&start_time=1784075042340&end_time=1784161442340"
+      },
+      {
+        "method": "GET",
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/evidence?limit=50&page_size=50&start_time=1784075042340&end_time=1784161442340"
+      },
+      {
+        "method": "GET",
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/pcap/jobs?limit=5&page_size=5&page=2&offset=5"
+      },
+      {
+        "method": "GET",
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/pcap/stats?limit=50&page_size=50"
+      },
+      {
+        "method": "GET",
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/audit/logs?limit=50&page_size=50&object_type=pcap"
+      },
+      {
+        "method": "GET",
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/pcap/jobs?limit=5&page_size=5&page=1&offset=0&task_id=F-20260620-000128"
+      },
+      {
+        "method": "GET",
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/evidence?limit=50&page_size=50&start_time=1784075049026&end_time=1784161449026"
+      },
+      {
+        "method": "GET",
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/sessions?limit=50&page_size=50&start_time=1784075049026&end_time=1784161449026"
+      },
+      {
+        "method": "GET",
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/pcap/stats?limit=50&page_size=50"
+      },
+      {
+        "method": "GET",
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/audit/logs?limit=50&page_size=50&object_type=pcap"
+      }
+    ]
+  }
+}

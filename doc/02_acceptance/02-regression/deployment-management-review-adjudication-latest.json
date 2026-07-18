@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-18T18:20:00+08:00",
+  "menu": "部署管理",
+  "route": "/deployments",
+  "result": "pass",
+  "review_sequence": [
+    "overall_agent_review",
+    "page_logic_agent_review",
+    "page_layout_agent_review",
+    "repair",
+    "windows_chrome_regression",
+    "main_thread_adjudication"
+  ],
+  "logic_review": {
+    "verdict": "pass",
+    "open_p0": 0,
+    "open_p1": 0,
+    "closed_blockers": [
+      "workflow rejection attempts now persist DEPLOY_WORKFLOW_UPDATE_failed audit records",
+      "paused or failed rollback cannot reactivate a target beyond the tenant active quota",
+      "planned direct activation requires an approved 100 percent configuration and persists execution_plan"
+    ],
+    "evidence": "doc/02_acceptance/02-regression/deployment-state-machine-latest.json"
+  },
+  "layout_review": {
+    "verdict": "pass",
+    "open_p0": 0,
+    "open_p1": 0,
+    "closed_blockers": [
+      "six of six page rows are fully visible and match the 6 per page label",
+      "rollback reason, quick reasons and execute control are inside the 1920x1080 viewport"
+    ],
+    "evidence": "evidence/ui-image-breakdowns/pages/deployments/full-stack-r264.json"
+  },
+  "visual_adjudication": {
+    "main": {
+      "status": "pass",
+      "pixel_mismatch_ratio": 0.11057809830318276,
+      "maximum": 0.125
+    },
+    "create_modal": {
+      "raw_status": "fail",
+      "effective_status": "pass_with_contract_exception",
+      "pixel_mismatch_ratio": 0.10515551970679832,
+      "maximum": 0.08
+    },
+    "rollback_modal": {
+      "raw_status": "fail",
+      "effective_status": "pass_with_contract_exception",
+      "pixel_mismatch_ratio": 0.10045118260284722,
+      "maximum": 0.08
+    },
+    "governing_contract": "agent.md:115",
+    "exception_record": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/deployment-modal-size-adjudication.json",
+    "reason": "The superseded overlay references use near-full-screen dialogs. The repository rule requires a small desktop Modal that preserves business context. Raw failures remain recorded and the exception is valid only when actual geometry is at most 960x760."
+  },
+  "main_thread_adjudication": {
+    "blocking_gates": {
+      "real_api_and_postgresql": "pass",
+      "workflow_and_state_machine": "pass: 70/70",
+      "kafka_outbox": "pass: 4/4",
+      "windows_chrome_interaction": "pass: 43/43",
+      "runtime_clean": "pass",
+      "visual_contract": "pass with two explicit agent.md:115 overlay exceptions",
+      "rollout_and_rollback": "pass"
+    },
+    "final_decision": "deployment_management_accepted; proceed_to_models"
+  },
+  "non_blocking_followups": [
+    "Add a positive live case for approved 100 percent planned direct activation.",
+    "Replace the two superseded near-full-screen overlay reference images with repository-compliant small-Modal references."
+  ],
+  "progress_report": "doc/02_acceptance/02-regression/deployment-management-development-progress-latest.json"
+}

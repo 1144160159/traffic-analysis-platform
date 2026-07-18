@@ -1,5 +1,12 @@
 # models-feature-sample-examples.png review
 
+
+## r328 Production Route Review Gate
+
+- Captured in Windows Chrome 150 over the Xshell CDP tunnel from the direct APISIX route at exact 1920x1080 / DPR 1.
+- Evidence: `evidence/ui-image-breakdowns/pages/models/state-r328-sample-examples.png`, `visual-r328/sample-examples-side-by-side.png`, and `interaction-r328.json`.
+- Raw diff: `0.10649305555555555 <= 0.15` with tolerance 64; TP and FP labels remain machine-verified as visually distinct.
+- Current main-thread status: `accepted-r328`.
 ## Review Status
 
 - Status: `breakdown-ready`

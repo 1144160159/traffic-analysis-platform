@@ -7149,25 +7149,25 @@
       "id": "models",
       "category": "pages",
       "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/models.png",
-      "stage": "production-route-evidence-missing",
+      "stage": "auxiliary-review-pending-r325",
       "accepted": false,
-      "status": "evidence-ready",
+      "status": "production-route-pass",
       "files": {
         "markdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models.md",
         "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models.json",
         "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models.review.md",
         "target": "evidence/ui-image-breakdowns/pages/models/target.png",
-        "implementation": "evidence/ui-image-breakdowns/pages/models/implementation.png",
-        "diff": "evidence/ui-image-breakdowns/pages/models/diff.png",
-        "regions_overlay": "evidence/ui-image-breakdowns/pages/models/regions-overlay.png",
-        "verification": "evidence/ui-image-breakdowns/pages/models/verification.json",
-        "metrics": "evidence/ui-image-breakdowns/pages/models/metrics.json"
+        "implementation": "evidence/ui-image-breakdowns/pages/models/interaction-r325.png",
+        "diff": "evidence/ui-image-breakdowns/pages/models/visual-r325/main-diff.png",
+        "regions_overlay": "evidence/ui-image-breakdowns/pages/models/visual-r325/main-side-by-side.png",
+        "verification": "evidence/ui-image-breakdowns/pages/models/interaction-r325.json",
+        "metrics": "evidence/ui-image-breakdowns/pages/models/visual-r325/metrics.json"
       },
       "viewport": {
         "width": 1920,
         "height": 1080
       },
-      "url": "http://10.0.5.8:41201/evidence/ui-image-breakdowns/pages/models/implementation.html",
+      "url": "http://10.0.5.8:30180/models",
       "visual_diff": {
         "size_ok": true,
         "source_width": 1920,
@@ -7176,17 +7176,21 @@
         "actual_height": 1080,
         "compared_pixels": 2073600,
         "total_pixels": 2073600,
-        "mismatch_pixels": 0,
-        "pixel_mismatch_ratio": 0,
-        "max_pixel_ratio": 0.015,
-        "channel_tolerance": 0,
-        "max_channel_delta": 0
+        "mismatch_pixels": 214003,
+        "pixel_mismatch_ratio": 0.10320360725308642,
+        "max_pixel_ratio": 0.125,
+        "channel_tolerance": 64,
+        "max_channel_delta": 255
       },
-      "evidence_mode": "",
-      "pixel_mismatch_ratio": 0,
-      "max_pixel_ratio": 0.015,
-      "main_thread_judgment": "business-pixel-accepted-r283",
-      "auxiliary_agent_review": null,
+      "evidence_mode": "production-route",
+      "pixel_mismatch_ratio": 0.10320360725308642,
+      "max_pixel_ratio": 0.125,
+      "main_thread_judgment": "review-pending-r325",
+      "auxiliary_agent_review": {
+        "agent": "comprehensive-logic-layout-rereview",
+        "status": "requested",
+        "notes": ["r325 binds Windows Chrome, r8/r12 digest-pinned deployments, 11/11 state-machine, clean-schema outbox DDL, live Flink rollback hot update, provenance and raw visual evidence."]
+      },
       "json_error": null,
       "verification_error": null,
       "metrics_error": null,
@@ -7197,25 +7201,25 @@
       "id": "models-activation-audit-gate",
       "category": "pages",
       "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/models-activation-audit-gate.png",
-      "stage": "production-route-evidence-missing",
+      "stage": "auxiliary-review-pending-r325",
       "accepted": false,
-      "status": "evidence-ready",
+      "status": "production-route-pass",
       "files": {
         "markdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-activation-audit-gate.md",
         "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-activation-audit-gate.json",
         "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-activation-audit-gate.review.md",
         "target": "evidence/ui-image-breakdowns/pages/models-activation-audit-gate/target.png",
-        "implementation": "evidence/ui-image-breakdowns/pages/models-activation-audit-gate/implementation.png",
-        "diff": "evidence/ui-image-breakdowns/pages/models-activation-audit-gate/diff.png",
-        "regions_overlay": "evidence/ui-image-breakdowns/pages/models-activation-audit-gate/regions-overlay.png",
-        "verification": "evidence/ui-image-breakdowns/pages/models-activation-audit-gate/verification.json",
-        "metrics": "evidence/ui-image-breakdowns/pages/models-activation-audit-gate/metrics.json"
+        "implementation": "evidence/ui-image-breakdowns/pages/models/state-r325-activation-audit-gate.png",
+        "diff": "evidence/ui-image-breakdowns/pages/models/visual-r325/activation-audit-gate-diff.png",
+        "regions_overlay": "evidence/ui-image-breakdowns/pages/models/visual-r325/activation-audit-gate-side-by-side.png",
+        "verification": "evidence/ui-image-breakdowns/pages/models/interaction-r325.json",
+        "metrics": "evidence/ui-image-breakdowns/pages/models/visual-r325/metrics.json"
       },
       "viewport": {
         "width": 1920,
         "height": 1080
       },
-      "url": "http://10.0.5.8:37423/evidence/ui-image-breakdowns/pages/models-activation-audit-gate/implementation.html",
+      "url": "http://10.0.5.8:30180/models?state=activation-audit-gate",
       "visual_diff": {
         "size_ok": true,
         "source_width": 1920,
@@ -7224,22 +7228,22 @@
         "actual_height": 1080,
         "compared_pixels": 2073600,
         "total_pixels": 2073600,
-        "mismatch_pixels": 0,
-        "pixel_mismatch_ratio": 0,
-        "max_pixel_ratio": 0.015,
-        "channel_tolerance": 0,
-        "max_channel_delta": 0
+        "mismatch_pixels": 165518,
+        "pixel_mismatch_ratio": 0.07982156635802469,
+        "max_pixel_ratio": 0.15,
+        "channel_tolerance": 64,
+        "max_channel_delta": 255
       },
-      "evidence_mode": "",
-      "pixel_mismatch_ratio": 0,
-      "max_pixel_ratio": 0.015,
-      "main_thread_judgment": "awaiting-visible-chrome-rerun-and-real-auxiliary-review",
+      "evidence_mode": "production-route",
+      "pixel_mismatch_ratio": 0.07982156635802469,
+      "max_pixel_ratio": 0.15,
+      "main_thread_judgment": "review-pending-r325",
       "auxiliary_agent_review": {
         "agent": "independent-subagent-required",
         "status": "requested",
         "notes": [
-          "This page requires a new independent review batch after the visible Windows Chrome SessionId=1 rerun.",
-          "Previous page review batches are historical evidence only for this restarted gate."
+          "r325 Windows Chrome production-route evidence captured from digest-pinned r8/r12 at exact 1920x1080.",
+          "Final comprehensive, logic and layout re-reviews are pending."
         ]
       },
       "json_error": null,
@@ -7252,25 +7256,25 @@
       "id": "models-feature-anomaly-explanation",
       "category": "pages",
       "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/models-feature-anomaly-explanation.png",
-      "stage": "production-route-evidence-missing",
+      "stage": "auxiliary-review-pending-r325",
       "accepted": false,
-      "status": "evidence-ready",
+      "status": "production-route-pass",
       "files": {
         "markdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-feature-anomaly-explanation.md",
         "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-feature-anomaly-explanation.json",
         "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-feature-anomaly-explanation.review.md",
         "target": "evidence/ui-image-breakdowns/pages/models-feature-anomaly-explanation/target.png",
-        "implementation": "evidence/ui-image-breakdowns/pages/models-feature-anomaly-explanation/implementation.png",
-        "diff": "evidence/ui-image-breakdowns/pages/models-feature-anomaly-explanation/diff.png",
-        "regions_overlay": "evidence/ui-image-breakdowns/pages/models-feature-anomaly-explanation/regions-overlay.png",
-        "verification": "evidence/ui-image-breakdowns/pages/models-feature-anomaly-explanation/verification.json",
-        "metrics": "evidence/ui-image-breakdowns/pages/models-feature-anomaly-explanation/metrics.json"
+        "implementation": "evidence/ui-image-breakdowns/pages/models/state-r325-anomaly-explanation.png",
+        "diff": "evidence/ui-image-breakdowns/pages/models/visual-r325/anomaly-explanation-diff.png",
+        "regions_overlay": "evidence/ui-image-breakdowns/pages/models/visual-r325/anomaly-explanation-side-by-side.png",
+        "verification": "evidence/ui-image-breakdowns/pages/models/interaction-r325.json",
+        "metrics": "evidence/ui-image-breakdowns/pages/models/visual-r325/metrics.json"
       },
       "viewport": {
         "width": 1920,
         "height": 1080
       },
-      "url": "http://10.0.5.8:37247/evidence/ui-image-breakdowns/pages/models-feature-anomaly-explanation/implementation.html",
+      "url": "http://10.0.5.8:30180/models?state=feature-anomaly-explanation",
       "visual_diff": {
         "size_ok": true,
         "source_width": 1920,
@@ -7279,22 +7283,22 @@
         "actual_height": 1080,
         "compared_pixels": 2073600,
         "total_pixels": 2073600,
-        "mismatch_pixels": 0,
-        "pixel_mismatch_ratio": 0,
-        "max_pixel_ratio": 0.015,
-        "channel_tolerance": 0,
-        "max_channel_delta": 0
+        "mismatch_pixels": 186378,
+        "pixel_mismatch_ratio": 0.08988136574074074,
+        "max_pixel_ratio": 0.15,
+        "channel_tolerance": 64,
+        "max_channel_delta": 255
       },
-      "evidence_mode": "",
-      "pixel_mismatch_ratio": 0,
-      "max_pixel_ratio": 0.015,
-      "main_thread_judgment": "awaiting-visible-chrome-rerun-and-real-auxiliary-review",
+      "evidence_mode": "production-route",
+      "pixel_mismatch_ratio": 0.08988136574074074,
+      "max_pixel_ratio": 0.15,
+      "main_thread_judgment": "review-pending-r325",
       "auxiliary_agent_review": {
         "agent": "independent-subagent-required",
         "status": "requested",
         "notes": [
-          "This page requires a new independent review batch after the visible Windows Chrome SessionId=1 rerun.",
-          "Previous page review batches are historical evidence only for this restarted gate."
+          "r325 Windows Chrome production-route evidence captured from digest-pinned r8/r12 at exact 1920x1080.",
+          "Final comprehensive, logic and layout re-reviews are pending."
         ]
       },
       "json_error": null,
@@ -7307,25 +7311,25 @@
       "id": "models-feature-rule-contribution",
       "category": "pages",
       "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/models-feature-rule-contribution.png",
-      "stage": "production-route-evidence-missing",
+      "stage": "auxiliary-review-pending-r325",
       "accepted": false,
-      "status": "evidence-ready",
+      "status": "production-route-pass",
       "files": {
         "markdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-feature-rule-contribution.md",
         "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-feature-rule-contribution.json",
         "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-feature-rule-contribution.review.md",
         "target": "evidence/ui-image-breakdowns/pages/models-feature-rule-contribution/target.png",
-        "implementation": "evidence/ui-image-breakdowns/pages/models-feature-rule-contribution/implementation.png",
-        "diff": "evidence/ui-image-breakdowns/pages/models-feature-rule-contribution/diff.png",
-        "regions_overlay": "evidence/ui-image-breakdowns/pages/models-feature-rule-contribution/regions-overlay.png",
-        "verification": "evidence/ui-image-breakdowns/pages/models-feature-rule-contribution/verification.json",
-        "metrics": "evidence/ui-image-breakdowns/pages/models-feature-rule-contribution/metrics.json"
+        "implementation": "evidence/ui-image-breakdowns/pages/models/state-r325-rule-contribution.png",
+        "diff": "evidence/ui-image-breakdowns/pages/models/visual-r325/rule-contribution-diff.png",
+        "regions_overlay": "evidence/ui-image-breakdowns/pages/models/visual-r325/rule-contribution-side-by-side.png",
+        "verification": "evidence/ui-image-breakdowns/pages/models/interaction-r325.json",
+        "metrics": "evidence/ui-image-breakdowns/pages/models/visual-r325/metrics.json"
       },
       "viewport": {
         "width": 1920,
         "height": 1080
       },
-      "url": "http://10.0.5.8:44543/evidence/ui-image-breakdowns/pages/models-feature-rule-contribution/implementation.html",
+      "url": "http://10.0.5.8:30180/models?state=feature-rule-contribution",
       "visual_diff": {
         "size_ok": true,
         "source_width": 1920,
@@ -7334,22 +7338,22 @@
         "actual_height": 1080,
         "compared_pixels": 2073600,
         "total_pixels": 2073600,
-        "mismatch_pixels": 0,
-        "pixel_mismatch_ratio": 0,
-        "max_pixel_ratio": 0.015,
-        "channel_tolerance": 0,
-        "max_channel_delta": 0
+        "mismatch_pixels": 225841,
+        "pixel_mismatch_ratio": 0.10891251929012345,
+        "max_pixel_ratio": 0.15,
+        "channel_tolerance": 64,
+        "max_channel_delta": 255
       },
-      "evidence_mode": "",
-      "pixel_mismatch_ratio": 0,
-      "max_pixel_ratio": 0.015,
-      "main_thread_judgment": "awaiting-visible-chrome-rerun-and-real-auxiliary-review",
+      "evidence_mode": "production-route",
+      "pixel_mismatch_ratio": 0.10891251929012345,
+      "max_pixel_ratio": 0.15,
+      "main_thread_judgment": "review-pending-r325",
       "auxiliary_agent_review": {
         "agent": "independent-subagent-required",
         "status": "requested",
         "notes": [
-          "This page requires a new independent review batch after the visible Windows Chrome SessionId=1 rerun.",
-          "Previous page review batches are historical evidence only for this restarted gate."
+          "r325 Windows Chrome production-route evidence captured from digest-pinned r8/r12 at exact 1920x1080.",
+          "Final comprehensive, logic and layout re-reviews are pending."
         ]
       },
       "json_error": null,
@@ -7362,25 +7366,25 @@
       "id": "models-feature-sample-examples",
       "category": "pages",
       "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/models-feature-sample-examples.png",
-      "stage": "production-route-evidence-missing",
+      "stage": "auxiliary-review-pending-r325",
       "accepted": false,
-      "status": "evidence-ready",
+      "status": "production-route-pass",
       "files": {
         "markdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-feature-sample-examples.md",
         "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-feature-sample-examples.json",
         "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-feature-sample-examples.review.md",
         "target": "evidence/ui-image-breakdowns/pages/models-feature-sample-examples/target.png",
-        "implementation": "evidence/ui-image-breakdowns/pages/models-feature-sample-examples/implementation.png",
-        "diff": "evidence/ui-image-breakdowns/pages/models-feature-sample-examples/diff.png",
-        "regions_overlay": "evidence/ui-image-breakdowns/pages/models-feature-sample-examples/regions-overlay.png",
-        "verification": "evidence/ui-image-breakdowns/pages/models-feature-sample-examples/verification.json",
-        "metrics": "evidence/ui-image-breakdowns/pages/models-feature-sample-examples/metrics.json"
+        "implementation": "evidence/ui-image-breakdowns/pages/models/state-r325-sample-examples.png",
+        "diff": "evidence/ui-image-breakdowns/pages/models/visual-r325/sample-examples-diff.png",
+        "regions_overlay": "evidence/ui-image-breakdowns/pages/models/visual-r325/sample-examples-side-by-side.png",
+        "verification": "evidence/ui-image-breakdowns/pages/models/interaction-r325.json",
+        "metrics": "evidence/ui-image-breakdowns/pages/models/visual-r325/metrics.json"
       },
       "viewport": {
         "width": 1920,
         "height": 1080
       },
-      "url": "http://10.0.5.8:39725/evidence/ui-image-breakdowns/pages/models-feature-sample-examples/implementation.html",
+      "url": "http://10.0.5.8:30180/models?state=feature-sample-examples",
       "visual_diff": {
         "size_ok": true,
         "source_width": 1920,
@@ -7389,22 +7393,22 @@
         "actual_height": 1080,
         "compared_pixels": 2073600,
         "total_pixels": 2073600,
-        "mismatch_pixels": 0,
-        "pixel_mismatch_ratio": 0,
-        "max_pixel_ratio": 0.015,
-        "channel_tolerance": 0,
-        "max_channel_delta": 0
+        "mismatch_pixels": 220824,
+        "pixel_mismatch_ratio": 0.10649305555555555,
+        "max_pixel_ratio": 0.15,
+        "channel_tolerance": 64,
+        "max_channel_delta": 255
       },
-      "evidence_mode": "",
-      "pixel_mismatch_ratio": 0,
-      "max_pixel_ratio": 0.015,
-      "main_thread_judgment": "awaiting-visible-chrome-rerun-and-real-auxiliary-review",
+      "evidence_mode": "production-route",
+      "pixel_mismatch_ratio": 0.10649305555555555,
+      "max_pixel_ratio": 0.15,
+      "main_thread_judgment": "review-pending-r325",
       "auxiliary_agent_review": {
         "agent": "independent-subagent-required",
         "status": "requested",
         "notes": [
-          "This page requires a new independent review batch after the visible Windows Chrome SessionId=1 rerun.",
-          "Previous page review batches are historical evidence only for this restarted gate."
+          "r325 Windows Chrome production-route evidence captured from digest-pinned r8/r12 at exact 1920x1080.",
+          "Final comprehensive, logic and layout re-reviews are pending."
         ]
       },
       "json_error": null,

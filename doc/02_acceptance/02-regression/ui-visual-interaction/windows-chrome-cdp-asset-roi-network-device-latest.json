@@ -1,0 +1,110 @@
+{
+  "status": "fail",
+  "browser_backend": "windows-chrome-cdp-via-xshell",
+  "cdp_url": "http://127.0.0.1:9224",
+  "browser": "Chrome/150.0.7871.115",
+  "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+  "cdp_targets": 5,
+  "url": "http://10.0.5.8:30180/assets?tab=network-device&__codex_ui_breakdown_production=1&assetVisualTs=1784087099352#codex_smoke_token=<redacted>",
+  "final_url": "http://10.0.5.8:30180/assets?tab=network-device&assetId=9938b501-c0b4-13a6-f4ae-a41620abea14&__codex_ui_breakdown_production=1",
+  "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets-network-device.png",
+  "actual": "evidence/learning/asset-inventory/20260715-five-layout-r25-roi/network-device/assets-network-device-actual-1920x1080.png",
+  "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/assets-roi/network-device/diff-1920.png",
+  "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/assets-roi/network-device/metrics.json",
+  "roi": {
+    "size_ok": true,
+    "comparison_scope": "scoring-region",
+    "scoring_region": {
+      "id": "assets-network-device-business-roi-v1",
+      "x": 198,
+      "y": 78,
+      "width": 1712,
+      "height": 920
+    },
+    "source_width": 1920,
+    "source_height": 1080,
+    "actual_width": 1920,
+    "actual_height": 1080,
+    "compared_pixels": 1575040,
+    "total_pixels": 1575040,
+    "mismatch_pixels": 256998,
+    "pixel_mismatch_ratio": 0.16316918935392116,
+    "max_pixel_ratio": 0.12,
+    "channel_tolerance": 64,
+    "max_channel_delta": 255,
+    "full_image_diagnostic": {
+      "compared_pixels": 2073600,
+      "total_pixels": 2073600,
+      "mismatch_pixels": 305161,
+      "pixel_mismatch_ratio": 0.14716483410493827,
+      "max_channel_delta": 255
+    }
+  },
+  "layout": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080,
+      "device_pixel_ratio": 0.9998436310887371
+    },
+    "page": {
+      "x": 194.98843383789062,
+      "y": 78.99305725097656,
+      "width": 1715.023193359375,
+      "height": 909.0046997070312,
+      "right": 1910.0116271972656,
+      "bottom": 987.9977569580078
+    },
+    "grid": {
+      "x": 194.98843383789062,
+      "y": 78.99305725097656,
+      "width": 1723.0208740234375,
+      "height": 905.9375610351562,
+      "right": 1918.0093078613281,
+      "bottom": 984.9306182861328
+    },
+    "main": {
+      "x": 194.98843383789062,
+      "y": 78.99305725097656,
+      "width": 1315.0347900390625,
+      "height": 905.9375610351562,
+      "right": 1510.0232238769531,
+      "bottom": 984.9306182861328
+    },
+    "rail": {
+      "x": 1518.0208740234375,
+      "y": 78.99305725097656,
+      "width": 399.9884338378906,
+      "height": 905.9375610351562,
+      "right": 1918.0093078613281,
+      "bottom": 984.9306182861328
+    },
+    "ledger": {
+      "x": 203.72686767578125,
+      "y": 336.7129821777344,
+      "width": 819.398193359375,
+      "height": 250.39352416992188,
+      "right": 1023.1250610351562,
+      "bottom": 587.1065063476562
+    },
+    "observability": null,
+    "evidence": {
+      "x": 194.98843383789062,
+      "y": 879.9421997070312,
+      "width": 1315.0347900390625,
+      "height": 104.98843383789062,
+      "right": 1510.0232238769531,
+      "bottom": 984.9306335449219
+    },
+    "row_count": 10,
+    "visual_mode": true,
+    "horizontal_overflow": false,
+    "final_url": "http://10.0.5.8:30180/assets?tab=network-device&assetId=9938b501-c0b4-13a6-f4ae-a41620abea14&__codex_ui_breakdown_production=1"
+  },
+  "runtime": {
+    "bad_responses": [],
+    "request_failures": [],
+    "console_errors": [],
+    "page_errors": [],
+    "external_extension_errors": []
+  }
+}

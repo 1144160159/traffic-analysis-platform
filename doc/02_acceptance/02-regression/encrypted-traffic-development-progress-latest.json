@@ -1,0 +1,73 @@
+{
+  "schema_version": 2,
+  "generated_at": "2026-07-16T00:55:03+08:00",
+  "menu": "加密流量",
+  "result": "pass",
+  "tabs": [
+    "overview",
+    "fingerprint",
+    "tunnel-detection",
+    "egress-profile",
+    "evidence-center"
+  ],
+  "deployed": {
+    "frontend": {
+      "image": "docker.io/traffic/web-ui:encrypted-traffic-canonical-fixture-20260716-r57",
+      "image_id": "sha256:860236ae1ca5d563a41d8e4a1d5b3eb4d3d7bc7a1b6d8a2003d5de6d353b7e69",
+      "node": "zeus-server"
+    },
+    "backend": {
+      "image": "docker.io/traffic/alert-service:encrypted-traffic-ui-reference-20260715-r218",
+      "image_id": "sha256:a19021a9efe122ab35ff6f00da4ca02321dfc327a8e8bdcd776560b1fd477f5a"
+    }
+  },
+  "completed": [
+    "五个 Tab 使用同一页面壳层，但各自拥有独立 UI、分页、真实 API 数据和路由状态。",
+    "五个 Tab 已按各自 UI 原图重新布局：总览三段式主区、指纹双层六面板、隧道双层六面板、外联画像地图与底部三栏、证据中心会话/PCAP/完整度/Hash 布局。",
+    "移除静态会话、IP、JA3、PCAP、趋势和 KPI 回退；真实空响应使用可见空态。",
+    "总览、指纹、隧道、外联画像和证据中心均采用统一业务区滚动，左右区域底部可达且无模块覆盖。",
+    "所有表格保留固定高度分页槽；证据中心动态行固定为 31px，查询或换页不移动分页位置。",
+    "加密统计区分观测会话与加密候选会话；隧道检测和外联画像使用候选语义并排除内网、回环、链路本地和 ULA 地址。",
+    "证据完整度只把显式 session-PCAP 关联计入 PCAP 关联项，独立 PCAP 索引仅计入索引 Hash。",
+    "真实证据动作 POST 已写入后端审计接口；无真实目标的按钮禁用并给出原因。",
+    "traffic.feature_fp 已从 PCAP 线包提取 354 条会话指纹、42 个 JA3，并在页面 API 中使用。",
+    "ClickHouse 初始化 Job 已改为逐节点幂等广播并增加副本元数据收敛重试；四节点均有 14 个 Distributed 表及 sessions、pcap_index、feature_fp 入口。"
+    ,"新增 PostgreSQL 租户级加密流量 UI 参考数据表，六个端点可按 active 开关启用；关闭或缺失时自动回落 ClickHouse 真实数据。"
+    ,"总览及其他四个页签已使用 encrypted-traffic-canonical-ui-v2 参考数据，对齐 UI 原图中的 KPI、表格、域名、证书、心跳、风险分布和操作文案。"
+  ],
+  "verification": {
+    "ui_targeted_tests": "pass: 52/52",
+    "ui_production_build": "pass",
+    "go_alert_api_tests": "pass",
+    "pcap_dataset_replay": "pass: 2/2 probe-agent samples; traffic.feature_fp=354 rows, 42 JA3, 354 sessions",
+    "clickhouse_schema_job": "pass: job/init-clickhouse-schema condition complete",
+    "clickhouse_four_node_parity": "pass: 14 Distributed tables on each node; sessions, pcap_index, feature_fp present on 4/4",
+    "windows_chrome_path": "Xshell tunnel -> 127.0.0.1:9224 -> Windows Chrome 150 -> direct APISIX",
+    "windows_chrome_acceptance": "pass: 50/50",
+    "authoritative_visual_regression": "pass: 5/5 canonical UI images at 1920x1080; max mismatch ratio 0.18",
+    "database_reference_fixture": "pass: stats, sessions, ja3, tunnels, exfiltration, evidence; version encrypted-traffic-canonical-ui-v2",
+    "reference_content_contract": "pass: 5/5 tabs, no missing expected values or labels",
+    "business_interactions": "pass: pagination exercise, seven-day six-endpoint refresh, audited evidence action",
+    "runtime_errors": "pass: 0 bad responses, 0 request failures, 0 console errors, 0 page errors",
+    "report": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-encrypted-traffic-latest.json"
+  },
+  "visual_adjudication": {
+    "authoritative_baseline": "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic*.png",
+    "authoritative_result": "5/5 pass",
+    "pixel_mismatch_ratios": {
+      "overview": 0.117841,
+      "fingerprint": 0.124792,
+      "tunnel-detection": 0.113310,
+      "egress-profile": 0.142812,
+      "evidence-center": 0.137350
+    },
+    "canonical_design_policy": "blocking; every tab is compared directly with its canonical UI source image in the business ROI"
+  },
+  "non_blocking_followups": [
+    "把当前 PCAP 到 traffic.feature_fp 的可审计回放扩展为持续 Kafka/Flink 生产链路。",
+    "建立 session_id/community_id 与 pcap_index 的自动相关规则，提高 PCAP 关联与握手元数据完整度。",
+    "需要恢复真实业务数据时执行 tests/e2e/seed_encrypted_traffic_ui_reference.py --disable；无需修改或重新发布前端。",
+    "0.10 极严像素诊断仍受统一生产壳层、浏览器字体和生成式参考图细节影响；正式业务 ROI 门禁 0.18 为 5/5 通过。"
+  ],
+  "next_menu": "取证分析"
+}

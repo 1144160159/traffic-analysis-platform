@@ -1,0 +1,367 @@
+{
+  "slug": "fingerprint",
+  "label": "指纹分析",
+  "url": "http://10.0.5.8:30180/encrypted-traffic?tab=fingerprint",
+  "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic-fingerprint.png",
+  "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/encrypted-traffic/fingerprint/actual-1920.png",
+  "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/encrypted-traffic/fingerprint/diff-1920.png",
+  "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/encrypted-traffic/fingerprint/metrics.json",
+  "side_by_side": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/encrypted-traffic/fingerprint/canonical-side-by-side-1920.png",
+  "layout": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080,
+      "device_pixel_ratio": 0.9998436310887371
+    },
+    "active_slug": "fingerprint",
+    "root_horizontal_overflow": false,
+    "app_main_scroll": {
+      "scroll_height": 917,
+      "client_height": 917,
+      "scrollable": false
+    },
+    "business": {
+      "x": 173.99305725097656,
+      "y": 87.98611450195312,
+      "width": 1736.0185546875,
+      "height": 901.0185546875,
+      "right": 1910.0116119384766,
+      "bottom": 989.0046691894531
+    },
+    "grid": {
+      "x": 173.99305725097656,
+      "y": 303.9583435058594,
+      "width": 1736.0185546875,
+      "height": 685.0463256835938,
+      "right": 1910.0116119384766,
+      "bottom": 989.0046691894531
+    },
+    "main": {
+      "x": 173.99305725097656,
+      "y": 303.9583435058594,
+      "width": 1498.9237060546875,
+      "height": 719.9884643554688,
+      "right": 1672.916763305664,
+      "bottom": 1023.9468078613281
+    },
+    "rail": {
+      "x": 1678.912109375,
+      "y": 303.9583435058594,
+      "width": 219.98843383789062,
+      "height": 719.9884643554688,
+      "right": 1898.9005432128906,
+      "bottom": 1023.9468078613281
+    },
+    "grid_overflow_y": "auto",
+    "grid_scrollbar_width": 11,
+    "scatter_canvas_count": 1,
+    "egress_map_canvas_count": 0,
+    "egress_map_panel": null,
+    "egress_map_body": null,
+    "egress_map": null,
+    "egress_map_canvas": null,
+    "overview_action_panels": [],
+    "titlebar": {
+      "x": 173.99305725097656,
+      "y": 87.98611450195312,
+      "width": 1736.0185546875,
+      "height": 97.99768829345703,
+      "right": 1910.0116119384766,
+      "bottom": 185.98380279541016
+    },
+    "tabs": {
+      "x": 182.98611450195312,
+      "y": 130.98379516601562,
+      "width": 463.9699401855469,
+      "height": 29.988428115844727,
+      "right": 646.9560546875,
+      "bottom": 160.97222328186035
+    },
+    "controls": {
+      "x": 1488.1597900390625,
+      "y": 145.9838104248047,
+      "width": 421.85186767578125,
+      "height": 41.53935241699219,
+      "right": 1910.0116577148438,
+      "bottom": 187.52316284179688
+    },
+    "panels": [
+      {
+        "title": "JA3/JA3S 指纹明细（Top 20）",
+        "x": 173.99305725097656,
+        "y": 303.9583435058594,
+        "width": 655.4166870117188,
+        "height": 381.9907531738281,
+        "right": 829.4097442626953,
+        "bottom": 685.9490966796875
+      },
+      {
+        "title": "指纹分布与聚类（按 JA3 聚簇）",
+        "x": 835.4051513671875,
+        "y": 303.9583435058594,
+        "width": 352.1759338378906,
+        "height": 381.9907531738281,
+        "right": 1187.5810852050781,
+        "bottom": 685.9490966796875
+      },
+      {
+        "title": "证书 Issuer 与 SNI 分布",
+        "x": 1193.576416015625,
+        "y": 303.9583435058594,
+        "width": 479.3403015136719,
+        "height": 381.9907531738281,
+        "right": 1672.9167175292969,
+        "bottom": 685.9490966796875
+      },
+      {
+        "title": "TLS 版本与密码套件（会话数热力）",
+        "x": 173.99305725097656,
+        "y": 691.9444580078125,
+        "width": 505.5555725097656,
+        "height": 331.9907531738281,
+        "right": 679.5486297607422,
+        "bottom": 1023.9352111816406
+      },
+      {
+        "title": "指纹关联规则（Top 匹配）",
+        "x": 685.5440063476562,
+        "y": 691.9444580078125,
+        "width": 426.2500305175781,
+        "height": 331.9907531738281,
+        "right": 1111.7940368652344,
+        "bottom": 1023.9352111816406
+      },
+      {
+        "title": "证书详情预览（点击左侧行查看）",
+        "x": 1117.7894287109375,
+        "y": 691.9444580078125,
+        "width": 555.1273193359375,
+        "height": 331.9907531738281,
+        "right": 1672.916748046875,
+        "bottom": 1023.9352111816406
+      },
+      {
+        "title": "指纹异常（近 24 小时）",
+        "x": 1678.912109375,
+        "y": 303.9583435058594,
+        "width": 219.98843383789062,
+        "height": 139.5254669189453,
+        "right": 1898.9005432128906,
+        "bottom": 443.4838104248047
+      },
+      {
+        "title": "快速定位",
+        "x": 1678.912109375,
+        "y": 449.47918701171875,
+        "width": 219.98843383789062,
+        "height": 155.42825317382812,
+        "right": 1898.9005432128906,
+        "bottom": 604.9074401855469
+      },
+      {
+        "title": "修复建议",
+        "x": 1678.912109375,
+        "y": 610.90283203125,
+        "width": 219.98843383789062,
+        "height": 281.6087951660156,
+        "right": 1898.9005432128906,
+        "bottom": 892.5116271972656
+      },
+      {
+        "title": "证据与报告",
+        "x": 1678.912109375,
+        "y": 898.5069580078125,
+        "width": 219.98843383789062,
+        "height": 125.4398193359375,
+        "right": 1898.9005432128906,
+        "bottom": 1023.94677734375
+      }
+    ],
+    "overlaps": [],
+    "horizontally_clipped": [],
+    "pagination": [
+      {
+        "x": 180.7291717529297,
+        "y": 647.210693359375,
+        "width": 641.9444580078125,
+        "height": 31.990741729736328,
+        "right": 822.6736297607422,
+        "bottom": 679.2014350891113
+      },
+      {
+        "x": 726.701416015625,
+        "y": 653.2060546875,
+        "width": 95.97222900390625,
+        "height": 23.993057250976562,
+        "right": 822.6736450195312,
+        "bottom": 677.1991119384766
+      },
+      {
+        "x": 1200.3125,
+        "y": 647.210693359375,
+        "width": 465.8680725097656,
+        "height": 31.990741729736328,
+        "right": 1666.1805725097656,
+        "bottom": 679.2014350891113
+      },
+      {
+        "x": 1570.2083740234375,
+        "y": 653.2060546875,
+        "width": 95.97222900390625,
+        "height": 23.993057250976562,
+        "right": 1666.1806030273438,
+        "bottom": 677.1991119384766
+      },
+      {
+        "x": 692.2801513671875,
+        "y": 985.19677734375,
+        "width": 412.7778015136719,
+        "height": 31.990741729736328,
+        "right": 1105.0579528808594,
+        "bottom": 1017.1875190734863
+      },
+      {
+        "x": 1033.0787353515625,
+        "y": 991.1921997070312,
+        "width": 71.97917175292969,
+        "height": 23.993057250976562,
+        "right": 1105.0579071044922,
+        "bottom": 1015.1852569580078
+      }
+    ],
+    "table_layouts": [
+      {
+        "id": "ja3",
+        "panel_title": "JA3/JA3S 指纹明细（Top 20）",
+        "table": {
+          "x": 180.7291717529297,
+          "y": 338.692138671875,
+          "width": 641.9444580078125,
+          "height": 340.50927734375,
+          "right": 822.6736297607422,
+          "bottom": 679.201416015625
+        },
+        "pagination": {
+          "x": 180.7291717529297,
+          "y": 647.210693359375,
+          "width": 641.9444580078125,
+          "height": 31.990741729736328,
+          "right": 822.6736297607422,
+          "bottom": 679.2014350891113
+        },
+        "last_row": {
+          "x": 180.7291717529297,
+          "y": 527.6273193359375,
+          "width": 641.9444580078125,
+          "height": 22.9976863861084,
+          "right": 822.6736297607422,
+          "bottom": 550.6250057220459
+        },
+        "pagination_below_rows": true,
+        "pagination_inside_table": true
+      },
+      {
+        "id": "dense",
+        "panel_title": "证书 Issuer 与 SNI 分布",
+        "table": {
+          "x": 1200.3125,
+          "y": 408.6805725097656,
+          "width": 465.8680725097656,
+          "height": 270.5208435058594,
+          "right": 1666.1805725097656,
+          "bottom": 679.201416015625
+        },
+        "pagination": {
+          "x": 1200.3125,
+          "y": 647.210693359375,
+          "width": 465.8680725097656,
+          "height": 31.990741729736328,
+          "right": 1666.1805725097656,
+          "bottom": 679.2014350891113
+        },
+        "last_row": {
+          "x": 1200.3125,
+          "y": 492.638916015625,
+          "width": 465.8680725097656,
+          "height": 23.993057250976562,
+          "right": 1666.1805725097656,
+          "bottom": 516.6319732666016
+        },
+        "pagination_below_rows": true,
+        "pagination_inside_table": true
+      },
+      {
+        "id": "dense",
+        "panel_title": "指纹关联规则（Top 匹配）",
+        "table": {
+          "x": 692.2801513671875,
+          "y": 726.6782836914062,
+          "width": 412.7778015136719,
+          "height": 290.50927734375,
+          "right": 1105.0579528808594,
+          "bottom": 1017.1875610351562
+        },
+        "pagination": {
+          "x": 692.2801513671875,
+          "y": 985.19677734375,
+          "width": 412.7778015136719,
+          "height": 31.990741729736328,
+          "right": 1105.0579528808594,
+          "bottom": 1017.1875190734863
+        },
+        "last_row": {
+          "x": 692.2801513671875,
+          "y": 928.969970703125,
+          "width": 412.7778015136719,
+          "height": 39.583335876464844,
+          "right": 1105.0579528808594,
+          "bottom": 968.5533065795898
+        },
+        "pagination_below_rows": true,
+        "pagination_inside_table": true
+      }
+    ],
+    "evidence_session_scroll": null,
+    "paginated_table_count": 3,
+    "unpaged_table_count": 0,
+    "error_alerts": [],
+    "table_rows": 0,
+    "custom_rows": 15,
+    "canvas_count": 1,
+    "script_resources": [
+      "http://10.0.5.8:30180/assets/index-cW6ImlD1.js",
+      "http://10.0.5.8:30180/assets/EncryptedTrafficPage-DNxK8Uzv.js"
+    ],
+    "text": "加密流量总览指纹分析隧道检测外联画像证据中心时间范围近 24 小时一键分析指纹详情证书详情指纹总数18,426较昨日 ↑ 8.6%可疑 JA3312较昨日 ↑ 24未知 SNI1,284较昨日 ↑ 134异常 Issuer47较昨日 ↑ 6TLS1.0/1.163较昨日 ↑ 5弱密码套件128较昨日 ↑ 16关联规则26较昨日 ↑ 3JA3/JA3S 指纹明细（Top 20）JA3 指纹流量占比流量 (Gbps)SNI 数关联告警风险等级771,4865-4866-4867-49195-49196,0-11-10-23,012.8%10.031218高危cbd52c1eb6700091a3e2d4c6214aa4d88.7%6.81989中危e7d705342b8acb0d0e0a7d1d4f2c9b617.6%6.014512中危4d7a2f00656b5f70b6a4e3c2d1f09a886.2%4.91126低危598c8ab3943e1e610a65c28e7d44fa204.9%3.8987中危f5a3d7c0eb2fe4e3c6fb101e9b72a1543.6%3.0763低危a1b2c3d4e5f6071827354565a6b7c8d92.7%2.1631低危12指纹分布与聚类（按 JA3 聚簇）证书 Issuer 与 SNI 分布Issuer 覆盖6/6未知 Issuer0弱协议2证书样本6Issuer目的 IP风险Google Trust Serviceswww.google.com正常DigiCert Incapi.github.com正常Cloudflare Inccloudflare-dns.com正常12TLS 版本与密码套件（会话数热力）TLS 1.3TLS_AES_128_GCM_SHA25631.5%TLS 1.3TLS_AES_256_GCM_SHA38423.5%TLS 1.2ECDHE_RSA_AES128_GCM22.4%TLS 1.1AES128_SHA5.5%TLS 1.03DES_EDE_CBC_SHA6.3%QUICTLS_CHACHA20_POLY130510.8%指纹关联规则（Top 匹配）规则名称匹配指纹匹配类型置信度状态可疑旧版 TLS 客户端0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a完全匹配98%命中加入名单弱密码套件连接f5a3d7c0eb2fe4e3c6fb101e9b72a154部分匹配92%命中加入证据自签名证书连接598c8ab3943e1e610a65c28e7d44fa20证书特征95%命中加入证据高熵未知 SNI4d7a2f00656b5f70b6a4e3c2d1f09a88SNI 特征80%观察中创建规则HTTP/1.1 罕见 ALPNe7d705342b8acb0d0e0a7d1d4f2c9b61ALPN 特征72%观察中创建规则1证书详情预览（点击左侧行查看）www.google.com正常IssuerGoogle Trust ServicesTLS / ALPNTLS 1.3 / h2关联告警18证书状态正常查看完整证书创建证据指纹异常（近 24 小时）查看全部异常 >可疑 JA3312未知 SNI1,284异常 Issuer47TLS1.0/1.1 会话63弱密码套件128快速定位创建 JA3 规则查看证书证据导出指纹报告加入观察名单修复建议阻断高风险国家/地区 17 个访问。生成规则隔离高风险主机 10.10.8.45。隔离主机评估异常域名 198 个并加入观察名单。评估名单检查首次出现目的地 156 个。检查目的地证据与报告指纹分析报告PCAP 证据检索审计与证据导出"
+  },
+  "visual_diff": {
+    "size_ok": true,
+    "comparison_scope": "scoring-region",
+    "scoring_region": {
+      "id": "encrypted-traffic-business-roi-v1",
+      "x": 198,
+      "y": 78,
+      "width": 1712,
+      "height": 920
+    },
+    "source_width": 1920,
+    "source_height": 1080,
+    "actual_width": 1920,
+    "actual_height": 1080,
+    "compared_pixels": 1575040,
+    "total_pixels": 1575040,
+    "mismatch_pixels": 195144,
+    "pixel_mismatch_ratio": 0.12389780577001219,
+    "max_pixel_ratio": 0.18,
+    "channel_tolerance": 64,
+    "max_channel_delta": 255,
+    "full_image_diagnostic": {
+      "compared_pixels": 2073600,
+      "total_pixels": 2073600,
+      "mismatch_pixels": 246043,
+      "pixel_mismatch_ratio": 0.1186549961419753,
+      "max_channel_delta": 255
+    }
+  },
+  "visual_status": "pass"
+}

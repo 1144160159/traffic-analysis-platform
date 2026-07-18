@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-19T04:04:00+08:00",
+  "namespace": "traffic-analysis",
+  "result": "pass",
+  "deployments": {
+    "rule-manager": {
+      "current_revision": 89,
+      "history_visible": true,
+      "history_range": "79-89",
+      "server_side_rollback_dry_run": "pass",
+      "resolved_image": "docker.io/traffic/rule-manager@sha256:27f53d3029d9bc6d2d304c7e6b0e0c7f8428910638e01f47e78f1a4177bc818d"
+    },
+    "web-ui": {
+      "current_revision": 642,
+      "history_visible": true,
+      "history_revisions": [631, 632, 633, 634, 635, 636, 637, 639, 640, 641, 642],
+      "server_side_rollback_dry_run": "pass",
+      "resolved_image": "docker.io/traffic/web-ui@sha256:7ded10737d650ce698dbbcfbeb3595375fac4fe3d9a98d0615fd028ba518eff3"
+    }
+  },
+  "note": "kubectl rollout undo used --dry-run=server only; no live rollback mutation was performed."
+}

@@ -262,9 +262,10 @@ schema/index/seed
 
 1. Gate Engine 先输出 hard constraints；失败项直接进入 repair。
 2. Reward Evaluator 按冻结版本计算各域分数和置信度。
-3. 四类 Critic 独立审查，不读取其他 Critic 的结论后再作答。
-4. 主线程核对证据，选择接受、回修、回退或人工门禁。
-5. 只有主线程接受且证据完整，episode 才可进入正向经验库。
+3. 页面逻辑 Critic 与页面布局 Critic 是每个页面的必选独立子代理门禁；此外业务、测试和性能 Critic 按风险执行。
+4. 所有 Critic 独立审查，不读取其他 Critic 的结论后再作答。
+5. 主线程逐条核对证据并记录 `accepted/rejected/deferred`，处理逻辑与布局建议冲突后，选择接受、回修、回退或人工门禁。
+6. 只有两项必选页面审核均有报告、主线程裁决完整、成立的 P0/P1 已回修且其他证据完整，episode 才可进入正向经验库。
 
 Critic 找到问题不等于问题成立；主线程必须逐条记录 `accepted/rejected/deferred` 和理由。
 
@@ -304,6 +305,8 @@ evidence/learning/<task-id>/<run-id>/
   selected-action.json
   gates.json
   reward.json
+  critic-page-logic.json
+  critic-page-layout.json
   critic-design.json
   critic-business.json
   critic-quality.json
@@ -324,6 +327,8 @@ evidence/learning/<task-id>/<run-id>/
 |---|---|
 | Product Agent | 用户任务、业务规则、决策链和功能缺口 |
 | Design Agent | 信息层级、视觉、交互、响应式和可访问性 |
+| Page Logic Critic | 独立审核页面对象、状态机、数据来源、权限、动作结果和业务闭环；只报告，不实施、不裁决 |
+| Page Layout Critic | 独立审核空间利用、层级、栅格、密度、滚动、响应式、空白和可访问性；只报告，不实施、不裁决 |
 | Full-stack Agent | UI/API/数据/部署实现和最小测试 |
 | Test Agent | 风险模型、测试矩阵、负例、回归和证据质量 |
 | Performance Agent | baseline、负载、资源、查询、Flink/K8s 和 SLO |

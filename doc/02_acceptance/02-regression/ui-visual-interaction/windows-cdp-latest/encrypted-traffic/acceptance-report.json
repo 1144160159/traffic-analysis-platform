@@ -1,0 +1,4709 @@
+{
+  "package_id": "encrypted_traffic_windows_chrome_xshell_acceptance",
+  "generated_at": "2026-07-16T02:29:50.997Z",
+  "result": "pass",
+  "browser_path": "Xshell tunnel -> 127.0.0.1:9224 -> Windows Chrome -> direct APISIX",
+  "cdp_url": "http://127.0.0.1:9224",
+  "browser": "Chrome/150.0.7871.115",
+  "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "device_scale_factor": 1
+  },
+  "visual_policy": {
+    "authoritative_gate": "five canonical UI source images",
+    "design_reference_gate": "blocking",
+    "scoring_region": "198,78,1712,920",
+    "scoring_region_id": "encrypted-traffic-business-roi-v1",
+    "channel_tolerance": 64,
+    "max_pixel_ratio": 0.18
+  },
+  "summary": {
+    "checks": 61,
+    "pass": 61,
+    "fail": 0,
+    "tabs": 5,
+    "visual_pass": 5,
+    "visual_fail": 0,
+    "canonical_visual_pass": 5,
+    "canonical_visual_fail": 0
+  },
+  "failures": [],
+  "checks": [
+    {
+      "id": "xshell-windows-cdp-preflight",
+      "status": "pass",
+      "browser": "Chrome/150.0.7871.115",
+      "target_count": 10
+    },
+    {
+      "id": "windows-chrome-css-viewport-calibrated",
+      "status": "pass",
+      "observed": {
+        "width": 2133,
+        "height": 1200,
+        "dpr": 0.8999999632438005
+      },
+      "calibrated": 0.90014064697609,
+      "enforced": {
+        "width": 1920,
+        "height": 1080,
+        "dpr": 0.9998436310887371
+      }
+    },
+    {
+      "id": "tab-overview-route-state",
+      "status": "pass",
+      "active_slug": "overview",
+      "url": "http://10.0.5.8:30180/encrypted-traffic?tab=overview"
+    },
+    {
+      "id": "tab-overview-layout",
+      "status": "pass",
+      "metrics": {
+        "viewport": {
+          "width": 1920,
+          "height": 1080,
+          "device_pixel_ratio": 0.9998436310887371
+        },
+        "active_slug": "overview",
+        "root_horizontal_overflow": false,
+        "app_main_scroll": {
+          "scroll_height": 917,
+          "client_height": 917,
+          "scrollable": false
+        },
+        "business": {
+          "x": 173.99305725097656,
+          "y": 87.98611450195312,
+          "width": 1736.0185546875,
+          "height": 901.0185546875,
+          "right": 1910.0116119384766,
+          "bottom": 989.0046691894531
+        },
+        "grid": {
+          "x": 173.99305725097656,
+          "y": 285.9606628417969,
+          "width": 1736.0185546875,
+          "height": 703.0440063476562,
+          "right": 1910.0116119384766,
+          "bottom": 989.0046691894531
+        },
+        "main": {
+          "x": 173.99305725097656,
+          "y": 285.9606628417969,
+          "width": 1288.9237060546875,
+          "height": 734.9884643554688,
+          "right": 1462.916763305664,
+          "bottom": 1020.9491271972656
+        },
+        "rail": {
+          "x": 1468.912109375,
+          "y": 285.9606628417969,
+          "width": 429.9884338378906,
+          "height": 734.9884643554688,
+          "right": 1898.9005432128906,
+          "bottom": 1020.9491271972656
+        },
+        "grid_overflow_y": "auto",
+        "grid_scrollbar_width": 11,
+        "scatter_canvas_count": 1,
+        "egress_map_canvas_count": 0,
+        "egress_map_panel": null,
+        "egress_map_body": null,
+        "egress_map": null,
+        "egress_map_canvas": null,
+        "overview_action_panels": [
+          {
+            "title": "处置与分析建议",
+            "panel": {
+              "x": 1468.912109375,
+              "y": 771.9444580078125,
+              "width": 429.9884338378906,
+              "height": 163.99305725097656,
+              "right": 1898.9005432128906,
+              "bottom": 935.9375152587891
+            },
+            "body": {
+              "x": 1469.65283203125,
+              "y": 800.6829223632812,
+              "width": 428.5069580078125,
+              "height": 134.5023193359375,
+              "right": 1898.1597900390625,
+              "bottom": 935.1852416992188
+            },
+            "body_scroll_height": 135,
+            "body_client_height": 135,
+            "body_overflow_y": "hidden"
+          },
+          {
+            "title": "生成与导出",
+            "panel": {
+              "x": 1468.912109375,
+              "y": 1097.916748046875,
+              "width": 429.9884338378906,
+              "height": 113.99305725097656,
+              "right": 1898.9005432128906,
+              "bottom": 1211.9098052978516
+            },
+            "body": {
+              "x": 1469.65283203125,
+              "y": 1126.6551513671875,
+              "width": 428.5069580078125,
+              "height": 84.5023193359375,
+              "right": 1898.1597900390625,
+              "bottom": 1211.157470703125
+            },
+            "body_scroll_height": 85,
+            "body_client_height": 85,
+            "body_overflow_y": "hidden"
+          }
+        ],
+        "titlebar": {
+          "x": 173.99305725097656,
+          "y": 87.98611450195312,
+          "width": 1736.0185546875,
+          "height": 91.9907455444336,
+          "right": 1910.0116119384766,
+          "bottom": 179.97686004638672
+        },
+        "tabs": {
+          "x": 182.98611450195312,
+          "y": 130.98379516601562,
+          "width": 463.9699401855469,
+          "height": 29.988428115844727,
+          "right": 646.9560546875,
+          "bottom": 160.97222328186035
+        },
+        "controls": {
+          "x": 1488.1597900390625,
+          "y": 93.98148345947266,
+          "width": 421.85186767578125,
+          "height": 41.53935241699219,
+          "right": 1910.0116577148438,
+          "bottom": 135.52083587646484
+        },
+        "panels": [
+          {
+            "title": "协议分布与趋势",
+            "x": 173.99305725097656,
+            "y": 285.9606628417969,
+            "width": 401.8287353515625,
+            "height": 251.45834350585938,
+            "right": 575.8217926025391,
+            "bottom": 537.4190063476562
+          },
+          {
+            "title": "指纹分析（Top JA3）",
+            "x": 581.817138671875,
+            "y": 285.9606628417969,
+            "width": 482.1990966796875,
+            "height": 251.45834350585938,
+            "right": 1064.0162353515625,
+            "bottom": 537.4190063476562
+          },
+          {
+            "title": "JA3 分布（流量 vs 会话数）",
+            "x": 1070.0115966796875,
+            "y": 285.9606628417969,
+            "width": 392.8935241699219,
+            "height": 251.45834350585938,
+            "right": 1462.9051208496094,
+            "bottom": 537.4190063476562
+          },
+          {
+            "title": "隧道检测与异常特征",
+            "x": 173.99305725097656,
+            "y": 543.4143676757812,
+            "width": 470.9375305175781,
+            "height": 251.45834350585938,
+            "right": 644.9305877685547,
+            "bottom": 794.8727111816406
+          },
+          {
+            "title": "异常隧道列表",
+            "x": 650.9259643554688,
+            "y": 543.4143676757812,
+            "width": 811.9907836914062,
+            "height": 251.45834350585938,
+            "right": 1462.916748046875,
+            "bottom": 794.8727111816406
+          },
+          {
+            "title": "证据与握手元数据（最新 200 条）",
+            "x": 173.99305725097656,
+            "y": 800.8681030273438,
+            "width": 1288.9237060546875,
+            "height": 389.9884338378906,
+            "right": 1462.916763305664,
+            "bottom": 1190.8565368652344
+          },
+          {
+            "title": "外联画像",
+            "x": 1468.912109375,
+            "y": 285.9606628417969,
+            "width": 429.9884338378906,
+            "height": 479.9884338378906,
+            "right": 1898.9005432128906,
+            "bottom": 765.9490966796875
+          },
+          {
+            "title": "处置与分析建议",
+            "x": 1468.912109375,
+            "y": 771.9444580078125,
+            "width": 429.9884338378906,
+            "height": 163.99305725097656,
+            "right": 1898.9005432128906,
+            "bottom": 935.9375152587891
+          },
+          {
+            "title": "关联与下钻",
+            "x": 1468.912109375,
+            "y": 941.9329223632812,
+            "width": 429.9884338378906,
+            "height": 149.98843383789062,
+            "right": 1898.9005432128906,
+            "bottom": 1091.9213562011719
+          },
+          {
+            "title": "生成与导出",
+            "x": 1468.912109375,
+            "y": 1097.916748046875,
+            "width": 429.9884338378906,
+            "height": 113.99305725097656,
+            "right": 1898.9005432128906,
+            "bottom": 1211.9098052978516
+          }
+        ],
+        "overlaps": [],
+        "horizontally_clipped": [],
+        "pagination": [
+          {
+            "x": 588.5532836914062,
+            "y": 498.692138671875,
+            "width": 468.72686767578125,
+            "height": 31.990741729736328,
+            "right": 1057.2801513671875,
+            "bottom": 530.6828804016113
+          },
+          {
+            "x": 961.3079223632812,
+            "y": 504.6875305175781,
+            "width": 95.97222900390625,
+            "height": 23.993057250976562,
+            "right": 1057.2801513671875,
+            "bottom": 528.6805877685547
+          },
+          {
+            "x": 657.6620483398438,
+            "y": 756.1458740234375,
+            "width": 798.5185546875,
+            "height": 31.990741729736328,
+            "right": 1456.1806030273438,
+            "bottom": 788.1366157531738
+          },
+          {
+            "x": 1360.2083740234375,
+            "y": 762.1412353515625,
+            "width": 95.97222900390625,
+            "height": 23.993057250976562,
+            "right": 1456.1806030273438,
+            "bottom": 786.1342926025391
+          },
+          {
+            "x": 180.7291717529297,
+            "y": 1136.1226806640625,
+            "width": 1275.451416015625,
+            "height": 31.990741729736328,
+            "right": 1456.1805877685547,
+            "bottom": 1168.1134223937988
+          },
+          {
+            "x": 1475.648193359375,
+            "y": 719.0740966796875,
+            "width": 416.5162353515625,
+            "height": 31.990741729736328,
+            "right": 1892.1644287109375,
+            "bottom": 751.0648384094238
+          },
+          {
+            "x": 1796.1922607421875,
+            "y": 725.0694580078125,
+            "width": 95.97222900390625,
+            "height": 23.993057250976562,
+            "right": 1892.1644897460938,
+            "bottom": 749.0625152587891
+          }
+        ],
+        "table_layouts": [
+          {
+            "id": "ja3",
+            "panel_title": "指纹分析（Top JA3）",
+            "table": {
+              "x": 588.5532836914062,
+              "y": 320.6944580078125,
+              "width": 468.72686767578125,
+              "height": 209.98843383789062,
+              "right": 1057.2801513671875,
+              "bottom": 530.6828918457031
+            },
+            "pagination": {
+              "x": 588.5532836914062,
+              "y": 498.692138671875,
+              "width": 468.72686767578125,
+              "height": 31.990741729736328,
+              "right": 1057.2801513671875,
+              "bottom": 530.6828804016113
+            },
+            "last_row": {
+              "x": 588.5532836914062,
+              "y": 455.6481628417969,
+              "width": 468.72686767578125,
+              "height": 22.9976863861084,
+              "right": 1057.2801513671875,
+              "bottom": 478.6458492279053
+            },
+            "pagination_below_rows": true,
+            "pagination_inside_table": true
+          },
+          {
+            "id": "tunnel-candidates",
+            "panel_title": "异常隧道列表",
+            "table": {
+              "x": 657.6620483398438,
+              "y": 578.148193359375,
+              "width": 798.5185546875,
+              "height": 209.98843383789062,
+              "right": 1456.1806030273438,
+              "bottom": 788.1366271972656
+            },
+            "pagination": {
+              "x": 657.6620483398438,
+              "y": 756.1458740234375,
+              "width": 798.5185546875,
+              "height": 31.990741729736328,
+              "right": 1456.1806030273438,
+              "bottom": 788.1366157531738
+            },
+            "last_row": {
+              "x": 657.6620483398438,
+              "y": 710.960693359375,
+              "width": 798.5185546875,
+              "height": 22.962963104248047,
+              "right": 1456.1806030273438,
+              "bottom": 733.923656463623
+            },
+            "pagination_below_rows": true,
+            "pagination_inside_table": true
+          },
+          {
+            "id": "overview-evidence",
+            "panel_title": "证据与握手元数据（最新 200 条）",
+            "table": {
+              "x": 180.7291717529297,
+              "y": 835.6018676757812,
+              "width": 1275.451416015625,
+              "height": 348.5069580078125,
+              "right": 1456.1805877685547,
+              "bottom": 1184.1088256835938
+            },
+            "pagination": {
+              "x": 180.7291717529297,
+              "y": 1136.1226806640625,
+              "width": 1275.451416015625,
+              "height": 31.990741729736328,
+              "right": 1456.1805877685547,
+              "bottom": 1168.1134223937988
+            },
+            "last_row": {
+              "x": 180.7291717529297,
+              "y": 1034.10888671875,
+              "width": 1279.988525390625,
+              "height": 40.72916793823242,
+              "right": 1460.7176971435547,
+              "bottom": 1074.8380546569824
+            },
+            "pagination_below_rows": true,
+            "pagination_inside_table": true
+          },
+          {
+            "id": "egress-destinations",
+            "panel_title": "外联画像",
+            "table": {
+              "x": 1475.648193359375,
+              "y": 541.076416015625,
+              "width": 416.5162353515625,
+              "height": 209.98843383789062,
+              "right": 1892.1644287109375,
+              "bottom": 751.0648498535156
+            },
+            "pagination": {
+              "x": 1475.648193359375,
+              "y": 719.0740966796875,
+              "width": 416.5162353515625,
+              "height": 31.990741729736328,
+              "right": 1892.1644287109375,
+              "bottom": 751.0648384094238
+            },
+            "last_row": {
+              "x": 1475.648193359375,
+              "y": 673.888916015625,
+              "width": 416.5162353515625,
+              "height": 22.962963104248047,
+              "right": 1892.1644287109375,
+              "bottom": 696.851879119873
+            },
+            "pagination_below_rows": true,
+            "pagination_inside_table": true
+          }
+        ],
+        "evidence_session_scroll": null,
+        "paginated_table_count": 4,
+        "unpaged_table_count": 0,
+        "error_alerts": [],
+        "table_rows": 5,
+        "custom_rows": 15,
+        "canvas_count": 5,
+        "script_resources": [
+          "http://10.0.5.8:30180/assets/index-cW6ImlD1.js",
+          "http://10.0.5.8:30180/assets/EncryptedTrafficPage-DNxK8Uzv.js"
+        ],
+        "text": "加密流量总览指纹分析隧道检测外联画像证据中心时间范围近 24 小时一键分析指纹详情证书详情加密流量总量78.3 Gbps真实 APITLS 流量占比63.7%真实 APIQUIC 流量占比18.4%真实 API未知加密占比17.9%真实 API异常证书数236 张真实 API可疑 JA3 数172 个真实 API未知 SNI 比例14.6%真实 API协议分布与趋势指纹分析（Top JA3）JA3 指纹流量占比流量 (Gbps)SNI 数关联告警风险等级771,4865-4866-4867-49195-49196,0-11-10-23,012.8%10.031218高危cbd52c1eb6700091a3e2d4c6214aa4d88.7%6.81989中危e7d705342b8acb0d0e0a7d1d4f2c9b617.6%6.014512中危4d7a2f00656b5f70b6a4e3c2d1f09a886.2%4.91126低危598c8ab3943e1e610a65c28e7d44fa204.9%3.8987中危12JA3 分布（流量 vs 会话数）隧道检测与异常特征DNS over HTTPS 会话412↑ 36异常长连接（>1h）287↑ 21高熵流量（>7.5）531↑ 58低频流量（<3.0）76↑ 9低熵心跳（疑似）193↑ 14疑似 VPN 会话118↑ 13异常隧道列表类型疑征源 IP目的域名 / IP持续时间流量 (Gbps)风险等级DoH over TLSSNI=DNS, ALPN=h2/h310.12.2.36cloudflare-dns.com3h 24m2.18高危异常长连接长连接 > 1h172.16.5.10203.0.113.456h 12m3.47高危心跳隧道固定周期 60s10.10.8.45198.51.100.272h 53m0.96中危高熵流量熵值 > 7.810.10.9.33198.16.12.341h 41m2.66中危低频流量频率 < 1/min10.11.3.22185.22.14.94h 30m0.42低危12证据与握手元数据（最新 200 条）时间协议Session 摘要证书详情SNIJA3JA3SALPNTLS 版本密码套件证书 Issuer风险等级操作时间协议Session 摘要证书详情SNIJA3JA3SALPNTLS 版本密码套件证书 Issuer风险等级操作06-20 02:45TLS10.12.2.36 -> 104.16.248.249:443有效cdn.example.com771,4865-4866-4867-49195-49196,0-11-10-23,0ja3s-01-canonicalh2TLS 1.2TLS_AES_256_GCM_SHA384Google Trust Services高危待关联06-20 02:44TLS10.18.4.5 -> 203.0.113.45:443有效api.github.comcbd52c1eb6700091a3e2d4c6214aa4d8ja3s-02-canonicalh2TLS 1.3TLS_AES_128_GCM_SHA256DigiCert Inc中危待关联06-20 02:43TLS172.16.5.10 -> 185.22.14.9:443有效cloudflare-dns.come7d705342b8acb0d0e0a7d1d4f2c9b61ja3s-03-canonicalh2TLS 1.3TLS_AES_256_GCM_SHA384Cloudflare Inc中危待关联06-20 02:42TLS10.12.9.33 -> 198.51.100.27:443有效*.cdn77.com4d7a2f00656b5f70b6a4e3c2d1f09a88ja3s-04-canonicalh2TLS 1.2TLS_AES_128_GCM_SHA256Amazon RSA 2048 M01中危待关联06-20 02:42QUIC10.11.3.22 -> 37.120.196.12:443有效-598c8ab3943e1e610a65c28e7d44fa20ja3s-05-canonicalh3TLS 1.3TLS_AES_256_GCM_SHA384Google Trust Services低危待关联共 8 条12外联画像查看详情 >境外目的地362较昨日 ↑ 18%CDN / 云服务284较昨日 ↑ 12%异常域名198较昨日 ↑ 21%首次出现目的地156较昨日 ↑ 9%目的 IP / 域名位置 / ASN流量会话数风险52.223.31.45美国 / AWS · AS165099.90 GB6,251中危104.16.248.249美国 / Cloudflare · AS1333518.70 GB12,845低危8.8.8.8美国 / Google · AS1516911.30 GB9,762低危20.190.128.1美国 / Azure · AS80756.60 GB4,117中危47.246.16.23新加坡 / Alibaba · AS379635.10 GB3,892低危12处置与分析建议阻断高风险国家/地区 17 个访问。生成规则隔离高风险主机 10.10.8.45。隔离主机评估异常域名 198 个并加入观察名单。评估名单检查首次出现目的地 156 个。检查目的地关联与下钻关联告警（18）关联战役（2）攻击链分析实体图谱取证分析PCAP 检索生成与导出创建告警创建战役生成报告导出 PCAP 索引导出证书写入审计日志"
+      },
+      "minimum_rail_width": 400
+    },
+    {
+      "id": "tab-overview-real-data",
+      "status": "pass",
+      "table_rows": 5,
+      "custom_rows": 15,
+      "canvas_count": 5
+    },
+    {
+      "id": "tab-overview-reference-content",
+      "status": "pass",
+      "expected": [
+        "78.3 Gbps",
+        "63.7%",
+        "18.4%",
+        "17.9%",
+        "236",
+        "172",
+        "14.6%",
+        "隧道检测与异常特征",
+        "异常隧道列表",
+        "外联画像",
+        "查看详情 >"
+      ],
+      "missing": []
+    },
+    {
+      "id": "tab-overview-pagination",
+      "status": "pass",
+      "pagination_count": 7,
+      "paginated_table_count": 4,
+      "unpaged_table_count": 0
+    },
+    {
+      "id": "tab-overview-required-pagination-clear-of-rows",
+      "status": "pass",
+      "required_panels": [
+        "证据与握手元数据（最新 200 条）",
+        "外联画像"
+      ],
+      "tables": [
+        {
+          "id": "overview-evidence",
+          "panel_title": "证据与握手元数据（最新 200 条）",
+          "table": {
+            "x": 180.7291717529297,
+            "y": 835.6018676757812,
+            "width": 1275.451416015625,
+            "height": 348.5069580078125,
+            "right": 1456.1805877685547,
+            "bottom": 1184.1088256835938
+          },
+          "pagination": {
+            "x": 180.7291717529297,
+            "y": 1136.1226806640625,
+            "width": 1275.451416015625,
+            "height": 31.990741729736328,
+            "right": 1456.1805877685547,
+            "bottom": 1168.1134223937988
+          },
+          "last_row": {
+            "x": 180.7291717529297,
+            "y": 1034.10888671875,
+            "width": 1279.988525390625,
+            "height": 40.72916793823242,
+            "right": 1460.7176971435547,
+            "bottom": 1074.8380546569824
+          },
+          "pagination_below_rows": true,
+          "pagination_inside_table": true
+        },
+        {
+          "id": "egress-destinations",
+          "panel_title": "外联画像",
+          "table": {
+            "x": 1475.648193359375,
+            "y": 541.076416015625,
+            "width": 416.5162353515625,
+            "height": 209.98843383789062,
+            "right": 1892.1644287109375,
+            "bottom": 751.0648498535156
+          },
+          "pagination": {
+            "x": 1475.648193359375,
+            "y": 719.0740966796875,
+            "width": 416.5162353515625,
+            "height": 31.990741729736328,
+            "right": 1892.1644287109375,
+            "bottom": 751.0648384094238
+          },
+          "last_row": {
+            "x": 1475.648193359375,
+            "y": 673.888916015625,
+            "width": 416.5162353515625,
+            "height": 22.962963104248047,
+            "right": 1892.1644287109375,
+            "bottom": 696.851879119873
+          },
+          "pagination_below_rows": true,
+          "pagination_inside_table": true
+        }
+      ]
+    },
+    {
+      "id": "tab-overview-pagination-position-stable",
+      "status": "pass",
+      "exercised": true,
+      "stable": true,
+      "before": {
+        "viewport_y": 498.692138671875,
+        "content_y": 212.73147583007812,
+        "width": 468.72686767578125,
+        "height": 31.990741729736328
+      },
+      "after": {
+        "viewport_y": 498.692138671875,
+        "content_y": 212.73147583007812,
+        "width": 468.72686767578125,
+        "height": 31.990741729736328
+      }
+    },
+    {
+      "id": "tab-overview-business-scroll-reachable",
+      "status": "pass",
+      "pass": true,
+      "max_scroll_top": 223,
+      "panel_count": 10,
+      "last_panel_bottom": 988.9467926025391,
+      "viewport_bottom": 991.0046691894531,
+      "main_overflow_y": "visible",
+      "rail_overflow_y": "visible"
+    },
+    {
+      "id": "tab-overview-business-scroll-visible",
+      "status": "pass",
+      "reachability": {
+        "pass": true,
+        "max_scroll_top": 223,
+        "panel_count": 10,
+        "last_panel_bottom": 988.9467926025391,
+        "viewport_bottom": 991.0046691894531,
+        "main_overflow_y": "visible",
+        "rail_overflow_y": "visible"
+      },
+      "grid_overflow_y": "auto",
+      "grid_scrollbar_width": 11
+    },
+    {
+      "id": "tab-overview-scatter-is-echarts",
+      "status": "pass",
+      "scatter_canvas_count": 1
+    },
+    {
+      "id": "tab-overview-advice-and-export-fully-visible",
+      "status": "pass",
+      "panels": [
+        {
+          "title": "处置与分析建议",
+          "panel": {
+            "x": 1468.912109375,
+            "y": 771.9444580078125,
+            "width": 429.9884338378906,
+            "height": 163.99305725097656,
+            "right": 1898.9005432128906,
+            "bottom": 935.9375152587891
+          },
+          "body": {
+            "x": 1469.65283203125,
+            "y": 800.6829223632812,
+            "width": 428.5069580078125,
+            "height": 134.5023193359375,
+            "right": 1898.1597900390625,
+            "bottom": 935.1852416992188
+          },
+          "body_scroll_height": 135,
+          "body_client_height": 135,
+          "body_overflow_y": "hidden"
+        },
+        {
+          "title": "生成与导出",
+          "panel": {
+            "x": 1468.912109375,
+            "y": 1097.916748046875,
+            "width": 429.9884338378906,
+            "height": 113.99305725097656,
+            "right": 1898.9005432128906,
+            "bottom": 1211.9098052978516
+          },
+          "body": {
+            "x": 1469.65283203125,
+            "y": 1126.6551513671875,
+            "width": 428.5069580078125,
+            "height": 84.5023193359375,
+            "right": 1898.1597900390625,
+            "bottom": 1211.157470703125
+          },
+          "body_scroll_height": 85,
+          "body_client_height": 85,
+          "body_overflow_y": "hidden"
+        }
+      ]
+    },
+    {
+      "id": "tab-overview-tab-navigation",
+      "status": "pass",
+      "tabs": {
+        "x": 182.98611450195312,
+        "y": 130.98379516601562,
+        "width": 463.9699401855469,
+        "height": 29.988428115844727,
+        "right": 646.9560546875,
+        "bottom": 160.97222328186035
+      }
+    },
+    {
+      "id": "tab-overview-canonical-visual",
+      "status": "pass",
+      "baseline": "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic.png",
+      "pixel_mismatch_ratio": 0.11548405119869971,
+      "max_pixel_ratio": 0.18,
+      "stdout": "{\"status\": \"pass\", \"target_id\": \"encrypted-traffic-overview\", \"pixel_mismatch_ratio\": 0.11548405119869971, \"comparison_scope\": \"scoring-region\", \"scoring_region\": {\"id\": \"encrypted-traffic-business-roi-v1\", \"x\": 198, \"y\": 78, \"width\": 1712, \"height\": 920}}"
+    },
+    {
+      "id": "tab-fingerprint-route-state",
+      "status": "pass",
+      "active_slug": "fingerprint",
+      "url": "http://10.0.5.8:30180/encrypted-traffic?tab=fingerprint"
+    },
+    {
+      "id": "tab-fingerprint-layout",
+      "status": "pass",
+      "metrics": {
+        "viewport": {
+          "width": 1920,
+          "height": 1080,
+          "device_pixel_ratio": 0.9998436310887371
+        },
+        "active_slug": "fingerprint",
+        "root_horizontal_overflow": false,
+        "app_main_scroll": {
+          "scroll_height": 917,
+          "client_height": 917,
+          "scrollable": false
+        },
+        "business": {
+          "x": 173.99305725097656,
+          "y": 87.98611450195312,
+          "width": 1736.0185546875,
+          "height": 901.0185546875,
+          "right": 1910.0116119384766,
+          "bottom": 989.0046691894531
+        },
+        "grid": {
+          "x": 173.99305725097656,
+          "y": 303.9583435058594,
+          "width": 1736.0185546875,
+          "height": 685.0463256835938,
+          "right": 1910.0116119384766,
+          "bottom": 989.0046691894531
+        },
+        "main": {
+          "x": 173.99305725097656,
+          "y": 303.9583435058594,
+          "width": 1498.9237060546875,
+          "height": 719.9884643554688,
+          "right": 1672.916763305664,
+          "bottom": 1023.9468078613281
+        },
+        "rail": {
+          "x": 1678.912109375,
+          "y": 303.9583435058594,
+          "width": 219.98843383789062,
+          "height": 719.9884643554688,
+          "right": 1898.9005432128906,
+          "bottom": 1023.9468078613281
+        },
+        "grid_overflow_y": "auto",
+        "grid_scrollbar_width": 11,
+        "scatter_canvas_count": 1,
+        "egress_map_canvas_count": 0,
+        "egress_map_panel": null,
+        "egress_map_body": null,
+        "egress_map": null,
+        "egress_map_canvas": null,
+        "overview_action_panels": [],
+        "titlebar": {
+          "x": 173.99305725097656,
+          "y": 87.98611450195312,
+          "width": 1736.0185546875,
+          "height": 97.99768829345703,
+          "right": 1910.0116119384766,
+          "bottom": 185.98380279541016
+        },
+        "tabs": {
+          "x": 182.98611450195312,
+          "y": 130.98379516601562,
+          "width": 463.9699401855469,
+          "height": 29.988428115844727,
+          "right": 646.9560546875,
+          "bottom": 160.97222328186035
+        },
+        "controls": {
+          "x": 1488.1597900390625,
+          "y": 145.9838104248047,
+          "width": 421.85186767578125,
+          "height": 41.53935241699219,
+          "right": 1910.0116577148438,
+          "bottom": 187.52316284179688
+        },
+        "panels": [
+          {
+            "title": "JA3/JA3S 指纹明细（Top 20）",
+            "x": 173.99305725097656,
+            "y": 303.9583435058594,
+            "width": 655.4166870117188,
+            "height": 381.9907531738281,
+            "right": 829.4097442626953,
+            "bottom": 685.9490966796875
+          },
+          {
+            "title": "指纹分布与聚类（按 JA3 聚簇）",
+            "x": 835.4051513671875,
+            "y": 303.9583435058594,
+            "width": 352.1759338378906,
+            "height": 381.9907531738281,
+            "right": 1187.5810852050781,
+            "bottom": 685.9490966796875
+          },
+          {
+            "title": "证书 Issuer 与 SNI 分布",
+            "x": 1193.576416015625,
+            "y": 303.9583435058594,
+            "width": 479.3403015136719,
+            "height": 381.9907531738281,
+            "right": 1672.9167175292969,
+            "bottom": 685.9490966796875
+          },
+          {
+            "title": "TLS 版本与密码套件（会话数热力）",
+            "x": 173.99305725097656,
+            "y": 691.9444580078125,
+            "width": 505.5555725097656,
+            "height": 331.9907531738281,
+            "right": 679.5486297607422,
+            "bottom": 1023.9352111816406
+          },
+          {
+            "title": "指纹关联规则（Top 匹配）",
+            "x": 685.5440063476562,
+            "y": 691.9444580078125,
+            "width": 426.2500305175781,
+            "height": 331.9907531738281,
+            "right": 1111.7940368652344,
+            "bottom": 1023.9352111816406
+          },
+          {
+            "title": "证书详情预览（点击左侧行查看）",
+            "x": 1117.7894287109375,
+            "y": 691.9444580078125,
+            "width": 555.1273193359375,
+            "height": 331.9907531738281,
+            "right": 1672.916748046875,
+            "bottom": 1023.9352111816406
+          },
+          {
+            "title": "指纹异常（近 24 小时）",
+            "x": 1678.912109375,
+            "y": 303.9583435058594,
+            "width": 219.98843383789062,
+            "height": 139.5254669189453,
+            "right": 1898.9005432128906,
+            "bottom": 443.4838104248047
+          },
+          {
+            "title": "快速定位",
+            "x": 1678.912109375,
+            "y": 449.47918701171875,
+            "width": 219.98843383789062,
+            "height": 155.42825317382812,
+            "right": 1898.9005432128906,
+            "bottom": 604.9074401855469
+          },
+          {
+            "title": "修复建议",
+            "x": 1678.912109375,
+            "y": 610.90283203125,
+            "width": 219.98843383789062,
+            "height": 281.6087951660156,
+            "right": 1898.9005432128906,
+            "bottom": 892.5116271972656
+          },
+          {
+            "title": "证据与报告",
+            "x": 1678.912109375,
+            "y": 898.5069580078125,
+            "width": 219.98843383789062,
+            "height": 125.4398193359375,
+            "right": 1898.9005432128906,
+            "bottom": 1023.94677734375
+          }
+        ],
+        "overlaps": [],
+        "horizontally_clipped": [],
+        "pagination": [
+          {
+            "x": 180.7291717529297,
+            "y": 647.210693359375,
+            "width": 641.9444580078125,
+            "height": 31.990741729736328,
+            "right": 822.6736297607422,
+            "bottom": 679.2014350891113
+          },
+          {
+            "x": 726.701416015625,
+            "y": 653.2060546875,
+            "width": 95.97222900390625,
+            "height": 23.993057250976562,
+            "right": 822.6736450195312,
+            "bottom": 677.1991119384766
+          },
+          {
+            "x": 1200.3125,
+            "y": 647.210693359375,
+            "width": 465.8680725097656,
+            "height": 31.990741729736328,
+            "right": 1666.1805725097656,
+            "bottom": 679.2014350891113
+          },
+          {
+            "x": 1570.2083740234375,
+            "y": 653.2060546875,
+            "width": 95.97222900390625,
+            "height": 23.993057250976562,
+            "right": 1666.1806030273438,
+            "bottom": 677.1991119384766
+          },
+          {
+            "x": 692.2801513671875,
+            "y": 985.19677734375,
+            "width": 412.7778015136719,
+            "height": 31.990741729736328,
+            "right": 1105.0579528808594,
+            "bottom": 1017.1875190734863
+          },
+          {
+            "x": 1033.0787353515625,
+            "y": 991.1921997070312,
+            "width": 71.97917175292969,
+            "height": 23.993057250976562,
+            "right": 1105.0579071044922,
+            "bottom": 1015.1852569580078
+          }
+        ],
+        "table_layouts": [
+          {
+            "id": "ja3",
+            "panel_title": "JA3/JA3S 指纹明细（Top 20）",
+            "table": {
+              "x": 180.7291717529297,
+              "y": 338.692138671875,
+              "width": 641.9444580078125,
+              "height": 340.50927734375,
+              "right": 822.6736297607422,
+              "bottom": 679.201416015625
+            },
+            "pagination": {
+              "x": 180.7291717529297,
+              "y": 647.210693359375,
+              "width": 641.9444580078125,
+              "height": 31.990741729736328,
+              "right": 822.6736297607422,
+              "bottom": 679.2014350891113
+            },
+            "last_row": {
+              "x": 180.7291717529297,
+              "y": 527.6273193359375,
+              "width": 641.9444580078125,
+              "height": 22.9976863861084,
+              "right": 822.6736297607422,
+              "bottom": 550.6250057220459
+            },
+            "pagination_below_rows": true,
+            "pagination_inside_table": true
+          },
+          {
+            "id": "dense",
+            "panel_title": "证书 Issuer 与 SNI 分布",
+            "table": {
+              "x": 1200.3125,
+              "y": 408.6805725097656,
+              "width": 465.8680725097656,
+              "height": 270.5208435058594,
+              "right": 1666.1805725097656,
+              "bottom": 679.201416015625
+            },
+            "pagination": {
+              "x": 1200.3125,
+              "y": 647.210693359375,
+              "width": 465.8680725097656,
+              "height": 31.990741729736328,
+              "right": 1666.1805725097656,
+              "bottom": 679.2014350891113
+            },
+            "last_row": {
+              "x": 1200.3125,
+              "y": 492.638916015625,
+              "width": 465.8680725097656,
+              "height": 23.993057250976562,
+              "right": 1666.1805725097656,
+              "bottom": 516.6319732666016
+            },
+            "pagination_below_rows": true,
+            "pagination_inside_table": true
+          },
+          {
+            "id": "dense",
+            "panel_title": "指纹关联规则（Top 匹配）",
+            "table": {
+              "x": 692.2801513671875,
+              "y": 726.6782836914062,
+              "width": 412.7778015136719,
+              "height": 290.50927734375,
+              "right": 1105.0579528808594,
+              "bottom": 1017.1875610351562
+            },
+            "pagination": {
+              "x": 692.2801513671875,
+              "y": 985.19677734375,
+              "width": 412.7778015136719,
+              "height": 31.990741729736328,
+              "right": 1105.0579528808594,
+              "bottom": 1017.1875190734863
+            },
+            "last_row": {
+              "x": 692.2801513671875,
+              "y": 928.969970703125,
+              "width": 412.7778015136719,
+              "height": 39.583335876464844,
+              "right": 1105.0579528808594,
+              "bottom": 968.5533065795898
+            },
+            "pagination_below_rows": true,
+            "pagination_inside_table": true
+          }
+        ],
+        "evidence_session_scroll": null,
+        "paginated_table_count": 3,
+        "unpaged_table_count": 0,
+        "error_alerts": [],
+        "table_rows": 0,
+        "custom_rows": 15,
+        "canvas_count": 1,
+        "script_resources": [
+          "http://10.0.5.8:30180/assets/index-cW6ImlD1.js",
+          "http://10.0.5.8:30180/assets/EncryptedTrafficPage-DNxK8Uzv.js"
+        ],
+        "text": "加密流量总览指纹分析隧道检测外联画像证据中心时间范围近 24 小时一键分析指纹详情证书详情指纹总数18,426较昨日 ↑ 8.6%可疑 JA3312较昨日 ↑ 24未知 SNI1,284较昨日 ↑ 134异常 Issuer47较昨日 ↑ 6TLS1.0/1.163较昨日 ↑ 5弱密码套件128较昨日 ↑ 16关联规则26较昨日 ↑ 3JA3/JA3S 指纹明细（Top 20）JA3 指纹流量占比流量 (Gbps)SNI 数关联告警风险等级771,4865-4866-4867-49195-49196,0-11-10-23,012.8%10.031218高危cbd52c1eb6700091a3e2d4c6214aa4d88.7%6.81989中危e7d705342b8acb0d0e0a7d1d4f2c9b617.6%6.014512中危4d7a2f00656b5f70b6a4e3c2d1f09a886.2%4.91126低危598c8ab3943e1e610a65c28e7d44fa204.9%3.8987中危f5a3d7c0eb2fe4e3c6fb101e9b72a1543.6%3.0763低危a1b2c3d4e5f6071827354565a6b7c8d92.7%2.1631低危12指纹分布与聚类（按 JA3 聚簇）证书 Issuer 与 SNI 分布Issuer 覆盖6/6未知 Issuer0弱协议2证书样本6Issuer目的 IP风险Google Trust Serviceswww.google.com正常DigiCert Incapi.github.com正常Cloudflare Inccloudflare-dns.com正常12TLS 版本与密码套件（会话数热力）TLS 1.3TLS_AES_128_GCM_SHA25631.5%TLS 1.3TLS_AES_256_GCM_SHA38423.5%TLS 1.2ECDHE_RSA_AES128_GCM22.4%TLS 1.1AES128_SHA5.5%TLS 1.03DES_EDE_CBC_SHA6.3%QUICTLS_CHACHA20_POLY130510.8%指纹关联规则（Top 匹配）规则名称匹配指纹匹配类型置信度状态可疑旧版 TLS 客户端0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a完全匹配98%命中加入名单弱密码套件连接f5a3d7c0eb2fe4e3c6fb101e9b72a154部分匹配92%命中加入证据自签名证书连接598c8ab3943e1e610a65c28e7d44fa20证书特征95%命中加入证据高熵未知 SNI4d7a2f00656b5f70b6a4e3c2d1f09a88SNI 特征80%观察中创建规则HTTP/1.1 罕见 ALPNe7d705342b8acb0d0e0a7d1d4f2c9b61ALPN 特征72%观察中创建规则1证书详情预览（点击左侧行查看）www.google.com正常IssuerGoogle Trust ServicesTLS / ALPNTLS 1.3 / h2关联告警18证书状态正常查看完整证书创建证据指纹异常（近 24 小时）查看全部异常 >可疑 JA3312未知 SNI1,284异常 Issuer47TLS1.0/1.1 会话63弱密码套件128快速定位创建 JA3 规则查看证书证据导出指纹报告加入观察名单修复建议阻断高风险国家/地区 17 个访问。生成规则隔离高风险主机 10.10.8.45。隔离主机评估异常域名 198 个并加入观察名单。评估名单检查首次出现目的地 156 个。检查目的地证据与报告指纹分析报告PCAP 证据检索审计与证据导出"
+      },
+      "minimum_rail_width": 190
+    },
+    {
+      "id": "tab-fingerprint-real-data",
+      "status": "pass",
+      "table_rows": 0,
+      "custom_rows": 15,
+      "canvas_count": 1
+    },
+    {
+      "id": "tab-fingerprint-reference-content",
+      "status": "pass",
+      "expected": [
+        "18,426",
+        "312",
+        "1,284",
+        "47",
+        "63",
+        "128",
+        "26",
+        "查看全部异常 >"
+      ],
+      "missing": []
+    },
+    {
+      "id": "tab-fingerprint-pagination",
+      "status": "pass",
+      "pagination_count": 6,
+      "paginated_table_count": 3,
+      "unpaged_table_count": 0
+    },
+    {
+      "id": "tab-fingerprint-required-pagination-clear-of-rows",
+      "status": "pass",
+      "required_panels": [],
+      "tables": []
+    },
+    {
+      "id": "tab-fingerprint-pagination-position-stable",
+      "status": "pass",
+      "exercised": true,
+      "stable": true,
+      "before": {
+        "viewport_y": 647.210693359375,
+        "content_y": 343.2523498535156,
+        "width": 641.9444580078125,
+        "height": 31.990741729736328
+      },
+      "after": {
+        "viewport_y": 647.210693359375,
+        "content_y": 343.2523498535156,
+        "width": 641.9444580078125,
+        "height": 31.990741729736328
+      }
+    },
+    {
+      "id": "tab-fingerprint-business-scroll-reachable",
+      "status": "pass",
+      "pass": true,
+      "max_scroll_top": 35,
+      "panel_count": 10,
+      "last_panel_bottom": 989.1320190429688,
+      "viewport_bottom": 991.0046691894531,
+      "main_overflow_y": "visible",
+      "rail_overflow_y": "visible"
+    },
+    {
+      "id": "tab-fingerprint-tab-navigation",
+      "status": "pass",
+      "tabs": {
+        "x": 182.98611450195312,
+        "y": 130.98379516601562,
+        "width": 463.9699401855469,
+        "height": 29.988428115844727,
+        "right": 646.9560546875,
+        "bottom": 160.97222328186035
+      }
+    },
+    {
+      "id": "tab-fingerprint-canonical-visual",
+      "status": "pass",
+      "baseline": "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic-fingerprint.png",
+      "pixel_mismatch_ratio": 0.12389780577001219,
+      "max_pixel_ratio": 0.18,
+      "stdout": "{\"status\": \"pass\", \"target_id\": \"encrypted-traffic-fingerprint\", \"pixel_mismatch_ratio\": 0.12389780577001219, \"comparison_scope\": \"scoring-region\", \"scoring_region\": {\"id\": \"encrypted-traffic-business-roi-v1\", \"x\": 198, \"y\": 78, \"width\": 1712, \"height\": 920}}"
+    },
+    {
+      "id": "tab-tunnel-detection-route-state",
+      "status": "pass",
+      "active_slug": "tunnel-detection",
+      "url": "http://10.0.5.8:30180/encrypted-traffic?tab=tunnel-detection"
+    },
+    {
+      "id": "tab-tunnel-detection-layout",
+      "status": "pass",
+      "metrics": {
+        "viewport": {
+          "width": 1920,
+          "height": 1080,
+          "device_pixel_ratio": 0.9998436310887371
+        },
+        "active_slug": "tunnel-detection",
+        "root_horizontal_overflow": false,
+        "app_main_scroll": {
+          "scroll_height": 917,
+          "client_height": 917,
+          "scrollable": false
+        },
+        "business": {
+          "x": 173.99305725097656,
+          "y": 87.98611450195312,
+          "width": 1736.0185546875,
+          "height": 901.0185546875,
+          "right": 1910.0116119384766,
+          "bottom": 989.0046691894531
+        },
+        "grid": {
+          "x": 173.99305725097656,
+          "y": 267.951416015625,
+          "width": 1736.0185546875,
+          "height": 721.0532836914062,
+          "right": 1910.0116119384766,
+          "bottom": 989.0046997070312
+        },
+        "main": {
+          "x": 173.99305725097656,
+          "y": 267.951416015625,
+          "width": 1498.9237060546875,
+          "height": 721.0532836914062,
+          "right": 1672.916763305664,
+          "bottom": 989.0046997070312
+        },
+        "rail": {
+          "x": 1678.912109375,
+          "y": 267.951416015625,
+          "width": 219.98843383789062,
+          "height": 721.0532836914062,
+          "right": 1898.9005432128906,
+          "bottom": 989.0046997070312
+        },
+        "grid_overflow_y": "auto",
+        "grid_scrollbar_width": 11,
+        "scatter_canvas_count": 1,
+        "egress_map_canvas_count": 0,
+        "egress_map_panel": null,
+        "egress_map_body": null,
+        "egress_map": null,
+        "egress_map_canvas": null,
+        "overview_action_panels": [],
+        "titlebar": {
+          "x": 173.99305725097656,
+          "y": 87.98611450195312,
+          "width": 1736.0185546875,
+          "height": 91.9907455444336,
+          "right": 1910.0116119384766,
+          "bottom": 179.97686004638672
+        },
+        "tabs": {
+          "x": 182.98611450195312,
+          "y": 130.98379516601562,
+          "width": 463.9699401855469,
+          "height": 29.988428115844727,
+          "right": 646.9560546875,
+          "bottom": 160.97222328186035
+        },
+        "controls": {
+          "x": 1488.1597900390625,
+          "y": 93.98148345947266,
+          "width": 421.85186767578125,
+          "height": 41.53935241699219,
+          "right": 1910.0116577148438,
+          "bottom": 135.52083587646484
+        },
+        "panels": [
+          {
+            "title": "隧道异常列表",
+            "x": 173.99305725097656,
+            "y": 267.951416015625,
+            "width": 647.8704223632812,
+            "height": 373.9930725097656,
+            "right": 821.8634796142578,
+            "bottom": 641.9444885253906
+          },
+          {
+            "title": "熵值与会话时长散点图",
+            "x": 827.8588256835938,
+            "y": 267.951416015625,
+            "width": 403.59954833984375,
+            "height": 373.9930725097656,
+            "right": 1231.4583740234375,
+            "bottom": 641.9444885253906
+          },
+          {
+            "title": "心跳通信时间序列",
+            "x": 1237.4537353515625,
+            "y": 267.951416015625,
+            "width": 435.4629821777344,
+            "height": 373.9930725097656,
+            "right": 1672.9167175292969,
+            "bottom": 641.9444885253906
+          },
+          {
+            "title": "DoH 与隧道特征",
+            "x": 173.99305725097656,
+            "y": 647.9398193359375,
+            "width": 414.72222900390625,
+            "height": 317.9977111816406,
+            "right": 588.7152862548828,
+            "bottom": 965.9375305175781
+          },
+          {
+            "title": "检测规则命中",
+            "x": 594.710693359375,
+            "y": 647.9398193359375,
+            "width": 505.7523498535156,
+            "height": 317.9977111816406,
+            "right": 1100.4630432128906,
+            "bottom": 965.9375305175781
+          },
+          {
+            "title": "会话证据预览",
+            "x": 1106.4583740234375,
+            "y": 647.9398193359375,
+            "width": 566.44677734375,
+            "height": 317.9977111816406,
+            "right": 1672.9051513671875,
+            "bottom": 965.9375305175781
+          },
+          {
+            "title": "隧道异常",
+            "x": 1678.912109375,
+            "y": 267.951416015625,
+            "width": 219.98843383789062,
+            "height": 119.46759796142578,
+            "right": 1898.9005432128906,
+            "bottom": 387.4190139770508
+          },
+          {
+            "title": "快速定位",
+            "x": 1678.912109375,
+            "y": 393.41436767578125,
+            "width": 219.98843383789062,
+            "height": 125.4398193359375,
+            "right": 1898.9005432128906,
+            "bottom": 518.8541870117188
+          },
+          {
+            "title": "修复建议",
+            "x": 1678.912109375,
+            "y": 524.8495483398438,
+            "width": 219.98843383789062,
+            "height": 361.6435241699219,
+            "right": 1898.9005432128906,
+            "bottom": 886.4930725097656
+          },
+          {
+            "title": "证据与报告",
+            "x": 1678.912109375,
+            "y": 892.4884643554688,
+            "width": 219.98843383789062,
+            "height": 95.4513931274414,
+            "right": 1898.9005432128906,
+            "bottom": 987.9398574829102
+          }
+        ],
+        "overlaps": [],
+        "horizontally_clipped": [],
+        "pagination": [
+          {
+            "x": 180.7291717529297,
+            "y": 603.2060546875,
+            "width": 634.398193359375,
+            "height": 31.990741729736328,
+            "right": 815.1273651123047,
+            "bottom": 635.1967964172363
+          },
+          {
+            "x": 743.148193359375,
+            "y": 609.201416015625,
+            "width": 71.97917175292969,
+            "height": 23.993057250976562,
+            "right": 815.1273651123047,
+            "bottom": 633.1944732666016
+          },
+          {
+            "x": 601.44677734375,
+            "y": 927.1990966796875,
+            "width": 492.2801208496094,
+            "height": 31.990741729736328,
+            "right": 1093.7268981933594,
+            "bottom": 959.1898384094238
+          },
+          {
+            "x": 1021.7477416992188,
+            "y": 933.1945190429688,
+            "width": 71.97917175292969,
+            "height": 23.993057250976562,
+            "right": 1093.7269134521484,
+            "bottom": 957.1875762939453
+          },
+          {
+            "x": 1113.1944580078125,
+            "y": 927.1990966796875,
+            "width": 552.9745483398438,
+            "height": 31.990741729736328,
+            "right": 1666.1690063476562,
+            "bottom": 959.1898384094238
+          },
+          {
+            "x": 1594.18994140625,
+            "y": 933.1945190429688,
+            "width": 71.97917175292969,
+            "height": 23.993057250976562,
+            "right": 1666.1691131591797,
+            "bottom": 957.1875762939453
+          }
+        ],
+        "table_layouts": [
+          {
+            "id": "tunnel-candidates",
+            "panel_title": "隧道异常列表",
+            "table": {
+              "x": 180.7291717529297,
+              "y": 302.6852111816406,
+              "width": 634.398193359375,
+              "height": 332.5115966796875,
+              "right": 815.1273651123047,
+              "bottom": 635.1968078613281
+            },
+            "pagination": {
+              "x": 180.7291717529297,
+              "y": 603.2060546875,
+              "width": 634.398193359375,
+              "height": 31.990741729736328,
+              "right": 815.1273651123047,
+              "bottom": 635.1967964172363
+            },
+            "last_row": {
+              "x": 180.7291717529297,
+              "y": 462.4537353515625,
+              "width": 634.398193359375,
+              "height": 22.962963104248047,
+              "right": 815.1273651123047,
+              "bottom": 485.41669845581055
+            },
+            "pagination_below_rows": true,
+            "pagination_inside_table": true
+          },
+          {
+            "id": "dense",
+            "panel_title": "检测规则命中",
+            "table": {
+              "x": 601.44677734375,
+              "y": 682.6736450195312,
+              "width": 492.2801208496094,
+              "height": 276.5162048339844,
+              "right": 1093.7268981933594,
+              "bottom": 959.1898498535156
+            },
+            "pagination": {
+              "x": 601.44677734375,
+              "y": 927.1990966796875,
+              "width": 492.2801208496094,
+              "height": 31.990741729736328,
+              "right": 1093.7268981933594,
+              "bottom": 959.1898384094238
+            },
+            "last_row": {
+              "x": 601.44677734375,
+              "y": 822.6041870117188,
+              "width": 492.2801208496094,
+              "height": 23.993057250976562,
+              "right": 1093.7268981933594,
+              "bottom": 846.5972442626953
+            },
+            "pagination_below_rows": true,
+            "pagination_inside_table": true
+          },
+          {
+            "id": "dense",
+            "panel_title": "会话证据预览",
+            "table": {
+              "x": 1113.1944580078125,
+              "y": 682.6736450195312,
+              "width": 552.9745483398438,
+              "height": 276.5162048339844,
+              "right": 1666.1690063476562,
+              "bottom": 959.1898498535156
+            },
+            "pagination": {
+              "x": 1113.1944580078125,
+              "y": 927.1990966796875,
+              "width": 552.9745483398438,
+              "height": 31.990741729736328,
+              "right": 1666.1690063476562,
+              "bottom": 959.1898384094238
+            },
+            "last_row": {
+              "x": 1113.1944580078125,
+              "y": 850.59033203125,
+              "width": 552.9745483398438,
+              "height": 23.993057250976562,
+              "right": 1666.1690063476562,
+              "bottom": 874.5833892822266
+            },
+            "pagination_below_rows": true,
+            "pagination_inside_table": true
+          }
+        ],
+        "evidence_session_scroll": null,
+        "paginated_table_count": 3,
+        "unpaged_table_count": 0,
+        "error_alerts": [],
+        "table_rows": 0,
+        "custom_rows": 17,
+        "canvas_count": 2,
+        "script_resources": [
+          "http://10.0.5.8:30180/assets/index-cW6ImlD1.js",
+          "http://10.0.5.8:30180/assets/EncryptedTrafficPage-DNxK8Uzv.js"
+        ],
+        "text": "加密流量总览指纹分析隧道检测外联画像证据中心时间范围近 24 小时一键分析指纹详情证书详情隧道告警412高风险候选DoH 会话287加密 DNS异常长连接531持续时间高熵流量193载荷熵值低熵心跳76周期通信疑似 VPN118协议候选已创建告警32待审核隧道异常列表类型疑征源 IP目的域名 / IP持续时间流量 (Gbps)风险等级DoH over TLSSNI=DNS, ALPN=h2/h310.12.2.36cloudflare-dns.com3h 24m2.18高危异常长连接长连接 > 1h172.16.5.10203.0.113.456h 12m3.47高危心跳隧道固定周期 60s10.10.8.45198.51.100.272h 53m0.96中危高熵流量熵值 > 7.810.10.9.33198.16.12.341h 41m2.66中危低频流量频率 < 1/min10.11.3.22185.22.14.94h 30m0.42低危疑似 VPNTLS over 44310.12.6.7737.120.196.125h 18m1.02中危1熵值与会话时长散点图心跳通信时间序列P95 间隔60.4s抖动 (P95)0.82s包数2,486DoH 与隧道特征DNS over HTTPS 会话412↑ 36异常长连接（>1h）287↑ 21高熵流量（>7.5）531↑ 58低频流量（<3.0）76↑ 9低熵心跳（疑似）193↑ 14疑似 VPN 会话118↑ 13检测规则命中规则名称特征阈值命中数置信度处置可疑旧版 TLS 客户端0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a完全匹配98%命中加入名单弱密码套件连接f5a3d7c0eb2fe4e3c6fb101e9b72a154部分匹配92%命中加入证据自签名证书连接598c8ab3943e1e610a65c28e7d44fa20证书特征95%命中加入证据高熵未知 SNI4d7a2f00656b5f70b6a4e3c2d1f09a88SNI 特征80%观察中创建规则HTTP/1.1 罕见 ALPNe7d705342b8acb0d0e0a7d1d4f2c9b61ALPN 特征72%观察中创建规则1会话证据预览源 IP目的域名协议JA3PCAP 索引风险10.12.2.36cdn.example.comTLS771,4865-4866-4867-49195-49196,0-11-10-23,0pcap-20250620-00001高危10.18.4.5api.github.comTLScbd52c1eb6700091a3e2d4c6214aa4d8pcap-20250620-00002中危172.16.5.10cloudflare-dns.comTLSe7d705342b8acb0d0e0a7d1d4f2c9b61pcap-20250620-00003中危10.12.9.33*.cdn77.comTLS4d7a2f00656b5f70b6a4e3c2d1f09a88pcap-20250620-00004中危10.11.3.2237.120.196.12QUIC598c8ab3943e1e610a65c28e7d44fa20pcap-20250620-00005中危10.10.2.36suspicious-tunnel.orgTLSf5a3d7c0eb2fe4e3c6fb101e9b72a154pcap-20250620-00006高危1生成调查规则提交专家复核隧道异常174高风险候选412 条待研判快速定位创建隧道告警查看会话证据加入观察名单修复建议阻断高风险国家/地区 17 个访问。生成规则隔离高风险主机 10.10.8.45。隔离主机评估异常域名 198 个并加入观察名单。评估名单检查首次出现目的地 156 个。检查目的地证据与报告导出隧道检测报告跳转证据中心"
+      },
+      "minimum_rail_width": 190
+    },
+    {
+      "id": "tab-tunnel-detection-real-data",
+      "status": "pass",
+      "table_rows": 0,
+      "custom_rows": 17,
+      "canvas_count": 2
+    },
+    {
+      "id": "tab-tunnel-detection-reference-content",
+      "status": "pass",
+      "expected": [
+        "412",
+        "287",
+        "531",
+        "193",
+        "76",
+        "118",
+        "32",
+        "60.4s",
+        "0.82s",
+        "2,486",
+        "174"
+      ],
+      "missing": []
+    },
+    {
+      "id": "tab-tunnel-detection-pagination",
+      "status": "pass",
+      "pagination_count": 6,
+      "paginated_table_count": 3,
+      "unpaged_table_count": 0
+    },
+    {
+      "id": "tab-tunnel-detection-required-pagination-clear-of-rows",
+      "status": "pass",
+      "required_panels": [
+        "隧道异常列表"
+      ],
+      "tables": [
+        {
+          "id": "tunnel-candidates",
+          "panel_title": "隧道异常列表",
+          "table": {
+            "x": 180.7291717529297,
+            "y": 302.6852111816406,
+            "width": 634.398193359375,
+            "height": 332.5115966796875,
+            "right": 815.1273651123047,
+            "bottom": 635.1968078613281
+          },
+          "pagination": {
+            "x": 180.7291717529297,
+            "y": 603.2060546875,
+            "width": 634.398193359375,
+            "height": 31.990741729736328,
+            "right": 815.1273651123047,
+            "bottom": 635.1967964172363
+          },
+          "last_row": {
+            "x": 180.7291717529297,
+            "y": 462.4537353515625,
+            "width": 634.398193359375,
+            "height": 22.962963104248047,
+            "right": 815.1273651123047,
+            "bottom": 485.41669845581055
+          },
+          "pagination_below_rows": true,
+          "pagination_inside_table": true
+        }
+      ]
+    },
+    {
+      "id": "tab-tunnel-detection-pagination-position-stable",
+      "status": "pass",
+      "exercised": false,
+      "stable": true
+    },
+    {
+      "id": "tab-tunnel-detection-business-scroll-reachable",
+      "status": "pass",
+      "pass": true,
+      "max_scroll_top": 7,
+      "panel_count": 10,
+      "last_panel_bottom": 981.2731704711914,
+      "viewport_bottom": 991.0046997070312,
+      "main_overflow_y": "visible",
+      "rail_overflow_y": "visible"
+    },
+    {
+      "id": "tab-tunnel-detection-tab-navigation",
+      "status": "pass",
+      "tabs": {
+        "x": 182.98611450195312,
+        "y": 130.98379516601562,
+        "width": 463.9699401855469,
+        "height": 29.988428115844727,
+        "right": 646.9560546875,
+        "bottom": 160.97222328186035
+      }
+    },
+    {
+      "id": "tab-tunnel-detection-canonical-visual",
+      "status": "pass",
+      "baseline": "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic-tunnel-detection.png",
+      "pixel_mismatch_ratio": 0.11299014628199919,
+      "max_pixel_ratio": 0.18,
+      "stdout": "{\"status\": \"pass\", \"target_id\": \"encrypted-traffic-tunnel-detection\", \"pixel_mismatch_ratio\": 0.11299014628199919, \"comparison_scope\": \"scoring-region\", \"scoring_region\": {\"id\": \"encrypted-traffic-business-roi-v1\", \"x\": 198, \"y\": 78, \"width\": 1712, \"height\": 920}}"
+    },
+    {
+      "id": "tab-egress-profile-route-state",
+      "status": "pass",
+      "active_slug": "egress-profile",
+      "url": "http://10.0.5.8:30180/encrypted-traffic?tab=egress-profile"
+    },
+    {
+      "id": "tab-egress-profile-layout",
+      "status": "pass",
+      "metrics": {
+        "viewport": {
+          "width": 1920,
+          "height": 1080,
+          "device_pixel_ratio": 0.9998436310887371
+        },
+        "active_slug": "egress-profile",
+        "root_horizontal_overflow": false,
+        "app_main_scroll": {
+          "scroll_height": 917,
+          "client_height": 917,
+          "scrollable": false
+        },
+        "business": {
+          "x": 173.99305725097656,
+          "y": 87.98611450195312,
+          "width": 1736.0185546875,
+          "height": 901.0185546875,
+          "right": 1910.0116119384766,
+          "bottom": 989.0046691894531
+        },
+        "grid": {
+          "x": 173.99305725097656,
+          "y": 283.9583435058594,
+          "width": 1736.0185546875,
+          "height": 705.0463256835938,
+          "right": 1910.0116119384766,
+          "bottom": 989.0046691894531
+        },
+        "main": {
+          "x": 173.99305725097656,
+          "y": 283.9583435058594,
+          "width": 1478.9237060546875,
+          "height": 705.0463256835938,
+          "right": 1652.916763305664,
+          "bottom": 989.0046691894531
+        },
+        "rail": {
+          "x": 1658.912109375,
+          "y": 283.9583435058594,
+          "width": 239.98843383789062,
+          "height": 705.0463256835938,
+          "right": 1898.9005432128906,
+          "bottom": 989.0046691894531
+        },
+        "grid_overflow_y": "auto",
+        "grid_scrollbar_width": 11,
+        "scatter_canvas_count": 0,
+        "egress_map_canvas_count": 3,
+        "egress_map_panel": {
+          "x": 173.99305725097656,
+          "y": 283.9583435058594,
+          "width": 913.2060546875,
+          "height": 519.9884643554688,
+          "right": 1087.1991119384766,
+          "bottom": 803.9468078613281
+        },
+        "egress_map_body": {
+          "x": 174.7338104248047,
+          "y": 312.69677734375,
+          "width": 911.724609375,
+          "height": 490.4977111816406,
+          "right": 1086.4584197998047,
+          "bottom": 803.1944885253906
+        },
+        "egress_map": {
+          "x": 180.7291717529297,
+          "y": 318.692138671875,
+          "width": 899.7338256835938,
+          "height": 478.5069580078125,
+          "right": 1080.4629974365234,
+          "bottom": 797.1990966796875
+        },
+        "egress_map_canvas": {
+          "x": 181.46990966796875,
+          "y": 319.4328918457031,
+          "width": 897.9977416992188,
+          "height": 476.9907531738281,
+          "right": 1079.4676513671875,
+          "bottom": 796.4236450195312
+        },
+        "overview_action_panels": [],
+        "titlebar": {
+          "x": 173.99305725097656,
+          "y": 87.98611450195312,
+          "width": 1736.0185546875,
+          "height": 91.9907455444336,
+          "right": 1910.0116119384766,
+          "bottom": 179.97686004638672
+        },
+        "tabs": {
+          "x": 182.98611450195312,
+          "y": 130.98379516601562,
+          "width": 463.9699401855469,
+          "height": 29.988428115844727,
+          "right": 646.9560546875,
+          "bottom": 160.97222328186035
+        },
+        "controls": {
+          "x": 1488.1597900390625,
+          "y": 93.98148345947266,
+          "width": 421.85186767578125,
+          "height": 41.53935241699219,
+          "right": 1910.0116577148438,
+          "bottom": 135.52083587646484
+        },
+        "panels": [
+          {
+            "title": "外联目的地地图",
+            "x": 173.99305725097656,
+            "y": 283.9583435058594,
+            "width": 913.2060546875,
+            "height": 519.9884643554688,
+            "right": 1087.1991119384766,
+            "bottom": 803.9468078613281
+          },
+          {
+            "title": "域名画像卡",
+            "x": 1093.1944580078125,
+            "y": 283.9583435058594,
+            "width": 559.7222290039062,
+            "height": 519.9884643554688,
+            "right": 1652.9166870117188,
+            "bottom": 803.9468078613281
+          },
+          {
+            "title": "Top 外联目的地",
+            "x": 173.99305725097656,
+            "y": 809.942138671875,
+            "width": 602.6852416992188,
+            "height": 283.9930725097656,
+            "right": 776.6782989501953,
+            "bottom": 1093.9352111816406
+          },
+          {
+            "title": "首次出现与异常域名趋势",
+            "x": 782.6736450195312,
+            "y": 809.942138671875,
+            "width": 375.2662353515625,
+            "height": 283.9930725097656,
+            "right": 1157.9398803710938,
+            "bottom": 1093.9352111816406
+          },
+          {
+            "title": "实体图谱入口",
+            "x": 1163.9351806640625,
+            "y": 809.942138671875,
+            "width": 488.98150634765625,
+            "height": 283.9930725097656,
+            "right": 1652.9166870117188,
+            "bottom": 1093.9352111816406
+          },
+          {
+            "title": "外联风险",
+            "x": 1658.912109375,
+            "y": 283.9583435058594,
+            "width": 239.98843383789062,
+            "height": 119.46759796142578,
+            "right": 1898.9005432128906,
+            "bottom": 403.42594146728516
+          },
+          {
+            "title": "快速定位",
+            "x": 1658.912109375,
+            "y": 409.42132568359375,
+            "width": 239.98843383789062,
+            "height": 125.4398193359375,
+            "right": 1898.9005432128906,
+            "bottom": 534.8611450195312
+          },
+          {
+            "title": "处置建议",
+            "x": 1658.912109375,
+            "y": 540.8565063476562,
+            "width": 239.98843383789062,
+            "height": 346.701416015625,
+            "right": 1898.9005432128906,
+            "bottom": 887.5579223632812
+          },
+          {
+            "title": "关联与导出",
+            "x": 1658.912109375,
+            "y": 893.5532836914062,
+            "width": 239.98843383789062,
+            "height": 95.4513931274414,
+            "right": 1898.9005432128906,
+            "bottom": 989.0046768188477
+          }
+        ],
+        "overlaps": [],
+        "horizontally_clipped": [],
+        "pagination": [
+          {
+            "x": 180.7291717529297,
+            "y": 1055.19677734375,
+            "width": 589.2130126953125,
+            "height": 31.990741729736328,
+            "right": 769.9421844482422,
+            "bottom": 1087.1875190734863
+          },
+          {
+            "x": 673.9699096679688,
+            "y": 1061.192138671875,
+            "width": 95.97222900390625,
+            "height": 23.993057250976562,
+            "right": 769.942138671875,
+            "bottom": 1085.1851959228516
+          }
+        ],
+        "table_layouts": [
+          {
+            "id": "egress-destinations",
+            "panel_title": "Top 外联目的地",
+            "table": {
+              "x": 180.7291717529297,
+              "y": 844.6759643554688,
+              "width": 589.2130126953125,
+              "height": 242.51158142089844,
+              "right": 769.9421844482422,
+              "bottom": 1087.1875457763672
+            },
+            "pagination": {
+              "x": 180.7291717529297,
+              "y": 1055.19677734375,
+              "width": 589.2130126953125,
+              "height": 31.990741729736328,
+              "right": 769.9421844482422,
+              "bottom": 1087.1875190734863
+            },
+            "last_row": {
+              "x": 180.7291717529297,
+              "y": 977.4884643554688,
+              "width": 589.2130126953125,
+              "height": 22.962963104248047,
+              "right": 769.9421844482422,
+              "bottom": 1000.4514274597168
+            },
+            "pagination_below_rows": true,
+            "pagination_inside_table": true
+          }
+        ],
+        "evidence_session_scroll": null,
+        "paginated_table_count": 1,
+        "unpaged_table_count": 0,
+        "error_alerts": [],
+        "table_rows": 0,
+        "custom_rows": 5,
+        "canvas_count": 5,
+        "script_resources": [
+          "http://10.0.5.8:30180/assets/index-cW6ImlD1.js",
+          "http://10.0.5.8:30180/assets/EncryptedTrafficPage-DNxK8Uzv.js"
+        ],
+        "text": "加密流量总览指纹分析隧道检测外联画像证据中心时间范围近 24 小时一键分析指纹详情证书详情境外目的地362较昨日 ↑ 18%CDN / 云服务284较昨日 ↑ 12%异常域名198较昨日 ↑ 21%首次出现目的地156较昨日 ↑ 9%高风险国家/地区17较昨日 ↓ 5%外联资产428较昨日 ↑ 7%图谱待查39较昨日 ↑ 14%外联目的地地图外传 API 已接入高风险目的地待确认目的地已观测目的地域名画像卡更多 >cloudflare-dns.comCloudflare · 104.16.248.249 · AS1333512,845 会话 · 18.7 GB低风险dns.googleGoogle LLC · 8.8.8.8 · AS151699,762 会话 · 11.3 GB低风险cdn-update.exampleUnknown · 45.77.88.102 · AS2092424,321 会话 · 6.2 GB高风险api.storage-cloud.netAmazon AWS · 52.223.31.45 · AS165096,251 会话 · 9.9 GB中风险suspicious-tunnel.orgPrivacy Protect LLC · 172.67.219.232,187 会话 · 3.1 GB高风险first-seen-cdn.netUnknown · 103.53.49.76 · AS1407091,945 会话 · 2.4 GB中风险Top 外联目的地更多 >目的 IP / 域名位置 / ASN流量会话数风险52.223.31.45美国 / AWS · AS165099.90 GB6,251中危104.16.248.249美国 / Cloudflare · AS1333518.70 GB12,845低危8.8.8.8美国 / Google · AS1516911.30 GB9,762低危20.190.128.1美国 / Azure · AS80756.60 GB4,117中危47.246.16.23新加坡 / Alibaba · AS379635.10 GB3,892低危12首次出现与异常域名趋势真实时间桶实体图谱入口更多 >外联风险78高风险较昨日 ↑ 12快速定位创建外联告警查看目的地证据跳转实体图谱处置建议阻断高风险国家/地区 17 个访问。生成规则隔离高风险主机 10.10.8.45。隔离主机评估异常域名 198 个并加入观察名单。评估名单检查首次出现目的地 156 个。检查目的地关联与导出关联告警实体图谱导出画像写入审计"
+      },
+      "minimum_rail_width": 220
+    },
+    {
+      "id": "tab-egress-profile-real-data",
+      "status": "pass",
+      "table_rows": 0,
+      "custom_rows": 5,
+      "canvas_count": 5
+    },
+    {
+      "id": "tab-egress-profile-reference-content",
+      "status": "pass",
+      "expected": [
+        "362",
+        "284",
+        "198",
+        "156",
+        "17",
+        "428",
+        "39",
+        "cloudflare-dns.com",
+        "dns.google",
+        "cdn-update.example",
+        "78",
+        "更多 >"
+      ],
+      "missing": []
+    },
+    {
+      "id": "tab-egress-profile-pagination",
+      "status": "pass",
+      "pagination_count": 2,
+      "paginated_table_count": 1,
+      "unpaged_table_count": 0
+    },
+    {
+      "id": "tab-egress-profile-required-pagination-clear-of-rows",
+      "status": "pass",
+      "required_panels": [],
+      "tables": []
+    },
+    {
+      "id": "tab-egress-profile-pagination-position-stable",
+      "status": "pass",
+      "exercised": true,
+      "stable": true,
+      "before": {
+        "viewport_y": 1055.19677734375,
+        "content_y": 771.2384338378906,
+        "width": 589.2130126953125,
+        "height": 31.990741729736328
+      },
+      "after": {
+        "viewport_y": 950.7523803710938,
+        "content_y": 771.2384872436523,
+        "width": 589.2130126953125,
+        "height": 31.990741729736328
+      }
+    },
+    {
+      "id": "tab-egress-profile-business-scroll-reachable",
+      "status": "pass",
+      "pass": true,
+      "max_scroll_top": 105,
+      "panel_count": 9,
+      "last_panel_bottom": 989.4908142089844,
+      "viewport_bottom": 991.0046691894531,
+      "main_overflow_y": "visible",
+      "rail_overflow_y": "visible"
+    },
+    {
+      "id": "tab-egress-profile-destination-map-taller-narrower",
+      "status": "pass",
+      "egress_map_canvas_count": 3,
+      "egress_map_panel": {
+        "x": 173.99305725097656,
+        "y": 283.9583435058594,
+        "width": 913.2060546875,
+        "height": 519.9884643554688,
+        "right": 1087.1991119384766,
+        "bottom": 803.9468078613281
+      }
+    },
+    {
+      "id": "tab-egress-profile-map-fills-panel",
+      "status": "pass",
+      "panel": {
+        "x": 173.99305725097656,
+        "y": 283.9583435058594,
+        "width": 913.2060546875,
+        "height": 519.9884643554688,
+        "right": 1087.1991119384766,
+        "bottom": 803.9468078613281
+      },
+      "body": {
+        "x": 174.7338104248047,
+        "y": 312.69677734375,
+        "width": 911.724609375,
+        "height": 490.4977111816406,
+        "right": 1086.4584197998047,
+        "bottom": 803.1944885253906
+      },
+      "map": {
+        "x": 180.7291717529297,
+        "y": 318.692138671875,
+        "width": 899.7338256835938,
+        "height": 478.5069580078125,
+        "right": 1080.4629974365234,
+        "bottom": 797.1990966796875
+      },
+      "canvas": {
+        "x": 181.46990966796875,
+        "y": 319.4328918457031,
+        "width": 897.9977416992188,
+        "height": 476.9907531738281,
+        "right": 1079.4676513671875,
+        "bottom": 796.4236450195312
+      }
+    },
+    {
+      "id": "tab-egress-profile-tab-navigation",
+      "status": "pass",
+      "tabs": {
+        "x": 182.98611450195312,
+        "y": 130.98379516601562,
+        "width": 463.9699401855469,
+        "height": 29.988428115844727,
+        "right": 646.9560546875,
+        "bottom": 160.97222328186035
+      }
+    },
+    {
+      "id": "tab-egress-profile-canonical-visual",
+      "status": "pass",
+      "baseline": "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic-egress-profile.png",
+      "pixel_mismatch_ratio": 0.1401285046728972,
+      "max_pixel_ratio": 0.18,
+      "stdout": "{\"status\": \"pass\", \"target_id\": \"encrypted-traffic-egress-profile\", \"pixel_mismatch_ratio\": 0.1401285046728972, \"comparison_scope\": \"scoring-region\", \"scoring_region\": {\"id\": \"encrypted-traffic-business-roi-v1\", \"x\": 198, \"y\": 78, \"width\": 1712, \"height\": 920}}"
+    },
+    {
+      "id": "tab-evidence-center-route-state",
+      "status": "pass",
+      "active_slug": "evidence-center",
+      "url": "http://10.0.5.8:30180/encrypted-traffic?tab=evidence-center"
+    },
+    {
+      "id": "tab-evidence-center-layout",
+      "status": "pass",
+      "metrics": {
+        "viewport": {
+          "width": 1920,
+          "height": 1080,
+          "device_pixel_ratio": 0.9998436310887371
+        },
+        "active_slug": "evidence-center",
+        "root_horizontal_overflow": false,
+        "app_main_scroll": {
+          "scroll_height": 917,
+          "client_height": 917,
+          "scrollable": false
+        },
+        "business": {
+          "x": 173.99305725097656,
+          "y": 87.98611450195312,
+          "width": 1736.0185546875,
+          "height": 901.0185546875,
+          "right": 1910.0116119384766,
+          "bottom": 989.0046691894531
+        },
+        "grid": {
+          "x": 173.99305725097656,
+          "y": 279.9537048339844,
+          "width": 1736.0185546875,
+          "height": 709.0509643554688,
+          "right": 1910.0116119384766,
+          "bottom": 989.0046691894531
+        },
+        "main": {
+          "x": 173.99305725097656,
+          "y": 279.9537048339844,
+          "width": 1474.9306640625,
+          "height": 709.0509643554688,
+          "right": 1648.9237213134766,
+          "bottom": 989.0046691894531
+        },
+        "rail": {
+          "x": 1658.912109375,
+          "y": 279.9537048339844,
+          "width": 239.98843383789062,
+          "height": 709.0509643554688,
+          "right": 1898.9005432128906,
+          "bottom": 989.0046691894531
+        },
+        "grid_overflow_y": "auto",
+        "grid_scrollbar_width": 11,
+        "scatter_canvas_count": 0,
+        "egress_map_canvas_count": 0,
+        "egress_map_panel": null,
+        "egress_map_body": null,
+        "egress_map": null,
+        "egress_map_canvas": null,
+        "overview_action_panels": [],
+        "titlebar": {
+          "x": 173.99305725097656,
+          "y": 87.98611450195312,
+          "width": 1736.0185546875,
+          "height": 91.9907455444336,
+          "right": 1910.0116119384766,
+          "bottom": 179.97686004638672
+        },
+        "tabs": {
+          "x": 182.98611450195312,
+          "y": 130.98379516601562,
+          "width": 463.9699401855469,
+          "height": 29.988428115844727,
+          "right": 646.9560546875,
+          "bottom": 160.97222328186035
+        },
+        "controls": {
+          "x": 1488.1597900390625,
+          "y": 93.98148345947266,
+          "width": 421.85186767578125,
+          "height": 41.53935241699219,
+          "right": 1910.0116577148438,
+          "bottom": 135.52083587646484
+        },
+        "panels": [
+          {
+            "title": "加密会话证据表",
+            "x": 173.99305725097656,
+            "y": 279.9537048339844,
+            "width": 716.84033203125,
+            "height": 455.9953918457031,
+            "right": 890.8333892822266,
+            "bottom": 735.9490966796875
+          },
+          {
+            "title": "时间窗内 PCAP 索引（独立数据源）",
+            "x": 896.8287353515625,
+            "y": 279.9537048339844,
+            "width": 438.8773498535156,
+            "height": 455.9953918457031,
+            "right": 1335.7060852050781,
+            "bottom": 735.9490966796875
+          },
+          {
+            "title": "证据锚点概览",
+            "x": 1341.701416015625,
+            "y": 279.9537048339844,
+            "width": 307.22222900390625,
+            "height": 455.9953918457031,
+            "right": 1648.9236450195312,
+            "bottom": 735.9490966796875
+          },
+          {
+            "title": "证书详情与握手元数据",
+            "x": 173.99305725097656,
+            "y": 741.9444580078125,
+            "width": 512.0255126953125,
+            "height": 366.9907531738281,
+            "right": 686.0185699462891,
+            "bottom": 1108.9352111816406
+          },
+          {
+            "title": "证据完整度",
+            "x": 692.013916015625,
+            "y": 741.9444580078125,
+            "width": 292.5810241699219,
+            "height": 366.9907531738281,
+            "right": 984.5949401855469,
+            "bottom": 1108.9352111816406
+          },
+          {
+            "title": "Hash 与审计校验",
+            "x": 990.59033203125,
+            "y": 741.9444580078125,
+            "width": 658.3333740234375,
+            "height": 366.9907531738281,
+            "right": 1648.9237060546875,
+            "bottom": 1108.9352111816406
+          },
+          {
+            "title": "证据概览",
+            "x": 1658.912109375,
+            "y": 279.9537048339844,
+            "width": 239.98843383789062,
+            "height": 103.46065521240234,
+            "right": 1898.9005432128906,
+            "bottom": 383.4143600463867
+          },
+          {
+            "title": "快速定位",
+            "x": 1658.912109375,
+            "y": 389.40972900390625,
+            "width": 239.98843383789062,
+            "height": 205.55557250976562,
+            "right": 1898.9005432128906,
+            "bottom": 594.9653015136719
+          },
+          {
+            "title": "证据动作",
+            "x": 1658.912109375,
+            "y": 600.960693359375,
+            "width": 239.98843383789062,
+            "height": 210.37037658691406,
+            "right": 1898.9005432128906,
+            "bottom": 811.3310699462891
+          },
+          {
+            "title": "报告与审计",
+            "x": 1658.912109375,
+            "y": 817.326416015625,
+            "width": 239.98843383789062,
+            "height": 94.44445037841797,
+            "right": 1898.9005432128906,
+            "bottom": 911.770866394043
+          },
+          {
+            "title": "证据缺口 Top5",
+            "x": 1658.912109375,
+            "y": 917.7662353515625,
+            "width": 239.98843383789062,
+            "height": 139.20140075683594,
+            "right": 1898.9005432128906,
+            "bottom": 1056.9676361083984
+          }
+        ],
+        "overlaps": [],
+        "horizontally_clipped": [],
+        "pagination": [
+          {
+            "x": 180.7291717529297,
+            "y": 593.6806030273438,
+            "width": 703.3681030273438,
+            "height": 31.990741729736328,
+            "right": 884.0972747802734,
+            "bottom": 625.6713447570801
+          },
+          {
+            "x": 903.5648803710938,
+            "y": 518.692138671875,
+            "width": 425.4051208496094,
+            "height": 31.990741729736328,
+            "right": 1328.9700012207031,
+            "bottom": 550.6828804016113
+          },
+          {
+            "x": 1232.997802734375,
+            "y": 524.6875,
+            "width": 95.97222900390625,
+            "height": 23.993057250976562,
+            "right": 1328.9700317382812,
+            "bottom": 548.6805572509766
+          },
+          {
+            "x": 997.326416015625,
+            "y": 980.6829223632812,
+            "width": 644.8611450195312,
+            "height": 31.990741729736328,
+            "right": 1642.1875610351562,
+            "bottom": 1012.6736640930176
+          },
+          {
+            "x": 1546.21533203125,
+            "y": 986.6782836914062,
+            "width": 95.97222900390625,
+            "height": 23.993057250976562,
+            "right": 1642.1875610351562,
+            "bottom": 1010.6713409423828
+          }
+        ],
+        "table_layouts": [
+          {
+            "id": "evidence-sessions",
+            "panel_title": "加密会话证据表",
+            "table": {
+              "x": 180.7291717529297,
+              "y": 314.6875,
+              "width": 703.3681030273438,
+              "height": 326.97918701171875,
+              "right": 884.0972747802734,
+              "bottom": 641.6666870117188
+            },
+            "pagination": {
+              "x": 180.7291717529297,
+              "y": 593.6806030273438,
+              "width": 703.3681030273438,
+              "height": 31.990741729736328,
+              "right": 884.0972747802734,
+              "bottom": 625.6713447570801
+            },
+            "last_row": {
+              "x": 180.7291717529297,
+              "y": 539.7800903320312,
+              "width": 703.3681030273438,
+              "height": 38.217594146728516,
+              "right": 884.0972747802734,
+              "bottom": 577.9976844787598
+            },
+            "pagination_below_rows": true,
+            "pagination_inside_table": true
+          },
+          {
+            "id": "dense",
+            "panel_title": "时间窗内 PCAP 索引（独立数据源）",
+            "table": {
+              "x": 903.5648803710938,
+              "y": 314.6875,
+              "width": 425.4051208496094,
+              "height": 235.99537658691406,
+              "right": 1328.9700012207031,
+              "bottom": 550.6828765869141
+            },
+            "pagination": {
+              "x": 903.5648803710938,
+              "y": 518.692138671875,
+              "width": 425.4051208496094,
+              "height": 31.990741729736328,
+              "right": 1328.9700012207031,
+              "bottom": 550.6828804016113
+            },
+            "last_row": {
+              "x": 903.5648803710938,
+              "y": 479.6180725097656,
+              "width": 425.4051208496094,
+              "height": 30.995372772216797,
+              "right": 1328.9700012207031,
+              "bottom": 510.6134452819824
+            },
+            "pagination_below_rows": true,
+            "pagination_inside_table": true
+          },
+          {
+            "id": "dense",
+            "panel_title": "Hash 与审计校验",
+            "table": {
+              "x": 997.326416015625,
+              "y": 776.6782836914062,
+              "width": 644.8611450195312,
+              "height": 235.99537658691406,
+              "right": 1642.1875610351562,
+              "bottom": 1012.6736602783203
+            },
+            "pagination": {
+              "x": 997.326416015625,
+              "y": 980.6829223632812,
+              "width": 644.8611450195312,
+              "height": 31.990741729736328,
+              "right": 1642.1875610351562,
+              "bottom": 1012.6736640930176
+            },
+            "last_row": {
+              "x": 997.326416015625,
+              "y": 941.6088256835938,
+              "width": 644.8611450195312,
+              "height": 30.995372772216797,
+              "right": 1642.1875610351562,
+              "bottom": 972.6041984558105
+            },
+            "pagination_below_rows": true,
+            "pagination_inside_table": true
+          }
+        ],
+        "evidence_session_scroll": {
+          "has_scroll_body": false,
+          "body_overflow_y": null,
+          "content_overflow_y": "visible",
+          "scroll_height": 263,
+          "client_height": 263
+        },
+        "paginated_table_count": 3,
+        "unpaged_table_count": 0,
+        "error_alerts": [],
+        "table_rows": 6,
+        "custom_rows": 10,
+        "canvas_count": 4,
+        "script_resources": [
+          "http://10.0.5.8:30180/assets/index-cW6ImlD1.js",
+          "http://10.0.5.8:30180/assets/EncryptedTrafficPage-DNxK8Uzv.js"
+        ],
+        "text": "加密流量总览指纹分析隧道检测外联画像证据中心时间范围近 24 小时一键分析指纹详情证书详情关联 Session1,284完整会话PCAP 索引436时间窗证书样本218证书链握手元数据9,642TLS/QUIC已校验 Hash391校验通过取证任务57执行中待补齐证据23需处理加密会话证据表证据 API 已接入证据 API时间Session ID源 IP目的地址协议风险06-20 03:45session-ui-000110.12.2.36104.16.248.249TLS高危06-20 03:44session-ui-000210.18.4.5203.0.113.45TLS中危06-20 03:43session-ui-0003172.16.5.10185.22.14.9TLS中危06-20 03:42session-ui-000410.12.9.33198.51.100.27TLS中危06-20 03:41session-ui-000510.11.3.2237.120.196.12QUIC低危06-20 03:40session-ui-000610.10.2.36172.67.219.23TLS高危共 9 条12时间窗内 PCAP 索引（独立数据源）尚未自动关联当前会话对象路径时间窗大小包数来源sha256状态pcap-20250620-00001.pcap10:15 - 10:1611.7 MB28,341pcap-prod00000001ab...已校验pcap-20250620-00002.pcap10:16 - 10:1714.7 MB25,171pcap-prod00000002ab...已校验pcap-20250620-00003.pcap10:17 - 10:1817.7 MB22,001pcap-prod00000003ab...已校验pcap-20250620-00004.pcap10:18 - 10:1920.7 MB18,831pcap-prod00000004ab...已校验pcap-20250620-00005.pcap10:19 - 10:2023.7 MB15,661pcap-prod00000005ab...已校验12申请下载申请校验生成取证任务证据锚点概览高危Session IDsession-ui-0001时间06-20 03:45源 / 目的10.12.2.36 -> 104.16.248.249协议TLS / h2SNI / 域名cdn.example.comJA3771,4865-4866-4867-49195-49196,0-11-10-23,0证书 Hashcert000000000000000000000000000000000000000000000000000000000001PCAP 索引pcap-20250620-00001Payload EntropyPayload entropy API校验证据 Hash关联证据分析证书详情与握手元数据SubjectCN=update.example.comIssuerR3 (Let's Encrypt)Serial04:2A:78:9E:3CNot Before2025-04-10 03:12:00Not After2025-07-09 03:12:00SignatureECDSA with SHA25610:15:01.321ClientHelloTLS 1.3, SNI update.example.com10:15:01.340ServerHelloTLS_AES_128_GCM_SHA25610:15:01.359Encrypted ExtensionsALPN h210:15:01.378CertificateR3 Let's Encrypt10:15:01.397Certificate VerifyECDSA P-25610:15:01.416FinishedHandshake complete10:15:01.435ClientHelloTLS 1.3, SNI update.example.com10:15:01.454ServerHelloTLS_AES_128_GCM_SHA256证据完整度Session1284/1284PCAP关联1012/1284证书218/236握手9642/9820索引Hash391/436Hash 与审计校验申请校验Hash 摘要对象路径时间来源状态0000000000000000...pcap/2025/06/20/0001.pcap10:16:00admin通过0000000000000000...pcap/2025/06/20/0002.pcap10:16:05admin通过0000000000000000...pcap/2025/06/20/0003.pcap10:16:10admin通过0000000000000000...pcap/2025/06/20/0004.pcap10:16:15admin通过0000000000000000...pcap/2025/06/20/0005.pcap10:16:20admin通过12证据概览96%证据完整度真实证据 API 已接入快速定位检索 Session ID / 域名 / IP时间范围近 24 小时协议类型全部风险等级全部SNI / 域名全部定 位证据动作生成取证任务申请证据保全关联告警发起专家复核标记证据缺口提交处置建议报告与审计导出证据报告写入审计日志证据缺口 Top5Session0PCAP关联272证书18握手178索引Hash45"
+      },
+      "minimum_rail_width": 190
+    },
+    {
+      "id": "tab-evidence-center-real-data",
+      "status": "pass",
+      "table_rows": 6,
+      "custom_rows": 10,
+      "canvas_count": 4
+    },
+    {
+      "id": "tab-evidence-center-reference-content",
+      "status": "pass",
+      "expected": [
+        "1,284",
+        "436",
+        "218",
+        "9,642",
+        "391",
+        "57",
+        "23",
+        "R3 (Let's Encrypt)",
+        "PCAP",
+        "Hash"
+      ],
+      "missing": []
+    },
+    {
+      "id": "tab-evidence-center-pagination",
+      "status": "pass",
+      "pagination_count": 5,
+      "paginated_table_count": 3,
+      "unpaged_table_count": 0
+    },
+    {
+      "id": "tab-evidence-center-required-pagination-clear-of-rows",
+      "status": "pass",
+      "required_panels": [
+        "加密会话证据表"
+      ],
+      "tables": [
+        {
+          "id": "evidence-sessions",
+          "panel_title": "加密会话证据表",
+          "table": {
+            "x": 180.7291717529297,
+            "y": 314.6875,
+            "width": 703.3681030273438,
+            "height": 326.97918701171875,
+            "right": 884.0972747802734,
+            "bottom": 641.6666870117188
+          },
+          "pagination": {
+            "x": 180.7291717529297,
+            "y": 593.6806030273438,
+            "width": 703.3681030273438,
+            "height": 31.990741729736328,
+            "right": 884.0972747802734,
+            "bottom": 625.6713447570801
+          },
+          "last_row": {
+            "x": 180.7291717529297,
+            "y": 539.7800903320312,
+            "width": 703.3681030273438,
+            "height": 38.217594146728516,
+            "right": 884.0972747802734,
+            "bottom": 577.9976844787598
+          },
+          "pagination_below_rows": true,
+          "pagination_inside_table": true
+        }
+      ]
+    },
+    {
+      "id": "tab-evidence-center-pagination-position-stable",
+      "status": "pass",
+      "exercised": true,
+      "stable": true,
+      "before": {
+        "viewport_y": 593.6806030273438,
+        "content_y": 313.7268981933594,
+        "width": 703.3681030273438,
+        "height": 31.990741729736328
+      },
+      "after": {
+        "viewport_y": 593.6806030273438,
+        "content_y": 313.7268981933594,
+        "width": 703.3681030273438,
+        "height": 31.990741729736328
+      }
+    },
+    {
+      "id": "tab-evidence-center-business-scroll-reachable",
+      "status": "pass",
+      "pass": true,
+      "max_scroll_top": 120,
+      "panel_count": 11,
+      "last_panel_bottom": 988.9352111816406,
+      "viewport_bottom": 991.0046691894531,
+      "main_overflow_y": "visible",
+      "rail_overflow_y": "visible"
+    },
+    {
+      "id": "tab-evidence-center-session-table-no-scrollbar",
+      "status": "pass",
+      "evidence_session_scroll": {
+        "has_scroll_body": false,
+        "body_overflow_y": null,
+        "content_overflow_y": "visible",
+        "scroll_height": 263,
+        "client_height": 263
+      }
+    },
+    {
+      "id": "tab-evidence-center-tab-navigation",
+      "status": "pass",
+      "tabs": {
+        "x": 182.98611450195312,
+        "y": 130.98379516601562,
+        "width": 463.9699401855469,
+        "height": 29.988428115844727,
+        "right": 646.9560546875,
+        "bottom": 160.97222328186035
+      }
+    },
+    {
+      "id": "tab-evidence-center-canonical-visual",
+      "status": "pass",
+      "baseline": "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic-evidence-center.png",
+      "pixel_mismatch_ratio": 0.13456166192604632,
+      "max_pixel_ratio": 0.18,
+      "stdout": "{\"status\": \"pass\", \"target_id\": \"encrypted-traffic-evidence-center\", \"pixel_mismatch_ratio\": 0.13456166192604632, \"comparison_scope\": \"scoring-region\", \"scoring_region\": {\"id\": \"encrypted-traffic-business-roi-v1\", \"x\": 198, \"y\": 78, \"width\": 1712, \"height\": 920}}"
+    },
+    {
+      "id": "evidence-action-real-api",
+      "status": "pass",
+      "http_status": 200,
+      "action_target": "session-ui-0001",
+      "action_id": "evidence-1784168989352156099",
+      "action": "associate_analysis"
+    },
+    {
+      "id": "time-range-refresh-real-api",
+      "status": "pass",
+      "selected": "近 7 天",
+      "endpoints": [
+        {
+          "endpoint": "/stats",
+          "pass": true,
+          "status": 200,
+          "span_days": 7
+        },
+        {
+          "endpoint": "/sessions",
+          "pass": true,
+          "status": 200,
+          "span_days": 7
+        },
+        {
+          "endpoint": "/ja3",
+          "pass": true,
+          "status": 200,
+          "span_days": 7
+        },
+        {
+          "endpoint": "/tunnels",
+          "pass": true,
+          "status": 200,
+          "span_days": 7
+        },
+        {
+          "endpoint": "/exfiltration",
+          "pass": true,
+          "status": 200,
+          "span_days": 7
+        },
+        {
+          "endpoint": "/evidence",
+          "pass": true,
+          "status": 200,
+          "span_days": 7
+        }
+      ]
+    },
+    {
+      "id": "database-reference-fixture-six-endpoints",
+      "status": "pass",
+      "fixture_version": "encrypted-traffic-canonical-ui-v2",
+      "endpoints": [
+        {
+          "endpoint": "/stats",
+          "pass": true,
+          "observations": 7
+        },
+        {
+          "endpoint": "/sessions",
+          "pass": true,
+          "observations": 7
+        },
+        {
+          "endpoint": "/ja3",
+          "pass": true,
+          "observations": 7
+        },
+        {
+          "endpoint": "/tunnels",
+          "pass": true,
+          "observations": 7
+        },
+        {
+          "endpoint": "/exfiltration",
+          "pass": true,
+          "observations": 7
+        },
+        {
+          "endpoint": "/evidence",
+          "pass": true,
+          "observations": 7
+        }
+      ]
+    }
+  ],
+  "states": [
+    {
+      "slug": "overview",
+      "label": "总览",
+      "url": "http://10.0.5.8:30180/encrypted-traffic?tab=overview",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/encrypted-traffic/overview/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/encrypted-traffic/overview/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/encrypted-traffic/overview/metrics.json",
+      "side_by_side": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/encrypted-traffic/overview/canonical-side-by-side-1920.png",
+      "layout": {
+        "viewport": {
+          "width": 1920,
+          "height": 1080,
+          "device_pixel_ratio": 0.9998436310887371
+        },
+        "active_slug": "overview",
+        "root_horizontal_overflow": false,
+        "app_main_scroll": {
+          "scroll_height": 917,
+          "client_height": 917,
+          "scrollable": false
+        },
+        "business": {
+          "x": 173.99305725097656,
+          "y": 87.98611450195312,
+          "width": 1736.0185546875,
+          "height": 901.0185546875,
+          "right": 1910.0116119384766,
+          "bottom": 989.0046691894531
+        },
+        "grid": {
+          "x": 173.99305725097656,
+          "y": 285.9606628417969,
+          "width": 1736.0185546875,
+          "height": 703.0440063476562,
+          "right": 1910.0116119384766,
+          "bottom": 989.0046691894531
+        },
+        "main": {
+          "x": 173.99305725097656,
+          "y": 285.9606628417969,
+          "width": 1288.9237060546875,
+          "height": 734.9884643554688,
+          "right": 1462.916763305664,
+          "bottom": 1020.9491271972656
+        },
+        "rail": {
+          "x": 1468.912109375,
+          "y": 285.9606628417969,
+          "width": 429.9884338378906,
+          "height": 734.9884643554688,
+          "right": 1898.9005432128906,
+          "bottom": 1020.9491271972656
+        },
+        "grid_overflow_y": "auto",
+        "grid_scrollbar_width": 11,
+        "scatter_canvas_count": 1,
+        "egress_map_canvas_count": 0,
+        "egress_map_panel": null,
+        "egress_map_body": null,
+        "egress_map": null,
+        "egress_map_canvas": null,
+        "overview_action_panels": [
+          {
+            "title": "处置与分析建议",
+            "panel": {
+              "x": 1468.912109375,
+              "y": 771.9444580078125,
+              "width": 429.9884338378906,
+              "height": 163.99305725097656,
+              "right": 1898.9005432128906,
+              "bottom": 935.9375152587891
+            },
+            "body": {
+              "x": 1469.65283203125,
+              "y": 800.6829223632812,
+              "width": 428.5069580078125,
+              "height": 134.5023193359375,
+              "right": 1898.1597900390625,
+              "bottom": 935.1852416992188
+            },
+            "body_scroll_height": 135,
+            "body_client_height": 135,
+            "body_overflow_y": "hidden"
+          },
+          {
+            "title": "生成与导出",
+            "panel": {
+              "x": 1468.912109375,
+              "y": 1097.916748046875,
+              "width": 429.9884338378906,
+              "height": 113.99305725097656,
+              "right": 1898.9005432128906,
+              "bottom": 1211.9098052978516
+            },
+            "body": {
+              "x": 1469.65283203125,
+              "y": 1126.6551513671875,
+              "width": 428.5069580078125,
+              "height": 84.5023193359375,
+              "right": 1898.1597900390625,
+              "bottom": 1211.157470703125
+            },
+            "body_scroll_height": 85,
+            "body_client_height": 85,
+            "body_overflow_y": "hidden"
+          }
+        ],
+        "titlebar": {
+          "x": 173.99305725097656,
+          "y": 87.98611450195312,
+          "width": 1736.0185546875,
+          "height": 91.9907455444336,
+          "right": 1910.0116119384766,
+          "bottom": 179.97686004638672
+        },
+        "tabs": {
+          "x": 182.98611450195312,
+          "y": 130.98379516601562,
+          "width": 463.9699401855469,
+          "height": 29.988428115844727,
+          "right": 646.9560546875,
+          "bottom": 160.97222328186035
+        },
+        "controls": {
+          "x": 1488.1597900390625,
+          "y": 93.98148345947266,
+          "width": 421.85186767578125,
+          "height": 41.53935241699219,
+          "right": 1910.0116577148438,
+          "bottom": 135.52083587646484
+        },
+        "panels": [
+          {
+            "title": "协议分布与趋势",
+            "x": 173.99305725097656,
+            "y": 285.9606628417969,
+            "width": 401.8287353515625,
+            "height": 251.45834350585938,
+            "right": 575.8217926025391,
+            "bottom": 537.4190063476562
+          },
+          {
+            "title": "指纹分析（Top JA3）",
+            "x": 581.817138671875,
+            "y": 285.9606628417969,
+            "width": 482.1990966796875,
+            "height": 251.45834350585938,
+            "right": 1064.0162353515625,
+            "bottom": 537.4190063476562
+          },
+          {
+            "title": "JA3 分布（流量 vs 会话数）",
+            "x": 1070.0115966796875,
+            "y": 285.9606628417969,
+            "width": 392.8935241699219,
+            "height": 251.45834350585938,
+            "right": 1462.9051208496094,
+            "bottom": 537.4190063476562
+          },
+          {
+            "title": "隧道检测与异常特征",
+            "x": 173.99305725097656,
+            "y": 543.4143676757812,
+            "width": 470.9375305175781,
+            "height": 251.45834350585938,
+            "right": 644.9305877685547,
+            "bottom": 794.8727111816406
+          },
+          {
+            "title": "异常隧道列表",
+            "x": 650.9259643554688,
+            "y": 543.4143676757812,
+            "width": 811.9907836914062,
+            "height": 251.45834350585938,
+            "right": 1462.916748046875,
+            "bottom": 794.8727111816406
+          },
+          {
+            "title": "证据与握手元数据（最新 200 条）",
+            "x": 173.99305725097656,
+            "y": 800.8681030273438,
+            "width": 1288.9237060546875,
+            "height": 389.9884338378906,
+            "right": 1462.916763305664,
+            "bottom": 1190.8565368652344
+          },
+          {
+            "title": "外联画像",
+            "x": 1468.912109375,
+            "y": 285.9606628417969,
+            "width": 429.9884338378906,
+            "height": 479.9884338378906,
+            "right": 1898.9005432128906,
+            "bottom": 765.9490966796875
+          },
+          {
+            "title": "处置与分析建议",
+            "x": 1468.912109375,
+            "y": 771.9444580078125,
+            "width": 429.9884338378906,
+            "height": 163.99305725097656,
+            "right": 1898.9005432128906,
+            "bottom": 935.9375152587891
+          },
+          {
+            "title": "关联与下钻",
+            "x": 1468.912109375,
+            "y": 941.9329223632812,
+            "width": 429.9884338378906,
+            "height": 149.98843383789062,
+            "right": 1898.9005432128906,
+            "bottom": 1091.9213562011719
+          },
+          {
+            "title": "生成与导出",
+            "x": 1468.912109375,
+            "y": 1097.916748046875,
+            "width": 429.9884338378906,
+            "height": 113.99305725097656,
+            "right": 1898.9005432128906,
+            "bottom": 1211.9098052978516
+          }
+        ],
+        "overlaps": [],
+        "horizontally_clipped": [],
+        "pagination": [
+          {
+            "x": 588.5532836914062,
+            "y": 498.692138671875,
+            "width": 468.72686767578125,
+            "height": 31.990741729736328,
+            "right": 1057.2801513671875,
+            "bottom": 530.6828804016113
+          },
+          {
+            "x": 961.3079223632812,
+            "y": 504.6875305175781,
+            "width": 95.97222900390625,
+            "height": 23.993057250976562,
+            "right": 1057.2801513671875,
+            "bottom": 528.6805877685547
+          },
+          {
+            "x": 657.6620483398438,
+            "y": 756.1458740234375,
+            "width": 798.5185546875,
+            "height": 31.990741729736328,
+            "right": 1456.1806030273438,
+            "bottom": 788.1366157531738
+          },
+          {
+            "x": 1360.2083740234375,
+            "y": 762.1412353515625,
+            "width": 95.97222900390625,
+            "height": 23.993057250976562,
+            "right": 1456.1806030273438,
+            "bottom": 786.1342926025391
+          },
+          {
+            "x": 180.7291717529297,
+            "y": 1136.1226806640625,
+            "width": 1275.451416015625,
+            "height": 31.990741729736328,
+            "right": 1456.1805877685547,
+            "bottom": 1168.1134223937988
+          },
+          {
+            "x": 1475.648193359375,
+            "y": 719.0740966796875,
+            "width": 416.5162353515625,
+            "height": 31.990741729736328,
+            "right": 1892.1644287109375,
+            "bottom": 751.0648384094238
+          },
+          {
+            "x": 1796.1922607421875,
+            "y": 725.0694580078125,
+            "width": 95.97222900390625,
+            "height": 23.993057250976562,
+            "right": 1892.1644897460938,
+            "bottom": 749.0625152587891
+          }
+        ],
+        "table_layouts": [
+          {
+            "id": "ja3",
+            "panel_title": "指纹分析（Top JA3）",
+            "table": {
+              "x": 588.5532836914062,
+              "y": 320.6944580078125,
+              "width": 468.72686767578125,
+              "height": 209.98843383789062,
+              "right": 1057.2801513671875,
+              "bottom": 530.6828918457031
+            },
+            "pagination": {
+              "x": 588.5532836914062,
+              "y": 498.692138671875,
+              "width": 468.72686767578125,
+              "height": 31.990741729736328,
+              "right": 1057.2801513671875,
+              "bottom": 530.6828804016113
+            },
+            "last_row": {
+              "x": 588.5532836914062,
+              "y": 455.6481628417969,
+              "width": 468.72686767578125,
+              "height": 22.9976863861084,
+              "right": 1057.2801513671875,
+              "bottom": 478.6458492279053
+            },
+            "pagination_below_rows": true,
+            "pagination_inside_table": true
+          },
+          {
+            "id": "tunnel-candidates",
+            "panel_title": "异常隧道列表",
+            "table": {
+              "x": 657.6620483398438,
+              "y": 578.148193359375,
+              "width": 798.5185546875,
+              "height": 209.98843383789062,
+              "right": 1456.1806030273438,
+              "bottom": 788.1366271972656
+            },
+            "pagination": {
+              "x": 657.6620483398438,
+              "y": 756.1458740234375,
+              "width": 798.5185546875,
+              "height": 31.990741729736328,
+              "right": 1456.1806030273438,
+              "bottom": 788.1366157531738
+            },
+            "last_row": {
+              "x": 657.6620483398438,
+              "y": 710.960693359375,
+              "width": 798.5185546875,
+              "height": 22.962963104248047,
+              "right": 1456.1806030273438,
+              "bottom": 733.923656463623
+            },
+            "pagination_below_rows": true,
+            "pagination_inside_table": true
+          },
+          {
+            "id": "overview-evidence",
+            "panel_title": "证据与握手元数据（最新 200 条）",
+            "table": {
+              "x": 180.7291717529297,
+              "y": 835.6018676757812,
+              "width": 1275.451416015625,
+              "height": 348.5069580078125,
+              "right": 1456.1805877685547,
+              "bottom": 1184.1088256835938
+            },
+            "pagination": {
+              "x": 180.7291717529297,
+              "y": 1136.1226806640625,
+              "width": 1275.451416015625,
+              "height": 31.990741729736328,
+              "right": 1456.1805877685547,
+              "bottom": 1168.1134223937988
+            },
+            "last_row": {
+              "x": 180.7291717529297,
+              "y": 1034.10888671875,
+              "width": 1279.988525390625,
+              "height": 40.72916793823242,
+              "right": 1460.7176971435547,
+              "bottom": 1074.8380546569824
+            },
+            "pagination_below_rows": true,
+            "pagination_inside_table": true
+          },
+          {
+            "id": "egress-destinations",
+            "panel_title": "外联画像",
+            "table": {
+              "x": 1475.648193359375,
+              "y": 541.076416015625,
+              "width": 416.5162353515625,
+              "height": 209.98843383789062,
+              "right": 1892.1644287109375,
+              "bottom": 751.0648498535156
+            },
+            "pagination": {
+              "x": 1475.648193359375,
+              "y": 719.0740966796875,
+              "width": 416.5162353515625,
+              "height": 31.990741729736328,
+              "right": 1892.1644287109375,
+              "bottom": 751.0648384094238
+            },
+            "last_row": {
+              "x": 1475.648193359375,
+              "y": 673.888916015625,
+              "width": 416.5162353515625,
+              "height": 22.962963104248047,
+              "right": 1892.1644287109375,
+              "bottom": 696.851879119873
+            },
+            "pagination_below_rows": true,
+            "pagination_inside_table": true
+          }
+        ],
+        "evidence_session_scroll": null,
+        "paginated_table_count": 4,
+        "unpaged_table_count": 0,
+        "error_alerts": [],
+        "table_rows": 5,
+        "custom_rows": 15,
+        "canvas_count": 5,
+        "script_resources": [
+          "http://10.0.5.8:30180/assets/index-cW6ImlD1.js",
+          "http://10.0.5.8:30180/assets/EncryptedTrafficPage-DNxK8Uzv.js"
+        ],
+        "text": "加密流量总览指纹分析隧道检测外联画像证据中心时间范围近 24 小时一键分析指纹详情证书详情加密流量总量78.3 Gbps真实 APITLS 流量占比63.7%真实 APIQUIC 流量占比18.4%真实 API未知加密占比17.9%真实 API异常证书数236 张真实 API可疑 JA3 数172 个真实 API未知 SNI 比例14.6%真实 API协议分布与趋势指纹分析（Top JA3）JA3 指纹流量占比流量 (Gbps)SNI 数关联告警风险等级771,4865-4866-4867-49195-49196,0-11-10-23,012.8%10.031218高危cbd52c1eb6700091a3e2d4c6214aa4d88.7%6.81989中危e7d705342b8acb0d0e0a7d1d4f2c9b617.6%6.014512中危4d7a2f00656b5f70b6a4e3c2d1f09a886.2%4.91126低危598c8ab3943e1e610a65c28e7d44fa204.9%3.8987中危12JA3 分布（流量 vs 会话数）隧道检测与异常特征DNS over HTTPS 会话412↑ 36异常长连接（>1h）287↑ 21高熵流量（>7.5）531↑ 58低频流量（<3.0）76↑ 9低熵心跳（疑似）193↑ 14疑似 VPN 会话118↑ 13异常隧道列表类型疑征源 IP目的域名 / IP持续时间流量 (Gbps)风险等级DoH over TLSSNI=DNS, ALPN=h2/h310.12.2.36cloudflare-dns.com3h 24m2.18高危异常长连接长连接 > 1h172.16.5.10203.0.113.456h 12m3.47高危心跳隧道固定周期 60s10.10.8.45198.51.100.272h 53m0.96中危高熵流量熵值 > 7.810.10.9.33198.16.12.341h 41m2.66中危低频流量频率 < 1/min10.11.3.22185.22.14.94h 30m0.42低危12证据与握手元数据（最新 200 条）时间协议Session 摘要证书详情SNIJA3JA3SALPNTLS 版本密码套件证书 Issuer风险等级操作时间协议Session 摘要证书详情SNIJA3JA3SALPNTLS 版本密码套件证书 Issuer风险等级操作06-20 02:45TLS10.12.2.36 -> 104.16.248.249:443有效cdn.example.com771,4865-4866-4867-49195-49196,0-11-10-23,0ja3s-01-canonicalh2TLS 1.2TLS_AES_256_GCM_SHA384Google Trust Services高危待关联06-20 02:44TLS10.18.4.5 -> 203.0.113.45:443有效api.github.comcbd52c1eb6700091a3e2d4c6214aa4d8ja3s-02-canonicalh2TLS 1.3TLS_AES_128_GCM_SHA256DigiCert Inc中危待关联06-20 02:43TLS172.16.5.10 -> 185.22.14.9:443有效cloudflare-dns.come7d705342b8acb0d0e0a7d1d4f2c9b61ja3s-03-canonicalh2TLS 1.3TLS_AES_256_GCM_SHA384Cloudflare Inc中危待关联06-20 02:42TLS10.12.9.33 -> 198.51.100.27:443有效*.cdn77.com4d7a2f00656b5f70b6a4e3c2d1f09a88ja3s-04-canonicalh2TLS 1.2TLS_AES_128_GCM_SHA256Amazon RSA 2048 M01中危待关联06-20 02:42QUIC10.11.3.22 -> 37.120.196.12:443有效-598c8ab3943e1e610a65c28e7d44fa20ja3s-05-canonicalh3TLS 1.3TLS_AES_256_GCM_SHA384Google Trust Services低危待关联共 8 条12外联画像查看详情 >境外目的地362较昨日 ↑ 18%CDN / 云服务284较昨日 ↑ 12%异常域名198较昨日 ↑ 21%首次出现目的地156较昨日 ↑ 9%目的 IP / 域名位置 / ASN流量会话数风险52.223.31.45美国 / AWS · AS165099.90 GB6,251中危104.16.248.249美国 / Cloudflare · AS1333518.70 GB12,845低危8.8.8.8美国 / Google · AS1516911.30 GB9,762低危20.190.128.1美国 / Azure · AS80756.60 GB4,117中危47.246.16.23新加坡 / Alibaba · AS379635.10 GB3,892低危12处置与分析建议阻断高风险国家/地区 17 个访问。生成规则隔离高风险主机 10.10.8.45。隔离主机评估异常域名 198 个并加入观察名单。评估名单检查首次出现目的地 156 个。检查目的地关联与下钻关联告警（18）关联战役（2）攻击链分析实体图谱取证分析PCAP 检索生成与导出创建告警创建战役生成报告导出 PCAP 索引导出证书写入审计日志"
+      },
+      "visual_diff": {
+        "size_ok": true,
+        "comparison_scope": "scoring-region",
+        "scoring_region": {
+          "id": "encrypted-traffic-business-roi-v1",
+          "x": 198,
+          "y": 78,
+          "width": 1712,
+          "height": 920
+        },
+        "source_width": 1920,
+        "source_height": 1080,
+        "actual_width": 1920,
+        "actual_height": 1080,
+        "compared_pixels": 1575040,
+        "total_pixels": 1575040,
+        "mismatch_pixels": 181892,
+        "pixel_mismatch_ratio": 0.11548405119869971,
+        "max_pixel_ratio": 0.18,
+        "channel_tolerance": 64,
+        "max_channel_delta": 255,
+        "full_image_diagnostic": {
+          "compared_pixels": 2073600,
+          "total_pixels": 2073600,
+          "mismatch_pixels": 232290,
+          "pixel_mismatch_ratio": 0.11202256944444444,
+          "max_channel_delta": 255
+        }
+      },
+      "visual_status": "pass"
+    },
+    {
+      "slug": "fingerprint",
+      "label": "指纹分析",
+      "url": "http://10.0.5.8:30180/encrypted-traffic?tab=fingerprint",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic-fingerprint.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/encrypted-traffic/fingerprint/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/encrypted-traffic/fingerprint/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/encrypted-traffic/fingerprint/metrics.json",
+      "side_by_side": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/encrypted-traffic/fingerprint/canonical-side-by-side-1920.png",
+      "layout": {
+        "viewport": {
+          "width": 1920,
+          "height": 1080,
+          "device_pixel_ratio": 0.9998436310887371
+        },
+        "active_slug": "fingerprint",
+        "root_horizontal_overflow": false,
+        "app_main_scroll": {
+          "scroll_height": 917,
+          "client_height": 917,
+          "scrollable": false
+        },
+        "business": {
+          "x": 173.99305725097656,
+          "y": 87.98611450195312,
+          "width": 1736.0185546875,
+          "height": 901.0185546875,
+          "right": 1910.0116119384766,
+          "bottom": 989.0046691894531
+        },
+        "grid": {
+          "x": 173.99305725097656,
+          "y": 303.9583435058594,
+          "width": 1736.0185546875,
+          "height": 685.0463256835938,
+          "right": 1910.0116119384766,
+          "bottom": 989.0046691894531
+        },
+        "main": {
+          "x": 173.99305725097656,
+          "y": 303.9583435058594,
+          "width": 1498.9237060546875,
+          "height": 719.9884643554688,
+          "right": 1672.916763305664,
+          "bottom": 1023.9468078613281
+        },
+        "rail": {
+          "x": 1678.912109375,
+          "y": 303.9583435058594,
+          "width": 219.98843383789062,
+          "height": 719.9884643554688,
+          "right": 1898.9005432128906,
+          "bottom": 1023.9468078613281
+        },
+        "grid_overflow_y": "auto",
+        "grid_scrollbar_width": 11,
+        "scatter_canvas_count": 1,
+        "egress_map_canvas_count": 0,
+        "egress_map_panel": null,
+        "egress_map_body": null,
+        "egress_map": null,
+        "egress_map_canvas": null,
+        "overview_action_panels": [],
+        "titlebar": {
+          "x": 173.99305725097656,
+          "y": 87.98611450195312,
+          "width": 1736.0185546875,
+          "height": 97.99768829345703,
+          "right": 1910.0116119384766,
+          "bottom": 185.98380279541016
+        },
+        "tabs": {
+          "x": 182.98611450195312,
+          "y": 130.98379516601562,
+          "width": 463.9699401855469,
+          "height": 29.988428115844727,
+          "right": 646.9560546875,
+          "bottom": 160.97222328186035
+        },
+        "controls": {
+          "x": 1488.1597900390625,
+          "y": 145.9838104248047,
+          "width": 421.85186767578125,
+          "height": 41.53935241699219,
+          "right": 1910.0116577148438,
+          "bottom": 187.52316284179688
+        },
+        "panels": [
+          {
+            "title": "JA3/JA3S 指纹明细（Top 20）",
+            "x": 173.99305725097656,
+            "y": 303.9583435058594,
+            "width": 655.4166870117188,
+            "height": 381.9907531738281,
+            "right": 829.4097442626953,
+            "bottom": 685.9490966796875
+          },
+          {
+            "title": "指纹分布与聚类（按 JA3 聚簇）",
+            "x": 835.4051513671875,
+            "y": 303.9583435058594,
+            "width": 352.1759338378906,
+            "height": 381.9907531738281,
+            "right": 1187.5810852050781,
+            "bottom": 685.9490966796875
+          },
+          {
+            "title": "证书 Issuer 与 SNI 分布",
+            "x": 1193.576416015625,
+            "y": 303.9583435058594,
+            "width": 479.3403015136719,
+            "height": 381.9907531738281,
+            "right": 1672.9167175292969,
+            "bottom": 685.9490966796875
+          },
+          {
+            "title": "TLS 版本与密码套件（会话数热力）",
+            "x": 173.99305725097656,
+            "y": 691.9444580078125,
+            "width": 505.5555725097656,
+            "height": 331.9907531738281,
+            "right": 679.5486297607422,
+            "bottom": 1023.9352111816406
+          },
+          {
+            "title": "指纹关联规则（Top 匹配）",
+            "x": 685.5440063476562,
+            "y": 691.9444580078125,
+            "width": 426.2500305175781,
+            "height": 331.9907531738281,
+            "right": 1111.7940368652344,
+            "bottom": 1023.9352111816406
+          },
+          {
+            "title": "证书详情预览（点击左侧行查看）",
+            "x": 1117.7894287109375,
+            "y": 691.9444580078125,
+            "width": 555.1273193359375,
+            "height": 331.9907531738281,
+            "right": 1672.916748046875,
+            "bottom": 1023.9352111816406
+          },
+          {
+            "title": "指纹异常（近 24 小时）",
+            "x": 1678.912109375,
+            "y": 303.9583435058594,
+            "width": 219.98843383789062,
+            "height": 139.5254669189453,
+            "right": 1898.9005432128906,
+            "bottom": 443.4838104248047
+          },
+          {
+            "title": "快速定位",
+            "x": 1678.912109375,
+            "y": 449.47918701171875,
+            "width": 219.98843383789062,
+            "height": 155.42825317382812,
+            "right": 1898.9005432128906,
+            "bottom": 604.9074401855469
+          },
+          {
+            "title": "修复建议",
+            "x": 1678.912109375,
+            "y": 610.90283203125,
+            "width": 219.98843383789062,
+            "height": 281.6087951660156,
+            "right": 1898.9005432128906,
+            "bottom": 892.5116271972656
+          },
+          {
+            "title": "证据与报告",
+            "x": 1678.912109375,
+            "y": 898.5069580078125,
+            "width": 219.98843383789062,
+            "height": 125.4398193359375,
+            "right": 1898.9005432128906,
+            "bottom": 1023.94677734375
+          }
+        ],
+        "overlaps": [],
+        "horizontally_clipped": [],
+        "pagination": [
+          {
+            "x": 180.7291717529297,
+            "y": 647.210693359375,
+            "width": 641.9444580078125,
+            "height": 31.990741729736328,
+            "right": 822.6736297607422,
+            "bottom": 679.2014350891113
+          },
+          {
+            "x": 726.701416015625,
+            "y": 653.2060546875,
+            "width": 95.97222900390625,
+            "height": 23.993057250976562,
+            "right": 822.6736450195312,
+            "bottom": 677.1991119384766
+          },
+          {
+            "x": 1200.3125,
+            "y": 647.210693359375,
+            "width": 465.8680725097656,
+            "height": 31.990741729736328,
+            "right": 1666.1805725097656,
+            "bottom": 679.2014350891113
+          },
+          {
+            "x": 1570.2083740234375,
+            "y": 653.2060546875,
+            "width": 95.97222900390625,
+            "height": 23.993057250976562,
+            "right": 1666.1806030273438,
+            "bottom": 677.1991119384766
+          },
+          {
+            "x": 692.2801513671875,
+            "y": 985.19677734375,
+            "width": 412.7778015136719,
+            "height": 31.990741729736328,
+            "right": 1105.0579528808594,
+            "bottom": 1017.1875190734863
+          },
+          {
+            "x": 1033.0787353515625,
+            "y": 991.1921997070312,
+            "width": 71.97917175292969,
+            "height": 23.993057250976562,
+            "right": 1105.0579071044922,
+            "bottom": 1015.1852569580078
+          }
+        ],
+        "table_layouts": [
+          {
+            "id": "ja3",
+            "panel_title": "JA3/JA3S 指纹明细（Top 20）",
+            "table": {
+              "x": 180.7291717529297,
+              "y": 338.692138671875,
+              "width": 641.9444580078125,
+              "height": 340.50927734375,
+              "right": 822.6736297607422,
+              "bottom": 679.201416015625
+            },
+            "pagination": {
+              "x": 180.7291717529297,
+              "y": 647.210693359375,
+              "width": 641.9444580078125,
+              "height": 31.990741729736328,
+              "right": 822.6736297607422,
+              "bottom": 679.2014350891113
+            },
+            "last_row": {
+              "x": 180.7291717529297,
+              "y": 527.6273193359375,
+              "width": 641.9444580078125,
+              "height": 22.9976863861084,
+              "right": 822.6736297607422,
+              "bottom": 550.6250057220459
+            },
+            "pagination_below_rows": true,
+            "pagination_inside_table": true
+          },
+          {
+            "id": "dense",
+            "panel_title": "证书 Issuer 与 SNI 分布",
+            "table": {
+              "x": 1200.3125,
+              "y": 408.6805725097656,
+              "width": 465.8680725097656,
+              "height": 270.5208435058594,
+              "right": 1666.1805725097656,
+              "bottom": 679.201416015625
+            },
+            "pagination": {
+              "x": 1200.3125,
+              "y": 647.210693359375,
+              "width": 465.8680725097656,
+              "height": 31.990741729736328,
+              "right": 1666.1805725097656,
+              "bottom": 679.2014350891113
+            },
+            "last_row": {
+              "x": 1200.3125,
+              "y": 492.638916015625,
+              "width": 465.8680725097656,
+              "height": 23.993057250976562,
+              "right": 1666.1805725097656,
+              "bottom": 516.6319732666016
+            },
+            "pagination_below_rows": true,
+            "pagination_inside_table": true
+          },
+          {
+            "id": "dense",
+            "panel_title": "指纹关联规则（Top 匹配）",
+            "table": {
+              "x": 692.2801513671875,
+              "y": 726.6782836914062,
+              "width": 412.7778015136719,
+              "height": 290.50927734375,
+              "right": 1105.0579528808594,
+              "bottom": 1017.1875610351562
+            },
+            "pagination": {
+              "x": 692.2801513671875,
+              "y": 985.19677734375,
+              "width": 412.7778015136719,
+              "height": 31.990741729736328,
+              "right": 1105.0579528808594,
+              "bottom": 1017.1875190734863
+            },
+            "last_row": {
+              "x": 692.2801513671875,
+              "y": 928.969970703125,
+              "width": 412.7778015136719,
+              "height": 39.583335876464844,
+              "right": 1105.0579528808594,
+              "bottom": 968.5533065795898
+            },
+            "pagination_below_rows": true,
+            "pagination_inside_table": true
+          }
+        ],
+        "evidence_session_scroll": null,
+        "paginated_table_count": 3,
+        "unpaged_table_count": 0,
+        "error_alerts": [],
+        "table_rows": 0,
+        "custom_rows": 15,
+        "canvas_count": 1,
+        "script_resources": [
+          "http://10.0.5.8:30180/assets/index-cW6ImlD1.js",
+          "http://10.0.5.8:30180/assets/EncryptedTrafficPage-DNxK8Uzv.js"
+        ],
+        "text": "加密流量总览指纹分析隧道检测外联画像证据中心时间范围近 24 小时一键分析指纹详情证书详情指纹总数18,426较昨日 ↑ 8.6%可疑 JA3312较昨日 ↑ 24未知 SNI1,284较昨日 ↑ 134异常 Issuer47较昨日 ↑ 6TLS1.0/1.163较昨日 ↑ 5弱密码套件128较昨日 ↑ 16关联规则26较昨日 ↑ 3JA3/JA3S 指纹明细（Top 20）JA3 指纹流量占比流量 (Gbps)SNI 数关联告警风险等级771,4865-4866-4867-49195-49196,0-11-10-23,012.8%10.031218高危cbd52c1eb6700091a3e2d4c6214aa4d88.7%6.81989中危e7d705342b8acb0d0e0a7d1d4f2c9b617.6%6.014512中危4d7a2f00656b5f70b6a4e3c2d1f09a886.2%4.91126低危598c8ab3943e1e610a65c28e7d44fa204.9%3.8987中危f5a3d7c0eb2fe4e3c6fb101e9b72a1543.6%3.0763低危a1b2c3d4e5f6071827354565a6b7c8d92.7%2.1631低危12指纹分布与聚类（按 JA3 聚簇）证书 Issuer 与 SNI 分布Issuer 覆盖6/6未知 Issuer0弱协议2证书样本6Issuer目的 IP风险Google Trust Serviceswww.google.com正常DigiCert Incapi.github.com正常Cloudflare Inccloudflare-dns.com正常12TLS 版本与密码套件（会话数热力）TLS 1.3TLS_AES_128_GCM_SHA25631.5%TLS 1.3TLS_AES_256_GCM_SHA38423.5%TLS 1.2ECDHE_RSA_AES128_GCM22.4%TLS 1.1AES128_SHA5.5%TLS 1.03DES_EDE_CBC_SHA6.3%QUICTLS_CHACHA20_POLY130510.8%指纹关联规则（Top 匹配）规则名称匹配指纹匹配类型置信度状态可疑旧版 TLS 客户端0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a完全匹配98%命中加入名单弱密码套件连接f5a3d7c0eb2fe4e3c6fb101e9b72a154部分匹配92%命中加入证据自签名证书连接598c8ab3943e1e610a65c28e7d44fa20证书特征95%命中加入证据高熵未知 SNI4d7a2f00656b5f70b6a4e3c2d1f09a88SNI 特征80%观察中创建规则HTTP/1.1 罕见 ALPNe7d705342b8acb0d0e0a7d1d4f2c9b61ALPN 特征72%观察中创建规则1证书详情预览（点击左侧行查看）www.google.com正常IssuerGoogle Trust ServicesTLS / ALPNTLS 1.3 / h2关联告警18证书状态正常查看完整证书创建证据指纹异常（近 24 小时）查看全部异常 >可疑 JA3312未知 SNI1,284异常 Issuer47TLS1.0/1.1 会话63弱密码套件128快速定位创建 JA3 规则查看证书证据导出指纹报告加入观察名单修复建议阻断高风险国家/地区 17 个访问。生成规则隔离高风险主机 10.10.8.45。隔离主机评估异常域名 198 个并加入观察名单。评估名单检查首次出现目的地 156 个。检查目的地证据与报告指纹分析报告PCAP 证据检索审计与证据导出"
+      },
+      "visual_diff": {
+        "size_ok": true,
+        "comparison_scope": "scoring-region",
+        "scoring_region": {
+          "id": "encrypted-traffic-business-roi-v1",
+          "x": 198,
+          "y": 78,
+          "width": 1712,
+          "height": 920
+        },
+        "source_width": 1920,
+        "source_height": 1080,
+        "actual_width": 1920,
+        "actual_height": 1080,
+        "compared_pixels": 1575040,
+        "total_pixels": 1575040,
+        "mismatch_pixels": 195144,
+        "pixel_mismatch_ratio": 0.12389780577001219,
+        "max_pixel_ratio": 0.18,
+        "channel_tolerance": 64,
+        "max_channel_delta": 255,
+        "full_image_diagnostic": {
+          "compared_pixels": 2073600,
+          "total_pixels": 2073600,
+          "mismatch_pixels": 246043,
+          "pixel_mismatch_ratio": 0.1186549961419753,
+          "max_channel_delta": 255
+        }
+      },
+      "visual_status": "pass"
+    },
+    {
+      "slug": "tunnel-detection",
+      "label": "隧道检测",
+      "url": "http://10.0.5.8:30180/encrypted-traffic?tab=tunnel-detection",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic-tunnel-detection.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/encrypted-traffic/tunnel-detection/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/encrypted-traffic/tunnel-detection/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/encrypted-traffic/tunnel-detection/metrics.json",
+      "side_by_side": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/encrypted-traffic/tunnel-detection/canonical-side-by-side-1920.png",
+      "layout": {
+        "viewport": {
+          "width": 1920,
+          "height": 1080,
+          "device_pixel_ratio": 0.9998436310887371
+        },
+        "active_slug": "tunnel-detection",
+        "root_horizontal_overflow": false,
+        "app_main_scroll": {
+          "scroll_height": 917,
+          "client_height": 917,
+          "scrollable": false
+        },
+        "business": {
+          "x": 173.99305725097656,
+          "y": 87.98611450195312,
+          "width": 1736.0185546875,
+          "height": 901.0185546875,
+          "right": 1910.0116119384766,
+          "bottom": 989.0046691894531
+        },
+        "grid": {
+          "x": 173.99305725097656,
+          "y": 267.951416015625,
+          "width": 1736.0185546875,
+          "height": 721.0532836914062,
+          "right": 1910.0116119384766,
+          "bottom": 989.0046997070312
+        },
+        "main": {
+          "x": 173.99305725097656,
+          "y": 267.951416015625,
+          "width": 1498.9237060546875,
+          "height": 721.0532836914062,
+          "right": 1672.916763305664,
+          "bottom": 989.0046997070312
+        },
+        "rail": {
+          "x": 1678.912109375,
+          "y": 267.951416015625,
+          "width": 219.98843383789062,
+          "height": 721.0532836914062,
+          "right": 1898.9005432128906,
+          "bottom": 989.0046997070312
+        },
+        "grid_overflow_y": "auto",
+        "grid_scrollbar_width": 11,
+        "scatter_canvas_count": 1,
+        "egress_map_canvas_count": 0,
+        "egress_map_panel": null,
+        "egress_map_body": null,
+        "egress_map": null,
+        "egress_map_canvas": null,
+        "overview_action_panels": [],
+        "titlebar": {
+          "x": 173.99305725097656,
+          "y": 87.98611450195312,
+          "width": 1736.0185546875,
+          "height": 91.9907455444336,
+          "right": 1910.0116119384766,
+          "bottom": 179.97686004638672
+        },
+        "tabs": {
+          "x": 182.98611450195312,
+          "y": 130.98379516601562,
+          "width": 463.9699401855469,
+          "height": 29.988428115844727,
+          "right": 646.9560546875,
+          "bottom": 160.97222328186035
+        },
+        "controls": {
+          "x": 1488.1597900390625,
+          "y": 93.98148345947266,
+          "width": 421.85186767578125,
+          "height": 41.53935241699219,
+          "right": 1910.0116577148438,
+          "bottom": 135.52083587646484
+        },
+        "panels": [
+          {
+            "title": "隧道异常列表",
+            "x": 173.99305725097656,
+            "y": 267.951416015625,
+            "width": 647.8704223632812,
+            "height": 373.9930725097656,
+            "right": 821.8634796142578,
+            "bottom": 641.9444885253906
+          },
+          {
+            "title": "熵值与会话时长散点图",
+            "x": 827.8588256835938,
+            "y": 267.951416015625,
+            "width": 403.59954833984375,
+            "height": 373.9930725097656,
+            "right": 1231.4583740234375,
+            "bottom": 641.9444885253906
+          },
+          {
+            "title": "心跳通信时间序列",
+            "x": 1237.4537353515625,
+            "y": 267.951416015625,
+            "width": 435.4629821777344,
+            "height": 373.9930725097656,
+            "right": 1672.9167175292969,
+            "bottom": 641.9444885253906
+          },
+          {
+            "title": "DoH 与隧道特征",
+            "x": 173.99305725097656,
+            "y": 647.9398193359375,
+            "width": 414.72222900390625,
+            "height": 317.9977111816406,
+            "right": 588.7152862548828,
+            "bottom": 965.9375305175781
+          },
+          {
+            "title": "检测规则命中",
+            "x": 594.710693359375,
+            "y": 647.9398193359375,
+            "width": 505.7523498535156,
+            "height": 317.9977111816406,
+            "right": 1100.4630432128906,
+            "bottom": 965.9375305175781
+          },
+          {
+            "title": "会话证据预览",
+            "x": 1106.4583740234375,
+            "y": 647.9398193359375,
+            "width": 566.44677734375,
+            "height": 317.9977111816406,
+            "right": 1672.9051513671875,
+            "bottom": 965.9375305175781
+          },
+          {
+            "title": "隧道异常",
+            "x": 1678.912109375,
+            "y": 267.951416015625,
+            "width": 219.98843383789062,
+            "height": 119.46759796142578,
+            "right": 1898.9005432128906,
+            "bottom": 387.4190139770508
+          },
+          {
+            "title": "快速定位",
+            "x": 1678.912109375,
+            "y": 393.41436767578125,
+            "width": 219.98843383789062,
+            "height": 125.4398193359375,
+            "right": 1898.9005432128906,
+            "bottom": 518.8541870117188
+          },
+          {
+            "title": "修复建议",
+            "x": 1678.912109375,
+            "y": 524.8495483398438,
+            "width": 219.98843383789062,
+            "height": 361.6435241699219,
+            "right": 1898.9005432128906,
+            "bottom": 886.4930725097656
+          },
+          {
+            "title": "证据与报告",
+            "x": 1678.912109375,
+            "y": 892.4884643554688,
+            "width": 219.98843383789062,
+            "height": 95.4513931274414,
+            "right": 1898.9005432128906,
+            "bottom": 987.9398574829102
+          }
+        ],
+        "overlaps": [],
+        "horizontally_clipped": [],
+        "pagination": [
+          {
+            "x": 180.7291717529297,
+            "y": 603.2060546875,
+            "width": 634.398193359375,
+            "height": 31.990741729736328,
+            "right": 815.1273651123047,
+            "bottom": 635.1967964172363
+          },
+          {
+            "x": 743.148193359375,
+            "y": 609.201416015625,
+            "width": 71.97917175292969,
+            "height": 23.993057250976562,
+            "right": 815.1273651123047,
+            "bottom": 633.1944732666016
+          },
+          {
+            "x": 601.44677734375,
+            "y": 927.1990966796875,
+            "width": 492.2801208496094,
+            "height": 31.990741729736328,
+            "right": 1093.7268981933594,
+            "bottom": 959.1898384094238
+          },
+          {
+            "x": 1021.7477416992188,
+            "y": 933.1945190429688,
+            "width": 71.97917175292969,
+            "height": 23.993057250976562,
+            "right": 1093.7269134521484,
+            "bottom": 957.1875762939453
+          },
+          {
+            "x": 1113.1944580078125,
+            "y": 927.1990966796875,
+            "width": 552.9745483398438,
+            "height": 31.990741729736328,
+            "right": 1666.1690063476562,
+            "bottom": 959.1898384094238
+          },
+          {
+            "x": 1594.18994140625,
+            "y": 933.1945190429688,
+            "width": 71.97917175292969,
+            "height": 23.993057250976562,
+            "right": 1666.1691131591797,
+            "bottom": 957.1875762939453
+          }
+        ],
+        "table_layouts": [
+          {
+            "id": "tunnel-candidates",
+            "panel_title": "隧道异常列表",
+            "table": {
+              "x": 180.7291717529297,
+              "y": 302.6852111816406,
+              "width": 634.398193359375,
+              "height": 332.5115966796875,
+              "right": 815.1273651123047,
+              "bottom": 635.1968078613281
+            },
+            "pagination": {
+              "x": 180.7291717529297,
+              "y": 603.2060546875,
+              "width": 634.398193359375,
+              "height": 31.990741729736328,
+              "right": 815.1273651123047,
+              "bottom": 635.1967964172363
+            },
+            "last_row": {
+              "x": 180.7291717529297,
+              "y": 462.4537353515625,
+              "width": 634.398193359375,
+              "height": 22.962963104248047,
+              "right": 815.1273651123047,
+              "bottom": 485.41669845581055
+            },
+            "pagination_below_rows": true,
+            "pagination_inside_table": true
+          },
+          {
+            "id": "dense",
+            "panel_title": "检测规则命中",
+            "table": {
+              "x": 601.44677734375,
+              "y": 682.6736450195312,
+              "width": 492.2801208496094,
+              "height": 276.5162048339844,
+              "right": 1093.7268981933594,
+              "bottom": 959.1898498535156
+            },
+            "pagination": {
+              "x": 601.44677734375,
+              "y": 927.1990966796875,
+              "width": 492.2801208496094,
+              "height": 31.990741729736328,
+              "right": 1093.7268981933594,
+              "bottom": 959.1898384094238
+            },
+            "last_row": {
+              "x": 601.44677734375,
+              "y": 822.6041870117188,
+              "width": 492.2801208496094,
+              "height": 23.993057250976562,
+              "right": 1093.7268981933594,
+              "bottom": 846.5972442626953
+            },
+            "pagination_below_rows": true,
+            "pagination_inside_table": true
+          },
+          {
+            "id": "dense",
+            "panel_title": "会话证据预览",
+            "table": {
+              "x": 1113.1944580078125,
+              "y": 682.6736450195312,
+              "width": 552.9745483398438,
+              "height": 276.5162048339844,
+              "right": 1666.1690063476562,
+              "bottom": 959.1898498535156
+            },
+            "pagination": {
+              "x": 1113.1944580078125,
+              "y": 927.1990966796875,
+              "width": 552.9745483398438,
+              "height": 31.990741729736328,
+              "right": 1666.1690063476562,
+              "bottom": 959.1898384094238
+            },
+            "last_row": {
+              "x": 1113.1944580078125,
+              "y": 850.59033203125,
+              "width": 552.9745483398438,
+              "height": 23.993057250976562,
+              "right": 1666.1690063476562,
+              "bottom": 874.5833892822266
+            },
+            "pagination_below_rows": true,
+            "pagination_inside_table": true
+          }
+        ],
+        "evidence_session_scroll": null,
+        "paginated_table_count": 3,
+        "unpaged_table_count": 0,
+        "error_alerts": [],
+        "table_rows": 0,
+        "custom_rows": 17,
+        "canvas_count": 2,
+        "script_resources": [
+          "http://10.0.5.8:30180/assets/index-cW6ImlD1.js",
+          "http://10.0.5.8:30180/assets/EncryptedTrafficPage-DNxK8Uzv.js"
+        ],
+        "text": "加密流量总览指纹分析隧道检测外联画像证据中心时间范围近 24 小时一键分析指纹详情证书详情隧道告警412高风险候选DoH 会话287加密 DNS异常长连接531持续时间高熵流量193载荷熵值低熵心跳76周期通信疑似 VPN118协议候选已创建告警32待审核隧道异常列表类型疑征源 IP目的域名 / IP持续时间流量 (Gbps)风险等级DoH over TLSSNI=DNS, ALPN=h2/h310.12.2.36cloudflare-dns.com3h 24m2.18高危异常长连接长连接 > 1h172.16.5.10203.0.113.456h 12m3.47高危心跳隧道固定周期 60s10.10.8.45198.51.100.272h 53m0.96中危高熵流量熵值 > 7.810.10.9.33198.16.12.341h 41m2.66中危低频流量频率 < 1/min10.11.3.22185.22.14.94h 30m0.42低危疑似 VPNTLS over 44310.12.6.7737.120.196.125h 18m1.02中危1熵值与会话时长散点图心跳通信时间序列P95 间隔60.4s抖动 (P95)0.82s包数2,486DoH 与隧道特征DNS over HTTPS 会话412↑ 36异常长连接（>1h）287↑ 21高熵流量（>7.5）531↑ 58低频流量（<3.0）76↑ 9低熵心跳（疑似）193↑ 14疑似 VPN 会话118↑ 13检测规则命中规则名称特征阈值命中数置信度处置可疑旧版 TLS 客户端0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a0a完全匹配98%命中加入名单弱密码套件连接f5a3d7c0eb2fe4e3c6fb101e9b72a154部分匹配92%命中加入证据自签名证书连接598c8ab3943e1e610a65c28e7d44fa20证书特征95%命中加入证据高熵未知 SNI4d7a2f00656b5f70b6a4e3c2d1f09a88SNI 特征80%观察中创建规则HTTP/1.1 罕见 ALPNe7d705342b8acb0d0e0a7d1d4f2c9b61ALPN 特征72%观察中创建规则1会话证据预览源 IP目的域名协议JA3PCAP 索引风险10.12.2.36cdn.example.comTLS771,4865-4866-4867-49195-49196,0-11-10-23,0pcap-20250620-00001高危10.18.4.5api.github.comTLScbd52c1eb6700091a3e2d4c6214aa4d8pcap-20250620-00002中危172.16.5.10cloudflare-dns.comTLSe7d705342b8acb0d0e0a7d1d4f2c9b61pcap-20250620-00003中危10.12.9.33*.cdn77.comTLS4d7a2f00656b5f70b6a4e3c2d1f09a88pcap-20250620-00004中危10.11.3.2237.120.196.12QUIC598c8ab3943e1e610a65c28e7d44fa20pcap-20250620-00005中危10.10.2.36suspicious-tunnel.orgTLSf5a3d7c0eb2fe4e3c6fb101e9b72a154pcap-20250620-00006高危1生成调查规则提交专家复核隧道异常174高风险候选412 条待研判快速定位创建隧道告警查看会话证据加入观察名单修复建议阻断高风险国家/地区 17 个访问。生成规则隔离高风险主机 10.10.8.45。隔离主机评估异常域名 198 个并加入观察名单。评估名单检查首次出现目的地 156 个。检查目的地证据与报告导出隧道检测报告跳转证据中心"
+      },
+      "visual_diff": {
+        "size_ok": true,
+        "comparison_scope": "scoring-region",
+        "scoring_region": {
+          "id": "encrypted-traffic-business-roi-v1",
+          "x": 198,
+          "y": 78,
+          "width": 1712,
+          "height": 920
+        },
+        "source_width": 1920,
+        "source_height": 1080,
+        "actual_width": 1920,
+        "actual_height": 1080,
+        "compared_pixels": 1575040,
+        "total_pixels": 1575040,
+        "mismatch_pixels": 177964,
+        "pixel_mismatch_ratio": 0.11299014628199919,
+        "max_pixel_ratio": 0.18,
+        "channel_tolerance": 64,
+        "max_channel_delta": 255,
+        "full_image_diagnostic": {
+          "compared_pixels": 2073600,
+          "total_pixels": 2073600,
+          "mismatch_pixels": 214440,
+          "pixel_mismatch_ratio": 0.10341435185185185,
+          "max_channel_delta": 255
+        }
+      },
+      "visual_status": "pass"
+    },
+    {
+      "slug": "egress-profile",
+      "label": "外联画像",
+      "url": "http://10.0.5.8:30180/encrypted-traffic?tab=egress-profile",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic-egress-profile.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/encrypted-traffic/egress-profile/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/encrypted-traffic/egress-profile/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/encrypted-traffic/egress-profile/metrics.json",
+      "side_by_side": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/encrypted-traffic/egress-profile/canonical-side-by-side-1920.png",
+      "layout": {
+        "viewport": {
+          "width": 1920,
+          "height": 1080,
+          "device_pixel_ratio": 0.9998436310887371
+        },
+        "active_slug": "egress-profile",
+        "root_horizontal_overflow": false,
+        "app_main_scroll": {
+          "scroll_height": 917,
+          "client_height": 917,
+          "scrollable": false
+        },
+        "business": {
+          "x": 173.99305725097656,
+          "y": 87.98611450195312,
+          "width": 1736.0185546875,
+          "height": 901.0185546875,
+          "right": 1910.0116119384766,
+          "bottom": 989.0046691894531
+        },
+        "grid": {
+          "x": 173.99305725097656,
+          "y": 283.9583435058594,
+          "width": 1736.0185546875,
+          "height": 705.0463256835938,
+          "right": 1910.0116119384766,
+          "bottom": 989.0046691894531
+        },
+        "main": {
+          "x": 173.99305725097656,
+          "y": 283.9583435058594,
+          "width": 1478.9237060546875,
+          "height": 705.0463256835938,
+          "right": 1652.916763305664,
+          "bottom": 989.0046691894531
+        },
+        "rail": {
+          "x": 1658.912109375,
+          "y": 283.9583435058594,
+          "width": 239.98843383789062,
+          "height": 705.0463256835938,
+          "right": 1898.9005432128906,
+          "bottom": 989.0046691894531
+        },
+        "grid_overflow_y": "auto",
+        "grid_scrollbar_width": 11,
+        "scatter_canvas_count": 0,
+        "egress_map_canvas_count": 3,
+        "egress_map_panel": {
+          "x": 173.99305725097656,
+          "y": 283.9583435058594,
+          "width": 913.2060546875,
+          "height": 519.9884643554688,
+          "right": 1087.1991119384766,
+          "bottom": 803.9468078613281
+        },
+        "egress_map_body": {
+          "x": 174.7338104248047,
+          "y": 312.69677734375,
+          "width": 911.724609375,
+          "height": 490.4977111816406,
+          "right": 1086.4584197998047,
+          "bottom": 803.1944885253906
+        },
+        "egress_map": {
+          "x": 180.7291717529297,
+          "y": 318.692138671875,
+          "width": 899.7338256835938,
+          "height": 478.5069580078125,
+          "right": 1080.4629974365234,
+          "bottom": 797.1990966796875
+        },
+        "egress_map_canvas": {
+          "x": 181.46990966796875,
+          "y": 319.4328918457031,
+          "width": 897.9977416992188,
+          "height": 476.9907531738281,
+          "right": 1079.4676513671875,
+          "bottom": 796.4236450195312
+        },
+        "overview_action_panels": [],
+        "titlebar": {
+          "x": 173.99305725097656,
+          "y": 87.98611450195312,
+          "width": 1736.0185546875,
+          "height": 91.9907455444336,
+          "right": 1910.0116119384766,
+          "bottom": 179.97686004638672
+        },
+        "tabs": {
+          "x": 182.98611450195312,
+          "y": 130.98379516601562,
+          "width": 463.9699401855469,
+          "height": 29.988428115844727,
+          "right": 646.9560546875,
+          "bottom": 160.97222328186035
+        },
+        "controls": {
+          "x": 1488.1597900390625,
+          "y": 93.98148345947266,
+          "width": 421.85186767578125,
+          "height": 41.53935241699219,
+          "right": 1910.0116577148438,
+          "bottom": 135.52083587646484
+        },
+        "panels": [
+          {
+            "title": "外联目的地地图",
+            "x": 173.99305725097656,
+            "y": 283.9583435058594,
+            "width": 913.2060546875,
+            "height": 519.9884643554688,
+            "right": 1087.1991119384766,
+            "bottom": 803.9468078613281
+          },
+          {
+            "title": "域名画像卡",
+            "x": 1093.1944580078125,
+            "y": 283.9583435058594,
+            "width": 559.7222290039062,
+            "height": 519.9884643554688,
+            "right": 1652.9166870117188,
+            "bottom": 803.9468078613281
+          },
+          {
+            "title": "Top 外联目的地",
+            "x": 173.99305725097656,
+            "y": 809.942138671875,
+            "width": 602.6852416992188,
+            "height": 283.9930725097656,
+            "right": 776.6782989501953,
+            "bottom": 1093.9352111816406
+          },
+          {
+            "title": "首次出现与异常域名趋势",
+            "x": 782.6736450195312,
+            "y": 809.942138671875,
+            "width": 375.2662353515625,
+            "height": 283.9930725097656,
+            "right": 1157.9398803710938,
+            "bottom": 1093.9352111816406
+          },
+          {
+            "title": "实体图谱入口",
+            "x": 1163.9351806640625,
+            "y": 809.942138671875,
+            "width": 488.98150634765625,
+            "height": 283.9930725097656,
+            "right": 1652.9166870117188,
+            "bottom": 1093.9352111816406
+          },
+          {
+            "title": "外联风险",
+            "x": 1658.912109375,
+            "y": 283.9583435058594,
+            "width": 239.98843383789062,
+            "height": 119.46759796142578,
+            "right": 1898.9005432128906,
+            "bottom": 403.42594146728516
+          },
+          {
+            "title": "快速定位",
+            "x": 1658.912109375,
+            "y": 409.42132568359375,
+            "width": 239.98843383789062,
+            "height": 125.4398193359375,
+            "right": 1898.9005432128906,
+            "bottom": 534.8611450195312
+          },
+          {
+            "title": "处置建议",
+            "x": 1658.912109375,
+            "y": 540.8565063476562,
+            "width": 239.98843383789062,
+            "height": 346.701416015625,
+            "right": 1898.9005432128906,
+            "bottom": 887.5579223632812
+          },
+          {
+            "title": "关联与导出",
+            "x": 1658.912109375,
+            "y": 893.5532836914062,
+            "width": 239.98843383789062,
+            "height": 95.4513931274414,
+            "right": 1898.9005432128906,
+            "bottom": 989.0046768188477
+          }
+        ],
+        "overlaps": [],
+        "horizontally_clipped": [],
+        "pagination": [
+          {
+            "x": 180.7291717529297,
+            "y": 1055.19677734375,
+            "width": 589.2130126953125,
+            "height": 31.990741729736328,
+            "right": 769.9421844482422,
+            "bottom": 1087.1875190734863
+          },
+          {
+            "x": 673.9699096679688,
+            "y": 1061.192138671875,
+            "width": 95.97222900390625,
+            "height": 23.993057250976562,
+            "right": 769.942138671875,
+            "bottom": 1085.1851959228516
+          }
+        ],
+        "table_layouts": [
+          {
+            "id": "egress-destinations",
+            "panel_title": "Top 外联目的地",
+            "table": {
+              "x": 180.7291717529297,
+              "y": 844.6759643554688,
+              "width": 589.2130126953125,
+              "height": 242.51158142089844,
+              "right": 769.9421844482422,
+              "bottom": 1087.1875457763672
+            },
+            "pagination": {
+              "x": 180.7291717529297,
+              "y": 1055.19677734375,
+              "width": 589.2130126953125,
+              "height": 31.990741729736328,
+              "right": 769.9421844482422,
+              "bottom": 1087.1875190734863
+            },
+            "last_row": {
+              "x": 180.7291717529297,
+              "y": 977.4884643554688,
+              "width": 589.2130126953125,
+              "height": 22.962963104248047,
+              "right": 769.9421844482422,
+              "bottom": 1000.4514274597168
+            },
+            "pagination_below_rows": true,
+            "pagination_inside_table": true
+          }
+        ],
+        "evidence_session_scroll": null,
+        "paginated_table_count": 1,
+        "unpaged_table_count": 0,
+        "error_alerts": [],
+        "table_rows": 0,
+        "custom_rows": 5,
+        "canvas_count": 5,
+        "script_resources": [
+          "http://10.0.5.8:30180/assets/index-cW6ImlD1.js",
+          "http://10.0.5.8:30180/assets/EncryptedTrafficPage-DNxK8Uzv.js"
+        ],
+        "text": "加密流量总览指纹分析隧道检测外联画像证据中心时间范围近 24 小时一键分析指纹详情证书详情境外目的地362较昨日 ↑ 18%CDN / 云服务284较昨日 ↑ 12%异常域名198较昨日 ↑ 21%首次出现目的地156较昨日 ↑ 9%高风险国家/地区17较昨日 ↓ 5%外联资产428较昨日 ↑ 7%图谱待查39较昨日 ↑ 14%外联目的地地图外传 API 已接入高风险目的地待确认目的地已观测目的地域名画像卡更多 >cloudflare-dns.comCloudflare · 104.16.248.249 · AS1333512,845 会话 · 18.7 GB低风险dns.googleGoogle LLC · 8.8.8.8 · AS151699,762 会话 · 11.3 GB低风险cdn-update.exampleUnknown · 45.77.88.102 · AS2092424,321 会话 · 6.2 GB高风险api.storage-cloud.netAmazon AWS · 52.223.31.45 · AS165096,251 会话 · 9.9 GB中风险suspicious-tunnel.orgPrivacy Protect LLC · 172.67.219.232,187 会话 · 3.1 GB高风险first-seen-cdn.netUnknown · 103.53.49.76 · AS1407091,945 会话 · 2.4 GB中风险Top 外联目的地更多 >目的 IP / 域名位置 / ASN流量会话数风险52.223.31.45美国 / AWS · AS165099.90 GB6,251中危104.16.248.249美国 / Cloudflare · AS1333518.70 GB12,845低危8.8.8.8美国 / Google · AS1516911.30 GB9,762低危20.190.128.1美国 / Azure · AS80756.60 GB4,117中危47.246.16.23新加坡 / Alibaba · AS379635.10 GB3,892低危12首次出现与异常域名趋势真实时间桶实体图谱入口更多 >外联风险78高风险较昨日 ↑ 12快速定位创建外联告警查看目的地证据跳转实体图谱处置建议阻断高风险国家/地区 17 个访问。生成规则隔离高风险主机 10.10.8.45。隔离主机评估异常域名 198 个并加入观察名单。评估名单检查首次出现目的地 156 个。检查目的地关联与导出关联告警实体图谱导出画像写入审计"
+      },
+      "visual_diff": {
+        "size_ok": true,
+        "comparison_scope": "scoring-region",
+        "scoring_region": {
+          "id": "encrypted-traffic-business-roi-v1",
+          "x": 198,
+          "y": 78,
+          "width": 1712,
+          "height": 920
+        },
+        "source_width": 1920,
+        "source_height": 1080,
+        "actual_width": 1920,
+        "actual_height": 1080,
+        "compared_pixels": 1575040,
+        "total_pixels": 1575040,
+        "mismatch_pixels": 220708,
+        "pixel_mismatch_ratio": 0.1401285046728972,
+        "max_pixel_ratio": 0.18,
+        "channel_tolerance": 64,
+        "max_channel_delta": 255,
+        "full_image_diagnostic": {
+          "compared_pixels": 2073600,
+          "total_pixels": 2073600,
+          "mismatch_pixels": 269435,
+          "pixel_mismatch_ratio": 0.12993586033950616,
+          "max_channel_delta": 255
+        }
+      },
+      "visual_status": "pass"
+    },
+    {
+      "slug": "evidence-center",
+      "label": "证据中心",
+      "url": "http://10.0.5.8:30180/encrypted-traffic?tab=evidence-center",
+      "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/encrypted-traffic-evidence-center.png",
+      "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/encrypted-traffic/evidence-center/actual-1920.png",
+      "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/encrypted-traffic/evidence-center/diff-1920.png",
+      "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/encrypted-traffic/evidence-center/metrics.json",
+      "side_by_side": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/encrypted-traffic/evidence-center/canonical-side-by-side-1920.png",
+      "layout": {
+        "viewport": {
+          "width": 1920,
+          "height": 1080,
+          "device_pixel_ratio": 0.9998436310887371
+        },
+        "active_slug": "evidence-center",
+        "root_horizontal_overflow": false,
+        "app_main_scroll": {
+          "scroll_height": 917,
+          "client_height": 917,
+          "scrollable": false
+        },
+        "business": {
+          "x": 173.99305725097656,
+          "y": 87.98611450195312,
+          "width": 1736.0185546875,
+          "height": 901.0185546875,
+          "right": 1910.0116119384766,
+          "bottom": 989.0046691894531
+        },
+        "grid": {
+          "x": 173.99305725097656,
+          "y": 279.9537048339844,
+          "width": 1736.0185546875,
+          "height": 709.0509643554688,
+          "right": 1910.0116119384766,
+          "bottom": 989.0046691894531
+        },
+        "main": {
+          "x": 173.99305725097656,
+          "y": 279.9537048339844,
+          "width": 1474.9306640625,
+          "height": 709.0509643554688,
+          "right": 1648.9237213134766,
+          "bottom": 989.0046691894531
+        },
+        "rail": {
+          "x": 1658.912109375,
+          "y": 279.9537048339844,
+          "width": 239.98843383789062,
+          "height": 709.0509643554688,
+          "right": 1898.9005432128906,
+          "bottom": 989.0046691894531
+        },
+        "grid_overflow_y": "auto",
+        "grid_scrollbar_width": 11,
+        "scatter_canvas_count": 0,
+        "egress_map_canvas_count": 0,
+        "egress_map_panel": null,
+        "egress_map_body": null,
+        "egress_map": null,
+        "egress_map_canvas": null,
+        "overview_action_panels": [],
+        "titlebar": {
+          "x": 173.99305725097656,
+          "y": 87.98611450195312,
+          "width": 1736.0185546875,
+          "height": 91.9907455444336,
+          "right": 1910.0116119384766,
+          "bottom": 179.97686004638672
+        },
+        "tabs": {
+          "x": 182.98611450195312,
+          "y": 130.98379516601562,
+          "width": 463.9699401855469,
+          "height": 29.988428115844727,
+          "right": 646.9560546875,
+          "bottom": 160.97222328186035
+        },
+        "controls": {
+          "x": 1488.1597900390625,
+          "y": 93.98148345947266,
+          "width": 421.85186767578125,
+          "height": 41.53935241699219,
+          "right": 1910.0116577148438,
+          "bottom": 135.52083587646484
+        },
+        "panels": [
+          {
+            "title": "加密会话证据表",
+            "x": 173.99305725097656,
+            "y": 279.9537048339844,
+            "width": 716.84033203125,
+            "height": 455.9953918457031,
+            "right": 890.8333892822266,
+            "bottom": 735.9490966796875
+          },
+          {
+            "title": "时间窗内 PCAP 索引（独立数据源）",
+            "x": 896.8287353515625,
+            "y": 279.9537048339844,
+            "width": 438.8773498535156,
+            "height": 455.9953918457031,
+            "right": 1335.7060852050781,
+            "bottom": 735.9490966796875
+          },
+          {
+            "title": "证据锚点概览",
+            "x": 1341.701416015625,
+            "y": 279.9537048339844,
+            "width": 307.22222900390625,
+            "height": 455.9953918457031,
+            "right": 1648.9236450195312,
+            "bottom": 735.9490966796875
+          },
+          {
+            "title": "证书详情与握手元数据",
+            "x": 173.99305725097656,
+            "y": 741.9444580078125,
+            "width": 512.0255126953125,
+            "height": 366.9907531738281,
+            "right": 686.0185699462891,
+            "bottom": 1108.9352111816406
+          },
+          {
+            "title": "证据完整度",
+            "x": 692.013916015625,
+            "y": 741.9444580078125,
+            "width": 292.5810241699219,
+            "height": 366.9907531738281,
+            "right": 984.5949401855469,
+            "bottom": 1108.9352111816406
+          },
+          {
+            "title": "Hash 与审计校验",
+            "x": 990.59033203125,
+            "y": 741.9444580078125,
+            "width": 658.3333740234375,
+            "height": 366.9907531738281,
+            "right": 1648.9237060546875,
+            "bottom": 1108.9352111816406
+          },
+          {
+            "title": "证据概览",
+            "x": 1658.912109375,
+            "y": 279.9537048339844,
+            "width": 239.98843383789062,
+            "height": 103.46065521240234,
+            "right": 1898.9005432128906,
+            "bottom": 383.4143600463867
+          },
+          {
+            "title": "快速定位",
+            "x": 1658.912109375,
+            "y": 389.40972900390625,
+            "width": 239.98843383789062,
+            "height": 205.55557250976562,
+            "right": 1898.9005432128906,
+            "bottom": 594.9653015136719
+          },
+          {
+            "title": "证据动作",
+            "x": 1658.912109375,
+            "y": 600.960693359375,
+            "width": 239.98843383789062,
+            "height": 210.37037658691406,
+            "right": 1898.9005432128906,
+            "bottom": 811.3310699462891
+          },
+          {
+            "title": "报告与审计",
+            "x": 1658.912109375,
+            "y": 817.326416015625,
+            "width": 239.98843383789062,
+            "height": 94.44445037841797,
+            "right": 1898.9005432128906,
+            "bottom": 911.770866394043
+          },
+          {
+            "title": "证据缺口 Top5",
+            "x": 1658.912109375,
+            "y": 917.7662353515625,
+            "width": 239.98843383789062,
+            "height": 139.20140075683594,
+            "right": 1898.9005432128906,
+            "bottom": 1056.9676361083984
+          }
+        ],
+        "overlaps": [],
+        "horizontally_clipped": [],
+        "pagination": [
+          {
+            "x": 180.7291717529297,
+            "y": 593.6806030273438,
+            "width": 703.3681030273438,
+            "height": 31.990741729736328,
+            "right": 884.0972747802734,
+            "bottom": 625.6713447570801
+          },
+          {
+            "x": 903.5648803710938,
+            "y": 518.692138671875,
+            "width": 425.4051208496094,
+            "height": 31.990741729736328,
+            "right": 1328.9700012207031,
+            "bottom": 550.6828804016113
+          },
+          {
+            "x": 1232.997802734375,
+            "y": 524.6875,
+            "width": 95.97222900390625,
+            "height": 23.993057250976562,
+            "right": 1328.9700317382812,
+            "bottom": 548.6805572509766
+          },
+          {
+            "x": 997.326416015625,
+            "y": 980.6829223632812,
+            "width": 644.8611450195312,
+            "height": 31.990741729736328,
+            "right": 1642.1875610351562,
+            "bottom": 1012.6736640930176
+          },
+          {
+            "x": 1546.21533203125,
+            "y": 986.6782836914062,
+            "width": 95.97222900390625,
+            "height": 23.993057250976562,
+            "right": 1642.1875610351562,
+            "bottom": 1010.6713409423828
+          }
+        ],
+        "table_layouts": [
+          {
+            "id": "evidence-sessions",
+            "panel_title": "加密会话证据表",
+            "table": {
+              "x": 180.7291717529297,
+              "y": 314.6875,
+              "width": 703.3681030273438,
+              "height": 326.97918701171875,
+              "right": 884.0972747802734,
+              "bottom": 641.6666870117188
+            },
+            "pagination": {
+              "x": 180.7291717529297,
+              "y": 593.6806030273438,
+              "width": 703.3681030273438,
+              "height": 31.990741729736328,
+              "right": 884.0972747802734,
+              "bottom": 625.6713447570801
+            },
+            "last_row": {
+              "x": 180.7291717529297,
+              "y": 539.7800903320312,
+              "width": 703.3681030273438,
+              "height": 38.217594146728516,
+              "right": 884.0972747802734,
+              "bottom": 577.9976844787598
+            },
+            "pagination_below_rows": true,
+            "pagination_inside_table": true
+          },
+          {
+            "id": "dense",
+            "panel_title": "时间窗内 PCAP 索引（独立数据源）",
+            "table": {
+              "x": 903.5648803710938,
+              "y": 314.6875,
+              "width": 425.4051208496094,
+              "height": 235.99537658691406,
+              "right": 1328.9700012207031,
+              "bottom": 550.6828765869141
+            },
+            "pagination": {
+              "x": 903.5648803710938,
+              "y": 518.692138671875,
+              "width": 425.4051208496094,
+              "height": 31.990741729736328,
+              "right": 1328.9700012207031,
+              "bottom": 550.6828804016113
+            },
+            "last_row": {
+              "x": 903.5648803710938,
+              "y": 479.6180725097656,
+              "width": 425.4051208496094,
+              "height": 30.995372772216797,
+              "right": 1328.9700012207031,
+              "bottom": 510.6134452819824
+            },
+            "pagination_below_rows": true,
+            "pagination_inside_table": true
+          },
+          {
+            "id": "dense",
+            "panel_title": "Hash 与审计校验",
+            "table": {
+              "x": 997.326416015625,
+              "y": 776.6782836914062,
+              "width": 644.8611450195312,
+              "height": 235.99537658691406,
+              "right": 1642.1875610351562,
+              "bottom": 1012.6736602783203
+            },
+            "pagination": {
+              "x": 997.326416015625,
+              "y": 980.6829223632812,
+              "width": 644.8611450195312,
+              "height": 31.990741729736328,
+              "right": 1642.1875610351562,
+              "bottom": 1012.6736640930176
+            },
+            "last_row": {
+              "x": 997.326416015625,
+              "y": 941.6088256835938,
+              "width": 644.8611450195312,
+              "height": 30.995372772216797,
+              "right": 1642.1875610351562,
+              "bottom": 972.6041984558105
+            },
+            "pagination_below_rows": true,
+            "pagination_inside_table": true
+          }
+        ],
+        "evidence_session_scroll": {
+          "has_scroll_body": false,
+          "body_overflow_y": null,
+          "content_overflow_y": "visible",
+          "scroll_height": 263,
+          "client_height": 263
+        },
+        "paginated_table_count": 3,
+        "unpaged_table_count": 0,
+        "error_alerts": [],
+        "table_rows": 6,
+        "custom_rows": 10,
+        "canvas_count": 4,
+        "script_resources": [
+          "http://10.0.5.8:30180/assets/index-cW6ImlD1.js",
+          "http://10.0.5.8:30180/assets/EncryptedTrafficPage-DNxK8Uzv.js"
+        ],
+        "text": "加密流量总览指纹分析隧道检测外联画像证据中心时间范围近 24 小时一键分析指纹详情证书详情关联 Session1,284完整会话PCAP 索引436时间窗证书样本218证书链握手元数据9,642TLS/QUIC已校验 Hash391校验通过取证任务57执行中待补齐证据23需处理加密会话证据表证据 API 已接入证据 API时间Session ID源 IP目的地址协议风险06-20 03:45session-ui-000110.12.2.36104.16.248.249TLS高危06-20 03:44session-ui-000210.18.4.5203.0.113.45TLS中危06-20 03:43session-ui-0003172.16.5.10185.22.14.9TLS中危06-20 03:42session-ui-000410.12.9.33198.51.100.27TLS中危06-20 03:41session-ui-000510.11.3.2237.120.196.12QUIC低危06-20 03:40session-ui-000610.10.2.36172.67.219.23TLS高危共 9 条12时间窗内 PCAP 索引（独立数据源）尚未自动关联当前会话对象路径时间窗大小包数来源sha256状态pcap-20250620-00001.pcap10:15 - 10:1611.7 MB28,341pcap-prod00000001ab...已校验pcap-20250620-00002.pcap10:16 - 10:1714.7 MB25,171pcap-prod00000002ab...已校验pcap-20250620-00003.pcap10:17 - 10:1817.7 MB22,001pcap-prod00000003ab...已校验pcap-20250620-00004.pcap10:18 - 10:1920.7 MB18,831pcap-prod00000004ab...已校验pcap-20250620-00005.pcap10:19 - 10:2023.7 MB15,661pcap-prod00000005ab...已校验12申请下载申请校验生成取证任务证据锚点概览高危Session IDsession-ui-0001时间06-20 03:45源 / 目的10.12.2.36 -> 104.16.248.249协议TLS / h2SNI / 域名cdn.example.comJA3771,4865-4866-4867-49195-49196,0-11-10-23,0证书 Hashcert000000000000000000000000000000000000000000000000000000000001PCAP 索引pcap-20250620-00001Payload EntropyPayload entropy API校验证据 Hash关联证据分析证书详情与握手元数据SubjectCN=update.example.comIssuerR3 (Let's Encrypt)Serial04:2A:78:9E:3CNot Before2025-04-10 03:12:00Not After2025-07-09 03:12:00SignatureECDSA with SHA25610:15:01.321ClientHelloTLS 1.3, SNI update.example.com10:15:01.340ServerHelloTLS_AES_128_GCM_SHA25610:15:01.359Encrypted ExtensionsALPN h210:15:01.378CertificateR3 Let's Encrypt10:15:01.397Certificate VerifyECDSA P-25610:15:01.416FinishedHandshake complete10:15:01.435ClientHelloTLS 1.3, SNI update.example.com10:15:01.454ServerHelloTLS_AES_128_GCM_SHA256证据完整度Session1284/1284PCAP关联1012/1284证书218/236握手9642/9820索引Hash391/436Hash 与审计校验申请校验Hash 摘要对象路径时间来源状态0000000000000000...pcap/2025/06/20/0001.pcap10:16:00admin通过0000000000000000...pcap/2025/06/20/0002.pcap10:16:05admin通过0000000000000000...pcap/2025/06/20/0003.pcap10:16:10admin通过0000000000000000...pcap/2025/06/20/0004.pcap10:16:15admin通过0000000000000000...pcap/2025/06/20/0005.pcap10:16:20admin通过12证据概览96%证据完整度真实证据 API 已接入快速定位检索 Session ID / 域名 / IP时间范围近 24 小时协议类型全部风险等级全部SNI / 域名全部定 位证据动作生成取证任务申请证据保全关联告警发起专家复核标记证据缺口提交处置建议报告与审计导出证据报告写入审计日志证据缺口 Top5Session0PCAP关联272证书18握手178索引Hash45"
+      },
+      "visual_diff": {
+        "size_ok": true,
+        "comparison_scope": "scoring-region",
+        "scoring_region": {
+          "id": "encrypted-traffic-business-roi-v1",
+          "x": 198,
+          "y": 78,
+          "width": 1712,
+          "height": 920
+        },
+        "source_width": 1920,
+        "source_height": 1080,
+        "actual_width": 1920,
+        "actual_height": 1080,
+        "compared_pixels": 1575040,
+        "total_pixels": 1575040,
+        "mismatch_pixels": 211940,
+        "pixel_mismatch_ratio": 0.13456166192604632,
+        "max_pixel_ratio": 0.18,
+        "channel_tolerance": 64,
+        "max_channel_delta": 255,
+        "full_image_diagnostic": {
+          "compared_pixels": 2073600,
+          "total_pixels": 2073600,
+          "mismatch_pixels": 259519,
+          "pixel_mismatch_ratio": 0.1251538387345679,
+          "max_channel_delta": 255
+        }
+      },
+      "visual_status": "pass"
+    }
+  ],
+  "runtime_errors": {
+    "bad_responses": [],
+    "request_failures": [],
+    "console_errors": [],
+    "page_errors": [],
+    "encrypted_responses": [
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/stats?limit=8&page_size=8&start_time=1784082501671&end_time=1784168901671",
+        "observed_at": 1784168902605,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2",
+        "total_sessions": 18426,
+        "traffic_gbps": 78.3,
+        "reference_visuals": true
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/sessions?limit=50&page_size=50&start_time=1784082501671&end_time=1784168901671",
+        "observed_at": 1784168902607,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/ja3?limit=50&page_size=50&start_time=1784082501671&end_time=1784168901671",
+        "observed_at": 1784168902633,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/tunnels?limit=50&page_size=50&start_time=1784082501672&end_time=1784168901672",
+        "observed_at": 1784168902638,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/exfiltration?limit=50&page_size=50&start_time=1784082501672&end_time=1784168901672",
+        "observed_at": 1784168902639,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/evidence?limit=50&page_size=50&start_time=1784082501672&end_time=1784168901672",
+        "observed_at": 1784168902640,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/stats?limit=8&page_size=8&start_time=1784082518961&end_time=1784168918961",
+        "observed_at": 1784168919817,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2",
+        "total_sessions": 18426,
+        "traffic_gbps": 78.3,
+        "reference_visuals": true
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/sessions?limit=50&page_size=50&start_time=1784082518962&end_time=1784168918962",
+        "observed_at": 1784168919818,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/ja3?limit=50&page_size=50&start_time=1784082518962&end_time=1784168918962",
+        "observed_at": 1784168919818,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/tunnels?limit=50&page_size=50&start_time=1784082518962&end_time=1784168918962",
+        "observed_at": 1784168919819,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/exfiltration?limit=50&page_size=50&start_time=1784082518962&end_time=1784168918962",
+        "observed_at": 1784168919820,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/evidence?limit=50&page_size=50&start_time=1784082518962&end_time=1784168918962",
+        "observed_at": 1784168919821,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/stats?limit=8&page_size=8&start_time=1784082535716&end_time=1784168935716",
+        "observed_at": 1784168936560,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2",
+        "total_sessions": 18426,
+        "traffic_gbps": 78.3,
+        "reference_visuals": true
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/sessions?limit=50&page_size=50&start_time=1784082535716&end_time=1784168935716",
+        "observed_at": 1784168936561,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/ja3?limit=50&page_size=50&start_time=1784082535716&end_time=1784168935716",
+        "observed_at": 1784168936561,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/tunnels?limit=50&page_size=50&start_time=1784082535716&end_time=1784168935716",
+        "observed_at": 1784168936562,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/exfiltration?limit=50&page_size=50&start_time=1784082535716&end_time=1784168935716",
+        "observed_at": 1784168936563,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/evidence?limit=50&page_size=50&start_time=1784082535716&end_time=1784168935716",
+        "observed_at": 1784168936564,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/stats?limit=8&page_size=8&start_time=1784082548910&end_time=1784168948910",
+        "observed_at": 1784168949757,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2",
+        "total_sessions": 18426,
+        "traffic_gbps": 78.3,
+        "reference_visuals": true
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/sessions?limit=50&page_size=50&start_time=1784082548910&end_time=1784168948910",
+        "observed_at": 1784168949758,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/ja3?limit=50&page_size=50&start_time=1784082548910&end_time=1784168948910",
+        "observed_at": 1784168949775,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/tunnels?limit=50&page_size=50&start_time=1784082548910&end_time=1784168948910",
+        "observed_at": 1784168949776,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/exfiltration?limit=50&page_size=50&start_time=1784082548910&end_time=1784168948910",
+        "observed_at": 1784168949777,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/evidence?limit=50&page_size=50&start_time=1784082548910&end_time=1784168948910",
+        "observed_at": 1784168949779,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/sessions?limit=50&page_size=50&start_time=1784082567650&end_time=1784168967650",
+        "observed_at": 1784168968493,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/stats?limit=8&page_size=8&start_time=1784082567650&end_time=1784168967650",
+        "observed_at": 1784168968494,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2",
+        "total_sessions": 18426,
+        "traffic_gbps": 78.3,
+        "reference_visuals": true
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/ja3?limit=50&page_size=50&start_time=1784082567650&end_time=1784168967650",
+        "observed_at": 1784168968494,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/tunnels?limit=50&page_size=50&start_time=1784082567650&end_time=1784168967650",
+        "observed_at": 1784168968495,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/exfiltration?limit=50&page_size=50&start_time=1784082567650&end_time=1784168967650",
+        "observed_at": 1784168968496,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/evidence?limit=50&page_size=50&start_time=1784082567650&end_time=1784168967650",
+        "observed_at": 1784168968497,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/stats?limit=8&page_size=8&start_time=1784082588645&end_time=1784168988645",
+        "observed_at": 1784168989457,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2",
+        "total_sessions": 18426,
+        "traffic_gbps": 78.3,
+        "reference_visuals": true
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/sessions?limit=50&page_size=50&start_time=1784082588645&end_time=1784168988645",
+        "observed_at": 1784168989458,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/ja3?limit=50&page_size=50&start_time=1784082588645&end_time=1784168988645",
+        "observed_at": 1784168989459,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/tunnels?limit=50&page_size=50&start_time=1784082588645&end_time=1784168988645",
+        "observed_at": 1784168989463,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/exfiltration?limit=50&page_size=50&start_time=1784082588645&end_time=1784168988645",
+        "observed_at": 1784168989463,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/evidence?limit=50&page_size=50&start_time=1784082588645&end_time=1784168988645",
+        "observed_at": 1784168989464,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/ja3?limit=50&page_size=50&start_time=1783564189722&end_time=1784168989722",
+        "observed_at": 1784168990579,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/sessions?limit=50&page_size=50&start_time=1783564189722&end_time=1784168989722",
+        "observed_at": 1784168990600,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/tunnels?limit=50&page_size=50&start_time=1783564189722&end_time=1784168989722",
+        "observed_at": 1784168990601,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/stats?limit=8&page_size=8&start_time=1783564189722&end_time=1784168989722",
+        "observed_at": 1784168990601,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2",
+        "total_sessions": 18426,
+        "traffic_gbps": 78.3,
+        "reference_visuals": true
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/exfiltration?limit=50&page_size=50&start_time=1783564189722&end_time=1784168989722",
+        "observed_at": 1784168990602,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      },
+      {
+        "status": 200,
+        "url": "http://10.0.5.8:30180/api/v1/encrypted-traffic/evidence?limit=50&page_size=50&start_time=1783564189722&end_time=1784168989722",
+        "observed_at": 1784168990602,
+        "fixture_mode": true,
+        "fixture_version": "encrypted-traffic-canonical-ui-v2"
+      }
+    ]
+  },
+  "token_material_redacted": true
+}

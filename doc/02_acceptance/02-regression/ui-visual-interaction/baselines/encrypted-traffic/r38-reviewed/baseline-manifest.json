@@ -1,0 +1,30 @@
+{
+  "baseline_id": "encrypted-traffic-r38-reviewed-1920x1080",
+  "created_at": "2026-07-15T10:20:43Z",
+  "source_report": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-encrypted-traffic-latest.json",
+  "capture_path": "Xshell tunnel -> 127.0.0.1:9224 -> Windows Chrome -> direct APISIX",
+  "frontend_image": "traffic/web-ui:encrypted-traffic-20260715-r38",
+  "backend_image": "traffic/alert-service:encrypted-traffic-20260715-r217",
+  "viewport": {
+    "width": 1920,
+    "height": 1080,
+    "device_scale_factor": 1
+  },
+  "adjudication": {
+    "status": "accepted_as_same_shell_regression_baseline",
+    "preconditions": [
+      "All five independent tabs render real API data.",
+      "No module overlap, horizontal clipping, or hidden bottom module was detected.",
+      "Pagination, seven-day API refresh, and audited evidence action checks passed.",
+      "Overall, page-logic, and page-layout agent reviews were completed before baseline capture."
+    ],
+    "legacy_design_reference": "Retained as a non-blocking visual-distance diagnostic because it uses a different global shell and static sample data."
+  },
+  "files": {
+    "overview-1920.png": "e71b680e0d47de2607664d1b91473c76cd67585ae70a3b31fd81dae50b555b9d",
+    "fingerprint-1920.png": "e9b88601704b1ae42e034acba1d1397ae9a7686ecfb8cc22c5ed87a5cd33b0a7",
+    "tunnel-detection-1920.png": "844a016052dbc693ce89af0018f89c916febc9c4f1af979a51636a5aa43a0827",
+    "egress-profile-1920.png": "4a85a63b3b5b9b2e8f17fc8b553e98cd84568ee3120878fcbc684fa07db6262c",
+    "evidence-center-1920.png": "915e86fdc63ee71acf8010529e0f786c5dd45ba389ff920a60136a110f2b8990"
+  }
+}

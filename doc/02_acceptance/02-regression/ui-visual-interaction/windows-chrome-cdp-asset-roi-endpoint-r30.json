@@ -1,0 +1,138 @@
+{
+  "status": "fail",
+  "browser_backend": "windows-chrome-cdp-via-xshell",
+  "cdp_url": "http://127.0.0.1:9224",
+  "browser": "Chrome/150.0.7871.115",
+  "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+  "cdp_targets": 10,
+  "url": "http://10.0.5.8:30180/assets?tab=endpoint&__codex_ui_breakdown_production=1&assetVisualTs=1784095823391#codex_smoke_token=<redacted>",
+  "final_url": "http://10.0.5.8:30180/assets?tab=endpoint&assetId=491edde0-98db-8deb-74db-59f8e7fb5200&__codex_ui_breakdown_production=1",
+  "source": "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets.png",
+  "actual": "evidence/learning/asset-inventory/20260715-five-layout-r30-visual-roi/endpoint/assets-actual-1920x1080.png",
+  "diff": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/assets-roi/endpoint/diff-1920.png",
+  "metrics": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/assets-roi/endpoint/metrics.json",
+  "roi": {
+    "size_ok": true,
+    "comparison_scope": "scoring-region",
+    "scoring_region": {
+      "id": "assets-business-roi-v1",
+      "x": 198,
+      "y": 78,
+      "width": 1712,
+      "height": 920
+    },
+    "source_width": 1920,
+    "source_height": 1080,
+    "actual_width": 1920,
+    "actual_height": 1080,
+    "compared_pixels": 1575040,
+    "total_pixels": 1575040,
+    "mismatch_pixels": 231857,
+    "pixel_mismatch_ratio": 0.14720705505891915,
+    "max_pixel_ratio": 0.12,
+    "channel_tolerance": 64,
+    "max_channel_delta": 255,
+    "full_image_diagnostic": {
+      "compared_pixels": 2073600,
+      "total_pixels": 2073600,
+      "mismatch_pixels": 284036,
+      "pixel_mismatch_ratio": 0.136977237654321,
+      "max_channel_delta": 255
+    }
+  },
+  "layout": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080,
+      "device_pixel_ratio": 0.9998436310887371
+    },
+    "page": {
+      "x": 194.98843383789062,
+      "y": 78.99305725097656,
+      "width": 1703.912109375,
+      "height": 923.94677734375,
+      "right": 1898.9005432128906,
+      "bottom": 1002.9398345947266
+    },
+    "grid": {
+      "x": 194.98843383789062,
+      "y": 78.99305725097656,
+      "width": 1711.9097900390625,
+      "height": 923.94677734375,
+      "right": 1906.8982238769531,
+      "bottom": 1002.9398345947266
+    },
+    "main": {
+      "x": 194.98843383789062,
+      "y": 78.99305725097656,
+      "width": 1303.9237060546875,
+      "height": 923.94677734375,
+      "right": 1498.9121398925781,
+      "bottom": 1002.9398345947266
+    },
+    "rail": {
+      "x": 1506.9097900390625,
+      "y": 78.99305725097656,
+      "width": 399.9884338378906,
+      "height": 923.94677734375,
+      "right": 1906.8982238769531,
+      "bottom": 1002.9398345947266
+    },
+    "ledger_panel": {
+      "x": 194.98843383789062,
+      "y": 320.97222900390625,
+      "width": 1303.9237060546875,
+      "height": 409.9884338378906,
+      "right": 1498.9121398925781,
+      "bottom": 730.9606628417969
+    },
+    "ledger": {
+      "x": 203.72686767578125,
+      "y": 349.7106628417969,
+      "width": 1286.44677734375,
+      "height": 331.9560241699219,
+      "right": 1490.1736450195312,
+      "bottom": 681.6666870117188
+    },
+    "category_workspace": {
+      "x": 194.98843383789062,
+      "y": 739.9537353515625,
+      "width": 1303.9237060546875,
+      "height": 262.9861145019531,
+      "right": 1498.9121398925781,
+      "bottom": 1002.9398498535156
+    },
+    "observability": {
+      "x": 194.98843383789062,
+      "y": 739.9537353515625,
+      "width": 1303.9237060546875,
+      "height": 173.99305725097656,
+      "right": 1498.9121398925781,
+      "bottom": 913.9467926025391
+    },
+    "work_grid": null,
+    "lower_grid": null,
+    "network_modules": null,
+    "unknown_main_grid": null,
+    "evidence": {
+      "x": 194.98843383789062,
+      "y": 921.9444580078125,
+      "width": 1303.9237060546875,
+      "height": 80.99537658691406,
+      "right": 1498.9121398925781,
+      "bottom": 1002.9398345947266
+    },
+    "row_count": 10,
+    "expected_visual_rows": 10,
+    "visual_mode": true,
+    "horizontal_overflow": false,
+    "final_url": "http://10.0.5.8:30180/assets?tab=endpoint&assetId=491edde0-98db-8deb-74db-59f8e7fb5200&__codex_ui_breakdown_production=1"
+  },
+  "runtime": {
+    "bad_responses": [],
+    "request_failures": [],
+    "console_errors": [],
+    "page_errors": [],
+    "external_extension_errors": []
+  }
+}

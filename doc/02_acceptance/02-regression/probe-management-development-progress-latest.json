@@ -1,0 +1,51 @@
+{
+  "package_id": "probe-management-development-progress",
+  "generated_at": "2026-07-16T08:27:06.049Z",
+  "status": "verified_with_runtime_boundary",
+  "menu": "探针管理",
+  "route": "/probes",
+  "implementation": {
+    "frontend": "pass",
+    "backend": "pass",
+    "database_fixture": "pass",
+    "api_dynamic_svg_2d_3d": "pass",
+    "six_operation_forms": "pass",
+    "queued_persistence": "pass",
+    "viewer_403": "pass",
+    "cross_tenant_404": "pass",
+    "topology_metrics_only_403": "pass",
+    "topology_cross_tenant_empty": "pass",
+    "topology_invalid_mode_400": "pass",
+    "topology_minimum_spacing": "pass"
+  },
+  "topology_contract": {
+    "source": "/api/v1/probes/topology",
+    "fields": [
+      "topology_x",
+      "topology_y",
+      "topology_z",
+      "topology_zone",
+      "topology_role",
+      "topology_links",
+      "topology_link_bandwidths_gbps"
+    ],
+    "rendering": {
+      "2d": "API planar coordinates and straight dynamic SVG links",
+      "3d": "API coordinates projected to an isometric SVG scene with dynamic height and curved links"
+    }
+  },
+  "acceptance": {
+    "browser": "Windows Chrome through Xshell CDP",
+    "viewport": "1920x1080",
+    "checks": 39,
+    "passed": 39,
+    "visual_roi_mismatch_ratio": 0.10098092746850873,
+    "max_ratio": 0.12,
+    "report": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-probes-latest.json",
+    "side_by_side": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-cdp-latest/probes/canonical-side-by-side-1920.png"
+  },
+  "runtime_boundary": {
+    "status": "open",
+    "detail": "probe operations are durably queued; a probe control-channel consumer and probe ACK callback are still required before queued operations can transition to completed"
+  }
+}

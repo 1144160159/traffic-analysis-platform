@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-15T23:01:24+08:00",
+  "menu": "加密流量",
+  "result": "pass",
+  "review_sequence": [
+    "overall_agent_review",
+    "page_logic_agent_review",
+    "page_layout_agent_review",
+    "main_thread_adjudication",
+    "repair",
+    "windows_chrome_regression"
+  ],
+  "overall_review": {
+    "findings": [
+      "隧道和外联语义曾把普通端口流量误报为隧道或外泄。",
+      "独立 PCAP 索引曾被错误计入会话证据完整度。",
+      "部分操作按钮无真实动作，分页只在客户端表现。",
+      "旧实现与五张对应 UI 原图结构不一致。"
+    ],
+    "disposition": "accepted_and_repaired",
+    "evidence": [
+      "候选规则改为 DNS 高频、SSH/QUIC 长连接、TLS 大流量长连接。",
+      "PCAP 关联只认显式 session.pcap_index；独立索引单独展示。",
+      "动作接入路由或审计 POST；未实现的下钻显式禁用。",
+      "五页签均按对应 UI 原图重构；Windows Chrome 最终 44/44，原图视觉 5/5。"
+    ]
+  },
+  "logic_review": {
+    "findings": [
+      "公网目的地址过滤不完整。",
+      "深链参数、时间范围、风险映射和时区存在不一致。",
+      "次级 API 错误被吞掉，QUIC 空态会回退到其他协议。",
+      "会话与 PCAP 未自动相关。"
+    ],
+    "disposition": "accepted_with_one_non_blocking_followup",
+    "evidence": [
+      "已排除 RFC1918、回环、链路本地、IPv6 ULA/link-local。",
+      "destination 深链、六接口时间范围、风险中文映射和 UTC+8 展示已统一。",
+      "次级 API 错误会上抛，QUIC 空态不再伪造其他协议数据。",
+      "自动 session-PCAP 相关保留为非阻断后续，页面明确标注独立数据源。"
+    ]
+  },
+  "layout_review": {
+    "findings": [
+      "业务区域应只有一个滚动所有者，左右底部必须可达。",
+      "证据表横向滚动和指纹页空白影响可读性。",
+      "分页位置不能随查询结果行数变化。",
+      "参考图的全局壳层彼此不一致，业务区仍需逐页对齐。"
+    ],
+    "disposition": "accepted_and_repaired",
+    "evidence": [
+      "taf-encrypted-grid 统一纵向滚动，主区和侧栏不再各自滚动。",
+      "证据表压缩为六个关键列，指纹主区和右栏按上下文填充。",
+      "自定义表和证据密集行使用固定高度及固定分页槽，换页位置检查通过。",
+      "五张 UI 原图直接承担阻断视觉门；项目统一生产壳层不作为业务区复刻差异的豁免条件。"
+    ]
+  },
+  "main_thread_adjudication": {
+    "blocking_gates": {
+      "real_api_and_database": "pass",
+      "five_independent_tabs": "pass",
+      "windows_chrome_interaction": "pass",
+      "canonical_ui_visual_regression": "pass: 5/5 at max mismatch ratio 0.18",
+      "no_overlap_or_clipping": "pass",
+      "pagination_position": "pass",
+      "runtime_errors": "pass"
+    },
+    "diagnostics": {
+      "canonical_generated_design_distance": "5/5 within the blocking 0.18 threshold; per-tab ratios 0.097878 to 0.142570",
+      "continuous_pcap_streaming": "not yet a blocking requirement for this menu closeout; current PCAP replay and ClickHouse rows are real and auditable",
+      "session_pcap_auto_correlation": "not yet complete and explicitly exposed as partial evidence"
+    },
+    "final_decision": "encrypted_traffic_menu_accepted; proceed_to_forensics"
+  },
+  "acceptance_report": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-encrypted-traffic-latest.json",
+  "progress_report": "doc/02_acceptance/02-regression/encrypted-traffic-development-progress-latest.json"
+}

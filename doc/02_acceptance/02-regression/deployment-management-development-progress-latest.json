@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-07-18T18:20:00+08:00",
+  "menu": "部署管理",
+  "route": "/deployments",
+  "menu_sequence_position": 6,
+  "status": "passed",
+  "workflow": [
+    "UI breakdown",
+    "frontend implementation",
+    "backend implementation",
+    "PostgreSQL state and audit",
+    "Xshell Windows Chrome",
+    "visual diff and metrics",
+    "overall agent review",
+    "logic agent review",
+    "layout agent review",
+    "main-thread adjudication",
+    "repair and regression"
+  ],
+  "implementation": {
+    "frontend_page": "web/ui/src/pages/DeploymentManagementWorkspace.tsx",
+    "backend_service": "go/control-plane/internal/rules/service/deployment_service.go",
+    "event_schema": "common/kafka/schemas/deployment-event-v1.schema.json",
+    "frontend_image": "docker.io/traffic/web-ui:deployment-management-20260718-r21",
+    "backend_image": "docker.io/traffic/rule-manager:deployment-management-20260718-r15"
+  },
+  "verification": {
+    "browser_path": "Xshell tunnel -> 127.0.0.1:9224 -> Windows Chrome 150 -> direct APISIX http://10.0.5.8:30180/deployments",
+    "viewport": "1920x1080, DPR approximately 1",
+    "windows_chrome_report": "evidence/ui-image-breakdowns/pages/deployments/full-stack-r264.json",
+    "windows_chrome_assertions": "43/43",
+    "runtime_errors": 0,
+    "deployment_state_machine_report": "doc/02_acceptance/02-regression/deployment-state-machine-latest.json",
+    "deployment_state_machine": "70/70",
+    "outbox_kafka_report": "doc/02_acceptance/02-regression/deployment-outbox-kafka-latest.json",
+    "outbox_kafka": "4/4",
+    "frontend_tests": "10/10",
+    "frontend_build": "pass",
+    "go_rules_tests": "pass",
+    "frontend_contract_validator": "181 pages, 28 overlays, 70 drawers; 0 errors, 0 warnings",
+    "main_visual": "pass: 0.11057809830318276 <= 0.125",
+    "create_modal_visual": "raw fail: 0.10515551970679832 > 0.08; effective pass_with_contract_exception",
+    "rollback_modal_visual": "raw fail: 0.10045118260284722 > 0.08; effective pass_with_contract_exception",
+    "overlay_contract_exception": "doc/04_assets/ui_suite_gpt_v1/specs/overlay-contracts/deployment-modal-size-adjudication.json",
+    "logic_review": "PASS P0=0 P1=0",
+    "layout_review": "PASS P0=0 P1=0",
+    "review_adjudication": "doc/02_acceptance/02-regression/deployment-management-review-adjudication-latest.json",
+    "rollout_rollback_evidence": "evidence/ui-image-breakdowns/pages/deployments/rollout-r264.json",
+    "learning_episode": "evidence/ui-image-breakdowns/pages/deployments/learning-episode-r264.json",
+    "learning_episode_evaluated": "evidence/ui-image-breakdowns/pages/deployments/learning-r264-evaluation/episode.evaluated.json",
+    "learning_episode_report": "evidence/ui-image-breakdowns/pages/deployments/learning-r264-evaluation/episode-report.md",
+    "learning_episode_status": "positive",
+    "learning_episode_reward": 95.35,
+    "learning_episode_hard_gates": "11/11 passed"
+  },
+  "closed_blockers": [
+    "two-person approval separation and immutable approved configuration",
+    "exactly seven fresh prechecks at submit, approve and execute",
+    "tenant and release-line capacity locks",
+    "workflow rejection failure audit",
+    "rollback tenant-quota safety",
+    "planned activation approved-configuration enforcement",
+    "durable outbox and actual Kafka schema-v1 consumption",
+    "release table and rollback-panel clipping",
+    "machine-checkable overlay contract exception"
+  ],
+  "non_blocking_followups": [
+    "positive live test for approved 100 percent planned direct activation",
+    "replacement references for the two superseded overlay targets"
+  ],
+  "next_menu": "/models"
+}

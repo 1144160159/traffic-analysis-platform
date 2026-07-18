@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-07-18T23:52:30+08:00",
+  "route": "/models",
+  "scope": "production dynamic route rendered from APISIX, Rule Manager and PostgreSQL",
+  "status": "pass",
+  "browser_contract": {
+    "path": "Xshell tunnel -> 127.0.0.1:9224 -> Windows Chrome 150 -> direct APISIX http://10.0.5.8:30180/models",
+    "css_viewport": "1920x1080",
+    "png_size": "1920x1080",
+    "device_pixel_ratio": 1.0000000298023224,
+    "visual_viewport_scale": 1
+  },
+  "adjudication": {
+    "production_threshold_contract": {
+      "main_max_ratio": 0.125,
+      "focus_state_max_ratio": 0.15,
+      "channel_tolerance": 64,
+      "scoring_region": "models-full-state-v2"
+    },
+    "supersedes_for_this_scope": "the 0.015 static reference-raster reproduction threshold in the historical asset review",
+    "does_not_supersede": "source target images, raw diff artifacts, or semantic and business-interaction gates",
+    "rationale": "The production route renders tenant-scoped PostgreSQL model, version, review, sample and audit values whose text differs from the frozen reference raster. Acceptance therefore preserves raw pixel ratios and additionally requires exact viewport geometry, zero application runtime failures, semantic color and chart invariants, and live API/database behavior."
+  },
+  "raw_metrics": [
+    {"id": "main", "mismatch_ratio": 0.1032204861111111, "max_ratio": 0.125, "status": "pass"},
+    {"id": "activation-audit-gate", "mismatch_ratio": 0.07979263117283951, "max_ratio": 0.15, "status": "pass"},
+    {"id": "rule-contribution", "mismatch_ratio": 0.10891251929012345, "max_ratio": 0.15, "status": "pass"},
+    {"id": "anomaly-explanation", "mismatch_ratio": 0.08988136574074074, "max_ratio": 0.15, "status": "pass"},
+    {"id": "sample-examples", "mismatch_ratio": 0.10649305555555555, "max_ratio": 0.15, "status": "pass"}
+  ],
+  "required_dual_gates": {
+    "exact_viewport_and_png": true,
+    "application_console_errors": 0,
+    "application_runtime_exceptions": 0,
+    "request_failures": 0,
+    "positive_and_negative_rule_contributions_visible": true,
+    "tp_and_fp_colors_distinct": true,
+    "passed_and_pending_gate_colors_distinct": true,
+    "server_activation_gate_enforced": true,
+    "cross_tenant_update_denied": true,
+    "durable_actions_reach_terminal_state": true,
+    "request_and_completion_or_dispatch_audits_present": true
+    ,"main_content_scroll_free": true
+    ,"right_rail_above_fixed_bottom_bar": true
+  },
+  "evidence": {
+    "interaction": "evidence/ui-image-breakdowns/pages/models/interaction-r328.json",
+    "state_machine": "evidence/ui-image-breakdowns/pages/models/state-machine-r328.json",
+    "build_provenance": "evidence/ui-image-breakdowns/pages/models/build-provenance-r328.json",
+    "flink_consumer": "evidence/ui-image-breakdowns/pages/models/flink-consumer-r328.json",
+    "fresh_schema": "evidence/ui-image-breakdowns/pages/models/fresh-schema-r325.json",
+    "metrics": "evidence/ui-image-breakdowns/pages/models/visual-r328/metrics.json",
+    "side_by_side_directory": "evidence/ui-image-breakdowns/pages/models/visual-r328/"
+  }
+}

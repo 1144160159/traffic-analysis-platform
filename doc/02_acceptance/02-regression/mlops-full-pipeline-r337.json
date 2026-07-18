@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-19T03:58:00+08:00",
+  "result": "pass",
+  "route": "/mlops",
+  "workflow": {
+    "namespace": "argo",
+    "source_workflow": "mlops-manual-4b2df8409725",
+    "retry_workflow": "mlops-training-template-5frqn",
+    "uid": "4cdfebd9-7c96-491c-b984-342ebe88953f",
+    "template": "mlops-training-template",
+    "phase": "Succeeded",
+    "required_nodes": {
+      "preflight-check": "Succeeded",
+      "extract-data": "Succeeded",
+      "train-model": "Succeeded",
+      "evaluate-model": "Succeeded",
+      "register-model": "Succeeded"
+    },
+    "parameters": {
+      "tenant-id": "default",
+      "model-id": "1b141e22-fb9c-4739-b126-2cf4e19073ef",
+      "feature-set-id": "v1",
+      "trigger": "manual",
+      "trigger-reason": "operator_training_submit"
+    }
+  },
+  "data_integrity": {
+    "feature_baseline_rows": 224598324,
+    "extracted_samples": 200,
+    "true_positive_samples": 100,
+    "false_positive_samples": 100,
+    "train_samples": 160,
+    "test_samples": 40,
+    "class_balance_preserved": true,
+    "extract_query": {
+      "full_order_by_removed": true,
+      "default_max_rows": 100000,
+      "max_threads": 1,
+      "max_block_size": 2048,
+      "old_query_failure": "ClickHouse Code 241 after approximately 14 seconds with estimated 16.68 GiB",
+      "new_query_result": "completed in approximately 110.9 seconds without OOM"
+    }
+  },
+  "control_plane": {
+    "manual_create_status": 202,
+    "stop_status": 202,
+    "retry_status": 202,
+    "unsafe_override_status": 400,
+    "unsafe_override_created_workflow": false,
+    "intent_completion_order": {
+      "create": true,
+      "stop": true,
+      "retry": true
+    },
+    "automatic_ownership": {
+      "workflow": "mlops-fp-rate-8360f3b2ac7c",
+      "tenant_id": "default",
+      "model_id": "1b141e22-fb9c-4739-b126-2cf4e19073ef",
+      "feature_set_id": "v1",
+      "list_and_get_pass": true
+    },
+    "automatic_scheduler_lock": {
+      "type": "PostgreSQL session advisory lock",
+      "key": "0x4d4c4f5053415554",
+      "scope": "condition read through durable intent, Argo submit, completion audit and local state update",
+      "dual_orchestrator_test": "exactly one Argo HTTP POST",
+      "post_rollout_duplicate_workflows": 0,
+      "automated_pending_audits": 0
+    }
+  },
+  "tenant_and_rbac": {
+    "viewer_write_status": 403,
+    "unauthenticated_status": 401,
+    "cross_tenant_list_count": 0,
+    "cross_tenant_get_status": 403,
+    "cross_tenant_stop_status": 403,
+    "cross_tenant_retry_status": 403
+  },
+  "runtime_images": {
+    "rule_manager": "docker.io/traffic/rule-manager@sha256:27f53d3029d9bc6d2d304c7e6b0e0c7f8428910638e01f47e78f1a4177bc818d",
+    "web_ui": "docker.io/traffic/web-ui@sha256:7ded10737d650ce698dbbcfbeb3595375fac4fe3d9a98d0615fd028ba518eff3",
+    "trainer": "docker.io/traffic/mlops-trainer@sha256:4f40de900eed37b8fa169660edda9e53626cd596b53a0aeaf677b08e1e6b4011",
+    "two_node_local_cri": true,
+    "deployments_ready": true,
+    "trainer_pod_image_ids_match": true
+  },
+  "verification": {
+    "windows_chrome": "evidence/ui-image-breakdowns/pages/mlops/interaction-r337.json",
+    "visual_metrics": "evidence/ui-image-breakdowns/pages/mlops/metrics-business-r337.json",
+    "implementation": "evidence/ui-image-breakdowns/pages/mlops/implementation-r337.png",
+    "side_by_side": "evidence/ui-image-breakdowns/pages/mlops/side-by-side-business-r337.png",
+    "pixel_mismatch_ratio": 0.08858102913479672,
+    "maximum": 0.125,
+    "runtime_errors": 0,
+    "python_mlops_tests": "17/17",
+    "frontend_tests": "173/173",
+    "frontend_build": "pass",
+    "go_tests": "pass"
+  }
+}
