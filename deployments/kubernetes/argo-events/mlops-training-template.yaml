@@ -87,15 +87,24 @@ spec:
     - name: trigger-reason
       value: ""
     - name: trainer-image
-      value: traffic/mlops-trainer:full-pipeline-fix-20260617
+      value: docker.io/traffic/mlops-trainer@sha256:4f40de900eed37b8fa169660edda9e53626cd596b53a0aeaf677b08e1e6b4011
   templates:
   - name: orchestrator-pipeline
     steps:
     - - name: preflight-check
         template: preflight-check
+    - - name: run-training-pipeline
+        template: training-pipeline
+        when: "{{steps.preflight-check.outputs.parameters.training-ready}} == true"
+
+  # Keep every artifact-producing/consuming step inside one conditional
+  # boundary. When preflight says there is not enough data, Argo skips this
+  # template as a unit instead of trying to resolve artifacts from a skipped
+  # extract-data step.
+  - name: training-pipeline
+    steps:
     - - name: extract-data
         template: extract-data
-        when: "{{steps.preflight-check.outputs.parameters.training-ready}} == true"
     - - name: train-model
         template: train-model
         arguments:

@@ -195,7 +195,7 @@ CREATE TABLE IF NOT EXISTS probe_operations (
   tenant_id     TEXT NOT NULL,
   probe_id      TEXT NOT NULL,
   operation_type TEXT NOT NULL,
-  status        TEXT NOT NULL DEFAULT 'completed',
+  status        TEXT NOT NULL DEFAULT 'queued',
   requested_by  TEXT NOT NULL DEFAULT '',
   request       JSONB NOT NULL DEFAULT '{}'::jsonb,
   result        JSONB NOT NULL DEFAULT '{}'::jsonb,

@@ -138,7 +138,82 @@ AS traffic.sessions_local
 ENGINE = Distributed(traffic_cluster, traffic, sessions_local, rand());
 
 -- =============================================================================
--- 3. alerts — Alert
+-- 3. feature_stat — FeatureStat
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS traffic.feature_stat_local ON CLUSTER traffic_cluster (
+  tenant_id                    String,
+  run_id                       String,
+  feature_set_id               String,
+  schema_version               String,
+  event_id                     String,
+  object_type                  String,
+  object_id                    String,
+  community_id                 String,
+  ts                           DateTime64(3),
+  protocol                     UInt8,
+  duration_ms                  UInt32,
+  pps                          Float32,
+  bps                          Float32,
+  up_down_ratio                Float32,
+  pktlen_mean                  Float32,
+  pktlen_std                   Float32,
+  iat_mean_ms                  Float32,
+  iat_std_ms                   Float32,
+  active_mean_ms               Float32,
+  idle_mean_ms                 Float32,
+  tcp_flag_syn_cnt             UInt16,
+  tcp_flag_ack_cnt             UInt16,
+  tcp_init_win_bytes_fwd       UInt32,
+  tcp_init_win_bytes_bwd       UInt32,
+  extra                        Array(Float32),
+  ingest_ts                    DateTime64(3) DEFAULT now64(3)
+)
+ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/feature_stat', '{replica}')
+PARTITION BY toDate(ts)
+ORDER BY (tenant_id, ts, community_id, object_type, object_id)
+TTL toDateTime(ts) + INTERVAL 30 DAY
+SETTINGS index_granularity = 8192;
+
+CREATE TABLE IF NOT EXISTS traffic.feature_stat ON CLUSTER traffic_cluster
+AS traffic.feature_stat_local
+ENGINE = Distributed(traffic_cluster, traffic, feature_stat_local, rand());
+
+-- =============================================================================
+-- 4. feature_fp — FeatureFingerprint
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS traffic.feature_fp_local ON CLUSTER traffic_cluster (
+  tenant_id          String,
+  run_id             String,
+  feature_set_id     String,
+  event_id           String,
+  community_id       String,
+  session_id         String,
+  ts                 DateTime64(3),
+  is_encrypted       UInt8,
+  tls_version        LowCardinality(String),
+  ja3                LowCardinality(String),
+  sni_hash           String,
+  cert_sha256        String,
+  cert_is_self_signed UInt8,
+  pubkey_len         UInt16,
+  hex_freq           Array(Float32),
+  hex_ratio          Array(Float32),
+  entropy_payload    Float32,
+  chi_square_bfd     Float32,
+  ingest_ts          DateTime64(3) DEFAULT now64(3)
+)
+ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/feature_fp', '{replica}')
+PARTITION BY toDate(ts)
+ORDER BY (tenant_id, ts, community_id, session_id)
+TTL toDateTime(ts) + INTERVAL 30 DAY
+SETTINGS index_granularity = 8192;
+
+CREATE TABLE IF NOT EXISTS traffic.feature_fp ON CLUSTER traffic_cluster
+AS traffic.feature_fp_local
+ENGINE = Distributed(traffic_cluster, traffic, feature_fp_local, cityHash64(tenant_id, community_id));
+
+-- =============================================================================
+-- 5. alerts — Alert
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS traffic.alerts_local ON CLUSTER traffic_cluster (
   tenant_id           String,

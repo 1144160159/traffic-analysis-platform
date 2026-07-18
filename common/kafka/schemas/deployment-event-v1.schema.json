@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic-analysis-platform.local/schemas/deployment-event-v1.schema.json",
+  "title": "DeploymentEventV1Json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_id",
+    "schema_version",
+    "event_type",
+    "action",
+    "deployment_id",
+    "tenant_id",
+    "scope",
+    "status",
+    "operator_id",
+    "timestamp"
+  ],
+  "properties": {
+    "event_id": { "type": "string", "format": "uuid" },
+    "schema_version": { "const": 1 },
+    "event_type": { "const": "deployment_event" },
+    "action": { "type": "string", "minLength": 1 },
+    "deployment_id": { "type": "string", "minLength": 1 },
+    "tenant_id": { "type": "string", "minLength": 1 },
+    "rule_version": { "type": "string" },
+    "model_version": { "type": "string" },
+    "feature_set_id": { "type": "string" },
+    "scope": { "type": "object" },
+    "status": { "type": "string", "minLength": 1 },
+    "operator_id": { "type": "string", "minLength": 1 },
+    "timestamp": { "type": "integer", "minimum": 0 }
+  }
+}

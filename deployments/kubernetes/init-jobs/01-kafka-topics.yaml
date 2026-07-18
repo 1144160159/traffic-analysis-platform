@@ -49,6 +49,8 @@ spec:
             "pcap.index.v1:6:259200000:536870912" \
             "rule.updates:1:86400000:134217728" \
             "model-updates:1:86400000:134217728" \
+            "model-actions.v1:3:259200000:134217728" \
+            "deployment.events.v1:6:259200000:268435456" \
             "audit.logs:3:259200000:268435456" \
             "asset.bindings.v1:4:86400000:134217728" \
             "device.logs.v1:8:259200000:268435456" \
