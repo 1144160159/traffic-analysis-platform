@@ -18,7 +18,7 @@
     "width": 1920,
     "height": 1080
   },
-  "status": "evidence-ready",
+  "status": "production-route-diff-failed",
   "route": "/settings",
   "host_route": null,
   "title": "系统设置",
@@ -1421,8 +1421,8 @@
     }
   ],
   "implementation": {
-    "source": "evidence/ui-image-breakdowns/pages/settings/implementation.html",
-    "mode": "reference-raster",
+    "source": "/settings",
+    "mode": "production-route",
     "route": "/settings",
     "pages": [
       "route:/settings"
@@ -1450,7 +1450,9 @@
       "ECharts dark theme tokens"
     ],
     "mapping_note": "The evidence screenshot is a deterministic reference-raster implementation for pixel proof; the breakdown arrays map the same image to semantic frontend units.",
-    "note": "Reference-raster implementation is used for pixel evidence; semantic component decomposition remains in the markdown/json record."
+    "note": "implementation.png is captured from the real APISIX/Web UI production route through Windows Chrome CDP. It is not a raster replay of target.png.",
+    "resolved_path": "/settings",
+    "route_state": {}
   },
   "evidence": {
     "target": "evidence/ui-image-breakdowns/pages/settings/target.png",
@@ -1465,27 +1467,30 @@
       "width": 1920,
       "height": 1080
     },
-    "url": "http://10.0.5.8:41079/evidence/ui-image-breakdowns/pages/settings/implementation.html",
+    "url": "http://10.0.5.8:30180/settings?windowsCdpEvidenceTs=1784490634500#codex_smoke_token=<redacted>",
     "render_source": "evidence/ui-image-breakdowns/pages/settings/target.png",
     "capture_meta": "evidence/ui-image-breakdowns/pages/settings/capture-meta.json",
     "cdp_version": "evidence/ui-image-breakdowns/pages/settings/cdp-version.json",
-    "cdp_list": "evidence/ui-image-breakdowns/pages/settings/cdp-list.json"
+    "cdp_list": "evidence/ui-image-breakdowns/pages/settings/cdp-list.json",
+    "evidence_mode": "production-route",
+    "production_route_report": "evidence/ui-image-breakdowns/pages/settings/production-route-report.json",
+    "final_url": "http://10.0.5.8:30180/settings?windowsCdpEvidenceTs=1784490634500"
   },
   "evidence_dir": "evidence/ui-image-breakdowns/pages/settings",
   "differences": [
     {
-      "type": "visual-diff",
-      "location": "full image",
-      "current": "Windows Chrome screenshot will be compared with the locked target PNG.",
-      "expected": "pixel mismatch ratio <= 0.015",
+      "type": "production-evidence-scope",
+      "location": "/settings",
+      "current": "implementation.png is captured from the real APISIX/Web UI route in Windows Chrome CDP",
+      "expected": "no target.png raster replay is used as implementation evidence",
       "status": "documented"
     },
     {
-      "type": "semantic-scope",
-      "location": "production React implementation",
-      "current": "reference-raster evidence proves visual parity only",
-      "expected": "semantic React components follow this record when implemented separately",
-      "status": "documented"
+      "type": "production-runtime",
+      "location": "/settings",
+      "current": "1 request failures; 1 page errors",
+      "expected": "no 4xx/5xx, requestfailed, console/pageerror, overflow, or visible geometry issue",
+      "status": "open"
     }
   ],
   "accepted": false,
@@ -1499,5 +1504,8 @@
   "review_gate": {
     "status": "requires-new-independent-subagent-review",
     "reason": "Old page acceptance predates the visible Windows Chrome fix and cannot close the restarted pages gate."
-  }
+  },
+  "unresolved": [
+    "production-runtime:/settings"
+  ]
 }

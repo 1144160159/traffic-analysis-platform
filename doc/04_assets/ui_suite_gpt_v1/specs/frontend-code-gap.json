@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-13T00:00:46.051Z",
+  "generatedAt": "2026-07-19T03:41:41.833Z",
   "summary": {
     "pages": 28,
     "pageFilesPresent": 28,
@@ -9,12 +9,12 @@
     "directFetchViolations": 0,
     "appShellTokenGaps": 0,
     "overlays": 70,
-    "overlaysConfirmed": 70,
-    "overlaysPartial": 0,
+    "overlaysConfirmed": 65,
+    "overlaysPartial": 5,
     "overlaysMissing": 0,
-    "pageGaps": 0,
+    "pageGaps": 2,
     "routeGaps": 0,
-    "fixQueue": 0
+    "fixQueue": 6
   },
   "appShell": {
     "target": {
@@ -427,8 +427,10 @@
         "error": true,
         "empty": true,
         "forbidden": true,
-        "dangerousActionCount": 0,
-        "dangerousLines": [],
+        "dangerousActionCount": 1,
+        "dangerousLines": [
+          "<Tooltip title=\"整改工单后端尚未接入\"><Button size=\"small\" danger disabled icon={<FileSearchOutlined />}>生成整改工单</Button></Tooltip>"
+        ],
         "guardedDanger": true,
         "dataAccessOk": true,
         "dataAccessNote": null
@@ -600,8 +602,9 @@
         "error": true,
         "empty": true,
         "forbidden": true,
-        "dangerousActionCount": 2,
+        "dangerousActionCount": 3,
         "dangerousLines": [
+          "<Button size=\"small\" danger icon={<StopOutlined />} onClick={() => onAction('停止回放', target)}>停止</Button>",
           "<Button size=\"small\" danger ghost icon={<RollbackOutlined />} onClick={() => onAction('回滚版本')}>回滚版本</Button>",
           "buttonProps={{ className: 'taf-rules-delete', size: 'small', danger: true }}"
         ],
@@ -628,22 +631,18 @@
       ],
       "missingApi": [],
       "signals": {
-        "usesQuery": true,
-        "usesService": true,
+        "usesQuery": false,
+        "usesService": false,
         "directFetch": false,
         "anyUsage": false,
-        "loading": true,
-        "error": true,
-        "empty": true,
+        "loading": false,
+        "error": false,
+        "empty": false,
         "forbidden": true,
-        "dangerousActionCount": 3,
-        "dangerousLines": [
-          "<Button size=\"small\" danger ghost icon={<StopOutlined />} onClick={() => openAction('停止灰度')}>停止灰度</Button>",
-          "<Button size=\"small\" danger icon={<RollbackOutlined />} onClick={() => openAction('快速回滚')}>快速回滚</Button>",
-          "<div className=\"taf-deployments-rollback-actions\"><Button size=\"small\" onClick={() => setReason('误报升高')}>误报升高</Button><Button size=\"small\" onClick={() => setReason('性能下降')}>性能下降</Button><Button size=\"small\" onClick={() => setReason('策略变更')}>策略变更</Button><Button size=\"small\" danger onClick={() => onAction('执行回滚', reason || '当前灰度版本')}>执行回滚</Button></div>"
-        ],
-        "guardedDanger": true,
-        "dataAccessOk": true,
+        "dangerousActionCount": 0,
+        "dangerousLines": [],
+        "guardedDanger": false,
+        "dataAccessOk": false,
         "dataAccessNote": null
       }
     },
@@ -675,9 +674,9 @@
         "forbidden": true,
         "dangerousActionCount": 3,
         "dangerousLines": [
-          "<Button size=\"small\" danger ghost icon={<RollbackOutlined />} data-model-action-managed=\"true\" onClick={() => openAction('回滚线上版本', 'model-version-rollback')}>回滚线上版本</Button>",
-          "<Button size=\"small\" danger ghost data-model-action-managed=\"true\" onClick={() => onAction('停用模型', 'model-version-deprecate', selected)}>停用模型</Button>",
-          "<Button size=\"small\" danger data-model-action-managed=\"true\" onClick={() => onAction(`回滚到 ${String(selected?.线上版本 ?? 'v1.7.0')}`, 'model-version-rollback', selected)}>回滚到 {String(selected?.线上版本 ?? 'v1.7.0')}</Button>"
+          "<Button size=\"small\" danger ghost icon={<RollbackOutlined />} disabled={!rollbackVersion} data-model-action-managed=\"true\" onClick={() => openAction(`回滚到 ${rollbackVersion}`, 'model-version-rollback', { ...selected, 版本: rollbackVersion })}>回滚线上版本</Button>",
+          "<Button size=\"small\" danger ghost disabled={!activeVersion} data-model-action-managed=\"true\" onClick={() => onAction('停用模型', 'model-version-deprecate', { ...selected, 版本: activeVersion })}>停用模型</Button>",
+          "<Button size=\"small\" danger data-model-action-managed=\"true\" disabled={!rollbackVersion} onClick={() => onAction(`回滚到 ${rollbackVersion}`, 'model-version-rollback', { ...selected, 版本: rollbackVersion })}>回滚到 {rollbackVersion || '无可回滚版本'}</Button>"
         ],
         "guardedDanger": true,
         "dataAccessOk": true,
@@ -716,7 +715,7 @@
         "forbidden": true,
         "dangerousActionCount": 1,
         "dangerousLines": [
-          "<Button size=\"small\" danger ghost icon={<PauseCircleOutlined />} onClick={() => openAction('停止任务', 'mlops-task-stop')}>停止任务</Button>"
+          "<Button size=\"small\" danger ghost icon={<PauseCircleOutlined />} disabled={!selected?.__can_stop} onClick={() => openAction('停止任务', 'mlops-task-stop')}>停止任务</Button>"
         ],
         "guardedDanger": true,
         "dataAccessOk": true,
@@ -786,9 +785,10 @@
         "error": true,
         "empty": true,
         "forbidden": true,
-        "dangerousActionCount": 1,
+        "dangerousActionCount": 2,
         "dangerousLines": [
-          "<Button size=\"small\" danger ghost icon={<RollbackOutlined />}>回滚执行</Button>"
+          "<Button size=\"small\" danger ghost icon={<RollbackOutlined />} disabled={!latestRollbackCandidate} onClick={() => { setRollbackExecution(latestRollbackCandidate); setRollbackReason('演练验证完成，记录回滚证据'); }}>回滚演练</Button>",
+          "<Modal title=\"记录演练回滚\" open={Boolean(rollbackExecution)} onCancel={() => setRollbackExecution(undefined)} onOk={() => rollbackMutation.mutate()} confirmLoading={rollbackMutation.isPending} okButtonProps={{ danger: true }}>"
         ],
         "guardedDanger": true,
         "dataAccessOk": true,
@@ -821,9 +821,10 @@
         "error": true,
         "empty": true,
         "forbidden": true,
-        "dangerousActionCount": 1,
+        "dangerousActionCount": 2,
         "dangerousLines": [
-          "<Button size=\"small\" danger ghost icon={<StopOutlined />} onClick={() => openAction('停用')}>停用</Button>"
+          "<Button size=\"small\" danger ghost icon={<StopOutlined />}>停用</Button>",
+          "<Popconfirm title=\"停用后立即停止命中，历史证据继续保留。\" onConfirm={() => onAction('disable')}><Button danger icon={<StopOutlined />} disabled={entry.status === 'disabled'}>停用</Button></Popconfirm>"
         ],
         "guardedDanger": true,
         "dataAccessOk": true,
@@ -1044,7 +1045,20 @@
       }
     }
   ],
-  "pageGaps": [],
+  "pageGaps": [
+    {
+      "pageId": "deployments",
+      "severity": "P1",
+      "message": "页面未能静态证明使用 React Query + service 接入契约 API。",
+      "action": "补齐 useQuery/service hook，保留 loading/error/empty 状态。"
+    },
+    {
+      "pageId": "deployments",
+      "severity": "P2",
+      "message": "页面状态覆盖不足或未能静态识别完整 loading/error/empty。",
+      "action": "补齐状态组件，必要时使用 state-* 设计图作为参考。"
+    }
+  ],
   "overlays": [
     {
       "id": "dropdown-user-menu",
@@ -1428,13 +1442,13 @@
       "hostFiles": [
         "web/ui/src/pages/ForensicsWorkbenchPage.tsx"
       ],
-      "kindFound": true,
+      "kindFound": false,
       "semanticHintFound": true,
       "tokenHits": [
         "forensics",
         "task"
       ],
-      "status": "confirmed"
+      "status": "partial"
     },
     {
       "id": "drawer-campaign-detail",
@@ -1540,13 +1554,13 @@
       "hostFiles": [
         "web/ui/src/pages/ForensicsWorkbenchPage.tsx"
       ],
-      "kindFound": true,
+      "kindFound": false,
       "semanticHintFound": true,
       "tokenHits": [
         "pcap",
         "download"
       ],
-      "status": "confirmed"
+      "status": "partial"
     },
     {
       "id": "drawer-session-replay",
@@ -1559,8 +1573,7 @@
       "kindFound": true,
       "semanticHintFound": true,
       "tokenHits": [
-        "session",
-        "replay"
+        "session"
       ],
       "status": "confirmed"
     },
@@ -1605,7 +1618,8 @@
       "kindFound": true,
       "semanticHintFound": true,
       "tokenHits": [
-        "asset"
+        "asset",
+        "history"
       ],
       "status": "confirmed"
     },
@@ -1759,13 +1773,12 @@
       "hostFiles": [
         "web/ui/src/pages/DeploymentManagementPage.tsx"
       ],
-      "kindFound": true,
+      "kindFound": false,
       "semanticHintFound": true,
       "tokenHits": [
-        "deployment",
-        "create"
+        "deployment"
       ],
-      "status": "confirmed"
+      "status": "partial"
     },
     {
       "id": "modal-deployment-rollback",
@@ -1775,13 +1788,12 @@
       "hostFiles": [
         "web/ui/src/pages/DeploymentManagementPage.tsx"
       ],
-      "kindFound": true,
+      "kindFound": false,
       "semanticHintFound": true,
       "tokenHits": [
-        "deployment",
-        "rollback"
+        "deployment"
       ],
-      "status": "confirmed"
+      "status": "partial"
     },
     {
       "id": "drawer-model-detail",
@@ -2003,14 +2015,14 @@
       "hostFiles": [
         "web/ui/src/pages/ForensicsWorkbenchPage.tsx"
       ],
-      "kindFound": true,
+      "kindFound": false,
       "semanticHintFound": true,
       "tokenHits": [
         "forensics",
         "evidence",
         "export"
       ],
-      "status": "confirmed"
+      "status": "partial"
     },
     {
       "id": "drawer-compliance-gate-detail",
@@ -2209,9 +2221,9 @@
       "pageCount": 7,
       "overlayCount": 17,
       "missingOverlayCount": 0,
-      "partialOverlayCount": 0,
+      "partialOverlayCount": 3,
       "pageGapCount": 0,
-      "nextAction": "进入截图回归和业务链路验收。"
+      "nextAction": "按本批次缺口逐页补齐状态、危险动作保护和浮层触发。"
     },
     {
       "id": "03-collection-asset",
@@ -2229,9 +2241,9 @@
       "pageCount": 6,
       "overlayCount": 11,
       "missingOverlayCount": 0,
-      "partialOverlayCount": 0,
-      "pageGapCount": 0,
-      "nextAction": "进入截图回归和业务链路验收。"
+      "partialOverlayCount": 2,
+      "pageGapCount": 2,
+      "nextAction": "按本批次缺口逐页补齐状态、危险动作保护和浮层触发。"
     },
     {
       "id": "05-audit-config",
@@ -2244,5 +2256,48 @@
       "nextAction": "进入截图回归和业务链路验收。"
     }
   ],
-  "fixQueue": []
+  "fixQueue": [
+    {
+      "priority": "P1",
+      "area": "Page",
+      "target": "deployments",
+      "issue": "页面未能静态证明使用 React Query + service 接入契约 API。",
+      "action": "补齐 useQuery/service hook，保留 loading/error/empty 状态。"
+    },
+    {
+      "priority": "P2",
+      "area": "Page",
+      "target": "deployments",
+      "issue": "页面状态覆盖不足或未能静态识别完整 loading/error/empty。",
+      "action": "补齐状态组件，必要时使用 state-* 设计图作为参考。"
+    },
+    {
+      "priority": "P2",
+      "area": "Overlay",
+      "target": "/forensics",
+      "issue": "3 个浮层只有部分静态信号：modal-forensics-task, popconfirm-pcap-download, modal-forensics-evidence-export",
+      "action": "补容器：modal-forensics-task -> Modal；popconfirm-pcap-download -> Popconfirm；modal-forensics-evidence-export -> Modal。目标文件：web/ui/src/pages/ForensicsWorkbenchPage.tsx。完成后做截图验收，并保留权限提示、影响范围和审计 trace。"
+    },
+    {
+      "priority": "P2",
+      "area": "Overlay",
+      "target": "/deployments",
+      "issue": "2 个浮层只有部分静态信号：modal-deployment-create, modal-deployment-rollback",
+      "action": "补容器：modal-deployment-create -> Modal；modal-deployment-rollback -> Modal。目标文件：web/ui/src/pages/DeploymentManagementPage.tsx。完成后做截图验收，并保留权限提示、影响范围和审计 trace。"
+    },
+    {
+      "priority": "P3",
+      "area": "Batch",
+      "target": "02-threat-forensics",
+      "issue": "批次仍有页面缺口 0、缺失浮层 0、部分浮层 3",
+      "action": "按本批次缺口逐页补齐状态、危险动作保护和浮层触发。"
+    },
+    {
+      "priority": "P3",
+      "area": "Batch",
+      "target": "04-detection-ops",
+      "issue": "批次仍有页面缺口 2、缺失浮层 0、部分浮层 2",
+      "action": "按本批次缺口逐页补齐状态、危险动作保护和浮层触发。"
+    }
+  ]
 }

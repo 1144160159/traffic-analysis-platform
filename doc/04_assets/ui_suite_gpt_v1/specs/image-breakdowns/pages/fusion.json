@@ -18,7 +18,7 @@
     "width": 1920,
     "height": 1080
   },
-  "status": "evidence-ready",
+  "status": "pixel-accepted",
   "route": "/fusion",
   "host_route": null,
   "title": "数据融合",
@@ -26,7 +26,7 @@
     "layout": "Business AppShell page screenshot",
     "business_focus": "Topbar/sidebar/bottombar must remain aligned to screen.png while the central business area carries page-specific content.",
     "current_state": "Current target state is the visible data-ready page state captured in the canonical PNG.",
-    "acceptance_scope": "Pixel acceptance proves exact target PNG reproduction by Windows Chrome screenshot and diff. Semantic production implementation remains guided by this breakdown record."
+    "acceptance_scope": "Acceptance pairs the canonical PNG with a same-viewport Windows Chrome production screenshot, global and regional diff gates, business interaction checks, and runtime-error checks."
   },
   "regions": [
     {
@@ -1449,17 +1449,28 @@
       "Ant Design theme override",
       "ECharts dark theme tokens"
     ],
-    "mapping_note": "The evidence screenshot is a deterministic reference-raster implementation for pixel proof; the breakdown arrays map the same image to semantic frontend units.",
-    "note": "implementation.png is captured from the real APISIX/Web UI production route through Windows Chrome CDP. It is not a raster replay of target.png.",
+    "mapping_note": "The breakdown arrays map the canonical reference into semantic frontend units; r625 uses the same 1920x1080 comparison input and adds real 1536x864 and 1366x768 responsive geometry gates.",
+    "note": "implementation.png and r625 responsive/overlay evidence are captured from the real APISIX/Web UI production route through Windows Chrome CDP. They are not raster replays of target.png.",
     "resolved_path": "/fusion",
     "route_state": {}
   },
   "evidence": {
     "target": "evidence/ui-image-breakdowns/pages/fusion/target.png",
     "implementation": "evidence/ui-image-breakdowns/pages/fusion/implementation.png",
+    "responsive_1536": "evidence/ui-image-breakdowns/pages/fusion/fusion-r625-responsive-1536.png",
+    "responsive_1366": "evidence/ui-image-breakdowns/pages/fusion/fusion-r625-responsive-1366.png",
+    "rule_modal": "evidence/ui-image-breakdowns/pages/fusion/fusion-r625-rule-modal.png",
+    "conflict_detail": "evidence/ui-image-breakdowns/pages/fusion/fusion-r625-conflict-detail.png",
+    "post_actions": "evidence/ui-image-breakdowns/pages/fusion/fusion-r625-post-actions.png",
+    "repair_retained": "evidence/ui-image-breakdowns/pages/fusion/fusion-r625-repair-retained.png",
+    "comparison": "evidence/ui-image-breakdowns/pages/fusion/fusion-r625-comparison.png",
+    "business_comparison": "evidence/ui-image-breakdowns/pages/fusion/fusion-r625-business-comparison.png",
+    "source_pipeline_comparison": "evidence/ui-image-breakdowns/pages/fusion/fusion-r625-source-pipeline-comparison.png",
+    "bottom_comparison": "evidence/ui-image-breakdowns/pages/fusion/fusion-r625-bottom-workbench-comparison.png",
     "diff": "evidence/ui-image-breakdowns/pages/fusion/diff.png",
     "regions_overlay": "evidence/ui-image-breakdowns/pages/fusion/regions-overlay.png",
     "metrics": "evidence/ui-image-breakdowns/pages/fusion/metrics.json",
+    "regional_metrics": "evidence/ui-image-breakdowns/pages/fusion/fusion-r625-visual-metrics.json",
     "measurement": "evidence/ui-image-breakdowns/pages/fusion/measurement.json",
     "text_ocr": "evidence/ui-image-breakdowns/pages/fusion/text-ocr.txt",
     "verification": "evidence/ui-image-breakdowns/pages/fusion/verification.json",
@@ -1467,35 +1478,57 @@
       "width": 1920,
       "height": 1080
     },
-    "url": "http://10.0.5.8:30180/fusion?windowsCdpEvidenceTs=1783853920500#codex_smoke_token=<redacted>",
-    "render_source": "evidence/ui-image-breakdowns/pages/fusion/target.png",
+    "url": "http://10.0.5.8:30180/fusion?fusionCdpTs=1784732729536#codex_smoke_token=<redacted>",
+    "render_source": "evidence/ui-image-breakdowns/pages/fusion/implementation.png",
     "capture_meta": "evidence/ui-image-breakdowns/pages/fusion/capture-meta.json",
     "cdp_version": "evidence/ui-image-breakdowns/pages/fusion/cdp-version.json",
     "cdp_list": "evidence/ui-image-breakdowns/pages/fusion/cdp-list.json",
     "evidence_mode": "production-route",
-    "production_route_report": "evidence/ui-image-breakdowns/pages/fusion/production-route-report.json",
-    "final_url": "http://10.0.5.8:30180/fusion?windowsCdpEvidenceTs=1783853920500"
+    "production_route_report": "doc/02_acceptance/02-regression/fusion-interactions-r625.json",
+    "contract_report": "doc/02_acceptance/runs/20260722-fusion-r625-contract/live-fusion-threat-intel-20260722-fusion-r625-contract-summary.json",
+    "review_adjudication": "doc/02_acceptance/02-regression/fusion-review-adjudication-latest.json",
+    "final_url": "http://10.0.5.8:30180/fusion?fusionCdpTs=1784732729536"
   },
   "evidence_dir": "evidence/ui-image-breakdowns/pages/fusion",
   "differences": [
     {
       "type": "production-evidence-scope",
       "location": "/fusion",
-      "current": "implementation.png is captured from the real APISIX/Web UI route in Windows Chrome CDP",
+      "current": "implementation.png plus r625 responsive and overlay screenshots are captured from the real APISIX/Web UI route in Windows Chrome CDP",
       "expected": "no target.png raster replay is used as implementation evidence",
       "status": "documented"
+    },
+    {
+      "type": "production-runtime",
+      "location": "/fusion",
+      "current": "r625 Windows Chrome assertions report no business HTTP failures, request failures, console errors or page errors; 1920, 1536 and 1366 geometry is contained with zero node overlap and no horizontal overflow",
+      "expected": "no 4xx/5xx, requestfailed, console/pageerror, overflow, or visible geometry issue",
+      "status": "resolved",
+      "evidence": "doc/02_acceptance/02-regression/fusion-interactions-r625.json"
+    },
+    {
+      "type": "visual-diff",
+      "location": "/fusion",
+      "current": "global mismatch 0.1122337963 and all six locked regional gates pass without threshold relaxation",
+      "expected": "global mismatch <= 0.125 and every locked regional gate passes",
+      "status": "resolved",
+      "evidence": "evidence/ui-image-breakdowns/pages/fusion/fusion-r625-visual-metrics.json"
     }
   ],
-  "accepted": false,
+  "accepted": true,
   "visible_chrome_rerun": {
-    "status": "required",
-    "reason": "Pages are being restarted after fixing Windows Chrome CDP from SessionId=0 background Chrome to SessionId=1 interactive Chrome.",
+    "status": "complete",
+    "reason": "r616 was verified in the visible interactive Windows Chrome session through the Xshell 9224 tunnel at 1920x1080, 1536x864 and 1366x768 non-fullscreen viewports.",
     "required_cdp_url": "http://127.0.0.1:9224",
     "required_windows_session_id": 1,
-    "started_at": "2026-07-04T15:44:20.703Z"
+    "started_at": "2026-07-04T15:44:20.703Z",
+    "completed_at": "2026-07-22T12:38:25.287Z",
+    "browser": "Chrome/150.0.7871.129",
+    "evidence": "doc/02_acceptance/02-regression/fusion-interactions-r616.json"
   },
   "review_gate": {
-    "status": "requires-new-independent-subagent-review",
-    "reason": "Old page acceptance predates the visible Windows Chrome fix and cannot close the restarted pages gate."
+    "status": "accepted",
+    "reason": "Independent logic and layout reviews both returned ACCEPT; root adjudication returned ACCEPT with P0/P1/P2 equal to zero and raw P3 findings retained.",
+    "evidence": "doc/02_acceptance/02-regression/fusion-review-adjudication-latest.json"
   }
 }

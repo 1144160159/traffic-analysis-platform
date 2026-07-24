@@ -277,6 +277,8 @@ function routeState(record, route) {
       state.query.set('impact', map[slug]);
       state.query.set('__codex_page_id', id);
     }
+  } else if (id.startsWith('whitelist-condition-') || id.startsWith('whitelist-expiry-')) {
+    state.query.set('__codex_page_id', id);
   } else if (id.startsWith('baselines-')) {
     const slug = id.replace(/^baselines-/, '');
     const map = {
@@ -588,6 +590,15 @@ async function main() {
       visible_bad_geometry: visibleBadGeometry,
     };
   });
+  // The user's Windows Chrome has an injected extension that requests a public
+  // IP helper on every navigation. Keep that evidence, but do not attribute its
+  // network failure or empty `Object` exception to the application runtime.
+  const externalRequestFailures = requestFailures.filter((item) => item.url.startsWith('https://api.yhchj.com/'));
+  const appRequestFailures = requestFailures.filter((item) => !item.url.startsWith('https://api.yhchj.com/'));
+  const externalPageErrors = externalRequestFailures.length
+    ? pageErrors.filter((item) => item.message === 'Object')
+    : [];
+  const appPageErrors = pageErrors.filter((item) => !externalPageErrors.includes(item));
 
   const routeReport = {
     target_id: record.id,
@@ -600,9 +611,13 @@ async function main() {
     bad_responses: badResponses,
     resource_requests: resourceRequests.slice(0, 300),
     forbidden_target_resource_requests: forbiddenTargetResourceRequests,
-    request_failures: requestFailures,
+    request_failures: appRequestFailures,
     console_errors: consoleErrors,
-    page_errors: pageErrors,
+    page_errors: appPageErrors,
+    external_browser_noise: {
+      request_failures: externalRequestFailures,
+      page_errors: externalPageErrors,
+    },
     metrics: {
       ...pageMetrics,
       final_url: redactUrl(pageMetrics.final_url),
@@ -660,8 +675,12 @@ async function main() {
     runtime_reasons: runtime.reasons,
     visual_diff: visualDiff,
     console_errors: consoleErrors,
-    page_errors: pageErrors,
-    request_failures: requestFailures,
+    page_errors: appPageErrors,
+    request_failures: appRequestFailures,
+    external_browser_noise: {
+      request_failures: externalRequestFailures,
+      page_errors: externalPageErrors,
+    },
     bad_responses: badResponses,
     forbidden_target_resource_requests: forbiddenTargetResourceRequests,
     screenshot: repoRel(implementation),

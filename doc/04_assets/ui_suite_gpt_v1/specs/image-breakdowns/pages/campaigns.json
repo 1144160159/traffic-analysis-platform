@@ -1467,14 +1467,14 @@
       "width": 1920,
       "height": 1080
     },
-    "url": "http://10.0.5.8:30180/campaigns?windowsCdpEvidenceTs=1783853655228#codex_smoke_token=<redacted>",
+    "url": "http://10.0.5.8:30180/campaigns?windowsCdpEvidenceTs=1784832329517#codex_smoke_token=<redacted>",
     "render_source": "evidence/ui-image-breakdowns/pages/campaigns/target.png",
     "capture_meta": "evidence/ui-image-breakdowns/pages/campaigns/capture-meta.json",
     "cdp_version": "evidence/ui-image-breakdowns/pages/campaigns/cdp-version.json",
     "cdp_list": "evidence/ui-image-breakdowns/pages/campaigns/cdp-list.json",
     "evidence_mode": "production-route",
     "production_route_report": "evidence/ui-image-breakdowns/pages/campaigns/production-route-report.json",
-    "final_url": "http://10.0.5.8:30180/campaigns?windowsCdpEvidenceTs=1783853655228"
+    "final_url": "http://10.0.5.8:30180/campaigns?windowsCdpEvidenceTs=1784832329517"
   },
   "evidence_dir": "evidence/ui-image-breakdowns/pages/campaigns",
   "differences": [
