@@ -8,6 +8,8 @@ LOG_DIR="${LOG_DIR:-doc/02_acceptance/runs/$(date +%Y%m%d%H%M%S)-settings-govern
 RUN_ID="${RUN_ID:-$(date +%Y%m%d%H%M%S)-settings-governance-preflight}"
 REGRESSION_DIR="${REGRESSION_DIR:-doc/02_acceptance/02-regression}"
 KUBECTL="${KUBECTL:-kubectl}"
+KUBECTL_SERVER="${KUBECTL_SERVER:-}"
+KUBECTL_TLS_SERVER_NAME="${KUBECTL_TLS_SERVER_NAME:-}"
 ALLOW_BLOCKERS="${ALLOW_BLOCKERS:-false}"
 JWT_SECRET_NAMESPACE="${JWT_SECRET_NAMESPACE:-traffic-analysis}"
 JWT_SECRET_NAME="${JWT_SECRET_NAME:-traffic-credentials}"
@@ -37,7 +39,10 @@ need_cmd() {
 }
 
 kctl() {
-  env -u HTTP_PROXY -u HTTPS_PROXY -u ALL_PROXY -u http_proxy -u https_proxy -u all_proxy "$KUBECTL" "$@"
+  local kubectl_args=()
+  [[ -n "$KUBECTL_SERVER" ]] && kubectl_args+=("--server=$KUBECTL_SERVER")
+  [[ -n "$KUBECTL_TLS_SERVER_NAME" ]] && kubectl_args+=("--tls-server-name=$KUBECTL_TLS_SERVER_NAME")
+  env -u HTTP_PROXY -u HTTPS_PROXY -u ALL_PROXY -u http_proxy -u https_proxy -u all_proxy "$KUBECTL" "${kubectl_args[@]}" "$@"
 }
 
 new_tmp() {
@@ -366,11 +371,17 @@ OTHER_USER_ID="$(ensure_user "$OTHER_TENANT" "$OTHER_USERNAME" | grep -E '^[0-9a
 
 ADMIN_TOKEN="$(make_token "$ADMIN_USERNAME" "$TENANT" "$ADMIN_USER_ID" '["admin"]' '["*","admin:*","admin:read","admin:write","token:read","token:write","audit:read","user:read"]')"
 VIEWER_TOKEN="$(make_token "$VIEWER_USERNAME" "$TENANT" "$VIEWER_USER_ID" '["viewer"]' '["alert:read"]')"
+TOKEN_WRITER_TOKEN="$(make_token "$VIEWER_USERNAME" "$TENANT" "$VIEWER_USER_ID" '["token-operator"]' '["token:write"]')"
+ADMIN_READER_TOKEN="$(make_token "$VIEWER_USERNAME" "$TENANT" "$VIEWER_USER_ID" '["settings-auditor"]' '["admin:read"]')"
+ADMIN_WRITER_TOKEN="$(make_token "$VIEWER_USERNAME" "$TENANT" "$VIEWER_USER_ID" '["settings-operator"]' '["admin:write"]')"
+ADMIN_WILDCARD_TOKEN="$(make_token "$VIEWER_USERNAME" "$TENANT" "$VIEWER_USER_ID" '["settings-admin"]' '["admin:*"]')"
 OTHER_TOKEN="$(make_token "$OTHER_USERNAME" "$OTHER_TENANT" "$OTHER_USER_ID" '["admin"]' '["*","admin:*","admin:read","admin:write","token:read","token:write","audit:read","user:read"]')"
 
-if grep -q "settings-token-create" web/ui/src/services/pageApiPlans.ts \
+if grep -q "settings-system-save" web/ui/src/services/pageApiPlans.ts \
+  && grep -q "settings-security-audit" web/ui/src/services/pageApiPlans.ts \
   && grep -q "settings-preferences-save" web/ui/src/services/pageApiPlans.ts \
-  && grep -q "settings-token-regenerate" web/ui/src/services/pageApiPlans.ts; then
+  && grep -q "settings-token-regenerate" web/ui/src/services/pageApiPlans.ts \
+  && grep -q "fetchSystemSettingsWorkbench" web/ui/src/services/settingsGovernanceApi.ts; then
   json_log "contract" "frontend settings action contract present" "info" true "ok" "settings actions declared" "web/ui/src/services/pageApiPlans.ts"
 else
   json_log "contract" "frontend settings action contract present" "blocker" false "missing" "settings action contract missing" "web/ui/src/services/pageApiPlans.ts"
@@ -384,6 +395,66 @@ assert_json "probe scope catalog includes defaults" "$LOG_DIR/probe-token-scopes
 
 curl_json "token list readable" "GET" "/api/v1/tokens?limit=5" "200" "$ADMIN_TOKEN" "$LOG_DIR/tokens-list.json"
 assert_json "token list response shape" "$LOG_DIR/tokens-list.json" '(.tokens | type == "array") and (.total | type == "number")'
+
+curl_json "tenant system settings workbench readable" "GET" "/api/v1/auth/system-settings" "200" "$ADMIN_TOKEN" "$LOG_DIR/system-settings-initial.json"
+assert_json "tenant system settings workbench uses tenant-scoped persisted model" "$LOG_DIR/system-settings-initial.json" --arg tenant "$TENANT" '.tenant_id == $tenant and (.revision | type == "number") and (.settings.sites | length >= 1) and (.settings.retention_policies | length >= 1) and (.settings.integrations | length >= 1) and (.roles | type == "array") and (.tokens.active | type == "number")'
+
+INITIAL_SYSTEM_REVISION="$(jq -r '.revision' "$LOG_DIR/system-settings-initial.json")"
+SYSTEM_SETTINGS_SAVE_PAYLOAD="$(jq -c '{expected_revision:.revision,settings:.settings}' "$LOG_DIR/system-settings-initial.json")"
+curl_json "tenant system settings saved with optimistic revision" "PUT" "/api/v1/auth/system-settings" "200" "$ADMIN_TOKEN" "$LOG_DIR/system-settings-saved.json" "$SYSTEM_SETTINGS_SAVE_PAYLOAD"
+assert_json "tenant system settings revision advanced" "$LOG_DIR/system-settings-saved.json" --argjson previous "$INITIAL_SYSTEM_REVISION" '.revision == ($previous + 1) and .tenant_id == "default"'
+SYSTEM_SETTINGS_REVISION="$(jq -r '.revision' "$LOG_DIR/system-settings-saved.json")"
+
+curl_json "stale tenant system settings revision rejected" "PUT" "/api/v1/auth/system-settings" "409" "$ADMIN_TOKEN" "$LOG_DIR/system-settings-stale.json" "$SYSTEM_SETTINGS_SAVE_PAYLOAD" || true
+assert_json "stale tenant system settings response is version conflict" "$LOG_DIR/system-settings-stale.json" '(.code // .error.code // "") == "BIZ_3005"'
+
+connection_payload="$(jq -nc --argjson revision "$SYSTEM_SETTINGS_REVISION" '{expected_revision:$revision}')"
+curl_json "tenant integration connection test persists result" "POST" "/api/v1/auth/system-settings/actions/connection-test" "200" "$ADMIN_TOKEN" "$LOG_DIR/system-settings-connection-test.json" "$connection_payload"
+assert_json "connection test advances revision reports measured status and hides secrets" "$LOG_DIR/system-settings-connection-test.json" --argjson previous "$SYSTEM_SETTINGS_REVISION" '(.status == "success" or .status == "warning") and .revision == ($previous + 1) and (.integrations | length >= 1) and ([.integrations[].status] | all(. == "healthy" or . == "degraded" or . == "disabled")) and ([.. | objects | has("password") or has("token") or has("secret")] | any | not)'
+SYSTEM_SETTINGS_REVISION="$(jq -r '.revision' "$LOG_DIR/system-settings-connection-test.json")"
+
+single_connection_payload="$(jq -nc --argjson revision "$SYSTEM_SETTINGS_REVISION" '{expected_revision:$revision,target_id:"apisix"}')"
+curl_json "single integration connection test persists one measured result" "POST" "/api/v1/auth/system-settings/actions/test-integration" "200" "$ADMIN_TOKEN" "$LOG_DIR/system-settings-single-connection-test.json" "$single_connection_payload"
+assert_json "single integration connection test advances revision" "$LOG_DIR/system-settings-single-connection-test.json" --argjson previous "$SYSTEM_SETTINGS_REVISION" '.revision == ($previous + 1) and .action == "test-integration"'
+SYSTEM_SETTINGS_REVISION="$(jq -r '.revision' "$LOG_DIR/system-settings-single-connection-test.json")"
+
+review_payload="$(jq -nc --argjson revision "$SYSTEM_SETTINGS_REVISION" '{expected_revision:$revision}')"
+curl_json "tenant scope review is truthful and non-mutating" "POST" "/api/v1/auth/system-settings/actions/scope-review" "200" "$ADMIN_TOKEN" "$LOG_DIR/system-settings-scope-review.json" "$review_payload"
+assert_json "scope review does not claim synchronization" "$LOG_DIR/system-settings-scope-review.json" --argjson revision "$SYSTEM_SETTINGS_REVISION" '.action == "scope-review" and .revision == $revision and (.message | contains("未执行权限变更")) and (.roles | type == "array") and (.tokens | type == "object")'
+
+audit_payload="$(jq -nc --argjson revision "$SYSTEM_SETTINGS_REVISION" '{expected_revision:$revision}')"
+curl_json "tenant security audit evaluates persisted settings" "POST" "/api/v1/auth/system-settings/actions/security-audit" "200" "$ADMIN_TOKEN" "$LOG_DIR/system-settings-security-audit.json" "$audit_payload"
+assert_json "security audit returns explainable result" "$LOG_DIR/system-settings-security-audit.json" '.action == "security-audit" and (.status == "success" or .status == "warning") and (.message | length > 0) and (.findings | type == "array")'
+
+curl_json "system settings impact is auditable" "GET" "/api/v1/auth/system-settings/impact" "200" "$ADMIN_TOKEN" "$LOG_DIR/system-settings-impact.json"
+assert_json "impact response states scope permission risk and audit action" "$LOG_DIR/system-settings-impact.json" '.tenant_id == "default" and (.affected_scopes | length >= 4) and .approval == "admin:write" and .audit_action == "system_settings_update" and (.risk | length > 0)'
+
+curl_json "viewer cannot read system settings" "GET" "/api/v1/auth/system-settings" "403" "$VIEWER_TOKEN" "$LOG_DIR/system-settings-viewer-denied.json" || true
+assert_json "viewer system settings denial is permission scoped" "$LOG_DIR/system-settings-viewer-denied.json" '(.code // .error.code // "") == "AUTH_1004"'
+
+curl_json "admin reader can read system settings" "GET" "/api/v1/auth/system-settings" "200" "$ADMIN_READER_TOKEN" "$LOG_DIR/system-settings-admin-reader.json"
+curl_json "admin reader cannot mutate system settings" "PUT" "/api/v1/auth/system-settings" "403" "$ADMIN_READER_TOKEN" "$LOG_DIR/system-settings-admin-reader-write-denied.json" "$SYSTEM_SETTINGS_SAVE_PAYLOAD" || true
+assert_json "admin reader write denial is permission scoped" "$LOG_DIR/system-settings-admin-reader-write-denied.json" '(.code // .error.code // "") == "AUTH_1004"'
+
+curl_json "other tenant reads only its own settings workbench" "GET" "/api/v1/auth/system-settings" "200" "$OTHER_TOKEN" "$LOG_DIR/system-settings-other-tenant.json" "" "$OTHER_TENANT"
+assert_json "other tenant workbench is isolated" "$LOG_DIR/system-settings-other-tenant.json" --arg tenant "$OTHER_TENANT" '.tenant_id == $tenant and .tenant_id != "default"'
+
+assert_psql_count "tenant system settings persisted in PostgreSQL" \
+  "SELECT count(*) FROM tenant_system_settings WHERE tenant_id = '$TENANT' AND revision = $SYSTEM_SETTINGS_REVISION AND jsonb_array_length(settings->'integrations') >= 1;" \
+  "pg-tenant-system-settings-count.txt"
+wait_for_audit "system settings update audit row exists" "system_settings_update" "$TENANT" "pg-system-settings-update-audit-count.txt"
+wait_for_audit "connection test audit row exists" "system_settings_connection_test" "$TENANT" "pg-system-settings-connection-audit-count.txt"
+CONNECTION_STATUS_SQL="$(sql_escape "$(jq -r '.status' "$LOG_DIR/system-settings-connection-test.json")")"
+assert_psql_count "connection test audit status matches measured response" \
+  "SELECT count(*) FROM audit_logs WHERE tenant_id = '$TENANT' AND action = 'system_settings_connection_test' AND detail->>'status' = '$CONNECTION_STATUS_SQL';" \
+  "pg-system-settings-connection-audit-status-count.txt"
+wait_for_audit "single integration test audit row exists" "system_settings_test_integration" "$TENANT" "pg-system-settings-single-connection-audit-count.txt"
+assert_psql_count "single integration audit records exactly one tested target" \
+  "SELECT count(*) FROM audit_logs WHERE tenant_id = '$TENANT' AND action = 'system_settings_test_integration' AND detail->>'target_id' = 'apisix' AND detail->>'tested_count' = '1';" \
+  "pg-system-settings-single-connection-audit-detail-count.txt"
+wait_for_audit "scope review audit row exists" "system_settings_scope_review" "$TENANT" "pg-system-settings-scope-review-audit-count.txt"
+wait_for_audit "security audit row exists" "system_settings_security_audit" "$TENANT" "pg-system-settings-security-audit-count.txt"
+wait_for_audit "impact view audit row exists" "system_settings_impact_view" "$TENANT" "pg-system-settings-impact-audit-count.txt"
 
 settings_payload="$(jq -nc '{page_size:50,refresh_interval:30,default_time_range:"last_24h",timezone:"Asia/Shanghai",show_ws_status:true}')"
 curl_json "display settings saved" "PUT" "/api/v1/auth/settings/display" "200" "$ADMIN_TOKEN" "$LOG_DIR/settings-display-save.json" "$settings_payload"
@@ -404,6 +475,36 @@ viewer_body="$LOG_DIR/token-create-viewer-denied.json"
 viewer_payload="$(jq -nc --arg name "codex-settings-denied-$RUN_ID" '{name:$name,scopes:["alert:read"],expires_in_sec:60}')"
 curl_json "viewer cannot create token" "POST" "/api/v1/tokens" "403" "$VIEWER_TOKEN" "$viewer_body" "$viewer_payload" || true
 assert_json "viewer token create denial mentions permission" "$viewer_body" '((.error.message // .message // "")) | contains("Permission denied")'
+
+admin_writer_body="$LOG_DIR/token-create-admin-writer-denied.json"
+curl_json "settings admin writer cannot create token without token write" "POST" "/api/v1/tokens" "403" "$ADMIN_WRITER_TOKEN" "$admin_writer_body" "$viewer_payload" || true
+assert_json "settings admin writer token denial is permission scoped" "$admin_writer_body" '((.error.message // .message // "")) | contains("token:write required")'
+
+admin_wildcard_body="$LOG_DIR/token-create-admin-wildcard-denied.json"
+curl_json "admin domain wildcard cannot create token without token write" "POST" "/api/v1/tokens" "403" "$ADMIN_WILDCARD_TOKEN" "$admin_wildcard_body" "$viewer_payload" || true
+assert_json "admin domain wildcard token denial is permission scoped" "$admin_wildcard_body" '((.error.message // .message // "")) | contains("token:write required")'
+
+delegation_body="$LOG_DIR/token-create-delegation-denied.json"
+delegation_payload="$(jq -nc --arg name "codex-settings-delegation-denied-$RUN_ID" '{name:$name,scopes:["admin:*"] ,expires_in_sec:60}')"
+curl_json "token writer cannot delegate admin scope" "POST" "/api/v1/tokens" "403" "$TOKEN_WRITER_TOKEN" "$delegation_body" "$delegation_payload" || true
+assert_json "scope delegation denial is explicit" "$delegation_body" '((.error.message // .message // "")) | contains("requested scopes exceed caller permissions")'
+
+probe_delegation_body="$LOG_DIR/probe-token-create-delegation-denied.json"
+probe_delegation_payload="$(jq -nc --arg probe "codex-probe-delegation-$RUN_ID" '{probe_id:$probe,name:$probe}')"
+curl_json "token writer cannot mint probe credential" "POST" "/api/v1/tokens/probe" "403" "$TOKEN_WRITER_TOKEN" "$probe_delegation_body" "$probe_delegation_payload" || true
+assert_json "probe scope delegation denial is explicit" "$probe_delegation_body" '((.error.message // .message // "")) | contains("probe scopes exceed caller permissions")'
+
+protected_body="$(new_tmp)"
+protected_payload="$(jq -nc --arg name "codex-settings-protected-$RUN_ID" '{name:$name,description:"scope ceiling target",scopes:["admin:read"],expires_in_sec:300}')"
+curl_json "admin creates protected scope token" "POST" "/api/v1/tokens" "201" "$ADMIN_TOKEN" "$protected_body" "$protected_payload"
+if jq -e '.token_id' "$protected_body" >/dev/null 2>&1; then
+  PROTECTED_TOKEN_ID="$(jq -r '.token_id' "$protected_body")"
+  TOKEN_IDS+=("$PROTECTED_TOKEN_ID")
+  protected_update_body="$LOG_DIR/token-update-protected-denied.json"
+  protected_update_payload='{"description":"unauthorized metadata rewrite"}'
+  curl_json "token writer cannot modify higher scope token metadata" "PUT" "/api/v1/tokens/$PROTECTED_TOKEN_ID" "403" "$TOKEN_WRITER_TOKEN" "$protected_update_body" "$protected_update_payload" || true
+  assert_json "target token scope ceiling denial is explicit" "$protected_update_body" '((.error.message // .message // "")) | contains("token scopes exceed caller permissions")'
+fi
 
 create_body="$(new_tmp)"
 created_name="codex-settings-token-$RUN_ID"

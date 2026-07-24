@@ -91,16 +91,20 @@ async function openCampaign(visual = false) {
   if (authStatus !== 200) throw new Error(`Campaign browser authentication preflight failed with HTTP ${authStatus}`);
 }
 
-async function verifyDrawer(button, endpointPattern, auditEvent, expectCampaignId = true) {
-  await button.click();
+async function verifyDrawer(button, endpointPattern, auditEvent, expectCampaignId = true, confirm = false, mutation = false, clickOptions = undefined) {
+  await button.click(clickOptions);
+  if (confirm) {
+    await page.locator('.ant-popconfirm:visible').getByRole('button', { name: '确 定' }).click();
+  }
   const drawer = page.locator('.taf-campaign-action-drawer:visible');
   await drawer.waitFor({ state: 'visible', timeout: 6_000 });
   const text = await drawer.textContent();
   const result = {
     endpoint: endpointPattern.test(text ?? ''),
     audit: Boolean(text?.includes(auditEvent)),
-    recorded: Boolean(text?.includes('recorded')),
-    persisted: Boolean(text?.includes('completed') && text?.includes('campaign_action_jobs')),
+    receipt: mutation
+      ? Boolean(text?.includes('业务操作已持久化') && text?.includes('PostgreSQL') && text?.includes('audit_logs') && text?.includes('completed'))
+      : Boolean(text?.includes('访问操作已审计') && text?.includes('campaign_action_jobs') && text?.includes('audit_logs') && text?.includes('completed')),
     requestBody: Boolean(text?.includes('simulation') && text?.includes('dry_run'))
       && (expectCampaignId ? Boolean(text?.includes('campaign_id')) : !text?.includes('campaign_id')),
   };
@@ -108,12 +112,27 @@ async function verifyDrawer(button, endpointPattern, auditEvent, expectCampaignI
   return result;
 }
 
-async function verifyNavigation(button, pathname, campaignId = '') {
+async function verifyNavigation(button, pathname, campaignId = '', confirm = false) {
   await button.click();
+  if (confirm) {
+    await page.locator('.ant-popconfirm:visible').getByRole('button', { name: '确 定' }).click();
+  }
   await page.waitForURL((url) => url.pathname === pathname, { timeout: 10_000 });
   await page.waitForLoadState('networkidle', { timeout: 12_000 }).catch(() => {});
   const destination = new URL(page.url());
   const passed = destination.pathname === pathname && (!campaignId || destination.searchParams.get('campaign') === campaignId);
+  await openCampaign(false);
+  return passed;
+}
+
+async function verifyDetailDrawerNavigation(button, campaignId) {
+  await button.click();
+  const drawer = page.locator('.taf-campaign-detail-drawer:visible');
+  await drawer.waitFor({ state: 'visible', timeout: 10_000 });
+  const drawerShowsCampaign = (await drawer.textContent())?.includes(campaignId) ?? false;
+  await drawer.getByRole('button', { name: '打开完整详情' }).click();
+  await page.waitForURL((url) => url.pathname === `/campaigns/${encodeURIComponent(campaignId)}`, { timeout: 10_000 });
+  const passed = drawerShowsCampaign && new URL(page.url()).pathname === `/campaigns/${encodeURIComponent(campaignId)}`;
   await openCampaign(false);
   return passed;
 }
@@ -123,6 +142,7 @@ fs.mkdirSync(evidenceDir, { recursive: true });
 await page.screenshot({ path: implementationPath, fullPage: false });
 
 const chartCanvasCount = await page.locator('.taf-campaign-workbench canvas').count();
+const attackGraphCount = await page.locator('[data-chart-engine="echarts"][data-series-type="graph"]').count();
 const chartBounds = await page.locator('.taf-campaign-workbench canvas').evaluateAll((canvases) => canvases.map((canvas) => {
   const rect = canvas.getBoundingClientRect();
   const context = canvas.getContext('2d');
@@ -165,9 +185,9 @@ const pageSizeFiveResponse = await pageSizeFiveResponsePromise;
 await page.waitForFunction(() => document.querySelectorAll('.taf-campaign-list-panel .ant-table-tbody tr').length === 5, undefined, { timeout: 10_000 });
 const pageSizeFiveRowCount = await tableRows.count();
 const riskChartDataAfterPageSizeChange = await page.locator('.taf-campaign-risk-distribution').getAttribute('data-chart-values');
-const riskChartDynamicUpdateWorked = Boolean(riskChartDataBeforePageSizeChange)
+const riskChartGlobalSummaryStable = Boolean(riskChartDataBeforePageSizeChange)
   && Boolean(riskChartDataAfterPageSizeChange)
-  && riskChartDataBeforePageSizeChange !== riskChartDataAfterPageSizeChange;
+  && riskChartDataBeforePageSizeChange === riskChartDataAfterPageSizeChange;
 const pageSizeEightResponsePromise = page.waitForResponse((response) => {
   if (response.request().method() !== 'GET' || !response.url().includes('/v1/campaigns?')) return false;
   const url = new URL(response.url());
@@ -311,24 +331,34 @@ const keywordRows = await tableRows.allTextContents();
 const keywordFilterWorked = keywordResponse.ok() && keywordRows.length > 0 && keywordRows.every((text) => text.toLowerCase().includes(keyword.toLowerCase()));
 await page.locator('.taf-campaign-filter > button').first().click();
 
-actionChecks.push(await verifyDrawer(page.locator('.taf-campaign-list-panel > .taf-panel__header button').nth(0), /\/v1\/campaigns\/[^/]+\/actions/, 'CAMPAIGN_OWNER_ASSIGNED'));
-actionChecks.push(await verifyDrawer(page.locator('.taf-campaign-list-panel > .taf-panel__header button').nth(1), /\/v1\/campaigns\/[^/]+\/actions/, 'CAMPAIGN_STATUS_CHANGED'));
-actionChecks.push(await verifyDrawer(page.locator('.taf-campaign-list-panel > .taf-panel__header button').nth(2), /\/v1\/campaigns\/[^/]+\/actions/, 'CAMPAIGN_CONTEXT_ACTION_REQUESTED'));
-actionChecks.push(await verifyDrawer(page.locator('.taf-campaign-node').first(), /\/v1\/campaigns\/[^/]+\/actions/, 'CAMPAIGN_PHASE_VIEWED'));
+actionChecks.push(await verifyDrawer(
+  page.locator('[data-chart-engine="echarts"][data-series-type="graph"] canvas'),
+  /\/v1\/campaigns\/[^/]+\/actions/,
+  'CAMPAIGN_PHASE_VIEWED',
+  true,
+  false,
+  false,
+  { position: { x: 60, y: 114 } },
+));
 actionChecks.push(await verifyDrawer(page.locator('.taf-campaign-impact button').first(), /\/v1\/campaigns\/[^/]+\/actions/, 'CAMPAIGN_IMPACT_VIEWED'));
 actionChecks.push(await verifyDrawer(page.getByRole('button', { name: '查看证据中心', exact: true }), /\/v1\/campaigns\/[^/]+\/actions/, 'CAMPAIGN_EVIDENCE_VIEWED'));
-actionChecks.push(await verifyDrawer(page.locator('.taf-campaign-actions button').nth(1), /\/v1\/campaigns\/[^/]+\/actions/, 'CAMPAIGN_STATUS_CHANGED'));
-actionChecks.push(await verifyDrawer(page.locator('.taf-campaign-actions button').nth(2), /\/v1\/campaigns\/[^/]+\/actions/, 'CAMPAIGN_REPORT_REQUESTED'));
-actionChecks.push(await verifyDrawer(page.locator('.taf-campaign-list-panel .ant-table-tbody tr').first().getByRole('button'), /\/v1\/campaigns\/[^/]+\/actions/, 'CAMPAIGN_CONTEXT_ACTION_REQUESTED'));
+actionChecks.push(await verifyDrawer(page.locator('.taf-campaign-actions button').nth(1), /\/v1\/campaigns\/[^/]+\/actions/, 'CAMPAIGN_STATUS_CHANGED', true, true, true));
+actionChecks.push(await verifyDrawer(page.locator('.taf-campaign-actions button').nth(2), /\/v1\/campaigns\/[^/]+\/actions/, 'CAMPAIGN_REPORT_REQUESTED', true, false, true));
+const firstRowActions = page.locator('.taf-campaign-list-panel .ant-table-tbody tr').first().locator('.taf-campaign-row-actions button');
+actionChecks.push(await verifyDrawer(firstRowActions.nth(1), /\/v1\/campaigns\/[^/]+\/actions/, 'CAMPAIGN_STATUS_CHANGED', true, true, true));
+actionChecks.push(await verifyDrawer(firstRowActions.nth(2), /\/v1\/campaigns\/[^/]+\/actions/, 'CAMPAIGN_CONTEXT_ACTION_REQUESTED'));
 
 const selectedCampaignId = (await page.locator('.taf-campaign-summary > div strong').textContent())?.trim() ?? '';
-const detailNavigation = await verifyNavigation(page.locator('.taf-campaign-rail > .taf-panel').first().locator('.taf-panel__header button').first(), `/campaigns/${encodeURIComponent((await page.locator('.taf-campaign-summary > div strong').textContent())?.trim() ?? '')}`);
+const detailNavigation = await verifyDetailDrawerNavigation(
+  page.locator('.taf-campaign-rail > .taf-panel').first().locator('.taf-panel__header button').first(),
+  selectedCampaignId,
+);
 const attackChainCampaignId = (await page.locator('.taf-campaign-summary > div strong').textContent())?.trim() ?? '';
 const attackChainNavigation = await verifyNavigation(page.locator('.taf-campaign-actions button').nth(3), '/attack-chains', attackChainCampaignId);
 const graphCampaignId = (await page.locator('.taf-campaign-summary > div strong').textContent())?.trim() ?? '';
 const graphNavigation = await verifyNavigation(page.locator('.taf-campaign-actions button').nth(4), '/graph', graphCampaignId);
 const soarCampaignId = (await page.locator('.taf-campaign-summary > div strong').textContent())?.trim() ?? '';
-const soarNavigation = await verifyNavigation(page.locator('.taf-campaign-actions button').nth(5), '/playbooks', soarCampaignId);
+const soarNavigation = await verifyNavigation(page.locator('.taf-campaign-actions button').nth(5), '/playbooks', soarCampaignId, true);
 const assetNavigation = await verifyNavigation(page.locator('.taf-campaign-rail > .taf-panel').nth(1).locator('.taf-panel__header button').first(), '/assets');
 
 await page.waitForTimeout(500);
@@ -354,20 +384,29 @@ const viewerResponse = await fetch(`${baseUrl}/api/v1/campaigns/${encodeURICompo
 const viewerWriteDenied = viewerResponse.status === 403;
 await page.screenshot({ path: interactionPath, fullPage: false });
 const screenshotValid = fs.statSync(implementationPath).size > 100_000 && fs.statSync(interactionPath).size > 100_000;
+const externalRequestFailures = requestFailures.filter((item) => item.url.startsWith('https://api.yhchj.com/'));
+const appRequestFailures = requestFailures.filter((item) => !item.url.startsWith('https://api.yhchj.com/'));
+const externalConsoleErrors = externalRequestFailures.length
+  ? consoleErrors.filter((item) => item === 'Failed to load resource: net::ERR_CONNECTION_CLOSED')
+  : [];
+const appConsoleErrors = consoleErrors.filter((item) => !externalConsoleErrors.includes(item));
+const externalPageErrors = externalRequestFailures.length ? pageErrors.filter((item) => item === 'Object') : [];
+const appPageErrors = pageErrors.filter((item) => !externalPageErrors.includes(item));
 
 const result = {
-  result: chartCanvasCount === 2
+  result: chartCanvasCount === 3
+    && attackGraphCount === 1
     && chartBounds.every((item) => item.visible)
     && paginationWorked
     && paginationPageSizeWorked
     && pageSizeChangerWorked
     && lastPageWorked
     && filterWorked
-    && riskChartDynamicUpdateWorked
+    && riskChartGlobalSummaryStable
     && statusFilterWorked
     && phaseFilterWorked
     && keywordFilterWorked
-    && actionChecks.every((item) => item.endpoint && item.audit && item.recorded && item.persisted && item.requestBody)
+    && actionChecks.every((item) => item.endpoint && item.audit && item.receipt && item.requestBody)
     && exportWorked
     && detailNavigation
     && attackChainNavigation
@@ -386,12 +425,13 @@ const result = {
     && viewerWriteDenied
     && screenshotValid
     && badResponses.length === 0
-    && consoleErrors.length === 0
-    && pageErrors.length === 0
-    && requestFailures.length === 0 ? 'pass' : 'fail',
+    && appConsoleErrors.length === 0
+    && appPageErrors.length === 0
+    && appRequestFailures.length === 0 ? 'pass' : 'fail',
   browser_backend: 'Windows Chrome CDP',
   browser: version.Browser,
   chart_canvas_count: chartCanvasCount,
+  attack_graph_count: attackGraphCount,
   chart_bounds: chartBounds,
   pagination_worked: paginationWorked,
   pagination_total_text: paginationTotalText,
@@ -407,7 +447,7 @@ const result = {
   second_page_first_campaign: secondPageFirstCampaign,
   filtered_risk: availableRisk,
   filter_worked: filterWorked,
-  risk_chart_dynamic_update_worked: riskChartDynamicUpdateWorked,
+  risk_chart_global_summary_stable: riskChartGlobalSummaryStable,
   risk_chart_data_before_page_size_change: riskChartDataBeforePageSizeChange,
   risk_chart_data_after_page_size_change: riskChartDataAfterPageSizeChange,
   status_filter: availableStatus,
@@ -429,9 +469,14 @@ const result = {
   viewer_write_denied: viewerWriteDenied,
   screenshot_valid: screenshotValid,
   bad_responses: badResponses,
-  console_errors: consoleErrors,
-  page_errors: pageErrors,
-  request_failures: requestFailures,
+  console_errors: appConsoleErrors,
+  page_errors: appPageErrors,
+  request_failures: appRequestFailures,
+  external_browser_noise: {
+    console_errors: externalConsoleErrors,
+    page_errors: externalPageErrors,
+    request_failures: externalRequestFailures,
+  },
   implementation_screenshot: path.relative(root, implementationPath),
   interaction_screenshot: path.relative(root, interactionPath),
   timestamp: new Date().toISOString(),

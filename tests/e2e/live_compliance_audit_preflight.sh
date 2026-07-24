@@ -20,7 +20,7 @@ REPORT="$LOG_DIR/live-compliance-audit-preflight-$RUN_ID.ndjson"
 SUMMARY="$LOG_DIR/live-compliance-audit-preflight-$RUN_ID-summary.json"
 LOCAL_REPORT="$LOG_DIR/local-report.md"
 RUN_SLUG="$(printf '%s' "$RUN_ID" | tr -c 'a-zA-Z0-9-' '-' | cut -c1-64 | sed 's/-*$//')"
-REPORT_TYPE="${REPORT_TYPE:-codex-live-compliance-${RUN_SLUG:-run}}"
+REPORT_TYPE="${REPORT_TYPE:-weekly}"
 
 mkdir -p "$LOG_DIR" "$REGRESSION_DIR"
 : >"$REPORT"
@@ -168,26 +168,49 @@ JWT_SECRET="$(kctl -n "$JWT_SECRET_NAMESPACE" get secret "$JWT_SECRET_NAME" -o "
 PG_PASSWORD="$(kctl -n "$JWT_SECRET_NAMESPACE" get secret "$JWT_SECRET_NAME" -o "jsonpath={.data.$PG_SECRET_KEY}" | base64 -d)"
 
 ADMIN_TOKEN="$(make_token codex-compliance-admin "$TENANT" '["admin"]' '["*","admin:*","audit:read","user:read"]')"
+READ_TOKEN="$(make_token codex-compliance-reader "$TENANT" '["compliance-reader"]' '["compliance:read"]')"
+WRITE_TOKEN="$(make_token codex-compliance-writer "$TENANT" '["compliance-writer"]' '["compliance:write"]')"
+EXPORT_TOKEN="$(make_token codex-compliance-exporter "$TENANT" '["compliance-exporter"]' '["compliance:export"]')"
+REMEDIATE_TOKEN="$(make_token codex-compliance-remediator "$TENANT" '["compliance-remediator"]' '["compliance:remediate"]')"
+FINALIZE_TOKEN="$(make_token codex-compliance-finalizer "$TENANT" '["compliance-finalizer"]' '["compliance:finalize"]')"
 VIEWER_TOKEN="$(make_token codex-compliance-viewer "$TENANT" '["viewer"]' '["user:read","audit:read"]')"
+NO_READ_TOKEN="$(make_token codex-compliance-no-read "$TENANT" '["viewer"]' '["user:read"]')"
 OTHER_TOKEN="$(make_token codex-compliance-other-admin "$OTHER_TENANT" '["admin"]' '["*","admin:*","audit:read","user:read"]')"
 
 curl_json "compliance reports list is readable" "GET" "/api/v1/compliance/reports?limit=5" "200" "$ADMIN_TOKEN" "$LOG_DIR/compliance-reports-before.json"
 assert_json "compliance reports response shape" "$LOG_DIR/compliance-reports-before.json" '.success == true and (.data.reports | type == "array") and (.data.total | type == "number")'
+curl_json "dedicated compliance read scope lists reports" "GET" "/api/v1/compliance/reports?limit=5" "200" "$READ_TOKEN" "$LOG_DIR/compliance-reports-dedicated-read.json"
 
 curl_json "compliance audit trail is readable" "GET" "/api/v1/compliance/audit-trail?limit=5" "200" "$ADMIN_TOKEN" "$LOG_DIR/compliance-audit-trail-before.json"
 assert_json "compliance audit trail response shape" "$LOG_DIR/compliance-audit-trail-before.json" '.success == true and (.data.trails | type == "array") and (.data.total | type == "number")'
 
+curl_json "user without compliance read cannot list reports" "GET" "/api/v1/compliance/reports?limit=1" "403" "$NO_READ_TOKEN" "$LOG_DIR/compliance-reports-no-read.json" || true
+curl_json "user without audit read cannot list audit trail" "GET" "/api/v1/compliance/audit-trail?limit=1" "403" "$NO_READ_TOKEN" "$LOG_DIR/compliance-audit-no-read.json" || true
+
 curl_json "audit log page API is readable" "GET" "/api/v1/audit/logs?limit=5" "200" "$ADMIN_TOKEN" "$LOG_DIR/audit-logs-before.json"
 assert_json "audit log response shape" "$LOG_DIR/audit-logs-before.json" '.success == true and (.data.trails | type == "array") and (.data.total | type == "number")'
 
+INVALIDATED_REPORT_ID="$(psql_exec "SELECT report_id::text FROM compliance_reports WHERE tenant_id='$TENANT' AND status='invalidated' ORDER BY generated_at DESC LIMIT 1;")"
+if [[ -n "$INVALIDATED_REPORT_ID" ]]; then
+  curl_json "complete report list excludes invalidated legacy rows" "GET" "/api/v1/compliance/reports?limit=100" "200" "$ADMIN_TOKEN" "$LOG_DIR/compliance-reports-without-invalidated.json"
+  NORMAL_REPORT_COUNT="$(psql_exec "SELECT count(*) FROM compliance_reports WHERE tenant_id='$TENANT' AND status <> 'invalidated';")"
+  assert_json "invalidated legacy report is excluded from list and total" "$LOG_DIR/compliance-reports-without-invalidated.json" \
+    --arg report_id "$INVALIDATED_REPORT_ID" --argjson normal_count "$NORMAL_REPORT_COUNT" '.data.total == $normal_count and ([.data.reports[] | select(.report_id == $report_id or .status == "invalidated")] | length) == 0'
+  curl_json "invalidated legacy report cannot be exported" "POST" "/api/v1/compliance/reports/$INVALIDATED_REPORT_ID/export" "404" "$ADMIN_TOKEN" "$LOG_DIR/compliance-invalidated-export.json" '{"format":"pdf"}' || true
+  curl_json "invalidated legacy report cannot create remediation" "POST" "/api/v1/compliance/reports/$INVALIDATED_REPORT_ID/remediations" "404" "$ADMIN_TOKEN" "$LOG_DIR/compliance-invalidated-remediation.json" '{}' || true
+  curl_json "invalidated legacy report cannot be finalized" "POST" "/api/v1/compliance/reports/$INVALIDATED_REPORT_ID/finalize" "404" "$ADMIN_TOKEN" "$LOG_DIR/compliance-invalidated-finalize.json" '{}' || true
+else
+  json_log "postgres" "legacy zero-evidence reports have been invalidated" "blocker" false "missing" "expected migrated invalidated report evidence" ""
+fi
+
 generate_body="$(jq -nc --arg report_type "$REPORT_TYPE" '{report_type:$report_type}')"
-curl_json "admin can generate compliance report" "POST" "/api/v1/compliance/reports/generate" "200" "$ADMIN_TOKEN" "$LOG_DIR/compliance-generate-admin.json" "$generate_body"
-assert_json "generated compliance report has persisted identity" "$LOG_DIR/compliance-generate-admin.json" \
-  --arg report_type "$REPORT_TYPE" '.success == true and (.data.report_id | type == "string" and length > 0) and .data.report_type == $report_type and .data.status == "completed"'
+curl_json "dedicated compliance write scope generates report" "POST" "/api/v1/compliance/reports/generate" "200" "$WRITE_TOKEN" "$LOG_DIR/compliance-generate-admin.json" "$generate_body"
+assert_json "generated compliance report has persisted fail-closed identity" "$LOG_DIR/compliance-generate-admin.json" \
+  --arg report_type "$REPORT_TYPE" '.success == true and (.data.report_id | type == "string" and length > 0) and .data.report_type == $report_type and .data.status == "insufficient_evidence" and (.data.sections | length) >= 7 and ([.data.sections[] | select(.status == "pass")] | length) == 0'
 
 REPORT_ID="$(jq -r '.data.report_id // ""' "$LOG_DIR/compliance-generate-admin.json")"
 if [[ -n "$REPORT_ID" ]]; then
-  curl_json "generated compliance report is queryable" "GET" "/api/v1/compliance/reports?report_type=$REPORT_TYPE&limit=10" "200" "$ADMIN_TOKEN" "$LOG_DIR/compliance-reports-after.json"
+  curl_json "generated compliance report is queryable" "GET" "/api/v1/compliance/reports?report_type=$REPORT_TYPE&limit=50" "200" "$ADMIN_TOKEN" "$LOG_DIR/compliance-reports-after.json"
   assert_json "generated report appears in compliance report list" "$LOG_DIR/compliance-reports-after.json" \
     --arg report_id "$REPORT_ID" '.success == true and ([.data.reports[] | select(.report_id == $report_id)] | length) == 1'
 
@@ -198,6 +221,86 @@ if [[ -n "$REPORT_ID" ]]; then
   curl_json "audit log page API has generated report event" "GET" "/api/v1/audit/logs?action=COMPLIANCE_REPORT_GENERATED&object_id=$REPORT_ID&limit=10" "200" "$ADMIN_TOKEN" "$LOG_DIR/audit-logs-generated.json"
   assert_json "audit log page API contains generated event" "$LOG_DIR/audit-logs-generated.json" \
     --arg report_id "$REPORT_ID" '.success == true and (.data.total >= 1) and ([.data.trails[] | select(.resource_id == $report_id and .action == "COMPLIANCE_REPORT_GENERATED")] | length) >= 1'
+
+  curl_json "dedicated compliance export scope exports evidence package" "POST" "/api/v1/compliance/reports/$REPORT_ID/evidence-package" "200" "$EXPORT_TOKEN" "$LOG_DIR/compliance-evidence-package.json"
+  assert_json "evidence package has zip payload and checksum" "$LOG_DIR/compliance-evidence-package.json" \
+    --arg report_id "$REPORT_ID" '.success == true and .data.report_id == $report_id and .data.artifact_type == "evidence_package" and .data.mime_type == "application/zip" and (.data.sha256 | startswith("sha256:")) and (.data.content_base64 | length > 32)'
+  python3 - "$LOG_DIR/compliance-evidence-package.json" "$LOG_DIR/compliance-evidence-package.zip" <<'PY'
+import base64, hashlib, json, pathlib, sys, zipfile
+source, target = map(pathlib.Path, sys.argv[1:])
+payload = json.loads(source.read_text())['data']
+content = base64.b64decode(payload['content_base64'])
+target.write_bytes(content)
+assert payload['sha256'] == 'sha256:' + hashlib.sha256(content).hexdigest()
+with zipfile.ZipFile(target) as archive:
+    assert sorted(archive.namelist()) == ['manifest.json', 'report.json']
+PY
+  if [[ -s "$LOG_DIR/compliance-evidence-package.zip" ]]; then
+    json_log "artifact" "evidence package opens and checksum matches" "info" true "ok" "$REPORT_ID" "compliance-evidence-package.zip"
+  else
+    json_log "artifact" "evidence package opens and checksum matches" "blocker" false "missing" "$REPORT_ID" "compliance-evidence-package.zip"
+  fi
+  curl_json "compliance audit trail has evidence export event" "GET" "/api/v1/compliance/audit-trail?action=COMPLIANCE_EVIDENCE_EXPORTED&object_id=$REPORT_ID&limit=10" "200" "$ADMIN_TOKEN" "$LOG_DIR/compliance-audit-trail-exported.json"
+  assert_json "compliance audit trail contains export event" "$LOG_DIR/compliance-audit-trail-exported.json" \
+    --arg report_id "$REPORT_ID" '.success == true and (.data.total >= 1) and ([.data.trails[] | select(.resource_id == $report_id and .action == "COMPLIANCE_EVIDENCE_EXPORTED")] | length) >= 1'
+
+  for format in pdf docx; do
+    curl_json "dedicated compliance export scope exports complete $format report" "POST" "/api/v1/compliance/reports/$REPORT_ID/export" "200" "$EXPORT_TOKEN" "$LOG_DIR/compliance-report-$format.json" "{\"format\":\"$format\"}"
+    assert_json "$format report has payload and checksum" "$LOG_DIR/compliance-report-$format.json" \
+      --arg report_id "$REPORT_ID" --arg format "$format" '.success == true and .data.report_id == $report_id and .data.artifact_type == ("report_" + $format) and (.data.sha256 | startswith("sha256:")) and (.data.content_base64 | length > 32)'
+  done
+  python3 - "$LOG_DIR/compliance-report-pdf.json" "$LOG_DIR/compliance-report-docx.json" "$LOG_DIR" <<'PY'
+import base64, hashlib, io, json, pathlib, sys, zipfile
+pdf_source, docx_source, output_dir = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2]), pathlib.Path(sys.argv[3])
+for source in (pdf_source, docx_source):
+    payload = json.loads(source.read_text())['data']
+    content = base64.b64decode(payload['content_base64'])
+    assert payload['sha256'] == 'sha256:' + hashlib.sha256(content).hexdigest()
+    (output_dir / payload['filename']).write_bytes(content)
+pdf = base64.b64decode(json.loads(pdf_source.read_text())['data']['content_base64'])
+assert pdf.startswith(b'%PDF-1.4')
+assert b'Sections:' in pdf and b'Audit trail:' in pdf and b'COMPLIANCE_REPORT_GENERATED' in pdf
+docx = base64.b64decode(json.loads(docx_source.read_text())['data']['content_base64'])
+with zipfile.ZipFile(io.BytesIO(docx)) as archive:
+    document = archive.read('word/document.xml')
+    assert b'alert_response' in document and b'COMPLIANCE_REPORT_GENERATED' in document
+PY
+  json_log "artifact" "PDF and DOCX contain sections and audit trail" "info" true "ok" "$REPORT_ID" "compliance-report-pdf.json,compliance-report-docx.json"
+
+  curl_json "dedicated remediation scope creates persistent tasks" "POST" "/api/v1/compliance/reports/$REPORT_ID/remediations" "200" "$REMEDIATE_TOKEN" "$LOG_DIR/compliance-remediations-first.json" '{}'
+  curl_json "dedicated remediation scope reuses persistent tasks" "POST" "/api/v1/compliance/reports/$REPORT_ID/remediations" "200" "$REMEDIATE_TOKEN" "$LOG_DIR/compliance-remediations-second.json" '{}'
+  assert_json "remediation repeat is idempotent" "$LOG_DIR/compliance-remediations-second.json" \
+    --slurpfile first "$LOG_DIR/compliance-remediations-first.json" '.success == true and .data.created == 0 and .data.reused == .data.total and ([.data.tasks[].task_id] | sort) == ([$first[0].data.tasks[].task_id] | sort)'
+
+  curl_json "dedicated finalize scope finalizes canonical report snapshot" "POST" "/api/v1/compliance/reports/$REPORT_ID/finalize" "200" "$FINALIZE_TOKEN" "$LOG_DIR/compliance-finalize-first.json" '{}'
+  curl_json "dedicated finalize scope rejects repeat finalization" "POST" "/api/v1/compliance/reports/$REPORT_ID/finalize" "409" "$FINALIZE_TOKEN" "$LOG_DIR/compliance-finalize-second.json" '{}' || true
+  assert_json "finalization returns canonical hash" "$LOG_DIR/compliance-finalize-first.json" '.success == true and .data.status == "finalized" and (.data.report_sha256 | startswith("sha256:"))'
+  python3 - "$LOG_DIR/compliance-evidence-package.zip" "$LOG_DIR/compliance-finalize-first.json" <<'PY'
+import json, pathlib, sys, zipfile
+package, finalization = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
+with zipfile.ZipFile(package) as archive:
+    manifest = json.loads(archive.read('manifest.json'))
+finalized = json.loads(finalization.read_text())['data']
+assert manifest['report_sha256'] == finalized['report_sha256']
+PY
+  json_log "artifact" "evidence manifest and finalization share canonical report hash" "info" true "ok" "$REPORT_ID" "compliance-finalize-first.json"
+
+  set +e
+  psql_exec "UPDATE compliance_finalizations SET finalized_by=finalized_by WHERE tenant_id='$TENANT' AND report_id::text='$REPORT_ID';" >"$LOG_DIR/pg-finalization-mutation.txt" 2>"$LOG_DIR/pg-finalization-mutation.err"
+  immutable_rc=$?
+  set -e
+  if [[ "$immutable_rc" -ne 0 ]] && grep -q "compliance finalizations are immutable" "$LOG_DIR/pg-finalization-mutation.err"; then
+    json_log "postgres" "finalization row rejects database mutation" "info" true "immutable" "$REPORT_ID" "pg-finalization-mutation.err"
+  else
+    json_log "postgres" "finalization row rejects database mutation" "blocker" false "mutable" "rc=$immutable_rc $(trim_file "$LOG_DIR/pg-finalization-mutation.err")" "pg-finalization-mutation.err"
+  fi
+
+  curl_json "viewer cannot export report" "POST" "/api/v1/compliance/reports/$REPORT_ID/export" "403" "$VIEWER_TOKEN" "$LOG_DIR/compliance-export-viewer.json" '{"format":"pdf"}' || true
+  curl_json "viewer cannot create remediation" "POST" "/api/v1/compliance/reports/$REPORT_ID/remediations" "403" "$VIEWER_TOKEN" "$LOG_DIR/compliance-remediation-viewer.json" '{}' || true
+  curl_json "viewer cannot finalize report" "POST" "/api/v1/compliance/reports/$REPORT_ID/finalize" "403" "$VIEWER_TOKEN" "$LOG_DIR/compliance-finalize-viewer.json" '{}' || true
+  curl_json "other tenant cannot export report" "POST" "/api/v1/compliance/reports/$REPORT_ID/export" "404" "$OTHER_TOKEN" "$LOG_DIR/compliance-export-other-tenant.json" '{"format":"pdf"}' || true
+  curl_json "other tenant cannot create remediation" "POST" "/api/v1/compliance/reports/$REPORT_ID/remediations" "404" "$OTHER_TOKEN" "$LOG_DIR/compliance-remediation-other-tenant.json" '{}' || true
+  curl_json "other tenant cannot finalize report" "POST" "/api/v1/compliance/reports/$REPORT_ID/finalize" "404" "$OTHER_TOKEN" "$LOG_DIR/compliance-finalize-other-tenant.json" '{}' || true
 
   set +e
   psql_exec "SELECT count(*) FROM compliance_reports WHERE tenant_id = '$TENANT' AND report_id::text = '$REPORT_ID' AND report_type = '$REPORT_TYPE';" >"$LOG_DIR/pg-compliance-report-count.txt" 2>"$LOG_DIR/pg-compliance-report-count.err"
@@ -225,6 +328,7 @@ else
 fi
 
 curl_json "viewer cannot generate compliance report" "POST" "/api/v1/compliance/reports/generate" "403" "$VIEWER_TOKEN" "$LOG_DIR/compliance-generate-viewer.json" "$generate_body" || true
+curl_json "unknown report type is rejected" "POST" "/api/v1/compliance/reports/generate" "400" "$ADMIN_TOKEN" "$LOG_DIR/compliance-invalid-report-type.json" '{"report_type":"unknown"}' || true
 
 TOTAL="$(jq -s 'length' "$REPORT")"
 PASSED="$(jq -s '[.[] | select(.passed == true)] | length' "$REPORT")"
