@@ -573,6 +573,8 @@ describe('pageSnapshotAdapters', () => {
               entities: ['10.12.4.12', '10.12.4.13', 'db-srv-01'],
               alerts: ['AL-001', 'AL-002', 'AL-003', 'AL-004'],
               score: 0.91,
+              activity_status: 'investigating',
+              status: 'contained',
               ts_start: 1792886400,
               ts_end: 1792972800,
               summary: 'RedLync APT lateral movement',
@@ -589,6 +591,17 @@ describe('pageSnapshotAdapters', () => {
             },
           ],
           total: 2933709,
+          summary: {
+            total: 2933709,
+            active: 12,
+            affected_assets: 236,
+            high_risk: 18,
+            medium_risk: 24,
+            low_risk: 16,
+            alert_count: 1246,
+            average_duration_hours: 86,
+            max_score: 0.91,
+          },
         },
       },
       [],
@@ -596,14 +609,20 @@ describe('pageSnapshotAdapters', () => {
 
     expect(snapshot?.total).toBe(2933709);
     expect(snapshot?.metrics.find((item) => item.label === '战役总数')?.value).toBe('2.9M 个');
-    expect(snapshot?.metrics.find((item) => item.label === '当前页活跃')?.value).toBe('2 个');
-    expect(snapshot?.metrics.find((item) => item.label === '当前页活跃')?.delta).toBe('当前页 API');
-    expect(snapshot?.metrics.find((item) => item.label === '当前页影响资产')?.value).toBe('4 台');
+    expect(snapshot?.metrics.find((item) => item.label === '活跃战役')?.value).toBe('12 个');
+    expect(snapshot?.metrics.find((item) => item.label === '活跃战役')?.delta).toBe('真实 API');
+    expect(snapshot?.metrics.find((item) => item.label === '影响资产')?.value).toBe('236 台');
+    expect(snapshot?.metrics.find((item) => item.label === '最高风险')?.value).toBe('高风险');
+    expect(snapshot?.metrics.find((item) => item.label === '告警总数')?.value).toBe('1.2K 条');
+    expect(snapshot?.metrics.find((item) => item.label === '平均持续时间')?.value).toBe('3 天 14 小时');
+    expect(snapshot?.visuals?.campaigns?.riskCounts).toEqual({ high: 18, medium: 24, low: 16 });
     expect(snapshot?.rows[0]['战役名称']).toBe('campaign-tenant-a1b2c3d4');
     expect(snapshot?.rows[0]['阶段']).toBe('数据外传');
     expect(snapshot?.rows[0]['风险等级']).toBe('高风险');
     expect(snapshot?.rows[0]['影响资产']).toBe(3);
     expect(snapshot?.rows[0]['告警数']).toBe(4);
+    expect(snapshot?.rows[0]['状态']).toBe('调查中');
+    expect(snapshot?.rows[0].__workflow_status).toBe('处置中');
     expect(snapshot?.rows[0]['首次发现']).toBe('10-25 00:00');
     expect(snapshot?.evidence.map((item) => item.label)).toContain('Campaigns API');
     expect(snapshot?.evidence.find((item) => item.label === '证据完整度')?.value).toBe('接口未提供');
@@ -1621,14 +1640,20 @@ describe('pageSnapshotAdapters', () => {
     const snapshot = adaptKnownPageSnapshot(
       route!.page,
       {
-        scopes: [
-          { name: 'alert:read', description: 'Read alerts', category: 'alert' },
-          { name: 'token:write', description: 'Manage API tokens', category: 'admin' },
-          { name: 'probe:ingest', description: 'Upload flow events', category: 'probe' },
-          { name: 'pcap:download', description: 'Download PCAP files', category: 'pcap' },
-        ],
+        tenant_id: 'default', tenant_name: '默认租户', revision: 3,
+        roles: [{ id: 'role-admin', name: 'admin' }, { id: 'role-analyst', name: 'analyst' }],
+        tokens: { total: 3, active: 2, expiring_soon: 1, revoked: 1 },
+        settings: { integrations: [{ id: 'apisix', status: 'healthy' }, { id: 'kafka', status: 'healthy' }] },
       },
       [
+        {
+          scopes: [
+            { name: 'alert:read', description: 'Read alerts', category: 'alert' },
+            { name: 'token:write', description: 'Manage API tokens', category: 'admin' },
+            { name: 'probe:ingest', description: 'Upload flow events', category: 'probe' },
+            { name: 'pcap:download', description: 'Download PCAP files', category: 'pcap' },
+          ],
+        },
         {
           tokens: [
             {
@@ -1671,17 +1696,21 @@ describe('pageSnapshotAdapters', () => {
           ],
           default_scopes: ['probe:ingest', 'probe:metrics'],
         },
+        { category: 'display', settings: { page_size: 50 } },
       ],
     );
 
-    expect(snapshot?.metrics.find((item) => item.label === '租户数')?.value).toBe('2 个');
-    expect(snapshot?.metrics.find((item) => item.label === '角色策略')?.value).toBe('4 项');
+    expect(snapshot?.metrics.find((item) => item.label === '租户数')?.value).toBe('1 个');
+    expect(snapshot?.metrics.find((item) => item.label === '角色策略')?.value).toBe('2 项');
     expect(snapshot?.metrics.find((item) => item.label === '有效令牌')?.value).toBe('2 个');
     expect(snapshot?.metrics.find((item) => item.label === '即将过期令牌')?.value).toBe('1 个');
     expect(snapshot?.rows[0].令牌名称).toBe('SOAR-Executor');
     expect(snapshot?.rows[0].权限范围).toBe('告警查看、令牌管理');
     expect(snapshot?.rows[0].令牌指纹).toBe('abcd****17');
     expect(snapshot?.rows[1].轮换状态).toBe('即将过期');
+    expect(snapshot?.rows[0].token_id).toBe('11111111-2222-3333-4444-555555555555');
+    expect(snapshot?.rows[0].scopes).toBe('alert:read,token:write');
+    expect(snapshot?.evidence.map((item) => item.label)).toContain('System Settings API');
     expect(snapshot?.evidence.map((item) => item.label)).toContain('Token Scopes API');
     expect(snapshot?.evidence.map((item) => item.label)).toContain('Token List API');
     expect(snapshot?.evidence.map((item) => item.label)).toContain('Probe Scopes API');

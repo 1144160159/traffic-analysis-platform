@@ -177,6 +177,21 @@ export type AssetSnapshotFilters = {
   campus?: string;
 };
 
+export type AlertSnapshotFilters = {
+  severity?: string;
+  status?: string;
+  alertType?: string;
+  srcIp?: string;
+  dstIp?: string;
+  assetIp?: string;
+  ruleVersion?: string;
+  modelVersion?: string;
+  attackPhase?: string;
+  minScore?: number;
+  startTime?: number;
+  endTime?: number;
+};
+
 export type PageSnapshotRequestOptions = {
   timeRange?: EncryptedTrafficTimeRange;
   dataQualityTimeRange?: DataQualityTimeRange;
@@ -187,6 +202,8 @@ export type PageSnapshotRequestOptions = {
   assetType?: 'endpoint' | 'server' | 'network-device' | 'business-system' | 'unknown';
   sourceAssetId?: string;
   sourceAssetIp?: string;
+  sourceEntity?: string;
+  alertFilters?: AlertSnapshotFilters;
   forensicsFilters?: {
     assetId?: string;
     srcIp?: string;
@@ -196,6 +213,142 @@ export type PageSnapshotRequestOptions = {
     tuple?: string;
     taskId?: string;
   };
+};
+
+export type EntityGraphWorkbenchNode = {
+  entity_id: string;
+  entity_type: 'ip' | 'host' | 'account' | 'domain' | 'service' | 'alert' | 'evidence' | string;
+  label: string;
+  detail: string;
+  risk_score: number;
+  risk_level: 'high' | 'medium' | 'low' | string;
+  x: number;
+  y: number;
+  icon: string;
+  metadata: Record<string, unknown>;
+  updated_at: number;
+};
+
+export type EntityGraphWorkbenchEdge = {
+  relation_id: string;
+  source_id: string;
+  target_id: string;
+  relation_type: string;
+  risk_level: 'high' | 'medium' | 'low' | string;
+  evidence_id?: string;
+  attributes: Record<string, unknown>;
+  weight: number;
+  observed_at: number;
+};
+
+export type EntityGraphWorkbench = {
+  center_id: string;
+  nodes: EntityGraphWorkbenchNode[];
+  edges: EntityGraphWorkbenchEdge[];
+  meta: {
+    source: string;
+    node_count: number;
+    edge_count: number;
+    depth: number;
+    entity_type: string;
+    site: string;
+    time_range: string;
+    query_duration_ms: number;
+    node_limit: number;
+    cache_hit_rate: string;
+    cache_applicable: boolean;
+    data_origin: string;
+    slow_query: boolean;
+  };
+};
+
+export type EntityGraphWorkbenchFilters = {
+  timeRange: '24h' | '7d' | 'all';
+  site: 'main' | 'all';
+  entityType: 'all' | 'ip' | 'host' | 'account' | 'domain' | 'service' | 'alert' | 'evidence';
+  depth: 1 | 2 | 3;
+};
+
+export type EntityGraphWorkbenchPath = {
+  mode: 'shortest' | 'attack' | 'communication' | 'account';
+  source_id: string;
+  target_id: string;
+  node_ids: string[];
+  edges: EntityGraphWorkbenchEdge[];
+  length: number;
+  risk_level: string;
+  evidence_ids: string[];
+};
+
+export const fetchEntityGraphWorkbench = async (
+  centerId = 'host:10.20.4.18',
+  filters: EntityGraphWorkbenchFilters = { timeRange: '24h', site: 'main', entityType: 'all', depth: 2 },
+): Promise<EntityGraphWorkbench> => {
+  const response = await api.get<{
+    data?: { graph?: EntityGraphWorkbench; meta?: EntityGraphWorkbench['meta'] };
+    graph?: EntityGraphWorkbench;
+    meta?: EntityGraphWorkbench['meta'];
+  }>('/v1/graph/workbench', {
+    params: {
+      center_id: centerId,
+      time_range: filters.timeRange,
+      site: filters.site,
+      entity_type: filters.entityType,
+      depth: filters.depth,
+    },
+  });
+  const graph = response.data.data?.graph ?? response.data.graph;
+  const meta = response.data.data?.meta ?? response.data.meta;
+  if (!graph) throw new Error('实体图谱工作台接口未返回 graph 数据');
+  if (!meta?.source || !meta.time_range || !meta.node_limit) throw new Error('实体图谱工作台接口未返回完整查询治理元数据');
+  return {
+    center_id: graph.center_id,
+    nodes: Array.isArray(graph.nodes) ? graph.nodes : [],
+    edges: Array.isArray(graph.edges) ? graph.edges : [],
+    meta: {
+      source: meta.source,
+      node_count: Number(meta?.node_count ?? graph.nodes?.length ?? 0),
+      edge_count: Number(meta?.edge_count ?? graph.edges?.length ?? 0),
+      depth: Number(meta?.depth ?? filters.depth),
+      entity_type: meta?.entity_type ?? filters.entityType,
+      site: meta?.site ?? filters.site,
+      time_range: meta?.time_range ?? filters.timeRange,
+      query_duration_ms: Number(meta?.query_duration_ms ?? 0),
+      node_limit: Number(meta.node_limit),
+      cache_hit_rate: meta.cache_hit_rate,
+      cache_applicable: Boolean(meta.cache_applicable),
+      data_origin: meta.data_origin,
+      slow_query: Boolean(meta?.slow_query),
+    },
+  };
+};
+
+export const fetchEntityGraphWorkbenchPath = async (params: {
+  sourceId: string;
+  targetId: string;
+  anchorId?: string;
+  mode: EntityGraphWorkbenchPath['mode'];
+  maxDepth?: number;
+  filters?: EntityGraphWorkbenchFilters;
+}): Promise<EntityGraphWorkbenchPath> => {
+  const response = await api.get<{
+    data?: { path?: EntityGraphWorkbenchPath };
+    path?: EntityGraphWorkbenchPath;
+  }>('/v1/graph/workbench/path', {
+    params: {
+      source_id: params.sourceId,
+      target_id: params.targetId,
+      anchor_id: params.anchorId,
+      mode: params.mode,
+      max_depth: params.maxDepth ?? 6,
+      time_range: params.filters?.timeRange,
+      site: params.filters?.site,
+      entity_type: params.filters?.entityType,
+    },
+  });
+  const path = response.data.data?.path ?? response.data.path;
+  if (!path) throw new Error('路径分析接口未返回 path 数据');
+  return path;
 };
 
 export type RuleRecord = {
@@ -1073,6 +1226,25 @@ const getPageRequestParams = (pageId: string, options: PageSnapshotRequestOption
       depth: 2,
       run_id: 'realtime',
     };
+  if (pageId === 'alerts')
+    return {
+      ...pagination,
+      ...(options.alertFilters?.severity ? { severity: options.alertFilters.severity } : {}),
+      ...(options.alertFilters?.status ? { status: options.alertFilters.status } : {}),
+      ...(options.alertFilters?.alertType ? { alert_type: options.alertFilters.alertType } : {}),
+      ...(options.alertFilters?.srcIp ? { src_ip: options.alertFilters.srcIp } : {}),
+      ...(options.alertFilters?.dstIp ? { dst_ip: options.alertFilters.dstIp } : {}),
+      ...(options.alertFilters?.assetIp ? { asset_ip: options.alertFilters.assetIp } : {}),
+      ...(options.alertFilters?.ruleVersion ? { rule_version: options.alertFilters.ruleVersion } : {}),
+      ...(options.alertFilters?.modelVersion ? { model_version: options.alertFilters.modelVersion } : {}),
+      ...(options.alertFilters?.attackPhase ? { attack_phase: options.alertFilters.attackPhase } : {}),
+      ...(options.alertFilters?.minScore ? { min_score: options.alertFilters.minScore } : {}),
+      ...(options.alertFilters?.startTime ? { start_time: options.alertFilters.startTime } : {}),
+      ...(options.alertFilters?.endTime ? { end_time: options.alertFilters.endTime } : {}),
+      ...(options.sourceEntity && /^\d{1,3}(?:\.\d{1,3}){3}$/.test(options.sourceEntity)
+        ? { src_ip: options.sourceEntity }
+        : {}),
+    };
   if (pageId === 'forensics')
     return {
       ...pagination,
@@ -1119,6 +1291,12 @@ const getPageRequestParams = (pageId: string, options: PageSnapshotRequestOption
 };
 
 const getSecondaryRequestParams = (pageId: string, endpoint: string, options: PageSnapshotRequestOptions) => {
+  if (pageId === 'alerts')
+    return {
+      ...(options.alertFilters?.startTime ? { start_time: options.alertFilters.startTime } : {}),
+      ...(options.alertFilters?.endTime ? { end_time: options.alertFilters.endTime } : {}),
+      ...(endpoint === '/v1/alerts/trend' ? { interval: 'hour' } : {}),
+    };
   if (pageId === 'encrypted-traffic') return buildEncryptedTrafficRangeParams(options.timeRange);
   if (pageId === 'forensics' && (endpoint === '/v1/encrypted-traffic/sessions' || endpoint === '/v1/encrypted-traffic/evidence')) {
     return buildEncryptedTrafficRangeParams('近 24 小时');

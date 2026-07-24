@@ -810,6 +810,7 @@ function riskClass(risk: string) {
 function emptySnapshot(campaignId: string): CampaignDetailSnapshot {
   return {
     campaignId,
+    campaignType: '未分类',
     title: '战役详情加载中',
     riskScore: 0,
     currentPhase: '-',
@@ -817,6 +818,8 @@ function emptySnapshot(campaignId: string): CampaignDetailSnapshot {
     firstSeen: '-',
     lastUpdated: '-',
     status: '加载中',
+    activityStatus: '加载中',
+    workflowStatus: '加载中',
     assignee: '-',
     alertCount: 0,
     assetCount: 0,
@@ -859,6 +862,8 @@ function emptySnapshot(campaignId: string): CampaignDetailSnapshot {
       rows: [],
     },
     evidenceCompleteness: 0,
+    evidenceCompletenessAvailable: false,
+    phaseDataBacked: false,
     evidenceChecks: [],
     evidenceSummaryRows: [],
     responseFlow: [],

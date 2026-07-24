@@ -28,11 +28,13 @@ export function assetSearchParams(input: {
   tab: AssetTabSlug;
   assetId?: string;
   detail?: AssetDetailSlug | null;
+  search?: string;
 }) {
   const params = new URLSearchParams();
   params.set('tab', input.tab);
   if (input.assetId) params.set('assetId', input.assetId);
   if (input.detail) params.set('detail', input.detail);
+  if (input.search) params.set('search', input.search);
   return params;
 }
 

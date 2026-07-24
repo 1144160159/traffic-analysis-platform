@@ -122,16 +122,16 @@ describe('encrypted traffic visual implementation', () => {
     expect(adapter).toContain("'等待外传 API'");
     expect(adapter).toContain("evidence('Encrypted Stats API', '/v1/encrypted-traffic/stats', 'ok')");
 
-    expect(apiPlan).toContain("primary: '/v1/encrypted-traffic/stats'");
-    expect(apiPlan).toContain("'/v1/encrypted-traffic/sessions'");
-    expect(apiPlan).toContain("'/v1/encrypted-traffic/ja3'");
-    expect(apiPlan).toContain("'/v1/encrypted-traffic/tunnels'");
-    expect(apiPlan).toContain("'/v1/encrypted-traffic/exfiltration'");
-    expect(apiPlan).toContain("'/v1/encrypted-traffic/evidence'");
-    expect(apiPlan).toContain("endpoint: '/v1/encrypted-traffic/evidence-actions'");
-    expect(apiPlan).toContain("auditEvent: 'ENCRYPTED_EVIDENCE_TASK_REQUESTED'");
-    expect(apiPlan).toContain("endpoint: '/v1/encrypted-traffic/egress-actions'");
-    expect(apiPlan).toContain("auditEvent: 'ENCRYPTED_EGRESS_ALERT_REQUESTED'");
+    expect(apiPlan).toContain('primary: "/v1/encrypted-traffic/stats"');
+    expect(apiPlan).toContain('"/v1/encrypted-traffic/sessions"');
+    expect(apiPlan).toContain('"/v1/encrypted-traffic/ja3"');
+    expect(apiPlan).toContain('"/v1/encrypted-traffic/tunnels"');
+    expect(apiPlan).toContain('"/v1/encrypted-traffic/exfiltration"');
+    expect(apiPlan).toContain('"/v1/encrypted-traffic/evidence"');
+    expect(apiPlan).toContain('endpoint: "/v1/encrypted-traffic/evidence-actions"');
+    expect(apiPlan).toContain('auditEvent: "ENCRYPTED_EVIDENCE_TASK_REQUESTED"');
+    expect(apiPlan).toContain('endpoint: "/v1/encrypted-traffic/egress-actions"');
+    expect(apiPlan).toContain('auditEvent: "ENCRYPTED_EGRESS_ALERT_REQUESTED"');
     expect(read(path.join(sourceRoot, 'services', 'api.ts'))).toContain("export type EncryptedTrafficTimeRange = '近 1 小时' | '近 24 小时' | '近 7 天';");
     expect(read(path.join(sourceRoot, 'services', 'api.ts'))).toContain("if (pageId === 'encrypted-traffic') return buildEncryptedTrafficRangeParams(options.timeRange);");
     expect(read(path.join(sourceRoot, 'services', 'api.ts'))).toContain('start_time: endTime - encryptedTrafficRangeMilliseconds[timeRange]');

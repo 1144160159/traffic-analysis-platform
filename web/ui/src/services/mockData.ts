@@ -358,6 +358,14 @@ export type ForensicsVisuals = {
   auditRows: Array<{ time: string; user: string; action: string; target: string; result: string }>;
 };
 
+export type CampaignVisuals = {
+  riskCounts: {
+    high: number;
+    medium: number;
+    low: number;
+  };
+};
+
 export type PageSnapshot = {
   id: string;
   total?: number;
@@ -369,6 +377,7 @@ export type PageSnapshot = {
     dashboard?: DashboardVisuals;
     screen?: ScreenVisuals;
     dataQuality?: DataQualityVisuals;
+    campaigns?: CampaignVisuals;
     encryptedTraffic?: EncryptedTrafficVisuals;
     forensics?: ForensicsVisuals;
   };

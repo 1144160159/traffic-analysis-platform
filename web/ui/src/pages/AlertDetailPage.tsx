@@ -225,7 +225,7 @@ function EvidenceFocusAction({
     mutationFn: submitAlertDetailAction,
     onSuccess: (submission) => {
       setResult(submission);
-      message.success(`${submission.action}已生成模拟任务：${submission.jobId}`);
+      message.success(`${submission.action}已持久化：${submission.jobId}`);
     },
     onError: (error) => message.error(error instanceof Error ? error.message : '证据操作提交失败'),
   });
@@ -257,7 +257,7 @@ function EvidenceFocusAction({
         <dl>
           <dt>告警对象</dt><dd>{alertId}</dd>
           <dt>操作目标</dt><dd>{target}</dd>
-          <dt>执行模式</dt><dd>仿真任务，保留后端 API 契约与审计事件</dd>
+          <dt>执行状态</dt><dd>{result?.status === 'pending_approval' ? '已进入响应审批队列' : '已记录并保留审计事件'}</dd>
         </dl>
         {result && <Alert type="success" showIcon message={`任务 ${result.jobId} 已排队`} description={`${result.auditEvent}；${result.apiContract}`} />}
       </div>
@@ -392,7 +392,7 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
     mutationFn: submitAlertDetailAction,
     onSuccess: (result) => {
       setBusinessActionResult(result);
-      message.success(`${result.action}已进入模拟任务队列：${result.jobId}`);
+      message.success(`${result.action}已持久化：${result.jobId}`);
     },
     onError: (mutationError) => {
       message.error(mutationError instanceof Error ? mutationError.message : '业务动作提交失败');
@@ -762,7 +762,7 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
             <dt>告警对象</dt><dd>{alertId}</dd>
             <dt>操作目标</dt><dd>{businessAction?.target}</dd>
             <dt>接口契约</dt><dd>已在 alert-detail 页面 API 计划中注册</dd>
-            <dt>执行模式</dt><dd>仿真任务，保留后端 API 契约与审计事件</dd>
+            <dt>执行状态</dt><dd>{businessActionResult?.status === 'pending_approval' ? '已进入响应审批队列' : '已记录并保留审计事件'}</dd>
           </dl>
           {businessActionResult && (
             <Alert

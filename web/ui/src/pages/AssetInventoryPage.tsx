@@ -154,16 +154,17 @@ export function AssetInventoryPage({ route }: { route: NavRoute }) {
   const activeTab = resolveAssetTab(searchParams.get('tab'));
   const activeDetail = resolveAssetDetail(searchParams.get('detail'));
   const requestedAssetId = searchParams.get('assetId') ?? '';
+  const requestedSearch = searchParams.get('search') ?? '';
   const [filtersCollapsed, setFiltersCollapsed] = useState(false);
   const [detailRailVisible, setDetailRailVisible] = useState(true);
   const [page, setPage] = useState(1);
-  const [draftFilters, setDraftFilters] = useState<AssetSnapshotFilters>({});
-  const [appliedFilters, setAppliedFilters] = useState<AssetSnapshotFilters>({});
+  const [draftFilters, setDraftFilters] = useState<AssetSnapshotFilters>(() => requestedSearch ? { search: requestedSearch } : {});
+  const [appliedFilters, setAppliedFilters] = useState<AssetSnapshotFilters>(() => requestedSearch ? { search: requestedSearch } : {});
   const nextSearchParams = useCallback((state: Parameters<typeof assetSearchParams>[0]) => {
-    const next = assetSearchParams(state);
+    const next = assetSearchParams({ ...state, search: state.search ?? requestedSearch });
     if (visualBreakdownMode) next.set('__codex_ui_breakdown_production', '1');
     return next;
-  }, [visualBreakdownMode]);
+  }, [requestedSearch, visualBreakdownMode]);
 
   const { data, error, isError, isLoading, refetch } = useQuery({
     queryKey: ['page-snapshot', route.id, activeTab, page, appliedFilters],

@@ -38,7 +38,7 @@ export type CampaignActionAuditRecord = {
   requiredScopes: string[];
   requestBody: Record<string, unknown>;
   jobId: string;
-  status: 'recorded';
+  status: 'completed';
   targetId: string;
   target: string;
   timestamp: string;
@@ -52,9 +52,10 @@ export type CampaignActionResult = {
   auditRecord: CampaignActionAuditRecord;
   requestBody: Record<string, unknown>;
   jobId: string;
-  status: 'recorded';
+  status: 'completed';
   jobStatus: 'completed';
-  mode: 'server-persisted-simulation';
+  mode: 'server-persisted-read' | 'server-persisted-mutation';
+  result: Record<string, unknown>;
 };
 
 type CampaignActionServerResponse = {
@@ -62,13 +63,20 @@ type CampaignActionServerResponse = {
   audit_event?: string;
   endpoint?: string;
   job_id?: string;
-  status?: 'recorded';
+  status?: 'completed';
   job_status?: 'completed';
   simulation?: boolean;
+  dry_run?: boolean;
+  result?: Record<string, unknown>;
 };
 
 const CAMPAIGN_AUDIT_KEY = 'taf:campaign-action-audit';
 const MAX_AUDIT_RECORDS = 20;
+const mutatingActions = new Set<CampaignActionId>([
+  'campaign-assign-owner',
+  'campaign-status-change',
+  'campaign-report-generate',
+]);
 
 export async function submitCampaignAction(input: CampaignActionInput): Promise<CampaignActionResult> {
   const plan = getPageActionPlan('campaigns', input.actionId);
@@ -89,6 +97,7 @@ export async function submitCampaignAction(input: CampaignActionInput): Promise<
     scope: scope ?? 'assets',
   });
   const isCollectionAction = !plan.endpoint.includes('{id}');
+  const isMutation = mutatingActions.has(input.actionId);
   const metadata = {
     ...(plan.defaultBody ?? {}),
     ...(input.metadata ?? {}),
@@ -96,15 +105,15 @@ export async function submitCampaignAction(input: CampaignActionInput): Promise<
     ...(!isCollectionAction ? { campaign_id: targetId } : {}),
     phase,
     scope,
-    dry_run: true,
+    dry_run: !isMutation,
   };
   if (isCollectionAction) delete metadata.campaign_id;
   const requestBody = {
     action_id: input.actionId,
     target: input.target,
     metadata,
-    simulation: true,
-    dry_run: true,
+    simulation: !isMutation,
+    dry_run: !isMutation,
   };
   const response = await api.request<{ data?: CampaignActionServerResponse } & CampaignActionServerResponse>({
     url: endpoint,
@@ -112,8 +121,8 @@ export async function submitCampaignAction(input: CampaignActionInput): Promise<
     data: requestBody,
   });
   const serverResult = response.data.data ?? response.data;
-  if (serverResult.simulation !== true || serverResult.status !== 'recorded' || serverResult.job_status !== 'completed') {
-    throw new Error('Campaign 动作服务未返回已持久化并审计的 dry-run 结果');
+  if (serverResult.simulation !== !isMutation || serverResult.dry_run !== !isMutation || serverResult.status !== 'completed' || serverResult.job_status !== 'completed') {
+    throw new Error('Campaign 动作服务未返回已持久化并审计的完成结果');
   }
   const jobId = serverResult.job_id?.trim();
   if (!jobId) throw new Error('Campaign 动作服务未返回持久化作业编号');
@@ -125,7 +134,7 @@ export async function submitCampaignAction(input: CampaignActionInput): Promise<
     requiredScopes: plan.requiredScopes,
     requestBody,
     jobId,
-    status: 'recorded',
+    status: 'completed',
     targetId,
     target: input.target,
     timestamp: new Date().toISOString(),
@@ -141,9 +150,10 @@ export async function submitCampaignAction(input: CampaignActionInput): Promise<
     auditRecord,
     requestBody,
     jobId,
-    status: 'recorded',
+    status: 'completed',
     jobStatus: 'completed',
-    mode: 'server-persisted-simulation',
+    mode: isMutation ? 'server-persisted-mutation' : 'server-persisted-read',
+    result: serverResult.result ?? {},
   };
 }
 

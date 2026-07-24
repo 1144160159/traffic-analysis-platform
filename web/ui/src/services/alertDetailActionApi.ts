@@ -1,4 +1,5 @@
 import { getPageActionPlan } from '@/services/pageApiPlans';
+import { submitAlertTriageAction } from '@/services/alertTriageApi';
 
 export type AlertDetailActionId =
   | 'alert-report-export'
@@ -19,27 +20,33 @@ export type AlertDetailActionResult = {
   apiContract: string;
   auditEvent: string;
   jobId: string;
-  status: 'queued';
+  status: 'recorded' | 'pending_approval';
   target: string;
-  mode: 'simulated';
+  mode: 'live';
 };
 
-// The backend endpoint is registered in pageApiPlans. Until the service is deployed,
-// the UI returns a typed asynchronous simulation instead of issuing a known 404.
 export async function submitAlertDetailAction({ alertId, actionId, target }: AlertDetailActionInput): Promise<AlertDetailActionResult> {
   const plan = getPageActionPlan('alert-detail', actionId);
   if (!plan) throw new Error(`未找到告警详情动作契约：${actionId}`);
 
-  await new Promise<void>((resolve) => window.setTimeout(resolve, 180));
-  const timestamp = new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14);
+  const isResponse = actionId === 'alert-response-request';
+  const submission = await submitAlertTriageAction({
+    kind: isResponse ? 'response-action' : 'investigation-note',
+    alertId,
+    action: plan.label,
+    target,
+    reason: `告警详情提交：${plan.label}`,
+    dryRun: isResponse,
+    detail: { action_id: actionId, source: 'alert-detail', api_contract: plan.endpoint },
+  });
   return {
     actionId,
     action: plan.label,
     apiContract: plan.endpoint.replace('{id}', encodeURIComponent(alertId)),
     auditEvent: plan.auditEvent,
-    jobId: `SIM-ALERT-${timestamp}`,
-    status: 'queued',
+    jobId: submission.job_id ?? submission.view_id ?? '',
+    status: submission.status ?? 'recorded',
     target,
-    mode: 'simulated',
+    mode: 'live',
   };
 }
