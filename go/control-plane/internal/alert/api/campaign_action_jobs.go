@@ -80,7 +80,14 @@ func commitCampaignActionTransaction(
 	}
 	return runCampaignActionTransaction(
 		tx,
-		func(executor campaignTransaction) error { return jobs.recordWithExecutor(ctx, executor, job) },
+		func(executor campaignTransaction) error {
+			if !job.Simulation {
+				if err := applyCampaignActionMutation(ctx, executor, &job); err != nil {
+					return err
+				}
+			}
+			return jobs.recordWithExecutor(ctx, executor, job)
+		},
 		func(executor campaignTransaction) error {
 			return audit.recordWithExecutor(ctx, executor, request, record)
 		},

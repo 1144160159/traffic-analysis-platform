@@ -82,3 +82,25 @@ func TestDeploymentWorkflowScopesAreValidAndDocumented(t *testing.T) {
 		}
 	}
 }
+
+func TestCanDelegateScopesEnforcesCallerCeiling(t *testing.T) {
+	tests := []struct {
+		name      string
+		actor     []string
+		requested []string
+		want      bool
+	}{
+		{name: "exact", actor: []string{ScopeAlertRead, ScopeTokenWrite}, requested: []string{ScopeAlertRead}, want: true},
+		{name: "token writer cannot mint admin", actor: []string{ScopeTokenWrite}, requested: []string{ScopeAdminAll}, want: false},
+		{name: "domain wildcard", actor: []string{"alert:*"}, requested: []string{ScopeAlertRead, ScopeAlertWrite}, want: true},
+		{name: "domain wildcard is bounded", actor: []string{"alert:*"}, requested: []string{ScopeAdminCrossTenant}, want: false},
+		{name: "global wildcard", actor: []string{ScopeAll}, requested: []string{ScopeAdminAll, ScopeAdminCrossTenant}, want: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := CanDelegateScopes(tt.actor, tt.requested); got != tt.want {
+				t.Fatalf("CanDelegateScopes(%v, %v) = %v, want %v", tt.actor, tt.requested, got, tt.want)
+			}
+		})
+	}
+}

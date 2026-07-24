@@ -121,8 +121,8 @@ func TestHTTPClientShowTags(t *testing.T) {
 		t.Fatalf("ShowTags failed: %v", err)
 	}
 	t.Logf("Tags: %v", tags)
-	if len(tags) != 5 {
-		t.Errorf("Expected 5 tags, got %d: %v", len(tags), tags)
+	if len(tags) != 6 {
+		t.Errorf("Expected 6 tags, got %d: %v", len(tags), tags)
 	}
 }
 
@@ -139,8 +139,8 @@ func TestHTTPClientShowEdges(t *testing.T) {
 		t.Fatalf("ShowEdges failed: %v", err)
 	}
 	t.Logf("Edges: %v", edges)
-	if len(edges) != 7 {
-		t.Errorf("Expected 7 edges, got %d: %v", len(edges), edges)
+	if len(edges) != 8 {
+		t.Errorf("Expected 8 edges, got %d: %v", len(edges), edges)
 	}
 }
 
@@ -285,14 +285,29 @@ func TestHashVID(t *testing.T) {
 	}
 }
 
+func TestHashTenantVIDIsolation(t *testing.T) {
+	entityID := "host:10.20.4.18"
+	defaultVID := hashTenantVID("default", entityID)
+	collisionVID := hashTenantVID("entity-graph-collision-tenant", entityID)
+	if defaultVID == collisionVID {
+		t.Fatalf("tenant-qualified VIDs collided: %q", defaultVID)
+	}
+	if defaultVID != "2efb75d2e907f0da9780bb82b66fef9d" {
+		t.Fatalf("unexpected stable tenant VID: %q", defaultVID)
+	}
+	if collisionVID != "46657b811b23521f67b8baa97901e017" {
+		t.Fatalf("unexpected collision fixture VID: %q", collisionVID)
+	}
+}
+
 // TestDefaultHTTPConfig 验证默认配置
 func TestDefaultHTTPConfig(t *testing.T) {
 	cfg := DefaultHTTPConfig()
 	if cfg.GraphAddr == "" {
 		t.Error("GraphAddr should not be empty")
 	}
-	if cfg.Username != "root" {
-		t.Errorf("Username = %s, want root", cfg.Username)
+	if cfg.Username != "traffic_graph" {
+		t.Errorf("Username = %s, want traffic_graph", cfg.Username)
 	}
 	if cfg.Space != "traffic_graph" {
 		t.Errorf("Space = %s, want traffic_graph", cfg.Space)

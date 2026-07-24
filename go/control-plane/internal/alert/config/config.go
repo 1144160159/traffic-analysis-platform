@@ -62,8 +62,8 @@ type ClickHouseConfig struct {
 
 // GetHosts 从 DSN 解析出主机列表
 func (c *ClickHouseConfig) GetHosts() []string {
-	if len(c.Hosts) > 0 && c.Hosts[0] != "" {
-		return c.Hosts
+	if hosts := normalizeClickHouseHosts(c.Hosts); len(hosts) > 0 {
+		return hosts
 	}
 
 	if c.DSN == "" {
@@ -87,12 +87,12 @@ func (c *ClickHouseConfig) GetHosts() []string {
 			if len(parts) == 2 {
 				hostPart := parts[1]
 				if idx := strings.Index(hostPart, "/"); idx > 0 {
-					return []string{hostPart[:idx]}
+					return normalizeClickHouseHosts([]string{hostPart[:idx]})
 				}
-				return []string{hostPart}
+				return normalizeClickHouseHosts([]string{hostPart})
 			}
 		}
-		return []string{dsn}
+		return normalizeClickHouseHosts([]string{dsn})
 	}
 
 	host := u.Host
@@ -100,12 +100,24 @@ func (c *ClickHouseConfig) GetHosts() []string {
 		host = "clickhouse-1.middleware.svc:9000"
 	}
 
-	// 确保有端口
-	if !strings.Contains(host, ":") {
-		host = host + ":9000"
-	}
+	return normalizeClickHouseHosts([]string{host})
+}
 
-	return []string{host}
+func normalizeClickHouseHosts(values []string) []string {
+	hosts := make([]string, 0, len(values))
+	for _, value := range values {
+		for _, rawHost := range strings.Split(value, ",") {
+			host := strings.TrimSpace(rawHost)
+			if host == "" {
+				continue
+			}
+			if !strings.Contains(host, ":") {
+				host += ":9000"
+			}
+			hosts = append(hosts, host)
+		}
+	}
+	return hosts
 }
 
 // GetDatabase 从 DSN 解析出数据库名

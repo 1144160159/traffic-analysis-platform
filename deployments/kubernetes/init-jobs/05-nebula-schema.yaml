@@ -41,22 +41,54 @@ spec:
         env:
         - {name: NEBULA_GRAPH_ADDR, value: "nebula-graph.middleware.svc"}
         - {name: NEBULA_GRAPH_PORT, value: "9669"}
+        - name: NEBULA_ADMIN_PASSWORD
+          valueFrom: {secretKeyRef: {name: traffic-credentials, key: NEBULA_ADMIN_PASSWORD}}
+        - name: NEBULA_SERVICE_PASSWORD
+          valueFrom: {secretKeyRef: {name: traffic-credentials, key: NEBULA_SERVICE_PASSWORD}}
         command:
         - /bin/sh
         - -c
         - |
+          set -eu
           echo "Initializing NebulaGraph schema..."
           sleep 10
 
+          # Fresh NebulaGraph 3.6 clusters start with the vendor bootstrap
+          # credential root/nebula when password authorization is enabled.
+          # Prefer the already-rotated Secret first; use the bootstrap password
+          # only once when a new cluster has not been rotated yet.
+          if ! /usr/local/bin/nebula-console -addr nebula-graph.middleware.svc -port 9669 -u root -p "${NEBULA_ADMIN_PASSWORD}" -e "SHOW USERS;" >/tmp/nebula-admin-check 2>&1; then
+            if printf '%s' "${NEBULA_ADMIN_PASSWORD}" | grep -q "['\\\\]"; then
+              echo "NEBULA_ADMIN_PASSWORD contains characters unsupported by the bootstrap nGQL literal."
+              exit 1
+            fi
+            bootstrap_output="$(/usr/local/bin/nebula-console -addr nebula-graph.middleware.svc -port 9669 -u root -p nebula -e "ALTER USER root WITH PASSWORD '${NEBULA_ADMIN_PASSWORD}';")"
+            if echo "$bootstrap_output" | grep '\[ERROR' >/dev/null; then
+              echo "NebulaGraph root bootstrap/rotation failed."
+              exit 1
+            fi
+            if ! /usr/local/bin/nebula-console -addr nebula-graph.middleware.svc -port 9669 -u root -p "${NEBULA_ADMIN_PASSWORD}" -e "SHOW USERS;" >/tmp/nebula-admin-verify 2>&1; then
+              echo "NebulaGraph rotated administrator credential verification failed."
+              exit 1
+            fi
+            echo "NebulaGraph administrator credential bootstrapped and rotated."
+          else
+            echo "NebulaGraph administrator credential already rotated."
+          fi
+
           # 使用 nebula-console 执行 nGQL，并在任一语句报错时让 Job 失败
-          output="$(cat <<'NGQL' | /usr/local/bin/nebula-console -addr nebula-graph.middleware.svc -port 9669 -u root -p root
+          output="$(cat <<NGQL | /usr/local/bin/nebula-console -addr nebula-graph.middleware.svc -port 9669 -u root -p "${NEBULA_ADMIN_PASSWORD}"
           CREATE SPACE IF NOT EXISTS traffic_graph(vid_type=FIXED_STRING(32), replica_factor=3, partition_num=30);
+          CREATE USER IF NOT EXISTS traffic_graph WITH PASSWORD '${NEBULA_SERVICE_PASSWORD}';
+          ALTER USER traffic_graph WITH PASSWORD '${NEBULA_SERVICE_PASSWORD}';
+          GRANT ROLE USER ON traffic_graph TO traffic_graph;
           USE traffic_graph;
           CREATE TAG IF NOT EXISTS ip_address(tenant_id STRING NOT NULL, ip STRING NOT NULL, mac_address STRING, hostname STRING, vendor STRING, os_type STRING, is_gateway BOOL DEFAULT false, risk_score DOUBLE DEFAULT 0.0, first_seen INT64, last_seen INT64, alert_count INT64 DEFAULT 0);
           CREATE TAG IF NOT EXISTS session(tenant_id STRING NOT NULL, community_id STRING NOT NULL, protocol INT8, src_port INT32, dst_port INT32, packets_fwd INT64, packets_bwd INT64, bytes_fwd INT64, bytes_bwd INT64, duration_ms INT32, ts_start INT64, ts_end INT64, alert_count INT64 DEFAULT 0);
           CREATE TAG IF NOT EXISTS alert(tenant_id STRING NOT NULL, alert_type STRING NOT NULL, severity STRING, score DOUBLE, labels STRING, first_seen INT64, last_seen INT64, status STRING DEFAULT 'new');
           CREATE TAG IF NOT EXISTS campaign(tenant_id STRING NOT NULL, campaign_type STRING, title STRING, description STRING, severity STRING, score DOUBLE, phase_progress DOUBLE DEFAULT 0.0, start_time INT64, end_time INT64);
           CREATE TAG IF NOT EXISTS network_device(tenant_id STRING NOT NULL, device_type STRING, mgmt_ip STRING, hostname STRING, vendor STRING, model STRING, software_ver STRING, ports_count INT32 DEFAULT 0);
+          CREATE TAG IF NOT EXISTS entity(tenant_id STRING NOT NULL, entity_id STRING NOT NULL, entity_type STRING NOT NULL, label STRING NOT NULL, detail STRING, risk_score INT64 DEFAULT 0, risk_level STRING, x DOUBLE DEFAULT 0.0, y DOUBLE DEFAULT 0.0, icon STRING, metadata_json STRING DEFAULT '{}', updated_at INT64);
           CREATE EDGE IF NOT EXISTS communicates(tenant_id STRING NOT NULL, community_id STRING, protocol INT8, session_count INT64 DEFAULT 1, total_bytes INT64, total_packets INT64, first_seen INT64, last_seen INT64, direction STRING);
           CREATE EDGE IF NOT EXISTS has_session(tenant_id STRING NOT NULL, role STRING NOT NULL, ts INT64);
           CREATE EDGE IF NOT EXISTS triggers_alert(tenant_id STRING NOT NULL, alert_id STRING NOT NULL, ts INT64);
@@ -64,6 +96,7 @@ spec:
           CREATE EDGE IF NOT EXISTS belongs_to(tenant_id STRING NOT NULL, subnet STRING, asn INT32, ts INT64);
           CREATE EDGE IF NOT EXISTS connects_to(tenant_id STRING NOT NULL, port STRING, vlan_id INT32, bandwidth INT64, ts INT64);
           CREATE EDGE IF NOT EXISTS attack_path_hop(tenant_id STRING NOT NULL, campaign_id STRING, hop_order INT32, ts INT64);
+          CREATE EDGE IF NOT EXISTS relation(tenant_id STRING NOT NULL, relation_id STRING NOT NULL, source_id STRING NOT NULL, target_id STRING NOT NULL, relation_type STRING NOT NULL, risk_level STRING, evidence_id STRING, attributes_json STRING DEFAULT '{}', weight DOUBLE DEFAULT 1.0, observed_at INT64);
           CREATE TAG INDEX IF NOT EXISTS ip_tenant_idx ON ip_address(tenant_id(32));
           CREATE TAG INDEX IF NOT EXISTS ip_address_idx ON ip_address(ip(32));
           CREATE TAG INDEX IF NOT EXISTS ip_risk_idx ON ip_address(risk_score);
@@ -73,10 +106,14 @@ spec:
           CREATE TAG INDEX IF NOT EXISTS alert_type_idx ON alert(alert_type(32));
           CREATE TAG INDEX IF NOT EXISTS alert_severity_idx ON alert(severity(16));
           CREATE TAG INDEX IF NOT EXISTS campaign_tenant_idx ON campaign(tenant_id(32));
+          CREATE TAG INDEX IF NOT EXISTS entity_tenant_idx ON entity(tenant_id(32));
+          CREATE TAG INDEX IF NOT EXISTS entity_id_idx ON entity(entity_id(32));
           CREATE EDGE INDEX IF NOT EXISTS comm_tenant_idx ON communicates(tenant_id(32));
           CREATE EDGE INDEX IF NOT EXISTS comm_dst_idx ON communicates(tenant_id(32));
           CREATE EDGE INDEX IF NOT EXISTS trigger_alert_idx ON triggers_alert(alert_id(32));
           CREATE EDGE INDEX IF NOT EXISTS att_path_camp_idx ON attack_path_hop(campaign_id(32));
+          CREATE EDGE INDEX IF NOT EXISTS relation_tenant_idx ON relation(tenant_id(32));
+          CREATE EDGE INDEX IF NOT EXISTS relation_id_idx ON relation(relation_id(32));
           SHOW SPACES;
           SHOW TAGS;
           SHOW EDGES;

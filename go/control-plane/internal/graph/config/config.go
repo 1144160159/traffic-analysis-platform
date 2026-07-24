@@ -23,16 +23,32 @@ import (
 type Config struct {
 	Server        ServerConfig `envPrefix:"SERVER_"`
 	ClickHouse    storage.ClickHouseConfig
-	Redis         RedisConfig `envPrefix:"REDIS_"`
-	API           APIConfig   `envPrefix:"API_"`
-	Cache         CacheConfig `envPrefix:"CACHE_"`
-	Query         QueryConfig `envPrefix:"QUERY_"`
-	OTEL          OTELConfig  `envPrefix:"OTEL_"`
-	Audit         AuditConfig `envPrefix:"AUDIT_"`
-	Kafka         KafkaConfig `envPrefix:"KAFKA_"`
+	Nebula        NebulaConfig `envPrefix:"NEBULA_"`
+	Redis         RedisConfig  `envPrefix:"REDIS_"`
+	API           APIConfig    `envPrefix:"API_"`
+	Cache         CacheConfig  `envPrefix:"CACHE_"`
+	Query         QueryConfig  `envPrefix:"QUERY_"`
+	OTEL          OTELConfig   `envPrefix:"OTEL_"`
+	Audit         AuditConfig  `envPrefix:"AUDIT_"`
+	Kafka         KafkaConfig  `envPrefix:"KAFKA_"`
 	KafkaSecurity commonkafka.SecurityConfig
 	Security      SecurityConfig `envPrefix:"SECURITY_"`
 	Auth          AuthConfig     `envPrefix:"AUTH_"`
+}
+
+// NebulaConfig configures the native NebulaGraph session pool used by the
+// entity workbench. ClickHouse remains available for time-series graph APIs,
+// while entity and relationship traversal is served by NebulaGraph.
+type NebulaConfig struct {
+	Enabled     bool          `env:"ENABLED" envDefault:"false"`
+	Addresses   []string      `env:"ADDRESSES" envSeparator:"," envDefault:"nebula-graph.middleware.svc:9669"`
+	Username    string        `env:"USERNAME" envDefault:"root"`
+	Password    string        `env:"PASSWORD"`
+	Space       string        `env:"SPACE" envDefault:"traffic_graph"`
+	Timeout     time.Duration `env:"TIMEOUT" envDefault:"10s"`
+	IdleTime    time.Duration `env:"IDLE_TIME" envDefault:"30m"`
+	MaxPoolSize int           `env:"MAX_POOL_SIZE" envDefault:"20"`
+	MinPoolSize int           `env:"MIN_POOL_SIZE" envDefault:"2"`
 }
 
 // ServerConfig HTTP 服务器配置
@@ -334,6 +350,10 @@ func (c *Config) Validate() error {
 		return err
 	}
 
+	if err := c.validateNebula(); err != nil {
+		return err
+	}
+
 	// 验证 Query 配置
 	if err := c.validateQuery(); err != nil {
 		return err
@@ -366,6 +386,28 @@ func (c *Config) Validate() error {
 		}
 	}
 
+	return nil
+}
+
+func (c *Config) validateNebula() error {
+	if !c.Nebula.Enabled {
+		return nil
+	}
+	if len(c.Nebula.Addresses) == 0 {
+		return errors.New(errors.ErrCodeConfigError, "NebulaGraph addresses are required")
+	}
+	if c.Nebula.Username == "" || c.Nebula.Password == "" {
+		return errors.New(errors.ErrCodeConfigError, "NebulaGraph username and password are required")
+	}
+	if c.Nebula.Space == "" {
+		return errors.New(errors.ErrCodeConfigError, "NebulaGraph space is required")
+	}
+	if c.Nebula.Timeout < time.Second || c.Nebula.Timeout > 5*time.Minute {
+		return errors.Newf(errors.ErrCodeConfigError, "NebulaGraph timeout must be between 1s and 5m, got %v", c.Nebula.Timeout)
+	}
+	if c.Nebula.MinPoolSize < 0 || c.Nebula.MaxPoolSize < 1 || c.Nebula.MinPoolSize > c.Nebula.MaxPoolSize {
+		return errors.New(errors.ErrCodeConfigError, "NebulaGraph pool sizes are invalid")
+	}
 	return nil
 }
 
@@ -588,6 +630,11 @@ func (c *Config) GetConfigSummary() map[string]interface{} {
 		"clickhouse": map[string]interface{}{
 			"hosts":    c.ClickHouse.Hosts,
 			"database": c.ClickHouse.Database,
+		},
+		"nebula": map[string]interface{}{
+			"enabled":   c.Nebula.Enabled,
+			"addresses": c.Nebula.Addresses,
+			"space":     c.Nebula.Space,
 		},
 		"redis": map[string]interface{}{
 			"enabled": c.Redis.IsConfigured(),

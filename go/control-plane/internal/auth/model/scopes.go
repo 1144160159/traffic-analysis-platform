@@ -6,6 +6,8 @@
 
 package model
 
+import "strings"
+
 // =============================================================================
 // 统一权限 Scope 定义
 // =============================================================================
@@ -22,6 +24,15 @@ const (
 	ScopeAlertRead   = "alert:read"
 	ScopeAlertWrite  = "alert:write"
 	ScopeAlertExport = "alert:export"
+)
+
+// SOAR 剧本治理权限
+const (
+	ScopePlaybookRead    = "playbook:read"
+	ScopePlaybookWrite   = "playbook:write"
+	ScopePlaybookDrill   = "playbook:drill"
+	ScopePlaybookApprove = "playbook:approve"
+	ScopePlaybookExport  = "playbook:export"
 )
 
 // 规则管理权限
@@ -66,6 +77,8 @@ const (
 
 // 管理员权限
 const (
+	ScopeAdminRead        = "admin:read"
+	ScopeAdminWrite       = "admin:write"
 	ScopeAdminAll         = "admin:*"
 	ScopeAdminCrossTenant = "admin:cross_tenant"
 )
@@ -93,6 +106,18 @@ const (
 const (
 	ScopeDataQualityRead  = "data-quality:read"
 	ScopeDataQualityWrite = "data-quality:write"
+)
+
+// 合规与审计权限
+const (
+	ScopeComplianceRead      = "compliance:read"
+	ScopeComplianceWrite     = "compliance:write"
+	ScopeComplianceExport    = "compliance:export"
+	ScopeComplianceFinalize  = "compliance:finalize"
+	ScopeComplianceRemediate = "compliance:remediate"
+	ScopeAuditRead           = "audit:read"
+	ScopeAuditWrite          = "audit:write"
+	ScopeAuditExport         = "audit:export"
 )
 
 // 通配符
@@ -138,6 +163,11 @@ var AllValidScopes = []string{
 	ScopeAlertRead,
 	ScopeAlertWrite,
 	ScopeAlertExport,
+	ScopePlaybookRead,
+	ScopePlaybookWrite,
+	ScopePlaybookDrill,
+	ScopePlaybookApprove,
+	ScopePlaybookExport,
 
 	ScopeRuleRead,
 	ScopeRuleWrite,
@@ -159,6 +189,8 @@ var AllValidScopes = []string{
 	ScopeAssetDiscover,
 	ScopeScreenView,
 
+	ScopeAdminRead,
+	ScopeAdminWrite,
 	ScopeAdminAll,
 	ScopeAdminCrossTenant,
 
@@ -168,6 +200,14 @@ var AllValidScopes = []string{
 	ScopeDLQReplay,
 	ScopeDataQualityRead,
 	ScopeDataQualityWrite,
+	ScopeComplianceRead,
+	ScopeComplianceWrite,
+	ScopeComplianceExport,
+	ScopeComplianceFinalize,
+	ScopeComplianceRemediate,
+	ScopeAuditRead,
+	ScopeAuditWrite,
+	ScopeAuditExport,
 
 	// 通配符
 	ScopeAll,
@@ -201,6 +241,11 @@ func GetAllScopeInfos() []ScopeInfo {
 		{Name: ScopeAlertRead, Description: "Read alerts", Category: "alert"},
 		{Name: ScopeAlertWrite, Description: "Update alert status and feedback", Category: "alert"},
 		{Name: ScopeAlertExport, Description: "Export alerts", Category: "alert"},
+		{Name: ScopePlaybookRead, Description: "Read tenant SOAR playbooks and evidence", Category: "playbook"},
+		{Name: ScopePlaybookWrite, Description: "Create, edit, submit, enable and disable SOAR playbooks", Category: "playbook"},
+		{Name: ScopePlaybookDrill, Description: "Run and roll back simulated SOAR drills", Category: "playbook"},
+		{Name: ScopePlaybookApprove, Description: "Independently approve or reject SOAR playbooks", Category: "playbook"},
+		{Name: ScopePlaybookExport, Description: "Export tenant SOAR evidence packages", Category: "playbook"},
 
 		{Name: ScopeRuleRead, Description: "Read detection rules", Category: "rule"},
 		{Name: ScopeRuleWrite, Description: "Create and update detection rules", Category: "rule"},
@@ -222,6 +267,8 @@ func GetAllScopeInfos() []ScopeInfo {
 		{Name: ScopeAssetDiscover, Description: "Register discovery credentials and run active asset discovery", Category: "asset"},
 		{Name: ScopeScreenView, Description: "View readonly situational screen", Category: "screen"},
 
+		{Name: ScopeAdminRead, Description: "Read tenant administration settings", Category: "admin"},
+		{Name: ScopeAdminWrite, Description: "Modify tenant administration settings", Category: "admin"},
 		{Name: ScopeAdminAll, Description: "Full admin access", Category: "admin"},
 		{Name: ScopeAdminCrossTenant, Description: "Cross-tenant admin access", Category: "admin"},
 
@@ -231,6 +278,14 @@ func GetAllScopeInfos() []ScopeInfo {
 		{Name: ScopeDLQReplay, Description: "Approve and replay DLQ fallback records", Category: "admin"},
 		{Name: ScopeDataQualityRead, Description: "Read data quality health, evidence and reports", Category: "data-quality"},
 		{Name: ScopeDataQualityWrite, Description: "Create audited data quality repair and export actions", Category: "data-quality"},
+		{Name: ScopeComplianceRead, Description: "Read tenant compliance reports and gate evidence", Category: "compliance"},
+		{Name: ScopeComplianceWrite, Description: "Generate tenant compliance reports", Category: "compliance"},
+		{Name: ScopeComplianceExport, Description: "Export tenant compliance evidence packages", Category: "compliance"},
+		{Name: ScopeComplianceFinalize, Description: "Finalize immutable compliance acceptance records", Category: "compliance"},
+		{Name: ScopeComplianceRemediate, Description: "Create and manage compliance remediation tasks", Category: "compliance"},
+		{Name: ScopeAuditRead, Description: "Read tenant audit trails", Category: "audit"},
+		{Name: ScopeAuditWrite, Description: "Create tenant audit reviews, saved queries and integrity checks", Category: "audit"},
+		{Name: ScopeAuditExport, Description: "Export tenant audit evidence", Category: "audit"},
 
 		{Name: ScopeAll, Description: "Full access (all scopes)", Category: "admin"},
 	}
@@ -290,6 +345,29 @@ func ValidateScopes(scopes []string) (valid []string, invalid []string) {
 	}
 
 	return valid, invalid
+}
+
+// CanDelegateScopes enforces a privilege ceiling for token administration.
+// A caller may only mint or assign scopes already covered by its own
+// permissions. Global and domain wildcards retain their normal semantics.
+func CanDelegateScopes(actorPermissions, requestedScopes []string) bool {
+	for _, requested := range requestedScopes {
+		covered := false
+		for _, permission := range actorPermissions {
+			if permission == ScopeAll || permission == requested {
+				covered = true
+				break
+			}
+			if strings.HasSuffix(permission, ":*") && strings.HasPrefix(requested, strings.TrimSuffix(permission, "*")) {
+				covered = true
+				break
+			}
+		}
+		if !covered {
+			return false
+		}
+	}
+	return true
 }
 
 // ScopesToList 将 scopes 切片转换为列表（兼容旧代码）

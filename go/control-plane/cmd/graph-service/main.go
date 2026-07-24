@@ -26,6 +26,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 
+	authjwt "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/jwt"
+	authrepository "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/repository"
+	authservice "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/service"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/audit"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/httpx"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/logging"
@@ -38,8 +41,17 @@ import (
 	graphlogging "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/graph/logging"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/graph/metrics"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/graph/monitoring"
+	graphnebula "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/graph/nebula"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/graph/query"
 )
+
+type tokenValidatorAdapter struct {
+	authService *authservice.AuthService
+}
+
+func (a tokenValidatorAdapter) ValidateToken(tokenString string) (httpx.Claims, error) {
+	return a.authService.ValidateToken(tokenString)
+}
 
 func main() {
 	// 初始化日志
@@ -272,6 +284,19 @@ func main() {
 		chCircuitBreaker,
 		logger,
 	)
+	if cfg.Nebula.Enabled {
+		workbenchStore, nebulaErr := graphnebula.NewWorkbenchStore(cfg.Nebula, logger)
+		if nebulaErr != nil {
+			logger.Fatal("Failed to initialize NebulaGraph workbench store", zap.Error(nebulaErr))
+		}
+		defer workbenchStore.Close()
+		graphQuery.SetWorkbenchStore(workbenchStore)
+		logger.Info("NebulaGraph workbench store initialized",
+			zap.Strings("addresses", cfg.Nebula.Addresses),
+			zap.String("space", cfg.Nebula.Space))
+	} else {
+		logger.Warn("NebulaGraph workbench store disabled; using ClickHouse compatibility path")
+	}
 	logger.Info("Graph query engine initialized")
 
 	// ==================== 修复 W1：初始化缓存预热服务 ====================
@@ -318,10 +343,33 @@ func main() {
 	// 注册业务路由。Handler 内部已经声明 /api/v1 前缀，入口层只传根路由。
 	handler.RegisterRoutes(r)
 
+	var graphAuthMiddleware httpx.Middleware
+	if cfg.Auth.Enabled && cfg.Auth.RequireAuth {
+		jwtSecret := getEnv("JWT_SECRET_KEY", getEnv("JWT_SIGNING_KEY", ""))
+		if jwtSecret == "" {
+			logger.Fatal("AUTH_REQUIRE_AUTH is enabled but JWT_SECRET_KEY/JWT_SIGNING_KEY is empty")
+		}
+		userRepo := authrepository.NewUserRepository(pgDB, logger)
+		tokenRepo := authrepository.NewTokenRepository(pgDB, logger)
+		jwtService, jwtErr := authjwt.NewService(authjwt.Config{
+			SigningKey:      jwtSecret,
+			SigningMethod:   "HS256",
+			AccessTokenTTL:  15 * time.Minute,
+			RefreshTokenTTL: 7 * 24 * time.Hour,
+			Issuer:          "traffic-auth-service",
+		}, redisClient, tokenRepo, logger)
+		if jwtErr != nil {
+			logger.Fatal("Failed to initialize graph JWT service", zap.Error(jwtErr))
+		}
+		authService := authservice.NewAuthService(userRepo, jwtService, nil, nil, logger, nil)
+		graphAuthMiddleware = httpx.Auth(tokenValidatorAdapter{authService: authService}, logger)
+		logger.Info("Graph API auth middleware initialized")
+	}
+
 	// ==================== 构建中间件链 ====================
 
 	middlewareChain := buildMiddlewareChain(cfg, logger)
-	finalHandler := middlewareChain.Then(r)
+	finalHandler := middlewareChain.Then(protectGraphBusinessAPI(r, graphAuthMiddleware))
 
 	// ==================== HTTP Server ====================
 
@@ -442,6 +490,20 @@ func main() {
 		zap.Int64("rejected_requests", cbMetrics.RejectedRequests))
 
 	logger.Info("Shutdown complete")
+}
+
+func protectGraphBusinessAPI(next http.Handler, authMiddleware httpx.Middleware) http.Handler {
+	if authMiddleware == nil {
+		return next
+	}
+	protected := authMiddleware(httpx.RequireAnyPermission("graph:read", "admin:*", "*")(next))
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodOptions || !strings.HasPrefix(r.URL.Path, "/api/v1/graph") {
+			next.ServeHTTP(w, r)
+			return
+		}
+		protected.ServeHTTP(w, r)
+	})
 }
 
 // ==================== 辅助函数 ====================

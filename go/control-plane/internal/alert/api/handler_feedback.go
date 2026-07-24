@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/service"
@@ -31,6 +32,7 @@ type FeedbackHandler struct {
 	auditLogger   interface{}
 	repo          *FeedbackRepository   // 反馈持久化仓库（ClickHouse）
 	whitelistRepo *whitelist.Repository // 白名单仓库（PostgreSQL）
+	actionAudit   *AlertActionAuditWriter
 	logger        *zap.Logger
 }
 
@@ -122,6 +124,10 @@ type AlertFeedbackExtended struct {
 // SubmitFeedback 提交告警反馈
 func (h *FeedbackHandler) SubmitFeedback(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	if !hasAlertWritePermission(ctx) {
+		errors.WriteErrorWithStatus(w, http.StatusForbidden, errors.ErrCodePermissionDenied, "Permission denied: alert:write required", httpx.GetTraceID(ctx), r.URL.Path)
+		return
+	}
 	logger := logging.L(ctx)
 	vars := mux.Vars(r)
 	alertID := vars["id"]
@@ -136,19 +142,6 @@ func (h *FeedbackHandler) SubmitFeedback(w http.ResponseWriter, r *http.Request)
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		errors.WriteError(w, errors.New(errors.ErrCodeInvalidRequest, "invalid request body"),
 			httpx.GetTraceID(ctx), r.URL.Path)
-		return
-	}
-	// 修复：先验证告警是否存在
-	alert, err := h.alertService.GetAlert(ctx, tenantID, alertID)
-	if err != nil {
-		if errors.IsCode(err, errors.ErrCodeAlertNotFound) {
-			errors.WriteErrorWithStatus(w, http.StatusNotFound,
-				errors.ErrCodeAlertNotFound, "Alert not found",
-				httpx.GetTraceID(ctx), r.URL.Path)
-			return
-		}
-		logger.Error("Failed to get alert", zap.Error(err))
-		errors.WriteError(w, err, httpx.GetTraceID(ctx), r.URL.Path)
 		return
 	}
 	// 验证label - 必须是 TP 或 FP
@@ -167,6 +160,26 @@ func (h *FeedbackHandler) SubmitFeedback(w http.ResponseWriter, r *http.Request)
 	if req.Label == "FP" && !isValidReasonCode(req.ReasonCode) {
 		errors.WriteError(w, errors.Newf(errors.ErrCodeInvalidParameter, "invalid reason_code: %s", req.ReasonCode),
 			httpx.GetTraceID(ctx), r.URL.Path)
+		return
+	}
+	if req.AddToWhitelist && req.Label == "FP" && !hasAlertWritePermission(ctx) {
+		errors.WriteErrorWithStatus(w, http.StatusForbidden,
+			errors.ErrCodePermissionDenied,
+			"Permission denied: alert:write required to create a whitelist draft from feedback",
+			httpx.GetTraceID(ctx), r.URL.Path)
+		return
+	}
+	// 权限已经通过后才查询告警，避免无写权限主体借复合操作探测存在性。
+	alert, err := h.alertService.GetAlert(ctx, tenantID, alertID)
+	if err != nil {
+		if errors.IsCode(err, errors.ErrCodeAlertNotFound) {
+			errors.WriteErrorWithStatus(w, http.StatusNotFound,
+				errors.ErrCodeAlertNotFound, "Alert not found",
+				httpx.GetTraceID(ctx), r.URL.Path)
+			return
+		}
+		logger.Error("Failed to get alert", zap.Error(err))
+		errors.WriteError(w, err, httpx.GetTraceID(ctx), r.URL.Path)
 		return
 	}
 	logger.Info("Submit alert feedback",
@@ -194,20 +207,14 @@ func (h *FeedbackHandler) SubmitFeedback(w http.ResponseWriter, r *http.Request)
 		Severity:   alert.Severity,
 		Labels:     alert.Labels,
 	}
-	// 发送到Kafka供模型训练使用
-	if h.kafkaProducer != nil {
-		if err := h.publishFeedback(ctx, feedback); err != nil {
-			logger.Error("Failed to publish feedback to Kafka", zap.Error(err))
-			// 不阻塞请求，继续处理
-		}
-	}
 	// 如果需要加入白名单，额外处理
 	var whitelistDraft *FeedbackWhitelistDraftResponse
 	if req.AddToWhitelist && req.Label == "FP" {
-		entry, err := h.createWhitelistDraft(ctx, tenantID, alertID, feedbackID, userID, req.ReasonCode, alert)
+		entry, err := h.createWhitelistDraft(ctx, r, tenantID, alertID, feedbackID, userID, req.ReasonCode, alert)
 		if err != nil {
-			logger.Warn("Failed to add to whitelist", zap.Error(err))
-			// 不阻塞请求
+			logger.Error("Failed to create audited whitelist draft from feedback", zap.Error(err))
+			httpx.JSONError(w, ctx, http.StatusInternalServerError, "WHITELIST_DRAFT_CREATE_FAILED", "feedback was not accepted because its whitelist draft and audit record could not be committed")
+			return
 		} else if entry != nil {
 			whitelistDraft = feedbackWhitelistDraftResponse(entry)
 		}
@@ -225,26 +232,46 @@ func (h *FeedbackHandler) SubmitFeedback(w http.ResponseWriter, r *http.Request)
 		AddToWhitelist: req.AddToWhitelist,
 		WhitelistDraft: whitelistDraft,
 	}
-	// 持久化到 ClickHouse（业务闭环：反馈数据可供查询 + 模型训练）
-	if h.repo != nil {
-		record := &FeedbackRecord{
-			FeedbackID:     feedbackID,
-			AlertID:        alertID,
-			TenantID:       tenantID,
-			UserID:         userID,
-			Label:          req.Label,
-			ReasonCode:     req.ReasonCode,
-			Comment:        req.Comment,
-			AddToWhitelist: req.AddToWhitelist,
-			AlertType:      alert.AlertType,
-			Severity:       alert.Severity,
-			ModelVersion:   alert.ModelVersion,
-			RuleVersion:    alert.RuleVersion,
-			CreatedAt:      feedbackTimestamp,
+	// 可查询反馈记录是成功响应的硬门禁，禁止 ClickHouse 写入失败后仍返回 201。
+	if h.repo == nil {
+		httpx.JSONError(w, ctx, http.StatusServiceUnavailable, "FEEDBACK_PERSISTENCE_UNAVAILABLE", "feedback persistence is unavailable")
+		return
+	}
+	record := &FeedbackRecord{
+		FeedbackID:     feedbackID,
+		AlertID:        alertID,
+		TenantID:       tenantID,
+		UserID:         userID,
+		Label:          req.Label,
+		ReasonCode:     req.ReasonCode,
+		Comment:        req.Comment,
+		AddToWhitelist: req.AddToWhitelist,
+		AlertType:      alert.AlertType,
+		Severity:       alert.Severity,
+		ModelVersion:   alert.ModelVersion,
+		RuleVersion:    alert.RuleVersion,
+		CreatedAt:      feedbackTimestamp,
+	}
+	if err := h.repo.Insert(ctx, record); err != nil {
+		logger.Error("Failed to persist feedback to ClickHouse", zap.Error(err))
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "FEEDBACK_PERSISTENCE_FAILED", "feedback was not accepted because its queryable record could not be persisted")
+		return
+	}
+	if h.kafkaProducer != nil {
+		if err := h.publishFeedback(ctx, feedback); err != nil {
+			logger.Error("Failed to publish feedback to Kafka", zap.Error(err))
+			httpx.JSONError(w, ctx, http.StatusServiceUnavailable, "FEEDBACK_EVENT_FAILED", "feedback record was persisted but the training event could not be published")
+			return
 		}
-		if err := h.repo.Insert(ctx, record); err != nil {
-			logger.Error("Failed to persist feedback to ClickHouse", zap.Error(err))
-		}
+	}
+	if h.actionAudit == nil {
+		httpx.JSONError(w, ctx, http.StatusServiceUnavailable, "AUDIT_UNAVAILABLE", "feedback was persisted but audit persistence is unavailable")
+		return
+	}
+	if err := h.actionAudit.Record(ctx, r, AlertActionAuditRecord{Action: "ALERT_FEEDBACK_SUBMITTED", ObjectType: "alert_feedback", ObjectID: feedbackID, TenantID: tenantID, UserID: userID, AlertID: alertID, Result: "success", Detail: map[string]interface{}{"label": req.Label, "reason_code": req.ReasonCode, "add_to_whitelist": req.AddToWhitelist}}); err != nil {
+		logger.Error("Failed to audit feedback", zap.Error(err))
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "AUDIT_FAILED", "feedback was persisted but its audit record could not be committed")
+		return
 	}
 
 	httpx.JSONCreated(w, ctx, response)
@@ -253,6 +280,10 @@ func (h *FeedbackHandler) SubmitFeedback(w http.ResponseWriter, r *http.Request)
 // GetFeedback 获取告警反馈历史
 func (h *FeedbackHandler) GetFeedback(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	if !hasAlertReadPermission(ctx) {
+		errors.WriteErrorWithStatus(w, http.StatusForbidden, errors.ErrCodePermissionDenied, "Permission denied: alert:read required", httpx.GetTraceID(ctx), r.URL.Path)
+		return
+	}
 	logger := logging.L(ctx)
 	vars := mux.Vars(r)
 	alertID := vars["id"]
@@ -312,6 +343,10 @@ func (h *FeedbackHandler) GetReasonCodes(w http.ResponseWriter, r *http.Request)
 // GetFeedbackStats 获取反馈统计（TP/FP 分布）
 func (h *FeedbackHandler) GetFeedbackStats(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	if !hasAlertReadPermission(ctx) {
+		errors.WriteErrorWithStatus(w, http.StatusForbidden, errors.ErrCodePermissionDenied, "Permission denied: alert:read required", httpx.GetTraceID(ctx), r.URL.Path)
+		return
+	}
 	tenantID := h.extractTenantID(r)
 	if tenantID == "" {
 		httpx.JSONError(w, ctx, http.StatusBadRequest, "MISSING_PARAM", "tenant_id required")
@@ -354,7 +389,7 @@ func (h *FeedbackHandler) publishFeedback(ctx context.Context, feedback *AlertFe
 }
 
 // createWhitelistDraft 基于误报反馈生成白名单审批草案。
-func (h *FeedbackHandler) createWhitelistDraft(ctx context.Context, tenantID, alertID, feedbackID, userID, reasonCode string, alert *service.AlertDetailDTO) (*whitelist.Entry, error) {
+func (h *FeedbackHandler) createWhitelistDraft(ctx context.Context, request *http.Request, tenantID, alertID, feedbackID, userID, reasonCode string, alert *service.AlertDetailDTO) (*whitelist.Entry, error) {
 	logger := logging.L(ctx)
 	srcIP, dstIP, alertType := "", "", ""
 	if alert != nil {
@@ -372,8 +407,7 @@ func (h *FeedbackHandler) createWhitelistDraft(ctx context.Context, tenantID, al
 		zap.String("alert_type", alertType))
 
 	if h.whitelistRepo == nil {
-		logger.Warn("Whitelist repository not available, skipping whitelist draft")
-		return nil, nil
+		return nil, fmt.Errorf("whitelist repository is not available")
 	}
 
 	entry, err := buildWhitelistDraftEntry(tenantID, alertID, feedbackID, userID, reasonCode, alert)
@@ -381,7 +415,17 @@ func (h *FeedbackHandler) createWhitelistDraft(ctx context.Context, tenantID, al
 		return nil, err
 	}
 
-	if err := h.whitelistRepo.Create(ctx, entry); err != nil {
+	detail := map[string]interface{}{
+		"type": entry.Type, "value": entry.Value, "status": entry.Status,
+		"approval_status": entry.ApprovalStatus, "source_alert_id": alertID,
+		"feedback_id": feedbackID, "request_id": httpx.GetRequestID(ctx),
+		"trace_id": httpx.GetTraceID(ctx), "api_path": request.URL.Path,
+		"creation_source": "alert_fp_feedback",
+	}
+	if err := h.whitelistRepo.CreateWithAudit(ctx, entry, whitelist.AuditRecord{
+		UserID: userID, Action: "WHITELIST_CREATED", ObjectID: entry.ID,
+		Detail: detail, IPAddress: feedbackClientIP(request), UserAgent: request.UserAgent(),
+	}); err != nil {
 		return nil, fmt.Errorf("failed to create whitelist draft: %w", err)
 	}
 
@@ -392,6 +436,13 @@ func (h *FeedbackHandler) createWhitelistDraft(ctx context.Context, tenantID, al
 		zap.String("whitelist_type", entry.Type),
 		zap.String("value", entry.Value))
 	return entry, nil
+}
+
+func feedbackClientIP(r *http.Request) string {
+	if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
+		return strings.TrimSpace(strings.Split(forwarded, ",")[0])
+	}
+	return strings.TrimSpace(strings.Split(r.RemoteAddr, ":")[0])
 }
 
 func buildWhitelistDraftEntry(tenantID, alertID, feedbackID, userID, reasonCode string, alert *service.AlertDetailDTO) (*whitelist.Entry, error) {

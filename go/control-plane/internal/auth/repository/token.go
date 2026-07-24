@@ -33,6 +33,10 @@ type TokenRepository struct {
 	logger      *zap.Logger
 }
 
+type tokenSQLExecutor interface {
+	ExecContext(context.Context, string, ...interface{}) (sql.Result, error)
+}
+
 // NewTokenRepository 创建 Token 仓储（修复 #24：支持 Redis）
 func NewTokenRepository(db *sql.DB, logger *zap.Logger) *TokenRepository {
 	if logger == nil {
@@ -59,6 +63,18 @@ func (r *TokenRepository) GetDB() *sql.DB {
 
 // Create 创建 Token（返回完整对象，但不包含明文 token）
 func (r *TokenRepository) Create(ctx context.Context, token *model.APIToken) error {
+	if err := prepareTokenForInsert(token); err != nil {
+		return err
+	}
+	if err := insertToken(ctx, r.db, token); err != nil {
+		r.logger.Error("Failed to create token", zap.String("tenant_id", token.TenantID), zap.String("name", token.Name), zap.Error(err))
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to create token")
+	}
+	r.logger.Info("Token created", zap.String("token_id", token.TokenID.String()), zap.String("tenant_id", token.TenantID), zap.String("name", token.Name))
+	return nil
+}
+
+func prepareTokenForInsert(token *model.APIToken) error {
 	if token == nil {
 		return errors.New(errors.ErrCodeInvalidParameter, "token cannot be nil")
 	}
@@ -92,7 +108,10 @@ func (r *TokenRepository) Create(ctx context.Context, token *model.APIToken) err
 	if token.TokenType == "" {
 		token.TokenType = model.TokenTypeAPI
 	}
+	return nil
+}
 
+func insertToken(ctx context.Context, exec tokenSQLExecutor, token *model.APIToken) error {
 	query := `
 		INSERT INTO api_tokens (
 			token_id, tenant_id, user_id, name, description, token_type,
@@ -106,7 +125,7 @@ func (r *TokenRepository) Create(ctx context.Context, token *model.APIToken) err
 		)
 	`
 
-	_, err := r.db.ExecContext(ctx, query,
+	_, err := exec.ExecContext(ctx, query,
 		token.TokenID,
 		token.TenantID,
 		token.UserID,
@@ -133,19 +152,162 @@ func (r *TokenRepository) Create(ctx context.Context, token *model.APIToken) err
 		token.ProbeID,
 	)
 
+	return err
+}
+
+func insertTokenAudit(ctx context.Context, exec tokenSQLExecutor, tenantID string, userID interface{}, action, objectID string, detail map[string]interface{}) error {
+	if detail == nil {
+		detail = map[string]interface{}{}
+	}
+	raw, err := json.Marshal(detail)
 	if err != nil {
-		r.logger.Error("Failed to create token",
-			zap.String("tenant_id", token.TenantID),
-			zap.String("name", token.Name),
-			zap.Error(err))
+		return err
+	}
+	_, err = exec.ExecContext(ctx, `
+		INSERT INTO audit_logs (tenant_id, user_id, action, object_type, object_id, detail, created_at)
+		VALUES ($1, $2, $3, 'api_token', $4, $5::jsonb, NOW())
+	`, tenantID, userID, action, objectID, string(raw))
+	return err
+}
+
+// CreateWithAudit makes the credential and its durable audit record one commit.
+func (r *TokenRepository) CreateWithAudit(ctx context.Context, token *model.APIToken, actor uuid.UUID) error {
+	if err := prepareTokenForInsert(token); err != nil {
+		return err
+	}
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to start token transaction")
+	}
+	defer func() { _ = tx.Rollback() }()
+	if err = insertToken(ctx, tx, token); err != nil {
 		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to create token")
 	}
+	if err = insertTokenAudit(ctx, tx, token.TenantID, actor.String(), "create_token", token.TokenID.String(), map[string]interface{}{"name": token.Name, "scopes": token.Scopes, "probe_id": token.ProbeID}); err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to audit token creation")
+	}
+	if err = tx.Commit(); err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to commit token creation")
+	}
+	return nil
+}
 
-	r.logger.Info("Token created",
-		zap.String("token_id", token.TokenID.String()),
-		zap.String("tenant_id", token.TenantID),
-		zap.String("name", token.Name))
+// UpdateWithAudit updates token metadata and its audit row atomically.
+func (r *TokenRepository) UpdateWithAudit(ctx context.Context, token *model.APIToken, actor uuid.UUID, oldValue, newValue map[string]interface{}) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to start token transaction")
+	}
+	defer func() { _ = tx.Rollback() }()
+	token.UpdatedAt = time.Now()
+	result, err := tx.ExecContext(ctx, `UPDATE api_tokens SET name=$2, description=$3, scopes=$4, expires_at=$5, rotation_enabled=$6, rotation_interval=$7, ip_whitelist=$8, metadata=$9, updated_at=$10, status=$11 WHERE token_id=$1 AND tenant_id=$12`, token.TokenID, token.Name, token.Description, token.Scopes, token.ExpiresAt, token.RotationEnabled, token.RotationInterval, token.IPWhitelist, token.Metadata, token.UpdatedAt, token.Status, token.TenantID)
+	if err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to update token")
+	}
+	if rows, _ := result.RowsAffected(); rows == 0 {
+		return errors.New(errors.ErrCodeEntityNotFound, "Token not found")
+	}
+	if err = insertTokenAudit(ctx, tx, token.TenantID, actor.String(), "update_token", token.TokenID.String(), map[string]interface{}{"old_value": oldValue, "new_value": newValue}); err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to audit token update")
+	}
+	if err = tx.Commit(); err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to commit token update")
+	}
+	return nil
+}
 
+func (r *TokenRepository) RevokeWithAudit(ctx context.Context, tenantID string, tokenID uuid.UUID, actor uuid.UUID, name, reason string) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to start token transaction")
+	}
+	defer func() { _ = tx.Rollback() }()
+	result, err := tx.ExecContext(ctx, `UPDATE api_tokens SET status='revoked', revoked_at=NOW(), updated_at=NOW() WHERE token_id=$1 AND tenant_id=$2 AND status='active'`, tokenID, tenantID)
+	if err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to revoke token")
+	}
+	if rows, _ := result.RowsAffected(); rows == 0 {
+		return errors.New(errors.ErrCodeEntityNotFound, "Token not found or already revoked")
+	}
+	if err = insertTokenAudit(ctx, tx, tenantID, actor.String(), "revoke_token", tokenID.String(), map[string]interface{}{"name": name, "reason": reason}); err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to audit token revocation")
+	}
+	if err = tx.Commit(); err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to commit token revocation")
+	}
+	return nil
+}
+
+func (r *TokenRepository) DeleteWithAudit(ctx context.Context, tenantID string, tokenID uuid.UUID, actor uuid.UUID, name string) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to start token transaction")
+	}
+	defer func() { _ = tx.Rollback() }()
+	result, err := tx.ExecContext(ctx, `DELETE FROM api_tokens WHERE token_id=$1 AND tenant_id=$2`, tokenID, tenantID)
+	if err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to delete token")
+	}
+	if rows, _ := result.RowsAffected(); rows == 0 {
+		return errors.New(errors.ErrCodeEntityNotFound, "Token not found")
+	}
+	if err = insertTokenAudit(ctx, tx, tenantID, actor.String(), "delete_token", tokenID.String(), map[string]interface{}{"name": name}); err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to audit token deletion")
+	}
+	if err = tx.Commit(); err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to commit token deletion")
+	}
+	return nil
+}
+
+func (r *TokenRepository) UpdateScopesWithAudit(ctx context.Context, tenantID string, tokenID uuid.UUID, scopes, oldScopes []string, actor uuid.UUID) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to start token transaction")
+	}
+	defer func() { _ = tx.Rollback() }()
+	result, err := tx.ExecContext(ctx, `UPDATE api_tokens SET scopes=$3, updated_at=NOW() WHERE token_id=$1 AND tenant_id=$2`, tokenID, tenantID, model.StringSlice(scopes))
+	if err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to update token scopes")
+	}
+	if rows, _ := result.RowsAffected(); rows == 0 {
+		return errors.New(errors.ErrCodeEntityNotFound, "Token not found")
+	}
+	if err = insertTokenAudit(ctx, tx, tenantID, actor.String(), "update_token_scopes", tokenID.String(), map[string]interface{}{"old_value": oldScopes, "new_value": scopes}); err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to audit token scopes")
+	}
+	if err = tx.Commit(); err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to commit token scopes")
+	}
+	return nil
+}
+
+func (r *TokenRepository) RotateWithAudit(ctx context.Context, tenantID string, oldTokenID uuid.UUID, newToken *model.APIToken, actor uuid.UUID) error {
+	if err := prepareTokenForInsert(newToken); err != nil {
+		return err
+	}
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to start token rotation")
+	}
+	defer func() { _ = tx.Rollback() }()
+	result, err := tx.ExecContext(ctx, `UPDATE api_tokens SET status='revoked', revoked_at=NOW(), updated_at=NOW() WHERE token_id=$1 AND tenant_id=$2 AND status='active'`, oldTokenID, tenantID)
+	if err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to revoke old token")
+	}
+	if rows, _ := result.RowsAffected(); rows == 0 {
+		return errors.New(errors.ErrCodeEntityNotFound, "Token not found or already revoked")
+	}
+	newToken.PreviousTokenID = &oldTokenID
+	if err = insertToken(ctx, tx, newToken); err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to create rotated token")
+	}
+	if err = insertTokenAudit(ctx, tx, tenantID, actor.String(), "regenerate_token", newToken.TokenID.String(), map[string]interface{}{"old_token_id": oldTokenID.String(), "new_token_id": newToken.TokenID.String(), "scopes": newToken.Scopes}); err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to audit token rotation")
+	}
+	if err = tx.Commit(); err != nil {
+		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to commit token rotation")
+	}
 	return nil
 }
 
@@ -1051,21 +1213,50 @@ func (r *TokenRepository) RevokeTokensByUser(ctx context.Context, userID uuid.UU
 	return revoked, nil
 }
 
-// CleanupExpiredTokens 清理过期的 Token（物理删除）
+// CleanupExpiredTokens deletes retained expired credentials only together with
+// a durable per-token audit trail.
 func (r *TokenRepository) CleanupExpiredTokens(ctx context.Context, before time.Time) (int64, error) {
-	query := `
-		DELETE FROM api_tokens
-		WHERE expires_at IS NOT NULL
-		  AND expires_at < $1
-		  AND status = 'expired'
-	`
-
-	result, err := r.db.ExecContext(ctx, query, before)
+	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		return 0, errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to cleanup expired tokens")
+		return 0, errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to start token cleanup")
 	}
-
-	deleted, _ := result.RowsAffected()
+	defer func() { _ = tx.Rollback() }()
+	rows, err := tx.QueryContext(ctx, `SELECT token_id, tenant_id, name FROM api_tokens WHERE expires_at IS NOT NULL AND expires_at < $1 AND status='expired' ORDER BY expires_at LIMIT 1000 FOR UPDATE SKIP LOCKED`, before)
+	if err != nil {
+		return 0, errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to select expired tokens")
+	}
+	type expiredToken struct {
+		id             uuid.UUID
+		tenantID, name string
+	}
+	items := make([]expiredToken, 0)
+	for rows.Next() {
+		var item expiredToken
+		if err = rows.Scan(&item.id, &item.tenantID, &item.name); err != nil {
+			_ = rows.Close()
+			return 0, errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to scan expired token")
+		}
+		items = append(items, item)
+	}
+	if err = rows.Close(); err != nil {
+		return 0, errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to close expired token rows")
+	}
+	for _, item := range items {
+		if err = insertTokenAudit(ctx, tx, item.tenantID, nil, "cleanup_expired_token", item.id.String(), map[string]interface{}{"name": item.name, "expired_before": before.UTC()}); err != nil {
+			return 0, errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to audit expired token cleanup")
+		}
+		result, deleteErr := tx.ExecContext(ctx, `DELETE FROM api_tokens WHERE token_id=$1 AND tenant_id=$2 AND status='expired'`, item.id, item.tenantID)
+		if deleteErr != nil {
+			return 0, errors.Wrap(deleteErr, errors.ErrCodeDatabaseError, "Failed to cleanup expired token")
+		}
+		if affected, _ := result.RowsAffected(); affected != 1 {
+			return 0, errors.New(errors.ErrCodeVersionConflict, "expired token changed during cleanup")
+		}
+	}
+	if err = tx.Commit(); err != nil {
+		return 0, errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to commit token cleanup")
+	}
+	deleted := int64(len(items))
 
 	if deleted > 0 {
 		r.logger.Info("Cleaned up expired tokens",

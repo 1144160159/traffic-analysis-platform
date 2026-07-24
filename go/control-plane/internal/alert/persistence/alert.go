@@ -94,6 +94,10 @@ type Alert struct {
 	// alert_type: 告警类型（如 "malware", "ddos", "scan" 等）
 	AlertType string `json:"alert_type" ch:"alert_type"`
 
+	// attack_phase: 由显式 MITRE/phase 标签优先、检测类型语义次优推导的规范攻击阶段。
+	// 它是查询投影字段，不写回原始 alerts 事件表。
+	AttackPhase string `json:"attack_phase,omitempty" ch:"-"`
+
 	// labels: 标签列表
 	Labels []string `json:"labels" ch:"labels"`
 
@@ -325,32 +329,32 @@ func (a *Alert) ToProto() *pb.Alert {
 	}
 
 	return &pb.Alert{
-		AlertId:      a.AlertID,
-		TenantId:     a.TenantID,
+		AlertId:          a.AlertID,
+		TenantId:         a.TenantID,
 		DedupFingerprint: a.Fingerprint,
-		CommunityId:  a.CommunityID,
-		SessionId:    a.SessionID,
-		CampaignId:   a.CampaignID,
-		AlertType:    a.AlertType,
-		Labels:       a.Labels,
-		Score:        a.Score,
-		Severity:     pb.Severity(pb.Severity_value[a.Severity]),
-		FirstSeen:    a.FirstSeen.UnixMilli(),
-		LastSeen:     a.LastSeen.UnixMilli(),
-		Count:        a.Count,
-		Status:       pb.AlertStatus(pb.AlertStatus_value[a.Status]),
-		Assignee:     a.Assignee,
-		UpdatedTs:    a.UpdatedTs.UnixMilli(),
-		ModelVersion: a.ModelVersion,
-		RuleVersion:  a.RuleVersion,
-		FeatureSetId: a.FeatureSetID,
-		EvidenceIds:  a.EvidenceIDs,
-		EventId:      a.EventID,
-		SrcIp:    a.SrcIP,
-		DstIp:    a.DstIP,
-		SrcPort:  uint32(a.SrcPort),
-		DstPort:  uint32(a.DstPort),
-		Protocol: uint32(a.Protocol),
+		CommunityId:      a.CommunityID,
+		SessionId:        a.SessionID,
+		CampaignId:       a.CampaignID,
+		AlertType:        a.AlertType,
+		Labels:           a.Labels,
+		Score:            a.Score,
+		Severity:         pb.Severity(pb.Severity_value[a.Severity]),
+		FirstSeen:        a.FirstSeen.UnixMilli(),
+		LastSeen:         a.LastSeen.UnixMilli(),
+		Count:            a.Count,
+		Status:           pb.AlertStatus(pb.AlertStatus_value[a.Status]),
+		Assignee:         a.Assignee,
+		UpdatedTs:        a.UpdatedTs.UnixMilli(),
+		ModelVersion:     a.ModelVersion,
+		RuleVersion:      a.RuleVersion,
+		FeatureSetId:     a.FeatureSetID,
+		EvidenceIds:      a.EvidenceIDs,
+		EventId:          a.EventID,
+		SrcIp:            a.SrcIP,
+		DstIp:            a.DstIP,
+		SrcPort:          uint32(a.SrcPort),
+		DstPort:          uint32(a.DstPort),
+		Protocol:         uint32(a.Protocol),
 	}
 }
 

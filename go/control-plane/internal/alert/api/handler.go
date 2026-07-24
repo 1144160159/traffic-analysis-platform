@@ -28,12 +28,13 @@ import (
 
 // Handler Alert API处理器
 type Handler struct {
-	alertService    *service.AlertService
-	feedbackHandler *FeedbackHandler
-	auditLogger     *audit.AlertAuditLogger
-	actionAudit     *AlertActionAuditWriter
-	consumerHealth  func(context.Context) error
-	logger          *zap.Logger
+	alertService     *service.AlertService
+	feedbackHandler  *FeedbackHandler
+	auditLogger      *audit.AlertAuditLogger
+	actionAudit      *AlertActionAuditWriter
+	responseProducer *kafka.Producer
+	consumerHealth   func(context.Context) error
+	logger           *zap.Logger
 }
 
 // NewHandler 创建Handler
@@ -83,6 +84,16 @@ func (h *Handler) SetFeedbackWhitelistRepo(repo *whitelist.Repository) {
 // SetActionAuditWriter 设置告警动作同步审计写入器。
 func (h *Handler) SetActionAuditWriter(writer *AlertActionAuditWriter) {
 	h.actionAudit = writer
+	if h.feedbackHandler != nil {
+		h.feedbackHandler.actionAudit = writer
+	}
+}
+
+// SetResponseActionProducer enables the durable outbox publisher used by
+// response-request buttons. The action remains pending approval; publishing
+// only hands the request to the downstream approval/automation workflow.
+func (h *Handler) SetResponseActionProducer(producer *kafka.Producer) {
+	h.responseProducer = producer
 }
 
 // SetConsumerHealthCheck includes the asynchronous Kafka ingestion path in
@@ -102,6 +113,8 @@ func (h *Handler) RegisterRoutes(r *mux.Router) {
 	// 导出功能
 	r.HandleFunc("/alerts/export", h.ExportAlerts).Methods("POST")
 	r.HandleFunc("/alerts/export/csv", h.ExportAlertsCSV).Methods("POST")
+	r.HandleFunc("/alerts/views", h.SaveAlertView).Methods("POST")
+	r.HandleFunc("/alerts/views", h.ListAlertViews).Methods("GET")
 	// 告警操作
 	r.HandleFunc("/alerts/batch/status", h.BatchUpdateStatus).Methods("PUT")
 	r.HandleFunc("/alerts/{id}", h.GetAlert).Methods("GET")
@@ -110,6 +123,9 @@ func (h *Handler) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/alerts/{id}/assign", h.AssignAlert).Methods("PUT")
 	r.HandleFunc("/alerts/{id}/close", h.CloseAlert).Methods("POST")
 	r.HandleFunc("/alerts/{id}/reopen", h.ReopenAlert).Methods("POST")
+	r.HandleFunc("/alerts/{id}/response-actions", h.CreateAlertResponseAction).Methods("POST")
+	r.HandleFunc("/alerts/{id}/response-actions/{job_id}", h.GetAlertResponseAction).Methods("GET")
+	r.HandleFunc("/alerts/{id}/investigation-notes", h.CreateAlertInvestigationNote).Methods("POST")
 	// 证据相关 API
 	r.HandleFunc("/evidence/{id}", h.GetEvidenceByID).Methods("GET")
 	r.HandleFunc("/evidence/alert/{alert_id}", h.GetEvidenceByAlertID).Methods("GET")
@@ -167,6 +183,9 @@ func (h *Handler) ReadinessCheck(w http.ResponseWriter, r *http.Request) {
 
 // ListAlerts 查询告警列表
 func (h *Handler) ListAlerts(w http.ResponseWriter, r *http.Request) {
+	if !h.requireAlertReadPermission(w, r) {
+		return
+	}
 	ctx := r.Context()
 	logger := logging.L(ctx)
 	// 提取租户ID
@@ -178,14 +197,26 @@ func (h *Handler) ListAlerts(w http.ResponseWriter, r *http.Request) {
 	}
 	// 解析查询参数
 	query := &service.ListQuery{
-		TenantID:  tenantID,
-		Severity:  r.URL.Query().Get("severity"),
-		Status:    r.URL.Query().Get("status"),
-		AlertType: r.URL.Query().Get("alert_type"),
-		SrcIP:     r.URL.Query().Get("src_ip"),
-		DstIP:     r.URL.Query().Get("dst_ip"),
-		SortBy:    r.URL.Query().Get("sort_by"),
-		SortOrder: r.URL.Query().Get("sort_order"),
+		TenantID:     tenantID,
+		Severity:     r.URL.Query().Get("severity"),
+		Status:       r.URL.Query().Get("status"),
+		AlertType:    r.URL.Query().Get("alert_type"),
+		RuleVersion:  r.URL.Query().Get("rule_version"),
+		ModelVersion: r.URL.Query().Get("model_version"),
+		AttackPhase:  r.URL.Query().Get("attack_phase"),
+		AssetIP:      r.URL.Query().Get("asset_ip"),
+		SrcIP:        r.URL.Query().Get("src_ip"),
+		DstIP:        r.URL.Query().Get("dst_ip"),
+		SortBy:       r.URL.Query().Get("sort_by"),
+		SortOrder:    r.URL.Query().Get("sort_order"),
+	}
+	if minScore := strings.TrimSpace(r.URL.Query().Get("min_score")); minScore != "" {
+		value, err := strconv.ParseFloat(minScore, 64)
+		if err != nil || value < 0 || value > 1 {
+			errors.WriteError(w, errors.Newf(errors.ErrCodeInvalidParameter, "invalid min_score: %s", minScore), httpx.GetTraceID(ctx), r.URL.Path)
+			return
+		}
+		query.MinScore = value
 	}
 	// 解析标签（逗号分隔）
 	if labelsStr := r.URL.Query().Get("labels"); labelsStr != "" {
@@ -212,7 +243,7 @@ func (h *Handler) ListAlerts(w http.ResponseWriter, r *http.Request) {
 	}
 	// 解析分页
 	query.Limit = parseIntWithDefault(r.URL.Query().Get("limit"), 50, 1, 1000)
-	query.Offset = parseIntWithDefault(r.URL.Query().Get("offset"), 0, 0, 100000)
+	query.Offset = parseIntWithDefault(r.URL.Query().Get("offset"), 0, 0, 10000000)
 	logger.Debug("List alerts request",
 		zap.String("tenant_id", tenantID),
 		zap.String("severity", query.Severity),
@@ -249,6 +280,9 @@ type SearchAlertsRequest struct {
 
 // SearchAlerts 全文搜索告警
 func (h *Handler) SearchAlerts(w http.ResponseWriter, r *http.Request) {
+	if !h.requireAlertReadPermission(w, r) {
+		return
+	}
 	ctx := r.Context()
 	logger := logging.L(ctx)
 	tenantID := h.extractTenantID(r)
@@ -299,6 +333,9 @@ func (h *Handler) SearchAlerts(w http.ResponseWriter, r *http.Request) {
 
 // GetAlert 获取告警详情
 func (h *Handler) GetAlert(w http.ResponseWriter, r *http.Request) {
+	if !h.requireAlertReadPermission(w, r) {
+		return
+	}
 	ctx := r.Context()
 	logger := logging.L(ctx)
 	vars := mux.Vars(r)
@@ -330,6 +367,9 @@ func (h *Handler) GetAlert(w http.ResponseWriter, r *http.Request) {
 
 // GetAlertEvidence 获取告警证据
 func (h *Handler) GetAlertEvidence(w http.ResponseWriter, r *http.Request) {
+	if !h.requireAlertReadPermission(w, r) {
+		return
+	}
 	ctx := r.Context()
 	logger := logging.L(ctx)
 	vars := mux.Vars(r)
@@ -372,6 +412,9 @@ func (h *Handler) GetAlertEvidence(w http.ResponseWriter, r *http.Request) {
 
 // GetEvidenceByID 获取单个证据详情
 func (h *Handler) GetEvidenceByID(w http.ResponseWriter, r *http.Request) {
+	if !h.requireAlertReadPermission(w, r) {
+		return
+	}
 	ctx := r.Context()
 	logger := logging.L(ctx)
 	vars := mux.Vars(r)
@@ -410,6 +453,9 @@ func (h *Handler) GetEvidenceByID(w http.ResponseWriter, r *http.Request) {
 
 // GetEvidenceByAlertID 获取告警的所有证据
 func (h *Handler) GetEvidenceByAlertID(w http.ResponseWriter, r *http.Request) {
+	if !h.requireAlertReadPermission(w, r) {
+		return
+	}
 	ctx := r.Context()
 	logger := logging.L(ctx)
 	vars := mux.Vars(r)
@@ -932,6 +978,9 @@ func (h *Handler) ReopenAlert(w http.ResponseWriter, r *http.Request) {
 
 // GetStats 获取告警统计
 func (h *Handler) GetStats(w http.ResponseWriter, r *http.Request) {
+	if !h.requireAlertReadPermission(w, r) {
+		return
+	}
 	ctx := r.Context()
 	logger := logging.L(ctx)
 	tenantID := h.extractTenantID(r)
@@ -976,6 +1025,9 @@ func (h *Handler) GetStats(w http.ResponseWriter, r *http.Request) {
 
 // GetTrend 获取告警趋势
 func (h *Handler) GetTrend(w http.ResponseWriter, r *http.Request) {
+	if !h.requireAlertReadPermission(w, r) {
+		return
+	}
 	ctx := r.Context()
 	logger := logging.L(ctx)
 	tenantID := h.extractTenantID(r)
@@ -1035,16 +1087,26 @@ func (h *Handler) GetTrend(w http.ResponseWriter, r *http.Request) {
 
 // ExportAlertsRequest 导出告警请求
 type ExportAlertsRequest struct {
-	Severity  []string `json:"severity,omitempty"`
-	Status    []string `json:"status,omitempty"`
-	AlertType string   `json:"alert_type,omitempty"`
-	StartTime int64    `json:"start_time,omitempty"`
-	EndTime   int64    `json:"end_time,omitempty"`
-	MaxCount  int      `json:"max_count,omitempty"`
+	Severity     []string `json:"severity,omitempty"`
+	Status       []string `json:"status,omitempty"`
+	AlertType    string   `json:"alert_type,omitempty"`
+	RuleVersion  string   `json:"rule_version,omitempty"`
+	ModelVersion string   `json:"model_version,omitempty"`
+	AttackPhase  string   `json:"attack_phase,omitempty"`
+	AssetIP      string   `json:"asset_ip,omitempty"`
+	SrcIP        string   `json:"src_ip,omitempty"`
+	DstIP        string   `json:"dst_ip,omitempty"`
+	MinScore     float64  `json:"min_score,omitempty"`
+	StartTime    int64    `json:"start_time,omitempty"`
+	EndTime      int64    `json:"end_time,omitempty"`
+	MaxCount     int      `json:"max_count,omitempty"`
 }
 
 // ExportAlerts 导出告警（JSON格式）
 func (h *Handler) ExportAlerts(w http.ResponseWriter, r *http.Request) {
+	if !h.requireAlertExportPermission(w, r) {
+		return
+	}
 	ctx := r.Context()
 	logger := logging.L(ctx)
 	tenantID := h.extractTenantID(r)
@@ -1066,11 +1128,9 @@ func (h *Handler) ExportAlerts(w http.ResponseWriter, r *http.Request) {
 		zap.Int("max_count", req.MaxCount))
 	// 构建导出查询
 	query := &service.ExportQuery{
-		TenantID:  tenantID,
-		Severity:  req.Severity,
-		Status:    req.Status,
-		AlertType: req.AlertType,
-		Format:    "json",
+		TenantID: tenantID, Severity: req.Severity, Status: req.Status, AlertType: req.AlertType,
+		RuleVersion: req.RuleVersion, ModelVersion: req.ModelVersion, AttackPhase: req.AttackPhase,
+		AssetIP: req.AssetIP, SrcIP: req.SrcIP, DstIP: req.DstIP, MinScore: req.MinScore, Format: "json",
 	}
 	if req.StartTime > 0 {
 		query.StartTime = time.UnixMilli(req.StartTime)
@@ -1099,6 +1159,9 @@ func (h *Handler) ExportAlerts(w http.ResponseWriter, r *http.Request) {
 
 // ExportAlertsCSV 导出告警（CSV格式）- 修复：使用标准库 csv 包进行正确转义，修复协议名称字段
 func (h *Handler) ExportAlertsCSV(w http.ResponseWriter, r *http.Request) {
+	if !h.requireAlertExportPermission(w, r) {
+		return
+	}
 	ctx := r.Context()
 	logger := logging.L(ctx)
 	tenantID := h.extractTenantID(r)
@@ -1120,11 +1183,9 @@ func (h *Handler) ExportAlertsCSV(w http.ResponseWriter, r *http.Request) {
 		zap.Int("max_count", req.MaxCount))
 	// 构建导出查询
 	query := &service.ExportQuery{
-		TenantID:  tenantID,
-		Severity:  req.Severity,
-		Status:    req.Status,
-		AlertType: req.AlertType,
-		Format:    "csv",
+		TenantID: tenantID, Severity: req.Severity, Status: req.Status, AlertType: req.AlertType,
+		RuleVersion: req.RuleVersion, ModelVersion: req.ModelVersion, AttackPhase: req.AttackPhase,
+		AssetIP: req.AssetIP, SrcIP: req.SrcIP, DstIP: req.DstIP, MinScore: req.MinScore, Format: "csv",
 	}
 	if req.StartTime > 0 {
 		query.StartTime = time.UnixMilli(req.StartTime)
@@ -1153,10 +1214,10 @@ func (h *Handler) ExportAlertsCSV(w http.ResponseWriter, r *http.Request) {
 	defer csvWriter.Flush()
 	// 写入表头
 	header := []string{
-		"alert_id", "tenant_id", "severity", "status", "alert_type",
+		"alert_id", "tenant_id", "severity", "status", "alert_type", "attack_phase",
 		"src_ip", "dst_ip", "src_port", "dst_port", "protocol", "protocol_name",
 		"first_seen", "last_seen", "count", "score", "assignee",
-		"labels", "community_id",
+		"model_version", "rule_version", "labels", "community_id",
 	}
 	if err := csvWriter.Write(header); err != nil {
 		logger.Error("Failed to write CSV header", zap.Error(err))
@@ -1176,6 +1237,7 @@ func (h *Handler) ExportAlertsCSV(w http.ResponseWriter, r *http.Request) {
 			alert.Severity,
 			alert.Status,
 			alert.AlertType,
+			alert.AttackPhase,
 			alert.SrcIP,
 			alert.DstIP,
 			strconv.Itoa(int(alert.SrcPort)),
@@ -1187,6 +1249,8 @@ func (h *Handler) ExportAlertsCSV(w http.ResponseWriter, r *http.Request) {
 			strconv.Itoa(int(alert.Count)),
 			strconv.FormatFloat(float64(alert.Score), 'f', 4, 32),
 			alert.Assignee,
+			alert.ModelVersion,
+			alert.RuleVersion,
 			labelsStr,
 			alert.CommunityID,
 		}
@@ -1199,6 +1263,9 @@ func (h *Handler) ExportAlertsCSV(w http.ResponseWriter, r *http.Request) {
 
 // GetStorageStatus 获取存储健康状态
 func (h *Handler) GetStorageStatus(w http.ResponseWriter, r *http.Request) {
+	if !h.requireAlertReadPermission(w, r) {
+		return
+	}
 	ctx := r.Context()
 	status := h.alertService.GetStorageStatus()
 	httpx.JSONSuccess(w, ctx, status)
@@ -1206,6 +1273,9 @@ func (h *Handler) GetStorageStatus(w http.ResponseWriter, r *http.Request) {
 
 // SubmitFeedbackBasic 基本的反馈提交（无 Kafka）
 func (h *Handler) SubmitFeedbackBasic(w http.ResponseWriter, r *http.Request) {
+	if !h.requireAlertWritePermission(w, r) {
+		return
+	}
 	ctx := r.Context()
 	logger := logging.L(ctx)
 	vars := mux.Vars(r)
@@ -1272,6 +1342,9 @@ func (h *Handler) SubmitFeedbackBasic(w http.ResponseWriter, r *http.Request) {
 
 // GetFeedbackBasic 基本的反馈获取
 func (h *Handler) GetFeedbackBasic(w http.ResponseWriter, r *http.Request) {
+	if !h.requireAlertReadPermission(w, r) {
+		return
+	}
 	ctx := r.Context()
 	vars := mux.Vars(r)
 	alertID := vars["id"]
@@ -1302,6 +1375,9 @@ func (h *Handler) GetFeedbackBasic(w http.ResponseWriter, r *http.Request) {
 
 // GetReasonCodesBasic 基本的原因码获取
 func (h *Handler) GetReasonCodesBasic(w http.ResponseWriter, r *http.Request) {
+	if !h.requireAlertReadPermission(w, r) {
+		return
+	}
 	ctx := r.Context()
 	codes := make([]map[string]string, 0, len(FPReasonCodes))
 	for code, desc := range FPReasonCodes {

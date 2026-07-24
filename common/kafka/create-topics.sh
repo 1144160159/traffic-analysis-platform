@@ -17,6 +17,7 @@ for entry in \
   "detections.v1:6:86400000:268435456:tenant_id+community_id:DetectionBatch" \
   "alerts.v1:8:259200000:268435456:tenant_id+alert_id:Alert" \
   "alert.feedback.v1:3:259200000:268435456:tenant_id+alert_id:AlertFeedback" \
+  "alert.response.requested.v1:3:259200000:268435456:tenant_id+job_id:AlertResponseRequested" \
   "pcap.index.v1:8:259200000:536870912:tenant_id+probe_id:PcapIndexMeta" \
   "rule.updates:1:86400000:134217728:rule_id:RuleCommand" \
   "model-updates:1:86400000:134217728:model_id:ModelUpdateEvent" \

@@ -116,6 +116,7 @@ func main() {
 	// =========================================================================
 	userRepo := repository.NewUserRepository(pgClient.DB(), logger)
 	tokenRepo := repository.NewTokenRepository(pgClient.DB(), logger)
+	systemSettingsRepo := repository.NewSystemSettingsRepository(pgClient.DB(), logger)
 	logger.Info("Repository layer initialized")
 
 	// =========================================================================
@@ -147,6 +148,7 @@ func main() {
 		DefaultTTL:         cfg.Token.DefaultTTL,
 	}
 	tokenService := service.NewTokenService(tokenRepo, auditLogger, logger, tokenServiceConfig)
+	systemSettingsService := service.NewSystemSettingsService(systemSettingsRepo, logger)
 
 	logger.Info("Service layer initialized",
 		zap.Int("max_tokens_per_tenant", cfg.Token.MaxTokensPerTenant))
@@ -161,6 +163,7 @@ func main() {
 	// =========================================================================
 	authHandler := createAuthHandler(authService, authMiddleware, auditLogger, redisClient, logger)
 	tokenHandler := createTokenHandler(tokenService, authMiddleware, auditLogger, logger)
+	systemSettingsHandler := api.NewSystemSettingsHandler(systemSettingsService, authMiddleware, logger)
 
 	logger.Info("Handler layer initialized")
 
@@ -173,7 +176,7 @@ func main() {
 	// =========================================================================
 	// 阶段13：HTTP 路由初始化
 	// =========================================================================
-	router := setupRoutes(authHandler, tokenHandler, healthChecker, logger)
+	router := setupRoutes(authHandler, tokenHandler, systemSettingsHandler, healthChecker, logger)
 	logger.Info("Routes registered")
 
 	// =========================================================================
@@ -531,6 +534,7 @@ func createTokenHandler(
 func setupRoutes(
 	authHandler *api.Handler,
 	tokenHandler *api.TokenHandler,
+	systemSettingsHandler *api.SystemSettingsHandler,
 	healthChecker *health.HealthChecker,
 	logger *zap.Logger,
 ) *mux.Router {
@@ -538,6 +542,7 @@ func setupRoutes(
 
 	authHandler.RegisterRoutes(r)
 	tokenHandler.RegisterRoutes(r)
+	systemSettingsHandler.RegisterRoutes(r)
 
 	r.HandleFunc("/health", healthChecker.Handler()).Methods("GET")
 	r.HandleFunc("/health/ready", healthChecker.ReadinessHandler()).Methods("GET")

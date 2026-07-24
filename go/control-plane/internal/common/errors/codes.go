@@ -110,6 +110,9 @@ func (c ErrorCode) HTTPStatus() int {
 		if c == ErrCodeQuotaExceeded {
 			return 429
 		}
+		if c == ErrCodePermissionDenied {
+			return 403
+		}
 		return 401
 	case c >= "VALID_2001" && c <= "VALID_2006":
 		return 400

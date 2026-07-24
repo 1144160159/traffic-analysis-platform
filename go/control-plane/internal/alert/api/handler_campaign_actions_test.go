@@ -54,7 +54,7 @@ func (r *campaignActionAuditRecorder) Record(_ context.Context, _ *http.Request,
 	return r.err
 }
 
-func TestSubmitCampaignActionRecordsAuthorizedSimulation(t *testing.T) {
+func TestSubmitCampaignActionRecordsAuthorizedRequest(t *testing.T) {
 	tests := []struct {
 		name       string
 		path       string
@@ -62,6 +62,7 @@ func TestSubmitCampaignActionRecordsAuthorizedSimulation(t *testing.T) {
 		permission string
 		objectID   string
 		auditEvent string
+		mutates    bool
 	}{
 		{
 			name:       "campaign-specific action",
@@ -70,6 +71,7 @@ func TestSubmitCampaignActionRecordsAuthorizedSimulation(t *testing.T) {
 			permission: authmodel.ScopeAlertWrite,
 			objectID:   "campaign-42",
 			auditEvent: "CAMPAIGN_STATUS_CHANGED",
+			mutates:    true,
 		},
 		{
 			name:       "collection action",
@@ -94,7 +96,12 @@ func TestSubmitCampaignActionRecordsAuthorizedSimulation(t *testing.T) {
 			if test.path == "/campaigns/actions" {
 				metadata = ""
 			}
-			body := `{"action_id":"` + test.actionID + `","target":"campaign-42","metadata":{` + metadata + `"dry_run":true,"source":"test"},"simulation":true,"dry_run":true}`
+			simulation, dryRun := "true", "true"
+			if test.mutates {
+				simulation, dryRun = "false", "false"
+				metadata += `"next_status":"investigating",`
+			}
+			body := `{"action_id":"` + test.actionID + `","target":"campaign-42","metadata":{` + metadata + `"dry_run":` + dryRun + `,"source":"test"},"simulation":` + simulation + `,"dry_run":` + dryRun + `}`
 			request := httptest.NewRequest(http.MethodPost, test.path, strings.NewReader(body))
 			request = campaignActionRequestWithPermissions(request, test.permission)
 			recorder := httptest.NewRecorder()
@@ -118,22 +125,22 @@ func TestSubmitCampaignActionRecordsAuthorizedSimulation(t *testing.T) {
 			require.True(t, response.Success)
 			require.Equal(t, test.actionID, response.Data.ActionID)
 			require.Equal(t, test.auditEvent, response.Data.AuditEvent)
-			require.Equal(t, "recorded", response.Data.Status)
+			require.Equal(t, "completed", response.Data.Status)
 			require.Equal(t, test.path, response.Data.Endpoint)
 			require.NotEmpty(t, response.Data.JobID)
 			require.Equal(t, "completed", response.Data.JobStatus)
-			require.True(t, response.Data.Simulation)
+			require.Equal(t, !test.mutates, response.Data.Simulation)
 
 			require.Len(t, audit.records, 1)
 			record := audit.records[0]
 			require.Equal(t, test.auditEvent, record.Action)
 			require.Equal(t, "campaign", record.ObjectType)
 			require.Equal(t, test.objectID, record.ObjectID)
-			require.Equal(t, "recorded", record.Result)
+			require.Equal(t, "completed", record.Result)
 			require.Equal(t, test.actionID, record.Detail["action_id"])
 			require.Equal(t, test.auditEvent, record.Detail["audit_event"])
-			require.Equal(t, true, record.Detail["simulation"])
-			require.Equal(t, true, record.Detail["dry_run"])
+			require.Equal(t, !test.mutates, record.Detail["simulation"])
+			require.Equal(t, !test.mutates, record.Detail["dry_run"])
 			require.Equal(t, response.Data.JobID, record.Detail["job_id"])
 			require.Len(t, jobs.jobs, 1)
 			require.Equal(t, response.Data.JobID, jobs.jobs[0].JobID)
@@ -183,7 +190,16 @@ func TestSubmitCampaignActionEnforcesActionScopes(t *testing.T) {
 			router := mux.NewRouter()
 			handler.RegisterRoutes(router)
 
-			body := `{"action_id":"` + test.actionID + `","target":"campaign-42","metadata":{"campaign_id":"campaign-42","dry_run":true},"simulation":true,"dry_run":true}`
+			mutates := campaignActionSpecs[test.actionID].Mutates
+			simulation, dryRun := "true", "true"
+			metadata := `"campaign_id":"campaign-42",`
+			if mutates {
+				simulation, dryRun = "false", "false"
+				if test.actionID == "campaign-status-change" {
+					metadata += `"next_status":"investigating",`
+				}
+			}
+			body := `{"action_id":"` + test.actionID + `","target":"campaign-42","metadata":{` + metadata + `"dry_run":` + dryRun + `},"simulation":` + simulation + `,"dry_run":` + dryRun + `}`
 			request := httptest.NewRequest(http.MethodPost, "/campaigns/campaign-42/actions", strings.NewReader(body))
 			request = campaignActionRequestWithPermissions(request, test.permission)
 			recorder := httptest.NewRecorder()
@@ -267,7 +283,7 @@ func TestSubmitCampaignActionUsesAtomicCommitterWhenConfigured(t *testing.T) {
 	}
 	router := mux.NewRouter()
 	handler.RegisterRoutes(router)
-	body := `{"action_id":"campaign-status-change","target":"campaign-42","metadata":{"campaign_id":"campaign-42","dry_run":true},"simulation":true,"dry_run":true}`
+	body := `{"action_id":"campaign-status-change","target":"campaign-42","metadata":{"campaign_id":"campaign-42","next_status":"investigating","dry_run":false},"simulation":false,"dry_run":false}`
 	request := campaignActionRequestWithPermissions(httptest.NewRequest(http.MethodPost, "/campaigns/campaign-42/actions", strings.NewReader(body)), authmodel.ScopeAlertWrite)
 	recorder := httptest.NewRecorder()
 
@@ -326,7 +342,7 @@ func TestSubmitCampaignActionRejectsUnknownTenantCampaign(t *testing.T) {
 	}
 	router := mux.NewRouter()
 	handler.RegisterRoutes(router)
-	body := `{"action_id":"campaign-status-change","target":"missing-campaign","metadata":{"campaign_id":"missing-campaign","dry_run":true},"simulation":true,"dry_run":true}`
+	body := `{"action_id":"campaign-status-change","target":"missing-campaign","metadata":{"campaign_id":"missing-campaign","next_status":"investigating","dry_run":false},"simulation":false,"dry_run":false}`
 	request := campaignActionRequestWithPermissions(httptest.NewRequest(http.MethodPost, "/campaigns/missing-campaign/actions", strings.NewReader(body)), authmodel.ScopeAlertWrite)
 	recorder := httptest.NewRecorder()
 

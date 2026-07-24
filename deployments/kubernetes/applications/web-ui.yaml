@@ -16,8 +16,8 @@ metadata:
   name: web-ui
   namespace: traffic-analysis
   annotations:
-    kubernetes.io/change-cause: "MLOps version-history trend and r333 Windows Chrome acceptance"
-    traffic.analysis/source-revision: "9715ff1904701d1ab1930309eca54ec2121999ab1f43c00cc14adceee9c8d309"
+    kubernetes.io/change-cause: "Campaigns r725 uses the AppShell public business-area spacing and keeps the ECharts graph nodes inside the chart viewport"
+    traffic.analysis/source-revision: "2f8bafc7f356e3df100f709099a8d991a370802211ec74b98bec4495a87657cd"
 spec:
   replicas: 1
   selector: {matchLabels: {app: web-ui}}
@@ -25,14 +25,16 @@ spec:
     metadata:
       labels: {app: web-ui}
       annotations:
-        traffic.analysis/build-id: "mlops-r333-20260719-r5"
-        traffic.analysis/source-digest: "9715ff1904701d1ab1930309eca54ec2121999ab1f43c00cc14adceee9c8d309"
-        traffic.analysis/image-digest: "sha256:7ded10737d650ce698dbbcfbeb3595375fac4fe3d9a98d0615fd028ba518eff3"
+        traffic.analysis/build-id: "campaigns-r725"
+        traffic.analysis/release: "campaigns-r725"
+        traffic.analysis/source-digest: "2f8bafc7f356e3df100f709099a8d991a370802211ec74b98bec4495a87657cd"
+        traffic.analysis/image-digest: "sha256:dfe87ddcd728bd89d6104d7d920a799a1a88d597a507c6bebc621e65702faffb"
+        traffic.analysis/image-id: "sha256:1ee615e84e4cef8234e8382d75e399b30811acd3636283a40e312d66d7d69884"
     spec:
       terminationGracePeriodSeconds: 30
       containers:
       - name: web-ui
-        image: docker.io/traffic/web-ui@sha256:7ded10737d650ce698dbbcfbeb3595375fac4fe3d9a98d0615fd028ba518eff3
+        image: docker.io/traffic/web-ui@sha256:dfe87ddcd728bd89d6104d7d920a799a1a88d597a507c6bebc621e65702faffb
         imagePullPolicy: Never
         ports: [{containerPort: 80}]
         lifecycle:

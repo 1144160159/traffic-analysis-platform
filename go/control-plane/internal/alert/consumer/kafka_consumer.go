@@ -26,6 +26,7 @@ import (
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/config"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/dedup"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/evidence"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/notification"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/persistence"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/state"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/kafka"
@@ -117,10 +118,13 @@ type Consumer struct {
 	dualWriter        *persistence.DualWriter
 	evidenceGenerator *evidence.Generator
 	arkimeLinkGen     *arkime.LinkGenerator
-	timeBucket        int
-	logger            *zap.Logger
-	batchSize         int
-	flushInterval     time.Duration
+	notifier          interface {
+		Notify(context.Context, *notification.AlertInfo) error
+	}
+	timeBucket    int
+	logger        *zap.Logger
+	batchSize     int
+	flushInterval time.Duration
 
 	// 状态管理
 	mu        sync.Mutex
@@ -135,6 +139,17 @@ type Consumer struct {
 	generateEvidence bool
 	generateArkime   bool
 	useLuaScript     bool // 新增：是否使用 Lua 脚本去重
+}
+
+// SetNotificationDispatcher connects persisted detections to the governed
+// notification execution chain. Delivery failures are logged after the alert
+// batch is durable and never roll back the alert itself.
+func (c *Consumer) SetNotificationDispatcher(dispatcher interface {
+	Notify(context.Context, *notification.AlertInfo) error
+}) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.notifier = dispatcher
 }
 
 // ConsumerConfig 消费者配置
@@ -363,6 +378,23 @@ func (c *Consumer) processBatch(ctx context.Context, msgs []*kafka.ReceivedMessa
 			return err // 不提交offset
 		}
 		batchWriteLatency.WithLabelValues("dual").Observe(time.Since(writeStart).Seconds())
+		c.mu.Lock()
+		dispatcher := c.notifier
+		c.mu.Unlock()
+		if dispatcher != nil {
+			for _, alert := range alerts {
+				assetScope, campus, objectType, objectID := notificationDimensions(alert.Labels)
+				if err := dispatcher.Notify(ctx, &notification.AlertInfo{
+					AlertID: alert.AlertID, Title: alert.AlertType, Severity: notification.NormalizeSeverity(alert.Severity, float64(alert.Score)), Score: float64(alert.Score),
+					SourceIP: alert.SrcIP, DestIP: alert.DstIP, AlertType: notification.NormalizeAlertType(alert.AlertType, strings.Join(alert.Labels, ",")),
+					Description: strings.Join(alert.Labels, ","), TenantID: alert.TenantID, Timestamp: alert.FirstSeen,
+					CampaignID: alert.CampaignID, AssetScope: assetScope, Campus: campus, AssetName: objectID,
+					ObjectType: objectType, ObjectID: objectID, Fingerprint: alert.Fingerprint,
+				}); err != nil {
+					c.logger.Warn("Governed notification dispatch failed", zap.String("alert_id", alert.AlertID), zap.Error(err))
+				}
+			}
+		}
 	}
 
 	// 批量写入证据
@@ -385,6 +417,32 @@ func (c *Consumer) processBatch(ctx context.Context, msgs []*kafka.ReceivedMessa
 	if len(alerts) > 0 {
 	}
 	return nil
+}
+
+func notificationDimensions(labels []string) (assetScope, campus, objectType, objectID string) {
+	for _, label := range labels {
+		parts := strings.SplitN(label, ":", 2)
+		if len(parts) != 2 {
+			parts = strings.SplitN(label, "=", 2)
+		}
+		if len(parts) != 2 {
+			continue
+		}
+		switch strings.ToLower(strings.TrimSpace(parts[0])) {
+		case "asset_scope", "asset_group", "资产组":
+			assetScope = strings.TrimSpace(parts[1])
+		case "campus", "园区":
+			campus = strings.TrimSpace(parts[1])
+		case "object_type":
+			objectType = strings.TrimSpace(parts[1])
+		case "object_id":
+			objectID = strings.TrimSpace(parts[1])
+		}
+	}
+	if assetScope == "" {
+		assetScope = objectType
+	}
+	return assetScope, campus, objectType, objectID
 }
 
 // processMessage 处理单条消息
@@ -522,11 +580,13 @@ func (c *Consumer) buildAlert(
 		protocol = uint8(0)
 	}
 
-	// 提取labels
-	labels := []string{}
-	if labels == nil {
-		labels = []string{}
-	}
+	// Preserve detector labels: notification routing, asset/campus scoping and
+	// downstream investigation all depend on this business context.
+	labels := append([]string(nil), detection.Behaviors[0].GetLabels()...)
+	labels = append(labels,
+		"object_type:"+detection.Behaviors[0].GetObjectType(),
+		"object_id:"+detection.Behaviors[0].GetObjectId(),
+	)
 
 	// 提取evidence_ids（从证据条目中）
 	evidenceIDs := make([]string, 0)
@@ -588,10 +648,10 @@ func (c *Consumer) buildAlert(
 		DstPort:  dstPort,
 		Protocol: protocol,
 
-		AlertType: detection.Behaviors[0].GetObjectType(),
+		AlertType: notification.NormalizeAlertType(detection.Behaviors[0].GetTopLabel(), strings.Join(labels, ",")),
 		Labels:    labels,
 		Score:     detection.Behaviors[0].GetTopScore(),
-		Severity:  detection.Behaviors[0].GetTopLabel(),
+		Severity:  notification.NormalizeSeverity("", float64(detection.Behaviors[0].GetTopScore())),
 
 		FirstSeen: firstSeen,
 		LastSeen:  lastSeen,

@@ -21,11 +21,11 @@ import (
 
 // CommunityDetection 社区检测结果
 type CommunityDetection struct {
-	Communities      map[int][]string          `json:"communities"`       // community_id → IP列表
-	IPToCommunity    map[string]int            `json:"ip_to_community"`   // IP → community_id
-	Modularity       float64                   `json:"modularity"`        // 模块度
-	CommunityCount   int                       `json:"community_count"`
-	CommunityStats   []CommunityStat           `json:"community_stats"`   // 社区统计
+	Communities    map[int][]string `json:"communities"`     // community_id → IP列表
+	IPToCommunity  map[string]int   `json:"ip_to_community"` // IP → community_id
+	Modularity     float64          `json:"modularity"`      // 模块度
+	CommunityCount int              `json:"community_count"`
+	CommunityStats []CommunityStat  `json:"community_stats"` // 社区统计
 }
 
 // CommunityStat 社区统计
@@ -40,11 +40,11 @@ type CommunityStat struct {
 
 // PageRankResult PageRank 结果
 type PageRankResult struct {
-	Scores       map[string]float64 `json:"scores"`        // IP → PageRank score
-	TopN         []RankedNode       `json:"top_n"`         // Top-N 节点
-	Converged    bool               `json:"converged"`
-	Iterations   int                `json:"iterations"`
-	DampingFactor float64           `json:"damping_factor"`
+	Scores        map[string]float64 `json:"scores"` // IP → PageRank score
+	TopN          []RankedNode       `json:"top_n"`  // Top-N 节点
+	Converged     bool               `json:"converged"`
+	Iterations    int                `json:"iterations"`
+	DampingFactor float64            `json:"damping_factor"`
 }
 
 // RankedNode 排名节点
@@ -56,35 +56,35 @@ type RankedNode struct {
 
 // CentralityResult 中心性结果
 type CentralityResult struct {
-	Betweenness     map[string]float64 `json:"betweenness"`      // IP → betweenness score
-	Closeness       map[string]float64 `json:"closeness"`        // IP → closeness score
-	Eigenvector     map[string]float64 `json:"eigenvector"`      // IP → eigenvector score
-	BridgeNodes     []string           `json:"bridge_nodes"`     // 桥梁节点 (高 betweenness)
-	HubNodes        []string           `json:"hub_nodes"`        // 枢纽节点 (高 degree + eigenvector)
+	Betweenness map[string]float64 `json:"betweenness"`  // IP → betweenness score
+	Closeness   map[string]float64 `json:"closeness"`    // IP → closeness score
+	Eigenvector map[string]float64 `json:"eigenvector"`  // IP → eigenvector score
+	BridgeNodes []string           `json:"bridge_nodes"` // 桥梁节点 (高 betweenness)
+	HubNodes    []string           `json:"hub_nodes"`    // 枢纽节点 (高 degree + eigenvector)
 }
 
 // AttackPathResult 攻击路径分析结果
 type AttackPathResult struct {
-	Paths           []AttackPath       `json:"paths"`
-	SourceIP        string             `json:"source_ip"`
-	TargetIP        string             `json:"target_ip"`
-	MaxHops         int                `json:"max_hops"`
-	ShortestPathLen int                `json:"shortest_path_len"`
-	TotalPaths      int                `json:"total_paths"`
+	Paths           []AttackPath `json:"paths"`
+	SourceIP        string       `json:"source_ip"`
+	TargetIP        string       `json:"target_ip"`
+	MaxHops         int          `json:"max_hops"`
+	ShortestPathLen int          `json:"shortest_path_len"`
+	TotalPaths      int          `json:"total_paths"`
 }
 
 // AttackPath 单条攻击路径
 type AttackPath struct {
-	Hops       []string `json:"hops"`        // IP 序列
+	Hops       []string `json:"hops"` // IP 序列
 	Length     int      `json:"length"`
-	TotalBytes uint64   `json:"total_bytes"`  // 路径上传输的总字节
-	RiskScore  float64  `json:"risk_score"`   // 路径风险评分
-	Techniques []string `json:"techniques"`   // MITRE 技术
+	TotalBytes uint64   `json:"total_bytes"` // 路径上传输的总字节
+	RiskScore  float64  `json:"risk_score"`  // 路径风险评分
+	Techniques []string `json:"techniques"`  // MITRE 技术
 }
 
 // AnomalyPattern 异常通信模式
 type AnomalyPattern struct {
-	Type        string   `json:"type"`         // "star", "chain", "mesh", "isolated"
+	Type        string   `json:"type"` // "star", "chain", "mesh", "isolated"
 	CenterIP    string   `json:"center_ip,omitempty"`
 	Members     []string `json:"members"`
 	EdgeCount   int      `json:"edge_count"`
@@ -98,8 +98,8 @@ type GraphAnalyzer struct {
 	logger *zap.Logger
 	mu     sync.RWMutex
 	// 缓存
-	adjacencyCache map[string][]string   // IP → neighbors
-	edgeCache      []graphEdge           // 缓存的边数据
+	adjacencyCache map[string][]string // IP → neighbors
+	edgeCache      []graphEdge         // 缓存的边数据
 	cacheTTL       time.Duration
 	cacheTime      time.Time
 }
@@ -120,7 +120,9 @@ func NewGraphAnalyzer(client *Client, logger *zap.Logger) *GraphAnalyzer {
 
 // DetectCommunities Louvain 算法社区检测
 func (ga *GraphAnalyzer) DetectCommunities(ctx context.Context, tenantID string, minModularityGain float64) (*CommunityDetection, error) {
-	if minModularityGain <= 0 { minModularityGain = 0.0001 }
+	if minModularityGain <= 0 {
+		minModularityGain = 0.0001
+	}
 
 	// 1. 获取图结构 (简化: 从 ClickHouse 获取邻接关系)
 	nodes, edges, err := ga.loadNetworkTopology(ctx, tenantID)
@@ -138,7 +140,9 @@ func (ga *GraphAnalyzer) DetectCommunities(ctx context.Context, tenantID string,
 
 	// 3. Louvain 迭代
 	m := float64(len(edges)) // 总边数
-	if m == 0 { m = 1 }
+	if m == 0 {
+		m = 1
+	}
 
 	// 节点权重 (degree)
 	nodeWeight := make(map[string]float64)
@@ -148,7 +152,9 @@ func (ga *GraphAnalyzer) DetectCommunities(ctx context.Context, tenantID string,
 	}
 	for _, e := range edges {
 		w := float64(e.sessionCount)
-		if w == 0 { w = 1.0 }
+		if w == 0 {
+			w = 1.0
+		}
 		adjList[e.src][e.dst] += w
 		adjList[e.dst][e.src] += w
 		nodeWeight[e.src] += w
@@ -179,7 +185,9 @@ func (ga *GraphAnalyzer) DetectCommunities(ctx context.Context, tenantID string,
 			ki := nodeWeight[node]
 
 			for comm, kiIn := range neighborComms {
-				if comm == currentComm { continue }
+				if comm == currentComm {
+					continue
+				}
 				// 模块度增益: ΔQ = ki_in/m - Σtot*ki/m²
 				sigmaTot := ga.computeCommunityWeight(community, nodeWeight, comm)
 				gain := kiIn/m - sigmaTot*ki/(m*m)
@@ -237,7 +245,9 @@ func (ga *GraphAnalyzer) computeCommunityWeight(community map[string]int, nodeWe
 
 // computeModularity 计算模块度
 func (ga *GraphAnalyzer) computeModularity(community map[string]int, adjList map[string]map[string]float64, nodeWeight map[string]float64, m float64) float64 {
-	if m == 0 { return 0 }
+	if m == 0 {
+		return 0
+	}
 	var Q float64
 	for u := range adjList {
 		cu := community[u]
@@ -259,11 +269,15 @@ func (ga *GraphAnalyzer) computeCommunityStats(communities map[int][]string, adj
 		s := CommunityStat{CommunityID: commID, NodeCount: len(members)}
 		// 社区内边
 		memberSet := make(map[string]bool)
-		for _, m := range members { memberSet[m] = true }
+		for _, m := range members {
+			memberSet[m] = true
+		}
 		var internalEdges int
 		for _, u := range members {
 			for v := range adjList[u] {
-				if memberSet[v] { internalEdges++ }
+				if memberSet[v] {
+					internalEdges++
+				}
 			}
 		}
 		s.EdgeCount = internalEdges / 2 // 无向边去重
@@ -289,8 +303,12 @@ func (ga *GraphAnalyzer) computeCommunityStats(communities map[int][]string, adj
 
 // ComputePageRank 计算 PageRank
 func (ga *GraphAnalyzer) ComputePageRank(ctx context.Context, tenantID string, dampingFactor float64, maxIterations int) (*PageRankResult, error) {
-	if dampingFactor <= 0 { dampingFactor = 0.85 }
-	if maxIterations <= 0 { maxIterations = 100 }
+	if dampingFactor <= 0 {
+		dampingFactor = 0.85
+	}
+	if maxIterations <= 0 {
+		maxIterations = 100
+	}
 
 	nodes, edges, err := ga.loadNetworkTopology(ctx, tenantID)
 	if err != nil {
@@ -298,7 +316,9 @@ func (ga *GraphAnalyzer) ComputePageRank(ctx context.Context, tenantID string, d
 	}
 
 	N := float64(len(nodes))
-	if N == 0 { return nil, fmt.Errorf("empty graph") }
+	if N == 0 {
+		return nil, fmt.Errorf("empty graph")
+	}
 
 	// 构建邻接表
 	adjList := make(map[string][]string)
@@ -349,7 +369,9 @@ func (ga *GraphAnalyzer) ComputePageRank(ctx context.Context, tenantID string, d
 		var maxDiff float64
 		for _, ip := range nodes {
 			diff := abs(newPR[ip] - pr[ip])
-			if diff > maxDiff { maxDiff = diff }
+			if diff > maxDiff {
+				maxDiff = diff
+			}
 			pr[ip] = newPR[ip]
 		}
 
@@ -368,7 +390,9 @@ func (ga *GraphAnalyzer) ComputePageRank(ctx context.Context, tenantID string, d
 	sort.Slice(ranked, func(i, j int) bool { return ranked[i].Score > ranked[j].Score })
 
 	topN := 20
-	if len(ranked) < topN { topN = len(ranked) }
+	if len(ranked) < topN {
+		topN = len(ranked)
+	}
 	for i := range ranked[:topN] {
 		ranked[i].Rank = i + 1
 	}
@@ -400,7 +424,9 @@ func (ga *GraphAnalyzer) ComputeCentrality(ctx context.Context, tenantID string,
 		return nil, err
 	}
 
-	if len(nodes) == 0 { return nil, fmt.Errorf("empty graph") }
+	if len(nodes) == 0 {
+		return nil, fmt.Errorf("empty graph")
+	}
 
 	// 构建邻接表
 	adjList := make(map[string][]string)
@@ -464,7 +490,9 @@ func (ga *GraphAnalyzer) ComputeCentrality(ctx context.Context, tenantID string,
 
 		// 反向累积
 		delta := make(map[string]float64)
-		for _, v := range nodes { delta[v] = 0 }
+		for _, v := range nodes {
+			delta[v] = 0
+		}
 		for i := len(stack) - 1; i >= 0; i-- {
 			w := stack[i]
 			for _, v := range pred[w] {
@@ -506,7 +534,9 @@ func (ga *GraphAnalyzer) ComputeCentrality(ctx context.Context, tenantID string,
 
 	// Eigenvector Centrality (simplified power iteration)
 	eigenvector := make(map[string]float64)
-	for _, ip := range nodes { eigenvector[ip] = 1.0 }
+	for _, ip := range nodes {
+		eigenvector[ip] = 1.0
+	}
 
 	// Power iteration for eigenvector
 	for iter := 0; iter < 50; iter++ {
@@ -555,7 +585,7 @@ func (ga *GraphAnalyzer) ComputeCentrality(ctx context.Context, tenantID string,
 	for _, ip := range nodes {
 		degreeScore := float64(len(adjList[ip])) / float64(len(nodes))
 		eigScore := eigenvector[ip]
-		hubs = append(hubs, hubCandidate{ip, degreeScore * 0.5 + eigScore * 0.5})
+		hubs = append(hubs, hubCandidate{ip, degreeScore*0.5 + eigScore*0.5})
 	}
 	sort.Slice(hubs, func(i, j int) bool { return hubs[i].score > hubs[j].score })
 	for i := 0; i < len(hubs) && i < hubCount; i++ {
@@ -577,8 +607,12 @@ func (ga *GraphAnalyzer) ComputeCentrality(ctx context.Context, tenantID string,
 
 // AnalyzeAttackPaths 攻击路径分析
 func (ga *GraphAnalyzer) AnalyzeAttackPaths(ctx context.Context, tenantID, sourceIP, targetIP string, maxHops int) (*AttackPathResult, error) {
-	if maxHops <= 0 { maxHops = 5 }
-	if maxHops > 10 { maxHops = 10 }
+	if maxHops <= 0 {
+		maxHops = 5
+	}
+	if maxHops > 10 {
+		maxHops = 10
+	}
 
 	nodes, edges, err := ga.loadNetworkTopology(ctx, tenantID)
 	if err != nil {
@@ -607,7 +641,9 @@ func (ga *GraphAnalyzer) AnalyzeAttackPaths(ctx context.Context, tenantID, sourc
 
 	var dfs func(current string, depth int, totalBytes uint64, risk float64)
 	dfs = func(current string, depth int, totalBytes uint64, risk float64) {
-		if depth > maxHops { return }
+		if depth > maxHops {
+			return
+		}
 		if current == targetIP && depth > 0 {
 			path := make([]string, len(currentPath))
 			copy(path, currentPath)
@@ -620,8 +656,12 @@ func (ga *GraphAnalyzer) AnalyzeAttackPaths(ctx context.Context, tenantID, sourc
 			return
 		}
 		for neighbor, edge := range adjList[current] {
-			if visited[neighbor] { continue }
-			if len(allPaths) >= 100 { return } // limit
+			if visited[neighbor] {
+				continue
+			}
+			if len(allPaths) >= 100 {
+				return
+			} // limit
 			visited[neighbor] = true
 			currentPath = append(currentPath, neighbor)
 			newBytes := totalBytes + uint64(edge.totalBytes)
@@ -717,7 +757,9 @@ func (ga *GraphAnalyzer) DetectAnomalyPatterns(ctx context.Context, tenantID str
 	// 2. Chain pattern: 线性通信链 (横向移动)
 	visited := make(map[string]bool)
 	for _, ip := range nodes {
-		if visited[ip] || len(adjList[ip]) != 2 { continue }
+		if visited[ip] || len(adjList[ip]) != 2 {
+			continue
+		}
 		// DFS 沿链走
 		chain := []string{ip}
 		visited[ip] = true
@@ -733,7 +775,9 @@ func (ga *GraphAnalyzer) DetectAnomalyPatterns(ctx context.Context, tenantID str
 					break
 				}
 			}
-			if !found { break }
+			if !found {
+				break
+			}
 		}
 		if len(chain) >= 3 {
 			patterns = append(patterns, AnomalyPattern{
@@ -767,7 +811,10 @@ func (ga *GraphAnalyzer) DetectAnomalyPatterns(ctx context.Context, tenantID str
 	for _, ip := range nodes {
 		if len(adjList[ip]) == 1 {
 			neighbor := ""
-			for n := range adjList[ip] { neighbor = n; break }
+			for n := range adjList[ip] {
+				neighbor = n
+				break
+			}
 			patterns = append(patterns, AnomalyPattern{
 				Type:        "isolated",
 				CenterIP:    ip,
@@ -801,7 +848,9 @@ func (ga *GraphAnalyzer) loadNetworkTopology(ctx context.Context, tenantID strin
 	ga.mu.RLock()
 	if time.Since(ga.cacheTime) < ga.cacheTTL && len(ga.adjacencyCache) > 0 && len(ga.edgeCache) > 0 {
 		nodes := make([]string, 0, len(ga.adjacencyCache))
-		for ip := range ga.adjacencyCache { nodes = append(nodes, ip) }
+		for ip := range ga.adjacencyCache {
+			nodes = append(nodes, ip)
+		}
 		edges := make([]graphEdge, len(ga.edgeCache))
 		copy(edges, ga.edgeCache)
 		ga.mu.RUnlock()
@@ -851,7 +900,7 @@ func (ga *GraphAnalyzer) loadNetworkTopology(ctx context.Context, tenantID strin
 			if i%50 == 0 { // 分批，避免单条查询过载
 				ngql := fmt.Sprintf(
 					`GO FROM "%s" OVER communicates YIELD dst(edge) AS dst, communicates.session_count AS sessions, communicates.total_bytes AS bytes`,
-					hashVID(src))
+					hashTenantVID(tenantID, src))
 				if result, err := ga.client.Execute(ctx, ngql); err == nil {
 					for _, row := range result.Rows {
 						dst, _ := row["dst"].(string)
@@ -899,9 +948,24 @@ func (ga *GraphAnalyzer) loadNetworkTopology(ctx context.Context, tenantID strin
 // 辅助函数
 // ============================================================================
 
-func abs(x float64) float64 { if x < 0 { return -x }; return x }
-func max(a, b int) int { if a > b { return a }; return b }
-func minFloat(a, b float64) float64 { if a < b { return a }; return b }
+func abs(x float64) float64 {
+	if x < 0 {
+		return -x
+	}
+	return x
+}
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+func minFloat(a, b float64) float64 {
+	if a < b {
+		return a
+	}
+	return b
+}
 func sqrtFloat(x float64) float64 { return math.Sqrt(x) }
 
 // bfsDistances computes shortest path distances from a source node to all other nodes in an undirected graph.
@@ -928,9 +992,12 @@ func bfsDistances(source string, adjList map[string][]string) map[string]int {
 func intFromRow(row map[string]interface{}, key string) int {
 	if v, ok := row[key]; ok {
 		switch n := v.(type) {
-		case int: return n
-		case int64: return int(n)
-		case float64: return int(n)
+		case int:
+			return n
+		case int64:
+			return int(n)
+		case float64:
+			return int(n)
 		}
 	}
 	return 0
@@ -939,9 +1006,12 @@ func intFromRow(row map[string]interface{}, key string) int {
 func int64FromRow(row map[string]interface{}, key string) int64 {
 	if v, ok := row[key]; ok {
 		switch n := v.(type) {
-		case int64: return n
-		case int: return int64(n)
-		case float64: return int64(n)
+		case int64:
+			return n
+		case int:
+			return int64(n)
+		case float64:
+			return int64(n)
 		}
 	}
 	return 0

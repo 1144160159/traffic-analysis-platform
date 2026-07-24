@@ -101,18 +101,34 @@ func (h *SystemHandler) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/topics/evidence-packages/export", h.ExportTopicEvidencePackage).Methods("POST")
 	r.HandleFunc("/fusion/sources", h.ListFusionSources).Methods("GET")
 	r.HandleFunc("/fusion/stats", h.GetFusionStats).Methods("GET")
+	r.HandleFunc("/fusion/workbench", h.GetFusionWorkbench).Methods("GET")
 	r.HandleFunc("/fusion/value-report", h.GetFusionValueReport).Methods("GET")
 	r.HandleFunc("/fusion/entities", h.ListFusionEntities).Methods("GET")
 	r.HandleFunc("/fusion/sources/{id}/sync", h.SyncFusionSource).Methods("POST")
 	r.HandleFunc("/fusion/conflicts/{id}/resolve", h.ResolveFusionConflict).Methods("POST")
 	r.HandleFunc("/fusion/rules/{id}", h.UpdateFusionRule).Methods("PATCH", "PUT")
+	r.HandleFunc("/fusion/evidence-packages", h.ExportFusionEvidencePackage).Methods("POST")
 	r.HandleFunc("/baselines", h.ListBehaviorBaselines).Methods("GET")
+	r.HandleFunc("/baselines/overview", h.GetBehaviorBaselineOverview).Methods("GET")
 	r.HandleFunc("/baselines/{id}", h.GetBehaviorBaseline).Methods("GET")
+	r.HandleFunc("/baselines/{id}/analytics", h.GetBehaviorBaselineAnalytics).Methods("GET")
+	r.HandleFunc("/baselines/{id}/versions", h.ListBehaviorBaselineVersions).Methods("GET")
+	r.HandleFunc("/baselines/{id}/actions", h.ListBehaviorBaselineActions).Methods("GET")
 	r.HandleFunc("/baselines/{id}/reset", h.ResetBehaviorBaseline).Methods("POST")
+	r.HandleFunc("/baselines/{id}/actions", h.SubmitBehaviorBaselineAction).Methods("POST")
 	r.HandleFunc("/compliance/reports", h.ListComplianceReports).Methods("GET")
 	r.HandleFunc("/compliance/reports/generate", h.GenerateComplianceReport).Methods("POST")
+	r.HandleFunc("/compliance/reports/{id}/evidence-package", h.ExportComplianceEvidencePackage).Methods("POST")
+	r.HandleFunc("/compliance/reports/{id}/export", h.ExportComplianceReport).Methods("POST")
+	r.HandleFunc("/compliance/reports/{id}/remediations", h.CreateComplianceRemediations).Methods("POST")
+	r.HandleFunc("/compliance/reports/{id}/finalize", h.FinalizeComplianceReport).Methods("POST")
 	r.HandleFunc("/compliance/audit-trail", h.ListAuditTrail).Methods("GET")
 	r.HandleFunc("/audit/logs", h.ListAuditLogs).Methods("GET")
+	r.HandleFunc("/audit/logs/{id}", h.GetAuditLog).Methods("GET")
+	r.HandleFunc("/audit/saved-queries", h.CreateAuditSavedQuery).Methods("POST")
+	r.HandleFunc("/audit/exports", h.CreateAuditExport).Methods("POST")
+	r.HandleFunc("/audit/reviews", h.CreateAuditReview).Methods("POST")
+	r.HandleFunc("/audit/integrity-checks", h.CreateAuditIntegrityCheck).Methods("POST")
 }
 
 type campaignActionRequest struct {
@@ -127,6 +143,7 @@ type campaignActionSpec struct {
 	AuditEvent string
 	Scopes     []string
 	Collection bool
+	Mutates    bool
 }
 
 var campaignActionSpecs = map[string]campaignActionSpec{
@@ -137,9 +154,9 @@ var campaignActionSpecs = map[string]campaignActionSpec{
 	"campaign-impact-inspect":    {AuditEvent: "CAMPAIGN_IMPACT_VIEWED", Scopes: []string{authmodel.ScopeAlertRead, authmodel.ScopeAlertWrite}},
 	"campaign-evidence-view":     {AuditEvent: "CAMPAIGN_EVIDENCE_VIEWED", Scopes: []string{authmodel.ScopeAlertRead, authmodel.ScopeAlertWrite}},
 	"campaign-attack-chain-view": {AuditEvent: "CAMPAIGN_ATTACK_CHAIN_VIEWED", Scopes: []string{authmodel.ScopeAlertRead, authmodel.ScopeAlertWrite}},
-	"campaign-assign-owner":      {AuditEvent: "CAMPAIGN_OWNER_ASSIGNED", Scopes: []string{authmodel.ScopeAlertWrite}},
-	"campaign-status-change":     {AuditEvent: "CAMPAIGN_STATUS_CHANGED", Scopes: []string{authmodel.ScopeAlertWrite}},
-	"campaign-report-generate":   {AuditEvent: "CAMPAIGN_REPORT_REQUESTED", Scopes: []string{authmodel.ScopeAlertWrite}},
+	"campaign-assign-owner":      {AuditEvent: "CAMPAIGN_OWNER_ASSIGNED", Scopes: []string{authmodel.ScopeAlertWrite}, Mutates: true},
+	"campaign-status-change":     {AuditEvent: "CAMPAIGN_STATUS_CHANGED", Scopes: []string{authmodel.ScopeAlertWrite}, Mutates: true},
+	"campaign-report-generate":   {AuditEvent: "CAMPAIGN_REPORT_REQUESTED", Scopes: []string{authmodel.ScopeAlertWrite}, Mutates: true},
 	"campaign-context-action":    {AuditEvent: "CAMPAIGN_CONTEXT_ACTION_REQUESTED", Scopes: []string{authmodel.ScopeAlertWrite}},
 	"campaign-graph-view":        {AuditEvent: "CAMPAIGN_GRAPH_VIEWED", Scopes: []string{authmodel.ScopeGraphRead}},
 	"campaign-soar-response":     {AuditEvent: "CAMPAIGN_SOAR_RESPONSE_REQUESTED", Scopes: []string{"playbook:execute"}},
@@ -166,15 +183,19 @@ func (h *SystemHandler) SubmitCampaignAction(w http.ResponseWriter, r *http.Requ
 		httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_ARGUMENT", "action_id, target, metadata, simulation and dry_run are required")
 		return
 	}
-	if !*request.Simulation || !*request.DryRun || !metadataBoolIsTrue(request.Metadata, "dry_run") {
-		httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_ARGUMENT", "campaign actions require simulation=true and dry_run=true")
-		return
-	}
 	if !hasAnySystemPermission(ctx, spec.Scopes...) {
 		httpx.JSONError(w, ctx, http.StatusForbidden, "PERMISSION_DENIED", "permission denied for campaign action")
 		return
 	}
-
+	if spec.Mutates {
+		if *request.Simulation || *request.DryRun || !metadataBoolEquals(request.Metadata, "dry_run", false) {
+			httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_ARGUMENT", "mutating campaign actions require simulation=false and dry_run=false")
+			return
+		}
+	} else if !*request.Simulation || !*request.DryRun || !metadataBoolIsTrue(request.Metadata, "dry_run") {
+		httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_ARGUMENT", "read-only campaign actions require simulation=true and dry_run=true")
+		return
+	}
 	campaignID := strings.TrimSpace(mux.Vars(r)["id"])
 	if campaignID == "" {
 		if !spec.Collection {
@@ -209,8 +230,31 @@ func (h *SystemHandler) SubmitCampaignAction(w http.ResponseWriter, r *http.Requ
 			return
 		}
 	}
+	if spec.Mutates {
+		if h.pgDB != nil {
+			if err := ensureCampaignWorkbenchSchema(ctx, h.pgDB); err != nil {
+				httpx.JSONError(w, ctx, http.StatusInternalServerError, "SCHEMA_UNAVAILABLE", "campaign workbench schema is unavailable")
+				return
+			}
+		}
+		switch request.ActionID {
+		case "campaign-assign-owner":
+			assignee := campaignMetadataString(request.Metadata, "assignee")
+			if assignee == "" || len([]rune(assignee)) > 128 {
+				httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_ARGUMENT", "assignee is required and must not exceed 128 characters")
+				return
+			}
+		case "campaign-status-change":
+			if !validCampaignWorkbenchStatus(strings.ToLower(campaignMetadataString(request.Metadata, "next_status"))) {
+				httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_ARGUMENT", "next_status must be active, investigating, contained, or closed")
+				return
+			}
+		}
+	}
 	endpoint := r.URL.Path
 	jobID := "campaign-" + uuid.NewString()
+	simulation := !spec.Mutates
+	dryRun := !spec.Mutates
 	detail := map[string]interface{}{
 		"action_id":   request.ActionID,
 		"audit_event": spec.AuditEvent,
@@ -218,10 +262,13 @@ func (h *SystemHandler) SubmitCampaignAction(w http.ResponseWriter, r *http.Requ
 		"metadata":    request.Metadata,
 		"endpoint":    endpoint,
 		"job_id":      jobID,
-		"simulation":  true,
-		"dry_run":     true,
-		"status":      "recorded",
+		"simulation":  simulation,
+		"dry_run":     dryRun,
+		"status":      "completed",
 		"job_status":  "completed",
+	}
+	if request.ActionID == "campaign-report-generate" {
+		detail["report_id"] = "campaign-report-" + uuid.NewString()
 	}
 	if h.campaignJobs == nil {
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "JOB_STORE_UNAVAILABLE", "campaign action job store is not configured")
@@ -230,7 +277,7 @@ func (h *SystemHandler) SubmitCampaignAction(w http.ResponseWriter, r *http.Requ
 	job := campaignActionJob{
 		JobID: jobID, TenantID: httpx.GetTenantID(ctx), CampaignID: campaignID,
 		ActionID: request.ActionID, Target: request.Target, Metadata: request.Metadata,
-		Simulation: true, DryRun: true, Status: "completed", Result: detail,
+		Simulation: simulation, DryRun: dryRun, Status: "completed", Result: detail,
 		CreatedBy: httpx.GetUserID(ctx),
 	}
 	auditRecord := AlertActionAuditRecord{
@@ -239,7 +286,7 @@ func (h *SystemHandler) SubmitCampaignAction(w http.ResponseWriter, r *http.Requ
 		ObjectID:   campaignID,
 		TenantID:   httpx.GetTenantID(ctx),
 		UserID:     httpx.GetUserID(ctx),
-		Result:     "recorded",
+		Result:     "completed",
 		Detail:     detail,
 	}
 	var commitErr error
@@ -259,11 +306,13 @@ func (h *SystemHandler) SubmitCampaignAction(w http.ResponseWriter, r *http.Requ
 	httpx.JSONSuccess(w, ctx, map[string]interface{}{
 		"action_id":   request.ActionID,
 		"audit_event": spec.AuditEvent,
-		"status":      "recorded",
+		"status":      "completed",
 		"endpoint":    endpoint,
 		"job_id":      jobID,
 		"job_status":  "completed",
-		"simulation":  true,
+		"simulation":  simulation,
+		"dry_run":     dryRun,
+		"result":      detail,
 	})
 }
 
@@ -308,6 +357,15 @@ func metadataBoolIsTrue(metadata map[string]interface{}, key string) bool {
 	return ok && boolean
 }
 
+func metadataBoolEquals(metadata map[string]interface{}, key string, expected bool) bool {
+	value, exists := metadata[key]
+	if !exists {
+		return false
+	}
+	boolean, ok := value.(bool)
+	return ok && boolean == expected
+}
+
 func hasAnySystemPermission(ctx context.Context, permissions ...string) bool {
 	for _, permission := range permissions {
 		if hasSystemPermission(ctx, permission) {
@@ -318,48 +376,79 @@ func hasAnySystemPermission(ctx context.Context, permissions ...string) bool {
 }
 
 type campaignDTO struct {
-	TenantID      string   `json:"tenant_id"`
-	CampaignID    string   `json:"campaign_id"`
-	TsStart       int64    `json:"ts_start"`
-	TsEnd         int64    `json:"ts_end"`
-	Entities      []string `json:"entities"`
-	Alerts        []string `json:"alerts"`
-	Score         float64  `json:"score"`
-	Summary       string   `json:"summary"`
-	EventID       string   `json:"event_id"`
-	IngestTs      int64    `json:"ingest_ts"`
-	CampaignType  string   `json:"campaign_type"`
-	AttackPhases  []string `json:"attack_phases"`
-	RuleIDs       []string `json:"rule_ids"`
-	ModelIDs      []string `json:"model_ids"`
-	HeaderProbeID string   `json:"header_probe_id,omitempty"`
-	Status        string   `json:"status"`
+	TenantID           string   `json:"tenant_id"`
+	CampaignID         string   `json:"campaign_id"`
+	TsStart            int64    `json:"ts_start"`
+	TsEnd              int64    `json:"ts_end"`
+	Entities           []string `json:"entities"`
+	Alerts             []string `json:"alerts"`
+	Score              float64  `json:"score"`
+	Summary            string   `json:"summary"`
+	EventID            string   `json:"event_id"`
+	IngestTs           int64    `json:"ingest_ts"`
+	CampaignType       string   `json:"campaign_type"`
+	AttackPhases       []string `json:"attack_phases"`
+	RuleIDs            []string `json:"rule_ids"`
+	ModelIDs           []string `json:"model_ids"`
+	HeaderProbeID      string   `json:"header_probe_id,omitempty"`
+	ActivityStatus     string   `json:"activity_status"`
+	Status             string   `json:"status"`
+	Assignee           string   `json:"assignee"`
+	StateVersion       int64    `json:"state_version"`
+	WorkbenchUpdatedAt string   `json:"workbench_updated_at,omitempty"`
+}
+
+type campaignSummaryDTO struct {
+	Total                uint64  `json:"total"`
+	Active               uint64  `json:"active"`
+	AffectedAssets       uint64  `json:"affected_assets"`
+	HighRisk             uint64  `json:"high_risk"`
+	MediumRisk           uint64  `json:"medium_risk"`
+	LowRisk              uint64  `json:"low_risk"`
+	AlertCount           uint64  `json:"alert_count"`
+	AverageDurationHours float64 `json:"average_duration_hours"`
+	MaxScore             float64 `json:"max_score"`
 }
 
 type campaignDetailDTO struct {
-	TenantID     string             `json:"tenant_id"`
-	CampaignID   string             `json:"campaign_id"`
-	TsStart      int64              `json:"ts_start"`
-	TsEnd        int64              `json:"ts_end"`
-	Entities     []string           `json:"entities"`
-	AlertIDs     []string           `json:"alert_ids"`
-	Alerts       []campaignAlertDTO `json:"alerts"`
-	Score        float64            `json:"score"`
-	Summary      string             `json:"summary"`
-	EventID      string             `json:"event_id"`
-	IngestTs     int64              `json:"ingest_ts"`
-	CampaignType string             `json:"campaign_type"`
-	AttackPhases []string           `json:"attack_phases"`
-	RuleIDs      []string           `json:"rule_ids"`
-	ModelIDs     []string           `json:"model_ids"`
-	Status       string             `json:"status"`
+	TenantID           string             `json:"tenant_id"`
+	CampaignID         string             `json:"campaign_id"`
+	TsStart            int64              `json:"ts_start"`
+	TsEnd              int64              `json:"ts_end"`
+	Entities           []string           `json:"entities"`
+	AlertIDs           []string           `json:"alert_ids"`
+	Alerts             []campaignAlertDTO `json:"alerts"`
+	Score              float64            `json:"score"`
+	Summary            string             `json:"summary"`
+	EventID            string             `json:"event_id"`
+	IngestTs           int64              `json:"ingest_ts"`
+	CampaignType       string             `json:"campaign_type"`
+	AttackPhases       []string           `json:"attack_phases"`
+	RuleIDs            []string           `json:"rule_ids"`
+	ModelIDs           []string           `json:"model_ids"`
+	PhaseSummaries     []campaignPhaseDTO `json:"phase_summaries"`
+	PhaseDataBacked    bool               `json:"phase_data_backed"`
+	ActivityStatus     string             `json:"activity_status"`
+	Status             string             `json:"status"`
+	Assignee           string             `json:"assignee"`
+	StateVersion       int64              `json:"state_version"`
+	WorkbenchUpdatedAt string             `json:"workbench_updated_at,omitempty"`
 }
 
 type campaignAlertDTO struct {
-	AlertID   string `json:"alert_id"`
-	AlertType string `json:"alert_type"`
-	Severity  string `json:"severity"`
-	LastSeen  int64  `json:"last_seen"`
+	AlertID       string `json:"alert_id"`
+	AlertType     string `json:"alert_type"`
+	Severity      string `json:"severity"`
+	LastSeen      int64  `json:"last_seen"`
+	AttackPhase   string `json:"attack_phase"`
+	EvidenceCount uint64 `json:"evidence_count"`
+}
+
+type campaignPhaseDTO struct {
+	Phase         string `json:"phase"`
+	AlertCount    uint64 `json:"alert_count"`
+	EvidenceCount uint64 `json:"evidence_count"`
+	LastSeen      int64  `json:"last_seen"`
 }
 
 type attackChainDTO struct {
@@ -449,7 +538,18 @@ func (h *SystemHandler) ListCampaigns(w http.ResponseWriter, r *http.Request) {
 		writeCampaignReadError(w, ctx, err)
 		return
 	}
-	httpx.JSONSuccess(w, ctx, map[string]interface{}{"campaigns": campaigns, "total": total, "limit": limit, "offset": offset})
+	summary, err := h.queryCampaignSummary(ctx, tenantID, filters, parseInt64Query(r, "start_time"), parseInt64Query(r, "end_time"))
+	if err != nil {
+		writeCampaignReadError(w, ctx, err)
+		return
+	}
+	httpx.JSONSuccess(w, ctx, map[string]interface{}{
+		"campaigns": campaigns,
+		"summary":   summary,
+		"total":     total,
+		"limit":     limit,
+		"offset":    offset,
+	})
 }
 
 func (h *SystemHandler) GetCampaign(w http.ResponseWriter, r *http.Request) {
@@ -463,13 +563,19 @@ func (h *SystemHandler) GetCampaign(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	alerts := h.queryCampaignAlerts(ctx, campaign.TenantID, campaign.CampaignID, campaign.Alerts)
+	phaseSummaries, phaseDataBacked := h.queryCampaignPhaseSummaries(ctx, campaign.TenantID, campaign.CampaignID, campaign.AttackPhases)
 	httpx.JSONSuccess(w, ctx, campaignDetailDTO{
 		TenantID: campaign.TenantID, CampaignID: campaign.CampaignID,
 		TsStart: campaign.TsStart, TsEnd: campaign.TsEnd,
 		Entities: campaign.Entities, AlertIDs: campaign.Alerts, Alerts: alerts,
 		Score: campaign.Score, Summary: campaign.Summary, EventID: campaign.EventID, IngestTs: campaign.IngestTs,
 		CampaignType: campaign.CampaignType, AttackPhases: campaign.AttackPhases, RuleIDs: campaign.RuleIDs, ModelIDs: campaign.ModelIDs,
-		Status: campaign.Status,
+		PhaseSummaries:  phaseSummaries,
+		PhaseDataBacked: phaseDataBacked,
+		ActivityStatus:  campaign.ActivityStatus,
+		Status:          campaign.Status,
+		Assignee:        campaign.Assignee, StateVersion: campaign.StateVersion,
+		WorkbenchUpdatedAt: campaign.WorkbenchUpdatedAt,
 	})
 }
 
@@ -684,7 +790,48 @@ func (h *SystemHandler) queryCampaigns(ctx context.Context, tenantID string, fil
 	if err := rows.Err(); err != nil {
 		return nil, 0, err
 	}
+	campaigns, err = h.enrichCampaignWorkbenchStates(ctx, tenantID, campaigns)
+	if err != nil {
+		return nil, 0, err
+	}
 	return campaigns, int64(total), nil
+}
+
+func (h *SystemHandler) queryCampaignSummary(ctx context.Context, tenantID string, filters campaignQueryFilters, start, end int64) (campaignSummaryDTO, error) {
+	where, args := buildCampaignWhere(tenantID, filters, start, end)
+	row, err := h.chClient.QueryRow(ctx, `
+		SELECT
+			count() AS total,
+			countIf(ts_end>=toUnixTimestamp64Milli(now64(3) - INTERVAL 24 HOUR)) AS active,
+			uniqCombined64Array(entities) AS affected_assets,
+			countIf(score>=0.8) AS high_risk,
+			countIf(score>=0.5 AND score<0.8) AS medium_risk,
+			countIf(score<0.5) AS low_risk,
+			sum(length(alerts)) AS alert_count,
+			if(countIf(ts_end>ts_start)=0, 0, avgIf((ts_end-ts_start)/3600000.0, ts_end>ts_start)) AS average_duration_hours,
+			max(score) AS max_score
+		FROM traffic.campaigns
+		WHERE `+where, args...)
+	if err != nil {
+		return campaignSummaryDTO{}, err
+	}
+	var summary campaignSummaryDTO
+	var maxScore float32
+	if err := row.Scan(
+		&summary.Total,
+		&summary.Active,
+		&summary.AffectedAssets,
+		&summary.HighRisk,
+		&summary.MediumRisk,
+		&summary.LowRisk,
+		&summary.AlertCount,
+		&summary.AverageDurationHours,
+		&maxScore,
+	); err != nil {
+		return campaignSummaryDTO{}, err
+	}
+	summary.MaxScore = float64(maxScore)
+	return summary, nil
 }
 
 func (h *SystemHandler) queryCampaignByID(ctx context.Context, tenantID, id string) (campaignDTO, error) {
@@ -695,12 +842,22 @@ func (h *SystemHandler) queryCampaignByID(ctx context.Context, tenantID, id stri
 	if err != nil {
 		return campaignDTO{}, err
 	}
-	return scanCampaignRow(row)
+	campaign, err := scanCampaignRow(row)
+	if err != nil {
+		return campaignDTO{}, err
+	}
+	campaigns, err := h.enrichCampaignWorkbenchStates(ctx, tenantID, []campaignDTO{campaign})
+	if err != nil {
+		return campaignDTO{}, err
+	}
+	return campaigns[0], nil
 }
 
 func (h *SystemHandler) queryCampaignAlerts(ctx context.Context, tenantID, campaignID string, alertIDs []string) []campaignAlertDTO {
 	rows, err := h.chClient.Query(ctx, `
-		SELECT alert_id, alert_type, severity, last_seen
+		SELECT alert_id, alert_type, severity, last_seen,
+			`+campaignAlertAttackPhaseExpression+` AS attack_phase,
+			toUInt64(length(evidence_ids)) AS evidence_count
 		FROM traffic.alerts WHERE tenant_id=? AND campaign_id=?
 		ORDER BY last_seen DESC LIMIT 200`, tenantID, campaignID)
 	if err != nil {
@@ -711,7 +868,14 @@ func (h *SystemHandler) queryCampaignAlerts(ctx context.Context, tenantID, campa
 	alerts := make([]campaignAlertDTO, 0)
 	for rows.Next() {
 		var alert campaignAlertDTO
-		if err := rows.Scan(&alert.AlertID, &alert.AlertType, &alert.Severity, &alert.LastSeen); err != nil {
+		if err := rows.Scan(
+			&alert.AlertID,
+			&alert.AlertType,
+			&alert.Severity,
+			&alert.LastSeen,
+			&alert.AttackPhase,
+			&alert.EvidenceCount,
+		); err != nil {
 			return alertIDsToSummaries(alertIDs)
 		}
 		alerts = append(alerts, alert)
@@ -721,6 +885,67 @@ func (h *SystemHandler) queryCampaignAlerts(ctx context.Context, tenantID, campa
 	}
 	return alerts
 }
+
+func (h *SystemHandler) queryCampaignPhaseSummaries(
+	ctx context.Context,
+	tenantID, campaignID string,
+	campaignPhases []string,
+) ([]campaignPhaseDTO, bool) {
+	rows, err := h.chClient.Query(ctx, `
+		SELECT
+			`+campaignAlertAttackPhaseExpression+` AS attack_phase,
+			toUInt64(count()) AS alert_count,
+			toUInt64(sum(length(evidence_ids))) AS evidence_count,
+			max(last_seen) AS last_seen
+		FROM traffic.alerts
+		WHERE tenant_id=? AND campaign_id=?
+		GROUP BY attack_phase
+		ORDER BY last_seen`, tenantID, campaignID)
+	if err != nil {
+		return campaignPhaseFallback(campaignPhases), false
+	}
+	defer rows.Close()
+
+	summaries := make([]campaignPhaseDTO, 0)
+	for rows.Next() {
+		var summary campaignPhaseDTO
+		if err := rows.Scan(&summary.Phase, &summary.AlertCount, &summary.EvidenceCount, &summary.LastSeen); err != nil {
+			return campaignPhaseFallback(campaignPhases), false
+		}
+		summaries = append(summaries, summary)
+	}
+	if rows.Err() != nil || len(summaries) == 0 {
+		return campaignPhaseFallback(campaignPhases), false
+	}
+	return summaries, true
+}
+
+func campaignPhaseFallback(phases []string) []campaignPhaseDTO {
+	summaries := make([]campaignPhaseDTO, 0, len(phases))
+	for _, phase := range phases {
+		if strings.TrimSpace(phase) == "" {
+			continue
+		}
+		summaries = append(summaries, campaignPhaseDTO{Phase: phase})
+	}
+	return summaries
+}
+
+const campaignAlertAttackPhaseExpression = `if(
+	arrayExists(label -> match(lowerUTF8(label), '^(attack_phase|attack-phase|mitre_phase|mitre-phase)[:=]'), labels),
+	replaceRegexpOne(arrayFirst(label -> match(lowerUTF8(label), '^(attack_phase|attack-phase|mitre_phase|mitre-phase)[:=]'), labels), '^[^:=]+[:=]', ''),
+	multiIf(
+		match(lowerUTF8(alert_type), 'c2|command.control|beacon|callback|dns.tunnel'), 'command_control',
+		match(lowerUTF8(alert_type), 'lateral|worm|smb|rdp|pass.the.hash'), 'lateral_movement',
+		match(lowerUTF8(alert_type), 'exfil|large.upload|data.transfer'), 'exfiltration',
+		match(lowerUTF8(alert_type), 'credential|brute.force|password|login'), 'credential_access',
+		match(lowerUTF8(alert_type), 'exploit|initial.access|phish'), 'initial_access',
+		match(lowerUTF8(alert_type), 'malware|execution|shell|script'), 'execution',
+		match(lowerUTF8(alert_type), 'persist|startup|scheduled.task'), 'persistence',
+		match(lowerUTF8(alert_type), 'impact|ransom|destroy|encrypt'), 'impact',
+		'discovery'
+	)
+)`
 
 type campaignScanner interface {
 	Scan(dest ...interface{}) error
@@ -752,6 +977,7 @@ func scanCampaignRow(row campaignScanner) (campaignDTO, error) {
 		return campaignDTO{}, err
 	}
 	campaign.Score = float64(score)
+	campaign.ActivityStatus = campaign.Status
 	return campaign, nil
 }
 

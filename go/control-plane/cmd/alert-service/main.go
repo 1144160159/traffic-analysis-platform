@@ -282,6 +282,17 @@ func main() {
 	} else {
 		defer feedbackProducer.Close()
 	}
+	var responseActionProducer *kafka.Producer
+	responseActionProducer, err = kafka.NewProducer(kafka.ProducerConfig{
+		Brokers: cfg.Kafka.Brokers, Topic: "alert.response.requested.v1", BatchSize: 100,
+		RequiredAcks: "all", Compression: "lz4", Security: cfg.Kafka.Security,
+	}, logger)
+	if err != nil {
+		logger.Warn("Failed to create response-action Kafka producer; durable outbox will remain pending", zap.Error(err))
+		responseActionProducer = nil
+	} else {
+		defer responseActionProducer.Close()
+	}
 
 	// ==================== 初始化 API Handler ====================
 	var apiHandler *api.Handler
@@ -291,6 +302,14 @@ func main() {
 		apiHandler = api.NewHandler(alertService, alertAuditLogger, logger)
 	}
 	apiHandler.SetActionAuditWriter(api.NewAlertActionAuditWriter(db, logger))
+	apiHandler.SetResponseActionProducer(responseActionProducer)
+	if responseActionProducer != nil {
+		if err := apiHandler.StartResponseActionOutboxWorker(ctx, 2*time.Second); err != nil {
+			logger.Warn("Failed to start response-action outbox worker", zap.Error(err))
+		} else {
+			logger.Info("Response-action outbox worker started")
+		}
+	}
 
 	// 初始化反馈持久化 (ClickHouse) — TP/FP 闭环
 	if chClient != nil {
@@ -453,12 +472,21 @@ func main() {
 			apiHandler.SetFeedbackWhitelistRepo(whitelistRepo)
 			whitelistHandler := whitelist.NewHandler(whitelistRepo, logger)
 			whitelistHandler.RegisterRoutes(apiRouter)
-			logger.Info("Whitelist management initialized (IP/domain/fingerprint/subnet)")
+			logger.Info("Whitelist governance initialized (IP/domain/asset/account/rule/model, approval and expiry lifecycle)")
 		}
 	}
 
 	// Advanced Alert Features (notification + risk + playbook + data quality)
-	notifyCfg := notification.NotifyConfig{MinSeverity: "high", RateLimitPerMin: 10}
+	notifyCfg := notification.NotifyConfig{
+		SMTPHost: getEnv("NOTIFY_SMTP_HOST", ""), SMTPPort: getIntEnv("NOTIFY_SMTP_PORT", 587),
+		SMTPUser: getEnv("NOTIFY_SMTP_USER", ""), SMTPPassword: getEnv("NOTIFY_SMTP_PASSWORD", ""),
+		FromEmail:    getEnv("NOTIFY_FROM_EMAIL", "alerts@traffic-analysis.local"),
+		SlackWebhook: getEnv("NOTIFY_SLACK_WEBHOOK", ""), WebhookURL: getEnv("NOTIFY_WEBHOOK_URL", ""),
+		WechatWebhook: getEnv("NOTIFY_WECHAT_WEBHOOK", ""), DingtalkWebhook: getEnv("NOTIFY_DINGTALK_WEBHOOK", ""),
+		FeishuWebhook: getEnv("NOTIFY_FEISHU_WEBHOOK", ""),
+		MinSeverity:   getEnv("NOTIFY_MIN_SEVERITY", "high"), RateLimitPerMin: getIntEnv("NOTIFY_RATE_LIMIT", 10),
+		TemplateDir: getEnv("NOTIFY_TEMPLATE_DIR", "/etc/traffic/templates"),
+	}
 	notifier := notification.NewNotificationService(notifyCfg, logger)
 	executor := playbook.NewActionExecutor(logger)
 	playbookEngine := playbook.NewPlaybookEngine(executor, logger)
@@ -474,6 +502,25 @@ func main() {
 			logger.Warn("Failed to init advanced API schema", zap.Error(err))
 			advancedRepo = nil
 		} else {
+			advancedRepo.SetNotificationAlertStateResolver(func(resolveCtx context.Context, tenantID, alertID string) (*notification.AlertInfo, string, error) {
+				detail, resolveErr := alertService.GetAlert(resolveCtx, tenantID, alertID)
+				if resolveErr != nil {
+					return nil, "", resolveErr
+				}
+				return &notification.AlertInfo{
+					AlertID: detail.AlertID, TenantID: detail.TenantID, Fingerprint: detail.Fingerprint,
+					Severity: detail.Severity, Score: float64(detail.Score), SourceIP: detail.SrcIP,
+					DestIP: detail.DstIP, AlertType: detail.AlertType, CampaignID: detail.CampaignID,
+					Timestamp: detail.LastSeen, Labels: append([]string(nil), detail.Labels...),
+					Description: strings.Join(detail.Labels, " "), Count: detail.Count,
+				}, detail.Status, nil
+			})
+			notifier.SetChannelResolver(advancedRepo.ResolveNotificationChannels)
+			notifier.SetDeliveryRecorder(advancedRepo.RecordAutomaticNotificationDelivery)
+			go advancedRepo.RunNotificationEscalationWorker(ctx, notifier, 2*time.Second)
+			if kafkaConsumer != nil {
+				kafkaConsumer.SetNotificationDispatcher(notifier)
+			}
 			overrides, err := advancedRepo.ListPlaybookOverrides(advancedCtx, "default")
 			if err != nil {
 				logger.Warn("Failed to load playbook overrides", zap.Error(err))

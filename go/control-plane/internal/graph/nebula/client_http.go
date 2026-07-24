@@ -1,10 +1,10 @@
 // NebulaGraph HTTP Client — 基于 HTTP API 的图数据库客户端
 //
 // 使用 NebulaGraph v3.6 的三种接入方式:
-//   1. HTTP Gateway (nebula-http-gateway, port 18080): /api/v1/ngql，推荐生产使用
-//      部署: kubectl apply -f deployments/kubernetes/infrastructure/11-nebula-http-gateway.yaml
-//   2. Graph Service HTTP (port 19669): 仅 /status 健康检查，不支持 nGQL 执行
-//   3. Console Client (client_console.go): stdin/stdout 调用 nebula-console CLI
+//  1. HTTP Gateway (nebula-http-gateway, port 18080): /api/v1/ngql，推荐生产使用
+//     部署: kubectl apply -f deployments/kubernetes/infrastructure/11-nebula-http-gateway.yaml
+//  2. Graph Service HTTP (port 19669): 仅 /status 健康检查，不支持 nGQL 执行
+//  3. Console Client (client_console.go): stdin/stdout 调用 nebula-console CLI
 //
 // 当前默认使用 Graph Service Status API (port 19669) 进行健康检查。
 // 实际 nGQL 执行需部署 nebula-http-gateway 或使用 ConsoleClient。
@@ -48,8 +48,8 @@ type HTTPClientConfig struct {
 func DefaultHTTPConfig() HTTPClientConfig {
 	return HTTPClientConfig{
 		GraphAddr:     "nebula-graph.middleware.svc:19669",
-		Username:      "root",
-		Password:      "root",
+		Username:      "traffic_graph",
+		Password:      "",
 		Space:         "traffic_graph",
 		Timeout:       30 * time.Second,
 		RetryCount:    3,
@@ -72,10 +72,10 @@ type httpExecuteRequest struct {
 
 // httpExecuteResponse HTTP API 响应体
 type httpExecuteResponse struct {
-	Errors      []httpAPIError   `json:"errors"`
-	Results     []httpAPIResult  `json:"results"`
-	ExecTimeUs  int64            `json:"execTimeInUs"`
-	SessionID   string           `json:"sessionId"`
+	Errors     []httpAPIError  `json:"errors"`
+	Results    []httpAPIResult `json:"results"`
+	ExecTimeUs int64           `json:"execTimeInUs"`
+	SessionID  string          `json:"sessionId"`
 }
 
 type httpAPIError struct {
@@ -407,7 +407,7 @@ func (hc *HTTPClient) Space() string {
 
 // InsertIPNode 插入 IP 节点
 func (hc *HTTPClient) InsertIPNode(ctx context.Context, tenantID, ip, mac, hostname, vendor, osType string, isGateway bool, riskScore float64, firstSeen, lastSeen int64) error {
-	vid := hashVID(ip)
+	vid := hashTenantVID(tenantID, ip)
 	nGQL := fmt.Sprintf(
 		`INSERT VERTEX ip_address(tenant_id, ip, mac_address, hostname, vendor, os_type, is_gateway, risk_score, first_seen, last_seen) VALUES "%s":("%s", "%s", "%s", "%s", "%s", "%s", %t, %f, %d, %d);`,
 		vid, tenantID, ip, mac, hostname, vendor, osType, isGateway, riskScore, firstSeen, lastSeen)
@@ -417,8 +417,8 @@ func (hc *HTTPClient) InsertIPNode(ctx context.Context, tenantID, ip, mac, hostn
 
 // InsertSessionEdge 插入会话边
 func (hc *HTTPClient) InsertSessionEdge(ctx context.Context, tenantID, srcIP, dstIP, communityID string, protocol int, sessionCount, totalBytes, totalPackets int64, firstSeen, lastSeen int64, direction string) error {
-	srcVID := hashVID(srcIP)
-	dstVID := hashVID(dstIP)
+	srcVID := hashTenantVID(tenantID, srcIP)
+	dstVID := hashTenantVID(tenantID, dstIP)
 	nGQL := fmt.Sprintf(
 		`INSERT EDGE communicates(tenant_id, community_id, protocol, session_count, total_bytes, total_packets, first_seen, last_seen, direction) VALUES "%s"->"%s":("%s", "%s", %d, %d, %d, %d, %d, %d, "%s");`,
 		srcVID, dstVID, tenantID, communityID, protocol, sessionCount, totalBytes, totalPackets, firstSeen, lastSeen, direction)
@@ -428,7 +428,7 @@ func (hc *HTTPClient) InsertSessionEdge(ctx context.Context, tenantID, srcIP, ds
 
 // InsertAlertNode 插入告警节点
 func (hc *HTTPClient) InsertAlertNode(ctx context.Context, tenantID, alertID, alertType, severity, labels string, score float64, firstSeen, lastSeen int64) error {
-	vid := hashVID(alertID)
+	vid := hashTenantVID(tenantID, alertID)
 	nGQL := fmt.Sprintf(
 		`INSERT VERTEX alert(tenant_id, alert_type, severity, score, labels, first_seen, last_seen) VALUES "%s":("%s", "%s", "%s", %f, "%s", %d, %d);`,
 		vid, tenantID, alertType, severity, score, labels, firstSeen, lastSeen)
@@ -438,7 +438,7 @@ func (hc *HTTPClient) InsertAlertNode(ctx context.Context, tenantID, alertID, al
 
 // InsertCampaignNode 插入攻击活动节点
 func (hc *HTTPClient) InsertCampaignNode(ctx context.Context, tenantID, campaignID, campaignType, title, desc, severity string, score, phaseProgress float64, startTime, endTime int64) error {
-	vid := hashVID(campaignID)
+	vid := hashTenantVID(tenantID, campaignID)
 	nGQL := fmt.Sprintf(
 		`INSERT VERTEX campaign(tenant_id, campaign_type, title, description, severity, score, phase_progress, start_time, end_time) VALUES "%s":("%s", "%s", "%s", "%s", "%s", %f, %f, %d, %d);`,
 		vid, tenantID, campaignType, title, desc, severity, score, phaseProgress, startTime, endTime)
@@ -448,8 +448,8 @@ func (hc *HTTPClient) InsertCampaignNode(ctx context.Context, tenantID, campaign
 
 // InsertTriggerEdge 插入告警触发边
 func (hc *HTTPClient) InsertTriggerEdge(ctx context.Context, tenantID, communityID, alertID string, ts int64) error {
-	srcVID := hashVID(communityID)
-	dstVID := hashVID(alertID)
+	srcVID := hashTenantVID(tenantID, communityID)
+	dstVID := hashTenantVID(tenantID, alertID)
 	nGQL := fmt.Sprintf(
 		`INSERT EDGE triggers_alert(tenant_id, alert_id, ts) VALUES "%s"->"%s":("%s", "%s", %d);`,
 		srcVID, dstVID, tenantID, alertID, ts)
@@ -459,8 +459,8 @@ func (hc *HTTPClient) InsertTriggerEdge(ctx context.Context, tenantID, community
 
 // InsertAttackPathHop 插入攻击路径跳
 func (hc *HTTPClient) InsertAttackPathHop(ctx context.Context, tenantID, campaignID, srcIP, dstIP string, hopOrder int32, ts int64) error {
-	srcVID := hashVID(srcIP)
-	dstVID := hashVID(dstIP)
+	srcVID := hashTenantVID(tenantID, srcIP)
+	dstVID := hashTenantVID(tenantID, dstIP)
 	nGQL := fmt.Sprintf(
 		`INSERT EDGE attack_path_hop(tenant_id, campaign_id, hop_order, ts) VALUES "%s"->"%s":("%s", "%s", %d, %d);`,
 		srcVID, dstVID, tenantID, campaignID, hopOrder, ts)
@@ -474,7 +474,7 @@ func (hc *HTTPClient) InsertAttackPathHop(ctx context.Context, tenantID, campaig
 
 // GetNeighbors 获取节点的邻居 (1-hop)
 func (hc *HTTPClient) GetNeighbors(ctx context.Context, tenantID, ip string, limit int) ([]map[string]interface{}, error) {
-	vid := hashVID(ip)
+	vid := hashTenantVID(tenantID, ip)
 	nGQL := fmt.Sprintf(
 		`GO FROM "%s" OVER communicates WHERE communicates.tenant_id == "%s" YIELD communicates._dst AS dst_ip, communicates.session_count AS session_count, communicates.total_bytes AS total_bytes, communicates.first_seen AS first_seen, communicates.last_seen AS last_seen LIMIT %d;`,
 		vid, tenantID, limit)
@@ -489,7 +489,7 @@ func (hc *HTTPClient) GetNeighbors(ctx context.Context, tenantID, ip string, lim
 func (hc *HTTPClient) GetSubgraph(ctx context.Context, tenantID string, centerIPs []string, steps int) (*SubgraphResult, error) {
 	vids := make([]string, len(centerIPs))
 	for i, ip := range centerIPs {
-		vids[i] = fmt.Sprintf(`"%s"`, hashVID(ip))
+		vids[i] = fmt.Sprintf(`"%s"`, hashTenantVID(tenantID, ip))
 	}
 	vidStr := strings.Join(vids, ", ")
 
@@ -510,9 +510,9 @@ func (hc *HTTPClient) GetSubgraph(ctx context.Context, tenantID string, centerIP
 }
 
 // FindPath 查找最短路径
-func (hc *HTTPClient) FindPath(ctx context.Context, srcIP, dstIP string, maxHops int) ([]map[string]interface{}, error) {
-	srcVID := hashVID(srcIP)
-	dstVID := hashVID(dstIP)
+func (hc *HTTPClient) FindPath(ctx context.Context, tenantID, srcIP, dstIP string, maxHops int) ([]map[string]interface{}, error) {
+	srcVID := hashTenantVID(tenantID, srcIP)
+	dstVID := hashTenantVID(tenantID, dstIP)
 	nGQL := fmt.Sprintf(
 		`FIND SHORTEST PATH FROM "%s" TO "%s" OVER communicates UPTO %d STEPS YIELD path AS p;`,
 		srcVID, dstVID, maxHops)

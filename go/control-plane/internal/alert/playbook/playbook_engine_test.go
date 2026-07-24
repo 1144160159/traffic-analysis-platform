@@ -86,6 +86,76 @@ func TestPlaybookExecution(t *testing.T) {
 	}
 }
 
+func TestPlaybookConditionsUseConfiguredValuesAndFailClosed(t *testing.T) {
+	engine := NewPlaybookEngine(NewActionExecutor(zap.NewNop()), zap.NewNop())
+	base := &AlertContext{RelatedAlertCount: 4, AssetRisk: "high"}
+	tests := []struct {
+		name      string
+		condition Condition
+		want      bool
+	}{
+		{name: "configured threshold passes", condition: Condition{Field: "alert_count", Operator: "gt", Value: "3"}, want: true},
+		{name: "configured threshold blocks", condition: Condition{Field: "alert_count", Operator: "gt", Value: "4"}, want: false},
+		{name: "risk comparison passes", condition: Condition{Field: "asset_risk", Operator: "gte", Value: "medium"}, want: true},
+		{name: "unknown actual risk fails closed", condition: Condition{Field: "asset_risk", Operator: "gte", Value: "low"}, want: false},
+		{name: "unknown field fails closed", condition: Condition{Field: "unknown", Operator: "eq", Value: "anything"}, want: false},
+		{name: "unknown operator fails closed", condition: Condition{Field: "alert_count", Operator: "contains", Value: "4"}, want: false},
+		{name: "invalid number fails closed", condition: Condition{Field: "alert_count", Operator: "gt", Value: "many"}, want: false},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			alert := base
+			if test.name == "unknown actual risk fails closed" {
+				clone := *base
+				clone.AssetRisk = "unknown"
+				alert = &clone
+			}
+			if got := engine.evaluateCondition(test.condition, alert); got != test.want {
+				t.Fatalf("evaluateCondition(%#v)=%t want %t", test.condition, got, test.want)
+			}
+		})
+	}
+}
+
+func TestSeverityComparisonFailsClosedForUnknownValues(t *testing.T) {
+	if isSeverityAtLeast("unknown", "low") {
+		t.Fatal("unknown actual severity must not satisfy a configured minimum")
+	}
+	if isSeverityAtLeast("high", "unknown") {
+		t.Fatal("unknown minimum severity must fail closed")
+	}
+}
+
+func TestPlaybookDrillIsExplicitlySimulated(t *testing.T) {
+	engine := NewPlaybookEngine(NewActionExecutor(zap.NewNop()), zap.NewNop())
+	pb := &Playbook{
+		Name:    "high-risk-drill",
+		Enabled: true,
+		Actions: []Action{
+			{Type: "block_ip", Parameters: map[string]interface{}{"duration": "24h"}, Timeout: time.Second},
+			{Type: "quarantine", Parameters: map[string]interface{}{}, Timeout: time.Second},
+		},
+	}
+	result, err := engine.Drill(context.Background(), pb, &AlertContext{
+		AlertID:  "drill-alert-1",
+		SourceIP: "192.0.2.10",
+	})
+	if err != nil {
+		t.Fatalf("drill failed: %v", err)
+	}
+	if result.Mode != "drill" {
+		t.Fatalf("mode=%q want drill", result.Mode)
+	}
+	if result.SuccessActions != 2 || result.FailedActions != 0 {
+		t.Fatalf("unexpected action counts: %#v", result)
+	}
+	for _, action := range result.Actions {
+		if !action.Simulated {
+			t.Fatalf("action %s was not marked simulated", action.ActionType)
+		}
+	}
+}
+
 func TestPlaybookMaxRuns(t *testing.T) {
 	executor := NewActionExecutor(zap.NewNop())
 	engine := NewPlaybookEngine(executor, zap.NewNop())

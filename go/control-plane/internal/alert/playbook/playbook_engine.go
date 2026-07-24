@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -45,7 +46,7 @@ type Playbook struct {
 // in the definition prevents the UI from inferring authorization semantics
 // from labels or action names.
 type ApprovalPolicy struct {
-	Required       bool   `json:"required"`
+	Required      bool   `json:"required"`
 	MinimumRole   string `json:"minimum_role"`
 	TwoPersonRule bool   `json:"two_person_rule"`
 }
@@ -263,18 +264,50 @@ func (e *PlaybookEngine) checkConditions(pb *Playbook, alert *AlertContext) bool
 }
 
 func (e *PlaybookEngine) evaluateCondition(cond Condition, alert *AlertContext) bool {
-	// 简化条件评估: alert_count > 5, asset_risk >= high
-	switch cond.Field {
+	if alert == nil {
+		return false
+	}
+	operator := strings.ToLower(strings.TrimSpace(cond.Operator))
+	value := strings.ToLower(strings.TrimSpace(cond.Value))
+	switch strings.ToLower(strings.TrimSpace(cond.Field)) {
 	case "alert_count":
-		if cond.Operator == "gt" && alert.RelatedAlertCount > 5 {
-			return true
+		expected, err := strconv.Atoi(value)
+		if err != nil {
+			return false
+		}
+		switch operator {
+		case "gt":
+			return alert.RelatedAlertCount > expected
+		case "gte":
+			return alert.RelatedAlertCount >= expected
+		case "eq":
+			return alert.RelatedAlertCount == expected
+		case "lt":
+			return alert.RelatedAlertCount < expected
+		case "lte":
+			return alert.RelatedAlertCount <= expected
 		}
 	case "asset_risk":
-		if cond.Operator == "gte" && isSeverityAtLeast(alert.AssetRisk, cond.Value) {
-			return true
+		actual := strings.ToLower(strings.TrimSpace(alert.AssetRisk))
+		actualRank, actualOK := severityRank(actual)
+		expectedRank, expectedOK := severityRank(value)
+		if !actualOK || !expectedOK {
+			return false
+		}
+		switch operator {
+		case "gte":
+			return actualRank >= expectedRank
+		case "gt":
+			return actualRank > expectedRank
+		case "eq":
+			return actualRank == expectedRank
+		case "lte":
+			return actualRank <= expectedRank
+		case "lt":
+			return actualRank < expectedRank
 		}
 	}
-	return true // 默认通过
+	return false
 }
 
 func (e *PlaybookEngine) executePlaybook(ctx context.Context, pb *Playbook, alert *AlertContext, drill bool) *ExecutionResult {
@@ -448,6 +481,29 @@ func (e *ActionExecutor) Execute(ctx context.Context, action Action, alert *Aler
 	return result
 }
 
+// Drill validates the action plan and renders its intended effect without
+// invoking a provider. It is deliberately separate from Execute so a stored
+// drill can never be mistaken for an applied isolation or blocking action.
+func (e *ActionExecutor) Drill(ctx context.Context, action Action, alert *AlertContext) ActionResult {
+	result := ActionResult{
+		ActionType: action.Type,
+		StartTime:  time.Now(),
+		Simulated:  true,
+	}
+	select {
+	case <-ctx.Done():
+		result.Error = ctx.Err().Error()
+	default:
+		if strings.TrimSpace(action.Type) == "" {
+			result.Error = "action type is required"
+		} else {
+			result.Message = fmt.Sprintf("Drill validated %s for alert %s", action.Type, alert.AlertID)
+		}
+	}
+	result.EndTime = time.Now()
+	return result
+}
+
 // =============================================================================
 // Data Types
 // =============================================================================
@@ -475,6 +531,7 @@ type ExecutionResult struct {
 	StartTime      time.Time      `json:"start_time"`
 	EndTime        time.Time      `json:"end_time"`
 	Duration       time.Duration  `json:"duration"`
+	Mode           string         `json:"mode"`
 }
 
 type ActionResult struct {
@@ -483,6 +540,7 @@ type ActionResult struct {
 	Error      string    `json:"error,omitempty"`
 	StartTime  time.Time `json:"start_time"`
 	EndTime    time.Time `json:"end_time"`
+	Simulated  bool      `json:"simulated"`
 }
 
 // =============================================================================
@@ -490,11 +548,18 @@ type ActionResult struct {
 // =============================================================================
 
 func isSeverityAtLeast(severity, min string) bool {
-	levels := map[string]int{"low": 0, "medium": 1, "high": 2, "critical": 3}
-	if min == "" {
+	if strings.TrimSpace(min) == "" {
 		return true
 	}
-	return levels[severity] >= levels[min]
+	severityValue, severityOK := severityRank(severity)
+	minimumValue, minimumOK := severityRank(min)
+	return severityOK && minimumOK && severityValue >= minimumValue
+}
+
+func severityRank(value string) (int, bool) {
+	levels := map[string]int{"low": 0, "medium": 1, "high": 2, "critical": 3}
+	rank, ok := levels[strings.ToLower(strings.TrimSpace(value))]
+	return rank, ok
 }
 
 func clonePlaybook(pb *Playbook) *Playbook {

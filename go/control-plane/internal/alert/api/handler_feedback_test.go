@@ -1,11 +1,32 @@
 package api
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/service"
+	"github.com/gorilla/mux"
+	"go.uber.org/zap"
 )
+
+func TestFeedbackWhitelistDraftRequiresAlertWriteBeforeAlertLookup(t *testing.T) {
+	handler := NewFeedbackHandler(nil, nil, nil, nil, nil, zap.NewNop())
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/alerts/AL-secret/feedback", strings.NewReader(`{"label":"FP","reason_code":"FALSE_ALARM","add_to_whitelist":true}`))
+	req = requestWithClaims(req, viewerClaims())
+	req = mux.SetURLVars(req, map[string]string{"id": "AL-secret"})
+	recorder := httptest.NewRecorder()
+
+	handler.SubmitFeedback(recorder, req)
+
+	if recorder.Code != http.StatusForbidden {
+		t.Fatalf("status=%d want 403 body=%s", recorder.Code, recorder.Body.String())
+	}
+	if !strings.Contains(recorder.Body.String(), "alert:write required") {
+		t.Fatalf("expected alert:write denial, got %s", recorder.Body.String())
+	}
+}
 
 func TestBuildWhitelistDraftEntryFromFeedback(t *testing.T) {
 	entry, err := buildWhitelistDraftEntry("tenant-a", "AL-20260629-0001", "FB-1", "sec_analyst", "FALSE_ALARM", &service.AlertDetailDTO{

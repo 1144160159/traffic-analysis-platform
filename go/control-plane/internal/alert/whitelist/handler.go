@@ -37,7 +37,7 @@ func (h *Handler) RegisterRoutes(r *mux.Router) {
 // List 列出租户白名单
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	if !h.ensureRepo(w, r) {
+	if !h.requireRead(w, r) || !h.ensureRepo(w, r) {
 		return
 	}
 	tenantID := tenantFromContext(ctx)
@@ -67,22 +67,50 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	entry.TenantID = tenantFromContext(ctx)
 	entry.CreatedBy = httpx.GetUserID(ctx)
-	if entry.Type == "" || entry.Value == "" {
+	entry.Type = normalizeType(entry.Type)
+	if entry.Type == "" || strings.TrimSpace(entry.Value) == "" {
 		httpx.JSONError(w, ctx, http.StatusBadRequest, "MISSING_PARAM", "type and value required")
 		return
 	}
-	if err := h.repo.Create(ctx, &entry); err != nil {
+	if entry.Status != "" && !strings.EqualFold(strings.TrimSpace(entry.Status), "draft") {
+		httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_INITIAL_STATE", "new whitelist entries must start in draft status")
+		return
+	}
+	if entry.ApprovalStatus != "" && !strings.EqualFold(strings.TrimSpace(entry.ApprovalStatus), "draft") {
+		httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_INITIAL_STATE", "new whitelist entries must start with draft approval_status")
+		return
+	}
+	entry.Status = "draft"
+	entry.ApprovalStatus = "draft"
+	tx, err := h.repo.db.BeginTx(ctx, nil)
+	if err != nil {
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
 		return
 	}
-	h.recordAudit(ctx, r, "WHITELIST_CREATED", entry.ID, map[string]interface{}{
+	defer tx.Rollback()
+	if err := h.repo.CreateTx(ctx, tx, &entry); err != nil {
+		if err == ErrAlreadyExists {
+			httpx.JSONError(w, ctx, http.StatusConflict, "WHITELIST_ALREADY_EXISTS", "a whitelist entry with the same tenant, type and value already exists")
+			return
+		}
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
+	if err := h.recordAuditWithRunner(ctx, r, tx, "WHITELIST_CREATED", entry.ID, map[string]interface{}{
 		"type":            entry.Type,
 		"value":           entry.Value,
 		"status":          entry.Status,
 		"approval_status": entry.ApprovalStatus,
 		"source_alert_id": entry.SourceAlertID,
 		"feedback_id":     entry.FeedbackID,
-	})
+	}); err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "AUDIT_WRITE_FAILED", "whitelist entry was not created because its audit record could not be committed")
+		return
+	}
+	if err := tx.Commit(); err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
 	httpx.JSONCreated(w, ctx, &entry)
 }
 
@@ -102,7 +130,13 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_REQUEST", "invalid body")
 		return
 	}
-	entry, err := h.repo.Update(ctx, tenantFromContext(ctx), id, req, httpx.GetUserID(ctx))
+	tx, err := h.repo.db.BeginTx(ctx, nil)
+	if err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
+	defer tx.Rollback()
+	current, err := h.repo.getWithRunner(ctx, tx, tenantFromContext(ctx), id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			httpx.JSONError(w, ctx, http.StatusNotFound, "NOT_FOUND", "whitelist entry not found")
@@ -111,15 +145,51 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
 		return
 	}
+	if req.ExpectedVersion == nil {
+		httpx.JSONError(w, ctx, http.StatusBadRequest, "MISSING_PARAM", "expected_version required for whitelist updates")
+		return
+	}
+	if req.ExpectedVersion != nil && *req.ExpectedVersion != current.Version {
+		httpx.JSONError(w, ctx, http.StatusConflict, "WHITELIST_VERSION_CONFLICT", "expected_version must match the current whitelist entry")
+		return
+	}
+	if code, message := validateWhitelistTransition(current, req, httpx.GetUserID(ctx), canApproveWhitelist(ctx)); code != "" {
+		status := http.StatusConflict
+		if code == "PERMISSION_DENIED" {
+			status = http.StatusForbidden
+		}
+		httpx.JSONError(w, ctx, status, code, message)
+		return
+	}
+	entry, err := h.repo.UpdateTx(ctx, tx, tenantFromContext(ctx), id, req, httpx.GetUserID(ctx))
+	if err != nil {
+		if err == ErrVersionConflict {
+			httpx.JSONError(w, ctx, http.StatusConflict, "WHITELIST_VERSION_CONFLICT", "whitelist entry changed; reload before retrying")
+			return
+		}
+		if err == sql.ErrNoRows {
+			httpx.JSONError(w, ctx, http.StatusNotFound, "NOT_FOUND", "whitelist entry not found")
+			return
+		}
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
 	action := whitelistAuditAction(req)
-	h.recordAudit(ctx, r, action, entry.ID, map[string]interface{}{
+	if err := h.recordAuditWithRunner(ctx, r, tx, action, entry.ID, map[string]interface{}{
 		"type":            entry.Type,
 		"value":           entry.Value,
 		"status":          entry.Status,
 		"approval_status": entry.ApprovalStatus,
 		"expires_at":      entry.ExpiresAt,
 		"source_alert_id": entry.SourceAlertID,
-	})
+	}); err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "AUDIT_WRITE_FAILED", "whitelist update was rolled back because its audit record could not be committed")
+		return
+	}
+	if err := tx.Commit(); err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
 	httpx.JSONSuccess(w, ctx, entry)
 }
 
@@ -131,7 +201,14 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 	id := mux.Vars(r)["id"]
 	tenantID := tenantFromContext(ctx)
-	if err := h.repo.Delete(ctx, tenantID, id); err != nil {
+	tx, err := h.repo.db.BeginTx(ctx, nil)
+	if err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
+	defer tx.Rollback()
+	current, err := h.repo.getWithRunner(ctx, tx, tenantID, id)
+	if err != nil {
 		if err == sql.ErrNoRows {
 			httpx.JSONError(w, ctx, http.StatusNotFound, "NOT_FOUND", "whitelist entry not found")
 			return
@@ -139,14 +216,42 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
 		return
 	}
-	h.recordAudit(ctx, r, "WHITELIST_DELETED", id, nil)
+	expectedVersion, err := strconv.Atoi(r.URL.Query().Get("expected_version"))
+	if err != nil || expectedVersion <= 0 {
+		httpx.JSONError(w, ctx, http.StatusBadRequest, "MISSING_PARAM", "expected_version query parameter required for whitelist deletion")
+		return
+	}
+	if expectedVersion != current.Version {
+		httpx.JSONError(w, ctx, http.StatusConflict, "WHITELIST_VERSION_CONFLICT", "expected_version must match the current whitelist entry")
+		return
+	}
+	if current.Status != "draft" && current.Status != "disabled" {
+		httpx.JSONError(w, ctx, http.StatusConflict, "WHITELIST_DELETE_REQUIRES_DISABLED", "pending or active whitelist entries must be disabled before deletion")
+		return
+	}
+	if err := h.repo.DeleteTx(ctx, tx, tenantID, id, expectedVersion); err != nil {
+		if err == sql.ErrNoRows {
+			httpx.JSONError(w, ctx, http.StatusConflict, "WHITELIST_VERSION_CONFLICT", "whitelist entry changed before deletion")
+			return
+		}
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
+	if err := h.recordAuditWithRunner(ctx, r, tx, "WHITELIST_DELETED", id, map[string]interface{}{"version": expectedVersion, "previous_status": current.Status}); err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "AUDIT_WRITE_FAILED", "whitelist deletion was rolled back because its audit record could not be committed")
+		return
+	}
+	if err := tx.Commit(); err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
 	httpx.JSONSuccess(w, ctx, map[string]string{"status": "deleted", "id": id})
 }
 
 // Check 检查值是否在白名单中
 func (h *Handler) Check(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	if !h.ensureRepo(w, r) {
+	if !h.requireRead(w, r) || !h.ensureRepo(w, r) {
 		return
 	}
 	var req struct {
@@ -179,6 +284,29 @@ func (h *Handler) requireWrite(w http.ResponseWriter, r *http.Request) bool {
 	return false
 }
 
+func (h *Handler) requireRead(w http.ResponseWriter, r *http.Request) bool {
+	if hasWhitelistRead(r.Context()) {
+		return true
+	}
+	httpx.JSONError(w, r.Context(), http.StatusForbidden, "PERMISSION_DENIED", "alert:read required")
+	return false
+}
+
+func hasWhitelistRead(ctx context.Context) bool {
+	if hasWhitelistWrite(ctx) {
+		return true
+	}
+	if claims := httpx.GetExtendedClaims(ctx); claims != nil {
+		return claims.HasPermission(authmodel.ScopeAlertRead)
+	}
+	for _, granted := range httpx.GetPermissions(ctx) {
+		if permissionMatches(granted, authmodel.ScopeAlertRead) {
+			return true
+		}
+	}
+	return false
+}
+
 func hasWhitelistWrite(ctx context.Context) bool {
 	if claims := httpx.GetExtendedClaims(ctx); claims != nil {
 		return claims.HasRole("admin") ||
@@ -198,6 +326,62 @@ func hasWhitelistWrite(ctx context.Context) bool {
 		}
 	}
 	return false
+}
+
+func canApproveWhitelist(ctx context.Context) bool {
+	if claims := httpx.GetExtendedClaims(ctx); claims != nil {
+		return claims.HasRole("admin") || claims.HasRole("super_admin") || claims.HasPermission(authmodel.ScopeAll) || claims.HasPermission(authmodel.ScopeAdminAll)
+	}
+	return httpx.HasRole(ctx, "admin") || httpx.HasRole(ctx, "super_admin")
+}
+
+func validateWhitelistTransition(current *Entry, req UpdateRequest, actor string, canApprove bool) (string, string) {
+	if current == nil {
+		return "NOT_FOUND", "whitelist entry not found"
+	}
+	nextStatus := current.Status
+	if req.Status != nil {
+		nextStatus = normalizeStatus(*req.Status, "")
+		if nextStatus == "" {
+			return "INVALID_TRANSITION", "unsupported whitelist status"
+		}
+	}
+	nextApproval := current.ApprovalStatus
+	if req.ApprovalStatus != nil {
+		nextApproval = normalizeApprovalStatus(*req.ApprovalStatus, "")
+		if nextApproval == "" {
+			return "INVALID_TRANSITION", "unsupported whitelist approval_status"
+		}
+	}
+
+	if !validWhitelistStatePair(nextStatus, nextApproval) {
+		return "INVALID_TRANSITION", "status and approval_status do not form a legal whitelist governance state"
+	}
+	currentPair := current.Status + "/" + current.ApprovalStatus
+	nextPair := nextStatus + "/" + nextApproval
+	if currentPair != nextPair {
+		switch currentPair + "->" + nextPair {
+		case "draft/draft->pending/pending":
+		case "pending/pending->active/approved", "pending/pending->disabled/rejected":
+			if !canApprove {
+				return "PERMISSION_DENIED", "admin approval role required"
+			}
+			if actor != "" && actor == current.CreatedBy {
+				return "WHITELIST_TWO_PERSON_REQUIRED", "creator cannot approve or reject their own whitelist entry"
+			}
+		case "active/approved->disabled/approved":
+		default:
+			return "INVALID_TRANSITION", "unsupported whitelist lifecycle transition"
+		}
+	}
+	return "", ""
+}
+
+func validWhitelistStatePair(status, approval string) bool {
+	return (status == "draft" && approval == "draft") ||
+		(status == "pending" && approval == "pending") ||
+		(status == "active" && approval == "approved") ||
+		(status == "disabled" && (approval == "approved" || approval == "rejected"))
 }
 
 func permissionMatches(granted, required string) bool {
@@ -244,8 +428,14 @@ func whitelistAuditAction(req UpdateRequest) string {
 }
 
 func (h *Handler) recordAudit(ctx context.Context, r *http.Request, action, objectID string, detail map[string]interface{}) {
+	if err := h.recordAuditWithRunner(ctx, r, h.repo.db, action, objectID, detail); err != nil && h.logger != nil {
+		h.logger.Warn("Failed to write whitelist audit log", zap.String("action", action), zap.String("object_id", objectID), zap.Error(err))
+	}
+}
+
+func (h *Handler) recordAuditWithRunner(ctx context.Context, r *http.Request, runner sqlRunner, action, objectID string, detail map[string]interface{}) error {
 	if h == nil || h.repo == nil || h.repo.db == nil {
-		return
+		return sql.ErrConnDone
 	}
 	if detail == nil {
 		detail = map[string]interface{}{}
@@ -261,7 +451,7 @@ func (h *Handler) recordAudit(ctx context.Context, r *http.Request, action, obje
 		if h.logger != nil {
 			h.logger.Warn("Failed to marshal whitelist audit detail", zap.Error(err))
 		}
-		return
+		return err
 	}
 
 	userIDExpr := "NULLIF($3, '')"
@@ -285,12 +475,8 @@ func (h *Handler) recordAudit(ctx context.Context, r *http.Request, action, obje
 		query = `INSERT INTO audit_logs (tenant_id, user_id, action, object_type, object_id, detail, ip_addr, user_agent)
 			VALUES ($1, ` + strings.Replace(userIDExpr, "$3", "$2", 1) + `, $3, $4, $5, $6::jsonb, $7, $8)`
 	}
-	if _, err := h.repo.db.ExecContext(r.Context(), query, args...); err != nil && h.logger != nil {
-		h.logger.Warn("Failed to write whitelist audit log",
-			zap.String("action", action),
-			zap.String("object_id", objectID),
-			zap.Error(err))
-	}
+	_, err = runner.ExecContext(r.Context(), query, args...)
+	return err
 }
 
 func (h *Handler) pgColumnExists(ctx context.Context, tableName, columnName string) bool {

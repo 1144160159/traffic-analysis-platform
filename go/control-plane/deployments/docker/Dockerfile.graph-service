@@ -4,7 +4,7 @@
 ################################################################################
 
 # 构建阶段
-FROM golang:1.21-alpine AS builder
+FROM golang:1.24.12-alpine AS builder
 
 WORKDIR /build
 
@@ -22,7 +22,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -ldflags="-w -s -X main.Version=$(git describe --tags --always) -X main.BuildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
     -o /build/graph-service \
-    ./control-plane/cmd/graph-service
+    ./cmd/graph-service
 
 # 运行阶段
 FROM alpine:3.18
@@ -48,10 +48,10 @@ USER appuser
 
 # 健康检查
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:8084/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8085/health || exit 1
 
 # 暴露端口
-EXPOSE 8084
+EXPOSE 8085
 
 # 启动服务
 ENTRYPOINT ["/app/graph-service"]

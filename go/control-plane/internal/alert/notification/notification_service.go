@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -38,9 +39,9 @@ type NotifyConfig struct {
 	DingtalkWebhook string `env:"NOTIFY_DINGTALK_WEBHOOK"`
 	FeishuWebhook   string `env:"NOTIFY_FEISHU_WEBHOOK"`
 
-	MinSeverity      string        `env:"NOTIFY_MIN_SEVERITY" envDefault:"high"`
-	RateLimitPerMin  int           `env:"NOTIFY_RATE_LIMIT" envDefault:"10"`
-	TemplateDir      string        `env:"NOTIFY_TEMPLATE_DIR" envDefault:"/etc/traffic/templates"`
+	MinSeverity     string `env:"NOTIFY_MIN_SEVERITY" envDefault:"high"`
+	RateLimitPerMin int    `env:"NOTIFY_RATE_LIMIT" envDefault:"10"`
+	TemplateDir     string `env:"NOTIFY_TEMPLATE_DIR" envDefault:"/etc/traffic/templates"`
 }
 
 // =============================================================================
@@ -48,26 +49,72 @@ type NotifyConfig struct {
 // =============================================================================
 
 type AlertInfo struct {
-	AlertID     string    `json:"alert_id"`
-	Title       string    `json:"title"`
-	Severity    string    `json:"severity"`
-	Score       float64   `json:"score"`
-	SourceIP    string    `json:"source_ip"`
-	DestIP      string    `json:"dest_ip"`
-	AlertType   string    `json:"alert_type"`
-	Description string    `json:"description"`
-	TenantID    string    `json:"tenant_id"`
-	Timestamp   time.Time `json:"timestamp"`
-	CampaignID  string    `json:"campaign_id,omitempty"`
-	AssetName   string    `json:"asset_name,omitempty"`
-	ThreatIntel string    `json:"threat_intel,omitempty"`
+	AlertID      string    `json:"alert_id"`
+	Title        string    `json:"title"`
+	Severity     string    `json:"severity"`
+	Score        float64   `json:"score"`
+	SourceIP     string    `json:"source_ip"`
+	DestIP       string    `json:"dest_ip"`
+	AlertType    string    `json:"alert_type"`
+	Description  string    `json:"description"`
+	Labels       []string  `json:"labels,omitempty"`
+	Count        int32     `json:"count,omitempty"`
+	TenantID     string    `json:"tenant_id"`
+	Timestamp    time.Time `json:"timestamp"`
+	CampaignID   string    `json:"campaign_id,omitempty"`
+	AssetName    string    `json:"asset_name,omitempty"`
+	ThreatIntel  string    `json:"threat_intel,omitempty"`
+	AssetScope   string    `json:"asset_scope,omitempty"`
+	Campus       string    `json:"campus,omitempty"`
+	ObjectType   string    `json:"object_type,omitempty"`
+	ObjectID     string    `json:"object_id,omitempty"`
+	Fingerprint  string    `json:"fingerprint,omitempty"`
+	TargetName   string    `json:"target_name,omitempty"`
+	Recipients   []string  `json:"recipients,omitempty"`
+	Destinations []string  `json:"destinations,omitempty"`
+}
+
+// ChannelRoute is the concrete result of notification-governance evaluation.
+// Keeping the matched rule and escalation target with the channel lets the
+// execution path persist an honest, attributable delivery history.
+type ChannelRoute struct {
+	Channel    string `json:"channel"`
+	RuleID     string `json:"rule_id,omitempty"`
+	TargetName string `json:"target_name,omitempty"`
+}
+
+type DeliveryResult struct {
+	Alert        *AlertInfo
+	Route        ChannelRoute
+	Status       string
+	ErrorMessage string
 }
 
 type NotificationService struct {
-	config  NotifyConfig
-	logger  *zap.Logger
-	limiter *rateLimiter
+	config           NotifyConfig
+	logger           *zap.Logger
+	limiter          *rateLimiter
+	channelResolver  func(context.Context, *AlertInfo) ([]ChannelRoute, error)
+	deliveryRecorder func(context.Context, DeliveryResult) error
 }
+
+func (s *NotificationService) SetChannelResolver(resolver func(context.Context, *AlertInfo) ([]ChannelRoute, error)) {
+	if s != nil {
+		s.channelResolver = resolver
+	}
+}
+
+func (s *NotificationService) SetDeliveryRecorder(recorder func(context.Context, DeliveryResult) error) {
+	if s != nil {
+		s.deliveryRecorder = recorder
+	}
+}
+
+var (
+	ErrChannelNotConfigured = errors.New("notification channel is not configured")
+	ErrChannelUnsupported   = errors.New("notification channel is not implemented")
+	ErrRateLimited          = errors.New("notification rate limit exceeded")
+)
 
 func NewNotificationService(cfg NotifyConfig, logger *zap.Logger) *NotificationService {
 	return &NotificationService{
@@ -79,18 +126,57 @@ func NewNotificationService(cfg NotifyConfig, logger *zap.Logger) *NotificationS
 
 // Notify 发送告警通知（自动选择渠道）
 func (s *NotificationService) Notify(ctx context.Context, alert *AlertInfo) error {
+	if alert == nil {
+		return errors.New("alert is required")
+	}
+	alert.Severity = NormalizeSeverity(alert.Severity, alert.Score)
+	alert.AlertType = NormalizeAlertType(alert.AlertType, alert.Description)
+	if s.channelResolver != nil {
+		routes, err := s.channelResolver(ctx, alert)
+		if err != nil {
+			return fmt.Errorf("resolve governed notification channels: %w", err)
+		}
+		if len(routes) == 0 {
+			return nil
+		}
+		if !s.limiter.Allow() {
+			for _, route := range routes {
+				s.recordDelivery(ctx, DeliveryResult{Alert: alert, Route: route, Status: "failed", ErrorMessage: ErrRateLimited.Error()})
+			}
+			return ErrRateLimited
+		}
+		var errs []string
+		for _, route := range routes {
+			dispatchErr := s.sendChannel(ctx, route.Channel, alert)
+			result := DeliveryResult{Alert: alert, Route: route, Status: "sent"}
+			if dispatchErr != nil {
+				result.Status = "failed"
+				result.ErrorMessage = dispatchErr.Error()
+				errs = append(errs, dispatchErr.Error())
+			}
+			if recordErr := s.recordDelivery(ctx, result); recordErr != nil {
+				errs = append(errs, "persist delivery: "+recordErr.Error())
+			}
+		}
+		if len(errs) > 0 {
+			return fmt.Errorf("notification errors: %s", strings.Join(errs, "; "))
+		}
+		return nil
+	}
 	if !s.shouldNotify(alert) {
 		return nil
 	}
 	if !s.limiter.Allow() {
 		s.logger.Warn("Notification rate limit exceeded", zap.String("alert_id", alert.AlertID))
-		return nil
+		return ErrRateLimited
 	}
 
 	var errs []string
+	attempted := 0
 
 	// Email 通知 (severity >= high)
 	if s.config.SMTPHost != "" && s.isSeverityAtLeast(alert.Severity, "high") {
+		attempted++
 		if err := s.sendEmail(ctx, alert); err != nil {
 			errs = append(errs, "email: "+err.Error())
 		}
@@ -98,6 +184,7 @@ func (s *NotificationService) Notify(ctx context.Context, alert *AlertInfo) erro
 
 	// Slack 通知 (severity >= critical)
 	if s.config.SlackWebhook != "" && s.isSeverityAtLeast(alert.Severity, "critical") {
+		attempted++
 		if err := s.sendSlack(ctx, alert); err != nil {
 			errs = append(errs, "slack: "+err.Error())
 		}
@@ -105,6 +192,7 @@ func (s *NotificationService) Notify(ctx context.Context, alert *AlertInfo) erro
 
 	// 通用 Webhook (所有级别)
 	if s.config.WebhookURL != "" {
+		attempted++
 		if err := s.sendWebhook(ctx, alert); err != nil {
 			errs = append(errs, "webhook: "+err.Error())
 		}
@@ -112,6 +200,7 @@ func (s *NotificationService) Notify(ctx context.Context, alert *AlertInfo) erro
 
 	// 企业微信 (severity >= high)
 	if s.config.WechatWebhook != "" && s.isSeverityAtLeast(alert.Severity, "high") {
+		attempted++
 		if err := s.sendWechat(ctx, alert); err != nil {
 			errs = append(errs, "wechat: "+err.Error())
 		}
@@ -119,6 +208,7 @@ func (s *NotificationService) Notify(ctx context.Context, alert *AlertInfo) erro
 
 	// 钉钉 (severity >= high)
 	if s.config.DingtalkWebhook != "" && s.isSeverityAtLeast(alert.Severity, "high") {
+		attempted++
 		if err := s.sendDingtalk(ctx, alert); err != nil {
 			errs = append(errs, "dingtalk: "+err.Error())
 		}
@@ -126,6 +216,7 @@ func (s *NotificationService) Notify(ctx context.Context, alert *AlertInfo) erro
 
 	// 飞书 (severity >= high)
 	if s.config.FeishuWebhook != "" && s.isSeverityAtLeast(alert.Severity, "high") {
+		attempted++
 		if err := s.sendFeishu(ctx, alert); err != nil {
 			errs = append(errs, "feishu: "+err.Error())
 		}
@@ -134,7 +225,131 @@ func (s *NotificationService) Notify(ctx context.Context, alert *AlertInfo) erro
 	if len(errs) > 0 {
 		return fmt.Errorf("notification errors: %s", strings.Join(errs, "; "))
 	}
+	if attempted == 0 {
+		return ErrChannelNotConfigured
+	}
 	return nil
+}
+
+func (s *NotificationService) recordDelivery(ctx context.Context, result DeliveryResult) error {
+	if s == nil || s.deliveryRecorder == nil {
+		return nil
+	}
+	return s.deliveryRecorder(ctx, result)
+}
+
+// NormalizeSeverity accepts protobuf enum strings, localized labels and the
+// historical top-label field. Unknown labels fall back to the numeric score.
+func NormalizeSeverity(raw string, score float64) string {
+	value := strings.ToLower(strings.TrimSpace(raw))
+	value = strings.TrimPrefix(value, "severity_")
+	switch value {
+	case "critical", "严重", "紧急":
+		return "critical"
+	case "high", "高危", "高":
+		return "high"
+	case "medium", "中危", "中":
+		return "medium"
+	case "low", "低危", "低":
+		return "low"
+	}
+	// Detector scores are normally 0..1; some historical writers persist
+	// percentages. Convert once so both contracts use the same thresholds.
+	if score > 1 {
+		score /= 100
+	}
+	switch {
+	case score >= 0.9:
+		return "critical"
+	case score >= 0.7:
+		return "high"
+	case score >= 0.4:
+		return "medium"
+	default:
+		return "low"
+	}
+}
+
+// NormalizeAlertType maps detector/protobuf labels to the business categories
+// configured by the notification workbench. The original value remains the
+// fallback so custom rule types continue to work.
+func NormalizeAlertType(raw string, labels string) string {
+	classify := func(value string) string {
+		value = strings.ToLower(strings.TrimSpace(value))
+		switch {
+		case strings.Contains(value, "data_exfil"), strings.Contains(value, "exfiltration"), strings.Contains(value, "数据泄露"), strings.Contains(value, "外传"):
+			return "数据泄露"
+		case strings.Contains(value, "login"), strings.Contains(value, "brute_force"), strings.Contains(value, "异常登录"), strings.Contains(value, "暴力破解"):
+			return "异常登录"
+		case strings.Contains(value, "task_failure"), strings.Contains(value, "data_quality"), strings.Contains(value, "任务失败"), strings.Contains(value, "数据质量"):
+			return "任务失败"
+		case strings.Contains(value, "scan"), strings.Contains(value, "attack"), strings.Contains(value, "intrusion"), strings.Contains(value, "攻击"), strings.Contains(value, "扫描"):
+			return "攻击告警"
+		}
+		return ""
+	}
+	if normalized := classify(raw); normalized != "" {
+		return normalized
+	}
+	if normalized := classify(labels); normalized != "" {
+		return normalized
+	}
+	return strings.TrimSpace(raw)
+}
+
+// SendChannel delivers through exactly one requested channel. It fails closed
+// when a provider is missing or unsupported, so callers cannot report a send
+// merely because the handler itself completed.
+func (s *NotificationService) SendChannel(ctx context.Context, channel string, alert *AlertInfo) error {
+	if s == nil {
+		return ErrChannelNotConfigured
+	}
+	if alert == nil {
+		return errors.New("alert is required")
+	}
+	if !s.limiter.Allow() {
+		return ErrRateLimited
+	}
+	return s.sendChannel(ctx, channel, alert)
+}
+
+func (s *NotificationService) sendChannel(ctx context.Context, channel string, alert *AlertInfo) error {
+	switch strings.ToLower(strings.TrimSpace(channel)) {
+	case "email":
+		if s.config.SMTPHost == "" || s.config.SMTPUser == "" {
+			return fmt.Errorf("email: %w", ErrChannelNotConfigured)
+		}
+		return s.sendEmail(ctx, alert)
+	case "webhook":
+		if s.config.WebhookURL == "" && len(alert.Destinations) == 0 {
+			return fmt.Errorf("webhook: %w", ErrChannelNotConfigured)
+		}
+		return s.sendWebhook(ctx, alert)
+	case "slack":
+		if s.config.SlackWebhook == "" && len(alert.Destinations) == 0 {
+			return fmt.Errorf("slack: %w", ErrChannelNotConfigured)
+		}
+		return s.sendSlack(ctx, alert)
+	case "wechat":
+		if s.config.WechatWebhook == "" && len(alert.Destinations) == 0 {
+			return fmt.Errorf("wechat: %w", ErrChannelNotConfigured)
+		}
+		return s.sendWechat(ctx, alert)
+	case "dingtalk":
+		if s.config.DingtalkWebhook == "" && len(alert.Destinations) == 0 {
+			return fmt.Errorf("dingtalk: %w", ErrChannelNotConfigured)
+		}
+		return s.sendDingtalk(ctx, alert)
+	case "feishu":
+		if s.config.FeishuWebhook == "" && len(alert.Destinations) == 0 {
+			return fmt.Errorf("feishu: %w", ErrChannelNotConfigured)
+		}
+		return s.sendFeishu(ctx, alert)
+	case "sms", "ticket":
+		return fmt.Errorf("%s: %w", channel, ErrChannelUnsupported)
+	default:
+		return fmt.Errorf("%s: %w", channel, ErrChannelUnsupported)
+	}
 }
 
 // =============================================================================
@@ -204,18 +419,12 @@ func (s *NotificationService) sendSlack(ctx context.Context, alert *AlertInfo) e
 				{"title": "Campaign", "value": alert.CampaignID, "short": true},
 				{"title": "Threat Intel", "value": alert.ThreatIntel, "short": true},
 			},
-			"footer":     "Traffic Analysis Platform",
-			"ts":         alert.Timestamp.Unix(),
+			"footer": "Traffic Analysis Platform",
+			"ts":     alert.Timestamp.Unix(),
 		}},
 	}
 
-	body, _ := json.Marshal(payload)
-	resp, err := http.Post(s.config.SlackWebhook, "application/json", bytes.NewReader(body))
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	return nil
+	return s.postWebhookDestinations(ctx, alert, s.config.SlackWebhook, payload, "slack")
 }
 
 // =============================================================================
@@ -236,7 +445,7 @@ func (s *NotificationService) sendWechat(ctx context.Context, alert *AlertInfo) 
 				alert.SourceIP, alert.DestIP, alert.AlertType, alert.CampaignID),
 		},
 	}
-	return s.postWebhook(s.config.WechatWebhook, payload)
+	return s.postWebhookDestinations(ctx, alert, s.config.WechatWebhook, payload, "wechat")
 }
 
 // =============================================================================
@@ -258,7 +467,7 @@ func (s *NotificationService) sendDingtalk(ctx context.Context, alert *AlertInfo
 				alert.SourceIP, alert.DestIP, alert.AlertType, alert.CampaignID),
 		},
 	}
-	return s.postWebhook(s.config.DingtalkWebhook, payload)
+	return s.postWebhookDestinations(ctx, alert, s.config.DingtalkWebhook, payload, "dingtalk")
 }
 
 // =============================================================================
@@ -285,25 +494,87 @@ func (s *NotificationService) sendFeishu(ctx context.Context, alert *AlertInfo) 
 			"elements": elements,
 		},
 	}
-	return s.postWebhook(s.config.FeishuWebhook, payload)
+	return s.postWebhookDestinations(ctx, alert, s.config.FeishuWebhook, payload, "feishu")
 }
 
 // =============================================================================
 // 通用 Webhook POST
 // =============================================================================
 
-func (s *NotificationService) postWebhook(url string, payload map[string]interface{}) error {
+func (s *NotificationService) postWebhook(ctx context.Context, url string, payload map[string]interface{}, provider string) error {
 	body, _ := json.Marshal(payload)
-	resp, err := http.Post(url, "application/json", bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := (&http.Client{Timeout: 15 * time.Second}).Do(req)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
+	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	if resp.StatusCode >= 400 {
-		respBody, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("webhook returned %d: %s", resp.StatusCode, string(respBody))
 	}
+	if provider == "slack" {
+		value := strings.TrimSpace(string(respBody))
+		if !strings.EqualFold(value, "ok") {
+			return fmt.Errorf("slack business response is not an explicit success: %q", value)
+		}
+		return nil
+	}
+	var response map[string]interface{}
+	if len(bytes.TrimSpace(respBody)) == 0 {
+		return fmt.Errorf("%s business response is empty", provider)
+	}
+	if err := json.Unmarshal(respBody, &response); err != nil {
+		return fmt.Errorf("%s business response is not JSON: %w", provider, err)
+	}
+	code := notificationProviderCode(response, provider)
+	if code == "" {
+		return fmt.Errorf("%s business response has no success code", provider)
+	}
+	if code != "0" {
+		message := notificationProviderMessage(response)
+		return fmt.Errorf("%s business error code=%s message=%s", provider, code, message)
+	}
 	return nil
+}
+
+func (s *NotificationService) postWebhookDestinations(ctx context.Context, alert *AlertInfo, fallback string, payload map[string]interface{}, provider string) error {
+	destinations := notificationDestinations(alert, fallback)
+	if len(destinations) == 0 {
+		return fmt.Errorf("%s: %w", provider, ErrChannelNotConfigured)
+	}
+	for _, destination := range destinations {
+		if err := s.postWebhook(ctx, destination, payload, provider); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func notificationProviderCode(response map[string]interface{}, provider string) string {
+	keys := []string{"errcode", "code"}
+	if provider == "feishu" {
+		keys = []string{"code", "StatusCode", "errcode"}
+	}
+	for _, key := range keys {
+		if value, ok := response[key]; ok {
+			return strings.TrimSpace(fmt.Sprint(value))
+		}
+	}
+	return ""
+}
+
+func notificationProviderMessage(response map[string]interface{}) string {
+	for _, key := range []string{"errmsg", "msg", "message", "StatusMessage"} {
+		if value, ok := response[key]; ok {
+			return strings.TrimSpace(fmt.Sprint(value))
+		}
+	}
+	return "provider rejected notification"
 }
 
 // =============================================================================
@@ -312,15 +583,48 @@ func (s *NotificationService) postWebhook(url string, payload map[string]interfa
 
 func (s *NotificationService) sendWebhook(ctx context.Context, alert *AlertInfo) error {
 	body, _ := json.Marshal(alert)
-	resp, err := http.Post(s.config.WebhookURL, "application/json", bytes.NewReader(body))
-	if err != nil {
-		return err
+	destinations := notificationDestinations(alert, s.config.WebhookURL)
+	if len(destinations) == 0 {
+		return fmt.Errorf("webhook: %w", ErrChannelNotConfigured)
 	}
-	defer resp.Body.Close()
+	for _, destination := range destinations {
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, destination, bytes.NewReader(body))
+		if err != nil {
+			return err
+		}
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := (&http.Client{Timeout: 15 * time.Second}).Do(req)
+		if err != nil {
+			return err
+		}
+		respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+		resp.Body.Close()
+		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+			return fmt.Errorf("webhook returned %d: %s", resp.StatusCode, string(respBody))
+		}
+	}
+	return nil
+}
 
-	if resp.StatusCode >= 400 {
-		respBody, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("webhook returned %d: %s", resp.StatusCode, string(respBody))
+func notificationDestinations(alert *AlertInfo, fallback string) []string {
+	if alert != nil && len(alert.Destinations) > 0 {
+		result := make([]string, 0, len(alert.Destinations))
+		seen := map[string]struct{}{}
+		for _, raw := range alert.Destinations {
+			destination := strings.TrimSpace(raw)
+			if destination == "" {
+				continue
+			}
+			if _, exists := seen[destination]; exists {
+				continue
+			}
+			seen[destination] = struct{}{}
+			result = append(result, destination)
+		}
+		return result
+	}
+	if destination := strings.TrimSpace(fallback); destination != "" {
+		return []string{destination}
 	}
 	return nil
 }
@@ -350,10 +654,14 @@ func (s *NotificationService) isSeverityAtLeast(severity, min string) bool {
 
 func (s *NotificationService) severityColor(severity string) string {
 	switch severity {
-	case "critical": return "#FF0000"
-	case "high":     return "#FF6600"
-	case "medium":   return "#FFCC00"
-	default:         return "#3399FF"
+	case "critical":
+		return "#FF0000"
+	case "high":
+		return "#FF6600"
+	case "medium":
+		return "#FFCC00"
+	default:
+		return "#3399FF"
 	}
 }
 
@@ -365,8 +673,7 @@ func (s *NotificationService) assetLabel(name string) string {
 }
 
 func (s *NotificationService) getRecipients(alert *AlertInfo) []string {
-	// 未来可扩展：按 tenant_id 查找管理员邮箱
-	return nil
+	return append([]string(nil), alert.Recipients...)
 }
 
 // =============================================================================
@@ -374,8 +681,8 @@ func (s *NotificationService) getRecipients(alert *AlertInfo) []string {
 // =============================================================================
 
 type rateLimiter struct {
-	mu       sync.Mutex
-	window   []time.Time
+	mu        sync.Mutex
+	window    []time.Time
 	maxPerMin int
 }
 
