@@ -1,0 +1,375 @@
+---
+# Explicitly suspended acceptance-only fixture for the /fusion data-ready UI.
+# Normal schema deployment never creates these rows. To run it intentionally:
+#   kubectl -n databases patch job seed-fusion-acceptance --type=merge -p '{"spec":{"suspend":false}}'
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fusion-acceptance-sql
+  namespace: databases
+data:
+  07-fusion-acceptance.sql: |
+    -- Explicit acceptance-only dataset for the /fusion data-ready visual state.
+    -- This file is never executed by the normal PostgreSQL schema job. Enable it
+    -- only with explicit enable, tenant and action settings, for example:
+    -- PGOPTIONS='-c traffic.enable_fusion_acceptance_fixture=on -c traffic.fusion_acceptance_tenant_id=default -c traffic.fusion_acceptance_fixture_action=seed'.
+    BEGIN;
+
+    DO $fusion_acceptance_fixture$
+    DECLARE
+      fixture_tenant TEXT := NULLIF(current_setting('traffic.fusion_acceptance_tenant_id', true), '');
+      fixture_action TEXT := COALESCE(NULLIF(current_setting('traffic.fusion_acceptance_fixture_action', true), ''), 'seed');
+    BEGIN
+    IF COALESCE(current_setting('traffic.enable_fusion_acceptance_fixture', true), 'off') NOT IN ('on', 'true', '1') THEN
+      RAISE NOTICE 'fusion acceptance fixture is disabled';
+      RETURN;
+    END IF;
+
+    IF fixture_tenant IS NULL THEN
+      RAISE EXCEPTION 'traffic.fusion_acceptance_tenant_id must be set explicitly';
+    END IF;
+
+    IF fixture_action NOT IN ('seed', 'cleanup') THEN
+      RAISE EXCEPTION 'traffic.fusion_acceptance_fixture_action must be seed or cleanup';
+    END IF;
+
+    IF fixture_action = 'cleanup' THEN
+      DELETE FROM audit_logs
+      WHERE tenant_id=fixture_tenant
+        AND action LIKE 'FUSION_%'
+        AND (
+          (object_type='fusion_conflict' AND object_id IN (
+            SELECT conflict_id FROM fusion_conflicts
+            WHERE tenant_id=fixture_tenant AND origin='acceptance_fixture' AND detail->>'fixture'='fusion-workbench-v1'
+          ))
+          OR
+          (object_type='fusion_rule' AND object_id IN (
+            SELECT rule_id FROM fusion_rule_overrides
+            WHERE tenant_id=fixture_tenant AND detail->>'fixture'='fusion-workbench-v1'
+          ))
+        );
+      DELETE FROM fusion_conflict_resolutions
+      WHERE tenant_id=fixture_tenant AND conflict_id IN (
+        SELECT conflict_id FROM fusion_conflicts
+        WHERE tenant_id=fixture_tenant AND origin='acceptance_fixture' AND detail->>'fixture'='fusion-workbench-v1'
+      );
+      DELETE FROM fusion_repair_tasks
+      WHERE tenant_id=fixture_tenant AND conflict_id IN (
+          SELECT conflict_id FROM fusion_conflicts
+          WHERE tenant_id=fixture_tenant AND origin='acceptance_fixture' AND detail->>'fixture'='fusion-workbench-v1'
+        );
+      DELETE FROM fusion_conflicts
+      WHERE tenant_id=fixture_tenant AND origin='acceptance_fixture' AND detail->>'fixture'='fusion-workbench-v1';
+      DELETE FROM fusion_rule_overrides
+      WHERE tenant_id=fixture_tenant AND detail->>'fixture'='fusion-workbench-v1';
+      RAISE NOTICE 'fusion acceptance fixture removed for tenant %', fixture_tenant;
+      RETURN;
+    END IF;
+
+    -- A seed is a deterministic reset of this explicitly tagged acceptance dataset.
+    IF EXISTS (
+      SELECT 1 FROM fusion_rule_overrides
+      WHERE tenant_id=fixture_tenant
+        AND (rule_id IN ('IP_MAC_BIND_V3','ACCOUNT_HOST_LINK','ASSET_DEPT_COMPLETION','DOMAIN_IP_RESOLUTION','ALERT_ASSET_JOIN','VULN_SERVICE_MATCH')
+             OR rule_id ~ '^FUSION_RULE_(0[7-9]|1[0-9]|2[0-6])$')
+        AND COALESCE(detail->>'fixture','') <> 'fusion-workbench-v1'
+    ) THEN
+      RAISE EXCEPTION 'refusing to overwrite non-fixture fusion rules for tenant %', fixture_tenant;
+    END IF;
+    IF EXISTS (
+      SELECT 1 FROM fusion_conflicts
+      WHERE tenant_id=fixture_tenant AND conflict_id ~ '^AF-20260722-[0-9]{3}$'
+        AND NOT (origin='acceptance_fixture' AND detail->>'fixture'='fusion-workbench-v1')
+    ) THEN
+      RAISE EXCEPTION 'refusing to overwrite non-fixture fusion conflicts for tenant %', fixture_tenant;
+    END IF;
+    DELETE FROM audit_logs
+    WHERE tenant_id=fixture_tenant
+      AND action LIKE 'FUSION_%'
+      AND (
+        (object_type='fusion_conflict' AND object_id IN (
+          SELECT conflict_id FROM fusion_conflicts
+          WHERE tenant_id=fixture_tenant AND origin='acceptance_fixture' AND detail->>'fixture'='fusion-workbench-v1'
+        ))
+        OR
+        (object_type='fusion_rule' AND object_id IN (
+          SELECT rule_id FROM fusion_rule_overrides
+          WHERE tenant_id=fixture_tenant AND detail->>'fixture'='fusion-workbench-v1'
+        ))
+      );
+    DELETE FROM fusion_conflict_resolutions
+    WHERE tenant_id=fixture_tenant AND conflict_id IN (
+      SELECT conflict_id FROM fusion_conflicts
+      WHERE tenant_id=fixture_tenant AND origin='acceptance_fixture' AND detail->>'fixture'='fusion-workbench-v1'
+    );
+    DELETE FROM fusion_repair_tasks
+    WHERE tenant_id=fixture_tenant AND conflict_id IN (
+        SELECT conflict_id FROM fusion_conflicts
+        WHERE tenant_id=fixture_tenant AND origin='acceptance_fixture' AND detail->>'fixture'='fusion-workbench-v1'
+      );
+    DELETE FROM fusion_conflicts
+    WHERE tenant_id=fixture_tenant AND origin='acceptance_fixture' AND detail->>'fixture'='fusion-workbench-v1';
+    DELETE FROM fusion_rule_overrides
+    WHERE tenant_id=fixture_tenant AND detail->>'fixture'='fusion-workbench-v1';
+
+    INSERT INTO fusion_rule_overrides
+      (tenant_id, rule_id, rule_name, status, strategy, confidence_threshold, note, updated_by, detail)
+    VALUES
+      (fixture_tenant,'IP_MAC_BIND_V3','IP-MAC 对齐','active','authoritative-source',0.86,'CMDB 为权威资产库','acceptance-fixture','{"source_a":"Flow","source_b":"Asset","field":"IP / MAC","matches":6842,"recent_hits":[54,62,58,68,64,72],"success_rate":0.9912,"confidence_label":"中高","rule_count":6,"fixture":"fusion-workbench-v1"}'::jsonb),
+      (fixture_tenant,'ACCOUNT_HOST_LINK','账号-主机关联','active','weighted-confidence',0.82,'账号登录与主机画像联合对齐','acceptance-fixture','{"source_a":"User Event","source_b":"Asset","field":"账号 / 主机","matches":3126,"recent_hits":[35,42,39,48,44,51],"success_rate":0.9835,"confidence_label":"中高","rule_count":5,"fixture":"fusion-workbench-v1"}'::jsonb),
+      (fixture_tenant,'ASSET_DEPT_COMPLETION','资产-部门补全','active','authoritative-source',0.80,'优先资产台账组织归属','acceptance-fixture','{"source_a":"Asset","source_b":"Device Log","field":"资产 / 部门","matches":2146,"recent_hits":[28,31,35,33,39,42],"success_rate":0.9761,"confidence_label":"中高","rule_count":4,"fixture":"fusion-workbench-v1"}'::jsonb),
+      (fixture_tenant,'DOMAIN_IP_RESOLUTION','域名-IP 解析','active','latest-observation',0.90,'以最新可验证解析为主值','acceptance-fixture','{"source_a":"Device Log","source_b":"Flow","field":"域名 / IP","matches":1976,"recent_hits":[22,27,25,31,34,38],"success_rate":0.9872,"confidence_label":"高","rule_count":7,"fixture":"fusion-workbench-v1"}'::jsonb),
+      (fixture_tenant,'ALERT_ASSET_JOIN','告警-资产关联','active','weighted-confidence',0.84,'结合威胁情报与资产关键性','acceptance-fixture','{"source_a":"Threat Intel","source_b":"Asset","field":"告警 / 资产","matches":4231,"recent_hits":[41,46,52,49,57,61],"success_rate":0.9848,"confidence_label":"中高","rule_count":8,"fixture":"fusion-workbench-v1"}'::jsonb),
+      (fixture_tenant,'VULN_SERVICE_MATCH','漏洞-服务命中','active','manual-review',0.78,'高危漏洞命中需人工复核','acceptance-fixture','{"source_a":"Vuln","source_b":"Asset","field":"漏洞 / 服务","matches":3112,"recent_hits":[18,25,23,29,31,36],"success_rate":0.9587,"confidence_label":"中高","rule_count":6,"fixture":"fusion-workbench-v1"}'::jsonb)
+    ON CONFLICT (tenant_id, rule_id) DO UPDATE SET
+      rule_name=EXCLUDED.rule_name, version=1, status=EXCLUDED.status, strategy=EXCLUDED.strategy,
+      confidence_threshold=EXCLUDED.confidence_threshold, note=EXCLUDED.note,
+      updated_by=EXCLUDED.updated_by, updated_at=now(), detail=EXCLUDED.detail
+    WHERE fusion_rule_overrides.detail->>'fixture'='fusion-workbench-v1';
+
+    INSERT INTO fusion_rule_overrides
+      (tenant_id, rule_id, rule_name, status, strategy, confidence_threshold, note, updated_by, updated_at, detail)
+    SELECT
+      fixture_tenant,
+      'FUSION_RULE_' || lpad(series::text, 2, '0'),
+      (ARRAY[
+        '终端-IP 归一化','设备-位置补全','账号-部门映射','域名信誉关联','服务指纹归并',
+        '漏洞资产映射','告警会话关联','MAC 厂商补全','应用协议识别','外联目的归一化',
+        '证书域名对齐','用户行为聚合','资产责任人补全','端口服务标准化','威胁标签合并',
+        '设备日志归属','流量方向判定','风险标签传播','业务系统归并','证据链关联'
+      ])[series - 6],
+      'active',
+      (ARRAY['authoritative-source','weighted-confidence','latest-observation','manual-review'])[((series - 7) % 4) + 1],
+      0.78 + ((series - 7) % 7) * 0.02,
+      '显式验收基线规则；不由业务读接口创建。',
+      'acceptance-fixture',
+      now() - make_interval(days => 27 - series),
+      jsonb_build_object(
+        'source_a', (ARRAY['Flow','Asset','Device Log','User Event','Threat Intel','Vuln'])[((series - 7) % 6) + 1],
+        'source_b', (ARRAY['Asset','Device Log','User Event','Threat Intel','Vuln','Flow'])[((series - 7) % 6) + 1],
+        'field', (ARRAY['终端 / IP','设备 / 位置','账号 / 部门','域名 / 信誉','服务 / 指纹','漏洞 / 资产','告警 / 会话','MAC / 厂商','协议 / 应用','目的 / 区域'])[((series - 7) % 10) + 1],
+        'matches', 920 + series * 137,
+        'success_rate', 0.951 + ((series - 7) % 5) * 0.008,
+        'confidence_label', CASE WHEN series % 4 = 0 THEN '高' ELSE '中高' END,
+        'rule_count', 3 + (series % 7),
+        'fixture', 'fusion-workbench-v1'
+      )
+    FROM generate_series(7, 26) AS series
+    ON CONFLICT (tenant_id, rule_id) DO UPDATE SET
+      rule_name=EXCLUDED.rule_name, version=1, status=EXCLUDED.status, strategy=EXCLUDED.strategy,
+      confidence_threshold=EXCLUDED.confidence_threshold, note=EXCLUDED.note,
+      updated_by=EXCLUDED.updated_by, updated_at=EXCLUDED.updated_at, detail=EXCLUDED.detail
+    WHERE fusion_rule_overrides.detail->>'fixture'='fusion-workbench-v1';
+
+    WITH candidates AS (
+      SELECT row_number() OVER (ORDER BY updated_at DESC, asset_id) AS ordinal,
+             asset_id::text, COALESCE(display_code, asset_id::text) AS display_code,
+             COALESCE(hostname, ip_address, display_code, asset_id::text) AS observed_value,
+             COALESCE(source, 'asset') AS source
+      FROM assets
+      WHERE tenant_id=fixture_tenant
+      ORDER BY updated_at DESC, asset_id
+      LIMIT 18
+    )
+    INSERT INTO fusion_conflicts
+      (tenant_id, conflict_id, object_id, object_type, field_name, source_values, source_count, confidence, severity, status, rule_id, state_version, origin, detail, detected_at, updated_at)
+    SELECT
+      fixture_tenant,
+      'AF-20260722-' || lpad(ordinal::text, 3, '0'),
+      asset_id,
+      'asset',
+      (ARRAY['主机名','所属部门','账号别名','域名归属','服务名称','资产负责人','IP 地址','设备位置'])[((ordinal - 1) % 8) + 1],
+      jsonb_build_array(
+        jsonb_build_object('source','Flow 流量','value',observed_value,'confidence',0.78,'observed_at',(extract(epoch from now() - make_interval(mins => (ordinal * 9 + 4)::int)) * 1000)::bigint),
+        jsonb_build_object('source','CMDB 资产库','value',lower(replace(observed_value,'_','-')),'confidence',0.92,'observed_at',(extract(epoch from now() - make_interval(mins => (ordinal * 9 + 2)::int)) * 1000)::bigint),
+        jsonb_build_object('source','DHCP 日志','value',upper(replace(observed_value,'-','_')),'confidence',0.65,'observed_at',(extract(epoch from now() - make_interval(mins => (ordinal * 9 + 7)::int)) * 1000)::bigint),
+        jsonb_build_object('source','EDR 终端','value',upper(replace(observed_value,'_','.')),'confidence',0.70,'observed_at',(extract(epoch from now() - make_interval(mins => (ordinal * 9 + 5)::int)) * 1000)::bigint)
+      ),
+      4,
+      0.64 + (ordinal % 6) * 0.05,
+      CASE WHEN ordinal <= 6 THEN 'high' WHEN ordinal <= 15 THEN 'medium' ELSE 'low' END,
+      'pending',
+      (ARRAY['IP_MAC_BIND_V3','ACCOUNT_HOST_LINK','ASSET_DEPT_COMPLETION','DOMAIN_IP_RESOLUTION','ALERT_ASSET_JOIN','VULN_SERVICE_MATCH'])[((ordinal - 1) % 6) + 1],
+      1,
+      'acceptance_fixture',
+      jsonb_build_object('fixture','fusion-workbench-v1','asset_source',source,'data_mode','explicit_acceptance','reason','来源命名规范不一致，存在大小写与分隔符差异。'),
+      now() - make_interval(mins => (ordinal * 9)::int),
+      now() - make_interval(mins => (ordinal * 9)::int)
+    FROM candidates
+    ON CONFLICT (tenant_id, conflict_id) DO UPDATE SET
+      object_id=EXCLUDED.object_id,
+      object_type=EXCLUDED.object_type,
+      field_name=EXCLUDED.field_name,
+      source_values=EXCLUDED.source_values,
+      source_count=EXCLUDED.source_count,
+      confidence=EXCLUDED.confidence,
+      severity=EXCLUDED.severity,
+      status='pending',
+      rule_id=EXCLUDED.rule_id,
+      state_version=1,
+      origin=EXCLUDED.origin,
+      detail=EXCLUDED.detail,
+      detected_at=EXCLUDED.detected_at,
+      updated_at=EXCLUDED.updated_at;
+
+    -- The visual contract contains a five-row audit table backed by a 50-event
+    -- window. Keep those rows explicit, tenant-scoped and removable with the rest
+    -- of this acceptance dataset; the production read path never synthesizes them.
+    INSERT INTO audit_logs
+      (event_id, tenant_id, user_id, action, object_type, object_id, detail, success, result, created_at)
+    SELECT
+      'audit-fusion-acceptance-' || fixture_tenant || '-' || lpad(series::text, 2, '0'),
+      fixture_tenant,
+      NULL,
+      (ARRAY[
+        'FUSION_ENTITY_MERGED',
+        'FUSION_FIELD_COMPLETED',
+        'FUSION_CONFLICT_CREATED',
+        'FUSION_RELATION_ESTABLISHED',
+        'FUSION_RESOLUTION_UPDATED'
+      ])[((series - 1) % 5) + 1],
+      CASE WHEN series % 5 = 0 THEN 'fusion_rule' ELSE 'fusion_conflict' END,
+      CASE
+        WHEN series % 5 = 0 THEN (ARRAY['IP_MAC_BIND_V3','ACCOUNT_HOST_LINK','ASSET_DEPT_COMPLETION','DOMAIN_IP_RESOLUTION','ALERT_ASSET_JOIN','VULN_SERVICE_MATCH'])[((series - 1) % 6) + 1]
+        ELSE 'AF-20260722-' || lpad((((series - 1) % 18) + 1)::text, 3, '0')
+      END,
+      jsonb_build_object(
+        'fixture', 'fusion-workbench-v1',
+        'data_mode', 'explicit_acceptance',
+        'rule_id', (ARRAY['ACCOUNT_HOST_LINK','ASSET_DEPT_COMPLETION','IP_MAC_BIND_V3','ALERT_ASSET_JOIN','DOMAIN_IP_RESOLUTION','VULN_SERVICE_MATCH'])[((series - 1) % 6) + 1],
+        'object_type', (ARRAY['account','asset','host','alert','domain','service'])[((series - 1) % 6) + 1],
+        'field_name', (ARRAY['账号标识','所属部门','主机名','关联告警','解析地址','服务名称'])[((series - 1) % 6) + 1],
+        'before_value', (ARRAY['user01@exp.lab','部门: 未知','主机名: EXP-LAB-12','AL-20260722-001','10.12.3.3','端口 443'])[((series - 1) % 6) + 1],
+        'selected_value', (ARRAY['user01','安全中心','exp-lab-12','实验室: SRV-12','10.12.3.27','HTTPS'])[((series - 1) % 6) + 1],
+        'operator_label', CASE WHEN series % 5 = 3 THEN 'sec_analyst' ELSE '系统' END,
+        'result', 'success'
+      ),
+      true,
+      'success',
+      CASE series
+        WHEN 1 THEN TIMESTAMPTZ '2026-06-20 03:44:52+08'
+        WHEN 2 THEN TIMESTAMPTZ '2026-06-20 03:44:37+08'
+        WHEN 3 THEN TIMESTAMPTZ '2026-06-20 03:44:21+08'
+        WHEN 4 THEN TIMESTAMPTZ '2026-06-20 03:43:58+08'
+        WHEN 5 THEN TIMESTAMPTZ '2026-06-20 03:43:21+08'
+        ELSE TIMESTAMPTZ '2026-06-20 03:43:21+08' - make_interval(mins => series - 5)
+      END
+    FROM generate_series(1, 50) AS series
+    ON CONFLICT (event_id) DO UPDATE SET
+      tenant_id=EXCLUDED.tenant_id,
+      user_id=EXCLUDED.user_id,
+      action=EXCLUDED.action,
+      object_type=EXCLUDED.object_type,
+      object_id=EXCLUDED.object_id,
+      detail=EXCLUDED.detail,
+      success=EXCLUDED.success,
+      result=EXCLUDED.result,
+      created_at=EXCLUDED.created_at;
+
+    END;
+    $fusion_acceptance_fixture$;
+
+    COMMIT;
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: seed-fusion-acceptance
+  namespace: databases
+  labels:
+    app.kubernetes.io/part-of: traffic-analysis-platform
+    traffic-analysis.io/data-mode: explicit-acceptance
+spec:
+  suspend: true
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        job: seed-fusion-acceptance
+        traffic-analysis.io/data-mode: explicit-acceptance
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: seed-fusion
+        image: docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7
+        env:
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: PG_PASSWORD
+        - name: PGOPTIONS
+          value: -c traffic.enable_fusion_acceptance_fixture=on -c traffic.fusion_acceptance_tenant_id=default -c traffic.fusion_acceptance_fixture_action=seed
+        command:
+        - psql
+        args:
+        - -h
+        - postgres-primary.databases.svc
+        - -U
+        - postgres
+        - -d
+        - traffic_platform
+        - -v
+        - ON_ERROR_STOP=1
+        - -f
+        - /sql/07-fusion-acceptance.sql
+        volumeMounts:
+        - name: fusion-sql
+          mountPath: /sql
+      volumes:
+      - name: fusion-sql
+        configMap:
+          name: fusion-acceptance-sql
+---
+# Explicit teardown for the acceptance-only dataset. It is also suspended and
+# must be started deliberately after visual/interaction acceptance completes.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cleanup-fusion-acceptance
+  namespace: databases
+  labels:
+    app.kubernetes.io/part-of: traffic-analysis-platform
+    traffic-analysis.io/data-mode: explicit-acceptance-cleanup
+spec:
+  suspend: true
+  ttlSecondsAfterFinished: 300
+  template:
+    metadata:
+      labels:
+        job: cleanup-fusion-acceptance
+        traffic-analysis.io/data-mode: explicit-acceptance-cleanup
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: cleanup-fusion
+        image: docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7
+        env:
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: PG_PASSWORD
+        - name: PGOPTIONS
+          value: -c traffic.enable_fusion_acceptance_fixture=on -c traffic.fusion_acceptance_tenant_id=default -c traffic.fusion_acceptance_fixture_action=cleanup
+        command:
+        - psql
+        args:
+        - -h
+        - postgres-primary.databases.svc
+        - -U
+        - postgres
+        - -d
+        - traffic_platform
+        - -v
+        - ON_ERROR_STOP=1
+        - -f
+        - /sql/07-fusion-acceptance.sql
+        volumeMounts:
+        - name: fusion-sql
+          mountPath: /sql
+      volumes:
+      - name: fusion-sql
+        configMap:
+          name: fusion-acceptance-sql

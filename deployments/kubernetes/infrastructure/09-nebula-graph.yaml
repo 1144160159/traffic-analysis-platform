@@ -44,8 +44,7 @@ spec:
       - args:
         - "echo \"--meta_server_addrs=nebula-meta-0.nebula-meta.middleware.svc:9559,nebula-meta-1.nebula-meta.middleware.svc:9559,nebula-meta-2.nebula-meta.middleware.svc:9559\n\
           --local_ip=$(POD_NAME).nebula-meta.middleware.svc\n--port=9559\n--ws_http_port=19559\n--data_path=/data/meta\n--log_dir=/data/logs\n\
-          --v=1\" > /tmp/metad.conf\nwhile true; do\n  echo \"$(date +%T) Starting metad...\"\n  /usr/local/nebula/bin/nebula-metad\
-          \ --flagfile=/tmp/metad.conf 2>&1\n  echo \"$(date +%T) metad exited($?), restart in 5s...\"\n  sleep 5\ndone\n"
+          --daemonize=false\n--v=1\" > /tmp/metad.conf\nexec /usr/local/nebula/bin/nebula-metad --flagfile=/tmp/metad.conf\n"
         command:
         - /bin/sh
         - -c
@@ -169,9 +168,8 @@ spec:
       containers:
       - args:
         - "echo \"--meta_server_addrs=nebula-meta-0.nebula-meta.middleware.svc:9559,nebula-meta-1.nebula-meta.middleware.svc:9559,nebula-meta-2.nebula-meta.middleware.svc:9559\n\
-          --local_ip=${POD_IP}\n--port=9669\n--ws_http_port=19669\n--log_dir=/data/logs\n--v=1\" > /tmp/graphd.conf\nwhile\
-          \ true; do\n  echo \"$(date +%T) Starting graphd...\"\n  /usr/local/nebula/bin/nebula-graphd --flagfile=/tmp/graphd.conf\
-          \ 2>&1\n  echo \"$(date +%T) graphd exited($?), restart in 5s...\"\n  sleep 5\ndone\n"
+          --local_ip=${POD_IP}\n--port=9669\n--ws_http_port=19669\n--log_dir=/data/logs\n--daemonize=false\n--enable_authorize=true\n--auth_type=password\n--failed_login_attempts=5\n--password_lock_time_in_secs=600\n--v=1\" > /tmp/graphd.conf\nexec\
+          \ /usr/local/nebula/bin/nebula-graphd --flagfile=/tmp/graphd.conf\n"
         command:
         - /bin/sh
         - -c
@@ -272,10 +270,8 @@ spec:
       - args:
         - "echo \"--meta_server_addrs=nebula-meta-0.nebula-meta.middleware.svc:9559,nebula-meta-1.nebula-meta.middleware.svc:9559,nebula-meta-2.nebula-meta.middleware.svc:9559\n\
           --local_ip=$(POD_NAME).nebula-storage-headless.middleware.svc\n--port=9777\n--ws_http_port=19779\n--data_path=/data/storage\n\
-          --log_dir=/data/logs\n--v=1\" > /tmp/storaged.conf\nwhile true; do\n  echo \"$(date +%T) Starting storaged...\"\n\
-          \  rm -f /usr/local/nebula/pids/nebula-storaged.pid\n  kill -9 $(pgrep nebula-storaged) 2>/dev/null; sleep 2\n \
-          \ /usr/local/nebula/bin/nebula-storaged --flagfile=/tmp/storaged.conf 2>&1\n  echo \"$(date +%T) storaged exited($?),\
-          \ restart in 10s...\"\n  sleep 10\ndone\n"
+          --log_dir=/data/logs\n--daemonize=false\n--v=1\" > /tmp/storaged.conf\nrm -f /usr/local/nebula/pids/nebula-storaged.pid\nexec\
+          \ /usr/local/nebula/bin/nebula-storaged --flagfile=/tmp/storaged.conf\n"
         command:
         - /bin/sh
         - -c

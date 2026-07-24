@@ -540,6 +540,28 @@ ENGINE = Distributed(
   alerts_local,
   cityHash64(tenant_id, alert_id)
 );
+
+CREATE TABLE IF NOT EXISTS ${CH_DB}.alerts_latest_local
+ON CLUSTER ${CH_CLUSTER}
+AS ${CH_DB}.alerts_local
+ENGINE = ReplicatedReplacingMergeTree(
+  '${CH_KEEPER_PREFIX}/{shard}/${CH_DB}/alerts_latest_local',
+  '{replica}',
+  updated_ts
+)
+ORDER BY (tenant_id, alert_id)
+TTL toDateTime(last_seen) + INTERVAL 30 DAY
+SETTINGS index_granularity = 8192;
+
+CREATE TABLE IF NOT EXISTS ${CH_DB}.alerts_latest
+ON CLUSTER ${CH_CLUSTER}
+AS ${CH_DB}.alerts_latest_local
+ENGINE = Distributed(${CH_CLUSTER}, ${CH_DB}, alerts_latest_local, cityHash64(tenant_id, alert_id));
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS ${CH_DB}.mv_alerts_latest_local
+ON CLUSTER ${CH_CLUSTER}
+TO ${CH_DB}.alerts_latest
+AS SELECT * FROM ${CH_DB}.alerts_local;
 -- -----------------------------------------------------------------------------------------
 -- evidence: 证据表
 -- 扩展字段来源：alert_clickhouse.sql
@@ -1172,6 +1194,75 @@ ENGINE = Distributed(
   cityHash64(tenant_id, query_id)
 );
 
+-- -----------------------------------------------------------------------------------------
+-- entity_graph_nodes / entity_graph_edges: 实体图谱工作台的类型化节点与关系
+-- -----------------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS ${CH_DB}.entity_graph_nodes_local
+ON CLUSTER ${CH_CLUSTER}
+(
+  tenant_id String,
+  entity_id String,
+  entity_type LowCardinality(String),
+  label String,
+  detail String,
+  risk_score UInt8,
+  risk_level LowCardinality(String),
+  x Float32,
+  y Float32,
+  icon LowCardinality(String),
+  metadata_json String,
+  updated_at Int64
+)
+ENGINE = ReplicatedReplacingMergeTree(
+  '${CH_KEEPER_PREFIX}/{shard}/${CH_DB}/entity_graph_nodes_local',
+  '{replica}',
+  updated_at
+)
+ORDER BY (tenant_id, entity_id)
+SETTINGS index_granularity = 8192;
+
+CREATE TABLE IF NOT EXISTS ${CH_DB}.entity_graph_nodes
+ON CLUSTER ${CH_CLUSTER}
+AS ${CH_DB}.entity_graph_nodes_local
+ENGINE = Distributed(
+  ${CH_CLUSTER},
+  ${CH_DB},
+  entity_graph_nodes_local,
+  cityHash64(tenant_id, entity_id)
+);
+
+CREATE TABLE IF NOT EXISTS ${CH_DB}.entity_graph_edges_local
+ON CLUSTER ${CH_CLUSTER}
+(
+  tenant_id String,
+  relation_id String,
+  source_id String,
+  target_id String,
+  relation_type LowCardinality(String),
+  risk_level LowCardinality(String),
+  evidence_id String,
+  attributes_json String DEFAULT '{}',
+  weight Float32,
+  observed_at Int64
+)
+ENGINE = ReplicatedReplacingMergeTree(
+  '${CH_KEEPER_PREFIX}/{shard}/${CH_DB}/entity_graph_edges_local',
+  '{replica}',
+  observed_at
+)
+ORDER BY (tenant_id, relation_id)
+SETTINGS index_granularity = 8192;
+
+CREATE TABLE IF NOT EXISTS ${CH_DB}.entity_graph_edges
+ON CLUSTER ${CH_CLUSTER}
+AS ${CH_DB}.entity_graph_edges_local
+ENGINE = Distributed(
+  ${CH_CLUSTER},
+  ${CH_DB},
+  entity_graph_edges_local,
+  cityHash64(tenant_id, relation_id)
+);
+
 -- ==================== 创建物化视图（可选）：会话结束原因统计 ====================
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS sessions_end_reason_hourly_local
@@ -1792,4 +1883,3 @@ WHERE created_at > now() - INTERVAL 24 HOUR
 GROUP BY tenant_id, center_ip
 ORDER BY tenant_id, query_count DESC
 LIMIT 100 BY tenant_id;
-

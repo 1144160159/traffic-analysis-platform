@@ -132,6 +132,8 @@ func (h *Handler) RegisterRoutes(r *mux.Router) {
 	// 图探索
 	r.HandleFunc("/api/v1/graph/explore", h.ExploreGraph).Methods("GET", "OPTIONS")
 	r.HandleFunc("/api/v1/graph/explore/batch", h.BatchExplore).Methods("POST", "OPTIONS")
+	r.HandleFunc("/api/v1/graph/workbench", h.GetWorkbenchGraph).Methods("GET", "OPTIONS")
+	r.HandleFunc("/api/v1/graph/workbench/path", h.GetWorkbenchPath).Methods("GET", "OPTIONS")
 
 	// 实体详情
 	r.HandleFunc("/api/v1/graph/entity/{id}", h.GetEntityDetails).Methods("GET", "OPTIONS")
@@ -148,6 +150,169 @@ func (h *Handler) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/api/v1/graph/cache/stats", h.GetCacheStats).Methods("GET", "OPTIONS")
 	r.HandleFunc("/api/v1/graph/cache/invalidate", h.InvalidateCache).Methods("POST", "OPTIONS")
 	r.HandleFunc("/api/v1/graph/cache/warmup", h.WarmupCache).Methods("POST", "OPTIONS") // 新增
+}
+
+// GetWorkbenchGraph returns the persisted multi-entity graph used by the
+// analyst workbench. Tenant identity always comes from the authenticated
+// context; callers cannot select another tenant through query parameters.
+func (h *Handler) GetWorkbenchGraph(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	queryStartedAt := time.Now()
+	tenantID := httpx.GetTenantID(ctx)
+	if tenantID == "" {
+		err := errors.New(errors.ErrCodeTenantNotFound, "Tenant ID is required")
+		errors.WriteError(w, err, httpx.GetTraceID(ctx), r.URL.Path)
+		return
+	}
+
+	filter, filterErr := parseWorkbenchFilter(r)
+	if filterErr != nil {
+		errors.WriteError(w, filterErr, httpx.GetTraceID(ctx), r.URL.Path)
+		return
+	}
+	tenantQueryConfig := h.getTenantQueryConfig(ctx, tenantID)
+	filter.Limit = tenantQueryConfig.MaxNodes
+	graph, err := h.graphQuery.GetWorkbenchGraph(ctx, tenantID, filter)
+	if err != nil {
+		h.logger.Error("Failed to load entity graph workbench",
+			zap.String("tenant_id", tenantID),
+			zap.String("center_id", filter.CenterID),
+			zap.Error(err))
+		appErr := errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to load entity graph workbench")
+		errors.WriteError(w, appErr, httpx.GetTraceID(ctx), r.URL.Path)
+		return
+	}
+	queryDurationMS := time.Since(queryStartedAt).Milliseconds()
+
+	if h.auditLogger != nil {
+		h.auditLogger.Log(ctx, &audit.AuditEvent{
+			EventType:    "GRAPH_WORKBENCH_VIEW",
+			TenantID:     tenantID,
+			UserID:       httpx.GetUserID(ctx),
+			Action:       "graph_workbench_view",
+			ResourceType: "graph",
+			ResourceID:   graph.CenterID,
+			Detail: map[string]interface{}{
+				"node_count":  len(graph.Nodes),
+				"edge_count":  len(graph.Edges),
+				"depth":       filter.Depth,
+				"entity_type": filter.EntityType,
+				"site":        filter.Site,
+			},
+			Result: audit.ResultSuccess,
+		})
+	}
+
+	errors.WriteSuccess(w, map[string]interface{}{
+		"graph": graph,
+		"meta": map[string]interface{}{
+			"source":            h.graphQuery.WorkbenchSource(),
+			"node_count":        len(graph.Nodes),
+			"edge_count":        len(graph.Edges),
+			"depth":             filter.Depth,
+			"entity_type":       filter.EntityType,
+			"site":              filter.Site,
+			"time_range":        filter.TimeRange,
+			"query_duration_ms": queryDurationMS,
+			"node_limit":        tenantQueryConfig.MaxNodes,
+			"cache_hit_rate":    "N/A",
+			"cache_applicable":  false,
+			"data_origin":       "nebula_graph_persisted_projection",
+			"slow_query":        queryDurationMS >= 500,
+		},
+	}, httpx.GetTraceID(ctx))
+}
+
+func parseWorkbenchFilter(r *http.Request) (query.WorkbenchFilter, *errors.AppError) {
+	filter := query.WorkbenchFilter{
+		CenterID:   strings.TrimSpace(r.URL.Query().Get("center_id")),
+		Depth:      2,
+		EntityType: strings.TrimSpace(r.URL.Query().Get("entity_type")),
+		Site:       strings.TrimSpace(r.URL.Query().Get("site")),
+	}
+	if filter.EntityType == "" {
+		filter.EntityType = "all"
+	}
+	if filter.Site == "" {
+		filter.Site = "main"
+	}
+	if rawDepth := strings.TrimSpace(r.URL.Query().Get("depth")); rawDepth != "" {
+		depth, err := strconv.Atoi(rawDepth)
+		if err != nil || depth < 1 || depth > 3 {
+			return filter, errors.New(errors.ErrCodeInvalidParameter, "depth must be between 1 and 3")
+		}
+		filter.Depth = depth
+	}
+	allowedTypes := map[string]bool{"all": true, "ip": true, "host": true, "account": true, "domain": true, "service": true, "alert": true, "evidence": true}
+	if !allowedTypes[filter.EntityType] {
+		return filter, errors.New(errors.ErrCodeInvalidParameter, "unsupported entity_type")
+	}
+	timeRange := strings.TrimSpace(r.URL.Query().Get("time_range"))
+	switch timeRange {
+	case "", "24h":
+		filter.TimeRange = "24h"
+		filter.SinceMS = time.Now().Add(-24 * time.Hour).UnixMilli()
+	case "7d":
+		filter.TimeRange = "7d"
+		filter.SinceMS = time.Now().Add(-7 * 24 * time.Hour).UnixMilli()
+	case "all":
+		filter.TimeRange = "all"
+		filter.SinceMS = 0
+	default:
+		return filter, errors.New(errors.ErrCodeInvalidParameter, "time_range must be 24h, 7d or all")
+	}
+	if len(filter.CenterID) > 256 || len(filter.Site) > 64 {
+		return filter, errors.New(errors.ErrCodeInvalidParameter, "workbench filter is too long")
+	}
+	return filter, nil
+}
+
+// GetWorkbenchPath returns a persisted NebulaGraph relationship path for one analysis tab.
+func (h *Handler) GetWorkbenchPath(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	tenantID := httpx.GetTenantID(ctx)
+	if tenantID == "" {
+		errors.WriteError(w, errors.New(errors.ErrCodeTenantNotFound, "Tenant ID is required"), httpx.GetTraceID(ctx), r.URL.Path)
+		return
+	}
+	sourceID := strings.TrimSpace(r.URL.Query().Get("source_id"))
+	targetID := strings.TrimSpace(r.URL.Query().Get("target_id"))
+	anchorID := strings.TrimSpace(r.URL.Query().Get("anchor_id"))
+	mode := strings.TrimSpace(r.URL.Query().Get("mode"))
+	if mode == "" {
+		mode = "shortest"
+	}
+	allowedModes := map[string]bool{"shortest": true, "attack": true, "communication": true, "account": true}
+	if sourceID == "" || targetID == "" || len(sourceID) > 256 || len(targetID) > 256 || len(anchorID) > 256 || !allowedModes[mode] {
+		errors.WriteError(w, errors.New(errors.ErrCodeInvalidParameter, "valid source_id, target_id and mode are required"), httpx.GetTraceID(ctx), r.URL.Path)
+		return
+	}
+	maxDepth := 3
+	if rawDepth := strings.TrimSpace(r.URL.Query().Get("max_depth")); rawDepth != "" {
+		parsed, err := strconv.Atoi(rawDepth)
+		if err != nil || parsed < 1 || parsed > 6 {
+			errors.WriteError(w, errors.New(errors.ErrCodeInvalidParameter, "max_depth must be between 1 and 6"), httpx.GetTraceID(ctx), r.URL.Path)
+			return
+		}
+		maxDepth = parsed
+	}
+	filter, filterErr := parseWorkbenchFilter(r)
+	if filterErr != nil {
+		errors.WriteError(w, filterErr, httpx.GetTraceID(ctx), r.URL.Path)
+		return
+	}
+	filter.CenterID = sourceID
+	filter.Depth = maxDepth
+	filter.Limit = h.getTenantQueryConfig(ctx, tenantID).MaxNodes
+	path, err := h.graphQuery.FindWorkbenchPath(ctx, tenantID, sourceID, targetID, anchorID, mode, filter)
+	if err != nil {
+		errors.WriteError(w, errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to analyze entity graph path"), httpx.GetTraceID(ctx), r.URL.Path)
+		return
+	}
+	errors.WriteSuccess(w, map[string]interface{}{
+		"path": path,
+		"meta": map[string]interface{}{"source": h.graphQuery.WorkbenchSource(), "mode": mode, "anchor_id": anchorID, "site": filter.Site, "entity_type": filter.EntityType, "time_range": filter.TimeRange, "max_depth": filter.Depth},
+	}, httpx.GetTraceID(ctx))
 }
 
 // logQueryMetrics 记录查询指标（新增辅助方法）

@@ -1,0 +1,10 @@
+ARG BASE_IMAGE=docker.io/traffic/auth-service:compliance-r353
+FROM ${BASE_IMAGE}
+
+ARG SOURCE_REVISION=unknown
+ARG BUILD_ID=local
+LABEL org.opencontainers.image.revision=${SOURCE_REVISION} \
+      org.opencontainers.image.version=${BUILD_ID} \
+      org.opencontainers.image.title="traffic-analysis auth-service"
+
+COPY --chmod=0755 bin/release-20260720/auth-service /usr/local/bin/app

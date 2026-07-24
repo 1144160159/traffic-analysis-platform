@@ -107,10 +107,10 @@ func (h *TokenHandler) CreateToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 检查权限
-	if !claims.HasPermission("admin:write") && !claims.HasPermission("token:write") {
+	if !claims.HasPermission("token:write") {
 		h.recordAuditFailure(r.Context(), claims.TenantID, claims.UserID.String(), "create_token", "permission_denied")
 		errors.WriteErrorWithStatus(w, http.StatusForbidden, errors.ErrCodePermissionDenied,
-			"Permission denied: admin:write or token:write required",
+			"Permission denied: token:write required",
 			httpx.GetTraceID(r.Context()), r.URL.Path)
 		return
 	}
@@ -132,6 +132,12 @@ func (h *TokenHandler) CreateToken(w http.ResponseWriter, r *http.Request) {
 	if len(req.Scopes) == 0 {
 		errors.WriteErrorWithStatus(w, http.StatusBadRequest, errors.ErrCodeMissingParameter,
 			"scopes is required", httpx.GetTraceID(r.Context()), r.URL.Path)
+		return
+	}
+	if !model.CanDelegateScopes(claims.Permissions, req.Scopes) {
+		h.recordAuditFailure(r.Context(), claims.TenantID, claims.UserID.String(), "create_token", "scope_delegation_denied")
+		errors.WriteErrorWithStatus(w, http.StatusForbidden, errors.ErrCodePermissionDenied,
+			"Permission denied: requested scopes exceed caller permissions", httpx.GetTraceID(r.Context()), r.URL.Path)
 		return
 	}
 
@@ -191,10 +197,10 @@ func (h *TokenHandler) CreateProbeToken(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// 检查权限
-	if !claims.HasPermission("admin:write") && !claims.HasPermission("token:write") {
+	if !claims.HasPermission("token:write") {
 		h.recordAuditFailure(r.Context(), claims.TenantID, claims.UserID.String(), "create_probe_token", "permission_denied")
 		errors.WriteErrorWithStatus(w, http.StatusForbidden, errors.ErrCodePermissionDenied,
-			"Permission denied: admin:write or token:write required",
+			"Permission denied: token:write required",
 			httpx.GetTraceID(r.Context()), r.URL.Path)
 		return
 	}
@@ -215,6 +221,12 @@ func (h *TokenHandler) CreateProbeToken(w http.ResponseWriter, r *http.Request) 
 
 	if req.Name == "" {
 		req.Name = "Probe Token - " + req.ProbeID
+	}
+	if !model.CanDelegateScopes(claims.Permissions, model.DefaultProbeScopes) {
+		h.recordAuditFailure(r.Context(), claims.TenantID, claims.UserID.String(), "create_probe_token", "scope_delegation_denied")
+		errors.WriteErrorWithStatus(w, http.StatusForbidden, errors.ErrCodePermissionDenied,
+			"Permission denied: probe scopes exceed caller permissions", httpx.GetTraceID(r.Context()), r.URL.Path)
+		return
 	}
 
 	// 创建探针 Token
@@ -360,7 +372,7 @@ func (h *TokenHandler) UpdateToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 检查权限
-	if !claims.HasPermission("admin:write") && !claims.HasPermission("token:write") {
+	if !claims.HasPermission("token:write") {
 		h.recordAuditFailure(r.Context(), claims.TenantID, claims.UserID.String(), "update_token", "permission_denied")
 		errors.WriteErrorWithStatus(w, http.StatusForbidden, errors.ErrCodePermissionDenied,
 			"Permission denied", httpx.GetTraceID(r.Context()), r.URL.Path)
@@ -382,6 +394,9 @@ func (h *TokenHandler) UpdateToken(w http.ResponseWriter, r *http.Request) {
 			"Invalid token_id format: must be UUID", httpx.GetTraceID(r.Context()), r.URL.Path)
 		return
 	}
+	if !h.requireTokenScopeControl(w, r, claims, tokenID, "update_token") {
+		return
+	}
 
 	// 解析请求体
 	var req UpdateTokenRequest
@@ -396,6 +411,12 @@ func (h *TokenHandler) UpdateToken(w http.ResponseWriter, r *http.Request) {
 		len(req.IPWhitelist) == 0 && req.ExpiresAt == nil {
 		errors.WriteErrorWithStatus(w, http.StatusBadRequest, errors.ErrCodeInvalidRequest,
 			"At least one field must be provided for update", httpx.GetTraceID(r.Context()), r.URL.Path)
+		return
+	}
+	if len(req.Scopes) > 0 && !model.CanDelegateScopes(claims.Permissions, req.Scopes) {
+		h.recordAuditFailure(r.Context(), claims.TenantID, claims.UserID.String(), "update_token", "scope_delegation_denied")
+		errors.WriteErrorWithStatus(w, http.StatusForbidden, errors.ErrCodePermissionDenied,
+			"Permission denied: requested scopes exceed caller permissions", httpx.GetTraceID(r.Context()), r.URL.Path)
 		return
 	}
 
@@ -465,7 +486,7 @@ func (h *TokenHandler) RevokeToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 检查权限
-	if !claims.HasPermission("admin:write") && !claims.HasPermission("token:write") {
+	if !claims.HasPermission("token:write") {
 		h.recordAuditFailure(r.Context(), claims.TenantID, claims.UserID.String(), "revoke_token", "permission_denied")
 		errors.WriteErrorWithStatus(w, http.StatusForbidden, errors.ErrCodePermissionDenied,
 			"Permission denied", httpx.GetTraceID(r.Context()), r.URL.Path)
@@ -484,6 +505,9 @@ func (h *TokenHandler) RevokeToken(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		errors.WriteErrorWithStatus(w, http.StatusBadRequest, errors.ErrCodeInvalidParameter,
 			"Invalid token_id format: must be UUID", httpx.GetTraceID(r.Context()), r.URL.Path)
+		return
+	}
+	if !h.requireTokenScopeControl(w, r, claims, tokenID, "revoke_token") {
 		return
 	}
 
@@ -512,7 +536,7 @@ func (h *TokenHandler) DeleteToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 检查权限
-	if !claims.HasPermission("admin:write") && !claims.HasPermission("token:write") {
+	if !claims.HasPermission("token:write") {
 		h.recordAuditFailure(r.Context(), claims.TenantID, claims.UserID.String(), "delete_token", "permission_denied")
 		errors.WriteErrorWithStatus(w, http.StatusForbidden, errors.ErrCodePermissionDenied,
 			"Permission denied", httpx.GetTraceID(r.Context()), r.URL.Path)
@@ -531,6 +555,9 @@ func (h *TokenHandler) DeleteToken(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		errors.WriteErrorWithStatus(w, http.StatusBadRequest, errors.ErrCodeInvalidParameter,
 			"Invalid token_id format: must be UUID", httpx.GetTraceID(r.Context()), r.URL.Path)
+		return
+	}
+	if !h.requireTokenScopeControl(w, r, claims, tokenID, "delete_token") {
 		return
 	}
 
@@ -561,7 +588,7 @@ func (h *TokenHandler) UpdateScopes(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 检查权限
-	if !claims.HasPermission("admin:write") && !claims.HasPermission("token:write") {
+	if !claims.HasPermission("token:write") {
 		h.recordAuditFailure(r.Context(), claims.TenantID, claims.UserID.String(), "update_scopes", "permission_denied")
 		errors.WriteErrorWithStatus(w, http.StatusForbidden, errors.ErrCodePermissionDenied,
 			"Permission denied", httpx.GetTraceID(r.Context()), r.URL.Path)
@@ -582,6 +609,9 @@ func (h *TokenHandler) UpdateScopes(w http.ResponseWriter, r *http.Request) {
 			"Invalid token_id format: must be UUID", httpx.GetTraceID(r.Context()), r.URL.Path)
 		return
 	}
+	if !h.requireTokenScopeControl(w, r, claims, tokenID, "update_scopes") {
+		return
+	}
 
 	var req UpdateScopesRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -593,6 +623,12 @@ func (h *TokenHandler) UpdateScopes(w http.ResponseWriter, r *http.Request) {
 	if len(req.Scopes) == 0 {
 		errors.WriteErrorWithStatus(w, http.StatusBadRequest, errors.ErrCodeMissingParameter,
 			"scopes is required", httpx.GetTraceID(r.Context()), r.URL.Path)
+		return
+	}
+	if !model.CanDelegateScopes(claims.Permissions, req.Scopes) {
+		h.recordAuditFailure(r.Context(), claims.TenantID, claims.UserID.String(), "update_scopes", "scope_delegation_denied")
+		errors.WriteErrorWithStatus(w, http.StatusForbidden, errors.ErrCodePermissionDenied,
+			"Permission denied: requested scopes exceed caller permissions", httpx.GetTraceID(r.Context()), r.URL.Path)
 		return
 	}
 
@@ -621,7 +657,7 @@ func (h *TokenHandler) RegenerateToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 检查权限
-	if !claims.HasPermission("admin:write") && !claims.HasPermission("token:write") {
+	if !claims.HasPermission("token:write") {
 		h.recordAuditFailure(r.Context(), claims.TenantID, claims.UserID.String(), "regenerate_token", "permission_denied")
 		errors.WriteErrorWithStatus(w, http.StatusForbidden, errors.ErrCodePermissionDenied,
 			"Permission denied", httpx.GetTraceID(r.Context()), r.URL.Path)
@@ -642,6 +678,17 @@ func (h *TokenHandler) RegenerateToken(w http.ResponseWriter, r *http.Request) {
 			"Invalid token_id format: must be UUID", httpx.GetTraceID(r.Context()), r.URL.Path)
 		return
 	}
+	oldToken, err := h.tokenService.GetToken(r.Context(), claims.TenantID, tokenID)
+	if err != nil {
+		errors.WriteError(w, err, httpx.GetTraceID(r.Context()), r.URL.Path)
+		return
+	}
+	if !model.CanDelegateScopes(claims.Permissions, model.ScopesToList(oldToken.Scopes)) {
+		h.recordAuditFailure(r.Context(), claims.TenantID, claims.UserID.String(), "regenerate_token", "scope_delegation_denied")
+		errors.WriteErrorWithStatus(w, http.StatusForbidden, errors.ErrCodePermissionDenied,
+			"Permission denied: token scopes exceed caller permissions", httpx.GetTraceID(r.Context()), r.URL.Path)
+		return
+	}
 
 	resp, err := h.tokenService.RegenerateToken(r.Context(), claims.TenantID, tokenID, claims.UserID)
 	if err != nil {
@@ -655,6 +702,21 @@ func (h *TokenHandler) RegenerateToken(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(resp)
+}
+
+func (h *TokenHandler) requireTokenScopeControl(w http.ResponseWriter, r *http.Request, claims *model.Claims, tokenID uuid.UUID, action string) bool {
+	token, err := h.tokenService.GetToken(r.Context(), claims.TenantID, tokenID)
+	if err != nil {
+		errors.WriteError(w, err, httpx.GetTraceID(r.Context()), r.URL.Path)
+		return false
+	}
+	if model.CanDelegateScopes(claims.Permissions, model.ScopesToList(token.Scopes)) {
+		return true
+	}
+	h.recordAuditFailure(r.Context(), claims.TenantID, claims.UserID.String(), action, "target_scope_control_denied")
+	errors.WriteErrorWithStatus(w, http.StatusForbidden, errors.ErrCodePermissionDenied,
+		"Permission denied: token scopes exceed caller permissions", httpx.GetTraceID(r.Context()), r.URL.Path)
+	return false
 }
 
 // ValidateTokenRequest 验证 Token 请求

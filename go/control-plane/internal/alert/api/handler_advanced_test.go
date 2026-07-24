@@ -146,6 +146,8 @@ func TestAdvancedHandlerUnavailableDependenciesReturnJSON(t *testing.T) {
 			var rr *httptest.ResponseRecorder
 			if tc.path == "/api/v1/notifications/test" {
 				rr = doAdvancedRequestWithPermissions(t, router, tc.method, tc.path, "", []string{"admin"}, []string{"admin:*"})
+			} else if strings.HasPrefix(tc.path, "/api/v1/playbooks") {
+				rr = doAdvancedRequestWithPermissions(t, router, tc.method, tc.path, "", []string{"viewer"}, []string{authmodel.ScopePlaybookRead})
 			} else if strings.HasPrefix(tc.path, "/api/v1/data-quality") {
 				permission := authmodel.ScopeDataQualityRead
 				body := ""
@@ -170,7 +172,7 @@ func TestAdvancedHandlerUnavailableDependenciesReturnJSON(t *testing.T) {
 	}
 }
 
-func TestAdvancedHandlerPatchPlaybookValidationAndSuccess(t *testing.T) {
+func TestAdvancedHandlerPatchPlaybookValidationAndRepositoryRequirement(t *testing.T) {
 	router := newAdvancedTestRouter(NewAdvancedHandler(nil, nil, newAdvancedTestPlaybookEngine(t), nil, nil))
 
 	tests := []struct {
@@ -181,7 +183,7 @@ func TestAdvancedHandlerPatchPlaybookValidationAndSuccess(t *testing.T) {
 		{name: "unknown field", body: `{"enabled":false,"extra":true}`, want: http.StatusBadRequest},
 		{name: "negative max runs", body: `{"max_runs":-1}`, want: http.StatusBadRequest},
 		{name: "negative cooldown", body: `{"cooldown_seconds":-1}`, want: http.StatusBadRequest},
-		{name: "missing playbook", body: `{"enabled":false}`, want: http.StatusNotFound},
+		{name: "missing playbook", body: `{"enabled":false}`, want: http.StatusServiceUnavailable},
 	}
 
 	for _, tc := range tests {
@@ -190,27 +192,16 @@ func TestAdvancedHandlerPatchPlaybookValidationAndSuccess(t *testing.T) {
 			if tc.name == "missing playbook" {
 				path = "/api/v1/playbooks/not-found"
 			}
-			rr := doAdvancedRequest(t, router, http.MethodPatch, path, tc.body)
+			rr := doAdvancedRequestWithPermissions(t, router, http.MethodPatch, path, tc.body, []string{"operator"}, []string{authmodel.ScopePlaybookWrite})
 			if rr.Code != tc.want {
 				t.Fatalf("status=%d want=%d body=%s", rr.Code, tc.want, rr.Body.String())
 			}
 		})
 	}
 
-	rr := doAdvancedRequest(t, router, http.MethodPatch, "/api/v1/playbooks/isolate-host", `{"enabled":false,"max_runs":3,"cooldown_seconds":30}`)
-	if rr.Code != http.StatusOK {
-		t.Fatalf("status=%d want=%d body=%s", rr.Code, http.StatusOK, rr.Body.String())
-	}
-	body := decodeAdvancedBody(t, rr)
-	data, ok := body["data"].(map[string]interface{})
-	if !ok {
-		t.Fatalf("missing data object: %#v", body)
-	}
-	if data["enabled"] != false {
-		t.Fatalf("enabled=%v want false", data["enabled"])
-	}
-	if data["max_runs"] != float64(3) {
-		t.Fatalf("max_runs=%v want 3", data["max_runs"])
+	rr := doAdvancedRequestWithPermissions(t, router, http.MethodPatch, "/api/v1/playbooks/isolate-host", `{"enabled":false,"expected_version":1}`, []string{"operator"}, []string{authmodel.ScopePlaybookWrite})
+	if rr.Code != http.StatusServiceUnavailable {
+		t.Fatalf("status=%d want=%d body=%s", rr.Code, http.StatusServiceUnavailable, rr.Body.String())
 	}
 }
 
@@ -253,10 +244,10 @@ func TestDataQualityPermissionAndActionValidation(t *testing.T) {
 	}
 }
 
-func TestAdvancedHandlerExecutePlaybookUsesRequestPayload(t *testing.T) {
+func TestAdvancedHandlerRejectsLivePlaybookWithoutProvider(t *testing.T) {
 	router := newAdvancedTestRouter(NewAdvancedHandler(nil, nil, newAdvancedTestPlaybookEngine(t), nil, nil))
 
-	rr := doAdvancedRequest(t, router, http.MethodPost, "/api/v1/playbooks/isolate-host/execute", `{
+	rr := doAdvancedRequestWithPermissions(t, router, http.MethodPost, "/api/v1/playbooks/isolate-host/execute", `{
 		"alert_id":"alert-42",
 		"alert_type":"scan",
 		"severity":"high",
@@ -265,24 +256,14 @@ func TestAdvancedHandlerExecutePlaybookUsesRequestPayload(t *testing.T) {
 		"dest_ip":"198.51.100.20",
 		"related_alert_count":7,
 		"asset_risk":"high"
-	}`)
-	if rr.Code != http.StatusOK {
-		t.Fatalf("status=%d want=%d body=%s", rr.Code, http.StatusOK, rr.Body.String())
+	}`, []string{"operator"}, []string{authmodel.ScopePlaybookWrite})
+	if rr.Code != http.StatusNotImplemented {
+		t.Fatalf("status=%d want=%d body=%s", rr.Code, http.StatusNotImplemented, rr.Body.String())
 	}
-
 	body := decodeAdvancedBody(t, rr)
-	data, ok := body["data"].(map[string]interface{})
-	if !ok {
-		t.Fatalf("missing data object: %#v", body)
-	}
-	if data["playbook"] != "isolate-host" {
-		t.Fatalf("playbook=%v want isolate-host", data["playbook"])
-	}
-	if data["alert_id"] != "alert-42" {
-		t.Fatalf("alert_id=%v want alert-42", data["alert_id"])
-	}
-	if data["success_actions"] != float64(2) || data["failed_actions"] != float64(0) {
-		t.Fatalf("unexpected action counts: %#v", data)
+	errorObject, ok := body["error"].(map[string]interface{})
+	if !ok || errorObject["code"] != "PLAYBOOK_LIVE_EXECUTION_NOT_CONFIGURED" {
+		t.Fatalf("unexpected live execution rejection: %#v", body)
 	}
 }
 
@@ -290,13 +271,13 @@ func TestAdvancedHandlerPlaybookExecutionsLimitValidation(t *testing.T) {
 	router := newAdvancedTestRouter(NewAdvancedHandler(nil, nil, newAdvancedTestPlaybookEngine(t), nil, nil))
 
 	for _, path := range []string{"/api/v1/playbooks/executions?limit=0", "/api/v1/playbooks/executions?limit=abc"} {
-		rr := doAdvancedRequest(t, router, http.MethodGet, path, "")
+		rr := doAdvancedRequestWithPermissions(t, router, http.MethodGet, path, "", []string{"viewer"}, []string{authmodel.ScopePlaybookRead})
 		if rr.Code != http.StatusBadRequest {
 			t.Fatalf("%s status=%d want=%d body=%s", path, rr.Code, http.StatusBadRequest, rr.Body.String())
 		}
 	}
 
-	rr := doAdvancedRequest(t, router, http.MethodGet, "/api/v1/playbooks/executions?limit=2", "")
+	rr := doAdvancedRequestWithPermissions(t, router, http.MethodGet, "/api/v1/playbooks/executions?limit=2", "", []string{"viewer"}, []string{authmodel.ScopePlaybookRead})
 	if rr.Code != http.StatusOK {
 		t.Fatalf("status=%d want=%d body=%s", rr.Code, http.StatusOK, rr.Body.String())
 	}
@@ -336,6 +317,11 @@ func TestAdvancedHandlerNotificationSettingsRejectInlineSecrets(t *testing.T) {
 		t.Fatalf("status=%d want=%d body=%s", rr.Code, http.StatusBadRequest, rr.Body.String())
 	}
 
+	rr = doAdvancedRequestWithPermissions(t, router, http.MethodPut, "/api/v1/notifications/settings", `{"min_severity":"urgent"}`, []string{"admin"}, []string{"admin:*"})
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("invalid severity status=%d want=%d body=%s", rr.Code, http.StatusBadRequest, rr.Body.String())
+	}
+
 	rr = doAdvancedRequestWithPermissions(t, router, http.MethodPut, "/api/v1/notifications/settings", `{"enabled":false}`, []string{"viewer"}, []string{"user:read"})
 	if rr.Code != http.StatusForbidden {
 		t.Fatalf("status=%d want=%d body=%s", rr.Code, http.StatusForbidden, rr.Body.String())
@@ -350,11 +336,11 @@ func TestAdvancedHandlerTestNotification(t *testing.T) {
 	router := newAdvancedTestRouter(NewAdvancedHandler(notifier, nil, nil, nil, nil))
 
 	rr := doAdvancedRequestWithPermissions(t, router, http.MethodPost, "/api/v1/notifications/test", "", []string{"admin"}, []string{"admin:*"})
-	if rr.Code != http.StatusOK {
-		t.Fatalf("status=%d want=%d body=%s", rr.Code, http.StatusOK, rr.Body.String())
+	if rr.Code != http.StatusConflict {
+		t.Fatalf("status=%d want=%d body=%s", rr.Code, http.StatusConflict, rr.Body.String())
 	}
 	body := decodeAdvancedBody(t, rr)
-	if body["message"] != "test notification sent" {
+	if body["message"] != "notification channel is disabled" {
 		t.Fatalf("message=%v", body["message"])
 	}
 
@@ -391,5 +377,141 @@ func TestAdvancedHandlerNotificationSilenceRuleValidation(t *testing.T) {
 	}`, []string{"viewer"}, []string{"user:read"})
 	if rr.Code != http.StatusForbidden {
 		t.Fatalf("status=%d want=%d body=%s", rr.Code, http.StatusForbidden, rr.Body.String())
+	}
+}
+
+func TestAdvancedHandlerNotificationGovernancePayloadValidation(t *testing.T) {
+	router := newAdvancedTestRouter(NewAdvancedHandler(nil, nil, nil, nil, nil))
+
+	tests := []struct {
+		name string
+		path string
+		body string
+	}{
+		{name: "subscription requires a name", path: "/api/v1/notifications/subscriptions", body: `{"channels":["email"]}`},
+		{name: "subscription rejects unknown channels", path: "/api/v1/notifications/subscriptions", body: `{"name":"bad channel","channels":["carrier-pigeon"]}`},
+		{name: "template requires a body", path: "/api/v1/notifications/templates", body: `{"template_type":"alert","name":"empty"}`},
+		{name: "escalation requires a stage", path: "/api/v1/notifications/escalation-policies", body: `{"name":"empty stages","stages":[]}`},
+		{name: "escalation stage requires a role", path: "/api/v1/notifications/escalation-policies", body: `{"name":"missing role","stages":[{"after_minutes":5}]}`},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			rr := doAdvancedRequestWithPermissions(t, router, http.MethodPost, test.path, test.body, []string{"admin"}, []string{"admin:*"})
+			if rr.Code != http.StatusBadRequest {
+				t.Fatalf("status=%d want=%d body=%s", rr.Code, http.StatusBadRequest, rr.Body.String())
+			}
+		})
+	}
+
+	rr := doAdvancedRequestWithPermissions(t, router, http.MethodPost, "/api/v1/notifications/subscriptions", `{"name":"valid","channels":["email"]}`, []string{"viewer"}, []string{"user:read"})
+	if rr.Code != http.StatusForbidden {
+		t.Fatalf("viewer status=%d want=%d body=%s", rr.Code, http.StatusForbidden, rr.Body.String())
+	}
+}
+
+func TestNotificationLimitValidation(t *testing.T) {
+	router := newAdvancedTestRouter(NewAdvancedHandler(nil, nil, nil, nil, &AdvancedRepository{}))
+	for _, path := range []string{"/api/v1/notifications/workbench?limit=0", "/api/v1/notifications/subscriptions?limit=201", "/api/v1/notifications/templates?limit=bad"} {
+		rr := doAdvancedRequestWithPermissions(t, router, http.MethodGet, path, "", []string{"admin"}, []string{"admin:*"})
+		if rr.Code != http.StatusBadRequest {
+			t.Fatalf("%s status=%d want=%d body=%s", path, rr.Code, http.StatusBadRequest, rr.Body.String())
+		}
+	}
+}
+
+func TestRenderNotificationTemplateSupportsTypedRequiredVariables(t *testing.T) {
+	record := &NotificationTemplateRecord{
+		Subject:        "任务 {{job_id}} / {{status}}",
+		Body:           "结果 {{job_id}}={{status}}",
+		VariableSchema: map[string]interface{}{"required": []string{"job_id", "status"}},
+	}
+	subject, body, err := renderNotificationTemplate(record, map[string]interface{}{"job_id": "job-42", "status": "failed"})
+	if err != nil {
+		t.Fatalf("render template: %v", err)
+	}
+	if subject != "任务 job-42 / failed" || body != "结果 job-42=failed" {
+		t.Fatalf("unexpected render subject=%q body=%q", subject, body)
+	}
+	if _, _, err := renderNotificationTemplate(record, map[string]interface{}{"job_id": "job-42"}); err == nil || !strings.Contains(err.Error(), "status") {
+		t.Fatalf("expected missing status error, got %v", err)
+	}
+}
+
+func TestNotificationRuleExecutionSemantics(t *testing.T) {
+	alert := &notification.AlertInfo{
+		AlertType: "攻击告警", Severity: "critical", Timestamp: time.Date(2026, 7, 20, 1, 30, 0, 0, time.Local),
+		AssetScope: "核心资产", Campus: "主园区", Description: "repeat",
+	}
+	policy := NotificationEscalationPolicyRecord{Name: "夜间升级策略", Enabled: true, Stages: []map[string]interface{}{{"after_minutes": float64(15), "condition": "重复告警", "target_role": "安全值班组"}}}
+	rule := NotificationRuleRecord{RuleID: "rule-1", Enabled: true, Conditions: map[string]interface{}{
+		"alert_type": "port_scan", "severity": "high", "asset_scope": "核心资产", "campus": "主园区",
+		"window_start": "22:00", "window_end": "08:00", "escalation_policy": "夜间升级策略",
+	}}
+	if !notificationRuleMatchesAlert(rule, alert, map[string]NotificationEscalationPolicyRecord{"夜间升级策略": policy}) {
+		t.Fatal("expected normalized type, severity, scope, campus and overnight window to match")
+	}
+	alert.Timestamp = time.Now().Add(-20 * time.Minute)
+	target, due := notificationEscalationTarget(rule, alert, map[string]NotificationEscalationPolicyRecord{"夜间升级策略": policy})
+	if !due || target != "安全值班组" {
+		t.Fatalf("target=%q due=%v", target, due)
+	}
+
+	silence := NotificationSilenceRule{Name: "维护窗口", Scope: "主园区", Policy: "全部策略", AffectedTargets: []string{"全部资产"}, Enabled: true, StartsAt: time.Now().Add(-time.Minute), EndsAt: time.Now().Add(time.Minute)}
+	if !notificationRuleIsSilenced(rule, alert, []NotificationSilenceRule{silence}) {
+		t.Fatal("localized all-policy/all-assets silence should match")
+	}
+}
+
+func TestNotificationEscalationExecutionRechecksLiveStatus(t *testing.T) {
+	alert := &notification.AlertInfo{Severity: "critical", Count: 3, Labels: []string{"repeat", "handling-failed"}}
+	if !notificationEscalationConditionMatchesAtExecution("未确认", alert, "new") {
+		t.Fatal("new alert should remain eligible for unconfirmed escalation")
+	}
+	for _, status := range []string{"triage", "assigned", "closed", "resolved", "false_positive"} {
+		if notificationEscalationConditionMatchesAtExecution("未确认", alert, status) {
+			t.Fatalf("status %q must cancel unconfirmed escalation", status)
+		}
+	}
+	if notificationEscalationConditionMatchesAtExecution("处置失败", alert, "closed") {
+		t.Fatal("terminal alert must cancel failure escalation")
+	}
+	if !notificationEscalationConditionMatchesAtExecution("处置失败", alert, "triage") {
+		t.Fatal("live non-terminal failure evidence should remain eligible")
+	}
+	if !notificationEscalationConditionMatchesAtExecution("重复告警", alert, "triage") {
+		t.Fatal("live aggregate count should keep repeated-alert escalation eligible")
+	}
+	alert.Count = 1
+	alert.Labels = nil
+	if notificationEscalationConditionMatchesAtExecution("重复告警", alert, "triage") {
+		t.Fatal("stale snapshot description must not make a non-repeated live alert eligible")
+	}
+}
+
+func TestNotificationEscalationStageFingerprintChangesWithTimingAndCondition(t *testing.T) {
+	base := map[string]interface{}{"after_minutes": float64(0), "condition": "SLA 超时", "target_role": "NOTIF_MISSING_ROLE_R466"}
+	first, err := notificationEscalationStageFingerprint(base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	same := map[string]interface{}{"target_role": "NOTIF_MISSING_ROLE_R466", "condition": "SLA 超时", "after_minutes": float64(0)}
+	second, err := notificationEscalationStageFingerprint(same)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first != second {
+		t.Fatal("canonical stage fingerprint must not depend on map iteration order")
+	}
+	if first != "b1c75f1195868c02c955e6e32cc695107efa8f20c676bfb869409ea2b8e9ae9e" {
+		canonical, _ := json.Marshal(base)
+		t.Fatalf("unexpected canonical stage fingerprint %s for %s", first, canonical)
+	}
+	changed := map[string]interface{}{"after_minutes": float64(30), "condition": "SLA 超时", "target_role": "NOTIF_MISSING_ROLE_R466"}
+	third, err := notificationEscalationStageFingerprint(changed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first == third {
+		t.Fatal("stage delay changes must invalidate the persisted fingerprint")
 	}
 }

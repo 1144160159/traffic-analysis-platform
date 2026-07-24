@@ -92,6 +92,37 @@ CREATE TABLE IF NOT EXISTS user_roles (
 CREATE INDEX IF NOT EXISTS idx_user_roles_user ON user_roles(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_roles_role ON user_roles(role_id);
 
+-- -----------------------------------------------------------------------------------------
+-- user_settings / tenant_system_settings: 个人偏好与租户级系统设置分离
+-- -----------------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS user_settings (
+  tenant_id  TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE,
+  user_id    UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+  category   TEXT NOT NULL,
+  settings   JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (tenant_id, user_id, category)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_settings_user ON user_settings (tenant_id, user_id);
+
+CREATE TABLE IF NOT EXISTS tenant_system_settings (
+  tenant_id   TEXT PRIMARY KEY REFERENCES tenants(tenant_id) ON DELETE CASCADE,
+  settings    JSONB NOT NULL DEFAULT '{}'::jsonb,
+  revision    BIGINT NOT NULL DEFAULT 1,
+  updated_by  UUID,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE tenant_system_settings ADD COLUMN IF NOT EXISTS settings JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE tenant_system_settings ADD COLUMN IF NOT EXISTS revision BIGINT NOT NULL DEFAULT 1;
+ALTER TABLE tenant_system_settings ADD COLUMN IF NOT EXISTS updated_by UUID;
+ALTER TABLE tenant_system_settings ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now();
+ALTER TABLE tenant_system_settings ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+CREATE INDEX IF NOT EXISTS idx_tenant_system_settings_updated ON tenant_system_settings (updated_at DESC);
+
 -- =========================================================================================
 -- 认证服务：API Token 管理（来源：auth_postgres_ddl.sql）
 -- =========================================================================================
@@ -233,8 +264,7 @@ CREATE INDEX IF NOT EXISTS idx_token_rotation_token_id
   ON token_rotation_history(token_id, rotated_at DESC);
 
 CREATE INDEX IF NOT EXISTS idx_token_rotation_grace_period 
-  ON token_rotation_history(grace_period_ends) 
-  WHERE grace_period_ends > now();
+  ON token_rotation_history(grace_period_ends);
 
 -- -----------------------------------------------------------------------------------------
 -- token_usage_logs: Token 使用日志表
@@ -840,6 +870,78 @@ ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS event_id TEXT;
 UPDATE audit_logs SET event_id = 'audit-' || id::TEXT WHERE event_id IS NULL OR event_id = '';
 ALTER TABLE audit_logs ALTER COLUMN event_id SET DEFAULT ('audit-' || uuid_generate_v4()::text);
 ALTER TABLE audit_logs ALTER COLUMN event_id SET NOT NULL;
+ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS request_id TEXT;
+ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS trace_id TEXT;
+ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS success BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS error_message TEXT;
+ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS risk_level TEXT;
+ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS result TEXT;
+UPDATE audit_logs SET request_id=detail->>'request_id' WHERE COALESCE(request_id,'')='' AND detail ? 'request_id';
+UPDATE audit_logs SET trace_id=detail->>'trace_id' WHERE COALESCE(trace_id,'')='' AND detail ? 'trace_id';
+UPDATE audit_logs SET result=COALESCE(NULLIF(detail->>'result',''), CASE WHEN success THEN 'success' ELSE 'failure' END) WHERE COALESCE(result,'')='';
+UPDATE audit_logs SET risk_level=COALESCE(NULLIF(detail->>'risk',''),NULLIF(detail->>'risk_level',''),'low') WHERE COALESCE(risk_level,'')='';
+UPDATE audit_logs SET success=false WHERE lower(result) IN ('failure','failed','error','denied');
+CREATE INDEX IF NOT EXISTS idx_audit_tenant_request ON audit_logs (tenant_id, request_id) WHERE request_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_audit_tenant_trace ON audit_logs (tenant_id, trace_id) WHERE trace_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_audit_tenant_result_risk_time ON audit_logs (tenant_id, result, risk_level, created_at DESC);
+CREATE TABLE IF NOT EXISTS audit_saved_queries (saved_query_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), tenant_id TEXT NOT NULL, name TEXT NOT NULL, filters JSONB NOT NULL DEFAULT '{}'::jsonb, created_by TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), UNIQUE (tenant_id, name));
+CREATE INDEX IF NOT EXISTS idx_audit_saved_queries_tenant_time ON audit_saved_queries (tenant_id, created_at DESC);
+CREATE TABLE IF NOT EXISTS audit_exports (export_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), tenant_id TEXT NOT NULL, format TEXT NOT NULL CHECK (format IN ('pdf','csv','json')), filters JSONB NOT NULL DEFAULT '{}'::jsonb, row_count INTEGER NOT NULL DEFAULT 0, total_matching INTEGER NOT NULL DEFAULT 0, truncated BOOLEAN NOT NULL DEFAULT false, mask_sensitive BOOLEAN NOT NULL DEFAULT true, filename TEXT NOT NULL, mime_type TEXT NOT NULL, sha256 TEXT NOT NULL, size_bytes BIGINT NOT NULL, created_by TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT now());
+ALTER TABLE audit_exports ADD COLUMN IF NOT EXISTS total_matching INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE audit_exports ADD COLUMN IF NOT EXISTS truncated BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE audit_exports ADD COLUMN IF NOT EXISTS mask_sensitive BOOLEAN NOT NULL DEFAULT true;
+CREATE INDEX IF NOT EXISTS idx_audit_exports_tenant_time ON audit_exports (tenant_id, created_at DESC);
+CREATE TABLE IF NOT EXISTS audit_reviews (review_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), tenant_id TEXT NOT NULL, audit_log_id TEXT NOT NULL, decision TEXT NOT NULL CHECK (decision IN ('pending','approved','rejected','escalated')), comment TEXT NOT NULL DEFAULT '', risk_level TEXT NOT NULL CHECK (risk_level IN ('low','medium','high','critical')), reviewed_by TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT now());
+CREATE INDEX IF NOT EXISTS idx_audit_reviews_tenant_log_time ON audit_reviews (tenant_id, audit_log_id, created_at DESC);
+CREATE TABLE IF NOT EXISTS audit_integrity_checks (check_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), tenant_id TEXT NOT NULL, time_start TIMESTAMPTZ NOT NULL, time_end TIMESTAMPTZ NOT NULL, filters JSONB NOT NULL DEFAULT '{}'::jsonb, row_count BIGINT NOT NULL, root_sha256 TEXT NOT NULL, status TEXT NOT NULL CHECK (status IN ('passed','failed','baseline_created','no_records')), matched_count BIGINT NOT NULL DEFAULT 0, baselined_count BIGINT NOT NULL DEFAULT 0, mismatched_count BIGINT NOT NULL DEFAULT 0, added_count BIGINT NOT NULL DEFAULT 0, missing_count BIGINT NOT NULL DEFAULT 0, requested_by TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT now());
+ALTER TABLE audit_integrity_checks ADD COLUMN IF NOT EXISTS matched_count BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE audit_integrity_checks ADD COLUMN IF NOT EXISTS baselined_count BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE audit_integrity_checks ADD COLUMN IF NOT EXISTS mismatched_count BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE audit_integrity_checks ADD COLUMN IF NOT EXISTS filters JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE audit_integrity_checks ADD COLUMN IF NOT EXISTS added_count BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE audit_integrity_checks ADD COLUMN IF NOT EXISTS missing_count BIGINT NOT NULL DEFAULT 0;
+ALTER TABLE audit_integrity_checks DROP CONSTRAINT IF EXISTS audit_integrity_checks_status_check;
+ALTER TABLE audit_integrity_checks ADD CONSTRAINT audit_integrity_checks_status_check CHECK (status IN ('passed','failed','baseline_created','no_records'));
+CREATE INDEX IF NOT EXISTS idx_audit_integrity_checks_tenant_time ON audit_integrity_checks (tenant_id, created_at DESC);
+CREATE TABLE IF NOT EXISTS audit_log_integrity_baselines (tenant_id TEXT NOT NULL, audit_log_id TEXT NOT NULL, root_sha256 TEXT NOT NULL, established_at TIMESTAMPTZ NOT NULL DEFAULT now(), last_checked_at TIMESTAMPTZ NOT NULL DEFAULT now(), PRIMARY KEY (tenant_id, audit_log_id));
+CREATE INDEX IF NOT EXISTS idx_audit_log_integrity_baselines_checked ON audit_log_integrity_baselines (tenant_id, last_checked_at DESC);
+CREATE TABLE IF NOT EXISTS audit_integrity_manifest_entries (check_id UUID NOT NULL REFERENCES audit_integrity_checks(check_id) ON DELETE RESTRICT, tenant_id TEXT NOT NULL, audit_log_id TEXT NOT NULL, root_sha256 TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now(), PRIMARY KEY (check_id, audit_log_id));
+CREATE INDEX IF NOT EXISTS idx_audit_integrity_manifest_tenant_log ON audit_integrity_manifest_entries (tenant_id, audit_log_id);
+CREATE TABLE IF NOT EXISTS alert_playbook_executions (
+    execution_id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, playbook_name TEXT NOT NULL, alert_id TEXT NOT NULL,
+    success_actions INTEGER NOT NULL DEFAULT 0, failed_actions INTEGER NOT NULL DEFAULT 0, duration_ms BIGINT NOT NULL DEFAULT 0,
+    request_payload JSONB NOT NULL DEFAULT '{}'::jsonb, result_payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+    mode TEXT NOT NULL DEFAULT 'legacy', status TEXT NOT NULL DEFAULT 'succeeded', rollback_of TEXT,
+    effect_payload JSONB NOT NULL DEFAULT '{}'::jsonb, requested_by TEXT NOT NULL DEFAULT '', rolled_back_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+ALTER TABLE alert_playbook_executions ADD COLUMN IF NOT EXISTS mode TEXT NOT NULL DEFAULT 'legacy';
+ALTER TABLE alert_playbook_executions ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'succeeded';
+ALTER TABLE alert_playbook_executions ADD COLUMN IF NOT EXISTS rollback_of TEXT;
+ALTER TABLE alert_playbook_executions ADD COLUMN IF NOT EXISTS effect_payload JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE alert_playbook_executions ADD COLUMN IF NOT EXISTS requested_by TEXT NOT NULL DEFAULT '';
+ALTER TABLE alert_playbook_executions ADD COLUMN IF NOT EXISTS rolled_back_at TIMESTAMPTZ;
+DO $do$ BEGIN ALTER TABLE alert_playbook_executions ADD CONSTRAINT alert_playbook_execution_mode_check CHECK (mode IN ('legacy', 'drill')); EXCEPTION WHEN duplicate_object THEN NULL; END $do$;
+DO $do$ BEGIN ALTER TABLE alert_playbook_executions ADD CONSTRAINT alert_playbook_execution_status_check CHECK (status IN ('succeeded', 'failed', 'rolled_back', 'rollback_recorded')); EXCEPTION WHEN duplicate_object THEN NULL; END $do$;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_alert_playbook_executions_tenant_id ON alert_playbook_executions (tenant_id, execution_id);
+DO $do$ BEGIN ALTER TABLE alert_playbook_executions ADD CONSTRAINT alert_playbook_execution_rollback_fk FOREIGN KEY (tenant_id, rollback_of) REFERENCES alert_playbook_executions (tenant_id, execution_id); EXCEPTION WHEN duplicate_object THEN NULL; END $do$;
+CREATE INDEX IF NOT EXISTS idx_alert_playbook_executions_tenant_created ON alert_playbook_executions (tenant_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS alert_saved_views (view_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), tenant_id TEXT NOT NULL, name TEXT NOT NULL, filters JSONB NOT NULL DEFAULT '{}'::jsonb, created_by TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), UNIQUE(tenant_id,name));
+CREATE TABLE IF NOT EXISTS alert_response_actions (job_id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, alert_id TEXT NOT NULL, action TEXT NOT NULL, target TEXT NOT NULL, reason TEXT NOT NULL, dry_run BOOLEAN NOT NULL DEFAULT true, status TEXT NOT NULL, detail JSONB NOT NULL DEFAULT '{}'::jsonb, requested_by TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS alert_response_outbox (outbox_id BIGSERIAL PRIMARY KEY, job_id TEXT NOT NULL REFERENCES alert_response_actions(job_id) ON DELETE CASCADE, tenant_id TEXT NOT NULL, event_type TEXT NOT NULL, payload JSONB NOT NULL, published BOOLEAN NOT NULL DEFAULT false, attempts INTEGER NOT NULL DEFAULT 0, last_error TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT now(), published_at TIMESTAMPTZ);
+CREATE INDEX IF NOT EXISTS idx_alert_response_outbox_pending ON alert_response_outbox (published, created_at) WHERE published=false;
+CREATE TABLE IF NOT EXISTS alert_playbook_overrides (tenant_id TEXT NOT NULL, name TEXT NOT NULL, enabled BOOLEAN NOT NULL DEFAULT true, max_runs INTEGER NOT NULL DEFAULT 0, cooldown_seconds BIGINT NOT NULL DEFAULT 0, updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), PRIMARY KEY (tenant_id, name));
+CREATE TABLE IF NOT EXISTS alert_playbook_definitions (
+    tenant_id TEXT NOT NULL, name TEXT NOT NULL, display_name TEXT NOT NULL, description TEXT NOT NULL DEFAULT '',
+    version INTEGER NOT NULL DEFAULT 1, stage TEXT NOT NULL DEFAULT 'draft', enabled BOOLEAN NOT NULL DEFAULT false,
+    risk_level TEXT NOT NULL DEFAULT 'medium', definition_payload JSONB NOT NULL, created_by TEXT NOT NULL DEFAULT '',
+    submitted_by TEXT NOT NULL DEFAULT '', approved_by TEXT NOT NULL DEFAULT '', rejection_reason TEXT NOT NULL DEFAULT '',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), PRIMARY KEY (tenant_id, name),
+    CONSTRAINT alert_playbook_definition_stage_check CHECK (stage IN ('draft', 'approval_pending', 'approved', 'rejected')),
+    CONSTRAINT alert_playbook_definition_risk_check CHECK (risk_level IN ('low', 'medium', 'high', 'critical'))
+);
+CREATE INDEX IF NOT EXISTS idx_alert_playbook_definitions_tenant_stage ON alert_playbook_definitions (tenant_id, stage, updated_at DESC);
 CREATE TABLE IF NOT EXISTS data_quality_actions (
     action_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     tenant_id TEXT NOT NULL,
@@ -916,16 +1018,72 @@ CREATE TABLE IF NOT EXISTS fusion_rule_overrides (
     rule_id TEXT NOT NULL,
     rule_name TEXT NOT NULL DEFAULT '',
     version BIGINT NOT NULL DEFAULT 1,
-    status TEXT NOT NULL DEFAULT 'draft',
-    strategy TEXT NOT NULL DEFAULT 'manual-review',
-    confidence_threshold DOUBLE PRECISION NOT NULL DEFAULT 0.85,
+    status TEXT NOT NULL DEFAULT 'draft' CONSTRAINT fusion_rule_overrides_status_check CHECK (status IN ('active','draft','disabled')),
+    strategy TEXT NOT NULL DEFAULT 'manual-review' CONSTRAINT fusion_rule_overrides_strategy_check CHECK (strategy IN ('authoritative-source','weighted-confidence','latest-observation','manual-review')),
+    confidence_threshold DOUBLE PRECISION NOT NULL DEFAULT 0.85 CONSTRAINT fusion_rule_overrides_threshold_check CHECK (confidence_threshold BETWEEN 0 AND 1),
     note TEXT NOT NULL DEFAULT '',
     updated_by TEXT NOT NULL DEFAULT '',
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     detail JSONB NOT NULL DEFAULT '{}'::jsonb,
     PRIMARY KEY (tenant_id, rule_id)
 );
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='fusion_rule_overrides_status_check') THEN
+    ALTER TABLE fusion_rule_overrides ADD CONSTRAINT fusion_rule_overrides_status_check CHECK (status IN ('active','draft','disabled'));
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='fusion_rule_overrides_strategy_check') THEN
+    ALTER TABLE fusion_rule_overrides ADD CONSTRAINT fusion_rule_overrides_strategy_check CHECK (strategy IN ('authoritative-source','weighted-confidence','latest-observation','manual-review'));
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='fusion_rule_overrides_threshold_check') THEN
+    ALTER TABLE fusion_rule_overrides ADD CONSTRAINT fusion_rule_overrides_threshold_check CHECK (confidence_threshold BETWEEN 0 AND 1);
+  END IF;
+END $$;
 CREATE INDEX IF NOT EXISTS idx_fusion_rule_overrides_time ON fusion_rule_overrides(tenant_id, updated_at DESC);
+
+CREATE TABLE IF NOT EXISTS fusion_conflicts (
+    tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE,
+    conflict_id TEXT NOT NULL,
+    object_id TEXT NOT NULL,
+    object_type TEXT NOT NULL DEFAULT 'entity',
+    field_name TEXT NOT NULL,
+    source_values JSONB NOT NULL DEFAULT '[]'::jsonb,
+    source_count INTEGER NOT NULL DEFAULT 0,
+    confidence DOUBLE PRECISION NOT NULL DEFAULT 0,
+    severity TEXT NOT NULL DEFAULT 'medium',
+    status TEXT NOT NULL DEFAULT 'pending',
+    rule_id TEXT NOT NULL DEFAULT '',
+    state_version BIGINT NOT NULL DEFAULT 1,
+    origin TEXT NOT NULL DEFAULT 'runtime',
+    detail JSONB NOT NULL DEFAULT '{}'::jsonb,
+    detected_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (tenant_id, conflict_id)
+);
+ALTER TABLE fusion_conflicts ADD COLUMN IF NOT EXISTS origin TEXT NOT NULL DEFAULT 'runtime';
+ALTER TABLE fusion_conflicts ADD COLUMN IF NOT EXISTS detail JSONB NOT NULL DEFAULT '{}'::jsonb;
+CREATE INDEX IF NOT EXISTS idx_fusion_conflicts_queue ON fusion_conflicts(tenant_id, status, detected_at DESC);
+
+CREATE TABLE IF NOT EXISTS fusion_repair_tasks (
+    task_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE,
+    conflict_id TEXT NOT NULL,
+    object_id TEXT NOT NULL DEFAULT '',
+    object_type TEXT NOT NULL DEFAULT 'entity',
+    field_name TEXT NOT NULL,
+    rule_id TEXT NOT NULL DEFAULT '',
+    selected_source TEXT NOT NULL,
+    selected_value TEXT NOT NULL,
+    state_version BIGINT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'queued' CHECK (status IN ('queued','in_progress','completed','failed','cancelled')),
+    requested_by TEXT NOT NULL DEFAULT '',
+    note TEXT NOT NULL DEFAULT '',
+    detail JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (tenant_id, conflict_id, state_version),
+    FOREIGN KEY (tenant_id, conflict_id) REFERENCES fusion_conflicts(tenant_id, conflict_id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_fusion_repair_tasks_queue ON fusion_repair_tasks(tenant_id, status, created_at DESC);
 
 -- =========================================================================================
 -- Graph Service 配置表（来自 graph_postgres.sql）
@@ -1064,15 +1222,20 @@ CREATE INDEX IF NOT EXISTS idx_feedback_label ON alert_feedback (tenant_id, labe
 CREATE TABLE IF NOT EXISTS whitelist (
   id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   tenant_id       TEXT NOT NULL,
-  type            TEXT NOT NULL CHECK (type IN ('ip','domain','fingerprint','subnet')),
+  type            TEXT NOT NULL CHECK (type IN ('ip','domain','fingerprint','subnet','asset','account','rule','model')),
   value           TEXT NOT NULL,
   reason          TEXT NOT NULL DEFAULT '',
   description     TEXT NOT NULL DEFAULT '',
-  status          TEXT NOT NULL DEFAULT 'active',
-  approval_status TEXT NOT NULL DEFAULT 'approved',
+  status          TEXT NOT NULL DEFAULT 'draft',
+  approval_status TEXT NOT NULL DEFAULT 'draft',
   source_alert_id TEXT NOT NULL DEFAULT '',
   feedback_id     TEXT NOT NULL DEFAULT '',
   owner_role      TEXT NOT NULL DEFAULT '',
+  scope           TEXT NOT NULL DEFAULT '',
+  risk_level      TEXT NOT NULL DEFAULT 'medium',
+  covered_alerts  INTEGER NOT NULL DEFAULT 0,
+  covered_assets  INTEGER NOT NULL DEFAULT 0,
+  version         INTEGER NOT NULL DEFAULT 1,
   created_by      TEXT NOT NULL DEFAULT '',
   approved_by     TEXT NOT NULL DEFAULT '',
   approved_at     TIMESTAMPTZ,
@@ -1083,15 +1246,31 @@ CREATE TABLE IF NOT EXISTS whitelist (
   UNIQUE (tenant_id, type, value)
 );
 
-ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active';
-ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS approval_status TEXT NOT NULL DEFAULT 'approved';
+ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'draft';
+ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS approval_status TEXT NOT NULL DEFAULT 'draft';
+ALTER TABLE whitelist ALTER COLUMN status SET DEFAULT 'draft';
+ALTER TABLE whitelist ALTER COLUMN approval_status SET DEFAULT 'draft';
 ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS source_alert_id TEXT NOT NULL DEFAULT '';
 ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS feedback_id TEXT NOT NULL DEFAULT '';
 ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS owner_role TEXT NOT NULL DEFAULT '';
+ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS scope TEXT NOT NULL DEFAULT '';
+ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS risk_level TEXT NOT NULL DEFAULT 'medium';
+ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS covered_alerts INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS covered_assets INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS version INTEGER NOT NULL DEFAULT 1;
 ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS approved_by TEXT NOT NULL DEFAULT '';
 ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ;
 ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS disabled_at TIMESTAMPTZ;
 ALTER TABLE whitelist ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+ALTER TABLE whitelist DROP CONSTRAINT IF EXISTS whitelist_type_check;
+ALTER TABLE whitelist ADD CONSTRAINT whitelist_type_check CHECK (type IN ('ip','domain','fingerprint','subnet','asset','account','rule','model'));
+ALTER TABLE whitelist DROP CONSTRAINT IF EXISTS whitelist_governance_state_check;
+ALTER TABLE whitelist ADD CONSTRAINT whitelist_governance_state_check CHECK (
+  (status='draft' AND approval_status='draft') OR
+  (status='pending' AND approval_status='pending') OR
+  (status='active' AND approval_status='approved') OR
+  (status='disabled' AND approval_status IN ('approved','rejected'))
+);
 CREATE INDEX IF NOT EXISTS idx_whitelist_tenant ON whitelist (tenant_id);
 CREATE INDEX IF NOT EXISTS idx_whitelist_entries_tenant_status ON whitelist (tenant_id, status, updated_at DESC);
 CREATE INDEX IF NOT EXISTS idx_whitelist_entries_approval ON whitelist (tenant_id, approval_status, updated_at DESC);
@@ -1342,6 +1521,7 @@ CREATE TABLE IF NOT EXISTS notification_rules (
 );
 
 CREATE INDEX IF NOT EXISTS idx_notification_tenant_enabled ON notification_rules (tenant_id, enabled);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_notification_rules_tenant_name ON notification_rules (tenant_id, name);
 
 -- -----------------------------------------------------------------------------------------
 -- notification_history: 通知历史表
@@ -1351,15 +1531,81 @@ CREATE TABLE IF NOT EXISTS notification_history (
   tenant_id       TEXT NOT NULL,
   rule_id         UUID REFERENCES notification_rules(rule_id),
   alert_id        TEXT NOT NULL,
+  target_name     TEXT NOT NULL DEFAULT '',
   channel         TEXT NOT NULL,
+  alert_type      TEXT NOT NULL DEFAULT '',
   status          TEXT NOT NULL,
   error_message   TEXT,
+  retry_count     INTEGER NOT NULL DEFAULT 0,
+  trace_id        TEXT NOT NULL DEFAULT '',
   sent_at         TIMESTAMPTZ,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+ALTER TABLE notification_history ADD COLUMN IF NOT EXISTS target_name TEXT NOT NULL DEFAULT '';
+ALTER TABLE notification_history ADD COLUMN IF NOT EXISTS alert_type TEXT NOT NULL DEFAULT '';
+ALTER TABLE notification_history ADD COLUMN IF NOT EXISTS retry_count INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE notification_history ADD COLUMN IF NOT EXISTS trace_id TEXT NOT NULL DEFAULT '';
+
 CREATE INDEX IF NOT EXISTS idx_notification_tenant_alert ON notification_history (tenant_id, alert_id);
 CREATE INDEX IF NOT EXISTS idx_notification_status ON notification_history (tenant_id, status, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS alert_notification_settings (
+  tenant_id  TEXT PRIMARY KEY,
+  settings   JSONB NOT NULL DEFAULT '{}'::jsonb,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS notification_escalation_policies (
+  policy_id  UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  tenant_id  TEXT NOT NULL,
+  name       TEXT NOT NULL,
+  stages     JSONB NOT NULL DEFAULT '[]'::jsonb,
+  enabled    BOOLEAN NOT NULL DEFAULT true,
+  created_by TEXT NOT NULL DEFAULT '',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (tenant_id, name)
+);
+CREATE INDEX IF NOT EXISTS idx_notification_escalation_tenant_enabled ON notification_escalation_policies (tenant_id, enabled, updated_at DESC);
+
+CREATE TABLE IF NOT EXISTS notification_escalation_jobs (
+  job_id BIGSERIAL PRIMARY KEY, tenant_id TEXT NOT NULL, alert_key TEXT NOT NULL,
+  alert_id TEXT NOT NULL DEFAULT '', rule_id UUID NOT NULL REFERENCES notification_rules(rule_id) ON DELETE CASCADE,
+  stage_index INTEGER NOT NULL, policy_id UUID, policy_updated_at TIMESTAMPTZ,
+  stage_after_minutes DOUBLE PRECISION, stage_fingerprint TEXT NOT NULL DEFAULT '',
+  target_role TEXT NOT NULL, channel TEXT NOT NULL,
+  due_at TIMESTAMPTZ NOT NULL, alert_payload JSONB NOT NULL, status TEXT NOT NULL DEFAULT 'pending',
+  attempts INTEGER NOT NULL DEFAULT 0, last_error TEXT, locked_at TIMESTAMPTZ,
+  lock_token TEXT NOT NULL DEFAULT '', trace_id TEXT NOT NULL DEFAULT '',
+  completed_at TIMESTAMPTZ, created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (tenant_id, alert_key, rule_id, stage_index, channel)
+);
+ALTER TABLE notification_escalation_jobs ADD COLUMN IF NOT EXISTS locked_at TIMESTAMPTZ;
+ALTER TABLE notification_escalation_jobs ADD COLUMN IF NOT EXISTS lock_token TEXT NOT NULL DEFAULT '';
+ALTER TABLE notification_escalation_jobs ADD COLUMN IF NOT EXISTS policy_id UUID;
+ALTER TABLE notification_escalation_jobs ADD COLUMN IF NOT EXISTS policy_updated_at TIMESTAMPTZ;
+ALTER TABLE notification_escalation_jobs ADD COLUMN IF NOT EXISTS stage_after_minutes DOUBLE PRECISION;
+ALTER TABLE notification_escalation_jobs ADD COLUMN IF NOT EXISTS stage_fingerprint TEXT NOT NULL DEFAULT '';
+CREATE INDEX IF NOT EXISTS idx_notification_escalation_jobs_due ON notification_escalation_jobs (status, due_at, job_id);
+
+CREATE TABLE IF NOT EXISTS notification_templates (
+  template_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  tenant_id TEXT NOT NULL,
+  template_type TEXT NOT NULL,
+  name TEXT NOT NULL,
+  version INTEGER NOT NULL DEFAULT 1,
+  subject TEXT NOT NULL DEFAULT '',
+  body TEXT NOT NULL DEFAULT '',
+  variable_schema JSONB NOT NULL DEFAULT '{}'::jsonb,
+  validation_status TEXT NOT NULL DEFAULT 'passed',
+  enabled BOOLEAN NOT NULL DEFAULT true,
+  created_by TEXT NOT NULL DEFAULT '',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (tenant_id, name)
+);
+CREATE INDEX IF NOT EXISTS idx_notification_templates_tenant_enabled ON notification_templates (tenant_id, enabled, updated_at DESC);
 
 -- -----------------------------------------------------------------------------------------
 -- notification_silence_rules: 通知静默窗口
@@ -1384,6 +1630,71 @@ CREATE INDEX IF NOT EXISTS idx_notification_silence_tenant_time
   ON notification_silence_rules (tenant_id, starts_at DESC);
 CREATE INDEX IF NOT EXISTS idx_notification_silence_tenant_enabled
   ON notification_silence_rules (tenant_id, enabled, starts_at DESC);
+
+
+CREATE OR REPLACE FUNCTION notification_governance_atomic_audit()
+RETURNS TRIGGER AS $$
+DECLARE
+  row_data JSONB;
+  tenant_value TEXT;
+  object_value TEXT;
+  action_prefix TEXT;
+BEGIN
+  row_data := CASE WHEN TG_OP = 'DELETE' THEN to_jsonb(OLD) ELSE to_jsonb(NEW) END;
+  tenant_value := COALESCE(row_data->>'tenant_id', 'default');
+  object_value := CASE
+    WHEN TG_TABLE_NAME = 'notification_escalation_jobs' THEN COALESCE(row_data->>'job_id', tenant_value)
+    ELSE COALESCE(row_data->>'rule_id', row_data->>'template_id', row_data->>'policy_id', row_data->>'notification_id', tenant_value)
+  END;
+  action_prefix := CASE TG_TABLE_NAME
+    WHEN 'alert_notification_settings' THEN 'NOTIFICATION_SETTINGS'
+    WHEN 'notification_rules' THEN 'NOTIFICATION_RULE'
+    WHEN 'notification_templates' THEN 'NOTIFICATION_TEMPLATE'
+    WHEN 'notification_escalation_policies' THEN 'NOTIFICATION_ESCALATION'
+    WHEN 'notification_escalation_jobs' THEN 'NOTIFICATION_ESCALATION_JOB'
+    WHEN 'notification_silence_rules' THEN 'NOTIFICATION_SILENCE_RULE'
+    WHEN 'notification_history' THEN 'NOTIFICATION_DELIVERY'
+    ELSE 'NOTIFICATION_GOVERNANCE'
+  END;
+  INSERT INTO audit_logs (event_id, tenant_id, user_id, action, object_type, object_id, detail)
+  VALUES (
+    'audit-' || uuid_generate_v4()::TEXT,
+    tenant_value,
+    NULL,
+    action_prefix || '_DB_' || TG_OP,
+    TG_TABLE_NAME,
+    object_value,
+    jsonb_build_object('atomic', true, 'operation', TG_OP)
+  );
+  RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
+END;
+$$ LANGUAGE plpgsql;
+
+DO $$
+DECLARE
+  table_name TEXT;
+  trigger_name TEXT;
+BEGIN
+  FOREACH table_name IN ARRAY ARRAY[
+    'alert_notification_settings',
+    'notification_rules',
+    'notification_templates',
+    'notification_escalation_policies',
+    'notification_escalation_jobs',
+    'notification_silence_rules',
+    'notification_history'
+  ]
+  LOOP
+    trigger_name := 'trg_' || table_name || '_atomic_audit';
+    EXECUTE format('DROP TRIGGER IF EXISTS %I ON %I', trigger_name, table_name);
+    EXECUTE format(
+      'CREATE TRIGGER %I AFTER INSERT OR UPDATE OR DELETE ON %I FOR EACH ROW EXECUTE FUNCTION notification_governance_atomic_audit()',
+      trigger_name,
+      table_name
+    );
+  END LOOP;
+END $$;
+
 
 -- -----------------------------------------------------------------------------------------
 -- topic governance: 专题视图、范围、订阅和导出
@@ -2185,6 +2496,15 @@ ON CONFLICT (tenant_id) DO NOTHING;
 -- =========================================================================================
 -- 视图：简化常用查询
 -- =========================================================================================
+
+-- 行为基线治理状态，与集群初始化脚本保持一致。
+CREATE TABLE IF NOT EXISTS behavior_baseline_resets (tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE, baseline_id TEXT NOT NULL, reset_at TIMESTAMPTZ NOT NULL DEFAULT now(), requested_by TEXT NOT NULL DEFAULT '', PRIMARY KEY (tenant_id, baseline_id));
+CREATE TABLE IF NOT EXISTS behavior_baseline_settings (tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE, baseline_id TEXT NOT NULL, warning_multiplier DOUBLE PRECISION NOT NULL DEFAULT 2.0 CHECK (warning_multiplier > 0), alert_multiplier DOUBLE PRECISION NOT NULL DEFAULT 3.0 CHECK (alert_multiplier > warning_multiplier), frozen BOOLEAN NOT NULL DEFAULT false, drift_watch BOOLEAN NOT NULL DEFAULT false, version INTEGER NOT NULL DEFAULT 1 CHECK (version > 0), updated_by TEXT NOT NULL DEFAULT '', updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), PRIMARY KEY (tenant_id, baseline_id));
+CREATE TABLE IF NOT EXISTS behavior_baseline_actions (action_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE, baseline_id TEXT NOT NULL, action_type TEXT NOT NULL CHECK (action_type IN ('create_alert','adjust_threshold','freeze','unfreeze','forensics','feedback_model','cold_start','drift_watch','rebuild','rollback','audit_trace')), status TEXT NOT NULL DEFAULT 'queued' CHECK (status IN ('queued','applied','rejected','failed')), reason TEXT NOT NULL DEFAULT '', request JSONB NOT NULL DEFAULT '{}'::jsonb, requested_by TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT now());
+CREATE INDEX IF NOT EXISTS idx_behavior_baseline_actions_time ON behavior_baseline_actions (tenant_id, baseline_id, created_at DESC);
+CREATE TABLE IF NOT EXISTS behavior_baseline_versions (tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE, baseline_id TEXT NOT NULL, version INTEGER NOT NULL CHECK (version > 0), snapshot JSONB NOT NULL DEFAULT '{}'::jsonb, source_action_id UUID NULL REFERENCES behavior_baseline_actions(action_id) ON DELETE SET NULL, created_by TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT now(), PRIMARY KEY (tenant_id, baseline_id, version));
+CREATE TABLE IF NOT EXISTS behavior_baseline_outbox (outbox_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE, baseline_id TEXT NOT NULL, action_id UUID NOT NULL REFERENCES behavior_baseline_actions(action_id) ON DELETE CASCADE, event_type TEXT NOT NULL, payload JSONB NOT NULL DEFAULT '{}'::jsonb, published BOOLEAN NOT NULL DEFAULT false, attempts INTEGER NOT NULL DEFAULT 0, last_error TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT now(), published_at TIMESTAMPTZ NULL);
+CREATE INDEX IF NOT EXISTS idx_behavior_baseline_outbox_pending ON behavior_baseline_outbox (published, created_at) WHERE published=false;
 
 -- 用户权限视图
 CREATE OR REPLACE VIEW user_permissions AS

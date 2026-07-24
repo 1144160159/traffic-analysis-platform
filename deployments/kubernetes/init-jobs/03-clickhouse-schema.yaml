@@ -149,6 +149,88 @@ spec:
           "
 
           # =========================
+          # 2.1 typed entity graph workbench
+          # =========================
+          echo "Creating typed entity graph workbench tables..."
+          ENTITY_GRAPH_SQL=$(cat <<'ENTITY_GRAPH_SQL_EOF'
+          CREATE TABLE IF NOT EXISTS traffic.entity_graph_nodes_local (
+            tenant_id String,
+            entity_id String,
+            entity_type LowCardinality(String),
+            label String,
+            detail String,
+            risk_score UInt8,
+            risk_level LowCardinality(String),
+            x Float32,
+            y Float32,
+            icon LowCardinality(String),
+            metadata_json String,
+            updated_at Int64
+          )
+          ENGINE = ReplicatedReplacingMergeTree('/clickhouse/tables/{shard}/entity_graph_nodes', '{replica}', updated_at)
+          ORDER BY (tenant_id, entity_id)
+          SETTINGS index_granularity = 8192;
+
+          CREATE TABLE IF NOT EXISTS traffic.entity_graph_nodes
+          AS traffic.entity_graph_nodes_local
+          ENGINE = Distributed(traffic_cluster, traffic, entity_graph_nodes_local, cityHash64(tenant_id, entity_id));
+
+          CREATE TABLE IF NOT EXISTS traffic.entity_graph_edges_local (
+            tenant_id String,
+            relation_id String,
+            source_id String,
+            target_id String,
+            relation_type LowCardinality(String),
+            risk_level LowCardinality(String),
+            evidence_id String,
+            attributes_json String,
+            weight Float32,
+            observed_at Int64
+          )
+          ENGINE = ReplicatedReplacingMergeTree('/clickhouse/tables/{shard}/entity_graph_edges', '{replica}', observed_at)
+          ORDER BY (tenant_id, relation_id)
+          SETTINGS index_granularity = 8192;
+
+          CREATE TABLE IF NOT EXISTS traffic.entity_graph_edges
+          AS traffic.entity_graph_edges_local
+          ENGINE = Distributed(traffic_cluster, traffic, entity_graph_edges_local, cityHash64(tenant_id, relation_id));
+
+          ALTER TABLE traffic.entity_graph_edges_local ADD COLUMN IF NOT EXISTS attributes_json String DEFAULT '{}' AFTER evidence_id;
+          ALTER TABLE traffic.entity_graph_edges ADD COLUMN IF NOT EXISTS attributes_json String DEFAULT '{}' AFTER evidence_id;
+
+          ALTER TABLE traffic.entity_graph_nodes_local DELETE WHERE tenant_id='default' AND entity_id='service:10.20.4.20' SETTINGS mutations_sync=2;
+          INSERT INTO traffic.entity_graph_nodes VALUES ('default','ip:185.234.15.23','ip','可疑外部IP','185.234.15.23',92,'high',22,18,'global','{"site":"main","owner":"外部威胁情报","tags":["可疑外联","高风险"]}',toUnixTimestamp64Milli(now64()));
+          INSERT INTO traffic.entity_graph_nodes VALUES ('default','account:biz_admin','account','biz_admin','账号',64,'low',48,14,'account','{"site":"main","site_label":"主园区","owner":"业务系统管理员","department":"信息化中心","tags":["高权限账号","业务管理员"]}',toUnixTimestamp64Milli(now64()));
+          INSERT INTO traffic.entity_graph_nodes VALUES ('default','host:10.20.4.19','host','WEB-SRV-02','10.20.4.19',48,'low',72,18,'host','{"site":"main","operating_system":"Rocky Linux 9.4","asset_group":"核心业务区 / Web服务","owner":"李明（应用运维）","services":["TCP/80","TCP/443"]}',toUnixTimestamp64Milli(now64()));
+          INSERT INTO traffic.entity_graph_nodes VALUES ('default','host:10.20.0.1','host','边界网关','10.20.0.1',55,'medium',15,46,'gateway','{"site":"main","operating_system":"Network OS 12.4","asset_group":"网络边界区","owner":"网络运行组","services":["BGP","NAT","ACL"]}',toUnixTimestamp64Milli(now64()));
+          INSERT INTO traffic.entity_graph_nodes VALUES ('default','host:10.20.4.18','host','核心业务服务器','10.20.4.18',85,'high',48,44,'host','{"site":"main","site_label":"主园区","operating_system":"CentOS Linux 7.9","asset_group":"核心业务区 / 服务器","owner":"张伟（信息化中心）","department":"信息化中心","tags":["核心业务","重要资产","7×24"],"services":["TCP/22","TCP/80","TCP/443","TCP/3306"]}',toUnixTimestamp64Milli(now64()));
+          INSERT INTO traffic.entity_graph_nodes VALUES ('default','host:10.20.4.20','host','DB-SRV-01','10.20.4.20',71,'medium',78,46,'database','{"site":"main","operating_system":"CentOS Linux 8.5","asset_group":"核心业务区 / 数据库","owner":"数据库运行组","services":["TCP/3306"]}',toUnixTimestamp64Milli(now64()));
+          INSERT INTO traffic.entity_graph_nodes VALUES ('default','domain:erp.corp.edu.cn','domain','erp.corp.edu.cn','域名',58,'medium',28,72,'domain','{"site":"main","owner":"ERP应用组","resolver":"10.20.0.53"}',toUnixTimestamp64Milli(now64()));
+          INSERT INTO traffic.entity_graph_nodes VALUES ('default','service:crm:443','service','CRM服务','TCP/443',46,'low',56,68,'service','{"site":"main","owner":"CRM应用组","protocol":"HTTPS","port":443}',toUnixTimestamp64Milli(now64()));
+          INSERT INTO traffic.entity_graph_nodes VALUES ('default','evidence:PCAP-20260620-0156','evidence','PCAP-20260620-0156','PCAP证据',30,'low',48,84,'evidence','{"site":"main","owner":"流量取证系统","evidence_type":"pcap"}',toUnixTimestamp64Milli(now64()));
+          INSERT INTO traffic.entity_graph_nodes VALUES ('default','alert:ALERT-20260620-1287','alert','ALERT-20260620-1287','告警',88,'high',76,72,'alert','{"site":"main","owner":"检测运营中心","severity":"high"}',toUnixTimestamp64Milli(now64()));
+          INSERT INTO traffic.entity_graph_nodes VALUES ('default','service:backup:873','service','备份服务','TCP/873',42,'low',88,58,'service','{"site":"main","owner":"数据保护组","protocol":"RSYNC","port":873,"services":["TCP/873"]}',toUnixTimestamp64Milli(now64()));
+          INSERT INTO traffic.entity_graph_nodes VALUES ('default','host:10.20.8.31','host','归档存储节点','10.20.8.31',38,'low',94,72,'host','{"site":"main","operating_system":"Rocky Linux 9.4","asset_group":"数据保护区 / 归档存储","owner":"数据保护组","services":["TCP/22","TCP/873"]}',toUnixTimestamp64Milli(now64()));
+
+          INSERT INTO traffic.entity_graph_edges VALUES ('default','rel-001','ip:185.234.15.23','host:10.20.4.18','通信','high','PCAP-20260620-0156','{"protocol":"TCP","port":"443","service":"HTTPS","frequency":642,"bytes":"12.4 GB","latency_ms":18,"attack_stage":"初始访问","action":"外部通信"}',0.96,toUnixTimestamp64Milli(now64()));
+          INSERT INTO traffic.entity_graph_edges VALUES ('default','rel-002','account:biz_admin','host:10.20.4.18','登录','low','AUDIT-GRAPH-0042','{"protocol":"RDP","port":"3389","service":"RDP","frequency":7,"bytes":"86 MB","latency_ms":24,"identity_label":"高权限","anomaly_reason":"非工作时间","attack_stage":"凭证访问"}',0.82,toUnixTimestamp64Milli(now64()));
+          INSERT INTO traffic.entity_graph_edges VALUES ('default','rel-003','host:10.20.4.19','host:10.20.4.18','通信','low','SESSION-20260620-3381','{"protocol":"TCP","port":"3306","service":"MySQL","frequency":318,"bytes":"8.6 GB","latency_ms":23}',0.78,toUnixTimestamp64Milli(now64()));
+          INSERT INTO traffic.entity_graph_edges VALUES ('default','rel-004','host:10.20.0.1','host:10.20.4.18','通信','low','SESSION-20260620-3381','{"protocol":"TCP","port":"443","service":"HTTPS","frequency":105,"bytes":"2.3 GB","latency_ms":56}',0.74,toUnixTimestamp64Milli(now64()));
+          INSERT INTO traffic.entity_graph_edges VALUES ('default','rel-005','host:10.20.4.18','host:10.20.4.20','通信','medium','PCAP-20260620-0156','{"protocol":"TCP","port":"3306","service":"MySQL","frequency":318,"bytes":"8.6 GB","latency_ms":23}',0.87,toUnixTimestamp64Milli(now64()));
+          INSERT INTO traffic.entity_graph_edges VALUES ('default','rel-006','domain:erp.corp.edu.cn','host:10.20.4.18','DNS解析','medium','SESSION-20260620-3381','{"protocol":"UDP","port":"53","service":"DNS","frequency":221,"bytes":"180 MB","latency_ms":12}',0.69,toUnixTimestamp64Milli(now64()));
+          INSERT INTO traffic.entity_graph_edges VALUES ('default','rel-007','host:10.20.4.18','evidence:PCAP-20260620-0156','证据引用','low','PCAP-20260620-0156','{"evidence_type":"PCAP","integrity":"verified"}',1.00,toUnixTimestamp64Milli(now64()));
+          INSERT INTO traffic.entity_graph_edges VALUES ('default','rel-008','host:10.20.4.18','alert:ALERT-20260620-1287','关联告警','high','ALERT-20260620-1287','{"alert_stage":"数据外传","attack_stage":"数据外传","action":"告警关联","alert_count":4}',0.93,toUnixTimestamp64Milli(now64()));
+          INSERT INTO traffic.entity_graph_edges VALUES ('default','rel-009','host:10.20.4.18','service:crm:443','行为服务','low','SESSION-20260620-3381','{"protocol":"TCP","port":"443","service":"CRM HTTPS","frequency":406,"bytes":"6.8 GB","latency_ms":20}',0.84,toUnixTimestamp64Milli(now64()));
+          INSERT INTO traffic.entity_graph_edges VALUES ('default','rel-010','account:biz_admin','host:10.20.4.19','账号访问','medium','AUDIT-GRAPH-0042','{"protocol":"SMB","port":"445","service":"SMB","frequency":2,"bytes":"240 MB","latency_ms":31,"identity_label":"横向访问","anomaly_reason":"首次访问"}',0.76,toUnixTimestamp64Milli(now64()));
+          INSERT INTO traffic.entity_graph_edges VALUES ('default','rel-011','domain:erp.corp.edu.cn','host:10.20.4.19','DNS解析','medium','SESSION-20260620-3381','{"protocol":"UDP","port":"53","service":"DNS","frequency":184,"bytes":"112 MB","latency_ms":15}',0.72,toUnixTimestamp64Milli(now64()));
+          INSERT INTO traffic.entity_graph_edges VALUES ('default','rel-012','service:crm:443','host:10.20.4.20','行为服务','low','PCAP-20260620-0156','{"protocol":"TCP","port":"3306","service":"MySQL","frequency":96,"bytes":"3.1 GB","latency_ms":28}',0.79,toUnixTimestamp64Milli(now64()));
+          INSERT INTO traffic.entity_graph_edges VALUES ('default','rel-013','host:10.20.4.20','service:backup:873','行为服务','low','SESSION-20260620-4490','{"protocol":"TCP","port":"873","service":"RSYNC","frequency":54,"bytes":"1.8 GB","latency_ms":34}',0.68,toUnixTimestamp64Milli(now64()));
+          INSERT INTO traffic.entity_graph_edges VALUES ('default','rel-014','service:backup:873','host:10.20.8.31','通信','low','SESSION-20260620-4490','{"protocol":"TCP","port":"873","service":"RSYNC","frequency":47,"bytes":"1.6 GB","latency_ms":41}',0.64,toUnixTimestamp64Milli(now64()));
+          ENTITY_GRAPH_SQL_EOF
+          )
+          $CH "$ENTITY_GRAPH_SQL"
+
+          # =========================
           # 3. feature_stat (FeatureStat)
           # =========================
           echo "Creating feature_stat..."
@@ -263,6 +345,21 @@ spec:
           CREATE TABLE IF NOT EXISTS traffic.alerts
           AS traffic.alerts_local
           ENGINE = Distributed(traffic_cluster, traffic, alerts_local, rand());
+
+          CREATE TABLE IF NOT EXISTS traffic.alerts_latest_local
+          AS traffic.alerts_local
+          ENGINE = ReplicatedReplacingMergeTree('/clickhouse/tables/{shard}/alerts_latest', '{replica}', updated_at)
+          ORDER BY (tenant_id, alert_id)
+          TTL toDateTime(last_seen / 1000) + toIntervalDay(30)
+          SETTINGS index_granularity = 8192;
+
+          CREATE TABLE IF NOT EXISTS traffic.alerts_latest
+          AS traffic.alerts_latest_local
+          ENGINE = Distributed(traffic_cluster, traffic, alerts_latest_local, cityHash64(tenant_id, alert_id));
+
+          CREATE MATERIALIZED VIEW IF NOT EXISTS traffic.alerts_latest_mv
+          TO traffic.alerts_latest
+          AS SELECT * FROM traffic.alerts_local;
           "
 
           echo "Ensuring latency-chain columns..."

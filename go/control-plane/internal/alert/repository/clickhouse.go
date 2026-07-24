@@ -6,7 +6,9 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -37,6 +39,43 @@ const alertSelectColumns = `
 	model_version, rule_version, feature_set_id,
 	evidence_ids, event_id`
 
+// 列表只读取告警中心实际展示的轻量字段。labels/evidence_ids 等数组列以及
+// fingerprint/session 明细会显著放大 24 小时 Top-N 排序开销，详情页仍使用
+// alertSelectColumns 获取完整记录。
+const alertListSelectColumns = `
+	tenant_id, alert_id, src_ip, dst_ip, src_port, dst_port, protocol,
+	alert_type, score, severity,
+	fromUnixTimestamp64Milli(first_seen) AS first_seen,
+	fromUnixTimestamp64Milli(last_seen) AS last_seen,
+	count, status, assignee,
+	fromUnixTimestamp64Milli(updated_at) AS updated_ts,
+	model_version, rule_version`
+
+const alertLatestProjection = `traffic.alerts_latest FINAL`
+
+// alertAttackPhaseExpression prefers an explicit phase label emitted by the
+// detector, then falls back to a stable MITRE-style semantic mapping. It never
+// exposes alert_type itself as an attack phase.
+const alertAttackPhaseExpression = `if(
+	arrayExists(label -> match(lowerUTF8(label), '^(attack_phase|attack-phase|mitre_phase|mitre-phase)[:=]'), labels),
+	replaceRegexpOne(arrayFirst(label -> match(lowerUTF8(label), '^(attack_phase|attack-phase|mitre_phase|mitre-phase)[:=]'), labels), '^[^:=]+[:=]', ''),
+	multiIf(
+		match(lowerUTF8(alert_type), 'c2|command.control|beacon|callback|dns.tunnel'), 'command_control',
+		match(lowerUTF8(alert_type), 'lateral|worm|smb|rdp|pass.the.hash'), 'lateral_movement',
+		match(lowerUTF8(alert_type), 'exfil|large.upload|data.transfer'), 'exfiltration',
+		match(lowerUTF8(alert_type), 'credential|brute.force|password|login'), 'credential_access',
+		match(lowerUTF8(alert_type), 'exploit|initial.access|phish'), 'initial_access',
+		match(lowerUTF8(alert_type), 'malware|execution|shell|script'), 'execution',
+		match(lowerUTF8(alert_type), 'persist|startup|scheduled.task'), 'persistence',
+		match(lowerUTF8(alert_type), 'privilege|sudo|escalat'), 'privilege_escalation',
+		match(lowerUTF8(alert_type), 'evasion|obfuscat|disable'), 'defense_evasion',
+		match(lowerUTF8(alert_type), 'collect|archive|stage'), 'collection',
+		match(lowerUTF8(alert_type), 'impact|ransom|destroy|encrypt'), 'impact',
+		match(lowerUTF8(alert_type), 'scan|recon|probe'), 'reconnaissance',
+		'discovery'
+	)
+)`
+
 // NewAlertRepository 创建AlertRepository
 func NewAlertRepository(client *storage.ClickHouseClient, logger *zap.Logger) *AlertRepository {
 	return &AlertRepository{
@@ -47,19 +86,24 @@ func NewAlertRepository(client *storage.ClickHouseClient, logger *zap.Logger) *A
 
 // ListQuery 列表查询参数
 type ListQuery struct {
-	TenantID  string
-	Severity  string
-	Status    string
-	AlertType string
-	SrcIP     string
-	DstIP     string
-	Labels    []string
-	StartTime time.Time
-	EndTime   time.Time
-	SortBy    string
-	SortOrder string
-	Limit     int
-	Offset    int
+	TenantID     string
+	Severity     string
+	Status       string
+	AlertType    string
+	RuleVersion  string
+	ModelVersion string
+	AttackPhase  string
+	AssetIP      string
+	MinScore     float64
+	SrcIP        string
+	DstIP        string
+	Labels       []string
+	StartTime    time.Time
+	EndTime      time.Time
+	SortBy       string
+	SortOrder    string
+	Limit        int
+	Offset       int
 }
 
 // ListResult 列表查询结果
@@ -78,16 +122,38 @@ func (r *AlertRepository) List(ctx context.Context, query *ListQuery) (*ListResu
 	args := []interface{}{query.TenantID}
 
 	if query.Severity != "" {
-		conditions = append(conditions, "severity = ?")
-		args = append(args, query.Severity)
+		conditions = append(conditions, "upperUTF8(severity) IN (?, ?)")
+		normalized := strings.ToUpper(strings.TrimPrefix(strings.ToUpper(query.Severity), "SEVERITY_"))
+		args = append(args, normalized, "SEVERITY_"+normalized)
 	}
 	if query.Status != "" {
-		conditions = append(conditions, "status = ?")
-		args = append(args, query.Status)
+		conditions = append(conditions, "upperUTF8(status) IN (?, ?)")
+		normalized := strings.ToUpper(strings.TrimPrefix(strings.ToUpper(query.Status), "ALERT_STATUS_"))
+		args = append(args, normalized, "ALERT_STATUS_"+normalized)
 	}
 	if query.AlertType != "" {
 		conditions = append(conditions, "alert_type = ?")
 		args = append(args, query.AlertType)
+	}
+	if query.RuleVersion != "" {
+		conditions = append(conditions, "rule_version = ?")
+		args = append(args, query.RuleVersion)
+	}
+	if query.ModelVersion != "" {
+		conditions = append(conditions, "model_version = ?")
+		args = append(args, query.ModelVersion)
+	}
+	if query.AttackPhase != "" {
+		conditions = append(conditions, alertAttackPhaseExpression+" = ?")
+		args = append(args, strings.ToLower(strings.TrimSpace(query.AttackPhase)))
+	}
+	if query.AssetIP != "" {
+		conditions = append(conditions, "(src_ip = ? OR dst_ip = ?)")
+		args = append(args, query.AssetIP, query.AssetIP)
+	}
+	if query.MinScore > 0 {
+		conditions = append(conditions, "score >= ?")
+		args = append(args, query.MinScore)
 	}
 	if query.SrcIP != "" {
 		conditions = append(conditions, "src_ip = ?")
@@ -110,27 +176,22 @@ func (r *AlertRepository) List(ctx context.Context, query *ListQuery) (*ListResu
 		args = append(args, query.EndTime.UnixMilli())
 	}
 
-	whereClause := strings.Join(conditions, " AND ")
+	whereClause := "1"
+	if len(conditions) > 0 {
+		whereClause = strings.Join(conditions, " AND ")
+	}
+	latestSource := alertLatestProjection
+	queryArgs := args
 
-	// 1. 查询总数
+	// 查询总数。ClickHouse 驱动返回的 Rows 与并发 QueryRow 不能在这里共享
+	// 同一查询上下文，否则某些 native 连接复用场景会得到正确 total 但空页。
 	countSQL := fmt.Sprintf(`
 		SELECT count() 
-		FROM traffic.alerts
+		FROM %s
 		WHERE %s
-	`, whereClause)
+	`, latestSource, whereClause)
 
-	var total uint64
-	row, err := r.client.QueryRow(ctx, countSQL, args...)
-	if err != nil {
-		r.logger.Error("Failed to query count", zap.Error(err))
-		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to query count")
-	}
-	if err := row.Scan(&total); err != nil {
-		r.logger.Error("Failed to scan count", zap.Error(err))
-		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to scan count")
-	}
-
-	// 2. 查询数据（使用物化视图，无需 FINAL）
+	// 查询数据（使用物化视图，无需 FINAL）
 	sortBy := "last_seen"
 	sortOrder := "DESC"
 	if query.SortBy != "" {
@@ -151,29 +212,91 @@ func (r *AlertRepository) List(ctx context.Context, query *ListQuery) (*ListResu
 	}
 
 	dataSQL := fmt.Sprintf(`
-		SELECT %s
-		FROM traffic.alerts
-		WHERE %s
-		ORDER BY %s %s
-		LIMIT %d OFFSET %d
-	`, alertSelectColumns, whereClause, sortBy, sortOrder, limit, offset)
+		SELECT toJSONString(groupArray(map(
+			'tenant_id', toString(tenant_id), 'alert_id', toString(alert_id),
+			'src_ip', toString(src_ip), 'dst_ip', toString(dst_ip),
+			'src_port', toString(src_port), 'dst_port', toString(dst_port),
+			'protocol', toString(protocol), 'alert_type', toString(alert_type),
+			'score', toString(score), 'severity', toString(severity),
+			'first_seen', toString(first_seen), 'last_seen', toString(last_seen),
+			'count', toString(count), 'status', toString(status),
+			'assignee', toString(assignee), 'updated_at', toString(updated_at),
+			'model_version', toString(model_version), 'rule_version', toString(rule_version),
+			'attack_phase', toString(attack_phase)
+		)))
+		FROM (
+			SELECT tenant_id, alert_id, src_ip, dst_ip, src_port, dst_port, protocol,
+				alert_type, score, severity, first_seen, last_seen, count, status,
+				assignee, updated_at, model_version, rule_version, %s AS attack_phase
+			FROM %s
+			WHERE %s
+			ORDER BY %s %s
+			LIMIT %d OFFSET %d
+		)
+	`, alertAttackPhaseExpression, latestSource, whereClause, sortBy, sortOrder, limit, offset)
 
-	rows, err := r.client.Query(ctx, dataSQL, args...)
+	dataRow, err := r.client.QueryRow(ctx, dataSQL, queryArgs...)
 	if err != nil {
 		r.logger.Error("Failed to query alerts", zap.Error(err))
 		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to query alerts")
 	}
-	defer rows.Close()
-
-	alerts, err := r.scanAlerts(rows)
+	var pageJSON string
+	if err := dataRow.Scan(&pageJSON); err != nil {
+		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to scan alert list page")
+	}
+	alerts, err := decodeAlertListPage(pageJSON)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to decode alert list page")
+	}
+	r.logger.Info("Alert list page loaded",
+		zap.String("tenant_id", query.TenantID),
+		zap.Int("rows", len(alerts)),
+		zap.Int("limit", limit),
+		zap.Int("offset", offset))
+	var total uint64
+	row, err := r.client.QueryRow(ctx, countSQL, queryArgs...)
+	if err != nil {
+		r.logger.Error("Failed to query count", zap.Error(err))
+		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to query count")
+	}
+	if err := row.Scan(&total); err != nil {
+		r.logger.Error("Failed to scan count", zap.Error(err))
+		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to scan count")
 	}
 
 	return &ListResult{
 		Alerts: alerts,
 		Total:  int64(total),
 	}, nil
+}
+
+func decodeAlertListPage(payload string) ([]*persistence.Alert, error) {
+	var records []map[string]string
+	if err := json.Unmarshal([]byte(payload), &records); err != nil {
+		return nil, err
+	}
+	alerts := make([]*persistence.Alert, 0, len(records))
+	for _, record := range records {
+		srcPort, _ := strconv.ParseUint(record["src_port"], 10, 16)
+		dstPort, _ := strconv.ParseUint(record["dst_port"], 10, 16)
+		protocol, _ := strconv.ParseUint(record["protocol"], 10, 8)
+		count, _ := strconv.ParseInt(record["count"], 10, 32)
+		score, _ := strconv.ParseFloat(record["score"], 32)
+		firstSeen, _ := strconv.ParseInt(record["first_seen"], 10, 64)
+		lastSeen, _ := strconv.ParseInt(record["last_seen"], 10, 64)
+		updatedAt, _ := strconv.ParseInt(record["updated_at"], 10, 64)
+		alerts = append(alerts, &persistence.Alert{
+			TenantID: record["tenant_id"], AlertID: record["alert_id"],
+			SrcIP: record["src_ip"], DstIP: record["dst_ip"],
+			SrcPort: uint16(srcPort), DstPort: uint16(dstPort), Protocol: uint8(protocol),
+			AlertType: record["alert_type"], Score: float32(score), Severity: record["severity"],
+			FirstSeen: time.UnixMilli(firstSeen), LastSeen: time.UnixMilli(lastSeen), Count: int32(count),
+			Status: record["status"], Assignee: record["assignee"], UpdatedTs: time.UnixMilli(updatedAt),
+			ModelVersion: record["model_version"], RuleVersion: record["rule_version"],
+			AttackPhase: record["attack_phase"],
+		})
+	}
+	return alerts, nil
 }
 
 // GetByID 根据ID查询告警
@@ -549,18 +672,17 @@ func (r *AlertRepository) GetStats(ctx context.Context, tenantID string, startTi
 	ctx, span := otel.StartSpan(ctx, "alert_repository.get_stats")
 	defer span.End()
 
-	// 修复：使用 alerts_latest 替代 alerts FINAL
-	sql := `
+	sql := fmt.Sprintf(`
 		SELECT 
 			severity,
 			status,
 			count() as cnt
-		FROM traffic.alerts
+		FROM %s
 		WHERE tenant_id = ?
 		  AND last_seen >= ?
 		  AND last_seen <= ?
 		GROUP BY severity, status
-	`
+	`, alertLatestProjection)
 
 	rows, err := r.client.Query(ctx, sql, tenantID, startTime.UnixMilli(), endTime.UnixMilli())
 	if err != nil {
@@ -609,13 +731,13 @@ func (r *AlertRepository) GetTrend(ctx context.Context, tenantID string, startTi
 			%s(fromUnixTimestamp64Milli(last_seen)) as ts,
 			severity,
 			count() as cnt
-		FROM traffic.alerts
+		FROM %s
 		WHERE tenant_id = ?
 		  AND last_seen >= ?
 		  AND last_seen <= ?
 		GROUP BY ts, severity
 		ORDER BY ts
-	`, timeFunc)
+	`, timeFunc, alertLatestProjection)
 	rows, err := r.client.Query(ctx, sql, tenantID, startTime.UnixMilli(), endTime.UnixMilli())
 	if err != nil {
 		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to query trend")
@@ -732,6 +854,33 @@ func (r *AlertRepository) scanAlerts(rows driver.Rows) ([]*persistence.Alert, er
 			return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to scan alert")
 		}
 		alerts = append(alerts, alert)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed while reading alert rows")
+	}
+	return alerts, nil
+}
+
+func (r *AlertRepository) scanAlertListRows(rows driver.Rows) ([]*persistence.Alert, error) {
+	alerts := make([]*persistence.Alert, 0)
+	for rows.Next() {
+		var alert persistence.Alert
+		var srcPort, dstPort, protocol uint32
+		if err := rows.Scan(
+			&alert.TenantID, &alert.AlertID, &alert.SrcIP, &alert.DstIP,
+			&srcPort, &dstPort, &protocol, &alert.AlertType, &alert.Score, &alert.Severity,
+			&alert.FirstSeen, &alert.LastSeen, &alert.Count, &alert.Status, &alert.Assignee,
+			&alert.UpdatedTs, &alert.ModelVersion, &alert.RuleVersion,
+		); err != nil {
+			return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to scan alert list row")
+		}
+		alert.SrcPort = uint16(srcPort)
+		alert.DstPort = uint16(dstPort)
+		alert.Protocol = uint8(protocol)
+		alerts = append(alerts, &alert)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed while reading alert list rows")
 	}
 	return alerts, nil
 }

@@ -94,19 +94,24 @@ func (s *AlertService) SetArkimeLinkGenerator(gen *arkime.LinkGenerator) {
 // ==================== 查询参数和结果定义 ====================
 // ListQuery 列表查询参数
 type ListQuery struct {
-	TenantID  string
-	Severity  string
-	Status    string
-	AlertType string
-	SrcIP     string
-	DstIP     string
-	Labels    []string
-	StartTime time.Time
-	EndTime   time.Time
-	SortBy    string
-	SortOrder string
-	Limit     int
-	Offset    int
+	TenantID     string
+	Severity     string
+	Status       string
+	AlertType    string
+	RuleVersion  string
+	ModelVersion string
+	AttackPhase  string
+	AssetIP      string
+	MinScore     float64
+	SrcIP        string
+	DstIP        string
+	Labels       []string
+	StartTime    time.Time
+	EndTime      time.Time
+	SortBy       string
+	SortOrder    string
+	Limit        int
+	Offset       int
 }
 
 // ListResult 列表结果
@@ -157,6 +162,7 @@ type AlertDTO struct {
 	Protocol     uint8     `json:"protocol"`
 	ProtocolName string    `json:"protocol_name"`
 	AlertType    string    `json:"alert_type"`
+	AttackPhase  string    `json:"attack_phase,omitempty"`
 	Labels       []string  `json:"labels"`
 	Score        float32   `json:"score"`
 	Severity     string    `json:"severity"`
@@ -167,6 +173,8 @@ type AlertDTO struct {
 	Assignee     string    `json:"assignee,omitempty"`
 	UpdatedAt    time.Time `json:"updated_at"`
 	StateVersion uint64    `json:"state_version"`
+	ModelVersion string    `json:"model_version,omitempty"`
+	RuleVersion  string    `json:"rule_version,omitempty"`
 }
 
 // StatusUpdateResult 告警状态更新结果
@@ -229,19 +237,24 @@ func (s *AlertService) ListAlerts(ctx context.Context, query *ListQuery) (*ListR
 	defer span.End()
 	// 转换为repository查询
 	repoQuery := &repository.ListQuery{
-		TenantID:  query.TenantID,
-		Severity:  query.Severity,
-		Status:    query.Status,
-		AlertType: query.AlertType,
-		SrcIP:     query.SrcIP,
-		DstIP:     query.DstIP,
-		Labels:    query.Labels,
-		StartTime: query.StartTime,
-		EndTime:   query.EndTime,
-		SortBy:    query.SortBy,
-		SortOrder: query.SortOrder,
-		Limit:     query.Limit,
-		Offset:    query.Offset,
+		TenantID:     query.TenantID,
+		Severity:     query.Severity,
+		Status:       query.Status,
+		AlertType:    query.AlertType,
+		RuleVersion:  query.RuleVersion,
+		ModelVersion: query.ModelVersion,
+		AttackPhase:  query.AttackPhase,
+		AssetIP:      query.AssetIP,
+		MinScore:     query.MinScore,
+		SrcIP:        query.SrcIP,
+		DstIP:        query.DstIP,
+		Labels:       query.Labels,
+		StartTime:    query.StartTime,
+		EndTime:      query.EndTime,
+		SortBy:       query.SortBy,
+		SortOrder:    query.SortOrder,
+		Limit:        query.Limit,
+		Offset:       query.Offset,
 	}
 	result, err := s.chRepo.List(ctx, repoQuery)
 	if err != nil {
@@ -651,14 +664,21 @@ func (s *AlertService) GetStorageStatus() map[fallback.StorageType]map[string]in
 // ==================== 导出功能（修复：流式处理）====================
 // ExportQuery 导出查询参数
 type ExportQuery struct {
-	TenantID  string
-	Severity  []string
-	Status    []string
-	AlertType string
-	StartTime time.Time
-	EndTime   time.Time
-	Format    string // csv, json
-	MaxCount  int
+	TenantID     string
+	Severity     []string
+	Status       []string
+	AlertType    string
+	RuleVersion  string
+	ModelVersion string
+	AttackPhase  string
+	AssetIP      string
+	SrcIP        string
+	DstIP        string
+	MinScore     float64
+	StartTime    time.Time
+	EndTime      time.Time
+	Format       string // csv, json
+	MaxCount     int
 }
 
 // ExportResult 导出结果
@@ -682,14 +702,10 @@ func (s *AlertService) ExportAlerts(ctx context.Context, query *ExportQuery, use
 	}
 	// 构建查询
 	listQuery := &ListQuery{
-		TenantID:  query.TenantID,
-		AlertType: query.AlertType,
-		StartTime: query.StartTime,
-		EndTime:   query.EndTime,
-		Limit:     query.MaxCount,
-		Offset:    0,
-		SortBy:    "last_seen",
-		SortOrder: "DESC",
+		TenantID: query.TenantID, AlertType: query.AlertType, RuleVersion: query.RuleVersion,
+		ModelVersion: query.ModelVersion, AttackPhase: query.AttackPhase, AssetIP: query.AssetIP,
+		SrcIP: query.SrcIP, DstIP: query.DstIP, MinScore: query.MinScore, StartTime: query.StartTime, EndTime: query.EndTime,
+		Limit: query.MaxCount, Offset: 0, SortBy: "last_seen", SortOrder: "DESC",
 	}
 	// 处理多值过滤
 	if len(query.Severity) > 0 {
@@ -731,9 +747,9 @@ func NewCSVExportWriter(w io.Writer) *CSVExportWriter {
 	csvWriter := csv.NewWriter(w)
 	// 写入表头
 	csvWriter.Write([]string{
-		"alert_id", "tenant_id", "severity", "status", "alert_type",
+		"alert_id", "tenant_id", "severity", "status", "alert_type", "attack_phase",
 		"src_ip", "dst_ip", "src_port", "dst_port", "protocol",
-		"first_seen", "last_seen", "count", "score", "assignee",
+		"first_seen", "last_seen", "count", "score", "assignee", "model_version", "rule_version",
 	})
 	return &CSVExportWriter{writer: csvWriter}
 }
@@ -746,6 +762,7 @@ func (w *CSVExportWriter) WriteAlert(alert *AlertDTO) error {
 		alert.Severity,
 		alert.Status,
 		alert.AlertType,
+		alert.AttackPhase,
 		alert.SrcIP,
 		alert.DstIP,
 		fmt.Sprintf("%d", alert.SrcPort),
@@ -756,6 +773,8 @@ func (w *CSVExportWriter) WriteAlert(alert *AlertDTO) error {
 		fmt.Sprintf("%d", alert.Count),
 		fmt.Sprintf("%.2f", alert.Score),
 		alert.Assignee,
+		alert.ModelVersion,
+		alert.RuleVersion,
 	})
 }
 
@@ -892,6 +911,7 @@ func (s *AlertService) toAlertDTO(a *persistence.Alert) *AlertDTO {
 		Protocol:     a.Protocol,
 		ProtocolName: a.GetProtocolName(),
 		AlertType:    a.AlertType,
+		AttackPhase:  a.AttackPhase,
 		Labels:       a.Labels,
 		Score:        a.Score,
 		Severity:     a.Severity,
@@ -902,6 +922,8 @@ func (s *AlertService) toAlertDTO(a *persistence.Alert) *AlertDTO {
 		Assignee:     a.Assignee,
 		UpdatedAt:    a.UpdatedTs,
 		StateVersion: stateVersionMillis(a.UpdatedTs),
+		ModelVersion: a.ModelVersion,
+		RuleVersion:  a.RuleVersion,
 	}
 }
 

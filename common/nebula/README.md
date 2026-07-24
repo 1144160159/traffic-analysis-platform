@@ -3,7 +3,8 @@
 > 集群名称: `traffic_graph`
 > 连接入口: `nebula-graph.middleware.svc:9669` (LoadBalancer `10.0.5.224`)
 > HTTP API: `nebula-graph:19669`
-> 用户/密码: `root` / `root`
+> 业务账号: `traffic_graph`; 密码仅由 `traffic-credentials/NEBULA_SERVICE_PASSWORD` 注入
+> 管理账号: `root`; 密码由 `NEBULA_ADMIN_PASSWORD` 在首次 Schema Job 中自动轮换
 
 ## 一、集群规格
 
@@ -24,13 +25,13 @@ CREATE SPACE traffic_graph(
 ```
 
 **VID 策略**: `FIXED_STRING(32)` 要求 VID 精确 32 字节。
-- Go 客户端使用 `hashVID()` 函数 (MD5 → 32 hex chars) 确定性生成 VID
-- 查询时必须通过 hashVID 转换后方可 FETCH/GO，否则返回空集
-- IP 地址、alert_id、campaign_id 等均需 hashVID 映射
+- 所有物理 VID 使用 `hashTenantVID(tenant_id, business_id)`，即 `MD5(trim(tenant_id) + ":" + trim(business_id))`
+- 业务 ID 保留在 Tag/Edge 属性中；查询和写入必须使用同一 tenant-qualified 映射
+- 不允许仅对 `entity_id`、IP、alert_id 或 campaign_id 做哈希，否则不同租户的同名实体会互相覆盖
 
 ## 三、数据模型
 
-### Tags (5 类节点)
+### Tags (6 类节点)
 
 ```nGQL
 CREATE TAG ip_address(
@@ -73,7 +74,7 @@ CREATE TAG network_device(
 );
 ```
 
-### Edge Types (7 类关系边)
+### Edge Types (8 类关系边)
 
 ```nGQL
 -- 网络通信 (src → dst)
@@ -103,7 +104,7 @@ CREATE EDGE connects_to(tenant_id STRING NOT NULL, port STRING, vlan_id INT32, b
 CREATE EDGE attack_path_hop(tenant_id STRING NOT NULL, campaign_id STRING, hop_order INT32, ts INT64);
 ```
 
-### 索引 (12 个)
+### 索引 (17 个)
 
 ```nGQL
 -- Tag 索引 (9)
@@ -141,6 +142,9 @@ kubectl wait --for=condition=ready pod -l app=nebula,component=graph -n middlewa
 
 # 初始化 Schema (或使用 init-nebula-schema Job)
 kubectl apply -f deployments/kubernetes/init-jobs/05-nebula-schema.yaml
+
+# 初始化实体图谱工作台数据（使用 traffic_graph 业务账号）
+kubectl apply -f deployments/kubernetes/init-jobs/06-nebula-workbench-seed.yaml
 ```
 
 ### 健康检查
@@ -149,23 +153,19 @@ kubectl apply -f deployments/kubernetes/init-jobs/05-nebula-schema.yaml
 # 查看所有 Pod
 kubectl get pods -n middleware -l app=nebula -o wide
 
-# 查看 Hosts 状态 (所有 Storage 应 ONLINE)
-kubectl run nebula-check --rm -it --restart=Never \
-  --image=vesoft/nebula-console:v3.6.0 -n middleware -- \
-  -addr nebula-graph.middleware.svc -port 9669 -u root -p root \
-  -e "SHOW HOSTS;"
+# Graph 服务健康状态
+kubectl run nebula-status --rm -i --restart=Never \
+  --image=curlimages/curl:8.10.1 -n middleware -- \
+  curl -fsS http://nebula-graph.middleware.svc:19669/status
 
-# 查看分区分布
-kubectl run nebula-parts --rm -it --restart=Never \
-  --image=vesoft/nebula-console:v3.6.0 -n middleware -- \
-  -addr nebula-graph.middleware.svc -port 9669 -u root -p root \
-  -e "USE traffic_graph; SHOW PARTS;"
+# 查看初始化结果（日志不打印凭证）
+kubectl get job init-nebula-schema seed-nebula-workbench -n middleware
+kubectl logs job/init-nebula-schema -n middleware
 
-# 查看 Tags 和 Edges
-kubectl run nebula-meta-check --rm -it --restart=Never \
-  --image=vesoft/nebula-console:v3.6.0 -n middleware -- \
-  -addr nebula-graph.middleware.svc -port 9669 -u root -p root \
-  -e "USE traffic_graph; SHOW TAGS; SHOW EDGES;"
+# 查看全部组件和逐 Pod DNS
+kubectl get pods -n middleware -l app=nebula -o wide
+kubectl get endpointslice -n middleware -l kubernetes.io/service-name=nebula-meta
+kubectl get endpointslice -n middleware -l kubernetes.io/service-name=nebula-storage-headless
 ```
 
 ### Storage 故障恢复
@@ -193,13 +193,14 @@ kubectl delete pod -n middleware nebula-storage-0 nebula-storage-1 nebula-storag
 
 ## 五、Go 客户端使用
 
-### 双客户端架构
+### 客户端架构
 
 | 客户端 | 文件 | 适用场景 |
 |--------|------|---------|
-| HTTP Client | `client_http.go` | 生产环境（需 nebula-http-gateway） |
-| Console Client | `client_console.go` | K8s Pod 内（需 nebula-console 二进制） |
-| TCP Client | `client.go` | 开发/测试（简化实现，生产需 nebula-go SDK） |
+| Workbench Store | `workbench_store.go` | 生产 Graph Service，官方 `nebula-go` SessionPool |
+| HTTP Client | `client_http.go` | 兼容 HTTP Gateway 的工具客户端 |
+| Console Client | `client_console.go` | K8s 运维 Job（需 nebula-console 二进制） |
+| Legacy TCP Client | `client.go` | 旧接口兼容；不作为生产 Graph Service 数据源 |
 
 ### 使用示例
 

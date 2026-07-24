@@ -12,6 +12,7 @@ package query
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"sync/atomic"
@@ -56,6 +57,67 @@ type Graph struct {
 	CacheHit  bool         `json:"cache_hit"` // 新增：缓存命中标志
 }
 
+// WorkbenchNode is a typed entity rendered by the entity-graph workbench.
+// Unlike GraphNode, it is not restricted to IP addresses and can represent
+// accounts, domains, alerts and evidence anchors stored by the fusion layer.
+type WorkbenchNode struct {
+	EntityID   string                 `json:"entity_id"`
+	EntityType string                 `json:"entity_type"`
+	Label      string                 `json:"label"`
+	Detail     string                 `json:"detail"`
+	RiskScore  uint8                  `json:"risk_score"`
+	RiskLevel  string                 `json:"risk_level"`
+	X          float32                `json:"x"`
+	Y          float32                `json:"y"`
+	Icon       string                 `json:"icon"`
+	Metadata   map[string]interface{} `json:"metadata"`
+	UpdatedAt  int64                  `json:"updated_at"`
+}
+
+// WorkbenchEdge is a typed relationship between two workbench entities.
+type WorkbenchEdge struct {
+	RelationID   string                 `json:"relation_id"`
+	SourceID     string                 `json:"source_id"`
+	TargetID     string                 `json:"target_id"`
+	RelationType string                 `json:"relation_type"`
+	RiskLevel    string                 `json:"risk_level"`
+	EvidenceID   string                 `json:"evidence_id,omitempty"`
+	Attributes   map[string]interface{} `json:"attributes"`
+	Weight       float32                `json:"weight"`
+	ObservedAt   int64                  `json:"observed_at"`
+}
+
+// WorkbenchGraph is the database-backed graph contract consumed by the UI.
+type WorkbenchGraph struct {
+	CenterID string           `json:"center_id"`
+	Nodes    []*WorkbenchNode `json:"nodes"`
+	Edges    []*WorkbenchEdge `json:"edges"`
+}
+
+// WorkbenchFilter captures the analyst-controlled neighborhood filters.
+type WorkbenchFilter struct {
+	CenterID    string
+	RequiredIDs []string
+	Depth       int
+	EntityType  string
+	Site        string
+	SinceMS     int64
+	TimeRange   string
+	Limit       int
+}
+
+// WorkbenchPath is a persisted relationship path returned for one analysis tab.
+type WorkbenchPath struct {
+	Mode        string           `json:"mode"`
+	SourceID    string           `json:"source_id"`
+	TargetID    string           `json:"target_id"`
+	NodeIDs     []string         `json:"node_ids"`
+	Edges       []*WorkbenchEdge `json:"edges"`
+	Length      int              `json:"length"`
+	RiskLevel   string           `json:"risk_level"`
+	EvidenceIDs []string         `json:"evidence_ids"`
+}
+
 // Path 路径
 type Path struct {
 	Nodes  []string `json:"nodes"`
@@ -85,13 +147,21 @@ type TimelinePoint struct {
 
 // GraphQuery 图查询引擎
 type GraphQuery struct {
-	client *storage.ClickHouseClient
-	cache  *cache.GraphCache
-	config config.QueryConfig
-	logger *zap.Logger
+	client         *storage.ClickHouseClient
+	workbenchStore WorkbenchStore
+	cache          *cache.GraphCache
+	config         config.QueryConfig
+	logger         *zap.Logger
 
 	// 统计指标
 	metrics QueryMetrics
+}
+
+// WorkbenchStore is the persistence boundary for the multi-entity graph.
+// Production wires a NebulaGraph implementation; keeping the interface here
+// makes tenant filtering and traversal behavior independently testable.
+type WorkbenchStore interface {
+	LoadWorkbenchGraph(ctx context.Context, tenantID string) ([]*WorkbenchNode, []*WorkbenchEdge, error)
 }
 
 // QueryMetrics 查询指标
@@ -101,6 +171,372 @@ type QueryMetrics struct {
 	TimeoutQueries int64
 	CacheHits      int64
 	CacheMisses    int64
+}
+
+// GetWorkbenchGraph returns the typed, persisted entity graph used by the
+// analyst workbench. The tables are populated by the fusion pipeline; the
+// query deliberately keeps tenant isolation in both node and edge reads.
+func (g *GraphQuery) GetWorkbenchGraph(ctx context.Context, tenantID string, filter WorkbenchFilter) (*WorkbenchGraph, error) {
+	if g.workbenchStore != nil {
+		nodes, edges, err := g.workbenchStore.LoadWorkbenchGraph(ctx, tenantID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load NebulaGraph workbench graph: %w", err)
+		}
+		return filterWorkbenchGraph(nodes, edges, filter), nil
+	}
+
+	return g.getClickHouseWorkbenchGraph(ctx, tenantID, filter)
+}
+
+// getClickHouseWorkbenchGraph remains as a compatibility path for unit tests
+// and non-Nebula development environments. Production enables NebulaGraph and
+// injects WorkbenchStore during service startup.
+func (g *GraphQuery) getClickHouseWorkbenchGraph(ctx context.Context, tenantID string, filter WorkbenchFilter) (*WorkbenchGraph, error) {
+	nodeRows, err := g.client.Query(ctx, `
+		SELECT entity_id, entity_type, label, detail, risk_score, risk_level,
+		       x, y, icon, metadata_json, updated_at
+		FROM traffic.entity_graph_nodes FINAL
+		WHERE tenant_id = ?
+		ORDER BY entity_id
+	`, tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query entity graph nodes: %w", err)
+	}
+	defer nodeRows.Close()
+
+	nodes := make([]*WorkbenchNode, 0)
+	for nodeRows.Next() {
+		var node WorkbenchNode
+		var metadataJSON string
+		if scanErr := nodeRows.Scan(
+			&node.EntityID,
+			&node.EntityType,
+			&node.Label,
+			&node.Detail,
+			&node.RiskScore,
+			&node.RiskLevel,
+			&node.X,
+			&node.Y,
+			&node.Icon,
+			&metadataJSON,
+			&node.UpdatedAt,
+		); scanErr != nil {
+			return nil, fmt.Errorf("failed to scan entity graph node: %w", scanErr)
+		}
+		node.Metadata = make(map[string]interface{})
+		if metadataJSON != "" {
+			if decodeErr := json.Unmarshal([]byte(metadataJSON), &node.Metadata); decodeErr != nil {
+				return nil, fmt.Errorf("failed to decode entity graph node metadata: %w", decodeErr)
+			}
+		}
+		nodes = append(nodes, &node)
+	}
+	if err := nodeRows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to iterate entity graph nodes: %w", err)
+	}
+
+	edgeRows, err := g.client.Query(ctx, `
+		SELECT relation_id, source_id, target_id, relation_type, risk_level,
+		       evidence_id, attributes_json, weight, observed_at
+		FROM traffic.entity_graph_edges FINAL
+		WHERE tenant_id = ?
+		ORDER BY relation_id
+	`, tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query entity graph edges: %w", err)
+	}
+	defer edgeRows.Close()
+
+	edges := make([]*WorkbenchEdge, 0)
+	for edgeRows.Next() {
+		var edge WorkbenchEdge
+		var attributesJSON string
+		if scanErr := edgeRows.Scan(
+			&edge.RelationID,
+			&edge.SourceID,
+			&edge.TargetID,
+			&edge.RelationType,
+			&edge.RiskLevel,
+			&edge.EvidenceID,
+			&attributesJSON,
+			&edge.Weight,
+			&edge.ObservedAt,
+		); scanErr != nil {
+			return nil, fmt.Errorf("failed to scan entity graph edge: %w", scanErr)
+		}
+		edge.Attributes = make(map[string]interface{})
+		if attributesJSON != "" {
+			if decodeErr := json.Unmarshal([]byte(attributesJSON), &edge.Attributes); decodeErr != nil {
+				return nil, fmt.Errorf("failed to decode entity graph edge attributes: %w", decodeErr)
+			}
+		}
+		edges = append(edges, &edge)
+	}
+	if err := edgeRows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to iterate entity graph edges: %w", err)
+	}
+
+	return filterWorkbenchGraph(nodes, edges, filter), nil
+}
+
+// SetWorkbenchStore switches the workbench persistence layer to NebulaGraph.
+func (g *GraphQuery) SetWorkbenchStore(store WorkbenchStore) {
+	g.workbenchStore = store
+}
+
+func (g *GraphQuery) WorkbenchSource() string {
+	if g.workbenchStore != nil {
+		return "nebula_graph"
+	}
+	return "clickhouse_entity_graph"
+}
+
+func filterWorkbenchGraph(nodes []*WorkbenchNode, edges []*WorkbenchEdge, filter WorkbenchFilter) *WorkbenchGraph {
+	if filter.Depth < 1 {
+		filter.Depth = 2
+	}
+	byID := make(map[string]*WorkbenchNode, len(nodes))
+	for _, node := range nodes {
+		byID[node.EntityID] = node
+	}
+	centerID := filter.CenterID
+	if _, ok := byID[centerID]; !ok {
+		if _, preferred := byID["host:10.20.4.18"]; preferred {
+			centerID = "host:10.20.4.18"
+		} else if len(nodes) > 0 {
+			centerID = nodes[0].EntityID
+		}
+	}
+	required := make(map[string]bool, len(filter.RequiredIDs)+1)
+	required[centerID] = true
+	for _, nodeID := range filter.RequiredIDs {
+		if nodeID != "" {
+			required[nodeID] = true
+		}
+	}
+
+	eligibleEdges := make([]*WorkbenchEdge, 0, len(edges))
+	adjacency := make(map[string][]*WorkbenchEdge)
+	for _, edge := range edges {
+		if filter.SinceMS > 0 && edge.ObservedAt < filter.SinceMS {
+			continue
+		}
+		eligibleEdges = append(eligibleEdges, edge)
+		adjacency[edge.SourceID] = append(adjacency[edge.SourceID], edge)
+		adjacency[edge.TargetID] = append(adjacency[edge.TargetID], edge)
+	}
+
+	distance := map[string]int{centerID: 0}
+	queue := []string{centerID}
+	for len(queue) > 0 {
+		current := queue[0]
+		queue = queue[1:]
+		if distance[current] >= filter.Depth {
+			continue
+		}
+		for _, edge := range adjacency[current] {
+			next := edge.TargetID
+			if next == current {
+				next = edge.SourceID
+			}
+			if _, seen := distance[next]; seen {
+				continue
+			}
+			distance[next] = distance[current] + 1
+			queue = append(queue, next)
+		}
+	}
+
+	visible := make(map[string]bool, len(distance))
+	for nodeID := range distance {
+		node := byID[nodeID]
+		if node == nil {
+			continue
+		}
+		if filter.Site != "" && filter.Site != "all" && metadataString(node.Metadata, "site") != filter.Site {
+			continue
+		}
+		if filter.EntityType != "" && filter.EntityType != "all" && node.EntityType != filter.EntityType && !required[nodeID] {
+			continue
+		}
+		visible[nodeID] = true
+	}
+	visible[centerID] = byID[centerID] != nil
+
+	filteredNodes := make([]*WorkbenchNode, 0, len(visible))
+	retained := make(map[string]bool, len(visible))
+	appendNode := func(node *WorkbenchNode) {
+		if node == nil || !visible[node.EntityID] || retained[node.EntityID] {
+			return
+		}
+		if filter.Limit > 0 && len(filteredNodes) >= filter.Limit {
+			return
+		}
+		filteredNodes = append(filteredNodes, node)
+		retained[node.EntityID] = true
+	}
+	appendNode(byID[centerID])
+	for _, nodeID := range filter.RequiredIDs {
+		appendNode(byID[nodeID])
+	}
+	for _, node := range nodes {
+		appendNode(node)
+	}
+	filteredEdges := make([]*WorkbenchEdge, 0, len(eligibleEdges))
+	for _, edge := range eligibleEdges {
+		if !retained[edge.SourceID] || !retained[edge.TargetID] {
+			continue
+		}
+		if minInt(distance[edge.SourceID], distance[edge.TargetID]) >= filter.Depth {
+			continue
+		}
+		filteredEdges = append(filteredEdges, edge)
+	}
+	return &WorkbenchGraph{CenterID: centerID, Nodes: filteredNodes, Edges: filteredEdges}
+}
+
+type workbenchPathStep struct {
+	nodeID string
+	edge   *WorkbenchEdge
+}
+
+func findDirectedWorkbenchSegment(adjacency map[string][]workbenchPathStep, sourceID, targetID string, maxDepth int) ([]string, []*WorkbenchEdge, bool) {
+	if sourceID == targetID {
+		return []string{sourceID}, []*WorkbenchEdge{}, true
+	}
+	previousNode := make(map[string]string)
+	previousEdge := make(map[string]*WorkbenchEdge)
+	distance := map[string]int{sourceID: 0}
+	queue := []string{sourceID}
+	for len(queue) > 0 {
+		current := queue[0]
+		queue = queue[1:]
+		if distance[current] >= maxDepth {
+			continue
+		}
+		for _, candidate := range adjacency[current] {
+			if _, seen := distance[candidate.nodeID]; seen {
+				continue
+			}
+			distance[candidate.nodeID] = distance[current] + 1
+			previousNode[candidate.nodeID] = current
+			previousEdge[candidate.nodeID] = candidate.edge
+			if candidate.nodeID == targetID {
+				queue = nil
+				break
+			}
+			queue = append(queue, candidate.nodeID)
+		}
+	}
+	if _, found := distance[targetID]; !found {
+		return []string{}, []*WorkbenchEdge{}, false
+	}
+	nodeIDs := []string{targetID}
+	pathEdges := make([]*WorkbenchEdge, 0, distance[targetID])
+	for current := targetID; current != sourceID; current = previousNode[current] {
+		pathEdges = append(pathEdges, previousEdge[current])
+		nodeIDs = append(nodeIDs, previousNode[current])
+	}
+	reverseStrings(nodeIDs)
+	reverseEdges(pathEdges)
+	return nodeIDs, pathEdges, true
+}
+
+// FindWorkbenchPath resolves a real persisted relationship path for a path-analysis tab.
+func (g *GraphQuery) FindWorkbenchPath(ctx context.Context, tenantID, sourceID, targetID, anchorID, mode string, filter WorkbenchFilter) (*WorkbenchPath, error) {
+	filter.CenterID = sourceID
+	filter.RequiredIDs = []string{sourceID, targetID, anchorID}
+	graph, err := g.GetWorkbenchGraph(ctx, tenantID, filter)
+	if err != nil {
+		return nil, err
+	}
+	maxDepth := filter.Depth
+	if maxDepth < 1 {
+		maxDepth = 3
+	}
+	adjacency := make(map[string][]workbenchPathStep)
+	for _, edge := range graph.Edges {
+		if !workbenchEdgeMatchesMode(edge, mode) {
+			continue
+		}
+		adjacency[edge.SourceID] = append(adjacency[edge.SourceID], workbenchPathStep{nodeID: edge.TargetID, edge: edge})
+	}
+	var nodeIDs []string
+	var pathEdges []*WorkbenchEdge
+	var found bool
+	if anchorID != "" && anchorID != sourceID && anchorID != targetID {
+		var firstNodes, secondNodes []string
+		var firstEdges, secondEdges []*WorkbenchEdge
+		firstNodes, firstEdges, found = findDirectedWorkbenchSegment(adjacency, sourceID, anchorID, maxDepth)
+		if found {
+			remainingDepth := maxDepth - len(firstEdges)
+			secondNodes, secondEdges, found = findDirectedWorkbenchSegment(adjacency, anchorID, targetID, remainingDepth)
+		}
+		if found {
+			nodeIDs = append(firstNodes, secondNodes[1:]...)
+			pathEdges = append(firstEdges, secondEdges...)
+		}
+	} else {
+		nodeIDs, pathEdges, found = findDirectedWorkbenchSegment(adjacency, sourceID, targetID, maxDepth)
+	}
+	if !found {
+		return &WorkbenchPath{Mode: mode, SourceID: sourceID, TargetID: targetID, NodeIDs: []string{}, Edges: []*WorkbenchEdge{}, EvidenceIDs: []string{}}, nil
+	}
+	risk := "low"
+	evidenceSet := make(map[string]bool)
+	evidenceIDs := make([]string, 0, len(pathEdges))
+	for _, edge := range pathEdges {
+		if edge.RiskLevel == "high" || edge.RiskLevel == "medium" && risk != "high" {
+			risk = edge.RiskLevel
+		}
+		if edge.EvidenceID != "" && !evidenceSet[edge.EvidenceID] {
+			evidenceSet[edge.EvidenceID] = true
+			evidenceIDs = append(evidenceIDs, edge.EvidenceID)
+		}
+	}
+	return &WorkbenchPath{Mode: mode, SourceID: sourceID, TargetID: targetID, NodeIDs: nodeIDs, Edges: pathEdges, Length: len(pathEdges), RiskLevel: risk, EvidenceIDs: evidenceIDs}, nil
+}
+
+func workbenchEdgeMatchesMode(edge *WorkbenchEdge, mode string) bool {
+	switch mode {
+	case "attack":
+		return edge.RelationType == "关联告警" || attributeString(edge.Attributes, "attack_stage") != "" || attributeString(edge.Attributes, "action") != "" || attributeString(edge.Attributes, "alert_stage") != ""
+	case "communication":
+		return edge.RelationType == "通信" || edge.RelationType == "DNS解析" || edge.RelationType == "行为服务"
+	case "account":
+		return (edge.RelationType == "登录" || edge.RelationType == "账号访问") && attributeString(edge.Attributes, "identity_label") != ""
+	default:
+		return true
+	}
+}
+
+func attributeString(attributes map[string]interface{}, key string) string {
+	value, _ := attributes[key].(string)
+	return strings.TrimSpace(value)
+}
+
+func metadataString(metadata map[string]interface{}, key string) string {
+	value, _ := metadata[key].(string)
+	return value
+}
+
+func minInt(left, right int) int {
+	if left < right {
+		return left
+	}
+	return right
+}
+
+func reverseStrings(values []string) {
+	for left, right := 0, len(values)-1; left < right; left, right = left+1, right-1 {
+		values[left], values[right] = values[right], values[left]
+	}
+}
+
+func reverseEdges(values []*WorkbenchEdge) {
+	for left, right := 0, len(values)-1; left < right; left, right = left+1, right-1 {
+		values[left], values[right] = values[right], values[left]
+	}
 }
 
 // NewGraphQuery 创建图查询引擎

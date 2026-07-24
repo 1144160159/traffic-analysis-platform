@@ -228,7 +228,7 @@ func (s *TokenService) CreateToken(ctx context.Context, req *CreateTokenRequest)
 	}
 
 	// 修复 #A9：创建 Token（数据库唯一约束会防止重复）
-	err = s.tokenRepo.Create(ctx, token)
+	err = s.tokenRepo.CreateWithAudit(ctx, token, req.CreatedBy)
 	if err != nil {
 		// 检查是否是唯一约束冲突
 		if isUniqueViolation(err) {
@@ -449,24 +449,21 @@ func (s *TokenService) UpdateToken(ctx context.Context, tenantID string, tokenID
 		return token, nil
 	}
 
-	// 更新到数据库
-	if err := s.tokenRepo.Update(ctx, token); err != nil {
+	newValues := map[string]interface{}{
+		"name": token.Name, "description": token.Description,
+		"scopes": model.ScopesToList(token.Scopes), "ip_whitelist": model.ScopesToList(token.IPWhitelist),
+		"expires_at": token.ExpiresAt,
+	}
+	// 更新与 durable audit 同一事务提交。
+	if err := s.tokenRepo.UpdateWithAudit(ctx, token, updatedBy, oldValues, newValues); err != nil {
 		s.logger.Error("Failed to update token",
 			zap.String("token_id", tokenID.String()),
 			zap.Error(err))
 		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to update token")
 	}
 
-	// 记录审计日志
+	// 外部审计流是事务审计之后的辅助副本。
 	if s.auditLogger != nil {
-		newValues := map[string]interface{}{
-			"name":         token.Name,
-			"description":  token.Description,
-			"scopes":       model.ScopesToList(token.Scopes),
-			"ip_whitelist": model.ScopesToList(token.IPWhitelist),
-			"expires_at":   token.ExpiresAt,
-		}
-
 		s.auditLogger.Log(ctx, &audit.AuditEvent{
 			EventType:    audit.EventTypeTokenCreate,
 			TenantID:     tenantID,
@@ -503,7 +500,7 @@ func (s *TokenService) RevokeToken(ctx context.Context, tenantID string, tokenID
 		return errors.New(errors.ErrCodeEntityNotFound, "Token not found")
 	}
 
-	if err := s.tokenRepo.Revoke(ctx, tokenID, "user_revoked"); err != nil {
+	if err := s.tokenRepo.RevokeWithAudit(ctx, tenantID, tokenID, revokedBy, token.Name, "user_revoked"); err != nil {
 		s.logger.Error("Failed to revoke token",
 			zap.String("token_id", tokenID.String()),
 			zap.Error(err))
@@ -511,7 +508,9 @@ func (s *TokenService) RevokeToken(ctx context.Context, tenantID string, tokenID
 		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to revoke token")
 	}
 
-	s.recordRevokeAuditSuccess(ctx, tenantID, token.Name, tokenID.String(), revokedBy)
+	if s.auditLogger != nil {
+		s.auditLogger.Log(ctx, &audit.AuditEvent{EventType: audit.EventTypeTokenRevoke, TenantID: tenantID, UserID: revokedBy.String(), Action: "revoke_token", ResourceType: "api_token", ResourceID: tokenID.String(), Detail: map[string]interface{}{"name": token.Name}, Result: audit.ResultSuccess})
+	}
 
 	s.logger.Info("API Token revoked",
 		zap.String("token_id", tokenID.String()),
@@ -536,7 +535,7 @@ func (s *TokenService) DeleteToken(ctx context.Context, tenantID string, tokenID
 		return errors.New(errors.ErrCodeEntityNotFound, "Token not found")
 	}
 
-	if err := s.tokenRepo.Delete(ctx, tokenID); err != nil {
+	if err := s.tokenRepo.DeleteWithAudit(ctx, tenantID, tokenID, deletedBy, token.Name); err != nil {
 		s.logger.Error("Failed to delete token",
 			zap.String("token_id", tokenID.String()),
 			zap.Error(err))
@@ -587,7 +586,8 @@ func (s *TokenService) UpdateTokenScopes(ctx context.Context, tenantID string, t
 		return errors.New(errors.ErrCodeEntityNotFound, "Token not found")
 	}
 
-	if err := s.tokenRepo.UpdateScopes(ctx, tokenID, validScopes); err != nil {
+	oldScopes := model.ScopesToList(token.Scopes)
+	if err := s.tokenRepo.UpdateScopesWithAudit(ctx, tenantID, tokenID, validScopes, oldScopes, updatedBy); err != nil {
 		s.logger.Error("Failed to update token scopes",
 			zap.String("token_id", tokenID.String()),
 			zap.Error(err))
@@ -595,11 +595,6 @@ func (s *TokenService) UpdateTokenScopes(ctx context.Context, tenantID string, t
 	}
 
 	if s.auditLogger != nil {
-		oldScopes := []string{}
-		for _, scope := range token.Scopes {
-			oldScopes = append(oldScopes, scope)
-		}
-
 		s.auditLogger.Log(ctx, &audit.AuditEvent{
 			EventType:    audit.EventTypeTokenCreate,
 			TenantID:     tenantID,
@@ -674,31 +669,37 @@ func (s *TokenService) RegenerateToken(ctx context.Context, tenantID string, tok
 		expiresIn = &d
 	}
 
-	newTokenResp, err := s.CreateToken(ctx, &CreateTokenRequest{
-		TenantID:    oldToken.TenantID,
-		Name:        oldToken.Name + " (regenerated)",
-		Description: oldToken.Description,
-		Scopes:      scopes,
-		ExpiresIn:   expiresIn,
-		ProbeID:     oldToken.ProbeID,
-		CreatedBy:   regeneratedBy,
-	})
+	plainToken, err := s.tokenHasher.GenerateAPIKey(string(oldToken.TokenType))
 	if err != nil {
-		return nil, errors.Wrap(err, errors.ErrCodeInternal, "Failed to create new token")
+		return nil, errors.Wrap(err, errors.ErrCodeInternal, "Failed to generate token")
 	}
-
-	if err := s.tokenRepo.Revoke(ctx, tokenID, "regenerated"); err != nil {
-		s.logger.Warn("Failed to revoke old token after regeneration",
-			zap.String("old_token_id", tokenID.String()),
-			zap.Error(err))
+	tokenHash, err := s.tokenHasher.HashToken(plainToken)
+	if err != nil {
+		return nil, errors.Wrap(err, errors.ErrCodeInternal, "Failed to hash token")
 	}
+	now := time.Now()
+	var expiresAt *time.Time
+	if expiresIn != nil && *expiresIn > 0 {
+		value := now.Add(*expiresIn)
+		expiresAt = &value
+	}
+	newToken := &model.APIToken{
+		TenantID: oldToken.TenantID, Name: oldToken.Name + " (rotated " + now.UTC().Format("20060102T150405") + ")",
+		Description: oldToken.Description, TokenType: oldToken.TokenType, TokenHash: tokenHash,
+		TokenPrefix: security.TokenPrefix(plainToken), Scopes: model.StringSlice(scopes), Status: model.TokenStatusActive,
+		ExpiresAt: expiresAt, CreatedBy: &regeneratedBy, ProbeID: oldToken.ProbeID,
+		IPWhitelist: oldToken.IPWhitelist, Metadata: oldToken.Metadata,
+	}
+	if err := s.tokenRepo.RotateWithAudit(ctx, tenantID, tokenID, newToken, regeneratedBy); err != nil {
+		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to rotate token atomically")
+	}
+	newTokenResp := &CreateTokenResponse{TokenID: newToken.TokenID, Token: plainToken, TokenPrefix: newToken.TokenPrefix, Name: newToken.Name, Scopes: scopes, ProbeID: newToken.ProbeID, ExpiresAt: expiresAt, CreatedAt: newToken.CreatedAt}
 
 	if s.auditLogger != nil {
 		detail := map[string]interface{}{
 			"old_token_id": tokenID.String(),
 			"new_token_id": newTokenResp.TokenID.String(),
 		}
-		s.writeAuditRow(ctx, tenantID, regeneratedBy.String(), "regenerate_token", "api_token", newTokenResp.TokenID.String(), detail)
 		s.auditLogger.Log(ctx, &audit.AuditEvent{
 			EventType:    audit.EventTypeTokenCreate,
 			TenantID:     tenantID,
@@ -708,11 +709,6 @@ func (s *TokenService) RegenerateToken(ctx context.Context, tenantID string, tok
 			ResourceID:   newTokenResp.TokenID.String(),
 			Detail:       detail,
 			Result:       audit.ResultSuccess,
-		})
-	} else {
-		s.writeAuditRow(ctx, tenantID, regeneratedBy.String(), "regenerate_token", "api_token", newTokenResp.TokenID.String(), map[string]interface{}{
-			"old_token_id": tokenID.String(),
-			"new_token_id": newTokenResp.TokenID.String(),
 		})
 	}
 
@@ -783,8 +779,6 @@ func (s *TokenService) recordAuditSuccess(ctx context.Context, req *CreateTokenR
 		"scopes":   req.Scopes,
 		"probe_id": req.ProbeID,
 	}
-	s.writeAuditRow(ctx, req.TenantID, req.CreatedBy.String(), "create_token", "api_token", tokenID, detail)
-
 	if s.auditLogger == nil {
 		return
 	}

@@ -2,6 +2,36 @@ package config
 
 import "testing"
 
+func TestClickHouseHostsNormalizeCommaSeparatedEnvironmentValue(t *testing.T) {
+	cfg := ClickHouseConfig{Hosts: []string{"clickhouse-1.middleware.svc:9000,clickhouse-2.middleware.svc:9000"}}
+
+	got := cfg.GetHosts()
+	want := []string{"clickhouse-1.middleware.svc:9000", "clickhouse-2.middleware.svc:9000"}
+	if len(got) != len(want) {
+		t.Fatalf("GetHosts() = %#v, want %#v", got, want)
+	}
+	for index := range want {
+		if got[index] != want[index] {
+			t.Fatalf("GetHosts()[%d] = %q, want %q", index, got[index], want[index])
+		}
+	}
+}
+
+func TestClickHouseHostsNormalizeDefaultDSN(t *testing.T) {
+	cfg := ClickHouseConfig{DSN: "clickhouse://default:@clickhouse-1.middleware.svc:9000,clickhouse-2.middleware.svc:9000/traffic"}
+
+	got := cfg.GetHosts()
+	want := []string{"clickhouse-1.middleware.svc:9000", "clickhouse-2.middleware.svc:9000"}
+	if len(got) != len(want) {
+		t.Fatalf("GetHosts() = %#v, want %#v", got, want)
+	}
+	for index := range want {
+		if got[index] != want[index] {
+			t.Fatalf("GetHosts()[%d] = %q, want %q", index, got[index], want[index])
+		}
+	}
+}
+
 func TestAuthConnectionStringFromParts(t *testing.T) {
 	cfg := AuthConfig{
 		PostgresHost:           "postgres-primary.databases.svc",

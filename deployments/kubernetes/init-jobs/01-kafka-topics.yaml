@@ -45,6 +45,7 @@ spec:
             "detections.business.v1:6:259200000:268435456" \
             "alerts.v1:6:259200000:268435456" \
             "alert.feedback.v1:3:259200000:268435456" \
+            "alert.response.requested.v1:3:259200000:268435456" \
             "campaigns.v1:6:259200000:268435456" \
             "pcap.index.v1:6:259200000:536870912" \
             "rule.updates:1:86400000:134217728" \

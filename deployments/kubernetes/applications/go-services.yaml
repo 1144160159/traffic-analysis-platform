@@ -90,19 +90,24 @@ spec:
 ---
 apiVersion: apps/v1
 kind: Deployment
-metadata: {name: auth-service, namespace: traffic-analysis}
+metadata:
+  name: auth-service
+  namespace: traffic-analysis
+  annotations:
+    kubernetes.io/change-cause: "Principal-scoped navigation idempotency and support audit request r520"
+    traffic.analysis/source-revision: "not-found-r520"
 spec:
   replicas: 1
   selector: {matchLabels: {app: auth-service}}
   template:
     metadata:
       labels: {app: auth-service}
-      annotations: {prometheus.io/scrape: "true", prometheus.io/port: "9092"}
+      annotations: {prometheus.io/scrape: "true", prometheus.io/port: "9092", traffic.analysis/build-id: "not-found-20260720-r520", traffic.analysis/image-digest: "sha256:d02bbf843802240955626a728781b220f89e90c92762639196d98c3165c383b6", traffic.analysis/image-id: "sha256:edf8c8c1943608ba2646d5b1eb2c6cb7a40d1763f3eb0b4395b5fa1fc538fd29"}
     spec:
       securityContext: {fsGroup: 1000, fsGroupChangePolicy: OnRootMismatch}
       containers:
       - name: auth-service
-        image: docker.io/traffic/auth-service@sha256:dbaba705c7309a36e3e8cac8aa4dbd1ff06794afcd3e72e33fa963a9bd5823b5
+        image: docker.io/traffic/auth-service@sha256:d02bbf843802240955626a728781b220f89e90c92762639196d98c3165c383b6
         imagePullPolicy: Never
         ports: [{containerPort: 8081}, {containerPort: 9092}]
         env:
@@ -155,20 +160,20 @@ metadata:
   name: alert-service
   namespace: traffic-analysis
   annotations:
-    kubernetes.io/change-cause: "Probe management real operations and canonical UI fixture r219"
-    traffic.analysis/source-revision: "worktree-20260716"
+    kubernetes.io/change-cause: "Campaigns r720 exposes selected-campaign phase aggregation provenance for truthful ATT&CK and evidence rendering"
+    traffic.analysis/source-revision: "601377b80087c3c2f993688993c3f032e8298b89a6cbab10621584966fe90683"
 spec:
   replicas: 1
   selector: {matchLabels: {app: alert-service}}
   template:
     metadata:
       labels: {app: alert-service}
-      annotations: {prometheus.io/scrape: "true", prometheus.io/port: "9093", traffic.analysis/build-id: "probe-topology-api-svg-20260716-r225-worktree"}
+      annotations: {prometheus.io/scrape: "true", prometheus.io/port: "9093", traffic.analysis/build-id: "campaigns-r720", traffic.analysis/source-digest: "601377b80087c3c2f993688993c3f032e8298b89a6cbab10621584966fe90683", traffic.analysis/image-digest: "sha256:20d44e52042a43686619a4861b7521b1a5b0ce6a7af0427381e21bbbab3b5da1", traffic.analysis/image-id: "sha256:751c45b63ce8cbece0d33863a579940001f50eb3c98b4adccb8dbf37731a51a3"}
     spec:
       terminationGracePeriodSeconds: 120
       containers:
       - name: alert-service
-        image: docker.io/traffic/alert-service:data-quality-daily-report-api-20260716-r229
+        image: docker.io/traffic/alert-service@sha256:20d44e52042a43686619a4861b7521b1a5b0ce6a7af0427381e21bbbab3b5da1
         imagePullPolicy: Never
         ports: [{containerPort: 8082}, {containerPort: 9093}]
         lifecycle:
@@ -347,17 +352,28 @@ spec:
 ---
 apiVersion: apps/v1
 kind: Deployment
-metadata: {name: graph-service, namespace: traffic-analysis}
+metadata:
+  name: graph-service
+  namespace: traffic-analysis
+  annotations:
+    kubernetes.io/change-cause: "Entity workbench native NebulaGraph source metadata r575"
+    traffic.analysis/source-revision: "entity-graph-nebulagraph-native-r575"
 spec:
   replicas: 1
   selector: {matchLabels: {app: graph-service}}
   template:
-    metadata: {labels: {app: graph-service}}
+    metadata:
+      labels: {app: graph-service}
+      annotations:
+        traffic.analysis/build-id: "entity-graph-nebulagraph-native-20260721-r575"
+        traffic.analysis/source-digest: "official-nebula-go-session-pool-tenant-isolated-entity-relation-lookup"
+        traffic.analysis/image-digest: "sha256:c2af7b2361d1bb606d10e24e5251ab59a8200d6424752b4964ec5dade7b6db6c"
+        traffic.analysis/image-id: "sha256:7f0f1f46518c3adbff1490e69fb73eaf761d0a28235560597acefe1817d2a79a"
     spec:
       securityContext: {fsGroup: 1000, fsGroupChangePolicy: OnRootMismatch}
       containers:
       - name: graph-service
-        image: docker.io/traffic/graph-service@sha256:43b44faa0ec00f54c8c3087c908eae0d7e7d9d76313583ad9e95ee863b87284f
+        image: docker.io/traffic/graph-service@sha256:c2af7b2361d1bb606d10e24e5251ab59a8200d6424752b4964ec5dade7b6db6c
         imagePullPolicy: Never
         ports: [{containerPort: 8085}]
         env:
@@ -368,7 +384,18 @@ spec:
         - {name: CLICKHOUSE_DIAL_TIMEOUT, value: "5s"}
         - {name: CLICKHOUSE_READ_TIMEOUT, value: "12s"}
         - {name: CLICKHOUSE_WRITE_TIMEOUT, value: "12s"}
+        - {name: NEBULA_ENABLED, value: "true"}
+        - {name: NEBULA_ADDRESSES, value: "nebula-graph.middleware.svc:9669"}
+        - {name: NEBULA_USERNAME, value: "traffic_graph"}
+        - {name: NEBULA_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: NEBULA_SERVICE_PASSWORD}}}
+        - {name: NEBULA_SPACE, value: "traffic_graph"}
+        - {name: NEBULA_TIMEOUT, value: "10s"}
+        - {name: NEBULA_MIN_POOL_SIZE, value: "2"}
+        - {name: NEBULA_MAX_POOL_SIZE, value: "20"}
         - {name: QUERY_TIMEOUT, value: "12s"}
+        - {name: AUTH_ENABLED, value: "true"}
+        - {name: AUTH_REQUIRE_AUTH, value: "true"}
+        - {name: JWT_SECRET_KEY, valueFrom: {secretKeyRef: {name: traffic-credentials, key: JWT_SECRET}}}
         - {name: POSTGRES_HOST, value: "postgres-primary.databases.svc"}
         - {name: POSTGRES_PORT, value: "5432"}
         - {name: POSTGRES_DATABASE, value: "traffic_platform"}

@@ -1,0 +1,4 @@
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+
+COPY web/ui/dist/ /usr/share/nginx/html/

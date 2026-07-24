@@ -30,20 +30,27 @@ func hashVID(id string) string {
 	return hex.EncodeToString(hash[:])
 }
 
+// hashTenantVID namespaces every physical Nebula VID by tenant. The visible
+// business identifier stays unchanged in tag/edge properties, while identical
+// entity IDs in different tenants can no longer overwrite each other.
+func hashTenantVID(tenantID, id string) string {
+	return hashVID(strings.TrimSpace(tenantID) + ":" + strings.TrimSpace(id))
+}
+
 // Config NebulaGraph 客户端配置
 type Config struct {
-	GraphAddrs     []string      // Graph 服务地址列表
-	MetaAddrs      []string      // Meta 服务地址列表 (for admin ops)
-	Username       string        // 用户名 (default: root)
-	Password       string        // 密码 (default: root)
-	Space          string        // 图空间名
-	MaxConns       int           // 最大连接数
-	MinConns       int           // 最小空闲连接数
-	ConnTimeout    time.Duration // 连接超时
-	QueryTimeout   time.Duration // 查询超时
-	RetryCount     int           // 重试次数
-	RetryDelay     time.Duration // 重试间隔
-	EnableMetrics  bool          // 启用指标收集
+	GraphAddrs    []string      // Graph 服务地址列表
+	MetaAddrs     []string      // Meta 服务地址列表 (for admin ops)
+	Username      string        // 用户名 (default: root)
+	Password      string        // 密码 (default: root)
+	Space         string        // 图空间名
+	MaxConns      int           // 最大连接数
+	MinConns      int           // 最小空闲连接数
+	ConnTimeout   time.Duration // 连接超时
+	QueryTimeout  time.Duration // 查询超时
+	RetryCount    int           // 重试次数
+	RetryDelay    time.Duration // 重试间隔
+	EnableMetrics bool          // 启用指标收集
 }
 
 // DefaultConfig 默认配置
@@ -51,8 +58,8 @@ func DefaultConfig() Config {
 	return Config{
 		GraphAddrs:    []string{"nebula-graph.middleware.svc:9669"},
 		MetaAddrs:     []string{"nebula-meta-0.nebula-meta.middleware.svc:9559"},
-		Username:      "root",
-		Password:      "root",
+		Username:      "traffic_graph",
+		Password:      "",
 		Space:         "traffic_graph",
 		MaxConns:      20,
 		MinConns:      5,
@@ -66,23 +73,23 @@ func DefaultConfig() Config {
 
 // Session 表示一个 NebulaGraph 会话连接
 type Session struct {
-	addr       string
-	conn       net.Conn
-	sessionID  int64
-	lastUsed   time.Time
-	mu         sync.Mutex
-	createdAt  time.Time
+	addr      string
+	conn      net.Conn
+	sessionID int64
+	lastUsed  time.Time
+	mu        sync.Mutex
+	createdAt time.Time
 }
 
 // Client NebulaGraph 客户端
 type Client struct {
-	config    Config
-	sessions  []*Session
-	mu        sync.RWMutex
-	idx       int
-	logger    *zap.Logger
-	closed    bool
-	metrics   *ClientMetrics
+	config   Config
+	sessions []*Session
+	mu       sync.RWMutex
+	idx      int
+	logger   *zap.Logger
+	closed   bool
+	metrics  *ClientMetrics
 }
 
 // ClientMetrics 客户端指标
@@ -101,10 +108,10 @@ func NewClient(config Config, logger *zap.Logger) (*Client, error) {
 	}
 
 	client := &Client{
-		config:  config,
+		config:   config,
 		sessions: make([]*Session, 0, config.MinConns),
-		logger:  logger,
-		metrics: &ClientMetrics{},
+		logger:   logger,
+		metrics:  &ClientMetrics{},
 	}
 
 	// 建立初始连接池
@@ -333,7 +340,7 @@ func (c *Client) executeRaw(session *Session, nGQL string) (*ResultSet, error) {
 
 // InsertIPNode 插入 IP 节点
 func (c *Client) InsertIPNode(ctx context.Context, tenantID, ip, mac, hostname, vendor, osType string, isGateway bool, riskScore float64, firstSeen, lastSeen int64) error {
-	vid := hashVID(ip)
+	vid := hashTenantVID(tenantID, ip)
 	nGQL := fmt.Sprintf(
 		`INSERT VERTEX ip_address(tenant_id, ip, mac_address, hostname, vendor, os_type, is_gateway, risk_score, first_seen, last_seen)
 		 VALUES "%s":("%s", "%s", "%s", "%s", "%s", "%s", %t, %f, %d, %d);`,
@@ -344,8 +351,8 @@ func (c *Client) InsertIPNode(ctx context.Context, tenantID, ip, mac, hostname, 
 
 // InsertSessionEdge 插入会话边
 func (c *Client) InsertSessionEdge(ctx context.Context, tenantID, srcIP, dstIP, communityID string, protocol int, sessionCount, totalBytes, totalPackets int64, firstSeen, lastSeen int64, direction string) error {
-	srcVID := hashVID(srcIP)
-	dstVID := hashVID(dstIP)
+	srcVID := hashTenantVID(tenantID, srcIP)
+	dstVID := hashTenantVID(tenantID, dstIP)
 	nGQL := fmt.Sprintf(
 		`INSERT EDGE communicates(tenant_id, community_id, protocol, session_count, total_bytes, total_packets, first_seen, last_seen, direction)
 		 VALUES "%s"->"%s":("%s", "%s", %d, %d, %d, %d, %d, %d, "%s");`,
@@ -356,7 +363,7 @@ func (c *Client) InsertSessionEdge(ctx context.Context, tenantID, srcIP, dstIP, 
 
 // InsertAlertNode 插入告警节点
 func (c *Client) InsertAlertNode(ctx context.Context, tenantID, alertID, alertType, severity, labels string, score float64, firstSeen, lastSeen int64) error {
-	vid := hashVID(alertID)
+	vid := hashTenantVID(tenantID, alertID)
 	nGQL := fmt.Sprintf(
 		`INSERT VERTEX alert(tenant_id, alert_type, severity, score, labels, first_seen, last_seen)
 		 VALUES "%s":("%s", "%s", "%s", %f, "%s", %d, %d);`,
@@ -367,8 +374,8 @@ func (c *Client) InsertAlertNode(ctx context.Context, tenantID, alertID, alertTy
 
 // InsertTriggerEdge 插入告警触发边 (Session → Alert)
 func (c *Client) InsertTriggerEdge(ctx context.Context, tenantID, communityID, alertID string, ts int64) error {
-	srcVID := hashVID(communityID)
-	dstVID := hashVID(alertID)
+	srcVID := hashTenantVID(tenantID, communityID)
+	dstVID := hashTenantVID(tenantID, alertID)
 	nGQL := fmt.Sprintf(
 		`INSERT EDGE triggers_alert(tenant_id, alert_id, ts)
 		 VALUES "%s"->"%s":("%s", "%s", %d);`,
@@ -379,7 +386,7 @@ func (c *Client) InsertTriggerEdge(ctx context.Context, tenantID, communityID, a
 
 // InsertCampaignNode 插入攻击活动节点
 func (c *Client) InsertCampaignNode(ctx context.Context, tenantID, campaignID, campaignType, title, desc, severity string, score, phaseProgress float64, startTime, endTime int64) error {
-	vid := hashVID(campaignID)
+	vid := hashTenantVID(tenantID, campaignID)
 	nGQL := fmt.Sprintf(
 		`INSERT VERTEX campaign(tenant_id, campaign_type, title, description, severity, score, phase_progress, start_time, end_time)
 		 VALUES "%s":("%s", "%s", "%s", "%s", "%s", %f, %f, %d, %d);`,
@@ -390,8 +397,8 @@ func (c *Client) InsertCampaignNode(ctx context.Context, tenantID, campaignID, c
 
 // InsertAttackPathHop 插入攻击路径跳
 func (c *Client) InsertAttackPathHop(ctx context.Context, tenantID, campaignID, srcIP, dstIP string, hopOrder int32, ts int64) error {
-	srcVID := hashVID(srcIP)
-	dstVID := hashVID(dstIP)
+	srcVID := hashTenantVID(tenantID, srcIP)
+	dstVID := hashTenantVID(tenantID, dstIP)
 	nGQL := fmt.Sprintf(
 		`INSERT EDGE attack_path_hop(tenant_id, campaign_id, hop_order, ts)
 		 VALUES "%s"->"%s":("%s", "%s", %d, %d);`,
@@ -406,7 +413,7 @@ func (c *Client) InsertAttackPathHop(ctx context.Context, tenantID, campaignID, 
 
 // GetNeighbors 获取节点的邻居 (1-hop)
 func (c *Client) GetNeighbors(ctx context.Context, tenantID, ip string, limit int) ([]map[string]interface{}, error) {
-	vid := hashVID(ip)
+	vid := hashTenantVID(tenantID, ip)
 	nGQL := fmt.Sprintf(
 		`GO FROM "%s" OVER communicates
 		 WHERE communicates.tenant_id == "%s"
@@ -428,7 +435,7 @@ func (c *Client) GetNeighbors(ctx context.Context, tenantID, ip string, limit in
 func (c *Client) GetSubgraph(ctx context.Context, tenantID string, centerIPs []string, steps int) (*SubgraphResult, error) {
 	vids := make([]string, len(centerIPs))
 	for i, ip := range centerIPs {
-		vids[i] = fmt.Sprintf(`"%s"`, hashVID(ip))
+		vids[i] = fmt.Sprintf(`"%s"`, hashTenantVID(tenantID, ip))
 	}
 	vidStr := strings.Join(vids, ", ")
 
@@ -541,7 +548,9 @@ func (c *Client) GetMetrics() ClientMetrics {
 
 // isRetryableError 判断是否可重试错误
 func isRetryableError(err error) bool {
-	if err == nil { return false }
+	if err == nil {
+		return false
+	}
 	msg := err.Error()
 	return strings.Contains(msg, "connection") ||
 		strings.Contains(msg, "timeout") ||

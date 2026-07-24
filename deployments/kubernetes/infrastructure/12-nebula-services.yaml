@@ -7,6 +7,7 @@ metadata:
   name: nebula-meta
   namespace: middleware
 spec:
+  clusterIP: None
   internalTrafficPolicy: Cluster
   ipFamilies:
   - IPv4
@@ -83,6 +84,7 @@ metadata:
   name: nebula-storage-headless
   namespace: middleware
 spec:
+  clusterIP: None
   internalTrafficPolicy: Cluster
   ipFamilies:
   - IPv4
@@ -106,115 +108,3 @@ spec:
     component: storage
   sessionAffinity: None
   type: ClusterIP
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    app: nebula
-    component: meta
-  name: nebula-meta
-  namespace: middleware
-spec:
-  internalTrafficPolicy: Cluster
-  ipFamilies:
-  - IPv4
-  ipFamilyPolicy: SingleStack
-  ports:
-  - name: thrift
-    port: 9559
-    protocol: TCP
-    targetPort: 9559
-  - name: http
-    port: 19559
-    protocol: TCP
-    targetPort: 19559
-  publishNotReadyAddresses: true
-  selector:
-    app: nebula
-    component: meta
-  sessionAffinity: None
-  type: ClusterIP
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: nebula-graph
-  namespace: middleware
-spec:
-  internalTrafficPolicy: Cluster
-  ipFamilies:
-  - IPv4
-  ipFamilyPolicy: SingleStack
-  ports:
-  - name: thrift
-    port: 9669
-    protocol: TCP
-    targetPort: 9669
-  - name: http
-    port: 19669
-    protocol: TCP
-    targetPort: 19669
-  selector:
-    app: nebula
-    component: graph
-  sessionAffinity: None
-  type: ClusterIP
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    app: nebula-studio
-  name: nebula-studio
-  namespace: middleware
-spec:
-  internalTrafficPolicy: Cluster
-  ipFamilies:
-  - IPv4
-  ipFamilyPolicy: SingleStack
-  ports:
-  - name: http
-    port: 7001
-    protocol: TCP
-    targetPort: 7001
-  selector:
-    app: nebula-studio
-  sessionAffinity: None
-  type: ClusterIP
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: nebula-storage-headless
-  namespace: middleware
-spec:
-  internalTrafficPolicy: Cluster
-  ipFamilies:
-  - IPv4
-  ipFamilyPolicy: SingleStack
-  ports:
-  - name: thrift
-    port: 9777
-    protocol: TCP
-    targetPort: 9777
-  - name: admin
-    port: 9778
-    protocol: TCP
-    targetPort: 9778
-  - name: http
-    port: 19779
-    protocol: TCP
-    targetPort: 19779
-  publishNotReadyAddresses: true
-  selector:
-    app: nebula
-    component: storage
-  sessionAffinity: None
-  type: ClusterIP
-
----
