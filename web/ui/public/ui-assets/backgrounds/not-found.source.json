@@ -1,0 +1,11 @@
+{
+  "usage": "Locked 404 page decorative background for the not-found business region and hologram slot",
+  "scope": "not-found page background only",
+  "resource_type": "screenshot-background",
+  "contains_business_page_ui": false,
+  "contains_business_dynamic_diagram": false,
+  "source": {
+    "image": "doc/04_assets/ui_suite_gpt_v1/backgrounds/4k/bg-not-found-safe-error-4k.png",
+    "masked_regions": []
+  }
+}

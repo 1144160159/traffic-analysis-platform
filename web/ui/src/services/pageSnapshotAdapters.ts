@@ -29,7 +29,7 @@ export const adaptKnownPageSnapshot = (
   if (page.id === 'screen') return adaptScreen(page, primaryPayload, secondaryPayloads);
   if (page.id === 'probes') return adaptProbes(page, primaryPayload);
   if (page.id === 'data-quality') return adaptDataQuality(page, primaryPayload);
-  if (page.id === 'alerts') return adaptAlerts(page, primaryPayload);
+  if (page.id === 'alerts') return adaptAlerts(page, primaryPayload, secondaryPayloads);
   if (page.id === 'assets') return adaptAssets(page, primaryPayload, secondaryPayloads);
   if (page.id === 'graph') return adaptGraph(page, primaryPayload);
   if (page.id === 'fusion') return adaptFusion(page, primaryPayload, secondaryPayloads);
@@ -939,50 +939,74 @@ const buildScreenVisuals = ({
   };
 };
 
-const adaptAlerts = (page: PageSpec, primaryPayload: unknown): PageSnapshot => {
+const adaptAlerts = (page: PageSpec, primaryPayload: unknown, secondaryPayloads: unknown[] = []): PageSnapshot => {
   const envelope = unwrapEnvelope(primaryPayload);
   const alerts = extractList(primaryPayload, ['alerts', 'data']);
   const total = totalFromEnvelope(envelope, alerts.length);
-  const counts = countBy(alerts, 'severity');
-  const statusCounts = alerts.reduce<Record<string, number>>((acc, item) => {
+  const pageSeverityCounts = countBy(alerts, 'severity');
+  const pageStatusCounts = alerts.reduce<Record<string, number>>((acc, item) => {
     const status = normalizeAlertStatus(textFrom(item, ['status'])) ?? 'unknown';
     acc[status] = (acc[status] ?? 0) + 1;
     return acc;
   }, {});
-  const highCount = countValue(counts, 'critical') + countValue(counts, 'high');
+  const stats = unwrapPayload(secondaryPayloads[0]);
+  const statsRecord = isRecord(stats) ? stats : {};
+  const rawSeverityCounts = isRecord(statsRecord.by_severity) ? statsRecord.by_severity : pageSeverityCounts;
+  const severityCounts = Object.entries(rawSeverityCounts).reduce<Record<string, number>>((acc, [key, value]) => {
+    const normalized = key.toLowerCase().replace(/^severity_/, '');
+    acc[normalized] = (acc[normalized] ?? 0) + metricNumericValue(value);
+    return acc;
+  }, {});
+  const rawStatusCounts = isRecord(statsRecord.by_status) ? statsRecord.by_status : pageStatusCounts;
+  const statusCounts = Object.entries(rawStatusCounts).reduce<Record<string, number>>((acc, [key, value]) => {
+    const normalized = normalizeAlertStatus(key) ?? key.toLowerCase();
+    acc[normalized] = (acc[normalized] ?? 0) + metricNumericValue(value);
+    return acc;
+  }, {});
+  const criticalCount = countValue(severityCounts, 'critical');
+  const highOnlyCount = countValue(severityCounts, 'high');
+  const mediumCount = countValue(severityCounts, 'medium');
+  const lowCount = countValue(severityCounts, 'low') + countValue(severityCounts, 'info');
+  const highCount = criticalCount + highOnlyCount;
+  const statsWindowTotal = numberAt(statsRecord, ['total']) || total;
 
   return {
     id: page.id,
     metrics: [
       metric('高危', highCount, '条', highCount ? 'risk' : 'ok'),
-      metric('中危', countValue(counts, 'medium'), '条', countValue(counts, 'medium') ? 'warn' : 'ok'),
-      metric('低危', countValue(counts, 'low') + countValue(counts, 'info'), '条', 'info'),
+      metric('中危', mediumCount, '条', mediumCount ? 'warn' : 'ok'),
+      metric('低危', lowCount, '条', 'info'),
       metric('未处理', countValue(statusCounts, 'new'), '条', 'risk'),
       metric('研判中', countValue(statusCounts, 'triage'), '条', 'warn'),
       metric('已指派', countValue(statusCounts, 'assigned'), '条', 'info'),
       metric('已关闭', countValue(statusCounts, 'closed'), '条', 'ok'),
     ],
-    rows: alerts.slice(0, 8).map((item, index) =>
+    total,
+    rows: alerts.map((item, index) =>
       makeRow(page, {
         '告警 ID': textFrom(item, ['alert_id', 'id']) || `ALERT-${index + 1}`,
         风险等级: severityLabel(textFrom(item, ['severity'])),
         告警名称: textFrom(item, ['alert_type', 'name', 'title']) || '-',
-        攻击阶段: textFrom(item, ['attack_phase', 'phase', 'mitre_phase']) || '-',
+        攻击阶段: attackPhaseLabel(textFrom(item, ['attack_phase', 'phase', 'mitre_phase'])),
         '源 IP': textFrom(item, ['src_ip', 'source_ip']) || '-',
         '目的 IP': textFrom(item, ['dst_ip', 'destination_ip']) || '-',
-        受影响资产: textFrom(item, ['asset_name', 'affected_asset', 'asset_id', 'hostname']) || '-',
-        '规则/模型': textFrom(item, ['rule_name', 'rule_id', 'model_name', 'model']) || '-',
+        受影响资产: textFrom(item, ['asset_name', 'affected_asset', 'asset_id', 'hostname']) || textFrom(item, ['src_ip']) || '-',
+        '规则/模型': textFrom(item, ['rule_name', 'rule_id', 'rule_version', 'model_name', 'model', 'model_version']) || textFrom(item, ['alert_type']) || '-',
         置信度: confidenceLabel(numberFrom(item, ['confidence', 'score'])),
         首次发生: textFrom(item, ['first_seen', 'created_at', 'timestamp']) || '-',
         状态: alertStatusLabel(textFrom(item, ['status'])),
         __alertId: textFrom(item, ['alert_id', 'id']) || `ALERT-${index + 1}`,
         __stateVersion: numberFrom(item, ['state_version', 'stateVersion', 'updated_ts']),
+        __riskScore: numberFrom(item, ['score', 'confidence']) * 100,
         __status: normalizeAlertStatus(textFrom(item, ['status'])) ?? textFrom(item, ['status']),
+        __ruleVersion: textFrom(item, ['rule_version', 'rule_id', 'rule_name']),
+        __modelVersion: textFrom(item, ['model_version', 'model', 'model_name']),
+        __attackPhase: textFrom(item, ['attack_phase', 'phase', 'mitre_phase']),
       }),
     ),
     timeline: [
-      timelineItem('告警队列已接入', `来自 /v1/alerts，当前返回 ${alerts.length} 条，总量 ${total}。`, 'ok'),
-      timelineItem('批量处置入口', '页面动作将继续绑定状态变更、反馈和导出接口。', 'info'),
+      timelineItem('告警队列已接入', `来自 /v1/alerts，当前页 ${alerts.length} 条，时间窗总量 ${statsWindowTotal}。`, 'ok'),
+      timelineItem('统计口径已接入', '队列指标来自 /v1/alerts/stats，不再按当前页样本推算。', 'info'),
     ],
     evidence: [
       evidence('Alerts API', '/v1/alerts', 'ok'),
@@ -1317,23 +1341,39 @@ const adaptCampaigns = (page: PageSpec, primaryPayload: unknown): PageSnapshot =
   const payload = unwrapPayload(primaryPayload);
   const envelope = isRecord(payload) ? payload : unwrapEnvelope(primaryPayload);
   const campaigns = extractList(primaryPayload, ['campaigns', 'data']);
-  const total = totalFromEnvelope(envelope, campaigns.length);
-  const active = campaigns.filter((item) => campaignStatus(item) !== '已结束').length;
-  const highRisk = campaigns.filter((item) => campaignRisk(item).includes('高')).length;
-  const affectedAssets = sumArrayLengths(campaigns, ['entities']);
-  const alertCount = sumArrayLengths(campaigns, ['alerts', 'alert_ids']);
-  const longestHours = Math.max(0, ...campaigns.map(campaignDurationHours));
+  const summary = isRecord(envelope.summary) ? envelope.summary : {};
+  const total = numberAt(summary, ['total']) || totalFromEnvelope(envelope, campaigns.length);
+  const active = numberAt(summary, ['active']) || campaigns.filter((item) => campaignStatus(item) !== '已结束').length;
+  const highRisk = numberAt(summary, ['high_risk']) || campaigns.filter((item) => campaignRisk(item).includes('高')).length;
+  const mediumRisk = numberAt(summary, ['medium_risk']) || campaigns.filter((item) => campaignRisk(item).includes('中')).length;
+  const lowRisk = numberAt(summary, ['low_risk']) || campaigns.filter((item) => campaignRisk(item).includes('低')).length;
+  const affectedAssets = numberAt(summary, ['affected_assets']) || sumArrayLengths(campaigns, ['entities']);
+  const alertCount = numberAt(summary, ['alert_count']) || sumArrayLengths(campaigns, ['alerts', 'alert_ids']);
+  const averageDurationHours = numberAt(summary, ['average_duration_hours'])
+    || average(campaigns.map(campaignDurationHours).filter((value) => value > 0));
+  const maxScore = numberAt(summary, ['max_score']) || Math.max(0, ...campaigns.map((item) => numberAt(item, ['score'])));
+  const highestRisk = maxScore >= 0.8 ? '高风险' : maxScore >= 0.5 ? '中风险' : '低风险';
 
   return {
     id: page.id,
     total,
     metrics: [
       metric('战役总数', total, '个', total ? 'info' : 'warn'),
-      campaignMetric('当前页活跃', active, '个', active ? 'risk' : 'ok'),
-      campaignMetric('当前页影响资产', affectedAssets, '台', affectedAssets ? 'warn' : 'ok'),
-      campaignMetric('当前页高风险', highRisk, '个', highRisk ? 'risk' : 'ok'),
-      campaignMetric('当前页告警', alertCount, '条', alertCount ? 'warn' : 'ok'),
-      campaignMetric('当前页最长持续', longestHours, '小时', longestHours >= 24 ? 'warn' : 'info'),
+      campaignMetric('活跃战役', active, '个', active ? 'risk' : 'ok'),
+      campaignMetric('影响资产', affectedAssets, '台', affectedAssets ? 'warn' : 'ok'),
+      {
+        label: '最高风险',
+        value: highestRisk,
+        delta: '真实 API',
+        status: highestRisk === '高风险' ? 'risk' : highestRisk === '中风险' ? 'warn' : 'ok',
+      },
+      campaignMetric('告警总数', alertCount, '条', alertCount ? 'warn' : 'ok'),
+      {
+        label: '平均持续时间',
+        value: formatCampaignDuration(averageDurationHours),
+        delta: '真实 API',
+        status: averageDurationHours >= 24 ? 'warn' : 'info',
+      },
     ],
     rows: campaigns.map((item, index) =>
       makeRow(page, {
@@ -1345,7 +1385,26 @@ const adaptCampaigns = (page: PageSpec, primaryPayload: unknown): PageSnapshot =
         首次发现: formatEpochTime(numberFrom(item, ['ts_start', 'start_time'])),
         最近活动: formatEpochTime(numberFrom(item, ['ts_end', 'end_time', 'ingest_ts'])),
         状态: campaignStatus(item),
+        __workflow_status: campaignWorkflowStatus(item),
         操作: '查看',
+        __assignee: textFrom(item, ['assignee']),
+        __campaign_type: textFrom(item, ['campaign_type']),
+        __summary: textFrom(item, ['summary']),
+        __state_version: numberAt(item, ['state_version']),
+        __workbench_updated_at: textFrom(item, ['workbench_updated_at']),
+        __entity_count: arrayLengthFrom(item, ['entities']),
+        __alert_count: arrayLengthFrom(item, ['alerts', 'alert_ids']),
+        __phase_count: arrayLengthFrom(item, ['attack_phases']),
+        __rule_count: arrayLengthFrom(item, ['rule_ids']),
+        __model_count: arrayLengthFrom(item, ['model_ids']),
+        __has_summary: textFrom(item, ['summary']) ? 1 : 0,
+        __phase_initial_access: hasCampaignPhase(item, 'initial_access') ? 1 : 0,
+        __phase_execution: hasCampaignPhase(item, 'execution') ? 1 : 0,
+        __phase_persistence: hasCampaignPhase(item, 'persistence') ? 1 : 0,
+        __phase_lateral_movement: hasCampaignPhase(item, 'lateral_movement') ? 1 : 0,
+        __phase_command_and_control: hasCampaignPhase(item, 'command_and_control') ? 1 : 0,
+        __phase_exfiltration: hasCampaignPhase(item, 'exfiltration') ? 1 : 0,
+        __phase_impact: hasCampaignPhase(item, 'impact') ? 1 : 0,
       }),
     ),
     timeline: campaignTimeline(campaigns),
@@ -1356,15 +1415,31 @@ const adaptCampaigns = (page: PageSpec, primaryPayload: unknown): PageSnapshot =
       evidence('影响实体', `${affectedAssets} 个`, affectedAssets ? 'warn' : 'ok'),
       evidence('证据完整度', '接口未提供', 'info'),
     ],
+    visuals: {
+      campaigns: {
+        riskCounts: { high: highRisk, medium: mediumRisk, low: lowRisk },
+      },
+    },
   };
 };
 
 const campaignMetric = (label: string, value: number, suffix: string, status: MetricStatus) => ({
   label,
   value: `${formatNumber(Number.isFinite(value) ? value : 0)} ${suffix}`,
-  delta: '当前页 API',
+  delta: '真实 API',
   status,
 });
+
+const formatCampaignDuration = (hours: number) => {
+  if (!Number.isFinite(hours) || hours <= 0) return '0 小时';
+  const roundedHours = Math.round(hours);
+  const days = Math.floor(roundedHours / 24);
+  const remainingHours = roundedHours % 24;
+  return days ? `${days} 天 ${remainingHours} 小时` : `${remainingHours} 小时`;
+};
+
+const hasCampaignPhase = (item: Record<string, unknown>, phase: string) =>
+  stringArrayFrom(item, ['attack_phases']).some((value) => value.toLowerCase() === phase);
 
 const adaptAttackChains = (page: PageSpec, primaryPayload: unknown): PageSnapshot => {
   const payload = unwrapPayload(primaryPayload);
@@ -2875,16 +2950,18 @@ const adaptAuditLog = (page: PageSpec, primaryPayload: unknown): PageSnapshot =>
 };
 
 const adaptNotifications = (page: PageSpec, primaryPayload: unknown, secondaryPayloads: unknown[]): PageSnapshot => {
-  const settings = unwrapPayload(primaryPayload);
+  const workbench = unwrapPayload(primaryPayload);
+  const workbenchSettings = valueAt(workbench, ['settings']);
+  const settings = isRecord(workbenchSettings) ? workbenchSettings : workbench;
   const channels = notificationChannels(settings);
-  const rules = extractList(settings, ['rules', 'subscriptions', 'routes']);
-  const history = extractList(settings, ['history', 'deliveries', 'audits']);
-  const escalationRules = extractList(settings, ['escalation_rules', 'escalations']);
+  const rules = extractList(workbench, ['rules', 'subscriptions', 'routes']);
+  const history = extractList(workbench, ['history', 'deliveries', 'audits']);
+  const escalationRules = extractList(workbench, ['escalation_policies', 'escalation_rules', 'escalations']);
   const apiSilenceRules = extractList(secondaryPayloads[0], ['rules', 'data', 'items']);
   const silenceRules = apiSilenceRules.length
     ? apiSilenceRules
-    : extractList(settings, ['silence_rules', 'silences', 'maintenance_windows']);
-  const templates = extractList(settings, ['templates', 'message_templates']);
+    : extractList(workbench, ['silence_rules', 'silences', 'maintenance_windows']);
+  const templates = extractList(workbench, ['templates', 'message_templates']);
   const enabledChannels = channels.filter((item) => item.enabled).length;
   const failedDeliveries = history.filter((item) => notificationDeliveryStatus(item).includes('失败')).length || (enabledChannels ? 21 : 0);
   const pendingNotifications = history.filter((item) => notificationDeliveryStatus(item).includes('待')).length || 82;
@@ -2924,17 +3001,22 @@ const adaptNotifications = (page: PageSpec, primaryPayload: unknown, secondaryPa
 };
 
 const adaptSettings = (page: PageSpec, primaryPayload: unknown, secondaryPayloads: unknown[]): PageSnapshot => {
-  const scopes = extractList(primaryPayload, ['scopes']);
-  const tokenPayload = secondaryPayloads[0];
-  const probeScopePayload = secondaryPayloads[1];
+  const workbench = unwrapPayload(primaryPayload);
+  const scopes = extractList(secondaryPayloads[0], ['scopes']);
+  const tokenPayload = secondaryPayloads[1];
+  const probeScopePayload = secondaryPayloads[2];
   const tokens = extractList(tokenPayload, ['tokens', 'data', 'items']);
   const probeScopes = extractList(probeScopePayload, ['scopes']);
   const tokenEnvelope = unwrapEnvelope(tokenPayload);
   const totalTokens = totalFromEnvelope(tokenEnvelope, tokens.length);
-  const tenantCount = new Set(tokens.map((item) => textFrom(item, ['tenant_id'])).filter(Boolean)).size || 1;
+  const tenantID = textFrom(workbench, ['tenant_id']) || 'default';
+  const tenantCount = tenantID ? 1 : 0;
+  const roles = extractList(workbench, ['roles']);
+  const integrations = extractList(isRecord(workbench) ? workbench.settings : undefined, ['integrations']);
+  const persistedTokens = isRecord(workbench) && isRecord(workbench.tokens) ? workbench.tokens : {};
   const scopeCategories = new Set(scopes.map((item) => textFrom(item, ['category'])).filter(Boolean));
-  const activeTokens = tokens.length ? tokens.filter(settingsTokenActive).length : totalTokens || 46;
-  const expiringTokens = tokens.length ? tokens.filter(settingsTokenExpiringSoon).length : 8;
+  const activeTokens = numberAt(persistedTokens, ['active']) || (tokens.length ? tokens.filter(settingsTokenActive).length : totalTokens || 0);
+  const expiringTokens = numberAt(persistedTokens, ['expiring_soon']) || (tokens.length ? tokens.filter(settingsTokenExpiringSoon).length : 0);
   const rotationEnabled = tokens.filter((item) => valueAt(item, ['rotation_enabled']) === true).length;
   const pendingAudit = Math.max(3, expiringTokens + rotationEnabled);
   const tokenListAvailable = tokens.length > 0;
@@ -2943,20 +3025,22 @@ const adaptSettings = (page: PageSpec, primaryPayload: unknown, secondaryPayload
     id: page.id,
     metrics: [
       settingsMetric('租户数', `${tenantCount} 个`, 'tenant_id', tenantCount ? 'info' : 'warn'),
-      settingsMetric('角色策略', `${scopes.length || 28} 项`, `${scopeCategories.size || 7} 类 scope`, scopes.length ? 'ok' : 'warn'),
+      settingsMetric('角色策略', `${roles.length || scopes.length} 项`, `${scopeCategories.size || 7} 类 scope`, roles.length || scopes.length ? 'ok' : 'warn'),
       settingsMetric('有效令牌', `${activeTokens} 个`, tokenListAvailable ? 'tokens' : '默认视图', activeTokens ? 'ok' : 'warn'),
       settingsMetric('即将过期令牌', `${expiringTokens} 个`, '7天内过期', expiringTokens ? 'warn' : 'ok'),
-      settingsMetric('集成健康', '7/7', probeScopes.length ? 'probe scopes' : '配置项', 'ok'),
+      settingsMetric('集成健康', `${integrations.filter((item) => textFrom(item, ['status']) === 'healthy').length}/${integrations.length || 7}`, probeScopes.length ? 'probe scopes' : '配置项', integrations.length ? 'ok' : 'warn'),
       settingsMetric('配置变更待审计', `${pendingAudit} 项`, rotationEnabled ? '轮换开启' : '保存后写审计', pendingAudit ? 'info' : 'ok'),
     ],
     rows: buildSettingsRows(page, tokens),
     timeline: [
+      timelineItem('租户设置真源已接入', `来自 /v1/auth/system-settings，租户 ${tenantID}、revision ${numberAt(workbench, ['revision'])}。`, tenantID ? 'ok' : 'warn'),
       timelineItem('Token Scope 真源已接入', `来自 /v1/tokens/scopes，返回 ${scopes.length || 0} 个权限范围。`, scopes.length ? 'ok' : 'warn'),
       timelineItem('API 令牌清单', tokenListAvailable ? `来自 /v1/tokens，当前租户 ${totalTokens || tokens.length} 个令牌。` : '令牌清单暂未返回，页面保持创建和轮换入口。', tokenListAvailable ? 'ok' : 'warn'),
       timelineItem('探针最小权限', `probe scopes ${probeScopes.length || 0} 个，默认权限不在前端展开明文密钥。`, probeScopes.length ? 'ok' : 'info'),
       timelineItem('配置审计闭环', `保存配置、轮换令牌、连接测试和安全审计均需要写入 audit_logs。`, 'info'),
     ],
     evidence: [
+      evidence('System Settings API', `/v1/auth/system-settings r${numberAt(workbench, ['revision'])}`, tenantID ? 'ok' : 'warn'),
       evidence('Token Scopes API', `${scopes.length || 0} scopes`, scopes.length ? 'ok' : 'warn'),
       evidence('Token List API', tokenListAvailable ? `${totalTokens || tokens.length} tokens` : '待返回', tokenListAvailable ? 'ok' : 'warn'),
       evidence('Probe Scopes API', `${probeScopes.length || 0} scopes`, probeScopes.length ? 'ok' : 'info'),
@@ -3081,6 +3165,9 @@ const sumNumbers = (items: Record<string, unknown>[], paths: string[]) =>
 
 const numeric = (value: unknown) => (typeof value === 'number' && Number.isFinite(value) ? value : 0);
 
+const average = (values: number[]) =>
+  values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
+
 const arrayLengthFrom = (payload: unknown, keys: string[]) => {
   for (const key of keys) {
     const value = valueAt(payload, [key]);
@@ -3118,8 +3205,27 @@ const statusFromCount = (value: number, warnAt = 1): MetricStatus => (value >= w
 const severityFromRecord = (item: Record<string, unknown>) =>
   severityLabel(textAt(item, ['severity']) || (numberAt(item, ['count']) > 10 ? 'high' : 'low'));
 
+const attackPhaseLabel = (phase: string) => {
+  const labels: Record<string, string> = {
+    reconnaissance: '侦察',
+    initial_access: '初始访问',
+    execution: '执行',
+    persistence: '持久化',
+    privilege_escalation: '权限提升',
+    defense_evasion: '防御规避',
+    credential_access: '凭证访问',
+    discovery: '发现',
+    lateral_movement: '横向移动',
+    collection: '数据收集',
+    command_control: '命令与控制',
+    exfiltration: '数据外传',
+    impact: '影响',
+  };
+  return (labels[phase.toLowerCase()] ?? phase) || '-';
+};
+
 const severityLabel = (severity: string) => {
-  const value = severity.toLowerCase();
+  const value = severity.toLowerCase().replace(/^severity_/, '');
   if (value === 'critical') return '严重';
   if (value === 'high') return '高危';
   if (value === 'medium') return '中危';
@@ -3269,13 +3375,23 @@ const campaignRisk = (item: Record<string, unknown>) => {
 };
 
 const campaignStatus = (item: Record<string, unknown>) => {
-  const explicit = textFrom(item, ['status']).toLowerCase();
+  const explicit = textFrom(item, ['activity_status', 'status']).toLowerCase();
   if (explicit === 'active') return '活跃中';
   if (explicit === 'investigating') return '调查中';
+  if (explicit === 'contained') return '处置中';
   if (explicit === 'closed') return '已结束';
   if (explicit) return statusLabel(explicit);
   const tsEnd = numberAt(item, ['ts_end', 'end_time']);
   return tsEnd ? '活跃中' : '调查中';
+};
+
+const campaignWorkflowStatus = (item: Record<string, unknown>) => {
+  const explicit = textFrom(item, ['status', 'activity_status']).toLowerCase();
+  if (explicit === 'active') return '活跃中';
+  if (explicit === 'investigating') return '调查中';
+  if (explicit === 'contained') return '处置中';
+  if (explicit === 'closed') return '已结束';
+  return campaignStatus(item);
 };
 
 const campaignDurationHours = (item: Record<string, unknown>) => {
@@ -4127,7 +4243,7 @@ const notificationChannels = (settings: unknown) => {
     feishu: '飞书',
     ticket: '工单系统',
   };
-  const defaults = ['email', 'sms', 'webhook', 'wechat', 'dingtalk', 'ticket'];
+  const defaults = ['email', 'webhook', 'wechat', 'dingtalk', 'slack', 'feishu'];
   const keys = Array.from(new Set([...defaults, ...Object.keys(channelMap)]));
   return keys.map((key, index) => ({
     key,
@@ -4226,28 +4342,25 @@ const buildSettingsRows = (page: PageSpec, tokens: Record<string, unknown>[]): S
     ['ReadOnly-Dashboard', '只读访问', 'a7d9****3c18', '2026-12-31', '2026-06-21 08:15', '正常'],
   ];
 
-  const source = tokens.length
-    ? tokens.slice(0, 8).map((item, index) => [
-        textFrom(item, ['name']) || `API Token ${index + 1}`,
-        settingsTokenScopes(item),
-        settingsTokenFingerprint(item, index),
-        settingsTokenExpiresAt(item),
-        settingsTokenLastUsed(item),
-        settingsTokenRotationStatus(item),
-      ])
-    : defaultRows;
+  if (!tokens.length) {
+    return defaultRows.map((row) => makeRow(page, {
+      令牌名称: row[0], 权限范围: row[1], 令牌指纹: row[2], 过期时间: row[3], 最近使用: row[4],
+      轮换状态: row[5], 操作: '轮换 / 吊销', token_id: '', scopes: '', token_status: 'display-only',
+    }));
+  }
 
-  return source.map((row) =>
-    makeRow(page, {
-      令牌名称: row[0],
-      权限范围: row[1],
-      令牌指纹: row[2],
-      过期时间: row[3],
-      最近使用: row[4],
-      轮换状态: row[5],
-      操作: '轮换 / 吊销',
-    }),
-  );
+  return tokens.slice(0, 8).map((item, index) => makeRow(page, {
+    令牌名称: textFrom(item, ['name']) || `API Token ${index + 1}`,
+    权限范围: settingsTokenScopes(item),
+    令牌指纹: settingsTokenFingerprint(item, index),
+    过期时间: settingsTokenExpiresAt(item),
+    最近使用: settingsTokenLastUsed(item),
+    轮换状态: settingsTokenRotationStatus(item),
+    操作: '轮换 / 吊销',
+    token_id: textFrom(item, ['token_id']),
+    scopes: stringListFrom(valueAt(item, ['scopes'])).join(','),
+    token_status: textFrom(item, ['status']),
+  }));
 };
 
 const settingsTokenActive = (item: Record<string, unknown>) => {

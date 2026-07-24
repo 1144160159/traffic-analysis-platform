@@ -29,4 +29,18 @@ describe('route access', () => {
     expect(hasRouteAccess(findRouteById('assets')!, { username: 'graph-reader', permissions: ['graph:read'] })).toBe(false);
     expect(hasRouteAccess(findRouteById('assets')!, { username: 'asset-reader', permissions: ['asset:read'] })).toBe(true);
   });
+
+  it('aligns the audit log route with the backend audit read scope', () => {
+    const route = findRouteById('audit-log')!;
+    expect(hasRouteAccess(route, { username: 'auditor', permissions: ['audit:read'] })).toBe(true);
+    expect(hasRouteAccess(route, { username: 'user-reader', permissions: ['user:read'] })).toBe(false);
+  });
+
+  it('aligns the settings route with the backend system settings read scopes', () => {
+    const route = findRouteById('settings')!;
+    expect(hasRouteAccess(route, { username: 'token-reader', permissions: ['token:read'] })).toBe(false);
+    expect(hasRouteAccess(route, { username: 'settings-reader', permissions: ['admin:read'] })).toBe(true);
+    expect(hasRouteAccess(route, { username: 'settings-writer', permissions: ['admin:write'] })).toBe(true);
+    expect(hasRouteAccess(route, { username: 'admin', permissions: ['admin:*'] })).toBe(true);
+  });
 });

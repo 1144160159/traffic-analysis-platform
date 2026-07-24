@@ -1,0 +1,965 @@
+/*
+ * Behavior baseline layout contract.
+ *
+ * pages.css contains the historical iterations for this screen.  This file is
+ * imported last so the five accepted boards share one explicit containment
+ * contract without reopening the rest of the application stylesheet.
+ */
+
+.taf-baseline-workbench,
+.taf-baseline-workbench *,
+.taf-baseline-workbench *::before,
+.taf-baseline-workbench *::after {
+  box-sizing: border-box;
+}
+
+.taf-baseline-workbench {
+  align-items: start;
+  overflow: visible !important;
+}
+
+.taf-baseline-workbench > .taf-baseline-left,
+.taf-baseline-workbench > .taf-baseline-detail {
+  min-width: 0 !important;
+  align-self: start;
+}
+
+.taf-baseline-workbench > .taf-baseline-left {
+  align-content: start;
+  overflow: visible !important;
+}
+
+.taf-baseline-workbench .taf-baseline-left--account {
+  grid-template-rows: 74px 32px 80px 276px 230px 199px 46px !important;
+  min-height: 971px !important;
+}
+
+.taf-baseline-workbench .taf-baseline-left--port {
+  grid-template-rows: 74px 36px 80px 253px 230px 213px 46px !important;
+  min-height: 967px !important;
+}
+
+.taf-baseline-workbench .taf-baseline-left--protocol {
+  grid-template-rows: 70px 30px 80px 270px 245px 185px 46px !important;
+  min-height: 957px !important;
+}
+
+.taf-baseline-workbench .taf-baseline-left--time {
+  grid-template-rows: 70px 30px 80px 264px 300px 145px 46px !important;
+  min-height: 965px !important;
+}
+
+.taf-baseline-workbench .taf-baseline-title-tabs,
+.taf-baseline-workbench .taf-baseline-filter,
+.taf-baseline-workbench .taf-baseline-kpis,
+.taf-baseline-workbench .taf-baseline-upper,
+.taf-baseline-workbench .taf-baseline-lower,
+.taf-baseline-workbench .taf-baseline-tertiary,
+.taf-baseline-workbench .taf-baseline-evidence-shortcuts {
+  width: 100%;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: 100%;
+  align-self: stretch;
+}
+
+.taf-baseline-workbench .taf-baseline-title-tabs,
+.taf-baseline-workbench .taf-baseline-filter,
+.taf-baseline-workbench .taf-baseline-kpis,
+.taf-baseline-workbench .taf-baseline-evidence-shortcuts {
+  max-height: 100%;
+  overflow: hidden !important;
+}
+
+.taf-baseline-workbench .taf-baseline-upper,
+.taf-baseline-workbench .taf-baseline-lower,
+.taf-baseline-workbench .taf-baseline-tertiary {
+  height: 100% !important;
+  max-height: 100%;
+  align-items: stretch;
+  overflow: hidden !important;
+  contain: layout paint;
+}
+
+.taf-baseline-workbench .taf-baseline-upper > .taf-panel,
+.taf-baseline-workbench .taf-baseline-lower > .taf-panel,
+.taf-baseline-workbench .taf-baseline-tertiary > .taf-panel,
+.taf-baseline-workbench > .taf-baseline-detail > .taf-panel {
+  width: 100%;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: 100%;
+  height: 100% !important;
+  max-height: 100%;
+  overflow: hidden !important;
+  contain: layout paint;
+  isolation: isolate;
+}
+
+#root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-lower--account > .taf-panel,
+#root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-lower--port > .taf-panel,
+#root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-lower--protocol > .taf-panel,
+#root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-lower--time > .taf-panel {
+  box-sizing: border-box !important;
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+}
+
+.taf-baseline-workbench .taf-baseline-upper > .taf-panel > .taf-panel__header,
+.taf-baseline-workbench .taf-baseline-lower > .taf-panel > .taf-panel__header,
+.taf-baseline-workbench .taf-baseline-tertiary > .taf-panel > .taf-panel__header,
+.taf-baseline-workbench > .taf-baseline-detail > .taf-panel > .taf-panel__header {
+  flex: 0 0 30px;
+  height: 30px !important;
+  min-height: 30px !important;
+  max-height: 30px;
+}
+
+.taf-baseline-workbench .taf-baseline-upper > .taf-panel > .taf-panel__body,
+.taf-baseline-workbench .taf-baseline-lower > .taf-panel > .taf-panel__body,
+.taf-baseline-workbench .taf-baseline-tertiary > .taf-panel > .taf-panel__body,
+.taf-baseline-workbench > .taf-baseline-detail > .taf-panel > .taf-panel__body {
+  width: 100%;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: 100%;
+  flex: 1 1 0;
+  overflow: hidden !important;
+  contain: layout paint;
+}
+
+/* Six-state boards previously exceeded the panel body by 18–26 px. */
+.taf-baseline-workbench .taf-baseline-state-machine {
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  height: 100% !important;
+  max-height: 100%;
+  align-content: stretch;
+  gap: 2px !important;
+  overflow: hidden !important;
+}
+
+.taf-baseline-workbench .taf-baseline-state-machine.is-five-state {
+  grid-template-rows: repeat(5, minmax(0, 1fr)) 18px !important;
+}
+
+.taf-baseline-workbench .taf-baseline-state-machine.is-six-state {
+  grid-template-rows: repeat(6, minmax(0, 1fr)) 18px !important;
+}
+
+.taf-baseline-workbench .taf-baseline-state-machine > div {
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  height: auto !important;
+  grid-template-columns: 24px minmax(0, 1fr) 56px 34px !important;
+  grid-template-rows: minmax(0, 1fr) 10px !important;
+  gap: 0 5px !important;
+  padding: 2px 6px !important;
+  overflow: hidden !important;
+}
+
+.taf-baseline-workbench .taf-baseline-state-machine > div > i {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.taf-baseline-workbench .taf-baseline-state-machine > div > i span {
+  left: 7px !important;
+  top: 17px !important;
+  height: 13px !important;
+}
+
+.taf-baseline-workbench .taf-baseline-state-machine > footer {
+  min-height: 0;
+  height: 18px;
+  overflow: hidden;
+  font-size: 8px;
+}
+
+/* All data-dense panel bodies divide the available height instead of imposing
+ * a minimum row height that can enlarge the parent grid item. */
+.taf-baseline-workbench .taf-baseline-dense-table,
+.taf-baseline-workbench .taf-baseline-wide-details,
+.taf-baseline-workbench .taf-baseline-evidence-list,
+.taf-baseline-workbench .taf-baseline-insight-list,
+.taf-baseline-workbench .taf-baseline-matrix,
+.taf-baseline-workbench .taf-baseline-portrait-grid,
+.taf-baseline-workbench .taf-baseline-discovery-cards,
+.taf-baseline-workbench .taf-baseline-protocol-mirrors,
+.taf-baseline-workbench .taf-baseline-time-profiles,
+.taf-baseline-workbench .taf-baseline-periodic,
+.taf-baseline-workbench .taf-baseline-account-geo,
+.taf-baseline-workbench .taf-baseline-scan-summary,
+.taf-baseline-workbench .taf-baseline-scan-summary--chart,
+.taf-baseline-workbench .taf-baseline-versions {
+  width: 100%;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: 100%;
+  height: 100% !important;
+  max-height: 100%;
+  align-content: stretch;
+  overflow: hidden !important;
+}
+
+.taf-baseline-workbench .taf-baseline-dense-table {
+  grid-template-rows: 22px repeat(5, minmax(0, 1fr)) !important;
+}
+
+.taf-baseline-workbench .taf-baseline-dense-table > button {
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none;
+}
+
+.taf-baseline-workbench .taf-baseline-wide-details {
+  grid-auto-rows: minmax(0, 1fr) !important;
+}
+
+.taf-baseline-workbench .taf-baseline-evidence-list {
+  grid-auto-rows: minmax(0, 1fr) !important;
+}
+
+.taf-baseline-workbench .taf-baseline-insight-list {
+  grid-auto-rows: minmax(0, 1fr);
+  gap: 3px !important;
+}
+
+.taf-baseline-workbench .taf-baseline-insight-row {
+  min-height: 0 !important;
+  height: auto !important;
+  padding-block: 2px !important;
+}
+
+.taf-baseline-workbench .taf-baseline-matrix {
+  grid-template-rows: repeat(5, minmax(0, 1fr)) !important;
+}
+
+.taf-baseline-workbench .taf-baseline-portrait-grid,
+.taf-baseline-workbench .taf-baseline-discovery-cards {
+  grid-auto-rows: minmax(0, 1fr);
+}
+
+.taf-baseline-workbench .taf-baseline-portrait-grid article,
+.taf-baseline-workbench .taf-baseline-discovery-cards article,
+.taf-baseline-workbench .taf-baseline-protocol-mirrors article,
+.taf-baseline-workbench .taf-baseline-time-profiles article {
+  min-height: 0 !important;
+  height: auto !important;
+  overflow: hidden;
+}
+
+.taf-baseline-workbench .taf-baseline-protocol-mirrors {
+  grid-template-rows: repeat(6, minmax(0, 1fr));
+  gap: 2px !important;
+}
+
+.taf-baseline-workbench .taf-baseline-time-profiles {
+  grid-template-rows: repeat(5, minmax(0, 1fr)) 12px !important;
+  gap: 2px !important;
+}
+
+.taf-baseline-workbench .taf-baseline-echart,
+.taf-baseline-workbench .taf-baseline-echart > div,
+.taf-baseline-workbench [data-chart-engine="echarts"] {
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: 100%;
+  height: 100% !important;
+  max-height: 100%;
+  overflow: hidden !important;
+}
+
+.taf-baseline-workbench [data-chart-engine="echarts"] canvas {
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+/* The desktop references keep a single business grid.  Narrower windows get
+ * complete KPI rows and vertically stacked panels; the host business canvas
+ * owns the scrollbar. */
+@container baseline-left (max-width: 1300px) {
+  .taf-baseline-workbench .taf-baseline-kpis[data-kpi-count="8"] {
+    height: 164px !important;
+    min-height: 164px !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    grid-template-rows: repeat(2, 80px) !important;
+  }
+
+  .taf-baseline-workbench .taf-baseline-left--account,
+  .taf-baseline-workbench .taf-baseline-left--port,
+  .taf-baseline-workbench .taf-baseline-left--protocol,
+  .taf-baseline-workbench .taf-baseline-left--time {
+    grid-template-rows: 74px 36px 164px 330px auto auto 46px !important;
+    min-height: 0 !important;
+  }
+
+  .taf-baseline-workbench .taf-baseline-upper,
+  .taf-baseline-workbench .taf-baseline-lower,
+  .taf-baseline-workbench .taf-baseline-tertiary {
+    height: auto !important;
+    max-height: none;
+    overflow: visible !important;
+    contain: none;
+  }
+
+  .taf-baseline-workbench .taf-baseline-upper {
+    min-height: 330px !important;
+  }
+
+  .taf-baseline-workbench .taf-baseline-lower,
+  .taf-baseline-workbench .taf-baseline-tertiary {
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: none !important;
+  }
+
+  .taf-baseline-workbench .taf-baseline-lower > .taf-panel,
+  .taf-baseline-workbench .taf-baseline-tertiary > .taf-panel {
+    min-height: 210px !important;
+    height: 210px !important;
+  }
+
+  .taf-baseline-workbench .taf-baseline-tertiary--port > .taf-panel {
+    min-height: 220px !important;
+    height: 220px !important;
+  }
+}
+
+@container baseline-left (max-width: 1060px) {
+  .taf-baseline-workbench .taf-baseline-upper {
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: none !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  .taf-baseline-workbench .taf-baseline-upper > .taf-panel {
+    min-height: 300px !important;
+    height: 300px !important;
+  }
+
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-lower {
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: repeat(3, 260px) !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    contain: none;
+  }
+
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-lower > .taf-panel {
+    min-height: 260px !important;
+    height: 260px !important;
+    max-height: 260px !important;
+  }
+}
+
+/*
+ * A query container cannot change its own grid tracks.  The legacy rules tried
+ * to resize `.taf-baseline-left` from its own named container and therefore
+ * left the upper track fixed at 330px while three 300px cards were stacked in
+ * it.  A viewport rule changes the container's own tracks; the named container
+ * query above remains responsible for its descendants.
+ */
+@media (max-width: 1700px) {
+  #root .taf-baseline-workbench > .taf-baseline-left--account,
+  #root .taf-baseline-workbench > .taf-baseline-left--port,
+  #root .taf-baseline-workbench > .taf-baseline-left--protocol,
+  #root .taf-baseline-workbench > .taf-baseline-left--time {
+    grid-template-rows: 74px 36px 164px auto auto auto 46px !important;
+    min-height: 0 !important;
+  }
+}
+
+/* -------------------------------------------------------------------------
+ * Specialist boards r711 — four independent, continuously responsive pages.
+ * ---------------------------------------------------------------------- */
+
+@media (min-width: 1800px) {
+  #root .taf-baseline-workbench:has(> .taf-baseline-left--account),
+  #root .taf-baseline-workbench:has(> .taf-baseline-left--port),
+  #root .taf-baseline-workbench:has(> .taf-baseline-left--protocol),
+  #root .taf-baseline-workbench:has(> .taf-baseline-left--time) {
+    grid-template-columns: minmax(0, 1fr) 494px !important;
+    gap: 8px !important;
+  }
+}
+
+@media (min-width: 1301px) and (max-width: 1799px) {
+  #root .taf-baseline-workbench:has(> .taf-baseline-left--account),
+  #root .taf-baseline-workbench:has(> .taf-baseline-left--port),
+  #root .taf-baseline-workbench:has(> .taf-baseline-left--protocol),
+  #root .taf-baseline-workbench:has(> .taf-baseline-left--time) {
+    grid-template-columns: minmax(0, 1fr) clamp(360px, 24vw, 410px) !important;
+    gap: 8px !important;
+  }
+}
+
+@media (max-width: 1300px) {
+  #root .taf-baseline-workbench:has(> .taf-baseline-left--account),
+  #root .taf-baseline-workbench:has(> .taf-baseline-left--port),
+  #root .taf-baseline-workbench:has(> .taf-baseline-left--protocol),
+  #root .taf-baseline-workbench:has(> .taf-baseline-left--time) {
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-auto-flow: row;
+    width: calc(100% - 8px) !important;
+  }
+
+  #root .taf-baseline-workbench > .taf-baseline-detail--account,
+  #root .taf-baseline-workbench > .taf-baseline-detail--port,
+  #root .taf-baseline-workbench > .taf-baseline-detail--protocol,
+  #root .taf-baseline-workbench > .taf-baseline-detail--time {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 720px !important;
+    grid-template-rows: auto auto !important;
+  }
+
+  #root .taf-baseline-workbench > .taf-baseline-detail--account {
+    height: 942px !important;
+    min-height: 942px !important;
+  }
+}
+
+/* Reference tabs are bordered controls, not a generic underline navigation. */
+#root .taf-baseline-workbench .taf-baseline-title-tabs .ant-tabs-nav::before {
+  border-bottom-color: rgba(45, 126, 173, .34) !important;
+}
+
+#root .taf-baseline-workbench .taf-baseline-title-tabs .ant-tabs-nav-list {
+  gap: 4px;
+}
+
+#root .taf-baseline-workbench .taf-baseline-title-tabs .ant-tabs-tab {
+  min-width: 92px;
+  justify-content: center;
+  margin: 0 !important;
+  padding: 6px 13px !important;
+  background: rgba(4, 22, 35, .82);
+  border: 1px solid rgba(52, 127, 171, .28);
+  border-radius: 3px 3px 0 0;
+}
+
+#root .taf-baseline-workbench .taf-baseline-title-tabs .ant-tabs-tab-active {
+  background: linear-gradient(180deg, rgba(13, 76, 117, .86), rgba(6, 47, 77, .92));
+  border-color: rgba(45, 177, 244, .68);
+  box-shadow: inset 0 0 12px rgba(27, 165, 231, .12);
+}
+
+#root .taf-baseline-workbench .taf-baseline-title-tabs .ant-tabs-ink-bar {
+  height: 2px !important;
+}
+
+/* Eight specialist KPI cards stay in one reference row while there is enough
+ * content width.  They fold to 4x2 only after the cards would become illegible. */
+@container baseline-left (min-width: 981px) {
+  #root .taf-baseline-workbench .taf-baseline-kpis[data-kpi-count="8"] {
+    height: 80px !important;
+    min-height: 80px !important;
+    grid-template-columns: repeat(8, minmax(0, 1fr)) !important;
+    grid-template-rows: 80px !important;
+  }
+}
+
+/* The reference desktop composition still fits at 1061px of business width.
+ * Earlier generic compact rules switched every lower band to one column at
+ * 1300px, which made the rows overflow their fixed page tracks. */
+@container baseline-left (min-width: 1061px) {
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-upper,
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-lower,
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-tertiary {
+    min-height: 0 !important;
+    max-height: 100% !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    contain: layout paint;
+  }
+
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-upper > .taf-panel,
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-lower > .taf-panel,
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-tertiary > .taf-panel {
+    min-height: 0 !important;
+    max-height: 100% !important;
+    height: 100% !important;
+  }
+
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-upper--account {
+    grid-template-columns: 292px minmax(0, 560fr) minmax(0, 458fr) !important;
+    grid-template-rows: 276px !important;
+  }
+
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-lower--account {
+    grid-template-columns: minmax(0, 548fr) minmax(0, 377fr) minmax(0, 385fr) !important;
+    grid-template-rows: 230px !important;
+  }
+
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-tertiary--account {
+    grid-template-columns: minmax(0, 618fr) minmax(0, 441fr) minmax(0, 251fr) !important;
+    grid-template-rows: 199px !important;
+  }
+
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-upper--port {
+    grid-template-columns: 292px minmax(0, 454fr) minmax(0, 564fr) !important;
+    grid-template-rows: 253px !important;
+  }
+
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-lower--port {
+    grid-template-columns: minmax(0, 627fr) minmax(0, 416fr) minmax(0, 267fr) !important;
+    grid-template-rows: 230px !important;
+  }
+
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-tertiary--port {
+    grid-template-columns: minmax(0, 448fr) minmax(0, 766fr) !important;
+    grid-template-rows: 213px !important;
+  }
+
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-upper--protocol {
+    grid-template-columns: 305px minmax(0, 477fr) minmax(0, 528fr) !important;
+    grid-template-rows: 270px !important;
+  }
+
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-lower--protocol {
+    grid-template-columns: minmax(0, 516fr) minmax(0, 447fr) minmax(0, 347fr) !important;
+    grid-template-rows: 245px !important;
+  }
+
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-tertiary--protocol {
+    grid-template-columns: minmax(0, 606fr) minmax(0, 562fr) minmax(0, 136fr) !important;
+    grid-template-rows: 185px !important;
+  }
+
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-upper--time {
+    grid-template-columns: 278px minmax(0, 590fr) minmax(0, 442fr) !important;
+    grid-template-rows: 264px !important;
+  }
+
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-lower--time {
+    grid-template-columns: minmax(0, 587fr) minmax(0, 411fr) minmax(0, 312fr) !important;
+    grid-template-rows: 300px !important;
+  }
+
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-tertiary--time {
+    grid-template-columns: minmax(0, 606fr) minmax(0, 562fr) minmax(0, 136fr) !important;
+    grid-template-rows: 145px !important;
+  }
+}
+
+/* Medium business widths retain the reference hierarchy: state machine beside
+ * the primary chart, with the secondary chart spanning the next row. */
+@container baseline-left (max-width: 1060px) {
+  #root .taf-baseline-workbench > .taf-baseline-left--account,
+  #root .taf-baseline-workbench > .taf-baseline-left--port,
+  #root .taf-baseline-workbench > .taf-baseline-left--protocol,
+  #root .taf-baseline-workbench > .taf-baseline-left--time {
+    grid-template-rows: 74px 36px auto auto auto auto 46px !important;
+  }
+
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-upper {
+    grid-template-columns: minmax(270px, .72fr) minmax(0, 1.28fr) !important;
+    grid-template-rows: 300px 300px !important;
+    height: 608px !important;
+    min-height: 608px !important;
+    overflow: hidden !important;
+    contain: layout paint;
+  }
+
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-upper > .taf-panel {
+    min-height: 0 !important;
+    height: 300px !important;
+    max-height: 300px !important;
+  }
+
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-upper > .taf-panel:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-lower,
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-tertiary {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-rows: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    contain: none;
+  }
+
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-lower > .taf-panel,
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-tertiary > .taf-panel {
+    min-height: 230px !important;
+    height: 230px !important;
+    max-height: 230px !important;
+  }
+
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-lower > .taf-panel:nth-child(3),
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-tertiary > .taf-panel:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-tertiary--port > .taf-panel {
+    min-height: 230px !important;
+    height: 230px !important;
+    max-height: 230px !important;
+  }
+}
+
+@container baseline-left (max-width: 760px) {
+  #root .taf-baseline-workbench .taf-baseline-kpis[data-kpi-count="8"] {
+    height: auto !important;
+    min-height: 332px !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-rows: repeat(4, 80px) !important;
+  }
+
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-upper,
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-lower,
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-tertiary {
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-upper > .taf-panel,
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-lower > .taf-panel,
+  #root .taf-baseline-workbench > .taf-baseline-left > .taf-baseline-tertiary > .taf-panel {
+    grid-column: auto !important;
+    min-height: 280px !important;
+    height: 280px !important;
+    max-height: 280px !important;
+  }
+}
+
+/* Specialist state machines reproduce the reference's stage chain and
+ * migration rails while keeping every label readable. */
+#root .taf-baseline-workbench .taf-baseline-state-machine.is-specialist {
+  position: relative;
+  padding: 2px 82px 0 4px;
+  gap: 3px !important;
+}
+
+#root .taf-baseline-workbench .taf-baseline-state-machine.is-specialist.is-five-state {
+  grid-template-rows: repeat(5, minmax(0, 1fr)) 22px !important;
+}
+
+#root .taf-baseline-workbench .taf-baseline-state-machine.is-specialist.is-six-state {
+  grid-template-rows: repeat(6, minmax(0, 1fr)) 22px !important;
+}
+
+#root .taf-baseline-workbench .taf-baseline-state-machine.is-specialist > div {
+  position: relative;
+  grid-template-columns: 24px minmax(0, 1fr) auto 38px !important;
+  grid-template-rows: minmax(17px, 1fr) 12px !important;
+  gap: 0 5px !important;
+  min-height: 0 !important;
+  padding: 3px 6px !important;
+  background: linear-gradient(90deg, rgba(10, 54, 81, .74), rgba(5, 28, 44, .5));
+  border: 1px solid currentColor;
+  border-radius: 4px;
+}
+
+#root .taf-baseline-workbench .taf-baseline-state-machine.is-specialist > div > i {
+  width: 19px !important;
+  height: 19px !important;
+  align-self: center;
+  box-shadow: 0 0 10px color-mix(in srgb, currentColor 34%, transparent);
+}
+
+#root .taf-baseline-workbench .taf-baseline-state-machine.is-specialist > div > i span {
+  left: 8px !important;
+  top: 18px !important;
+  height: 13px !important;
+}
+
+#root .taf-baseline-workbench .taf-baseline-state-machine.is-specialist > div > strong {
+  align-self: center;
+  overflow: hidden;
+  font-size: 11px;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#root .taf-baseline-workbench .taf-baseline-state-machine.is-specialist > div > em,
+#root .taf-baseline-workbench .taf-baseline-state-machine.is-specialist > div > small {
+  align-self: center;
+  font-size: 9px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+#root .taf-baseline-workbench .taf-baseline-state-machine.is-specialist > div > b {
+  grid-column: 2 / 5;
+  overflow: hidden;
+  color: rgba(154, 187, 210, .72);
+  font-size: 8px;
+  font-weight: 500;
+  line-height: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#root .taf-baseline-workbench .taf-baseline-state-transition {
+  position: absolute;
+  right: -17px;
+  top: 50%;
+  width: 16px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  color: currentColor;
+  font-size: 10px;
+  transform: translateY(-50%);
+}
+
+#root .taf-baseline-workbench .taf-baseline-state-rails {
+  position: absolute;
+  top: 5px;
+  right: 2px;
+  bottom: 25px;
+  width: 68px;
+  display: grid;
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding-left: 8px;
+  border-left: 1px dashed rgba(54, 184, 239, .55);
+}
+
+#root .taf-baseline-workbench .taf-baseline-state-rails span {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #47c7ff;
+  font-size: 8px;
+  line-height: 1.2;
+}
+
+#root .taf-baseline-workbench .taf-baseline-state-rails span:nth-child(2) {
+  color: #ffb020;
+}
+
+#root .taf-baseline-workbench .taf-baseline-state-rails span:nth-child(3) {
+  color: #a47cff;
+}
+
+#root .taf-baseline-workbench .taf-baseline-state-machine.is-specialist > footer {
+  padding-right: 2px;
+  font-size: 8px;
+}
+
+/* Page-specific chart frames restore legends, switchers and event annotations
+ * that are visible in the four reference boards. */
+#root .taf-baseline-workbench .taf-specialist-chart-shell {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+}
+
+#root .taf-baseline-workbench .taf-specialist-chart-stage {
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+#root .taf-baseline-workbench .taf-specialist-chart-stage > .taf-baseline-echart,
+#root .taf-baseline-workbench .taf-specialist-chart-stage > [data-chart-engine="echarts"] {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+#root .taf-baseline-workbench .taf-specialist-chart-toolbar {
+  min-width: 0;
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 2px 7px;
+  color: rgba(178, 206, 226, .82);
+  border-bottom: 1px solid rgba(49, 127, 171, .18);
+}
+
+#root .taf-baseline-workbench .taf-specialist-chart-toolbar.is-compact {
+  min-height: 20px;
+  border-top: 1px solid rgba(49, 127, 171, .18);
+  border-bottom: 0;
+}
+
+#root .taf-baseline-workbench .taf-specialist-chart-toolbar > div {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+
+#root .taf-baseline-workbench .taf-specialist-chart-toolbar span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+#root .taf-baseline-workbench .taf-specialist-chart-toolbar span i {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  background: #46c8ff;
+  border-radius: 1px;
+  box-shadow: 0 0 5px rgba(70, 200, 255, .45);
+}
+
+#root .taf-baseline-workbench .taf-specialist-chart-toolbar span.is-active {
+  min-height: 20px;
+  padding: 0 8px;
+  color: #54caff;
+  background: rgba(20, 121, 184, .16);
+  border: 1px solid rgba(48, 161, 222, .42);
+  border-radius: 2px;
+}
+
+#root .taf-baseline-workbench .taf-specialist-chart-toolbar span.is-ok i { background: #5bd586; }
+#root .taf-baseline-workbench .taf-specialist-chart-toolbar span.is-warning i { background: #ffb020; }
+#root .taf-baseline-workbench .taf-specialist-chart-toolbar span.is-risk i { background: #ff5d62; }
+#root .taf-baseline-workbench .taf-specialist-chart-toolbar span.is-purple i { background: #a47cff; }
+#root .taf-baseline-workbench .taf-specialist-chart-toolbar span.is-muted i { background: #5b7183; }
+
+#root .taf-baseline-workbench .taf-specialist-chart-toolbar aside {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+#root .taf-baseline-workbench .taf-specialist-chart-toolbar aside em {
+  padding: 2px 5px;
+  color: #ff8c68;
+  font-size: 8px;
+  line-height: 1;
+  background: rgba(118, 38, 28, .32);
+  border: 1px solid rgba(255, 91, 82, .3);
+  border-radius: 2px;
+  white-space: nowrap;
+}
+
+#root .taf-baseline-workbench .taf-account-network-shell,
+#root .taf-baseline-workbench .taf-port-heatmap-shell,
+#root .taf-baseline-workbench .taf-protocol-donut-shell,
+#root .taf-baseline-workbench .taf-time-calendar-shell {
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+#root .taf-baseline-workbench .taf-port-trend-shell {
+  grid-template-rows: auto auto minmax(0, 1fr);
+}
+
+#root .taf-baseline-workbench .taf-specialist-event-flags {
+  min-height: 19px;
+  display: flex;
+  justify-content: space-around;
+  gap: 6px;
+  padding: 2px 8px 0;
+}
+
+#root .taf-baseline-workbench .taf-specialist-event-flags span {
+  padding: 2px 6px;
+  color: #b48cff;
+  font-size: 8px;
+  background: rgba(77, 47, 109, .32);
+  border: 1px solid rgba(164, 124, 255, .3);
+  border-radius: 2px;
+}
+
+#root .taf-baseline-workbench .taf-specialist-event-flags span.is-risk {
+  color: #ff6c65;
+  background: rgba(118, 38, 28, .3);
+  border-color: rgba(255, 91, 82, .34);
+}
+
+#root .taf-baseline-workbench .taf-time-heatmap-shell {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+#root .taf-baseline-workbench .taf-time-window-markers {
+  min-height: 21px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  padding: 3px 8px;
+}
+
+#root .taf-baseline-workbench .taf-time-window-markers span {
+  overflow: hidden;
+  color: #b98cff;
+  font-size: 8px;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-bottom: 1px dashed currentColor;
+}
+
+#root .taf-baseline-workbench .taf-time-window-markers span:nth-child(2) { color: #ffbf55; }
+#root .taf-baseline-workbench .taf-time-window-markers span:nth-child(3) { color: #4fd5d0; }
+
+/* Asset is outside this visual rebuild, but it remains in the responsive
+ * regression gate. Keep its two-panel rows self-contained at compact widths. */
+@container baseline-left (max-width: 1060px) and (min-width: 761px) {
+  #root .taf-baseline-workbench > .taf-baseline-left--asset > .taf-baseline-upper--asset {
+    grid-template-columns: minmax(280px, .72fr) minmax(0, 1.28fr) !important;
+    grid-template-rows: 370px !important;
+    height: 370px !important;
+    min-height: 370px !important;
+    max-height: 370px !important;
+    overflow: hidden !important;
+    contain: layout paint;
+  }
+
+  #root .taf-baseline-workbench > .taf-baseline-left--asset > .taf-baseline-upper--asset > .taf-panel {
+    min-height: 0 !important;
+    height: 370px !important;
+    max-height: 370px !important;
+  }
+
+  #root .taf-baseline-workbench > .taf-baseline-left--asset > .taf-baseline-lower--asset {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-rows: 290px !important;
+    height: 290px !important;
+    min-height: 290px !important;
+    max-height: 290px !important;
+    overflow: hidden !important;
+    contain: layout paint;
+  }
+
+  #root .taf-baseline-workbench > .taf-baseline-left--asset > .taf-baseline-lower--asset > .taf-panel {
+    min-height: 0 !important;
+    height: 290px !important;
+    max-height: 290px !important;
+  }
+
+  #root .taf-baseline-workbench > .taf-baseline-left--asset .taf-baseline-version-head,
+  #root .taf-baseline-workbench > .taf-baseline-left--asset .taf-baseline-version-row {
+    grid-template-columns: 34px 52px minmax(68px, 1fr) minmax(76px, 1fr) 50px 40px !important;
+    gap: 4px !important;
+  }
+
+  #root .taf-baseline-workbench > .taf-baseline-left--asset .taf-baseline-version-row .ant-btn {
+    min-width: 0 !important;
+    width: 40px;
+    padding-inline: 4px;
+  }
+}

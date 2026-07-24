@@ -185,6 +185,11 @@ function validateScreenshotBackgroundManifest(relativeBackgroundPath: string) {
 
 function allowedScreenshotReferences(content: string, index: number) {
   const context = content.slice(Math.max(0, index - 140), Math.min(content.length, index + 140));
+  const publicBackground = /(?:\/|['"])(ui-assets\/backgrounds\/[^'")?#\s]+\.(?:png|jpe?g|webp|gif|avif|svg))/i.exec(context);
+  if (publicBackground) {
+    const violation = validateScreenshotBackgroundManifest(path.join('public', publicBackground[1]));
+    return { allowed: true, violations: violation ? [violation] : [] };
+  }
   const assetPath = /assets\/((?:generated-icons|screenshot-icons|screenshot-panels|screenshot-backgrounds)\/[^'")?#\s]+\.(?:png|jpe?g|webp|gif|avif|svg))/i.exec(context);
   if (!assetPath) return { allowed: false, violations: [] as string[] };
   if (assetPath[1].startsWith('screenshot-icons/')) {
@@ -238,6 +243,7 @@ describe('no-bitmap UI implementation guard', () => {
       if (
         imageTag &&
         !(relative === 'pages/LoginPage.tsx' && content.includes('alt="登录验证码"')) &&
+        !content.includes('data-screenshot-background') &&
         !content.includes('data-generated-icon')
       ) {
         violations.push(`${relative}:${lineNumber(content, imageTag.index)} raw img tag`);

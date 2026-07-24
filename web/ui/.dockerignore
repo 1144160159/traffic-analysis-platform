@@ -1,5 +1,7 @@
 node_modules
 dist
+!dist
+!dist/**
 playwright-report
 test-results
 .git

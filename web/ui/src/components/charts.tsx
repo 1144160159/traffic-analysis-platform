@@ -1,18 +1,72 @@
-import { BarChart, CustomChart, GaugeChart, GraphChart, HeatmapChart, LineChart, LinesChart, PieChart, SankeyChart, ScatterChart } from 'echarts/charts';
+import { BarChart, BoxplotChart, CustomChart, GaugeChart, GraphChart, HeatmapChart, LineChart, LinesChart, PieChart, SankeyChart, ScatterChart } from 'echarts/charts';
 import { GridComponent, LegendComponent, TitleComponent, TooltipComponent, VisualMapComponent } from 'echarts/components';
 import * as echarts from 'echarts/core';
 import type { ComposeOption } from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
 import EChartsReactCore from 'echarts-for-react/esm/core';
-import type { BarSeriesOption, CustomSeriesOption, GaugeSeriesOption, GraphSeriesOption, HeatmapSeriesOption, LineSeriesOption, LinesSeriesOption, PieSeriesOption, SankeySeriesOption, ScatterSeriesOption } from 'echarts/charts';
+import { AlertOutlined, ApiOutlined, DatabaseOutlined, FileSearchOutlined, GlobalOutlined, HddOutlined, SafetyCertificateOutlined, UserOutlined, ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons';
+import type { BarSeriesOption, BoxplotSeriesOption, CustomSeriesOption, GaugeSeriesOption, GraphSeriesOption, HeatmapSeriesOption, LineSeriesOption, LinesSeriesOption, PieSeriesOption, SankeySeriesOption, ScatterSeriesOption } from 'echarts/charts';
 import type { GridComponentOption, LegendComponentOption, TitleComponentOption, TooltipComponentOption, VisualMapComponentOption } from 'echarts/components';
-import type { KeyboardEvent } from 'react';
+import { useState } from 'react';
+import type { KeyboardEvent, WheelEvent } from 'react';
 
-echarts.use([LineChart, GaugeChart, ScatterChart, HeatmapChart, LinesChart, CustomChart, PieChart, BarChart, SankeyChart, GraphChart, GridComponent, TooltipComponent, TitleComponent, LegendComponent, VisualMapComponent, CanvasRenderer]);
+echarts.use([LineChart, GaugeChart, ScatterChart, HeatmapChart, LinesChart, CustomChart, PieChart, BarChart, BoxplotChart, SankeyChart, GraphChart, GridComponent, TooltipComponent, TitleComponent, LegendComponent, VisualMapComponent, CanvasRenderer]);
 
 type ChartOption = ComposeOption<
-  LineSeriesOption | GaugeSeriesOption | ScatterSeriesOption | HeatmapSeriesOption | LinesSeriesOption | CustomSeriesOption | PieSeriesOption | BarSeriesOption | SankeySeriesOption | GraphSeriesOption | GridComponentOption | TooltipComponentOption | TitleComponentOption | LegendComponentOption | VisualMapComponentOption
+  LineSeriesOption | GaugeSeriesOption | ScatterSeriesOption | HeatmapSeriesOption | LinesSeriesOption | CustomSeriesOption | PieSeriesOption | BarSeriesOption | BoxplotSeriesOption | SankeySeriesOption | GraphSeriesOption | GridComponentOption | TooltipComponentOption | TitleComponentOption | LegendComponentOption | VisualMapComponentOption
 >;
+
+export type BaselineBoxplotDatum = {
+  label: string;
+  values: [number, number, number, number, number];
+  unit?: string;
+};
+
+export type BaselineScatterDatum = {
+  hour: number;
+  value: number;
+  level: 'normal' | 'warning' | 'danger';
+};
+
+export type BaselineTrendDatum = {
+  labels: string[];
+  mean: number[];
+  p50: number[];
+  p95: number[];
+  p99: number[];
+  upper: number[];
+  lower: number[];
+};
+
+export type BaselineHeatmapDatum = {
+  x: string[];
+  y: string[];
+  values: Array<[number, number, number]>;
+};
+
+export type BaselineDonutDatum = {
+  name: string;
+  value: number;
+  secondaryValue?: number;
+};
+
+export type BaselineNetworkDatum = {
+  nodes: Array<{ id: string; name: string; value: number; category: number }>;
+  links: Array<{ source: string; target: string; value: number }>;
+};
+
+export type BaselineMultiSeriesDatum = {
+  labels: string[];
+  series: Array<{ name: string; values: number[] }>;
+};
+
+export type BaselinePortScanDatum = {
+  sources: Array<{ name: string; value: number }>;
+  targets: Array<{ name: string; value: number }>;
+  distribution: Array<{ name: string; value: number }>;
+  trendLabels: string[];
+  trendValues: number[];
+};
 
 export type WorldActivityPoint = {
   name: string;
@@ -37,6 +91,13 @@ export type CampaignDensityPoint = {
   y: number;
   value: number;
   level?: 'low' | 'medium' | 'high';
+};
+
+export type CampaignAttackGraphNode = {
+  name: string;
+  alertCount: number;
+  evidenceCount: number;
+  tone: 'info' | 'warn' | 'risk' | 'ok';
 };
 
 export type AbnormalImpactItem = {
@@ -164,6 +225,29 @@ export type ExfilGraphLink = {
   selected?: boolean;
 };
 
+export type EntityTopologyNode = {
+  id: string;
+  label: string;
+  detail: string;
+  x: number;
+  y: number;
+  hop?: number;
+  riskLevel: string;
+  entityType: string;
+  icon?: string;
+  center?: boolean;
+  selected?: boolean;
+};
+
+export type EntityTopologyLink = {
+  id: string;
+  source: string;
+  target: string;
+  label: string;
+  riskLevel: string;
+  weight: number;
+};
+
 export type TopicTopologyNode = {
   id: string;
   label: string;
@@ -196,6 +280,24 @@ export type EncryptedScatterChartPoint = {
   x: number;
   y: number;
   level: 'low' | 'medium' | 'high' | 'info';
+};
+
+export type FusionPipelineGeometry = {
+  width: number;
+  height: number;
+  sourceLinks: Array<{ start: [number, number]; end: [number, number] }>;
+  ruleLinks: Array<{ start: [number, number]; end: [number, number] }>;
+  outputLinks: Array<{ start: [number, number]; end: [number, number] }>;
+};
+
+export type PlaybookFlowGeometry = {
+  width: number;
+  height: number;
+  links: Array<{
+    start: [number, number];
+    end: [number, number];
+    tone: 'ok' | 'warn' | 'risk' | 'info';
+  }>;
 };
 
 const worldLandPaths = [
@@ -2073,6 +2175,396 @@ export function ExfilGraphChart({
   );
 }
 
+const campaignAttackToneColor = (tone: CampaignAttackGraphNode['tone']) => {
+  if (tone === 'risk') return '#ff4d4f';
+  if (tone === 'warn') return '#ffb020';
+  if (tone === 'ok') return '#36d66b';
+  return '#32b7ff';
+};
+
+const campaignAttackCoordinates: Array<[number, number]> = [
+  [92, 132],
+  [300, 64],
+  [492, 138],
+  [500, 278],
+  [320, 356],
+  [110, 308],
+];
+
+export function CampaignAttackGraphChart({
+  campaignId,
+  risk,
+  workflowStatus,
+  nodes,
+  ariaLabel,
+  onNodeClick,
+}: {
+  campaignId: string;
+  risk: string;
+  workflowStatus: string;
+  nodes: CampaignAttackGraphNode[];
+  ariaLabel: string;
+  onNodeClick?: (name: string) => void;
+}) {
+  const centerName = campaignId || '当前战役';
+  const graphNodes = nodes.slice(0, campaignAttackCoordinates.length);
+  const toneByName = new Map(graphNodes.map((node) => [node.name, node.tone]));
+  const nodeByName = new Map(graphNodes.map((node) => [node.name, node]));
+  const option: ChartOption = {
+    backgroundColor: 'transparent',
+    animation: false,
+    tooltip: {
+      trigger: 'item',
+      confine: true,
+      backgroundColor: 'rgba(3, 17, 28, 0.96)',
+      borderColor: 'rgba(127, 212, 255, 0.3)',
+      textStyle: { color: '#eaf7ff', fontSize: 12 },
+      formatter: (rawParams) => {
+        const params = Array.isArray(rawParams) ? rawParams[0] : rawParams;
+        const item = params as { dataType?: string; name?: string };
+        if (item.dataType === 'edge') return '战役阶段关联';
+        if (item.name === centerName) return `${centerName}<br/>${risk} / ${workflowStatus}`;
+        const node = nodeByName.get(item.name ?? '');
+        return node
+          ? `${node.name}<br/>关联告警：${node.alertCount}<br/>关联证据：${node.evidenceCount} 条`
+          : item.name ?? '战役阶段';
+      },
+    },
+    series: [{
+      name: '战役阶段关联图',
+      type: 'graph',
+      layout: 'none',
+      left: 58,
+      right: 58,
+      top: 52,
+      bottom: 52,
+      roam: true,
+      draggable: true,
+      symbol: 'circle',
+      edgeSymbol: ['circle', 'circle'],
+      edgeSymbolSize: [4, 7],
+      label: {
+        show: true,
+        position: 'inside',
+        align: 'center',
+        verticalAlign: 'middle',
+        color: '#eaf7ff',
+        fontFamily: 'Inter, "Microsoft YaHei", sans-serif',
+        fontSize: 10,
+        lineHeight: 15,
+        formatter: (params) => {
+          const name = params.name ?? '';
+          if (name === centerName) {
+            const compactName = centerName.length > 16 ? `${centerName.slice(0, 15)}…` : centerName;
+            return `{center|${compactName}}\n{centerMeta|${risk} / ${workflowStatus}}`;
+          }
+          const node = nodeByName.get(name);
+          return node
+            ? `{phase|${node.name}}\n{count|${node.alertCount} 告警}\n{evidence|${node.evidenceCount} 条证据}`
+            : name;
+        },
+        rich: {
+          center: { color: '#f4fbff', fontSize: 11, fontWeight: 700, lineHeight: 19 },
+          centerMeta: { color: '#ffb020', fontSize: 10, lineHeight: 17 },
+          phase: { color: '#f4fbff', fontSize: 11, fontWeight: 700, lineHeight: 17 },
+          count: { color: '#d7f1ff', fontSize: 10, lineHeight: 14 },
+          evidence: { color: '#8fb3c4', fontSize: 9, lineHeight: 13 },
+        },
+      },
+      lineStyle: {
+        color: 'target',
+        type: 'dashed',
+        opacity: 0.66,
+        width: 1.6,
+        curveness: 0.06,
+      },
+      emphasis: {
+        focus: 'adjacency',
+        lineStyle: { opacity: 1, width: 2.5 },
+      },
+      data: [
+        {
+          name: centerName,
+          x: 300,
+          y: 210,
+          value: nodes.reduce((sum, node) => sum + node.alertCount, 0),
+          symbolSize: 108,
+          draggable: false,
+          itemStyle: {
+            color: '#061c2b',
+            borderColor: '#ff4d4f',
+            borderWidth: 2.4,
+            shadowBlur: 24,
+            shadowColor: 'rgba(255, 77, 79, 0.46)',
+          },
+        },
+        ...graphNodes.map((node, index) => ({
+          name: node.name,
+          x: campaignAttackCoordinates[index][0],
+          y: campaignAttackCoordinates[index][1],
+          value: node.alertCount,
+          symbolSize: 78,
+          itemStyle: {
+            color: '#061c2b',
+            borderColor: campaignAttackToneColor(node.tone),
+            borderWidth: 1.8,
+            shadowBlur: 18,
+            shadowColor: campaignAttackToneColor(node.tone),
+          },
+        })),
+      ],
+      links: graphNodes.map((node) => ({
+        source: centerName,
+        target: node.name,
+        lineStyle: { color: campaignAttackToneColor(toneByName.get(node.name) ?? 'info') },
+      })),
+    } as GraphSeriesOption],
+  };
+
+  return (
+    <div
+      className="taf-campaign-attack-graph"
+      data-chart-engine="echarts"
+      data-series-type="graph"
+    >
+      <EChartsReactCore
+        aria-label={ariaLabel}
+        echarts={echarts}
+        style={{ height: '100%', width: '100%' }}
+        option={option}
+        notMerge
+        lazyUpdate
+        onEvents={onNodeClick ? {
+          click: (params: { seriesType?: string; dataType?: string; name?: string }) => {
+            if (
+              params.seriesType === 'graph'
+              && params.dataType === 'node'
+              && params.name
+              && params.name !== centerName
+            ) {
+              onNodeClick(params.name);
+            }
+          },
+        } : undefined}
+      />
+    </div>
+  );
+}
+
+const entityRiskColor = (riskLevel: string) => {
+  if (riskLevel === 'high') return '#ff4d4f';
+  if (riskLevel === 'medium') return '#ffb020';
+  if (riskLevel === 'low') return '#36d66b';
+  return '#18a8ff';
+};
+
+const entityIcon = (entityType: string, iconKind?: string) => {
+  if (entityType === 'ip' || entityType === 'domain') return <GlobalOutlined />;
+  if (entityType === 'account') return <UserOutlined />;
+  if (entityType === 'service') return <ApiOutlined />;
+  if (entityType === 'alert') return <AlertOutlined />;
+  if (entityType === 'evidence') return <FileSearchOutlined />;
+  if (iconKind === 'gateway') return <SafetyCertificateOutlined />;
+  if (iconKind === 'database') return <DatabaseOutlined />;
+  return <HddOutlined />;
+};
+
+const entityRelationColor = (relation: string, riskLevel: string) => {
+  if (riskLevel === 'high') return '#ff4d4f';
+  if (relation === '登录' || relation === '账号访问') return '#79d64b';
+  if (relation === 'DNS解析') return '#ffb020';
+  if (relation === '行为服务') return '#2ed6c8';
+  if (relation === '关联告警') return '#ff7a45';
+  if (relation === '证据引用') return '#b685ff';
+  return '#18a8ff';
+};
+
+export function EntityTopologyGraph({
+  nodes,
+  links,
+  ariaLabel,
+  onNodeClick,
+}: {
+  nodes: EntityTopologyNode[];
+  links: EntityTopologyLink[];
+  ariaLabel: string;
+  onNodeClick?: (id: string) => void;
+}) {
+  const [zoom, setZoom] = useState(1);
+  const updateZoom = (next: number) => setZoom(Math.min(1.6, Math.max(0.7, Number(next.toFixed(2)))));
+  const handleWheel = (event: WheelEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    updateZoom(zoom + (event.deltaY < 0 ? 0.1 : -0.1));
+  };
+  const centerNodeId = nodes.find((node) => node.center)?.id;
+  const hopByNodeId = new Map(nodes.map((node) => [node.id, node.hop ?? 0]));
+  const minX = nodes.length ? Math.min(...nodes.map((node) => node.x)) : 0;
+  const maxX = nodes.length ? Math.max(...nodes.map((node) => node.x)) : 1;
+  const minY = nodes.length ? Math.min(...nodes.map((node) => node.y)) : 0;
+  const maxY = nodes.length ? Math.max(...nodes.map((node) => node.y)) : 1;
+  const normalizedPositionForNode = (node: EntityTopologyNode) => ({
+    left: 18 + ((node.x - minX) / Math.max(1, maxX - minX)) * 68,
+    top: 12 + ((node.y - minY) / Math.max(1, maxY - minY)) * 76,
+  });
+  const positionForNode = (node: EntityTopologyNode) => ({
+    left: `${normalizedPositionForNode(node).left}%`,
+    top: `${normalizedPositionForNode(node).top}%`,
+    '--taf-entity-color': entityRiskColor(node.riskLevel),
+  } as React.CSSProperties);
+  const nodeById = new Map(nodes.map((node) => [node.id, node]));
+  const option: ChartOption = {
+    backgroundColor: 'transparent',
+    animation: false,
+    tooltip: {
+      trigger: 'item',
+      confine: true,
+      backgroundColor: 'rgba(3, 17, 28, 0.96)',
+      borderColor: 'rgba(127, 212, 255, 0.32)',
+      textStyle: { color: '#eaf7ff', fontSize: 12 },
+      formatter: (rawParams) => {
+        const params = rawParams as { dataType?: string; data?: { entityLabel?: string; detail?: string; relation?: string; weight?: number } };
+        if (params.dataType === 'edge') return `${params.data?.relation ?? '关系'}<br/>关联强度：${Math.round((params.data?.weight ?? 0) * 100)}%`;
+        return `${params.data?.entityLabel ?? '实体'}<br/>${params.data?.detail ?? '-'}`;
+      },
+    },
+    series: [{
+      name: '实体邻居图谱',
+      type: 'graph',
+      layout: 'none',
+      left: '18%',
+      right: '14%',
+      top: '12%',
+      bottom: '12%',
+      roam: false,
+      draggable: false,
+      edgeSymbol: ['none', 'arrow'],
+      edgeSymbolSize: [0, 7],
+      emphasis: { focus: 'adjacency', scale: 1.12 },
+      select: { itemStyle: { borderColor: '#f4fbff', borderWidth: 4 } },
+      label: { show: false },
+      edgeLabel: {
+        show: false,
+        position: 'middle',
+        color: '#cfefff',
+        fontFamily: '"Microsoft YaHei", "PingFang SC", Arial, sans-serif',
+        fontSize: 12,
+        fontStyle: 'normal',
+        fontWeight: 500,
+        lineHeight: 16,
+        rotate: 0,
+        formatter: (params) => (params as { data?: { relation?: string } }).data?.relation ?? '',
+        backgroundColor: 'rgba(3, 17, 28, 0.86)',
+        textBorderColor: '#03111c',
+        textBorderWidth: 2,
+        borderRadius: 2,
+        padding: [1, 4],
+      },
+      lineStyle: { opacity: 0.74, width: 1.8, curveness: 0.08 },
+      data: nodes.map((node) => {
+        const color = entityRiskColor(node.riskLevel);
+        return {
+          id: node.id,
+          name: node.id,
+          entityLabel: node.label,
+          detail: node.detail,
+          x: node.x,
+          y: node.y,
+          symbol: 'circle',
+          symbolSize: node.center ? 72 : 46,
+          selected: node.selected,
+          label: node.entityType === 'evidence' ? { position: 'right', distance: 7 } : undefined,
+          itemStyle: {
+            color: color,
+            opacity: 0,
+          },
+        };
+      }),
+      links: links.map((link, index) => {
+        const centerConnected = link.source === centerNodeId || link.target === centerNodeId;
+        const sourceHop = hopByNodeId.get(link.source) ?? 0;
+        const targetHop = hopByNodeId.get(link.target) ?? 0;
+        const crossLink = sourceHop === targetHop;
+        const labelPosition = index % 2 === 0 ? 'insideMiddleTop' : 'insideMiddleBottom';
+        return {
+          id: link.id,
+          source: link.source,
+          target: link.target,
+          relation: link.label,
+          weight: link.weight,
+          label: { show: !crossLink, position: labelPosition, distance: centerConnected ? 12 : 7 },
+          lineStyle: {
+            color: entityRelationColor(link.label, link.riskLevel),
+            width: crossLink ? 1 : Math.max(1.2, 1 + link.weight * 1.4),
+            type: crossLink ? 'dotted' : 'dashed',
+            opacity: crossLink ? 0.3 : 0.86,
+            curveness: index % 3 === 0 ? 0.035 : index % 3 === 1 ? -0.025 : 0,
+          },
+        };
+      }),
+    } as GraphSeriesOption],
+  };
+  return (
+    <div className="taf-entity-topology-chart" aria-label={ariaLabel} onWheel={handleWheel}>
+      <div className="taf-entity-topology-zoom" role="group" aria-label="邻居图谱缩放控制">
+        <button type="button" aria-label="缩小邻居图谱" onClick={() => updateZoom(zoom - 0.1)} disabled={zoom <= 0.7}><ZoomOutOutlined /></button>
+        <button type="button" className="taf-entity-topology-zoom__value" aria-label="复位邻居图谱缩放" onClick={() => updateZoom(1)}>{Math.round(zoom * 100)}%</button>
+        <button type="button" aria-label="放大邻居图谱" onClick={() => updateZoom(zoom + 0.1)} disabled={zoom >= 1.6}><ZoomInOutlined /></button>
+      </div>
+      <div className="taf-entity-topology-scene" data-zoom={zoom.toFixed(2)} style={{ transform: `scale(${zoom})` }}>
+        <EChartsReactCore
+          echarts={echarts}
+          style={{ position: 'absolute', inset: 0, height: '100%', width: '100%' }}
+          option={option}
+          notMerge
+          lazyUpdate
+        />
+        {nodes.map((node) => (
+          <button
+            key={node.id}
+            type="button"
+            className={`taf-entity-topology-node is-${node.entityType} ${node.center ? 'is-center' : ''} ${node.selected ? 'is-selected' : ''}`}
+            data-hop={node.hop ?? 0}
+            style={positionForNode(node)}
+            onClick={() => onNodeClick?.(node.id)}
+            title={`${node.label} ${node.detail}`}
+          >
+            <i>{entityIcon(node.entityType, node.icon)}</i>
+            <strong>{node.label}</strong>
+            <small>{node.detail}</small>
+          </button>
+        ))}
+        {links.map((link, index) => {
+          const source = nodeById.get(link.source);
+          const target = nodeById.get(link.target);
+          if (!source || !target) return null;
+          const sourcePosition = normalizedPositionForNode(source);
+          const targetPosition = normalizedPositionForNode(target);
+          const progress = link.source === centerNodeId
+            ? 0.62
+            : link.target === centerNodeId
+              ? 0.38
+              : index % 2 === 0 ? 0.46 : 0.54;
+          return (
+            <span
+              key={`label-${link.id}`}
+              className="taf-entity-topology-relation-label"
+              data-relation-label={link.label}
+              style={{
+                left: `${sourcePosition.left + (targetPosition.left - sourcePosition.left) * progress}%`,
+                top: `${sourcePosition.top + (targetPosition.top - sourcePosition.top) * progress}%`,
+                color: entityRelationColor(link.label, link.riskLevel),
+                transform: `translate(-50%, calc(-50% + ${index % 3 === 0 ? -10 : index % 3 === 1 ? 8 : -2}px))`,
+              }}
+            >
+              {link.label}
+            </span>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 const topicTopologyColors: Record<TopicTopologyNode['tone'], string> = {
   asset: '#18a8ff',
   probe: '#7fd4ff',
@@ -2196,41 +2688,94 @@ export function ExfilBarChart({
   );
 }
 
+export function QueryHistoryBarChart({
+  items,
+  ariaLabel,
+}: {
+  items: Array<{ label: string; value: number }>;
+  ariaLabel: string;
+}) {
+  const option: ChartOption = {
+    backgroundColor: 'transparent',
+    animation: false,
+    tooltip: {
+      trigger: 'axis',
+      confine: true,
+      axisPointer: { type: 'shadow' },
+      backgroundColor: 'rgba(3, 17, 28, 0.96)',
+      borderColor: 'rgba(127, 212, 255, 0.3)',
+      textStyle: { color: '#eaf7ff', fontSize: 11 },
+      formatter: (params) => {
+        const first = Array.isArray(params) ? params[0] : params;
+        const data = first as { axisValue?: string; value?: number };
+        return `${data.axisValue ?? '查询'}<br/>耗时 ${data.value ?? 0} ms`;
+      },
+    },
+    grid: { left: 30, right: 8, top: 8, bottom: 24 },
+    xAxis: {
+      type: 'category',
+      data: items.map((item) => item.label),
+      axisLine: { lineStyle: { color: 'rgba(127, 212, 255, 0.28)' } },
+      axisTick: { show: false },
+      axisLabel: { color: '#7f9fb1', fontSize: 9, interval: 0 },
+    },
+    yAxis: {
+      type: 'value',
+      min: 0,
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: { color: '#7f9fb1', fontSize: 9 },
+      splitLine: { lineStyle: { color: 'rgba(56, 151, 201, 0.12)' } },
+    },
+    series: [{
+      name: '查询耗时',
+      type: 'bar',
+      data: items.map((item) => item.value),
+      barMaxWidth: 18,
+      itemStyle: {
+        color: '#35bdff',
+        borderRadius: [3, 3, 0, 0],
+        shadowBlur: 10,
+        shadowColor: 'rgba(24, 168, 255, 0.32)',
+      },
+    }],
+  };
+  return (
+    <EChartsReactCore
+      aria-label={ariaLabel}
+      echarts={echarts}
+      style={{ height: '100%', width: '100%' }}
+      option={option}
+      notMerge
+      lazyUpdate
+    />
+  );
+}
+
 export function SparklineChart({
   trend,
   tone = 'ok',
+  ariaLabel = '指标趋势折线图',
+  dataSource = 'api',
 }: {
   trend: number[];
   tone?: 'ok' | 'warn' | 'risk' | 'info';
+  ariaLabel?: string;
+  dataSource?: string;
 }) {
   const color =
     tone === 'warn' ? '#ffb020' : tone === 'risk' ? '#ff4d4f' : tone === 'info' ? '#18a8ff' : '#36d66b';
-  const source = trend.length ? trend : [42, 46, 43, 49, 45, 51, 48, 52];
-  const min = Math.min(...source);
-  const max = Math.max(...source);
-  const range = Math.max(1, max - min);
-  const normalized = source.map((value, index) => {
-    const base = 44 + (((value - min) / range) - 0.5) * 8;
-    const jitter = ((index * 7) % 5 - 2) * 0.8;
-    return Math.max(36, Math.min(54, base + jitter));
-  });
-  const sparkData = normalized.flatMap((value, index) => {
-    const next = normalized[index + 1];
-    if (next === undefined) return [Math.round(value)];
-    return [0, 1, 2].map((step) => {
-      const t = step / 3;
-      const baseline = value * (1 - t) + next * t;
-      const wobble = ((index * 3 + step * 5) % 7 - 3) * 1.15;
-      return Math.round(Math.max(36, Math.min(54, baseline + wobble)));
-    });
-  });
+  const sparkData = trend.map(Number).filter(Number.isFinite);
+  const minimum = sparkData.length ? Math.min(...sparkData) : 0;
+  const maximum = sparkData.length ? Math.max(...sparkData) : 1;
+  const padding = Math.max(1, (maximum - minimum) * 0.15);
   const option: ChartOption = {
     backgroundColor: 'transparent',
     animation: false,
     tooltip: { show: false },
     grid: { left: 2, right: 2, top: 1, bottom: 1, containLabel: false },
     xAxis: { type: 'category', show: false, boundaryGap: false, data: sparkData.map((_, index) => `${index}`) },
-    yAxis: { type: 'value', show: false, min: 30, max: 60 },
+    yAxis: { type: 'value', show: false, min: Math.max(0, minimum - padding), max: maximum + padding },
     series: [
       {
         name: '趋势',
@@ -2238,22 +2783,910 @@ export function SparklineChart({
         smooth: false,
         symbol: 'none',
         data: sparkData,
-        lineStyle: { color, width: 1.35, shadowBlur: 5, shadowColor: `${color}88` },
+        lineStyle: { color, width: 1.6, shadowBlur: 5, shadowColor: `${color}88` },
+        areaStyle: { color: `${color}24`, opacity: 0.72 },
         emphasis: { disabled: true },
       },
     ],
   };
 
   return (
-    <EChartsReactCore
-      className="taf-pipeline__chart"
-      echarts={echarts}
-      style={{ height: 16, width: '100%' }}
-      option={option}
-      notMerge
-      lazyUpdate
-    />
+    <span className="taf-echarts-sparkline-source" data-series-type="line" data-series-values={JSON.stringify(sparkData)} data-series-source={dataSource}>
+      <EChartsReactCore
+        aria-label={ariaLabel}
+        className="taf-echarts-sparkline"
+        echarts={echarts}
+        style={{ height: 20, width: '100%' }}
+        option={option}
+        notMerge
+        lazyUpdate
+      />
+    </span>
   );
+}
+
+export function BaselineBoxplotChart({ data, ariaLabel = '行为基线箱线分布图' }: { data: BaselineBoxplotDatum[]; ariaLabel?: string }) {
+  const count = Math.max(1, data.length);
+  const palette = ['#29b8ff', '#67c23a', '#ff9f43', '#a47cff', '#38c7df', '#ff6b67'];
+  const option: ChartOption = {
+    animation: false,
+    backgroundColor: 'transparent',
+    grid: data.map((_, index) => ({ left: `${index * (100 / count) + 2}%`, width: `${100 / count - 4}%`, top: 18, bottom: 42, containLabel: true })),
+    tooltip: { trigger: 'item', confine: true },
+    xAxis: data.map((item, index) => ({
+      gridIndex: index,
+      type: 'category',
+      data: [item.label],
+      axisLine: { lineStyle: { color: 'rgba(71,144,181,.42)' } },
+      axisLabel: { color: '#91aec0', fontSize: 10, interval: 0 },
+    })),
+    yAxis: data.map((item, index) => ({
+      gridIndex: index,
+      type: 'value',
+      scale: true,
+      name: item.unit,
+      nameTextStyle: { color: '#6f91a5', fontSize: 8 },
+      splitLine: { lineStyle: { color: 'rgba(71,144,181,.12)' } },
+      axisLabel: { color: '#6f91a5', fontSize: 9 },
+    })),
+    series: data.map((item, index) => ({
+      name: '基线区间',
+      type: 'boxplot',
+      xAxisIndex: index,
+      yAxisIndex: index,
+      data: [{ value: item.values, name: item.label }],
+      itemStyle: { color: `${palette[index % palette.length]}33`, borderColor: palette[index % palette.length], borderWidth: 1.5 },
+    })),
+  };
+  return (
+    <div className="taf-baseline-echart" data-chart-engine="echarts" data-series-type="boxplot" data-series-values={JSON.stringify(data)}>
+      <EChartsReactCore aria-label={ariaLabel} echarts={echarts} style={{ width: '100%', height: '100%' }} option={option} notMerge />
+    </div>
+  );
+}
+
+export function BaselineDeviationScatterChart({ data, ariaLabel = '时间段与流量偏离散点图' }: { data: BaselineScatterDatum[]; ariaLabel?: string }) {
+  const colors = { normal: '#25b9ff', warning: '#ffc53d', danger: '#ff4d4f' };
+  const option: ChartOption = {
+    animation: false,
+    backgroundColor: 'transparent',
+    grid: { left: 44, right: 14, top: 20, bottom: 35 },
+    tooltip: { trigger: 'item', confine: true, formatter: (params: unknown) => {
+      const item = params as { data?: { value?: [number, number]; level?: string } };
+      return `${item.data?.value?.[0] ?? 0}:00<br/>观察值 ${Number(item.data?.value?.[1] ?? 0).toLocaleString()}<br/>${item.data?.level ?? ''}`;
+    } },
+    xAxis: {
+      type: 'value', min: 0, max: 23, interval: 4,
+      axisLine: { lineStyle: { color: 'rgba(71,144,181,.42)' } },
+      splitLine: { lineStyle: { color: 'rgba(71,144,181,.1)' } },
+      axisLabel: { color: '#91aec0', formatter: '{value}:00', fontSize: 9 },
+    },
+    yAxis: {
+      type: 'value',
+      splitLine: { lineStyle: { color: 'rgba(71,144,181,.12)' } },
+      axisLabel: { color: '#6f91a5', fontSize: 9 },
+    },
+    series: (['normal', 'warning', 'danger'] as const).map((level) => ({
+      name: level === 'normal' ? '正常' : level === 'warning' ? '关注' : '高偏离',
+      type: 'scatter',
+      symbolSize: level === 'danger' ? 8 : level === 'warning' ? 6 : 4,
+      data: data.filter((item) => item.level === level).map((item) => ({ value: [item.hour, item.value], level, itemStyle: { color: colors[level] } })),
+    })),
+  };
+  return (
+    <div className="taf-baseline-echart" data-chart-engine="echarts" data-series-type="scatter" data-series-values={JSON.stringify(data)}>
+      <EChartsReactCore aria-label={ariaLabel} echarts={echarts} style={{ width: '100%', height: '100%' }} option={option} notMerge />
+    </div>
+  );
+}
+
+export function BaselineIntervalTrendChart({ data, ariaLabel = '24小时基线区间趋势图' }: { data: BaselineTrendDatum; ariaLabel?: string }) {
+  const line = (name: string, values: number[], color: string, dashed = false): LineSeriesOption => ({
+    name,
+    type: 'line',
+    data: values,
+    showSymbol: false,
+    smooth: true,
+    lineStyle: { color, width: name === '均值' ? 2 : 1, type: dashed ? 'dashed' : 'solid' },
+    itemStyle: { color },
+  });
+  const option: ChartOption = {
+    animation: false,
+    backgroundColor: 'transparent',
+    grid: { left: 46, right: 16, top: 28, bottom: 28 },
+    legend: { top: 1, right: 4, itemWidth: 12, itemHeight: 5, textStyle: { color: '#8eacbd', fontSize: 9 } },
+    tooltip: { trigger: 'axis', confine: true },
+    xAxis: {
+      type: 'category', data: data.labels, boundaryGap: false,
+      axisLine: { lineStyle: { color: 'rgba(71,144,181,.42)' } },
+      axisLabel: { color: '#7797aa', fontSize: 9, interval: 3 },
+    },
+    yAxis: { type: 'value', splitLine: { lineStyle: { color: 'rgba(71,144,181,.1)' } }, axisLabel: { color: '#6f91a5', fontSize: 9 } },
+    series: [
+      line('均值', data.mean, '#24c6ff'),
+      line('P50', data.p50, '#45e3c1'),
+      line('P95', data.p95, '#b689ff'),
+      line('P99', data.p99, '#ffb020'),
+      line('阈值上限', data.upper, '#ff4d4f', true),
+      line('阈值下限', data.lower, '#5b8ff9', true),
+    ],
+  };
+  return (
+    <div className="taf-baseline-echart" data-chart-engine="echarts" data-series-type="line" data-series-values={JSON.stringify(data)}>
+      <EChartsReactCore aria-label={ariaLabel} echarts={echarts} style={{ width: '100%', height: '100%' }} option={option} notMerge />
+    </div>
+  );
+}
+
+export function BaselineMultiSeriesChart({ data, ariaLabel = '行为基线多序列趋势图' }: { data: BaselineMultiSeriesDatum; ariaLabel?: string }) {
+  const palette = ['#24c6ff', '#45e3c1', '#ffb020', '#ff5b57', '#a47cff', '#5b8ff9', '#8bd346', '#e67cff'];
+  const option: ChartOption = {
+    animation: false,
+    backgroundColor: 'transparent',
+    grid: { left: 46, right: 16, top: 30, bottom: 28 },
+    legend: { top: 1, right: 4, itemWidth: 12, itemHeight: 5, textStyle: { color: '#8eacbd', fontSize: 9 } },
+    tooltip: { trigger: 'axis', confine: true },
+    xAxis: {
+      type: 'category',
+      data: data.labels,
+      boundaryGap: false,
+      axisLine: { lineStyle: { color: 'rgba(71,144,181,.42)' } },
+      axisLabel: { color: '#7797aa', fontSize: 9, interval: Math.max(0, Math.ceil(data.labels.length / 8) - 1) },
+    },
+    yAxis: { type: 'value', splitLine: { lineStyle: { color: 'rgba(71,144,181,.1)' } }, axisLabel: { color: '#6f91a5', fontSize: 9 } },
+    series: data.series.map((item, index) => ({
+      name: item.name,
+      type: 'line',
+      data: item.values,
+      showSymbol: false,
+      smooth: false,
+      connectNulls: false,
+      lineStyle: { color: palette[index % palette.length], width: index < 3 ? 2 : 1.2 },
+      itemStyle: { color: palette[index % palette.length] },
+    } as LineSeriesOption)),
+  };
+  return (
+    <div className="taf-baseline-echart" data-chart-engine="echarts" data-series-type="multi-line" data-series-values={JSON.stringify(data)}>
+      <EChartsReactCore aria-label={ariaLabel} echarts={echarts} style={{ width: '100%', height: '100%' }} option={option} notMerge />
+    </div>
+  );
+}
+
+export function BaselineHeatmapChart({ data, ariaLabel = '行为基线热力图', normalizeByRow = false, scale = 'absolute' }: { data: BaselineHeatmapDatum; ariaLabel?: string; normalizeByRow?: boolean; scale?: 'absolute' | 'log' | 'quantile' }) {
+  // Aggregations return only observed buckets.  Expand the declared x/y
+  // domain to a complete matrix so an unobserved bucket remains visible as a
+  // truthful zero cell instead of a transparent hole in the topology.
+  const observed = new Map(data.values.map(([x, y, value]) => [`${x}:${y}`, Number(value) || 0]));
+  const matrixValues: Array<[number, number, number]> = data.y.flatMap((_, y) => data.x.map((__, x) => [x, y, observed.get(`${x}:${y}`) ?? 0] as [number, number, number]));
+  const rowMaximum = new Map<number, number>();
+  const rowMinimum = new Map<number, number>();
+  matrixValues.forEach((item) => {
+    const value = Number(item[2]) || 0;
+    rowMaximum.set(item[1], Math.max(rowMaximum.get(item[1]) ?? 0, value));
+    rowMinimum.set(item[1], Math.min(rowMinimum.get(item[1]) ?? value, value));
+  });
+  const logarithmic = scale === 'log';
+  const quantile = scale === 'quantile';
+  const positiveValues = matrixValues.map((item) => Math.max(0, Number(item[2]) || 0)).filter((value) => value > 0).sort((left, right) => left - right);
+  const percentile = (value: number) => {
+    if (value <= 0 || !positiveValues.length) return 0;
+    let upper = positiveValues.findIndex((candidate) => candidate >= value);
+    if (upper < 0) upper = positiveValues.length - 1;
+    return 14 + upper / Math.max(1, positiveValues.length - 1) * 86;
+  };
+  const displayValues = normalizeByRow
+    ? matrixValues.map(([x, y, value]) => {
+        const minimum = rowMinimum.get(y) ?? 0;
+        const maximum = rowMaximum.get(y) ?? 0;
+        const relative = maximum > minimum ? (value - minimum) / (maximum - minimum) * 100 : value > 0 ? 50 : 0;
+        return [x, y, relative, value];
+      })
+    : logarithmic
+      ? matrixValues.map(([x, y, value]) => [x, y, Math.log1p(Math.max(0, Number(value) || 0)), value])
+      : quantile
+        ? matrixValues.map(([x, y, value]) => [x, y, percentile(Number(value) || 0), value])
+    : matrixValues;
+  const rawMaximum = Math.max(1, ...matrixValues.map((item) => Number(item[2]) || 0));
+  const maximum = normalizeByRow || quantile ? 100 : logarithmic ? Math.log1p(rawMaximum) : rawMaximum;
+  const option: ChartOption = {
+    animation: false,
+    backgroundColor: 'transparent',
+    tooltip: {
+      position: 'top',
+      confine: true,
+      formatter: (rawParams) => {
+        const params = rawParams as { value?: [number, number, number, number?] };
+        const value = params.value ?? [0, 0, 0];
+        const observed = value[3] ?? value[2];
+        return `${data.y[value[1]] ?? '-'} · ${data.x[value[0]] ?? '-'}<br/>观测值 ${Number(observed).toLocaleString('zh-CN')}${normalizeByRow ? `<br/>行内相对强度 ${Number(value[2]).toFixed(1)}%` : logarithmic ? '<br/>颜色使用全局对数刻度' : quantile ? `<br/>全局非零分位 ${Number(value[2]).toFixed(1)}%` : ''}`;
+      },
+    },
+    grid: { left: 48, right: 8, top: 8, bottom: 28 },
+    xAxis: {
+      type: 'category',
+      data: data.x,
+      axisLine: { lineStyle: { color: 'rgba(71,144,181,.38)' } },
+      axisTick: { show: false },
+      axisLabel: { color: '#89a8ba', fontSize: 9, interval: 0, hideOverlap: true },
+    },
+    yAxis: {
+      type: 'category',
+      data: data.y,
+      inverse: true,
+      axisLine: { show: false },
+      axisTick: { show: false },
+      axisLabel: { color: '#9ab5c5', fontSize: 9, interval: 0, overflow: 'truncate', width: 42 },
+    },
+    visualMap: {
+      show: false,
+      // Heatmap tuples may carry the untouched observation as a fourth
+      // tooltip-only field.  Pin the visual channel to the normalized third
+      // dimension so quantile/log modes do not accidentally color every real
+      // high-volume observation as the maximum bucket.
+      dimension: 2,
+      min: 0,
+      max: maximum,
+      inRange: { color: ['#0b2940', '#155b89', '#178ed0', '#46c8ff', '#36d66b', '#ffc53d', '#ff9f43', '#ff554f'] },
+    },
+    series: [{
+      name: '观测强度',
+      type: 'heatmap',
+      data: displayValues,
+      progressive: 0,
+      itemStyle: { borderColor: '#061725', borderWidth: 2, borderRadius: 2 },
+      emphasis: { itemStyle: { borderColor: '#eaf7ff', borderWidth: 1 } },
+    }],
+  };
+  return (
+    <div className="taf-baseline-echart" data-chart-engine="echarts" data-series-type="heatmap" data-series-values={JSON.stringify(data.values)}>
+      <EChartsReactCore aria-label={ariaLabel} echarts={echarts} style={{ width: '100%', height: '100%' }} option={option} notMerge />
+    </div>
+  );
+}
+
+export function BaselineCalendarChart({ data, ariaLabel = '时间段基线日历视图' }: { data: BaselineHeatmapDatum; ariaLabel?: string }) {
+  // Calendar overview is a day x hour matrix. Preserve every observed hourly
+  // bucket instead of turning the first 31 matrix cells into 31 unrelated
+  // days. This keeps the compact intra-day bars both faithful to the API and
+  // visually aligned with the reference calendar.
+  const parsedDays = data.y.length ? data.y : [...new Set(data.values.map(([, y]) => String(y + 1)))];
+  const hourCount = Math.max(1, data.x.length);
+  const days = Array.from({ length: 31 }, (_, index) => {
+    const hourly = Array.from({ length: hourCount }, (__, hour) => Math.max(0, Number(data.values.find(([x, y]) => x === hour && y === index)?.[2] ?? 0)));
+    return {
+      index,
+      label: parsedDays[index] || `第 ${index + 1} 天`,
+      value: hourly.reduce((sum, value) => sum + value, 0),
+      hourly,
+    };
+  });
+  const maximum = Math.max(1, ...days.map((item) => item.value));
+  const hourlyMaximum = Math.max(1, ...days.flatMap((item) => item.hourly));
+  const option: ChartOption = {
+    animation: false,
+    backgroundColor: 'transparent',
+    tooltip: {
+      confine: true,
+      formatter: (rawParams) => {
+        const params = rawParams as { data?: { label?: string; value?: number[] } };
+        return `${params.data?.label ?? '-'}<br/>会话聚合 ${Number(params.data?.value?.[2] ?? 0).toLocaleString('zh-CN')}`;
+      },
+    },
+    grid: { left: 4, right: 4, top: 6, bottom: 4 },
+    xAxis: { type: 'value', min: -0.5, max: 6.5, show: false },
+    yAxis: { type: 'value', min: -0.5, max: 4.5, inverse: true, show: false },
+    series: [{
+      name: '日历会话聚合',
+      type: 'custom',
+      coordinateSystem: 'cartesian2d',
+      data: days.map((item, index) => ({
+        name: item.label,
+        label: item.label,
+        value: [index % 7, Math.floor(index / 7), item.value, index + 1],
+      })),
+      renderItem: (_params, api) => {
+        const column = Number(api.value(0));
+        const row = Number(api.value(1));
+        const value = Number(api.value(2));
+        const day = Number(api.value(3));
+        const [centerX, centerY] = api.coord([column, row]);
+        const cell = api.size?.([1, 1]);
+        const cellWidth = Math.max(20, (Array.isArray(cell) ? Math.abs(cell[0]) : 30) - 5);
+        const cellHeight = Math.max(20, (Array.isArray(cell) ? Math.abs(cell[1]) : 30) - 5);
+        const strength = Math.max(0, Math.min(1, value / maximum));
+        const fill = strength > .72 ? 'rgba(255,77,79,.22)' : strength > .42 ? 'rgba(255,176,32,.18)' : 'rgba(27,160,225,.13)';
+        const stroke = strength > .72 ? '#ff5d62' : strength > .42 ? '#ffb020' : '#258bc2';
+        const bars = days[Math.max(0, day - 1)]?.hourly ?? [];
+        const visibleBars = bars.length > 12
+          ? Array.from({ length: 12 }, (_, barIndex) => bars.slice(barIndex * Math.ceil(bars.length / 12), (barIndex + 1) * Math.ceil(bars.length / 12)).reduce((sum, item) => sum + item, 0))
+          : bars;
+        const barGap = 1;
+        const barWidth = Math.max(1, (cellWidth - 10 - Math.max(0, visibleBars.length - 1) * barGap) / Math.max(1, visibleBars.length));
+        const barBaseY = centerY + cellHeight / 2 - 5;
+        const barMaximum = bars.length > 12 ? hourlyMaximum * Math.ceil(bars.length / 12) : hourlyMaximum;
+        return {
+          type: 'group',
+          children: [
+            {
+              type: 'rect',
+              shape: { x: centerX - cellWidth / 2, y: centerY - cellHeight / 2, width: cellWidth, height: cellHeight, r: 3 },
+              style: { fill, stroke, lineWidth: 1 },
+              silent: true,
+            },
+            {
+              type: 'text',
+              style: { x: centerX - cellWidth / 2 + 5, y: centerY - cellHeight / 2 + 4, text: String(day), fill: '#cbe8f7', font: '9px sans-serif', textVerticalAlign: 'top' },
+              silent: true,
+            },
+            ...visibleBars.map((bar, barIndex) => {
+              const height = Math.max(1, Math.min(cellHeight - 19, (bar / Math.max(1, barMaximum)) * (cellHeight - 19)));
+              return {
+                type: 'rect',
+                shape: {
+                  x: centerX - cellWidth / 2 + 5 + barIndex * (barWidth + barGap),
+                  y: barBaseY - height,
+                  width: barWidth,
+                  height,
+                  r: 1,
+                },
+                style: { fill: stroke, opacity: .92 },
+                silent: true,
+              };
+            }),
+          ],
+        };
+      },
+    } as CustomSeriesOption],
+  };
+  return <div className="taf-baseline-echart taf-baseline-calendar-chart" data-chart-engine="echarts" data-series-type="heatmap" data-series-values={JSON.stringify(days)}><EChartsReactCore aria-label={ariaLabel} echarts={echarts} style={{ width: '100%', height: '100%' }} option={option} notMerge /></div>;
+}
+
+export function BaselineRailGaugeChart({ items, ariaLabel = '偏离摘要指标' }: { items: Array<{ label: string; value: number; maximum: number; color: string; display: string }>; ariaLabel?: string }) {
+  const centers = ['13%', '38%', '63%', '88%'];
+  const option: ChartOption = {
+    animation: false,
+    backgroundColor: 'transparent',
+    title: items.slice(0, 4).map((item, index) => ({
+      text: item.display,
+      subtext: item.label,
+      left: centers[index],
+      top: '34%',
+      textAlign: 'center',
+      textStyle: { color: '#e8f6ff', fontSize: 12, fontWeight: 600 },
+      subtextStyle: { color: '#8eabba', fontSize: 8, lineHeight: 18 },
+    })),
+    series: items.slice(0, 4).map((item, index) => ({
+      name: item.label,
+      type: 'pie',
+      center: [centers[index], '40%'],
+      radius: ['39%', '48%'],
+      startAngle: 90,
+      clockwise: true,
+      silent: true,
+      label: { show: false },
+      labelLine: { show: false },
+      data: [
+        { value: Math.max(0, Math.min(item.maximum, item.value)), itemStyle: { color: item.color } },
+        { value: Math.max(0.0001, item.maximum - Math.max(0, Math.min(item.maximum, item.value))), itemStyle: { color: 'rgba(69, 111, 134, .2)' } },
+      ],
+    })),
+  };
+  return <div className="taf-baseline-rail-gauges taf-baseline-echart" data-chart-engine="echarts" data-series-type="gauge-summary" data-series-values={JSON.stringify(items)}><EChartsReactCore aria-label={ariaLabel} echarts={echarts} style={{ width: '100%', height: '100%' }} option={option} notMerge /></div>;
+}
+
+export function BaselineHourlyProfileChart({ data, ariaLabel = '真实小时聚合轮廓图' }: { data: BaselineHeatmapDatum; ariaLabel?: string }) {
+  const totals = data.x.map((_, xIndex) => data.values.reduce((sum, item) => item[0] === xIndex ? sum + Number(item[2] || 0) : sum, 0));
+  const option: ChartOption = {
+    animation: false,
+    backgroundColor: 'transparent',
+    grid: { left: 40, right: 8, top: 12, bottom: 28 },
+    tooltip: { trigger: 'axis', confine: true },
+    xAxis: { type: 'category', data: data.x, axisLine: { lineStyle: { color: 'rgba(71,144,181,.42)' } }, axisLabel: { color: '#7797aa', fontSize: 8, interval: 2 } },
+    yAxis: { type: 'value', splitLine: { lineStyle: { color: 'rgba(71,144,181,.1)' } }, axisLabel: { color: '#6f91a5', fontSize: 8 } },
+    series: [{
+      name: '小时会话聚合',
+      type: 'bar',
+      data: totals,
+      barMaxWidth: 12,
+      itemStyle: { color: '#29b8ff', borderColor: '#6dd7ff', borderWidth: .5 },
+    }],
+  };
+  return <div className="taf-baseline-echart" data-chart-engine="echarts" data-series-type="bar" data-series-values={JSON.stringify(totals)}><EChartsReactCore aria-label={ariaLabel} echarts={echarts} style={{ width: '100%', height: '100%' }} option={option} notMerge /></div>;
+}
+
+export function BaselinePeriodicityChart({ data, ariaLabel = '周期性连接分析图' }: { data: BaselineHeatmapDatum; ariaLabel?: string }) {
+  const totals = data.x.map((_, xIndex) => data.values.reduce((sum, item) => item[0] === xIndex ? sum + Number(item[2] || 0) : sum, 0));
+  const intervals = Array.from({ length: Math.min(8, Math.max(1, totals.length - 1)) }, (_, offset) => {
+    const period = offset + 1;
+    const differences = totals.slice(period).map((value, index) => Math.abs(value - totals[index]));
+    const meanDifference = differences.reduce((sum, value) => sum + value, 0) / Math.max(1, differences.length);
+    const scale = Math.max(1, ...totals);
+    return Math.max(0, Math.round((1 - Math.min(1, meanDifference / scale)) * 100));
+  });
+  const option: ChartOption = {
+    animation: false,
+    backgroundColor: 'transparent',
+    tooltip: { trigger: 'axis', confine: true },
+    grid: [{ left: 34, right: 8, top: 8, height: '48%' }, { left: 34, right: 8, top: '66%', bottom: 17 }],
+    xAxis: [
+      { type: 'category', data: data.x, axisLine: { lineStyle: { color: 'rgba(71,144,181,.35)' } }, axisLabel: { color: '#7797aa', fontSize: 7, interval: 3 } },
+      { type: 'category', gridIndex: 1, data: intervals.map((_, index) => `${index + 1}h`), axisLine: { lineStyle: { color: 'rgba(71,144,181,.35)' } }, axisLabel: { color: '#7797aa', fontSize: 7 } },
+    ],
+    yAxis: [
+      { type: 'value', splitNumber: 2, splitLine: { lineStyle: { color: 'rgba(71,144,181,.08)' } }, axisLabel: { color: '#6f91a5', fontSize: 7 } },
+      { type: 'value', gridIndex: 1, max: 100, splitNumber: 2, splitLine: { lineStyle: { color: 'rgba(71,144,181,.08)' } }, axisLabel: { color: '#6f91a5', fontSize: 7, formatter: '{value}%' } },
+    ],
+    series: [
+      { name: '小时会话', type: 'line', smooth: .25, symbol: 'circle', symbolSize: 3, data: totals, lineStyle: { color: '#2fbfff', width: 1.5 }, itemStyle: { color: '#71dcff' }, areaStyle: { color: 'rgba(47,191,255,.12)' } },
+      { name: '周期相似度', type: 'bar', xAxisIndex: 1, yAxisIndex: 1, data: intervals, barMaxWidth: 12, itemStyle: { color: '#7b74ff', borderColor: '#aba7ff', borderWidth: .5 } },
+    ],
+  };
+  return <div className="taf-baseline-echart" data-chart-engine="echarts" data-series-type="line-bar" data-series-values={JSON.stringify({ totals, intervals })}><EChartsReactCore aria-label={ariaLabel} echarts={echarts} style={{ width: '100%', height: '100%' }} option={option} notMerge /></div>;
+}
+
+export function BaselineDonutChart({ data, centerLabel, ariaLabel = '协议基线分布环图' }: { data: BaselineDonutDatum[]; centerLabel: string; ariaLabel?: string }) {
+  const total = Math.max(1, data.reduce((sum, item) => sum + item.value, 0));
+  const secondaryTotal = Math.max(1, data.reduce((sum, item) => sum + (item.secondaryValue ?? item.value), 0));
+  const primaryShare = data.length ? data[0].value / total * 100 : 0;
+  const secondaryShare = data.length ? (data[0].secondaryValue ?? data[0].value) / secondaryTotal * 100 : 0;
+  const palette = ['#279cff', '#58c3ff', '#68d391', '#ffc53d', '#a47cff', '#ff6b67', '#35e2ce', '#7898ff'];
+  const option: ChartOption = {
+    animation: false,
+    backgroundColor: 'transparent',
+    tooltip: { trigger: 'item', confine: true, formatter: '{b}<br/>{c} · {d}%' },
+    title: {
+      text: centerLabel,
+      subtext: `${primaryShare.toFixed(1)}%\n流量 ${secondaryShare.toFixed(1)}%`,
+      left: '50%',
+      top: '33%',
+      textAlign: 'center',
+      textStyle: { color: '#e8f6ff', fontSize: 12, fontWeight: 600 },
+      subtextStyle: { color: '#7f9dad', fontSize: 8, lineHeight: 13 },
+    },
+    series: [
+      {
+        name: '会话占比',
+        type: 'pie',
+        center: ['50%', '52%'],
+        radius: ['43%', '62%'],
+        minAngle: 2,
+        avoidLabelOverlap: true,
+        label: { show: false },
+        labelLine: { show: false },
+        itemStyle: { borderColor: '#061725', borderWidth: 1 },
+        data: data.map((item, index) => ({ name: item.name, value: item.value, itemStyle: { color: palette[index % palette.length] } })),
+      },
+      {
+        name: '流量占比',
+        type: 'pie',
+        center: ['50%', '52%'],
+        radius: ['67%', '83%'],
+        minAngle: 2,
+        avoidLabelOverlap: true,
+        label: { show: false },
+        labelLine: { show: false },
+        itemStyle: { borderColor: '#061725', borderWidth: 1, opacity: .78 },
+        data: data.map((item, index) => ({ name: item.name, value: item.secondaryValue ?? item.value, itemStyle: { color: palette[index % palette.length] } })),
+      },
+    ],
+  };
+  return (
+    <div className="taf-baseline-donut-composite" data-chart-engine="echarts" data-series-type="pie" data-series-values={JSON.stringify(data)}>
+      <div className="taf-baseline-echart"><EChartsReactCore aria-label={ariaLabel} echarts={echarts} style={{ width: '100%', height: '100%' }} option={option} notMerge /></div>
+      <div className="taf-baseline-donut-legend">
+        <header><span>协议</span><span>会话</span><span>流量</span></header>
+        {data.slice(0, 8).map((item, index) => {
+          const sessionShare = item.value / total * 100;
+          const byteShare = (item.secondaryValue ?? item.value) / secondaryTotal * 100;
+          return <div key={item.name}><i style={{ background: palette[index % palette.length] }} /><strong>{item.name}</strong><span>{sessionShare.toFixed(1)}%</span><span>{byteShare.toFixed(1)}%</span><em className={sessionShare >= byteShare ? 'is-up' : 'is-down'}>{sessionShare >= byteShare ? '↑' : '↓'}</em></div>;
+        })}
+      </div>
+    </div>
+  );
+}
+
+export function BaselineNetworkChart({ data, ariaLabel = '账号访问资产基线图' }: { data: BaselineNetworkDatum; ariaLabel?: string }) {
+  const palette = ['#46c8ff', '#ff9f43', '#72d572', '#a47cff'];
+  const accounts = data.nodes.filter((node) => node.category === 0);
+  const resources = data.nodes.filter((node) => node.category !== 0);
+  const positioned = data.nodes.map((node) => {
+    const group = node.category === 0 ? accounts : resources;
+    const index = group.findIndex((item) => item.id === node.id);
+    // `graph/layout:none` consumes canvas coordinates rather than percentages.
+    // Keep the bipartite columns inside the smallest accepted chart stage so
+    // nodes do not collapse into the lower half when the business area narrows.
+    return { ...node, x: node.category === 0 ? 62 : 292, y: 24 + index * (132 / Math.max(1, group.length - 1)) };
+  });
+  const option: ChartOption = {
+    animation: false,
+    backgroundColor: 'transparent',
+    tooltip: { trigger: 'item', confine: true },
+    series: [{
+      name: '访问关系',
+      type: 'graph',
+      layout: 'none',
+      roam: true,
+      scaleLimit: { min: 0.7, max: 2.8 },
+      data: positioned.map((node) => ({
+        ...node,
+        symbolSize: node.category === 0 ? 20 : Math.max(12, Math.min(18, 10 + node.value / 3)),
+        itemStyle: { color: palette[node.category % palette.length], borderColor: '#dff6ff', borderWidth: 1 },
+        label: { show: true, position: node.category === 0 ? 'left' : 'right', distance: 5, color: '#bcd0dc', fontSize: 8, formatter: '{b}' },
+      })),
+      links: data.links.map((link, index) => ({
+        ...link,
+        lineStyle: { color: palette[(link.value >= 7 ? 1 : link.value >= 4 ? 0 : 2)], opacity: 0.56, width: Math.max(1, Math.min(2.2, link.value / 3)), curveness: ((index % 5) - 2) * 0.035 },
+      })),
+      categories: [{ name: '账号' }, { name: '高风险资产' }, { name: '稳定资产' }, { name: '新资产' }],
+      edgeSymbol: ['none', 'arrow'],
+      edgeSymbolSize: [0, 5],
+      emphasis: { focus: 'adjacency' },
+    }],
+  };
+  return (
+    <div className="taf-baseline-echart" data-chart-engine="echarts" data-series-type="graph" data-series-values={JSON.stringify(data)}>
+      <EChartsReactCore aria-label={ariaLabel} echarts={echarts} style={{ width: '100%', height: '100%' }} option={option} notMerge />
+    </div>
+  );
+}
+
+export function BaselinePortScanChart({ data, ariaLabel = '端口扫描特征图' }: { data: BaselinePortScanDatum; ariaLabel?: string }) {
+  const sources = data.sources.slice(0, 3);
+  const targets = data.targets.slice(0, 6);
+  const graphNodes = [
+    ...sources.map((item, index) => ({ id: `source-${index}`, name: item.name, value: item.value, x: 16, y: 26 + index * 62, category: 0 })),
+    ...targets.map((item, index) => ({ id: `target-${index}`, name: item.name, value: item.value, x: 150, y: 12 + index * 34, category: 1 })),
+  ];
+  const graphLinks = sources.flatMap((source, sourceIndex) => targets.map((target, targetIndex) => ({
+    source: `source-${sourceIndex}`,
+    target: `target-${targetIndex}`,
+    value: Math.max(1, Math.min(source.value, target.value)),
+  })));
+  const option: ChartOption = {
+    animation: false,
+    backgroundColor: 'transparent',
+    tooltip: { trigger: 'item', confine: true },
+    title: [
+      { text: '源 IP → 目标端口', left: '2%', top: 1, textStyle: { color: '#9db8c8', fontSize: 9, fontWeight: 500 } },
+      { text: '命中分布', left: '37%', top: 1, textStyle: { color: '#9db8c8', fontSize: 9, fontWeight: 500 } },
+      { text: '扫描突发趋势', left: '68%', top: 1, textStyle: { color: '#9db8c8', fontSize: 9, fontWeight: 500 } },
+    ],
+    grid: [
+      { left: '39%', width: '25%', top: 26, bottom: 23 },
+      { left: '69%', right: 6, top: 26, bottom: 23 },
+    ],
+    xAxis: [
+      { type: 'category', gridIndex: 0, data: data.distribution.slice(0, 6).map((item) => item.name), axisTick: { show: false }, axisLine: { lineStyle: { color: 'rgba(71,144,181,.35)' } }, axisLabel: { color: '#7898aa', fontSize: 6, interval: 0, formatter: (value) => String(value).slice(0, 5) } },
+      { type: 'category', gridIndex: 1, data: data.trendLabels, boundaryGap: false, axisTick: { show: false }, axisLine: { lineStyle: { color: 'rgba(71,144,181,.35)' } }, axisLabel: { show: false } },
+    ],
+    yAxis: [
+      { type: 'value', gridIndex: 0, splitNumber: 3, axisLabel: { show: false }, splitLine: { lineStyle: { color: 'rgba(71,144,181,.08)' } } },
+      { type: 'value', gridIndex: 1, splitNumber: 3, axisLabel: { show: false }, splitLine: { lineStyle: { color: 'rgba(71,144,181,.08)' } } },
+    ],
+    series: [
+      {
+        name: '源与目标关系',
+        type: 'graph',
+        layout: 'none',
+        left: '1%',
+        top: 25,
+        width: '33%',
+        height: '72%',
+        data: graphNodes.map((node) => ({
+          ...node,
+          symbolSize: node.category === 0 ? 18 : 10,
+          itemStyle: { color: node.category === 0 ? '#29b8ff' : '#ffb020', borderColor: '#cbefff', borderWidth: .6 },
+          label: { show: true, position: node.category === 0 ? 'right' : 'left', color: '#9eb8c7', fontSize: 6, formatter: (params) => String(params.name ?? '').slice(0, 8) },
+        })),
+        links: graphLinks.map((link) => ({ ...link, lineStyle: { color: '#4ec8ff', opacity: .28, width: Math.max(.5, Math.min(1.8, link.value / 200)) } })),
+        edgeSymbol: ['none', 'arrow'],
+        edgeSymbolSize: [0, 4],
+        roam: false,
+      } as GraphSeriesOption,
+      {
+        name: '端口命中',
+        type: 'bar',
+        xAxisIndex: 0,
+        yAxisIndex: 0,
+        data: data.distribution.slice(0, 6).map((item, index) => ({ value: item.value, itemStyle: { color: ['#29b8ff', '#45e3c1', '#ffb020', '#ff5b57', '#a47cff', '#5b8ff9'][index % 6] } })),
+        barMaxWidth: 12,
+      } as BarSeriesOption,
+      {
+        name: '扫描信号',
+        type: 'line',
+        xAxisIndex: 1,
+        yAxisIndex: 1,
+        data: data.trendValues,
+        showSymbol: false,
+        smooth: .2,
+        lineStyle: { color: '#ff5b57', width: 1.5 },
+        areaStyle: { color: 'rgba(255,91,87,.12)' },
+      } as LineSeriesOption,
+    ],
+  };
+  return <div className="taf-baseline-echart taf-baseline-port-scan-chart" data-chart-engine="echarts" data-series-type="graph-bar-line" data-series-values={JSON.stringify(data)}><EChartsReactCore aria-label={ariaLabel} echarts={echarts} style={{ width: '100%', height: '100%' }} option={option} notMerge /></div>;
+}
+
+export function FusionSourceStatusChart({
+  trend,
+  tone = 'ok',
+  ariaLabel = '数据源最近80分钟接入趋势',
+}: {
+  trend: number[];
+  tone?: 'ok' | 'warn' | 'risk' | 'info';
+  ariaLabel?: string;
+}) {
+  const color = tone === 'warn' ? '#ffb020' : tone === 'risk' ? '#ff4d4f' : tone === 'info' ? '#18a8ff' : '#36d66b';
+  const source = trend.map(Number).filter(Number.isFinite);
+  const values = source.length > 0 ? source : [0, 0, 0, 0, 0, 0, 0, 0];
+  const minimum = Math.min(...values);
+  const maximum = Math.max(...values);
+  const padding = Math.max(1, (maximum - minimum) * 0.18);
+  const option: ChartOption = {
+    backgroundColor: 'transparent',
+    animation: false,
+    tooltip: {
+      trigger: 'axis',
+      confine: true,
+      axisPointer: { type: 'line', lineStyle: { color: `${color}88`, width: 1 } },
+      backgroundColor: 'rgba(3, 17, 28, 0.96)',
+      borderColor: `${color}66`,
+      textStyle: { color: '#eaf7ff', fontSize: 10 },
+      formatter: (params) => {
+        const first = Array.isArray(params) ? params[0] : params;
+        const point = first as { dataIndex?: number; value?: number };
+        const minutesAgo = Math.max(0, (values.length - 1 - Number(point.dataIndex ?? 0)) * 10);
+        return `${minutesAgo === 0 ? '当前' : `${minutesAgo} 分钟前`}<br/>接入 ${Number(point.value ?? 0).toLocaleString('zh-CN')} 条`;
+      },
+    },
+    grid: { left: 1, right: 1, top: 3, bottom: 2, containLabel: false },
+    xAxis: { type: 'category', show: false, boundaryGap: false, data: values.map((_, index) => String(index)) },
+    yAxis: { type: 'value', show: false, min: Math.max(0, minimum - padding), max: maximum + padding },
+    series: [{
+      name: '接入量',
+      type: 'line',
+      data: values,
+      smooth: 0.18,
+      symbol: 'none',
+      lineStyle: { color, width: 1.8, shadowBlur: 6, shadowColor: `${color}88` },
+      areaStyle: { color: `${color}20`, opacity: 0.78 },
+      emphasis: { disabled: true },
+    }],
+  };
+
+  return (
+    <span
+      className="taf-fusion-source-echart"
+      data-chart-engine="echarts"
+      data-series-type="line"
+      data-series-values={JSON.stringify(values)}
+    >
+      <EChartsReactCore
+        aria-label={ariaLabel}
+        echarts={echarts}
+        style={{ height: 24, width: '100%' }}
+        option={option}
+        notMerge
+        lazyUpdate
+      />
+    </span>
+  );
+}
+
+export function FusionRuleMiniChart({
+  values,
+  ariaLabel,
+}: {
+  values: number[];
+  ariaLabel: string;
+}) {
+  const normalizedValues = values.length ? values.map((value) => Math.max(0, Number(value) || 0)) : [0];
+  const option: ChartOption = {
+    animation: false,
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'shadow', shadowStyle: { color: 'rgba(32, 191, 255, 0.08)' } },
+      backgroundColor: 'rgba(3, 17, 28, 0.96)',
+      borderColor: 'rgba(72, 190, 255, 0.48)',
+      textStyle: { color: '#d7efff', fontSize: 10 },
+      formatter: (params) => {
+        const first = Array.isArray(params) ? params[0] : params;
+        const point = first as { dataIndex?: number; value?: number };
+        return `周期 ${Number(point.dataIndex ?? 0) + 1}<br/>命中 ${Number(point.value ?? 0).toLocaleString('zh-CN')} 次`;
+      },
+    },
+    grid: { left: 1, right: 1, top: 1, bottom: 1, containLabel: false },
+    xAxis: { type: 'category', show: false, data: normalizedValues.map((_, index) => String(index)) },
+    yAxis: { type: 'value', show: false, min: 0 },
+    series: [{
+      type: 'bar',
+      data: normalizedValues,
+      barWidth: '52%',
+      barMaxWidth: 12,
+      itemStyle: { color: '#20bfff', borderColor: '#64ddff', borderWidth: 0.5, borderRadius: [1, 1, 0, 0] },
+      emphasis: { itemStyle: { color: '#7de5ff', borderColor: '#d7f7ff', borderWidth: 1 } },
+    }],
+  };
+  return <span className="taf-fusion-rule-mini-chart" data-chart-engine="echarts" data-series-type="bar" data-series-values={JSON.stringify(normalizedValues)}><EChartsReactCore aria-label={ariaLabel} echarts={echarts} style={{ width: '100%', height: '100%' }} option={option} notMerge lazyUpdate /></span>;
+}
+
+export function FusionPipelineConnectionsChart({
+  geometry,
+  ariaLabel = '多源融合映射连线图',
+}: {
+  geometry?: FusionPipelineGeometry;
+  ariaLabel?: string;
+}) {
+  const colors = ['#35bdff', '#29d7c4', '#8b7cff', '#ff9d42', '#ff5b82', '#ffd24a'];
+  const width = Math.max(1, geometry?.width ?? 1);
+  const height = Math.max(1, geometry?.height ?? 1);
+  const option: ChartOption = {
+    animation: false,
+    tooltip: { show: false },
+    grid: { left: 0, right: 0, top: 0, bottom: 0, containLabel: false },
+    xAxis: { type: 'value', min: 0, max: width, show: false },
+    yAxis: { type: 'value', min: 0, max: height, inverse: true, show: false },
+    series: [{
+      name: '融合映射连线',
+      type: 'custom',
+      coordinateSystem: 'cartesian2d',
+      silent: true,
+      data: [0],
+      renderItem: (_params, api) => {
+        const point = (x: number, y: number) => api.coord([x, y]);
+        const curve = (start: [number, number], end: [number, number], color: string, bend = 0) => {
+          const [startX, startY] = point(start[0], start[1]);
+          const [endX, endY] = point(end[0], end[1]);
+          const controlOffset = Math.max(10, Math.abs(endX - startX) * 0.52);
+          return {
+            type: 'bezierCurve',
+            shape: {
+              x1: startX,
+              y1: startY,
+              cpx1: startX + controlOffset,
+              cpy1: startY + bend,
+              cpx2: endX - controlOffset,
+              cpy2: endY + bend,
+              x2: endX,
+              y2: endY,
+            },
+            style: { fill: 'none', stroke: color, lineWidth: 1.7, opacity: 0.9, shadowBlur: 4, shadowColor: color },
+            silent: true,
+          } as const;
+        };
+        const arrow = (end: [number, number], color: string) => {
+          const [endX, endY] = point(end[0], end[1]);
+          return {
+            type: 'polygon',
+            shape: { points: [[endX, endY], [endX - 6, endY - 3.5], [endX - 6, endY + 3.5]] },
+            style: { fill: color, stroke: color },
+            silent: true,
+          } as const;
+        };
+        const sourceLinks = geometry?.sourceLinks ?? [];
+        const ruleLinks = geometry?.ruleLinks ?? [];
+        const outputLinks = geometry?.outputLinks ?? [];
+        return {
+          type: 'group',
+          children: [
+            ...sourceLinks.flatMap((link, index) => {
+              const bend = ((sourceLinks.length - 1) / 2 - index) * 6;
+              return [curve(link.start, link.end, colors[index % colors.length], bend), arrow(link.end, colors[index % colors.length])];
+            }),
+            ...ruleLinks.flatMap((link) => [curve(link.start, link.end, '#65caff'), arrow(link.end, '#65caff')]),
+            ...outputLinks.flatMap((link, index) => {
+              const bend = (index - (outputLinks.length - 1) / 2) * 6;
+              return [curve(link.start, link.end, colors[index % colors.length], bend), arrow(link.end, colors[index % colors.length])];
+            }),
+          ],
+        };
+      },
+    } as CustomSeriesOption],
+  };
+  return <EChartsReactCore
+    aria-label={ariaLabel}
+    className="taf-fusion-pipeline-connections"
+    data-chart-engine="echarts"
+    data-series-type="custom"
+    data-geometry-width={geometry?.width ?? 0}
+    data-geometry-height={geometry?.height ?? 0}
+    data-geometry-links={geometry ? JSON.stringify({ sourceLinks: geometry.sourceLinks, ruleLinks: geometry.ruleLinks, outputLinks: geometry.outputLinks }) : ''}
+    echarts={echarts}
+    style={{ width: '100%', height: '100%' }}
+    option={option}
+    notMerge
+    lazyUpdate
+  />;
+}
+
+export function PlaybookFlowConnectionsChart({
+  geometry,
+  ariaLabel = '安全响应剧本流程连线图',
+}: {
+  geometry?: PlaybookFlowGeometry;
+  ariaLabel?: string;
+}) {
+  const width = Math.max(1, geometry?.width ?? 1);
+  const height = Math.max(1, geometry?.height ?? 1);
+  const tones = {
+    ok: '#2dd66f',
+    warn: '#ffb224',
+    risk: '#ff4d4f',
+    info: '#35bdff',
+  } as const;
+  const option: ChartOption = {
+    animation: false,
+    tooltip: { show: false },
+    grid: { left: 0, right: 0, top: 0, bottom: 0, containLabel: false },
+    xAxis: { type: 'value', min: 0, max: width, show: false },
+    yAxis: { type: 'value', min: 0, max: height, inverse: true, show: false },
+    series: [{
+      name: '剧本流程连线',
+      type: 'custom',
+      coordinateSystem: 'cartesian2d',
+      silent: true,
+      data: [0],
+      renderItem: (_params, api) => {
+        const point = (value: [number, number]) => api.coord(value);
+        const links = geometry?.links ?? [];
+        return {
+          type: 'group',
+          children: links.flatMap((link) => {
+            const color = tones[link.tone];
+            const [startX, startY] = point(link.start);
+            const [endX, endY] = point(link.end);
+            const horizontal = Math.abs(endX - startX) >= Math.abs(endY - startY);
+            const wrapsBack = endX < startX && endY > startY;
+            const points = wrapsBack
+              ? [[startX, startY], [Math.min(width - 12, startX + 22), startY], [Math.min(width - 12, startX + 22), endY - 18], [endX, endY - 18], [endX, endY]]
+              : horizontal
+                ? [[startX, startY], [(startX + endX) / 2, startY], [(startX + endX) / 2, endY], [endX, endY]]
+                : [[startX, startY], [startX, (startY + endY) / 2], [endX, (startY + endY) / 2], [endX, endY]];
+            const previous = points[points.length - 2];
+            const dx = endX - previous[0];
+            const dy = endY - previous[1];
+            const length = Math.max(1, Math.hypot(dx, dy));
+            const ux = dx / length;
+            const uy = dy / length;
+            const nx = -uy;
+            const ny = ux;
+            return [
+              {
+                type: 'polyline',
+                shape: { points, smooth: 0.18 },
+                style: { fill: 'none', stroke: color, lineWidth: 1.8, opacity: 0.9, shadowBlur: 5, shadowColor: color },
+                silent: true,
+              },
+              {
+                type: 'polygon',
+                shape: {
+                  points: [
+                    [endX, endY],
+                    [endX - ux * 7 + nx * 4, endY - uy * 7 + ny * 4],
+                    [endX - ux * 7 - nx * 4, endY - uy * 7 - ny * 4],
+                  ],
+                },
+                style: { fill: color, stroke: color },
+                silent: true,
+              },
+            ];
+          }),
+        };
+      },
+    } as CustomSeriesOption],
+  };
+  return <EChartsReactCore
+    aria-label={ariaLabel}
+    className="taf-playbooks-flow-connections"
+    data-chart-engine="echarts"
+    data-series-type="custom"
+    data-link-count={geometry?.links.length ?? 0}
+    echarts={echarts}
+    style={{ width: '100%', height: '100%' }}
+    option={option}
+    notMerge
+    lazyUpdate
+  />;
 }
 
 export function AbnormalImpactPieChart({
@@ -2930,6 +4363,54 @@ export function RingChart({
       style={{ height, width: '100%' }}
       option={option}
     />
+  );
+}
+
+export function RiskScoreRingChart({
+  value,
+  ariaLabel = '实体风险评分 ECharts 环形图',
+  size = 52,
+}: {
+  value: number;
+  ariaLabel?: string;
+  size?: number;
+}) {
+  const score = Math.max(0, Math.min(100, value));
+  const color = score >= 80 ? '#ff4d4f' : score >= 60 ? '#ffb020' : '#36d66b';
+  const option: ChartOption = {
+    backgroundColor: 'transparent',
+    animation: false,
+    series: [{
+      type: 'gauge',
+      center: ['50%', '50%'],
+      radius: '92%',
+      min: 0,
+      max: 100,
+      startAngle: 90,
+      endAngle: -269.9,
+      pointer: { show: false },
+      progress: { show: true, roundCap: true, width: 4, itemStyle: { color } },
+      axisLine: { roundCap: true, lineStyle: { width: 4, color: [[1, 'rgba(127, 159, 177, 0.24)']] } },
+      axisTick: { show: false },
+      splitLine: { show: false },
+      axisLabel: { show: false },
+      anchor: { show: false },
+      title: { show: true, offsetCenter: [0, '-27%'], color: '#7f9fb1', fontSize: size >= 80 ? 10 : 7 },
+      detail: { valueAnimation: false, offsetCenter: [0, '19%'], color, fontSize: size >= 80 ? 28 : 19, fontWeight: 700, formatter: '{value}' },
+      data: [{ value: score, name: '风险评分' }],
+    }],
+  };
+  return (
+    <span className="taf-graph-risk-ring-echart" style={{ width: size, height: size }} data-series-type="gauge" data-series-value={score} data-series-color={color}>
+      <EChartsReactCore
+        aria-label={ariaLabel}
+        echarts={echarts}
+        style={{ width: size, height: size }}
+        option={option}
+        notMerge
+        lazyUpdate
+      />
+    </span>
   );
 }
 

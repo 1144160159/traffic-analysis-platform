@@ -1,0 +1,31 @@
+FROM nginx:1.25-alpine AS runtime-source
+
+FROM scratch
+
+ARG SOURCE_REVISION=unknown
+ARG BUILD_ID=local
+LABEL org.opencontainers.image.revision=${SOURCE_REVISION} \
+      org.opencontainers.image.version=${BUILD_ID} \
+      org.opencontainers.image.title="traffic-analysis web-ui"
+
+COPY --from=runtime-source / /
+COPY dist/ /usr/share/nginx/html/
+COPY deployments/nginx.conf /etc/nginx/nginx.conf.template
+COPY deployments/docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+RUN echo 'window.__RUNTIME_CONFIG__ = { \
+  API_BASE_URL: "${API_BASE_URL}", \
+  WS_URL: "${WS_URL}", \
+  ARKIME_BASE_URL: "${ARKIME_BASE_URL}", \
+  AUTH_ENABLED: "${AUTH_ENABLED}", \
+  USE_MOCK: "${USE_MOCK}", \
+  ALERT_DETAIL_API_ENABLED: "${ALERT_DETAIL_API_ENABLED}", \
+  ENABLE_REALTIME: "${ENABLE_REALTIME}", \
+  SCREEN_ACCESS_MODE: "${SCREEN_ACCESS_MODE}", \
+  DESKTOP_SMOKE_TOKEN_ENABLED: "${DESKTOP_SMOKE_TOKEN_ENABLED}" \
+};' > /usr/share/nginx/html/config.js.template
+
+EXPOSE 80
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["nginx", "-g", "daemon off;"]

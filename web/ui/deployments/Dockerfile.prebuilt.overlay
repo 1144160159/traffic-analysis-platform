@@ -1,0 +1,12 @@
+ARG BASE_IMAGE=docker.io/traffic/web-ui:whitelist-r352
+FROM ${BASE_IMAGE}
+
+ARG SOURCE_REVISION=unknown
+ARG BUILD_ID=local
+LABEL org.opencontainers.image.revision=${SOURCE_REVISION} \
+      org.opencontainers.image.version=${BUILD_ID} \
+      org.opencontainers.image.title="traffic-analysis web-ui"
+
+COPY dist/ /usr/share/nginx/html/
+RUN find /usr/share/nginx/html -type d -exec chmod 0755 {} + \
+  && find /usr/share/nginx/html -type f -exec chmod 0644 {} +

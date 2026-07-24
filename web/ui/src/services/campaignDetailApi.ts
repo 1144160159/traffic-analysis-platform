@@ -155,6 +155,7 @@ export type CampaignDetailReviewRow = {
 
 export type CampaignDetailSnapshot = {
   campaignId: string;
+  campaignType: string;
   title: string;
   riskScore: number;
   currentPhase: string;
@@ -162,6 +163,8 @@ export type CampaignDetailSnapshot = {
   firstSeen: string;
   lastUpdated: string;
   status: string;
+  activityStatus: string;
+  workflowStatus: string;
   assignee: string;
   alertCount: number;
   assetCount: number;
@@ -179,6 +182,8 @@ export type CampaignDetailSnapshot = {
   impactDepartment: CampaignDetailImpactDepartment;
   impactCampus: CampaignDetailImpactCampus;
   evidenceCompleteness: number;
+  evidenceCompletenessAvailable: boolean;
+  phaseDataBacked: boolean;
   evidenceChecks: CampaignDetailEvidenceCheck[];
   evidenceSummaryRows: CampaignDetailEvidenceSummaryRow[];
   responseFlow: CampaignDetailFlowStep[];
@@ -206,17 +211,20 @@ export function normalizeCampaignDetailSnapshot(
   const campaignId = textFrom(record, ['campaign_id', 'campaignId', 'id', 'event_id']) || requestedCampaignId;
   const alertIds = stringListFrom(valueAt(record, ['alert_ids', 'alerts']));
   const alertRows = extractList(record, ['alerts']).length ? extractList(record, ['alerts']) : alertIds.map((id) => ({ alert_id: id }));
+  const phaseSummaryRows = extractList(record, ['phase_summaries']);
   const entityIds = stringListFrom(valueAt(record, ['entities']));
   const score = normalizeScore(numberAt(record, ['score', 'risk_score', 'riskScore']) || 92);
   const rawAlertCount = Math.max(alertRows.length, alertIds.length);
   const alertCount = rawAlertCount || 38;
-  const phases = buildPhaseCards(record, alertCount);
+  const phases = buildPhaseCards(record, alertCount, phaseSummaryRows);
   const assetCount = entityIds.length || 57;
   const firstSeen = formatTimestamp(valueAt(record, ['ts_start', 'start_time', 'first_seen'])) || '2026-06-19 09:12:00';
   const lastUpdated = formatTimestamp(valueAt(record, ['ts_end', 'end_time', 'ingest_ts', 'updated_at'])) || '2026-06-20 23:38:18';
   const currentPhase = phases.find((item) => item.status === 'risk')?.phase || phases[phases.length - 2]?.phase || '数据外传';
   const duration = formatDuration(valueAt(record, ['ts_start', 'start_time']), valueAt(record, ['ts_end', 'end_time']));
   const status = campaignStatus(record, score);
+  const activityStatus = statusLabel(textFrom(record, ['activity_status']) || textFrom(record, ['status']));
+  const workflowStatus = statusLabel(textFrom(record, ['status'])) || activityStatus;
   const impactAccount = buildImpactAccount(record);
   const impactBusinessSystem = buildImpactBusinessSystem(record);
   const impactService = buildImpactService(record);
@@ -230,9 +238,12 @@ export function normalizeCampaignDetailSnapshot(
     ...stringListFrom(valueAt(record, ['model_ids'])).slice(0, 2),
   ].filter(Boolean).slice(0, 4);
   const evidenceCompleteness = Math.min(96, Math.round(67 + alertCount / 3 + Math.min(6, assetCount / 10)));
+  const evidenceCompletenessAvailable = numberAt(record, ['evidence_completeness']) > 0;
+  const campaignType = textFrom(record, ['campaign_type', 'campaignType']) || '未分类';
 
   return {
     campaignId,
+    campaignType,
     title: summaryTitle(summary, campaignId),
     riskScore: score,
     currentPhase,
@@ -240,6 +251,8 @@ export function normalizeCampaignDetailSnapshot(
     firstSeen,
     lastUpdated,
     status,
+    activityStatus,
+    workflowStatus,
     assignee: textFrom(record, ['owner', 'assignee', 'analyst']) || 'sec_analyst',
     alertCount,
     assetCount,
@@ -282,6 +295,8 @@ export function normalizeCampaignDetailSnapshot(
     impactDepartment,
     impactCampus,
     evidenceCompleteness,
+    evidenceCompletenessAvailable,
+    phaseDataBacked: Boolean(valueAt(record, ['phase_data_backed'])),
     evidenceChecks: buildEvidenceChecks(evidenceCompleteness, alertCount),
     evidenceSummaryRows: buildEvidenceRows(campaignId, evidenceCompleteness),
     responseFlow: buildResponseFlow(firstSeen, lastUpdated, status),
@@ -323,16 +338,29 @@ function buildMockCampaignDetailSnapshot(campaignId: string) {
   });
 }
 
-function buildPhaseCards(record: Record<string, unknown>, alertCount: number): CampaignDetailPhase[] {
+function buildPhaseCards(
+  record: Record<string, unknown>,
+  alertCount: number,
+  phaseSummaryRows: Record<string, unknown>[] = [],
+): CampaignDetailPhase[] {
   const payloadPhases = stringListFrom(valueAt(record, ['attack_phases', 'phases'])).map(phaseLabel);
   const phases = Array.from(new Set([...canonicalPhases, ...payloadPhases])).slice(0, 7);
   const exfiltrationIndex = phases.findIndex((phase) => phase.includes('外传'));
   const activeIndex = exfiltrationIndex >= 0 ? exfiltrationIndex : Math.min(5, phases.length - 1);
+  const phaseSummaries = new Map(
+    phaseSummaryRows.map((item) => [phaseLabel(textFrom(item, ['phase', 'attack_phase'])), item]),
+  );
   return phases.map((phase, index) => ({
     phase,
-    time: phaseTime(index),
-    alertCount: Math.max(1, Math.round(alertCount / phases.length) + (index % 3) - 1),
-    evidenceCount: 3 + index + (phase.includes('外传') ? 4 : 0),
+    time: phaseSummaries.has(phase)
+      ? (formatTimestamp(valueAt(phaseSummaries.get(phase), ['last_seen'])) || '-')
+      : phaseTime(index),
+    alertCount: phaseSummaries.size
+      ? numberAt(phaseSummaries.get(phase) ?? {}, ['alert_count'])
+      : Math.max(1, Math.round(alertCount / phases.length) + (index % 3) - 1),
+    evidenceCount: phaseSummaries.size
+      ? numberAt(phaseSummaries.get(phase) ?? {}, ['evidence_count'])
+      : 3 + index + (phase.includes('外传') ? 4 : 0),
     status: phaseStatus(index, activeIndex, phase),
     summary: phaseSummary(phase),
   }));
@@ -740,6 +768,15 @@ function severityLabel(value: string) {
   if (lower.includes('medium') || value.includes('中')) return '中危';
   if (lower.includes('low') || value.includes('低')) return '低危';
   return value || '中危';
+}
+
+function statusLabel(value: string) {
+  const lower = value.toLowerCase();
+  if (lower === 'active' || value === '活跃中') return '活跃中';
+  if (lower === 'investigating' || value === '调查中') return '调查中';
+  if (lower === 'contained' || value === '处置中') return '处置中';
+  if (lower === 'closed' || value === '已结束') return '已结束';
+  return value || '未设置';
 }
 
 function campaignStatus(record: Record<string, unknown>, score: number) {

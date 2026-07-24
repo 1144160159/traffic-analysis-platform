@@ -17,7 +17,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Alert, Button, Select, Space, Table, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { ReactNode } from 'react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { OverlayContractHost, type OverlayContract } from '@/components/OverlayContractHost';
 import { StatusTag } from '@/components/StatusTag';
 import { WorkPanel } from '@/components/WorkPanel';
@@ -64,8 +65,11 @@ const attackChainOverlays: OverlayContract[] = [
 ];
 
 export function AttackChainAnalysisPage({ route }: { route: NavRoute }) {
+  const [searchParams] = useSearchParams();
+  const sourceEntity = searchParams.get('entity') ?? '';
+  const [assetScope, setAssetScope] = useState(sourceEntity || '全部资产');
   const { data, error, isError, isLoading, refetch } = useQuery({
-    queryKey: ['page-snapshot', route.id],
+    queryKey: ['page-snapshot', route.id, sourceEntity],
     queryFn: () => fetchPageSnapshot(route.id),
   });
 
@@ -82,7 +86,7 @@ export function AttackChainAnalysisPage({ route }: { route: NavRoute }) {
     <div className="taf-page taf-attack-chain">
       <section className="taf-attack-shell">
         <header className="taf-attack-toolbar">
-          <h1>{route.page.title}</h1>
+          <div><h1>{route.page.title}</h1>{sourceEntity && <span className="taf-source-context" data-source-entity={sourceEntity}>关联实体：{sourceEntity}</span>}</div>
           <div className="taf-attack-filters">
             <label>
               <span>选择战役</span>
@@ -94,7 +98,7 @@ export function AttackChainAnalysisPage({ route }: { route: NavRoute }) {
             </label>
             <label>
               <span>资产范围</span>
-              <Select size="small" value="全部资产" options={[{ value: '全部资产' }, { value: '核心区' }, { value: '办公区' }]} />
+              <Select size="small" value={assetScope} options={Array.from(new Set(['全部资产', sourceEntity, '核心区', '办公区'].filter(Boolean))).map((value) => ({ value }))} onChange={setAssetScope} />
             </label>
             <label>
               <span>视图模式</span>
