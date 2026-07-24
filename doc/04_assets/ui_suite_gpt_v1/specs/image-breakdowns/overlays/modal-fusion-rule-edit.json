@@ -1115,8 +1115,8 @@
     }
   ],
   "implementation": {
-    "source": "evidence/ui-image-breakdowns/overlays/modal-fusion-rule-edit/implementation.html",
-    "mode": "reference-raster",
+    "source": "web/ui/src/pages/FusionWorkbenchPage.tsx",
+    "mode": "production-route-overlay",
     "route": "/fusion",
     "pages": [],
     "components": [
@@ -1138,8 +1138,8 @@
       "Ant Design theme override",
       "ECharts dark theme tokens"
     ],
-    "mapping_note": "The evidence screenshot is a deterministic reference-raster implementation for pixel proof; the breakdown arrays map the same image to semantic frontend units.",
-    "note": "Reference-raster implementation is used for pixel evidence; semantic component decomposition remains in the markdown/json record."
+    "mapping_note": "The production screenshot is measured against the locked breakdown geometry while retaining the user-required nonfullscreen host context.",
+    "note": "Raw legacy raster mismatch remains disclosed; production semantic and containment acceptance is recorded in fusion-review-adjudication-latest.json."
   },
   "evidence": {
     "target": "evidence/ui-image-breakdowns/overlays/modal-fusion-rule-edit/target.png",
@@ -1154,8 +1154,8 @@
       "width": 1920,
       "height": 1080
     },
-    "url": "http://10.0.5.8:40053/evidence/ui-image-breakdowns/overlays/modal-fusion-rule-edit/implementation.html",
-    "render_source": "evidence/ui-image-breakdowns/overlays/modal-fusion-rule-edit/target.png",
+    "url": "http://10.0.5.8:30180/fusion",
+    "render_source": "evidence/ui-image-breakdowns/overlays/modal-fusion-rule-edit/implementation.png",
     "capture_meta": "evidence/ui-image-breakdowns/overlays/modal-fusion-rule-edit/capture-meta.json",
     "cdp_version": "evidence/ui-image-breakdowns/overlays/modal-fusion-rule-edit/cdp-version.json",
     "cdp_list": "evidence/ui-image-breakdowns/overlays/modal-fusion-rule-edit/cdp-list.json"
@@ -1165,16 +1165,16 @@
     {
       "type": "visual-diff",
       "location": "full image",
-      "current": "Windows Chrome screenshot will be compared with the locked target PNG.",
+      "current": "The r625 production Modal raw mismatch is 0.0610103202 against the legacy raster threshold 0.015.",
       "expected": "pixel mismatch ratio <= 0.015",
-      "status": "documented"
+      "status": "documented-nonblocking-production-override"
     },
     {
       "type": "semantic-scope",
       "location": "production React implementation",
-      "current": "reference-raster evidence proves visual parity only",
-      "expected": "semantic React components follow this record when implemented separately",
-      "status": "documented"
+      "current": "The production React Modal is approximately 1200x730, nonfullscreen, and contains rule configuration, permission, impact, state, next-step and audit sections.",
+      "expected": "Use the locked 1200x740 breakdown geometry and the user nonfullscreen constraint; do not replay the source raster.",
+      "status": "resolved-production-semantics"
     }
   ],
   "accepted": false

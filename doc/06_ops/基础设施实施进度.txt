@@ -133,7 +133,7 @@
   Keycloak Admin     http://10.0.5.8:30080    admin/admin123
   StreamPark         http://10.0.5.8:30100    admin/streampark
   Argo Server        http://10.0.5.8:30046
-  NebulaGraph Studio http://10.0.5.8:30701    root/root (连接 nebula-graph:9669)
+  NebulaGraph Studio http://10.0.5.8:30701    账号与密码由 K8s Secret 管理（连接 nebula-graph:9669）
 
 十四、全组件 Pod 及 Service 清单（NodePort 统一入口 10.0.5.8）
 ─────────────────────────────────────────
@@ -160,7 +160,7 @@
     Pod: nebula-meta-1        10.244.1.151  zeus-server       nebula-graph      :31179 (19669 HTTP)
     Pod: nebula-meta-2        10.244.0.131  8-2tb
     Pod: nebula-graph-*-545j7 10.244.1.149  zeus-server  Svc: nebula-studio     :30701 (7001 Web)
-    Pod: nebula-graph-*-7v2bk 10.244.0.130  8-2tb             用户 root/root, 空间 traffic_graph
+    Pod: nebula-graph-*-7v2bk 10.244.0.130  8-2tb             管理/服务账号由 Secret 管理, 空间 traffic_graph
     Pod: nebula-graph-*-k8jnw 10.244.1.148  zeus-server
     Pod: nebula-storage-0     10.244.1.181  zeus-server
     Pod: nebula-storage-1     10.244.1.180  zeus-server
@@ -244,18 +244,18 @@
     nebula-console:        (随用随建，不常驻)
 
     集群名：traffic_graph
-    用户/密码：root / root
+    账号：root 管理账号 + traffic_graph 服务账号；密码由 ExternalSecret/K8s Secret 注入，禁止写入文档
     客户端入口：nebula-graph:9669（内部），外部 gRPC 10.0.5.8:30069 / HTTP 10.0.5.8:31179
     HTTP API：nebula-graph:19669
-    Web 控制台：NebulaGraph Studio @ http://10.0.5.8:30701 (进入后添加连接: nebula-graph.middleware.svc:9669, root/root) 🆕
+    Web 控制台：NebulaGraph Studio @ http://10.0.5.8:30701（进入后添加连接 nebula-graph.middleware.svc:9669，凭证从 Secret 获取） 🆕
     探针：TCP 9559(Meta) / 9669(Graph) / 9777(Storage)
     PDB：maxUnavailable=1
     前置标签：kubectl label node zeus-server nebula-primary=true
 
-  图空间 schema（初始化: init-nebula-schema Job + 2026-06-07 手动重建验证）：
-    5 Tags:  ip_address, session, alert, campaign, network_device
-    7 Edges: communicates, has_session, triggers_alert, includes_alert, belongs_to, connects_to, attack_path_hop
-    12 索引: Tag/Edge 复合索引 (tenant_id, community_id, alert_type, risk_score 等)
+  图空间 schema（初始化: init-nebula-schema Job + 2026-07-21 工作台 schema/数据验证）：
+    6 Tags:  ip_address, session, alert, campaign, network_device, entity
+    8 Edges: communicates, has_session, triggers_alert, includes_alert, belongs_to, connects_to, attack_path_hop, relation
+    17 索引: Tag/Edge 索引 (tenant_id, entity_id, relation_id, community_id, alert_type, risk_score 等)
     30 分区 × 3 副本 (replica_factor=3)，分布均匀，无 Losts
     VID 类型: FIXED_STRING(32) — 要求 VID 精确 32 字节；Go 客户端使用 hashVID() (MD5→32 hex)
 
@@ -451,3 +451,232 @@
     - sessions、pcap_index、feature_fp 在 4/4 节点存在；
     - clickhouse-1 与 clickhouse-2 的近 24 小时加密会话和 PCAP 索引计数一致；
     - Windows Chrome 加密流量五 Tab 验收 44/44 通过，运行态错误 0。
+
+二十五、2026-07-19 SOAR 剧本安全演练与运行态部署
+─────────────────────────────────────────
+
+  【实现】
+    - PostgreSQL 租户剧本定义、乐观版本、两人审批、启停、演练、回滚和审计已闭环；
+    - 新增 playbook:read/write/drill/approve/export 最小权限；
+    - 未接真实 provider 时 live execute 固定 501，演练动作全部 simulated；
+    - alert_playbook_executions 已启用 mode/status CHECK、租户内 rollback FK 和执行 ID 唯一约束；
+    - 1/2/3/4 动作流程分别使用真实连接位图，避免连接线指向空白节点。
+
+  【部署】
+    - alert-service revision 114：docker.io/traffic/alert-service@sha256:72885ceca42638110bed077e48db2026980898e9106261f12efc3a7acfce5a01；
+    - auth-service revision 29：docker.io/traffic/auth-service@sha256:1d5099f238acb219c051bb4da652a1e2eecf5918f80d781a05b3b0c6183c4e1c；
+    - web-ui revision 647：docker.io/traffic/web-ui@sha256:b65d39a3980ea26035925d1655b757e4a5b524f5fb4c92132819df66fb0c24e7；
+    - 三个 Deployment 均 Ready，alert/web 镜像已导入 8-2tb 与 zeus-server；三项 server-side rollback dry-run 均通过。
+
+  【验证】
+    - Xshell 隧道 127.0.0.1:9224 → Windows Chrome 150 → APISIX /playbooks；
+    - 版本 1→6、stale 409、自审批 409、viewer 403、跨租户 404、live 501、drill/rollback 均通过；
+    - 205 条导出边界探针 205/205，回滚证据 UI 计数为 1，清理后无探针残留；
+    - 1920×1080 业务区视觉差异率 0.07687100161233736 < 0.125；
+    - Go race、前端 5/5 定向测试、生产构建及三类独立复核均通过。
+
+  【后续非阻断项】
+    - evidence export 升级为同一 PostgreSQL 只读快照与流式输出，降低并发时间点不一致和大租户内存压力。
+
+二十六、2026-07-19 白名单治理 r351/r352 运行态闭环
+─────────────────────────────────────────
+
+  【实现】
+    - 白名单固定从 draft/draft 开始，状态与审批状态组合受数据库和服务端共同约束；
+    - 创建、提交、独立审批、延期、停用、带 expected_version 删除形成完整版本链；
+    - FP 反馈的 add_to_whitelist 在告警查询前要求 alert:write，避免存在性探测；
+    - 反馈生成草案与 WHITELIST_CREATED 审计在同一 PostgreSQL 事务内提交，失败回滚并返回 500；
+    - common SQL、Docker merged SQL 与 Kubernetes init-job 内嵌 schema 已同步；
+    - 删除审计不再使用保留假设，API 与 PostgreSQL 均验证 WHITELIST_DELETED，严格保留 6 条审计。
+
+  【部署】
+    - alert-service r351：docker.io/traffic/alert-service@sha256:d623d9e54d8fdd754e46d6d46949f69c8117b46af7f24579429deef640b427bb；
+    - web-ui r352：docker.io/traffic/web-ui@sha256:082270accbb437552d3cda8868e5f9fe6cd73601f8081534bbc80d26eacb5d24；
+    - 两个镜像已导入 8-2tb 与 zeus-server，并在 traffic-analysis namespace 完成 Ready 后验收；
+    - manifest 已固定上述 digest。主线程最终文档刷新时只读 kubectl 查询曾短暂遇到 TLS handshake timeout，随后独立综合复审已重新确认两个 Pod Ready，且运行时 Docker config ID 与 r351/r352 完全匹配；live template 仍显示等价标签，后续重新部署直接应用 digest-pinned manifest。
+
+  【验证】
+    - live APISIX/JWT/PostgreSQL 预检 46/46，0 blockers、0 warnings；
+    - Xshell 隧道 127.0.0.1:9224 → Windows Chrome 150 → APISIX /whitelist；
+    - 1920×1080 下真实创建→提交→独立审批→延期→停用→删除通过，业务浏览器错误 0；
+    - 删除后业务行消失，6 条 append-only 审计动作完整保留；
+    - 主页面、5 个条件、3 个到期治理状态、Modal、Drawer 共 11/11 视觉门禁通过；
+    - 像素差异率范围 0.0398871528–0.0840128279，均低于 0.125；
+    - Go race、前端 3/3 定向测试、生产构建、UI contract、独立逻辑/布局复审均通过。
+
+  【证据】
+    - doc/02_acceptance/02-regression/whitelist-development-progress-latest.json；
+    - doc/02_acceptance/02-regression/whitelist-review-adjudication-latest.json；
+    - doc/02_acceptance/02-regression/whitelist-rollout-r352.json；
+    - evidence/ui-image-breakdowns/pages/whitelist/verification.json。
+
+  【后续非阻断项】
+    - 条件构造标题与次级 ID 展示、主表固定操作列、Modal 自适应高度；
+    - 白名单 r352 已接受，后续合规页面已在 r367/r368 闭环。
+
+二十七、2026-07-19 合规审计 r367/r368 运行态闭环
+─────────────────────────────────────────
+
+  【实现】
+    - 9 个合规 section 统一 fail-closed，未提供证据时保存 insufficient_evidence，不生成前端假通过；
+    - 历史零证据 pass 报告迁移为 invalidated，并从列表 total、导出、整改和固化路径排除；
+    - 新增 compliance:read/write/export/remediate/finalize 与 audit:read 最小权限；
+    - 证据包 ZIP、英文 PDF、中文 DOCX 均由服务端真实生成并审计；
+    - evidence manifest 与 finalization 共用 canonical report SHA-256；
+    - 整改任务持久化且重复调用复用原 task_id，固化记录唯一并由 PostgreSQL trigger 禁止更新/删除；
+    - common SQL、Docker merged SQL 与 Kubernetes init-job 内嵌 schema 已同步。
+
+  【部署】
+    - alert-service r367 / Kubernetes revision 126：docker.io/traffic/alert-service@sha256:8b364a7b6171b239395cb4c6fb4bc10850f9d6880c4621be2edbc4d92a41fba9；
+    - web-ui r368 / Kubernetes revision 664：docker.io/traffic/web-ui@sha256:48e92b7da33a305f9c769b7a83bb86797dcbd2668acc4259e93b9aa96ccb3e89；
+    - 两个镜像均已导入 8-2tb 与 zeus-server，manifest 固定 digest，两个 Deployment Ready 且验收 Pod restart=0。
+
+  【验证】
+    - live APISIX/JWT/PostgreSQL 预检 52/52，0 blockers、0 warnings；
+    - Xshell 隧道 127.0.0.1:9224 → Windows Chrome 150 → APISIX /compliance；
+    - 生成→ZIP/PDF/DOCX→整改新建/复用→不可变固化→重复固化 409 全链路通过；
+    - 报告真实状态为 insufficient_evidence，未把缺失 PCAP、模型、规则或部署证据伪造成 pass；
+    - 主页面、Drawer、证据 Modal、报告 Modal 共 4/4 视觉门禁通过；
+    - 像素差异率范围 0.0749951775–0.1018557099，均低于 0.125；
+    - A/B/E 裁切、D 可视高度、F 空占位、双 Modal 滚动/预览问题均关闭；
+    - Go race、前端定向测试、生产构建、Kubernetes dry-run、独立逻辑/布局复审均通过。
+
+  【证据】
+    - doc/02_acceptance/02-regression/compliance-development-progress-latest.json；
+    - doc/02_acceptance/02-regression/compliance-review-adjudication-latest.json；
+    - doc/02_acceptance/02-regression/compliance-rollout-r368.json；
+    - evidence/ui-image-breakdowns/pages/compliance/verification.json。
+
+  【边界与后续】
+    - 本页面验收不替代正式第三方检测包、试点签认、NetworkPolicy-capable CNI 或其他项目级 blocker；
+    - 合规 r367/r368 已接受，开发队列继续 Deployment Management 页面。
+
+二十八、2026-07-20 系统设置 r509/r510 运行态闭环
+─────────────────────────────────────────
+
+  【部署】
+    - auth-service r509 / Kubernetes revision 40：docker.io/traffic/auth-service@sha256:6e3cb398fb1c68c4dccbcc727af17bfb5f08b4f8218fa2baf128c290a8109735；
+    - web-ui r502 / Kubernetes revision 705：docker.io/traffic/web-ui@sha256:ad61548ca0f8434d7c93a9529960a065d21e09863f241bc41533178afb952cb7；
+    - 两个镜像均已导入 8-2tb 与 zeus-server，manifest 固定 digest，两个 Deployment Ready replicas=1。
+
+  【验证】
+    - live APISIX/JWT/PostgreSQL 预检 88/88，0 blockers、0 warnings；
+    - Xshell 隧道 127.0.0.1:9224 → Windows Chrome 150 → APISIX /settings；
+    - 20/20 route/RBAC/业务动作检查、18 个原生点击、五类 560px 业务区内 Drawer 全部通过；
+    - 连接 warning/findings 与审计一致，单集成审计 target_id=apisix 且 tested_count=1；
+    - admin:read 只读、admin:write 系统写入、token:write 令牌管理和 admin:* 严格域边界均通过正负例；
+    - 全图视觉差异率 0.0711535494 < 0.125，逻辑与布局终审均 ACCEPT、P0/P1/P2=0。
+
+  【证据与回滚】
+    - doc/02_acceptance/02-regression/settings-development-progress-latest.json；
+    - doc/02_acceptance/02-regression/settings-review-adjudication-latest.json；
+    - doc/02_acceptance/02-regression/settings-rollout-r510.json；
+    - evidence/ui-image-breakdowns/pages/settings/verification.json；
+    - 回滚使用两个 Deployment 的 rollout history 上一 digest-pinned ReplicaSet。
+
+二十九、2026-07-21 NebulaGraph 原生实体图谱 r575/r576 运行态闭环
+─────────────────────────────────────────
+
+  【集群修复】
+    - Meta/Graph/Storage 进程改为 --daemonize=false 前台 exec，删除 Storage 循环 kill/restart 包装；
+    - 修复前 nebula-storage-2 容器内部进程已重启 953 次并触发 Raft 抖动；修复后 3 Meta + 3 Graph + 3 Storage 全部 Ready，9 个实例 restart=0；
+    - Graph 层启用 password authorization，管理密码和 traffic_graph 服务密码均由 ExternalSecret/K8s Secret 同步；
+    - traffic_graph 服务账号最初按只读查询授予 GUEST；r580 实施时为支持独立 seed/migration Job 已调整为 USER，Graph Service 仍不使用 root。当前运行态以第三十节为准。
+
+  【Schema 与数据】
+    - 图空间已扩展为 6 Tags / 8 Edges / 17 Indexes；
+    - 新增通用 entity Tag 和 relation Edge，用于存储实体图谱工作台的类型实体、证据属性和关系属性；
+    - 06-nebula-workbench-seed.yaml 提供幂等迁移/种子任务，当前 default 租户为 12 实体/14 关系；
+    - Schema Job 和 seed Job 均通过 SecretRef 取得凭证，不在仓库、日志或验收文档写入明文密码。
+
+  【应用开发与部署】
+    - Graph Service 引入官方 nebula-go v3.6.1 SessionPool，按 tenant_id 参数化 LOOKUP entity/relation；
+    - 生产启动时 NEBULA_ENABLED=true，SessionPool 初始化失败则 Graph Service 失败关闭，不会将 ClickHouse 兼容路径伪装为图数据库成功；
+    - Graph Service r575：docker.io/traffic/graph-service@sha256:c2af7b2361d1bb606d10e24e5251ab59a8200d6424752b4964ec5dade7b6db6c；
+    - Web UI r576：docker.io/traffic/web-ui@sha256:7dffa2659009611622df0f97b472fc16bf6db0895d462d26d2719e4e7c36df61；
+    - 两个镜像均已导入 8-2tb 与 zeus-server，manifest 固定 digest，当前 Pod Ready 且 restart=0。
+
+  【验证】
+    - 真实 APISIX/JWT/NebulaGraph 预检通过：401/403、租户隔离、实体筛选、四种路径和反向攻击路径拒绝全部正常；
+    - 二跳实际返回 source=nebula_graph、data_origin=nebula_graph_persisted_projection、11 节点/13 关系；
+    - Xshell 127.0.0.1:9224 上的 Windows Chrome 150 交互回归全部通过，页面显示“数据源 NebulaGraph”；
+    - 一/二/三跳、ECharts 拓扑、四路径固定 420px 区域、开放服务、查询治理、业务跳转与页面无横向溢出门禁全部通过；
+    - 锁定参考图 raw 全图差异率 0.3088806906 > 0.02，依然记为 fail；不放宽或伪造 pixel pass。
+
+  【证据】
+    - doc/02_acceptance/02-regression/entity-graph-live-preflight-r575.json；
+    - doc/02_acceptance/02-regression/entity-graph-interactions-r575.json；
+    - doc/02_acceptance/02-regression/entity-graph-rollout-r576.json；
+    - evidence/ui-image-breakdowns/pages/graph/entity-graph-r575-interactions.png。
+
+三十、2026-07-21 NebulaGraph fresh-install 与实体图谱 r580 加固
+─────────────────────────────────────────
+
+  【部署修复】
+    - nebula-meta 与 nebula-storage-headless 在仓库清单中显式 clusterIP=None、publishNotReadyAddresses=true，删除重复 Service 定义；当前 live 两个 Service 均验证为 headless；
+    - init-nebula-schema 首先验证 ExternalSecret 管理的 root 密码；仅 fresh install 未轮换时使用 NebulaGraph 3.6 厂商 bootstrap 凭证完成一次性 ALTER USER，随后必须使用 Secret 密码复验；
+    - traffic_graph 业务账号角色升级为 USER，只允许该账号执行工作台 seed/migration；seed Job 不再读取或使用 root 密码；
+    - default 租户的 12 实体/14 关系迁移为 tenant-qualified VID，关系使用显式 rank 1-14；旧无 tenant VID 仅按固定迁移清单删除。
+
+  【租户隔离】
+    - Go 兼容读写路径统一使用 MD5(trim(tenant_id) + ':' + trim(business_id))；同一 business ID 在不同 tenant 下生成不同 32 字节 VID；
+    - live 增加 entity-graph-collision-tenant，同样的 host:10.20.4.18 返回独立标签“租户隔离验证主机”、1 节点/0 关系；default 仍返回 11 节点/13 关系；
+    - 空租户、同 ID 碰撞租户、路径隔离、401、403、四类路径和反向攻击拒绝均通过真实 APISIX/JWT/NebulaGraph 验证。
+
+  【UI 与证据】
+    - Web UI r580：docker.io/traffic/web-ui@sha256:a8068f4aa6a97bae70bd250a964d65575c9220383f5db83cddc64f2951ea3e3d；双节点导入、digest pin、Deployment Ready；
+    - 邻居图谱支持 70%-160% 缩放和复位，13 个关系标签为正常水平中文字体；箭头与节点圆心最大偏差 0.0096px；
+    - 四个路径 tab 位于同一 1390×420 区域，查询治理位于其下方业务滚动区；Windows Chrome/Xshell 9224 交互全部通过；
+    - 证据：doc/02_acceptance/02-regression/entity-graph-live-preflight-r580.json、entity-graph-interactions-r580.json、evidence/ui-image-breakdowns/pages/graph/entity-graph-r580-interactions.png；
+    - raw 全图视觉差异率 0.3215991512 > 0.02，维持 fail，不作为功能/部署 pass 的替代证据。
+
+三十一、2026-07-21 实体图谱路径结果 r582 紧凑布局回修
+─────────────────────────────────────────
+
+  【UI 回修】
+    - 按最新验收意见撤销 r580 的 1390×420 单列扩展，将“路径分析结果”恢复为左侧 649.53125×250 紧凑面板，“查询治理”恢复到同一行右侧；
+    - 保持四个 Tab、顶部摘要和底部事实行的业务职责，仅重做中间路径图：最短路径为蓝色关系链，攻击路径为阶段带+红色攻击链，通信路径为带宽/延迟/协议关系链，账号路径为账号访问链+异常摘要；
+    - 四种模式均直接渲染 NebulaGraph API 的 path.node_ids/path.edges，不为匹配静态参考图补造节点或关系；生产数据分别为 3/2、3/2、3/2、2/1（节点/连接）。
+
+  【部署与验收】
+    - Web UI r582：docker.io/traffic/web-ui@sha256:83fa28517c37263ca2cc89a71924e107a33599a929e97f3d0ec7985ba917b620；镜像导入 8-2tb 与 zeus-server，digest pin，Deployment generation=779/revision=764，Ready=1/1，restart=0；
+    - Windows Chrome 150 经 Xshell 127.0.0.1:9224 在生产 APISIX http://10.0.5.8:30180/graph 完成四 Tab、导航、导出、查询治理和拓扑回归，业务 4xx/5xx=0、意外 console/page error=0；
+    - 证据：doc/02_acceptance/02-regression/entity-graph-interactions-r582.json、entity-graph-rollout-r582.json、evidence/ui-image-breakdowns/pages/graph/entity-graph-r582-path-tabs/、entity-graph-r582-path-visual-metrics.json；
+    - 运维提示：本机 shell 的 HTTP_PROXY/HTTPS_PROXY 指向 127.0.0.1:9999 时，kubectl 访问 10.0.5.8:6443 会产生伪 TLS handshake timeout；集群命令必须清空代理或显式设置 NO_PROXY=127.0.0.1,localhost,10.0.5.8,10.0.5.9。
+
+三十二、2026-07-21 实体图谱路径结果 r583 左侧区域增高
+─────────────────────────────────────────
+
+  【UI 调整】
+    - 保持路径分析结果左列宽度 649.53125px、查询治理右列及同排关系不变，将左侧面板高度由 250px 增至 300px；
+    - 新增 50px（20%）用于扩大中间路径画布，并把普通节点图标由 28px 增至 34px、攻击节点由 24px 增至 30px，同时提升主标签字号；
+    - 四个 Tab 的外框均稳定为 649.53125×300，路径节点与连线全部在区域内，仍直接使用 NebulaGraph 返回数据。
+
+  【部署与验收】
+    - Web UI r583：docker.io/traffic/web-ui@sha256:e07cd9a6aeec0cc63de5e8d9d2431d79af2914d413101874e1c2e1949695d688；双节点导入、digest pin，Deployment generation=780/revision=765，Ready=1/1，restart=0；
+    - Windows Chrome 150 经 Xshell 127.0.0.1:9224 在 1920×1080 非全屏生产页面验收通过；四 Tab、路径动作、拓扑、筛选、保存、导出和详情动作均通过，业务失败与意外 console/page error 为 0；
+    - 逻辑与布局独立复审均 ACCEPT，P0/P1/P2=0；主线程裁决 ACCEPT；
+    - 证据：doc/02_acceptance/02-regression/entity-graph-interactions-r583.json、entity-graph-rollout-r583.json、evidence/ui-image-breakdowns/pages/graph/entity-graph-r583-path-tabs/、entity-graph-r583-path-visual-metrics.json、entity-graph-r583-diff/taller-left-panel-comparison.png。
+
+三十三、2026-07-21 实体图谱业务区域与数据库驱动 ECharts r584-r586
+
+1. 业务区域布局回修：
+    - 路径分析结果从 r583 的 649.53125×300 调整为 801.322937×340，查询治理保持同排右侧 580.666687×340，左右宽度比 1.38:1；
+    - 查询治理 body client/scroll=303/303，内部治理区 client/scroll=283/283，全部子元素位于面板内，解决内容被覆盖和显示不全；
+    - 最短、攻击、通信、账号访问四个 Tab 的宿主框完全一致，节点、连线、摘要与动作均未跳出该区域。
+2. 实体详情 ECharts：
+    - 风险评分由 CSS 圆环改为 ECharts gauge，风险值直接绑定 NebulaGraph node.risk_score；
+    - 最近24小时流量、相关告警均为 ECharts line；r586 删除旧组件中的归一化、jitter、插值和 synthetic fallback；
+    - NebulaGraph node.metadata 增加 traffic_trend_{24h|7d|all} 与 alert_trend_{24h|7d|all} canonical 时间桶；账号 0 告警为真实平直零线。
+3. 部署：
+    - NebulaGraph `middleware/seed-nebula-workbench` Job 执行成功；
+    - Web UI r586：docker.io/traffic/web-ui@sha256:636d72cf224f231c0090c28804d9b7052caac99f434a207312c8355e7814103d；双节点导入并建立 digest 引用，Deployment generation=783/revision=768，Ready=1/1，restart=0；
+    - 生产 Pod `web-ui-7b59d95b65-rmh76` 位于 zeus-server。
+4. Windows Chrome 真实验收：
+    - Xshell/CDP 127.0.0.1:9224，Chrome/150.0.7871.128，生产 APISIX `/graph`；
+    - live source=nebula_graph，11 节点/13 关系；三张实体详情图表类型、值、颜色和数据源逐值通过；四路径、缩放复位、筛选、保存、导出与业务跳转均通过；
+    - 业务 HTTP 失败、request failure、unexpected console/page error、横向溢出均为 0。
+5. 复审：
+    - r585 逻辑审查 REJECT 的 P1/P2（伪时序与 canvas-only 门禁）已在 r586 关闭；
+    - r586 逻辑 ACCEPT（P0/P1/P2=0，P3=1），布局 ACCEPT（P0/P1/P2/P3=0），主线程裁决 ACCEPT；
+    - 证据：doc/02_acceptance/02-regression/entity-graph-interactions-r586.json、entity-graph-rollout-r586.json、entity-graph-review-adjudication-latest.json、evidence/ui-image-breakdowns/pages/graph/entity-graph-r586-visual-metrics.json。

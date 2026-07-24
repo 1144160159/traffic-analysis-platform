@@ -1282,7 +1282,11 @@
       "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/audit-log.md",
       "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/audit-log.json",
       "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/audit-log.review.md",
-      "evidence_dir": "evidence/ui-image-breakdowns/pages/audit-log"
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/audit-log",
+      "development_status": "accepted",
+      "acceptance_revision": "r483",
+      "acceptance_mode": "structured-contract-adjudication-with-raw-pixel-fail-preserved",
+      "acceptance_evidence": "doc/02_acceptance/02-regression/audit-log-development-progress-latest.json"
     },
     {
       "order": 81,
@@ -1298,7 +1302,11 @@
       "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/audit-log-operation-context.md",
       "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/audit-log-operation-context.json",
       "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/audit-log-operation-context.review.md",
-      "evidence_dir": "evidence/ui-image-breakdowns/pages/audit-log-operation-context"
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/audit-log-operation-context",
+      "development_status": "accepted",
+      "acceptance_revision": "r425",
+      "acceptance_mode": "contained-right-panel-user-contract",
+      "acceptance_evidence": "evidence/ui-image-breakdowns/pages/audit-log/interaction-r425.json"
     },
     {
       "order": 82,
@@ -1314,7 +1322,11 @@
       "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/audit-log-related-chain.md",
       "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/audit-log-related-chain.json",
       "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/audit-log-related-chain.review.md",
-      "evidence_dir": "evidence/ui-image-breakdowns/pages/audit-log-related-chain"
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/audit-log-related-chain",
+      "development_status": "accepted",
+      "acceptance_revision": "r425",
+      "acceptance_mode": "contained-right-panel-user-contract",
+      "acceptance_evidence": "evidence/ui-image-breakdowns/pages/audit-log/interaction-r425.json"
     },
     {
       "order": 83,
@@ -1330,7 +1342,11 @@
       "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/notifications.md",
       "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/notifications.json",
       "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/notifications.review.md",
-      "evidence_dir": "evidence/ui-image-breakdowns/pages/notifications"
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/notifications",
+      "development_status": "accepted",
+      "acceptance_revision": "r467",
+      "acceptance_mode": "windows-chrome-visual-and-business-interaction-dual-gate",
+      "acceptance_evidence": "evidence/ui-image-breakdowns/pages/notifications/interaction-r467.json"
     },
     {
       "order": 84,
@@ -1346,7 +1362,11 @@
       "breakdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/settings.md",
       "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/settings.json",
       "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/settings.review.md",
-      "evidence_dir": "evidence/ui-image-breakdowns/pages/settings"
+      "evidence_dir": "evidence/ui-image-breakdowns/pages/settings",
+      "development_status": "accepted",
+      "acceptance_revision": "r510",
+      "acceptance_mode": "windows-chrome-visual-and-business-interaction-dual-gate",
+      "acceptance_evidence": "doc/02_acceptance/02-regression/settings-development-progress-latest.json"
     },
     {
       "order": 85,

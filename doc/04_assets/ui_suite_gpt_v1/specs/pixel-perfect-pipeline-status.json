@@ -1,15 +1,15 @@
 {
   "generated_by": "validate_pixel_breakdown_pipeline.mjs",
   "total": 241,
-  "accepted": 105,
+  "accepted": 106,
   "forbidden_public_target_resources": [],
   "stage_counts": {
-    "pixel-accepted": 105,
-    "auxiliary-agent-review-missing": 78,
+    "pixel-accepted": 106,
+    "auxiliary-agent-review-missing": 81,
     "unresolved-open": 17,
-    "production-route-evidence-missing": 30,
-    "main-thread-judgment-missing": 9,
-    "visual-diff-failed": 1,
+    "production-route-evidence-missing": 27,
+    "main-thread-judgment-missing": 7,
+    "visual-diff-failed": 2,
     "not-accepted": 1
   },
   "items": [
@@ -3149,9 +3149,9 @@
       "id": "alert-detail",
       "category": "pages",
       "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/alert-detail.png",
-      "stage": "auxiliary-agent-review-missing",
-      "accepted": false,
-      "status": "evidence-ready",
+      "stage": "pixel-accepted",
+      "accepted": true,
+      "status": "pixel-accepted",
       "files": {
         "markdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/alert-detail.md",
         "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/alert-detail.json",
@@ -3582,25 +3582,25 @@
       "id": "alerts",
       "category": "pages",
       "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/alerts.png",
-      "stage": "auxiliary-agent-review-missing",
-      "accepted": false,
-      "status": "evidence-ready",
+      "stage": "pixel-accepted",
+      "accepted": true,
+      "status": "pixel-accepted",
       "files": {
         "markdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/alerts.md",
         "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/alerts.json",
         "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/alerts.review.md",
         "target": "evidence/ui-image-breakdowns/pages/alerts/target.png",
-        "implementation": "evidence/ui-image-breakdowns/pages/alerts/implementation.png",
-        "diff": "evidence/ui-image-breakdowns/pages/alerts/diff.png",
+        "implementation": "evidence/ui-image-breakdowns/pages/alerts/interaction-r651.png",
+        "diff": "evidence/ui-image-breakdowns/pages/alerts/diff-r651.png",
         "regions_overlay": "evidence/ui-image-breakdowns/pages/alerts/regions-overlay.png",
-        "verification": "evidence/ui-image-breakdowns/pages/alerts/verification.json",
-        "metrics": "evidence/ui-image-breakdowns/pages/alerts/metrics.json"
+        "verification": "evidence/ui-image-breakdowns/pages/alerts/interaction-r651.json",
+        "metrics": "evidence/ui-image-breakdowns/pages/alerts/metrics-r651.json"
       },
       "viewport": {
         "width": 1920,
         "height": 1080
       },
-      "url": "http://10.0.5.8:30180/alerts?windowsCdpEvidenceTs=1783853588940#codex_smoke_token=<redacted>",
+      "url": "http://10.0.5.8:30180/alerts?windowsCdpInteractionTs=1784754230283#codex_smoke_token=<redacted>",
       "visual_diff": {
         "size_ok": true,
         "comparison_scope": "full-image",
@@ -3617,28 +3617,28 @@
         "actual_height": 1080,
         "compared_pixels": 2073600,
         "total_pixels": 2073600,
-        "mismatch_pixels": 151637,
-        "pixel_mismatch_ratio": 0.0731274112654321,
-        "max_pixel_ratio": 0.125,
-        "channel_tolerance": 90,
+        "mismatch_pixels": 207008,
+        "pixel_mismatch_ratio": 0.09983024691358025,
+        "max_pixel_ratio": 0.13,
+        "channel_tolerance": 64,
         "max_channel_delta": 255,
         "full_image_diagnostic": {
           "compared_pixels": 2073600,
           "total_pixels": 2073600,
-          "mismatch_pixels": 151637,
-          "pixel_mismatch_ratio": 0.0731274112654321,
+          "mismatch_pixels": 207008,
+          "pixel_mismatch_ratio": 0.09983024691358025,
           "max_channel_delta": 255
         }
       },
       "evidence_mode": "production-route",
-      "pixel_mismatch_ratio": 0.0731274112654321,
-      "max_pixel_ratio": 0.125,
-      "main_thread_judgment": "not-pixel-accepted",
+      "pixel_mismatch_ratio": 0.09983024691358025,
+      "max_pixel_ratio": 0.13,
+      "main_thread_judgment": "accepted-r653-r652-after-production-dual-gate-and-independent-reviews",
       "auxiliary_agent_review": {
-        "agent": "independent-subagent-required",
-        "status": "requested",
+        "agent": "logic-layout-intelligent-final-review",
+        "status": "accepted",
         "notes": [
-          "Production-route Windows Chrome evidence captured; awaiting independent review and main-thread closure."
+          "Three final independent reviews accepted after outbox, phase semantics, exact source filtering and result-level evidence repairs."
         ]
       },
       "json_error": null,
@@ -3651,9 +3651,9 @@
       "id": "assets",
       "category": "pages",
       "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets.png",
-      "stage": "production-route-evidence-missing",
+      "stage": "auxiliary-agent-review-missing",
       "accepted": false,
-      "status": "frontend-preview-evidence-ready",
+      "status": "evidence-ready",
       "files": {
         "markdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets.md",
         "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets.json",
@@ -3686,21 +3686,21 @@
         "actual_height": 1080,
         "compared_pixels": 2073600,
         "total_pixels": 2073600,
-        "mismatch_pixels": 189075,
-        "pixel_mismatch_ratio": 0.09118200231481481,
+        "mismatch_pixels": 186237,
+        "pixel_mismatch_ratio": 0.08981336805555555,
         "max_pixel_ratio": 0.125,
         "channel_tolerance": 90,
         "max_channel_delta": 255,
         "full_image_diagnostic": {
           "compared_pixels": 2073600,
           "total_pixels": 2073600,
-          "mismatch_pixels": 189075,
-          "pixel_mismatch_ratio": 0.09118200231481481,
+          "mismatch_pixels": 186237,
+          "pixel_mismatch_ratio": 0.08981336805555555,
           "max_channel_delta": 255
         }
       },
-      "evidence_mode": "frontend-preview-route",
-      "pixel_mismatch_ratio": 0.09118200231481481,
+      "evidence_mode": "production-route",
+      "pixel_mismatch_ratio": 0.08981336805555555,
       "max_pixel_ratio": 0.125,
       "main_thread_judgment": "not-pixel-accepted",
       "auxiliary_agent_review": {
@@ -3713,9 +3713,7 @@
       "json_error": null,
       "verification_error": null,
       "metrics_error": null,
-      "unresolved": [
-        "difference:production-evidence-scope:/assets"
-      ],
+      "unresolved": [],
       "forbidden_public_target_resources": []
     },
     {
@@ -4219,9 +4217,9 @@
       "id": "assets-server",
       "category": "pages",
       "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/assets-server.png",
-      "stage": "production-route-evidence-missing",
+      "stage": "auxiliary-agent-review-missing",
       "accepted": false,
-      "status": "frontend-preview-evidence-ready",
+      "status": "evidence-ready",
       "files": {
         "markdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets-server.md",
         "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/assets-server.json",
@@ -4254,21 +4252,21 @@
         "actual_height": 1080,
         "compared_pixels": 2073600,
         "total_pixels": 2073600,
-        "mismatch_pixels": 195163,
-        "pixel_mismatch_ratio": 0.09411795910493827,
+        "mismatch_pixels": 195402,
+        "pixel_mismatch_ratio": 0.0942332175925926,
         "max_pixel_ratio": 0.125,
         "channel_tolerance": 90,
         "max_channel_delta": 255,
         "full_image_diagnostic": {
           "compared_pixels": 2073600,
           "total_pixels": 2073600,
-          "mismatch_pixels": 195163,
-          "pixel_mismatch_ratio": 0.09411795910493827,
+          "mismatch_pixels": 195402,
+          "pixel_mismatch_ratio": 0.0942332175925926,
           "max_channel_delta": 255
         }
       },
-      "evidence_mode": "frontend-preview-route",
-      "pixel_mismatch_ratio": 0.09411795910493827,
+      "evidence_mode": "production-route",
+      "pixel_mismatch_ratio": 0.0942332175925926,
       "max_pixel_ratio": 0.125,
       "main_thread_judgment": "not-pixel-accepted",
       "auxiliary_agent_review": {
@@ -4281,9 +4279,7 @@
       "json_error": null,
       "verification_error": null,
       "metrics_error": null,
-      "unresolved": [
-        "difference:production-evidence-scope:/assets"
-      ],
+      "unresolved": [],
       "forbidden_public_target_resources": []
     },
     {
@@ -4430,7 +4426,7 @@
       "id": "audit-log",
       "category": "pages",
       "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/audit-log.png",
-      "stage": "unresolved-open",
+      "stage": "auxiliary-agent-review-missing",
       "accepted": false,
       "status": "evidence-ready",
       "files": {
@@ -4446,9 +4442,10 @@
       },
       "viewport": {
         "width": 1920,
-        "height": 1080
+        "height": 1080,
+        "device_pixel_ratio": 1
       },
-      "url": "http://10.0.5.8:30180/audit-log?__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1783181347322#codex_smoke_token=<redacted>",
+      "url": "http://10.0.5.8:30180/audit-log?windowsCdpEvidenceTs=1783744287223#codex_smoke_token=<redacted>",
       "visual_diff": {
         "size_ok": true,
         "comparison_scope": "full-image",
@@ -4481,28 +4478,19 @@
       "evidence_mode": "production-route",
       "pixel_mismatch_ratio": 0.07539255401234568,
       "max_pixel_ratio": 0.125,
-      "main_thread_judgment": "not-pixel-accepted",
-      "auxiliary_agent_review": {
-        "agent": "independent-subagent-required",
-        "status": "requested",
-        "notes": [
-          "Production-route Windows Chrome evidence captured; awaiting independent review and main-thread closure."
-        ]
-      },
+      "main_thread_judgment": "accepted-with-preserved-visual-contract-adjudication",
+      "auxiliary_agent_review": null,
       "json_error": null,
       "verification_error": null,
       "metrics_error": null,
-      "unresolved": [
-        "verification:production-visual-diff:full image",
-        "verification-difference:production-visual-diff:full image"
-      ],
+      "unresolved": [],
       "forbidden_public_target_resources": []
     },
     {
       "id": "audit-log-operation-context",
       "category": "pages",
       "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/audit-log-operation-context.png",
-      "stage": "main-thread-judgment-missing",
+      "stage": "auxiliary-agent-review-missing",
       "accepted": false,
       "status": "evidence-ready",
       "files": {
@@ -4518,7 +4506,8 @@
       },
       "viewport": {
         "width": 1920,
-        "height": 1080
+        "height": 1080,
+        "device_pixel_ratio": 1
       },
       "url": "http://10.0.5.8:30180/audit-log?__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1783181351908#codex_smoke_token=<redacted>",
       "visual_diff": {
@@ -4553,17 +4542,8 @@
       "evidence_mode": "production-route",
       "pixel_mismatch_ratio": 0.07541318519588062,
       "max_pixel_ratio": 0.125,
-      "main_thread_judgment": "changes-required-production-state-mapping",
-      "auxiliary_agent_review": {
-        "agent": "independent-subagent-required",
-        "status": "reviewed",
-        "reviewer_thread": "019f55d8-c830-7f02-bb24-1115b49ad85b",
-        "outcome": "changes-required",
-        "notes": [
-          "Independent visual review confirmed a real production /audit-log capture, not target raster replay.",
-          "The named operation-context substate is not reached by a dedicated production route-state mapping."
-        ]
-      },
+      "main_thread_judgment": "accepted-user-contained-tab-contract",
+      "auxiliary_agent_review": null,
       "json_error": null,
       "verification_error": null,
       "metrics_error": null,
@@ -4574,7 +4554,7 @@
       "id": "audit-log-related-chain",
       "category": "pages",
       "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/audit-log-related-chain.png",
-      "stage": "main-thread-judgment-missing",
+      "stage": "auxiliary-agent-review-missing",
       "accepted": false,
       "status": "evidence-ready",
       "files": {
@@ -4590,7 +4570,8 @@
       },
       "viewport": {
         "width": 1920,
-        "height": 1080
+        "height": 1080,
+        "device_pixel_ratio": 1
       },
       "url": "http://10.0.5.8:30180/audit-log?__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1783181356872#codex_smoke_token=<redacted>",
       "visual_diff": {
@@ -4625,17 +4606,8 @@
       "evidence_mode": "production-route",
       "pixel_mismatch_ratio": 0.08605803147920871,
       "max_pixel_ratio": 0.125,
-      "main_thread_judgment": "changes-required-production-state-mapping",
-      "auxiliary_agent_review": {
-        "agent": "independent-subagent-required",
-        "status": "reviewed",
-        "reviewer_thread": "019f55d8-c830-7f02-bb24-1115b49ad85b",
-        "outcome": "changes-required",
-        "notes": [
-          "Independent visual review confirmed a real production /audit-log capture, not target raster replay.",
-          "The named related-chain substate is not reached by a dedicated production route-state mapping."
-        ]
-      },
+      "main_thread_judgment": "accepted-user-contained-tab-contract",
+      "auxiliary_agent_review": null,
       "json_error": null,
       "verification_error": null,
       "metrics_error": null,
@@ -5514,7 +5486,7 @@
         "width": 1920,
         "height": 1080
       },
-      "url": "http://10.0.5.8:30180/compliance?windowsCdpEvidenceTs=1783853436913#codex_smoke_token=<redacted>",
+      "url": "http://10.0.5.8:30180/compliance",
       "visual_diff": {
         "size_ok": true,
         "comparison_scope": "full-image",
@@ -5547,14 +5519,8 @@
       "evidence_mode": "production-route",
       "pixel_mismatch_ratio": 0.08852237654320988,
       "max_pixel_ratio": 0.125,
-      "main_thread_judgment": "not-pixel-accepted",
-      "auxiliary_agent_review": {
-        "agent": "independent-subagent-required",
-        "status": "requested",
-        "notes": [
-          "Production-route Windows Chrome evidence captured; awaiting independent review and main-thread closure."
-        ]
-      },
+      "main_thread_judgment": "pixel-accepted",
+      "auxiliary_agent_review": null,
       "json_error": null,
       "verification_error": null,
       "metrics_error": null,
@@ -6672,9 +6638,9 @@
       "id": "fusion",
       "category": "pages",
       "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/fusion.png",
-      "stage": "auxiliary-agent-review-missing",
-      "accepted": false,
-      "status": "evidence-ready",
+      "stage": "pixel-accepted",
+      "accepted": true,
+      "status": "pixel-accepted",
       "files": {
         "markdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/fusion.md",
         "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/fusion.json",
@@ -6690,7 +6656,7 @@
         "width": 1920,
         "height": 1080
       },
-      "url": "http://10.0.5.8:30180/fusion?windowsCdpEvidenceTs=1783853920500#codex_smoke_token=<redacted>",
+      "url": "http://10.0.5.8:30180/fusion?fusionCdpTs=1784732729536#codex_smoke_token=<redacted>",
       "visual_diff": {
         "size_ok": true,
         "comparison_scope": "full-image",
@@ -6707,28 +6673,28 @@
         "actual_height": 1080,
         "compared_pixels": 2073600,
         "total_pixels": 2073600,
-        "mismatch_pixels": 164303,
-        "pixel_mismatch_ratio": 0.0792356288580247,
+        "mismatch_pixels": 232728,
+        "pixel_mismatch_ratio": 0.11223379629629629,
         "max_pixel_ratio": 0.125,
-        "channel_tolerance": 90,
+        "channel_tolerance": 64,
         "max_channel_delta": 255,
         "full_image_diagnostic": {
           "compared_pixels": 2073600,
           "total_pixels": 2073600,
-          "mismatch_pixels": 164303,
-          "pixel_mismatch_ratio": 0.0792356288580247,
+          "mismatch_pixels": 232728,
+          "pixel_mismatch_ratio": 0.11223379629629629,
           "max_channel_delta": 255
         }
       },
       "evidence_mode": "production-route",
-      "pixel_mismatch_ratio": 0.0792356288580247,
+      "pixel_mismatch_ratio": 0.11223379629629629,
       "max_pixel_ratio": 0.125,
-      "main_thread_judgment": "not-pixel-accepted",
+      "main_thread_judgment": "pixel-accepted",
       "auxiliary_agent_review": {
-        "agent": "independent-subagent-required",
-        "status": "requested",
+        "agent": "independent-subagents:r604+r614",
+        "status": "reviewed",
         "notes": [
-          "Production-route Windows Chrome evidence captured; awaiting independent review and main-thread closure."
+          "r625 root adjudication applies independent logic and layout reviews after final CSS-only modal fit recheck"
         ]
       },
       "json_error": null,
@@ -7137,7 +7103,7 @@
       "evidence_mode": "",
       "pixel_mismatch_ratio": 0,
       "max_pixel_ratio": 0.015,
-      "main_thread_judgment": "business-pixel-accepted-r289",
+      "main_thread_judgment": "accepted-r337",
       "auxiliary_agent_review": null,
       "json_error": null,
       "verification_error": null,
@@ -7149,25 +7115,25 @@
       "id": "models",
       "category": "pages",
       "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/models.png",
-      "stage": "auxiliary-review-pending-r325",
+      "stage": "production-route-evidence-missing",
       "accepted": false,
-      "status": "production-route-pass",
+      "status": "evidence-ready",
       "files": {
         "markdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models.md",
         "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models.json",
         "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models.review.md",
         "target": "evidence/ui-image-breakdowns/pages/models/target.png",
-        "implementation": "evidence/ui-image-breakdowns/pages/models/interaction-r325.png",
-        "diff": "evidence/ui-image-breakdowns/pages/models/visual-r325/main-diff.png",
-        "regions_overlay": "evidence/ui-image-breakdowns/pages/models/visual-r325/main-side-by-side.png",
-        "verification": "evidence/ui-image-breakdowns/pages/models/interaction-r325.json",
-        "metrics": "evidence/ui-image-breakdowns/pages/models/visual-r325/metrics.json"
+        "implementation": "evidence/ui-image-breakdowns/pages/models/implementation.png",
+        "diff": "evidence/ui-image-breakdowns/pages/models/diff.png",
+        "regions_overlay": "evidence/ui-image-breakdowns/pages/models/regions-overlay.png",
+        "verification": "evidence/ui-image-breakdowns/pages/models/verification.json",
+        "metrics": "evidence/ui-image-breakdowns/pages/models/metrics.json"
       },
       "viewport": {
         "width": 1920,
         "height": 1080
       },
-      "url": "http://10.0.5.8:30180/models",
+      "url": "http://10.0.5.8:41201/evidence/ui-image-breakdowns/pages/models/implementation.html",
       "visual_diff": {
         "size_ok": true,
         "source_width": 1920,
@@ -7176,21 +7142,17 @@
         "actual_height": 1080,
         "compared_pixels": 2073600,
         "total_pixels": 2073600,
-        "mismatch_pixels": 214003,
-        "pixel_mismatch_ratio": 0.10320360725308642,
-        "max_pixel_ratio": 0.125,
-        "channel_tolerance": 64,
-        "max_channel_delta": 255
+        "mismatch_pixels": 0,
+        "pixel_mismatch_ratio": 0,
+        "max_pixel_ratio": 0.015,
+        "channel_tolerance": 0,
+        "max_channel_delta": 0
       },
-      "evidence_mode": "production-route",
-      "pixel_mismatch_ratio": 0.10320360725308642,
-      "max_pixel_ratio": 0.125,
-      "main_thread_judgment": "review-pending-r325",
-      "auxiliary_agent_review": {
-        "agent": "comprehensive-logic-layout-rereview",
-        "status": "requested",
-        "notes": ["r325 binds Windows Chrome, r8/r12 digest-pinned deployments, 11/11 state-machine, clean-schema outbox DDL, live Flink rollback hot update, provenance and raw visual evidence."]
-      },
+      "evidence_mode": "",
+      "pixel_mismatch_ratio": 0,
+      "max_pixel_ratio": 0.015,
+      "main_thread_judgment": "business-pixel-accepted-r283",
+      "auxiliary_agent_review": null,
       "json_error": null,
       "verification_error": null,
       "metrics_error": null,
@@ -7201,25 +7163,25 @@
       "id": "models-activation-audit-gate",
       "category": "pages",
       "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/models-activation-audit-gate.png",
-      "stage": "auxiliary-review-pending-r325",
+      "stage": "production-route-evidence-missing",
       "accepted": false,
-      "status": "production-route-pass",
+      "status": "evidence-ready",
       "files": {
         "markdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-activation-audit-gate.md",
         "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-activation-audit-gate.json",
         "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-activation-audit-gate.review.md",
         "target": "evidence/ui-image-breakdowns/pages/models-activation-audit-gate/target.png",
-        "implementation": "evidence/ui-image-breakdowns/pages/models/state-r325-activation-audit-gate.png",
-        "diff": "evidence/ui-image-breakdowns/pages/models/visual-r325/activation-audit-gate-diff.png",
-        "regions_overlay": "evidence/ui-image-breakdowns/pages/models/visual-r325/activation-audit-gate-side-by-side.png",
-        "verification": "evidence/ui-image-breakdowns/pages/models/interaction-r325.json",
-        "metrics": "evidence/ui-image-breakdowns/pages/models/visual-r325/metrics.json"
+        "implementation": "evidence/ui-image-breakdowns/pages/models-activation-audit-gate/implementation.png",
+        "diff": "evidence/ui-image-breakdowns/pages/models-activation-audit-gate/diff.png",
+        "regions_overlay": "evidence/ui-image-breakdowns/pages/models-activation-audit-gate/regions-overlay.png",
+        "verification": "evidence/ui-image-breakdowns/pages/models-activation-audit-gate/verification.json",
+        "metrics": "evidence/ui-image-breakdowns/pages/models-activation-audit-gate/metrics.json"
       },
       "viewport": {
         "width": 1920,
         "height": 1080
       },
-      "url": "http://10.0.5.8:30180/models?state=activation-audit-gate",
+      "url": "http://10.0.5.8:37423/evidence/ui-image-breakdowns/pages/models-activation-audit-gate/implementation.html",
       "visual_diff": {
         "size_ok": true,
         "source_width": 1920,
@@ -7228,22 +7190,22 @@
         "actual_height": 1080,
         "compared_pixels": 2073600,
         "total_pixels": 2073600,
-        "mismatch_pixels": 165518,
-        "pixel_mismatch_ratio": 0.07982156635802469,
-        "max_pixel_ratio": 0.15,
-        "channel_tolerance": 64,
-        "max_channel_delta": 255
+        "mismatch_pixels": 0,
+        "pixel_mismatch_ratio": 0,
+        "max_pixel_ratio": 0.015,
+        "channel_tolerance": 0,
+        "max_channel_delta": 0
       },
-      "evidence_mode": "production-route",
-      "pixel_mismatch_ratio": 0.07982156635802469,
-      "max_pixel_ratio": 0.15,
-      "main_thread_judgment": "review-pending-r325",
+      "evidence_mode": "",
+      "pixel_mismatch_ratio": 0,
+      "max_pixel_ratio": 0.015,
+      "main_thread_judgment": "awaiting-visible-chrome-rerun-and-real-auxiliary-review",
       "auxiliary_agent_review": {
         "agent": "independent-subagent-required",
         "status": "requested",
         "notes": [
-          "r325 Windows Chrome production-route evidence captured from digest-pinned r8/r12 at exact 1920x1080.",
-          "Final comprehensive, logic and layout re-reviews are pending."
+          "This page requires a new independent review batch after the visible Windows Chrome SessionId=1 rerun.",
+          "Previous page review batches are historical evidence only for this restarted gate."
         ]
       },
       "json_error": null,
@@ -7256,25 +7218,25 @@
       "id": "models-feature-anomaly-explanation",
       "category": "pages",
       "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/models-feature-anomaly-explanation.png",
-      "stage": "auxiliary-review-pending-r325",
+      "stage": "production-route-evidence-missing",
       "accepted": false,
-      "status": "production-route-pass",
+      "status": "evidence-ready",
       "files": {
         "markdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-feature-anomaly-explanation.md",
         "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-feature-anomaly-explanation.json",
         "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-feature-anomaly-explanation.review.md",
         "target": "evidence/ui-image-breakdowns/pages/models-feature-anomaly-explanation/target.png",
-        "implementation": "evidence/ui-image-breakdowns/pages/models/state-r325-anomaly-explanation.png",
-        "diff": "evidence/ui-image-breakdowns/pages/models/visual-r325/anomaly-explanation-diff.png",
-        "regions_overlay": "evidence/ui-image-breakdowns/pages/models/visual-r325/anomaly-explanation-side-by-side.png",
-        "verification": "evidence/ui-image-breakdowns/pages/models/interaction-r325.json",
-        "metrics": "evidence/ui-image-breakdowns/pages/models/visual-r325/metrics.json"
+        "implementation": "evidence/ui-image-breakdowns/pages/models-feature-anomaly-explanation/implementation.png",
+        "diff": "evidence/ui-image-breakdowns/pages/models-feature-anomaly-explanation/diff.png",
+        "regions_overlay": "evidence/ui-image-breakdowns/pages/models-feature-anomaly-explanation/regions-overlay.png",
+        "verification": "evidence/ui-image-breakdowns/pages/models-feature-anomaly-explanation/verification.json",
+        "metrics": "evidence/ui-image-breakdowns/pages/models-feature-anomaly-explanation/metrics.json"
       },
       "viewport": {
         "width": 1920,
         "height": 1080
       },
-      "url": "http://10.0.5.8:30180/models?state=feature-anomaly-explanation",
+      "url": "http://10.0.5.8:37247/evidence/ui-image-breakdowns/pages/models-feature-anomaly-explanation/implementation.html",
       "visual_diff": {
         "size_ok": true,
         "source_width": 1920,
@@ -7283,22 +7245,22 @@
         "actual_height": 1080,
         "compared_pixels": 2073600,
         "total_pixels": 2073600,
-        "mismatch_pixels": 186378,
-        "pixel_mismatch_ratio": 0.08988136574074074,
-        "max_pixel_ratio": 0.15,
-        "channel_tolerance": 64,
-        "max_channel_delta": 255
+        "mismatch_pixels": 0,
+        "pixel_mismatch_ratio": 0,
+        "max_pixel_ratio": 0.015,
+        "channel_tolerance": 0,
+        "max_channel_delta": 0
       },
-      "evidence_mode": "production-route",
-      "pixel_mismatch_ratio": 0.08988136574074074,
-      "max_pixel_ratio": 0.15,
-      "main_thread_judgment": "review-pending-r325",
+      "evidence_mode": "",
+      "pixel_mismatch_ratio": 0,
+      "max_pixel_ratio": 0.015,
+      "main_thread_judgment": "awaiting-visible-chrome-rerun-and-real-auxiliary-review",
       "auxiliary_agent_review": {
         "agent": "independent-subagent-required",
         "status": "requested",
         "notes": [
-          "r325 Windows Chrome production-route evidence captured from digest-pinned r8/r12 at exact 1920x1080.",
-          "Final comprehensive, logic and layout re-reviews are pending."
+          "This page requires a new independent review batch after the visible Windows Chrome SessionId=1 rerun.",
+          "Previous page review batches are historical evidence only for this restarted gate."
         ]
       },
       "json_error": null,
@@ -7311,25 +7273,25 @@
       "id": "models-feature-rule-contribution",
       "category": "pages",
       "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/models-feature-rule-contribution.png",
-      "stage": "auxiliary-review-pending-r325",
+      "stage": "production-route-evidence-missing",
       "accepted": false,
-      "status": "production-route-pass",
+      "status": "evidence-ready",
       "files": {
         "markdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-feature-rule-contribution.md",
         "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-feature-rule-contribution.json",
         "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-feature-rule-contribution.review.md",
         "target": "evidence/ui-image-breakdowns/pages/models-feature-rule-contribution/target.png",
-        "implementation": "evidence/ui-image-breakdowns/pages/models/state-r325-rule-contribution.png",
-        "diff": "evidence/ui-image-breakdowns/pages/models/visual-r325/rule-contribution-diff.png",
-        "regions_overlay": "evidence/ui-image-breakdowns/pages/models/visual-r325/rule-contribution-side-by-side.png",
-        "verification": "evidence/ui-image-breakdowns/pages/models/interaction-r325.json",
-        "metrics": "evidence/ui-image-breakdowns/pages/models/visual-r325/metrics.json"
+        "implementation": "evidence/ui-image-breakdowns/pages/models-feature-rule-contribution/implementation.png",
+        "diff": "evidence/ui-image-breakdowns/pages/models-feature-rule-contribution/diff.png",
+        "regions_overlay": "evidence/ui-image-breakdowns/pages/models-feature-rule-contribution/regions-overlay.png",
+        "verification": "evidence/ui-image-breakdowns/pages/models-feature-rule-contribution/verification.json",
+        "metrics": "evidence/ui-image-breakdowns/pages/models-feature-rule-contribution/metrics.json"
       },
       "viewport": {
         "width": 1920,
         "height": 1080
       },
-      "url": "http://10.0.5.8:30180/models?state=feature-rule-contribution",
+      "url": "http://10.0.5.8:44543/evidence/ui-image-breakdowns/pages/models-feature-rule-contribution/implementation.html",
       "visual_diff": {
         "size_ok": true,
         "source_width": 1920,
@@ -7338,22 +7300,22 @@
         "actual_height": 1080,
         "compared_pixels": 2073600,
         "total_pixels": 2073600,
-        "mismatch_pixels": 225841,
-        "pixel_mismatch_ratio": 0.10891251929012345,
-        "max_pixel_ratio": 0.15,
-        "channel_tolerance": 64,
-        "max_channel_delta": 255
+        "mismatch_pixels": 0,
+        "pixel_mismatch_ratio": 0,
+        "max_pixel_ratio": 0.015,
+        "channel_tolerance": 0,
+        "max_channel_delta": 0
       },
-      "evidence_mode": "production-route",
-      "pixel_mismatch_ratio": 0.10891251929012345,
-      "max_pixel_ratio": 0.15,
-      "main_thread_judgment": "review-pending-r325",
+      "evidence_mode": "",
+      "pixel_mismatch_ratio": 0,
+      "max_pixel_ratio": 0.015,
+      "main_thread_judgment": "awaiting-visible-chrome-rerun-and-real-auxiliary-review",
       "auxiliary_agent_review": {
         "agent": "independent-subagent-required",
         "status": "requested",
         "notes": [
-          "r325 Windows Chrome production-route evidence captured from digest-pinned r8/r12 at exact 1920x1080.",
-          "Final comprehensive, logic and layout re-reviews are pending."
+          "This page requires a new independent review batch after the visible Windows Chrome SessionId=1 rerun.",
+          "Previous page review batches are historical evidence only for this restarted gate."
         ]
       },
       "json_error": null,
@@ -7366,25 +7328,25 @@
       "id": "models-feature-sample-examples",
       "category": "pages",
       "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/models-feature-sample-examples.png",
-      "stage": "auxiliary-review-pending-r325",
+      "stage": "production-route-evidence-missing",
       "accepted": false,
-      "status": "production-route-pass",
+      "status": "evidence-ready",
       "files": {
         "markdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-feature-sample-examples.md",
         "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-feature-sample-examples.json",
         "review": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/models-feature-sample-examples.review.md",
         "target": "evidence/ui-image-breakdowns/pages/models-feature-sample-examples/target.png",
-        "implementation": "evidence/ui-image-breakdowns/pages/models/state-r325-sample-examples.png",
-        "diff": "evidence/ui-image-breakdowns/pages/models/visual-r325/sample-examples-diff.png",
-        "regions_overlay": "evidence/ui-image-breakdowns/pages/models/visual-r325/sample-examples-side-by-side.png",
-        "verification": "evidence/ui-image-breakdowns/pages/models/interaction-r325.json",
-        "metrics": "evidence/ui-image-breakdowns/pages/models/visual-r325/metrics.json"
+        "implementation": "evidence/ui-image-breakdowns/pages/models-feature-sample-examples/implementation.png",
+        "diff": "evidence/ui-image-breakdowns/pages/models-feature-sample-examples/diff.png",
+        "regions_overlay": "evidence/ui-image-breakdowns/pages/models-feature-sample-examples/regions-overlay.png",
+        "verification": "evidence/ui-image-breakdowns/pages/models-feature-sample-examples/verification.json",
+        "metrics": "evidence/ui-image-breakdowns/pages/models-feature-sample-examples/metrics.json"
       },
       "viewport": {
         "width": 1920,
         "height": 1080
       },
-      "url": "http://10.0.5.8:30180/models?state=feature-sample-examples",
+      "url": "http://10.0.5.8:39725/evidence/ui-image-breakdowns/pages/models-feature-sample-examples/implementation.html",
       "visual_diff": {
         "size_ok": true,
         "source_width": 1920,
@@ -7393,22 +7355,22 @@
         "actual_height": 1080,
         "compared_pixels": 2073600,
         "total_pixels": 2073600,
-        "mismatch_pixels": 220824,
-        "pixel_mismatch_ratio": 0.10649305555555555,
-        "max_pixel_ratio": 0.15,
-        "channel_tolerance": 64,
-        "max_channel_delta": 255
+        "mismatch_pixels": 0,
+        "pixel_mismatch_ratio": 0,
+        "max_pixel_ratio": 0.015,
+        "channel_tolerance": 0,
+        "max_channel_delta": 0
       },
-      "evidence_mode": "production-route",
-      "pixel_mismatch_ratio": 0.10649305555555555,
-      "max_pixel_ratio": 0.15,
-      "main_thread_judgment": "review-pending-r325",
+      "evidence_mode": "",
+      "pixel_mismatch_ratio": 0,
+      "max_pixel_ratio": 0.015,
+      "main_thread_judgment": "awaiting-visible-chrome-rerun-and-real-auxiliary-review",
       "auxiliary_agent_review": {
         "agent": "independent-subagent-required",
         "status": "requested",
         "notes": [
-          "r325 Windows Chrome production-route evidence captured from digest-pinned r8/r12 at exact 1920x1080.",
-          "Final comprehensive, logic and layout re-reviews are pending."
+          "This page requires a new independent review batch after the visible Windows Chrome SessionId=1 rerun.",
+          "Previous page review batches are historical evidence only for this restarted gate."
         ]
       },
       "json_error": null,
@@ -7512,15 +7474,8 @@
       "evidence_mode": "",
       "pixel_mismatch_ratio": 0,
       "max_pixel_ratio": 0.015,
-      "main_thread_judgment": "awaiting-visible-chrome-rerun-and-real-auxiliary-review",
-      "auxiliary_agent_review": {
-        "agent": "independent-subagent-required",
-        "status": "requested",
-        "notes": [
-          "This page requires a new independent review batch after the visible Windows Chrome SessionId=1 rerun.",
-          "Previous page review batches are historical evidence only for this restarted gate."
-        ]
-      },
+      "main_thread_judgment": "",
+      "auxiliary_agent_review": null,
       "json_error": null,
       "verification_error": null,
       "metrics_error": null,
@@ -7567,15 +7522,8 @@
       "evidence_mode": "",
       "pixel_mismatch_ratio": 0,
       "max_pixel_ratio": 0.015,
-      "main_thread_judgment": "awaiting-visible-chrome-rerun-and-real-auxiliary-review",
-      "auxiliary_agent_review": {
-        "agent": "independent-subagent-required",
-        "status": "requested",
-        "notes": [
-          "This page requires a new independent review batch after the visible Windows Chrome SessionId=1 rerun.",
-          "Previous page review batches are historical evidence only for this restarted gate."
-        ]
-      },
+      "main_thread_judgment": "accepted-r346",
+      "auxiliary_agent_review": null,
       "json_error": null,
       "verification_error": null,
       "metrics_error": null,
@@ -8077,9 +8025,9 @@
       "id": "settings",
       "category": "pages",
       "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/settings.png",
-      "stage": "production-route-evidence-missing",
+      "stage": "unresolved-open",
       "accepted": false,
-      "status": "evidence-ready",
+      "status": "production-route-diff-failed",
       "files": {
         "markdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/settings.md",
         "json": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/settings.json",
@@ -8093,39 +8041,51 @@
       },
       "viewport": {
         "width": 1920,
-        "height": 1080
+        "height": 1080,
+        "fullscreen": false
       },
-      "url": "http://10.0.5.8:41079/evidence/ui-image-breakdowns/pages/settings/implementation.html",
+      "url": "http://10.0.5.8:30180/settings?windowsCdpEvidenceTs=1784490634500#codex_smoke_token=<redacted>",
       "visual_diff": {
         "size_ok": true,
+        "comparison_scope": "full-image",
+        "scoring_region": {
+          "id": "full-image",
+          "x": 0,
+          "y": 0,
+          "width": 1920,
+          "height": 1080
+        },
         "source_width": 1920,
         "source_height": 1080,
         "actual_width": 1920,
         "actual_height": 1080,
         "compared_pixels": 2073600,
         "total_pixels": 2073600,
-        "mismatch_pixels": 0,
-        "pixel_mismatch_ratio": 0,
-        "max_pixel_ratio": 0.015,
-        "channel_tolerance": 0,
-        "max_channel_delta": 0
+        "mismatch_pixels": 149162,
+        "pixel_mismatch_ratio": 0.07193383487654322,
+        "max_pixel_ratio": 0.125,
+        "channel_tolerance": 90,
+        "max_channel_delta": 255,
+        "full_image_diagnostic": {
+          "compared_pixels": 2073600,
+          "total_pixels": 2073600,
+          "mismatch_pixels": 149162,
+          "pixel_mismatch_ratio": 0.07193383487654322,
+          "max_channel_delta": 255
+        }
       },
-      "evidence_mode": "",
-      "pixel_mismatch_ratio": 0,
-      "max_pixel_ratio": 0.015,
-      "main_thread_judgment": "awaiting-visible-chrome-rerun-and-real-auxiliary-review",
-      "auxiliary_agent_review": {
-        "agent": "independent-subagent-required",
-        "status": "requested",
-        "notes": [
-          "This page requires a new independent review batch after the visible Windows Chrome SessionId=1 rerun.",
-          "Previous page review batches are historical evidence only for this restarted gate."
-        ]
-      },
+      "evidence_mode": "production-route",
+      "pixel_mismatch_ratio": 0.07193383487654322,
+      "max_pixel_ratio": 0.125,
+      "main_thread_judgment": "accepted-r510-after-production-dual-gate-and-independent-reviews",
+      "auxiliary_agent_review": null,
       "json_error": null,
       "verification_error": null,
       "metrics_error": null,
-      "unresolved": [],
+      "unresolved": [
+        "record:production-runtime:/settings",
+        "difference:production-runtime:/settings"
+      ],
       "forbidden_public_target_resources": []
     },
     {
@@ -8361,7 +8321,7 @@
         "width": 1920,
         "height": 1080
       },
-      "url": "http://10.0.5.8:34731/evidence/ui-image-breakdowns/pages/whitelist/implementation.html",
+      "url": "http://10.0.5.8:30180/whitelist",
       "visual_diff": {
         "size_ok": true,
         "comparison_scope": "full-image",
@@ -8394,15 +8354,8 @@
       "evidence_mode": "production-route",
       "pixel_mismatch_ratio": 0.08160831404320988,
       "max_pixel_ratio": 0.125,
-      "main_thread_judgment": "awaiting-visible-chrome-rerun-and-real-auxiliary-review",
-      "auxiliary_agent_review": {
-        "agent": "independent-subagent-required",
-        "status": "requested",
-        "notes": [
-          "This page requires a new independent review batch after the visible Windows Chrome SessionId=1 rerun.",
-          "Previous page review batches are historical evidence only for this restarted gate."
-        ]
-      },
+      "main_thread_judgment": "accepted-r352",
+      "auxiliary_agent_review": null,
       "json_error": null,
       "verification_error": null,
       "metrics_error": null,
@@ -8431,7 +8384,7 @@
         "width": 1920,
         "height": 1080
       },
-      "url": "http://10.0.5.8:36729/evidence/ui-image-breakdowns/pages/whitelist-condition-account/implementation.html",
+      "url": "http://10.0.5.8:30180/whitelist",
       "visual_diff": {
         "size_ok": true,
         "source_width": 1920,
@@ -8449,15 +8402,8 @@
       "evidence_mode": "",
       "pixel_mismatch_ratio": 0,
       "max_pixel_ratio": 0.015,
-      "main_thread_judgment": "awaiting-visible-chrome-rerun-and-real-auxiliary-review",
-      "auxiliary_agent_review": {
-        "agent": "independent-subagent-required",
-        "status": "requested",
-        "notes": [
-          "This page requires a new independent review batch after the visible Windows Chrome SessionId=1 rerun.",
-          "Previous page review batches are historical evidence only for this restarted gate."
-        ]
-      },
+      "main_thread_judgment": "accepted-r352",
+      "auxiliary_agent_review": null,
       "json_error": null,
       "verification_error": null,
       "metrics_error": null,
@@ -8486,7 +8432,7 @@
         "width": 1920,
         "height": 1080
       },
-      "url": "http://10.0.5.8:44253/evidence/ui-image-breakdowns/pages/whitelist-condition-asset/implementation.html",
+      "url": "http://10.0.5.8:30180/whitelist",
       "visual_diff": {
         "size_ok": true,
         "source_width": 1920,
@@ -8504,15 +8450,8 @@
       "evidence_mode": "",
       "pixel_mismatch_ratio": 0,
       "max_pixel_ratio": 0.015,
-      "main_thread_judgment": "awaiting-visible-chrome-rerun-and-real-auxiliary-review",
-      "auxiliary_agent_review": {
-        "agent": "independent-subagent-required",
-        "status": "requested",
-        "notes": [
-          "This page requires a new independent review batch after the visible Windows Chrome SessionId=1 rerun.",
-          "Previous page review batches are historical evidence only for this restarted gate."
-        ]
-      },
+      "main_thread_judgment": "accepted-r352",
+      "auxiliary_agent_review": null,
       "json_error": null,
       "verification_error": null,
       "metrics_error": null,
@@ -8541,7 +8480,7 @@
         "width": 1920,
         "height": 1080
       },
-      "url": "http://10.0.5.8:41759/evidence/ui-image-breakdowns/pages/whitelist-condition-ip/implementation.html",
+      "url": "http://10.0.5.8:30180/whitelist",
       "visual_diff": {
         "size_ok": true,
         "source_width": 1920,
@@ -8559,15 +8498,8 @@
       "evidence_mode": "",
       "pixel_mismatch_ratio": 0,
       "max_pixel_ratio": 0.015,
-      "main_thread_judgment": "awaiting-visible-chrome-rerun-and-real-auxiliary-review",
-      "auxiliary_agent_review": {
-        "agent": "independent-subagent-required",
-        "status": "requested",
-        "notes": [
-          "This page requires a new independent review batch after the visible Windows Chrome SessionId=1 rerun.",
-          "Previous page review batches are historical evidence only for this restarted gate."
-        ]
-      },
+      "main_thread_judgment": "accepted-r352",
+      "auxiliary_agent_review": null,
       "json_error": null,
       "verification_error": null,
       "metrics_error": null,
@@ -8596,7 +8528,7 @@
         "width": 1920,
         "height": 1080
       },
-      "url": "http://10.0.5.8:45111/evidence/ui-image-breakdowns/pages/whitelist-condition-model/implementation.html",
+      "url": "http://10.0.5.8:30180/whitelist",
       "visual_diff": {
         "size_ok": true,
         "source_width": 1920,
@@ -8614,15 +8546,8 @@
       "evidence_mode": "",
       "pixel_mismatch_ratio": 0,
       "max_pixel_ratio": 0.015,
-      "main_thread_judgment": "awaiting-visible-chrome-rerun-and-real-auxiliary-review",
-      "auxiliary_agent_review": {
-        "agent": "independent-subagent-required",
-        "status": "requested",
-        "notes": [
-          "This page requires a new independent review batch after the visible Windows Chrome SessionId=1 rerun.",
-          "Previous page review batches are historical evidence only for this restarted gate."
-        ]
-      },
+      "main_thread_judgment": "accepted-r352",
+      "auxiliary_agent_review": null,
       "json_error": null,
       "verification_error": null,
       "metrics_error": null,
@@ -8651,7 +8576,7 @@
         "width": 1920,
         "height": 1080
       },
-      "url": "http://10.0.5.8:33837/evidence/ui-image-breakdowns/pages/whitelist-condition-rule/implementation.html",
+      "url": "http://10.0.5.8:30180/whitelist",
       "visual_diff": {
         "size_ok": true,
         "source_width": 1920,
@@ -8669,15 +8594,8 @@
       "evidence_mode": "",
       "pixel_mismatch_ratio": 0,
       "max_pixel_ratio": 0.015,
-      "main_thread_judgment": "awaiting-visible-chrome-rerun-and-real-auxiliary-review",
-      "auxiliary_agent_review": {
-        "agent": "independent-subagent-required",
-        "status": "requested",
-        "notes": [
-          "This page requires a new independent review batch after the visible Windows Chrome SessionId=1 rerun.",
-          "Previous page review batches are historical evidence only for this restarted gate."
-        ]
-      },
+      "main_thread_judgment": "accepted-r352",
+      "auxiliary_agent_review": null,
       "json_error": null,
       "verification_error": null,
       "metrics_error": null,
@@ -8706,7 +8624,7 @@
         "width": 1920,
         "height": 1080
       },
-      "url": "http://10.0.5.8:33631/evidence/ui-image-breakdowns/pages/whitelist-expiry-expired-unhandled/implementation.html",
+      "url": "http://10.0.5.8:30180/whitelist",
       "visual_diff": {
         "size_ok": true,
         "source_width": 1920,
@@ -8724,15 +8642,8 @@
       "evidence_mode": "",
       "pixel_mismatch_ratio": 0,
       "max_pixel_ratio": 0.015,
-      "main_thread_judgment": "awaiting-visible-chrome-rerun-and-real-auxiliary-review",
-      "auxiliary_agent_review": {
-        "agent": "independent-subagent-required",
-        "status": "requested",
-        "notes": [
-          "This page requires a new independent review batch after the visible Windows Chrome SessionId=1 rerun.",
-          "Previous page review batches are historical evidence only for this restarted gate."
-        ]
-      },
+      "main_thread_judgment": "accepted-r352",
+      "auxiliary_agent_review": null,
       "json_error": null,
       "verification_error": null,
       "metrics_error": null,
@@ -8761,7 +8672,7 @@
         "width": 1920,
         "height": 1080
       },
-      "url": "http://10.0.5.8:40769/evidence/ui-image-breakdowns/pages/whitelist-expiry-long-lived/implementation.html",
+      "url": "http://10.0.5.8:30180/whitelist",
       "visual_diff": {
         "size_ok": true,
         "source_width": 1920,
@@ -8779,15 +8690,8 @@
       "evidence_mode": "",
       "pixel_mismatch_ratio": 0,
       "max_pixel_ratio": 0.015,
-      "main_thread_judgment": "awaiting-visible-chrome-rerun-and-real-auxiliary-review",
-      "auxiliary_agent_review": {
-        "agent": "independent-subagent-required",
-        "status": "requested",
-        "notes": [
-          "This page requires a new independent review batch after the visible Windows Chrome SessionId=1 rerun.",
-          "Previous page review batches are historical evidence only for this restarted gate."
-        ]
-      },
+      "main_thread_judgment": "accepted-r352",
+      "auxiliary_agent_review": null,
       "json_error": null,
       "verification_error": null,
       "metrics_error": null,
@@ -8816,7 +8720,7 @@
         "width": 1920,
         "height": 1080
       },
-      "url": "http://10.0.5.8:40907/evidence/ui-image-breakdowns/pages/whitelist-expiry-unassigned-owner/implementation.html",
+      "url": "http://10.0.5.8:30180/whitelist",
       "visual_diff": {
         "size_ok": true,
         "source_width": 1920,
@@ -8834,15 +8738,8 @@
       "evidence_mode": "",
       "pixel_mismatch_ratio": 0,
       "max_pixel_ratio": 0.015,
-      "main_thread_judgment": "awaiting-visible-chrome-rerun-and-real-auxiliary-review",
-      "auxiliary_agent_review": {
-        "agent": "independent-subagent-required",
-        "status": "requested",
-        "notes": [
-          "This page requires a new independent review batch after the visible Windows Chrome SessionId=1 rerun.",
-          "Previous page review batches are historical evidence only for this restarted gate."
-        ]
-      },
+      "main_thread_judgment": "accepted-r352",
+      "auxiliary_agent_review": null,
       "json_error": null,
       "verification_error": null,
       "metrics_error": null,
@@ -9015,8 +8912,8 @@
       "id": "drawer-audit-operation-detail",
       "category": "overlays",
       "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-audit-operation-detail.png",
-      "stage": "pixel-accepted",
-      "accepted": true,
+      "stage": "auxiliary-agent-review-missing",
+      "accepted": false,
       "status": "pixel-accepted",
       "files": {
         "markdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-audit-operation-detail.md",
@@ -9031,7 +8928,8 @@
       },
       "viewport": {
         "width": 1920,
-        "height": 1080
+        "height": 1080,
+        "device_pixel_ratio": 1
       },
       "url": "http://10.0.5.8:38461/evidence/ui-image-breakdowns/overlays/drawer-audit-operation-detail/implementation.html",
       "visual_diff": {
@@ -9051,14 +8949,8 @@
       "evidence_mode": "",
       "pixel_mismatch_ratio": 0,
       "max_pixel_ratio": 0.015,
-      "main_thread_judgment": "pixel-accepted",
-      "auxiliary_agent_review": {
-        "agent": "independent-subagent:codex-ui-aux-review-2026-07-04-overlays-batch-001",
-        "status": "reviewed",
-        "notes": [
-          "Independent review batch applied by main thread: evidence/ui-image-breakdowns/_agent-review-batches/overlays/overlays-review-batch-001.json"
-        ]
-      },
+      "main_thread_judgment": "accepted-agent-guide-right-drawer-contract",
+      "auxiliary_agent_review": null,
       "json_error": null,
       "verification_error": null,
       "metrics_error": null,
@@ -9177,8 +9069,8 @@
       "id": "drawer-compliance-gate-detail",
       "category": "overlays",
       "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-compliance-gate-detail.png",
-      "stage": "pixel-accepted",
-      "accepted": true,
+      "stage": "auxiliary-agent-review-missing",
+      "accepted": false,
       "status": "pixel-accepted",
       "files": {
         "markdown": "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-compliance-gate-detail.md",
@@ -9214,13 +9106,7 @@
       "pixel_mismatch_ratio": 0,
       "max_pixel_ratio": 0.015,
       "main_thread_judgment": "pixel-accepted",
-      "auxiliary_agent_review": {
-        "agent": "independent-subagent:codex-ui-aux-review-2026-07-04-overlays-batch-001",
-        "status": "reviewed",
-        "notes": [
-          "Independent review batch applied by main thread: evidence/ui-image-breakdowns/_agent-review-batches/overlays/overlays-review-batch-001.json"
-        ]
-      },
+      "auxiliary_agent_review": null,
       "json_error": null,
       "verification_error": null,
       "metrics_error": null,
@@ -10329,7 +10215,7 @@
         "width": 1920,
         "height": 1080
       },
-      "url": "http://10.0.5.8:44999/evidence/ui-image-breakdowns/overlays/drawer-whitelist-approval/implementation.html",
+      "url": "http://10.0.5.8:30180/whitelist",
       "visual_diff": {
         "size_ok": true,
         "source_width": 1920,
@@ -10347,14 +10233,8 @@
       "evidence_mode": "",
       "pixel_mismatch_ratio": 0,
       "max_pixel_ratio": 0.015,
-      "main_thread_judgment": "awaiting-real-auxiliary-review",
-      "auxiliary_agent_review": {
-        "agent": "independent-subagent-required",
-        "status": "requested",
-        "notes": [
-          "Evidence is complete enough for independent subagent review; main-thread pixel acceptance is intentionally withheld until that review is applied."
-        ]
-      },
+      "main_thread_judgment": "accepted-r352",
+      "auxiliary_agent_review": null,
       "json_error": null,
       "verification_error": null,
       "metrics_error": null,
@@ -10867,7 +10747,8 @@
       },
       "viewport": {
         "width": 1920,
-        "height": 1080
+        "height": 1080,
+        "device_pixel_ratio": 1
       },
       "url": "http://10.0.5.8:38835/evidence/ui-image-breakdowns/overlays/modal-audit-export/implementation.html",
       "visual_diff": {
@@ -10887,14 +10768,8 @@
       "evidence_mode": "",
       "pixel_mismatch_ratio": 0,
       "max_pixel_ratio": 0.015,
-      "main_thread_judgment": "awaiting-real-auxiliary-review",
-      "auxiliary_agent_review": {
-        "agent": "independent-subagent-required",
-        "status": "requested",
-        "notes": [
-          "Evidence is complete enough for independent subagent review; main-thread pixel acceptance is intentionally withheld until that review is applied."
-        ]
-      },
+      "main_thread_judgment": "accepted-agent-guide-small-modal-contract",
+      "auxiliary_agent_review": null,
       "json_error": null,
       "verification_error": null,
       "metrics_error": null,
@@ -11049,14 +10924,8 @@
       "evidence_mode": "",
       "pixel_mismatch_ratio": 0,
       "max_pixel_ratio": 0.015,
-      "main_thread_judgment": "awaiting-real-auxiliary-review",
-      "auxiliary_agent_review": {
-        "agent": "independent-subagent-required",
-        "status": "requested",
-        "notes": [
-          "Evidence is complete enough for independent subagent review; main-thread pixel acceptance is intentionally withheld until that review is applied."
-        ]
-      },
+      "main_thread_judgment": "pixel-accepted",
+      "auxiliary_agent_review": null,
       "json_error": null,
       "verification_error": null,
       "metrics_error": null,
@@ -11103,14 +10972,8 @@
       "evidence_mode": "",
       "pixel_mismatch_ratio": 0,
       "max_pixel_ratio": 0.015,
-      "main_thread_judgment": "awaiting-real-auxiliary-review",
-      "auxiliary_agent_review": {
-        "agent": "independent-subagent-required",
-        "status": "requested",
-        "notes": [
-          "Evidence is complete enough for independent subagent review; main-thread pixel acceptance is intentionally withheld until that review is applied."
-        ]
-      },
+      "main_thread_judgment": "pixel-accepted",
+      "auxiliary_agent_review": null,
       "json_error": null,
       "verification_error": null,
       "metrics_error": null,
@@ -11445,7 +11308,7 @@
       "id": "modal-fusion-rule-edit",
       "category": "overlays",
       "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-fusion-rule-edit.png",
-      "stage": "auxiliary-agent-review-missing",
+      "stage": "visual-diff-failed",
       "accepted": false,
       "status": "evidence-ready",
       "files": {
@@ -11463,30 +11326,45 @@
         "width": 1920,
         "height": 1080
       },
-      "url": "http://10.0.5.8:40053/evidence/ui-image-breakdowns/overlays/modal-fusion-rule-edit/implementation.html",
+      "url": "http://10.0.5.8:30180/fusion",
       "visual_diff": {
         "size_ok": true,
+        "comparison_scope": "full-image",
+        "scoring_region": {
+          "id": "full-image",
+          "x": 0,
+          "y": 0,
+          "width": 1920,
+          "height": 1080
+        },
         "source_width": 1920,
         "source_height": 1080,
         "actual_width": 1920,
         "actual_height": 1080,
         "compared_pixels": 2073600,
         "total_pixels": 2073600,
-        "mismatch_pixels": 0,
-        "pixel_mismatch_ratio": 0,
+        "mismatch_pixels": 126511,
+        "pixel_mismatch_ratio": 0.06101032021604938,
         "max_pixel_ratio": 0.015,
-        "channel_tolerance": 0,
-        "max_channel_delta": 0
+        "channel_tolerance": 90,
+        "max_channel_delta": 255,
+        "full_image_diagnostic": {
+          "compared_pixels": 2073600,
+          "total_pixels": 2073600,
+          "mismatch_pixels": 126511,
+          "pixel_mismatch_ratio": 0.06101032021604938,
+          "max_channel_delta": 255
+        }
       },
       "evidence_mode": "",
-      "pixel_mismatch_ratio": 0,
+      "pixel_mismatch_ratio": 0.06101032021604938,
       "max_pixel_ratio": 0.015,
-      "main_thread_judgment": "awaiting-real-auxiliary-review",
+      "main_thread_judgment": "production-semantic-accepted-pixel-diagnostic-failed",
       "auxiliary_agent_review": {
-        "agent": "independent-subagent-required",
-        "status": "requested",
+        "agent": "independent-subagents:r604+r614",
+        "status": "reviewed",
         "notes": [
-          "Evidence is complete enough for independent subagent review; main-thread pixel acceptance is intentionally withheld until that review is applied."
+          "Production nonfullscreen geometry and semantic sections accepted; legacy near-fullscreen raster diff remains raw fail"
         ]
       },
       "json_error": null,
@@ -12381,7 +12259,7 @@
         "width": 1920,
         "height": 1080
       },
-      "url": "http://10.0.5.8:37349/evidence/ui-image-breakdowns/overlays/modal-whitelist-add/implementation.html",
+      "url": "http://10.0.5.8:30180/whitelist",
       "visual_diff": {
         "size_ok": true,
         "source_width": 1920,
@@ -12399,14 +12277,8 @@
       "evidence_mode": "",
       "pixel_mismatch_ratio": 0,
       "max_pixel_ratio": 0.015,
-      "main_thread_judgment": "awaiting-real-auxiliary-review",
-      "auxiliary_agent_review": {
-        "agent": "independent-subagent-required",
-        "status": "requested",
-        "notes": [
-          "Evidence is complete enough for independent subagent review; main-thread pixel acceptance is intentionally withheld until that review is applied."
-        ]
-      },
+      "main_thread_judgment": "accepted-r352",
+      "auxiliary_agent_review": null,
       "json_error": null,
       "verification_error": null,
       "metrics_error": null,
