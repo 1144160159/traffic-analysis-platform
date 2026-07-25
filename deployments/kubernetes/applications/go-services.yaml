@@ -160,20 +160,20 @@ metadata:
   name: alert-service
   namespace: traffic-analysis
   annotations:
-    kubernetes.io/change-cause: "Campaigns r720 exposes selected-campaign phase aggregation provenance for truthful ATT&CK and evidence rendering"
-    traffic.analysis/source-revision: "601377b80087c3c2f993688993c3f032e8298b89a6cbab10621584966fe90683"
+    kubernetes.io/change-cause: "Topic domain r758 uses a static alert-service binary, the required 30-day APT window and live campaign KPI derivation"
+    traffic.analysis/source-revision: "534f1b22c3a83c3ecbe37d9313d3880cd4cc1e0b0f3fc2063f9c031f8037d0ca"
 spec:
   replicas: 1
   selector: {matchLabels: {app: alert-service}}
   template:
     metadata:
       labels: {app: alert-service}
-      annotations: {prometheus.io/scrape: "true", prometheus.io/port: "9093", traffic.analysis/build-id: "campaigns-r720", traffic.analysis/source-digest: "601377b80087c3c2f993688993c3f032e8298b89a6cbab10621584966fe90683", traffic.analysis/image-digest: "sha256:20d44e52042a43686619a4861b7521b1a5b0ce6a7af0427381e21bbbab3b5da1", traffic.analysis/image-id: "sha256:751c45b63ce8cbece0d33863a579940001f50eb3c98b4adccb8dbf37731a51a3"}
+      annotations: {prometheus.io/scrape: "true", prometheus.io/port: "9093", traffic.analysis/build-id: "topic-domain-r758", traffic.analysis/release: "topic-domain-r758", traffic.analysis/source-digest: "534f1b22c3a83c3ecbe37d9313d3880cd4cc1e0b0f3fc2063f9c031f8037d0ca", traffic.analysis/image-digest: "sha256:18f4d61602076b6ce5a2ac92540a2feff17ecfabcc70d65bc06357185b887702", traffic.analysis/image-id: "sha256:62af1dc631cd34549330af571d27ab0cc6993dadbf16befd87484e54e084477e"}
     spec:
       terminationGracePeriodSeconds: 120
       containers:
       - name: alert-service
-        image: docker.io/traffic/alert-service@sha256:20d44e52042a43686619a4861b7521b1a5b0ce6a7af0427381e21bbbab3b5da1
+        image: docker.io/traffic/alert-service:topic-domain-r758
         imagePullPolicy: Never
         ports: [{containerPort: 8082}, {containerPort: 9093}]
         lifecycle:

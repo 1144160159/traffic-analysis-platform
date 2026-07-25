@@ -479,6 +479,8 @@ data:
     CREATE INDEX IF NOT EXISTS idx_topic_subscriptions_tenant_topic ON topic_subscriptions (tenant_id, topic, updated_at DESC);
     CREATE TABLE IF NOT EXISTS topic_exports (export_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), tenant_id TEXT NOT NULL, topic TEXT NOT NULL, export_type TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'completed', parameters JSONB NOT NULL DEFAULT '{}'::jsonb, result JSONB NOT NULL DEFAULT '{}'::jsonb, generated_by TEXT NOT NULL DEFAULT '', generated_at TIMESTAMPTZ NOT NULL DEFAULT now());
     CREATE INDEX IF NOT EXISTS idx_topic_exports_tenant_time ON topic_exports (tenant_id, generated_at DESC);
+    CREATE TABLE IF NOT EXISTS topic_actions (action_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), tenant_id TEXT NOT NULL, topic TEXT NOT NULL, action TEXT NOT NULL, target TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'queued', detail JSONB NOT NULL DEFAULT '{}'::jsonb, requested_by TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now());
+    CREATE INDEX IF NOT EXISTS idx_topic_actions_tenant_topic ON topic_actions (tenant_id, topic, created_at DESC);
     COMMIT;
   05-default-data.sql: |
     -- =============================================================================
@@ -966,6 +968,62 @@ data:
     
     COMMIT;
     
+  07-campaign-impact-assets.sql: |
+    BEGIN;
+    INSERT INTO assets (
+      asset_id, display_code, tenant_id, asset_type, status, ip, ip_address, mac_address,
+      hostname, vendor, os_type, source, department, campus, owner, criticality,
+      tags, metadata, first_seen, last_seen, created_at, updated_at
+    ) VALUES
+    (
+      '10000000-0000-4000-8000-000000000058'::uuid,
+      'INFRA-CP-01', 'default', 'server', 'active', '10.0.5.8', '10.0.5.8', '02:00:05:08:00:01',
+      '8-2TB', 'OpenEuler', 'openEuler 22.03', 'infrastructure-inventory',
+      '信息中心', '主园区-数据中心', '平台运维组', 5,
+      '{"environment":"production","role":"kubernetes-control-plane","data_contract":"campaign-impact-v1"}'::jsonb,
+      jsonb_build_object(
+        'business_system', '全流量分析平台', 'key_service', 'Kubernetes API / ClickHouse',
+        'recovery_priority', 'P0', 'network_path', '主园区核心链路',
+        'campaign_accounts', jsonb_build_array(
+          jsonb_build_object('account','sec_analyst','account_type','人员账号','permission_risk','高危','login_path','统一认证 -> 10.0.5.8'),
+          jsonb_build_object('account','platform_ops','account_type','管理账号','permission_risk','高危','login_path','堡垒机 -> 10.0.5.8')
+        ),
+        'open_services', jsonb_build_array(
+          jsonb_build_object('service','Kubernetes API','port',6443,'protocol','TCP','risk_level','高危','dependency','全流量分析平台'),
+          jsonb_build_object('service','VXLAN','port',8472,'protocol','UDP','risk_level','中危','dependency','集群容器网络')
+        )
+      ),
+      now() - interval '49 days', now(), now(), now()
+    ),
+    (
+      '10000000-0000-4000-8000-000000000059'::uuid,
+      'INFRA-WK-01', 'default', 'server', 'active', '10.0.5.9', '10.0.5.9', '02:00:05:09:00:01',
+      'zeus-server', 'OpenEuler', 'openEuler 22.03', 'infrastructure-inventory',
+      '信息中心', '主园区-数据中心', '平台运维组', 4,
+      '{"environment":"production","role":"kubernetes-worker","data_contract":"campaign-impact-v1"}'::jsonb,
+      jsonb_build_object(
+        'business_system', '全流量分析平台', 'key_service', 'ClickHouse / Web UI',
+        'recovery_priority', 'P0', 'network_path', '主园区核心链路',
+        'campaign_accounts', jsonb_build_array(
+          jsonb_build_object('account','ops_admin','account_type','管理账号','permission_risk','高危','login_path','堡垒机 -> 10.0.5.9'),
+          jsonb_build_object('account','svc_sync','account_type','服务账号','permission_risk','中危','login_path','10.0.5.8 -> 10.0.5.9')
+        ),
+        'open_services', jsonb_build_array(
+          jsonb_build_object('service','ClickHouse Native','port',9000,'protocol','TCP','risk_level','高危','dependency','全流量分析平台'),
+          jsonb_build_object('service','VXLAN','port',8472,'protocol','UDP','risk_level','中危','dependency','集群容器网络')
+        )
+      ),
+      now() - interval '49 days', now(), now(), now()
+    )
+    ON CONFLICT (tenant_id, ip) WHERE ip IS NOT NULL DO UPDATE SET
+      display_code=EXCLUDED.display_code, asset_type=EXCLUDED.asset_type, status=EXCLUDED.status,
+      ip_address=EXCLUDED.ip_address, mac_address=EXCLUDED.mac_address, hostname=EXCLUDED.hostname, vendor=EXCLUDED.vendor,
+      os_type=EXCLUDED.os_type, source=EXCLUDED.source, department=EXCLUDED.department,
+      campus=EXCLUDED.campus, owner=EXCLUDED.owner, criticality=EXCLUDED.criticality,
+      tags=EXCLUDED.tags, metadata=EXCLUDED.metadata, last_seen=EXCLUDED.last_seen,
+      updated_at=EXCLUDED.updated_at;
+    COMMIT;
+
   06-graph.sql: |
     BEGIN;
     CREATE TABLE IF NOT EXISTS graph_cache_config (config_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), tenant_id TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE, neighbor_ttl_sec INT NOT NULL DEFAULT 300, entity_ttl_sec INT NOT NULL DEFAULT 300, graph_ttl_sec INT NOT NULL DEFAULT 120, max_nodes_per_cache INT NOT NULL DEFAULT 500, max_edges_per_cache INT NOT NULL DEFAULT 1000, time_granularity_sec INT NOT NULL DEFAULT 300, enabled BOOLEAN NOT NULL DEFAULT true, created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), UNIQUE (tenant_id));
@@ -1002,7 +1060,7 @@ spec:
         - |
           echo "Initializing PostgreSQL schema..."
           cd /sql
-          for f in 00-init.sql 01-assets.sql 02-features-rules.sql 03-models-deploy.sql 04-tasks-audit.sql 05-default-data.sql 06-graph.sql; do
+          for f in 00-init.sql 01-assets.sql 02-features-rules.sql 03-models-deploy.sql 04-tasks-audit.sql 05-default-data.sql 06-graph.sql 07-campaign-impact-assets.sql; do
             echo "  Running $f..."
             psql -h postgres-primary.databases.svc -U postgres -d traffic_platform -f "/sql/$f"
           done
