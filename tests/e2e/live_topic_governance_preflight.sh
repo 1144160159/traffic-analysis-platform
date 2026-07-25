@@ -189,6 +189,7 @@ OTHER_TOKEN="$(make_token codex-topic-other-admin "$OTHER_TENANT" '["admin"]' '[
 
 if grep -q "topic-view-save" web/ui/src/services/pageApiPlans.ts \
   && grep -q "TOPIC_REPORT_EXPORTED" web/ui/src/services/pageApiPlans.ts \
+  && grep -q "TOPIC_ACTION_REQUESTED" web/ui/src/services/pageApiPlans.ts \
   && grep -q "adaptTopicsOverview" web/ui/src/services/pageSnapshotAdapters.ts; then
   json_log "contract" "frontend topic governance contract present" "info" true "ok" "topic actions, exports, and snapshot adapter declared" "web/ui/src/services/pageApiPlans.ts"
 else
@@ -235,6 +236,24 @@ scope_body="$(jq -nc --arg scope "$SCOPE_NAME" '{scope_name:$scope, included_ass
 curl_json "admin can update topic scope" "PUT" "/api/v1/topics/scopes/tunnel" "200" "$ADMIN_TOKEN" "$LOG_DIR/topic-scope-update.json" "$scope_body"
 assert_json "topic scope update response" "$LOG_DIR/topic-scope-update.json" \
   --arg scope "$SCOPE_NAME" '.success == true and .data.topic == "tunnel" and .data.scope_name == $scope and (.data.included_assets | length) >= 1'
+
+curl_json "admin can submit topic action" "POST" "/api/v1/topics/tunnel/actions" "202" "$ADMIN_TOKEN" "$LOG_DIR/topic-action-create.json" \
+  '{"action":"extract_pcap","label":"提取隧道 PCAP","target":"10.12.8.45","data_mode":"live","detail":{"source":"live-preflight"}}'
+assert_json "created topic action has durable identity" "$LOG_DIR/topic-action-create.json" \
+  '.success == true and (.data.action_id | type == "string" and length > 0) and .data.topic == "tunnel" and .data.status == "queued" and .data.data_mode == "live"'
+TOPIC_ACTION_ID="$(jq -r '.data.action_id // ""' "$LOG_DIR/topic-action-create.json")"
+curl_json "viewer cannot submit topic action" "POST" "/api/v1/topics/tunnel/actions" "403" "$VIEWER_TOKEN" "$LOG_DIR/topic-action-viewer.json" \
+  '{"action":"extract_pcap","label":"提取隧道 PCAP","target":"10.12.8.45","data_mode":"live"}' || true
+if [[ -n "$TOPIC_ACTION_ID" ]]; then
+  assert_psql_count "topic action persisted in PostgreSQL" \
+    "SELECT count(*) FROM topic_actions WHERE tenant_id = '$TENANT' AND action_id = '$TOPIC_ACTION_ID' AND status = 'queued';" \
+    "pg-topic-action-count.txt"
+  curl_json "topic action audit is queryable" "GET" "/api/v1/audit/logs?action=TOPIC_ACTION_REQUESTED&object_id=$TOPIC_ACTION_ID&limit=10" "200" "$ADMIN_TOKEN" "$LOG_DIR/topic-action-audit.json"
+  assert_json "topic action audit persisted atomically" "$LOG_DIR/topic-action-audit.json" \
+    --arg action_id "$TOPIC_ACTION_ID" '.success == true and ([.data.trails[] | select(.resource_id == $action_id and .action == "TOPIC_ACTION_REQUESTED")] | length) == 1'
+else
+  json_log "assert" "created topic action id extracted" "blocker" false "missing" "create response did not return action_id" "topic-action-create.json"
+fi
 
 subscription_body="$(jq -nc --arg recipient "$SUBSCRIPTION_RECIPIENT" '{topic:"exfil", channel:"webhook", threshold:"high", schedule:"realtime", recipients:[$recipient], enabled:true}')"
 curl_json "admin can create topic subscription" "POST" "/api/v1/topics/subscriptions" "201" "$ADMIN_TOKEN" "$LOG_DIR/topic-subscription-create.json" "$subscription_body"
@@ -299,7 +318,7 @@ else
 fi
 
 assert_psql_count "topic governance audit persisted" \
-  "SELECT count(*) FROM audit_logs WHERE tenant_id = '$TENANT' AND action IN ('TOPIC_VIEW_SAVED','TOPIC_VIEW_UPDATED','TOPIC_VIEW_SHARED','TOPIC_VIEW_FAVORITE_UPDATED','TOPIC_SCOPE_UPDATED','TOPIC_SUBSCRIPTION_CREATED','TOPIC_SUBSCRIPTION_UPDATED','TOPIC_REPORT_EXPORTED','TOPIC_EVIDENCE_PACKAGE_EXPORTED');" \
+  "SELECT count(*) FROM audit_logs WHERE tenant_id = '$TENANT' AND action IN ('TOPIC_VIEW_SAVED','TOPIC_VIEW_UPDATED','TOPIC_VIEW_SHARED','TOPIC_VIEW_FAVORITE_UPDATED','TOPIC_SCOPE_UPDATED','TOPIC_ACTION_REQUESTED','TOPIC_SUBSCRIPTION_CREATED','TOPIC_SUBSCRIPTION_UPDATED','TOPIC_REPORT_EXPORTED','TOPIC_EVIDENCE_PACKAGE_EXPORTED');" \
   "pg-topic-audit-count.txt"
 
 TOTAL="$(jq -s 'length' "$REPORT")"
@@ -321,6 +340,7 @@ jq -n \
   --arg other_tenant "$OTHER_TENANT" \
   --arg view_id "${VIEW_ID:-}" \
   --arg subscription_id "${SUB_ID:-}" \
+  --arg topic_action_id "${TOPIC_ACTION_ID:-}" \
   --arg report_export_id "${REPORT_EXPORT_ID:-}" \
   --arg evidence_export_id "${EVIDENCE_EXPORT_ID:-}" \
   --arg report "$REPORT" \
@@ -338,6 +358,7 @@ jq -n \
     other_tenant:$other_tenant,
     view_id:$view_id,
     subscription_id:$subscription_id,
+    topic_action_id:$topic_action_id,
     report_export_id:$report_export_id,
     evidence_export_id:$evidence_export_id,
     report:$report,

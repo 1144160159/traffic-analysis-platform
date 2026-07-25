@@ -44,6 +44,9 @@ const accessToken = `${tokenInput}.${crypto.createHmac('sha256', secret).update(
 const browser = await chromium.connectOverCDP(cdpUrl);
 const context = browser.contexts()[0] ?? await browser.newContext();
 const page = await context.newPage();
+const cdp = await page.context().newCDPSession(page);
+let exitCode = 1;
+try {
 await page.setViewportSize({ width: 1920, height: 1080 });
 const url = new URL('/campaigns', baseUrl);
 url.searchParams.set('attackGraphTs', String(Date.now()));
@@ -117,5 +120,9 @@ const result = {
 
 fs.writeFileSync(outputPath, `${JSON.stringify(result, null, 2)}\n`);
 console.log(JSON.stringify(result, null, 2));
-await page.close().catch(() => {});
-process.exit(result.result === 'pass' ? 0 : 1);
+exitCode = result.result === 'pass' ? 0 : 1;
+} finally {
+  await cdp.send('Emulation.clearDeviceMetricsOverride').catch(() => {});
+  await page.close().catch(() => {});
+}
+process.exit(exitCode);

@@ -6,6 +6,7 @@ import { execFileSync } from 'node:child_process';
 
 const root = process.cwd();
 const baseUrl = process.env.BASE_URL || 'http://10.0.5.8:30180';
+const revision = process.env.CAMPAIGN_EVIDENCE_REVISION?.trim() || 'latest';
 const outputPath = path.join(root, 'doc/02_acceptance/02-regression/campaign-workbench-live-preflight-latest.json');
 for (const key of ['HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY', 'http_proxy', 'https_proxy', 'all_proxy']) delete process.env[key];
 process.env.NO_PROXY = '127.0.0.1,localhost,10.0.5.8';
@@ -37,7 +38,11 @@ async function request(url, options = {}) {
 function sql(query) {
   return execFileSync('kubectl', ['-n', 'databases', 'exec', 'postgres-primary-0', '--', 'psql', '-U', 'postgres', '-d', 'traffic_platform', '-Atc', query], { encoding: 'utf8', env: process.env }).trim();
 }
+function clickhouse(query) {
+  return execFileSync('kubectl', ['-n', 'middleware', 'exec', 'clickhouse-1-0', '--', 'clickhouse-client', '--query', query], { encoding: 'utf8', env: process.env }).trim();
+}
 const escapeSQL = (value) => String(value).replaceAll("'", "''");
+const escapeClickHouse = (value) => String(value).replaceAll('\\', '\\\\').replaceAll("'", "\\'");
 
 const list = await request('/api/v1/campaigns?limit=8&offset=0');
 const campaigns = list.data.campaigns ?? [];
@@ -67,13 +72,97 @@ check('owner assignment returns versioned result', assignment.data.result?.assig
 
 const afterAssignment = await request(`/api/v1/campaigns/${encodeURIComponent(campaignId)}`);
 check('detail reflects persisted assignee', afterAssignment.data.assignee === 'campaign_acceptance', afterAssignment.data.assignee);
+const impactBacked = afterAssignment.data.impact_data_backed ?? {};
+const impactKeys = ['accounts', 'services', 'assets', 'departments', 'campuses', 'business_systems'];
+check(
+  'detail impact projections expose data lineage',
+  impactKeys.every((key) => impactBacked[key] === true),
+  impactBacked,
+);
+const impactCollections = {
+  accounts: afterAssignment.data.impact_accounts ?? [],
+  services: afterAssignment.data.impact_services ?? [],
+  assets: afterAssignment.data.impact_assets ?? [],
+  departments: afterAssignment.data.impact_departments ?? [],
+  campuses: afterAssignment.data.impact_campuses ?? [],
+  business_systems: afterAssignment.data.impact_business_systems ?? [],
+};
+check(
+  'detail impact projections contain real linked rows',
+  Object.values(impactCollections).every((rows) => Array.isArray(rows) && rows.length > 0),
+  Object.fromEntries(Object.entries(impactCollections).map(([key, rows]) => [key, rows.length])),
+);
+check(
+  'department progress comes from persisted campaign workflow status',
+  impactCollections.departments.every((row) => Number(row.progress) > 0 && Number(row.progress) <= 100),
+  impactCollections.departments,
+);
+check(
+  'service impact contains observed port protocol data',
+  impactCollections.services.some((row) => /^\d+\/(TCP|UDP|ICMP|IP-\d+)$/.test(String(row.port_protocol ?? ''))),
+  impactCollections.services,
+);
+const alertIDs = afterAssignment.data.alert_ids ?? [];
+const alertIDSQL = alertIDs.map((id) => `'${escapeClickHouse(id)}'`).join(',');
+const campaignCommunityIDs = alertIDSQL
+  ? clickhouse(`SELECT DISTINCT community_id FROM traffic.alerts WHERE tenant_id='default' AND alert_id IN (${alertIDSQL}) AND community_id != '' FORMAT TSV`)
+      .split('\n').map((value) => value.trim()).filter(Boolean)
+  : [];
+const communityIDSQL = campaignCommunityIDs.map((id) => `'${escapeClickHouse(id)}'`).join(',');
+const linkedSessionCount = communityIDSQL
+  ? Number(clickhouse(`SELECT count() FROM traffic.sessions WHERE tenant_id='default' AND community_id IN (${communityIDSQL})`))
+  : 0;
+check(
+  'campaign Community IDs resolve to persisted sessions',
+  campaignCommunityIDs.length > 0 && linkedSessionCount > 0,
+  { campaign_community_ids: campaignCommunityIDs, linked_session_count: linkedSessionCount },
+);
+const persistedSessionServiceTuples = communityIDSQL
+  ? clickhouse(`
+      SELECT concat(
+        toString(latest_dst_port),
+        '/',
+        multiIf(
+          latest_protocol=6, 'TCP',
+          latest_protocol=17, 'UDP',
+          latest_protocol=1, 'ICMP',
+          concat('IP-', toString(latest_protocol))
+        ),
+        '|',
+        latest_dst_ip
+      )
+      FROM (
+        SELECT
+          community_id,
+          argMax(dst_ip, ts_end) AS latest_dst_ip,
+          toUInt16(argMax(dst_port, ts_end)) AS latest_dst_port,
+          toUInt8(argMax(protocol, ts_end)) AS latest_protocol
+        FROM traffic.sessions
+        WHERE tenant_id='default' AND community_id IN (${communityIDSQL})
+        GROUP BY community_id
+      )
+      WHERE latest_dst_port > 0
+      FORMAT TSV`)
+      .split('\n').map((value) => value.trim()).filter(Boolean)
+  : [];
+const projectedServiceTuples = impactCollections.services
+  .filter((row) => /^\d+\.\d+\.\d+\.\d+$/.test(String(row.dependency ?? '')))
+  .map((row) => `${row.port_protocol}|${row.dependency}`);
+check(
+  'service impact tuple equals a persisted campaign session row',
+  projectedServiceTuples.length > 0
+    && projectedServiceTuples.some((tuple) => persistedSessionServiceTuples.includes(tuple)),
+  { projected_service_tuples: projectedServiceTuples, persisted_session_service_tuples: persistedSessionServiceTuples },
+);
 const phaseSummaries = afterAssignment.data.phase_summaries ?? [];
 check(
   'detail exposes selected-campaign phase aggregation',
   Array.isArray(phaseSummaries)
     && phaseSummaries.length > 0
-    && typeof afterAssignment.data.phase_data_backed === 'boolean'
-    && phaseSummaries.every((item) => typeof item.phase === 'string' && Number(item.alert_count) >= 0 && Number(item.evidence_count) >= 0),
+    && afterAssignment.data.phase_data_backed === true
+    && phaseSummaries.every((item) => typeof item.phase === 'string' && Number(item.alert_count) >= 0 && Number(item.evidence_count) >= 0)
+    && phaseSummaries.some((item) => Number(item.alert_count) > 0)
+    && phaseSummaries.some((item) => Number(item.evidence_count) > 0),
   { phase_data_backed: afterAssignment.data.phase_data_backed, phase_summaries: phaseSummaries },
 );
 check(
@@ -135,6 +224,8 @@ const reportRow = sql(`SELECT report_id || '|' || status || '|' || format FROM c
 check('PostgreSQL contains completed report', reportRow === `${reportId}|completed|pdf`, reportRow);
 const persistedJobs = sql(`SELECT count(*) FROM campaign_action_jobs WHERE tenant_id='default' AND job_id IN ('${escapeSQL(assignment.data.job_id)}','${escapeSQL(statusChange.data.job_id)}','${escapeSQL(report.data.job_id)}') AND simulation=false AND dry_run=false AND status='completed'`);
 check('all mutating jobs are durable', persistedJobs === '3', persistedJobs);
+const impactAssetRows = sql(`SELECT count(*) FROM assets WHERE tenant_id='default' AND ip IN ('10.0.5.8','10.0.5.9') AND tags->>'data_contract'='campaign-impact-v1' AND jsonb_array_length(metadata->'campaign_accounts')>0 AND jsonb_array_length(metadata->'open_services')>0`);
+check('PostgreSQL stores campaign impact asset metadata', impactAssetRows === '2', impactAssetRows);
 
 const audit = await request('/api/v1/audit/logs?object_type=campaign&limit=100');
 const auditRows = audit.data.trails ?? [];
@@ -155,7 +246,8 @@ await request(`/api/v1/campaigns/${encodeURIComponent(campaignId)}/actions`, {
 
 const result = checks.every((item) => item.passed) ? 'pass' : 'fail';
 const output = {
-  run_id: `campaign-workbench-r654-${Date.now()}`,
+  run_id: `campaign-workbench-${revision}-${Date.now()}`,
+  revision,
   result,
   base_url: baseUrl,
   campaign_id: campaignId,

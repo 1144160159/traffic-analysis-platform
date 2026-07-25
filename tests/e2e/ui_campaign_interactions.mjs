@@ -42,6 +42,9 @@ for (const stalePage of context.pages()) {
   if (stalePage.url().includes('/campaigns?windowsCdpInteractionTs=')) await stalePage.close().catch(() => {});
 }
 const page = await context.newPage();
+const cdp = await page.context().newCDPSession(page);
+let exitCode = 1;
+try {
 await page.setViewportSize({ width: 1920, height: 1080 });
 
 const badResponses = [];
@@ -99,6 +102,17 @@ async function verifyDrawer(button, endpointPattern, auditEvent, expectCampaignI
   const drawer = page.locator('.taf-campaign-action-drawer:visible');
   await drawer.waitFor({ state: 'visible', timeout: 6_000 });
   const text = await drawer.textContent();
+  const popupBounds = await drawer.locator('.ant-modal-content').evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return {
+      left: Math.round(rect.left),
+      top: Math.round(rect.top),
+      width: Math.round(rect.width),
+      height: Math.round(rect.height),
+      right: Math.round(rect.right),
+      bottom: Math.round(rect.bottom),
+    };
+  });
   const result = {
     endpoint: endpointPattern.test(text ?? ''),
     audit: Boolean(text?.includes(auditEvent)),
@@ -107,9 +121,84 @@ async function verifyDrawer(button, endpointPattern, auditEvent, expectCampaignI
       : Boolean(text?.includes('访问操作已审计') && text?.includes('campaign_action_jobs') && text?.includes('audit_logs') && text?.includes('completed')),
     requestBody: Boolean(text?.includes('simulation') && text?.includes('dry_run'))
       && (expectCampaignId ? Boolean(text?.includes('campaign_id')) : !text?.includes('campaign_id')),
+    popupIntrinsic: popupBounds.width <= 520
+      && popupBounds.height <= 620
+      && popupBounds.left > 0
+      && popupBounds.top > 0
+      && popupBounds.right < 1920
+      && popupBounds.bottom < 1080,
+    popupBounds,
   };
-  await drawer.locator('.ant-drawer-close').click();
+  await drawer.locator('.ant-modal-close').click();
   return result;
+}
+
+async function verifyEvidenceNavigation(button, campaignId) {
+  const responsePromise = page.waitForResponse((response) => response.request().method() === 'POST'
+    && /\/v1\/campaigns\/[^/]+\/actions/.test(response.url()));
+  await button.click();
+  const response = await responsePromise;
+  const payload = await response.json().catch(() => ({}));
+  const data = payload?.data ?? payload;
+  const requestBody = response.request().postDataJSON();
+  await page.waitForURL((url) => url.pathname === `/campaigns/${encodeURIComponent(campaignId)}` && url.searchParams.get('tab') === 'evidence', { timeout: 10_000 });
+  const passed = {
+    endpoint: response.ok(),
+    audit: data?.audit_event === 'CAMPAIGN_EVIDENCE_VIEWED',
+    receipt: Boolean(data?.job_id && data?.status === 'completed'),
+    requestBody: requestBody?.metadata?.campaign_id === campaignId && requestBody?.simulation === true && requestBody?.dry_run === true,
+    popupIntrinsic: true,
+    popupBounds: null,
+    navigation: new URL(page.url()).pathname,
+  };
+  await openCampaign(false);
+  return passed;
+}
+
+async function verifyImpactNavigation(button, campaignId) {
+  const listUrl = new URL(page.url());
+  const responsePromise = page.waitForResponse((response) => response.request().method() === 'POST'
+    && /\/v1\/campaigns\/[^/]+\/actions/.test(response.url()));
+  await button.click();
+  const response = await responsePromise;
+  const payload = await response.json().catch(() => ({}));
+  const data = payload?.data ?? payload;
+  const requestBody = response.request().postDataJSON();
+  const modal = page.locator('.taf-campaign-impact-modal:visible');
+  await modal.waitFor({ state: 'visible', timeout: 10_000 });
+  const popupBounds = await modal.locator('.ant-modal-content').evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return {
+      left: Math.round(rect.left),
+      top: Math.round(rect.top),
+      width: Math.round(rect.width),
+      height: Math.round(rect.height),
+      right: Math.round(rect.right),
+      bottom: Math.round(rect.bottom),
+    };
+  });
+  const passed = {
+    endpoint: response.ok(),
+    audit: data?.audit_event === 'CAMPAIGN_IMPACT_VIEWED',
+    receipt: Boolean(data?.job_id && data?.status === 'completed'),
+    requestBody: requestBody?.metadata?.campaign_id === campaignId
+      && Boolean(requestBody?.metadata?.scope)
+      && requestBody?.simulation === true
+      && requestBody?.dry_run === true,
+    popupIntrinsic: popupBounds.width <= 1040
+      && popupBounds.height <= 760
+      && popupBounds.left > 0
+      && popupBounds.top > 0
+      && popupBounds.right < 1920
+      && popupBounds.bottom < 1080,
+    popupBounds,
+    navigation: new URL(page.url()).pathname,
+    listRouteRetained: new URL(page.url()).pathname === listUrl.pathname
+      && new URL(page.url()).search === listUrl.search,
+  };
+  await modal.locator('.ant-modal-close').click();
+  await modal.waitFor({ state: 'hidden', timeout: 8_000 });
+  return passed;
 }
 
 async function verifyNavigation(button, pathname, campaignId = '', confirm = false) {
@@ -120,7 +209,9 @@ async function verifyNavigation(button, pathname, campaignId = '', confirm = fal
   await page.waitForURL((url) => url.pathname === pathname, { timeout: 10_000 });
   await page.waitForLoadState('networkidle', { timeout: 12_000 }).catch(() => {});
   const destination = new URL(page.url());
-  const passed = destination.pathname === pathname && (!campaignId || destination.searchParams.get('campaign') === campaignId);
+  const campaignParameter = pathname === '/attack-chains' ? 'chain' : 'campaign';
+  const passed = destination.pathname === pathname
+    && (!campaignId || destination.searchParams.get(campaignParameter) === campaignId);
   await openCampaign(false);
   return passed;
 }
@@ -163,7 +254,7 @@ const downloadPromise = page.waitForEvent('download', { timeout: 8_000 });
 await page.locator('.taf-campaign-list-panel > .taf-panel__header button').first().click();
 const download = await downloadPromise;
 const exportWorked = Boolean(download.suggestedFilename().match(/^campaigns-.*\.json$/));
-await page.locator('.taf-campaign-action-drawer:visible .ant-drawer-close').click();
+await page.locator('.taf-campaign-action-drawer:visible .ant-modal-close').click();
 
 await openCampaign(false);
 
@@ -283,12 +374,23 @@ async function verifySelectFilter(selectIndex, label, parameter, expectedValue) 
   });
   await page.locator('.taf-campaign-filter > button').nth(1).click();
   const response = await responsePromise;
+  const payload = await response.json().catch(() => ({}));
+  const campaigns = payload?.data?.campaigns ?? payload?.campaigns ?? [];
   const settled = await page.waitForFunction((expectedLabel) => {
-    const rows = Array.from(document.querySelectorAll('.taf-campaign-list-panel .ant-table-tbody tr'));
-    return rows.length > 0 && rows.every((row) => row.textContent?.includes(String(expectedLabel)));
+    const rows = Array.from(document.querySelectorAll('.taf-campaign-list-panel .ant-table-tbody tr.ant-table-row'));
+    const empty = document.querySelector('.taf-campaign-list-panel .ant-empty');
+    return (rows.length > 0 && rows.every((row) => row.textContent?.includes(String(expectedLabel))))
+      || Boolean(empty);
   }, label, { timeout: 10_000 }).then(() => true).catch(() => false);
   const url = new URL(response.url());
-  const passed = response.ok() && url.searchParams.get(parameter) === expectedValue && url.searchParams.get('limit') === '8' && settled;
+  const serverFiltered = campaigns.every(
+    (campaign) => (campaign.activity_status ?? campaign.status) === expectedValue,
+  );
+  const passed = response.ok()
+    && url.searchParams.get(parameter) === expectedValue
+    && url.searchParams.get('limit') === '8'
+    && serverFiltered
+    && settled;
   await page.locator('.taf-campaign-filter > button').first().click();
   await page.waitForTimeout(300);
   return passed;
@@ -331,6 +433,8 @@ const keywordRows = await tableRows.allTextContents();
 const keywordFilterWorked = keywordResponse.ok() && keywordRows.length > 0 && keywordRows.every((text) => text.toLowerCase().includes(keyword.toLowerCase()));
 await page.locator('.taf-campaign-filter > button').first().click();
 
+await openCampaign(false);
+await page.locator('[data-chart-engine="echarts"][data-series-type="graph"] canvas').waitFor({ state: 'visible', timeout: 15_000 });
 actionChecks.push(await verifyDrawer(
   page.locator('[data-chart-engine="echarts"][data-series-type="graph"] canvas'),
   /\/v1\/campaigns\/[^/]+\/actions/,
@@ -340,8 +444,10 @@ actionChecks.push(await verifyDrawer(
   false,
   { position: { x: 60, y: 114 } },
 ));
-actionChecks.push(await verifyDrawer(page.locator('.taf-campaign-impact button').first(), /\/v1\/campaigns\/[^/]+\/actions/, 'CAMPAIGN_IMPACT_VIEWED'));
-actionChecks.push(await verifyDrawer(page.getByRole('button', { name: '查看证据中心', exact: true }), /\/v1\/campaigns\/[^/]+\/actions/, 'CAMPAIGN_EVIDENCE_VIEWED'));
+const impactCampaignId = (await page.locator('.taf-campaign-summary > div strong').textContent())?.trim() ?? '';
+actionChecks.push(await verifyImpactNavigation(page.locator('.taf-campaign-impact button').first(), impactCampaignId));
+const evidenceCampaignId = (await page.locator('.taf-campaign-summary > div strong').textContent())?.trim() ?? '';
+actionChecks.push(await verifyEvidenceNavigation(page.getByRole('button', { name: '查看证据中心', exact: true }), evidenceCampaignId));
 actionChecks.push(await verifyDrawer(page.locator('.taf-campaign-actions button').nth(1), /\/v1\/campaigns\/[^/]+\/actions/, 'CAMPAIGN_STATUS_CHANGED', true, true, true));
 actionChecks.push(await verifyDrawer(page.locator('.taf-campaign-actions button').nth(2), /\/v1\/campaigns\/[^/]+\/actions/, 'CAMPAIGN_REPORT_REQUESTED', true, false, true));
 const firstRowActions = page.locator('.taf-campaign-list-panel .ant-table-tbody tr').first().locator('.taf-campaign-row-actions button');
@@ -406,7 +512,7 @@ const result = {
     && statusFilterWorked
     && phaseFilterWorked
     && keywordFilterWorked
-    && actionChecks.every((item) => item.endpoint && item.audit && item.receipt && item.requestBody)
+    && actionChecks.every((item) => item.endpoint && item.audit && item.receipt && item.requestBody && item.popupIntrinsic)
     && exportWorked
     && detailNavigation
     && attackChainNavigation
@@ -484,5 +590,9 @@ const result = {
 
 fs.writeFileSync(outputPath, `${JSON.stringify(result, null, 2)}\n`);
 console.log(JSON.stringify(result, null, 2));
-await page.close().catch(() => {});
-process.exit(result.result === 'pass' ? 0 : 1);
+exitCode = result.result === 'pass' ? 0 : 1;
+} finally {
+  await cdp.send('Emulation.clearDeviceMetricsOverride').catch(() => {});
+  await page.close().catch(() => {});
+}
+process.exit(exitCode);

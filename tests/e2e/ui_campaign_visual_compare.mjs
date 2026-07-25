@@ -14,6 +14,7 @@ const comparisonPath = path.join(outputDir, `comparison-${revision}.png`);
 const diffPath = path.join(outputDir, `diff-${revision}.png`);
 const metricsPath = path.join(outputDir, `metrics-${revision}.json`);
 const threshold = 64;
+const maxPixelMismatchRatio = Number(process.env.CAMPAIGN_VISUAL_MAX_MISMATCH_RATIO || '0.125');
 
 for (const key of ['HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY', 'http_proxy', 'https_proxy', 'all_proxy']) delete process.env[key];
 
@@ -21,6 +22,9 @@ const version = await (await fetch(`${cdpUrl}/json/version`)).json();
 const browser = await chromium.connectOverCDP(version.webSocketDebuggerUrl);
 const context = browser.contexts()[0] ?? await browser.newContext();
 const page = await context.newPage();
+const cdp = await page.context().newCDPSession(page);
+let exitCode = 1;
+try {
 await page.setViewportSize({ width: 1920, height: 1080 });
 const result = await page.evaluate(async ({ source, actual, threshold }) => {
   const load = (data) => new Promise((resolve, reject) => {
@@ -126,7 +130,16 @@ const metrics = {
     mean_absolute_channel_delta: result.meanAbsoluteChannelDelta,
     regions: result.regions,
   },
+  acceptance: {
+    max_pixel_mismatch_ratio: maxPixelMismatchRatio,
+    status: result.mismatchRatio <= maxPixelMismatchRatio ? 'pass' : 'fail',
+  },
 };
 fs.writeFileSync(metricsPath, `${JSON.stringify(metrics, null, 2)}\n`);
 console.log(JSON.stringify(metrics, null, 2));
-await page.close().catch(() => {});
+exitCode = metrics.acceptance.status === 'pass' ? 0 : 1;
+} finally {
+  await cdp.send('Emulation.clearDeviceMetricsOverride').catch(() => {});
+  await page.close().catch(() => {});
+}
+process.exit(exitCode);
