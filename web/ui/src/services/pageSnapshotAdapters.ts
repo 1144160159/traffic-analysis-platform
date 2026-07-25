@@ -1384,7 +1384,8 @@ const adaptCampaigns = (page: PageSpec, primaryPayload: unknown): PageSnapshot =
         告警数: arrayLengthFrom(item, ['alerts', 'alert_ids']),
         首次发现: formatEpochTime(numberFrom(item, ['ts_start', 'start_time'])),
         最近活动: formatEpochTime(numberFrom(item, ['ts_end', 'end_time', 'ingest_ts'])),
-        状态: campaignStatus(item),
+        状态: campaignWorkflowStatus(item),
+        __activity_status: campaignStatus(item),
         __workflow_status: campaignWorkflowStatus(item),
         操作: '查看',
         __assignee: textFrom(item, ['assignee']),
@@ -1452,7 +1453,7 @@ const adaptAttackChains = (page: PageSpec, primaryPayload: unknown): PageSnapsho
   const evidenceAnchors = Math.max(phases.length, keyEvents.length, chains.reduce((sum, item) => sum + numberAt(item, ['alert_count']), 0));
   const entityNodes = chains.reduce((sum, item) => sum + numberAt(item, ['entity_count']), 0);
   const riskScore = Math.max(0, ...chains.map((item) => numberAt(item, ['risk_score'])));
-  const blockPoints = phases.filter((item) => campaignPhaseLabel(textFrom(item, ['phase'])).includes('外') || campaignPhaseLabel(textFrom(item, ['phase'])).includes('C2')).length || 6;
+  const blockPoints = phases.filter((item) => campaignPhaseLabel(textFrom(item, ['phase'])).includes('外') || campaignPhaseLabel(textFrom(item, ['phase'])).includes('C2')).length;
   const confidence = chains.length ? Math.min(99, Math.max(60, riskScore || averageNumbers(phases, ['confidence']))) : 0;
 
   const rows = phases.length
@@ -2202,32 +2203,42 @@ const adaptTunnelTopic = (page: PageSpec, primaryPayload: unknown): PageSnapshot
   const users = extractList(primaryPayload, ['users']);
   const sessionCount = numberAt(summary, ['session_count']) || sumNumbers(users, ['count']);
   const protocolCount = numberAt(summary, ['protocol_count']) || protocols.length;
+  const activeUsers = numberAt(summary, ['active_users']) || users.length;
   const highRiskUsers = numberAt(summary, ['high_risk_users']) || users.filter((item) => topicRiskLabel(textFrom(item, ['risk'])).includes('高')).length;
   const totalBytes = numberAt(summary, ['total_bytes']) || sumNumbers(users, ['total_bytes']);
-  const longSessions = Math.max(1, Math.round(sessionCount * 0.08));
-  const evidenceRate = users.length || protocols.length ? Math.min(99, 78 + users.length + protocols.length * 2) : 0;
+  const suspiciousRatio = activeUsers ? (highRiskUsers / activeUsers) * 100 : 0;
+  const evidenceRate =
+    ratioAt(summary, ['evidence_completeness']) ||
+    ratioAt(summary, ['evidence_rate']);
+  const evidenceState = evidenceRate ? '接口聚合' : '待证据关联';
   const sourceRows = users.length ? users : protocols;
 
   return {
     id: page.id,
     metrics: [
-      topicMetric('活跃隧道会话', formatNumber(sessionCount), '真实 API', sessionCount ? 'info' : 'warn'),
-      topicMetric('隧道协议', String(protocolCount), 'protocols', protocolCount ? 'ok' : 'warn'),
-      topicMetric('高危用户', String(highRiskUsers), 'users', highRiskUsers ? 'risk' : 'ok'),
-      topicMetric('总流量', bytesLabel(totalBytes), 'total_bytes', totalBytes ? 'warn' : 'info'),
-      topicMetric('异常长连接', String(longSessions), '推导', longSessions ? 'warn' : 'ok'),
-      topicMetric('证据完整度', `${evidenceRate.toFixed(1)}%`, 'PCAP/Session', evidenceRate >= 85 ? 'ok' : 'warn'),
+      topicMetric('隧道协议数', String(protocolCount), 'protocols', protocolCount ? 'info' : 'warn'),
+      topicMetric('高频隧道源', String(activeUsers), 'users', activeUsers ? 'info' : 'warn'),
+      topicMetric('加密会话流量', bytesLabel(totalBytes), 'total_bytes', totalBytes ? 'ok' : 'warn'),
+      topicMetric('异常隧道数', formatNumber(sessionCount), 'sessions', sessionCount ? 'risk' : 'ok'),
+      topicMetric('隧道端点数', String(users.length), 'live users', users.length ? 'info' : 'warn'),
+      topicMetric('可疑隧道占比', `${suspiciousRatio.toFixed(1)}%`, 'high risk / active', suspiciousRatio ? 'warn' : 'ok'),
+      topicMetric('证据完整度', `${evidenceRate.toFixed(1)}%`, evidenceState, evidenceRate >= 85 ? 'ok' : evidenceRate ? 'warn' : 'info'),
+      topicMetric('报告置信度', `${evidenceRate.toFixed(1)}%`, evidenceState, evidenceRate >= 85 ? 'ok' : evidenceRate ? 'warn' : 'info'),
+      topicMetric('未闭环风险数', String(highRiskUsers), 'high risk users', highRiskUsers ? 'warn' : 'ok'),
+      topicMetric('活跃隧道会话', formatNumber(sessionCount), '兼容专题总览', sessionCount ? 'info' : 'warn'),
     ],
     rows: sourceRows.slice(0, 8).map((item, index) =>
       makeRow(page, {
-        事件ID: `TUNNEL-${String(index + 1).padStart(4, '0')}`,
+        事件ID: `TN-LIVE-${String(index + 1).padStart(4, '0')}`,
         隧道源: textFrom(item, ['ip']) || `TUNNEL-SRC-${String(index + 1).padStart(2, '0')}`,
         协议: textFrom(item, ['protocol']) || `协议族 ${index + 1}`,
-        目的端点: textFrom(item, ['dst_ip', 'destination_ip']) || '境外云服务 / 未知 SNI',
-        证据类型: textFrom(item, ['risk']) ? `risk=${textFrom(item, ['risk'])}` : `${formatNumber(numberAt(item, ['count']))} 会话`,
+        目的端点: textFrom(item, ['dst_ip', 'destination_ip']) || '-',
+        证据类型: 'Session',
         时间窗: formatEpochTime(numberFrom(item, ['last_seen'])) || '近 24h',
         风险状态: topicRiskLabel(textFrom(item, ['risk']) || (index === 0 && highRiskUsers ? 'high' : 'medium')),
         风险操作: '取证',
+        __session_count: numberFrom(item, ['count']),
+        __total_bytes: numberFrom(item, ['total_bytes']),
       }),
     ),
     timeline: [
@@ -2241,7 +2252,7 @@ const adaptTunnelTopic = (page: PageSpec, primaryPayload: unknown): PageSnapshot
       evidence('协议分布', `${protocols.length} 类`, protocols.length ? 'ok' : 'warn'),
       evidence('高危用户', `${highRiskUsers}/${users.length}`, highRiskUsers ? 'risk' : 'ok'),
       evidence('JA3/JA3S', '关联加密流量', 'info'),
-      evidence('PCAP 窗口', `${longSessions} 个候选`, longSessions ? 'warn' : 'ok'),
+      evidence('PCAP 窗口', `${sessionCount} 个会话候选`, sessionCount ? 'warn' : 'ok'),
       evidence('审计记录', '阻断/取证待写入', 'info'),
     ],
   };
@@ -2250,6 +2261,7 @@ const adaptTunnelTopic = (page: PageSpec, primaryPayload: unknown): PageSnapshot
 const adaptExfilTopic = (page: PageSpec, primaryPayload: unknown): PageSnapshot => {
   const summary = valueAt(primaryPayload, ['summary']);
   const sources = extractList(primaryPayload, ['top_sources', 'sources']);
+  const destinations = extractList(primaryPayload, ['destinations']);
   const riskTypes = extractList(primaryPayload, ['risk_types', 'risks']);
   const paths = extractList(primaryPayload, ['paths']);
   const rows = paths.length ? paths : sources;
@@ -2258,47 +2270,45 @@ const adaptExfilTopic = (page: PageSpec, primaryPayload: unknown): PageSnapshot 
   const sessionCount = numberAt(summary, ['session_count']) || sumNumbers(sources, ['session_count']);
   const uploadBytes = numberAt(summary, ['upload_bytes']) || sumNumbers(sources, ['upload_bytes']);
   const highRiskSources = numberAt(summary, ['high_risk_sources']) || sources.filter((item) => topicRiskLabel(textFrom(item, ['risk'])).includes('高')).length;
-  const alertCount = numberAt(summary, ['alert_count']) || numberAt(summary, ['warning_count']) || Math.max(64, pathCount * 16, highRiskSources * 8);
+  const alertCount = numberAt(summary, ['alert_count']) || numberAt(summary, ['warning_count']);
   const destinationCount =
     numberAt(summary, ['destination_count']) ||
     numberAt(summary, ['dst_count']) ||
-    new Set(rows.map((item) => textFrom(item, ['dst_region', 'region', 'dst_ip'])).filter(Boolean)).size ||
-    Math.max(0, Math.round(pathCount * 1.4));
-  const sensitiveTypeCount = numberAt(summary, ['sensitive_type_count']) || riskTypes.length || new Set(rows.map((item) => textFrom(item, ['data_type', 'type'])).filter(Boolean)).size;
+    destinations.length ||
+    new Set(rows.map((item) => textFrom(item, ['dst_region', 'region', 'dst_ip'])).filter(Boolean)).size;
+  const sensitiveTypeCount =
+    numberAt(summary, ['sensitive_type_count']) ||
+    new Set(rows.map((item) => textFrom(item, ['data_type'])).filter(Boolean)).size;
   const crossBorderDestinations =
     numberAt(summary, ['cross_border_destinations']) ||
-    numberAt(summary, ['cross_border_destination_count']) ||
-    rows.filter((item) => /境外|跨境|美国|日本|新加坡|德国|香港|US|JP|SG|DE|HK/i.test(textFrom(item, ['dst_region', 'region', 'dst_ip']))).length ||
-    Math.max(0, Math.round(destinationCount * 0.37));
+    numberAt(summary, ['cross_border_destination_count']);
   const peakUploadGbps =
     numberAt(summary, ['peak_upload_gbps']) ||
     numberAt(summary, ['peak_gbps']) ||
-    Math.max(0, ...rows.map((item) => numberFrom(item, ['peak_gbps', 'gbps']))) ||
-    38.6;
+    Math.max(0, ...rows.map((item) => numberFrom(item, ['peak_gbps', 'gbps'])));
   const topRiskType = riskTypes[0] ? textFrom(riskTypes[0], ['type', 'severity']) : '异常上传';
   const evidenceRate =
     ratioAt(summary, ['evidence_completeness']) ||
-    ratioAt(summary, ['evidence_rate']) ||
-    (rows.length ? Math.min(99, 50 + rows.length * 2 + riskTypes.length * 3) : 62);
+    ratioAt(summary, ['evidence_rate']);
 
   return {
     id: page.id,
     metrics: [
-      topicMetric('外传预警量', formatNumber(alertCount), '较昨日 +8', alertCount ? 'risk' : 'ok'),
-      topicMetric('外传路径数', formatNumber(pathCount || 112), '较昨日 +15', pathCount ? 'warn' : 'info'),
-      topicMetric('可疑外传源', formatNumber(highRiskSources || sourceCount || 23), '较昨日 +3', highRiskSources ? 'risk' : 'warn'),
-      topicMetric('外传目的地数', formatNumber(destinationCount || 87), '较昨日 +11', destinationCount ? 'info' : 'warn'),
-      topicMetric('敏感数据类型数', formatNumber(sensitiveTypeCount || 12), '较昨日 +2', sensitiveTypeCount ? 'warn' : 'info'),
-      topicMetric('异常上传峰值', `${peakUploadGbps.toFixed(1)} Gbps`, '较昨日 +27%', peakUploadGbps >= 30 ? 'warn' : 'ok'),
-      topicMetric('跨境目的地数', formatNumber(crossBorderDestinations || 32), '较昨日 +6', crossBorderDestinations ? 'warn' : 'ok'),
-      topicMetric('证据完整度', `${Math.round(evidenceRate)}%`, '较昨日 +6%', evidenceRate >= 90 ? 'ok' : evidenceRate >= 60 ? 'warn' : 'risk'),
+      topicMetric('外传预警量', formatNumber(alertCount), alertCount ? '当前窗口' : '告警待关联', alertCount ? 'risk' : 'info'),
+      topicMetric('外传路径数', formatNumber(pathCount), '实时路径', pathCount ? 'warn' : 'info'),
+      topicMetric('可疑外传源', formatNumber(highRiskSources || sourceCount), '实时源资产', highRiskSources ? 'risk' : sourceCount ? 'warn' : 'ok'),
+      topicMetric('外传目的地数', formatNumber(destinationCount), '实时目的端', destinationCount ? 'info' : 'warn'),
+      topicMetric('敏感数据类型数', formatNumber(sensitiveTypeCount), sensitiveTypeCount ? '数据分类' : '分类待接入', sensitiveTypeCount ? 'warn' : 'info'),
+      topicMetric('异常上传峰值', `${peakUploadGbps.toFixed(1)} Gbps`, '当前窗口', peakUploadGbps >= 30 ? 'warn' : 'ok'),
+      topicMetric('跨境目的地数', formatNumber(crossBorderDestinations), crossBorderDestinations ? '地域归因' : '地域待归因', crossBorderDestinations ? 'warn' : 'info'),
+      topicMetric('证据完整度', `${Math.round(evidenceRate)}%`, evidenceRate ? '接口聚合' : '待证据关联', evidenceRate >= 90 ? 'ok' : evidenceRate >= 60 ? 'warn' : 'info'),
     ],
     rows: rows.slice(0, 8).map((item, index) =>
       makeRow(page, {
         源资产: textFrom(item, ['src_ip']) || `EXFIL-SRC-${String(index + 1).padStart(2, '0')}`,
         外传路径: textFrom(item, ['dst_ip']) ? `${textFrom(item, ['src_ip'])} -> ${textFrom(item, ['dst_ip'])}` : `${textFrom(item, ['src_ip']) || '源资产'} -> 多目的地`,
-        目标区域: textFrom(item, ['dst_region', 'region']) || ['境外云服务', '对象存储', '未知 ASN', '跨境 CDN'][index % 4],
-        数据类型: textFrom(item, ['data_type', 'type']) || topRiskType,
+        目标区域: textFrom(item, ['dst_region', 'region', 'dst_ip']) || '-',
+        数据类型: textFrom(item, ['data_type']) || '-',
         上传量: bytesLabel(numberFrom(item, ['upload_bytes', 'total_bytes'])),
         会话数: numberFrom(item, ['session_count']) || numberFrom(item, ['count']),
         风险类型: textFrom(riskTypes[index % Math.max(riskTypes.length, 1)], ['type']) || topRiskType,
@@ -2314,11 +2324,11 @@ const adaptExfilTopic = (page: PageSpec, primaryPayload: unknown): PageSnapshot 
     ],
     evidence: [
       evidence('告警证据', `${formatNumber(alertCount)} / ${formatNumber(alertCount)} (100%)`, alertCount ? 'ok' : 'warn'),
-      evidence('PCAP', `${formatNumber(Math.round(sessionCount * 0.41) || 132)} / ${formatNumber(Math.round(sessionCount * 0.49) || 156)} (84%)`, sessionCount ? 'warn' : 'info'),
-      evidence('Session', `${formatNumber(Math.round(sessionCount * 0.62) || 198)} / ${formatNumber(Math.round(sessionCount * 0.64) || 204)} (97%)`, sessionCount ? 'ok' : 'info'),
-      evidence('审计日志', '38 / 38 (100%)', 'ok'),
-      evidence('回溯路径', `${formatNumber(Math.max(18, paths.length))} / ${formatNumber(Math.max(18, paths.length))} (100%)`, paths.length ? 'ok' : 'info'),
-      evidence('资产快照', `${formatNumber(Math.max(23, sourceCount))} / ${formatNumber(Math.max(23, sourceCount))} (100%)`, sourceCount ? 'ok' : 'info'),
+      evidence('PCAP', '未由专题接口返回', 'info'),
+      evidence('Session', `${formatNumber(sessionCount)} / ${formatNumber(sessionCount)} (100%)`, sessionCount ? 'ok' : 'info'),
+      evidence('审计日志', '由专题操作审计提供', 'info'),
+      evidence('回溯路径', `${formatNumber(paths.length)} / ${formatNumber(paths.length)} (100%)`, paths.length ? 'ok' : 'info'),
+      evidence('资产快照', `${formatNumber(sourceCount)} 个源资产`, sourceCount ? 'ok' : 'info'),
     ],
   };
 };
@@ -2332,30 +2342,29 @@ const adaptAptTopic = (page: PageSpec, primaryPayload: unknown): PageSnapshot =>
   const highRisk = numberAt(summary, ['high_risk_count']) || campaigns.filter((item) => campaignRisk(item).includes('高')).length;
   const entityCount = numberAt(summary, ['entity_count']) || sumArrayLengths(campaigns, ['entities']);
   const alertCount = numberAt(summary, ['alert_count']) || sumArrayLengths(campaigns, ['alerts']);
-  const phaseCoverageTotal = Math.max(7, phaseCount || 7);
-  const phaseCoverageDone = Math.max(5, Math.min(phaseCoverageTotal, phaseCount || 5));
-  const lateralMoveLinks = numberAt(summary, ['lateral_move_links']) || Math.max(23, Math.round(entityCount * 0.14));
-  const persistenceSignals = numberAt(summary, ['persistence_signals']) || Math.max(18, Math.round((highRisk || 1) * 2.5));
-  const exfilEvidence = numberAt(summary, ['exfil_evidence_count']) || Math.max(32, Math.round(alertCount * 0.03));
-  const closureRate = ratioAt(summary, ['closure_rate']) || 68;
-  const reportConfidence = ratioAt(summary, ['report_confidence']) || 62;
-  const clusterDensity =
-    numberAt(summary, ['cluster_density']) ||
-    Math.max(0.48, Math.min(0.92, (campaignCount || 7) / Math.max(10, (phaseCount || 5) * 2)));
-  const evidenceRate = campaigns.length ? Math.min(99, 78 + campaigns.length * 2 + phaseCount * 3) : 90.6;
+  const phaseCoverageTotal = 7;
+  const phaseCoverageDone = Math.min(phaseCoverageTotal, phaseCount);
+  const lateralMoveLinks = numberAt(summary, ['lateral_move_links']);
+  const persistenceSignals = numberAt(summary, ['persistence_signals']);
+  const exfilEvidence = numberAt(summary, ['exfil_evidence_count']);
+  const closureRate = ratioAt(summary, ['closure_rate']);
+  const reportConfidence = ratioAt(summary, ['report_confidence']);
+  const clusterDensity = numberAt(summary, ['cluster_density']);
+  const evidenceRate = ratioAt(summary, ['evidence_completeness']);
+  const metricScope = textAt(summary, ['metric_scope']) === 'listed_campaigns' ? `最近 ${campaigns.length} 个战役` : '接口聚合';
 
   return {
     id: page.id,
     metrics: [
-      topicMetric('关联战役数', String(campaignCount || 7), '较昨日 +1', campaignCount || highRisk ? 'risk' : 'warn'),
-      topicMetric('战役集密度', clusterDensity.toFixed(2), '较昨日 +0.08', clusterDensity >= 0.7 ? 'ok' : 'warn'),
-      topicMetric('攻击阶段覆盖', `${phaseCoverageDone}/${phaseCoverageTotal}`, '较昨日 +1', phaseCoverageDone >= 5 ? 'info' : 'warn'),
-      topicMetric('关键资产命中', String(entityCount || 46), '较昨日 +6', entityCount ? 'risk' : 'warn'),
-      topicMetric('横向移动链路', String(lateralMoveLinks), '较昨日 +4', lateralMoveLinks ? 'warn' : 'ok'),
-      topicMetric('持久化迹象数', String(persistenceSignals), '较昨日 +2', persistenceSignals ? 'warn' : 'ok'),
-      topicMetric('外传关联证据', String(exfilEvidence), '较昨日 +5', exfilEvidence ? 'info' : 'ok'),
-      topicMetric('处置闭环率', `${Math.round(closureRate)}%`, '较昨日 +7%', closureRate >= 80 ? 'ok' : closureRate >= 60 ? 'warn' : 'risk'),
-      topicMetric('报告置信度', `${Math.round(reportConfidence)}%`, '较昨日 +8%', reportConfidence >= 80 ? 'ok' : reportConfidence >= 60 ? 'warn' : 'risk'),
+      topicMetric('关联战役数', String(campaignCount), '实时战役', campaignCount || highRisk ? 'risk' : 'ok'),
+      topicMetric('战役集密度', clusterDensity.toFixed(2), metricScope, clusterDensity >= 0.7 ? 'ok' : clusterDensity ? 'warn' : 'info'),
+      topicMetric('攻击阶段覆盖', `${phaseCoverageDone}/${phaseCoverageTotal}`, '实时阶段', phaseCoverageDone >= 5 ? 'info' : phaseCoverageDone ? 'warn' : 'info'),
+      topicMetric('关键资产命中', String(entityCount), '实时实体', entityCount ? 'risk' : 'ok'),
+      topicMetric('横向移动链路', String(lateralMoveLinks), metricScope, lateralMoveLinks ? 'warn' : 'ok'),
+      topicMetric('持久化迹象数', String(persistenceSignals), metricScope, persistenceSignals ? 'warn' : 'ok'),
+      topicMetric('外传关联证据', String(exfilEvidence), metricScope, exfilEvidence ? 'info' : 'ok'),
+      topicMetric('处置闭环率', `${Math.round(closureRate)}%`, metricScope, closureRate >= 80 ? 'ok' : closureRate >= 60 ? 'warn' : closureRate ? 'risk' : 'info'),
+      topicMetric('报告置信度', `${Math.round(reportConfidence)}%`, metricScope, reportConfidence >= 80 ? 'ok' : reportConfidence >= 60 ? 'warn' : reportConfidence ? 'risk' : 'info'),
     ],
     rows: campaigns.slice(0, 8).map((item, index) =>
       makeRow(page, {

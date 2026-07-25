@@ -8,7 +8,7 @@ import { AlertOutlined, ApiOutlined, DatabaseOutlined, FileSearchOutlined, Globa
 import type { BarSeriesOption, BoxplotSeriesOption, CustomSeriesOption, GaugeSeriesOption, GraphSeriesOption, HeatmapSeriesOption, LineSeriesOption, LinesSeriesOption, PieSeriesOption, SankeySeriesOption, ScatterSeriesOption } from 'echarts/charts';
 import type { GridComponentOption, LegendComponentOption, TitleComponentOption, TooltipComponentOption, VisualMapComponentOption } from 'echarts/components';
 import { useState } from 'react';
-import type { KeyboardEvent, WheelEvent } from 'react';
+import type { CSSProperties, WheelEvent } from 'react';
 
 echarts.use([LineChart, GaugeChart, ScatterChart, HeatmapChart, LinesChart, CustomChart, PieChart, BarChart, BoxplotChart, SankeyChart, GraphChart, GridComponent, TooltipComponent, TitleComponent, LegendComponent, VisualMapComponent, CanvasRenderer]);
 
@@ -251,6 +251,7 @@ export type EntityTopologyLink = {
 export type TopicTopologyNode = {
   id: string;
   label: string;
+  title?: string;
   detail: string;
   x: number;
   y: number;
@@ -2328,12 +2329,12 @@ export function CampaignAttackGraphChart({
       data-series-type="graph"
     >
       <EChartsReactCore
+        key={`${centerName}:${graphNodes.map((node) => `${node.name}:${node.alertCount}:${node.evidenceCount}`).join('|')}`}
         aria-label={ariaLabel}
         echarts={echarts}
         style={{ height: '100%', width: '100%' }}
         option={option}
         notMerge
-        lazyUpdate
         onEvents={onNodeClick ? {
           click: (params: { seriesType?: string; dataType?: string; name?: string }) => {
             if (
@@ -2598,34 +2599,57 @@ export function TopicTopologyGraph({
   showNodeLabels?: boolean;
 }) {
   return (
-    <svg className="taf-api-topology-svg" viewBox="0 0 100 100" preserveAspectRatio="none" role="img" aria-label={ariaLabel}>
-      <defs>
-        <filter id="taf-api-topology-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="0.8" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
-        <marker id="taf-api-topology-arrow" markerWidth="4" markerHeight="4" refX="3" refY="2" orient="auto"><path d="M 0 0 L 4 2 L 0 4 z" fill="rgba(127, 212, 255, 0.76)" /></marker>
-      </defs>
-      <g className="taf-api-topology-svg__links">
-        {links.map((link) => {
-          const source = nodes.find((node) => node.id === link.source);
-          const target = nodes.find((node) => node.id === link.target);
-          if (!source || !target) return null;
-          const sourcePoint = topologySvgPoint(source);
-          const targetPoint = topologySvgPoint(target);
-          return <path key={`${link.source}-${link.target}`} d={`M ${sourcePoint.x} ${sourcePoint.y} L ${targetPoint.x} ${targetPoint.y}`} stroke={topicTopologyLinkColors[link.tone ?? 'info']} markerEnd={showNodes ? 'url(#taf-api-topology-arrow)' : undefined} />;
+    <div className="taf-api-topology" role="img" aria-label={ariaLabel}>
+      <svg className="taf-api-topology-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <filter id="taf-api-topology-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="0.8" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+          <marker id="taf-api-topology-arrow" markerWidth="4" markerHeight="4" refX="3" refY="2" orient="auto"><path d="M 0 0 L 4 2 L 0 4 z" fill="rgba(127, 212, 255, 0.76)" /></marker>
+        </defs>
+        <g className="taf-api-topology-svg__links">
+          {links.map((link) => {
+            const source = nodes.find((node) => node.id === link.source);
+            const target = nodes.find((node) => node.id === link.target);
+            if (!source || !target) return null;
+            const edge = topologySvgEdge(source, target);
+            return <path key={`${link.source}-${link.target}`} d={`M ${edge.source.x} ${edge.source.y} L ${edge.target.x} ${edge.target.y}`} stroke={topicTopologyLinkColors[link.tone ?? 'info']} markerEnd={showNodes ? 'url(#taf-api-topology-arrow)' : undefined} />;
+          })}
+        </g>
+        {!showNodeLabels && showNodes && nodes.map((node) => {
+          const point = topologySvgPoint(node);
+          const color = topicTopologyColors[node.tone];
+          return (
+            <g key={node.id}>
+              <circle cx={point.x} cy={point.y} r="2" fill={color} opacity="0.18" />
+              <circle cx={point.x} cy={point.y} r="0.72" fill={color} filter="url(#taf-api-topology-glow)" />
+            </g>
+          );
         })}
-      </g>
-      {showNodes && nodes.map((node) => {
+      </svg>
+      {showNodes && showNodeLabels && nodes.map((node) => {
         const point = topologySvgPoint(node);
-        const width = Math.min(16, Math.max(8, (node.size?.[0] ?? 110) / 10));
-        const height = Math.min(7, Math.max(3.5, (node.size?.[1] ?? 40) / 10));
         const color = topicTopologyColors[node.tone];
-        const nodeProps = onNodeClick ? { role: 'button', tabIndex: 0, onClick: () => onNodeClick(node.id), onKeyDown: (event: KeyboardEvent<SVGGElement>) => { if (event.key === 'Enter' || event.key === ' ') onNodeClick(node.id); } } : {};
+        const style = {
+          '--taf-topology-node-color': color,
+          left: `${point.x}%`,
+          top: `${point.y}%`,
+          width: `min(${node.size?.[0] ?? 104}px, 14%)`,
+          height: `min(${node.size?.[1] ?? 40}px, 14%)`,
+        } as CSSProperties;
         return (
-          <g key={node.id} className={`taf-api-topology-svg__node is-${node.tone} ${node.selected ? 'is-selected' : ''}`} {...nodeProps}>
-            {showNodeLabels ? <><rect x={point.x - width / 2} y={point.y - height / 2} width={width} height={height} rx="1.2" fill="rgba(3, 17, 28, 0.9)" stroke={color} /><text x={point.x} y={point.y - 0.35} textAnchor="middle" className="taf-api-topology-svg__title">{node.label}</text><text x={point.x} y={point.y + 1.45} textAnchor="middle" className="taf-api-topology-svg__detail">{node.detail}</text></> : <><circle cx={point.x} cy={point.y} r="2" fill={color} opacity="0.18" /><circle cx={point.x} cy={point.y} r="0.72" fill={color} filter="url(#taf-api-topology-glow)" /><title>{`${node.label} ${node.detail}`}</title></>}
-          </g>
+          <button
+            key={node.id}
+            type="button"
+            className={`taf-api-topology-node is-${node.tone} ${node.selected ? 'is-selected' : ''}`}
+            style={style}
+            title={node.title ?? `${node.label} ${node.detail}`}
+            onClick={() => onNodeClick?.(node.id)}
+          >
+            <strong>{node.label}</strong>
+            <span>{node.detail}</span>
+          </button>
         );
       })}
-    </svg>
+    </div>
   );
 }
 
@@ -2633,6 +2657,27 @@ const topologySvgPoint = (node: TopicTopologyNode) => ({
   x: Math.max(2, Math.min(98, node.x)),
   y: Math.max(2, Math.min(98, node.y)),
 });
+
+const topologyNodeHalfSize = (node: TopicTopologyNode) => ({
+  x: Math.min(7, Math.max(4, (node.size?.[0] ?? 104) / 20)),
+  y: Math.min(5.5, Math.max(2.2, (node.size?.[1] ?? 40) / 20)),
+});
+
+const topologySvgEdge = (source: TopicTopologyNode, target: TopicTopologyNode) => {
+  const sourcePoint = topologySvgPoint(source);
+  const targetPoint = topologySvgPoint(target);
+  const dx = targetPoint.x - sourcePoint.x;
+  const dy = targetPoint.y - sourcePoint.y;
+  if (!dx && !dy) return { source: sourcePoint, target: targetPoint };
+  const sourceHalf = topologyNodeHalfSize(source);
+  const targetHalf = topologyNodeHalfSize(target);
+  const sourceScale = 1 / Math.max(Math.abs(dx) / sourceHalf.x, Math.abs(dy) / sourceHalf.y);
+  const targetScale = 1 / Math.max(Math.abs(dx) / targetHalf.x, Math.abs(dy) / targetHalf.y);
+  return {
+    source: { x: sourcePoint.x + dx * sourceScale, y: sourcePoint.y + dy * sourceScale },
+    target: { x: targetPoint.x - dx * targetScale, y: targetPoint.y - dy * targetScale },
+  };
+};
 
 export function ExfilBarChart({
   items,

@@ -22,16 +22,17 @@ import {
   UserSwitchOutlined,
   WifiOutlined,
 } from '@ant-design/icons';
-import { useQuery } from '@tanstack/react-query';
-import { Alert, Button, Empty, Progress, Space, Table, Tooltip } from 'antd';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { Alert, Button, Checkbox, Empty, message, Modal, Progress, Select, Space, Table, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { MetricTile } from '@/components/MetricTile';
-import { OverlayContractHost, type OverlayContract } from '@/components/OverlayContractHost';
+import { DataQualityDonutChart } from '@/components/charts';
 import { StatusTag } from '@/components/StatusTag';
 import { WorkPanel } from '@/components/WorkPanel';
 import type { NavRoute } from '@/routes/routeManifest';
+import { submitCampaignAction } from '@/services/campaignActionApi';
 import {
   fetchCampaignDetailSnapshot,
   type CampaignDetailAccountRow,
@@ -84,21 +85,15 @@ const evidenceColumns: ColumnsType<CampaignDetailEvidenceSummaryRow> = [
   { title: '状态', dataIndex: '状态', key: '状态', width: 86, render: (value) => <StatusTag value={value} /> },
 ];
 
-const campaignDetailOverlays: OverlayContract[] = [
-  {
-    id: 'modal-campaign-report-export',
-    title: '战役报告导出',
-    kind: 'Modal',
-    actionLabel: '报告导出',
-    description: '导出战役阶段、关联告警、影响资产、证据包和复盘结论。',
-    impact: '生成可审计报告材料并绑定当前战役 ID。',
-  },
-];
-
 export function CampaignDetailPage({ route }: { route: NavRoute }) {
   const params = useParams();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const visualPageId = searchParams.get('__codex_page_id') ?? '';
+  const [reportOpen, setReportOpen] = useState(visualPageId === 'modal-campaign-report-export');
+  const [impactOpen, setImpactOpen] = useState(
+    visualPageId.startsWith('campaign-detail-impact-') || searchParams.has('impact'),
+  );
   const visualBreakdownMode = isVisualBreakdownMode();
   const campaignId = params.campaignId ?? 'APT-20260619-001';
   const activeImpact = resolveCampaignImpact(searchParams.get('impact') || searchParams.get('tab'));
@@ -107,73 +102,65 @@ export function CampaignDetailPage({ route }: { route: NavRoute }) {
     queryFn: () => fetchCampaignDetailSnapshot(campaignId),
     refetchInterval: visualBreakdownMode ? false : 30_000,
   });
+  const actionMutation = useMutation({
+    mutationFn: submitCampaignAction,
+    onSuccess: (result) => message.success(`操作已完成并写入审计：${result.jobId}`),
+    onError: (mutationError) => message.error(mutationError instanceof Error ? mutationError.message : '战役操作提交失败'),
+  });
 
   const snapshot = data ?? emptySnapshot(campaignId);
+  const runAction = (
+    actionId: Parameters<typeof submitCampaignAction>[0]['actionId'],
+    target: string,
+    metadata?: Record<string, unknown>,
+  ) => actionMutation.mutateAsync({ actionId, campaignId, target, metadata });
+  const exportCampaignPackage = async () => {
+    const receipt = await runAction('campaign-export', '导出战役包', {
+      format: 'json',
+      sections: ['profile', 'attack_phases', 'alerts', 'impact', 'evidence', 'response', 'review'],
+    });
+    const blob = new Blob([JSON.stringify({ campaign: snapshot, receipt }, null, 2)], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `${snapshot.campaignId}-bundle.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
   const changeImpact = (nextImpact: string) => {
     setSearchParams((current) => {
       const next = new URLSearchParams(current);
       next.set('impact', nextImpact);
       return next;
     });
+    setImpactOpen(true);
+  };
+  useEffect(() => {
+    setImpactOpen(visualPageId.startsWith('campaign-detail-impact-') || searchParams.has('impact'));
+  }, [searchParams, visualPageId]);
+  const closeImpact = () => {
+    setImpactOpen(false);
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      next.delete('impact');
+      return next;
+    });
   };
 
-  if (visualBreakdownMode && activeImpact === 'account') {
-    return (
-      <div className="taf-page taf-campaign-detail-page taf-campaign-impact-account-visual-page">
-        <CampaignImpactAccountPanel snapshot={snapshot} activeImpact={activeImpact} onImpactChange={changeImpact} focus />
-      </div>
-    );
-  }
-
-  if (visualBreakdownMode && activeImpact === 'business-system') {
-    return (
-      <div className="taf-page taf-campaign-detail-page taf-campaign-impact-account-visual-page">
-        <CampaignImpactBusinessSystemPanel snapshot={snapshot} activeImpact={activeImpact} onImpactChange={changeImpact} focus />
-      </div>
-    );
-  }
-
-  if (visualBreakdownMode && activeImpact === 'service') {
-    return (
-      <div className="taf-page taf-campaign-detail-page taf-campaign-impact-account-visual-page">
-        <CampaignImpactServicePanel snapshot={snapshot} activeImpact={activeImpact} onImpactChange={changeImpact} focus />
-      </div>
-    );
-  }
-
-  if (visualBreakdownMode && activeImpact === 'campus') {
-    return (
-      <div className="taf-page taf-campaign-detail-page taf-campaign-impact-account-visual-page">
-        <CampaignImpactCampusPanel snapshot={snapshot} activeImpact={activeImpact} onImpactChange={changeImpact} focus />
-      </div>
-    );
-  }
-
-  if (visualBreakdownMode && activeImpact === 'department') {
-    return (
-      <div className="taf-page taf-campaign-detail-page taf-campaign-impact-account-visual-page">
-        <CampaignImpactDepartmentPanel snapshot={snapshot} activeImpact={activeImpact} onImpactChange={changeImpact} focus />
-      </div>
-    );
-  }
-
   return (
-    <div className="taf-page taf-campaign-detail-page">
+    <div className="taf-page taf-campaign-detail-page is-redesigned" data-page-id="campaign-detail">
       <header className="taf-campaign-detail-titlebar">
         <div className="taf-campaign-detail-titlebar__page-title">
-          <h1 title={route.page.title}>{route.page.title}</h1>
+          <h1 title={route.page.title}>威胁分析 / 战役列表 / {route.page.title}</h1>
         </div>
         <Space size={8}>
-          <Button size="small" icon={<CloudDownloadOutlined />}>导出战役包</Button>
-          <Button size="small" type="primary" icon={<FileDoneOutlined />}>生成战役报告</Button>
-          <Button size="small" icon={<AuditOutlined />}>写入审计</Button>
+          <Button size="small" icon={<ReloadOutlined />} loading={isLoading} onClick={() => void refetch()}>刷新</Button>
+          <Button size="small" icon={<CloudDownloadOutlined />} loading={actionMutation.isPending} onClick={() => void exportCampaignPackage()}>导出战役包</Button>
+          <Button size="small" type="primary" icon={<FileDoneOutlined />} onClick={() => setReportOpen(true)}>生成战役报告</Button>
+          <Button size="small" icon={<AuditOutlined />} loading={actionMutation.isPending} onClick={() => void runAction('campaign-context-action', '写入审计', { event: 'CAMPAIGN_DETAIL_AUDIT_REQUESTED' })}>写入审计</Button>
           <Button size="small" icon={<MoreOutlined />}>更多</Button>
-          <OverlayContractHost overlays={campaignDetailOverlays} compact />
           <Tooltip title="返回战役列表">
             <Button size="small" icon={<ArrowLeftOutlined />} aria-label="返回战役列表" onClick={() => navigate('/campaigns')} />
-          </Tooltip>
-          <Tooltip title="刷新战役详情">
-            <Button size="small" icon={<ReloadOutlined />} onClick={() => void refetch()} />
           </Tooltip>
         </Space>
       </header>
@@ -194,9 +181,8 @@ export function CampaignDetailPage({ route }: { route: NavRoute }) {
             <FlagOutlined />
           </div>
           <div>
-            <span>{snapshot.campaignId}</span>
-            <h2>{snapshot.title}</h2>
-            <p>{snapshot.summary}</p>
+            <h2>{snapshot.campaignId} <StatusTag value={snapshot.status} /></h2>
+            <p>{snapshot.title}</p>
             <div className="taf-campaign-detail-tags">
               {snapshot.tags.map((tag) => <b key={tag}>{tag}</b>)}
             </div>
@@ -207,43 +193,38 @@ export function CampaignDetailPage({ route }: { route: NavRoute }) {
           <strong>{snapshot.currentPhase}</strong>
         </div>
         <div className="taf-campaign-detail-profile-facts">
-          {snapshot.profileFacts.map((item) => (
+          {snapshot.profileFacts.filter((item) => !['战役 ID', '风险评分'].includes(item.label)).map((item) => (
             <ProfileFact key={item.label} label={item.label} value={item.value} status={item.status} />
           ))}
         </div>
+        <Button size="small" className="taf-campaign-detail-profile-edit" onClick={() => void runAction('campaign-context-action', '编辑战役信息', { intent: 'edit_profile' })}>编辑信息</Button>
       </section>
-
-      <div className="taf-campaign-detail-metrics">
-        {snapshot.metrics.map((metric) => <MetricTile key={metric.label} metric={metric} />)}
-      </div>
-
-      <WorkPanel title="攻击时间轴（从发现到闭环）" className="taf-campaign-detail-phase-panel" extra={<Link to="/attack-chains">下钻攻击链</Link>}>
-        <div className="taf-campaign-detail-phase-cards">
-          {snapshot.phases.map((phase, index) => (
-            <div key={phase.phase} className={`taf-campaign-detail-phase-card is-${phase.status}`}>
-              <header>
-                <i>{phaseIcon(index)}</i>
-                <span>{phase.time}</span>
-              </header>
-              <strong>{phase.phase}</strong>
-              <p>{phase.summary}</p>
-              <footer>
-                <b>{phase.alertCount} 告警</b>
-                <b>{phase.evidenceCount} 证据</b>
-              </footer>
-            </div>
-          ))}
-        </div>
-        <div className="taf-campaign-detail-phase-track">
-          {snapshot.phases.map((phase) => <span key={phase.phase} className={`taf-campaign-detail-phase-dot is-${phase.status}`} />)}
-        </div>
-      </WorkPanel>
 
       <div className="taf-campaign-detail-grid">
         <main className="taf-campaign-detail-main">
-          <WorkPanel title={`关联告警（${snapshot.alertCount}）`} className="taf-campaign-detail-alerts" extra={<Link to="/alerts">查看告警中心</Link>}>
+          <WorkPanel title="攻击时间轴（基于 ATT&CK 阶段）" className="taf-campaign-detail-phase-panel" extra={<Link to={`/attack-chains?campaign=${encodeURIComponent(snapshot.campaignId)}`}>查看完整时间线</Link>}>
+            <div className="taf-campaign-detail-phase-cards">
+              {snapshot.phases.map((phase, index) => (
+                <div key={phase.phase} className={`taf-campaign-detail-phase-card is-${phase.status}`}>
+                  <header><i>{phaseIcon(index)}</i><strong>{phase.phase}</strong></header>
+                  <span>{phase.time}</span>
+                  <footer><b>{phase.alertCount} 告警</b><b>{phase.evidenceCount} 证据</b></footer>
+                </div>
+              ))}
+            </div>
+            <div className="taf-campaign-detail-phase-track">
+              {snapshot.phases.map((phase) => <span key={phase.phase} className={`taf-campaign-detail-phase-dot is-${phase.status}`} />)}
+            </div>
+            <div className="taf-campaign-detail-phase-legend">
+              <span className="is-risk">告警事件</span><span className="is-info">证据生成</span>
+              <span className="is-ok">处置动作</span><span className="is-warn">关键节点</span>
+            </div>
+          </WorkPanel>
+
+          <div className="taf-campaign-detail-bottom-grid">
+          <WorkPanel title={`关联告警（${snapshot.alertCount}）`} className="taf-campaign-detail-alerts" extra={<Link to="/alerts">查看全部告警</Link>}>
             <div className="taf-campaign-detail-alert-filter">
-              {['全部', '高危', '横向移动', 'C2通信', '数据外传'].map((label) => <button key={label} type="button">{label}</button>)}
+              {['全部', '高危', '中危', '低危'].map((label) => <button key={label} type="button">{label}</button>)}
             </div>
             <Table
               rowKey={(row) => row.告警ID}
@@ -258,37 +239,23 @@ export function CampaignDetailPage({ route }: { route: NavRoute }) {
             />
           </WorkPanel>
 
-          <div className="taf-campaign-detail-lower">
-            <WorkPanel title="影响范围" className="taf-campaign-detail-impact-panel" extra={<Link to="/assets">资产台账</Link>}>
+            <WorkPanel title="影响范围" className="taf-campaign-detail-impact-panel" extra={<Link to="/assets">查看全部资产</Link>}>
               <ImpactTabs snapshot={snapshot} activeImpact={activeImpact} onImpactChange={changeImpact} />
-              {activeImpact === 'account' ? (
-                <CampaignImpactAccountContent snapshot={snapshot} />
-              ) : activeImpact === 'business-system' ? (
-                <CampaignImpactBusinessSystemContent snapshot={snapshot} />
-              ) : activeImpact === 'service' ? (
-                <CampaignImpactServiceContent snapshot={snapshot} />
-              ) : activeImpact === 'campus' ? (
-                <CampaignImpactCampusContent snapshot={snapshot} />
-              ) : activeImpact === 'department' ? (
-                <CampaignImpactDepartmentContent snapshot={snapshot} />
-              ) : (
-                <Table
-                  rowKey={(row) => row.资产}
-                  size="small"
-                  pagination={false}
-                  columns={assetColumns}
-                  dataSource={snapshot.topAssets}
-                  rowClassName={() => 'taf-campaign-detail-top-asset'}
-                  locale={{
-                    emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无影响资产" />,
-                  }}
-                />
-              )}
+              <CampaignImpactAssetCompact snapshot={snapshot} />
             </WorkPanel>
 
-            <WorkPanel title="证据包" className="taf-campaign-detail-evidence-panel" extra={<Link to="/forensics">取证分析</Link>}>
+            <WorkPanel title="证据包完整度" className="taf-campaign-detail-evidence-panel" extra={<Link to="/forensics">查看证据中心</Link>}>
               <div className="taf-campaign-detail-evidence-overview">
-                <Progress type="circle" percent={snapshot.evidenceCompleteness} size={62} strokeColor="#36d66b" />
+                <div className="taf-campaign-detail-evidence-donut">
+                  <DataQualityDonutChart
+                    ariaLabel="战役证据包完整度"
+                    rows={[
+                      { label: '完整', value: snapshot.evidenceCompleteness, color: '#42bfff' },
+                      { label: '待补齐', value: Math.max(0, 100 - snapshot.evidenceCompleteness), color: 'rgba(56,151,201,0.18)' },
+                    ]}
+                  />
+                  <strong>{snapshot.evidenceCompletenessAvailable || visualBreakdownMode ? `${snapshot.evidenceCompleteness}%` : '--'}</strong>
+                </div>
                 <div>
                   {snapshot.evidenceChecks.map((item) => (
                     <span key={item.label} className={`taf-campaign-detail-evidence-check is-${item.status}`}>
@@ -314,7 +281,7 @@ export function CampaignDetailPage({ route }: { route: NavRoute }) {
         </main>
 
         <aside className="taf-campaign-detail-rail">
-          <WorkPanel title="处置流程" extra={<Link to="/playbooks">SOAR 剧本</Link>}>
+          <WorkPanel title="处置流程" className="taf-campaign-detail-response-panel">
             <div className="taf-campaign-detail-response-flow">
               {snapshot.responseFlow.map((step) => (
                 <div key={step.title} className={`taf-campaign-detail-response-step is-${step.status}`}>
@@ -324,6 +291,7 @@ export function CampaignDetailPage({ route }: { route: NavRoute }) {
                 </div>
               ))}
             </div>
+            <Link className="taf-campaign-detail-panel-more" to={`/playbooks?campaign=${encodeURIComponent(snapshot.campaignId)}`}>查看全部处置记录 &gt;</Link>
           </WorkPanel>
 
           <WorkPanel title="处置动作" className="taf-campaign-detail-actions-panel">
@@ -350,15 +318,262 @@ export function CampaignDetailPage({ route }: { route: NavRoute }) {
               ))}
             </div>
             <div className="taf-campaign-detail-review-links">
-              <Link to="/graph">实体图谱</Link>
-              <Link to="/forensics">证据包</Link>
-              <Link to="/mlops">样本回流</Link>
+              <Link to={`/campaigns/${encodeURIComponent(snapshot.campaignId)}?view=review`}>查看复盘报告 &gt;</Link>
             </div>
           </WorkPanel>
         </aside>
       </div>
+      <CampaignReportModal
+        open={reportOpen}
+        snapshot={snapshot}
+        pending={actionMutation.isPending}
+        onCancel={() => setReportOpen(false)}
+        onSubmit={async (payload) => {
+          await runAction('campaign-report-generate', '生成战役报告', payload);
+          setReportOpen(false);
+        }}
+      />
+      <Modal
+        className="taf-campaign-impact-modal"
+        open={impactOpen}
+        width="min(1040px, calc(100dvw - 96px))"
+        centered
+        title={null}
+        footer={null}
+        styles={{ body: { padding: 0 } }}
+        onCancel={closeImpact}
+      >
+        <CampaignImpactModalContent
+          snapshot={snapshot}
+          activeImpact={activeImpact}
+          onImpactChange={changeImpact}
+        />
+      </Modal>
     </div>
   );
+}
+
+export function CampaignImpactModalContent({
+  snapshot,
+  activeImpact,
+  onImpactChange,
+}: {
+  snapshot: CampaignDetailSnapshot;
+  activeImpact: string;
+  onImpactChange: (impact: string) => void;
+}) {
+  if (activeImpact === 'account') {
+    return <CampaignImpactAccountPanel snapshot={snapshot} activeImpact={activeImpact} onImpactChange={onImpactChange} focus />;
+  }
+  if (activeImpact === 'business-system') {
+    return <CampaignImpactBusinessSystemPanel snapshot={snapshot} activeImpact={activeImpact} onImpactChange={onImpactChange} focus />;
+  }
+  if (activeImpact === 'service') {
+    return <CampaignImpactServicePanel snapshot={snapshot} activeImpact={activeImpact} onImpactChange={onImpactChange} focus />;
+  }
+  if (activeImpact === 'campus') {
+    return <CampaignImpactCampusPanel snapshot={snapshot} activeImpact={activeImpact} onImpactChange={onImpactChange} focus />;
+  }
+  if (activeImpact === 'department') {
+    return <CampaignImpactDepartmentPanel snapshot={snapshot} activeImpact={activeImpact} onImpactChange={onImpactChange} focus />;
+  }
+  return (
+    <section className="taf-campaign-impact-account-focus taf-campaign-impact-asset-focus" data-page-id="campaign-detail-impact-asset">
+      <header><h1>影响范围</h1></header>
+      <ImpactTabs snapshot={snapshot} activeImpact={activeImpact} onImpactChange={onImpactChange} />
+      <CampaignImpactAssetCompact snapshot={snapshot} />
+    </section>
+  );
+}
+
+function CampaignImpactAssetCompact({ snapshot }: { snapshot: CampaignDetailSnapshot }) {
+  const high = snapshot.topAssets.filter((row) => row.风险.includes('高')).length;
+  const medium = snapshot.topAssets.filter((row) => row.风险.includes('中')).length;
+  const low = Math.max(0, snapshot.assetCount - high - medium);
+  const total = Math.max(1, snapshot.assetCount);
+  return (
+    <div className="taf-campaign-detail-impact-compact">
+      <div className="taf-campaign-detail-impact-chart">
+        <DataQualityDonutChart
+          ariaLabel="战役影响资产风险分布"
+          rows={[
+            { label: '高风险', value: high, color: '#ff4d4f' },
+            { label: '中风险', value: medium, color: '#faad14' },
+            { label: '低风险', value: low, color: '#75c743' },
+          ]}
+        />
+        <strong>{snapshot.assetCount}</strong>
+        <span>受影响资产</span>
+      </div>
+      <div className="taf-campaign-detail-impact-risk-list">
+        {[
+          ['高风险', high, '#ff4d4f'],
+          ['中风险', medium, '#faad14'],
+          ['低风险', low, '#75c743'],
+        ].map(([label, value, color]) => (
+          <span key={String(label)}>
+            <i style={{ backgroundColor: String(color) }} />
+            <b>{label}</b><strong>{value}</strong><em>{((Number(value) / total) * 100).toFixed(1)}%</em>
+          </span>
+        ))}
+      </div>
+      <Table
+        rowKey={(row) => row.资产}
+        size="small"
+        pagination={false}
+        columns={assetColumns}
+        dataSource={snapshot.topAssets}
+        rowClassName={() => 'taf-campaign-detail-top-asset'}
+        locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无影响资产" /> }}
+      />
+    </div>
+  );
+}
+
+function CampaignReportModal({
+  open,
+  snapshot,
+  pending,
+  onCancel,
+  onSubmit,
+}: {
+  open: boolean;
+  snapshot: CampaignDetailSnapshot;
+  pending: boolean;
+  onCancel: () => void;
+  onSubmit: (payload: Record<string, unknown>) => Promise<void>;
+}) {
+  const [selectedPhases, setSelectedPhases] = useState<string[] | null>(null);
+  const [rootCause, setRootCause] = useState<string>();
+  const [blocker, setBlocker] = useState<string>();
+  const [residualRisk, setResidualRisk] = useState('中风险');
+  const [recommendation, setRecommendation] = useState<string>();
+  const [format, setFormat] = useState('PDF');
+  const [includeAttachments, setIncludeAttachments] = useState(true);
+  const phases = snapshot.phases.map((phase) => phase.phase);
+  const effectiveSelectedPhases = selectedPhases ?? phases;
+  const readyEvidence = snapshot.evidenceSummaryRows.filter((row) => row.状态.includes('完整') || row.状态.includes('就绪')).length;
+  useEffect(() => {
+    if (!open) return;
+    setSelectedPhases(phases);
+    setRootCause(undefined);
+    setBlocker(undefined);
+    setResidualRisk('中风险');
+    setRecommendation(undefined);
+    setFormat('PDF');
+    setIncludeAttachments(true);
+  }, [open, snapshot.campaignId]);
+  return (
+    <Modal
+      className="taf-campaign-report-modal"
+      width="min(1200px, calc(100dvw - 32px))"
+      open={open}
+      centered
+      title={null}
+      footer={null}
+      onCancel={onCancel}
+      destroyOnClose={false}
+    >
+      <header className="taf-campaign-report-modal__header">
+        <h2>生成战役报告</h2>
+        <p>战役详情 / {snapshot.campaignId} / <StatusTag value={snapshot.status} /></p>
+        <span>Trace ID：{snapshot.campaignId.replace(/[^A-Za-z0-9]/g, '').slice(-16) || '--'}</span>
+      </header>
+      <div className="taf-campaign-report-modal__metrics">
+        <ReportMetric icon={<NodeIndexOutlined />} label="战役阶段" value={`${snapshot.phases.length} 个阶段`} tone="info" />
+        <ReportMetric icon={<SafetyOutlined />} label="关联告警" value={`${snapshot.alertCount} 条`} tone="risk" />
+        <ReportMetric icon={<DatabaseOutlined />} label="影响资产" value={`${snapshot.assetCount} 个`} tone="warn" />
+        <ReportMetric icon={<SafetyCertificateOutlined />} label="证据完整度" value={snapshot.evidenceCompletenessAvailable ? `${snapshot.evidenceCompleteness}%` : '--'} tone="ok" />
+        <ReportMetric icon={<UserSwitchOutlined />} label="审批状态" value="需复核" tone="warn" />
+      </div>
+      <div className="taf-campaign-report-modal__body">
+        <section className="taf-campaign-report-scope">
+          <h3>报告范围</h3>
+          <div className="taf-campaign-report-scope__title"><b>攻击阶段（已选 {effectiveSelectedPhases.length}/{phases.length}）</b><button type="button" onClick={() => setSelectedPhases(phases)}>全选</button></div>
+          <Checkbox.Group value={effectiveSelectedPhases} onChange={(values) => setSelectedPhases(values.map(String))}>
+            {phases.map((phase) => <Checkbox key={phase} value={phase}>{phase}</Checkbox>)}
+          </Checkbox.Group>
+          <label><span>时间窗口</span><strong>{snapshot.firstSeen}　~　{snapshot.lastUpdated}</strong></label>
+          <label><span>资产范围</span><strong>所有受影响资产（{snapshot.assetCount}）</strong></label>
+          <label><span>地域范围</span><strong>{snapshot.impactCampus.total ? `${snapshot.impactCampus.total} 个校区` : '未提供'}</strong></label>
+          <p>将包含选定阶段内的关键事件、证据与处置记录。</p>
+        </section>
+        <section className="taf-campaign-report-evidence">
+          <h3>证据包 <span>总计 {snapshot.evidenceSummaryRows.length} 类</span></h3>
+          <Table
+            size="small"
+            pagination={false}
+            rowKey="证据类型"
+            dataSource={snapshot.evidenceSummaryRows}
+            columns={[
+              { title: '类型', dataIndex: '证据类型' },
+              { title: '数量', dataIndex: '文件记录' },
+              { title: '完整度', dataIndex: '完整度' },
+              { title: 'Hash 校验', render: (_, row) => <span className={row.状态.includes('完整') || row.状态.includes('就绪') ? 'is-ok' : ''}>{row.状态.includes('完整') || row.状态.includes('就绪') ? '已登记' : '未提供'}</span> },
+              { title: '状态', dataIndex: '状态', render: (value) => <StatusTag value={value} /> },
+            ]}
+            locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无真实证据包数据" /> }}
+          />
+          <Alert type="warning" showIcon message={`证据包已就绪 ${readyEvidence}/${snapshot.evidenceSummaryRows.length} 类，导出结果受权限与审批控制。`} />
+        </section>
+        <section className="taf-campaign-report-review">
+          <h3>复盘结论</h3>
+          <ReportSelect label="根因分析" value={rootCause} onChange={setRootCause} options={['钓鱼邮件', '凭证泄露', '弱口令', '供应链风险']} />
+          <ReportSelect label="关键阻断点" value={blocker} onChange={setBlocker} options={['入口封禁', '账号吊销', '网络隔离', '域名阻断']} />
+          <ReportSelect label="遗留风险" value={residualRisk} onChange={setResidualRisk} options={['高风险', '中风险', '低风险']} />
+          <ReportSelect label="整改建议" value={recommendation} onChange={setRecommendation} options={['加强终端检测', '完善账号基线', '收紧出口访问', '补齐证据采集']} />
+          <label className="taf-campaign-report-format"><span>报告模板</span><Select value="战役复盘报告（标准版）" options={[{ value: '战役复盘报告（标准版）' }]} /></label>
+          <div className="taf-campaign-report-format-buttons">
+            {['PDF', 'Word'].map((item) => <button type="button" key={item} className={format === item ? 'is-active' : ''} onClick={() => setFormat(item)}>{item}</button>)}
+          </div>
+          <Checkbox checked={includeAttachments} onChange={(event) => setIncludeAttachments(event.target.checked)}>包含附件（原始证据清单）</Checkbox>
+        </section>
+      </div>
+      <footer className="taf-campaign-report-modal__footer">
+        <Alert type="warning" showIcon message="需审批：安全负责人复核通过后，方可导出并写入审计。" description={`当前审批人：${snapshot.assignee || '未分配'}`} />
+        <Space>
+          <Button onClick={onCancel}>取消</Button>
+          <Button onClick={() => message.info('报告预览将在生成任务完成后开放')}>预览报告</Button>
+          <Button
+            type="primary"
+            loading={pending}
+            disabled={!effectiveSelectedPhases.length}
+            onClick={() => void onSubmit({
+              format: format.toLowerCase(),
+              phases: effectiveSelectedPhases,
+              sections: effectiveSelectedPhases,
+              evidence_count: snapshot.evidenceSummaryRows.length,
+              root_cause: rootCause,
+              key_blocker: blocker,
+              residual_risk: residualRisk,
+              recommendation,
+              include_attachments: includeAttachments,
+            })}
+          >
+            导出并写入审计
+          </Button>
+        </Space>
+      </footer>
+    </Modal>
+  );
+}
+
+function ReportMetric({ icon, label, value, tone }: { icon: ReactNode; label: string; value: string; tone: string }) {
+  return <span className={`is-${tone}`}><i>{icon}</i><b>{label}</b><strong>{value}</strong></span>;
+}
+
+function ReportSelect({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value?: string;
+  onChange: (value: string) => void;
+  options: string[];
+}) {
+  return <label><span>{label}</span><Select placeholder="未选择" value={value} onChange={onChange} options={options.map((item) => ({ value: item }))} /></label>;
 }
 
 function ProfileFact({ label, value, status = false }: { label: string; value: string; status?: boolean }) {
@@ -594,16 +809,19 @@ function CampaignImpactRiskSummary({
   unit: string;
   breakdown: CampaignDetailImpactRiskRow[];
 }) {
-  const highDeg = riskDegrees(breakdown[0], total);
-  const mediumDeg = highDeg + riskDegrees(breakdown[1], total);
-  const donutStyle = {
-    '--taf-impact-high-deg': `${highDeg}deg`,
-    '--taf-impact-medium-deg': `${mediumDeg}deg`,
-  } as CSSProperties;
+  const palette = ['#ff3b3f', '#ffad18', '#75c743'];
   return (
     <div className="taf-campaign-impact-account-summary">
-      <div className="taf-campaign-impact-account-donut" style={donutStyle} aria-label={`${total} ${unit}`}>
-        <div><strong>{total}</strong><span>{unit}</span></div>
+      <div className="taf-campaign-impact-account-donut" aria-label={`${total} ${unit}`}>
+        <DataQualityDonutChart
+          ariaLabel={`影响范围风险分布，共 ${total} ${unit}`}
+          rows={breakdown.map((item, index) => ({
+            label: item.label,
+            value: item.count,
+            color: palette[index] ?? '#42bfff',
+          }))}
+        />
+        <div className="taf-campaign-impact-account-donut__label"><strong>{total}</strong><span>{unit}</span></div>
       </div>
       <div className="taf-campaign-impact-account-risk-list">
         {breakdown.map((item) => <RiskBreakdownRow key={item.label} item={item} />)}
@@ -790,11 +1008,6 @@ function resolveCampaignImpact(value: string | null) {
   return 'asset';
 }
 
-function riskDegrees(item: CampaignDetailImpactRiskRow | undefined, total: number) {
-  if (!item || total <= 0) return 0;
-  return Math.max(0, Math.min(360, (item.count / total) * 360));
-}
-
 function priorityClass(priority: string) {
   if (priority === 'P0') return 'is-risk';
   if (priority === 'P2') return 'is-ok';
@@ -864,6 +1077,8 @@ function emptySnapshot(campaignId: string): CampaignDetailSnapshot {
     evidenceCompleteness: 0,
     evidenceCompletenessAvailable: false,
     phaseDataBacked: false,
+    evidenceRail: [],
+    statusTransitions: [],
     evidenceChecks: [],
     evidenceSummaryRows: [],
     responseFlow: [],

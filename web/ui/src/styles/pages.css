@@ -8734,6 +8734,454 @@
   }
 }
 
+/* Campaign detail drawer: dedicated wide three-column contract. */
+.taf-campaign-detail-drawer .ant-modal-content {
+  max-height: min(860px, calc(100dvh - 96px));
+  padding: 0;
+  overflow: hidden;
+  background: linear-gradient(135deg, #041523, #020b13);
+  border: 1px solid rgba(42, 164, 235, 0.46);
+  border-radius: 8px;
+}
+
+.taf-campaign-detail-drawer .ant-modal-body {
+  max-height: min(858px, calc(100dvh - 98px));
+  overflow: auto;
+  padding: 0;
+}
+
+.taf-campaign-detail-drawer__content {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 22px;
+  color: #c8dbe7;
+}
+
+.taf-campaign-detail-drawer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.taf-campaign-detail-drawer__header h2 {
+  margin: 0;
+  color: #eef9ff;
+  font-size: 24px;
+}
+
+.taf-campaign-detail-drawer__header p {
+  margin: 5px 0 0;
+  color: #c5d5df;
+}
+
+.taf-campaign-detail-drawer__header b {
+  padding: 3px 16px;
+  color: #48c1ff;
+  border: 1px solid #168ac8;
+  border-radius: 18px;
+}
+
+.taf-campaign-detail-drawer__summary {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  padding: 8px;
+  background: rgba(7, 34, 55, 0.74);
+  border: 1px solid rgba(56, 151, 201, 0.34);
+}
+
+.taf-campaign-detail-drawer__summary > span {
+  min-height: 66px;
+  display: grid;
+  grid-template-columns: 46px 1fr;
+  grid-template-rows: 1fr 1fr;
+  align-items: end;
+  padding: 8px 16px;
+  border-right: 1px solid rgba(56, 151, 201, 0.23);
+}
+
+.taf-campaign-detail-drawer__summary > span:last-child { border-right: 0; }
+.taf-campaign-detail-drawer__summary > span i { grid-row: 1 / 3; align-self: center; color: #2fb8ff; font-size: 25px; }
+.taf-campaign-detail-drawer__summary > span b { color: #9eb5c4; font-size: 11px; }
+.taf-campaign-detail-drawer__summary > span strong { overflow: hidden; color: #eaf7ff; font-size: 14px; text-overflow: ellipsis; white-space: nowrap; }
+
+.taf-campaign-detail-drawer__workspace {
+  min-height: 0;
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: minmax(220px, 0.75fr) minmax(430px, 1.45fr) minmax(240px, 0.82fr);
+  gap: 10px;
+}
+
+.taf-campaign-detail-drawer__workspace > aside,
+.taf-campaign-detail-drawer__workspace > main {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.taf-campaign-detail-drawer__workspace > aside:first-child { grid-template-rows: 226px 1fr; }
+.taf-campaign-detail-drawer__workspace > main { grid-template-rows: 360px 1fr; }
+.taf-campaign-detail-drawer__workspace > aside:last-child { grid-template-rows: 220px 220px 1fr; }
+
+.taf-campaign-detail-drawer__section {
+  min-width: 0;
+  min-height: 0;
+  padding: 12px 14px;
+  background: rgba(4, 25, 40, 0.66);
+  border: 1px solid rgba(56, 151, 201, 0.34);
+  border-radius: 4px;
+}
+
+.taf-campaign-detail-drawer__section h3 {
+  margin: -12px -14px 10px;
+  padding: 10px 14px;
+  color: #e7f5fd;
+  font-size: 14px;
+  border-bottom: 1px solid rgba(56, 151, 201, 0.24);
+}
+
+.taf-campaign-detail-drawer__reasons {
+  display: grid;
+  gap: 6px;
+}
+
+.taf-campaign-detail-drawer__reasons span {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  border: 1px solid rgba(56, 151, 201, 0.28);
+}
+
+.taf-campaign-detail-drawer__reasons b { font-weight: 500; }
+.taf-campaign-detail-drawer__reasons strong { color: #eef9ff; }
+
+.taf-campaign-detail-drawer__phases {
+  display: grid;
+  gap: 3px;
+}
+
+.taf-campaign-detail-drawer__phases span {
+  min-height: 44px;
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  align-items: center;
+  padding: 0 8px;
+  color: #61cb89;
+  border-left: 1px dashed currentColor;
+}
+
+.taf-campaign-detail-drawer__phases span i {
+  width: 14px;
+  height: 14px;
+  background: currentColor;
+  border: 3px solid #062033;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px currentColor;
+}
+
+.taf-campaign-detail-drawer__phases .is-warn { color: var(--ui-warning); }
+.taf-campaign-detail-drawer__phases .is-risk { color: var(--ui-danger); }
+.taf-campaign-detail-drawer__phases small { color: #94aebb; }
+
+.taf-campaign-detail-drawer__graph > div {
+  height: calc(100% - 30px);
+}
+
+.taf-campaign-detail-drawer__impact {
+  display: grid;
+  gap: 2px;
+}
+
+.taf-campaign-detail-drawer__impact span {
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+  border-bottom: 1px solid rgba(56, 151, 201, 0.16);
+}
+
+.taf-campaign-detail-drawer__suggestions {
+  display: grid;
+  gap: 9px;
+}
+
+.taf-campaign-detail-drawer__suggestions span,
+.taf-campaign-detail-drawer__suggestions button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 7px;
+  color: #d8e8f2;
+  text-align: left;
+  background: rgba(15, 65, 98, 0.22);
+  border: 1px solid rgba(56, 151, 201, 0.18);
+  border-radius: 3px;
+}
+
+.taf-campaign-detail-drawer__suggestions button { cursor: pointer; }
+
+.taf-campaign-detail-drawer__suggestions .anticon { color: var(--ui-warning); }
+
+.taf-campaign-detail-drawer__section dl {
+  display: grid;
+  grid-template-columns: 76px 1fr;
+  gap: 8px;
+  margin: 0;
+  font-size: 11px;
+}
+
+.taf-campaign-detail-drawer__section dt { color: #8199a8; }
+.taf-campaign-detail-drawer__section dd { margin: 0; color: #c7d9e4; }
+
+.taf-campaign-detail-drawer__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.taf-campaign-detail-drawer__footer .ant-alert {
+  flex: 1;
+  padding: 7px 12px;
+}
+
+@media (max-width: 1300px) {
+  .taf-campaign-detail-drawer__workspace {
+    grid-template-columns: minmax(240px, 0.75fr) minmax(470px, 1.35fr) minmax(250px, 0.78fr);
+  }
+
+  .taf-campaign-detail-drawer__footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+/* Attack chain detail drawer contract. */
+.taf-attack-chain-detail-drawer .ant-modal-content {
+  max-height: min(860px, calc(100dvh - 96px));
+  padding: 0;
+  overflow: hidden;
+  background: linear-gradient(135deg, #041523, #020b13);
+  border: 1px solid rgba(42, 164, 235, 0.48);
+  border-radius: 8px;
+}
+
+.taf-attack-chain-detail-drawer .ant-modal-body {
+  max-height: min(858px, calc(100dvh - 98px));
+  overflow: auto;
+  padding: 0;
+}
+
+.taf-attack-chain-drawer-content {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 24px;
+  color: #c8dbe7;
+}
+
+.taf-attack-chain-drawer-content > header,
+.taf-attack-chain-drawer-content > footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.taf-attack-chain-drawer-content > header h2 { margin: 0; color: #edf9ff; font-size: 25px; }
+.taf-attack-chain-drawer-content > header p { margin: 4px 0 0; color: #9fb7c6; }
+.taf-attack-chain-drawer-content > header b { padding: 4px 18px; color: #dceef8; border: 1px solid rgba(56, 151, 201, 0.32); }
+
+.taf-attack-chain-drawer-summary {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  min-height: 84px;
+  border: 1px solid rgba(56, 151, 201, 0.36);
+}
+
+.taf-attack-chain-drawer-summary span {
+  display: grid;
+  align-content: center;
+  gap: 6px;
+  padding: 10px 24px;
+  border-right: 1px solid rgba(56, 151, 201, 0.24);
+}
+
+.taf-attack-chain-drawer-summary span:last-child { border-right: 0; }
+.taf-attack-chain-drawer-summary b { color: #91a9b8; font-size: 11px; }
+.taf-attack-chain-drawer-summary strong { overflow: hidden; color: #e6f4fc; text-overflow: ellipsis; white-space: nowrap; }
+
+.taf-attack-chain-drawer-grid {
+  min-height: 540px;
+  display: grid;
+  grid-template-columns: minmax(200px, 0.72fr) minmax(430px, 1.9fr) minmax(220px, 0.85fr);
+  gap: 10px;
+}
+
+.taf-attack-chain-drawer-grid > aside,
+.taf-attack-chain-drawer-grid > main {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.taf-attack-chain-drawer-grid > aside:first-child { grid-template-rows: 300px minmax(190px, 1fr); }
+.taf-attack-chain-drawer-grid > main { grid-template-rows: 360px minmax(130px, 1fr); }
+.taf-attack-chain-drawer-grid > aside:last-child { grid-template-rows: 175px 190px minmax(125px, 1fr); }
+.taf-attack-chain-drawer-grid .taf-panel { min-height: 0; }
+.taf-attack-chain-drawer-grid .taf-panel__body { height: calc(100% - 36px); overflow: hidden; }
+
+.taf-attack-chain-drawer-phases {
+  display: grid;
+  gap: 0;
+}
+
+.taf-attack-chain-drawer-phases span {
+  position: relative;
+  min-height: 35px;
+  display: grid;
+  grid-template-columns: 20px 1fr auto;
+  align-items: center;
+  color: #b8cbd7;
+}
+
+.taf-attack-chain-drawer-phases span::before {
+  position: absolute;
+  top: 25px;
+  bottom: -10px;
+  left: 6px;
+  border-left: 1px dashed #238bc8;
+  content: '';
+}
+
+.taf-attack-chain-drawer-phases span:last-child::before { display: none; }
+.taf-attack-chain-drawer-phases i { width: 12px; height: 12px; border: 2px solid #159eed; border-radius: 50%; }
+.taf-attack-chain-drawer-phases .is-current { color: #ffbf27; font-weight: 700; }
+.taf-attack-chain-drawer-phases .is-current i { background: #159eed; box-shadow: 0 0 0 5px rgba(21, 158, 237, 0.2); }
+
+.taf-attack-chain-drawer-grid dl {
+  display: grid;
+  grid-template-columns: 86px 1fr;
+  gap: 10px;
+  margin: 0;
+  font-size: 12px;
+}
+
+.taf-attack-chain-drawer-grid dt { color: #829aa9; }
+.taf-attack-chain-drawer-grid dd { margin: 0; color: #d5e6ef; }
+
+.taf-attack-chain-drawer-grid h4 {
+  margin: 3px 0 8px;
+  color: #d8eaf4;
+}
+
+.taf-attack-chain-drawer-evidence {
+  display: grid;
+  margin-bottom: 12px;
+  border: 1px solid rgba(56, 151, 201, 0.24);
+}
+
+.taf-attack-chain-drawer-evidence > div,
+.taf-attack-chain-drawer-evidence > span {
+  min-height: 36px;
+  display: grid;
+  grid-template-columns: 0.8fr 1.5fr 1fr 0.7fr 0.8fr;
+  gap: 6px;
+  align-items: center;
+  padding: 0 10px;
+  border-bottom: 1px solid rgba(56, 151, 201, 0.17);
+}
+
+.taf-attack-chain-drawer-evidence > div { color: #93aab8; background: rgba(16, 61, 92, 0.28); }
+.taf-attack-chain-drawer-evidence b { color: #d8ebf5; }
+.taf-attack-chain-drawer-evidence em { overflow: hidden; color: #adc0cb; font-style: normal; text-overflow: ellipsis; white-space: nowrap; }
+
+.taf-attack-chain-drawer-rules {
+  display: grid;
+  border: 1px solid rgba(56, 151, 201, 0.24);
+}
+
+.taf-attack-chain-drawer-rules span {
+  min-height: 34px;
+  display: grid;
+  grid-template-columns: 110px 1fr 80px;
+  align-items: center;
+  padding: 0 10px;
+  border-bottom: 1px solid rgba(56, 151, 201, 0.16);
+}
+
+.taf-attack-chain-drawer-preview {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+}
+
+.taf-attack-chain-drawer-preview span {
+  position: relative;
+  min-width: 100px;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+
+.taf-attack-chain-drawer-preview i {
+  width: 54px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  color: #45bfff;
+  background: rgba(15, 70, 106, 0.62);
+  border: 1px solid #319fd9;
+  clip-path: polygon(18% 0, 82% 0, 100% 50%, 82% 100%, 18% 100%, 0 50%);
+}
+
+.taf-attack-chain-drawer-preview .is-current i { color: #ff6b55; border-color: #ff594d; box-shadow: 0 0 24px rgba(255, 77, 79, 0.4); }
+.taf-attack-chain-drawer-preview b { max-width: 110px; overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.taf-attack-chain-drawer-preview small { color: #879eac; }
+.taf-attack-chain-drawer-preview em { position: absolute; top: 10px; right: -32px; color: #34b5ff; font-size: 22px; font-style: normal; }
+
+.taf-attack-chain-drawer-assets,
+.taf-attack-chain-drawer-next {
+  display: grid;
+}
+
+.taf-attack-chain-drawer-assets span,
+.taf-attack-chain-drawer-next button {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  color: #c8dbe7;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgba(56, 151, 201, 0.16);
+}
+
+.taf-attack-chain-drawer-next button {
+  margin-bottom: 5px;
+  background: rgba(15, 65, 98, 0.35);
+  border: 1px solid rgba(56, 151, 201, 0.28);
+  cursor: pointer;
+}
+
+.taf-attack-chain-drawer-next button b { color: #4bc3ff; }
+.taf-attack-chain-drawer-content > footer .ant-alert { flex: 1; padding: 7px 12px; }
+
+@media (max-width: 1320px) {
+  .taf-attack-chain-drawer-grid {
+    grid-template-columns: minmax(190px, 0.68fr) minmax(390px, 1.65fr) minmax(205px, 0.78fr);
+  }
+}
+
 @media (max-width: 900px) {
   .taf-alert-detail-page.is-visual-target .taf-alert-detail-summary {
     grid-template-columns: minmax(0, 1fr);
@@ -9318,33 +9766,23 @@
   position: relative;
   width: 140px;
   height: 140px;
-  display: grid;
-  place-items: center;
   border-radius: 50%;
-  background:
-    conic-gradient(
-      #ff3b3f 0deg var(--taf-impact-high-deg),
-      #ffad18 var(--taf-impact-high-deg) var(--taf-impact-medium-deg),
-      #75c743 var(--taf-impact-medium-deg) 360deg
-    );
-  box-shadow: 0 0 22px rgba(31, 136, 255, 0.16), inset 0 0 16px rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 22px rgba(31, 136, 255, 0.16);
 }
 
 .taf-campaign-impact-account-donut::before {
-  content: "";
-  position: absolute;
-  inset: 24px;
-  border-radius: 50%;
-  background: #03111c;
-  box-shadow: inset 0 0 22px rgba(56, 151, 201, 0.16);
+  content: none;
 }
 
-.taf-campaign-impact-account-donut > div {
-  position: relative;
+.taf-campaign-impact-account-donut__label {
+  position: absolute;
+  inset: 0;
   z-index: 1;
   display: grid;
+  place-content: center;
   justify-items: center;
   gap: 2px;
+  pointer-events: none;
 }
 
 .taf-campaign-impact-account-donut strong {
@@ -9528,11 +9966,49 @@
   background: #020c14;
 }
 
+.taf-campaign-impact-modal {
+  top: 0;
+  max-width: calc(100dvw - 96px);
+  padding-bottom: 0;
+}
+
+.taf-campaign-impact-modal .ant-modal-content {
+  max-height: min(760px, calc(100dvh - 96px));
+  padding: 0;
+  overflow: hidden;
+  background: #020c14;
+  border: 1px solid rgba(28, 118, 205, 0.82);
+  border-radius: 10px;
+  box-shadow: 0 0 30px rgba(24, 168, 255, 0.24);
+}
+
+.taf-campaign-impact-modal .ant-modal-body {
+  max-height: min(758px, calc(100dvh - 98px));
+  min-height: 0;
+  overflow: auto;
+}
+
+.taf-campaign-impact-modal .taf-campaign-impact-account-focus,
+.taf-campaign-impact-modal .taf-campaign-impact-entity-focus {
+  height: auto;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.taf-campaign-impact-asset-focus .taf-campaign-detail-impact-compact {
+  min-height: 520px;
+  grid-template-columns: minmax(260px, 0.75fr) minmax(0, 1.25fr);
+  padding: clamp(18px, 2vw, 30px);
+  background: rgba(4, 22, 36, 0.72);
+  border: 1px solid rgba(56, 151, 201, 0.32);
+  border-radius: 8px;
+}
+
 .taf-campaign-impact-account-focus {
-  --taf-campaign-focus-scale: 1;
-  --taf-campaign-focus-scale: min(calc(100dvw / 2133px), calc(100dvh / 1200px));
-  width: 2133px;
-  height: 1200px;
+  width: 100%;
+  height: 100%;
   box-sizing: border-box;
   display: grid;
   grid-template-rows: 58px 58px minmax(0, 1fr);
@@ -9545,8 +10021,8 @@
   border: 2px solid rgba(28, 118, 205, 0.82);
   border-radius: 12px;
   box-shadow: inset 0 0 28px rgba(41, 143, 255, 0.28);
-  transform: scale(var(--taf-campaign-focus-scale));
-  transform-origin: center;
+  transform: none;
+  transform-origin: initial;
 }
 
 .taf-campaign-impact-account-focus > header {
@@ -9702,9 +10178,9 @@
 }
 
 .taf-campaign-impact-entity-focus {
-  width: 2097px;
-  height: 1180px;
-  margin: 9px 18px 11px;
+  width: 100%;
+  height: 100%;
+  margin: 0;
   grid-template-rows: 58px 64px minmax(0, 1fr);
   gap: 12px;
   padding: 17px 49px 20px;
@@ -12377,7 +12853,35 @@
 }
 
 .taf-campaign-rail > .taf-panel {
+  width: 100%;
+  max-width: 100%;
   flex: none;
+}
+
+.taf-campaign-rail .taf-panel__header > h2,
+.taf-campaign-rail .taf-panel__extra {
+  min-width: 0;
+}
+
+.taf-campaign-rail .taf-panel__header > h2 {
+  flex: 1 1 auto;
+}
+
+.taf-campaign-rail .taf-panel__extra {
+  max-width: 52%;
+  overflow: hidden;
+}
+
+.taf-campaign-rail .taf-panel__extra .ant-btn {
+  min-width: 0;
+  max-width: 100%;
+  padding-inline: 0;
+  overflow: hidden;
+}
+
+.taf-campaign-rail .taf-panel__extra .ant-btn > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .taf-campaign-summary-panel {
@@ -12389,11 +12893,11 @@
 }
 
 .taf-campaign-evidence-panel {
-  height: 150px;
+  height: 168px;
 }
 
 .taf-campaign-state-panel {
-  height: 284px;
+  height: 246px;
 }
 
 .taf-campaign-summary-panel > .taf-panel__body,
@@ -12984,20 +13488,23 @@
 
 .taf-campaign-evidence {
   display: grid;
-  grid-template-columns: 82px minmax(0, 1fr);
-  gap: 8px;
+  grid-template-columns: 100px minmax(0, 1fr);
+  gap: 12px;
   align-items: center;
+  min-width: 0;
+  height: 100%;
 }
 
 .taf-campaign-evidence-chart {
   position: relative;
-  width: 76px;
-  height: 76px;
+  width: 94px;
+  height: 94px;
+  justify-self: center;
 }
 
 .taf-campaign-evidence-chart > div {
-  width: 76px !important;
-  height: 76px !important;
+  width: 94px !important;
+  height: 94px !important;
 }
 
 .taf-campaign-evidence-chart > strong,
@@ -13011,75 +13518,82 @@
 }
 
 .taf-campaign-evidence-chart > strong {
-  top: 22px;
+  top: 29px;
   color: var(--ui-text-primary);
-  font-size: 18px;
+  font-size: 17px;
+  line-height: 20px;
 }
 
 .taf-campaign-evidence-chart > span {
-  top: 45px;
+  top: 52px;
   color: var(--ui-text-muted);
   font-size: 10px;
 }
 
-.taf-campaign-evidence > div:last-child {
+.taf-campaign-evidence-list {
+  min-width: 0;
   display: grid;
-  gap: 3px;
+  gap: 7px;
 }
 
-.taf-campaign-evidence span {
+.taf-campaign-evidence-list > span {
+  min-width: 0;
   display: grid;
-  grid-template-columns: 86px minmax(0, 1fr) 70px;
-  gap: 8px;
+  grid-template-columns: 7px minmax(76px, auto) minmax(18px, 1fr) minmax(62px, auto);
+  gap: 6px;
   align-items: center;
   color: var(--ui-text-secondary);
-  font-size: 12px;
+  font-size: 11px;
 }
 
-.taf-campaign-evidence b,
-.taf-campaign-evidence strong {
+.taf-campaign-evidence-list > span > i {
+  width: 7px;
+  height: 7px;
+  display: block;
+  background: var(--ui-info);
+  border-radius: 1px;
+  box-shadow: 0 0 5px rgba(24, 168, 255, 0.4);
+}
+
+.taf-campaign-evidence-list > span.is-ok > i {
+  background: var(--ui-success);
+  box-shadow: 0 0 5px rgba(54, 214, 107, 0.38);
+}
+
+.taf-campaign-evidence-list > span.is-warn > i {
+  background: var(--ui-warning);
+  box-shadow: 0 0 5px rgba(255, 176, 32, 0.38);
+}
+
+.taf-campaign-evidence-list > span.is-risk > i {
+  background: var(--ui-danger);
+  box-shadow: 0 0 5px rgba(255, 77, 79, 0.38);
+}
+
+.taf-campaign-evidence-list > span > b,
+.taf-campaign-evidence-list > span > strong {
   overflow: hidden;
   font-weight: 500;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
-.taf-campaign-evidence strong {
+.taf-campaign-evidence-list > span > strong {
   color: var(--ui-text-primary);
   text-align: right;
 }
 
-.taf-campaign-evidence i {
-  height: 6px;
+.taf-campaign-evidence-list > span > em {
+  height: 1px;
   overflow: hidden;
-  background: rgba(56, 151, 201, 0.16);
-  border-radius: 10px;
-}
-
-.taf-campaign-evidence em {
-  display: block;
-  height: 100%;
-  background: var(--ui-info);
-  border-radius: inherit;
-}
-
-.taf-campaign-evidence .is-ok em {
-  background: var(--ui-success);
-}
-
-.taf-campaign-evidence .is-warn em {
-  background: var(--ui-warning);
-}
-
-.taf-campaign-evidence .is-risk em {
-  background: var(--ui-danger);
+  background: rgba(56, 151, 201, 0.24);
 }
 
 .taf-campaign-state-flow {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: 0;
+  margin-bottom: 12px;
 }
 
 .taf-campaign-actions-title {
@@ -13090,9 +13604,29 @@
   letter-spacing: 0;
 }
 
-.taf-campaign-state-flow span {
+.taf-campaign-state-step {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 12px;
+  align-items: center;
+}
+
+.taf-campaign-state-step:last-child {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.taf-campaign-state-step > .anticon {
   position: relative;
-  min-height: 54px;
+  z-index: 1;
+  margin-inline: -1px;
+  color: rgba(127, 212, 255, 0.54);
+  font-size: 11px;
+}
+
+.taf-campaign-state-step span {
+  position: relative;
+  min-width: 0;
+  min-height: 58px;
   display: grid;
   place-items: center;
   gap: 2px;
@@ -13102,17 +13636,18 @@
   border-radius: 4px;
 }
 
-.taf-campaign-state-flow span.is-current {
+.taf-campaign-state-step span.is-current {
   color: var(--ui-danger);
+  background: rgba(255, 77, 79, 0.035);
   border-color: rgba(255, 77, 79, 0.62);
 }
 
-.taf-campaign-state-flow strong {
+.taf-campaign-state-step strong {
   color: var(--ui-text-primary);
   font-size: 12px;
 }
 
-.taf-campaign-state-flow small {
+.taf-campaign-state-step small {
   color: inherit;
   font-size: 11px;
 }
@@ -13125,6 +13660,7 @@
 
 .taf-campaign-actions .ant-btn {
   min-width: 0;
+  overflow: hidden;
 }
 
 .taf-campaign-actions .ant-btn:nth-child(1) {
@@ -13144,6 +13680,8 @@
 }
 
 .taf-campaign-actions .ant-btn > span:not(.anticon) {
+  display: block;
+  flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -13183,6 +13721,24 @@
   border-radius: 4px;
   font-size: 11px;
   white-space: pre-wrap;
+}
+
+.taf-campaign-action-drawer {
+  top: max(72px, calc((100dvh - 620px) / 2));
+  max-width: calc(100dvw - 40px);
+  padding-bottom: 24px;
+}
+
+.taf-campaign-action-drawer .ant-modal-content {
+  max-height: min(620px, calc(100dvh - 80px));
+  overflow: hidden;
+  background: linear-gradient(135deg, #071d2e, #03101b);
+  border: 1px solid rgba(56, 151, 201, 0.42);
+}
+
+.taf-campaign-action-drawer .ant-modal-body {
+  max-height: min(520px, calc(100dvh - 180px));
+  overflow: auto;
 }
 
 .taf-campaign-detail-drawer .ant-drawer-body {
@@ -13513,6 +14069,49 @@
 
 .taf-attack-column:last-child::after {
   display: none;
+}
+
+.taf-attack-canvas.is-empty {
+  grid-template-columns: minmax(0, 1fr);
+  place-items: center;
+  padding: 32px;
+}
+
+.taf-attack-canvas.is-swimlane-view .taf-attack-chain-columns {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  overflow-y: auto;
+}
+
+.taf-attack-canvas.is-swimlane-view .taf-attack-column {
+  grid-template-columns: repeat(5, minmax(132px, 1fr));
+  grid-template-rows: minmax(72px, auto);
+  gap: 8px;
+}
+
+.taf-attack-canvas.is-swimlane-view .taf-attack-column::after,
+.taf-attack-canvas.is-matrix-view .taf-attack-column::after {
+  display: none;
+}
+
+.taf-attack-canvas.is-matrix-view .taf-attack-chain-columns {
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  align-content: start;
+  gap: 12px;
+  overflow-y: auto;
+}
+
+.taf-attack-canvas.is-matrix-view .taf-attack-column {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(76px, auto));
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid rgba(56, 151, 201, 0.22);
+  border-radius: 6px;
+}
+
+.taf-attack-canvas.is-matrix-view .taf-attack-phase-card {
+  grid-column: 1 / -1;
 }
 
 .taf-attack-phase-card,
@@ -41553,6 +42152,77 @@ html.taf-window--os-short-height .taf-login__submit.ant-btn {
   max-width: 128px;
 }
 
+.taf-topic-controls > .ant-btn {
+  min-width: 104px;
+  max-width: 132px;
+}
+
+.taf-topic-governance-modal .ant-modal-content {
+  max-height: min(720px, calc(var(--taf-window-inner-height, 100dvh) - 48px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.taf-topic-governance-modal .ant-modal-body,
+.taf-topic-governance-drawer .ant-drawer-body {
+  min-height: 0;
+  overflow: auto;
+}
+
+.taf-topic-governance-form {
+  display: grid;
+  gap: 14px;
+}
+
+.taf-topic-governance-form > label {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  color: var(--ui-text-secondary);
+  font-size: 13px;
+}
+
+.taf-topic-governance-form .ant-select,
+.taf-topic-governance-form .ant-input,
+.taf-topic-governance-form .ant-input-textarea {
+  width: 100%;
+}
+
+.taf-topic-governance-form dl {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  margin: 0;
+  border: 1px solid rgba(56, 151, 201, 0.24);
+}
+
+.taf-topic-governance-form dt,
+.taf-topic-governance-form dd {
+  min-width: 0;
+  margin: 0;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(56, 151, 201, 0.18);
+}
+
+.taf-topic-governance-form dt {
+  color: var(--ui-text-muted);
+  background: rgba(6, 32, 49, 0.58);
+}
+
+.taf-topic-governance-form dd {
+  overflow-wrap: anywhere;
+}
+
+.taf-topic-inline-result {
+  margin-left: 4px;
+  color: var(--ui-success);
+  font-size: 11px;
+}
+
+.taf-topic-inline-result.is-error {
+  color: var(--ui-danger);
+}
+
 .taf-topic-facts {
   flex: 0 0 auto;
   display: grid;
@@ -42036,7 +42706,17 @@ html.taf-window--os-short-height .taf-login__submit.ant-btn {
   height: 100%;
 }
 
+.taf-api-topology {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
 .taf-api-topology-svg {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   display: block;
@@ -42079,6 +42759,50 @@ html.taf-window--os-short-height .taf-login__submit.ant-btn {
   pointer-events: none;
 }
 
+.taf-api-topology-node {
+  position: absolute;
+  z-index: 1;
+  min-width: 58px;
+  min-height: 24px;
+  display: grid;
+  align-content: center;
+  gap: 1px;
+  overflow: hidden;
+  padding: 3px 6px;
+  color: #eaf7ff;
+  text-align: center;
+  background: rgba(3, 17, 28, 0.9);
+  border: 1px solid var(--taf-topology-node-color, rgba(127, 212, 255, 0.64));
+  border-radius: 5px;
+  box-shadow: 0 0 10px color-mix(in srgb, var(--taf-topology-node-color, #18a8ff) 28%, transparent);
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+}
+
+.taf-api-topology-node strong,
+.taf-api-topology-node span {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.taf-api-topology-node strong {
+  font-size: 10px;
+  line-height: 1.15;
+}
+
+.taf-api-topology-node span {
+  color: #9fc5d8;
+  font-size: 8px;
+  line-height: 1.1;
+}
+
+.taf-api-topology-node.is-selected {
+  border-width: 2px;
+  box-shadow: 0 0 15px color-mix(in srgb, var(--taf-topology-node-color, #18a8ff) 48%, transparent);
+}
+
 @keyframes taf-api-topology-flow {
   to { stroke-dashoffset: -8; }
 }
@@ -42089,6 +42813,12 @@ html.taf-window--os-short-height .taf-login__submit.ant-btn {
   width: calc(100% - 36px);
   height: calc(100% - 60px);
   pointer-events: none;
+}
+
+.taf-topic-apt-attack-map .taf-api-topology-svg {
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .taf-topic-apt-attack-map path {
@@ -51181,4 +51911,1515 @@ html.taf-window--os-short-height .taf-login__submit.ant-btn {
 .taf-campaign-workbench .taf-campaign-list-panel .ant-table-wrapper .ant-table-tbody > tr > td {
   padding-block: 14px !important;
   padding-inline: 7px !important;
+}
+
+/* Campaign detail r726: screenshot-contract layout. */
+.taf-campaign-detail-page.is-redesigned {
+  min-width: 0;
+  height: auto;
+  min-height: calc(var(--taf-window-inner-height, 100dvh) - 174px);
+  overflow: visible;
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-titlebar {
+  min-height: 42px;
+  padding: 5px 10px;
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-titlebar h1 {
+  color: #b7c9d7;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-profile {
+  position: relative;
+  min-height: 116px;
+  grid-template-columns: minmax(330px, 0.95fr) 112px minmax(760px, 2.4fr);
+  gap: 0;
+  padding: 11px 72px 11px 18px;
+  border-radius: 4px;
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-profile-main {
+  grid-template-columns: 62px minmax(0, 1fr);
+  border-right: 1px solid rgba(56, 151, 201, 0.18);
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-profile-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-profile-main h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-risk {
+  border-right: 1px solid rgba(56, 151, 201, 0.18);
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-risk .ant-progress {
+  width: 58px !important;
+  height: 58px !important;
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-risk .ant-progress-text {
+  font-size: 18px !important;
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-profile-facts {
+  grid-template-columns: repeat(4, minmax(100px, 1fr));
+  gap: 0;
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-profile-fact {
+  padding: 6px 12px;
+  background: transparent;
+  border: 0;
+  border-right: 1px solid rgba(56, 151, 201, 0.12);
+  border-radius: 0;
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-profile-edit {
+  position: absolute;
+  right: 10px;
+  bottom: 14px;
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-grid {
+  grid-template-columns: minmax(930px, 1fr) 430px;
+  gap: 8px;
+  height: auto;
+  min-height: 710px;
+  overflow: visible;
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-main {
+  height: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: 265px minmax(430px, 1fr);
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-phase-panel .taf-panel__body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 10px 12px 8px;
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-phase-cards {
+  gap: 0;
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-phase-card {
+  position: relative;
+  min-height: 116px;
+  padding: 12px 15px;
+  border-radius: 0;
+  background: linear-gradient(135deg, rgba(4, 26, 43, 0.96), rgba(7, 44, 67, 0.8));
+  border-color: rgba(39, 173, 238, 0.42);
+  clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 50%, calc(100% - 13px) 100%, 0 100%, 13px 50%);
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-phase-card:first-child {
+  clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 50%, calc(100% - 13px) 100%, 0 100%);
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-phase-card header {
+  justify-content: flex-start;
+  font-size: 13px;
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-phase-card > span {
+  color: #c5d8e4;
+  font-size: 12px;
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-phase-card footer {
+  display: grid;
+  justify-content: start;
+  color: #c5d8e4;
+  font-size: 11px;
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-phase-card.is-risk {
+  background: linear-gradient(135deg, rgba(54, 37, 18, 0.9), rgba(77, 49, 15, 0.68));
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-phase-track {
+  margin: 12px 24px 0;
+}
+
+.taf-campaign-detail-phase-legend {
+  display: flex;
+  justify-content: center;
+  gap: 34px;
+  margin-top: 11px;
+  color: var(--ui-text-secondary);
+  font-size: 11px;
+}
+
+.taf-campaign-detail-phase-legend span::before {
+  width: 8px;
+  height: 8px;
+  display: inline-block;
+  margin-right: 6px;
+  content: '';
+  background: var(--ui-info);
+  border-radius: 50%;
+}
+
+.taf-campaign-detail-phase-legend .is-risk::before { background: var(--ui-danger); }
+.taf-campaign-detail-phase-legend .is-ok::before { background: var(--ui-success); }
+.taf-campaign-detail-phase-legend .is-warn::before { background: var(--ui-warning); }
+
+.taf-campaign-detail-bottom-grid {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(360px, 1.08fr) minmax(310px, 0.92fr) minmax(300px, 0.9fr);
+  gap: 8px;
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-bottom-grid > .taf-panel {
+  height: 100%;
+  min-height: 430px;
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-alerts {
+  grid-row: auto;
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-impact-tabs {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 2px;
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-impact-tab {
+  min-height: 28px;
+  display: flex;
+  justify-content: center;
+  gap: 3px;
+  padding: 3px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-impact-tab .anticon,
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-impact-tab strong {
+  display: none;
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-impact-tab.is-active {
+  color: #47bcff;
+  background: rgba(28, 132, 205, 0.1);
+  border-bottom-color: #2baeff;
+  box-shadow: none;
+}
+
+.taf-campaign-detail-impact-compact {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 6px;
+}
+
+.taf-campaign-detail-impact-chart {
+  position: relative;
+  width: 116px;
+  height: 116px;
+}
+
+.taf-campaign-detail-impact-chart > div:first-child,
+.taf-campaign-detail-evidence-donut > div {
+  width: 100%;
+  height: 100%;
+}
+
+.taf-campaign-detail-impact-chart > strong,
+.taf-campaign-detail-impact-chart > span {
+  position: absolute;
+  left: 50%;
+  z-index: 1;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.taf-campaign-detail-impact-chart > strong {
+  top: 39px;
+  color: #f2f8fc;
+  font-size: 20px;
+}
+
+.taf-campaign-detail-impact-chart > span {
+  top: 65px;
+  color: var(--ui-text-secondary);
+  font-size: 10px;
+}
+
+.taf-campaign-detail-impact-risk-list {
+  display: grid;
+  align-content: center;
+}
+
+.taf-campaign-detail-impact-risk-list span {
+  min-height: 28px;
+  display: grid;
+  grid-template-columns: 8px 1fr auto auto;
+  gap: 7px;
+  align-items: center;
+  border-bottom: 1px solid rgba(56, 151, 201, 0.12);
+}
+
+.taf-campaign-detail-impact-risk-list i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.taf-campaign-detail-impact-risk-list b,
+.taf-campaign-detail-impact-risk-list strong,
+.taf-campaign-detail-impact-risk-list em {
+  font-size: 11px;
+  font-style: normal;
+}
+
+.taf-campaign-detail-impact-risk-list em { color: var(--ui-text-secondary); }
+.taf-campaign-detail-impact-compact .ant-table-wrapper { grid-column: 1 / -1; }
+
+.taf-campaign-detail-evidence-donut {
+  position: relative;
+  width: 108px;
+  height: 108px;
+  flex: 0 0 108px;
+}
+
+.taf-campaign-detail-evidence-donut > strong {
+  position: absolute;
+  inset: 40px 0 auto;
+  z-index: 1;
+  color: #f1f8fc;
+  font-size: 18px;
+  text-align: center;
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-evidence-overview {
+  align-items: center;
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-rail {
+  height: auto;
+  display: grid;
+  grid-template-rows: 214px 270px minmax(216px, 1fr);
+  gap: 8px;
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-response-flow {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0;
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-response-step {
+  position: relative;
+  min-width: 0;
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  padding: 7px 2px;
+  background: transparent;
+  border: 0;
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-response-step:not(:last-child)::after {
+  position: absolute;
+  top: 21px;
+  right: -9px;
+  width: 18px;
+  content: '→';
+  color: #708798;
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-response-step i {
+  width: 35px;
+  height: 35px;
+  display: grid;
+  place-items: center;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+}
+
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-response-step strong,
+.taf-campaign-detail-page.is-redesigned .taf-campaign-detail-response-step span {
+  overflow: hidden;
+  font-size: 10px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.taf-campaign-detail-panel-more {
+  display: block;
+  margin-top: 8px;
+  text-align: center;
+}
+
+.taf-campaign-report-modal .ant-modal-content {
+  padding: 0;
+  overflow: hidden;
+  background: linear-gradient(135deg, #061b2b, #020c16);
+  border: 1px solid #18b9ff;
+  border-radius: 10px;
+  box-shadow: 0 0 32px rgba(24, 168, 255, 0.28);
+}
+
+.taf-campaign-report-modal .ant-modal-close { color: #a9bbc8; }
+
+.taf-campaign-report-modal__header {
+  position: relative;
+  padding: 24px 36px 14px;
+}
+
+.taf-campaign-report-modal__header h2 {
+  margin: 0 0 6px;
+  color: #edf8ff;
+  font-size: 26px;
+}
+
+.taf-campaign-report-modal__header p {
+  margin: 0;
+  color: #b4c6d3;
+  font-size: 15px;
+}
+
+.taf-campaign-report-modal__header > span {
+  position: absolute;
+  right: 44px;
+  bottom: 18px;
+  color: #44c5ff;
+}
+
+.taf-campaign-report-modal__metrics {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 0 36px;
+  border: 1px solid rgba(56, 151, 201, 0.34);
+}
+
+.taf-campaign-report-modal__metrics > span {
+  min-height: 104px;
+  display: grid;
+  grid-template-columns: 68px 1fr;
+  grid-template-rows: 1fr 1fr;
+  align-items: end;
+  padding: 16px 24px;
+  border-right: 1px solid rgba(56, 151, 201, 0.24);
+}
+
+.taf-campaign-report-modal__metrics > span:last-child { border-right: 0; }
+
+.taf-campaign-report-modal__metrics i {
+  grid-row: 1 / 3;
+  align-self: center;
+  color: #2baeff;
+  font-size: 38px;
+}
+
+.taf-campaign-report-modal__metrics b { color: #b8c9d4; font-size: 14px; }
+.taf-campaign-report-modal__metrics strong { color: #f2f8fc; font-size: 22px; }
+.taf-campaign-report-modal__metrics .is-risk i { color: #ff4d4f; }
+.taf-campaign-report-modal__metrics .is-warn i { color: #faad14; }
+.taf-campaign-report-modal__metrics .is-ok i { color: #36d66b; }
+
+.taf-campaign-report-modal__body {
+  display: grid;
+  grid-template-columns: minmax(250px, 0.9fr) minmax(330px, 1.22fr) minmax(270px, 0.98fr);
+  gap: 16px;
+  padding: 16px 36px;
+}
+
+.taf-campaign-report-modal__body > section {
+  min-width: 0;
+  min-height: 456px;
+  padding: 16px 20px;
+  background: rgba(4, 25, 40, 0.62);
+  border: 1px solid rgba(56, 151, 201, 0.34);
+}
+
+.taf-campaign-report-modal__body h3 {
+  margin: -16px -20px 14px;
+  padding: 13px 20px;
+  color: #e8f6ff;
+  font-size: 19px;
+  border-bottom: 1px solid rgba(56, 151, 201, 0.25);
+}
+
+.taf-campaign-report-modal__body h3 span {
+  float: right;
+  color: #a8bdca;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.taf-campaign-report-scope__title {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.taf-campaign-report-scope__title button {
+  color: #38b9ff;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.taf-campaign-report-scope .ant-checkbox-group {
+  display: grid;
+  gap: 8px;
+}
+
+.taf-campaign-report-scope > label,
+.taf-campaign-report-review > label {
+  min-height: 40px;
+  display: grid;
+  grid-template-columns: 94px minmax(0, 1fr);
+  align-items: center;
+  margin-top: 9px;
+}
+
+.taf-campaign-report-scope > label strong {
+  min-width: 0;
+  padding: 8px 10px;
+  overflow: hidden;
+  color: #c8d9e4;
+  font-size: 12px;
+  background: rgba(2, 15, 25, 0.8);
+  border: 1px solid rgba(56, 151, 201, 0.3);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.taf-campaign-report-scope > p {
+  color: var(--ui-text-secondary);
+  font-size: 12px;
+}
+
+.taf-campaign-report-evidence .ant-table-wrapper { margin-bottom: 12px; }
+.taf-campaign-report-evidence .is-ok { color: #36d66b; }
+.taf-campaign-report-review .ant-select { width: 100%; }
+
+.taf-campaign-report-format-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin: 9px 0 14px 94px;
+}
+
+.taf-campaign-report-format-buttons button {
+  min-height: 36px;
+  color: #c2d2dd;
+  background: #071b2b;
+  border: 1px solid rgba(56, 151, 201, 0.35);
+}
+
+.taf-campaign-report-format-buttons .is-active {
+  color: #eefaff;
+  background: rgba(19, 91, 160, 0.48);
+  border-color: #1e9cff;
+}
+
+.taf-campaign-report-modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 6px 36px 28px;
+}
+
+.taf-campaign-report-modal__footer .ant-alert {
+  min-width: 520px;
+  padding: 9px 16px;
+}
+
+@media (max-width: 1500px) {
+  .taf-campaign-detail-page.is-redesigned .taf-campaign-detail-grid {
+    grid-template-columns: minmax(840px, 1fr) 370px;
+  }
+
+  .taf-campaign-detail-bottom-grid {
+    grid-template-columns: repeat(3, minmax(280px, 1fr));
+    overflow-x: auto;
+  }
+
+  .taf-campaign-detail-page.is-redesigned .taf-campaign-detail-profile {
+    grid-template-columns: minmax(270px, 0.8fr) 100px minmax(620px, 2.2fr);
+  }
+}
+
+@media (max-width: 1180px) {
+  .taf-campaign-detail-page.is-redesigned .taf-campaign-detail-profile {
+    grid-template-columns: minmax(300px, 1fr) 104px;
+    padding-right: 12px;
+  }
+
+  .taf-campaign-detail-page.is-redesigned .taf-campaign-detail-profile-facts {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(4, minmax(100px, 1fr));
+  }
+
+  .taf-campaign-detail-page.is-redesigned .taf-campaign-detail-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .taf-campaign-detail-page.is-redesigned .taf-campaign-detail-rail {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+  }
+
+  .taf-campaign-detail-page.is-redesigned .taf-campaign-detail-review-panel {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Campaign overlay final cascade contract.
+   These selectors intentionally live at EOF because the legacy drawer rules
+   predate the image-to-code modal workspace and otherwise override its grid. */
+.taf-campaign-detail-drawer__content {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 22px;
+}
+
+.taf-campaign-detail-drawer__summary {
+  min-height: 84px;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.taf-campaign-detail-drawer__summary > span {
+  min-width: 0;
+  min-height: 66px;
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  grid-template-rows: 1fr 1fr;
+  align-items: end;
+  padding: 8px 16px;
+  border-right: 1px solid rgba(56, 151, 201, 0.23);
+}
+
+.taf-campaign-detail-drawer__summary > span i {
+  grid-row: 1 / 3;
+  align-self: center;
+  color: #2fb8ff;
+  font-size: 25px;
+}
+
+.taf-campaign-detail-drawer__summary > span b {
+  color: #9eb5c4;
+  font-size: 11px;
+}
+
+.taf-campaign-detail-drawer__summary > span strong {
+  overflow: hidden;
+  color: #eaf7ff;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.taf-campaign-detail-drawer__workspace {
+  min-height: 0;
+  flex: 0 1 auto;
+  display: grid;
+  grid-template-columns: minmax(260px, 0.78fr) minmax(520px, 1.45fr) minmax(280px, 0.82fr);
+  gap: 10px;
+}
+
+.taf-campaign-detail-drawer__workspace > aside,
+.taf-campaign-detail-drawer__workspace > main {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.taf-campaign-detail-drawer__workspace > aside:first-child { grid-template-rows: 226px minmax(0, 1fr); }
+.taf-campaign-detail-drawer__workspace > main { grid-template-rows: 410px minmax(0, 1fr); }
+.taf-campaign-detail-drawer__workspace > aside:last-child { grid-template-rows: 260px 220px minmax(0, 1fr); }
+
+.taf-campaign-detail-drawer__section {
+  min-width: 0;
+  min-height: 0;
+  padding: 12px 14px;
+  overflow: auto;
+  border-radius: 4px;
+}
+
+.taf-campaign-detail-drawer__section h3 {
+  margin: -12px -14px 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(56, 151, 201, 0.24);
+}
+
+.taf-campaign-detail-drawer__phases {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 3px;
+}
+
+.taf-campaign-detail-drawer__phases span {
+  min-height: 40px;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0;
+  padding: 0 8px;
+  background: transparent;
+  border: 0;
+  border-left: 1px dashed currentColor;
+  border-radius: 0;
+}
+
+.taf-campaign-detail-drawer__impact {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px;
+}
+
+.taf-campaign-detail-drawer__footer {
+  flex: 0 0 auto;
+}
+
+.taf-attack-chain-drawer-grid {
+  min-height: 0;
+  flex: 0 1 auto;
+}
+
+.taf-campaign-report-modal {
+  top: 0;
+  max-width: calc(100dvw - 32px);
+  padding-bottom: 0;
+}
+
+.taf-campaign-report-modal .ant-modal-content {
+  width: 100%;
+  height: min(740px, calc(100dvh - 32px));
+  max-height: calc(100dvh - 32px);
+  display: flex;
+  flex-direction: column;
+}
+
+.taf-campaign-report-modal .ant-modal-body {
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+}
+
+.taf-campaign-report-modal__body {
+  min-height: 0;
+  flex: 0 1 auto;
+}
+
+.taf-campaign-report-modal__body > section {
+  min-height: 0;
+}
+
+.taf-campaign-report-evidence .ant-table-wrapper {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+@media (max-width: 960px) {
+  .taf-campaign-report-modal__metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .taf-campaign-report-modal__metrics > span:nth-child(3) {
+    border-right: 0;
+  }
+
+  .taf-campaign-report-modal__body {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .taf-campaign-report-review {
+    grid-column: 1 / -1;
+  }
+
+  .taf-campaign-report-modal__footer {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .taf-campaign-report-modal__footer .ant-alert {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .taf-campaign-report-modal__footer .ant-space {
+    align-self: flex-end;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 640px) {
+  .taf-campaign-report-modal__header {
+    padding-inline: 18px;
+  }
+
+  .taf-campaign-report-modal__header > span {
+    position: static;
+    display: block;
+    margin-top: 8px;
+  }
+
+  .taf-campaign-report-modal__metrics {
+    grid-template-columns: minmax(0, 1fr);
+    margin-inline: 18px;
+  }
+
+  .taf-campaign-report-modal__metrics > span {
+    min-height: 76px;
+    grid-template-columns: 48px minmax(0, 1fr);
+    padding: 10px 14px;
+    border-right: 0;
+    border-bottom: 1px solid rgba(56, 151, 201, 0.24);
+  }
+
+  .taf-campaign-report-modal__metrics > span:last-child {
+    border-bottom: 0;
+  }
+
+  .taf-campaign-report-modal__body {
+    grid-template-columns: minmax(0, 1fr);
+    padding-inline: 18px;
+  }
+
+  .taf-campaign-report-review {
+    grid-column: auto;
+  }
+
+  .taf-campaign-report-modal__footer {
+    padding-inline: 18px;
+  }
+
+  .taf-campaign-report-modal__footer .ant-space {
+    align-self: stretch;
+  }
+
+  .taf-campaign-report-modal__footer .ant-space-item,
+  .taf-campaign-report-modal__footer button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 1500px) {
+  .taf-campaign-detail-drawer__workspace {
+    grid-template-columns: minmax(210px, 0.72fr) minmax(400px, 1.4fr) minmax(220px, 0.78fr);
+  }
+}
+
+/* Campaign impact focus surfaces are native responsive layouts.
+   The canonical artwork used a 2133x1200 canvas, but production must adapt to
+   the actual business viewport instead of scaling and clipping that canvas. */
+.taf-campaign-impact-account-visual-page {
+  place-items: stretch;
+  padding: clamp(6px, 1vw, 14px) !important;
+  overflow: auto;
+}
+
+.taf-campaign-impact-account-focus,
+.taf-campaign-impact-entity-focus {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 690px;
+  margin: 0;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: clamp(8px, 1vw, 14px);
+  padding: clamp(14px, 1.8vw, 28px);
+  overflow: auto;
+  transform: none;
+  transform-origin: initial;
+}
+
+.taf-campaign-impact-account-focus > header h1 {
+  font-size: clamp(22px, 2vw, 34px);
+}
+
+.taf-campaign-impact-account-focus .taf-campaign-detail-impact-tabs {
+  gap: clamp(4px, 0.6vw, 8px);
+}
+
+.taf-campaign-impact-account-focus .taf-campaign-detail-impact-tab {
+  min-height: clamp(42px, 5.4vh, 58px);
+  padding: 0 clamp(6px, 1vw, 14px);
+}
+
+.taf-campaign-impact-account-focus .taf-campaign-detail-impact-tab span {
+  font-size: clamp(14px, 1.45vw, 24px);
+}
+
+.taf-campaign-impact-account-content.is-focus,
+.taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus,
+.taf-campaign-impact-campus-focus .taf-campaign-impact-campus-content.is-focus,
+.taf-campaign-impact-service-focus .taf-campaign-impact-service-content.is-focus,
+.taf-campaign-impact-department-focus .taf-campaign-impact-department-content.is-focus {
+  grid-template-rows: minmax(210px, 0.8fr) minmax(320px, 1.2fr);
+  gap: clamp(8px, 1vw, 14px);
+  overflow: visible;
+}
+
+.taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-summary,
+.taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus .taf-campaign-impact-account-summary,
+.taf-campaign-impact-campus-focus .taf-campaign-impact-campus-content.is-focus .taf-campaign-impact-account-summary,
+.taf-campaign-impact-service-focus .taf-campaign-impact-service-content.is-focus .taf-campaign-impact-account-summary,
+.taf-campaign-impact-department-focus .taf-campaign-impact-department-content.is-focus .taf-campaign-impact-account-summary {
+  grid-template-columns: minmax(240px, 0.82fr) minmax(340px, 1.18fr);
+  gap: clamp(12px, 2vw, 32px);
+  padding: clamp(14px, 1.8vw, 28px);
+  background: rgba(4, 22, 36, 0.72);
+  border: 1px solid rgba(56, 151, 201, 0.32);
+  border-radius: 8px;
+}
+
+.taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-donut,
+.taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus .taf-campaign-impact-account-donut,
+.taf-campaign-impact-campus-focus .taf-campaign-impact-campus-content.is-focus .taf-campaign-impact-account-donut,
+.taf-campaign-impact-service-focus .taf-campaign-impact-service-content.is-focus .taf-campaign-impact-account-donut,
+.taf-campaign-impact-department-focus .taf-campaign-impact-department-content.is-focus .taf-campaign-impact-account-donut {
+  width: clamp(180px, 20vw, 280px);
+  height: clamp(180px, 20vw, 280px);
+  justify-self: center;
+  transform: none;
+}
+
+.taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-donut strong {
+  font-size: clamp(30px, 3vw, 52px);
+}
+
+.taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-donut span {
+  font-size: clamp(13px, 1.4vw, 22px);
+}
+
+.taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-risk-list,
+.taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus .taf-campaign-impact-account-risk-list,
+.taf-campaign-impact-campus-focus .taf-campaign-impact-campus-content.is-focus .taf-campaign-impact-account-risk-list,
+.taf-campaign-impact-service-focus .taf-campaign-impact-service-content.is-focus .taf-campaign-impact-account-risk-list,
+.taf-campaign-impact-department-focus .taf-campaign-impact-department-content.is-focus .taf-campaign-impact-account-risk-list {
+  width: 100%;
+  height: auto;
+  align-self: center;
+  gap: 0;
+  padding: clamp(8px, 1vw, 18px);
+  overflow: visible;
+  transform: none;
+}
+
+.taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-risk-row,
+.taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus .taf-campaign-impact-account-risk-row,
+.taf-campaign-impact-campus-focus .taf-campaign-impact-campus-content.is-focus .taf-campaign-impact-account-risk-row,
+.taf-campaign-impact-service-focus .taf-campaign-impact-service-content.is-focus .taf-campaign-impact-account-risk-row,
+.taf-campaign-impact-department-focus .taf-campaign-impact-department-content.is-focus .taf-campaign-impact-account-risk-row {
+  min-height: clamp(46px, 6vh, 66px);
+  grid-template-columns: clamp(18px, 2vw, 30px) minmax(0, 1fr) minmax(50px, 0.25fr) minmax(70px, 0.32fr);
+  padding: 0 clamp(10px, 1.5vw, 22px);
+}
+
+.taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-risk-row i,
+.taf-campaign-impact-campus-focus .taf-campaign-impact-campus-content.is-focus .taf-campaign-impact-account-risk-row i,
+.taf-campaign-impact-service-focus .taf-campaign-impact-service-content.is-focus .taf-campaign-impact-account-risk-row i,
+.taf-campaign-impact-department-focus .taf-campaign-impact-department-content.is-focus .taf-campaign-impact-account-risk-row i {
+  width: clamp(14px, 1.5vw, 22px);
+  height: clamp(14px, 1.5vw, 22px);
+}
+
+.taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-risk-row span,
+.taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-risk-row strong,
+.taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-risk-row em {
+  padding: 0;
+  font-size: clamp(14px, 1.5vw, 24px);
+  text-align: right;
+}
+
+.taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-risk-row span {
+  text-align: left;
+}
+
+.taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus .taf-campaign-impact-account-table-block {
+  gap: 8px;
+  padding: clamp(14px, 1.5vw, 24px);
+  background: rgba(4, 22, 36, 0.72);
+  border: 1px solid rgba(56, 151, 201, 0.32);
+  border-radius: 8px;
+}
+
+.taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-table-block h2,
+.taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus .taf-campaign-impact-account-table-block h2 {
+  margin: 0;
+  font-size: clamp(18px, 1.8vw, 28px);
+}
+
+.taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-table,
+.taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus .taf-campaign-impact-account-table {
+  height: auto;
+  min-height: 0;
+  overflow-x: auto;
+}
+
+.taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-table__head,
+.taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-table__row,
+.taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus .taf-campaign-impact-account-table__head,
+.taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus .taf-campaign-impact-account-table__row {
+  min-width: 720px;
+  height: auto;
+  min-height: clamp(42px, 5.2vh, 62px);
+}
+
+.taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-table__head span,
+.taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-table__row strong,
+.taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-table__row span,
+.taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-table__row em,
+.taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus .taf-campaign-impact-account-table__head span,
+.taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus .taf-campaign-impact-account-table__row strong,
+.taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus .taf-campaign-impact-account-table__row span,
+.taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus .taf-campaign-impact-account-table__row em {
+  justify-content: flex-start;
+  padding: 0 clamp(10px, 1.7vw, 28px);
+  font-size: clamp(13px, 1.35vw, 22px);
+}
+
+.taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-table__row b {
+  min-width: auto;
+  padding: 0 10px;
+  line-height: 26px;
+  font-size: inherit;
+  transform: none;
+}
+
+.taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-all-link {
+  font-size: clamp(14px, 1.4vw, 22px);
+}
+
+.taf-campaign-impact-department-focus .taf-campaign-impact-department-content.is-focus .taf-campaign-impact-department-progress {
+  width: 100%;
+  grid-template-columns: minmax(0, 1fr) 64px;
+  gap: 12px;
+  transform: none;
+}
+
+.taf-campaign-impact-department-focus .taf-campaign-impact-department-content.is-focus .taf-campaign-impact-department-progress i {
+  height: 10px;
+}
+
+.taf-campaign-impact-department-focus .taf-campaign-impact-department-content.is-focus .taf-campaign-impact-department-progress b {
+  font-size: inherit;
+}
+
+@media (max-width: 980px) {
+  .taf-campaign-impact-account-focus,
+  .taf-campaign-impact-entity-focus {
+    min-height: 760px;
+  }
+
+  .taf-campaign-impact-account-focus .taf-campaign-detail-impact-tabs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .taf-campaign-impact-account-content.is-focus,
+  .taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus {
+    grid-template-rows: auto auto;
+  }
+
+  .taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-summary,
+  .taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus .taf-campaign-impact-account-summary {
+    grid-template-columns: minmax(190px, 0.72fr) minmax(260px, 1.28fr);
+  }
+}
+
+/* Production impact range is an intrinsic modal, not the full-frame evidence canvas. */
+.taf-campaign-impact-modal .taf-campaign-impact-account-focus,
+.taf-campaign-impact-modal .taf-campaign-impact-entity-focus {
+  min-height: 0;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 10px;
+  padding: 18px 28px 20px;
+  overflow: visible;
+}
+
+.taf-campaign-impact-modal .taf-campaign-impact-account-content.is-focus,
+.taf-campaign-impact-modal .taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus,
+.taf-campaign-impact-modal .taf-campaign-impact-campus-focus .taf-campaign-impact-campus-content.is-focus,
+.taf-campaign-impact-modal .taf-campaign-impact-service-focus .taf-campaign-impact-service-content.is-focus,
+.taf-campaign-impact-modal .taf-campaign-impact-department-focus .taf-campaign-impact-department-content.is-focus {
+  grid-template-rows: minmax(182px, 0.72fr) minmax(292px, 1.28fr);
+  gap: 10px;
+}
+
+/* The reference art is composed at a wide canvas, while production keeps the
+   impact surface inside a 1040px modal. Reflow the same visual hierarchy at
+   modal scale and remove legacy fixed cell widths that clipped the last
+   percentage/table columns. */
+.taf-campaign-impact-modal .taf-campaign-impact-account-focus,
+.taf-campaign-impact-modal .taf-campaign-impact-entity-focus {
+  gap: 8px;
+  padding: 14px 20px 16px;
+}
+
+.taf-campaign-impact-modal .taf-campaign-impact-account-focus > header h1 {
+  font-size: 28px;
+}
+
+.taf-campaign-impact-modal .taf-campaign-impact-account-focus .taf-campaign-detail-impact-tab {
+  min-height: 48px;
+  padding-inline: 8px;
+}
+
+.taf-campaign-impact-modal .taf-campaign-impact-account-focus .taf-campaign-detail-impact-tab span {
+  font-size: 18px;
+}
+
+.taf-campaign-impact-modal .taf-campaign-impact-account-content.is-focus,
+.taf-campaign-impact-modal .taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus,
+.taf-campaign-impact-modal .taf-campaign-impact-campus-focus .taf-campaign-impact-campus-content.is-focus,
+.taf-campaign-impact-modal .taf-campaign-impact-service-focus .taf-campaign-impact-service-content.is-focus,
+.taf-campaign-impact-modal .taf-campaign-impact-department-focus .taf-campaign-impact-department-content.is-focus {
+  grid-template-rows: minmax(210px, 0.74fr) minmax(300px, 1.26fr);
+  gap: 8px;
+}
+
+.taf-campaign-impact-modal .taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-summary,
+.taf-campaign-impact-modal .taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus .taf-campaign-impact-account-summary {
+  grid-template-columns: minmax(270px, 0.88fr) minmax(0, 1.12fr);
+  gap: 18px;
+  padding: 14px 18px;
+}
+
+.taf-campaign-impact-modal .taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-donut,
+.taf-campaign-impact-modal .taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus .taf-campaign-impact-account-donut {
+  width: 220px;
+  height: 220px;
+}
+
+.taf-campaign-impact-modal .taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-donut strong {
+  font-size: 42px;
+}
+
+.taf-campaign-impact-modal .taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-donut span {
+  font-size: 17px;
+}
+
+.taf-campaign-impact-modal .taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-risk-list,
+.taf-campaign-impact-modal .taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus .taf-campaign-impact-account-risk-list {
+  padding: 8px 14px;
+}
+
+.taf-campaign-impact-modal .taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-risk-row,
+.taf-campaign-impact-modal .taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus .taf-campaign-impact-account-risk-row {
+  min-height: 54px;
+  grid-template-columns: 20px minmax(0, 1fr) 64px 88px;
+  padding-inline: 12px;
+}
+
+.taf-campaign-impact-modal .taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-risk-row span,
+.taf-campaign-impact-modal .taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-risk-row strong,
+.taf-campaign-impact-modal .taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-risk-row em,
+.taf-campaign-impact-modal .taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus .taf-campaign-impact-account-risk-row span,
+.taf-campaign-impact-modal .taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus .taf-campaign-impact-account-risk-row strong,
+.taf-campaign-impact-modal .taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus .taf-campaign-impact-account-risk-row em {
+  min-width: 0;
+  padding: 0;
+  overflow: visible;
+  font-size: 19px;
+  white-space: nowrap;
+}
+
+.taf-campaign-impact-modal .taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-table-block,
+.taf-campaign-impact-modal .taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus .taf-campaign-impact-account-table-block {
+  gap: 8px;
+  padding: 16px 18px 12px;
+}
+
+.taf-campaign-impact-modal .taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-table-block h2,
+.taf-campaign-impact-modal .taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus .taf-campaign-impact-account-table-block h2 {
+  font-size: 22px;
+}
+
+.taf-campaign-impact-modal .taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-table__head,
+.taf-campaign-impact-modal .taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-table__row,
+.taf-campaign-impact-modal .taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus .taf-campaign-impact-account-table__head,
+.taf-campaign-impact-modal .taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus .taf-campaign-impact-account-table__row {
+  min-width: 0;
+  min-height: 48px;
+}
+
+.taf-campaign-impact-modal .taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-table__head span,
+.taf-campaign-impact-modal .taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-table__row strong,
+.taf-campaign-impact-modal .taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-table__row span,
+.taf-campaign-impact-modal .taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-table__row em,
+.taf-campaign-impact-modal .taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus .taf-campaign-impact-account-table__head span,
+.taf-campaign-impact-modal .taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus .taf-campaign-impact-account-table__row strong,
+.taf-campaign-impact-modal .taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus .taf-campaign-impact-account-table__row span,
+.taf-campaign-impact-modal .taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus .taf-campaign-impact-account-table__row em {
+  min-width: 0;
+  padding-inline: 12px;
+  overflow: hidden;
+  font-size: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.taf-campaign-impact-modal .taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-table__row b,
+.taf-campaign-impact-modal .taf-campaign-impact-entity-focus .taf-campaign-impact-entity-content.is-focus .taf-campaign-impact-account-table__row b {
+  width: auto;
+  min-width: 0;
+  max-width: 100%;
+  padding-inline: 8px;
+  font-size: inherit;
+}
+
+.taf-campaign-impact-modal .taf-campaign-impact-account-content.is-focus .taf-campaign-impact-account-all-link {
+  font-size: 18px;
+}
+
+.taf-campaign-impact-modal .taf-campaign-impact-department-focus .taf-campaign-impact-department-content.is-focus .taf-campaign-impact-department-progress {
+  grid-template-columns: minmax(0, 1fr) 44px;
+}
+
+@media (max-width: 980px) {
+  .taf-campaign-impact-modal {
+    max-width: calc(100dvw - 32px);
+  }
+
+  .taf-campaign-impact-modal .taf-campaign-impact-account-focus,
+  .taf-campaign-impact-modal .taf-campaign-impact-entity-focus {
+    min-height: 0;
+    overflow: visible;
+  }
+}
+
+/* Campaign and attack-chain detail are production right drawers.
+   Keep the host page visible and confine all scrolling to the drawer body. */
+.taf-campaign-detail-drawer .ant-drawer-mask,
+.taf-attack-chain-detail-drawer .ant-drawer-mask {
+  background: rgba(0, 7, 13, 0.46);
+}
+
+.taf-campaign-detail-drawer .ant-drawer-content-wrapper,
+.taf-attack-chain-detail-drawer .ant-drawer-content-wrapper {
+  top: 48px;
+  right: 40px;
+  bottom: 48px;
+  height: auto;
+  max-height: calc(100dvh - 96px);
+  overflow: hidden;
+  border: 1px solid rgba(42, 164, 235, 0.54);
+  border-radius: 8px;
+  box-shadow: 0 0 32px rgba(17, 134, 203, 0.2);
+}
+
+.taf-campaign-detail-drawer .ant-drawer-content,
+.taf-attack-chain-detail-drawer .ant-drawer-content {
+  overflow: hidden;
+  background: #041523;
+  border-radius: 8px;
+}
+
+.taf-campaign-detail-drawer .ant-drawer-body,
+.taf-attack-chain-detail-drawer .ant-drawer-body {
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
+.taf-campaign-detail-drawer__content,
+.taf-attack-chain-drawer-content {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.taf-campaign-detail-drawer__header,
+.taf-attack-chain-drawer-content > header {
+  align-items: flex-start;
+}
+
+.taf-campaign-detail-drawer__header > .ant-space,
+.taf-attack-chain-drawer-content > header > .ant-space {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.taf-campaign-detail-drawer__header .ant-btn,
+.taf-attack-chain-drawer-content > header .ant-btn {
+  color: #9db9c9;
+}
+
+.taf-campaign-detail-drawer__summary,
+.taf-attack-chain-drawer-summary {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.taf-campaign-detail-drawer__summary > span:nth-child(3n),
+.taf-attack-chain-drawer-summary > span:nth-child(3n) {
+  border-right: 0;
+}
+
+.taf-campaign-detail-drawer__summary > span:nth-child(-n + 3),
+.taf-attack-chain-drawer-summary > span:nth-child(-n + 3) {
+  border-bottom: 1px solid rgba(56, 151, 201, 0.23);
+}
+
+.taf-detail-drawer-tabs {
+  flex: 0 0 auto;
+  margin: 0 18px;
+}
+
+.taf-detail-drawer-tabs .ant-tabs-nav {
+  margin: 0;
+}
+
+.taf-detail-drawer-tabs .ant-tabs-tab {
+  min-width: 88px;
+  justify-content: center;
+  padding-block: 12px;
+}
+
+.taf-campaign-detail-drawer__workspace[data-active-tab="detail"] [data-tab-panel]:not([data-tab-panel="detail"]),
+.taf-campaign-detail-drawer__workspace[data-active-tab="evidence"] [data-tab-panel]:not([data-tab-panel="evidence"]),
+.taf-campaign-detail-drawer__workspace[data-active-tab="audit"] [data-tab-panel]:not([data-tab-panel="audit"]),
+.taf-attack-chain-drawer-grid[data-active-tab="detail"] .taf-panel:not(.is-tab-detail),
+.taf-attack-chain-drawer-grid[data-active-tab="evidence"] .taf-panel:not(.is-tab-evidence),
+.taf-attack-chain-drawer-grid[data-active-tab="audit"] .taf-panel:not(.is-tab-audit) {
+  display: none;
+}
+
+.taf-campaign-detail-drawer__workspace[data-active-tab="detail"] > aside:not(:has(> [data-tab-panel="detail"])),
+.taf-campaign-detail-drawer__workspace[data-active-tab="detail"] > main:not(:has(> [data-tab-panel="detail"])),
+.taf-campaign-detail-drawer__workspace[data-active-tab="evidence"] > aside:not(:has(> [data-tab-panel="evidence"])),
+.taf-campaign-detail-drawer__workspace[data-active-tab="evidence"] > main:not(:has(> [data-tab-panel="evidence"])),
+.taf-campaign-detail-drawer__workspace[data-active-tab="audit"] > aside:not(:has(> [data-tab-panel="audit"])),
+.taf-campaign-detail-drawer__workspace[data-active-tab="audit"] > main:not(:has(> [data-tab-panel="audit"])),
+.taf-attack-chain-drawer-grid[data-active-tab="detail"] > aside:not(:has(> .is-tab-detail)),
+.taf-attack-chain-drawer-grid[data-active-tab="detail"] > main:not(:has(> .is-tab-detail)),
+.taf-attack-chain-drawer-grid[data-active-tab="evidence"] > aside:not(:has(> .is-tab-evidence)),
+.taf-attack-chain-drawer-grid[data-active-tab="evidence"] > main:not(:has(> .is-tab-evidence)),
+.taf-attack-chain-drawer-grid[data-active-tab="audit"] > aside:not(:has(> .is-tab-audit)),
+.taf-attack-chain-drawer-grid[data-active-tab="audit"] > main:not(:has(> .is-tab-audit)) {
+  display: none;
+}
+
+.taf-campaign-detail-drawer__workspace[data-active-tab="evidence"] > main,
+.taf-campaign-detail-drawer__workspace[data-active-tab="audit"] > aside,
+.taf-attack-chain-drawer-grid[data-active-tab="evidence"] > main,
+.taf-attack-chain-drawer-grid[data-active-tab="audit"] > aside {
+  grid-column: 1 / -1;
+}
+
+.taf-campaign-detail-drawer__workspace[data-active-tab="evidence"] > main,
+.taf-campaign-detail-drawer__workspace[data-active-tab="audit"] > aside,
+.taf-attack-chain-drawer-grid[data-active-tab="evidence"] > main,
+.taf-attack-chain-drawer-grid[data-active-tab="audit"] > aside {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.taf-campaign-detail-drawer__workspace,
+.taf-attack-chain-drawer-grid {
+  min-height: 0;
+  flex: 1 1 auto;
+  grid-template-columns: minmax(180px, 0.72fr) minmax(300px, 1.28fr) minmax(180px, 0.72fr);
+  overflow: auto;
+}
+
+.taf-campaign-detail-drawer__workspace > aside:last-child,
+.taf-attack-chain-drawer-grid > aside:last-child {
+  grid-column: auto;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.taf-campaign-detail-drawer__workspace > aside:last-child > *,
+.taf-attack-chain-drawer-grid > aside:last-child > * {
+  min-height: 0;
+}
+
+.taf-campaign-detail-drawer__section,
+.taf-attack-chain-drawer-grid .taf-panel__body {
+  overflow: visible;
+}
+
+.taf-campaign-detail-drawer__evidence-table .ant-table-content,
+.taf-attack-chain-drawer-evidence {
+  overflow-x: auto;
+}
+
+.taf-campaign-detail-drawer__evidence-table table {
+  min-width: 620px;
+}
+
+.taf-attack-chain-drawer-evidence > div,
+.taf-attack-chain-drawer-evidence > span {
+  min-width: 650px;
+}
+
+.taf-campaign-detail-drawer__footer,
+.taf-attack-chain-drawer-content > footer {
+  flex: 0 0 auto;
+  align-items: center;
+  flex-direction: row;
+}
+
+.taf-campaign-detail-drawer__footer > .ant-space,
+.taf-attack-chain-drawer-content > footer > .ant-space {
+  align-self: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+@media (max-width: 960px) {
+  .taf-campaign-detail-drawer .ant-drawer-content-wrapper,
+  .taf-attack-chain-detail-drawer .ant-drawer-content-wrapper {
+    top: 16px;
+    right: 16px;
+    bottom: 16px;
+    max-height: calc(100dvh - 32px);
+  }
+
+  .taf-campaign-detail-drawer__summary,
+  .taf-attack-chain-drawer-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: minmax(66px, auto);
+    flex: 0 0 auto;
+  }
+
+  .taf-campaign-detail-drawer__summary > span,
+  .taf-attack-chain-drawer-summary > span {
+    border-right: 1px solid rgba(56, 151, 201, 0.23);
+    border-bottom: 1px solid rgba(56, 151, 201, 0.23);
+  }
+
+  .taf-campaign-detail-drawer__summary > span:nth-child(2n),
+  .taf-attack-chain-drawer-summary > span:nth-child(2n) {
+    border-right: 0;
+  }
+
+  .taf-campaign-detail-drawer__workspace,
+  .taf-attack-chain-drawer-grid {
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+  }
+
+  .taf-campaign-detail-drawer__workspace > aside,
+  .taf-campaign-detail-drawer__workspace > main,
+  .taf-attack-chain-drawer-grid > aside,
+  .taf-attack-chain-drawer-grid > main {
+    flex: 0 0 auto;
+    grid-template-rows: none;
+    grid-auto-rows: max-content;
+    align-content: start;
+  }
+
+  .taf-campaign-detail-drawer__workspace > aside:first-child,
+  .taf-campaign-detail-drawer__workspace > main,
+  .taf-campaign-detail-drawer__workspace > aside:last-child,
+  .taf-attack-chain-drawer-grid > aside:first-child,
+  .taf-attack-chain-drawer-grid > main,
+  .taf-attack-chain-drawer-grid > aside:last-child {
+    grid-template-rows: none;
+    grid-auto-rows: max-content;
+  }
+
+  .taf-campaign-detail-drawer__graph {
+    min-height: 360px;
+  }
+
+  .taf-attack-chain-drawer-preview {
+    min-height: 300px;
+  }
+
+  .taf-campaign-detail-drawer__workspace > aside:last-child,
+  .taf-attack-chain-drawer-grid > aside:last-child {
+    grid-column: auto;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .taf-campaign-detail-drawer__content,
+  .taf-attack-chain-drawer-content {
+    padding: 14px;
+  }
+
+  .taf-campaign-detail-drawer__header,
+  .taf-attack-chain-drawer-content > header {
+    flex-direction: column;
+  }
+
+  .taf-campaign-detail-drawer__header > .ant-space,
+  .taf-attack-chain-drawer-content > header > .ant-space {
+    justify-content: flex-start;
+  }
+
+  .taf-campaign-detail-drawer__summary,
+  .taf-attack-chain-drawer-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-height: 218px;
+    flex: 0 0 auto;
+    overflow-y: auto;
+  }
+
+  .taf-campaign-detail-drawer__summary > span,
+  .taf-attack-chain-drawer-summary > span {
+    min-height: 62px;
+    border-right: 1px solid rgba(56, 151, 201, 0.23);
+  }
+
+  .taf-campaign-detail-drawer__summary > span:nth-child(2n),
+  .taf-attack-chain-drawer-summary > span:nth-child(2n) {
+    border-right: 0;
+  }
+
+  .taf-campaign-detail-drawer__footer > .ant-space,
+  .taf-attack-chain-drawer-content > footer > .ant-space {
+    width: 100%;
+    align-self: stretch;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .taf-campaign-detail-drawer__footer > .ant-space > .ant-space-item,
+  .taf-attack-chain-drawer-content > footer > .ant-space > .ant-space-item,
+  .taf-campaign-detail-drawer__footer button,
+  .taf-attack-chain-drawer-content > footer button {
+    width: 100%;
+  }
+
+  .taf-campaign-detail-drawer__footer,
+  .taf-attack-chain-drawer-content > footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
 }

@@ -557,8 +557,7 @@
 .taf-shell--visual-breakdown:has(.taf-alert-evidence-files-focus),
 .taf-shell--visual-breakdown:has(.taf-alert-evidence-pcap-focus),
 .taf-shell--visual-breakdown:has(.taf-alert-evidence-logs-focus),
-.taf-shell--visual-breakdown:has(.taf-alert-evidence-graph-focus),
-.taf-shell--visual-breakdown:has(.taf-campaign-impact-account-focus) {
+.taf-shell--visual-breakdown:has(.taf-alert-evidence-graph-focus) {
   --shell-sidebar: 0px;
   background: #03111c;
 }
@@ -574,18 +573,14 @@
 .taf-shell--visual-breakdown:has(.taf-alert-evidence-logs-focus) .taf-bottombar,
 .taf-shell--visual-breakdown:has(.taf-alert-evidence-graph-focus) .taf-topbar,
 .taf-shell--visual-breakdown:has(.taf-alert-evidence-graph-focus) .taf-sidebar,
-.taf-shell--visual-breakdown:has(.taf-alert-evidence-graph-focus) .taf-bottombar,
-.taf-shell--visual-breakdown:has(.taf-campaign-impact-account-focus) .taf-topbar,
-.taf-shell--visual-breakdown:has(.taf-campaign-impact-account-focus) .taf-sidebar,
-.taf-shell--visual-breakdown:has(.taf-campaign-impact-account-focus) .taf-bottombar {
+.taf-shell--visual-breakdown:has(.taf-alert-evidence-graph-focus) .taf-bottombar {
   display: none;
 }
 
 .taf-shell--visual-breakdown:has(.taf-alert-evidence-files-focus) .taf-main,
 .taf-shell--visual-breakdown:has(.taf-alert-evidence-pcap-focus) .taf-main,
 .taf-shell--visual-breakdown:has(.taf-alert-evidence-logs-focus) .taf-main,
-.taf-shell--visual-breakdown:has(.taf-alert-evidence-graph-focus) .taf-main,
-.taf-shell--visual-breakdown:has(.taf-campaign-impact-account-focus) .taf-main {
+.taf-shell--visual-breakdown:has(.taf-alert-evidence-graph-focus) .taf-main {
   inset: 0;
   width: 100vw;
   width: 100dvw;
