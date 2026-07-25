@@ -670,4 +670,20 @@ CREATE TABLE IF NOT EXISTS topic_exports (
 CREATE INDEX IF NOT EXISTS idx_topic_exports_tenant_time
   ON topic_exports (tenant_id, generated_at DESC);
 
+CREATE TABLE IF NOT EXISTS topic_actions (
+  action_id    UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  tenant_id    TEXT NOT NULL,
+  topic        TEXT NOT NULL,
+  action       TEXT NOT NULL,
+  target       TEXT NOT NULL,
+  status       TEXT NOT NULL DEFAULT 'queued',
+  detail       JSONB NOT NULL DEFAULT '{}'::jsonb,
+  requested_by TEXT NOT NULL DEFAULT '',
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_topic_actions_tenant_topic
+  ON topic_actions (tenant_id, topic, created_at DESC);
+
 COMMIT;
