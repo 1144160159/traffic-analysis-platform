@@ -1,0 +1,54 @@
+{
+  "page": "entity-graph",
+  "revision": "r576",
+  "rolled_out_at": "2026-07-21T09:40:00+08:00",
+  "namespace": "traffic-analysis",
+  "nebula_cluster": {
+    "namespace": "middleware",
+    "space": "traffic_graph",
+    "topology": {"meta": 3, "graph": 3, "storage": 3},
+    "ready": 9,
+    "restarts": 0,
+    "schema": {"tags": 6, "edges": 8, "indexes": 17},
+    "workbench_data": {"entities": 12, "relations": 14},
+    "authentication": "password authorization enabled; admin and service passwords are Secret-backed",
+    "service_principal": "traffic_graph with GUEST role on traffic_graph"
+  },
+  "deployments": [
+    {
+      "name": "graph-service",
+      "source_revision": "entity-graph-nebulagraph-native-r575",
+      "deployment_revision": 33,
+      "deployment_generation": 33,
+      "image": "docker.io/traffic/graph-service@sha256:c2af7b2361d1bb606d10e24e5251ab59a8200d6424752b4964ec5dade7b6db6c",
+      "image_id": "sha256:7f0f1f46518c3adbff1490e69fb73eaf761d0a28235560597acefe1817d2a79a",
+      "pod": {"name": "graph-service-7bf6d5587f-wdgfs", "ready": true, "restarts": 0, "node": "zeus-server"}
+    },
+    {
+      "name": "web-ui",
+      "source_revision": "entity-graph-nebulagraph-native-r576",
+      "deployment_revision": 758,
+      "deployment_generation": 773,
+      "image": "docker.io/traffic/web-ui@sha256:7dffa2659009611622df0f97b472fc16bf6db0895d462d26d2719e4e7c36df61",
+      "image_id": "sha256:c9ad6c6829d4e9fcb6641f7342df8d7ed66e7a413c7e9d97ff00fdf8255bc0b4",
+      "pod": {"name": "web-ui-69f4dbc5f9-5kqbq", "ready": true, "restarts": 0, "node": "zeus-server"}
+    }
+  ],
+  "nodes_imported": ["8-2tb", "zeus-server"],
+  "image_pull_policy": "Never",
+  "digest_reference_imported": true,
+  "manifests": [
+    "deployments/kubernetes/infrastructure/09-nebula-graph.yaml",
+    "deployments/kubernetes/init-jobs/05-nebula-schema.yaml",
+    "deployments/kubernetes/init-jobs/06-nebula-workbench-seed.yaml",
+    "deployments/kubernetes/applications/go-services.yaml",
+    "deployments/kubernetes/applications/web-ui.yaml"
+  ],
+  "verification": [
+    "entity-graph-live-preflight-r575.json",
+    "entity-graph-interactions-r575.json",
+    "evidence/ui-image-breakdowns/pages/graph/entity-graph-r575-interactions.png"
+  ],
+  "rollback": "deployment rollout history and previous r573/r574 image references remain available on both nodes",
+  "result": "pass"
+}

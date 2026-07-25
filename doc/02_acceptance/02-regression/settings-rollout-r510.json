@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "result": "pass",
+  "acceptance_revision": "r510",
+  "backend": {
+    "source_revision": "settings-r509",
+    "kubernetes_revision": "40",
+    "image": "docker.io/traffic/auth-service@sha256:6e3cb398fb1c68c4dccbcc727af17bfb5f08b4f8218fa2baf128c290a8109735",
+    "config_id": "sha256:b2f73bd553203f29e65d1f8d480452a8a614879f6a3eb3369a73d1cce073079d",
+    "ready_replicas": 1,
+    "nodes_imported": ["8-2tb", "zeus-server"]
+  },
+  "frontend": {
+    "source_revision": "settings-r502",
+    "kubernetes_revision": "705",
+    "image": "docker.io/traffic/web-ui@sha256:ad61548ca0f8434d7c93a9529960a065d21e09863f241bc41533178afb952cb7",
+    "config_id": "sha256:e8e604d91a6909a00744da85744e8e495c6368315024804fa47502a9f1587dc7",
+    "ready_replicas": 1,
+    "nodes_imported": ["8-2tb", "zeus-server"]
+  },
+  "source_manifests": [
+    "deployments/kubernetes/applications/go-services.yaml",
+    "deployments/kubernetes/applications/web-ui.yaml"
+  ],
+  "runtime_evidence": [
+    "doc/02_acceptance/02-regression/settings-governance-preflight-latest.json",
+    "evidence/ui-image-breakdowns/pages/settings/interaction-r510.json",
+    "evidence/ui-image-breakdowns/pages/settings/metrics-r510-main.json",
+    "evidence/ui-image-breakdowns/pages/settings/compare-r510-main.png"
+  ],
+  "rollback": "Kubernetes rollout history retains the previous digest-pinned ReplicaSets"
+}

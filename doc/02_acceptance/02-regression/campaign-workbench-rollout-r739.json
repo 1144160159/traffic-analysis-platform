@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-07-24T22:15:17+08:00",
+  "scope": "campaign-domain",
+  "release": "campaign-domain-r739",
+  "status": "image_ready_cluster_apply_blocked",
+  "change": {
+    "repairs": [
+      "继承 r738 的内容型影响范围 Modal、1200x740 报告 Modal 和攻击链交互修复",
+      "战役详情与攻击链详情新增详情、证据、审计三个受控 Tabs",
+      "Drawer 打开状态、选中对象和 Tab 分别写入 drawer、campaign 和 detailTab URL 参数，关闭时清理打开状态",
+      "非活动 Tab 内容不再同时铺在 Drawer 工作区"
+    ]
+  },
+  "verification": {
+    "targeted_vitest": {
+      "result": "pass",
+      "files": 5,
+      "tests": 37
+    },
+    "typescript_and_vite_build": {
+      "result": "pass",
+      "modules_transformed": 4081
+    },
+    "image_import": {
+      "result": "pass",
+      "nodes": [
+        "10.0.5.8",
+        "10.0.5.9"
+      ]
+    },
+    "kubernetes_apply": {
+      "result": "blocked",
+      "error": "kube-apiserver TLS handshake timeout"
+    },
+    "windows_chrome": {
+      "result": "blocked",
+      "endpoint": "http://127.0.0.1:9224",
+      "error": "connection reset by peer"
+    },
+    "visual_diff": "pending"
+  },
+  "artifacts": {
+    "source_digest": "0aa6144b13a1621f6465b5d4cb028b6f5569d7aafb5884a91b2744f6cea42dd2",
+    "docker_image_id": "sha256:0565b0186ca08d25acac51d1d1e9f226a4c26da964194c5e8bcd76144b0f174a",
+    "containerd_manifest_digest": "sha256:8cefdc50ffd41fb42454335702d000585dc419f5eba9f89e2f7a0d23c7a63a8d",
+    "image": "docker.io/traffic/web-ui:campaign-domain-r739",
+    "build_log": "/tmp/web-ui-r739-build.log",
+    "local_import_log": "/tmp/traffic-web-ui-r739-local-import.log",
+    "remote_import_log": "/tmp/traffic-web-ui-r739-remote-import.log"
+  },
+  "complete": false
+}

@@ -1,0 +1,45 @@
+{
+  "page": "fusion",
+  "revision": "r625",
+  "deployed_at": "2026-07-22T23:04:45+08:00",
+  "cluster": "traffic-analysis",
+  "deployment": {
+    "name": "web-ui",
+    "generation": 823,
+    "revision": 808,
+    "image": "docker.io/traffic/web-ui@sha256:710d80a5fef6c10b9cf28c0ac568c33efe3b58312b1b7fca23ab882540305231",
+    "image_id": "sha256:c1dfba3807f0f28597738530cfc9fed9416f02e646786507c1cbdfa9ae00bab4",
+    "image_size_bytes": 142878979,
+    "source_digest": "0754749727c5e4fb9879d717c975bd6b0eb61b1ac70e31d5d4cf0f61b58c5f4b",
+    "rollout_result": "success",
+    "nodes_imported": ["8-2TB", "zeus-server"],
+    "observed_generation": 823,
+    "observed_ready": "1/1",
+    "observed_restarts": 0,
+    "observed_pod": "web-ui-65f8556945-vc4sl",
+    "pod_node": "zeus-server"
+  },
+  "backend": {
+    "image": "docker.io/traffic/alert-service@sha256:4dbf1c0ef727c5470dc84573ac02cdcf3c7388732400f760f82f921339d7d350",
+    "source_failure_semantics": ["SOURCE_NOT_CONFIGURED", "SOURCE_QUERY_FAILED"]
+  },
+  "verification": {
+    "windows_chrome": "45/45 pass, Chrome 150, Xshell 9224, 1920x1080 + 1536x864 + 1366x768 nonfullscreen",
+    "live_contract": "77/77 pass, blockers=0, warnings=0",
+    "visual_gate": "global plus all six locked ROIs pass without threshold relaxation",
+    "responsive_geometry": "contained=true, overlapPairs=0 and 6+5+6 measured-edge links at all three widths",
+    "runtime": "0 business HTTP failures, 0 request failures, 0 console errors, 0 page errors",
+    "canonical_pipeline": "pixel-accepted"
+  },
+  "evidence": {
+    "interactions": "doc/02_acceptance/02-regression/fusion-interactions-r625.json",
+    "responsive_1536": "evidence/ui-image-breakdowns/pages/fusion/fusion-r625-responsive-1536.png",
+    "responsive_1366": "evidence/ui-image-breakdowns/pages/fusion/fusion-r625-responsive-1366.png",
+    "rule_modal": "evidence/ui-image-breakdowns/pages/fusion/fusion-r625-rule-modal.png",
+    "conflict_detail": "evidence/ui-image-breakdowns/pages/fusion/fusion-r625-conflict-detail.png",
+    "contract": "doc/02_acceptance/runs/20260722-fusion-r625-contract/live-fusion-threat-intel-20260722-fusion-r625-contract-summary.json",
+    "visual_metrics": "evidence/ui-image-breakdowns/pages/fusion/fusion-r625-visual-metrics.json",
+    "comparison": "evidence/ui-image-breakdowns/pages/fusion/fusion-r625-comparison.png",
+    "verification": "evidence/ui-image-breakdowns/pages/fusion/verification.json"
+  }
+}

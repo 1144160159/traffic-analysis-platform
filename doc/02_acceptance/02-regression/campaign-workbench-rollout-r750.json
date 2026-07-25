@@ -1,0 +1,192 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-07-25T02:28:00+08:00",
+  "scope": "campaign-domain",
+  "status": "accepted",
+  "frontend_release": "campaign-domain-r748",
+  "backend_release": "campaign-domain-r750",
+  "database_contract": "campaign-impact-v1",
+  "change": {
+    "ui": [
+      "战役列表、战役详情、报告、攻击链及详情覆盖层按 11 个 UI 目标重建",
+      "五类影响范围使用 1040px 内容型居中 Modal，宿主顶栏、侧栏和战役详情保持可见",
+      "五类真实入口关闭后保留同一战役、标题、阶段数和风险值，并移除 impact 查询参数",
+      "战役阶段关联图使用 ECharts graph，支持缩放、拖拽和节点点击审计"
+    ],
+    "backend": [
+      "campaign detail DTO 暴露 accounts/services/assets/departments/campuses/business_systems 六类影响范围",
+      "ClickHouse alerts Community ID 关联 sessions，端点 IP 再关联 PostgreSQL assets",
+      "账号与服务合并 user_events、会话观测和持久化资产元数据",
+      "部门处置进度由 PostgreSQL campaign_workbench_state.status 映射"
+    ],
+    "database": [
+      "新增幂等 PostgreSQL campaign-impact-v1 资产契约并同步 K8s init ConfigMap/Job",
+      "10.0.5.8 与 10.0.5.9 双节点资产提供账号、开放服务、部门、校区和业务系统元数据"
+    ]
+  },
+  "verification": {
+    "targeted_vitest": {
+      "result": "pass",
+      "files": 5,
+      "tests": 37
+    },
+    "typescript_and_vite_build": {
+      "result": "pass",
+      "modules_transformed": 4081
+    },
+    "go_alert_api": {
+      "result": "pass",
+      "package": "./internal/alert/api"
+    },
+    "kubernetes_dry_run": {
+      "result": "pass",
+      "manifests": 3
+    },
+    "live_contract": {
+      "result": "pass",
+      "checks": 33,
+      "failed": 0,
+      "impact_counts": {
+        "accounts": 4,
+        "services": 3,
+        "assets": 2,
+        "departments": 1,
+        "campuses": 1,
+        "business_systems": 1
+      },
+      "community_id_session_rows": 45846,
+      "service_tuple_exact_match": "8472/UDP|10.0.5.9",
+      "tenant_isolation": true,
+      "viewer_write_denied": true,
+      "durable_jobs_and_audit": true
+    },
+    "windows_chrome_popup_and_responsive": {
+      "result": "pass",
+      "browser": "Chrome/150.0.7871.182",
+      "endpoint": "http://127.0.0.1:9224",
+      "impact_modals": 5,
+      "impact_modal_geometry": "1040x671 at 1366x768",
+      "impact_close_checks": 5,
+      "impact_content_retained": 5,
+      "desktop_drawers": 2,
+      "responsive_drawer_checks": 4,
+      "app_errors": 0
+    },
+    "windows_chrome_interactions": {
+      "result": "pass",
+      "action_checks": 8,
+      "server_audit_count": 14,
+      "viewer_write_denied": true,
+      "app_errors": 0
+    },
+    "echarts_attack_graph": {
+      "result": "pass",
+      "checks": 6,
+      "zoom_verified": true,
+      "phase_click_audit_verified": true
+    },
+    "windows_chrome_responsive": {
+      "result": "pass",
+      "checks": 54,
+      "viewports": 6
+    },
+    "visual_capture_and_diff": {
+      "result": "pass",
+      "captures": "11/11",
+      "comparisons": "11/11",
+      "threshold": 0.125,
+      "campaigns_full_frame": 0.09712818287037037,
+      "highest_normalized_modal_roi": {
+        "target": "campaign-detail-impact-campus",
+        "pixel_mismatch_ratio": 0.12387769898496315
+      },
+      "impact_modal_comparison_mode": "normalized-modal-roi",
+      "full_frame_impact_comparisons": "diagnostic only"
+    }
+  },
+  "deployment": {
+    "web_ui": {
+      "generation": 952,
+      "observed_generation": 952,
+      "ready_replicas": 1,
+      "image": "docker.io/traffic/web-ui:campaign-domain-r748",
+      "source_digest": "112d9308292ba5c2b942ad5c5c40f7db050400d6d676902eec76b9216ff6c197",
+      "oci_digest": "sha256:c408ab6a176f19d9facfbad752134004739e87af178a3617fd7c012c082d08ee",
+      "runtime_image_id": "sha256:8ab457264e4fdbf9ef9da62fea95e91f83abe1cc2aef5bab487bc15ea1e1da9c",
+      "restarts": 0
+    },
+    "alert_service": {
+      "generation": 233,
+      "observed_generation": 233,
+      "ready_replicas": 1,
+      "image": "docker.io/traffic/alert-service:campaign-domain-r750",
+      "source_digest": "cf7211b60654915a66d4d70e4e7d3b3c3f78a2c56c9481f285f4320761edd568",
+      "oci_digest": "sha256:e1961c263b5c38bb956abdb810551d5e198358fa59a8660e712737f2afef46cf",
+      "runtime_image_id": "sha256:c75c4670edd80d780fe15f349a805ed437d46882f6b3618ccb17bb1a2e5cadce",
+      "restarts": 0
+    },
+    "postgresql": {
+      "migration": "common/sql/pg/07-campaign-impact-assets.sql",
+      "migration_sha256": "2a8e1f1398efd367f7e957bfce74e98c051b57279a75ee58eac90389c4ff9a20",
+      "upserted_rows": 2
+    }
+  },
+  "reviews": {
+    "logic": {
+      "result": "pass",
+      "p0": 0,
+      "p1": 0,
+      "p2": 2,
+      "closed_during_adjudication": [
+        "服务影响元组已与持久化 sessions 做逐行等值校验"
+      ]
+    },
+    "layout": {
+      "result": "pass",
+      "p0": 0,
+      "p1": 0,
+      "p2": 0
+    },
+    "acceptance": {
+      "result": "pass_after_document_closure",
+      "p0": 0,
+      "p1": 0,
+      "p2": 4
+    },
+    "main_thread": {
+      "decision": "ACCEPT",
+      "scope": "campaign-domain only"
+    }
+  },
+  "artifacts": {
+    "live_contract": "doc/02_acceptance/02-regression/campaign-workbench-live-preflight-latest.json",
+    "popup_and_responsive": "evidence/ui-image-breakdowns/pages/campaigns/popup-and-responsive-r750.json",
+    "real_impact_screenshot": "evidence/ui-image-breakdowns/pages/campaigns/real-impact-account-r750.png",
+    "captures": "doc/02_acceptance/02-regression/campaign-domain-captures-r748.json",
+    "comparisons": "doc/02_acceptance/02-regression/campaign-domain-comparisons-r748.json",
+    "interactions": "evidence/ui-image-breakdowns/pages/campaigns/interaction-r748.json",
+    "attack_graph": "evidence/ui-image-breakdowns/pages/campaigns/attack-graph-r748.json",
+    "responsive": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-campaign-responsive-latest.json",
+    "postgres_migration_log": "doc/02_acceptance/02-regression/logs/campaign-domain-r750-postgres-impact-assets.log",
+    "backend_build_log": "doc/02_acceptance/02-regression/logs/campaign-domain-r750-alert-overlay-build.log",
+    "backend_test_log": "doc/02_acceptance/02-regression/logs/campaign-domain-r750-go-test.log"
+  },
+  "artifact_sha256": {
+    "live_contract": "c2435a6259fbdcd97443f641fbbfd7044137e362537712cdab55ff44435812c1",
+    "popup_and_responsive": "c184fa143c8e911473bb4a739b24734a7498e2c3c8ab554ae16d9bc8e8e268cf",
+    "real_impact_screenshot": "5b1d9cbeac094dd5e3908224cf75fe5c12ec32bb0dde9c46f99d17fe586a113a",
+    "captures": "cefce9c38cd13e87dfac35436aab73722e8c959b4368a55f4889d1e8a3169065",
+    "comparisons": "75463dfa97cb5ba1cb32f2ec091a0b07ef0e03cc08576060d5e81b9851398e5b",
+    "interactions": "05eab0477086ea25b5556d93043df07c76bec9ab8dac3fe0b2ded0995099e8b9",
+    "attack_graph": "4af54973c6c46811261d03289fe833d443e80e6413ef1c30a8328da4d44f1430",
+    "responsive": "ae2f66d801a16792e8c8b97b10c0900ae2c70f3faf6c70916126e7c39528f64c"
+  },
+  "known_non_blocking_followups": [
+    "为六类影响范围 DTO 增加逐行 provenance 字段",
+    "补充 user_events 对账号投影的独立贡献样本",
+    "避免 bootstrap SQL 覆盖资产发现系统的权威时间字段",
+    "校区 normalized ROI 距 0.125 阈值较近，后续保持同浏览器同视口回归"
+  ],
+  "complete": true,
+  "project_complete": false
+}

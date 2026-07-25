@@ -1,0 +1,76 @@
+{
+  "page": "fusion",
+  "route": "/fusion",
+  "revision": "r625",
+  "status": "complete",
+  "updated_at": "2026-07-22T23:45:31+08:00",
+  "workflow": [
+    {
+      "step": "UI breakdown",
+      "status": "complete",
+      "result": "locked the 1920x1080 page target and the 1200x740 rule-modal contract; retained the user override that business detail remains contained instead of fullscreen",
+      "evidence": "doc/04_assets/ui_suite_gpt_v1/screens/pages/fusion.png"
+    },
+    {
+      "step": "frontend implementation",
+      "status": "complete",
+      "result": "removed fixed-width overflow, added container-responsive source/rule/output geometry, ECharts source and rule charts, six-page conflict pagination, contained detail actions, and the complete rule-governance modal",
+      "evidence": "web/ui/src/pages/FusionWorkbenchPage.tsx"
+    },
+    {
+      "step": "backend and database truthfulness",
+      "status": "complete",
+      "result": "PostgreSQL-backed rules/conflicts/repairs/audits retain optimistic concurrency and RBAC; unavailable ClickHouse/PostgreSQL sources expose SOURCE_NOT_CONFIGURED or SOURCE_QUERY_FAILED instead of false zero-data health",
+      "evidence": "go/control-plane/internal/alert/api/handler_product_pages.go"
+    },
+    {
+      "step": "build and deployment",
+      "status": "complete",
+      "result": "r625 is a flattened 143 MB image imported on 8-2TB and zeus-server; deployment generation 823 revision 808 is Ready 1/1 with zero restarts",
+      "evidence": "doc/02_acceptance/02-regression/fusion-rollout-r625.json"
+    },
+    {
+      "step": "Windows Chrome interaction and responsive gate",
+      "status": "complete",
+      "result": "45/45 assertions pass through Xshell 127.0.0.1:9224 at 1920x1080, 1536x864 and 1366x768; all nodes are contained, overlapPairs=0, 6+5+6 links remain valid, and no horizontal overflow occurs",
+      "evidence": "doc/02_acceptance/02-regression/fusion-interactions-r625.json"
+    },
+    {
+      "step": "live API, PostgreSQL and permission contract",
+      "status": "complete",
+      "result": "77/77 pass with zero failures, blockers or warnings; page six, stale versions, reader 403s, persisted writes, repair task, audit rows and bundle image identity are verified",
+      "evidence": "doc/02_acceptance/runs/20260722-fusion-r625-contract/live-fusion-threat-intel-20260722-fusion-r625-contract-summary.json"
+    },
+    {
+      "step": "visual diff and metrics",
+      "status": "complete",
+      "result": "global 0.1122337963 <= 0.125 and all six locked regional gates pass without threshold relaxation; bottom workbench passes at 0.0903636975 with no container opacity",
+      "evidence": "evidence/ui-image-breakdowns/pages/fusion/fusion-r625-visual-metrics.json"
+    },
+    {
+      "step": "independent reviews and root adjudication",
+      "status": "complete",
+      "result": "logic and layout reviewers accept with no P0/P1/P2 implementation blockers; root rechecked the final r625 modal-only fit change and synchronized the canonical pixel pipeline",
+      "evidence": "doc/02_acceptance/02-regression/fusion-review-adjudication-latest.json"
+    }
+  ],
+  "verification_summary": {
+    "frontend_build": "pass",
+    "go_tests": "pass",
+    "live_contract": "77/77 pass, blockers=0, warnings=0",
+    "windows_chrome": "45/45 pass at 1920x1080, 1536x864 and 1366x768 through Xshell 127.0.0.1:9224",
+    "responsive_geometry": "all nodes contained, overlapPairs=0, 6+5+6 links valid at every tested width",
+    "runtime": "0 business HTTP failures, 0 request failures, 0 console errors, 0 page errors",
+    "visual": "global and all six locked ROIs pass",
+    "canonical_pipeline": "fusion is pixel-accepted",
+    "deployment": "generation 823, revision 808, Ready 1/1, restart=0",
+    "continuation_recheck": "production /fusion HTTP 200, Xshell CDP Chrome/150 reachable, focused Vitest 65/65, Go alert API pass and frontend build pass at 2026-07-22T23:45:31+08:00",
+    "repository_wide_test_boundary": "199/201 Web UI tests pass; the two failing assertions concern Playbook bitmap assets and Encrypted Traffic source quote style, not Fusion behavior or layout"
+  },
+  "remaining_blockers": [],
+  "non_blocking_findings": [
+    "The pipeline ROI is 0.1407307210 against 0.142 and should remain guarded in future CSS changes.",
+    "The standalone legacy overlay raster comparison remains an explicit diagnostic failure because that source presents a near-full-canvas modal; production acceptance follows the locked 1200x740 breakdown and the user nonfullscreen constraint.",
+    "Responsive viewport widths were verified; no separate Chrome zoomLevel mutation is claimed."
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "page": "entity-graph",
+  "revision": "r585",
+  "rolled_out_at": "2026-07-21T16:06:34+08:00",
+  "scope": "enlarge the left path-analysis workspace, keep query governance fully inside the right panel, and render all three entity-detail graphics with ECharts",
+  "deployment": {
+    "name": "web-ui",
+    "source_revision": "entity-graph-echarts-ring-r585",
+    "deployment_revision": 767,
+    "deployment_generation": 782,
+    "image": "docker.io/traffic/web-ui@sha256:c63a1ab78fefb3dc5f4dffa04e198707ea1c8a82200c5b3ff19ad153f7a7d433",
+    "pod": {
+      "name": "web-ui-77fdd84457-5th66",
+      "ready": true,
+      "restarts": 0,
+      "node": "zeus-server"
+    }
+  },
+  "nodes_imported": ["8-2tb", "zeus-server"],
+  "image_pull_policy": "Never",
+  "digest_reference_imported": true,
+  "layout": {
+    "path_panel": {"width_px": 801.3229370117188, "height_px": 340, "column": "left"},
+    "query_governance": {"width_px": 580.6666870117188, "height_px": 340, "column": "right", "clipped": false},
+    "left_to_right_width_ratio": 1.3800050096477239,
+    "all_tabs_stable": true
+  },
+  "entity_detail_charts": {
+    "risk_score_ring": "ECharts gauge",
+    "last_24h_traffic": "ECharts line",
+    "related_alerts": "ECharts line",
+    "canvas_count": 3
+  },
+  "verification": {
+    "web_build": "pass",
+    "backend_preflight": "pass",
+    "windows_chrome_backend": "Xshell CDP 127.0.0.1:9224",
+    "windows_chrome_version": "Chrome/150.0.7871.128",
+    "production_route": "http://10.0.5.8:30180/graph",
+    "interaction_result": "pass",
+    "business_http_failures": 0,
+    "unexpected_console_errors": 0,
+    "unexpected_page_errors": 0
+  },
+  "evidence": [
+    "doc/02_acceptance/02-regression/entity-graph-interactions-r585.json",
+    "evidence/ui-image-breakdowns/pages/graph/entity-graph-r585-interactions.png",
+    "evidence/ui-image-breakdowns/pages/graph/entity-graph-r585-account-detail.png",
+    "evidence/ui-image-breakdowns/pages/graph/entity-graph-r585-path-tabs/shortest.png",
+    "evidence/ui-image-breakdowns/pages/graph/entity-graph-r585-path-tabs/attack.png",
+    "evidence/ui-image-breakdowns/pages/graph/entity-graph-r585-path-tabs/communication.png",
+    "evidence/ui-image-breakdowns/pages/graph/entity-graph-r585-path-tabs/account.png",
+    "evidence/ui-image-breakdowns/pages/graph/entity-graph-r585-visual-metrics.json",
+    "evidence/ui-image-breakdowns/pages/graph/entity-graph-r585-diff/full-side-by-side.png",
+    "evidence/ui-image-breakdowns/pages/graph/entity-graph-r585-diff/lower-workspace-side-by-side.png"
+  ],
+  "result": "pass"
+}

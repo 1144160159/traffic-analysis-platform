@@ -1,0 +1,22 @@
+{
+  "page": "entity-graph",
+  "revision": "r566",
+  "rolled_out_at": "2026-07-20T19:11:00+08:00",
+  "namespace": "traffic-analysis",
+  "deployment": "web-ui",
+  "deployment_revision": 752,
+  "image": "docker.io/traffic/web-ui@sha256:b808cf9825123cbc6611e64b7d2d9e7766f12ba9f3959a29647def5b03d5b095",
+  "nodes_imported": ["8-2tb", "zeus-server"],
+  "image_pull_policy": "Never",
+  "digest_reference_imported": true,
+  "replicas": {"ready": 1, "desired": 1, "updated": 1},
+  "pod": {
+    "name": "web-ui-b957c6b96-khvcj",
+    "ready": true,
+    "restarts": 0,
+    "image_id": "docker.io/traffic/web-ui@sha256:b808cf9825123cbc6611e64b7d2d9e7766f12ba9f3959a29647def5b03d5b095"
+  },
+  "manifest": "deployments/kubernetes/applications/web-ui.yaml",
+  "rollback": "deployment rollout history remains available; r564 and r566 tags remain imported on both nodes",
+  "result": "pass"
+}

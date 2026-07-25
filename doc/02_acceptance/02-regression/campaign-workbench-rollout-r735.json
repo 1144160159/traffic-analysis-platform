@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-07-24T21:25:00+08:00",
+  "scope": "campaign-domain",
+  "release": "campaign-domain-r735",
+  "status": "deployed_visual_gate_pending",
+  "change": {
+    "finding": "影响范围被实现为全屏 focus 页面，违背生产弹层必须保持宿主上下文可见的规则",
+    "repair": [
+      "影响范围五种对象状态改为战役详情宿主页上的居中实际尺寸 Ant Design Modal",
+      "Modal 最大宽度 1180px / 86dvw，最大高度为视口高度减 96px",
+      "弹窗 body 负责滚动，内容不再使用整块 transform 缩放",
+      "使用 centered 契约修正宽屏下垂直偏移",
+      "验收规格同步为 modal-state，focus query 仅负责稳定打开生产弹窗"
+    ]
+  },
+  "verification": {
+    "targeted_vitest": {
+      "result": "pass",
+      "files": 5,
+      "tests": 37
+    },
+    "typescript_and_vite_build": {
+      "result": "pass",
+      "modules_transformed": 4081
+    },
+    "kubernetes_dry_run": "pass",
+    "kubernetes_rollout": {
+      "result": "pass",
+      "generation": 941,
+      "observed_generation": 941,
+      "ready": "1/1"
+    },
+    "gateway_http": {
+      "result": "pass",
+      "url": "http://10.0.5.8:30180/",
+      "status": 200
+    },
+    "windows_chrome": {
+      "result": "blocked",
+      "endpoint": "http://127.0.0.1:9224",
+      "error": "connection reset by peer",
+      "required_next": "restart Windows CodexChromeCDP on 9222 and restore the existing Xshell 9224 -> 9222 forwarding rule"
+    },
+    "visual_diff": "pending",
+    "logic_review": "pending",
+    "layout_review": "pending",
+    "main_thread_adjudication": "pending"
+  },
+  "artifacts": {
+    "source_digest": "74b200ecb8edee8751aefcd40be55e16d803922e6d8f3293228e028f246ba002",
+    "docker_image_id": "sha256:e068beaf8c19a5606dd3a0b1753574ec866b86bcb2c628737ae7e047c8fe7dac",
+    "containerd_manifest_digest": "sha256:bcb53bb56a4aef8614b1bddd65a5920f26c3511d2e21880d4195832b0707c8bb",
+    "image": "docker.io/traffic/web-ui:campaign-domain-r735"
+  },
+  "complete": false
+}

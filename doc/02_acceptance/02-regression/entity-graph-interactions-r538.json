@@ -1,0 +1,171 @@
+{
+  "result": "pass",
+  "browser_backend": "Windows Chrome CDP over Xshell 9224",
+  "browser": "Chrome/150.0.7871.128",
+  "route": "http://10.0.5.8:30180/graph?windowsCdpInteractionTs=1784520825421#codex_smoke_token=<redacted>",
+  "checks": {
+    "source_is_clickhouse": true,
+    "node_count": true,
+    "edge_count": true,
+    "topology_is_echarts_canvas": true,
+    "selected_node_changed": true,
+    "search_filter_count": true,
+    "backend_entity_filter": true,
+    "saved_view_persisted": true,
+    "export_download": true,
+    "path_panel_visible": true,
+    "four_path_tabs_stay_in_fixed_panel": true,
+    "four_path_tabs_have_distinct_real_relations": true,
+    "four_path_tabs_have_distinct_ui_contracts": true,
+    "topology_reset_keeps_single_canvas": true,
+    "detail_close_and_restore": true,
+    "destinations_work": true,
+    "no_business_bad_responses": true,
+    "no_business_request_failures": true,
+    "no_unexpected_console_errors": true,
+    "no_unexpected_page_errors": true,
+    "no_horizontal_overflow": true
+  },
+  "graph": {
+    "source": "clickhouse_entity_graph",
+    "node_count": 10,
+    "edge_count": 12
+  },
+  "path_tabs": [
+    {
+      "tab": "最短路径",
+      "mode": "shortest",
+      "relation": "通信",
+      "required_text": "路径长度",
+      "actual_mode": "shortest",
+      "actual_relation": "通信",
+      "actual_length": 1,
+      "box": {
+        "x": 174,
+        "y": 699,
+        "width": 667.1979370117188,
+        "height": 298
+      },
+      "panel_stable": true,
+      "inside_panel": true,
+      "ui_class": "taf-graph-mode-view is-shortest"
+    },
+    {
+      "tab": "攻击路径",
+      "mode": "attack",
+      "relation": "关联告警",
+      "required_text": "攻击阶段",
+      "actual_mode": "attack",
+      "actual_relation": "关联告警",
+      "actual_length": 1,
+      "box": {
+        "x": 174,
+        "y": 699,
+        "width": 667.1979370117188,
+        "height": 298
+      },
+      "panel_stable": true,
+      "inside_panel": true,
+      "ui_class": "taf-graph-mode-view is-attack"
+    },
+    {
+      "tab": "通信路径",
+      "mode": "communication",
+      "relation": "DNS解析",
+      "required_text": "通信频次",
+      "actual_mode": "communication",
+      "actual_relation": "DNS解析",
+      "actual_length": 1,
+      "box": {
+        "x": 174,
+        "y": 699,
+        "width": 667.1979370117188,
+        "height": 298
+      },
+      "panel_stable": true,
+      "inside_panel": true,
+      "ui_class": "taf-graph-mode-view is-communication"
+    },
+    {
+      "tab": "账号访问路径",
+      "mode": "account",
+      "relation": "登录",
+      "required_text": "身份标签",
+      "actual_mode": "account",
+      "actual_relation": "登录",
+      "actual_length": 1,
+      "box": {
+        "x": 174,
+        "y": 699,
+        "width": 667.1979370117188,
+        "height": 298
+      },
+      "panel_stable": true,
+      "inside_panel": true,
+      "ui_class": "taf-graph-mode-view is-account"
+    }
+  ],
+  "topology": {
+    "canvas_count": 1,
+    "reset_canvas_count": 1
+  },
+  "saved_view": {
+    "center_id": "host:10.20.4.18",
+    "search": "",
+    "filters": {
+      "timeRange": "24h",
+      "site": "main",
+      "entityType": "all",
+      "depth": 2
+    },
+    "saved_at": "2026-07-20T04:14:03.105Z"
+  },
+  "download": "entity-graph-host-10.20.4.18.json",
+  "navigation": [
+    {
+      "label": "查看资产",
+      "passed": true,
+      "url": "http://10.0.5.8:30180/assets?search=%E8%B4%A6%E5%8F%B7"
+    },
+    {
+      "label": "查看告警",
+      "passed": true,
+      "url": "http://10.0.5.8:30180/alerts?entity=10.20.4.18"
+    },
+    {
+      "label": "进入取证",
+      "passed": true,
+      "url": "http://10.0.5.8:30180/forensics?asset=10.20.4.18"
+    },
+    {
+      "label": "跳转攻击链",
+      "passed": true,
+      "url": "http://10.0.5.8:30180/attack-chains?entity=10.20.4.18"
+    },
+    {
+      "label": "审计日志",
+      "passed": true,
+      "url": "http://10.0.5.8:30180/audit-log?object_type=graph&object_id=host%3A10.20.4.18"
+    }
+  ],
+  "bad_responses": [],
+  "business_request_failures": [],
+  "unexpected_console_errors": [],
+  "unexpected_page_errors": [],
+  "known_external_noise": {
+    "request_failures": [
+      {
+        "url": "https://api.yhchj.com/ip",
+        "failure": "net::ERR_CONNECTION_CLOSED"
+      }
+    ],
+    "console_errors": [
+      "Failed to load resource: net::ERR_CONNECTION_CLOSED"
+    ],
+    "page_errors": [
+      "Object"
+    ]
+  },
+  "screenshot": "evidence/ui-image-breakdowns/pages/graph/entity-graph-r538-interactions.png",
+  "generated_at": "2026-07-20T04:14:15.602Z"
+}

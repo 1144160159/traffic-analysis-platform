@@ -1,0 +1,93 @@
+{
+  "page": "fusion",
+  "revision": "r625",
+  "adjudicated_at": "2026-07-22T23:09:00+08:00",
+  "review_scope": "root adjudication after independent logic and layout reviews, final modal fit recheck, and canonical pipeline synchronization",
+  "logic_review": {
+    "result": "ACCEPT",
+    "p0": [],
+    "p1": [],
+    "p2": [],
+    "p3": [
+      "SOURCE_QUERY_FAILED has source review coverage; a dedicated injected database failure test remains optional hardening."
+    ],
+    "closed_findings": [
+      "18 conflicts at pageSize 3 expose all six pages; Windows Chrome visits offset 15 and validates the final three IDs.",
+      "The live contract uses conflict_limit=3 and offset=3 and passes 77/77.",
+      "Unavailable dependencies return explicit unavailable status and error codes instead of healthy zero data.",
+      "Optimistic version conflicts, reader permission denials, PostgreSQL writes and audit rows pass."
+    ],
+    "evidence": [
+      "doc/02_acceptance/02-regression/fusion-interactions-r625.json",
+      "doc/02_acceptance/runs/20260722-fusion-r625-contract/live-fusion-threat-intel-20260722-fusion-r625-contract-summary.json",
+      "go/control-plane/internal/alert/api/handler_product_pages_test.go"
+    ]
+  },
+  "layout_review": {
+    "result": "ACCEPT",
+    "p0": [],
+    "p1": [],
+    "p2": [],
+    "p3": [
+      "The standalone legacy overlay raster diff remains diagnostic-only because it conflicts with the locked 1200x740 breakdown and nonfullscreen production constraint."
+    ],
+    "verification_boundaries": [
+      "The pipeline visual ROI passes with 0.001269279 margin and remains a protected regression gate.",
+      "The evidence covers responsive viewport widths but does not claim an independent Chrome zoomLevel mutation."
+    ],
+    "closed_findings": [
+      "1920, 1536 and 1366 have no document or pipeline horizontal overflow.",
+      "Every node is contained with overlapPairs=0 and all 6+5+6 ECharts links terminate against measured node boundaries.",
+      "The bottom workbench uses scoped tokens, not container opacity, and all three bottom ROIs pass.",
+      "The r625 modal is approximately 1200x730, nonfullscreen, has no visible internal scrollbar at 1920, and contains all governance sections.",
+      "The right conflict detail and all four actions stay inside the 486px business rail."
+    ],
+    "evidence": [
+      "evidence/ui-image-breakdowns/pages/fusion/fusion-r625-comparison.png",
+      "evidence/ui-image-breakdowns/pages/fusion/fusion-r625-responsive-1536.png",
+      "evidence/ui-image-breakdowns/pages/fusion/fusion-r625-responsive-1366.png",
+      "evidence/ui-image-breakdowns/pages/fusion/fusion-r625-rule-modal.png",
+      "evidence/ui-image-breakdowns/pages/fusion/fusion-r625-conflict-detail.png",
+      "evidence/ui-image-breakdowns/pages/fusion/fusion-r625-visual-metrics.json"
+    ]
+  },
+  "reviewer_receipts": [
+    {
+      "reviewer": "fusion_logic_review_r614",
+      "result": "ACCEPT",
+      "severity_counts": {
+        "p0": 0,
+        "p1": 0,
+        "p2": 0,
+        "p3": 1
+      },
+      "note": "r625 preserves the accepted r623 business behavior; 45/45 interactions, 77/77 live contract checks and alert API tests pass. The remaining P3 is optional injected SOURCE_QUERY_FAILED hardening."
+    },
+    {
+      "reviewer": "fusion_logic_review_r604",
+      "result": "ACCEPT",
+      "severity_counts": {
+        "p0": 0,
+        "p1": 0,
+        "p2": 0
+      }
+    },
+    {
+      "reviewer": "fusion_layout_review_r614",
+      "result": "ACCEPT",
+      "severity_counts": {
+        "p0": 0,
+        "p1": 0,
+        "p2": 0,
+        "p3": 1
+      },
+      "note": "Three responsive layouts, 45/45 interaction assertions and all page ROIs pass; the modal is nonfullscreen with no visible inner scrollbar and retains the complete governance area. The only P3 is the legacy fullscreen-modal raster mismatch."
+    }
+  ],
+  "root_adjudication": {
+    "result": "ACCEPT",
+    "reason": "The reported resize failure is closed by real Windows Chrome evidence at three viewport widths; interaction, live data, persistence, RBAC, deployment, global visual and all regional visual gates pass. The final r625 change only compacts modal-internal spacing, was visually rechecked, and retains the full interaction suite.",
+    "canonical_status": "pixel-accepted",
+    "remaining_blockers": []
+  }
+}

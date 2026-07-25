@@ -1,0 +1,35 @@
+{
+  "page": "fusion",
+  "revision": "r607",
+  "deployed_at": "2026-07-22T17:24:00+08:00",
+  "cluster": "traffic-analysis",
+  "deployments": [
+    {
+      "name": "web-ui",
+      "image": "docker.io/traffic/web-ui@sha256:609fbc99d7f0063fb585d47efca428bb00b60678205f4261b5cde061ea346e98",
+      "generation": 803,
+      "revision": 788,
+      "ready": "1/1"
+    },
+    {
+      "name": "alert-service",
+      "image": "docker.io/traffic/alert-service@sha256:c06f9c1e28eddb5627742f846b67edbb4cfc2e710a41227748baa69ad6c6d47d",
+      "generation": 176,
+      "revision": 167,
+      "ready": "1/1"
+    }
+  ],
+  "nodes": ["zeus-server", "8-2TB"],
+  "verification": {
+    "live_contract": "64/64 pass, 0 blockers, 0 warnings",
+    "windows_chrome": "pass, Chrome 150, Xshell 9224, 1920x1080 non-fullscreen",
+    "visual": "global and 6/6 regional gates pass",
+    "reviews": "logic ACCEPT; layout ACCEPT; root ACCEPT"
+  },
+  "source_digests": {
+    "fixture_sql": "sha256:cb9e48a731963a199db41f1f92f6f2a303ec31324e89ab1d9682ac29998fe1c0",
+    "fusion_page": "sha256:7c02f9b7079d054e0cbb5b7829a25e45093b389bbbb81f7c113b8736b153e862",
+    "charts": "sha256:0ebd5fdfa5d2e09eddabd02f2cbd64f0f1b5a23e8bc62b647c6f077ee6db6d9d",
+    "alert_handler": "sha256:024864ef1fc3b765bf019b6420ec65261f7f6dbbf655e397e86141d5e1e07b07"
+  }
+}

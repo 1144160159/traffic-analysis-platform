@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-19T08:50:14+08:00",
+  "namespace": "traffic-analysis",
+  "result": "pass",
+  "deployments": {
+    "alert-service": {
+      "revision": "r351",
+      "ready_at_rollout": true,
+      "resolved_image": "docker.io/traffic/alert-service@sha256:d623d9e54d8fdd754e46d6d46949f69c8117b46af7f24579429deef640b427bb",
+      "containerd_manifest_digest": "sha256:d623d9e54d8fdd754e46d6d46949f69c8117b46af7f24579429deef640b427bb",
+      "docker_config_id": "sha256:6342320cb936a6d5aabb1307d23d88da20055e80160d20e9e5e29d5c9cd2ea6b"
+    },
+    "web-ui": {
+      "revision": "r352",
+      "ready_at_rollout": true,
+      "resolved_image": "docker.io/traffic/web-ui@sha256:082270accbb437552d3cda8868e5f9fe6cd73601f8081534bbc80d26eacb5d24",
+      "containerd_manifest_digest": "sha256:082270accbb437552d3cda8868e5f9fe6cd73601f8081534bbc80d26eacb5d24",
+      "docker_config_id": "sha256:e1e1ab3e6802d4500b6cbfff86a0dfceab097279f972a4885524a91420077958"
+    }
+  },
+  "two_node_image_import": ["8-2tb", "zeus-server"],
+  "source_manifests": [
+    "deployments/kubernetes/applications/go-services.yaml",
+    "deployments/kubernetes/applications/web-ui.yaml"
+  ],
+  "runtime_evidence": [
+    "doc/02_acceptance/runs/20260719-whitelist-governance-r351/live-whitelist-governance-preflight-20260719-whitelist-governance-r351-summary.json",
+    "evidence/ui-image-breakdowns/pages/whitelist/interaction-r352.json",
+    "evidence/ui-image-breakdowns/pages/whitelist-visual-states-r352.json"
+  ],
+  "rollback": {
+    "strategy": "rollout undo to the prior Deployment revision or reapply the prior digest-pinned manifest",
+    "mutation_performed": false,
+    "reason": "forward rollout and acceptance passed; no destructive rollback was needed"
+  },
+  "finalization_note": "The main-thread read-only kubectl refresh briefly hit a TLS handshake timeout; the later independent final review successfully reconfirmed both Pods Ready and matched the runtime Docker config IDs to r351/r352. Repository manifests remain digest-pinned; live templates still carry the equivalent whitelist-r351/r352 tags until the next manifest apply."
+}

@@ -1,0 +1,25 @@
+{
+  "page": "alerts",
+  "result": "ready",
+  "backend": {
+    "workload": "alert-service",
+    "release": "alerts-r647",
+    "digest": "sha256:4ee7e891052387de3a610fc98643d25b39e2269f2762ca0f7fdcf256dab00de7",
+    "image_id": "sha256:644a85c055d5655d6bd9e72ea7aeeb51344b6619876b276b3e7d0eb6241120f7",
+    "source_digest": "089695f98ea36134269fd1a87c9967ea9cc603a8ff78f2d3dddc2dec177cded6",
+    "generation": 196,
+    "revision": 184
+  },
+  "frontend": {
+    "workload": "web-ui",
+    "release": "alerts-r648",
+    "digest": "sha256:8bbdd8a56566c257bb3ce57d4eaa48087c992d92f67984e1d299b36467171726",
+    "image_id": "sha256:2ec5acd010c456c4b98c721ce2547c9c4f671b2f78d2d3d8b733c64370e8cd6c",
+    "source_digest": "5e09c30a505d04e8479cc229cd7bc982c3de5a283d61dfe715c74e959ed18fcb",
+    "generation": 839,
+    "revision": 823
+  },
+  "nodes_imported": 2,
+  "deployments_ready": true,
+  "pod_restarts": 0
+}

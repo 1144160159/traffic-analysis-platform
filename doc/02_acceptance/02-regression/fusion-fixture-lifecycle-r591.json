@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "page_id": "fusion",
+  "release": "r591",
+  "generated_at": "2026-07-22T10:59:18+08:00",
+  "result": "pass",
+  "scope": "isolated PostgreSQL acceptance fixture lifecycle",
+  "tenant": "codex-fusion-fixture-r591-20260722",
+  "canonical_sql": "common/sql/pg/07-fusion-acceptance.sql",
+  "checks": [
+    {
+      "name": "seed creates deterministic fixture",
+      "result": "pass",
+      "observed": {
+        "assets_preserved": 18,
+        "rules": 26,
+        "conflicts": 18,
+        "pending": 18,
+        "risk_counts": {
+          "high": 6,
+          "medium": 9,
+          "low": 3
+        }
+      }
+    },
+    {
+      "name": "reseed resets fixture mutations",
+      "result": "pass",
+      "observed": {
+        "rules": 26,
+        "conflicts": 18,
+        "pending": 18,
+        "resolutions": 0,
+        "fusion_audits": 0,
+        "canonical_rule_version": 1
+      }
+    },
+    {
+      "name": "cleanup removes only tagged fixture rows",
+      "result": "pass",
+      "observed": {
+        "assets_preserved": 18,
+        "rules": 0,
+        "conflicts": 0,
+        "resolutions": 0,
+        "fusion_audits": 0
+      }
+    },
+    {
+      "name": "temporary tenant removed after verification",
+      "result": "pass",
+      "observed": {
+        "tenant_rows": 0
+      }
+    }
+  ],
+  "safety": {
+    "fixture_enable_required": true,
+    "tenant_required": true,
+    "action_required": true,
+    "tag_scoped_cleanup": true,
+    "default_tenant_mutated": false
+  }
+}

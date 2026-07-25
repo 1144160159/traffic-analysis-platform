@@ -1,0 +1,45 @@
+{
+  "page": "fusion",
+  "revision": "r625",
+  "result": "pass",
+  "audited_at": "2026-07-22T23:45:31+08:00",
+  "required_flow": [
+    {"step": "UI拆解", "status": "pass", "evidence": "doc/04_assets/ui_suite_gpt_v1/screens/pages/fusion.png"},
+    {"step": "前端", "status": "pass", "evidence": "web/ui/src/pages/FusionWorkbenchPage.tsx"},
+    {"step": "后端", "status": "pass", "evidence": "go/control-plane/internal/alert/api/handler_product_pages.go"},
+    {"step": "DB", "status": "pass", "evidence": "doc/02_acceptance/runs/20260722-fusion-r625-contract/live-fusion-threat-intel-20260722-fusion-r625-contract-summary.json"},
+    {"step": "Xshell Windows Chrome", "status": "pass", "evidence": "doc/02_acceptance/02-regression/fusion-interactions-r625.json"},
+    {"step": "diff/metrics", "status": "pass", "evidence": "evidence/ui-image-breakdowns/pages/fusion/fusion-r625-visual-metrics.json"},
+    {"step": "智能体审查", "status": "pass", "evidence": "doc/02_acceptance/02-regression/fusion-review-adjudication-latest.json"},
+    {"step": "逻辑子代理", "status": "pass", "evidence": "logic ACCEPT P0/P1/P2=0"},
+    {"step": "布局子代理", "status": "pass", "evidence": "layout ACCEPT P0/P1/P2=0"},
+    {"step": "主线程裁决", "status": "pass", "evidence": "fusion-review-adjudication-latest.json"},
+    {"step": "回修", "status": "pass", "evidence": "r625 production deployment and final Windows Chrome rerun"}
+  ],
+  "hard_gates": {
+    "frontend_build": "pass",
+    "go_alert_api_tests": "pass",
+    "windows_chrome_interactions": "45/45",
+    "live_contract": "77/77",
+    "visual_regions": "7/7 including global",
+    "runtime_failures": 0,
+    "deployment_ready": "1/1",
+    "canonical_pixel_pipeline": "pixel-accepted"
+  },
+  "reviewer_receipts": {
+    "logic_r614": "ACCEPT; P0=0, P1=0, P2=0, P3=1 optional failure-injection hardening",
+    "logic_r604": "ACCEPT; no blocking finding",
+    "layout_r614": "ACCEPT; P0=0, P1=0, P2=0, P3=1 legacy fullscreen-modal raster mismatch"
+  },
+  "continuation_audit": {
+    "production_route": "HTTP 200 at http://10.0.5.8:30180/fusion",
+    "xshell_cdp": "Chrome/150.0.7871.129 reachable at http://127.0.0.1:9224/json/version",
+    "deployment": "web-ui sha256:710d80a5fef6c10b9cf28c0ac568c33efe3b58312b1b7fca23ab882540305231 Ready 1/1, pod Running, restart 0",
+    "frontend_build": "pass",
+    "fusion_focused_vitest": "65/65 pass across page API plans, snapshot adapters, access and route manifest",
+    "go_alert_api": "pass",
+    "evidence_integrity": "JSON parse, required screenshot existence and git diff check pass",
+    "repository_wide_test_boundary": "The full Web UI suite currently has 199/201 passing; two failures are outside Fusion (Playbook bitmap guard and Encrypted Traffic quote-style source assertion) and are not used as Fusion acceptance evidence."
+  },
+  "remaining_blockers": []
+}

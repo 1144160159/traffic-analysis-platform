@@ -1,0 +1,42 @@
+{
+  "page": "entity-graph",
+  "route": "/graph",
+  "revision": "r573",
+  "captured_at": "2026-07-21T08:36:00+08:00",
+  "browser": {
+    "backend": "Windows Chrome CDP over Xshell 9224",
+    "version": "Chrome/150.0.7871.128",
+    "viewport": "1920x1080",
+    "fullscreen": false
+  },
+  "depth_states": [
+    {"label": "一跳", "selected": true, "nodes": 10, "edges": 9, "hop_counts": {"0": 1, "1": 9}},
+    {"label": "二跳", "selected": true, "nodes": 11, "edges": 13, "hop_counts": {"0": 1, "1": 9, "2": 1}},
+    {"label": "三跳", "selected": true, "nodes": 12, "edges": 14, "hop_counts": {"0": 1, "1": 9, "2": 1, "3": 1}}
+  ],
+  "topology": {
+    "third_hop_chain": ["DB-SRV-01", "备份服务", "归档存储节点"],
+    "third_hop_chain_hops": [1, 2, 3],
+    "left_to_right_order": true,
+    "icon_overlap_count": 0,
+    "cross_links": "retained as 30 percent opacity dotted links without duplicate labels"
+  },
+  "path_panel": {
+    "height_px": 420,
+    "tabs": [
+      {"name": "最短路径", "mode": "shortest", "inside_panel": true},
+      {"name": "攻击路径", "mode": "attack", "inside_panel": true},
+      {"name": "通信路径", "mode": "communication", "inside_panel": true},
+      {"name": "账号访问路径", "mode": "account", "inside_panel": true}
+    ]
+  },
+  "workspace_scroll": {"scroll_top_px": 125, "scroll_height_px": 1042, "client_height_px": 917, "scrollable": true},
+  "query_history": {"echarts_canvas_count": 1, "legacy_css_bar_count": 0},
+  "open_services": ["TCP/22", "TCP/80", "TCP/443", "TCP/3306"],
+  "runtime": {"console_errors": 0, "page_errors": 0, "bad_responses": 0, "request_failures": 0, "realtime": "connected"},
+  "screenshots": [
+    "evidence/ui-image-breakdowns/pages/graph/entity-graph-r573-production-final.png",
+    "evidence/ui-image-breakdowns/pages/graph/entity-graph-r573-production-bottom.png"
+  ],
+  "result": "pass"
+}

@@ -1,0 +1,20 @@
+{
+  "page": "baselines",
+  "result": "ready",
+  "backend": {
+    "workload": "alert-service",
+    "release": "baseline-20260722-r641",
+    "digest": "sha256:c9ebc073d8a1671bdbb712d2bcbca9d6d0cfc3bc445f616742167bfb40c91756",
+    "image_id": "sha256:c9221efa3ccf72e5c65316822f89052ff0e1d8f1b4494b4fb143563f1d550d45",
+    "source_digest": "fbd78e378f2c44f26bb4237d5cac91d2dc7d250733d5489a6a1cad56e4b2425d"
+  },
+  "frontend": {
+    "workload": "web-ui",
+    "release": "baseline-20260722-r642",
+    "digest": "sha256:f4a6aef04d4fec5fe127e3545efd8d81af93329af273ae6ab47523e76834fdbb",
+    "image_id": "sha256:033daf3503c5df67fb242fed2d99771d6c684eb99b2d6065f6df42f89716fcd0",
+    "source_digest": "37dfaf7c6c6a78a5bd99c7bcdf46ad40bcca62a1821b249b3c77274116c8065e"
+  },
+  "nodes_imported": 2,
+  "deployments_ready": true
+}

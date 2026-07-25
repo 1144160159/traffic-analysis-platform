@@ -1,0 +1,64 @@
+{
+  "schema_version": 2,
+  "updated_at": "2026-07-20T05:15:45+08:00",
+  "menu": "审计日志",
+  "route": "/audit-log",
+  "status": "accepted_row_actions_pointer_refresh_fix_r478_r483",
+  "implementation": {
+    "frontend_revision": "r478",
+    "frontend_image": "docker.io/traffic/web-ui@sha256:93c22d6a25bbd34ddd24383189440a50e19afbf3845f2262a3fb3c07685f7961",
+    "kubernetes_revision": "701",
+    "images_imported_to_nodes": ["8-2tb", "zeus-server"],
+    "real_row_actions": ["详情", "关联", "复核"],
+    "contained_detail_tabs": ["字段变更对比", "操作上下文", "关联链路", "操作详情", "复核操作"],
+    "action_column": {
+      "fixed": "right",
+      "width_px": 172,
+      "button_size_px": "42x30",
+      "clipped": false
+    },
+    "pointer_guards": [
+      "fixed-right cell and action group explicitly accept pointer events",
+      "background list refetch no longer disables cached row actions",
+      "current action has an explicit selected-state indication"
+    ],
+    "review_binding_guards": [
+      "submit reconstructs the action from the current selectedRecord.log_id",
+      "row and checkbox switching are locked while mutation is pending",
+      "changing row clears stale mutation feedback",
+      "title review action opens the contained review tab"
+    ]
+  },
+  "verification": {
+    "browser_path": "Xshell tunnel -> 127.0.0.1:9224 -> Windows Chrome 150 -> APISIX http://10.0.5.8:30180/audit-log",
+    "viewport": "1920x1080 DPR 1",
+    "windows_chrome_interaction": "evidence/ui-image-breakdowns/pages/audit-log/interaction-r483.json",
+    "windows_chrome_status": "pass",
+    "required_checks": "37/37",
+    "native_pointer_actions": "3/3 center hit the corresponding BUTTON without force click",
+    "background_refetch_actionable": true,
+    "row_action_clipped": false,
+    "row_review_retargeted": true,
+    "review_request_response_bound": true,
+    "title_review_worked": true,
+    "viewer_permission_gate": "3/3 disabled",
+    "review_panel": "604px right-side region; no visible Drawer or Modal",
+    "application_errors": 0,
+    "frontend_targeted_tests": "9/9 pass",
+    "frontend_build": "pass",
+    "raw_full_image_visual_status": "fail_preserved",
+    "raw_pixel_mismatch_ratio": 0.2637692901234568,
+    "raw_pixel_mismatch_maximum": 0.125,
+    "visual_contract_adjudication": "preserved because current PostgreSQL data and the user-required contained detail/review states supersede the locked sample composition"
+  },
+  "reviews": {
+    "logic": "ACCEPT r483; P0=0, P1=0, P2=1",
+    "layout": "ACCEPT r479/current tree; P0=0, P1=0, P2=1",
+    "main_thread": "accepted; native pointer and delayed-background-refetch gates close the reported unusable-button defect"
+  },
+  "review_adjudication": "doc/02_acceptance/02-regression/audit-log-review-adjudication-latest.json",
+  "rollout_and_rollback": "doc/02_acceptance/02-regression/audit-log-rollout-r483.json",
+  "page_verification": "evidence/ui-image-breakdowns/pages/audit-log/verification.json",
+  "design_qa": "design-qa.md",
+  "next_step": "Return to the active system-settings page queue after this user-reported audit-log regression is closed."
+}

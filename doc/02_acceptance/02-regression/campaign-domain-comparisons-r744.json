@@ -1,0 +1,123 @@
+{
+  "generated_at": "2026-07-24T15:55:46.025Z",
+  "browser": "Windows Chrome over Xshell CDP 9224",
+  "revision": "r744",
+  "result": "fail",
+  "acceptance": {
+    "channel_tolerance": 64,
+    "max_pixel_mismatch_ratio": 0.125
+  },
+  "convention": "reference on left, implementation on right",
+  "targets": [
+    {
+      "id": "campaigns",
+      "status": "pass",
+      "viewport": "1920x1080",
+      "pixel_mismatch_ratio": 0.09712625385802469,
+      "mean_absolute_channel_delta": 19.31539721579218,
+      "reference": "evidence/ui-image-breakdowns/pages/campaigns/target.png",
+      "implementation": "evidence/ui-image-breakdowns/pages/campaigns/implementation.png",
+      "comparison": "evidence/ui-image-breakdowns/pages/campaigns/comparison-r744.png"
+    },
+    {
+      "id": "campaign-detail",
+      "status": "pass",
+      "viewport": "1920x1080",
+      "pixel_mismatch_ratio": 0.10404320987654321,
+      "mean_absolute_channel_delta": 20.838192515432098,
+      "reference": "evidence/ui-image-breakdowns/pages/campaign-detail/target.png",
+      "implementation": "evidence/ui-image-breakdowns/pages/campaign-detail/implementation.png",
+      "comparison": "evidence/ui-image-breakdowns/pages/campaign-detail/comparison-r744.png"
+    },
+    {
+      "id": "drawer-campaign-detail",
+      "status": "pass",
+      "viewport": "1920x1080",
+      "pixel_mismatch_ratio": 0.11291521990740741,
+      "mean_absolute_channel_delta": 20.33021572788066,
+      "reference": "evidence/ui-image-breakdowns/overlays/drawer-campaign-detail/target.png",
+      "implementation": "evidence/ui-image-breakdowns/overlays/drawer-campaign-detail/implementation.png",
+      "comparison": "evidence/ui-image-breakdowns/overlays/drawer-campaign-detail/comparison-r744.png"
+    },
+    {
+      "id": "modal-campaign-report-export",
+      "status": "pass",
+      "viewport": "1920x1080",
+      "pixel_mismatch_ratio": 0.09808063271604939,
+      "mean_absolute_channel_delta": 18.166073656121398,
+      "reference": "evidence/ui-image-breakdowns/overlays/modal-campaign-report-export/target.png",
+      "implementation": "evidence/ui-image-breakdowns/overlays/modal-campaign-report-export/implementation.png",
+      "comparison": "evidence/ui-image-breakdowns/overlays/modal-campaign-report-export/comparison-r744.png"
+    },
+    {
+      "id": "campaign-detail-impact-account",
+      "status": "pass",
+      "viewport": "1920x1080",
+      "pixel_mismatch_ratio": 0.12368007330246913,
+      "mean_absolute_channel_delta": 19.623884548611112,
+      "reference": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-account/target.png",
+      "implementation": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-account/implementation.png",
+      "comparison": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-account/comparison-r744.png"
+    },
+    {
+      "id": "campaign-detail-impact-service",
+      "status": "fail",
+      "viewport": "1920x1080",
+      "pixel_mismatch_ratio": 0.12946952160493827,
+      "mean_absolute_channel_delta": 19.771302887088478,
+      "reference": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-service/target.png",
+      "implementation": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-service/implementation.png",
+      "comparison": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-service/comparison-r744.png"
+    },
+    {
+      "id": "campaign-detail-impact-department",
+      "status": "fail",
+      "viewport": "1920x1080",
+      "pixel_mismatch_ratio": 0.1303467399691358,
+      "mean_absolute_channel_delta": 19.728618666409464,
+      "reference": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-department/target.png",
+      "implementation": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-department/implementation.png",
+      "comparison": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-department/comparison-r744.png"
+    },
+    {
+      "id": "campaign-detail-impact-campus",
+      "status": "fail",
+      "viewport": "1920x1080",
+      "pixel_mismatch_ratio": 0.13718074845679012,
+      "mean_absolute_channel_delta": 21.03137008101852,
+      "reference": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/target.png",
+      "implementation": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/implementation.png",
+      "comparison": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/comparison-r744.png"
+    },
+    {
+      "id": "campaign-detail-impact-business-system",
+      "status": "fail",
+      "viewport": "1920x1080",
+      "pixel_mismatch_ratio": 0.13169560185185186,
+      "mean_absolute_channel_delta": 19.899773341049382,
+      "reference": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-business-system/target.png",
+      "implementation": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-business-system/implementation.png",
+      "comparison": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-business-system/comparison-r744.png"
+    },
+    {
+      "id": "attack-chains",
+      "status": "pass",
+      "viewport": "1920x1080",
+      "pixel_mismatch_ratio": 0.09893759645061728,
+      "mean_absolute_channel_delta": 20.408391203703705,
+      "reference": "evidence/ui-image-breakdowns/pages/attack-chains/target.png",
+      "implementation": "evidence/ui-image-breakdowns/pages/attack-chains/implementation.png",
+      "comparison": "evidence/ui-image-breakdowns/pages/attack-chains/comparison-r744.png"
+    },
+    {
+      "id": "drawer-attack-chain-detail",
+      "status": "pass",
+      "viewport": "1920x1080",
+      "pixel_mismatch_ratio": 0.09649064429012345,
+      "mean_absolute_channel_delta": 17.90935345936214,
+      "reference": "evidence/ui-image-breakdowns/overlays/drawer-attack-chain-detail/target.png",
+      "implementation": "evidence/ui-image-breakdowns/overlays/drawer-attack-chain-detail/implementation.png",
+      "comparison": "evidence/ui-image-breakdowns/overlays/drawer-attack-chain-detail/comparison-r744.png"
+    }
+  ]
+}

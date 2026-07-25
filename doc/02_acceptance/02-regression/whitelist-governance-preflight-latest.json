@@ -1,21 +1,21 @@
 {
-  "run_id": "20260630-whitelist-governance-preflight-r2",
+  "run_id": "20260719-whitelist-governance-r351",
   "result": "pass",
   "apisix": "http://10.0.5.8:30180",
   "tenant": "default",
   "other_tenant": "tenant-b",
-  "entry_id": "c60b3e32-4808-402d-af0d-ccafae3d2bcd",
-  "entry_value": "codex-20260630-whitelist-governance-preflight-r2.example.test",
-  "source_alert_id": "codex-alert-20260630-whitelist-governance-preflight-r2",
-  "report": "doc/02_acceptance/runs/20260630-whitelist-governance-preflight-r2/live-whitelist-governance-preflight-20260630-whitelist-governance-preflight-r2.ndjson",
-  "local_report": "doc/02_acceptance/runs/20260630-whitelist-governance-preflight-r2/local-report.md",
-  "total": 26,
-  "passed": 26,
+  "entry_id": "6ad378b2-5b15-4821-b034-a496dae85096",
+  "entry_value": "codex-20260719-whitelist-governance-r351.example.test",
+  "source_alert_id": "codex-alert-20260719-whitelist-governance-r351",
+  "report": "doc/02_acceptance/runs/20260719-whitelist-governance-r351/live-whitelist-governance-preflight-20260719-whitelist-governance-r351.ndjson",
+  "local_report": "doc/02_acceptance/runs/20260719-whitelist-governance-r351/local-report.md",
+  "total": 46,
+  "passed": 46,
   "blockers": 0,
   "warnings": 0,
   "checks": [
     {
-      "ts": "2026-06-30T13:24:33+08:00",
+      "ts": "2026-07-19T08:29:15+08:00",
       "phase": "contract",
       "name": "frontend whitelist governance contract present",
       "severity": "info",
@@ -25,17 +25,17 @@
       "artifact": "web/ui/src/services/pageApiPlans.ts"
     },
     {
-      "ts": "2026-06-30T13:24:33+08:00",
+      "ts": "2026-07-19T08:29:15+08:00",
       "phase": "api",
       "name": "whitelist list is readable",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"entries\":[{\"id\":\"0ab9346b-edf0-4046-adb0-270be30def34\",\"tenant_id\":\"default\",\"type\":\"domain\",\"value\":\"codex-20260630-whitelist-governance-preflight-r1.example.test\",\"reason\":\"codex expiry governance extension\",\"description\":\"codex live whitelist governance preflight\",\"status\":\"disabled\",\"approval_status\":\"approved\",\"source_alert_id\":\"codex-alert-20260630-whitelist-governance-preflight-r1\",\"owner_role\":\"soc-duty\",\"created_by\":\"04b2f337-7a44-45fa-bded-dac0ee798ccd\",\"approved_by\":\"04b2f337-7a44-45fa-bded-dac0ee798ccd\",\"approved_at\":\"2026-06-30T05:21:30.305406Z\",\"disabled_at\":\"2026-06-30T05:21:30.668805Z\",\"expires_at\":\"2026-07-30T05:21:29Z\",\"created_at\":\"2026-06-30T05:21:30.070229Z\",\"updated_at\":\"2026-06-30T05:21:30.666064Z\"}],\"limit\":5,\"offset\":0,\"total\":1},\"meta\":{\"request_id\":\"905c27e1-d74f-4a1f-8048-94e3fa5fe9cb\",\"trace_id\":\"905c27e1-d74f-4a1f-8048-94e3fa5fe9cb\"},\"timestamp\":\"2026-06-30T05:24:33Z\"} ",
+      "detail": "{\"success\":true,\"data\":{\"entries\":[{\"id\":\"d41ce712-341e-4aa0-8a7c-a66b2f8d809d\",\"tenant_id\":\"default\",\"type\":\"domain\",\"value\":\"codex-20260719-whitelist-governance-r348.example.test\",\"reason\":\"codex expiry governance extension\",\"description\":\"codex live whitelist governance preflight\",\"status\":\"disabled\",\"approval_status\":\"approved\",\"source_alert_id\":\"codex-alert-20260719-whitelist-governance-r348\",\"owner_role\":\"soc-duty\",\"risk_level\":\"medium\",\"version\":5,\"created_by\":\"9224b17b-ca97-4b14-9b3d-e70a2aa1a69e\",\"approved_by\":\"df8536d4-05e2-47f8-833c-7d12c9367ff9\",\"approved_at\":\"2026-07-18T23:25:16.591446Z\",\"disabled_at\":\"2026-07-18T23:25:17.161572Z\",\"expires_at\":\"2026-08-17T23:25:16Z\",\"created_at\":\"2026-07-18T23:25:16.162215Z\",\"updated_at\":\"2026-07-18T23:25:17.161742Z\"},{\"id\":\"6f576d4f-18ca-417d-8766-93c98599aeb3\",\"tenant_id\":\"default\",\"type\":\"domain\",\"value\":\"codex-20260719-whitelist-governance-r347.example.test\",\"reason\":\"codex expiry governance extension\",\"description\":\"codex live whitelist governance preflight\",\"status\":\"disabled\",\"approval_status\":\"approved\",\"source_alert_id\":\"codex-alert-20260719-whitelist-governance-r347\",\"owner_role\":\"soc-duty\",\"risk_level\":\"medium\",\"version\":5,\"",
       "artifact": "whitelist-before.json"
     },
     {
-      "ts": "2026-06-30T13:24:33+08:00",
+      "ts": "2026-07-19T08:29:15+08:00",
       "phase": "assert",
       "name": "whitelist response shape",
       "severity": "info",
@@ -45,17 +45,57 @@
       "artifact": "whitelist-before.json"
     },
     {
-      "ts": "2026-06-30T13:24:33+08:00",
+      "ts": "2026-07-19T08:29:15+08:00",
+      "phase": "api",
+      "name": "authenticated token without alert read cannot list whitelist",
+      "severity": "info",
+      "passed": true,
+      "status": "403",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"alert:read required\"},\"meta\":{\"request_id\":\"b20c51fd-d7d4-436e-9ed0-d0cad48bc7a9\",\"trace_id\":\"b20c51fd-d7d4-436e-9ed0-d0cad48bc7a9\"},\"timestamp\":\"2026-07-19T00:29:15Z\"} ",
+      "artifact": "whitelist-list-no-access.json"
+    },
+    {
+      "ts": "2026-07-19T08:29:15+08:00",
+      "phase": "api",
+      "name": "authenticated token without alert read cannot check whitelist",
+      "severity": "info",
+      "passed": true,
+      "status": "403",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"alert:read required\"},\"meta\":{\"request_id\":\"e1f10367-a024-4e40-9858-7237a47fc1bf\",\"trace_id\":\"e1f10367-a024-4e40-9858-7237a47fc1bf\"},\"timestamp\":\"2026-07-19T00:29:15Z\"} ",
+      "artifact": "whitelist-check-no-access.json"
+    },
+    {
+      "ts": "2026-07-19T08:29:15+08:00",
+      "phase": "api",
+      "name": "create cannot bypass draft and independent approval",
+      "severity": "info",
+      "passed": true,
+      "status": "400",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"INVALID_INITIAL_STATE\",\"message\":\"new whitelist entries must start in draft status\"},\"meta\":{\"request_id\":\"2deea051-4c95-4d6e-92a6-4785b9900751\",\"trace_id\":\"2deea051-4c95-4d6e-92a6-4785b9900751\"},\"timestamp\":\"2026-07-19T00:29:15Z\"} ",
+      "artifact": "whitelist-create-bypass.json"
+    },
+    {
+      "ts": "2026-07-19T08:29:15+08:00",
+      "phase": "assert",
+      "name": "initial active state bypass is rejected",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == false and .error.code == \"INVALID_INITIAL_STATE\"",
+      "artifact": "whitelist-create-bypass.json"
+    },
+    {
+      "ts": "2026-07-19T08:29:15+08:00",
       "phase": "api",
       "name": "admin can create whitelist draft",
       "severity": "info",
       "passed": true,
       "status": "201",
-      "detail": "{\"success\":true,\"data\":{\"id\":\"c60b3e32-4808-402d-af0d-ccafae3d2bcd\",\"tenant_id\":\"default\",\"type\":\"domain\",\"value\":\"codex-20260630-whitelist-governance-preflight-r2.example.test\",\"reason\":\"false_positive\",\"description\":\"codex live whitelist governance preflight\",\"status\":\"draft\",\"approval_status\":\"draft\",\"source_alert_id\":\"codex-alert-20260630-whitelist-governance-preflight-r2\",\"owner_role\":\"soc-duty\",\"created_by\":\"bccd85e3-fc2f-4021-b877-f192e690b4d4\",\"expires_at\":\"2026-07-02T05:24:33Z\",\"created_at\":\"2026-06-30T05:24:33.648508Z\",\"updated_at\":\"2026-06-30T05:24:33.648508Z\"},\"meta\":{\"request_id\":\"e1ce43e1-b22e-4c2a-a5f3-c254915cc234\",\"trace_id\":\"e1ce43e1-b22e-4c2a-a5f3-c254915cc234\"},\"timestamp\":\"2026-06-30T05:24:33Z\"} ",
+      "detail": "{\"success\":true,\"data\":{\"id\":\"6ad378b2-5b15-4821-b034-a496dae85096\",\"tenant_id\":\"default\",\"type\":\"domain\",\"value\":\"codex-20260719-whitelist-governance-r351.example.test\",\"reason\":\"false_positive\",\"description\":\"codex live whitelist governance preflight\",\"status\":\"draft\",\"approval_status\":\"draft\",\"source_alert_id\":\"codex-alert-20260719-whitelist-governance-r351\",\"owner_role\":\"soc-duty\",\"risk_level\":\"medium\",\"version\":1,\"created_by\":\"a6128a39-dbe4-4ad1-9ab8-72c7ac3ca3e0\",\"expires_at\":\"2026-07-21T00:29:15Z\",\"created_at\":\"2026-07-19T00:29:15.541544Z\",\"updated_at\":\"2026-07-19T00:29:15.541544Z\"},\"meta\":{\"request_id\":\"e41a7f68-5769-4315-b2d9-a0d590c890b9\",\"trace_id\":\"e41a7f68-5769-4315-b2d9-a0d590c890b9\"},\"timestamp\":\"2026-07-19T00:29:15Z\"} ",
       "artifact": "whitelist-create.json"
     },
     {
-      "ts": "2026-06-30T13:24:33+08:00",
+      "ts": "2026-07-19T08:29:15+08:00",
       "phase": "assert",
       "name": "created whitelist entry has identity",
       "severity": "info",
@@ -65,27 +105,47 @@
       "artifact": "whitelist-create.json"
     },
     {
-      "ts": "2026-06-30T13:24:33+08:00",
+      "ts": "2026-07-19T08:29:15+08:00",
       "phase": "api",
       "name": "viewer cannot create whitelist entry",
       "severity": "info",
       "passed": true,
       "status": "403",
-      "detail": "{\"success\":false,\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"alert:write required\"},\"meta\":{\"request_id\":\"65a1a69b-488b-453f-82b8-714fc212ff58\",\"trace_id\":\"65a1a69b-488b-453f-82b8-714fc212ff58\"},\"timestamp\":\"2026-06-30T05:24:33Z\"} ",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"alert:write required\"},\"meta\":{\"request_id\":\"736eafe0-8179-4aca-b4da-35c47eebe471\",\"trace_id\":\"736eafe0-8179-4aca-b4da-35c47eebe471\"},\"timestamp\":\"2026-07-19T00:29:15Z\"} ",
       "artifact": "whitelist-create-viewer.json"
     },
     {
-      "ts": "2026-06-30T13:24:33+08:00",
+      "ts": "2026-07-19T08:29:15+08:00",
+      "phase": "api",
+      "name": "duplicate create cannot overwrite existing governance state",
+      "severity": "info",
+      "passed": true,
+      "status": "409",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"WHITELIST_ALREADY_EXISTS\",\"message\":\"a whitelist entry with the same tenant, type and value already exists\"},\"meta\":{\"request_id\":\"b732a587-63a4-41e4-8c16-929fb757bf4a\",\"trace_id\":\"b732a587-63a4-41e4-8c16-929fb757bf4a\"},\"timestamp\":\"2026-07-19T00:29:15Z\"} ",
+      "artifact": "whitelist-create-duplicate.json"
+    },
+    {
+      "ts": "2026-07-19T08:29:15+08:00",
+      "phase": "assert",
+      "name": "duplicate create returns explicit conflict",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == false and .error.code == \"WHITELIST_ALREADY_EXISTS\"",
+      "artifact": "whitelist-create-duplicate.json"
+    },
+    {
+      "ts": "2026-07-19T08:29:15+08:00",
       "phase": "api",
       "name": "admin can submit whitelist approval",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"id\":\"c60b3e32-4808-402d-af0d-ccafae3d2bcd\",\"tenant_id\":\"default\",\"type\":\"domain\",\"value\":\"codex-20260630-whitelist-governance-preflight-r2.example.test\",\"reason\":\"false_positive\",\"description\":\"codex live whitelist governance preflight\",\"status\":\"pending\",\"approval_status\":\"pending\",\"source_alert_id\":\"codex-alert-20260630-whitelist-governance-preflight-r2\",\"owner_role\":\"soc-duty\",\"created_by\":\"bccd85e3-fc2f-4021-b877-f192e690b4d4\",\"expires_at\":\"2026-07-02T05:24:33Z\",\"created_at\":\"2026-06-30T05:24:33.648508Z\",\"updated_at\":\"2026-06-30T05:24:33.793412Z\"},\"meta\":{\"request_id\":\"52a8eaf6-58db-4804-a283-fa6d6f2f0813\",\"trace_id\":\"52a8eaf6-58db-4804-a283-fa6d6f2f0813\"},\"timestamp\":\"2026-06-30T05:24:33Z\"} ",
+      "detail": "{\"success\":true,\"data\":{\"id\":\"6ad378b2-5b15-4821-b034-a496dae85096\",\"tenant_id\":\"default\",\"type\":\"domain\",\"value\":\"codex-20260719-whitelist-governance-r351.example.test\",\"reason\":\"false_positive\",\"description\":\"codex live whitelist governance preflight\",\"status\":\"pending\",\"approval_status\":\"pending\",\"source_alert_id\":\"codex-alert-20260719-whitelist-governance-r351\",\"owner_role\":\"soc-duty\",\"risk_level\":\"medium\",\"version\":2,\"created_by\":\"a6128a39-dbe4-4ad1-9ab8-72c7ac3ca3e0\",\"expires_at\":\"2026-07-21T00:29:15Z\",\"created_at\":\"2026-07-19T00:29:15.541544Z\",\"updated_at\":\"2026-07-19T00:29:15.820028Z\"},\"meta\":{\"request_id\":\"c80de42d-fd0e-4beb-a9db-f82236a5185f\",\"trace_id\":\"c80de42d-fd0e-4beb-a9db-f82236a5185f\"},\"timestamp\":\"2026-07-19T00:29:15Z\"} ",
       "artifact": "whitelist-submit-approval.json"
     },
     {
-      "ts": "2026-06-30T13:24:33+08:00",
+      "ts": "2026-07-19T08:29:15+08:00",
       "phase": "assert",
       "name": "whitelist approval submission response",
       "severity": "info",
@@ -95,17 +155,37 @@
       "artifact": "whitelist-submit-approval.json"
     },
     {
-      "ts": "2026-06-30T13:24:33+08:00",
+      "ts": "2026-07-19T08:29:15+08:00",
       "phase": "api",
-      "name": "admin can approve and activate whitelist entry",
+      "name": "creator cannot self-approve whitelist entry",
+      "severity": "info",
+      "passed": true,
+      "status": "409",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"WHITELIST_TWO_PERSON_REQUIRED\",\"message\":\"creator cannot approve or reject their own whitelist entry\"},\"meta\":{\"request_id\":\"d87641ab-9e9d-43fc-aa9f-8f2f0c2e4447\",\"trace_id\":\"d87641ab-9e9d-43fc-aa9f-8f2f0c2e4447\"},\"timestamp\":\"2026-07-19T00:29:15Z\"} ",
+      "artifact": "whitelist-self-approve.json"
+    },
+    {
+      "ts": "2026-07-19T08:29:16+08:00",
+      "phase": "assert",
+      "name": "self approval is rejected by two-person rule",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == false and .error.code == \"WHITELIST_TWO_PERSON_REQUIRED\"",
+      "artifact": "whitelist-self-approve.json"
+    },
+    {
+      "ts": "2026-07-19T08:29:16+08:00",
+      "phase": "api",
+      "name": "independent admin can approve and activate whitelist entry",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"id\":\"c60b3e32-4808-402d-af0d-ccafae3d2bcd\",\"tenant_id\":\"default\",\"type\":\"domain\",\"value\":\"codex-20260630-whitelist-governance-preflight-r2.example.test\",\"reason\":\"false_positive\",\"description\":\"codex live whitelist governance preflight\",\"status\":\"active\",\"approval_status\":\"approved\",\"source_alert_id\":\"codex-alert-20260630-whitelist-governance-preflight-r2\",\"owner_role\":\"soc-duty\",\"created_by\":\"bccd85e3-fc2f-4021-b877-f192e690b4d4\",\"approved_by\":\"bccd85e3-fc2f-4021-b877-f192e690b4d4\",\"approved_at\":\"2026-06-30T05:24:33.882314Z\",\"expires_at\":\"2026-07-02T05:24:33Z\",\"created_at\":\"2026-06-30T05:24:33.648508Z\",\"updated_at\":\"2026-06-30T05:24:33.879567Z\"},\"meta\":{\"request_id\":\"2b00be97-d0b9-4efb-acdb-a49fee723714\",\"trace_id\":\"2b00be97-d0b9-4efb-acdb-a49fee723714\"},\"timestamp\":\"2026-06-30T05:24:33Z\"} ",
+      "detail": "{\"success\":true,\"data\":{\"id\":\"6ad378b2-5b15-4821-b034-a496dae85096\",\"tenant_id\":\"default\",\"type\":\"domain\",\"value\":\"codex-20260719-whitelist-governance-r351.example.test\",\"reason\":\"independent security review passed\",\"description\":\"codex live whitelist governance preflight\",\"status\":\"active\",\"approval_status\":\"approved\",\"source_alert_id\":\"codex-alert-20260719-whitelist-governance-r351\",\"owner_role\":\"soc-duty\",\"risk_level\":\"medium\",\"version\":3,\"created_by\":\"a6128a39-dbe4-4ad1-9ab8-72c7ac3ca3e0\",\"approved_by\":\"de4ce53d-fb5a-4b16-9518-9950981c6d6d\",\"approved_at\":\"2026-07-19T00:29:16.040671Z\",\"expires_at\":\"2026-07-21T00:29:15Z\",\"created_at\":\"2026-07-19T00:29:15.541544Z\",\"updated_at\":\"2026-07-19T00:29:16.039118Z\"},\"meta\":{\"request_id\":\"49e895af-1d53-4e1e-9460-917e73316c8e\",\"trace_id\":\"49e895af-1d53-4e1e-9460-917e73316c8e\"},\"timestamp\":\"2026-07-19T00:29:16Z\"} ",
       "artifact": "whitelist-approve.json"
     },
     {
-      "ts": "2026-06-30T13:24:33+08:00",
+      "ts": "2026-07-19T08:29:16+08:00",
       "phase": "assert",
       "name": "whitelist approval activation response",
       "severity": "info",
@@ -115,17 +195,57 @@
       "artifact": "whitelist-approve.json"
     },
     {
-      "ts": "2026-06-30T13:24:34+08:00",
+      "ts": "2026-07-19T08:29:16+08:00",
+      "phase": "api",
+      "name": "active approved entry rejects partial pending transition",
+      "severity": "info",
+      "passed": true,
+      "status": "409",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"INVALID_TRANSITION\",\"message\":\"status and approval_status do not form a legal whitelist governance state\"},\"meta\":{\"request_id\":\"5731b35c-4ad4-43cd-8939-5aca0e66b791\",\"trace_id\":\"5731b35c-4ad4-43cd-8939-5aca0e66b791\"},\"timestamp\":\"2026-07-19T00:29:16Z\"} ",
+      "artifact": "whitelist-invalid-state-pair.json"
+    },
+    {
+      "ts": "2026-07-19T08:29:16+08:00",
+      "phase": "assert",
+      "name": "invalid status approval pair is rejected",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == false and .error.code == \"INVALID_TRANSITION\"",
+      "artifact": "whitelist-invalid-state-pair.json"
+    },
+    {
+      "ts": "2026-07-19T08:29:16+08:00",
+      "phase": "api",
+      "name": "active whitelist cannot be hard deleted",
+      "severity": "info",
+      "passed": true,
+      "status": "409",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"WHITELIST_DELETE_REQUIRES_DISABLED\",\"message\":\"pending or active whitelist entries must be disabled before deletion\"},\"meta\":{\"request_id\":\"8bc36ca1-8bda-49ce-b806-edc17cd0da38\",\"trace_id\":\"8bc36ca1-8bda-49ce-b806-edc17cd0da38\"},\"timestamp\":\"2026-07-19T00:29:16Z\"} ",
+      "artifact": "whitelist-delete-active.json"
+    },
+    {
+      "ts": "2026-07-19T08:29:16+08:00",
+      "phase": "assert",
+      "name": "active delete requires disable first",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == false and .error.code == \"WHITELIST_DELETE_REQUIRES_DISABLED\"",
+      "artifact": "whitelist-delete-active.json"
+    },
+    {
+      "ts": "2026-07-19T08:29:16+08:00",
       "phase": "api",
       "name": "active whitelist entry matches check API",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"value\":\"codex-20260630-whitelist-governance-preflight-r2.example.test\",\"whitelisted\":true},\"meta\":{\"request_id\":\"092df59a-3d50-42c2-814e-bdd721122def\",\"trace_id\":\"092df59a-3d50-42c2-814e-bdd721122def\"},\"timestamp\":\"2026-06-30T05:24:34Z\"} ",
+      "detail": "{\"success\":true,\"data\":{\"value\":\"codex-20260719-whitelist-governance-r351.example.test\",\"whitelisted\":true},\"meta\":{\"request_id\":\"8dfced8e-4661-41db-a8e3-09229279738c\",\"trace_id\":\"8dfced8e-4661-41db-a8e3-09229279738c\"},\"timestamp\":\"2026-07-19T00:29:16Z\"} ",
       "artifact": "whitelist-check-active.json"
     },
     {
-      "ts": "2026-06-30T13:24:34+08:00",
+      "ts": "2026-07-19T08:29:16+08:00",
       "phase": "assert",
       "name": "active whitelist check result",
       "severity": "info",
@@ -135,17 +255,37 @@
       "artifact": "whitelist-check-active.json"
     },
     {
-      "ts": "2026-06-30T13:24:34+08:00",
+      "ts": "2026-07-19T08:29:16+08:00",
+      "phase": "api",
+      "name": "stale whitelist update is rejected",
+      "severity": "info",
+      "passed": true,
+      "status": "409",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"WHITELIST_VERSION_CONFLICT\",\"message\":\"expected_version must match the current whitelist entry\"},\"meta\":{\"request_id\":\"762e37e8-5f62-4113-b07c-654e34de6201\",\"trace_id\":\"762e37e8-5f62-4113-b07c-654e34de6201\"},\"timestamp\":\"2026-07-19T00:29:16Z\"} ",
+      "artifact": "whitelist-stale-update.json"
+    },
+    {
+      "ts": "2026-07-19T08:29:16+08:00",
+      "phase": "assert",
+      "name": "stale update returns optimistic conflict",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == false and .error.code == \"WHITELIST_VERSION_CONFLICT\"",
+      "artifact": "whitelist-stale-update.json"
+    },
+    {
+      "ts": "2026-07-19T08:29:16+08:00",
       "phase": "api",
       "name": "admin can extend whitelist expiry",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"id\":\"c60b3e32-4808-402d-af0d-ccafae3d2bcd\",\"tenant_id\":\"default\",\"type\":\"domain\",\"value\":\"codex-20260630-whitelist-governance-preflight-r2.example.test\",\"reason\":\"codex expiry governance extension\",\"description\":\"codex live whitelist governance preflight\",\"status\":\"active\",\"approval_status\":\"approved\",\"source_alert_id\":\"codex-alert-20260630-whitelist-governance-preflight-r2\",\"owner_role\":\"soc-duty\",\"created_by\":\"bccd85e3-fc2f-4021-b877-f192e690b4d4\",\"approved_by\":\"bccd85e3-fc2f-4021-b877-f192e690b4d4\",\"approved_at\":\"2026-06-30T05:24:33.882314Z\",\"expires_at\":\"2026-07-30T05:24:33Z\",\"created_at\":\"2026-06-30T05:24:33.648508Z\",\"updated_at\":\"2026-06-30T05:24:34.111491Z\"},\"meta\":{\"request_id\":\"3b92ea02-21b6-4b9f-813c-a76824eacc20\",\"trace_id\":\"3b92ea02-21b6-4b9f-813c-a76824eacc20\"},\"timestamp\":\"2026-06-30T05:24:34Z\"} ",
+      "detail": "{\"success\":true,\"data\":{\"id\":\"6ad378b2-5b15-4821-b034-a496dae85096\",\"tenant_id\":\"default\",\"type\":\"domain\",\"value\":\"codex-20260719-whitelist-governance-r351.example.test\",\"reason\":\"codex expiry governance extension\",\"description\":\"codex live whitelist governance preflight\",\"status\":\"active\",\"approval_status\":\"approved\",\"source_alert_id\":\"codex-alert-20260719-whitelist-governance-r351\",\"owner_role\":\"soc-duty\",\"risk_level\":\"medium\",\"version\":4,\"created_by\":\"a6128a39-dbe4-4ad1-9ab8-72c7ac3ca3e0\",\"approved_by\":\"de4ce53d-fb5a-4b16-9518-9950981c6d6d\",\"approved_at\":\"2026-07-19T00:29:16.040671Z\",\"expires_at\":\"2026-08-18T00:29:15Z\",\"created_at\":\"2026-07-19T00:29:15.541544Z\",\"updated_at\":\"2026-07-19T00:29:16.567262Z\"},\"meta\":{\"request_id\":\"c457ba86-dd18-4e85-923a-a0865a79d9f7\",\"trace_id\":\"c457ba86-dd18-4e85-923a-a0865a79d9f7\"},\"timestamp\":\"2026-07-19T00:29:16Z\"} ",
       "artifact": "whitelist-extend.json"
     },
     {
-      "ts": "2026-06-30T13:24:34+08:00",
+      "ts": "2026-07-19T08:29:16+08:00",
       "phase": "assert",
       "name": "whitelist expiry extension response",
       "severity": "info",
@@ -155,37 +295,37 @@
       "artifact": "whitelist-extend.json"
     },
     {
-      "ts": "2026-06-30T13:24:34+08:00",
+      "ts": "2026-07-19T08:29:16+08:00",
       "phase": "api",
       "name": "other tenant cannot update whitelist entry",
       "severity": "info",
       "passed": true,
       "status": "404",
-      "detail": "{\"success\":false,\"error\":{\"code\":\"NOT_FOUND\",\"message\":\"whitelist entry not found\"},\"meta\":{\"request_id\":\"57c1000d-8c6f-46d6-97a6-88e918dbe5af\",\"trace_id\":\"57c1000d-8c6f-46d6-97a6-88e918dbe5af\"},\"timestamp\":\"2026-06-30T05:24:34Z\"} ",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"NOT_FOUND\",\"message\":\"whitelist entry not found\"},\"meta\":{\"request_id\":\"110ec9c2-9396-445b-a95c-7e0fb4f6c8cb\",\"trace_id\":\"110ec9c2-9396-445b-a95c-7e0fb4f6c8cb\"},\"timestamp\":\"2026-07-19T00:29:16Z\"} ",
       "artifact": "whitelist-other-tenant.json"
     },
     {
-      "ts": "2026-06-30T13:24:34+08:00",
+      "ts": "2026-07-19T08:29:16+08:00",
       "phase": "api",
       "name": "viewer cannot disable whitelist entry",
       "severity": "info",
       "passed": true,
       "status": "403",
-      "detail": "{\"success\":false,\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"alert:write required\"},\"meta\":{\"request_id\":\"2c10b416-95a1-4c3a-b60c-051645642309\",\"trace_id\":\"2c10b416-95a1-4c3a-b60c-051645642309\"},\"timestamp\":\"2026-06-30T05:24:34Z\"} ",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"alert:write required\"},\"meta\":{\"request_id\":\"8fd0c314-c4ff-4c35-a38a-846003f8447d\",\"trace_id\":\"8fd0c314-c4ff-4c35-a38a-846003f8447d\"},\"timestamp\":\"2026-07-19T00:29:16Z\"} ",
       "artifact": "whitelist-disable-viewer.json"
     },
     {
-      "ts": "2026-06-30T13:24:34+08:00",
+      "ts": "2026-07-19T08:29:16+08:00",
       "phase": "api",
       "name": "admin can disable whitelist entry",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"id\":\"c60b3e32-4808-402d-af0d-ccafae3d2bcd\",\"tenant_id\":\"default\",\"type\":\"domain\",\"value\":\"codex-20260630-whitelist-governance-preflight-r2.example.test\",\"reason\":\"codex expiry governance extension\",\"description\":\"codex live whitelist governance preflight\",\"status\":\"disabled\",\"approval_status\":\"approved\",\"source_alert_id\":\"codex-alert-20260630-whitelist-governance-preflight-r2\",\"owner_role\":\"soc-duty\",\"created_by\":\"bccd85e3-fc2f-4021-b877-f192e690b4d4\",\"approved_by\":\"bccd85e3-fc2f-4021-b877-f192e690b4d4\",\"approved_at\":\"2026-06-30T05:24:33.882314Z\",\"disabled_at\":\"2026-06-30T05:24:34.261259Z\",\"expires_at\":\"2026-07-30T05:24:33Z\",\"created_at\":\"2026-06-30T05:24:33.648508Z\",\"updated_at\":\"2026-06-30T05:24:34.258495Z\"},\"meta\":{\"request_id\":\"960b4eec-71dd-47f9-aa5e-89afe33c4570\",\"trace_id\":\"960b4eec-71dd-47f9-aa5e-89afe33c4570\"},\"timestamp\":\"2026-06-30T05:24:34Z\"} ",
+      "detail": "{\"success\":true,\"data\":{\"id\":\"6ad378b2-5b15-4821-b034-a496dae85096\",\"tenant_id\":\"default\",\"type\":\"domain\",\"value\":\"codex-20260719-whitelist-governance-r351.example.test\",\"reason\":\"codex expiry governance extension\",\"description\":\"codex live whitelist governance preflight\",\"status\":\"disabled\",\"approval_status\":\"approved\",\"source_alert_id\":\"codex-alert-20260719-whitelist-governance-r351\",\"owner_role\":\"soc-duty\",\"risk_level\":\"medium\",\"version\":5,\"created_by\":\"a6128a39-dbe4-4ad1-9ab8-72c7ac3ca3e0\",\"approved_by\":\"de4ce53d-fb5a-4b16-9518-9950981c6d6d\",\"approved_at\":\"2026-07-19T00:29:16.040671Z\",\"disabled_at\":\"2026-07-19T00:29:16.778347Z\",\"expires_at\":\"2026-08-18T00:29:15Z\",\"created_at\":\"2026-07-19T00:29:15.541544Z\",\"updated_at\":\"2026-07-19T00:29:16.776611Z\"},\"meta\":{\"request_id\":\"c4418912-6b85-42d6-9d4f-67a9364ff006\",\"trace_id\":\"c4418912-6b85-42d6-9d4f-67a9364ff006\"},\"timestamp\":\"2026-07-19T00:29:16Z\"} ",
       "artifact": "whitelist-disable.json"
     },
     {
-      "ts": "2026-06-30T13:24:34+08:00",
+      "ts": "2026-07-19T08:29:16+08:00",
       "phase": "assert",
       "name": "whitelist disable response",
       "severity": "info",
@@ -195,17 +335,17 @@
       "artifact": "whitelist-disable.json"
     },
     {
-      "ts": "2026-06-30T13:24:34+08:00",
+      "ts": "2026-07-19T08:29:16+08:00",
       "phase": "api",
       "name": "disabled whitelist entry stops matching check API",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"value\":\"codex-20260630-whitelist-governance-preflight-r2.example.test\",\"whitelisted\":false},\"meta\":{\"request_id\":\"e89144b5-8ff0-432b-9357-7042cc3aa004\",\"trace_id\":\"e89144b5-8ff0-432b-9357-7042cc3aa004\"},\"timestamp\":\"2026-06-30T05:24:34Z\"} ",
+      "detail": "{\"success\":true,\"data\":{\"value\":\"codex-20260719-whitelist-governance-r351.example.test\",\"whitelisted\":false},\"meta\":{\"request_id\":\"b97563c5-85e5-40d2-9422-87dbe4ef6fa4\",\"trace_id\":\"b97563c5-85e5-40d2-9422-87dbe4ef6fa4\"},\"timestamp\":\"2026-07-19T00:29:16Z\"} ",
       "artifact": "whitelist-check-disabled.json"
     },
     {
-      "ts": "2026-06-30T13:24:34+08:00",
+      "ts": "2026-07-19T08:29:16+08:00",
       "phase": "assert",
       "name": "disabled whitelist check result",
       "severity": "info",
@@ -215,17 +355,17 @@
       "artifact": "whitelist-check-disabled.json"
     },
     {
-      "ts": "2026-06-30T13:24:34+08:00",
+      "ts": "2026-07-19T08:29:16+08:00",
       "phase": "api",
       "name": "audit log page API has whitelist create event",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"total\":1,\"trails\":[{\"log_id\":\"audit-69544fca-5b31-40b0-9d83-10b966589c88\",\"tenant_id\":\"default\",\"user_id\":\"bccd85e3-fc2f-4021-b877-f192e690b4d4\",\"action\":\"WHITELIST_CREATED\",\"resource_type\":\"whitelist\",\"resource_id\":\"c60b3e32-4808-402d-af0d-ccafae3d2bcd\",\"details\":{\"api_path\":\"/api/v1/whitelist\",\"approval_status\":\"draft\",\"feedback_id\":\"\",\"request_id\":\"e1ce43e1-b22e-4c2a-a5f3-c254915cc234\",\"result\":\"success\",\"source_alert_id\":\"codex-alert-20260630-whitelist-governance-preflight-r2\",\"status\":\"draft\",\"trace_id\":\"e1ce43e1-b22e-4c2a-a5f3-c254915cc234\",\"type\":\"domain\",\"value\":\"codex-20260630-whitelist-governance-preflight-r2.example.test\"},\"ip_address\":\"10.244.0.0\",\"timestamp\":1782797073656,\"result\":\"success\"}]},\"meta\":{\"request_id\":\"1cf7758f-8d85-4766-b065-191d0c6e2d22\",\"trace_id\":\"1cf7758f-8d85-4766-b065-191d0c6e2d22\"},\"timestamp\":\"2026-06-30T05:24:34Z\"} ",
+      "detail": "{\"success\":true,\"data\":{\"total\":1,\"trails\":[{\"log_id\":\"audit-892d96b1-4e16-44ed-8aa9-15af04da2c45\",\"tenant_id\":\"default\",\"user_id\":\"a6128a39-dbe4-4ad1-9ab8-72c7ac3ca3e0\",\"action\":\"WHITELIST_CREATED\",\"resource_type\":\"whitelist\",\"resource_id\":\"6ad378b2-5b15-4821-b034-a496dae85096\",\"details\":{\"api_path\":\"/api/v1/whitelist\",\"approval_status\":\"draft\",\"feedback_id\":\"\",\"request_id\":\"e41a7f68-5769-4315-b2d9-a0d590c890b9\",\"result\":\"success\",\"source_alert_id\":\"codex-alert-20260719-whitelist-governance-r351\",\"status\":\"draft\",\"trace_id\":\"e41a7f68-5769-4315-b2d9-a0d590c890b9\",\"type\":\"domain\",\"value\":\"codex-20260719-whitelist-governance-r351.example.test\"},\"ip_address\":\"10.244.0.0\",\"timestamp\":1784420955541,\"result\":\"success\"}]},\"meta\":{\"request_id\":\"0316cdbc-4ab2-4dcf-81a9-d5faeda150fb\",\"trace_id\":\"0316cdbc-4ab2-4dcf-81a9-d5faeda150fb\"},\"timestamp\":\"2026-07-19T00:29:16Z\"} ",
       "artifact": "whitelist-audit-created.json"
     },
     {
-      "ts": "2026-06-30T13:24:34+08:00",
+      "ts": "2026-07-19T08:29:17+08:00",
       "phase": "assert",
       "name": "audit log contains whitelist create event",
       "severity": "info",
@@ -235,17 +375,17 @@
       "artifact": "whitelist-audit-created.json"
     },
     {
-      "ts": "2026-06-30T13:24:34+08:00",
+      "ts": "2026-07-19T08:29:17+08:00",
       "phase": "api",
       "name": "audit log page API has whitelist disable event",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"total\":1,\"trails\":[{\"log_id\":\"audit-7a111155-4be5-407f-80ee-7142107a7e0b\",\"tenant_id\":\"default\",\"user_id\":\"bccd85e3-fc2f-4021-b877-f192e690b4d4\",\"action\":\"WHITELIST_DISABLED\",\"resource_type\":\"whitelist\",\"resource_id\":\"c60b3e32-4808-402d-af0d-ccafae3d2bcd\",\"details\":{\"api_path\":\"/api/v1/whitelist/c60b3e32-4808-402d-af0d-ccafae3d2bcd\",\"approval_status\":\"approved\",\"expires_at\":\"2026-07-30T05:24:33Z\",\"request_id\":\"960b4eec-71dd-47f9-aa5e-89afe33c4570\",\"result\":\"success\",\"source_alert_id\":\"codex-alert-20260630-whitelist-governance-preflight-r2\",\"status\":\"disabled\",\"trace_id\":\"960b4eec-71dd-47f9-aa5e-89afe33c4570\",\"type\":\"domain\",\"value\":\"codex-20260630-whitelist-governance-preflight-r2.example.test\"},\"ip_address\":\"10.244.0.0\",\"timestamp\":1782797074264,\"result\":\"success\"}]},\"meta\":{\"request_id\":\"e1863125-d889-4144-8d32-6238ce2b3e59\",\"trace_id\":\"e1863125-d889-4144-8d32-6238ce2b3e59\"},\"timestamp\":\"2026-06-30T05:24:34Z\"} ",
+      "detail": "{\"success\":true,\"data\":{\"total\":1,\"trails\":[{\"log_id\":\"audit-801f6346-8d28-44fd-bc94-a205377a1587\",\"tenant_id\":\"default\",\"user_id\":\"a6128a39-dbe4-4ad1-9ab8-72c7ac3ca3e0\",\"action\":\"WHITELIST_DISABLED\",\"resource_type\":\"whitelist\",\"resource_id\":\"6ad378b2-5b15-4821-b034-a496dae85096\",\"details\":{\"api_path\":\"/api/v1/whitelist/6ad378b2-5b15-4821-b034-a496dae85096\",\"approval_status\":\"approved\",\"expires_at\":\"2026-08-18T00:29:15Z\",\"request_id\":\"c4418912-6b85-42d6-9d4f-67a9364ff006\",\"result\":\"success\",\"source_alert_id\":\"codex-alert-20260719-whitelist-governance-r351\",\"status\":\"disabled\",\"trace_id\":\"c4418912-6b85-42d6-9d4f-67a9364ff006\",\"type\":\"domain\",\"value\":\"codex-20260719-whitelist-governance-r351.example.test\"},\"ip_address\":\"10.244.0.1\",\"timestamp\":1784420956776,\"result\":\"success\"}]},\"meta\":{\"request_id\":\"fb17489e-5423-4520-a5f8-6aa396cc0c39\",\"trace_id\":\"fb17489e-5423-4520-a5f8-6aa396cc0c39\"},\"timestamp\":\"2026-07-19T00:29:17Z\"} ",
       "artifact": "whitelist-audit-disabled.json"
     },
     {
-      "ts": "2026-06-30T13:24:34+08:00",
+      "ts": "2026-07-19T08:29:17+08:00",
       "phase": "assert",
       "name": "audit log contains whitelist disable event",
       "severity": "info",
@@ -255,7 +395,7 @@
       "artifact": "whitelist-audit-disabled.json"
     },
     {
-      "ts": "2026-06-30T13:24:34+08:00",
+      "ts": "2026-07-19T08:29:17+08:00",
       "phase": "postgres",
       "name": "whitelist entry persisted as disabled in PostgreSQL",
       "severity": "info",
@@ -265,7 +405,7 @@
       "artifact": "pg-whitelist-entry-count.txt"
     },
     {
-      "ts": "2026-06-30T13:24:34+08:00",
+      "ts": "2026-07-19T08:29:17+08:00",
       "phase": "postgres",
       "name": "whitelist governance audit rows persisted in PostgreSQL",
       "severity": "info",
@@ -273,6 +413,66 @@
       "status": "ok",
       "detail": "5",
       "artifact": "pg-whitelist-audit-count.txt"
+    },
+    {
+      "ts": "2026-07-19T08:29:17+08:00",
+      "phase": "api",
+      "name": "disabled whitelist can be versioned-deleted",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"id\":\"6ad378b2-5b15-4821-b034-a496dae85096\",\"status\":\"deleted\"},\"meta\":{\"request_id\":\"c41cf50e-dabf-4b9b-b2ed-61f3ca2bbafd\",\"trace_id\":\"c41cf50e-dabf-4b9b-b2ed-61f3ca2bbafd\"},\"timestamp\":\"2026-07-19T00:29:17Z\"} ",
+      "artifact": "whitelist-delete.json"
+    },
+    {
+      "ts": "2026-07-19T08:29:17+08:00",
+      "phase": "assert",
+      "name": "versioned delete response",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.id == $entry_id and .data.status == \"deleted\"",
+      "artifact": "whitelist-delete.json"
+    },
+    {
+      "ts": "2026-07-19T08:29:17+08:00",
+      "phase": "api",
+      "name": "audit log page API has whitelist delete event",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"total\":1,\"trails\":[{\"log_id\":\"audit-844d58d8-3ff8-4f4b-8742-809f4938cc99\",\"tenant_id\":\"default\",\"user_id\":\"a6128a39-dbe4-4ad1-9ab8-72c7ac3ca3e0\",\"action\":\"WHITELIST_DELETED\",\"resource_type\":\"whitelist\",\"resource_id\":\"6ad378b2-5b15-4821-b034-a496dae85096\",\"details\":{\"api_path\":\"/api/v1/whitelist/6ad378b2-5b15-4821-b034-a496dae85096\",\"previous_status\":\"disabled\",\"request_id\":\"c41cf50e-dabf-4b9b-b2ed-61f3ca2bbafd\",\"result\":\"success\",\"trace_id\":\"c41cf50e-dabf-4b9b-b2ed-61f3ca2bbafd\",\"version\":5},\"ip_address\":\"10.244.0.0\",\"timestamp\":1784420957459,\"result\":\"success\"}]},\"meta\":{\"request_id\":\"02e56bb1-8c8b-4410-bf54-d9208e9ebc9b\",\"trace_id\":\"02e56bb1-8c8b-4410-bf54-d9208e9ebc9b\"},\"timestamp\":\"2026-07-19T00:29:17Z\"} ",
+      "artifact": "whitelist-audit-deleted.json"
+    },
+    {
+      "ts": "2026-07-19T08:29:17+08:00",
+      "phase": "assert",
+      "name": "audit log contains whitelist delete event",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and (.data.total >= 1) and ([.data.trails[] | select(.resource_id == $entry_id and .action == \"WHITELIST_DELETED\")] | length) >= 1",
+      "artifact": "whitelist-audit-deleted.json"
+    },
+    {
+      "ts": "2026-07-19T08:29:17+08:00",
+      "phase": "postgres",
+      "name": "versioned deletion removes acceptance business row",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "count=0; append-only audit rows intentionally retained",
+      "artifact": "pg-whitelist-delete-count.txt"
+    },
+    {
+      "ts": "2026-07-19T08:29:17+08:00",
+      "phase": "postgres",
+      "name": "versioned deletion retains all six append-only audit rows",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "count=6 including WHITELIST_DELETED",
+      "artifact": "pg-whitelist-audit-after-delete-count.txt"
     }
   ]
 }

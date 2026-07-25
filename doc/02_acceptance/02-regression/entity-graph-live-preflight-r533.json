@@ -1,0 +1,42 @@
+{
+  "result": "pass",
+  "generated_at": "2026-07-20T10:30:58+08:00",
+  "base_url": "http://10.0.5.8:30180",
+  "checks": {
+    "unauthorized_status": "401",
+    "authenticated_graph": {
+      "meta": {
+        "edge_count": 8,
+        "node_count": 9,
+        "source": "clickhouse_entity_graph"
+      },
+      "graph": {
+        "center_id": "host:10.20.4.18",
+        "node_types": [
+          "account",
+          "alert",
+          "domain",
+          "evidence",
+          "host",
+          "ip",
+          "service"
+        ],
+        "evidence_ids": [
+          "ALERT-20260620-1287",
+          "AUDIT-GRAPH-0042",
+          "PCAP-20260620-0156",
+          "SESSION-20260620-3381"
+        ]
+      }
+    },
+    "cross_tenant_query_isolated": {
+      "edge_count": 0,
+      "node_count": 0,
+      "source": "clickhouse_entity_graph"
+    },
+    "replicas": [
+      "clickhouse-1-0=9\t8",
+      "clickhouse-replica-1=9\t8"
+    ]
+  }
+}

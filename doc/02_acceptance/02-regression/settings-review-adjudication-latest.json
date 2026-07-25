@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "page": "settings",
+  "acceptance_revision": "r510",
+  "result": "accepted",
+  "logic_review": {
+    "result": "ACCEPT",
+    "p0": 0,
+    "p1": 0,
+    "p2": 0,
+    "closed_findings": [
+      "frontend route RBAC now matches backend admin read and write semantics",
+      "admin read and admin wildcard identities see correct read-only or domain-scoped controls",
+      "token lifecycle requires token write and enforces target-token scope ceilings",
+      "connection warning is computed before atomic audit persistence",
+      "single-integration audit records the actual tested target count"
+    ],
+    "remaining": []
+  },
+  "layout_review": {
+    "result": "ACCEPT",
+    "p0": 0,
+    "p1": 0,
+    "p2": 0,
+    "accepted_checks": [
+      "1920x1080 non-fullscreen business region has no horizontal overflow or covered content",
+      "18 native pointer actions hit their intended controls",
+      "five 560px drawers stay inside the page region and have no horizontal overflow",
+      "reference and production comparison passes at 0.07115355 below 0.125"
+    ],
+    "remaining": []
+  },
+  "main_thread_decision": "accept",
+  "basis": [
+    "88 of 88 production API and PostgreSQL checks passed",
+    "20 of 20 Windows Chrome route, permission, action and containment checks passed",
+    "visual diff passed and the side-by-side image showed no clipping or overlay escape",
+    "both independent reviewers returned ACCEPT with P0=0, P1=0 and P2=0"
+  ]
+}

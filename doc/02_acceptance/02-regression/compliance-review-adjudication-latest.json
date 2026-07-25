@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-19T11:35:10+08:00",
+  "menu": "合规审计",
+  "route": "/compliance",
+  "backend_revision": "r367",
+  "frontend_revision": "r368",
+  "result": "pass",
+  "review_sequence": ["comprehensive_agent_review", "page_logic_agent_review", "page_layout_agent_review", "main_thread_adjudication"],
+  "comprehensive_review": {
+    "verdict": "pass",
+    "open_p0": 0,
+    "open_p1": 0,
+    "open_p2": 0,
+    "checks": [
+      "fail-closed nine-section report with no browser-faked pass",
+      "real ZIP, English PDF and Chinese DOCX",
+      "canonical evidence and finalization hashes match",
+      "remediation is persistent and idempotent",
+      "finalization is unique and database-immutable",
+      "all acceptance and status documents point to r367/r368"
+    ]
+  },
+  "logic_review": {
+    "verdict": "pass",
+    "open_p0": 0,
+    "open_p1": 0,
+    "open_p2": 0,
+    "closed_blockers": [
+      "invalidated legacy rows are excluded from complete list and total",
+      "dedicated compliance scopes have positive paths and viewer 403 negatives",
+      "artifact_type supports evidence_package, report_pdf and report_docx",
+      "topic views and subscriptions remain unaffected and return live 200"
+    ],
+    "evidence": [
+      "doc/02_acceptance/runs/compliance-r367-final-20260719110622/live-compliance-audit-preflight-compliance-r367-final-20260719110622-summary.json",
+      "evidence/ui-image-breakdowns/pages/compliance/interaction-r368.json"
+    ]
+  },
+  "layout_review": {
+    "verdict": "pass",
+    "open_p0": 0,
+    "open_p1": 0,
+    "open_p2": 0,
+    "closed_blockers": [
+      "A/B/E content no longer clips and DOM content boundaries remain within panels",
+      "D trend area is readable",
+      "F shows a truthful structured zero-batch row",
+      "evidence modal uses one scroll container and supports preflight",
+      "report modal states nine gates plus two appendices and supports inline preview"
+    ],
+    "side_by_side_evidence": [
+      "evidence/ui-image-breakdowns/pages/compliance/implementation-r368.png",
+      "evidence/ui-image-breakdowns/overlays/drawer-compliance-gate-detail/implementation-r368.png",
+      "evidence/ui-image-breakdowns/overlays/modal-compliance-evidence-package-export/implementation-r368.png",
+      "evidence/ui-image-breakdowns/overlays/modal-compliance-report-export/implementation-r368.png"
+    ]
+  },
+  "visual_adjudication": {
+    "status": "pass",
+    "target_count": 4,
+    "passed_count": 4,
+    "pixel_mismatch_minimum": 0.0749951774691358,
+    "pixel_mismatch_maximum_observed": 0.10185570987654322,
+    "maximum": 0.125,
+    "browser": "Windows Chrome 150 via Xshell CDP 127.0.0.1:9224",
+    "viewport": "1920x1080"
+  },
+  "main_thread_adjudication": {
+    "blocking_gates": {
+      "fail_closed_report_truth": "pass",
+      "tenant_rbac_and_dedicated_scopes": "pass",
+      "artifact_integrity_and_languages": "pass",
+      "remediation_idempotency": "pass",
+      "immutable_finalization": "pass",
+      "windows_chrome_interaction": "pass",
+      "four_state_visual_contract": "pass",
+      "runtime_and_tests": "pass",
+      "immutable_runtime_provenance": "pass"
+    },
+    "final_decision": "compliance_audit_accepted_r367_r368",
+    "tracked_follow_up": "project-level third-party formal evidence remains outside this page acceptance"
+  }
+}

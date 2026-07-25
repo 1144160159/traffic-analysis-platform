@@ -1,0 +1,383 @@
+{
+  "run_id": "20260719-audit-governance-r424",
+  "result": "pass",
+  "apisix": "http://10.0.5.8:30180",
+  "tenant": "default",
+  "other_tenant": "audit-governance-other",
+  "query_id": "3a0a5622-6390-4633-a455-86e64c8a139f",
+  "log_id": "audit-a779d191-7a88-4638-833c-ac6246b0dd4d",
+  "total": 41,
+  "passed": 41,
+  "blockers": 0,
+  "checks": [
+    {
+      "ts": "2026-07-19T22:36:16+08:00",
+      "phase": "api",
+      "name": "admin lists tenant audit logs",
+      "passed": true,
+      "severity": "info",
+      "detail": "http-200",
+      "artifact": "list-admin.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:16+08:00",
+      "phase": "assert",
+      "name": "list exposes rows, summary and retention",
+      "passed": true,
+      "severity": "info",
+      "detail": ".success == true and (.data.logs|type==\"array\") and (.data.trails|type==\"array\") and (.data.total|type==\"number\") and (.data.summary.integrity_rate|type==\"number\") and (.data.retention.retention_days|type==\"number\")",
+      "artifact": "list-admin.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:16+08:00",
+      "phase": "api",
+      "name": "dedicated audit reader lists logs",
+      "passed": true,
+      "severity": "info",
+      "detail": "http-200",
+      "artifact": "list-reader.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:16+08:00",
+      "phase": "api",
+      "name": "missing audit read fails closed",
+      "passed": true,
+      "severity": "info",
+      "detail": "http-403",
+      "artifact": "list-no-read.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:16+08:00",
+      "phase": "api",
+      "name": "admin persists saved query",
+      "passed": true,
+      "severity": "info",
+      "detail": "http-201",
+      "artifact": "save-query.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:16+08:00",
+      "phase": "assert",
+      "name": "saved query response matches web contract",
+      "passed": true,
+      "severity": "info",
+      "detail": ".success == true and (.data.query_id|type==\"string\" and length>0) and .data.query_id == .data.saved_query_id",
+      "artifact": "save-query.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:16+08:00",
+      "phase": "api",
+      "name": "saved-query audit event is queryable",
+      "passed": true,
+      "severity": "info",
+      "detail": "http-200",
+      "artifact": "query-event.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:16+08:00",
+      "phase": "assert",
+      "name": "saved-query audit event is present",
+      "passed": true,
+      "severity": "info",
+      "detail": ".success == true and .data.total >= 1 and (.data.trails[0].request_id|type==\"string\") and (.data.trails[0].trace_id|type==\"string\")",
+      "artifact": "query-event.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:16+08:00",
+      "phase": "api",
+      "name": "admin reads tenant-bound detail",
+      "passed": true,
+      "severity": "info",
+      "detail": "http-200",
+      "artifact": "detail-admin.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:16+08:00",
+      "phase": "assert",
+      "name": "detail preserves governance context",
+      "passed": true,
+      "severity": "info",
+      "detail": ".success == true and .data.log_id != \"\" and .data.tenant_id != \"\" and (.data.details|type==\"object\")",
+      "artifact": "detail-admin.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:16+08:00",
+      "phase": "api",
+      "name": "other tenant cannot read detail",
+      "passed": true,
+      "severity": "info",
+      "detail": "http-404",
+      "artifact": "detail-other.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:16+08:00",
+      "phase": "api",
+      "name": "other tenant cannot review detail",
+      "passed": true,
+      "severity": "info",
+      "detail": "http-404",
+      "artifact": "review-other.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:16+08:00",
+      "phase": "api",
+      "name": "admin creates persisted review",
+      "passed": true,
+      "severity": "info",
+      "detail": "http-201",
+      "artifact": "review-admin.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:16+08:00",
+      "phase": "assert",
+      "name": "review response matches web contract",
+      "passed": true,
+      "severity": "info",
+      "detail": ".success == true and .data.log_id != \"\" and .data.status == \"escalated\" and (.data.review_id|type==\"string\")",
+      "artifact": "review-admin.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:17+08:00",
+      "phase": "api",
+      "name": "selected-row export filters by exact audit log id",
+      "passed": true,
+      "severity": "info",
+      "detail": "http-200",
+      "artifact": "export-selected.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:17+08:00",
+      "phase": "assert",
+      "name": "selected-row export contains exactly one complete row",
+      "passed": true,
+      "severity": "info",
+      "detail": ".success == true and .data.row_count == 1 and .data.total_matching == 1 and .data.truncated == false and .data.mask_sensitive == true",
+      "artifact": "export-selected.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:17+08:00",
+      "phase": "api",
+      "name": "viewer cannot save query",
+      "passed": true,
+      "severity": "info",
+      "detail": "http-403",
+      "artifact": "save-query-viewer.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:17+08:00",
+      "phase": "api",
+      "name": "viewer cannot export evidence",
+      "passed": true,
+      "severity": "info",
+      "detail": "http-403",
+      "artifact": "export-viewer.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:17+08:00",
+      "phase": "api",
+      "name": "viewer cannot run integrity check",
+      "passed": true,
+      "severity": "info",
+      "detail": "http-403",
+      "artifact": "integrity-viewer.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:17+08:00",
+      "phase": "api",
+      "name": "oversized synchronous export fails instead of truncating",
+      "passed": true,
+      "severity": "info",
+      "detail": "http-413",
+      "artifact": "export-oversized.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:17+08:00",
+      "phase": "api",
+      "name": "admin exports real pdf artifact",
+      "passed": true,
+      "severity": "info",
+      "detail": "http-200",
+      "artifact": "export-pdf.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:17+08:00",
+      "phase": "artifact",
+      "name": "pdf checksum and content are valid",
+      "passed": true,
+      "severity": "info",
+      "detail": "sha256 and file signature verified",
+      "artifact": "export-pdf.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:17+08:00",
+      "phase": "api",
+      "name": "admin exports real csv artifact",
+      "passed": true,
+      "severity": "info",
+      "detail": "http-200",
+      "artifact": "export-csv.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:17+08:00",
+      "phase": "artifact",
+      "name": "csv checksum and content are valid",
+      "passed": true,
+      "severity": "info",
+      "detail": "sha256 and file signature verified",
+      "artifact": "export-csv.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:17+08:00",
+      "phase": "api",
+      "name": "admin exports real json artifact",
+      "passed": true,
+      "severity": "info",
+      "detail": "http-200",
+      "artifact": "export-json.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:17+08:00",
+      "phase": "artifact",
+      "name": "json checksum and content are valid",
+      "passed": true,
+      "severity": "info",
+      "detail": "sha256 and file signature verified",
+      "artifact": "export-json.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:17+08:00",
+      "phase": "api",
+      "name": "first exact-window integrity check establishes baselines",
+      "passed": true,
+      "severity": "info",
+      "detail": "http-201",
+      "artifact": "integrity-first.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:17+08:00",
+      "phase": "assert",
+      "name": "first check is honest about baseline state",
+      "passed": true,
+      "severity": "info",
+      "detail": ".success == true and .data.valid == true and (.data.status == \"baseline_created\" or .data.status == \"passed\") and .data.records_checked >= 1 and (.data.root_sha256|startswith(\"sha256:\"))",
+      "artifact": "integrity-first.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:17+08:00",
+      "phase": "api",
+      "name": "second exact-window integrity check verifies baselines",
+      "passed": true,
+      "severity": "info",
+      "detail": "http-201",
+      "artifact": "integrity-second.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:17+08:00",
+      "phase": "assert",
+      "name": "second check compares persisted per-row baselines",
+      "passed": true,
+      "severity": "info",
+      "detail": ".success == true and .data.valid == true and .data.status == \"passed\" and .data.matched >= 1 and .data.mismatched == 0",
+      "artifact": "integrity-second.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:17+08:00",
+      "phase": "api",
+      "name": "tamper probe is detected",
+      "passed": true,
+      "severity": "info",
+      "detail": "http-201",
+      "artifact": "integrity-tampered.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:18+08:00",
+      "phase": "assert",
+      "name": "tampered row fails integrity comparison",
+      "passed": true,
+      "severity": "info",
+      "detail": ".success == true and .data.valid == false and .data.status == \"failed\" and .data.mismatched >= 1",
+      "artifact": "integrity-tampered.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:18+08:00",
+      "phase": "api",
+      "name": "restored row passes integrity comparison",
+      "passed": true,
+      "severity": "info",
+      "detail": "http-201",
+      "artifact": "integrity-restored.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:18+08:00",
+      "phase": "assert",
+      "name": "restored row matches original immutable baseline",
+      "passed": true,
+      "severity": "info",
+      "detail": ".success == true and .data.valid == true and .data.status == \"passed\" and .data.mismatched == 0",
+      "artifact": "integrity-restored.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:18+08:00",
+      "phase": "api",
+      "name": "deletion probe establishes fixed-window manifest",
+      "passed": true,
+      "severity": "info",
+      "detail": "http-201",
+      "artifact": "integrity-delete-baseline.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:18+08:00",
+      "phase": "assert",
+      "name": "deletion probe baseline is created",
+      "passed": true,
+      "severity": "info",
+      "detail": ".success == true and .data.valid == true and .data.status == \"baseline_created\" and .data.records_checked == 1",
+      "artifact": "integrity-delete-baseline.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:18+08:00",
+      "phase": "api",
+      "name": "deleted audit row is detected by fixed-window manifest",
+      "passed": true,
+      "severity": "info",
+      "detail": "http-201",
+      "artifact": "integrity-delete-detected.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:18+08:00",
+      "phase": "assert",
+      "name": "deleted row fails integrity comparison",
+      "passed": true,
+      "severity": "info",
+      "detail": ".success == true and .data.valid == false and .data.status == \"failed\" and .data.missing == 1",
+      "artifact": "integrity-delete-detected.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:18+08:00",
+      "phase": "api",
+      "name": "restored deleted row passes fixed-window manifest",
+      "passed": true,
+      "severity": "info",
+      "detail": "http-201",
+      "artifact": "integrity-delete-restored.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:18+08:00",
+      "phase": "assert",
+      "name": "restored deleted row matches manifest",
+      "passed": true,
+      "severity": "info",
+      "detail": ".success == true and .data.valid == true and .data.status == \"passed\" and .data.missing == 0 and .data.mismatched == 0",
+      "artifact": "integrity-delete-restored.json"
+    },
+    {
+      "ts": "2026-07-19T22:36:19+08:00",
+      "phase": "postgres",
+      "name": "saved query, exports and review persisted",
+      "passed": true,
+      "severity": "info",
+      "detail": "saved=1 exports=4 reviews=1",
+      "artifact": ""
+    }
+  ]
+}

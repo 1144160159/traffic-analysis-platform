@@ -15,12 +15,20 @@
   "status": "evidence-ready",
   "route": "/campaigns/:campaignId?impact=business-system",
   "host_route": "/campaigns/:campaignId",
+  "surface_type": "modal-state",
+  "production_surface_contract": {
+    "host_context": "战役详情页必须保持可见",
+    "container": "居中实际尺寸 Modal，不得替换业务区或铺满浏览器",
+    "size": "最大宽度 1180px / 86dvw，最大高度 100dvh - 96px",
+    "overflow": "仅弹窗 body 内部滚动",
+    "focus_route": "仅用于稳定打开生产弹窗并采集验收证据，不代表全屏生产页面"
+  },
   "title": "战役详情。",
   "observation": {
-    "layout": "Focused campaign impact panel for the business-system tab",
+    "layout": "战役详情宿主页上的居中影响范围弹窗，业务系统 Tab 激活",
     "business_focus": "Affected-system risk distribution and Top 5 services with recovery priority",
     "current_state": "Business-system tab active with data-ready risk ring, distribution rows and table",
-    "acceptance_scope": "Production React implementation captured from the real APISIX route through Windows Chrome CDP"
+    "acceptance_scope": "Windows Chrome 同时验证宿主上下文、弹窗边界、内部滚动和内容视觉；不得用全屏 focus 画布代替生产弹窗"
   },
   "regions": [
     {
@@ -1336,7 +1344,8 @@
     "resolved_path": "/campaigns/campaign-exfil-default-1782729598739-e1d2dc37",
     "route_state": {
       "impact": "business-system",
-      "__codex_page_id": "campaign-detail-impact-business-system"
+      "__codex_page_id": "campaign-detail-impact-business-system",
+      "__codex_ui_breakdown_production": "1"
     },
     "note": "implementation.png is captured from the real APISIX/Web UI production route through Windows Chrome CDP. It is not a raster replay of target.png."
   },
@@ -1353,14 +1362,14 @@
       "width": 1920,
       "height": 1080
     },
-    "url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=business-system&__codex_page_id=campaign-detail-impact-business-system&windowsCdpEvidenceTs=1783853696985#codex_smoke_token=<redacted>",
+    "url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=business-system&__codex_page_id=campaign-detail-impact-business-system&__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1784905414844#codex_smoke_token=<redacted>",
     "render_source": "production React/CSS and typed campaign snapshot",
     "capture_meta": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-business-system/capture-meta.json",
     "cdp_version": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-business-system/cdp-version.json",
     "cdp_list": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-business-system/cdp-list.json",
     "evidence_mode": "production-route",
     "production_route_report": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-business-system/production-route-report.json",
-    "final_url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=business-system&__codex_page_id=campaign-detail-impact-business-system&windowsCdpEvidenceTs=1783853696985"
+    "final_url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=business-system&__codex_page_id=campaign-detail-impact-business-system&__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1784905414844"
   },
   "evidence_dir": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-business-system",
   "differences": [
@@ -1398,6 +1407,13 @@
       "current": "implementation.png is captured from the real APISIX/Web UI route in Windows Chrome CDP",
       "expected": "no target.png raster replay is used as implementation evidence",
       "status": "documented"
+    },
+    {
+      "type": "production-state-mapping",
+      "location": "/campaigns/campaign-exfil-default-1782729598739-e1d2dc37",
+      "current": "canonical campaign visual contract state enabled; normal-route runtime is verified separately",
+      "expected": "target image has a deterministic implemented route state or interaction mapping",
+      "status": "open"
     }
   ],
   "accepted": false,
@@ -1522,5 +1538,8 @@
     "dynamic_data_status": "pass",
     "main_thread_judgment": "business-pixel-accepted",
     "updated_at": "2026-07-10T05:22:00.000Z"
-  }
+  },
+  "unresolved": [
+    "production-state-mapping:/campaigns/campaign-exfil-default-1782729598739-e1d2dc37"
+  ]
 }

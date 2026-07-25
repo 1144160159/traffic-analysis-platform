@@ -1,0 +1,110 @@
+{
+  "result": "pass",
+  "generated_at": "2026-07-20T12:12:05+08:00",
+  "base_url": "http://10.0.5.8:30180",
+  "checks": {
+    "unauthorized_status": "401",
+    "authenticated_graph": {
+      "meta": {
+        "depth": 2,
+        "edge_count": 12,
+        "entity_type": "all",
+        "node_count": 10,
+        "site": "main",
+        "source": "clickhouse_entity_graph",
+        "time_range": ""
+      },
+      "graph": {
+        "center_id": "host:10.20.4.18",
+        "node_types": [
+          "account",
+          "alert",
+          "domain",
+          "evidence",
+          "host",
+          "ip",
+          "service"
+        ],
+        "evidence_ids": [
+          "ALERT-20260620-1287",
+          "AUDIT-GRAPH-0042",
+          "PCAP-20260620-0156",
+          "SESSION-20260620-3381"
+        ]
+      }
+    },
+    "account_filter": {
+      "meta": {
+        "depth": 2,
+        "edge_count": 1,
+        "entity_type": "account",
+        "node_count": 2,
+        "site": "main",
+        "source": "clickhouse_entity_graph",
+        "time_range": "all"
+      },
+      "node_ids": [
+        "account:biz_admin",
+        "host:10.20.4.18"
+      ],
+      "relation_ids": [
+        "rel-002"
+      ]
+    },
+    "path_modes": [
+      {
+        "mode": "account",
+        "source_id": "account:biz_admin",
+        "target_id": "host:10.20.4.18",
+        "length": 1,
+        "relation": "登录",
+        "evidence_ids": [
+          "AUDIT-GRAPH-0042"
+        ]
+      },
+      {
+        "mode": "attack",
+        "source_id": "alert:ALERT-20260620-1287",
+        "target_id": "host:10.20.4.18",
+        "length": 1,
+        "relation": "关联告警",
+        "evidence_ids": [
+          "ALERT-20260620-1287"
+        ]
+      },
+      {
+        "mode": "communication",
+        "source_id": "domain:erp.corp.edu.cn",
+        "target_id": "host:10.20.4.18",
+        "length": 1,
+        "relation": "DNS解析",
+        "evidence_ids": [
+          "SESSION-20260620-3381"
+        ]
+      },
+      {
+        "mode": "shortest",
+        "source_id": "ip:185.234.15.23",
+        "target_id": "host:10.20.4.18",
+        "length": 1,
+        "relation": "通信",
+        "evidence_ids": [
+          "PCAP-20260620-0156"
+        ]
+      }
+    ],
+    "cross_tenant_query_isolated": {
+      "depth": 2,
+      "edge_count": 0,
+      "entity_type": "all",
+      "node_count": 0,
+      "site": "main",
+      "source": "clickhouse_entity_graph",
+      "time_range": ""
+    },
+    "replicas": [
+      "clickhouse-1-0=10\t12",
+      "clickhouse-replica-1=10\t12"
+    ]
+  }
+}

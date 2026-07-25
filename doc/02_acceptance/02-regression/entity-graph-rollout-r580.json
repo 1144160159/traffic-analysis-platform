@@ -1,0 +1,59 @@
+{
+  "page": "entity-graph",
+  "revision": "r580",
+  "rolled_out_at": "2026-07-21T11:30:12+08:00",
+  "nebula_cluster": {
+    "namespace": "middleware",
+    "space": "traffic_graph",
+    "topology": {"meta": 3, "graph": 3, "storage": 3},
+    "ready": 9,
+    "restarts": 0,
+    "schema": {"tags": 6, "edges": 8, "indexes": 17},
+    "workbench_data": {"default_entities": 12, "default_relations": 14, "collision_tenant_entities": 1},
+    "authentication": "password authorization enabled; fresh-install root bootstrap rotates immediately to the ExternalSecret-managed administrator password",
+    "service_principal": "traffic_graph with USER role on traffic_graph",
+    "tenant_vid_policy": "md5(trim(tenant_id) + ':' + trim(business_id))",
+    "headless_services": ["nebula-meta", "nebula-storage-headless"]
+  },
+  "deployments": [
+    {
+      "name": "graph-service",
+      "source_revision": "entity-graph-nebulagraph-native-r575",
+      "deployment_revision": 33,
+      "deployment_generation": 33,
+      "image": "docker.io/traffic/graph-service@sha256:c2af7b2361d1bb606d10e24e5251ab59a8200d6424752b4964ec5dade7b6db6c",
+      "pod": {"name": "graph-service-7bf6d5587f-wdgfs", "ready": true, "restarts": 0, "node": "zeus-server"}
+    },
+    {
+      "name": "web-ui",
+      "source_revision": "entity-graph-readable-label-placement-r580",
+      "deployment_generation": 777,
+      "image": "docker.io/traffic/web-ui@sha256:a8068f4aa6a97bae70bd250a964d65575c9220383f5db83cddc64f2951ea3e3d",
+      "image_id": "docker.io/traffic/web-ui@sha256:a8068f4aa6a97bae70bd250a964d65575c9220383f5db83cddc64f2951ea3e3d",
+      "pod": {"name": "web-ui-66c7fc579b-827lt", "ready": true, "restarts": 0, "node": "zeus-server"}
+    }
+  ],
+  "nodes_imported": ["8-2tb", "zeus-server"],
+  "image_pull_policy": "Never",
+  "digest_reference_imported": true,
+  "jobs": [
+    {"name": "init-nebula-schema", "result": "complete"},
+    {"name": "seed-nebula-workbench", "result": "complete"}
+  ],
+  "manifests": [
+    "deployments/kubernetes/infrastructure/09-nebula-graph.yaml",
+    "deployments/kubernetes/infrastructure/12-nebula-services.yaml",
+    "deployments/kubernetes/init-jobs/05-nebula-schema.yaml",
+    "deployments/kubernetes/init-jobs/06-nebula-workbench-seed.yaml",
+    "deployments/kubernetes/applications/go-services.yaml",
+    "deployments/kubernetes/applications/web-ui.yaml"
+  ],
+  "verification": [
+    "entity-graph-live-preflight-r580.json",
+    "entity-graph-interactions-r580.json",
+    "evidence/ui-image-breakdowns/pages/graph/entity-graph-r580-interactions.png"
+  ],
+  "visual_gate": {"status": "fail", "pixel_mismatch_ratio": 0.3215991512345679, "threshold": 0.02},
+  "rollback": "deployment rollout history and the previous digest-pinned Web UI ReplicaSet remain available on both nodes",
+  "result": "runtime_pass_raw_visual_fail"
+}

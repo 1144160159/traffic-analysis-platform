@@ -1,0 +1,51 @@
+{
+  "page": "entity-graph",
+  "revision": "r586",
+  "adjudicated_at": "2026-07-21T16:26:53+08:00",
+  "result": "accept",
+  "scope": "enlarge and contain the lower workspace, render all three entity-detail graphics with ECharts, and use raw NebulaGraph-backed time-bucket series without synthetic motion",
+  "logic_review": {
+    "result": "accept",
+    "P0": 0,
+    "P1": 0,
+    "P2": 0,
+    "P3": 1,
+    "closed": [
+      "RiskScoreRingChart is an ECharts gauge bound directly to node.risk_score with the expected red and amber thresholds",
+      "SparklineChart no longer normalizes, jitters, interpolates or supplies fallback values",
+      "traffic and alert line series use node.metadata time buckets selected by 24h, 7d or all",
+      "the r586 E2E compares series type, values, source, gauge value and color against the same live NebulaGraph response",
+      "biz_admin has twelve real zero alert buckets and renders a flat zero line",
+      "all four live path modes, governance containment and business actions remain passing"
+    ],
+    "minor": [
+      "the strongest value-by-value runtime assertions cover 24h for the center entity and biz_admin; 7d/all currently retain label switching plus canonical seed coverage"
+    ]
+  },
+  "layout_review": {
+    "result": "accept",
+    "P0": 0,
+    "P1": 0,
+    "P2": 0,
+    "P3": 0,
+    "closed": [
+      "the path panel remains 801.322937x340 and the query-governance panel remains 580.666687x340 on the same row",
+      "query governance remains fully contained with no new clipping, overlap or overflow",
+      "the 64-point amber gauge and raw blue traffic line remain clear",
+      "the zero-alert green series is visibly flat and truthful",
+      "the r585 asymmetric layout has no visual regression"
+    ],
+    "minor": []
+  },
+  "main_thread_adjudication": {
+    "decision": "accept",
+    "reason": "the initial logic rejection correctly identified synthetic sparkline behavior; r586 removes it, deploys canonical NebulaGraph time buckets, and passes strengthened Windows Chrome value/source assertions plus independent logic and layout re-review",
+    "deferred": "the 7d/all value-by-value extension is a non-blocking P3 because this correction explicitly asked about the visible 24-hour detail graphics and their ECharts implementation"
+  },
+  "runtime_evidence": {
+    "windows_chrome_interactions": "doc/02_acceptance/02-regression/entity-graph-interactions-r586.json",
+    "production_route": "http://10.0.5.8:30180/graph",
+    "visual_metrics": "evidence/ui-image-breakdowns/pages/graph/entity-graph-r586-visual-metrics.json",
+    "rollout": "doc/02_acceptance/02-regression/entity-graph-rollout-r586.json"
+  }
+}

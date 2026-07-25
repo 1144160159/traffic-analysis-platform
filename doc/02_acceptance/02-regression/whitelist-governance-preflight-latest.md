@@ -1,10 +1,10 @@
 # Whitelist Governance Live Preflight
 
-- Run: `20260630-whitelist-governance-preflight-r2`
+- Run: `20260719-whitelist-governance-r351`
 - Result: `pass`
-- Checks: `26/26` passed, `0` blockers, `0` warnings
-- Whitelist entry: `c60b3e32-4808-402d-af0d-ccafae3d2bcd`
-- Match value: `codex-20260630-whitelist-governance-preflight-r2.example.test`
+- Checks: `46/46` passed, `0` blockers, `0` warnings
+- Whitelist entry: `6ad378b2-5b15-4821-b034-a496dae85096`
+- Match value: `codex-20260719-whitelist-governance-r351.example.test`
 
 This gate closes the whitelist governance business loop:
 draft creation, approval submission, activation, expiry extension, disable,

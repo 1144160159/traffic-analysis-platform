@@ -1,0 +1,86 @@
+{
+  "result": "pass",
+  "browser_backend": "Windows Chrome CDP over Xshell 9224",
+  "browser": "Chrome/150.0.7871.128",
+  "route": "http://10.0.5.8:30180/graph?windowsCdpInteractionTs=1784514674120#codex_smoke_token=<redacted>",
+  "checks": {
+    "source_is_clickhouse": true,
+    "node_count": true,
+    "edge_count": true,
+    "selected_node_changed": true,
+    "search_filter_count": true,
+    "saved_view_persisted": true,
+    "export_download": true,
+    "path_panel_visible": true,
+    "destinations_work": true,
+    "no_business_bad_responses": true,
+    "no_business_request_failures": true,
+    "no_unexpected_console_errors": true,
+    "no_unexpected_page_errors": true,
+    "no_horizontal_overflow": true
+  },
+  "graph": {
+    "source": "clickhouse_entity_graph",
+    "node_count": 9,
+    "edge_count": 8
+  },
+  "saved_view": {
+    "center_id": "host:10.20.4.18",
+    "search": "",
+    "saved_at": "2026-07-20T02:31:17.440Z"
+  },
+  "download": "entity-graph-host-10.20.4.18.json",
+  "navigation": [
+    {
+      "label": "查看资产",
+      "passed": true,
+      "url": "http://10.0.5.8:30180/assets?search=%E8%B4%A6%E5%8F%B7"
+    },
+    {
+      "label": "查看告警",
+      "passed": true,
+      "url": "http://10.0.5.8:30180/alerts?entity=10.20.4.18"
+    },
+    {
+      "label": "进入取证",
+      "passed": true,
+      "url": "http://10.0.5.8:30180/forensics?asset=10.20.4.18"
+    },
+    {
+      "label": "跳转攻击链",
+      "passed": true,
+      "url": "http://10.0.5.8:30180/attack-chains?entity=10.20.4.18"
+    },
+    {
+      "label": "审计日志",
+      "passed": true,
+      "url": "http://10.0.5.8:30180/audit-log?object_type=graph&object_id=host%3A10.20.4.18"
+    }
+  ],
+  "bad_responses": [],
+  "business_request_failures": [],
+  "unexpected_console_errors": [],
+  "unexpected_page_errors": [],
+  "known_external_noise": {
+    "request_failures": [
+      {
+        "url": "https://api.yhchj.com/ip",
+        "failure": "net::ERR_CONNECTION_CLOSED"
+      },
+      {
+        "url": "https://api.yhchj.com/ip",
+        "failure": "net::ERR_CONNECTION_CLOSED"
+      }
+    ],
+    "console_errors": [
+      "Failed to load resource: net::ERR_CONNECTION_CLOSED",
+      "Failed to load resource: net::ERR_CONNECTION_CLOSED"
+    ],
+    "page_errors": [
+      "Object",
+      "Object"
+    ]
+  },
+  "screenshot": "evidence/ui-image-breakdowns/pages/graph/entity-graph-r529-interactions.png",
+  "generated_at": "2026-07-20T02:31:28.381Z"
+}

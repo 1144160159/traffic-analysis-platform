@@ -1,0 +1,426 @@
+{
+  "run_id": "campaign-workbench-r750-1784917660971",
+  "revision": "r750",
+  "result": "pass",
+  "base_url": "http://10.0.5.8:30180",
+  "campaign_id": "campaign-exfil-default-1783876075253-d150e2f8",
+  "check_count": 33,
+  "passed": 33,
+  "failed": 0,
+  "checks": [
+    {
+      "name": "campaign list HTTP 200",
+      "passed": true,
+      "detail": 200
+    },
+    {
+      "name": "campaign list uses real ClickHouse rows",
+      "passed": true,
+      "detail": {
+        "count": 8,
+        "campaign_id": "campaign-exfil-default-1783876075253-d150e2f8"
+      }
+    },
+    {
+      "name": "campaign list total supports server pagination",
+      "passed": true,
+      "detail": 8737243
+    },
+    {
+      "name": "campaign DTO exposes operational state contract",
+      "passed": true,
+      "detail": {
+        "assignee": "sec_analyst",
+        "state_version": 84
+      }
+    },
+    {
+      "name": "phase filter HTTP 200",
+      "passed": true,
+      "detail": 200
+    },
+    {
+      "name": "phase filter is result-level exact",
+      "passed": true,
+      "detail": [
+        [
+          "collection",
+          "exfiltration",
+          "command_and_control"
+        ],
+        [
+          "collection",
+          "exfiltration",
+          "command_and_control"
+        ],
+        [
+          "collection",
+          "exfiltration",
+          "command_and_control"
+        ],
+        [
+          "collection",
+          "exfiltration",
+          "command_and_control"
+        ],
+        [
+          "collection",
+          "exfiltration",
+          "command_and_control"
+        ]
+      ]
+    },
+    {
+      "name": "owner assignment HTTP 200",
+      "passed": true,
+      "detail": 200
+    },
+    {
+      "name": "owner assignment is a real mutation",
+      "passed": true,
+      "detail": {
+        "action_id": "campaign-assign-owner",
+        "audit_event": "CAMPAIGN_OWNER_ASSIGNED",
+        "dry_run": false,
+        "endpoint": "/api/v1/campaigns/campaign-exfil-default-1783876075253-d150e2f8/actions",
+        "job_id": "campaign-12fea66c-b8fd-4e3f-b62d-fd992d9f6ce0",
+        "job_status": "completed",
+        "result": {
+          "action_id": "campaign-assign-owner",
+          "assignee": "campaign_acceptance",
+          "audit_event": "CAMPAIGN_OWNER_ASSIGNED",
+          "dry_run": false,
+          "endpoint": "/api/v1/campaigns/campaign-exfil-default-1783876075253-d150e2f8/actions",
+          "job_id": "campaign-12fea66c-b8fd-4e3f-b62d-fd992d9f6ce0",
+          "job_status": "completed",
+          "metadata": {
+            "assignee": "campaign_acceptance",
+            "campaign_id": "campaign-exfil-default-1783876075253-d150e2f8",
+            "dry_run": false
+          },
+          "simulation": false,
+          "state_version": 85,
+          "status": "completed",
+          "target": "campaign-exfil-default-1783876075253-d150e2f8",
+          "updated_at": "2026-07-24T18:27:28.995338Z"
+        },
+        "simulation": false,
+        "status": "completed"
+      }
+    },
+    {
+      "name": "owner assignment returns versioned result",
+      "passed": true,
+      "detail": {
+        "action_id": "campaign-assign-owner",
+        "assignee": "campaign_acceptance",
+        "audit_event": "CAMPAIGN_OWNER_ASSIGNED",
+        "dry_run": false,
+        "endpoint": "/api/v1/campaigns/campaign-exfil-default-1783876075253-d150e2f8/actions",
+        "job_id": "campaign-12fea66c-b8fd-4e3f-b62d-fd992d9f6ce0",
+        "job_status": "completed",
+        "metadata": {
+          "assignee": "campaign_acceptance",
+          "campaign_id": "campaign-exfil-default-1783876075253-d150e2f8",
+          "dry_run": false
+        },
+        "simulation": false,
+        "state_version": 85,
+        "status": "completed",
+        "target": "campaign-exfil-default-1783876075253-d150e2f8",
+        "updated_at": "2026-07-24T18:27:28.995338Z"
+      }
+    },
+    {
+      "name": "detail reflects persisted assignee",
+      "passed": true,
+      "detail": "campaign_acceptance"
+    },
+    {
+      "name": "detail impact projections expose data lineage",
+      "passed": true,
+      "detail": {
+        "accounts": true,
+        "assets": true,
+        "business_systems": true,
+        "campuses": true,
+        "departments": true,
+        "services": true
+      }
+    },
+    {
+      "name": "detail impact projections contain real linked rows",
+      "passed": true,
+      "detail": {
+        "accounts": 4,
+        "services": 3,
+        "assets": 2,
+        "departments": 1,
+        "campuses": 1,
+        "business_systems": 1
+      }
+    },
+    {
+      "name": "department progress comes from persisted campaign workflow status",
+      "passed": true,
+      "detail": [
+        {
+          "department": "信息中心",
+          "owner": "平台运维组",
+          "risk": "高危",
+          "progress": 40
+        }
+      ]
+    },
+    {
+      "name": "service impact contains observed port protocol data",
+      "passed": true,
+      "detail": [
+        {
+          "service_name": "Service 8472",
+          "port_protocol": "8472/UDP",
+          "risk": "高危",
+          "dependency": "10.0.5.9"
+        },
+        {
+          "service_name": "Kubernetes API",
+          "port_protocol": "6443/TCP",
+          "risk": "高危",
+          "dependency": "全流量分析平台"
+        },
+        {
+          "service_name": "ClickHouse Native",
+          "port_protocol": "9000/TCP",
+          "risk": "高危",
+          "dependency": "全流量分析平台"
+        }
+      ]
+    },
+    {
+      "name": "campaign Community IDs resolve to persisted sessions",
+      "passed": true,
+      "detail": {
+        "campaign_community_ids": [
+          "1:h1jmFC/hSH0cFoXT4gccj6Aju6E=",
+          "1:fc7pL+S6NYHBZ4tuXvcAQKrpl8I=",
+          "1:gmRxpeBBwZUcpkRDRqI1hM5IEE8=",
+          "1:jCSHvl/wXzNB2MQTWhtpZdre+aE=",
+          "1:w2O8mv8UbanKB0N+7tqd0/hSj9s=",
+          "1:QCc1LpIq+A8KJqdU/VI+8f2fULU="
+        ],
+        "linked_session_count": 45847
+      }
+    },
+    {
+      "name": "service impact tuple equals a persisted campaign session row",
+      "passed": true,
+      "detail": {
+        "projected_service_tuples": [
+          "8472/UDP|10.0.5.9"
+        ],
+        "persisted_session_service_tuples": [
+          "58077/UDP|10.0.5.9",
+          "8472/UDP|10.0.5.9",
+          "50596/UDP|10.0.5.9",
+          "8472/UDP|10.0.5.9",
+          "37378/UDP|10.0.5.9",
+          "8472/UDP|10.0.5.9"
+        ]
+      }
+    },
+    {
+      "name": "detail exposes selected-campaign phase aggregation",
+      "passed": true,
+      "detail": {
+        "phase_data_backed": true,
+        "phase_summaries": [
+          {
+            "phase": "exfiltration",
+            "alert_count": 1,
+            "evidence_count": 1,
+            "last_seen": 1783876086470
+          },
+          {
+            "phase": "discovery",
+            "alert_count": 1,
+            "evidence_count": 1,
+            "last_seen": 1783879437356
+          }
+        ]
+      }
+    },
+    {
+      "name": "detail separates activity and workflow status",
+      "passed": true,
+      "detail": {
+        "activity_status": "closed",
+        "workflow_status": "active"
+      }
+    },
+    {
+      "name": "status change HTTP 200",
+      "passed": true,
+      "detail": 200
+    },
+    {
+      "name": "status change returns new operational state",
+      "passed": true,
+      "detail": {
+        "action_id": "campaign-status-change",
+        "audit_event": "CAMPAIGN_STATUS_CHANGED",
+        "campaign_status": "contained",
+        "dry_run": false,
+        "endpoint": "/api/v1/campaigns/campaign-exfil-default-1783876075253-d150e2f8/actions",
+        "job_id": "campaign-6cf5a6f9-ae48-45e4-88d2-e7ed8fcb36e6",
+        "job_status": "completed",
+        "metadata": {
+          "campaign_id": "campaign-exfil-default-1783876075253-d150e2f8",
+          "dry_run": false,
+          "next_status": "contained"
+        },
+        "simulation": false,
+        "state_version": 86,
+        "status": "completed",
+        "target": "campaign-exfil-default-1783876075253-d150e2f8",
+        "updated_at": "2026-07-24T18:27:36.326376Z"
+      }
+    },
+    {
+      "name": "status change increments state_version",
+      "passed": true,
+      "detail": {
+        "before": 85,
+        "after": 86
+      }
+    },
+    {
+      "name": "detail reflects contained state",
+      "passed": true,
+      "detail": "contained"
+    },
+    {
+      "name": "report generation HTTP 200",
+      "passed": true,
+      "detail": 200
+    },
+    {
+      "name": "report generation returns durable report ID",
+      "passed": true,
+      "detail": {
+        "action_id": "campaign-report-generate",
+        "audit_event": "CAMPAIGN_REPORT_REQUESTED",
+        "dry_run": false,
+        "endpoint": "/api/v1/campaigns/campaign-exfil-default-1783876075253-d150e2f8/actions",
+        "job_id": "campaign-3bf7e755-0b2a-4a5d-b509-6a0f4d992454",
+        "job_status": "completed",
+        "metadata": {
+          "campaign_id": "campaign-exfil-default-1783876075253-d150e2f8",
+          "dry_run": false,
+          "evidence_count": 5,
+          "format": "pdf",
+          "sections": [
+            "攻击阶段",
+            "影响范围",
+            "证据链",
+            "处置结论"
+          ]
+        },
+        "report_format": "pdf",
+        "report_id": "campaign-report-35e0134b-6adc-4e26-8235-0a3ef5286d79",
+        "report_status": "completed",
+        "simulation": false,
+        "status": "completed",
+        "target": "战役复盘报告"
+      }
+    },
+    {
+      "name": "action job can be read back",
+      "passed": true,
+      "detail": {
+        "job_id": "campaign-6cf5a6f9-ae48-45e4-88d2-e7ed8fcb36e6",
+        "tenant_id": "default",
+        "campaign_id": "campaign-exfil-default-1783876075253-d150e2f8",
+        "action_id": "campaign-status-change",
+        "target": "campaign-exfil-default-1783876075253-d150e2f8",
+        "metadata": {
+          "campaign_id": "campaign-exfil-default-1783876075253-d150e2f8",
+          "dry_run": false,
+          "next_status": "contained"
+        },
+        "simulation": false,
+        "dry_run": false,
+        "status": "completed",
+        "result": {
+          "action_id": "campaign-status-change",
+          "audit_event": "CAMPAIGN_STATUS_CHANGED",
+          "campaign_status": "contained",
+          "dry_run": false,
+          "endpoint": "/api/v1/campaigns/campaign-exfil-default-1783876075253-d150e2f8/actions",
+          "job_id": "campaign-6cf5a6f9-ae48-45e4-88d2-e7ed8fcb36e6",
+          "job_status": "completed",
+          "metadata": {
+            "campaign_id": "campaign-exfil-default-1783876075253-d150e2f8",
+            "dry_run": false,
+            "next_status": "contained"
+          },
+          "simulation": false,
+          "state_version": 86,
+          "status": "completed",
+          "target": "campaign-exfil-default-1783876075253-d150e2f8",
+          "updated_at": "2026-07-24T18:27:36.326376Z"
+        },
+        "created_by": "6819af23-2532-4263-8a08-5a13585879f4",
+        "created_at": "2026-07-24T18:27:36.326376Z",
+        "completed_at": "2026-07-24T18:27:36.326376Z"
+      }
+    },
+    {
+      "name": "action job records non-simulation mutation",
+      "passed": true,
+      "detail": {
+        "simulation": false,
+        "dry_run": false
+      }
+    },
+    {
+      "name": "viewer cannot mutate campaigns",
+      "passed": true,
+      "detail": 403
+    },
+    {
+      "name": "campaign detail is tenant isolated",
+      "passed": true,
+      "detail": 404
+    },
+    {
+      "name": "PostgreSQL contains versioned workbench state",
+      "passed": true,
+      "detail": "campaign_acceptance|contained|86"
+    },
+    {
+      "name": "PostgreSQL contains completed report",
+      "passed": true,
+      "detail": "campaign-report-35e0134b-6adc-4e26-8235-0a3ef5286d79|completed|pdf"
+    },
+    {
+      "name": "all mutating jobs are durable",
+      "passed": true,
+      "detail": "3"
+    },
+    {
+      "name": "PostgreSQL stores campaign impact asset metadata",
+      "passed": true,
+      "detail": "2"
+    },
+    {
+      "name": "all mutating jobs have audit trails",
+      "passed": true,
+      "detail": [
+        "campaign-3bf7e755-0b2a-4a5d-b509-6a0f4d992454",
+        "campaign-6cf5a6f9-ae48-45e4-88d2-e7ed8fcb36e6",
+        "campaign-12fea66c-b8fd-4e3f-b62d-fd992d9f6ce0"
+      ]
+    }
+  ],
+  "timestamp": "2026-07-24T18:27:40.971Z"
+}

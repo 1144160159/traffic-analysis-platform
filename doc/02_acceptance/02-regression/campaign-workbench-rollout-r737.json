@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-07-24T21:53:00+08:00",
+  "scope": "campaign-domain",
+  "release": "campaign-domain-r737",
+  "status": "deployed_visual_gate_pending",
+  "change": {
+    "source_contracts": [
+      "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-campaign-detail.json",
+      "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/overlays/drawer-attack-chain-detail.json"
+    ],
+    "repairs": [
+      "战役详情和攻击链详情从居中 Modal 改为右侧 Ant Design Drawer",
+      "1920px 视口下 Drawer 宽 900px、右侧留 40px、上下各留 48px，底层宿主页面保持可见",
+      "960px 和 640px 断点重排摘要、工作区、证据表与底部操作区，滚动限制在 Drawer body",
+      "战役处置、SOAR 响应、取证任务和调查结论增加二次确认",
+      "popup bounds 验收脚本支持 Modal/Drawer 双类型并断言 Drawer 右对齐"
+    ]
+  },
+  "verification": {
+    "targeted_vitest": {
+      "result": "pass",
+      "files": 5,
+      "tests": 37
+    },
+    "typescript_and_vite_build": {
+      "result": "pass",
+      "modules_transformed": 4081
+    },
+    "kubernetes_dry_run": "pass",
+    "kubernetes_rollout": {
+      "result": "pass",
+      "generation": 943,
+      "observed_generation": 943,
+      "ready": "1/1"
+    },
+    "gateway_http": {
+      "result": "pass",
+      "status": 200
+    },
+    "production_bundle": {
+      "result": "pass",
+      "drawer_css_present": true,
+      "campaign_guard_present": true,
+      "attack_chain_guard_present": true
+    },
+    "windows_chrome": {
+      "result": "blocked",
+      "endpoint": "http://127.0.0.1:9224",
+      "error": "connection reset by peer",
+      "required_next": "restart Windows CodexChromeCDP on 9222 and preserve Xshell 9224 -> 9222"
+    },
+    "visual_diff": "pending",
+    "fresh_reviews": "running"
+  },
+  "artifacts": {
+    "source_digest": "eaa30615e6cc58713b346c7db5b9f5a9eba09c238dba33b1ed9c28acbcf18b8f",
+    "docker_image_id": "sha256:e8db9ded2f60c1f1434baf1d071a12c483900dc34f356aa0166a1598680cfdc2",
+    "containerd_manifest_digest": "sha256:17f85190dd2b07ad13ed9211bbbac71261a3a0bb8b76bfbd2533021215df0d74",
+    "image": "docker.io/traffic/web-ui:campaign-domain-r737"
+  },
+  "complete": false
+}

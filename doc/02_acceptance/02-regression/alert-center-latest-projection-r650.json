@@ -1,0 +1,28 @@
+{
+  "page": "alerts",
+  "result": "pass",
+  "window": "fixed 24h window shared by raw and latest queries",
+  "time_unit": "epoch milliseconds",
+  "raw_unique_alert_ids": 1589917,
+  "latest_rows": 1589923,
+  "latest_unique_alert_ids": 1589923,
+  "latest_duplicate_alert_ids": 0,
+  "observed_streaming_drift": 6,
+  "allowed_streaming_drift": 20,
+  "projection": {
+    "local_table": "traffic.alerts_latest_local",
+    "distributed_table": "traffic.alerts_latest",
+    "engine": "ReplicatedReplacingMergeTree(updated_at)",
+    "key": ["tenant_id", "alert_id"],
+    "query_mode": "FINAL"
+  },
+  "repair": {
+    "script": "deployments/kubernetes/scripts/backfill-alerts-latest.sh",
+    "logical_idempotency": "deduplicate by tenant_id and alert_id before replacement",
+    "shell_syntax": "pass"
+  },
+  "schema_sources": [
+    "deployments/kubernetes/init-jobs/03-clickhouse-schema.yaml",
+    "go/control-plane/deployments/docker/init/clickhouse_merged.sql"
+  ]
+}

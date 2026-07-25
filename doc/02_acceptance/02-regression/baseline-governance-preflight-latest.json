@@ -1,19 +1,19 @@
 {
-  "run_id": "20260630-baseline-governance-preflight-r2",
+  "run_id": "20260723-baselines-r665",
   "result": "pass",
   "apisix": "http://10.0.5.8:30180",
   "tenant": "default",
   "other_tenant": "tenant-b",
-  "baseline_id": "ip:10.0.5.8",
-  "report": "doc/02_acceptance/runs/20260630-baseline-governance-preflight-r2/live-baseline-governance-preflight-20260630-baseline-governance-preflight-r2.ndjson",
-  "local_report": "doc/02_acceptance/runs/20260630-baseline-governance-preflight-r2/local-report.md",
-  "total": 16,
-  "passed": 16,
+  "baseline_id": "asset:10.0.5.8",
+  "report": "doc/02_acceptance/runs/20260723080500-baseline-governance-preflight/live-baseline-governance-preflight-20260723-baselines-r665.ndjson",
+  "local_report": "doc/02_acceptance/runs/20260723080500-baseline-governance-preflight/local-report.md",
+  "total": 65,
+  "passed": 65,
   "blockers": 0,
   "warnings": 0,
   "checks": [
     {
-      "ts": "2026-06-30T14:05:29+08:00",
+      "ts": "2026-07-23T08:05:00+08:00",
       "phase": "contract",
       "name": "frontend baseline action contract present",
       "severity": "info",
@@ -23,47 +23,147 @@
       "artifact": "web/ui/src/services/pageApiPlans.ts"
     },
     {
-      "ts": "2026-06-30T14:05:29+08:00",
+      "ts": "2026-07-23T08:05:03+08:00",
       "phase": "api",
       "name": "behavior baselines readable",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"baselines\":[{\"baseline_id\":\"ip:10.0.5.8\",\"tenant_id\":\"default\",\"name\":\"IP行为基线 10.0.5.8\",\"entity_type\":\"ip\",\"entity_id\":\"10.0.5.8\",\"baseline_type\":\"dynamic\",\"metrics\":[],\"status\":\"active\",\"created_at\":1782194729379,\"updated_at\":1782757323525,\"version\":1},{\"baseline_id\":\"ip:fe80::5a11:22ff:fea1:622b\",\"tenant_id\":\"default\",\"name\":\"IP行为基线 fe80::5a11:22ff:fea1:622b\",\"entity_type\":\"ip\",\"entity_id\":\"fe80::5a11:22ff:fea1:622b\",\"baseline_type\":\"dynamic\",\"metrics\":[],\"status\":\"active\",\"created_at\":1782194729379,\"updated_at\":1782757322230,\"version\":1},{\"baseline_id\":\"ip:fe80::5054:ff:feb0:a65d\",\"tenant_id\":\"default\",\"name\":\"IP行为基线 fe80::5054:ff:feb0:a65d\",\"entity_type\":\"ip\",\"entity_id\":\"fe80::5054:ff:feb0:a65d\",\"baseline_type\":\"dynamic\",\"metrics\":[],\"status\":\"active\",\"created_at\":1782194729379,\"updated_at\":1782757320208,\"version\":1},{\"baseline_id\":\"ip:fe80::9e69:b4ff:fe67:31c5\",\"tenant_id\":\"default\",\"name\":\"IP行为基线 fe80::9e69:b4ff:fe67:31c5\",\"entity_type\":\"ip\",\"entity_id\":\"fe80::9e69:b4ff:fe67:31c5\",\"baseline_type\":\"dynamic\",\"metrics\":[],\"status\":\"active\",\"created_at\":1782194729379,\"updated_at\":1782757319949,\"version\":1},{\"baseline_id\":\"",
+      "detail": "{\"success\":true,\"data\":{\"baselines\":[{\"baseline_id\":\"asset:10.0.5.8\",\"tenant_id\":\"default\",\"name\":\"资产行为基线 10.0.5.8\",\"entity_type\":\"asset\",\"entity_id\":\"10.0.5.8\",\"baseline_type\":\"asset\",\"metrics\":[{\"metric_name\":\"bytes_per_session\",\"unit\":\"bytes\",\"normal_range\":[0,46897366.53100977],\"mean\":1228821.8358151268,\"std_dev\":22834272.347597323,\"current_value\":682,\"deviation_score\":0.05378493420414838,\"threshold_config\":{\"warning_multiplier\":2.1,\"alert_multiplier\":3.2}},{\"metric_name\":\"packets_per_session\",\"unit\":\"packets\",\"normal_range\":[0,48892.07723438765],\"mean\":1353.632972591779,\"std_dev\":23769.222130897935,\"current_value\":4,\"deviation_score\":0.05678069585783258,\"threshold_config\":{\"warning_multiplier\":2.1,\"alert_multiplier\":3.2}},{\"metric_name\":\"duration_ms\",\"unit\":\"ms\",\"normal_range\":[0,232660.71865364548],\"mean\":11613.223117295252,\"std_dev\":110523.74776817512,\"current_value\":9543,\"deviation_score\":0.018731025314465178,\"threshold_config\":{\"warning_multiplier\":2.1,\"alert_multiplier\":3.2}}],\"status\":\"drift\",\"created_at\":1784760323019,\"updated_at\":1784765084361,\"version\":28,\"frozen\":false,\"drift_watch\":true},{\"baseline_id\":\"asset:240c:caa1:1:204::1\",\"tenant_id\":\"default\",\"na",
       "artifact": "baselines-list.json"
     },
     {
-      "ts": "2026-06-30T14:05:29+08:00",
+      "ts": "2026-07-23T08:05:03+08:00",
       "phase": "assert",
       "name": "behavior baselines response shape",
       "severity": "info",
       "passed": true,
       "status": "ok",
-      "detail": ".success == true and (.data.baselines | type == \"array\") and (.data.total | type == \"number\")",
+      "detail": ".success == true and (.data.baselines | type == \"array\") and (.data.total | type == \"number\") and .data.summary.scope == \"all_entities_in_window\" and (.data.summary.learning | type == \"number\") and (.data.summary.active | type == \"number\")",
       "artifact": "baselines-list.json"
     },
     {
-      "ts": "2026-06-30T14:05:29+08:00",
+      "ts": "2026-07-23T08:05:05+08:00",
+      "phase": "api",
+      "name": "asset behavior baselines readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"baselines\":[{\"baseline_id\":\"asset:10.0.5.8\",\"tenant_id\":\"default\",\"name\":\"资产行为基线 10.0.5.8\",\"entity_type\":\"asset\",\"entity_id\":\"10.0.5.8\",\"baseline_type\":\"asset\",\"metrics\":[{\"metric_name\":\"bytes_per_session\",\"unit\":\"bytes\",\"normal_range\":[0,46865048.767430246],\"mean\":1227199.208081369,\"std_dev\":22818924.779674437,\"current_value\":604,\"deviation_score\":0.05375341826683865,\"threshold_config\":{\"warning_multiplier\":2.1,\"alert_multiplier\":3.2}},{\"metric_name\":\"packets_per_session\",\"unit\":\"packets\",\"normal_range\":[0,48858.4648521558],\"mean\":1351.9614486060418,\"std_dev\":23753.251701774876,\"current_value\":4,\"deviation_score\":0.0567485018695491,\"threshold_config\":{\"warning_multiplier\":2.1,\"alert_multiplier\":3.2}},{\"metric_name\":\"duration_ms\",\"unit\":\"ms\",\"normal_range\":[0,232565.98891947576],\"mean\":11619.085018926953,\"std_dev\":110473.45195027441,\"current_value\":8424,\"deviation_score\":0.028921745111803912,\"threshold_config\":{\"warning_multiplier\":2.1,\"alert_multiplier\":3.2}}],\"status\":\"drift\",\"created_at\":1784760323019,\"updated_at\":1784765088358,\"version\":28,\"frozen\":false,\"drift_watch\":true},{\"baseline_id\":\"asset:fe80::a00:27ff:fe66:3e6d\",\"tenant_id\":\"default",
+      "artifact": "baselines-asset.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:05+08:00",
+      "phase": "assert",
+      "name": "asset baseline response is typed",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and (.data.total | type == \"number\") and ([.data.baselines[] | select(.baseline_type != $baseline_type)] | length) == 0",
+      "artifact": "baselines-asset.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:05+08:00",
+      "phase": "api",
+      "name": "account behavior baselines readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"baselines\":[{\"baseline_id\":\"account:sec_analyst\",\"tenant_id\":\"default\",\"name\":\"账号行为基线 sec_analyst\",\"entity_type\":\"account\",\"entity_id\":\"sec_analyst\",\"baseline_type\":\"account\",\"metrics\":[{\"metric_name\":\"events_per_window\",\"unit\":\"events\",\"normal_range\":[64,64],\"mean\":64,\"std_dev\":0,\"current_value\":64,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}},{\"metric_name\":\"source_ip_count\",\"unit\":\"addresses\",\"normal_range\":[1,1],\"mean\":1,\"std_dev\":0,\"current_value\":1,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}},{\"metric_name\":\"resource_count\",\"unit\":\"resources\",\"normal_range\":[4,8],\"mean\":6,\"std_dev\":1,\"current_value\":6,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}},{\"metric_name\":\"login_hour\",\"unit\":\"hour\",\"normal_range\":[0,25.535668847618197],\"mean\":11.5,\"std_dev\":7.0178344238090995,\"current_value\":22,\"deviation_score\":1.4961880497461026,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}}],\"status\":\"active\",\"created_at\":1782173105941,\"updated_at\":1784757968000,\"version\":1,\"frozen\":false,\"drift_watch\":false},{\"baseline_id\":\"account:ops_admin\",\"tenant_id\":\"default\",\"name\":\"账号行为",
+      "artifact": "baselines-account.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:06+08:00",
+      "phase": "assert",
+      "name": "account baseline response is typed",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and (.data.total | type == \"number\") and ([.data.baselines[] | select(.baseline_type != $baseline_type)] | length) == 0",
+      "artifact": "baselines-account.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:10+08:00",
+      "phase": "api",
+      "name": "port behavior baselines readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"baselines\":[{\"baseline_id\":\"port:8472\",\"tenant_id\":\"default\",\"name\":\"端口行为基线 8472\",\"entity_type\":\"port\",\"entity_id\":\"8472\",\"baseline_type\":\"port\",\"metrics\":[{\"metric_name\":\"bytes_per_session\",\"unit\":\"bytes\",\"normal_range\":[0,20718485.653855156],\"mean\":415606.03644949297,\"std_dev\":10151439.808702832,\"current_value\":427854,\"deviation_score\":0.0012065247670588412,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}},{\"metric_name\":\"packets_per_session\",\"unit\":\"packets\",\"normal_range\":[0,17922.402440456815],\"mean\":414.2930966880539,\"std_dev\":8754.054671884382,\"current_value\":240,\"deviation_score\":0.019909984940788116,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}},{\"metric_name\":\"duration_ms\",\"unit\":\"ms\",\"normal_range\":[0,304668.582465653],\"mean\":24313.701713740513,\"std_dev\":140177.44037595624,\"current_value\":10082,\"deviation_score\":0.10152633459115143,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}}],\"status\":\"active\",\"created_at\":1782173106065,\"updated_at\":1784765089980,\"version\":1,\"frozen\":false,\"drift_watch\":false},{\"baseline_id\":\"port:46158\",\"tenant_id\":\"default\",\"name\":\"端口行为基线 46158\",\"e",
+      "artifact": "baselines-port.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:10+08:00",
+      "phase": "assert",
+      "name": "port baseline response is typed",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and (.data.total | type == \"number\") and ([.data.baselines[] | select(.baseline_type != $baseline_type)] | length) == 0",
+      "artifact": "baselines-port.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:12+08:00",
+      "phase": "api",
+      "name": "protocol behavior baselines readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"baselines\":[{\"baseline_id\":\"protocol:17\",\"tenant_id\":\"default\",\"name\":\"协议行为基线 17\",\"entity_type\":\"protocol\",\"entity_id\":\"17\",\"baseline_type\":\"protocol\",\"metrics\":[{\"metric_name\":\"bytes_per_session\",\"unit\":\"bytes\",\"normal_range\":[0,16162943.997526987],\"mean\":328073.68213948346,\"std_dev\":7917435.157693751,\"current_value\":45012,\"deviation_score\":0.03575168934151849,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}},{\"metric_name\":\"packets_per_session\",\"unit\":\"packets\",\"normal_range\":[0,16624.873436917456],\"mean\":359.5393743948189,\"std_dev\":8132.66703126132,\"current_value\":20,\"deviation_score\":0.04175006465771398,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}},{\"metric_name\":\"duration_ms\",\"unit\":\"ms\",\"normal_range\":[0,304490.9088655577],\"mean\":23530.274955530534,\"std_dev\":140480.31695501358,\"current_value\":6374,\"deviation_score\":0.12212582749955311,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}}],\"status\":\"active\",\"created_at\":1782173110912,\"updated_at\":1784765094608,\"version\":1,\"frozen\":false,\"drift_watch\":false},{\"baseline_id\":\"protocol:6\",\"tenant_id\":\"default\",\"name\":\"协议行为基线 6\",\"entity",
+      "artifact": "baselines-protocol.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:12+08:00",
+      "phase": "assert",
+      "name": "protocol baseline response is typed",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and (.data.total | type == \"number\") and ([.data.baselines[] | select(.baseline_type != $baseline_type)] | length) == 0",
+      "artifact": "baselines-protocol.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:15+08:00",
+      "phase": "api",
+      "name": "time behavior baselines readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"baselines\":[{\"baseline_id\":\"time:0\",\"tenant_id\":\"default\",\"name\":\"时间段行为基线 0\",\"entity_type\":\"time\",\"entity_id\":\"0\",\"baseline_type\":\"time\",\"metrics\":[{\"metric_name\":\"bytes_per_session\",\"unit\":\"bytes\",\"normal_range\":[0,15050774.241392938],\"mean\":287583.1370307951,\"std_dev\":7381595.552181072,\"current_value\":854,\"deviation_score\":0.03884378858254758,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}},{\"metric_name\":\"packets_per_session\",\"unit\":\"packets\",\"normal_range\":[0,15264.122818019718],\"mean\":315.04811970100627,\"std_dev\":7474.5373491593555,\"current_value\":4,\"deviation_score\":0.04161436423031442,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}},{\"metric_name\":\"duration_ms\",\"unit\":\"ms\",\"normal_range\":[0,275502.4681995733],\"mean\":23129.810529191283,\"std_dev\":126186.32883519099,\"deviation_score\":0.18329886242590185,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}}],\"status\":\"active\",\"created_at\":1782173113009,\"updated_at\":1784765095826,\"version\":1,\"frozen\":false,\"drift_watch\":false},{\"baseline_id\":\"time:23\",\"tenant_id\":\"default\",\"name\":\"时间段行为基线 23\",\"entity_type\":\"time\",\"entity_id\":\"23\",\"b",
+      "artifact": "baselines-time.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:15+08:00",
+      "phase": "assert",
+      "name": "time baseline response is typed",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and (.data.total | type == \"number\") and ([.data.baselines[] | select(.baseline_type != $baseline_type)] | length) == 0",
+      "artifact": "baselines-time.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:15+08:00",
       "phase": "precondition",
       "name": "behavior baseline sample exists",
       "severity": "info",
       "passed": true,
       "status": "ok",
-      "detail": "ip:10.0.5.8",
+      "detail": "asset:10.0.5.8",
       "artifact": "baselines-list.json"
     },
     {
-      "ts": "2026-06-30T14:05:29+08:00",
+      "ts": "2026-07-23T08:05:15+08:00",
       "phase": "api",
       "name": "behavior baseline detail readable",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"baseline_id\":\"ip:10.0.5.8\",\"tenant_id\":\"default\",\"name\":\"IP行为基线 10.0.5.8\",\"entity_type\":\"ip\",\"entity_id\":\"10.0.5.8\",\"baseline_type\":\"dynamic\",\"metrics\":[{\"metric_name\":\"bytes_per_session\",\"unit\":\"bytes\",\"normal_range\":[0,0],\"mean\":0,\"std_dev\":0,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}},{\"metric_name\":\"packets_per_session\",\"unit\":\"packets\",\"normal_range\":[0,0],\"mean\":0,\"std_dev\":0,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}},{\"metric_name\":\"duration_ms\",\"unit\":\"ms\",\"normal_range\":[0,0],\"mean\":0,\"std_dev\":0,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}}],\"status\":\"learning\",\"created_at\":1782799499318,\"updated_at\":0,\"version\":1},\"meta\":{\"request_id\":\"4772c3ef-c266-4415-897d-1d7286ff112f\",\"trace_id\":\"4772c3ef-c266-4415-897d-1d7286ff112f\"},\"timestamp\":\"2026-06-30T06:05:29Z\"} ",
+      "detail": "{\"success\":true,\"data\":{\"baseline_id\":\"asset:10.0.5.8\",\"tenant_id\":\"default\",\"name\":\"资产行为基线 10.0.5.8\",\"entity_type\":\"asset\",\"entity_id\":\"10.0.5.8\",\"baseline_type\":\"asset\",\"metrics\":[{\"metric_name\":\"bytes_per_session\",\"unit\":\"bytes\",\"normal_range\":[0,46801454.86222936],\"mean\":1227772.1883630522,\"std_dev\":22786841.336933155,\"current_value\":125846,\"deviation_score\":0.04835800504640538,\"threshold_config\":{\"warning_multiplier\":2.1,\"alert_multiplier\":3.2}},{\"metric_name\":\"packets_per_session\",\"unit\":\"packets\",\"normal_range\":[0,48791.05655158253],\"mean\":1352.789067667346,\"std_dev\":23719.13374195759,\"current_value\":512,\"deviation_score\":0.03544771393484937,\"threshold_config\":{\"warning_multiplier\":2.1,\"alert_multiplier\":3.2}},{\"metric_name\":\"duration_ms\",\"unit\":\"ms\",\"normal_range\":[0,232241.662035528],\"mean\":11608.542958573493,\"std_dev\":110316.55953847725,\"current_value\":20028,\"deviation_score\":0.07632088125890012,\"threshold_config\":{\"warning_multiplier\":2.1,\"alert_multiplier\":3.2}}],\"status\":\"drift\",\"created_at\":1784760323019,\"updated_at\":1784765097958,\"version\":28,\"frozen\":false,\"drift_watch\":true},\"meta\":{\"request_id\":\"c81867bc-8763-452a-89be-da564bd89c4e\",\"trace_id\":\"c81867b",
       "artifact": "baseline-detail.json"
     },
     {
-      "ts": "2026-06-30T14:05:29+08:00",
+      "ts": "2026-07-23T08:05:15+08:00",
       "phase": "assert",
       "name": "behavior baseline detail response shape",
       "severity": "info",
@@ -73,17 +173,247 @@
       "artifact": "baseline-detail.json"
     },
     {
-      "ts": "2026-06-30T14:05:29+08:00",
+      "ts": "2026-07-23T08:05:15+08:00",
+      "phase": "api",
+      "name": "behavior baseline real analytics readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"baseline_id\":\"asset:10.0.5.8\",\"window_days\":30,\"metric_name\":\"bytes_per_session\",\"unit\":\"bytes\",\"distributions\":[{\"metric_name\":\"bytes_per_session\",\"unit\":\"bytes\",\"values\":[74,319.4470520019531,689.7542114257812,2069.230712890625,4027674548]},{\"metric_name\":\"packets_per_session\",\"unit\":\"packets\",\"values\":[1,2,4,8.235655784606934,3241873]},{\"metric_name\":\"duration_ms\",\"unit\":\"ms\",\"values\":[0,0,0,34.97666549682617,3440012]}],\"series\":[{\"timestamp\":1784757600000,\"mean\":1140847.5710198465,\"p50\":698,\"p95\":2168873,\"p99\":33524186,\"upper\":74145664.46655153,\"lower\":0,\"samples\":[448,448,448,720,698,724,232,232,324,510,572,944,232,464,1076,13842,520,888,208,888]},{\"timestamp\":1784761200000,\"mean\":1271647.2629641572,\"p50\":690.0258178710938,\"p95\":2289630,\"p99\":36489552,\"upper\":74145664.46655153,\"lower\":0,\"samples\":[635096,385452,30315619,412636,2160,232,232,1044,632,1004,3174,248,248,598,13890,508,298,698,720,448]},{\"timestamp\":1784764800000,\"mean\":947023.3068539326,\"p50\":621.8269653320312,\"p95\":1701302.625,\"p99\":33007358,\"upper\":74145664.46655153,\"lower\":0,\"samples\":[526,3224,558,15322,338,344,7842,524,478,13724,344,530,448,248,1144,620,1036,1144,728,728]}]},\"meta\":{\"r",
+      "artifact": "baseline-analytics.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:15+08:00",
+      "phase": "assert",
+      "name": "behavior analytics exposes real distributions and time buckets",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.baseline_id == $baseline_id and (.data.distributions | length) >= 1 and (.data.distributions[0].values | length) == 5 and (.data.series | length) >= 1 and (.data.series[0].samples | type == \"array\")",
+      "artifact": "baseline-analytics.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:18+08:00",
+      "phase": "api",
+      "name": "behavior baseline beyond old 200 row detail boundary is readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"baselines\":[{\"baseline_id\":\"asset:2001::6810:fc37\",\"tenant_id\":\"default\",\"name\":\"资产行为基线 2001::6810:fc37\",\"entity_type\":\"asset\",\"entity_id\":\"2001::6810:fc37\",\"baseline_type\":\"asset\",\"metrics\":[{\"metric_name\":\"bytes_per_session\",\"unit\":\"bytes\",\"normal_range\":[470,470],\"mean\":470,\"std_dev\":0,\"current_value\":470,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}},{\"metric_name\":\"packets_per_session\",\"unit\":\"packets\",\"normal_range\":[5,5],\"mean\":5,\"std_dev\":0,\"current_value\":5,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}},{\"metric_name\":\"duration_ms\",\"unit\":\"ms\",\"normal_range\":[15104.012934185906,15612.987065814094],\"mean\":15358.5,\"std_dev\":127.24353290704666,\"current_value\":15577,\"deviation_score\":1.7171796083311959,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}}],\"status\":\"learning\",\"created_at\":1782173115638,\"updated_at\":1784715536260,\"version\":1,\"frozen\":false,\"drift_watch\":false}],\"summary\":{\"scope\":\"all_entities_in_window\",\"total\":795,\"learning\":731,\"active\":63,\"drift\":1,\"frozen\":0,\"alerts\":3,\"rebuild\":0},\"total\":795},\"meta\":{\"request_id\":\"57a32742-f083-45a2-bb81-aaf33cdd65c4\",\"trace_id\":\"57a32",
+      "artifact": "baseline-offset-300.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:18+08:00",
+      "phase": "api",
+      "name": "offset baseline detail readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"baseline_id\":\"asset:2001::6810:fc37\",\"tenant_id\":\"default\",\"name\":\"资产行为基线 2001::6810:fc37\",\"entity_type\":\"asset\",\"entity_id\":\"2001::6810:fc37\",\"baseline_type\":\"asset\",\"metrics\":[{\"metric_name\":\"bytes_per_session\",\"unit\":\"bytes\",\"normal_range\":[470,470],\"mean\":470,\"std_dev\":0,\"current_value\":470,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}},{\"metric_name\":\"packets_per_session\",\"unit\":\"packets\",\"normal_range\":[5,5],\"mean\":5,\"std_dev\":0,\"current_value\":5,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}},{\"metric_name\":\"duration_ms\",\"unit\":\"ms\",\"normal_range\":[15104.012934185906,15612.987065814094],\"mean\":15358.5,\"std_dev\":127.24353290704666,\"current_value\":15577,\"deviation_score\":1.7171796083311959,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}}],\"status\":\"learning\",\"created_at\":1782173118272,\"updated_at\":1784715536260,\"version\":1,\"frozen\":false,\"drift_watch\":false},\"meta\":{\"request_id\":\"6d674358-3dcc-4a35-bc17-2adcddaa71bc\",\"trace_id\":\"6d674358-3dcc-4a35-bc17-2adcddaa71bc\"},\"timestamp\":\"2026-07-23T00:05:18Z\"} ",
+      "artifact": "baseline-offset-300-detail.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:18+08:00",
+      "phase": "assert",
+      "name": "offset baseline detail matches listed id",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.baseline_id == $baseline_id",
+      "artifact": "baseline-offset-300-detail.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:21+08:00",
+      "phase": "api",
+      "name": "90 day behavior baseline historical page is readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"baselines\":[{\"baseline_id\":\"asset:10.1.14.174\",\"tenant_id\":\"default\",\"name\":\"资产行为基线 10.1.14.174\",\"entity_type\":\"asset\",\"entity_id\":\"10.1.14.174\",\"baseline_type\":\"asset\",\"metrics\":[{\"metric_name\":\"bytes_per_session\",\"unit\":\"bytes\",\"normal_range\":[60,60],\"mean\":60,\"std_dev\":0,\"current_value\":60,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}},{\"metric_name\":\"packets_per_session\",\"unit\":\"packets\",\"normal_range\":[1,1],\"mean\":1,\"std_dev\":0,\"current_value\":1,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}},{\"metric_name\":\"duration_ms\",\"unit\":\"ms\",\"normal_range\":[0,0],\"mean\":0,\"std_dev\":0,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}}],\"status\":\"learning\",\"created_at\":1776989118699,\"updated_at\":1781665445910,\"version\":1,\"frozen\":false,\"drift_watch\":false}],\"summary\":{\"scope\":\"all_entities_in_window\",\"total\":2715,\"learning\":2641,\"active\":73,\"drift\":1,\"frozen\":0,\"alerts\":4,\"rebuild\":0},\"total\":2715},\"meta\":{\"request_id\":\"19e035f8-a97a-473c-a6c1-2cf8c0a326e9\",\"trace_id\":\"19e035f8-a97a-473c-a6c1-2cf8c0a326e9\"},\"timestamp\":\"2026-07-23T00:05:21Z\"} ",
+      "artifact": "baseline-90d-offset-1000.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:21+08:00",
+      "phase": "api",
+      "name": "90 day historical baseline detail inherits window",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"baseline_id\":\"asset:10.1.14.174\",\"tenant_id\":\"default\",\"name\":\"资产行为基线 10.1.14.174\",\"entity_type\":\"asset\",\"entity_id\":\"10.1.14.174\",\"baseline_type\":\"asset\",\"metrics\":[{\"metric_name\":\"bytes_per_session\",\"unit\":\"bytes\",\"normal_range\":[60,60],\"mean\":60,\"std_dev\":0,\"current_value\":60,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}},{\"metric_name\":\"packets_per_session\",\"unit\":\"packets\",\"normal_range\":[1,1],\"mean\":1,\"std_dev\":0,\"current_value\":1,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}},{\"metric_name\":\"duration_ms\",\"unit\":\"ms\",\"normal_range\":[0,0],\"mean\":0,\"std_dev\":0,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}}],\"status\":\"learning\",\"created_at\":1776989121368,\"updated_at\":1781665445910,\"version\":1,\"frozen\":false,\"drift_watch\":false},\"meta\":{\"request_id\":\"ae3a44d8-3228-4c17-8653-7a5b3f1a27ea\",\"trace_id\":\"ae3a44d8-3228-4c17-8653-7a5b3f1a27ea\"},\"timestamp\":\"2026-07-23T00:05:21Z\"} ",
+      "artifact": "baseline-90d-offset-1000-detail.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:21+08:00",
+      "phase": "assert",
+      "name": "90 day historical detail matches listed id",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.baseline_id == $baseline_id",
+      "artifact": "baseline-90d-offset-1000-detail.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:21+08:00",
+      "phase": "api",
+      "name": "admin can queue audited threshold governance",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"action\":{\"action_id\":\"8bd3b6f4-25b8-42fe-a2d9-8444c54f7183\",\"tenant_id\":\"default\",\"baseline_id\":\"asset:10.0.5.8\",\"action\":\"adjust_threshold\",\"status\":\"applied\",\"local_state_applied\":true,\"downstream_status\":\"queued\",\"reason\":\"live preflight verifies durable queued governance\",\"request\":{\"alert_multiplier\":3.2,\"detail\":{},\"warning_multiplier\":2.1},\"requested_by\":\"79af616d-4489-4e32-9cec-8b74c7a8b06c\",\"created_at\":1784765121846},\"audit_written\":true},\"meta\":{\"request_id\":\"ce6a15ea-163e-4e45-9ecd-a54c3f437365\",\"trace_id\":\"ce6a15ea-163e-4e45-9ecd-a54c3f437365\"},\"timestamp\":\"2026-07-23T00:05:21Z\"} ",
+      "artifact": "baseline-action-admin.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:21+08:00",
+      "phase": "assert",
+      "name": "threshold local state and downstream state are distinct",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.action.baseline_id == $baseline_id and .data.action.action == \"adjust_threshold\" and .data.action.status == \"applied\" and .data.action.local_state_applied == true and .data.action.downstream_status == \"queued\" and .data.audit_written == true",
+      "artifact": "baseline-action-admin.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:21+08:00",
+      "phase": "api",
+      "name": "persisted behavior baseline versions readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"total\":29,\"versions\":[{\"baseline_id\":\"asset:10.0.5.8\",\"version\":29,\"snapshot\":{\"alert_multiplier\":3.2,\"drift_watch\":true,\"frozen\":false,\"warning_multiplier\":2.1},\"source_action_id\":\"8bd3b6f4-25b8-42fe-a2d9-8444c54f7183\",\"created_by\":\"79af616d-4489-4e32-9cec-8b74c7a8b06c\",\"created_at\":1784765121846},{\"baseline_id\":\"asset:10.0.5.8\",\"version\":28,\"snapshot\":{\"alert_multiplier\":3.2,\"drift_watch\":true,\"frozen\":false,\"warning_multiplier\":2.1},\"source_action_id\":\"57f1face-a2c0-488e-a1c8-60bd472f595e\",\"created_by\":\"dbb07491-93ef-48be-a2cc-7753a7455e50\",\"created_at\":1784760334958},{\"baseline_id\":\"asset:10.0.5.8\",\"version\":27,\"snapshot\":{\"alert_multiplier\":3.2,\"drift_watch\":false,\"frozen\":false,\"warning_multiplier\":2.1},\"created_by\":\"dbb07491-93ef-48be-a2cc-7753a7455e50\",\"created_at\":1784760334958},{\"baseline_id\":\"asset:10.0.5.8\",\"version\":26,\"snapshot\":{\"alert_multiplier\":3.2,\"drift_watch\":true,\"frozen\":false,\"warning_multiplier\":2.1},\"source_action_id\":\"10353fce-3174-4698-abe2-950f0189b467\",\"created_by\":\"dbb07491-93ef-48be-a2cc-7753a7455e50\",\"created_at\":1784760321844},{\"baseline_id\":\"asset:10.0.5.8\",\"version\":25,\"snapshot\":{\"alert_multiplier\":3.2,\"drift_watch\":true",
+      "artifact": "baseline-versions.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:22+08:00",
+      "phase": "assert",
+      "name": "version list exposes real rollback snapshots",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and (.data.total >= 1) and (.data.versions | type == \"array\") and (.data.versions[0].snapshot | type == \"object\")",
+      "artifact": "baseline-versions.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:22+08:00",
+      "phase": "api",
+      "name": "persisted behavior baseline actions readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"actions\":[{\"action_id\":\"8bd3b6f4-25b8-42fe-a2d9-8444c54f7183\",\"tenant_id\":\"default\",\"baseline_id\":\"asset:10.0.5.8\",\"action\":\"adjust_threshold\",\"status\":\"applied\",\"local_state_applied\":true,\"downstream_status\":\"queued\",\"reason\":\"live preflight verifies durable queued governance\",\"request\":{\"alert_multiplier\":3.2,\"detail\":{},\"warning_multiplier\":2.1},\"requested_by\":\"79af616d-4489-4e32-9cec-8b74c7a8b06c\",\"created_at\":1784765121846},{\"action_id\":\"57f1face-a2c0-488e-a1c8-60bd472f595e\",\"tenant_id\":\"default\",\"baseline_id\":\"asset:10.0.5.8\",\"action\":\"drift_watch\",\"status\":\"applied\",\"local_state_applied\":true,\"downstream_status\":\"queued\",\"reason\":\"live preflight verifies post-reset governance remains available\",\"request\":{\"detail\":{}},\"requested_by\":\"dbb07491-93ef-48be-a2cc-7753a7455e50\",\"created_at\":1784760334958},{\"action_id\":\"806865ff-7546-4b27-acaa-3193c5be2460\",\"tenant_id\":\"default\",\"baseline_id\":\"asset:10.0.5.8\",\"action\":\"feedback_model\",\"status\":\"queued\",\"local_state_applied\":false,\"downstream_status\":\"failed\",\"downstream_attempts\":2,\"downstream_error\":\"preflight downstream failure\",\"reason\":\"live preflight verifies persisted downstream failure mapping\",\"reque",
+      "artifact": "baseline-actions.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:22+08:00",
+      "phase": "assert",
+      "name": "action list exposes local and downstream state",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and (.data.total >= 1) and ([.data.actions[] | select(.action == \"adjust_threshold\" and .local_state_applied == true and .downstream_status == \"queued\")] | length) >= 1",
+      "artifact": "baseline-actions.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:22+08:00",
+      "phase": "postgres",
+      "name": "preflight marks one owned outbox row published",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "8bd3b6f4-25b8-42fe-a2d9-8444c54f7183 UPDATE 1 ",
+      "artifact": "pg-behavior-baseline-outbox-published.txt"
+    },
+    {
+      "ts": "2026-07-23T08:05:22+08:00",
+      "phase": "api",
+      "name": "published behavior baseline downstream state readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"actions\":[{\"action_id\":\"8bd3b6f4-25b8-42fe-a2d9-8444c54f7183\",\"tenant_id\":\"default\",\"baseline_id\":\"asset:10.0.5.8\",\"action\":\"adjust_threshold\",\"status\":\"applied\",\"local_state_applied\":true,\"downstream_status\":\"published\",\"downstream_attempts\":1,\"reason\":\"live preflight verifies durable queued governance\",\"request\":{\"alert_multiplier\":3.2,\"detail\":{},\"warning_multiplier\":2.1},\"requested_by\":\"79af616d-4489-4e32-9cec-8b74c7a8b06c\",\"created_at\":1784765121846},{\"action_id\":\"57f1face-a2c0-488e-a1c8-60bd472f595e\",\"tenant_id\":\"default\",\"baseline_id\":\"asset:10.0.5.8\",\"action\":\"drift_watch\",\"status\":\"applied\",\"local_state_applied\":true,\"downstream_status\":\"queued\",\"reason\":\"live preflight verifies post-reset governance remains available\",\"request\":{\"detail\":{}},\"requested_by\":\"dbb07491-93ef-48be-a2cc-7753a7455e50\",\"created_at\":1784760334958},{\"action_id\":\"806865ff-7546-4b27-acaa-3193c5be2460\",\"tenant_id\":\"default\",\"baseline_id\":\"asset:10.0.5.8\",\"action\":\"feedback_model\",\"status\":\"queued\",\"local_state_applied\":false,\"downstream_status\":\"failed\",\"downstream_attempts\":2,\"downstream_error\":\"preflight downstream failure\",\"reason\":\"live preflight verifies persisted downstr",
+      "artifact": "baseline-actions-published.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:22+08:00",
+      "phase": "assert",
+      "name": "published outbox state maps to published",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "([.data.actions[] | select(.action_id == $action_id and .downstream_status == \"published\" and .downstream_attempts == 1)] | length) == 1",
+      "artifact": "baseline-actions-published.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:22+08:00",
+      "phase": "api",
+      "name": "admin can queue model feedback for failed-state mapping",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"action\":{\"action_id\":\"4bc89047-1f64-47bc-8963-618cd11f8aa4\",\"tenant_id\":\"default\",\"baseline_id\":\"asset:10.0.5.8\",\"action\":\"feedback_model\",\"status\":\"queued\",\"local_state_applied\":false,\"downstream_status\":\"queued\",\"reason\":\"live preflight verifies persisted downstream failure mapping\",\"request\":{\"detail\":{}},\"requested_by\":\"79af616d-4489-4e32-9cec-8b74c7a8b06c\",\"created_at\":1784765122399},\"audit_written\":true},\"meta\":{\"request_id\":\"e7935c8c-3f2d-4a15-9dac-2798222f2bff\",\"trace_id\":\"e7935c8c-3f2d-4a15-9dac-2798222f2bff\"},\"timestamp\":\"2026-07-23T00:05:22Z\"} ",
+      "artifact": "baseline-action-failed-seed.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:22+08:00",
+      "phase": "postgres",
+      "name": "preflight records one owned outbox failure",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "4bc89047-1f64-47bc-8963-618cd11f8aa4 UPDATE 1 ",
+      "artifact": "pg-behavior-baseline-outbox-failed.txt"
+    },
+    {
+      "ts": "2026-07-23T08:05:22+08:00",
+      "phase": "api",
+      "name": "failed behavior baseline downstream state readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"actions\":[{\"action_id\":\"4bc89047-1f64-47bc-8963-618cd11f8aa4\",\"tenant_id\":\"default\",\"baseline_id\":\"asset:10.0.5.8\",\"action\":\"feedback_model\",\"status\":\"queued\",\"local_state_applied\":false,\"downstream_status\":\"failed\",\"downstream_attempts\":2,\"downstream_error\":\"preflight downstream failure\",\"reason\":\"live preflight verifies persisted downstream failure mapping\",\"request\":{\"detail\":{}},\"requested_by\":\"79af616d-4489-4e32-9cec-8b74c7a8b06c\",\"created_at\":1784765122399},{\"action_id\":\"8bd3b6f4-25b8-42fe-a2d9-8444c54f7183\",\"tenant_id\":\"default\",\"baseline_id\":\"asset:10.0.5.8\",\"action\":\"adjust_threshold\",\"status\":\"applied\",\"local_state_applied\":true,\"downstream_status\":\"published\",\"downstream_attempts\":1,\"reason\":\"live preflight verifies durable queued governance\",\"request\":{\"alert_multiplier\":3.2,\"detail\":{},\"warning_multiplier\":2.1},\"requested_by\":\"79af616d-4489-4e32-9cec-8b74c7a8b06c\",\"created_at\":1784765121846},{\"action_id\":\"57f1face-a2c0-488e-a1c8-60bd472f595e\",\"tenant_id\":\"default\",\"baseline_id\":\"asset:10.0.5.8\",\"action\":\"drift_watch\",\"status\":\"applied\",\"local_state_applied\":true,\"downstream_status\":\"queued\",\"reason\":\"live preflight verifies post-reset governanc",
+      "artifact": "baseline-actions-failed.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:22+08:00",
+      "phase": "assert",
+      "name": "outbox error maps to failed with attempts and reason",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "([.data.actions[] | select(.action_id == $action_id and .downstream_status == \"failed\" and .downstream_attempts == 2 and .downstream_error == \"preflight downstream failure\")] | length) == 1",
+      "artifact": "baseline-actions-failed.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:22+08:00",
+      "phase": "api",
+      "name": "viewer cannot queue behavior baseline governance",
+      "severity": "info",
+      "passed": true,
+      "status": "403",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"permission denied: alert:write required\"},\"meta\":{\"request_id\":\"1d8aca8a-e273-4080-b013-bf1a270fe6a5\",\"trace_id\":\"1d8aca8a-e273-4080-b013-bf1a270fe6a5\"},\"timestamp\":\"2026-07-23T00:05:22Z\"} ",
+      "artifact": "baseline-action-viewer.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:22+08:00",
+      "phase": "assert",
+      "name": "viewer governance denial mentions alert write",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "((.error.message // .message // \"\")) | contains(\"alert:write\")",
+      "artifact": "baseline-action-viewer.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:22+08:00",
       "phase": "api",
       "name": "admin can reset behavior baseline",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"baseline_id\":\"ip:10.0.5.8\",\"tenant_id\":\"default\",\"name\":\"IP行为基线 10.0.5.8\",\"entity_type\":\"ip\",\"entity_id\":\"10.0.5.8\",\"baseline_type\":\"dynamic\",\"metrics\":[{\"metric_name\":\"bytes_per_session\",\"unit\":\"bytes\",\"normal_range\":[0,0],\"mean\":0,\"std_dev\":0,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}},{\"metric_name\":\"packets_per_session\",\"unit\":\"packets\",\"normal_range\":[0,0],\"mean\":0,\"std_dev\":0,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}},{\"metric_name\":\"duration_ms\",\"unit\":\"ms\",\"normal_range\":[0,0],\"mean\":0,\"std_dev\":0,\"threshold_config\":{\"warning_multiplier\":2,\"alert_multiplier\":3}}],\"status\":\"learning\",\"created_at\":1782799529648,\"updated_at\":0,\"version\":1},\"meta\":{\"request_id\":\"803f386d-0e3f-4e87-a4d9-39ebb12a14f6\",\"trace_id\":\"803f386d-0e3f-4e87-a4d9-39ebb12a14f6\"},\"timestamp\":\"2026-06-30T06:05:29Z\"} ",
+      "detail": "{\"success\":true,\"data\":{\"baseline_id\":\"asset:10.0.5.8\",\"tenant_id\":\"default\",\"name\":\"资产行为基线 10.0.5.8\",\"entity_type\":\"asset\",\"entity_id\":\"10.0.5.8\",\"baseline_type\":\"asset\",\"metrics\":[{\"metric_name\":\"bytes_per_session\",\"unit\":\"bytes\",\"normal_range\":[0,0],\"mean\":0,\"std_dev\":0,\"threshold_config\":{\"warning_multiplier\":2.1,\"alert_multiplier\":3.2}},{\"metric_name\":\"packets_per_session\",\"unit\":\"packets\",\"normal_range\":[0,0],\"mean\":0,\"std_dev\":0,\"threshold_config\":{\"warning_multiplier\":2.1,\"alert_multiplier\":3.2}},{\"metric_name\":\"duration_ms\",\"unit\":\"ms\",\"normal_range\":[0,0],\"mean\":0,\"std_dev\":0,\"threshold_config\":{\"warning_multiplier\":2.1,\"alert_multiplier\":3.2}}],\"status\":\"learning\",\"created_at\":1784765122784,\"updated_at\":1784765122784,\"version\":29,\"frozen\":false,\"drift_watch\":true},\"meta\":{\"request_id\":\"eca39532-0958-4566-988a-1fde22472ffe\",\"trace_id\":\"eca39532-0958-4566-988a-1fde22472ffe\"},\"timestamp\":\"2026-07-23T00:05:22Z\"} ",
       "artifact": "baseline-reset-admin.json"
     },
     {
-      "ts": "2026-06-30T14:05:29+08:00",
+      "ts": "2026-07-23T08:05:22+08:00",
       "phase": "assert",
       "name": "baseline reset response is tenant scoped and learning",
       "severity": "info",
@@ -93,17 +423,137 @@
       "artifact": "baseline-reset-admin.json"
     },
     {
-      "ts": "2026-06-30T14:05:29+08:00",
+      "ts": "2026-07-23T08:05:23+08:00",
+      "phase": "api",
+      "name": "zero-sample reset baseline remains directly readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"baseline_id\":\"asset:10.0.5.8\",\"tenant_id\":\"default\",\"name\":\"资产行为基线 10.0.5.8\",\"entity_type\":\"asset\",\"entity_id\":\"10.0.5.8\",\"baseline_type\":\"asset\",\"metrics\":[{\"metric_name\":\"bytes_per_session\",\"unit\":\"bytes\",\"normal_range\":[0,0],\"mean\":0,\"std_dev\":0,\"threshold_config\":{\"warning_multiplier\":2.1,\"alert_multiplier\":3.2}},{\"metric_name\":\"packets_per_session\",\"unit\":\"packets\",\"normal_range\":[0,0],\"mean\":0,\"std_dev\":0,\"threshold_config\":{\"warning_multiplier\":2.1,\"alert_multiplier\":3.2}},{\"metric_name\":\"duration_ms\",\"unit\":\"ms\",\"normal_range\":[0,0],\"mean\":0,\"std_dev\":0,\"threshold_config\":{\"warning_multiplier\":2.1,\"alert_multiplier\":3.2}}],\"status\":\"learning\",\"created_at\":1784765122784,\"updated_at\":1784765122784,\"version\":30,\"frozen\":false,\"drift_watch\":false},\"meta\":{\"request_id\":\"2e054be0-3714-418a-98fd-77bcbf94eb6b\",\"trace_id\":\"2e054be0-3714-418a-98fd-77bcbf94eb6b\"},\"timestamp\":\"2026-07-23T00:05:23Z\"} ",
+      "artifact": "baseline-reset-detail.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:23+08:00",
+      "phase": "assert",
+      "name": "reset detail is a governable learning snapshot",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.baseline_id == $baseline_id and .data.status == \"learning\" and (.data.metrics | length) >= 1",
+      "artifact": "baseline-reset-detail.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:24+08:00",
+      "phase": "api",
+      "name": "zero-sample reset analytics remains readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"baseline_id\":\"asset:10.0.5.8\",\"window_days\":30,\"metric_name\":\"bytes_per_session\",\"unit\":\"bytes\",\"distributions\":[{\"metric_name\":\"bytes_per_session\",\"unit\":\"bytes\",\"values\":[0,0,0,0,0]},{\"metric_name\":\"packets_per_session\",\"unit\":\"packets\",\"values\":[0,0,0,0,0]},{\"metric_name\":\"duration_ms\",\"unit\":\"ms\",\"values\":[0,0,0,0,0]}],\"series\":[]},\"meta\":{\"request_id\":\"49fcc27f-dbd8-4309-89ac-9ca93a8a0190\",\"trace_id\":\"49fcc27f-dbd8-4309-89ac-9ca93a8a0190\"},\"timestamp\":\"2026-07-23T00:05:24Z\"} ",
+      "artifact": "baseline-reset-analytics.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:24+08:00",
+      "phase": "assert",
+      "name": "reset analytics returns typed empty-or-new-sample series",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.baseline_id == $baseline_id and (.data.distributions | type == \"array\") and (.data.series | type == \"array\")",
+      "artifact": "baseline-reset-analytics.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:25+08:00",
+      "phase": "api",
+      "name": "zero-sample reset versions remain readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"total\":29,\"versions\":[{\"baseline_id\":\"asset:10.0.5.8\",\"version\":29,\"snapshot\":{\"alert_multiplier\":3.2,\"drift_watch\":true,\"frozen\":false,\"warning_multiplier\":2.1},\"source_action_id\":\"8bd3b6f4-25b8-42fe-a2d9-8444c54f7183\",\"created_by\":\"79af616d-4489-4e32-9cec-8b74c7a8b06c\",\"created_at\":1784765121846},{\"baseline_id\":\"asset:10.0.5.8\",\"version\":28,\"snapshot\":{\"alert_multiplier\":3.2,\"drift_watch\":true,\"frozen\":false,\"warning_multiplier\":2.1},\"source_action_id\":\"57f1face-a2c0-488e-a1c8-60bd472f595e\",\"created_by\":\"dbb07491-93ef-48be-a2cc-7753a7455e50\",\"created_at\":1784760334958},{\"baseline_id\":\"asset:10.0.5.8\",\"version\":27,\"snapshot\":{\"alert_multiplier\":3.2,\"drift_watch\":false,\"frozen\":false,\"warning_multiplier\":2.1},\"created_by\":\"dbb07491-93ef-48be-a2cc-7753a7455e50\",\"created_at\":1784760334958},{\"baseline_id\":\"asset:10.0.5.8\",\"version\":26,\"snapshot\":{\"alert_multiplier\":3.2,\"drift_watch\":true,\"frozen\":false,\"warning_multiplier\":2.1},\"source_action_id\":\"10353fce-3174-4698-abe2-950f0189b467\",\"created_by\":\"dbb07491-93ef-48be-a2cc-7753a7455e50\",\"created_at\":1784760321844},{\"baseline_id\":\"asset:10.0.5.8\",\"version\":25,\"snapshot\":{\"alert_multiplier\":3.2,\"drift_watch\":true",
+      "artifact": "baseline-reset-versions.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:25+08:00",
+      "phase": "assert",
+      "name": "reset versions keep governance history",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and (.data.versions | type == \"array\") and (.data.total >= 1)",
+      "artifact": "baseline-reset-versions.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:26+08:00",
+      "phase": "api",
+      "name": "zero-sample reset actions remain readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"actions\":[{\"action_id\":\"4bc89047-1f64-47bc-8963-618cd11f8aa4\",\"tenant_id\":\"default\",\"baseline_id\":\"asset:10.0.5.8\",\"action\":\"feedback_model\",\"status\":\"queued\",\"local_state_applied\":false,\"downstream_status\":\"failed\",\"downstream_attempts\":2,\"downstream_error\":\"preflight downstream failure\",\"reason\":\"live preflight verifies persisted downstream failure mapping\",\"request\":{\"detail\":{}},\"requested_by\":\"79af616d-4489-4e32-9cec-8b74c7a8b06c\",\"created_at\":1784765122399},{\"action_id\":\"8bd3b6f4-25b8-42fe-a2d9-8444c54f7183\",\"tenant_id\":\"default\",\"baseline_id\":\"asset:10.0.5.8\",\"action\":\"adjust_threshold\",\"status\":\"applied\",\"local_state_applied\":true,\"downstream_status\":\"published\",\"downstream_attempts\":1,\"reason\":\"live preflight verifies durable queued governance\",\"request\":{\"alert_multiplier\":3.2,\"detail\":{},\"warning_multiplier\":2.1},\"requested_by\":\"79af616d-4489-4e32-9cec-8b74c7a8b06c\",\"created_at\":1784765121846},{\"action_id\":\"57f1face-a2c0-488e-a1c8-60bd472f595e\",\"tenant_id\":\"default\",\"baseline_id\":\"asset:10.0.5.8\",\"action\":\"drift_watch\",\"status\":\"applied\",\"local_state_applied\":true,\"downstream_status\":\"queued\",\"reason\":\"live preflight verifies post-reset governanc",
+      "artifact": "baseline-reset-actions.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:26+08:00",
+      "phase": "assert",
+      "name": "reset actions keep published and failed downstream truth",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "([.data.actions[] | select(.action_id == $published_id and .downstream_status == \"published\")] | length) == 1 and ([.data.actions[] | select(.action_id == $failed_id and .downstream_status == \"failed\")] | length) == 1",
+      "artifact": "baseline-reset-actions.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:29+08:00",
+      "phase": "api",
+      "name": "reset-aware all-window summary readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"baselines\":[{\"baseline_id\":\"asset:10.0.5.8\",\"tenant_id\":\"default\",\"name\":\"资产行为基线 10.0.5.8\",\"entity_type\":\"asset\",\"entity_id\":\"10.0.5.8\",\"baseline_type\":\"asset\",\"metrics\":[{\"metric_name\":\"bytes_per_session\",\"unit\":\"bytes\",\"normal_range\":[0,0],\"mean\":0,\"std_dev\":0,\"threshold_config\":{\"warning_multiplier\":2.1,\"alert_multiplier\":3.2}},{\"metric_name\":\"packets_per_session\",\"unit\":\"packets\",\"normal_range\":[0,0],\"mean\":0,\"std_dev\":0,\"threshold_config\":{\"warning_multiplier\":2.1,\"alert_multiplier\":3.2}},{\"metric_name\":\"duration_ms\",\"unit\":\"ms\",\"normal_range\":[0,0],\"mean\":0,\"std_dev\":0,\"threshold_config\":{\"warning_multiplier\":2.1,\"alert_multiplier\":3.2}}],\"status\":\"learning\",\"created_at\":1784765122784,\"updated_at\":1784765115818,\"version\":30,\"frozen\":false,\"drift_watch\":false},{\"baseline_id\":\"asset:fe80::5054:ff:fe26:140a\",\"tenant_id\":\"default\",\"name\":\"资产行为基线 fe80::5054:ff:fe26:140a\",\"entity_type\":\"asset\",\"entity_id\":\"fe80::5054:ff:fe26:140a\",\"baseline_type\":\"asset\",\"metrics\":[{\"metric_name\":\"bytes_per_session\",\"unit\":\"bytes\",\"normal_range\":[0,697.9189599343899],\"mean\":344.7750316856781,\"std_dev\":176.5719641243559,\"current_value\":270,\"deviation_",
+      "artifact": "baseline-reset-summary.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:29+08:00",
+      "phase": "assert",
+      "name": "summary is window-scoped reset-aware and exclusive",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.summary.scope == \"all_entities_in_window\" and ((.data.summary.learning + .data.summary.active + .data.summary.drift + .data.summary.rebuild + .data.summary.frozen) == .data.summary.total) and (.data.summary.alerts <= .data.summary.total)",
+      "artifact": "baseline-reset-summary.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:30+08:00",
+      "phase": "api",
+      "name": "zero-sample reset baseline accepts subsequent governance",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"action\":{\"action_id\":\"c296a727-e981-4894-b78a-9ace40520c5b\",\"tenant_id\":\"default\",\"baseline_id\":\"asset:10.0.5.8\",\"action\":\"drift_watch\",\"status\":\"applied\",\"local_state_applied\":true,\"downstream_status\":\"queued\",\"reason\":\"live preflight verifies post-reset governance remains available\",\"request\":{\"detail\":{}},\"requested_by\":\"79af616d-4489-4e32-9cec-8b74c7a8b06c\",\"created_at\":1784765130557},\"audit_written\":true},\"meta\":{\"request_id\":\"8c679769-a604-4ba8-9166-d5be450d50cd\",\"trace_id\":\"8c679769-a604-4ba8-9166-d5be450d50cd\"},\"timestamp\":\"2026-07-23T00:05:30Z\"} ",
+      "artifact": "baseline-reset-action-read-after-write.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:30+08:00",
+      "phase": "assert",
+      "name": "post-reset governance is persisted and audited",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.action.baseline_id == $baseline_id and .data.action.action == \"drift_watch\" and .data.action.local_state_applied == true and .data.audit_written == true",
+      "artifact": "baseline-reset-action-read-after-write.json"
+    },
+    {
+      "ts": "2026-07-23T08:05:30+08:00",
       "phase": "api",
       "name": "viewer cannot reset behavior baseline",
       "severity": "info",
       "passed": true,
       "status": "403",
-      "detail": "{\"success\":false,\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"permission denied: alert:write required\"},\"meta\":{\"request_id\":\"d6625aba-9398-476a-be2f-7761060b629a\",\"trace_id\":\"d6625aba-9398-476a-be2f-7761060b629a\"},\"timestamp\":\"2026-06-30T06:05:29Z\"} ",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"permission denied: alert:write required\"},\"meta\":{\"request_id\":\"ec4bc70a-0415-4435-ab59-bd550bda223f\",\"trace_id\":\"ec4bc70a-0415-4435-ab59-bd550bda223f\"},\"timestamp\":\"2026-07-23T00:05:30Z\"} ",
       "artifact": "baseline-reset-viewer.json"
     },
     {
-      "ts": "2026-06-30T14:05:29+08:00",
+      "ts": "2026-07-23T08:05:30+08:00",
       "phase": "assert",
       "name": "viewer reset denial mentions alert write",
       "severity": "info",
@@ -113,17 +563,17 @@
       "artifact": "baseline-reset-viewer.json"
     },
     {
-      "ts": "2026-06-30T14:05:29+08:00",
+      "ts": "2026-07-23T08:05:30+08:00",
       "phase": "api",
       "name": "audit log page API has baseline reset event",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"total\":3,\"trails\":[{\"log_id\":\"audit-20260630060529.654988102\",\"tenant_id\":\"default\",\"user_id\":\"40d1a6a9-e9d1-4b77-93eb-9fda63d217ea\",\"action\":\"BEHAVIOR_BASELINE_RESET\",\"resource_type\":\"baseline\",\"resource_id\":\"ip:10.0.5.8\",\"details\":{\"status\":\"reset\"},\"ip_address\":\"10.244.0.0\",\"timestamp\":1782799529652,\"result\":\"success\"},{\"log_id\":\"audit-20260630060459.329282919\",\"tenant_id\":\"default\",\"user_id\":\"edc03db0-a844-452c-880e-b4b53d85c37f\",\"action\":\"BEHAVIOR_BASELINE_RESET\",\"resource_type\":\"baseline\",\"resource_id\":\"ip:10.0.5.8\",\"details\":{\"status\":\"reset\"},\"ip_address\":\"10.244.0.0\",\"timestamp\":1782799499327,\"result\":\"success\"},{\"log_id\":\"audit-24355586-a1cb-482b-9a8c-9cf8026f8d91\",\"tenant_id\":\"default\",\"user_id\":\"21b340f4-4833-4610-8659-8718d4d8eb52\",\"action\":\"BEHAVIOR_BASELINE_RESET\",\"resource_type\":\"baseline\",\"resource_id\":\"ip:10.0.5.8\",\"details\":{\"status\":\"reset\"},\"ip_address\":\"10.244.0.0\",\"timestamp\":1781633592751,\"result\":\"success\"}]},\"meta\":{\"request_id\":\"1ba5cfcb-d717-4ae5-9bab-b0a51c79bdf2\",\"trace_id\":\"1ba5cfcb-d717-4ae5-9bab-b0a51c79bdf2\"},\"timestamp\":\"2026-06-30T06:05:29Z\"} ",
+      "detail": "{\"success\":true,\"data\":{\"logs\":[{\"log_id\":\"audit-fusion-1784765122787227962\",\"tenant_id\":\"default\",\"user_id\":\"79af616d-4489-4e32-9cec-8b74c7a8b06c\",\"action\":\"BEHAVIOR_BASELINE_RESET\",\"resource_type\":\"baseline\",\"resource_id\":\"asset:10.0.5.8\",\"details\":{\"status\":\"reset\"},\"ip_address\":\"10.244.0.1\",\"user_agent\":\"curl/7.79.1\",\"request_id\":\"\",\"trace_id\":\"\",\"result\":\"success\",\"risk\":\"low\",\"timestamp\":1784765122784},{\"log_id\":\"audit-fusion-1784760323023108794\",\"tenant_id\":\"default\",\"user_id\":\"dbb07491-93ef-48be-a2cc-7753a7455e50\",\"action\":\"BEHAVIOR_BASELINE_RESET\",\"resource_type\":\"baseline\",\"resource_id\":\"asset:10.0.5.8\",\"details\":{\"status\":\"reset\"},\"ip_address\":\"10.244.0.1\",\"user_agent\":\"curl/7.79.1\",\"request_id\":\"\",\"trace_id\":\"\",\"result\":\"success\",\"risk\":\"low\",\"timestamp\":1784760323019},{\"log_id\":\"audit-fusion-1784756996369799643\",\"tenant_id\":\"default\",\"user_id\":\"cc64f8cb-43ac-4715-8272-d1b7d0a1ca9a\",\"action\":\"BEHAVIOR_BASELINE_RESET\",\"resource_type\":\"baseline\",\"resource_id\":\"asset:10.0.5.8\",\"details\":{\"status\":\"reset\"},\"ip_address\":\"10.244.0.1\",\"user_agent\":\"curl/7.79.1\",\"request_id\":\"\",\"trace_id\":\"\",\"result\":\"success\",\"risk\":\"low\",\"timestamp\":1784756996366},{\"log_id\":\"audit-fusion-1784",
       "artifact": "baseline-audit-reset.json"
     },
     {
-      "ts": "2026-06-30T14:05:29+08:00",
+      "ts": "2026-07-23T08:05:30+08:00",
       "phase": "assert",
       "name": "audit log contains baseline reset event",
       "severity": "info",
@@ -133,17 +583,17 @@
       "artifact": "baseline-audit-reset.json"
     },
     {
-      "ts": "2026-06-30T14:05:29+08:00",
+      "ts": "2026-07-23T08:05:30+08:00",
       "phase": "api",
       "name": "other tenant cannot see baseline reset audit",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"total\":0,\"trails\":[]},\"meta\":{\"request_id\":\"1b44706a-7920-48c5-852c-a0371ede4566\",\"trace_id\":\"1b44706a-7920-48c5-852c-a0371ede4566\"},\"timestamp\":\"2026-06-30T06:05:29Z\"} ",
+      "detail": "{\"success\":true,\"data\":{\"logs\":[],\"retention\":{\"retention_days\":365,\"archived_until\":1753229130887,\"archive_location\":\"archive-audit\",\"integrity_rate\":0,\"masked_rate\":0},\"summary\":{\"today\":0,\"failed\":0,\"high_risk\":0,\"exports\":0,\"pcap_access\":0,\"integrity_rate\":0},\"total\":0,\"trails\":[]},\"meta\":{\"request_id\":\"68c8978b-09c7-4476-8aa3-6e23fc791b50\",\"trace_id\":\"68c8978b-09c7-4476-8aa3-6e23fc791b50\"},\"timestamp\":\"2026-07-23T00:05:30Z\"} ",
       "artifact": "baseline-audit-other-tenant.json"
     },
     {
-      "ts": "2026-06-30T14:05:29+08:00",
+      "ts": "2026-07-23T08:05:30+08:00",
       "phase": "assert",
       "name": "baseline reset audit is tenant isolated",
       "severity": "info",
@@ -153,7 +603,7 @@
       "artifact": "baseline-audit-other-tenant.json"
     },
     {
-      "ts": "2026-06-30T14:05:30+08:00",
+      "ts": "2026-07-23T08:05:31+08:00",
       "phase": "postgres",
       "name": "behavior baseline reset persisted in PostgreSQL",
       "severity": "info",
@@ -163,14 +613,54 @@
       "artifact": "pg-behavior-baseline-reset-count.txt"
     },
     {
-      "ts": "2026-06-30T14:05:30+08:00",
+      "ts": "2026-07-23T08:05:31+08:00",
       "phase": "postgres",
       "name": "behavior baseline reset audit persisted",
       "severity": "info",
       "passed": true,
       "status": "ok",
-      "detail": "3",
+      "detail": "10",
       "artifact": "pg-behavior-baseline-audit-count.txt"
+    },
+    {
+      "ts": "2026-07-23T08:05:31+08:00",
+      "phase": "postgres",
+      "name": "behavior baseline action persisted in PostgreSQL",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "19",
+      "artifact": "pg-behavior-baseline-action-count.txt"
+    },
+    {
+      "ts": "2026-07-23T08:05:31+08:00",
+      "phase": "postgres",
+      "name": "behavior baseline outbox persisted in PostgreSQL",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "14",
+      "artifact": "pg-behavior-baseline-outbox-count.txt"
+    },
+    {
+      "ts": "2026-07-23T08:05:31+08:00",
+      "phase": "postgres",
+      "name": "behavior baseline version snapshot persisted",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "30",
+      "artifact": "pg-behavior-baseline-version-count.txt"
+    },
+    {
+      "ts": "2026-07-23T08:05:31+08:00",
+      "phase": "postgres",
+      "name": "behavior baseline action audit persisted",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "20",
+      "artifact": "pg-behavior-baseline-action-audit-count.txt"
     }
   ]
 }

@@ -1,0 +1,114 @@
+{
+  "page": "campaigns",
+  "route": "/campaigns",
+  "status": "accepted",
+  "accepted_at": "2026-07-25T02:28:00+08:00",
+  "reopened_at": "2026-07-24",
+  "reopen_reason": "closed by r748 UI and r750 backend/database integrated adjudication",
+  "backend_release": "campaign-domain-r750",
+  "frontend_release": "campaign-domain-r748",
+  "source_visual": "doc/04_assets/ui_suite_gpt_v1/screens/pages/campaigns.png",
+  "implementation": {
+    "list_source": "ClickHouse campaign aggregation through alert-service",
+    "pagination": "server-side exact total and page-size contract",
+    "phase_graph_engine": "echarts",
+    "phase_graph_series": "graph",
+    "phase_graph_layout": "fixed coordinates with roam zoom and draggable phase nodes",
+    "phase_graph_data": "selected campaign phase alert and evidence aggregation",
+    "business_area_layout": "AppShell public taf-main spacing without campaign-specific desktop offset",
+    "persistent_actions": [
+      "owner_assignment",
+      "status_change",
+      "report_generation"
+    ],
+    "audited_visit_actions": [
+      "phase_inspect",
+      "impact_inspect",
+      "evidence_view"
+    ]
+  },
+  "gates": {
+    "frontend_targeted_test": {
+      "result": "pass",
+      "files": 5,
+      "tests": 37
+    },
+    "frontend_typecheck": "pass",
+    "frontend_build": "pass",
+    "live_contract": {
+      "result": "pass",
+      "checks": 33,
+      "blockers": 0,
+      "phase_data_backed": true,
+      "impact_data_backed": true,
+      "service_tuple_exact_match": true
+    },
+    "windows_chrome_responsive": {
+      "result": "pass",
+      "checks": 54,
+      "viewports": 6
+    },
+    "echarts_graph_runtime": {
+      "result": "pass",
+      "checks": 6,
+      "canvas_count": 1,
+      "zoom_verified": true,
+      "phase_click_audit_verified": true
+    },
+    "visual_diff": {
+      "result": "pass",
+      "targets": 11,
+      "threshold": 0.125,
+      "campaigns_pixel_mismatch_ratio": 0.09712818287037037,
+      "maximum_impact_normalized_roi": 0.12387769898496315
+    },
+    "impact_modal_close": {
+      "result": "pass",
+      "checks": 5,
+      "content_retained": 5
+    }
+  },
+  "reviews": {
+    "logic": {
+      "result": "pass",
+      "p0": 0,
+      "p1": 0,
+      "p2": 2
+    },
+    "layout": {
+      "result": "pass",
+      "p0": 0,
+      "p1": 0,
+      "p2": 0
+    },
+    "main_thread": {
+      "result": "ACCEPT",
+      "p0": 0,
+      "p1": 0,
+      "p2": 4
+    }
+  },
+  "rollout": {
+    "backend_generation": 233,
+    "backend_revision": "campaign-domain-r750",
+    "frontend_generation": 952,
+    "frontend_revision": "campaign-domain-r748",
+    "ready": true,
+    "pod_restarts": 0
+  },
+  "evidence": [
+    "doc/02_acceptance/02-regression/campaign-workbench-live-preflight-latest.json",
+    "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-campaign-responsive-latest.json",
+    "doc/02_acceptance/02-regression/campaign-workbench-review-adjudication-latest.json",
+    "doc/02_acceptance/02-regression/campaign-workbench-rollout-r750.json",
+    "doc/02_acceptance/02-regression/campaign-domain-captures-r748.json",
+    "doc/02_acceptance/02-regression/campaign-domain-comparisons-r748.json",
+    "evidence/ui-image-breakdowns/pages/campaigns/popup-and-responsive-r750.json",
+    "evidence/ui-image-breakdowns/pages/campaigns/real-impact-account-r750.png",
+    "evidence/ui-image-breakdowns/pages/campaigns/interaction-r748.json",
+    "evidence/ui-image-breakdowns/pages/campaigns/attack-graph-r748.json",
+    "design-qa.md"
+  ],
+  "current_gate": "ACCEPT: r748 UI generation 952 and r750 alert-service generation 233 are Ready 1/1; 33/33 live, 11/11 capture+diff, 5/5 stable impact close, 14/14 audit, 6/6 graph and 54/54 responsive gates pass",
+  "project_complete": false
+}

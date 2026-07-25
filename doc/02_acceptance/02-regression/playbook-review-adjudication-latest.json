@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-19T05:52:10+08:00",
+  "menu": "SOAR 剧本",
+  "route": "/playbooks",
+  "revision": "r346",
+  "result": "pass",
+  "review_sequence": [
+    "comprehensive_agent_review",
+    "page_logic_agent_review",
+    "page_layout_agent_review",
+    "main_thread_adjudication"
+  ],
+  "comprehensive_review": {
+    "verdict": "pass",
+    "open_p0": 0,
+    "open_p1": 0,
+    "open_p2": 1,
+    "non_blocking_p2": ["complete evidence export should use a single read-only snapshot and streaming output for very large tenants"],
+    "closed_blockers": ["false live execution", "misleading provider limits", "silent 200-row export cap", "broad workbench filtering", "missing playbook scopes", "missing database constraints", "rollback KPI false zero"]
+  },
+  "logic_review": {
+    "verdict": "pass",
+    "open_p0": 0,
+    "open_p1": 0,
+    "open_p2": 0,
+    "closed_blockers": ["unknown asset risk passed through map zero value", "unknown severity could satisfy low threshold"],
+    "evidence": "evidence/ui-image-breakdowns/pages/playbooks/interaction-r346.json"
+  },
+  "layout_review": {
+    "verdict": "pass",
+    "open_p0": 0,
+    "open_p1": 0,
+    "open_p2": 0,
+    "checks": ["three-action connector closes notification to end", "end has no orphan outgoing arrow", "1/2/3/4 action connector assets exist", "D and G panels are not clipped", "editor modal is fully visible", "node title and aria labels expose complete text"]
+  },
+  "visual_adjudication": {
+    "status": "pass",
+    "pixel_mismatch_ratio": 0.07687100161233736,
+    "maximum": 0.125,
+    "target": "evidence/ui-image-breakdowns/pages/playbooks/target.png",
+    "actual": "evidence/ui-image-breakdowns/pages/playbooks/implementation-r346.png",
+    "side_by_side": "evidence/ui-image-breakdowns/pages/playbooks/side-by-side-business-r346.png",
+    "diff": "evidence/ui-image-breakdowns/pages/playbooks/diff-business-r346.png"
+  },
+  "main_thread_adjudication": {
+    "blocking_gates": {
+      "durable_lifecycle": "pass",
+      "tenant_rbac_and_audit": "pass",
+      "safe_drill_and_live_fail_closed": "pass",
+      "database_constraints": "pass",
+      "complete_export_boundary": "pass: 205/205",
+      "windows_chrome_interaction": "pass",
+      "visual_contract": "pass",
+      "runtime_and_tests": "pass",
+      "immutable_runtime_provenance": "pass"
+    },
+    "final_decision": "playbook_automation_accepted_r346",
+    "tracked_follow_up": "snapshot-consistent streaming evidence export"
+  }
+}

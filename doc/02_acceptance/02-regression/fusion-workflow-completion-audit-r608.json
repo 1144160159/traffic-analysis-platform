@@ -1,0 +1,114 @@
+{
+  "page": "fusion",
+  "route": "/fusion",
+  "revision": "r608",
+  "audited_at": "2026-07-22T18:59:11+08:00",
+  "result": "pass",
+  "workflow_contract": "UI decomposition -> frontend -> backend -> database -> deployment -> Windows Chrome through Xshell -> diff/metrics -> logic review -> layout review -> root adjudication -> rework",
+  "reinforcement_loop": {
+    "method": "measurement-driven iterative reward loop",
+    "claim_boundary": "This is an evidence-scored engineering feedback loop, not an online-trained or self-modifying machine-learning model.",
+    "history": [
+      {
+        "revision": "r607",
+        "decision": "reject after renewed review",
+        "feedback": "canonical rule fields, complete evidence chain, acceptance disclosure and button execution required rework"
+      },
+      {
+        "revision": "r608-initial",
+        "decision": "reject by logic reviewer",
+        "feedback": "PostgreSQL constraints were live but missing from two formal initialization paths and the automated constraint gate"
+      },
+      {
+        "revision": "r608-final",
+        "decision": "accept",
+        "feedback": "77/77 contract, fresh database initialization, Windows Chrome interactions, all visual gates and both independent reviews passed"
+      }
+    ]
+  },
+  "stages": [
+    {
+      "id": "ui-decomposition-and-implementation",
+      "status": "pass",
+      "evidence": [
+        "doc/04_assets/ui_suite_gpt_v1/screens/pages/fusion.png",
+        "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/fusion.json",
+        "web/ui/src/pages/FusionWorkbenchPage.tsx"
+      ],
+      "finding": "The production page follows the reference regions, discloses acceptance fixtures and provides safe rule copy, tooltip, pagination and conflict controls."
+    },
+    {
+      "id": "backend-and-evidence-chain",
+      "status": "pass",
+      "evidence": [
+        "go/control-plane/internal/alert/api/handler_product_pages.go",
+        "go/control-plane/internal/alert/api/handler_product_pages_test.go"
+      ],
+      "finding": "Rule mutations preserve canonical fields, enforce legal values and optimistic locking, while schema v2 exports the complete conflict handling chain."
+    },
+    {
+      "id": "database-and-initializers",
+      "status": "pass",
+      "evidence": [
+        "common/sql/pg/00-init.sql",
+        "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+        "go/control-plane/deployments/docker/init/postgres_merged.sql",
+        "doc/02_acceptance/02-regression/fusion-db-init-validation-r608.json"
+      ],
+      "finding": "All three schema sources define identical named constraints; both formal initializers passed fresh-database execution and rejected three invalid rule values."
+    },
+    {
+      "id": "live-contract",
+      "status": "pass",
+      "evidence": [
+        "doc/02_acceptance/02-regression/fusion-threat-intel-latest.json"
+      ],
+      "finding": "The final APISIX/JWT/PostgreSQL contract passed 77/77 checks with no blocker or warning, including source-schema and live pg_constraint checks."
+    },
+    {
+      "id": "deployment",
+      "status": "pass",
+      "evidence": [
+        "doc/02_acceptance/02-regression/fusion-rollout-r608.json"
+      ],
+      "finding": "Digest-pinned Web UI and Alert Service images are present on both nodes; deployments are Ready 1/1 with zero restarts, and the live PostgreSQL init ConfigMap matches the repository."
+    },
+    {
+      "id": "windows-chrome-interaction",
+      "status": "pass",
+      "evidence": [
+        "doc/02_acceptance/02-regression/fusion-interactions-r608.json",
+        "evidence/ui-image-breakdowns/pages/fusion/fusion-r608-interactions.png",
+        "evidence/ui-image-breakdowns/pages/fusion/fusion-r608-repair-retained.png",
+        "evidence/ui-image-breakdowns/pages/fusion/fusion-r608-post-actions.png"
+      ],
+      "finding": "Windows Chrome 150 through Xshell CDP 9224 passed all interactions at 1920x1080 non-fullscreen with no business HTTP, request, console or page errors."
+    },
+    {
+      "id": "visual-diff",
+      "status": "pass",
+      "evidence": [
+        "evidence/ui-image-breakdowns/pages/fusion/fusion-r608-comparison.png",
+        "evidence/ui-image-breakdowns/pages/fusion/fusion-r608-diff.png",
+        "evidence/ui-image-breakdowns/pages/fusion/fusion-r608-visual-metrics.json"
+      ],
+      "finding": "Global mismatch 0.11749710648148148 is below 0.125 and every configured regional gate passes."
+    },
+    {
+      "id": "independent-reviews-and-root-adjudication",
+      "status": "pass",
+      "evidence": [
+        "doc/02_acceptance/02-regression/fusion-review-adjudication-latest.json"
+      ],
+      "finding": "Logic ACCEPT has P0/P1/P2/P3 zero; layout ACCEPT has P0/P1 zero and only recorded non-blocking P2/P3 observations; root decision is ACCEPT."
+    }
+  ],
+  "blocking_findings": [],
+  "non_blocking_findings": [
+    "Pipeline and bottom-workbench visual gates have narrow margins.",
+    "The fourth conflict row is close to the footer but remains reachable by vertical scrolling.",
+    "Long entity UUIDs remain ellipsized; rule IDs expose a verified tooltip.",
+    "The truthful acceptance-data badge introduces a small intentional difference from the reference image."
+  ],
+  "root_completion_decision": "ACCEPT"
+}

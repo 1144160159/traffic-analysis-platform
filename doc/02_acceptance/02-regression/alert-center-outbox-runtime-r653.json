@@ -1,0 +1,32 @@
+{
+  "page": "alerts",
+  "result": "pass",
+  "worker": {
+    "delivery_owner": "background worker only",
+    "claim": "FOR UPDATE SKIP LOCKED with 60 second lease",
+    "retry": "exponential backoff capped at 300 seconds",
+    "acknowledgement": "published=true only after Kafka RequireAll SendJSON success",
+    "topic": "alert.response.requested.v1"
+  },
+  "before_r653": {
+    "total": 13,
+    "published": 9,
+    "pending": 4
+  },
+  "after_r653": {
+    "total": 17,
+    "published": 17,
+    "pending": 0,
+    "maximum_attempts": 2
+  },
+  "new_action": {
+    "initial_http_outbox_status": "pending_retry",
+    "final_outbox_published": true,
+    "final_attempts": 1,
+    "final_last_error": ""
+  },
+  "evidence": [
+    "doc/02_acceptance/02-regression/alert-center-live-preflight-latest.json",
+    "go/control-plane/internal/alert/api/handler_alert_actions.go"
+  ]
+}

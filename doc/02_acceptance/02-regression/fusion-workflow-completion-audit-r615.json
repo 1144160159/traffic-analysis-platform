@@ -1,0 +1,29 @@
+{
+  "page": "fusion",
+  "revision": "r615",
+  "result": "complete",
+  "completed_at": "2026-07-22T20:43:00+08:00",
+  "stages": {
+    "agent_and_docs": "complete",
+    "ui_decomposition": "complete",
+    "frontend": "complete",
+    "backend": "complete",
+    "database": "complete",
+    "two_node_rollout": "complete",
+    "xshell_windows_chrome": "complete",
+    "visual_diff": "complete with two disclosed P3 raw ROI failures",
+    "logic_subagent": "ACCEPT",
+    "layout_subagent": "ACCEPT",
+    "root_adjudication": "ACCEPT",
+    "documentation_sync": "complete"
+  },
+  "blockers": [],
+  "evidence": [
+    "doc/02_acceptance/02-regression/fusion-interactions-r615.json",
+    "doc/02_acceptance/02-regression/fusion-threat-intel-latest.json",
+    "doc/02_acceptance/02-regression/fusion-review-adjudication-latest.json",
+    "doc/02_acceptance/02-regression/fusion-rollout-r615.json",
+    "evidence/ui-image-breakdowns/pages/fusion/fusion-r615-visual-metrics.json",
+    "design-qa.md"
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-20T03:04:48+08:00",
+  "result": "pass",
+  "deployment": {
+    "backend_revision": "notifications-r462",
+    "kubernetes_revision": "147",
+    "backend_image": "docker.io/traffic/alert-service@sha256:dc53d800a972da9a5ab5055c82836a859af7b1fb59d4f49ca1b5109c80675fcc",
+    "backend_config_id": "sha256:f0d637edebefece03ff6be4d6f511ffb5d88dc342326f91d8ce9f2da52fe0a35",
+    "web_revision": "notifications-r459",
+    "web_image": "docker.io/traffic/web-ui@sha256:078ebf713f909969e0f8eec300910a9f3e33d279e3ca95c191974a22b81f6af1",
+    "ready_replicas": 1,
+    "restart_count": 0
+  },
+  "live_alerts": {
+    "eligible_alert_id": "alert-default-1784487541008-6ab603cc",
+    "eligible_status": "ALERT_STATUS_NEW",
+    "terminal_alert_id": "mlops-accept-r331-alert-0000",
+    "terminal_status": "closed",
+    "source": "traffic.alerts in ClickHouse"
+  },
+  "checks": {
+    "schema_has_locked_at_and_lock_token": true,
+    "runtime_atomic_audit_function_uses_job_id_for_job_objects": true,
+    "unique_delivery_job_after_duplicate_insert": 1,
+    "role_destination_sink_requests": 2,
+    "role_destination_sink_sha256": "90c0a90c2bc24b5b9df44d88352b6feddb15eb4d249d7418287b3ee6fd8597e9",
+    "role_route_changed_actual_destination": true,
+    "lease_recovery_reclaimed_stale_processing_job": true,
+    "disabled_rule_cancelled_before_provider_io": true,
+    "terminal_alert_cancelled_before_provider_io": true,
+    "active_silence_cancelled_before_provider_io": true,
+    "disabled_channel_cancelled_before_provider_io": true,
+    "settings_restored": true,
+    "delivery_history_persisted": true,
+    "atomic_job_audits_use_unique_job_ids": true
+  },
+  "jobs": [
+    {"job_id": 3, "alert_key": "notif-r462-role-route", "status": "sent", "attempts": 1, "lease_released": true},
+    {"job_id": 4, "alert_key": "notif-r462-lease-recovery", "status": "sent", "attempts": 1, "lease_released": true, "started_as": "processing with a five-minute-old lease"},
+    {"job_id": 5, "alert_key": "notif-r462-disabled-cancel", "status": "cancelled", "attempts": 1, "reason": "notification rule disabled or removed before escalation deadline", "lease_released": true},
+    {"job_id": 6, "alert_key": "notif-r462-closed-cancel", "status": "cancelled", "attempts": 1, "reason": "escalation condition no longer matches live alert status closed", "lease_released": true},
+    {"job_id": 7, "alert_key": "notif-r462-silence-cancel", "status": "cancelled", "attempts": 1, "reason": "notification entered an active silence window before escalation deadline", "lease_released": true},
+    {"job_id": 8, "alert_key": "notif-r462-settings-cancel", "status": "cancelled", "attempts": 1, "reason": "notification channel disabled before escalation deadline", "lease_released": true}
+  ],
+  "deliveries": [
+    {"notification_id": 144, "status": "sent", "channel": "webhook", "target_name": "NOTIF_ROLE_R462"},
+    {"notification_id": 145, "status": "sent", "channel": "webhook", "target_name": "NOTIF_ROLE_R462"}
+  ],
+  "role_route_contract": {
+    "source": "active users joined through user_roles and roles",
+    "destination_source": "user_settings category notifications, key webhook",
+    "actual_destination": "http://notification-role-sink-r462.traffic-analysis.svc:8080/cgi-bin/notify",
+    "global_webhook_used": false,
+    "payload_contains_target_name": true,
+    "payload_contains_resolved_destinations": true
+  },
+  "provider_truth_tests": {
+    "http_200_empty_rejected": true,
+    "http_200_non_json_rejected": true,
+    "http_200_missing_success_code_rejected": true,
+    "explicit_nonzero_business_code_rejected": true,
+    "role_destination_overrides_global_webhook": true,
+    "go_test_packages": [
+      "./internal/alert/consumer",
+      "./internal/alert/notification",
+      "./internal/alert/api",
+      "./cmd/alert-service"
+    ],
+    "go_test_result": "pass"
+  },
+  "cleanup": {
+    "status": "completed",
+    "scope": "temporary sink, role, user, role mapping, user notification setting, two rules, one policy, one silence and six jobs",
+    "temporary_rules_remaining": 0,
+    "temporary_jobs_remaining": 0,
+    "truthful_delivery_history_rows_preserved": 2,
+    "immutable_job_audit_rows_preserved": 24,
+    "immutable_audit_rows_preserved": true
+  }
+}

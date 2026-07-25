@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-07-24T22:26:49+08:00",
+  "scope": "campaign-domain",
+  "release": "campaign-domain-r741",
+  "status": "deployed_visual_gate_pending",
+  "change": {
+    "repairs": [
+      "影响范围使用最大 1040x760 内容型 Modal，战役报告使用桌面 1200x740 Modal",
+      "战役与攻击链详情使用右 Drawer 和 URL 支持的详情、证据、审计 Tabs",
+      "攻击链筛选、三视图、真实查询状态和审计导出闭环",
+      "危险动作、行内状态流转和 Drawer 操作增加确认、pending 禁用和错误捕获",
+      "战役列表影响范围读取真实详情 impactTabs，点击审计后打开对应影响弹窗",
+      "popup bounds 门禁精确断言 Drawer、报告 Modal 和窄屏响应式几何"
+    ]
+  },
+  "verification": {
+    "targeted_vitest": {
+      "result": "pass",
+      "files": 5,
+      "tests": 37
+    },
+    "typescript_and_vite_build": {
+      "result": "pass",
+      "modules_transformed": 4081
+    },
+    "image_import": {
+      "result": "pass",
+      "nodes": [
+        "10.0.5.8",
+        "10.0.5.9"
+      ]
+    },
+    "kubernetes_apply": {
+      "result": "pass",
+      "deployment_generation": 944,
+      "observed_generation": 944,
+      "ready_replicas": 1,
+      "updated_replicas": 1,
+      "pod_restarts": 0,
+      "runtime_image_id": "sha256:23ad17b78f5e47f19d9f4d7c6f3df101596efa47b9ca8d9b3971350e31220478",
+      "gateway_login_http_status": 200
+    },
+    "windows_chrome": {
+      "result": "blocked",
+      "endpoint": "http://127.0.0.1:9224",
+      "error": "connection reset by peer"
+    },
+    "visual_diff": "pending"
+  },
+  "artifacts": {
+    "source_digest": "2a062e823dd54435d5c010667356d9884257dbaa4e0962294979b44d5a9226ba",
+    "docker_image_id": "sha256:23ad17b78f5e47f19d9f4d7c6f3df101596efa47b9ca8d9b3971350e31220478",
+    "containerd_manifest_digest": "sha256:51cd2bdf36a5d5b96045f0b2576a6186c848c236fbf1c51e3449e321aea97ff4",
+    "image": "docker.io/traffic/web-ui:campaign-domain-r741",
+    "build_log": "/tmp/web-ui-r741-build.log",
+    "local_import_log": "/tmp/traffic-web-ui-r741-local-import.log",
+    "remote_import_log": "/tmp/traffic-web-ui-r741-remote-import.log"
+  },
+  "complete": false
+}

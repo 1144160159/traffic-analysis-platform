@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-19T08:50:14+08:00",
+  "menu": "白名单治理",
+  "route": "/whitelist",
+  "backend_revision": "r351",
+  "frontend_revision": "r352",
+  "result": "pass",
+  "review_sequence": [
+    "comprehensive_agent_review",
+    "page_logic_agent_review",
+    "page_layout_agent_review",
+    "main_thread_adjudication"
+  ],
+  "comprehensive_review": {
+    "verdict": "pass",
+    "open_p0": 0,
+    "open_p1": 0,
+    "open_p2": 3,
+    "checks": [
+      "all 221 related JSON files parse",
+      "all eleven accepted verification references exist",
+      "learning episode SHA-256 values match",
+      "source manifests pin the final digests",
+      "live alert-service and web-ui Pods are Ready and runtime config IDs match r351/r352"
+    ]
+  },
+  "logic_review": {
+    "verdict": "pass",
+    "open_p0": 0,
+    "open_p1": 0,
+    "closed_blockers": [
+      "feedback add_to_whitelist now requires alert:write before alert lookup",
+      "feedback draft and WHITELIST_CREATED audit commit atomically",
+      "Kubernetes embedded PostgreSQL whitelist schema matches source SQL",
+      "delete acceptance asserts real WHITELIST_DELETED API and exactly six PostgreSQL audit rows"
+    ],
+    "evidence": [
+      "doc/02_acceptance/runs/20260719-whitelist-governance-r351/live-whitelist-governance-preflight-20260719-whitelist-governance-r351-summary.json",
+      "evidence/ui-image-breakdowns/pages/whitelist/interaction-r352.json"
+    ]
+  },
+  "layout_review": {
+    "verdict": "pass",
+    "open_p0": 0,
+    "open_p1": 0,
+    "open_p2": 3,
+    "non_blocking_p2": [
+      "allow the condition-builder title to wrap and expose remaining secondary IDs by title",
+      "consider a fixed right action column in the main table",
+      "let the add modal content determine height to reduce bottom whitespace"
+    ],
+    "checks": [
+      "all five condition impact values are complete",
+      "model threshold 0.87 and rule type traffic detection are independent and correct",
+      "all three expiry-governance identifiers and reasons are readable",
+      "modal and drawer bottom actions are visible",
+      "drawer chart axis is formatted as 22.4"
+    ],
+    "side_by_side_evidence": [
+      "evidence/ui-image-breakdowns/reviews/r352/main-pair.png",
+      "evidence/ui-image-breakdowns/reviews/r352/conditions-pairs.png",
+      "evidence/ui-image-breakdowns/reviews/r352/expiry-pairs.png",
+      "evidence/ui-image-breakdowns/reviews/r352/overlays-pairs.png"
+    ]
+  },
+  "visual_adjudication": {
+    "status": "pass",
+    "target_count": 11,
+    "passed_count": 11,
+    "pixel_mismatch_minimum": 0.039887152777777775,
+    "pixel_mismatch_maximum_observed": 0.08401282793209877,
+    "maximum": 0.125,
+    "browser": "Windows Chrome 150 via Xshell CDP 127.0.0.1:9224",
+    "viewport": "1920x1080"
+  },
+  "main_thread_adjudication": {
+    "blocking_gates": {
+      "durable_lifecycle": "pass",
+      "tenant_rbac_and_two_person_approval": "pass",
+      "feedback_permission_and_atomic_audit": "pass",
+      "database_constraints_and_schema_sync": "pass",
+      "versioned_delete_and_six_audits": "pass",
+      "windows_chrome_interaction": "pass",
+      "eleven_state_visual_contract": "pass",
+      "runtime_and_tests": "pass",
+      "immutable_runtime_provenance": "pass"
+    },
+    "final_decision": "whitelist_governance_accepted_r352",
+    "tracked_follow_up": "three non-blocking layout P2 items"
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "page": "entity-graph",
+  "revision": "r582",
+  "rolled_out_at": "2026-07-21T13:43:31+08:00",
+  "scope": "restore compact path-analysis layout and redesign only the four mode-specific middle path visualizations",
+  "deployment": {
+    "name": "web-ui",
+    "source_revision": "entity-graph-path-compact-r582",
+    "deployment_revision": 764,
+    "deployment_generation": 779,
+    "image": "docker.io/traffic/web-ui@sha256:83fa28517c37263ca2cc89a71924e107a33599a929e97f3d0ec7985ba917b620",
+    "pod": {
+      "name": "web-ui-6656d6c55-2jt86",
+      "ready": true,
+      "restarts": 0,
+      "node": "zeus-server"
+    }
+  },
+  "nodes_imported": ["8-2tb", "zeus-server"],
+  "image_pull_policy": "Never",
+  "digest_reference_imported": true,
+  "layout": {
+    "path_panel": {"width_px": 649.53125, "height_px": 250, "column": "left"},
+    "query_governance": "right column on the same row",
+    "all_tabs_stable": true
+  },
+  "verification": {
+    "web_build": "pass",
+    "windows_chrome_backend": "Xshell CDP 127.0.0.1:9224",
+    "windows_chrome_version": "Chrome/150.0.7871.128",
+    "production_route": "http://10.0.5.8:30180/graph",
+    "interaction_result": "pass",
+    "business_http_failures": 0,
+    "unexpected_console_errors": 0,
+    "unexpected_page_errors": 0
+  },
+  "evidence": [
+    "doc/02_acceptance/02-regression/entity-graph-interactions-r582.json",
+    "evidence/ui-image-breakdowns/pages/graph/entity-graph-r582-interactions.png",
+    "evidence/ui-image-breakdowns/pages/graph/entity-graph-r582-path-tabs/shortest.png",
+    "evidence/ui-image-breakdowns/pages/graph/entity-graph-r582-path-tabs/attack.png",
+    "evidence/ui-image-breakdowns/pages/graph/entity-graph-r582-path-tabs/communication.png",
+    "evidence/ui-image-breakdowns/pages/graph/entity-graph-r582-path-tabs/account.png",
+    "evidence/ui-image-breakdowns/pages/graph/entity-graph-r582-path-visual-metrics.json"
+  ],
+  "result": "pass"
+}

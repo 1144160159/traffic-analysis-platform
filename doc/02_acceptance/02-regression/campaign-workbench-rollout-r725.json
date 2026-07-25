@@ -1,0 +1,47 @@
+{
+  "page": "campaigns",
+  "result": "ready",
+  "backend": {
+    "workload": "alert-service",
+    "release": "campaigns-r720",
+    "digest": "sha256:20d44e52042a43686619a4861b7521b1a5b0ce6a7af0427381e21bbbab3b5da1",
+    "image_id": "sha256:751c45b63ce8cbece0d33863a579940001f50eb3c98b4adccb8dbf37731a51a3",
+    "source_digest": "601377b80087c3c2f993688993c3f032e8298b89a6cbab10621584966fe90683",
+    "generation": 226,
+    "observed_generation": 226,
+    "revision": 208,
+    "ready_replicas": 1,
+    "desired_replicas": 1
+  },
+  "frontend": {
+    "workload": "web-ui",
+    "release": "campaigns-r725",
+    "digest": "sha256:dfe87ddcd728bd89d6104d7d920a799a1a88d597a507c6bebc621e65702faffb",
+    "image_id": "sha256:1ee615e84e4cef8234e8382d75e399b30811acd3636283a40e312d66d7d69884",
+    "source_digest": "2f8bafc7f356e3df100f709099a8d991a370802211ec74b98bec4495a87657cd",
+    "generation": 930,
+    "observed_generation": 930,
+    "revision": 907,
+    "ready_replicas": 1,
+    "desired_replicas": 1
+  },
+  "nodes_imported": 2,
+  "deployments_ready": true,
+  "pod_restarts": 0,
+  "tests": {
+    "frontend_targeted_test": "2/2",
+    "frontend_typecheck": "pass",
+    "frontend_build": "pass",
+    "live_contract": "26/26",
+    "windows_chrome_responsive": "54/54",
+    "echarts_graph_runtime": "6/6",
+    "visual_diff": "pass"
+  },
+  "evidence": [
+    "doc/02_acceptance/02-regression/campaign-workbench-live-preflight-latest.json",
+    "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-campaign-responsive-latest.json",
+    "evidence/ui-image-breakdowns/pages/campaigns/attack-graph-r725.json",
+    "evidence/ui-image-breakdowns/pages/campaigns/comparison-r725.png",
+    "design-qa.md"
+  ]
+}

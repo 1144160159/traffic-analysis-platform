@@ -1,0 +1,96 @@
+{
+  "generated_at": "2026-07-24T10:31:03.445Z",
+  "browser": "Windows Chrome over Xshell CDP 9224",
+  "revision": "r732",
+  "convention": "reference on left, implementation on right",
+  "targets": [
+    {
+      "id": "campaigns",
+      "status": "ready",
+      "viewport": "1920x1080",
+      "reference": "evidence/ui-image-breakdowns/pages/campaigns/target.png",
+      "implementation": "evidence/ui-image-breakdowns/pages/campaigns/implementation.png",
+      "comparison": "evidence/ui-image-breakdowns/pages/campaigns/comparison-r732.png"
+    },
+    {
+      "id": "campaign-detail",
+      "status": "ready",
+      "viewport": "1920x1080",
+      "reference": "evidence/ui-image-breakdowns/pages/campaign-detail/target.png",
+      "implementation": "evidence/ui-image-breakdowns/pages/campaign-detail/implementation.png",
+      "comparison": "evidence/ui-image-breakdowns/pages/campaign-detail/comparison-r732.png"
+    },
+    {
+      "id": "drawer-campaign-detail",
+      "status": "ready",
+      "viewport": "1920x1080",
+      "reference": "evidence/ui-image-breakdowns/overlays/drawer-campaign-detail/target.png",
+      "implementation": "evidence/ui-image-breakdowns/overlays/drawer-campaign-detail/implementation.png",
+      "comparison": "evidence/ui-image-breakdowns/overlays/drawer-campaign-detail/comparison-r732.png"
+    },
+    {
+      "id": "modal-campaign-report-export",
+      "status": "ready",
+      "viewport": "1920x1080",
+      "reference": "evidence/ui-image-breakdowns/overlays/modal-campaign-report-export/target.png",
+      "implementation": "evidence/ui-image-breakdowns/overlays/modal-campaign-report-export/implementation.png",
+      "comparison": "evidence/ui-image-breakdowns/overlays/modal-campaign-report-export/comparison-r732.png"
+    },
+    {
+      "id": "campaign-detail-impact-account",
+      "status": "ready",
+      "viewport": "1920x1080",
+      "reference": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-account/target.png",
+      "implementation": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-account/implementation.png",
+      "comparison": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-account/comparison-r732.png"
+    },
+    {
+      "id": "campaign-detail-impact-service",
+      "status": "ready",
+      "viewport": "1920x1080",
+      "reference": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-service/target.png",
+      "implementation": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-service/implementation.png",
+      "comparison": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-service/comparison-r732.png"
+    },
+    {
+      "id": "campaign-detail-impact-department",
+      "status": "ready",
+      "viewport": "1920x1080",
+      "reference": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-department/target.png",
+      "implementation": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-department/implementation.png",
+      "comparison": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-department/comparison-r732.png"
+    },
+    {
+      "id": "campaign-detail-impact-campus",
+      "status": "ready",
+      "viewport": "1920x1080",
+      "reference": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/target.png",
+      "implementation": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/implementation.png",
+      "comparison": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/comparison-r732.png"
+    },
+    {
+      "id": "campaign-detail-impact-business-system",
+      "status": "ready",
+      "viewport": "1920x1080",
+      "reference": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-business-system/target.png",
+      "implementation": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-business-system/implementation.png",
+      "comparison": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-business-system/comparison-r732.png"
+    },
+    {
+      "id": "attack-chains",
+      "status": "ready",
+      "viewport": "1920x1080",
+      "reference": "evidence/ui-image-breakdowns/pages/attack-chains/target.png",
+      "implementation": "evidence/ui-image-breakdowns/pages/attack-chains/implementation.png",
+      "comparison": "evidence/ui-image-breakdowns/pages/attack-chains/comparison-r732.png"
+    },
+    {
+      "id": "drawer-attack-chain-detail",
+      "status": "ready",
+      "viewport": "1920x1080",
+      "reference": "evidence/ui-image-breakdowns/overlays/drawer-attack-chain-detail/target.png",
+      "implementation": "evidence/ui-image-breakdowns/overlays/drawer-attack-chain-detail/implementation.png",
+      "comparison": "evidence/ui-image-breakdowns/overlays/drawer-attack-chain-detail/comparison-r732.png"
+    }
+  ]
+}

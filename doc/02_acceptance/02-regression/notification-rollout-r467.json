@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "result": "pass",
+  "acceptance_revision": "r467",
+  "backend": {
+    "source_revision": "notifications-r466",
+    "kubernetes_revision": "149",
+    "image": "docker.io/traffic/alert-service@sha256:f4587a890b2dd5edbcaaf4d9aaaa1d0d61cdadbe5323cfd73b34bf43f9b5c9b0",
+    "config_id": "sha256:4a0be3f51a596960c0d67e3ec6556493b48c4d8ca4c888414eaae3cd85938f13",
+    "ready_replicas": 1,
+    "restart_count": 0,
+    "nodes_imported": ["8-2tb", "zeus-server"]
+  },
+  "frontend": {
+    "source_revision": "notifications-r459",
+    "kubernetes_revision": "697",
+    "image": "docker.io/traffic/web-ui@sha256:078ebf713f909969e0f8eec300910a9f3e33d279e3ca95c191974a22b81f6af1",
+    "ready_replicas": 1,
+    "restart_count": 0
+  },
+  "deployment_manifest": "deployments/kubernetes/applications/go-services.yaml",
+  "browser_evidence": "evidence/ui-image-breakdowns/pages/notifications/interaction-r467.json",
+  "rollback": "Kubernetes rollout history retains the previous digest-pinned ReplicaSet"
+}

@@ -1,0 +1,56 @@
+{
+  "page": "fusion",
+  "revision": "r608",
+  "deployed_at": "2026-07-22T18:39:26+08:00",
+  "cluster": "traffic-analysis",
+  "deployments": [
+    {
+      "name": "web-ui",
+      "image": "docker.io/traffic/web-ui@sha256:56bf6e8301436b156a4605cbf6c4aa09f9c8761ce1a37452a51f7b2a04f4aedb",
+      "generation": 805,
+      "revision": 790,
+      "ready": "1/1",
+      "restarts": 0
+    },
+    {
+      "name": "alert-service",
+      "image": "docker.io/traffic/alert-service@sha256:5f0546c2b6b3f362832117a4d7f6940896569e4b2adf0c7bdb72f82053b35667",
+      "generation": 177,
+      "revision": 168,
+      "ready": "1/1",
+      "restarts": 0
+    }
+  ],
+  "nodes": [
+    "zeus-server",
+    "8-2TB"
+  ],
+  "database_constraints": [
+    "fusion_rule_overrides_status_check",
+    "fusion_rule_overrides_strategy_check",
+    "fusion_rule_overrides_threshold_check"
+  ],
+  "verification": {
+    "live_contract": "77/77 pass, 0 blockers, 0 warnings",
+    "windows_chrome": "pass, Chrome 150, Xshell 9224, 1920x1080 non-fullscreen",
+    "visual": "global and 6/6 regional gates pass",
+    "reviews": "logic ACCEPT; layout ACCEPT; root ACCEPT"
+  },
+  "source_digests": {
+    "fixture_sql": "sha256:cb9e48a731963a199db41f1f92f6f2a303ec31324e89ab1d9682ac29998fe1c0",
+    "fusion_page": "sha256:2493d6b438a184b9300f03b95af6d02cd64dd559fc45eff7ddf6f3fa5f730021",
+    "charts": "sha256:0ebd5fdfa5d2e09eddabd02f2cbd64f0f1b5a23e8bc62b647c6f077ee6db6d9d",
+    "alert_handler": "sha256:54aca49960f9727d991a375c3a92228cb49cef479d2171bc74406d78dc7d9a26",
+    "postgres_schema": "sha256:e00530e9a15e92c94bdc2062d2ccbe4ccbe6bb2e5b4cac9e65dc49211c797b41",
+    "live_contract": "sha256:50a6b909bce8276dfb888aa8e9c2b6c4844436a9e2a50656ec683dc163e25b2a",
+    "kubernetes_postgres_init": "sha256:74cde107fc837db84270018ef67505ba54d4cd47f46f829d97059df0e50f6ba1",
+    "merged_postgres_init": "sha256:07b40dd38415874404f56811c9b4090222845786d22c278fdd8709d308c5ca64",
+    "windows_interactions": "sha256:0610338eba7f43eb567827aa94e873b436fb975e50803056eb559b81fd8a28c6"
+  },
+  "evidence": {
+    "contract": "doc/02_acceptance/02-regression/fusion-threat-intel-latest.json",
+    "interactions": "doc/02_acceptance/02-regression/fusion-interactions-r608.json",
+    "visual_metrics": "evidence/ui-image-breakdowns/pages/fusion/fusion-r608-visual-metrics.json",
+    "database_init": "doc/02_acceptance/02-regression/fusion-db-init-validation-r608.json"
+  }
+}

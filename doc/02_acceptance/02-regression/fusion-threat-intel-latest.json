@@ -1,33 +1,39 @@
 {
-  "run_id": "20260629-fusion-write-r2",
-  "generated_at": "2026-06-29T01:06:50Z",
+  "run_id": "20260722-fusion-r625-contract",
+  "generated_at": "2026-07-22T15:06:08Z",
   "apisix": "http://10.0.5.8:30180",
   "web_url": "http://10.0.5.8:30180",
   "result": "pass",
   "totals": {
-    "total": 29,
-    "passed": 29,
+    "total": 77,
+    "passed": 77,
     "failed": 0,
     "blockers": 0,
     "warnings": 0
   },
   "artifacts": {
-    "ndjson": "doc/02_acceptance/runs/20260629-fusion-threat-intel/live-fusion-threat-intel-20260629-fusion-write-r2.ndjson",
+    "ndjson": "doc/02_acceptance/runs/20260722-fusion-r625-contract/live-fusion-threat-intel-20260722-fusion-r625-contract.ndjson",
     "vitest": "web-vitest-fusion-threat-intel.log",
+    "icon_workflow": "fusion-ui-icon-workflow.json",
     "web_deployment": "web-ui-deploy-live.json",
+    "alert_deployment": "alert-service-deploy-live.json",
     "web_bundle_marker": "live-web-bundle-marker.txt",
     "fusion_stats": "api-fusion-stats.json",
+    "fusion_workbench": "api-fusion-workbench.json",
+    "fusion_workbench_page1": "api-fusion-workbench-page1.json",
+    "fusion_workbench_page2": "api-fusion-workbench-page2.json",
     "fusion_entities": "api-fusion-entities.json",
     "threat_entries": "api-threat-intel-entries.json",
     "conflict_resolution": "api-fusion-conflict-resolve.json",
     "rule_update": "api-fusion-rule-update.json",
     "pg_conflict_resolution": "pg-fusion-conflict-resolution-count.txt",
     "pg_rule_override": "pg-fusion-rule-override-count.txt",
+    "pg_repair_task": "pg-fusion-repair-task-count.txt",
     "pg_audit": "pg-fusion-write-audit-count.txt"
   },
   "checks": [
     {
-      "ts": "2026-06-29T09:06:42+08:00",
+      "ts": "2026-07-22T23:05:28+08:00",
       "phase": "contract",
       "name": "fusion page plan includes threat intel endpoint",
       "severity": "info",
@@ -37,7 +43,7 @@
       "artifact": "web/ui/src/services/pageApiPlans.ts"
     },
     {
-      "ts": "2026-06-29T09:06:42+08:00",
+      "ts": "2026-07-22T23:05:28+08:00",
       "phase": "contract",
       "name": "fusion route manifest advertises threat intel API",
       "severity": "info",
@@ -47,7 +53,7 @@
       "artifact": "web/ui/src/routes/routeManifest.tsx"
     },
     {
-      "ts": "2026-06-29T09:06:42+08:00",
+      "ts": "2026-07-22T23:05:28+08:00",
       "phase": "contract",
       "name": "fusion adapter maps threat intel entries",
       "severity": "info",
@@ -57,7 +63,7 @@
       "artifact": "web/ui/src/services/pageSnapshotAdapters.ts"
     },
     {
-      "ts": "2026-06-29T09:06:42+08:00",
+      "ts": "2026-07-22T23:05:28+08:00",
       "phase": "contract",
       "name": "fusion workbench renders threat intel live evidence",
       "severity": "info",
@@ -67,7 +73,7 @@
       "artifact": "web/ui/src/pages/FusionWorkbenchPage.tsx"
     },
     {
-      "ts": "2026-06-29T09:06:42+08:00",
+      "ts": "2026-07-22T23:05:28+08:00",
       "phase": "contract",
       "name": "fusion API plan registers conflict write",
       "severity": "info",
@@ -77,7 +83,7 @@
       "artifact": "web/ui/src/services/pageApiPlans.ts"
     },
     {
-      "ts": "2026-06-29T09:06:42+08:00",
+      "ts": "2026-07-22T23:05:28+08:00",
       "phase": "contract",
       "name": "fusion workbench calls conflict write API",
       "severity": "info",
@@ -87,7 +93,7 @@
       "artifact": "web/ui/src/pages/FusionWorkbenchPage.tsx"
     },
     {
-      "ts": "2026-06-29T09:06:42+08:00",
+      "ts": "2026-07-22T23:05:28+08:00",
       "phase": "contract",
       "name": "fusion workbench calls rule write API",
       "severity": "info",
@@ -97,7 +103,47 @@
       "artifact": "web/ui/src/pages/FusionWorkbenchPage.tsx"
     },
     {
-      "ts": "2026-06-29T09:06:46+08:00",
+      "ts": "2026-07-22T23:05:28+08:00",
+      "phase": "contract",
+      "name": "canonical PostgreSQL schema declares fusion rule constraints",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "common/sql/pg/00-init.sql",
+      "artifact": "common/sql/pg/00-init.sql"
+    },
+    {
+      "ts": "2026-07-22T23:05:28+08:00",
+      "phase": "contract",
+      "name": "Kubernetes PostgreSQL init declares fusion rule constraints",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+      "artifact": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml"
+    },
+    {
+      "ts": "2026-07-22T23:05:28+08:00",
+      "phase": "contract",
+      "name": "merged PostgreSQL init declares fusion rule constraints",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+      "artifact": "go/control-plane/deployments/docker/init/postgres_merged.sql"
+    },
+    {
+      "ts": "2026-07-22T23:05:28+08:00",
+      "phase": "asset",
+      "name": "fusion icon candidates require visual approval before formal copy",
+      "severity": "info",
+      "passed": true,
+      "status": "pass",
+      "detail": "rejected candidates are quarantined; production uses reviewed code-native icons",
+      "artifact": "fusion-ui-icon-workflow.json"
+    },
+    {
+      "ts": "2026-07-22T23:05:32+08:00",
       "phase": "web",
       "name": "fusion threat intel Vitest contract",
       "severity": "info",
@@ -107,7 +153,37 @@
       "artifact": "web-vitest-fusion-threat-intel.log"
     },
     {
-      "ts": "2026-06-29T09:06:48+08:00",
+      "ts": "2026-07-22T23:05:33+08:00",
+      "phase": "assert",
+      "name": "fusion rule database constraints are present and canonical",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "pg-fusion-rule-constraints.json"
+    },
+    {
+      "ts": "2026-07-22T23:05:33+08:00",
+      "phase": "assert",
+      "name": "fusion rule strategy database constraint is canonical",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "pg-fusion-rule-constraints.json"
+    },
+    {
+      "ts": "2026-07-22T23:05:33+08:00",
+      "phase": "assert",
+      "name": "fusion rule threshold database constraint is canonical",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "pg-fusion-rule-constraints.json"
+    },
+    {
+      "ts": "2026-07-22T23:05:39+08:00",
       "phase": "api",
       "name": "fusion stats through APISIX",
       "severity": "info",
@@ -117,7 +193,7 @@
       "artifact": "api-fusion-stats.json"
     },
     {
-      "ts": "2026-06-29T09:06:48+08:00",
+      "ts": "2026-07-22T23:05:39+08:00",
       "phase": "assert",
       "name": "fusion stats include threat_intel source",
       "severity": "info",
@@ -127,7 +203,167 @@
       "artifact": "api-fusion-stats.json"
     },
     {
-      "ts": "2026-06-29T09:06:49+08:00",
+      "ts": "2026-07-22T23:05:44+08:00",
+      "phase": "api",
+      "name": "fusion workbench through APISIX",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "/api/v1/fusion/workbench",
+      "artifact": "api-fusion-workbench.json"
+    },
+    {
+      "ts": "2026-07-22T23:05:44+08:00",
+      "phase": "assert",
+      "name": "fusion workbench has six live sources",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "api-fusion-workbench.json"
+    },
+    {
+      "ts": "2026-07-22T23:05:44+08:00",
+      "phase": "assert",
+      "name": "fusion sources disclose truthful threat intel and vulnerability storage",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "api-fusion-workbench.json"
+    },
+    {
+      "ts": "2026-07-22T23:05:44+08:00",
+      "phase": "assert",
+      "name": "fusion source coverage never fabricates an unmeasured percentage",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "api-fusion-workbench.json"
+    },
+    {
+      "ts": "2026-07-22T23:05:45+08:00",
+      "phase": "assert",
+      "name": "fusion source error rate never fabricates an unmeasured zero",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "api-fusion-workbench.json"
+    },
+    {
+      "ts": "2026-07-22T23:05:45+08:00",
+      "phase": "assert",
+      "name": "fusion workbench exposes canonical rule pipeline from persisted rules",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "api-fusion-workbench.json"
+    },
+    {
+      "ts": "2026-07-22T23:05:45+08:00",
+      "phase": "assert",
+      "name": "fusion conflict totals match persisted state summary",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "api-fusion-workbench.json"
+    },
+    {
+      "ts": "2026-07-22T23:05:45+08:00",
+      "phase": "assert",
+      "name": "fusion audit response is bounded and contains no synthetic baseline events",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "api-fusion-workbench.json"
+    },
+    {
+      "ts": "2026-07-22T23:05:50+08:00",
+      "phase": "api",
+      "name": "fusion workbench first server page",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "/api/v1/fusion/workbench?rule_limit=6&rule_offset=0&conflict_limit=3&conflict_offset=0&audit_limit=5&audit_offset=0",
+      "artifact": "api-fusion-workbench-page1.json"
+    },
+    {
+      "ts": "2026-07-22T23:05:50+08:00",
+      "phase": "assert",
+      "name": "fusion workbench first page exposes totals and bounded rows",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "api-fusion-workbench-page1.json"
+    },
+    {
+      "ts": "2026-07-22T23:05:56+08:00",
+      "phase": "api",
+      "name": "fusion workbench second server page",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "/api/v1/fusion/workbench?rule_limit=6&rule_offset=6&conflict_limit=3&conflict_offset=3&audit_limit=5&audit_offset=5",
+      "artifact": "api-fusion-workbench-page2.json"
+    },
+    {
+      "ts": "2026-07-22T23:05:56+08:00",
+      "phase": "assert",
+      "name": "fusion workbench second page uses requested offsets",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "api-fusion-workbench-page2.json"
+    },
+    {
+      "ts": "2026-07-22T23:05:56+08:00",
+      "phase": "api",
+      "name": "fusion rule server pages do not repeat rows",
+      "severity": "info",
+      "passed": true,
+      "status": "disjoint",
+      "detail": "offset page IDs differ from first page",
+      "artifact": "api-fusion-workbench-page2.json"
+    },
+    {
+      "ts": "2026-07-22T23:05:56+08:00",
+      "phase": "api",
+      "name": "fusion conflict server pages do not repeat rows",
+      "severity": "info",
+      "passed": true,
+      "status": "disjoint",
+      "detail": "offset page IDs differ from first page",
+      "artifact": "api-fusion-workbench-page2.json"
+    },
+    {
+      "ts": "2026-07-22T23:06:03+08:00",
+      "phase": "api",
+      "name": "repeat fusion workbench read through APISIX",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "/api/v1/fusion/workbench",
+      "artifact": "api-fusion-workbench-repeat.json"
+    },
+    {
+      "ts": "2026-07-22T23:06:03+08:00",
+      "phase": "postgres",
+      "name": "fusion workbench GET is read only",
+      "severity": "info",
+      "passed": true,
+      "status": "unchanged",
+      "detail": "rules, conflicts and audit counts are stable across repeated GET",
+      "artifact": "pg-fusion-readonly-after.txt"
+    },
+    {
+      "ts": "2026-07-22T23:06:05+08:00",
       "phase": "api",
       "name": "fusion entities through APISIX",
       "severity": "info",
@@ -137,7 +373,7 @@
       "artifact": "api-fusion-entities.json"
     },
     {
-      "ts": "2026-06-29T09:06:49+08:00",
+      "ts": "2026-07-22T23:06:05+08:00",
       "phase": "assert",
       "name": "fusion entities returns aligned entities",
       "severity": "info",
@@ -147,7 +383,7 @@
       "artifact": "api-fusion-entities.json"
     },
     {
-      "ts": "2026-06-29T09:06:49+08:00",
+      "ts": "2026-07-22T23:06:05+08:00",
       "phase": "api",
       "name": "threat intel entries through APISIX",
       "severity": "info",
@@ -157,7 +393,7 @@
       "artifact": "api-threat-intel-entries.json"
     },
     {
-      "ts": "2026-06-29T09:06:49+08:00",
+      "ts": "2026-07-22T23:06:05+08:00",
       "phase": "assert",
       "name": "threat intel entries returns list",
       "severity": "info",
@@ -167,29 +403,79 @@
       "artifact": "api-threat-intel-entries.json"
     },
     {
-      "ts": "2026-06-29T09:06:49+08:00",
+      "ts": "2026-07-22T23:06:05+08:00",
+      "phase": "api",
+      "name": "read-only token cannot request fusion source sync",
+      "severity": "info",
+      "passed": true,
+      "status": "403",
+      "detail": "/api/v1/fusion/sources/traffic/sync",
+      "artifact": "api-fusion-source-sync-reader-denied.json"
+    },
+    {
+      "ts": "2026-07-22T23:06:05+08:00",
       "phase": "api",
       "name": "read-only token cannot resolve fusion conflict",
       "severity": "info",
       "passed": true,
       "status": "403",
-      "detail": "/api/v1/fusion/conflicts/codex-fusion-conflict-20260629-fusion-write-r2/resolve",
+      "detail": "/api/v1/fusion/conflicts/codex-fusion-conflict-20260722-fusion-r625-contract/resolve",
       "artifact": "api-fusion-conflict-reader-denied.json"
     },
     {
-      "ts": "2026-06-29T09:06:49+08:00",
+      "ts": "2026-07-22T23:06:05+08:00",
+      "phase": "api",
+      "name": "fusion conflict rejects a source value not stored in canonical facts",
+      "severity": "info",
+      "passed": true,
+      "status": "400",
+      "detail": "/api/v1/fusion/conflicts/codex-fusion-conflict-20260722-fusion-r625-contract/resolve",
+      "artifact": "api-fusion-conflict-invalid-source.json"
+    },
+    {
+      "ts": "2026-07-22T23:06:05+08:00",
+      "phase": "assert",
+      "name": "invalid fusion source value returns explicit code",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "api-fusion-conflict-invalid-source.json"
+    },
+    {
+      "ts": "2026-07-22T23:06:05+08:00",
+      "phase": "api",
+      "name": "fusion conflict rejects an unsupported strategy",
+      "severity": "info",
+      "passed": true,
+      "status": "400",
+      "detail": "/api/v1/fusion/conflicts/codex-fusion-conflict-20260722-fusion-r625-contract/resolve",
+      "artifact": "api-fusion-conflict-invalid-strategy.json"
+    },
+    {
+      "ts": "2026-07-22T23:06:05+08:00",
+      "phase": "assert",
+      "name": "invalid fusion strategy returns explicit code",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "api-fusion-conflict-invalid-strategy.json"
+    },
+    {
+      "ts": "2026-07-22T23:06:05+08:00",
       "phase": "api",
       "name": "resolve fusion conflict through APISIX",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "/api/v1/fusion/conflicts/codex-fusion-conflict-20260629-fusion-write-r2/resolve",
+      "detail": "/api/v1/fusion/conflicts/codex-fusion-conflict-20260722-fusion-r625-contract/resolve",
       "artifact": "api-fusion-conflict-resolve.json"
     },
     {
-      "ts": "2026-06-29T09:06:49+08:00",
+      "ts": "2026-07-22T23:06:05+08:00",
       "phase": "assert",
-      "name": "fusion conflict resolution returns persisted version and audit flag",
+      "name": "fusion conflict resolution returns canonical facts, real repair task and audit flag",
       "severity": "info",
       "passed": true,
       "status": "ok",
@@ -197,19 +483,139 @@
       "artifact": "api-fusion-conflict-resolve.json"
     },
     {
-      "ts": "2026-06-29T09:06:49+08:00",
+      "ts": "2026-07-22T23:06:05+08:00",
+      "phase": "api",
+      "name": "stale fusion conflict state is rejected",
+      "severity": "info",
+      "passed": true,
+      "status": "409",
+      "detail": "/api/v1/fusion/conflicts/codex-fusion-conflict-20260722-fusion-r625-contract/resolve",
+      "artifact": "api-fusion-conflict-stale-version.json"
+    },
+    {
+      "ts": "2026-07-22T23:06:05+08:00",
+      "phase": "api",
+      "name": "repair-pending fusion conflict rejects a duplicate repair task",
+      "severity": "info",
+      "passed": true,
+      "status": "409",
+      "detail": "/api/v1/fusion/conflicts/codex-fusion-conflict-20260722-fusion-r625-contract/resolve",
+      "artifact": "api-fusion-conflict-repeat-repair.json"
+    },
+    {
+      "ts": "2026-07-22T23:06:05+08:00",
+      "phase": "assert",
+      "name": "duplicate fusion repair task returns explicit idempotency code",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "api-fusion-conflict-repeat-repair.json"
+    },
+    {
+      "ts": "2026-07-22T23:06:05+08:00",
+      "phase": "api",
+      "name": "repair-pending fusion conflict rejects another resolution strategy",
+      "severity": "info",
+      "passed": true,
+      "status": "409",
+      "detail": "/api/v1/fusion/conflicts/codex-fusion-conflict-20260722-fusion-r625-contract/resolve",
+      "artifact": "api-fusion-conflict-pending-resolve.json"
+    },
+    {
+      "ts": "2026-07-22T23:06:06+08:00",
+      "phase": "assert",
+      "name": "repair-pending fusion conflict returns explicit lock code",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "api-fusion-conflict-pending-resolve.json"
+    },
+    {
+      "ts": "2026-07-22T23:06:06+08:00",
+      "phase": "api",
+      "name": "read-only token cannot update fusion rule",
+      "severity": "info",
+      "passed": true,
+      "status": "403",
+      "detail": "/api/v1/fusion/rules/codex-fusion-rule-20260722-fusion-r625-contract",
+      "artifact": "api-fusion-rule-reader-denied.json"
+    },
+    {
+      "ts": "2026-07-22T23:06:06+08:00",
+      "phase": "api",
+      "name": "fusion rule rejects an unsupported status",
+      "severity": "info",
+      "passed": true,
+      "status": "400",
+      "detail": "/api/v1/fusion/rules/codex-fusion-rule-20260722-fusion-r625-contract",
+      "artifact": "api-fusion-rule-invalid-status.json"
+    },
+    {
+      "ts": "2026-07-22T23:06:06+08:00",
+      "phase": "assert",
+      "name": "invalid fusion rule status returns explicit code",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "api-fusion-rule-invalid-status.json"
+    },
+    {
+      "ts": "2026-07-22T23:06:06+08:00",
+      "phase": "api",
+      "name": "fusion rule rejects an unsupported strategy",
+      "severity": "info",
+      "passed": true,
+      "status": "400",
+      "detail": "/api/v1/fusion/rules/codex-fusion-rule-20260722-fusion-r625-contract",
+      "artifact": "api-fusion-rule-invalid-strategy.json"
+    },
+    {
+      "ts": "2026-07-22T23:06:06+08:00",
+      "phase": "assert",
+      "name": "invalid fusion rule strategy returns explicit code",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "api-fusion-rule-invalid-strategy.json"
+    },
+    {
+      "ts": "2026-07-22T23:06:06+08:00",
+      "phase": "api",
+      "name": "fusion rule rejects an out-of-range threshold",
+      "severity": "info",
+      "passed": true,
+      "status": "400",
+      "detail": "/api/v1/fusion/rules/codex-fusion-rule-20260722-fusion-r625-contract",
+      "artifact": "api-fusion-rule-invalid-threshold.json"
+    },
+    {
+      "ts": "2026-07-22T23:06:06+08:00",
+      "phase": "assert",
+      "name": "invalid fusion rule threshold returns explicit code",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "api-fusion-rule-invalid-threshold.json"
+    },
+    {
+      "ts": "2026-07-22T23:06:06+08:00",
       "phase": "api",
       "name": "update fusion rule through APISIX",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "/api/v1/fusion/rules/codex-fusion-rule-20260629-fusion-write-r2",
+      "detail": "/api/v1/fusion/rules/codex-fusion-rule-20260722-fusion-r625-contract",
       "artifact": "api-fusion-rule-update.json"
     },
     {
-      "ts": "2026-06-29T09:06:49+08:00",
+      "ts": "2026-07-22T23:06:06+08:00",
       "phase": "assert",
-      "name": "fusion rule update returns version and audit flag",
+      "name": "fusion rule update preserves canonical name and detail",
       "severity": "info",
       "passed": true,
       "status": "ok",
@@ -217,47 +623,127 @@
       "artifact": "api-fusion-rule-update.json"
     },
     {
-      "ts": "2026-06-29T09:06:49+08:00",
+      "ts": "2026-07-22T23:06:06+08:00",
+      "phase": "api",
+      "name": "stale fusion rule version is rejected",
+      "severity": "info",
+      "passed": true,
+      "status": "409",
+      "detail": "/api/v1/fusion/rules/codex-fusion-rule-20260722-fusion-r625-contract",
+      "artifact": "api-fusion-rule-stale-version.json"
+    },
+    {
+      "ts": "2026-07-22T23:06:06+08:00",
+      "phase": "api",
+      "name": "read-only token cannot export fusion evidence",
+      "severity": "info",
+      "passed": true,
+      "status": "403",
+      "detail": "/api/v1/fusion/evidence-packages",
+      "artifact": "api-fusion-evidence-reader-denied.json"
+    },
+    {
+      "ts": "2026-07-22T23:06:06+08:00",
+      "phase": "api",
+      "name": "export fusion evidence through APISIX",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "/api/v1/fusion/evidence-packages",
+      "artifact": "api-fusion-evidence-export.json"
+    },
+    {
+      "ts": "2026-07-22T23:06:06+08:00",
+      "phase": "assert",
+      "name": "fusion evidence export returns complete evidence chain",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "api-fusion-evidence-export.json"
+    },
+    {
+      "ts": "2026-07-22T23:06:06+08:00",
       "phase": "assert",
       "name": "fusion conflict resolution row exists",
       "severity": "info",
       "passed": true,
       "status": "ok",
       "detail": "",
-      "artifact": "63"
+      "artifact": "pg-fusion-conflict-resolution-count.json"
     },
     {
-      "ts": "2026-06-29T09:06:49+08:00",
+      "ts": "2026-07-22T23:06:07+08:00",
+      "phase": "assert",
+      "name": "fusion conflict resolution persisted server canonical facts",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "pg-fusion-conflict-resolution-canonical.json"
+    },
+    {
+      "ts": "2026-07-22T23:06:07+08:00",
       "phase": "assert",
       "name": "fusion rule override row exists",
       "severity": "info",
       "passed": true,
       "status": "ok",
       "detail": "",
-      "artifact": "63"
+      "artifact": "pg-fusion-rule-override-count.json"
     },
     {
-      "ts": "2026-06-29T09:06:49+08:00",
+      "ts": "2026-07-22T23:06:07+08:00",
+      "phase": "assert",
+      "name": "fusion rule database row preserves canonical immutable fields",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "pg-fusion-rule-override-canonical.json"
+    },
+    {
+      "ts": "2026-07-22T23:06:07+08:00",
+      "phase": "assert",
+      "name": "fusion repair task row exists",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "",
+      "artifact": "pg-fusion-repair-task-count.json"
+    },
+    {
+      "ts": "2026-07-22T23:06:07+08:00",
       "phase": "assert",
       "name": "fusion write audit rows exist",
       "severity": "info",
       "passed": true,
       "status": "ok",
       "detail": "",
-      "artifact": "63"
+      "artifact": "pg-fusion-write-audit-count.json"
     },
     {
-      "ts": "2026-06-29T09:06:50+08:00",
+      "ts": "2026-07-22T23:06:07+08:00",
+      "phase": "backend",
+      "name": "live alert-service deployment archived",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "docker.io/traffic/alert-service@sha256:4dbf1c0ef727c5470dc84573ac02cdcf3c7388732400f760f82f921339d7d350",
+      "artifact": "alert-service-deploy-live.json"
+    },
+    {
+      "ts": "2026-07-22T23:06:08+08:00",
       "phase": "web",
       "name": "live web-ui deployment image",
       "severity": "info",
       "passed": true,
       "status": "ok",
-      "detail": "traffic/web-ui:fusion-write-20260629-r1",
+      "detail": "docker.io/traffic/web-ui@sha256:710d80a5fef6c10b9cf28c0ac568c33efe3b58312b1b7fca23ab882540305231",
       "artifact": "web-ui-deploy-image.txt"
     },
     {
-      "ts": "2026-06-29T09:06:50+08:00",
+      "ts": "2026-07-22T23:06:08+08:00",
       "phase": "web",
       "name": "live web index through APISIX",
       "severity": "info",
@@ -267,53 +753,53 @@
       "artifact": "live-web-index.html"
     },
     {
-      "ts": "2026-06-29T09:06:50+08:00",
+      "ts": "2026-07-22T23:06:08+08:00",
       "phase": "web",
       "name": "live web index bundle through APISIX",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "/assets/index-Bc_6_gUd.js",
+      "detail": "/assets/index-BDOSuoqT.js",
       "artifact": "live-web-index.js"
     },
     {
-      "ts": "2026-06-29T09:06:50+08:00",
+      "ts": "2026-07-22T23:06:08+08:00",
       "phase": "web",
       "name": "live fusion bundle through APISIX",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "/assets/FusionWorkbenchPage-BAklbnHA.js",
+      "detail": "/assets/FusionWorkbenchPage-DYGZYjMp.js",
       "artifact": "live-web-fusion.js"
     },
     {
-      "ts": "2026-06-29T09:06:50+08:00",
+      "ts": "2026-07-22T23:06:08+08:00",
       "phase": "web",
       "name": "live fusion bundle includes threat intel UI markers",
       "severity": "info",
       "passed": true,
       "status": "ok",
-      "detail": "FusionWorkbenchPage-BAklbnHA.js",
+      "detail": "FusionWorkbenchPage-DYGZYjMp.js",
       "artifact": "live-web-bundle-marker.txt"
     },
     {
-      "ts": "2026-06-29T09:06:50+08:00",
+      "ts": "2026-07-22T23:06:08+08:00",
       "phase": "web",
       "name": "live fusion bundle includes write API markers",
       "severity": "info",
       "passed": true,
       "status": "ok",
-      "detail": "FusionWorkbenchPage-BAklbnHA.js",
+      "detail": "FusionWorkbenchPage-DYGZYjMp.js",
       "artifact": "live-web-bundle-marker.txt"
     },
     {
-      "ts": "2026-06-29T09:06:50+08:00",
+      "ts": "2026-07-22T23:06:08+08:00",
       "phase": "web",
       "name": "live index bundle advertises threat intel API endpoint",
       "severity": "info",
       "passed": true,
       "status": "ok",
-      "detail": "assets/index-Bc_6_gUd.js",
+      "detail": "assets/index-BDOSuoqT.js",
       "artifact": "live-web-bundle-marker.txt"
     }
   ]

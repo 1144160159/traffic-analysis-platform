@@ -1,0 +1,592 @@
+{
+  "result": "pass",
+  "browser_backend": "Windows Chrome CDP over Xshell 9224",
+  "browser": "Chrome/150.0.7871.128",
+  "route": "http://10.0.5.8:30180/graph?windowsCdpInteractionTs=1784622211558#codex_smoke_token=<redacted>",
+  "checks": {
+    "source_is_nebula_graph": true,
+    "node_count": true,
+    "edge_count": true,
+    "graph_title_has_no_breadcrumb": true,
+    "open_services_complete": true,
+    "entity_detail_sections_complete": true,
+    "entity_metric_trends_are_echarts": true,
+    "entity_risk_score_is_echarts_ring": true,
+    "entity_chart_types_values_and_sources_match_nebula": true,
+    "zero_alert_series_is_flat_and_not_synthetic": true,
+    "entity_detail_time_range_label_tracks_filter": true,
+    "selected_account_services_complete": true,
+    "selected_account_services_stable_after_search": true,
+    "query_governance_complete": true,
+    "topology_is_echarts_canvas": true,
+    "topology_arrows_share_visible_circle_centres": true,
+    "topology_zoom_controls_work": true,
+    "topology_relation_labels_use_normal_horizontal_font": true,
+    "selected_node_changed": true,
+    "search_filter_count": true,
+    "backend_entity_filter": true,
+    "saved_view_persisted": true,
+    "export_download": true,
+    "path_panel_visible": true,
+    "path_panel_uses_larger_left_column": true,
+    "query_governance_is_fully_contained": true,
+    "four_path_tabs_stay_in_fixed_panel": true,
+    "four_path_tabs_have_distinct_real_relations": true,
+    "four_path_tabs_have_mode_specific_real_fields": true,
+    "four_path_tabs_have_distinct_ui_contracts": true,
+    "four_path_middle_visuals_are_data_backed_and_contained": true,
+    "four_path_mode_actions_work": true,
+    "topology_reset_keeps_single_canvas": true,
+    "detail_close_and_restore": true,
+    "destinations_work": true,
+    "account_destinations_use_stable_business_target": true,
+    "no_business_bad_responses": true,
+    "no_business_request_failures": true,
+    "no_unexpected_console_errors": true,
+    "no_unexpected_page_errors": true,
+    "no_horizontal_overflow": true
+  },
+  "graph": {
+    "source": "nebula_graph",
+    "node_count": 11,
+    "edge_count": 13
+  },
+  "path_tabs": [
+    {
+      "tab": "最短路径",
+      "mode": "shortest",
+      "relation": "通信",
+      "min_length": 2,
+      "required_text": "路径长度",
+      "required_secondary_text": "路径 ID",
+      "required_attribute": "service",
+      "actual_mode": "shortest",
+      "actual_relation": "通信",
+      "actual_length": 2,
+      "required_attribute_value": "HTTPS",
+      "box": {
+        "x": 174,
+        "y": 656.6666870117188,
+        "width": 801.3229370117188,
+        "height": 340
+      },
+      "panel_stable": true,
+      "inside_panel": true,
+      "ui_class": "taf-graph-mode-view is-shortest",
+      "middle_visual_inside_panel": true,
+      "middle_node_count": 3,
+      "middle_connector_count": 2,
+      "screenshot": "evidence/ui-image-breakdowns/pages/graph/entity-graph-r586-path-tabs/shortest.png"
+    },
+    {
+      "tab": "攻击路径",
+      "mode": "attack",
+      "relation": "关联告警",
+      "min_length": 2,
+      "required_text": "攻击阶段",
+      "required_secondary_text": "横向移动",
+      "required_attribute": "attack_stage",
+      "actual_mode": "attack",
+      "actual_relation": "关联告警",
+      "actual_length": 2,
+      "required_attribute_value": "初始访问",
+      "box": {
+        "x": 174,
+        "y": 656.6666870117188,
+        "width": 801.3229370117188,
+        "height": 340
+      },
+      "panel_stable": true,
+      "inside_panel": true,
+      "ui_class": "taf-graph-mode-view is-attack",
+      "middle_visual_inside_panel": true,
+      "middle_node_count": 3,
+      "middle_connector_count": 2,
+      "screenshot": "evidence/ui-image-breakdowns/pages/graph/entity-graph-r586-path-tabs/attack.png"
+    },
+    {
+      "tab": "通信路径",
+      "mode": "communication",
+      "relation": "DNS解析",
+      "min_length": 2,
+      "required_text": "通信频次",
+      "required_secondary_text": "Top 对端",
+      "required_attribute": "frequency",
+      "actual_mode": "communication",
+      "actual_relation": "DNS解析",
+      "actual_length": 2,
+      "required_attribute_value": 221,
+      "box": {
+        "x": 174,
+        "y": 656.6666870117188,
+        "width": 801.3229370117188,
+        "height": 340
+      },
+      "panel_stable": true,
+      "inside_panel": true,
+      "ui_class": "taf-graph-mode-view is-communication",
+      "middle_visual_inside_panel": true,
+      "middle_node_count": 3,
+      "middle_connector_count": 2,
+      "screenshot": "evidence/ui-image-breakdowns/pages/graph/entity-graph-r586-path-tabs/communication.png"
+    },
+    {
+      "tab": "账号访问路径",
+      "mode": "account",
+      "relation": "登录",
+      "min_length": 1,
+      "required_text": "身份标签",
+      "required_secondary_text": "异常访问",
+      "required_attribute": "identity_label",
+      "actual_mode": "account",
+      "actual_relation": "登录",
+      "actual_length": 1,
+      "required_attribute_value": "高权限",
+      "box": {
+        "x": 174,
+        "y": 656.6666870117188,
+        "width": 801.3229370117188,
+        "height": 340
+      },
+      "panel_stable": true,
+      "inside_panel": true,
+      "ui_class": "taf-graph-mode-view is-account",
+      "middle_visual_inside_panel": true,
+      "middle_node_count": 2,
+      "middle_connector_count": 1,
+      "screenshot": "evidence/ui-image-breakdowns/pages/graph/entity-graph-r586-path-tabs/account.png"
+    }
+  ],
+  "lower_workspace_layout": {
+    "path_panel_box": {
+      "x": 174,
+      "y": 656.6666870117188,
+      "width": 801.3229370117188,
+      "height": 340
+    },
+    "governance_panel_box": {
+      "x": 983.3229370117188,
+      "y": 656.6666870117188,
+      "width": 580.6666870117188,
+      "height": 340
+    },
+    "left_to_right_width_ratio": 1.3800050096477239
+  },
+  "governance_layout": {
+    "body_client_height": 303,
+    "body_scroll_height": 303,
+    "governance_client_height": 283,
+    "governance_scroll_height": 283,
+    "children_inside_panel": true
+  },
+  "path_mode_action_navigation": [
+    {
+      "tab": "攻击路径",
+      "button": "跳转攻击链",
+      "passed": true,
+      "rendered": true,
+      "access_denied": false,
+      "url": "http://10.0.5.8:30180/attack-chains?entity=alert%3AALERT-20260620-1287"
+    },
+    {
+      "tab": "通信路径",
+      "button": "查看证据",
+      "passed": true,
+      "rendered": true,
+      "access_denied": false,
+      "url": "http://10.0.5.8:30180/forensics?evidence=SESSION-20260620-3381&evidence_ids=SESSION-20260620-3381%2CPCAP-20260620-0156"
+    },
+    {
+      "tab": "账号访问路径",
+      "button": "账号画像",
+      "passed": true,
+      "rendered": true,
+      "access_denied": false,
+      "url": "http://10.0.5.8:30180/assets?search=account%3Abiz_admin"
+    },
+    {
+      "tab": "账号访问路径",
+      "button": "查看审计",
+      "passed": true,
+      "rendered": true,
+      "access_denied": false,
+      "url": "http://10.0.5.8:30180/audit-log?object_id=AUDIT-GRAPH-0042&evidence_ids=AUDIT-GRAPH-0042"
+    }
+  ],
+  "topology": {
+    "canvas_count": 1,
+    "reset_canvas_count": 1,
+    "node_anchor_alignment": {
+      "nodes": 11,
+      "max_center_delta_px": 0.00956054687503638
+    },
+    "zoom": {
+      "initial": "1.00",
+      "enlarged": "1.10",
+      "reset": "1.00"
+    },
+    "relation_labels": [
+      {
+        "text": "登录",
+        "font_family": "\"Microsoft YaHei\", \"PingFang SC\", Arial, sans-serif",
+        "font_size": "11px",
+        "font_style": "normal",
+        "font_stretch": "100%",
+        "transform": "matrix(1, 0, 0, 1, -16.6667, -20.1667)"
+      },
+      {
+        "text": "账号访问",
+        "font_family": "\"Microsoft YaHei\", \"PingFang SC\", Arial, sans-serif",
+        "font_size": "11px",
+        "font_style": "normal",
+        "font_stretch": "100%",
+        "transform": "matrix(1, 0, 0, 1, -27.6667, -2.16667)"
+      },
+      {
+        "text": "通信",
+        "font_family": "\"Microsoft YaHei\", \"PingFang SC\", Arial, sans-serif",
+        "font_size": "11px",
+        "font_style": "normal",
+        "font_stretch": "100%",
+        "transform": "matrix(1, 0, 0, 1, -16.6667, -12.1667)"
+      },
+      {
+        "text": "行为服务",
+        "font_family": "\"Microsoft YaHei\", \"PingFang SC\", Arial, sans-serif",
+        "font_size": "11px",
+        "font_style": "normal",
+        "font_stretch": "100%",
+        "transform": "matrix(1, 0, 0, 1, -27.6667, -20.1667)"
+      },
+      {
+        "text": "DNS解析",
+        "font_family": "\"Microsoft YaHei\", \"PingFang SC\", Arial, sans-serif",
+        "font_size": "11px",
+        "font_style": "normal",
+        "font_stretch": "100%",
+        "transform": "matrix(1, 0, 0, 1, -28.5052, -2.16667)"
+      },
+      {
+        "text": "DNS解析",
+        "font_family": "\"Microsoft YaHei\", \"PingFang SC\", Arial, sans-serif",
+        "font_size": "11px",
+        "font_style": "normal",
+        "font_stretch": "100%",
+        "transform": "matrix(1, 0, 0, 1, -28.5052, -12.1667)"
+      },
+      {
+        "text": "通信",
+        "font_family": "\"Microsoft YaHei\", \"PingFang SC\", Arial, sans-serif",
+        "font_size": "11px",
+        "font_style": "normal",
+        "font_stretch": "100%",
+        "transform": "matrix(1, 0, 0, 1, -16.6667, -20.1667)"
+      },
+      {
+        "text": "通信",
+        "font_family": "\"Microsoft YaHei\", \"PingFang SC\", Arial, sans-serif",
+        "font_size": "11px",
+        "font_style": "normal",
+        "font_stretch": "100%",
+        "transform": "matrix(1, 0, 0, 1, -16.6667, -2.16667)"
+      },
+      {
+        "text": "通信",
+        "font_family": "\"Microsoft YaHei\", \"PingFang SC\", Arial, sans-serif",
+        "font_size": "11px",
+        "font_style": "normal",
+        "font_stretch": "100%",
+        "transform": "matrix(1, 0, 0, 1, -16.6667, -12.1667)"
+      },
+      {
+        "text": "证据引用",
+        "font_family": "\"Microsoft YaHei\", \"PingFang SC\", Arial, sans-serif",
+        "font_size": "11px",
+        "font_style": "normal",
+        "font_stretch": "100%",
+        "transform": "matrix(1, 0, 0, 1, -27.6667, -20.1667)"
+      },
+      {
+        "text": "关联告警",
+        "font_family": "\"Microsoft YaHei\", \"PingFang SC\", Arial, sans-serif",
+        "font_size": "11px",
+        "font_style": "normal",
+        "font_stretch": "100%",
+        "transform": "matrix(1, 0, 0, 1, -27.6667, -2.16667)"
+      },
+      {
+        "text": "行为服务",
+        "font_family": "\"Microsoft YaHei\", \"PingFang SC\", Arial, sans-serif",
+        "font_size": "11px",
+        "font_style": "normal",
+        "font_stretch": "100%",
+        "transform": "matrix(1, 0, 0, 1, -27.6667, -12.1667)"
+      },
+      {
+        "text": "行为服务",
+        "font_family": "\"Microsoft YaHei\", \"PingFang SC\", Arial, sans-serif",
+        "font_size": "11px",
+        "font_style": "normal",
+        "font_stretch": "100%",
+        "transform": "matrix(1, 0, 0, 1, -27.6667, -20.1667)"
+      }
+    ]
+  },
+  "detail_trends": {
+    "sparkline_echarts_canvas_count": 2,
+    "risk_ring_echarts_canvas_count": 1,
+    "initial_entity_chart_contract": {
+      "risk": {
+        "type": "gauge",
+        "value": 85,
+        "color": "#ff4d4f"
+      },
+      "trends": [
+        {
+          "type": "line",
+          "values": [
+            120,
+            138,
+            146,
+            151,
+            167,
+            180,
+            172,
+            159,
+            175,
+            190,
+            213,
+            206
+          ],
+          "source": "nebula_graph:metadata.traffic_trend_24h"
+        },
+        {
+          "type": "line",
+          "values": [
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            2
+          ],
+          "source": "nebula_graph:metadata.alert_trend_24h"
+        }
+      ]
+    },
+    "account_entity_chart_contract": {
+      "risk": {
+        "type": "gauge",
+        "value": 64,
+        "color": "#ffb020"
+      },
+      "trends": [
+        {
+          "type": "line",
+          "values": [
+            0,
+            1,
+            0,
+            0,
+            1,
+            0,
+            2,
+            1,
+            0,
+            1,
+            1,
+            2
+          ],
+          "source": "nebula_graph:metadata.traffic_trend_24h"
+        },
+        {
+          "type": "line",
+          "values": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "source": "nebula_graph:metadata.alert_trend_24h"
+        }
+      ]
+    }
+  },
+  "saved_view": {
+    "center_id": "host:10.20.4.18",
+    "search": "",
+    "filters": {
+      "timeRange": "24h",
+      "site": "main",
+      "entityType": "all",
+      "depth": 2
+    },
+    "saved_at": "2026-07-21T08:23:43.584Z"
+  },
+  "download": "entity-graph-host-10.20.4.18.json",
+  "navigation": [
+    {
+      "label": "查看资产",
+      "passed": true,
+      "rendered": true,
+      "access_denied": false,
+      "heading": "资产台账",
+      "business_context": true,
+      "url": "http://10.0.5.8:30180/assets?search=10.20.4.18"
+    },
+    {
+      "label": "查看告警",
+      "passed": true,
+      "rendered": true,
+      "access_denied": false,
+      "heading": "告警中心",
+      "business_context": true,
+      "url": "http://10.0.5.8:30180/alerts?entity=10.20.4.18"
+    },
+    {
+      "label": "进入取证",
+      "passed": true,
+      "rendered": true,
+      "access_denied": false,
+      "heading": "取证分析",
+      "business_context": true,
+      "url": "http://10.0.5.8:30180/forensics?assetId=10.20.4.18"
+    },
+    {
+      "label": "跳转攻击链",
+      "passed": true,
+      "rendered": true,
+      "access_denied": false,
+      "heading": "攻击链分析",
+      "business_context": true,
+      "url": "http://10.0.5.8:30180/attack-chains?entity=10.20.4.18"
+    },
+    {
+      "label": "审计日志",
+      "passed": true,
+      "rendered": true,
+      "access_denied": false,
+      "heading": "审计日志",
+      "business_context": true,
+      "url": "http://10.0.5.8:30180/audit-log?object_type=graph&object_id=host%3A10.20.4.18"
+    }
+  ],
+  "account_navigation": [
+    {
+      "label": "查看资产",
+      "passed": true,
+      "rendered": true,
+      "access_denied": false,
+      "heading": "资产台账",
+      "business_context": true,
+      "url": "http://10.0.5.8:30180/assets?search=biz_admin"
+    },
+    {
+      "label": "查看告警",
+      "passed": true,
+      "rendered": true,
+      "access_denied": false,
+      "heading": "告警中心",
+      "business_context": true,
+      "url": "http://10.0.5.8:30180/alerts?entity=biz_admin"
+    },
+    {
+      "label": "进入取证",
+      "passed": true,
+      "rendered": true,
+      "access_denied": false,
+      "heading": "取证分析",
+      "business_context": true,
+      "url": "http://10.0.5.8:30180/forensics?assetId=biz_admin"
+    },
+    {
+      "label": "跳转攻击链",
+      "passed": true,
+      "rendered": true,
+      "access_denied": false,
+      "heading": "攻击链分析",
+      "business_context": true,
+      "url": "http://10.0.5.8:30180/attack-chains?entity=biz_admin"
+    },
+    {
+      "label": "审计日志",
+      "passed": true,
+      "rendered": true,
+      "access_denied": false,
+      "heading": "审计日志",
+      "business_context": true,
+      "url": "http://10.0.5.8:30180/audit-log?object_type=graph&object_id=account%3Abiz_admin"
+    }
+  ],
+  "bad_responses": [],
+  "business_request_failures": [],
+  "unexpected_console_errors": [],
+  "unexpected_page_errors": [],
+  "known_external_noise": {
+    "request_failures": [
+      {
+        "url": "https://api.yhchj.com/ip",
+        "failure": "net::ERR_CONNECTION_CLOSED"
+      },
+      {
+        "url": "https://api.yhchj.com/ip",
+        "failure": "net::ERR_CONNECTION_CLOSED"
+      },
+      {
+        "url": "https://api.yhchj.com/ip",
+        "failure": "net::ERR_CONNECTION_CLOSED"
+      },
+      {
+        "url": "https://api.yhchj.com/ip",
+        "failure": "net::ERR_CONNECTION_CLOSED"
+      },
+      {
+        "url": "https://api.yhchj.com/ip",
+        "failure": "net::ERR_CONNECTION_CLOSED"
+      },
+      {
+        "url": "https://api.yhchj.com/ip",
+        "failure": "net::ERR_CONNECTION_CLOSED"
+      },
+      {
+        "url": "https://api.yhchj.com/ip",
+        "failure": "net::ERR_CONNECTION_CLOSED"
+      }
+    ],
+    "console_errors": [
+      "Failed to load resource: net::ERR_CONNECTION_CLOSED",
+      "Failed to load resource: net::ERR_CONNECTION_CLOSED",
+      "Failed to load resource: net::ERR_CONNECTION_CLOSED",
+      "Failed to load resource: net::ERR_CONNECTION_CLOSED",
+      "Failed to load resource: net::ERR_CONNECTION_CLOSED",
+      "Failed to load resource: net::ERR_CONNECTION_CLOSED",
+      "Failed to load resource: net::ERR_CONNECTION_CLOSED"
+    ],
+    "page_errors": [
+      "Object",
+      "Object",
+      "Object",
+      "Object",
+      "Object",
+      "Object",
+      "Object"
+    ]
+  },
+  "screenshot": "evidence/ui-image-breakdowns/pages/graph/entity-graph-r586-interactions.png",
+  "selected_account_detail_screenshot": "evidence/ui-image-breakdowns/pages/graph/entity-graph-r586-account-detail.png",
+  "generated_at": "2026-07-21T08:24:26.976Z"
+}

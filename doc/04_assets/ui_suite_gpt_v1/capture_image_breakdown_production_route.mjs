@@ -193,6 +193,13 @@ function routeHostId(id, routeMap) {
 function routeEntry(record, routeMap) {
   const exact = routeMap.find((route) => route.id === record.id);
   if (exact) return exact;
+  const overlayHosts = {
+    'drawer-campaign-detail': 'campaigns',
+    'modal-campaign-report-export': 'campaign-detail',
+    'drawer-attack-chain-detail': 'attack-chains',
+  };
+  const overlayHost = overlayHosts[record.id];
+  if (overlayHost) return routeMap.find((route) => route.id === overlayHost) || null;
   const host = routeHostId(record.id, routeMap);
   return routeMap.find((route) => route.id === host) || null;
 }
@@ -277,6 +284,8 @@ function routeState(record, route) {
       state.query.set('impact', map[slug]);
       state.query.set('__codex_page_id', id);
     }
+  } else if (id === 'drawer-campaign-detail' || id === 'modal-campaign-report-export' || id === 'drawer-attack-chain-detail') {
+    state.query.set('__codex_page_id', id);
   } else if (id.startsWith('whitelist-condition-') || id.startsWith('whitelist-expiry-')) {
     state.query.set('__codex_page_id', id);
   } else if (id.startsWith('baselines-')) {
@@ -298,6 +307,18 @@ function routeState(record, route) {
   }
   if (state.query.size === 0 && route?.id && route.id !== record.id) {
     state.notes.push(`no dedicated production state query is implemented for ${id}; captured host route ${route.id}`);
+  }
+  if (
+    id === 'campaigns'
+    || id === 'campaign-detail'
+    || id === 'attack-chains'
+    || id === 'drawer-campaign-detail'
+    || id === 'modal-campaign-report-export'
+    || id === 'drawer-attack-chain-detail'
+    || id.startsWith('campaign-detail-impact-')
+  ) {
+    state.query.set('__codex_ui_breakdown_production', '1');
+    state.notes.push('canonical campaign visual contract state enabled; normal-route runtime is verified separately');
   }
   return state;
 }

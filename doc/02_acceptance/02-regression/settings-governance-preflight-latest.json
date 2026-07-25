@@ -1,21 +1,21 @@
 {
-  "run_id": "20260630-settings-governance-preflight-r1",
+  "run_id": "20260720-settings-governance-r510",
   "result": "pass",
   "apisix": "http://10.0.5.8:30180",
   "tenant": "default",
   "other_tenant": "tenant-b",
   "admin_user_id": "0119603f-453b-49b4-a94d-1f5f150ce2c4",
-  "created_token_id": "faf0492c-9ad5-44d0-b96b-f6729286771a",
-  "regenerated_token_id": "ae49bb57-0bf8-4430-91dc-7ff3a12f09dd",
-  "report": "doc/02_acceptance/runs/20260630-settings-governance-preflight-r1/live-settings-governance-preflight-20260630-settings-governance-preflight-r1.ndjson",
-  "local_report": "doc/02_acceptance/runs/20260630-settings-governance-preflight-r1/local-report.md",
-  "total": 45,
-  "passed": 45,
+  "created_token_id": "a567e294-45d4-4d2a-b75b-103172d1ccf5",
+  "regenerated_token_id": "3224c0f4-b4b4-46a7-a365-6f89a23f2a03",
+  "report": "doc/02_acceptance/runs/20260720071000-settings-governance-r510/live-settings-governance-preflight-20260720-settings-governance-r510.ndjson",
+  "local_report": "doc/02_acceptance/runs/20260720071000-settings-governance-r510/local-report.md",
+  "total": 88,
+  "passed": 88,
   "blockers": 0,
   "warnings": 0,
   "checks": [
     {
-      "ts": "2026-06-30T14:22:59+08:00",
+      "ts": "2026-07-20T07:10:03+08:00",
       "phase": "contract",
       "name": "frontend settings action contract present",
       "severity": "info",
@@ -25,17 +25,17 @@
       "artifact": "web/ui/src/services/pageApiPlans.ts"
     },
     {
-      "ts": "2026-06-30T14:22:59+08:00",
+      "ts": "2026-07-20T07:10:03+08:00",
       "phase": "api",
       "name": "scope catalog readable",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"scopes\":[{\"name\":\"probe:ingest\",\"description\":\"Upload flow events and PCAP index\",\"category\":\"probe\"},{\"name\":\"probe:metrics\",\"description\":\"Report probe metrics\",\"category\":\"probe\"},{\"name\":\"user:read\",\"description\":\"Read users\",\"category\":\"user\"},{\"name\":\"user:write\",\"description\":\"Create and update users\",\"category\":\"user\"},{\"name\":\"user:delete\",\"description\":\"Delete users\",\"category\":\"user\"},{\"name\":\"alert:read\",\"description\":\"Read alerts\",\"category\":\"alert\"},{\"name\":\"alert:write\",\"description\":\"Update alert status and feedback\",\"category\":\"alert\"},{\"name\":\"alert:export\",\"description\":\"Export alerts\",\"category\":\"alert\"},{\"name\":\"rule:read\",\"description\":\"Read detection rules\",\"category\":\"rule\"},{\"name\":\"rule:write\",\"description\":\"Create and update detection rules\",\"category\":\"rule\"},{\"name\":\"rule:delete\",\"description\":\"Delete detection rules\",\"category\":\"rule\"},{\"name\":\"deploy:read\",\"description\":\"Read deployments\",\"category\":\"deploy\"},{\"name\":\"deploy:create\",\"description\":\"Create deployments\",\"category\":\"deploy\"},{\"name\":\"deploy:activate\",\"description\":\"Activate deployments\",\"category\":\"deploy\"},{\"name\":\"deploy:rollback\",\"description\":\"Rollback deployments\",\"category\":\"deplo",
+      "detail": "{\"scopes\":[{\"name\":\"probe:ingest\",\"description\":\"Upload flow events and PCAP index\",\"category\":\"probe\"},{\"name\":\"probe:metrics\",\"description\":\"Report probe metrics\",\"category\":\"probe\"},{\"name\":\"probe:read\",\"description\":\"Read probe inventory, health and operations\",\"category\":\"probe\"},{\"name\":\"probe:write\",\"description\":\"Manage probe configuration, certificate rotation and upgrades\",\"category\":\"probe\"},{\"name\":\"user:read\",\"description\":\"Read users\",\"category\":\"user\"},{\"name\":\"user:write\",\"description\":\"Create and update users\",\"category\":\"user\"},{\"name\":\"user:delete\",\"description\":\"Delete users\",\"category\":\"user\"},{\"name\":\"alert:read\",\"description\":\"Read alerts\",\"category\":\"alert\"},{\"name\":\"alert:write\",\"description\":\"Update alert status and feedback\",\"category\":\"alert\"},{\"name\":\"alert:export\",\"description\":\"Export alerts\",\"category\":\"alert\"},{\"name\":\"playbook:read\",\"description\":\"Read tenant SOAR playbooks and evidence\",\"category\":\"playbook\"},{\"name\":\"playbook:write\",\"description\":\"Create, edit, submit, enable and disable SOAR playbooks\",\"category\":\"playbook\"},{\"name\":\"playbook:drill\",\"description\":\"Run and roll back simulated SOAR drills\",\"category\":\"playbook\"},{\"name\":\"playbook:",
       "artifact": "token-scopes.json"
     },
     {
-      "ts": "2026-06-30T14:22:59+08:00",
+      "ts": "2026-07-20T07:10:03+08:00",
       "phase": "assert",
       "name": "scope catalog includes token scopes",
       "severity": "info",
@@ -45,17 +45,17 @@
       "artifact": "token-scopes.json"
     },
     {
-      "ts": "2026-06-30T14:22:59+08:00",
+      "ts": "2026-07-20T07:10:03+08:00",
       "phase": "api",
       "name": "probe scope catalog readable",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"default_scopes\":[\"probe:ingest\",\"probe:metrics\"],\"full_scopes\":[\"probe:ingest\",\"probe:metrics\",\"pcap:read\"],\"minimal_scopes\":[\"probe:ingest\"],\"scopes\":[{\"name\":\"probe:ingest\",\"description\":\"Upload flow events and PCAP index\",\"category\":\"probe\"},{\"name\":\"probe:metrics\",\"description\":\"Report probe metrics\",\"category\":\"probe\"}]} ",
+      "detail": "{\"default_scopes\":[\"probe:ingest\",\"probe:metrics\"],\"full_scopes\":[\"probe:ingest\",\"probe:metrics\",\"pcap:read\"],\"minimal_scopes\":[\"probe:ingest\"],\"scopes\":[{\"name\":\"probe:ingest\",\"description\":\"Upload flow events and PCAP index\",\"category\":\"probe\"},{\"name\":\"probe:metrics\",\"description\":\"Report probe metrics\",\"category\":\"probe\"},{\"name\":\"probe:read\",\"description\":\"Read probe inventory, health and operations\",\"category\":\"probe\"},{\"name\":\"probe:write\",\"description\":\"Manage probe configuration, certificate rotation and upgrades\",\"category\":\"probe\"}]} ",
       "artifact": "probe-token-scopes.json"
     },
     {
-      "ts": "2026-06-30T14:22:59+08:00",
+      "ts": "2026-07-20T07:10:03+08:00",
       "phase": "assert",
       "name": "probe scope catalog includes defaults",
       "severity": "info",
@@ -65,17 +65,17 @@
       "artifact": "probe-token-scopes.json"
     },
     {
-      "ts": "2026-06-30T14:22:59+08:00",
+      "ts": "2026-07-20T07:10:03+08:00",
       "phase": "api",
       "name": "token list readable",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"limit\":5,\"offset\":0,\"tokens\":[{\"token_id\":\"4e4eb07c-2922-4ab4-80bc-bb2dfe20c259\",\"tenant_id\":\"default\",\"name\":\"codex-live-token-manual-20260629093941-1631619 (regenerated)\",\"description\":\"Codex live lifecycle probe\",\"token_type\":\"api\",\"token_prefix\":\"api_5esim9iblo8cjo\",\"scopes\":[\"alert:read\",\"token:read\"],\"status\":\"revoked\",\"expires_at\":\"2026-06-29T01:44:41.078893Z\",\"last_used_at\":\"2026-06-29T01:39:41.356414Z\",\"usage_count\":1,\"created_by\":\"f19c52dd-e122-45f3-adb5-03346ae5d171\",\"created_at\":\"2026-06-29T01:39:41.23176Z\",\"updated_at\":\"2026-06-29T01:39:41.363385Z\",\"revoked_at\":\"2026-06-29T01:39:41.363385Z\",\"rotation_enabled\":false},{\"token_id\":\"c5da5110-3f24-401b-9d43-e9c20c02a9e0\",\"tenant_id\":\"default\",\"name\":\"codex-live-token-manual-20260629093941-1631619\",\"description\":\"Codex live lifecycle probe\",\"token_type\":\"api\",\"token_prefix\":\"api_bbpgvjgg4jtakc\",\"scopes\":[\"alert:read\",\"token:read\"],\"status\":\"revoked\",\"expires_at\":\"2026-06-29T01:44:41.078213Z\",\"last_used_at\":\"2026-06-29T01:39:41.219266Z\",\"usage_count\":1,\"created_by\":\"f19c52dd-e122-45f3-adb5-03346ae5d171\",\"created_at\":\"2026-06-29T01:39:41.078215Z\",\"updated_at\":\"2026-06-29T01:39:41.235029Z\",\"revoked_at\":\"2026-06-29T01:39:41.23",
+      "detail": "{\"limit\":5,\"offset\":0,\"tokens\":[{\"token_id\":\"4f6ea494-81a1-44e2-b654-3b48e189fcd1\",\"tenant_id\":\"default\",\"name\":\"codex-settings-ui-r509-1784501880610 (rotated 20260719T225813)\",\"description\":\"Windows Chrome settings interaction evidence\",\"token_type\":\"api\",\"token_prefix\":\"api_0h8j7h2wgxgf1g\",\"scopes\":[\"alert:read\",\"token:read\"],\"status\":\"revoked\",\"expires_at\":\"2026-08-18T22:58:02.592557Z\",\"usage_count\":0,\"created_by\":\"5e6a6367-8652-4b97-8c09-b3685700b696\",\"created_at\":\"2026-07-19T22:58:13.859095Z\",\"updated_at\":\"2026-07-19T22:58:17.163551Z\",\"revoked_at\":\"2026-07-19T22:58:17.163551Z\",\"rotation_enabled\":false,\"previous_token_id\":\"c40cecb6-ab73-4d81-ad55-1cec33bce58a\"},{\"token_id\":\"c40cecb6-ab73-4d81-ad55-1cec33bce58a\",\"tenant_id\":\"default\",\"name\":\"codex-settings-ui-r509-1784501880610\",\"description\":\"Windows Chrome settings interaction evidence\",\"token_type\":\"api\",\"token_prefix\":\"api_ijytgu0f4uptjg\",\"scopes\":[\"alert:read\",\"token:read\"],\"status\":\"revoked\",\"expires_at\":\"2026-08-18T22:58:02.592548Z\",\"usage_count\":0,\"created_by\":\"5e6a6367-8652-4b97-8c09-b3685700b696\",\"created_at\":\"2026-07-19T22:58:02.592549Z\",\"updated_at\":\"2026-07-19T22:58:13.8572Z\",\"revoked_at\":\"2026-07-19T22:58:13.8572Z\"",
       "artifact": "tokens-list.json"
     },
     {
-      "ts": "2026-06-30T14:22:59+08:00",
+      "ts": "2026-07-20T07:10:04+08:00",
       "phase": "assert",
       "name": "token list response shape",
       "severity": "info",
@@ -85,7 +85,327 @@
       "artifact": "tokens-list.json"
     },
     {
-      "ts": "2026-06-30T14:22:59+08:00",
+      "ts": "2026-07-20T07:10:04+08:00",
+      "phase": "api",
+      "name": "tenant system settings workbench readable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"tenant_id\":\"default\",\"tenant_name\":\"default\",\"tenant_status\":\"active\",\"revision\":40,\"settings\":{\"sites\":[{\"id\":\"east-campus\",\"name\":\"华东园区（主租户）\",\"kind\":\"site\",\"isolation_status\":\"isolated\"},{\"id\":\"core-campus\",\"parent_id\":\"east-campus\",\"name\":\"核心园区\",\"kind\":\"campus\",\"isolation_status\":\"isolated\"},{\"id\":\"campus-a\",\"parent_id\":\"east-campus\",\"name\":\"分园区A\",\"kind\":\"campus\",\"isolation_status\":\"isolated\"},{\"id\":\"campus-b\",\"parent_id\":\"east-campus\",\"name\":\"分园区B\",\"kind\":\"campus\",\"isolation_status\":\"isolated\"},{\"id\":\"rd-network\",\"parent_id\":\"east-campus\",\"name\":\"研发网络\",\"cidr\":\"10.10.0.0/16\",\"kind\":\"folder\",\"isolation_status\":\"isolated\"},{\"id\":\"teaching-segment\",\"parent_id\":\"rd-network\",\"name\":\"教学网段\",\"cidr\":\"10.10.0.0/16\",\"kind\":\"segment\",\"isolation_status\":\"isolated\"},{\"id\":\"test-segment\",\"parent_id\":\"rd-network\",\"name\":\"测试网段\",\"cidr\":\"10.11.0.0/16\",\"kind\":\"segment\",\"isolation_status\":\"isolated\"},{\"id\":\"office-segment\",\"parent_id\":\"rd-network\",\"name\":\"办公网段\",\"cidr\":\"10.12.0.0/16\",\"kind\":\"segment\",\"isolation_status\":\"isolated\"},{\"id\":\"production-network\",\"parent_id\":\"east-campus\",\"name\":\"生产网段\",\"kind\":\"folder\",\"isolatio",
+      "artifact": "system-settings-initial.json"
+    },
+    {
+      "ts": "2026-07-20T07:10:04+08:00",
+      "phase": "assert",
+      "name": "tenant system settings workbench uses tenant-scoped persisted model",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".tenant_id == $tenant and (.revision | type == \"number\") and (.settings.sites | length >= 1) and (.settings.retention_policies | length >= 1) and (.settings.integrations | length >= 1) and (.roles | type == \"array\") and (.tokens.active | type == \"number\")",
+      "artifact": "system-settings-initial.json"
+    },
+    {
+      "ts": "2026-07-20T07:10:04+08:00",
+      "phase": "api",
+      "name": "tenant system settings saved with optimistic revision",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"tenant_id\":\"default\",\"tenant_name\":\"default\",\"tenant_status\":\"active\",\"revision\":41,\"settings\":{\"sites\":[{\"id\":\"east-campus\",\"name\":\"华东园区（主租户）\",\"kind\":\"site\",\"isolation_status\":\"isolated\"},{\"id\":\"core-campus\",\"parent_id\":\"east-campus\",\"name\":\"核心园区\",\"kind\":\"campus\",\"isolation_status\":\"isolated\"},{\"id\":\"campus-a\",\"parent_id\":\"east-campus\",\"name\":\"分园区A\",\"kind\":\"campus\",\"isolation_status\":\"isolated\"},{\"id\":\"campus-b\",\"parent_id\":\"east-campus\",\"name\":\"分园区B\",\"kind\":\"campus\",\"isolation_status\":\"isolated\"},{\"id\":\"rd-network\",\"parent_id\":\"east-campus\",\"name\":\"研发网络\",\"cidr\":\"10.10.0.0/16\",\"kind\":\"folder\",\"isolation_status\":\"isolated\"},{\"id\":\"teaching-segment\",\"parent_id\":\"rd-network\",\"name\":\"教学网段\",\"cidr\":\"10.10.0.0/16\",\"kind\":\"segment\",\"isolation_status\":\"isolated\"},{\"id\":\"test-segment\",\"parent_id\":\"rd-network\",\"name\":\"测试网段\",\"cidr\":\"10.11.0.0/16\",\"kind\":\"segment\",\"isolation_status\":\"isolated\"},{\"id\":\"office-segment\",\"parent_id\":\"rd-network\",\"name\":\"办公网段\",\"cidr\":\"10.12.0.0/16\",\"kind\":\"segment\",\"isolation_status\":\"isolated\"},{\"id\":\"production-network\",\"parent_id\":\"east-campus\",\"name\":\"生产网段\",\"kind\":\"folder\",\"isolatio",
+      "artifact": "system-settings-saved.json"
+    },
+    {
+      "ts": "2026-07-20T07:10:04+08:00",
+      "phase": "assert",
+      "name": "tenant system settings revision advanced",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".revision == ($previous + 1) and .tenant_id == \"default\"",
+      "artifact": "system-settings-saved.json"
+    },
+    {
+      "ts": "2026-07-20T07:10:04+08:00",
+      "phase": "api",
+      "name": "stale tenant system settings revision rejected",
+      "severity": "info",
+      "passed": true,
+      "status": "409",
+      "detail": "{\"code\":\"BIZ_3005\",\"message\":\"system settings revision conflict\",\"trace_id\":\"959e903a-67d7-4ee7-90e9-fe1fc0d61f5d\",\"timestamp\":\"2026-07-19T23:10:04Z\",\"path\":\"/api/v1/auth/system-settings\"} ",
+      "artifact": "system-settings-stale.json"
+    },
+    {
+      "ts": "2026-07-20T07:10:04+08:00",
+      "phase": "assert",
+      "name": "stale tenant system settings response is version conflict",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "(.code // .error.code // \"\") == \"BIZ_3005\"",
+      "artifact": "system-settings-stale.json"
+    },
+    {
+      "ts": "2026-07-20T07:10:04+08:00",
+      "phase": "api",
+      "name": "tenant integration connection test persists result",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"action\":\"connection-test\",\"status\":\"warning\",\"message\":\"真实连接测试已完成：2 个端点不可达，结果已写入租户配置\",\"revision\":42,\"updated_at\":\"2026-07-19T23:10:04.405331Z\",\"findings\":[\"Keycloak: keycloak.middleware.svc.cluster.local:8080 不可达: dial tcp 10.110.102.1:8080: connect: connection refused\",\"Webhook: 未配置可探测 endpoint\"],\"integrations\":[{\"id\":\"keycloak\",\"name\":\"Keycloak\",\"enabled\":true,\"status\":\"degraded\",\"secret_ref\":\"secret://traffic-credentials/keycloak\",\"last_tested_at\":\"2026-07-19T23:10:04.399973019Z\"},{\"id\":\"apisix\",\"name\":\"APISIX\",\"enabled\":true,\"status\":\"healthy\",\"last_tested_at\":\"2026-07-19T23:10:04.399973019Z\"},{\"id\":\"kafka\",\"name\":\"Kafka\",\"enabled\":true,\"status\":\"healthy\",\"secret_ref\":\"secret://traffic-credentials/kafka\",\"last_tested_at\":\"2026-07-19T23:10:04.399973019Z\"},{\"id\":\"minio\",\"name\":\"MinIO\",\"enabled\":true,\"status\":\"healthy\",\"secret_ref\":\"secret://traffic-credentials/minio\",\"last_tested_at\":\"2026-07-19T23:10:04.399973019Z\"},{\"id\":\"opensearch\",\"name\":\"OpenSearch\",\"enabled\":true,\"status\":\"healthy\",\"secret_ref\":\"secret://traffic-credentials/opensearch\",\"last_tested_at\":\"2026-07-19T23:10:04.399973019Z\"},{\"id\":\"nebula\",\"",
+      "artifact": "system-settings-connection-test.json"
+    },
+    {
+      "ts": "2026-07-20T07:10:04+08:00",
+      "phase": "assert",
+      "name": "connection test advances revision reports measured status and hides secrets",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "(.status == \"success\" or .status == \"warning\") and .revision == ($previous + 1) and (.integrations | length >= 1) and ([.integrations[].status] | all(. == \"healthy\" or . == \"degraded\" or . == \"disabled\")) and ([.. | objects | has(\"password\") or has(\"token\") or has(\"secret\")] | any | not)",
+      "artifact": "system-settings-connection-test.json"
+    },
+    {
+      "ts": "2026-07-20T07:10:04+08:00",
+      "phase": "api",
+      "name": "single integration connection test persists one measured result",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"action\":\"test-integration\",\"status\":\"success\",\"message\":\"真实连接测试已完成，所有已启用端点可达，结果已写入租户配置\",\"revision\":43,\"updated_at\":\"2026-07-19T23:10:04.54439Z\",\"integrations\":[{\"id\":\"keycloak\",\"name\":\"Keycloak\",\"enabled\":true,\"status\":\"degraded\",\"secret_ref\":\"secret://traffic-credentials/keycloak\",\"last_tested_at\":\"2026-07-19T23:10:04.399973019Z\"},{\"id\":\"apisix\",\"name\":\"APISIX\",\"enabled\":true,\"status\":\"healthy\",\"last_tested_at\":\"2026-07-19T23:10:04.544265246Z\"},{\"id\":\"kafka\",\"name\":\"Kafka\",\"enabled\":true,\"status\":\"healthy\",\"secret_ref\":\"secret://traffic-credentials/kafka\",\"last_tested_at\":\"2026-07-19T23:10:04.399973019Z\"},{\"id\":\"minio\",\"name\":\"MinIO\",\"enabled\":true,\"status\":\"healthy\",\"secret_ref\":\"secret://traffic-credentials/minio\",\"last_tested_at\":\"2026-07-19T23:10:04.399973019Z\"},{\"id\":\"opensearch\",\"name\":\"OpenSearch\",\"enabled\":true,\"status\":\"healthy\",\"secret_ref\":\"secret://traffic-credentials/opensearch\",\"last_tested_at\":\"2026-07-19T23:10:04.399973019Z\"},{\"id\":\"nebula\",\"name\":\"NebulaGraph\",\"enabled\":true,\"status\":\"healthy\",\"secret_ref\":\"secret://traffic-credentials/nebula\",\"last_tested_at\":\"2026-07-19T23:10:04.399973019Z\"},{\"id\":\"webh",
+      "artifact": "system-settings-single-connection-test.json"
+    },
+    {
+      "ts": "2026-07-20T07:10:04+08:00",
+      "phase": "assert",
+      "name": "single integration connection test advances revision",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".revision == ($previous + 1) and .action == \"test-integration\"",
+      "artifact": "system-settings-single-connection-test.json"
+    },
+    {
+      "ts": "2026-07-20T07:10:04+08:00",
+      "phase": "api",
+      "name": "tenant scope review is truthful and non-mutating",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"action\":\"scope-review\",\"status\":\"warning\",\"message\":\"权限范围复核完成：检查 4 个角色；当前有效令牌 0 个；未执行权限变更\",\"revision\":43,\"updated_at\":\"2026-07-19T23:10:04.684964265Z\",\"findings\":[\"角色 operator 包含未知权限 alert\",\"角色 operator 包含未知权限 flow:read\",\"角色 viewer 包含未知权限 dashboard:read\",\"角色 viewer 包含未知权限 flow:read\"],\"tokens\":{\"total\":21,\"active\":0,\"expiring_soon\":0,\"revoked\":21},\"roles\":[{\"id\":\"f0e59fc3-b6a0-4293-8cf8-c3dc866c627f\",\"name\":\"admin\",\"description\":\"Administrator with full access\",\"permissions\":[\"*\",\"admin:*\",\"admin:cross_tenant\",\"alert:export\",\"alert:read\",\"alert:write\",\"asset:discover\",\"asset:read\",\"deploy:activate\",\"deploy:create\",\"deploy:read\",\"deploy:rollback\",\"dlq:replay\",\"graph:read\",\"pcap:cut\",\"pcap:download\",\"pcap:read\",\"probe:ingest\",\"probe:metrics\",\"probe:write\",\"rule:delete\",\"rule:read\",\"rule:write\",\"screen:view\",\"token:read\",\"token:write\",\"user:delete\",\"user:read\",\"user:write\"],\"system\":true},{\"id\":\"d681e943-f1b1-4914-956d-0170af5dce95\",\"name\":\"operator\",\"description\":\"\",\"permissions\":[\"alert\",\"flow:read\",\"pcap:read\"],\"system\":false},{\"id\":\"80ffba12-6e9f-4eee-b3bb-1",
+      "artifact": "system-settings-scope-review.json"
+    },
+    {
+      "ts": "2026-07-20T07:10:04+08:00",
+      "phase": "assert",
+      "name": "scope review does not claim synchronization",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".action == \"scope-review\" and .revision == $revision and (.message | contains(\"未执行权限变更\")) and (.roles | type == \"array\") and (.tokens | type == \"object\")",
+      "artifact": "system-settings-scope-review.json"
+    },
+    {
+      "ts": "2026-07-20T07:10:04+08:00",
+      "phase": "api",
+      "name": "tenant security audit evaluates persisted settings",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"action\":\"security-audit\",\"status\":\"warning\",\"message\":\"安全审计完成，发现 1 项需要关注\",\"revision\":43,\"updated_at\":\"2026-07-19T23:10:04.794209921Z\",\"findings\":[\"海外园区 未隔离\"]} ",
+      "artifact": "system-settings-security-audit.json"
+    },
+    {
+      "ts": "2026-07-20T07:10:04+08:00",
+      "phase": "assert",
+      "name": "security audit returns explainable result",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".action == \"security-audit\" and (.status == \"success\" or .status == \"warning\") and (.message | length > 0) and (.findings | type == \"array\")",
+      "artifact": "system-settings-security-audit.json"
+    },
+    {
+      "ts": "2026-07-20T07:10:04+08:00",
+      "phase": "api",
+      "name": "system settings impact is auditable",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"tenant_id\":\"default\",\"revision\":43,\"affected_scopes\":[\"租户与站点隔离\",\"RBAC 与令牌\",\"数据生命周期\",\"外部集成\",\"安全与显示参数\"],\"risk\":\"medium\",\"approval\":\"admin:write\",\"audit_action\":\"system_settings_update\",\"summary\":\"当前配置包含 11 个站点范围、4 个角色、7 个集成和 6 个留存策略。\"} ",
+      "artifact": "system-settings-impact.json"
+    },
+    {
+      "ts": "2026-07-20T07:10:04+08:00",
+      "phase": "assert",
+      "name": "impact response states scope permission risk and audit action",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".tenant_id == \"default\" and (.affected_scopes | length >= 4) and .approval == \"admin:write\" and .audit_action == \"system_settings_update\" and (.risk | length > 0)",
+      "artifact": "system-settings-impact.json"
+    },
+    {
+      "ts": "2026-07-20T07:10:04+08:00",
+      "phase": "api",
+      "name": "viewer cannot read system settings",
+      "severity": "info",
+      "passed": true,
+      "status": "403",
+      "detail": "{\"code\":\"AUTH_1004\",\"message\":\"admin:read or admin:write required\",\"trace_id\":\"3c55e322-744a-4be0-ac08-fac559e355bc\",\"timestamp\":\"2026-07-19T23:10:04Z\",\"path\":\"/api/v1/auth/system-settings\"} ",
+      "artifact": "system-settings-viewer-denied.json"
+    },
+    {
+      "ts": "2026-07-20T07:10:05+08:00",
+      "phase": "assert",
+      "name": "viewer system settings denial is permission scoped",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "(.code // .error.code // \"\") == \"AUTH_1004\"",
+      "artifact": "system-settings-viewer-denied.json"
+    },
+    {
+      "ts": "2026-07-20T07:10:05+08:00",
+      "phase": "api",
+      "name": "admin reader can read system settings",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"tenant_id\":\"default\",\"tenant_name\":\"default\",\"tenant_status\":\"active\",\"revision\":43,\"settings\":{\"sites\":[{\"id\":\"east-campus\",\"name\":\"华东园区（主租户）\",\"kind\":\"site\",\"isolation_status\":\"isolated\"},{\"id\":\"core-campus\",\"parent_id\":\"east-campus\",\"name\":\"核心园区\",\"kind\":\"campus\",\"isolation_status\":\"isolated\"},{\"id\":\"campus-a\",\"parent_id\":\"east-campus\",\"name\":\"分园区A\",\"kind\":\"campus\",\"isolation_status\":\"isolated\"},{\"id\":\"campus-b\",\"parent_id\":\"east-campus\",\"name\":\"分园区B\",\"kind\":\"campus\",\"isolation_status\":\"isolated\"},{\"id\":\"rd-network\",\"parent_id\":\"east-campus\",\"name\":\"研发网络\",\"cidr\":\"10.10.0.0/16\",\"kind\":\"folder\",\"isolation_status\":\"isolated\"},{\"id\":\"teaching-segment\",\"parent_id\":\"rd-network\",\"name\":\"教学网段\",\"cidr\":\"10.10.0.0/16\",\"kind\":\"segment\",\"isolation_status\":\"isolated\"},{\"id\":\"test-segment\",\"parent_id\":\"rd-network\",\"name\":\"测试网段\",\"cidr\":\"10.11.0.0/16\",\"kind\":\"segment\",\"isolation_status\":\"isolated\"},{\"id\":\"office-segment\",\"parent_id\":\"rd-network\",\"name\":\"办公网段\",\"cidr\":\"10.12.0.0/16\",\"kind\":\"segment\",\"isolation_status\":\"isolated\"},{\"id\":\"production-network\",\"parent_id\":\"east-campus\",\"name\":\"生产网段\",\"kind\":\"folder\",\"isolatio",
+      "artifact": "system-settings-admin-reader.json"
+    },
+    {
+      "ts": "2026-07-20T07:10:05+08:00",
+      "phase": "api",
+      "name": "admin reader cannot mutate system settings",
+      "severity": "info",
+      "passed": true,
+      "status": "403",
+      "detail": "{\"code\":\"AUTH_1004\",\"message\":\"admin:write required\",\"trace_id\":\"dfc40ca4-3b72-4379-b231-81a57ac8aa3e\",\"timestamp\":\"2026-07-19T23:10:05Z\",\"path\":\"/api/v1/auth/system-settings\"} ",
+      "artifact": "system-settings-admin-reader-write-denied.json"
+    },
+    {
+      "ts": "2026-07-20T07:10:05+08:00",
+      "phase": "assert",
+      "name": "admin reader write denial is permission scoped",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "(.code // .error.code // \"\") == \"AUTH_1004\"",
+      "artifact": "system-settings-admin-reader-write-denied.json"
+    },
+    {
+      "ts": "2026-07-20T07:10:05+08:00",
+      "phase": "api",
+      "name": "other tenant reads only its own settings workbench",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"tenant_id\":\"tenant-b\",\"tenant_name\":\"tenant-b\",\"tenant_status\":\"active\",\"revision\":0,\"settings\":{\"sites\":[{\"id\":\"east-campus\",\"name\":\"华东园区（主租户）\",\"kind\":\"site\",\"isolation_status\":\"isolated\"},{\"id\":\"core-campus\",\"parent_id\":\"east-campus\",\"name\":\"核心园区\",\"kind\":\"campus\",\"isolation_status\":\"isolated\"},{\"id\":\"campus-a\",\"parent_id\":\"east-campus\",\"name\":\"分园区A\",\"kind\":\"campus\",\"isolation_status\":\"isolated\"},{\"id\":\"campus-b\",\"parent_id\":\"east-campus\",\"name\":\"分园区B\",\"kind\":\"campus\",\"isolation_status\":\"isolated\"},{\"id\":\"rd-network\",\"parent_id\":\"east-campus\",\"name\":\"研发网络\",\"cidr\":\"10.10.0.0/16\",\"kind\":\"folder\",\"isolation_status\":\"isolated\"},{\"id\":\"teaching-segment\",\"parent_id\":\"rd-network\",\"name\":\"教学网段\",\"cidr\":\"10.10.0.0/16\",\"kind\":\"segment\",\"isolation_status\":\"isolated\"},{\"id\":\"test-segment\",\"parent_id\":\"rd-network\",\"name\":\"测试网段\",\"cidr\":\"10.11.0.0/16\",\"kind\":\"segment\",\"isolation_status\":\"isolated\"},{\"id\":\"office-segment\",\"parent_id\":\"rd-network\",\"name\":\"办公网段\",\"cidr\":\"10.12.0.0/16\",\"kind\":\"segment\",\"isolation_status\":\"isolated\"},{\"id\":\"production-network\",\"parent_id\":\"east-campus\",\"name\":\"生产网段\",\"kind\":\"folder\",\"isolati",
+      "artifact": "system-settings-other-tenant.json"
+    },
+    {
+      "ts": "2026-07-20T07:10:05+08:00",
+      "phase": "assert",
+      "name": "other tenant workbench is isolated",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".tenant_id == $tenant and .tenant_id != \"default\"",
+      "artifact": "system-settings-other-tenant.json"
+    },
+    {
+      "ts": "2026-07-20T07:10:05+08:00",
+      "phase": "postgres",
+      "name": "tenant system settings persisted in PostgreSQL",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "pg-tenant-system-settings-count.txt"
+    },
+    {
+      "ts": "2026-07-20T07:10:05+08:00",
+      "phase": "audit",
+      "name": "system settings update audit row exists",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "action=system_settings_update object_id=default count=16",
+      "artifact": "pg-system-settings-update-audit-count.txt"
+    },
+    {
+      "ts": "2026-07-20T07:10:05+08:00",
+      "phase": "audit",
+      "name": "connection test audit row exists",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "action=system_settings_connection_test object_id=default count=16",
+      "artifact": "pg-system-settings-connection-audit-count.txt"
+    },
+    {
+      "ts": "2026-07-20T07:10:05+08:00",
+      "phase": "postgres",
+      "name": "connection test audit status matches measured response",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "3",
+      "artifact": "pg-system-settings-connection-audit-status-count.txt"
+    },
+    {
+      "ts": "2026-07-20T07:10:05+08:00",
+      "phase": "audit",
+      "name": "single integration test audit row exists",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "action=system_settings_test_integration object_id=default count=11",
+      "artifact": "pg-system-settings-single-connection-audit-count.txt"
+    },
+    {
+      "ts": "2026-07-20T07:10:06+08:00",
+      "phase": "postgres",
+      "name": "single integration audit records exactly one tested target",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "1",
+      "artifact": "pg-system-settings-single-connection-audit-detail-count.txt"
+    },
+    {
+      "ts": "2026-07-20T07:10:06+08:00",
+      "phase": "audit",
+      "name": "scope review audit row exists",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "action=system_settings_scope_review object_id=default count=4",
+      "artifact": "pg-system-settings-scope-review-audit-count.txt"
+    },
+    {
+      "ts": "2026-07-20T07:10:06+08:00",
+      "phase": "audit",
+      "name": "security audit row exists",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "action=system_settings_security_audit object_id=default count=16",
+      "artifact": "pg-system-settings-security-audit-count.txt"
+    },
+    {
+      "ts": "2026-07-20T07:10:06+08:00",
+      "phase": "audit",
+      "name": "impact view audit row exists",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "action=system_settings_impact_view object_id=default count=16",
+      "artifact": "pg-system-settings-impact-audit-count.txt"
+    },
+    {
+      "ts": "2026-07-20T07:10:06+08:00",
       "phase": "api",
       "name": "display settings saved",
       "severity": "info",
@@ -95,7 +415,7 @@
       "artifact": "settings-display-save.json"
     },
     {
-      "ts": "2026-06-30T14:22:59+08:00",
+      "ts": "2026-07-20T07:10:06+08:00",
       "phase": "assert",
       "name": "display settings save response shape",
       "severity": "info",
@@ -105,7 +425,7 @@
       "artifact": "settings-display-save.json"
     },
     {
-      "ts": "2026-06-30T14:22:59+08:00",
+      "ts": "2026-07-20T07:10:06+08:00",
       "phase": "api",
       "name": "display settings readable",
       "severity": "info",
@@ -115,7 +435,7 @@
       "artifact": "settings-display-get.json"
     },
     {
-      "ts": "2026-06-30T14:22:59+08:00",
+      "ts": "2026-07-20T07:10:06+08:00",
       "phase": "assert",
       "name": "display settings read response includes saved values",
       "severity": "info",
@@ -125,17 +445,17 @@
       "artifact": "settings-display-get.json"
     },
     {
-      "ts": "2026-06-30T14:22:59+08:00",
+      "ts": "2026-07-20T07:10:06+08:00",
       "phase": "api",
       "name": "invalid settings category rejected",
       "severity": "info",
       "passed": true,
       "status": "400",
-      "detail": "{\"code\":\"VALID_2003\",\"message\":\"invalid settings category\",\"trace_id\":\"de16aee2-cce0-4385-bf7c-c1f3aec8bda1\",\"timestamp\":\"2026-06-30T06:22:59Z\",\"path\":\"/api/v1/auth/settings/security\"} ",
+      "detail": "{\"code\":\"VALID_2003\",\"message\":\"invalid settings category\",\"trace_id\":\"37a98141-57c6-4545-ba1c-843b4ff5338d\",\"timestamp\":\"2026-07-19T23:10:06Z\",\"path\":\"/api/v1/auth/settings/security\"} ",
       "artifact": "settings-invalid-category.json"
     },
     {
-      "ts": "2026-06-30T14:22:59+08:00",
+      "ts": "2026-07-20T07:10:06+08:00",
       "phase": "assert",
       "name": "invalid settings category mentions validation",
       "severity": "info",
@@ -145,7 +465,7 @@
       "artifact": "settings-invalid-category.json"
     },
     {
-      "ts": "2026-06-30T14:23:00+08:00",
+      "ts": "2026-07-20T07:10:06+08:00",
       "phase": "postgres",
       "name": "display settings persisted in PostgreSQL",
       "severity": "info",
@@ -155,17 +475,17 @@
       "artifact": "pg-user-settings-display-count.txt"
     },
     {
-      "ts": "2026-06-30T14:23:00+08:00",
+      "ts": "2026-07-20T07:10:06+08:00",
       "phase": "api",
       "name": "viewer cannot create token",
       "severity": "info",
       "passed": true,
       "status": "403",
-      "detail": "{\"code\":\"AUTH_1004\",\"message\":\"Permission denied: admin:write or token:write required\",\"trace_id\":\"25f61141-effb-4282-a1d2-0fc8fe499e46\",\"timestamp\":\"2026-06-30T06:23:00Z\",\"path\":\"/api/v1/tokens\"} ",
+      "detail": "{\"code\":\"AUTH_1004\",\"message\":\"Permission denied: token:write required\",\"trace_id\":\"dba26d4c-67ef-4f10-84e1-bdb2dc59ad9e\",\"timestamp\":\"2026-07-19T23:10:06Z\",\"path\":\"/api/v1/tokens\"} ",
       "artifact": "token-create-viewer-denied.json"
     },
     {
-      "ts": "2026-06-30T14:23:00+08:00",
+      "ts": "2026-07-20T07:10:07+08:00",
       "phase": "assert",
       "name": "viewer token create denial mentions permission",
       "severity": "info",
@@ -175,37 +495,147 @@
       "artifact": "token-create-viewer-denied.json"
     },
     {
-      "ts": "2026-06-30T14:23:00+08:00",
+      "ts": "2026-07-20T07:10:07+08:00",
+      "phase": "api",
+      "name": "settings admin writer cannot create token without token write",
+      "severity": "info",
+      "passed": true,
+      "status": "403",
+      "detail": "{\"code\":\"AUTH_1004\",\"message\":\"Permission denied: token:write required\",\"trace_id\":\"b72b5570-9e5c-4427-b4f6-c451b9b94e3b\",\"timestamp\":\"2026-07-19T23:10:07Z\",\"path\":\"/api/v1/tokens\"} ",
+      "artifact": "token-create-admin-writer-denied.json"
+    },
+    {
+      "ts": "2026-07-20T07:10:07+08:00",
+      "phase": "assert",
+      "name": "settings admin writer token denial is permission scoped",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "((.error.message // .message // \"\")) | contains(\"token:write required\")",
+      "artifact": "token-create-admin-writer-denied.json"
+    },
+    {
+      "ts": "2026-07-20T07:10:07+08:00",
+      "phase": "api",
+      "name": "admin domain wildcard cannot create token without token write",
+      "severity": "info",
+      "passed": true,
+      "status": "403",
+      "detail": "{\"code\":\"AUTH_1004\",\"message\":\"Permission denied: token:write required\",\"trace_id\":\"3e126136-cb13-48b2-a430-2784f4890098\",\"timestamp\":\"2026-07-19T23:10:07Z\",\"path\":\"/api/v1/tokens\"} ",
+      "artifact": "token-create-admin-wildcard-denied.json"
+    },
+    {
+      "ts": "2026-07-20T07:10:07+08:00",
+      "phase": "assert",
+      "name": "admin domain wildcard token denial is permission scoped",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "((.error.message // .message // \"\")) | contains(\"token:write required\")",
+      "artifact": "token-create-admin-wildcard-denied.json"
+    },
+    {
+      "ts": "2026-07-20T07:10:07+08:00",
+      "phase": "api",
+      "name": "token writer cannot delegate admin scope",
+      "severity": "info",
+      "passed": true,
+      "status": "403",
+      "detail": "{\"code\":\"AUTH_1004\",\"message\":\"Permission denied: requested scopes exceed caller permissions\",\"trace_id\":\"e633256b-6730-408e-8554-ba8212de4756\",\"timestamp\":\"2026-07-19T23:10:07Z\",\"path\":\"/api/v1/tokens\"} ",
+      "artifact": "token-create-delegation-denied.json"
+    },
+    {
+      "ts": "2026-07-20T07:10:07+08:00",
+      "phase": "assert",
+      "name": "scope delegation denial is explicit",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "((.error.message // .message // \"\")) | contains(\"requested scopes exceed caller permissions\")",
+      "artifact": "token-create-delegation-denied.json"
+    },
+    {
+      "ts": "2026-07-20T07:10:07+08:00",
+      "phase": "api",
+      "name": "token writer cannot mint probe credential",
+      "severity": "info",
+      "passed": true,
+      "status": "403",
+      "detail": "{\"code\":\"AUTH_1004\",\"message\":\"Permission denied: probe scopes exceed caller permissions\",\"trace_id\":\"ce106bb3-6efd-4200-8642-2f47b83ed409\",\"timestamp\":\"2026-07-19T23:10:07Z\",\"path\":\"/api/v1/tokens/probe\"} ",
+      "artifact": "probe-token-create-delegation-denied.json"
+    },
+    {
+      "ts": "2026-07-20T07:10:07+08:00",
+      "phase": "assert",
+      "name": "probe scope delegation denial is explicit",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "((.error.message // .message // \"\")) | contains(\"probe scopes exceed caller permissions\")",
+      "artifact": "probe-token-create-delegation-denied.json"
+    },
+    {
+      "ts": "2026-07-20T07:10:07+08:00",
+      "phase": "api",
+      "name": "admin creates protected scope token",
+      "severity": "info",
+      "passed": true,
+      "status": "201",
+      "detail": "{\"token_id\":\"f2732985-9200-4266-b48d-2c767a301534\",\"token\":\"<redacted>\",\"token_prefix\":\"api_byu6rwyxaokolp\",\"name\":\"codex-settings-protected-20260720-settings-governance-r510\",\"scopes\":[\"admin:read\"],\"expires_at\":\"2026-07-19T23:15:07.454909187Z\",\"created_at\":\"2026-07-19T23:10:07.454910623Z\"} ",
+      "artifact": "tmp.TDEjoxZJUm"
+    },
+    {
+      "ts": "2026-07-20T07:10:07+08:00",
+      "phase": "api",
+      "name": "token writer cannot modify higher scope token metadata",
+      "severity": "info",
+      "passed": true,
+      "status": "403",
+      "detail": "{\"code\":\"AUTH_1004\",\"message\":\"Permission denied: token scopes exceed caller permissions\",\"trace_id\":\"a483befe-fb8e-4212-bde0-18fc84f76057\",\"timestamp\":\"2026-07-19T23:10:07Z\",\"path\":\"/api/v1/tokens/f2732985-9200-4266-b48d-2c767a301534\"} ",
+      "artifact": "token-update-protected-denied.json"
+    },
+    {
+      "ts": "2026-07-20T07:10:07+08:00",
+      "phase": "assert",
+      "name": "target token scope ceiling denial is explicit",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "((.error.message // .message // \"\")) | contains(\"token scopes exceed caller permissions\")",
+      "artifact": "token-update-protected-denied.json"
+    },
+    {
+      "ts": "2026-07-20T07:10:07+08:00",
       "phase": "api",
       "name": "admin creates settings API token",
       "severity": "info",
       "passed": true,
       "status": "201",
-      "detail": "{\"token_id\":\"faf0492c-9ad5-44d0-b96b-f6729286771a\",\"token\":\"<redacted>\",\"token_prefix\":\"api_tepqnnpfdvbx0j\",\"name\":\"codex-settings-token-20260630-settings-governance-preflight-r1\",\"scopes\":[\"alert:read\",\"token:read\"],\"expires_at\":\"2026-06-30T06:28:00.164746801Z\",\"created_at\":\"2026-06-30T06:23:00.164748138Z\"} ",
-      "artifact": "tmp.oPi5lMtNkY"
+      "detail": "{\"token_id\":\"a567e294-45d4-4d2a-b75b-103172d1ccf5\",\"token\":\"<redacted>\",\"token_prefix\":\"api_hx29txejpob8-e\",\"name\":\"codex-settings-token-20260720-settings-governance-r510\",\"scopes\":[\"alert:read\",\"token:read\"],\"expires_at\":\"2026-07-19T23:15:07.636159514Z\",\"created_at\":\"2026-07-19T23:10:07.636161261Z\"} ",
+      "artifact": "tmp.CJJOnCA2nk"
     },
     {
-      "ts": "2026-06-30T14:23:00+08:00",
+      "ts": "2026-07-20T07:10:07+08:00",
       "phase": "assert",
       "name": "created token response hides hash",
       "severity": "info",
       "passed": true,
       "status": "ok",
       "detail": ".token_id and .token and .token_prefix and (.token_hash? == null) and ((.scopes // []) | index(\"alert:read\") != null)",
-      "artifact": "tmp.oPi5lMtNkY"
+      "artifact": "tmp.CJJOnCA2nk"
     },
     {
-      "ts": "2026-06-30T14:23:00+08:00",
+      "ts": "2026-07-20T07:10:07+08:00",
       "phase": "assert",
       "name": "created token exposes expected safe prefix",
       "severity": "info",
       "passed": true,
       "status": "ok",
-      "detail": "token_id=faf0492c-9ad5-44d0-b96b-f6729286771a prefix=api_tepqnnpfdvbx0j",
+      "detail": "token_id=a567e294-45d4-4d2a-b75b-103172d1ccf5 prefix=api_hx29txejpob8-e",
       "artifact": "settings-token-create-redacted.json"
     },
     {
-      "ts": "2026-06-30T14:23:00+08:00",
+      "ts": "2026-07-20T07:10:07+08:00",
       "phase": "postgres",
       "name": "created token hash and scopes persisted",
       "severity": "info",
@@ -215,27 +645,27 @@
       "artifact": "pg-settings-token-create-count.txt"
     },
     {
-      "ts": "2026-06-30T14:23:00+08:00",
+      "ts": "2026-07-20T07:10:08+08:00",
       "phase": "audit",
       "name": "create token audit row exists",
       "severity": "info",
       "passed": true,
       "status": "ok",
-      "detail": "action=create_token object_id=faf0492c-9ad5-44d0-b96b-f6729286771a count=1",
+      "detail": "action=create_token object_id=a567e294-45d4-4d2a-b75b-103172d1ccf5 count=1",
       "artifact": "pg-settings-token-create-audit-count.txt"
     },
     {
-      "ts": "2026-06-30T14:23:00+08:00",
+      "ts": "2026-07-20T07:10:08+08:00",
       "phase": "api",
       "name": "other tenant cannot read settings token",
       "severity": "info",
       "passed": true,
       "status": "404",
-      "detail": "{\"code\":\"BIZ_3010\",\"message\":\"Token not found\",\"trace_id\":\"3d3a8d27-c3bb-4ae9-a4e1-ea5727d9694a\",\"timestamp\":\"2026-06-30T06:23:00Z\",\"path\":\"/api/v1/tokens/faf0492c-9ad5-44d0-b96b-f6729286771a\"} ",
+      "detail": "{\"code\":\"BIZ_3010\",\"message\":\"Token not found\",\"trace_id\":\"b99beeaa-3848-4e79-b17f-21a93fdb8de7\",\"timestamp\":\"2026-07-19T23:10:08Z\",\"path\":\"/api/v1/tokens/a567e294-45d4-4d2a-b75b-103172d1ccf5\"} ",
       "artifact": "token-read-other-tenant.json"
     },
     {
-      "ts": "2026-06-30T14:23:00+08:00",
+      "ts": "2026-07-20T07:10:08+08:00",
       "phase": "assert",
       "name": "other tenant token read is isolated",
       "severity": "info",
@@ -245,17 +675,17 @@
       "artifact": "token-read-other-tenant.json"
     },
     {
-      "ts": "2026-06-30T14:23:00+08:00",
+      "ts": "2026-07-20T07:10:08+08:00",
       "phase": "api",
       "name": "invalid token scope rejected",
       "severity": "info",
       "passed": true,
       "status": "400",
-      "detail": "{\"code\":\"VALID_2003\",\"message\":\"invalid scopes: [invalid:scope]\",\"trace_id\":\"42537936-ecce-4507-9b10-c44fef1d6b33\",\"timestamp\":\"2026-06-30T06:23:00Z\",\"path\":\"/api/v1/tokens/faf0492c-9ad5-44d0-b96b-f6729286771a/scopes\"} ",
+      "detail": "{\"code\":\"VALID_2003\",\"message\":\"invalid scopes: [invalid:scope]\",\"trace_id\":\"628c3a88-48ca-4375-9908-ccc1af404a1a\",\"timestamp\":\"2026-07-19T23:10:08Z\",\"path\":\"/api/v1/tokens/a567e294-45d4-4d2a-b75b-103172d1ccf5/scopes\"} ",
       "artifact": "token-scope-invalid.json"
     },
     {
-      "ts": "2026-06-30T14:23:00+08:00",
+      "ts": "2026-07-20T07:10:08+08:00",
       "phase": "assert",
       "name": "invalid scope response names invalid scope",
       "severity": "info",
@@ -265,7 +695,7 @@
       "artifact": "token-scope-invalid.json"
     },
     {
-      "ts": "2026-06-30T14:23:00+08:00",
+      "ts": "2026-07-20T07:10:08+08:00",
       "phase": "api",
       "name": "admin updates token scopes",
       "severity": "info",
@@ -275,7 +705,7 @@
       "artifact": "token-scope-update.json"
     },
     {
-      "ts": "2026-06-30T14:23:00+08:00",
+      "ts": "2026-07-20T07:10:08+08:00",
       "phase": "assert",
       "name": "scope update response confirms success",
       "severity": "info",
@@ -285,7 +715,7 @@
       "artifact": "token-scope-update.json"
     },
     {
-      "ts": "2026-06-30T14:23:00+08:00",
+      "ts": "2026-07-20T07:10:08+08:00",
       "phase": "postgres",
       "name": "updated token scopes persisted",
       "severity": "info",
@@ -295,17 +725,17 @@
       "artifact": "pg-settings-token-scope-update-count.txt"
     },
     {
-      "ts": "2026-06-30T14:23:01+08:00",
+      "ts": "2026-07-20T07:10:08+08:00",
       "phase": "api",
       "name": "created raw token validates after scope update",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"expires_at\":\"2026-06-30T06:28:00.164747Z\",\"name\":\"codex-settings-token-20260630-settings-governance-preflight-r1\",\"probe_id\":\"\",\"scopes\":[\"alert:read\"],\"tenant_id\":\"default\",\"valid\":true} ",
+      "detail": "{\"expires_at\":\"2026-07-19T23:15:07.63616Z\",\"name\":\"codex-settings-token-20260720-settings-governance-r510\",\"probe_id\":\"\",\"scopes\":[\"alert:read\"],\"tenant_id\":\"default\",\"valid\":true} ",
       "artifact": "token-validate-created.json"
     },
     {
-      "ts": "2026-06-30T14:23:01+08:00",
+      "ts": "2026-07-20T07:10:08+08:00",
       "phase": "assert",
       "name": "created token validate response reflects updated scope",
       "severity": "info",
@@ -315,27 +745,27 @@
       "artifact": "token-validate-created.json"
     },
     {
-      "ts": "2026-06-30T14:23:01+08:00",
+      "ts": "2026-07-20T07:10:08+08:00",
       "phase": "api",
       "name": "admin regenerates settings token",
       "severity": "info",
       "passed": true,
       "status": "201",
-      "detail": "{\"token_id\":\"ae49bb57-0bf8-4430-91dc-7ff3a12f09dd\",\"token\":\"<redacted>\",\"token_prefix\":\"api_5_ljkr7lik-iao\",\"name\":\"codex-settings-token-20260630-settings-governance-preflight-r1 (regenerated)\",\"scopes\":[\"alert:read\"],\"expires_at\":\"2026-06-30T06:28:00.165156053Z\",\"created_at\":\"2026-06-30T06:23:01.133477402Z\"} ",
-      "artifact": "tmp.nKA8e6vOZ1"
+      "detail": "{\"token_id\":\"3224c0f4-b4b4-46a7-a365-6f89a23f2a03\",\"token\":\"<redacted>\",\"token_prefix\":\"api_cyf7bz_i17s-d0\",\"name\":\"codex-settings-token-20260720-settings-governance-r510 (rotated 20260719T231008)\",\"scopes\":[\"alert:read\"],\"expires_at\":\"2026-07-19T23:15:07.636170959Z\",\"created_at\":\"2026-07-19T23:10:08.762969815Z\"} ",
+      "artifact": "tmp.Wm5yZbEo6e"
     },
     {
-      "ts": "2026-06-30T14:23:01+08:00",
+      "ts": "2026-07-20T07:10:09+08:00",
       "phase": "assert",
       "name": "regenerated token response hides hash",
       "severity": "info",
       "passed": true,
       "status": "ok",
       "detail": ".token_id and .token and .token_prefix and (.token_hash? == null)",
-      "artifact": "tmp.nKA8e6vOZ1"
+      "artifact": "tmp.Wm5yZbEo6e"
     },
     {
-      "ts": "2026-06-30T14:23:01+08:00",
+      "ts": "2026-07-20T07:10:09+08:00",
       "phase": "postgres",
       "name": "old token revoked by regenerate",
       "severity": "info",
@@ -345,7 +775,7 @@
       "artifact": "pg-settings-token-old-revoked-count.txt"
     },
     {
-      "ts": "2026-06-30T14:23:01+08:00",
+      "ts": "2026-07-20T07:10:09+08:00",
       "phase": "postgres",
       "name": "regenerated token hash persisted",
       "severity": "info",
@@ -355,27 +785,27 @@
       "artifact": "pg-settings-token-regenerate-count.txt"
     },
     {
-      "ts": "2026-06-30T14:23:01+08:00",
+      "ts": "2026-07-20T07:10:09+08:00",
       "phase": "audit",
       "name": "regenerate token audit row exists",
       "severity": "info",
       "passed": true,
       "status": "ok",
-      "detail": "action=regenerate_token object_id=ae49bb57-0bf8-4430-91dc-7ff3a12f09dd count=1",
+      "detail": "action=regenerate_token object_id=3224c0f4-b4b4-46a7-a365-6f89a23f2a03 count=1",
       "artifact": "pg-settings-token-regenerate-audit-count.txt"
     },
     {
-      "ts": "2026-06-30T14:23:01+08:00",
+      "ts": "2026-07-20T07:10:09+08:00",
       "phase": "api",
       "name": "old raw token rejected after regenerate",
       "severity": "info",
       "passed": true,
       "status": "401",
-      "detail": "{\"code\":\"AUTH_1003\",\"message\":\"Invalid token\",\"trace_id\":\"4f595b97-d69a-4998-bcff-32b56777d6b6\",\"timestamp\":\"2026-06-30T06:23:01Z\",\"path\":\"/api/v1/tokens/validate\"} ",
+      "detail": "{\"code\":\"AUTH_1003\",\"message\":\"Invalid token\",\"trace_id\":\"564a910c-f6c7-479a-a747-82e757b5d00c\",\"timestamp\":\"2026-07-19T23:10:09Z\",\"path\":\"/api/v1/tokens/validate\"} ",
       "artifact": "token-validate-old-after-regenerate.json"
     },
     {
-      "ts": "2026-06-30T14:23:01+08:00",
+      "ts": "2026-07-20T07:10:09+08:00",
       "phase": "assert",
       "name": "old token rejected response is invalid token",
       "severity": "info",
@@ -385,17 +815,17 @@
       "artifact": "token-validate-old-after-regenerate.json"
     },
     {
-      "ts": "2026-06-30T14:23:01+08:00",
+      "ts": "2026-07-20T07:10:09+08:00",
       "phase": "api",
       "name": "regenerated raw token validates",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"expires_at\":\"2026-06-30T06:28:00.165156Z\",\"name\":\"codex-settings-token-20260630-settings-governance-preflight-r1 (regenerated)\",\"probe_id\":\"\",\"scopes\":[\"alert:read\"],\"tenant_id\":\"default\",\"valid\":true} ",
+      "detail": "{\"expires_at\":\"2026-07-19T23:15:07.636171Z\",\"name\":\"codex-settings-token-20260720-settings-governance-r510 (rotated 20260719T231008)\",\"probe_id\":\"\",\"scopes\":[\"alert:read\"],\"tenant_id\":\"default\",\"valid\":true} ",
       "artifact": "token-validate-regenerated.json"
     },
     {
-      "ts": "2026-06-30T14:23:01+08:00",
+      "ts": "2026-07-20T07:10:09+08:00",
       "phase": "assert",
       "name": "regenerated token validate response is tenant scoped",
       "severity": "info",
@@ -405,7 +835,7 @@
       "artifact": "token-validate-regenerated.json"
     },
     {
-      "ts": "2026-06-30T14:23:01+08:00",
+      "ts": "2026-07-20T07:10:09+08:00",
       "phase": "api",
       "name": "admin revokes regenerated token",
       "severity": "info",
@@ -415,7 +845,7 @@
       "artifact": "token-revoke-regenerated.json"
     },
     {
-      "ts": "2026-06-30T14:23:01+08:00",
+      "ts": "2026-07-20T07:10:09+08:00",
       "phase": "assert",
       "name": "revoke response confirms success",
       "severity": "info",
@@ -425,17 +855,17 @@
       "artifact": "token-revoke-regenerated.json"
     },
     {
-      "ts": "2026-06-30T14:23:01+08:00",
+      "ts": "2026-07-20T07:10:09+08:00",
       "phase": "api",
       "name": "revoked raw token rejected",
       "severity": "info",
       "passed": true,
       "status": "401",
-      "detail": "{\"code\":\"AUTH_1003\",\"message\":\"Invalid token\",\"trace_id\":\"d27fa427-4dc8-4510-a063-1b76f416ce68\",\"timestamp\":\"2026-06-30T06:23:01Z\",\"path\":\"/api/v1/tokens/validate\"} ",
+      "detail": "{\"code\":\"AUTH_1003\",\"message\":\"Invalid token\",\"trace_id\":\"df79faed-9eaa-498a-93d9-00fe82b61d02\",\"timestamp\":\"2026-07-19T23:10:09Z\",\"path\":\"/api/v1/tokens/validate\"} ",
       "artifact": "token-validate-after-revoke.json"
     },
     {
-      "ts": "2026-06-30T14:23:02+08:00",
+      "ts": "2026-07-20T07:10:09+08:00",
       "phase": "assert",
       "name": "revoked token rejected response is invalid token",
       "severity": "info",
@@ -445,7 +875,7 @@
       "artifact": "token-validate-after-revoke.json"
     },
     {
-      "ts": "2026-06-30T14:23:02+08:00",
+      "ts": "2026-07-20T07:10:10+08:00",
       "phase": "postgres",
       "name": "revoked token state persisted",
       "severity": "info",
@@ -455,13 +885,13 @@
       "artifact": "pg-settings-token-revoke-count.txt"
     },
     {
-      "ts": "2026-06-30T14:23:02+08:00",
+      "ts": "2026-07-20T07:10:10+08:00",
       "phase": "audit",
       "name": "revoke token audit row exists",
       "severity": "info",
       "passed": true,
       "status": "ok",
-      "detail": "action=revoke_token object_id=ae49bb57-0bf8-4430-91dc-7ff3a12f09dd count=1",
+      "detail": "action=revoke_token object_id=3224c0f4-b4b4-46a7-a365-6f89a23f2a03 count=1",
       "artifact": "pg-settings-token-revoke-audit-count.txt"
     }
   ]

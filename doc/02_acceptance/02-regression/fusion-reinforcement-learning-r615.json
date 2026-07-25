@@ -1,0 +1,48 @@
+{
+  "page": "fusion",
+  "revision": "r615",
+  "method": "evidence-gated iterative reward loop",
+  "episodes": [
+    {
+      "episode": "r613 baseline",
+      "observation": "responsive geometry and audit structure passed, but straight connector fan-out remained visibly unlike the source",
+      "action": "add center-directed bend control to source curves and fan-out bends to output curves",
+      "reward": "global mismatch improved from 0.11722174 to 0.11719473 and layout review accepted the adaptive geometry"
+    },
+    {
+      "episode": "r614 logic review",
+      "observation": "fusion audit links carried object_type in the URL but AuditLogPage only applied object_id",
+      "action": "initialize the visible object filter from object_type and add Fusion rule/conflict options",
+      "reward": "r615 browser request carried both filters and returned eight of eight matching rows"
+    },
+    {
+      "episode": "r615 evidence hardening",
+      "observation": "response-only write evidence and disabled-button-only RBAC evidence were weaker than the backend contract",
+      "action": "add PostgreSQL row comparison, stale-version 409 and reader-token 403 checks for all three write endpoints",
+      "reward": "all enhanced assertions passed and logic re-review returned ACCEPT with P0/P1/P2=0"
+    },
+    {
+      "episode": "r615 test stabilization",
+      "observation": "pagination assertion could sample old rows after the pagination control became active",
+      "action": "wait for the first conflict identity to change after the server response",
+      "reward": "the final run deterministically observed AF-001..004 then AF-005..008 and passed"
+    }
+  ],
+  "reward_vector": {
+    "functional": "pass",
+    "backend_contract": "77/77",
+    "database_persistence": "pass",
+    "optimistic_lock": "409 pass",
+    "server_rbac": "3/3 403 pass",
+    "responsive_geometry": "17/17 at two widths",
+    "global_visual": "0.1172593557 <= 0.125",
+    "independent_logic": "ACCEPT",
+    "independent_layout": "ACCEPT"
+  },
+  "penalties_retained": [
+    "fusion_pipeline raw ROI 0.1438302168 > 0.142",
+    "bottom_workbench raw ROI 0.1149684148 > 0.102"
+  ],
+  "threshold_relaxation": false,
+  "final_result": "accepted"
+}
