@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
@@ -666,6 +667,8 @@ func TestTopicGovernanceRoutesAreRegisteredUnderAPIV1(t *testing.T) {
 		{name: "subscription update", method: http.MethodPatch, path: "/api/v1/topics/subscriptions/00000000-0000-0000-0000-000000000001", body: `{"enabled":false}`},
 		{name: "report export", method: http.MethodPost, path: "/api/v1/topics/reports/export", body: `{"topic":"tunnel"}`},
 		{name: "evidence package export", method: http.MethodPost, path: "/api/v1/topics/evidence-packages/export", body: `{"topic":"tunnel"}`},
+		{name: "topic action", method: http.MethodPost, path: "/api/v1/topics/tunnel/actions", body: `{"action":"extract_pcap","target":"10.12.8.45","data_mode":"live"}`},
+		{name: "apt evidence action", method: http.MethodPost, path: "/api/v1/topics/apt/evidence-actions", body: `{"action":"trace","target":"ioc-1","data_mode":"live"}`},
 		{name: "fusion value report", method: http.MethodGet, path: "/api/v1/fusion/value-report?window_hours=24"},
 		{name: "fusion workbench", method: http.MethodGet, path: "/api/v1/fusion/workbench"},
 		{name: "fusion evidence export", method: http.MethodPost, path: "/api/v1/fusion/evidence-packages", body: `{"conflict_id":"CF-20260625-018"}`},
@@ -686,6 +689,50 @@ func TestTopicGovernanceRoutesAreRegisteredUnderAPIV1(t *testing.T) {
 				t.Fatalf("expected route %s %s to be registered, got 404 body %s", tc.method, tc.path, recorder.Body.String())
 			}
 		})
+	}
+}
+
+func TestSummarizeAPTTopicCampaignsUsesListedCampaignEvidence(t *testing.T) {
+	campaigns := []campaignDTO{
+		{
+			CampaignID:     "apt-1",
+			Entities:       []string{"asset-1", "asset-2", "asset-2"},
+			Alerts:         []string{"alert-1", "alert-2"},
+			Score:          0.9,
+			AttackPhases:   []string{"initial_access", "persistence", "lateral_movement", "exfiltration"},
+			Status:         "closed",
+			ActivityStatus: "active",
+		},
+		{
+			CampaignID:     "apt-2",
+			Entities:       []string{"asset-1", "asset-3"},
+			Alerts:         []string{"alert-3"},
+			Score:          0.7,
+			AttackPhases:   []string{"execution", "lateral_movement"},
+			Status:         "investigating",
+			ActivityStatus: "investigating",
+		},
+	}
+
+	phases, summary := summarizeAPTTopicCampaigns(campaigns, 9)
+
+	if phases["lateral_movement"] != 2 || phases["persistence"] != 1 {
+		t.Fatalf("unexpected phase distribution: %#v", phases)
+	}
+	if summary["campaign_count"] != int64(9) || summary["listed_campaigns"] != 2 {
+		t.Fatalf("unexpected campaign scope: %#v", summary)
+	}
+	if summary["entity_count"] != 3 || summary["alert_count"] != 3 {
+		t.Fatalf("unexpected entity/alert counts: %#v", summary)
+	}
+	if summary["lateral_move_links"] != 2 || summary["persistence_signals"] != 1 || summary["exfil_evidence_count"] != 2 {
+		t.Fatalf("unexpected APT evidence metrics: %#v", summary)
+	}
+	if summary["cluster_density"] != 1.0 || summary["closure_rate"] != 50.0 || math.Abs(summary["report_confidence"].(float64)-80.0) > 0.0001 {
+		t.Fatalf("unexpected APT derived rates: %#v", summary)
+	}
+	if summary["metric_scope"] != "listed_campaigns" || summary["metric_scope_campaigns"] != 2 {
+		t.Fatalf("expected listed-campaign scope disclosure: %#v", summary)
 	}
 }
 
