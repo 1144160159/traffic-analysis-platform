@@ -1,8 +1,10 @@
 import {
   ApartmentOutlined,
   BranchesOutlined,
+  CaretRightOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
+  CloseOutlined,
   DownloadOutlined,
   EyeOutlined,
   FileProtectOutlined,
@@ -15,15 +17,16 @@ import {
   UserSwitchOutlined,
 } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Alert, Button, Drawer, Empty, Input, Popconfirm, Select, Space, Table, message } from 'antd';
+import { Alert, Button, Drawer, Empty, Input, Modal, Popconfirm, Select, Space, Table, Tabs, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { CampaignAttackGraphChart, DataQualityDonutChart } from '@/components/charts';
 import { MetricTile } from '@/components/MetricTile';
 import { StatusTag } from '@/components/StatusTag';
 import { WorkPanel } from '@/components/WorkPanel';
+import { CampaignImpactModalContent } from '@/pages/CampaignDetailPage';
 import type { NavRoute } from '@/routes/routeManifest';
 import { fetchPageSnapshot } from '@/services/api';
 import { submitCampaignAction, type CampaignActionId, type CampaignActionResult } from '@/services/campaignActionApi';
@@ -81,15 +84,21 @@ const emptyCampaignFilters: CampaignFilters = { risk: '全部', status: '全部'
 
 export function CampaignWorkbenchPage({ route }: { route: NavRoute }) {
   const navigate = useNavigate();
+  const [routeSearch, setRouteSearch] = useSearchParams();
   const queryClient = useQueryClient();
   const visualBreakdownMode = isVisualBreakdownMode();
-  const [selectedRowKey, setSelectedRowKey] = useState<string>();
+  const visualPageId = routeSearch.get('__codex_page_id') ?? '';
+  const requestedCampaign = routeSearch.get('campaign') ?? '';
+  const drawerRequested = routeSearch.get('drawer') === 'campaign-detail';
+  const [selectedRowKey, setSelectedRowKey] = useState<string | undefined>(requestedCampaign || undefined);
   const [filterDraft, setFilterDraft] = useState<CampaignFilters>(emptyCampaignFilters);
   const [appliedFilters, setAppliedFilters] = useState<CampaignFilters>(emptyCampaignFilters);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(visualBreakdownMode ? 10 : 8);
   const [actionContext, setActionContext] = useState<CampaignActionContext>();
   const [detailOpen, setDetailOpen] = useState(false);
+  const [impactOpen, setImpactOpen] = useState(false);
+  const [activeImpact, setActiveImpact] = useState('asset');
   useEffect(() => {
     setPage(1);
     setPageSize(visualBreakdownMode ? 10 : 8);
@@ -110,13 +119,16 @@ export function CampaignWorkbenchPage({ route }: { route: NavRoute }) {
     [apiRows, campaignTotal, visualBreakdownMode],
   );
   const filteredRows = useMemo(
-    () => visualBreakdownMode ? filterCampaignRows(rows, appliedFilters) : rows,
-    [rows, appliedFilters, visualBreakdownMode],
+    () => filterCampaignRows(rows, appliedFilters),
+    [rows, appliedFilters],
   );
   const selectedRow = useMemo(() => {
     if (!filteredRows.length) return undefined;
     return filteredRows.find((row) => rowKey(row) === selectedRowKey) ?? filteredRows[0];
   }, [filteredRows, selectedRowKey]);
+  useEffect(() => {
+    if ((visualPageId === 'drawer-campaign-detail' || drawerRequested) && selectedRow) setDetailOpen(true);
+  }, [drawerRequested, selectedRow, visualPageId]);
 
   const actionMutation = useMutation({
     mutationFn: submitCampaignAction,
@@ -155,7 +167,18 @@ export function CampaignWorkbenchPage({ route }: { route: NavRoute }) {
   const openDetail = async () => {
     if (!selectedCampaignId) return;
     await executeAction('campaign-detail-view', '查看战役详情', { showReceipt: false });
+    const next = new URLSearchParams(routeSearch);
+    next.set('campaign', selectedCampaignId);
+    next.set('drawer', 'campaign-detail');
+    setRouteSearch(next, { replace: true });
     setDetailOpen(true);
+  };
+  const closeDetail = () => {
+    const next = new URLSearchParams(routeSearch);
+    next.delete('drawer');
+    next.delete('detailTab');
+    setRouteSearch(next, { replace: true });
+    setDetailOpen(false);
   };
   const exportRows = async () => {
     if (!selectedCampaignId || !filteredRows.length) {
@@ -178,7 +201,7 @@ export function CampaignWorkbenchPage({ route }: { route: NavRoute }) {
     key: column,
     width: campaignColumnWidth(column),
     ellipsis: true,
-    render: (value, record) => renderCampaignCell(column, value, record, (action) => {
+    render: (value, record) => renderCampaignCell(column, value, record, actionMutation.isPending, (action) => {
       const targetId = rowKey(record);
       setSelectedRowKey(targetId);
       if (action === 'detail') {
@@ -186,7 +209,13 @@ export function CampaignWorkbenchPage({ route }: { route: NavRoute }) {
           targetId,
           target: '表格行查看详情',
           showReceipt: false,
-        }).then(() => setDetailOpen(true)).catch(() => {});
+        }).then(() => {
+          const next = new URLSearchParams(routeSearch);
+          next.set('campaign', targetId);
+          next.set('drawer', 'campaign-detail');
+          setRouteSearch(next, { replace: true });
+          setDetailOpen(true);
+        }).catch(() => {});
         return;
       }
       if (action === 'status') {
@@ -194,13 +223,13 @@ export function CampaignWorkbenchPage({ route }: { route: NavRoute }) {
           targetId,
           target: '表格行状态流转',
           metadata: { next_status: nextCampaignStatus(record) },
-        });
+        }).catch(() => {});
         return;
       }
       void executeAction('campaign-context-action', `查看 ${text(record, '战役名称', '战役')} 操作`, {
         targetId,
         target: '表格行更多操作',
-      });
+      }).catch(() => {});
     }),
   }));
   return (
@@ -315,8 +344,19 @@ export function CampaignWorkbenchPage({ route }: { route: NavRoute }) {
           />
           <ImpactScope
             selectedRow={selectedRow}
+            detail={detailQuery.data}
             disabled={!selectedRow}
-            onInspect={(scope) => void executeAction('campaign-impact-inspect', `查看${scope}影响范围`, { target: scope, metadata: { scope } })}
+            onInspect={(scope) => {
+              if (!selectedCampaignId) return;
+              void executeAction('campaign-impact-inspect', `查看${scope}影响范围`, {
+                target: scope,
+                metadata: { scope },
+                showReceipt: false,
+              }).then(() => {
+                setActiveImpact(campaignImpactRouteId(scope));
+                setImpactOpen(true);
+              }).catch(() => {});
+            }}
             onViewAssets={() => void executeAction('campaign-impact-inspect', '查看资产列表', { target: '资产列表', navigateTo: `/assets?campaign=${encodeURIComponent(selectedCampaignId)}` })}
           />
           <EvidenceCompleteness
@@ -333,6 +373,8 @@ export function CampaignWorkbenchPage({ route }: { route: NavRoute }) {
           />
           <StateTransition
             selectedRow={selectedRow}
+            detail={detailQuery.data}
+            visualBreakdownMode={visualBreakdownMode}
             actions={route.page.actions}
             pending={actionMutation.isPending}
             onAction={(action) => {
@@ -345,28 +387,63 @@ export function CampaignWorkbenchPage({ route }: { route: NavRoute }) {
           />
         </aside>
       </div>
-      <Drawer
+      <Modal
         className="taf-campaign-action-drawer"
         title={actionContext?.title ?? '战役操作'}
         width="min(520px, calc(100dvw - 40px))"
         open={Boolean(actionContext)}
-        onClose={() => setActionContext(undefined)}
+        footer={null}
+        onCancel={() => setActionContext(undefined)}
       >
         {actionContext && <CampaignActionReceipt context={actionContext} />}
-      </Drawer>
+      </Modal>
+      <Modal
+        className="taf-campaign-impact-modal"
+        open={impactOpen}
+        width="min(1040px, calc(100dvw - 96px))"
+        centered
+        title={null}
+        footer={null}
+        styles={{ body: { padding: 0 } }}
+        onCancel={() => setImpactOpen(false)}
+      >
+        {detailQuery.isLoading && <div className="taf-campaign-detail-drawer__loading">正在加载战役影响范围…</div>}
+        {detailQuery.isError && (
+          <Alert
+            type="error"
+            showIcon
+            message="影响范围加载失败"
+            description={detailQuery.error instanceof Error ? detailQuery.error.message : '请检查战役详情接口。'}
+            action={<Button size="small" danger onClick={() => void detailQuery.refetch()}>重试</Button>}
+          />
+        )}
+        {detailQuery.data && (
+          <CampaignImpactModalContent
+            snapshot={detailQuery.data}
+            activeImpact={activeImpact}
+            onImpactChange={setActiveImpact}
+          />
+        )}
+      </Modal>
       <Drawer
-        className="taf-campaign-detail-drawer"
-        title={`战役详情 · ${selectedCampaignId}`}
-        width="min(900px, calc(100dvw - 220px))"
+        rootClassName="taf-campaign-detail-drawer"
+        title={null}
+        placement="right"
+        width="min(900px, calc(100dvw - 32px))"
         open={detailOpen}
-        onClose={() => setDetailOpen(false)}
-        extra={<Button size="small" onClick={() => navigate(`/campaigns/${encodeURIComponent(selectedCampaignId)}`)}>打开完整详情</Button>}
+        closable={false}
+        onClose={closeDetail}
+        styles={{ body: { padding: 0 } }}
       >
         <CampaignDetailDrawerContent
           snapshot={detailQuery.data}
           loading={detailQuery.isLoading}
+          pending={actionMutation.isPending}
           error={detailQuery.error}
           onRetry={() => void detailQuery.refetch()}
+          onClose={closeDetail}
+          onOpenFull={() => navigate(`/campaigns/${encodeURIComponent(selectedCampaignId)}`)}
+          onAction={(actionId, target, metadata) => executeAction(actionId, target, { metadata })}
         />
       </Drawer>
     </div>
@@ -382,7 +459,7 @@ function CampaignFilter({ value, onChange, onReset, onSubmit }: { value: Campaig
       </label>
       <label>
         <span>状态</span>
-        <Select size="small" value={value.status} onChange={(status) => onChange({ ...value, status })} options={[{ value: '全部' }, { value: '活跃中' }, { value: '调查中' }, { value: '已结束' }]} />
+        <Select size="small" value={value.status} onChange={(status) => onChange({ ...value, status })} options={[{ value: '全部' }, { value: '活跃中' }, { value: '调查中' }, { value: '处置中' }, { value: '已结束' }]} />
       </label>
       <label>
         <span>阶段</span>
@@ -542,7 +619,19 @@ function CampaignSummary({ selectedRow, detail, onViewDetail }: { selectedRow?: 
   );
 }
 
-function ImpactScope({ selectedRow, disabled, onInspect, onViewAssets }: { selectedRow?: SnapshotRow; disabled: boolean; onInspect: (scope: string) => void; onViewAssets: () => void }) {
+function ImpactScope({
+  selectedRow,
+  detail,
+  disabled,
+  onInspect,
+  onViewAssets,
+}: {
+  selectedRow?: SnapshotRow;
+  detail?: CampaignDetailSnapshot;
+  disabled: boolean;
+  onInspect: (scope: string) => void;
+  onViewAssets: () => void;
+}) {
   return (
     <WorkPanel title="影响范围" className="taf-campaign-impact-panel" extra={<Button size="small" type="link" disabled={disabled} onClick={onViewAssets}>查看资产列表</Button>}>
       <div className="taf-campaign-impact">
@@ -550,13 +639,25 @@ function ImpactScope({ selectedRow, disabled, onInspect, onViewAssets }: { selec
           <button key={label} type="button" disabled={disabled} onClick={() => onInspect(label)}>
             <Icon />
             <span>{label}</span>
-            <strong>{text(selectedRow, field, '0')} {suffix}</strong>
+            <strong>{campaignImpactValue(detail, label, text(selectedRow, field, '0'))} {suffix}</strong>
           </button>
         ))}
       </div>
     </WorkPanel>
   );
 }
+
+const campaignImpactValue = (detail: CampaignDetailSnapshot | undefined, label: string, fallback: string) =>
+  detail?.impactTabs.find((item) => item.label === label || (label === '园区' && item.label === '校区'))?.value ?? fallback;
+
+const campaignImpactRouteId = (label: string) => {
+  if (label === '账号') return 'account';
+  if (label === '服务') return 'service';
+  if (label === '业务系统') return 'business-system';
+  if (label === '部门') return 'department';
+  if (label === '园区' || label === '校区') return 'campus';
+  return 'asset';
+};
 
 function EvidenceCompleteness({
   selectedRow,
@@ -569,39 +670,34 @@ function EvidenceCompleteness({
   visualBreakdownMode: boolean;
   onViewEvidence: () => void;
 }) {
-  const phaseEvidence = detail?.phases ?? [];
-  const totalEvidence = phaseEvidence.reduce((sum, item) => sum + item.evidenceCount, 0);
-  const totalAlerts = phaseEvidence.reduce((sum, item) => sum + item.alertCount, 0);
   const percentAvailable = visualBreakdownMode || Boolean(detail?.evidenceCompletenessAvailable);
   const percent = visualBreakdownMode ? 78 : (detail?.evidenceCompleteness ?? 0);
   const items = visualBreakdownMode
     ? visualCampaignEvidenceItems()
-    : [
-        { label: '关联告警', value: `${totalAlerts} 条`, status: totalAlerts ? 'ok' : 'warn' },
-        { label: 'PCAP / Session', value: totalEvidence ? `${totalEvidence} 条` : '未提供', status: totalEvidence ? 'ok' : 'warn' },
-        { label: '日志', value: '未提供', status: 'warn' },
-        { label: '图谱路径', value: '未提供', status: 'warn' },
-        { label: '处置记录', value: campaignWorkflowStatus(selectedRow) === '活跃中' ? '进行中' : campaignWorkflowStatus(selectedRow), status: 'info' },
-      ] as PageSnapshot['evidence'];
+    : campaignEvidenceRailItems(detail, selectedRow);
+  const donutRows = percentAvailable
+    ? [
+        { label: '已收集', value: percent, color: '#36d66b' },
+        { label: '待补齐', value: Math.max(0, 100 - percent), color: 'rgba(56,151,201,0.18)' },
+      ]
+    : [{ label: '口径待配置', value: 100, color: 'rgba(56,151,201,0.22)' }];
   return (
     <WorkPanel title="证据完整度" className="taf-campaign-evidence-panel" extra={<Button size="small" type="link" disabled={!selectedRow} onClick={onViewEvidence}>查看证据中心</Button>}>
       <div className="taf-campaign-evidence">
         <div className="taf-campaign-evidence-chart">
           <DataQualityDonutChart
             ariaLabel="战役证据完整度动态图"
-            rows={[
-              { label: '已收集', value: percent, color: '#36d66b' },
-              { label: '待补齐', value: Math.max(0, 100 - percent), color: 'rgba(56,151,201,0.18)' },
-            ]}
+            rows={donutRows}
           />
           <strong>{percentAvailable ? `${percent}%` : '--'}</strong>
           <span>{percentAvailable ? '已收集' : '口径待配置'}</span>
         </div>
-        <div>
+        <div className="taf-campaign-evidence-list">
           {items.slice(0, 5).map((item) => (
             <span key={item.label} className={`is-${item.status}`}>
+              <i aria-hidden="true" />
               <b>{item.label}</b>
-              <i><em style={{ width: evidenceMetricWidth(item.value, item.label) }} /></i>
+              <em aria-hidden="true" />
               <strong>{item.value}</strong>
             </span>
           ))}
@@ -611,29 +707,46 @@ function EvidenceCompleteness({
   );
 }
 
-function StateTransition({ selectedRow, actions, pending, onAction }: { selectedRow?: SnapshotRow; actions: string[]; pending: boolean; onAction: (action: string) => void }) {
-  const campaignActions = ['查看详情', '变更状态', '生成报告', '下钻攻击链', '跳转资产图谱', '进入 SOAR 处置'];
+function StateTransition({
+  selectedRow,
+  detail,
+  visualBreakdownMode,
+  actions,
+  pending,
+  onAction,
+}: {
+  selectedRow?: SnapshotRow;
+  detail?: CampaignDetailSnapshot;
+  visualBreakdownMode: boolean;
+  actions: string[];
+  pending: boolean;
+  onAction: (action: string) => void;
+}) {
+  const campaignActions = ['查看详情', '变更状态', '生成报告', '下钻攻击链', '跳转资产图谱', 'SOAR 处置'];
   const visibleActions = campaignActions.length ? campaignActions : actions;
   if (!selectedRow) {
     return <WorkPanel title="状态流转" className="taf-campaign-state-panel"><Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="请选择战役后执行处置" /></WorkPanel>;
   }
-  const stateFlow = campaignStateFlow(selectedRow);
+  const stateFlow = campaignStateFlow(selectedRow, detail, visualBreakdownMode);
   return (
     <WorkPanel title="状态流转" className="taf-campaign-state-panel">
       <div className="taf-campaign-state-flow">
-        {stateFlow.map(([state, time]) => (
-          <span key={state} className={state === campaignWorkflowStatus(selectedRow) ? 'is-current' : ''}>
-            <strong>{state}</strong>
-            <small>{time}</small>
-          </span>
+        {stateFlow.map(([state, time, current], index) => (
+          <div key={state} className="taf-campaign-state-step">
+            <span className={current ? 'is-current' : ''}>
+              <strong>{state}</strong>
+              <small>{time}</small>
+            </span>
+            {index < stateFlow.length - 1 && <CaretRightOutlined aria-hidden="true" />}
+          </div>
         ))}
       </div>
       <h3 className="taf-campaign-actions-title">战役操作</h3>
       <div className="taf-campaign-actions">
         {visibleActions.map((action) => {
-          const dangerous = action === '变更状态' || action === '进入 SOAR 处置';
+          const dangerous = action === '变更状态' || action === 'SOAR 处置';
           const button = (
-            <Button key={action} size="small" disabled={!selectedRow} loading={pending} onClick={dangerous ? undefined : () => onAction(action)} icon={action.includes('报告') ? <FileProtectOutlined /> : action.includes('攻击链') ? <BranchesOutlined /> : <EyeOutlined />}>
+            <Button key={action} size="small" disabled={!selectedRow} loading={pending} onClick={dangerous ? undefined : () => onAction(action)} icon={campaignActionIcon(action)}>
               {action}
             </Button>
           );
@@ -644,6 +757,7 @@ function StateTransition({ selectedRow, actions, pending, onAction }: { selected
               description={action === '变更状态'
                 ? '需要 alert:write；会修改当前战役的处置状态，并写入 PostgreSQL 与 audit_logs。'
                 : '需要 playbook:execute；仅进入编排页，本页不会直接执行处置动作。'}
+              okButtonProps={{ loading: pending }}
               onConfirm={() => onAction(action)}
             >
               {button}
@@ -659,6 +773,7 @@ const renderCampaignCell = (
   column: string,
   value: unknown,
   record: SnapshotRow,
+  pending: boolean,
   onAction: (action: 'detail' | 'status' | 'more') => void,
 ): ReactNode => {
   if (column === '战役名称') {
@@ -685,6 +800,7 @@ const renderCampaignCell = (
           type="text"
           aria-label={`查看${campaignName}详情`}
           icon={<EyeOutlined />}
+          disabled={pending}
           onClick={(event) => {
             event.stopPropagation();
             onAction('detail');
@@ -693,6 +809,7 @@ const renderCampaignCell = (
         <Popconfirm
           title="确认变更战役处置状态？"
           description="该操作会修改当前战役状态并写入审计日志。"
+          okButtonProps={{ loading: pending }}
           onConfirm={() => onAction('status')}
         >
           <Button
@@ -700,6 +817,7 @@ const renderCampaignCell = (
             type="text"
             aria-label={`变更${campaignName}状态`}
             icon={<CheckCircleOutlined />}
+            disabled={pending}
             onClick={(event) => event.stopPropagation()}
           />
         </Popconfirm>
@@ -708,6 +826,7 @@ const renderCampaignCell = (
           type="text"
           aria-label={`打开${campaignName}更多操作`}
           icon={<MoreOutlined />}
+          disabled={pending}
           onClick={(event) => {
             event.stopPropagation();
             onAction('more');
@@ -792,9 +911,9 @@ const handleCampaignAction = async (
   if (action === '查看详情') return executeAction('campaign-detail-view', action, { navigateTo: `/campaigns/${encodedId}` });
   if (action === '变更状态') return executeAction('campaign-status-change', action, { metadata: { next_status: nextCampaignStatus(selectedRow) } });
   if (action === '生成报告') return executeAction('campaign-report-generate', action, { target: '战役复盘报告', metadata: { format: 'pdf', sections: ['攻击阶段', '影响范围', '证据链', '处置结论'], evidence_count: 5 } });
-  if (action === '下钻攻击链') return executeAction('campaign-attack-chain-view', action, { navigateTo: `/attack-chains?campaign=${encodedId}` });
+  if (action === '下钻攻击链') return executeAction('campaign-attack-chain-view', action, { navigateTo: `/attack-chains?chain=${encodedId}` });
   if (action === '跳转资产图谱') return executeAction('campaign-graph-view', action, { navigateTo: `/graph?campaign=${encodedId}` });
-  if (action === '进入 SOAR 处置') return executeAction('campaign-soar-response', action, { navigateTo: `/playbooks?campaign=${encodedId}`, metadata: { dry_run: true } });
+  if (action === 'SOAR 处置') return executeAction('campaign-soar-response', action, { navigateTo: `/playbooks?campaign=${encodedId}`, metadata: { dry_run: true } });
   return executeAction('campaign-context-action', action);
 };
 
@@ -825,71 +944,193 @@ function CampaignActionReceipt({ context }: { context: CampaignActionContext }) 
 function CampaignDetailDrawerContent({
   snapshot,
   loading,
+  pending,
   error,
   onRetry,
+  onClose,
+  onOpenFull,
+  onAction,
 }: {
   snapshot?: CampaignDetailSnapshot;
   loading: boolean;
+  pending: boolean;
   error: Error | null;
   onRetry: () => void;
+  onClose: () => void;
+  onOpenFull: () => void;
+  onAction: (actionId: CampaignActionId, target: string, metadata?: Record<string, unknown>) => Promise<CampaignActionResult>;
 }) {
+  const [drawerSearch, setDrawerSearch] = useSearchParams();
+  const requestedTab = drawerSearch.get('detailTab');
+  const [activeTab, setActiveTab] = useState(requestedTab && ['detail', 'evidence', 'audit'].includes(requestedTab) ? requestedTab : 'detail');
+  useEffect(() => {
+    setActiveTab(requestedTab && ['detail', 'evidence', 'audit'].includes(requestedTab) ? requestedTab : 'detail');
+  }, [requestedTab]);
+  const changeTab = (tab: string) => {
+    setActiveTab(tab);
+    const next = new URLSearchParams(drawerSearch);
+    if (tab === 'detail') next.delete('detailTab');
+    else next.set('detailTab', tab);
+    setDrawerSearch(next, { replace: true });
+  };
   if (error) {
     return <Alert type="error" showIcon message="战役详情加载失败" description={error.message} action={<Button size="small" danger onClick={onRetry}>重试</Button>} />;
   }
   if (loading || !snapshot) return <div className="taf-campaign-detail-drawer__loading">正在加载战役证据与影响范围…</div>;
+  const graphNodes = snapshot.phases.slice(0, 6).map((phase) => ({
+    name: phase.phase,
+    alertCount: phase.alertCount,
+    evidenceCount: phase.evidenceCount,
+    tone: phase.status,
+  }));
   return (
     <div className="taf-campaign-detail-drawer__content">
+      <header className="taf-campaign-detail-drawer__header">
+        <div><h2>战役详情</h2><p>{snapshot.campaignId}　/　{snapshot.title}　/　置信度 {snapshot.riskScore}%</p></div>
+        <Space>
+          <StatusTag value={snapshot.status} />
+          <StatusTag value={snapshot.riskScore >= 80 ? '高危' : '中危'} />
+          <b>证据 {snapshot.evidenceSummaryRows.length}</b>
+          <Button type="text" aria-label="关闭战役详情" icon={<CloseOutlined />} onClick={onClose} />
+        </Space>
+      </header>
       <section className="taf-campaign-detail-drawer__summary">
-        <div><FlagOutlined /><strong>{snapshot.title}</strong><span>{snapshot.summary}</span></div>
-        <dl>
-          <dt>风险评分</dt><dd>{snapshot.riskScore}/100</dd>
-          <dt>当前阶段</dt><dd>{snapshot.currentPhase}</dd>
-          <dt>负责人</dt><dd>{snapshot.assignee}</dd>
-          <dt>状态</dt><dd><StatusTag value={snapshot.status} /></dd>
-          <dt>关联告警</dt><dd>{snapshot.alertCount} 条</dd>
-          <dt>影响资产</dt><dd>{snapshot.assetCount} 台</dd>
-        </dl>
+        {[
+          ['战役名称', snapshot.campaignId, <FlagOutlined />],
+          ['首次发现', snapshot.firstSeen, <ClockCircleOutlined />],
+          ['最近活动', snapshot.lastUpdated, <ClockCircleOutlined />],
+          ['影响资产', `${snapshot.assetCount} 台`, <ApartmentOutlined />],
+          ['关联告警', `${snapshot.alertCount} 条`, <SafetyCertificateOutlined />],
+          ['聚类置信度', `${snapshot.riskScore}%`, <NodeIndexOutlined />],
+        ].map(([label, value, icon]) => <span key={String(label)}><i>{icon}</i><b>{label}</b><strong>{value}</strong></span>)}
       </section>
-      <section className="taf-campaign-detail-drawer__section">
-        <h3>攻击阶段链</h3>
-        <div className="taf-campaign-detail-drawer__phases">
-          {snapshot.phases.map((phase) => (
-            <span key={phase.phase} className={`is-${phase.status}`}>
-              <b>{phase.phase}</b><small>{phase.time}</small><em>{phase.alertCount} 告警 / {phase.evidenceCount} 证据</em>
-            </span>
-          ))}
-        </div>
-      </section>
-      <div className="taf-campaign-detail-drawer__columns">
-        <section className="taf-campaign-detail-drawer__section">
-          <h3>影响范围</h3>
-          <div className="taf-campaign-detail-drawer__impact">
-            {snapshot.impactTabs.map((item) => <span key={item.label}><b>{item.label}</b><strong>{item.value}</strong></span>)}
-          </div>
-        </section>
-        <section className="taf-campaign-detail-drawer__section">
-          <h3>证据完整度 · {snapshot.evidenceCompleteness}%</h3>
-          <div className="taf-campaign-detail-drawer__evidence">
-            {snapshot.evidenceChecks.map((item) => <span key={item.label} className={`is-${item.status}`}><b>{item.label}</b><strong>{item.value}</strong></span>)}
-          </div>
-        </section>
+      <Tabs
+        className="taf-detail-drawer-tabs"
+        activeKey={activeTab}
+        onChange={changeTab}
+        items={[
+          { key: 'detail', label: '详情' },
+          { key: 'evidence', label: '证据' },
+          { key: 'audit', label: '审计' },
+        ]}
+      />
+      <div className="taf-campaign-detail-drawer__workspace" data-active-tab={activeTab}>
+        <aside>
+          <section className="taf-campaign-detail-drawer__section" data-tab-panel="detail">
+            <h3>聚类原因</h3>
+            <div className="taf-campaign-detail-drawer__reasons">
+              {[
+                ['关联告警', `${snapshot.alertCount} 条`],
+                ['受影响实体', `${snapshot.assetCount} 个`],
+                ['攻击阶段', `${snapshot.phases.length} 个`],
+                ['证据类型', `${snapshot.evidenceSummaryRows.length} 类`],
+                ['阶段数据', snapshot.phaseDataBacked ? '真实聚合' : '接口未提供'],
+              ].map(([label, value]) => <span key={label}><b>{label}</b><strong>{value}</strong></span>)}
+            </div>
+          </section>
+          <section className="taf-campaign-detail-drawer__section" data-tab-panel="detail">
+            <h3>攻击阶段链（当前：{snapshot.currentPhase}）</h3>
+            <div className="taf-campaign-detail-drawer__phases">
+              {snapshot.phases.map((phase) => <span key={phase.phase} className={`is-${phase.status}`}><i /><b>{phase.phase}</b><small>{phase.time}</small></span>)}
+            </div>
+          </section>
+        </aside>
+        <main>
+          <section className="taf-campaign-detail-drawer__section taf-campaign-detail-drawer__graph" data-tab-panel="detail">
+            <h3>证据和攻击链预览</h3>
+            <CampaignAttackGraphChart campaignId={snapshot.campaignId} risk={snapshot.riskScore >= 80 ? '高危' : '中危'} workflowStatus={snapshot.workflowStatus} nodes={graphNodes} ariaLabel="战役详情证据和攻击链预览" />
+          </section>
+          <section className="taf-campaign-detail-drawer__section taf-campaign-detail-drawer__evidence-table" data-tab-panel="evidence">
+            <h3>证据列表（{snapshot.evidenceSummaryRows.length}）</h3>
+            <Table
+              size="small"
+              rowKey="证据类型"
+              pagination={false}
+              dataSource={snapshot.evidenceSummaryRows}
+              columns={[
+                { title: '证据类型', dataIndex: '证据类型' },
+                { title: '对象', dataIndex: '文件记录' },
+                { title: '完整度', dataIndex: '完整度' },
+                { title: '风险', render: () => <StatusTag value={snapshot.riskScore >= 80 ? '高危' : '中危'} /> },
+                {
+                  title: '可操作项',
+                  render: (_, row) => (
+                    <Space>
+                      <Button size="small" type="text" aria-label={`查看${row.证据类型}`} icon={<EyeOutlined />} onClick={() => void onAction('campaign-evidence-view', `查看${row.证据类型}`, { evidence_type: row.证据类型 })} />
+                      <Button size="small" type="text" aria-label={`导出${row.证据类型}`} icon={<DownloadOutlined />} onClick={() => void onAction('campaign-export', `导出${row.证据类型}`, { evidence_type: row.证据类型, format: 'json' })} />
+                    </Space>
+                  ),
+                },
+              ]}
+              locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无真实证据记录" /> }}
+            />
+          </section>
+        </main>
+        <aside>
+          <section className="taf-campaign-detail-drawer__section" data-tab-panel="detail">
+            <h3>影响范围</h3>
+            <div className="taf-campaign-detail-drawer__impact">{snapshot.impactTabs.map((item) => <span key={item.label}><b>{item.label}</b><strong>{item.value}</strong></span>)}</div>
+          </section>
+          <section className="taf-campaign-detail-drawer__section" data-tab-panel="detail">
+            <h3>处置建议</h3>
+            <div className="taf-campaign-detail-drawer__suggestions">
+              {[
+                ['隔离受影响终端', 'campaign-soar-response'],
+                ['吊销可疑账号令牌', 'campaign-context-action'],
+                ['下发检测规则', 'campaign-context-action'],
+                ['触发 SOAR 剧本', 'campaign-soar-response'],
+                ['生成战役报告', 'campaign-report-generate'],
+              ].map(([item, actionId]) => (
+                <Popconfirm
+                  key={item}
+                  title={`确认执行“${item}”？`}
+                  description="操作将经过服务端权限校验并写入审计留痕。"
+                  okText="确认执行"
+                  cancelText="取消"
+                  okButtonProps={{ loading: pending }}
+                  onConfirm={() => onAction(actionId as CampaignActionId, item, actionId === 'campaign-report-generate' ? { format: 'pdf', sections: snapshot.phases.map((phase) => phase.phase), evidence_count: snapshot.evidenceSummaryRows.length } : { dry_run: actionId !== 'campaign-report-generate' })}
+                >
+                  <button type="button" disabled={pending}>
+                    <CheckCircleOutlined />{item}
+                  </button>
+                </Popconfirm>
+              ))}
+            </div>
+          </section>
+          <section className="taf-campaign-detail-drawer__section" data-tab-panel="audit">
+            <h3>审计留痕</h3>
+            <dl><dt>操作人</dt><dd>{snapshot.assignee || '当前登录用户'}</dd><dt>审批策略</dt><dd>由服务端权限策略校验</dd><dt>变更摘要</dt><dd>{snapshot.summary}</dd><dt>审计编号</dt><dd>操作成功后由服务端生成</dd></dl>
+          </section>
+        </aside>
       </div>
-      <section className="taf-campaign-detail-drawer__section">
-        <h3>最近关联告警</h3>
-        <Table
-          size="small"
-          rowKey="告警ID"
-          pagination={false}
-          dataSource={snapshot.alerts.slice(0, 5)}
-          columns={[
-            { title: '告警时间', dataIndex: '告警时间', width: 126 },
-            { title: '告警名称', dataIndex: '告警名称', ellipsis: true },
-            { title: '攻击阶段', dataIndex: '攻击阶段', width: 100 },
-            { title: '风险', dataIndex: '风险', width: 74, render: (value) => <StatusTag value={value} /> },
-            { title: '状态', dataIndex: '状态', width: 84, render: (value) => <StatusTag value={value} /> },
-          ]}
-        />
-      </section>
+      <footer className="taf-campaign-detail-drawer__footer">
+        <Alert type="warning" showIcon message={`隔离动作将影响 ${snapshot.assetCount} 台资产，需审批`} description="请确认业务影响并完成审批流程后执行。" />
+        <Space>
+          <Button onClick={onClose}>关闭</Button>
+          <Button icon={<DownloadOutlined />} disabled={pending} onClick={() => void onAction('campaign-export', '导出证据包', { format: 'json' })}>导出证据包</Button>
+          <Popconfirm
+            title="确认触发 SOAR 剧本？"
+            description={`将针对 ${snapshot.assetCount} 台受影响资产创建审计任务。`}
+            okText="确认触发"
+            cancelText="取消"
+            okButtonProps={{ loading: pending }}
+            onConfirm={() => void onAction('campaign-soar-response', '触发剧本', { dry_run: true })}
+          >
+            <Button icon={<BranchesOutlined />} disabled={pending}>触发剧本</Button>
+          </Popconfirm>
+          <Button onClick={onOpenFull}>打开完整详情</Button>
+          <Popconfirm
+            title="确认提交处置建议？"
+            description="提交后战役将进入处置中状态，并写入审计留痕。"
+            okText="确认提交"
+            cancelText="取消"
+            okButtonProps={{ loading: pending }}
+            onConfirm={() => void onAction('campaign-status-change', '提交处置建议', { next_status: 'contained' })}
+          >
+            <Button type="primary" disabled={pending}>提交处置建议</Button>
+          </Popconfirm>
+        </Space>
+      </footer>
     </div>
   );
 }
@@ -946,42 +1187,103 @@ const campaignRiskCounts = (rows: SnapshotRow[]): RiskCounts => rows.reduce<Risk
 
 const formatRiskShare = (count: number, denominator: number) => `${count} (${((count / denominator) * 100).toFixed(1)}%)`;
 
-const evidenceWidth = (value: string) => {
-  const [done, total] = value.split('/').map((part) => Number(part.replace(/[^\d.]/g, '')));
-  if (!done || !total) return '0%';
-  return `${Math.max(16, Math.min(100, (done / total) * 100))}%`;
-};
-
-const evidenceMetricWidth = (value: string, label: string) => {
-  if (value.includes('/')) return evidenceWidth(value);
-  const count = Number(value.replace(/[^\d.]/g, ''));
-  if (!Number.isFinite(count) || count <= 0) return '0%';
-  if (label.includes('告警')) return `${Math.min(100, 30 + Math.log10(count + 1) * 24)}%`;
-  if (label.includes('证据')) return `${Math.min(100, 24 + Math.log10(count + 1) * 28)}%`;
-  return '72%';
-};
-
 const visualCampaignEvidenceItems = (): PageSnapshot['evidence'] => {
   return [
-    { label: '告警', value: '234 / 312', status: 'ok' },
-    { label: 'PCAP / Session', value: '86 / 128', status: 'warn' },
-    { label: '日志', value: '1,432 / 2,150', status: 'ok' },
+    { label: '告警', value: '234 / 312', status: 'info' },
+    { label: 'PCAP / Session', value: '86 / 128', status: 'ok' },
+    { label: '日志', value: '1,432 / 2,150', status: 'warn' },
     { label: '图谱路径', value: '12 / 18', status: 'warn' },
     { label: '处置记录', value: '8 / 10', status: 'risk' },
   ];
 };
 
-const campaignStateFlow = (row: SnapshotRow | undefined) => {
+const campaignEvidenceRailItems = (
+  detail: CampaignDetailSnapshot | undefined,
+  row: SnapshotRow | undefined,
+): PageSnapshot['evidence'] => {
+  const fallbackAlertCount = Number(row?.['告警数'] ?? 0);
+  const source = detail?.evidenceRail?.length
+    ? detail.evidenceRail
+    : [
+        { key: 'alerts', label: '告警', current: Number.isFinite(fallbackAlertCount) ? fallbackAlertCount : 0, expected: null, available: true },
+        { key: 'packet_session', label: 'PCAP / Session', current: null, expected: null, available: false },
+        { key: 'logs', label: '日志', current: null, expected: null, available: false },
+        { key: 'graph_paths', label: '图谱路径', current: null, expected: null, available: false },
+        { key: 'response_records', label: '处置记录', current: null, expected: null, available: false },
+      ];
+  return source.slice(0, 5).map((item, index) => {
+    const current = item.available && item.current !== null ? formatCount(item.current) : '--';
+    const expected = item.expected !== null ? formatCount(item.expected) : '--';
+    return {
+      label: item.label,
+      value: `${current} / ${expected}`,
+      status: (['info', 'ok', 'warn', 'warn', 'risk'][index] ?? 'info') as PageSnapshot['evidence'][number]['status'],
+    };
+  });
+};
+
+const campaignStateFlow = (
+  row: SnapshotRow | undefined,
+  detail: CampaignDetailSnapshot | undefined,
+  visualBreakdownMode: boolean,
+): Array<[string, string, boolean]> => {
+  if (visualBreakdownMode) {
+    return [
+      ['新建', '06-19 09:15', false],
+      ['调查中', '06-19 10:02', false],
+      ['处置中', '06-19 18:33', false],
+      ['活跃中', '06-20 03:22', true],
+    ];
+  }
   const current = campaignWorkflowStatus(row);
   const firstSeen = text(row, '首次发现', '-');
   const recent = text(row, '最近活动', '-');
   const updated = text(row, '__workbench_updated_at', '-');
+  const transitionTimes = new Map(
+    (detail?.statusTransitions ?? []).map((item) => [
+      campaignStatusLabel(item.status),
+      formatCampaignStateTime(item.changedAt),
+    ]),
+  );
+  const finalState = current === '已结束' ? '已结束' : '活跃中';
   return [
-    ['新建', firstSeen],
-    ['调查中', current === '调查中' ? updated : '-'],
-    ['处置中', current === '处置中' ? updated : '-'],
-    [current === '已结束' ? '已结束' : '活跃中', current === '已结束' || current === '活跃中' ? recent : '-'],
+    ['新建', transitionTimes.get('新建') || formatCampaignStateTime(firstSeen), current === '新建'],
+    ['调查中', transitionTimes.get('调查中') || (current === '调查中' ? formatCampaignStateTime(updated) : '--'), current === '调查中'],
+    ['处置中', transitionTimes.get('处置中') || (current === '处置中' ? formatCampaignStateTime(updated) : '--'), current === '处置中'],
+    [finalState, transitionTimes.get(finalState) || (current === finalState ? formatCampaignStateTime(recent) : '--'), current === finalState],
   ];
+};
+
+const campaignStatusLabel = (value: string) => {
+  const normalized = value.toLowerCase();
+  if (normalized === 'new') return '新建';
+  if (normalized === 'investigating') return '调查中';
+  if (normalized === 'contained') return '处置中';
+  if (normalized === 'closed') return '已结束';
+  if (normalized === 'active') return '活跃中';
+  return value;
+};
+
+const formatCampaignStateTime = (value: string) => {
+  if (!value || value === '-') return '--';
+  const parsed = Date.parse(value);
+  if (Number.isFinite(parsed)) {
+    const date = new Date(parsed);
+    return `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+  }
+  const matched = value.match(/(\d{2})[-/](\d{2}).*?(\d{2}):(\d{2})/);
+  return matched ? `${matched[1]}-${matched[2]} ${matched[3]}:${matched[4]}` : value;
+};
+
+const formatCount = (value: number) => new Intl.NumberFormat('zh-CN').format(Math.max(0, value));
+
+const campaignActionIcon = (action: string) => {
+  if (action === '变更状态') return <ClockCircleOutlined />;
+  if (action.includes('报告')) return <FileProtectOutlined />;
+  if (action.includes('攻击链')) return <BranchesOutlined />;
+  if (action.includes('资产图谱')) return <ApartmentOutlined />;
+  if (action.includes('SOAR')) return <SafetyCertificateOutlined />;
+  return <EyeOutlined />;
 };
 
 const campaignWorkflowStatus = (row: SnapshotRow | undefined) =>

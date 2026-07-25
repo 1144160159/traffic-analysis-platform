@@ -621,7 +621,8 @@ describe('pageSnapshotAdapters', () => {
     expect(snapshot?.rows[0]['风险等级']).toBe('高风险');
     expect(snapshot?.rows[0]['影响资产']).toBe(3);
     expect(snapshot?.rows[0]['告警数']).toBe(4);
-    expect(snapshot?.rows[0]['状态']).toBe('调查中');
+    expect(snapshot?.rows[0]['状态']).toBe('处置中');
+    expect(snapshot?.rows[0].__activity_status).toBe('调查中');
     expect(snapshot?.rows[0].__workflow_status).toBe('处置中');
     expect(snapshot?.rows[0]['首次发现']).toBe('10-25 00:00');
     expect(snapshot?.evidence.map((item) => item.label)).toContain('Campaigns API');

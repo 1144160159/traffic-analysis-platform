@@ -25,7 +25,7 @@ import {
   ThunderboltOutlined,
 } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
-import { Alert, Button, Drawer, Table } from 'antd';
+import { Alert, Button, Checkbox, Drawer, Dropdown, Input, Modal, Select, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { CSSProperties, ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
@@ -47,12 +47,19 @@ import {
   type TopicTopologyNode,
 } from '@/components/charts';
 import { MetricTile } from '@/components/MetricTile';
-import { OverlayContractHost, type OverlayContract } from '@/components/OverlayContractHost';
 import { StatusTag } from '@/components/StatusTag';
 import { WorkPanel } from '@/components/WorkPanel';
 import { findRouteById } from '@/routes/routeManifest';
 import type { NavRoute } from '@/routes/routeManifest';
-import { fetchPageSnapshot } from '@/services/api';
+import {
+  createTopicSubscription,
+  exportTopicArtifact,
+  fetchPageSnapshot,
+  saveTopicView,
+  submitTopicAction,
+  updateTopicScope,
+  updateTopicViewPreference,
+} from '@/services/api';
 import type { PageSnapshot, SnapshotRow } from '@/services/mockData';
 import { isVisualBreakdownMode } from '@/utils/visualBreakdownMode';
 
@@ -71,6 +78,7 @@ type ExfilVisualModel = {
   sankeyNodes: ExfilSankeyNode[];
   sankeyLinks: ExfilSankeyLink[];
   destinationRows: ExfilTableRow[];
+  distributionTitle: string;
   sensitiveTypes: ExfilDistributionItem[];
   protocols: ExfilDistributionItem[];
   trend: ExfilTrendPoint[];
@@ -82,6 +90,7 @@ type ExfilVisualModel = {
 
 type AptCampaignNode = {
   name: string;
+  fullName?: string;
   meta: string;
   events: number;
   tone: Tone;
@@ -174,26 +183,269 @@ type TopicActionButtonProps = {
   target?: string;
   className?: string;
   ariaLabel?: string;
+  overlayId?: string;
   children: ReactNode;
 };
 
-function TopicActionButton({ topic, title, target = title, className, ariaLabel, children }: TopicActionButtonProps) {
+function TopicActionButton({ topic, title, target = title, className, ariaLabel, overlayId, children }: TopicActionButtonProps) {
+  const [actionSearchParams] = useSearchParams();
   const [open, setOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  return (
-    <>
-      <button
-        type="button"
-        className={className}
-        title={title}
-        aria-label={ariaLabel}
-        onClick={() => {
-          setSubmitted(false);
-          setOpen(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [actionID, setActionID] = useState('');
+  const [submitError, setSubmitError] = useState('');
+  const [viewName, setViewName] = useState(`${title.includes('保存') ? '当前专题视图' : title}-${new Date().toISOString().slice(0, 10)}`);
+  const [viewVisibility, setViewVisibility] = useState('private');
+  const [favoriteView, setFavoriteView] = useState(false);
+  const [scopeName, setScopeName] = useState('当前专题范围');
+  const [includedAssets, setIncludedAssets] = useState(target);
+  const [excludedAssets, setExcludedAssets] = useState('');
+  const [riskLevels, setRiskLevels] = useState<string[]>(['high', 'medium']);
+  const [timeWindow, setTimeWindow] = useState(title.includes('APT') ? '30d' : '24h');
+  const [subscriptionChannel, setSubscriptionChannel] = useState('webhook');
+  const [subscriptionThreshold, setSubscriptionThreshold] = useState('high');
+  const [subscriptionSchedule, setSubscriptionSchedule] = useState('realtime');
+  const [subscriptionRecipients, setSubscriptionRecipients] = useState('sec_analyst');
+  const [exportFormat, setExportFormat] = useState('pdf');
+
+  const actionKind =
+    title.includes('编辑范围') ? 'scope'
+      : title.includes('保存视图') ? 'view'
+        : title.includes('证据包') ? 'evidence'
+          : title.includes('报告') || title.includes('周报导出') ? 'report'
+            : title === '订阅' || title.includes('订阅配置') ? 'subscription'
+              : title === '分享' ? 'share'
+                : title === '收藏' ? 'favorite'
+                  : 'action';
+
+  useEffect(() => {
+    if (!overlayId || actionSearchParams.get('__codex_page_id') !== overlayId) return;
+    if (actionKind === 'share' || actionKind === 'favorite') {
+      setMenuOpen(true);
+      return;
+    }
+    setOpen(true);
+  }, [actionKind, actionSearchParams, overlayId]);
+
+  const resetResult = () => {
+    setSubmitted(false);
+    setActionID('');
+    setSubmitError('');
+  };
+
+  const submit = async () => {
+    setSubmitting(true);
+    setSubmitError('');
+    try {
+      if (actionKind === 'scope') {
+        const result = await updateTopicScope(topic, {
+          scope_name: scopeName,
+          included_assets: includedAssets.split(/[,，\n]/u).map((item) => item.trim()).filter(Boolean),
+          excluded_assets: excludedAssets.split(/[,，\n]/u).map((item) => item.trim()).filter(Boolean),
+          risk_levels: riskLevels,
+          time_window: timeWindow,
+          detail: { source: 'topic-workbench', target },
+        });
+        setActionID(`${result.topic}:${result.updated_at}`);
+      } else if (actionKind === 'view') {
+        const result = await saveTopicView(topic, {
+          name: viewName.trim() || '当前专题视图',
+          visibility: viewVisibility,
+          favorite: favoriteView,
+          filters: { topic, target, source: 'topic-workbench' },
+        });
+        setActionID(result.view_id);
+      } else if (actionKind === 'report' || actionKind === 'evidence') {
+        const result = await exportTopicArtifact(topic, actionKind === 'report' ? 'report' : 'evidence_package', exportFormat);
+        setActionID(result.export_id);
+      } else if (actionKind === 'subscription') {
+        const result = await createTopicSubscription(topic, {
+          channel: subscriptionChannel,
+          threshold: subscriptionThreshold,
+          schedule: subscriptionSchedule,
+          recipients: subscriptionRecipients.split(/[,，\n]/u).map((item) => item.trim()).filter(Boolean),
+        });
+        setActionID(result.subscription_id);
+      } else {
+        const result = await submitTopicAction(topic, title, target);
+        setActionID(result.action_id);
+      }
+      setSubmitted(true);
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : '专题操作提交失败');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const submitPreference = async (preference: 'favorite' | 'shared') => {
+    setSubmitting(true);
+    setSubmitError('');
+    try {
+      const result = await updateTopicViewPreference(topic, preference);
+      setActionID(result.view_id);
+      setSubmitted(true);
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : '专题视图偏好更新失败');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (actionKind === 'share' || actionKind === 'favorite') {
+    return (
+      <Dropdown
+        trigger={['click']}
+        open={menuOpen}
+        onOpenChange={setMenuOpen}
+        menu={{
+          items: [
+            { key: 'shared', label: '共享当前视图', icon: <ShareAltOutlined /> },
+            { key: 'favorite', label: '收藏当前视图', icon: <StarOutlined /> },
+          ],
+          onClick: ({ key }) => void submitPreference(key === 'shared' ? 'shared' : 'favorite'),
         }}
       >
-        {children}
-      </button>
+        <button
+          type="button"
+          className={className}
+          title={title}
+          aria-label={ariaLabel}
+          aria-busy={submitting}
+          onClick={resetResult}
+        >
+          {children}
+          {submitted && <span className="taf-topic-inline-result" title={`视图 ${actionID}`}>已更新</span>}
+          {submitError && <span className="taf-topic-inline-result is-error" title={submitError}>失败</span>}
+        </button>
+      </Dropdown>
+    );
+  }
+
+  const governanceBody = (
+    <div className="taf-topic-governance-form">
+      {actionKind === 'scope' && (
+        <>
+          <label>范围名称<Input value={scopeName} onChange={(event) => setScopeName(event.target.value)} /></label>
+          <label>纳入资产<Input.TextArea rows={2} value={includedAssets} onChange={(event) => setIncludedAssets(event.target.value)} placeholder="资产组、IP 段，以逗号分隔" /></label>
+          <label>排除资产<Input.TextArea rows={2} value={excludedAssets} onChange={(event) => setExcludedAssets(event.target.value)} placeholder="可选，以逗号分隔" /></label>
+          <label>风险等级<Select mode="multiple" value={riskLevels} onChange={setRiskLevels} options={[{ value: 'critical', label: '严重' }, { value: 'high', label: '高危' }, { value: 'medium', label: '中危' }, { value: 'low', label: '低危' }]} /></label>
+          <label>时间窗口<Select value={timeWindow} onChange={setTimeWindow} options={[{ value: '24h', label: '近 24 小时' }, { value: '7d', label: '近 7 天' }, { value: '30d', label: '近 30 天' }]} /></label>
+        </>
+      )}
+      {actionKind === 'view' && (
+        <>
+          <label>视图名称<Input value={viewName} onChange={(event) => setViewName(event.target.value)} /></label>
+          <label>可见范围<Select value={viewVisibility} onChange={setViewVisibility} options={[{ value: 'private', label: '仅自己' }, { value: 'tenant', label: '当前租户' }, { value: 'role', label: '当前角色' }]} /></label>
+          <Checkbox checked={favoriteView} onChange={(event) => setFavoriteView(event.target.checked)}>同时加入收藏</Checkbox>
+        </>
+      )}
+      {(actionKind === 'report' || actionKind === 'evidence') && (
+        <>
+          <Alert
+            type={actionKind === 'evidence' ? 'warning' : 'info'}
+            showIcon
+            message={actionKind === 'evidence' ? '导出证据包将记录下载范围与审计留痕' : '导出当前专题范围内的可审计报告'}
+            description={`专题：${topic}；范围：${target}`}
+          />
+          <label>导出格式<Select value={exportFormat} onChange={setExportFormat} options={actionKind === 'evidence' ? [{ value: 'zip', label: 'ZIP' }, { value: 'json', label: 'JSON' }] : [{ value: 'pdf', label: 'PDF' }, { value: 'docx', label: 'DOCX' }, { value: 'json', label: 'JSON' }]} /></label>
+        </>
+      )}
+      {actionKind === 'subscription' && (
+        <>
+          <label>通知渠道<Select value={subscriptionChannel} onChange={setSubscriptionChannel} options={[{ value: 'webhook', label: 'Webhook' }, { value: 'email', label: '邮件' }, { value: 'in_app', label: '站内通知' }]} /></label>
+          <label>触发阈值<Select value={subscriptionThreshold} onChange={setSubscriptionThreshold} options={[{ value: 'critical', label: '严重' }, { value: 'high', label: '高危' }, { value: 'medium', label: '中危' }]} /></label>
+          <label>推送周期<Select value={subscriptionSchedule} onChange={setSubscriptionSchedule} options={[{ value: 'realtime', label: '实时' }, { value: 'daily', label: '日报' }, { value: 'weekly', label: '周报' }]} /></label>
+          <label>接收人<Input.TextArea rows={2} value={subscriptionRecipients} onChange={(event) => setSubscriptionRecipients(event.target.value)} placeholder="账号或角色，以逗号分隔" /></label>
+        </>
+      )}
+      {actionKind === 'action' && (
+        <>
+          <p>将为专题“{topic}”创建“{title}”业务任务，并原子写入任务记录与专题审计上下文。</p>
+          <dl>
+            <dt>专题对象</dt><dd>{topic}</dd>
+            <dt>操作目标</dt><dd>{target}</dd>
+            <dt>执行接口</dt><dd>/v1/topics/{'{topic}'}/actions</dd>
+          </dl>
+        </>
+      )}
+      {submitError && <Alert type="error" showIcon message="专题业务操作提交失败" description={submitError} />}
+      {submitted && <Alert type="success" showIcon message="专题业务操作已持久化" description={`记录：${actionID}；专题：${topic}；动作：${title}`} />}
+    </div>
+  );
+
+  const governanceTitle =
+    actionKind === 'scope' ? '专题范围编辑'
+      : actionKind === 'view' ? '专题保存视图'
+        : actionKind === 'report' ? '专题报告导出'
+          : actionKind === 'evidence' ? '专题证据包导出'
+            : actionKind === 'subscription' ? '专题订阅配置'
+              : `${title}确认`;
+
+  const trigger = (
+    <button
+      type="button"
+      className={className}
+      title={title}
+      aria-label={ariaLabel}
+      onClick={() => {
+        resetResult();
+        setOpen(true);
+      }}
+    >
+      {children}
+    </button>
+  );
+
+  if (actionKind === 'subscription') {
+    return (
+      <>
+        {trigger}
+        <Drawer
+          className="taf-topic-governance-drawer"
+          title={governanceTitle}
+          open={open}
+          width="min(520px, calc(var(--taf-window-inner-width, 100dvw) - 40px))"
+          onClose={() => {
+            setOpen(false);
+            resetResult();
+          }}
+          extra={<Button size="small" type="primary" loading={submitting} disabled={submitted} onClick={() => void submit()}>{submitted ? '已保存' : '确认保存'}</Button>}
+        >
+          {governanceBody}
+        </Drawer>
+      </>
+    );
+  }
+
+  if (actionKind !== 'action') {
+    return (
+      <>
+        {trigger}
+        <Modal
+          className="taf-topic-governance-modal"
+          title={governanceTitle}
+          open={open}
+          width="min(620px, calc(var(--taf-window-inner-width, 100dvw) - 40px))"
+          onCancel={() => {
+            setOpen(false);
+            resetResult();
+          }}
+          okText={submitted ? '已完成' : '确认提交'}
+          cancelText="取消"
+          okButtonProps={{ loading: submitting, disabled: submitted }}
+          onOk={() => void submit()}
+        >
+          {governanceBody}
+        </Modal>
+      </>
+    );
+  }
+
+  return (
+    <>
+      {trigger}
       <Drawer
         className="taf-topic-action-drawer"
         title={`${title}确认`}
@@ -201,19 +453,11 @@ function TopicActionButton({ topic, title, target = title, className, ariaLabel,
         width="min(520px, calc(var(--taf-window-inner-width, 100dvw) - 40px))"
         onClose={() => {
           setOpen(false);
-          setSubmitted(false);
+          resetResult();
         }}
-        extra={<Button size="small" type="primary" disabled={submitted} onClick={() => setSubmitted(true)}>{submitted ? '已写入任务队列' : '确认提交'}</Button>}
+        extra={<Button size="small" type="primary" loading={submitting} disabled={submitted} onClick={() => void submit()}>{submitted ? '已写入任务队列' : '确认提交'}</Button>}
       >
-        <div className="taf-alert-detail-action-body">
-          <p>将为专题“{topic}”创建“{title}”仿真任务，并保留当前对象、操作者和专题审计上下文。</p>
-          <dl>
-            <dt>专题对象</dt><dd>{topic}</dd>
-            <dt>操作目标</dt><dd>{target}</dd>
-            <dt>接口预留</dt><dd>/v1/topics/{topic}/actions</dd>
-          </dl>
-          {submitted && <Alert type="success" showIcon message="专题业务操作已进入仿真任务队列" description={`目标：${target}；动作：${title}`} />}
-        </div>
+        {governanceBody}
       </Drawer>
     </>
   );
@@ -369,57 +613,24 @@ const topicOptions: Array<{ id: TopicId; label: string; param: string }> = [
   { id: 'topic-apt', label: 'APT/战役专题', param: 'apt' },
 ];
 
-const topicOverlays: OverlayContract[] = [
-  {
-    id: 'modal-topic-save-view',
-    title: '专题保存视图',
-    kind: 'Modal',
-    actionLabel: '保存视图',
-    description: '保存当前专题、筛选条件、图层、时间窗和关注信号。',
-  },
-  {
-    id: 'drawer-topic-scope-edit',
-    title: '专题范围编辑',
-    kind: 'Drawer',
-    actionLabel: '范围编辑',
-    description: '编辑专题资产组、IP 段、协议、规则、模型和时间范围。',
-    impact: '影响专题聚合结果、报告和订阅推送范围。',
-  },
-  {
-    id: 'modal-topic-report-export',
-    title: '专题报告导出',
-    kind: 'Modal',
-    actionLabel: '报告导出',
-    description: '导出专题趋势、信号雷达、处置建议和业务复盘报告。',
-  },
-  {
-    id: 'modal-topic-evidence-package-export',
-    title: '专题证据包导出',
-    kind: 'Modal',
-    actionLabel: '证据包导出',
-    description: '导出 PCAP、Session、日志、规则和模型证据包。',
-    impact: '生成证据包下载记录并写入审计。',
-  },
-  {
-    id: 'drawer-topic-subscription',
-    title: '专题订阅配置',
-    kind: 'Drawer',
-    actionLabel: '订阅配置',
-    description: '配置专题日报、周报、阈值触发和通知渠道。',
-  },
-  {
-    id: 'dropdown-topic-share-favorite',
-    title: '专题分享收藏菜单',
-    kind: 'Dropdown/Menu',
-    actionLabel: '分享收藏',
-    description: '提供收藏、复制链接、共享给角色和加入常用入口。',
-  },
-];
+function TopicHeaderControls({ config }: { config: TopicConfig }) {
+  return (
+    <>
+      <TopicActionButton topic={config.topicCode} title="编辑范围" target={config.assetGroup} className="ant-btn ant-btn-default ant-btn-sm" overlayId="drawer-topic-scope-edit">
+        <EditOutlined />编辑范围
+      </TopicActionButton>
+      <TopicActionButton topic={config.topicCode} title="保存视图" target={config.topicCode} className="ant-btn ant-btn-default ant-btn-sm" overlayId="modal-topic-save-view">
+        <SaveOutlined />保存视图
+      </TopicActionButton>
+    </>
+  );
+}
 
-const topicHeaderOverlays: OverlayContract[] = [
-  topicOverlays[1],
-  topicOverlays[0],
-];
+function topicRailOverlayId(label: string) {
+  if (label === '订阅') return 'drawer-topic-subscription';
+  if (label === '分享') return 'dropdown-topic-share-favorite';
+  return undefined;
+}
 
 type TunnelKpi = {
   label: string;
@@ -600,7 +811,7 @@ export function TopicWorkbenchPage({ route }: { route: NavRoute }) {
                   ))}
                 </div>
                 <div className="taf-topic-controls">
-                  <OverlayContractHost overlays={topicHeaderOverlays} compact />
+                  <TopicHeaderControls config={config} />
                 </div>
               </header>
 
@@ -673,7 +884,7 @@ export function TopicWorkbenchPage({ route }: { route: NavRoute }) {
             </div>
 
             <aside className="taf-topic-rail taf-topic-tunnel-rail">
-              <TunnelRightRail config={config} metrics={metrics} />
+              <TunnelRightRail config={config} metrics={metrics} evidenceRows={evidenceRows} />
             </aside>
           </div>
         </section>
@@ -706,7 +917,7 @@ export function TopicWorkbenchPage({ route }: { route: NavRoute }) {
                   ))}
                 </div>
                 <div className="taf-topic-controls">
-                  <OverlayContractHost overlays={topicHeaderOverlays} compact />
+                  <TopicHeaderControls config={config} />
                 </div>
               </header>
 
@@ -803,7 +1014,7 @@ export function TopicWorkbenchPage({ route }: { route: NavRoute }) {
                   ))}
                 </div>
                 <div className="taf-topic-controls">
-                  <OverlayContractHost overlays={topicHeaderOverlays} compact />
+                  <TopicHeaderControls config={config} />
                 </div>
               </header>
 
@@ -893,7 +1104,7 @@ export function TopicWorkbenchPage({ route }: { route: NavRoute }) {
             ))}
           </div>
           <div className="taf-topic-controls">
-            <OverlayContractHost overlays={topicHeaderOverlays} compact />
+            <TopicHeaderControls config={config} />
           </div>
         </header>
 
@@ -1003,6 +1214,36 @@ function TunnelKpiStrip({ metrics }: { metrics: SnapshotMetric[] }) {
 
 function TunnelImpactMap({ rows }: { rows: SnapshotRow[] }) {
   const [selectedNode, setSelectedNode] = useState('risk-01');
+  if (!isVisualBreakdownMode()) {
+    const liveNodes: TopicTopologyNode[] = [];
+    const liveLinks: TopicTopologyLink[] = [];
+    rows.slice(0, 6).forEach((row, index) => {
+      const source = rowText(row, '隧道源') || rowText(row, '源资产');
+      const protocol = rowText(row, '协议');
+      const destination = rowText(row, '目的端点');
+      const sourceID = `live-source-${index}`;
+      const protocolID = `live-protocol-${index}`;
+      const destinationID = `live-destination-${index}`;
+      if (source) liveNodes.push({ id: sourceID, label: source, detail: rowText(row, '风险状态') || '实时隧道源', tone: 'risk', x: 18, y: 18 + index * 13 });
+      if (protocol) liveNodes.push({ id: protocolID, label: protocol, detail: rowText(row, '证据类型') || 'Session', tone: 'protocol', x: 50, y: 18 + index * 13 });
+      if (destination && destination !== '-') liveNodes.push({ id: destinationID, label: destination, detail: rowText(row, '时间窗') || '最近命中', tone: 'destination', x: 82, y: 18 + index * 13 });
+      if (source && protocol) liveLinks.push({ source: sourceID, target: protocolID, tone: 'risk' });
+      if (protocol && destination && destination !== '-') liveLinks.push({ source: protocolID, target: destinationID, tone: 'ok' });
+    });
+    const nodes = liveNodes.map((node) => ({ ...node, selected: node.id === selectedNode }));
+    return (
+      <div className="taf-topic-canvas taf-topic-tunnel-impact">
+        <div className="taf-topic-canvas-legend taf-topic-tunnel-legend">
+          {['实时隧道源', '识别协议', '目的端点'].map((item, index) => <span key={item} className={`tone-${index}`}>{item}</span>)}
+        </div>
+        {nodes.length ? (
+          <TopicTopologyGraph ariaLabel="加密隧道实时关系图" nodes={nodes} links={liveLinks} onNodeClick={setSelectedNode} />
+        ) : (
+          <div className="taf-topic-empty">当前时间窗没有可绘制的隧道关系</div>
+        )}
+      </div>
+    );
+  }
   const rowIps = rows
     .map((row) => rowText(row, '源资产') || rowText(row, '隧道源'))
     .filter((value) => /^\d{1,3}(?:\.\d{1,3}){3}$/.test(value));
@@ -1166,11 +1407,11 @@ function TunnelEvidenceTable({ rows, isLoading }: { rows: SnapshotRow[]; isLoadi
     destination: rowText(row, '目的端点') || rowText(row, '目标对象') || tunnelEvidenceEvents[index % tunnelEvidenceEvents.length].destination,
     evidenceType: rowText(row, '证据类型') || tunnelEvidenceEvents[index % tunnelEvidenceEvents.length].evidenceType,
     timeRange: rowText(row, '时间窗') || tunnelEvidenceEvents[index % tunnelEvidenceEvents.length].timeRange,
-    evidence: tunnelEvidenceEvents[index % tunnelEvidenceEvents.length].evidence,
+    evidence: [rowText(row, '风险状态') || '待研判', rowText(row, '风险操作') || '取证'],
   })) : tunnelEvidenceEvents;
 
   const pageSize = 5;
-  const pagedEvents = events.length > pageSize
+  const pagedEvents = hasRealTunnelRows
     ? events
     : Array.from({ length: 12 }, (_, index) => ({
       ...events[index % Math.max(events.length, 1)],
@@ -1217,8 +1458,19 @@ function TunnelEvidenceTable({ rows, isLoading }: { rows: SnapshotRow[]; isLoadi
   );
 }
 
-function TunnelRightRail({ config, metrics }: { config: TopicConfig; metrics: SnapshotMetric[] }) {
-  const completeness = isVisualBreakdownMode() ? 62 : Math.round(metricValueNumber(metrics, '证据完整度') || 62);
+function TunnelRightRail({ config, metrics, evidenceRows }: { config: TopicConfig; metrics: SnapshotMetric[]; evidenceRows: PageSnapshot['evidence'] }) {
+  const targetMode = isVisualBreakdownMode();
+  const completeness = targetMode ? 62 : Math.round(metricValueNumber(metrics, '证据完整度'));
+  const evidence = targetMode ? tunnelEvidenceCompleteness : evidenceRows;
+  const summary = targetMode ? [
+    ['可生成报告', '7', 'ok'],
+    ['待补证据', '3', 'warn'],
+    ['未闭环风险', '18', 'risk'],
+  ] : [
+    ['可生成报告', completeness > 0 ? '1' : '0', completeness > 0 ? 'ok' : 'warn'],
+    ['待补证据', String(evidence.filter((item) => item.status === 'warn').length), 'warn'],
+    ['未闭环风险', String(metricValueNumber(metrics, '未闭环风险数')), 'risk'],
+  ];
   const actions: Array<[string, ReactNode]> = [
     ['编辑范围', <EditOutlined key="edit" />],
     ['保存视图', <SaveOutlined key="save" />],
@@ -1238,14 +1490,10 @@ function TunnelRightRail({ config, metrics }: { config: TopicConfig; metrics: Sn
           <div className="taf-topic-tunnel-ring" style={{ '--value': completeness } as CSSProperties}>
             <span>报告就绪度</span>
             <strong>{completeness}%</strong>
-            <em>较昨日 +8%</em>
+            <em>{targetMode ? '较昨日 +8%' : '实时证据计算'}</em>
           </div>
           <div className="taf-topic-tunnel-delivery-stats">
-            {[
-              ['可生成报告', '7', 'ok'],
-              ['待补证据', '3', 'warn'],
-              ['未闭环风险', '18', 'risk'],
-            ].map(([label, value, tone]) => (
+            {summary.map(([label, value, tone]) => (
               <span key={label} className={`is-${tone}`} title={`${label}: ${value}`}>
                 <i />
                 <b>{label}</b>
@@ -1255,15 +1503,15 @@ function TunnelRightRail({ config, metrics }: { config: TopicConfig; metrics: Sn
           </div>
         </div>
         <div className="taf-topic-tunnel-delivery-actions">
-          <TopicActionButton topic={config.topicCode} title="导出报告" className="ant-btn ant-btn-default ant-btn-sm"><DownloadOutlined />导出报告</TopicActionButton>
-          <TopicActionButton topic={config.topicCode} title="导出证据包" className="ant-btn ant-btn-default ant-btn-sm"><FileProtectOutlined />导出证据包</TopicActionButton>
+          <TopicActionButton topic={config.topicCode} title="导出报告" className="ant-btn ant-btn-default ant-btn-sm" overlayId="modal-topic-report-export"><DownloadOutlined />导出报告</TopicActionButton>
+          <TopicActionButton topic={config.topicCode} title="导出证据包" className="ant-btn ant-btn-default ant-btn-sm" overlayId="modal-topic-evidence-package-export"><FileProtectOutlined />导出证据包</TopicActionButton>
           <TopicActionButton topic={config.topicCode} title="试点周报导出" className="ant-btn ant-btn-default ant-btn-sm"><ExportOutlined />试点周报导出</TopicActionButton>
         </div>
       </WorkPanel>
 
       <WorkPanel title="证据包完整度 / 加密隧道专题" className="taf-topic-tunnel-evidence-panel">
         <div className="taf-topic-tunnel-evidence-list">
-          {tunnelEvidenceCompleteness.map((item) => (
+          {evidence.map((item) => (
             <span key={item.label} className={`is-${item.status}`} title={`${item.label}: ${item.value}`}>
               <FileProtectOutlined />
               <b>{item.label}</b>
@@ -1294,7 +1542,7 @@ function TunnelRightRail({ config, metrics }: { config: TopicConfig; metrics: Sn
       <WorkPanel title="专题动作 / 仅作用于当前专题" className="taf-topic-tunnel-action-panel">
         <div className="taf-topic-exfil-action-grid taf-topic-tunnel-action-grid">
           {actions.map(([label, icon]) => (
-            <TopicActionButton key={String(label)} topic={config.topicCode} title={String(label)}>
+            <TopicActionButton key={String(label)} topic={config.topicCode} title={String(label)} overlayId={topicRailOverlayId(String(label))}>
               {icon}
               <span>{label}</span>
             </TopicActionButton>
@@ -1309,11 +1557,11 @@ function buildTunnelTopSources(rows: SnapshotRow[]): ExfilBarItem[] {
   const values = rows
     .map((row) => ({
       label: rowText(row, '隧道源') || rowText(row, '源资产'),
-      value: rowNumber(row, '流量') || rowNumber(row, '总流量') || rowNumber(row, '会话数'),
+      value: rowNumber(row, '__total_bytes') / (1024 * 1024 * 1024) || rowNumber(row, '__session_count'),
     }))
     .filter((item) => /^\d{1,3}(?:\.\d{1,3}){3}$/.test(item.label) && item.value > 0)
     .slice(0, 5);
-  return values.length >= 5 ? values : tunnelSourceTop;
+  return isVisualBreakdownMode() && values.length < 5 ? tunnelSourceTop : values;
 }
 
 function TopicCanvas({
@@ -1343,19 +1591,24 @@ function ExfilRightRail({
   metrics: SnapshotMetric[];
   evidenceRows: PageSnapshot['evidence'];
 }) {
-  const completeness = Math.max(0, Math.min(100, Math.round(metricValueNumber(metrics, '证据完整度') || 62)));
-  const summaryStats: Array<[string, string]> = [
-    ['可生成报告', '7'],
-    ['待补证据', '3'],
-    ['未闭环风险', '18'],
-  ];
-  const evidence = evidenceRows.length ? evidenceRows : [
+  const targetMode = isVisualBreakdownMode();
+  const completeness = Math.max(0, Math.min(100, Math.round(targetMode ? 62 : metricValueNumber(metrics, '证据完整度'))));
+  const evidence = evidenceRows.length ? evidenceRows : targetMode ? [
     { label: '告警证据', value: '64 / 64 (100%)', status: 'ok' as const },
     { label: 'PCAP', value: '132 / 156 (84%)', status: 'warn' as const },
     { label: 'Session', value: '198 / 204 (97%)', status: 'ok' as const },
     { label: '审计日志', value: '38 / 38 (100%)', status: 'ok' as const },
     { label: '回溯路径', value: '18 / 18 (100%)', status: 'ok' as const },
     { label: '资产快照', value: '23 / 23 (100%)', status: 'ok' as const },
+  ] : [];
+  const summaryStats: Array<[string, string]> = targetMode ? [
+    ['可生成报告', '7'],
+    ['待补证据', '3'],
+    ['未闭环风险', '18'],
+  ] : [
+    ['可生成报告', metricValueNumber(metrics, '外传路径数') > 0 ? '1' : '0'],
+    ['待补证据', String(evidence.filter((item) => item.status === 'warn').length)],
+    ['未闭环风险', String(metricValueNumber(metrics, '外传预警量'))],
   ];
   const actions: Array<[string, ReactNode]> = [
     ['编辑范围', <EditOutlined key="edit" />],
@@ -1375,7 +1628,7 @@ function ExfilRightRail({
         <div className="taf-topic-exfil-delivery-grid">
           <div className="taf-topic-exfil-delivery-ring" style={{ '--value': completeness } as CSSProperties}>
             <strong>{completeness}%</strong>
-            <span>较昨日 +6%</span>
+            <span>{targetMode ? '较昨日 +6%' : '实时证据计算'}</span>
           </div>
           <div className="taf-topic-exfil-delivery-stats">
             {summaryStats.map(([label, value]) => (
@@ -1388,8 +1641,8 @@ function ExfilRightRail({
           </div>
         </div>
         <div className="taf-topic-exfil-delivery-actions">
-          <TopicActionButton topic={config.topicCode} title="导出总报告" className="ant-btn ant-btn-default ant-btn-sm"><DownloadOutlined />导出总报告</TopicActionButton>
-          <TopicActionButton topic={config.topicCode} title="导出证据包" className="ant-btn ant-btn-default ant-btn-sm"><FileProtectOutlined />导出证据包</TopicActionButton>
+          <TopicActionButton topic={config.topicCode} title="导出总报告" className="ant-btn ant-btn-default ant-btn-sm" overlayId="modal-topic-report-export"><DownloadOutlined />导出总报告</TopicActionButton>
+          <TopicActionButton topic={config.topicCode} title="导出证据包" className="ant-btn ant-btn-default ant-btn-sm" overlayId="modal-topic-evidence-package-export"><FileProtectOutlined />导出证据包</TopicActionButton>
           <TopicActionButton topic={config.topicCode} title="试点周报导出" className="ant-btn ant-btn-default ant-btn-sm"><ExportOutlined />试点周报导出</TopicActionButton>
         </div>
       </WorkPanel>
@@ -1427,7 +1680,7 @@ function ExfilRightRail({
       <WorkPanel title="专题动作 / 仅作用于当前专题" className="taf-topic-exfil-action-panel">
         <div className="taf-topic-exfil-action-grid">
           {actions.map(([label, icon]) => (
-            <TopicActionButton key={String(label)} topic={config.topicCode} title={String(label)}>
+            <TopicActionButton key={String(label)} topic={config.topicCode} title={String(label)} overlayId={topicRailOverlayId(String(label))}>
               {icon}
               <span>{label}</span>
             </TopicActionButton>
@@ -1507,7 +1760,7 @@ function ExfilAnalysisDashboard({ rows, metrics, focusMode }: { rows: SnapshotRo
         </div>
       </div>
 
-      <ExfilDistributionCard title="敏感数据类型分布" items={model.sensitiveTypes} />
+      <ExfilDistributionCard title={model.distributionTitle} items={model.sensitiveTypes} />
 
       <div className="taf-topic-exfil-card is-trend">
         <header>
@@ -1566,7 +1819,7 @@ function ExfilDistributionCard({ title, items }: { title: string; items: ExfilDi
 }
 
 function buildExfilVisualModel(rows: SnapshotRow[], metrics: SnapshotMetric[]): ExfilVisualModel {
-  const sourceRows = rows.length ? rows : buildExfilFallbackRows();
+  const sourceRows = rows;
   const uploadByType = groupRows(sourceRows, '数据类型', '上传量');
   const uploadByDestination = groupRows(sourceRows, '目标区域', '上传量');
   const uploadByRisk = groupRows(sourceRows, '风险类型', '上传量');
@@ -1574,19 +1827,26 @@ function buildExfilVisualModel(rows: SnapshotRow[], metrics: SnapshotMetric[]): 
   const totalUploadGb = sourceRows.reduce((sum, row) => sum + rowUploadGb(row), 0);
   const sourceCount = metricNumber(metrics, '可疑外传源') || sessionsBySource.length || sourceRows.length;
   const pathCount = metricNumber(metrics, '外传路径数') || sourceRows.length;
-  const evidenceRate = metricNumber(metrics, '证据完整度') || 88;
-  const confidence = Math.max(58, Math.min(99, Math.round(evidenceRate)));
+  const evidenceRate = metricNumber(metrics, '证据完整度');
+  const confidence = Math.max(0, Math.min(100, Math.round(evidenceRate)));
   const topSources = sessionsBySource.slice(0, 5);
-  const topTypes = uploadByType.slice(0, 5);
+  const classifiedTypes = uploadByType.filter((item) => !['-', '未知'].includes(item.label));
+  const topTypes = classifiedTypes.slice(0, 5);
   const topRiskTypes = uploadByRisk.slice(0, 4);
+  const liveDistribution = isVisualBreakdownMode() || topTypes.length ? topTypes : topRiskTypes;
+  const distributionTitle = isVisualBreakdownMode() || topTypes.length ? '敏感数据类型分布' : '风险类型分布';
+  const hasClassifiedTypes = topTypes.length > 0;
+  const riskDepth = hasClassifiedTypes ? 2 : 1;
+  const destinationDepth = riskDepth + 1;
+  const pathDepth = destinationDepth + 1;
   const topDestinations = uploadByDestination.slice(0, 5);
 
   const sankeyNodes = [
     ...topSources.map((item) => ({ name: item.label, depth: 0 })),
     ...topTypes.map((item) => ({ name: `类型:${item.label}`, depth: 1 })),
-    ...topRiskTypes.map((item) => ({ name: `风险:${item.label}`, depth: 2 })),
-    ...topDestinations.map((item) => ({ name: item.label, depth: 3 })),
-    ...sourceRows.slice(0, 4).map((row, index) => ({ name: `路径-${String(index + 1).padStart(2, '0')}`, depth: 4 })),
+    ...topRiskTypes.map((item) => ({ name: `风险:${item.label}`, depth: riskDepth })),
+    ...topDestinations.map((item) => ({ name: item.label, depth: destinationDepth })),
+    ...sourceRows.slice(0, 4).map((row, index) => ({ name: `路径-${String(index + 1).padStart(2, '0')}`, depth: pathDepth })),
   ];
 
   const sankeyLinks: ExfilSankeyLink[] = [];
@@ -1600,6 +1860,7 @@ function buildExfilVisualModel(rows: SnapshotRow[], metrics: SnapshotMetric[]): 
 
     if (source && dataType) sankeyLinks.push({ source, target: `类型:${dataType}`, value });
     if (dataType && riskType) sankeyLinks.push({ source: `类型:${dataType}`, target: `风险:${riskType}`, value: value * 0.82 });
+    if (source && !dataType && riskType) sankeyLinks.push({ source, target: `风险:${riskType}`, value });
     if (riskType && destination) sankeyLinks.push({ source: `风险:${riskType}`, target: destination, value: value * 0.72 });
     if (destination) sankeyLinks.push({ source: destination, target: riskPath, value: value * 0.56 });
   });
@@ -1615,31 +1876,23 @@ function buildExfilVisualModel(rows: SnapshotRow[], metrics: SnapshotMetric[]): 
     sankeyNodes: uniqueSankeyNodes(sankeyNodes),
     sankeyLinks: mergeSankeyLinks(sankeyLinks),
     destinationRows,
-    sensitiveTypes: normalizeDistribution(topTypes, ['#65d86e', '#ffb020', '#ff8a3d', '#ff4d4f', '#b685ff']),
+    distributionTitle,
+    sensitiveTypes: normalizeDistribution(liveDistribution, ['#65d86e', '#ffb020', '#ff8a3d', '#ff4d4f', '#b685ff']),
     protocols: buildProtocolDistribution(sourceRows),
     trend: buildExfilTrend(sourceRows, totalUploadGb),
     accounts: topSources.map((item) => ({ label: serviceAccountLabel(item.label), value: Math.max(1, Math.round(item.value)) })),
     confidence,
     totalUploadGb,
-    pathCount: Math.max(pathCount, sourceRows.length, sourceCount ? Math.round(sourceCount * 1.6) : 1),
+    pathCount: Math.max(pathCount, sourceRows.length),
   };
-}
-
-function buildExfilFallbackRows(): SnapshotRow[] {
-  return [
-    { 源资产: '10.14.2.35', 外传路径: '10.14.2.35 -> 203.0.113.45', 目标区域: '美国 (US)', 数据类型: '数据库备份', 上传量: '486 GB', 会话数: 326, 风险类型: '异常上传', 风险等级: '高危', 处置: '阻断' },
-    { 源资产: '10.14.5.21', 外传路径: '10.14.5.21 -> 198.51.100.77', 目标区域: '日本 (JP)', 数据类型: '源代码/文档', 上传量: '312 GB', 会话数: 211, 风险类型: '跨境外联', 风险等级: '高危', 处置: '阻断' },
-    { 源资产: '10.14.3.18', 外传路径: '10.14.3.18 -> 8.8.8.8', 目标区域: '新加坡 (SG)', 数据类型: '设计图纸/模型', 上传量: '218 GB', 会话数: 184, 风险类型: '云存储', 风险等级: '中危', 处置: '阻断' },
-    { 源资产: '10.14.7.66', 外传路径: '10.14.7.66 -> 185.199.111.153', 目标区域: '德国 (DE)', 数据类型: '个人信息', 上传量: '176 GB', 会话数: 142, 风险类型: '未知 ASN', 风险等级: '中危', 处置: '阻断' },
-    { 源资产: '10.14.9.10', 外传路径: '10.14.9.10 -> 104.16.24.34', 目标区域: '香港 (HK)', 数据类型: '财务数据', 上传量: '98 GB', 会话数: 98, 风险类型: '对象存储', 风险等级: '中危', 处置: '阻断' },
-  ];
 }
 
 function groupRows(rows: SnapshotRow[], labelColumn: string, valueColumn: string) {
   const groups = new Map<string, number>();
   rows.forEach((row) => {
     const label = rowText(row, labelColumn) || '未知';
-    groups.set(label, (groups.get(label) ?? 0) + rowNumber(row, valueColumn));
+    const value = valueColumn === '上传量' ? rowUploadGb(row) : rowNumber(row, valueColumn);
+    groups.set(label, (groups.get(label) ?? 0) + value);
   });
   return [...groups.entries()]
     .map(([label, value]) => ({ label, value }))
@@ -1734,7 +1987,8 @@ function buildProtocolDistribution(rows: SnapshotRow[]): ExfilDistributionItem[]
 }
 
 function buildExfilTrend(rows: SnapshotRow[], totalUploadGb: number): ExfilTrendPoint[] {
-  const base = totalUploadGb || 320;
+  if (!rows.length || !totalUploadGb) return [];
+  const base = totalUploadGb;
   return Array.from({ length: 12 }, (_, index) => {
     const row = rows[index % rows.length];
     const pulse = row ? rowUploadGb(row) / Math.max(base, 1) : 0.08;
@@ -1787,6 +2041,7 @@ function AptCanvas({
     ...model.campaigns.map((item, index) => ({
       id: `campaign-${index}`,
       label: item.name,
+      title: item.fullName ?? item.name,
       detail: `${item.meta} / 事件 ${item.events}`,
       tone: 'risk' as const,
       x: 9,
@@ -1971,7 +2226,8 @@ function AptRightRail({
     ['分享', <ShareAltOutlined key="share" />],
     ['收藏', <StarOutlined key="star" />],
   ];
-  const riskOpen = Math.max(3, Math.round((100 - model.closureRate) / 2));
+  const targetMode = isVisualBreakdownMode();
+  const riskOpen = targetMode ? Math.max(3, Math.round((100 - model.closureRate) / 2)) : model.campaigns.length ? Math.round((100 - model.closureRate) / 2) : 0;
 
   return (
     <>
@@ -1980,17 +2236,17 @@ function AptRightRail({
         <div className="taf-topic-exfil-delivery-grid">
           <div className="taf-topic-exfil-delivery-ring" style={{ '--value': model.reportConfidence } as CSSProperties}>
             <strong>{Math.round(model.reportConfidence)}%</strong>
-            <span>较昨日 +8%</span>
+            <span>{targetMode ? '较昨日 +8%' : '实时证据计算'}</span>
           </div>
           <div className="taf-topic-exfil-delivery-stats">
-            <span><i /><b>可生成报告</b><strong>{Math.max(7, model.campaigns.length + 4)}</strong></span>
-            <span><i /><b>待补证据</b><strong>{model.evidenceRows.filter((item) => item.status === 'warn').length || 3}</strong></span>
+            <span><i /><b>可生成报告</b><strong>{targetMode ? Math.max(7, model.campaigns.length + 4) : model.campaigns.length}</strong></span>
+            <span><i /><b>待补证据</b><strong>{targetMode ? model.evidenceRows.filter((item) => item.status === 'warn').length || 3 : model.evidenceRows.filter((item) => item.status === 'warn').length}</strong></span>
             <span><i /><b>未闭环风险</b><strong>{riskOpen}</strong></span>
           </div>
         </div>
         <div className="taf-topic-exfil-delivery-actions">
-          <TopicActionButton topic={config.topicCode} title="导出总报告" className="ant-btn ant-btn-default ant-btn-sm"><DownloadOutlined />导出总报告</TopicActionButton>
-          <TopicActionButton topic={config.topicCode} title="导出证据包" className="ant-btn ant-btn-default ant-btn-sm"><FileProtectOutlined />导出证据包</TopicActionButton>
+          <TopicActionButton topic={config.topicCode} title="导出总报告" className="ant-btn ant-btn-default ant-btn-sm" overlayId="modal-topic-report-export"><DownloadOutlined />导出总报告</TopicActionButton>
+          <TopicActionButton topic={config.topicCode} title="导出证据包" className="ant-btn ant-btn-default ant-btn-sm" overlayId="modal-topic-evidence-package-export"><FileProtectOutlined />导出证据包</TopicActionButton>
           <TopicActionButton topic={config.topicCode} title="试点周报导出" className="ant-btn ant-btn-default ant-btn-sm"><ExportOutlined />试点周报导出</TopicActionButton>
         </div>
       </WorkPanel>
@@ -2028,7 +2284,7 @@ function AptRightRail({
       <WorkPanel title="专题动作 / 仅作用于当前专题" className="taf-topic-apt-action-panel">
         <div className="taf-topic-exfil-action-grid">
           {actions.map(([label, icon]) => (
-            <TopicActionButton key={String(label)} topic={config.topicCode} title={String(label)}>
+            <TopicActionButton key={String(label)} topic={config.topicCode} title={String(label)} overlayId={topicRailOverlayId(String(label))}>
               {icon}
               <span>{label}</span>
             </TopicActionButton>
@@ -2055,6 +2311,9 @@ function AptEvidenceTable({ rows, isLoading }: { rows: SnapshotRow[]; isLoading:
   const [page, setPage] = useState(1);
   const [selectedAction, setSelectedAction] = useState<{ action: string; row: AptEvidenceEventRow }>();
   const [submittedAction, setSubmittedAction] = useState(false);
+  const [submittingAction, setSubmittingAction] = useState(false);
+  const [actionID, setActionID] = useState('');
+  const [actionError, setActionError] = useState('');
   const pageCount = Math.max(1, Math.ceil(tableRows.length / pageSize));
   const currentPage = Math.min(page, pageCount);
   const visibleRows = tableRows.slice((currentPage - 1) * pageSize, currentPage * pageSize);
@@ -2074,6 +2333,8 @@ function AptEvidenceTable({ rows, isLoading }: { rows: SnapshotRow[]; isLoading:
       <b title="操作">操作</b>
       {isLoading ? (
         <span className="taf-topic-apt-table-loading">加载中...</span>
+      ) : !visibleRows.length ? (
+        <span className="taf-topic-apt-table-loading">当前时间窗没有真实战役证据</span>
       ) : visibleRows.map((row) => (
         <div key={row.id} className="taf-topic-apt-table-row">
           {columns.map(([key]) => (
@@ -2093,6 +2354,8 @@ function AptEvidenceTable({ rows, isLoading }: { rows: SnapshotRow[]; isLoading:
                 title={action}
                 onClick={() => {
                   setSubmittedAction(false);
+                  setActionID('');
+                  setActionError('');
                   setSelectedAction({ action, row });
                 }}
               >
@@ -2130,17 +2393,41 @@ function AptEvidenceTable({ rows, isLoading }: { rows: SnapshotRow[]; isLoading:
         onClose={() => {
           setSelectedAction(undefined);
           setSubmittedAction(false);
+          setActionID('');
+          setActionError('');
         }}
-        extra={<Button size="small" type="primary" disabled={submittedAction} onClick={() => setSubmittedAction(true)}>{submittedAction ? '已写入任务队列' : '确认提交'}</Button>}
+        extra={(
+          <Button
+            size="small"
+            type="primary"
+            loading={submittingAction}
+            disabled={submittedAction || !selectedAction}
+            onClick={() => {
+              if (!selectedAction) return;
+              setSubmittingAction(true);
+              setActionError('');
+              void submitTopicAction('apt', selectedAction.action, selectedAction.row.id)
+                .then((result) => {
+                  setActionID(result.action_id);
+                  setSubmittedAction(true);
+                })
+                .catch((error: unknown) => setActionError(error instanceof Error ? error.message : 'APT 证据操作提交失败'))
+                .finally(() => setSubmittingAction(false));
+            }}
+          >
+            {submittedAction ? '已写入任务队列' : '确认提交'}
+          </Button>
+        )}
       >
         <div className="taf-alert-detail-action-body">
-          <p>将为当前 APT 专题事件创建“{selectedAction?.action}”仿真任务，并保留对象、动作和审计上下文。</p>
+          <p>将为当前 APT 专题事件创建“{selectedAction?.action}”业务任务，并原子写入任务与审计上下文。</p>
           <dl>
             <dt>事件 ID</dt><dd>{selectedAction?.row.id}</dd>
             <dt>IoC</dt><dd>{selectedAction?.row.ioc}</dd>
-            <dt>接口预留</dt><dd>/v1/topics/apt/evidence-actions</dd>
+            <dt>执行接口</dt><dd>/v1/topics/apt/actions</dd>
           </dl>
-          {submittedAction && <Alert type="success" showIcon message="APT 证据操作已进入仿真任务队列" description={`事件 ${selectedAction?.row.id}；动作 ${selectedAction?.action}`} />}
+          {actionError && <Alert type="error" showIcon message="APT 证据操作提交失败" description={actionError} />}
+          {submittedAction && <Alert type="success" showIcon message="APT 证据操作已进入持久化任务队列" description={`任务 ${actionID}；事件 ${selectedAction?.row.id}；动作 ${selectedAction?.action}`} />}
         </div>
       </Drawer>
     </div>
@@ -2150,47 +2437,41 @@ function AptEvidenceTable({ rows, isLoading }: { rows: SnapshotRow[]; isLoading:
 function buildAptVisualModel(rows: SnapshotRow[], metrics: SnapshotMetric[], evidenceRows: PageSnapshot['evidence']): AptVisualModel {
   if (isVisualBreakdownMode()) return buildAptTargetVisualModel();
 
-  const sourceRows = rows.length ? rows : buildAptFallbackRows();
-  const campaignNames = sourceRows.slice(0, 3).map((row, index) => rowText(row, '战役名称') || ['APT-CN-2026', 'TEMP.HAWK', 'UNKNOWN-07'][index]);
-  const alertTotal = metricNumber(metrics, '关联告警') || sourceRows.reduce((sum, row) => sum + rowNumber(row, '关联告警'), 0) || 156;
-  const eventTotal = Math.max(64, Math.round(alertTotal * 0.14));
+  const sourceRows = rows;
+  const campaignNames = sourceRows.slice(0, 3).map((row) => rowText(row, '战役名称')).filter(Boolean);
+  const alertTotal = sourceRows.reduce((sum, row) => sum + rowNumber(row, '关联告警'), 0);
+  const eventTotal = alertTotal;
   const campaigns = campaignNames.map((name, index) => ({
-    name,
+    name: compactCampaignName(name, index),
+    fullName: name,
     meta: index === 0 ? '高置信' : index === 1 ? '中置信' : '低置信',
-    events: Math.max(12, Math.round(eventTotal / (index + 1.6))),
+    events: rowNumber(sourceRows[index] ?? {}, '关联告警'),
     tone: (index === 0 ? 'risk' : index === 1 ? 'warn' : 'info') as Tone,
   }));
   const labels = ['初始访问', '执行', '持久化', '防御规避', '凭证访问', '发现', '横向移动', '命令控制', '数据外传'];
   const phases = labels.map((label, index) => ({
     id: `TA${String(index + 1).padStart(4, '0')}`,
     label,
-    value: phaseValue(label, sourceRows, metrics, index),
+    value: phaseValue(label, sourceRows, metrics),
     confidence: index % 3 === 0 ? '高置信' : index % 3 === 1 ? '中覆盖' : '低覆盖',
     tone: (index % 4 === 0 ? 'risk' : index % 4 === 1 ? 'warn' : index % 4 === 2 ? 'info' : 'ok') as Tone,
   }));
   const evidenceNodes = [
-    { label: 'C2 域名', value: iocValue(sourceRows, 0, 'c2-apt.ltop'), tone: 'risk' as Tone },
-    { label: 'C2 IP', value: iocValue(sourceRows, 1, '185.199.111.153'), tone: 'risk' as Tone },
-    { label: '外联地址', value: iocValue(sourceRows, 2, '195.110.10.77'), tone: 'warn' as Tone },
-    { label: 'PCAP', value: `${Math.max(56, Math.round(eventTotal * 0.36))} 证据`, tone: 'warn' as Tone },
-    { label: 'Session', value: `${Math.max(72, Math.round(eventTotal * 0.46))} 会话`, tone: 'ok' as Tone },
+    { label: 'C2 域名', value: iocValue(sourceRows, 0, '-'), tone: 'risk' as Tone },
+    { label: 'C2 IP', value: iocValue(sourceRows, 1, '-'), tone: 'risk' as Tone },
+    { label: '外联地址', value: iocValue(sourceRows, 2, '-'), tone: 'warn' as Tone },
+    { label: 'PCAP', value: `${Math.round(eventTotal * 0.36)} 证据`, tone: 'warn' as Tone },
+    { label: 'Session', value: `${Math.round(eventTotal * 0.46)} 会话`, tone: 'ok' as Tone },
   ];
   const assets = [
-    { label: '资产/组', value: `办公终端 命中 ${Math.max(32, metricNumber(metrics, '关键资产命中'))}`, tone: 'ok' as Tone },
-    { label: '账号', value: `CORP.LOCAL 命中 ${Math.max(27, Math.round(eventTotal * 0.17))}`, tone: 'ok' as Tone },
-    { label: '资产/后门', value: `PowerShell 命中 ${Math.max(18, metricNumber(metrics, '持久化迹象数'))}`, tone: 'ok' as Tone },
-    { label: '关键班弱码', value: `弱特征服务 命中 ${Math.max(14, Math.round(eventTotal * 0.09))}`, tone: 'ok' as Tone },
+    { label: '资产/组', value: `命中 ${metricNumber(metrics, '关键资产命中')}`, tone: 'ok' as Tone },
+    { label: '账号', value: `命中 ${Math.round(eventTotal * 0.17)}`, tone: 'ok' as Tone },
+    { label: '资产/后门', value: `命中 ${metricNumber(metrics, '持久化迹象数')}`, tone: 'ok' as Tone },
+    { label: '关键凭据', value: `命中 ${Math.round(eventTotal * 0.09)}`, tone: 'ok' as Tone },
   ];
-  const reportConfidence = metricNumber(metrics, '报告置信度') || 62;
-  const closureRate = metricNumber(metrics, '处置闭环率') || 68;
-  const normalizedEvidenceRows = evidenceRows.length ? evidenceRows : [
-    { label: '告警证据', value: '64 / 64 (100%)', status: 'ok' as const },
-    { label: 'PCAP', value: '132 / 156 (84%)', status: 'warn' as const },
-    { label: 'Session', value: '198 / 204 (97%)', status: 'ok' as const },
-    { label: '审计日志', value: '38 / 38 (100%)', status: 'ok' as const },
-    { label: '回溯路径', value: '18 / 18 (100%)', status: 'ok' as const },
-    { label: '资产快照', value: '23 / 23 (100%)', status: 'ok' as const },
-  ];
+  const reportConfidence = metricNumber(metrics, '报告置信度');
+  const closureRate = metricNumber(metrics, '处置闭环率');
+  const normalizedEvidenceRows = evidenceRows;
 
   return {
     campaigns,
@@ -2198,16 +2479,16 @@ function buildAptVisualModel(rows: SnapshotRow[], metrics: SnapshotMetric[], evi
     evidenceNodes,
     assets,
     timeline: buildAptTimeline(sourceRows, eventTotal),
-    iocs: evidenceNodes.slice(0, 5).map((item, index) => ({
+    iocs: evidenceNodes.slice(0, 5).filter((item) => item.value !== '-').map((item, index) => ({
       ioc: item.value.replace(/\s+(证据|会话)$/u, ''),
       type: index === 0 ? '域名' : index === 1 ? 'IP' : index === 4 ? '会话' : 'Hash',
-      hits: Math.max(18, Math.round(eventTotal / (index + 2))),
-      firstSeen: `06-${String(23 + index).padStart(2, '0')} ${String(10 + index).padStart(2, '0')}:21`,
+      hits: Math.round(eventTotal / (index + 2)),
+      firstSeen: sourceRows[index] ? rowText(sourceRows[index], '首次发现') : '-',
     })),
     response: [
       { label: '已完成', value: Math.round(closureRate), tone: 'ok' as Tone },
-      { label: '进行中', value: Math.max(12, Math.round((100 - closureRate) * 0.56)), tone: 'warn' as Tone },
-      { label: '待处置', value: Math.max(8, Math.round((100 - closureRate) * 0.44)), tone: 'risk' as Tone },
+      { label: '进行中', value: sourceRows.length ? Math.round((100 - closureRate) * 0.56) : 0, tone: 'warn' as Tone },
+      { label: '待处置', value: sourceRows.length ? Math.round((100 - closureRate) * 0.44) : 0, tone: 'risk' as Tone },
     ],
     evidenceRows: normalizedEvidenceRows,
     reportConfidence,
@@ -2288,16 +2569,19 @@ function buildAptEvidenceEventRows(rows: SnapshotRow[]): AptEvidenceEventRow[] {
 
   const directRows = rows
     .map((row, index) => {
-      const id = rowText(row, '事件ID');
+      const id = rowText(row, '事件ID') || rowText(row, '战役名称');
       if (!id) return null;
-      const status = rowText(row, '处置状态') || '进行中';
+      const status = rowText(row, '处置状态') || rowText(row, '处置') || '进行中';
+      const firstSeen = rowText(row, '首次发现');
+      const lastSeen = rowText(row, '最近活动');
+      const alertCount = rowNumber(row, '关联告警');
       return {
         id,
         phase: rowText(row, '阶段') || '初始访问',
-        assetGroup: rowText(row, '资产组') || rowText(row, '关键实体') || '办公终端',
-        ioc: rowText(row, 'IoC') || rowText(row, '关键实体') || 'c2-apt.ltop',
-        evidenceType: rowText(row, '证据类型') || 'Session',
-        timeWindow: rowText(row, '时间窗') || rowText(row, '最近活动') || `2026-06-${String(index + 1).padStart(2, '0')} 10:00 ~ 10:30`,
+        assetGroup: rowText(row, '资产组') || rowText(row, '关键实体') || '-',
+        ioc: rowText(row, 'IoC') || rowText(row, '关键实体') || '-',
+        evidenceType: rowText(row, '证据类型') || (alertCount > 0 ? `告警 ${alertCount}` : '战役记录'),
+        timeWindow: rowText(row, '时间窗') || (firstSeen && lastSeen ? `${firstSeen} ~ ${lastSeen}` : lastSeen || firstSeen || `第 ${index + 1} 条战役记录`),
         status,
         statusTone: aptStatusTone(status),
         actions: ['全量详情', '溯源分析', 'PCAP', 'Session', '关联告警', '停止BGP'],
@@ -2305,7 +2589,17 @@ function buildAptEvidenceEventRows(rows: SnapshotRow[]): AptEvidenceEventRow[] {
     })
     .filter((row): row is AptEvidenceEventRow => Boolean(row));
 
-  return directRows.length ? directRows : buildAptTargetEvidenceRows();
+  return directRows;
+}
+
+function compactCampaignName(value: string, index: number) {
+  const normalized = value.trim();
+  if (!normalized) return `CAMPAIGN-${String(index + 1).padStart(2, '0')}`;
+  if (normalized.length <= 18) return normalized;
+  const segments = normalized.split('-').filter(Boolean);
+  const suffix = segments[segments.length - 1] ?? '';
+  if (suffix && suffix.length <= 10) return `EXFIL-${suffix.toUpperCase()}`;
+  return `${normalized.slice(0, 8)}…${normalized.slice(-7)}`;
 }
 
 function buildAptTargetEvidenceRows(): AptEvidenceEventRow[] {
@@ -2396,25 +2690,17 @@ function aptStatusTone(status: string): Tone {
   return 'warn';
 }
 
-function buildAptFallbackRows(): SnapshotRow[] {
-  return [
-    { 战役名称: 'APT-CN-2026', 阶段: '初始访问', 关键实体: 'WEB-SRV-02', 关联告警: 234, 攻击技术: 'T1190', 首次发现: '06-19 09:12', 最近活动: '06-20 03:22', 风险等级: '高风险', 处置: '下钻' },
-    { 战役名称: 'TEMP.HAWK', 阶段: '执行活动', 关键实体: '域控 DC-01', 关联告警: 187, 攻击技术: 'T1059', 首次发现: '06-18 09:12', 最近活动: '06-19 03:22', 风险等级: '高风险', 处置: '下钻' },
-    { 战役名称: 'UNKNOWN-07', 阶段: '横向移动', 关键实体: '财务-SRV-2003', 关联告警: 156, 攻击技术: 'T1021', 首次发现: '06-17 09:12', 最近活动: '06-18 03:22', 风险等级: '中风险', 处置: '下钻' },
-  ];
-}
-
-function phaseValue(label: string, rows: SnapshotRow[], metrics: SnapshotMetric[], index: number) {
+function phaseValue(label: string, rows: SnapshotRow[], metrics: SnapshotMetric[]) {
   const byRow = rows.filter((row) => rowText(row, '阶段').includes(label.slice(0, 2))).length;
-  if (byRow) return byRow + 4;
-  if (label === '横向移动') return metricNumber(metrics, '横向移动链路') || 23;
-  if (label === '持久化') return metricNumber(metrics, '持久化迹象数') || 18;
-  if (label === '数据外传') return metricNumber(metrics, '外传关联证据') || 32;
-  return [7, 7, 6, 6, 5, 6, 23, 8, 32][index] ?? 6;
+  if (byRow) return byRow;
+  if (label === '横向移动') return metricNumber(metrics, '横向移动链路');
+  if (label === '持久化') return metricNumber(metrics, '持久化迹象数');
+  if (label === '数据外传') return metricNumber(metrics, '外传关联证据');
+  return 0;
 }
 
 function iocValue(rows: SnapshotRow[], index: number, fallback: string) {
-  const row = rows[index % rows.length] ?? {};
+  const row = rows.length ? rows[index % rows.length] : {};
   const entity = rowText(row, '关键实体');
   if (/^\d{1,3}(?:\.\d{1,3}){3}$/.test(entity)) return entity;
   if (index === 0 && entity.includes('.')) return entity;
@@ -2423,6 +2709,7 @@ function iocValue(rows: SnapshotRow[], index: number, fallback: string) {
 
 function buildAptTimeline(rows: SnapshotRow[], eventTotal: number): AptTimelinePoint[] {
   const labels = ['05-21', '05-26', '05-31', '06-05', '06-10', '06-15', '06-20'];
+  if (!rows.length) return labels.map((label) => ({ label, aptCn: 0, tempHawk: 0, unknown: 0 }));
   return labels.map((label, index) => {
     const seed = rows[index % rows.length] ? rowNumber(rows[index % rows.length], '关联告警') : eventTotal;
     return {

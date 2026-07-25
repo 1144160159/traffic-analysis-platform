@@ -17,6 +17,15 @@ describe('campaignDetailApi', () => {
           { alert_id: 'AL-20260620-000123', alert_type: 'C2 隧道通信', severity: 'critical', last_seen: 1_771_292_540_000 },
           { alert_id: 'AL-20260620-000119', alert_type: '横向移动 SMB 探测', severity: 'high', last_seen: 1_771_303_900_000 },
         ],
+        phase_data_backed: true,
+        evidence_summary: [
+          { key: 'alerts', label: '告警', current: 2, expected: 4, available: true },
+          { key: 'packet_session', label: 'PCAP / Session', current: 6, available: true },
+        ],
+        status_transitions: [
+          { status: 'new', changed_at: '2026-06-19T09:15:00Z', source: 'campaign' },
+          { status: 'investigating', changed_at: '2026-06-19T10:02:00Z', source: 'audit_log' },
+        ],
         attack_phases: ['初始访问', '执行', '持久化', '横向移动', 'C2通信', '数据外传', '处置闭环'],
         rule_ids: ['C2_Tunnel_v3', 'Data_Exfil_v1'],
         model_ids: ['APT_Campaign_Cluster_v2'],
@@ -32,92 +41,58 @@ describe('campaignDetailApi', () => {
     expect(snapshot.phases.map((item) => item.phase)).toEqual(['初始访问', '执行', '持久化', '横向移动', 'C2通信', '数据外传', '处置闭环']);
     expect(snapshot.alerts[0].告警ID).toBe('AL-20260620-000123');
     expect(snapshot.impactTabs).toHaveLength(6);
-    expect(snapshot.topAssets).toHaveLength(5);
-    expect(snapshot.impactAccount.total).toBe(31);
-    expect(snapshot.impactAccount.breakdown.map((item) => item.count)).toEqual([8, 14, 9]);
-    expect(snapshot.impactAccount.breakdown.map((item) => item.percent)).toEqual(['25.8%', '45.2%', '29.0%']);
-    expect(snapshot.impactAccount.rows).toHaveLength(5);
-    expect(snapshot.impactAccount.rows[0]).toEqual({
-      账号: 'svc_backup',
-      账号类型: '服务账号',
-      权限风险: '高危',
-      登录链路: 'VPN -> DB-SRV-07',
+    expect(snapshot.topAssets).toHaveLength(3);
+    expect(snapshot.impactAccount.total).toBe(0);
+    expect(snapshot.impactAccount.rows).toEqual([]);
+    expect(snapshot.impactBusinessSystem.total).toBe(0);
+    expect(snapshot.impactBusinessSystem.rows).toEqual([]);
+    expect(snapshot.impactService.total).toBe(0);
+    expect(snapshot.impactService.rows).toEqual([]);
+    expect(snapshot.impactDepartment.total).toBe(0);
+    expect(snapshot.impactDepartment.rows).toEqual([]);
+    expect(snapshot.impactCampus.total).toBe(0);
+    expect(snapshot.impactCampus.rows).toEqual([]);
+    expect(snapshot.evidenceChecks.map((item) => item.label)).toEqual(['告警', 'PCAP / Session']);
+    expect(snapshot.phaseDataBacked).toBe(true);
+    expect(snapshot.evidenceRail[0]).toEqual({
+      key: 'alerts',
+      label: '告警',
+      current: 2,
+      expected: 4,
+      available: true,
     });
-    expect(snapshot.impactBusinessSystem.total).toBe(9);
-    expect(snapshot.impactBusinessSystem.breakdown.map((item) => item.count)).toEqual([3, 4, 2]);
-    expect(snapshot.impactBusinessSystem.breakdown.map((item) => item.percent)).toEqual(['33.3%', '44.5%', '22.2%']);
-    expect(snapshot.impactBusinessSystem.rows[0]).toEqual({
-      业务系统: '科研管理系统',
-      关键服务: 'DB/API',
-      风险: '高危',
-      恢复优先级: 'P0',
+    expect(snapshot.statusTransitions[1]).toEqual({
+      status: 'investigating',
+      changedAt: '2026-06-19T10:02:00Z',
+      source: 'audit_log',
     });
-    expect(snapshot.impactService.total).toBe(42);
-    expect(snapshot.impactService.breakdown.map((item) => item.count)).toEqual([11, 18, 13]);
-    expect(snapshot.impactService.breakdown.map((item) => item.percent)).toEqual(['26.2%', '42.9%', '30.9%']);
-    expect(snapshot.impactService.rows[0]).toEqual({
-      服务名称: 'PostgreSQL',
-      端口协议: '5432/TCP',
-      风险: '高危',
-      依赖关系: '科研管理系统',
-    });
-    expect(snapshot.impactDepartment.total).toBe(7);
-    expect(snapshot.impactDepartment.breakdown.map((item) => item.count)).toEqual([2, 3, 2]);
-    expect(snapshot.impactDepartment.breakdown.map((item) => item.percent)).toEqual(['28.6%', '42.9%', '28.6%']);
-    expect(snapshot.impactDepartment.rows[0]).toEqual({
-      部门名称: '科研处',
-      责任人: '王主任',
-      风险: '高危',
-      处置进度: 40,
-    });
-    expect(snapshot.impactCampus.total).toBe(4);
-    expect(snapshot.impactCampus.breakdown.map((item) => item.count)).toEqual([1, 2, 1]);
-    expect(snapshot.impactCampus.breakdown.map((item) => item.percent)).toEqual(['25.0%', '50.0%', '25.0%']);
-    expect(snapshot.impactCampus.rows[0]).toEqual({
-      校区楼宇: '主校区-数据中心',
-      覆盖资产: 26,
-      风险: '高危',
-      链路: '核心链路',
-    });
-    expect(snapshot.evidenceChecks.map((item) => item.label)).toContain('完整度');
-    expect(snapshot.evidenceSummaryRows[0].证据类型).toBe('PCAP');
+    expect(snapshot.evidenceSummaryRows[0].证据类型).toBe('告警');
     expect(snapshot.responseFlow).toHaveLength(6);
-    expect(snapshot.responseActions).toHaveLength(5);
-    expect(snapshot.reviewRows).toHaveLength(6);
+    expect(snapshot.responseFlow.map((step) => step.title)).toEqual(['发现', '研判', '遏制', '根除', '恢复', '复盘']);
+    expect(snapshot.responseActions).toEqual([]);
+    expect(snapshot.reviewRows).toEqual([]);
     expect(snapshot.evidence.find((item) => item.label === 'Campaign Detail API')?.value).toBe('/v1/campaigns/APT-20260619-001');
   });
 
-  it('keeps a usable empty-state storyboard when optional detail fields are missing', () => {
+  it('keeps an honest empty state when optional detail fields are missing', () => {
     const snapshot = normalizeCampaignDetailSnapshot('APT-EMPTY', { data: { campaign_id: 'APT-EMPTY', score: 87 } });
 
     expect(snapshot.campaignId).toBe('APT-EMPTY');
     expect(snapshot.riskScore).toBe(87);
-    expect(snapshot.alertCount).toBe(38);
-    expect(snapshot.assetCount).toBe(57);
-    expect(snapshot.phases).toHaveLength(7);
-    expect(snapshot.alerts).toHaveLength(5);
-    expect(snapshot.impactAccount.total).toBe(31);
-    expect(snapshot.impactAccount.rows[4].账号).toBe('svc_deploy');
-    expect(snapshot.impactBusinessSystem.rows[4].恢复优先级).toBe('P2');
-    expect(snapshot.impactService.rows[4]).toEqual({
-      服务名称: 'Redis',
-      端口协议: '6379/TCP',
-      风险: '中危',
-      依赖关系: '会话缓存',
-    });
-    expect(snapshot.impactDepartment.rows[4]).toEqual({
-      部门名称: '图书馆',
-      责任人: '运维组',
-      风险: '中危',
-      处置进度: 80,
-    });
-    expect(snapshot.impactCampus.rows[4]).toEqual({
-      校区楼宇: '西校区-图书馆',
-      覆盖资产: 5,
-      风险: '低危',
-      链路: '出口链路',
-    });
-    expect(snapshot.evidenceSummaryRows).toHaveLength(5);
+    expect(snapshot.alertCount).toBe(0);
+    expect(snapshot.assetCount).toBe(0);
+    expect(snapshot.phases).toEqual([]);
+    expect(snapshot.alerts).toEqual([]);
+    expect(snapshot.impactAccount.total).toBe(0);
+    expect(snapshot.impactAccount.rows).toEqual([]);
+    expect(snapshot.impactBusinessSystem.rows).toEqual([]);
+    expect(snapshot.impactService.rows).toEqual([]);
+    expect(snapshot.impactDepartment.rows).toEqual([]);
+    expect(snapshot.impactCampus.rows).toEqual([]);
+    expect(snapshot.evidenceSummaryRows).toHaveLength(1);
+    expect(snapshot.evidenceRail[0].current).toBe(0);
+    expect(snapshot.evidenceRail[1].available).toBe(false);
+    expect(snapshot.statusTransitions).toEqual([]);
     expect(snapshot.status).toBe('进行中');
   });
 

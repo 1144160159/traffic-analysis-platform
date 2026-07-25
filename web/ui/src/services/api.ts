@@ -863,6 +863,178 @@ export const fetchPageSnapshot = async (pageId: string, options: PageSnapshotReq
   return fetchRealPageSnapshot(route.page, options);
 };
 
+export type TopicActionResult = {
+  action_id: string;
+  tenant_id: string;
+  topic: 'tunnel' | 'exfil' | 'apt';
+  action: string;
+  label: string;
+  target: string;
+  data_mode: 'live' | 'partial' | 'simulated';
+  status: string;
+  requested_by: string;
+  created_at: number;
+};
+
+const topicActionKey = (topic: string): TopicActionResult['topic'] => {
+  const normalized = topic.trim().toLowerCase();
+  if (normalized.startsWith('exfil')) return 'exfil';
+  if (normalized.startsWith('apt') || normalized.startsWith('campaign')) return 'apt';
+  return 'tunnel';
+};
+
+const topicActionCode = (label: string) => {
+  const mappings: Array<[RegExp, string]> = [
+    [/PCAP|取证/u, 'extract_pcap'],
+    [/阻断|隔离|停止/u, 'contain'],
+    [/白名单|例外/u, 'review_exception'],
+    [/审计/u, 'write_audit'],
+    [/规则|模型/u, 'link_rule'],
+    [/攻击链|下钻|溯源/u, 'trace'],
+    [/订阅/u, 'subscribe'],
+    [/静默/u, 'mute'],
+    [/分享/u, 'share'],
+    [/收藏/u, 'favorite'],
+    [/布局/u, 'change_layout'],
+    [/全屏/u, 'focus_view'],
+  ];
+  return mappings.find(([pattern]) => pattern.test(label))?.[1] ?? 'topic_operation';
+};
+
+export const submitTopicAction = async (topic: string, label: string, target: string): Promise<TopicActionResult> => {
+  const topicKey = topicActionKey(topic);
+  const response = await api.post<{ data?: TopicActionResult } & Partial<TopicActionResult>>(`/v1/topics/${topicKey}/actions`, {
+    action: topicActionCode(label),
+    label,
+    target,
+    data_mode: 'live',
+    detail: { source: 'topic-workbench' },
+  });
+  return (response.data.data ?? response.data) as TopicActionResult;
+};
+
+export type TopicSavedView = {
+  view_id: string;
+  topic: TopicActionResult['topic'];
+  name: string;
+  filters: Record<string, unknown>;
+  visibility: string;
+  favorite: boolean;
+  shared: boolean;
+  share_token?: string;
+  created_at: number;
+  updated_at: number;
+};
+
+export type TopicScope = {
+  topic: TopicActionResult['topic'];
+  scope_name: string;
+  included_assets: string[];
+  excluded_assets: string[];
+  risk_levels: string[];
+  time_window: string;
+  detail: Record<string, unknown>;
+  updated_at: number;
+};
+
+export type TopicSubscription = {
+  subscription_id: string;
+  topic: TopicActionResult['topic'];
+  channel: string;
+  threshold: string;
+  schedule: string;
+  recipients: string[];
+  enabled: boolean;
+  created_at: number;
+  updated_at: number;
+};
+
+export type TopicExport = {
+  export_id: string;
+  topic: TopicActionResult['topic'];
+  export_type: 'report' | 'evidence_package';
+  status: string;
+  parameters: Record<string, unknown>;
+  result: Record<string, unknown>;
+  generated_at: number;
+};
+
+export const saveTopicView = async (
+  topic: string,
+  input: { name: string; visibility: string; favorite: boolean; filters: Record<string, unknown> },
+): Promise<TopicSavedView> => {
+  const response = await api.post<{ data: TopicSavedView }>('/v1/topics/views', {
+    topic: topicActionKey(topic),
+    ...input,
+  });
+  return response.data.data;
+};
+
+export const updateTopicScope = async (
+  topic: string,
+  input: {
+    scope_name: string;
+    included_assets: string[];
+    excluded_assets: string[];
+    risk_levels: string[];
+    time_window: string;
+    detail: Record<string, unknown>;
+  },
+): Promise<TopicScope> => {
+  const topicKey = topicActionKey(topic);
+  const response = await api.put<{ data: TopicScope }>(`/v1/topics/scopes/${topicKey}`, input);
+  return response.data.data;
+};
+
+export const createTopicSubscription = async (
+  topic: string,
+  input: { channel: string; threshold: string; schedule: string; recipients: string[] },
+): Promise<TopicSubscription> => {
+  const response = await api.post<{ data: TopicSubscription }>('/v1/topics/subscriptions', {
+    topic: topicActionKey(topic),
+    enabled: true,
+    ...input,
+  });
+  return response.data.data;
+};
+
+export const exportTopicArtifact = async (
+  topic: string,
+  exportType: 'report' | 'evidence_package',
+  format: string,
+): Promise<TopicExport> => {
+  const endpoint = exportType === 'report' ? '/v1/topics/reports/export' : '/v1/topics/evidence-packages/export';
+  const response = await api.post<{ data: TopicExport }>(endpoint, {
+    topic: topicActionKey(topic),
+    format,
+    parameters: { source: 'topic-workbench', visual_state: topicActionKey(topic) },
+  });
+  return response.data.data;
+};
+
+export const updateTopicViewPreference = async (
+  topic: string,
+  preference: 'favorite' | 'shared',
+): Promise<TopicSavedView> => {
+  const topicKey = topicActionKey(topic);
+  const listResponse = await api.get<{ data: { views: TopicSavedView[] } }>('/v1/topics/views', {
+    params: { topic: topicKey, limit: 1, offset: 0 },
+  });
+  let view = listResponse.data.data.views?.[0];
+  if (!view) {
+    view = await saveTopicView(topicKey, {
+      name: `${topicKey}-当前专题视图`,
+      visibility: 'private',
+      favorite: false,
+      filters: { topic: topicKey, source: 'topic-workbench' },
+    });
+  }
+  const response = await api.patch<{ data: TopicSavedView }>(`/v1/topics/views/${encodeURIComponent(view.view_id)}`, {
+    [preference]: true,
+  });
+  return response.data.data;
+};
+
 type ApiEnvelope = {
   data?: unknown;
   total?: number;

@@ -140,6 +140,20 @@ export type CampaignDetailFlowStep = {
   status: CampaignDetailMetric['status'];
 };
 
+export type CampaignDetailEvidenceRailItem = {
+  key: string;
+  label: string;
+  current: number | null;
+  expected: number | null;
+  available: boolean;
+};
+
+export type CampaignDetailStatusTransition = {
+  status: string;
+  changedAt: string;
+  source: string;
+};
+
 export type CampaignDetailActionRow = {
   动作: string;
   目标: string;
@@ -184,6 +198,8 @@ export type CampaignDetailSnapshot = {
   evidenceCompleteness: number;
   evidenceCompletenessAvailable: boolean;
   phaseDataBacked: boolean;
+  evidenceRail: CampaignDetailEvidenceRailItem[];
+  statusTransitions: CampaignDetailStatusTransition[];
   evidenceChecks: CampaignDetailEvidenceCheck[];
   evidenceSummaryRows: CampaignDetailEvidenceSummaryRow[];
   responseFlow: CampaignDetailFlowStep[];
@@ -213,32 +229,45 @@ export function normalizeCampaignDetailSnapshot(
   const alertRows = extractList(record, ['alerts']).length ? extractList(record, ['alerts']) : alertIds.map((id) => ({ alert_id: id }));
   const phaseSummaryRows = extractList(record, ['phase_summaries']);
   const entityIds = stringListFrom(valueAt(record, ['entities']));
-  const score = normalizeScore(numberAt(record, ['score', 'risk_score', 'riskScore']) || 92);
+  const referenceFixture = appConfig.useMock || isVisualBreakdownMode() || valueAt(record, ['__reference_fixture']) === true;
+  const score = normalizeScore(numberAt(record, ['score', 'risk_score', 'riskScore']));
   const rawAlertCount = Math.max(alertRows.length, alertIds.length);
-  const alertCount = rawAlertCount || 38;
-  const phases = buildPhaseCards(record, alertCount, phaseSummaryRows);
-  const assetCount = entityIds.length || 57;
-  const firstSeen = formatTimestamp(valueAt(record, ['ts_start', 'start_time', 'first_seen'])) || '2026-06-19 09:12:00';
-  const lastUpdated = formatTimestamp(valueAt(record, ['ts_end', 'end_time', 'ingest_ts', 'updated_at'])) || '2026-06-20 23:38:18';
-  const currentPhase = phases.find((item) => item.status === 'risk')?.phase || phases[phases.length - 2]?.phase || '数据外传';
+  const alertCount = rawAlertCount;
+  const phases = buildPhaseCards(record, alertCount, phaseSummaryRows, referenceFixture);
+  const phaseDataBacked = valueAt(record, ['phase_data_backed']) === true;
+  const assetCount = entityIds.length;
+  const firstSeen = formatTimestamp(valueAt(record, ['ts_start', 'start_time', 'first_seen'])) || '-';
+  const lastUpdated = formatTimestamp(valueAt(record, ['ts_end', 'end_time', 'ingest_ts', 'updated_at'])) || '-';
+  const currentPhase = phases.find((item) => item.status === 'risk')?.phase
+    || phases[phases.length - 2]?.phase
+    || (referenceFixture ? '数据外传' : '未提供');
   const duration = formatDuration(valueAt(record, ['ts_start', 'start_time']), valueAt(record, ['ts_end', 'end_time']));
   const status = campaignStatus(record, score);
   const activityStatus = statusLabel(textFrom(record, ['activity_status']) || textFrom(record, ['status']));
   const workflowStatus = statusLabel(textFrom(record, ['status'])) || activityStatus;
-  const impactAccount = buildImpactAccount(record);
-  const impactBusinessSystem = buildImpactBusinessSystem(record);
-  const impactService = buildImpactService(record);
-  const impactDepartment = buildImpactDepartment(record);
-  const impactCampus = buildImpactCampus(record);
+  const impactAccount = buildImpactAccount(record, referenceFixture);
+  const impactBusinessSystem = buildImpactBusinessSystem(record, referenceFixture);
+  const impactService = buildImpactService(record, referenceFixture);
+  const impactDepartment = buildImpactDepartment(record, referenceFixture);
+  const impactCampus = buildImpactCampus(record, referenceFixture);
   const summary = textFrom(record, ['summary', 'description'])
-    || '园区科研网络定向窃密战役，跨办公区、科研网与数据中心产生多阶段告警和取证证据。';
+    || (referenceFixture ? '园区科研网络定向窃密战役，跨办公区、科研网与数据中心产生多阶段告警和取证证据。' : '未提供战役摘要');
   const tags = [
     textFrom(record, ['campaign_type', 'campaignType']) || 'APT 定向攻击',
     ...stringListFrom(valueAt(record, ['rule_ids'])).slice(0, 2),
     ...stringListFrom(valueAt(record, ['model_ids'])).slice(0, 2),
   ].filter(Boolean).slice(0, 4);
-  const evidenceCompleteness = Math.min(96, Math.round(67 + alertCount / 3 + Math.min(6, assetCount / 10)));
-  const evidenceCompletenessAvailable = numberAt(record, ['evidence_completeness']) > 0;
+  const rawEvidenceCompleteness = valueAt(record, ['evidence_completeness']);
+  const explicitEvidenceCompleteness = typeof rawEvidenceCompleteness === 'number'
+    ? rawEvidenceCompleteness
+    : typeof rawEvidenceCompleteness === 'string' && rawEvidenceCompleteness.trim()
+      ? Number(rawEvidenceCompleteness)
+      : Number.NaN;
+  const evidenceCompletenessAvailable = Number.isFinite(explicitEvidenceCompleteness)
+    && explicitEvidenceCompleteness >= 0;
+  const evidenceCompleteness = evidenceCompletenessAvailable
+    ? Math.min(100, Math.round(explicitEvidenceCompleteness))
+    : (referenceFixture ? Math.min(96, Math.round(67 + alertCount / 3 + Math.min(6, assetCount / 10))) : 0);
   const campaignType = textFrom(record, ['campaign_type', 'campaignType']) || '未分类';
 
   return {
@@ -247,26 +276,26 @@ export function normalizeCampaignDetailSnapshot(
     title: summaryTitle(summary, campaignId),
     riskScore: score,
     currentPhase,
-    duration: duration || '2天14小时',
+    duration: duration || (referenceFixture ? '2天14小时' : '-'),
     firstSeen,
     lastUpdated,
     status,
     activityStatus,
     workflowStatus,
-    assignee: textFrom(record, ['owner', 'assignee', 'analyst']) || 'sec_analyst',
+    assignee: textFrom(record, ['owner', 'assignee', 'analyst']) || (referenceFixture ? 'sec_analyst' : '未分配'),
     alertCount,
     assetCount,
-    tags: tags.length ? tags : ['APT 定向攻击', 'C2_Tunnel_v3', 'Data_Exfil_v1'],
+    tags: tags.length ? tags : (referenceFixture ? ['APT 定向攻击', 'C2_Tunnel_v3', 'Data_Exfil_v1'] : []),
     summary,
     profileFacts: [
       fact('战役 ID', campaignId),
       fact('风险评分', `${score}/100`),
       fact('当前阶段', currentPhase),
-      fact('持续时间', duration || '2天14小时'),
+      fact('持续时间', duration || (referenceFixture ? '2天14小时' : '-')),
       fact('首次发现', firstSeen),
       fact('最近活动', lastUpdated),
       fact('当前状态', status, true),
-      fact('负责人', textFrom(record, ['owner', 'assignee', 'analyst']) || 'sec_analyst'),
+      fact('负责人', textFrom(record, ['owner', 'assignee', 'analyst']) || (referenceFixture ? 'sec_analyst' : '未分配')),
       fact('关联告警', `${alertCount} 条`),
       fact('影响资产', `${assetCount} 台`),
     ],
@@ -279,7 +308,7 @@ export function normalizeCampaignDetailSnapshot(
       metric('处置进度', status === '已结束' ? '100%' : '68%', status, status === '已结束' ? 'ok' : 'warn'),
     ],
     phases,
-    alerts: buildAlertRows(alertRows, alertIds, phases, assetCount),
+    alerts: buildAlertRows(alertRows, alertIds, phases, assetCount, referenceFixture),
     impactTabs: buildImpactTabs(
       assetCount,
       impactAccount.total,
@@ -288,7 +317,7 @@ export function normalizeCampaignDetailSnapshot(
       impactCampus.total,
       impactBusinessSystem.total,
     ),
-    topAssets: buildTopAssets(entityIds),
+    topAssets: buildTopAssets(record, entityIds, referenceFixture),
     impactAccount,
     impactBusinessSystem,
     impactService,
@@ -296,12 +325,14 @@ export function normalizeCampaignDetailSnapshot(
     impactCampus,
     evidenceCompleteness,
     evidenceCompletenessAvailable,
-    phaseDataBacked: Boolean(valueAt(record, ['phase_data_backed'])),
-    evidenceChecks: buildEvidenceChecks(evidenceCompleteness, alertCount),
-    evidenceSummaryRows: buildEvidenceRows(campaignId, evidenceCompleteness),
-    responseFlow: buildResponseFlow(firstSeen, lastUpdated, status),
-    responseActions: buildResponseActions(currentPhase, campaignId),
-    reviewRows: buildReviewRows(score, currentPhase, evidenceCompleteness),
+    phaseDataBacked,
+    evidenceRail: normalizeEvidenceRail(record, rawAlertCount, phaseSummaryRows, phaseDataBacked),
+    statusTransitions: normalizeStatusTransitions(record),
+    evidenceChecks: referenceFixture ? buildEvidenceChecks(evidenceCompleteness, alertCount) : buildEvidenceChecksFromRail(normalizeEvidenceRail(record, rawAlertCount, phaseSummaryRows, phaseDataBacked)),
+    evidenceSummaryRows: referenceFixture ? buildEvidenceRows(campaignId, evidenceCompleteness) : buildEvidenceRowsFromRail(normalizeEvidenceRail(record, rawAlertCount, phaseSummaryRows, phaseDataBacked)),
+    responseFlow: referenceFixture ? buildResponseFlow(firstSeen, lastUpdated, status) : buildResponseFlowFromTransitions(normalizeStatusTransitions(record)),
+    responseActions: referenceFixture ? buildResponseActions(currentPhase, campaignId) : [],
+    reviewRows: referenceFixture ? buildReviewRows(score, currentPhase, evidenceCompleteness) : [],
     evidence: [
       metric('Campaign Detail API', `/v1/campaigns/${campaignId}`, 'primary', 'ok'),
       metric('告警聚合', `${alertCount} 条`, 'alerts', alertCount ? 'warn' : 'info'),
@@ -334,6 +365,7 @@ function buildMockCampaignDetailSnapshot(campaignId: string) {
       attack_phases: canonicalPhases,
       rule_ids: ['C2_Tunnel_v3', 'Lateral_Move_v2', 'Data_Exfil_v1'],
       model_ids: ['APT_Campaign_Cluster_v2'],
+      __reference_fixture: true,
     },
   });
 }
@@ -342,9 +374,10 @@ function buildPhaseCards(
   record: Record<string, unknown>,
   alertCount: number,
   phaseSummaryRows: Record<string, unknown>[] = [],
+  referenceFixture = false,
 ): CampaignDetailPhase[] {
   const payloadPhases = stringListFrom(valueAt(record, ['attack_phases', 'phases'])).map(phaseLabel);
-  const phases = Array.from(new Set([...canonicalPhases, ...payloadPhases])).slice(0, 7);
+  const phases = Array.from(new Set([...(referenceFixture ? canonicalPhases : []), ...payloadPhases])).slice(0, 7);
   const exfiltrationIndex = phases.findIndex((phase) => phase.includes('外传'));
   const activeIndex = exfiltrationIndex >= 0 ? exfiltrationIndex : Math.min(5, phases.length - 1);
   const phaseSummaries = new Map(
@@ -354,13 +387,13 @@ function buildPhaseCards(
     phase,
     time: phaseSummaries.has(phase)
       ? (formatTimestamp(valueAt(phaseSummaries.get(phase), ['last_seen'])) || '-')
-      : phaseTime(index),
+      : (referenceFixture ? phaseTime(index) : '-'),
     alertCount: phaseSummaries.size
       ? numberAt(phaseSummaries.get(phase) ?? {}, ['alert_count'])
-      : Math.max(1, Math.round(alertCount / phases.length) + (index % 3) - 1),
+      : (referenceFixture ? Math.max(1, Math.round(alertCount / phases.length) + (index % 3) - 1) : 0),
     evidenceCount: phaseSummaries.size
       ? numberAt(phaseSummaries.get(phase) ?? {}, ['evidence_count'])
-      : 3 + index + (phase.includes('外传') ? 4 : 0),
+      : (referenceFixture ? 3 + index + (phase.includes('外传') ? 4 : 0) : 0),
     status: phaseStatus(index, activeIndex, phase),
     summary: phaseSummary(phase),
   }));
@@ -371,22 +404,24 @@ function buildAlertRows(
   alertIds: string[],
   phases: CampaignDetailPhase[],
   assetCount: number,
+  referenceFixture = false,
 ): CampaignDetailAlertRow[] {
   const source = alerts.length ? alerts : alertIds.map((id) => ({ alert_id: id }));
   const normalized = source.slice(0, 5).map((alert, index) => {
-    const phase = phases[Math.min(index + 1, phases.length - 1)];
+    const phase = phases[Math.min(index + 1, Math.max(0, phases.length - 1))];
+    const phaseName = phase?.phase || '未提供';
     return {
-      告警时间: formatTimestamp(valueAt(alert, ['last_seen', 'timestamp', 'first_seen'])) || `06-20 ${String(3 + index).padStart(2, '0')}:4${index}:18`,
-      告警ID: textFrom(alert, ['alert_id', 'id']) || alertIds[index] || `AL-20260620-${String(123 - index).padStart(6, '0')}`,
-      告警名称: textFrom(alert, ['alert_type', 'title', 'name']) || alertNameForPhase(phase.phase),
-      攻击阶段: phase.phase,
-      影响资产: `${Math.max(2, Math.round(assetCount / (index + 6)))} 台`,
-      风险: severityLabel(textFrom(alert, ['severity', 'risk_level']) || (index < 3 ? 'high' : 'medium')),
-      状态: index < 3 ? '调查中' : '处置中',
+      告警时间: formatTimestamp(valueAt(alert, ['last_seen', 'timestamp', 'first_seen'])) || (referenceFixture ? `06-20 ${String(3 + index).padStart(2, '0')}:4${index}:18` : '-'),
+      告警ID: textFrom(alert, ['alert_id', 'id']) || alertIds[index] || (referenceFixture ? `AL-20260620-${String(123 - index).padStart(6, '0')}` : ''),
+      告警名称: textFrom(alert, ['alert_type', 'title', 'name']) || (referenceFixture ? alertNameForPhase(phaseName) : '未提供'),
+      攻击阶段: phaseName,
+      影响资产: assetCount ? `${Math.max(1, Math.round(assetCount / Math.max(1, index + 6)))} 台` : '0 台',
+      风险: severityLabel(textFrom(alert, ['severity', 'risk_level']) || (referenceFixture ? (index < 3 ? 'high' : 'medium') : 'unknown')),
+      状态: textFrom(alert, ['status']) || (referenceFixture ? (index < 3 ? '调查中' : '处置中') : '未提供'),
       操作: '下钻',
     };
   });
-  while (normalized.length < 5) {
+  while (referenceFixture && normalized.length < 5) {
     const index = normalized.length;
     const phase = phases[Math.min(index + 1, phases.length - 1)];
     normalized.push({
@@ -421,7 +456,7 @@ function buildImpactTabs(
   ];
 }
 
-function buildImpactService(record: Record<string, unknown>): CampaignDetailImpactService {
+function buildImpactService(record: Record<string, unknown>, referenceFixture = false): CampaignDetailImpactService {
   const payloadRows = extractList(record, ['impact_services', 'affected_services', 'services', 'top_services'])
     .map((row) => ({
       服务名称: textFrom(row, ['service_name', 'service', 'name', 'id']) || '',
@@ -438,14 +473,14 @@ function buildImpactService(record: Record<string, unknown>): CampaignDetailImpa
     { 服务名称: 'NFS', 端口协议: '2049/TCP', 风险: '中危', 依赖关系: '文件共享' },
     { 服务名称: 'Redis', 端口协议: '6379/TCP', 风险: '中危', 依赖关系: '会话缓存' },
   ];
-  const usesFallbackRows = payloadRows.length === 0;
+  const usesFallbackRows = referenceFixture && payloadRows.length === 0;
   const rows = usesFallbackRows ? defaults : payloadRows;
   const explicitTotal = numberAt(record, ['service_count', 'affected_service_count', 'services_total']);
-  const total = explicitTotal || 42;
+  const total = explicitTotal || (usesFallbackRows ? 42 : rows.length);
   const high = numberAt(record, ['service_high_risk', 'high_risk_services'])
-    || (usesFallbackRows ? 11 : rows.filter((row) => row.风险.includes('高')).length || 11);
+    || (usesFallbackRows ? 11 : rows.filter((row) => row.风险.includes('高')).length);
   const medium = numberAt(record, ['service_medium_risk', 'medium_risk_services'])
-    || (usesFallbackRows ? 18 : Math.max(0, total - high - 13));
+    || (usesFallbackRows ? 18 : rows.filter((row) => row.风险.includes('中')).length);
   const low = numberAt(record, ['service_low_risk', 'low_risk_services'])
     || Math.max(0, total - high - medium);
   return {
@@ -462,7 +497,7 @@ function buildImpactService(record: Record<string, unknown>): CampaignDetailImpa
   };
 }
 
-function buildImpactDepartment(record: Record<string, unknown>): CampaignDetailImpactDepartment {
+function buildImpactDepartment(record: Record<string, unknown>, referenceFixture = false): CampaignDetailImpactDepartment {
   const payloadRows = extractList(record, ['impact_departments', 'affected_departments', 'departments', 'top_departments'])
     .map((row) => ({
       部门名称: textFrom(row, ['department', 'department_name', 'dept', 'name', 'id']) || '',
@@ -479,14 +514,14 @@ function buildImpactDepartment(record: Record<string, unknown>): CampaignDetailI
     { 部门名称: '教务处', 责任人: '张主任', 风险: '中危', 处置进度: 72 },
     { 部门名称: '图书馆', 责任人: '运维组', 风险: '中危', 处置进度: 80 },
   ];
-  const usesFallbackRows = payloadRows.length === 0;
+  const usesFallbackRows = referenceFixture && payloadRows.length === 0;
   const rows = usesFallbackRows ? defaults : payloadRows;
   const explicitTotal = numberAt(record, ['department_count', 'affected_department_count', 'departments_total']);
-  const total = explicitTotal || 7;
+  const total = explicitTotal || (usesFallbackRows ? 7 : rows.length);
   const high = numberAt(record, ['department_high_risk', 'high_risk_departments'])
-    || (usesFallbackRows ? 2 : rows.filter((row) => row.风险.includes('高')).length || 2);
+    || (usesFallbackRows ? 2 : rows.filter((row) => row.风险.includes('高')).length);
   const medium = numberAt(record, ['department_medium_risk', 'medium_risk_departments'])
-    || (usesFallbackRows ? 3 : Math.max(0, total - high - 2));
+    || (usesFallbackRows ? 3 : rows.filter((row) => row.风险.includes('中')).length);
   const low = numberAt(record, ['department_low_risk', 'low_risk_departments'])
     || Math.max(0, total - high - medium);
   return {
@@ -497,7 +532,7 @@ function buildImpactDepartment(record: Record<string, unknown>): CampaignDetailI
   };
 }
 
-function buildImpactCampus(record: Record<string, unknown>): CampaignDetailImpactCampus {
+function buildImpactCampus(record: Record<string, unknown>, referenceFixture = false): CampaignDetailImpactCampus {
   const payloadRows = extractList(record, ['impact_campuses', 'affected_campuses', 'campuses', 'top_campuses'])
     .map((row) => ({
       校区楼宇: textFrom(row, ['campus_building', 'campus', 'building', 'name', 'id']) || '',
@@ -514,14 +549,14 @@ function buildImpactCampus(record: Record<string, unknown>): CampaignDetailImpac
     { 校区楼宇: '南校区-教学楼', 覆盖资产: 7, 风险: '中危', 链路: '无线网' },
     { 校区楼宇: '西校区-图书馆', 覆盖资产: 5, 风险: '低危', 链路: '出口链路' },
   ];
-  const usesFallbackRows = payloadRows.length === 0;
+  const usesFallbackRows = referenceFixture && payloadRows.length === 0;
   const rows = usesFallbackRows ? defaults : payloadRows;
   const explicitTotal = numberAt(record, ['campus_count', 'affected_campus_count', 'campuses_total']);
-  const total = explicitTotal || 4;
+  const total = explicitTotal || (usesFallbackRows ? 4 : rows.length);
   const high = numberAt(record, ['campus_high_risk', 'high_risk_campuses'])
-    || (usesFallbackRows ? 1 : rows.filter((row) => row.风险.includes('高')).length || 1);
+    || (usesFallbackRows ? 1 : rows.filter((row) => row.风险.includes('高')).length);
   const medium = numberAt(record, ['campus_medium_risk', 'medium_risk_campuses'])
-    || (usesFallbackRows ? 2 : Math.max(0, total - high - 1));
+    || (usesFallbackRows ? 2 : rows.filter((row) => row.风险.includes('中')).length);
   const low = numberAt(record, ['campus_low_risk', 'low_risk_campuses'])
     || Math.max(0, total - high - medium);
   return {
@@ -532,7 +567,7 @@ function buildImpactCampus(record: Record<string, unknown>): CampaignDetailImpac
   };
 }
 
-function buildImpactBusinessSystem(record: Record<string, unknown>): CampaignDetailImpactBusinessSystem {
+function buildImpactBusinessSystem(record: Record<string, unknown>, referenceFixture = false): CampaignDetailImpactBusinessSystem {
   const payloadRows = extractList(record, ['impact_business_systems', 'affected_business_systems', 'business_systems', 'top_business_systems'])
     .map((row) => ({
       业务系统: textFrom(row, ['business_system', 'system', 'name', 'id']) || '',
@@ -549,14 +584,14 @@ function buildImpactBusinessSystem(record: Record<string, unknown>): CampaignDet
     { 业务系统: '统一认证平台', 关键服务: 'LDAP/OIDC', 风险: '中危', 恢复优先级: 'P1' },
     { 业务系统: '教工终端管理', 关键服务: 'Agent API', 风险: '中危', 恢复优先级: 'P2' },
   ];
-  const usesFallbackRows = payloadRows.length === 0;
+  const usesFallbackRows = referenceFixture && payloadRows.length === 0;
   const rows = usesFallbackRows ? defaults : payloadRows;
   const explicitTotal = numberAt(record, ['business_system_count', 'affected_business_system_count', 'businessSystemsTotal']);
-  const total = explicitTotal || 9;
+  const total = explicitTotal || (usesFallbackRows ? 9 : rows.length);
   const high = numberAt(record, ['business_system_high_risk', 'high_risk_business_systems'])
-    || (usesFallbackRows ? 3 : rows.filter((row) => row.风险.includes('高')).length || 3);
+    || (usesFallbackRows ? 3 : rows.filter((row) => row.风险.includes('高')).length);
   const medium = numberAt(record, ['business_system_medium_risk', 'medium_risk_business_systems'])
-    || (usesFallbackRows ? 4 : Math.max(0, total - high - 2));
+    || (usesFallbackRows ? 4 : rows.filter((row) => row.风险.includes('中')).length);
   const low = numberAt(record, ['business_system_low_risk', 'low_risk_business_systems'])
     || Math.max(0, total - high - medium);
   return {
@@ -573,7 +608,7 @@ function buildImpactBusinessSystem(record: Record<string, unknown>): CampaignDet
   };
 }
 
-function buildImpactAccount(record: Record<string, unknown>): CampaignDetailImpactAccount {
+function buildImpactAccount(record: Record<string, unknown>, referenceFixture = false): CampaignDetailImpactAccount {
   const accountRows = extractList(record, ['impact_accounts', 'affected_accounts', 'accounts', 'top_accounts'])
     .map((row) => ({
       账号: textFrom(row, ['account', 'account_id', 'username', 'name', 'id']) || '',
@@ -590,14 +625,14 @@ function buildImpactAccount(record: Record<string, unknown>): CampaignDetailImpa
     { 账号: 'ops_reader', 账号类型: '只读账号', 权限风险: '中危', 登录链路: '堡垒机 -> 日志库' },
     { 账号: 'svc_deploy', 账号类型: '服务账号', 权限风险: '中危', 登录链路: 'CI -> K8s API' },
   ];
-  const usesFallbackRows = accountRows.length === 0;
+  const usesFallbackRows = referenceFixture && accountRows.length === 0;
   const rows = usesFallbackRows ? defaults : accountRows;
   const explicitTotal = numberAt(record, ['account_count', 'affected_account_count', 'affectedAccounts', 'accounts_total']);
-  const total = explicitTotal || 31;
+  const total = explicitTotal || (usesFallbackRows ? 31 : rows.length);
   const high = numberAt(record, ['account_high_risk', 'high_risk_accounts'])
-    || (usesFallbackRows ? 8 : rows.filter((row) => row.权限风险.includes('高')).length || 8);
+    || (usesFallbackRows ? 8 : rows.filter((row) => row.权限风险.includes('高')).length);
   const medium = numberAt(record, ['account_medium_risk', 'medium_risk_accounts'])
-    || (usesFallbackRows ? 14 : Math.max(0, total - high - 9));
+    || (usesFallbackRows ? 14 : rows.filter((row) => row.权限风险.includes('中')).length);
   const low = numberAt(record, ['account_low_risk', 'low_risk_accounts']) || Math.max(0, total - high - medium);
   return {
     total,
@@ -631,7 +666,7 @@ function progressPercent(source: Record<string, unknown>, keys: string[]) {
   return Math.max(0, Math.min(100, Math.round(percent)));
 }
 
-function buildTopAssets(entities: string[]): CampaignDetailAssetRow[] {
+function buildTopAssets(record: Record<string, unknown>, entities: string[], referenceFixture = false): CampaignDetailAssetRow[] {
   const defaults = [
     ['科研网-SRV-021', '服务器', '科研处', '科研数据平台', '高危', 'PCAP / Session'],
     ['办公区-WS-1024', '终端', '信息中心', '办公协同', '高危', 'EDR / 日志'],
@@ -639,6 +674,25 @@ function buildTopAssets(entities: string[]): CampaignDetailAssetRow[] {
     ['图书馆-NAS-03', '存储', '图书馆', '文献库', '中危', '流量画像'],
     ['教学区-PC-0421', '终端', '教务处', '教务系统', '中危', 'Session'],
   ];
+  if (!referenceFixture) {
+    const impactRows = extractList(record, ['impact_assets']).map((row) => ({
+      资产: textFrom(row, ['asset', 'asset_name', 'display_code', 'hostname', 'ip']) || '',
+      类型: textFrom(row, ['type', 'asset_type']) || '未提供',
+      部门: textFrom(row, ['department']) || '未提供',
+      业务系统: textFrom(row, ['business_system', 'system']) || '未提供',
+      风险: textFrom(row, ['risk', 'risk_level']) || '未提供',
+      证据: textFrom(row, ['evidence', 'source']) || '未提供',
+    })).filter((row) => row.资产);
+    if (impactRows.length) return impactRows.slice(0, 5);
+    return entities.slice(0, 5).map((entity) => ({
+      资产: entity,
+      类型: '未提供',
+      部门: '未提供',
+      业务系统: '未提供',
+      风险: '未提供',
+      证据: '未提供',
+    }));
+  }
   return defaults.map((row, index) => ({
     资产: entities[index] || row[0],
     类型: row[1],
@@ -646,6 +700,97 @@ function buildTopAssets(entities: string[]): CampaignDetailAssetRow[] {
     业务系统: row[3],
     风险: row[4],
     证据: row[5],
+  }));
+}
+
+function normalizeEvidenceRail(
+  record: Record<string, unknown>,
+  rawAlertCount: number,
+  phaseSummaryRows: Record<string, unknown>[],
+  phaseDataBacked: boolean,
+): CampaignDetailEvidenceRailItem[] {
+  const rows = extractList(record, ['evidence_summary']);
+  if (rows.length) {
+    return rows.slice(0, 5).map((row) => {
+      const currentValue = valueAt(row, ['current']);
+      const expectedValue = valueAt(row, ['expected']);
+      const current = typeof currentValue === 'number' && Number.isFinite(currentValue) ? currentValue : null;
+      const expected = typeof expectedValue === 'number' && Number.isFinite(expectedValue) ? expectedValue : null;
+      return {
+        key: textFrom(row, ['key']) || textFrom(row, ['label']),
+        label: textFrom(row, ['label']) || '未命名证据',
+        current,
+        expected,
+        available: valueAt(row, ['available']) === true,
+      };
+    });
+  }
+
+  const evidenceCount = phaseDataBacked
+    ? phaseSummaryRows.reduce((sum, row) => sum + numberAt(row, ['evidence_count']), 0)
+    : 0;
+  return [
+    { key: 'alerts', label: '告警', current: rawAlertCount, expected: null, available: true },
+    { key: 'packet_session', label: 'PCAP / Session', current: phaseDataBacked ? evidenceCount : null, expected: null, available: phaseDataBacked },
+    { key: 'logs', label: '日志', current: null, expected: null, available: false },
+    { key: 'graph_paths', label: '图谱路径', current: null, expected: null, available: false },
+    { key: 'response_records', label: '处置记录', current: null, expected: null, available: false },
+  ];
+}
+
+function normalizeStatusTransitions(record: Record<string, unknown>): CampaignDetailStatusTransition[] {
+  return extractList(record, ['status_transitions']).map((row) => ({
+    status: textFrom(row, ['status']),
+    changedAt: textFrom(row, ['changed_at', 'changedAt']),
+    source: textFrom(row, ['source']) || 'runtime',
+  })).filter((row) => row.status);
+}
+
+function buildEvidenceChecksFromRail(rows: CampaignDetailEvidenceRailItem[]): CampaignDetailEvidenceCheck[] {
+  return rows.filter((row) => row.available).map((row) => ({
+    label: row.label,
+    value: row.expected === null ? String(row.current ?? 0) : `${row.current ?? 0} / ${row.expected}`,
+    status: row.expected !== null && (row.current ?? 0) < row.expected ? 'warn' : 'ok',
+  }));
+}
+
+function buildEvidenceRowsFromRail(rows: CampaignDetailEvidenceRailItem[]): CampaignDetailEvidenceSummaryRow[] {
+  return rows.filter((row) => row.available).map((row) => {
+    const current = row.current ?? 0;
+    const completeness = row.expected && row.expected > 0 ? Math.round((current / row.expected) * 100) : null;
+    return {
+      证据类型: row.label,
+      文件记录: String(current),
+      完整度: completeness === null ? '--' : `${Math.min(100, completeness)}%`,
+      状态: completeness === null ? '已采集' : completeness >= 100 ? '完整' : '待补齐',
+    };
+  });
+}
+
+function buildResponseFlowFromTransitions(rows: CampaignDetailStatusTransition[]): CampaignDetailFlowStep[] {
+  const normalized = rows.map((row) => ({
+    ...row,
+    status: row.status.toLowerCase(),
+    time: formatTimestamp(row.changedAt) || '-',
+  }));
+  const byStatus = (statuses: string[]) => normalized.find((row) => statuses.includes(row.status));
+  const discovered = normalized[0];
+  const investigating = byStatus(['investigating', 'active']);
+  const contained = byStatus(['contained']);
+  const closed = byStatus(['closed']);
+  const currentIndex = closed ? 5 : contained ? 2 : investigating ? 1 : discovered ? 0 : -1;
+  const definitions = [
+    { title: '发现', row: discovered },
+    { title: '研判', row: investigating },
+    { title: '遏制', row: contained },
+    { title: '根除', row: undefined },
+    { title: '恢复', row: closed },
+    { title: '复盘', row: undefined },
+  ];
+  return definitions.map((definition, index) => ({
+    title: definition.title,
+    time: definition.row?.time ?? '-',
+    status: index < currentIndex ? 'ok' : index === currentIndex ? 'warn' : 'info',
   }));
 }
 
@@ -772,6 +917,7 @@ function severityLabel(value: string) {
 
 function statusLabel(value: string) {
   const lower = value.toLowerCase();
+  if (lower === 'new' || value === '新建') return '新建';
   if (lower === 'active' || value === '活跃中') return '活跃中';
   if (lower === 'investigating' || value === '调查中') return '调查中';
   if (lower === 'contained' || value === '处置中') return '处置中';
@@ -781,7 +927,7 @@ function statusLabel(value: string) {
 
 function campaignStatus(record: Record<string, unknown>, score: number) {
   const explicit = textFrom(record, ['status', 'state']);
-  if (explicit) return explicit;
+  if (explicit) return statusLabel(explicit);
   return score >= 85 ? '进行中' : '观察中';
 }
 
