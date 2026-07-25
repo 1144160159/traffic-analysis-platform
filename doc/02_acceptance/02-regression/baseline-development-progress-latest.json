@@ -1,0 +1,31 @@
+{
+  "page": "baselines",
+  "route": "/baselines",
+  "status": "accepted",
+  "accepted_at": "2026-07-23T02:35:00+08:00",
+  "backend_release": "r641",
+  "frontend_release": "r642",
+  "source_visual": "doc/04_assets/ui_suite_gpt_v1/screens/pages/baselines.png",
+  "implementation": {
+    "baseline_types": ["asset", "account", "port", "protocol", "time_window"],
+    "window_days": [7, 30, 90],
+    "chart_engine": "echarts",
+    "chart_inputs": ["five_number_distribution", "hour_buckets", "p50", "p95", "p99", "mean", "sample_values"],
+    "summary_scope": "all_entities_in_window",
+    "persistent_governance": true
+  },
+  "gates": {
+    "live_contract": {"result": "pass", "checks": 65, "blockers": 0, "warnings": 0},
+    "windows_chrome": {"result": "pass", "checks": 16, "viewports": ["1920x1080", "1600x900"]},
+    "frontend_tests": {"result": "pass", "files": 37, "tests": 205},
+    "frontend_build": "pass",
+    "go_alert_api": "pass",
+    "visual_diff": {"result": "pass", "full_ratio": 0.107755}
+  },
+  "reviews": {
+    "logic": {"result": "ACCEPT", "p0": 0, "p1": 0},
+    "layout": {"result": "ACCEPT", "p0": 0, "p1": 0},
+    "intelligent": {"result": "ACCEPT", "p0": 0, "p1": 0}
+  },
+  "next_page": {"name": "告警中心", "route": "/alerts"}
+}

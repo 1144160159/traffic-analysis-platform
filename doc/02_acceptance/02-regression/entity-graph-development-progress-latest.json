@@ -1,0 +1,54 @@
+{
+  "page": "entity-graph",
+  "route": "/graph",
+  "revision": "r586",
+  "status": "runtime_and_region_visual_pass",
+  "updated_at": "2026-07-21T16:26:53+08:00",
+  "latest_user_correction": "confirm all three entity-detail graphics are ECharts and ensure both line series display real database-backed time buckets without synthetic motion",
+  "browser": {
+    "backend": "Windows Chrome CDP over Xshell 9224",
+    "version": "Chrome/150.0.7871.128",
+    "viewport": "1920x1080 non-fullscreen business workspace",
+    "route": "http://10.0.5.8:30180/graph",
+    "result": "pass",
+    "evidence": "entity-graph-interactions-r586.json"
+  },
+  "backend": {
+    "source": "NebulaGraph 3.6 official nebula-go SessionPool",
+    "data_origin": "nebula_graph_persisted_projection",
+    "depth_2": {"nodes": 11, "edges": 13},
+    "result": "pass"
+  },
+  "closed_requirements": [
+    "path analysis remains in the left column and is enlarged to 801.322937x340 while query governance stays at 580.666687x340 on the same row",
+    "the lower workspace uses a measured 1.38:1 left-to-right width ratio so the path region is visibly larger",
+    "query governance panel body and content have equal client/scroll heights and all children remain inside the panel",
+    "all four path tabs keep an identical 801.322937x340 panel box and remain fully contained",
+    "risk score uses one ECharts gauge bound to node.risk_score and the two trends use ECharts line series bound to NebulaGraph metadata time buckets",
+    "SparklineChart no longer normalizes, jitters, interpolates or falls back to synthetic values; zero alerts render as a flat zero line",
+    "all four modes continue to map live path.node_ids and path.edges without fabricated entities or relations",
+    "production APISIX route, four path actions, topology controls, filters, save/export and entity actions pass in Windows Chrome over port 9224"
+  ],
+  "verification": {
+    "web_build": "pass",
+    "backend_preflight": "pass",
+    "kubernetes_rollout": "pass",
+    "web_ui_ready_replicas": 1,
+    "web_ui_restarts": 0,
+    "windows_chrome": "pass",
+    "business_http_failures": 0,
+    "unexpected_console_errors": 0,
+    "unexpected_page_errors": 0
+  },
+  "visual_diff": {
+    "region_status": "pass",
+    "panel_stable_across_tabs": true,
+    "left_to_right_width_ratio": 1.3800050096477239,
+    "path_panel_height_px": 340,
+    "query_governance_clipped": false,
+    "comparison_image": "evidence/ui-image-breakdowns/pages/graph/entity-graph-r585-diff/lower-workspace-side-by-side.png",
+    "evidence": "evidence/ui-image-breakdowns/pages/graph/entity-graph-r586-visual-metrics.json"
+  },
+  "review_evidence": "entity-graph-review-adjudication-latest.json",
+  "next_page": "data-fusion"
+}

@@ -1,0 +1,56 @@
+{
+  "page": "entity-graph",
+  "revision": "r586",
+  "rolled_out_at": "2026-07-21T16:26:53+08:00",
+  "scope": "retain the r585 layout correction while replacing synthetic detail sparklines with raw NebulaGraph-backed time-bucket series",
+  "deployment": {
+    "name": "web-ui",
+    "source_revision": "entity-graph-real-trends-r586",
+    "deployment_revision": 768,
+    "deployment_generation": 783,
+    "image": "docker.io/traffic/web-ui@sha256:636d72cf224f231c0090c28804d9b7052caac99f434a207312c8355e7814103d",
+    "image_id": "sha256:c97c028ffda55a036333946117d789b7f2ade508e5729aa31bbf21156fe20f72",
+    "pod": {"name": "web-ui-7b59d95b65-rmh76", "ready": true, "restarts": 0, "node": "zeus-server"}
+  },
+  "nebula_graph": {
+    "seed_job": "middleware/seed-nebula-workbench",
+    "result": "complete",
+    "source": "node.metadata time buckets",
+    "series": ["traffic_trend_24h", "traffic_trend_7d", "traffic_trend_all", "alert_trend_24h", "alert_trend_7d", "alert_trend_all"]
+  },
+  "layout": {
+    "path_panel": {"width_px": 801.3229370117188, "height_px": 340, "column": "left"},
+    "query_governance": {"width_px": 580.6666870117188, "height_px": 340, "column": "right", "clipped": false},
+    "left_to_right_width_ratio": 1.3800050096477239,
+    "all_tabs_stable": true
+  },
+  "entity_detail_charts": {
+    "risk_score_ring": "ECharts gauge bound to node.risk_score",
+    "last_24h_traffic": "ECharts line bound without normalization to node.metadata.traffic_trend_24h",
+    "related_alerts": "ECharts line bound without normalization to node.metadata.alert_trend_24h",
+    "synthetic_jitter_or_fallback": false,
+    "zero_alert_series": "flat zero line",
+    "canvas_count": 3
+  },
+  "verification": {
+    "web_build": "pass",
+    "windows_chrome_backend": "Xshell CDP 127.0.0.1:9224",
+    "windows_chrome_version": "Chrome/150.0.7871.128",
+    "production_route": "http://10.0.5.8:30180/graph",
+    "interaction_result": "pass",
+    "business_http_failures": 0,
+    "unexpected_console_errors": 0,
+    "unexpected_page_errors": 0
+  },
+  "evidence": [
+    "doc/02_acceptance/02-regression/entity-graph-interactions-r586.json",
+    "evidence/ui-image-breakdowns/pages/graph/entity-graph-r586-interactions.png",
+    "evidence/ui-image-breakdowns/pages/graph/entity-graph-r586-account-detail.png",
+    "evidence/ui-image-breakdowns/pages/graph/entity-graph-r586-path-tabs/shortest.png",
+    "evidence/ui-image-breakdowns/pages/graph/entity-graph-r586-path-tabs/attack.png",
+    "evidence/ui-image-breakdowns/pages/graph/entity-graph-r586-path-tabs/communication.png",
+    "evidence/ui-image-breakdowns/pages/graph/entity-graph-r586-path-tabs/account.png",
+    "evidence/ui-image-breakdowns/pages/graph/entity-graph-r586-visual-metrics.json"
+  ],
+  "result": "pass"
+}

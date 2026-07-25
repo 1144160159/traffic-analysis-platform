@@ -1,0 +1,19 @@
+{
+  "page": "baselines",
+  "release": "r641/r642",
+  "decision": "ACCEPT",
+  "p0": 0,
+  "p1": 0,
+  "reviewers": [
+    {"role": "logic", "decision": "ACCEPT", "p0": 0, "p1": 0},
+    {"role": "layout", "decision": "ACCEPT", "p0": 0, "p1": 0, "closed_finding": "compact action status tags are visible, horizontal, nowrap, inside panel and above the fixed bottom bar"},
+    {"role": "intelligent", "decision": "ACCEPT", "p0": 0, "p1": 0}
+  ],
+  "main_thread_adjudication": "accept r641 backend and r642 frontend after final 65/65 live, 16/16 Windows Chrome, visual ROI, persistence and compact-layout evidence passed",
+  "evidence": [
+    "doc/02_acceptance/runs/20260723022000-baseline-governance-r641/live-baseline-governance-preflight-20260723022000-baseline-governance-r641-summary.json",
+    "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-baselines-latest.json",
+    "evidence/ui-image-breakdowns/pages/baselines/baseline-r642-visual-metrics.json",
+    "evidence/learning/baselines/20260723-windows-xshell-r642/baseline-persisted-actions-compact-scrolled-1600x900.png"
+  ]
+}

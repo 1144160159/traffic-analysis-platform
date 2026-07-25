@@ -1,0 +1,46 @@
+{
+  "page": "fusion",
+  "revision": "r608",
+  "validated_at": "2026-07-22T18:57:30+08:00",
+  "result": "pass",
+  "method": "fresh temporary PostgreSQL databases on the live PostgreSQL primary",
+  "sources": [
+    {
+      "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+      "temporary_database": "codex_fusion_r608_k8s",
+      "full_init": "pass",
+      "valid_rule_insert": "pass",
+      "invalid_status_rejected": true,
+      "invalid_strategy_rejected": true,
+      "invalid_threshold_rejected": true
+    },
+    {
+      "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+      "temporary_database": "codex_fusion_r608_merged",
+      "full_init": "pass",
+      "valid_rule_insert": "pass",
+      "invalid_status_rejected": true,
+      "invalid_strategy_rejected": true,
+      "invalid_threshold_rejected": true,
+      "additional_repair": "removed non-immutable now() predicate from idx_token_rotation_grace_period so the formal merged initializer can execute on a fresh database"
+    }
+  ],
+  "constraints": {
+    "fusion_rule_overrides_status_check": "CHECK status in active, draft, disabled",
+    "fusion_rule_overrides_strategy_check": "CHECK strategy in authoritative-source, weighted-confidence, latest-observation, manual-review",
+    "fusion_rule_overrides_threshold_check": "CHECK confidence_threshold between 0 and 1"
+  },
+  "cleanup": {
+    "temporary_databases_dropped": true,
+    "remaining_temporary_database_count": 0
+  },
+  "live_configmap": {
+    "name": "databases/postgres-init-sql",
+    "updated": true,
+    "repo_00_init_sha256": "fc642d548fdbd7762b11c43eb4fcfb9fb644be712661d9cd0cf2be20a5d52fbe",
+    "live_00_init_sha256": "fc642d548fdbd7762b11c43eb4fcfb9fb644be712661d9cd0cf2be20a5d52fbe",
+    "repo_04_tasks_audit_sha256": "231c2a42ae0494a5a05c72ae1ea24f8f1ca6b6664b35b18dcea42d43250a7254",
+    "live_04_tasks_audit_sha256": "231c2a42ae0494a5a05c72ae1ea24f8f1ca6b6664b35b18dcea42d43250a7254"
+  },
+  "automated_regression": "doc/02_acceptance/02-regression/fusion-threat-intel-latest.json"
+}

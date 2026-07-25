@@ -1,0 +1,514 @@
+{
+  "run_id": "20260720-notification-workbench-r466-final",
+  "result": "pass",
+  "api": "http://10.0.5.8:30180",
+  "total": 63,
+  "passed": 63,
+  "blockers": 0,
+  "checks": [
+    {
+      "phase": "api",
+      "name": "workbench-initial",
+      "severity": "info",
+      "passed": true,
+      "detail": "HTTP 200, expected 200",
+      "artifact": "workbench-initial.json"
+    },
+    {
+      "phase": "assert",
+      "name": "workbench has database fixtures",
+      "severity": "info",
+      "passed": true,
+      "detail": "counts={\"rules\":28,\"templates\":4,\"policies\":2,\"deliveries\":8,\"silences\":4}",
+      "artifact": "workbench-initial.json"
+    },
+    {
+      "phase": "assert",
+      "name": "workbench contains no plaintext channel secret",
+      "severity": "info",
+      "passed": true,
+      "detail": "secret_ref=traffic-analysis/notification-secret",
+      "artifact": "workbench-initial.json"
+    },
+    {
+      "phase": "api",
+      "name": "viewer-workbench-denied",
+      "severity": "info",
+      "passed": true,
+      "detail": "HTTP 403, expected 403",
+      "artifact": "viewer-workbench-denied.json"
+    },
+    {
+      "phase": "api",
+      "name": "viewer-settings-denied",
+      "severity": "info",
+      "passed": true,
+      "detail": "HTTP 403, expected 403",
+      "artifact": "viewer-settings-denied.json"
+    },
+    {
+      "phase": "api",
+      "name": "viewer-rule-create-denied",
+      "severity": "info",
+      "passed": true,
+      "detail": "HTTP 403, expected 403",
+      "artifact": "viewer-rule-create-denied.json"
+    },
+    {
+      "phase": "api",
+      "name": "invalid-channel-rejected",
+      "severity": "info",
+      "passed": true,
+      "detail": "HTTP 400, expected 400",
+      "artifact": "invalid-channel-rejected.json"
+    },
+    {
+      "phase": "api",
+      "name": "invalid-escalation-rejected",
+      "severity": "info",
+      "passed": true,
+      "detail": "HTTP 400, expected 400",
+      "artifact": "invalid-escalation-rejected.json"
+    },
+    {
+      "phase": "api",
+      "name": "rule-create",
+      "severity": "info",
+      "passed": true,
+      "detail": "HTTP 201, expected 201",
+      "artifact": "rule-create.json"
+    },
+    {
+      "phase": "assert",
+      "name": "created rule has tenant identity",
+      "severity": "info",
+      "passed": true,
+      "detail": "rule_id=a89f73d1-ca9e-43cf-b9f4-290dc5696204",
+      "artifact": "rule-create.json"
+    },
+    {
+      "phase": "api",
+      "name": "rule-disable",
+      "severity": "info",
+      "passed": true,
+      "detail": "HTTP 200, expected 200",
+      "artifact": "rule-disable.json"
+    },
+    {
+      "phase": "assert",
+      "name": "rule patch persisted disabled state",
+      "severity": "info",
+      "passed": true,
+      "detail": "enabled=false",
+      "artifact": "rule-disable.json"
+    },
+    {
+      "phase": "assert",
+      "name": "rule partial patch preserves conditions and channels",
+      "severity": "info",
+      "passed": true,
+      "detail": "conditions={\"alert_type\":\"攻击告警\",\"asset_scope\":\"核心资产\",\"campus\":\"主园区\",\"escalation_policy\":\"夜间升级策略\",\"severity\":\"high\",\"silence_mode\":\"维护窗口\",\"window_end\":\"08:00\",\"window_start\":\"00:00\"}, channels=[\"email\",\"wechat\"]",
+      "artifact": "rule-disable.json"
+    },
+    {
+      "phase": "api",
+      "name": "cross-tenant-rule-hidden",
+      "severity": "info",
+      "passed": true,
+      "detail": "HTTP 404, expected 404",
+      "artifact": "cross-tenant-rule-hidden.json"
+    },
+    {
+      "phase": "api",
+      "name": "template-create",
+      "severity": "info",
+      "passed": true,
+      "detail": "HTTP 201, expected 201",
+      "artifact": "template-create.json"
+    },
+    {
+      "phase": "api",
+      "name": "template-update",
+      "severity": "info",
+      "passed": true,
+      "detail": "HTTP 200, expected 200",
+      "artifact": "template-update.json"
+    },
+    {
+      "phase": "assert",
+      "name": "template update increments version",
+      "severity": "info",
+      "passed": true,
+      "detail": "version=1->2",
+      "artifact": "template-update.json"
+    },
+    {
+      "phase": "assert",
+      "name": "template partial patch preserves variable schema",
+      "severity": "info",
+      "passed": true,
+      "detail": "{\"required\":[\"severity\",\"title\",\"alert_id\"]}",
+      "artifact": "template-update.json"
+    },
+    {
+      "phase": "api",
+      "name": "template-test",
+      "severity": "info",
+      "passed": true,
+      "detail": "HTTP 503, expected 503",
+      "artifact": "template-test.json"
+    },
+    {
+      "phase": "assert",
+      "name": "template test renders and persists truthful provider failure",
+      "severity": "info",
+      "passed": true,
+      "detail": "notification_id=173, status=failed, error=email: notification channel is not configured",
+      "artifact": "template-test.json"
+    },
+    {
+      "phase": "api",
+      "name": "escalation-create",
+      "severity": "info",
+      "passed": true,
+      "detail": "HTTP 201, expected 201",
+      "artifact": "escalation-create.json"
+    },
+    {
+      "phase": "api",
+      "name": "escalation-disable",
+      "severity": "info",
+      "passed": true,
+      "detail": "HTTP 200, expected 200",
+      "artifact": "escalation-disable.json"
+    },
+    {
+      "phase": "assert",
+      "name": "escalation patch persisted disabled state",
+      "severity": "info",
+      "passed": true,
+      "detail": "enabled=false",
+      "artifact": "escalation-disable.json"
+    },
+    {
+      "phase": "assert",
+      "name": "escalation partial patch preserves stages",
+      "severity": "info",
+      "passed": true,
+      "detail": "stages=[{\"after_minutes\":5,\"condition\":\"SLA 超时\",\"target_role\":\"安全值班组\"},{\"after_minutes\":15,\"condition\":\"未确认\",\"target_role\":\"安全管理组\"}]",
+      "artifact": "escalation-disable.json"
+    },
+    {
+      "phase": "api",
+      "name": "silence-create",
+      "severity": "info",
+      "passed": true,
+      "detail": "HTTP 201, expected 201",
+      "artifact": "silence-create.json"
+    },
+    {
+      "phase": "api",
+      "name": "silence-disable",
+      "severity": "info",
+      "passed": true,
+      "detail": "HTTP 200, expected 200",
+      "artifact": "silence-disable.json"
+    },
+    {
+      "phase": "assert",
+      "name": "silence patch persisted disabled state",
+      "severity": "info",
+      "passed": true,
+      "detail": "enabled=false",
+      "artifact": "silence-disable.json"
+    },
+    {
+      "phase": "api",
+      "name": "settings-partial-update",
+      "severity": "info",
+      "passed": true,
+      "detail": "HTTP 200, expected 200",
+      "artifact": "settings-partial-update.json"
+    },
+    {
+      "phase": "assert",
+      "name": "partial settings update preserves non-channel values",
+      "severity": "info",
+      "passed": true,
+      "detail": "secret_ref=traffic-analysis/notification-secret, severity=high",
+      "artifact": "settings-partial-update.json"
+    },
+    {
+      "phase": "api",
+      "name": "settings-restore",
+      "severity": "info",
+      "passed": true,
+      "detail": "HTTP 200, expected 200",
+      "artifact": "settings-restore.json"
+    },
+    {
+      "phase": "api",
+      "name": "channel-test",
+      "severity": "info",
+      "passed": true,
+      "detail": "HTTP 503, expected 503",
+      "artifact": "channel-test.json"
+    },
+    {
+      "phase": "assert",
+      "name": "channel test persists truthful provider failure",
+      "severity": "info",
+      "passed": true,
+      "detail": "notification_id=174, status=failed, error=email: notification channel is not configured",
+      "artifact": "channel-test.json"
+    },
+    {
+      "phase": "assert",
+      "name": "fixture includes failed delivery for retry",
+      "severity": "info",
+      "passed": true,
+      "detail": "notification_id=130",
+      "artifact": "workbench-initial.json"
+    },
+    {
+      "phase": "api",
+      "name": "delivery-retry",
+      "severity": "info",
+      "passed": true,
+      "detail": "HTTP 503, expected 503",
+      "artifact": "delivery-retry.json"
+    },
+    {
+      "phase": "assert",
+      "name": "retry attempts provider, preserves failure truth and updates trace",
+      "severity": "info",
+      "passed": true,
+      "detail": "status=failed, retry_count=1, error=webhook: notification channel is not configured",
+      "artifact": "delivery-retry.json"
+    },
+    {
+      "phase": "api",
+      "name": "workbench-after-actions",
+      "severity": "info",
+      "passed": true,
+      "detail": "HTTP 200, expected 200",
+      "artifact": "workbench-after-actions.json"
+    },
+    {
+      "phase": "assert",
+      "name": "created objects are queryable together",
+      "severity": "info",
+      "passed": true,
+      "detail": "all created ids present in workbench",
+      "artifact": "workbench-after-actions.json"
+    },
+    {
+      "phase": "api",
+      "name": "notification-audits",
+      "severity": "info",
+      "passed": true,
+      "detail": "HTTP 200, expected 200",
+      "artifact": "notification-audits.json"
+    },
+    {
+      "phase": "assert",
+      "name": "audit contains NOTIFICATION_RULE_CREATED",
+      "severity": "info",
+      "passed": true,
+      "detail": "NOTIFICATION_RULE_CREATED",
+      "artifact": "notification-audits.json"
+    },
+    {
+      "phase": "assert",
+      "name": "audit contains NOTIFICATION_RULE_UPDATED",
+      "severity": "info",
+      "passed": true,
+      "detail": "NOTIFICATION_RULE_UPDATED",
+      "artifact": "notification-audits.json"
+    },
+    {
+      "phase": "assert",
+      "name": "audit contains NOTIFICATION_TEMPLATE_CREATED",
+      "severity": "info",
+      "passed": true,
+      "detail": "NOTIFICATION_TEMPLATE_CREATED",
+      "artifact": "notification-audits.json"
+    },
+    {
+      "phase": "assert",
+      "name": "audit contains NOTIFICATION_TEMPLATE_UPDATED",
+      "severity": "info",
+      "passed": true,
+      "detail": "NOTIFICATION_TEMPLATE_UPDATED",
+      "artifact": "notification-audits.json"
+    },
+    {
+      "phase": "assert",
+      "name": "audit contains NOTIFICATION_TEMPLATE_TEST_FAILED",
+      "severity": "info",
+      "passed": true,
+      "detail": "NOTIFICATION_TEMPLATE_TEST_FAILED",
+      "artifact": "notification-audits.json"
+    },
+    {
+      "phase": "assert",
+      "name": "audit contains NOTIFICATION_ESCALATION_CREATED",
+      "severity": "info",
+      "passed": true,
+      "detail": "NOTIFICATION_ESCALATION_CREATED",
+      "artifact": "notification-audits.json"
+    },
+    {
+      "phase": "assert",
+      "name": "audit contains NOTIFICATION_ESCALATION_UPDATED",
+      "severity": "info",
+      "passed": true,
+      "detail": "NOTIFICATION_ESCALATION_UPDATED",
+      "artifact": "notification-audits.json"
+    },
+    {
+      "phase": "assert",
+      "name": "audit contains NOTIFICATION_SILENCE_RULE_CREATED",
+      "severity": "info",
+      "passed": true,
+      "detail": "NOTIFICATION_SILENCE_RULE_CREATED",
+      "artifact": "notification-audits.json"
+    },
+    {
+      "phase": "assert",
+      "name": "audit contains NOTIFICATION_SILENCE_RULE_UPDATED",
+      "severity": "info",
+      "passed": true,
+      "detail": "NOTIFICATION_SILENCE_RULE_UPDATED",
+      "artifact": "notification-audits.json"
+    },
+    {
+      "phase": "assert",
+      "name": "audit contains NOTIFICATION_SETTINGS_UPDATED",
+      "severity": "info",
+      "passed": true,
+      "detail": "NOTIFICATION_SETTINGS_UPDATED",
+      "artifact": "notification-audits.json"
+    },
+    {
+      "phase": "assert",
+      "name": "audit contains NOTIFICATION_TEST_FAILED",
+      "severity": "info",
+      "passed": true,
+      "detail": "NOTIFICATION_TEST_FAILED",
+      "artifact": "notification-audits.json"
+    },
+    {
+      "phase": "assert",
+      "name": "audit contains NOTIFICATION_DELIVERY_RETRY_FAILED",
+      "severity": "info",
+      "passed": true,
+      "detail": "NOTIFICATION_DELIVERY_RETRY_FAILED",
+      "artifact": "notification-audits.json"
+    },
+    {
+      "phase": "assert",
+      "name": "audit contains NOTIFICATION_RULE_DB_INSERT",
+      "severity": "info",
+      "passed": true,
+      "detail": "NOTIFICATION_RULE_DB_INSERT",
+      "artifact": "notification-audits.json"
+    },
+    {
+      "phase": "assert",
+      "name": "audit contains NOTIFICATION_RULE_DB_UPDATE",
+      "severity": "info",
+      "passed": true,
+      "detail": "NOTIFICATION_RULE_DB_UPDATE",
+      "artifact": "notification-audits.json"
+    },
+    {
+      "phase": "assert",
+      "name": "audit contains NOTIFICATION_TEMPLATE_DB_INSERT",
+      "severity": "info",
+      "passed": true,
+      "detail": "NOTIFICATION_TEMPLATE_DB_INSERT",
+      "artifact": "notification-audits.json"
+    },
+    {
+      "phase": "assert",
+      "name": "audit contains NOTIFICATION_TEMPLATE_DB_UPDATE",
+      "severity": "info",
+      "passed": true,
+      "detail": "NOTIFICATION_TEMPLATE_DB_UPDATE",
+      "artifact": "notification-audits.json"
+    },
+    {
+      "phase": "assert",
+      "name": "audit contains NOTIFICATION_ESCALATION_DB_INSERT",
+      "severity": "info",
+      "passed": true,
+      "detail": "NOTIFICATION_ESCALATION_DB_INSERT",
+      "artifact": "notification-audits.json"
+    },
+    {
+      "phase": "assert",
+      "name": "audit contains NOTIFICATION_ESCALATION_DB_UPDATE",
+      "severity": "info",
+      "passed": true,
+      "detail": "NOTIFICATION_ESCALATION_DB_UPDATE",
+      "artifact": "notification-audits.json"
+    },
+    {
+      "phase": "assert",
+      "name": "audit contains NOTIFICATION_SILENCE_RULE_DB_INSERT",
+      "severity": "info",
+      "passed": true,
+      "detail": "NOTIFICATION_SILENCE_RULE_DB_INSERT",
+      "artifact": "notification-audits.json"
+    },
+    {
+      "phase": "assert",
+      "name": "audit contains NOTIFICATION_SILENCE_RULE_DB_UPDATE",
+      "severity": "info",
+      "passed": true,
+      "detail": "NOTIFICATION_SILENCE_RULE_DB_UPDATE",
+      "artifact": "notification-audits.json"
+    },
+    {
+      "phase": "assert",
+      "name": "audit contains NOTIFICATION_SETTINGS_DB_UPDATE",
+      "severity": "info",
+      "passed": true,
+      "detail": "NOTIFICATION_SETTINGS_DB_UPDATE",
+      "artifact": "notification-audits.json"
+    },
+    {
+      "phase": "assert",
+      "name": "audit contains NOTIFICATION_DELIVERY_DB_INSERT",
+      "severity": "info",
+      "passed": true,
+      "detail": "NOTIFICATION_DELIVERY_DB_INSERT",
+      "artifact": "notification-audits.json"
+    },
+    {
+      "phase": "assert",
+      "name": "audit contains NOTIFICATION_DELIVERY_DB_UPDATE",
+      "severity": "info",
+      "passed": true,
+      "detail": "NOTIFICATION_DELIVERY_DB_UPDATE",
+      "artifact": "notification-audits.json"
+    },
+    {
+      "phase": "assert",
+      "name": "PostgreSQL contains every created object",
+      "severity": "info",
+      "passed": true,
+      "detail": "{\"rule\":1,\"template\":1,\"policy\":1,\"silence\":1,\"template_delivery\":1}",
+      "artifact": "postgres-counts.json"
+    },
+    {
+      "phase": "cleanup",
+      "name": "created notification objects removed",
+      "severity": "info",
+      "passed": true,
+      "detail": "7 scoped cleanup statements",
+      "artifact": ""
+    }
+  ]
+}

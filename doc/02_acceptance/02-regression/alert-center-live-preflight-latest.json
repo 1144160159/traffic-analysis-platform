@@ -1,0 +1,237 @@
+{
+  "run_id": "alert-center-r651-1784754324546",
+  "result": "pass",
+  "route": "http://10.0.5.8:30180/api/v1/alerts",
+  "data_mode": "live",
+  "checks": [
+    {
+      "name": "real paginated alert list",
+      "status": 200,
+      "duration_ms": 486,
+      "pass": true
+    },
+    {
+      "name": "list contains only real rows",
+      "pass": true,
+      "rows": 10,
+      "response_shape": {
+        "root_keys": [
+          "success",
+          "data",
+          "meta",
+          "timestamp"
+        ],
+        "data_kind": "array",
+        "data_keys": []
+      }
+    },
+    {
+      "name": "server pagination total",
+      "pass": true,
+      "total": 1574945
+    },
+    {
+      "name": "real alert statistics",
+      "status": 200,
+      "duration_ms": 255,
+      "pass": true
+    },
+    {
+      "name": "stats have real total and dimensions",
+      "pass": true,
+      "total": 1574945
+    },
+    {
+      "name": "list and stats use the same latest-alert cardinality",
+      "pass": true,
+      "list_total": 1574945,
+      "stats_total": 1574945,
+      "observed_drift": 0,
+      "allowed_drift": 20
+    },
+    {
+      "name": "latest projection reconciles with raw distinct alerts",
+      "pass": true,
+      "raw_unique": 1574945,
+      "latest_rows": 1574945,
+      "latest_unique": 1574945,
+      "observed_drift": 0,
+      "allowed_drift": 20
+    },
+    {
+      "name": "canonical status alias filter",
+      "status": 200,
+      "duration_ms": 253,
+      "pass": true
+    },
+    {
+      "name": "status filter returns matching latest alerts",
+      "pass": true,
+      "status": "new",
+      "rows": 10
+    },
+    {
+      "name": "asset IP filter",
+      "status": 200,
+      "duration_ms": 255,
+      "pass": true
+    },
+    {
+      "name": "asset IP filter returns matching latest alerts",
+      "pass": true,
+      "value": "cid:1:uc9FaZ"
+    },
+    {
+      "name": "source IP filter",
+      "status": 200,
+      "duration_ms": 239,
+      "pass": true
+    },
+    {
+      "name": "source IP filter is exact",
+      "pass": true,
+      "value": "cid:1:uc9FaZ"
+    },
+    {
+      "name": "destination IP filter",
+      "status": 200,
+      "duration_ms": 234,
+      "pass": true
+    },
+    {
+      "name": "destination IP filter returns matching latest alerts",
+      "pass": true,
+      "value": "cid:/pKB30Mt1KSqBTUe8OCLo="
+    },
+    {
+      "name": "model version filter",
+      "status": 200,
+      "duration_ms": 245,
+      "pass": true
+    },
+    {
+      "name": "model version filter returns matching latest alerts",
+      "pass": true,
+      "value": "v1.0"
+    },
+    {
+      "name": "attack phase filter",
+      "status": 200,
+      "duration_ms": 446,
+      "pass": true
+    },
+    {
+      "name": "attack phase is canonical and filterable",
+      "pass": true,
+      "value": "discovery",
+      "alert_type": "statistical_anomaly"
+    },
+    {
+      "name": "minimum score filter",
+      "status": 200,
+      "duration_ms": 249,
+      "pass": true
+    },
+    {
+      "name": "minimum score filter returns matching latest alerts",
+      "pass": true,
+      "value": 1
+    },
+    {
+      "name": "viewer cannot list alerts",
+      "status": 403,
+      "expected_status": 403,
+      "pass": true
+    },
+    {
+      "name": "viewer cannot read alert stats",
+      "status": 403,
+      "expected_status": 403,
+      "pass": true
+    },
+    {
+      "name": "viewer cannot submit TP/FP feedback",
+      "status": 403,
+      "expected_status": 403,
+      "pass": true
+    },
+    {
+      "name": "durable response action",
+      "status": 201,
+      "duration_ms": 605,
+      "pass": true
+    },
+    {
+      "name": "response action returns durable approval job",
+      "pass": true,
+      "job_id": "alert-action-a71176d7-04fc-45a3-a2cf-5c8537efc14c",
+      "initial_outbox_status": "pending_retry"
+    },
+    {
+      "name": "background outbox worker publishes pending action",
+      "pass": true,
+      "outbox_published": true,
+      "outbox_attempts": 1,
+      "outbox_last_error": ""
+    },
+    {
+      "name": "durable saved view",
+      "status": 201,
+      "duration_ms": 13,
+      "pass": true
+    },
+    {
+      "name": "saved view returns durable view id",
+      "pass": true,
+      "view_id": "3d508b66-b061-4f6b-b2ca-60aa07e83156"
+    },
+    {
+      "name": "saved view list readback",
+      "status": 200,
+      "duration_ms": 5,
+      "pass": true
+    },
+    {
+      "name": "saved view is reusable",
+      "pass": true
+    },
+    {
+      "name": "saved view preserves time window",
+      "pass": true,
+      "expected": [
+        1784667924546,
+        1784754324546
+      ]
+    },
+    {
+      "name": "durable TP feedback",
+      "status": 201,
+      "duration_ms": 1524,
+      "pass": true
+    },
+    {
+      "name": "feedback history readback",
+      "status": 200,
+      "duration_ms": 588,
+      "pass": true
+    },
+    {
+      "name": "feedback is queryable after success",
+      "pass": true,
+      "feedback_id": "a5657729-58a3-4816-a8b9-a330be6be0f0"
+    },
+    {
+      "name": "filtered CSV content matches active queue filters",
+      "status": 200,
+      "pass": true,
+      "rows": 25,
+      "filter_status": "new",
+      "source_ip": "cid:1:uc9FaZ",
+      "destination_ip": "cid:/pKB30Mt1KSqBTUe8OCLo=",
+      "attack_phase": "discovery",
+      "model_version": "v1.0",
+      "minimum_score": 1
+    }
+  ],
+  "timestamp": "2026-07-22T21:05:32.920Z"
+}

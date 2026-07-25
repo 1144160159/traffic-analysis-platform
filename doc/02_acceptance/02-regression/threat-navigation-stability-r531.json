@@ -1,0 +1,93 @@
+{
+  "result": "pass",
+  "browser_backend": "Windows Chrome CDP over Xshell 9224",
+  "browser": "Chrome/150.0.7871.128",
+  "checks": {
+    "sidebar_width_stable": true,
+    "main_left_stable": true,
+    "active_item_height_stable": true,
+    "threat_menu_shape_stable": true,
+    "threat_group_always_expanded": true,
+    "route_specific_shell_removed": true,
+    "no_horizontal_overflow": true
+  },
+  "states": [
+    {
+      "id": "alerts",
+      "path": "/alerts",
+      "shell_classes": "taf-shell",
+      "sidebar_width": 166,
+      "main_left": 166,
+      "threat_group_expanded": true,
+      "threat_items": [
+        "告警中心128",
+        "战役列表",
+        "攻击链分析",
+        "加密流量",
+        "取证分析"
+      ],
+      "active_item": "告警中心128",
+      "active_item_height": 36,
+      "horizontal_overflow": false,
+      "screenshot": "evidence/ui-image-breakdowns/navigation/threat-stability-r531/alerts-1920x1080.png"
+    },
+    {
+      "id": "campaigns",
+      "path": "/campaigns",
+      "shell_classes": "taf-shell",
+      "sidebar_width": 166,
+      "main_left": 166,
+      "threat_group_expanded": true,
+      "threat_items": [
+        "告警中心128",
+        "战役列表",
+        "攻击链分析",
+        "加密流量",
+        "取证分析"
+      ],
+      "active_item": "战役列表",
+      "active_item_height": 36,
+      "horizontal_overflow": false,
+      "screenshot": "evidence/ui-image-breakdowns/navigation/threat-stability-r531/campaigns-1920x1080.png"
+    },
+    {
+      "id": "attack-chains",
+      "path": "/attack-chains",
+      "shell_classes": "taf-shell",
+      "sidebar_width": 166,
+      "main_left": 166,
+      "threat_group_expanded": true,
+      "threat_items": [
+        "告警中心128",
+        "战役列表",
+        "攻击链分析",
+        "加密流量",
+        "取证分析"
+      ],
+      "active_item": "攻击链分析",
+      "active_item_height": 36,
+      "horizontal_overflow": false,
+      "screenshot": "evidence/ui-image-breakdowns/navigation/threat-stability-r531/attack-chains-1920x1080.png"
+    },
+    {
+      "id": "alerts-return",
+      "path": "/alerts",
+      "shell_classes": "taf-shell",
+      "sidebar_width": 166,
+      "main_left": 166,
+      "threat_group_expanded": true,
+      "threat_items": [
+        "告警中心128",
+        "战役列表",
+        "攻击链分析",
+        "加密流量",
+        "取证分析"
+      ],
+      "active_item": "告警中心128",
+      "active_item_height": 36,
+      "horizontal_overflow": false,
+      "screenshot": "evidence/ui-image-breakdowns/navigation/threat-stability-r531/alerts-return-1920x1080.png"
+    }
+  ],
+  "generated_at": "2026-07-20T02:15:34.911Z"
+}

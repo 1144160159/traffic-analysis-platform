@@ -1115,8 +1115,8 @@
     }
   ],
   "implementation": {
-    "source": "evidence/ui-image-breakdowns/overlays/modal-campaign-report-export/implementation.html",
-    "mode": "reference-raster",
+    "source": "/campaigns/campaign-exfil-default-1782729598739-e1d2dc37",
+    "mode": "production-route",
     "route": "/campaigns/:campaignId",
     "pages": [],
     "components": [
@@ -1139,7 +1139,12 @@
       "ECharts dark theme tokens"
     ],
     "mapping_note": "The evidence screenshot is a deterministic reference-raster implementation for pixel proof; the breakdown arrays map the same image to semantic frontend units.",
-    "note": "Reference-raster implementation is used for pixel evidence; semantic component decomposition remains in the markdown/json record."
+    "note": "implementation.png is captured from the real APISIX/Web UI production route through Windows Chrome CDP. It is not a raster replay of target.png.",
+    "resolved_path": "/campaigns/campaign-exfil-default-1782729598739-e1d2dc37",
+    "route_state": {
+      "__codex_page_id": "modal-campaign-report-export",
+      "__codex_ui_breakdown_production": "1"
+    }
   },
   "evidence": {
     "target": "evidence/ui-image-breakdowns/overlays/modal-campaign-report-export/target.png",
@@ -1154,28 +1159,34 @@
       "width": 1920,
       "height": 1080
     },
-    "url": "http://10.0.5.8:37459/evidence/ui-image-breakdowns/overlays/modal-campaign-report-export/implementation.html",
+    "url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?__codex_page_id=modal-campaign-report-export&__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1784905362156#codex_smoke_token=<redacted>",
     "render_source": "evidence/ui-image-breakdowns/overlays/modal-campaign-report-export/target.png",
     "capture_meta": "evidence/ui-image-breakdowns/overlays/modal-campaign-report-export/capture-meta.json",
     "cdp_version": "evidence/ui-image-breakdowns/overlays/modal-campaign-report-export/cdp-version.json",
-    "cdp_list": "evidence/ui-image-breakdowns/overlays/modal-campaign-report-export/cdp-list.json"
+    "cdp_list": "evidence/ui-image-breakdowns/overlays/modal-campaign-report-export/cdp-list.json",
+    "evidence_mode": "production-route",
+    "production_route_report": "evidence/ui-image-breakdowns/overlays/modal-campaign-report-export/production-route-report.json",
+    "final_url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?__codex_page_id=modal-campaign-report-export&__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1784905362156"
   },
   "evidence_dir": "evidence/ui-image-breakdowns/overlays/modal-campaign-report-export",
   "differences": [
     {
-      "type": "visual-diff",
-      "location": "full image",
-      "current": "Windows Chrome screenshot will be compared with the locked target PNG.",
-      "expected": "pixel mismatch ratio <= 0.015",
+      "type": "production-evidence-scope",
+      "location": "/campaigns/campaign-exfil-default-1782729598739-e1d2dc37",
+      "current": "implementation.png is captured from the real APISIX/Web UI route in Windows Chrome CDP",
+      "expected": "no target.png raster replay is used as implementation evidence",
       "status": "documented"
     },
     {
-      "type": "semantic-scope",
-      "location": "production React implementation",
-      "current": "reference-raster evidence proves visual parity only",
-      "expected": "semantic React components follow this record when implemented separately",
-      "status": "documented"
+      "type": "production-state-mapping",
+      "location": "/campaigns/campaign-exfil-default-1782729598739-e1d2dc37",
+      "current": "canonical campaign visual contract state enabled; normal-route runtime is verified separately",
+      "expected": "target image has a deterministic implemented route state or interaction mapping",
+      "status": "open"
     }
   ],
-  "accepted": false
+  "accepted": false,
+  "unresolved": [
+    "production-state-mapping:/campaigns/campaign-exfil-default-1782729598739-e1d2dc37"
+  ]
 }

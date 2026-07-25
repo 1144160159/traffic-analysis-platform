@@ -1,0 +1,49 @@
+{
+  "page": "entity-graph",
+  "revision": "r583",
+  "rolled_out_at": "2026-07-21T14:40:05+08:00",
+  "scope": "increase the compact left path-analysis panel height and enlarge its four data-backed path visualizations without changing the two-column business layout",
+  "deployment": {
+    "name": "web-ui",
+    "source_revision": "entity-graph-path-taller-r583",
+    "deployment_revision": 765,
+    "deployment_generation": 780,
+    "image": "docker.io/traffic/web-ui@sha256:e07cd9a6aeec0cc63de5e8d9d2431d79af2914d413101874e1c2e1949695d688",
+    "pod": {
+      "name": "web-ui-6b97bb5d5-s927r",
+      "ready": true,
+      "restarts": 0,
+      "node": "zeus-server"
+    }
+  },
+  "nodes_imported": ["8-2tb", "zeus-server"],
+  "image_pull_policy": "Never",
+  "digest_reference_imported": true,
+  "layout": {
+    "path_panel": {"width_px": 649.53125, "height_px": 300, "column": "left"},
+    "query_governance": "right column on the same row",
+    "all_tabs_stable": true
+  },
+  "verification": {
+    "web_build": "pass",
+    "backend_preflight": "pass",
+    "windows_chrome_backend": "Xshell CDP 127.0.0.1:9224",
+    "windows_chrome_version": "Chrome/150.0.7871.128",
+    "production_route": "http://10.0.5.8:30180/graph",
+    "interaction_result": "pass",
+    "business_http_failures": 0,
+    "unexpected_console_errors": 0,
+    "unexpected_page_errors": 0
+  },
+  "evidence": [
+    "doc/02_acceptance/02-regression/entity-graph-interactions-r583.json",
+    "evidence/ui-image-breakdowns/pages/graph/entity-graph-r583-interactions.png",
+    "evidence/ui-image-breakdowns/pages/graph/entity-graph-r583-path-tabs/shortest.png",
+    "evidence/ui-image-breakdowns/pages/graph/entity-graph-r583-path-tabs/attack.png",
+    "evidence/ui-image-breakdowns/pages/graph/entity-graph-r583-path-tabs/communication.png",
+    "evidence/ui-image-breakdowns/pages/graph/entity-graph-r583-path-tabs/account.png",
+    "evidence/ui-image-breakdowns/pages/graph/entity-graph-r583-path-visual-metrics.json",
+    "evidence/ui-image-breakdowns/pages/graph/entity-graph-r583-diff/taller-left-panel-comparison.png"
+  ],
+  "result": "pass"
+}

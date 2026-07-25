@@ -1,0 +1,47 @@
+{
+  "page": "alerts",
+  "result": "accepted",
+  "initial_reviews": {
+    "intelligent": {
+      "result": "revise",
+      "p0": 0,
+      "p1": 1,
+      "p2": 2,
+      "findings": ["outbox had no background retry worker", "live check count was documented as 38 instead of 36", "release documents still referenced r647/r648"]
+    },
+    "logic": {
+      "result": "revise",
+      "p0": 0,
+      "p1": 2,
+      "p2": 1,
+      "findings": ["outbox failures were not retried", "attack phase and same-source cluster semantics were imprecise", "batch, cluster and CSV checks lacked result-level assertions"]
+    },
+    "layout": {"result": "accepted", "p0": 0, "p1": 0, "p2": 0}
+  },
+  "repairs": [
+    "moved Kafka delivery to a lease-based FOR UPDATE SKIP LOCKED background worker with exponential backoff",
+    "recovered four existing pending outbox rows and verified a new pending_retry action reaches published",
+    "derived canonical attack_phase from explicit labels or stable MITRE semantic mapping instead of returning alert_type",
+    "changed same-source cluster to exact src_ip filtering",
+    "added batch assign, batch status, cluster and CSV content-level assertions",
+    "synchronized release and acceptance documents to r653/r652 and 36 checks"
+  ],
+  "final_reviews": {
+    "intelligent": {"result": "accepted", "p0": 0, "p1": 0, "p2": 0, "release_document_observation": "closed before main-thread adjudication"},
+    "logic": {"result": "accepted", "p0": 0, "p1": 0, "p2": 0},
+    "layout": {"result": "accepted", "p0": 0, "p1": 0, "p2": 0}
+  },
+  "main_thread": {
+    "result": "accepted",
+    "p0": 0,
+    "p1": 0,
+    "p2": 0,
+    "basis": [
+      "36/36 live APISIX/JWT/PostgreSQL/ClickHouse checks",
+      "17/17 outbox records published with zero pending at runtime observation",
+      "Windows Chrome dual-viewport interaction pass with result-level action checks",
+      "visual full and ROI thresholds pass",
+      "three independent final reviews accept"
+    ]
+  }
+}

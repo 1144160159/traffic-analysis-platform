@@ -1,0 +1,449 @@
+{
+  "result": "pass",
+  "browser_path": "Xshell tunnel -> 127.0.0.1:9224 -> Windows Chrome -> direct APISIX",
+  "browser": "Chrome/150.0.7871.129",
+  "cdp_targets": 5,
+  "route": "http://10.0.5.8:30180/fusion?fusionCdpTs=1784727458210#codex_smoke_token=<redacted>",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "deployment_image": "docker.io/traffic/web-ui@sha256:136232302d11eec71c041bde4c8821975cb61c7bba8c29820fa3fb2c891be3f5",
+  "counts": {
+    "sources": 6,
+    "rules": 6,
+    "pending_conflicts": 18,
+    "risk_distribution": {
+      "high": 6,
+      "low": 3,
+      "medium": 9
+    },
+    "audits": 5,
+    "initial_conflict_rows": 3,
+    "page_two_conflict_rows": 3,
+    "initial_conflict_ids": [
+      "AF-20260722-001",
+      "AF-20260722-002",
+      "AF-20260722-003"
+    ],
+    "page_two_conflict_ids": [
+      "AF-20260722-004",
+      "AF-20260722-005",
+      "AF-20260722-006"
+    ],
+    "post_action_audit_rows": 5,
+    "page_two_audit_rows": 5,
+    "source_echarts": 6,
+    "source_echarts_declared": 6,
+    "pipeline_echarts": 1,
+    "pipeline_bar_echarts": 6,
+    "pipeline_geometry_wide": {
+      "valid": true,
+      "contained": true,
+      "overlapPairs": 0,
+      "width": 1215.916748046875,
+      "height": 184,
+      "sourceLinks": 6,
+      "ruleLinks": 5,
+      "outputLinks": 6
+    },
+    "pipeline_geometry_medium": {
+      "valid": true,
+      "contained": true,
+      "overlapPairs": 0,
+      "width": 929.0625,
+      "height": 184,
+      "sourceLinks": 6,
+      "ruleLinks": 5,
+      "outputLinks": 6
+    },
+    "pipeline_geometry_compact": {
+      "valid": true,
+      "contained": true,
+      "overlapPairs": 0,
+      "width": 1164.666748046875,
+      "height": 184,
+      "sourceLinks": 6,
+      "ruleLinks": 5,
+      "outputLinks": 6
+    },
+    "responsive_layout_medium": {
+      "viewport": {
+        "width": 1536,
+        "height": 864
+      },
+      "noDocumentHorizontalOverflow": true,
+      "noStageHorizontalOverflow": true,
+      "labelsInViewport": true,
+      "gridInViewport": true,
+      "mainInViewport": true,
+      "detailInViewport": true,
+      "stageWidth": 929.0625
+    },
+    "responsive_layout_compact": {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "noDocumentHorizontalOverflow": true,
+      "noStageHorizontalOverflow": true,
+      "labelsInViewport": true,
+      "gridInViewport": true,
+      "mainInViewport": true,
+      "detailInViewport": true,
+      "stageWidth": 1164.666748046875
+    }
+  },
+  "assertions": {
+    "windows_chrome_9224": true,
+    "non_fullscreen_viewport": true,
+    "source_cards_six": true,
+    "source_status_charts_are_echarts": true,
+    "source_titles_do_not_overlap_status": true,
+    "source_storage_is_truthful": true,
+    "pipeline_connections_are_echarts": true,
+    "pipeline_connections_adapt_to_measured_node_edges": true,
+    "pipeline_nodes_never_overlap_or_escape": true,
+    "responsive_business_layout_no_horizontal_overflow": true,
+    "pipeline_rule_trends_are_database_backed_echarts": true,
+    "canonical_pipeline_rule_order": true,
+    "acceptance_rule_count": true,
+    "rule_server_pagination_reachable": true,
+    "conflict_queue_pagination_reachable": true,
+    "pending_conflict_count": true,
+    "acceptance_conflicts_are_explicit": true,
+    "acceptance_fixture_is_disclosed_in_ui": true,
+    "truncated_rule_ids_have_tooltips": true,
+    "pending_risk_distribution": true,
+    "audit_count_and_density": true,
+    "audit_matches_reference_columns": true,
+    "audit_pagination_reachable_after_writes": true,
+    "detail_actions_complete": true,
+    "rule_copy_refresh_and_audit_actions_work": true,
+    "authoritative_confirm_action_working": true,
+    "reset_page_state_complete": true,
+    "reader_ui_write_controls_disabled": true,
+    "reader_server_write_denied": true,
+    "existing_chrome_session_restored": true,
+    "rule_write_persisted": true,
+    "stale_rule_write_rejected": true,
+    "repair_task_persisted": true,
+    "processed_conflict_retained_after_write": true,
+    "duplicate_repair_task_blocked_in_ui": true,
+    "repair_pending_conflict_locked_in_ui": true,
+    "evidence_button_is_visible_hit_target": true,
+    "evidence_downloaded": true,
+    "audit_navigation_working": true,
+    "right_detail_contained": true,
+    "no_horizontal_overflow": true,
+    "no_business_http_failures": true,
+    "no_request_failures": true,
+    "no_console_errors": true,
+    "no_page_errors": true
+  },
+  "layout": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "document": {
+      "scrollWidth": 1920,
+      "clientWidth": 1920,
+      "scrollHeight": 1080
+    },
+    "detail": {
+      "left": 1414.25,
+      "top": -38.66666793823242,
+      "right": 1900,
+      "bottom": 681.6667060852051,
+      "width": 485.75,
+      "height": 720.3333740234375
+    },
+    "grid": {
+      "left": 174,
+      "top": -38.66666793823242,
+      "right": 1900,
+      "bottom": 740.6667060852051,
+      "width": 1726,
+      "height": 779.3333740234375
+    },
+    "main": {
+      "left": 174,
+      "top": -38.66666793823242,
+      "right": 1407.25,
+      "bottom": 740.6667060852051,
+      "width": 1233.25,
+      "height": 779.3333740234375
+    },
+    "shellOverflowY": "auto",
+    "windowInnerWidthToken": "1920px"
+  },
+  "writes": {
+    "rule_id": "IP_MAC_BIND_V3",
+    "rule_version": 2,
+    "conflict_id": "AF-20260722-001",
+    "conflict_state_version": 2,
+    "repair_task_id": "b62a90a1-ebc9-4aff-b3d3-e747af60d12d",
+    "repair_task_database_record": "b62a90a1-ebc9-4aff-b3d3-e747af60d12d|fusion_conflict_repair|queued|AF-20260722-001",
+    "evidence_filename": "fusion-evidence-af-20260722-001-1784727529.json",
+    "evidence_sha256": "sha256:ac434e36ae5abbc66057497d4abdf8b1df266d8a32fcab11117857f85009da3e"
+  },
+  "audit_navigation": {
+    "pathname": "/audit-log",
+    "search": "?object_type=fusion_conflict&object_id=AF-20260722-001",
+    "response_status": 200,
+    "object_filter_visible": true,
+    "record_count": 8,
+    "records": [
+      {
+        "resource_type": "fusion_conflict",
+        "resource_id": "AF-20260722-001"
+      },
+      {
+        "resource_type": "fusion_conflict",
+        "resource_id": "AF-20260722-001"
+      },
+      {
+        "resource_type": "fusion_conflict",
+        "resource_id": "AF-20260722-001"
+      },
+      {
+        "resource_type": "fusion_conflict",
+        "resource_id": "AF-20260722-001"
+      },
+      {
+        "resource_type": "fusion_conflict",
+        "resource_id": "AF-20260722-001"
+      },
+      {
+        "resource_type": "fusion_conflict",
+        "resource_id": "AF-20260722-001"
+      },
+      {
+        "resource_type": "fusion_conflict",
+        "resource_id": "AF-20260722-001"
+      },
+      {
+        "resource_type": "fusion_conflict",
+        "resource_id": "AF-20260722-001"
+      }
+    ]
+  },
+  "business_responses": [
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/threat-intel/entries?limit=12"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/workbench?rule_limit=6&rule_offset=0&conflict_limit=3&conflict_offset=0&audit_limit=5&audit_offset=0"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/threat-intel/entries?limit=12"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/workbench?rule_limit=6&rule_offset=6&conflict_limit=3&conflict_offset=0&audit_limit=5&audit_offset=0"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/threat-intel/entries?limit=12"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/workbench?rule_limit=6&rule_offset=0&conflict_limit=3&conflict_offset=0&audit_limit=5&audit_offset=0"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/threat-intel/entries?limit=12"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/workbench?rule_limit=6&rule_offset=0&conflict_limit=3&conflict_offset=3&audit_limit=5&audit_offset=0"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/threat-intel/entries?limit=12"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/workbench?rule_limit=6&rule_offset=0&conflict_limit=3&conflict_offset=0&audit_limit=5&audit_offset=0"
+    },
+    {
+      "status": 200,
+      "method": "PATCH",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/rules/IP_MAC_BIND_V3"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/threat-intel/entries?limit=12"
+    },
+    {
+      "status": 200,
+      "method": "POST",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/conflicts/AF-20260722-001/resolve"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/threat-intel/entries?limit=12"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/workbench?rule_limit=6&rule_offset=0&conflict_limit=3&conflict_offset=0&audit_limit=5&audit_offset=0"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/workbench?rule_limit=6&rule_offset=0&conflict_limit=3&conflict_offset=0&audit_limit=5&audit_offset=0"
+    },
+    {
+      "status": 200,
+      "method": "POST",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/evidence-packages"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/threat-intel/entries?limit=12"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/workbench?rule_limit=6&rule_offset=0&conflict_limit=3&conflict_offset=0&audit_limit=5&audit_offset=0"
+    },
+    {
+      "status": 200,
+      "method": "POST",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/evidence-packages"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/threat-intel/entries?limit=12"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/workbench?rule_limit=6&rule_offset=0&conflict_limit=3&conflict_offset=0&audit_limit=5&audit_offset=0"
+    },
+    {
+      "status": 200,
+      "method": "POST",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/evidence-packages"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/threat-intel/entries?limit=12"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/workbench?rule_limit=6&rule_offset=0&conflict_limit=3&conflict_offset=0&audit_limit=5&audit_offset=0"
+    },
+    {
+      "status": 200,
+      "method": "POST",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/evidence-packages"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/threat-intel/entries?limit=12"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/workbench?rule_limit=6&rule_offset=0&conflict_limit=3&conflict_offset=0&audit_limit=5&audit_offset=0"
+    },
+    {
+      "status": 200,
+      "method": "POST",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/conflicts/AF-20260722-003/resolve"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/threat-intel/entries?limit=12"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/threat-intel/entries?limit=12"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/workbench?rule_limit=6&rule_offset=0&conflict_limit=3&conflict_offset=0&audit_limit=5&audit_offset=0"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/workbench?rule_limit=6&rule_offset=0&conflict_limit=3&conflict_offset=0&audit_limit=5&audit_offset=5"
+    }
+  ],
+  "bad_responses": [],
+  "request_failures": [],
+  "console_errors": [],
+  "page_errors": [],
+  "ignored_browser_extension_noise": {
+    "verified": true,
+    "requests": [
+      {
+        "url": "https://api.yhchj.com/ip",
+        "extension_url": "chrome-extension://hmlpiahhoampfgiodhahfofmeppmkaeo/js/jquery.js",
+        "function_name": "send"
+      }
+    ],
+    "request_failures": [
+      {
+        "url": "https://api.yhchj.com/ip",
+        "failure": "net::ERR_CONNECTION_CLOSED"
+      }
+    ],
+    "console_errors": [
+      {
+        "text": "Failed to load resource: net::ERR_CONNECTION_CLOSED",
+        "url": "https://api.yhchj.com/ip",
+        "line": 0
+      },
+      {
+        "text": "grm ERROR [iterable] ░░ Not supported: in app messages from Iterable",
+        "url": "chrome-extension://kbfnbcaeplbcioakkpcpgfkobkghlhen/src/js/Grammarly.js",
+        "line": 1
+      },
+      {
+        "text": "grm ERROR [iterable] ░░ Not supported: in app messages from Iterable",
+        "url": "chrome-extension://kbfnbcaeplbcioakkpcpgfkobkghlhen/src/js/Grammarly.js",
+        "line": 1
+      }
+    ],
+    "page_errors": [
+      "Object"
+    ]
+  },
+  "screenshots": [
+    "evidence/ui-image-breakdowns/pages/fusion/fusion-r617-interactions.png",
+    "evidence/ui-image-breakdowns/pages/fusion/fusion-r617-responsive-1536.png",
+    "evidence/ui-image-breakdowns/pages/fusion/fusion-r617-responsive-1366.png",
+    "evidence/ui-image-breakdowns/pages/fusion/fusion-r617-rule-modal.png",
+    "evidence/ui-image-breakdowns/pages/fusion/fusion-r617-conflict-detail.png",
+    "evidence/ui-image-breakdowns/pages/fusion/fusion-r617-repair-retained.png",
+    "evidence/ui-image-breakdowns/pages/fusion/fusion-r617-post-actions.png"
+  ],
+  "timestamp": "2026-07-22T13:39:49.878Z"
+}

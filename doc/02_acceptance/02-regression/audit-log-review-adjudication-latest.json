@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-20T05:15:45+08:00",
+  "menu": "审计日志",
+  "route": "/audit-log",
+  "frontend_revision": "r478",
+  "browser_revision": "r483",
+  "result": "pass_with_preserved_visual_contract_adjudication",
+  "review_sequence": ["page_logic_agent_review", "page_layout_agent_review", "main_thread_adjudication"],
+  "logic_review": {
+    "verdict": "accept",
+    "open_p0": 0,
+    "open_p1": 0,
+    "open_p2": 1,
+    "closed_p1": [
+      "A-row review panel followed by B-row selection now submits and displays B",
+      "title review action now opens the contained review tab instead of setting silent state"
+    ],
+    "closed_p2": [
+      "a controlled delayed list refetch proves the cached detail action stays enabled and mouse-clickable while isFetching is true"
+    ],
+    "tracked_p2": ["the real review POST pending interval is not yet delayed to capture every disabled control state"]
+  },
+  "layout_review": {
+    "verdict": "accept",
+    "open_p0": 0,
+    "open_p1": 0,
+    "open_p2": 1,
+    "accepted_checks": [
+      "three 42x30 row buttons fully fit a non-clipped fixed-right action column and their centers hit the corresponding BUTTON",
+      "detail, association and review remain in the same 604x514 right-side region",
+      "review state has no visible Drawer or Modal",
+      "1920x1080 has no document horizontal overflow and all principal panels fit"
+    ],
+    "tracked_p2": ["42x30 desktop targets remain below common 44x44 touch guidance; keyboard, zoom and screen-reader coverage is not complete"]
+  },
+  "visual_adjudication": {
+    "raw_status": "fail",
+    "maximum": 0.125,
+    "main_pixel_mismatch_ratio": 0.2637692901234568,
+    "raw_metrics_rewritten": false,
+    "contract_decision": "accepted_with_existing_waiver",
+    "basis": [
+      "the user requires every audit detail tab and row action state to remain inside the right-side detail region",
+      "live PostgreSQL totals and relationships must not be replaced with the reference image sample values",
+      "r483 real interaction, native pointer hit testing, delayed-refetch actionability, exact target binding and clip-free geometry pass"
+    ],
+    "side_by_side_evidence": [
+      "evidence/ui-image-breakdowns/pages/audit-log/compare-r479-main.png"
+    ]
+  },
+  "main_thread_adjudication": {
+    "blocking_gates": {
+      "three_row_actions_hit_testable": "pass",
+      "current_row_target_binding": "pass",
+      "viewer_permission_gate": "pass",
+      "contained_detail_review_layout": "pass",
+      "windows_chrome_interaction": "pass_37_of_37",
+      "native_pointer_actions": "pass_3_of_3",
+      "background_refetch_actionable": "pass",
+      "runtime_and_build": "pass",
+      "immutable_runtime_provenance": "pass"
+    },
+    "final_decision": "audit_log_row_actions_accepted_r478_r483",
+    "remaining_items": "two non-blocking accessibility and evidence-depth P2 observations are retained; none reproduces the reported unusable-button defect"
+  }
+}

@@ -1,12 +1,12 @@
 {
-  "token_id": "faf0492c-9ad5-44d0-b96b-f6729286771a",
+  "token_id": "a567e294-45d4-4d2a-b75b-103172d1ccf5",
   "token": "<redacted>",
-  "token_prefix": "api_tepqnnpfdvbx0j",
-  "name": "codex-settings-token-20260630-settings-governance-preflight-r1",
+  "token_prefix": "api_hx29txejpob8-e",
+  "name": "codex-settings-token-20260720-settings-governance-r510",
   "scopes": [
     "alert:read",
     "token:read"
   ],
-  "expires_at": "2026-06-30T06:28:00.164746801Z",
-  "created_at": "2026-06-30T06:23:00.164748138Z"
+  "expires_at": "2026-07-19T23:15:07.636159514Z",
+  "created_at": "2026-07-19T23:10:07.636161261Z"
 }

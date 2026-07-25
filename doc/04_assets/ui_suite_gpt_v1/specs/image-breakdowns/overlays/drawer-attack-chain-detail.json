@@ -18,7 +18,7 @@
     "width": 1920,
     "height": 1080
   },
-  "status": "pixel-accepted",
+  "status": "evidence-ready",
   "route": "/attack-chains",
   "host_route": null,
   "title": "攻击链详情抽屉",
@@ -1113,8 +1113,8 @@
     }
   ],
   "implementation": {
-    "source": "evidence/ui-image-breakdowns/overlays/drawer-attack-chain-detail/implementation.html",
-    "mode": "reference-raster",
+    "source": "/attack-chains",
+    "mode": "production-route",
     "route": "/attack-chains",
     "pages": [],
     "components": [
@@ -1137,7 +1137,12 @@
       "ECharts dark theme tokens"
     ],
     "mapping_note": "The evidence screenshot is a deterministic reference-raster implementation for pixel proof; the breakdown arrays map the same image to semantic frontend units.",
-    "note": "Reference-raster implementation is used for pixel evidence; semantic component decomposition remains in the markdown/json record."
+    "note": "implementation.png is captured from the real APISIX/Web UI production route through Windows Chrome CDP. It is not a raster replay of target.png.",
+    "resolved_path": "/attack-chains",
+    "route_state": {
+      "__codex_page_id": "drawer-attack-chain-detail",
+      "__codex_ui_breakdown_production": "1"
+    }
   },
   "evidence": {
     "target": "evidence/ui-image-breakdowns/overlays/drawer-attack-chain-detail/target.png",
@@ -1152,28 +1157,34 @@
       "width": 1920,
       "height": 1080
     },
-    "url": "http://10.0.5.8:44249/evidence/ui-image-breakdowns/overlays/drawer-attack-chain-detail/implementation.html",
+    "url": "http://10.0.5.8:30180/attack-chains?__codex_page_id=drawer-attack-chain-detail&__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1784905435966#codex_smoke_token=<redacted>",
     "render_source": "evidence/ui-image-breakdowns/overlays/drawer-attack-chain-detail/target.png",
     "capture_meta": "evidence/ui-image-breakdowns/overlays/drawer-attack-chain-detail/capture-meta.json",
     "cdp_version": "evidence/ui-image-breakdowns/overlays/drawer-attack-chain-detail/cdp-version.json",
-    "cdp_list": "evidence/ui-image-breakdowns/overlays/drawer-attack-chain-detail/cdp-list.json"
+    "cdp_list": "evidence/ui-image-breakdowns/overlays/drawer-attack-chain-detail/cdp-list.json",
+    "evidence_mode": "production-route",
+    "production_route_report": "evidence/ui-image-breakdowns/overlays/drawer-attack-chain-detail/production-route-report.json",
+    "final_url": "http://10.0.5.8:30180/attack-chains?__codex_page_id=drawer-attack-chain-detail&__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1784905435966"
   },
   "evidence_dir": "evidence/ui-image-breakdowns/overlays/drawer-attack-chain-detail",
   "differences": [
     {
-      "type": "visual-diff",
-      "location": "full image",
-      "current": "Windows Chrome screenshot will be compared with the locked target PNG.",
-      "expected": "pixel mismatch ratio <= 0.015",
+      "type": "production-evidence-scope",
+      "location": "/attack-chains",
+      "current": "implementation.png is captured from the real APISIX/Web UI route in Windows Chrome CDP",
+      "expected": "no target.png raster replay is used as implementation evidence",
       "status": "documented"
     },
     {
-      "type": "semantic-scope",
-      "location": "production React implementation",
-      "current": "reference-raster evidence proves visual parity only",
-      "expected": "semantic React components follow this record when implemented separately",
-      "status": "documented"
+      "type": "production-state-mapping",
+      "location": "/attack-chains",
+      "current": "canonical campaign visual contract state enabled; normal-route runtime is verified separately",
+      "expected": "target image has a deterministic implemented route state or interaction mapping",
+      "status": "open"
     }
   ],
-  "accepted": true
+  "accepted": false,
+  "unresolved": [
+    "production-state-mapping:/attack-chains"
+  ]
 }

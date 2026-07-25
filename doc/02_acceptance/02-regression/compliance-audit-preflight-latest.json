@@ -1,30 +1,30 @@
 {
-  "run_id": "20260630-compliance-audit-preflight-r1",
+  "run_id": "compliance-r367-final-20260719110622",
   "result": "pass",
   "apisix": "http://10.0.5.8:30180",
   "tenant": "default",
   "other_tenant": "tenant-b",
-  "report_type": "codex-live-compliance-20260630-compliance-audit-preflight-r1",
-  "report_id": "b531bbfb-70bf-46e6-8908-d2c882b67e6a",
-  "report": "doc/02_acceptance/runs/20260630-compliance-audit-preflight-r1/live-compliance-audit-preflight-20260630-compliance-audit-preflight-r1.ndjson",
-  "local_report": "doc/02_acceptance/runs/20260630-compliance-audit-preflight-r1/local-report.md",
-  "total": 19,
-  "passed": 19,
+  "report_type": "weekly",
+  "report_id": "1c5f7a8b-2516-4a4c-87f4-3961aa81920a",
+  "report": "doc/02_acceptance/runs/compliance-r367-final-20260719110622/live-compliance-audit-preflight-compliance-r367-final-20260719110622.ndjson",
+  "local_report": "doc/02_acceptance/runs/compliance-r367-final-20260719110622/local-report.md",
+  "total": 52,
+  "passed": 52,
   "blockers": 0,
   "warnings": 0,
   "checks": [
     {
-      "ts": "2026-06-30T04:04:24+08:00",
+      "ts": "2026-07-19T11:06:23+08:00",
       "phase": "api",
       "name": "compliance reports list is readable",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"reports\":[{\"report_id\":\"0864aa91-350c-4ebf-8e0c-6adea25b4bb0\",\"tenant_id\":\"default\",\"report_type\":\"daily\",\"time_range\":{\"end\":1781633592829,\"start\":1781547192829},\"generated_at\":1781633592840,\"status\":\"completed\",\"summary\":{\"total_alerts\":0,\"critical_alerts\":0,\"resolved_alerts\":0,\"false_positives\":0,\"avg_response_time_min\":0,\"sla_violations\":0},\"sections\":[{\"section_name\":\"alert_response\",\"title\":\"告警响应闭环\",\"content\":{\"resolution_rate\":1,\"resolved_alerts\":0,\"total_alerts\":0},\"status\":\"pass\"},{\"section_name\":\"critical_alerts\",\"title\":\"严重风险处置\",\"content\":{\"critical_alerts\":0,\"sla_violations\":0},\"status\":\"pass\"},{\"section_name\":\"feedback_quality\",\"title\":\"误报反馈质量\",\"content\":{\"false_positives\":0},\"status\":\"pass\"}]},{\"report_id\":\"18ff8efe-a31b-424b-a6c3-ef7c4ffef92c\",\"tenant_id\":\"default\",\"report_type\":\"daily\",\"time_range\":{\"end\":1781620124772,\"start\":1781533724772},\"generated_at\":1781620124785,\"status\":\"completed\",\"summary\":{\"total_a",
+      "detail": "{\"success\":true,\"data\":{\"reports\":[{\"report_id\":\"698ac282-7fb3-4ed3-97df-fa5ca3b99c1d\",\"tenant_id\":\"default\",\"report_type\":\"weekly\",\"time_range\":{\"end\":1784430064585,\"start\":1783825264585},\"generated_at\":1784430065343,\"status\":\"insufficient_evidence\",\"summary\":{\"total_alerts\":234335321,\"critical_alerts\":234177847,\"resolved_alerts\":200,\"false_positives\":0,\"avg_response_time_min\":1.6583333333333332,\"sla_violations\":201457162},\"sections\":[{\"section_name\":\"collection_coverage\",\"title\":\"采集覆盖率\",\"content\":{\"actual_value\":\"not_provided\",\"evaluated\":false,\"evidence_status\":\"insufficient\",\"reason\":\"probe coverage evidence was not supplied\",\"source\":\"probe inventory and heartbeat\"},\"status\":\"insufficient_evidence\"},{\"section_name\":\"data_quality\",\"title\":\"数据质量\",\"content\":{\"actual_value\":\"not_provided\",\"evaluated\":false,\"evidence_status\":\"insufficient\",\"reason\":\"integrity and deduplication evidence was not supplied\",\"source\":\"Kafka, Flink and ClickHouse quality metrics\"},\"status\":",
       "artifact": "compliance-reports-before.json"
     },
     {
-      "ts": "2026-06-30T04:04:24+08:00",
+      "ts": "2026-07-19T11:06:23+08:00",
       "phase": "assert",
       "name": "compliance reports response shape",
       "severity": "info",
@@ -34,17 +34,27 @@
       "artifact": "compliance-reports-before.json"
     },
     {
-      "ts": "2026-06-30T04:04:24+08:00",
+      "ts": "2026-07-19T11:06:23+08:00",
+      "phase": "api",
+      "name": "dedicated compliance read scope lists reports",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"reports\":[{\"report_id\":\"698ac282-7fb3-4ed3-97df-fa5ca3b99c1d\",\"tenant_id\":\"default\",\"report_type\":\"weekly\",\"time_range\":{\"end\":1784430064585,\"start\":1783825264585},\"generated_at\":1784430065343,\"status\":\"insufficient_evidence\",\"summary\":{\"total_alerts\":234335321,\"critical_alerts\":234177847,\"resolved_alerts\":200,\"false_positives\":0,\"avg_response_time_min\":1.6583333333333332,\"sla_violations\":201457162},\"sections\":[{\"section_name\":\"collection_coverage\",\"title\":\"采集覆盖率\",\"content\":{\"actual_value\":\"not_provided\",\"evaluated\":false,\"evidence_status\":\"insufficient\",\"reason\":\"probe coverage evidence was not supplied\",\"source\":\"probe inventory and heartbeat\"},\"status\":\"insufficient_evidence\"},{\"section_name\":\"data_quality\",\"title\":\"数据质量\",\"content\":{\"actual_value\":\"not_provided\",\"evaluated\":false,\"evidence_status\":\"insufficient\",\"reason\":\"integrity and deduplication evidence was not supplied\",\"source\":\"Kafka, Flink and ClickHouse quality metrics\"},\"status\":",
+      "artifact": "compliance-reports-dedicated-read.json"
+    },
+    {
+      "ts": "2026-07-19T11:06:23+08:00",
       "phase": "api",
       "name": "compliance audit trail is readable",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"total\":2379,\"trails\":[{\"log_id\":\"audit-9de1eb45-2eb0-4acb-a41c-976c3fd1ebb5\",\"tenant_id\":\"default\",\"user_id\":\"\",\"action\":\"THREAT_INTEL_FEED_SCHEDULED_IMPORT\",\"resource_type\":\"threat_intel\",\"resource_id\":\"codex-live-scheduled\",\"details\":{\"count\":1,\"event_id\":\"ti-deaf5b37-4771-45a5-bcdb-e7516979ab33\",\"event_type\":\"threat_intel.feed_scheduled_imported\",\"kafka_topic\":\"threat.intel.v1\",\"request_id\":\"\",\"source\":\"codex-live-scheduled\",\"trace_id\":\"\"},\"ip_address\":\"\",\"timestamp\":1782763447659,\"result\":\"success\"},{\"log_id\":\"audit-d3a28c2a-e266-404a-a8e4-e179ccc1b773\",\"tenant_id\":\"default\",\"user_id\":\"\",\"action\":\"THREAT_INTEL_FEED_SCHEDULED_IMPORT\",\"resource_type\":\"threat_intel\",\"resource_id\":\"codex-live-scheduled\",\"details\":{\"count\":1,\"event_id\":\"ti-354c6036-338e-4efa-960a-9e5813fb774a\",\"event_type\":\"threat_intel.feed_scheduled_imported\",\"kafka_topic\":\"threat.intel.v1\",\"request_id\":\"\",\"source\":\"codex-live-scheduled\",\"trace_id\":\"\"},\"ip_address\":\"\",\"timestamp\":1782763417631",
+      "detail": "{\"success\":true,\"data\":{\"total\":59144,\"trails\":[{\"log_id\":\"audit-814c9a18-6b06-422a-bf6f-8e25d7790d44\",\"tenant_id\":\"default\",\"user_id\":\"\",\"action\":\"THREAT_INTEL_FEED_SCHEDULED_IMPORT\",\"resource_type\":\"threat_intel\",\"resource_id\":\"codex-live-scheduled\",\"details\":{\"count\":1,\"event_id\":\"ti-79dbb62f-7e41-4cdd-b0c9-ba81c69bc00a\",\"event_type\":\"threat_intel.feed_scheduled_imported\",\"kafka_topic\":\"threat.intel.v1\",\"request_id\":\"\",\"source\":\"codex-live-scheduled\",\"trace_id\":\"\"},\"ip_address\":\"\",\"timestamp\":1784430378868,\"result\":\"success\"},{\"log_id\":\"audit-29614872-2b60-4826-aaa8-9184bddd4754\",\"tenant_id\":\"default\",\"user_id\":\"\",\"action\":\"THREAT_INTEL_FEED_SCHEDULED_IMPORT\",\"resource_type\":\"threat_intel\",\"resource_id\":\"codex-live-scheduled\",\"details\":{\"count\":1,\"event_id\":\"ti-f5783eea-8e3d-4f78-b343-97da3a69d34e\",\"event_type\":\"threat_intel.feed_scheduled_imported\",\"kafka_topic\":\"threat.intel.v1\",\"request_id\":\"\",\"source\":\"codex-live-scheduled\",\"trace_id\":\"\"},\"ip_address\":\"\",\"timestamp\":178443034873",
       "artifact": "compliance-audit-trail-before.json"
     },
     {
-      "ts": "2026-06-30T04:04:24+08:00",
+      "ts": "2026-07-19T11:06:23+08:00",
       "phase": "assert",
       "name": "compliance audit trail response shape",
       "severity": "info",
@@ -54,17 +64,37 @@
       "artifact": "compliance-audit-trail-before.json"
     },
     {
-      "ts": "2026-06-30T04:04:25+08:00",
+      "ts": "2026-07-19T11:06:23+08:00",
+      "phase": "api",
+      "name": "user without compliance read cannot list reports",
+      "severity": "info",
+      "passed": true,
+      "status": "403",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"permission denied: compliance:read required\"},\"meta\":{\"request_id\":\"5c6a1143-2344-4e48-a44c-d5571742eb7a\",\"trace_id\":\"5c6a1143-2344-4e48-a44c-d5571742eb7a\"},\"timestamp\":\"2026-07-19T03:06:23Z\"} ",
+      "artifact": "compliance-reports-no-read.json"
+    },
+    {
+      "ts": "2026-07-19T11:06:23+08:00",
+      "phase": "api",
+      "name": "user without audit read cannot list audit trail",
+      "severity": "info",
+      "passed": true,
+      "status": "403",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"permission denied: audit:read required\"},\"meta\":{\"request_id\":\"bea5ca19-d9f0-4aa4-97ca-8ad04f70e967\",\"trace_id\":\"bea5ca19-d9f0-4aa4-97ca-8ad04f70e967\"},\"timestamp\":\"2026-07-19T03:06:23Z\"} ",
+      "artifact": "compliance-audit-no-read.json"
+    },
+    {
+      "ts": "2026-07-19T11:06:23+08:00",
       "phase": "api",
       "name": "audit log page API is readable",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"total\":2379,\"trails\":[{\"log_id\":\"audit-9de1eb45-2eb0-4acb-a41c-976c3fd1ebb5\",\"tenant_id\":\"default\",\"user_id\":\"\",\"action\":\"THREAT_INTEL_FEED_SCHEDULED_IMPORT\",\"resource_type\":\"threat_intel\",\"resource_id\":\"codex-live-scheduled\",\"details\":{\"count\":1,\"event_id\":\"ti-deaf5b37-4771-45a5-bcdb-e7516979ab33\",\"event_type\":\"threat_intel.feed_scheduled_imported\",\"kafka_topic\":\"threat.intel.v1\",\"request_id\":\"\",\"source\":\"codex-live-scheduled\",\"trace_id\":\"\"},\"ip_address\":\"\",\"timestamp\":1782763447659,\"result\":\"success\"},{\"log_id\":\"audit-d3a28c2a-e266-404a-a8e4-e179ccc1b773\",\"tenant_id\":\"default\",\"user_id\":\"\",\"action\":\"THREAT_INTEL_FEED_SCHEDULED_IMPORT\",\"resource_type\":\"threat_intel\",\"resource_id\":\"codex-live-scheduled\",\"details\":{\"count\":1,\"event_id\":\"ti-354c6036-338e-4efa-960a-9e5813fb774a\",\"event_type\":\"threat_intel.feed_scheduled_imported\",\"kafka_topic\":\"threat.intel.v1\",\"request_id\":\"\",\"source\":\"codex-live-scheduled\",\"trace_id\":\"\"},\"ip_address\":\"\",\"timestamp\":1782763417631",
+      "detail": "{\"success\":true,\"data\":{\"total\":59144,\"trails\":[{\"log_id\":\"audit-814c9a18-6b06-422a-bf6f-8e25d7790d44\",\"tenant_id\":\"default\",\"user_id\":\"\",\"action\":\"THREAT_INTEL_FEED_SCHEDULED_IMPORT\",\"resource_type\":\"threat_intel\",\"resource_id\":\"codex-live-scheduled\",\"details\":{\"count\":1,\"event_id\":\"ti-79dbb62f-7e41-4cdd-b0c9-ba81c69bc00a\",\"event_type\":\"threat_intel.feed_scheduled_imported\",\"kafka_topic\":\"threat.intel.v1\",\"request_id\":\"\",\"source\":\"codex-live-scheduled\",\"trace_id\":\"\"},\"ip_address\":\"\",\"timestamp\":1784430378868,\"result\":\"success\"},{\"log_id\":\"audit-29614872-2b60-4826-aaa8-9184bddd4754\",\"tenant_id\":\"default\",\"user_id\":\"\",\"action\":\"THREAT_INTEL_FEED_SCHEDULED_IMPORT\",\"resource_type\":\"threat_intel\",\"resource_id\":\"codex-live-scheduled\",\"details\":{\"count\":1,\"event_id\":\"ti-f5783eea-8e3d-4f78-b343-97da3a69d34e\",\"event_type\":\"threat_intel.feed_scheduled_imported\",\"kafka_topic\":\"threat.intel.v1\",\"request_id\":\"\",\"source\":\"codex-live-scheduled\",\"trace_id\":\"\"},\"ip_address\":\"\",\"timestamp\":178443034873",
       "artifact": "audit-logs-before.json"
     },
     {
-      "ts": "2026-06-30T04:04:25+08:00",
+      "ts": "2026-07-19T11:06:23+08:00",
       "phase": "assert",
       "name": "audit log response shape",
       "severity": "info",
@@ -74,37 +104,87 @@
       "artifact": "audit-logs-before.json"
     },
     {
-      "ts": "2026-06-30T04:04:25+08:00",
+      "ts": "2026-07-19T11:06:23+08:00",
       "phase": "api",
-      "name": "admin can generate compliance report",
+      "name": "complete report list excludes invalidated legacy rows",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"report_id\":\"b531bbfb-70bf-46e6-8908-d2c882b67e6a\",\"tenant_id\":\"default\",\"report_type\":\"codex-live-compliance-20260630-compliance-audit-preflight-r1\",\"time_range\":{\"end\":1782763465122,\"start\":1782158665122},\"generated_at\":1782763465415,\"status\":\"completed\",\"summary\":{\"total_alerts\":0,\"critical_alerts\":0,\"resolved_alerts\":0,\"false_positives\":0,\"avg_response_time_min\":0,\"sla_violations\":0},\"sections\":[{\"section_name\":\"alert_response\",\"title\":\"告警响应闭环\",\"content\":{\"resolution_rate\":1,\"resolved_alerts\":0,\"total_alerts\":0},\"status\":\"pass\"},{\"section_name\":\"critical_alerts\",\"title\":\"严重风险处置\",\"content\":{\"critical_alerts\":0,\"sla_violations\":0},\"status\":\"pass\"},{\"section_name\":\"feedback_quality\",\"title\":\"误报反馈质量\",\"content\":{\"false_positives\":0},\"status\":\"pass\"}]},\"meta\":{\"request_id\":\"85930673-e2a2-4525-9a17-194c5eaf0615\",\"trace_id\":\"85930673-e2a2-4525-9a17-194c5eaf0615\"},\"timestamp\":\"2026-06-29T20:04:25Z\"} ",
-      "artifact": "compliance-generate-admin.json"
+      "detail": "{\"success\":true,\"data\":{\"reports\":[{\"report_id\":\"698ac282-7fb3-4ed3-97df-fa5ca3b99c1d\",\"tenant_id\":\"default\",\"report_type\":\"weekly\",\"time_range\":{\"end\":1784430064585,\"start\":1783825264585},\"generated_at\":1784430065343,\"status\":\"insufficient_evidence\",\"summary\":{\"total_alerts\":234335321,\"critical_alerts\":234177847,\"resolved_alerts\":200,\"false_positives\":0,\"avg_response_time_min\":1.6583333333333332,\"sla_violations\":201457162},\"sections\":[{\"section_name\":\"collection_coverage\",\"title\":\"采集覆盖率\",\"content\":{\"actual_value\":\"not_provided\",\"evaluated\":false,\"evidence_status\":\"insufficient\",\"reason\":\"probe coverage evidence was not supplied\",\"source\":\"probe inventory and heartbeat\"},\"status\":\"insufficient_evidence\"},{\"section_name\":\"data_quality\",\"title\":\"数据质量\",\"content\":{\"actual_value\":\"not_provided\",\"evaluated\":false,\"evidence_status\":\"insufficient\",\"reason\":\"integrity and deduplication evidence was not supplied\",\"source\":\"Kafka, Flink and ClickHouse quality metrics\"},\"status\":",
+      "artifact": "compliance-reports-without-invalidated.json"
     },
     {
-      "ts": "2026-06-30T04:04:25+08:00",
+      "ts": "2026-07-19T11:06:23+08:00",
       "phase": "assert",
-      "name": "generated compliance report has persisted identity",
+      "name": "invalidated legacy report is excluded from list and total",
       "severity": "info",
       "passed": true,
       "status": "ok",
-      "detail": ".success == true and (.data.report_id | type == \"string\" and length > 0) and .data.report_type == $report_type and .data.status == \"completed\"",
+      "detail": ".data.total == $normal_count and ([.data.reports[] | select(.report_id == $report_id or .status == \"invalidated\")] | length) == 0",
+      "artifact": "compliance-reports-without-invalidated.json"
+    },
+    {
+      "ts": "2026-07-19T11:06:23+08:00",
+      "phase": "api",
+      "name": "invalidated legacy report cannot be exported",
+      "severity": "info",
+      "passed": true,
+      "status": "404",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"NOT_FOUND\",\"message\":\"compliance report not found\"},\"meta\":{\"request_id\":\"54b25d59-7e98-4575-8d52-2a387f56eeff\",\"trace_id\":\"54b25d59-7e98-4575-8d52-2a387f56eeff\"},\"timestamp\":\"2026-07-19T03:06:23Z\"} ",
+      "artifact": "compliance-invalidated-export.json"
+    },
+    {
+      "ts": "2026-07-19T11:06:23+08:00",
+      "phase": "api",
+      "name": "invalidated legacy report cannot create remediation",
+      "severity": "info",
+      "passed": true,
+      "status": "404",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"NOT_FOUND\",\"message\":\"compliance report not found\"},\"meta\":{\"request_id\":\"4a8932ad-57db-4875-95c7-a49f44828caa\",\"trace_id\":\"4a8932ad-57db-4875-95c7-a49f44828caa\"},\"timestamp\":\"2026-07-19T03:06:23Z\"} ",
+      "artifact": "compliance-invalidated-remediation.json"
+    },
+    {
+      "ts": "2026-07-19T11:06:23+08:00",
+      "phase": "api",
+      "name": "invalidated legacy report cannot be finalized",
+      "severity": "info",
+      "passed": true,
+      "status": "404",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"NOT_FOUND\",\"message\":\"compliance report not found\"},\"meta\":{\"request_id\":\"c6edef56-5f59-4a8c-8245-558c823e6de8\",\"trace_id\":\"c6edef56-5f59-4a8c-8245-558c823e6de8\"},\"timestamp\":\"2026-07-19T03:06:23Z\"} ",
+      "artifact": "compliance-invalidated-finalize.json"
+    },
+    {
+      "ts": "2026-07-19T11:06:24+08:00",
+      "phase": "api",
+      "name": "dedicated compliance write scope generates report",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"report_id\":\"1c5f7a8b-2516-4a4c-87f4-3961aa81920a\",\"tenant_id\":\"default\",\"report_type\":\"weekly\",\"time_range\":{\"end\":1784430383937,\"start\":1783825583937},\"generated_at\":1784430384597,\"status\":\"insufficient_evidence\",\"summary\":{\"total_alerts\":234413994,\"critical_alerts\":234256374,\"resolved_alerts\":200,\"false_positives\":0,\"avg_response_time_min\":1.6583333333333332,\"sla_violations\":201615216},\"sections\":[{\"section_name\":\"collection_coverage\",\"title\":\"采集覆盖率\",\"content\":{\"actual_value\":\"not_provided\",\"evaluated\":false,\"evidence_status\":\"insufficient\",\"reason\":\"probe coverage evidence was not supplied\",\"source\":\"probe inventory and heartbeat\"},\"status\":\"insufficient_evidence\"},{\"section_name\":\"data_quality\",\"title\":\"数据质量\",\"content\":{\"actual_value\":\"not_provided\",\"evaluated\":false,\"evidence_status\":\"insufficient\",\"reason\":\"integrity and deduplication evidence was not supplied\",\"source\":\"Kafka, Flink and ClickHouse quality metrics\"},\"status\":\"insufficien",
       "artifact": "compliance-generate-admin.json"
     },
     {
-      "ts": "2026-06-30T04:04:25+08:00",
+      "ts": "2026-07-19T11:06:24+08:00",
+      "phase": "assert",
+      "name": "generated compliance report has persisted fail-closed identity",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and (.data.report_id | type == \"string\" and length > 0) and .data.report_type == $report_type and .data.status == \"insufficient_evidence\" and (.data.sections | length) >= 7 and ([.data.sections[] | select(.status == \"pass\")] | length) == 0",
+      "artifact": "compliance-generate-admin.json"
+    },
+    {
+      "ts": "2026-07-19T11:06:24+08:00",
       "phase": "api",
       "name": "generated compliance report is queryable",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"reports\":[{\"report_id\":\"b531bbfb-70bf-46e6-8908-d2c882b67e6a\",\"tenant_id\":\"default\",\"report_type\":\"codex-live-compliance-20260630-compliance-audit-preflight-r1\",\"time_range\":{\"end\":1782763465122,\"start\":1782158665122},\"generated_at\":1782763465415,\"status\":\"completed\",\"summary\":{\"total_alerts\":0,\"critical_alerts\":0,\"resolved_alerts\":0,\"false_positives\":0,\"avg_response_time_min\":0,\"sla_violations\":0},\"sections\":[{\"section_name\":\"alert_response\",\"title\":\"告警响应闭环\",\"content\":{\"resolution_rate\":1,\"resolved_alerts\":0,\"total_alerts\":0},\"status\":\"pass\"},{\"section_name\":\"critical_alerts\",\"title\":\"严重风险处置\",\"content\":{\"critical_alerts\":0,\"sla_violations\":0},\"status\":\"pass\"},{\"section_name\":\"feedback_quality\",\"title\":\"误报反馈质量\",\"content\":{\"false_positives\":0},\"status\":\"pass\"}]}],\"total\":1},\"meta\":{\"request_id\":\"1fd28de1-7d50-4391-a9c2-4c45ced89eaf\",\"trace_id\":\"1fd28de1-7d50-4391-a9c2-4c45ced89eaf\"},\"timestamp\":\"2026-06-29T20:04:25Z\"} ",
+      "detail": "{\"success\":true,\"data\":{\"reports\":[{\"report_id\":\"1c5f7a8b-2516-4a4c-87f4-3961aa81920a\",\"tenant_id\":\"default\",\"report_type\":\"weekly\",\"time_range\":{\"end\":1784430383937,\"start\":1783825583937},\"generated_at\":1784430384597,\"status\":\"insufficient_evidence\",\"summary\":{\"total_alerts\":234413994,\"critical_alerts\":234256374,\"resolved_alerts\":200,\"false_positives\":0,\"avg_response_time_min\":1.6583333333333332,\"sla_violations\":201615216},\"sections\":[{\"section_name\":\"collection_coverage\",\"title\":\"采集覆盖率\",\"content\":{\"actual_value\":\"not_provided\",\"evaluated\":false,\"evidence_status\":\"insufficient\",\"reason\":\"probe coverage evidence was not supplied\",\"source\":\"probe inventory and heartbeat\"},\"status\":\"insufficient_evidence\"},{\"section_name\":\"data_quality\",\"title\":\"数据质量\",\"content\":{\"actual_value\":\"not_provided\",\"evaluated\":false,\"evidence_status\":\"insufficient\",\"reason\":\"integrity and deduplication evidence was not supplied\",\"source\":\"Kafka, Flink and ClickHouse quality metrics\"},\"status\":",
       "artifact": "compliance-reports-after.json"
     },
     {
-      "ts": "2026-06-30T04:04:25+08:00",
+      "ts": "2026-07-19T11:06:24+08:00",
       "phase": "assert",
       "name": "generated report appears in compliance report list",
       "severity": "info",
@@ -114,17 +194,17 @@
       "artifact": "compliance-reports-after.json"
     },
     {
-      "ts": "2026-06-30T04:04:25+08:00",
+      "ts": "2026-07-19T11:06:24+08:00",
       "phase": "api",
       "name": "compliance audit trail has generated report event",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"total\":1,\"trails\":[{\"log_id\":\"audit-20260629200425.420771019\",\"tenant_id\":\"default\",\"user_id\":\"5837d930-30b9-4052-ae14-6679c6043322\",\"action\":\"COMPLIANCE_REPORT_GENERATED\",\"resource_type\":\"compliance_report\",\"resource_id\":\"b531bbfb-70bf-46e6-8908-d2c882b67e6a\",\"details\":{\"report_type\":\"codex-live-compliance-20260630-compliance-audit-preflight-r1\"},\"ip_address\":\"10.244.0.1\",\"timestamp\":1782763465420,\"result\":\"success\"}]},\"meta\":{\"request_id\":\"7d59ae7a-c815-4395-85d8-c0a29afeebfd\",\"trace_id\":\"7d59ae7a-c815-4395-85d8-c0a29afeebfd\"},\"timestamp\":\"2026-06-29T20:04:25Z\"} ",
+      "detail": "{\"success\":true,\"data\":{\"total\":1,\"trails\":[{\"log_id\":\"audit-ad9f1ee6-170a-484d-b56f-3873ffc134c2\",\"tenant_id\":\"default\",\"user_id\":\"353d67f7-a99a-4f01-9267-247ba880f005\",\"action\":\"COMPLIANCE_REPORT_GENERATED\",\"resource_type\":\"compliance_report\",\"resource_id\":\"1c5f7a8b-2516-4a4c-87f4-3961aa81920a\",\"details\":{\"api_path\":\"/api/v1/compliance/reports/generate\",\"report_type\":\"weekly\",\"request_id\":\"09ab8dc0-f15e-4ab8-bfa0-889d128b8ed3\",\"result\":\"success\",\"source_status\":\"insufficient_evidence\",\"time_end\":1784430383937,\"time_start\":1783825583937,\"total_alerts\":234413994,\"trace_id\":\"09ab8dc0-f15e-4ab8-bfa0-889d128b8ed3\"},\"ip_address\":\"10.244.0.1\",\"timestamp\":1784430384597,\"result\":\"success\"}]},\"meta\":{\"request_id\":\"0b5b4a87-3839-40ef-befd-6cc2cb56593b\",\"trace_id\":\"0b5b4a87-3839-40ef-befd-6cc2cb56593b\"},\"timestamp\":\"2026-07-19T03:06:24Z\"} ",
       "artifact": "compliance-audit-trail-generated.json"
     },
     {
-      "ts": "2026-06-30T04:04:25+08:00",
+      "ts": "2026-07-19T11:06:24+08:00",
       "phase": "assert",
       "name": "compliance audit trail contains generated event",
       "severity": "info",
@@ -134,17 +214,17 @@
       "artifact": "compliance-audit-trail-generated.json"
     },
     {
-      "ts": "2026-06-30T04:04:25+08:00",
+      "ts": "2026-07-19T11:06:24+08:00",
       "phase": "api",
       "name": "audit log page API has generated report event",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"total\":1,\"trails\":[{\"log_id\":\"audit-20260629200425.420771019\",\"tenant_id\":\"default\",\"user_id\":\"5837d930-30b9-4052-ae14-6679c6043322\",\"action\":\"COMPLIANCE_REPORT_GENERATED\",\"resource_type\":\"compliance_report\",\"resource_id\":\"b531bbfb-70bf-46e6-8908-d2c882b67e6a\",\"details\":{\"report_type\":\"codex-live-compliance-20260630-compliance-audit-preflight-r1\"},\"ip_address\":\"10.244.0.1\",\"timestamp\":1782763465420,\"result\":\"success\"}]},\"meta\":{\"request_id\":\"f7cf361b-1530-4672-907e-6d1d3359ec83\",\"trace_id\":\"f7cf361b-1530-4672-907e-6d1d3359ec83\"},\"timestamp\":\"2026-06-29T20:04:25Z\"} ",
+      "detail": "{\"success\":true,\"data\":{\"total\":1,\"trails\":[{\"log_id\":\"audit-ad9f1ee6-170a-484d-b56f-3873ffc134c2\",\"tenant_id\":\"default\",\"user_id\":\"353d67f7-a99a-4f01-9267-247ba880f005\",\"action\":\"COMPLIANCE_REPORT_GENERATED\",\"resource_type\":\"compliance_report\",\"resource_id\":\"1c5f7a8b-2516-4a4c-87f4-3961aa81920a\",\"details\":{\"api_path\":\"/api/v1/compliance/reports/generate\",\"report_type\":\"weekly\",\"request_id\":\"09ab8dc0-f15e-4ab8-bfa0-889d128b8ed3\",\"result\":\"success\",\"source_status\":\"insufficient_evidence\",\"time_end\":1784430383937,\"time_start\":1783825583937,\"total_alerts\":234413994,\"trace_id\":\"09ab8dc0-f15e-4ab8-bfa0-889d128b8ed3\"},\"ip_address\":\"10.244.0.1\",\"timestamp\":1784430384597,\"result\":\"success\"}]},\"meta\":{\"request_id\":\"b7d878ff-f237-4daf-95e0-081277e6efee\",\"trace_id\":\"b7d878ff-f237-4daf-95e0-081277e6efee\"},\"timestamp\":\"2026-07-19T03:06:24Z\"} ",
       "artifact": "audit-logs-generated.json"
     },
     {
-      "ts": "2026-06-30T04:04:25+08:00",
+      "ts": "2026-07-19T11:06:24+08:00",
       "phase": "assert",
       "name": "audit log page API contains generated event",
       "severity": "info",
@@ -154,37 +234,277 @@
       "artifact": "audit-logs-generated.json"
     },
     {
-      "ts": "2026-06-30T04:04:25+08:00",
+      "ts": "2026-07-19T11:06:25+08:00",
+      "phase": "api",
+      "name": "dedicated compliance export scope exports evidence package",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"export_id\":\"COMP-EVIDENCE-35164065F099\",\"report_id\":\"1c5f7a8b-2516-4a4c-87f4-3961aa81920a\",\"artifact_type\":\"evidence_package\",\"filename\":\"compliance-evidence-1c5f7a8b-2516-4a4c-87f4-3961aa81920a.zip\",\"mime_type\":\"application/zip\",\"sha256\":\"sha256:58668d596bfdcc00399fca30d9f5a73b1cf9c2867bdfae4b8e7b4982b9f71ee2\",\"content_base64\":\"UEsDBBQACAAIAAAAAAAAAAAAAAAAAAAAAAANAAAAbWFuaWZlc3QuanNvblTPzWrDMBAE4HuewvhcF0nR3/o5eurFjNerRDRRjK0ESum7F9e0kNuw7DcwX4emabHUnMB1qJ+ztH3T8u06XzIKyyCPPMkWZvAHTtK+bOIkRRZUmQbUDRhlfKdCp+lNHXvle+NeldZBRa38+24WmW9LHfK0Ac0uBcSxM077zsJyF0Oy3ZG8BqImo/DE1jOM8xvdU584WOW8HklgAxGic3CJA0VGsiNph5GTcSNxwuRI9MhkjwHRkYd5bq+o93Vrz2W9p5Q5S6n/4/fflc9yxfCQZc230vaN/j1XKSh/uyZJuF9qe/j+CQAA//9QSwcIMtDEbesAAABaAQAAUEsDBBQACAAIAAAAAAAAAAAAAAAAAAAAAAALAAAAcmVwb3J0Lmpzb268lt9rG0cQx/+VY59PQfdL9+OtBEIhL3kv5Zi7m5O32tu97u7JFcaQ0hKFtHYoqVtKSopp47oPsUsJNBjS/jPRr/+i3Fmy5UR2hR+kN83u3sx8dr6zs0MklkLqmGYkIlbq5T4EScv2rE7LBTdtBX7utpywYwEEVmi3gZhEIwc+P5JhDhXTxFx8SA9KJBHZRuyxQb2Z",
+      "artifact": "compliance-evidence-package.json"
+    },
+    {
+      "ts": "2026-07-19T11:06:25+08:00",
+      "phase": "assert",
+      "name": "evidence package has zip payload and checksum",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.report_id == $report_id and .data.artifact_type == \"evidence_package\" and .data.mime_type == \"application/zip\" and (.data.sha256 | startswith(\"sha256:\")) and (.data.content_base64 | length > 32)",
+      "artifact": "compliance-evidence-package.json"
+    },
+    {
+      "ts": "2026-07-19T11:06:25+08:00",
+      "phase": "artifact",
+      "name": "evidence package opens and checksum matches",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "1c5f7a8b-2516-4a4c-87f4-3961aa81920a",
+      "artifact": "compliance-evidence-package.zip"
+    },
+    {
+      "ts": "2026-07-19T11:06:25+08:00",
+      "phase": "api",
+      "name": "compliance audit trail has evidence export event",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"total\":1,\"trails\":[{\"log_id\":\"audit-84505bd9-517c-479c-9314-ede2e597182c\",\"tenant_id\":\"default\",\"user_id\":\"ade6c907-6ba5-4815-aba5-0396f71db9f2\",\"action\":\"COMPLIANCE_EVIDENCE_EXPORTED\",\"resource_type\":\"compliance_report\",\"resource_id\":\"1c5f7a8b-2516-4a4c-87f4-3961aa81920a\",\"details\":{\"api_path\":\"/api/v1/compliance/reports/1c5f7a8b-2516-4a4c-87f4-3961aa81920a/evidence-package\",\"artifact_type\":\"evidence_package\",\"export_id\":\"COMP-EVIDENCE-35164065F099\",\"request_id\":\"beb1edad-f668-4bce-bd81-31de4ce526bf\",\"result\":\"success\",\"sha256\":\"sha256:58668d596bfdcc00399fca30d9f5a73b1cf9c2867bdfae4b8e7b4982b9f71ee2\",\"size_bytes\":1433,\"trace_id\":\"beb1edad-f668-4bce-bd81-31de4ce526bf\"},\"ip_address\":\"10.244.0.1\",\"timestamp\":1784430385010,\"result\":\"success\"}]},\"meta\":{\"request_id\":\"54073e5c-f6e8-420b-b13b-d53027ef6af4\",\"trace_id\":\"54073e5c-f6e8-420b-b13b-d53027ef6af4\"},\"timestamp\":\"2026-07-19T03:06:25Z\"} ",
+      "artifact": "compliance-audit-trail-exported.json"
+    },
+    {
+      "ts": "2026-07-19T11:06:25+08:00",
+      "phase": "assert",
+      "name": "compliance audit trail contains export event",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and (.data.total >= 1) and ([.data.trails[] | select(.resource_id == $report_id and .action == \"COMPLIANCE_EVIDENCE_EXPORTED\")] | length) >= 1",
+      "artifact": "compliance-audit-trail-exported.json"
+    },
+    {
+      "ts": "2026-07-19T11:06:25+08:00",
+      "phase": "api",
+      "name": "dedicated compliance export scope exports complete pdf report",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"export_id\":\"COMP-REPORT-80B1441205C8\",\"report_id\":\"1c5f7a8b-2516-4a4c-87f4-3961aa81920a\",\"artifact_type\":\"report_pdf\",\"filename\":\"compliance-report-1c5f7a8b-2516-4a4c-87f4-3961aa81920a.pdf\",\"mime_type\":\"application/pdf\",\"sha256\":\"sha256:33e967cb250660f1a88791327c15632dd7c6c79bb777a64e06a03933149ad5ac\",\"content_base64\":\"JVBERi0xLjQKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0gL0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCA2MTIgNzkyXSAvUmVzb3VyY2VzIDw8IC9Gb250IDw8IC9GMSA1IDAgUiA+PiA+PiAvQ29udGVudHMgNCAwIFIgPj4KZW5kb2JqCjQgMCBvYmoKPDwgL0xlbmd0aCAyNjU3ID4+CnN0cmVhbQpCVCAvRjEgNyBUZiAzMiA3NjAgVGQgMTAgVEwgKENvbXBsaWFuY2UgUnVudGltZSBSZXBvcnQpIFRqIFQqIChSZXBvcnQgSUQ6IDFjNWY3YThiLTI1MTYtNGE0Yy04N2Y0LTM5NjFhYTgxOTIwYSkgVGogVCogKFRlbmFudDogZGVmYXVsdCkgVGogVCogKFR5cGU6IHdlZWtseSkgVGogVCogKFN0YXR1czogaW5zdWZmaWNpZW50X2V2aWRlbmNlKSBUaiBUKiAoUmFuZ2U6IDE3ODM4Mj",
+      "artifact": "compliance-report-pdf.json"
+    },
+    {
+      "ts": "2026-07-19T11:06:25+08:00",
+      "phase": "assert",
+      "name": "pdf report has payload and checksum",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.report_id == $report_id and .data.artifact_type == (\"report_\" + $format) and (.data.sha256 | startswith(\"sha256:\")) and (.data.content_base64 | length > 32)",
+      "artifact": "compliance-report-pdf.json"
+    },
+    {
+      "ts": "2026-07-19T11:06:25+08:00",
+      "phase": "api",
+      "name": "dedicated compliance export scope exports complete docx report",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"export_id\":\"COMP-REPORT-297FC8AEC980\",\"report_id\":\"1c5f7a8b-2516-4a4c-87f4-3961aa81920a\",\"artifact_type\":\"report_docx\",\"filename\":\"compliance-report-1c5f7a8b-2516-4a4c-87f4-3961aa81920a.docx\",\"mime_type\":\"application/vnd.openxmlformats-officedocument.wordprocessingml.document\",\"sha256\":\"sha256:5eb918ab4dfe011279e24488e79457a6ecd4d0b1086bb8ed71706f22a2734573\",\"content_base64\":\"UEsDBBQACAAIAAAAAAAAAAAAAAAAAAAAAAATAAAAW0NvbnRlbnRfVHlwZXNdLnhtbHyQzU7rQAyFX2Xk7VUzvSwQQk274GcJLMoDWBMnHTFjj8ZuSN8epS1doMLa55zvk1ebKSc3UtUo3ML/ZgmOOEgXeWjhffu8uAOnhtxhEqYWDqSwWa+2h0LqppxYW9iZlXvvNewoozZSiKeceqkZTRupgy8YPnAgf7Nc3vogbMS2sHkD1qtH6nGfzD1NRnzyqJQU3MMpOLNawFJSDGhR2I/c/aAszoSmUjpmdBeL/ptyAn+VMF9+B5x7ryPVGjtyb1jtBTO14D+ldr6TsM/E1vw9c8VT+j4GuvTntVIlkGrkIafmcskY+dvfH9+9/goAAP//UEsHCHluM9fyAAAArQEAAFBLAwQUAAgACAAAAAAAAAAAAAAAAAAAAAAACwAAAF9yZWxzLy5yZWxzjM+xTsQwEATQX7G2J85RIITiXIOQrkXhA1b2JrGwdy2vAd/f01AQRHHtaPRGM517TuaTqkZhB6dhBEPsJUTeHLwtL3ePYLQhB0zC5OBKCud5eqWELQrrHouanhOrg7218mSt",
+      "artifact": "compliance-report-docx.json"
+    },
+    {
+      "ts": "2026-07-19T11:06:25+08:00",
+      "phase": "assert",
+      "name": "docx report has payload and checksum",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.report_id == $report_id and .data.artifact_type == (\"report_\" + $format) and (.data.sha256 | startswith(\"sha256:\")) and (.data.content_base64 | length > 32)",
+      "artifact": "compliance-report-docx.json"
+    },
+    {
+      "ts": "2026-07-19T11:06:25+08:00",
+      "phase": "artifact",
+      "name": "PDF and DOCX contain sections and audit trail",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "1c5f7a8b-2516-4a4c-87f4-3961aa81920a",
+      "artifact": "compliance-report-pdf.json,compliance-report-docx.json"
+    },
+    {
+      "ts": "2026-07-19T11:06:25+08:00",
+      "phase": "api",
+      "name": "dedicated remediation scope creates persistent tasks",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"created\":9,\"report_id\":\"1c5f7a8b-2516-4a4c-87f4-3961aa81920a\",\"reused\":0,\"tasks\":[{\"task_id\":\"34c18e8e-125f-4913-909c-6ca0c90bde23\",\"report_id\":\"1c5f7a8b-2516-4a4c-87f4-3961aa81920a\",\"section_name\":\"collection_coverage\",\"title\":\"采集覆盖率\",\"status\":\"open\",\"created_by\":\"4db620f5-f8bc-46ed-81bd-52cc0634cb27\",\"created_at\":1784430385531},{\"task_id\":\"c3d2baa7-5863-43d6-b184-82537184021b\",\"report_id\":\"1c5f7a8b-2516-4a4c-87f4-3961aa81920a\",\"section_name\":\"data_quality\",\"title\":\"数据质量\",\"status\":\"open\",\"created_by\":\"4db620f5-f8bc-46ed-81bd-52cc0634cb27\",\"created_at\":1784430385531},{\"task_id\":\"b727094f-17dd-48ae-b99a-4988538eef0a\",\"report_id\":\"1c5f7a8b-2516-4a4c-87f4-3961aa81920a\",\"section_name\":\"alert_response\",\"title\":\"告警响应闭环\",\"status\":\"open\",\"created_by\":\"4db620f5-f8bc-46ed-81bd-52cc0634cb27\",\"created_at\":1784430385531},{\"task_id\":\"7ad4c631-8b2c-4884-a12d-45e0fb04550c\",\"report_id\":\"1c5f7a8b-2516-4a4c-87f4-3961aa81920a\",\"section_name\":\"pcap_evi",
+      "artifact": "compliance-remediations-first.json"
+    },
+    {
+      "ts": "2026-07-19T11:06:25+08:00",
+      "phase": "api",
+      "name": "dedicated remediation scope reuses persistent tasks",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"created\":0,\"report_id\":\"1c5f7a8b-2516-4a4c-87f4-3961aa81920a\",\"reused\":9,\"tasks\":[{\"task_id\":\"34c18e8e-125f-4913-909c-6ca0c90bde23\",\"report_id\":\"1c5f7a8b-2516-4a4c-87f4-3961aa81920a\",\"section_name\":\"collection_coverage\",\"title\":\"采集覆盖率\",\"status\":\"open\",\"created_by\":\"4db620f5-f8bc-46ed-81bd-52cc0634cb27\",\"created_at\":1784430385531},{\"task_id\":\"c3d2baa7-5863-43d6-b184-82537184021b\",\"report_id\":\"1c5f7a8b-2516-4a4c-87f4-3961aa81920a\",\"section_name\":\"data_quality\",\"title\":\"数据质量\",\"status\":\"open\",\"created_by\":\"4db620f5-f8bc-46ed-81bd-52cc0634cb27\",\"created_at\":1784430385531},{\"task_id\":\"b727094f-17dd-48ae-b99a-4988538eef0a\",\"report_id\":\"1c5f7a8b-2516-4a4c-87f4-3961aa81920a\",\"section_name\":\"alert_response\",\"title\":\"告警响应闭环\",\"status\":\"open\",\"created_by\":\"4db620f5-f8bc-46ed-81bd-52cc0634cb27\",\"created_at\":1784430385531},{\"task_id\":\"7ad4c631-8b2c-4884-a12d-45e0fb04550c\",\"report_id\":\"1c5f7a8b-2516-4a4c-87f4-3961aa81920a\",\"section_name\":\"pcap_evi",
+      "artifact": "compliance-remediations-second.json"
+    },
+    {
+      "ts": "2026-07-19T11:06:25+08:00",
+      "phase": "assert",
+      "name": "remediation repeat is idempotent",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.created == 0 and .data.reused == .data.total and ([.data.tasks[].task_id] | sort) == ([$first[0].data.tasks[].task_id] | sort)",
+      "artifact": "compliance-remediations-second.json"
+    },
+    {
+      "ts": "2026-07-19T11:06:25+08:00",
+      "phase": "api",
+      "name": "dedicated finalize scope finalizes canonical report snapshot",
+      "severity": "info",
+      "passed": true,
+      "status": "200",
+      "detail": "{\"success\":true,\"data\":{\"finalization_id\":\"6d9ddd03-ff4f-4d62-84e6-68f03f83ed80\",\"report_id\":\"1c5f7a8b-2516-4a4c-87f4-3961aa81920a\",\"report_sha256\":\"sha256:fc740561b9ea4799a855a5fc798caf4b915abcf25b9cfad59e1bc9437a8596a2\",\"status\":\"finalized\",\"finalized_by\":\"6ed5c51a-343d-479b-846a-9daad5439184\",\"finalized_at\":1784430385666},\"meta\":{\"request_id\":\"bfbbde94-3fd2-4ff7-831b-19b0aa9c2924\",\"trace_id\":\"bfbbde94-3fd2-4ff7-831b-19b0aa9c2924\"},\"timestamp\":\"2026-07-19T03:06:25Z\"} ",
+      "artifact": "compliance-finalize-first.json"
+    },
+    {
+      "ts": "2026-07-19T11:06:25+08:00",
+      "phase": "api",
+      "name": "dedicated finalize scope rejects repeat finalization",
+      "severity": "info",
+      "passed": true,
+      "status": "409",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"ALREADY_FINALIZED\",\"message\":\"compliance report is already finalized\"},\"meta\":{\"request_id\":\"32db105a-16bf-4b58-a0d3-97153e60c15d\",\"trace_id\":\"32db105a-16bf-4b58-a0d3-97153e60c15d\"},\"timestamp\":\"2026-07-19T03:06:25Z\"} ",
+      "artifact": "compliance-finalize-second.json"
+    },
+    {
+      "ts": "2026-07-19T11:06:25+08:00",
+      "phase": "assert",
+      "name": "finalization returns canonical hash",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": ".success == true and .data.status == \"finalized\" and (.data.report_sha256 | startswith(\"sha256:\"))",
+      "artifact": "compliance-finalize-first.json"
+    },
+    {
+      "ts": "2026-07-19T11:06:25+08:00",
+      "phase": "artifact",
+      "name": "evidence manifest and finalization share canonical report hash",
+      "severity": "info",
+      "passed": true,
+      "status": "ok",
+      "detail": "1c5f7a8b-2516-4a4c-87f4-3961aa81920a",
+      "artifact": "compliance-finalize-first.json"
+    },
+    {
+      "ts": "2026-07-19T11:06:25+08:00",
+      "phase": "postgres",
+      "name": "finalization row rejects database mutation",
+      "severity": "info",
+      "passed": true,
+      "status": "immutable",
+      "detail": "1c5f7a8b-2516-4a4c-87f4-3961aa81920a",
+      "artifact": "pg-finalization-mutation.err"
+    },
+    {
+      "ts": "2026-07-19T11:06:26+08:00",
+      "phase": "api",
+      "name": "viewer cannot export report",
+      "severity": "info",
+      "passed": true,
+      "status": "403",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"permission denied: compliance:export required\"},\"meta\":{\"request_id\":\"8f47eaeb-695f-491b-b9ec-67968594adba\",\"trace_id\":\"8f47eaeb-695f-491b-b9ec-67968594adba\"},\"timestamp\":\"2026-07-19T03:06:26Z\"} ",
+      "artifact": "compliance-export-viewer.json"
+    },
+    {
+      "ts": "2026-07-19T11:06:26+08:00",
+      "phase": "api",
+      "name": "viewer cannot create remediation",
+      "severity": "info",
+      "passed": true,
+      "status": "403",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"permission denied: compliance:remediate required\"},\"meta\":{\"request_id\":\"e13f887c-04d1-4fe4-aaf1-b8273014ca13\",\"trace_id\":\"e13f887c-04d1-4fe4-aaf1-b8273014ca13\"},\"timestamp\":\"2026-07-19T03:06:26Z\"} ",
+      "artifact": "compliance-remediation-viewer.json"
+    },
+    {
+      "ts": "2026-07-19T11:06:26+08:00",
+      "phase": "api",
+      "name": "viewer cannot finalize report",
+      "severity": "info",
+      "passed": true,
+      "status": "403",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"permission denied: compliance:finalize required\"},\"meta\":{\"request_id\":\"56c60489-98c8-407f-82fc-f9640e4289de\",\"trace_id\":\"56c60489-98c8-407f-82fc-f9640e4289de\"},\"timestamp\":\"2026-07-19T03:06:26Z\"} ",
+      "artifact": "compliance-finalize-viewer.json"
+    },
+    {
+      "ts": "2026-07-19T11:06:26+08:00",
+      "phase": "api",
+      "name": "other tenant cannot export report",
+      "severity": "info",
+      "passed": true,
+      "status": "404",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"NOT_FOUND\",\"message\":\"compliance report not found\"},\"meta\":{\"request_id\":\"8b16722e-cbba-4346-86be-538963daf1e8\",\"trace_id\":\"8b16722e-cbba-4346-86be-538963daf1e8\"},\"timestamp\":\"2026-07-19T03:06:26Z\"} ",
+      "artifact": "compliance-export-other-tenant.json"
+    },
+    {
+      "ts": "2026-07-19T11:06:26+08:00",
+      "phase": "api",
+      "name": "other tenant cannot create remediation",
+      "severity": "info",
+      "passed": true,
+      "status": "404",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"NOT_FOUND\",\"message\":\"compliance report not found\"},\"meta\":{\"request_id\":\"feb52195-7073-42e3-a9fa-de09282d67c8\",\"trace_id\":\"feb52195-7073-42e3-a9fa-de09282d67c8\"},\"timestamp\":\"2026-07-19T03:06:26Z\"} ",
+      "artifact": "compliance-remediation-other-tenant.json"
+    },
+    {
+      "ts": "2026-07-19T11:06:26+08:00",
+      "phase": "api",
+      "name": "other tenant cannot finalize report",
+      "severity": "info",
+      "passed": true,
+      "status": "404",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"NOT_FOUND\",\"message\":\"compliance report not found\"},\"meta\":{\"request_id\":\"c1e7b6d1-951c-4796-a5b8-a031f6a3a152\",\"trace_id\":\"c1e7b6d1-951c-4796-a5b8-a031f6a3a152\"},\"timestamp\":\"2026-07-19T03:06:26Z\"} ",
+      "artifact": "compliance-finalize-other-tenant.json"
+    },
+    {
+      "ts": "2026-07-19T11:06:26+08:00",
       "phase": "postgres",
       "name": "generated compliance report persisted in PostgreSQL",
       "severity": "info",
       "passed": true,
       "status": "ok",
-      "detail": "b531bbfb-70bf-46e6-8908-d2c882b67e6a",
+      "detail": "1c5f7a8b-2516-4a4c-87f4-3961aa81920a",
       "artifact": "pg-compliance-report-count.txt"
     },
     {
-      "ts": "2026-06-30T04:04:25+08:00",
+      "ts": "2026-07-19T11:06:26+08:00",
       "phase": "postgres",
       "name": "generated compliance audit row persisted in PostgreSQL",
       "severity": "info",
       "passed": true,
       "status": "ok",
-      "detail": "b531bbfb-70bf-46e6-8908-d2c882b67e6a",
+      "detail": "1c5f7a8b-2516-4a4c-87f4-3961aa81920a",
       "artifact": "pg-compliance-audit-count.txt"
     },
     {
-      "ts": "2026-06-30T04:04:25+08:00",
+      "ts": "2026-07-19T11:06:26+08:00",
       "phase": "api",
       "name": "other tenant cannot see generated audit row",
       "severity": "info",
       "passed": true,
       "status": "200",
-      "detail": "{\"success\":true,\"data\":{\"total\":0,\"trails\":[]},\"meta\":{\"request_id\":\"0183eafc-a9a8-441f-8ef2-1b5411cd7d37\",\"trace_id\":\"0183eafc-a9a8-441f-8ef2-1b5411cd7d37\"},\"timestamp\":\"2026-06-29T20:04:25Z\"} ",
+      "detail": "{\"success\":true,\"data\":{\"total\":0,\"trails\":[]},\"meta\":{\"request_id\":\"d42af553-bca4-4df2-805c-ce72d22dc6e5\",\"trace_id\":\"d42af553-bca4-4df2-805c-ce72d22dc6e5\"},\"timestamp\":\"2026-07-19T03:06:26Z\"} ",
       "artifact": "other-tenant-audit-logs-generated.json"
     },
     {
-      "ts": "2026-06-30T04:04:26+08:00",
+      "ts": "2026-07-19T11:06:26+08:00",
       "phase": "assert",
       "name": "audit log query is tenant isolated",
       "severity": "info",
@@ -194,14 +514,24 @@
       "artifact": "other-tenant-audit-logs-generated.json"
     },
     {
-      "ts": "2026-06-30T04:04:26+08:00",
+      "ts": "2026-07-19T11:06:26+08:00",
       "phase": "api",
       "name": "viewer cannot generate compliance report",
       "severity": "info",
       "passed": true,
       "status": "403",
-      "detail": "{\"success\":false,\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"permission denied: admin:* required\"},\"meta\":{\"request_id\":\"28a124cc-fdac-40c5-986b-daf85b05e41d\",\"trace_id\":\"28a124cc-fdac-40c5-986b-daf85b05e41d\"},\"timestamp\":\"2026-06-29T20:04:26Z\"} ",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"PERMISSION_DENIED\",\"message\":\"permission denied: compliance:write required\"},\"meta\":{\"request_id\":\"b342193c-f543-4ee5-95e0-6572070f935e\",\"trace_id\":\"b342193c-f543-4ee5-95e0-6572070f935e\"},\"timestamp\":\"2026-07-19T03:06:26Z\"} ",
       "artifact": "compliance-generate-viewer.json"
+    },
+    {
+      "ts": "2026-07-19T11:06:26+08:00",
+      "phase": "api",
+      "name": "unknown report type is rejected",
+      "severity": "info",
+      "passed": true,
+      "status": "400",
+      "detail": "{\"success\":false,\"error\":{\"code\":\"INVALID_REPORT_TYPE\",\"message\":\"report_type must be weekly, monthly or custom\"},\"meta\":{\"request_id\":\"1c6a8e87-94d9-4453-a030-226450d35db8\",\"trace_id\":\"1c6a8e87-94d9-4453-a030-226450d35db8\"},\"timestamp\":\"2026-07-19T03:06:26Z\"} ",
+      "artifact": "compliance-invalid-report-type.json"
     }
   ]
 }

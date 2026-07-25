@@ -1,0 +1,157 @@
+{
+  "page": "fusion",
+  "route": "/fusion",
+  "revision": "r607",
+  "audited_at": "2026-07-22T17:37:14+08:00",
+  "result": "pass",
+  "workflow_contract": "UI decomposition -> icon candidate extraction -> individual/contact-sheet review -> explicit approval before formal asset copy -> frontend -> backend -> database -> Windows Chrome through Xshell -> diff/metrics -> design QA -> logic review -> layout review -> root adjudication -> rework",
+  "reinforcement_loop": {
+    "method": "measurement-driven iterative reward loop",
+    "description": "Each revision is rewarded only when live contracts, Windows Chrome interactions, visual thresholds and independent reviews improve without introducing synthetic business facts.",
+    "history": [
+      {
+        "revision": "r604",
+        "decision": "reject",
+        "feedback": "logic and layout findings required frontend and backend rework"
+      },
+      {
+        "revision": "r606",
+        "decision": "reject",
+        "feedback": "layout accepted, but canonical conflict and repair semantics still failed logic review"
+      },
+      {
+        "revision": "r607",
+        "decision": "accept",
+        "feedback": "64/64 live contracts, Windows Chrome interaction gate, global plus 6/6 regional visual gates, logic review and layout review all passed"
+      }
+    ],
+    "claim_boundary": "This is an evidence-scored engineering feedback loop, not an online-trained or self-modifying machine-learning model."
+  },
+  "stages": [
+    {
+      "id": "ui-decomposition",
+      "status": "pass",
+      "evidence": [
+        "doc/04_assets/ui_suite_gpt_v1/screens/pages/fusion.png",
+        "doc/04_assets/ui_suite_gpt_v1/specs/image-breakdowns/pages/fusion.json"
+      ],
+      "finding": "The canonical 1920x1080 source and semantic region breakdown are current and mark r607 accepted."
+    },
+    {
+      "id": "icon-candidate-area",
+      "status": "pass",
+      "evidence": [
+        "evidence/ui-image-breakdowns/pages/fusion/icon-candidates/fusion-r599-source-candidate/review.json",
+        "evidence/ui-image-breakdowns/pages/fusion/icon-candidates/fusion-r599-source-candidate/review-sheet.png",
+        "evidence/ui-image-breakdowns/pages/fusion/icon-candidates/r598-rejected/review.json",
+        "evidence/ui-image-breakdowns/pages/fusion/icon-candidates/r598-rejected/fusion-extracted-icon-sheet.png"
+      ],
+      "finding": "Both extracted raster candidate batches were reviewed and rejected; they remain quarantined in the candidate area."
+    },
+    {
+      "id": "icon-promotion-guard",
+      "status": "pass",
+      "evidence": [
+        "tests/e2e/fusion_ui_icon_candidate_check.mjs",
+        "tests/e2e/fusion_ui_icon_workflow_check.mjs",
+        "scripts/promote_fusion_icon_candidates.mjs",
+        "doc/02_acceptance/02-regression/fusion-icon-workflow-r607.json"
+      ],
+      "finding": "Candidate integrity and workflow checks pass. A negative promotion test exits nonzero with 'candidate review is not approved'; no rejected raster was copied to formal assets. Production therefore uses reviewed Ant Design icons."
+    },
+    {
+      "id": "frontend",
+      "status": "pass",
+      "evidence": [
+        "web/ui/src/pages/FusionWorkbenchPage.tsx",
+        "web/ui/src/components/charts.tsx"
+      ],
+      "finding": "The page implements the full-width lower workbench, database-backed ECharts trends, server pagination, conflict actions, evidence download and repair-pending locks."
+    },
+    {
+      "id": "backend",
+      "status": "pass",
+      "evidence": [
+        "go/control-plane/internal/alert/api/handler_product_pages.go",
+        "go/control-plane/internal/alert/api/handler_product_pages_test.go"
+      ],
+      "finding": "Conflict writes lock canonical rows, validate strategy, source/value and version, and reject duplicate or cross-strategy repair tasks."
+    },
+    {
+      "id": "database",
+      "status": "pass",
+      "evidence": [
+        "common/sql/pg/07-fusion-acceptance.sql",
+        "doc/02_acceptance/02-regression/fusion-threat-intel-latest.json"
+      ],
+      "finding": "Source observations, rule recent_hits, conflict reasons and explicit acceptance fixtures are persisted and verified through APISIX/PostgreSQL."
+    },
+    {
+      "id": "build-and-unit-tests",
+      "status": "pass",
+      "evidence": [
+        "doc/02_acceptance/02-regression/fusion-threat-intel-latest.json"
+      ],
+      "finding": "Web build, focused frontend tests and go test ./internal/alert/api passed."
+    },
+    {
+      "id": "deployment",
+      "status": "pass",
+      "evidence": [
+        "doc/02_acceptance/02-regression/fusion-rollout-r607.json"
+      ],
+      "finding": "Digest-pinned Web UI and Alert Service images are imported on both nodes; both deployments are Ready 1/1."
+    },
+    {
+      "id": "windows-chrome",
+      "status": "pass",
+      "evidence": [
+        "doc/02_acceptance/02-regression/fusion-interactions-r607.json",
+        "evidence/ui-image-breakdowns/pages/fusion/fusion-r607-interactions.png"
+      ],
+      "finding": "Visible Windows Chrome 150 was reached through Xshell 127.0.0.1:9224 at 1920x1080 non-fullscreen; all business interactions and runtime-error assertions passed."
+    },
+    {
+      "id": "visual-diff-and-metrics",
+      "status": "pass",
+      "evidence": [
+        "evidence/ui-image-breakdowns/pages/fusion/fusion-r607-comparison.png",
+        "evidence/ui-image-breakdowns/pages/fusion/fusion-r607-diff.png",
+        "evidence/ui-image-breakdowns/pages/fusion/fusion-r607-visual-metrics.json"
+      ],
+      "finding": "Global mismatch is 0.11720534336419754 below 0.125; all six configured regional gates pass."
+    },
+    {
+      "id": "design-qa",
+      "status": "pass",
+      "evidence": [
+        "design-qa.md"
+      ],
+      "finding": "The r607 design QA section records same-input comparisons, remaining non-blocking differences and ends in final result: passed."
+    },
+    {
+      "id": "independent-reviews",
+      "status": "pass",
+      "evidence": [
+        "doc/02_acceptance/02-regression/fusion-review-adjudication-latest.json"
+      ],
+      "finding": "Logic review ACCEPT with P0/P1/P2 zero; layout review ACCEPT with P0/P1 zero."
+    },
+    {
+      "id": "root-adjudication-and-rework",
+      "status": "pass",
+      "evidence": [
+        "doc/02_acceptance/02-regression/fusion-review-adjudication-latest.json",
+        "doc/02_acceptance/02-regression/fusion-development-progress-latest.json"
+      ],
+      "finding": "The main thread accepted r607 only after the r604 and r606 rejection feedback was repaired and every blocking gate passed."
+    }
+  ],
+  "blocking_findings": [],
+  "non_blocking_findings": [
+    "The fusion_pipeline and bottom_workbench visual ratios pass with narrow margins.",
+    "The fourth conflict row is close to the footer but remains reachable through the business-area scrollbar.",
+    "Live unmeasured source trends remain less visually rich than the reference rather than being filled with synthetic values."
+  ],
+  "root_completion_decision": "ACCEPT"
+}

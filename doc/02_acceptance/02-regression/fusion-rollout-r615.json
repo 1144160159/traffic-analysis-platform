@@ -1,0 +1,41 @@
+{
+  "page": "fusion",
+  "revision": "r615",
+  "deployed_at": "2026-07-22T20:30:00+08:00",
+  "cluster": "traffic-analysis",
+  "deployment": {
+    "name": "web-ui",
+    "generation": 812,
+    "revision": 797,
+    "image": "docker.io/traffic/web-ui@sha256:e3a97e3a9c83e1b1ed59e47ebcca9875c24f0e67688cfe297b1a540898401d42",
+    "image_id": "sha256:3449ec769066a55f16c250d30e4311b69a6229dc8dbb282b8e496c0c9c1c4130",
+    "source_digest": "f9548903ef3ee7674fe11f1b6a5d32c7d28e45cfb700f8ce11e917fe321185d5",
+    "rollout_result": "success",
+    "nodes_imported": ["8-2TB", "zeus-server"],
+    "observed_ready": "1/1",
+    "observed_restarts": 0,
+    "pod_node": "zeus-server"
+  },
+  "verification": {
+    "windows_chrome": "pass, Chrome 150, Xshell 9224, 1920x1080 nonfullscreen",
+    "interaction_assertions": "all true",
+    "live_contract": "77/77 pass, blockers=0, warnings=0",
+    "responsive_geometry": "17/17 links at 1215.67px and 962.67px",
+    "runtime": "0 business HTTP failures, 0 request failures, 0 console errors, 0 page errors"
+  },
+  "source_digests": {
+    "fixture_sql": "sha256:64117cf75775db2432adc0a9cc2bf6fe1c0ec5881dc95132adecff5cf8c6fce8",
+    "fusion_page": "sha256:57ac7b1dc9eafe8331e68c5d9c0024100c9493c90dac44ae0ff510f6424187b9",
+    "audit_page": "sha256:9317791161dc33b88bfbf356104095ca7d62d35698c13553086d7f1bf0710b08",
+    "charts": "sha256:0511e6be8dc9fc5e076360185398aaa18d53c8fde514c14bdb92e77509d75764",
+    "windows_interactions": "sha256:78fad3386574659000fcdd95c011aada4d4e650679b72c5e1fc95413263bfbd5",
+    "visual_metrics": "sha256:ec6f196dfffcfac8a8d275a3258850fdc0ad5d6059acc183199f64d89adf4e8c"
+  },
+  "evidence": {
+    "interactions": "doc/02_acceptance/02-regression/fusion-interactions-r615.json",
+    "contract": "doc/02_acceptance/02-regression/fusion-threat-intel-latest.json",
+    "visual_metrics": "evidence/ui-image-breakdowns/pages/fusion/fusion-r615-visual-metrics.json",
+    "comparison": "evidence/ui-image-breakdowns/pages/fusion/fusion-r615-comparison.png",
+    "design_qa": "design-qa.md"
+  }
+}

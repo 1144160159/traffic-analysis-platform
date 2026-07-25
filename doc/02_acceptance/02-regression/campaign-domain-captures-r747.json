@@ -1,0 +1,244 @@
+{
+  "revision": "r747",
+  "generated_at": "2026-07-24T16:28:40.266Z",
+  "browser_backend": "Windows Chrome CDP over Xshell 9224",
+  "browser": "Chrome/150.0.7871.182",
+  "campaign_id": "campaign-exfil-default-1783876075253-d150e2f8",
+  "result": "pass",
+  "targets": [
+    {
+      "id": "campaigns",
+      "status": "pass",
+      "route": "/campaigns?__codex_ui_breakdown_production=1&captureTs=1784910441779",
+      "implementation": "evidence/ui-image-breakdowns/pages/campaigns/implementation.png",
+      "implementation_roi": null,
+      "roi_dimensions": null,
+      "dimensions": {
+        "width": 1920,
+        "height": 1080,
+        "horizontalOverflow": false
+      },
+      "errors": {
+        "responses": [],
+        "console": [],
+        "page": [],
+        "requests": []
+      }
+    },
+    {
+      "id": "campaign-detail",
+      "status": "pass",
+      "route": "/campaigns/campaign-exfil-default-1783876075253-d150e2f8?__codex_ui_breakdown_production=1&captureTs=1784910446955",
+      "implementation": "evidence/ui-image-breakdowns/pages/campaign-detail/implementation.png",
+      "implementation_roi": null,
+      "roi_dimensions": null,
+      "dimensions": {
+        "width": 1920,
+        "height": 1080,
+        "horizontalOverflow": false
+      },
+      "errors": {
+        "responses": [],
+        "console": [],
+        "page": [],
+        "requests": []
+      }
+    },
+    {
+      "id": "drawer-campaign-detail",
+      "status": "pass",
+      "route": "/campaigns?__codex_ui_breakdown_production=1&__codex_page_id=drawer-campaign-detail&captureTs=1784910452833",
+      "implementation": "evidence/ui-image-breakdowns/overlays/drawer-campaign-detail/implementation.png",
+      "implementation_roi": null,
+      "roi_dimensions": null,
+      "dimensions": {
+        "width": 1920,
+        "height": 1080,
+        "horizontalOverflow": false
+      },
+      "errors": {
+        "responses": [],
+        "console": [],
+        "page": [],
+        "requests": []
+      }
+    },
+    {
+      "id": "modal-campaign-report-export",
+      "status": "pass",
+      "route": "/campaigns/campaign-exfil-default-1783876075253-d150e2f8?__codex_ui_breakdown_production=1&__codex_page_id=modal-campaign-report-export&captureTs=1784910459113",
+      "implementation": "evidence/ui-image-breakdowns/overlays/modal-campaign-report-export/implementation.png",
+      "implementation_roi": null,
+      "roi_dimensions": null,
+      "dimensions": {
+        "width": 1920,
+        "height": 1080,
+        "horizontalOverflow": false
+      },
+      "errors": {
+        "responses": [],
+        "console": [],
+        "page": [],
+        "requests": []
+      }
+    },
+    {
+      "id": "campaign-detail-impact-account",
+      "status": "pass",
+      "route": "/campaigns/campaign-exfil-default-1783876075253-d150e2f8?impact=account&__codex_ui_breakdown_production=1&__codex_page_id=campaign-detail-impact-account&captureTs=1784910465170",
+      "implementation": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-account/implementation.png",
+      "implementation_roi": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-account/implementation-roi.png",
+      "roi_dimensions": {
+        "x": 441,
+        "y": 83,
+        "width": 1039,
+        "height": 914
+      },
+      "dimensions": {
+        "width": 1920,
+        "height": 1080,
+        "horizontalOverflow": false
+      },
+      "errors": {
+        "responses": [],
+        "console": [],
+        "page": [],
+        "requests": []
+      }
+    },
+    {
+      "id": "campaign-detail-impact-service",
+      "status": "pass",
+      "route": "/campaigns/campaign-exfil-default-1783876075253-d150e2f8?impact=service&__codex_ui_breakdown_production=1&__codex_page_id=campaign-detail-impact-service&captureTs=1784910476108",
+      "implementation": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-service/implementation.png",
+      "implementation_roi": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-service/implementation-roi.png",
+      "roi_dimensions": {
+        "x": 441,
+        "y": 74,
+        "width": 1039,
+        "height": 933
+      },
+      "dimensions": {
+        "width": 1920,
+        "height": 1080,
+        "horizontalOverflow": false
+      },
+      "errors": {
+        "responses": [],
+        "console": [],
+        "page": [],
+        "requests": []
+      }
+    },
+    {
+      "id": "campaign-detail-impact-department",
+      "status": "pass",
+      "route": "/campaigns/campaign-exfil-default-1783876075253-d150e2f8?impact=department&__codex_ui_breakdown_production=1&__codex_page_id=campaign-detail-impact-department&captureTs=1784910484209",
+      "implementation": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-department/implementation.png",
+      "implementation_roi": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-department/implementation-roi.png",
+      "roi_dimensions": {
+        "x": 441,
+        "y": 74,
+        "width": 1039,
+        "height": 933
+      },
+      "dimensions": {
+        "width": 1920,
+        "height": 1080,
+        "horizontalOverflow": false
+      },
+      "errors": {
+        "responses": [],
+        "console": [],
+        "page": [],
+        "requests": []
+      }
+    },
+    {
+      "id": "campaign-detail-impact-campus",
+      "status": "pass",
+      "route": "/campaigns/campaign-exfil-default-1783876075253-d150e2f8?impact=campus&__codex_ui_breakdown_production=1&__codex_page_id=campaign-detail-impact-campus&captureTs=1784910491657",
+      "implementation": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/implementation.png",
+      "implementation_roi": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/implementation-roi.png",
+      "roi_dimensions": {
+        "x": 441,
+        "y": 74,
+        "width": 1039,
+        "height": 933
+      },
+      "dimensions": {
+        "width": 1920,
+        "height": 1080,
+        "horizontalOverflow": false
+      },
+      "errors": {
+        "responses": [],
+        "console": [],
+        "page": [],
+        "requests": []
+      }
+    },
+    {
+      "id": "campaign-detail-impact-business-system",
+      "status": "pass",
+      "route": "/campaigns/campaign-exfil-default-1783876075253-d150e2f8?impact=business-system&__codex_ui_breakdown_production=1&__codex_page_id=campaign-detail-impact-business-system&captureTs=1784910499071",
+      "implementation": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-business-system/implementation.png",
+      "implementation_roi": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-business-system/implementation-roi.png",
+      "roi_dimensions": {
+        "x": 441,
+        "y": 74,
+        "width": 1039,
+        "height": 933
+      },
+      "dimensions": {
+        "width": 1920,
+        "height": 1080,
+        "horizontalOverflow": false
+      },
+      "errors": {
+        "responses": [],
+        "console": [],
+        "page": [],
+        "requests": []
+      }
+    },
+    {
+      "id": "attack-chains",
+      "status": "pass",
+      "route": "/attack-chains?chain=campaign-exfil-default-1783876075253-d150e2f8&__codex_ui_breakdown_production=1&captureTs=1784910506694",
+      "implementation": "evidence/ui-image-breakdowns/pages/attack-chains/implementation.png",
+      "implementation_roi": null,
+      "roi_dimensions": null,
+      "dimensions": {
+        "width": 1920,
+        "height": 1080,
+        "horizontalOverflow": false
+      },
+      "errors": {
+        "responses": [],
+        "console": [],
+        "page": [],
+        "requests": []
+      }
+    },
+    {
+      "id": "drawer-attack-chain-detail",
+      "status": "pass",
+      "route": "/attack-chains?chain=campaign-exfil-default-1783876075253-d150e2f8&__codex_ui_breakdown_production=1&__codex_page_id=drawer-attack-chain-detail&captureTs=1784910512746",
+      "implementation": "evidence/ui-image-breakdowns/overlays/drawer-attack-chain-detail/implementation.png",
+      "implementation_roi": null,
+      "roi_dimensions": null,
+      "dimensions": {
+        "width": 1920,
+        "height": 1080,
+        "horizontalOverflow": false
+      },
+      "errors": {
+        "responses": [],
+        "console": [],
+        "page": [],
+        "requests": []
+      }
+    }
+  ]
+}

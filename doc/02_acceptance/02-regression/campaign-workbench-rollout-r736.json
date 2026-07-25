@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-07-24T21:42:00+08:00",
+  "scope": "campaign-domain",
+  "release": "campaign-domain-r736",
+  "status": "deployed_visual_gate_pending",
+  "change": {
+    "finding": "影响范围视觉验收状态触发 AppShell 全屏规则，导致生产弹窗看起来占满业务区且宿主菜单消失",
+    "repair": [
+      "从 AppShell 全屏 focus 规则中移除 campaign impact 选择器",
+      "影响范围保留为战役详情页上的 1180px / 86dvw 居中实际尺寸 Modal",
+      "impact 查询参数成为弹窗打开状态的唯一 URL 来源，关闭弹窗同时移除 impact 参数",
+      "宿主影响范围卡片仅保留紧凑摘要，完整对象内容只在 Modal 内渲染",
+      "Windows Chrome 边界脚本新增顶部栏、侧栏、宿主页可见和页面无横向溢出断言"
+    ]
+  },
+  "verification": {
+    "targeted_vitest": {
+      "result": "pass",
+      "files": 5,
+      "tests": 37
+    },
+    "typescript_and_vite_build": {
+      "result": "pass",
+      "modules_transformed": 4081
+    },
+    "backend_live_contract": {
+      "result": "pass",
+      "checks": 26,
+      "phase_data_backed": true,
+      "backend_release": "campaign-domain-r728"
+    },
+    "kubernetes_rollout": {
+      "result": "pass",
+      "frontend_generation": 942,
+      "frontend_observed_generation": 942,
+      "backend_generation": 230,
+      "backend_observed_generation": 230,
+      "ready": "1/1"
+    },
+    "gateway_http": {
+      "result": "pass",
+      "url": "http://10.0.5.8:30180/",
+      "status": 200
+    },
+    "windows_chrome": {
+      "result": "blocked",
+      "endpoint": "http://127.0.0.1:9224",
+      "error": "connection reset by peer",
+      "required_next": "restart Windows CodexChromeCDP on 9222 and keep the existing Xshell 9224 -> 9222 forwarding rule"
+    },
+    "visual_diff": "pending",
+    "fresh_logic_review": "pending_after_visual_gate",
+    "fresh_layout_review": "pending_after_visual_gate",
+    "main_thread_adjudication": "pending"
+  },
+  "artifacts": {
+    "frontend": {
+      "source_digest": "1da95fe5af433dbb74f1e30fb8b7b3e051658711a80c2d63f177598bdcd7c8e1",
+      "docker_image_id": "sha256:4648a0612beb656620c5d5ac291ae5f3cd16f63f903f85a7583a9c57e0995184",
+      "containerd_manifest_digest": "sha256:c1acb8dcea842bd60084ddcf450b288f805e1f7e45f670db237d5dd9cac50b17",
+      "image": "docker.io/traffic/web-ui:campaign-domain-r736"
+    },
+    "backend": {
+      "source_digest": "36075c413eaff9a1543a649ab36373a0328ea664c72e9d5cb99bf257601e3ab1",
+      "docker_image_id": "sha256:38470ac1110c7b11e1fccb55b7ed154b69b748b000b608248e4a77dbaf238a00",
+      "containerd_manifest_digest": "sha256:bf93c476f98cd0375bc7e063339b43195a75dd9d045aab93c7d940877398439b",
+      "image": "docker.io/traffic/alert-service:campaign-domain-r728"
+    }
+  },
+  "complete": false
+}

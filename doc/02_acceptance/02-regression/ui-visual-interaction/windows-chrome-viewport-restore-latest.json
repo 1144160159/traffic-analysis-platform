@@ -1,0 +1,25 @@
+{
+  "result": "pass",
+  "browser_backend": "Windows Chrome CDP over Xshell 9224",
+  "baseline": {
+    "inner_width": 1707,
+    "inner_height": 898,
+    "device_pixel_ratio": 1.5
+  },
+  "restored_viewport": {
+    "inner_width": 1707,
+    "inner_height": 898,
+    "device_pixel_ratio": 1.5,
+    "document_client_width": 1707,
+    "document_scroll_width": 1707,
+    "rail_right": 1687.3333740234375
+  },
+  "closed_emulated_campaign_tabs": [
+    "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1783876075253-d150e2f8?tab=evidence",
+    "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1783876075253-d150e2f8?tab=evidence",
+    "http://10.0.5.8:30180/campaigns",
+    "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1783876075253-d150e2f8?tab=evidence"
+  ],
+  "restored_url": "http://10.0.5.8:30180/campaigns",
+  "timestamp": "2026-07-24T01:57:15.560Z"
+}

@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "page": "settings",
+  "route": "/settings",
+  "status": "accepted",
+  "acceptance_revision": "r510",
+  "generated_at": "2026-07-20T07:15:00+08:00",
+  "environment": {
+    "production_url": "http://10.0.5.8:30180/settings",
+    "browser": "Windows Chrome 150 through Xshell CDP 127.0.0.1:9224",
+    "viewport": "1920x1080",
+    "backend_revision": "settings-r509",
+    "frontend_revision": "settings-r502"
+  },
+  "workflow": [
+    "read agent.md, doc project contracts and session 019f63e1 continuation record",
+    "decompose the locked settings reference and inspect the production route",
+    "implement contained settings workbench, real backend actions and PostgreSQL persistence",
+    "run the Windows Chrome interaction and visual gates through the Xshell tunnel",
+    "submit independent logic and layout reviews",
+    "reopen on review findings and fix route RBAC, token scope ceilings, audit status ordering, strict wildcard semantics and exact tested_count",
+    "deploy digest-pinned images to both nodes and rerun API, database, browser and visual gates",
+    "accept only after both independent reviews returned P0=0, P1=0 and P2=0"
+  ],
+  "gates": {
+    "api_preflight": {"result": "pass", "passed": 88, "total": 88, "blockers": 0, "warnings": 0, "evidence": "doc/02_acceptance/02-regression/settings-governance-preflight-latest.json"},
+    "windows_chrome": {"result": "pass", "checks": 20, "native_pointer_actions": 18, "drawer_states": 5, "evidence": "evidence/ui-image-breakdowns/pages/settings/interaction-r510.json"},
+    "visual_diff": {"result": "pass", "pixel_mismatch_ratio": 0.07115354938271605, "maximum": 0.125, "evidence": "evidence/ui-image-breakdowns/pages/settings/metrics-r510-main.json"},
+    "go_tests": {"result": "pass", "packages": ["./internal/auth/model", "./internal/auth/repository", "./internal/auth/service", "./internal/auth/api"]},
+    "frontend_tests": {"result": "pass", "passed": 37, "total": 37},
+    "frontend_build": {"result": "pass"},
+    "logic_review": {"result": "ACCEPT", "p0": 0, "p1": 0, "p2": 0},
+    "layout_review": {"result": "ACCEPT", "p0": 0, "p1": 0, "p2": 0}
+  },
+  "accepted_behavior": [
+    "all detail drawers remain 560px wide inside the settings business region and never enter fullscreen",
+    "all visible token row actions are native pointer targets and remain unclipped",
+    "admin:read can enter a read-only page while token:read is denied at the route",
+    "admin:write controls system settings and token:write controls token lifecycle; admin:* does not imply token:write",
+    "token mutations cannot target a token whose existing scopes exceed caller delegation authority",
+    "connection status, findings and exact tested_count are written to audit detail",
+    "token create, scope update, rotation, revoke and settings revision changes are durable and audited"
+  ],
+  "review_adjudication": "doc/02_acceptance/02-regression/settings-review-adjudication-latest.json",
+  "rollout": "doc/02_acceptance/02-regression/settings-rollout-r510.json",
+  "page_verification": "evidence/ui-image-breakdowns/pages/settings/verification.json",
+  "next_queue_item": {"id": "not-found", "route": "/__codex_visual_not_found__", "title": "404"}
+}

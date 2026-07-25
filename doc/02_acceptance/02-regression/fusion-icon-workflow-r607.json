@@ -1,0 +1,46 @@
+{
+  "page": "fusion",
+  "revision": "r607",
+  "verified_at": "2026-07-22T17:37:14+08:00",
+  "result": "pass",
+  "policy": "candidate area -> individual/contact-sheet inspection -> explicit review decision -> approved-only formal copy",
+  "candidate_integrity": {
+    "result": "pass",
+    "candidate_id": "fusion-r599-source-candidate",
+    "icon_count": 6,
+    "expected_icon_count": 6,
+    "review_decision": "rejected",
+    "formal_asset_copy": false,
+    "command": "node tests/e2e/fusion_ui_icon_candidate_check.mjs"
+  },
+  "workflow_gate": {
+    "result": "pass",
+    "candidates": [
+      {
+        "id": "fusion-r599-source-candidate",
+        "decision": "rejected",
+        "formal_asset_copy": false,
+        "blocking_issues": 4
+      },
+      {
+        "id": "r598-rejected",
+        "decision": "rejected",
+        "formal_asset_copy": false,
+        "blocking_issues": 5
+      }
+    ],
+    "formal_assets_present": false,
+    "production_strategy": "reviewed-code-native-icons",
+    "command": "node tests/e2e/fusion_ui_icon_workflow_check.mjs"
+  },
+  "negative_promotion_test": {
+    "result": "pass",
+    "candidate_id": "fusion-r599-source-candidate",
+    "expected_exit_code": 1,
+    "actual_exit_code": 1,
+    "expected_error": "candidate review is not approved",
+    "actual_error": "candidate review is not approved",
+    "command": "node scripts/promote_fusion_icon_candidates.mjs fusion-r599-source-candidate"
+  },
+  "blocking_findings": []
+}

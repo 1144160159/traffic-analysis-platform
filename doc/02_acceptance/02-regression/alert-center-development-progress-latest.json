@@ -1,0 +1,54 @@
+{
+  "page": "alerts",
+  "route": "/alerts",
+  "status": "accepted",
+  "accepted_at": "2026-07-23",
+  "backend_release": "r653",
+  "frontend_release": "r652",
+  "source_visual": "doc/04_assets/ui_suite_gpt_v1/screens/pages/alerts.png",
+  "implementation": {
+    "production_simulated_rows": 0,
+    "list_source": "traffic.alerts_latest FINAL",
+    "list_projection": "ReplicatedReplacingMergeTree latest state keyed by tenant_id and alert_id",
+    "pagination": "server-side exact total over latest state",
+    "attack_phase": "explicit MITRE phase label first, deterministic semantic mapping second; never raw alert_type fallback",
+    "same_source_cluster": "exact src_ip filter",
+    "persistent_actions": ["saved_view", "response_action", "investigation_note", "feedback", "batch_assign", "batch_status"],
+    "response_action_state": "pending_approval",
+    "response_action_transport": "PostgreSQL lease-based retry outbox to Kafka alert.response.requested.v1",
+    "risk_chart_engine": "echarts",
+    "filter_options": "derived from current real alert rows",
+    "export": "inherits active queue filters and validates CSV row content"
+  },
+  "gates": {
+    "live_contract": {"result": "pass", "checks": 36, "blockers": 0, "warnings": 0},
+    "latest_projection": {"result": "pass", "raw_unique": 1574945, "latest_rows": 1574945, "latest_unique": 1574945, "observed_streaming_drift": 0, "allowed_streaming_drift": 20},
+    "outbox_runtime": {"result": "pass", "published": 17, "pending": 0, "recovered_previous_pending": 4},
+    "windows_chrome": {"result": "pass", "browser": "Chrome/150.0.7871.129", "transport": "CDP over Xshell 127.0.0.1:9224", "viewports": ["1920x1080", "1600x900"], "runtime_errors": 0, "request_failures": 0, "viewport_overflow": 0, "batch_assign_verified": true, "batch_status_verified": true, "cluster_verified": true},
+    "frontend_build": "pass",
+    "frontend_targeted_lint": "pass",
+    "frontend_targeted_test": "pass",
+    "go_alert_packages": "pass",
+    "visual_diff": {"result": "pass", "channel_tolerance": 64, "full_ratio": 0.09983024691358025, "maximum": 0.13, "queue_and_filters_ratio": 0.06772342379106305, "alert_table_ratio": 0.11150305895439377, "detail_and_feedback_ratio": 0.09865634000274294}
+  },
+  "reviews": {
+    "logic": {"result": "accepted", "p0": 0, "p1": 0, "p2": 0},
+    "layout": {"result": "accepted", "p0": 0, "p1": 0, "p2": 0},
+    "intelligent": {"result": "accepted", "p0": 0, "p1": 0, "p2": 0},
+    "main_thread": {"result": "accepted", "p0": 0, "p1": 0, "p2": 0}
+  },
+  "rollout": {"backend_generation": 208, "backend_revision": 193, "frontend_generation": 857, "frontend_revision": 837, "ready": true, "pod_restarts": 0},
+  "evidence": [
+    "doc/02_acceptance/02-regression/alert-center-live-preflight-latest.json",
+    "doc/02_acceptance/02-regression/alert-center-latest-projection-r653.json",
+    "doc/02_acceptance/02-regression/alert-center-outbox-runtime-r653.json",
+    "evidence/ui-image-breakdowns/pages/alerts/interaction-r651.json",
+    "evidence/ui-image-breakdowns/pages/alerts/metrics-r651.json",
+    "evidence/ui-image-breakdowns/pages/alerts/comparison-r651.png",
+    "evidence/ui-image-breakdowns/pages/alerts/diff-r651.png",
+    "doc/02_acceptance/02-regression/alert-center-review-adjudication-latest.json",
+    "doc/02_acceptance/02-regression/alert-center-rollout-r653.json"
+  ],
+  "next_page": {"name": "战役列表", "route": "/campaigns"},
+  "project_complete": false
+}

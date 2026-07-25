@@ -1,0 +1,56 @@
+{
+  "page": "entity-graph",
+  "route": "/graph",
+  "revision": "r566",
+  "captured_at": "2026-07-20T19:03:00+08:00",
+  "browser": {
+    "backend": "Windows Chrome CDP over Xshell 9224",
+    "version": "Chrome/150.0.7871.128",
+    "viewport_css": "1707x898",
+    "device_pixel_ratio": 1.5,
+    "fullscreen": false
+  },
+  "runtime": {
+    "web_ui_revision": 752,
+    "image_tag": "docker.io/traffic/web-ui:entity-graph-windowed-closure-20260720-r566",
+    "manifest_digest": "sha256:b808cf9825123cbc6611e64b7d2d9e7766f12ba9f3959a29647def5b03d5b095",
+    "image_id": "docker.io/traffic/web-ui@sha256:b808cf9825123cbc6611e64b7d2d9e7766f12ba9f3959a29647def5b03d5b095",
+    "ready": true,
+    "restarts": 0
+  },
+  "host_detail": {
+    "entity": "核心业务服务器",
+    "section_heading": "开放服务",
+    "services": ["TCP/22", "TCP/80", "TCP/443", "TCP/3306"],
+    "screenshot": "evidence/ui-image-breakdowns/pages/graph/entity-graph-r566-windowed.png"
+  },
+  "account_detail": {
+    "entity": "biz_admin",
+    "section_heading": "开放服务",
+    "services": ["RDP/3389", "SMB/445"],
+    "screenshot": "evidence/ui-image-breakdowns/pages/graph/entity-graph-r566-account-open-services.png"
+  },
+  "layout": {
+    "business_grid": {"x": 174, "y": 132, "width": 1523.33, "height": 664},
+    "main_column": {"x": 174, "y": 132, "width": 1187.33, "height": 664},
+    "detail": {"x": 1369.33, "y": 132, "width": 328, "height": 662},
+    "toolbar_inside_main_column": true,
+    "detail_title_visible": true,
+    "horizontal_overflow_px": 0,
+    "vertical_overflow_px": 0
+  },
+  "path_tabs": [
+    {"name": "最短路径", "inside_panel": true, "internal_horizontal_overflow_px": 0, "screenshot": "evidence/ui-image-breakdowns/pages/graph/entity-graph-r566-path-1.png"},
+    {"name": "攻击路径", "inside_panel": true, "internal_horizontal_overflow_px": 0, "screenshot": "evidence/ui-image-breakdowns/pages/graph/entity-graph-r566-path-2.png"},
+    {"name": "通信路径", "inside_panel": true, "internal_horizontal_overflow_px": 0, "all_nodes_visible": true, "screenshot": "evidence/ui-image-breakdowns/pages/graph/entity-graph-r566-path-3.png"},
+    {"name": "账号访问路径", "inside_panel": true, "internal_horizontal_overflow_px": 0, "screenshot": "evidence/ui-image-breakdowns/pages/graph/entity-graph-r566-path-4.png"}
+  ],
+  "actions": ["查看资产", "查看告警", "进入取证", "跳转攻击链", "审计日志"],
+  "reviews": {
+    "holistic": {"result": "accept", "P0": 0, "P1": 0, "P2": 0, "P3": 1},
+    "logic": {"result": "accept", "P0": 0, "P1": 0, "P2": 0, "P3": 0},
+    "layout": {"result": "accept", "P0": 0, "P1": 0, "P2": 0, "P3": 1},
+    "remaining": "center relationship labels are dense but do not cover nodes or block interaction"
+  },
+  "result": "pass"
+}

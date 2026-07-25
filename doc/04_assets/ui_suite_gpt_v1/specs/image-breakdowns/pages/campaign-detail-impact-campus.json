@@ -16,16 +16,24 @@
   "evidence_dir": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/",
   "status": "evidence-ready",
   "accepted": false,
+  "surface_type": "modal-state",
+  "production_surface_contract": {
+    "host_context": "战役详情页必须保持可见",
+    "container": "居中实际尺寸 Modal，不得替换业务区或铺满浏览器",
+    "size": "最大宽度 1180px / 86dvw，最大高度 100dvh - 96px",
+    "overflow": "仅弹窗 body 内部滚动",
+    "focus_route": "仅用于稳定打开生产弹窗并采集验收证据，不代表全屏生产页面"
+  },
   "canvas": {
     "width": 1920,
     "height": 1080
   },
   "observation": {
-    "layout": "目标图是战役详情内影响范围模块的校区焦点态，不是生产全屏弹窗。画布内仅包含影响范围标题、六个对象 Tab、校区风险环、风险分布、Top 5 校区表和下钻链接。",
+    "layout": "目标图是战役详情宿主页上的居中影响范围弹窗，校区 Tab 激活。弹窗内包含影响范围标题、六个对象 Tab、校区风险环、风险分布、Top 5 校区表和下钻链接。",
     "menu_state": "正常生产路由保持威胁分析 / 战役列表父菜单选中；焦点截图态仅为视觉验收状态。",
     "business_focus": "展示受影响校区总数、高中低风险占比、覆盖资产、校区风险等级和核心/VPN/无线/出口链路。",
     "visual_style": "深海军蓝背景、细青蓝边框、白色高密度文字；高风险红、中风险琥珀、低风险绿色；校区 Tab 使用蓝色激活态。",
-    "responsive_rule": "焦点态采用 2133x1200 语义设计画布并根据真实 CSS viewport 等比缩放；正常生产详情使用 AppShell 自适应布局。"
+    "responsive_rule": "弹窗宽度受 1180px / 86dvw 双重约束，高度受视口约束；内容使用原生响应式布局和弹窗 body 内部滚动，禁止整块 transform 缩放。"
   },
   "regions": [
     {
@@ -856,7 +864,8 @@
     "source": "/campaigns/campaign-exfil-default-1782729598739-e1d2dc37",
     "route_state": {
       "impact": "campus",
-      "__codex_page_id": "campaign-detail-impact-campus"
+      "__codex_page_id": "campaign-detail-impact-campus",
+      "__codex_ui_breakdown_production": "1"
     },
     "primary_endpoint": "/v1/campaigns/{campaignId}",
     "service": "web/ui/src/services/campaignDetailApi.ts",
@@ -903,8 +912,8 @@
     },
     "image_tag": "traffic/web-ui:ui-campaign-impact-campus-20260710-r176",
     "evidence_mode": "production-route",
-    "url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=campus&__codex_page_id=campaign-detail-impact-campus&windowsCdpEvidenceTs=1783853715705#codex_smoke_token=<redacted>",
-    "final_url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=campus&__codex_page_id=campaign-detail-impact-campus&windowsCdpEvidenceTs=1783853715705",
+    "url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=campus&__codex_page_id=campaign-detail-impact-campus&__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1784905403948#codex_smoke_token=<redacted>",
+    "final_url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=campus&__codex_page_id=campaign-detail-impact-campus&__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1784905403948",
     "diff": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/diff.png",
     "verification": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-campus/verification.json"
   },
@@ -930,6 +939,13 @@
       "current": "implementation.png is captured from the real APISIX/Web UI route in Windows Chrome CDP",
       "expected": "no target.png raster replay is used as implementation evidence",
       "status": "documented"
+    },
+    {
+      "type": "production-state-mapping",
+      "location": "/campaigns/campaign-exfil-default-1782729598739-e1d2dc37",
+      "current": "canonical campaign visual contract state enabled; normal-route runtime is verified separately",
+      "expected": "target image has a deterministic implemented route state or interaction mapping",
+      "status": "open"
     }
   ],
   "review_gate": {
@@ -985,5 +1001,8 @@
     "content_within_panel_body": true,
     "horizontal_overflow": false,
     "runtime_errors": 0
-  }
+  },
+  "unresolved": [
+    "production-state-mapping:/campaigns/campaign-exfil-default-1782729598739-e1d2dc37"
+  ]
 }

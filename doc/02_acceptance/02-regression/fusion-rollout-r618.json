@@ -1,0 +1,48 @@
+{
+  "page": "fusion",
+  "revision": "r618",
+  "deployed_at": "2026-07-22T21:48:00+08:00",
+  "cluster": "traffic-analysis",
+  "deployment": {
+    "name": "web-ui",
+    "generation": 816,
+    "revision": 801,
+    "image": "docker.io/traffic/web-ui@sha256:5e745846b895682ff568d51a65a3846dad26c77d4ab20c45754c231571e7414d",
+    "image_id": "sha256:5ed53fca25342c4d9ada266ddf835cfcddd8a718c35e28d7c348442c363ebcc5",
+    "source_digest": "37907d8a1f7e25eca625512c35ef271ff1856beef81520a45459fefec5845663",
+    "rollout_result": "success",
+    "nodes_imported": [
+      "8-2TB",
+      "zeus-server"
+    ],
+    "observed_generation": 816,
+    "observed_ready": "1/1",
+    "observed_restarts": 0,
+    "observed_pod": "web-ui-6995fd4c7c-wbrcc",
+    "pod_node": "zeus-server"
+  },
+  "verification": {
+    "windows_chrome": "pass, Chrome 150, Xshell 9224, 1920x1080 + 1536x864 + 1366x768 nonfullscreen",
+    "interaction_assertions": "45/45 true",
+    "live_contract": "77/77 pass, blockers=0, warnings=0",
+    "visual_gate": "all 6 formal ROIs pass without threshold relaxation",
+    "responsive_geometry": "all nodes contained, overlapPairs=0 and 6+5+6 measured-edge links valid at all three widths",
+    "runtime": "0 business HTTP failures, 0 request failures, 0 console errors, 0 page errors"
+  },
+  "source_digests": {
+    "pages_css": "sha256:50c4ecfc44175312bc5e7b35cf30ee4deebf62742e7b839027592a7f58c65b81",
+    "windows_interactions": "sha256:a481930c306bd7aae2967f13e980dbc948af3d792e93e5dfabe8f22ff2d60bba",
+    "visual_metrics": "sha256:ea54d48a6d41cf805afe9a087797398d7c3fd19442e3664875be4bde8b978eb8"
+  },
+  "evidence": {
+    "interactions": "doc/02_acceptance/02-regression/fusion-interactions-r618.json",
+    "responsive_1536": "evidence/ui-image-breakdowns/pages/fusion/fusion-r618-responsive-1536.png",
+    "responsive_1366": "evidence/ui-image-breakdowns/pages/fusion/fusion-r618-responsive-1366.png",
+    "rule_modal": "evidence/ui-image-breakdowns/pages/fusion/fusion-r618-rule-modal.png",
+    "conflict_detail": "evidence/ui-image-breakdowns/pages/fusion/fusion-r618-conflict-detail.png",
+    "contract": "doc/02_acceptance/runs/20260722-fusion-r618-contract/live-fusion-threat-intel-20260722-fusion-r618-contract-summary.json",
+    "visual_metrics": "evidence/ui-image-breakdowns/pages/fusion/fusion-r618-visual-metrics.json",
+    "comparison": "evidence/ui-image-breakdowns/pages/fusion/fusion-r618-comparison.png",
+    "design_qa": "design-qa.md"
+  }
+}

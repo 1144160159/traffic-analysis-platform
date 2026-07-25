@@ -1,0 +1,92 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-07-24T23:00:00+08:00",
+  "scope": "campaign-domain",
+  "release": "campaign-domain-r742",
+  "status": "deployed_windows_chrome_gates_pass_review_pending",
+  "change": {
+    "repairs": [
+      "移除战役详情与攻击链详情从旧 Modal 契约遗留的根节点 top/max-width 偏移",
+      "影响范围保持最大 1040x760 的内容型 Modal，宿主顶部栏、侧栏和业务页面可见",
+      "完整交互门禁按新逻辑验证影响范围先写审计再进入内容型 Modal",
+      "状态筛选门禁正确接受服务端零结果与页面空态",
+      "popup bounds 门禁等待动画稳定并隔离 Windows 浏览器外部 IP 插件噪声"
+    ]
+  },
+  "verification": {
+    "targeted_vitest": {
+      "result": "pass",
+      "files": 5,
+      "tests": 37
+    },
+    "typescript_and_vite_build": {
+      "result": "pass",
+      "modules_transformed": 4081
+    },
+    "image_import": {
+      "result": "pass",
+      "nodes": [
+        "10.0.5.8",
+        "10.0.5.9"
+      ]
+    },
+    "kubernetes_apply": {
+      "result": "pass",
+      "deployment_generation": 945,
+      "observed_generation": 945,
+      "ready_replicas": 1,
+      "updated_replicas": 1,
+      "pod_restarts": 0,
+      "runtime_image_id": "sha256:261e5bce1edc6dad8ba9e1d041ce64c1bedf89ec4b5057b084b09954ea3ff17b",
+      "gateway_login_http_status": 200
+    },
+    "windows_chrome_popup_bounds": {
+      "result": "pass",
+      "browser": "Chrome/150.0.7871.182",
+      "impact_modals": 5,
+      "desktop_drawers": 2,
+      "responsive_drawer_checks": 4,
+      "app_errors": 0
+    },
+    "windows_chrome_interactions": {
+      "result": "pass",
+      "action_checks": 8,
+      "server_audit_count": 14,
+      "viewer_write_denied": true,
+      "app_errors": 0
+    },
+    "echarts_attack_graph": {
+      "result": "pass",
+      "checks": 6,
+      "zoom_verified": true,
+      "phase_click_audit_verified": true
+    },
+    "windows_chrome_responsive": {
+      "result": "pass",
+      "checks": 54,
+      "viewports": 6
+    },
+    "visual_diff": {
+      "result": "measured_pending_adjudication",
+      "pixel_mismatch_ratio": 0.09587191358024691,
+      "mean_absolute_channel_delta": 19.338263245884775
+    }
+  },
+  "artifacts": {
+    "source_digest": "ee95c4e48e8b0b3e7562970c6312264f1dd011a08b2b9080dc3fa832e6ebcfab",
+    "docker_image_id": "sha256:261e5bce1edc6dad8ba9e1d041ce64c1bedf89ec4b5057b084b09954ea3ff17b",
+    "containerd_manifest_digest": "sha256:fa30283be948c27fcaa694dc15fae99964884cf6b4de5786de6994d56c3fcf9b",
+    "image": "docker.io/traffic/web-ui:campaign-domain-r742",
+    "popup_bounds": "evidence/ui-image-breakdowns/pages/campaigns/popup-and-responsive-r742.json",
+    "interaction": "evidence/ui-image-breakdowns/pages/campaigns/interaction-r742.json",
+    "attack_graph": "evidence/ui-image-breakdowns/pages/campaigns/attack-graph-r742.json",
+    "responsive": "doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-campaign-responsive-latest.json",
+    "visual_metrics": "evidence/ui-image-breakdowns/pages/campaigns/metrics-r742.json",
+    "comparison": "evidence/ui-image-breakdowns/pages/campaigns/comparison-r742.png",
+    "diff": "evidence/ui-image-breakdowns/pages/campaigns/diff-r742.png",
+    "build_log": "/tmp/web-ui-r742-build.log",
+    "local_import_log": "/tmp/traffic-web-ui-r742-local-import.log",
+    "remote_import_log": "/tmp/traffic-web-ui-r742-remote-import.log"
+  },
+  "complete": false
+}

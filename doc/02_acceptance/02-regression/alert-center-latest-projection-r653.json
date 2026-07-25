@@ -1,0 +1,20 @@
+{
+  "page": "alerts",
+  "result": "pass",
+  "window": "fixed 24h window shared by raw and latest queries",
+  "time_unit": "epoch milliseconds",
+  "raw_unique_alert_ids": 1574945,
+  "latest_rows": 1574945,
+  "latest_unique_alert_ids": 1574945,
+  "latest_duplicate_alert_ids": 0,
+  "observed_streaming_drift": 0,
+  "allowed_streaming_drift": 20,
+  "projection": {
+    "local_table": "traffic.alerts_latest_local",
+    "distributed_table": "traffic.alerts_latest",
+    "engine": "ReplicatedReplacingMergeTree(updated_at)",
+    "key": ["tenant_id", "alert_id"],
+    "query_mode": "FINAL"
+  },
+  "repair_script": "deployments/kubernetes/scripts/backfill-alerts-latest.sh"
+}

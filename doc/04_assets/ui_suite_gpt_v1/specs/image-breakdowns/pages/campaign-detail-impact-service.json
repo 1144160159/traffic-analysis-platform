@@ -13,14 +13,22 @@
     "height": 1080
   },
   "status": "evidence-ready",
-  "route": "/campaigns/:campaignId",
-  "host_route": null,
+  "route": "/campaigns/:campaignId?impact=service",
+  "host_route": "/campaigns/:campaignId",
+  "surface_type": "modal-state",
+  "production_surface_contract": {
+    "host_context": "战役详情页必须保持可见",
+    "container": "居中实际尺寸 Modal，不得替换业务区或铺满浏览器",
+    "size": "最大宽度 1180px / 86dvw，最大高度 100dvh - 96px",
+    "overflow": "仅弹窗 body 内部滚动",
+    "focus_route": "仅用于稳定打开生产弹窗并采集验收证据，不代表全屏生产页面"
+  },
   "title": "战役详情。",
   "observation": {
-    "layout": "Business AppShell page screenshot",
-    "business_focus": "Topbar/sidebar/bottombar must remain aligned to screen.png while the central business area carries page-specific content.",
-    "current_state": "Current target state is the visible data-ready page state captured in the canonical PNG.",
-    "acceptance_scope": "Pixel acceptance proves exact target PNG reproduction by Windows Chrome screenshot and diff. Semantic production implementation remains guided by this breakdown record."
+    "layout": "战役详情宿主页上的居中影响范围弹窗，服务 Tab 激活",
+    "business_focus": "服务风险分布、受影响服务明细和下钻入口",
+    "current_state": "服务 Tab 数据就绪；ECharts 风险环与 Top 5 服务明细可见",
+    "acceptance_scope": "Windows Chrome 同时验证宿主上下文、弹窗边界、内部滚动和内容视觉；不得用全屏 focus 画布代替生产弹窗"
   },
   "regions": [
     {
@@ -1343,7 +1351,8 @@
     "resolved_path": "/campaigns/campaign-exfil-default-1782729598739-e1d2dc37",
     "route_state": {
       "impact": "service",
-      "__codex_page_id": "campaign-detail-impact-service"
+      "__codex_page_id": "campaign-detail-impact-service",
+      "__codex_ui_breakdown_production": "1"
     }
   },
   "evidence": {
@@ -1359,14 +1368,14 @@
       "width": 1920,
       "height": 1080
     },
-    "url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=service&__codex_page_id=campaign-detail-impact-service&windowsCdpEvidenceTs=1783853751272#codex_smoke_token=<redacted>",
+    "url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=service&__codex_page_id=campaign-detail-impact-service&__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1784905383661#codex_smoke_token=<redacted>",
     "render_source": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-service/target.png",
     "capture_meta": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-service/capture-meta.json",
     "cdp_version": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-service/cdp-version.json",
     "cdp_list": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-service/cdp-list.json",
     "evidence_mode": "production-route",
     "production_route_report": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-service/production-route-report.json",
-    "final_url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=service&__codex_page_id=campaign-detail-impact-service&windowsCdpEvidenceTs=1783853751272",
+    "final_url": "http://10.0.5.8:30180/campaigns/campaign-exfil-default-1782729598739-e1d2dc37?impact=service&__codex_page_id=campaign-detail-impact-service&__codex_ui_breakdown_production=1&windowsCdpEvidenceTs=1784905383661",
     "implementation_final": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-service/implementation-r178-final.png",
     "diff_business": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-service/diff-business-r178-final.png",
     "diff_strict": "evidence/ui-image-breakdowns/pages/campaign-detail-impact-service/diff-strict-r178-final.png",
@@ -1393,6 +1402,13 @@
       "current": "implementation.png is captured from the real APISIX/Web UI route in Windows Chrome CDP",
       "expected": "no target.png raster replay is used as implementation evidence",
       "status": "documented"
+    },
+    {
+      "type": "production-state-mapping",
+      "location": "/campaigns/campaign-exfil-default-1782729598739-e1d2dc37",
+      "current": "canonical campaign visual contract state enabled; normal-route runtime is verified separately",
+      "expected": "target image has a deterministic implemented route state or interaction mapping",
+      "status": "open"
     }
   ],
   "accepted": false,
@@ -1454,5 +1470,8 @@
     "remaining_non_blocking_risks": [
       "strict pixel mismatch remains 0.999823 > 0.015 and is documented as non-blocking for business-pixel acceptance"
     ]
-  }
+  },
+  "unresolved": [
+    "production-state-mapping:/campaigns/campaign-exfil-default-1782729598739-e1d2dc37"
+  ]
 }

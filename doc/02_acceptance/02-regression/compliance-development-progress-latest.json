@@ -1,0 +1,51 @@
+{
+  "schema_version": 2,
+  "updated_at": "2026-07-19T11:35:10+08:00",
+  "menu": "合规审计",
+  "route": "/compliance",
+  "status": "accepted",
+  "implementation": {
+    "frontend_revision": "r368",
+    "frontend_image": "docker.io/traffic/web-ui@sha256:48e92b7da33a305f9c769b7a83bb86797dcbd2668acc4259e93b9aa96ccb3e89",
+    "backend_revision": "r367",
+    "backend_image": "docker.io/traffic/alert-service@sha256:8b364a7b6171b239395cb4c6fb4bc10850f9d6880c4621be2edbc4d92a41fba9",
+    "images_imported_to_nodes": ["8-2tb", "zeus-server"],
+    "fail_closed_sections": 9,
+    "dedicated_scopes": ["compliance:read", "compliance:write", "compliance:export", "compliance:remediate", "compliance:finalize", "audit:read"],
+    "invalidated_legacy_reports_hidden": true,
+    "real_zip_pdf_docx": true,
+    "canonical_report_hash_shared": true,
+    "idempotent_remediations": true,
+    "immutable_finalization": true,
+    "source_docker_kubernetes_schema_synced": true
+  },
+  "verification": {
+    "browser_path": "Xshell tunnel -> 127.0.0.1:9224 -> Windows Chrome 150 -> APISIX http://10.0.5.8:30180/compliance",
+    "viewport": "1920x1080",
+    "windows_chrome_interaction": "evidence/ui-image-breakdowns/pages/compliance/interaction-r368.json",
+    "windows_chrome_status": "pass",
+    "workflow": "generate -> ZIP/PDF/DOCX export -> remediation create/reuse -> immutable finalize -> repeat finalize 409",
+    "report_status": "insufficient_evidence",
+    "application_errors": 0,
+    "live_backend_preflight": "52/52; 0 blockers; 0 warnings",
+    "live_backend_evidence": "doc/02_acceptance/runs/compliance-r367-final-20260719110622/live-compliance-audit-preflight-compliance-r367-final-20260719110622-summary.json",
+    "visual_targets": 4,
+    "visual_targets_passed": 4,
+    "pixel_mismatch_range": [0.0749951774691358, 0.10185570987654322],
+    "pixel_mismatch_maximum": 0.125,
+    "go_race_tests": "pass",
+    "frontend_tests": "26/26 targeted pass",
+    "frontend_build": "pass"
+  },
+  "reviews": {
+    "comprehensive": "PASS r367/r368; P0=0, P1=0; documentation P2 closed by this update",
+    "logic": "PASS r367; P0=0, P1=0, P2=0",
+    "layout": "PASS r368; P0=0, P1=0, P2=0",
+    "main_thread": "accepted"
+  },
+  "review_adjudication": "doc/02_acceptance/02-regression/compliance-review-adjudication-latest.json",
+  "rollout_and_rollback": "doc/02_acceptance/02-regression/compliance-rollout-r368.json",
+  "page_verification": "evidence/ui-image-breakdowns/pages/compliance/verification.json",
+  "design_qa": "design-qa.md",
+  "next_step": "合规审计 r367/r368 已接受；继续 Deployment Management 页面队列，项目级生产安全与第三方正式材料仍按原 blocker 管理。"
+}

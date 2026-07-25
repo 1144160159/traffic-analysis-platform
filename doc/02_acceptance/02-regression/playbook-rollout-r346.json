@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-19T05:52:10+08:00",
+  "namespace": "traffic-analysis",
+  "result": "pass",
+  "deployments": {
+    "alert-service": {
+      "current_revision": 114,
+      "history_visible": true,
+      "server_side_rollback_dry_run": "pass",
+      "resolved_image": "docker.io/traffic/alert-service@sha256:72885ceca42638110bed077e48db2026980898e9106261f12efc3a7acfce5a01"
+    },
+    "auth-service": {
+      "current_revision": 29,
+      "history_visible": true,
+      "server_side_rollback_dry_run": "pass",
+      "resolved_image": "docker.io/traffic/auth-service@sha256:1d5099f238acb219c051bb4da652a1e2eecf5918f80d781a05b3b0c6183c4e1c"
+    },
+    "web-ui": {
+      "current_revision": 647,
+      "history_visible": true,
+      "server_side_rollback_dry_run": "pass",
+      "resolved_image": "docker.io/traffic/web-ui@sha256:b65d39a3980ea26035925d1655b757e4a5b524f5fb4c92132819df66fb0c24e7"
+    }
+  },
+  "two_node_image_import": ["8-2tb", "zeus-server"],
+  "note": "kubectl rollout undo used --dry-run=server only; no live rollback mutation was performed."
+}

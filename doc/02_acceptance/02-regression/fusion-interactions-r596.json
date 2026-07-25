@@ -1,0 +1,304 @@
+{
+  "result": "pass",
+  "browser_path": "Xshell tunnel -> 127.0.0.1:9224 -> Windows Chrome -> direct APISIX",
+  "browser": "Chrome/150.0.7871.129",
+  "cdp_targets": 5,
+  "route": "http://10.0.5.8:30180/fusion?fusionCdpTs=1784701573951#codex_smoke_token=<redacted>",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "deployment_image": "docker.io/traffic/web-ui@sha256:5ff71af8fd1264d198879c3fd875c09886a410cc6a405637b4cf2f5db0649823",
+  "counts": {
+    "sources": 6,
+    "rules": 6,
+    "pending_conflicts": 18,
+    "risk_distribution": {
+      "high": 6,
+      "low": 3,
+      "medium": 9
+    },
+    "audits": 3,
+    "initial_conflict_rows": 4,
+    "page_two_conflict_rows": 4,
+    "post_action_audit_rows": 5,
+    "page_two_audit_rows": 4,
+    "source_echarts": 6,
+    "source_echarts_declared": 6,
+    "pipeline_echarts": 1
+  },
+  "assertions": {
+    "windows_chrome_9224": true,
+    "non_fullscreen_viewport": true,
+    "source_cards_six": true,
+    "source_status_charts_are_echarts": true,
+    "source_titles_do_not_overlap_status": true,
+    "source_storage_is_truthful": true,
+    "pipeline_connections_are_echarts": true,
+    "canonical_pipeline_rule_order": true,
+    "production_rule_count": true,
+    "rule_server_pagination_reachable": true,
+    "conflict_queue_pagination_reachable": true,
+    "pending_conflict_count": true,
+    "acceptance_conflicts_are_explicit": true,
+    "pending_risk_distribution": true,
+    "audit_count_and_density": true,
+    "audit_pagination_reachable_after_writes": true,
+    "detail_actions_complete": true,
+    "restore_server_state_complete": true,
+    "reader_ui_write_controls_disabled": true,
+    "existing_chrome_session_restored": true,
+    "rule_write_persisted": true,
+    "repair_task_persisted": true,
+    "processed_conflict_retained_after_write": true,
+    "evidence_button_is_visible_hit_target": true,
+    "evidence_downloaded": true,
+    "audit_navigation_working": true,
+    "right_detail_contained": true,
+    "no_horizontal_overflow": true,
+    "no_business_http_failures": true,
+    "no_request_failures": true,
+    "no_console_errors": true,
+    "no_page_errors": true
+  },
+  "layout": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "document": {
+      "scrollWidth": 1920,
+      "clientWidth": 1920,
+      "scrollHeight": 1080
+    },
+    "detail": {
+      "left": 1400,
+      "top": 6.6666669845581055,
+      "right": 1900,
+      "bottom": 989.3333539962769,
+      "width": 500,
+      "height": 982.6666870117188
+    },
+    "grid": {
+      "left": 174,
+      "top": 6.6666669845581055,
+      "right": 1900,
+      "bottom": 989.3333539962769,
+      "width": 1726,
+      "height": 982.6666870117188
+    },
+    "main": {
+      "left": 174,
+      "top": 6.6666669845581055,
+      "right": 1392,
+      "bottom": 989.3333539962769,
+      "width": 1218,
+      "height": 982.6666870117188
+    },
+    "shellOverflowY": "auto",
+    "windowInnerWidthToken": "1920px"
+  },
+  "writes": {
+    "rule_id": "IP_MAC_BIND_V3",
+    "rule_version": 2,
+    "conflict_id": "AF-20260722-001",
+    "conflict_state_version": 2,
+    "repair_task_id": "a2c37072-ff03-4561-845e-d480e75e3548",
+    "repair_task_database_record": "a2c37072-ff03-4561-845e-d480e75e3548|fusion_conflict_repair|queued|AF-20260722-001",
+    "evidence_filename": "fusion-evidence-af-20260722-001-1784701621.json",
+    "evidence_sha256": "sha256:5a7be33433d7bcb032aa34b0c4c40941ea05b4a86badb5d4e2b9894dcc364d1a"
+  },
+  "business_responses": [
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/threat-intel/entries?limit=12"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/workbench?rule_limit=6&rule_offset=0&conflict_limit=4&conflict_offset=0&audit_limit=5&audit_offset=0"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/threat-intel/entries?limit=12"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/workbench?rule_limit=6&rule_offset=6&conflict_limit=4&conflict_offset=0&audit_limit=5&audit_offset=0"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/threat-intel/entries?limit=12"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/workbench?rule_limit=6&rule_offset=0&conflict_limit=4&conflict_offset=4&audit_limit=5&audit_offset=0"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/threat-intel/entries?limit=12"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/workbench?rule_limit=6&rule_offset=0&conflict_limit=4&conflict_offset=0&audit_limit=5&audit_offset=0"
+    },
+    {
+      "status": 200,
+      "method": "PATCH",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/rules/IP_MAC_BIND_V3"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/threat-intel/entries?limit=12"
+    },
+    {
+      "status": 200,
+      "method": "POST",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/conflicts/AF-20260722-001/resolve"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/threat-intel/entries?limit=12"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/workbench?rule_limit=6&rule_offset=0&conflict_limit=4&conflict_offset=0&audit_limit=5&audit_offset=0"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/workbench?rule_limit=6&rule_offset=0&conflict_limit=4&conflict_offset=0&audit_limit=5&audit_offset=0"
+    },
+    {
+      "status": 200,
+      "method": "POST",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/evidence-packages"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/threat-intel/entries?limit=12"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/workbench?rule_limit=6&rule_offset=0&conflict_limit=4&conflict_offset=0&audit_limit=5&audit_offset=0"
+    },
+    {
+      "status": 200,
+      "method": "POST",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/evidence-packages"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/threat-intel/entries?limit=12"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/workbench?rule_limit=6&rule_offset=0&conflict_limit=4&conflict_offset=0&audit_limit=5&audit_offset=0"
+    },
+    {
+      "status": 200,
+      "method": "POST",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/evidence-packages"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/threat-intel/entries?limit=12"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/workbench?rule_limit=6&rule_offset=0&conflict_limit=4&conflict_offset=0&audit_limit=5&audit_offset=0"
+    },
+    {
+      "status": 200,
+      "method": "POST",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/evidence-packages"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/threat-intel/entries?limit=12"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/workbench?rule_limit=6&rule_offset=0&conflict_limit=4&conflict_offset=0&audit_limit=5&audit_offset=0"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/threat-intel/entries?limit=12"
+    },
+    {
+      "status": 200,
+      "method": "GET",
+      "url": "http://10.0.5.8:30180/api/v1/fusion/workbench?rule_limit=6&rule_offset=0&conflict_limit=4&conflict_offset=0&audit_limit=5&audit_offset=5"
+    }
+  ],
+  "bad_responses": [],
+  "request_failures": [],
+  "console_errors": [],
+  "page_errors": [],
+  "ignored_browser_extension_noise": {
+    "verified": true,
+    "requests": [
+      {
+        "url": "https://api.yhchj.com/ip",
+        "extension_url": "chrome-extension://hmlpiahhoampfgiodhahfofmeppmkaeo/js/jquery.js",
+        "function_name": "send"
+      },
+      {
+        "url": "https://api.yhchj.com/ip",
+        "extension_url": "chrome-extension://hmlpiahhoampfgiodhahfofmeppmkaeo/js/jquery.js",
+        "function_name": "send"
+      }
+    ],
+    "request_failures": [
+      {
+        "url": "https://api.yhchj.com/ip",
+        "failure": "net::ERR_CONNECTION_CLOSED"
+      }
+    ],
+    "console_errors": [
+      {
+        "text": "Failed to load resource: net::ERR_CONNECTION_CLOSED",
+        "url": "https://api.yhchj.com/ip",
+        "line": 0
+      },
+      {
+        "text": "grm ERROR [iterable] ░░ Not supported: in app messages from Iterable",
+        "url": "chrome-extension://kbfnbcaeplbcioakkpcpgfkobkghlhen/src/js/Grammarly.js",
+        "line": 1
+      },
+      {
+        "text": "grm ERROR [iterable] ░░ Not supported: in app messages from Iterable",
+        "url": "chrome-extension://kbfnbcaeplbcioakkpcpgfkobkghlhen/src/js/Grammarly.js",
+        "line": 1
+      }
+    ],
+    "page_errors": [
+      "Object"
+    ]
+  },
+  "screenshots": [
+    "evidence/ui-image-breakdowns/pages/fusion/fusion-r596-interactions.png",
+    "evidence/ui-image-breakdowns/pages/fusion/fusion-r596-repair-retained.png",
+    "evidence/ui-image-breakdowns/pages/fusion/fusion-r596-post-actions.png"
+  ],
+  "timestamp": "2026-07-22T06:27:41.171Z"
+}

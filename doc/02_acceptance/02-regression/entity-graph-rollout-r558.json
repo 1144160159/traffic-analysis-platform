@@ -1,0 +1,42 @@
+{
+  "page": "entity-graph",
+  "revision": "r558",
+  "deployed_at": "2026-07-20T17:40:31+08:00",
+  "namespace": "traffic-analysis",
+  "deployments": [
+    {
+      "name": "graph-service",
+      "kubernetes_revision": 31,
+      "image": "docker.io/traffic/graph-service@sha256:dbef4b8ec6db924d1b163d98615eedb97f31b1ea76fdb8853bcc20714c1e6c37",
+      "ready": "1/1",
+      "restarts": 0,
+      "pod": "graph-service-5fd5cdc8d5-5wl7h",
+      "node": "zeus-server"
+    },
+    {
+      "name": "web-ui",
+      "kubernetes_revision": 744,
+      "image": "docker.io/traffic/web-ui@sha256:b6d3233f0d73d6e4a39b1eb0779ad883e9bd9c678174a30a21d42c57ec22c746",
+      "ready": "1/1",
+      "restarts": 0,
+      "pod": "web-ui-777578cfff-mswln",
+      "node": "zeus-server"
+    }
+  ],
+  "node_imports": ["8-2tb", "zeus-server"],
+  "checks": {
+    "go_test": "pass",
+    "go_build": "pass",
+    "web_build": "pass",
+    "live_preflight": "pass",
+    "windows_chrome": "pass",
+    "logic_review": "accept",
+    "layout_review": "accept"
+  },
+  "evidence_sha256": {
+    "main_screenshot": "deb1f3c935b216de9f5a0abc2677b6714c37af16382ef99884ac1071e0b6f1f0",
+    "account_detail_screenshot": "644e5b972c29cf3752f50197d26685c9bbd675ed7814c53a95f95eed07b3fb25",
+    "browser_result": "c75b9c0b53f1498e30d981bdd3b8d40775fd85a0ac19b7ba3a2f60607e8cad8a",
+    "backend_result": "6e5ecb7a3830162fc955535eb05b8d3e1ced43f8f723899156abd9200fec7c85"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-20T05:15:45+08:00",
+  "namespace": "traffic-analysis",
+  "result": "pass",
+  "deployments": {
+    "web-ui": {
+      "revision": "r478",
+      "kubernetes_revision": "701",
+      "ready_at_rollout": true,
+      "restart_count": 0,
+      "resolved_image": "docker.io/traffic/web-ui@sha256:93c22d6a25bbd34ddd24383189440a50e19afbf3845f2262a3fb3c07685f7961",
+      "containerd_manifest_digest": "sha256:93c22d6a25bbd34ddd24383189440a50e19afbf3845f2262a3fb3c07685f7961",
+      "docker_config_id": "sha256:008b0a24a2e02c033656366017d1cd6b7e95754a24597baf6602fb1cff07ad23"
+    }
+  },
+  "two_node_image_import": ["8-2tb", "zeus-server"],
+  "source_manifests": ["deployments/kubernetes/applications/web-ui.yaml"],
+  "runtime_evidence": [
+    "evidence/ui-image-breakdowns/pages/audit-log/interaction-r483.json",
+    "evidence/ui-image-breakdowns/pages/audit-log/metrics-r479-main.json",
+    "evidence/ui-image-breakdowns/pages/audit-log/compare-r479-main.png"
+  ],
+  "rollback": {
+    "strategy": "rollout undo to Deployment revision 700 or reapply the prior digest-pinned manifest",
+    "mutation_performed": false,
+    "reason": "forward rollout and r483 acceptance passed"
+  }
+}

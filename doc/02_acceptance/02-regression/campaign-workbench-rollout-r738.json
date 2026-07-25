@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-07-24T22:10:22+08:00",
+  "scope": "campaign-domain",
+  "release": "campaign-domain-r738",
+  "status": "image_ready_cluster_apply_blocked",
+  "change": {
+    "repairs": [
+      "影响范围改为最大 1040x760 的内容型居中 Modal，并删除 664/680px 强制最小高度",
+      "战役报告 Modal 按 UI 契约改为桌面 1200x740，并补齐 960px 和 640px 响应式重排",
+      "攻击链空筛选显示 Empty，不再回退整条攻击链",
+      "攻击链三种视图使用不同画布布局，战役、资产和视图选择同步 URL",
+      "攻击链真实列表和详情查询接入 loading、error、refresh，导出前先写审计",
+      "popup bounds 门禁要求两个指定 Drawer 均存在，并精确断言桌面 900/40/48/48 几何和报告 Modal 1200x740"
+    ]
+  },
+  "verification": {
+    "targeted_vitest": {
+      "result": "pass",
+      "files": 5,
+      "tests": 37
+    },
+    "typescript_and_vite_build": {
+      "result": "pass",
+      "modules_transformed": 4081
+    },
+    "image_import": {
+      "result": "pass",
+      "nodes": [
+        "10.0.5.8",
+        "10.0.5.9"
+      ]
+    },
+    "kubernetes_apply": {
+      "result": "blocked",
+      "error": "kube-apiserver TLS handshake timeout",
+      "required_next": "retry declarative apply after kube-apiserver TLS recovers"
+    },
+    "windows_chrome": {
+      "result": "blocked",
+      "endpoint": "http://127.0.0.1:9224",
+      "error": "connection reset by peer",
+      "required_next": "restart Windows CodexChromeCDP on 9222 and preserve Xshell 9224 -> 9222"
+    },
+    "visual_diff": "pending",
+    "fresh_reviews": {
+      "logic": "rework_required",
+      "layout": "rework_required",
+      "acceptance": "blocked"
+    }
+  },
+  "artifacts": {
+    "source_digest": "7b6729f6ce3a67c9e856370c0a51755e2c3fa23606e5e6f9f9f87f3d352145a1",
+    "docker_image_id": "sha256:6a37fb802c24f2abfc533c1f1453390eaf957722b4b4893777f30270b25b84df",
+    "containerd_manifest_digest": "sha256:a5ea7a04e1e91f958bf65eb2eab0028affbad014e519d3e4d6849abd61ac9d96",
+    "image": "docker.io/traffic/web-ui:campaign-domain-r738",
+    "build_log": "/tmp/web-ui-r738-build.log",
+    "local_import_log": "/tmp/traffic-web-ui-r738-local-import.log",
+    "remote_import_log": "/tmp/traffic-web-ui-r738-remote-import.log"
+  },
+  "complete": false
+}

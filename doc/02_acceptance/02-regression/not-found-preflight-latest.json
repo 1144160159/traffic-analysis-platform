@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "result": "pass",
+  "run_id": "not-found-r520-live",
+  "event_id": "nav-62524734-1da2-487c-9d80-ce3aec841c8d",
+  "trace_id": "0a4d31d9-7ec9-43a9-bea1-6814d5840d07",
+  "audit_count": 1,
+  "support_request_id": "support-62524734-1da2-487c-9d80-ce3aec841c8d",
+  "support_trace_id": "8cd2b227-1ca8-462e-b8be-e6b05b6939ba",
+  "support_count": 1,
+  "auth_image": "docker.io/traffic/auth-service@sha256:d02bbf843802240955626a728781b220f89e90c92762639196d98c3165c383b6",
+  "checks": [
+    {
+      "name": "first authenticated write returns 201",
+      "passed": true
+    },
+    {
+      "name": "idempotent retry returns 201",
+      "passed": true
+    },
+    {
+      "name": "response is database-backed and safe",
+      "passed": true
+    },
+    {
+      "name": "event is persisted exactly once",
+      "passed": true
+    },
+    {
+      "name": "audit detail excludes raw internal paths",
+      "passed": true
+    },
+    {
+      "name": "idempotent retry returns the persisted audit trace",
+      "passed": true
+    },
+    {
+      "name": "cross-user event id reuse is rejected",
+      "passed": true
+    },
+    {
+      "name": "cross-tenant event id reuse is rejected",
+      "passed": true
+    },
+    {
+      "name": "support request is observable and idempotent",
+      "passed": true
+    },
+    {
+      "name": "support request ownership is enforced",
+      "passed": true
+    },
+    {
+      "name": "unauthenticated write is rejected",
+      "passed": true
+    },
+    {
+      "name": "raw path event id is rejected",
+      "passed": true
+    }
+  ]
+}

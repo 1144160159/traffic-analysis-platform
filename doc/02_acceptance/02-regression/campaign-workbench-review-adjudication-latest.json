@@ -1,0 +1,77 @@
+{
+  "page": "campaigns",
+  "result": "ACCEPT",
+  "previous_result": "reopened",
+  "adjudicated_at": "2026-07-25T02:28:00+08:00",
+  "release": {
+    "frontend": "campaign-domain-r748",
+    "backend": "campaign-domain-r750"
+  },
+  "findings_and_repairs": [
+    {
+      "finding": "战役阶段关联图使用 DOM 节点和 CSS 伪元素连线",
+      "severity": "P1",
+      "repair": "替换为 ECharts graph 系列，固定阶段坐标并启用 roam 与节点拖拽",
+      "status": "closed"
+    },
+    {
+      "finding": "ECharts 外圈节点在绘图区边缘被裁切",
+      "severity": "P1",
+      "repair": "增加 graph series 上下左右绘图区内边距并通过 Windows Chrome 截图复核",
+      "status": "closed"
+    },
+    {
+      "finding": "战役页宽屏下额外左移 24px、缩窄 37px、上移 8px，与公共业务区样式不一致",
+      "severity": "P1",
+      "repair": "删除战役页专属宽屏覆盖，直接继承 AppShell taf-main 公共 padding",
+      "status": "closed"
+    },
+    {
+      "finding": "账号、服务、部门进度缺少完整真实数据链路",
+      "severity": "P1",
+      "repair": "以 alerts Community ID 关联 sessions，再关联 PostgreSQL assets，并从持久化 workflow status 计算部门进度；33/33 live 通过",
+      "status": "closed"
+    },
+    {
+      "finding": "影响范围关闭后缺少宿主业务内容稳定保留证据",
+      "severity": "P1",
+      "repair": "五类真实入口关闭前后比较 campaignId、标题、阶段数和风险值；5/5 内容一致且 impact 参数已移除",
+      "status": "closed"
+    }
+  ],
+  "final_reviews": {
+    "logic": {
+      "result": "pass",
+      "p0": 0,
+      "p1": 0,
+      "p2": 2
+    },
+    "layout": {
+      "result": "pass",
+      "p0": 0,
+      "p1": 0,
+      "p2": 0
+    },
+    "interaction": {
+      "result": "pass",
+      "p0": 0,
+      "p1": 0,
+      "p2": 0
+    }
+  },
+  "main_thread": {
+    "result": "ACCEPT",
+    "basis": [
+      "33/33 live APISIX, JWT, PostgreSQL and ClickHouse checks pass on campaign-domain-r750",
+      "r748 frontend 5 files / 37 tests and production build pass",
+      "Windows Chrome 9224: 11/11 captures and comparisons, 5/5 stable close, 54/54 responsive and 6/6 ECharts graph pass",
+      "logic and layout reviews have P0=0 and P1=0",
+      "web-ui generation 952 and alert-service generation 233 are Ready 1/1 with manifest/image IDs aligned"
+    ],
+    "p0": 0,
+    "p1": 0,
+    "p2": 4,
+    "scope": "campaign-domain only",
+    "project_complete": false
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "page": "fusion",
+  "revision": "r616",
+  "deployed_at": "2026-07-22T20:52:00+08:00",
+  "cluster": "traffic-analysis",
+  "deployment": {
+    "name": "web-ui",
+    "generation": 813,
+    "revision": 798,
+    "image": "docker.io/traffic/web-ui@sha256:8d5c84ac27f75f70eafefc85249b534cca957d8b84c80ffac89262f731dbf7ac",
+    "image_id": "sha256:6af6c092744932e87eae2c7f75ea12c9688305ee8877b713638d3043be0eef73",
+    "source_digest": "4b4ffe3fcf62dce6827bc61a4e3db875127e50fc527b78d7ba0e841ec2faac83",
+    "rollout_result": "success",
+    "nodes_imported": ["8-2TB", "zeus-server"],
+    "observed_generation": 813,
+    "observed_ready": "1/1",
+    "observed_restarts": 0,
+    "observed_pod": "web-ui-77bcc64899-gqlnt",
+    "pod_node": "zeus-server"
+  },
+  "verification": {
+    "windows_chrome": "pass, Chrome 150, Xshell 9224, 1920x1080 + 1536x864 + 1366x768 nonfullscreen",
+    "interaction_assertions": "all true",
+    "live_contract": "77/77 pass, blockers=0, warnings=0",
+    "responsive_geometry": "all nodes contained, overlapPairs=0 and 6+5+6 links valid at all three widths",
+    "runtime": "0 business HTTP failures, 0 request failures, 0 console errors, 0 page errors"
+  },
+  "source_digests": {
+    "pages_css": "sha256:36775a58b15f60b60f8a3d5ae311d43dbc97a98d48a2766d9ad9c7fdedb2b64a",
+    "windows_interactions": "sha256:eb54df624f3674119086464821fbc6282ab6da54a7f8ed059e269d2711d1bcd6",
+    "visual_metrics": "sha256:18a6a23f545c0a354aad266d97e5bdb7cb886589795747ca93d089703cbb79d0"
+  },
+  "evidence": {
+    "interactions": "doc/02_acceptance/02-regression/fusion-interactions-r616.json",
+    "responsive_screenshot": "evidence/ui-image-breakdowns/pages/fusion/fusion-r616-responsive-1536.png",
+    "contract": "doc/02_acceptance/02-regression/fusion-threat-intel-latest.json",
+    "visual_metrics": "evidence/ui-image-breakdowns/pages/fusion/fusion-r616-visual-metrics.json",
+    "comparison": "evidence/ui-image-breakdowns/pages/fusion/fusion-r616-comparison.png",
+    "design_qa": "design-qa.md"
+  }
+}

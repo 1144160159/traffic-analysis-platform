@@ -1,0 +1,45 @@
+{
+  "page": "fusion",
+  "revision": "r613",
+  "deployed_at": "2026-07-22T19:40:00+08:00",
+  "cluster": "traffic-analysis",
+  "deployment": {
+    "name": "web-ui",
+    "image": "docker.io/traffic/web-ui@sha256:3a772ceb9fafdc4f6246ffde680669f29b9ae9b4fe72ac08197466b02531ee66",
+    "rollout_result": "success",
+    "nodes_imported": [
+      "zeus-server",
+      "8-2TB"
+    ],
+    "observed_ready": "1/1",
+    "observed_restarts": 0
+  },
+  "database_fixture": {
+    "mode": "explicit_acceptance",
+    "audit_events": 50,
+    "rule_trend_series": 6,
+    "canonical_sql": "common/sql/pg/07-fusion-acceptance.sql",
+    "kubernetes_initializer": "deployments/kubernetes/init-jobs/07-fusion-acceptance-fixture.yaml",
+    "synchronization": "pass"
+  },
+  "verification": {
+    "windows_chrome": "pass, Chrome 150, Xshell 9224, 1920x1080 non-fullscreen",
+    "responsive_geometry": "pass at 1215.67px and 962.67px, 17/17 links terminate on measured node edges",
+    "echarts": "6/6 source trends, 6/6 rule bar trends and the pipeline connection layer are ECharts instances",
+    "audit": "six reference columns, five visible rows, 50 total explicit acceptance records, pagination and row navigation pass",
+    "runtime": "0 bad business responses, 0 request failures, 0 console errors, 0 page errors"
+  },
+  "source_digests": {
+    "fixture_sql": "sha256:64117cf75775db2432adc0a9cc2bf6fe1c0ec5881dc95132adecff5cf8c6fce8",
+    "fusion_page": "sha256:206633d02050ab01481535c1f710d7c0c83ff15cafeccea10afb47d06c3c7745",
+    "charts": "sha256:d9f8dc44838428c0a2f34eef360bea3d64e53da259b938d1c6ec907fc404be12",
+    "windows_interactions": "sha256:1855ecdcccbc3960ec9e54db5885593d0f77cc4e41cc3e922f641e8b6a96fcb6",
+    "visual_metrics": "sha256:80d35fbf592d94b243096cf874768a9035c801461ddf8d1ed252b10ffc92d067"
+  },
+  "evidence": {
+    "interactions": "doc/02_acceptance/02-regression/fusion-interactions-r613.json",
+    "visual_metrics": "evidence/ui-image-breakdowns/pages/fusion/fusion-r613-visual-metrics.json",
+    "comparison": "evidence/ui-image-breakdowns/pages/fusion/fusion-r613-comparison.png",
+    "design_qa": "evidence/ui-image-breakdowns/pages/fusion/design-qa.md"
+  }
+}

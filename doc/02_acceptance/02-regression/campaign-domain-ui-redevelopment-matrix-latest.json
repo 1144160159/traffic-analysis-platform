@@ -1,0 +1,141 @@
+{
+  "schema_version": "1.0",
+  "updated_at": "2026-07-25T02:28:00+08:00",
+  "scope": "campaign-domain",
+  "status": "accepted",
+  "workflow": [
+    "UI breakdown",
+    "frontend implementation",
+    "backend implementation",
+    "database-backed data",
+    "Windows Chrome over Xshell CDP",
+    "diff and metrics",
+    "agent review",
+    "logic subagent review",
+    "layout subagent review",
+    "main-thread adjudication",
+    "repair"
+  ],
+  "targets": [
+    {
+      "id": "campaigns",
+      "kind": "page",
+      "route": "/campaigns",
+      "reference": "doc/04_assets/ui_suite_gpt_v1/screens/pages/campaigns.png",
+      "implementation": "web/ui/src/pages/CampaignWorkbenchPage.tsx",
+      "data_contract": "GET /api/v1/campaigns and GET /api/v1/campaigns/{id}",
+      "current_gate": "accepted_r748_r750",
+      "required_states": ["data", "loading", "error", "empty", "selected-campaign", "responsive"]
+    },
+    {
+      "id": "drawer-campaign-detail",
+      "kind": "overlay",
+      "route": "/campaigns -> 查看详情",
+      "reference": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-campaign-detail.png",
+      "implementation": "web/ui/src/pages/CampaignWorkbenchPage.tsx",
+      "data_contract": "GET /api/v1/campaigns/{id}",
+      "current_gate": "accepted_r748_r750",
+      "required_states": ["open", "close", "evidence-actions", "danger-confirmation", "audit-receipt"]
+    },
+    {
+      "id": "campaign-detail",
+      "kind": "page",
+      "route": "/campaigns/:campaignId",
+      "reference": "doc/04_assets/ui_suite_gpt_v1/screens/pages/campaign-detail.png",
+      "implementation": "web/ui/src/pages/CampaignDetailPage.tsx",
+      "data_contract": "GET /api/v1/campaigns/{id}",
+      "current_gate": "accepted_r748_r750",
+      "required_states": ["data", "loading", "error", "empty", "responsive"]
+    },
+    {
+      "id": "campaign-detail-impact-account",
+      "kind": "modal-state",
+      "route": "/campaigns/:campaignId?impact=account",
+      "reference": "doc/04_assets/ui_suite_gpt_v1/screens/pages/campaign-detail-impact-account.png",
+      "implementation": "web/ui/src/pages/CampaignDetailPage.tsx",
+      "data_contract": "campaign detail impact_accounts",
+      "surface_contract": "host campaign detail remains visible; centered intrinsic modal; modal body owns scrolling",
+      "current_gate": "accepted_intrinsic_modal_and_stable_close"
+    },
+    {
+      "id": "campaign-detail-impact-service",
+      "kind": "modal-state",
+      "route": "/campaigns/:campaignId?impact=service",
+      "reference": "doc/04_assets/ui_suite_gpt_v1/screens/pages/campaign-detail-impact-service.png",
+      "implementation": "web/ui/src/pages/CampaignDetailPage.tsx",
+      "data_contract": "campaign detail impact_services",
+      "surface_contract": "host campaign detail remains visible; centered intrinsic modal; modal body owns scrolling",
+      "current_gate": "accepted_intrinsic_modal_and_stable_close"
+    },
+    {
+      "id": "campaign-detail-impact-department",
+      "kind": "modal-state",
+      "route": "/campaigns/:campaignId?impact=department",
+      "reference": "doc/04_assets/ui_suite_gpt_v1/screens/pages/campaign-detail-impact-department.png",
+      "implementation": "web/ui/src/pages/CampaignDetailPage.tsx",
+      "data_contract": "campaign detail impact_departments",
+      "surface_contract": "host campaign detail remains visible; centered intrinsic modal; modal body owns scrolling",
+      "current_gate": "accepted_intrinsic_modal_and_stable_close"
+    },
+    {
+      "id": "campaign-detail-impact-campus",
+      "kind": "modal-state",
+      "route": "/campaigns/:campaignId?impact=campus",
+      "reference": "doc/04_assets/ui_suite_gpt_v1/screens/pages/campaign-detail-impact-campus.png",
+      "implementation": "web/ui/src/pages/CampaignDetailPage.tsx",
+      "data_contract": "campaign detail impact_campuses",
+      "surface_contract": "host campaign detail remains visible; centered intrinsic modal; modal body owns scrolling",
+      "current_gate": "accepted_intrinsic_modal_and_stable_close"
+    },
+    {
+      "id": "campaign-detail-impact-business-system",
+      "kind": "modal-state",
+      "route": "/campaigns/:campaignId?impact=business-system",
+      "reference": "doc/04_assets/ui_suite_gpt_v1/screens/pages/campaign-detail-impact-business-system.png",
+      "implementation": "web/ui/src/pages/CampaignDetailPage.tsx",
+      "data_contract": "campaign detail impact_business_systems",
+      "surface_contract": "host campaign detail remains visible; centered intrinsic modal; modal body owns scrolling",
+      "current_gate": "accepted_intrinsic_modal_and_stable_close"
+    },
+    {
+      "id": "modal-campaign-report-export",
+      "kind": "overlay",
+      "route": "/campaigns/:campaignId -> 生成战役报告",
+      "reference": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/modal-campaign-report-export.png",
+      "implementation": "web/ui/src/pages/CampaignDetailPage.tsx",
+      "data_contract": "POST /api/v1/campaigns/{id}/actions action_id=campaign-report-generate",
+      "current_gate": "accepted_r748_r750",
+      "required_states": ["open", "validation", "approval", "submit", "success", "close"]
+    },
+    {
+      "id": "attack-chains",
+      "kind": "related-page",
+      "route": "/attack-chains?campaign=:campaignId",
+      "reference": "doc/04_assets/ui_suite_gpt_v1/screens/pages/attack-chains.png",
+      "implementation": "web/ui/src/pages/AttackChainAnalysisPage.tsx",
+      "data_contract": "GET /api/v1/attack-chains",
+      "current_gate": "accepted_r748_cross_page_regression"
+    },
+    {
+      "id": "drawer-attack-chain-detail",
+      "kind": "related-overlay",
+      "route": "/attack-chains -> 查看详情",
+      "reference": "doc/04_assets/ui_suite_gpt_v1/screens/overlays/drawer-attack-chain-detail.png",
+      "implementation": "web/ui/src/pages/AttackChainAnalysisPage.tsx",
+      "data_contract": "GET /api/v1/attack-chains/{id}",
+      "current_gate": "accepted_r748_cross_page_regression"
+    }
+  ],
+  "acceptance": {
+    "result": "ACCEPT",
+    "frontend_release": "campaign-domain-r748",
+    "backend_release": "campaign-domain-r750",
+    "browser": "Windows Chrome through Xshell CDP http://127.0.0.1:9224",
+    "reference_viewport": "1920x1080",
+    "production_data": "no fabricated fallback values",
+    "runtime": "no 4xx/5xx, requestfailed, console error, pageerror or runtime exception",
+    "visual": "same viewport combined reference/current comparison plus diff metrics",
+    "interaction": "all visible primary controls usable and audited where required",
+    "responsive": "business workspace adapts without horizontal clipping or detached overlays"
+  }
+}

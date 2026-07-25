@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "page": "notifications",
+  "route": "/notifications",
+  "status": "accepted",
+  "acceptance_revision": "r467",
+  "generated_at": "2026-07-20T03:42:00+08:00",
+  "environment": {
+    "production_url": "http://10.0.5.8:30180/notifications",
+    "browser": "Windows Chrome 150 through Xshell CDP 127.0.0.1:9224",
+    "viewport": "1920x1080",
+    "backend_revision": "notifications-r466",
+    "frontend_revision": "notifications-r459"
+  },
+  "workflow": [
+    "read agent.md and doc project contracts",
+    "capture and compare the existing notification reference and production route",
+    "implement real notification settings, rules, policies, templates, history and silence actions",
+    "close truthful provider dispatch, persistence, RBAC and audit paths",
+    "run Windows Chrome interaction and visual gates",
+    "submit independent logic and layout reviews",
+    "reopen on review findings and add deadline live-state validation, policy fingerprints, retry backoff and lease heartbeat",
+    "deploy digest-pinned r466 and rerun API, worker, browser and visual gates",
+    "accept only after both independent reviews returned P0=0 and P1=0"
+  ],
+  "gates": {
+    "api_preflight": {"result": "pass", "passed": 63, "total": 63, "blockers": 0, "evidence": "doc/02_acceptance/02-regression/notification-workbench-preflight-latest.json"},
+    "scheduler_runtime": {"result": "pass", "evidence": "doc/02_acceptance/02-regression/notification-escalation-runtime-r466.json"},
+    "windows_chrome": {"result": "pass", "action_families": 18, "visible_buttons": 78, "drawer_checks": 36, "evidence": "evidence/ui-image-breakdowns/pages/notifications/interaction-r467.json"},
+    "visual_diff": {"result": "pass", "business_ratio": 0.07816289800224689, "exclusive_max": 0.125, "evidence": "evidence/ui-image-breakdowns/pages/notifications/metrics-r467-main.json"},
+    "go_tests": {"result": "pass", "packages": ["./internal/alert/consumer", "./internal/alert/notification", "./internal/alert/api", "./cmd/alert-service"]},
+    "logic_review": {"result": "ACCEPT", "p0": 0, "p1": 0, "p2": 5},
+    "layout_review": {"result": "ACCEPT", "p0": 0, "p1": 0, "p2": 2}
+  },
+  "remaining_non_blocking": [
+    "normalize every protobuf terminal status alias through one status parser",
+    "add provider idempotency keys for the at-least-once history-persistence retry edge",
+    "persist per-endpoint fan-out results",
+    "add a long provider-I/O heartbeat loss integration test",
+    "add a focused cmd/alert-service resolver wiring test",
+    "verify keyboard focus, 200 percent zoom and low-vision readability",
+    "refine breadcrumb, KPI icon and filter hierarchy parity"
+  ],
+  "next_queue_item": {"id": "settings", "route": "/settings", "title": "系统设置"}
+}

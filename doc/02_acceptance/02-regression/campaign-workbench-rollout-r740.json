@@ -1,0 +1,56 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-07-24T22:22:41+08:00",
+  "scope": "campaign-domain",
+  "release": "campaign-domain-r740",
+  "status": "image_ready_cluster_apply_blocked",
+  "change": {
+    "repairs": [
+      "影响范围使用最大 1040x760 内容型 Modal，删除强制最小高度",
+      "战役报告使用桌面 1200x740 Modal，并在 960px 和 640px 响应式重排",
+      "战役与攻击链详情使用 900px 右 Drawer 和详情、证据、审计 Tabs",
+      "Drawer 打开状态、选中对象和 Tab 写入 URL，关闭时清理打开状态",
+      "攻击链空筛选显示 Empty，三视图使用不同布局，真实查询状态和审计导出闭环",
+      "危险动作、行内状态流转和 Drawer 操作增加确认、pending 禁用和错误捕获",
+      "popup bounds 门禁精确断言两个 Drawer 的 900/40/48/48 几何、报告 1200x740 以及 960/640 响应式可达"
+    ]
+  },
+  "verification": {
+    "targeted_vitest": {
+      "result": "pass",
+      "files": 5,
+      "tests": 37
+    },
+    "typescript_and_vite_build": {
+      "result": "pass",
+      "modules_transformed": 4081
+    },
+    "image_import": {
+      "result": "pass",
+      "nodes": [
+        "10.0.5.8",
+        "10.0.5.9"
+      ]
+    },
+    "kubernetes_apply": {
+      "result": "blocked",
+      "error": "kube-apiserver TLS handshake timeout"
+    },
+    "windows_chrome": {
+      "result": "blocked",
+      "endpoint": "http://127.0.0.1:9224",
+      "error": "connection reset by peer"
+    },
+    "visual_diff": "pending"
+  },
+  "artifacts": {
+    "source_digest": "761c1bd9e512f939a9655600af902d9c4e4bfaf53c63fb5b4b563835eabe28d0",
+    "docker_image_id": "sha256:8901a759feb0e4e16b803f1bcbe8ec47a0d4e996900d8446c2c123cc5c671e67",
+    "containerd_manifest_digest": "sha256:f0fbc30bb461f42535a185ab72dfb8a654ed8ad28fc9bb278599dd630b64c81f",
+    "image": "docker.io/traffic/web-ui:campaign-domain-r740",
+    "build_log": "/tmp/web-ui-r740-build.log",
+    "local_import_log": "/tmp/traffic-web-ui-r740-local-import.log",
+    "remote_import_log": "/tmp/traffic-web-ui-r740-remote-import.log"
+  },
+  "complete": false
+}

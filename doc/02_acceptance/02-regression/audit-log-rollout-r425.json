@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-19T22:42:51+08:00",
+  "namespace": "traffic-analysis",
+  "result": "pass",
+  "deployments": {
+    "alert-service": {
+      "revision": "r422",
+      "kubernetes_revision": "135",
+      "ready_at_rollout": true,
+      "restart_count": 0,
+      "resolved_image": "docker.io/traffic/alert-service@sha256:20205aa6801b3a21b8c95a6956c6cbedb6022d05be132164b21ed04c94f68785",
+      "containerd_manifest_digest": "sha256:20205aa6801b3a21b8c95a6956c6cbedb6022d05be132164b21ed04c94f68785",
+      "docker_config_id": "sha256:581ecf10bef089fda7207a7b85b45bc3b5b1d3fc493107c60a63bd4a9eec77a9"
+    },
+    "web-ui": {
+      "revision": "r423",
+      "kubernetes_revision": "681",
+      "ready_at_rollout": true,
+      "restart_count": 0,
+      "resolved_image": "docker.io/traffic/web-ui@sha256:a1843e82c5329fd9d1f1424f327898498e42c2e49683bec36ba4801753107996",
+      "containerd_manifest_digest": "sha256:a1843e82c5329fd9d1f1424f327898498e42c2e49683bec36ba4801753107996",
+      "docker_config_id": "sha256:0512b89b6b28745aff9983a15d731e323cf84296d9a8f1a42e203c1c5ec0fee2"
+    }
+  },
+  "two_node_image_import": ["8-2tb", "zeus-server"],
+  "source_manifests": [
+    "deployments/kubernetes/applications/go-services.yaml",
+    "deployments/kubernetes/applications/web-ui.yaml"
+  ],
+  "runtime_evidence": [
+    "doc/02_acceptance/runs/20260719-audit-governance-r424/audit-governance-summary.json",
+    "evidence/ui-image-breakdowns/pages/audit-log/interaction-r425.json",
+    "evidence/ui-image-breakdowns/pages/audit-log/metrics-r425-main.json"
+  ],
+  "rollback": {
+    "strategy": "rollout undo to the prior Deployment revision or reapply the prior digest-pinned manifest",
+    "mutation_performed": false,
+    "reason": "forward rollout and acceptance passed; no destructive rollback was needed"
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-20T03:35:00+08:00",
+  "result": "pass",
+  "deployment": {
+    "backend_revision": "notifications-r466",
+    "kubernetes_revision": "149",
+    "backend_image": "docker.io/traffic/alert-service@sha256:f4587a890b2dd5edbcaaf4d9aaaa1d0d61cdadbe5323cfd73b34bf43f9b5c9b0",
+    "backend_config_id": "sha256:4a0be3f51a596960c0d67e3ec6556493b48c4d8ca4c888414eaae3cd85938f13",
+    "ready_replicas": 1,
+    "restart_count": 0
+  },
+  "live_alert": {
+    "alert_id": "alert-default-1784487541008-6ab603cc",
+    "source": "traffic.alerts in ClickHouse",
+    "status": "ALERT_STATUS_NEW",
+    "severity": "SEVERITY_CRITICAL",
+    "count": 1,
+    "labels": ["time_anomaly", "traffic_anomaly", "protocol_anomaly", "statistical_anomaly", "behavior_anomaly"],
+    "stale_job_snapshot_severity": "low",
+    "stale_job_snapshot_count": 99,
+    "execution_contract": "deadline validation replaces the job snapshot with the live AlertInfo before severity, rule, silence and escalation-condition checks"
+  },
+  "schema": {
+    "locked_at": "timestamp with time zone",
+    "lock_token": "text",
+    "policy_id": "uuid",
+    "policy_updated_at": "timestamp with time zone",
+    "stage_after_minutes": "double precision",
+    "stage_fingerprint": "text"
+  },
+  "policy_consistency_check": {
+    "alert_key": "notif-r466-policy-mismatch",
+    "initial_status": "pending",
+    "final_status": "cancelled",
+    "attempts": 1,
+    "reason": "escalation policy stage changed before deadline",
+    "provider_history_rows": 0,
+    "lease_released": true,
+    "lock_token_released": true,
+    "completed": true
+  },
+  "transient_retry_check": {
+    "alert_key": "notif-r466-retry",
+    "failure": "target role NOTIF_MISSING_ROLE_R466 has no active webhook destinations",
+    "status_after_first_attempt": "pending",
+    "attempts": 1,
+    "retry_due_in_future": true,
+    "lease_released": true,
+    "lock_token_released": true,
+    "completed": false,
+    "truthful_history": {
+      "notification_id": 175,
+      "status": "failed",
+      "channel": "webhook",
+      "target_name": "NOTIF_MISSING_ROLE_R466"
+    },
+    "max_attempts": 5,
+    "backoff_seconds": "15 multiplied by attempt number"
+  },
+  "lease_contract": {
+    "lease_duration_seconds": 120,
+    "heartbeat_interval_seconds": 40,
+    "heartbeat_updates_require_processing_status_and_matching_lock_token": true,
+    "heartbeat_loss_cancels_provider_context": true,
+    "completion_and_retry_release_require_matching_lock_token": true,
+    "provider_http_timeout_seconds_per_destination": 15
+  },
+  "inherited_live_proof": {
+    "evidence": "doc/02_acceptance/02-regression/notification-escalation-runtime-r462.json",
+    "role_destination_changed_actual_non_email_endpoint": true,
+    "stale_processing_job_recovered": true,
+    "disabled_rule_terminal_alert_active_silence_and_disabled_channel_cancelled_before_provider_io": true,
+    "provider_200_empty_non_json_missing_code_and_nonzero_code_rejected": true
+  },
+  "tests": {
+    "packages": [
+      "./internal/alert/consumer",
+      "./internal/alert/notification",
+      "./internal/alert/api",
+      "./cmd/alert-service"
+    ],
+    "result": "pass",
+    "stage_fingerprint_is_canonical_and_changes_with_stage_timing": true,
+    "live_count_and_labels_drive_repeat_and_failure_conditions": true
+  },
+  "cleanup": {
+    "temporary_jobs_remaining": 0,
+    "temporary_rules_remaining": 0,
+    "temporary_policies_remaining": 0,
+    "truthful_failure_history_preserved": 1,
+    "immutable_audit_rows_preserved": true
+  }
+}

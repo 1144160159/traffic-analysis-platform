@@ -1,0 +1,1542 @@
+{
+  "run_id": "campaign-responsive-r748",
+  "result": "pass",
+  "browser_backend": "Windows Chrome CDP over Xshell 9224",
+  "base_url": "http://10.0.5.8:30180",
+  "check_count": 54,
+  "passed": 54,
+  "failed": 0,
+  "runs": [
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "passed": true,
+      "checks": [
+        {
+          "name": "viewport-exact",
+          "passed": true
+        },
+        {
+          "name": "no-root-or-campaign-horizontal-overflow",
+          "passed": true
+        },
+        {
+          "name": "table-has-no-horizontal-scroll",
+          "passed": true
+        },
+        {
+          "name": "no-visible-horizontal-clipping",
+          "passed": true
+        },
+        {
+          "name": "eight-table-rows-visible",
+          "passed": true
+        },
+        {
+          "name": "list-and-attack-do-not-overlap",
+          "passed": true
+        },
+        {
+          "name": "uses-public-business-area-spacing",
+          "passed": true
+        },
+        {
+          "name": "attack-association-is-visible-echarts-graph",
+          "passed": true
+        },
+        {
+          "name": "responsive-rail-and-business-scroll",
+          "passed": true
+        }
+      ],
+      "metrics": {
+        "viewport": {
+          "width": 1920,
+          "height": 1080
+        },
+        "root_horizontal_overflow": false,
+        "campaign_horizontal_overflow": false,
+        "business_scroll": {
+          "overflow_y": "auto",
+          "client_height": 917,
+          "scroll_height": 917
+        },
+        "public_business_spacing": {
+          "actual_left": 174,
+          "expected_left": 174,
+          "actual_top": 88,
+          "expected_top": 88
+        },
+        "attack_graph": {
+          "engine": "echarts",
+          "series_type": "graph",
+          "canvas_count": 1,
+          "width": 593.2291870117188,
+          "height": 382,
+          "canvas_width": 592,
+          "canvas_height": 381
+        },
+        "table_scroll": {
+          "client_width": 615,
+          "scroll_width": 615,
+          "overflow": false
+        },
+        "main": {
+          "x": 174,
+          "y": 136,
+          "width": 1274,
+          "height": 834,
+          "right": 1448,
+          "bottom": 970
+        },
+        "rail": {
+          "x": 1456,
+          "y": 136,
+          "width": 454,
+          "height": 834,
+          "right": 1910,
+          "bottom": 970
+        },
+        "list": {
+          "x": 174,
+          "y": 306.66668701171875,
+          "width": 651.4271240234375,
+          "height": 663.3333740234375,
+          "right": 825.4271240234375,
+          "bottom": 970.0000610351562
+        },
+        "attack": {
+          "x": 833.4271240234375,
+          "y": 306.66668701171875,
+          "width": 614.5625,
+          "height": 663.3333740234375,
+          "right": 1447.9896240234375,
+          "bottom": 970.0000610351562
+        },
+        "overflow_candidates": [
+          {
+            "tag": "DIV",
+            "class_name": "taf-metric is-warn",
+            "client_width": 144,
+            "scroll_width": 149,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "STRONG",
+            "class_name": "",
+            "client_width": 82,
+            "scroll_width": 95,
+            "overflow_x": "visible"
+          },
+          {
+            "tag": "STRONG",
+            "class_name": "",
+            "client_width": 82,
+            "scroll_width": 89,
+            "overflow_x": "visible"
+          },
+          {
+            "tag": "TH",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 48,
+            "scroll_width": 64,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TH",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 48,
+            "scroll_width": 52,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "SPAN",
+            "class_name": "taf-campaign-id",
+            "client_width": 119,
+            "scroll_width": 303,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 62,
+            "scroll_width": 83,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 67,
+            "scroll_width": 82,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 67,
+            "scroll_width": 82,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 67,
+            "scroll_width": 78,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "SPAN",
+            "class_name": "taf-campaign-id",
+            "client_width": 119,
+            "scroll_width": 303,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 62,
+            "scroll_width": 83,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 67,
+            "scroll_width": 82,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 67,
+            "scroll_width": 82,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 67,
+            "scroll_width": 78,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "SPAN",
+            "class_name": "taf-campaign-id",
+            "client_width": 119,
+            "scroll_width": 300,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 62,
+            "scroll_width": 83,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 67,
+            "scroll_width": 82,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 67,
+            "scroll_width": 82,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 67,
+            "scroll_width": 78,
+            "overflow_x": "hidden"
+          }
+        ],
+        "visible_rows": 8,
+        "visible_bad_geometry": []
+      },
+      "screenshot": "evidence/ui-image-breakdowns/pages/campaigns/responsive-r748/campaigns-1920x1080.png"
+    },
+    {
+      "viewport": {
+        "width": 1728,
+        "height": 1080
+      },
+      "passed": true,
+      "checks": [
+        {
+          "name": "viewport-exact",
+          "passed": true
+        },
+        {
+          "name": "no-root-or-campaign-horizontal-overflow",
+          "passed": true
+        },
+        {
+          "name": "table-has-no-horizontal-scroll",
+          "passed": true
+        },
+        {
+          "name": "no-visible-horizontal-clipping",
+          "passed": true
+        },
+        {
+          "name": "eight-table-rows-visible",
+          "passed": true
+        },
+        {
+          "name": "list-and-attack-do-not-overlap",
+          "passed": true
+        },
+        {
+          "name": "uses-public-business-area-spacing",
+          "passed": true
+        },
+        {
+          "name": "attack-association-is-visible-echarts-graph",
+          "passed": true
+        },
+        {
+          "name": "responsive-rail-and-business-scroll",
+          "passed": true
+        }
+      ],
+      "metrics": {
+        "viewport": {
+          "width": 1728,
+          "height": 1080
+        },
+        "root_horizontal_overflow": false,
+        "campaign_horizontal_overflow": false,
+        "business_scroll": {
+          "overflow_y": "auto",
+          "client_height": 917,
+          "scroll_height": 1347
+        },
+        "public_business_spacing": {
+          "actual_left": 174,
+          "expected_left": 174,
+          "actual_top": 88,
+          "expected_top": 88
+        },
+        "attack_graph": {
+          "engine": "echarts",
+          "series_type": "graph",
+          "canvas_count": 1,
+          "width": 698.4791870117188,
+          "height": 382,
+          "canvas_width": 697,
+          "canvas_height": 381
+        },
+        "table_scroll": {
+          "client_width": 770,
+          "scroll_width": 770,
+          "overflow": false
+        },
+        "main": {
+          "x": 174,
+          "y": 136,
+          "width": 1534,
+          "height": 831.3333740234375,
+          "right": 1708,
+          "bottom": 967.3333740234375
+        },
+        "rail": {
+          "x": 174,
+          "y": 975.3333740234375,
+          "width": 1534,
+          "height": 444,
+          "right": 1708,
+          "bottom": 1419.3333740234375
+        },
+        "list": {
+          "x": 174,
+          "y": 304,
+          "width": 806.1875,
+          "height": 663.3333740234375,
+          "right": 980.1875,
+          "bottom": 967.3333740234375
+        },
+        "attack": {
+          "x": 988.1875,
+          "y": 304,
+          "width": 719.8125,
+          "height": 663.3333740234375,
+          "right": 1708,
+          "bottom": 967.3333740234375
+        },
+        "overflow_candidates": [
+          {
+            "tag": "DIV",
+            "class_name": "",
+            "client_width": 219,
+            "scroll_width": 231,
+            "overflow_x": "visible"
+          },
+          {
+            "tag": "UL",
+            "class_name": "",
+            "client_width": 133,
+            "scroll_width": 145,
+            "overflow_x": "visible"
+          },
+          {
+            "tag": "LI",
+            "class_name": "is-warn",
+            "client_width": 133,
+            "scroll_width": 145,
+            "overflow_x": "visible"
+          },
+          {
+            "tag": "STRONG",
+            "class_name": "",
+            "client_width": 73,
+            "scroll_width": 85,
+            "overflow_x": "visible"
+          },
+          {
+            "tag": "TH",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 60,
+            "scroll_width": 64,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "SPAN",
+            "class_name": "taf-campaign-id",
+            "client_width": 153,
+            "scroll_width": 303,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "SPAN",
+            "class_name": "taf-campaign-id",
+            "client_width": 153,
+            "scroll_width": 303,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "SPAN",
+            "class_name": "taf-campaign-id",
+            "client_width": 153,
+            "scroll_width": 300,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "SPAN",
+            "class_name": "taf-campaign-id",
+            "client_width": 153,
+            "scroll_width": 306,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "SPAN",
+            "class_name": "taf-campaign-id",
+            "client_width": 153,
+            "scroll_width": 306,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "SPAN",
+            "class_name": "taf-campaign-id",
+            "client_width": 153,
+            "scroll_width": 302,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "SPAN",
+            "class_name": "taf-campaign-id",
+            "client_width": 153,
+            "scroll_width": 305,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "SPAN",
+            "class_name": "taf-campaign-id",
+            "client_width": 153,
+            "scroll_width": 305,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "DIV",
+            "class_name": "taf-campaign-phase is-info",
+            "client_width": 96,
+            "scroll_width": 144,
+            "overflow_x": "visible"
+          },
+          {
+            "tag": "I",
+            "class_name": "",
+            "client_width": 33,
+            "scroll_width": 112,
+            "overflow_x": "visible"
+          },
+          {
+            "tag": "DIV",
+            "class_name": "taf-campaign-phase is-warn",
+            "client_width": 96,
+            "scroll_width": 144,
+            "overflow_x": "visible"
+          },
+          {
+            "tag": "I",
+            "class_name": "",
+            "client_width": 33,
+            "scroll_width": 112,
+            "overflow_x": "visible"
+          },
+          {
+            "tag": "DIV",
+            "class_name": "taf-campaign-phase is-warn",
+            "client_width": 96,
+            "scroll_width": 144,
+            "overflow_x": "visible"
+          },
+          {
+            "tag": "I",
+            "class_name": "",
+            "client_width": 33,
+            "scroll_width": 112,
+            "overflow_x": "visible"
+          },
+          {
+            "tag": "DIV",
+            "class_name": "taf-campaign-phase is-warn",
+            "client_width": 96,
+            "scroll_width": 144,
+            "overflow_x": "visible"
+          }
+        ],
+        "visible_rows": 8,
+        "visible_bad_geometry": []
+      },
+      "screenshot": "evidence/ui-image-breakdowns/pages/campaigns/responsive-r748/campaigns-1728x1080.png"
+    },
+    {
+      "viewport": {
+        "width": 1600,
+        "height": 1080
+      },
+      "passed": true,
+      "checks": [
+        {
+          "name": "viewport-exact",
+          "passed": true
+        },
+        {
+          "name": "no-root-or-campaign-horizontal-overflow",
+          "passed": true
+        },
+        {
+          "name": "table-has-no-horizontal-scroll",
+          "passed": true
+        },
+        {
+          "name": "no-visible-horizontal-clipping",
+          "passed": true
+        },
+        {
+          "name": "eight-table-rows-visible",
+          "passed": true
+        },
+        {
+          "name": "list-and-attack-do-not-overlap",
+          "passed": true
+        },
+        {
+          "name": "uses-public-business-area-spacing",
+          "passed": true
+        },
+        {
+          "name": "attack-association-is-visible-echarts-graph",
+          "passed": true
+        },
+        {
+          "name": "responsive-rail-and-business-scroll",
+          "passed": true
+        }
+      ],
+      "metrics": {
+        "viewport": {
+          "width": 1600,
+          "height": 1080
+        },
+        "root_horizontal_overflow": false,
+        "campaign_horizontal_overflow": false,
+        "business_scroll": {
+          "overflow_y": "auto",
+          "client_height": 917,
+          "scroll_height": 1347
+        },
+        "public_business_spacing": {
+          "actual_left": 174,
+          "expected_left": 174,
+          "actual_top": 88,
+          "expected_top": 88
+        },
+        "attack_graph": {
+          "engine": "echarts",
+          "series_type": "graph",
+          "canvas_count": 1,
+          "width": 638.1041870117188,
+          "height": 382,
+          "canvas_width": 637,
+          "canvas_height": 381
+        },
+        "table_scroll": {
+          "client_width": 702,
+          "scroll_width": 702,
+          "overflow": false
+        },
+        "main": {
+          "x": 174,
+          "y": 136,
+          "width": 1406,
+          "height": 831.3333740234375,
+          "right": 1580,
+          "bottom": 967.3333740234375
+        },
+        "rail": {
+          "x": 174,
+          "y": 975.3333740234375,
+          "width": 1406,
+          "height": 444,
+          "right": 1580,
+          "bottom": 1419.3333740234375
+        },
+        "list": {
+          "x": 174,
+          "y": 304,
+          "width": 738.5625,
+          "height": 663.3333740234375,
+          "right": 912.5625,
+          "bottom": 967.3333740234375
+        },
+        "attack": {
+          "x": 920.5625,
+          "y": 304,
+          "width": 659.4375,
+          "height": 663.3333740234375,
+          "right": 1580,
+          "bottom": 967.3333740234375
+        },
+        "overflow_candidates": [
+          {
+            "tag": "DIV",
+            "class_name": "",
+            "client_width": 219,
+            "scroll_width": 231,
+            "overflow_x": "visible"
+          },
+          {
+            "tag": "UL",
+            "class_name": "",
+            "client_width": 133,
+            "scroll_width": 145,
+            "overflow_x": "visible"
+          },
+          {
+            "tag": "LI",
+            "class_name": "is-warn",
+            "client_width": 133,
+            "scroll_width": 145,
+            "overflow_x": "visible"
+          },
+          {
+            "tag": "STRONG",
+            "class_name": "",
+            "client_width": 73,
+            "scroll_width": 85,
+            "overflow_x": "visible"
+          },
+          {
+            "tag": "TH",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 55,
+            "scroll_width": 64,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "SPAN",
+            "class_name": "taf-campaign-id",
+            "client_width": 138,
+            "scroll_width": 303,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 71,
+            "scroll_width": 83,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 76,
+            "scroll_width": 82,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 76,
+            "scroll_width": 82,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "SPAN",
+            "class_name": "taf-campaign-id",
+            "client_width": 138,
+            "scroll_width": 303,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 71,
+            "scroll_width": 83,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 76,
+            "scroll_width": 82,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 76,
+            "scroll_width": 82,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "SPAN",
+            "class_name": "taf-campaign-id",
+            "client_width": 138,
+            "scroll_width": 300,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 71,
+            "scroll_width": 83,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 76,
+            "scroll_width": 82,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 76,
+            "scroll_width": 82,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "SPAN",
+            "class_name": "taf-campaign-id",
+            "client_width": 138,
+            "scroll_width": 306,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 71,
+            "scroll_width": 83,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 76,
+            "scroll_width": 82,
+            "overflow_x": "hidden"
+          }
+        ],
+        "visible_rows": 8,
+        "visible_bad_geometry": []
+      },
+      "screenshot": "evidence/ui-image-breakdowns/pages/campaigns/responsive-r748/campaigns-1600x1080.png"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 1080
+      },
+      "passed": true,
+      "checks": [
+        {
+          "name": "viewport-exact",
+          "passed": true
+        },
+        {
+          "name": "no-root-or-campaign-horizontal-overflow",
+          "passed": true
+        },
+        {
+          "name": "table-has-no-horizontal-scroll",
+          "passed": true
+        },
+        {
+          "name": "no-visible-horizontal-clipping",
+          "passed": true
+        },
+        {
+          "name": "eight-table-rows-visible",
+          "passed": true
+        },
+        {
+          "name": "list-and-attack-do-not-overlap",
+          "passed": true
+        },
+        {
+          "name": "uses-public-business-area-spacing",
+          "passed": true
+        },
+        {
+          "name": "attack-association-is-visible-echarts-graph",
+          "passed": true
+        },
+        {
+          "name": "responsive-rail-and-business-scroll",
+          "passed": true
+        }
+      ],
+      "metrics": {
+        "viewport": {
+          "width": 1440,
+          "height": 1080
+        },
+        "root_horizontal_overflow": false,
+        "campaign_horizontal_overflow": false,
+        "business_scroll": {
+          "overflow_y": "auto",
+          "client_height": 917,
+          "scroll_height": 1347
+        },
+        "public_business_spacing": {
+          "actual_left": 174,
+          "expected_left": 174,
+          "actual_top": 88,
+          "expected_top": 88
+        },
+        "attack_graph": {
+          "engine": "echarts",
+          "series_type": "graph",
+          "canvas_count": 1,
+          "width": 562.6354370117188,
+          "height": 382,
+          "canvas_width": 561,
+          "canvas_height": 381
+        },
+        "table_scroll": {
+          "client_width": 617,
+          "scroll_width": 617,
+          "overflow": false
+        },
+        "main": {
+          "x": 174,
+          "y": 136,
+          "width": 1246,
+          "height": 831.3333740234375,
+          "right": 1420,
+          "bottom": 967.3333740234375
+        },
+        "rail": {
+          "x": 174,
+          "y": 975.3333740234375,
+          "width": 1246,
+          "height": 444,
+          "right": 1420,
+          "bottom": 1419.3333740234375
+        },
+        "list": {
+          "x": 174,
+          "y": 304,
+          "width": 654.03125,
+          "height": 663.3333740234375,
+          "right": 828.03125,
+          "bottom": 967.3333740234375
+        },
+        "attack": {
+          "x": 836.03125,
+          "y": 304,
+          "width": 583.96875,
+          "height": 663.3333740234375,
+          "right": 1420,
+          "bottom": 967.3333740234375
+        },
+        "overflow_candidates": [
+          {
+            "tag": "DIV",
+            "class_name": "",
+            "client_width": 219,
+            "scroll_width": 231,
+            "overflow_x": "visible"
+          },
+          {
+            "tag": "UL",
+            "class_name": "",
+            "client_width": 133,
+            "scroll_width": 145,
+            "overflow_x": "visible"
+          },
+          {
+            "tag": "LI",
+            "class_name": "is-warn",
+            "client_width": 133,
+            "scroll_width": 145,
+            "overflow_x": "visible"
+          },
+          {
+            "tag": "STRONG",
+            "class_name": "",
+            "client_width": 73,
+            "scroll_width": 85,
+            "overflow_x": "visible"
+          },
+          {
+            "tag": "TH",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 48,
+            "scroll_width": 64,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TH",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 48,
+            "scroll_width": 52,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "SPAN",
+            "class_name": "taf-campaign-id",
+            "client_width": 120,
+            "scroll_width": 303,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 62,
+            "scroll_width": 83,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 67,
+            "scroll_width": 82,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 67,
+            "scroll_width": 82,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 67,
+            "scroll_width": 78,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "SPAN",
+            "class_name": "taf-campaign-id",
+            "client_width": 120,
+            "scroll_width": 303,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 62,
+            "scroll_width": 83,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 67,
+            "scroll_width": 82,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 67,
+            "scroll_width": 82,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 67,
+            "scroll_width": 78,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "SPAN",
+            "class_name": "taf-campaign-id",
+            "client_width": 120,
+            "scroll_width": 300,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 62,
+            "scroll_width": 83,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 67,
+            "scroll_width": 82,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 67,
+            "scroll_width": 82,
+            "overflow_x": "hidden"
+          }
+        ],
+        "visible_rows": 8,
+        "visible_bad_geometry": []
+      },
+      "screenshot": "evidence/ui-image-breakdowns/pages/campaigns/responsive-r748/campaigns-1440x1080.png"
+    },
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 1080
+      },
+      "passed": true,
+      "checks": [
+        {
+          "name": "viewport-exact",
+          "passed": true
+        },
+        {
+          "name": "no-root-or-campaign-horizontal-overflow",
+          "passed": true
+        },
+        {
+          "name": "table-has-no-horizontal-scroll",
+          "passed": true
+        },
+        {
+          "name": "no-visible-horizontal-clipping",
+          "passed": true
+        },
+        {
+          "name": "eight-table-rows-visible",
+          "passed": true
+        },
+        {
+          "name": "list-and-attack-do-not-overlap",
+          "passed": true
+        },
+        {
+          "name": "uses-public-business-area-spacing",
+          "passed": true
+        },
+        {
+          "name": "attack-association-is-visible-echarts-graph",
+          "passed": true
+        },
+        {
+          "name": "responsive-rail-and-business-scroll",
+          "passed": true
+        }
+      ],
+      "metrics": {
+        "viewport": {
+          "width": 1366,
+          "height": 1080
+        },
+        "root_horizontal_overflow": false,
+        "campaign_horizontal_overflow": false,
+        "business_scroll": {
+          "overflow_y": "auto",
+          "client_height": 917,
+          "scroll_height": 1374
+        },
+        "public_business_spacing": {
+          "actual_left": 164,
+          "expected_left": 164,
+          "actual_top": 88,
+          "expected_top": 88
+        },
+        "attack_graph": {
+          "engine": "echarts",
+          "series_type": "graph",
+          "canvas_count": 1,
+          "width": 532.4479370117188,
+          "height": 382,
+          "canvas_width": 531,
+          "canvas_height": 381
+        },
+        "table_scroll": {
+          "client_width": 584,
+          "scroll_width": 584,
+          "overflow": false
+        },
+        "main": {
+          "x": 164,
+          "y": 136,
+          "width": 1182,
+          "height": 858,
+          "right": 1346,
+          "bottom": 994
+        },
+        "rail": {
+          "x": 164,
+          "y": 1002,
+          "width": 1182,
+          "height": 444,
+          "right": 1346,
+          "bottom": 1446
+        },
+        "list": {
+          "x": 164,
+          "y": 330.66668701171875,
+          "width": 620.21875,
+          "height": 663.3333740234375,
+          "right": 784.21875,
+          "bottom": 994.0000610351562
+        },
+        "attack": {
+          "x": 792.21875,
+          "y": 330.66668701171875,
+          "width": 553.78125,
+          "height": 663.3333740234375,
+          "right": 1346,
+          "bottom": 994.0000610351562
+        },
+        "overflow_candidates": [
+          {
+            "tag": "DIV",
+            "class_name": "taf-metric is-warn",
+            "client_width": 139,
+            "scroll_width": 149,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "STRONG",
+            "class_name": "",
+            "client_width": 77,
+            "scroll_width": 95,
+            "overflow_x": "visible"
+          },
+          {
+            "tag": "DIV",
+            "class_name": "taf-metric is-warn",
+            "client_width": 139,
+            "scroll_width": 143,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "STRONG",
+            "class_name": "",
+            "client_width": 77,
+            "scroll_width": 89,
+            "overflow_x": "visible"
+          },
+          {
+            "tag": "DIV",
+            "class_name": "taf-campaign-risk-distribution",
+            "client_width": 267,
+            "scroll_width": 270,
+            "overflow_x": "visible"
+          },
+          {
+            "tag": "DIV",
+            "class_name": "",
+            "client_width": 243,
+            "scroll_width": 258,
+            "overflow_x": "visible"
+          },
+          {
+            "tag": "UL",
+            "class_name": "",
+            "client_width": 119,
+            "scroll_width": 134,
+            "overflow_x": "visible"
+          },
+          {
+            "tag": "LI",
+            "class_name": "is-warn",
+            "client_width": 119,
+            "scroll_width": 134,
+            "overflow_x": "visible"
+          },
+          {
+            "tag": "STRONG",
+            "class_name": "",
+            "client_width": 35,
+            "scroll_width": 50,
+            "overflow_x": "visible"
+          },
+          {
+            "tag": "TH",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 59,
+            "scroll_width": 64,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TH",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 46,
+            "scroll_width": 64,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TH",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 46,
+            "scroll_width": 52,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "SPAN",
+            "class_name": "taf-campaign-id",
+            "client_width": 112,
+            "scroll_width": 303,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 59,
+            "scroll_width": 62,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 59,
+            "scroll_width": 83,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 63,
+            "scroll_width": 82,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 63,
+            "scroll_width": 82,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 59,
+            "scroll_width": 70,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 63,
+            "scroll_width": 78,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "SPAN",
+            "class_name": "taf-campaign-id",
+            "client_width": 112,
+            "scroll_width": 303,
+            "overflow_x": "hidden"
+          }
+        ],
+        "visible_rows": 8,
+        "visible_bad_geometry": []
+      },
+      "screenshot": "evidence/ui-image-breakdowns/pages/campaigns/responsive-r748/campaigns-1366x1080.png"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 1080
+      },
+      "passed": true,
+      "checks": [
+        {
+          "name": "viewport-exact",
+          "passed": true
+        },
+        {
+          "name": "no-root-or-campaign-horizontal-overflow",
+          "passed": true
+        },
+        {
+          "name": "table-has-no-horizontal-scroll",
+          "passed": true
+        },
+        {
+          "name": "no-visible-horizontal-clipping",
+          "passed": true
+        },
+        {
+          "name": "eight-table-rows-visible",
+          "passed": true
+        },
+        {
+          "name": "list-and-attack-do-not-overlap",
+          "passed": true
+        },
+        {
+          "name": "uses-public-business-area-spacing",
+          "passed": true
+        },
+        {
+          "name": "attack-association-is-visible-echarts-graph",
+          "passed": true
+        },
+        {
+          "name": "responsive-rail-and-business-scroll",
+          "passed": true
+        }
+      ],
+      "metrics": {
+        "viewport": {
+          "width": 1280,
+          "height": 1080
+        },
+        "root_horizontal_overflow": false,
+        "campaign_horizontal_overflow": false,
+        "business_scroll": {
+          "overflow_y": "auto",
+          "client_height": 917,
+          "scroll_height": 1401
+        },
+        "public_business_spacing": {
+          "actual_left": 164,
+          "expected_left": 164,
+          "actual_top": 88,
+          "expected_top": 88
+        },
+        "attack_graph": {
+          "engine": "echarts",
+          "series_type": "graph",
+          "canvas_count": 1,
+          "width": 491.875,
+          "height": 382,
+          "canvas_width": 491,
+          "canvas_height": 381
+        },
+        "table_scroll": {
+          "client_width": 538,
+          "scroll_width": 538,
+          "overflow": false
+        },
+        "main": {
+          "x": 164,
+          "y": 136,
+          "width": 1096,
+          "height": 884.6666870117188,
+          "right": 1260,
+          "bottom": 1020.6666870117188
+        },
+        "rail": {
+          "x": 164,
+          "y": 1028.666748046875,
+          "width": 1096,
+          "height": 444,
+          "right": 1260,
+          "bottom": 1472.666748046875
+        },
+        "list": {
+          "x": 164,
+          "y": 357.3333435058594,
+          "width": 574.7916870117188,
+          "height": 663.3333740234375,
+          "right": 738.7916870117188,
+          "bottom": 1020.6667175292969
+        },
+        "attack": {
+          "x": 746.7916870117188,
+          "y": 357.3333435058594,
+          "width": 513.2083740234375,
+          "height": 663.3333740234375,
+          "right": 1260.0000610351562,
+          "bottom": 1020.6667175292969
+        },
+        "overflow_candidates": [
+          {
+            "tag": "STRONG",
+            "class_name": "",
+            "client_width": 89,
+            "scroll_width": 95,
+            "overflow_x": "visible"
+          },
+          {
+            "tag": "DIV",
+            "class_name": "taf-campaign-risk-distribution",
+            "client_width": 267,
+            "scroll_width": 270,
+            "overflow_x": "visible"
+          },
+          {
+            "tag": "DIV",
+            "class_name": "",
+            "client_width": 243,
+            "scroll_width": 258,
+            "overflow_x": "visible"
+          },
+          {
+            "tag": "UL",
+            "class_name": "",
+            "client_width": 119,
+            "scroll_width": 134,
+            "overflow_x": "visible"
+          },
+          {
+            "tag": "LI",
+            "class_name": "is-warn",
+            "client_width": 119,
+            "scroll_width": 134,
+            "overflow_x": "visible"
+          },
+          {
+            "tag": "STRONG",
+            "class_name": "",
+            "client_width": 35,
+            "scroll_width": 50,
+            "overflow_x": "visible"
+          },
+          {
+            "tag": "TH",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 54,
+            "scroll_width": 64,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TH",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 42,
+            "scroll_width": 64,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TH",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 42,
+            "scroll_width": 52,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TH",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 58,
+            "scroll_width": 64,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TH",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 58,
+            "scroll_width": 64,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "SPAN",
+            "class_name": "taf-campaign-id",
+            "client_width": 102,
+            "scroll_width": 303,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 54,
+            "scroll_width": 62,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 54,
+            "scroll_width": 83,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 58,
+            "scroll_width": 82,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 58,
+            "scroll_width": 82,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 54,
+            "scroll_width": 70,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 58,
+            "scroll_width": 78,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "SPAN",
+            "class_name": "taf-campaign-id",
+            "client_width": 102,
+            "scroll_width": 303,
+            "overflow_x": "hidden"
+          },
+          {
+            "tag": "TD",
+            "class_name": "ant-table-cell ant-table-cell-ellipsis",
+            "client_width": 54,
+            "scroll_width": 62,
+            "overflow_x": "hidden"
+          }
+        ],
+        "visible_rows": 8,
+        "visible_bad_geometry": []
+      },
+      "screenshot": "evidence/ui-image-breakdowns/pages/campaigns/responsive-r748/campaigns-1280x1080.png"
+    }
+  ],
+  "timestamp": "2026-07-24T17:19:16.810Z"
+}

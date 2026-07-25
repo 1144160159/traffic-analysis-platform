@@ -1,0 +1,67 @@
+{
+  "page": "entity-graph",
+  "route": "/graph",
+  "revision": "r564",
+  "captured_at": "2026-07-20T18:49:00+08:00",
+  "browser": {
+    "backend": "Windows Chrome CDP over Xshell 9224",
+    "version": "Chrome/150.0.7871.128",
+    "viewport_css": "1707x898",
+    "device_pixel_ratio": 1.5,
+    "fullscreen": false
+  },
+  "runtime": {
+    "web_ui_revision": 749,
+    "image": "docker.io/traffic/web-ui:entity-graph-windowed-tabs-20260720-r564",
+    "manifest_digest": "sha256:5739561de415583349ac4348d1d3b0a4a05993b824dabd9b59197227b0997f52",
+    "image_id": "sha256:571c29d479f3f0a0f642146fe64325b82698caa9551ef03f9a51783c31d81cc8",
+    "ready": true,
+    "restarts": 0
+  },
+  "host_detail": {
+    "entity": "核心业务服务器",
+    "section_heading": "开放服务",
+    "services": ["TCP/22", "TCP/80", "TCP/443", "TCP/3306"],
+    "screenshot": "evidence/ui-image-breakdowns/pages/graph/entity-graph-r564-windowed.png"
+  },
+  "account_detail": {
+    "entity": "biz_admin",
+    "section_heading": "开放服务",
+    "services": ["RDP/3389", "SMB/445"],
+    "screenshot": "evidence/ui-image-breakdowns/pages/graph/entity-graph-r564-account-open-services.png"
+  },
+  "layout": {
+    "business_grid": {"x": 174, "y": 132, "width": 1523.33, "height": 664},
+    "detail": {"x": 1369.33, "y": 132, "width": 328, "height": 662},
+    "entity_detail_height": 390,
+    "evidence_height": 140,
+    "action_height": 116,
+    "horizontal_overflow_px": 0,
+    "vertical_overflow_px": 0,
+    "hidden_detail_elements": 0
+  },
+  "path_tabs": [
+    {"name": "最短路径", "inside_panel": true, "screenshot": "evidence/ui-image-breakdowns/pages/graph/entity-graph-r564-path-1.png"},
+    {"name": "攻击路径", "inside_panel": true, "screenshot": "evidence/ui-image-breakdowns/pages/graph/entity-graph-r564-path-2.png"},
+    {"name": "通信路径", "inside_panel": true, "screenshot": "evidence/ui-image-breakdowns/pages/graph/entity-graph-r564-path-3.png"},
+    {"name": "账号访问路径", "inside_panel": true, "screenshot": "evidence/ui-image-breakdowns/pages/graph/entity-graph-r564-path-4.png"}
+  ],
+  "actions": ["查看资产", "查看告警", "进入取证", "跳转攻击链", "审计日志"],
+  "checks": {
+    "open_services_present_for_host": true,
+    "open_services_present_for_account": true,
+    "query_governance_visible": true,
+    "all_actions_visible": true,
+    "all_path_tabs_inside_fixed_panel": true,
+    "no_business_region_overflow": true
+  },
+  "review": {
+    "result": "rejected_and_superseded",
+    "blockers": [
+      "toolbar crossed the main-column boundary and covered the detail title",
+      "communication target DB-SRV-01 was clipped by the Top peer region"
+    ],
+    "superseded_by": "entity-graph-open-services-r566.json"
+  },
+  "result": "superseded_rejected"
+}

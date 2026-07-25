@@ -1,0 +1,42 @@
+{
+  "status": "fail",
+  "backend": "windows-chrome-cdp",
+  "acceptance_eligible": false,
+  "reason": "Windows Chrome CDP evidence is separate from the older Codex Desktop extension receiver gate.",
+  "target_id": "graph",
+  "route_id": "graph",
+  "run_id": "entity-graph-r528",
+  "url": "http://10.0.5.8:30180/graph?windowsCdpEvidenceTs=1784512755963#codex_smoke_token=<redacted>",
+  "final_url": "http://10.0.5.8:30180/graph?windowsCdpEvidenceTs=1784512755963",
+  "expected_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "desktop_viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "stored_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "uploaded_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "post_capture_resize": false,
+  "cdp_url": "http://127.0.0.1:9224",
+  "browser": "Chrome/150.0.7871.128",
+  "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/graph.png",
+  "screenshot": "evidence/ui-image-breakdowns/pages/graph/entity-graph-r528/entity-graph-r528/graph-1920x1080.png",
+  "actual": "doc/02_acceptance/02-regression/ui-visual-interaction/entity-graph-r528/graph/actual-1920.png",
+  "protected_route": true,
+  "smoke_token_used": true,
+  "smoke_hash_consumed": true,
+  "captured_at": "2026-07-20T01:59:23.932Z",
+  "runtime_reasons": [
+    "1 request failures",
+    "1 console errors",
+    "1 page errors"
+  ]
+}

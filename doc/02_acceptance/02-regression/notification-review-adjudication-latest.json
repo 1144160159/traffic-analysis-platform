@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "page": "notifications",
+  "acceptance_revision": "r467",
+  "result": "accepted",
+  "logic_review": {
+    "result": "ACCEPT",
+    "p0": 0,
+    "p1": 0,
+    "closed_findings": [
+      "deadline uses complete live AlertInfo and current status",
+      "policy identity, version, delay, target and canonical stage fingerprint are immutable execution gates",
+      "stale processing recovery, lock-token ownership, heartbeat and bounded backoff are enforced",
+      "target_role changes the actual non-email destination",
+      "Slack, WeChat, DingTalk and Feishu require explicit business success"
+    ],
+    "p2": [
+      "normalize ALERT_STATUS_FALSE_POSITIVE and future aliases centrally",
+      "external providers without idempotency may receive a duplicate if delivery succeeds but history persistence fails",
+      "fan-out history is channel-level instead of per endpoint",
+      "heartbeat loss during deliberately long provider I/O lacks a live integration fixture",
+      "cmd/alert-service resolver wiring has no focused test file"
+    ]
+  },
+  "layout_review": {
+    "result": "ACCEPT",
+    "p0": 0,
+    "p1": 0,
+    "p2": [
+      "keyboard focus, 200 percent zoom and low-vision readability need a dedicated accessibility pass",
+      "breadcrumb, KPI icon and filter hierarchy are visually simpler than the reference"
+    ]
+  },
+  "main_thread_decision": "accept",
+  "basis": [
+    "63 of 63 live API checks passed",
+    "real worker evidence covers live alert replacement, policy mismatch cancellation and transient retry",
+    "Windows Chrome completed all 18 action families with 78 hit-testable buttons and 36 constrained drawers",
+    "business visual mismatch ratio 0.078162898 is below 0.125",
+    "both independent reviews returned P0=0 and P1=0"
+  ]
+}

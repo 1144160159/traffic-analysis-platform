@@ -1,0 +1,346 @@
+{
+  "result": "pass",
+  "generated_at": "2026-07-21T09:40:22+08:00",
+  "base_url": "http://10.0.5.8:30180",
+  "checks": {
+    "unauthorized_status": "401",
+    "low_scope_status": "403",
+    "authenticated_graph": {
+      "meta": {
+        "cache_applicable": false,
+        "cache_hit_rate": "N/A",
+        "data_origin": "nebula_graph_persisted_projection",
+        "depth": 2,
+        "edge_count": 13,
+        "entity_type": "all",
+        "node_count": 11,
+        "node_limit": 500,
+        "query_duration_ms": 21,
+        "site": "main",
+        "slow_query": false,
+        "source": "nebula_graph",
+        "time_range": "24h"
+      },
+      "graph": {
+        "center_id": "host:10.20.4.18",
+        "node_types": [
+          "account",
+          "alert",
+          "domain",
+          "evidence",
+          "host",
+          "ip",
+          "service"
+        ],
+        "evidence_ids": [
+          "ALERT-20260620-1287",
+          "AUDIT-GRAPH-0042",
+          "PCAP-20260620-0156",
+          "SESSION-20260620-3381",
+          "SESSION-20260620-4490"
+        ]
+      }
+    },
+    "account_filter": {
+      "meta": {
+        "cache_applicable": false,
+        "cache_hit_rate": "N/A",
+        "data_origin": "nebula_graph_persisted_projection",
+        "depth": 2,
+        "edge_count": 1,
+        "entity_type": "account",
+        "node_count": 2,
+        "node_limit": 500,
+        "query_duration_ms": 12,
+        "site": "main",
+        "slow_query": false,
+        "source": "nebula_graph",
+        "time_range": "all"
+      },
+      "node_ids": [
+        "host:10.20.4.18",
+        "account:biz_admin"
+      ],
+      "relation_ids": [
+        "rel-002"
+      ]
+    },
+    "filtered_account_path": {
+      "mode": "account",
+      "source_id": "account:biz_admin",
+      "target_id": "host:10.20.4.18",
+      "node_ids": [
+        "account:biz_admin",
+        "host:10.20.4.18"
+      ],
+      "edges": [
+        {
+          "relation_id": "rel-002",
+          "source_id": "account:biz_admin",
+          "target_id": "host:10.20.4.18",
+          "relation_type": "登录",
+          "risk_level": "low",
+          "evidence_id": "AUDIT-GRAPH-0042",
+          "attributes": {
+            "anomaly_reason": "非工作时间",
+            "attack_stage": "凭证访问",
+            "bytes": "86 MB",
+            "frequency": 7,
+            "identity_label": "高权限",
+            "latency_ms": 24,
+            "port": "3389",
+            "protocol": "RDP",
+            "service": "RDP"
+          },
+          "weight": 0.82,
+          "observed_at": 1784596719000
+        }
+      ],
+      "length": 1,
+      "risk_level": "low",
+      "evidence_ids": [
+        "AUDIT-GRAPH-0042"
+      ]
+    },
+    "path_modes": [
+      {
+        "mode": "account",
+        "source_id": "account:biz_admin",
+        "target_id": "host:10.20.4.18",
+        "length": 1,
+        "relations": [
+          "登录"
+        ],
+        "attributes": [
+          {
+            "anomaly_reason": "非工作时间",
+            "attack_stage": "凭证访问",
+            "bytes": "86 MB",
+            "frequency": 7,
+            "identity_label": "高权限",
+            "latency_ms": 24,
+            "port": "3389",
+            "protocol": "RDP",
+            "service": "RDP"
+          }
+        ],
+        "evidence_ids": [
+          "AUDIT-GRAPH-0042"
+        ]
+      },
+      {
+        "mode": "account",
+        "source_id": "account:biz_admin",
+        "target_id": "host:10.20.4.18",
+        "length": 1,
+        "relations": [
+          "登录"
+        ],
+        "attributes": [
+          {
+            "anomaly_reason": "非工作时间",
+            "attack_stage": "凭证访问",
+            "bytes": "86 MB",
+            "frequency": 7,
+            "identity_label": "高权限",
+            "latency_ms": 24,
+            "port": "3389",
+            "protocol": "RDP",
+            "service": "RDP"
+          }
+        ],
+        "evidence_ids": [
+          "AUDIT-GRAPH-0042"
+        ]
+      },
+      {
+        "mode": "attack",
+        "source_id": "ip:185.234.15.23",
+        "target_id": "alert:ALERT-20260620-1287",
+        "length": 2,
+        "relations": [
+          "通信",
+          "关联告警"
+        ],
+        "attributes": [
+          {
+            "action": "外部通信",
+            "attack_stage": "初始访问",
+            "bytes": "12.4 GB",
+            "frequency": 642,
+            "latency_ms": 18,
+            "port": "443",
+            "protocol": "TCP",
+            "service": "HTTPS"
+          },
+          {
+            "action": "告警关联",
+            "alert_count": 4,
+            "alert_stage": "数据外传",
+            "attack_stage": "数据外传"
+          }
+        ],
+        "evidence_ids": [
+          "PCAP-20260620-0156",
+          "ALERT-20260620-1287"
+        ]
+      },
+      {
+        "mode": "communication",
+        "source_id": "domain:erp.corp.edu.cn",
+        "target_id": "host:10.20.4.20",
+        "length": 2,
+        "relations": [
+          "DNS解析",
+          "通信"
+        ],
+        "attributes": [
+          {
+            "bytes": "180 MB",
+            "frequency": 221,
+            "latency_ms": 12,
+            "port": "53",
+            "protocol": "UDP",
+            "service": "DNS"
+          },
+          {
+            "bytes": "8.6 GB",
+            "frequency": 318,
+            "latency_ms": 23,
+            "port": "3306",
+            "protocol": "TCP",
+            "service": "MySQL"
+          }
+        ],
+        "evidence_ids": [
+          "SESSION-20260620-3381",
+          "PCAP-20260620-0156"
+        ]
+      },
+      {
+        "mode": "shortest",
+        "source_id": "ip:185.234.15.23",
+        "target_id": "host:10.20.4.20",
+        "length": 2,
+        "relations": [
+          "通信",
+          "通信"
+        ],
+        "attributes": [
+          {
+            "action": "外部通信",
+            "attack_stage": "初始访问",
+            "bytes": "12.4 GB",
+            "frequency": 642,
+            "latency_ms": 18,
+            "port": "443",
+            "protocol": "TCP",
+            "service": "HTTPS"
+          },
+          {
+            "bytes": "8.6 GB",
+            "frequency": 318,
+            "latency_ms": 23,
+            "port": "3306",
+            "protocol": "TCP",
+            "service": "MySQL"
+          }
+        ],
+        "evidence_ids": [
+          "PCAP-20260620-0156"
+        ]
+      }
+    ],
+    "reverse_attack_is_rejected": {
+      "mode": "attack",
+      "source_id": "alert:ALERT-20260620-1287",
+      "target_id": "ip:185.234.15.23",
+      "node_ids": [],
+      "edges": [],
+      "length": 0,
+      "risk_level": "",
+      "evidence_ids": []
+    },
+    "cross_tenant_query_isolated": {
+      "cache_applicable": false,
+      "cache_hit_rate": "N/A",
+      "data_origin": "nebula_graph_persisted_projection",
+      "depth": 2,
+      "edge_count": 0,
+      "entity_type": "all",
+      "node_count": 0,
+      "node_limit": 500,
+      "query_duration_ms": 14,
+      "site": "main",
+      "slow_query": false,
+      "source": "nebula_graph",
+      "time_range": "24h"
+    },
+    "cross_tenant_path_isolated": {
+      "mode": "shortest",
+      "source_id": "ip:185.234.15.23",
+      "target_id": "host:10.20.4.20",
+      "node_ids": [],
+      "edges": [],
+      "length": 0,
+      "risk_level": "",
+      "evidence_ids": []
+    },
+    "nebula_cluster": [
+      {
+        "name": "nebula-graph-769b6f5756-d4zd6",
+        "component": "graph",
+        "ready": true,
+        "restarts": 0
+      },
+      {
+        "name": "nebula-graph-769b6f5756-j4zk8",
+        "component": "graph",
+        "ready": true,
+        "restarts": 0
+      },
+      {
+        "name": "nebula-graph-769b6f5756-n55vc",
+        "component": "graph",
+        "ready": true,
+        "restarts": 0
+      },
+      {
+        "name": "nebula-meta-0",
+        "component": "meta",
+        "ready": true,
+        "restarts": 0
+      },
+      {
+        "name": "nebula-meta-1",
+        "component": "meta",
+        "ready": true,
+        "restarts": 0
+      },
+      {
+        "name": "nebula-meta-2",
+        "component": "meta",
+        "ready": true,
+        "restarts": 0
+      },
+      {
+        "name": "nebula-storage-0",
+        "component": "storage",
+        "ready": true,
+        "restarts": 0
+      },
+      {
+        "name": "nebula-storage-1",
+        "component": "storage",
+        "ready": true,
+        "restarts": 0
+      },
+      {
+        "name": "nebula-storage-2",
+        "component": "storage",
+        "ready": true,
+        "restarts": 0
+      }
+    ]
+  }
+}

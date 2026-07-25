@@ -1,0 +1,550 @@
+{
+  "package_id": "windows_chrome_cdp_full_route_capture",
+  "run_id": "seven-menu-baseline-r523",
+  "result": "fail",
+  "runtime_result": "fail",
+  "visual_diff_result": "fail",
+  "generated_at": "2026-07-20T01:08:08.426Z",
+  "base_url": "http://10.0.5.8:30180",
+  "cdp_url": "http://127.0.0.1:9224",
+  "cdp_version": {
+    "Browser": "Chrome/150.0.7871.128",
+    "Protocol-Version": "1.3",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36",
+    "V8-Version": "15.0.1240245",
+    "WebKit-Version": "537.36 (@81891e5ca708047763816c778216799ef14c66cb)",
+    "webSocketDebuggerUrl": "ws://127.0.0.1:9224/devtools/browser/75350330-9a80-4c6e-a2b0-824c491d5c3a"
+  },
+  "cdp_targets_count": 3,
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "evidence_dir": "evidence/ui-image-breakdowns/redevelopment-seven-menu-baseline-r523/seven-menu-baseline-r523",
+  "acceptance_dir": "doc/02_acceptance/02-regression/redevelopment-seven-menu-baseline-r523",
+  "target_mode": "visual-targets",
+  "capture_plan": "doc/02_acceptance/02-regression/ui-visual-interaction/capture-plan-latest.json",
+  "output_json": "doc/02_acceptance/02-regression/redevelopment-seven-menu-baseline-r523.json",
+  "output_md": "doc/02_acceptance/02-regression/redevelopment-seven-menu-baseline-r523.md",
+  "alert_id": "alert-default-1782752318016-1dd589c4",
+  "campaign_id": "campaign-exfil-default-1782729598739-e1d2dc37",
+  "auth": {
+    "strategy": "hash-smoke-token",
+    "smoke_token_source": "generated-from-k8s-secret",
+    "smoke_token_env": "DESKTOP_SMOKE_TOKEN",
+    "token_material_redacted": true
+  },
+  "max_pixel_ratio": 0.015,
+  "channel_tolerance": 0,
+  "summary": {
+    "total": 7,
+    "runtime_pass": 0,
+    "runtime_fail": 7,
+    "visual_diff_total": 7,
+    "visual_diff_pass": 0,
+    "visual_diff_fail": 7,
+    "failed_runtime_routes": [
+      "alerts",
+      "campaigns",
+      "attack-chains",
+      "graph",
+      "fusion",
+      "baselines",
+      "topics"
+    ],
+    "failed_visual_diff_routes": [
+      "alerts",
+      "campaigns",
+      "attack-chains",
+      "graph",
+      "fusion",
+      "baselines",
+      "topics"
+    ]
+  },
+  "routes": [
+    {
+      "id": "alerts",
+      "route_id": "alerts",
+      "title": "告警中心",
+      "route": "/alerts",
+      "resolved_path": "/alerts",
+      "url": "http://10.0.5.8:30180/alerts?windowsCdpEvidenceTs=1784509614534#codex_smoke_token=<redacted>",
+      "final_url": "http://10.0.5.8:30180/alerts?windowsCdpEvidenceTs=1784509614534",
+      "screenshot": "evidence/ui-image-breakdowns/redevelopment-seven-menu-baseline-r523/seven-menu-baseline-r523/alerts-1920x1080.png",
+      "acceptance_actual": "doc/02_acceptance/02-regression/redevelopment-seven-menu-baseline-r523/alerts/actual-1920.png",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/alerts.png",
+      "duration_ms": 15711,
+      "goto_error": null,
+      "bad_responses": [],
+      "request_failures": [
+        {
+          "url": "https://api.yhchj.com/ip",
+          "method": "GET",
+          "failure": "net::ERR_CONNECTION_CLOSED"
+        }
+      ],
+      "console_errors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_CONNECTION_CLOSED"
+        }
+      ],
+      "page_errors": [
+        {
+          "message": "Object"
+        },
+        {
+          "message": "Cannot read properties of null (reading 'disconnect')"
+        }
+      ],
+      "metrics": {
+        "final_url": "http://10.0.5.8:30180/alerts?windowsCdpEvidenceTs=1784509614534",
+        "document_title": "园区网络全流量采集与分析系统",
+        "h1": "告警中心",
+        "body_text_sample": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-20 09:06:55 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 采集监测 威胁分析 告警中心 128 战役列表 攻击链分析 加密流量 取证分析 资产图谱 检测运营 审计配置 C codex-windows-cdp-admin 系统管理员 在线 告警中心 自定义视图 保存视图 批量确认 批量操作 行操作 告警队列 筛选检索 时间窗 资产 全部资产 目的 IP 规则 全部规则 模型 全部模型 攻击阶段 全部阶段 状态 全部状态 置信度 全部 重 置 查 询 告警列表（共 28 条） 研判中 批量指派 批量状态变更 导出 告警 ID 风险等级 告警名称 攻击阶段 源 IP 目的 IP 受影响资产 规则/模型 置信度 首次发生 状态 操作 告警 ID 风险等级 告警名称 攻击阶段 源 IP 目的 IP 受影响资产 规则/模型 置信度 首次发生 状态 操作 ALERT-SIM-0001-SIM0001 高危 疑似 C2 隧道通信 命令与控制 172.16.5.10:44321 185.22.14.9:443 办公区-WS-1024 ",
+        "scroll_width": 1920,
+        "client_width": 1920,
+        "scroll_height": 1080,
+        "client_height": 1080,
+        "horizontal_overflow": false,
+        "error_alerts": [],
+        "visible_bad_geometry": []
+      },
+      "protected_route": true,
+      "smoke_token_used": true,
+      "smoke_hash_consumed": true,
+      "runtime_status": "fail",
+      "runtime_reasons": [
+        "1 request failures",
+        "1 console errors",
+        "1 page errors"
+      ],
+      "visual_diff": {
+        "skipped": false,
+        "status": "fail",
+        "exit_code": 1,
+        "pixel_mismatch_ratio": 0.9998722029320988,
+        "stdout": "{\"status\": \"fail\", \"target_id\": \"alerts\", \"pixel_mismatch_ratio\": 0.9998722029320988, \"comparison_scope\": \"full-image\", \"scoring_region\": {\"id\": \"full-image\", \"x\": 0, \"y\": 0, \"width\": 1920, \"height\": 1080}}",
+        "stderr": "",
+        "metrics": "doc/02_acceptance/02-regression/redevelopment-seven-menu-baseline-r523/alerts/metrics.json",
+        "diff": "doc/02_acceptance/02-regression/redevelopment-seven-menu-baseline-r523/alerts/diff-1920.png"
+      },
+      "capture_meta": "doc/02_acceptance/02-regression/redevelopment-seven-menu-baseline-r523/alerts/capture-meta.json"
+    },
+    {
+      "id": "campaigns",
+      "route_id": "campaigns",
+      "title": "战役列表",
+      "route": "/campaigns",
+      "resolved_path": "/campaigns",
+      "url": "http://10.0.5.8:30180/campaigns?windowsCdpEvidenceTs=1784509614534#codex_smoke_token=<redacted>",
+      "final_url": "http://10.0.5.8:30180/campaigns?windowsCdpEvidenceTs=1784509614534",
+      "screenshot": "evidence/ui-image-breakdowns/redevelopment-seven-menu-baseline-r523/seven-menu-baseline-r523/campaigns-1920x1080.png",
+      "acceptance_actual": "doc/02_acceptance/02-regression/redevelopment-seven-menu-baseline-r523/campaigns/actual-1920.png",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/campaigns.png",
+      "duration_ms": 6983,
+      "goto_error": null,
+      "bad_responses": [],
+      "request_failures": [
+        {
+          "url": "https://api.yhchj.com/ip",
+          "method": "GET",
+          "failure": "net::ERR_CONNECTION_CLOSED"
+        }
+      ],
+      "console_errors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_CONNECTION_CLOSED"
+        }
+      ],
+      "page_errors": [
+        {
+          "message": "Object"
+        },
+        {
+          "message": "Cannot read properties of null (reading 'disconnect')"
+        }
+      ],
+      "metrics": {
+        "final_url": "http://10.0.5.8:30180/campaigns?windowsCdpEvidenceTs=1784509614534",
+        "document_title": "园区网络全流量采集与分析系统",
+        "h1": "战役列表",
+        "body_text_sample": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-20 09:07:12 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 采集监测 威胁分析 告警中心 128 战役列表 攻击链分析 加密流量 取证分析 资产图谱 检测运营 审计配置 C codex-windows-cdp-admin 系统管理员 在线 战役列表 战役详情 战役总数 9.1M 个 真实 API 当前页活跃 0 个 当前页 API 当前页影响资产 16 台 当前页 API 当前页高风险 0 个 当前页 API 当前页告警 25 条 当前页 API 当前页最长持续 0 小时 当前页 API 当前页风险分布 高风险 0 (0.0%) 中风险 8 (100.0%) 低风险 0 (0.0%) 战役列表（共 9085485 个） 模拟指派负责人 模拟变更状态 风险等级 全部 状态 全部 阶段 全部 战役名称 / 关键字 重 置 查 询 战役名称 阶段 风险等级 影响资产 告警数 首次发现 最近活动 状态 操作 campaign-exfil-default-1783876075253-d150e2f8 外联通信 中风险 2 2 0",
+        "scroll_width": 1920,
+        "client_width": 1920,
+        "scroll_height": 1080,
+        "client_height": 1080,
+        "horizontal_overflow": false,
+        "error_alerts": [],
+        "visible_bad_geometry": []
+      },
+      "protected_route": true,
+      "smoke_token_used": true,
+      "smoke_hash_consumed": true,
+      "runtime_status": "fail",
+      "runtime_reasons": [
+        "1 request failures",
+        "1 console errors",
+        "1 page errors"
+      ],
+      "visual_diff": {
+        "skipped": false,
+        "status": "fail",
+        "exit_code": 1,
+        "pixel_mismatch_ratio": 0.999918499228395,
+        "stdout": "{\"status\": \"fail\", \"target_id\": \"campaigns\", \"pixel_mismatch_ratio\": 0.999918499228395, \"comparison_scope\": \"full-image\", \"scoring_region\": {\"id\": \"full-image\", \"x\": 0, \"y\": 0, \"width\": 1920, \"height\": 1080}}",
+        "stderr": "",
+        "metrics": "doc/02_acceptance/02-regression/redevelopment-seven-menu-baseline-r523/campaigns/metrics.json",
+        "diff": "doc/02_acceptance/02-regression/redevelopment-seven-menu-baseline-r523/campaigns/diff-1920.png"
+      },
+      "capture_meta": "doc/02_acceptance/02-regression/redevelopment-seven-menu-baseline-r523/campaigns/capture-meta.json"
+    },
+    {
+      "id": "attack-chains",
+      "route_id": "attack-chains",
+      "title": "攻击链分析",
+      "route": "/attack-chains",
+      "resolved_path": "/attack-chains",
+      "url": "http://10.0.5.8:30180/attack-chains?windowsCdpEvidenceTs=1784509614534#codex_smoke_token=<redacted>",
+      "final_url": "http://10.0.5.8:30180/attack-chains?windowsCdpEvidenceTs=1784509614534",
+      "screenshot": "evidence/ui-image-breakdowns/redevelopment-seven-menu-baseline-r523/seven-menu-baseline-r523/attack-chains-1920x1080.png",
+      "acceptance_actual": "doc/02_acceptance/02-regression/redevelopment-seven-menu-baseline-r523/attack-chains/actual-1920.png",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/attack-chains.png",
+      "duration_ms": 7089,
+      "goto_error": null,
+      "bad_responses": [],
+      "request_failures": [
+        {
+          "url": "https://api.yhchj.com/ip",
+          "method": "GET",
+          "failure": "net::ERR_CONNECTION_CLOSED"
+        }
+      ],
+      "console_errors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_CONNECTION_CLOSED"
+        }
+      ],
+      "page_errors": [
+        {
+          "message": "Object"
+        },
+        {
+          "message": "Cannot read properties of null (reading 'disconnect')"
+        }
+      ],
+      "metrics": {
+        "final_url": "http://10.0.5.8:30180/attack-chains?windowsCdpEvidenceTs=1784509614534",
+        "document_title": "园区网络全流量采集与分析系统",
+        "h1": "攻击链分析",
+        "body_text_sample": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-20 09:07:20 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 采集监测 威胁分析 告警中心 128 战役列表 攻击链分析 加密流量 取证分析 资产图谱 检测运营 审计配置 C codex-windows-cdp-admin 系统管理员 在线 攻击链分析 选择战役 疑似 C2 隧道通信 时间范围 2026-06-19 00:00:00 ~ 2026-06-20 03:45:00 资产范围 全部资产 视图模式 攻击链视图 导出报告 下钻图谱 触发响应 链路详情 攻击链画布 攻击阶段 MITRE ATT&CK 攻击阶段 实体 / 资产 告警事件 证据锚点 处置动作 1 侦察 TA0043 203.0.113.45 端口扫描探测 06-19 01:12:08 DNS 解析记录 pcap / sysmon / session 封禁源 IP 低影响 2 初始访问 TA0001 边界防火墙 FW-01 Web 漏洞利用 06-19 01:18:08 HTTP 请求包 pcap / sysmon / session WAF 规则加固 低",
+        "scroll_width": 1920,
+        "client_width": 1920,
+        "scroll_height": 1080,
+        "client_height": 1080,
+        "horizontal_overflow": false,
+        "error_alerts": [],
+        "visible_bad_geometry": []
+      },
+      "protected_route": true,
+      "smoke_token_used": true,
+      "smoke_hash_consumed": true,
+      "runtime_status": "fail",
+      "runtime_reasons": [
+        "1 request failures",
+        "1 console errors",
+        "1 page errors"
+      ],
+      "visual_diff": {
+        "skipped": false,
+        "status": "fail",
+        "exit_code": 1,
+        "pixel_mismatch_ratio": 0.9999233217592592,
+        "stdout": "{\"status\": \"fail\", \"target_id\": \"attack-chains\", \"pixel_mismatch_ratio\": 0.9999233217592592, \"comparison_scope\": \"full-image\", \"scoring_region\": {\"id\": \"full-image\", \"x\": 0, \"y\": 0, \"width\": 1920, \"height\": 1080}}",
+        "stderr": "",
+        "metrics": "doc/02_acceptance/02-regression/redevelopment-seven-menu-baseline-r523/attack-chains/metrics.json",
+        "diff": "doc/02_acceptance/02-regression/redevelopment-seven-menu-baseline-r523/attack-chains/diff-1920.png"
+      },
+      "capture_meta": "doc/02_acceptance/02-regression/redevelopment-seven-menu-baseline-r523/attack-chains/capture-meta.json"
+    },
+    {
+      "id": "graph",
+      "route_id": "graph",
+      "title": "实体图谱",
+      "route": "/graph",
+      "resolved_path": "/graph",
+      "url": "http://10.0.5.8:30180/graph?windowsCdpEvidenceTs=1784509614534#codex_smoke_token=<redacted>",
+      "final_url": "http://10.0.5.8:30180/graph?windowsCdpEvidenceTs=1784509614534",
+      "screenshot": "evidence/ui-image-breakdowns/redevelopment-seven-menu-baseline-r523/seven-menu-baseline-r523/graph-1920x1080.png",
+      "acceptance_actual": "doc/02_acceptance/02-regression/redevelopment-seven-menu-baseline-r523/graph/actual-1920.png",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/graph.png",
+      "duration_ms": 7136,
+      "goto_error": null,
+      "bad_responses": [],
+      "request_failures": [
+        {
+          "url": "https://api.yhchj.com/ip",
+          "method": "GET",
+          "failure": "net::ERR_CONNECTION_CLOSED"
+        }
+      ],
+      "console_errors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_CONNECTION_CLOSED"
+        }
+      ],
+      "page_errors": [
+        {
+          "message": "Object"
+        },
+        {
+          "message": "Cannot read properties of null (reading 'disconnect')"
+        }
+      ],
+      "metrics": {
+        "final_url": "http://10.0.5.8:30180/graph?windowsCdpEvidenceTs=1784509614534",
+        "document_title": "园区网络全流量采集与分析系统",
+        "h1": "实体图谱",
+        "body_text_sample": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-20 09:07:28 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 采集监测 威胁分析 资产图谱 资产台账 实体图谱 数据融合 行为基准 检测运营 审计配置 C codex-windows-cdp-admin 系统管理员 在线 实体图谱 定位中心节点 近24小时 主园区 实体类型：全部 关系深度：二跳 路径分析 保存视图 导出证据 实体详情 路径分析 实体节点 1 个 真实 API 关系边 0 条 真实 API 异常路径 0 条 真实 API 关键资产 0 个 真实 API 告警关联 0 条 真实 API 邻居图谱 查询耗时 278 ms 节点 10 关系 12 IP地址 主机 账号 域名 服务 告警 证据 通信 登录 通信 通信 通信 DNS解析 证据引用 关联告警 可疑外部IP 185.234.15.23 biz_admin 账号 WEB-SRV-02 10.20.4.19 边界网关 10.20.0.1 核心业务服务器 10.20.4.18 DB-SRV-01 10.20.4.20 erp.corp.edu.cn 域名 P",
+        "scroll_width": 1920,
+        "client_width": 1920,
+        "scroll_height": 1080,
+        "client_height": 1080,
+        "horizontal_overflow": false,
+        "error_alerts": [],
+        "visible_bad_geometry": []
+      },
+      "protected_route": true,
+      "smoke_token_used": true,
+      "smoke_hash_consumed": true,
+      "runtime_status": "fail",
+      "runtime_reasons": [
+        "1 request failures",
+        "1 console errors",
+        "1 page errors"
+      ],
+      "visual_diff": {
+        "skipped": false,
+        "status": "fail",
+        "exit_code": 1,
+        "pixel_mismatch_ratio": 0.9999300733024692,
+        "stdout": "{\"status\": \"fail\", \"target_id\": \"graph\", \"pixel_mismatch_ratio\": 0.9999300733024692, \"comparison_scope\": \"full-image\", \"scoring_region\": {\"id\": \"full-image\", \"x\": 0, \"y\": 0, \"width\": 1920, \"height\": 1080}}",
+        "stderr": "",
+        "metrics": "doc/02_acceptance/02-regression/redevelopment-seven-menu-baseline-r523/graph/metrics.json",
+        "diff": "doc/02_acceptance/02-regression/redevelopment-seven-menu-baseline-r523/graph/diff-1920.png"
+      },
+      "capture_meta": "doc/02_acceptance/02-regression/redevelopment-seven-menu-baseline-r523/graph/capture-meta.json"
+    },
+    {
+      "id": "fusion",
+      "route_id": "fusion",
+      "title": "数据融合",
+      "route": "/fusion",
+      "resolved_path": "/fusion",
+      "url": "http://10.0.5.8:30180/fusion?windowsCdpEvidenceTs=1784509614534#codex_smoke_token=<redacted>",
+      "final_url": "http://10.0.5.8:30180/fusion?windowsCdpEvidenceTs=1784509614534",
+      "screenshot": "evidence/ui-image-breakdowns/redevelopment-seven-menu-baseline-r523/seven-menu-baseline-r523/fusion-1920x1080.png",
+      "acceptance_actual": "doc/02_acceptance/02-regression/redevelopment-seven-menu-baseline-r523/fusion/actual-1920.png",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/fusion.png",
+      "duration_ms": 16244,
+      "goto_error": null,
+      "bad_responses": [],
+      "request_failures": [
+        {
+          "url": "https://api.yhchj.com/ip",
+          "method": "GET",
+          "failure": "net::ERR_CONNECTION_CLOSED"
+        }
+      ],
+      "console_errors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_CONNECTION_CLOSED"
+        }
+      ],
+      "page_errors": [
+        {
+          "message": "Object"
+        },
+        {
+          "message": "Cannot read properties of null (reading 'disconnect')"
+        }
+      ],
+      "metrics": {
+        "final_url": "http://10.0.5.8:30180/fusion?windowsCdpEvidenceTs=1784509614534",
+        "document_title": "园区网络全流量采集与分析系统",
+        "h1": "数据融合",
+        "body_text_sample": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-20 09:07:36 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 采集监测 威胁分析 资产图谱 资产台账 实体图谱 数据融合 行为基准 检测运营 审计配置 C codex-windows-cdp-admin 系统管理员 在线 数据融合 原始状态 规则编辑 数据源状态 Flow 流量元数据 正常 接入批次 2026062507 更新延迟 32s 字段覆盖 92.3% Asset 资产信息 正常 接入批次 2026062506 更新延迟 18s 字段覆盖 94.7% Device Log 设备日志 波动 接入批次 2026062506 更新延迟 56s 字段覆盖 88.1% User Event 用户事件 正常 接入批次 2026062507 更新延迟 21s 字段覆盖 98.8% Threat Intel 威胁情报 延迟 接入批次 2026062506 更新延迟 45s 字段覆盖 98.5% Vuln 漏洞信息 波动 接入批次 2026062505 更新延迟 67s 字段覆盖 86.2% 多源融合编排（映射与对齐流程） 编辑规",
+        "scroll_width": 1920,
+        "client_width": 1920,
+        "scroll_height": 1080,
+        "client_height": 1080,
+        "horizontal_overflow": false,
+        "error_alerts": [],
+        "visible_bad_geometry": []
+      },
+      "protected_route": true,
+      "smoke_token_used": true,
+      "smoke_hash_consumed": true,
+      "runtime_status": "fail",
+      "runtime_reasons": [
+        "1 request failures",
+        "1 console errors",
+        "1 page errors"
+      ],
+      "visual_diff": {
+        "skipped": false,
+        "status": "fail",
+        "exit_code": 1,
+        "pixel_mismatch_ratio": 0.9999628665123457,
+        "stdout": "{\"status\": \"fail\", \"target_id\": \"fusion\", \"pixel_mismatch_ratio\": 0.9999628665123457, \"comparison_scope\": \"full-image\", \"scoring_region\": {\"id\": \"full-image\", \"x\": 0, \"y\": 0, \"width\": 1920, \"height\": 1080}}",
+        "stderr": "",
+        "metrics": "doc/02_acceptance/02-regression/redevelopment-seven-menu-baseline-r523/fusion/metrics.json",
+        "diff": "doc/02_acceptance/02-regression/redevelopment-seven-menu-baseline-r523/fusion/diff-1920.png"
+      },
+      "capture_meta": "doc/02_acceptance/02-regression/redevelopment-seven-menu-baseline-r523/fusion/capture-meta.json"
+    },
+    {
+      "id": "baselines",
+      "route_id": "baselines",
+      "title": "行为基准",
+      "route": "/baselines",
+      "resolved_path": "/baselines",
+      "url": "http://10.0.5.8:30180/baselines?windowsCdpEvidenceTs=1784509614534#codex_smoke_token=<redacted>",
+      "final_url": "http://10.0.5.8:30180/baselines?windowsCdpEvidenceTs=1784509614534",
+      "screenshot": "evidence/ui-image-breakdowns/redevelopment-seven-menu-baseline-r523/seven-menu-baseline-r523/baselines-1920x1080.png",
+      "acceptance_actual": "doc/02_acceptance/02-regression/redevelopment-seven-menu-baseline-r523/baselines/actual-1920.png",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/baselines.png",
+      "duration_ms": 6871,
+      "goto_error": null,
+      "bad_responses": [],
+      "request_failures": [
+        {
+          "url": "https://api.yhchj.com/ip",
+          "method": "GET",
+          "failure": "net::ERR_CONNECTION_CLOSED"
+        }
+      ],
+      "console_errors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_CONNECTION_CLOSED"
+        }
+      ],
+      "page_errors": [
+        {
+          "message": "Object"
+        },
+        {
+          "message": "Cannot read properties of null (reading 'disconnect')"
+        }
+      ],
+      "metrics": {
+        "final_url": "http://10.0.5.8:30180/baselines?windowsCdpEvidenceTs=1784509614534",
+        "document_title": "园区网络全流量采集与分析系统",
+        "h1": "行为基准",
+        "body_text_sample": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-20 09:07:52 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 采集监测 威胁分析 资产图谱 资产台账 实体图谱 数据融合 行为基准 检测运营 审计配置 C codex-windows-cdp-admin 系统管理员 在线 行为基准 管理基线 阈值编辑 资产基线 账号基线 端口基线 协议基线 时间段基线 资产组 全部资产组 历史窗口 近 30 天 学习状态 全部 漂移状态 全部 版本 全部版本 偏离资产 0 个 真实 API 新端口 0 个 真实 API 异常协议 0 类 真实 API 夜间访问 0 个 真实 API 基线稳定度 100.0% 真实 API 基线状态机 学习中 对象 128 占比 3.8% 稳定 对象 3,021 占比 90.6% 漂移观察 对象 42 占比 1.3% 待重建 对象 15 占比 0.4% 已冻结 对象 217 占比 6.5% 行为分布分析（IP行为基线 10.0.5.8） 会话长度（秒） 目的端口数（个/小时） 时间段 vs 流量偏离 均值 P50 P95 P99 阈值上限 阈值下限 偏离列",
+        "scroll_width": 1920,
+        "client_width": 1920,
+        "scroll_height": 1080,
+        "client_height": 1080,
+        "horizontal_overflow": false,
+        "error_alerts": [],
+        "visible_bad_geometry": []
+      },
+      "protected_route": true,
+      "smoke_token_used": true,
+      "smoke_hash_consumed": true,
+      "runtime_status": "fail",
+      "runtime_reasons": [
+        "1 request failures",
+        "1 console errors",
+        "1 page errors"
+      ],
+      "visual_diff": {
+        "skipped": false,
+        "status": "fail",
+        "exit_code": 1,
+        "pixel_mismatch_ratio": 0.9999363425925926,
+        "stdout": "{\"status\": \"fail\", \"target_id\": \"baselines\", \"pixel_mismatch_ratio\": 0.9999363425925926, \"comparison_scope\": \"full-image\", \"scoring_region\": {\"id\": \"full-image\", \"x\": 0, \"y\": 0, \"width\": 1920, \"height\": 1080}}",
+        "stderr": "",
+        "metrics": "doc/02_acceptance/02-regression/redevelopment-seven-menu-baseline-r523/baselines/metrics.json",
+        "diff": "doc/02_acceptance/02-regression/redevelopment-seven-menu-baseline-r523/baselines/diff-1920.png"
+      },
+      "capture_meta": "doc/02_acceptance/02-regression/redevelopment-seven-menu-baseline-r523/baselines/capture-meta.json"
+    },
+    {
+      "id": "topics",
+      "route_id": "topics",
+      "title": "专题面板",
+      "route": "/topics",
+      "resolved_path": "/topics",
+      "url": "http://10.0.5.8:30180/topics?windowsCdpEvidenceTs=1784509614534#codex_smoke_token=<redacted>",
+      "final_url": "http://10.0.5.8:30180/topics?windowsCdpEvidenceTs=1784509614534",
+      "screenshot": "evidence/ui-image-breakdowns/redevelopment-seven-menu-baseline-r523/seven-menu-baseline-r523/topics-1920x1080.png",
+      "acceptance_actual": "doc/02_acceptance/02-regression/redevelopment-seven-menu-baseline-r523/topics/actual-1920.png",
+      "source_image": "doc/04_assets/ui_suite_gpt_v1/screens/pages/topics-encrypted-tunnel.png",
+      "duration_ms": 7847,
+      "goto_error": null,
+      "bad_responses": [],
+      "request_failures": [
+        {
+          "url": "https://api.yhchj.com/ip",
+          "method": "GET",
+          "failure": "net::ERR_CONNECTION_CLOSED"
+        }
+      ],
+      "console_errors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: net::ERR_CONNECTION_CLOSED"
+        }
+      ],
+      "page_errors": [
+        {
+          "message": "Object"
+        },
+        {
+          "message": "Cannot read properties of null (reading 'disconnect')"
+        }
+      ],
+      "metrics": {
+        "final_url": "http://10.0.5.8:30180/topics?windowsCdpEvidenceTs=1784509614534",
+        "document_title": "园区网络全流量采集与分析系统",
+        "h1": "专题面板",
+        "body_text_sample": "园区网络全流量采集与分析系统 站点 主园区 时间 2026-07-20 09:08:00 风险态势 高风险 87/100 告警总数 128 / 24h 关键告警 9 / 24h 采集健康度 98.6% 在线探针 24/25 数据质量 99.1% 合格率 PCAP检索 资产检索 规则检索 脚本中心 帮助中心 更多应用 综合态势 仪表盘 态势大屏 专题面板 采集监测 威胁分析 资产图谱 检测运营 审计配置 C codex-windows-cdp-admin 系统管理员 在线 专题面板 加密隧道专题 数据外传专题 APT/战役专题 范围编辑 保存视图 专题ID： tunnel-20260620-01 站点： 主校区 资产组： 办公终端 / 服务群组 IP 段： 10.12.0.0/16 协议： SSH / TLS / HTTPS / RDP / SOCKS 时间窗： 近 7 天 (2026-06-13 00:00:00 ~ 2026-06-20 03:45:00) 规则： 加密隧道识别规则集 v2.1 模型： 加密隧道识别模型 v1.3 隧道协议数 0 等待 API 高频隧道源 0 等待 API 加密会话流量 0 等待 API 异常隧道数 0 等待 API 隧道端点数 0 等待 API 可疑隧道占比 0 等待 API 证据完整度 81.0% PCAP/Session 报告置信度 0 等待",
+        "scroll_width": 1920,
+        "client_width": 1920,
+        "scroll_height": 1080,
+        "client_height": 1080,
+        "horizontal_overflow": false,
+        "error_alerts": [],
+        "visible_bad_geometry": []
+      },
+      "protected_route": true,
+      "smoke_token_used": true,
+      "smoke_hash_consumed": true,
+      "runtime_status": "fail",
+      "runtime_reasons": [
+        "1 request failures",
+        "1 console errors",
+        "1 page errors"
+      ],
+      "visual_diff": {
+        "skipped": false,
+        "status": "fail",
+        "exit_code": 1,
+        "pixel_mismatch_ratio": 0.9999040316358024,
+        "stdout": "{\"status\": \"fail\", \"target_id\": \"topics\", \"pixel_mismatch_ratio\": 0.9999040316358024, \"comparison_scope\": \"full-image\", \"scoring_region\": {\"id\": \"full-image\", \"x\": 0, \"y\": 0, \"width\": 1920, \"height\": 1080}}",
+        "stderr": "",
+        "metrics": "doc/02_acceptance/02-regression/redevelopment-seven-menu-baseline-r523/topics/metrics.json",
+        "diff": "doc/02_acceptance/02-regression/redevelopment-seven-menu-baseline-r523/topics/diff-1920.png"
+      },
+      "capture_meta": "doc/02_acceptance/02-regression/redevelopment-seven-menu-baseline-r523/topics/capture-meta.json"
+    }
+  ]
+}
