@@ -67,7 +67,9 @@ const cdp = await page.context().newCDPSession(page);
 fs.mkdirSync(evidenceDir, { recursive: true });
 const accessToken = token();
 const runs = [];
+let exitCode = 1;
 
+try {
 for (const viewport of viewports) {
   const url = new URL('/campaigns', baseUrl);
   url.searchParams.set('campaignResponsiveTs', String(Date.now()));
@@ -208,5 +210,9 @@ const result = {
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 fs.writeFileSync(outputPath, `${JSON.stringify(result, null, 2)}\n`);
 console.log(JSON.stringify(result, null, 2));
-await page.close();
-process.exit(result.result === 'pass' ? 0 : 1);
+exitCode = result.result === 'pass' ? 0 : 1;
+} finally {
+  await cdp.send('Emulation.clearDeviceMetricsOverride').catch(() => {});
+  await page.close().catch(() => {});
+}
+process.exit(exitCode);
