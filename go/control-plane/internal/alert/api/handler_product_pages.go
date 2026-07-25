@@ -79,6 +79,7 @@ type encryptedTunnelProtocolDTO struct {
 
 type encryptedTunnelUserDTO struct {
 	IP         string `json:"ip"`
+	DstIP      string `json:"dst_ip"`
 	Count      int64  `json:"count"`
 	Protocol   string `json:"protocol"`
 	Risk       string `json:"risk"`
@@ -116,6 +117,8 @@ type encryptedExfiltrationRiskDTO struct {
 type encryptedExfiltrationPathDTO struct {
 	SrcIP        string `json:"src_ip"`
 	DstIP        string `json:"dst_ip"`
+	DstPort      uint32 `json:"dst_port"`
+	Protocol     string `json:"protocol"`
 	SessionCount int64  `json:"session_count"`
 	UploadBytes  uint64 `json:"upload_bytes"`
 	LastSeen     int64  `json:"last_seen"`
@@ -730,6 +733,14 @@ type topicExportRequest struct {
 	Format     string                 `json:"format"`
 	TimeRange  *complianceRange       `json:"time_range"`
 	Parameters map[string]interface{} `json:"parameters"`
+}
+
+type topicActionRequest struct {
+	Action   string                 `json:"action"`
+	Label    string                 `json:"label"`
+	Target   string                 `json:"target"`
+	DataMode string                 `json:"data_mode"`
+	Detail   map[string]interface{} `json:"detail"`
 }
 
 type auditTrailDTO struct {
@@ -1466,10 +1477,26 @@ func (h *SystemHandler) GetExfiltrationTopic(w http.ResponseWriter, r *http.Requ
 
 	var uploadBytes uint64
 	var sessionCount int64
+	var maxSourceUploadBytes uint64
 	for _, source := range sources {
 		uploadBytes += source.UploadBytes
 		sessionCount += source.SessionCount
+		if source.UploadBytes > maxSourceUploadBytes {
+			maxSourceUploadBytes = source.UploadBytes
+		}
 	}
+	destinations, err := h.queryExfiltrationDestinations(ctx, tenantID, start, end, limit)
+	if err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
+	trend, err := h.queryExfiltrationTrend(ctx, tenantID, start, end)
+	if err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
+	durationSeconds := math.Max(1, float64(end-start)/1000)
+	peakUploadGbps := float64(maxSourceUploadBytes) * 8 / durationSeconds / 1_000_000_000
 
 	httpx.JSONSuccess(w, ctx, map[string]interface{}{
 		"topic":      "exfil",
@@ -1481,10 +1508,15 @@ func (h *SystemHandler) GetExfiltrationTopic(w http.ResponseWriter, r *http.Requ
 			"session_count":     sessionCount,
 			"upload_bytes":      uploadBytes,
 			"high_risk_sources": countExfiltrationSourcesByRisk(sources, "high"),
+			"destination_count": len(destinations),
+			"risk_type_count":   len(risks),
+			"peak_upload_gbps":  peakUploadGbps,
 		},
-		"top_sources": sources,
-		"risk_types":  risks,
-		"paths":       paths,
+		"top_sources":  sources,
+		"destinations": destinations,
+		"risk_types":   risks,
+		"paths":        paths,
+		"trend":        trend,
 	})
 }
 
@@ -1492,7 +1524,7 @@ func (h *SystemHandler) GetAPTTopic(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	tenantID := queryTenantID(r)
 	limit, _ := parsePageLimitOffset(r, 20, 100)
-	start, end := queryTimeRange(r, 7*24*time.Hour)
+	start, end := queryTimeRange(r, 30*24*time.Hour)
 
 	campaigns, total, err := h.queryCampaigns(ctx, tenantID, campaignQueryFilters{}, start, end, limit, 0)
 	if err != nil {
@@ -1500,26 +1532,7 @@ func (h *SystemHandler) GetAPTTopic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	phaseDistribution := map[string]int{}
-	entities := map[string]bool{}
-	alertCount := 0
-	highRisk := 0
-	for _, campaign := range campaigns {
-		alertCount += len(campaign.Alerts)
-		if campaign.Score >= 0.75 {
-			highRisk++
-		}
-		for _, phase := range campaign.AttackPhases {
-			if phase != "" {
-				phaseDistribution[phase]++
-			}
-		}
-		for _, entity := range campaign.Entities {
-			if entity != "" {
-				entities[entity] = true
-			}
-		}
-	}
+	phaseDistribution, summary := summarizeAPTTopicCampaigns(campaigns, total)
 
 	httpx.JSONSuccess(w, ctx, map[string]interface{}{
 		"topic":              "apt",
@@ -1527,14 +1540,90 @@ func (h *SystemHandler) GetAPTTopic(w http.ResponseWriter, r *http.Request) {
 		"time_range":         map[string]int64{"start": start, "end": end},
 		"campaigns":          campaigns,
 		"phase_distribution": phaseDistribution,
-		"summary": map[string]interface{}{
-			"campaign_count":   total,
-			"listed_campaigns": len(campaigns),
-			"high_risk_count":  highRisk,
-			"entity_count":     len(entities),
-			"alert_count":      alertCount,
-		},
+		"summary":            summary,
 	})
+}
+
+func summarizeAPTTopicCampaigns(campaigns []campaignDTO, total int64) (map[string]int, map[string]interface{}) {
+	phaseDistribution := make(map[string]int)
+	entityCampaignCounts := make(map[string]int)
+	entities := make(map[string]struct{})
+	alertCount := 0
+	exfilEvidenceCount := 0
+	highRisk := 0
+	closed := 0
+	scoreTotal := 0.0
+	for _, campaign := range campaigns {
+		alertCount += len(campaign.Alerts)
+		if campaign.Score >= 0.75 {
+			highRisk++
+		}
+		scoreTotal += campaign.Score
+		status := strings.ToLower(strings.TrimSpace(campaign.Status))
+		if status == "" {
+			status = strings.ToLower(strings.TrimSpace(campaign.ActivityStatus))
+		}
+		if status == "closed" || status == "resolved" || status == "ended" {
+			closed++
+		}
+		hasExfiltration := false
+		for _, phase := range campaign.AttackPhases {
+			normalizedPhase := strings.ToLower(strings.TrimSpace(phase))
+			if normalizedPhase != "" {
+				phaseDistribution[normalizedPhase]++
+			}
+			if normalizedPhase == "exfiltration" {
+				hasExfiltration = true
+			}
+		}
+		if hasExfiltration {
+			exfilEvidenceCount += len(campaign.Alerts)
+		}
+		seenEntities := make(map[string]struct{})
+		for _, entity := range campaign.Entities {
+			normalizedEntity := strings.TrimSpace(entity)
+			if normalizedEntity == "" {
+				continue
+			}
+			entities[normalizedEntity] = struct{}{}
+			seenEntities[normalizedEntity] = struct{}{}
+		}
+		for entity := range seenEntities {
+			entityCampaignCounts[entity]++
+		}
+	}
+
+	maxEntityCampaigns := 0
+	for _, count := range entityCampaignCounts {
+		if count > maxEntityCampaigns {
+			maxEntityCampaigns = count
+		}
+	}
+	listedCampaigns := len(campaigns)
+	clusterDensity := 0.0
+	closureRate := 0.0
+	reportConfidence := 0.0
+	if listedCampaigns > 0 {
+		clusterDensity = float64(maxEntityCampaigns) / float64(listedCampaigns)
+		closureRate = float64(closed) / float64(listedCampaigns) * 100
+		reportConfidence = scoreTotal / float64(listedCampaigns) * 100
+	}
+
+	return phaseDistribution, map[string]interface{}{
+		"campaign_count":         total,
+		"listed_campaigns":       listedCampaigns,
+		"high_risk_count":        highRisk,
+		"entity_count":           len(entities),
+		"alert_count":            alertCount,
+		"cluster_density":        clusterDensity,
+		"lateral_move_links":     phaseDistribution["lateral_movement"],
+		"persistence_signals":    phaseDistribution["persistence"],
+		"exfil_evidence_count":   exfilEvidenceCount,
+		"closure_rate":           closureRate,
+		"report_confidence":      reportConfidence,
+		"metric_scope":           "listed_campaigns",
+		"metric_scope_campaigns": listedCampaigns,
+	}
 }
 
 func (h *SystemHandler) ListTopicViews(w http.ResponseWriter, r *http.Request) {
@@ -1917,6 +2006,93 @@ func (h *SystemHandler) ExportTopicReport(w http.ResponseWriter, r *http.Request
 
 func (h *SystemHandler) ExportTopicEvidencePackage(w http.ResponseWriter, r *http.Request) {
 	h.exportTopicArtifact(w, r, "evidence_package", "TOPIC_EVIDENCE_PACKAGE_EXPORTED")
+}
+
+func (h *SystemHandler) SubmitTopicAction(w http.ResponseWriter, r *http.Request) {
+	if !h.requireTopicWritePermission(w, r) {
+		return
+	}
+	ctx := r.Context()
+	if !h.requirePostgres(w, ctx) || !h.ensureTopicGovernanceSchema(w, ctx) {
+		return
+	}
+	topic := normalizeTopicKey(mux.Vars(r)["topic"])
+	if !isValidTopicKey(topic) {
+		httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_REQUEST", "invalid topic")
+		return
+	}
+	var req topicActionRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_REQUEST", "invalid request body")
+		return
+	}
+	req.Action = strings.TrimSpace(strings.ToLower(req.Action))
+	req.Label = strings.TrimSpace(req.Label)
+	req.Target = strings.TrimSpace(req.Target)
+	req.DataMode = strings.TrimSpace(strings.ToLower(req.DataMode))
+	if req.Action == "" || req.Target == "" {
+		httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_REQUEST", "action and target are required")
+		return
+	}
+	if req.DataMode == "" {
+		req.DataMode = "live"
+	}
+	switch req.DataMode {
+	case "live", "partial", "simulated":
+	default:
+		httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_REQUEST", "unsupported data_mode")
+		return
+	}
+	if req.Detail == nil {
+		req.Detail = map[string]interface{}{}
+	}
+	req.Detail["label"] = req.Label
+	req.Detail["data_mode"] = req.DataMode
+	detailJSON, _ := json.Marshal(req.Detail)
+	tenantID := writeTenantID(r)
+	userID := httpx.GetUserID(ctx)
+	var actionID, status string
+	var createdAt time.Time
+	tx, err := h.pgDB.BeginTx(ctx, nil)
+	if err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
+	defer tx.Rollback()
+	err = tx.QueryRowContext(ctx, `
+		INSERT INTO topic_actions (tenant_id, topic, action, target, status, detail, requested_by)
+		VALUES ($1, $2, $3, $4, 'queued', $5::jsonb, $6)
+		RETURNING action_id::text, status, created_at`,
+		tenantID, topic, req.Action, req.Target, string(detailJSON), userID,
+	).Scan(&actionID, &status, &createdAt)
+	if err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
+	writer := NewAlertActionAuditWriter(h.pgDB, h.logger)
+	if err := writer.recordWithExecutor(ctx, tx, r, AlertActionAuditRecord{
+		Action: "TOPIC_ACTION_REQUESTED", ObjectType: "topic_action", ObjectID: actionID,
+		TenantID: tenantID, UserID: userID, Result: "success",
+		Detail: map[string]interface{}{
+			"topic": topic, "action": req.Action, "label": req.Label, "target": req.Target, "data_mode": req.DataMode,
+		},
+	}); err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "AUDIT_WRITE_FAILED", "failed to persist topic action audit")
+		return
+	}
+	if err := tx.Commit(); err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
+	httpx.JSON(w, http.StatusAccepted, map[string]interface{}{
+		"success": true,
+		"data": map[string]interface{}{
+			"action_id": actionID, "tenant_id": tenantID, "topic": topic,
+			"action": req.Action, "label": req.Label, "target": req.Target,
+			"data_mode": req.DataMode, "status": status, "requested_by": userID,
+			"created_at": createdAt.UnixMilli(),
+		},
+	})
 }
 
 func (h *SystemHandler) exportTopicArtifact(w http.ResponseWriter, r *http.Request, exportType, auditAction string) {
@@ -4185,6 +4361,20 @@ func (h *SystemHandler) ensureTopicGovernanceSchema(w http.ResponseWriter, ctx c
 		)`,
 		`CREATE INDEX IF NOT EXISTS idx_topic_exports_tenant_time
 			ON topic_exports (tenant_id, generated_at DESC)`,
+		`CREATE TABLE IF NOT EXISTS topic_actions (
+			action_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			tenant_id TEXT NOT NULL,
+			topic TEXT NOT NULL,
+			action TEXT NOT NULL,
+			target TEXT NOT NULL,
+			status TEXT NOT NULL DEFAULT 'queued',
+			detail JSONB NOT NULL DEFAULT '{}'::jsonb,
+			requested_by TEXT NOT NULL DEFAULT '',
+			created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+			updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_topic_actions_tenant_topic
+			ON topic_actions (tenant_id, topic, created_at DESC)`,
 	}
 	for _, stmt := range stmts {
 		if _, err := h.pgDB.ExecContext(ctx, stmt); err != nil {
@@ -4966,9 +5156,9 @@ func (h *SystemHandler) queryTunnelProtocols(ctx context.Context, tenantID strin
 
 func (h *SystemHandler) queryTunnelUsers(ctx context.Context, tenantID string, start, end int64, limit int) ([]encryptedTunnelUserDTO, error) {
 	rows, err := h.chClient.Query(ctx, `
-		SELECT src_ip, tunnel_protocol, count(), sum(bytes_total), max(ts_end)
+		SELECT src_ip, tunnel_protocol, argMax(dst_ip, ts_end), count(), sum(bytes_total), max(ts_end)
 		FROM (
-			SELECT src_ip, ts_end, bytes_total,
+			SELECT src_ip, dst_ip, ts_end, bytes_total,
 			       multiIf(
 			           dns_pkt_cnt >= 20, 'DNS_HIGH_FREQUENCY',
 			           dst_port = 22 AND duration_ms >= 600000, 'SSH_LONG_LIVED',
@@ -4996,7 +5186,7 @@ func (h *SystemHandler) queryTunnelUsers(ctx context.Context, tenantID string, s
 	for rows.Next() {
 		var item encryptedTunnelUserDTO
 		var count uint64
-		if err := rows.Scan(&item.IP, &item.Protocol, &count, &item.TotalBytes, &item.LastSeen); err != nil {
+		if err := rows.Scan(&item.IP, &item.Protocol, &item.DstIP, &count, &item.TotalBytes, &item.LastSeen); err != nil {
 			return nil, err
 		}
 		item.Count = int64(count)
@@ -5164,7 +5354,7 @@ func (h *SystemHandler) queryExfiltrationRisks(ctx context.Context, tenantID str
 
 func (h *SystemHandler) queryExfiltrationPaths(ctx context.Context, tenantID string, start, end int64, limit int) ([]encryptedExfiltrationPathDTO, error) {
 	rows, err := h.chClient.Query(ctx, `
-		SELECT src_ip, dst_ip, count(), sum(bytes_fwd), max(ts_end)
+		SELECT src_ip, dst_ip, dst_port, protocol, count(), sum(bytes_fwd), max(ts_end)
 		FROM traffic.sessions
 		WHERE tenant_id=? AND ts_start>=? AND ts_start<=?
 		  AND dst_port IN (22, 443, 8443, 853, 993, 995, 465)
@@ -5177,7 +5367,7 @@ func (h *SystemHandler) queryExfiltrationPaths(ctx context.Context, tenantID str
 			OR startsWith(lower(dst_ip), 'fc') OR startsWith(lower(dst_ip), 'fd')
 			OR startsWith(lower(dst_ip), 'fe80:')
 		  )
-		GROUP BY src_ip, dst_ip
+		GROUP BY src_ip, dst_ip, dst_port, protocol
 		ORDER BY sum(bytes_fwd) DESC
 		LIMIT ?`, tenantID, start, end, limit)
 	if err != nil {
@@ -5189,9 +5379,11 @@ func (h *SystemHandler) queryExfiltrationPaths(ctx context.Context, tenantID str
 	for rows.Next() {
 		var item encryptedExfiltrationPathDTO
 		var sessionCount uint64
-		if err := rows.Scan(&item.SrcIP, &item.DstIP, &sessionCount, &item.UploadBytes, &item.LastSeen); err != nil {
+		var protocol uint8
+		if err := rows.Scan(&item.SrcIP, &item.DstIP, &item.DstPort, &protocol, &sessionCount, &item.UploadBytes, &item.LastSeen); err != nil {
 			return nil, err
 		}
+		item.Protocol = encryptedProtocol(protocol, item.DstPort)
 		item.SessionCount = int64(sessionCount)
 		item.Risk = exfiltrationRisk(item.UploadBytes, item.SessionCount)
 		paths = append(paths, item)

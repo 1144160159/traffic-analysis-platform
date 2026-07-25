@@ -452,15 +452,6 @@ func main() {
 
 	systemHandler.RegisterRoutes(apiRouter)
 	logger.Info("Campaign, attack-chain and probe APIs registered")
-	apiRouter.HandleFunc("/topics/views", systemHandler.ListTopicViews).Methods("GET")
-	apiRouter.HandleFunc("/topics/views", systemHandler.SaveTopicView).Methods("POST")
-	apiRouter.HandleFunc("/topics/views/{id}", systemHandler.UpdateTopicView).Methods("PATCH")
-	apiRouter.HandleFunc("/topics/scopes/{topic}", systemHandler.UpdateTopicScope).Methods("PUT", "PATCH")
-	apiRouter.HandleFunc("/topics/subscriptions", systemHandler.ListTopicSubscriptions).Methods("GET")
-	apiRouter.HandleFunc("/topics/subscriptions", systemHandler.CreateTopicSubscription).Methods("POST")
-	apiRouter.HandleFunc("/topics/subscriptions/{id}", systemHandler.UpdateTopicSubscription).Methods("PATCH")
-	apiRouter.HandleFunc("/topics/reports/export", systemHandler.ExportTopicReport).Methods("POST")
-	apiRouter.HandleFunc("/topics/evidence-packages/export", systemHandler.ExportTopicEvidencePackage).Methods("POST")
 	logger.Info("Topic governance APIs registered")
 
 	// 白名单管理 (PostgreSQL) — Web UI /api/v1/whitelist

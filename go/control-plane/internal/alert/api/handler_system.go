@@ -18,6 +18,7 @@ import (
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/storage"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"github.com/lib/pq"
 	"go.uber.org/zap"
 )
 
@@ -99,6 +100,8 @@ func (h *SystemHandler) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/topics/subscriptions/{id}", h.UpdateTopicSubscription).Methods("PATCH")
 	r.HandleFunc("/topics/reports/export", h.ExportTopicReport).Methods("POST")
 	r.HandleFunc("/topics/evidence-packages/export", h.ExportTopicEvidencePackage).Methods("POST")
+	r.HandleFunc("/topics/{topic}/actions", h.SubmitTopicAction).Methods("POST")
+	r.HandleFunc("/topics/{topic}/evidence-actions", h.SubmitTopicAction).Methods("POST")
 	r.HandleFunc("/fusion/sources", h.ListFusionSources).Methods("GET")
 	r.HandleFunc("/fusion/stats", h.GetFusionStats).Methods("GET")
 	r.HandleFunc("/fusion/workbench", h.GetFusionWorkbench).Methods("GET")
@@ -411,28 +414,97 @@ type campaignSummaryDTO struct {
 }
 
 type campaignDetailDTO struct {
-	TenantID           string             `json:"tenant_id"`
-	CampaignID         string             `json:"campaign_id"`
-	TsStart            int64              `json:"ts_start"`
-	TsEnd              int64              `json:"ts_end"`
-	Entities           []string           `json:"entities"`
-	AlertIDs           []string           `json:"alert_ids"`
-	Alerts             []campaignAlertDTO `json:"alerts"`
-	Score              float64            `json:"score"`
-	Summary            string             `json:"summary"`
-	EventID            string             `json:"event_id"`
-	IngestTs           int64              `json:"ingest_ts"`
-	CampaignType       string             `json:"campaign_type"`
-	AttackPhases       []string           `json:"attack_phases"`
-	RuleIDs            []string           `json:"rule_ids"`
-	ModelIDs           []string           `json:"model_ids"`
-	PhaseSummaries     []campaignPhaseDTO `json:"phase_summaries"`
-	PhaseDataBacked    bool               `json:"phase_data_backed"`
-	ActivityStatus     string             `json:"activity_status"`
-	Status             string             `json:"status"`
-	Assignee           string             `json:"assignee"`
-	StateVersion       int64              `json:"state_version"`
-	WorkbenchUpdatedAt string             `json:"workbench_updated_at,omitempty"`
+	TenantID           string                        `json:"tenant_id"`
+	CampaignID         string                        `json:"campaign_id"`
+	TsStart            int64                         `json:"ts_start"`
+	TsEnd              int64                         `json:"ts_end"`
+	Entities           []string                      `json:"entities"`
+	AlertIDs           []string                      `json:"alert_ids"`
+	Alerts             []campaignAlertDTO            `json:"alerts"`
+	Score              float64                       `json:"score"`
+	Summary            string                        `json:"summary"`
+	EventID            string                        `json:"event_id"`
+	IngestTs           int64                         `json:"ingest_ts"`
+	CampaignType       string                        `json:"campaign_type"`
+	AttackPhases       []string                      `json:"attack_phases"`
+	RuleIDs            []string                      `json:"rule_ids"`
+	ModelIDs           []string                      `json:"model_ids"`
+	PhaseSummaries     []campaignPhaseDTO            `json:"phase_summaries"`
+	PhaseDataBacked    bool                          `json:"phase_data_backed"`
+	EvidenceSummary    []campaignEvidenceSummaryDTO  `json:"evidence_summary"`
+	StatusTransitions  []campaignStatusTransitionDTO `json:"status_transitions"`
+	ImpactAssets       []campaignImpactAssetDTO      `json:"impact_assets"`
+	ImpactAccounts     []campaignImpactAccountDTO    `json:"impact_accounts"`
+	ImpactServices     []campaignImpactServiceDTO    `json:"impact_services"`
+	ImpactDepartments  []campaignImpactDepartmentDTO `json:"impact_departments"`
+	ImpactCampuses     []campaignImpactCampusDTO     `json:"impact_campuses"`
+	ImpactSystems      []campaignImpactSystemDTO     `json:"impact_business_systems"`
+	ImpactDataBacked   map[string]bool               `json:"impact_data_backed"`
+	ActivityStatus     string                        `json:"activity_status"`
+	Status             string                        `json:"status"`
+	Assignee           string                        `json:"assignee"`
+	StateVersion       int64                         `json:"state_version"`
+	WorkbenchUpdatedAt string                        `json:"workbench_updated_at,omitempty"`
+}
+
+type campaignImpactAssetDTO struct {
+	Asset          string `json:"asset"`
+	Type           string `json:"type"`
+	Department     string `json:"department"`
+	Campus         string `json:"campus"`
+	BusinessSystem string `json:"business_system"`
+	Owner          string `json:"owner"`
+	Risk           string `json:"risk"`
+	Evidence       string `json:"evidence"`
+}
+
+type campaignImpactAccountDTO struct {
+	Account        string `json:"account"`
+	AccountType    string `json:"account_type"`
+	PermissionRisk string `json:"permission_risk"`
+	LoginPath      string `json:"login_path"`
+}
+
+type campaignImpactServiceDTO struct {
+	ServiceName  string `json:"service_name"`
+	PortProtocol string `json:"port_protocol"`
+	Risk         string `json:"risk"`
+	Dependency   string `json:"dependency"`
+}
+
+type campaignImpactDepartmentDTO struct {
+	Department string `json:"department"`
+	Owner      string `json:"owner"`
+	Risk       string `json:"risk"`
+	Progress   int    `json:"progress"`
+}
+
+type campaignImpactCampusDTO struct {
+	Campus        string `json:"campus"`
+	CoveredAssets int    `json:"covered_assets"`
+	Risk          string `json:"risk"`
+	Link          string `json:"link"`
+}
+
+type campaignImpactSystemDTO struct {
+	BusinessSystem   string `json:"business_system"`
+	KeyService       string `json:"key_service"`
+	Risk             string `json:"risk"`
+	RecoveryPriority string `json:"recovery_priority"`
+}
+
+type campaignEvidenceSummaryDTO struct {
+	Key       string  `json:"key"`
+	Label     string  `json:"label"`
+	Current   *uint64 `json:"current,omitempty"`
+	Expected  *uint64 `json:"expected,omitempty"`
+	Available bool    `json:"available"`
+}
+
+type campaignStatusTransitionDTO struct {
+	Status    string `json:"status"`
+	ChangedAt string `json:"changed_at"`
+	Source    string `json:"source"`
 }
 
 type campaignAlertDTO struct {
@@ -563,20 +635,652 @@ func (h *SystemHandler) GetCampaign(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	alerts := h.queryCampaignAlerts(ctx, campaign.TenantID, campaign.CampaignID, campaign.Alerts)
-	phaseSummaries, phaseDataBacked := h.queryCampaignPhaseSummaries(ctx, campaign.TenantID, campaign.CampaignID, campaign.AttackPhases)
+	phaseSummaries, phaseDataBacked := h.queryCampaignPhaseSummaries(
+		ctx,
+		campaign.TenantID,
+		campaign.CampaignID,
+		campaign.Alerts,
+		campaign.AttackPhases,
+	)
+	statusTransitions, responseRecordCount, responseRecordsAvailable := h.queryCampaignAuditState(
+		ctx,
+		campaign.TenantID,
+		campaign.CampaignID,
+		campaign.TsStart,
+		campaign.TsEnd,
+		campaign.Status,
+		campaign.WorkbenchUpdatedAt,
+	)
+	impactObservations, networkEntities, observationDataBacked := h.queryCampaignImpactObservations(
+		ctx,
+		campaign.TenantID,
+		campaign.CampaignID,
+		campaign.Alerts,
+	)
+	impactAccounts, accountDataBacked := h.queryCampaignImpactAccounts(
+		ctx,
+		campaign.TenantID,
+		networkEntities,
+		campaign.TsStart,
+		campaign.TsEnd,
+	)
+	observedServices := campaignImpactServicesFromObservations(impactObservations)
+	impactAssets, assetAccounts, assetServices, impactDepartments, impactCampuses, impactSystems, assetDataBacked := h.queryCampaignImpactAssets(
+		ctx,
+		campaign.TenantID,
+		append(append([]string{}, campaign.Entities...), networkEntities...),
+		campaignStatusProgress(campaign.Status),
+	)
+	impactAccounts = mergeCampaignImpactAccounts(impactAccounts, assetAccounts)
+	impactServices := mergeCampaignImpactServices(observedServices, assetServices)
 	httpx.JSONSuccess(w, ctx, campaignDetailDTO{
 		TenantID: campaign.TenantID, CampaignID: campaign.CampaignID,
 		TsStart: campaign.TsStart, TsEnd: campaign.TsEnd,
 		Entities: campaign.Entities, AlertIDs: campaign.Alerts, Alerts: alerts,
 		Score: campaign.Score, Summary: campaign.Summary, EventID: campaign.EventID, IngestTs: campaign.IngestTs,
 		CampaignType: campaign.CampaignType, AttackPhases: campaign.AttackPhases, RuleIDs: campaign.RuleIDs, ModelIDs: campaign.ModelIDs,
-		PhaseSummaries:  phaseSummaries,
-		PhaseDataBacked: phaseDataBacked,
-		ActivityStatus:  campaign.ActivityStatus,
-		Status:          campaign.Status,
-		Assignee:        campaign.Assignee, StateVersion: campaign.StateVersion,
+		PhaseSummaries:    phaseSummaries,
+		PhaseDataBacked:   phaseDataBacked,
+		EvidenceSummary:   campaignEvidenceSummary(alerts, phaseSummaries, phaseDataBacked, responseRecordCount, responseRecordsAvailable),
+		StatusTransitions: statusTransitions,
+		ImpactAssets:      impactAssets,
+		ImpactAccounts:    impactAccounts,
+		ImpactServices:    impactServices,
+		ImpactDepartments: impactDepartments,
+		ImpactCampuses:    impactCampuses,
+		ImpactSystems:     impactSystems,
+		ImpactDataBacked: map[string]bool{
+			"accounts":         accountDataBacked || assetDataBacked,
+			"services":         observationDataBacked || assetDataBacked,
+			"assets":           assetDataBacked,
+			"departments":      assetDataBacked,
+			"campuses":         assetDataBacked,
+			"business_systems": assetDataBacked,
+		},
+		ActivityStatus: campaign.ActivityStatus,
+		Status:         campaign.Status,
+		Assignee:       campaign.Assignee, StateVersion: campaign.StateVersion,
 		WorkbenchUpdatedAt: campaign.WorkbenchUpdatedAt,
 	})
+}
+
+func (h *SystemHandler) queryCampaignImpactAssets(
+	ctx context.Context,
+	tenantID string,
+	entities []string,
+	responseProgress int,
+) ([]campaignImpactAssetDTO, []campaignImpactAccountDTO, []campaignImpactServiceDTO, []campaignImpactDepartmentDTO, []campaignImpactCampusDTO, []campaignImpactSystemDTO, bool) {
+	if h.pgDB == nil || len(entities) == 0 {
+		return []campaignImpactAssetDTO{}, []campaignImpactAccountDTO{}, []campaignImpactServiceDTO{}, []campaignImpactDepartmentDTO{}, []campaignImpactCampusDTO{}, []campaignImpactSystemDTO{}, false
+	}
+	rows, err := h.pgDB.QueryContext(ctx, `
+		SELECT COALESCE(NULLIF(display_code,''), NULLIF(hostname,''), NULLIF(ip_address,''), NULLIF(ip,''), asset_id::text),
+		       asset_type, COALESCE(department,''), COALESCE(campus,''), COALESCE(owner,''),
+		       criticality, COALESCE(metadata,'{}'::jsonb)::text
+		FROM assets
+		WHERE tenant_id=$1
+		  AND (
+		    asset_id::text = ANY($2) OR display_code = ANY($2) OR hostname = ANY($2)
+		    OR ip_address = ANY($2) OR ip = ANY($2)
+		  )
+		ORDER BY criticality DESC, last_seen DESC`, tenantID, pq.Array(entities))
+	if err != nil {
+		if h.logger != nil {
+			h.logger.Debug("campaign impact asset query unavailable", zap.Error(err), zap.String("campaign_tenant", tenantID))
+		}
+		return []campaignImpactAssetDTO{}, []campaignImpactAccountDTO{}, []campaignImpactServiceDTO{}, []campaignImpactDepartmentDTO{}, []campaignImpactCampusDTO{}, []campaignImpactSystemDTO{}, false
+	}
+	defer rows.Close()
+
+	assets := make([]campaignImpactAssetDTO, 0)
+	accounts := make([]campaignImpactAccountDTO, 0)
+	services := make([]campaignImpactServiceDTO, 0)
+	departmentMap := map[string]campaignImpactDepartmentDTO{}
+	campusMap := map[string]campaignImpactCampusDTO{}
+	systemMap := map[string]campaignImpactSystemDTO{}
+	for rows.Next() {
+		var assetName, assetType, department, campus, owner, metadataJSON string
+		var criticality int
+		if scanErr := rows.Scan(&assetName, &assetType, &department, &campus, &owner, &criticality, &metadataJSON); scanErr != nil {
+			continue
+		}
+		metadata := map[string]interface{}{}
+		_ = json.Unmarshal([]byte(metadataJSON), &metadata)
+		risk := campaignAssetRiskLabel(criticality)
+		businessSystem := firstNonEmpty(stringFromMap(metadata, "business_system"), stringFromMap(metadata, "system"))
+		keyService := firstNonEmpty(stringFromMap(metadata, "key_service"), stringFromMap(metadata, "service"))
+		accounts = mergeCampaignImpactAccounts(accounts, campaignImpactAccountsFromMetadata(metadata))
+		services = mergeCampaignImpactServices(services, campaignImpactServicesFromMetadata(metadata, businessSystem))
+		assets = append(assets, campaignImpactAssetDTO{
+			Asset: assetName, Type: assetType, Department: department, Campus: campus,
+			BusinessSystem: businessSystem, Owner: owner, Risk: risk, Evidence: "PostgreSQL assets",
+		})
+		if department != "" {
+			current := departmentMap[department]
+			if current.Department == "" || campaignRiskRank(risk) > campaignRiskRank(current.Risk) {
+				departmentMap[department] = campaignImpactDepartmentDTO{
+					Department: department,
+					Owner:      owner,
+					Risk:       risk,
+					Progress:   responseProgress,
+				}
+			}
+		}
+		if campus != "" {
+			current := campusMap[campus]
+			current.Campus = campus
+			current.CoveredAssets++
+			if campaignRiskRank(risk) > campaignRiskRank(current.Risk) {
+				current.Risk = risk
+			}
+			current.Link = stringFromMap(metadata, "network_path")
+			campusMap[campus] = current
+		}
+		if businessSystem != "" {
+			current := systemMap[businessSystem]
+			current.BusinessSystem = businessSystem
+			if current.KeyService == "" {
+				current.KeyService = keyService
+			}
+			if campaignRiskRank(risk) > campaignRiskRank(current.Risk) {
+				current.Risk = risk
+			}
+			current.RecoveryPriority = stringFromMap(metadata, "recovery_priority")
+			systemMap[businessSystem] = current
+		}
+	}
+	departments := make([]campaignImpactDepartmentDTO, 0, len(departmentMap))
+	for _, item := range departmentMap {
+		departments = append(departments, item)
+	}
+	campuses := make([]campaignImpactCampusDTO, 0, len(campusMap))
+	for _, item := range campusMap {
+		campuses = append(campuses, item)
+	}
+	systems := make([]campaignImpactSystemDTO, 0, len(systemMap))
+	for _, item := range systemMap {
+		systems = append(systems, item)
+	}
+	return assets, accounts, services, departments, campuses, systems, rows.Err() == nil
+}
+
+type campaignImpactObservation struct {
+	CommunityID string
+	SrcIP       string
+	DstIP       string
+	DstPort     uint16
+	Protocol    uint8
+	Severity    string
+}
+
+func (h *SystemHandler) queryCampaignImpactObservations(
+	ctx context.Context,
+	tenantID, campaignID string,
+	alertIDs []string,
+) ([]campaignImpactObservation, []string, bool) {
+	if h.chClient == nil {
+		return []campaignImpactObservation{}, []string{}, false
+	}
+	rows, err := h.chClient.Query(ctx, `
+		SELECT
+			argMax(community_id, last_seen) AS latest_community_id,
+			argMax(src_ip, last_seen) AS latest_src_ip,
+			argMax(dst_ip, last_seen) AS latest_dst_ip,
+			toUInt16(argMax(dst_port, last_seen)) AS latest_dst_port,
+			toUInt8(argMax(protocol, last_seen)) AS latest_protocol,
+			argMax(severity, last_seen) AS latest_severity
+		FROM traffic.alerts
+		WHERE tenant_id=? AND (campaign_id=? OR has(?, alert_id))
+		GROUP BY alert_id
+		ORDER BY max(last_seen) DESC
+		LIMIT 500`, tenantID, campaignID, alertIDs)
+	if err != nil {
+		return []campaignImpactObservation{}, []string{}, false
+	}
+	defer rows.Close()
+
+	observations := make([]campaignImpactObservation, 0)
+	entitySet := map[string]struct{}{}
+	for rows.Next() {
+		var observation campaignImpactObservation
+		if err := rows.Scan(
+			&observation.CommunityID,
+			&observation.SrcIP,
+			&observation.DstIP,
+			&observation.DstPort,
+			&observation.Protocol,
+			&observation.Severity,
+		); err != nil {
+			return []campaignImpactObservation{}, []string{}, false
+		}
+		observations = append(observations, observation)
+		if observation.SrcIP != "" {
+			entitySet[observation.SrcIP] = struct{}{}
+		}
+		if observation.DstIP != "" {
+			entitySet[observation.DstIP] = struct{}{}
+		}
+	}
+	if rows.Err() != nil {
+		return []campaignImpactObservation{}, []string{}, false
+	}
+	networkEntities := make([]string, 0, len(entitySet))
+	for entity := range entitySet {
+		networkEntities = append(networkEntities, entity)
+	}
+	enriched, enrichedEntities, enrichedOK := h.queryCampaignImpactSessions(ctx, tenantID, observations)
+	if enrichedOK && len(enriched) > 0 {
+		return enriched, enrichedEntities, true
+	}
+	return observations, networkEntities, true
+}
+
+func (h *SystemHandler) queryCampaignImpactSessions(
+	ctx context.Context,
+	tenantID string,
+	alertObservations []campaignImpactObservation,
+) ([]campaignImpactObservation, []string, bool) {
+	communityIDs := make([]string, 0, len(alertObservations))
+	severityByCommunityID := make(map[string]string, len(alertObservations))
+	for _, observation := range alertObservations {
+		if observation.CommunityID == "" {
+			continue
+		}
+		communityIDs = append(communityIDs, observation.CommunityID)
+		currentSeverity, exists := severityByCommunityID[observation.CommunityID]
+		if !exists || campaignRiskRank(campaignAlertRiskLabel(observation.Severity)) >
+			campaignRiskRank(campaignAlertRiskLabel(currentSeverity)) {
+			severityByCommunityID[observation.CommunityID] = observation.Severity
+		}
+	}
+	if len(communityIDs) == 0 {
+		return []campaignImpactObservation{}, []string{}, false
+	}
+
+	rows, err := h.chClient.Query(ctx, `
+		SELECT
+			community_id,
+			argMax(src_ip, ts_end) AS latest_src_ip,
+			argMax(dst_ip, ts_end) AS latest_dst_ip,
+			toUInt16(argMax(dst_port, ts_end)) AS latest_dst_port,
+			toUInt8(argMax(protocol, ts_end)) AS latest_protocol
+		FROM traffic.sessions
+		WHERE tenant_id=? AND has(?, community_id)
+		GROUP BY community_id
+		ORDER BY max(ts_end) DESC
+		LIMIT 500`, tenantID, communityIDs)
+	if err != nil {
+		return []campaignImpactObservation{}, []string{}, false
+	}
+	defer rows.Close()
+
+	observations := make([]campaignImpactObservation, 0)
+	entitySet := map[string]struct{}{}
+	for rows.Next() {
+		var observation campaignImpactObservation
+		if err := rows.Scan(
+			&observation.CommunityID,
+			&observation.SrcIP,
+			&observation.DstIP,
+			&observation.DstPort,
+			&observation.Protocol,
+		); err != nil {
+			return []campaignImpactObservation{}, []string{}, false
+		}
+		observation.Severity = severityByCommunityID[observation.CommunityID]
+		observations = append(observations, observation)
+		if observation.SrcIP != "" {
+			entitySet[observation.SrcIP] = struct{}{}
+		}
+		if observation.DstIP != "" {
+			entitySet[observation.DstIP] = struct{}{}
+		}
+	}
+	if rows.Err() != nil {
+		return []campaignImpactObservation{}, []string{}, false
+	}
+	entities := make([]string, 0, len(entitySet))
+	for entity := range entitySet {
+		entities = append(entities, entity)
+	}
+	return observations, entities, true
+}
+
+func (h *SystemHandler) queryCampaignImpactAccounts(
+	ctx context.Context,
+	tenantID string,
+	networkEntities []string,
+	tsStart, tsEnd int64,
+) ([]campaignImpactAccountDTO, bool) {
+	if h.chClient == nil || len(networkEntities) == 0 || tsStart <= 0 || tsEnd <= 0 {
+		return []campaignImpactAccountDTO{}, false
+	}
+	rows, err := h.chClient.Query(ctx, `
+		SELECT
+			username,
+			argMax(user_id, timestamp) AS latest_user_id,
+			argMax(resource, timestamp) AS latest_resource,
+			argMax(result, timestamp) AS latest_result,
+			argMax(source_ip, timestamp) AS latest_source_ip,
+			toUInt64(countIf(lowerUTF8(result) NOT IN ('success','ok','allow','allowed','passed','通过','成功'))) AS failure_count
+		FROM traffic.user_events
+		WHERE tenant_id=?
+		  AND timestamp BETWEEN toDateTime(intDiv(?, 1000)) - INTERVAL 1 HOUR
+		                    AND toDateTime(intDiv(?, 1000)) + INTERVAL 1 HOUR
+		  AND has(?, source_ip)
+		  AND username != ''
+		GROUP BY username
+		ORDER BY failure_count DESC, max(timestamp) DESC
+		LIMIT 100`, tenantID, tsStart, tsEnd, networkEntities)
+	if err != nil {
+		return []campaignImpactAccountDTO{}, false
+	}
+	defer rows.Close()
+
+	accounts := make([]campaignImpactAccountDTO, 0)
+	for rows.Next() {
+		var username, userID, resource, result, sourceIP string
+		var failureCount uint64
+		if err := rows.Scan(&username, &userID, &resource, &result, &sourceIP, &failureCount); err != nil {
+			return []campaignImpactAccountDTO{}, false
+		}
+		accounts = append(accounts, campaignImpactAccountDTO{
+			Account:        username,
+			AccountType:    campaignAccountType(username, userID),
+			PermissionRisk: campaignAccountRisk(username, result, failureCount),
+			LoginPath:      campaignLoginPath(sourceIP, resource),
+		})
+	}
+	if rows.Err() != nil {
+		return []campaignImpactAccountDTO{}, false
+	}
+	return accounts, true
+}
+
+func campaignImpactServicesFromObservations(observations []campaignImpactObservation) []campaignImpactServiceDTO {
+	services := make([]campaignImpactServiceDTO, 0)
+	serviceIndex := map[string]int{}
+	for _, observation := range observations {
+		if observation.DstPort == 0 {
+			continue
+		}
+		protocol := campaignTransportProtocol(observation.Protocol)
+		key := fmt.Sprintf("%d/%s", observation.DstPort, protocol)
+		risk := campaignAlertRiskLabel(observation.Severity)
+		if index, ok := serviceIndex[key]; ok {
+			if campaignRiskRank(risk) > campaignRiskRank(services[index].Risk) {
+				services[index].Risk = risk
+			}
+			continue
+		}
+		serviceIndex[key] = len(services)
+		services = append(services, campaignImpactServiceDTO{
+			ServiceName:  campaignServiceName(observation.DstPort),
+			PortProtocol: key,
+			Risk:         risk,
+			Dependency:   observation.DstIP,
+		})
+	}
+	return services
+}
+
+func campaignImpactAccountsFromMetadata(metadata map[string]interface{}) []campaignImpactAccountDTO {
+	raw, ok := metadata["campaign_accounts"].([]interface{})
+	if !ok {
+		return []campaignImpactAccountDTO{}
+	}
+	accounts := make([]campaignImpactAccountDTO, 0, len(raw))
+	for _, item := range raw {
+		record, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		account := firstNonEmpty(stringFromMap(record, "account"), stringFromMap(record, "username"))
+		if account == "" {
+			continue
+		}
+		accounts = append(accounts, campaignImpactAccountDTO{
+			Account:        account,
+			AccountType:    firstNonEmpty(stringFromMap(record, "account_type"), campaignAccountType(account, stringFromMap(record, "user_id"))),
+			PermissionRisk: firstNonEmpty(stringFromMap(record, "permission_risk"), stringFromMap(record, "risk"), "低危"),
+			LoginPath:      firstNonEmpty(stringFromMap(record, "login_path"), stringFromMap(record, "access_path")),
+		})
+	}
+	return accounts
+}
+
+func campaignImpactServicesFromMetadata(metadata map[string]interface{}, businessSystem string) []campaignImpactServiceDTO {
+	raw, ok := metadata["open_services"].([]interface{})
+	if !ok {
+		return []campaignImpactServiceDTO{}
+	}
+	services := make([]campaignImpactServiceDTO, 0, len(raw))
+	for _, item := range raw {
+		record, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		port := uint16(intFromMap(record, "port"))
+		protocol := strings.ToUpper(firstNonEmpty(stringFromMap(record, "protocol"), "TCP"))
+		name := firstNonEmpty(stringFromMap(record, "service"), stringFromMap(record, "name"))
+		if name == "" && port > 0 {
+			name = campaignServiceName(port)
+		}
+		if name == "" {
+			continue
+		}
+		portProtocol := protocol
+		if port > 0 {
+			portProtocol = fmt.Sprintf("%d/%s", port, protocol)
+		}
+		services = append(services, campaignImpactServiceDTO{
+			ServiceName:  name,
+			PortProtocol: portProtocol,
+			Risk:         firstNonEmpty(stringFromMap(record, "risk_level"), stringFromMap(record, "risk"), "低危"),
+			Dependency:   firstNonEmpty(stringFromMap(record, "dependency"), businessSystem),
+		})
+	}
+	return services
+}
+
+func mergeCampaignImpactAccounts(groups ...[]campaignImpactAccountDTO) []campaignImpactAccountDTO {
+	merged := make([]campaignImpactAccountDTO, 0)
+	indexByAccount := map[string]int{}
+	for _, group := range groups {
+		for _, account := range group {
+			key := strings.ToLower(strings.TrimSpace(account.Account))
+			if key == "" {
+				continue
+			}
+			if index, ok := indexByAccount[key]; ok {
+				if campaignRiskRank(account.PermissionRisk) > campaignRiskRank(merged[index].PermissionRisk) {
+					merged[index] = account
+				}
+				continue
+			}
+			indexByAccount[key] = len(merged)
+			merged = append(merged, account)
+		}
+	}
+	return merged
+}
+
+func mergeCampaignImpactServices(groups ...[]campaignImpactServiceDTO) []campaignImpactServiceDTO {
+	merged := make([]campaignImpactServiceDTO, 0)
+	indexByService := map[string]int{}
+	for _, group := range groups {
+		for _, service := range group {
+			key := strings.ToLower(strings.TrimSpace(service.PortProtocol))
+			if key == "" {
+				key = strings.ToLower(strings.TrimSpace(service.ServiceName))
+			}
+			if key == "" {
+				continue
+			}
+			if index, ok := indexByService[key]; ok {
+				if campaignRiskRank(service.Risk) > campaignRiskRank(merged[index].Risk) {
+					merged[index] = service
+				}
+				continue
+			}
+			indexByService[key] = len(merged)
+			merged = append(merged, service)
+		}
+	}
+	return merged
+}
+
+func intFromMap(record map[string]interface{}, key string) int {
+	switch value := record[key].(type) {
+	case float64:
+		return int(value)
+	case int:
+		return value
+	case int64:
+		return int(value)
+	case json.Number:
+		number, _ := value.Int64()
+		return int(number)
+	case string:
+		number, _ := strconv.Atoi(value)
+		return number
+	default:
+		return 0
+	}
+}
+
+func campaignStatusProgress(status string) int {
+	switch strings.ToLower(strings.TrimSpace(status)) {
+	case "closed":
+		return 100
+	case "remediated":
+		return 90
+	case "contained":
+		return 70
+	case "investigating", "active":
+		return 40
+	case "triaged":
+		return 25
+	default:
+		return 10
+	}
+}
+
+func campaignTransportProtocol(protocol uint8) string {
+	switch protocol {
+	case 6:
+		return "TCP"
+	case 17:
+		return "UDP"
+	case 1:
+		return "ICMP"
+	default:
+		return fmt.Sprintf("IP-%d", protocol)
+	}
+}
+
+func campaignServiceName(port uint16) string {
+	switch port {
+	case 22:
+		return "SSH"
+	case 53:
+		return "DNS"
+	case 80:
+		return "HTTP"
+	case 389:
+		return "LDAP"
+	case 443:
+		return "HTTPS"
+	case 2049:
+		return "NFS"
+	case 3306:
+		return "MySQL"
+	case 5432:
+		return "PostgreSQL"
+	case 6379:
+		return "Redis"
+	case 9000:
+		return "MinIO API"
+	case 9092:
+		return "Kafka"
+	case 9200:
+		return "OpenSearch"
+	default:
+		return fmt.Sprintf("Service %d", port)
+	}
+}
+
+func campaignAlertRiskLabel(severity string) string {
+	normalized := strings.TrimPrefix(strings.ToLower(strings.TrimSpace(severity)), "severity_")
+	switch normalized {
+	case "critical", "high", "严重", "高危":
+		return "高危"
+	case "medium", "中危":
+		return "中危"
+	default:
+		return "低危"
+	}
+}
+
+func campaignAccountType(username, userID string) string {
+	normalized := strings.ToLower(strings.TrimSpace(username))
+	if strings.HasPrefix(normalized, "svc_") || strings.HasPrefix(normalized, "service_") {
+		return "服务账号"
+	}
+	if strings.Contains(normalized, "admin") || strings.Contains(normalized, "root") {
+		return "管理账号"
+	}
+	if strings.TrimSpace(userID) == "" {
+		return "未知账号"
+	}
+	return "人员账号"
+}
+
+func campaignAccountRisk(username, result string, failureCount uint64) string {
+	normalized := strings.ToLower(strings.TrimSpace(username))
+	if failureCount >= 3 || strings.Contains(normalized, "admin") || strings.Contains(normalized, "root") {
+		return "高危"
+	}
+	result = strings.ToLower(strings.TrimSpace(result))
+	if failureCount > 0 || strings.Contains(result, "fail") || strings.Contains(result, "deny") || strings.HasPrefix(normalized, "svc_") {
+		return "中危"
+	}
+	return "低危"
+}
+
+func campaignLoginPath(sourceIP, resource string) string {
+	sourceIP = strings.TrimSpace(sourceIP)
+	resource = strings.TrimSpace(resource)
+	if sourceIP == "" {
+		return resource
+	}
+	if resource == "" {
+		return sourceIP
+	}
+	return sourceIP + " -> " + resource
+}
+
+func campaignAssetRiskLabel(criticality int) string {
+	if criticality >= 4 {
+		return "高危"
+	}
+	if criticality >= 2 {
+		return "中危"
+	}
+	return "低危"
+}
+
+func campaignRiskRank(risk string) int {
+	if strings.Contains(risk, "高") {
+		return 3
+	}
+	if strings.Contains(risk, "中") {
+		return 2
+	}
+	if strings.Contains(risk, "低") {
+		return 1
+	}
+	return 0
 }
 
 func (h *SystemHandler) ListAttackChains(w http.ResponseWriter, r *http.Request) {
@@ -593,7 +1297,10 @@ func (h *SystemHandler) ListAttackChains(w http.ResponseWriter, r *http.Request)
 	}
 	chains := make([]attackChainDTO, 0, len(campaigns))
 	for _, campaign := range campaigns {
-		chains = append(chains, campaignToAttackChain(campaign))
+		alerts := h.queryCampaignAlerts(ctx, campaign.TenantID, campaign.CampaignID, campaign.Alerts)
+		chain := campaignToAttackChain(campaign)
+		chain.Phases = campaignToPhasesWithAlerts(campaign, alerts)
+		chains = append(chains, chain)
 	}
 	httpx.JSONSuccess(w, ctx, map[string]interface{}{"chains": chains, "total": total, "limit": limit, "offset": offset})
 }
@@ -608,7 +1315,10 @@ func (h *SystemHandler) GetAttackChain(w http.ResponseWriter, r *http.Request) {
 		writeCampaignReadError(w, ctx, err)
 		return
 	}
-	httpx.JSONSuccess(w, ctx, campaignToAttackChain(campaign))
+	alerts := h.queryCampaignAlerts(ctx, campaign.TenantID, campaign.CampaignID, campaign.Alerts)
+	chain := campaignToAttackChain(campaign)
+	chain.Phases = campaignToPhasesWithAlerts(campaign, alerts)
+	httpx.JSONSuccess(w, ctx, chain)
 }
 
 func (h *SystemHandler) GetAttackChainPhases(w http.ResponseWriter, r *http.Request) {
@@ -855,11 +1565,16 @@ func (h *SystemHandler) queryCampaignByID(ctx context.Context, tenantID, id stri
 
 func (h *SystemHandler) queryCampaignAlerts(ctx context.Context, tenantID, campaignID string, alertIDs []string) []campaignAlertDTO {
 	rows, err := h.chClient.Query(ctx, `
-		SELECT alert_id, alert_type, severity, last_seen,
-			`+campaignAlertAttackPhaseExpression+` AS attack_phase,
-			toUInt64(length(evidence_ids)) AS evidence_count
-		FROM traffic.alerts WHERE tenant_id=? AND campaign_id=?
-		ORDER BY last_seen DESC LIMIT 200`, tenantID, campaignID)
+		SELECT alert_id,
+			argMax(alert_type, last_seen) AS latest_alert_type,
+			argMax(severity, last_seen) AS latest_severity,
+			max(last_seen) AS latest_seen,
+			argMax(`+campaignAlertAttackPhaseExpression+`, last_seen) AS latest_attack_phase,
+			toUInt64(max(length(evidence_ids))) AS evidence_count
+		FROM traffic.alerts
+		WHERE tenant_id=? AND (campaign_id=? OR has(?, alert_id))
+		GROUP BY alert_id
+		ORDER BY latest_seen DESC LIMIT 200`, tenantID, campaignID, alertIDs)
 	if err != nil {
 		return alertIDsToSummaries(alertIDs)
 	}
@@ -889,18 +1604,25 @@ func (h *SystemHandler) queryCampaignAlerts(ctx context.Context, tenantID, campa
 func (h *SystemHandler) queryCampaignPhaseSummaries(
 	ctx context.Context,
 	tenantID, campaignID string,
+	alertIDs []string,
 	campaignPhases []string,
 ) ([]campaignPhaseDTO, bool) {
 	rows, err := h.chClient.Query(ctx, `
-		SELECT
-			`+campaignAlertAttackPhaseExpression+` AS attack_phase,
+		SELECT attack_phase,
 			toUInt64(count()) AS alert_count,
-			toUInt64(sum(length(evidence_ids))) AS evidence_count,
-			max(last_seen) AS last_seen
-		FROM traffic.alerts
-		WHERE tenant_id=? AND campaign_id=?
+			toUInt64(sum(evidence_count)) AS evidence_count,
+			max(latest_seen) AS phase_last_seen
+		FROM (
+			SELECT alert_id,
+				argMax(`+campaignAlertAttackPhaseExpression+`, last_seen) AS attack_phase,
+				toUInt64(max(length(evidence_ids))) AS evidence_count,
+				max(last_seen) AS latest_seen
+			FROM traffic.alerts
+			WHERE tenant_id=? AND (campaign_id=? OR has(?, alert_id))
+			GROUP BY alert_id
+		)
 		GROUP BY attack_phase
-		ORDER BY last_seen`, tenantID, campaignID)
+		ORDER BY phase_last_seen`, tenantID, campaignID, alertIDs)
 	if err != nil {
 		return campaignPhaseFallback(campaignPhases), false
 	}
@@ -918,6 +1640,116 @@ func (h *SystemHandler) queryCampaignPhaseSummaries(
 		return campaignPhaseFallback(campaignPhases), false
 	}
 	return summaries, true
+}
+
+func campaignEvidenceSummary(
+	alerts []campaignAlertDTO,
+	phases []campaignPhaseDTO,
+	phaseDataBacked bool,
+	responseRecordCount uint64,
+	responseRecordsAvailable bool,
+) []campaignEvidenceSummaryDTO {
+	alertCount := uint64(len(alerts))
+	evidenceCount := uint64(0)
+	for _, phase := range phases {
+		evidenceCount += phase.EvidenceCount
+	}
+	items := []campaignEvidenceSummaryDTO{
+		{Key: "alerts", Label: "告警", Current: &alertCount, Available: true},
+		{Key: "packet_session", Label: "PCAP / Session", Available: phaseDataBacked},
+		{Key: "logs", Label: "日志", Available: false},
+		{Key: "graph_paths", Label: "图谱路径", Available: false},
+		{Key: "response_records", Label: "处置记录", Available: responseRecordsAvailable},
+	}
+	if phaseDataBacked {
+		items[1].Current = &evidenceCount
+	}
+	if responseRecordsAvailable {
+		items[4].Current = &responseRecordCount
+	}
+	return items
+}
+
+func (h *SystemHandler) queryCampaignAuditState(
+	ctx context.Context,
+	tenantID, campaignID string,
+	tsStart, tsEnd int64,
+	currentStatus, workbenchUpdatedAt string,
+) ([]campaignStatusTransitionDTO, uint64, bool) {
+	transitions := []campaignStatusTransitionDTO{{
+		Status:    "new",
+		ChangedAt: campaignTimestampRFC3339(tsStart),
+		Source:    "campaign",
+	}}
+	if h.pgDB == nil {
+		return appendCurrentCampaignTransition(transitions, currentStatus, workbenchUpdatedAt, tsEnd), 0, false
+	}
+	rows, err := h.pgDB.QueryContext(ctx, `
+		SELECT action,
+			COALESCE(NULLIF(detail->'metadata'->>'next_status',''), NULLIF(detail->'result'->>'campaign_status',''), ''),
+			created_at
+		FROM audit_logs
+		WHERE tenant_id=$1 AND object_type='campaign' AND object_id=$2
+		  AND action IN ('CAMPAIGN_STATUS_CHANGED','CAMPAIGN_OWNER_ASSIGNED','CAMPAIGN_REPORT_REQUESTED','CAMPAIGN_SOAR_RESPONSE_REQUESTED')
+		ORDER BY created_at`, tenantID, campaignID)
+	if err != nil {
+		return appendCurrentCampaignTransition(transitions, currentStatus, workbenchUpdatedAt, tsEnd), 0, false
+	}
+	defer rows.Close()
+
+	var responseRecordCount uint64
+	for rows.Next() {
+		var action, status string
+		var changedAt time.Time
+		if err := rows.Scan(&action, &status, &changedAt); err != nil {
+			return appendCurrentCampaignTransition(transitions, currentStatus, workbenchUpdatedAt, tsEnd), 0, false
+		}
+		responseRecordCount++
+		if action == "CAMPAIGN_STATUS_CHANGED" && validCampaignWorkbenchStatus(strings.ToLower(strings.TrimSpace(status))) {
+			transitions = append(transitions, campaignStatusTransitionDTO{
+				Status:    strings.ToLower(strings.TrimSpace(status)),
+				ChangedAt: changedAt.UTC().Format(time.RFC3339Nano),
+				Source:    "audit_log",
+			})
+		}
+	}
+	if rows.Err() != nil {
+		return appendCurrentCampaignTransition(transitions, currentStatus, workbenchUpdatedAt, tsEnd), 0, false
+	}
+	return appendCurrentCampaignTransition(transitions, currentStatus, workbenchUpdatedAt, tsEnd), responseRecordCount, true
+}
+
+func appendCurrentCampaignTransition(
+	transitions []campaignStatusTransitionDTO,
+	currentStatus, workbenchUpdatedAt string,
+	tsEnd int64,
+) []campaignStatusTransitionDTO {
+	status := strings.ToLower(strings.TrimSpace(currentStatus))
+	if !validCampaignWorkbenchStatus(status) {
+		return transitions
+	}
+	for _, transition := range transitions {
+		if transition.Status == status {
+			return transitions
+		}
+	}
+	changedAt := strings.TrimSpace(workbenchUpdatedAt)
+	source := "workbench_state"
+	if changedAt == "" {
+		changedAt = campaignTimestampRFC3339(tsEnd)
+		source = "campaign"
+	}
+	return append(transitions, campaignStatusTransitionDTO{Status: status, ChangedAt: changedAt, Source: source})
+}
+
+func campaignTimestampRFC3339(value int64) string {
+	if value <= 0 {
+		return ""
+	}
+	if value < 100_000_000_000 {
+		return time.Unix(value, 0).UTC().Format(time.RFC3339Nano)
+	}
+	return time.UnixMilli(value).UTC().Format(time.RFC3339Nano)
 }
 
 func campaignPhaseFallback(phases []string) []campaignPhaseDTO {
@@ -1012,6 +1844,49 @@ func campaignToPhases(campaign campaignDTO) []attackPhaseDTO {
 		phases = append(phases, attackPhaseDTO{
 			Phase: phase, AlertIDs: campaign.Alerts, StartTime: campaign.TsStart,
 			EndTime: campaign.TsEnd, KeyEvents: []attackEventDTO{}, Confidence: campaign.Score,
+		})
+	}
+	return phases
+}
+
+func campaignToPhasesWithAlerts(campaign campaignDTO, alerts []campaignAlertDTO) []attackPhaseDTO {
+	phases := make([]attackPhaseDTO, 0, len(campaign.AttackPhases))
+	for _, phase := range campaign.AttackPhases {
+		if phase == "" {
+			continue
+		}
+		alertIDs := make([]string, 0)
+		keyEvents := make([]attackEventDTO, 0)
+		var phaseStart, phaseEnd int64
+		for _, alert := range alerts {
+			if alert.AttackPhase != "" && !strings.EqualFold(strings.TrimSpace(alert.AttackPhase), strings.TrimSpace(phase)) {
+				continue
+			}
+			if alert.AlertID != "" {
+				alertIDs = append(alertIDs, alert.AlertID)
+			}
+			if alert.LastSeen > 0 {
+				if phaseStart == 0 || alert.LastSeen < phaseStart {
+					phaseStart = alert.LastSeen
+				}
+				if alert.LastSeen > phaseEnd {
+					phaseEnd = alert.LastSeen
+				}
+			}
+			keyEvents = append(keyEvents, attackEventDTO{
+				EventID: alert.AlertID, Timestamp: alert.LastSeen, Description: alert.AlertType,
+				Technique: phase, Severity: alert.Severity,
+			})
+		}
+		if phaseStart == 0 {
+			phaseStart = campaign.TsStart
+		}
+		if phaseEnd == 0 {
+			phaseEnd = campaign.TsEnd
+		}
+		phases = append(phases, attackPhaseDTO{
+			Phase: phase, AlertIDs: alertIDs, StartTime: phaseStart, EndTime: phaseEnd,
+			KeyEvents: keyEvents, Confidence: campaign.Score,
 		})
 	}
 	return phases
