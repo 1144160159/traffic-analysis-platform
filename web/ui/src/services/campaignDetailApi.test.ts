@@ -53,6 +53,10 @@ describe('campaignDetailApi', () => {
     expect(snapshot.impactCampus.total).toBe(0);
     expect(snapshot.impactCampus.rows).toEqual([]);
     expect(snapshot.evidenceChecks.map((item) => item.label)).toEqual(['告警', 'PCAP / Session']);
+    expect(snapshot.evidenceCompletenessAvailable).toBe(true);
+    expect(snapshot.evidenceCompleteness).toBe(50);
+    expect(snapshot.evidenceChecks[0].percent).toBe(50);
+    expect(snapshot.evidenceChecks[1]).toMatchObject({ percent: 0, status: 'info' });
     expect(snapshot.phaseDataBacked).toBe(true);
     expect(snapshot.evidenceRail[0]).toEqual({
       key: 'alerts',
@@ -69,8 +73,11 @@ describe('campaignDetailApi', () => {
     expect(snapshot.evidenceSummaryRows[0].证据类型).toBe('告警');
     expect(snapshot.responseFlow).toHaveLength(6);
     expect(snapshot.responseFlow.map((step) => step.title)).toEqual(['发现', '研判', '遏制', '根除', '恢复', '复盘']);
-    expect(snapshot.responseActions).toEqual([]);
-    expect(snapshot.reviewRows).toEqual([]);
+    expect(snapshot.responseActions).toEqual([
+      { 动作: '研判更新', 目标: '06-19 18:02', 负责人: 'audit_log', 状态: '最新记录' },
+      { 动作: '发现战役', 目标: '06-19 17:15', 负责人: 'campaign', 状态: '已记录' },
+    ]);
+    expect(snapshot.reviewRows.map((row) => row.维度)).toEqual(['战役摘要', '攻击阶段', '影响范围', '证据状态', '负责人']);
     expect(snapshot.evidence.find((item) => item.label === 'Campaign Detail API')?.value).toBe('/v1/campaigns/APT-20260619-001');
   });
 
@@ -140,5 +147,65 @@ describe('campaignDetailApi', () => {
       { 服务名称: 'Kafka broker', 端口协议: '9092/TCP', 风险: '高危', 依赖关系: '事件总线' },
       { 服务名称: 'OIDC', 端口协议: '443/TCP', 风险: '低危', 依赖关系: '统一登录' },
     ]);
+  });
+
+  it('uses all alerts for risk filtering and preserves backend impact provenance', () => {
+    const snapshot = normalizeCampaignDetailSnapshot('APT-DATA-BACKED', {
+      data: {
+        campaign_id: 'APT-DATA-BACKED',
+        entities: ['entity-fallback'],
+        alerts: Array.from({ length: 7 }, (_, index) => ({
+          alert_id: `AL-${index}`,
+          severity: index === 6 ? 'low' : 'high',
+        })),
+        impact_data_backed: {
+          assets: true,
+          accounts: false,
+          services: false,
+          departments: false,
+          campuses: false,
+          business_systems: false,
+        },
+        impact_assets: [
+          { asset: 'db-01', severity: 'critical' },
+          { asset: 'web-01', severity: 'medium' },
+          { asset: 'dns-01', severity: 'low' },
+        ],
+      },
+    });
+
+    expect(snapshot.alerts).toHaveLength(7);
+    expect(snapshot.alerts[snapshot.alerts.length - 1]?.风险).toBe('低危');
+    expect(snapshot.assetCount).toBe(3);
+    expect(snapshot.impactAsset.breakdown.map((item) => item.count)).toEqual([1, 1, 1]);
+    expect(snapshot.impactDataBacked.asset).toBe(true);
+    expect(snapshot.impactDataBacked.account).toBe(false);
+    expect(snapshot.impactTabs.find((item) => item.label === '账号')?.value).toBe('--');
+    expect(snapshot.impactTabs.find((item) => item.label === '服务')?.value).toBe('--');
+  });
+
+  it('uses the complete payload for impact totals while limiting detail rows to five', () => {
+    const services = Array.from({ length: 7 }, (_, index) => ({
+      service_name: `service-${index}`,
+      severity: index < 3 ? 'high' : index < 5 ? 'medium' : 'low',
+    }));
+    const accounts = Array.from({ length: 8 }, (_, index) => ({
+      username: `account-${index}`,
+      severity: index < 2 ? 'high' : index < 6 ? 'medium' : 'low',
+    }));
+    const snapshot = normalizeCampaignDetailSnapshot('APT-IMPACT-ALL', {
+      data: {
+        campaign_id: 'APT-IMPACT-ALL',
+        impact_services: services,
+        impact_accounts: accounts,
+      },
+    });
+
+    expect(snapshot.impactService.total).toBe(7);
+    expect(snapshot.impactService.breakdown.map((item) => item.count)).toEqual([3, 2, 2]);
+    expect(snapshot.impactService.rows).toHaveLength(5);
+    expect(snapshot.impactAccount.total).toBe(8);
+    expect(snapshot.impactAccount.breakdown.map((item) => item.count)).toEqual([2, 4, 2]);
+    expect(snapshot.impactAccount.rows).toHaveLength(5);
   });
 });

@@ -34,20 +34,10 @@ RUN apk add --no-cache gettext
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY deployments/nginx.conf /etc/nginx/nginx.conf.template
 COPY deployments/docker-entrypoint.sh /docker-entrypoint.sh
+COPY deployments/config.js.template /usr/share/nginx/html/config.js.template
 RUN find /usr/share/nginx/html -type d -exec chmod 0755 {} + \
   && find /usr/share/nginx/html -type f -exec chmod 0644 {} +
 RUN chmod +x /docker-entrypoint.sh
-
-RUN echo 'window.__RUNTIME_CONFIG__ = { \
-  API_BASE_URL: "${API_BASE_URL}", \
-  WS_URL: "${WS_URL}", \
-  ARKIME_BASE_URL: "${ARKIME_BASE_URL}", \
-  AUTH_ENABLED: "${AUTH_ENABLED}", \
-  USE_MOCK: "${USE_MOCK}", \
-  ENABLE_REALTIME: "${ENABLE_REALTIME}", \
-  SCREEN_ACCESS_MODE: "${SCREEN_ACCESS_MODE}", \
-  DESKTOP_SMOKE_TOKEN_ENABLED: "${DESKTOP_SMOKE_TOKEN_ENABLED}" \
-};' > /usr/share/nginx/html/config.js.template
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:80/health || exit 1

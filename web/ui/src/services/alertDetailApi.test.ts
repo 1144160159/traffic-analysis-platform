@@ -39,6 +39,7 @@ describe('alertDetailApi', () => {
             size: '24.8 MB',
             timestamp: '2026-06-20T03:43:05Z',
             status: 'generated',
+            redirect_url: '/forensics?evidence=AL-20260620-000123.pcap',
           },
           {
             type: 'Session',
@@ -65,6 +66,7 @@ describe('alertDetailApi', () => {
     expect(snapshot.assets[1].ip).toBe('185.22.14.9');
     expect(snapshot.evidenceRows[0].证据类型).toBe('PCAP');
     expect(snapshot.evidenceRows[0].状态).toBe('已生成');
+    expect(snapshot.evidenceRows[0].viewUrl).toBe('/forensics?evidence=AL-20260620-000123.pcap');
     expect(snapshot.evidenceRows[1].sessionEvidence?.sessionId).toBe('session-20260620-000123.json');
     expect(snapshot.evidenceRows[1].sessionEvidence?.tupleLines).toContain('172.16.5.10:443 ->');
     expect(snapshot.evidence.map((item) => item.label)).toContain('Evidence API');
@@ -79,7 +81,7 @@ describe('alertDetailApi', () => {
     );
 
     expect(snapshot.alertId).toBe('AL-1');
-    expect(snapshot.evidenceRows).toHaveLength(6);
+    expect(snapshot.evidenceRows).toHaveLength(0);
     expect(snapshot.evidence.find((item) => item.label === 'Evidence API')?.status).toBe('warn');
     expect(snapshot.evidence.find((item) => item.label === 'Feedback API')?.value).toBe('HTTP 404');
   });

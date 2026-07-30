@@ -1451,6 +1451,7 @@ export const detailRoutes: NavRoute[] = [
             "/api/v1/alerts/{id}/evidence",
             "/api/v1/alerts/{id}/status",
             "/api/v1/alerts/{id}/assign",
+            "/api/v1/alerts/{id}/labels",
             "/api/v1/alerts/{id}/close",
             "/api/v1/alerts/{id}/reopen",
             "/api/v1/alerts/{id}/feedback",

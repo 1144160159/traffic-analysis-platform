@@ -5,10 +5,30 @@ import type { ComposeOption } from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
 import EChartsReactCore from 'echarts-for-react/esm/core';
 import { AlertOutlined, ApiOutlined, DatabaseOutlined, FileSearchOutlined, GlobalOutlined, HddOutlined, SafetyCertificateOutlined, UserOutlined, ZoomInOutlined, ZoomOutOutlined } from '@ant-design/icons';
+import ApiOutlinedSvg from '@ant-design/icons-svg/es/asn/ApiOutlined';
+import AimOutlinedSvg from '@ant-design/icons-svg/es/asn/AimOutlined';
+import AuditOutlinedSvg from '@ant-design/icons-svg/es/asn/AuditOutlined';
+import CloudServerOutlinedSvg from '@ant-design/icons-svg/es/asn/CloudServerOutlined';
+import CloudUploadOutlinedSvg from '@ant-design/icons-svg/es/asn/CloudUploadOutlined';
+import CompassOutlinedSvg from '@ant-design/icons-svg/es/asn/CompassOutlined';
+import DesktopOutlinedSvg from '@ant-design/icons-svg/es/asn/DesktopOutlined';
+import FileProtectOutlinedSvg from '@ant-design/icons-svg/es/asn/FileProtectOutlined';
+import FileSearchOutlinedSvg from '@ant-design/icons-svg/es/asn/FileSearchOutlined';
+import GatewayOutlinedSvg from '@ant-design/icons-svg/es/asn/GatewayOutlined';
+import GlobalOutlinedSvg from '@ant-design/icons-svg/es/asn/GlobalOutlined';
+import HddOutlinedSvg from '@ant-design/icons-svg/es/asn/HddOutlined';
+import KeyOutlinedSvg from '@ant-design/icons-svg/es/asn/KeyOutlined';
+import LinkOutlinedSvg from '@ant-design/icons-svg/es/asn/LinkOutlined';
+import LockOutlinedSvg from '@ant-design/icons-svg/es/asn/LockOutlined';
+import SafetyCertificateOutlinedSvg from '@ant-design/icons-svg/es/asn/SafetyCertificateOutlined';
+import SwapOutlinedSvg from '@ant-design/icons-svg/es/asn/SwapOutlined';
+import ThunderboltOutlinedSvg from '@ant-design/icons-svg/es/asn/ThunderboltOutlined';
+import UserOutlinedSvg from '@ant-design/icons-svg/es/asn/UserOutlined';
+import type { AbstractNode, IconDefinition } from '@ant-design/icons-svg/es/types';
 import type { BarSeriesOption, BoxplotSeriesOption, CustomSeriesOption, GaugeSeriesOption, GraphSeriesOption, HeatmapSeriesOption, LineSeriesOption, LinesSeriesOption, PieSeriesOption, SankeySeriesOption, ScatterSeriesOption } from 'echarts/charts';
 import type { GridComponentOption, LegendComponentOption, TitleComponentOption, TooltipComponentOption, VisualMapComponentOption } from 'echarts/components';
-import { useState } from 'react';
-import type { CSSProperties, WheelEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import type { WheelEvent } from 'react';
 
 echarts.use([LineChart, GaugeChart, ScatterChart, HeatmapChart, LinesChart, CustomChart, PieChart, BarChart, BoxplotChart, SankeyChart, GraphChart, GridComponent, TooltipComponent, TitleComponent, LegendComponent, VisualMapComponent, CanvasRenderer]);
 
@@ -255,8 +275,13 @@ export type TopicTopologyNode = {
   detail: string;
   x: number;
   y: number;
-  tone: 'asset' | 'probe' | 'risk' | 'protocol' | 'proxy' | 'destination';
+  tone: 'asset' | 'probe' | 'risk' | 'protocol' | 'proxy' | 'destination' | 'warn';
   size?: [number, number];
+  symbol?: 'roundRect' | 'circle';
+  icon?: 'desktop' | 'server' | 'storage' | 'probe' | 'user' | 'protocol' | 'gateway' | 'lock' | 'global'
+    | 'campaign' | 'initial' | 'execute' | 'persist' | 'evasion' | 'credential' | 'discovery'
+    | 'lateral' | 'c2' | 'exfil' | 'evidence' | 'audit';
+  labelPosition?: 'inside' | 'top' | 'bottom' | 'left' | 'right';
   selected?: boolean;
 };
 
@@ -264,6 +289,12 @@ export type TopicTopologyLink = {
   source: string;
   target: string;
   tone?: 'info' | 'risk' | 'ok' | 'warn' | 'purple';
+  lineType?: 'solid' | 'dashed';
+  label?: string;
+  value?: number;
+  width?: number;
+  curveness?: number;
+  selected?: boolean;
 };
 
 export type ExfilBarItem = {
@@ -761,6 +792,29 @@ export function CampaignDensityChart({
 
 const exfilPalette = ['#18a8ff', '#65d86e', '#ffb020', '#b685ff', '#ff5b3d', '#7fd4ff'];
 
+function useExfilChartScale() {
+  const readScale = () => {
+    if (typeof window === 'undefined') return 1;
+    return Math.max(0.9, Math.min(1.18, window.innerWidth / 1920));
+  };
+  const [scale, setScale] = useState(readScale);
+
+  useEffect(() => {
+    let frame = 0;
+    const update = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => setScale(readScale()));
+    };
+    window.addEventListener('resize', update);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('resize', update);
+    };
+  }, []);
+
+  return scale;
+}
+
 export function ExfilSankeyChart({
   nodes,
   links,
@@ -793,8 +847,8 @@ export function ExfilSankeyChart({
         right: 4,
         top: 8,
         bottom: 8,
-        nodeWidth: 13,
-        nodeGap: 7,
+        nodeWidth: 58,
+        nodeGap: 6,
         draggable: false,
         emphasis: { focus: 'adjacency' },
         lineStyle: {
@@ -804,15 +858,17 @@ export function ExfilSankeyChart({
         },
         label: {
           color: '#d7f1ff',
-          fontSize: 10,
+          position: 'inside',
+          align: 'center',
+          fontSize: 8,
           overflow: 'truncate',
-          width: 76,
+          width: 50,
         },
         levels: exfilPalette.map((color, depth) => ({
           depth,
           itemStyle: {
-            color,
-            borderColor: 'rgba(234, 247, 255, 0.42)',
+            color: 'rgba(3, 22, 36, 0.94)',
+            borderColor: color,
             borderWidth: 1,
           },
           lineStyle: {
@@ -824,10 +880,10 @@ export function ExfilSankeyChart({
           name: node.name,
           depth: node.depth,
           itemStyle: {
-            color: exfilPalette[(node.depth ?? index) % exfilPalette.length],
-            borderColor: 'rgba(234, 247, 255, 0.42)',
+            color: 'rgba(3, 22, 36, 0.94)',
+            borderColor: exfilPalette[(node.depth ?? index) % exfilPalette.length],
             borderWidth: 1,
-            shadowBlur: 8,
+            shadowBlur: 4,
             shadowColor: exfilPalette[(node.depth ?? index) % exfilPalette.length],
           },
         })),
@@ -859,6 +915,7 @@ export function ExfilPieChart({
   center?: [string, string];
   radius?: [string, string];
 }) {
+  const scale = useExfilChartScale();
   const option: ChartOption = {
     backgroundColor: 'transparent',
     animation: false,
@@ -867,7 +924,7 @@ export function ExfilPieChart({
       confine: true,
       backgroundColor: 'rgba(3, 17, 28, 0.94)',
       borderColor: 'rgba(127, 212, 255, 0.26)',
-      textStyle: { color: '#eaf7ff', fontSize: 11 },
+      textStyle: { color: '#eaf7ff', fontSize: Math.round(11 * scale) },
       formatter: '{b}<br/>{c} ({d}%)',
     },
     series: [
@@ -1306,6 +1363,7 @@ export function ExfilLineChart({
   points: ExfilTrendPoint[];
   ariaLabel: string;
 }) {
+  const scale = useExfilChartScale();
   const values = points.map((point) => point.value);
   const maxValue = Math.max(1, ...values);
   const option: ChartOption = {
@@ -1316,23 +1374,28 @@ export function ExfilLineChart({
       confine: true,
       backgroundColor: 'rgba(3, 17, 28, 0.94)',
       borderColor: 'rgba(127, 212, 255, 0.26)',
-      textStyle: { color: '#eaf7ff', fontSize: 11 },
+      textStyle: { color: '#eaf7ff', fontSize: Math.round(11 * scale) },
     },
-    grid: { left: 22, right: 8, top: 8, bottom: 18 },
+    grid: {
+      left: Math.round(24 * scale),
+      right: Math.round(10 * scale),
+      top: Math.round(8 * scale),
+      bottom: Math.round(20 * scale),
+    },
     xAxis: {
       type: 'category',
       boundaryGap: false,
       data: points.map((point) => point.label),
       axisLine: { lineStyle: { color: 'rgba(127, 212, 255, 0.28)' } },
       axisTick: { show: false },
-      axisLabel: { color: '#8fb3c4', fontSize: 9, interval: Math.ceil(points.length / 4) },
+      axisLabel: { color: '#8fb3c4', fontSize: Math.round(9 * scale), interval: Math.ceil(points.length / 4) },
     },
     yAxis: {
       type: 'value',
       min: 0,
       max: Math.ceil(maxValue * 1.16),
       splitLine: { lineStyle: { color: 'rgba(56, 151, 201, 0.13)' } },
-      axisLabel: { color: '#8fb3c4', fontSize: 9 },
+      axisLabel: { color: '#8fb3c4', fontSize: Math.round(9 * scale) },
     },
     series: [
       {
@@ -1340,7 +1403,7 @@ export function ExfilLineChart({
         type: 'line',
         smooth: true,
         symbol: 'circle',
-        symbolSize: 4,
+        symbolSize: Math.max(4, Math.round(4 * scale)),
         data: values,
         lineStyle: { color: '#18d5ff', width: 2 },
         itemStyle: { color: '#18d5ff' },
@@ -2209,11 +2272,31 @@ export function CampaignAttackGraphChart({
 }) {
   const centerName = campaignId || '当前战役';
   const graphNodes = nodes.slice(0, campaignAttackCoordinates.length);
-  const toneByName = new Map(graphNodes.map((node) => [node.name, node.tone]));
   const nodeByName = new Map(graphNodes.map((node) => [node.name, node]));
+  const centerCoordinate: [number, number] = [300, 210];
   const option: ChartOption = {
     backgroundColor: 'transparent',
     animation: false,
+    grid: {
+      left: 42,
+      right: 42,
+      top: 38,
+      bottom: 38,
+      containLabel: false,
+    },
+    xAxis: {
+      type: 'value',
+      min: 0,
+      max: 600,
+      show: false,
+    },
+    yAxis: {
+      type: 'value',
+      min: 0,
+      max: 420,
+      inverse: true,
+      show: false,
+    },
     tooltip: {
       trigger: 'item',
       confine: true,
@@ -2222,8 +2305,8 @@ export function CampaignAttackGraphChart({
       textStyle: { color: '#eaf7ff', fontSize: 12 },
       formatter: (rawParams) => {
         const params = Array.isArray(rawParams) ? rawParams[0] : rawParams;
-        const item = params as { dataType?: string; name?: string };
-        if (item.dataType === 'edge') return '战役阶段关联';
+        const item = params as { seriesType?: string; name?: string };
+        if (item.seriesType === 'lines') return `${item.name ?? '战役阶段'}关联`;
         if (item.name === centerName) return `${centerName}<br/>${risk} / ${workflowStatus}`;
         const node = nodeByName.get(item.name ?? '');
         return node
@@ -2231,102 +2314,99 @@ export function CampaignAttackGraphChart({
           : item.name ?? '战役阶段';
       },
     },
-    series: [{
-      name: '战役阶段关联图',
-      type: 'graph',
-      layout: 'none',
-      left: 58,
-      right: 58,
-      top: 52,
-      bottom: 52,
-      roam: true,
-      draggable: true,
-      symbol: 'circle',
-      edgeSymbol: ['circle', 'circle'],
-      edgeSymbolSize: [4, 7],
-      label: {
-        show: true,
-        position: 'inside',
-        align: 'center',
-        verticalAlign: 'middle',
-        color: '#eaf7ff',
-        fontFamily: 'Inter, "Microsoft YaHei", sans-serif',
-        fontSize: 10,
-        lineHeight: 15,
-        formatter: (params) => {
-          const name = params.name ?? '';
-          if (name === centerName) {
-            const compactName = centerName.length > 16 ? `${centerName.slice(0, 15)}…` : centerName;
-            return `{center|${compactName}}\n{centerMeta|${risk} / ${workflowStatus}}`;
-          }
-          const node = nodeByName.get(name);
-          return node
-            ? `{phase|${node.name}}\n{count|${node.alertCount} 告警}\n{evidence|${node.evidenceCount} 条证据}`
-            : name;
+    series: [
+      {
+        name: '战役阶段关系线',
+        type: 'lines',
+        coordinateSystem: 'cartesian2d',
+        silent: true,
+        symbol: ['none', 'arrow'],
+        symbolSize: [0, 8],
+        lineStyle: {
+          type: 'dashed',
+          opacity: 0.72,
+          width: 1.6,
         },
-        rich: {
-          center: { color: '#f4fbff', fontSize: 11, fontWeight: 700, lineHeight: 19 },
-          centerMeta: { color: '#ffb020', fontSize: 10, lineHeight: 17 },
-          phase: { color: '#f4fbff', fontSize: 11, fontWeight: 700, lineHeight: 17 },
-          count: { color: '#d7f1ff', fontSize: 10, lineHeight: 14 },
-          evidence: { color: '#8fb3c4', fontSize: 9, lineHeight: 13 },
-        },
-      },
-      lineStyle: {
-        color: 'target',
-        type: 'dashed',
-        opacity: 0.66,
-        width: 1.6,
-        curveness: 0.06,
-      },
-      emphasis: {
-        focus: 'adjacency',
-        lineStyle: { opacity: 1, width: 2.5 },
-      },
-      data: [
-        {
-          name: centerName,
-          x: 300,
-          y: 210,
-          value: nodes.reduce((sum, node) => sum + node.alertCount, 0),
-          symbolSize: 108,
-          draggable: false,
-          itemStyle: {
-            color: '#061c2b',
-            borderColor: '#ff4d4f',
-            borderWidth: 2.4,
-            shadowBlur: 24,
-            shadowColor: 'rgba(255, 77, 79, 0.46)',
-          },
-        },
-        ...graphNodes.map((node, index) => ({
+        data: graphNodes.map((node, index) => ({
           name: node.name,
-          x: campaignAttackCoordinates[index][0],
-          y: campaignAttackCoordinates[index][1],
-          value: node.alertCount,
-          symbolSize: 78,
-          itemStyle: {
-            color: '#061c2b',
-            borderColor: campaignAttackToneColor(node.tone),
-            borderWidth: 1.8,
-            shadowBlur: 18,
-            shadowColor: campaignAttackToneColor(node.tone),
+          coords: [centerCoordinate, campaignAttackCoordinates[index]],
+          lineStyle: {
+            color: campaignAttackToneColor(node.tone),
+            curveness: index % 2 === 0 ? 0.04 : -0.04,
           },
         })),
-      ],
-      links: graphNodes.map((node) => ({
-        source: centerName,
-        target: node.name,
-        lineStyle: { color: campaignAttackToneColor(toneByName.get(node.name) ?? 'info') },
-      })),
-    } as GraphSeriesOption],
+      } as LinesSeriesOption,
+      {
+        name: '战役阶段关联图',
+        type: 'scatter',
+        symbol: 'circle',
+        label: {
+          show: true,
+          position: 'inside',
+          align: 'center',
+          verticalAlign: 'middle',
+          color: '#eaf7ff',
+          fontFamily: 'Inter, "Microsoft YaHei", sans-serif',
+          fontSize: 10,
+          lineHeight: 15,
+          formatter: (params) => {
+            const name = params.name ?? '';
+            if (name === centerName) {
+              const compactName = centerName.length > 16 ? `${centerName.slice(0, 15)}…` : centerName;
+              return `{center|${compactName}}\n{centerMeta|${risk} / ${workflowStatus}}`;
+            }
+            const node = nodeByName.get(name);
+            return node
+              ? `{phase|${node.name}}\n{count|${node.alertCount} 告警}\n{evidence|${node.evidenceCount} 条证据}`
+              : name;
+          },
+          rich: {
+            center: { color: '#f4fbff', fontSize: 11, fontWeight: 700, lineHeight: 19 },
+            centerMeta: { color: '#ffb020', fontSize: 10, lineHeight: 17 },
+            phase: { color: '#f4fbff', fontSize: 11, fontWeight: 700, lineHeight: 17 },
+            count: { color: '#d7f1ff', fontSize: 10, lineHeight: 14 },
+            evidence: { color: '#8fb3c4', fontSize: 9, lineHeight: 13 },
+          },
+        },
+        emphasis: {
+          focus: 'self',
+          scale: 1.08,
+        },
+        data: [
+          {
+            name: centerName,
+            value: [...centerCoordinate, nodes.reduce((sum, node) => sum + node.alertCount, 0)],
+            symbolSize: 108,
+            itemStyle: {
+              color: '#061c2b',
+              borderColor: '#ff4d4f',
+              borderWidth: 2.4,
+              shadowBlur: 24,
+              shadowColor: 'rgba(255, 77, 79, 0.46)',
+            },
+          },
+          ...graphNodes.map((node, index) => ({
+            name: node.name,
+            value: [...campaignAttackCoordinates[index], node.alertCount],
+            symbolSize: 78,
+            itemStyle: {
+              color: '#061c2b',
+              borderColor: campaignAttackToneColor(node.tone),
+              borderWidth: 1.8,
+              shadowBlur: 18,
+              shadowColor: campaignAttackToneColor(node.tone),
+            },
+          })),
+        ],
+      } as ScatterSeriesOption,
+    ],
   };
 
   return (
     <div
       className="taf-campaign-attack-graph"
       data-chart-engine="echarts"
-      data-series-type="graph"
+      data-series-type="lines+scatter"
     >
       <EChartsReactCore
         key={`${centerName}:${graphNodes.map((node) => `${node.name}:${node.alertCount}:${node.evidenceCount}`).join('|')}`}
@@ -2337,12 +2417,7 @@ export function CampaignAttackGraphChart({
         notMerge
         onEvents={onNodeClick ? {
           click: (params: { seriesType?: string; dataType?: string; name?: string }) => {
-            if (
-              params.seriesType === 'graph'
-              && params.dataType === 'node'
-              && params.name
-              && params.name !== centerName
-            ) {
+            if (params.seriesType === 'scatter' && params.name && params.name !== centerName) {
               onNodeClick(params.name);
             }
           },
@@ -2570,9 +2645,20 @@ const topicTopologyColors: Record<TopicTopologyNode['tone'], string> = {
   asset: '#18a8ff',
   probe: '#7fd4ff',
   risk: '#ff5b3d',
-  protocol: '#b685ff',
-  proxy: '#ffb020',
-  destination: '#65d86e',
+  protocol: '#65d86e',
+  proxy: '#b685ff',
+  destination: '#b685ff',
+  warn: '#ffb020',
+};
+
+const topicTopologyBackgrounds: Record<TopicTopologyNode['tone'], string> = {
+  asset: 'rgba(24, 168, 255, 0.22)',
+  probe: 'rgba(127, 212, 255, 0.16)',
+  risk: 'rgba(255, 91, 61, 0.16)',
+  protocol: 'rgba(101, 216, 110, 0.2)',
+  proxy: 'rgba(182, 133, 255, 0.16)',
+  destination: 'rgba(182, 133, 255, 0.16)',
+  warn: 'rgba(255, 176, 32, 0.14)',
 };
 
 const topicTopologyLinkColors: Record<NonNullable<TopicTopologyLink['tone']>, string> = {
@@ -2583,6 +2669,71 @@ const topicTopologyLinkColors: Record<NonNullable<TopicTopologyLink['tone']>, st
   purple: 'rgba(196, 128, 255, 0.68)',
 };
 
+const topicTopologyIcons: Record<NonNullable<TopicTopologyNode['icon']>, IconDefinition> = {
+  desktop: DesktopOutlinedSvg,
+  server: CloudServerOutlinedSvg,
+  storage: HddOutlinedSvg,
+  probe: ApiOutlinedSvg,
+  user: UserOutlinedSvg,
+  protocol: SafetyCertificateOutlinedSvg,
+  gateway: GatewayOutlinedSvg,
+  lock: LockOutlinedSvg,
+  global: GlobalOutlinedSvg,
+  campaign: AimOutlinedSvg,
+  initial: LinkOutlinedSvg,
+  execute: ThunderboltOutlinedSvg,
+  persist: FileProtectOutlinedSvg,
+  evasion: SafetyCertificateOutlinedSvg,
+  credential: KeyOutlinedSvg,
+  discovery: CompassOutlinedSvg,
+  lateral: SwapOutlinedSvg,
+  c2: AimOutlinedSvg,
+  exfil: CloudUploadOutlinedSvg,
+  evidence: FileSearchOutlinedSvg,
+  audit: AuditOutlinedSvg,
+};
+
+const serializeAntIconNode = (node: AbstractNode): string => {
+  const attributes = Object.entries(node.attrs)
+    .map(([key, value]) => `${key}="${String(value).replace(/&/gu, '&amp;').replace(/"/gu, '&quot;')}"`)
+    .join(' ');
+  return `<${node.tag}${attributes ? ` ${attributes}` : ''}>${(node.children ?? []).map(serializeAntIconNode).join('')}</${node.tag}>`;
+};
+
+const topicTopologyIconDataUri = (icon: NonNullable<TopicTopologyNode['icon']>, color: string) => {
+  const definition = topicTopologyIcons[icon];
+  const root = typeof definition.icon === 'function' ? definition.icon(color, color) : definition.icon;
+  const viewBox = root.attrs.viewBox ?? '0 0 1024 1024';
+  const body = (root.children ?? []).map(serializeAntIconNode).join('');
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" fill="${color}">${body}</svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+};
+
+const topicTopologyTextWidth = (value: string, fontSize: number) =>
+  Array.from(value).reduce((width, character) =>
+    width + (character.codePointAt(0)! > 0xff ? fontSize : fontSize * 0.58), 0);
+
+const topicTopologyFrameSize = (node: TopicTopologyNode, visualProfile: 'default' | 'apt-reference' = 'default'): [number, number] => {
+  const apiWidth = Array.isArray(node.size) ? node.size[0] : 104;
+  const apiHeight = Array.isArray(node.size) ? node.size[1] : 46;
+  if (visualProfile === 'apt-reference') {
+    if (node.id.startsWith('campaign-')) return [Math.max(112, apiWidth), Math.max(68, apiHeight)];
+    if (node.id.startsWith('phase-')) return [Math.max(88, apiWidth), Math.max(52, apiHeight)];
+    if (node.id.startsWith('evidence-')) return [Math.max(104, apiWidth), Math.max(52, apiHeight)];
+    if (node.id.startsWith('asset-')) return [Math.max(96, apiWidth), Math.max(54, apiHeight)];
+  }
+  // Rich-text fragments have their own padding and an inter-fragment gap.
+  // Reserve that space in the frame itself so an icon or a long CJK label can
+  // never paint outside the node when the graph is zoomed.
+  const iconWidth = node.icon ? 28 : 0;
+  const titleWidth = topicTopologyTextWidth(node.label, 10) + iconWidth + 32;
+  const detailWidth = topicTopologyTextWidth(node.detail, 8) + 32;
+  return [
+    Math.round(Math.max(104, Math.min(224, Math.max(apiWidth, titleWidth, detailWidth)))),
+    Math.round(Math.max(50, Math.min(68, apiHeight))),
+  ];
+};
+
 export function TopicTopologyGraph({
   ariaLabel,
   nodes,
@@ -2590,6 +2741,7 @@ export function TopicTopologyGraph({
   onNodeClick,
   showNodes = true,
   showNodeLabels = true,
+  visualProfile = 'default',
 }: {
   ariaLabel: string;
   nodes: TopicTopologyNode[];
@@ -2597,87 +2749,529 @@ export function TopicTopologyGraph({
   onNodeClick?: (id: string) => void;
   showNodes?: boolean;
   showNodeLabels?: boolean;
+  visualProfile?: 'default' | 'apt-reference';
 }) {
+  const chartRef = useRef<EChartsReactCore>(null);
+  const [zoom, setZoom] = useState(1);
+  const [chartSize, setChartSize] = useState({ width: 960, height: 420 });
+  const uniqueNodeIDs = new Set<string>();
+  let duplicateNodeCount = 0;
+  const uniqueNodes = nodes.flatMap((node) => {
+    const id = node.id.trim();
+    if (!id || uniqueNodeIDs.has(id)) {
+      if (id) duplicateNodeCount += 1;
+      return [];
+    }
+    uniqueNodeIDs.add(id);
+    return [{ ...node, id }];
+  });
+  let danglingLinkCount = 0;
+  let selfLinkCount = 0;
+  const validLinks = links.flatMap((link) => {
+    const source = link.source.trim();
+    const target = link.target.trim();
+    if (source === target) {
+      selfLinkCount += 1;
+      return [];
+    }
+    if (!uniqueNodeIDs.has(source) || !uniqueNodeIDs.has(target)) {
+      danglingLinkCount += 1;
+      return [];
+    }
+    return [{ ...link, source, target }];
+  });
+  /*
+   * Keep the graph's own plotting inset deliberately small. Dense business
+   * columns (five exfil rows, five tunnel protocols, six APT evidence nodes)
+   * need the available height for a visible frame-to-frame gutter; the node
+   * boundary clamp below still prevents any frame from leaving the canvas.
+   */
+  const seriesInset = 5;
+  const frameInset = 0;
+  const seriesWidth = Math.max(1, chartSize.width - seriesInset * 2);
+  const seriesHeight = Math.max(1, chartSize.height - seriesInset * 2);
+  const minimumFrameGap = 13;
+  let nodeContentOverflowCount = 0;
+  let nodeInsetViolationCount = 0;
+  const preparedGraphNodes = uniqueNodes.map((node) => {
+    const [nodeWidth, nodeHeight] = topicTopologyFrameSize(node, visualProfile);
+    const aptReference = visualProfile === 'apt-reference';
+    const minX = Math.min(50, ((nodeWidth / 2 + frameInset) / seriesWidth) * 100);
+    const maxX = Math.max(50, 100 - minX);
+    const minY = Math.min(50, ((nodeHeight / 2 + frameInset) / seriesHeight) * 100);
+    const maxY = Math.max(50, 100 - minY);
+    const x = Math.max(minX, Math.min(maxX, node.x));
+    const y = Math.max(minY, Math.min(maxY, node.y));
+    /*
+     * Rich text is explicitly clipped to the title/detail boxes below.  The
+     * previous diagnostic compared the untruncated string width with the whole
+     * frame and therefore reported an overflow even though ECharts kept every
+     * glyph and icon inside the node.  Diagnose the painted boxes instead.
+     */
+    const titleBoxWidth = Math.max(42, nodeWidth - (node.icon ? 48 : 24));
+    const detailBoxWidth = Math.max(42, nodeWidth - 24);
+    if (titleBoxWidth + (node.icon ? 40 : 16) > nodeWidth + 0.5
+      || detailBoxWidth + 16 > nodeWidth + 0.5) {
+      nodeContentOverflowCount += 1;
+    }
+    const left = x / 100 * seriesWidth - nodeWidth / 2;
+    const right = (100 - x) / 100 * seriesWidth - nodeWidth / 2;
+    const top = y / 100 * seriesHeight - nodeHeight / 2;
+    const bottom = (100 - y) / 100 * seriesHeight - nodeHeight / 2;
+    if ([left, right, top, bottom].some((inset) => inset < frameInset - 0.5)) {
+      nodeInsetViolationCount += 1;
+    }
+    return {
+      id: node.id,
+      name: node.id,
+      value: node.detail,
+      x,
+      y,
+      symbol: 'roundRect' as const,
+      symbolSize: [nodeWidth, nodeHeight] as [number, number],
+      itemStyle: {
+        color: topicTopologyBackgrounds[node.tone],
+        borderColor: topicTopologyColors[node.tone],
+        borderWidth: node.selected ? 2.2 : aptReference ? 1.2 : 1.4,
+        shadowBlur: node.selected ? (aptReference ? 5 : 10) : aptReference ? 0 : 4,
+        shadowColor: topicTopologyColors[node.tone],
+      },
+      label: {
+        show: showNodeLabels,
+        color: '#eaf7ff',
+        backgroundColor: 'transparent',
+        borderRadius: 3,
+        padding: [1, 3],
+        position: 'inside' as const,
+        fontSize: aptReference ? 9 : 10,
+        lineHeight: aptReference ? 13 : 15,
+        overflow: 'truncate' as const,
+        width: nodeWidth - 16,
+        formatter: aptReference && node.id.startsWith('campaign-')
+          ? `{icon|} {kicker|战役簇}\n{title|${node.label}}\n{detail|${node.detail}}`
+          : node.icon
+            ? `{icon|} {title|${node.label}}\n{detail|${node.detail}}`
+            : `{title|${node.label}}\n{detail|${node.detail}}`,
+        rich: {
+          icon: {
+            width: 14,
+            height: 14,
+            backgroundColor: node.icon
+              ? { image: topicTopologyIconDataUri(node.icon, topicTopologyColors[node.tone]) }
+              : 'transparent',
+          },
+          title: {
+            width: Math.max(42, nodeWidth - (node.icon ? 48 : 24)),
+            overflow: 'truncate' as const,
+            color: '#eaf7ff',
+            fontSize: aptReference ? 9 : 10,
+            fontWeight: 700,
+            lineHeight: 14,
+          },
+          detail: {
+            width: Math.max(42, nodeWidth - 24),
+            overflow: 'truncate' as const,
+            color: '#9fc5d8',
+            fontSize: aptReference ? 7.5 : 8,
+            lineHeight: aptReference ? 10 : 11,
+          },
+          kicker: {
+            color: '#b9d5e5',
+            fontSize: 7.5,
+            fontWeight: 600,
+            lineHeight: 10,
+          },
+        },
+      },
+    };
+  });
+  type PreparedGraphNode = (typeof preparedGraphNodes)[number];
+  type AxisItem = {
+    desired: number;
+    size: number;
+  };
+  let nodeLayoutCapacityViolationCount = 0;
+  const distributeAxis = (items: AxisItem[], available: number) => {
+    if (!items.length) return [];
+    const required = items.reduce((total, item) => total + item.size, 0)
+      + minimumFrameGap * Math.max(0, items.length - 1);
+    if (required > available + 0.5) nodeLayoutCapacityViolationCount += 1;
+    const positions = items.map((item) => (
+      Math.max(item.size / 2, Math.min(available - item.size / 2, item.desired))
+    ));
+    /*
+     * Forward/backward relaxation preserves the API-provided order and desired
+     * placement while guaranteeing a visible gutter whenever the column fits.
+     * This runs on every responsive chart measurement, so browser resizing can
+     * never collapse previously separated business frames back together.
+     */
+    for (let pass = 0; pass < 3; pass += 1) {
+      for (let index = 1; index < positions.length; index += 1) {
+        const separation = (items[index - 1].size + items[index].size) / 2 + minimumFrameGap;
+        positions[index] = Math.max(positions[index], positions[index - 1] + separation);
+      }
+      const overflow = positions[positions.length - 1]
+        + items[items.length - 1].size / 2
+        - available;
+      if (overflow > 0) {
+        for (let index = 0; index < positions.length; index += 1) positions[index] -= overflow;
+      }
+      for (let index = positions.length - 2; index >= 0; index -= 1) {
+        const separation = (items[index].size + items[index + 1].size) / 2 + minimumFrameGap;
+        positions[index] = Math.min(positions[index], positions[index + 1] - separation);
+      }
+      const underflow = items[0].size / 2 - positions[0];
+      if (underflow > 0) {
+        for (let index = 0; index < positions.length; index += 1) positions[index] += underflow;
+      }
+    }
+    return positions;
+  };
+  const columnGroups: PreparedGraphNode[][] = [];
+  [...preparedGraphNodes]
+    .sort((left, right) => left.x - right.x || left.y - right.y)
+    .forEach((node) => {
+      const current = columnGroups[columnGroups.length - 1];
+      if (!current || Math.abs(current[0].x - node.x) > 0.5) columnGroups.push([node]);
+      else current.push(node);
+    });
+  const columnPositions = distributeAxis(
+    columnGroups.map((column) => ({
+      desired: column.reduce((total, node) => total + node.x, 0) / column.length / 100 * seriesWidth,
+      size: Math.max(...column.map((node) => node.symbolSize[0])),
+    })),
+    seriesWidth,
+  );
+  columnGroups.forEach((column, columnIndex) => {
+    const centerX = columnPositions[columnIndex];
+    column.forEach((node) => {
+      node.x = centerX / seriesWidth * 100;
+    });
+    const orderedNodes = [...column].sort((left, right) => left.y - right.y);
+    const rowPositions = distributeAxis(
+      orderedNodes.map((node) => ({
+        desired: node.y / 100 * seriesHeight,
+        size: node.symbolSize[1],
+      })),
+      seriesHeight,
+    );
+    orderedNodes.forEach((node, rowIndex) => {
+      node.y = rowPositions[rowIndex] / seriesHeight * 100;
+    });
+  });
+  const graphNodes = preparedGraphNodes;
+  nodeInsetViolationCount = 0;
+  graphNodes.forEach((node) => {
+    const [nodeWidth, nodeHeight] = node.symbolSize;
+    const left = node.x / 100 * seriesWidth - nodeWidth / 2;
+    const right = (100 - node.x) / 100 * seriesWidth - nodeWidth / 2;
+    const top = node.y / 100 * seriesHeight - nodeHeight / 2;
+    const bottom = (100 - node.y) / 100 * seriesHeight - nodeHeight / 2;
+    if ([left, right, top, bottom].some((inset) => inset < frameInset - 0.5)) {
+      nodeInsetViolationCount += 1;
+    }
+  });
+  const evidenceColumnX = Math.max(
+    ...graphNodes.filter((node) => node.id.startsWith('evidence-')).map((node) => node.x),
+    -Infinity,
+  );
+  const assetColumnNodes = graphNodes.filter((node) => node.id.startsWith('asset-'));
+  const nodeOverlapCount = graphNodes.reduce((count, node, index) => {
+    const [nodeWidth, nodeHeight] = node.symbolSize;
+    const nodeX = node.x / 100 * seriesWidth;
+    const nodeY = node.y / 100 * seriesHeight;
+    return count + graphNodes.slice(index + 1).filter((candidate) => {
+      const [candidateWidth, candidateHeight] = candidate.symbolSize;
+      const candidateX = candidate.x / 100 * seriesWidth;
+      const candidateY = candidate.y / 100 * seriesHeight;
+      return Math.abs(nodeX - candidateX) < (nodeWidth + candidateWidth) / 2
+        && Math.abs(nodeY - candidateY) < (nodeHeight + candidateHeight) / 2;
+    }).length;
+  }, 0);
+  let nodeMinimumGap = Number.POSITIVE_INFINITY;
+  let nodeProximityCount = 0;
+  graphNodes.forEach((node, index) => {
+    const [nodeWidth, nodeHeight] = node.symbolSize;
+    const nodeX = node.x / 100 * seriesWidth;
+    const nodeY = node.y / 100 * seriesHeight;
+    graphNodes.slice(index + 1).forEach((candidate) => {
+      const [candidateWidth, candidateHeight] = candidate.symbolSize;
+      const candidateX = candidate.x / 100 * seriesWidth;
+      const candidateY = candidate.y / 100 * seriesHeight;
+      const horizontalGap = Math.abs(nodeX - candidateX) - (nodeWidth + candidateWidth) / 2;
+      const verticalGap = Math.abs(nodeY - candidateY) - (nodeHeight + candidateHeight) / 2;
+      const distance = Math.hypot(Math.max(0, horizontalGap), Math.max(0, verticalGap));
+      nodeMinimumGap = Math.min(nodeMinimumGap, distance);
+      if (distance < minimumFrameGap - 0.5) nodeProximityCount += 1;
+    });
+  });
+  if (!Number.isFinite(nodeMinimumGap)) nodeMinimumGap = 0;
+  const rightAssetColumnContract = visualProfile !== 'apt-reference'
+    ? 'not-applicable'
+    : assetColumnNodes.length === 4 && assetColumnNodes.every((node) => node.x > evidenceColumnX)
+      ? 'assets-after-evidence'
+      : 'invalid';
+  /*
+   * ECharts' graph edge adjustment treats a rectangular symbol as a circle
+   * whose diameter is the average of the symbol width and height. That makes a
+   * horizontal edge enter a wide node before it reaches the framework edge.
+   * Give every link its own invisible source/target anchor with a diameter
+   * calculated from the real rectangular boundary. The target anchor also
+   * reserves half of the arrow length, so the arrow tip (not its centre) lands
+   * on the target frame.
+   */
+  const graphNodeByID = new Map(graphNodes.map((node) => [node.id, node]));
+  const markerSizes = visualProfile === 'apt-reference'
+    ? { source: 3, target: 9 }
+    : { source: 1, target: 10 };
+  const boundaryRadius = (
+    node: (typeof graphNodes)[number],
+    directionX: number,
+    directionY: number,
+  ) => {
+    const magnitude = Math.hypot(directionX, directionY);
+    if (magnitude < 0.001) return 0;
+    const unitX = directionX / magnitude;
+    const unitY = directionY / magnitude;
+    const horizontal = Math.abs(unitX) > 0.0001
+      ? node.symbolSize[0] / 2 / Math.abs(unitX)
+      : Number.POSITIVE_INFINITY;
+    const vertical = Math.abs(unitY) > 0.0001
+      ? node.symbolSize[1] / 2 / Math.abs(unitY)
+      : Number.POSITIVE_INFINITY;
+    return Math.min(horizontal, vertical);
+  };
+  let edgeFrameIntrusionCount = 0;
+  const edgeAnchorSignature: string[] = [];
+  const edgeAnchors = validLinks.flatMap((link, index) => {
+    const source = graphNodeByID.get(link.source);
+    const target = graphNodeByID.get(link.target);
+    if (!source || !target) return [];
+    const sourceX = source.x / 100 * seriesWidth;
+    const sourceY = source.y / 100 * seriesHeight;
+    const targetX = target.x / 100 * seriesWidth;
+    const targetY = target.y / 100 * seriesHeight;
+    const curveness = link.curveness ?? 0;
+    const controlX = curveness
+      ? (sourceX + targetX) / 2 - (sourceY - targetY) * curveness
+      : targetX;
+    const controlY = curveness
+      ? (sourceY + targetY) / 2 - (targetX - sourceX) * curveness
+      : targetY;
+    const sourceBoundary = boundaryRadius(source, controlX - sourceX, controlY - sourceY);
+    const targetBoundary = boundaryRadius(
+      target,
+      curveness ? controlX - targetX : sourceX - targetX,
+      curveness ? controlY - targetY : sourceY - targetY,
+    );
+    const sourceRadius = sourceBoundary + markerSizes.source / 2;
+    const targetRadius = targetBoundary + markerSizes.target / 2;
+    if (!Number.isFinite(sourceRadius) || !Number.isFinite(targetRadius)
+      || sourceRadius + 0.01 < sourceBoundary
+      || targetRadius - markerSizes.target / 2 + 0.01 < targetBoundary) {
+      edgeFrameIntrusionCount += 1;
+    }
+    edgeAnchorSignature.push(
+      `${link.source}>${link.target}:${sourceRadius.toFixed(2)},${targetRadius.toFixed(2)}`,
+    );
+    const anchor = (
+      id: string,
+      node: (typeof graphNodes)[number],
+      diameter: number,
+    ) => ({
+      id,
+      name: id,
+      value: 0,
+      x: node.x,
+      y: node.y,
+      symbol: 'none' as const,
+      symbolSize: Math.max(1, diameter),
+      itemStyle: { opacity: 0 },
+      label: { show: false },
+      tooltip: { show: false },
+    });
+    return [
+      anchor(`__edge-${index}-source`, source, sourceRadius * 2),
+      anchor(`__edge-${index}-target`, target, targetRadius * 2),
+    ];
+  });
+  const curvedLinkCount = validLinks.filter((link) => Math.abs(link.curveness ?? 0) >= 0.01).length;
+  const linkCurvenessSignature = validLinks
+    .filter((link) => Math.abs(link.curveness ?? 0) >= 0.01)
+    .map((link) => `${link.source}>${link.target}:${(link.curveness ?? 0).toFixed(2)}`)
+    .join('|');
+  const graphPaddingNodes = [
+    { id: '__padding-top-left', name: '__padding-top-left', x: 0, y: 0 },
+    { id: '__padding-bottom-right', name: '__padding-bottom-right', x: 100, y: 100 },
+  ].map((node) => ({
+    ...node,
+    value: 0,
+    symbol: 'circle' as const,
+    symbolSize: 1,
+    itemStyle: { opacity: 0 },
+    label: { show: false },
+    tooltip: { show: false },
+  }));
+  const option: ChartOption = {
+    backgroundColor: 'transparent',
+    animation: false,
+    tooltip: {
+      trigger: 'item',
+      confine: true,
+      backgroundColor: 'rgba(3, 17, 28, 0.96)',
+      borderColor: 'rgba(127, 212, 255, 0.28)',
+      textStyle: { color: '#eaf7ff', fontSize: 11 },
+      formatter: (rawParams) => {
+        const params = Array.isArray(rawParams) ? rawParams[0] : rawParams;
+        const item = params as { dataType?: string; data?: { id?: string; name?: string }; name?: string };
+        if (item.dataType === 'edge') return item.data?.name || '关系链路';
+        const node = nodes.find((candidate) => candidate.id === item.name);
+        return node ? `${node.label}<br/>${node.detail}` : item.name || '关系节点';
+      },
+    },
+    series: [{
+      type: 'graph',
+      layout: 'none',
+      left: seriesInset,
+      right: seriesInset,
+      top: seriesInset,
+      bottom: seriesInset,
+      roam: true,
+      zoom,
+      nodeScaleRatio: 1,
+      scaleLimit: { min: 0.45, max: 3.2 },
+      draggable: false,
+      // ECharts clips graph edges at each node symbol. A visible source anchor
+      // and a larger target arrow make those two frame intersections explicit.
+      // Keep the stroke continuous: a dashed first/last segment can look
+      // detached even when its mathematical endpoint is on the frame.
+      edgeSymbol: [
+        showNodes && markerSizes.source > 0 ? 'circle' : 'none',
+        showNodes ? 'arrow' : 'none',
+      ],
+      edgeSymbolSize: [markerSizes.source, markerSizes.target],
+      emphasis: { focus: 'adjacency' },
+      data: showNodes
+        ? [...graphPaddingNodes, ...edgeAnchors, ...graphNodes]
+        : [...graphPaddingNodes, ...edgeAnchors, ...graphNodes.map((node) => ({ ...node, symbolSize: 1, label: { show: false }, itemStyle: { opacity: 0 } }))],
+      links: validLinks.map((link, index) => ({
+        source: `__edge-${index}-source`,
+        target: `__edge-${index}-target`,
+        value: link.value,
+        name: link.label,
+        lineStyle: {
+          color: topicTopologyLinkColors[link.tone ?? 'info'],
+          width: link.width ?? Math.max(1.4, Math.min(3, 1.2 + (link.value ?? 0) / 24)),
+          type: visualProfile === 'apt-reference' ? (link.lineType ?? 'dashed') : 'solid',
+          opacity: link.selected ? 0.96 : link.lineType === 'dashed' ? 0.5 : 0.72,
+          curveness: link.curveness ?? 0,
+          cap: 'round',
+          shadowBlur: link.selected ? 8 : 0,
+          shadowColor: topicTopologyLinkColors[link.tone ?? 'info'],
+        },
+      })),
+      lineStyle: { width: 1.2, opacity: 0.64 },
+    }],
+  };
+
+  useEffect(() => {
+    const chart = chartRef.current?.getEchartsInstance();
+    const host = chart?.getDom()?.parentElement;
+    if (!chart || !host || typeof ResizeObserver === 'undefined') return undefined;
+    const resize = () => {
+      const bounds = host.getBoundingClientRect();
+      const nextWidth = Math.max(1, Math.round(bounds.width));
+      const nextHeight = Math.max(1, Math.round(bounds.height));
+      setChartSize((current) => (
+        current.width === nextWidth && current.height === nextHeight
+          ? current
+          : { width: nextWidth, height: nextHeight }
+      ));
+      chart.resize();
+    };
+    const observer = new ResizeObserver(resize);
+    observer.observe(host);
+    resize();
+    return () => observer.disconnect();
+  }, []);
+
+  const resetGraph = () => {
+    setZoom(1);
+    const chart = chartRef.current?.getEchartsInstance();
+    chart?.dispatchAction({ type: 'restore' });
+    chart?.resize();
+  };
+
   return (
-    <div className="taf-api-topology" role="img" aria-label={ariaLabel}>
-      <svg className="taf-api-topology-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-        <defs>
-          <filter id="taf-api-topology-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="0.8" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
-          <marker id="taf-api-topology-arrow" markerWidth="4" markerHeight="4" refX="3" refY="2" orient="auto"><path d="M 0 0 L 4 2 L 0 4 z" fill="rgba(127, 212, 255, 0.76)" /></marker>
-        </defs>
-        <g className="taf-api-topology-svg__links">
-          {links.map((link) => {
-            const source = nodes.find((node) => node.id === link.source);
-            const target = nodes.find((node) => node.id === link.target);
-            if (!source || !target) return null;
-            const edge = topologySvgEdge(source, target);
-            return <path key={`${link.source}-${link.target}`} d={`M ${edge.source.x} ${edge.source.y} L ${edge.target.x} ${edge.target.y}`} stroke={topicTopologyLinkColors[link.tone ?? 'info']} markerEnd={showNodes ? 'url(#taf-api-topology-arrow)' : undefined} />;
-          })}
-        </g>
-        {!showNodeLabels && showNodes && nodes.map((node) => {
-          const point = topologySvgPoint(node);
-          const color = topicTopologyColors[node.tone];
-          return (
-            <g key={node.id}>
-              <circle cx={point.x} cy={point.y} r="2" fill={color} opacity="0.18" />
-              <circle cx={point.x} cy={point.y} r="0.72" fill={color} filter="url(#taf-api-topology-glow)" />
-            </g>
-          );
-        })}
-      </svg>
-      {showNodes && showNodeLabels && nodes.map((node) => {
-        const point = topologySvgPoint(node);
-        const color = topicTopologyColors[node.tone];
-        const style = {
-          '--taf-topology-node-color': color,
-          left: `${point.x}%`,
-          top: `${point.y}%`,
-          width: `min(${node.size?.[0] ?? 104}px, 14%)`,
-          height: `min(${node.size?.[1] ?? 40}px, 14%)`,
-        } as CSSProperties;
-        return (
-          <button
-            key={node.id}
-            type="button"
-            className={`taf-api-topology-node is-${node.tone} ${node.selected ? 'is-selected' : ''}`}
-            style={style}
-            title={node.title ?? `${node.label} ${node.detail}`}
-            onClick={() => onNodeClick?.(node.id)}
-          >
-            <strong>{node.label}</strong>
-            <span>{node.detail}</span>
-          </button>
-        );
-      })}
+    <div
+      className="taf-api-topology"
+      role="img"
+      aria-label={ariaLabel}
+      data-api-dynamic="true"
+      data-roam-enabled="true"
+      data-zoom={zoom.toFixed(2)}
+      data-node-frame-contract="roundRect-inside-responsive"
+      data-node-gutter-contract={`minimum-${minimumFrameGap}px-responsive-two-axis`}
+      data-node-layout-capacity-violation-count={nodeLayoutCapacityViolationCount}
+      data-edge-anchor-contract="rect-boundary-anchor-per-link"
+      data-edge-source-contract="source-marker-outside-frame"
+      data-edge-line-contract={visualProfile === 'apt-reference' ? 'reference-colored-dashed-source-dot-target-arrow' : 'continuous-solid-boundary-target-arrow'}
+      data-edge-symbol-size={visualProfile === 'apt-reference' ? '3x9' : '1x10'}
+      data-edge-frame-intrusion-count={edgeFrameIntrusionCount}
+      data-edge-anchor-signature={edgeAnchorSignature.join('|')}
+      data-visual-profile={visualProfile}
+      data-node-count={uniqueNodes.length}
+      data-link-count={validLinks.length}
+      data-dashed-link-count={validLinks.filter((link) => link.lineType === 'dashed').length}
+      data-duplicate-node-count={duplicateNodeCount}
+      data-dangling-link-count={danglingLinkCount}
+      data-self-link-count={selfLinkCount}
+      data-node-overlap-count={nodeOverlapCount}
+      data-node-minimum-gap={nodeMinimumGap.toFixed(2)}
+      data-node-proximity-count={nodeProximityCount}
+      data-node-content-overflow-count={nodeContentOverflowCount}
+      data-node-inset-violation-count={nodeInsetViolationCount}
+      data-chart-size={`${chartSize.width}x${chartSize.height}`}
+      data-position-signature={uniqueNodes.map((node) => `${node.id}:${node.x.toFixed(2)},${node.y.toFixed(2)}`).join('|')}
+      data-safe-position-signature={graphNodes.map((node) => `${node.id}:${node.x.toFixed(2)},${node.y.toFixed(2)}`).join('|')}
+      data-frame-size-signature={graphNodes.map((node) => `${node.id}:${node.symbolSize[0]}x${node.symbolSize[1]}`).join('|')}
+      data-node-label-signature={uniqueNodes.map((node) => `${node.id}:${node.label}:${node.detail}`).join('|')}
+      data-node-icon-signature={uniqueNodes.map((node) => `${node.id}:${node.icon ?? 'none'}`).join('|')}
+      data-link-tone-signature={validLinks.map((link) => `${link.source}>${link.target}:${link.tone ?? 'info'}:${link.lineType ?? 'solid'}`).join('|')}
+      data-curved-link-count={curvedLinkCount}
+      data-link-curveness-signature={linkCurvenessSignature}
+      data-right-asset-column-contract={rightAssetColumnContract}
+    >
+      <EChartsReactCore
+        ref={chartRef}
+        echarts={echarts}
+        style={{ height: '100%', width: '100%' }}
+        option={option}
+        notMerge
+        onEvents={{
+          click: (params: { dataType?: string; name?: string }) => {
+            if (params.dataType === 'node' && params.name) onNodeClick?.(params.name);
+          },
+          graphRoam: () => {
+            const currentOption = chartRef.current?.getEchartsInstance().getOption();
+            const series = Array.isArray(currentOption?.series)
+              ? currentOption.series[0] as { zoom?: number }
+              : undefined;
+            const currentZoom = Number(series?.zoom);
+            if (Number.isFinite(currentZoom) && Math.abs(currentZoom - zoom) > 0.005) {
+              setZoom(Math.max(0.45, Math.min(3.2, Number(currentZoom.toFixed(2)))));
+            }
+          },
+        }}
+      />
+      <div className="taf-api-topology-controls" aria-label="关系图缩放控制">
+        <button type="button" title="放大关系图" onClick={() => setZoom((value) => Math.min(3.2, Number((value + 0.2).toFixed(2))))}>＋</button>
+        <button type="button" title="缩小关系图" onClick={() => setZoom((value) => Math.max(0.45, Number((value - 0.2).toFixed(2))))}>－</button>
+        <button type="button" title="自动适配关系图" onClick={resetGraph}>适配</button>
+      </div>
     </div>
   );
 }
-
-const topologySvgPoint = (node: TopicTopologyNode) => ({
-  x: Math.max(2, Math.min(98, node.x)),
-  y: Math.max(2, Math.min(98, node.y)),
-});
-
-const topologyNodeHalfSize = (node: TopicTopologyNode) => ({
-  x: Math.min(7, Math.max(4, (node.size?.[0] ?? 104) / 20)),
-  y: Math.min(5.5, Math.max(2.2, (node.size?.[1] ?? 40) / 20)),
-});
-
-const topologySvgEdge = (source: TopicTopologyNode, target: TopicTopologyNode) => {
-  const sourcePoint = topologySvgPoint(source);
-  const targetPoint = topologySvgPoint(target);
-  const dx = targetPoint.x - sourcePoint.x;
-  const dy = targetPoint.y - sourcePoint.y;
-  if (!dx && !dy) return { source: sourcePoint, target: targetPoint };
-  const sourceHalf = topologyNodeHalfSize(source);
-  const targetHalf = topologyNodeHalfSize(target);
-  const sourceScale = 1 / Math.max(Math.abs(dx) / sourceHalf.x, Math.abs(dy) / sourceHalf.y);
-  const targetScale = 1 / Math.max(Math.abs(dx) / targetHalf.x, Math.abs(dy) / targetHalf.y);
-  return {
-    source: { x: sourcePoint.x + dx * sourceScale, y: sourcePoint.y + dy * sourceScale },
-    target: { x: targetPoint.x - dx * targetScale, y: targetPoint.y - dy * targetScale },
-  };
-};
 
 export function ExfilBarChart({
   items,
@@ -2686,6 +3280,7 @@ export function ExfilBarChart({
   items: ExfilBarItem[];
   ariaLabel: string;
 }) {
+  const scale = useExfilChartScale();
   const maxValue = Math.max(1, ...items.map((item) => item.value));
   const option: ChartOption = {
     backgroundColor: 'transparent',
@@ -2695,9 +3290,14 @@ export function ExfilBarChart({
       confine: true,
       backgroundColor: 'rgba(3, 17, 28, 0.94)',
       borderColor: 'rgba(127, 212, 255, 0.26)',
-      textStyle: { color: '#eaf7ff', fontSize: 11 },
+      textStyle: { color: '#eaf7ff', fontSize: Math.round(11 * scale) },
     },
-    grid: { left: 70, right: 24, top: 4, bottom: 4 },
+    grid: {
+      left: Math.round(70 * scale),
+      right: Math.round(28 * scale),
+      top: Math.round(5 * scale),
+      bottom: Math.round(5 * scale),
+    },
     xAxis: { type: 'value', min: 0, max: Math.ceil(maxValue * 1.12), show: false },
     yAxis: {
       type: 'category',
@@ -2705,7 +3305,12 @@ export function ExfilBarChart({
       data: items.map((item) => item.label),
       axisLine: { show: false },
       axisTick: { show: false },
-      axisLabel: { color: '#ccecff', fontSize: 10, width: 66, overflow: 'truncate' },
+      axisLabel: {
+        color: '#ccecff',
+        fontSize: Math.round(10 * scale),
+        width: Math.round(66 * scale),
+        overflow: 'truncate',
+      },
     },
     series: [
       {
@@ -2715,8 +3320,14 @@ export function ExfilBarChart({
           value: item.value,
           itemStyle: { color: index < 2 ? '#18a8ff' : index < 4 ? '#65d86e' : '#ffb020' },
         })),
-        barWidth: 7,
-        label: { show: true, position: 'right', color: '#d7f1ff', fontSize: 10 },
+        barWidth: Math.max(7, Math.round(7 * scale)),
+        label: {
+          show: true,
+          position: 'right',
+          color: '#d7f1ff',
+          fontSize: Math.round(10 * scale),
+          formatter: (params) => Number(Array.isArray(params.value) ? params.value[0] : params.value ?? 0).toFixed(1),
+        },
       },
     ],
   };

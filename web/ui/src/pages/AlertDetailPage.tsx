@@ -5,11 +5,11 @@ import {
   BlockOutlined,
   CheckCircleOutlined,
   CloudDownloadOutlined,
-  CloseOutlined,
   CodeOutlined,
   CopyOutlined,
   ClusterOutlined,
   DatabaseOutlined,
+  DesktopOutlined,
   EyeOutlined,
   FileTextOutlined,
   GlobalOutlined,
@@ -27,13 +27,12 @@ import {
   UserSwitchOutlined,
 } from '@ant-design/icons';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Alert, Button, Checkbox, Drawer, Empty, Input, Progress, Radio, Select, Space, Table, Tooltip, message } from 'antd';
+import { Alert, Button, Checkbox, Empty, Input, Modal, Radio, Select, Space, Table, Tooltip, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { CSSProperties, ReactNode } from 'react';
 import { Fragment, useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { MetricTile } from '@/components/MetricTile';
-import { OverlayContractHost, type OverlayContract } from '@/components/OverlayContractHost';
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { RiskScoreRingChart } from '@/components/charts';
 import { StatusTag } from '@/components/StatusTag';
 import { WorkPanel } from '@/components/WorkPanel';
 import type { NavRoute } from '@/routes/routeManifest';
@@ -45,6 +44,8 @@ import {
   type AlertDetailSnapshot,
 } from '@/services/alertDetailApi';
 import {
+  alertDetailActionErrorMessage,
+  downloadAlertEvidenceFile,
   submitAlertDetailAction,
   type AlertDetailActionId,
   type AlertDetailActionResult,
@@ -66,7 +67,13 @@ type AlertDetailBusinessAction = {
   description: string;
 };
 
-function buildEvidenceColumns(onOpen: (row: AlertDetailEvidenceRow) => void): ColumnsType<AlertDetailEvidenceRow> {
+export const ALERT_DETAIL_EVIDENCE_PAGE_SIZE = 5;
+
+function buildEvidenceColumns(
+  onDownload: (row: AlertDetailEvidenceRow) => void,
+  onView: (row: AlertDetailEvidenceRow) => void,
+  downloading: boolean,
+): ColumnsType<AlertDetailEvidenceRow> {
   return [
   { title: '证据类型', dataIndex: '证据类型', key: '证据类型', width: 96, render: renderTextCell },
   { title: '文件 / 记录', dataIndex: '文件记录', key: '文件记录', ellipsis: true, render: renderTextCell },
@@ -79,63 +86,45 @@ function buildEvidenceColumns(onOpen: (row: AlertDetailEvidenceRow) => void): Co
       dataIndex: '操作',
       key: '操作',
       width: 108,
-      render: (value, row) => (
-        <button
-          type="button"
-          className="taf-alert-detail-evidence-action"
-          title={`${String(value)}：${row.文件记录}`}
-          onClick={() => onOpen(row)}
-        >
-          {String(value)}
-        </button>
+      render: (_value, row) => (
+        <span className="taf-alert-detail-evidence-actions">
+          <Tooltip title={`下载：${row.文件记录}`}>
+            <Button
+              type="text"
+              size="small"
+              className="taf-alert-detail-evidence-action is-download"
+              aria-label={`下载证据 ${row.文件记录}`}
+              icon={<CloudDownloadOutlined />}
+              loading={downloading}
+              onClick={() => onDownload(row)}
+            />
+          </Tooltip>
+          <Tooltip title={`查看：${row.文件记录}`}>
+            <Button
+              type="text"
+              size="small"
+              className="taf-alert-detail-evidence-action is-view"
+              aria-label={`查看证据 ${row.文件记录}`}
+              icon={<EyeOutlined />}
+              onClick={() => onView(row)}
+            />
+          </Tooltip>
+        </span>
       ),
     },
   ];
 }
 
-const alertDetailOverlays: OverlayContract[] = [
-  {
-    id: 'modal-alert-status',
-    title: '更新告警状态',
-    kind: 'Modal',
-    actionLabel: '更新状态',
-    description: '更新告警为未处理、研判中、已指派或已关闭；误报只作为反馈结果提交。',
-    impact: '影响告警闭环状态、SLA 统计和审计留痕。',
-    audit: '记录状态变更前后值、责任人、备注和 trace。',
-  },
-  {
-    id: 'modal-alert-feedback',
-    title: '提交告警反馈',
-    kind: 'Modal',
-    actionLabel: '提交反馈',
-    description: '提交 TP/FP 反馈、误报原因、样本回流和模型学习标签。',
-    impact: '影响模型反馈数据集与规则质量统计。',
-  },
-  {
-    id: 'modal-evidence-detail',
-    title: '证据详情',
-    kind: 'Modal',
-    actionLabel: '证据详情',
-    description: '展示证据文件摘要、hash 校验、采集窗口和下载权限。',
-  },
-  {
-    id: 'modal-playbook-trigger',
-    title: '从告警触发剧本',
-    kind: 'Modal',
-    actionLabel: '触发剧本',
-    description: '按告警上下文选择 SOAR 剧本、执行范围、审批策略和回滚计划。',
-    impact: '可能触发隔离、阻断、脚本下发等响应动作。',
-    danger: true,
-  },
-  {
-    id: 'modal-whitelist-draft-from-alert',
-    title: '从告警生成白名单草案',
-    kind: 'Modal',
-    actionLabel: '白名单草案',
-    description: '基于当前告警五元组、资产、规则和误报原因生成白名单审批草案。',
-    impact: '审批通过后影响后续检测命中和误报压降。',
-  },
-];
+export function evidenceViewRoute(row: AlertDetailEvidenceRow, alertId: string) {
+  const configuredRoute = row.viewUrl?.trim();
+  if (configuredRoute?.startsWith('/') && !configuredRoute.startsWith('//')) return configuredRoute;
+  const params = new URLSearchParams({
+    alert_id: alertId,
+    evidence: row.文件记录,
+    type: row.evidenceKind || row.证据类型,
+  });
+  return `/forensics?${params.toString()}`;
+}
 
 type FeedbackChoice = 'tp' | 'fp' | 'pending';
 
@@ -155,6 +144,14 @@ function renderTextCell(value: unknown) {
 }
 
 function createAlertDetailAction(label: string, target: string, description?: string): AlertDetailBusinessAction {
+  if (label.includes('标签')) {
+    return {
+      id: 'alert-label-update',
+      label,
+      target,
+      description: description ?? `编辑 ${target} 的告警标签；保存后写入告警版本和审计日志。`,
+    };
+  }
   if (label.includes('导出')) {
     return {
       id: 'alert-report-export',
@@ -218,6 +215,8 @@ function EvidenceFocusAction({
   as = 'button',
   children,
 }: EvidenceFocusActionProps) {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [result, setResult] = useState<AlertDetailActionResult>();
   const action = createAlertDetailAction(title, target, description);
@@ -229,27 +228,42 @@ function EvidenceFocusAction({
     },
     onError: (error) => message.error(error instanceof Error ? error.message : '证据操作提交失败'),
   });
+  const focusedEvidenceView = evidenceFocusView(title);
+  const closeAction = () => {
+    setOpen(false);
+    setResult(undefined);
+    mutation.reset();
+  };
   const openAction = () => {
+    if (focusedEvidenceView) {
+      navigate(evidenceFocusRoute(alertId, location.search, focusedEvidenceView), { replace: true });
+      return;
+    }
+    mutation.reset();
     setResult(undefined);
     setOpen(true);
   };
-  const drawer = (
-    <Drawer
+  const dialog = (
+    <Modal
       className="taf-alert-detail-action-drawer"
       title={`${title}确认`}
       open={open}
-      width="min(520px, calc(var(--taf-window-inner-width, 100dvw) - 40px))"
-      onClose={() => setOpen(false)}
-      extra={(
-        <Button
-          size="small"
-          type="primary"
-          loading={mutation.isPending}
-          disabled={Boolean(result)}
-          onClick={() => mutation.mutate({ alertId, actionId: action.id, target })}
-        >
-          {result ? '已生成任务' : '确认提交'}
-        </Button>
+      centered
+      width={520}
+      onCancel={closeAction}
+      footer={(
+        <Space>
+          <Button size="small" onClick={closeAction}>取消</Button>
+          <Button
+            size="small"
+            type="primary"
+            loading={mutation.isPending}
+            disabled={Boolean(result)}
+            onClick={() => mutation.mutate({ alertId, actionId: action.id, target })}
+          >
+            {result ? '已生成任务' : '确认提交'}
+          </Button>
+        </Space>
       )}
     >
       <div className="taf-alert-detail-action-body">
@@ -261,7 +275,7 @@ function EvidenceFocusAction({
         </dl>
         {result && <Alert type="success" showIcon message={`任务 ${result.jobId} 已排队`} description={`${result.auditEvent}；${result.apiContract}`} />}
       </div>
-    </Drawer>
+    </Modal>
   );
 
   if (as === 'link') {
@@ -279,7 +293,7 @@ function EvidenceFocusAction({
         >
           {children}
         </a>
-        {drawer}
+        {dialog}
       </>
     );
   }
@@ -289,9 +303,27 @@ function EvidenceFocusAction({
       <button type="button" className={className} title={title} aria-label={ariaLabel} aria-pressed={ariaPressed} onClick={openAction}>
         {children}
       </button>
-      {drawer}
+      {dialog}
     </>
   );
+}
+
+export function evidenceFocusView(title: string) {
+  if (title.startsWith('全部 ') || title.startsWith('查看全部证据')) return 'all';
+  if (title.startsWith('PCAP ') || title.startsWith('查看全部 PCAP')) return 'pcap';
+  if (title.startsWith('Session ') || title.startsWith('查看全部 Session')) return 'session';
+  if (title.startsWith('日志 ') || title.startsWith('查看全部 日志')) return 'logs';
+  if (title.startsWith('图谱路径 ') || title.startsWith('查看全部 图谱路径')) return 'graph-path';
+  if (title.startsWith('文件 ') || title.startsWith('查看全部 文件')) return 'files';
+  return '';
+}
+
+export function evidenceFocusRoute(alertId: string, currentSearch: string, focusedEvidenceView: string) {
+  const nextSearch = new URLSearchParams(currentSearch);
+  nextSearch.delete('evidence');
+  nextSearch.set('evidenceView', focusedEvidenceView);
+  const query = nextSearch.toString();
+  return `/alerts/${encodeURIComponent(alertId)}${query ? `?${query}` : ''}`;
 }
 
 export function AlertDetailPage({ route }: { route: NavRoute }) {
@@ -301,16 +333,17 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
   const visualBreakdownMode = isVisualBreakdownMode();
   const visualPageId = searchParams.get('__codex_page_id') || searchParams.get('pageId') || '';
   const evidenceView = searchParams.get('evidenceView') || searchParams.get('evidence') || '';
-  const evidenceFilesFocusMode =
-    visualBreakdownMode && (visualPageId === 'alert-detail-evidence-files' || evidenceView === 'files');
-  const evidencePcapFocusMode =
-    visualBreakdownMode && (visualPageId === 'alert-detail-evidence-pcap' || evidenceView === 'pcap');
+  const requestedReturnTo = searchParams.get('returnTo') || '';
+  const returnTo = requestedReturnTo === '/alerts' || requestedReturnTo.startsWith('/alerts?')
+    ? requestedReturnTo
+    : '/alerts';
+  const evidenceFilesFocusMode = visualPageId === 'alert-detail-evidence-files' || evidenceView === 'files';
+  const evidencePcapFocusMode = visualPageId === 'alert-detail-evidence-pcap' || evidenceView === 'pcap';
   const evidenceSessionFocusMode =
-    visualBreakdownMode && (visualPageId === 'alert-detail-evidence-session' || evidenceView === 'session' || evidenceView === 'sessions');
-  const evidenceLogsFocusMode =
-    visualBreakdownMode && (visualPageId === 'alert-detail-evidence-logs' || evidenceView === 'logs' || evidenceView === 'log');
+    visualPageId === 'alert-detail-evidence-session' || evidenceView === 'session' || evidenceView === 'sessions';
+  const evidenceLogsFocusMode = visualPageId === 'alert-detail-evidence-logs' || evidenceView === 'logs' || evidenceView === 'log';
   const evidenceGraphPathFocusMode =
-    visualBreakdownMode && (visualPageId === 'alert-detail-evidence-graph-path' || evidenceView === 'graph-path' || evidenceView === 'graph');
+    visualPageId === 'alert-detail-evidence-graph-path' || evidenceView === 'graph-path' || evidenceView === 'graph';
   const alertId = params.alertId ?? 'AL-20260620-000123';
   const [targetStatus, setTargetStatus] = useState<AlertStatusCode>();
   const [statusReason, setStatusReason] = useState('');
@@ -319,10 +352,11 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
   const [feedbackComment, setFeedbackComment] = useState('');
   const [feedbackAddToWhitelist, setFeedbackAddToWhitelist] = useState(false);
   const [lastWhitelistDraftUrl, setLastWhitelistDraftUrl] = useState('');
-  const [sessionEvidencePopupOpen, setSessionEvidencePopupOpen] = useState(true);
-  const [evidencePage, setEvidencePage] = useState(1);
   const [businessAction, setBusinessAction] = useState<AlertDetailBusinessAction>();
   const [businessActionResult, setBusinessActionResult] = useState<AlertDetailActionResult>();
+  const [businessActionTarget, setBusinessActionTarget] = useState('');
+  const [businessActionReason, setBusinessActionReason] = useState('');
+  const [evidencePage, setEvidencePage] = useState(1);
   const { data, error, isError, isLoading, refetch } = useQuery({
     queryKey: ['alert-detail', alertId],
     queryFn: () => fetchAlertDetailSnapshot(alertId),
@@ -357,10 +391,6 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
     setFeedbackAddToWhitelist(Boolean(loadedWhitelistDraft));
     setLastWhitelistDraftUrl('');
   }, [loadedAlertId, loadedFeedbackReason, loadedFeedbackResult, loadedWhitelistDraft]);
-  useEffect(() => {
-    if (evidenceSessionFocusMode) setSessionEvidencePopupOpen(true);
-  }, [evidenceSessionFocusMode]);
-
   const allowedNextStatuses = useMemo(() => alertAllowedNextStatuses(snapshot.status), [snapshot.status]);
   const canSubmitStatusChange = Boolean(
     targetStatus && canTransitionAlertStatus(snapshot.status, targetStatus) && statusReason.trim().length >= 4,
@@ -390,46 +420,109 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
   });
   const businessActionMutation = useMutation({
     mutationFn: submitAlertDetailAction,
-    onSuccess: (result) => {
+    onSuccess: async (result) => {
       setBusinessActionResult(result);
       message.success(`${result.action}已持久化：${result.jobId}`);
+      await refetch();
     },
     onError: (mutationError) => {
       message.error(mutationError instanceof Error ? mutationError.message : '业务动作提交失败');
     },
   });
-  const openBusinessAction = (label: string, target = snapshot.alertId, description?: string) => {
+  const evidenceDownloadMutation = useMutation({
+    mutationFn: async (row: AlertDetailEvidenceRow) => {
+      const evidenceId = row.evidenceId || row.文件记录;
+      const result = await submitAlertDetailAction({
+        alertId: snapshot.alertId,
+        actionId: 'alert-evidence-access',
+        target: evidenceId,
+        reason: `下载告警证据：${row.文件记录}`,
+        detail: {
+          access_mode: 'download',
+          evidence_id: evidenceId,
+          requested_file_name: row.文件记录,
+          evidence_kind: row.evidenceKind || row.证据类型,
+          signed_url_requested: true,
+          source: 'alert-detail-inline-evidence',
+        },
+      });
+      if (!result.downloadUrl) throw new Error('证据下载地址未返回');
+      await downloadAlertEvidenceFile(result.downloadUrl, result.fileName || row.文件记录);
+      return { result, row };
+    },
+    onSuccess: ({ result, row }) => {
+      message.success(`证据已下载：${result.fileName || row.文件记录}`);
+    },
+    onError: (mutationError) => {
+      message.error(alertDetailActionErrorMessage(mutationError, '证据下载失败，请稍后重试'));
+    },
+  });
+  const closeBusinessAction = () => {
+    setBusinessAction(undefined);
     setBusinessActionResult(undefined);
-    setBusinessAction(createAlertDetailAction(label, target, description));
+    businessActionMutation.reset();
   };
-  const evidenceColumns = useMemo(
-    () => buildEvidenceColumns((row) => openBusinessAction(String(row.操作), row.文件记录)),
-    [snapshot.alertId],
+  const openBusinessAction = (label: string, target = snapshot.alertId, description?: string) => {
+    businessActionMutation.reset();
+    setBusinessActionResult(undefined);
+    const nextAction = createAlertDetailAction(label, target, description);
+    setBusinessAction(nextAction);
+    setBusinessActionTarget(nextAction.id === 'alert-label-update' ? snapshot.tags.join('，') : nextAction.target);
+    setBusinessActionReason(nextAction.description);
+  };
+  const activeEvidenceTab: EvidenceFocusTab = evidenceFilesFocusMode
+    ? 'files'
+    : evidencePcapFocusMode
+      ? 'pcap'
+      : evidenceSessionFocusMode
+        ? 'session'
+        : evidenceLogsFocusMode
+          ? 'logs'
+          : evidenceGraphPathFocusMode
+            ? 'graph'
+            : 'all';
+  const visibleEvidenceRows = useMemo(() => {
+    if (activeEvidenceTab === 'pcap') return snapshot.evidenceRows.filter(isPcapEvidence);
+    if (activeEvidenceTab === 'session') return snapshot.evidenceRows.filter(isSessionEvidence);
+    if (activeEvidenceTab === 'logs') return snapshot.evidenceRows.filter(isLogEvidence);
+    if (activeEvidenceTab === 'graph') return snapshot.evidenceRows.filter(isGraphPathEvidence);
+    if (activeEvidenceTab === 'files') return snapshot.evidenceRows.filter(isFileEvidence);
+    return snapshot.evidenceRows;
+  }, [activeEvidenceTab, snapshot.evidenceRows]);
+  useEffect(() => {
+    setEvidencePage(1);
+  }, [activeEvidenceTab]);
+  useEffect(() => {
+    const lastPage = Math.max(1, Math.ceil(visibleEvidenceRows.length / ALERT_DETAIL_EVIDENCE_PAGE_SIZE));
+    setEvidencePage((current) => Math.min(current, lastPage));
+  }, [visibleEvidenceRows.length]);
+  const downloadEvidence = (row: AlertDetailEvidenceRow) => {
+    evidenceDownloadMutation.mutate(row);
+  };
+  const viewEvidence = (row: AlertDetailEvidenceRow) => {
+    navigate(evidenceViewRoute(row, snapshot.alertId));
+  };
+  const evidenceColumns = buildEvidenceColumns(
+    downloadEvidence,
+    viewEvidence,
+    evidenceDownloadMutation.isPending,
   );
 
-  if (evidenceFilesFocusMode) {
-    return <AlertEvidenceFilesFocusView snapshot={snapshot} isLoading={isLoading} />;
-  }
-
-  if (evidencePcapFocusMode) {
-    return <AlertEvidencePcapFocusView snapshot={snapshot} isLoading={isLoading} />;
-  }
-
-  if (evidenceLogsFocusMode) {
-    return <AlertEvidenceLogsFocusView snapshot={snapshot} isLoading={isLoading} />;
-  }
-
-  if (evidenceGraphPathFocusMode) {
-    return <AlertEvidenceGraphPathFocusView snapshot={snapshot} isLoading={isLoading} />;
-  }
-
   return (
-    <div className={`taf-page taf-alert-detail-page${visualBreakdownMode ? ' is-visual-target' : ''}`}>
+    <div className="taf-page taf-alert-detail-page is-visual-target">
       <header className="taf-alert-detail-titlebar">
-        <div className="taf-alert-detail-titlebar__page-title">
-          <h1 title="告警详情">告警详情</h1>
+        <div className="taf-alert-detail-titlebar__context">
+          <h1>告警详情</h1>
         </div>
         <Space size={visualBreakdownMode ? 12 : 8} wrap>
+          <Button
+            className="taf-alert-detail-back-button"
+            size="small"
+            icon={<ArrowLeftOutlined />}
+            onClick={() => navigate(returnTo)}
+          >
+            返回告警列表
+          </Button>
           <Button size="small" icon={<CloudDownloadOutlined />} title="导出报告" onClick={() => openBusinessAction('导出报告')}>导出报告</Button>
           <Button size="small" icon={<CheckCircleOutlined />} title="标记为战役" onClick={() => openBusinessAction('标记为战役')}>标记为战役</Button>
           <Button
@@ -445,13 +538,9 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
             加入白名单
           </Button>
           <Button size="small" icon={<MoreOutlined />} title="更多操作" onClick={() => openBusinessAction('更多操作')}>更多操作</Button>
-          <Tooltip title="返回告警中心">
-            <Button size="small" icon={<ArrowLeftOutlined />} aria-label="返回告警中心" onClick={() => navigate('/alerts')} />
-          </Tooltip>
           <Tooltip title="刷新告警详情">
             <Button size="small" icon={<ReloadOutlined />} onClick={() => void refetch()} />
           </Tooltip>
-          {!visualBreakdownMode && <OverlayContractHost overlays={alertDetailOverlays} compact />}
         </Space>
       </header>
 
@@ -470,50 +559,56 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
           <WorkPanel title="研判摘要" className="taf-alert-detail-summary-panel" extra={<Button type="link" size="small" onClick={() => openBusinessAction('编辑标签')}>编辑标签</Button>}>
             <div className="taf-alert-detail-summary">
               <div className="taf-alert-detail-score" title={`置信评分 ${snapshot.score} / 100，${snapshot.severity}`}>
-                <Progress type="circle" percent={snapshot.score} size={116} strokeColor="#ff4d4f" format={() => snapshot.score} />
+                <RiskScoreRingChart value={snapshot.score} size={116} ariaLabel={`告警风险评分 ${snapshot.score} 分 ECharts 圆环图`} />
                 <strong>{snapshot.severity}</strong>
               </div>
               <div className="taf-alert-detail-facts">
-                <SummaryFact label="告警 ID" value={snapshot.alertId} />
-                <SummaryFact label="告警名称" value={snapshot.title} />
-                <SummaryFact label="规则 / 模型" value={snapshot.ruleModel} />
-                <SummaryFact label="攻击阶段" value={snapshot.attackPhase} />
+                <SummaryFact label="告警 ID" value={snapshot.alertId} span={2} />
+                <SummaryFact label="告警名称" value={snapshot.title} span={2} />
+                <SummaryFact label="规则 / 模型" value={snapshot.ruleModel} span={2} />
+                <SummaryFact label="攻击阶段" value={snapshot.attackPhase} span={2} />
                 <SummaryFact label="严重级别" value={snapshot.severity} status />
                 <SummaryFact label="置信度" value={snapshot.confidence} />
-                <SummaryFact label="当前状态" value={snapshot.status} status />
-                <SummaryFact label="状态版本" value={snapshot.stateVersion ? String(snapshot.stateVersion) : '-'} />
-                <SummaryFact label="责任人" value={snapshot.assignee} />
-                <SummaryFact label="首次发生" value={snapshot.firstSeen} />
-                <SummaryFact label="影响资产" value="2 台主机" />
-                <SummaryFact label="业务系统" value={snapshot.businessSystem} />
-                <SummaryFact label="处置建议" value={snapshot.recommendation} wide />
-                <div className="taf-alert-detail-tags">
+                <SummaryFact label="当前状态" value={snapshot.status} status span={2} />
+                <SummaryFact label="责任人" value={snapshot.assignee} span={2} />
+                <SummaryFact label="首次发生" value={snapshot.firstSeen} span={2} />
+                <SummaryFact label="影响资产" value="2 台主机" span={2} />
+                <SummaryFact label="业务系统" value={snapshot.businessSystem} span={2} />
+                <SummaryFact label="处置建议" value={snapshot.recommendation} span={3} />
+                <div className="taf-alert-detail-tags is-summary-tags">
                   {snapshot.tags.map((tag) => <span key={tag}>{tag}</span>)}
                 </div>
               </div>
             </div>
           </WorkPanel>
 
-          {!visualBreakdownMode && (
-            <div className="taf-alert-detail-metrics">
-              {snapshot.metrics.map((metric) => <MetricTile key={metric.label} metric={metric} />)}
-            </div>
-          )}
-
           <div className="taf-alert-detail-midgrid">
             <WorkPanel title="资产上下文" className="taf-alert-detail-assets-panel">
               <div className="taf-alert-detail-assets">
-                {snapshot.assets.map((asset) => (
+                {snapshot.assets.map((asset, index) => (
                   <div key={asset.title} className="taf-alert-detail-asset-card">
                     <header>
                       <span>{asset.title}</span>
                       <StatusTag value={asset.role} />
                     </header>
+                    <div className="taf-alert-detail-asset-identity">
+                      <span className="taf-alert-detail-asset-identity-icon">
+                        {index === 0 ? <DesktopOutlined /> : <GlobalOutlined />}
+                      </span>
+                      <strong title={index === 0 ? asset.hostname : asset.ip}>
+                        {index === 0 ? asset.hostname : asset.ip}
+                      </strong>
+                      {index === 0 && <StatusTag value="在线" />}
+                    </div>
                     <dl>
                       {assetFacts(asset).map((fact) => (
                         <Fragment key={`${asset.title}-${fact.label}`}>
                           <dt>{fact.label}</dt>
-                          <dd title={fact.value}>{fact.value}</dd>
+                          <dd title={fact.value}>
+                            {fact.label === '最近风险画像'
+                              ? <span className="taf-alert-detail-asset-risk-tags">{fact.value.split(/\s*[/／]\s*/).filter(Boolean).map((tag) => <em key={tag}>{tag}</em>)}</span>
+                              : fact.value}
+                          </dd>
                         </Fragment>
                       ))}
                     </dl>
@@ -536,24 +631,34 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
             </WorkPanel>
           </div>
 
-          <WorkPanel title={`证据链（${snapshot.evidenceRows.length}）`} className="taf-alert-detail-evidence-panel">
+          <WorkPanel
+            title={`证据链（${snapshot.evidenceRows.length}）`}
+            className="taf-alert-detail-evidence-panel"
+            extra={<EvidenceTabsHeader snapshot={snapshot} routeAlertId={alertId} active={activeEvidenceTab} />}
+          >
+            {snapshot.evidenceApiError && (
+              <Alert
+                type="warning"
+                showIcon
+                message="证据接口暂不可用"
+                description={`${snapshot.evidenceApiError}；当前空表不代表该告警没有证据。`}
+              />
+            )}
             <Table
               rowKey={(row) => `${row.证据类型}-${row.文件记录}`}
               size="small"
               loading={isLoading}
               pagination={{
                 current: evidencePage,
-                pageSize: 4,
-                total: snapshot.evidenceRows.length,
+                pageSize: ALERT_DETAIL_EVIDENCE_PAGE_SIZE,
+                total: visibleEvidenceRows.length,
                 showSizeChanger: false,
-                showQuickJumper: false,
-                size: 'small',
-                showTotal: (total) => `共 ${total} 条`,
-                onChange: (page) => setEvidencePage(page),
+                hideOnSinglePage: false,
+                onChange: setEvidencePage,
               }}
-              scroll={{ x: 920, y: 254 }}
+              scroll={{ x: 920, y: 190 }}
               columns={evidenceColumns}
-              dataSource={snapshot.evidenceRows}
+              dataSource={visibleEvidenceRows}
               locale={{
                 emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无证据链数据" />,
               }}
@@ -581,17 +686,20 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
               <div><strong>业务系统</strong><span>1</span></div>
               <div><strong>脆弱资产</strong><span>0</span></div>
               <div className="taf-alert-detail-path">
-                <span className="is-risk">
+                <span className="taf-alert-detail-path-node is-risk">
+                  <span className="taf-alert-detail-path-icon"><StopOutlined /></span>
                   <strong>源端主机</strong>
                   <em>{sourceAsset?.ip ?? '172.16.5.10'}</em>
                 </span>
                 <i />
-                <span>
+                <span className="taf-alert-detail-path-node">
+                  <span className="taf-alert-detail-path-icon"><DatabaseOutlined /></span>
                   <strong>核心区</strong>
                   <em>{sourceAsset?.business ?? '办公区'}</em>
                 </span>
                 <i />
-                <span className="is-ok">
+                <span className="taf-alert-detail-path-node is-ok">
+                  <span className="taf-alert-detail-path-icon"><SafetyCertificateOutlined /></span>
                   <strong>目的端</strong>
                   <em>{destinationAsset?.ip ?? '185.22.14.9'}</em>
                 </span>
@@ -617,56 +725,16 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
             </div>
           </WorkPanel>
 
-          {!visualBreakdownMode && (
-          <WorkPanel title="状态流转门禁" className="taf-alert-detail-status-panel" extra={<span>{allowedNextStatuses.length} 个可选下一态</span>}>
-            <div className="taf-alert-detail-status-flow" aria-label="告警状态流转门禁">
-              {alertStatusOptions.map((option) => {
-                const currentStatus = normalizeAlertStatus(snapshot.status);
-                const isCurrent = currentStatus === option.value;
-                const isAllowed = canTransitionAlertStatus(snapshot.status, option.value);
-                const isSelected = targetStatus === option.value;
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    className={`${isCurrent ? 'is-current' : isAllowed ? 'is-allowed' : 'is-blocked'}${isSelected ? ' is-selected' : ''}`}
-                    disabled={!isAllowed}
-                    aria-pressed={isSelected}
-                    onClick={() => setTargetStatus(option.value)}
-                  >
-                    <strong>{option.label}</strong>
-                    <span>{isCurrent ? '当前状态' : isAllowed ? '允许迁移' : '后端状态机禁止'}</span>
-                  </button>
-                );
-              })}
-            </div>
-            <Input.TextArea
-              value={statusReason}
-              rows={2}
-              placeholder="填写状态变更原因，至少 4 个字符，并写入 audit trace"
-              onChange={(event) => setStatusReason(event.target.value)}
-            />
-            <footer className="taf-alert-detail-status-footer">
-              <span>
-                当前：{alertStatusLabel(snapshot.status)}；可迁移到：
-                {allowedNextStatuses.map((status) => alertStatusLabel(status)).join(' / ') || '无'}
-                {snapshot.stateVersion ? `；版本 ${snapshot.stateVersion}` : ''}
-              </span>
-              <Button
-                type="primary"
-                size="small"
-                disabled={!canSubmitStatusChange}
-                loading={statusMutation.isPending}
-                onClick={() => statusMutation.mutate()}
-              >
-                提交状态变更
-              </Button>
-            </footer>
-          </WorkPanel>
-          )}
-
           <WorkPanel title="反馈与学习" className="taf-alert-detail-feedback-panel">
             <div className="taf-alert-detail-feedback">
+              {snapshot.feedbackApiError && (
+                <Alert
+                  type="warning"
+                  showIcon
+                  message="历史反馈暂不可用"
+                  description={`${snapshot.feedbackApiError}；可继续填写，本次提交仍会单独校验。`}
+                />
+              )}
               <label>
                 <span>判定结果</span>
                 <Radio.Group value={feedbackResult} size="small" onChange={(event) => setFeedbackResult(event.target.value as FeedbackChoice)}>
@@ -718,6 +786,9 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
                 >
                   提交反馈
                 </Button>
+                {feedbackResult === 'pending' && (
+                  <span className="taf-alert-detail-feedback-pending-hint">待确认是未决状态，请选择 TP 或 FP 后提交</span>
+                )}
                 {lastWhitelistDraftUrl && (
                   <Button size="small" icon={<LinkOutlined />} onClick={() => navigate(lastWhitelistDraftUrl)}>
                     查看草案
@@ -729,38 +800,68 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
 
         </aside>
       </div>
-      <Drawer
+      <Modal
         className="taf-alert-detail-action-drawer"
         title={businessAction ? `${businessAction.label}确认` : '告警业务操作'}
         open={Boolean(businessAction)}
-        width="min(520px, calc(var(--taf-window-inner-width, 100dvw) - 40px))"
-        onClose={() => {
-          setBusinessAction(undefined);
-          setBusinessActionResult(undefined);
-        }}
-        extra={(
-          <Button
-            size="small"
-            type="primary"
-            loading={businessActionMutation.isPending}
-            disabled={Boolean(businessActionResult)}
-            onClick={() => {
-              if (businessAction) businessActionMutation.mutate({
-                alertId,
-                actionId: businessAction.id,
-                target: businessAction.target,
-              });
-            }}
-          >
-            {businessActionResult ? '已生成任务' : '确认提交'}
-          </Button>
+        centered
+        width={520}
+        onCancel={closeBusinessAction}
+        footer={(
+          <Space>
+            <Button
+              size="small"
+              onClick={closeBusinessAction}
+            >
+              取消
+            </Button>
+            <Button
+              size="small"
+              type="primary"
+              loading={businessActionMutation.isPending}
+              disabled={Boolean(businessActionResult) || !businessActionTarget.trim() || businessActionReason.trim().length < 4}
+              onClick={() => {
+                if (businessAction) businessActionMutation.mutate({
+                  alertId,
+                  actionId: businessAction.id,
+                  target: businessActionTarget,
+                  reason: businessActionReason,
+                  detail: {
+                    previous_target: businessAction.target,
+                    labels: businessAction.label.includes('标签')
+                      ? businessActionTarget.split(/[,，]/).map((item) => item.trim()).filter(Boolean)
+                      : undefined,
+                  },
+                });
+              }}
+            >
+              {businessActionResult ? '已生成任务' : '确认提交'}
+            </Button>
+          </Space>
         )}
       >
         <div className="taf-alert-detail-action-body">
           <p>{businessAction?.description}</p>
+          <label>
+            <span>{businessAction?.label.includes('标签') ? '标签内容' : '操作目标'}</span>
+            <Input
+              value={businessActionTarget}
+              placeholder={businessAction?.label.includes('标签') ? '多个标签使用逗号分隔' : '输入本次操作目标'}
+              onChange={(event) => setBusinessActionTarget(event.target.value)}
+            />
+          </label>
+          <label>
+            <span>操作原因</span>
+            <Input.TextArea
+              rows={3}
+              value={businessActionReason}
+              placeholder="填写操作原因，至少 4 个字符；提交后写入审计记录"
+              onChange={(event) => setBusinessActionReason(event.target.value)}
+            />
+          </label>
           <dl>
             <dt>告警对象</dt><dd>{alertId}</dd>
-            <dt>操作目标</dt><dd>{businessAction?.target}</dd>
+            <dt>操作目标</dt><dd>{businessActionTarget || '-'}</dd>
             <dt>接口契约</dt><dd>已在 alert-detail 页面 API 计划中注册</dd>
             <dt>执行状态</dt><dd>{businessActionResult?.status === 'pending_approval' ? '已进入响应审批队列' : '已记录并保留审计事件'}</dd>
           </dl>
@@ -773,15 +874,77 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
             />
           )}
         </div>
-      </Drawer>
-      {evidenceSessionFocusMode && sessionEvidencePopupOpen && (
-        <AlertEvidenceSessionFocusView
-          snapshot={snapshot}
-          isLoading={isLoading}
-          onClose={() => setSessionEvidencePopupOpen(false)}
-        />
-      )}
+      </Modal>
     </div>
+  );
+}
+
+type EvidenceFocusTab = 'all' | 'pcap' | 'session' | 'logs' | 'graph' | 'files';
+
+function EvidenceTabsHeader({
+  snapshot,
+  routeAlertId,
+  active,
+}: {
+  snapshot: AlertDetailSnapshot;
+  routeAlertId: string;
+  active: EvidenceFocusTab;
+}) {
+  const counts = evidenceBucketCounts(snapshot.evidenceRows);
+  const tabs: Array<{ id: EvidenceFocusTab; label: string; count: number; target: string }> = [
+    { id: 'all', label: '全部', count: counts.all, target: '全部证据' },
+    { id: 'pcap', label: 'PCAP', count: counts.pcap, target: 'PCAP 证据' },
+    { id: 'session', label: 'Session', count: counts.session, target: 'Session 证据' },
+    { id: 'logs', label: '日志', count: counts.log, target: '日志证据' },
+    { id: 'graph', label: '图谱路径', count: counts.graph, target: '图谱路径证据' },
+    { id: 'files', label: '文件', count: counts.files, target: '文件证据' },
+  ];
+  return (
+    <div className="taf-alert-detail-evidence-tabs" role="tablist" aria-label="证据链分类">
+      {tabs.map((tab) => (
+        <EvidenceFocusAction
+          key={tab.id}
+          alertId={routeAlertId}
+          title={`${tab.label} ${tab.count}`}
+          target={tab.target}
+          className={active === tab.id ? 'is-active' : undefined}
+          ariaPressed={active === tab.id}
+        >
+          {tab.label} <strong>{tab.count}</strong>
+        </EvidenceFocusAction>
+      ))}
+    </div>
+  );
+}
+
+function AlertEvidenceAllFocusView({
+  snapshot,
+  isLoading,
+  onOpenRow,
+}: {
+  snapshot: AlertDetailSnapshot;
+  isLoading: boolean;
+  onOpenRow: (row: AlertDetailEvidenceRow) => void;
+}) {
+  const columns = useMemo(() => buildEvidenceColumns(onOpenRow, onOpenRow, false), [onOpenRow]);
+
+  return (
+    <section className="taf-alert-evidence-all-focus" data-page-id="alert-detail-evidence-all" aria-label="告警详情全部证据链">
+      <div className="taf-alert-evidence-all-card">
+        <div className="taf-alert-evidence-all-table">
+          <Table
+            rowKey={(row) => `${row.证据类型}-${row.文件记录}`}
+            size="small"
+            loading={isLoading}
+            pagination={false}
+            scroll={{ x: 820, y: 360 }}
+            columns={columns}
+            dataSource={snapshot.evidenceRows}
+            locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无证据链数据" /> }}
+          />
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -793,20 +956,28 @@ function AlertEvidenceFilesFocusView({ snapshot, isLoading }: { snapshot: AlertD
   const signedUrl = fileRow?.signedUrl || `https://evidence.campus.local/signed/${snapshot.alertId}`;
   const generatedAt = compactDateTime(fileRow?.生成时间) || '06-20 03:43:04';
   const tags = fileRow?.fileTags?.length ? fileRow.fileTags : ['报告附件', '导出脚本', 'hash 校验', '下载审计 sec_analyst 03:45'];
+  const copySignedUrl = async () => {
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('clipboard api unavailable');
+      await navigator.clipboard.writeText(signedUrl);
+      message.success('签名 URL 已复制');
+    } catch {
+      const textarea = document.createElement('textarea');
+      textarea.value = signedUrl;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      const copied = document.execCommand('copy');
+      textarea.remove();
+      if (copied) message.success('签名 URL 已复制');
+      else message.error('签名 URL 复制失败，请检查浏览器剪贴板权限');
+    }
+  };
 
   return (
     <section className="taf-alert-evidence-files-focus" data-page-id="alert-detail-evidence-files" aria-label="告警详情证据链文件">
       <div className="taf-alert-evidence-files-card">
-        <header className="taf-alert-evidence-files-tabs" aria-label="证据链分类">
-          <h1 title={`证据链（${counts.all}）`}>证据链（{counts.all}）</h1>
-          <EvidenceFocusAction alertId={snapshot.alertId} title={`全部 ${counts.all}`} target="全部证据">全部 <strong>{counts.all}</strong></EvidenceFocusAction>
-          <EvidenceFocusAction alertId={snapshot.alertId} title={`PCAP ${counts.pcap}`} target="PCAP 证据">PCAP <strong>{counts.pcap}</strong></EvidenceFocusAction>
-          <EvidenceFocusAction alertId={snapshot.alertId} title={`Session ${counts.session}`} target="Session 证据">Session <strong>{counts.session}</strong></EvidenceFocusAction>
-          <EvidenceFocusAction alertId={snapshot.alertId} title={`日志 ${counts.log}`} target="日志证据">日志 <strong>{counts.log}</strong></EvidenceFocusAction>
-          <EvidenceFocusAction alertId={snapshot.alertId} title={`图谱路径 ${counts.graph}`} target="图谱路径证据">图谱路径 <strong>{counts.graph}</strong></EvidenceFocusAction>
-          <EvidenceFocusAction alertId={snapshot.alertId} title={`文件 ${counts.files}`} target={filename} className="is-active" ariaPressed>文件 <strong>{counts.files}</strong></EvidenceFocusAction>
-        </header>
-
         <div className="taf-alert-evidence-files-table" aria-busy={isLoading}>
           <div className="taf-alert-evidence-files-head" role="row">
             <span>证据类型</span>
@@ -847,11 +1018,17 @@ function AlertEvidenceFilesFocusView({ snapshot, isLoading }: { snapshot: AlertD
                 {tag}
               </EvidenceFocusAction>
             ))}
-            <label title="签名 URL 预览">
+            <button
+              type="button"
+              className="taf-alert-evidence-files-signed-url"
+              title="复制签名 URL"
+              aria-label="复制签名 URL"
+              onClick={copySignedUrl}
+            >
               <b>签名 URL 预览</b>
               <span>{signedUrl}</span>
               <CopyOutlined />
-            </label>
+            </button>
           </div>
 
           <footer className="taf-alert-evidence-files-footer">
@@ -875,16 +1052,6 @@ function AlertEvidencePcapFocusView({ snapshot, isLoading }: { snapshot: AlertDe
   return (
     <section className="taf-alert-evidence-pcap-focus" data-page-id="alert-detail-evidence-pcap" aria-label="告警详情证据链 PCAP">
       <div className="taf-alert-evidence-pcap-card">
-        <header className="taf-alert-evidence-pcap-tabs" aria-label="证据链分类">
-          <h1 title={`证据链（${counts.all}）`}>证据链（{counts.all}）</h1>
-          <EvidenceFocusAction alertId={snapshot.alertId} title={`全部 ${counts.all}`} target="全部证据">全部 <strong>{counts.all}</strong></EvidenceFocusAction>
-          <EvidenceFocusAction alertId={snapshot.alertId} title={`PCAP ${counts.pcap}`} target={pcap.fileName} className="is-active" ariaPressed>PCAP <strong>{counts.pcap}</strong></EvidenceFocusAction>
-          <EvidenceFocusAction alertId={snapshot.alertId} title={`Session ${counts.session}`} target="Session 证据">Session <strong>{counts.session}</strong></EvidenceFocusAction>
-          <EvidenceFocusAction alertId={snapshot.alertId} title={`日志 ${counts.log}`} target="日志证据">日志 <strong>{counts.log}</strong></EvidenceFocusAction>
-          <EvidenceFocusAction alertId={snapshot.alertId} title={`图谱路径 ${counts.graph}`} target="图谱路径证据">图谱路径 <strong>{counts.graph}</strong></EvidenceFocusAction>
-          <EvidenceFocusAction alertId={snapshot.alertId} title={`文件 ${counts.files}`} target="文件证据">文件 <strong>{counts.files}</strong></EvidenceFocusAction>
-        </header>
-
         <div className="taf-alert-evidence-pcap-table" aria-busy={isLoading}>
           <div className="taf-alert-evidence-pcap-head" role="row">
             <span>证据类型</span>
@@ -948,7 +1115,7 @@ function AlertEvidencePcapFocusView({ snapshot, isLoading }: { snapshot: AlertDe
   );
 }
 
-function AlertEvidenceSessionFocusView({ snapshot, isLoading, onClose }: { snapshot: AlertDetailSnapshot; isLoading: boolean; onClose: () => void }) {
+function AlertEvidenceSessionFocusView({ snapshot, isLoading }: { snapshot: AlertDetailSnapshot; isLoading: boolean }) {
   const counts = evidenceBucketCounts(snapshot.evidenceRows);
   const sessionRows = snapshot.evidenceRows.filter((row) => isSessionEvidence(row));
   const sessions = sessionRows.map((row, index) => row.sessionEvidence ?? defaultSessionEvidence(snapshot.alertId, index));
@@ -960,25 +1127,6 @@ function AlertEvidenceSessionFocusView({ snapshot, isLoading, onClose }: { snaps
   return (
     <section className="taf-alert-evidence-session-focus" data-page-id="alert-detail-evidence-session" aria-label="告警详情证据链 Session">
       <div className="taf-alert-evidence-session-card">
-        <button
-          type="button"
-          className="taf-business-popup-close taf-alert-evidence-session-close"
-          aria-label="关闭弹窗"
-          title="关闭弹窗"
-          onClick={onClose}
-        >
-          <CloseOutlined />
-        </button>
-        <header className="taf-alert-evidence-session-tabs" aria-label="证据链分类">
-          <h1 title={`证据链（${counts.all}）`}>证据链（{counts.all}）</h1>
-          <EvidenceFocusAction alertId={snapshot.alertId} title={`全部 ${counts.all}`} target="全部证据">全部 <strong>{counts.all}</strong></EvidenceFocusAction>
-          <EvidenceFocusAction alertId={snapshot.alertId} title={`PCAP ${counts.pcap}`} target="PCAP 证据">PCAP <strong>{counts.pcap}</strong></EvidenceFocusAction>
-          <EvidenceFocusAction alertId={snapshot.alertId} title={`Session ${counts.session}`} target="Session 证据" className="is-active" ariaPressed>Session <strong>{counts.session}</strong></EvidenceFocusAction>
-          <EvidenceFocusAction alertId={snapshot.alertId} title={`日志 ${counts.log}`} target="日志证据">日志 <strong>{counts.log}</strong></EvidenceFocusAction>
-          <EvidenceFocusAction alertId={snapshot.alertId} title={`图谱路径 ${counts.graph}`} target="图谱路径证据">图谱路径 <strong>{counts.graph}</strong></EvidenceFocusAction>
-          <EvidenceFocusAction alertId={snapshot.alertId} title={`文件 ${counts.files}`} target="文件证据">文件 <strong>{counts.files}</strong></EvidenceFocusAction>
-        </header>
-
         <div className="taf-alert-evidence-session-table" aria-busy={isLoading}>
           <div className="taf-alert-evidence-session-head" role="row">
             <span>证据类型</span>
@@ -1050,16 +1198,6 @@ function AlertEvidenceLogsFocusView({ snapshot, isLoading }: { snapshot: AlertDe
   return (
     <section className="taf-alert-evidence-logs-focus" data-page-id="alert-detail-evidence-logs" aria-label="告警详情证据链日志">
       <div className="taf-alert-evidence-logs-card">
-        <header className="taf-alert-evidence-logs-tabs" aria-label="证据链分类">
-          <h1 title={`证据链（${counts.all}）`}>证据链（{counts.all}）</h1>
-          <EvidenceFocusAction alertId={snapshot.alertId} title={`全部 ${counts.all}`} target="全部证据">全部 <strong>{counts.all}</strong></EvidenceFocusAction>
-          <EvidenceFocusAction alertId={snapshot.alertId} title={`PCAP ${counts.pcap}`} target="PCAP 证据">PCAP <strong>{counts.pcap}</strong></EvidenceFocusAction>
-          <EvidenceFocusAction alertId={snapshot.alertId} title={`Session ${counts.session}`} target="Session 证据">Session <strong>{counts.session}</strong></EvidenceFocusAction>
-          <EvidenceFocusAction alertId={snapshot.alertId} title={`日志 ${counts.log}`} target={log.logFile} className="is-active" ariaPressed>日志 <strong>{counts.log}</strong></EvidenceFocusAction>
-          <EvidenceFocusAction alertId={snapshot.alertId} title={`图谱路径 ${counts.graph}`} target="图谱路径证据">图谱路径 <strong>{counts.graph}</strong></EvidenceFocusAction>
-          <EvidenceFocusAction alertId={snapshot.alertId} title={`文件 ${counts.files}`} target="文件证据">文件 <strong>{counts.files}</strong></EvidenceFocusAction>
-        </header>
-
         <div className="taf-alert-evidence-logs-table" aria-busy={isLoading}>
           <div className="taf-alert-evidence-logs-head" role="row">
             <span>证据类型</span>
@@ -1137,16 +1275,6 @@ function AlertEvidenceGraphPathFocusView({ snapshot, isLoading }: { snapshot: Al
   return (
     <section className="taf-alert-evidence-graph-focus" data-page-id="alert-detail-evidence-graph-path" aria-label="告警详情证据链图谱路径">
       <div className="taf-alert-evidence-graph-card">
-        <header className="taf-alert-evidence-graph-tabs" aria-label="证据链分类">
-          <h1 title={`证据链（${counts.all}）`}>证据链（{counts.all}）</h1>
-          <EvidenceFocusAction alertId={snapshot.alertId} title={`全部 ${counts.all}`} target="全部证据">全部 <strong>{counts.all}</strong></EvidenceFocusAction>
-          <EvidenceFocusAction alertId={snapshot.alertId} title={`PCAP ${counts.pcap}`} target="PCAP 证据">PCAP <strong>{counts.pcap}</strong></EvidenceFocusAction>
-          <EvidenceFocusAction alertId={snapshot.alertId} title={`Session ${counts.session}`} target="Session 证据">Session <strong>{counts.session}</strong></EvidenceFocusAction>
-          <EvidenceFocusAction alertId={snapshot.alertId} title={`日志 ${counts.log}`} target="日志证据">日志 <strong>{counts.log}</strong></EvidenceFocusAction>
-          <EvidenceFocusAction alertId={snapshot.alertId} title={`图谱路径 ${counts.graph}`} target={graph.pathFile} className="is-active" ariaPressed>图谱路径 <strong>{counts.graph}</strong></EvidenceFocusAction>
-          <EvidenceFocusAction alertId={snapshot.alertId} title={`文件 ${counts.files}`} target="文件证据">文件 <strong>{counts.files}</strong></EvidenceFocusAction>
-        </header>
-
         <div className="taf-alert-evidence-graph-table" aria-busy={isLoading}>
           <div className="taf-alert-evidence-graph-head" role="row">
             <span>证据类型</span>
@@ -1243,9 +1371,19 @@ function GraphPathEdges({ edges }: { edges: NonNullable<AlertDetailEvidenceRow['
   );
 }
 
-function SummaryFact({ label, value, status = false, wide = false }: { label: string; value: string; status?: boolean; wide?: boolean }) {
+function SummaryFact({
+  label,
+  value,
+  status = false,
+  span = 1,
+}: {
+  label: string;
+  value: string;
+  status?: boolean;
+  span?: 1 | 2 | 3;
+}) {
   return (
-    <div className={`taf-alert-detail-summary-fact${wide ? ' is-wide' : ''}`}>
+    <div className={`taf-alert-detail-summary-fact is-span-${span}`}>
       <span>{label}</span>
       {status ? <StatusTag value={value} /> : <strong title={value}>{value}</strong>}
     </div>
@@ -1277,12 +1415,12 @@ function responseIcon(index: number) {
 function evidenceBucketCounts(rows: AlertDetailEvidenceRow[]) {
   const count = (predicate: (row: AlertDetailEvidenceRow) => boolean) => rows.filter(predicate).length;
   return {
-    all: rows.length || 6,
-    pcap: count((row) => row.证据类型.toLowerCase().includes('pcap')) || 1,
-    session: count((row) => row.证据类型.toLowerCase().includes('session')) || 2,
-    log: count((row) => row.证据类型.includes('日志') || row.证据类型.toLowerCase().includes('log')) || 1,
-    graph: count((row) => row.证据类型.includes('图谱') || row.证据类型.toLowerCase().includes('graph')) || 1,
-    files: count(isFileEvidence) || 1,
+    all: rows.length,
+    pcap: count((row) => row.证据类型.toLowerCase().includes('pcap')),
+    session: count((row) => row.证据类型.toLowerCase().includes('session')),
+    log: count((row) => row.证据类型.includes('日志') || row.证据类型.toLowerCase().includes('log')),
+    graph: count((row) => row.证据类型.includes('图谱') || row.证据类型.toLowerCase().includes('graph')),
+    files: count(isFileEvidence),
   };
 }
 
@@ -1464,5 +1602,7 @@ function emptySnapshot(alertId: string): AlertDetailSnapshot {
     responseActions: [],
     feedback: { defaultResult: 'pending', reason: '', whitelistDraft: '', sampleReturn: '' },
     evidence: [],
+    evidenceApiError: '',
+    feedbackApiError: '',
   };
 }

@@ -6,6 +6,8 @@ import { describe, expect, it } from 'vitest';
 const sourceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const page = fs.readFileSync(path.join(sourceRoot, 'pages', 'CampaignWorkbenchPage.tsx'), 'utf8');
 const styles = fs.readFileSync(path.join(sourceRoot, 'styles', 'pages.css'), 'utf8');
+const drawerStyles = fs.readFileSync(path.join(sourceRoot, 'styles', 'campaign-workbench-drawer.css'), 'utf8');
+const main = fs.readFileSync(path.join(sourceRoot, 'main.tsx'), 'utf8');
 const charts = fs.readFileSync(path.join(sourceRoot, 'components', 'charts.tsx'), 'utf8');
 
 describe('campaign workbench business contract', () => {
@@ -16,9 +18,10 @@ describe('campaign workbench business contract', () => {
     expect(page).not.toContain('className="taf-campaign-node');
     expect(charts).toContain('export function CampaignAttackGraphChart');
     expect(charts).toContain("name: '战役阶段关联图'");
-    expect(charts).toContain("type: 'graph'");
+    expect(charts).toContain("type: 'lines'");
+    expect(charts).toContain("type: 'scatter'");
     expect(charts).toContain('data-chart-engine="echarts"');
-    expect(charts).toContain('data-series-type="graph"');
+    expect(charts).toContain('data-series-type="lines+scatter"');
     expect(styles).not.toContain('.taf-campaign-node::before');
     expect(page).toContain('战役风险分布动态图');
     expect(page).toContain('战役证据完整度动态图');
@@ -69,7 +72,11 @@ describe('campaign workbench business contract', () => {
     expect(page).toContain('className="taf-campaign-action-drawer"');
     expect(page).toContain('rootClassName="taf-campaign-detail-drawer"');
     expect(page).toContain('placement="right"');
-    expect(page).toContain('width="min(900px, calc(100dvw - 32px))"');
+    expect(page).toContain('width="min(1200px, calc(100dvw - 48px))"');
+    expect(page).toContain('const selectCampaign = (record: SnapshotRow) =>');
+    expect(page).toContain("next.set('campaign', targetId)");
+    expect(page).toContain('onClick: () => selectCampaign(record)');
+    expect(page).toContain("'aria-selected': selectedRow ? rowKey(record) === rowKey(selectedRow) : false");
     expect(page).toContain('aria-label="关闭战役详情"');
     expect(page).toContain('className="taf-detail-drawer-tabs"');
     expect(page).toContain("{ key: 'evidence', label: '证据' }");
@@ -101,6 +108,10 @@ describe('campaign workbench business contract', () => {
     expect(styles).toContain('.taf-campaign-detail-drawer .ant-drawer-content-wrapper');
     expect(styles).toContain('right: 40px;');
     expect(styles).toContain('max-height: calc(100dvh - 96px);');
+    expect(main).toContain("import '@/styles/campaign-workbench-drawer.css'");
+    expect(drawerStyles).toContain('right: 16px;');
+    expect(drawerStyles).toContain('max-height: calc(100dvh - 32px);');
+    expect(drawerStyles).toContain('.taf-campaign-detail-drawer__workspace[data-active-tab="audit"] > aside:last-child');
     expect(styles).not.toMatch(/\.taf-campaign-evidence span\s*\{/);
     expect(styles).not.toMatch(/\.taf-campaign-evidence-list\s+span\s*\{/);
   });
