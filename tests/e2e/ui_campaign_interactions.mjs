@@ -233,7 +233,7 @@ fs.mkdirSync(evidenceDir, { recursive: true });
 await page.screenshot({ path: implementationPath, fullPage: false });
 
 const chartCanvasCount = await page.locator('.taf-campaign-workbench canvas').count();
-const attackGraphCount = await page.locator('[data-chart-engine="echarts"][data-series-type="graph"]').count();
+const attackGraphCount = await page.locator('[data-chart-engine="echarts"][data-series-type="lines+scatter"]').count();
 const chartBounds = await page.locator('.taf-campaign-workbench canvas').evaluateAll((canvases) => canvases.map((canvas) => {
   const rect = canvas.getBoundingClientRect();
   const context = canvas.getContext('2d');
@@ -434,9 +434,9 @@ const keywordFilterWorked = keywordResponse.ok() && keywordRows.length > 0 && ke
 await page.locator('.taf-campaign-filter > button').first().click();
 
 await openCampaign(false);
-await page.locator('[data-chart-engine="echarts"][data-series-type="graph"] canvas').waitFor({ state: 'visible', timeout: 15_000 });
+await page.locator('[data-chart-engine="echarts"][data-series-type="lines+scatter"] canvas').waitFor({ state: 'visible', timeout: 15_000 });
 actionChecks.push(await verifyDrawer(
-  page.locator('[data-chart-engine="echarts"][data-series-type="graph"] canvas'),
+  page.locator('[data-chart-engine="echarts"][data-series-type="lines+scatter"] canvas'),
   /\/v1\/campaigns\/[^/]+\/actions/,
   'CAMPAIGN_PHASE_VIEWED',
   true,

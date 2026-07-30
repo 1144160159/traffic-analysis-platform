@@ -1,0 +1,72 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alert-detail-evidence-fixture-r819
+  namespace: minio
+binaryData:
+  c2-tunnel.pcap: 1MOyoQIABAAAAAAAAAAAAP//AAABAAAASa5mahCkAAA2AAAANgAAAAARIjNEVWZ3iJmquwgARQAAKBI0QABABgAArBAFCrkWFgnDUAG7AAAAAQAAAABQAv//AAAAAA==
+data:
+  session-primary.json: |
+    {"session_id":"session-alert-detail-r802","src":"172.16.5.10:51514","dst":"185.22.14.9:443","duration_seconds":758,"bytes":1258291}
+  session-heartbeat.json: |
+    {"session_id":"session-20260620-000124","src":"172.16.5.10:51514","dst":"185.22.14.9:443","heartbeat_seconds":30,"duration_seconds":496}
+  ids-alert-detail-r802.log: |
+    2026-06-20T03:43:03Z IDS rule=C2_Tunnel_v3 src=172.16.5.10 dst=185.22.14.9 ja3_score=0.91 action=alert
+  path-alert-detail-r802.json: |
+    {"path_id":"alert-detail-r802","relation":"C2 communication","nodes":["172.16.5.10","core-zone","185.22.14.9"],"edges":[["172.16.5.10","core-zone"],["core-zone","185.22.14.9"]]}
+  hash.txt: |
+    1a2b3c4d5bef79a81a2b3c4d5bef79a81a2b3c4d5bef79a81a2b3c4d5bef79a8
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: seed-alert-detail-evidence-r819
+  namespace: minio
+spec:
+  ttlSecondsAfterFinished: 3600
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: seed-evidence
+        image: docker.io/minio/mc@sha256:eb4ea9884b77704230e2423e9004d2fa738dc272876b9cc41a297d29443b8780
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: MINIO_ROOT_USER
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: MINIO_ACCESS_KEY
+        - name: MINIO_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: MINIO_SECRET_KEY
+        command: ["sh", "-c"]
+        args:
+        - |
+          set -eu
+          mc alias set local http://minio.minio.svc:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
+          mc mb --ignore-existing local/traffic-evidence
+          mc cp --attr "Content-Type=application/vnd.tcpdump.pcap" /fixtures/c2-tunnel.pcap local/traffic-evidence/alerts/r802/c2-tunnel.pcap
+          mc cp --attr "Content-Type=application/json" /fixtures/session-primary.json local/traffic-evidence/alerts/r802/session-primary.json
+          mc cp --attr "Content-Type=application/json" /fixtures/session-heartbeat.json local/traffic-evidence/alerts/r802/session-heartbeat.json
+          mc cp --attr "Content-Type=text/plain" /fixtures/ids-alert-detail-r802.log local/traffic-evidence/alerts/r802/ids-alert-detail-r802.log
+          mc cp --attr "Content-Type=application/json" /fixtures/path-alert-detail-r802.json local/traffic-evidence/alerts/r802/path-alert-detail-r802.json
+          mc cp --attr "Content-Type=text/plain" /fixtures/hash.txt local/traffic-evidence/alerts/r802/hash.txt
+          mc ls local/traffic-evidence/alerts/r802/
+        resources:
+          requests:
+            cpu: 25m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 128Mi
+        volumeMounts:
+        - name: evidence-fixture
+          mountPath: /fixtures
+          readOnly: true
+      volumes:
+      - name: evidence-fixture
+        configMap:
+          name: alert-detail-evidence-fixture-r819

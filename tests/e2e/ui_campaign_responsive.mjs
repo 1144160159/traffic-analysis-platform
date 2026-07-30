@@ -95,7 +95,7 @@ for (const viewport of viewports) {
     const businessRect = business?.getBoundingClientRect();
     const campaignRect = campaign?.getBoundingClientRect();
     const businessStyle = business ? getComputedStyle(business) : null;
-    const attackGraph = document.querySelector('[data-chart-engine="echarts"][data-series-type="graph"]');
+    const attackGraph = document.querySelector('[data-chart-engine="echarts"][data-series-type="lines+scatter"]');
     const attackGraphCanvas = attackGraph?.querySelector('canvas');
     const attackGraphRect = attackGraph?.getBoundingClientRect();
     const attackGraphCanvasRect = attackGraphCanvas?.getBoundingClientRect();

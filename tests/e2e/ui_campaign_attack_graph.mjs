@@ -54,7 +54,7 @@ url.hash = `codex_smoke_token=${accessToken}`;
 await page.goto(url.toString(), { waitUntil: 'domcontentloaded', timeout: 45_000 });
 await page.waitForLoadState('networkidle', { timeout: 12_000 }).catch(() => {});
 
-const graph = page.locator('[data-chart-engine="echarts"][data-series-type="graph"]');
+const graph = page.locator('[data-chart-engine="echarts"][data-series-type="lines+scatter"]');
 await graph.waitFor({ state: 'visible', timeout: 20_000 });
 const canvas = graph.locator('canvas');
 const graphMetrics = await graph.evaluate((element) => {
@@ -79,7 +79,7 @@ const afterZoom = crypto.createHash('sha256').update(await canvas.screenshot()).
 
 await page.reload({ waitUntil: 'domcontentloaded', timeout: 45_000 });
 await page.waitForLoadState('networkidle', { timeout: 12_000 }).catch(() => {});
-const reloadedCanvas = page.locator('[data-chart-engine="echarts"][data-series-type="graph"] canvas');
+const reloadedCanvas = page.locator('[data-chart-engine="echarts"][data-series-type="lines+scatter"] canvas');
 await reloadedCanvas.waitFor({ state: 'visible', timeout: 20_000 });
 const actionResponsePromise = page.waitForResponse((response) =>
   response.request().method() === 'POST'

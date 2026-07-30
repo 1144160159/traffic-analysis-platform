@@ -10,7 +10,7 @@ const uiRequire = createRequire(path.join(root, 'web/ui/package.json'));
 const { chromium } = uiRequire('@playwright/test');
 const baseUrl = 'http://10.0.5.8:30180';
 const cdpUrl = 'http://127.0.0.1:9224';
-const revision = 'r758-r761';
+const revision = process.env.TOPIC_REVISION ?? 'r758-r761';
 const outputPath = path.join(root, `evidence/ui-image-breakdowns/pages/topics-live-windows-cdp-${revision}.json`);
 
 for (const key of ['HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY', 'http_proxy', 'https_proxy', 'all_proxy']) delete process.env[key];
@@ -93,7 +93,9 @@ let exitCode = 1;
 page.on('response', async (response) => {
   const url = response.url();
   if (url.startsWith(`${baseUrl}/api/`) && response.status() >= 400) {
-    productBadResponses.push({ status: response.status(), url });
+    const body = await response.text().catch(() => '');
+    productBadResponses.push({ status: response.status(), url, body: body.slice(0, 1200) });
+    console.error(`[topic-live] bad response ${response.status()} ${url} ${body.slice(0, 1200)}`);
   }
   const match = url.match(/\/api\/v1\/topics\/(tunnel|exfil|apt)(?:\?|$)/u);
   if (match && response.request().method() === 'GET' && response.ok()) {
@@ -141,8 +143,22 @@ async function pageLayoutEvidence() {
   return page.evaluate(() => {
     const pageElement = document.querySelector('.taf-topic-page');
     const shellElement = document.querySelector('.taf-topic-shell');
+    const layoutElement = document.querySelector('.taf-topic-tunnel-layout, .taf-topic-exfil-layout, .taf-topic-apt-layout');
+    const leftElement = document.querySelector('.taf-topic-tunnel-left, .taf-topic-exfil-left, .taf-topic-apt-left');
+    const railElement = document.querySelector('.taf-topic-tunnel-rail, .taf-topic-exfil-rail, .taf-topic-apt-rail');
     const pageRect = pageElement?.getBoundingClientRect();
     const shellRect = shellElement?.getBoundingClientRect();
+    const leftRect = leftElement?.getBoundingClientRect();
+    const railRect = railElement?.getBoundingClientRect();
+    const overlapWidth = leftRect && railRect ? Math.max(0, Math.min(leftRect.right, railRect.right) - Math.max(leftRect.left, railRect.left)) : 0;
+    const overlapHeight = leftRect && railRect ? Math.max(0, Math.min(leftRect.bottom, railRect.bottom) - Math.max(leftRect.top, railRect.top)) : 0;
+    const clippedRailText = railElement ? [...railElement.querySelectorAll('header strong, b, em, button, .taf-topic-report-preview span')]
+      .filter((element) => {
+        const rect = element.getBoundingClientRect();
+        const style = getComputedStyle(element);
+        return rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && element.scrollWidth > element.clientWidth + 2;
+      })
+      .map((element) => element.textContent?.trim()).filter(Boolean) : [];
     return {
       viewport: { width: window.innerWidth, height: window.innerHeight },
       document_width: document.documentElement.scrollWidth,
@@ -151,12 +167,37 @@ async function pageLayoutEvidence() {
       page_bounds: pageRect ? { left: Math.round(pageRect.left), right: Math.round(pageRect.right), width: Math.round(pageRect.width), top: Math.round(pageRect.top), bottom: Math.round(pageRect.bottom) } : null,
       shell_bounds: shellRect ? { left: Math.round(shellRect.left), right: Math.round(shellRect.right), width: Math.round(shellRect.width), top: Math.round(shellRect.top), bottom: Math.round(shellRect.bottom) } : null,
       shell_overflow_y: shellElement ? getComputedStyle(shellElement).overflowY : '',
+      layout_grid_columns: layoutElement ? getComputedStyle(layoutElement).gridTemplateColumns : '',
+      rail_grid_columns: railElement ? getComputedStyle(railElement).gridTemplateColumns : '',
+      left_rail_overlap_area: Math.round(overlapWidth * overlapHeight),
+      clipped_rail_text: clippedRailText,
+      dynamic_graphs: document.querySelectorAll('.taf-api-topology[data-api-dynamic="true"][data-roam-enabled="true"]').length,
     };
   });
 }
 
 async function metricEvidence() {
   return page.locator('.taf-topic-kpis .taf-metric, .taf-topic-tunnel-kpis .taf-topic-tunnel-kpi').allTextContents();
+}
+
+async function tunnelViewportGeometry() {
+  return page.evaluate(() => {
+    const board = document.querySelector('.taf-topic-tunnel-boardline');
+    const tableBody = document.querySelector('.taf-topic-tunnel-table-body');
+    const rows = [...document.querySelectorAll('.taf-topic-tunnel-table-row')];
+    const boardRect = board?.getBoundingClientRect();
+    return {
+      board_height: boardRect ? Math.round(boardRect.height) : 0,
+      visible_rows: rows.filter((row) => {
+        const rect = row.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0;
+      }).length,
+      table_client_height: tableBody?.clientHeight ?? 0,
+      table_scroll_height: tableBody?.scrollHeight ?? 0,
+      table_has_vertical_overflow: Boolean(tableBody && tableBody.scrollHeight > tableBody.clientHeight + 1),
+      document_has_vertical_overflow: document.documentElement.scrollHeight > window.innerHeight + 1,
+    };
+  });
 }
 
 async function verifyModal(button, endpointPattern, maxWidth, maxHeight, methods = ['POST'], evidenceName = '') {
@@ -174,6 +215,10 @@ async function verifyModal(button, endpointPattern, maxWidth, maxHeight, methods
   const responsePromise = page.waitForResponse((response) => endpointPattern.test(response.url()) && methods.includes(response.request().method()), { timeout: 12_000 });
   await modal.getByRole('button', { name: '确认提交' }).click();
   const response = await responsePromise;
+  if (!response.ok()) {
+    const body = await response.text().catch(() => '');
+    throw new Error(`topic governance modal request failed: ${response.status()} ${response.url()} ${body.slice(0, 1200)}`);
+  }
   await modal.locator('.ant-alert-success').waitFor({ state: 'visible', timeout: 8_000 });
   const passed = response.ok() && boundsPass(bounds, maxWidth, maxHeight, { width: 1920, height: 1080 });
   const modalRoot = page.locator('.taf-topic-governance-modal:visible');
@@ -247,6 +292,28 @@ try {
     console.error(`[topic-live] captured ${topic}`);
   }
 
+  await openTopic('tunnel', { width: 1920, height: 1080 });
+  const tunnelTableAt1080 = await tunnelViewportGeometry();
+  await page.setViewportSize({ width: 1920, height: 1300 });
+  await page.waitForTimeout(300);
+  const tunnelTableAt1300 = await tunnelViewportGeometry();
+  const highViewportScreenshot = path.join(
+    root,
+    `evidence/ui-image-breakdowns/pages/topics-encrypted-tunnel/responsive-1920x1300-${revision}.png`,
+  );
+  fs.mkdirSync(path.dirname(highViewportScreenshot), { recursive: true });
+  await page.screenshot({ path: highViewportScreenshot, fullPage: false });
+  const tunnelTableViewportBehavior = {
+    at_1920x1080: tunnelTableAt1080,
+    at_1920x1300: tunnelTableAt1300,
+    screenshot: path.relative(root, highViewportScreenshot),
+    passed: tunnelTableAt1080.visible_rows === 10
+      && tunnelTableAt1080.table_has_vertical_overflow
+      && tunnelTableAt1300.visible_rows === 10
+      && !tunnelTableAt1300.table_has_vertical_overflow
+      && Math.abs(tunnelTableAt1300.board_height - tunnelTableAt1080.board_height) <= 2,
+  };
+
   await openTopic('tunnel');
   console.error('[topic-live] verifying governance overlays');
   const governance = {
@@ -254,7 +321,7 @@ try {
     saved_view: await verifyModal(page.getByTitle('保存视图').first(), /\/api\/v1\/topics\/views$/u, 620, 760),
     report_export: await verifyModal(page.getByTitle('导出报告').first(), /\/api\/v1\/topics\/reports\/export$/u, 620, 760),
     evidence_export: await verifyModal(page.getByTitle('导出证据包').first(), /\/api\/v1\/topics\/evidence-packages\/export$/u, 620, 760),
-    subscription: await verifyDrawer(page.getByTitle('订阅').first(), /\/api\/v1\/topics\/subscriptions$/u),
+    subscription: await verifyModal(page.getByTitle('订阅').first(), /\/api\/v1\/topics\/subscriptions$/u, 620, 760),
   };
 
   const shareButton = page.getByTitle('分享').first();
@@ -289,6 +356,7 @@ try {
     result: Object.values(dataChecks).every(Boolean)
       && Object.values(governance).every((item) => item.passed)
       && responsive.every((item) => item.passed)
+      && tunnelTableViewportBehavior.passed
       && productBadResponses.length === 0
       && productRequestFailures.length === 0
       && consoleErrors.length === 0
@@ -298,6 +366,7 @@ try {
     topics,
     governance,
     responsive,
+    tunnel_table_viewport_behavior: tunnelTableViewportBehavior,
     data_checks: dataChecks,
     api_summaries: {
       tunnel: tunnelData.summary,
