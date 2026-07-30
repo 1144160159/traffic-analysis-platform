@@ -9,9 +9,10 @@ const root = process.cwd();
 const { chromium } = createRequire(path.join(root, 'web/ui/package.json'))('@playwright/test');
 const baseUrl = 'http://10.0.5.8:30180';
 const cdpUrl = 'http://127.0.0.1:9224';
-const outputPath = path.join(root, 'evidence/ui-image-breakdowns/pages/alerts/interaction-r651.json');
-const screenshotPath = path.join(root, 'evidence/ui-image-breakdowns/pages/alerts/interaction-r651.png');
-const compactScreenshotPath = path.join(root, 'evidence/ui-image-breakdowns/pages/alerts/interaction-r651-1600x900.png');
+const outputPath = path.join(root, 'evidence/ui-image-breakdowns/pages/alerts/interaction-r801.json');
+const screenshotPath = path.join(root, 'evidence/ui-image-breakdowns/pages/alerts/interaction-r801.png');
+const compactScreenshotPath = path.join(root, 'evidence/ui-image-breakdowns/pages/alerts/interaction-r801-1600x900.png');
+const batchModalScreenshotPath = path.join(root, 'evidence/ui-image-breakdowns/pages/alerts/batch-modal-r801.png');
 
 for (const key of ['HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY', 'http_proxy', 'https_proxy', 'all_proxy']) delete process.env[key];
 process.env.NO_PROXY = '127.0.0.1,localhost,10.0.5.8';
@@ -58,6 +59,11 @@ await page.waitForFunction(() => Array.from(document.querySelectorAll('button'))
 const batchAssignEnabled = await page.getByRole('button', { name: '批量指派' }).isEnabled();
 const batchAssignResponsePromise = page.waitForResponse((response) => response.url().endsWith('/assign') && response.request().method() === 'PUT');
 await page.getByRole('button', { name: '批量指派' }).click();
+const batchAssignModal = page.locator('.taf-alert-batch-modal:visible');
+await batchAssignModal.waitFor({ state: 'visible' });
+const batchModalBounds = await batchAssignModal.boundingBox();
+await page.screenshot({ path: batchModalScreenshotPath, fullPage: false });
+await batchAssignModal.getByRole('button', { name: '确认提交' }).click();
 const batchAssignResponse = await batchAssignResponsePromise;
 const batchAssignStatus = batchAssignResponse.status();
 const batchAssignBody = await batchAssignResponse.json().catch(() => ({}));
@@ -69,6 +75,9 @@ await page.locator('.taf-alert-table-panel tbody .ant-table-selection-column inp
 await page.waitForFunction(() => Array.from(document.querySelectorAll('button')).some((button) => button.textContent?.includes('批量状态变更') && !button.disabled));
 const batchStatusResponsePromise = page.waitForResponse((response) => response.url().endsWith('/alerts/batch/status') && response.request().method() === 'PUT');
 await page.getByRole('button', { name: '批量状态变更' }).click();
+const batchStatusModal = page.locator('.taf-alert-batch-modal:visible');
+await batchStatusModal.waitFor({ state: 'visible' });
+await batchStatusModal.getByRole('button', { name: '确认提交' }).click();
 const batchStatusResponse = await batchStatusResponsePromise;
 const batchStatusCode = batchStatusResponse.status();
 const batchStatusBody = await batchStatusResponse.json().catch(() => ({}));
@@ -140,5 +149,6 @@ const feedbackReachable = await page.evaluate(() => {
   return buttonRect.top >= detailRect.top && buttonRect.bottom <= Math.min(detailRect.bottom, innerHeight);
 });
 const noViewportOverflow = [desktopLayout, compactLayout].every((layout) => Math.max(layout.bodyScrollWidth, layout.documentScrollWidth) <= layout.viewportWidth + 2);
-const result = { result: gaugeCanvasCount === 1 && simulatedRowCount === 0 && tablePageTwo === '2' && ['auto', 'scroll'].includes(tableOverflowY) && viewActionVisible && rowActionVisible && rowActionStatus === 201 && clusterVerified && feedbackStatus === 201 && selectedCount === 1 && batchAssignEnabled && batchAssignVerified && batchStatusVerified && noViewportOverflow && compactLayout.tablePaginationSeparated && compactLayout.detailScrollable && feedbackReachable && badResponses.length === 0 && consoleErrors.length === 0 && pageErrors.length === 0 && requestFailures.length === 0 ? 'pass' : 'fail', browser_backend: 'Windows Chrome CDP over Xshell tunnel', browser: version.Browser, route: redact(routeUrl.toString()), data_mode: 'live', gauge_canvas_count: gaugeCanvasCount, simulated_row_count: simulatedRowCount, table_page_two: tablePageTwo, table_overflow_y: tableOverflowY, view_action_visible: viewActionVisible, row_action_visible: rowActionVisible, row_action_status: rowActionStatus, cluster_action_status: clusterActionStatus, cluster_source: clusterSource, cluster_rows: clusterRows.length, cluster_verified: clusterVerified, feedback_status: feedbackStatus, selected_count: selectedCount, batch_assign_enabled: batchAssignEnabled, batch_assign_status: batchAssignStatus, batch_assign_verified: batchAssignVerified, batch_status_code: batchStatusCode, batch_status_verified: batchStatusVerified, compact_feedback_reachable: feedbackReachable, no_viewport_overflow: noViewportOverflow, desktop_layout: desktopLayout, compact_layout: compactLayout, bad_responses: badResponses, console_errors: consoleErrors, page_errors: pageErrors, request_failures: requestFailures, screenshot: path.relative(root, screenshotPath), compact_screenshot: path.relative(root, compactScreenshotPath), timestamp: new Date().toISOString() };
+const batchModalFits = Boolean(batchModalBounds && batchModalBounds.width >= 440 && batchModalBounds.width <= 500 && batchModalBounds.height < 520 && batchModalBounds.x > 0 && batchModalBounds.y > 0);
+const result = { result: gaugeCanvasCount === 1 && simulatedRowCount === 0 && tablePageTwo === '2' && ['auto', 'scroll'].includes(tableOverflowY) && viewActionVisible && rowActionVisible && rowActionStatus === 201 && clusterVerified && feedbackStatus === 201 && selectedCount === 1 && batchAssignEnabled && batchAssignVerified && batchStatusVerified && batchModalFits && noViewportOverflow && compactLayout.tablePaginationSeparated && compactLayout.detailScrollable && feedbackReachable && badResponses.length === 0 && consoleErrors.length === 0 && pageErrors.length === 0 && requestFailures.length === 0 ? 'pass' : 'fail', browser_backend: 'Windows Chrome CDP over Xshell tunnel', browser: version.Browser, route: redact(routeUrl.toString()), data_mode: 'live', gauge_canvas_count: gaugeCanvasCount, simulated_row_count: simulatedRowCount, table_page_two: tablePageTwo, table_overflow_y: tableOverflowY, view_action_visible: viewActionVisible, row_action_visible: rowActionVisible, row_action_status: rowActionStatus, cluster_action_status: clusterActionStatus, cluster_source: clusterSource, cluster_rows: clusterRows.length, cluster_verified: clusterVerified, feedback_status: feedbackStatus, selected_count: selectedCount, batch_assign_enabled: batchAssignEnabled, batch_assign_status: batchAssignStatus, batch_assign_verified: batchAssignVerified, batch_status_code: batchStatusCode, batch_status_verified: batchStatusVerified, batch_modal_bounds: batchModalBounds, batch_modal_fits: batchModalFits, compact_feedback_reachable: feedbackReachable, no_viewport_overflow: noViewportOverflow, desktop_layout: desktopLayout, compact_layout: compactLayout, bad_responses: badResponses, console_errors: consoleErrors, page_errors: pageErrors, request_failures: requestFailures, screenshot: path.relative(root, screenshotPath), compact_screenshot: path.relative(root, compactScreenshotPath), batch_modal_screenshot: path.relative(root, batchModalScreenshotPath), timestamp: new Date().toISOString() };
 fs.mkdirSync(path.dirname(outputPath), { recursive: true }); fs.writeFileSync(outputPath, `${JSON.stringify(result, null, 2)}\n`); console.log(JSON.stringify(result, null, 2)); await page.close().catch(() => {}); process.exit(result.result === 'pass' ? 0 : 1);

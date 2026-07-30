@@ -207,6 +207,16 @@ curl_json "topic saved views readable" "GET" "/api/v1/topics/views?limit=5" "200
 assert_json "topic saved views response shape" "$LOG_DIR/topic-views-before.json" '.success == true and (.data.views | type == "array") and (.data.total | type == "number")'
 curl_json "topic subscriptions readable" "GET" "/api/v1/topics/subscriptions?limit=5" "200" "$ADMIN_TOKEN" "$LOG_DIR/topic-subscriptions-before.json"
 assert_json "topic subscriptions response shape" "$LOG_DIR/topic-subscriptions-before.json" '.success == true and (.data.subscriptions | type == "array") and (.data.total | type == "number")'
+curl_json "topic scope readable before mutation" "GET" "/api/v1/topics/scopes/tunnel" "200" "$ADMIN_TOKEN" "$LOG_DIR/topic-scope-before.json"
+assert_json "topic scope response shape" "$LOG_DIR/topic-scope-before.json" '.success == true and .data.topic == "tunnel"'
+scope_restore_body="$(jq -c '.data | {
+  scope_name: (.scope_name // "默认专题范围"),
+  included_assets: (.included_assets // []),
+  excluded_assets: (.excluded_assets // []),
+  risk_levels: (.risk_levels // []),
+  time_window: (.time_window // "24h"),
+  detail: ((.detail // {}) + {restored_by:"live-topic-governance-preflight"})
+}' "$LOG_DIR/topic-scope-before.json")"
 
 view_body="$(jq -nc --arg name "$VIEW_NAME" '{topic:"tunnel", name:$name, filters:{risk:"high", owner:"codex"}, visibility:"team", favorite:true}')"
 curl_json "admin can save topic view" "POST" "/api/v1/topics/views" "201" "$ADMIN_TOKEN" "$LOG_DIR/topic-view-create.json" "$view_body"
@@ -320,6 +330,16 @@ fi
 assert_psql_count "topic governance audit persisted" \
   "SELECT count(*) FROM audit_logs WHERE tenant_id = '$TENANT' AND action IN ('TOPIC_VIEW_SAVED','TOPIC_VIEW_UPDATED','TOPIC_VIEW_SHARED','TOPIC_VIEW_FAVORITE_UPDATED','TOPIC_SCOPE_UPDATED','TOPIC_ACTION_REQUESTED','TOPIC_SUBSCRIPTION_CREATED','TOPIC_SUBSCRIPTION_UPDATED','TOPIC_REPORT_EXPORTED','TOPIC_EVIDENCE_PACKAGE_EXPORTED');" \
   "pg-topic-audit-count.txt"
+
+curl_json "topic scope restored after mutation" "PUT" "/api/v1/topics/scopes/tunnel" "200" "$ADMIN_TOKEN" "$LOG_DIR/topic-scope-restore.json" "$scope_restore_body"
+assert_json "topic scope restoration response" "$LOG_DIR/topic-scope-restore.json" \
+  --argjson expected "$scope_restore_body" \
+  '.success == true
+   and .data.scope_name == $expected.scope_name
+   and .data.included_assets == $expected.included_assets
+   and .data.excluded_assets == $expected.excluded_assets
+   and .data.risk_levels == $expected.risk_levels
+   and .data.time_window == $expected.time_window'
 
 TOTAL="$(jq -s 'length' "$REPORT")"
 PASSED="$(jq -s '[.[] | select(.passed == true)] | length' "$REPORT")"
