@@ -1,0 +1,50 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: seed-topic-panel-simulations
+  namespace: databases
+  labels:
+    app.kubernetes.io/name: topic-panel-simulations
+    app.kubernetes.io/component: acceptance-fixture
+spec:
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: topic-panel-simulations
+        app.kubernetes.io/component: acceptance-fixture
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: seed
+        image: docker.io/library/postgres@sha256:3a5291c749cd77894b6d3e6e2135b81a29b1e864026e6d899ab01bc3656c6bc7
+        command: ["bash", "-ceu"]
+        args:
+        - |
+          psql \
+            -h postgres-primary.databases.svc \
+            -U postgres \
+            -d traffic_platform \
+            -v ON_ERROR_STOP=1 \
+            -f /fixture/seed_topic_panel_simulations.postgres.sql
+          psql \
+            -h postgres-primary.databases.svc \
+            -U postgres \
+            -d traffic_platform \
+            -v ON_ERROR_STOP=1 \
+            -Atc "SELECT topic || '|' || count(*) || '|' || max(simulation_id) || '|' || max(version) FROM topic_panel_simulations WHERE enabled GROUP BY topic ORDER BY topic"
+        env:
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: PG_PASSWORD
+        volumeMounts:
+        - name: fixture
+          mountPath: /fixture
+          readOnly: true
+      volumes:
+      - name: fixture
+        configMap:
+          name: topic-panel-simulations-sql

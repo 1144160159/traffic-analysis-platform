@@ -1,0 +1,4 @@
+FROM docker.io/traffic/alert-service:alert-detail-r802
+COPY alert-service /usr/local/bin/alert-service
+USER appuser
+ENTRYPOINT ["/usr/local/bin/alert-service"]

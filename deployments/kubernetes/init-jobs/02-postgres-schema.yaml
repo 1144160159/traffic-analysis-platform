@@ -481,6 +481,9 @@ data:
     CREATE INDEX IF NOT EXISTS idx_topic_exports_tenant_time ON topic_exports (tenant_id, generated_at DESC);
     CREATE TABLE IF NOT EXISTS topic_actions (action_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(), tenant_id TEXT NOT NULL, topic TEXT NOT NULL, action TEXT NOT NULL, target TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'queued', detail JSONB NOT NULL DEFAULT '{}'::jsonb, requested_by TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now());
     CREATE INDEX IF NOT EXISTS idx_topic_actions_tenant_topic ON topic_actions (tenant_id, topic, created_at DESC);
+    CREATE TABLE IF NOT EXISTS topic_panel_simulations (simulation_id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL DEFAULT '*', topic TEXT NOT NULL CHECK (topic IN ('tunnel', 'exfil', 'apt')), version TEXT NOT NULL, enabled BOOLEAN NOT NULL DEFAULT true, payload JSONB NOT NULL, created_by TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), UNIQUE (tenant_id, topic, version));
+    CREATE INDEX IF NOT EXISTS idx_topic_panel_simulations_active ON topic_panel_simulations (tenant_id, topic, enabled, updated_at DESC);
+    CREATE UNIQUE INDEX IF NOT EXISTS uq_topic_panel_simulations_one_enabled ON topic_panel_simulations (tenant_id, topic) WHERE enabled;
     COMMIT;
   05-default-data.sql: |
     -- =============================================================================

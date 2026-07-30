@@ -16,8 +16,8 @@ metadata:
   name: web-ui
   namespace: traffic-analysis
   annotations:
-    kubernetes.io/change-cause: "Topic domain r761 renders scope editing as an intrinsic modal and restores readable topology node typography with boundary-anchored links"
-    traffic.analysis/source-revision: "db0a01658f3d98c93f24b859246f4b80d4bc0320ef9a90ededdce79d2d83a0b1"
+    kubernetes.io/change-cause: "Topic panel r892 locks APT and encrypted-tunnel analysis geometry within each browser viewport"
+    traffic.analysis/source-revision: "5a657cecd0616a8e8d514847e35c66cdf19c3eaa0a4bda134fa254eb34b1ac61"
 spec:
   replicas: 1
   selector: {matchLabels: {app: web-ui}}
@@ -25,16 +25,16 @@ spec:
     metadata:
       labels: {app: web-ui}
       annotations:
-        traffic.analysis/build-id: "topic-domain-r761"
-        traffic.analysis/release: "topic-domain-r761"
-        traffic.analysis/source-digest: "db0a01658f3d98c93f24b859246f4b80d4bc0320ef9a90ededdce79d2d83a0b1"
-        traffic.analysis/image-digest: "sha256:7621ff5c473179adc04093a33aa715059bce418d0b32dc2f10f51960c8529a8e"
-        traffic.analysis/image-id: "sha256:d251d20498d2d4341c7e95bd375261afbd29d25c97d5782b6832635973019c3f"
+        traffic.analysis/build-id: "topic-panel-r892"
+        traffic.analysis/release: "topic-panel-r892"
+        traffic.analysis/source-digest: "5a657cecd0616a8e8d514847e35c66cdf19c3eaa0a4bda134fa254eb34b1ac61"
+        traffic.analysis/image-digest: "sha256:b6b820a96a31ea4fbe37ca5d4795d9a703aaf71efe6e2473d06246fa8e9e0980"
+        traffic.analysis/image-id: "sha256:fd9a69a8605614fe9dad9c9a630f4691839fdc90f93c84b1814ba8357d2d1904"
     spec:
       terminationGracePeriodSeconds: 30
       containers:
       - name: web-ui
-        image: docker.io/traffic/web-ui:topic-domain-r761
+        image: docker.io/traffic/web-ui:topic-panel-r892
         imagePullPolicy: Never
         ports: [{containerPort: 80}]
         lifecycle:
@@ -51,7 +51,7 @@ spec:
         - {name: ENABLE_REALTIME, value: "true"}
         - {name: AUTH_ENABLED, value: "true"}
         - {name: USE_MOCK, value: "false"}
-        - {name: ALERT_DETAIL_API_ENABLED, value: "false"}
+        - {name: ALERT_DETAIL_API_ENABLED, value: "true"}
         - {name: SCREEN_ACCESS_MODE, value: "protected"}
         - {name: DESKTOP_SMOKE_TOKEN_ENABLED, value: "true"}
         resources: {requests: {cpu: 100m, memory: 128Mi, ephemeral-storage: 128Mi}, limits: {cpu: 500m, memory: 512Mi, ephemeral-storage: 512Mi}}

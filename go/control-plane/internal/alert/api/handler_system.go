@@ -72,6 +72,9 @@ func (h *SystemHandler) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/attack-chains", h.ListAttackChains).Methods("GET")
 	r.HandleFunc("/attack-chains/{id}", h.GetAttackChain).Methods("GET")
 	r.HandleFunc("/attack-chains/{id}/phases", h.GetAttackChainPhases).Methods("GET")
+	r.HandleFunc("/attack-chains/{id}/evidence", h.ListAttackChainEvidence).Methods("GET")
+	r.HandleFunc("/attack-chains/{id}/paths", h.ListAttackChainPaths).Methods("GET")
+	r.HandleFunc("/attack-chains/{id}/recommendations", h.ListAttackChainRecommendations).Methods("GET")
 	r.HandleFunc("/probes", h.ListProbes).Methods("GET")
 	r.HandleFunc("/probes/topology", h.GetProbeTopology).Methods("GET")
 	r.HandleFunc("/probes/batch-upgrade", h.BatchUpgradeProbes).Methods("POST")
@@ -94,6 +97,7 @@ func (h *SystemHandler) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/topics/views", h.ListTopicViews).Methods("GET")
 	r.HandleFunc("/topics/views", h.SaveTopicView).Methods("POST")
 	r.HandleFunc("/topics/views/{id}", h.UpdateTopicView).Methods("PATCH")
+	r.HandleFunc("/topics/scopes/{topic}", h.GetTopicScope).Methods("GET")
 	r.HandleFunc("/topics/scopes/{topic}", h.UpdateTopicScope).Methods("PUT", "PATCH")
 	r.HandleFunc("/topics/subscriptions", h.ListTopicSubscriptions).Methods("GET")
 	r.HandleFunc("/topics/subscriptions", h.CreateTopicSubscription).Methods("POST")
@@ -508,12 +512,16 @@ type campaignStatusTransitionDTO struct {
 }
 
 type campaignAlertDTO struct {
-	AlertID       string `json:"alert_id"`
-	AlertType     string `json:"alert_type"`
-	Severity      string `json:"severity"`
-	LastSeen      int64  `json:"last_seen"`
-	AttackPhase   string `json:"attack_phase"`
-	EvidenceCount uint64 `json:"evidence_count"`
+	AlertID       string   `json:"alert_id"`
+	AlertType     string   `json:"alert_type"`
+	Severity      string   `json:"severity"`
+	LastSeen      int64    `json:"last_seen"`
+	AttackPhase   string   `json:"attack_phase"`
+	Entity        string   `json:"entity"`
+	SrcIP         string   `json:"src_ip"`
+	DstIP         string   `json:"dst_ip"`
+	EvidenceIDs   []string `json:"evidence_ids"`
+	EvidenceCount uint64   `json:"evidence_count"`
 }
 
 type campaignPhaseDTO struct {
@@ -550,13 +558,50 @@ type attackPhaseDTO struct {
 }
 
 type attackEventDTO struct {
-	EventID     string `json:"event_id"`
-	Timestamp   int64  `json:"timestamp"`
-	Description string `json:"description"`
-	SrcIP       string `json:"src_ip"`
-	DstIP       string `json:"dst_ip"`
-	Technique   string `json:"technique,omitempty"`
-	Severity    string `json:"severity"`
+	EventID     string   `json:"event_id"`
+	Timestamp   int64    `json:"timestamp"`
+	Description string   `json:"description"`
+	Entity      string   `json:"entity,omitempty"`
+	SrcIP       string   `json:"src_ip"`
+	DstIP       string   `json:"dst_ip"`
+	Technique   string   `json:"technique,omitempty"`
+	Severity    string   `json:"severity"`
+	EvidenceIDs []string `json:"evidence_ids,omitempty"`
+}
+
+type attackChainEvidenceDTO struct {
+	EvidenceID       string `json:"evidence_id"`
+	AlertID          string `json:"alert_id"`
+	Phase            string `json:"phase"`
+	Type             string `json:"type"`
+	Summary          string `json:"summary"`
+	Timestamp        int64  `json:"timestamp"`
+	Integrity        uint8  `json:"integrity"`
+	VisualizationURL string `json:"visualization_url,omitempty"`
+}
+
+type attackChainPathDTO struct {
+	PathID        string `json:"path_id"`
+	Phase         string `json:"phase"`
+	Technique     string `json:"technique"`
+	Entity        string `json:"entity"`
+	Alert         string `json:"alert"`
+	EvidenceID    string `json:"evidence_id"`
+	Action        string `json:"action"`
+	Status        string `json:"status"`
+	SourceIP      string `json:"source_ip"`
+	DestinationIP string `json:"destination_ip"`
+	Timestamp     int64  `json:"timestamp"`
+}
+
+type attackChainRecommendationDTO struct {
+	RecommendationID string `json:"recommendation_id"`
+	Category         string `json:"category"`
+	Priority         string `json:"priority"`
+	Target           string `json:"target"`
+	Action           string `json:"action"`
+	Impact           string `json:"impact"`
+	Phase            string `json:"phase"`
 }
 
 type probeDTO struct {
@@ -1334,6 +1379,113 @@ func (h *SystemHandler) GetAttackChainPhases(w http.ResponseWriter, r *http.Requ
 	httpx.JSONSuccess(w, ctx, map[string]interface{}{"phases": campaignToPhases(campaign)})
 }
 
+func (h *SystemHandler) ListAttackChainEvidence(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	if !h.requireCampaignReadPermission(w, r) {
+		return
+	}
+	campaignID := mux.Vars(r)["id"]
+	campaign, err := h.queryCampaignByID(ctx, queryTenantID(r), campaignID)
+	if err != nil {
+		writeCampaignReadError(w, ctx, err)
+		return
+	}
+	evidenceType, err := normalizeAttackChainEvidenceType(r.URL.Query().Get("type"))
+	if err != nil {
+		httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_ARGUMENT", err.Error())
+		return
+	}
+	phase := strings.TrimSpace(r.URL.Query().Get("phase"))
+	alerts := h.queryCampaignAlerts(ctx, campaign.TenantID, campaign.CampaignID, campaign.Alerts)
+	phaseByAlertID := make(map[string]string, len(alerts))
+	phaseAlertIDs := make([]string, 0)
+	for _, alert := range alerts {
+		phaseByAlertID[alert.AlertID] = alert.AttackPhase
+		if phase != "" && strings.EqualFold(strings.TrimSpace(alert.AttackPhase), phase) {
+			phaseAlertIDs = append(phaseAlertIDs, alert.AlertID)
+		}
+	}
+	if phase != "" && len(phaseAlertIDs) == 0 {
+		httpx.JSONSuccess(w, ctx, map[string]interface{}{
+			"items": []attackChainEvidenceDTO{}, "total": 0, "limit": 0, "offset": 0,
+		})
+		return
+	}
+	limit, offset := parseLimitOffset(r, 4, 50)
+	items, total, err := h.queryAttackChainEvidence(
+		ctx, campaign.TenantID, campaign.CampaignID, evidenceType, phaseAlertIDs, limit, offset,
+	)
+	if err != nil {
+		writeCampaignReadError(w, ctx, err)
+		return
+	}
+	for index := range items {
+		items[index].Phase = phaseByAlertID[items[index].AlertID]
+	}
+	httpx.JSONSuccess(w, ctx, map[string]interface{}{
+		"items": items, "total": total, "limit": limit, "offset": offset,
+	})
+}
+
+func (h *SystemHandler) ListAttackChainPaths(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	if !h.requireCampaignReadPermission(w, r) {
+		return
+	}
+	campaignID := mux.Vars(r)["id"]
+	campaign, err := h.queryCampaignByID(ctx, queryTenantID(r), campaignID)
+	if err != nil {
+		writeCampaignReadError(w, ctx, err)
+		return
+	}
+	limit, offset := parseLimitOffset(r, 3, 50)
+	alerts, total, err := h.queryCampaignAlertsPage(
+		ctx, campaign.TenantID, campaign.CampaignID, campaign.Alerts,
+		strings.TrimSpace(r.URL.Query().Get("phase")), limit, offset,
+	)
+	if err != nil {
+		writeCampaignReadError(w, ctx, err)
+		return
+	}
+	items := make([]attackChainPathDTO, 0, len(alerts))
+	for index, alert := range alerts {
+		items = append(items, attackChainPathFromAlert(alert, offset+index))
+	}
+	httpx.JSONSuccess(w, ctx, map[string]interface{}{
+		"items": items, "total": total, "limit": limit, "offset": offset,
+	})
+}
+
+func (h *SystemHandler) ListAttackChainRecommendations(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	if !h.requireCampaignReadPermission(w, r) {
+		return
+	}
+	category, err := normalizeAttackChainRecommendationCategory(r.URL.Query().Get("category"))
+	if err != nil {
+		httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_ARGUMENT", err.Error())
+		return
+	}
+	campaignID := mux.Vars(r)["id"]
+	campaign, err := h.queryCampaignByID(ctx, queryTenantID(r), campaignID)
+	if err != nil {
+		writeCampaignReadError(w, ctx, err)
+		return
+	}
+	limit, offset := parseLimitOffset(r, 6, 50)
+	items, total, err := h.queryAttackChainRecommendations(
+		ctx, campaign.TenantID, campaign.CampaignID, category,
+		strings.TrimSpace(r.URL.Query().Get("phase")), limit, offset,
+	)
+	if err != nil {
+		writeCampaignReadError(w, ctx, err)
+		return
+	}
+	httpx.JSONSuccess(w, ctx, map[string]interface{}{
+		"items": items, "category": category, "total": total, "limit": limit, "offset": offset,
+	})
+}
+
 const statusClientClosedRequest = 499
 
 func writeCampaignReadError(w http.ResponseWriter, ctx context.Context, err error) {
@@ -1570,6 +1722,10 @@ func (h *SystemHandler) queryCampaignAlerts(ctx context.Context, tenantID, campa
 			argMax(severity, last_seen) AS latest_severity,
 			max(last_seen) AS latest_seen,
 			argMax(`+campaignAlertAttackPhaseExpression+`, last_seen) AS latest_attack_phase,
+			argMax(`+campaignAlertEntityExpression+`, last_seen) AS latest_entity,
+			argMax(src_ip, last_seen) AS latest_src_ip,
+			argMax(dst_ip, last_seen) AS latest_dst_ip,
+			argMax(evidence_ids, last_seen) AS latest_evidence_ids,
 			toUInt64(max(length(evidence_ids))) AS evidence_count
 		FROM traffic.alerts
 		WHERE tenant_id=? AND (campaign_id=? OR has(?, alert_id))
@@ -1589,6 +1745,10 @@ func (h *SystemHandler) queryCampaignAlerts(ctx context.Context, tenantID, campa
 			&alert.Severity,
 			&alert.LastSeen,
 			&alert.AttackPhase,
+			&alert.Entity,
+			&alert.SrcIP,
+			&alert.DstIP,
+			&alert.EvidenceIDs,
 			&alert.EvidenceCount,
 		); err != nil {
 			return alertIDsToSummaries(alertIDs)
@@ -1599,6 +1759,353 @@ func (h *SystemHandler) queryCampaignAlerts(ctx context.Context, tenantID, campa
 		return alertIDsToSummaries(alertIDs)
 	}
 	return alerts
+}
+
+func (h *SystemHandler) queryCampaignAlertsPage(
+	ctx context.Context,
+	tenantID, campaignID string,
+	alertIDs []string,
+	phase string,
+	limit, offset int,
+) ([]campaignAlertDTO, int64, error) {
+	where := "tenant_id=? AND (campaign_id=? OR has(?, alert_id))"
+	args := []interface{}{tenantID, campaignID, alertIDs}
+	if phase != "" {
+		where += " AND " + campaignAlertAttackPhaseExpression + "=?"
+		args = append(args, phase)
+	}
+	var total uint64
+	countRow, err := h.chClient.QueryRow(ctx, `
+		SELECT count()
+		FROM (
+			SELECT alert_id
+			FROM traffic.alerts
+			WHERE `+where+`
+			GROUP BY alert_id
+		)`, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	if err := countRow.Scan(&total); err != nil {
+		return nil, 0, err
+	}
+	queryArgs := append(append([]interface{}{}, args...), limit, offset)
+	rows, err := h.chClient.Query(ctx, `
+		SELECT alert_id,
+			argMax(alert_type, last_seen) AS latest_alert_type,
+			argMax(severity, last_seen) AS latest_severity,
+			max(last_seen) AS latest_seen,
+			argMax(`+campaignAlertAttackPhaseExpression+`, last_seen) AS latest_attack_phase,
+			argMax(`+campaignAlertEntityExpression+`, last_seen) AS latest_entity,
+			argMax(src_ip, last_seen) AS latest_src_ip,
+			argMax(dst_ip, last_seen) AS latest_dst_ip,
+			argMax(evidence_ids, last_seen) AS latest_evidence_ids,
+			toUInt64(max(length(evidence_ids))) AS evidence_count
+		FROM traffic.alerts
+		WHERE `+where+`
+		GROUP BY alert_id
+		ORDER BY latest_seen ASC
+		LIMIT ? OFFSET ?`, queryArgs...)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	alerts := make([]campaignAlertDTO, 0, limit)
+	for rows.Next() {
+		var alert campaignAlertDTO
+		if err := rows.Scan(
+			&alert.AlertID,
+			&alert.AlertType,
+			&alert.Severity,
+			&alert.LastSeen,
+			&alert.AttackPhase,
+			&alert.Entity,
+			&alert.SrcIP,
+			&alert.DstIP,
+			&alert.EvidenceIDs,
+			&alert.EvidenceCount,
+		); err != nil {
+			return nil, 0, err
+		}
+		alerts = append(alerts, alert)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+	return alerts, int64(total), nil
+}
+
+func (h *SystemHandler) queryAttackChainEvidence(
+	ctx context.Context,
+	tenantID, campaignID, evidenceType string,
+	phaseAlertIDs []string,
+	limit, offset int,
+) ([]attackChainEvidenceDTO, int64, error) {
+	where := "tenant_id=? AND event_id=?"
+	args := []interface{}{tenantID, campaignID}
+	switch evidenceType {
+	case "alert":
+		where += " AND lowerUTF8(type) IN ('alert', '告警')"
+	case "pcap":
+		where += " AND (lowerUTF8(type)='pcap' OR positionCaseInsensitiveUTF8(summary, '.pcap')>0)"
+	case "session":
+		where += " AND (positionCaseInsensitiveUTF8(type, 'session')>0 OR positionUTF8(type, '会话')>0)"
+	case "log":
+		where += " AND (lowerUTF8(type)='log' OR positionUTF8(type, '日志')>0 OR positionCaseInsensitiveUTF8(summary, '.log')>0)"
+	case "graph":
+		where += " AND (positionCaseInsensitiveUTF8(type, 'graph')>0 OR positionUTF8(type, '图谱')>0)"
+	case "rule_model":
+		where += " AND (positionCaseInsensitiveUTF8(type, 'rule')>0 OR positionCaseInsensitiveUTF8(type, 'model')>0 OR positionUTF8(type, '规则')>0 OR positionUTF8(type, '模型')>0)"
+	}
+	if len(phaseAlertIDs) > 0 {
+		where += " AND has(?, alert_id)"
+		args = append(args, phaseAlertIDs)
+	}
+	var total uint64
+	countRow, err := h.chClient.QueryRow(ctx, `
+		SELECT uniqExact(evidence_id)
+		FROM traffic.evidence
+		WHERE `+where, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	if err := countRow.Scan(&total); err != nil {
+		return nil, 0, err
+	}
+	queryArgs := append(append([]interface{}{}, args...), limit, offset)
+	rows, err := h.chClient.Query(ctx, `
+		SELECT evidence_id,
+			argMax(alert_id, ingest_ts) AS latest_alert_id,
+			argMax(type, ingest_ts) AS latest_type,
+			argMax(summary, ingest_ts) AS latest_summary,
+			max(ts) AS latest_ts,
+			toUInt8(round(max(confidence)*100)) AS integrity,
+			argMax(visualization_url, ingest_ts) AS latest_visualization_url
+		FROM traffic.evidence
+		WHERE `+where+`
+		GROUP BY evidence_id
+		ORDER BY latest_ts ASC
+		LIMIT ? OFFSET ?`, queryArgs...)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	items := make([]attackChainEvidenceDTO, 0, limit)
+	for rows.Next() {
+		var item attackChainEvidenceDTO
+		if err := rows.Scan(
+			&item.EvidenceID,
+			&item.AlertID,
+			&item.Type,
+			&item.Summary,
+			&item.Timestamp,
+			&item.Integrity,
+			&item.VisualizationURL,
+		); err != nil {
+			return nil, 0, err
+		}
+		items = append(items, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+	return items, int64(total), nil
+}
+
+func (h *SystemHandler) queryAttackChainRecommendations(
+	ctx context.Context,
+	tenantID, campaignID, category, phase string,
+	limit, offset int,
+) ([]attackChainRecommendationDTO, int64, error) {
+	where := "tenant_id=? AND campaign_id=? AND category=?"
+	args := []interface{}{tenantID, campaignID, category}
+	if phase != "" {
+		where += " AND lowerUTF8(phase)=lowerUTF8(?)"
+		args = append(args, phase)
+	}
+
+	var total uint64
+	countRow, err := h.chClient.QueryRow(ctx, `
+		SELECT uniqExact(recommendation_id)
+		FROM traffic.attack_chain_recommendations
+		WHERE `+where, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	if err := countRow.Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	queryArgs := append(append([]interface{}{}, args...), limit, offset)
+	rows, err := h.chClient.Query(ctx, `
+		SELECT recommendation_id,
+			argMax(category, created_at) AS latest_category,
+			argMax(priority, created_at) AS latest_priority,
+			argMax(target, created_at) AS latest_target,
+			argMax(action, created_at) AS latest_action,
+			argMax(impact, created_at) AS latest_impact,
+			argMax(phase, created_at) AS latest_phase,
+			max(sort_order) AS latest_sort_order
+		FROM traffic.attack_chain_recommendations
+		WHERE `+where+`
+		GROUP BY recommendation_id
+		ORDER BY latest_sort_order ASC, recommendation_id ASC
+		LIMIT ? OFFSET ?`, queryArgs...)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	items := make([]attackChainRecommendationDTO, 0, limit)
+	for rows.Next() {
+		var item attackChainRecommendationDTO
+		var sortOrder uint16
+		if err := rows.Scan(
+			&item.RecommendationID,
+			&item.Category,
+			&item.Priority,
+			&item.Target,
+			&item.Action,
+			&item.Impact,
+			&item.Phase,
+			&sortOrder,
+		); err != nil {
+			return nil, 0, err
+		}
+		items = append(items, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+	return items, int64(total), nil
+}
+
+func normalizeAttackChainEvidenceType(value string) (string, error) {
+	switch normalized := strings.ToLower(strings.TrimSpace(value)); normalized {
+	case "", "all", "全部":
+		return "", nil
+	case "alert", "告警":
+		return "alert", nil
+	case "pcap":
+		return "pcap", nil
+	case "session":
+		return "session", nil
+	case "log", "日志":
+		return "log", nil
+	case "graph", "图谱":
+		return "graph", nil
+	case "rule_model", "rule/model", "规则/模型":
+		return "rule_model", nil
+	default:
+		return "", fmt.Errorf("unsupported attack-chain evidence type")
+	}
+}
+
+func normalizeAttackChainRecommendationCategory(value string) (string, error) {
+	switch normalized := strings.ToLower(strings.TrimSpace(value)); normalized {
+	case "", "block", "阻断点":
+		return "block", nil
+	case "isolate", "隔离建议":
+		return "isolate", nil
+	case "allowlist", "白名单风险":
+		return "allowlist", nil
+	case "playbook", "剧本推荐":
+		return "playbook", nil
+	default:
+		return "", fmt.Errorf("unsupported attack-chain recommendation category")
+	}
+}
+
+func attackChainPathFromAlert(alert campaignAlertDTO, index int) attackChainPathDTO {
+	evidenceID := ""
+	if len(alert.EvidenceIDs) > 0 {
+		evidenceID = alert.EvidenceIDs[0]
+	}
+	return attackChainPathDTO{
+		PathID:        fmt.Sprintf("path-%d-%s", index+1, alert.AlertID),
+		Phase:         alert.AttackPhase,
+		Technique:     mitreTechniqueForAttackPhase(alert.AttackPhase),
+		Entity:        firstNonEmpty(alert.Entity, alert.DstIP, alert.SrcIP),
+		Alert:         alert.AlertType,
+		EvidenceID:    evidenceID,
+		Action:        attackChainRecommendationAction("block", alert),
+		Status:        "confirmed",
+		SourceIP:      alert.SrcIP,
+		DestinationIP: alert.DstIP,
+		Timestamp:     alert.LastSeen,
+	}
+}
+
+func attackChainRecommendationFromAlert(category string, alert campaignAlertDTO, index int) attackChainRecommendationDTO {
+	target := firstNonEmpty(alert.Entity, alert.DstIP, alert.SrcIP)
+	impact := "低影响"
+	switch category {
+	case "isolate":
+		impact = "中等影响"
+	case "allowlist":
+		impact = "需审批"
+	case "playbook":
+		impact = "自动化"
+	}
+	return attackChainRecommendationDTO{
+		RecommendationID: fmt.Sprintf("%s-%d-%s", category, index+1, alert.AlertID),
+		Category:         category,
+		Priority:         attackChainRecommendationPriority(alert.Severity),
+		Target:           target,
+		Action:           attackChainRecommendationAction(category, alert),
+		Impact:           impact,
+		Phase:            alert.AttackPhase,
+	}
+}
+
+func attackChainRecommendationPriority(severity string) string {
+	switch strings.ToLower(strings.TrimSpace(severity)) {
+	case "critical", "high", "高危":
+		return "高"
+	case "medium", "中危":
+		return "中"
+	default:
+		return "低"
+	}
+}
+
+func attackChainRecommendationAction(category string, alert campaignAlertDTO) string {
+	target := firstNonEmpty(alert.Entity, alert.DstIP, alert.SrcIP)
+	switch category {
+	case "isolate":
+		return "隔离 " + target
+	case "allowlist":
+		return "复核白名单 " + target
+	case "playbook":
+		return firstNonEmpty(attackChainPlaybookName(alert.AttackPhase), "执行通用研判剧本")
+	default:
+		if strings.Contains(strings.ToLower(alert.AttackPhase), "initial") {
+			return "加固入口 " + target
+		}
+		return "阻断 " + target
+	}
+}
+
+func attackChainPlaybookName(phase string) string {
+	normalized := strings.ToLower(strings.TrimSpace(phase))
+	switch {
+	case strings.Contains(normalized, "recon"):
+		return "执行扫描源封禁剧本"
+	case strings.Contains(normalized, "initial"), strings.Contains(normalized, "access"):
+		return "执行入口加固剧本"
+	case strings.Contains(normalized, "execution"):
+		return "执行恶意进程处置剧本"
+	case strings.Contains(normalized, "lateral"):
+		return "执行横向移动隔离剧本"
+	case strings.Contains(normalized, "command"), strings.Contains(normalized, "control"), strings.Contains(normalized, "c2"):
+		return "执行 C2 阻断剧本"
+	case strings.Contains(normalized, "exfil"):
+		return "执行数据外传阻断剧本"
+	default:
+		return ""
+	}
 }
 
 func (h *SystemHandler) queryCampaignPhaseSummaries(
@@ -1779,6 +2286,12 @@ const campaignAlertAttackPhaseExpression = `if(
 	)
 )`
 
+const campaignAlertEntityExpression = `if(
+	arrayExists(label -> match(lowerUTF8(label), '^entity[:=]'), labels),
+	replaceRegexpOne(arrayFirst(label -> match(lowerUTF8(label), '^entity[:=]'), labels), '^[^:=]+[:=]', ''),
+	''
+)`
+
 type campaignScanner interface {
 	Scan(dest ...interface{}) error
 }
@@ -1875,7 +2388,8 @@ func campaignToPhasesWithAlerts(campaign campaignDTO, alerts []campaignAlertDTO)
 			}
 			keyEvents = append(keyEvents, attackEventDTO{
 				EventID: alert.AlertID, Timestamp: alert.LastSeen, Description: alert.AlertType,
-				Technique: phase, Severity: alert.Severity,
+				Entity: alert.Entity, SrcIP: alert.SrcIP, DstIP: alert.DstIP, Technique: mitreTechniqueForAttackPhase(phase),
+				Severity: alert.Severity, EvidenceIDs: alert.EvidenceIDs,
 			})
 		}
 		if phaseStart == 0 {
@@ -1890,6 +2404,26 @@ func campaignToPhasesWithAlerts(campaign campaignDTO, alerts []campaignAlertDTO)
 		})
 	}
 	return phases
+}
+
+func mitreTechniqueForAttackPhase(phase string) string {
+	normalized := strings.ToLower(strings.TrimSpace(phase))
+	switch {
+	case strings.Contains(normalized, "recon"):
+		return "TA0043"
+	case strings.Contains(normalized, "initial"), strings.Contains(normalized, "access"):
+		return "TA0001"
+	case strings.Contains(normalized, "execution"):
+		return "TA0002"
+	case strings.Contains(normalized, "lateral"):
+		return "TA0008"
+	case strings.Contains(normalized, "command"), strings.Contains(normalized, "control"), strings.Contains(normalized, "c2"):
+		return "TA0011"
+	case strings.Contains(normalized, "exfil"):
+		return "TA0010"
+	default:
+		return phase
+	}
 }
 
 func alertIDsToSummaries(alertIDs []string) []campaignAlertDTO {

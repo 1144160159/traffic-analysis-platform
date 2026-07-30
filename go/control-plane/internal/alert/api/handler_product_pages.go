@@ -7,15 +7,18 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math"
 	"net/http"
+	"net/url"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf16"
 
 	authmodel "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/model"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/httpx"
@@ -729,10 +732,11 @@ type topicSubscriptionUpdateRequest struct {
 }
 
 type topicExportRequest struct {
-	Topic      string                 `json:"topic"`
-	Format     string                 `json:"format"`
-	TimeRange  *complianceRange       `json:"time_range"`
-	Parameters map[string]interface{} `json:"parameters"`
+	Topic          string                 `json:"topic"`
+	Format         string                 `json:"format"`
+	SourceExportID string                 `json:"source_export_id"`
+	TimeRange      *complianceRange       `json:"time_range"`
+	Parameters     map[string]interface{} `json:"parameters"`
 }
 
 type topicActionRequest struct {
@@ -1417,7 +1421,19 @@ var encryptedEvidenceAuditEvents = map[string]string{
 func (h *SystemHandler) GetTunnelTopic(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	tenantID := queryTenantID(r)
-	start, end := queryTimeRange(r, 24*time.Hour)
+	scope, err := h.loadTopicScope(ctx, tenantID, "tunnel")
+	if err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
+	start, end := queryTimeRange(r, topicScopeDuration(scope, 24*time.Hour))
+	if simulation, ok, loadErr := h.loadTopicPanelSimulation(ctx, tenantID, "tunnel", scope, start, end); loadErr != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", loadErr.Error())
+		return
+	} else if ok {
+		httpx.JSONSuccess(w, ctx, simulation)
+		return
+	}
 
 	protocols, err := h.queryTunnelProtocols(ctx, tenantID, start, end)
 	if err != nil {
@@ -1450,6 +1466,7 @@ func (h *SystemHandler) GetTunnelTopic(w http.ResponseWriter, r *http.Request) {
 		},
 		"protocols": protocols,
 		"users":     users,
+		"scope":     scope,
 	})
 }
 
@@ -1457,7 +1474,19 @@ func (h *SystemHandler) GetExfiltrationTopic(w http.ResponseWriter, r *http.Requ
 	ctx := r.Context()
 	tenantID := queryTenantID(r)
 	limit, _ := parsePageLimitOffset(r, 20, 100)
-	start, end := queryTimeRange(r, 24*time.Hour)
+	scope, err := h.loadTopicScope(ctx, tenantID, "exfil")
+	if err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
+	start, end := queryTimeRange(r, topicScopeDuration(scope, 24*time.Hour))
+	if simulation, ok, loadErr := h.loadTopicPanelSimulation(ctx, tenantID, "exfil", scope, start, end); loadErr != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", loadErr.Error())
+		return
+	} else if ok {
+		httpx.JSONSuccess(w, ctx, simulation)
+		return
+	}
 
 	sources, err := h.queryExfiltrationSources(ctx, tenantID, start, end, limit)
 	if err != nil {
@@ -1517,6 +1546,7 @@ func (h *SystemHandler) GetExfiltrationTopic(w http.ResponseWriter, r *http.Requ
 		"risk_types":   risks,
 		"paths":        paths,
 		"trend":        trend,
+		"scope":        scope,
 	})
 }
 
@@ -1524,7 +1554,19 @@ func (h *SystemHandler) GetAPTTopic(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	tenantID := queryTenantID(r)
 	limit, _ := parsePageLimitOffset(r, 20, 100)
-	start, end := queryTimeRange(r, 30*24*time.Hour)
+	scope, err := h.loadTopicScope(ctx, tenantID, "apt")
+	if err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
+	start, end := queryTimeRange(r, topicScopeDuration(scope, 30*24*time.Hour))
+	if simulation, ok, loadErr := h.loadTopicPanelSimulation(ctx, tenantID, "apt", scope, start, end); loadErr != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", loadErr.Error())
+		return
+	} else if ok {
+		httpx.JSONSuccess(w, ctx, simulation)
+		return
+	}
 
 	campaigns, total, err := h.queryCampaigns(ctx, tenantID, campaignQueryFilters{}, start, end, limit, 0)
 	if err != nil {
@@ -1541,7 +1583,157 @@ func (h *SystemHandler) GetAPTTopic(w http.ResponseWriter, r *http.Request) {
 		"campaigns":          campaigns,
 		"phase_distribution": phaseDistribution,
 		"summary":            summary,
+		"scope":              scope,
 	})
+}
+
+// loadTopicPanelSimulation returns the currently enabled database fixture for a
+// topic. A tenant-specific row wins over the shared '*' row. Missing fixture
+// tables are treated as a normal non-simulated deployment so older databases
+// continue to fall back to the live ClickHouse aggregations.
+func (h *SystemHandler) loadTopicPanelSimulation(
+	ctx context.Context,
+	tenantID string,
+	topic string,
+	scope *topicScopeDTO,
+	start int64,
+	end int64,
+) (map[string]interface{}, bool, error) {
+	if h.pgDB == nil {
+		return nil, false, nil
+	}
+	return h.loadTopicPanelSimulationFrom(ctx, h.pgDB, tenantID, topic, scope, start, end)
+}
+
+type topicQueryRower interface {
+	QueryRowContext(context.Context, string, ...interface{}) *sql.Row
+}
+
+func (h *SystemHandler) loadTopicPanelSimulationFrom(
+	ctx context.Context,
+	queryer topicQueryRower,
+	tenantID string,
+	topic string,
+	scope *topicScopeDTO,
+	start int64,
+	end int64,
+) (map[string]interface{}, bool, error) {
+	var tableName sql.NullString
+	if err := queryer.QueryRowContext(ctx, `SELECT to_regclass('public.topic_panel_simulations')`).Scan(&tableName); err != nil {
+		return nil, false, fmt.Errorf("check topic panel simulation table: %w", err)
+	}
+	if !tableName.Valid || strings.TrimSpace(tableName.String) == "" {
+		return nil, false, nil
+	}
+
+	var simulationID string
+	var version string
+	var rawPayload []byte
+	var simulationUpdatedAt time.Time
+	err := queryer.QueryRowContext(ctx, `
+			SELECT simulation_id, version, payload, updated_at
+			FROM topic_panel_simulations
+			WHERE enabled = true
+			  AND topic = $1
+			  AND tenant_id IN ($2, '*')
+			ORDER BY CASE WHEN tenant_id = $2 THEN 0 ELSE 1 END, updated_at DESC
+			LIMIT 1`, topic, tenantID).Scan(&simulationID, &version, &rawPayload, &simulationUpdatedAt)
+	if err == sql.ErrNoRows {
+		return nil, false, nil
+	}
+	if err != nil {
+		return nil, false, fmt.Errorf("load topic panel simulation: %w", err)
+	}
+
+	payload := make(map[string]interface{})
+	if err := json.Unmarshal(rawPayload, &payload); err != nil {
+		return nil, false, fmt.Errorf("decode topic panel simulation %s: %w", simulationID, err)
+	}
+	payload["topic"] = topic
+	payload["data_mode"] = "simulated"
+	payload["simulation_id"] = simulationID
+	payload["simulation_version"] = version
+	payload["updated_at"] = simulationUpdatedAt.UnixMilli()
+	payload["time_range"] = map[string]int64{"start": start, "end": end}
+	payload["scope"] = scope
+	applyTopicSimulationScope(payload, scope)
+	return payload, true, nil
+}
+
+func applyTopicSimulationScope(payload map[string]interface{}, scope *topicScopeDTO) {
+	if scope == nil {
+		return
+	}
+	events, ok := payload["events"].([]interface{})
+	if !ok {
+		return
+	}
+	riskLevels := make(map[string]bool, len(scope.RiskLevels))
+	for _, level := range scope.RiskLevels {
+		riskLevels[strings.ToLower(strings.TrimSpace(level))] = true
+	}
+	filtered := make([]interface{}, 0, len(events))
+	for _, rawEvent := range events {
+		event, ok := rawEvent.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		encoded, _ := json.Marshal(event)
+		searchable := strings.ToLower(string(encoded))
+		if len(scope.IncludedAssets) > 0 && !topicScopeMatchesAny(searchable, scope.IncludedAssets) {
+			continue
+		}
+		if topicScopeMatchesAny(searchable, scope.ExcludedAssets) {
+			continue
+		}
+		risk := strings.ToLower(strings.TrimSpace(fmt.Sprint(event["risk"])))
+		if risk == "" {
+			risk = strings.ToLower(strings.TrimSpace(fmt.Sprint(event["risk_level"])))
+		}
+		if len(riskLevels) > 0 && risk != "" && !riskLevels[risk] {
+			continue
+		}
+		filtered = append(filtered, event)
+	}
+	payload["events"] = filtered
+	payload["scope_applied"] = map[string]interface{}{
+		"included_assets":           scope.IncludedAssets,
+		"excluded_assets":           scope.ExcludedAssets,
+		"risk_levels":               scope.RiskLevels,
+		"time_window":               scope.TimeWindow,
+		"matched_events":            len(filtered),
+		"source_events":             len(events),
+		"included_filter_effective": true,
+	}
+	if summary, ok := payload["summary"].(map[string]interface{}); ok {
+		summary["total_events"] = len(filtered)
+	}
+	if presentation, ok := payload["presentation"].(map[string]interface{}); ok {
+		presentation["time_window_label"] = topicScopeWindowLabel(scope.TimeWindow)
+	}
+}
+
+func topicScopeMatchesAny(searchable string, values []string) bool {
+	for _, value := range values {
+		value = strings.ToLower(strings.TrimSpace(value))
+		if value != "" && strings.Contains(searchable, value) {
+			return true
+		}
+	}
+	return false
+}
+
+func topicScopeWindowLabel(value string) string {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "24h":
+		return "近24小时"
+	case "7d":
+		return "近7天"
+	case "30d":
+		return "近30天"
+	default:
+		return firstNonEmpty(strings.TrimSpace(value), "当前查询窗口")
+	}
 }
 
 func summarizeAPTTopicCampaigns(campaigns []campaignDTO, total int64) (map[string]int, map[string]interface{}) {
@@ -1701,7 +1893,13 @@ func (h *SystemHandler) SaveTopicView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	filtersJSON, _ := json.Marshal(req.Filters)
-	view, err := scanTopicView(h.pgDB.QueryRowContext(ctx, `
+	tx, err := h.pgDB.BeginTx(ctx, nil)
+	if err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
+	defer tx.Rollback()
+	view, err := scanTopicView(tx.QueryRowContext(ctx, `
 		INSERT INTO topic_saved_views (tenant_id, topic, name, filters, visibility, favorite, created_by)
 		VALUES ($1, $2, $3, $4::jsonb, $5, $6, $7)
 		RETURNING view_id::text, tenant_id, topic, name, filters::text, visibility, favorite, shared, COALESCE(share_token, ''), created_by, created_at, updated_at`,
@@ -1710,9 +1908,16 @@ func (h *SystemHandler) SaveTopicView(w http.ResponseWriter, r *http.Request) {
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
 		return
 	}
-	_ = h.insertAuditLog(ctx, tenantID, httpx.GetUserID(ctx), "TOPIC_VIEW_SAVED", "topic_saved_view", view.ViewID, map[string]interface{}{
+	if err := h.recordTopicAuditTx(ctx, tx, r, "TOPIC_VIEW_SAVED", "topic_saved_view", view.ViewID, tenantID, map[string]interface{}{
 		"topic": req.Topic, "name": req.Name, "visibility": req.Visibility, "favorite": req.Favorite,
-	}, r)
+	}); err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "AUDIT_WRITE_FAILED", "failed to persist saved view audit")
+		return
+	}
+	if err := tx.Commit(); err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
 	httpx.JSON(w, http.StatusCreated, map[string]interface{}{"success": true, "data": view})
 }
 
@@ -1765,7 +1970,13 @@ func (h *SystemHandler) UpdateTopicView(w http.ResponseWriter, r *http.Request) 
 		shareToken = ""
 	}
 	filtersJSON, _ := json.Marshal(filters)
-	view, err := scanTopicView(h.pgDB.QueryRowContext(ctx, `
+	tx, err := h.pgDB.BeginTx(ctx, nil)
+	if err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
+	defer tx.Rollback()
+	view, err := scanTopicView(tx.QueryRowContext(ctx, `
 		UPDATE topic_saved_views
 		SET name=$3, filters=$4::jsonb, visibility=$5, favorite=$6, shared=$7, share_token=NULLIF($8, ''), updated_at=now()
 		WHERE tenant_id=$1 AND view_id=$2
@@ -1785,9 +1996,16 @@ func (h *SystemHandler) UpdateTopicView(w http.ResponseWriter, r *http.Request) 
 	} else if req.Favorite != nil {
 		action = "TOPIC_VIEW_FAVORITE_UPDATED"
 	}
-	_ = h.insertAuditLog(ctx, tenantID, httpx.GetUserID(ctx), action, "topic_saved_view", view.ViewID, map[string]interface{}{
+	if err := h.recordTopicAuditTx(ctx, tx, r, action, "topic_saved_view", view.ViewID, tenantID, map[string]interface{}{
 		"topic": view.Topic, "favorite": view.Favorite, "shared": view.Shared, "visibility": view.Visibility,
-	}, r)
+	}); err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "AUDIT_WRITE_FAILED", "failed to persist view update audit")
+		return
+	}
+	if err := tx.Commit(); err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
 	httpx.JSONSuccess(w, ctx, view)
 }
 
@@ -1819,7 +2037,13 @@ func (h *SystemHandler) UpdateTopicScope(w http.ResponseWriter, r *http.Request)
 	excludedJSON, _ := json.Marshal(cleanStringList(req.ExcludedAssets))
 	riskJSON, _ := json.Marshal(cleanStringList(req.RiskLevels))
 	detailJSON, _ := json.Marshal(req.Detail)
-	scope, err := scanTopicScope(h.pgDB.QueryRowContext(ctx, `
+	tx, err := h.pgDB.BeginTx(ctx, nil)
+	if err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
+	defer tx.Rollback()
+	scope, err := scanTopicScope(tx.QueryRowContext(ctx, `
 		INSERT INTO topic_scope_overrides (tenant_id, topic, scope_name, included_assets, excluded_assets, risk_levels, time_window, detail, updated_by)
 		VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, $6::jsonb, $7, $8::jsonb, $9)
 		ON CONFLICT (tenant_id, topic) DO UPDATE SET
@@ -1837,10 +2061,96 @@ func (h *SystemHandler) UpdateTopicScope(w http.ResponseWriter, r *http.Request)
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
 		return
 	}
-	_ = h.insertAuditLog(ctx, tenantID, httpx.GetUserID(ctx), "TOPIC_SCOPE_UPDATED", "topic_scope", topic, map[string]interface{}{
+	if err := h.recordTopicAuditTx(ctx, tx, r, "TOPIC_SCOPE_UPDATED", "topic_scope", topic, tenantID, map[string]interface{}{
 		"topic": topic, "scope_name": req.ScopeName, "time_window": req.TimeWindow, "included_assets": scope.IncludedAssets,
-	}, r)
+	}); err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "AUDIT_WRITE_FAILED", "failed to persist scope audit")
+		return
+	}
+	if err := tx.Commit(); err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
 	httpx.JSONSuccess(w, ctx, scope)
+}
+
+func (h *SystemHandler) GetTopicScope(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	if !h.requirePostgres(w, ctx) || !h.ensureTopicGovernanceSchema(w, ctx) {
+		return
+	}
+	tenantID := queryTenantID(r)
+	topic := normalizeTopicKey(mux.Vars(r)["topic"])
+	if !isValidTopicKey(topic) {
+		httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_REQUEST", "invalid topic")
+		return
+	}
+	scope, err := h.loadTopicScope(ctx, tenantID, topic)
+	if err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
+	if scope == nil {
+		scope = &topicScopeDTO{
+			TenantID:       tenantID,
+			Topic:          topic,
+			ScopeName:      "默认专题范围",
+			IncludedAssets: []string{},
+			ExcludedAssets: []string{},
+			RiskLevels:     []string{},
+			TimeWindow:     topicDefaultTimeWindow(topic),
+			Detail:         map[string]interface{}{},
+		}
+	}
+	httpx.JSONSuccess(w, ctx, scope)
+}
+
+func (h *SystemHandler) loadTopicScope(ctx context.Context, tenantID, topic string) (*topicScopeDTO, error) {
+	if h.pgDB == nil {
+		return nil, nil
+	}
+	return h.loadTopicScopeFrom(ctx, h.pgDB, tenantID, topic)
+}
+
+func (h *SystemHandler) loadTopicScopeFrom(ctx context.Context, queryer topicQueryRower, tenantID, topic string) (*topicScopeDTO, error) {
+	scope, err := scanTopicScope(queryer.QueryRowContext(ctx, `
+			SELECT tenant_id, topic, scope_name, included_assets::text, excluded_assets::text, risk_levels::text,
+			       time_window, updated_by, updated_at, detail::text
+		FROM topic_scope_overrides
+		WHERE tenant_id=$1 AND topic=$2`,
+		tenantID, topic))
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &scope, nil
+}
+
+func topicDefaultTimeWindow(topic string) string {
+	if topic == "apt" {
+		return "30d"
+	}
+	return "24h"
+}
+
+func topicScopeDuration(scope *topicScopeDTO, fallback time.Duration) time.Duration {
+	if scope == nil {
+		return fallback
+	}
+	switch strings.ToLower(strings.TrimSpace(scope.TimeWindow)) {
+	case "1h":
+		return time.Hour
+	case "24h", "1d":
+		return 24 * time.Hour
+	case "7d":
+		return 7 * 24 * time.Hour
+	case "30d":
+		return 30 * 24 * time.Hour
+	default:
+		return fallback
+	}
 }
 
 func (h *SystemHandler) ListTopicSubscriptions(w http.ResponseWriter, r *http.Request) {
@@ -1924,7 +2234,13 @@ func (h *SystemHandler) CreateTopicSubscription(w http.ResponseWriter, r *http.R
 	}
 	recipientsJSON, _ := json.Marshal(req.Recipients)
 	detailJSON, _ := json.Marshal(req.Detail)
-	subscription, err := scanTopicSubscription(h.pgDB.QueryRowContext(ctx, `
+	tx, err := h.pgDB.BeginTx(ctx, nil)
+	if err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
+	defer tx.Rollback()
+	subscription, err := scanTopicSubscription(tx.QueryRowContext(ctx, `
 		INSERT INTO topic_subscriptions (tenant_id, topic, channel, threshold, schedule, recipients, enabled, created_by, detail)
 		VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9::jsonb)
 		RETURNING subscription_id::text, tenant_id, topic, channel, threshold, schedule, recipients::text, enabled, created_by, created_at, updated_at, detail::text`,
@@ -1933,9 +2249,16 @@ func (h *SystemHandler) CreateTopicSubscription(w http.ResponseWriter, r *http.R
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
 		return
 	}
-	_ = h.insertAuditLog(ctx, tenantID, httpx.GetUserID(ctx), "TOPIC_SUBSCRIPTION_CREATED", "topic_subscription", subscription.SubscriptionID, map[string]interface{}{
+	if err := h.recordTopicAuditTx(ctx, tx, r, "TOPIC_SUBSCRIPTION_CREATED", "topic_subscription", subscription.SubscriptionID, tenantID, map[string]interface{}{
 		"topic": req.Topic, "channel": req.Channel, "threshold": req.Threshold, "schedule": req.Schedule,
-	}, r)
+	}); err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "AUDIT_WRITE_FAILED", "failed to persist subscription audit")
+		return
+	}
+	if err := tx.Commit(); err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
 	httpx.JSON(w, http.StatusCreated, map[string]interface{}{"success": true, "data": subscription})
 }
 
@@ -1980,7 +2303,13 @@ func (h *SystemHandler) UpdateTopicSubscription(w http.ResponseWriter, r *http.R
 	}
 	recipientsJSON, _ := json.Marshal(recipients)
 	detailJSON, _ := json.Marshal(detail)
-	subscription, err := scanTopicSubscription(h.pgDB.QueryRowContext(ctx, `
+	tx, err := h.pgDB.BeginTx(ctx, nil)
+	if err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
+	defer tx.Rollback()
+	subscription, err := scanTopicSubscription(tx.QueryRowContext(ctx, `
 		UPDATE topic_subscriptions
 		SET channel=$3, threshold=$4, schedule=$5, recipients=$6::jsonb, enabled=$7, detail=$8::jsonb, updated_at=now()
 		WHERE tenant_id=$1 AND subscription_id=$2
@@ -1994,9 +2323,16 @@ func (h *SystemHandler) UpdateTopicSubscription(w http.ResponseWriter, r *http.R
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
 		return
 	}
-	_ = h.insertAuditLog(ctx, tenantID, httpx.GetUserID(ctx), "TOPIC_SUBSCRIPTION_UPDATED", "topic_subscription", subscription.SubscriptionID, map[string]interface{}{
+	if err := h.recordTopicAuditTx(ctx, tx, r, "TOPIC_SUBSCRIPTION_UPDATED", "topic_subscription", subscription.SubscriptionID, tenantID, map[string]interface{}{
 		"topic": subscription.Topic, "enabled": subscription.Enabled, "channel": subscription.Channel,
-	}, r)
+	}); err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "AUDIT_WRITE_FAILED", "failed to persist subscription update audit")
+		return
+	}
+	if err := tx.Commit(); err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
 	httpx.JSONSuccess(w, ctx, subscription)
 }
 
@@ -2006,6 +2342,107 @@ func (h *SystemHandler) ExportTopicReport(w http.ResponseWriter, r *http.Request
 
 func (h *SystemHandler) ExportTopicEvidencePackage(w http.ResponseWriter, r *http.Request) {
 	h.exportTopicArtifact(w, r, "evidence_package", "TOPIC_EVIDENCE_PACKAGE_EXPORTED")
+}
+
+func topicActionBusinessEffect(topic, action, target, dataMode string) (string, map[string]interface{}) {
+	status := "completed"
+	effect := map[string]interface{}{
+		"operation":   action,
+		"state":       "completed",
+		"result_type": "business_result",
+		"message":     "专题业务操作已执行",
+	}
+	switch action {
+	case "inspect_detail":
+		effect["message"] = "已加载事件完整详情与证据索引"
+		effect["next_route"] = fmt.Sprintf("/topics?topic=%s&event=%s", topic, url.QueryEscape(target))
+	case "inspect_alerts":
+		effect["message"] = "已完成关联告警检索"
+		effect["next_route"] = fmt.Sprintf("/alerts?topic=%s&target=%s", topic, url.QueryEscape(target))
+	case "trace":
+		effect["message"] = "已生成溯源关系与时间线"
+		effect["next_route"] = fmt.Sprintf("/graph?topic=%s&target=%s", topic, url.QueryEscape(target))
+	case "extract_pcap":
+		effect["message"] = "已生成取证任务与证据引用"
+		effect["evidence_ref"] = fmt.Sprintf("topic/%s/pcap/%s", topic, target)
+	case "inspect_session":
+		effect["message"] = "已加载加密会话详情与关联握手元数据"
+		effect["next_route"] = fmt.Sprintf("/encrypted-traffic?topic=%s&session=%s", topic, url.QueryEscape(target))
+		effect["evidence_ref"] = fmt.Sprintf("topic/%s/session/%s", topic, target)
+	case "inspect_certificate":
+		effect["message"] = "已加载证书链、JA3 与 SNI 指纹证据"
+		effect["next_route"] = fmt.Sprintf("/encrypted-traffic?topic=%s&certificate=%s", topic, url.QueryEscape(target))
+		effect["evidence_ref"] = fmt.Sprintf("topic/%s/certificate/%s", topic, target)
+	case "trace_path":
+		effect["message"] = "已生成该事件的回溯路径与时间序列"
+		effect["next_route"] = fmt.Sprintf("/graph?topic=%s&trace=%s", topic, url.QueryEscape(target))
+		effect["evidence_ref"] = fmt.Sprintf("topic/%s/trace/%s", topic, target)
+	case "contain":
+		effect["message"] = "已应用专题隔离/阻断策略"
+		effect["target_state"] = "contained"
+	case "write_audit":
+		effect["message"] = "已写入专题复核审计记录"
+		effect["target_state"] = "audited"
+	case "monitor":
+		effect["message"] = "已将对象加入持续监控"
+		effect["target_state"] = "monitoring"
+	case "review", "review_exception":
+		effect["message"] = "已创建人工复核结论"
+		effect["target_state"] = "reviewed"
+	case "mute":
+		effect["message"] = "已更新当前专题静默策略"
+		effect["target_state"] = "muted"
+	case "change_layout":
+		effect["message"] = "已保存关系图布局偏好"
+	case "focus_view":
+		effect["message"] = "已记录关系图全屏查看行为"
+	default:
+		effect["message"] = "已完成专题业务操作并记录结果"
+	}
+	if dataMode != "simulated" {
+		status = "queued"
+		effect["state"] = "queued"
+		effect["message"] = fmt.Sprintf("%s；任务已持久化，等待执行器处理", effect["message"])
+	}
+	effect["data_mode"] = dataMode
+	return status, effect
+}
+
+func isAllowedTopicAction(action string) bool {
+	switch action {
+	case "inspect_detail", "inspect_alerts", "trace", "extract_pcap",
+		"inspect_session", "inspect_certificate", "trace_path", "contain",
+		"write_audit", "monitor", "review", "review_exception", "mute",
+		"link_rule", "change_layout", "focus_view":
+		return true
+	default:
+		return false
+	}
+}
+
+func (h *SystemHandler) validateTopicActionDataMode(ctx context.Context, tenantID, topic string, req topicActionRequest) error {
+	if req.DataMode != "simulated" {
+		return nil
+	}
+	simulationID := strings.TrimSpace(fmt.Sprint(req.Detail["simulation_id"]))
+	simulationVersion := strings.TrimSpace(fmt.Sprint(req.Detail["simulation_version"]))
+	if simulationID == "" || simulationID == "<nil>" || simulationVersion == "" || simulationVersion == "<nil>" {
+		return fmt.Errorf("simulated data_mode requires simulation_id and simulation_version")
+	}
+	var valid bool
+	if err := h.pgDB.QueryRowContext(ctx, `
+		SELECT EXISTS (
+			SELECT 1
+			FROM topic_panel_simulations
+			WHERE enabled=true AND topic=$1 AND tenant_id IN ($2, '*')
+			  AND simulation_id=$3 AND version=$4
+		)`, topic, tenantID, simulationID, simulationVersion).Scan(&valid); err != nil {
+		return fmt.Errorf("validate topic simulation identity: %w", err)
+	}
+	if !valid {
+		return fmt.Errorf("simulation identity is not enabled for this tenant and topic")
+	}
+	return nil
 }
 
 func (h *SystemHandler) SubmitTopicAction(w http.ResponseWriter, r *http.Request) {
@@ -2034,6 +2471,10 @@ func (h *SystemHandler) SubmitTopicAction(w http.ResponseWriter, r *http.Request
 		httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_REQUEST", "action and target are required")
 		return
 	}
+	if !isAllowedTopicAction(req.Action) {
+		httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_REQUEST", "unsupported topic action")
+		return
+	}
 	if req.DataMode == "" {
 		req.DataMode = "live"
 	}
@@ -2046,10 +2487,16 @@ func (h *SystemHandler) SubmitTopicAction(w http.ResponseWriter, r *http.Request
 	if req.Detail == nil {
 		req.Detail = map[string]interface{}{}
 	}
+	tenantID := writeTenantID(r)
+	if err := h.validateTopicActionDataMode(ctx, tenantID, topic, req); err != nil {
+		httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_REQUEST", err.Error())
+		return
+	}
 	req.Detail["label"] = req.Label
 	req.Detail["data_mode"] = req.DataMode
+	businessStatus, businessEffect := topicActionBusinessEffect(topic, req.Action, req.Target, req.DataMode)
+	req.Detail["business_effect"] = businessEffect
 	detailJSON, _ := json.Marshal(req.Detail)
-	tenantID := writeTenantID(r)
 	userID := httpx.GetUserID(ctx)
 	var actionID, status string
 	var createdAt time.Time
@@ -2061,9 +2508,9 @@ func (h *SystemHandler) SubmitTopicAction(w http.ResponseWriter, r *http.Request
 	defer tx.Rollback()
 	err = tx.QueryRowContext(ctx, `
 		INSERT INTO topic_actions (tenant_id, topic, action, target, status, detail, requested_by)
-		VALUES ($1, $2, $3, $4, 'queued', $5::jsonb, $6)
+		VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7)
 		RETURNING action_id::text, status, created_at`,
-		tenantID, topic, req.Action, req.Target, string(detailJSON), userID,
+		tenantID, topic, req.Action, req.Target, businessStatus, string(detailJSON), userID,
 	).Scan(&actionID, &status, &createdAt)
 	if err != nil {
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
@@ -2075,6 +2522,7 @@ func (h *SystemHandler) SubmitTopicAction(w http.ResponseWriter, r *http.Request
 		TenantID: tenantID, UserID: userID, Result: "success",
 		Detail: map[string]interface{}{
 			"topic": topic, "action": req.Action, "label": req.Label, "target": req.Target, "data_mode": req.DataMode,
+			"business_status": businessStatus, "business_effect": businessEffect,
 		},
 	}); err != nil {
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "AUDIT_WRITE_FAILED", "failed to persist topic action audit")
@@ -2090,7 +2538,7 @@ func (h *SystemHandler) SubmitTopicAction(w http.ResponseWriter, r *http.Request
 			"action_id": actionID, "tenant_id": tenantID, "topic": topic,
 			"action": req.Action, "label": req.Label, "target": req.Target,
 			"data_mode": req.DataMode, "status": status, "requested_by": userID,
-			"created_at": createdAt.UnixMilli(),
+			"business_effect": businessEffect, "created_at": createdAt.UnixMilli(),
 		},
 	})
 }
@@ -2118,18 +2566,90 @@ func (h *SystemHandler) exportTopicArtifact(w http.ResponseWriter, r *http.Reque
 	if req.Parameters == nil {
 		req.Parameters = map[string]interface{}{}
 	}
+	req.SourceExportID = strings.TrimSpace(req.SourceExportID)
+	if req.SourceExportID != "" && exportType != "report" {
+		httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_REQUEST", "source_export_id is only valid for report exports")
+		return
+	}
 	start, end := complianceReportRange("daily", req.TimeRange)
 	req.Parameters["format"] = format
 	req.Parameters["time_range"] = map[string]int64{"start": start, "end": end}
+	tx, err := h.pgDB.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelRepeatableRead})
+	if err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
+	defer tx.Rollback()
+
+	var snapshot map[string]interface{}
+	var snapshotChecksum string
+	if req.SourceExportID != "" {
+		var sourceParameters map[string]interface{}
+		snapshot, sourceParameters, snapshotChecksum, err = loadTopicSourceReportSnapshot(ctx, tx, tenantID, req.Topic, req.SourceExportID)
+		if err == sql.ErrNoRows {
+			httpx.JSONError(w, ctx, http.StatusNotFound, "NOT_FOUND", "source topic report export not found")
+			return
+		}
+		if err != nil {
+			httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+			return
+		}
+		for key, value := range sourceParameters {
+			if key != "format" && key != "source_export_id" {
+				req.Parameters[key] = value
+			}
+		}
+		req.Parameters["source_export_id"] = req.SourceExportID
+	} else {
+		scope, scopeErr := h.loadTopicScopeFrom(ctx, tx, tenantID, req.Topic)
+		if scopeErr != nil {
+			httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", scopeErr.Error())
+			return
+		}
+		snapshot, err = h.loadTopicExportSnapshotFrom(ctx, tx, tenantID, req.Topic, scope, start, end)
+		if err != nil {
+			httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+			return
+		}
+		snapshotChecksum, err = topicSnapshotChecksum(snapshot)
+		if err != nil {
+			httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+			return
+		}
+	}
+	for _, key := range []string{"data_mode", "simulation_id", "simulation_version"} {
+		if value, ok := snapshot[key]; ok {
+			req.Parameters[key] = value
+		} else {
+			delete(req.Parameters, key)
+		}
+	}
+	artifact, filename, contentType, err := buildTopicArtifact(req.Topic, exportType, format, tenantID, httpx.GetUserID(ctx), req.Parameters, snapshot)
+	if err != nil {
+		httpx.JSONError(w, ctx, http.StatusBadRequest, "INVALID_REQUEST", err.Error())
+		return
+	}
+	checksum := fmt.Sprintf("sha256:%x", sha256.Sum256(artifact))
 	result := map[string]interface{}{
-		"file_key":       fmt.Sprintf("topics/%s/%s-%d.%s", req.Topic, exportType, time.Now().Unix(), format),
-		"summary":        topicExportSummary(req.Topic, exportType),
-		"retention_days": 30,
-		"audit_required": true,
+		"file_key":        fmt.Sprintf("topics/%s/%s", req.Topic, filename),
+		"filename":        filename,
+		"content_type":    contentType,
+		"content_base64":  base64.StdEncoding.EncodeToString(artifact),
+		"size_bytes":      len(artifact),
+		"sha256":          checksum,
+		"snapshot_sha256": snapshotChecksum,
+		"snapshot":        snapshot,
+		"report_model":    buildTopicReportModel(req.Topic, snapshot),
+		"summary":         topicExportSummary(req.Topic, exportType),
+		"retention_days":  30,
+		"audit_required":  true,
+	}
+	if req.SourceExportID != "" {
+		result["source_export_id"] = req.SourceExportID
 	}
 	paramsJSON, _ := json.Marshal(req.Parameters)
 	resultJSON, _ := json.Marshal(result)
-	exported, err := scanTopicExport(h.pgDB.QueryRowContext(ctx, `
+	exported, err := scanTopicExport(tx.QueryRowContext(ctx, `
 		INSERT INTO topic_exports (tenant_id, topic, export_type, status, parameters, result, generated_by)
 		VALUES ($1, $2, $3, 'completed', $4::jsonb, $5::jsonb, $6)
 		RETURNING export_id::text, tenant_id, topic, export_type, status, parameters::text, result::text, generated_by, generated_at`,
@@ -2138,10 +2658,385 @@ func (h *SystemHandler) exportTopicArtifact(w http.ResponseWriter, r *http.Reque
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
 		return
 	}
-	_ = h.insertAuditLog(ctx, tenantID, httpx.GetUserID(ctx), auditAction, "topic_export", exported.ExportID, map[string]interface{}{
-		"topic": req.Topic, "export_type": exportType, "format": format,
-	}, r)
+	if err := h.recordTopicAuditTx(ctx, tx, r, auditAction, "topic_export", exported.ExportID, tenantID, map[string]interface{}{
+		"topic": req.Topic, "export_type": exportType, "format": format, "filename": filename,
+		"sha256": checksum, "size_bytes": len(artifact), "data_mode": req.Parameters["data_mode"],
+		"snapshot_sha256": snapshotChecksum, "source_export_id": req.SourceExportID,
+		"simulation_id": req.Parameters["simulation_id"], "simulation_version": req.Parameters["simulation_version"],
+	}); err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "AUDIT_WRITE_FAILED", "failed to persist topic export audit")
+		return
+	}
+	if err := tx.Commit(); err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
+		return
+	}
 	httpx.JSON(w, http.StatusAccepted, map[string]interface{}{"success": true, "data": exported})
+}
+
+func (h *SystemHandler) loadTopicExportSnapshot(ctx context.Context, tenantID, topic string, scope *topicScopeDTO, start, end int64) (map[string]interface{}, error) {
+	if h.pgDB == nil {
+		return nil, fmt.Errorf("PostgreSQL is required")
+	}
+	return h.loadTopicExportSnapshotFrom(ctx, h.pgDB, tenantID, topic, scope, start, end)
+}
+
+func (h *SystemHandler) loadTopicExportSnapshotFrom(ctx context.Context, queryer topicQueryRower, tenantID, topic string, scope *topicScopeDTO, start, end int64) (map[string]interface{}, error) {
+	if simulation, ok, err := h.loadTopicPanelSimulationFrom(ctx, queryer, tenantID, topic, scope, start, end); err != nil {
+		return nil, err
+	} else if ok {
+		return simulation, nil
+	}
+
+	base := map[string]interface{}{
+		"topic": topic, "data_mode": "live", "updated_at": time.Now().UnixMilli(),
+		"time_range": map[string]int64{"start": start, "end": end}, "scope": scope,
+	}
+	switch topic {
+	case "tunnel":
+		protocols, err := h.queryTunnelProtocols(ctx, tenantID, start, end)
+		if err != nil {
+			return nil, err
+		}
+		users, err := h.queryTunnelUsers(ctx, tenantID, start, end, 20)
+		if err != nil {
+			return nil, err
+		}
+		var sessions int64
+		var totalBytes uint64
+		for _, protocol := range protocols {
+			sessions += protocol.Count
+			totalBytes += protocol.TotalBytes
+		}
+		base["summary"] = map[string]interface{}{
+			"protocol_count": len(protocols), "active_users": len(users), "session_count": sessions,
+			"total_bytes": totalBytes, "high_risk_users": countTunnelUsersByRisk(users, "high"),
+		}
+		base["protocols"] = protocols
+		base["users"] = users
+	case "exfil":
+		sources, err := h.queryExfiltrationSources(ctx, tenantID, start, end, 100)
+		if err != nil {
+			return nil, err
+		}
+		risks, err := h.queryExfiltrationRisks(ctx, tenantID, start, end)
+		if err != nil {
+			return nil, err
+		}
+		paths, err := h.queryExfiltrationPaths(ctx, tenantID, start, end, 100)
+		if err != nil {
+			return nil, err
+		}
+		destinations, err := h.queryExfiltrationDestinations(ctx, tenantID, start, end, 100)
+		if err != nil {
+			return nil, err
+		}
+		trend, err := h.queryExfiltrationTrend(ctx, tenantID, start, end)
+		if err != nil {
+			return nil, err
+		}
+		var uploadBytes, maxUpload uint64
+		var sessions int64
+		for _, source := range sources {
+			uploadBytes += source.UploadBytes
+			sessions += source.SessionCount
+			if source.UploadBytes > maxUpload {
+				maxUpload = source.UploadBytes
+			}
+		}
+		durationSeconds := math.Max(1, float64(end-start)/1000)
+		base["summary"] = map[string]interface{}{
+			"source_count": len(sources), "path_count": len(paths), "session_count": sessions,
+			"upload_bytes": uploadBytes, "high_risk_sources": countExfiltrationSourcesByRisk(sources, "high"),
+			"destination_count": len(destinations), "risk_type_count": len(risks),
+			"peak_upload_gbps": float64(maxUpload) * 8 / durationSeconds / 1_000_000_000,
+		}
+		base["top_sources"], base["destinations"], base["risk_types"], base["paths"], base["trend"] = sources, destinations, risks, paths, trend
+	case "apt":
+		campaigns, total, err := h.queryCampaigns(ctx, tenantID, campaignQueryFilters{}, start, end, 100, 0)
+		if err != nil {
+			return nil, err
+		}
+		phaseDistribution, summary := summarizeAPTTopicCampaigns(campaigns, total)
+		base["campaigns"], base["phase_distribution"], base["summary"] = campaigns, phaseDistribution, summary
+	default:
+		return nil, fmt.Errorf("unsupported topic %q", topic)
+	}
+	return base, nil
+}
+
+func topicSnapshotChecksum(snapshot map[string]interface{}) (string, error) {
+	encoded, err := json.Marshal(snapshot)
+	if err != nil {
+		return "", err
+	}
+	// Normalize structs (notably the scope DTO) into JSON objects before
+	// hashing. PostgreSQL JSONB returns those objects as maps with sorted keys;
+	// hashing the original struct field order made an unchanged stored snapshot
+	// appear to drift when it was reused for PDF/DOCX downloads.
+	var canonical interface{}
+	decoder := json.NewDecoder(bytes.NewReader(encoded))
+	decoder.UseNumber()
+	if err := decoder.Decode(&canonical); err != nil {
+		return "", fmt.Errorf("canonicalize topic snapshot: %w", err)
+	}
+	encoded, err = json.Marshal(canonical)
+	if err != nil {
+		return "", fmt.Errorf("encode canonical topic snapshot: %w", err)
+	}
+	return fmt.Sprintf("sha256:%x", sha256.Sum256(encoded)), nil
+}
+
+func buildTopicReportModel(topic string, snapshot map[string]interface{}) map[string]interface{} {
+	presentation, _ := snapshot["presentation"].(map[string]interface{})
+	summary, _ := snapshot["summary"].(map[string]interface{})
+	evidenceSections := make([]map[string]interface{}, 0, 8)
+	for _, key := range []string{"events", "evidence_bundle", "protocols", "users", "top_sources", "destinations", "paths", "campaigns", "iocs"} {
+		encoded, _ := json.Marshal(snapshot[key])
+		var values []json.RawMessage
+		if json.Unmarshal(encoded, &values) == nil {
+			evidenceSections = append(evidenceSections, map[string]interface{}{"key": key, "count": len(values)})
+		}
+	}
+	return map[string]interface{}{
+		"title":             firstNonEmpty(stringFromMap(presentation, "report_title"), topicExportSummary(topic, "report")),
+		"topic_id":          firstNonEmpty(stringFromMap(presentation, "topic_id"), topic),
+		"time_range":        firstNonEmpty(stringFromMap(presentation, "time_window_label"), fmt.Sprint(snapshot["time_range"])),
+		"scope":             firstNonEmpty(stringFromMap(presentation, "report_scope"), stringFromMap(presentation, "asset_group")),
+		"conclusion":        stringFromMap(presentation, "report_conclusion"),
+		"summary":           summary,
+		"findings":          []interface{}{},
+		"evidence_sections": evidenceSections,
+		"presentation":      presentation,
+	}
+}
+
+func loadTopicSourceReportSnapshot(
+	ctx context.Context,
+	queryer topicQueryRower,
+	tenantID string,
+	topic string,
+	sourceExportID string,
+) (map[string]interface{}, map[string]interface{}, string, error) {
+	var resultJSON, parametersJSON string
+	err := queryer.QueryRowContext(ctx, `
+		SELECT result::text, parameters::text
+		FROM topic_exports
+		WHERE tenant_id=$1 AND topic=$2 AND export_type='report' AND status='completed' AND export_id=$3`,
+		tenantID, topic, sourceExportID,
+	).Scan(&resultJSON, &parametersJSON)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	result := map[string]interface{}{}
+	parameters := map[string]interface{}{}
+	if err := json.Unmarshal([]byte(resultJSON), &result); err != nil {
+		return nil, nil, "", fmt.Errorf("decode source topic export result: %w", err)
+	}
+	_ = json.Unmarshal([]byte(parametersJSON), &parameters)
+	snapshot, ok := result["snapshot"].(map[string]interface{})
+	if !ok {
+		return nil, nil, "", fmt.Errorf("source topic export is missing its report snapshot")
+	}
+	checksum, err := topicSnapshotChecksum(snapshot)
+	if err != nil {
+		return nil, nil, "", err
+	}
+	if stored, _ := result["snapshot_sha256"].(string); stored != "" && stored != checksum {
+		return nil, nil, "", fmt.Errorf("source topic export snapshot checksum mismatch")
+	}
+	return snapshot, parameters, checksum, nil
+}
+
+func buildTopicArtifact(topic, exportType, format, tenantID, userID string, parameters map[string]interface{}, snapshot map[string]interface{}) ([]byte, string, string, error) {
+	format = strings.ToLower(strings.TrimSpace(format))
+	if format == "" {
+		format = "json"
+	}
+	payload := map[string]interface{}{
+		"schema_version": 1,
+		"artifact_type":  "topic_" + exportType,
+		"topic":          topic,
+		"tenant_id":      tenantID,
+		"generated_by":   userID,
+		"generated_at":   time.Now().UTC().Format(time.RFC3339Nano),
+		"parameters":     parameters,
+		"snapshot":       snapshot,
+	}
+	jsonContent, err := json.MarshalIndent(payload, "", "  ")
+	if err != nil {
+		return nil, "", "", err
+	}
+	stem := fmt.Sprintf("%s-%s-%d", topic, exportType, time.Now().Unix())
+	switch format {
+	case "json":
+		return jsonContent, stem + ".json", "application/json", nil
+	case "zip":
+		var buffer bytes.Buffer
+		writer := zip.NewWriter(&buffer)
+		snapshotContent, snapshotErr := json.MarshalIndent(snapshot, "", "  ")
+		if snapshotErr != nil {
+			return nil, "", "", snapshotErr
+		}
+		manifest := map[string]interface{}{
+			"schema_version": 1, "artifact_type": "topic_" + exportType, "topic": topic,
+			"tenant_id": tenantID, "generated_by": userID, "generated_at": payload["generated_at"],
+			"parameters": parameters, "snapshot_file": "snapshot.json",
+			"snapshot_sha256": fmt.Sprintf("sha256:%x", sha256.Sum256(snapshotContent)),
+		}
+		manifestContent, manifestErr := json.MarshalIndent(manifest, "", "  ")
+		if manifestErr != nil {
+			return nil, "", "", manifestErr
+		}
+		for name, content := range map[string][]byte{"manifest.json": manifestContent, "snapshot.json": snapshotContent} {
+			entry, createErr := writer.Create(name)
+			if createErr != nil {
+				return nil, "", "", createErr
+			}
+			if _, writeErr := entry.Write(content); writeErr != nil {
+				return nil, "", "", writeErr
+			}
+		}
+		if closeErr := writer.Close(); closeErr != nil {
+			return nil, "", "", closeErr
+		}
+		return buffer.Bytes(), stem + ".zip", "application/zip", nil
+	case "pdf":
+		content := buildMinimalTopicPDF(topic, exportType, parameters, snapshot)
+		return content, stem + ".pdf", "application/pdf", nil
+	case "docx":
+		content, docErr := buildMinimalTopicDOCX(topic, exportType, parameters, snapshot)
+		return content, stem + ".docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", docErr
+	default:
+		return nil, "", "", fmt.Errorf("unsupported topic export format %q", format)
+	}
+}
+
+func topicArtifactReportLines(topic, exportType string, parameters, snapshot map[string]interface{}) []string {
+	reportModel := buildTopicReportModel(topic, snapshot)
+	lines := []string{
+		firstNonEmpty(fmt.Sprint(reportModel["title"]), "Traffic Analysis Topic Report"),
+		fmt.Sprintf("topic=%s artifact_type=%s data_mode=%v", topic, exportType, snapshot["data_mode"]),
+		fmt.Sprintf("simulation_id=%v simulation_version=%v", snapshot["simulation_id"], snapshot["simulation_version"]),
+		fmt.Sprintf("parameter_fields=%d", len(parameters)),
+		fmt.Sprintf("topic_id=%v", reportModel["topic_id"]),
+		fmt.Sprintf("time_range=%v", reportModel["time_range"]),
+		fmt.Sprintf("scope=%v", reportModel["scope"]),
+		fmt.Sprintf("conclusion=%v", reportModel["conclusion"]),
+	}
+	if summary, ok := snapshot["summary"].(map[string]interface{}); ok {
+		keys := make([]string, 0, len(summary))
+		for key := range summary {
+			keys = append(keys, key)
+		}
+		sort.Strings(keys)
+		for _, key := range keys {
+			lines = append(lines, fmt.Sprintf("summary.%s=%v", key, summary[key]))
+		}
+	}
+	for _, key := range []string{"events", "protocols", "users", "top_sources", "destinations", "risk_types", "paths", "campaigns", "evidence_bundle"} {
+		if values, ok := snapshot[key].([]interface{}); ok {
+			lines = append(lines, fmt.Sprintf("%s.count=%d", key, len(values)))
+			continue
+		}
+		encoded, _ := json.Marshal(snapshot[key])
+		if len(encoded) > 0 && string(encoded) != "null" {
+			var values []json.RawMessage
+			if json.Unmarshal(encoded, &values) == nil {
+				lines = append(lines, fmt.Sprintf("%s.count=%d", key, len(values)))
+			}
+		}
+	}
+	snapshotJSON, _ := json.Marshal(snapshot)
+	lines = append(lines, fmt.Sprintf("snapshot_bytes=%d", len(snapshotJSON)), fmt.Sprintf("snapshot_sha256=sha256:%x", sha256.Sum256(snapshotJSON)))
+	return lines
+}
+
+func topicPDFUTF16Hex(value string) string {
+	codeUnits := utf16.Encode([]rune(value))
+	encoded := make([]byte, 2, 2+len(codeUnits)*2)
+	encoded[0], encoded[1] = 0xfe, 0xff
+	for _, codeUnit := range codeUnits {
+		encoded = append(encoded, byte(codeUnit>>8), byte(codeUnit))
+	}
+	return strings.ToUpper(hex.EncodeToString(encoded))
+}
+
+func buildMinimalTopicPDF(topic, exportType string, parameters, snapshot map[string]interface{}) []byte {
+	lines := topicArtifactReportLines(topic, exportType, parameters, snapshot)
+	var streamBuilder strings.Builder
+	streamBuilder.WriteString("BT /F1 10 Tf 50 760 Td")
+	for _, rawLine := range lines {
+		runes := []rune(rawLine)
+		if len(runes) > 80 {
+			runes = runes[:80]
+		}
+		fmt.Fprintf(&streamBuilder, " 0 -14 Td <%s> Tj", topicPDFUTF16Hex(string(runes)))
+	}
+	streamBuilder.WriteString(" ET")
+	stream := streamBuilder.String()
+	objects := []string{
+		"<< /Type /Catalog /Pages 2 0 R >>",
+		"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+		"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+		"<< /Type /Font /Subtype /Type0 /BaseFont /STSong-Light /Encoding /UniGB-UCS2-H /DescendantFonts [6 0 R] >>",
+		fmt.Sprintf("<< /Length %d >>\nstream\n%s\nendstream", len(stream), stream),
+		"<< /Type /Font /Subtype /CIDFontType0 /BaseFont /STSong-Light /CIDSystemInfo << /Registry (Adobe) /Ordering (GB1) /Supplement 4 >> /DW 1000 >>",
+	}
+	var buffer bytes.Buffer
+	buffer.WriteString("%PDF-1.4\n")
+	offsets := make([]int, len(objects)+1)
+	for index, object := range objects {
+		offsets[index+1] = buffer.Len()
+		fmt.Fprintf(&buffer, "%d 0 obj\n%s\nendobj\n", index+1, object)
+	}
+	xref := buffer.Len()
+	fmt.Fprintf(&buffer, "xref\n0 %d\n0000000000 65535 f \n", len(objects)+1)
+	for index := 1; index <= len(objects); index++ {
+		fmt.Fprintf(&buffer, "%010d 00000 n \n", offsets[index])
+	}
+	fmt.Fprintf(&buffer, "trailer << /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n", len(objects)+1, xref)
+	return buffer.Bytes()
+}
+
+func buildMinimalTopicDOCX(topic, exportType string, parameters, snapshot map[string]interface{}) ([]byte, error) {
+	lines := topicArtifactReportLines(topic, exportType, parameters, snapshot)
+	paragraphs := make([]string, 0, len(lines)+1)
+	for _, line := range lines {
+		text := strings.NewReplacer("&", "&amp;", "<", "&lt;", ">", "&gt;").Replace(line)
+		paragraphs = append(paragraphs, `<w:p><w:r><w:t>`+text+`</w:t></w:r></w:p>`)
+	}
+	snapshotJSON, _ := json.MarshalIndent(snapshot, "", "  ")
+	fullSnapshot := strings.NewReplacer("&", "&amp;", "<", "&lt;", ">", "&gt;").Replace(string(snapshotJSON))
+	paragraphs = append(paragraphs, `<w:p><w:r><w:t xml:space="preserve">`+fullSnapshot+`</w:t></w:r></w:p>`)
+	files := map[string]string{
+		"[Content_Types].xml": `<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>`,
+		"_rels/.rels":         `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>`,
+		"word/document.xml":   `<?xml version="1.0" encoding="UTF-8"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>` + strings.Join(paragraphs, "") + `</w:body></w:document>`,
+	}
+	var buffer bytes.Buffer
+	writer := zip.NewWriter(&buffer)
+	for name, content := range files {
+		entry, err := writer.Create(name)
+		if err != nil {
+			return nil, err
+		}
+		if _, err := entry.Write([]byte(content)); err != nil {
+			return nil, err
+		}
+	}
+	if err := writer.Close(); err != nil {
+		return nil, err
+	}
+	return buffer.Bytes(), nil
+}
+
+func (h *SystemHandler) recordTopicAuditTx(ctx context.Context, tx *sql.Tx, r *http.Request, action, objectType, objectID, tenantID string, detail map[string]interface{}) error {
+	writer := NewAlertActionAuditWriter(h.pgDB, h.logger)
+	return writer.recordWithExecutor(ctx, tx, r, AlertActionAuditRecord{
+		Action: action, ObjectType: objectType, ObjectID: objectID,
+		TenantID: tenantID, UserID: httpx.GetUserID(ctx), Result: "success", Detail: detail,
+	})
 }
 
 func (h *SystemHandler) ListFusionSources(w http.ResponseWriter, r *http.Request) {
@@ -4402,6 +5297,8 @@ func topicVisibility(value string) string {
 	switch strings.TrimSpace(strings.ToLower(value)) {
 	case "team", "tenant":
 		return "team"
+	case "role":
+		return "role"
 	case "public":
 		return "public"
 	default:

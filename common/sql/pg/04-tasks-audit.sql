@@ -686,4 +686,26 @@ CREATE TABLE IF NOT EXISTS topic_actions (
 CREATE INDEX IF NOT EXISTS idx_topic_actions_tenant_topic
   ON topic_actions (tenant_id, topic, created_at DESC);
 
+-- Database-backed presentation fixtures for the three topic workbenches.  These
+-- rows are read through the normal topic APIs; the Web UI never imports fixture
+-- constants or bypasses the backend.
+CREATE TABLE IF NOT EXISTS topic_panel_simulations (
+  simulation_id TEXT PRIMARY KEY,
+  tenant_id     TEXT NOT NULL DEFAULT '*',
+  topic         TEXT NOT NULL CHECK (topic IN ('tunnel', 'exfil', 'apt')),
+  version       TEXT NOT NULL,
+  enabled       BOOLEAN NOT NULL DEFAULT true,
+  payload       JSONB NOT NULL,
+  created_by    TEXT NOT NULL DEFAULT '',
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (tenant_id, topic, version)
+);
+
+CREATE INDEX IF NOT EXISTS idx_topic_panel_simulations_active
+  ON topic_panel_simulations (tenant_id, topic, enabled, updated_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_topic_panel_simulations_one_enabled
+  ON topic_panel_simulations (tenant_id, topic)
+  WHERE enabled;
+
 COMMIT;
