@@ -100,3 +100,19 @@ The r245 production route uses `traffic/web-ui:ui-topic-graphs-20260711-r245`. S
 | Business ROI | pass | `metrics-business-r259.json`: `0.09128387903290155 <= 0.125`. |
 
 Main-thread judgment: `business-pixel-accepted`. The current production image is `traffic/web-ui:ui-screen-original-svg-20260711-r259`; r245's ECharts topology statement is historical and superseded for topology-only visuals.
+
+## topic-panel-r833 Database-backed Rebuild
+
+- Source and implementation were compared together at 1920×1080/DPR 1 in Windows Chrome 150 through Xshell CDP `9224 -> 9222`.
+- PostgreSQL supplies nine KPI values, campaign/stage relationships, IoCs, response state, 156 evidence events, delivery summary, evidence bundle and report preview; the API retains ClickHouse fallback.
+- Phase/status filters, search, compact pagination, report preview, APT action confirmation and all right-rail governance actions are functional and audited by the backend.
+- Final Windows Chrome run exercised 81 controls on this Tab, including six analysis tabs, 30 visible row actions, phase/status filters, search and compact pagination; all backend actions returned their expected status.
+- Same-input evidence: `comparison-topic-panel-r833.png` and `comparison-business-topic-panel-r833.png`; implementation: `implementation-topic-panel-r833-live.png`.
+- Full-frame mismatch ratio is `0.0970510224`; normalized business ROI is `0.0950848409`, both `<= 0.125`. P0/P1/P2=0. Result: pass.
+
+## topic-panel-r839 Unified Attack-chain Graph and Responsive Completion
+
+- The attack-chain canvas now uses the same API-driven `TopicTopologyGraph` as tunnel and exfil, with solid evidence-confirmed edges, dashed impact/inference edges, pan/zoom and automatic fit.
+- At 1366×768 the page becomes a vertically scrollable business flow: graph, analysis, table/status and two-column right rail remain separate, with no horizontal overflow or detected clipped rail text.
+- Report preview is a backend-generated artifact Modal; APT row actions are centered business Modals and persist status, `business_effect`, simulation provenance and audit records.
+- Full-frame mismatch is `0.0983579282`; normalized business ROI is `0.0982379546`, both `<= 0.125`. P0/P1/P2=0. Result: pass.

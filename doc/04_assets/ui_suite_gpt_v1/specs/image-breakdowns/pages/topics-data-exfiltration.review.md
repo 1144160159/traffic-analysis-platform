@@ -64,3 +64,21 @@
 ## Decision
 
 The `topics-data-exfiltration` business region is accepted for the current alpha visual gate. Continue the pages queue with `topics-apt-campaign`.
+
+## topic-panel-r833 Database-backed Rebuild
+
+- Source and implementation were compared together at 1920×1080/DPR 1 in Windows Chrome 150 through Xshell CDP `9224 -> 9222`.
+- PostgreSQL supplies eight KPI values, path/distribution analysis, 128 evidence events, delivery summary, evidence bundle and report preview; the Web UI consumes the topic API rather than page-local fixtures.
+- Risk/protocol filters, search, pagination, report preview, row actions and all right-rail governance actions are functional and use the existing backend persistence/audit contract.
+- r826 normalized business review exposed a P2 (`0.1261106193 > 0.125`). r827-r832 restored the deep-blue shell/table density and rebuilt the database-derived Sankey; r833 aligned the right summary's evidence/report/action proportions with the reference and enlarged the report thumbnail.
+- The Sankey now keeps five database destination IP identities instead of merging repeated regions into an oversized node; five source/type/risk/destination/path rows remain traceable to the API payload.
+- Final Windows Chrome run exercised all 30 controls on this Tab, including 10 visible row actions, risk/protocol filters, search, pagination, report/export/subscription and preference actions.
+- Same-input evidence: `comparison-topic-panel-r833.png` and `comparison-business-topic-panel-r833.png`; implementation: `implementation-topic-panel-r833-live.png`.
+- Full-frame mismatch ratio is `0.1109341242`; normalized business ROI is `0.1174644127`, both `<= 0.125`. P0/P1/P2=0. Result: pass.
+
+## topic-panel-r839 Unified Path Graph and Responsive Completion
+
+- The former page-specific Sankey renderer is replaced by the same API-driven `TopicTopologyGraph` used by tunnel and APT. The five database paths remain distinct, and confirmed/inferred relations use solid/dashed lines.
+- ECharts roam plus explicit zoom and fit controls are active. Invisible extent anchors and a terminal responsive minimum height keep every edge node inside the canvas.
+- The 1366×768 r838 review exposed a collapsed graph host with stacked labels; r839 preserves a 400px canvas and the recaptured five-layer graph has no label overlap. 1600 and 1366 reflow the right rail below the main business area without horizontal overflow.
+- Full-frame mismatch is `0.1135416667`; normalized business ROI is `0.1214927230`, both `<= 0.125`. P0/P1/P2=0. Result: pass.

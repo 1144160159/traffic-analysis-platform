@@ -69,3 +69,20 @@ These three areas must not be merged into one generic ranking. They answer diffe
 ## Decision
 
 The `topics-encrypted-tunnel` business region is accepted for r98. Continue the queue with the next topic page while preserving the rule that public regions are not modified and business diagrams must be API-driven.
+
+## topic-panel-r833 Database-backed Rebuild
+
+- Source and implementation were compared together at 1920×1080/DPR 1 in Windows Chrome 150 through Xshell CDP `9224 -> 9222`.
+- PostgreSQL supplies the page profile, nine KPI values, charts, 128 evidence events, delivery summary, evidence bundle and report preview. The API marks the response as `data_mode=simulated` and preserves ClickHouse fallback.
+- Layout/fullscreen, three analysis tabs, three filters, search, compact pagination, report preview, row actions and all right-rail governance actions are functional; persistent actions call the topic backend.
+- Final Windows Chrome run exercised 75 controls on this Tab, including 20 visible row actions, three filters, search and compact pagination; all backend actions returned their expected 200/201/202 status.
+- Same-input evidence: `comparison-topic-panel-r833.png` and `comparison-business-topic-panel-r833.png`; implementation: `implementation-topic-panel-r833-live.png`.
+- Full-frame mismatch ratio is `0.1078231096`; normalized business ROI is `0.1120169162`, both `<= 0.125`. P0/P1/P2=0. Result: pass.
+
+## topic-panel-r839 Responsive and Business Completion
+
+- All three topic canvases now share the API-driven `TopicTopologyGraph` ECharts graph. Solid edges are confirmed relations; dashed edges are inferred/impact relations. Pan, wheel zoom, explicit zoom and fit controls are enabled.
+- Protocol family, high-risk user and fingerprint evidence cards switch to three distinct API-derived analysis states.
+- 1920×1080, 1600×900 and 1366×768 Windows Chrome captures have no document overflow, left/right collision or clipped rail text. The r839 terminal cascade prevents generic responsive rules from collapsing the graph host.
+- Report preview calls the report export API and renders the returned artifact in a centered Modal. Row actions use centered confirmation Modals and persist a completed `business_effect`, rather than opening a right Drawer.
+- Full-frame mismatch is `0.1107653356`; normalized business ROI is `0.1166468449`, both `<= 0.125`. The final three-topic run is `158/158`; P0/P1/P2=0. Result: pass.
