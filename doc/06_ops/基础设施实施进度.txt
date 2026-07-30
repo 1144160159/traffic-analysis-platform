@@ -680,3 +680,218 @@
     - r585 逻辑审查 REJECT 的 P1/P2（伪时序与 canvas-only 门禁）已在 r586 关闭；
     - r586 逻辑 ACCEPT（P0/P1/P2=0，P3=1），布局 ACCEPT（P0/P1/P2/P3=0），主线程裁决 ACCEPT；
     - 证据：doc/02_acceptance/02-regression/entity-graph-interactions-r586.json、entity-graph-rollout-r586.json、entity-graph-review-adjudication-latest.json、evidence/ui-image-breakdowns/pages/graph/entity-graph-r586-visual-metrics.json。
+
+三十四、2026-07-26 战役详情 r763 生产回修
+─────────────────────────────────────────
+
+1. 页面与数据：
+    - 业务区顶部只保留“战役详情”；评分、影响范围、证据完整度均由 ECharts 圆环渲染；
+    - 关联告警高/中/低危筛选接入 URL 状态并基于完整告警集合过滤；影响范围六个 Tab 在原卡片内切换，不再打开全屏或业务区级弹窗；
+    - 后端 `impact_data_backed` 被保留到前端快照；资产总数与风险分布来自 `impact_assets`；证据完整度优先使用显式值，否则由 evidence current/expected 计算，未知数据保持 `--`；
+    - “证据包完整度”和“证据摘要”拆分为上下独立面板；处置流程与处置动作合并为右栏同一卡片。
+2. 自适应：
+    - 1920×1080、1500×900、1366×768、1024×768 四种 Windows Chrome 视口均无业务模块相互覆盖、无整页横向溢出；
+    - 1650px 以下底部区域改为两列并允许业务区纵向滚动，1439px 以下主区与右栏顺序堆叠，解决旧固定 704px 高度导致的遮挡。
+3. 部署：
+    - Web UI `docker.io/traffic/web-ui:campaign-detail-r763`；
+    - OCI manifest `sha256:d4780e2381c7df1719ca7ec31c7ec54caf7f1ce479636eef8a53bb68a73667ee`，image ID `sha256:0d46714f025e8605de1ecd0554275b9d0a85033f1dea233f774d963c5b6a1760`；
+    - 镜像已导入 8-2tb 与 zeus-server；Deployment generation=962/revision=937，Ready=1/1，restart=0，生产 Pod 位于 zeus-server。
+4. 生产验证：
+    - Windows Chrome 150 经 Xshell `127.0.0.1:9224 -> 127.0.0.1:9222` 打开 APISIX 生产路由；
+    - `/api/v1/campaigns/campaign-exfil-default-1782729598739-e1d2dc37` 返回 200；六个影响 Tab 均有独立数据/空态签名；业务 4xx/5xx、request failure、unexpected console/page error 均为 0；
+    - 交互与响应式门禁通过；正式视觉差异率 `0.0918103781 > 0.015`，保持 fail，不放宽阈值。
+5. 证据：
+    - `evidence/ui-image-breakdowns/pages/campaign-detail/inline-acceptance-r763-prod.json`；
+    - `evidence/ui-image-breakdowns/pages/campaign-detail/implementation-r763-prod.png`；
+    - `evidence/ui-image-breakdowns/pages/campaign-detail/impact-*-r763-prod.png`；
+    - `evidence/ui-image-breakdowns/pages/campaign-detail/metrics-r763-prod.json`、`comparison-r763-prod.png`、`diff-r763-prod.png`。
+
+三十五、2026-07-26 战役列表选中联动与详情 Drawer r770
+─────────────────────────────────────────
+
+1. 产品形态：
+    - 保留右侧战役详情 Drawer，用于在不离开列表的情况下切换战役、快速研判与处置；完整详情页继续作为深度分析入口；
+    - Drawer 最大宽度 1200px，1920×1080 下实测 1200×1048，顶部/右侧/底部均保留 16px，宿主列表仍可见，不使用全屏 Modal。
+2. 联动逻辑：
+    - 表格选中状态同步 selectedRowKey 与 URL campaign；
+    - 当前选中战役、影响范围、证据完整度、状态流转、详情 API 和 Drawer 内容统一绑定 selectedCampaignId；
+    - Windows Chrome 实测第一行切换第二行后仅第二行 aria-selected=true，右侧与 Drawer 的战役 ID 同步切换。
+3. Drawer 与 ECharts：
+    - 顶部六项摘要为 3×2；详情/证据/审计均位于同一 Drawer 内容区；
+    - 详情三栏实测 296/526/296px 且无覆盖；证据与审计页签均扩展到 1137px；
+    - 关联视图使用 ECharts lines+scatter，节点固定为等比例圆形，关系线含方向箭头，解决 graph 坐标变换造成的字体/节点拉伸。
+4. 部署与验收：
+    - Web UI `docker.io/traffic/web-ui:campaign-list-drawer-r770`；
+    - OCI manifest `sha256:be8c74d469e43d0a44c52efa1c1995c3df953caac415378c49a0b77517ecfd5a`，image ID `sha256:86f418024da293c835c8b0cbbf486b52c28e169f9844886c039ea72c8ffc5b81`；
+    - Deployment generation/revision=971/946，Ready=1/1，restart=0，生产 Pod 位于 zeus-server；
+    - Windows Chrome 150 经 Xshell `127.0.0.1:9224 -> 127.0.0.1:9222` 完成生产交互与几何门禁，业务 4xx/5xx、console error、page error、request failure 均为 0；
+    - 证据：`evidence/ui-image-breakdowns/pages/campaigns/selection-drawer-r770-prod.json`、`selection-drawer-r770-prod.png`。
+
+三十六、2026-07-26 完整战役详情指定区域重构 r774
+─────────────────────────────────────────
+
+1. 指定区域：
+    - 业务区顶部按最新截图改为独立“战役详情”，Windows Chrome 实测字号 32px、字重 900；
+    - 证据包完整度与证据摘要保持独立卡片，证据摘要恢复首个可疑文件、SHA256、首次外联域名、解析 IP、首次外联时间五行；
+    - 处置流程按最新截图重构为发现、研判、遏制、根除、恢复、复盘六个圆形图标节点及单箭头连接，处置动作使用真实 status_transitions 生成，复盘结论由真实战役、阶段、资产、告警、证据及负责人数据生成；
+    - 关联告警列宽与横向滚动边界重新约束，生产实测单元格无覆盖且 1920px 下无表格横向溢出。
+2. 数据诚实性：
+    - 生产 `/api/v1/campaigns/campaign-exfil-default-1782729598739-e1d2dc37` 返回 200；
+    - 当前 API 未提供可疑文件、SHA256、首次外联域名及解析 IP，这四项明确显示 `--`，不使用 UI 图静态值伪装真实数据；首次外联时间使用真实战役时间字段。
+3. 部署：
+    - Web UI `docker.io/traffic/web-ui:campaign-detail-r774`；
+    - OCI manifest `sha256:295410d40364809bcc4e1cf992612f368b555cdb73ab6cabdfa7ef79f2a8ae20`，image ID `sha256:0fa2f919b52b696488ef1e55f9bf2396f5d01c96e3afd676032e2f078ce4818f`；
+    - Deployment generation/observedGeneration=975/975，revision=950；Pod `web-ui-7f495d996f-47l8n` 位于 zeus-server，Ready=1/1，restart=0。
+4. Windows Chrome 验收：
+    - Xshell/CDP `127.0.0.1:9224 -> 127.0.0.1:9222`，Chrome/150.0.7871.182，生产 APISIX；
+    - 标题、六步流程、8 条真实处置动作、5 条复盘结论、5 行证据摘要、关联告警防覆盖全部通过；
+    - 高/中/低/全部筛选、六个影响范围 Tab、三个 ECharts 圆环及 1920/1500/1366/1024 自适应通过，业务 4xx/5xx、console/page/request error 均为 0；
+    - 本次指定区域视觉契约通过；旧整页 canonical 像素差异率 `0.0975983796 > 0.015`，因旧标题/面包屑已被最新用户截图替代且静态业务数据不同，继续单独记录为 fail，不冒充整页像素通过。
+5. 证据：
+    - `evidence/ui-image-breakdowns/pages/campaign-detail/inline-acceptance-r774-prod.json`；
+    - `evidence/ui-image-breakdowns/pages/campaign-detail/implementation-r774-prod.png`、`comparison-r774-prod.png`、`diff-r774-prod.png`；
+    - `evidence/ui-image-breakdowns/pages/campaign-detail/metrics-r774-prod.json`、`impact-*-r774-prod.png`。
+
+三十七、2026-07-26 战役详情处置流程视觉回修 r777
+─────────────────────────────────────────
+
+1. 视觉结构：
+    - 删除旧六列网格中依赖绝对定位的箭头，将发现、研判、遏制、根除、恢复、复盘六个阶段与五个 Ant Design 箭头改为同级 flex 序列；
+    - 圆环增至 46px、图标增至 18px，阶段名使用 12px/700，时间使用等宽数字；圆环、箭头、阶段名和时间分别共用稳定基线；
+    - 正常右栏连接器为 14px；1440–1650px 使用 38px 圆环和 10px 连接器，避免窄右栏挤压。
+2. 部署：
+    - Web UI `docker.io/traffic/web-ui:campaign-detail-r777`；
+    - OCI manifest `sha256:92e6b2439e29dd9bca50428721071481f8b453102dd2ba9543f2bbfbb906df31`，image ID `sha256:9745430c2f6d5e7e1b39b049df09fd7c01422886a6d249193b5843b66f0b85c2`；
+    - Deployment generation/observedGeneration=978/978，revision=953。
+3. Windows Chrome 验收：
+    - Xshell/CDP `127.0.0.1:9224 -> 127.0.0.1:9222`；
+    - 6 个阶段、5 个连接器全部位于流程区域内，时间文本裁切为 false；
+    - 1920/1500/1366/1024 响应式、真实 API、关联告警与其他战役详情回归继续通过；console/page/request/business HTTP error 为 0。
+4. 证据：
+    - `evidence/ui-image-breakdowns/pages/campaign-detail/response-flow-r777-prod.png`；
+    - `evidence/ui-image-breakdowns/pages/campaign-detail/implementation-r777-prod.png`；
+    - `evidence/ui-image-breakdowns/pages/campaign-detail/inline-acceptance-r777-prod.json`。
+
+三十八、2026-07-27 告警详情参考图与六类原始证据下载闭环 r820
+─────────────────────────────────────────
+
+1. 生产镜像与集群：
+    - 下载验收 Web UI `docker.io/traffic/web-ui:alert-detail-r820`，OCI manifest `sha256:155cadbdf85b72635d07cb6f64fb35d4c7eb16515f95850f795e32cde4b7b9db`，image ID `sha256:d0d699daf6fb41817ccb9bdd10621f3c32b866d6cf0c247ba596bb2d16076cc6`；
+    - alert-service `docker.io/traffic/alert-service:alert-detail-r819`，OCI manifest `sha256:7358dbe3b940196df890ab5d73f59c0bf593850157af06e9e908b865d156332d`，image ID `sha256:284ece24d2b36eeb650ce231eea04dbd36d0654260d5ca729e878365e5097b5c`；
+    - 镜像已导入 8-2tb 与 zeus-server；下载验收时 Web UI generation/observedGeneration=`1034/1034`、alert-service=`256/256`，最终两项 Ready=`1/1`、Pod restart=`0`。当前全局 Web UI 已升级为 `alert-center-timeline-r822` 并继承告警详情实现。
+2. 数据与动作：
+    - ClickHouse 真实 fixture 共 6 条证据：PCAP 1、Session 2、日志 1、图谱路径 1、文件哈希 1；MinIO 已按精确 object path 写入六个不同原始对象；
+    - 六个证据 Tab 是告警详情页内联面板，不再使用弹窗；全部 Tab 每页 5 条，第 2 页 1 条，分页左侧总数文本已删除；
+    - 下载和查看分别处理：下载通过专用 `/evidence/access` 仅按精确 ID/对象别名解析真实证据，不再按类型兜底；写入 `access_mode=download` 请求审计并申请 5 分钟地址，再由 alert-service 使用集群 MinIO 凭据且仅调用 Stat/GetObject 流式返回原始对象；文件下载成功审计仅在 `io.Copy` 完成后写入，Stat/Open/stream 失败分别记录 failed；查看进入安全证据路由；
+    - 六个原始对象分别为 `hash.txt` 65 bytes、`path-alert-detail-r802.json` 178 bytes、`ids-alert-detail-r802.log` 103 bytes、`session-heartbeat.json` 137 bytes、`session-primary.json` 132 bytes、`c2-tunnel.pcap` 94 bytes；
+    - 标签、报告记录、响应动作、反馈分别返回 `200/201/201/201`，写动作继续在 PostgreSQL 保留审计记录。
+3. Windows Chrome/Xshell 验收：
+    - Chrome/150.0.7871.182，经 `127.0.0.1:9224 -> Windows 127.0.0.1:9222` 访问生产 APISIX；
+    - 1920×1080、1600×900、2560×1080 三档通过：水平溢出均为 `0`，1600 提供纵向滚动，2560 业务宽度利用率 `0.9924`；
+    - 六 Tab 最大几何差 `0`，标题、Tab、表头、正文 computed typography 六态完全一致，Modal/Drawer 数量为 `0`；
+    - 顶部仅保留“告警详情”，“返回告警列表”位于业务区顶部右侧；资产上下文和时间线按参考图补齐；
+    - 业务 4xx/5xx、console/page error 均为 `0`。
+    - 下载专项：六个不同 evidence ID 均为 access=`201`、file=`200`，六个文件名/Content-Type/字节数与 MinIO 对象一致，六条 `ALERT_EVIDENCE_DOWNLOADED` success 审计一一对应；PCAP Content-Type=`application/vnd.tcpdump.pcap`、魔数=`d4c3b2a1`，console error=`0`；
+    - r815/r816 的 619-byte JSON 结果仅是 EvidenceDTO 元数据，现明确标记为被 r820 六类原始对象下载替代。
+4. 证据：
+    - `doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r814.json`；
+    - `doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r814-evidence/`；
+    - `doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r814-visual-compare/`；
+    - `doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-detail-r820-all-downloads.json`；
+    - `scripts/seed_alert_detail_evidence_objects.kubernetes.yaml`；
+    - `evidence/ui-image-breakdowns/pages/alert-detail/design-qa.md`。
+
+三十九、2026-07-27 告警中心时间轴与十行滚动策略 r822
+─────────────────────────────────────────
+
+1. 实现：
+    - `.taf-alert-timeline::before` 提供连续竖轴，首尾对齐第一与第五节点中心，层级保持轴线 0、条目 1、节点 2；
+    - 时间线仅使用告警接口返回的 first_seen、created_at、last_seen、updated_at 和当前状态，不推断未返回的证据或处置事件；
+    - 告警表格每页 10 行，按 `.taf-alert-table-viewport` 实际高度决定是否设置 `scroll.y`；紧凑宽度禁用内部滚动，由业务页自然扩展。
+2. 测试与审查：
+    - `AlertTriagePage.test.ts` 9/9、Web UI build、`git diff --check` 均通过；
+    - 页面布局静态审查确认轴线几何和表格策略无代码级 P0/P1/P2；
+    - Windows Chrome 验收脚本经两轮独立审查回修，最终脚本 P0/P1/P2=0。
+3. 部署：
+    - Web UI `docker.io/traffic/web-ui:alert-center-timeline-r822`；
+    - OCI manifest `sha256:2a18cb9a0027a9a5a530ba3ef426e15163eca928be14179ec5510c77f49d91f6`，image ID `sha256:012ce800499623564c58cadc570c0460a825ca69acce2d2ced90ebba33ed9689`；
+    - Deployment generation/observedGeneration=`1036/1036`，Pod 位于 zeus-server，Ready=`1/1`，restart=`0`。
+4. 未闭合门禁：
+    - 当前执行策略拒绝 Node 连接 `127.0.0.1:9224`，错误为 `connect EPERM`；因此 r822 Windows Chrome 2560×1080/1600×720 截图与 DOM 几何证据未生成，不声明视觉门通过；
+    - 机器可读阻塞记录：`doc/02_acceptance/02-regression/ui-visual-interaction/windows-chrome-cdp-alert-triage-r822-timeline-table-blocked.json`。
+
+四十、2026-07-28 专题面板数据库模拟与三图生产闭环 r823-r825
+─────────────────────────────────────────
+
+1. PostgreSQL：
+    - 新增 `topic_panel_simulations`，支持租户/共享快照、版本、启用状态和 JSONB payload；schema 已同步到 PG SQL 与 K8s init-job；
+    - `scripts/seed_topic_panel_simulations.postgres.sql` 可重复写入 tunnel 128、exfil 128、apt 156 条事件及图表/KPI/证据/报告数据；已先通过临时 PostgreSQL 16 校验，再写入生产 PostgreSQL。
+2. alert-service：
+    - 三个专题 GET 优先读取数据库模拟快照，返回 `data_mode/simulation_id/simulation_version`，无表或无快照时回退 ClickHouse；
+    - 镜像 `docker.io/traffic/alert-service:topic-panel-r823`，OCI manifest `sha256:a5e8aa775166c2cc3c7fd1e004848206a66f5df53bd65739883a4fe348555416`，image ID `sha256:71573a6899cbef1b4c06ca295ed7265f9eca2ae045b11bf97a3d230881ea01bd`。
+3. Web UI：
+    - r824 完成三图视觉和后置合理性修正；r825 修复 adapter 在缺失 `events/evidence_bundle` 时误回退到首个数组的问题；r826 清理无效专题属性并完成最终生产视觉复验；
+    - r826 镜像 `docker.io/traffic/web-ui:topic-panel-r826`，OCI manifest `sha256:b2ecd6a165f789dcfc3d12df413bf17479fcf79f24482c11a4d6c244bceb8590`，image ID `sha256:02403056116b40b8a40ec91d3ec373cd2616e8fa220e6091ea107045ac9b0521`；已导入 8-2tb 与 zeus-server containerd，Deployment generation/observedGeneration=`1042/1042`、Ready=`1/1`。
+4. 验收：
+    - `20260727-topic-panel-r823` 专题治理 48/48 passed；
+    - Windows Chrome 150/Xshell `9224 -> 9222` 的 r826 三页视觉门和三档响应式通过；mismatch ratio 为 `0.1079538002 / 0.1156023341 / 0.0949242863`，均不高于 `0.125`；
+    - 证据索引：`doc/02_acceptance/02-regression/topics-development-progress-latest.md`。
+
+四十一、2026-07-28 专题面板响应式与业务动作闭环 r836-r839
+─────────────────────────────────────────
+
+1. alert-service r836：
+    - 专题动作不再统一写 queued；模拟操作返回 completed，真实隔离操作返回 accepted；`business_effect` 包含任务状态、目标状态、下一路由或证据引用，并同时写入 `topic_actions.detail` 和 `audit_logs`；
+    - 报告预览继续复用真实导出接口，返回 Base64 制品、文件名、字节数、SHA-256 和摘要；镜像 `docker.io/traffic/alert-service:topic-panel-r836`，generation/observedGeneration=`259/259`、Ready=`1/1`。
+2. Web UI r839：
+    - 三专题统一使用 API 动态 `TopicTopologyGraph`，支持实线/虚线、漫游缩放和自动适配；隧道三项分析入口完成真实切换；报告预览和列表动作均为居中 Modal；
+    - 终端 CSS 级联保护 1600/1366 图容器与业务区纵向重排；镜像 `docker.io/traffic/web-ui:topic-panel-r839`，OCI manifest `sha256:19ff39b254e39b033d076e842eb0c33b828e57ee7600d3f64b9c5cf50082f07c`，image ID `sha256:f0b15a7d292939e0e8b5fd412d80ed18a95dcfbdf3cdf976a221ea211fcfc399`；已导入 8-2tb 与 zeus-server，generation/observedGeneration=`1055/1055`、Ready=`1/1`。
+3. 生产验收：
+    - Windows Chrome/Xshell `9224 -> 9222` 的三档响应式、158 项控件、报告/业务 Modal、数据库 actor 审计及三图同帧差异全部通过；
+    - 最终证据索引为 `doc/02_acceptance/02-regression/topics-development-progress-latest.md`。
+
+四十二、2026-07-28 专题面板严格逐图回修 r840-r842
+─────────────────────────────────────────
+
+1. alert-service r840：
+    - 报告导出统一从 PostgreSQL 专题模拟快照生成；数据库无启用快照时按 tunnel/exfil/apt 分别回退 ClickHouse 实时聚合；
+    - PDF、DOCX、ZIP 不再返回占位内容，制品包含专题指标和数据计数；ZIP 的 manifest、snapshot 分离并附 SHA-256；
+    - 镜像 `docker.io/traffic/alert-service:topic-panel-r840`，OCI manifest `sha256:e2f763a780f4f5572f875ee673f11fad7a58532a5f41a7a5914d29ff4db5095a`，image ID `sha256:d45c2dd106264e3d94acfe8d9f203c7ae263578ae5a28925fc510ac3a5d56040`；generation/observedGeneration=`260/260`、Ready=`1/1`。
+2. Web UI r842：
+    - 新增专题末级精确样式层，1920 恢复三张 UI 图的主区/右栏比例，1600/1366 改为纵向信息流；KPI、图例、APT 矩阵和右栏均有独立裁切保护；
+    - 三个主画布继续共用 `TopicTopologyGraph`，API 节点/边优先，保留实线/虚线、滚轮漫游、放大/缩小/自动适配和可测 zoom 状态；
+    - 报告缩略图与报告预览改为数据驱动报告文档；隧道高危用户按风险筛选排序；行级业务操作保持居中 Modal；
+    - r842 继续将 1366px 元数据/KPI 改为三列或四列完整换行，并补齐报告指标中文映射；
+    - 镜像 `docker.io/traffic/web-ui:topic-panel-r842`，OCI manifest `sha256:afbbf993f0b944673a24df76614b679489ec8f96902ce38e7ff3c74189108338`，image ID `sha256:5706f19e9b0b4218fa6e9f2993db7d75e496ba724fbf0176d13b955e7e79ab80`；generation/observedGeneration=`1057/1057`、Ready=`1/1`。
+3. 生产验收：
+    - Windows Chrome 150/Xshell `9224 -> 9222` 在 1920×1080、1600×900、1366×768 对三个专题均无页面级水平溢出、左右区重叠或右栏文字裁切；
+    - 全控件按 tunnel `58/58` 和 exfil+apt `100/100` 分段执行，合计 `158/158`；三个报告预览均创建 PostgreSQL 制品与匹配审计；最终 actor 写入 65 动作、20 导出、6 视图、3 范围、3 订阅、106 审计；
+    - r839 的 `0.125` 宽松差异门不再作为完成依据，r842 按用户本轮三张内容区 UI 图逐区复核；最终证据索引为 `doc/02_acceptance/02-regression/topics-development-progress-latest.md`。
+
+四十三、2026-07-28 加密隧道局部影响面纠正 r843
+─────────────────────────────────────────
+
+1. 数据与接口：
+    - PostgreSQL `topic_panel_simulations` 的 tunnel 快照按用户最新局部参考图写入六层业务链：资产组、探针、高危隧道源、隧道协议、代理/跳板、外部端点；
+    - 当前快照包含 20 个节点、26 条实/虚关系边和 3 张底部摘要卡，由专题 GET API 动态返回。
+2. Web UI r843：
+    - 继续复用三专题统一的 `TopicTopologyGraph`，增加圆形节点和外置标签能力；加密隧道不再使用 IP 中心放射图；
+    - 三张摘要卡联动分析区，协议分析、高危用户、指纹证据和端点国家分布均可独立切换；
+    - 镜像 `docker.io/traffic/web-ui:topic-panel-r843`，OCI manifest `sha256:5a165d7dc5e048fb32d3a841dd529692481904e2ff47e5e89792e84bbbd4972e`，image ID `sha256:a7dcdebb70ef5f1f34a7ffa9a51eb98faf3c79a94ce2ef421df99d14057338f3`；generation/observedGeneration=`1058/1058`、Ready=`1/1`。
+3. 生产验收：
+    - Windows Chrome 150/Xshell `9224 -> 9222` 的 1920×1080、1600×900、1366×768 三档均无水平溢出、左右区重叠或右栏文字裁切；
+    - 修正后加密隧道控件门禁 `58/58`，关系图放大、缩小、自动适配、布局、全屏、摘要卡联动、四个分析页签、列表动作、报告预览和右栏动作全部通过，应用错误、请求失败、console/page error 均为 0。
+
+四十四、2026-07-28 加密隧道整页最终回修 r850-r851
+─────────────────────────────────────────
+
+1. alert-service r850：
+    - PCAP、Session、证书、回溯路径、审计日志使用独立动作码和业务结果，均写 `topic_actions` 与审计；
+    - 镜像 `docker.io/traffic/alert-service:topic-panel-r850`，OCI manifest `sha256:4f9f5dbe5694ec7ecb799299a9673e917868b17f6c19b9e915805fcccfc7855d`，image ID `sha256:9820cad9e390003189bebd0ea8758bc83b9210fbbe30d5258286e84d646b7395`；generation/observedGeneration=`261/261`、Ready=`1/1`。
+2. Web UI r851：
+    - 中部局部影响面与分析区保持 381px 固定业务高度；资产组与协议节点的框、图标、标题、明细统一缩放且边框包围文字；
+    - 隧道复用路径使用真实箭头图标；表格固定 10 条/页并按实际空间决定内部滚动；窄屏使用页面/图容器滚动；
+    - 镜像 `docker.io/traffic/web-ui:topic-panel-r851`，OCI manifest `sha256:46d92e778d6d74388865b8322d4cb7f19a62becbf997c06a5506905fcd30203c`，image ID `sha256:5d7874f6f97ae9940f21f5ec9c9051f324dcdb4d874b5557263d605c1d95325e`；generation/observedGeneration=`1065/1065`、Ready=`1/1`。
+3. 生产验收：
+    - Windows Chrome 150/Xshell `9224 -> 9222` 专项控件 `88/88`，五类行级动作、报告预览、三个分析 Tab、关系图控制和治理操作均通过；
+    - 1920×1080 表内滚动开启，1920×1300 完整展示 10 行且表内滚动关闭；两档中部业务区均为 381px；1600×900、1366×768 无页面级水平溢出。

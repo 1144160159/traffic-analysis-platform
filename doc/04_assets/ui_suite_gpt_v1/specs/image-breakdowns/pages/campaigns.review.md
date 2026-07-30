@@ -10,6 +10,18 @@
 - Production image: `traffic/web-ui:ui-campaigns-visual-20260710-r165`
 - Production route: `http://10.0.5.8:30180/campaigns`
 
+## 2026-07-26 r770 Superseding Drawer Review
+
+- Production image: `docker.io/traffic/web-ui:campaign-list-drawer-r770`.
+- Drawer decision: required for context-preserving list triage; full detail remains a separate deep-analysis route.
+- Selection state: clicking a row updates the unique selected row, URL `campaign`, all four right-rail panels, the detail API query key and the Drawer campaign content.
+- Geometry: 1920×1080 Windows Chrome produces a 1200×1048 right Drawer at 16px top/right/bottom; the campaign list remains visible behind it.
+- Layout: six summary cells render as 3×2; detail columns are 296/526/296 with no overlap; evidence and audit panels each expand to 1137px inside the same tab workspace.
+- Chart: the evidence/attack relation view is ECharts `lines + scatter`; circular nodes use fixed pixel sizes and directed relationship arrows, eliminating graph-coordinate symbol stretching.
+- Runtime: detail API 200; application 4xx/5xx, console errors, page errors and request failures are all zero.
+- Evidence: `evidence/ui-image-breakdowns/pages/campaigns/selection-drawer-r770-prod.json` and `selection-drawer-r770-prod.png`.
+- Scope note: the latest user-selected Drawer screenshot requires tabs and a 3×2 summary; those explicit changes supersede the older single-row/no-tab overlay raster for this state.
+
 ## Checks
 
 | Check | Result | Evidence |
