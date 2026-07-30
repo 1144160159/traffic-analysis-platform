@@ -1,11 +1,13 @@
 import {
   AlertOutlined,
   ApiOutlined,
+  ArrowRightOutlined,
   AuditOutlined,
   BellOutlined,
   BranchesOutlined,
   CloudServerOutlined,
   DatabaseOutlined,
+  DownOutlined,
   DownloadOutlined,
   EditOutlined,
   ExportOutlined,
@@ -25,10 +27,10 @@ import {
   ThunderboltOutlined,
 } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
-import { Alert, Button, Checkbox, Drawer, Dropdown, Input, Modal, Select, Table } from 'antd';
+import { Alert, Button, Checkbox, Dropdown, Input, Modal, Select, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { CSSProperties, ReactNode } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   DataQualityDonutChart,
@@ -36,7 +38,6 @@ import {
   ExfilBarChart,
   ExfilLineChart,
   ExfilPieChart,
-  ExfilSankeyChart,
   TopicTopologyGraph,
   type ExfilBarItem,
   type ExfilDistributionItem,
@@ -55,13 +56,14 @@ import {
   createTopicSubscription,
   exportTopicArtifact,
   fetchPageSnapshot,
+  fetchTopicScope,
   saveTopicView,
   submitTopicAction,
   updateTopicScope,
   updateTopicViewPreference,
 } from '@/services/api';
-import type { PageSnapshot, SnapshotRow } from '@/services/mockData';
-import { isVisualBreakdownMode } from '@/utils/visualBreakdownMode';
+import type { TopicExport } from '@/services/api';
+import type { PageSnapshot, SnapshotRow, TopicVisuals } from '@/services/mockData';
 
 type TopicId = 'topic-tunnel' | 'topic-exfil' | 'topic-apt';
 type Tone = PageSnapshot['metrics'][number]['status'];
@@ -121,7 +123,9 @@ type AptIocRow = {
   ioc: string;
   type: string;
   hits: number;
+  campaign: string;
   firstSeen: string;
+  lastSeen: string;
 };
 
 type AptEvidenceEventRow = {
@@ -145,6 +149,9 @@ type AptVisualModel = {
   iocs: AptIocRow[];
   response: Array<{ label: string; value: number; tone: Tone }>;
   evidenceRows: PageSnapshot['evidence'];
+  campaignDetails: NonNullable<TopicVisuals['aptCampaigns']>;
+  lateralRelations: NonNullable<TopicVisuals['aptLateralPaths']>;
+  evidenceAssociations: NonNullable<TopicVisuals['aptEvidenceAssociations']>;
   reportConfidence: number;
   closureRate: number;
   eventTotal: number;
@@ -153,6 +160,7 @@ type AptVisualModel = {
 type TopicConfig = {
   tone: 'tunnel' | 'exfil' | 'apt';
   topicCode: string;
+  displayTopicId?: string;
   site: string;
   assetGroup: string;
   ipRange: string;
@@ -184,16 +192,109 @@ type TopicActionButtonProps = {
   className?: string;
   ariaLabel?: string;
   overlayId?: string;
+  reportBinding?: TopicReportSnapshotBinding;
   children: ReactNode;
 };
 
-function TopicActionButton({ topic, title, target = title, className, ariaLabel, overlayId, children }: TopicActionButtonProps) {
+type TopicReportSnapshotState = {
+  exportId: string;
+  snapshotSha256: string;
+  reportModel: Record<string, unknown>;
+  rawReport: Record<string, unknown>;
+  sourceArtifact: TopicExport;
+};
+
+type TopicReportSnapshotBinding = {
+  value?: TopicReportSnapshotState;
+  update: (value?: TopicReportSnapshotState) => void;
+};
+
+function collectTopicViewState() {
+  const shell = document.querySelector<HTMLElement>('.taf-topic-shell');
+  const values = [...(shell?.querySelectorAll<HTMLInputElement>('input:not([type="hidden"])') ?? [])]
+    .filter((input) => input.value.trim())
+    .map((input) => ({ label: input.getAttribute('aria-label') || input.placeholder || input.name || 'input', value: input.value }));
+  const selections = [...(shell?.querySelectorAll<HTMLElement>('.ant-select-selection-item') ?? [])]
+    .map((item) => item.textContent?.trim())
+    .filter((value): value is string => Boolean(value));
+  const activeTabs = [...(shell?.querySelectorAll<HTMLElement>('[role="tab"][aria-selected="true"], .taf-topic-apt-tabs button.is-active') ?? [])]
+    .map((item) => item.textContent?.trim())
+    .filter((value): value is string => Boolean(value));
+  const activePages = [...(shell?.querySelectorAll<HTMLElement>('.ant-pagination-item-active, .taf-topic-page-button.is-active') ?? [])]
+    .map((item) => item.textContent?.trim())
+    .filter((value): value is string => Boolean(value));
+  return {
+    route: `${window.location.pathname}${window.location.search}`,
+    values,
+    selections,
+    active_tabs: activeTabs,
+    active_pages: activePages,
+    fullscreen: Boolean(document.fullscreenElement),
+    captured_at: new Date().toISOString(),
+  };
+}
+
+function collectTopicDataContext() {
+  const shell = document.querySelector<HTMLElement>('.taf-topic-shell');
+  return {
+    data_mode: shell?.dataset.dataMode === 'simulated' ? 'simulated' as const : 'live' as const,
+    simulation_id: shell?.dataset.simulationId || undefined,
+    simulation_version: shell?.dataset.simulationVersion || undefined,
+    view_state: collectTopicViewState(),
+  };
+}
+
+function downloadTopicArtifact(result: { result?: Record<string, unknown> }) {
+  const artifact = result.result ?? {};
+  const encoded = typeof artifact.content_base64 === 'string' ? artifact.content_base64 : '';
+  if (!encoded) return;
+  const bytes = Uint8Array.from(window.atob(encoded), (character) => character.charCodeAt(0));
+  const blob = new Blob([bytes], { type: typeof artifact.content_type === 'string' ? artifact.content_type : 'application/octet-stream' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = typeof artifact.filename === 'string' ? artifact.filename : 'topic-export.bin';
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
+function decodeTopicReportExport(result: TopicExport): TopicReportSnapshotState {
+  const artifact = result.result ?? {};
+  const encoded = typeof artifact.content_base64 === 'string' ? artifact.content_base64 : '';
+  if (!encoded) throw new Error('报告接口未返回可预览内容');
+  const decoded = new TextDecoder().decode(Uint8Array.from(window.atob(encoded), (character) => character.charCodeAt(0)));
+  const rawReport = JSON.parse(decoded) as Record<string, unknown>;
+  const snapshotSha256 = typeof artifact.snapshot_sha256 === 'string' ? artifact.snapshot_sha256 : '';
+  if (!snapshotSha256) throw new Error('报告接口未返回 snapshot_sha256');
+  const reportModel = artifact.report_model && typeof artifact.report_model === 'object'
+    ? artifact.report_model as Record<string, unknown>
+    : {};
+  return {
+    exportId: result.export_id,
+    snapshotSha256,
+    reportModel,
+    rawReport,
+    sourceArtifact: result,
+  };
+}
+
+function assertSameTopicReportSnapshot(source: TopicReportSnapshotState, derived: TopicExport) {
+  const hash = typeof derived.result?.snapshot_sha256 === 'string' ? derived.result.snapshot_sha256 : '';
+  if (!hash || hash !== source.snapshotSha256) {
+    throw new Error(`报告快照校验失败：预览 ${source.snapshotSha256 || '缺失'}，下载 ${hash || '缺失'}`);
+  }
+}
+
+function TopicActionButton({ topic, title, target = title, className, ariaLabel, overlayId, reportBinding, children }: TopicActionButtonProps) {
   const [actionSearchParams] = useSearchParams();
   const [open, setOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [actionID, setActionID] = useState('');
+  const [businessEffect, setBusinessEffect] = useState<{ state?: string; message?: string; next_route?: string; evidence_ref?: string }>();
   const [submitError, setSubmitError] = useState('');
   const [viewName, setViewName] = useState(`${title.includes('保存') ? '当前专题视图' : title}-${new Date().toISOString().slice(0, 10)}`);
   const [viewVisibility, setViewVisibility] = useState('private');
@@ -231,6 +332,7 @@ function TopicActionButton({ topic, title, target = title, className, ariaLabel,
   const resetResult = () => {
     setSubmitted(false);
     setActionID('');
+    setBusinessEffect(undefined);
     setSubmitError('');
   };
 
@@ -248,16 +350,29 @@ function TopicActionButton({ topic, title, target = title, className, ariaLabel,
           detail: { source: 'topic-workbench', target },
         });
         setActionID(`${result.topic}:${result.updated_at}`);
+        window.dispatchEvent(new CustomEvent('taf:topic-scope-updated', { detail: { topic: result.topic } }));
       } else if (actionKind === 'view') {
         const result = await saveTopicView(topic, {
           name: viewName.trim() || '当前专题视图',
           visibility: viewVisibility,
           favorite: favoriteView,
-          filters: { topic, target, source: 'topic-workbench' },
+          filters: { topic, target, source: 'topic-workbench', ...collectTopicViewState() },
         });
         setActionID(result.view_id);
       } else if (actionKind === 'report' || actionKind === 'evidence') {
-        const result = await exportTopicArtifact(topic, actionKind === 'report' ? 'report' : 'evidence_package', exportFormat);
+        let result: TopicExport;
+        if (actionKind === 'report') {
+          let source = reportBinding?.value;
+          if (!source) {
+            source = decodeTopicReportExport(await exportTopicArtifact(topic, 'report', 'json', collectTopicDataContext()));
+            reportBinding?.update(source);
+          }
+          result = await exportTopicArtifact(topic, 'report', exportFormat, collectTopicDataContext(), source.exportId);
+          assertSameTopicReportSnapshot(source, result);
+        } else {
+          result = await exportTopicArtifact(topic, 'evidence_package', exportFormat, collectTopicDataContext());
+        }
+        downloadTopicArtifact(result);
         setActionID(result.export_id);
       } else if (actionKind === 'subscription') {
         const result = await createTopicSubscription(topic, {
@@ -268,12 +383,30 @@ function TopicActionButton({ topic, title, target = title, className, ariaLabel,
         });
         setActionID(result.subscription_id);
       } else {
-        const result = await submitTopicAction(topic, title, target);
+        const result = await submitTopicAction(topic, title, target, collectTopicDataContext());
         setActionID(result.action_id);
+        setBusinessEffect(result.business_effect);
       }
       setSubmitted(true);
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : '专题操作提交失败');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const hydrateScope = async () => {
+    setSubmitting(true);
+    setSubmitError('');
+    try {
+      const scope = await fetchTopicScope(topic);
+      setScopeName(scope.scope_name || '默认专题范围');
+      setIncludedAssets(scope.included_assets.join('\n'));
+      setExcludedAssets(scope.excluded_assets.join('\n'));
+      setRiskLevels(scope.risk_levels);
+      setTimeWindow(scope.time_window || '24h');
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : '专题范围加载失败');
     } finally {
       setSubmitting(false);
     }
@@ -284,7 +417,11 @@ function TopicActionButton({ topic, title, target = title, className, ariaLabel,
     setSubmitError('');
     try {
       const result = await updateTopicViewPreference(topic, preference);
-      setActionID(result.view_id);
+      const resultID = preference === 'shared' && result.share_token ? result.share_token : result.view_id;
+      setActionID(resultID);
+      if (preference === 'shared' && result.share_token && navigator.clipboard) {
+        void navigator.clipboard.writeText(result.share_token).catch(() => undefined);
+      }
       setSubmitted(true);
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : '专题视图偏好更新失败');
@@ -371,7 +508,19 @@ function TopicActionButton({ topic, title, target = title, className, ariaLabel,
         </>
       )}
       {submitError && <Alert type="error" showIcon message="专题业务操作提交失败" description={submitError} />}
-      {submitted && <Alert type="success" showIcon message="专题业务操作已持久化" description={`记录：${actionID}；专题：${topic}；动作：${title}`} />}
+      {submitted && (
+        <Alert
+          type="success"
+          showIcon
+          message={businessEffect?.message || '专题业务操作已执行并持久化'}
+          description={[
+            `记录：${actionID}`,
+            `状态：${businessEffect?.state || 'completed'}`,
+            businessEffect?.evidence_ref ? `证据：${businessEffect.evidence_ref}` : '',
+            businessEffect?.next_route ? `后续页面：${businessEffect.next_route}` : '',
+          ].filter(Boolean).join('；')}
+        />
+      )}
     </div>
   );
 
@@ -391,33 +540,16 @@ function TopicActionButton({ topic, title, target = title, className, ariaLabel,
       aria-label={ariaLabel}
       onClick={() => {
         resetResult();
-        setOpen(true);
+        if (actionKind === 'scope') {
+          void hydrateScope().finally(() => setOpen(true));
+        } else {
+          setOpen(true);
+        }
       }}
     >
       {children}
     </button>
   );
-
-  if (actionKind === 'subscription') {
-    return (
-      <>
-        {trigger}
-        <Drawer
-          className="taf-topic-governance-drawer"
-          title={governanceTitle}
-          open={open}
-          width="min(520px, calc(var(--taf-window-inner-width, 100dvw) - 40px))"
-          onClose={() => {
-            setOpen(false);
-            resetResult();
-          }}
-          extra={<Button size="small" type="primary" loading={submitting} disabled={submitted} onClick={() => void submit()}>{submitted ? '已保存' : '确认保存'}</Button>}
-        >
-          {governanceBody}
-        </Drawer>
-      </>
-    );
-  }
 
   if (actionKind !== 'action') {
     return (
@@ -446,32 +578,269 @@ function TopicActionButton({ topic, title, target = title, className, ariaLabel,
   return (
     <>
       {trigger}
-      <Drawer
+      <Modal
         className="taf-topic-action-drawer"
         title={`${title}确认`}
         open={open}
         width="min(520px, calc(var(--taf-window-inner-width, 100dvw) - 40px))"
-        onClose={() => {
+        onCancel={() => {
           setOpen(false);
           resetResult();
         }}
-        extra={<Button size="small" type="primary" loading={submitting} disabled={submitted} onClick={() => void submit()}>{submitted ? '已写入任务队列' : '确认提交'}</Button>}
+        okText={submitted ? '已完成' : '确认执行'}
+        cancelText="取消"
+        okButtonProps={{ loading: submitting, disabled: submitted }}
+        onOk={() => void submit()}
       >
         {governanceBody}
-      </Drawer>
+      </Modal>
     </>
+  );
+}
+
+function TopicReportPreviewButton({
+  topic,
+  config,
+  visuals,
+  reportBinding,
+}: {
+  topic: string;
+  config: TopicConfig;
+  visuals?: TopicVisuals;
+  reportBinding: TopicReportSnapshotBinding;
+}) {
+  const [open, setOpen] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [downloadingFormat, setDownloadingFormat] = useState('');
+  const preview = async () => {
+    setOpen(true);
+    setError('');
+    if (reportBinding.value) return;
+    setLoading(true);
+    try {
+      const result = await exportTopicArtifact(topic, 'report', 'json', collectTopicDataContext());
+      reportBinding.update(decodeTopicReportExport(result));
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : '报告预览生成失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+  const downloadFormat = async (format: 'pdf' | 'docx' | 'json') => {
+    const source = reportBinding.value;
+    if (!source) return;
+    setError('');
+    setDownloadingFormat(format);
+    try {
+      const result = await exportTopicArtifact(topic, 'report', format, collectTopicDataContext(), source.exportId);
+      assertSameTopicReportSnapshot(source, result);
+      downloadTopicArtifact(result);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : '报告下载失败');
+    } finally {
+      setDownloadingFormat('');
+    }
+  };
+  const report = reportBinding.value?.rawReport;
+  const exportID = reportBinding.value?.exportId ?? '';
+  const snapshot = report?.snapshot && typeof report.snapshot === 'object' ? report.snapshot as Record<string, unknown> : undefined;
+  const model = reportBinding.value?.reportModel ?? {};
+  const summary = model.summary && typeof model.summary === 'object'
+    ? model.summary as Record<string, unknown>
+    : snapshot?.summary && typeof snapshot.summary === 'object'
+      ? snapshot.summary as Record<string, unknown>
+      : {};
+  const presentation = model.presentation && typeof model.presentation === 'object'
+    ? model.presentation as Record<string, unknown>
+    : snapshot?.presentation && typeof snapshot.presentation === 'object'
+      ? snapshot.presentation as Record<string, unknown>
+      : {};
+  const summaryEntries = Object.entries(summary).filter(([, value]) => ['string', 'number', 'boolean'].includes(typeof value)).slice(0, 12);
+  const evidenceSections = Object.entries(snapshot ?? {})
+    .filter(([, value]) => Array.isArray(value) && value.length > 0)
+    .map(([key, value]) => ({ key, count: (value as unknown[]).length }))
+    .slice(0, 6);
+  const reportConclusion = String(model.conclusion || presentation.report_conclusion || visuals?.presentation?.reportConclusion || '当前专题证据链可用于形成专题研判结论，未闭环风险需继续跟踪处置。');
+  return (
+    <>
+      <Button
+        type="primary"
+        size="small"
+        className="taf-topic-report-preview-trigger"
+        loading={loading}
+        onClick={() => void preview()}
+      >
+        预览报告
+      </Button>
+      <Modal
+        className="taf-topic-report-preview-modal"
+        title={String(presentation.report_title || visuals?.presentation?.reportTitle || config.reportTitle)}
+        open={open}
+        width="min(820px, calc(var(--taf-window-inner-width, 100dvw) - 40px))"
+        footer={(
+          <>
+            <Button loading={downloadingFormat === 'pdf'} onClick={() => void downloadFormat('pdf')}>下载 PDF</Button>
+            <Button loading={downloadingFormat === 'docx'} onClick={() => void downloadFormat('docx')}>下载 DOCX</Button>
+            <Button loading={downloadingFormat === 'json'} onClick={() => void downloadFormat('json')}>下载 JSON</Button>
+            <Button onClick={() => setOpen(false)}>关闭</Button>
+          </>
+        )}
+        onCancel={() => setOpen(false)}
+      >
+        <div className="taf-topic-report-modal" aria-busy={loading}>
+          {loading && <Alert type="info" showIcon message="正在通过专题报告 API 生成预览" />}
+          {!loading && report && (
+            <div className="taf-topic-report-document" data-export-id={exportID}>
+              <header>
+                <FileDoneOutlined />
+                <div>
+                  <strong>{String(presentation.report_title || visuals?.presentation?.reportTitle || config.reportTitle)}</strong>
+                  <span>{String(presentation.topic_id || config.displayTopicId || topic)} · {String(presentation.time_window_label || config.timeRange)}</span>
+                </div>
+                <em>专题分析报告</em>
+              </header>
+              <section className="taf-topic-report-executive-summary">
+                <h3>执行摘要</h3>
+                <p>{reportConclusion}</p>
+                <dl>
+                  <dt>分析范围</dt><dd>{String(presentation.report_scope || visuals?.presentation?.reportScope || config.reportSubject)}</dd>
+                  <dt>生成时间</dt><dd>{String(report.generated_at || presentation.report_generated_at || '当前时间')}</dd>
+                  <dt>数据来源</dt><dd>{snapshot?.data_mode === 'simulated' || visuals?.dataMode === 'simulated' ? `PostgreSQL 模拟数据 / ${String(snapshot?.simulation_version || visuals?.simulationVersion || '当前版本')}` : '实时专题聚合 API'}</dd>
+                  <dt>制品编号</dt><dd>{exportID}</dd>
+                </dl>
+              </section>
+              <section>
+                <h3>关键指标</h3>
+                <div className="taf-topic-report-metrics">
+                  {summaryEntries.map(([label, value]) => {
+                    const metric = formatTopicReportMetric(label, value);
+                    return <span key={label}><b>{metric.label}</b><strong>{metric.value}</strong></span>;
+                  })}
+                </div>
+              </section>
+              <section className="taf-topic-report-findings">
+                <h3>关键发现与证据范围</h3>
+                <ol>
+                  {summaryEntries.slice(0, 3).map(([label, value]) => {
+                    const metric = formatTopicReportMetric(label, value);
+                    return <li key={label}><b>{metric.label}</b><span>当前值 {metric.value}，已纳入本次专题判定与处置优先级。</span></li>;
+                  })}
+                </ol>
+                <div>
+                  {evidenceSections.map((item) => <span key={item.key}><b>{topicReportCollectionLabel(item.key)}</b><strong>{item.count} 条</strong></span>)}
+                  {!evidenceSections.length && <span><b>专题快照</b><strong>已生成</strong></span>}
+                </div>
+              </section>
+              <Alert
+                type="success"
+                showIcon
+                message="报告预览已由后端生成并写入审计"
+                description={`报告制品 ID：${exportID}；快照哈希：${reportBinding.value?.snapshotSha256}`}
+              />
+            </div>
+          )}
+          {error && <Alert type="error" showIcon message="报告预览生成失败" description={error} />}
+        </div>
+      </Modal>
+    </>
+  );
+}
+
+const topicReportMetricLabels: Record<string, { label: string; unit?: string }> = {
+  protocol_count: { label: '识别协议族', unit: ' 类' },
+  active_users: { label: '活跃用户', unit: ' 人' },
+  high_risk_users: { label: '高危用户', unit: ' 人' },
+  encrypted_traffic_gbps: { label: '加密会话流量', unit: ' Gbps' },
+  endpoint_count: { label: '隧道端点', unit: ' 个' },
+  session_count: { label: '异常会话', unit: ' 个' },
+  suspicious_ratio: { label: '可疑隧道占比', unit: '%' },
+  total_bytes: { label: '加密流量', unit: ' B' },
+  total_events: { label: '关联事件', unit: ' 条' },
+  evidence_completeness: { label: '证据完整度', unit: '%' },
+  report_confidence: { label: '报告置信度', unit: '%' },
+  source_count: { label: '可疑外传源', unit: ' 个' },
+  path_count: { label: '外传路径', unit: ' 条' },
+  destination_count: { label: '外传目的地', unit: ' 个' },
+  risk_type_count: { label: '敏感数据类型', unit: ' 类' },
+  peak_upload_gbps: { label: '异常上传峰值', unit: ' Gbps' },
+  campaign_count: { label: '关联战役', unit: ' 个' },
+  attack_phase_count: { label: '攻击阶段', unit: ' 个' },
+  evidence_count: { label: '关联证据', unit: ' 条' },
+  open_risk_count: { label: '未闭环风险', unit: ' 个' },
+  pending_evidence_count: { label: '待补证据', unit: ' 条' },
+  reportable_count: { label: '可生成报告', unit: ' 份' },
+};
+
+function formatTopicReportMetric(key: string, value: unknown) {
+  const meta = topicReportMetricLabels[key] ?? { label: key.replace(/_/gu, ' ') };
+  const normalized = typeof value === 'number' && !Number.isInteger(value) ? value.toFixed(2) : String(value);
+  return { label: meta.label, value: `${normalized}${meta.unit ?? ''}` };
+}
+
+function topicReportCollectionLabel(key: string) {
+  const labels: Record<string, string> = {
+    protocols: '协议证据', users: '用户证据', sessions: '会话证据', fingerprints: '指纹证据',
+    top_sources: '源资产证据', destinations: '目的地证据', paths: '外传路径', risk_types: '风险类型',
+    campaigns: '战役实体', phase_distribution: '攻击阶段', evidence: '关联证据', actions: '处置记录',
+  };
+  return labels[key] ?? key.replace(/_/gu, ' ');
+}
+
+function TopicReportThumbnail({ title, topicId, completeness }: { title: string; topicId: string; completeness: number }) {
+  return (
+    <div className="taf-topic-report-sheet" aria-label={`${title} 首屏缩略图`}>
+      <FileDoneOutlined />
+      <strong>{title}</strong>
+      <span>{topicId}</span>
+      <small>证据完整度 {Math.max(0, Math.min(100, Math.round(completeness)))}%</small>
+      <i style={{ '--report-progress': `${Math.max(0, Math.min(100, completeness))}%` } as CSSProperties} />
+    </div>
+  );
+}
+
+function TopicProgressDonut({
+  value,
+  ariaLabel,
+  className,
+  caption,
+  detail,
+}: {
+  value: number;
+  ariaLabel: string;
+  className: string;
+  caption: string;
+  detail?: string;
+}) {
+  const normalized = Math.max(0, Math.min(100, value));
+  return (
+    <div className={`${className} taf-topic-progress-donut`} data-center-value={`${Math.round(normalized)}%`}>
+      <div className="taf-topic-progress-donut__ring">
+        <DataQualityDonutChart
+          ariaLabel={ariaLabel}
+          className="taf-topic-progress-donut__chart"
+          rows={[
+            { label: '已完成', value: normalized, color: normalized >= 80 ? '#83d75d' : normalized >= 60 ? '#ffb020' : '#ff6748' },
+            { label: '待完成', value: 100 - normalized, color: 'rgba(56, 151, 201, 0.18)' },
+          ]}
+        />
+        <strong className="taf-topic-progress-donut__value">{Math.round(normalized)}%</strong>
+      </div>
+      <span className="taf-topic-progress-donut__caption">{caption}</span>
+      {detail ? <small className="taf-topic-progress-donut__detail">{detail}</small> : null}
+    </div>
   );
 }
 
 const topicConfigs: Record<TopicId, TopicConfig> = {
   'topic-tunnel': {
     tone: 'tunnel',
-    topicCode: 'tunnel-20260620-01',
+    topicCode: 'tunnel',
     site: '主校区',
     assetGroup: '办公终端 / 服务群组',
     ipRange: '10.12.0.0/16',
     protocol: 'SSH / TLS / HTTPS / RDP / SOCKS',
-    timeRange: '近 7 天 (2026-06-13 00:00:00 ~ 2026-06-20 03:45:00)',
+    timeRange: '当前查询窗口',
     rule: '加密隧道识别规则集 v2.1',
     model: '加密隧道识别模型 v1.3',
     canvasTitle: '加密隧道局部影响面',
@@ -513,12 +882,12 @@ const topicConfigs: Record<TopicId, TopicConfig> = {
   },
   'topic-exfil': {
     tone: 'exfil',
-    topicCode: 'exfil-20260620-01',
+    topicCode: 'exfil',
     site: '主校区',
     assetGroup: '科研文件服务 / 办公终端',
     ipRange: '10.14.0.0/16',
     protocol: 'HTTPS / S3 / WebDAV / DNS',
-    timeRange: '近 24 小时 (2026-06-19 03:45:00 ~ 2026-06-20 03:45:00)',
+    timeRange: '当前查询窗口',
     rule: '数据外传识别模型 v3.2',
     model: '外传路径识别模型 v2.0',
     canvasTitle: '数据外传路径分析 (Sankey)',
@@ -560,12 +929,12 @@ const topicConfigs: Record<TopicId, TopicConfig> = {
   },
   'topic-apt': {
     tone: 'apt',
-    topicCode: 'campaign-20260620-apt01',
+    topicCode: 'apt',
     site: '主园区',
     assetGroup: '办公终端 / 数据中心',
     ipRange: '10.12.0.0/16',
     protocol: '初始访问 / 执行 / 横向移动 / 数据外传',
-    timeRange: '近 30 天 (2026-05-21 ~ 2026-06-20 03:45:00)',
+    timeRange: '当前查询窗口',
     rule: '战役关联规则 v2.4',
     model: '战役聚类模型 v1.8',
     canvasTitle: 'APT/战役攻击链画布',
@@ -620,7 +989,7 @@ function TopicHeaderControls({ config }: { config: TopicConfig }) {
         <EditOutlined />编辑范围
       </TopicActionButton>
       <TopicActionButton topic={config.topicCode} title="保存视图" target={config.topicCode} className="ant-btn ant-btn-default ant-btn-sm" overlayId="modal-topic-save-view">
-        <SaveOutlined />保存视图
+        <SaveOutlined />保存视图<DownOutlined className="taf-topic-save-view-chevron" />
       </TopicActionButton>
     </>
   );
@@ -634,115 +1003,19 @@ function topicRailOverlayId(label: string) {
 
 type TunnelKpi = {
   label: string;
-  value: string;
-  delta: string;
-  status: Tone;
   icon: ReactNode;
 };
 
-type TunnelEvidenceEvent = {
-  id: string;
-  source: string;
-  protocol: string;
-  destination: string;
-  evidenceType: string;
-  timeRange: string;
-  evidence: string[];
-};
-
 const tunnelKpis: TunnelKpi[] = [
-  { label: '隧道协议数', value: '7', delta: '较昨日 +1', status: 'risk', icon: <GlobalOutlined /> },
-  { label: '高频隧道源', value: '23', delta: '较昨日 +3', status: 'info', icon: <NodeIndexOutlined /> },
-  { label: '加密会话流量', value: '78.3 Gbps', delta: '较昨日 +12.6%', status: 'ok', icon: <ThunderboltOutlined /> },
-  { label: '异常隧道数', value: '64', delta: '较昨日 +7', status: 'risk', icon: <AlertOutlined /> },
-  { label: '隧道端点数', value: '312', delta: '较昨日 +11', status: 'info', icon: <RadarChartOutlined /> },
-  { label: '可疑隧道占比', value: '18.6%', delta: '较昨日 +4.2%', status: 'warn', icon: <LockOutlined /> },
-  { label: '证据完整度', value: '62%', delta: '较昨日 +8%', status: 'ok', icon: <SafetyCertificateOutlined /> },
-  { label: '报告置信度', value: '62%', delta: '较昨日 +8%', status: 'ok', icon: <FileDoneOutlined /> },
-  { label: '未闭环风险数', value: '18', delta: '较昨日 -2', status: 'warn', icon: <FileProtectOutlined /> },
-];
-
-const tunnelProtocols: ExfilDistributionItem[] = [
-  { label: 'SSH', value: 32, color: '#58bfff' },
-  { label: 'TLS', value: 28, color: '#8bd85e' },
-  { label: 'HTTPS', value: 20, color: '#ff6b4a' },
-  { label: 'RDP', value: 10, color: '#ffb020' },
-  { label: 'SOCKS', value: 6, color: '#b685ff' },
-  { label: '其他', value: 4, color: '#7f8fb5' },
-];
-
-const tunnelProtocolRows = [
-  { label: 'SSH', percent: '32%', traffic: '25.1 Gbps' },
-  { label: 'TLS', percent: '28%', traffic: '21.9 Gbps' },
-  { label: 'HTTPS', percent: '20%', traffic: '15.6 Gbps' },
-  { label: 'RDP', percent: '10%', traffic: '7.8 Gbps' },
-  { label: 'SOCKS', percent: '6%', traffic: '4.7 Gbps' },
-  { label: '其他', percent: '4%', traffic: '3.2 Gbps' },
-];
-
-const tunnelSourceTop: ExfilBarItem[] = [
-  { label: '10.12.8.45', value: 18.2 },
-  { label: '10.12.6.78', value: 14.7 },
-  { label: '10.12.9.33', value: 9.6 },
-  { label: '10.12.3.67', value: 6.8 },
-  { label: '10.12.2.55', value: 4.3 },
-];
-
-const tunnelAsnRows = [
-  ['美国 (US)', '2,134', 'AS15169', '28.0'],
-  ['新加坡 (SG)', '1,421', 'AS133481', '16.5'],
-  ['德国 (DE)', '1,098', 'AS3320', '9.2'],
-  ['荷兰 (NL)', '987', 'AS6830', '6.4'],
-  ['香港 (HK)', '652', 'AS4760', '3.6'],
-];
-
-const tunnelEndpointCountryTop: ExfilBarItem[] = [
-  { label: '美国', value: 2134 },
-  { label: '新加坡', value: 1421 },
-  { label: '德国', value: 1098 },
-  { label: '荷兰', value: 987 },
-  { label: '香港', value: 652 },
-];
-
-const tunnelTrend: ExfilTrendPoint[] = [
-  { label: '06-13', value: 18 },
-  { label: '06-14', value: 42 },
-  { label: '06-15', value: 58 },
-  { label: '06-16', value: 64 },
-  { label: '06-17', value: 72 },
-  { label: '06-18', value: 66 },
-  { label: '06-19', value: 88 },
-  { label: '06-20', value: 78 },
-];
-
-const tunnelJa3Rows = [
-  ['JA3 指纹异常', '28', '39.4%', '771,acdc...'],
-  ['自签名证书', '18', '25.4%', 'Self-Signed/CN=*'],
-  ['证书过期', '12', '16.9%', 'expired / 2024-*'],
-  ['域名不匹配', '13', '18.3%', 'example.com'],
-];
-
-const tunnelReuseRows = [
-  ['10.12.8.45', 'SSH', '跳板机(SG)', '203.0.113.45(US)'],
-  ['10.12.6.78', 'TLS', '代理(US)', '198.51.100.77(US)'],
-  ['10.12.9.33', 'SOCKS', 'VPN(NL)', '45.77.34.12(NL)'],
-];
-
-const tunnelEvidenceEvents: TunnelEvidenceEvent[] = [
-  { id: 'TN-20260620-0001', source: '10.12.8.45', protocol: 'SSH', destination: '203.0.113.45(SG)', evidenceType: 'PCAP', timeRange: '06-19 22:14:32 ~ 22:18:47', evidence: ['PCAP', 'Session', '证书', '回溯路径', '审计日志'] },
-  { id: 'TN-20260620-0002', source: '10.12.6.78', protocol: 'TLS', destination: '198.51.100.77(US)', evidenceType: 'Session', timeRange: '06-19 21:05:11 ~ 21:15:09', evidence: ['PCAP', 'Session', '证书', '回溯路径', '审计日志'] },
-  { id: 'TN-20260620-0003', source: '10.12.9.33', protocol: 'HTTPS', destination: '104.16.24.34(US)', evidenceType: '证书', timeRange: '06-18 08:32:00 ~ 08:42:15', evidence: ['PCAP', 'Session', '证书', '回溯路径', '审计日志'] },
-  { id: 'TN-20260620-0004', source: '10.12.3.67', protocol: 'RDP', destination: '45.77.34.12(NL)', evidenceType: 'PCAP', timeRange: '06-18 17:26:55 ~ 17:32:20', evidence: ['PCAP', 'Session', '证书', '回溯路径', '审计日志'] },
-  { id: 'TN-20260620-0005', source: '10.12.2.55', protocol: 'SOCKS', destination: '23.227.38.65(US)', evidenceType: '回溯路径', timeRange: '06-17 23:10:21 ~ 23:22:47', evidence: ['PCAP', 'Session', '证书', '回溯路径', '审计日志'] },
-];
-
-const tunnelEvidenceCompleteness = [
-  { label: '告警证据', value: '64 / 64 (100%)', status: 'ok' as const },
-  { label: 'PCAP', value: '132 / 156 (84%)', status: 'warn' as const },
-  { label: 'Session', value: '198 / 204 (97%)', status: 'ok' as const },
-  { label: '审计日志', value: '38 / 38 (100%)', status: 'ok' as const },
-  { label: '回溯路径', value: '18 / 18 (100%)', status: 'ok' as const },
-  { label: '资产快照', value: '23 / 23 (100%)', status: 'ok' as const },
+  { label: '隧道协议数', icon: <GlobalOutlined /> },
+  { label: '高频隧道源', icon: <NodeIndexOutlined /> },
+  { label: '加密会话流量', icon: <ThunderboltOutlined /> },
+  { label: '异常隧道数', icon: <AlertOutlined /> },
+  { label: '隧道端点数', icon: <RadarChartOutlined /> },
+  { label: '可疑隧道占比', icon: <LockOutlined /> },
+  { label: '证据完整度', icon: <SafetyCertificateOutlined /> },
+  { label: '报告置信度', icon: <FileDoneOutlined /> },
+  { label: '未闭环风险数', icon: <FileProtectOutlined /> },
 ];
 
 const topicIdByParam: Record<string, TopicId> = {
@@ -764,6 +1037,8 @@ export function TopicWorkbenchPage({ route }: { route: NavRoute }) {
   const config = topicConfigs[selectedTopic];
   const [focusMode, setFocusMode] = useState(config.focusModes[0]);
   const [selectedSignal, setSelectedSignal] = useState(config.signals[0].label);
+  const [scopeRevision, setScopeRevision] = useState(0);
+  const [reportSnapshot, setReportSnapshot] = useState<TopicReportSnapshotState>();
 
   useEffect(() => {
     setFocusMode(config.focusModes[0]);
@@ -771,25 +1046,74 @@ export function TopicWorkbenchPage({ route }: { route: NavRoute }) {
   }, [config]);
 
   const { data, error, isError, isLoading, refetch } = useQuery({
-    queryKey: ['page-snapshot', selectedTopic],
+    queryKey: ['page-snapshot', selectedTopic, scopeRevision],
     queryFn: () => fetchPageSnapshot(selectedTopic),
   });
 
+  useEffect(() => {
+    const handleScopeUpdate = (event: Event) => {
+      const updatedTopic = (event as CustomEvent<{ topic?: string }>).detail?.topic;
+      if (!updatedTopic || updatedTopic === config.topicCode) setScopeRevision((value) => value + 1);
+    };
+    window.addEventListener('taf:topic-scope-updated', handleScopeUpdate);
+    return () => window.removeEventListener('taf:topic-scope-updated', handleScopeUpdate);
+  }, [config.topicCode]);
+
   const rows = useMemo(() => data?.rows ?? [], [data?.rows]);
+  const topicVisuals = data?.visuals?.topic;
+  const reportValidityKey = [
+    selectedTopic,
+    scopeRevision,
+    topicVisuals?.scope?.updatedAt ?? 0,
+    topicVisuals?.simulationVersion ?? '',
+    topicVisuals?.updatedAt ?? 0,
+  ].join(':');
+  useEffect(() => {
+    setReportSnapshot(undefined);
+  }, [reportValidityKey]);
+  const reportBinding: TopicReportSnapshotBinding = {
+    value: reportSnapshot,
+    update: setReportSnapshot,
+  };
+  const runtimeTopicCode = topicVisuals?.topic ?? config.topicCode;
+  const presentation = topicVisuals?.presentation;
+  const runtimeTopicID = presentation?.topicId || runtimeTopicCode;
+  const runtimeTimeRange = topicVisuals?.scope?.timeWindow
+    ? ({ '24h': '近24小时', '7d': '近7天', '30d': '近30天' }[topicVisuals.scope.timeWindow] || topicVisuals.scope.timeWindow)
+    : presentation?.timeWindowLabel || topicTimeRangeLabel(topicVisuals, config.timeRange);
+  const runtimeAssetGroup = topicVisuals?.scope?.includedAssets.length
+    ? topicVisuals.scope.includedAssets.join(' / ')
+    : presentation?.assetGroup || config.assetGroup;
+  const effectiveConfig = {
+    ...config,
+    topicCode: runtimeTopicCode,
+    displayTopicId: runtimeTopicID,
+    site: presentation?.site || config.site,
+    assetGroup: runtimeAssetGroup,
+    ipRange: presentation?.ipRange || config.ipRange,
+    protocol: presentation?.protocols || config.protocol,
+    timeRange: runtimeTimeRange,
+    rule: presentation?.ruleVersion || config.rule,
+    model: presentation?.modelVersion || config.model,
+    reportTitle: presentation?.reportTitle || config.reportTitle,
+    reportSubject: presentation?.reportScope || config.reportSubject,
+    eventTotal: data?.total || config.eventTotal,
+  };
   const metrics = topicPage.kpis.map((label) => data?.metrics.find((item) => item.label === label) ?? fallbackMetric(label));
   const evidenceRows = data?.evidence.length ? data.evidence : topicPage.evidence.map((label) => ({ label, value: '待返回', status: 'info' as const }));
   const columns: ColumnsType<SnapshotRow> = topicPage.tableColumns.map((column) => ({
     title: column,
     dataIndex: column,
     key: column,
+    width: selectedTopic === 'topic-exfil' && column === '处置' ? 320 : undefined,
     ellipsis: true,
-    render: (value) => renderTopicCell(column, value),
+    render: (value, record) => renderTopicCell(config.topicCode, column, value, record),
   }));
 
   if (selectedTopic === 'topic-tunnel') {
     return (
       <div className={`taf-page taf-topic-page taf-topic-${config.tone}`}>
-        <section className={`taf-topic-shell bg-${topicPage.background}`}>
+        <section className={`taf-topic-shell bg-${topicPage.background}`} data-data-mode={topicVisuals?.dataMode || 'live'} data-simulation-id={topicVisuals?.simulationId || ''} data-simulation-version={topicVisuals?.simulationVersion || ''}>
           <div className="taf-topic-tunnel-layout">
             <div className="taf-topic-tunnel-left">
               <header className="taf-topic-titlebar">
@@ -811,20 +1135,21 @@ export function TopicWorkbenchPage({ route }: { route: NavRoute }) {
                   ))}
                 </div>
                 <div className="taf-topic-controls">
-                  <TopicHeaderControls config={config} />
+                  <TopicHeaderControls config={effectiveConfig} />
                 </div>
               </header>
 
               <div className="taf-topic-facts" aria-label="专题筛选条件">
                 {[
-                  ['专题ID', config.topicCode],
-                  ['站点', config.site],
-                  ['资产组', config.assetGroup],
-                  ['IP 段', config.ipRange],
-                  ['协议', config.protocol],
-                  ['时间窗', config.timeRange],
-                  ['规则', config.rule],
-                  ['模型', config.model],
+                  ['专题ID', runtimeTopicID],
+                  ['站点', effectiveConfig.site],
+                  ['资产组', runtimeAssetGroup],
+                  ...(config.tone === 'apt'
+                    ? [['攻击阶段', effectiveConfig.ipRange]]
+                    : [['IP 段', effectiveConfig.ipRange], ['协议', effectiveConfig.protocol]]),
+                  ['时间窗', runtimeTimeRange],
+                  ['规则', effectiveConfig.rule],
+                  ['模型', effectiveConfig.model],
                 ].map(([label, value]) => (
                   <span key={label} className={`is-${label === '时间窗' ? 'time' : label === '规则' ? 'rule' : label === '模型' ? 'model' : 'default'}`} title={`${label}: ${value}`}>
                     <b>{label}：</b>
@@ -847,44 +1172,27 @@ export function TopicWorkbenchPage({ route }: { route: NavRoute }) {
 
               <main className="taf-topic-main taf-topic-tunnel-main">
                 <div className="taf-topic-boardline taf-topic-tunnel-boardline">
-                  <WorkPanel
-                    title={config.canvasTitle}
-                    className="taf-topic-canvas-panel taf-topic-tunnel-impact-panel"
-                    extra={(
-                      <span className="taf-topic-tunnel-panel-actions">
-                        <TopicActionButton topic={config.topicCode} title="布局：径向" target={config.canvasTitle}>布局：径向</TopicActionButton>
-                        <TopicActionButton topic={config.topicCode} title="全屏" target={config.canvasTitle}>全屏</TopicActionButton>
-                      </span>
-                    )}
-                  >
-                    <TunnelImpactMap rows={rows} />
-                    <div className="taf-topic-alert-strip taf-topic-tunnel-alert-strip">
-                      {config.signals.slice(0, 3).map((signal) => (
-                        <button
-                          key={signal.label}
-                          type="button"
-                          className={`taf-topic-alert-chip is-${signal.status} ${selectedSignal === signal.label ? 'is-selected' : ''}`}
-                          onClick={() => setSelectedSignal(signal.label)}
-                        >
-                          <span>{signal.icon}</span>
-                          <strong>{signal.label}</strong>
-                          <em>{signal.value}</em>
-                        </button>
-                      ))}
-                    </div>
-                  </WorkPanel>
+                  <TunnelCanvasPanel
+                    config={effectiveConfig}
+                    rows={rows}
+                    visuals={topicVisuals}
+                  />
 
-                  <TunnelAnalysisPanel rows={rows} metrics={metrics} />
+                  <TunnelAnalysisPanel rows={rows} metrics={metrics} visuals={topicVisuals} />
                 </div>
 
-                <WorkPanel title={`加密隧道关联事件与证据 / topic: ${config.topicCode}`} className="taf-topic-table-panel taf-topic-tunnel-table-panel" extra={<TunnelTableToolbar topic={config.topicCode} />}>
-                  <TunnelEvidenceTable rows={rows} isLoading={isLoading} />
-                </WorkPanel>
+                <TunnelEvidenceSection
+                  rows={rows}
+                  isLoading={isLoading}
+                  total={data?.total}
+                  topic={config.topicCode}
+                  displayTopicId={runtimeTopicID}
+                />
               </main>
             </div>
 
             <aside className="taf-topic-rail taf-topic-tunnel-rail">
-              <TunnelRightRail config={config} metrics={metrics} evidenceRows={evidenceRows} />
+              <TunnelRightRail config={effectiveConfig} metrics={metrics} evidenceRows={evidenceRows} visuals={topicVisuals} reportBinding={reportBinding} />
             </aside>
           </div>
         </section>
@@ -895,7 +1203,7 @@ export function TopicWorkbenchPage({ route }: { route: NavRoute }) {
   if (selectedTopic === 'topic-exfil') {
     return (
       <div className={`taf-page taf-topic-page taf-topic-${config.tone}`}>
-        <section className={`taf-topic-shell bg-${topicPage.background}`}>
+        <section className={`taf-topic-shell bg-${topicPage.background}`} data-data-mode={topicVisuals?.dataMode || 'live'} data-simulation-id={topicVisuals?.simulationId || ''} data-simulation-version={topicVisuals?.simulationVersion || ''}>
           <div className="taf-topic-exfil-layout">
             <div className="taf-topic-exfil-left">
               <header className="taf-topic-titlebar">
@@ -917,20 +1225,21 @@ export function TopicWorkbenchPage({ route }: { route: NavRoute }) {
                   ))}
                 </div>
                 <div className="taf-topic-controls">
-                  <TopicHeaderControls config={config} />
+                  <TopicHeaderControls config={effectiveConfig} />
                 </div>
               </header>
 
               <div className="taf-topic-facts" aria-label="专题筛选条件">
                 {[
-                  ['专题ID', config.topicCode],
-                  ['站点', config.site],
-                  ['资产组', config.assetGroup],
-                  ['IP 段', config.ipRange],
-                  ['协议', config.protocol],
-                  ['时间窗', config.timeRange],
-                  ['规则', config.rule],
-                  ['模型', config.model],
+                  ['专题ID', runtimeTopicID],
+                  ['站点', effectiveConfig.site],
+                  ['资产组', runtimeAssetGroup],
+                  ...(config.tone === 'apt'
+                    ? [['攻击阶段', effectiveConfig.ipRange]]
+                    : [['IP 段', effectiveConfig.ipRange], ['协议', effectiveConfig.protocol]]),
+                  ['时间窗', runtimeTimeRange],
+                  ['规则', effectiveConfig.rule],
+                  ['模型', effectiveConfig.model],
                 ].map(([label, value]) => (
                   <span key={label} className={`is-${label === '时间窗' ? 'time' : label === '规则' ? 'rule' : label === '模型' ? 'model' : 'default'}`} title={`${label}: ${value}`}>
                     <b>{label}：</b>
@@ -960,28 +1269,24 @@ export function TopicWorkbenchPage({ route }: { route: NavRoute }) {
                     className="taf-topic-canvas-panel taf-topic-exfil-canvas-panel"
                     extra={<span className="taf-topic-focus">{config.canvasMode}</span>}
                   >
-                    <ExfilCanvas rows={rows} metrics={metrics} />
+                    <ExfilCanvas rows={rows} metrics={metrics} visuals={topicVisuals} />
                   </WorkPanel>
 
-                  <ExfilAnalysisDashboard rows={rows} metrics={metrics} focusMode={focusMode} />
+                  <ExfilAnalysisDashboard rows={rows} metrics={metrics} focusMode={focusMode} visuals={topicVisuals} />
                 </div>
 
-                <WorkPanel title={topicPage.tableTitle} className="taf-topic-table-panel taf-topic-exfil-table-panel" extra={<span>专题总览</span>}>
-                  <Table
-                    rowKey={(record) => String(record[topicPage.tableColumns[0]] ?? JSON.stringify(record))}
-                    size="small"
-                    loading={isLoading}
-                    columns={columns}
-                    dataSource={rows}
-                    pagination={{ pageSize: 5, size: 'small' }}
-                    scroll={{ x: 980, y: 142 }}
-                  />
-                </WorkPanel>
+                <ExfilEvidenceSection
+                  title={topicPage.tableTitle}
+                  rows={rows}
+                  columns={columns}
+                  rowKeyColumn={topicPage.tableColumns[0]}
+                  isLoading={isLoading}
+                />
               </main>
             </div>
 
             <aside className="taf-topic-rail taf-topic-exfil-rail">
-              <ExfilRightRail config={config} metrics={metrics} evidenceRows={evidenceRows} />
+              <ExfilRightRail config={effectiveConfig} metrics={metrics} evidenceRows={evidenceRows} visuals={topicVisuals} reportBinding={reportBinding} />
             </aside>
           </div>
         </section>
@@ -992,7 +1297,7 @@ export function TopicWorkbenchPage({ route }: { route: NavRoute }) {
   if (selectedTopic === 'topic-apt') {
     return (
       <div className={`taf-page taf-topic-page taf-topic-${config.tone}`}>
-        <section className={`taf-topic-shell bg-${topicPage.background}`}>
+        <section className={`taf-topic-shell bg-${topicPage.background}`} data-data-mode={topicVisuals?.dataMode || 'live'} data-simulation-id={topicVisuals?.simulationId || ''} data-simulation-version={topicVisuals?.simulationVersion || ''}>
           <div className="taf-topic-apt-layout">
             <div className="taf-topic-apt-left">
               <header className="taf-topic-titlebar">
@@ -1014,20 +1319,21 @@ export function TopicWorkbenchPage({ route }: { route: NavRoute }) {
                   ))}
                 </div>
                 <div className="taf-topic-controls">
-                  <TopicHeaderControls config={config} />
+                  <TopicHeaderControls config={effectiveConfig} />
                 </div>
               </header>
 
               <div className="taf-topic-facts" aria-label="专题筛选条件">
                 {[
-                  ['专题ID', config.topicCode],
-                  ['站点', config.site],
-                  ['资产组', config.assetGroup],
-                  ['IP 段', config.ipRange],
-                  ['协议', config.protocol],
-                  ['时间窗', config.timeRange],
-                  ['规则', config.rule],
-                  ['模型', config.model],
+                  ['专题ID', runtimeTopicID],
+                  ['站点', effectiveConfig.site],
+                  ['资产组', runtimeAssetGroup],
+                  ...(config.tone === 'apt'
+                    ? [['攻击阶段', effectiveConfig.ipRange]]
+                    : [['IP 段', effectiveConfig.ipRange], ['协议', effectiveConfig.protocol]]),
+                  ['时间窗', runtimeTimeRange],
+                  ['规则', effectiveConfig.rule],
+                  ['模型', effectiveConfig.model],
                 ].map(([label, value]) => (
                   <span key={label} className={`is-${label === '时间窗' ? 'time' : label === '规则' ? 'rule' : label === '模型' ? 'model' : 'default'}`} title={`${label}: ${value}`}>
                     <b>{label}：</b>
@@ -1057,24 +1363,24 @@ export function TopicWorkbenchPage({ route }: { route: NavRoute }) {
                     className="taf-topic-canvas-panel taf-topic-apt-canvas-panel"
                     extra={<span className="taf-topic-focus">{config.canvasMode}</span>}
                   >
-                    <TopicCanvas topicId={selectedTopic} config={config} rows={rows} metrics={metrics} selectedSignal={selectedSignal} />
+                    <TopicCanvas topicId={selectedTopic} rows={rows} metrics={metrics} visuals={topicVisuals} />
                   </WorkPanel>
 
-                  <AptAnalysisDashboard rows={rows} metrics={metrics} focusMode={focusMode} />
+                  <AptAnalysisDashboard rows={rows} metrics={metrics} evidenceRows={evidenceRows} focusMode={focusMode} visuals={topicVisuals} />
                 </div>
 
                 <div className="taf-topic-apt-bottomline">
-                  <WorkPanel title={`战役关联事件与证据 / ${config.topicCode}`} className="taf-topic-table-panel taf-topic-apt-table-panel" extra={<AptEvidenceToolbar />}>
-                    <AptEvidenceTable rows={rows} isLoading={isLoading} />
+                  <WorkPanel title={`战役关联事件与证据 / ${runtimeTopicID}`} className="taf-topic-table-panel taf-topic-apt-table-panel">
+                    <AptEvidenceTable rows={rows} isLoading={isLoading} topic={config.topicCode} />
                   </WorkPanel>
 
-                  <AptResponsePanel rows={rows} metrics={metrics} />
+                  <AptResponsePanel rows={rows} metrics={metrics} visuals={topicVisuals} />
                 </div>
               </main>
             </div>
 
             <aside className="taf-topic-rail taf-topic-apt-rail">
-              <AptRightRail config={config} metrics={metrics} evidenceRows={evidenceRows} rows={rows} />
+              <AptRightRail config={effectiveConfig} metrics={metrics} evidenceRows={evidenceRows} rows={rows} visuals={topicVisuals} reportBinding={reportBinding} />
             </aside>
           </div>
         </section>
@@ -1084,7 +1390,7 @@ export function TopicWorkbenchPage({ route }: { route: NavRoute }) {
 
   return (
     <div className={`taf-page taf-topic-page taf-topic-${config.tone}`}>
-      <section className={`taf-topic-shell bg-${topicPage.background}`}>
+      <section className={`taf-topic-shell bg-${topicPage.background}`} data-data-mode={topicVisuals?.dataMode || 'live'} data-simulation-id={topicVisuals?.simulationId || ''} data-simulation-version={topicVisuals?.simulationVersion || ''}>
         <header className="taf-topic-titlebar">
           <div className="taf-topic-title-main">
             <h1>{route.page.title}</h1>
@@ -1104,18 +1410,18 @@ export function TopicWorkbenchPage({ route }: { route: NavRoute }) {
             ))}
           </div>
           <div className="taf-topic-controls">
-            <TopicHeaderControls config={config} />
+            <TopicHeaderControls config={effectiveConfig} />
           </div>
         </header>
 
         <div className="taf-topic-facts" aria-label="专题筛选条件">
           {[
-            ['专题ID', config.topicCode],
+            ['专题ID', runtimeTopicCode],
             ['站点', config.site],
-            ['资产组', config.assetGroup],
+            ['资产组', runtimeAssetGroup],
             ['IP 段', config.ipRange],
             ['协议', config.protocol],
-            ['时间窗', config.timeRange],
+            ['时间窗', runtimeTimeRange],
             ['规则', config.rule],
             ['模型', config.model],
           ].map(([label, value]) => (
@@ -1148,7 +1454,7 @@ export function TopicWorkbenchPage({ route }: { route: NavRoute }) {
                 className="taf-topic-canvas-panel"
                 extra={<span className="taf-topic-focus">{config.canvasMode}</span>}
               >
-                <TopicCanvas topicId={selectedTopic} config={config} rows={rows} metrics={metrics} selectedSignal={selectedSignal} />
+                <TopicCanvas topicId={selectedTopic} rows={rows} metrics={metrics} visuals={topicVisuals} />
                 <div className="taf-topic-alert-strip">
                   {config.signals.slice(0, 3).map((signal) => (
                     <button
@@ -1165,7 +1471,7 @@ export function TopicWorkbenchPage({ route }: { route: NavRoute }) {
                 </div>
               </WorkPanel>
 
-              <AptAnalysisDashboard rows={rows} metrics={metrics} focusMode={focusMode} />
+              <AptAnalysisDashboard rows={rows} metrics={metrics} evidenceRows={evidenceRows} focusMode={focusMode} visuals={topicVisuals} />
             </div>
 
             <WorkPanel title={topicPage.tableTitle} className="taf-topic-table-panel" extra={<span>{topicPage.tabs[0]}</span>}>
@@ -1182,7 +1488,7 @@ export function TopicWorkbenchPage({ route }: { route: NavRoute }) {
           </main>
 
           <aside className="taf-topic-rail">
-            <AptRightRail config={config} metrics={metrics} evidenceRows={evidenceRows} rows={rows} />
+            <AptRightRail config={config} metrics={metrics} evidenceRows={evidenceRows} rows={rows} visuals={topicVisuals} reportBinding={reportBinding} />
           </aside>
         </div>
       </section>
@@ -1191,14 +1497,13 @@ export function TopicWorkbenchPage({ route }: { route: NavRoute }) {
 }
 
 function TunnelKpiStrip({ metrics }: { metrics: SnapshotMetric[] }) {
-  const useTargetValues = isVisualBreakdownMode();
   return (
     <div className="taf-topic-kpis taf-topic-tunnel-kpis" aria-label="加密隧道专题指标">
       {tunnelKpis.map((item) => {
         const metric = metrics.find((candidate) => candidate.label === item.label);
-        const value = useTargetValues ? item.value : metric?.value || item.value;
-        const delta = useTargetValues ? item.delta : metric?.delta || item.delta;
-        const status = useTargetValues ? item.status : metric?.status || item.status;
+        const value = metric?.value ?? '0';
+        const delta = metric?.delta || '实时接口';
+        const status = metric?.status ?? 'info';
         return (
           <div key={item.label} className={`taf-topic-tunnel-kpi is-${status}`} title={`${item.label}: ${value}, ${delta}`}>
             <span>{item.icon}</span>
@@ -1212,88 +1517,270 @@ function TunnelKpiStrip({ metrics }: { metrics: SnapshotMetric[] }) {
   );
 }
 
-function TunnelImpactMap({ rows }: { rows: SnapshotRow[] }) {
-  const [selectedNode, setSelectedNode] = useState('risk-01');
-  if (!isVisualBreakdownMode()) {
-    const liveNodes: TopicTopologyNode[] = [];
-    const liveLinks: TopicTopologyLink[] = [];
-    rows.slice(0, 6).forEach((row, index) => {
-      const source = rowText(row, '隧道源') || rowText(row, '源资产');
-      const protocol = rowText(row, '协议');
-      const destination = rowText(row, '目的端点');
-      const sourceID = `live-source-${index}`;
-      const protocolID = `live-protocol-${index}`;
-      const destinationID = `live-destination-${index}`;
-      if (source) liveNodes.push({ id: sourceID, label: source, detail: rowText(row, '风险状态') || '实时隧道源', tone: 'risk', x: 18, y: 18 + index * 13 });
-      if (protocol) liveNodes.push({ id: protocolID, label: protocol, detail: rowText(row, '证据类型') || 'Session', tone: 'protocol', x: 50, y: 18 + index * 13 });
-      if (destination && destination !== '-') liveNodes.push({ id: destinationID, label: destination, detail: rowText(row, '时间窗') || '最近命中', tone: 'destination', x: 82, y: 18 + index * 13 });
-      if (source && protocol) liveLinks.push({ source: sourceID, target: protocolID, tone: 'risk' });
-      if (protocol && destination && destination !== '-') liveLinks.push({ source: protocolID, target: destinationID, tone: 'ok' });
-    });
-    const nodes = liveNodes.map((node) => ({ ...node, selected: node.id === selectedNode }));
-    return (
-      <div className="taf-topic-canvas taf-topic-tunnel-impact">
-        <div className="taf-topic-canvas-legend taf-topic-tunnel-legend">
-          {['实时隧道源', '识别协议', '目的端点'].map((item, index) => <span key={item} className={`tone-${index}`}>{item}</span>)}
-        </div>
-        {nodes.length ? (
-          <TopicTopologyGraph ariaLabel="加密隧道实时关系图" nodes={nodes} links={liveLinks} onNodeClick={setSelectedNode} />
-        ) : (
-          <div className="taf-topic-empty">当前时间窗没有可绘制的隧道关系</div>
-        )}
-      </div>
-    );
-  }
-  const rowIps = rows
-    .map((row) => rowText(row, '源资产') || rowText(row, '隧道源'))
-    .filter((value) => /^\d{1,3}(?:\.\d{1,3}){3}$/.test(value));
-  const riskIps = ['10.12.8.45', '10.12.6.78', '10.12.9.33'].map((fallback, index) => rowIps[index] ?? fallback);
-  const baseNodes: TopicTopologyNode[] = [
-    { id: 'asset-office', label: '办公终端组', detail: '668 资产', tone: 'asset', x: 7, y: 23 },
-    { id: 'asset-server', label: '服务群组', detail: '284 资产', tone: 'asset', x: 7, y: 49 },
-    { id: 'asset-storage', label: '数据存储', detail: '76 资产', tone: 'asset', x: 7, y: 74 },
-    { id: 'probe-01', label: 'Probe-01', detail: '10.12.1.11', tone: 'probe', x: 25, y: 37 },
-    { id: 'probe-02', label: 'Probe-02', detail: '10.12.1.12', tone: 'probe', x: 25, y: 67 },
-    { id: 'risk-01', label: riskIps[0], detail: '高风险隧道源', tone: 'risk', x: 42, y: 28 },
-    { id: 'risk-02', label: riskIps[1], detail: '高风险隧道源', tone: 'risk', x: 42, y: 51 },
-    { id: 'risk-03', label: riskIps[2], detail: '高风险隧道源', tone: 'risk', x: 42, y: 74 },
-    { id: 'protocol-ssh', label: 'SSH 隧道', detail: '203 会话', tone: 'protocol', x: 58, y: 22 },
-    { id: 'protocol-tls', label: 'TLS 隧道', detail: '165.1M 会话', tone: 'protocol', x: 58, y: 38 },
-    { id: 'protocol-https', label: 'HTTPS 隧道', detail: '104.3M 会话', tone: 'protocol', x: 58, y: 54 },
-    { id: 'protocol-rdp', label: 'RDP 隧道', detail: '8.6M 会话', tone: 'protocol', x: 58, y: 70 },
-    { id: 'protocol-socks', label: 'SOCKS 隧道', detail: '6.2M 会话', tone: 'protocol', x: 58, y: 86 },
-    { id: 'proxy-sg', label: '跳板机', detail: 'SG.ASN 45102', tone: 'proxy', x: 75, y: 38 },
-    { id: 'proxy-nl', label: 'VPN/中转', detail: 'NL.ASN 6830', tone: 'proxy', x: 75, y: 67 },
-    { id: 'dest-us', label: '美国', detail: '45 节点', tone: 'destination', x: 92, y: 17 },
-    { id: 'dest-sg', label: '新加坡', detail: '28 节点', tone: 'destination', x: 92, y: 34 },
-    { id: 'dest-hk', label: '香港', detail: '79 节点', tone: 'destination', x: 92, y: 51 },
-    { id: 'dest-nl', label: '荷兰', detail: '12 节点', tone: 'destination', x: 92, y: 68 },
-    { id: 'dest-de', label: '德国', detail: '9 节点', tone: 'destination', x: 92, y: 84 },
-  ];
-  const nodes = baseNodes.map((node) => ({ ...node, selected: node.id === selectedNode }));
-  const links: TopicTopologyLink[] = [
-    ['asset-office', 'probe-01', 'info'], ['asset-server', 'probe-01', 'info'], ['asset-storage', 'probe-02', 'info'],
-    ['probe-01', 'risk-01', 'info'], ['probe-01', 'risk-02', 'info'], ['probe-02', 'risk-02', 'info'], ['probe-02', 'risk-03', 'info'],
-    ['risk-01', 'protocol-ssh', 'risk'], ['risk-01', 'protocol-tls', 'risk'], ['risk-02', 'protocol-https', 'risk'], ['risk-02', 'protocol-rdp', 'risk'], ['risk-03', 'protocol-socks', 'risk'],
-    ['protocol-ssh', 'proxy-sg', 'ok'], ['protocol-tls', 'proxy-sg', 'ok'], ['protocol-https', 'proxy-nl', 'ok'], ['protocol-rdp', 'proxy-nl', 'ok'], ['protocol-socks', 'proxy-nl', 'ok'],
-    ['proxy-sg', 'dest-us', 'purple'], ['proxy-sg', 'dest-sg', 'purple'], ['proxy-sg', 'dest-hk', 'purple'], ['proxy-nl', 'dest-nl', 'purple'], ['proxy-nl', 'dest-de', 'purple'],
-  ].map(([source, target, tone]) => ({ source, target, tone: tone as TopicTopologyLink['tone'] }));
+function TunnelCanvasPanel({
+  config,
+  rows,
+  visuals,
+}: {
+  config: TopicConfig;
+  rows: SnapshotRow[];
+  visuals?: TopicVisuals;
+}) {
+  const [layout, setLayout] = useState<'radial' | 'layered'>('layered');
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [controlError, setControlError] = useState('');
+  const panelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const handleFullscreenChange = () => setIsFullscreen(document.fullscreenElement === panelRef.current);
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+  const switchLayout = async () => {
+    const next = layout === 'radial' ? 'layered' : 'radial';
+    setControlError('');
+    try {
+      await submitTopicAction(config.topicCode, '切换拓扑布局', next, collectTopicDataContext());
+      setLayout(next);
+    } catch (error) {
+      setControlError(error instanceof Error ? error.message : '布局切换审计失败');
+    }
+  };
+  const toggleFullscreen = async () => {
+    const target = panelRef.current;
+    if (!target) return;
+    setControlError('');
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await target.requestFullscreen();
+      await submitTopicAction(config.topicCode, '切换拓扑全屏', config.displayTopicId ?? config.topicCode, collectTopicDataContext());
+    } catch (error) {
+      setControlError(error instanceof Error ? error.message : '全屏切换失败');
+    }
+  };
+  const impactHighlights = visuals?.impactHighlights?.length
+    ? visuals.impactHighlights
+    : config.signals.slice(0, 3).map((signal) => ({
+      label: signal.label,
+      value: signal.value,
+      detail: signal.detail,
+      status: signal.status,
+      targetSignal: signal.label,
+    }));
+  const highlightIcon = (status: Tone) => status === 'risk'
+    ? <AlertOutlined />
+    : status === 'warn'
+      ? <ThunderboltOutlined />
+      : <NodeIndexOutlined />;
 
   return (
-    <div className="taf-topic-canvas taf-topic-tunnel-impact">
-      <div className="taf-topic-canvas-legend taf-topic-tunnel-legend">
-        {['主机/资产', '探针', '隧道协议', '代理/跳板', '外部端点', '告警', '战役'].map((item, index) => <span key={item} className={`tone-${index}`}>{item}</span>)}
-      </div>
-      <TopicTopologyGraph ariaLabel="加密隧道局部影响面关系图" nodes={nodes} links={links} onNodeClick={setSelectedNode} />
+    <div ref={panelRef} className="taf-topic-tunnel-fullscreen-host">
+      <WorkPanel
+        title={config.canvasTitle}
+        className="taf-topic-canvas-panel taf-topic-tunnel-impact-panel"
+        extra={(
+          <span className="taf-topic-tunnel-panel-actions">
+            {controlError && <em className="taf-topic-inline-result is-error" title={controlError}>失败</em>}
+            <button type="button" onClick={() => void switchLayout()}>布局：{layout === 'layered' ? '径向' : '分层'}</button>
+            <button type="button" onClick={() => void toggleFullscreen()}>{isFullscreen ? '退出全屏' : '全屏'}</button>
+          </span>
+        )}
+      >
+        <TunnelImpactMap rows={rows} layout={layout} visuals={visuals} />
+        <div className="taf-topic-alert-strip taf-topic-tunnel-alert-strip">
+          {impactHighlights.map((signal) => (
+            <article
+              key={signal.label}
+              className={`taf-topic-alert-chip is-${signal.status}`}
+              title={signal.detail}
+              data-api-summary="true"
+            >
+              <span>{highlightIcon(signal.status)}</span>
+              <strong>{signal.label}</strong>
+              <em>{signal.value}</em>
+            </article>
+          ))}
+        </div>
+      </WorkPanel>
     </div>
   );
 }
 
-function TunnelAnalysisPanel({ rows, metrics }: { rows: SnapshotRow[]; metrics: SnapshotMetric[] }) {
+function TunnelImpactMap({ rows, visuals, layout = 'layered' }: { rows: SnapshotRow[]; visuals?: TopicVisuals; layout?: 'radial' | 'layered' }) {
+  const [selectedNode, setSelectedNode] = useState('');
+  const nodesByID = new Map<string, TopicTopologyNode>();
+  const links: TopicTopologyLink[] = [];
+  rows.slice(0, 8).forEach((row, index) => {
+    const source = rowText(row, '隧道源') || rowText(row, '源资产');
+    const protocol = rowText(row, '协议');
+    const destination = rowText(row, '目的端点');
+    const sourceID = `source:${source}`;
+    const protocolID = `protocol:${protocol}`;
+    const destinationID = `destination:${destination}`;
+    const rowY = 14 + index * Math.min(11, 72 / Math.max(Math.min(rows.length, 8), 1));
+    const angle = (Math.PI * 2 * index) / Math.max(Math.min(rows.length, 8), 1) - Math.PI / 2;
+    const sourcePosition = layout === 'radial' ? { x: 50 + Math.cos(angle) * 40, y: 50 + Math.sin(angle) * 39 } : { x: 14, y: rowY };
+    const protocolPosition = layout === 'radial' ? { x: 50 + Math.cos(angle) * 20, y: 50 + Math.sin(angle) * 20 } : { x: 50, y: rowY };
+    const destinationPosition = layout === 'radial' ? { x: 50, y: 50 } : { x: 86, y: rowY };
+    if (source) nodesByID.set(sourceID, { id: sourceID, label: source, detail: rowText(row, '风险状态') || '实时隧道源', tone: 'risk', ...sourcePosition });
+    if (protocol) nodesByID.set(protocolID, { id: protocolID, label: protocolLabel(protocol), detail: `${rowNumber(row, '__session_count')} 会话`, tone: 'protocol', ...protocolPosition });
+    if (destination && destination !== '-') nodesByID.set(destinationID, { id: destinationID, label: destination, detail: rowText(row, '时间窗') || '最近命中', tone: 'destination', ...destinationPosition });
+    if (source && protocol) links.push({
+      source: sourceID,
+      target: protocolID,
+      tone: 'risk',
+      lineType: 'solid',
+      value: rowNumber(row, '__session_count'),
+      label: `${source} → ${protocolLabel(protocol)} / 已识别会话`,
+    });
+    if (protocol && destination && destination !== '-') links.push({
+      source: protocolID,
+      target: destinationID,
+      tone: 'ok',
+      lineType: 'dashed',
+      value: rowNumber(row, '__session_count'),
+      label: `${protocolLabel(protocol)} → ${destination} / 关联目的端`,
+    });
+  });
+  const apiNodes: TopicTopologyNode[] = (visuals?.topologyNodes ?? []).map((node) => {
+    const normalizedY = Math.max(0, Math.min(1, (node.y - 8) / 84));
+    const angle = normalizedY * Math.PI * 2 - Math.PI / 2;
+    const radius = 12 + Math.max(0, Math.min(1, node.x / 100)) * 34;
+    const position = layout === 'radial'
+      ? {
+        x: 50 + Math.cos(angle) * radius,
+        y: 50 + Math.sin(angle) * radius * 0.82,
+      }
+      : { x: node.x, y: node.y };
+    return {
+      id: node.id,
+      label: node.label,
+      detail: node.detail,
+      ...position,
+      tone: node.tone,
+      size: node.symbol === 'circle'
+        ? [Math.round(node.width * 1.15), Math.round(node.height * 1.15)]
+        : [Math.round(node.width * 1.04), Math.round(node.height * 1.1)],
+      symbol: node.symbol,
+      icon: node.icon,
+      labelPosition: node.labelPosition,
+      selected: node.id === selectedNode,
+    };
+  });
+  const apiLinks: TopicTopologyLink[] = (visuals?.topologyLinks ?? []).map((link) => ({
+    source: link.source,
+    target: link.target,
+    value: link.value,
+    tone: link.tone,
+    lineType: link.lineType,
+    label: link.label,
+  }));
+  const nodes = apiNodes.length ? apiNodes : [...nodesByID.values()].map((node) => ({ ...node, selected: node.id === selectedNode }));
+  const graphLinks = apiLinks.length ? apiLinks : links;
+
+  return (
+    <div className="taf-topic-canvas taf-topic-tunnel-impact">
+      <div className="taf-topic-canvas-legend taf-topic-tunnel-legend">
+        {['主机 / 资产', '探针', '隧道协议', '代理 / 跳板', '外部端点', '告警', '战役'].map((item, index) => <span key={item} className={`tone-${index}`}>{item}</span>)}
+      </div>
+      {nodes.length ? (
+        <TopicTopologyGraph ariaLabel={`加密隧道实时关系图 / ${layout === 'radial' ? '径向' : '分层'}`} nodes={nodes} links={graphLinks} onNodeClick={setSelectedNode} />
+      ) : (
+        <div className="taf-topic-empty">当前时间窗没有可绘制的隧道关系</div>
+      )}
+    </div>
+  );
+}
+
+function TunnelAnalysisPanel({
+  rows,
+  metrics,
+  visuals,
+}: {
+  rows: SnapshotRow[];
+  metrics: SnapshotMetric[];
+  visuals?: TopicVisuals;
+}) {
   const topSources = buildTunnelTopSources(rows);
-  const completeness = Math.round(metricValueNumber(metrics, '证据完整度') || 62);
-  const tabs = ['协议分析', '隧道源TOP5', '端点国家分布'];
-  const [activeTab, setActiveTab] = useState(tabs[0]);
+  const completeness = Math.round(metricValueNumber(metrics, '证据完整度'));
+  const protocols = visuals?.tunnelProtocols ?? [];
+  const users = visuals?.tunnelUsers ?? [];
+  const protocolTotal = protocols.reduce((sum, item) => sum + item.count, 0);
+  const protocolDistribution = protocols.map((item, index) => ({
+    label: protocolLabel(item.protocol),
+    value: protocolTotal ? Number((item.count / protocolTotal * 100).toFixed(1)) : 0,
+    color: ['#58bfff', '#8bd85e', '#ff6b4a', '#ffb020', '#b685ff', '#7f8fb5'][index % 6],
+  })).filter((item) => item.value > 0);
+  const protocolRows = protocols.map((item) => ({
+    label: protocolLabel(item.protocol),
+    percent: percentOf(item.count, protocolTotal),
+    traffic: bytesLabelCompact(item.totalBytes),
+  }));
+  const endpointGroups = new Map<string, number>();
+  users.forEach((item) => {
+    if (item.dstIp) endpointGroups.set(item.dstIp, (endpointGroups.get(item.dstIp) ?? 0) + item.count);
+  });
+  const endpointTop = [...endpointGroups.entries()]
+    .map(([label, value]) => ({ label, value }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 5);
+  const endpointRows = (visuals?.destinationDistribution ?? []).length
+    ? (visuals?.destinationDistribution ?? []).slice(0, 5).map((item) => [item.label, String(item.value), item.asn || '未归因', item.trafficGb.toFixed(1)])
+    : endpointTop.map((item) => [item.label, String(item.value), '未归因', '-']);
+  const tunnelSourceTop5 = users
+    .slice()
+    .sort((left, right) => right.totalBytes - left.totalBytes || right.count - left.count)
+    .slice(0, 5);
+  const tunnelSourceBars = tunnelSourceTop5.map((item) => ({
+    label: item.ip,
+    value: Number((item.totalBytes / (1024 ** 3)).toFixed(1)),
+  }));
+  const destinationDistributionBars = (visuals?.destinationDistribution ?? [])
+    .slice()
+    .sort((left, right) => right.value - left.value)
+    .slice(0, 5)
+    .map((item) => ({
+      label: item.label,
+      value: item.value,
+    }));
+  const trend = visuals?.tunnelTrend?.length
+    ? visuals.tunnelTrend
+    : users
+      .filter((item) => item.lastSeen > 0)
+      .sort((a, b) => a.lastSeen - b.lastSeen)
+      .slice(-8)
+      .map((item) => ({ label: formatTopicTime(item.lastSeen, 'MM-DD HH:mm'), value: Number((item.totalBytes / (1024 ** 3)).toFixed(2)) }));
+  const reuseRows = visuals?.tunnelReusePaths?.length
+    ? visuals.tunnelReusePaths
+    : users.slice(0, 5).map((item) => [item.ip, protocolLabel(item.protocol), '代理待归因', item.dstIp || '未返回目的端点']);
+  const sourceProtocolRows = tunnelSourceTop5.map((item) => [
+    item.ip,
+    protocolLabel(item.protocol),
+    String(item.count),
+    bytesLabelCompact(item.totalBytes),
+  ]);
+  const uniqueSourceDestinations = new Set(users.map((item) => item.dstIp).filter(Boolean)).size;
+  const highRiskSourceCount = users.filter((item) => /高|high|critical/iu.test(item.risk)).length;
+  const sourceTrafficBytes = users.reduce((sum, item) => sum + item.totalBytes, 0);
+  const destinationTrafficBars = (visuals?.destinationDistribution ?? [])
+    .slice()
+    .sort((left, right) => right.trafficGb - left.trafficGb)
+    .slice(0, 5)
+    .map((item) => ({
+      label: item.label,
+      value: Number(item.trafficGb.toFixed(2)),
+    }));
+  const destinationEndpointTotal = (visuals?.destinationDistribution ?? []).reduce((sum, item) => sum + item.value, 0);
+  const destinationTrafficTotal = (visuals?.destinationDistribution ?? []).reduce((sum, item) => sum + item.trafficGb, 0);
+  const destinationConcentration = destinationEndpointTotal
+    ? Number((((visuals?.destinationDistribution?.[0]?.value ?? 0) / destinationEndpointTotal) * 100).toFixed(1))
+    : 0;
+  const destinationAsnCount = new Set((visuals?.destinationDistribution ?? []).map((item) => item.asn).filter(Boolean)).size;
+  const tabs = [
+    { id: 'protocol', label: '协议分析' },
+    { id: 'source', label: '隧道源' },
+    { id: 'destination', label: '端点国家分布' },
+  ] as const;
+  const [activeTab, setActiveTab] = useState<(typeof tabs)[number]['id']>('protocol');
   return (
     <WorkPanel
       title="加密隧道分析"
@@ -1301,135 +1788,263 @@ function TunnelAnalysisPanel({ rows, metrics }: { rows: SnapshotRow[]; metrics: 
       extra={(
         <span className="taf-topic-tunnel-analysis-tabs">
           {tabs.map((item) => (
-            <button key={item} type="button" className={activeTab === item ? 'is-active' : ''} aria-selected={activeTab === item} onClick={() => setActiveTab(item)}>{item}</button>
+            <button key={item.id} type="button" role="tab" className={activeTab === item.id ? 'is-active' : ''} aria-selected={activeTab === item.id} data-tab-id={item.id} onClick={() => setActiveTab(item.id)}>{item.label}</button>
           ))}
         </span>
       )}
     >
-      <div className="taf-topic-tunnel-analysis-grid">
-        <section className="taf-topic-tunnel-card is-protocol">
-          <header>
-            <strong>协议</strong>
-            <span>{completeness}% 证据完整</span>
-          </header>
-          <div className="taf-topic-tunnel-protocol-body">
-            <ExfilPieChart items={tunnelProtocols} ariaLabel="加密隧道协议占比" />
-            <div className="taf-topic-tunnel-protocol-table">
-              {tunnelProtocolRows.map((row) => (
-                <span key={row.label} title={`${row.label} ${row.percent} ${row.traffic}`}>
-                  <b>{row.label}</b>
-                  <em>{row.percent}</em>
-                  <strong>{row.traffic}</strong>
-                </span>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="taf-topic-tunnel-card is-source">
-          <header>
-            <strong>高频隧道源 TOP5</strong>
-            <span>流量 (Gbps)</span>
-          </header>
-          <ExfilBarChart items={topSources} ariaLabel="高频隧道源 TOP5" />
-        </section>
-
-        <section className="taf-topic-tunnel-card is-asn">
-          <header>
-            <strong>端点国家 / ASN TOP5</strong>
-            <span>外部目的端点数 / ASN</span>
-          </header>
-          <div className="taf-topic-tunnel-asn-body">
-            <div className="taf-topic-tunnel-asn-chart">
-              <ExfilBarChart items={tunnelEndpointCountryTop} ariaLabel="外部隧道端点国家分布 TOP5" />
-            </div>
-            <div className="taf-topic-tunnel-mini-table is-asn">
-              <b>国家/地区</b><b>端点数</b><b>ASN</b><b>流量</b>
-              {tunnelAsnRows.flatMap((row) => row.map((cell, index) => <span key={`${row[0]}-${index}`} title={cell}>{cell}</span>))}
-            </div>
-          </div>
-        </section>
-
-        <section className="taf-topic-tunnel-card is-trend">
-          <header>
-            <strong>加密流量趋势 (Gbps)</strong>
-            <span>06-13 ~ 06-20</span>
-          </header>
-          <ExfilLineChart points={tunnelTrend} ariaLabel="加密流量趋势" />
-        </section>
-
-        <section className="taf-topic-tunnel-card is-ja3">
-          <header>
-            <strong>JA3 / 证书异常疑点</strong>
-            <span>类型</span>
-          </header>
-          <div className="taf-topic-tunnel-mini-table is-ja3">
-            <b>类型</b><b>数量</b><b>占比</b><b>示例</b>
-            {tunnelJa3Rows.flatMap((row) => row.map((cell, index) => <span key={`${row[0]}-${index}`} title={cell}>{cell}</span>))}
-          </div>
-        </section>
-
-        <section className="taf-topic-tunnel-card is-reuse">
-          <header>
-            <strong>隧道复用路径（示例）</strong>
-            <span>源主机 / 协议 / 代理 / 目的端点</span>
-          </header>
-          <div className="taf-topic-tunnel-reuse">
-            {tunnelReuseRows.map((row) => (
-              <span key={row.join('-')} title={row.join(' -> ')}>
-                {row.map((cell, index) => <b key={cell}>{cell}{index < row.length - 1 ? <i /> : null}</b>)}
-              </span>
-            ))}
-          </div>
-        </section>
+      <div
+        className="taf-topic-tunnel-analysis-grid"
+        data-active-tab={activeTab}
+        data-tab-geometry-contract="fixed-within-viewport"
+      >
+        {activeTab === 'protocol' && (
+          <>
+            <section className="taf-topic-tunnel-card is-protocol">
+              <header><strong>协议</strong><span>{completeness ? `${completeness}% 证据完整` : '证据完整度待接口返回'}</span></header>
+              {protocolDistribution.length ? (
+                <div className="taf-topic-tunnel-protocol-body">
+                  <ExfilPieChart items={protocolDistribution} ariaLabel="加密隧道协议占比" />
+                  <div className="taf-topic-tunnel-protocol-table">
+                    {protocolRows.map((row) => (
+                      <span key={row.label} title={`${row.label} ${row.percent} ${row.traffic}`}>
+                        <b>{row.label}</b><em>{row.percent}</em><strong>{row.traffic}</strong>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : <div className="taf-topic-empty">当前时间窗没有协议分布数据</div>}
+            </section>
+            <section className="taf-topic-tunnel-card is-source">
+              <header><strong>高频隧道源 TOP5</strong><span>真实流量 (GB)</span></header>
+              {topSources.length ? <ExfilBarChart items={topSources} ariaLabel="高频隧道源 TOP5" /> : <div className="taf-topic-empty">暂无源资产流量</div>}
+            </section>
+            <section className="taf-topic-tunnel-card is-asn">
+              <header><strong>端点国家 / ASN TOP5</strong><span>流量 (GB)</span></header>
+              <div className="taf-topic-tunnel-mini-table is-asn">
+                <b>国家/地区</b><b>总端数</b><b>ASN</b><b>流量</b>
+                {endpointRows.flatMap((row) => row.map((cell, index) => <span key={`${row[0]}-${index}`} title={cell}>{cell}</span>))}
+              </div>
+            </section>
+            <section className="taf-topic-tunnel-card is-trend">
+              <header>
+                <strong>{visuals?.tunnelTrendUnit ? `最近命中流量 (${visuals.tunnelTrendUnit})` : '最近命中趋势'}</strong>
+                <span>{visuals?.tunnelTrendUnit ? '接口趋势序列' : '单位待接口声明'}</span>
+              </header>
+              {trend.length ? <ExfilLineChart points={trend} ariaLabel="隧道源最近命中流量" /> : <div className="taf-topic-empty">暂无时间序列</div>}
+            </section>
+            <section className="taf-topic-tunnel-card is-ja3">
+              <header><strong>JA3 / 证书异常疑点</strong><span>示例</span></header>
+              {(visuals?.certificateAnomalies ?? []).length ? (
+                <div className="taf-topic-tunnel-mini-table is-ja3">
+                  <b>类型</b><b>数量</b><b>占比</b><b>示例</b>
+                  {(visuals?.certificateAnomalies ?? []).flatMap((item) => [
+                    item.label,
+                    String(item.value),
+                    `${(item.percent ?? 0).toFixed(1)}%`,
+                    item.sample || '待补证',
+                  ].map((cell, index) => <span key={`${item.label}-${index}`} title={cell}>{cell}</span>))}
+                </div>
+              ) : <div className="taf-topic-empty">当前接口没有返回 JA3 / 证书异常记录</div>}
+            </section>
+            <TunnelReuseCard rows={reuseRows} />
+          </>
+        )}
+        {activeTab === 'source' && (
+          <>
+            <section className="taf-topic-tunnel-card is-source taf-topic-high-risk-users" data-business-view="source-traffic" data-api-source="tunnel_users.total_bytes">
+              <header><strong>隧道源流量 TOP5</strong><span>按 API 流量排序</span></header>
+              {tunnelSourceBars.length ? <ExfilBarChart items={tunnelSourceBars} ariaLabel="隧道源流量 TOP5" /> : <div className="taf-topic-empty">当前接口没有返回隧道源</div>}
+            </section>
+            <section className="taf-topic-tunnel-card is-reuse" data-business-view="source-evidence" data-api-source="tunnel_users">
+              <header><strong>隧道源证据 TOP5</strong><span>源 / 风险 / 会话 / 目的端</span></header>
+              {tunnelSourceTop5.length ? (
+                <div className="taf-topic-tunnel-reuse">
+                  {tunnelSourceTop5.map((item) => (
+                    <span key={`${item.ip}-${item.dstIp}-${item.protocol}`} title={`${item.ip} ${item.risk} ${item.count} ${item.dstIp}`}>
+                      <b>{item.ip}<i /></b><b>{item.risk || '高危'}<i /></b><b>{item.count} 会话<i /></b><b>{item.dstIp || '目的端待归因'}</b>
+                    </span>
+                  ))}
+                </div>
+              ) : <div className="taf-topic-empty">暂无隧道源证据</div>}
+            </section>
+            <section className="taf-topic-tunnel-card is-source-detail" data-business-view="source-protocol" data-api-source="tunnel_users.protocol">
+              <header><strong>隧道源协议与会话</strong><span>源 / 协议 / 会话 / 流量</span></header>
+              {sourceProtocolRows.length ? (
+                <div className="taf-topic-tunnel-mini-table is-source-detail">
+                  <b>隧道源</b><b>协议</b><b>会话</b><b>流量</b>
+                  {sourceProtocolRows.flatMap((row) => row.map((cell, index) => <span key={`${row[0]}-source-${index}`} title={cell}>{cell}</span>))}
+                </div>
+              ) : <div className="taf-topic-empty">暂无隧道源协议明细</div>}
+            </section>
+            <section className="taf-topic-tunnel-card is-derived" data-business-view="source-summary" data-api-source="tunnel_users:derived">
+              <header><strong>隧道源调查摘要</strong><span>API 派生</span></header>
+              <div className="taf-topic-derived-metrics">
+                <span><b>源资产</b><strong>{users.length}</strong><small>当前调查范围</small></span>
+                <span><b>高风险源</b><strong>{highRiskSourceCount}</strong><small>风险等级归类</small></span>
+                <span><b>关联目的端</b><strong>{uniqueSourceDestinations}</strong><small>去重目的地址</small></span>
+                <span><b>累计流量</b><strong>{bytesLabelCompact(sourceTrafficBytes)}</strong><small>源侧流量汇总</small></span>
+              </div>
+            </section>
+          </>
+        )}
+        {activeTab === 'destination' && (
+          <>
+            <section className="taf-topic-tunnel-card is-asn" data-business-view="destination-count" data-api-source="destination_distribution.value">
+              <header><strong>端点国家分布 TOP5</strong><span>API 地域聚合</span></header>
+              {destinationDistributionBars.length ? <ExfilBarChart items={destinationDistributionBars} ariaLabel="端点国家分布 TOP5" /> : <div className="taf-topic-empty">暂无端点国家分布</div>}
+            </section>
+            <section className="taf-topic-tunnel-card is-source" data-business-view="destination-traffic" data-api-source="destination_distribution.traffic_gb">
+              <header><strong>国家端点流量 TOP5</strong><span>traffic_gb 聚合</span></header>
+              {destinationTrafficBars.length ? <ExfilBarChart items={destinationTrafficBars} ariaLabel="国家端点流量 TOP5" /> : <div className="taf-topic-empty">暂无国家端点流量</div>}
+            </section>
+            <section className="taf-topic-tunnel-card is-asn" data-business-view="destination-asn" data-api-source="destination_distribution">
+              <header><strong>端点国家 / ASN TOP5</strong><span>端点数 / ASN / 流量</span></header>
+              <div className="taf-topic-tunnel-mini-table is-asn">
+                <b>国家/地区</b><b>总端数</b><b>ASN</b><b>流量</b>
+                {endpointRows.flatMap((row) => row.map((cell, index) => <span key={`${row[0]}-tab-${index}`} title={cell}>{cell}</span>))}
+              </div>
+            </section>
+            <section className="taf-topic-tunnel-card is-derived" data-business-view="destination-summary" data-api-source="destination_distribution:derived">
+              <header><strong>跨境端点集中度</strong><span>API 派生</span></header>
+              <div className="taf-topic-derived-metrics">
+                <span><b>端点总数</b><strong>{destinationEndpointTotal}</strong><small>地域端点汇总</small></span>
+                <span><b>国家/地区</b><strong>{destinationDistributionBars.length}</strong><small>当前调查范围</small></span>
+                <span><b>ASN 数</b><strong>{destinationAsnCount}</strong><small>去重网络归属</small></span>
+                <span><b>TOP1 集中度</b><strong>{destinationConcentration}%</strong><small>首位地域占比</small></span>
+                <span><b>聚合流量</b><strong>{destinationTrafficTotal.toFixed(1)} GB</strong><small>跨境流量汇总</small></span>
+              </div>
+            </section>
+          </>
+        )}
       </div>
     </WorkPanel>
   );
 }
 
-function TunnelTableToolbar({ topic }: { topic: string }) {
+function TunnelReuseCard({ rows }: { rows: string[][] }) {
+  return (
+    <section className="taf-topic-tunnel-card is-reuse">
+      <header><strong>隧道复用路径</strong><span>源主机 / 协议 / 目的端点</span></header>
+      {rows.length ? (
+        <div className="taf-topic-tunnel-reuse">
+          {rows.map((row) => (
+            <span key={row.join('-')} title={row.join(' -> ')}>
+              {row.map((cell, index) => (
+                <b key={`${cell}-${index}`}>
+                  {cell}
+                  {index < row.length - 1 ? <ArrowRightOutlined aria-hidden="true" /> : null}
+                </b>
+              ))}
+            </span>
+          ))}
+        </div>
+      ) : <div className="taf-topic-empty">暂无可复用路径</div>}
+    </section>
+  );
+}
+
+function TunnelTableToolbar({
+  evidenceType,
+  phase,
+  risk,
+  query,
+  evidenceOptions,
+  phaseOptions,
+  riskOptions,
+  onEvidenceTypeChange,
+  onPhaseChange,
+  onRiskChange,
+  onQueryChange,
+}: {
+  evidenceType: string;
+  phase: string;
+  risk: string;
+  query: string;
+  evidenceOptions: string[];
+  phaseOptions: string[];
+  riskOptions: string[];
+  onEvidenceTypeChange: (value: string) => void;
+  onPhaseChange: (value: string) => void;
+  onRiskChange: (value: string) => void;
+  onQueryChange: (value: string) => void;
+}) {
   return (
     <span className="taf-topic-tunnel-table-toolbar">
-      <TopicActionButton topic={topic} title="证据类型：全部">证据类型：全部</TopicActionButton>
-      <TopicActionButton topic={topic} title="阶段：全部">阶段：全部</TopicActionButton>
-      <TopicActionButton topic={topic} title="风险等级：全部">风险等级：全部</TopicActionButton>
-      <TopicActionButton topic={topic} title="搜索隧道证据" ariaLabel="搜索"><SearchOutlined /></TopicActionButton>
+      <Select aria-label="证据类型筛选" size="small" value={evidenceType} onChange={onEvidenceTypeChange} options={['全部', ...evidenceOptions].map((value) => ({ value, label: `证据：${value}` }))} />
+      <Select aria-label="阶段筛选" size="small" value={phase} onChange={onPhaseChange} options={['全部', ...phaseOptions].map((value) => ({ value, label: `阶段：${value}` }))} />
+      <Select aria-label="风险等级筛选" size="small" value={risk} onChange={onRiskChange} options={['全部', ...riskOptions].map((value) => ({ value, label: `风险：${value}` }))} />
+      <Input aria-label="搜索隧道证据" size="small" allowClear prefix={<SearchOutlined />} value={query} onChange={(event) => onQueryChange(event.target.value)} placeholder="搜索证据" />
     </span>
   );
 }
 
-function TunnelEvidenceTable({ rows, isLoading }: { rows: SnapshotRow[]; isLoading: boolean }) {
-  const hasRealTunnelRows = !isVisualBreakdownMode() && rows.some((row) => rowText(row, '事件ID').startsWith('TN-'));
-  const events = hasRealTunnelRows ? rows.map((row, index) => ({
-    id: rowText(row, '事件ID') || tunnelEvidenceEvents[index % tunnelEvidenceEvents.length].id,
-    source: rowText(row, '隧道源') || rowText(row, '源资产') || tunnelEvidenceEvents[index % tunnelEvidenceEvents.length].source,
-    protocol: rowText(row, '协议') || rowText(row, '协议族') || tunnelEvidenceEvents[index % tunnelEvidenceEvents.length].protocol,
-    destination: rowText(row, '目的端点') || rowText(row, '目标对象') || tunnelEvidenceEvents[index % tunnelEvidenceEvents.length].destination,
-    evidenceType: rowText(row, '证据类型') || tunnelEvidenceEvents[index % tunnelEvidenceEvents.length].evidenceType,
-    timeRange: rowText(row, '时间窗') || tunnelEvidenceEvents[index % tunnelEvidenceEvents.length].timeRange,
-    evidence: [rowText(row, '风险状态') || '待研判', rowText(row, '风险操作') || '取证'],
-  })) : tunnelEvidenceEvents;
+function TunnelEvidenceSection({ rows, isLoading, total, topic, displayTopicId }: { rows: SnapshotRow[]; isLoading: boolean; total?: number; topic: string; displayTopicId: string }) {
+  const [evidenceType, setEvidenceType] = useState('全部');
+  const [phase, setPhase] = useState('全部');
+  const [risk, setRisk] = useState('全部');
+  const [query, setQuery] = useState('');
+  const values = (column: string) => [...new Set(rows.map((row) => rowText(row, column)).filter(Boolean))];
+  const filteredRows = rows.filter((row) => {
+    if (evidenceType !== '全部' && !rowText(row, '证据类型').includes(evidenceType)) return false;
+    if (phase !== '全部' && rowText(row, '阶段') !== phase) return false;
+    if (risk !== '全部' && rowText(row, '风险状态') !== risk) return false;
+    return !query || Object.values(row).some((value) => String(value).toLowerCase().includes(query.toLowerCase()));
+  });
+  const filtered = evidenceType !== '全部' || phase !== '全部' || risk !== '全部' || Boolean(query);
+  return (
+    <WorkPanel
+      title={`加密隧道关联事件与证据 / topic: ${displayTopicId}`}
+      className="taf-topic-table-panel taf-topic-tunnel-table-panel"
+      extra={(
+        <TunnelTableToolbar
+          evidenceType={evidenceType}
+          phase={phase}
+          risk={risk}
+          query={query}
+          evidenceOptions={values('证据类型')}
+          phaseOptions={values('阶段')}
+          riskOptions={values('风险状态')}
+          onEvidenceTypeChange={setEvidenceType}
+          onPhaseChange={setPhase}
+          onRiskChange={setRisk}
+          onQueryChange={setQuery}
+        />
+      )}
+    >
+      <TunnelEvidenceTable rows={filteredRows} isLoading={isLoading} total={filtered ? filteredRows.length : total} topic={topic} />
+    </WorkPanel>
+  );
+}
 
-  const pageSize = 5;
-  const pagedEvents = hasRealTunnelRows
-    ? events
-    : Array.from({ length: 12 }, (_, index) => ({
-      ...events[index % Math.max(events.length, 1)],
-      id: `${events[index % Math.max(events.length, 1)]?.id ?? `TN-${index + 1}`}-${String(index + 1).padStart(2, '0')}`,
-    }));
+function TunnelEvidenceTable({ rows, isLoading, total, topic }: { rows: SnapshotRow[]; isLoading: boolean; total?: number; topic: string }) {
+  const events = rows.map((row, index) => ({
+    key: `${rowText(row, '事件ID') || 'tunnel'}-${index}`,
+    id: rowText(row, '事件ID') || '-',
+    source: rowText(row, '隧道源') || rowText(row, '源资产') || '-',
+    protocol: protocolLabel(rowText(row, '协议') || rowText(row, '协议族')),
+    destination: rowText(row, '目的端点') || rowText(row, '目标对象') || '-',
+    evidenceType: rowText(row, '证据类型') || 'Session',
+    timeRange: rowText(row, '时间窗') || '-',
+    actions: ['PCAP', 'Session', '证书', '回溯路径', '审计日志'],
+  }));
+
+  const pageSize = 10;
+  const pagedEvents = events;
   const [page, setPage] = useState(1);
   const pageCount = Math.max(1, Math.ceil(pagedEvents.length / pageSize));
   const currentPage = Math.min(page, pageCount);
   const visibleEvents = pagedEvents.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const pageTokens = compactPaginationTokens(pageCount, currentPage);
 
   return (
-    <div className="taf-topic-tunnel-table" aria-busy={isLoading}>
+    <div className="taf-topic-tunnel-table" aria-busy={isLoading} data-column-separators="visible">
       <div className="taf-topic-tunnel-table-head">
-        {['事件ID', '隧道源', '协议', '目的端点', '证据类型', '时间窗', '风险状态', '风险操作'].map((label) => <b key={label}>{label}</b>)}
+        {['事件ID', '隧道源', '协议', '目的端点', '证据类型', '时间窗', '风险操作'].map((label) => <b key={label}>{label}</b>)}
       </div>
       <div className="taf-topic-tunnel-table-body">
-        {visibleEvents.map((row) => (
-          <div key={row.id} className="taf-topic-tunnel-table-row">
+        {!isLoading && !visibleEvents.length ? <div className="taf-topic-empty">当前时间窗没有真实隧道事件</div> : visibleEvents.map((row) => (
+          <div key={row.key} className="taf-topic-tunnel-table-row">
             <span title={row.id}>{row.id}</span>
             <span title={row.source}>{row.source}</span>
             <span title={row.protocol}>{row.protocol}</span>
@@ -1437,20 +2052,19 @@ function TunnelEvidenceTable({ rows, isLoading }: { rows: SnapshotRow[]; isLoadi
             <span title={row.evidenceType}>{row.evidenceType}</span>
             <span title={row.timeRange}>{row.timeRange}</span>
             <span className="taf-topic-tunnel-evidence-tags">
-              {row.evidence.slice(0, 3).map((item) => <i key={item}>{item}</i>)}
-            </span>
-            <span className="taf-topic-tunnel-evidence-tags">
-              {row.evidence.slice(3).map((item) => <i key={item}>{item}</i>)}
+              {row.actions.map((item) => (
+                <TopicActionButton key={item} topic={topic} title={item} target={row.id}>{item}</TopicActionButton>
+              ))}
             </span>
           </div>
         ))}
       </div>
       <div className="taf-topic-tunnel-table-footer">
-        <span>共 {pagedEvents.length} 条</span>
+        <span>共 {total ?? pagedEvents.length} 条</span>
         <button type="button" aria-label="隧道证据上一页" title="上一页" disabled={currentPage <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))}>‹</button>
-        {Array.from({ length: pageCount }, (_, index) => index + 1).map((value) => (
+        {pageTokens.map((value) => typeof value === 'number' ? (
           <button key={value} type="button" className={currentPage === value ? 'is-active' : ''} aria-current={currentPage === value ? 'page' : undefined} title={`第 ${value} 页`} onClick={() => setPage(value)}>{value}</button>
-        ))}
+        ) : <i key={value} aria-hidden="true">…</i>)}
         <button type="button" aria-label="隧道证据下一页" title="下一页" disabled={currentPage >= pageCount} onClick={() => setPage((value) => Math.min(pageCount, value + 1))}>›</button>
         <span>{pageSize} 条/页</span>
       </div>
@@ -1458,18 +2072,25 @@ function TunnelEvidenceTable({ rows, isLoading }: { rows: SnapshotRow[]; isLoadi
   );
 }
 
-function TunnelRightRail({ config, metrics, evidenceRows }: { config: TopicConfig; metrics: SnapshotMetric[]; evidenceRows: PageSnapshot['evidence'] }) {
-  const targetMode = isVisualBreakdownMode();
-  const completeness = targetMode ? 62 : Math.round(metricValueNumber(metrics, '证据完整度'));
-  const evidence = targetMode ? tunnelEvidenceCompleteness : evidenceRows;
-  const summary = targetMode ? [
-    ['可生成报告', '7', 'ok'],
-    ['待补证据', '3', 'warn'],
-    ['未闭环风险', '18', 'risk'],
-  ] : [
-    ['可生成报告', completeness > 0 ? '1' : '0', completeness > 0 ? 'ok' : 'warn'],
-    ['待补证据', String(evidence.filter((item) => item.status === 'warn').length), 'warn'],
-    ['未闭环风险', String(metricValueNumber(metrics, '未闭环风险数')), 'risk'],
+function TunnelRightRail({
+  config,
+  metrics,
+  evidenceRows,
+  visuals,
+  reportBinding,
+}: {
+  config: TopicConfig;
+  metrics: SnapshotMetric[];
+  evidenceRows: PageSnapshot['evidence'];
+  visuals?: TopicVisuals;
+  reportBinding: TopicReportSnapshotBinding;
+}) {
+  const completeness = Math.round(metricValueNumber(metrics, '证据完整度'));
+  const evidence = evidenceRows;
+  const summary = [
+    ['可生成报告', String(visuals?.summary?.reportable_count ?? (completeness > 0 ? 1 : 0)), completeness > 0 ? 'ok' : 'warn'],
+    ['待补证据', String(visuals?.summary?.pending_evidence_count ?? evidence.filter((item) => item.status === 'warn').length), 'warn'],
+    ['未闭环风险', String(visuals?.summary?.open_risk_count ?? metricValueNumber(metrics, '未闭环风险数')), 'risk'],
   ];
   const actions: Array<[string, ReactNode]> = [
     ['编辑范围', <EditOutlined key="edit" />],
@@ -1485,13 +2106,16 @@ function TunnelRightRail({ config, metrics, evidenceRows }: { config: TopicConfi
 
   return (
     <>
-      <WorkPanel title={`专题交付摘要 / ${config.topicCode}`} className="taf-topic-tunnel-delivery">
-        <div className="taf-topic-tunnel-delivery-grid">
-          <div className="taf-topic-tunnel-ring" style={{ '--value': completeness } as CSSProperties}>
-            <span>报告就绪度</span>
-            <strong>{completeness}%</strong>
-            <em>{targetMode ? '较昨日 +8%' : '实时证据计算'}</em>
-          </div>
+      <WorkPanel title={`专题交付摘要 / ${config.displayTopicId ?? config.topicCode}`} className="taf-topic-tunnel-delivery">
+        <small className="taf-topic-tunnel-delivery-subtitle">(加密隧道专题)</small>
+        <div className="taf-topic-tunnel-delivery-grid" data-responsive-summary-contract="ring-legend-values-container-proportional">
+          <TopicProgressDonut
+            value={completeness}
+            ariaLabel="加密隧道报告就绪度"
+            className="taf-topic-tunnel-ring"
+            caption="报告就绪度"
+            detail="较昨日 +8%"
+          />
           <div className="taf-topic-tunnel-delivery-stats">
             {summary.map(([label, value, tone]) => (
               <span key={label} className={`is-${tone}`} title={`${label}: ${value}`}>
@@ -1503,9 +2127,9 @@ function TunnelRightRail({ config, metrics, evidenceRows }: { config: TopicConfi
           </div>
         </div>
         <div className="taf-topic-tunnel-delivery-actions">
-          <TopicActionButton topic={config.topicCode} title="导出报告" className="ant-btn ant-btn-default ant-btn-sm" overlayId="modal-topic-report-export"><DownloadOutlined />导出报告</TopicActionButton>
+          <TopicActionButton topic={config.topicCode} title="导出报告" className="ant-btn ant-btn-default ant-btn-sm" overlayId="modal-topic-report-export" reportBinding={reportBinding}><DownloadOutlined />导出报告</TopicActionButton>
           <TopicActionButton topic={config.topicCode} title="导出证据包" className="ant-btn ant-btn-default ant-btn-sm" overlayId="modal-topic-evidence-package-export"><FileProtectOutlined />导出证据包</TopicActionButton>
-          <TopicActionButton topic={config.topicCode} title="试点周报导出" className="ant-btn ant-btn-default ant-btn-sm"><ExportOutlined />试点周报导出</TopicActionButton>
+          <TopicActionButton topic={config.topicCode} title="试点周报导出" className="ant-btn ant-btn-default ant-btn-sm" reportBinding={reportBinding}><ExportOutlined />试点周报导出</TopicActionButton>
         </div>
       </WorkPanel>
 
@@ -1523,18 +2147,13 @@ function TunnelRightRail({ config, metrics, evidenceRows }: { config: TopicConfi
 
       <WorkPanel title="报告预览 / 当前保存视图" className="taf-topic-tunnel-report-panel">
         <div className="taf-topic-report-preview taf-topic-tunnel-report-preview">
-          <div className="taf-topic-report-sheet">
-            <span />
-            <span />
-            <span />
-            <i />
-          </div>
+          <TopicReportThumbnail title={visuals?.presentation?.reportTitle || '加密隧道专题_试点周报'} topicId={config.displayTopicId ?? config.topicCode} completeness={completeness} />
           <div>
-            <strong>报告类型：加密隧道专题_试点周报</strong>
-            <span>时间窗：2026-06-13 ~ 2026-06-20</span>
+            <strong>报告类型：{visuals?.presentation?.reportTitle || '加密隧道专题_试点周报'}</strong>
+            <span>时间窗：{visuals?.presentation?.reportTimeRange || config.timeRange}</span>
             <span>资产组：{config.reportSubject}</span>
-            <span>生成时间：2026-06-20 03:40:12</span>
-            <TopicActionButton topic={config.topicCode} title="预览报告" className="ant-btn ant-btn-link ant-btn-sm">预览报告</TopicActionButton>
+            <span>生成时间：{visuals?.presentation?.reportGeneratedAt || '提交导出任务时生成'}</span>
+            <TopicReportPreviewButton topic={config.topicCode} config={config} visuals={visuals} reportBinding={reportBinding} />
           </div>
         </div>
       </WorkPanel>
@@ -1542,7 +2161,7 @@ function TunnelRightRail({ config, metrics, evidenceRows }: { config: TopicConfi
       <WorkPanel title="专题动作 / 仅作用于当前专题" className="taf-topic-tunnel-action-panel">
         <div className="taf-topic-exfil-action-grid taf-topic-tunnel-action-grid">
           {actions.map(([label, icon]) => (
-            <TopicActionButton key={String(label)} topic={config.topicCode} title={String(label)} overlayId={topicRailOverlayId(String(label))}>
+            <TopicActionButton key={String(label)} topic={config.topicCode} title={String(label)} target={config.displayTopicId ?? config.topicCode} overlayId={topicRailOverlayId(String(label))} reportBinding={reportBinding}>
               {icon}
               <span>{label}</span>
             </TopicActionButton>
@@ -1554,61 +2173,54 @@ function TunnelRightRail({ config, metrics, evidenceRows }: { config: TopicConfi
 }
 
 function buildTunnelTopSources(rows: SnapshotRow[]): ExfilBarItem[] {
-  const values = rows
-    .map((row) => ({
-      label: rowText(row, '隧道源') || rowText(row, '源资产'),
-      value: rowNumber(row, '__total_bytes') / (1024 * 1024 * 1024) || rowNumber(row, '__session_count'),
-    }))
-    .filter((item) => /^\d{1,3}(?:\.\d{1,3}){3}$/.test(item.label) && item.value > 0)
+  const totals = new Map<string, number>();
+  rows.forEach((row) => {
+    const label = rowText(row, '隧道源') || rowText(row, '源资产');
+    const totalBytes = rowNumber(row, '__total_bytes');
+    if (!/^\d{1,3}(?:\.\d{1,3}){3}$/.test(label) || totalBytes <= 0) return;
+    totals.set(label, (totals.get(label) ?? 0) + totalBytes);
+  });
+  return [...totals.entries()]
+    .map(([label, totalBytes]) => ({ label, value: totalBytes / (1024 ** 3) }))
+    .sort((left, right) => right.value - left.value)
     .slice(0, 5);
-  return isVisualBreakdownMode() && values.length < 5 ? tunnelSourceTop : values;
 }
 
 function TopicCanvas({
   topicId,
-  config,
   rows,
   metrics,
-  selectedSignal,
+  visuals,
 }: {
   topicId: TopicId;
-  config: TopicConfig;
   rows: SnapshotRow[];
   metrics: SnapshotMetric[];
-  selectedSignal: string;
+  visuals?: TopicVisuals;
 }) {
-  if (topicId === 'topic-exfil') return <ExfilCanvas rows={rows} metrics={metrics} />;
-  if (topicId === 'topic-apt') return <AptCanvas config={config} rows={rows} metrics={metrics} selectedSignal={selectedSignal} />;
-  return <TunnelCanvas config={config} rows={rows} />;
+  if (topicId === 'topic-exfil') return <ExfilCanvas rows={rows} metrics={metrics} visuals={visuals} />;
+  if (topicId === 'topic-apt') return <AptCanvas rows={rows} metrics={metrics} visuals={visuals} />;
+  return <TunnelImpactMap rows={rows} />;
 }
 
 function ExfilRightRail({
   config,
   metrics,
   evidenceRows,
+  visuals,
+  reportBinding,
 }: {
   config: TopicConfig;
   metrics: SnapshotMetric[];
   evidenceRows: PageSnapshot['evidence'];
+  visuals?: TopicVisuals;
+  reportBinding: TopicReportSnapshotBinding;
 }) {
-  const targetMode = isVisualBreakdownMode();
-  const completeness = Math.max(0, Math.min(100, Math.round(targetMode ? 62 : metricValueNumber(metrics, '证据完整度'))));
-  const evidence = evidenceRows.length ? evidenceRows : targetMode ? [
-    { label: '告警证据', value: '64 / 64 (100%)', status: 'ok' as const },
-    { label: 'PCAP', value: '132 / 156 (84%)', status: 'warn' as const },
-    { label: 'Session', value: '198 / 204 (97%)', status: 'ok' as const },
-    { label: '审计日志', value: '38 / 38 (100%)', status: 'ok' as const },
-    { label: '回溯路径', value: '18 / 18 (100%)', status: 'ok' as const },
-    { label: '资产快照', value: '23 / 23 (100%)', status: 'ok' as const },
-  ] : [];
-  const summaryStats: Array<[string, string]> = targetMode ? [
-    ['可生成报告', '7'],
-    ['待补证据', '3'],
-    ['未闭环风险', '18'],
-  ] : [
-    ['可生成报告', metricValueNumber(metrics, '外传路径数') > 0 ? '1' : '0'],
-    ['待补证据', String(evidence.filter((item) => item.status === 'warn').length)],
-    ['未闭环风险', String(metricValueNumber(metrics, '外传预警量'))],
+  const completeness = Math.max(0, Math.min(100, Math.round(metricValueNumber(metrics, '证据完整度'))));
+  const evidence = evidenceRows;
+  const summaryStats: Array<[string, string]> = [
+    ['可生成报告', String(visuals?.summary?.reportable_count ?? (metricValueNumber(metrics, '外传路径数') > 0 ? 1 : 0))],
+    ['待补证据', String(visuals?.summary?.pending_evidence_count ?? evidence.filter((item) => item.status === 'warn').length)],
+    ['未闭环风险', String(visuals?.summary?.open_risk_count ?? metricValueNumber(metrics, '外传预警量'))],
   ];
   const actions: Array<[string, ReactNode]> = [
     ['编辑范围', <EditOutlined key="edit" />],
@@ -1624,12 +2236,14 @@ function ExfilRightRail({
 
   return (
     <>
-      <WorkPanel title={`专题交付摘要 / ${config.topicCode}`} className="taf-topic-exfil-delivery">
-        <div className="taf-topic-exfil-delivery-grid">
-          <div className="taf-topic-exfil-delivery-ring" style={{ '--value': completeness } as CSSProperties}>
-            <strong>{completeness}%</strong>
-            <span>{targetMode ? '较昨日 +6%' : '实时证据计算'}</span>
-          </div>
+      <WorkPanel title={`专题交付摘要 / ${config.displayTopicId ?? config.topicCode}`} className="taf-topic-exfil-delivery">
+        <div className="taf-topic-exfil-delivery-grid" data-responsive-summary-contract="ring-legend-values-container-proportional">
+          <TopicProgressDonut
+            value={completeness}
+            ariaLabel="数据外传报告就绪度"
+            className="taf-topic-exfil-delivery-ring"
+            caption="实时证据计算"
+          />
           <div className="taf-topic-exfil-delivery-stats">
             {summaryStats.map(([label, value]) => (
               <span key={label}>
@@ -1641,9 +2255,9 @@ function ExfilRightRail({
           </div>
         </div>
         <div className="taf-topic-exfil-delivery-actions">
-          <TopicActionButton topic={config.topicCode} title="导出总报告" className="ant-btn ant-btn-default ant-btn-sm" overlayId="modal-topic-report-export"><DownloadOutlined />导出总报告</TopicActionButton>
+          <TopicActionButton topic={config.topicCode} title="导出总报告" className="ant-btn ant-btn-default ant-btn-sm" overlayId="modal-topic-report-export" reportBinding={reportBinding}><DownloadOutlined />导出总报告</TopicActionButton>
           <TopicActionButton topic={config.topicCode} title="导出证据包" className="ant-btn ant-btn-default ant-btn-sm" overlayId="modal-topic-evidence-package-export"><FileProtectOutlined />导出证据包</TopicActionButton>
-          <TopicActionButton topic={config.topicCode} title="试点周报导出" className="ant-btn ant-btn-default ant-btn-sm"><ExportOutlined />试点周报导出</TopicActionButton>
+          <TopicActionButton topic={config.topicCode} title="试点周报导出" className="ant-btn ant-btn-default ant-btn-sm" reportBinding={reportBinding}><ExportOutlined />试点周报导出</TopicActionButton>
         </div>
       </WorkPanel>
 
@@ -1661,18 +2275,13 @@ function ExfilRightRail({
 
       <WorkPanel title="报告预览 / 当前保存视图" className="taf-topic-exfil-report">
         <div className="taf-topic-report-preview">
-          <div className="taf-topic-report-sheet">
-            <span />
-            <span />
-            <span />
-            <i />
-          </div>
+          <TopicReportThumbnail title={config.reportTitle} topicId={config.displayTopicId ?? config.topicCode} completeness={completeness} />
           <div>
             <strong>{config.reportTitle}</strong>
-            <span>时间窗：近 24 小时</span>
+            <span>时间窗：{config.timeRange}</span>
             <span>资产组：{config.reportSubject}</span>
-            <span>生成时间：2026-06-20 03:40:12</span>
-            <TopicActionButton topic={config.topicCode} title="预览报告" className="ant-btn ant-btn-link ant-btn-sm">预览报告</TopicActionButton>
+            <span>生成时间：{visuals?.presentation?.reportGeneratedAt || '提交导出任务时生成'}</span>
+            <TopicReportPreviewButton topic={config.topicCode} config={config} visuals={visuals} reportBinding={reportBinding} />
           </div>
         </div>
       </WorkPanel>
@@ -1680,7 +2289,7 @@ function ExfilRightRail({
       <WorkPanel title="专题动作 / 仅作用于当前专题" className="taf-topic-exfil-action-panel">
         <div className="taf-topic-exfil-action-grid">
           {actions.map(([label, icon]) => (
-            <TopicActionButton key={String(label)} topic={config.topicCode} title={String(label)} overlayId={topicRailOverlayId(String(label))}>
+            <TopicActionButton key={String(label)} topic={config.topicCode} title={String(label)} target={config.displayTopicId ?? config.topicCode} overlayId={topicRailOverlayId(String(label))} reportBinding={reportBinding}>
               {icon}
               <span>{label}</span>
             </TopicActionButton>
@@ -1691,44 +2300,126 @@ function ExfilRightRail({
   );
 }
 
-function TunnelCanvas({ config, rows }: { config: TopicConfig; rows: SnapshotRow[] }) {
-  const sources = rows.slice(0, 3).map((row, index) => String(row['源资产'] ?? `10.12.${index + 6}.${45 + index}`));
-  const destinations = ['美国 45 节点', '新加坡 28 节点', '香港 79 节点', '德国 12 节点'];
+function ExfilEvidenceSection({
+  title,
+  rows,
+  columns,
+  rowKeyColumn,
+  isLoading,
+}: {
+  title: string;
+  rows: SnapshotRow[];
+  columns: ColumnsType<SnapshotRow>;
+  rowKeyColumn: string;
+  isLoading: boolean;
+}) {
+  const [risk, setRisk] = useState('全部');
+  const [protocol, setProtocol] = useState('全部');
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const tableHostRef = useRef<HTMLDivElement>(null);
+  const [tableBodyHeight, setTableBodyHeight] = useState(280);
+  const riskOptions = [...new Set(rows.map((row) => rowText(row, '风险等级')).filter(Boolean))];
+  const protocolOptions = [...new Set(rows.map((row) => rowText(row, '协议')).filter(Boolean))];
+  const filteredRows = rows.filter((row) => {
+    if (risk !== '全部' && rowText(row, '风险等级') !== risk) return false;
+    if (protocol !== '全部' && rowText(row, '协议') !== protocol) return false;
+    return !query || Object.values(row).some((value) => String(value).toLowerCase().includes(query.toLowerCase()));
+  });
+  useEffect(() => setPage(1), [risk, protocol, query]);
+  const pageCount = Math.max(1, Math.ceil(filteredRows.length / 10));
+  useEffect(() => setPage((current) => Math.min(current, pageCount)), [pageCount]);
+  useEffect(() => {
+    const host = tableHostRef.current;
+    if (!host || typeof ResizeObserver === 'undefined') return undefined;
+    let frame = 0;
+    const updateHeight = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        // Header and fixed pagination remain outside the scroll owner. Ten
+        // compact 28px rows fit when the panel has enough room; otherwise only
+        // the tbody scrolls.
+        setTableBodyHeight(Math.max(96, Math.min(280, Math.floor(host.clientHeight - 70))));
+      });
+    };
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(host);
+    updateHeight();
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, []);
   return (
-    <div className="taf-topic-canvas taf-topic-tunnel-canvas">
-      <div className="taf-topic-canvas-legend">
-        {['主机/资产', '探针', '隧道协议', '代理/跳板', '外部端点', '告警'].map((item, index) => <span key={item} className={`tone-${index}`}>{item}</span>)}
+    <WorkPanel
+      title={title}
+      className="taf-topic-table-panel taf-topic-exfil-table-panel"
+      extra={(
+        <span className="taf-topic-tunnel-table-toolbar">
+          <Select aria-label="外传风险筛选" size="small" value={risk} onChange={setRisk} options={['全部', ...riskOptions].map((value) => ({ value, label: `风险：${value}` }))} />
+          <Select aria-label="外传协议筛选" size="small" value={protocol} onChange={setProtocol} options={['全部', ...protocolOptions].map((value) => ({ value, label: `协议：${value}` }))} />
+          <Input aria-label="搜索外传事件" size="small" allowClear prefix={<SearchOutlined />} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索外传事件" />
+        </span>
+      )}
+    >
+      <div className="taf-topic-exfil-table-host" ref={tableHostRef} data-page-size="10" data-scroll-owner="tbody" data-column-separators="visible">
+        <Table
+          rowKey={(record) => String(record[rowKeyColumn] ?? JSON.stringify(record))}
+          size="small"
+          loading={isLoading}
+          columns={columns}
+          dataSource={filteredRows}
+          pagination={{
+            current: page,
+            pageSize: 10,
+            size: 'small',
+            showSizeChanger: false,
+            showTotal: (value) => `共 ${value} 条`,
+            onChange: setPage,
+          }}
+          scroll={{ x: 1180, y: tableBodyHeight }}
+        />
       </div>
-      <div className="taf-topic-flow-map">
-        <div className="taf-topic-flow-col">
-          {sources.map((source, index) => <FlowNode key={source} tone="source" title={source} detail={`${668 - index * 212} 资产`} />)}
-        </div>
-        <div className="taf-topic-flow-col is-probe">
-          {['Probe-01 10.12.1.11', 'Probe-02 10.12.1.12'].map((item) => <FlowNode key={item} tone="probe" title={item} detail="在线采集" />)}
-        </div>
-        <div className="taf-topic-flow-col is-risk">
-          {['10.12.8.45', '10.12.6.78', '10.12.9.33'].map((item) => <FlowNode key={item} tone="risk" title={item} detail="高风险隧道源" />)}
-        </div>
-        <div className="taf-topic-flow-col is-protocol">
-          {['SSH 隧道 203 会话', 'TLS 隧道 165.1M 会话', 'HTTPS 隧道 104.3M 会话', 'SOCKS 隧道 6.2M 会话'].map((item) => <FlowNode key={item} tone="protocol" title={item} detail={config.protocol} />)}
-        </div>
-        <div className="taf-topic-flow-col is-destination">
-          {destinations.map((item) => <FlowNode key={item} tone="destination" title={item} detail="外部端点" />)}
-        </div>
-      </div>
-    </div>
+    </WorkPanel>
   );
 }
 
-function ExfilCanvas({ rows, metrics }: { rows: SnapshotRow[]; metrics: SnapshotMetric[] }) {
-  const model = buildExfilVisualModel(rows, metrics);
+function ExfilCanvas({ rows, metrics, visuals }: { rows: SnapshotRow[]; metrics: SnapshotMetric[]; visuals?: TopicVisuals }) {
+  const [selectedNode, setSelectedNode] = useState('');
+  const model = buildExfilVisualModel(rows, metrics, visuals);
+  const topologyNodes: TopicTopologyNode[] = (visuals?.topologyNodes ?? [])
+    .map((node) => ({
+      id: node.id, label: node.label, detail: node.detail, x: node.x, y: node.y,
+      tone: node.tone, size: [node.width, node.height], symbol: node.symbol, icon: node.icon,
+      labelPosition: node.labelPosition, selected: selectedNode === node.id,
+    }));
+  const topologyLinks: TopicTopologyLink[] = (visuals?.topologyLinks ?? [])
+    .map((link) => ({
+      source: link.source, target: link.target, value: link.value, tone: link.tone,
+      lineType: link.lineType, label: link.label, width: link.width, curveness: link.curveness,
+      selected: selectedNode !== '' && (link.source === selectedNode || link.target === selectedNode),
+    }));
+  const selectNode = (nodeID: string) => setSelectedNode((current) => current === nodeID ? '' : nodeID);
   return (
     <div className="taf-topic-canvas taf-topic-exfil-canvas">
       <div className="taf-topic-canvas-legend">
-        {['内部源', '文件服务', '代理/中转', '外部目的地', '风险路径'].map((item, index) => <span key={item} className={`tone-${index}`}>{item}</span>)}
+        {['内部源', '文件服务', '代理/中转', '外部目的地', '风险路径', '实线：确认', '虚线：推断'].map((item, index) => <span key={item} className={`tone-${index}`}>{item}</span>)}
       </div>
       <div className="taf-topic-sankey">
-        <ExfilSankeyChart nodes={model.sankeyNodes} links={model.sankeyLinks} ariaLabel="数据外传路径 Sankey" />
+        <div className="taf-topic-exfil-stage-headings" aria-label="数据外传路径分层">
+          {['内部源资产', '文件服务 / 共享', '代理 / 中转节点', '外部目的地（按国家）', '风险路径（TOP）']
+            .map((item) => <span key={item}>{item}</span>)}
+        </div>
+        {topologyNodes.length && topologyLinks.length ? (
+          <TopicTopologyGraph
+            nodes={topologyNodes}
+            links={topologyLinks}
+            ariaLabel="数据外传路径动态关系图"
+            onNodeClick={selectNode}
+          />
+        ) : (
+          <Alert type="error" showIcon message="数据外传关系图缺少 API 拓扑数据" description="当前快照必须返回 topology_nodes 和 topology_links。" />
+        )}
         <div className="taf-topic-sankey-summary">
           <span>总外传流量：{model.totalUploadGb.toFixed(1)} GB</span>
           <span>涉及路径：{model.pathCount}</span>
@@ -1739,72 +2430,94 @@ function ExfilCanvas({ rows, metrics }: { rows: SnapshotRow[]; metrics: Snapshot
   );
 }
 
-function ExfilAnalysisDashboard({ rows, metrics, focusMode }: { rows: SnapshotRow[]; metrics: SnapshotMetric[]; focusMode: string }) {
-  const model = buildExfilVisualModel(rows, metrics);
+function ExfilAnalysisDashboard({ rows, metrics, focusMode, visuals }: { rows: SnapshotRow[]; metrics: SnapshotMetric[]; focusMode: string; visuals?: TopicVisuals }) {
+  const model = buildExfilVisualModel(rows, metrics, visuals);
 
   return (
-    <div className="taf-topic-exfil-dashboard" aria-label="数据外传分析">
-      <div className="taf-topic-exfil-card is-table">
-        <header>
-          <strong>目的地国家/ASN TOP 5</strong>
-          <span>{focusMode}</span>
-        </header>
-        <div className="taf-topic-exfil-table">
-          <b>国家/地区</b><b>ASN</b><b>流量</b><b>占比</b>
-          {model.destinationRows.map((row) => [
-            <span key={`${row.region}-region`}>{row.region}</span>,
-            <span key={`${row.region}-asn`}>{row.asn}</span>,
-            <span key={`${row.region}-traffic`}>{row.traffic}</span>,
-            <span key={`${row.region}-ratio`}>{row.ratio}</span>,
-          ])}
+    <WorkPanel
+      title="数据外传分析"
+      className="taf-topic-analysis-panel taf-topic-exfil-analysis-panel"
+      extra={<span className="taf-topic-focus">多维研判</span>}
+    >
+      <div
+        className="taf-topic-exfil-dashboard"
+        aria-label="数据外传分析"
+        data-analysis-module-contract="destination-sensitive-trend-protocol-confidence"
+      >
+        <div className="taf-topic-exfil-card is-table" data-layout-slot="destination">
+          <header>
+            <strong>目的地国家 / ASN TOP 5</strong>
+            <span>{focusMode}</span>
+          </header>
+          <div className="taf-topic-exfil-table">
+            <b>目的地址</b><b>归因</b><b>流量 GB</b><b>占比</b>
+            {model.destinationRows.map((row) => [
+              <span key={`${row.region}-region`}>{row.region}</span>,
+              <span key={`${row.region}-asn`}>{row.asn}</span>,
+              <span key={`${row.region}-traffic`}>{row.traffic}</span>,
+              <span key={`${row.region}-ratio`}>{row.ratio}</span>,
+            ])}
+          </div>
+        </div>
+
+        <ExfilDistributionCard title={model.distributionTitle} items={model.sensitiveTypes} slot="sensitive" />
+
+        <div className="taf-topic-exfil-card is-trend" data-layout-slot="trend">
+          <header>
+            <strong>异常上传峰值趋势</strong>
+            <span>峰值 {Math.max(0, ...model.trend.map((point) => point.value)).toFixed(0)} 会话</span>
+          </header>
+          <ExfilLineChart points={model.trend} ariaLabel="异常上传峰值趋势" />
+        </div>
+
+        <ExfilDistributionCard title="外传协议占比" items={model.protocols} slot="protocol" />
+
+        <div className="taf-topic-exfil-card is-score" data-layout-slot="confidence">
+          <header>
+            <strong>路径置信度评分</strong>
+            <span>{model.pathCount} 条路径</span>
+          </header>
+          <TopicProgressDonut
+            value={model.confidence}
+            ariaLabel="数据外传路径置信度"
+            className="taf-topic-exfil-score-ring"
+            caption="路径置信度"
+          />
+        </div>
+
+        <div className="taf-topic-exfil-card is-bars" data-layout-slot="account-service">
+          <header>
+            <strong>可疑账号 / 服务分布 TOP 5</strong>
+            <span>命中 {model.accounts.reduce((sum, item) => sum + item.value, 0)}</span>
+          </header>
+          {model.accounts.length
+            ? <ExfilBarChart items={model.accounts} ariaLabel="可疑账号和服务分布 TOP 5" />
+            : <div className="taf-topic-empty">account_service_distribution 未返回</div>}
         </div>
       </div>
-
-      <ExfilDistributionCard title={model.distributionTitle} items={model.sensitiveTypes} />
-
-      <div className="taf-topic-exfil-card is-trend">
-        <header>
-          <strong>异常上传峰值趋势 (Gbps)</strong>
-          <span>峰值 {Math.max(...model.trend.map((point) => point.value)).toFixed(1)} GB</span>
-        </header>
-        <ExfilLineChart points={model.trend} ariaLabel="异常上传峰值趋势" />
-      </div>
-
-      <ExfilDistributionCard title="外传协议占比" items={model.protocols} />
-
-      <div className="taf-topic-exfil-card is-score">
-        <header>
-          <strong>路径置信度评分</strong>
-          <span>{model.pathCount} 条路径</span>
-        </header>
-        <div className="taf-topic-exfil-score-ring" style={{ '--value': model.confidence } as CSSProperties}>
-          <strong>{model.confidence}</strong>
-          <span>/100</span>
-        </div>
-      </div>
-
-      <div className="taf-topic-exfil-card is-bars">
-        <header>
-          <strong>可疑账号/服务分布 TOP 5</strong>
-          <span>命中 {model.accounts.reduce((sum, item) => sum + item.value, 0)}</span>
-        </header>
-        <ExfilBarChart items={model.accounts} ariaLabel="可疑账号和服务分布" />
-      </div>
-    </div>
+    </WorkPanel>
   );
 }
 
-function ExfilDistributionCard({ title, items }: { title: string; items: ExfilDistributionItem[] }) {
+function ExfilDistributionCard({
+  title,
+  items,
+  slot,
+}: {
+  title: string;
+  items: ExfilDistributionItem[];
+  slot: 'sensitive' | 'protocol';
+}) {
   const total = items.reduce((sum, item) => sum + item.value, 0);
   const primaryValue = total ? Math.round((items[0]?.value ?? 0) / total * 100) : 0;
   return (
-    <div className="taf-topic-exfil-card is-donut">
+    <div className="taf-topic-exfil-card is-donut" data-layout-slot={slot}>
       <header>
         <strong>{title}</strong>
         <span>{primaryValue}%</span>
       </header>
       <div className="taf-topic-exfil-donut-layout">
-        <ExfilPieChart items={items} ariaLabel={title} center={['50%', '50%']} radius={['30%', '54%']} />
+        <ExfilPieChart items={items} ariaLabel={title} center={['50%', '50%']} radius={['43%', '76%']} />
         <div className="taf-topic-exfil-legend">
           {items.map((item) => (
             <span key={item.label} style={{ '--color': item.color } as CSSProperties}>
@@ -1818,56 +2531,82 @@ function ExfilDistributionCard({ title, items }: { title: string; items: ExfilDi
   );
 }
 
-function buildExfilVisualModel(rows: SnapshotRow[], metrics: SnapshotMetric[]): ExfilVisualModel {
+function buildExfilVisualModel(rows: SnapshotRow[], metrics: SnapshotMetric[], visuals?: TopicVisuals): ExfilVisualModel {
   const sourceRows = rows;
   const uploadByType = groupRows(sourceRows, '数据类型', '上传量');
   const uploadByDestination = groupRows(sourceRows, '目标区域', '上传量');
   const uploadByRisk = groupRows(sourceRows, '风险类型', '上传量');
   const sessionsBySource = groupRows(sourceRows, '源资产', '会话数');
-  const totalUploadGb = sourceRows.reduce((sum, row) => sum + rowUploadGb(row), 0);
-  const sourceCount = metricNumber(metrics, '可疑外传源') || sessionsBySource.length || sourceRows.length;
-  const pathCount = metricNumber(metrics, '外传路径数') || sourceRows.length;
-  const evidenceRate = metricNumber(metrics, '证据完整度');
-  const confidence = Math.max(0, Math.min(100, Math.round(evidenceRate)));
+  const totalUploadGb = visuals?.summary?.upload_bytes !== undefined
+    ? visuals.summary.upload_bytes / (1024 ** 3)
+    : sourceRows.reduce((sum, row) => sum + rowUploadGb(row), 0);
+  const pathCount = visuals?.summary?.path_count ?? metricNumber(metrics, '外传路径数');
+  const pathConfidence = visuals?.summary?.path_confidence;
+  const confidence = Math.max(0, Math.min(100, Math.round(
+    pathConfidence ?? metricNumber(metrics, '证据完整度'),
+  )));
   const topSources = sessionsBySource.slice(0, 5);
   const classifiedTypes = uploadByType.filter((item) => !['-', '未知'].includes(item.label));
   const topTypes = classifiedTypes.slice(0, 5);
-  const topRiskTypes = uploadByRisk.slice(0, 4);
-  const liveDistribution = isVisualBreakdownMode() || topTypes.length ? topTypes : topRiskTypes;
-  const distributionTitle = isVisualBreakdownMode() || topTypes.length ? '敏感数据类型分布' : '风险类型分布';
+  const visualRiskTypes = (visuals?.exfilRiskTypes ?? []).map((item) => ({
+    label: riskTypeLabel(item.type),
+    value: item.totalBytes > 0 ? item.totalBytes / (1024 ** 3) : item.count,
+  })).filter((item) => item.value > 0);
+  const visualRiskLabels = new Set(visualRiskTypes.map((item) => item.label));
+  const topRiskTypes = [
+    ...visualRiskTypes,
+    ...uploadByRisk.filter((item) => !visualRiskLabels.has(item.label)),
+  ].slice(0, 5);
+  const liveDistribution = topTypes.length ? topTypes : topRiskTypes;
+  const distributionTitle = topTypes.length ? '敏感数据类型分布' : '风险类型分布';
   const hasClassifiedTypes = topTypes.length > 0;
   const riskDepth = hasClassifiedTypes ? 2 : 1;
   const destinationDepth = riskDepth + 1;
   const pathDepth = destinationDepth + 1;
-  const topDestinations = uploadByDestination.slice(0, 5);
+  const actualDestinations = (visuals?.exfilDestinations ?? []).map((item) => ({
+    // The Sankey must preserve destination identity. Grouping by region merged
+    // multiple database destinations into one oversized node and obscured paths.
+    label: item.dstIp || item.region,
+    region: item.region || item.dstIp,
+    value: item.uploadBytes / (1024 ** 3),
+    asn: item.asn || '未归因',
+  })).filter((item) => item.label && item.value > 0);
+  const topDestinations = (actualDestinations.length ? actualDestinations : uploadByDestination)
+    .slice()
+    .sort((left, right) => right.value - left.value)
+    .slice(0, 5);
 
   const sankeyNodes = [
     ...topSources.map((item) => ({ name: item.label, depth: 0 })),
     ...topTypes.map((item) => ({ name: `类型:${item.label}`, depth: 1 })),
     ...topRiskTypes.map((item) => ({ name: `风险:${item.label}`, depth: riskDepth })),
     ...topDestinations.map((item) => ({ name: item.label, depth: destinationDepth })),
-    ...sourceRows.slice(0, 4).map((row, index) => ({ name: `路径-${String(index + 1).padStart(2, '0')}`, depth: pathDepth })),
+    ...sourceRows.slice(0, 5).map((row, index) => ({ name: `路径-${String(index + 1).padStart(2, '0')}`, depth: pathDepth })),
   ];
 
   const sankeyLinks: ExfilSankeyLink[] = [];
-  sourceRows.slice(0, 8).forEach((row, index) => {
-    const source = firstMatchingGroup(rowText(row, '源资产'), topSources);
-    const dataType = firstMatchingGroup(rowText(row, '数据类型'), topTypes);
-    const riskType = firstMatchingGroup(rowText(row, '风险类型'), topRiskTypes);
-    const destination = firstMatchingGroup(rowText(row, '目标区域'), topDestinations);
-    const riskPath = `路径-${String((index % 4) + 1).padStart(2, '0')}`;
-    const value = Math.max(1, rowUploadGb(row));
+  const representativeRows = topSources.flatMap((source) =>
+    sourceRows.filter((row) => rowText(row, '源资产') === source.label).slice(0, 2));
+  (representativeRows.length ? representativeRows : sourceRows.slice(0, 10)).forEach((row, index) => {
+    const source = firstMatchingGroup(rowText(row, '源资产'), topSources) || topSources[index % Math.max(1, topSources.length)]?.label;
+    const dataType = firstMatchingGroup(rowText(row, '数据类型'), topTypes) || topTypes[index % Math.max(1, topTypes.length)]?.label;
+    const riskType = topRiskTypes[index % Math.max(1, topRiskTypes.length)]?.label
+      || firstMatchingGroup(rowText(row, '风险类型'), topRiskTypes);
+    const destination = topDestinations[index % Math.max(1, topDestinations.length)]?.label
+      || firstMatchingGroup(rowText(row, '目标区域'), topDestinations);
+    const riskPath = `路径-${String((index % 5) + 1).padStart(2, '0')}`;
+    const value = Math.max(1, Math.log2(rowUploadGb(row) + 2) * 2);
 
     if (source && dataType) sankeyLinks.push({ source, target: `类型:${dataType}`, value });
-    if (dataType && riskType) sankeyLinks.push({ source: `类型:${dataType}`, target: `风险:${riskType}`, value: value * 0.82 });
+    if (dataType && riskType) sankeyLinks.push({ source: `类型:${dataType}`, target: `风险:${riskType}`, value: value * 0.88 });
     if (source && !dataType && riskType) sankeyLinks.push({ source, target: `风险:${riskType}`, value });
-    if (riskType && destination) sankeyLinks.push({ source: `风险:${riskType}`, target: destination, value: value * 0.72 });
-    if (destination) sankeyLinks.push({ source: destination, target: riskPath, value: value * 0.56 });
+    if (riskType && destination) sankeyLinks.push({ source: `风险:${riskType}`, target: destination, value: value * 0.78 });
+    if (destination) sankeyLinks.push({ source: destination, target: riskPath, value: value * 0.68 });
   });
 
-  const destinationRows = topDestinations.map((item, index) => ({
-    region: item.label,
-    asn: destinationAsn(item.label, index),
+  const destinationRows = topDestinations.map((item) => ({
+    region: 'region' in item && typeof item.region === 'string' ? item.region : item.label,
+    asn: 'asn' in item && typeof item.asn === 'string' ? item.asn : '未归因',
     traffic: `${item.value.toFixed(1)}`,
     ratio: percentOf(item.value, totalUploadGb),
   }));
@@ -1878,12 +2617,16 @@ function buildExfilVisualModel(rows: SnapshotRow[], metrics: SnapshotMetric[]): 
     destinationRows,
     distributionTitle,
     sensitiveTypes: normalizeDistribution(liveDistribution, ['#65d86e', '#ffb020', '#ff8a3d', '#ff4d4f', '#b685ff']),
-    protocols: buildProtocolDistribution(sourceRows),
-    trend: buildExfilTrend(sourceRows, totalUploadGb),
-    accounts: topSources.map((item) => ({ label: serviceAccountLabel(item.label), value: Math.max(1, Math.round(item.value)) })),
+    protocols: buildProtocolDistribution(visuals?.exfilPaths ?? []),
+    trend: buildExfilTrend(visuals?.exfilTrend ?? []),
+    accounts: (visuals?.exfilAccountServices ?? [])
+      .slice()
+      .sort((left, right) => right.count - left.count)
+      .slice(0, 5)
+      .map((item) => ({ label: item.label, value: item.count })),
     confidence,
     totalUploadGb,
-    pathCount: Math.max(pathCount, sourceRows.length),
+    pathCount,
   };
 }
 
@@ -1903,6 +2646,51 @@ function groupRows(rows: SnapshotRow[], labelColumn: string, valueColumn: string
 function rowText(row: SnapshotRow, column: string) {
   const value = row[column];
   return typeof value === 'number' ? String(value) : String(value ?? '').trim();
+}
+
+function protocolLabel(value: string) {
+  const labels: Record<string, string> = {
+    DNS_HIGH_FREQUENCY: 'DNS 高频隧道',
+    SSH_LONG_LIVED: 'SSH 长连接',
+    QUIC_LONG_LIVED: 'QUIC 长连接',
+    TLS_LARGE_LONG_LIVED: 'TLS 大流量长连接',
+  };
+  return labels[value] ?? (value || '未知协议');
+}
+
+function riskTypeLabel(value: string) {
+  const labels: Record<string, string> = {
+    large_encrypted_upload: '大流量加密上传',
+    long_lived_encrypted_session: '长连接加密会话',
+    non_standard_encrypted_port: '非标准加密端口',
+  };
+  return labels[value] ?? (value || '未知风险');
+}
+
+function bytesLabelCompact(value: number) {
+  if (!Number.isFinite(value) || value <= 0) return '0 B';
+  if (value >= 1024 ** 3) return `${(value / (1024 ** 3)).toFixed(2)} GB`;
+  if (value >= 1024 ** 2) return `${(value / (1024 ** 2)).toFixed(1)} MB`;
+  if (value >= 1024) return `${(value / 1024).toFixed(1)} KB`;
+  return `${Math.round(value)} B`;
+}
+
+function formatTopicTime(value: number, format: 'MM-DD HH:mm' | 'HH:mm' = 'MM-DD HH:mm') {
+  if (!Number.isFinite(value) || value <= 0) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hour = String(date.getHours()).padStart(2, '0');
+  const minute = String(date.getMinutes()).padStart(2, '0');
+  return format === 'HH:mm' ? `${hour}:${minute}` : `${month}-${day} ${hour}:${minute}`;
+}
+
+function topicTimeRangeLabel(visuals: TopicVisuals | undefined, fallback: string) {
+  const start = visuals?.timeRange.start ?? 0;
+  const end = visuals?.timeRange.end ?? 0;
+  if (!start || !end) return fallback;
+  return `${formatTopicTime(start)} ~ ${formatTopicTime(end)}`;
 }
 
 function rowNumber(row: SnapshotRow, column: string) {
@@ -1936,6 +2724,20 @@ function metricValueNumber(metrics: SnapshotMetric[], label: string) {
   return metricNumber(metrics, label);
 }
 
+function compactPaginationTokens(pageCount: number, currentPage: number): Array<number | string> {
+  if (pageCount <= 7) return Array.from({ length: pageCount }, (_, index) => index + 1);
+  const pages = new Set([1, pageCount, currentPage - 1, currentPage, currentPage + 1]);
+  if (currentPage <= 3) [2, 3, 4].forEach((value) => pages.add(value));
+  if (currentPage >= pageCount - 2) [pageCount - 3, pageCount - 2, pageCount - 1].forEach((value) => pages.add(value));
+  const sorted = [...pages].filter((value) => value >= 1 && value <= pageCount).sort((a, b) => a - b);
+  const tokens: Array<number | string> = [];
+  sorted.forEach((value, index) => {
+    if (index > 0 && value - sorted[index - 1] > 1) tokens.push(`ellipsis-${sorted[index - 1]}-${value}`);
+    tokens.push(value);
+  });
+  return tokens;
+}
+
 function firstMatchingGroup(value: string, groups: Array<{ label: string }>) {
   if (!groups.length) return '';
   return groups.find((item) => item.label === value)?.label ?? groups[0].label;
@@ -1962,42 +2764,37 @@ function mergeSankeyLinks(links: ExfilSankeyLink[]) {
 
 function normalizeDistribution(groups: Array<{ label: string; value: number }>, colors: string[]): ExfilDistributionItem[] {
   const total = groups.reduce((sum, item) => sum + item.value, 0) || 1;
-  return groups.slice(0, 5).map((item, index) => ({
+  return groups
+    .slice()
+    .sort((left, right) => right.value - left.value)
+    .slice(0, 5)
+    .map((item, index) => ({
     label: item.label,
     value: Number((item.value / total * 100).toFixed(1)),
     color: colors[index % colors.length],
-  }));
+    }));
 }
 
-function buildProtocolDistribution(rows: SnapshotRow[]): ExfilDistributionItem[] {
-  const protocols = ['HTTPS', 'S3', 'WebDAV', 'DNS', '其他'];
-  const total = rows.reduce((sum, row) => sum + rowUploadGb(row), 0) || 1;
-  return protocols.map((label, index) => {
-    const value = rows.reduce((sum, row, rowIndex) => {
-      const path = rowText(row, '外传路径');
-      const matched = path.toUpperCase().includes(label.toUpperCase()) || rowIndex % protocols.length === index;
-      return matched ? sum + rowUploadGb(row) : sum;
-    }, 0);
-    return {
-      label,
-      value: Number((value / total * 100).toFixed(1)),
-      color: ['#1ea8ff', '#ffb020', '#65d86e', '#ff8a3d', '#b685ff'][index],
-    };
-  }).filter((item) => item.value > 0);
-}
-
-function buildExfilTrend(rows: SnapshotRow[], totalUploadGb: number): ExfilTrendPoint[] {
-  if (!rows.length || !totalUploadGb) return [];
-  const base = totalUploadGb;
-  return Array.from({ length: 12 }, (_, index) => {
-    const row = rows[index % rows.length];
-    const pulse = row ? rowUploadGb(row) / Math.max(base, 1) : 0.08;
-    const wave = 0.42 + Math.sin(index * 0.86) * 0.14 + (index % 4 === 2 ? 0.18 : 0);
-    return {
-      label: `${String(index * 2).padStart(2, '0')}:00`,
-      value: Number(Math.max(2, base / 18 * (wave + pulse)).toFixed(1)),
-    };
+function buildProtocolDistribution(paths: NonNullable<TopicVisuals['exfilPaths']>): ExfilDistributionItem[] {
+  const grouped = new Map<string, number>();
+  paths.forEach((path) => {
+    const label = path.protocol || (path.dstPort ? `端口 ${path.dstPort}` : '未知协议');
+    grouped.set(label, (grouped.get(label) ?? 0) + path.uploadBytes);
   });
+  return normalizeDistribution(
+    [...grouped.entries()].map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value),
+    ['#1ea8ff', '#ffb020', '#65d86e', '#ff8a3d', '#b685ff'],
+  );
+}
+
+function buildExfilTrend(trend: NonNullable<TopicVisuals['exfilTrend']>): ExfilTrendPoint[] {
+  return trend
+    .filter((item) => item.bucketStart > 0)
+    .sort((a, b) => a.bucketStart - b.bucketStart)
+    .map((item) => ({
+      label: formatTopicTime(item.bucketStart, 'HH:mm'),
+      value: item.largeUploadSessions + item.longLivedSessions + item.nonStandardPortSessions,
+    }));
 }
 
 function percentOf(value: number, total: number) {
@@ -2005,100 +2802,88 @@ function percentOf(value: number, total: number) {
   return `${(value / total * 100).toFixed(1)}%`;
 }
 
-function destinationAsn(label: string, index: number) {
-  const known: Record<string, string> = {
-    '美国 (US)': 'AS15169',
-    '日本 (JP)': 'AS17676',
-    '新加坡 (SG)': 'AS133481',
-    '德国 (DE)': 'AS3320',
-    '香港 (HK)': 'AS4760',
-  };
-  return known[label] ?? `AS${15169 + index * 817}`;
-}
-
-function serviceAccountLabel(source: string) {
-  const labels = ['svc_backup', 'svc_share', 'user_test01', 'gitlab-ci', 'anonymous'];
-  if (source.includes('NAS')) return 'svc_backup';
-  if (source.includes('Share')) return 'svc_share';
-  const tail = source.split(/[.-]/).filter(Boolean).slice(-1)[0];
-  return tail && /\d+/.test(tail) ? `svc_${tail}` : labels[Math.abs(source.length) % labels.length];
-}
-
 function AptCanvas({
-  config,
-  rows,
-  metrics,
-  selectedSignal,
+  visuals,
 }: {
-  config: TopicConfig;
   rows: SnapshotRow[];
   metrics: SnapshotMetric[];
-  selectedSignal: string;
+  visuals?: TopicVisuals;
 }) {
   const [selectedNode, setSelectedNode] = useState('campaign-0');
-  const model = buildAptVisualModel(rows, metrics, []);
-  const nodes: TopicTopologyNode[] = [
-    ...model.campaigns.map((item, index) => ({
-      id: `campaign-${index}`,
-      label: item.name,
-      title: item.fullName ?? item.name,
-      detail: `${item.meta} / 事件 ${item.events}`,
-      tone: 'risk' as const,
-      x: 9,
-      y: 22 + index * 29,
-      size: [112, 40] as [number, number],
-    })),
-    ...model.phases.map((item, index) => ({
-      id: `phase-${item.id}`,
-      label: `${index + 1} ${item.label}`,
-      detail: `${item.value} / ${item.confidence}`,
-      tone: item.tone === 'risk' ? 'risk' as const : item.tone === 'warn' ? 'proxy' as const : item.tone === 'ok' ? 'destination' as const : 'probe' as const,
-      x: 38 + (index % 3) * 18,
-      y: 22 + Math.floor(index / 3) * 29,
-      size: [92, 36] as [number, number],
-    })),
-    ...model.evidenceNodes.map((item, index) => ({
-      id: `evidence-${index}`,
-      label: item.label,
-      detail: item.value,
-      tone: item.tone === 'risk' ? 'risk' as const : item.tone === 'warn' ? 'proxy' as const : 'destination' as const,
-      x: 88,
-      y: 17 + index * 15,
-      size: [106, 36] as [number, number],
-    })),
-    ...model.assets.map((item, index) => ({
-      id: `asset-${index}`,
-      label: item.label,
-      detail: item.value,
-      tone: 'destination' as const,
-      x: 30 + index * 19,
-      y: 88,
-      size: [106, 32] as [number, number],
-    })),
-  ].map((node) => ({ ...node, selected: node.id === selectedNode }));
-  const links: TopicTopologyLink[] = [
-    ...model.campaigns.flatMap((_, campaignIndex) => model.phases.slice(campaignIndex * 2, campaignIndex * 2 + 3).map((phase) => ({ source: `campaign-${campaignIndex}`, target: `phase-${phase.id}`, tone: 'purple' as const }))),
-    ...model.phases.map((phase, index) => ({ source: `phase-${phase.id}`, target: `evidence-${index % model.evidenceNodes.length}`, tone: phase.tone === 'risk' ? 'risk' as const : 'warn' as const })),
-    ...model.phases.slice(0, model.assets.length).map((phase, index) => ({ source: `phase-${phase.id}`, target: `asset-${index}`, tone: 'ok' as const })),
-  ];
+  const nodes: TopicTopologyNode[] = (visuals?.topologyNodes ?? [])
+    .map((node) => ({
+      id: node.id, label: node.label, detail: node.detail, x: node.x, y: node.y,
+      tone: node.tone, size: [node.width, node.height], symbol: node.symbol, icon: node.icon,
+      labelPosition: node.labelPosition, selected: selectedNode === node.id,
+    }));
+  const links: TopicTopologyLink[] = (visuals?.topologyLinks ?? [])
+    .map((link) => ({
+      source: link.source, target: link.target, value: link.value, tone: link.tone,
+      lineType: link.lineType, label: link.label, width: link.width, curveness: link.curveness,
+      selected: selectedNode !== '' && (link.source === selectedNode || link.target === selectedNode),
+    }));
+  const selectNode = (nodeID: string) => setSelectedNode((current) => current === nodeID ? '' : nodeID);
   return (
     <div className="taf-topic-canvas taf-topic-apt-canvas">
       <div className="taf-topic-canvas-legend">
-        {['战役簇', '攻击阶段', '资产/账号', 'C2/外联', '证据节点'].map((item, index) => <span key={item} className={`tone-${index}`}>{item}</span>)}
+        {['战役簇', '攻击阶段', '资产/账号', '进程/服务', 'C2/外联', '横向移动', '数据外传', '证据节点'].map((item, index) => <span key={item} className={`tone-${index}`}>{item}</span>)}
       </div>
       <div className="taf-topic-attack-map taf-topic-apt-attack-map">
         <div className="taf-topic-apt-topology-svg">
-          <TopicTopologyGraph ariaLabel="APT 战役攻击关系图" nodes={nodes} links={links} onNodeClick={setSelectedNode} />
+          {nodes.length && links.length ? (
+            <TopicTopologyGraph
+              ariaLabel="APT 战役攻击关系图"
+              nodes={nodes}
+              links={links}
+              onNodeClick={selectNode}
+              visualProfile="apt-reference"
+            />
+          ) : (
+            <Alert type="error" showIcon message="APT 战役画布缺少 API 拓扑数据" description="当前快照必须返回 topology_nodes 和 topology_links。" />
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-function AptAnalysisDashboard({ rows, metrics, focusMode }: { rows: SnapshotRow[]; metrics: SnapshotMetric[]; focusMode: string }) {
-  const model = buildAptVisualModel(rows, metrics, []);
-  const analysisTabs = ['ATT&CK阶段覆盖', '战役耗时线', '关键 IoC 命中', '横向移动路径', '处置动作状态', '证据关联强度'];
+function AptAnalysisDashboard({
+  rows,
+  metrics,
+  evidenceRows,
+  focusMode,
+  visuals,
+}: {
+  rows: SnapshotRow[];
+  metrics: SnapshotMetric[];
+  evidenceRows: PageSnapshot['evidence'];
+  focusMode: string;
+  visuals?: TopicVisuals;
+}) {
+  const model = buildAptVisualModel(rows, metrics, evidenceRows, visuals);
+  const analysisTabs = ['ATT&CK阶段覆盖', '战役耗时线', '关键 IoC 命中', '横向移动关系', '处置动作状态', '证据关联强度'];
   const [activeTab, setActiveTab] = useState(analysisTabs[0]);
+  const campaignDurationRows = model.campaignDetails.slice(0, 5).map((campaign) => {
+    const durationHours = campaign.tsEnd > campaign.tsStart
+      ? (campaign.tsEnd - campaign.tsStart) / 3_600_000
+      : 0;
+    return {
+      ...campaign,
+      duration: durationHours >= 24 ? `${(durationHours / 24).toFixed(1)} 天` : `${durationHours.toFixed(1)} 小时`,
+      timeRange: `${formatTopicTime(campaign.tsStart)} ~ ${formatTopicTime(campaign.tsEnd)}`,
+    };
+  });
+  const iocTypeCounts = [...model.iocs.reduce((groups, item) => {
+    groups.set(item.type || '未知', (groups.get(item.type || '未知') ?? 0) + item.hits);
+    return groups;
+  }, new Map<string, number>()).entries()].map(([label, value]) => ({ label, value }));
+  const responseTotal = model.response.reduce((sum, item) => sum + item.value, 0);
+  const lateralSummaryCount = Math.round(metricValueNumber(metrics, '横向移动链路'));
+  const evidenceGapRows = model.evidenceRows.filter((item) => item.status !== 'ok');
+  const timelineEventCount = model.timeline.reduce(
+    (sum, point) => sum + point.aptCn + point.tempHawk + point.unknown,
+    0,
+  );
 
   return (
     <WorkPanel
@@ -2111,6 +2896,8 @@ function AptAnalysisDashboard({ rows, metrics, focusMode }: { rows: SnapshotRow[
           <button
             key={item}
             type="button"
+            role="tab"
+            title={item}
             className={activeTab === item ? 'is-active' : ''}
             aria-selected={activeTab === item}
             onClick={() => setActiveTab(item)}
@@ -2119,39 +2906,60 @@ function AptAnalysisDashboard({ rows, metrics, focusMode }: { rows: SnapshotRow[
           </button>
         ))}
       </div>
-      <div className="taf-topic-apt-analysis-grid">
-        <div className="taf-topic-apt-matrix" aria-label="ATT&CK 阶段覆盖矩阵">
+      <div
+        className="taf-topic-apt-analysis-grid"
+        data-active-tab={activeTab}
+        data-tab-geometry-contract="fixed-within-viewport"
+      >
+        {activeTab === 'ATT&CK阶段覆盖' && <div className="taf-topic-apt-matrix" aria-label="ATT&CK 阶段覆盖矩阵" data-business-view="attack-phase-matrix" data-api-source="campaigns.attack_phases,phase_distribution">
           <b />
           {model.phases.map((phase) => <b key={phase.id}>{phase.id}<small>{phase.label}</small></b>)}
-          {model.campaigns.map((campaign, rowIndex) => [
+          {model.campaigns.map((campaign) => [
             <strong key={`${campaign.name}-name`}>{campaign.name}</strong>,
-            ...model.phases.map((phase, phaseIndex) => (
-              <span
-                key={`${campaign.name}-${phase.id}`}
-                className={`is-${(rowIndex + phaseIndex) % 5 === 1 ? 'warn' : (rowIndex + phaseIndex) % 6 === 2 ? 'risk' : 'ok'}`}
-              />
-            )),
+            ...model.phases.map((phase) => {
+              const campaignDetail = model.campaignDetails.find((item) => item.id === campaign.fullName);
+              const hit = campaignDetail
+                ? campaignDetail.attackPhases.some((item) => normalizeAptPhase(item) === phase.label)
+                : rows.some((row) =>
+                  rowText(row, '战役名称') === campaign.fullName
+                  && normalizeAptPhase(rowText(row, '阶段')) === phase.label);
+              return (
+                <span
+                  key={`${campaign.name}-${phase.id}`}
+                  className={`is-${hit ? (phase.tone === 'risk' ? 'risk' : phase.tone === 'warn' ? 'warn' : 'ok') : 'info'}`}
+                  title={`${campaign.name} / ${phase.label}: ${hit ? phase.value : 0}`}
+                />
+              );
+            }),
           ])}
-        </div>
+        </div>}
 
-        <div className="taf-topic-apt-trend" aria-label="战役时间线事件数">
+        {(activeTab === 'ATT&CK阶段覆盖' || activeTab === '战役耗时线') && <div
+          className="taf-topic-apt-trend"
+          aria-label="战役时间线事件数"
+          data-business-view="campaign-event-trend"
+          data-api-source="events.ts_start,events.campaign_id"
+          data-timeline-point-count={model.timeline.length}
+          data-visible-event-count={timelineEventCount}
+          data-total-event-count={model.eventTotal}
+        >
           <header>
-            <strong>战役时间线（事件数）</strong>
-            <span>{model.eventTotal} 事件</span>
+            <strong>战役时间线（TOP3 事件数）</strong>
+            <span>{timelineEventCount} / 全部 {model.eventTotal}</span>
           </header>
           <DataQualityTrendChart
             ariaLabel="APT 战役事件趋势"
             className="taf-topic-apt-trend-echart"
             categories={model.timeline.map((point) => point.label)}
             series={[
-              { name: 'APT-CN', color: '#ff5b3d', values: model.timeline.map((point) => point.aptCn), area: true },
-              { name: 'TEMP.HAWK', color: '#ffb020', values: model.timeline.map((point) => point.tempHawk) },
-              { name: 'UNKNOWN-07', color: '#65d86e', values: model.timeline.map((point) => point.unknown), dashed: true },
+              { name: model.campaigns[0]?.name ?? '战役 1', color: '#ff5b3d', values: model.timeline.map((point) => point.aptCn), area: true },
+              { name: model.campaigns[1]?.name ?? '战役 2', color: '#ffb020', values: model.timeline.map((point) => point.tempHawk) },
+              { name: model.campaigns[2]?.name ?? '战役 3', color: '#65d86e', values: model.timeline.map((point) => point.unknown), dashed: true },
             ]}
           />
-        </div>
+        </div>}
 
-        <div className="taf-topic-apt-ioc" aria-label="关键 IoC 命中 TOP5">
+        {(activeTab === 'ATT&CK阶段覆盖' || activeTab === '关键 IoC 命中') && <div className="taf-topic-apt-ioc" aria-label="关键 IoC 命中 TOP5" data-business-view="ioc-top5" data-api-source="iocs">
           <header>
             <strong>关键 IoC 命中 TOP5</strong>
             <span>复盘证据</span>
@@ -2159,26 +2967,179 @@ function AptAnalysisDashboard({ rows, metrics, focusMode }: { rows: SnapshotRow[
           <div>
             <b title="IoC">IoC</b><b title="类型">类型</b><b title="命中次数">命中次数</b><b title="首次命中">首次命中</b>
             {model.iocs.map((item) => [
-              <span key={`${item.ioc}-ioc`} title={item.ioc}>{item.ioc}</span>,
-              <span key={`${item.ioc}-type`} title={item.type}>{item.type}</span>,
-              <span key={`${item.ioc}-hits`} title={`${item.hits}`}>{item.hits}</span>,
-              <span key={`${item.ioc}-time`} title={item.firstSeen}>{item.firstSeen}</span>,
+              <span key={`${item.ioc}-ioc`} data-column="ioc" title={item.ioc}>{item.ioc}</span>,
+              <span key={`${item.ioc}-type`} data-column="type" title={item.type}>{item.type}</span>,
+              <span key={`${item.ioc}-hits`} data-column="hits" title={`${item.hits}`}>{item.hits}</span>,
+              <span key={`${item.ioc}-time`} data-column="first-seen" title={item.firstSeen}>{item.firstSeen}</span>,
             ])}
           </div>
-        </div>
+        </div>}
 
+        {activeTab === '战役耗时线' && (
+          <>
+            <div className="taf-topic-apt-ioc" data-business-view="campaign-duration" data-api-source="campaigns.ts_start,ts_end">
+              <header><strong>战役持续时间 TOP5</strong><span>真实首末活动时间</span></header>
+              {campaignDurationRows.length ? (
+                <div className="taf-topic-apt-business-table is-duration">
+                  <b>战役</b><b>持续时间</b><b>状态</b><b>告警</b>
+                  {campaignDurationRows.flatMap((item) => [
+                    item.id,
+                    item.duration,
+                    item.status || item.activityStatus || 'unknown',
+                    String(item.alertCount),
+                  ].map((cell, index) => <span key={`${item.id}-duration-${index}`} title={cell}>{cell}</span>))}
+                </div>
+              ) : <div className="taf-topic-empty">campaigns 未返回首末活动时间</div>}
+            </div>
+            <div className="taf-topic-apt-trend" data-business-view="campaign-window" data-api-source="campaigns:derived">
+              <header><strong>调查窗口与风险</strong><span>API 派生</span></header>
+              {campaignDurationRows.length ? <div className="taf-topic-campaign-window-list">
+                {campaignDurationRows.map((item) => (
+                  <span key={`${item.id}-window`} title={item.timeRange}>
+                    <b>{item.id}</b><em>{Math.round(item.score * 100)}%</em><small>{item.timeRange}</small>
+                  </span>
+                ))}
+              </div> : <div className="taf-topic-empty">campaigns 未返回调查窗口</div>}
+            </div>
+          </>
+        )}
+
+        {activeTab === '关键 IoC 命中' && (
+          <>
+            <div className="taf-topic-apt-trend" data-business-view="ioc-types" data-api-source="iocs.type,hits">
+              <header><strong>IoC 类型命中分布</strong><span>hits 求和</span></header>
+              {iocTypeCounts.length ? <ExfilBarChart items={iocTypeCounts} ariaLabel="IoC 类型命中分布" /> : <div className="taf-topic-empty">iocs 未返回类型命中数据</div>}
+            </div>
+            <div className="taf-topic-apt-ioc" data-business-view="ioc-campaign" data-api-source="iocs.campaign">
+              <header><strong>IoC 与战役关联</strong><span>真实关联字段</span></header>
+              {model.iocs.length ? <div className="taf-topic-apt-business-table is-ioc-campaign">
+                <b>IoC</b><b>类型</b><b>战役</b><b>命中</b>
+                {model.iocs.flatMap((item) => [
+                  item.ioc,
+                  item.type,
+                  item.campaign,
+                  String(item.hits),
+                ].map((cell, index) => <span
+                  key={`${item.ioc}-campaign-${index}`}
+                  data-column={['ioc', 'type', 'campaign', 'hits'][index]}
+                  title={cell}
+                >{cell}</span>))}
+              </div> : <div className="taf-topic-empty">iocs 未返回战役关联</div>}
+            </div>
+          </>
+        )}
+
+        {activeTab === '横向移动关系' && (
+          <>
+            <div className="taf-topic-apt-ioc" data-business-view="lateral-relations" data-api-source="topology_links:derived">
+              <header><strong>横向移动相关拓扑关系</strong><span>{model.lateralRelations.length} 条可绘制关系</span></header>
+              {model.lateralRelations.length ? (
+                <div className="taf-topic-apt-business-table is-lateral">
+                  <b>源框</b><b>目标框</b><b>关系</b><b>可信</b>
+                  {model.lateralRelations.flatMap((item) => [
+                    item.sourceLabel,
+                    item.targetLabel,
+                    item.originalLabel,
+                    item.lineType === 'solid' ? '确认' : '推断',
+                  ].map((cell, index) => <span key={`${item.sourceId}-${item.targetId}-lateral-${index}`} title={cell}>{cell}</span>))}
+                </div>
+              ) : <div className="taf-topic-empty">topology_links 未返回可严格识别的横向移动关系</div>}
+            </div>
+            <div className="taf-topic-apt-trend" data-business-view="lateral-summary" data-api-source="summary.lateral_move_links,topology_links:derived">
+              <header><strong>横向移动调查口径</strong><span>聚合值与可绘制关系分列</span></header>
+              <div className="taf-topic-derived-metrics">
+                <span><b>API 聚合链路</b><strong>{lateralSummaryCount}</strong><small>summary.lateral_move_links</small></span>
+                <span><b>可绘制关系</b><strong>{model.lateralRelations.length}</strong><small>严格端点校验后</small></span>
+                <span><b>确认关系</b><strong>{model.lateralRelations.filter((item) => item.lineType === 'solid').length}</strong><small>solid</small></span>
+                <span><b>推断关系</b><strong>{model.lateralRelations.filter((item) => item.lineType === 'dashed').length}</strong><small>dashed</small></span>
+              </div>
+            </div>
+            <div className="taf-topic-apt-ioc" data-business-view="lateral-campaigns" data-api-source="campaigns.attack_phases,entities">
+              <header><strong>涉及战役与实体</strong><span>campaigns 原始字段</span></header>
+              {model.campaignDetails.some((item) => item.attackPhases.some((phase) => normalizeAptPhase(phase) === '横向移动')) ? <div className="taf-topic-campaign-window-list">
+                {model.campaignDetails.filter((item) => item.attackPhases.some((phase) => normalizeAptPhase(phase) === '横向移动')).map((item) => (
+                  <span key={`${item.id}-lateral-campaign`}><b>{item.id}</b><em>{item.entities.length} 实体</em><small>{item.entities.join(' / ') || '无实体'}</small></span>
+                ))}
+              </div> : <div className="taf-topic-empty">campaigns 未返回横向移动阶段战役</div>}
+            </div>
+          </>
+        )}
+        {activeTab === '处置动作状态' && (
+          <>
+            <div className="taf-topic-apt-trend" data-business-view="response-donut" data-api-source="response">
+              <header><strong>处置动作状态</strong><span>{responseTotal} 条动作</span></header>
+              <DataQualityDonutChart
+                ariaLabel="APT 处置动作状态"
+                rows={model.response.map((item) => ({ label: item.label, value: item.value, color: item.tone === 'risk' ? '#ff5b3d' : item.tone === 'warn' ? '#ffb020' : '#65d86e' }))}
+              />
+            </div>
+            <div className="taf-topic-apt-ioc" data-business-view="campaign-status" data-api-source="campaigns.status,activity_status">
+              <header><strong>战役处置状态</strong><span>campaigns 原始状态</span></header>
+              {model.campaignDetails.length ? <div className="taf-topic-apt-business-table is-campaign-status">
+                <b>战役</b><b>状态</b><b>活动态</b><b>评分</b>
+                {model.campaignDetails.slice(0, 5).flatMap((item) => [
+                  item.id,
+                  item.status || '-',
+                  item.activityStatus || '-',
+                  `${Math.round(item.score * 100)}%`,
+                ].map((cell, index) => <span key={`${item.id}-status-${index}`} title={cell}>{cell}</span>))}
+              </div> : <div className="taf-topic-empty">campaigns 未返回处置状态</div>}
+            </div>
+            <div className="taf-topic-apt-trend" data-business-view="response-summary" data-api-source="response,summary.closure_rate">
+              <header><strong>闭环与待办</strong><span>实时处置口径</span></header>
+              <div className="taf-topic-derived-metrics">
+                <span><b>闭环率</b><strong>{Math.round(model.closureRate)}%</strong><small>summary.closure_rate</small></span>
+                {model.response.map((item) => <span key={`${item.label}-summary`}><b>{item.label}</b><strong>{item.value}</strong><small>{Math.round(item.value / Math.max(responseTotal, 1) * 100)}%</small></span>)}
+              </div>
+            </div>
+          </>
+        )}
+        {activeTab === '证据关联强度' && (
+          <>
+            <div className="taf-topic-apt-ioc" data-business-view="evidence-completeness" data-api-source="evidence_bundle">
+              <header><strong>证据包完整度</strong><span>接口返回口径</span></header>
+              {model.evidenceRows.length ? <div className="taf-topic-exfil-evidence-list">
+                {model.evidenceRows.map((item) => <span key={item.label} className={`is-${item.status}`}><FileProtectOutlined /><b>{item.label}</b><em>{item.value}</em></span>)}
+              </div> : <div className="taf-topic-empty">evidence_bundle 未返回证据完整度</div>}
+            </div>
+            <div className="taf-topic-apt-ioc" data-business-view="evidence-relations" data-api-source="topology_links:derived">
+              <header><strong>证据关联拓扑</strong><span>{model.evidenceAssociations.length} 条严格关系</span></header>
+              {model.evidenceAssociations.length ? (
+                <div className="taf-topic-apt-business-table is-evidence">
+                  <b>来源框</b><b>证据框</b><b>关系</b><b>数量</b>
+                  {model.evidenceAssociations.flatMap((item) => [
+                    item.sourceLabel,
+                    item.targetLabel,
+                    item.originalLabel,
+                    String(item.value),
+                  ].map((cell, index) => <span key={`${item.sourceId}-${item.targetId}-evidence-${index}`} title={cell}>{cell}</span>))}
+                </div>
+              ) : <div className="taf-topic-empty">topology_links 未返回 evidence-* 目标关系</div>}
+            </div>
+            <div className="taf-topic-apt-trend" data-business-view="evidence-gaps" data-api-source="evidence_bundle.status">
+              <header><strong>缺证与补证队列</strong><span>{evidenceGapRows.length} 项待处理</span></header>
+              <div className="taf-topic-campaign-window-list">
+                {evidenceGapRows.length
+                  ? evidenceGapRows.map((item) => <span key={`${item.label}-gap`}><b>{item.label}</b><em className={`is-${item.status}`}>{item.status}</em><small>{item.value}</small></span>)
+                  : model.evidenceRows.length
+                    ? <span><b>证据包</b><em>ok</em><small>当前无缺证项</small></span>
+                    : <span><b>证据包</b><em>待返回</em><small>evidence_bundle 未返回</small></span>}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </WorkPanel>
   );
 }
 
-function AptResponsePanel({ rows, metrics }: { rows: SnapshotRow[]; metrics: SnapshotMetric[] }) {
-  const model = buildAptVisualModel(rows, metrics, []);
+function AptResponsePanel({ rows, metrics, visuals }: { rows: SnapshotRow[]; metrics: SnapshotMetric[]; visuals?: TopicVisuals }) {
+  const model = buildAptVisualModel(rows, metrics, [], visuals);
   const total = model.response.reduce((sum, item) => sum + item.value, 0);
   return (
     <WorkPanel title="处置动作状态（近30天）" className="taf-topic-apt-response-panel" extra={<span className="taf-topic-focus">总计 {total}</span>}>
       <div className="taf-topic-apt-response" aria-label="处置动作状态">
-        <div className="taf-topic-apt-response-chart">
+        <div className="taf-topic-apt-response-chart" data-responsive-chart-contract="container-proportional">
           <DataQualityDonutChart
             ariaLabel="APT 处置动作状态分布"
             className="taf-topic-apt-response-echart"
@@ -2188,8 +3149,10 @@ function AptResponsePanel({ rows, metrics }: { rows: SnapshotRow[]; metrics: Sna
               color: item.tone === 'risk' ? '#ff5b3d' : item.tone === 'warn' ? '#ffb020' : '#65d86e',
             }))}
           />
-          <strong>{total}</strong>
-          <span>总计</span>
+          <div className="taf-topic-apt-response-center">
+            <strong>{total}</strong>
+            <span>总计</span>
+          </div>
         </div>
         <div>
           {model.response.map((item) => (
@@ -2209,13 +3172,17 @@ function AptRightRail({
   metrics,
   evidenceRows,
   rows,
+  visuals,
+  reportBinding,
 }: {
   config: TopicConfig;
   metrics: SnapshotMetric[];
   evidenceRows: PageSnapshot['evidence'];
   rows: SnapshotRow[];
+  visuals?: TopicVisuals;
+  reportBinding: TopicReportSnapshotBinding;
 }) {
-  const model = buildAptVisualModel(rows, metrics, evidenceRows);
+  const model = buildAptVisualModel(rows, metrics, evidenceRows, visuals);
   const actions: Array<[string, ReactNode]> = [
     ['编辑范围', <EditOutlined key="edit" />],
     ['保存视图', <SaveOutlined key="save" />],
@@ -2226,28 +3193,32 @@ function AptRightRail({
     ['分享', <ShareAltOutlined key="share" />],
     ['收藏', <StarOutlined key="star" />],
   ];
-  const targetMode = isVisualBreakdownMode();
-  const riskOpen = targetMode ? Math.max(3, Math.round((100 - model.closureRate) / 2)) : model.campaigns.length ? Math.round((100 - model.closureRate) / 2) : 0;
+  const riskOpen = model.response.find((item) => item.label === '待处置')?.value ?? 0;
+  const reportableCount = visuals?.summary?.reportable_count ?? model.campaigns.length;
+  const pendingEvidenceCount = visuals?.summary?.pending_evidence_count ?? model.evidenceRows.filter((item) => item.status === 'warn').length;
+  const openRiskCount = visuals?.summary?.open_risk_count ?? riskOpen;
 
   return (
     <>
-      <WorkPanel title={`战役交付摘要 / ${config.topicCode}`} className="taf-topic-apt-delivery">
+      <WorkPanel title={`战役交付摘要 / ${config.displayTopicId ?? config.topicCode}`} className="taf-topic-apt-delivery">
         <span className="taf-topic-apt-delivery-scope">(APT/战役专题)</span>
-        <div className="taf-topic-exfil-delivery-grid">
-          <div className="taf-topic-exfil-delivery-ring" style={{ '--value': model.reportConfidence } as CSSProperties}>
-            <strong>{Math.round(model.reportConfidence)}%</strong>
-            <span>{targetMode ? '较昨日 +8%' : '实时证据计算'}</span>
-          </div>
+        <div className="taf-topic-exfil-delivery-grid" data-responsive-summary-contract="ring-legend-values-container-proportional">
+          <TopicProgressDonut
+            value={model.reportConfidence}
+            ariaLabel="APT 战役报告就绪度"
+            className="taf-topic-exfil-delivery-ring"
+            caption="实时证据计算"
+          />
           <div className="taf-topic-exfil-delivery-stats">
-            <span><i /><b>可生成报告</b><strong>{targetMode ? Math.max(7, model.campaigns.length + 4) : model.campaigns.length}</strong></span>
-            <span><i /><b>待补证据</b><strong>{targetMode ? model.evidenceRows.filter((item) => item.status === 'warn').length || 3 : model.evidenceRows.filter((item) => item.status === 'warn').length}</strong></span>
-            <span><i /><b>未闭环风险</b><strong>{riskOpen}</strong></span>
+            <span><i /><b>可生成报告</b><strong>{reportableCount}</strong></span>
+            <span><i /><b>待补证据</b><strong>{pendingEvidenceCount}</strong></span>
+            <span><i /><b>未闭环风险</b><strong>{openRiskCount}</strong></span>
           </div>
         </div>
         <div className="taf-topic-exfil-delivery-actions">
-          <TopicActionButton topic={config.topicCode} title="导出总报告" className="ant-btn ant-btn-default ant-btn-sm" overlayId="modal-topic-report-export"><DownloadOutlined />导出总报告</TopicActionButton>
+          <TopicActionButton topic={config.topicCode} title="导出总报告" className="ant-btn ant-btn-default ant-btn-sm" overlayId="modal-topic-report-export" reportBinding={reportBinding}><DownloadOutlined />导出总报告</TopicActionButton>
           <TopicActionButton topic={config.topicCode} title="导出证据包" className="ant-btn ant-btn-default ant-btn-sm" overlayId="modal-topic-evidence-package-export"><FileProtectOutlined />导出证据包</TopicActionButton>
-          <TopicActionButton topic={config.topicCode} title="试点周报导出" className="ant-btn ant-btn-default ant-btn-sm"><ExportOutlined />试点周报导出</TopicActionButton>
+          <TopicActionButton topic={config.topicCode} title="试点周报导出" className="ant-btn ant-btn-default ant-btn-sm" reportBinding={reportBinding}><ExportOutlined />试点周报导出</TopicActionButton>
         </div>
       </WorkPanel>
 
@@ -2265,18 +3236,13 @@ function AptRightRail({
 
       <WorkPanel title="战役报告预览 / 当前保存视图" className="taf-topic-apt-report">
         <div className="taf-topic-report-preview">
-          <div className="taf-topic-report-sheet">
-            <span />
-            <span />
-            <span />
-            <i />
-          </div>
+          <TopicReportThumbnail title={config.reportTitle} topicId={config.displayTopicId ?? config.topicCode} completeness={model.reportConfidence} />
           <div>
             <strong>{config.reportTitle}</strong>
             <span>时间窗：{config.timeRange.split('(')[0].trim()}</span>
             <span>资产组：{config.reportSubject}</span>
-            <span>生成时间：2026-06-20 03:40:12</span>
-            <TopicActionButton topic={config.topicCode} title="预览报告" className="ant-btn ant-btn-link ant-btn-sm">预览报告</TopicActionButton>
+            <span>生成时间：{visuals?.presentation?.reportGeneratedAt || '提交导出任务时生成'}</span>
+            <TopicReportPreviewButton topic={config.topicCode} config={config} visuals={visuals} reportBinding={reportBinding} />
           </div>
         </div>
       </WorkPanel>
@@ -2284,7 +3250,7 @@ function AptRightRail({
       <WorkPanel title="专题动作 / 仅作用于当前专题" className="taf-topic-apt-action-panel">
         <div className="taf-topic-exfil-action-grid">
           {actions.map(([label, icon]) => (
-            <TopicActionButton key={String(label)} topic={config.topicCode} title={String(label)} overlayId={topicRailOverlayId(String(label))}>
+            <TopicActionButton key={String(label)} topic={config.topicCode} title={String(label)} target={config.displayTopicId ?? config.topicCode} overlayId={topicRailOverlayId(String(label))} reportBinding={reportBinding}>
               {icon}
               <span>{label}</span>
             </TopicActionButton>
@@ -2295,28 +3261,56 @@ function AptRightRail({
   );
 }
 
-function AptEvidenceToolbar() {
+function AptEvidenceToolbar({
+  phase,
+  status,
+  query,
+  phases,
+  statuses,
+  onPhaseChange,
+  onStatusChange,
+  onQueryChange,
+}: {
+  phase: string;
+  status: string;
+  query: string;
+  phases: string[];
+  statuses: string[];
+  onPhaseChange: (value: string) => void;
+  onStatusChange: (value: string) => void;
+  onQueryChange: (value: string) => void;
+}) {
   return (
     <div className="taf-topic-apt-table-toolbar" aria-label="APT 证据表筛选">
-      {['视图：分层', '发现域：全部', '证据类型：全部', '处置状态：全部'].map((item) => (
-        <span key={item} title={item}>{item}</span>
-      ))}
+      <Select aria-label="APT 阶段筛选" size="small" popupMatchSelectWidth={190} value={phase} onChange={onPhaseChange} options={['全部', ...phases].map((value) => ({ value, label: `阶段：${value}` }))} />
+      <Select aria-label="APT 处置状态筛选" size="small" popupMatchSelectWidth={190} value={status} onChange={onStatusChange} options={['全部', ...statuses].map((value) => ({ value, label: `状态：${value}` }))} />
+      <Input aria-label="搜索 APT 证据" size="small" allowClear prefix={<SearchOutlined />} value={query} onChange={(event) => onQueryChange(event.target.value)} placeholder="搜索战役 / IoC" />
     </div>
   );
 }
 
-function AptEvidenceTable({ rows, isLoading }: { rows: SnapshotRow[]; isLoading: boolean }) {
-  const tableRows = buildAptEvidenceEventRows(rows);
-  const pageSize = 5;
+function AptEvidenceTable({ rows, isLoading, topic }: { rows: SnapshotRow[]; isLoading: boolean; topic: string }) {
+  const allTableRows = buildAptEvidenceEventRows(rows);
+  const pageSize = 10;
   const [page, setPage] = useState(1);
+  const [phase, setPhase] = useState('全部');
+  const [status, setStatus] = useState('全部');
+  const [query, setQuery] = useState('');
   const [selectedAction, setSelectedAction] = useState<{ action: string; row: AptEvidenceEventRow }>();
   const [submittedAction, setSubmittedAction] = useState(false);
   const [submittingAction, setSubmittingAction] = useState(false);
   const [actionID, setActionID] = useState('');
+  const [actionResult, setActionResult] = useState('');
   const [actionError, setActionError] = useState('');
+  const tableRows = allTableRows.filter((row) => {
+    if (phase !== '全部' && row.phase !== phase) return false;
+    if (status !== '全部' && row.status !== status) return false;
+    return !query || Object.values(row).some((value) => String(value).toLowerCase().includes(query.toLowerCase()));
+  });
   const pageCount = Math.max(1, Math.ceil(tableRows.length / pageSize));
   const currentPage = Math.min(page, pageCount);
   const visibleRows = tableRows.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const pageTokens = compactPaginationTokens(pageCount, currentPage);
   const columns: Array<[keyof AptEvidenceEventRow, string]> = [
     ['id', '事件ID'],
     ['phase', '阶段'],
@@ -2328,7 +3322,25 @@ function AptEvidenceTable({ rows, isLoading }: { rows: SnapshotRow[]; isLoading:
   ];
 
   return (
-    <div className="taf-topic-apt-evidence-table" aria-busy={isLoading} aria-label="战役关联事件与证据">
+    <>
+      <AptEvidenceToolbar
+        phase={phase}
+        status={status}
+        query={query}
+        phases={[...new Set(allTableRows.map((row) => row.phase))]}
+        statuses={[...new Set(allTableRows.map((row) => row.status))]}
+        onPhaseChange={(value) => { setPhase(value); setPage(1); }}
+        onStatusChange={(value) => { setStatus(value); setPage(1); }}
+        onQueryChange={(value) => { setQuery(value); setPage(1); }}
+      />
+      <div
+        className="taf-topic-apt-evidence-table"
+        aria-busy={isLoading}
+        aria-label="战役关联事件与证据"
+        data-page-size={pageSize}
+        data-current-page={currentPage}
+        data-rendered-row-count={visibleRows.length}
+      >
       {columns.map(([, label]) => <b key={label} title={label}>{label}</b>)}
       <b title="操作">操作</b>
       {isLoading ? (
@@ -2355,6 +3367,7 @@ function AptEvidenceTable({ rows, isLoading }: { rows: SnapshotRow[]; isLoading:
                 onClick={() => {
                   setSubmittedAction(false);
                   setActionID('');
+                  setActionResult('');
                   setActionError('');
                   setSelectedAction({ action, row });
                 }}
@@ -2369,7 +3382,7 @@ function AptEvidenceTable({ rows, isLoading }: { rows: SnapshotRow[]; isLoading:
         <div className="taf-topic-apt-table-footer">
           <span>共 {tableRows.length} 条</span>
           <button type="button" title="上一页" aria-label="APT 证据上一页" disabled={currentPage <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))}>‹</button>
-          {Array.from({ length: pageCount }, (_, index) => index + 1).map((value) => (
+          {pageTokens.map((value) => typeof value === 'number' ? (
             <button
               key={value}
               type="button"
@@ -2380,44 +3393,39 @@ function AptEvidenceTable({ rows, isLoading }: { rows: SnapshotRow[]; isLoading:
             >
               {value}
             </button>
-          ))}
+          ) : <i key={value} aria-hidden="true">…</i>)}
           <button type="button" title="下一页" aria-label="APT 证据下一页" disabled={currentPage >= pageCount} onClick={() => setPage((value) => Math.min(pageCount, value + 1))}>›</button>
           <span>{pageSize} 条/页</span>
         </div>
       )}
-      <Drawer
+        <Modal
         className="taf-topic-action-drawer"
         title={selectedAction ? `${selectedAction.action}确认` : 'APT 证据操作'}
         open={Boolean(selectedAction)}
         width="min(520px, calc(var(--taf-window-inner-width, 100dvw) - 40px))"
-        onClose={() => {
+        onCancel={() => {
           setSelectedAction(undefined);
           setSubmittedAction(false);
           setActionID('');
+          setActionResult('');
           setActionError('');
         }}
-        extra={(
-          <Button
-            size="small"
-            type="primary"
-            loading={submittingAction}
-            disabled={submittedAction || !selectedAction}
-            onClick={() => {
-              if (!selectedAction) return;
-              setSubmittingAction(true);
-              setActionError('');
-              void submitTopicAction('apt', selectedAction.action, selectedAction.row.id)
-                .then((result) => {
-                  setActionID(result.action_id);
-                  setSubmittedAction(true);
-                })
-                .catch((error: unknown) => setActionError(error instanceof Error ? error.message : 'APT 证据操作提交失败'))
-                .finally(() => setSubmittingAction(false));
-            }}
-          >
-            {submittedAction ? '已写入任务队列' : '确认提交'}
-          </Button>
-        )}
+        okText={submittedAction ? '已完成' : '确认执行'}
+        cancelText="取消"
+        okButtonProps={{ loading: submittingAction, disabled: submittedAction || !selectedAction }}
+        onOk={() => {
+          if (!selectedAction) return;
+          setSubmittingAction(true);
+          setActionError('');
+          void submitTopicAction(topic, selectedAction.action, selectedAction.row.id, collectTopicDataContext())
+            .then((result) => {
+              setActionID(result.action_id);
+              setActionResult(result.business_effect?.message || 'APT 证据业务操作已执行');
+              setSubmittedAction(true);
+            })
+            .catch((error: unknown) => setActionError(error instanceof Error ? error.message : 'APT 证据操作提交失败'))
+            .finally(() => setSubmittingAction(false));
+        }}
       >
         <div className="taf-alert-detail-action-body">
           <p>将为当前 APT 专题事件创建“{selectedAction?.action}”业务任务，并原子写入任务与审计上下文。</p>
@@ -2427,151 +3435,124 @@ function AptEvidenceTable({ rows, isLoading }: { rows: SnapshotRow[]; isLoading:
             <dt>执行接口</dt><dd>/v1/topics/apt/actions</dd>
           </dl>
           {actionError && <Alert type="error" showIcon message="APT 证据操作提交失败" description={actionError} />}
-          {submittedAction && <Alert type="success" showIcon message="APT 证据操作已进入持久化任务队列" description={`任务 ${actionID}；事件 ${selectedAction?.row.id}；动作 ${selectedAction?.action}`} />}
+          {submittedAction && <Alert type="success" showIcon message={actionResult} description={`任务 ${actionID}；事件 ${selectedAction?.row.id}；动作 ${selectedAction?.action}`} />}
         </div>
-      </Drawer>
-    </div>
+        </Modal>
+      </div>
+    </>
   );
 }
 
-function buildAptVisualModel(rows: SnapshotRow[], metrics: SnapshotMetric[], evidenceRows: PageSnapshot['evidence']): AptVisualModel {
-  if (isVisualBreakdownMode()) return buildAptTargetVisualModel();
-
+function buildAptVisualModel(rows: SnapshotRow[], metrics: SnapshotMetric[], _evidenceRows: PageSnapshot['evidence'], visuals?: TopicVisuals): AptVisualModel {
   const sourceRows = rows;
-  const campaignNames = sourceRows.slice(0, 3).map((row) => rowText(row, '战役名称')).filter(Boolean);
+  const apiCampaigns = visuals?.aptCampaigns ?? [];
+  const campaignNames = apiCampaigns.length
+    ? apiCampaigns.slice(0, 3).map((item) => item.id)
+    : sourceRows.slice(0, 3).map((row) => rowText(row, '战役名称')).filter(Boolean);
   const alertTotal = sourceRows.reduce((sum, row) => sum + rowNumber(row, '关联告警'), 0);
-  const eventTotal = alertTotal;
+  const eventTotal = visuals?.summary?.total_events ?? alertTotal;
   const campaigns = campaignNames.map((name, index) => ({
     name: compactCampaignName(name, index),
     fullName: name,
-    meta: index === 0 ? '高置信' : index === 1 ? '中置信' : '低置信',
-    events: rowNumber(sourceRows[index] ?? {}, '关联告警'),
-    tone: (index === 0 ? 'risk' : index === 1 ? 'warn' : 'info') as Tone,
+    meta: apiCampaigns[index]?.status || rowText(sourceRows[index] ?? {}, '风险等级') || '风险待评估',
+    events: apiCampaigns[index]?.alertCount ?? rowNumber(sourceRows[index] ?? {}, '关联告警'),
+    tone: apiCampaigns[index]
+      ? (apiCampaigns[index].score >= 0.8 ? 'risk' : apiCampaigns[index].score >= 0.6 ? 'warn' : 'info')
+      : aptRiskTone(rowText(sourceRows[index] ?? {}, '风险等级')),
   }));
-  const labels = ['初始访问', '执行', '持久化', '防御规避', '凭证访问', '发现', '横向移动', '命令控制', '数据外传'];
-  const phases = labels.map((label, index) => ({
-    id: `TA${String(index + 1).padStart(4, '0')}`,
-    label,
-    value: phaseValue(label, sourceRows, metrics),
-    confidence: index % 3 === 0 ? '高置信' : index % 3 === 1 ? '中覆盖' : '低覆盖',
-    tone: (index % 4 === 0 ? 'risk' : index % 4 === 1 ? 'warn' : index % 4 === 2 ? 'info' : 'ok') as Tone,
-  }));
-  const evidenceNodes = [
-    { label: 'C2 域名', value: iocValue(sourceRows, 0, '-'), tone: 'risk' as Tone },
-    { label: 'C2 IP', value: iocValue(sourceRows, 1, '-'), tone: 'risk' as Tone },
-    { label: '外联地址', value: iocValue(sourceRows, 2, '-'), tone: 'warn' as Tone },
-    { label: 'PCAP', value: `${Math.round(eventTotal * 0.36)} 证据`, tone: 'warn' as Tone },
-    { label: 'Session', value: `${Math.round(eventTotal * 0.46)} 会话`, tone: 'ok' as Tone },
+  const tactics = [
+    { id: 'TA0001', label: '初始访问' },
+    { id: 'TA0002', label: '执行' },
+    { id: 'TA0003', label: '持久化' },
+    { id: 'TA0005', label: '防御规避' },
+    { id: 'TA0006', label: '凭证访问' },
+    { id: 'TA0007', label: '发现' },
+    { id: 'TA0008', label: '横向移动' },
+    { id: 'TA0011', label: '命令控制' },
+    { id: 'TA0010', label: '数据外传' },
   ];
+  const phaseCounts = new Map((visuals?.aptPhaseDistribution ?? []).map((item) => [normalizeAptPhase(item.phase), item.count]));
+  const phases = tactics.map(({ id, label }) => {
+    const value = phaseCounts.get(label) ?? phaseValue(label, sourceRows, metrics);
+    return {
+      id,
+      label,
+      value,
+      confidence: value > 0 ? '真实命中' : '未命中',
+      tone: (value > 0 ? (['横向移动', '数据外传', '命令控制'].includes(label) ? 'risk' : 'warn') : 'info') as Tone,
+    };
+  });
+  const evidenceNodes: AptEvidenceNode[] = uniqueAptEntities(sourceRows).slice(0, 5).map((item) => ({
+    label: aptEntityType(item.entity),
+    value: `${item.entity} / ${item.hits} 告警`,
+    tone: item.tone,
+  }));
+  if (!evidenceNodes.length) evidenceNodes.push({ label: '关联实体', value: '专题接口未返回', tone: 'info' });
   const assets = [
     { label: '资产/组', value: `命中 ${metricNumber(metrics, '关键资产命中')}`, tone: 'ok' as Tone },
-    { label: '账号', value: `命中 ${Math.round(eventTotal * 0.17)}`, tone: 'ok' as Tone },
+    { label: '账号', value: '专题接口未返回', tone: 'info' as Tone },
     { label: '资产/后门', value: `命中 ${metricNumber(metrics, '持久化迹象数')}`, tone: 'ok' as Tone },
-    { label: '关键凭据', value: `命中 ${Math.round(eventTotal * 0.09)}`, tone: 'ok' as Tone },
+    { label: '关键凭据', value: '专题接口未返回', tone: 'info' as Tone },
   ];
   const reportConfidence = metricNumber(metrics, '报告置信度');
   const closureRate = metricNumber(metrics, '处置闭环率');
-  const normalizedEvidenceRows = evidenceRows;
+  const normalizedEvidenceRows = visuals?.evidenceBundle
+    ? visuals.evidenceBundle.map((item) => ({
+      label: item.label,
+      value: `${item.complete} / ${item.total} (${item.total ? Math.round(item.complete / item.total * 100) : 0}%)`,
+      status: item.status,
+    }))
+    : [];
+  const response = visuals?.aptResponse
+    ? [
+      { label: '已完成', value: visuals.aptResponse.closed, tone: 'ok' as Tone },
+      { label: '进行中', value: visuals.aptResponse.processing, tone: 'warn' as Tone },
+      { label: '待处置', value: visuals.aptResponse.open, tone: 'risk' as Tone },
+    ]
+    : buildAptResponse(sourceRows);
+  const visualIocs = visuals?.aptIocs ?? [];
 
   return {
     campaigns,
     phases,
     evidenceNodes,
     assets,
-    timeline: buildAptTimeline(sourceRows, eventTotal),
-    iocs: evidenceNodes.slice(0, 5).filter((item) => item.value !== '-').map((item, index) => ({
-      ioc: item.value.replace(/\s+(证据|会话)$/u, ''),
-      type: index === 0 ? '域名' : index === 1 ? 'IP' : index === 4 ? '会话' : 'Hash',
-      hits: Math.round(eventTotal / (index + 2)),
-      firstSeen: sourceRows[index] ? rowText(sourceRows[index], '首次发现') : '-',
-    })),
-    response: [
-      { label: '已完成', value: Math.round(closureRate), tone: 'ok' as Tone },
-      { label: '进行中', value: sourceRows.length ? Math.round((100 - closureRate) * 0.56) : 0, tone: 'warn' as Tone },
-      { label: '待处置', value: sourceRows.length ? Math.round((100 - closureRate) * 0.44) : 0, tone: 'risk' as Tone },
-    ],
+    timeline: buildAptTimeline(sourceRows, campaignNames.slice(0, 3)),
+    iocs: visualIocs.length
+      ? visualIocs.slice(0, 5).map((item) => ({
+        ioc: item.value,
+        type: item.type,
+        hits: item.hits,
+        campaign: item.campaign || '-',
+        firstSeen: formatTopicTime(item.firstSeen ?? 0),
+        lastSeen: formatTopicTime(item.lastSeen ?? 0),
+      }))
+      : uniqueAptEntities(sourceRows).slice(0, 5).map((item) => ({
+        ioc: item.entity,
+        type: aptEntityType(item.entity),
+        hits: item.hits,
+        campaign: '-',
+        firstSeen: item.firstSeen,
+        lastSeen: '-',
+      })),
+    response,
     evidenceRows: normalizedEvidenceRows,
+    campaignDetails: visuals?.aptCampaigns ?? [],
+    lateralRelations: visuals?.aptLateralPaths ?? [],
+    evidenceAssociations: visuals?.aptEvidenceAssociations ?? [],
     reportConfidence,
     closureRate,
     eventTotal,
   };
 }
 
-function buildAptTargetVisualModel(): AptVisualModel {
-  return {
-    campaigns: [
-      { name: 'APT-CN-2026', meta: '高置信', events: 156, tone: 'risk' },
-      { name: 'TEMP.HAWK', meta: '中置信', events: 98, tone: 'warn' },
-      { name: 'UNKNOWN-07', meta: '低置信', events: 64, tone: 'info' },
-    ],
-    phases: [
-      { id: 'TA0001', label: '初始访问', value: 7, confidence: '高置信', tone: 'risk' },
-      { id: 'TA0002', label: '执行', value: 7, confidence: '高置信', tone: 'warn' },
-      { id: 'TA0003', label: '持久化', value: 6, confidence: '中覆盖', tone: 'info' },
-      { id: 'TA0004', label: '防御规避', value: 6, confidence: '中覆盖', tone: 'ok' },
-      { id: 'TA0005', label: '凭证访问', value: 5, confidence: '中覆盖', tone: 'risk' },
-      { id: 'TA0007', label: '发现', value: 6, confidence: '中覆盖', tone: 'warn' },
-      { id: 'TA0008', label: '横向移动', value: 23, confidence: '链路', tone: 'risk' },
-      { id: 'TA0011', label: '命令控制', value: 8, confidence: '命中', tone: 'warn' },
-      { id: 'TA0010', label: '数据外传', value: 32, confidence: '证据', tone: 'risk' },
-    ],
-    evidenceNodes: [
-      { label: 'C2 域名', value: 'c2-apt.ltop 命中 8', tone: 'risk' },
-      { label: 'C2 IP', value: '185.199.111.153 命中 6', tone: 'risk' },
-      { label: '外联地址', value: '195.110.10.77 命中 5', tone: 'warn' },
-      { label: 'PCAP', value: '56 证据', tone: 'warn' },
-      { label: 'Session', value: '72 会话', tone: 'ok' },
-      { label: '日志/审计', value: '134 条', tone: 'ok' },
-    ],
-    assets: [
-      { label: '资产/组', value: '办公终端 命中 32', tone: 'ok' },
-      { label: '账号', value: 'CORP.LOCAL 命中 27', tone: 'ok' },
-      { label: '资产/后门', value: 'PowerShell 命中 18', tone: 'ok' },
-      { label: '关键班弱码', value: '弱特征服务 命中 14', tone: 'ok' },
-    ],
-    timeline: [
-      { label: '05-21', aptCn: 12, tempHawk: 8, unknown: 5 },
-      { label: '05-26', aptCn: 22, tempHawk: 13, unknown: 7 },
-      { label: '05-31', aptCn: 38, tempHawk: 18, unknown: 11 },
-      { label: '06-05', aptCn: 46, tempHawk: 27, unknown: 14 },
-      { label: '06-10', aptCn: 64, tempHawk: 31, unknown: 20 },
-      { label: '06-15', aptCn: 58, tempHawk: 39, unknown: 24 },
-      { label: '06-20', aptCn: 78, tempHawk: 46, unknown: 28 },
-    ],
-    iocs: [
-      { ioc: 'c2-apt.ltop', type: '域名', hits: 32, firstSeen: '05-23 10:21' },
-      { ioc: '195.110.10.77', type: 'IP', hits: 28, firstSeen: '05-24 14:11' },
-      { ioc: '185.199.111.153', type: 'IP', hits: 21, firstSeen: '05-25 09:33' },
-      { ioc: 'updatel.javroc-dol.com', type: '域名', hits: 18, firstSeen: '06-02 11:07' },
-      { ioc: 'a1b2c3d4e5f6a7b8', type: 'Hash', hits: 18, firstSeen: '06-03 16:42' },
-    ],
-    response: [
-      { label: '已完成', value: 68, tone: 'ok' },
-      { label: '进行中', value: 18, tone: 'warn' },
-      { label: '待处置', value: 14, tone: 'risk' },
-    ],
-    evidenceRows: [
-      { label: '告警证据', value: '64 / 64 (100%)', status: 'ok' },
-      { label: 'PCAP', value: '132 / 156 (84%)', status: 'warn' },
-      { label: 'Session', value: '198 / 204 (97%)', status: 'ok' },
-      { label: '审计日志', value: '38 / 38 (100%)', status: 'ok' },
-      { label: '回溯路径', value: '18 / 18 (100%)', status: 'ok' },
-      { label: '资产快照', value: '23 / 23 (100%)', status: 'ok' },
-    ],
-    reportConfidence: 62,
-    closureRate: 68,
-    eventTotal: 180,
-  };
-}
-
 function buildAptEvidenceEventRows(rows: SnapshotRow[]): AptEvidenceEventRow[] {
-  if (isVisualBreakdownMode()) return buildAptTargetEvidenceRows();
-
   const directRows = rows
     .map((row, index) => {
       const id = rowText(row, '事件ID') || rowText(row, '战役名称');
       if (!id) return null;
-      const status = rowText(row, '处置状态') || rowText(row, '处置') || '进行中';
+      const rawStatus = rowText(row, '处置状态') || 'unknown';
+      const status = aptStatusLabel(rawStatus);
       const firstSeen = rowText(row, '首次发现');
       const lastSeen = rowText(row, '最近活动');
       const alertCount = rowNumber(row, '关联告警');
@@ -2584,7 +3565,7 @@ function buildAptEvidenceEventRows(rows: SnapshotRow[]): AptEvidenceEventRow[] {
         timeWindow: rowText(row, '时间窗') || (firstSeen && lastSeen ? `${firstSeen} ~ ${lastSeen}` : lastSeen || firstSeen || `第 ${index + 1} 条战役记录`),
         status,
         statusTone: aptStatusTone(status),
-        actions: ['全量详情', '溯源分析', 'PCAP', 'Session', '关联告警', '停止BGP'],
+        actions: ['全量详情', '溯源分析', '关联告警'],
       } satisfies AptEvidenceEventRow;
     })
     .filter((row): row is AptEvidenceEventRow => Boolean(row));
@@ -2598,100 +3579,49 @@ function compactCampaignName(value: string, index: number) {
   if (normalized.length <= 18) return normalized;
   const segments = normalized.split('-').filter(Boolean);
   const suffix = segments[segments.length - 1] ?? '';
-  if (suffix && suffix.length <= 10) return `EXFIL-${suffix.toUpperCase()}`;
+  if (suffix && suffix.length <= 10) return `${normalized.slice(0, 7)}…${suffix}`;
   return `${normalized.slice(0, 8)}…${normalized.slice(-7)}`;
 }
 
-function buildAptTargetEvidenceRows(): AptEvidenceEventRow[] {
-  return [
-    {
-      id: '20260601-0001',
-      phase: '初始访问',
-      assetGroup: '办公终端',
-      ioc: 'c2-apt.ltop',
-      evidenceType: 'PCAP',
-      timeWindow: '2026-05-23 10:21 ~ 10:42',
-      status: '已完成',
-      statusTone: 'ok',
-      actions: ['全量详情', '溯源分析', 'PCAP', 'Session', '关联告警', '停止BGP'],
-    },
-    {
-      id: '20260602-0005',
-      phase: '执行',
-      assetGroup: '办公终端',
-      ioc: 'PowerShell - Encoded',
-      evidenceType: 'Session',
-      timeWindow: '2026-05-23 10:43 ~ 11:05',
-      status: '已完成',
-      statusTone: 'ok',
-      actions: ['全量详情', '溯源分析', 'PCAP', 'Session', '关联告警', '停止BGP'],
-    },
-    {
-      id: '20260603-0012',
-      phase: '持久化',
-      assetGroup: '办公终端',
-      ioc: 'a1b2c3d4e5f6a7b8',
-      evidenceType: '文件摘要',
-      timeWindow: '2026-05-24 14:11 ~ 14:35',
-      status: '进行中',
-      statusTone: 'warn',
-      actions: ['全量详情', '溯源分析', 'PCAP', 'Session', '关联告警', '停止BGP'],
-    },
-    {
-      id: '20260604-0020',
-      phase: '防御规避',
-      assetGroup: '办公网段',
-      ioc: 'regsvr32.exe',
-      evidenceType: '日志',
-      timeWindow: '2026-05-25 09:22 ~ 09:35',
-      status: '已完成',
-      statusTone: 'ok',
-      actions: ['全量详情', '溯源分析', 'PCAP', 'Session', '关联告警', '停止BGP'],
-    },
-    {
-      id: '20260610-0051',
-      phase: '凭证访问',
-      assetGroup: '数据中心',
-      ioc: '10.12.3.55 > 10.12.5.21',
-      evidenceType: 'Session',
-      timeWindow: '2026-05-30 21:03 ~ 21:28',
-      status: '进行中',
-      statusTone: 'warn',
-      actions: ['全量详情', '溯源分析', 'PCAP', 'Session', '关联告警', '停止BGP'],
-    },
-    {
-      id: '20260612-0068',
-      phase: '命令控制',
-      assetGroup: '数据中心',
-      ioc: '185.199.111.153',
-      evidenceType: 'PCAP',
-      timeWindow: '2026-06-02 11:07 ~ 11:29',
-      status: '已完成',
-      statusTone: 'ok',
-      actions: ['全量详情', '溯源分析', 'PCAP', 'Session', '关联告警', '停止BGP'],
-    },
-    {
-      id: '20260615-0079',
-      phase: '数据外传',
-      assetGroup: '数据中心',
-      ioc: '195.110.10.77',
-      evidenceType: '日志/审计',
-      timeWindow: '2026-06-18 02:18 ~ 02:46',
-      status: '待处置',
-      statusTone: 'risk',
-      actions: ['全量详情', '溯源分析', 'PCAP', 'Session', '关联告警', '停止BGP'],
-    },
-  ];
-}
-
 function aptStatusTone(status: string): Tone {
-  if (status.includes('完成')) return 'ok';
-  if (status.includes('待') || status.includes('未')) return 'risk';
+  if (status.includes('完成') || status === 'closed' || status === 'resolved' || status === 'ended') return 'ok';
+  if (status.includes('待') || status.includes('未') || status === 'unknown') return 'risk';
   return 'warn';
 }
 
+function aptStatusLabel(status: string) {
+  const normalized = status.trim().toLowerCase();
+  if (['closed', 'resolved', 'ended'].includes(normalized)) return '已完成';
+  if (['active', 'in_progress', 'investigating', 'processing'].includes(normalized)) return '进行中';
+  return status && normalized !== 'unknown' ? status : '待处置';
+}
+
+function aptRiskTone(risk: string): Tone {
+  if (risk.includes('高') || risk.toLowerCase().includes('critical') || risk.toLowerCase().includes('high')) return 'risk';
+  if (risk.includes('中') || risk.toLowerCase().includes('medium')) return 'warn';
+  return 'info';
+}
+
+function normalizeAptPhase(phase: string) {
+  const normalized = phase.trim().toLowerCase().replace(/[\s-]+/g, '_');
+  const labels: Record<string, string> = {
+    initial_access: '初始访问',
+    execution: '执行',
+    persistence: '持久化',
+    defense_evasion: '防御规避',
+    credential_access: '凭证访问',
+    discovery: '发现',
+    lateral_movement: '横向移动',
+    command_control: '命令控制',
+    command_and_control: '命令控制',
+    exfiltration: '数据外传',
+  };
+  if (phase.trim() === '外传') return '数据外传';
+  return labels[normalized] ?? phase;
+}
+
 function phaseValue(label: string, rows: SnapshotRow[], metrics: SnapshotMetric[]) {
-  const byRow = rows.filter((row) => rowText(row, '阶段').includes(label.slice(0, 2))).length;
+  const byRow = rows.filter((row) => normalizeAptPhase(rowText(row, '阶段')).includes(label.slice(0, 2))).length;
   if (byRow) return byRow;
   if (label === '横向移动') return metricNumber(metrics, '横向移动链路');
   if (label === '持久化') return metricNumber(metrics, '持久化迹象数');
@@ -2699,40 +3629,105 @@ function phaseValue(label: string, rows: SnapshotRow[], metrics: SnapshotMetric[
   return 0;
 }
 
-function iocValue(rows: SnapshotRow[], index: number, fallback: string) {
-  const row = rows.length ? rows[index % rows.length] : {};
-  const entity = rowText(row, '关键实体');
-  if (/^\d{1,3}(?:\.\d{1,3}){3}$/.test(entity)) return entity;
-  if (index === 0 && entity.includes('.')) return entity;
-  return fallback;
+function aptEntityType(entity: string) {
+  if (/^\d{1,3}(?:\.\d{1,3}){3}$/.test(entity)) return 'IP';
+  if (/^[a-f0-9]{32,64}$/i.test(entity)) return 'Hash';
+  if (entity.includes('.')) return '域名/主机';
+  return '实体';
 }
 
-function buildAptTimeline(rows: SnapshotRow[], eventTotal: number): AptTimelinePoint[] {
-  const labels = ['05-21', '05-26', '05-31', '06-05', '06-10', '06-15', '06-20'];
-  if (!rows.length) return labels.map((label) => ({ label, aptCn: 0, tempHawk: 0, unknown: 0 }));
-  return labels.map((label, index) => {
-    const seed = rows[index % rows.length] ? rowNumber(rows[index % rows.length], '关联告警') : eventTotal;
-    return {
-      label,
-      aptCn: Math.max(8, Math.round(seed / 4 + Math.sin(index * 0.9) * 12)),
-      tempHawk: Math.max(6, Math.round(seed / 6 + Math.cos(index * 0.7) * 8)),
-      unknown: Math.max(3, Math.round(seed / 10 + Math.sin(index * 1.2) * 5)),
-    };
+function uniqueAptEntities(rows: SnapshotRow[]) {
+  const entities = new Map<string, { entity: string; hits: number; firstSeen: string; tone: Tone }>();
+  rows.forEach((row) => {
+    const entity = rowText(row, '关键实体');
+    if (!entity || entity === '-') return;
+    const existing = entities.get(entity);
+    const hits = rowNumber(row, '关联告警');
+    entities.set(entity, {
+      entity,
+      hits: (existing?.hits ?? 0) + hits,
+      firstSeen: existing?.firstSeen || rowText(row, '首次发现') || '-',
+      tone: aptRiskTone(rowText(row, '风险等级')),
+    });
   });
+  return [...entities.values()].sort((a, b) => b.hits - a.hits);
 }
 
-function FlowNode({ tone, title, detail }: { tone: string; title: string; detail: string }) {
-  return (
-    <span className={`taf-topic-flow-node is-${tone}`}>
-      <strong>{title}</strong>
-      <em>{detail}</em>
-    </span>
-  );
+function buildAptResponse(rows: SnapshotRow[]): AptVisualModel['response'] {
+  const counts = { completed: 0, active: 0, pending: 0 };
+  rows.forEach((row) => {
+    const status = rowText(row, '处置状态').toLowerCase();
+    if (['closed', 'resolved', 'ended'].includes(status)) counts.completed++;
+    else if (['active', 'in_progress', 'investigating', 'processing'].includes(status)) counts.active++;
+    else counts.pending++;
+  });
+  return [
+    { label: '已完成', value: counts.completed, tone: 'ok' },
+    { label: '进行中', value: counts.active, tone: 'warn' },
+    { label: '待处置', value: counts.pending, tone: 'risk' },
+  ];
 }
 
-function renderTopicCell(column: string, value: unknown) {
+function buildAptTimeline(rows: SnapshotRow[], campaignNames: string[]): AptTimelinePoint[] {
+  const timestamped = rows
+    .map((row) => {
+      const rawTimestamp = rowNumber(row, '__ts_start');
+      const timestamp = rawTimestamp > 0 && rawTimestamp < 10_000_000_000
+        ? rawTimestamp * 1000
+        : rawTimestamp;
+      return {
+        campaign: rowText(row, '__campaign_id') || rowText(row, '战役名称'),
+        timestamp,
+      };
+    })
+    .filter((item) => item.campaign && Number.isFinite(item.timestamp))
+    .sort((left, right) => left.timestamp - right.timestamp);
+  if (!timestamped.length) return [];
+
+  const minTimestamp = timestamped[0].timestamp;
+  const maxTimestamp = timestamped[timestamped.length - 1].timestamp;
+  const bucketCount = Math.min(10, Math.max(1, timestamped.length));
+  const bucketWidth = Math.max(1, Math.ceil((maxTimestamp - minTimestamp + 1) / bucketCount));
+  const counts = Array.from({ length: bucketCount }, () => [0, 0, 0]);
+
+  timestamped.forEach((item) => {
+    const campaignIndex = campaignNames.findIndex((name) => name === item.campaign);
+    if (campaignIndex < 0 || campaignIndex > 2) return;
+    const bucketIndex = Math.min(bucketCount - 1, Math.floor((item.timestamp - minTimestamp) / bucketWidth));
+    counts[bucketIndex][campaignIndex] += 1;
+  });
+
+  return counts.map((values, index) => ({
+    label: formatTopicTime(minTimestamp + (index * bucketWidth)).slice(0, 5),
+    aptCn: values[0],
+    tempHawk: values[1],
+    unknown: values[2],
+  }));
+}
+
+function renderTopicCell(topic: string, column: string, value: unknown, record: SnapshotRow) {
   if (column.includes('风险')) return <StatusTag value={value} />;
-  if (column === '处置') return <TopicActionButton topic="专题下钻" title="下钻" className="ant-btn ant-btn-link ant-btn-sm">下钻</TopicActionButton>;
+  if (column === '处置') {
+    const target = rowText(record, '事件ID') || rowText(record, '外传路径') || rowText(record, '源资产') || topic;
+    if (topic === 'exfil') {
+      return (
+        <div className="taf-topic-exfil-row-actions" aria-label={`外传证据操作 ${target}`}>
+          {['PCAP', 'Session', '文件摘要', '回溯路径', '审计日志'].map((label) => (
+            <TopicActionButton
+              key={label}
+              topic={topic}
+              title={label}
+              target={target}
+              className="ant-btn ant-btn-default ant-btn-sm"
+            >
+              {label}
+            </TopicActionButton>
+          ))}
+        </div>
+      );
+    }
+    return <TopicActionButton topic={topic} title={String(value || '下钻')} target={target} className="ant-btn ant-btn-link ant-btn-sm">{String(value || '下钻')}</TopicActionButton>;
+  }
   if (column.includes('流量') || column.includes('上传量') || column.includes('告警')) {
     return <strong className="taf-topic-strong-cell">{String(value ?? '-')}</strong>;
   }

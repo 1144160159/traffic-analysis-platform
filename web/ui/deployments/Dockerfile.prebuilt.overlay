@@ -8,5 +8,8 @@ LABEL org.opencontainers.image.revision=${SOURCE_REVISION} \
       org.opencontainers.image.title="traffic-analysis web-ui"
 
 COPY dist/ /usr/share/nginx/html/
+COPY deployments/config.js.template /usr/share/nginx/html/config.js.template
+COPY deployments/docker-entrypoint.sh /docker-entrypoint.sh
 RUN find /usr/share/nginx/html -type d -exec chmod 0755 {} + \
-  && find /usr/share/nginx/html -type f -exec chmod 0644 {} +
+  && find /usr/share/nginx/html -type f -exec chmod 0644 {} + \
+  && chmod +x /docker-entrypoint.sh

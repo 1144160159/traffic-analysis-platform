@@ -1,0 +1,165 @@
+/* Campaign list detail drawer
+   This stylesheet is imported after the legacy page bundle so this responsive
+   production contract cannot be replaced by historical campaign overrides. */
+
+.taf-campaign-detail-drawer .ant-drawer-content-wrapper {
+  top: 16px;
+  right: 16px;
+  bottom: 16px;
+  height: auto;
+  max-height: calc(100dvh - 32px);
+}
+
+.taf-campaign-detail-drawer .ant-drawer-body {
+  padding: 0;
+  overflow: hidden;
+}
+
+.taf-campaign-detail-drawer__content {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  gap: 10px;
+  padding: 18px 22px 16px;
+  overflow: hidden;
+}
+
+.taf-campaign-detail-drawer__header {
+  min-height: 60px;
+  flex: 0 0 auto;
+}
+
+.taf-campaign-detail-drawer__summary {
+  min-height: 138px;
+  flex: 0 0 auto;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(66px, 1fr));
+  gap: 0;
+  padding: 0 10px;
+}
+
+.taf-campaign-detail-drawer__summary > span {
+  min-height: 66px;
+  grid-template-columns: 48px minmax(0, 1fr);
+  padding: 9px 18px;
+}
+
+.taf-campaign-detail-drawer__workspace {
+  min-height: 0;
+  flex: 1 1 auto;
+  grid-template-columns: minmax(250px, 0.82fr) minmax(430px, 1.46fr) minmax(250px, 0.82fr);
+  gap: 10px;
+  padding-right: 2px;
+  overflow: auto;
+  scrollbar-gutter: stable;
+}
+
+.taf-campaign-detail-drawer__workspace > aside,
+.taf-campaign-detail-drawer__workspace > main {
+  min-height: 0;
+  height: 100%;
+}
+
+.taf-campaign-detail-drawer__workspace[data-active-tab="detail"] > aside:first-child {
+  grid-template-rows: minmax(190px, 0.72fr) minmax(300px, 1.28fr);
+}
+
+.taf-campaign-detail-drawer__workspace[data-active-tab="detail"] > main {
+  grid-template-rows: minmax(500px, 1fr);
+}
+
+.taf-campaign-detail-drawer__workspace[data-active-tab="detail"] > aside:last-child {
+  grid-template-rows: minmax(210px, 0.74fr) minmax(300px, 1.26fr);
+}
+
+.taf-campaign-detail-drawer__workspace[data-active-tab="evidence"] > main,
+.taf-campaign-detail-drawer__workspace[data-active-tab="audit"] > aside:last-child {
+  width: 100%;
+  height: auto;
+  min-height: 100%;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.taf-campaign-detail-drawer__workspace[data-active-tab="audit"] > aside:first-child {
+  display: none;
+}
+
+.taf-campaign-detail-drawer__workspace[data-active-tab="audit"] [data-tab-panel="audit"] {
+  width: 100%;
+}
+
+.taf-campaign-detail-drawer__graph {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.taf-campaign-detail-drawer__graph > div {
+  width: 100%;
+  height: 100%;
+  min-height: 440px;
+}
+
+.taf-campaign-detail-drawer__footer {
+  min-height: 62px;
+  flex: 0 0 auto;
+}
+
+.taf-campaign-detail-drawer__footer .ant-alert {
+  min-width: 300px;
+  max-width: 390px;
+}
+
+.taf-campaign-detail-drawer__footer > .ant-space {
+  min-width: 0;
+  flex-wrap: nowrap;
+}
+
+@media (max-width: 1260px) {
+  .taf-campaign-detail-drawer__workspace {
+    grid-template-columns: minmax(220px, 0.78fr) minmax(390px, 1.42fr) minmax(220px, 0.78fr);
+  }
+
+  .taf-campaign-detail-drawer__footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .taf-campaign-detail-drawer__footer .ant-alert {
+    width: 100%;
+    max-width: none;
+  }
+
+  .taf-campaign-detail-drawer__footer > .ant-space {
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 980px) {
+  .taf-campaign-detail-drawer__content {
+    overflow-y: auto;
+  }
+
+  .taf-campaign-detail-drawer__summary {
+    min-height: 204px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(3, minmax(66px, 1fr));
+  }
+
+  .taf-campaign-detail-drawer__workspace {
+    display: flex;
+    flex: 0 0 auto;
+    overflow: visible;
+  }
+
+  .taf-campaign-detail-drawer__workspace > aside,
+  .taf-campaign-detail-drawer__workspace > main {
+    height: auto;
+  }
+
+  .taf-campaign-detail-drawer__footer > .ant-space {
+    flex-wrap: wrap;
+  }
+}

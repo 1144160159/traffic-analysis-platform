@@ -1,0 +1,2014 @@
+/*
+ * 专题面板三张 UI 真源的最终覆盖层。
+ * 此文件必须在 pages.css 之后加载，避免历史页面级联重新压缩专题画布。
+ */
+
+@media (min-width: 1800px) {
+  .taf-shell:has(.taf-topic-page) {
+    --shell-sidebar: 190px;
+  }
+
+  .taf-shell:has(.taf-topic-page) .taf-main {
+    padding: 0 10px 0 8px;
+    overflow: hidden;
+  }
+
+  .taf-shell:has(.taf-topic-page) .taf-topic-shell {
+    height: calc(var(--taf-window-inner-height, 100dvh) - var(--shell-topbar) - var(--shell-bottombar));
+  }
+
+  .taf-topic-exfil .taf-topic-shell {
+    padding: 0 7px 20px 0;
+  }
+
+  .taf-topic-exfil-layout {
+    margin-top: -1px;
+    margin-left: -1px;
+  }
+
+  .taf-topic-tunnel-main {
+    grid-template-rows: minmax(0, 1fr) 260px;
+  }
+
+  .taf-topic-exfil-main {
+    grid-template-rows:
+      minmax(480px, 1fr)
+      clamp(166px, calc(100dvh - 960px), 340px);
+  }
+
+  .taf-topic-apt-main {
+    grid-template-rows: 490px 156px;
+  }
+
+  .taf-topic-tunnel-rail {
+    grid-template-rows: 242px 194px 215px minmax(0, 1fr);
+  }
+
+  .taf-topic-exfil-rail {
+    height: calc(100dvh - 184px);
+    grid-template-rows: 242px 180px 225px minmax(0, 1fr);
+  }
+
+  .taf-topic-apt-rail {
+    grid-template-rows: 260px 240px 198px minmax(0, 1fr);
+  }
+}
+
+.taf-topic-page .taf-api-topology {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 220px;
+}
+
+.taf-topic-tunnel-alert-strip .taf-topic-alert-chip {
+  cursor: default;
+  user-select: text;
+}
+
+.taf-topic-tunnel-alert-strip .taf-topic-alert-chip.is-risk {
+  background: rgba(87, 24, 20, 0.34);
+  border-color: rgba(255, 91, 61, 0.5);
+}
+
+.taf-topic-tunnel-alert-strip .taf-topic-alert-chip.is-warn {
+  background: rgba(82, 57, 13, 0.3);
+  border-color: rgba(255, 176, 32, 0.48);
+}
+
+.taf-topic-tunnel-alert-strip .taf-topic-alert-chip.is-info {
+  background: rgba(49, 27, 78, 0.32);
+  border-color: rgba(182, 133, 255, 0.44);
+}
+
+.taf-topic-tunnel .taf-topic-controls > .ant-btn,
+.taf-topic-exfil .taf-topic-controls > .ant-btn,
+.taf-topic-apt .taf-topic-controls > .ant-btn,
+.taf-topic-tunnel-delivery-actions .ant-btn,
+.taf-topic-exfil-delivery-actions .ant-btn {
+  color: #7fd4ff !important;
+  background: rgba(3, 17, 28, 0.68) !important;
+  border-color: rgba(56, 151, 201, 0.42) !important;
+  box-shadow: none !important;
+}
+
+.taf-topic-tunnel .taf-topic-controls > .ant-btn:hover,
+.taf-topic-exfil .taf-topic-controls > .ant-btn:hover,
+.taf-topic-apt .taf-topic-controls > .ant-btn:hover,
+.taf-topic-tunnel-delivery-actions .ant-btn:hover {
+  color: #dff5ff !important;
+  background: rgba(24, 168, 255, 0.18) !important;
+  border-color: rgba(91, 198, 255, 0.7) !important;
+}
+
+.taf-topic-report-preview-trigger.ant-btn {
+  color: #02131f !important;
+  background: linear-gradient(135deg, #30bdff, #1688ff) !important;
+  border-color: #65ceff !important;
+  box-shadow: 0 0 10px rgba(24, 168, 255, 0.24) !important;
+  font-weight: 700;
+}
+
+.taf-topic-report-preview-trigger.ant-btn:hover,
+.taf-topic-report-preview-trigger.ant-btn:focus-visible {
+  color: #001018 !important;
+  background: linear-gradient(135deg, #74d7ff, #36a8ff) !important;
+  border-color: #a8e8ff !important;
+  box-shadow: 0 0 14px rgba(48, 189, 255, 0.42) !important;
+}
+
+.taf-topic-save-view-chevron {
+  margin-left: 5px;
+  font-size: 9px;
+}
+
+.taf-topic-tunnel-kpi {
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 1px 6px;
+  padding-right: 6px;
+  padding-left: 6px;
+}
+
+.taf-topic-tunnel-kpi > span {
+  width: 22px;
+  height: 22px;
+  font-size: 14px;
+}
+
+.taf-topic-tunnel-kpi strong {
+  overflow: visible;
+  font-size: clamp(15px, 0.95vw, 18px);
+  text-overflow: clip;
+}
+
+.taf-topic-exfil-donut-layout {
+  grid-template-columns: 66px minmax(0, 1fr);
+  gap: 7px;
+}
+
+.taf-topic-exfil-donut-layout > div:first-child {
+  width: 64px !important;
+  height: 58px !important;
+}
+
+.taf-topic-exfil-legend {
+  gap: 2px;
+  overflow: visible;
+}
+
+.taf-topic-exfil-legend span {
+  min-height: 13px;
+  grid-template-columns: 7px minmax(0, 1fr) 34px;
+  gap: 3px;
+  font-size: 8px;
+  line-height: 1.12;
+}
+
+.taf-topic-exfil-legend span::before {
+  grid-column: 1;
+  margin: 0;
+}
+
+.taf-topic-exfil-legend b {
+  grid-column: 2;
+  padding: 0;
+  overflow: visible;
+  white-space: normal;
+  text-overflow: clip;
+}
+
+.taf-topic-exfil-legend em {
+  grid-column: 3;
+}
+
+.taf-topic-apt-matrix {
+  min-width: 760px;
+  overflow: visible;
+}
+
+.taf-topic-apt-analysis-grid:has(.taf-topic-apt-matrix) {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+
+.taf-topic-apt .taf-topic-apt-matrix b,
+.taf-topic-apt .taf-topic-apt-matrix strong,
+.taf-topic-apt .taf-topic-apt-matrix span {
+  height: 30px;
+  overflow: visible;
+  font-size: 8px;
+  line-height: 1.08;
+  white-space: normal;
+  text-align: center;
+  text-overflow: clip;
+}
+
+.taf-topic-apt .taf-topic-apt-matrix b small {
+  display: block;
+  overflow: visible;
+  white-space: normal;
+  text-overflow: clip;
+}
+
+.taf-topic-report-sheet,
+.taf-topic-tunnel-report-preview .taf-topic-report-sheet,
+.taf-topic-exfil-report .taf-topic-report-sheet,
+.taf-topic-apt-report .taf-topic-report-sheet {
+  width: 82px;
+  height: 112px;
+  display: grid;
+  grid-template-rows: 20px auto auto auto 5px;
+  gap: 4px;
+  align-content: start;
+  padding: 8px;
+  color: #124564;
+  background: #e8f5ff;
+}
+
+.taf-topic-report-sheet .anticon {
+  color: #2586b9;
+  font-size: 18px;
+}
+
+.taf-topic-report-sheet strong,
+.taf-topic-report-sheet span,
+.taf-topic-report-sheet small {
+  width: 100%;
+  height: auto;
+  overflow: hidden;
+  color: #124564;
+  background: transparent;
+  font-size: 7px;
+  line-height: 1.18;
+  white-space: normal;
+  text-overflow: ellipsis;
+}
+
+.taf-topic-report-sheet strong {
+  max-height: 25px;
+  font-size: 8px;
+}
+
+.taf-topic-report-sheet i {
+  width: 100%;
+  height: 5px;
+  align-self: end;
+  background: linear-gradient(90deg, #2ba9e8 0 var(--report-progress), rgba(37, 134, 185, 0.18) var(--report-progress) 100%);
+  border-radius: 999px;
+}
+
+.taf-topic-report-preview-modal .ant-modal-content {
+  max-height: min(80vh, 780px);
+}
+
+/* r853: data-exfiltration and APT rebuild against the two visual sources. */
+@media (min-width: 1800px) {
+  .taf-topic-exfil-left {
+    grid-template-rows: auto auto 87px minmax(0, 1fr);
+  }
+
+  .taf-topic-apt-left {
+    grid-template-rows: auto auto 72px minmax(0, 1fr);
+  }
+
+  .taf-topic-exfil-left .taf-topic-facts {
+    row-gap: 0;
+  }
+
+  .taf-topic-exfil-boardline {
+    grid-template-columns: minmax(620px, 1.08fr) minmax(520px, 0.92fr);
+  }
+
+  .taf-topic-apt-boardline {
+    grid-template-columns: minmax(700px, 1.08fr) minmax(560px, 0.92fr);
+  }
+
+  .taf-topic-exfil-rail,
+  .taf-topic-apt-rail {
+    height: calc(100dvh - 213px);
+  }
+}
+
+.taf-topic-exfil-canvas .taf-topic-canvas-legend,
+.taf-topic-apt-canvas .taf-topic-canvas-legend {
+  min-height: 27px;
+  gap: 10px;
+  padding: 7px 10px 2px;
+}
+
+.taf-topic-exfil-canvas .taf-topic-canvas-legend span,
+.taf-topic-apt-canvas .taf-topic-canvas-legend span {
+  font-size: 10px;
+}
+
+.taf-topic-exfil-canvas .taf-topic-sankey {
+  min-height: 0;
+}
+
+.taf-topic-exfil-canvas .taf-api-topology,
+.taf-topic-apt-canvas .taf-api-topology {
+  min-height: 0;
+}
+
+.taf-topic-exfil-canvas .taf-api-topology-controls,
+.taf-topic-apt-canvas .taf-api-topology-controls {
+  right: 7px;
+  bottom: 5px;
+}
+
+.taf-topic-exfil .taf-topic-exfil-card {
+  padding: 7px;
+}
+
+.taf-topic-exfil .taf-topic-exfil-card header strong,
+.taf-topic-exfil .taf-topic-exfil-card header span {
+  font-size: 10px;
+}
+
+.taf-topic-exfil .taf-topic-exfil-table b,
+.taf-topic-exfil .taf-topic-exfil-table span,
+.taf-topic-exfil .taf-topic-exfil-bars span {
+  font-size: 9px;
+}
+
+.taf-topic-exfil-table-panel .ant-table-body {
+  overflow-y: auto !important;
+}
+
+.taf-topic-exfil-table-panel .ant-table-container {
+  min-height: 0;
+}
+
+.taf-topic-exfil-row-actions {
+  min-width: 300px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(52px, 1fr));
+  gap: 4px;
+}
+
+.taf-topic-exfil-row-actions .ant-btn {
+  min-width: 0;
+  height: 20px;
+  padding: 0 5px;
+  overflow: hidden;
+  color: #62c6ff !important;
+  background: rgba(24, 168, 255, 0.1) !important;
+  border: 1px solid rgba(56, 151, 201, 0.32) !important;
+  border-radius: 2px;
+  box-shadow: none !important;
+  font-size: 9px;
+  line-height: 18px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.taf-topic-exfil-row-actions .ant-btn:hover {
+  color: #e7f8ff !important;
+  background: rgba(24, 168, 255, 0.2) !important;
+  border-color: rgba(91, 198, 255, 0.66) !important;
+}
+
+@media (min-width: 1800px) {
+  .taf-topic-exfil-table-panel .ant-table-thead > tr > th {
+    height: 28px;
+    padding-block: 5px !important;
+  }
+
+  .taf-topic-exfil-table-panel .ant-table-tbody > tr > td {
+    height: 28px;
+    padding-block: 5px !important;
+  }
+
+  .taf-topic-exfil-delivery-grid {
+    grid-template-columns: 116px minmax(0, 1fr);
+  }
+
+  .taf-topic-exfil-delivery-ring {
+    width: 104px;
+    height: 104px;
+  }
+
+  .taf-topic-exfil-delivery-ring strong {
+    font-size: 22px;
+  }
+
+  .taf-topic-exfil-delivery-ring span {
+    margin-top: 38px;
+    margin-left: -56px;
+    font-size: 10px;
+  }
+
+  .taf-topic-exfil-report .taf-topic-report-sheet {
+    width: 100px;
+    height: 148px;
+    grid-template-rows: 24px 30px 12px 12px 5px;
+    gap: 5px;
+    align-content: start;
+    padding: 9px;
+  }
+}
+
+.taf-topic-report-sheet strong {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.taf-topic-report-sheet span,
+.taf-topic-report-sheet small {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.taf-topic-report-sheet i {
+  position: static !important;
+  width: 100% !important;
+  height: 5px !important;
+  min-height: 5px !important;
+  max-height: 5px !important;
+  margin: 0 !important;
+  align-self: end;
+  border-radius: 2px !important;
+}
+
+.taf-topic-apt-response-chart strong,
+.taf-topic-apt-response-chart span {
+  position: absolute;
+  left: 50%;
+  z-index: 2;
+  /* The pie's 56% inner radius leaves a 39.2px hole in this 70px chart. */
+  width: 36px;
+  margin: 0;
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+.taf-topic-apt-response-chart strong {
+  top: 19px;
+  font-size: 14px;
+  line-height: 16px;
+}
+
+.taf-topic-apt-response-chart span {
+  top: 36px;
+  font-size: 9px;
+  line-height: 10px;
+}
+
+.taf-topic-exfil-report .taf-topic-report-preview,
+.taf-topic-apt-report .taf-topic-report-preview {
+  align-items: center;
+}
+
+.taf-topic-exfil-action-panel .taf-topic-exfil-action-grid button,
+.taf-topic-apt-action-panel .taf-topic-exfil-action-grid button {
+  color: #7fd4ff;
+  background: rgba(3, 17, 28, 0.56);
+  border-color: rgba(56, 151, 201, 0.25);
+}
+
+.taf-topic-exfil-action-panel .taf-topic-exfil-action-grid button:hover,
+.taf-topic-apt-action-panel .taf-topic-exfil-action-grid button:hover {
+  color: #e9f8ff;
+  background: rgba(24, 168, 255, 0.16);
+  border-color: rgba(91, 198, 255, 0.58);
+}
+
+@media (max-width: 1799px) {
+  .taf-shell:has(.taf-topic-page.taf-topic-tunnel) .taf-main {
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    scrollbar-gutter: stable;
+  }
+
+  .taf-topic-page.taf-topic-tunnel,
+  .taf-topic-tunnel .taf-topic-shell {
+    height: auto !important;
+    min-height: calc(var(--taf-window-inner-height, 100dvh) - var(--shell-topbar) - 24px);
+    overflow: visible !important;
+  }
+
+  .taf-topic-tunnel-layout,
+  .taf-topic-exfil-layout,
+  .taf-topic-apt-layout {
+    grid-template-columns: minmax(0, 1fr) !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .taf-topic-tunnel-left,
+  .taf-topic-exfil-left,
+  .taf-topic-apt-left,
+  .taf-topic-tunnel-main,
+  .taf-topic-exfil-main,
+  .taf-topic-apt-main {
+    height: auto !important;
+    min-height: 0;
+    overflow: visible !important;
+  }
+
+  .taf-topic-tunnel-table-panel,
+  .taf-topic-tunnel-table-panel .taf-panel__body,
+  .taf-topic-tunnel-table,
+  .taf-topic-tunnel-table-body {
+    height: auto !important;
+    max-height: none !important;
+    overflow-y: visible !important;
+  }
+
+  .taf-topic-tunnel-rail,
+  .taf-topic-exfil-rail,
+  .taf-topic-apt-rail {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-rows: none !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+}
+
+@media (max-width: 1439px) {
+  .taf-topic-tunnel-impact-panel .taf-panel__body {
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-gutter: stable;
+  }
+
+  .taf-topic-tunnel-impact {
+    min-width: 760px;
+  }
+
+  .taf-topic-page .taf-topic-facts,
+  .taf-topic-page .taf-topic-tunnel-left .taf-topic-facts {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .taf-topic-page .taf-topic-facts span {
+    height: auto;
+    min-height: 30px;
+    align-items: flex-start;
+    padding-block: 6px;
+  }
+
+  .taf-topic-page .taf-topic-facts em {
+    overflow: visible;
+    white-space: normal;
+    text-overflow: clip;
+    overflow-wrap: anywhere;
+  }
+
+  .taf-topic-page .taf-topic-tunnel-kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .taf-topic-page .taf-topic-exfil .taf-topic-kpis {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+
+  .taf-topic-page .taf-topic-apt .taf-topic-kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .taf-topic-page .taf-topic-tunnel-kpi,
+  .taf-topic-page .taf-topic-kpis .taf-metric {
+    min-height: 70px;
+  }
+
+  .taf-topic-page .taf-topic-tunnel-kpi b,
+  .taf-topic-page .taf-topic-tunnel-kpi em,
+  .taf-topic-page .taf-topic-kpis .taf-metric > span:not(.taf-metric__icon),
+  .taf-topic-page .taf-topic-kpis .taf-metric small {
+    height: auto;
+    overflow: visible;
+    white-space: normal;
+    text-overflow: clip;
+  }
+
+  .taf-topic-tunnel-boardline,
+  .taf-topic-exfil-boardline,
+  .taf-topic-apt-boardline {
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: none !important;
+    height: auto !important;
+  }
+
+  .taf-topic-tunnel-boardline > *,
+  .taf-topic-exfil-boardline > *,
+  .taf-topic-apt-boardline > * {
+    height: auto !important;
+    min-height: 440px !important;
+  }
+}
+
+/* Encrypted tunnel full-page reference lock (1920x1080 source).
+   Keep the responsive reflow above for narrower desktop windows. */
+.taf-topic-tunnel-table-head,
+.taf-topic-tunnel-table-row {
+  grid-template-columns:
+    minmax(132px, 0.92fr)
+    minmax(94px, 0.7fr)
+    64px
+    minmax(156px, 1.05fr)
+    86px
+    minmax(190px, 1.24fr)
+    minmax(330px, 2.1fr);
+}
+
+.taf-topic-tunnel-evidence-tags {
+  gap: 4px;
+}
+
+.taf-topic-tunnel-evidence-tags button {
+  min-width: 0;
+  height: 20px;
+  padding: 0 6px;
+  color: #62c6ff;
+  background: rgba(24, 168, 255, 0.1);
+  border: 1px solid rgba(24, 168, 255, 0.32);
+  border-radius: 2px;
+  font-size: 9px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.taf-topic-tunnel-delivery .taf-panel__body {
+  grid-template-rows: 14px minmax(0, 1fr) 26px;
+  gap: 4px;
+}
+
+.taf-topic-tunnel-delivery-subtitle {
+  color: var(--ui-text-secondary);
+  font-size: 10px;
+  line-height: 14px;
+}
+
+.taf-topic-tunnel-action-grid {
+  grid-template-columns: repeat(20, minmax(0, 1fr));
+  gap: 12px 2px;
+}
+
+.taf-topic-tunnel-action-grid button {
+  grid-column: span 5;
+}
+
+.taf-topic-tunnel-action-grid button:nth-child(n + 5) {
+  grid-column: span 4;
+}
+
+.taf-topic-tunnel-card.is-asn .taf-topic-tunnel-mini-table,
+.taf-topic-tunnel-card.is-ja3 .taf-topic-tunnel-mini-table {
+  align-content: center;
+}
+
+@media (min-width: 1800px) {
+  .taf-shell:has(.taf-topic-page.taf-topic-tunnel) {
+    --shell-topbar: 72px;
+    --shell-sidebar: 182px;
+    --shell-bottombar: 120px;
+  }
+
+  .taf-shell:has(.taf-topic-page.taf-topic-tunnel) .taf-main {
+    padding: 0 14px 0 8px;
+  }
+
+  .taf-topic-tunnel .taf-topic-shell {
+    height: calc(var(--taf-window-inner-height, 100dvh) - var(--shell-topbar) - var(--shell-bottombar) - 15px);
+  }
+
+  .taf-topic-tunnel .taf-topic-titlebar {
+    row-gap: 4px;
+    padding: 4px 10px 5px;
+  }
+
+  .taf-topic-tunnel .taf-topic-title-main h1 {
+    font-size: 20px;
+    line-height: 25px;
+  }
+
+  .taf-topic-tunnel .taf-topic-controls > .ant-btn:first-child {
+    min-width: 112px;
+  }
+
+  .taf-topic-tunnel .taf-topic-controls > .ant-btn:last-child {
+    min-width: 132px;
+  }
+
+  .taf-topic-tunnel-left {
+    grid-template-rows: auto auto 92px minmax(0, 1fr);
+  }
+
+  .taf-topic-tunnel-kpi {
+    grid-template-columns: 38px minmax(0, 1fr);
+    grid-template-rows: 18px 27px 17px;
+    gap: 1px 7px;
+    padding: 8px 7px;
+  }
+
+  .taf-topic-tunnel-kpi > span {
+    width: 34px;
+    height: 34px;
+    font-size: 20px;
+  }
+
+  .taf-topic-tunnel-kpi b {
+    font-size: 11px;
+  }
+
+  .taf-topic-tunnel-kpi strong {
+    font-size: 18px;
+  }
+
+  .taf-topic-tunnel-kpi em {
+    font-size: 10px;
+  }
+
+  .taf-topic-tunnel-main {
+    /*
+     * Keep the impact/analysis row proportional to the desktop workspace.
+     * The previous fixed 430px row became increasingly shallow as the browser
+     * widened, stretching node coordinates sideways and causing label overlap.
+     */
+    --taf-tunnel-board-height: clamp(460px, calc(32.2vw - 155px), 680px);
+    /*
+     * Width controls the proportional business canvas; additional viewport
+     * height is assigned to the 10-row evidence area instead of flattening the
+     * canvas or leaving unused space.
+     */
+    height: max(calc(var(--taf-tunnel-board-height) + 181px), calc(100dvh - 469px));
+    align-self: start;
+    grid-template-rows: var(--taf-tunnel-board-height) minmax(175px, 1fr);
+  }
+
+  .taf-topic-tunnel-layout {
+    grid-template-columns: minmax(0, 1fr) 352px;
+  }
+
+  .taf-topic-tunnel-boardline {
+    grid-template-columns: minmax(620px, 1.36fr) minmax(500px, 1fr);
+  }
+
+  .taf-topic-tunnel-impact-panel .taf-panel__body {
+    grid-template-rows: minmax(0, 1fr) 58px;
+  }
+
+  .taf-topic-tunnel-alert-strip {
+    grid-template-columns: 0.92fr 0.98fr 1.3fr;
+  }
+
+  .taf-topic-tunnel-rail {
+    height: 855px;
+    margin-top: 4px;
+    grid-template-rows: 228px 209px 197px minmax(200px, 1fr);
+  }
+
+  .taf-topic-tunnel-delivery .taf-panel__body {
+    grid-template-rows: 14px 120px 26px;
+    align-content: start;
+  }
+
+  .taf-topic-tunnel-ring {
+    width: 104px;
+    height: 104px;
+  }
+
+  .taf-topic-tunnel-evidence-list {
+    gap: 10px;
+  }
+
+  .taf-topic-tunnel-report-preview {
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .taf-topic-tunnel-report-preview .taf-topic-report-sheet {
+    width: 88px;
+    height: 150px;
+    grid-template-rows: 22px auto auto minmax(0, 1fr) 10px;
+    gap: 6px;
+    padding: 9px;
+  }
+
+  .taf-topic-tunnel-report-preview .taf-topic-report-sheet .anticon {
+    font-size: 20px;
+  }
+
+  .taf-topic-tunnel-report-preview .taf-topic-report-sheet strong {
+    max-height: 30px;
+    font-size: 9px;
+  }
+
+  .taf-topic-tunnel-report-preview .taf-topic-report-sheet span,
+  .taf-topic-tunnel-report-preview .taf-topic-report-sheet small {
+    font-size: 8px;
+  }
+
+  .taf-topic-tunnel-action-grid button {
+    gap: 4px;
+    font-size: 11px;
+  }
+
+  .taf-topic-tunnel-action-grid .anticon {
+    font-size: 19px;
+  }
+}
+
+@media (min-width: 1800px) and (min-height: 1180px) {
+  .taf-topic-tunnel-rail {
+    height: calc(100dvh - 213px);
+  }
+}
+
+@media (max-width: 959px) {
+  .taf-topic-titlebar {
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-areas: "title" "tabs" "controls" !important;
+  }
+
+  .taf-topic-tunnel-rail,
+  .taf-topic-exfil-rail,
+  .taf-topic-apt-rail {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
+/* Keep the exfil business canvas bounded when desktop Chrome is narrowed.
+   Auto-height ECharts hosts can otherwise feed their measured height back into
+   the stacked grid and make the page grow on every resize. */
+@media (min-width: 1200px) and (max-width: 1799px) {
+  .taf-topic-exfil-main {
+    height: 786px !important;
+    display: grid;
+    grid-template-rows: 440px 340px !important;
+    overflow: hidden !important;
+  }
+
+  .taf-topic-exfil-boardline {
+    height: 440px !important;
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr) !important;
+    grid-template-rows: minmax(0, 1fr) !important;
+  }
+
+  .taf-topic-exfil-boardline > * {
+    height: 440px !important;
+    min-height: 0 !important;
+  }
+
+  .taf-topic-exfil-canvas,
+  .taf-topic-exfil-canvas-panel .taf-panel__body,
+  .taf-topic-exfil .taf-api-topology {
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+  }
+
+  .taf-topic-exfil-table-panel {
+    height: 340px !important;
+    min-height: 0 !important;
+    max-height: 340px !important;
+  }
+}
+
+@media (min-width: 960px) and (max-width: 1199px) {
+  .taf-topic-exfil-main {
+    height: 992px !important;
+    display: grid;
+    grid-template-rows: 646px 340px !important;
+    overflow: hidden !important;
+  }
+
+  .taf-topic-exfil-boardline {
+    height: 646px !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: repeat(2, 320px) !important;
+  }
+
+  .taf-topic-exfil-boardline > * {
+    height: 320px !important;
+    min-height: 0 !important;
+  }
+
+  .taf-topic-exfil-canvas,
+  .taf-topic-exfil-canvas-panel .taf-panel__body,
+  .taf-topic-exfil .taf-api-topology {
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+  }
+
+  .taf-topic-exfil-table-panel {
+    height: 340px !important;
+    min-height: 0 !important;
+    max-height: 340px !important;
+  }
+}
+
+@media (min-width: 1800px) and (max-height: 900px) {
+  .taf-shell:has(.taf-topic-page.taf-topic-exfil) .taf-main {
+    overflow-y: auto !important;
+  }
+
+  .taf-topic-exfil .taf-topic-shell {
+    height: auto !important;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .taf-topic-exfil-layout {
+    height: auto !important;
+    min-height: 0;
+    align-items: start;
+  }
+
+  .taf-topic-exfil-left {
+    height: auto !important;
+    grid-template-rows: auto auto 72px 520px;
+    overflow: hidden;
+  }
+
+  .taf-topic-exfil-main {
+    height: 520px !important;
+    grid-template-rows: 300px 214px !important;
+    overflow: hidden !important;
+  }
+
+  .taf-topic-exfil-boardline,
+  .taf-topic-exfil-boardline > * {
+    height: 300px !important;
+    min-height: 0 !important;
+  }
+
+  .taf-topic-exfil-canvas,
+  .taf-topic-exfil-canvas-panel .taf-panel__body,
+  .taf-topic-exfil .taf-api-topology {
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+  }
+
+  .taf-topic-exfil-table-panel {
+    height: 214px !important;
+    min-height: 0 !important;
+    max-height: 214px !important;
+  }
+
+  .taf-topic-exfil-rail {
+    height: 760px !important;
+  }
+}
+
+/* Structured delivery donuts: the ring owns only one centered percentage.
+   Captions are normal-flow siblings below the ring and can never overlap it. */
+.taf-topic-progress-donut {
+  height: auto !important;
+  display: grid !important;
+  place-items: initial !important;
+  align-content: start;
+  justify-items: center;
+  overflow: visible;
+  border-radius: 0 !important;
+  background: none !important;
+}
+
+.taf-topic-progress-donut__ring {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.taf-topic-progress-donut__chart {
+  position: absolute;
+  inset: 0;
+}
+
+.taf-topic-progress-donut__value {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: auto !important;
+  margin: 0 !important;
+  color: #83d75d !important;
+  font-size: 20px !important;
+  line-height: 1 !important;
+  pointer-events: none;
+}
+
+.taf-topic-progress-donut > .taf-topic-progress-donut__caption,
+.taf-topic-progress-donut > .taf-topic-progress-donut__detail {
+  position: static !important;
+  width: 100% !important;
+  margin: 0 !important;
+  overflow: hidden;
+  color: var(--ui-text-muted);
+  font-size: 9px !important;
+  font-style: normal;
+  line-height: 12px;
+  text-align: center;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  transform: none !important;
+}
+
+.taf-topic-tunnel-ring > .taf-topic-progress-donut__caption {
+  grid-column: 1 !important;
+  grid-row: 2 !important;
+  align-self: stretch !important;
+  margin-top: 0 !important;
+}
+
+.taf-topic-progress-donut > .taf-topic-progress-donut__detail {
+  grid-column: 1 !important;
+  grid-row: 3 !important;
+  align-self: stretch !important;
+  margin-bottom: 0 !important;
+  color: var(--ui-success);
+  font-size: 8px !important;
+  line-height: 10px;
+}
+
+.taf-topic-tunnel-ring {
+  width: 88px !important;
+  grid-template-rows: 82px 12px 10px;
+}
+
+.taf-topic-tunnel-ring .taf-topic-progress-donut__ring {
+  width: 82px;
+}
+
+.taf-topic-exfil-delivery-ring {
+  width: 70px !important;
+  grid-template-rows: 64px 12px;
+}
+
+.taf-topic-exfil-delivery-ring .taf-topic-progress-donut__ring {
+  width: 64px;
+}
+
+@media (min-width: 1800px) {
+  .taf-topic-tunnel-layout,
+  .taf-topic-exfil-layout,
+  .taf-topic-apt-layout {
+    grid-template-columns: minmax(0, 1fr) clamp(366px, 19.2vw, 430px);
+  }
+
+  .taf-topic-tunnel-ring {
+    width: clamp(104px, 5.8vw, 122px) !important;
+    grid-template-rows: clamp(96px, 5.45vw, 114px) 14px 11px;
+  }
+
+  .taf-topic-tunnel-ring .taf-topic-progress-donut__ring {
+    width: clamp(96px, 5.45vw, 114px);
+  }
+
+  .taf-topic-exfil-delivery-ring {
+    width: clamp(104px, 5.8vw, 122px) !important;
+    grid-template-rows: clamp(96px, 5.45vw, 114px) 14px;
+  }
+
+  .taf-topic-exfil-delivery-ring .taf-topic-progress-donut__ring {
+    width: clamp(96px, 5.45vw, 114px);
+  }
+
+  .taf-topic-tunnel-delivery-grid,
+  .taf-topic-exfil-delivery-grid {
+    grid-template-columns: clamp(112px, 6.4vw, 136px) minmax(0, 1fr);
+    gap: clamp(10px, 0.72vw, 16px);
+  }
+
+  .taf-topic-progress-donut__value {
+    font-size: clamp(22px, 1.28vw, 27px) !important;
+  }
+
+  .taf-topic-progress-donut > .taf-topic-progress-donut__caption {
+    font-size: clamp(9px, 0.54vw, 11px) !important;
+  }
+
+  .taf-topic-progress-donut > .taf-topic-progress-donut__detail {
+    font-size: clamp(8px, 0.48vw, 10px) !important;
+  }
+
+  .taf-topic-tunnel-delivery-stats,
+  .taf-topic-exfil-delivery-stats {
+    gap: clamp(6px, 0.52vw, 11px);
+  }
+
+  .taf-topic-tunnel-delivery-stats span,
+  .taf-topic-exfil-delivery-stats span {
+    grid-template-columns: clamp(9px, 0.52vw, 11px) minmax(0, 1fr) clamp(28px, 2vw, 42px);
+    gap: clamp(6px, 0.48vw, 10px);
+  }
+
+  .taf-topic-tunnel-delivery-stats b,
+  .taf-topic-tunnel-delivery-stats strong,
+  .taf-topic-exfil-delivery-stats b,
+  .taf-topic-exfil-delivery-stats strong {
+    font-size: clamp(11px, 0.66vw, 14px);
+  }
+
+  .taf-topic-tunnel-delivery-stats i,
+  .taf-topic-exfil-delivery-stats i {
+    width: clamp(8px, 0.48vw, 10px);
+    height: clamp(8px, 0.48vw, 10px);
+  }
+}
+
+/* Data-exfiltration evidence: the tbody is the only vertical scroll owner.
+   Ant's fixed 10-row page remains rendered while pagination stays outside it. */
+.taf-topic-exfil-table-panel .taf-panel__body,
+.taf-topic-exfil-table-host,
+.taf-topic-exfil-table-host > .ant-table-wrapper,
+.taf-topic-exfil-table-host .ant-spin-nested-loading,
+.taf-topic-exfil-table-host .ant-spin-container {
+  min-height: 0;
+  height: 100%;
+}
+
+.taf-topic-exfil-table-panel .taf-panel__body {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  overflow: hidden !important;
+}
+
+.taf-topic-exfil-table-host .ant-spin-container {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.taf-topic-exfil-table-host .ant-table {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.taf-topic-exfil-table-host .ant-table-container {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.taf-topic-exfil-table-host .ant-table-body {
+  min-height: 0;
+  overflow-y: auto !important;
+  scrollbar-width: thin;
+}
+
+.taf-topic-exfil-table-host .ant-table-pagination.ant-pagination {
+  position: static !important;
+  min-height: 28px;
+  margin: 4px 0 0 !important;
+  align-self: end;
+}
+
+/* Business-dense Tunnel tabs. Stable tab IDs drive the grid rather than labels. */
+.taf-topic-tunnel-analysis-grid[data-active-tab="source"] {
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
+.taf-topic-tunnel-analysis-grid[data-active-tab="destination"] {
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+}
+
+.taf-topic-tunnel-analysis-grid[data-active-tab="destination"] .taf-topic-tunnel-card.is-derived {
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 1800px) {
+  .taf-topic-tunnel-analysis-grid[data-active-tab="destination"] .taf-topic-tunnel-card.is-derived .taf-topic-derived-metrics {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    overflow: hidden;
+  }
+}
+
+.taf-topic-tunnel-mini-table.is-source-detail,
+.taf-topic-apt-business-table {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr) 46px minmax(58px, 0.8fr);
+  align-content: start;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+.taf-topic-tunnel-mini-table.is-source-detail > *,
+.taf-topic-apt-business-table > * {
+  min-width: 0;
+  overflow: hidden;
+  padding: 2px 4px;
+  border-bottom: 1px solid rgba(56, 151, 201, 0.1);
+  font-size: 9px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.taf-topic-tunnel-mini-table.is-source-detail b,
+.taf-topic-apt-business-table b {
+  color: var(--ui-text-muted);
+  font-weight: 500;
+}
+
+.taf-topic-tunnel-mini-table.is-source-detail span,
+.taf-topic-apt-business-table span {
+  color: var(--ui-text-secondary);
+}
+
+.taf-topic-derived-metrics {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+.taf-topic-derived-metrics > span {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1px 6px;
+  align-content: center;
+  padding: 4px 6px;
+  background: rgba(24, 168, 255, 0.06);
+  border: 1px solid rgba(56, 151, 201, 0.12);
+  border-radius: 3px;
+}
+
+.taf-topic-derived-metrics b,
+.taf-topic-derived-metrics strong,
+.taf-topic-derived-metrics small {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.taf-topic-derived-metrics b {
+  color: var(--ui-text-secondary);
+  font-size: 9px;
+  font-weight: 500;
+}
+
+.taf-topic-derived-metrics strong {
+  color: #7fd4ff;
+  font-size: 12px;
+}
+
+.taf-topic-derived-metrics small {
+  grid-column: 1 / -1;
+  color: var(--ui-text-muted);
+  font-size: 8px;
+}
+
+/* APT non-default tabs expose 2-3 traceable business views each. */
+.taf-topic-apt-analysis-grid > [data-business-view] {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  padding: 6px;
+  background: rgba(3, 17, 28, 0.48);
+  border: 1px solid rgba(56, 151, 201, 0.14);
+  border-radius: 5px;
+}
+
+/* Every non-default APT dimension has three business views. The last view
+   spans the full second row so the analysis area is fully used. */
+.taf-topic-apt-analysis-grid:not(:has(.taf-topic-apt-matrix)) > [data-business-view]:last-child {
+  grid-column: 1 / -1;
+}
+
+.taf-topic-apt-analysis-grid:not(:has(.taf-topic-apt-matrix)) > [data-business-view]:last-child .taf-topic-campaign-window-list {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.taf-topic-apt-analysis-grid[data-active-tab="处置动作状态"] > [data-business-view="response-summary"] .taf-topic-derived-metrics {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  overflow: hidden;
+}
+
+.taf-topic-apt-analysis-grid [data-business-view="evidence-completeness"] > .taf-topic-exfil-evidence-list {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 3px;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+.taf-topic-apt-analysis-grid [data-business-view="evidence-completeness"] > .taf-topic-exfil-evidence-list > span {
+  width: 100%;
+  height: 18px;
+  padding: 0 2px;
+  grid-template-columns: 16px minmax(0, 1fr) minmax(96px, auto);
+}
+
+.taf-topic-apt-tabs {
+  gap: 3px;
+}
+
+.taf-topic-apt-tabs button {
+  padding-inline: 3px;
+  font-size: 9px;
+  text-overflow: clip;
+}
+
+.taf-topic-apt-table-actions {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+.taf-topic-apt-business-table.is-duration,
+.taf-topic-apt-business-table.is-ioc-campaign,
+.taf-topic-apt-business-table.is-lateral,
+.taf-topic-apt-business-table.is-campaign-status,
+.taf-topic-apt-business-table.is-evidence {
+  grid-template-columns: minmax(0, 1fr) minmax(58px, 0.72fr) minmax(0, 1fr) 48px;
+}
+
+.taf-topic-campaign-window-list {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  align-content: start;
+  gap: 3px;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+.taf-topic-campaign-window-list > span {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1px 6px;
+  padding: 3px 5px;
+  background: rgba(24, 168, 255, 0.05);
+  border-bottom: 1px solid rgba(56, 151, 201, 0.1);
+}
+
+.taf-topic-campaign-window-list b,
+.taf-topic-campaign-window-list em,
+.taf-topic-campaign-window-list small {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 9px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.taf-topic-campaign-window-list b {
+  color: var(--ui-text-primary);
+}
+
+.taf-topic-campaign-window-list em {
+  color: var(--ui-warning);
+  font-style: normal;
+}
+
+.taf-topic-campaign-window-list small {
+  grid-column: 1 / -1;
+  color: var(--ui-text-muted);
+  font-size: 8px;
+}
+
+/* Data-exfiltration analysis follows the locked two-column, three-row target.
+   Left: destination, trend, confidence. Right: sensitive type, protocol,
+   suspicious account/service. Explicit slots prevent DOM order drift. */
+.taf-topic-exfil-dashboard {
+  width: 100%;
+  height: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  grid-template-rows: repeat(3, minmax(0, 1fr)) !important;
+  gap: 6px;
+}
+
+.taf-topic-exfil-analysis-panel {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: 30px minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.taf-topic-exfil-analysis-panel > .taf-panel__body {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  padding: 6px;
+}
+
+.taf-topic-exfil-dashboard > [data-layout-slot="destination"] {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+}
+
+.taf-topic-exfil-dashboard > [data-layout-slot="trend"] {
+  grid-column: 1 !important;
+  grid-row: 2 !important;
+}
+
+.taf-topic-exfil-dashboard > [data-layout-slot="confidence"] {
+  grid-column: 1 !important;
+  grid-row: 3 !important;
+}
+
+.taf-topic-exfil-dashboard > [data-layout-slot="sensitive"] {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+}
+
+.taf-topic-exfil-dashboard > [data-layout-slot="protocol"] {
+  grid-column: 2 !important;
+  grid-row: 2 !important;
+}
+
+.taf-topic-exfil-dashboard > [data-layout-slot="account-service"] {
+  grid-column: 2 !important;
+  grid-row: 3 !important;
+}
+
+.taf-topic-exfil-dashboard .taf-topic-exfil-card {
+  min-height: 0;
+  height: auto;
+  grid-template-rows: 18px minmax(0, 1fr);
+}
+
+.taf-topic-exfil-dashboard .taf-topic-exfil-donut-layout {
+  grid-template-columns: clamp(82px, 5.8vw, 126px) minmax(0, 1fr);
+  gap: clamp(6px, 0.42vw, 10px);
+}
+
+.taf-topic-exfil-dashboard .taf-topic-exfil-donut-layout > div:first-child {
+  width: auto !important;
+  height: 100% !important;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  max-height: 120px;
+  aspect-ratio: 1;
+}
+
+.taf-topic-exfil-dashboard .taf-topic-exfil-legend {
+  gap: clamp(2px, 0.18vw, 4px);
+}
+
+.taf-topic-exfil-dashboard .taf-topic-exfil-legend span {
+  min-height: clamp(12px, 0.82vw, 17px);
+  grid-template-columns: 7px minmax(0, 1fr) clamp(36px, 2.35vw, 52px);
+  font-size: clamp(9px, 0.52vw, 11px);
+  line-height: 1.15;
+}
+
+.taf-topic-exfil-dashboard .taf-topic-exfil-legend span::before {
+  width: clamp(6px, 0.38vw, 8px);
+  height: clamp(6px, 0.38vw, 8px);
+}
+
+.taf-topic-exfil-dashboard .taf-topic-exfil-card header strong {
+  font-size: clamp(11px, 0.63vw, 13px);
+}
+
+.taf-topic-exfil-dashboard .taf-topic-exfil-card header span,
+.taf-topic-exfil-dashboard .taf-topic-exfil-table b,
+.taf-topic-exfil-dashboard .taf-topic-exfil-table span {
+  font-size: clamp(9px, 0.54vw, 11px);
+}
+
+.taf-topic-exfil-dashboard .taf-topic-exfil-card.is-trend > div:last-child,
+.taf-topic-exfil-dashboard .taf-topic-exfil-card.is-bars > div:last-child {
+  width: 100%;
+  height: 100% !important;
+  min-height: 64px;
+}
+
+.taf-topic-exfil-dashboard .taf-topic-exfil-card.is-trend canvas,
+.taf-topic-exfil-dashboard .taf-topic-exfil-card.is-bars canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.taf-topic-exfil-dashboard .taf-topic-exfil-score-ring {
+  width: 100% !important;
+  height: 100% !important;
+  grid-template-rows: minmax(68px, 1fr) 12px;
+  align-content: center;
+}
+
+.taf-topic-exfil-dashboard .taf-topic-exfil-score-ring .taf-topic-progress-donut__ring {
+  width: clamp(74px, 5vw, 108px);
+  justify-self: center;
+}
+
+.taf-topic-exfil-dashboard .taf-topic-exfil-table {
+  align-content: stretch;
+}
+
+/* Preserve a usable three-row chart canvas at the compact desktop breakpoints.
+   These heights are bounded and replace the previous 300/320px hosts that
+   could not contain three chart rows without clipping. */
+@media (min-width: 960px) and (max-width: 1199px) {
+  .taf-topic-exfil-main {
+    height: 1102px !important;
+    grid-template-rows: 756px 340px !important;
+  }
+
+  .taf-topic-exfil-boardline {
+    height: 756px !important;
+    grid-template-rows: 320px 430px !important;
+  }
+
+  .taf-topic-exfil-boardline > .taf-topic-exfil-analysis-panel {
+    height: 430px !important;
+  }
+}
+
+@media (min-width: 1800px) and (max-height: 900px) {
+  .taf-topic-exfil-left {
+    grid-template-rows: auto auto 72px 620px;
+  }
+
+  .taf-topic-exfil-main {
+    height: 620px !important;
+    grid-template-rows: 400px 214px !important;
+  }
+
+  .taf-topic-exfil-boardline,
+  .taf-topic-exfil-boardline > * {
+    height: 400px !important;
+  }
+}
+
+/* The APT response card consumes the extra horizontal space instead of
+   preserving the former fixed 70/104px chart. The center label is tied to the
+   ring container so the ring, total, legend and values scale as one unit. */
+.taf-topic-apt-bottomline {
+  grid-template-columns: minmax(0, 1fr) clamp(300px, 18vw, 420px);
+}
+
+.taf-topic-apt-response-panel .taf-topic-apt-response {
+  grid-template-columns: clamp(112px, 8vw, 172px) minmax(0, 1fr);
+  gap: clamp(10px, 0.75vw, 16px);
+}
+
+.taf-topic-apt-response-chart {
+  width: clamp(104px, 7.2vw, 154px);
+  height: clamp(104px, 7.2vw, 154px);
+}
+
+.taf-topic-apt-response-center {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 1px;
+  pointer-events: none;
+  text-align: center;
+}
+
+.taf-topic-apt-response-chart .taf-topic-apt-response-center strong,
+.taf-topic-apt-response-chart .taf-topic-apt-response-center span {
+  position: static;
+  width: auto;
+  margin: 0;
+  transform: none;
+}
+
+.taf-topic-apt-response-chart .taf-topic-apt-response-center strong {
+  color: var(--ui-text-primary);
+  font-size: clamp(17px, 1.08vw, 23px);
+  line-height: 1;
+}
+
+.taf-topic-apt-response-chart .taf-topic-apt-response-center span {
+  color: var(--ui-text-muted);
+  font-size: clamp(9px, 0.58vw, 12px);
+  line-height: 1;
+}
+
+.taf-topic-apt-response-panel .taf-topic-apt-response > div:last-child {
+  gap: clamp(8px, 0.7vw, 14px);
+}
+
+.taf-topic-apt-response-panel .taf-topic-apt-response > div:last-child span {
+  grid-template-columns: minmax(0, 1fr) clamp(58px, 4.2vw, 86px);
+  gap: clamp(6px, 0.45vw, 10px);
+  font-size: clamp(11px, 0.66vw, 14px);
+}
+
+/* r875: the three topic tabs share one outer geometry contract.  Switching
+   business content must not move the title/tabs, the main canvas, or the right
+   rail relative to the application menu. */
+@media (min-width: 1200px) {
+  .taf-topic-tunnel .taf-topic-shell,
+  .taf-topic-exfil .taf-topic-shell,
+  .taf-topic-apt .taf-topic-shell {
+    padding: 0 7px 20px 0;
+  }
+
+  .taf-topic-tunnel-layout,
+  .taf-topic-exfil-layout,
+  .taf-topic-apt-layout {
+    margin: 0;
+    gap: 6px;
+  }
+
+  .taf-topic-tunnel-left,
+  .taf-topic-exfil-left,
+  .taf-topic-apt-left {
+    grid-template-rows: 78px 66px 82px minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .taf-topic-tunnel-left .taf-topic-titlebar,
+  .taf-topic-exfil-left .taf-topic-titlebar,
+  .taf-topic-apt-left .taf-topic-titlebar {
+    width: 100%;
+    min-height: 78px;
+    height: 78px;
+    margin: 0;
+    padding: 8px 12px;
+  }
+
+  .taf-topic-tunnel-left .taf-topic-facts,
+  .taf-topic-exfil-left .taf-topic-facts,
+  .taf-topic-apt-left .taf-topic-facts {
+    height: 66px;
+    margin: 0;
+    align-content: stretch;
+    row-gap: 6px;
+  }
+
+  .taf-topic-tunnel-left > .taf-topic-kpis,
+  .taf-topic-exfil-left > .taf-topic-kpis,
+  .taf-topic-apt-left > .taf-topic-kpis {
+    min-height: 82px;
+    height: 82px;
+    margin: 0;
+  }
+}
+
+/* Identical right-rail proportions for tunnel, exfiltration and APT. */
+@media (min-width: 1800px) {
+  .taf-shell:has(.taf-topic-page.taf-topic-tunnel) {
+    --shell-topbar: 80px;
+    --shell-sidebar: 190px;
+    --shell-bottombar: 83px;
+  }
+
+  .taf-shell:has(.taf-topic-page.taf-topic-tunnel) .taf-main {
+    padding: 0 10px 0 8px;
+  }
+
+  .taf-shell:has(.taf-topic-page) .taf-topic-shell,
+  .taf-topic-tunnel .taf-topic-shell {
+    height: calc(var(--taf-window-inner-height, 100dvh) - var(--shell-topbar) - var(--shell-bottombar));
+  }
+
+  .taf-topic-tunnel-left .taf-topic-titlebar,
+  .taf-topic-exfil-left .taf-topic-titlebar,
+  .taf-topic-apt-left .taf-topic-titlebar {
+    row-gap: 7px;
+  }
+
+  .taf-topic-tunnel-left .taf-topic-title-main h1,
+  .taf-topic-exfil-left .taf-topic-title-main h1,
+  .taf-topic-apt-left .taf-topic-title-main h1 {
+    font-size: 20px;
+    line-height: 25px;
+  }
+
+  .taf-topic-tunnel-rail,
+  .taf-topic-exfil-rail,
+  .taf-topic-apt-rail {
+    height: calc(100dvh - 184px);
+    margin: 0;
+    grid-template-rows: 242px 194px 225px minmax(210px, 1fr);
+    gap: 6px;
+  }
+
+  .taf-topic-tunnel-delivery .taf-panel__body {
+    grid-template-rows: 14px minmax(0, 1fr) 26px;
+    gap: 6px;
+    align-content: stretch;
+  }
+
+  .taf-topic-exfil-delivery .taf-panel__body {
+    grid-template-rows: minmax(0, 1fr) 26px;
+    gap: 6px;
+  }
+
+  .taf-topic-apt-delivery .taf-panel__body {
+    grid-template-rows: 18px minmax(0, 1fr) 26px;
+    gap: 6px;
+  }
+}
+
+.taf-topic-tunnel-delivery .taf-panel__body,
+.taf-topic-exfil-delivery .taf-panel__body,
+.taf-topic-apt-delivery .taf-panel__body {
+  overflow: hidden;
+}
+
+.taf-topic-tunnel-delivery-grid,
+.taf-topic-exfil-delivery-grid {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.taf-topic-tunnel-delivery-actions,
+.taf-topic-exfil-delivery-actions {
+  position: relative;
+  z-index: 3;
+  align-self: end;
+  margin-top: auto;
+}
+
+/* Match the APT evidence table's visible column boundaries. */
+.taf-topic-tunnel-table-head > b,
+.taf-topic-tunnel-table-row > span,
+.taf-topic-exfil-table-panel .ant-table-thead > tr > th,
+.taf-topic-exfil-table-panel .ant-table-tbody > tr > td {
+  border-right: 1px solid rgba(56, 151, 201, 0.16) !important;
+}
+
+.taf-topic-tunnel-table-head > b:last-child,
+.taf-topic-tunnel-table-row > span:last-child,
+.taf-topic-exfil-table-panel .ant-table-thead > tr > th:last-child,
+.taf-topic-exfil-table-panel .ant-table-tbody > tr > td:last-child {
+  border-right: 0 !important;
+}
+
+/* r879: data-exfiltration visual refinement.
+   Give the path canvas the reference image's primary visual weight while
+   retaining a complete two-column, three-row analysis module. */
+@media (min-width: 1200px) {
+  .taf-topic-exfil-boardline {
+    grid-template-columns: minmax(0, 1.62fr) minmax(420px, 1fr) !important;
+    gap: 6px;
+  }
+}
+
+.taf-topic-exfil-canvas {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.taf-topic-exfil-canvas .taf-topic-sankey {
+  height: auto;
+  grid-template-rows: 14px minmax(0, 1fr) 26px;
+  gap: 4px;
+  padding: 4px 8px 7px;
+}
+
+.taf-topic-exfil-stage-headings {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: center;
+  padding: 0 clamp(18px, 2vw, 34px);
+  color: #7faec3;
+  font-size: clamp(8px, 0.5vw, 10px);
+  letter-spacing: 0.02em;
+  line-height: 14px;
+  pointer-events: none;
+}
+
+.taf-topic-exfil-stage-headings span {
+  min-width: 0;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.taf-topic-exfil-canvas .taf-topic-sankey-summary {
+  min-height: 26px;
+  padding-inline: 10px;
+  background: linear-gradient(90deg, rgba(3, 17, 28, 0.82), rgba(8, 38, 56, 0.58));
+  border-color: rgba(67, 174, 224, 0.24);
+  box-shadow: inset 0 1px 0 rgba(127, 212, 255, 0.04);
+}
+
+.taf-topic-exfil-canvas .taf-topic-sankey-summary span {
+  color: #a9cede;
+  font-size: clamp(9px, 0.56vw, 11px);
+  text-align: center;
+}
+
+.taf-topic-exfil-canvas .taf-topic-sankey-summary span + span {
+  border-left: 1px solid rgba(56, 151, 201, 0.18);
+}
+
+.taf-topic-exfil-analysis-panel > .taf-panel__body {
+  padding: 6px;
+  background:
+    linear-gradient(180deg, rgba(8, 35, 51, 0.2), transparent 22%),
+    rgba(2, 18, 29, 0.16);
+}
+
+.taf-topic-exfil-dashboard {
+  gap: 5px;
+}
+
+.taf-topic-exfil-dashboard .taf-topic-exfil-card {
+  position: relative;
+  grid-template-rows: 20px minmax(0, 1fr);
+  gap: 3px;
+  padding: 6px 7px;
+  background: linear-gradient(145deg, rgba(5, 30, 45, 0.78), rgba(2, 18, 29, 0.7));
+  border-color: rgba(60, 157, 205, 0.23);
+  border-radius: 4px;
+  box-shadow: inset 0 1px 0 rgba(127, 212, 255, 0.035);
+}
+
+.taf-topic-exfil-dashboard .taf-topic-exfil-card::before {
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  left: 0;
+  width: 2px;
+  background: linear-gradient(180deg, rgba(24, 168, 255, 0.74), rgba(24, 168, 255, 0.08));
+  border-radius: 0 2px 2px 0;
+  content: "";
+}
+
+.taf-topic-exfil-dashboard .taf-topic-exfil-card header {
+  height: 20px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid rgba(56, 151, 201, 0.13);
+}
+
+.taf-topic-exfil-dashboard .taf-topic-exfil-card header strong {
+  font-size: clamp(10px, 0.61vw, 12px);
+  letter-spacing: 0.01em;
+}
+
+.taf-topic-exfil-dashboard .taf-topic-exfil-card header span {
+  font-size: clamp(9px, 0.53vw, 11px);
+}
+
+.taf-topic-exfil-dashboard .taf-topic-exfil-table {
+  grid-template-columns: 1.2fr 0.9fr 0.72fr 0.7fr;
+  align-content: stretch;
+}
+
+.taf-topic-exfil-dashboard .taf-topic-exfil-table b,
+.taf-topic-exfil-dashboard .taf-topic-exfil-table span {
+  display: flex;
+  min-height: 0;
+  align-items: center;
+  padding: 2px 4px;
+  border-right: 1px solid rgba(56, 151, 201, 0.09);
+}
+
+.taf-topic-exfil-dashboard .taf-topic-exfil-table b:nth-child(4n),
+.taf-topic-exfil-dashboard .taf-topic-exfil-table span:nth-child(4n) {
+  border-right: 0;
+}
+
+.taf-topic-exfil-dashboard .taf-topic-exfil-table span:nth-child(8n + 5),
+.taf-topic-exfil-dashboard .taf-topic-exfil-table span:nth-child(8n + 6),
+.taf-topic-exfil-dashboard .taf-topic-exfil-table span:nth-child(8n + 7),
+.taf-topic-exfil-dashboard .taf-topic-exfil-table span:nth-child(8n + 8) {
+  background: rgba(24, 168, 255, 0.025);
+}
+
+.taf-topic-exfil-dashboard .taf-topic-exfil-donut-layout {
+  grid-template-columns: clamp(84px, 5.3vw, 114px) minmax(0, 1fr);
+  gap: clamp(5px, 0.36vw, 8px);
+}
+
+.taf-topic-exfil-dashboard .taf-topic-exfil-donut-layout > div:first-child {
+  width: 100% !important;
+  height: 100% !important;
+  max-height: 112px;
+  aspect-ratio: 1;
+}
+
+.taf-topic-exfil-dashboard .taf-topic-exfil-legend {
+  gap: clamp(1px, 0.14vw, 3px);
+}
+
+.taf-topic-exfil-dashboard .taf-topic-exfil-legend span {
+  min-height: clamp(11px, 0.72vw, 15px);
+  grid-template-columns: 7px minmax(0, 1fr) clamp(34px, 2.05vw, 46px);
+  gap: 3px;
+}
+
+.taf-topic-exfil-dashboard .taf-topic-exfil-score-ring {
+  grid-template-rows: minmax(72px, 1fr) 12px;
+}
+
+.taf-topic-exfil-dashboard .taf-topic-exfil-score-ring .taf-topic-progress-donut__ring {
+  width: clamp(78px, 4.8vw, 104px);
+}
+
+@media (min-width: 1800px) {
+  .taf-topic-exfil-boardline {
+    grid-template-columns: minmax(0, 1.65fr) minmax(500px, 1fr) !important;
+  }
+}
+
+/* The APT filters show their complete value and keep a useful search field. */
+.taf-topic-apt-table-toolbar {
+  min-width: 510px;
+  gap: 6px;
+}
+
+.taf-topic-apt-table-toolbar > .ant-select {
+  width: 154px;
+  min-width: 154px;
+  max-width: none;
+}
+
+.taf-topic-apt-table-toolbar > .ant-input-affix-wrapper {
+  width: 190px;
+  min-width: 190px;
+  max-width: none;
+}
+
+.taf-topic-apt-table-toolbar .ant-select-selector,
+.taf-topic-apt-table-toolbar .ant-select-selection-item,
+.taf-topic-apt-table-toolbar .ant-input-prefix,
+.taf-topic-apt-table-toolbar .ant-input {
+  max-width: none;
+}
+
+/* r889: every campaign-analysis tab occupies the same track at a given
+   viewport. Different business views may reflow inside the track, but they
+   must never resize the analysis panel or the neighbouring attack canvas. */
+.taf-topic-apt-analysis-panel,
+.taf-topic-apt-analysis-panel > .taf-panel__body,
+.taf-topic-apt-analysis-grid,
+.taf-topic-tunnel-analysis,
+.taf-topic-tunnel-analysis > .taf-panel__body,
+.taf-topic-tunnel-analysis-grid {
+  min-width: 0;
+  min-height: 0;
+}
+
+.taf-topic-apt-analysis-grid,
+.taf-topic-tunnel-analysis-grid {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  contain: layout paint;
+}
+
+@media (max-width: 1799px) {
+  .taf-topic-apt-boardline,
+  .taf-topic-tunnel-boardline {
+    grid-auto-rows: clamp(
+      440px,
+      calc(var(--taf-window-inner-height, 100dvh) * 0.58),
+      520px
+    ) !important;
+    align-items: stretch;
+  }
+
+  .taf-topic-apt-boardline > .taf-topic-canvas-panel,
+  .taf-topic-apt-boardline > .taf-topic-apt-analysis-panel,
+  .taf-topic-tunnel-boardline > .taf-topic-tunnel-impact-panel,
+  .taf-topic-tunnel-boardline > .taf-topic-tunnel-analysis {
+    width: 100%;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: none;
+    align-self: stretch;
+  }
+}
+
+@media (max-width: 1439px) {
+  .taf-topic-tunnel-analysis-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-rows: minmax(105px, 1.05fr) minmax(105px, 1fr) minmax(94px, 0.9fr) !important;
+    height: 100% !important;
+  }
+
+  .taf-topic-tunnel-analysis-grid[data-active-tab="source"] {
+    grid-template-rows: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .taf-topic-tunnel-analysis-grid[data-active-tab="destination"] {
+    grid-template-rows: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 1600px) {
+  .taf-topic-apt-analysis-panel > .taf-panel__body {
+    grid-template-rows: 43px minmax(0, 1fr);
+  }
+
+  .taf-topic-apt-tabs {
+    height: 43px;
+    min-height: 43px;
+    grid-template-rows: repeat(2, 20px);
+    align-content: start;
+    overflow: hidden;
+  }
+}

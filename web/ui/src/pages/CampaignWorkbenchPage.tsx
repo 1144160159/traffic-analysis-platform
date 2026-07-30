@@ -127,6 +127,11 @@ export function CampaignWorkbenchPage({ route }: { route: NavRoute }) {
     return filteredRows.find((row) => rowKey(row) === selectedRowKey) ?? filteredRows[0];
   }, [filteredRows, selectedRowKey]);
   useEffect(() => {
+    if (requestedCampaign && requestedCampaign !== selectedRowKey) {
+      setSelectedRowKey(requestedCampaign);
+    }
+  }, [requestedCampaign, selectedRowKey]);
+  useEffect(() => {
     if ((visualPageId === 'drawer-campaign-detail' || drawerRequested) && selectedRow) setDetailOpen(true);
   }, [drawerRequested, selectedRow, visualPageId]);
 
@@ -139,6 +144,14 @@ export function CampaignWorkbenchPage({ route }: { route: NavRoute }) {
     onError: (mutationError) => message.error(mutationError instanceof Error ? mutationError.message : '战役操作提交失败'),
   });
   const selectedCampaignId = text(selectedRow, '战役名称', '');
+  const selectCampaign = (record: SnapshotRow) => {
+    const targetId = rowKey(record);
+    setSelectedRowKey(targetId);
+    const next = new URLSearchParams(routeSearch);
+    next.set('campaign', targetId);
+    next.delete('detailTab');
+    setRouteSearch(next, { replace: true });
+  };
   const detailQuery = useQuery({
     queryKey: ['campaign-detail-drawer', selectedCampaignId],
     queryFn: () => fetchCampaignDetailSnapshot(selectedCampaignId),
@@ -203,7 +216,7 @@ export function CampaignWorkbenchPage({ route }: { route: NavRoute }) {
     ellipsis: true,
     render: (value, record) => renderCampaignCell(column, value, record, actionMutation.isPending, (action) => {
       const targetId = rowKey(record);
-      setSelectedRowKey(targetId);
+      selectCampaign(record);
       if (action === 'detail') {
         void executeAction('campaign-detail-view', `查看 ${text(record, '战役名称', '战役')} 详情`, {
           targetId,
@@ -319,7 +332,8 @@ export function CampaignWorkbenchPage({ route }: { route: NavRoute }) {
                 }}
                 rowClassName={(record) => (selectedRow && rowKey(record) === rowKey(selectedRow) ? 'is-selected' : '')}
                 onRow={(record) => ({
-                  onClick: () => setSelectedRowKey(rowKey(record)),
+                  onClick: () => selectCampaign(record),
+                  'aria-selected': selectedRow ? rowKey(record) === rowKey(selectedRow) : false,
                 })}
               />
             </WorkPanel>
@@ -429,7 +443,7 @@ export function CampaignWorkbenchPage({ route }: { route: NavRoute }) {
         rootClassName="taf-campaign-detail-drawer"
         title={null}
         placement="right"
-        width="min(900px, calc(100dvw - 32px))"
+        width="min(1200px, calc(100dvw - 48px))"
         open={detailOpen}
         closable={false}
         onClose={closeDetail}

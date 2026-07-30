@@ -366,6 +366,181 @@ export type CampaignVisuals = {
   };
 };
 
+export type TopicVisuals = {
+  topic: 'tunnel' | 'exfil' | 'apt';
+  updatedAt: number;
+  timeRange: { start: number; end: number };
+  dataMode?: 'live' | 'simulated';
+  simulationId?: string;
+  simulationVersion?: string;
+  presentation?: {
+    topicId: string;
+    site: string;
+    assetGroup: string;
+    ipRange: string;
+    protocols: string;
+    timeWindowLabel: string;
+    ruleVersion: string;
+    modelVersion: string;
+    reportTitle: string;
+    reportTimeRange?: string;
+    reportGeneratedAt: string;
+    reportScope: string;
+    reportConclusion: string;
+  };
+  summary?: Record<string, number>;
+  evidenceBundle?: Array<{
+    label: string;
+    complete: number;
+    total: number;
+    status: 'ok' | 'warn' | 'risk' | 'info';
+  }>;
+  destinationDistribution?: Array<{ label: string; value: number; trafficGb: number; asn?: string }>;
+  certificateAnomalies?: Array<{ label: string; value: number; status: 'ok' | 'warn' | 'risk' | 'info'; percent?: number; sample?: string }>;
+  tunnelTrend?: Array<{ label: string; value: number }>;
+  tunnelTrendUnit?: string;
+  tunnelReusePaths?: string[][];
+  aptIocs?: Array<{
+    value: string;
+    type: string;
+    campaign: string;
+    hits: number;
+    firstSeen?: number;
+    lastSeen?: number;
+  }>;
+  aptResponse?: { closed: number; processing: number; open: number; total: number };
+  aptCampaigns?: Array<{
+    id: string;
+    type: string;
+    status: string;
+    activityStatus: string;
+    score: number;
+    tsStart: number;
+    tsEnd: number;
+    attackPhases: string[];
+    entities: string[];
+    alertCount: number;
+  }>;
+  aptLateralPaths?: Array<{
+    sourceId: string;
+    sourceLabel: string;
+    targetId: string;
+    targetLabel: string;
+    value: number;
+    tone: 'info' | 'risk' | 'ok' | 'warn' | 'purple';
+    lineType: 'solid' | 'dashed';
+    originalLabel: string;
+  }>;
+  aptEvidenceAssociations?: Array<{
+    sourceId: string;
+    sourceLabel: string;
+    targetId: string;
+    targetLabel: string;
+    value: number;
+    tone: 'info' | 'risk' | 'ok' | 'warn' | 'purple';
+    lineType: 'solid' | 'dashed';
+    originalLabel: string;
+  }>;
+  topologyDiagnostics?: {
+    duplicateNodeCount: number;
+    danglingLinkCount: number;
+    selfLinkCount: number;
+    validNodeCount: number;
+    validLinkCount: number;
+  };
+  topologyNodes?: Array<{
+    id: string;
+    label: string;
+    detail: string;
+    x: number;
+    y: number;
+    tone: 'asset' | 'probe' | 'risk' | 'protocol' | 'proxy' | 'destination' | 'warn';
+    width: number;
+    height: number;
+    symbol?: 'roundRect' | 'circle';
+    icon?: 'desktop' | 'server' | 'storage' | 'probe' | 'user' | 'protocol' | 'gateway' | 'lock' | 'global'
+      | 'campaign' | 'initial' | 'execute' | 'persist' | 'evasion' | 'credential' | 'discovery'
+      | 'lateral' | 'c2' | 'exfil' | 'evidence' | 'audit';
+    labelPosition?: 'inside' | 'top' | 'bottom' | 'left' | 'right';
+  }>;
+  topologyLinks?: Array<{
+    source: string;
+    target: string;
+    value: number;
+    tone: 'info' | 'risk' | 'ok' | 'warn' | 'purple';
+    lineType: 'solid' | 'dashed';
+    label: string;
+    width?: number;
+    curveness?: number;
+  }>;
+  impactHighlights?: Array<{
+    label: string;
+    value: string;
+    detail: string;
+    status: 'ok' | 'warn' | 'risk' | 'info';
+    targetSignal: string;
+  }>;
+  scope?: {
+    scopeName: string;
+    includedAssets: string[];
+    excludedAssets: string[];
+    riskLevels: string[];
+    timeWindow: string;
+    updatedAt: number;
+  };
+  tunnelProtocols?: Array<{ protocol: string; count: number; totalBytes: number }>;
+  tunnelUsers?: Array<{
+    ip: string;
+    dstIp: string;
+    protocol: string;
+    risk: string;
+    count: number;
+    totalBytes: number;
+    lastSeen: number;
+  }>;
+  exfilSources?: Array<{
+    srcIp: string;
+    sessionCount: number;
+    uploadBytes: number;
+    totalBytes: number;
+    destinationCount: number;
+    lastSeen: number;
+    risk: string;
+  }>;
+  exfilDestinations?: Array<{
+    dstIp: string;
+    region: string;
+    asn: string;
+    sessionCount: number;
+    uploadBytes: number;
+    totalBytes: number;
+    sourceCount: number;
+    lastSeen: number;
+    risk: string;
+  }>;
+  exfilRiskTypes?: Array<{ type: string; count: number; severity: string; totalBytes: number }>;
+  exfilAccountServices?: Array<{ label: string; type: string; count: number }>;
+  exfilPaths?: Array<{
+    srcIp: string;
+    dstIp: string;
+    dstPort: number;
+    protocol: string;
+    sessionCount: number;
+    uploadBytes: number;
+    lastSeen: number;
+    risk: string;
+  }>;
+  exfilTrend?: Array<{
+    bucketStart: number;
+    destinationCount: number;
+    largeUploadSessions: number;
+    longLivedSessions: number;
+    nonStandardPortSessions: number;
+    encryptedSessions: number;
+  }>;
+  aptPhaseDistribution?: Array<{ phase: string; count: number }>;
+};
+
 export type PageSnapshot = {
   id: string;
   total?: number;
@@ -380,6 +555,7 @@ export type PageSnapshot = {
     campaigns?: CampaignVisuals;
     encryptedTraffic?: EncryptedTrafficVisuals;
     forensics?: ForensicsVisuals;
+    topic?: TopicVisuals;
   };
 };
 

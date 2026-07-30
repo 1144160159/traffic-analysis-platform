@@ -851,7 +851,7 @@ export const fetchPageSnapshot = async (pageId: string, options: PageSnapshotReq
   const route = findRouteById(pageId);
   if (!route) throw new Error(`Unknown page: ${pageId}`);
 
-  if (isVisualBreakdownMode() && pageId !== 'assets') {
+  if (isVisualBreakdownMode() && pageId !== 'assets' && !pageId.startsWith('topic-')) {
     return buildVisualBreakdownSnapshot(route.page);
   }
 
@@ -872,6 +872,14 @@ export type TopicActionResult = {
   target: string;
   data_mode: 'live' | 'partial' | 'simulated';
   status: string;
+  business_effect?: {
+    operation: string;
+    state: string;
+    result_type: string;
+    message: string;
+    next_route?: string;
+    evidence_ref?: string;
+  };
   requested_by: string;
   created_at: number;
 };
@@ -886,11 +894,18 @@ const topicActionKey = (topic: string): TopicActionResult['topic'] => {
 const topicActionCode = (label: string) => {
   const mappings: Array<[RegExp, string]> = [
     [/PCAP|取证/u, 'extract_pcap'],
+    [/Session|会话/u, 'inspect_session'],
+    [/证书/u, 'inspect_certificate'],
+    [/回溯路径/u, 'trace_path'],
     [/阻断|隔离|停止/u, 'contain'],
     [/白名单|例外/u, 'review_exception'],
     [/审计/u, 'write_audit'],
     [/规则|模型/u, 'link_rule'],
     [/攻击链|下钻|溯源/u, 'trace'],
+    [/全量详情|详情/u, 'inspect_detail'],
+    [/关联告警/u, 'inspect_alerts'],
+    [/观察|监控/u, 'monitor'],
+    [/复核/u, 'review'],
     [/订阅/u, 'subscribe'],
     [/静默/u, 'mute'],
     [/分享/u, 'share'],
@@ -898,17 +913,36 @@ const topicActionCode = (label: string) => {
     [/布局/u, 'change_layout'],
     [/全屏/u, 'focus_view'],
   ];
-  return mappings.find(([pattern]) => pattern.test(label))?.[1] ?? 'topic_operation';
+  return mappings.find(([pattern]) => pattern.test(label))?.[1] ?? 'inspect_detail';
 };
 
-export const submitTopicAction = async (topic: string, label: string, target: string): Promise<TopicActionResult> => {
+export type TopicDataContext = {
+  data_mode: 'live' | 'partial' | 'simulated';
+  simulation_id?: string;
+  simulation_version?: string;
+  scope_snapshot?: Record<string, unknown>;
+  view_state?: Record<string, unknown>;
+};
+
+export const submitTopicAction = async (
+  topic: string,
+  label: string,
+  target: string,
+  context?: TopicDataContext,
+): Promise<TopicActionResult> => {
   const topicKey = topicActionKey(topic);
   const response = await api.post<{ data?: TopicActionResult } & Partial<TopicActionResult>>(`/v1/topics/${topicKey}/actions`, {
     action: topicActionCode(label),
     label,
     target,
-    data_mode: 'live',
-    detail: { source: 'topic-workbench' },
+    data_mode: context?.data_mode ?? 'live',
+    detail: {
+      source: 'topic-workbench',
+      simulation_id: context?.simulation_id,
+      simulation_version: context?.simulation_version,
+      scope_snapshot: context?.scope_snapshot,
+      view_state: context?.view_state,
+    },
   });
   return (response.data.data ?? response.data) as TopicActionResult;
 };
@@ -935,6 +969,12 @@ export type TopicScope = {
   time_window: string;
   detail: Record<string, unknown>;
   updated_at: number;
+};
+
+export const fetchTopicScope = async (topic: string): Promise<TopicScope> => {
+  const topicKey = topicActionKey(topic);
+  const response = await api.get<{ data: TopicScope }>(`/v1/topics/scopes/${topicKey}`);
+  return response.data.data;
 };
 
 export type TopicSubscription = {
@@ -967,7 +1007,11 @@ export const saveTopicView = async (
     topic: topicActionKey(topic),
     ...input,
   });
-  return response.data.data;
+  const view = response.data.data;
+  if (typeof window !== 'undefined') {
+    window.sessionStorage.setItem(`taf:topic:${view.topic}:current-view-id`, view.view_id);
+  }
+  return view;
 };
 
 export const updateTopicScope = async (
@@ -1002,12 +1046,23 @@ export const exportTopicArtifact = async (
   topic: string,
   exportType: 'report' | 'evidence_package',
   format: string,
+  context?: TopicDataContext,
+  sourceExportId?: string,
 ): Promise<TopicExport> => {
   const endpoint = exportType === 'report' ? '/v1/topics/reports/export' : '/v1/topics/evidence-packages/export';
   const response = await api.post<{ data: TopicExport }>(endpoint, {
     topic: topicActionKey(topic),
     format,
-    parameters: { source: 'topic-workbench', visual_state: topicActionKey(topic) },
+    source_export_id: sourceExportId || undefined,
+    parameters: {
+      source: 'topic-workbench',
+      visual_state: topicActionKey(topic),
+      data_mode: context?.data_mode ?? 'live',
+      simulation_id: context?.simulation_id,
+      simulation_version: context?.simulation_version,
+      scope_snapshot: context?.scope_snapshot,
+      view_state: context?.view_state,
+    },
   });
   return response.data.data;
 };
@@ -1017,19 +1072,18 @@ export const updateTopicViewPreference = async (
   preference: 'favorite' | 'shared',
 ): Promise<TopicSavedView> => {
   const topicKey = topicActionKey(topic);
-  const listResponse = await api.get<{ data: { views: TopicSavedView[] } }>('/v1/topics/views', {
-    params: { topic: topicKey, limit: 1, offset: 0 },
-  });
-  let view = listResponse.data.data.views?.[0];
-  if (!view) {
-    view = await saveTopicView(topicKey, {
+  const storageKey = `taf:topic:${topicKey}:current-view-id`;
+  let viewID = typeof window !== 'undefined' ? window.sessionStorage.getItem(storageKey) : '';
+  if (!viewID) {
+    const view = await saveTopicView(topicKey, {
       name: `${topicKey}-当前专题视图`,
       visibility: 'private',
       favorite: false,
       filters: { topic: topicKey, source: 'topic-workbench' },
     });
+    viewID = view.view_id;
   }
-  const response = await api.patch<{ data: TopicSavedView }>(`/v1/topics/views/${encodeURIComponent(view.view_id)}`, {
+  const response = await api.patch<{ data: TopicSavedView }>(`/v1/topics/views/${encodeURIComponent(viewID)}`, {
     [preference]: true,
   });
   return response.data.data;
@@ -1335,9 +1389,11 @@ const fetchRealPageSnapshot = async (page: PageSpec, options: PageSnapshotReques
   const plan = getPageApiPlan(page.id);
   const requestParams = getPageRequestParams(page.id, options);
   const secondaryEndpoints = getPageLoadSecondaryEndpoints(page.id);
+  const isTopicSnapshot = page.id === 'topic-tunnel' || page.id === 'topic-exfil' || page.id === 'topic-apt';
+  const primaryPageSize = isTopicSnapshot ? 200 : 8;
   const [primary, ...secondary] = await Promise.all([
     api.get<ApiEnvelope>(plan.primary, {
-      params: { limit: 8, page_size: 8, ...requestParams },
+      params: { limit: primaryPageSize, page_size: primaryPageSize, ...requestParams },
     }),
     ...secondaryEndpoints.map((endpoint) =>
       api

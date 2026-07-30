@@ -446,6 +446,20 @@ export const pageApiPlans: Record<string, EndpointPlan> = {
     secondary: ["/v1/alerts/{id}/evidence", "/v1/alerts/{id}/feedback"],
     actions: [
       {
+        id: "alert-label-update",
+        label: "Update alert labels",
+        method: "PUT",
+        endpoint: "/v1/alerts/{id}/labels",
+        requiredScopes: ["alert:write"],
+        acceptedScopes: ["alert:write", "alert:*", "admin:*", "*"],
+        auditEvent: "ALERT_LABELS_UPDATED",
+        defaultBody: { labels: [], reason: "" },
+        guardrails: [
+          "label updates must use the alert append-only version path",
+          "successful writes must retain the actor and reason in audit_logs",
+        ],
+      },
+      {
         id: "alert-report-export",
         label: "Export alert report",
         method: "POST",

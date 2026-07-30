@@ -203,6 +203,10 @@ describe('pageSnapshotAdapters', () => {
             rule_name: 'C2_Tunnel_v3',
             confidence: 0.98,
             first_seen: '2026-06-25T09:42:11Z',
+            last_seen: '2026-06-25T09:44:12Z',
+            created_at: '2026-06-25T09:42:12Z',
+            updated_at: '2026-06-25T09:45:12Z',
+            campaign_id: 'campaign-c2-001',
             status: 'ALERT_STATUS_NEW',
             state_version: 1782712345678,
           },
@@ -253,10 +257,13 @@ describe('pageSnapshotAdapters', () => {
 
     expect(snapshot?.metrics.find((item) => item.label === '高危')?.value).toBe('2 条');
     expect(snapshot?.metrics.find((item) => item.label === '未处理')?.value).toBe('1 条');
-    expect(snapshot?.metrics.find((item) => item.label === '研判中')?.value).toBe('1 条');
-    expect(snapshot?.metrics.find((item) => item.label === '已指派')?.value).toBe('1 条');
-    expect(snapshot?.metrics.find((item) => item.label === '已关闭')?.value).toBe('1 条');
+    expect(snapshot?.metrics.map((item) => item.label)).toEqual(['高危', '中危', '低危', '未处理', '处理中', '已确认', '已忽略']);
+    expect(snapshot?.metrics.find((item) => item.label === '处理中')?.value).toBe('1 条');
+    expect(snapshot?.metrics.find((item) => item.label === '已确认')?.value).toBe('1 条');
+    expect(snapshot?.metrics.find((item) => item.label === '已忽略')?.value).toBe('1 条');
+    expect(snapshot?.metrics.every((item) => item.delta === '24h 窗口')).toBe(true);
     expect(snapshot?.rows[0]['告警 ID']).toBe('AL-20260625-0001');
+    expect(snapshot?.rows[0]['风险等级']).toBe('高危');
     expect(snapshot?.rows[0]['受影响资产']).toBe('办公区-WS-1024');
     expect(snapshot?.rows[0]['规则/模型']).toBe('C2_Tunnel_v3');
     expect(snapshot?.rows[0]['置信度']).toBe('0.98');
@@ -264,9 +271,11 @@ describe('pageSnapshotAdapters', () => {
     expect(snapshot?.rows[0].__alertId).toBe('AL-20260625-0001');
     expect(snapshot?.rows[0].__stateVersion).toBe(1782712345678);
     expect(snapshot?.rows[0].__status).toBe('new');
-    expect(snapshot?.rows[1]['状态']).toBe('研判中');
-    expect(snapshot?.rows[2]['状态']).toBe('已指派');
-    expect(snapshot?.rows[3]['状态']).toBe('已关闭');
+    expect(snapshot?.rows[0].__campaignId).toBe('campaign-c2-001');
+    expect(snapshot?.rows[0].__lastSeen).toBe('2026-06-25T09:44:12Z');
+    expect(snapshot?.rows[1]['状态']).toBe('处理中');
+    expect(snapshot?.rows[2]['状态']).toBe('已确认');
+    expect(snapshot?.rows[3]['状态']).toBe('已忽略');
   });
 
   it('maps asset list payload into asset inventory columns', () => {
@@ -731,6 +740,8 @@ describe('pageSnapshotAdapters', () => {
           summary: { protocol_count: 2, active_users: 2, session_count: 1280, total_bytes: 2_147_483_648, high_risk_users: 1 },
           protocols: [{ protocol: 'TLS', count: 900, total_bytes: 1_600_000_000 }],
           users: [{ ip: '10.12.2.36', count: 320, protocol: 'DoH/TLS', risk: 'high', total_bytes: 900_000_000, last_seen: 1792886400 }],
+          tunnel_trend_unit: 'GB',
+          tunnel_trend: [{ label: '06-19', value: 18.2 }],
         },
       },
       [],
@@ -740,10 +751,15 @@ describe('pageSnapshotAdapters', () => {
       exfil!.page,
       {
         data: {
-          summary: { source_count: 3, path_count: 4, session_count: 680, upload_bytes: 1_073_741_824, high_risk_sources: 2 },
+          summary: { source_count: 3, path_count: 4, path_confidence: 72, session_count: 680, upload_bytes: 1_073_741_824, high_risk_sources: 2 },
           top_sources: [{ src_ip: '10.12.8.45', session_count: 210, upload_bytes: 486_000_000, dst_count: 8, risk: 'high' }],
           risk_types: [{ type: 'cloud_storage', count: 12, severity: 'high', total_bytes: 680_000_000 }],
+          account_service_distribution: [
+            { label: 'svc_backup', type: 'service_account', count: 21 },
+            { label: 'gitlab-ci', type: 'service', count: 9 },
+          ],
           paths: [{ src_ip: '10.12.8.45', dst_ip: '198.51.100.27', session_count: 88, upload_bytes: 420_000_000, risk: 'high' }],
+          events: [{ event_id: 'EXF-001', src_ip: '10.12.8.45', dst_ip: '198.51.100.27', session_count: 88, upload_bytes: 420_000_000, risk: 'high' }],
         },
       },
       [],
@@ -765,7 +781,44 @@ describe('pageSnapshotAdapters', () => {
               attack_phases: ['initial_access', 'command_and_control'],
               ts_start: 1792886400,
               ts_end: 1792890000,
+              status: 'investigating',
+              activity_status: 'active',
             },
+          ],
+          events: [
+            {
+              event_id: 'APT-EVT-001',
+              campaign_id: 'APT-20260619-001',
+              campaign_type: 'apt',
+              score: 0.91,
+              entities: ['WEB-SRV-02', 'DC-01'],
+              alerts: ['AL-1', 'AL-2'],
+              attack_phases: ['initial_access', 'command_and_control'],
+              ts_start: 1792886400,
+              ts_end: 1792890000,
+            },
+          ],
+          iocs: [
+            {
+              value: '185.199.108.153',
+              type: 'IP',
+              campaign: 'APT-20260619-001',
+              hits: 18,
+              first_seen: 1792886400,
+              last_seen: 1792890000,
+            },
+          ],
+          topology_nodes: [
+            { id: 'phase-lateral', label: '横向移动', detail: '3 条关系', symbol: 'circle', label_position: 'bottom', width: 80, height: 30 },
+            { id: 'asset-a', label: '资产 A', detail: '办公终端', width: 120, height: 46 },
+            { id: 'evidence-pcap', label: 'PCAP', detail: '8 条证据', width: 112, height: 46 },
+            { id: 'asset-a', label: '重复资产', detail: '应丢弃', width: 120, height: 46 },
+          ],
+          topology_links: [
+            { source: 'phase-lateral', target: 'asset-a', label: '横向移动影响', line_type: 'solid', tone: 'warn', value: 3 },
+            { source: 'phase-lateral', target: 'evidence-pcap', label: 'PCAP 证据', line_type: 'dashed', tone: 'info', value: 8 },
+            { source: 'asset-a', target: 'asset-a', label: '自环', line_type: 'solid', tone: 'risk', value: 1 },
+            { source: 'missing', target: 'asset-a', label: '悬空', line_type: 'solid', tone: 'risk', value: 1 },
           ],
         },
       },
@@ -775,12 +828,114 @@ describe('pageSnapshotAdapters', () => {
     expect(tunnelSnapshot?.metrics.find((item) => item.label === '活跃隧道会话')?.value).toBe('1.3K');
     expect(tunnelSnapshot?.rows[0]['风险状态']).toBe('高危');
     expect(tunnelSnapshot?.evidence.map((item) => item.label)).toContain('Tunnel Topic API');
+    expect(tunnelSnapshot?.visuals?.topic?.tunnelTrendUnit).toBe('GB');
     expect(exfilSnapshot?.metrics.find((item) => item.label === '外传路径数')?.value).toBe('4');
     expect(exfilSnapshot?.rows[0]['外传路径']).toBe('10.12.8.45 -> 198.51.100.27');
     expect(exfilSnapshot?.evidence.map((item) => item.label)).toContain('告警证据');
+    expect(exfilSnapshot?.visuals?.topic?.exfilAccountServices).toEqual([
+      { label: 'svc_backup', type: 'service_account', count: 21 },
+      { label: 'gitlab-ci', type: 'service', count: 9 },
+    ]);
+    expect(exfilSnapshot?.visuals?.topic?.summary?.path_confidence).toBe(72);
     expect(aptSnapshot?.metrics.find((item) => item.label === '关联战役数')?.value).toBe('2');
+    expect(aptSnapshot?.rows[0]['事件ID']).toBe('APT-EVT-001');
     expect(aptSnapshot?.rows[0]['战役名称']).toBe('APT-20260619-001');
+    expect(aptSnapshot?.rows[0].__campaign_id).toBe('APT-20260619-001');
+    expect(aptSnapshot?.rows[0].__ts_start).toBe(1_792_886_400);
     expect(aptSnapshot?.evidence.map((item) => item.label)).toContain('APT Topic API');
+    expect(aptSnapshot?.visuals?.topic?.topologyNodes).toHaveLength(3);
+    expect(aptSnapshot?.visuals?.topic?.topologyNodes?.every((item) => item.symbol === 'roundRect' && item.labelPosition === 'inside')).toBe(true);
+    expect(aptSnapshot?.visuals?.topic?.topologyLinks).toHaveLength(2);
+    expect(aptSnapshot?.visuals?.topic?.topologyDiagnostics).toMatchObject({
+      duplicateNodeCount: 1,
+      danglingLinkCount: 1,
+      selfLinkCount: 1,
+      validNodeCount: 3,
+      validLinkCount: 2,
+    });
+    expect(aptSnapshot?.visuals?.topic?.aptCampaigns?.[0]).toMatchObject({
+      id: 'APT-20260619-001',
+      status: 'investigating',
+      activityStatus: 'active',
+      alertCount: 2,
+      tsStart: 1_792_886_400_000,
+      tsEnd: 1_792_890_000_000,
+    });
+    expect(aptSnapshot?.visuals?.topic?.aptIocs?.[0]).toMatchObject({
+      value: '185.199.108.153',
+      campaign: 'APT-20260619-001',
+      hits: 18,
+      firstSeen: 1_792_886_400_000,
+      lastSeen: 1_792_890_000_000,
+    });
+    expect(aptSnapshot?.visuals?.topic?.aptLateralPaths?.[0]).toMatchObject({
+      sourceId: 'phase-lateral',
+      sourceLabel: '横向移动',
+      targetId: 'asset-a',
+      targetLabel: '资产 A',
+      originalLabel: '横向移动影响',
+    });
+    expect(aptSnapshot?.visuals?.topic?.aptEvidenceAssociations?.[0]).toMatchObject({
+      targetId: 'evidence-pcap',
+      targetLabel: 'PCAP',
+    });
+  });
+
+  it('preserves explicit zero topic summary values instead of replacing them with list counts', () => {
+    const exfil = findRouteById('topic-exfil');
+    const apt = findRouteById('topic-apt');
+    expect(exfil).toBeTruthy();
+    expect(apt).toBeTruthy();
+
+    const exfilSnapshot = adaptKnownPageSnapshot(
+      exfil!.page,
+      {
+        data: {
+          summary: {
+            source_count: 0,
+            path_count: 0,
+            session_count: 0,
+            upload_bytes: 0,
+            high_risk_sources: 0,
+            destination_count: 0,
+            sensitive_type_count: 0,
+            cross_border_destinations: 0,
+            peak_upload_gbps: 0,
+            total_events: 0,
+          },
+          top_sources: [{ src_ip: '10.12.8.45', session_count: 210, upload_bytes: 486_000_000, risk: 'high' }],
+          paths: [{ src_ip: '10.12.8.45', dst_ip: '198.51.100.27' }],
+          events: [{ event_id: 'EXF-SHOULD-NOT-CHANGE-SUMMARY' }],
+        },
+      },
+      [],
+    );
+    const aptSnapshot = adaptKnownPageSnapshot(
+      apt!.page,
+      {
+        data: {
+          summary: {
+            campaign_count: 0,
+            high_risk_count: 0,
+            entity_count: 0,
+            alert_count: 0,
+            phase_coverage_done: 0,
+            phase_coverage_total: 0,
+            total_events: 0,
+          },
+          campaigns: [{ campaign_id: 'APT-SHOULD-NOT-CHANGE-SUMMARY', entities: ['asset-a'], alerts: ['alert-a'] }],
+          events: [{ event_id: 'APT-EVT-SHOULD-NOT-CHANGE-SUMMARY' }],
+        },
+      },
+      [],
+    );
+
+    expect(exfilSnapshot?.total).toBe(0);
+    expect(exfilSnapshot?.metrics.find((item) => item.label === '外传路径数')?.value).toBe('0');
+    expect(exfilSnapshot?.metrics.find((item) => item.label === '可疑外传源')?.value).toBe('0');
+    expect(aptSnapshot?.total).toBe(0);
+    expect(aptSnapshot?.metrics.find((item) => item.label === '关联战役数')?.value).toBe('0');
+    expect(aptSnapshot?.metrics.find((item) => item.label === '攻击阶段覆盖')?.value).toBe('0/0');
   });
 
   it('maps encrypted traffic payload into encrypted workbench rows and evidence', () => {

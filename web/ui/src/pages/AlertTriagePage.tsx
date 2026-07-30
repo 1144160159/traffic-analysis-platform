@@ -13,11 +13,11 @@ import {
   SearchOutlined,
 } from '@ant-design/icons';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Alert, Button, DatePicker, Drawer, Input, Radio, Select, Space, Table, Tooltip, message } from 'antd';
+import { Alert, Button, DatePicker, Drawer, Input, Modal, Radio, Select, Space, Table, Tooltip, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import type { Key, ReactNode } from 'react';
-import { useMemo, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { RiskScoreRingChart } from '@/components/charts';
 import { StatusTag } from '@/components/StatusTag';
@@ -36,6 +36,32 @@ import { isVisualBreakdownMode } from '@/utils/visualBreakdownMode';
 
 type FeedbackResult = 'tp' | 'fp' | 'pending';
 type AlertAction = { title: string; alertId: string; target: string; endpoint: string; auditEvent: string; kind: 'saved-view' | 'response-action' | 'investigation-note' };
+type BatchDialog = 'assign' | 'status';
+
+const ALERT_TABLE_ROW_HEIGHT = 39;
+const ALERT_TABLE_HEADER_HEIGHT = 39;
+const ALERT_TABLE_PAGINATION_RESERVE = 50;
+
+export const alertTableVerticalScrollHeight = (
+  viewportHeight: number,
+  rowCount: number,
+  pageSize: number,
+  internalScrollAllowed = true,
+): number | undefined => {
+  if (!internalScrollAllowed) return undefined;
+  const naturalBodyHeight = Math.min(rowCount, pageSize) * ALERT_TABLE_ROW_HEIGHT;
+  const availableBodyHeight = Math.max(
+    1,
+    Math.floor(viewportHeight - ALERT_TABLE_HEADER_HEIGHT - ALERT_TABLE_PAGINATION_RESERVE),
+  );
+  return availableBodyHeight + 1 < naturalBodyHeight ? availableBodyHeight : undefined;
+};
+
+export function alertDetailRoute(alertId: string, currentSearch: URLSearchParams): string {
+  const query = currentSearch.toString();
+  const returnTo = `/alerts${query ? `?${query}` : ''}`;
+  return `/alerts/${encodeURIComponent(alertId)}?returnTo=${encodeURIComponent(returnTo)}`;
+}
 
 export function AlertTriagePage({ route }: { route: NavRoute }) {
   const [searchParams] = useSearchParams();
@@ -49,6 +75,7 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
   const [batchTargetStatus, setBatchTargetStatus] = useState<AlertStatusCode>('triage');
   const [batchReason, setBatchReason] = useState('批量研判状态同步');
   const [batchAssignee, setBatchAssignee] = useState('security-analyst');
+  const [batchDialog, setBatchDialog] = useState<BatchDialog>();
   const [listPage, setListPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [view, setView] = useState('自定义视图');
@@ -60,6 +87,8 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
   const [action, setAction] = useState<AlertAction>();
   const [actionSubmitted, setActionSubmitted] = useState(false);
   const [actionReason, setActionReason] = useState('安全运营人员确认提交');
+  const alertTableViewportRef = useRef<HTMLDivElement>(null);
+  const [alertTableScrollY, setAlertTableScrollY] = useState<number>();
   const visualBreakdownMode = isVisualBreakdownMode();
   const { data, error, isError, isLoading, refetch } = useQuery({
     queryKey: ['page-snapshot', route.id, sourceEntity, listPage, pageSize, appliedFilters, appliedTimeWindow],
@@ -85,6 +114,37 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
   const { data: savedViews = [], refetch: refetchSavedViews } = useQuery({ queryKey: ['alert-saved-views'], queryFn: fetchAlertSavedViews });
 
   const rows = useMemo(() => data?.rows ?? [], [data?.rows]);
+  useLayoutEffect(() => {
+    const viewport = alertTableViewportRef.current;
+    if (!viewport) return undefined;
+
+    let frame = 0;
+    const compactLayout = window.matchMedia('(max-width: 1439px)');
+    const updateScrollHeight = () => {
+      const nextScrollY = alertTableVerticalScrollHeight(
+        viewport.clientHeight,
+        rows.length,
+        pageSize,
+        !compactLayout.matches,
+      );
+      setAlertTableScrollY((current) => current === nextScrollY ? current : nextScrollY);
+    };
+    const scheduleMeasure = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(updateScrollHeight);
+    };
+    const observer = new ResizeObserver(scheduleMeasure);
+    observer.observe(viewport);
+    window.addEventListener('resize', scheduleMeasure);
+    compactLayout.addEventListener('change', scheduleMeasure);
+    updateScrollHeight();
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      window.removeEventListener('resize', scheduleMeasure);
+      compactLayout.removeEventListener('change', scheduleMeasure);
+    };
+  }, [pageSize, rows.length]);
   const selectedRow = useMemo(() => {
     if (!rows.length) return undefined;
     return rows.find((row) => rowKey(row) === selectedRowKey) ?? rows[0];
@@ -124,6 +184,7 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
         message.warning(`批量状态变更失败 ${result.failedCount} 条`);
       } else {
         message.success(`批量状态变更已提交：${alertStatusLabel(effectiveBatchTargetStatus ?? '')}`);
+        setBatchDialog(undefined);
       }
       await refetch();
     },
@@ -133,7 +194,11 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
   });
   const batchAssignMutation = useMutation({
     mutationFn: () => batchAssignAlerts(selectedRows.map(alertIdFromRow), batchAssignee),
-    onSuccess: async (result) => { message.success(`已指派 ${result.success} 条告警`); await refetch(); },
+    onSuccess: async (result) => {
+      message.success(`已指派 ${result.success} 条告警`);
+      setBatchDialog(undefined);
+      await refetch();
+    },
     onError: (mutationError) => message.error(mutationError instanceof Error ? mutationError.message : '批量指派失败'),
   });
   const exportMutation = useMutation({
@@ -202,7 +267,7 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
     ellipsis: true,
     render: (value, record) => renderAlertCell(column, value, record, (title) => {
       const alertId = alertIdFromRow(record);
-      if (title === '查看告警详情') navigate(`/alerts/${encodeURIComponent(alertId)}`);
+      if (title === '查看告警详情') navigate(alertDetailRoute(alertId, searchParams));
       else openAction(title, alertId);
     }),
   }));
@@ -249,6 +314,12 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
     }
   };
   const applyClusterFilter = (label: string) => {
+    if (label === '同战役') {
+      const campaignId = text(selectedRow, '__campaignId', '');
+      if (campaignId) navigate(`/campaigns?campaign=${encodeURIComponent(campaignId)}`);
+      else message.info('当前告警未返回战役聚合标识');
+      return;
+    }
     const next = { ...filters };
     if (label === '同源 IP') {
       next.source = text(selectedRow, '源 IP', '');
@@ -373,28 +444,12 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
             title={`${route.page.tableTitle}（共 ${totalRows || 0} 条）`}
             extra={
               <Space>
-                  <Select
-                    size="small"
-                    value={effectiveBatchTargetStatus}
-                    style={{ width: 104 }}
-                    options={allowedBatchStatuses.map((status) => ({ value: status, label: alertStatusLabel(status) }))}
-                    disabled={!selectedRow || allowedBatchStatuses.length === 0}
-                    onChange={(value) => setBatchTargetStatus(value)}
-                  />
-                  <Input
-                    size="small"
-                    value={batchReason}
-                    style={{ width: 160 }}
-                    onChange={(event) => setBatchReason(event.target.value)}
-                  />
-                  <Input size="small" value={batchAssignee} style={{ width: 120 }} onChange={(event) => setBatchAssignee(event.target.value)} placeholder="指派对象" />
-                  <Button size="small" icon={<SafetyCertificateOutlined />} disabled={!selectedRows.length || !batchAssignee.trim()} loading={batchAssignMutation.isPending} onClick={() => batchAssignMutation.mutate()}>批量指派</Button>
+                  <Button size="small" icon={<SafetyCertificateOutlined />} disabled={!selectedRows.length} onClick={() => setBatchDialog('assign')}>批量指派</Button>
                   <Button
                     size="small"
                     icon={<CheckCircleOutlined />}
-                    disabled={!canSubmitBatchStatus}
-                    loading={batchStatusMutation.isPending}
-                    onClick={() => batchStatusMutation.mutate()}
+                    disabled={!selectedRows.length || !effectiveBatchTargetStatus}
+                    onClick={() => setBatchDialog('status')}
                   >
                     批量状态变更
                   </Button>
@@ -403,38 +458,42 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
               </Space>
             }
           >
-            <Table
-              className="taf-alert-table"
-              rowKey={rowKey}
-              size="small"
-              loading={isLoading}
-              columns={columns}
-              dataSource={rows}
-              scroll={{ x: 1080, y: 340 }}
-              pagination={{
-                current: listPage,
-                pageSize,
-                total: totalRows,
-                size: 'small',
-                showSizeChanger: true,
-                showQuickJumper: true,
-                pageSizeOptions: ['10', '20', '50'],
-                onChange: (nextPage, nextPageSize) => { setListPage(nextPage); setPageSize(nextPageSize); },
-              }}
-              rowSelection={{ selectedRowKeys, onChange: setSelectedRowKeys }}
-              onRow={(record) => ({
-                onClick: () => setSelectedRowKey(rowKey(record)),
-              })}
-            />
+            <div ref={alertTableViewportRef} className="taf-alert-table-viewport">
+              <Table
+                className="taf-alert-table"
+                rowKey={rowKey}
+                size="small"
+                loading={isLoading}
+                columns={columns}
+                dataSource={rows}
+                scroll={alertTableScrollY === undefined ? { x: 1080 } : { x: 1080, y: alertTableScrollY }}
+                pagination={{
+                  current: listPage,
+                  pageSize,
+                  total: totalRows,
+                  size: 'small',
+                  showSizeChanger: true,
+                  showQuickJumper: true,
+                  pageSizeOptions: ['10', '20', '50'],
+                  onChange: (nextPage, nextPageSize) => { setListPage(nextPage); setPageSize(nextPageSize); },
+                }}
+                rowSelection={{ selectedRowKeys, onChange: setSelectedRowKeys }}
+                onRow={(record) => ({
+                  onClick: () => setSelectedRowKey(rowKey(record)),
+                  className: rowKey(record) === rowKey(selectedRow ?? {}) ? 'is-context-selected' : '',
+                })}
+              />
+            </div>
           </WorkPanel>
         </main>
 
         <aside className="taf-alert-detail">
           <AlertSummary row={selectedRow} onAction={(title, target) => {
-            if (title === '进入告警详情' && target) navigate(`/alerts/${encodeURIComponent(target)}`);
+            if (title === '进入告警详情' && target) navigate(alertDetailRoute(target, searchParams));
+            else if (title === '跳转取证' && target) navigate(`/forensics?alert=${encodeURIComponent(target)}`);
             else openAction(title, target);
           }} />
-          <TriageTimeline row={selectedRow} timeline={data?.timeline ?? []} />
+          <TriageTimeline row={selectedRow} />
           <ClusterCards row={selectedRow} rows={rows} onAction={applyClusterFilter} />
           <FeedbackForm
             actions={route.page.actions}
@@ -454,6 +513,57 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
       <Drawer className="taf-alert-triage-action-drawer" title={action ? `${action.title}确认` : '告警操作确认'} open={Boolean(action)} width="min(520px, calc(var(--taf-window-inner-width, 100dvw) - 40px))" onClose={() => { setAction(undefined); setActionSubmitted(false); actionMutation.reset(); }} extra={<Button size="small" type="primary" disabled={actionSubmitted || actionReason.trim().length < 4} loading={actionMutation.isPending} onClick={() => actionMutation.mutate()}>{actionSubmitted ? '已持久化' : '确认提交'}</Button>}>
         {action && <div className="taf-alert-detail-action-body"><p>{action.kind === 'response-action' ? `将创建“${action.title}”受控响应请求；当前状态为待审批，不宣称已经执行。` : `将持久化“${action.title}”并保留租户、权限和审计上下文。`}</p><dl><dt>告警对象</dt><dd>{action.target || '-'}</dd><dt>业务接口</dt><dd>{action.endpoint}</dd><dt>审计事件</dt><dd>{action.auditEvent}</dd></dl><Input.TextArea rows={3} value={actionReason} onChange={(event) => setActionReason(event.target.value)} placeholder="请输入操作原因（至少 4 个字符）" />{actionMutation.isError && <Alert type="error" showIcon message="告警业务操作提交失败" description={actionMutation.error instanceof Error ? actionMutation.error.message : 'unknown error'} />}{actionSubmitted && <Alert type="success" showIcon message={action?.kind === 'response-action' ? '响应请求待审批' : '告警业务操作已持久化'} description={`记录：${actionMutation.data?.job_id ?? actionMutation.data?.view_id ?? '-'}`} />}</div>}
       </Drawer>
+      <Modal
+        className="taf-alert-batch-modal"
+        title={batchDialog === 'assign' ? '批量指派告警' : '批量状态变更'}
+        open={Boolean(batchDialog)}
+        width={480}
+        centered
+        destroyOnClose
+        confirmLoading={batchAssignMutation.isPending || batchStatusMutation.isPending}
+        okButtonProps={{
+          disabled: batchDialog === 'assign'
+            ? !batchAssignee.trim() || selectedRows.length === 0
+            : !canSubmitBatchStatus,
+        }}
+        okText="确认提交"
+        cancelText="取消"
+        onCancel={() => setBatchDialog(undefined)}
+        onOk={() => {
+          if (batchDialog === 'assign') batchAssignMutation.mutate();
+          if (batchDialog === 'status') batchStatusMutation.mutate();
+        }}
+      >
+        <div className="taf-alert-batch-form">
+          <div className="taf-alert-batch-scope">
+            <SafetyCertificateOutlined />
+            <span>已选择</span>
+            <strong>{selectedRows.length} 条告警</strong>
+          </div>
+          {batchDialog === 'assign' ? (
+            <label>
+              <span>指派对象</span>
+              <Input value={batchAssignee} onChange={(event) => setBatchAssignee(event.target.value)} placeholder="请输入安全分析员账号" />
+            </label>
+          ) : (
+            <>
+              <label>
+                <span>目标状态</span>
+                <Select
+                  value={effectiveBatchTargetStatus}
+                  options={allowedBatchStatuses.map((status) => ({ value: status, label: alertStatusLabel(status) }))}
+                  onChange={(value) => setBatchTargetStatus(value)}
+                />
+              </label>
+              <label>
+                <span>变更原因</span>
+                <Input.TextArea rows={3} value={batchReason} onChange={(event) => setBatchReason(event.target.value)} placeholder="请输入状态变更原因（至少 4 个字符）" />
+              </label>
+            </>
+          )}
+          <small>本操作会保留租户、操作者、影响范围和审计事件，不会绕过审批策略。</small>
+        </div>
+      </Modal>
     </div>
   );
 }
@@ -488,14 +598,23 @@ function AlertSummary({ row, onAction }: { row?: SnapshotRow; onAction: (title: 
   const ruleModel = text(row, '规则/模型', '-');
   const confidence = text(row, '置信度', '-');
   const affectedAsset = text(row, '受影响资产', '-');
+  const severity = text(row, '风险等级', '无数据');
 
   return (
-    <WorkPanel title="告警详情" extra={<Button size="small" type="link" onClick={() => onAction('进入告警详情', alertId)}>进入详情</Button>}>
+    <WorkPanel
+      title="告警详情"
+      extra={(
+        <Space size={4} className="taf-alert-summary__toolbar">
+          <StatusTag value={severity} />
+          <Button size="small" type="link" onClick={() => onAction('进入告警详情', alertId)}>进入详情</Button>
+          <Button size="small" type="link" onClick={() => onAction('跳转取证', alertId)}>跳转取证</Button>
+        </Space>
+      )}
+    >
       <div className="taf-alert-summary">
         <AlertRiskDial score={score} />
         <div className="taf-alert-summary__facts">
           <strong title={text(row, '告警名称', '暂无告警')}>{text(row, '告警名称', '暂无告警')}</strong>
-          <StatusTag value={text(row, '风险等级', '无数据')} />
           <dl>
             <dt>告警 ID</dt>
             <dd title={alertId}>{alertId}</dd>
@@ -524,12 +643,8 @@ function AlertRiskDial({ score }: { score: number }) {
   );
 }
 
-function TriageTimeline({ row, timeline }: { row?: SnapshotRow; timeline: PageSnapshot['timeline'] }) {
-  const items = timeline.length
-    ? timeline
-    : [
-        { title: '暂无时间线', description: '当前筛选范围没有可展示的真实告警事件。', status: 'info' as const },
-      ];
+function TriageTimeline({ row }: { row?: SnapshotRow }) {
+  const items = alertTimelineItems(row);
 
   return (
     <WorkPanel title="研判时间线">
@@ -537,7 +652,7 @@ function TriageTimeline({ row, timeline }: { row?: SnapshotRow; timeline: PageSn
         {items.slice(0, 5).map((item, index) => (
           <div key={`${item.title}-${index}`} className={`taf-alert-timeline__item is-${item.status}`}>
             <i />
-            <span>{alertTimelineTime(index, row)}</span>
+            <span>{item.time}</span>
             <strong>{item.title}</strong>
             <em title={item.description}>{item.description}</em>
           </div>
@@ -547,15 +662,92 @@ function TriageTimeline({ row, timeline }: { row?: SnapshotRow; timeline: PageSn
   );
 }
 
-const alertTimelineTime = (index: number, row?: SnapshotRow) => {
-  if (index === 0) {
-    const value = text(row, '首次发生', '');
-    const parsed = value ? new Date(value) : undefined;
-    if (parsed && Number.isFinite(parsed.getTime())) return parsed.toLocaleTimeString('zh-CN', { hour12: false });
-    const match = value.match(/(\d{2}:\d{2}:\d{2})/);
-    return match?.[1] ?? '--:--:--';
+type AlertTriageTimelineItem = PageSnapshot['timeline'][number] & {
+  time: string;
+  timestamp: number;
+};
+
+export const alertTimelineItems = (row?: SnapshotRow): AlertTriageTimelineItem[] => {
+  if (!row) {
+    return [{
+      time: '--:--:--',
+      timestamp: 0,
+      title: '暂无研判事件',
+      description: '请选择一条告警以查看该记录的真实时间字段。',
+      status: 'info',
+    }];
   }
-  return '--:--:--';
+  const name = text(row, '告警名称', '-');
+  const source = text(row, '源 IP', '-');
+  const destination = text(row, '目的 IP', '-');
+  const status = text(row, '状态', '-');
+  const stateVersion = text(row, '__stateVersion', '');
+  const timestamps = {
+    firstSeen: text(row, '__firstSeen', text(row, '首次发生', '')),
+    createdAt: text(row, '__createdAt', ''),
+    lastSeen: text(row, '__lastSeen', ''),
+    updatedAt: text(row, '__updatedAt', ''),
+  };
+  const timedItems = [
+    {
+      rawTime: timestamps.firstSeen,
+      title: '首次发生',
+      description: `${name} 首次观测，通信 ${source} → ${destination}`,
+      status: 'info' as const,
+    },
+    {
+      rawTime: timestamps.createdAt,
+      title: '告警创建',
+      description: '告警记录已写入研判队列。',
+      status: 'warn' as const,
+    },
+    {
+      rawTime: timestamps.lastSeen,
+      title: '最近观测',
+      description: '这是告警记录返回的最近观测时间。',
+      status: 'warn' as const,
+    },
+    {
+      rawTime: timestamps.updatedAt,
+      title: '最近更新',
+      description: stateVersion ? `状态记录已更新，版本 ${stateVersion}。` : '状态记录已更新。',
+      status: /确认|关闭|忽略/.test(status) ? 'ok' as const : 'info' as const,
+    },
+  ]
+    .filter((item) => Boolean(item.rawTime))
+    .map((item) => ({
+      time: alertTimelineClock(item.rawTime),
+      timestamp: alertTimelineEpoch(item.rawTime),
+      title: item.title,
+      description: item.description,
+      status: item.status,
+    }))
+    .sort((left, right) => left.timestamp - right.timestamp);
+  const currentTime = timestamps.updatedAt || timestamps.lastSeen || timestamps.createdAt || timestamps.firstSeen;
+  const currentItem: AlertTriageTimelineItem = {
+    time: alertTimelineClock(currentTime),
+    timestamp: alertTimelineEpoch(currentTime),
+    title: '当前状态',
+    description: `当前状态为 ${status}；未返回的研判动作不在此处推断。`,
+    status: /确认|关闭|忽略/.test(status) ? 'ok' : 'info',
+  };
+  return [...timedItems, currentItem].slice(-5);
+};
+
+const alertTimelineEpoch = (value: string) => {
+  if (!value) return 0;
+  const numeric = Number(value);
+  const parsed = Number.isFinite(numeric) && numeric > 0
+    ? new Date(numeric < 10_000_000_000 ? numeric * 1_000 : numeric)
+    : new Date(value);
+  return Number.isFinite(parsed.getTime()) ? parsed.getTime() : 0;
+};
+
+const alertTimelineClock = (value: string) => {
+  if (!value) return '--:--:--';
+  const timestamp = alertTimelineEpoch(value);
+  if (timestamp > 0) return new Date(timestamp).toLocaleTimeString('zh-CN', { hour12: false });
+  return value.match(/(\d{2}:\d{2}:\d{2})/)?.[1] ?? '--:--:--';
 };
 
 const compactAlertMetricValue = (value: string) => {
@@ -571,12 +763,13 @@ function ClusterCards({ row, rows, onAction }: { row?: SnapshotRow; rows: Snapsh
   const asset = text(row, '受影响资产', '');
   const phase = text(row, '攻击阶段', '');
   const rule = text(row, '规则/模型', '');
+  const campaignId = text(row, '__campaignId', '');
   const cards = [
     ['同源 IP', rows.filter((item) => text(item, '源 IP', '') === sourceIP).length],
     ['同资产', rows.filter((item) => text(item, '受影响资产', '') === asset).length],
     ['同攻击链', rows.filter((item) => text(item, '攻击阶段', '') === phase).length],
     ['同规则/模型', rows.filter((item) => text(item, '规则/模型', '') === rule).length],
-    ['当前阶段', phase || '-'],
+    ['同战役', campaignId ? rows.filter((item) => text(item, '__campaignId', '') === campaignId).length : '-'],
   ];
 
   return (

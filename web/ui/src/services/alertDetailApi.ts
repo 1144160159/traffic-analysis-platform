@@ -36,9 +36,11 @@ export type AlertDetailEvidenceRow = {
   生成时间: string;
   状态: string;
   操作: string;
+  evidenceId?: string;
   evidenceKind?: string;
   hashValue?: string;
   signedUrl?: string;
+  viewUrl?: string;
   fileTags?: string[];
   pcapEvidence?: AlertDetailPcapEvidence;
   sessionEvidence?: AlertDetailSessionEvidence;
@@ -150,6 +152,8 @@ export type AlertDetailSnapshot = {
     sampleReturn: string;
   };
   evidence: AlertDetailMetric[];
+  evidenceApiError?: string;
+  feedbackApiError?: string;
 };
 
 export type UpdateAlertStatusResult = {
@@ -399,7 +403,7 @@ export function normalizeAlertDetailSnapshot(
   const evidenceRows = extractList(evidencePayload, ['evidences', 'evidence', 'items', 'data']);
   const feedback = unwrapPayload(feedbackPayload);
   const alertRecord = isRecord(alert) ? alert : {};
-  const evidenceList = evidenceRows.length ? evidenceRows : derivedEvidence(alertRecord, requestedAlertId);
+  const evidenceList = evidenceRows;
   const score = normalizeScore(numberAt(alertRecord, ['score', 'risk_score', 'riskScore']) || 92);
   const confidenceValue = numberAt(alertRecord, ['confidence', 'probability']);
   const alertId = textFrom(alertRecord, ['alert_id', 'alertId', 'id']) || requestedAlertId;
@@ -490,7 +494,7 @@ export function normalizeAlertDetailSnapshot(
       timelineItem('03:43:47', '横向移动', '检测到内网扫描与会话探测行为', 'risk'),
       timelineItem('03:44:12', '处置动作', '已生成隔离与阻断建议，等待确认执行', 'info'),
     ],
-    evidenceRows: evidenceList.slice(0, 6).map((item, index) => evidenceRow(item, alertId, index)),
+    evidenceRows: evidenceList.map((item, index) => evidenceRow(item, alertId, index)),
     responseActions: [
       { label: '隔离主机', risk: '高危', status: 'risk' },
       { label: '阻断 IP', risk: '高危', status: 'risk' },
@@ -510,6 +514,8 @@ export function normalizeAlertDetailSnapshot(
       metric('Feedback API', feedbackAvailable ? '已读取' : secondaryErrorText(feedbackPayload) || '待提交', 'secondary', feedbackAvailable ? 'ok' : 'info'),
       metric('审计提示', '危险动作需留痕', 'audit_logs', 'info'),
     ],
+    evidenceApiError: secondaryErrorText(evidencePayload),
+    feedbackApiError: secondaryErrorText(feedbackPayload),
   };
 }
 
@@ -790,31 +796,41 @@ function derivedEvidence(alert: Record<string, unknown>, alertId: string): Recor
 }
 
 function evidenceRow(item: Record<string, unknown>, alertId: string, index: number): AlertDetailEvidenceRow {
-  const type = textFrom(item, ['type', 'evidence_type']) || ['PCAP', 'Session', '日志', '图谱路径', 'Hash', '签名 URL'][index % 6];
-  const id = textFrom(item, ['evidence_id', 'id', 'file_key', 'path']) || `${type}-${alertId}-${index + 1}`;
-  const status = evidenceStatusLabel(textFrom(item, ['status']) || 'generated');
-  const hashValue = textFrom(item, ['hash', 'sha256', 'checksum']) || (type.includes('文件') ? 'SHA256: 1a2b3c4d5bef79a8h9i0j...' : '');
-  const signedUrl = textFrom(item, ['signed_url', 'signedUrl', 'url']) || (type.includes('文件') ? `https://evidence.campus.local/signed/${alertId}` : '');
-  const fileTags = stringListFrom(valueAt(item, ['tags', 'labels'])).length
-    ? stringListFrom(valueAt(item, ['tags', 'labels']))
+  const metrics = valueAt(item, ['metrics']);
+  const snippetRef = valueAt(item, ['snippet_ref', 'snippetRef']);
+  const source = {
+    ...(isRecord(metrics) ? metrics : {}),
+    ...(isRecord(snippetRef) ? snippetRef : {}),
+    ...item,
+  };
+  const type = textFrom(source, ['type', 'evidence_type']) || ['PCAP', 'Session', '日志', '图谱路径', 'Hash', '签名 URL'][index % 6];
+  const id = textFrom(source, ['evidence_id', 'id', 'file_key', 'path']) || `${type}-${alertId}-${index + 1}`;
+  const status = evidenceStatusLabel(textFrom(source, ['status']) || 'generated');
+  const hashValue = textFrom(source, ['hash', 'sha256', 'checksum']) || '';
+  const signedUrl = textFrom(source, ['signed_url', 'signedUrl', 'url']) || '';
+  const viewUrl = textFrom(source, ['redirect_url', 'redirectUrl', 'view_url', 'viewUrl']) || '';
+  const fileTags = stringListFrom(valueAt(source, ['tags', 'labels'])).length
+    ? stringListFrom(valueAt(source, ['tags', 'labels']))
     : type.includes('文件')
       ? ['报告附件', '导出脚本', 'hash 校验', '下载审计 sec_analyst 03:45']
       : [];
-  const pcapEvidence = pcapEvidenceFrom(item, alertId, type, id, status);
-  const sessionEvidence = sessionEvidenceFrom(item, alertId, type, id, status);
-  const graphPath = graphPathFrom(item, alertId, type, id, status);
-  const logEvidence = logEvidenceFrom(item, alertId, type, id, status);
+  const pcapEvidence = pcapEvidenceFrom(source, alertId, type, id, status);
+  const sessionEvidence = sessionEvidenceFrom(source, alertId, type, id, status);
+  const graphPath = graphPathFrom(source, alertId, type, id, status);
+  const logEvidence = logEvidenceFrom(source, alertId, type, id, status);
   return {
     证据类型: type,
     文件记录: id,
-    内容摘要: textFrom(item, ['summary', 'description']) || `${type} 证据已关联告警上下文`,
-    大小: textFrom(item, ['size', 'bytes']) || '-',
-    生成时间: formatDateTime(textFrom(item, ['timestamp', 'created_at', 'generated_at'])) || '2026-06-20 03:43:05',
+    内容摘要: textFrom(source, ['summary', 'description']) || `${type} 证据已关联告警上下文`,
+    大小: textFrom(source, ['size', 'bytes']) || '-',
+    生成时间: formatDateTime(textFrom(source, ['timestamp', 'created_at', 'generated_at'])) || '-',
     状态: status,
     操作: status === '待生成' ? '等待' : '下载 / 查看',
-    evidenceKind: textFrom(item, ['evidence_kind', 'evidenceKind', 'kind']) || (type.includes('文件') ? 'hash 清单 / 附件' : type),
+    evidenceId: id,
+    evidenceKind: textFrom(source, ['evidence_kind', 'evidenceKind', 'kind']) || (type.includes('文件') ? 'hash 清单 / 附件' : type),
     hashValue,
     signedUrl,
+    viewUrl,
     fileTags,
     pcapEvidence,
     sessionEvidence,
