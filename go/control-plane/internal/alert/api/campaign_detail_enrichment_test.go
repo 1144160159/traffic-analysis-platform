@@ -118,3 +118,91 @@ func TestCampaignImpactMetadataProjectionAndDeduplication(t *testing.T) {
 	require.Len(t, mergeCampaignImpactServices(services, services), 1)
 	require.Equal(t, "高危", campaignAlertRiskLabel("SEVERITY_CRITICAL"))
 }
+
+func TestAttackChainPhasesCarryObservedEndpointsEvidenceAndMitreTechnique(t *testing.T) {
+	campaign := campaignDTO{
+		CampaignID:   "attack-chain-demo",
+		TenantID:     "default",
+		AttackPhases: []string{"initial_access"},
+		TsStart:      100,
+		TsEnd:        300,
+		Score:        0.92,
+	}
+	alerts := []campaignAlertDTO{{
+		AlertID:     "alert-initial-access",
+		AlertType:   "Web 漏洞利用",
+		Severity:    "high",
+		LastSeen:    200,
+		AttackPhase: "initial_access",
+		Entity:      "FW-01",
+		SrcIP:       "198.51.100.27",
+		DstIP:       "10.12.5.23",
+		EvidenceIDs: []string{"pcap-initial-access"},
+	}}
+
+	phases := campaignToPhasesWithAlerts(campaign, alerts)
+
+	require.Len(t, phases, 1)
+	require.Equal(t, []string{"alert-initial-access"}, phases[0].AlertIDs)
+	require.Equal(t, int64(200), phases[0].StartTime)
+	require.Equal(t, int64(200), phases[0].EndTime)
+	require.Len(t, phases[0].KeyEvents, 1)
+	require.Equal(t, "FW-01", phases[0].KeyEvents[0].Entity)
+	require.Equal(t, "198.51.100.27", phases[0].KeyEvents[0].SrcIP)
+	require.Equal(t, "10.12.5.23", phases[0].KeyEvents[0].DstIP)
+	require.Equal(t, "TA0001", phases[0].KeyEvents[0].Technique)
+	require.Equal(t, []string{"pcap-initial-access"}, phases[0].KeyEvents[0].EvidenceIDs)
+}
+
+func TestAttackChainPagedResourcesKeepDistinctRecommendationTabs(t *testing.T) {
+	alert := campaignAlertDTO{
+		AlertID:     "alert-c2",
+		AlertType:   "C2 隧道通信",
+		Severity:    "critical",
+		LastSeen:    1785047111000,
+		AttackPhase: "command_control",
+		Entity:      "c2.example.com",
+		SrcIP:       "10.12.8.45",
+		DstIP:       "198.51.100.27",
+		EvidenceIDs: []string{"evidence-tls-session"},
+	}
+
+	path := attackChainPathFromAlert(alert, 0)
+	require.Equal(t, "TA0011", path.Technique)
+	require.Equal(t, "evidence-tls-session", path.EvidenceID)
+	require.Equal(t, "confirmed", path.Status)
+
+	block := attackChainRecommendationFromAlert("block", alert, 0)
+	isolate := attackChainRecommendationFromAlert("isolate", alert, 0)
+	allowlist := attackChainRecommendationFromAlert("allowlist", alert, 0)
+	playbook := attackChainRecommendationFromAlert("playbook", alert, 0)
+
+	require.Equal(t, "阻断 c2.example.com", block.Action)
+	require.Equal(t, "隔离 c2.example.com", isolate.Action)
+	require.Equal(t, "复核白名单 c2.example.com", allowlist.Action)
+	require.Equal(t, "执行 C2 阻断剧本", playbook.Action)
+	require.Equal(t, []string{"低影响", "中等影响", "需审批", "自动化"}, []string{
+		block.Impact, isolate.Impact, allowlist.Impact, playbook.Impact,
+	})
+}
+
+func TestAttackChainEvidenceAndRecommendationQueryValuesAreAllowlisted(t *testing.T) {
+	for input, expected := range map[string]string{
+		"": "block", "阻断点": "block", "隔离建议": "isolate", "白名单风险": "allowlist", "剧本推荐": "playbook",
+	} {
+		actual, err := normalizeAttackChainRecommendationCategory(input)
+		require.NoError(t, err)
+		require.Equal(t, expected, actual)
+	}
+	for input, expected := range map[string]string{
+		"": "", "全部": "", "PCAP": "pcap", "Session": "session", "日志": "log", "图谱": "graph", "规则/模型": "rule_model",
+	} {
+		actual, err := normalizeAttackChainEvidenceType(input)
+		require.NoError(t, err)
+		require.Equal(t, expected, actual)
+	}
+	_, err := normalizeAttackChainEvidenceType("unsupported")
+	require.Error(t, err)
+	_, err = normalizeAttackChainRecommendationCategory("unsupported")
+	require.Error(t, err)
+}

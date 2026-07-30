@@ -160,20 +160,20 @@ metadata:
   name: alert-service
   namespace: traffic-analysis
   annotations:
-    kubernetes.io/change-cause: "Topic domain r758 uses a static alert-service binary, the required 30-day APT window and live campaign KPI derivation"
-    traffic.analysis/source-revision: "534f1b22c3a83c3ecbe37d9313d3880cd4cc1e0b0f3fc2063f9c031f8037d0ca"
+    kubernetes.io/change-cause: "Topic panel r859 preserves canonical snapshots and emits CJK report text through UTF-16 Type0 PDF fonts"
+    traffic.analysis/source-revision: "f898e20ae0ac77f18f475df3520a47ee099f95c7b8b34bd01fac0a89537c2c9c"
 spec:
   replicas: 1
   selector: {matchLabels: {app: alert-service}}
   template:
     metadata:
       labels: {app: alert-service}
-      annotations: {prometheus.io/scrape: "true", prometheus.io/port: "9093", traffic.analysis/build-id: "topic-domain-r758", traffic.analysis/release: "topic-domain-r758", traffic.analysis/source-digest: "534f1b22c3a83c3ecbe37d9313d3880cd4cc1e0b0f3fc2063f9c031f8037d0ca", traffic.analysis/image-digest: "sha256:18f4d61602076b6ce5a2ac92540a2feff17ecfabcc70d65bc06357185b887702", traffic.analysis/image-id: "sha256:62af1dc631cd34549330af571d27ab0cc6993dadbf16befd87484e54e084477e"}
+      annotations: {prometheus.io/scrape: "true", prometheus.io/port: "9093", traffic.analysis/build-id: "topic-panel-r859", traffic.analysis/release: "topic-panel-r859", traffic.analysis/source-digest: "f898e20ae0ac77f18f475df3520a47ee099f95c7b8b34bd01fac0a89537c2c9c", traffic.analysis/image-digest: "sha256:7d38feb52755e5fb4bcb23846b8efbc971dbcd1924e722bc92b5cac416481cc6", traffic.analysis/image-id: "sha256:51e2d66da1117ba5400e1a3d7d978d9c14b9e05ef58824b946a254b863c7f546"}
     spec:
       terminationGracePeriodSeconds: 120
       containers:
       - name: alert-service
-        image: docker.io/traffic/alert-service:topic-domain-r758
+        image: docker.io/traffic/alert-service:topic-panel-r859
         imagePullPolicy: Never
         ports: [{containerPort: 8082}, {containerPort: 9093}]
         lifecycle:
@@ -203,6 +203,10 @@ spec:
         - {name: OPENSEARCH_ADDRS, value: "http://opensearch.middleware.svc:9200"}
         - {name: OPENSEARCH_USERNAME, value: "admin"}
         - {name: OPENSEARCH_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: OPENSEARCH_ADMIN_PASSWORD}}}
+        - {name: S3_ENDPOINT, value: "minio.minio.svc:9000"}
+        - {name: S3_ACCESS_KEY, valueFrom: {secretKeyRef: {name: traffic-credentials, key: MINIO_ACCESS_KEY}}}
+        - {name: S3_SECRET_KEY, valueFrom: {secretKeyRef: {name: traffic-credentials, key: MINIO_SECRET_KEY}}}
+        - {name: S3_USE_SSL, value: "false"}
         - {name: JWT_SECRET_KEY, valueFrom: {secretKeyRef: {name: traffic-credentials, key: JWT_SECRET}}}
         - {name: LOG_LEVEL, value: "info"}
         resources: {requests: {cpu: 500m, memory: 512Mi, ephemeral-storage: 128Mi}, limits: {cpu: "1", memory: 1Gi, ephemeral-storage: 512Mi}}

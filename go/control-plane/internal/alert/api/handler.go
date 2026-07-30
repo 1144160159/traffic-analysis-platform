@@ -32,6 +32,7 @@ type Handler struct {
 	feedbackHandler  *FeedbackHandler
 	auditLogger      *audit.AlertAuditLogger
 	actionAudit      *AlertActionAuditWriter
+	evidenceObjects  alertEvidenceObjectStore
 	responseProducer *kafka.Producer
 	consumerHealth   func(context.Context) error
 	logger           *zap.Logger
@@ -119,8 +120,11 @@ func (h *Handler) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/alerts/batch/status", h.BatchUpdateStatus).Methods("PUT")
 	r.HandleFunc("/alerts/{id}", h.GetAlert).Methods("GET")
 	r.HandleFunc("/alerts/{id}/evidence", h.GetAlertEvidence).Methods("GET")
+	r.HandleFunc("/alerts/{id}/evidence/access", h.CreateAlertEvidenceAccess).Methods("POST")
+	r.HandleFunc("/alerts/{id}/evidence/{evidence_id}/download", h.DownloadAlertEvidence).Methods("GET")
 	r.HandleFunc("/alerts/{id}/status", h.UpdateStatus).Methods("PUT")
 	r.HandleFunc("/alerts/{id}/assign", h.AssignAlert).Methods("PUT")
+	r.HandleFunc("/alerts/{id}/labels", h.UpdateAlertLabels).Methods("PUT")
 	r.HandleFunc("/alerts/{id}/close", h.CloseAlert).Methods("POST")
 	r.HandleFunc("/alerts/{id}/reopen", h.ReopenAlert).Methods("POST")
 	r.HandleFunc("/alerts/{id}/response-actions", h.CreateAlertResponseAction).Methods("POST")

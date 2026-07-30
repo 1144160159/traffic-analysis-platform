@@ -646,6 +646,66 @@ func TestPostgresAssetVulnerabilitySourceCountsOnlyVulnerabilityItems(t *testing
 	}
 }
 
+func TestLoadTopicPanelSimulationUsesDatabasePayloadAndRuntimeContext(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("create sql mock: %v", err)
+	}
+	defer db.Close()
+	mock.ExpectQuery("SELECT to_regclass").
+		WillReturnRows(sqlmock.NewRows([]string{"to_regclass"}).AddRow("topic_panel_simulations"))
+	mock.ExpectQuery("SELECT simulation_id, version, payload").
+		WithArgs("tunnel", "tenant-a").
+		WillReturnRows(sqlmock.NewRows([]string{"simulation_id", "version", "payload", "updated_at"}).AddRow(
+			"topic-tunnel-ui-v1",
+			"ui-suite-gpt-v1",
+			[]byte(`{"summary":{"protocol_count":7},"updated_at":1}`),
+			time.UnixMilli(1718888888000),
+		))
+
+	handler := NewSystemHandler(nil, db, nil)
+	scope := &topicScopeDTO{TenantID: "tenant-a", Topic: "tunnel", TimeWindow: "7d"}
+	payload, ok, err := handler.loadTopicPanelSimulation(context.Background(), "tenant-a", "tunnel", scope, 100, 200)
+	if err != nil || !ok {
+		t.Fatalf("expected simulation payload, ok=%v err=%v", ok, err)
+	}
+	if payload["data_mode"] != "simulated" || payload["simulation_id"] != "topic-tunnel-ui-v1" || payload["simulation_version"] != "ui-suite-gpt-v1" {
+		t.Fatalf("unexpected simulation metadata: %+v", payload)
+	}
+	if payload["updated_at"] != int64(1718888888000) {
+		t.Fatalf("expected stable database updated_at, got %#v", payload["updated_at"])
+	}
+	timeRange, ok := payload["time_range"].(map[string]int64)
+	if !ok || timeRange["start"] != 100 || timeRange["end"] != 200 {
+		t.Fatalf("unexpected runtime time range: %#v", payload["time_range"])
+	}
+	if payload["scope"] != scope {
+		t.Fatalf("expected runtime scope to override fixture scope")
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet SQL expectations: %v", err)
+	}
+}
+
+func TestLoadTopicPanelSimulationFallsBackWhenTableIsAbsent(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("create sql mock: %v", err)
+	}
+	defer db.Close()
+	mock.ExpectQuery("SELECT to_regclass").
+		WillReturnRows(sqlmock.NewRows([]string{"to_regclass"}).AddRow(nil))
+
+	handler := NewSystemHandler(nil, db, nil)
+	payload, ok, err := handler.loadTopicPanelSimulation(context.Background(), "tenant-a", "exfil", nil, 100, 200)
+	if err != nil || ok || payload != nil {
+		t.Fatalf("expected live-data fallback, payload=%#v ok=%v err=%v", payload, ok, err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet SQL expectations: %v", err)
+	}
+}
+
 func TestTopicGovernanceRoutesAreRegisteredUnderAPIV1(t *testing.T) {
 	handler := NewSystemHandler(nil, nil, nil)
 	router := mux.NewRouter()
@@ -849,5 +909,277 @@ func TestFusionSourcesExposeUnavailableDependencies(t *testing.T) {
 				t.Fatalf("expected error code %q, got %#v", tc.errorCode, tc.source.Config["error_code"])
 			}
 		})
+	}
+}
+
+func TestTopicActionBusinessEffectReturnsTraceableResult(t *testing.T) {
+	tests := []struct {
+		name         string
+		topic        string
+		action       string
+		target       string
+		dataMode     string
+		wantStatus   string
+		wantState    string
+		wantField    string
+		wantContains string
+	}{
+		{
+			name: "simulated containment completes with target state", topic: "tunnel", action: "contain",
+			target: "TUN-20260620-001", dataMode: "simulated", wantStatus: "completed", wantState: "completed",
+			wantField: "target_state", wantContains: "contained",
+		},
+		{
+			name: "live containment is queued for the execution worker", topic: "tunnel", action: "contain",
+			target: "TUN-20260620-001", dataMode: "live", wantStatus: "queued", wantState: "queued",
+			wantField: "message", wantContains: "等待执行器",
+		},
+		{
+			name: "trace returns graph route", topic: "apt", action: "trace",
+			target: "APT CN/2026", dataMode: "simulated", wantStatus: "completed", wantState: "completed",
+			wantField: "next_route", wantContains: "/graph?topic=apt&target=APT+CN%2F2026",
+		},
+		{
+			name: "pcap extraction returns evidence reference", topic: "exfil", action: "extract_pcap",
+			target: "EXFIL-001", dataMode: "simulated", wantStatus: "completed", wantState: "completed",
+			wantField: "evidence_ref", wantContains: "topic/exfil/pcap/EXFIL-001",
+		},
+		{
+			name: "session inspection returns session evidence", topic: "tunnel", action: "inspect_session",
+			target: "TN-20260620-0001", dataMode: "simulated", wantStatus: "completed", wantState: "completed",
+			wantField: "evidence_ref", wantContains: "topic/tunnel/session/TN-20260620-0001",
+		},
+		{
+			name: "certificate inspection returns fingerprint evidence", topic: "tunnel", action: "inspect_certificate",
+			target: "TN-20260620-0001", dataMode: "simulated", wantStatus: "completed", wantState: "completed",
+			wantField: "evidence_ref", wantContains: "topic/tunnel/certificate/TN-20260620-0001",
+		},
+		{
+			name: "trace path returns graph route", topic: "tunnel", action: "trace_path",
+			target: "TN-20260620-0001", dataMode: "simulated", wantStatus: "completed", wantState: "completed",
+			wantField: "next_route", wantContains: "/graph?topic=tunnel&trace=TN-20260620-0001",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			status, effect := topicActionBusinessEffect(tc.topic, tc.action, tc.target, tc.dataMode)
+			if status != tc.wantStatus {
+				t.Fatalf("expected status %q, got %q", tc.wantStatus, status)
+			}
+			if effect["state"] != tc.wantState {
+				t.Fatalf("expected effect state %q, got %#v", tc.wantState, effect["state"])
+			}
+			if effect["operation"] != tc.action || effect["data_mode"] != tc.dataMode {
+				t.Fatalf("effect lost action or data mode: %#v", effect)
+			}
+			value, ok := effect[tc.wantField].(string)
+			if !ok || !strings.Contains(value, tc.wantContains) {
+				t.Fatalf("expected %s to contain %q, got %#v", tc.wantField, tc.wantContains, effect[tc.wantField])
+			}
+		})
+	}
+}
+
+func TestBuildTopicArtifactContainsSnapshotMetricsAndDistinctZipManifest(t *testing.T) {
+	snapshot := map[string]interface{}{
+		"topic": "tunnel", "data_mode": "simulated", "simulation_id": "topic-tunnel-ui-v1", "simulation_version": "ui-suite-gpt-v1",
+		"summary":         map[string]interface{}{"protocol_count": 7, "session_count": 64, "evidence_completeness": 62},
+		"events":          []interface{}{map[string]interface{}{"event_id": "TUN-001"}, map[string]interface{}{"event_id": "TUN-002"}},
+		"evidence_bundle": []interface{}{map[string]interface{}{"label": "PCAP", "complete": 42, "total": 64}},
+		"presentation": map[string]interface{}{
+			"report_title":      "加密隧道专题分析报告",
+			"report_scope":      "主校区办公终端",
+			"report_conclusion": "发现 64 条异常隧道会话。",
+		},
+	}
+	parameters := map[string]interface{}{"format": "pdf", "data_mode": "simulated"}
+
+	pdf, pdfName, pdfType, err := buildTopicArtifact("tunnel", "report", "pdf", "default", "tester", parameters, snapshot)
+	if err != nil {
+		t.Fatalf("build pdf: %v", err)
+	}
+	if !strings.HasSuffix(pdfName, ".pdf") || pdfType != "application/pdf" || len(pdf) < 900 {
+		t.Fatalf("expected a populated PDF artifact, name=%q type=%q bytes=%d", pdfName, pdfType, len(pdf))
+	}
+	for _, marker := range []string{"summary.protocol_count=7", "events.count=2", "evidence_bundle.count=1", "snapshot_sha256=sha256:"} {
+		if !bytes.Contains(pdf, []byte(topicPDFUTF16Hex(marker))) {
+			t.Fatalf("PDF is missing report marker %q", marker)
+		}
+	}
+	for _, marker := range []string{"加密隧道专题分析报告", "scope=主校区办公终端", "conclusion=发现 64 条异常隧道会话。"} {
+		if !bytes.Contains(pdf, []byte(topicPDFUTF16Hex(marker))) {
+			t.Fatalf("PDF is missing UTF-16 report content %q", marker)
+		}
+	}
+
+	docx, _, _, err := buildTopicArtifact("tunnel", "report", "docx", "default", "tester", parameters, snapshot)
+	if err != nil {
+		t.Fatalf("build docx: %v", err)
+	}
+	docReader, err := zip.NewReader(bytes.NewReader(docx), int64(len(docx)))
+	if err != nil {
+		t.Fatalf("open docx: %v", err)
+	}
+	var documentXML []byte
+	for _, file := range docReader.File {
+		if file.Name != "word/document.xml" {
+			continue
+		}
+		reader, openErr := file.Open()
+		if openErr != nil {
+			t.Fatalf("open document.xml: %v", openErr)
+		}
+		documentXML, err = io.ReadAll(reader)
+		reader.Close()
+		if err != nil {
+			t.Fatalf("read document.xml: %v", err)
+		}
+	}
+	if !bytes.Contains(documentXML, []byte("summary.protocol_count=7")) || !bytes.Contains(documentXML, []byte("TUN-001")) {
+		t.Fatalf("DOCX does not contain snapshot metrics and event content")
+	}
+
+	artifactZip, _, _, err := buildTopicArtifact("tunnel", "evidence_package", "zip", "default", "tester", parameters, snapshot)
+	if err != nil {
+		t.Fatalf("build zip: %v", err)
+	}
+	zipReader, err := zip.NewReader(bytes.NewReader(artifactZip), int64(len(artifactZip)))
+	if err != nil {
+		t.Fatalf("open evidence zip: %v", err)
+	}
+	entries := map[string][]byte{}
+	for _, file := range zipReader.File {
+		reader, openErr := file.Open()
+		if openErr != nil {
+			t.Fatalf("open %s: %v", file.Name, openErr)
+		}
+		entries[file.Name], err = io.ReadAll(reader)
+		reader.Close()
+		if err != nil {
+			t.Fatalf("read %s: %v", file.Name, err)
+		}
+	}
+	if bytes.Equal(entries["manifest.json"], entries["snapshot.json"]) {
+		t.Fatalf("manifest.json must not duplicate snapshot.json")
+	}
+	if !bytes.Contains(entries["manifest.json"], []byte("snapshot_sha256")) || !bytes.Contains(entries["snapshot.json"], []byte("TUN-001")) {
+		t.Fatalf("ZIP manifest/snapshot content is incomplete")
+	}
+}
+
+func TestLoadTopicSourceReportSnapshotReusesTenantScopedSnapshotAndHash(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("create sqlmock: %v", err)
+	}
+	defer db.Close()
+
+	snapshot := map[string]interface{}{
+		"topic": "exfil",
+		"summary": map[string]interface{}{
+			"path_count": 112,
+		},
+		"events": []interface{}{map[string]interface{}{"event_id": "EXF-001"}},
+	}
+	checksum, err := topicSnapshotChecksum(snapshot)
+	if err != nil {
+		t.Fatalf("checksum snapshot: %v", err)
+	}
+	resultJSON, _ := json.Marshal(map[string]interface{}{
+		"snapshot":        snapshot,
+		"snapshot_sha256": checksum,
+		"report_model":    buildTopicReportModel("exfil", snapshot),
+	})
+	parametersJSON, _ := json.Marshal(map[string]interface{}{
+		"data_mode":          "simulated",
+		"simulation_id":      "topic-exfil-ui-v2",
+		"simulation_version": "ui-suite-gpt-v2",
+	})
+
+	mock.ExpectQuery(regexp.QuoteMeta(`
+		SELECT result::text, parameters::text
+		FROM topic_exports
+		WHERE tenant_id=$1 AND topic=$2 AND export_type='report' AND status='completed' AND export_id=$3`)).
+		WithArgs("tenant-a", "exfil", "11111111-1111-1111-1111-111111111111").
+		WillReturnRows(sqlmock.NewRows([]string{"result", "parameters"}).AddRow(string(resultJSON), string(parametersJSON)))
+
+	reused, parameters, reusedChecksum, err := loadTopicSourceReportSnapshot(
+		context.Background(),
+		db,
+		"tenant-a",
+		"exfil",
+		"11111111-1111-1111-1111-111111111111",
+	)
+	if err != nil {
+		t.Fatalf("load source report snapshot: %v", err)
+	}
+	if reusedChecksum != checksum {
+		t.Fatalf("expected checksum %q, got %q", checksum, reusedChecksum)
+	}
+	if fmt.Sprint(reused["topic"]) != "exfil" || fmt.Sprint(parameters["simulation_id"]) != "topic-exfil-ui-v2" {
+		t.Fatalf("source snapshot or parameters changed: snapshot=%#v parameters=%#v", reused, parameters)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatalf("unmet SQL expectations: %v", err)
+	}
+}
+
+func TestLoadTopicSourceReportSnapshotRejectsChecksumDrift(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("create sqlmock: %v", err)
+	}
+	defer db.Close()
+
+	resultJSON, _ := json.Marshal(map[string]interface{}{
+		"snapshot":        map[string]interface{}{"topic": "apt", "summary": map[string]interface{}{"campaign_count": 7}},
+		"snapshot_sha256": "sha256:stale",
+	})
+	mock.ExpectQuery("SELECT result::text, parameters::text").
+		WithArgs("tenant-a", "apt", "22222222-2222-2222-2222-222222222222").
+		WillReturnRows(sqlmock.NewRows([]string{"result", "parameters"}).AddRow(string(resultJSON), `{}`))
+
+	_, _, _, err = loadTopicSourceReportSnapshot(
+		context.Background(),
+		db,
+		"tenant-a",
+		"apt",
+		"22222222-2222-2222-2222-222222222222",
+	)
+	if err == nil || !strings.Contains(err.Error(), "checksum mismatch") {
+		t.Fatalf("expected checksum mismatch, got %v", err)
+	}
+}
+
+func TestTopicSnapshotChecksumIsStableAcrossJSONBStructRoundTrip(t *testing.T) {
+	original := map[string]interface{}{
+		"topic": "tunnel",
+		"scope": &topicScopeDTO{
+			TenantID:       "tenant-a",
+			Topic:          "tunnel",
+			ScopeName:      "核心范围",
+			IncludedAssets: []string{"core-switch"},
+			RiskLevels:     []string{"high"},
+			TimeWindow:     "24h",
+			UpdatedAt:      1718888888000,
+		},
+		"time_range": map[string]int64{"start": 1718800000000, "end": 1718888888000},
+	}
+	originalChecksum, err := topicSnapshotChecksum(original)
+	if err != nil {
+		t.Fatalf("checksum original snapshot: %v", err)
+	}
+	encoded, _ := json.Marshal(original)
+	reloaded := map[string]interface{}{}
+	if err := json.Unmarshal(encoded, &reloaded); err != nil {
+		t.Fatalf("round trip snapshot: %v", err)
+	}
+	reloadedChecksum, err := topicSnapshotChecksum(reloaded)
+	if err != nil {
+		t.Fatalf("checksum reloaded snapshot: %v", err)
+	}
+	if originalChecksum != reloadedChecksum {
+		t.Fatalf("checksum drifted across JSONB-style round trip: original=%s reloaded=%s", originalChecksum, reloadedChecksum)
 	}
 }

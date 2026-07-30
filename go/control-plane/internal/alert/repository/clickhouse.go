@@ -414,6 +414,17 @@ func (r *AlertRepository) UpdateAssignee(ctx context.Context, tenantID, alertID,
 	})
 }
 
+// UpdateLabels updates the alert labels through the same append-only,
+// optimistic-lock path used by status and assignee mutations.
+func (r *AlertRepository) UpdateLabels(ctx context.Context, tenantID, alertID string, labels []string, userID string) error {
+	ctx, span := otel.StartSpan(ctx, "alert_repository.update_labels")
+	defer span.End()
+	return r.updateWithOptimisticLock(ctx, tenantID, alertID, func(alert *persistence.Alert) error {
+		alert.Labels = append([]string(nil), labels...)
+		return nil
+	})
+}
+
 // UpdateAssigneeWithVersion 更新告警分配人（带版本号的乐观锁）
 func (r *AlertRepository) UpdateAssigneeWithVersion(ctx context.Context, tenantID, alertID, assignee, userID string, expectedVersion time.Time) error {
 	ctx, span := otel.StartSpan(ctx, "alert_repository.update_assignee_with_version")

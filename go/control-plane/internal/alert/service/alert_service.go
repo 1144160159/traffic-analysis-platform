@@ -358,6 +358,14 @@ func (s *AlertService) GetEvidenceByID(ctx context.Context, tenantID, alertID, e
 	return nil, errors.Newf(errors.ErrCodeResourceNotFound, "evidence not found: %s", evidenceID)
 }
 
+// UpdateLabels replaces the mutable alert label set while preserving the
+// append-only ClickHouse version history.
+func (s *AlertService) UpdateLabels(ctx context.Context, tenantID, alertID string, labels []string, userID string) error {
+	ctx, span := otel.StartSpan(ctx, "alert_service.update_labels")
+	defer span.End()
+	return s.chRepo.UpdateLabels(ctx, tenantID, alertID, labels, userID)
+}
+
 // ==================== 更新方法 ====================
 // UpdateStatus 更新告警状态，状态机脏数据自动修复
 func (s *AlertService) UpdateStatus(ctx context.Context, tenantID, alertID, newStatus, userID, reason string) (string, error) {
