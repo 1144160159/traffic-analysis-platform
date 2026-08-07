@@ -6,6 +6,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts/alignment/verify_dashboard_task_real_components_ephemeral.py"
 GO_TEST = ROOT / "go/control-plane/internal/alert/api/dashboard_task_real_components_integration_test.go"
+PROFILE_GO_TEST = ROOT / "go/control-plane/internal/alert/api/dashboard_task_bounded_profile_integration_test.go"
 
 
 def load_module():
@@ -22,6 +23,7 @@ class DashboardTaskRealComponentsGuardTests(unittest.TestCase):
         cls.module = load_module()
         cls.script = SCRIPT.read_text(encoding="utf-8")
         cls.go_test = GO_TEST.read_text(encoding="utf-8")
+        cls.profile_go_test = PROFILE_GO_TEST.read_text(encoding="utf-8")
 
     def test_images_are_immutable_and_names_are_run_scoped(self):
         self.assertIn("postgres@sha256:", self.module.POSTGRES_IMAGE)
@@ -55,10 +57,41 @@ class DashboardTaskRealComponentsGuardTests(unittest.TestCase):
         self.assertIn("COMPENSATOR_TRANSPORT_UNKNOWN", self.go_test)
 
     def test_runner_records_the_exact_test_and_non_secret_sumdb_override(self):
-        self.assertIn("^TestDashboardTaskRealComponents$", self.script)
+        self.assertIn('test_name = "TestDashboardTaskRealComponents"', self.script)
+        self.assertIn('test_name = "TestDashboardTaskBoundedPerformanceProfile"', self.script)
+        self.assertIn('"-run", f"^{test_name}$"', self.script)
         self.assertIn('test_env["GOSUMDB"]', self.script)
         self.assertIn('"secrets_captured": False', self.script)
         self.assertNotIn("DASHBOARD_TASK_PROVIDER_TOKEN", self.script)
+
+    def test_bounded_profile_is_sentinel_guarded_and_not_a_production_slo(self):
+        self.assertIn("DASHBOARD_TASK_REAL_COMPONENTS_EPHEMERAL_SENTINEL", self.profile_go_test)
+        self.assertIn("DASHBOARD_TASK_BOUNDED_PROFILE_RESULT", self.profile_go_test)
+        self.assertIn("OWNED_PREFLIGHT_CEILING_NOT_PRODUCTION_SLO", self.profile_go_test)
+        self.assertIn("approved_release_candidate", self.profile_go_test)
+        self.assertRegex(
+            self.profile_go_test.lower(), r'"production_applied"\s*:\s*false'
+        )
+        self.assertIn("os.O_EXCL", self.profile_go_test)
+
+    def test_bounded_profile_has_fault_resource_and_lag_stop_conditions(self):
+        for marker in (
+            "retry_amplification_bounded",
+            "kafka_final_lag_zero",
+            "heap_growth_below_owned_ceiling",
+            "goroutine_growth_below_owned_ceiling",
+            "end_to_end_p99_below_owned_ceiling",
+            "consumer_cold_start_below_owned_ceiling",
+            "unknown_timeout_with_external_effect",
+        ):
+            self.assertIn(marker, self.profile_go_test)
+        self.assertIn('"docker", "stats", "--no-stream"', self.script)
+        self.assertIn("post_workload_single_snapshot_not_capacity_evidence", self.script)
+        self.assertEqual("512m", self.module.POSTGRES_MEMORY_LIMIT)
+        self.assertEqual("1g", self.module.REDPANDA_MEMORY_LIMIT)
+        self.assertIn('"--memory", REDPANDA_MEMORY_LIMIT', self.script)
+        self.assertIn('"--memory", POSTGRES_MEMORY_LIMIT', self.script)
+        self.assertIn('"--smp", "1", "--memory", "512M", "--reserve-memory", "0M"', self.script)
 
 
 if __name__ == "__main__":

@@ -21,6 +21,10 @@ TOPIC = "dashboard.task.events.v1"
 SENTINEL_TABLE = "codex_ephemeral_dashboard_task_real_components_sentinel"
 SENTINEL_VALUE = "dashboard-real-components-ephemeral-only"
 PASSWORD = "codex-dashboard-real-components-ephemeral-only"
+POSTGRES_MEMORY_LIMIT = "512m"
+POSTGRES_CPU_LIMIT = "1"
+REDPANDA_MEMORY_LIMIT = "1g"
+REDPANDA_CPU_LIMIT = "2"
 
 
 def run(
@@ -61,11 +65,41 @@ def container_absent(name: str) -> bool:
     return run(["docker", "container", "inspect", name], check=False).returncode != 0
 
 
+def container_stats(name: str) -> dict[str, Any] | None:
+    completed = run(
+        ["docker", "stats", "--no-stream", "--format", "{{json .}}", name],
+        check=False,
+    )
+    if completed.returncode != 0:
+        return None
+    payload = completed.stdout.decode(errors="replace").strip()
+    if not payload:
+        return None
+    raw = json.loads(payload)
+    return {
+        "cpu_percent": raw.get("CPUPerc"),
+        "memory_usage": raw.get("MemUsage"),
+        "memory_percent": raw.get("MemPerc"),
+        "network_io": raw.get("NetIO"),
+        "block_io": raw.get("BlockIO"),
+        "pids": raw.get("PIDs"),
+        "measurement": "post_workload_single_snapshot_not_capacity_evidence",
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--output", type=Path)
+    parser.add_argument(
+        "--mode", choices=("correctness", "bounded-profile"), default="correctness"
+    )
+    parser.add_argument("--profile-result", type=Path)
     args = parser.parse_args()
+    if args.mode == "bounded-profile" and args.profile_result is None:
+        parser.error("--profile-result is required in bounded-profile mode")
+    if args.mode == "correctness" and args.profile_result is not None:
+        parser.error("--profile-result is only valid in bounded-profile mode")
 
     postgres_container, kafka_container = names(args.run_id)
     kafka_port = loopback_port()
@@ -73,7 +107,12 @@ def main() -> int:
         "schema_version": 1,
         "run_id": args.run_id,
         "status": "FAIL",
-        "coverage_status": "OWNED_REAL_POSTGRES_REDPANDA_AND_LOOPBACK_HTTP_PROVIDER_G1",
+        "mode": args.mode,
+        "coverage_status": (
+            "OWNED_BOUNDED_POSTGRES_REDPANDA_HTTP_G4_PREFLIGHT_NOT_APPROVED_G4"
+            if args.mode == "bounded-profile"
+            else "OWNED_REAL_POSTGRES_REDPANDA_AND_LOOPBACK_HTTP_PROVIDER_G1"
+        ),
         "postgres_container": postgres_container,
         "kafka_container": kafka_container,
         "postgres_image": POSTGRES_IMAGE,
@@ -96,6 +135,13 @@ def main() -> int:
         "compensation_transport_ambiguity_verified": False,
         "tenant_isolation_verified": False,
         "same_trace_reconciliation_verified": False,
+        "bounded_profile_verified": False,
+        "bounded_profile": None,
+        "container_resource_limits": {
+            "postgres": {"memory": POSTGRES_MEMORY_LIMIT, "cpus": POSTGRES_CPU_LIMIT},
+            "redpanda": {"memory": REDPANDA_MEMORY_LIMIT, "cpus": REDPANDA_CPU_LIMIT},
+        },
+        "container_resource_snapshots": {"postgres": None, "redpanda": None},
         "loopback_only": True,
         "persistent_volume_attached": False,
         "shared_environment_touched": False,
@@ -120,8 +166,10 @@ def main() -> int:
         run(
             [
                 "docker", "run", "--name", kafka_container,
+                "--memory", REDPANDA_MEMORY_LIMIT, "--cpus", REDPANDA_CPU_LIMIT,
                 "-p", f"127.0.0.1:{kafka_port}:19092", "-d", KAFKA_IMAGE,
                 "redpanda", "start", "--mode", "dev-container", "--check=false",
+                "--smp", "1", "--memory", "512M", "--reserve-memory", "0M",
                 "--kafka-addr", "internal://0.0.0.0:9092,external://0.0.0.0:19092",
                 "--advertise-kafka-addr",
                 f"internal://127.0.0.1:9092,external://127.0.0.1:{kafka_port}",
@@ -174,6 +222,7 @@ def main() -> int:
         run(
             [
                 "docker", "run", "--name", postgres_container,
+                "--memory", POSTGRES_MEMORY_LIMIT, "--cpus", POSTGRES_CPU_LIMIT,
                 "-e", f"POSTGRES_PASSWORD={PASSWORD}", "-e", "POSTGRES_DB=traffic_platform",
                 "-p", "127.0.0.1::5432", "-d", POSTGRES_IMAGE,
             ]
@@ -225,10 +274,20 @@ def main() -> int:
         )
         test_env["DASHBOARD_TASK_REAL_COMPONENTS_EPHEMERAL_KAFKA_BROKER"] = f"127.0.0.1:{kafka_port}"
         test_env["DASHBOARD_TASK_REAL_COMPONENTS_EPHEMERAL_SENTINEL"] = SENTINEL_VALUE
+        test_name = "TestDashboardTaskRealComponents"
+        if args.mode == "bounded-profile":
+            profile_result = args.profile_result.resolve()
+            if profile_result.exists():
+                raise RuntimeError(
+                    f"refusing to overwrite dashboard bounded profile: {profile_result}"
+                )
+            profile_result.parent.mkdir(parents=True, exist_ok=True)
+            test_env["DASHBOARD_TASK_BOUNDED_PROFILE_RESULT"] = str(profile_result)
+            test_name = "TestDashboardTaskBoundedPerformanceProfile"
         completed = run(
             [
                 "go", "-C", "go/control-plane", "test", "./internal/alert/api",
-                "-run", "^TestDashboardTaskRealComponents$", "-count=1", "-v",
+                "-run", f"^{test_name}$", "-count=1", "-v",
             ],
             env=test_env,
             check=False,
@@ -236,24 +295,44 @@ def main() -> int:
         result["test_output"] = completed.stdout.decode(errors="replace").strip()
         if completed.returncode != 0:
             raise RuntimeError(f"dashboard real-component integration exited {completed.returncode}")
-        for field in (
-            "required_acks_all_verified",
-            "durable_inbox_verified",
-            "consumer_restart_replay_verified",
-            "out_of_order_authority_rejection_verified",
-            "http_execution_provider_verified",
-            "http_compensation_provider_verified",
-            "provider_idempotency_verified",
-            "execution_transport_ambiguity_verified",
-            "compensation_transport_ambiguity_verified",
-            "tenant_isolation_verified",
-            "same_trace_reconciliation_verified",
-        ):
-            result[field] = True
+        if args.mode == "bounded-profile":
+            profile = json.loads(profile_result.read_text(encoding="utf-8"))
+            if profile.get("status") != "PASS":
+                raise RuntimeError("dashboard bounded profile did not pass its stop conditions")
+            result["bounded_profile"] = profile
+            result["bounded_profile_verified"] = True
+            result["required_acks_all_verified"] = True
+            result["durable_inbox_verified"] = True
+            result["http_execution_provider_verified"] = True
+            result["provider_idempotency_verified"] = True
+            result["execution_transport_ambiguity_verified"] = True
+        else:
+            for field in (
+                "required_acks_all_verified",
+                "durable_inbox_verified",
+                "consumer_restart_replay_verified",
+                "out_of_order_authority_rejection_verified",
+                "http_execution_provider_verified",
+                "http_compensation_provider_verified",
+                "provider_idempotency_verified",
+                "execution_transport_ambiguity_verified",
+                "compensation_transport_ambiguity_verified",
+                "tenant_isolation_verified",
+                "same_trace_reconciliation_verified",
+            ):
+                result[field] = True
         result["status"] = "PASS"
     except Exception as exc:
         result["errors"] = [str(exc)]
     finally:
+        if postgres_created:
+            result["container_resource_snapshots"]["postgres"] = container_stats(
+                postgres_container
+            )
+        if kafka_created:
+            result["container_resource_snapshots"]["redpanda"] = container_stats(
+                kafka_container
+            )
         if postgres_created:
             run(["docker", "rm", "-f", postgres_container], check=False)
         if kafka_created:

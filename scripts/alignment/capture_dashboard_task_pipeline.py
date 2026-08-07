@@ -23,6 +23,7 @@ SOURCE_ARTIFACTS = (
     "go/control-plane/internal/alert/api/dashboard_task_compensation.go",
     "go/control-plane/internal/alert/api/dashboard_task_v2_integration_test.go",
     "go/control-plane/internal/alert/api/dashboard_task_real_components_integration_test.go",
+    "go/control-plane/internal/alert/api/dashboard_task_bounded_profile_integration_test.go",
     "go/control-plane/internal/alert/api/dashboard_task_pipeline.go",
     "go/control-plane/internal/alert/api/dashboard_task_http_provider.go",
     "go/control-plane/internal/alert/api/dashboard_task_http_provider_test.go",
@@ -149,6 +150,16 @@ def main() -> int:
                 "--output", str(output / "real-components-result.json"),
             ],
         ),
+        (
+            "bounded-performance-fault-preflight",
+            [
+                "python3", "scripts/alignment/verify_dashboard_task_real_components_ephemeral.py",
+                "--run-id", args.run_id + "-bounded-profile",
+                "--mode", "bounded-profile",
+                "--profile-result", str(output / "bounded-profile-result.json"),
+                "--output", str(output / "bounded-profile-runner-result.json"),
+            ],
+        ),
         ("event-catalog", ["python3", "scripts/alignment/check_event_catalog.py"]),
         (
             "kafka-acl",
@@ -180,6 +191,25 @@ def main() -> int:
         and all(item["status"] == "PASS" for item in results)
         and candidate_stable
     )
+
+    result_artifacts = []
+    for name in (
+        "real-components-result.json",
+        "bounded-profile-runner-result.json",
+        "bounded-profile-result.json",
+    ):
+        path = output / name
+        if path.is_file():
+            result_artifacts.append(
+                {"path": name, "sha256": sha256(path), "size_bytes": path.stat().st_size}
+            )
+    bounded_profile_path = output / "bounded-profile-result.json"
+    bounded_profile = (
+        json.loads(bounded_profile_path.read_text(encoding="utf-8"))
+        if bounded_profile_path.is_file()
+        else None
+    )
+    scoped_pass = scoped_pass and bounded_profile is not None and bounded_profile.get("status") == "PASS"
 
     artifacts = []
     for relative in SOURCE_ARTIFACTS:
@@ -213,7 +243,7 @@ def main() -> int:
             "G1": "PASS_FOR_REPOSITORY_COMPONENTS_AND_OWNED_REAL_POSTGRES_REDPANDA_HTTP_PROVIDER_LIFECYCLE",
             "G2": "OPEN_FOR_APPROVED_RELEASE_CANDIDATE_POSTGRESQL_KAFKA_AND_PROVIDER",
             "G3": "OPEN_FOR_SAME_TRACE_TASK_EVENT_RECEIPT_AUDIT_AND_PROVIDER_EFFECT_RECONCILIATION",
-            "G4": "OPEN_FOR_QUEUE_LAG_RETRY_EXECUTOR_P99_AND_RESOURCE_BUDGETS",
+            "G4": "PREFLIGHT_PASS_OWNED_BOUNDED_POSTGRES_REDPANDA_HTTP_NOT_APPROVED_G4",
             "G5": "OPEN_FOR_CURRENT_CANDIDATE_WINDOWS_CHROME_MOCK_OFF",
             "G6": "HOLD_FOR_EXPAND_SHADOW_CANARY_ROLLBACK_AND_OBSERVATION",
             "G7": "OPEN",
@@ -222,6 +252,8 @@ def main() -> int:
         "production_applied": False,
         "commands": results,
         "source_artifacts": artifacts,
+        "result_artifacts": result_artifacts,
+        "owned_bounded_profile": bounded_profile,
         "proven": [
             "task acceptance atomically commits task history audit outbox and exact idempotency receipt in PostgreSQL",
             "the required-acks dispatcher marks an outbox row published only after Kafka acknowledgement and retains bounded retry and dead state",
@@ -240,13 +272,16 @@ def main() -> int:
             "common Docker and Kubernetes schema entrypoints replay twice to the same hash and include queue receipt and inbox tables",
             "the new topic JSON schema ACL workload identity and Kubernetes topic bootstrap catalogs are synchronized",
             "both task and pipeline flags remain default-off and the expand-only rollback preserves in-flight receipts and unknown effects",
+            "an owned bounded 40-task profile records create queue provider terminal propagation and end-to-end P50 P95 P99 plus throughput Kafka lag retry amplification heap and goroutine growth",
+            "controlled slow response connection loss and provider timeout faults preserve eight partial tasks; timeout-side external effects remain explicitly unresolved rather than being rewritten as completed",
+            "owned preflight ceilings stop obvious regressions but are explicitly not production SLOs or approved G4 release-candidate budgets",
         ],
         "open": [
             "run the exact release candidate against approved PostgreSQL Kafka and execution and compensation provider services",
             "repeat duplicate outbox publish consumer restart Kafka replay and provider retry against the approved release-candidate services",
             "prove compensation lost-response recovery against the approved provider with an authoritative idempotency lookup rather than only partial-state preservation",
             "reconcile each approved create-execution and compensation operation across task history audit events inbox offsets provider receipt and authoritative provider effect by its own trace",
-            "measure queue lag retry storm executor timeout P50/P95/P99 throughput and resource stop conditions",
+            "recalibrate queue lag retry executor timeout P50 P95 P99 throughput and resource budgets on the approved release candidate and run at least three fixed-scale rounds with variance",
             "capture the same production candidate bundle in designated Windows Chrome through the available external tunnel with mock disabled",
             "execute expand shadow canary rollback and T+0/T+1/T+3/T+7 observation with independent approval",
             "complete G7 sign-off while retaining independent G8 external milestones",

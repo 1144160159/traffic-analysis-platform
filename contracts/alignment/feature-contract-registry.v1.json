@@ -1370,7 +1370,7 @@
       "formal_contract_present": true,
       "formal_contract": {
         "path": "contracts/alignment/features/F-DASHBOARD-002.json",
-        "sha256": "aef0b6ff81e8e41b3ef707c2e087e28cdecde06d19c3271d2f6ae239ebef57cf",
+        "sha256": "b069e2a8799925fe9dfc59aa132118253be3f355e788771c776370ca95afae0a",
         "contract_version": 2,
         "status": "implementing",
         "operation_id": "createDashboardTask",
@@ -1898,5 +1898,5 @@
       "complete compatibility diff G2 through G7 and external G8 gates"
     ]
   },
-  "catalog_sha256": "c4ec139b19e387977feb54d8911a1d862c6058897099c6aa89614fbdad979dfe"
+  "catalog_sha256": "d2b5109629400185703fbcad6d526e7c23fc2e0659762d0a17c3c57b3d527760"
 }
