@@ -1976,16 +1976,22 @@
       "owner": "kafka-platform-owner",
       "status": "VERIFYING",
       "evidence": [
+        "contracts/kafka/dlq-commit-barrier.v1.json",
+        "scripts/alignment/verify_kafka_dlq_commit_barrier.py",
+        "tests/alignment/test_kafka_dlq_commit_barrier.py",
+        "go/control-plane/internal/common/kafka/consumer_batch_commit_test.go",
+        "go/control-plane/internal/common/kafka/dlq_test.go",
         "go/control-plane/internal/alert/consumer/kafka_dlq_commit_test.go",
         "go/control-plane/internal/common/kafka/consumer_health_test.go",
         "go/control-plane/internal/asset/consumer/binding_consumer.go",
         "go/control-plane/internal/common/kafka/errors.go",
         "go/control-plane/internal/common/kafka/consumer.go",
         "go/control-plane/internal/common/audit/consumer.go",
+        "doc/02_acceptance/runs/20260807-remediation-g0-full-v173/manifest.json#sha256=1fabbebddd5061a33d3640583fe8c117208fdb4ac281d2fd3dd5aacbd5ded0b1",
         "doc/02_acceptance/runs/20260802-remediation-kafka-acl-v4/manifest.json#sha256=f93a96c35c647dcea3a3be2c2abb0477cd68be6a6459e9d5c19ba0be03f26bf2"
       ],
       "blocker": null,
-      "note": "共享consumer与告警专用批处理在DLQ失败时均阻止offset提交，资产binding解码失败保持fail-closed。audit materializer进一步启用显式permanent-only策略：不可解析消息只有在dlq.v1持久化成功后才允许提交，PG、同步offset commit及其他瞬时失败保持未提交并撤销健康；既有消费者保持兼容，待逐条分类迁移。仍需真实broker毒消息、PG中断、DLQ中断、重放和offset证据。"
+      "note": "共享Go BatchConsume现已把broker offset ACK作为最终持久化屏障：不再把异步排队当成提交成功，真实commit错误向调用方传播且processed指标只在ACK后增加；后台单消息提交失败保留pending offset重试。DLQ安全初始化失败不再退化为无认证writer，批内任一序列化失败整批拒绝，单条与批量均采用canonical TargetTopic。独立合同、静态verifier、5项负向变异测试、race测试和同哈希G0 v173已PASS；覆盖仍仅为PARTIAL_SHARED_GO_CONSUMER。资产binding和audit permanent-only策略继续保持fail-closed。尚缺真实broker毒消息、DLQ/PG中断、source offset-DLQ-PG/CH审计同trace对账、重启/rebalance、非Go与专用consumer盘点、性能、灰度回滚及T+观察，故状态保持VERIFYING。"
     },
     {
       "id": "T-KAFKA-004",

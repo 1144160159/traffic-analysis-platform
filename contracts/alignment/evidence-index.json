@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-07T06:41:25Z",
+  "updated_at": "2026-08-07T07:17:25Z",
   "latest_g0": {
-    "run_id": "20260807-remediation-g0-full-v171",
-    "manifest": "doc/02_acceptance/runs/20260807-remediation-g0-full-v171/manifest.json",
-    "manifest_sha256": "8aa3364aa74104a9d9ab15a10a7947b476d2d1125a8293edf16804722f1bb01f",
-    "candidate_source_sha256": "336456de94e68f9b45c0617b74a543644b7c266a437525c1e4fca4cb98c35e4d",
+    "run_id": "20260807-remediation-g0-full-v173",
+    "manifest": "doc/02_acceptance/runs/20260807-remediation-g0-full-v173/manifest.json",
+    "manifest_sha256": "1fabbebddd5061a33d3640583fe8c117208fdb4ac281d2fd3dd5aacbd5ded0b1",
+    "candidate_source_sha256": "bfe9d9bf307b061486ee061e1d9b580dd91dc6f3514d0663129b07a4caea9d57",
     "status": "PASS",
     "scope": [
       "alignment-test",
@@ -19,6 +19,30 @@
       "G2-G6",
       "G8"
     ]
+  },
+  "latest_kafka_dlq_commit_barrier": {
+    "control_id": "T-KAFKA-003",
+    "contract": "contracts/kafka/dlq-commit-barrier.v1.json",
+    "verifier": "scripts/alignment/verify_kafka_dlq_commit_barrier.py",
+    "tests": [
+      "tests/alignment/test_kafka_dlq_commit_barrier.py",
+      "go/control-plane/internal/common/kafka/consumer_batch_commit_test.go",
+      "go/control-plane/internal/common/kafka/dlq_test.go"
+    ],
+    "g0_run_id": "20260807-remediation-g0-full-v173",
+    "g0_manifest_sha256": "1fabbebddd5061a33d3640583fe8c117208fdb4ac281d2fd3dd5aacbd5ded0b1",
+    "candidate_source_sha256": "bfe9d9bf307b061486ee061e1d9b580dd91dc6f3514d0663129b07a4caea9d57",
+    "repository_status": "PASS",
+    "coverage_status": "PARTIAL_SHARED_GO_CONSUMER",
+    "production_applied": false,
+    "remaining_gates": [
+      "real broker poison-message and DLQ acknowledgement failure injection",
+      "source offset DLQ record PostgreSQL materialization and audit reconciliation by tenant trace event and revision",
+      "consumer restart rebalance lag and duplicate convergence evidence",
+      "approved canary rollback T+0 T+1 T+3 T+7 observation and independent sign-off",
+      "inventory and migrate non-Go and dedicated consumer paths"
+    ],
+    "note": "Batch processing now requires a real Kafka commit acknowledgement before processed metrics advance; DLQ security, serialization and write failures retain source offsets. Repository proof does not establish live broker or production completion."
   },
   "latest_common_response_adapter": {
     "feature_ids": ["F-COMMON-002", "F-COMMON-004", "F-ADAPTER-002"],
