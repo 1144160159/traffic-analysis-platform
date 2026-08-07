@@ -110,6 +110,21 @@ class CampaignSelectorTest {
         assertThat(results.get(0).getCampaignId()).startsWith("campaign-").contains("tenant-1");
     }
 
+    @Test @DisplayName("相同告警集合重放保持 Campaign 和 Event ID")
+    void testReplayStableCampaignIdentity() throws Exception {
+        long baseTime = 1_700_000_000_000L;
+        List<Alert> alerts = scanExploitAlerts(baseTime, "10.0.0.1");
+
+        Campaign first = runCepPipeline(
+                alerts, ScanExploitPattern.create(patternConfig), new ScanExploitSelector()).get(0);
+        Campaign replay = runCepPipeline(
+                alerts, ScanExploitPattern.create(patternConfig), new ScanExploitSelector()).get(0);
+
+        assertThat(replay.getCampaignId()).isEqualTo(first.getCampaignId());
+        assertThat(replay.getEventId()).isEqualTo(first.getEventId());
+        assertThat(replay.getHeader().getEventId()).isEqualTo(first.getHeader().getEventId());
+    }
+
     @Test @DisplayName("EventHeader 正确设置")
     void testEventHeaderCorrectlySet() throws Exception {
         long baseTime = System.currentTimeMillis();

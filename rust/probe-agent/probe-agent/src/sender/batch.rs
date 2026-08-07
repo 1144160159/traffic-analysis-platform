@@ -414,7 +414,9 @@ mod tests {
         });
 
         assert!(collector.push(flow_event("flow-1")).is_none());
-        let batch = collector.push(flow_event("flow-2")).expect("batch should flush");
+        let batch = collector
+            .push(flow_event("flow-2"))
+            .expect("batch should flush");
 
         assert_eq!(batch.len(), 2);
         assert!(collector.is_empty());
@@ -452,9 +454,14 @@ mod tests {
             batches.push(batch);
         }
 
-        handle.await.expect("BatchSender task should finish cleanly");
+        handle
+            .await
+            .expect("BatchSender task should finish cleanly");
 
-        assert_eq!(batches.iter().map(Vec::len).collect::<Vec<_>>(), vec![2, 2, 1]);
+        assert_eq!(
+            batches.iter().map(Vec::len).collect::<Vec<_>>(),
+            vec![2, 2, 1]
+        );
         assert_eq!(
             batches
                 .into_iter()

@@ -11,7 +11,7 @@ public interface GraphQueryLogBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.GraphQueryLog logs = 1 [json_name = "logs"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.GraphQueryLog> 
+  java.util.List<com.traffic.proto.traffic.v1.GraphQueryLog>
       getLogsList();
   /**
    * <code>repeated .traffic.v1.GraphQueryLog logs = 1 [json_name = "logs"];</code>
@@ -24,7 +24,7 @@ public interface GraphQueryLogBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.GraphQueryLog logs = 1 [json_name = "logs"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.GraphQueryLogOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.GraphQueryLogOrBuilder>
       getLogsOrBuilderList();
   /**
    * <code>repeated .traffic.v1.GraphQueryLog logs = 1 [json_name = "logs"];</code>

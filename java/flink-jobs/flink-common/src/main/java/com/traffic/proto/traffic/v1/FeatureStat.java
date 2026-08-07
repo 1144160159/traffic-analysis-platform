@@ -26,6 +26,8 @@ private static final long serialVersionUID = 0L;
     objectId_ = "";
     communityId_ = "";
     extra_ = emptyFloatList();
+    evidenceIds_ =
+        com.google.protobuf.LazyStringArrayList.emptyList();
   }
 
   @java.lang.Override
@@ -88,7 +90,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       schemaVersion_ = s;
@@ -104,7 +106,7 @@ private static final long serialVersionUID = 0L;
       getSchemaVersionBytes() {
     java.lang.Object ref = schemaVersion_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       schemaVersion_ = b;
@@ -127,7 +129,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       objectType_ = s;
@@ -143,7 +145,7 @@ private static final long serialVersionUID = 0L;
       getObjectTypeBytes() {
     java.lang.Object ref = objectType_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       objectType_ = b;
@@ -166,7 +168,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       objectId_ = s;
@@ -182,7 +184,7 @@ private static final long serialVersionUID = 0L;
       getObjectIdBytes() {
     java.lang.Object ref = objectId_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       objectId_ = b;
@@ -205,7 +207,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       communityId_ = s;
@@ -221,7 +223,7 @@ private static final long serialVersionUID = 0L;
       getCommunityIdBytes() {
     java.lang.Object ref = communityId_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       communityId_ = b;
@@ -437,6 +439,81 @@ private static final long serialVersionUID = 0L;
   }
   private int extraMemoizedSerializedSize = -1;
 
+  public static final int TUPLE_FIELD_NUMBER = 23;
+  private com.traffic.proto.traffic.v1.FiveTuple tuple_;
+  /**
+   * <pre>
+   * Original session context required by downstream detections and evidence.
+   * </pre>
+   *
+   * <code>.traffic.v1.FiveTuple tuple = 23 [json_name = "tuple"];</code>
+   * @return Whether the tuple field is set.
+   */
+  @java.lang.Override
+  public boolean hasTuple() {
+    return ((bitField0_ & 0x00000002) != 0);
+  }
+  /**
+   * <pre>
+   * Original session context required by downstream detections and evidence.
+   * </pre>
+   *
+   * <code>.traffic.v1.FiveTuple tuple = 23 [json_name = "tuple"];</code>
+   * @return The tuple.
+   */
+  @java.lang.Override
+  public com.traffic.proto.traffic.v1.FiveTuple getTuple() {
+    return tuple_ == null ? com.traffic.proto.traffic.v1.FiveTuple.getDefaultInstance() : tuple_;
+  }
+  /**
+   * <pre>
+   * Original session context required by downstream detections and evidence.
+   * </pre>
+   *
+   * <code>.traffic.v1.FiveTuple tuple = 23 [json_name = "tuple"];</code>
+   */
+  @java.lang.Override
+  public com.traffic.proto.traffic.v1.FiveTupleOrBuilder getTupleOrBuilder() {
+    return tuple_ == null ? com.traffic.proto.traffic.v1.FiveTuple.getDefaultInstance() : tuple_;
+  }
+
+  public static final int EVIDENCE_IDS_FIELD_NUMBER = 24;
+  @SuppressWarnings("serial")
+  private com.google.protobuf.LazyStringArrayList evidenceIds_ =
+      com.google.protobuf.LazyStringArrayList.emptyList();
+  /**
+   * <code>repeated string evidence_ids = 24 [json_name = "evidenceIds"];</code>
+   * @return A list containing the evidenceIds.
+   */
+  public com.google.protobuf.ProtocolStringList
+      getEvidenceIdsList() {
+    return evidenceIds_;
+  }
+  /**
+   * <code>repeated string evidence_ids = 24 [json_name = "evidenceIds"];</code>
+   * @return The count of evidenceIds.
+   */
+  public int getEvidenceIdsCount() {
+    return evidenceIds_.size();
+  }
+  /**
+   * <code>repeated string evidence_ids = 24 [json_name = "evidenceIds"];</code>
+   * @param index The index of the element to return.
+   * @return The evidenceIds at the given index.
+   */
+  public java.lang.String getEvidenceIds(int index) {
+    return evidenceIds_.get(index);
+  }
+  /**
+   * <code>repeated string evidence_ids = 24 [json_name = "evidenceIds"];</code>
+   * @param index The index of the value to return.
+   * @return The bytes of the evidenceIds at the given index.
+   */
+  public com.google.protobuf.ByteString
+      getEvidenceIdsBytes(int index) {
+    return evidenceIds_.getByteString(index);
+  }
+
   private byte memoizedIsInitialized = -1;
   @java.lang.Override
   public final boolean isInitialized() {
@@ -521,6 +598,12 @@ private static final long serialVersionUID = 0L;
     }
     for (int i = 0; i < extra_.size(); i++) {
       output.writeFloatNoTag(extra_.getFloat(i));
+    }
+    if (((bitField0_ & 0x00000002) != 0)) {
+      output.writeMessage(23, getTuple());
+    }
+    for (int i = 0; i < evidenceIds_.size(); i++) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 24, evidenceIds_.getRaw(i));
     }
     getUnknownFields().writeTo(output);
   }
@@ -622,6 +705,18 @@ private static final long serialVersionUID = 0L;
       }
       extraMemoizedSerializedSize = dataSize;
     }
+    if (((bitField0_ & 0x00000002) != 0)) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeMessageSize(23, getTuple());
+    }
+    {
+      int dataSize = 0;
+      for (int i = 0; i < evidenceIds_.size(); i++) {
+        dataSize += computeStringSizeNoTag(evidenceIds_.getRaw(i));
+      }
+      size += dataSize;
+      size += 2 * getEvidenceIdsList().size();
+    }
     size += getUnknownFields().getSerializedSize();
     memoizedSize = size;
     return size;
@@ -693,6 +788,13 @@ private static final long serialVersionUID = 0L;
         != other.getTcpInitWinBytesBwd()) return false;
     if (!getExtraList()
         .equals(other.getExtraList())) return false;
+    if (hasTuple() != other.hasTuple()) return false;
+    if (hasTuple()) {
+      if (!getTuple()
+          .equals(other.getTuple())) return false;
+    }
+    if (!getEvidenceIdsList()
+        .equals(other.getEvidenceIdsList())) return false;
     if (!getUnknownFields().equals(other.getUnknownFields())) return false;
     return true;
   }
@@ -761,6 +863,14 @@ private static final long serialVersionUID = 0L;
     if (getExtraCount() > 0) {
       hash = (37 * hash) + EXTRA_FIELD_NUMBER;
       hash = (53 * hash) + getExtraList().hashCode();
+    }
+    if (hasTuple()) {
+      hash = (37 * hash) + TUPLE_FIELD_NUMBER;
+      hash = (53 * hash) + getTuple().hashCode();
+    }
+    if (getEvidenceIdsCount() > 0) {
+      hash = (37 * hash) + EVIDENCE_IDS_FIELD_NUMBER;
+      hash = (53 * hash) + getEvidenceIdsList().hashCode();
     }
     hash = (29 * hash) + getUnknownFields().hashCode();
     memoizedHashCode = hash;
@@ -897,6 +1007,7 @@ private static final long serialVersionUID = 0L;
       if (com.google.protobuf.GeneratedMessageV3
               .alwaysUseFieldBuilders) {
         getHeaderFieldBuilder();
+        getTupleFieldBuilder();
       }
     }
     @java.lang.Override
@@ -929,6 +1040,13 @@ private static final long serialVersionUID = 0L;
       tcpInitWinBytesFwd_ = 0;
       tcpInitWinBytesBwd_ = 0;
       extra_ = emptyFloatList();
+      tuple_ = null;
+      if (tupleBuilder_ != null) {
+        tupleBuilder_.dispose();
+        tupleBuilder_ = null;
+      }
+      evidenceIds_ =
+          com.google.protobuf.LazyStringArrayList.emptyList();
       return this;
     }
 
@@ -1032,6 +1150,16 @@ private static final long serialVersionUID = 0L;
       if (((from_bitField0_ & 0x00200000) != 0)) {
         extra_.makeImmutable();
         result.extra_ = extra_;
+      }
+      if (((from_bitField0_ & 0x00400000) != 0)) {
+        result.tuple_ = tupleBuilder_ == null
+            ? tuple_
+            : tupleBuilder_.build();
+        to_bitField0_ |= 0x00000002;
+      }
+      if (((from_bitField0_ & 0x00800000) != 0)) {
+        evidenceIds_.makeImmutable();
+        result.evidenceIds_ = evidenceIds_;
       }
       result.bitField0_ |= to_bitField0_;
     }
@@ -1159,6 +1287,19 @@ private static final long serialVersionUID = 0L;
         } else {
           ensureExtraIsMutable();
           extra_.addAll(other.extra_);
+        }
+        onChanged();
+      }
+      if (other.hasTuple()) {
+        mergeTuple(other.getTuple());
+      }
+      if (!other.evidenceIds_.isEmpty()) {
+        if (evidenceIds_.isEmpty()) {
+          evidenceIds_ = other.evidenceIds_;
+          bitField0_ |= 0x00800000;
+        } else {
+          ensureEvidenceIdsIsMutable();
+          evidenceIds_.addAll(other.evidenceIds_);
         }
         onChanged();
       }
@@ -1312,6 +1453,19 @@ private static final long serialVersionUID = 0L;
               input.popLimit(limit);
               break;
             } // case 178
+            case 186: {
+              input.readMessage(
+                  getTupleFieldBuilder().getBuilder(),
+                  extensionRegistry);
+              bitField0_ |= 0x00400000;
+              break;
+            } // case 186
+            case 194: {
+              java.lang.String s = input.readStringRequireUtf8();
+              ensureEvidenceIdsIsMutable();
+              evidenceIds_.add(s);
+              break;
+            } // case 194
             default: {
               if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                 done = true; // was an endgroup tag
@@ -1437,7 +1591,7 @@ private static final long serialVersionUID = 0L;
      * <code>.traffic.v1.EventHeader header = 1 [json_name = "header"];</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
-        com.traffic.proto.traffic.v1.EventHeader, com.traffic.proto.traffic.v1.EventHeader.Builder, com.traffic.proto.traffic.v1.EventHeaderOrBuilder> 
+        com.traffic.proto.traffic.v1.EventHeader, com.traffic.proto.traffic.v1.EventHeader.Builder, com.traffic.proto.traffic.v1.EventHeaderOrBuilder>
         getHeaderFieldBuilder() {
       if (headerBuilder_ == null) {
         headerBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -1475,7 +1629,7 @@ private static final long serialVersionUID = 0L;
         getSchemaVersionBytes() {
       java.lang.Object ref = schemaVersion_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         schemaVersion_ = b;
@@ -1547,7 +1701,7 @@ private static final long serialVersionUID = 0L;
         getObjectTypeBytes() {
       java.lang.Object ref = objectType_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         objectType_ = b;
@@ -1619,7 +1773,7 @@ private static final long serialVersionUID = 0L;
         getObjectIdBytes() {
       java.lang.Object ref = objectId_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         objectId_ = b;
@@ -1691,7 +1845,7 @@ private static final long serialVersionUID = 0L;
         getCommunityIdBytes() {
       java.lang.Object ref = communityId_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         communityId_ = b;
@@ -2336,6 +2490,274 @@ private static final long serialVersionUID = 0L;
     public Builder clearExtra() {
       extra_ = emptyFloatList();
       bitField0_ = (bitField0_ & ~0x00200000);
+      onChanged();
+      return this;
+    }
+
+    private com.traffic.proto.traffic.v1.FiveTuple tuple_;
+    private com.google.protobuf.SingleFieldBuilderV3<
+        com.traffic.proto.traffic.v1.FiveTuple, com.traffic.proto.traffic.v1.FiveTuple.Builder, com.traffic.proto.traffic.v1.FiveTupleOrBuilder> tupleBuilder_;
+    /**
+     * <pre>
+     * Original session context required by downstream detections and evidence.
+     * </pre>
+     *
+     * <code>.traffic.v1.FiveTuple tuple = 23 [json_name = "tuple"];</code>
+     * @return Whether the tuple field is set.
+     */
+    public boolean hasTuple() {
+      return ((bitField0_ & 0x00400000) != 0);
+    }
+    /**
+     * <pre>
+     * Original session context required by downstream detections and evidence.
+     * </pre>
+     *
+     * <code>.traffic.v1.FiveTuple tuple = 23 [json_name = "tuple"];</code>
+     * @return The tuple.
+     */
+    public com.traffic.proto.traffic.v1.FiveTuple getTuple() {
+      if (tupleBuilder_ == null) {
+        return tuple_ == null ? com.traffic.proto.traffic.v1.FiveTuple.getDefaultInstance() : tuple_;
+      } else {
+        return tupleBuilder_.getMessage();
+      }
+    }
+    /**
+     * <pre>
+     * Original session context required by downstream detections and evidence.
+     * </pre>
+     *
+     * <code>.traffic.v1.FiveTuple tuple = 23 [json_name = "tuple"];</code>
+     */
+    public Builder setTuple(com.traffic.proto.traffic.v1.FiveTuple value) {
+      if (tupleBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        tuple_ = value;
+      } else {
+        tupleBuilder_.setMessage(value);
+      }
+      bitField0_ |= 0x00400000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * Original session context required by downstream detections and evidence.
+     * </pre>
+     *
+     * <code>.traffic.v1.FiveTuple tuple = 23 [json_name = "tuple"];</code>
+     */
+    public Builder setTuple(
+        com.traffic.proto.traffic.v1.FiveTuple.Builder builderForValue) {
+      if (tupleBuilder_ == null) {
+        tuple_ = builderForValue.build();
+      } else {
+        tupleBuilder_.setMessage(builderForValue.build());
+      }
+      bitField0_ |= 0x00400000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * Original session context required by downstream detections and evidence.
+     * </pre>
+     *
+     * <code>.traffic.v1.FiveTuple tuple = 23 [json_name = "tuple"];</code>
+     */
+    public Builder mergeTuple(com.traffic.proto.traffic.v1.FiveTuple value) {
+      if (tupleBuilder_ == null) {
+        if (((bitField0_ & 0x00400000) != 0) &&
+          tuple_ != null &&
+          tuple_ != com.traffic.proto.traffic.v1.FiveTuple.getDefaultInstance()) {
+          getTupleBuilder().mergeFrom(value);
+        } else {
+          tuple_ = value;
+        }
+      } else {
+        tupleBuilder_.mergeFrom(value);
+      }
+      if (tuple_ != null) {
+        bitField0_ |= 0x00400000;
+        onChanged();
+      }
+      return this;
+    }
+    /**
+     * <pre>
+     * Original session context required by downstream detections and evidence.
+     * </pre>
+     *
+     * <code>.traffic.v1.FiveTuple tuple = 23 [json_name = "tuple"];</code>
+     */
+    public Builder clearTuple() {
+      bitField0_ = (bitField0_ & ~0x00400000);
+      tuple_ = null;
+      if (tupleBuilder_ != null) {
+        tupleBuilder_.dispose();
+        tupleBuilder_ = null;
+      }
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * Original session context required by downstream detections and evidence.
+     * </pre>
+     *
+     * <code>.traffic.v1.FiveTuple tuple = 23 [json_name = "tuple"];</code>
+     */
+    public com.traffic.proto.traffic.v1.FiveTuple.Builder getTupleBuilder() {
+      bitField0_ |= 0x00400000;
+      onChanged();
+      return getTupleFieldBuilder().getBuilder();
+    }
+    /**
+     * <pre>
+     * Original session context required by downstream detections and evidence.
+     * </pre>
+     *
+     * <code>.traffic.v1.FiveTuple tuple = 23 [json_name = "tuple"];</code>
+     */
+    public com.traffic.proto.traffic.v1.FiveTupleOrBuilder getTupleOrBuilder() {
+      if (tupleBuilder_ != null) {
+        return tupleBuilder_.getMessageOrBuilder();
+      } else {
+        return tuple_ == null ?
+            com.traffic.proto.traffic.v1.FiveTuple.getDefaultInstance() : tuple_;
+      }
+    }
+    /**
+     * <pre>
+     * Original session context required by downstream detections and evidence.
+     * </pre>
+     *
+     * <code>.traffic.v1.FiveTuple tuple = 23 [json_name = "tuple"];</code>
+     */
+    private com.google.protobuf.SingleFieldBuilderV3<
+        com.traffic.proto.traffic.v1.FiveTuple, com.traffic.proto.traffic.v1.FiveTuple.Builder, com.traffic.proto.traffic.v1.FiveTupleOrBuilder>
+        getTupleFieldBuilder() {
+      if (tupleBuilder_ == null) {
+        tupleBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+            com.traffic.proto.traffic.v1.FiveTuple, com.traffic.proto.traffic.v1.FiveTuple.Builder, com.traffic.proto.traffic.v1.FiveTupleOrBuilder>(
+                getTuple(),
+                getParentForChildren(),
+                isClean());
+        tuple_ = null;
+      }
+      return tupleBuilder_;
+    }
+
+    private com.google.protobuf.LazyStringArrayList evidenceIds_ =
+        com.google.protobuf.LazyStringArrayList.emptyList();
+    private void ensureEvidenceIdsIsMutable() {
+      if (!evidenceIds_.isModifiable()) {
+        evidenceIds_ = new com.google.protobuf.LazyStringArrayList(evidenceIds_);
+      }
+      bitField0_ |= 0x00800000;
+    }
+    /**
+     * <code>repeated string evidence_ids = 24 [json_name = "evidenceIds"];</code>
+     * @return A list containing the evidenceIds.
+     */
+    public com.google.protobuf.ProtocolStringList
+        getEvidenceIdsList() {
+      evidenceIds_.makeImmutable();
+      return evidenceIds_;
+    }
+    /**
+     * <code>repeated string evidence_ids = 24 [json_name = "evidenceIds"];</code>
+     * @return The count of evidenceIds.
+     */
+    public int getEvidenceIdsCount() {
+      return evidenceIds_.size();
+    }
+    /**
+     * <code>repeated string evidence_ids = 24 [json_name = "evidenceIds"];</code>
+     * @param index The index of the element to return.
+     * @return The evidenceIds at the given index.
+     */
+    public java.lang.String getEvidenceIds(int index) {
+      return evidenceIds_.get(index);
+    }
+    /**
+     * <code>repeated string evidence_ids = 24 [json_name = "evidenceIds"];</code>
+     * @param index The index of the value to return.
+     * @return The bytes of the evidenceIds at the given index.
+     */
+    public com.google.protobuf.ByteString
+        getEvidenceIdsBytes(int index) {
+      return evidenceIds_.getByteString(index);
+    }
+    /**
+     * <code>repeated string evidence_ids = 24 [json_name = "evidenceIds"];</code>
+     * @param index The index to set the value at.
+     * @param value The evidenceIds to set.
+     * @return This builder for chaining.
+     */
+    public Builder setEvidenceIds(
+        int index, java.lang.String value) {
+      if (value == null) { throw new NullPointerException(); }
+      ensureEvidenceIdsIsMutable();
+      evidenceIds_.set(index, value);
+      bitField0_ |= 0x00800000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string evidence_ids = 24 [json_name = "evidenceIds"];</code>
+     * @param value The evidenceIds to add.
+     * @return This builder for chaining.
+     */
+    public Builder addEvidenceIds(
+        java.lang.String value) {
+      if (value == null) { throw new NullPointerException(); }
+      ensureEvidenceIdsIsMutable();
+      evidenceIds_.add(value);
+      bitField0_ |= 0x00800000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string evidence_ids = 24 [json_name = "evidenceIds"];</code>
+     * @param values The evidenceIds to add.
+     * @return This builder for chaining.
+     */
+    public Builder addAllEvidenceIds(
+        java.lang.Iterable<java.lang.String> values) {
+      ensureEvidenceIdsIsMutable();
+      com.google.protobuf.AbstractMessageLite.Builder.addAll(
+          values, evidenceIds_);
+      bitField0_ |= 0x00800000;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string evidence_ids = 24 [json_name = "evidenceIds"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearEvidenceIds() {
+      evidenceIds_ =
+        com.google.protobuf.LazyStringArrayList.emptyList();
+      bitField0_ = (bitField0_ & ~0x00800000);;
+      onChanged();
+      return this;
+    }
+    /**
+     * <code>repeated string evidence_ids = 24 [json_name = "evidenceIds"];</code>
+     * @param value The bytes of the evidenceIds to add.
+     * @return This builder for chaining.
+     */
+    public Builder addEvidenceIdsBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) { throw new NullPointerException(); }
+      checkByteStringIsUtf8(value);
+      ensureEvidenceIdsIsMutable();
+      evidenceIds_.add(value);
+      bitField0_ |= 0x00800000;
       onChanged();
       return this;
     }

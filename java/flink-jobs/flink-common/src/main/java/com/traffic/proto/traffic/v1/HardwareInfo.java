@@ -55,7 +55,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       cpuModel_ = s;
@@ -71,7 +71,7 @@ private static final long serialVersionUID = 0L;
       getCpuModelBytes() {
     java.lang.Object ref = cpuModel_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       cpuModel_ = b;
@@ -116,7 +116,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       osVersion_ = s;
@@ -132,7 +132,7 @@ private static final long serialVersionUID = 0L;
       getOsVersionBytes() {
     java.lang.Object ref = osVersion_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       osVersion_ = b;
@@ -156,7 +156,7 @@ private static final long serialVersionUID = 0L;
    * <code>repeated .traffic.v1.NIC nics = 5 [json_name = "nics"];</code>
    */
   @java.lang.Override
-  public java.util.List<? extends com.traffic.proto.traffic.v1.NICOrBuilder> 
+  public java.util.List<? extends com.traffic.proto.traffic.v1.NICOrBuilder>
       getNicsOrBuilderList() {
     return nics_;
   }
@@ -568,7 +568,7 @@ private static final long serialVersionUID = 0L;
             nicsBuilder_ = null;
             nics_ = other.nics_;
             bitField0_ = (bitField0_ & ~0x00000010);
-            nicsBuilder_ = 
+            nicsBuilder_ =
               com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                  getNicsFieldBuilder() : null;
           } else {
@@ -677,7 +677,7 @@ private static final long serialVersionUID = 0L;
         getCpuModelBytes() {
       java.lang.Object ref = cpuModel_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         cpuModel_ = b;
@@ -813,7 +813,7 @@ private static final long serialVersionUID = 0L;
         getOsVersionBytes() {
       java.lang.Object ref = osVersion_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         osVersion_ = b;
@@ -1055,7 +1055,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.NIC nics = 5 [json_name = "nics"];</code>
      */
-    public java.util.List<? extends com.traffic.proto.traffic.v1.NICOrBuilder> 
+    public java.util.List<? extends com.traffic.proto.traffic.v1.NICOrBuilder>
          getNicsOrBuilderList() {
       if (nicsBuilder_ != null) {
         return nicsBuilder_.getMessageOrBuilderList();
@@ -1081,12 +1081,12 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.NIC nics = 5 [json_name = "nics"];</code>
      */
-    public java.util.List<com.traffic.proto.traffic.v1.NIC.Builder> 
+    public java.util.List<com.traffic.proto.traffic.v1.NIC.Builder>
          getNicsBuilderList() {
       return getNicsFieldBuilder().getBuilderList();
     }
     private com.google.protobuf.RepeatedFieldBuilderV3<
-        com.traffic.proto.traffic.v1.NIC, com.traffic.proto.traffic.v1.NIC.Builder, com.traffic.proto.traffic.v1.NICOrBuilder> 
+        com.traffic.proto.traffic.v1.NIC, com.traffic.proto.traffic.v1.NIC.Builder, com.traffic.proto.traffic.v1.NICOrBuilder>
         getNicsFieldBuilder() {
       if (nicsBuilder_ == null) {
         nicsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<

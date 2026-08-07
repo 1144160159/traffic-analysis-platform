@@ -11,7 +11,7 @@ public interface FlowBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.FlowEvent flows = 1 [json_name = "flows"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.FlowEvent> 
+  java.util.List<com.traffic.proto.traffic.v1.FlowEvent>
       getFlowsList();
   /**
    * <code>repeated .traffic.v1.FlowEvent flows = 1 [json_name = "flows"];</code>
@@ -24,7 +24,7 @@ public interface FlowBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.FlowEvent flows = 1 [json_name = "flows"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.FlowEventOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.FlowEventOrBuilder>
       getFlowsOrBuilderList();
   /**
    * <code>repeated .traffic.v1.FlowEvent flows = 1 [json_name = "flows"];</code>

@@ -349,4 +349,26 @@ public interface AlertOrBuilder extends
    * @return The stateVersion.
    */
   long getStateVersion();
+
+  /**
+   * <pre>
+   * trace_id is the 32-character lowercase W3C trace identifier propagated
+   * from the originating request/event through every alert projection.
+   * </pre>
+   *
+   * <code>string trace_id = 33 [json_name = "traceId"];</code>
+   * @return The traceId.
+   */
+  java.lang.String getTraceId();
+  /**
+   * <pre>
+   * trace_id is the 32-character lowercase W3C trace identifier propagated
+   * from the originating request/event through every alert projection.
+   * </pre>
+   *
+   * <code>string trace_id = 33 [json_name = "traceId"];</code>
+   * @return The bytes for traceId.
+   */
+  com.google.protobuf.ByteString
+      getTraceIdBytes();
 }

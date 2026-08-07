@@ -23,6 +23,20 @@ message EventHeader {
   int64 kafka_ts = 8;
   // flink_out_ts is the millisecond timestamp assigned when a Flink job emits or persists the derived event.
   int64 flink_out_ts = 9;
+  // The fields below are an additive v1 event envelope. Existing fields remain
+  // wire-compatible while producers migrate to the complete contract.
+  string event_type = 10;
+  string schema_version = 11;
+  string aggregate_type = 12;
+  string aggregate_id = 13;
+  uint64 aggregate_version = 14;
+  int64 occurred_at = 15;
+  int64 produced_at = 16;
+  string trace_id = 17;
+  string causation_id = 18;
+  string correlation_id = 19;
+  string idempotency_key = 20;
+  string producer = 21;
 }
 
 // FiveTuple 五元组

@@ -4,9 +4,11 @@ import com.traffic.flink.behavior.user.detector.*;
 import com.traffic.flink.behavior.user.model.AnomalyEvent;
 import com.traffic.flink.behavior.user.sink.*;
 import com.traffic.flink.common.ConfigUtils;
+import com.traffic.flink.common.DeterministicId;
 import com.traffic.flink.common.ProtoDeserializer;
 import com.traffic.proto.traffic.v1.Alert;
 import com.traffic.proto.traffic.v1.AlertStatus;
+import com.traffic.proto.traffic.v1.DeadLetter;
 import com.traffic.proto.traffic.v1.Severity;
 import com.traffic.proto.traffic.v1.UserEvent;
 
@@ -20,6 +22,7 @@ import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsIni
 import org.apache.flink.runtime.state.storage.FileSystemCheckpointStorage;
 import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -29,9 +32,9 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Locale;
 import java.util.Properties;
-import java.util.UUID;
 
 /**
  * Flink User Behavior Job — 用户行为异常检测
@@ -54,6 +57,7 @@ public class UserBehaviorJob {
         String kafkaBrokers = ConfigUtils.get(params, "kafka.brokers", "kafka-bootstrap.middleware.svc:9092");
         String inputTopic = ConfigUtils.get(params, "kafka.input.topic", "user.events.v1");
         String outputTopic = ConfigUtils.get(params, "kafka.output.topic", "alerts.v1");
+        String dlqTopic = ConfigUtils.get(params, "kafka.dlq.topic", "dlq.v1");
         String groupId = ConfigUtils.get(params, "kafka.group.id", "flink-user-behavior-job");
         String checkpointPath = ConfigUtils.get(
                 params,
@@ -62,12 +66,23 @@ public class UserBehaviorJob {
         long checkpointIntervalMs = ConfigUtils.getLong(params, "checkpoint.interval.ms", 60_000L);
         long checkpointTimeoutMs = ConfigUtils.getLong(params, "checkpoint.timeout.ms", 600_000L);
         int parallelism = ConfigUtils.getInt(params, "parallelism", 2);
+        long maxOutOfOrderSeconds = ConfigUtils.getLong(
+                params, "watermark.max.out.of.orderness.seconds", 30L);
+        long allowedLatenessSeconds = ConfigUtils.getLong(
+                params, "watermark.allowed.lateness.seconds", 120L);
         String clickhouseUrl = ConfigUtils.get(
                 params,
                 "clickhouse.url",
                 "jdbc:clickhouse://clickhouse-1.middleware.svc:8123/traffic");
         String clickhouseUser = ConfigUtils.get(params, "clickhouse.user", "default");
         String clickhousePassword = ConfigUtils.get(params, "clickhouse.password", "");
+        String clickhouseAnomalyTable = ConfigUtils.get(
+                params, "clickhouse.anomaly.table", "traffic.user_anomalies_v2");
+        int clickhouseBatchSize = ConfigUtils.getInt(params, "clickhouse.batch.size", 500);
+        long clickhouseBatchIntervalMs = ConfigUtils.getLong(
+                params, "clickhouse.batch.interval.ms", 2_000L);
+        int clickhouseMaxRetries = ConfigUtils.getInt(params, "clickhouse.max.retries", 3);
+        String replayId = ConfigUtils.get(params, "replay.id", "");
 
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
         env.setParallelism(parallelism);
@@ -84,13 +99,22 @@ public class UserBehaviorJob {
                 .setProperties(ConfigUtils.kafkaClientProperties(params))
                 .build();
 
-        DataStream<UserEvent> events = env.fromSource(source,
-                WatermarkStrategy.<UserEvent>forMonotonousTimestamps()
+        DataStream<UserEvent> validatedEvents = env.fromSource(source,
+                WatermarkStrategy.<UserEvent>forBoundedOutOfOrderness(
+                                Duration.ofSeconds(maxOutOfOrderSeconds))
                         .withTimestampAssigner((e, ts) -> e.getTimestamp()),
                 "Kafka-UserEvents")
                 .uid("kafka-source").name("Kafka Source (user.events.v1)")
                 .filter(e -> e != null && e.getEventId() != null && !e.getEventId().isEmpty())
                 .uid("null-filter").name("Filter Invalid Events");
+
+        SingleOutputStreamOperator<UserEvent> events = validatedEvents
+                .process(new LateUserEventRouter(
+                        allowedLatenessSeconds * 1000L, inputTopic))
+                .uid("late-user-event-router").name("Route Late User Events");
+        events.getSideOutput(LateUserEventRouter.LATE_EVENTS)
+                .sinkTo(createDeadLetterSink(kafkaBrokers, dlqTopic))
+                .uid("late-user-event-dlq-sink").name("Kafka Sink (" + dlqTopic + ")");
 
         // Detector 1: Impossible Travel
         DataStream<AnomalyEvent> travelAnomalies = events
@@ -113,7 +137,16 @@ public class UserBehaviorJob {
         // Merge all anomaly streams
         DataStream<AnomalyEvent> allAnomalies = travelAnomalies.union(bruteAnomalies, privAnomalies)
                 .filter(a -> a != null)
-                .uid("merge-anomalies").name("Merge All Anomalies");
+                .uid("merge-anomalies").name("Merge All Anomalies")
+                .map(anomaly -> {
+                    anomaly.replayId = replayId;
+                    if (anomaly.eventVersion <= 0) {
+                        anomaly.eventVersion = 1L;
+                    }
+                    return anomaly;
+                })
+                .returns(AnomalyEvent.class)
+                .uid("mark-replay-context").name("Mark Replay Context");
 
         // Sink 1: Kafka alerts.v1 (protobuf Alert, shared downstream contract)
         KafkaSink<Alert> alertSink = createAlertSink(kafkaBrokers, outputTopic);
@@ -124,8 +157,15 @@ public class UserBehaviorJob {
                 .uid("alert-kafka-sink").name("Kafka Sink (" + outputTopic + ")");
 
         // Sink 2: ClickHouse
-        allAnomalies.addSink(new ClickHouseAnomalySink(clickhouseUrl, clickhouseUser, clickhousePassword))
-                .uid("ch-sink").name("ClickHouse Sink (user_anomalies)");
+        allAnomalies.addSink(new ClickHouseAnomalySink(
+                        clickhouseUrl,
+                        clickhouseUser,
+                        clickhousePassword,
+                        clickhouseAnomalyTable,
+                        clickhouseBatchSize,
+                        clickhouseBatchIntervalMs,
+                        clickhouseMaxRetries))
+                .uid("ch-sink").name("ClickHouse Sink (user_anomalies_v2)");
 
         LOG.info("User Behavior Job started: input={}, output={}, checkpoint={}, parallelism={}",
                 inputTopic, outputTopic, checkpointPath, parallelism);
@@ -139,8 +179,12 @@ public class UserBehaviorJob {
         String detectorType = nonBlank(anomaly.detectorType, "USER_BEHAVIOR");
         String alertType = "user_behavior." + detectorType.toLowerCase(Locale.ROOT);
         String alertId = nonBlank(anomaly.anomalyId,
-                UUID.nameUUIDFromBytes((tenantId + ":" + userId + ":" + detectorType + ":" + eventTime)
-                        .getBytes(StandardCharsets.UTF_8)).toString());
+                DeterministicId.uuid(
+                        "flink-user-anomaly-fallback/v1",
+                        tenantId,
+                        userId,
+                        detectorType,
+                        eventTime));
         String srcIp = nonBlank(anomaly.sourceIp2, nonBlank(anomaly.sourceIp1, "0.0.0.0"));
         String fingerprint = tenantId + ":" + userId + ":" + detectorType;
 
@@ -216,6 +260,20 @@ public class UserBehaviorJob {
                 .build();
     }
 
+    private static KafkaSink<DeadLetter> createDeadLetterSink(String brokers, String topic) {
+        Properties producerProps = com.traffic.flink.common.ConfigUtil.kafkaClientProperties();
+        producerProps.setProperty(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true");
+        producerProps.setProperty(ProducerConfig.ACKS_CONFIG, "all");
+        producerProps.setProperty(ProducerConfig.COMPRESSION_TYPE_CONFIG, "lz4");
+
+        return KafkaSink.<DeadLetter>builder()
+                .setBootstrapServers(brokers)
+                .setRecordSerializer(new DeadLetterKafkaSerializer(topic))
+                .setDeliveryGuarantee(DeliveryGuarantee.AT_LEAST_ONCE)
+                .setKafkaProducerConfig(producerProps)
+                .build();
+    }
+
     private static String nonBlank(String value, String fallback) {
         return value == null || value.isBlank() ? fallback : value;
     }
@@ -242,6 +300,30 @@ public class UserBehaviorJob {
                     null,
                     recordTimestamp,
                     key.getBytes(StandardCharsets.UTF_8),
+                    element.toByteArray());
+        }
+    }
+
+    private static class DeadLetterKafkaSerializer implements KafkaRecordSerializationSchema<DeadLetter> {
+        private static final long serialVersionUID = 1L;
+        private final String topic;
+
+        DeadLetterKafkaSerializer(String topic) {
+            this.topic = topic;
+        }
+
+        @Nullable
+        @Override
+        public ProducerRecord<byte[], byte[]> serialize(
+                DeadLetter element, KafkaSinkContext context, Long timestamp) {
+            if (element == null) {
+                return null;
+            }
+            return new ProducerRecord<>(
+                    topic,
+                    null,
+                    element.getCreatedAt() > 0 ? element.getCreatedAt() : null,
+                    nonBlank(element.getTenantId(), "unknown").getBytes(StandardCharsets.UTF_8),
                     element.toByteArray());
         }
     }

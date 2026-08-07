@@ -1,0 +1,55 @@
+{
+  "version": 2,
+  "_meta": {
+    "contract": "T-OS-002",
+    "schema_version": 2,
+    "owner": "opensearch-data-owner"
+  },
+  "template": {
+    "mappings": {
+      "dynamic": "strict",
+      "properties": {
+        "tenant_id": {"type": "keyword"},
+        "alert_id": {"type": "keyword"},
+        "event_id": {"type": "keyword"},
+        "trace_id": {"type": "keyword"},
+        "fingerprint": {"type": "keyword"},
+        "dedup_fingerprint": {"type": "keyword"},
+        "community_id": {"type": "keyword", "copy_to": "search_text"},
+        "session_id": {"type": "keyword"},
+        "campaign_id": {"type": "keyword"},
+        "src_ip": {"type": "ip", "ignore_malformed": true, "copy_to": "search_text"},
+        "dst_ip": {"type": "ip", "ignore_malformed": true, "copy_to": "search_text"},
+        "src_port": {"type": "integer"},
+        "dst_port": {"type": "integer"},
+        "protocol": {"type": "short"},
+        "protocol_name": {"type": "keyword"},
+        "alert_type": {"type": "keyword", "copy_to": "search_text"},
+        "attack_phase": {"type": "keyword"},
+        "labels": {"type": "keyword", "copy_to": "search_text"},
+        "search_text": {"type": "text"},
+        "score": {"type": "float"},
+        "severity": {"type": "keyword"},
+        "first_seen": {"type": "date"},
+        "last_seen": {"type": "date"},
+        "updated_ts": {"type": "date"},
+        "ingest_ts": {"type": "date"},
+        "first_seen_ms": {"type": "date", "format": "epoch_millis"},
+        "last_seen_ms": {"type": "date", "format": "epoch_millis"},
+        "count": {"type": "integer"},
+        "status": {"type": "keyword"},
+        "assignee": {"type": "keyword"},
+        "model_version": {"type": "keyword"},
+        "rule_version": {"type": "keyword"},
+        "feature_set_id": {"type": "keyword"},
+        "evidence_ids": {"type": "keyword"},
+        "arkime_link": {"type": "keyword", "index": false},
+        "arkime_session_link": {"type": "keyword", "index": false},
+        "evidence_count": {"type": "integer"},
+        "feedback_label": {"type": "keyword"},
+        "feedback_count": {"type": "integer"},
+        "state_version": {"type": "long"}
+      }
+    }
+  }
+}

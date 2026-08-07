@@ -82,8 +82,8 @@ v{YYYYMMDD}_{HHMMSS}
 | 内部 Service | `minio.minio.svc:9000` |
 | 外部 NodePort | `10.0.5.8:30000` |
 | Bucket | `traffic-models` |
-| Access Key | `minioadmin` (开发) / K8s Secret `minio-secret` |
-| Secret Key | K8s Secret `minio-secret` |
+| Access Key | 专用model-writer身份，由Secret provider注入 |
+| Secret Key | 专用model-writer身份，由Secret provider注入 |
 
 ## 二、模型格式与兼容性
 
@@ -204,14 +204,18 @@ curl -X POST http://rule-manager.traffic-analysis.svc:8080/api/v1/models/behavio
 
 ```bash
 # 本地启动 MinIO (Docker)
+export MINIO_DEV_ROOT_USER='<unique-local-bootstrap-user>'
+export MINIO_DEV_ROOT_PASSWORD='<unique-local-bootstrap-password>'
 docker run -p 9000:9000 -p 9001:9001 \
-  -e MINIO_ROOT_USER=minioadmin \
-  -e MINIO_ROOT_PASSWORD=minioadmin \
+  -e MINIO_ROOT_USER="$MINIO_DEV_ROOT_USER" \
+  -e MINIO_ROOT_PASSWORD="$MINIO_DEV_ROOT_PASSWORD" \
   quay.io/minio/minio server /data --console-address ":9001"
 
 # 创建 bucket
-mc alias set local http://localhost:9000 minioadmin minioadmin
+mc alias set local http://localhost:9000 "$MINIO_DEV_ROOT_USER" "$MINIO_DEV_ROOT_PASSWORD"
 mc mb local/traffic-models
+
+# 业务脚本必须使用独立model-writer凭证；本地明文只允许在隔离开发环境显式设置MINIO_SECURE=false。
 
 # 模拟模型上传
 mc cp model.json local/traffic-models/models/v20240614_120000/model.json

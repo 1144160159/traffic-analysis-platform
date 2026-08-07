@@ -29,9 +29,11 @@ spec:
       labels: {app: ingest-gateway}
       annotations: {prometheus.io/scrape: "true", prometheus.io/port: "9091", traffic.analysis/build-id: "kafka-security-20260712-r3-worktree"}
     spec:
+      serviceAccountName: ingest-gateway
+      automountServiceAccountToken: false
       initContainers:
       - name: init-dlq-fallback-dir
-        image: docker.io/traffic/ingest-gateway@sha256:7e5895b2402581820859acbf48c5a0a532237ab2352826cfcf199d0c2a1f5d0a
+        image: docker.io/traffic/ingest-gateway@sha256:b6bf1db5f0d69bbb9140822ecdec74104b36235fe4fdcffda5648d5bf135c318
         imagePullPolicy: Never
         command: ["sh", "-c", "mkdir -p /var/log/ingest-gateway/dlq-fallback && chown -R 1000:1000 /var/log/ingest-gateway"]
         securityContext: {runAsUser: 0, runAsGroup: 0}
@@ -39,22 +41,29 @@ spec:
         - {name: dlq-fallback, mountPath: /var/log/ingest-gateway}
       containers:
       - name: ingest-gateway
+        securityContext: {runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000, allowPrivilegeEscalation: false, capabilities: {drop: ["ALL"]}, seccompProfile: {type: RuntimeDefault}}
         image: docker.io/traffic/ingest-gateway@sha256:7e5895b2402581820859acbf48c5a0a532237ab2352826cfcf199d0c2a1f5d0a
         imagePullPolicy: Never
         ports: [{containerPort: 50051}, {containerPort: 8080}, {containerPort: 9091}]
         env:
+        - {name: ENVIRONMENT, value: "production"}
         - {name: GRPC_ADDR, value: ":50051"}
         - {name: HEALTH_ADDR, value: ":8080"}
         - {name: METRICS_ADDR, value: ":9091"}
         - {name: KAFKA_BROKERS, value: "kafka-bootstrap.middleware.svc:9092"}
         - {name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL"}
         - {name: KAFKA_SASL_MECHANISM, value: "SCRAM-SHA-512"}
-        - {name: KAFKA_SASL_USERNAME, valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_USERNAME}}}
-        - {name: KAFKA_SASL_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_PASSWORD}}}
+        - {name: KAFKA_SASL_USERNAME, valueFrom: {secretKeyRef: {name: kafka-ingest-gateway-credentials, key: username}}}
+        - {name: KAFKA_SASL_PASSWORD, valueFrom: {secretKeyRef: {name: kafka-ingest-gateway-credentials, key: password}}}
         - {name: KAFKA_TLS_CA_FILE, value: "/etc/kafka/tls/ca.crt"}
         - {name: KAFKA_TLS_SERVER_NAME, value: "kafka-bootstrap.middleware.svc"}
+        - {name: KAFKA_PROBE_CONTROL_TOPIC, value: "probe.control.v2"}
+        - {name: KAFKA_PROBE_ACK_TOPIC, value: "probe.acks.v2"}
+        - {name: KAFKA_PROBE_CONTROL_GROUP, value: "ingest-gateway-probe-control-v2"}
         - {name: REDIS_SENTINEL_ADDRS, value: "redis-sentinel.databases.svc:26379"}
         - {name: REDIS_SENTINEL_MASTER, value: "mymaster"}
+        - {name: REDIS_DB, value: "0"}
+        - {name: REDIS_RELIABILITY_DOMAIN, value: "coordination"}
         - {name: POSTGRES_HOST, value: "postgres-primary.databases.svc"}
         - {name: POSTGRES_PORT, value: "5432"}
         - {name: POSTGRES_DATABASE, value: "traffic_platform"}
@@ -62,6 +71,7 @@ spec:
         - {name: POSTGRES_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: PG_PASSWORD}}}
         - {name: JWT_SIGNING_KEY, valueFrom: {secretKeyRef: {name: traffic-credentials, key: JWT_SECRET}}}
         - {name: REQUIRE_MTLS, value: "true"}
+        - {name: MTLS_SHARED_IDENTITY, value: "probe-agent"}
         - {name: TLS_CA_FILE, value: "/etc/ingest-gateway/certs/ca-cert.pem"}
         - {name: TLS_CERT_FILE, value: "/etc/ingest-gateway/certs/server-cert.pem"}
         - {name: TLS_KEY_FILE, value: "/etc/ingest-gateway/certs/server-key.pem"}
@@ -104,9 +114,12 @@ spec:
       labels: {app: auth-service}
       annotations: {prometheus.io/scrape: "true", prometheus.io/port: "9092", traffic.analysis/build-id: "not-found-20260720-r520", traffic.analysis/image-digest: "sha256:d02bbf843802240955626a728781b220f89e90c92762639196d98c3165c383b6", traffic.analysis/image-id: "sha256:edf8c8c1943608ba2646d5b1eb2c6cb7a40d1763f3eb0b4395b5fa1fc538fd29"}
     spec:
+      serviceAccountName: auth-service
+      automountServiceAccountToken: false
       securityContext: {fsGroup: 1000, fsGroupChangePolicy: OnRootMismatch}
       containers:
       - name: auth-service
+        securityContext: {runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000, allowPrivilegeEscalation: false, capabilities: {drop: ["ALL"]}, seccompProfile: {type: RuntimeDefault}}
         image: docker.io/traffic/auth-service@sha256:d02bbf843802240955626a728781b220f89e90c92762639196d98c3165c383b6
         imagePullPolicy: Never
         ports: [{containerPort: 8081}, {containerPort: 9092}]
@@ -120,11 +133,14 @@ spec:
         - {name: REDIS_ENABLED, value: "true"}
         - {name: REDIS_SENTINEL_ADDRS, value: "redis-sentinel.databases.svc:26379"}
         - {name: REDIS_SENTINEL_MASTER, value: "mymaster"}
+        - {name: REDIS_DB, value: "1"}
+        - {name: REDIS_RELIABILITY_DOMAIN, value: "session"}
         - {name: KAFKA_BROKERS, value: "kafka-bootstrap.middleware.svc:9092"}
+        - {name: KAFKA_USER_EVENT_TOPIC, value: "user.events.v1"}
         - {name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL"}
         - {name: KAFKA_SASL_MECHANISM, value: "SCRAM-SHA-512"}
-        - {name: KAFKA_SASL_USERNAME, valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_USERNAME}}}
-        - {name: KAFKA_SASL_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_PASSWORD}}}
+        - {name: KAFKA_SASL_USERNAME, valueFrom: {secretKeyRef: {name: kafka-auth-service-credentials, key: username}}}
+        - {name: KAFKA_SASL_PASSWORD, valueFrom: {secretKeyRef: {name: kafka-auth-service-credentials, key: password}}}
         - {name: KAFKA_TLS_CA_FILE, value: "/etc/kafka/tls/ca.crt"}
         - {name: KAFKA_TLS_SERVER_NAME, value: "kafka-bootstrap.middleware.svc"}
         - {name: OIDC_ENABLED, value: "true"}
@@ -152,7 +168,7 @@ spec:
   selector: {app: alert-service}
   ports:
   - {name: http, port: 8082}
-  - {name: metrics, port: 9093}
+  - {name: metrics, port: 9093, targetPort: 8082}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -160,41 +176,79 @@ metadata:
   name: alert-service
   namespace: traffic-analysis
   annotations:
-    kubernetes.io/change-cause: "Topic panel r859 preserves canonical snapshots and emits CJK report text through UTF-16 Type0 PDF fonts"
-    traffic.analysis/source-revision: "f898e20ae0ac77f18f475df3520a47ee099f95c7b8b34bd01fac0a89537c2c9c"
+    kubernetes.io/change-cause: "F-DASHBOARD-001/002 unified read snapshot with authoritative workflow KPIs and durable task acceptance; executor pipeline remains disabled"
+    traffic.analysis/source-revision: "159fca0eb3957280a91c00932b16f322a3795a64983e185b75acbb8e8b8b086b"
 spec:
   replicas: 1
   selector: {matchLabels: {app: alert-service}}
   template:
     metadata:
       labels: {app: alert-service}
-      annotations: {prometheus.io/scrape: "true", prometheus.io/port: "9093", traffic.analysis/build-id: "topic-panel-r859", traffic.analysis/release: "topic-panel-r859", traffic.analysis/source-digest: "f898e20ae0ac77f18f475df3520a47ee099f95c7b8b34bd01fac0a89537c2c9c", traffic.analysis/image-digest: "sha256:7d38feb52755e5fb4bcb23846b8efbc971dbcd1924e722bc92b5cac416481cc6", traffic.analysis/image-id: "sha256:51e2d66da1117ba5400e1a3d7d978d9c14b9e05ef58824b946a254b863c7f546"}
+      annotations: {prometheus.io/scrape: "true", prometheus.io/port: "8082", traffic.analysis/build-id: "remediation-dashboard-159fca0eb395", traffic.analysis/release: "dashboard-read-task-remediation-20260805", traffic.analysis/source-digest: "159fca0eb3957280a91c00932b16f322a3795a64983e185b75acbb8e8b8b086b", traffic.analysis/image-digest: "sha256:3db6e239bdffdc11aa384283e881166dcbf75e6f04d37e6618de3c6a9cf2561f", traffic.analysis/image-id: "sha256:9a5121ddf301e164a06ce9c0b1245bb1685aad46fd9c543ceecb8bca13f5c65f"}
     spec:
+      serviceAccountName: alert-service
+      automountServiceAccountToken: false
       terminationGracePeriodSeconds: 120
       containers:
       - name: alert-service
-        image: docker.io/traffic/alert-service:topic-panel-r859
+        securityContext: {runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000, allowPrivilegeEscalation: false, capabilities: {drop: ["ALL"]}, seccompProfile: {type: RuntimeDefault}}
+        image: docker.io/traffic/alert-service:remediation-dashboard-159fca0eb395
         imagePullPolicy: Never
-        ports: [{containerPort: 8082}, {containerPort: 9093}]
-        lifecycle:
-          preStop:
-            exec: {command: ["/bin/sh", "-c", "sleep 10"]}
+        ports: [{containerPort: 8082}]
         env:
         - {name: API_LISTEN_ADDR, value: ":8082"}
         - {name: KAFKA_BROKERS, value: "kafka-bootstrap.middleware.svc:9092"}
         - {name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL"}
         - {name: KAFKA_SASL_MECHANISM, value: "SCRAM-SHA-512"}
-        - {name: KAFKA_SASL_USERNAME, valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_USERNAME}}}
-        - {name: KAFKA_SASL_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_PASSWORD}}}
+        - {name: KAFKA_SASL_USERNAME, valueFrom: {secretKeyRef: {name: kafka-alert-service-credentials, key: username}}}
+        - {name: KAFKA_SASL_PASSWORD, valueFrom: {secretKeyRef: {name: kafka-alert-service-credentials, key: password}}}
         - {name: KAFKA_TLS_CA_FILE, value: "/etc/kafka/tls/ca.crt"}
         - {name: KAFKA_TLS_SERVER_NAME, value: "kafka-bootstrap.middleware.svc"}
+        - {name: KAFKA_PROBE_ACK_TOPIC, value: "probe.acks.v2"}
+        - {name: KAFKA_PROBE_ACK_GROUP, value: "alert-service-probe-acks-v2"}
+        - {name: KAFKA_PROBE_EVENT_TOPIC, value: "probe.events.v2"}
+        - {name: KAFKA_PROBE_EVENT_GROUP, value: "alert-service-probe-event-projection-v2"}
+        - {name: KAFKA_TOPIC_ACTION_EVENT_TOPIC, value: "traffic.topic.action.v2"}
+        - {name: KAFKA_TOPIC_ACTION_EVENT_GROUP, value: "alert-service-topic-action-projection-v2"}
+        - {name: KAFKA_CAMPAIGN_EVENT_TOPIC, value: "campaign.events.v2"}
+        - {name: KAFKA_CAMPAIGN_EVENT_GROUP, value: "alert-service-campaign-event-projection-v2"}
+        - {name: KAFKA_CAMPAIGN_MEMBERSHIP_TOPIC, value: "campaign.membership.events.v2"}
+        - {name: KAFKA_CAMPAIGN_MEMBERSHIP_GROUP, value: "alert-service-campaign-membership-projection-v2"}
+        - {name: KAFKA_PLAYBOOK_EXECUTION_EVENT_TOPIC, value: "playbook.execution.events.v2"}
+        - {name: KAFKA_PLAYBOOK_EXECUTION_EVENT_GROUP, value: "alert-service-playbook-execution-projection-v2"}
+        - {name: KAFKA_SAVED_VIEW_EVENT_TOPIC, value: "alert.saved-view.events.v1"}
+        - {name: KAFKA_WHITELIST_EVENT_TOPIC, value: "whitelist.events.v2"}
+        - {name: KAFKA_NOTIFICATION_GOVERNANCE_EVENT_TOPIC, value: "notification.governance.events.v1"}
+        - {name: KAFKA_THREAT_INTEL_EVENT_TOPIC, value: "threat.intel.v1"}
+        - {name: KAFKA_THREAT_INTEL_EVENT_GROUP, value: "alert-service-threat-intel-projection-v1"}
+        - {name: THREAT_INTEL_EVENT_PROJECTION_V1_ENABLED, value: "true"}
         - {name: CLICKHOUSE_HOSTS, value: "clickhouse-1.middleware.svc:9000,clickhouse-2.middleware.svc:9000"}
         - {name: CLICKHOUSE_DATABASE, value: "traffic"}
         - {name: CLICKHOUSE_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: CLICKHOUSE_PASSWORD}}}
         - {name: CLICKHOUSE_MAX_OPEN_CONNS, value: "32"}
         - {name: CLICKHOUSE_MAX_IDLE_CONNS, value: "16"}
+        - {name: DATA_QUALITY_SIGNAL_COLLECTION_ENABLED, value: "true"}
+        - {name: DATA_QUALITY_RULE_EVALUATION_ENABLED, value: "false"}
+        - {name: DATA_QUALITY_REPAIR_EXECUTION_ENABLED, value: "false"}
+        - {name: DATA_QUALITY_REPAIR_PROJECTION_ENABLED, value: "false"}
+        - {name: DATA_QUALITY_REPAIR_EVIDENCE_TIMEOUT, value: "15s"}
+        - {name: DATA_QUALITY_REPAIR_PROJECTION_TOPIC, value: "flow.projection-replay.v1"}
+        - {name: DATA_QUALITY_REPAIR_PROJECTION_GROUP, value: "alert-service-flow-replay-projection-v1"}
+        - {name: DATA_QUALITY_REPAIR_WORKER_INTERVAL, value: "5s"}
+        - {name: DATA_QUALITY_SIGNAL_COLLECTION_INTERVAL, value: "1m"}
+        - {name: DATA_QUALITY_SIGNAL_COLLECTION_TIMEOUT, value: "10s"}
+        - {name: DATA_QUALITY_KAFKA_TOPIC, value: "flow.events.v1"}
+        - {name: DATA_QUALITY_KAFKA_GROUP_ID, value: "flink-session-job"}
+        - {name: DATA_QUALITY_FLINK_REST_URL, value: "http://flink-jobmanager.flink.svc:8081"}
+        - {name: DATA_QUALITY_FLINK_JOB_NAME, value: "Session Aggregation Job V2"}
+        - {name: DATA_QUALITY_FLINK_VERTEX_CONTAINS, value: "Assign FlowEvent Watermarks"}
+        - {name: DATA_QUALITY_FLINK_METRIC_CONTAINS, value: "currentOutputWatermark"}
+        - {name: DQ_MAX_KAFKA_LAG, value: "10000"}
+        - {name: DQ_MAX_SIGNAL_AGE, value: "5m"}
         - {name: REDIS_SENTINEL_ADDRS, value: "redis-sentinel.databases.svc:26379"}
         - {name: REDIS_SENTINEL_MASTER, value: "mymaster"}
+        - {name: REDIS_DB, value: "0"}
+        - {name: REDIS_RELIABILITY_DOMAIN, value: "coordination"}
         - {name: AUTH_POSTGRES_HOST, value: "postgres-primary.databases.svc"}
         - {name: AUTH_POSTGRES_PORT, value: "5432"}
         - {name: AUTH_POSTGRES_DATABASE, value: "traffic_platform"}
@@ -203,10 +257,61 @@ spec:
         - {name: OPENSEARCH_ADDRS, value: "http://opensearch.middleware.svc:9200"}
         - {name: OPENSEARCH_USERNAME, value: "admin"}
         - {name: OPENSEARCH_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: OPENSEARCH_ADMIN_PASSWORD}}}
+        - {name: OPENSEARCH_LEGACY_READ_TARGET, value: "alerts"}
+        - {name: OPENSEARCH_ALERTS_V2_ENABLED, value: "false"}
+        - {name: OPENSEARCH_ALERTS_READ_ALIAS, value: "alerts-v2-read"}
+        - {name: OPENSEARCH_ALERTS_WRITE_ALIAS, value: "alerts-v2-write"}
+        - {name: OPENSEARCH_SEARCH_CURSOR_V1_ENABLED, value: "false"}
+        - {name: OPENSEARCH_SEARCH_SHALLOW_RESULT_LIMIT, value: "1000"}
+        - {name: OPENSEARCH_SEARCH_MAX_PAGE_SIZE, value: "200"}
+        - {name: OPENSEARCH_SEARCH_QUERY_TIMEOUT, value: "2s"}
+        - {name: OPENSEARCH_SEARCH_CURSOR_TTL, value: "2m"}
+        - {name: OPENSEARCH_SEARCH_TRACK_TOTAL_HITS_UP_TO, value: "10000"}
+        - {name: OPENSEARCH_ALERT_PROJECTION_RECONCILE_V1_ENABLED, value: "false"}
+        - {name: OPENSEARCH_ALERT_PROJECTION_RECONCILE_INTERVAL, value: "1s"}
+        - {name: OPENSEARCH_ALERT_PROJECTION_RECONCILE_LEASE, value: "45s"}
+        - {name: OPENSEARCH_ALERT_PROJECTION_RECONCILE_BATCH_SIZE, value: "100"}
+        - {name: OPENSEARCH_ALERT_PROJECTION_RECONCILE_MAX_ATTEMPTS, value: "8"}
+        - {name: OPENSEARCH_ALERT_PROJECTION_REBUILD_MAX_DOCUMENTS, value: "10000"}
+        - {name: OPENSEARCH_ALERT_PROJECTION_STOP_ERROR_COUNT, value: "25"}
+        - {name: OPENSEARCH_ALERT_PROJECTION_REPAIR_PER_SECOND, value: "100"}
         - {name: S3_ENDPOINT, value: "minio.minio.svc:9000"}
-        - {name: S3_ACCESS_KEY, valueFrom: {secretKeyRef: {name: traffic-credentials, key: MINIO_ACCESS_KEY}}}
-        - {name: S3_SECRET_KEY, valueFrom: {secretKeyRef: {name: traffic-credentials, key: MINIO_SECRET_KEY}}}
+        - {name: S3_ACCESS_KEY, valueFrom: {secretKeyRef: {name: minio-alert-service-credentials, key: accesskey}}}
+        - {name: S3_SECRET_KEY, valueFrom: {secretKeyRef: {name: minio-alert-service-credentials, key: secretkey}}}
         - {name: S3_USE_SSL, value: "false"}
+        - {name: ALERT_REPORT_BUCKET, value: "report-artifacts"}
+        - {name: ALERT_REPORT_JOBS_V1_ENABLED, value: "true"}
+        - {name: CAMPAIGN_ALERT_LINKS_V1_ENABLED, value: "true"}
+        - {name: CAMPAIGN_AGGREGATE_V2_ENABLED, value: "false"}
+        - {name: CAMPAIGN_EVENT_PIPELINE_V2_ENABLED, value: "false"}
+        - {name: WHITELIST_EVENT_PIPELINE_V2_ENABLED, value: "false"}
+        - {name: CAMPAIGN_TARGET_PROJECTION_V2_ENABLED, value: "false"}
+        - {name: CAMPAIGN_SOAR_EXECUTOR_URL, value: ""}
+        - {name: CAMPAIGN_SOAR_EXECUTOR_TIMEOUT_SECONDS, value: "30"}
+        - {name: CAMPAIGN_SOAR_EXECUTOR_TOKEN, valueFrom: {secretKeyRef: {name: traffic-credentials, key: CAMPAIGN_SOAR_EXECUTOR_TOKEN, optional: true}}}
+        - {name: PLAYBOOK_EXECUTION_V2_ENABLED, value: "false"}
+        - {name: DASHBOARD_TASK_V2_ENABLED, value: "false"}
+        - {name: DASHBOARD_TASK_PIPELINE_V1_ENABLED, value: "false"}
+        - {name: DASHBOARD_TASK_EVENT_TOPIC, value: "dashboard.task.events.v1"}
+        - {name: DASHBOARD_TASK_EXECUTOR_TIMEOUT_SECONDS, value: "30"}
+        - {name: DASHBOARD_SNAPSHOT_V1_ENABLED, value: "true"}
+        - {name: PLAYBOOK_EXECUTION_EVENT_PIPELINE_V2_ENABLED, value: "false"}
+        - {name: PLAYBOOK_EXECUTION_PROVIDER_URL, value: ""}
+        - {name: PLAYBOOK_EXECUTION_PROVIDER_TIMEOUT_SECONDS, value: "30"}
+        - {name: PLAYBOOK_EXECUTION_PROVIDER_TOKEN, valueFrom: {secretKeyRef: {name: traffic-credentials, key: PLAYBOOK_EXECUTION_PROVIDER_TOKEN, optional: true}}}
+        - {name: CAMPAIGN_TARGET_PROJECTION_CLICKHOUSE_TABLE, value: "traffic.campaign_projection_events_v2"}
+        - {name: CAMPAIGN_TARGET_PROJECTION_OS_WRITE_ALIAS, value: "campaign-projections-v2-write"}
+        - {name: CAMPAIGN_TARGET_PROJECTION_NEBULA_ADDRESSES, value: "nebula-graph.middleware.svc:9669"}
+        - {name: CAMPAIGN_TARGET_PROJECTION_NEBULA_USERNAME, value: "traffic_graph"}
+        - {name: CAMPAIGN_TARGET_PROJECTION_NEBULA_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: NEBULA_SERVICE_PASSWORD}}}
+        - {name: CAMPAIGN_TARGET_PROJECTION_NEBULA_SPACE, value: "traffic_graph"}
+        - {name: ALERT_FEEDBACK_TRANSACTIONAL_OUTBOX_V1_ENABLED, value: "true"}
+        - {name: KAFKA_RESPONSE_ACTION_TOPIC, value: "alert.response.requested.v1"}
+        - {name: KAFKA_RESPONSE_ACTION_GROUP, value: "alert-service-response-execution-v1"}
+        - {name: ALERT_RESPONSE_EXECUTION_V1_ENABLED, value: "true"}
+        - {name: TOPIC_SNAPSHOT_V1_ENABLED, value: "true"}
+        - {name: TOPIC_EXECUTOR_V2_ENABLED, value: "true"}
+        - {name: PROBE_OPERATION_ACK_V2_ENABLED, value: "true"}
         - {name: JWT_SECRET_KEY, valueFrom: {secretKeyRef: {name: traffic-credentials, key: JWT_SECRET}}}
         - {name: LOG_LEVEL, value: "info"}
         resources: {requests: {cpu: 500m, memory: 512Mi, ephemeral-storage: 128Mi}, limits: {cpu: "1", memory: 1Gi, ephemeral-storage: 512Mi}}
@@ -229,19 +334,33 @@ spec:
 ---
 apiVersion: apps/v1
 kind: Deployment
-metadata: {name: asset-service, namespace: traffic-analysis}
+metadata:
+  name: asset-service
+  namespace: traffic-analysis
+  annotations:
+    kubernetes.io/change-cause: "F-ASSET-002 transactional outbox replay and durable dual projection"
+    traffic.analysis/source-sha256: "d6546314264d218cbff8eeeec7ba3237f1ff123280682cc067c0edb1b7d8b7c5"
+    traffic.analysis/image-manifest-digest: "sha256:c910403b1fa076eff9f2164f48371c262ba986b15ecac25588cf769de77980d1"
 spec:
   replicas: 1
   selector: {matchLabels: {app: asset-service}}
   template:
     metadata:
       labels: {app: asset-service}
-      annotations: {prometheus.io/scrape: "true", prometheus.io/port: "8083"}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8083"
+        traffic.analysis/build-id: "remediation-asset-audit-d6546314264d"
+        traffic.analysis/source-sha256: "d6546314264d218cbff8eeeec7ba3237f1ff123280682cc067c0edb1b7d8b7c5"
+        traffic.analysis/image-manifest-digest: "sha256:c910403b1fa076eff9f2164f48371c262ba986b15ecac25588cf769de77980d1"
     spec:
+      serviceAccountName: asset-service
+      automountServiceAccountToken: false
       containers:
       - name: asset-service
-        image: docker.io/traffic/asset-service@sha256:0ff5bc4b1084b610e8508e47195dddbc692d8a10ff28daa653508a00af5b95bd
-        imagePullPolicy: IfNotPresent
+        securityContext: {runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000, allowPrivilegeEscalation: false, capabilities: {drop: ["ALL"]}, seccompProfile: {type: RuntimeDefault}}
+        image: docker.io/traffic/asset-service:remediation-asset-audit-d6546314264d
+        imagePullPolicy: Never
         ports: [{containerPort: 50053}, {containerPort: 8083}]
         env:
         - {name: ASSET_GRPC_PORT, value: "50053"}
@@ -254,16 +373,59 @@ spec:
         - {name: ASSET_KAFKA_BROKERS, value: "kafka-bootstrap.middleware.svc:9092"}
         - {name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL"}
         - {name: KAFKA_SASL_MECHANISM, value: "SCRAM-SHA-512"}
-        - {name: KAFKA_SASL_USERNAME, valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_USERNAME}}}
-        - {name: KAFKA_SASL_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_PASSWORD}}}
+        - {name: KAFKA_SASL_USERNAME, valueFrom: {secretKeyRef: {name: kafka-asset-service-credentials, key: username}}}
+        - {name: KAFKA_SASL_PASSWORD, valueFrom: {secretKeyRef: {name: kafka-asset-service-credentials, key: password}}}
         - {name: KAFKA_TLS_CA_FILE, value: "/etc/kafka/tls/ca.crt"}
         - {name: KAFKA_TLS_SERVER_NAME, value: "kafka-bootstrap.middleware.svc"}
         - {name: ASSET_KAFKA_TOPIC, value: "asset.bindings.v1"}
         - {name: ASSET_KAFKA_GROUP_ID, value: "asset-service-bindings"}
+        - {name: ASSET_EVENT_OUTBOX_ENABLED, value: "true"}
+        - {name: ASSET_EVENT_TOPIC, value: "asset.events.v2"}
+        - {name: ASSET_DISCOVERY_OUTBOX_ENABLED, value: "true"}
+        - {name: ASSET_DISCOVERY_EVENT_TOPIC, value: "asset.discovery.events.v1"}
+        - {name: ASSET_CURSOR_V2_ENABLED, value: "false"}
+        - {name: ASSET_DETAIL_SNAPSHOT_V1_ENABLED, value: "false"}
+        - {name: ASSET_DETAIL_CLICKHOUSE_ENABLED, value: "false"}
+        - {name: CLICKHOUSE_HOSTS, value: "clickhouse-1.middleware.svc:9000,clickhouse-2.middleware.svc:9000"}
+        - {name: CLICKHOUSE_DATABASE, value: "traffic"}
+        - {name: CLICKHOUSE_USERNAME, value: "default"}
+        - {name: CLICKHOUSE_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: CLICKHOUSE_PASSWORD}}}
+        - {name: ASSET_DETAIL_CLICKHOUSE_QUERY_TIMEOUT, value: "3s"}
+        - {name: ASSET_DETAIL_CLICKHOUSE_LOOKBACK, value: "168h"}
+        - {name: ASSET_DETAIL_CLICKHOUSE_ALERT_LIMIT, value: "50"}
+        - {name: ASSET_DETAIL_NEBULA_ENABLED, value: "false"}
+        - {name: ASSET_DETAIL_NEBULA_RELATION_LIMIT, value: "100"}
+        - {name: ASSET_DETAIL_EVIDENCE_ENABLED, value: "false"}
+        - {name: ASSET_DETAIL_EVIDENCE_LIMIT, value: "100"}
+        - {name: ASSET_GOVERNANCE_V1_ENABLED, value: "false"}
+        - {name: ASSET_PROJECTION_ENABLED, value: "true"}
+        - {name: ASSET_PROJECTION_GROUP_ID, value: "asset-projection-v2"}
+        - {name: ASSET_PROJECTION_OS_ADDRESSES, value: "http://opensearch.middleware.svc:9200"}
+        - {name: ASSET_PROJECTION_OS_USERNAME, value: "admin"}
+        - {name: ASSET_PROJECTION_OS_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: OPENSEARCH_ADMIN_PASSWORD}}}
+        - {name: ASSET_PROJECTION_OS_WRITE_ALIAS, value: "assets-v2-write"}
+        - {name: ASSET_PROJECTION_NEBULA_ADDRESSES, value: "nebula-graph.middleware.svc:9669"}
+        - {name: ASSET_PROJECTION_NEBULA_USERNAME, value: "traffic_graph"}
+        - {name: ASSET_PROJECTION_NEBULA_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: NEBULA_SERVICE_PASSWORD}}}
+        - {name: ASSET_PROJECTION_NEBULA_SPACE, value: "traffic_graph"}
         - {name: ASSET_DISCOVERY_SCHEDULER_ENABLED, value: "false"}
+        - {name: ASSET_DISCOVERY_JOBS_V2_ENABLED, value: "false"}
+        - {name: ASSET_DISCOVERY_WORKER_ENABLED, value: "false"}
         - {name: ASSET_DISCOVERY_MODE, value: "snmp_lldp"}
         - {name: ASSET_DISCOVERY_INTERVAL, value: "30m"}
         - {name: ASSET_DISCOVERY_MAX_HOSTS, value: "128"}
+        - {name: ASSET_EXPORT_JOBS_V1_ENABLED, value: "false"}
+        - {name: ASSET_EXPORT_WORKER_ENABLED, value: "false"}
+        - {name: ASSET_EXPORT_MAX_ROWS, value: "100000"}
+        - {name: ASSET_EXPORT_MAX_BYTES, value: "104857600"}
+        - {name: ASSET_EXPORT_RETENTION, value: "168h"}
+        - {name: ASSET_EXPORT_BUCKET, value: "report-artifacts"}
+        - {name: ASSET_EXPORT_OUTBOX_ENABLED, value: "false"}
+        - {name: ASSET_EXPORT_EVENT_TOPIC, value: "asset.exports.v1"}
+        - {name: S3_ENDPOINT, value: "minio.minio.svc:9000"}
+        - {name: S3_ACCESS_KEY, valueFrom: {secretKeyRef: {name: minio-asset-service-credentials, key: accesskey}}}
+        - {name: S3_SECRET_KEY, valueFrom: {secretKeyRef: {name: minio-asset-service-credentials, key: secretkey}}}
+        - {name: S3_USE_SSL, value: "false"}
         - {name: JWT_SIGNING_KEY, valueFrom: {secretKeyRef: {name: traffic-credentials, key: JWT_SECRET}}}
         - {name: LOG_LEVEL, value: "info"}
         resources: {requests: {cpu: 100m, memory: 128Mi}, limits: {cpu: 500m, memory: 512Mi}}
@@ -297,9 +459,12 @@ spec:
         traffic.analysis/source-digest: "bce58660940ecde859e612fb1167aeaf344f52f9f2051864f9c708198e91403d"
         traffic.analysis/image-digest: "sha256:27f53d3029d9bc6d2d304c7e6b0e0c7f8428910638e01f47e78f1a4177bc818d"
     spec:
+      serviceAccountName: rule-manager
+      automountServiceAccountToken: false
       securityContext: {fsGroup: 1000, fsGroupChangePolicy: OnRootMismatch}
       containers:
       - name: rule-manager
+        securityContext: {runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000, allowPrivilegeEscalation: false, capabilities: {drop: ["ALL"]}, seccompProfile: {type: RuntimeDefault}}
         image: docker.io/traffic/rule-manager@sha256:27f53d3029d9bc6d2d304c7e6b0e0c7f8428910638e01f47e78f1a4177bc818d
         imagePullPolicy: Never
         ports: [{containerPort: 8084}]
@@ -315,19 +480,36 @@ spec:
         - {name: CLICKHOUSE_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: CLICKHOUSE_PASSWORD}}}
         - {name: REDIS_SENTINEL_ADDRS, value: "redis-sentinel.databases.svc:26379"}
         - {name: REDIS_SENTINEL_MASTER, value: "mymaster"}
+        - {name: REDIS_DB, value: "0"}
+        - {name: REDIS_RELIABILITY_DOMAIN, value: "coordination"}
         - {name: KAFKA_BROKERS, value: "kafka-bootstrap.middleware.svc:9092"}
         - {name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL"}
         - {name: KAFKA_SASL_MECHANISM, value: "SCRAM-SHA-512"}
-        - {name: KAFKA_SASL_USERNAME, valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_USERNAME}}}
-        - {name: KAFKA_SASL_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_PASSWORD}}}
+        - {name: KAFKA_SASL_USERNAME, valueFrom: {secretKeyRef: {name: kafka-rule-manager-credentials, key: username}}}
+        - {name: KAFKA_SASL_PASSWORD, valueFrom: {secretKeyRef: {name: kafka-rule-manager-credentials, key: password}}}
         - {name: KAFKA_TLS_CA_FILE, value: "/etc/kafka/tls/ca.crt"}
         - {name: KAFKA_TLS_SERVER_NAME, value: "kafka-bootstrap.middleware.svc"}
         - {name: KAFKA_RULE_TOPIC, value: "rule.updates"}
         - {name: KAFKA_MODEL_TOPIC, value: "model-updates"}
         - {name: KAFKA_MODEL_ACTION_TOPIC, value: "model-actions.v1"}
+        - {name: KAFKA_MODEL_ACTION_EVENT_GROUP, value: "rule-manager-model-action-execution-v1"}
+        - {name: MODEL_ACTION_OUTBOX_V1_ENABLED, value: "true"}
+        - {name: MODEL_ACTION_INBOX_V1_ENABLED, value: "true"}
         - {name: KAFKA_MODEL_APPLIED_TOPIC, value: "model-update-applied.v1"}
         - {name: MODEL_APPLIED_ACK_EXPECTED_PARALLELISM, value: "4"}
         - {name: KAFKA_DEPLOYMENT_TOPIC, value: "deployment.events.v1"}
+        - {name: KAFKA_DEPLOYMENT_EVENT_GROUP, value: "rule-manager-deployment-projection-v1"}
+        - {name: DEPLOYMENT_EVENT_PROJECTION_V1_ENABLED, value: "true"}
+        - {name: KAFKA_ALERT_FEEDBACK_TOPIC, value: "alert.feedback.v1"}
+        - {name: KAFKA_ALERT_FEEDBACK_EVENT_GROUP, value: "rule-manager-alert-feedback-projection-v1"}
+        - {name: ALERT_FEEDBACK_PROJECTION_V1_ENABLED, value: "true"}
+        - {name: KAFKA_WHITELIST_EVENT_TOPIC, value: "whitelist.events.v2"}
+        - {name: KAFKA_WHITELIST_EVENT_GROUP, value: "rule-manager-whitelist-rule-effect-v2"}
+        - {name: WHITELIST_EVENT_PIPELINE_V2_ENABLED, value: "false"}
+        - {name: MODEL_FEEDBACK_CLICKHOUSE_PROJECTION_V1_ENABLED, value: "true"}
+        - {name: MODEL_FEEDBACK_CLICKHOUSE_PROJECTION_V2_ENABLED, value: "false"}
+        - {name: MODEL_FEEDBACK_CLICKHOUSE_PROJECTION_V2_TABLE, value: "traffic.alert_feedback_v2"}
+        - {name: MODEL_FEEDBACK_CLICKHOUSE_PROJECTION_INTERVAL, value: "2s"}
         - {name: KAFKA_AUDIT_TOPIC, value: "audit.logs"}
         - {name: AUDIT_TOPIC, value: "audit.logs"}
         - {name: MLOPS_ARGO_NAMESPACE, value: "argo"}
@@ -374,9 +556,12 @@ spec:
         traffic.analysis/image-digest: "sha256:c2af7b2361d1bb606d10e24e5251ab59a8200d6424752b4964ec5dade7b6db6c"
         traffic.analysis/image-id: "sha256:7f0f1f46518c3adbff1490e69fb73eaf761d0a28235560597acefe1817d2a79a"
     spec:
+      serviceAccountName: graph-service
+      automountServiceAccountToken: false
       securityContext: {fsGroup: 1000, fsGroupChangePolicy: OnRootMismatch}
       containers:
       - name: graph-service
+        securityContext: {runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000, allowPrivilegeEscalation: false, capabilities: {drop: ["ALL"]}, seccompProfile: {type: RuntimeDefault}}
         image: docker.io/traffic/graph-service@sha256:c2af7b2361d1bb606d10e24e5251ab59a8200d6424752b4964ec5dade7b6db6c
         imagePullPolicy: Never
         ports: [{containerPort: 8085}]
@@ -409,11 +594,13 @@ spec:
         - {name: POSTGRES_SSL_MODE, value: "disable"}
         - {name: REDIS_SENTINEL_ADDRS, value: "redis-sentinel.databases.svc:26379"}
         - {name: REDIS_SENTINEL_MASTER, value: "mymaster"}
+        - {name: REDIS_DB, value: "0"}
+        - {name: REDIS_RELIABILITY_DOMAIN, value: "coordination"}
         - {name: KAFKA_BROKERS, value: "kafka-bootstrap.middleware.svc:9092"}
         - {name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL"}
         - {name: KAFKA_SASL_MECHANISM, value: "SCRAM-SHA-512"}
-        - {name: KAFKA_SASL_USERNAME, valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_USERNAME}}}
-        - {name: KAFKA_SASL_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_PASSWORD}}}
+        - {name: KAFKA_SASL_USERNAME, valueFrom: {secretKeyRef: {name: kafka-graph-service-credentials, key: username}}}
+        - {name: KAFKA_SASL_PASSWORD, valueFrom: {secretKeyRef: {name: kafka-graph-service-credentials, key: password}}}
         - {name: KAFKA_TLS_CA_FILE, value: "/etc/kafka/tls/ca.crt"}
         - {name: KAFKA_TLS_SERVER_NAME, value: "kafka-bootstrap.middleware.svc"}
         - {name: OTEL_ENABLED, value: "false"}
@@ -446,8 +633,11 @@ spec:
       labels: {app: threat-intel-service}
       annotations: {prometheus.io/scrape: "true", prometheus.io/port: "8087"}
     spec:
+      serviceAccountName: threat-intel-service
+      automountServiceAccountToken: false
       containers:
       - name: threat-intel-service
+        securityContext: {runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000, allowPrivilegeEscalation: false, capabilities: {drop: ["ALL"]}, seccompProfile: {type: RuntimeDefault}}
         image: docker.io/traffic/threat-intel-service@sha256:d87ccc7066dbd2d04aa55db16c1e2ca271e0d5274373ba0ca5159b513c0c629c
         imagePullPolicy: Never
         ports: [{containerPort: 8087}]
@@ -461,11 +651,12 @@ spec:
         - {name: KAFKA_BROKERS, value: "kafka-bootstrap.middleware.svc:9092"}
         - {name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL"}
         - {name: KAFKA_SASL_MECHANISM, value: "SCRAM-SHA-512"}
-        - {name: KAFKA_SASL_USERNAME, valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_USERNAME}}}
-        - {name: KAFKA_SASL_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_PASSWORD}}}
+        - {name: KAFKA_SASL_USERNAME, valueFrom: {secretKeyRef: {name: kafka-threat-intel-service-credentials, key: username}}}
+        - {name: KAFKA_SASL_PASSWORD, valueFrom: {secretKeyRef: {name: kafka-threat-intel-service-credentials, key: password}}}
         - {name: KAFKA_TLS_CA_FILE, value: "/etc/kafka/tls/ca.crt"}
         - {name: KAFKA_TLS_SERVER_NAME, value: "kafka-bootstrap.middleware.svc"}
         - {name: KAFKA_THREAT_INTEL_TOPIC, value: "threat.intel.v1"}
+        - {name: THREAT_INTEL_OUTBOX_V1_ENABLED, value: "true"}
         - {name: THREAT_INTEL_FEED_SCHEDULER_ENABLED, value: "true"}
         - {name: THREAT_INTEL_FEED_SCHEDULER_TICK_SECONDS, value: "2"}
         - {name: JWT_SECRET_KEY, valueFrom: {secretKeyRef: {name: traffic-credentials, key: JWT_SECRET}}}
@@ -489,16 +680,31 @@ spec:
 ---
 apiVersion: apps/v1
 kind: Deployment
-metadata: {name: forensics-service, namespace: traffic-analysis}
+metadata:
+  name: forensics-service
+  namespace: traffic-analysis
+  annotations:
+    kubernetes.io/change-cause: "Forensics schema-aware readiness and source-reference acceptance candidate 7d3aba0ae1b7"
+    traffic.analysis/source-sha256: "7d3aba0ae1b79459788d819290ffa84e94b09a5be3fd33e56fcf84cd816d1047"
+    traffic.analysis/image-manifest-digest: "sha256:b9810d2f810325621d9259b62a262ac901025662e2a46f8388ff5a9821ef1e9f"
 spec:
   replicas: 1
   selector: {matchLabels: {app: forensics-service}}
   template:
-    metadata: {labels: {app: forensics-service}}
+    metadata:
+      labels: {app: forensics-service}
+      annotations:
+        traffic.analysis/build-id: "remediation-forensics-7d3aba0ae1b7"
+        traffic.analysis/source-sha256: "7d3aba0ae1b79459788d819290ffa84e94b09a5be3fd33e56fcf84cd816d1047"
+        traffic.analysis/image-manifest-digest: "sha256:b9810d2f810325621d9259b62a262ac901025662e2a46f8388ff5a9821ef1e9f"
+        traffic.analysis/image-id: "sha256:d56d6f7442defa00b65f2ce44f8c3253f8f546d91ac3badd782a4a6aa044e4ff"
     spec:
+      serviceAccountName: forensics-service
+      automountServiceAccountToken: false
       containers:
       - name: forensics-service
-        image: docker.io/traffic/forensics-service:forensics-canonical-v1-20260716-r7
+        securityContext: {runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000, allowPrivilegeEscalation: false, capabilities: {drop: ["ALL"]}, seccompProfile: {type: RuntimeDefault}}
+        image: docker.io/traffic/forensics-service:remediation-forensics-7d3aba0ae1b7
         imagePullPolicy: Never
         ports: [{containerPort: 8086}]
         env:
@@ -512,22 +718,26 @@ spec:
         - {name: CLICKHOUSE_DATABASE, value: "traffic"}
         - {name: CLICKHOUSE_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: CLICKHOUSE_PASSWORD}}}
         - {name: S3_ENDPOINT, value: "minio.minio.svc:9000"}
-        - {name: S3_ACCESS_KEY, valueFrom: {secretKeyRef: {name: traffic-credentials, key: MINIO_ACCESS_KEY}}}
-        - {name: S3_SECRET_KEY, valueFrom: {secretKeyRef: {name: traffic-credentials, key: MINIO_SECRET_KEY}}}
+        - {name: S3_ACCESS_KEY, valueFrom: {secretKeyRef: {name: minio-forensics-service-credentials, key: accesskey}}}
+        - {name: S3_SECRET_KEY, valueFrom: {secretKeyRef: {name: minio-forensics-service-credentials, key: secretkey}}}
         - {name: REDIS_SENTINEL_ADDRS, value: "redis-sentinel.databases.svc:26379"}
         - {name: REDIS_SENTINEL_MASTER, value: "mymaster"}
+        - {name: REDIS_DB, value: "1"}
+        - {name: REDIS_RELIABILITY_DOMAIN, value: "session"}
         - {name: AUTH_ENABLED, value: "true"}
         - {name: JWT_SIGNING_KEY, valueFrom: {secretKeyRef: {name: traffic-credentials, key: JWT_SECRET}}}
         - {name: JWT_ISSUER, value: "traffic-auth-service"}
         - {name: KAFKA_BROKERS, value: "kafka-bootstrap.middleware.svc:9092"}
         - {name: KAFKA_SECURITY_PROTOCOL, value: "SASL_SSL"}
         - {name: KAFKA_SASL_MECHANISM, value: "SCRAM-SHA-512"}
-        - {name: KAFKA_SASL_USERNAME, valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_USERNAME}}}
-        - {name: KAFKA_SASL_PASSWORD, valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_PASSWORD}}}
+        - {name: KAFKA_SASL_USERNAME, valueFrom: {secretKeyRef: {name: kafka-forensics-service-credentials, key: username}}}
+        - {name: KAFKA_SASL_PASSWORD, valueFrom: {secretKeyRef: {name: kafka-forensics-service-credentials, key: password}}}
         - {name: KAFKA_TLS_CA_FILE, value: "/etc/kafka/tls/ca.crt"}
         - {name: KAFKA_TLS_SERVER_NAME, value: "kafka-bootstrap.middleware.svc"}
         - {name: LOG_LEVEL, value: "info"}
         resources: {requests: {cpu: 500m, memory: 512Mi}, limits: {cpu: "1", memory: 1Gi}}
+        livenessProbe: {httpGet: {path: /health, port: 8086}, initialDelaySeconds: 10, periodSeconds: 15}
+        readinessProbe: {httpGet: {path: /ready, port: 8086}, initialDelaySeconds: 5, periodSeconds: 10}
         volumeMounts:
         - {name: kafka-client-tls, mountPath: /etc/kafka/tls, readOnly: true}
       volumes:

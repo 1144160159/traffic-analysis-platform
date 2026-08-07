@@ -1,0 +1,97 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: opensearch-ha-alert-rules-v1
+  namespace: observability
+  labels:
+    traffic.openai.com/contract: opensearch-ha-security-restore-v1
+data:
+  opensearch-ha.rules.yaml: |
+    groups:
+    - name: traffic-opensearch-ha
+      interval: 30s
+      rules:
+      - alert: OpenSearchMetricsEndpointMissing
+        expr: up{job="opensearch"} == 0
+        for: 2m
+        labels: {severity: critical, remediation_id: T-OS-005}
+        annotations:
+          summary: OpenSearch metrics endpoint is unavailable
+          runbook: doc/07_alignment/runbooks/T-OS-005-snapshot-zone-tls-restore.md
+      - alert: OpenSearchClusterRed
+        expr: opensearch_cluster_status{color="red"} == 1
+        for: 1m
+        labels: {severity: critical, remediation_id: T-OS-005}
+        annotations:
+          summary: OpenSearch cluster health is red
+          runbook: doc/07_alignment/runbooks/T-OS-005-snapshot-zone-tls-restore.md
+      - alert: OpenSearchUnassignedShards
+        expr: opensearch_cluster_unassigned_shards > 0
+        for: 5m
+        labels: {severity: critical, remediation_id: T-OS-005}
+        annotations:
+          summary: OpenSearch has unassigned shards
+          runbook: doc/07_alignment/runbooks/T-OS-005-snapshot-zone-tls-restore.md
+      - alert: OpenSearchRelocationStalled
+        expr: opensearch_cluster_relocating_shards > 0
+        for: 15m
+        labels: {severity: warning, remediation_id: T-OS-005}
+        annotations:
+          summary: OpenSearch shard relocation has not completed
+          runbook: doc/07_alignment/runbooks/T-OS-005-snapshot-zone-tls-restore.md
+      - alert: OpenSearchPendingClusterTasks
+        expr: opensearch_cluster_pending_tasks > 10
+        for: 5m
+        labels: {severity: critical, remediation_id: T-OS-005}
+        annotations:
+          summary: OpenSearch pending cluster tasks exceed the rollout budget
+          runbook: doc/07_alignment/runbooks/T-OS-005-snapshot-zone-tls-restore.md
+      - alert: OpenSearchWriteRejections
+        expr: sum by (cluster) (rate(opensearch_thread_pool_rejected_total{pool="write"}[5m])) > 0
+        for: 5m
+        labels: {severity: critical, remediation_id: T-OS-005}
+        annotations:
+          summary: OpenSearch write thread pool is rejecting work
+          runbook: doc/07_alignment/runbooks/T-OS-005-snapshot-zone-tls-restore.md
+      - alert: OpenSearchDiskHighWatermark
+        expr: opensearch_fs_used_percent >= 80
+        for: 5m
+        labels: {severity: critical, remediation_id: T-OS-005}
+        annotations:
+          summary: OpenSearch disk use reached the high watermark
+          runbook: doc/07_alignment/runbooks/T-OS-005-snapshot-zone-tls-restore.md
+      - alert: OpenSearchDiskFloodStage
+        expr: opensearch_fs_used_percent >= 90
+        for: 1m
+        labels: {severity: critical, remediation_id: T-OS-005}
+        annotations:
+          summary: OpenSearch disk use reached flood stage
+          runbook: doc/07_alignment/runbooks/T-OS-005-snapshot-zone-tls-restore.md
+      - alert: OpenSearchSnapshotStale
+        expr: time() - opensearch_snapshot_last_success_timestamp_seconds > 90000
+        for: 10m
+        labels: {severity: critical, remediation_id: T-OS-005}
+        annotations:
+          summary: No successful OpenSearch snapshot has completed within 25 hours
+          runbook: doc/07_alignment/runbooks/T-OS-005-snapshot-zone-tls-restore.md
+      - alert: OpenSearchSnapshotFailure
+        expr: increase(opensearch_snapshot_failures_total[1h]) > 0
+        for: 1m
+        labels: {severity: critical, remediation_id: T-OS-005}
+        annotations:
+          summary: An OpenSearch snapshot failed
+          runbook: doc/07_alignment/runbooks/T-OS-005-snapshot-zone-tls-restore.md
+      - alert: OpenSearchTLSCertificateExpiring
+        expr: opensearch_tls_not_after_timestamp_seconds - time() < 1209600
+        for: 1h
+        labels: {severity: warning, remediation_id: T-OS-005}
+        annotations:
+          summary: An OpenSearch TLS certificate expires within 14 days
+          runbook: doc/07_alignment/runbooks/T-OS-005-snapshot-zone-tls-restore.md
+      - alert: OpenSearchZoneConcentration
+        expr: max by (cluster) (count by (cluster, zone) (opensearch_node_up == 1)) > 1
+        for: 5m
+        labels: {severity: critical, remediation_id: T-OS-005}
+        annotations:
+          summary: More than one OpenSearch node is concentrated in one zone
+          runbook: doc/07_alignment/runbooks/T-OS-005-snapshot-zone-tls-restore.md

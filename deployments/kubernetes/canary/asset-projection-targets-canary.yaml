@@ -1,0 +1,52 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: asset-projection-targets-canary
+  namespace: traffic-analysis
+  labels:
+    traffic.io/remediation-id: F-ASSET-002
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: opensearch
+        image: docker.io/curlimages/curl@sha256:1ab04d023ece37e6ec991bf3306ad04e0ef0084e94a5c6b6563cfcb9563169db
+        command: ["sh", "-c"]
+        args:
+        - |
+          set -eu
+          base=http://opensearch.middleware.svc:9200
+          health="$(curl -fsS -u "admin:${OPENSEARCH_ADMIN_PASSWORD}" "$base/_cluster/health/assets-v2-000001?filter_path=status,unassigned_shards")"
+          printf '%s' "$health" | grep -q '"status":"green"'
+          printf '%s' "$health" | grep -q '"unassigned_shards":0'
+          aliases="$(curl -fsS -u "admin:${OPENSEARCH_ADMIN_PASSWORD}" "$base/_alias/assets-v2-write")"
+          printf '%s' "$aliases" | grep -q 'assets-v2-000001'
+          printf '%s' "$aliases" | grep -q '"is_write_index":true'
+          simulated="$(curl -fsS -u "admin:${OPENSEARCH_ADMIN_PASSWORD}" -X POST "$base/_index_template/_simulate_index/assets-v2-canary")"
+          printf '%s' "$simulated" | grep -q '"dynamic":"strict"'
+          echo 'target=opensearch alias=assets-v2-write readiness=pass'
+        env:
+        - name: OPENSEARCH_ADMIN_PASSWORD
+          valueFrom: {secretKeyRef: {name: traffic-credentials, key: OPENSEARCH_ADMIN_PASSWORD}}
+      - name: nebulagraph
+        image: vesoft/nebula-console:v3.6.0
+        command: ["sh", "-c"]
+        args:
+        - |
+          set -eu
+          output="$(/usr/local/bin/nebula-console \
+            -addr nebula-graph.middleware.svc -port 9669 \
+            -u traffic_graph -p "${NEBULA_SERVICE_PASSWORD}" \
+            -e 'USE traffic_graph; YIELD 1 AS ready; SHOW TAGS;')"
+          if printf '%s' "$output" | grep '\[ERROR' >/dev/null; then
+            printf '%s\n' "$output" >&2
+            exit 1
+          fi
+          printf '%s' "$output" | grep -q 'entity'
+          echo 'target=nebulagraph space=traffic_graph tag=entity readiness=pass'
+        env:
+        - name: NEBULA_SERVICE_PASSWORD
+          valueFrom: {secretKeyRef: {name: traffic-credentials, key: NEBULA_SERVICE_PASSWORD}}

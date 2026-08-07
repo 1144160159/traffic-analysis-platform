@@ -1,0 +1,166 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: opensearch-alerts-v2-contract
+  namespace: middleware
+  labels:
+    traffic.io/remediation-id: T-OS-002
+    traffic.io/migration-phase: expand
+data:
+  mappings-component.json: |-
+    {"version":2,"_meta":{"contract":"T-OS-002","schema_version":2,"owner":"opensearch-data-owner"},"template":{"mappings":{"dynamic":"strict","properties":{"tenant_id":{"type":"keyword"},"alert_id":{"type":"keyword"},"event_id":{"type":"keyword"},"trace_id":{"type":"keyword"},"fingerprint":{"type":"keyword"},"dedup_fingerprint":{"type":"keyword"},"community_id":{"type":"keyword","copy_to":"search_text"},"session_id":{"type":"keyword"},"campaign_id":{"type":"keyword"},"src_ip":{"type":"ip","ignore_malformed":true,"copy_to":"search_text"},"dst_ip":{"type":"ip","ignore_malformed":true,"copy_to":"search_text"},"src_port":{"type":"integer"},"dst_port":{"type":"integer"},"protocol":{"type":"short"},"protocol_name":{"type":"keyword"},"alert_type":{"type":"keyword","copy_to":"search_text"},"attack_phase":{"type":"keyword"},"labels":{"type":"keyword","copy_to":"search_text"},"search_text":{"type":"text"},"score":{"type":"float"},"severity":{"type":"keyword"},"first_seen":{"type":"date"},"last_seen":{"type":"date"},"updated_ts":{"type":"date"},"ingest_ts":{"type":"date"},"first_seen_ms":{"type":"date","format":"epoch_millis"},"last_seen_ms":{"type":"date","format":"epoch_millis"},"count":{"type":"integer"},"status":{"type":"keyword"},"assignee":{"type":"keyword"},"model_version":{"type":"keyword"},"rule_version":{"type":"keyword"},"feature_set_id":{"type":"keyword"},"evidence_ids":{"type":"keyword"},"arkime_link":{"type":"keyword","index":false},"arkime_session_link":{"type":"keyword","index":false},"evidence_count":{"type":"integer"},"feedback_label":{"type":"keyword"},"feedback_count":{"type":"integer"},"state_version":{"type":"long"}}}}}
+  settings-component.json: |-
+    {"version":2,"_meta":{"contract":"T-OS-002","schema_version":2,"owner":"opensearch-data-owner"},"template":{"settings":{"number_of_shards":3,"number_of_replicas":1,"refresh_interval":"5s","plugins.index_state_management.rollover_alias":"alerts-v2-write"}}}
+  index-template.json: |-
+    {"index_patterns":["alerts-v2-*"],"priority":300,"version":2,"composed_of":["traffic-alerts-mappings-v2","traffic-alerts-settings-v2"],"_meta":{"contract":"T-OS-002","schema_version":2,"read_alias":"alerts-v2-read","write_alias":"alerts-v2-write"}}
+  ism-policy.json: |-
+    {"policy":{"description":"Versioned alerts v2 rollover and 30-day retention candidate","schema_version":2,"default_state":"hot","states":[{"name":"hot","actions":[{"rollover":{"min_size":"30gb","min_index_age":"1d"}}],"transitions":[{"state_name":"delete","conditions":{"min_index_age":"30d"}}]},{"name":"delete","actions":[{"delete":{}}],"transitions":[]}],"ism_template":{"index_patterns":["alerts-v2-*"],"priority":300}}}
+  bootstrap-index.json: |-
+    {"aliases":{"alerts-v2-read":{},"alerts-v2-write":{"is_write_index":true}}}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: expand-opensearch-alerts-v2
+  namespace: middleware
+  labels:
+    traffic.io/remediation-id: T-OS-002
+    traffic.io/migration-phase: expand
+  annotations:
+    traffic.io/execution-mode: approval-required
+spec:
+  # Applying this manifest is non-executing. An approved change window must
+  # create the approval Secret and explicitly unsuspend this Job.
+  suspend: true
+  backoffLimit: 0
+  activeDeadlineSeconds: 300
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        traffic.io/remediation-id: T-OS-002
+        traffic.io/migration-phase: expand
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: expand-alerts-v2
+        image: docker.io/curlimages/curl@sha256:1ab04d023ece37e6ec991bf3306ad04e0ef0084e94a5c6b6563cfcb9563169db
+        command: ["sh", "-ceu"]
+        env:
+        - name: OPENSEARCH_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: traffic-credentials
+              key: OPENSEARCH_ADMIN_PASSWORD
+        - name: CHANGE_APPROVAL_ID
+          valueFrom:
+            secretKeyRef:
+              name: opensearch-alerts-v2-approval
+              key: approval_id
+        - name: CHANGE_APPROVED_BY
+          valueFrom:
+            secretKeyRef:
+              name: opensearch-alerts-v2-approval
+              key: approved_by
+        - name: CHANGE_APPROVAL_NONCE
+          valueFrom:
+            secretKeyRef:
+              name: opensearch-alerts-v2-approval
+              key: approval_nonce
+        - name: CHANGE_WINDOW_NOT_BEFORE_EPOCH
+          valueFrom:
+            secretKeyRef:
+              name: opensearch-alerts-v2-approval
+              key: not_before_epoch
+        - name: CHANGE_WINDOW_EXPIRES_AT_EPOCH
+          valueFrom:
+            secretKeyRef:
+              name: opensearch-alerts-v2-approval
+              key: expires_at_epoch
+        # The checked-in manifest is deliberately unrendered and cannot run.
+        # The renderer replaces this value and binds it to an immutable Secret.
+        - name: EXPECTED_APPROVAL_NONCE
+          value: UNRENDERED
+        - name: APPROVED_CLUSTER_UUID
+          valueFrom:
+            secretKeyRef:
+              name: opensearch-alerts-v2-approval
+              key: cluster_uuid
+        - name: APPROVED_G0_CANDIDATE_SHA256
+          valueFrom:
+            secretKeyRef:
+              name: opensearch-alerts-v2-approval
+              key: g0_candidate_sha256
+        - name: APPROVED_G0_MANIFEST_SHA256
+          valueFrom:
+            secretKeyRef:
+              name: opensearch-alerts-v2-approval
+              key: g0_manifest_sha256
+        - name: APPROVED_CONTRACT_SHA256
+          valueFrom:
+            secretKeyRef:
+              name: opensearch-alerts-v2-approval
+              key: contract_sha256
+        volumeMounts:
+        - name: alerts-v2-contract
+          mountPath: /etc/opensearch-contract/alerts-v2
+          readOnly: true
+        args:
+        - |
+          OS="http://opensearch-0.opensearch.middleware.svc:9200"
+          CONTRACT_DIR="/etc/opensearch-contract/alerts-v2"
+          EXPECTED_CONTRACT_SHA256="c6c3b32eebf6b1ab6da472e9c0849ba613b59c8ebdeaea0e0ee1aeb8c8895c28"
+          MAX_APPROVAL_WINDOW_SECONDS=14400
+          test -n "$CHANGE_APPROVAL_ID"
+          test -n "$CHANGE_APPROVED_BY"
+          test "$EXPECTED_APPROVAL_NONCE" != "UNRENDERED"
+          test "$CHANGE_APPROVAL_NONCE" = "$EXPECTED_APPROVAL_NONCE"
+          echo "$CHANGE_WINDOW_NOT_BEFORE_EPOCH" | grep -Eq '^[0-9]+$'
+          echo "$CHANGE_WINDOW_EXPIRES_AT_EPOCH" | grep -Eq '^[0-9]+$'
+          test "$CHANGE_WINDOW_EXPIRES_AT_EPOCH" -gt "$CHANGE_WINDOW_NOT_BEFORE_EPOCH"
+          test "$((CHANGE_WINDOW_EXPIRES_AT_EPOCH - CHANGE_WINDOW_NOT_BEFORE_EPOCH))" -le "$MAX_APPROVAL_WINDOW_SECONDS"
+          CURRENT_EPOCH="$(date -u +%s)"
+          test "$CURRENT_EPOCH" -ge "$CHANGE_WINDOW_NOT_BEFORE_EPOCH"
+          test "$CURRENT_EPOCH" -le "$CHANGE_WINDOW_EXPIRES_AT_EPOCH"
+          echo "$APPROVED_G0_CANDIDATE_SHA256" | grep -Eq '^[0-9a-f]{64}$'
+          echo "$APPROVED_G0_MANIFEST_SHA256" | grep -Eq '^[0-9a-f]{64}$'
+          test "$APPROVED_CONTRACT_SHA256" = "$EXPECTED_CONTRACT_SHA256"
+          ACTUAL_CONTRACT_SHA256="$(cat "$CONTRACT_DIR/mappings-component.json" "$CONTRACT_DIR/settings-component.json" "$CONTRACT_DIR/index-template.json" "$CONTRACT_DIR/ism-policy.json" "$CONTRACT_DIR/bootstrap-index.json" | sha256sum | cut -d' ' -f1)"
+          test "$ACTUAL_CONTRACT_SHA256" = "$EXPECTED_CONTRACT_SHA256"
+
+          ROOT="$(curl -fsS -u "admin:${OPENSEARCH_ADMIN_PASSWORD}" "$OS/")"
+          echo "$ROOT" | grep -Fq "\"cluster_uuid\":\"${APPROVED_CLUSTER_UUID}\""
+          curl -fsS -u "admin:${OPENSEARCH_ADMIN_PASSWORD}" "$OS/_cluster/health" | grep -Eq '"status":"(green|yellow)"'
+
+          curl -fsS -u "admin:${OPENSEARCH_ADMIN_PASSWORD}" -X PUT "$OS/_component_template/traffic-alerts-mappings-v2" -H 'Content-Type: application/json' --data-binary @"$CONTRACT_DIR/mappings-component.json"
+          curl -fsS -u "admin:${OPENSEARCH_ADMIN_PASSWORD}" -X PUT "$OS/_component_template/traffic-alerts-settings-v2" -H 'Content-Type: application/json' --data-binary @"$CONTRACT_DIR/settings-component.json"
+          POLICY_URL="$OS/_plugins/_ism/policies/traffic-alerts-hot-delete-v2"
+          POLICY_CODE="$(curl -sS -o /tmp/alerts-v2-policy.json -w '%{http_code}' -u "admin:${OPENSEARCH_ADMIN_PASSWORD}" "$POLICY_URL")"
+          if [ "$POLICY_CODE" = "404" ]; then
+            curl -fsS -u "admin:${OPENSEARCH_ADMIN_PASSWORD}" -X PUT "$POLICY_URL" -H 'Content-Type: application/json' --data-binary @"$CONTRACT_DIR/ism-policy.json"
+          elif [ "$POLICY_CODE" = "200" ]; then
+            POLICY_SEQ_NO="$(sed -n 's/.*"_seq_no":\([0-9][0-9]*\).*/\1/p' /tmp/alerts-v2-policy.json | head -1)"
+            POLICY_PRIMARY_TERM="$(sed -n 's/.*"_primary_term":\([0-9][0-9]*\).*/\1/p' /tmp/alerts-v2-policy.json | head -1)"
+            test -n "$POLICY_SEQ_NO"
+            test -n "$POLICY_PRIMARY_TERM"
+            curl -fsS -u "admin:${OPENSEARCH_ADMIN_PASSWORD}" -X PUT "$POLICY_URL?if_seq_no=$POLICY_SEQ_NO&if_primary_term=$POLICY_PRIMARY_TERM" -H 'Content-Type: application/json' --data-binary @"$CONTRACT_DIR/ism-policy.json"
+          else
+            echo "Unexpected ISM policy lookup status: $POLICY_CODE" >&2
+            exit 1
+          fi
+          curl -fsS -u "admin:${OPENSEARCH_ADMIN_PASSWORD}" -X PUT "$OS/_index_template/traffic-alerts-v2-template" -H 'Content-Type: application/json' --data-binary @"$CONTRACT_DIR/index-template.json"
+          curl -fsS -u "admin:${OPENSEARCH_ADMIN_PASSWORD}" -X POST "$OS/_index_template/_simulate_index/alerts-v2-000001" >/tmp/alerts-v2-simulated.json
+          grep -q '"dynamic":"strict"' /tmp/alerts-v2-simulated.json
+          grep -q '"tenant_id":{"type":"keyword"' /tmp/alerts-v2-simulated.json
+          grep -q '"src_ip":{"type":"ip"' /tmp/alerts-v2-simulated.json
+          if [ "$(curl -sS -o /dev/null -w '%{http_code}' -u "admin:${OPENSEARCH_ADMIN_PASSWORD}" "$OS/alerts-v2-000001")" = "404" ]; then
+            curl -fsS -u "admin:${OPENSEARCH_ADMIN_PASSWORD}" -X PUT "$OS/alerts-v2-000001" -H 'Content-Type: application/json' --data-binary @"$CONTRACT_DIR/bootstrap-index.json"
+          fi
+          curl -fsS -u "admin:${OPENSEARCH_ADMIN_PASSWORD}" "$OS/_alias/alerts-v2-read" | grep -q 'alerts-v2-000001'
+          curl -fsS -u "admin:${OPENSEARCH_ADMIN_PASSWORD}" "$OS/_alias/alerts-v2-write" | grep -q '"is_write_index":true'
+          curl -fsS -u "admin:${OPENSEARCH_ADMIN_PASSWORD}" "$OS/_plugins/_ism/explain/alerts-v2-000001" | grep -q 'traffic-alerts-hot-delete-v2'
+      volumes:
+      - name: alerts-v2-contract
+        configMap:
+          name: opensearch-alerts-v2-contract

@@ -2,6 +2,7 @@ pub mod aggregator;
 pub mod archiver;
 pub mod capture;
 pub mod config;
+pub mod control;
 pub mod cpu_affinity;
 pub mod interface_monitor;
 pub mod metrics;

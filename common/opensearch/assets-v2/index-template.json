@@ -1,0 +1,47 @@
+{
+  "index_patterns": ["assets-v2-*"],
+  "priority": 200,
+  "template": {
+    "settings": {
+      "number_of_shards": 3,
+      "number_of_replicas": 1
+    },
+    "mappings": {
+      "dynamic": "strict",
+      "properties": {
+        "contract_version": {"type": "keyword"},
+        "event_id": {"type": "keyword"},
+        "trace_id": {"type": "keyword"},
+        "tenant_id": {"type": "keyword"},
+        "asset_id": {"type": "keyword"},
+        "revision": {"type": "long"},
+        "asset": {
+          "properties": {
+            "asset_id": {"type": "keyword"},
+            "revision": {"type": "long"},
+            "display_code": {"type": "keyword"},
+            "tenant_id": {"type": "keyword"},
+            "asset_type": {"type": "keyword"},
+            "status": {"type": "keyword"},
+            "ip_address": {"type": "ip", "ignore_malformed": true},
+            "mac_address": {"type": "keyword"},
+            "hostname": {"type": "keyword"},
+            "vendor": {"type": "keyword"},
+            "os_type": {"type": "keyword"},
+            "source": {"type": "keyword"},
+            "vlan_id": {"type": "keyword"},
+            "switch_port": {"type": "keyword"},
+            "department": {"type": "keyword"},
+            "campus": {"type": "keyword"},
+            "owner": {"type": "keyword"},
+            "criticality": {"type": "integer"},
+            "tags": {"type": "object", "enabled": false},
+            "metadata": {"type": "object", "enabled": false},
+            "first_seen": {"type": "date"},
+            "last_seen": {"type": "date"}
+          }
+        }
+      }
+    }
+  }
+}

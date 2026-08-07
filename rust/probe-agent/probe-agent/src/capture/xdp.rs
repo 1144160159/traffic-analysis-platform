@@ -1,4 +1,5 @@
 use anyhow::{bail, Context, Result};
+use std::collections::HashSet;
 use std::env;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -26,6 +27,7 @@ pub struct XdpCapture {
     stats: CaptureStats,
     running: bool,
     pending_fill_addrs: Vec<u64>,
+    kernel_owned_frames: HashSet<usize>,
     promisc_guard: Option<PromiscuousMode>,
     ifindex: i32,
 }
@@ -63,6 +65,7 @@ impl XdpCapture {
             stats: CaptureStats::default(),
             running: false,
             pending_fill_addrs: Vec::with_capacity(XSK_BATCH_SIZE),
+            kernel_owned_frames: HashSet::with_capacity(config.frame_count),
             promisc_guard: None,
             ifindex,
         })
@@ -250,6 +253,11 @@ impl XdpCapture {
 
         let filled = xsk_socket.fill_queue.fill(&self.pending_fill_addrs);
 
+        for addr in &self.pending_fill_addrs[..filled] {
+            self.kernel_owned_frames
+                .insert(self.umem.addr_to_frame(*addr as usize));
+        }
+
         // Free frames that couldn't be added to fill queue
         if filled < self.pending_fill_addrs.len() {
             for addr in &self.pending_fill_addrs[filled..] {
@@ -263,6 +271,7 @@ impl XdpCapture {
                 self.pending_fill_addrs.len() - filled
             );
         }
+        self.pending_fill_addrs.clear();
     }
 
     fn process_completions(&mut self) {
@@ -278,6 +287,7 @@ impl XdpCapture {
         if completed > 0 {
             for addr in &addrs[..completed] {
                 let frame_idx = self.umem.addr_to_frame(*addr as usize);
+                self.kernel_owned_frames.remove(&frame_idx);
                 self.umem.free_frame(frame_idx);
             }
             trace!("Completed {} frames", completed);
@@ -405,8 +415,18 @@ impl Capturer for XdpCapture {
         // Drop eBPF (detaches program)
         self.bpf = None;
 
-        // Drop XSK socket (closes fd and unmaps rings)
+        // Closing the XSK socket terminates kernel ownership of every address
+        // still submitted to the fill/RX rings. Reclaim exactly those frames;
+        // PacketBatch-owned frames were removed from this set in poll() and
+        // remain governed by PacketBatch::drop.
         self.xsk_socket = None;
+        let kernel_frames: Vec<usize> = self.kernel_owned_frames.drain().collect();
+        self.umem.free_frames(&kernel_frames);
+        self.pending_fill_addrs.clear();
+        debug!(
+            "Reclaimed {} kernel-owned UMEM frames during XDP stop",
+            kernel_frames.len()
+        );
 
         self.running = false;
         info!("XDP capture stopped");
@@ -470,6 +490,12 @@ impl Capturer for XdpCapture {
         let mut frames = Vec::with_capacity(received);
         for desc in &descs[..received] {
             let frame_idx = self.umem.addr_to_frame(desc.addr as usize);
+            if !self.kernel_owned_frames.remove(&frame_idx) {
+                warn!(
+                    "RX descriptor returned untracked UMEM frame {}; preserving batch ownership",
+                    frame_idx
+                );
+            }
             let offset = (desc.addr as usize) % self.umem.frame_size();
             frames.push(FrameInfo {
                 idx: frame_idx,

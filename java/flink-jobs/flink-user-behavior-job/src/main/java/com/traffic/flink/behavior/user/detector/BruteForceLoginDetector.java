@@ -48,7 +48,8 @@ public class BruteForceLoginDetector extends KeyedProcessFunction<String, UserEv
                 AnomalyEvent anomaly = new AnomalyEvent(
                     event.getTenantId(), event.getUserId(), event.getUsername(),
                     "BRUTE_FORCE", "critical", 0.95f,
-                    String.format("Brute force: %d failures before success from %s", count, event.getSourceIp()));
+                    String.format("Brute force: %d failures before success from %s", count, event.getSourceIp()),
+                    event.getTimestamp(), event.getEventId(), String.valueOf(firstTime));
                 anomaly.sourceIp1 = event.getSourceIp();
                 anomaly.detailJson = String.format("{\"failures\":%d,\"source_ip\":\"%s\",\"window_min\":10}", count, event.getSourceIp());
                 out.collect(anomaly);

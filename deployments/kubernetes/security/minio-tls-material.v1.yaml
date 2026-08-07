@@ -1,0 +1,76 @@
+# Expand-only MinIO TLS material template. Applying this file must not alter the
+# MinIO StatefulSet or any client. Certificate activation requires a separate,
+# approved all-consumer cutover bundle.
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: minio-server-tls
+  namespace: minio
+  annotations:
+    traffic.platform/production-applied: "false"
+    traffic.platform/cutover-ready: "false"
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: traffic-platform-secret-store
+    kind: ClusterSecretStore
+  target:
+    name: minio-server-tls
+    creationPolicy: Owner
+  data:
+  - secretKey: public.crt
+    remoteRef: {key: traffic-platform-prod-minio-tls, property: public_crt}
+  - secretKey: private.key
+    remoteRef: {key: traffic-platform-prod-minio-tls, property: private_key}
+  - secretKey: ca.crt
+    remoteRef: {key: traffic-platform-prod-minio-tls, property: ca_crt}
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: minio-client-ca
+  namespace: traffic-analysis
+  annotations:
+    traffic.platform/production-applied: "false"
+    traffic.platform/cutover-ready: "false"
+spec:
+  refreshInterval: 1h
+  secretStoreRef: {name: traffic-platform-secret-store, kind: ClusterSecretStore}
+  target: {name: minio-client-ca, creationPolicy: Owner}
+  data:
+  - secretKey: ca.crt
+    remoteRef: {key: traffic-platform-prod-minio-tls, property: ca_crt}
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: minio-client-ca
+  namespace: flink
+  annotations:
+    traffic.platform/production-applied: "false"
+    traffic.platform/cutover-ready: "false"
+spec:
+  refreshInterval: 1h
+  secretStoreRef: {name: traffic-platform-secret-store, kind: ClusterSecretStore}
+  target: {name: minio-client-ca, creationPolicy: Owner}
+  data:
+  - secretKey: ca.crt
+    remoteRef: {key: traffic-platform-prod-minio-tls, property: ca_crt}
+  - secretKey: truststore.p12
+    remoteRef: {key: traffic-platform-prod-minio-tls, property: truststore_p12}
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: minio-client-ca
+  namespace: argo
+  annotations:
+    traffic.platform/production-applied: "false"
+    traffic.platform/cutover-ready: "false"
+spec:
+  refreshInterval: 1h
+  secretStoreRef: {name: traffic-platform-secret-store, kind: ClusterSecretStore}
+  target: {name: minio-client-ca, creationPolicy: Owner}
+  data:
+  - secretKey: ca.crt
+    remoteRef: {key: traffic-platform-prod-minio-tls, property: ca_crt}

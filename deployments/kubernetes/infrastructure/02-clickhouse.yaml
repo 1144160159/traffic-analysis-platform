@@ -82,6 +82,46 @@ data:
       <mark_cache_size>1073741824</mark_cache_size>
       <uncompressed_cache_size>536870912</uncompressed_cache_size>
     </clickhouse>
+  prometheus.xml: |
+    <clickhouse>
+      <prometheus>
+        <endpoint>/metrics</endpoint>
+        <port>9363</port>
+        <metrics>true</metrics>
+        <asynchronous_metrics>true</asynchronous_metrics>
+        <events>true</events>
+        <errors>true</errors>
+      </prometheus>
+    </clickhouse>
+  users-governance.xml: |
+    <clickhouse>
+      <!-- Candidate profile only. Bind per-service users after credential and TLS rollout. -->
+      <profiles>
+        <traffic_runtime>
+          <max_memory_usage>8589934592</max_memory_usage>
+          <max_memory_usage_for_user>12884901888</max_memory_usage_for_user>
+          <max_threads>8</max_threads>
+          <max_execution_time>120</max_execution_time>
+          <max_bytes_to_read>1099511627776</max_bytes_to_read>
+          <max_distributed_connections>64</max_distributed_connections>
+          <max_distributed_depth>2</max_distributed_depth>
+          <skip_unavailable_shards>0</skip_unavailable_shards>
+          <fallback_to_stale_replicas_for_distributed_queries>0</fallback_to_stale_replicas_for_distributed_queries>
+        </traffic_runtime>
+      </profiles>
+      <quotas>
+        <traffic_runtime>
+          <interval>
+            <duration>3600</duration>
+            <queries>100000</queries>
+            <errors>10000</errors>
+            <result_rows>0</result_rows>
+            <read_rows>0</read_rows>
+            <execution_time>0</execution_time>
+          </interval>
+        </traffic_runtime>
+      </quotas>
+    </clickhouse>
 
 ---
 apiVersion: v1
@@ -125,6 +165,10 @@ data:
           </server>
         </raft_configuration>
       </keeper_server>
+      <prometheus>
+        <endpoint>/metrics</endpoint>
+        <port>9363</port>
+      </prometheus>
     </clickhouse>
 
 # =============================================================================
@@ -149,6 +193,10 @@ spec:
     port: 9444
     protocol: TCP
     targetPort: 9444
+  - name: metrics
+    port: 9363
+    protocol: TCP
+    targetPort: 9363
   selector:
     app: clickhouse-keeper
   type: ClusterIP
@@ -168,6 +216,10 @@ spec:
   serviceName: clickhouse-keeper-headless
   template:
     metadata:
+      annotations:
+        prometheus.io/path: /metrics
+        prometheus.io/port: "9363"
+        prometheus.io/scrape: "true"
       labels:
         app: clickhouse-keeper
     spec:
@@ -216,6 +268,9 @@ spec:
           protocol: TCP
         - containerPort: 9444
           name: raft
+          protocol: TCP
+        - containerPort: 9363
+          name: metrics
           protocol: TCP
         resources:
           limits:
@@ -277,6 +332,10 @@ spec:
   serviceName: clickhouse-1
   template:
     metadata:
+      annotations:
+        prometheus.io/path: /metrics
+        prometheus.io/port: "9363"
+        prometheus.io/scrape: "true"
       labels:
         app: clickhouse
         instance: ch-1
@@ -289,6 +348,7 @@ spec:
         - |
           sed "s|__CLICKHOUSE_PASSWORD__|${CLICKHOUSE_PASSWORD}|g" /config-src/cluster.xml > /ch-config/cluster.xml
           cp /config-src/resource-limits.xml /ch-config/resource-limits.xml
+          cp /config-src/prometheus.xml /ch-config/prometheus.xml
           cat > /ch-config/docker_related_config.xml << XEOF
           <clickhouse>
             <listen_host>::</listen_host>
@@ -349,6 +409,9 @@ spec:
         - containerPort: 9000
           name: native
           protocol: TCP
+        - containerPort: 9363
+          name: metrics
+          protocol: TCP
         readinessProbe:
           failureThreshold: 3
           httpGet:
@@ -371,6 +434,10 @@ spec:
           name: data
         - mountPath: /etc/clickhouse-server/config.d
           name: ch-config
+        - mountPath: /etc/clickhouse-server/users.d/traffic-runtime.xml
+          name: config
+          readOnly: true
+          subPath: users-governance.xml
       dnsPolicy: ClusterFirst
       nodeSelector:
         kubernetes.io/hostname: 8-2tb
@@ -433,6 +500,10 @@ spec:
   serviceName: clickhouse-2
   template:
     metadata:
+      annotations:
+        prometheus.io/path: /metrics
+        prometheus.io/port: "9363"
+        prometheus.io/scrape: "true"
       labels:
         app: clickhouse
         instance: ch-2
@@ -445,6 +516,7 @@ spec:
         - |
           sed "s|__CLICKHOUSE_PASSWORD__|${CLICKHOUSE_PASSWORD}|g" /config-src/cluster.xml > /ch-config/cluster.xml
           cp /config-src/resource-limits.xml /ch-config/resource-limits.xml
+          cp /config-src/prometheus.xml /ch-config/prometheus.xml
           cat > /ch-config/docker_related_config.xml << XEOF
           <clickhouse>
             <listen_host>::</listen_host>
@@ -505,6 +577,9 @@ spec:
         - containerPort: 9000
           name: native
           protocol: TCP
+        - containerPort: 9363
+          name: metrics
+          protocol: TCP
         readinessProbe:
           failureThreshold: 3
           httpGet:
@@ -527,6 +602,10 @@ spec:
           name: data
         - mountPath: /etc/clickhouse-server/config.d
           name: ch-config
+        - mountPath: /etc/clickhouse-server/users.d/traffic-runtime.xml
+          name: config
+          readOnly: true
+          subPath: users-governance.xml
       dnsPolicy: ClusterFirst
       nodeSelector:
         kubernetes.io/hostname: zeus-server
@@ -590,6 +669,10 @@ spec:
     port: 9009
     protocol: TCP
     targetPort: 9009
+  - name: metrics
+    port: 9363
+    protocol: TCP
+    targetPort: 9363
   selector:
     app: clickhouse
     role: replica
@@ -615,6 +698,10 @@ spec:
   serviceName: clickhouse-replica
   template:
     metadata:
+      annotations:
+        prometheus.io/path: /metrics
+        prometheus.io/port: "9363"
+        prometheus.io/scrape: "true"
       labels:
         app: clickhouse
         role: replica
@@ -629,6 +716,7 @@ spec:
           if [ "$REPLICA_ID" = "2" ]; then SHARD_ID=2; fi
           sed "s|__CLICKHOUSE_PASSWORD__|${CLICKHOUSE_PASSWORD}|g" /config-src/cluster.xml > /ch-config/cluster.xml
           cp /config-src/resource-limits.xml /ch-config/resource-limits.xml
+          cp /config-src/prometheus.xml /ch-config/prometheus.xml
           cat > /ch-config/docker_related_config.xml << XEOF
           <clickhouse>
             <listen_host>::</listen_host>
@@ -689,6 +777,9 @@ spec:
         - containerPort: 9000
           name: native
           protocol: TCP
+        - containerPort: 9363
+          name: metrics
+          protocol: TCP
         readinessProbe:
           failureThreshold: 3
           httpGet:
@@ -711,6 +802,10 @@ spec:
           name: data
         - mountPath: /etc/clickhouse-server/config.d
           name: ch-config
+        - mountPath: /etc/clickhouse-server/users.d/traffic-runtime.xml
+          name: config
+          readOnly: true
+          subPath: users-governance.xml
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       schedulerName: default-scheduler
@@ -771,6 +866,10 @@ spec:
     port: 9000
     protocol: TCP
     targetPort: 9000
+  - name: metrics
+    port: 9363
+    protocol: TCP
+    targetPort: 9363
   selector:
     app: clickhouse
     shard: "1"
@@ -797,6 +896,10 @@ spec:
     port: 9000
     protocol: TCP
     targetPort: 9000
+  - name: metrics
+    port: 9363
+    protocol: TCP
+    targetPort: 9363
   selector:
     app: clickhouse
     shard: "2"
@@ -825,6 +928,10 @@ spec:
     port: 9009
     protocol: TCP
     targetPort: 9009
+  - name: metrics
+    port: 9363
+    protocol: TCP
+    targetPort: 9363
   - name: keeper
     port: 9181
     protocol: TCP

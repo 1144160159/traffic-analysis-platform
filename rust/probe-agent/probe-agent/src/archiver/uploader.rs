@@ -41,6 +41,7 @@ pub struct UploaderConfig {
     pub s3_endpoint: String,
     pub s3_access_key: String,
     pub s3_secret_key: String,
+    pub s3_ca_cert: Option<String>,
     pub max_concurrent: usize,
     pub zstd_level: i32,
     pub gateway_addr: Option<String>,
@@ -59,6 +60,7 @@ impl Default for UploaderConfig {
             s3_endpoint: "http://10.0.5.8:9002".to_string(),
             s3_access_key: std::env::var("PROBE_S3_ACCESS_KEY").unwrap_or_default(),
             s3_secret_key: std::env::var("PROBE_S3_SECRET_KEY").unwrap_or_default(),
+            s3_ca_cert: None,
             max_concurrent: 4,
             zstd_level: 3,
             gateway_addr: None,
@@ -79,6 +81,7 @@ impl From<&ArchiverConfig> for UploaderConfig {
             s3_endpoint: config.s3_endpoint.clone(),
             s3_access_key: config.s3_access_key.clone(),
             s3_secret_key: config.s3_secret_key.clone(),
+            s3_ca_cert: config.s3_ca_cert.clone(),
             max_concurrent: config.max_concurrent_uploads,
             zstd_level: config.zstd_level,
             gateway_addr: None,
@@ -268,6 +271,7 @@ pub struct Uploader {
 
 impl Uploader {
     pub fn new(config: UploaderConfig) -> Result<Self> {
+        configure_s3_transport(&config)?;
         let credentials = Credentials::new(
             Some(&config.s3_access_key),
             Some(&config.s3_secret_key),
@@ -457,16 +461,22 @@ impl Uploader {
 
         tokio::fs::write(&local_path, &compressed).await?;
 
-        let task_id = self.journal.record_pending(&task, &local_path)?;
-
-        info!(
-            "Recorded pending upload: task_id={}, local_path={}",
-            task_id, local_path
-        );
-
         let mut hasher = Sha256::new();
         hasher.update(&compressed);
         let sha256 = format!("{:x}", hasher.finalize());
+
+        let task_id = self.journal.record_pending(
+            &task,
+            &local_path,
+            original_size,
+            compressed_size,
+            &sha256,
+        )?;
+
+        info!(
+            "Recorded pending upload with complete manifest: task_id={}, local_path={}",
+            task_id, local_path
+        );
 
         let key = Self::generate_key(&task);
 
@@ -513,12 +523,13 @@ impl Uploader {
             duration_ms,
         };
 
+        let mut metadata_synced = false;
         for round in 0..MAX_METADATA_UPLOAD_ROUNDS {
             match self.upload_metadata(&key, &task, &upload_result).await {
                 Ok(()) => {
                     self.journal.mark_metadata_synced(&task_id)?;
                     info!("Metadata synced: key={}", key);
-
+                    metadata_synced = true;
                     break;
                 }
                 Err(e) => {
@@ -546,6 +557,12 @@ impl Uploader {
                 }
             }
         }
+        if !metadata_synced {
+            bail!(
+                "PCAP object uploaded but metadata was not durably acknowledged; journal and local evidence retained for task {}",
+                task_id
+            );
+        }
 
         info!(
             "Upload completed: key={}, size={}KB, duration={}ms",
@@ -570,8 +587,11 @@ impl Uploader {
         let raw_path = local_path.replace(".pcap.zst", ".pcap.raw");
         tokio::fs::write(&raw_path, &task.data).await?;
 
-        let _task_id = uuid::Uuid::new_v4().to_string();
-        self.journal.record_pending(task, &raw_path)?;
+        let mut hasher = Sha256::new();
+        hasher.update(&task.data);
+        let sha256 = format!("{:x}", hasher.finalize());
+        self.journal
+            .record_pending(task, &raw_path, task.data.len(), task.data.len(), &sha256)?;
 
         error!(
             "CRITICAL: Uncompressed PCAP saved: path={}, size={} MB. Manual intervention required!",
@@ -632,6 +652,13 @@ impl Uploader {
             info!("Recovering metadata sync: task_id={}", task_id);
 
             if let Some(s3_key) = &entry.s3_key {
+                if !entry.has_complete_manifest() {
+                    let message =
+                        "legacy journal entry has no size/hash manifest; refusing metadata ACK";
+                    self.journal.update_retry(&task_id, message)?;
+                    error!("{}: task_id={}", message, task_id);
+                    continue;
+                }
                 let task = UploadTask {
                     data: vec![],
                     ts_start: entry.ts_start,
@@ -643,9 +670,9 @@ impl Uploader {
 
                 let result = UploadResult {
                     key: s3_key.clone(),
-                    original_size: 0,
-                    compressed_size: 0,
-                    sha256: String::new(),
+                    original_size: entry.original_size,
+                    compressed_size: entry.compressed_size,
+                    sha256: entry.sha256.clone(),
                     duration_ms: 0,
                 };
 
@@ -697,8 +724,7 @@ impl Uploader {
         let client = match &self.grpc_client {
             Some(c) => c.clone(),
             None => {
-                debug!("gRPC client not initialized, skipping metadata upload");
-                return Ok(());
+                bail!("gRPC metadata client is not initialized");
             }
         };
 
@@ -1087,6 +1113,43 @@ impl Uploader {
     }
 }
 
+fn configure_s3_transport(config: &UploaderConfig) -> Result<()> {
+    let endpoint = config.s3_endpoint.trim();
+    let ca_file = config
+        .s3_ca_cert
+        .as_deref()
+        .map(str::trim)
+        .filter(|value| !value.is_empty());
+
+    if endpoint.starts_with("https://") {
+        let ca_file = ca_file.context("HTTPS S3 endpoint requires archiver.s3_ca_cert")?;
+        let pem = std::fs::read_to_string(ca_file)
+            .with_context(|| format!("failed to read S3 CA certificate {ca_file}"))?;
+        if !pem.contains("-----BEGIN CERTIFICATE-----")
+            || !pem.contains("-----END CERTIFICATE-----")
+        {
+            bail!("S3 CA certificate does not contain a PEM certificate");
+        }
+        if let Ok(existing) = std::env::var("SSL_CERT_FILE") {
+            if !existing.trim().is_empty() && existing != ca_file {
+                bail!(
+                    "SSL_CERT_FILE is already set to a different path; refusing to replace process trust roots"
+                );
+            }
+        }
+        // rust-s3 0.33 constructs its reqwest/native-tls client internally and
+        // exposes no custom client builder. OpenSSL reads SSL_CERT_FILE when
+        // that client is built; set it once during single-threaded startup.
+        std::env::set_var("SSL_CERT_FILE", ca_file);
+        return Ok(());
+    }
+
+    if ca_file.is_some() {
+        bail!("archiver.s3_ca_cert cannot be configured for a non-HTTPS S3 endpoint");
+    }
+    Ok(())
+}
+
 fn complete_part_from_upload(part_number: u32, part: Part) -> Part {
     Part {
         // MinIO returns quoted ETags. Preserve the exact value for
@@ -1099,7 +1162,7 @@ fn complete_part_from_upload(part_number: u32, part: Part) -> Part {
 
 #[cfg(test)]
 mod tests {
-    use super::complete_part_from_upload;
+    use super::{complete_part_from_upload, configure_s3_transport, UploaderConfig};
     use s3::serde_types::Part;
 
     #[test]
@@ -1114,6 +1177,28 @@ mod tests {
         assert_eq!(part.part_number, 3);
         assert_eq!(part.etag, "\"abc123\"");
         assert!(!part.etag.contains("<Part>"));
+    }
+
+    #[test]
+    fn https_s3_requires_private_ca() {
+        let config = UploaderConfig {
+            s3_endpoint: "https://minio.minio.svc:9000".to_string(),
+            s3_ca_cert: None,
+            ..UploaderConfig::default()
+        };
+        let error = configure_s3_transport(&config).expect_err("HTTPS without CA must fail");
+        assert!(error.to_string().contains("requires archiver.s3_ca_cert"));
+    }
+
+    #[test]
+    fn plaintext_s3_rejects_ca_configuration() {
+        let config = UploaderConfig {
+            s3_endpoint: "http://minio.minio.svc:9000".to_string(),
+            s3_ca_cert: Some("/etc/minio/ca.crt".to_string()),
+            ..UploaderConfig::default()
+        };
+        let error = configure_s3_transport(&config).expect_err("plaintext plus CA must fail");
+        assert!(error.to_string().contains("non-HTTPS"));
     }
 }
 

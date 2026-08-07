@@ -9,13 +9,28 @@ data:
     {
       "Rules": [
         {
-          "ID": "expire-pcap-archive-after-14-days",
+          "ID": "expire-pcap-archive-after-37-days",
           "Status": "Enabled",
           "Filter": {
             "Prefix": ""
           },
           "Expiration": {
-            "Days": 14
+            "Days": 37
+          }
+        }
+      ]
+    }
+  report-artifacts-lifecycle.json: |
+    {
+      "Rules": [
+        {
+          "ID": "expire-report-artifacts-after-90-days",
+          "Status": "Enabled",
+          "Filter": {
+            "Prefix": ""
+          },
+          "Expiration": {
+            "Days": 90
           }
         }
       ]
@@ -52,10 +67,22 @@ spec:
           set -eu
           mc alias set local http://minio.minio.svc:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
           mc mb --ignore-existing local/pcap-archive
+          mc mb --ignore-existing local/report-artifacts
           # Flink owns checkpoint cleanup; do not attach the PCAP expiry policy.
           mc mb --ignore-existing local/flink-checkpoints
+          # Bucket creation is bootstrap-owned. Runtime model and Argo credentials
+          # must fail closed when these governed buckets are absent.
+          mc mb --ignore-existing local/traffic-models
+          mc mb --ignore-existing local/argo-artifacts
           mc ilm rule import local/pcap-archive < /policies/pcap-archive-lifecycle.json
+          mc ilm rule import local/report-artifacts < /policies/report-artifacts-lifecycle.json
           mc ilm rule ls local/pcap-archive
+          mc ilm rule ls local/report-artifacts
+          mc stat local/pcap-archive
+          mc stat local/report-artifacts
+          mc stat local/flink-checkpoints
+          mc stat local/traffic-models
+          mc stat local/argo-artifacts
         resources:
           requests:
             cpu: 50m
@@ -109,6 +136,7 @@ spec:
               set -eu
               mc alias set local http://minio.minio.svc:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
               mc rm --incomplete --recursive --force --older-than 24h local/pcap-archive/
+              mc rm --incomplete --recursive --force --older-than 24h local/report-artifacts/
             resources:
               requests:
                 cpu: 50m

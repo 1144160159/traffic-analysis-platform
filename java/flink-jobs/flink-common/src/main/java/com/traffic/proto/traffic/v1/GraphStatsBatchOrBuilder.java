@@ -11,7 +11,7 @@ public interface GraphStatsBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.GraphCacheStats cache_stats = 1 [json_name = "cacheStats"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.GraphCacheStats> 
+  java.util.List<com.traffic.proto.traffic.v1.GraphCacheStats>
       getCacheStatsList();
   /**
    * <code>repeated .traffic.v1.GraphCacheStats cache_stats = 1 [json_name = "cacheStats"];</code>
@@ -24,7 +24,7 @@ public interface GraphStatsBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.GraphCacheStats cache_stats = 1 [json_name = "cacheStats"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.GraphCacheStatsOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.GraphCacheStatsOrBuilder>
       getCacheStatsOrBuilderList();
   /**
    * <code>repeated .traffic.v1.GraphCacheStats cache_stats = 1 [json_name = "cacheStats"];</code>
@@ -35,7 +35,7 @@ public interface GraphStatsBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.GraphHotIP hot_ips = 2 [json_name = "hotIps"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.GraphHotIP> 
+  java.util.List<com.traffic.proto.traffic.v1.GraphHotIP>
       getHotIpsList();
   /**
    * <code>repeated .traffic.v1.GraphHotIP hot_ips = 2 [json_name = "hotIps"];</code>
@@ -48,7 +48,7 @@ public interface GraphStatsBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.GraphHotIP hot_ips = 2 [json_name = "hotIps"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.GraphHotIPOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.GraphHotIPOrBuilder>
       getHotIpsOrBuilderList();
   /**
    * <code>repeated .traffic.v1.GraphHotIP hot_ips = 2 [json_name = "hotIps"];</code>
@@ -59,7 +59,7 @@ public interface GraphStatsBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.GraphSlowQuery slow_queries = 3 [json_name = "slowQueries"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.GraphSlowQuery> 
+  java.util.List<com.traffic.proto.traffic.v1.GraphSlowQuery>
       getSlowQueriesList();
   /**
    * <code>repeated .traffic.v1.GraphSlowQuery slow_queries = 3 [json_name = "slowQueries"];</code>
@@ -72,7 +72,7 @@ public interface GraphStatsBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.GraphSlowQuery slow_queries = 3 [json_name = "slowQueries"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.GraphSlowQueryOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.GraphSlowQueryOrBuilder>
       getSlowQueriesOrBuilderList();
   /**
    * <code>repeated .traffic.v1.GraphSlowQuery slow_queries = 3 [json_name = "slowQueries"];</code>
@@ -83,7 +83,7 @@ public interface GraphStatsBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.GraphIPAffinity ip_affinities = 4 [json_name = "ipAffinities"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.GraphIPAffinity> 
+  java.util.List<com.traffic.proto.traffic.v1.GraphIPAffinity>
       getIpAffinitiesList();
   /**
    * <code>repeated .traffic.v1.GraphIPAffinity ip_affinities = 4 [json_name = "ipAffinities"];</code>
@@ -96,7 +96,7 @@ public interface GraphStatsBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.GraphIPAffinity ip_affinities = 4 [json_name = "ipAffinities"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.GraphIPAffinityOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.GraphIPAffinityOrBuilder>
       getIpAffinitiesOrBuilderList();
   /**
    * <code>repeated .traffic.v1.GraphIPAffinity ip_affinities = 4 [json_name = "ipAffinities"];</code>

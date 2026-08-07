@@ -63,7 +63,7 @@ private static final long serialVersionUID = 0L;
    * <code>repeated .traffic.v1.GraphCacheStats cache_stats = 1 [json_name = "cacheStats"];</code>
    */
   @java.lang.Override
-  public java.util.List<? extends com.traffic.proto.traffic.v1.GraphCacheStatsOrBuilder> 
+  public java.util.List<? extends com.traffic.proto.traffic.v1.GraphCacheStatsOrBuilder>
       getCacheStatsOrBuilderList() {
     return cacheStats_;
   }
@@ -104,7 +104,7 @@ private static final long serialVersionUID = 0L;
    * <code>repeated .traffic.v1.GraphHotIP hot_ips = 2 [json_name = "hotIps"];</code>
    */
   @java.lang.Override
-  public java.util.List<? extends com.traffic.proto.traffic.v1.GraphHotIPOrBuilder> 
+  public java.util.List<? extends com.traffic.proto.traffic.v1.GraphHotIPOrBuilder>
       getHotIpsOrBuilderList() {
     return hotIps_;
   }
@@ -145,7 +145,7 @@ private static final long serialVersionUID = 0L;
    * <code>repeated .traffic.v1.GraphSlowQuery slow_queries = 3 [json_name = "slowQueries"];</code>
    */
   @java.lang.Override
-  public java.util.List<? extends com.traffic.proto.traffic.v1.GraphSlowQueryOrBuilder> 
+  public java.util.List<? extends com.traffic.proto.traffic.v1.GraphSlowQueryOrBuilder>
       getSlowQueriesOrBuilderList() {
     return slowQueries_;
   }
@@ -186,7 +186,7 @@ private static final long serialVersionUID = 0L;
    * <code>repeated .traffic.v1.GraphIPAffinity ip_affinities = 4 [json_name = "ipAffinities"];</code>
    */
   @java.lang.Override
-  public java.util.List<? extends com.traffic.proto.traffic.v1.GraphIPAffinityOrBuilder> 
+  public java.util.List<? extends com.traffic.proto.traffic.v1.GraphIPAffinityOrBuilder>
       getIpAffinitiesOrBuilderList() {
     return ipAffinities_;
   }
@@ -226,7 +226,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       batchId_ = s;
@@ -242,7 +242,7 @@ private static final long serialVersionUID = 0L;
       getBatchIdBytes() {
     java.lang.Object ref = batchId_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       batchId_ = b;
@@ -265,7 +265,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       tenantId_ = s;
@@ -281,7 +281,7 @@ private static final long serialVersionUID = 0L;
       getTenantIdBytes() {
     java.lang.Object ref = tenantId_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       tenantId_ = b;
@@ -747,7 +747,7 @@ private static final long serialVersionUID = 0L;
             cacheStatsBuilder_ = null;
             cacheStats_ = other.cacheStats_;
             bitField0_ = (bitField0_ & ~0x00000001);
-            cacheStatsBuilder_ = 
+            cacheStatsBuilder_ =
               com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                  getCacheStatsFieldBuilder() : null;
           } else {
@@ -773,7 +773,7 @@ private static final long serialVersionUID = 0L;
             hotIpsBuilder_ = null;
             hotIps_ = other.hotIps_;
             bitField0_ = (bitField0_ & ~0x00000002);
-            hotIpsBuilder_ = 
+            hotIpsBuilder_ =
               com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                  getHotIpsFieldBuilder() : null;
           } else {
@@ -799,7 +799,7 @@ private static final long serialVersionUID = 0L;
             slowQueriesBuilder_ = null;
             slowQueries_ = other.slowQueries_;
             bitField0_ = (bitField0_ & ~0x00000004);
-            slowQueriesBuilder_ = 
+            slowQueriesBuilder_ =
               com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                  getSlowQueriesFieldBuilder() : null;
           } else {
@@ -825,7 +825,7 @@ private static final long serialVersionUID = 0L;
             ipAffinitiesBuilder_ = null;
             ipAffinities_ = other.ipAffinities_;
             bitField0_ = (bitField0_ & ~0x00000008);
-            ipAffinitiesBuilder_ = 
+            ipAffinitiesBuilder_ =
               com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                  getIpAffinitiesFieldBuilder() : null;
           } else {
@@ -1151,7 +1151,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.GraphCacheStats cache_stats = 1 [json_name = "cacheStats"];</code>
      */
-    public java.util.List<? extends com.traffic.proto.traffic.v1.GraphCacheStatsOrBuilder> 
+    public java.util.List<? extends com.traffic.proto.traffic.v1.GraphCacheStatsOrBuilder>
          getCacheStatsOrBuilderList() {
       if (cacheStatsBuilder_ != null) {
         return cacheStatsBuilder_.getMessageOrBuilderList();
@@ -1177,12 +1177,12 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.GraphCacheStats cache_stats = 1 [json_name = "cacheStats"];</code>
      */
-    public java.util.List<com.traffic.proto.traffic.v1.GraphCacheStats.Builder> 
+    public java.util.List<com.traffic.proto.traffic.v1.GraphCacheStats.Builder>
          getCacheStatsBuilderList() {
       return getCacheStatsFieldBuilder().getBuilderList();
     }
     private com.google.protobuf.RepeatedFieldBuilderV3<
-        com.traffic.proto.traffic.v1.GraphCacheStats, com.traffic.proto.traffic.v1.GraphCacheStats.Builder, com.traffic.proto.traffic.v1.GraphCacheStatsOrBuilder> 
+        com.traffic.proto.traffic.v1.GraphCacheStats, com.traffic.proto.traffic.v1.GraphCacheStats.Builder, com.traffic.proto.traffic.v1.GraphCacheStatsOrBuilder>
         getCacheStatsFieldBuilder() {
       if (cacheStatsBuilder_ == null) {
         cacheStatsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
@@ -1391,7 +1391,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.GraphHotIP hot_ips = 2 [json_name = "hotIps"];</code>
      */
-    public java.util.List<? extends com.traffic.proto.traffic.v1.GraphHotIPOrBuilder> 
+    public java.util.List<? extends com.traffic.proto.traffic.v1.GraphHotIPOrBuilder>
          getHotIpsOrBuilderList() {
       if (hotIpsBuilder_ != null) {
         return hotIpsBuilder_.getMessageOrBuilderList();
@@ -1417,12 +1417,12 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.GraphHotIP hot_ips = 2 [json_name = "hotIps"];</code>
      */
-    public java.util.List<com.traffic.proto.traffic.v1.GraphHotIP.Builder> 
+    public java.util.List<com.traffic.proto.traffic.v1.GraphHotIP.Builder>
          getHotIpsBuilderList() {
       return getHotIpsFieldBuilder().getBuilderList();
     }
     private com.google.protobuf.RepeatedFieldBuilderV3<
-        com.traffic.proto.traffic.v1.GraphHotIP, com.traffic.proto.traffic.v1.GraphHotIP.Builder, com.traffic.proto.traffic.v1.GraphHotIPOrBuilder> 
+        com.traffic.proto.traffic.v1.GraphHotIP, com.traffic.proto.traffic.v1.GraphHotIP.Builder, com.traffic.proto.traffic.v1.GraphHotIPOrBuilder>
         getHotIpsFieldBuilder() {
       if (hotIpsBuilder_ == null) {
         hotIpsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
@@ -1631,7 +1631,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.GraphSlowQuery slow_queries = 3 [json_name = "slowQueries"];</code>
      */
-    public java.util.List<? extends com.traffic.proto.traffic.v1.GraphSlowQueryOrBuilder> 
+    public java.util.List<? extends com.traffic.proto.traffic.v1.GraphSlowQueryOrBuilder>
          getSlowQueriesOrBuilderList() {
       if (slowQueriesBuilder_ != null) {
         return slowQueriesBuilder_.getMessageOrBuilderList();
@@ -1657,12 +1657,12 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.GraphSlowQuery slow_queries = 3 [json_name = "slowQueries"];</code>
      */
-    public java.util.List<com.traffic.proto.traffic.v1.GraphSlowQuery.Builder> 
+    public java.util.List<com.traffic.proto.traffic.v1.GraphSlowQuery.Builder>
          getSlowQueriesBuilderList() {
       return getSlowQueriesFieldBuilder().getBuilderList();
     }
     private com.google.protobuf.RepeatedFieldBuilderV3<
-        com.traffic.proto.traffic.v1.GraphSlowQuery, com.traffic.proto.traffic.v1.GraphSlowQuery.Builder, com.traffic.proto.traffic.v1.GraphSlowQueryOrBuilder> 
+        com.traffic.proto.traffic.v1.GraphSlowQuery, com.traffic.proto.traffic.v1.GraphSlowQuery.Builder, com.traffic.proto.traffic.v1.GraphSlowQueryOrBuilder>
         getSlowQueriesFieldBuilder() {
       if (slowQueriesBuilder_ == null) {
         slowQueriesBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
@@ -1871,7 +1871,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.GraphIPAffinity ip_affinities = 4 [json_name = "ipAffinities"];</code>
      */
-    public java.util.List<? extends com.traffic.proto.traffic.v1.GraphIPAffinityOrBuilder> 
+    public java.util.List<? extends com.traffic.proto.traffic.v1.GraphIPAffinityOrBuilder>
          getIpAffinitiesOrBuilderList() {
       if (ipAffinitiesBuilder_ != null) {
         return ipAffinitiesBuilder_.getMessageOrBuilderList();
@@ -1897,12 +1897,12 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.GraphIPAffinity ip_affinities = 4 [json_name = "ipAffinities"];</code>
      */
-    public java.util.List<com.traffic.proto.traffic.v1.GraphIPAffinity.Builder> 
+    public java.util.List<com.traffic.proto.traffic.v1.GraphIPAffinity.Builder>
          getIpAffinitiesBuilderList() {
       return getIpAffinitiesFieldBuilder().getBuilderList();
     }
     private com.google.protobuf.RepeatedFieldBuilderV3<
-        com.traffic.proto.traffic.v1.GraphIPAffinity, com.traffic.proto.traffic.v1.GraphIPAffinity.Builder, com.traffic.proto.traffic.v1.GraphIPAffinityOrBuilder> 
+        com.traffic.proto.traffic.v1.GraphIPAffinity, com.traffic.proto.traffic.v1.GraphIPAffinity.Builder, com.traffic.proto.traffic.v1.GraphIPAffinityOrBuilder>
         getIpAffinitiesFieldBuilder() {
       if (ipAffinitiesBuilder_ == null) {
         ipAffinitiesBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
@@ -1941,7 +1941,7 @@ private static final long serialVersionUID = 0L;
         getBatchIdBytes() {
       java.lang.Object ref = batchId_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         batchId_ = b;
@@ -2013,7 +2013,7 @@ private static final long serialVersionUID = 0L;
         getTenantIdBytes() {
       java.lang.Object ref = tenantId_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         tenantId_ = b;

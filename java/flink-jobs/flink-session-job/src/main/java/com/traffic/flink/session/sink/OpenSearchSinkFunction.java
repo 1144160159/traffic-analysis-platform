@@ -3,8 +3,13 @@ package com.traffic.flink.session.sink;
 import com.traffic.proto.traffic.v1.SessionEvent;
 
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.api.common.state.ListState;
+import org.apache.flink.api.common.state.ListStateDescriptor;
 import org.apache.flink.metrics.Counter;
 import org.apache.flink.metrics.MetricGroup;
+import org.apache.flink.runtime.state.FunctionInitializationContext;
+import org.apache.flink.runtime.state.FunctionSnapshotContext;
+import org.apache.flink.streaming.api.checkpoint.CheckpointedFunction;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 
 import org.apache.http.HttpHost;
@@ -37,10 +42,11 @@ import java.util.Map;
  * 核心功能：
  * 1. 批量写入 OpenSearch（Bulk API）
  * 2. 幂等写入（使用 event_id 作为文档 ID）
- * 3. 写入失败时记录 Metrics，不阻塞主流
+ * 3. 任一 bulk item 失败时使 task 失败，由 checkpoint 重放；event_id 保证幂等
  * 4. 索引字段精简（只索引用于检索的关键字段）
  */
-public class OpenSearchSinkFunction extends RichSinkFunction<SessionEvent> {
+public class OpenSearchSinkFunction extends RichSinkFunction<SessionEvent>
+        implements CheckpointedFunction {
 
     private static final long serialVersionUID = 1L;
     private static final Logger LOG = LoggerFactory.getLogger(OpenSearchSinkFunction.class);
@@ -58,6 +64,7 @@ public class OpenSearchSinkFunction extends RichSinkFunction<SessionEvent> {
     // ==================== 运行时资源 ====================
     private transient RestHighLevelClient client;
     private transient List<SessionEvent> buffer;
+    private transient ListState<SessionEvent> pendingState;
     private transient long lastFlushTime;
 
     // ==================== Metrics ====================
@@ -118,7 +125,9 @@ public class OpenSearchSinkFunction extends RichSinkFunction<SessionEvent> {
         );
 
         this.client = new RestHighLevelClient(builder);
-        this.buffer = new ArrayList<>();
+        if (this.buffer == null) {
+            this.buffer = new ArrayList<>();
+        }
         this.lastFlushTime = System.currentTimeMillis();
 
         // 初始化 Metrics
@@ -166,64 +175,104 @@ public class OpenSearchSinkFunction extends RichSinkFunction<SessionEvent> {
         }
     }
 
+    @Override
+    public void snapshotState(FunctionSnapshotContext context) throws Exception {
+        // A checkpoint cannot commit source offsets while OpenSearch still has
+        // unacknowledged documents. Deterministic event_id makes replay safe.
+        flushBuffer();
+        pendingState.clear();
+        for (SessionEvent session : buffer) {
+            pendingState.add(session);
+        }
+    }
+
+    @Override
+    public void initializeState(FunctionInitializationContext context) throws Exception {
+        pendingState = context.getOperatorStateStore().getListState(
+                new ListStateDescriptor<>("opensearch-session-pending-v1", SessionEvent.class));
+        buffer = new ArrayList<>();
+        if (context.isRestored()) {
+            for (SessionEvent session : pendingState.get()) {
+                buffer.add(session);
+            }
+        }
+    }
+
     /**
      * Flush 缓冲区到 OpenSearch
      */
-    private void flushBuffer() {
+    private void flushBuffer() throws Exception {
         if (buffer.isEmpty()) {
             return;
         }
 
         List<SessionEvent> toFlush = new ArrayList<>(buffer);
-        buffer.clear();
         lastFlushTime = System.currentTimeMillis();
 
-        try {
-            BulkRequest bulkRequest = new BulkRequest();
+        BulkRequest bulkRequest = new BulkRequest();
 
-            for (SessionEvent session : toFlush) {
-                Map<String, Object> document = buildDocument(session);
-                String docId = session.getHeader().getEventId();
+        for (SessionEvent session : toFlush) {
+            Map<String, Object> document = buildDocument(session);
+            String docId = session.getHeader().getEventId();
 
-                IndexRequest indexRequest = new IndexRequest(indexName)
-                        .id(docId)
-                        .source(document, XContentType.JSON);
+            IndexRequest indexRequest = new IndexRequest(indexName)
+                    .id(docId)
+                    .source(document, XContentType.JSON);
 
-                bulkRequest.add(indexRequest);
-            }
-
-            BulkResponse bulkResponse = client.bulk(bulkRequest, RequestOptions.DEFAULT);
-            bulkFlushCounter.inc();
-
-            // 处理响应
-            int successCount = 0;
-            int failCount = 0;
-
-            for (BulkItemResponse itemResponse : bulkResponse.getItems()) {
-                if (itemResponse.isFailed()) {
-                    failCount++;
-                    LOG.warn("Failed to index document {}: {}",
-                            itemResponse.getId(),
-                            itemResponse.getFailureMessage());
-                } else {
-                    successCount++;
-                }
-            }
-
-            indexSuccessCounter.inc(successCount);
-            indexFailCounter.inc(failCount);
-
-            if (failCount > 0) {
-                LOG.warn("Bulk index completed with {} failures out of {} documents",
-                        failCount, toFlush.size());
-            } else {
-                LOG.debug("Bulk index completed: {} documents indexed successfully", successCount);
-            }
-
-        } catch (Exception e) {
-            LOG.error("Error flushing to OpenSearch: {}", e.getMessage(), e);
-            indexFailCounter.inc(toFlush.size());
+            bulkRequest.add(indexRequest);
         }
+
+        final BulkResponse bulkResponse;
+        try {
+            bulkResponse = client.bulk(bulkRequest, RequestOptions.DEFAULT);
+        } catch (Exception e) {
+            indexFailCounter.inc(toFlush.size());
+            LOG.error("OpenSearch bulk request failed; retaining {} documents for checkpoint replay",
+                    toFlush.size(), e);
+            throw e;
+        }
+        bulkFlushCounter.inc();
+
+        int successCount = 0;
+        int failCount = 0;
+        for (BulkItemResponse itemResponse : bulkResponse.getItems()) {
+            if (itemResponse.isFailed()) {
+                failCount++;
+                LOG.warn("Failed to index document {}: {}",
+                        itemResponse.getId(),
+                        itemResponse.getFailureMessage());
+            } else {
+                successCount++;
+            }
+        }
+
+        indexSuccessCounter.inc(successCount);
+        indexFailCounter.inc(failCount);
+        String failureSummary = bulkFailureSummary(bulkResponse.getItems());
+        if (!failureSummary.isEmpty()) {
+            LOG.error("OpenSearch bulk partially failed ({}/{}); retaining the batch and failing the task: {}",
+                    failCount, toFlush.size(), failureSummary);
+            throw new IOException("OpenSearch bulk partial failure: " + failureSummary);
+        }
+
+        // Clear only after every item is acknowledged. A later checkpoint
+        // replay is safe because event_id is the deterministic document ID.
+        buffer.clear();
+        LOG.debug("Bulk index completed: {} documents indexed successfully", successCount);
+    }
+
+    static String bulkFailureSummary(BulkItemResponse[] items) {
+        StringBuilder summary = new StringBuilder();
+        for (BulkItemResponse item : items) {
+            if (!item.isFailed()) {
+                continue;
+            }
+            if (summary.length() > 0) {
+                summary.append("; ");
+            }
+            summary.append(item.getId()).append(": ").append(item.getFailureMessage());
+        }
+        return summary.toString();
     }
 
     /**

@@ -46,4 +46,58 @@ public interface HeartbeatRequestOrBuilder extends
    * <code>.traffic.v1.ProbeStatus status = 3 [json_name = "status"];</code>
    */
   com.traffic.proto.traffic.v1.ProbeStatusOrBuilder getStatusOrBuilder();
+
+  /**
+   * <pre>
+   * Final receipts are retried by the Agent until the authenticated Gateway
+   * durably accepts them. The Gateway must reject receipts whose tenant/probe
+   * identity differs from the authenticated context.
+   * </pre>
+   *
+   * <code>repeated .traffic.v1.ProbeOperationAck operation_acks = 4 [json_name = "operationAcks"];</code>
+   */
+  java.util.List<com.traffic.proto.traffic.v1.ProbeOperationAck>
+      getOperationAcksList();
+  /**
+   * <pre>
+   * Final receipts are retried by the Agent until the authenticated Gateway
+   * durably accepts them. The Gateway must reject receipts whose tenant/probe
+   * identity differs from the authenticated context.
+   * </pre>
+   *
+   * <code>repeated .traffic.v1.ProbeOperationAck operation_acks = 4 [json_name = "operationAcks"];</code>
+   */
+  com.traffic.proto.traffic.v1.ProbeOperationAck getOperationAcks(int index);
+  /**
+   * <pre>
+   * Final receipts are retried by the Agent until the authenticated Gateway
+   * durably accepts them. The Gateway must reject receipts whose tenant/probe
+   * identity differs from the authenticated context.
+   * </pre>
+   *
+   * <code>repeated .traffic.v1.ProbeOperationAck operation_acks = 4 [json_name = "operationAcks"];</code>
+   */
+  int getOperationAcksCount();
+  /**
+   * <pre>
+   * Final receipts are retried by the Agent until the authenticated Gateway
+   * durably accepts them. The Gateway must reject receipts whose tenant/probe
+   * identity differs from the authenticated context.
+   * </pre>
+   *
+   * <code>repeated .traffic.v1.ProbeOperationAck operation_acks = 4 [json_name = "operationAcks"];</code>
+   */
+  java.util.List<? extends com.traffic.proto.traffic.v1.ProbeOperationAckOrBuilder>
+      getOperationAcksOrBuilderList();
+  /**
+   * <pre>
+   * Final receipts are retried by the Agent until the authenticated Gateway
+   * durably accepts them. The Gateway must reject receipts whose tenant/probe
+   * identity differs from the authenticated context.
+   * </pre>
+   *
+   * <code>repeated .traffic.v1.ProbeOperationAck operation_acks = 4 [json_name = "operationAcks"];</code>
+   */
+  com.traffic.proto.traffic.v1.ProbeOperationAckOrBuilder getOperationAcksOrBuilder(
+      int index);
 }

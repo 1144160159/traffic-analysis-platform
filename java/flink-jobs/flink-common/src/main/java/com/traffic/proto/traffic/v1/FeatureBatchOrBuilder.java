@@ -11,7 +11,7 @@ public interface FeatureBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.FeatureStat stats = 1 [json_name = "stats"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.FeatureStat> 
+  java.util.List<com.traffic.proto.traffic.v1.FeatureStat>
       getStatsList();
   /**
    * <code>repeated .traffic.v1.FeatureStat stats = 1 [json_name = "stats"];</code>
@@ -24,7 +24,7 @@ public interface FeatureBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.FeatureStat stats = 1 [json_name = "stats"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.FeatureStatOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.FeatureStatOrBuilder>
       getStatsOrBuilderList();
   /**
    * <code>repeated .traffic.v1.FeatureStat stats = 1 [json_name = "stats"];</code>
@@ -35,7 +35,7 @@ public interface FeatureBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.FeatureSeq sequences = 2 [json_name = "sequences"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.FeatureSeq> 
+  java.util.List<com.traffic.proto.traffic.v1.FeatureSeq>
       getSequencesList();
   /**
    * <code>repeated .traffic.v1.FeatureSeq sequences = 2 [json_name = "sequences"];</code>
@@ -48,7 +48,7 @@ public interface FeatureBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.FeatureSeq sequences = 2 [json_name = "sequences"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.FeatureSeqOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.FeatureSeqOrBuilder>
       getSequencesOrBuilderList();
   /**
    * <code>repeated .traffic.v1.FeatureSeq sequences = 2 [json_name = "sequences"];</code>
@@ -59,7 +59,7 @@ public interface FeatureBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.FeatureFingerprint fingerprints = 3 [json_name = "fingerprints"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.FeatureFingerprint> 
+  java.util.List<com.traffic.proto.traffic.v1.FeatureFingerprint>
       getFingerprintsList();
   /**
    * <code>repeated .traffic.v1.FeatureFingerprint fingerprints = 3 [json_name = "fingerprints"];</code>
@@ -72,7 +72,7 @@ public interface FeatureBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.FeatureFingerprint fingerprints = 3 [json_name = "fingerprints"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.FeatureFingerprintOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.FeatureFingerprintOrBuilder>
       getFingerprintsOrBuilderList();
   /**
    * <code>repeated .traffic.v1.FeatureFingerprint fingerprints = 3 [json_name = "fingerprints"];</code>

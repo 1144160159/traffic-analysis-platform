@@ -1,0 +1,113 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: opensearch
+  namespace: middleware
+  labels:
+    traffic.openai.com/contract: opensearch-ha-security-restore-v1
+spec:
+  template:
+    metadata:
+      labels:
+        traffic.openai.com/contract: opensearch-ha-security-restore-v1
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: topology.kubernetes.io/zone
+                operator: Exists
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: opensearch
+            topologyKey: topology.kubernetes.io/zone
+      topologySpreadConstraints:
+      - maxSkew: 1
+        minDomains: 3
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: DoNotSchedule
+        labelSelector:
+          matchLabels:
+            app: opensearch
+      containers:
+      - name: opensearch
+        # Build deployments/opensearch/Dockerfile.ha-v1, scan it, then replace
+        # this fail-safe placeholder with an immutable approved digest.
+        image: registry.invalid/traffic/opensearch-ha-v1@sha256:0000000000000000000000000000000000000000000000000000000000000000
+        env:
+        - name: OPENSEARCH_INITIAL_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: opensearch-bootstrap-admin
+              key: password
+        - name: node.attr.zone
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.labels['topology.kubernetes.io/zone']
+        - name: cluster.routing.allocation.awareness.attributes
+          value: zone
+        - name: cluster.routing.allocation.awareness.force.zone.values
+          value: zone-a,zone-b,zone-c
+        - name: cluster.routing.allocation.disk.watermark.low
+          value: 70%
+        - name: cluster.routing.allocation.disk.watermark.high
+          value: 80%
+        - name: cluster.routing.allocation.disk.watermark.flood_stage
+          value: 90%
+        - name: plugins.security.ssl.http.enabled
+          value: "true"
+        - name: plugins.security.ssl.http.pemcert_filepath
+          value: tls/tls.crt
+        - name: plugins.security.ssl.http.pemkey_filepath
+          value: tls/tls.key
+        - name: plugins.security.ssl.http.pemtrustedcas_filepath
+          value: tls/ca.crt
+        - name: plugins.security.ssl.http.clientauth_mode
+          value: REQUIRE
+        - name: plugins.security.ssl.transport.pemcert_filepath
+          value: tls/tls.crt
+        - name: plugins.security.ssl.transport.pemkey_filepath
+          value: tls/tls.key
+        - name: plugins.security.ssl.transport.pemtrustedcas_filepath
+          value: tls/ca.crt
+        - name: plugins.security.ssl.transport.enforce_hostname_verification
+          value: "true"
+        - name: plugins.security.ssl.transport.resolve_hostname
+          value: "true"
+        - name: plugins.security.audit.type
+          value: internal_opensearch
+        - name: plugins.security.audit.config.disabled_rest_categories
+          value: NONE
+        - name: plugins.security.audit.config.disabled_transport_categories
+          value: NONE
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -ec
+            - 'peer="$(hostname).opensearch.middleware.svc"; curl -fsS --resolve "${peer}:9200:127.0.0.1" --cacert /usr/share/opensearch/config/tls/ca.crt --cert /var/run/opensearch-monitor/tls.crt --key /var/run/opensearch-monitor/tls.key "https://${peer}:9200/_cluster/health" >/dev/null'
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -ec
+            - 'peer="$(hostname).opensearch.middleware.svc"; curl -fsS --resolve "${peer}:9200:127.0.0.1" --cacert /usr/share/opensearch/config/tls/ca.crt --cert /var/run/opensearch-monitor/tls.crt --key /var/run/opensearch-monitor/tls.key "https://${peer}:9200/_cluster/health?local=true" >/dev/null'
+        volumeMounts:
+        - name: opensearch-node-tls
+          mountPath: /usr/share/opensearch/config/tls
+          readOnly: true
+        - name: opensearch-monitor-tls
+          mountPath: /var/run/opensearch-monitor
+          readOnly: true
+      volumes:
+      - name: opensearch-node-tls
+        secret:
+          secretName: opensearch-node-tls
+          optional: false
+      - name: opensearch-monitor-tls
+        secret:
+          secretName: opensearch-monitor-tls
+          optional: false

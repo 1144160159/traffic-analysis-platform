@@ -43,7 +43,10 @@ message MacIpBinding {
 }
 
 service AssetService {
-  // RegisterOrUpdate creates or updates an asset.
+  // RegisterOrUpdate creates or updates an asset. Mutation metadata must carry
+  // authorization: Bearer <access JWT>, idempotency-key, x-expected-revision,
+  // x-reason and x-trace-id. The token must grant asset:discover and its tenant
+  // is authoritative over any tenant supplied in the payload.
   rpc UpsertAsset(UpsertAssetRequest) returns (UpsertAssetResponse);
 
   // GetAsset retrieves an asset by ID or MAC.
@@ -52,7 +55,10 @@ service AssetService {
   // ListAssets returns assets for a tenant, with optional filters.
   rpc ListAssets(ListAssetsRequest) returns (ListAssetsResponse);
 
-  // RecordMacIpBinding records a MAC→IP binding observed from traffic.
+  // RecordMacIpBinding records a MAC→IP binding observed from traffic. Direct
+  // gRPC delivery requires the same Bearer access JWT/asset:discover tenant
+  // gate plus observed_at; Kafka delivery instead uses the canonical
+  // topic/partition/offset/item identity before committing offset.
   rpc RecordMacIpBinding(RecordMacIpBindingRequest) returns (RecordMacIpBindingResponse);
 
   // GetAssetHistory returns the change event history for an asset.

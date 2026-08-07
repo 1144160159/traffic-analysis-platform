@@ -1,6 +1,7 @@
 package com.traffic.flink.session.aggregator;
 
 import com.traffic.flink.common.CommunityIdUtil;
+import com.traffic.flink.common.DeterministicId;
 import com.traffic.proto.traffic.v1.EventHeader;
 import com.traffic.proto.traffic.v1.FlowEvent;
 import com.traffic.proto.traffic.v1.FiveTuple;
@@ -612,21 +613,38 @@ public class SessionAggregator implements AggregateFunction<FlowEvent, SessionAc
      * 创建错误 Session（降级处理）
      */
     private SessionEvent createErrorSession(SessionAccumulator acc) {
+        long eventTime = Math.max(acc.tsEnd, acc.lastSeenFlowTs);
+        if (eventTime <= 0) {
+            eventTime = acc.sourceIngestTs;
+        }
+        String tenantId = acc.tenantId != null ? acc.tenantId : "unknown";
+        String runId = acc.runId != null ? acc.runId : "unknown";
+        String eventId = DeterministicId.uuidFromSorted(
+                "flink-session-error-event/v1",
+                acc.flowIds,
+                tenantId,
+                runId,
+                acc.communityId,
+                acc.tsStart,
+                acc.tsEnd,
+                acc.lastSeenFlowTs);
+        String sessionId = "error-session-" + DeterministicId.shortId(
+                "flink-session-error/v1", 16, eventId);
         EventHeader header = EventHeader.newBuilder()
-                .setEventId("error-event-" + System.currentTimeMillis())
-                .setTenantId(acc.tenantId != null ? acc.tenantId : "unknown")
-                .setRunId(acc.runId != null ? acc.runId : "unknown")
-                .setEventTs(System.currentTimeMillis())
-                .setIngestTs(acc.sourceIngestTs > 0 ? acc.sourceIngestTs : System.currentTimeMillis())
+                .setEventId(eventId)
+                .setTenantId(tenantId)
+                .setRunId(runId)
+                .setEventTs(eventTime)
+                .setIngestTs(acc.sourceIngestTs > 0 ? acc.sourceIngestTs : eventTime)
                 .setKafkaTs(acc.kafkaTs)
-                .setFlinkOutTs(System.currentTimeMillis())
+                .setFlinkOutTs(acc.flinkOutTs > 0 ? acc.flinkOutTs : eventTime)
                 .setProbeId(acc.probeId != null ? acc.probeId : "unknown")
                 .setFeatureSetId(acc.featureSetId != null ? acc.featureSetId : "default")
                 .build();
 
         return SessionEvent.newBuilder()
                 .setHeader(header)
-                .setSessionId("error-session-" + System.currentTimeMillis())
+                .setSessionId(sessionId)
                 .setCommunityId("error")
                 .setTuple(FiveTuple.newBuilder()
                         .setSrcIp("0.0.0.0")
@@ -635,8 +653,8 @@ public class SessionAggregator implements AggregateFunction<FlowEvent, SessionAc
                         .setDstPort(0)
                         .setProtocol(0)
                         .build())
-                .setTsStart(System.currentTimeMillis())
-                .setTsEnd(System.currentTimeMillis())
+                .setTsStart(eventTime)
+                .setTsEnd(eventTime)
                 .setDurationMs(0)
                 .setProtocol(0)
                 .setClientIp("0.0.0.0")

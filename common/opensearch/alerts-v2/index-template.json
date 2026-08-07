@@ -1,0 +1,15 @@
+{
+  "index_patterns": ["alerts-v2-*"],
+  "priority": 300,
+  "version": 2,
+  "composed_of": [
+    "traffic-alerts-mappings-v2",
+    "traffic-alerts-settings-v2"
+  ],
+  "_meta": {
+    "contract": "T-OS-002",
+    "schema_version": 2,
+    "read_alias": "alerts-v2-read",
+    "write_alias": "alerts-v2-write"
+  }
+}

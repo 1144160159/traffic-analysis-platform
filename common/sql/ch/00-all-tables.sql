@@ -246,6 +246,7 @@ CREATE TABLE IF NOT EXISTS traffic.alerts_local ON CLUSTER traffic_cluster (
   rule_version        String,
   state_version       UInt64,
   event_id            String,
+  trace_id            String,
   kafka_ts            Int64,
   flink_out_ts        Int64,
   created_at          Int64,
@@ -326,7 +327,38 @@ AS traffic.campaigns_local
 ENGINE = Distributed(traffic_cluster, traffic, campaigns_local, rand());
 
 -- =============================================================================
--- 5a. attack_chain_recommendations — Campaign response recommendations
+-- 5a. campaign_projection_events_v2 — versioned campaign event shadow
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS traffic.campaign_projection_events_v2_local ON CLUSTER traffic_cluster (
+  projection_id FixedString(64),
+  event_id UUID,
+  tenant_id String,
+  stream LowCardinality(String),
+  projection_key String,
+  projection_version UInt64,
+  campaign_id String,
+  relation_id String,
+  alert_id String,
+  event_type LowCardinality(String),
+  schema_version UInt16,
+  trace_id String,
+  received_at DateTime64(3, 'UTC'),
+  payload String CODEC(ZSTD(3)),
+  projection_sha256 FixedString(64),
+  projected_at DateTime64(3, 'UTC') DEFAULT now64(3)
+)
+ENGINE = ReplicatedReplacingMergeTree('/clickhouse/tables/{shard}/campaign_projection_events_v2_local', '{replica}', projected_at)
+PARTITION BY toYYYYMM(received_at)
+ORDER BY (tenant_id, projection_key, projection_version, event_id)
+TTL toDateTime(received_at) + INTERVAL 180 DAY
+SETTINGS index_granularity = 8192;
+
+CREATE TABLE IF NOT EXISTS traffic.campaign_projection_events_v2 ON CLUSTER traffic_cluster
+AS traffic.campaign_projection_events_v2_local
+ENGINE = Distributed(traffic_cluster, traffic, campaign_projection_events_v2_local, cityHash64(tenant_id, projection_key));
+
+-- =============================================================================
+-- 5b. attack_chain_recommendations — Campaign response recommendations
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS traffic.attack_chain_recommendations_local ON CLUSTER traffic_cluster (
   tenant_id         String,
@@ -350,6 +382,36 @@ SETTINGS index_granularity = 8192;
 CREATE TABLE IF NOT EXISTS traffic.attack_chain_recommendations ON CLUSTER traffic_cluster
 AS traffic.attack_chain_recommendations_local
 ENGINE = Distributed(traffic_cluster, traffic, attack_chain_recommendations_local, rand());
+
+-- =============================================================================
+-- 5c. user_anomalies_v2 — replayable user-behavior projection
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS traffic.user_anomalies_v2_local ON CLUSTER traffic_cluster (
+  anomaly_id String,
+  tenant_id String,
+  user_id String,
+  username String,
+  detector_type LowCardinality(String),
+  severity LowCardinality(String),
+  score Float32,
+  description String,
+  detail_json String CODEC(ZSTD(3)),
+  source_ip1 String,
+  source_ip2 String,
+  detected_at DateTime64(3, 'UTC'),
+  event_version UInt64,
+  replay_id String DEFAULT '',
+  projected_at DateTime64(3, 'UTC') DEFAULT now64(3)
+)
+ENGINE = ReplicatedReplacingMergeTree('/clickhouse/tables/{shard}/user_anomalies_v2_local', '{replica}', event_version)
+PARTITION BY toYYYYMM(detected_at)
+ORDER BY (tenant_id, anomaly_id)
+TTL toDateTime(detected_at) + INTERVAL 180 DAY
+SETTINGS index_granularity = 8192;
+
+CREATE TABLE IF NOT EXISTS traffic.user_anomalies_v2 ON CLUSTER traffic_cluster
+AS traffic.user_anomalies_v2_local
+ENGINE = Distributed(traffic_cluster, traffic, user_anomalies_v2_local, cityHash64(tenant_id, anomaly_id));
 
 -- =============================================================================
 -- 6. pcap_index — PcapIndexMeta

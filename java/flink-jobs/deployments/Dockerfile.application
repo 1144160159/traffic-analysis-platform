@@ -1,0 +1,10 @@
+# One immutable image per Flink Application Cluster. Build from java/flink-jobs.
+# Example: docker build --build-arg JOB_MODULE=flink-session-job ...
+ARG BASE_IMAGE=docker.io/traffic/flink@sha256:8c9b090b84435355bce4b7209e5920b17811e90c07029215ac80e50de4c771f9
+FROM ${BASE_IMAGE}
+
+ARG JOB_MODULE
+RUN test -n "${JOB_MODULE}" && mkdir -p /opt/flink/usrlib
+COPY ${JOB_MODULE}/target/${JOB_MODULE}-1.0.0-SNAPSHOT.jar /opt/flink/usrlib/${JOB_MODULE}.jar
+
+USER flink

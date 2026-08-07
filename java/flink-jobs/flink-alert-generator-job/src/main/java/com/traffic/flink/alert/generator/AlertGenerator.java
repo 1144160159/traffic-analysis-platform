@@ -2,6 +2,7 @@ package com.traffic.flink.alert.generator;
 
 import com.traffic.flink.alert.dedup.DedupState;
 import com.traffic.flink.alert.evidence.EvidenceBuilder;
+import com.traffic.flink.common.DeterministicId;
 import com.traffic.proto.traffic.v1.*;
 
 import org.apache.flink.api.common.state.StateTtlConfig;
@@ -21,9 +22,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.security.MessageDigest;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Alert 生成器 (重构版)
@@ -243,7 +244,7 @@ public class AlertGenerator extends KeyedProcessFunction<String, DetectionBehavi
         }
 
         // 生成新告警
-        String alertId = generateAlertId(tenantId, currentTime);
+        String alertId = generateAlertId(detection, fingerprint, currentTime);
         String evidenceId = generateEvidenceId(alertId);
 
         // 生成 Arkime 链接
@@ -380,7 +381,7 @@ public class AlertGenerator extends KeyedProcessFunction<String, DetectionBehavi
                     tenantId, alertType, srcIp, dstIp, dstPort);
 
             MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] hash = md.digest(raw.getBytes());
+            byte[] hash = md.digest(raw.getBytes(StandardCharsets.UTF_8));
 
             StringBuilder sb = new StringBuilder();
             for (byte b : hash) {
@@ -390,46 +391,36 @@ public class AlertGenerator extends KeyedProcessFunction<String, DetectionBehavi
             return sb.toString();
         } catch (Exception e) {
             LOG.error("Failed to generate fingerprint", e);
-            return UUID.randomUUID().toString();
+            return DeterministicId.shortId(
+                    "flink-alert-fingerprint-fallback/v1", 32,
+                    tenantId, alertType, srcIp, dstIp, dstPort);
         }
     }
 
     /**
      * 生成确定性 Alert ID (确保幂等)
      */
-    private String generateAlertId(String tenantId, long timestamp) {
-        // 使用确定性hash避免随机UUID，确保相同输入产生相同alertId
-        String raw = tenantId + ":" + timestamp;
-        try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] hash = md.digest(raw.getBytes());
-            StringBuilder sb = new StringBuilder();
-            for (byte b : hash) sb.append(String.format("%02x", b));
-            return String.format("alert-%s-%d-%s", tenantId, timestamp, sb.substring(0, 8));
-        } catch (Exception e) {
-            return String.format("alert-%s-%d-%s",
-                    tenantId, timestamp, UUID.randomUUID().toString().substring(0, 8));
-        }
+    private String generateAlertId(DetectionBehavior detection, String fingerprint, long timestamp) {
+        String tenantId = detection.getHeader().getTenantId();
+        return String.format("alert-%s-%d-%s", tenantId, timestamp,
+                DeterministicId.shortId(
+                        "flink-alert/v1", 8,
+                        tenantId,
+                        detection.getHeader().getEventId(),
+                        detection.getModelVersion(),
+                        detection.getTopLabel(),
+                        fingerprint,
+                        timestamp));
     }
 
     /**
      * 生成确定性 Evidence ID
      */
     private String generateEvidenceId(String alertId) {
-        String raw = alertId + ":evidence";
-        try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] hash = md.digest(raw.getBytes());
-            StringBuilder sb = new StringBuilder();
-            for (byte b : hash) sb.append(String.format("%02x", b));
-            return String.format("evidence-%s-%s",
-                    alertId.substring(Math.min(6, alertId.length())),
-                    sb.substring(0, 8));
-        } catch (Exception e) {
-            return String.format("evidence-%s-%s",
-                    alertId.substring(Math.min(6, alertId.length())),
-                    UUID.randomUUID().toString().substring(0, 8));
-        }
+        return String.format("evidence-%s-%s",
+                alertId.substring(Math.min(6, alertId.length())),
+                DeterministicId.shortId(
+                        "flink-alert-evidence/v1", 8, alertId));
     }
 
     /**
@@ -508,6 +499,7 @@ public class AlertGenerator extends KeyedProcessFunction<String, DetectionBehavi
                 .setDedupFingerprint(fingerprint)
                 .setUpdatedTs(currentTime)
                 .setEventId(generateDeterministicEventId(alertId, fingerprint, currentTime))
+                .setTraceId(header.getTraceId())
                 .setIngestTs(System.currentTimeMillis())
                 .setCount(1)
                 .setArkimeSessionLink(arkimeLink)
@@ -568,6 +560,7 @@ public class AlertGenerator extends KeyedProcessFunction<String, DetectionBehavi
                 .setDedupFingerprint(fingerprint)
                 .setUpdatedTs(lastSeen) // 使用最新时间
                 .setEventId(generateDeterministicEventId(alertId, fingerprint, firstSeen))
+                .setTraceId(header.getTraceId())
                 .setIngestTs(System.currentTimeMillis())
                 .setCount(count)
                 .setArkimeSessionLink(generateArkimeLink(detection.getCommunityId(), lastSeen))
@@ -582,26 +575,8 @@ public class AlertGenerator extends KeyedProcessFunction<String, DetectionBehavi
      * 相同 input 总是生成相同的 event_id
      */
     private String generateDeterministicEventId(String alertId, String fingerprint, long timestamp) {
-        try {
-            String raw = String.format("%s:%s:%d", alertId, fingerprint, timestamp);
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] hash = md.digest(raw.getBytes());
-            long msb = 0;
-            long lsb = 0;
-            for (int i = 0; i < 8; i++) {
-                msb = (msb << 8) | (hash[i] & 0xff);
-            }
-            for (int i = 8; i < 16; i++) {
-                lsb = (lsb << 8) | (hash[i] & 0xff);
-            }
-            // UUID v3 style
-            msb = (msb & 0xffffffffffff0fffL) | 0x0000000000003000L;
-            lsb = (lsb & 0x3fffffffffffffffL) | 0x8000000000000000L;
-            return new UUID(msb, lsb).toString();
-        } catch (Exception e) {
-            LOG.warn("Failed to generate deterministic event_id, falling back to random", e);
-            return UUID.randomUUID().toString();
-        }
+        return DeterministicId.uuid(
+                "flink-alert-event/v1", alertId, fingerprint, timestamp);
     }
 
     /**

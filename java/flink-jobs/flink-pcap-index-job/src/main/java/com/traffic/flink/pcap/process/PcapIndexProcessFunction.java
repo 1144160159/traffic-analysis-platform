@@ -311,8 +311,6 @@ public class PcapIndexProcessFunction extends ProcessFunction<PcapIndexMeta, Pca
             LOG.info("  Missing BloomFilter:     {}", metrics.getMissingBloomFilterCounter().getCount());
             LOG.info("  Large File:              {}", metrics.getLargeFileCounter().getCount());
             LOG.info("  DLQ Write:               {}", metrics.getDlqWriteCounter().getCount());
-            LOG.info("  ClickHouse Success:      {}", metrics.getClickhouseSuccessCounter().getCount());
-            LOG.info("  ClickHouse Failure:      {}", metrics.getClickhouseFailureCounter().getCount());
             LOG.info("==================================================");
             
             lastLogTime = now;

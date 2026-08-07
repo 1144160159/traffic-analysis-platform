@@ -10,17 +10,102 @@ import json
 import argparse
 import hashlib
 import requests
+from dataclasses import dataclass
 from datetime import datetime
-from minio import Minio
-from minio.error import S3Error
 import logging
+import ssl
+import urllib3
 from urllib.parse import quote
+
+try:
+    from minio import Minio
+except ImportError:  # Configuration validation remains testable in minimal CI images.
+    Minio = None
 
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class MinioRuntimeConfig:
+    endpoint: str
+    access_key: str
+    secret_key: str
+    bucket: str
+    secure: bool
+    ca_file: str | None
+
+
+def _required_env(name):
+    value = os.getenv(name, '').strip()
+    if not value:
+        raise RuntimeError(f'{name} is required; model artifact storage fails closed')
+    return value
+
+
+def load_minio_config():
+    """Load explicit MinIO settings without development credential fallbacks."""
+    endpoint = _required_env('MINIO_ENDPOINT')
+    access_key = _required_env('MINIO_ACCESS_KEY')
+    secret_key = _required_env('MINIO_SECRET_KEY')
+    bucket = _required_env('MINIO_BUCKET')
+    secure_value = _required_env('MINIO_SECURE').lower()
+    if secure_value not in {'true', 'false'}:
+        raise RuntimeError('MINIO_SECURE must be explicitly true or false')
+    if '://' in endpoint:
+        raise RuntimeError('MINIO_ENDPOINT must be host:port; select TLS with MINIO_SECURE')
+    if access_key == 'minioadmin' or secret_key == 'minioadmin':
+        raise RuntimeError('default MinIO administrator credentials are prohibited')
+    secure = secure_value == 'true'
+    ca_file = os.getenv('MINIO_CA_FILE', '').strip()
+    if secure and not ca_file:
+        raise RuntimeError('MINIO_CA_FILE is required when MINIO_SECURE=true')
+    if not secure and ca_file:
+        raise RuntimeError('MINIO_CA_FILE cannot be set when MINIO_SECURE=false')
+    if ca_file and not os.path.isfile(ca_file):
+        raise RuntimeError('MINIO_CA_FILE must reference a readable CA certificate file')
+    return MinioRuntimeConfig(
+        endpoint=endpoint,
+        access_key=access_key,
+        secret_key=secret_key,
+        bucket=bucket,
+        secure=secure,
+        ca_file=ca_file or None,
+    )
+
+
+def build_minio_client(config=None):
+    config = config or load_minio_config()
+    if Minio is None:
+        raise RuntimeError('the minio package is required for model artifact upload')
+    kwargs = {}
+    if config.secure:
+        try:
+            ssl.create_default_context(cafile=config.ca_file)
+        except (OSError, ssl.SSLError) as exc:
+            raise RuntimeError(f'MINIO_CA_FILE is not a valid CA bundle: {exc}') from exc
+        kwargs['http_client'] = urllib3.PoolManager(
+            cert_reqs='CERT_REQUIRED',
+            ca_certs=config.ca_file,
+        )
+    return Minio(
+        config.endpoint,
+        access_key=config.access_key,
+        secret_key=config.secret_key,
+        secure=config.secure,
+        **kwargs,
+    )
+
+
+def require_model_bucket(client, bucket):
+    """Require bootstrap-owned bucket creation; application credentials never create it."""
+    if not client.bucket_exists(bucket):
+        raise RuntimeError(
+            f'MinIO bucket {bucket!r} is absent; create it through the governed bootstrap path'
+        )
 
 
 def auth_headers():
@@ -42,28 +127,15 @@ def artifact_prefix(tenant_id, model_id, version, artifact_sha256):
 
 def upload_to_minio(model_path, model_type, tenant_id, model_id, version, artifact_sha256):
     """上传模型到 MinIO"""
-    
-    # MinIO 配置
-    endpoint = os.getenv('MINIO_ENDPOINT', 'minio:9000')
-    access_key = os.getenv('MINIO_ACCESS_KEY', 'minioadmin')
-    secret_key = os.getenv('MINIO_SECRET_KEY', 'minioadmin')
-    bucket_name = os.getenv('MINIO_BUCKET', 'traffic-models')
-    secure = os.getenv('MINIO_SECURE', 'false').lower() == 'true'
-    
-    logger.info(f"Connecting to MinIO: {endpoint}")
-    
-    # 创建 MinIO 客户端
-    client = Minio(
-        endpoint,
-        access_key=access_key,
-        secret_key=secret_key,
-        secure=secure
+    config = load_minio_config()
+    logger.info(
+        "Connecting to MinIO endpoint=%s bucket=%s secure=%s",
+        config.endpoint,
+        config.bucket,
+        config.secure,
     )
-    
-    # 确保 bucket 存在
-    if not client.bucket_exists(bucket_name):
-        logger.info(f"Creating bucket: {bucket_name}")
-        client.make_bucket(bucket_name)
+    client = build_minio_client(config)
+    require_model_bucket(client, config.bucket)
     
     # 构建对象键
     if model_type == 'xgboost':
@@ -76,10 +148,10 @@ def upload_to_minio(model_path, model_type, tenant_id, model_id, version, artifa
     object_name = f"{artifact_prefix(tenant_id, model_id, version, artifact_sha256)}/model.{file_ext}"
     
     # 上传模型
-    logger.info(f"Uploading model to s3://{bucket_name}/{object_name}")
+    logger.info(f"Uploading model to s3://{config.bucket}/{object_name}")
     
     client.fput_object(
-        bucket_name,
+        config.bucket,
         object_name,
         model_path,
         content_type='application/octet-stream'
@@ -88,46 +160,36 @@ def upload_to_minio(model_path, model_type, tenant_id, model_id, version, artifa
     logger.info(f"Model uploaded successfully")
     
     # 构建 S3 URI
-    s3_uri = f"s3://{bucket_name}/{object_name}"
+    s3_uri = f"s3://{config.bucket}/{object_name}"
     
     return s3_uri
 
 
 def upload_artifacts(model_dir, tenant_id, model_id, version, artifact_sha256):
     """上传模型相关的所有文件"""
-    
-    endpoint = os.getenv('MINIO_ENDPOINT', 'minio:9000')
-    access_key = os.getenv('MINIO_ACCESS_KEY', 'minioadmin')
-    secret_key = os.getenv('MINIO_SECRET_KEY', 'minioadmin')
-    bucket_name = os.getenv('MINIO_BUCKET', 'traffic-models')
-    secure = os.getenv('MINIO_SECURE', 'false').lower() == 'true'
-    
-    client = Minio(
-        endpoint,
-        access_key=access_key,
-        secret_key=secret_key,
-        secure=secure
-    )
+    config = load_minio_config()
+    client = build_minio_client(config)
+    require_model_bucket(client, config.bucket)
     
     # 上传特征列表
     feature_cols_path = os.path.join(model_dir, 'feature_columns.json')
     if os.path.exists(feature_cols_path):
         object_name = f"{artifact_prefix(tenant_id, model_id, version, artifact_sha256)}/feature_columns.json"
-        client.fput_object(bucket_name, object_name, feature_cols_path)
+        client.fput_object(config.bucket, object_name, feature_cols_path)
         logger.info(f"Uploaded feature_columns.json")
     
     # 上传特征重要性
     importance_path = os.path.join(model_dir, 'feature_importance.json')
     if os.path.exists(importance_path):
         object_name = f"{artifact_prefix(tenant_id, model_id, version, artifact_sha256)}/feature_importance.json"
-        client.fput_object(bucket_name, object_name, importance_path)
+        client.fput_object(config.bucket, object_name, importance_path)
         logger.info(f"Uploaded feature_importance.json")
     
     # 上传训练指标
     train_metrics_path = os.path.join(model_dir, 'train_metrics.json')
     if os.path.exists(train_metrics_path):
         object_name = f"{artifact_prefix(tenant_id, model_id, version, artifact_sha256)}/train_metrics.json"
-        client.fput_object(bucket_name, object_name, train_metrics_path)
+        client.fput_object(config.bucket, object_name, train_metrics_path)
         logger.info(f"Uploaded train_metrics.json")
 
 

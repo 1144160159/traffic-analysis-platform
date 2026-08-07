@@ -41,7 +41,7 @@ public interface AlertExtendedBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.Alert alerts = 10 [json_name = "alerts"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.Alert> 
+  java.util.List<com.traffic.proto.traffic.v1.Alert>
       getAlertsList();
   /**
    * <code>repeated .traffic.v1.Alert alerts = 10 [json_name = "alerts"];</code>
@@ -54,7 +54,7 @@ public interface AlertExtendedBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.Alert alerts = 10 [json_name = "alerts"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.AlertOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.AlertOrBuilder>
       getAlertsOrBuilderList();
   /**
    * <code>repeated .traffic.v1.Alert alerts = 10 [json_name = "alerts"];</code>
@@ -65,7 +65,7 @@ public interface AlertExtendedBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.Evidence evidences = 11 [json_name = "evidences"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.Evidence> 
+  java.util.List<com.traffic.proto.traffic.v1.Evidence>
       getEvidencesList();
   /**
    * <code>repeated .traffic.v1.Evidence evidences = 11 [json_name = "evidences"];</code>
@@ -78,7 +78,7 @@ public interface AlertExtendedBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.Evidence evidences = 11 [json_name = "evidences"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.EvidenceOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.EvidenceOrBuilder>
       getEvidencesOrBuilderList();
   /**
    * <code>repeated .traffic.v1.Evidence evidences = 11 [json_name = "evidences"];</code>
@@ -89,7 +89,7 @@ public interface AlertExtendedBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.Campaign campaigns = 12 [json_name = "campaigns"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.Campaign> 
+  java.util.List<com.traffic.proto.traffic.v1.Campaign>
       getCampaignsList();
   /**
    * <code>repeated .traffic.v1.Campaign campaigns = 12 [json_name = "campaigns"];</code>
@@ -102,7 +102,7 @@ public interface AlertExtendedBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.Campaign campaigns = 12 [json_name = "campaigns"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.CampaignOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.CampaignOrBuilder>
       getCampaignsOrBuilderList();
   /**
    * <code>repeated .traffic.v1.Campaign campaigns = 12 [json_name = "campaigns"];</code>
@@ -113,7 +113,7 @@ public interface AlertExtendedBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.AlertFeedback feedbacks = 13 [json_name = "feedbacks"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.AlertFeedback> 
+  java.util.List<com.traffic.proto.traffic.v1.AlertFeedback>
       getFeedbacksList();
   /**
    * <code>repeated .traffic.v1.AlertFeedback feedbacks = 13 [json_name = "feedbacks"];</code>
@@ -126,7 +126,7 @@ public interface AlertExtendedBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.AlertFeedback feedbacks = 13 [json_name = "feedbacks"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.AlertFeedbackOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.AlertFeedbackOrBuilder>
       getFeedbacksOrBuilderList();
   /**
    * <code>repeated .traffic.v1.AlertFeedback feedbacks = 13 [json_name = "feedbacks"];</code>
@@ -137,7 +137,7 @@ public interface AlertExtendedBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.WhitelistRule whitelist_rules = 14 [json_name = "whitelistRules"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.WhitelistRule> 
+  java.util.List<com.traffic.proto.traffic.v1.WhitelistRule>
       getWhitelistRulesList();
   /**
    * <code>repeated .traffic.v1.WhitelistRule whitelist_rules = 14 [json_name = "whitelistRules"];</code>
@@ -150,7 +150,7 @@ public interface AlertExtendedBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.WhitelistRule whitelist_rules = 14 [json_name = "whitelistRules"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.WhitelistRuleOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.WhitelistRuleOrBuilder>
       getWhitelistRulesOrBuilderList();
   /**
    * <code>repeated .traffic.v1.WhitelistRule whitelist_rules = 14 [json_name = "whitelistRules"];</code>
@@ -161,7 +161,7 @@ public interface AlertExtendedBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.AlertStateTransition state_transitions = 15 [json_name = "stateTransitions"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.AlertStateTransition> 
+  java.util.List<com.traffic.proto.traffic.v1.AlertStateTransition>
       getStateTransitionsList();
   /**
    * <code>repeated .traffic.v1.AlertStateTransition state_transitions = 15 [json_name = "stateTransitions"];</code>
@@ -174,7 +174,7 @@ public interface AlertExtendedBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.AlertStateTransition state_transitions = 15 [json_name = "stateTransitions"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.AlertStateTransitionOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.AlertStateTransitionOrBuilder>
       getStateTransitionsOrBuilderList();
   /**
    * <code>repeated .traffic.v1.AlertStateTransition state_transitions = 15 [json_name = "stateTransitions"];</code>
@@ -185,7 +185,7 @@ public interface AlertExtendedBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.DedupStats dedup_stats = 16 [json_name = "dedupStats"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.DedupStats> 
+  java.util.List<com.traffic.proto.traffic.v1.DedupStats>
       getDedupStatsList();
   /**
    * <code>repeated .traffic.v1.DedupStats dedup_stats = 16 [json_name = "dedupStats"];</code>
@@ -198,7 +198,7 @@ public interface AlertExtendedBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.DedupStats dedup_stats = 16 [json_name = "dedupStats"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.DedupStatsOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.DedupStatsOrBuilder>
       getDedupStatsOrBuilderList();
   /**
    * <code>repeated .traffic.v1.DedupStats dedup_stats = 16 [json_name = "dedupStats"];</code>
@@ -209,7 +209,7 @@ public interface AlertExtendedBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.StorageHealthEvent storage_health_events = 17 [json_name = "storageHealthEvents"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.StorageHealthEvent> 
+  java.util.List<com.traffic.proto.traffic.v1.StorageHealthEvent>
       getStorageHealthEventsList();
   /**
    * <code>repeated .traffic.v1.StorageHealthEvent storage_health_events = 17 [json_name = "storageHealthEvents"];</code>
@@ -222,7 +222,7 @@ public interface AlertExtendedBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.StorageHealthEvent storage_health_events = 17 [json_name = "storageHealthEvents"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.StorageHealthEventOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.StorageHealthEventOrBuilder>
       getStorageHealthEventsOrBuilderList();
   /**
    * <code>repeated .traffic.v1.StorageHealthEvent storage_health_events = 17 [json_name = "storageHealthEvents"];</code>
@@ -233,7 +233,7 @@ public interface AlertExtendedBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.ModelFeedbackMetrics model_feedback_metrics = 18 [json_name = "modelFeedbackMetrics"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.ModelFeedbackMetrics> 
+  java.util.List<com.traffic.proto.traffic.v1.ModelFeedbackMetrics>
       getModelFeedbackMetricsList();
   /**
    * <code>repeated .traffic.v1.ModelFeedbackMetrics model_feedback_metrics = 18 [json_name = "modelFeedbackMetrics"];</code>
@@ -246,7 +246,7 @@ public interface AlertExtendedBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.ModelFeedbackMetrics model_feedback_metrics = 18 [json_name = "modelFeedbackMetrics"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.ModelFeedbackMetricsOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.ModelFeedbackMetricsOrBuilder>
       getModelFeedbackMetricsOrBuilderList();
   /**
    * <code>repeated .traffic.v1.ModelFeedbackMetrics model_feedback_metrics = 18 [json_name = "modelFeedbackMetrics"];</code>
@@ -257,7 +257,7 @@ public interface AlertExtendedBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.AlertCorrelationEdge correlation_edges = 19 [json_name = "correlationEdges"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.AlertCorrelationEdge> 
+  java.util.List<com.traffic.proto.traffic.v1.AlertCorrelationEdge>
       getCorrelationEdgesList();
   /**
    * <code>repeated .traffic.v1.AlertCorrelationEdge correlation_edges = 19 [json_name = "correlationEdges"];</code>
@@ -270,7 +270,7 @@ public interface AlertExtendedBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.AlertCorrelationEdge correlation_edges = 19 [json_name = "correlationEdges"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.AlertCorrelationEdgeOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.AlertCorrelationEdgeOrBuilder>
       getCorrelationEdgesOrBuilderList();
   /**
    * <code>repeated .traffic.v1.AlertCorrelationEdge correlation_edges = 19 [json_name = "correlationEdges"];</code>
@@ -281,7 +281,7 @@ public interface AlertExtendedBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.NotificationEvent notification_events = 20 [json_name = "notificationEvents"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.NotificationEvent> 
+  java.util.List<com.traffic.proto.traffic.v1.NotificationEvent>
       getNotificationEventsList();
   /**
    * <code>repeated .traffic.v1.NotificationEvent notification_events = 20 [json_name = "notificationEvents"];</code>
@@ -294,7 +294,7 @@ public interface AlertExtendedBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.NotificationEvent notification_events = 20 [json_name = "notificationEvents"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.NotificationEventOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.NotificationEventOrBuilder>
       getNotificationEventsOrBuilderList();
   /**
    * <code>repeated .traffic.v1.NotificationEvent notification_events = 20 [json_name = "notificationEvents"];</code>

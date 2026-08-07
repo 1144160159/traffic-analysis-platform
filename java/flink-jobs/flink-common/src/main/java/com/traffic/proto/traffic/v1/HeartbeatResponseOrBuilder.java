@@ -28,4 +28,103 @@ public interface HeartbeatResponseOrBuilder extends
    * <code>.traffic.v1.ProbeConfig config = 2 [json_name = "config"];</code>
    */
   com.traffic.proto.traffic.v1.ProbeConfigOrBuilder getConfigOrBuilder();
+
+  /**
+   * <pre>
+   * Commands are selected by the Gateway after authenticating tenant_id and
+   * probe_id. The Agent still validates both identities, expiry, revision and
+   * the deterministic command hash before execution.
+   * </pre>
+   *
+   * <code>repeated .traffic.v1.ProbeOperationCommand operation_commands = 3 [json_name = "operationCommands"];</code>
+   */
+  java.util.List<com.traffic.proto.traffic.v1.ProbeOperationCommand>
+      getOperationCommandsList();
+  /**
+   * <pre>
+   * Commands are selected by the Gateway after authenticating tenant_id and
+   * probe_id. The Agent still validates both identities, expiry, revision and
+   * the deterministic command hash before execution.
+   * </pre>
+   *
+   * <code>repeated .traffic.v1.ProbeOperationCommand operation_commands = 3 [json_name = "operationCommands"];</code>
+   */
+  com.traffic.proto.traffic.v1.ProbeOperationCommand getOperationCommands(int index);
+  /**
+   * <pre>
+   * Commands are selected by the Gateway after authenticating tenant_id and
+   * probe_id. The Agent still validates both identities, expiry, revision and
+   * the deterministic command hash before execution.
+   * </pre>
+   *
+   * <code>repeated .traffic.v1.ProbeOperationCommand operation_commands = 3 [json_name = "operationCommands"];</code>
+   */
+  int getOperationCommandsCount();
+  /**
+   * <pre>
+   * Commands are selected by the Gateway after authenticating tenant_id and
+   * probe_id. The Agent still validates both identities, expiry, revision and
+   * the deterministic command hash before execution.
+   * </pre>
+   *
+   * <code>repeated .traffic.v1.ProbeOperationCommand operation_commands = 3 [json_name = "operationCommands"];</code>
+   */
+  java.util.List<? extends com.traffic.proto.traffic.v1.ProbeOperationCommandOrBuilder>
+      getOperationCommandsOrBuilderList();
+  /**
+   * <pre>
+   * Commands are selected by the Gateway after authenticating tenant_id and
+   * probe_id. The Agent still validates both identities, expiry, revision and
+   * the deterministic command hash before execution.
+   * </pre>
+   *
+   * <code>repeated .traffic.v1.ProbeOperationCommand operation_commands = 3 [json_name = "operationCommands"];</code>
+   */
+  com.traffic.proto.traffic.v1.ProbeOperationCommandOrBuilder getOperationCommandsOrBuilder(
+      int index);
+
+  /**
+   * <pre>
+   * The Agent removes a locally persisted ACK only when its operation_id is
+   * returned here. An empty list is not an acknowledgement.
+   * </pre>
+   *
+   * <code>repeated string accepted_ack_operation_ids = 4 [json_name = "acceptedAckOperationIds"];</code>
+   * @return A list containing the acceptedAckOperationIds.
+   */
+  java.util.List<java.lang.String>
+      getAcceptedAckOperationIdsList();
+  /**
+   * <pre>
+   * The Agent removes a locally persisted ACK only when its operation_id is
+   * returned here. An empty list is not an acknowledgement.
+   * </pre>
+   *
+   * <code>repeated string accepted_ack_operation_ids = 4 [json_name = "acceptedAckOperationIds"];</code>
+   * @return The count of acceptedAckOperationIds.
+   */
+  int getAcceptedAckOperationIdsCount();
+  /**
+   * <pre>
+   * The Agent removes a locally persisted ACK only when its operation_id is
+   * returned here. An empty list is not an acknowledgement.
+   * </pre>
+   *
+   * <code>repeated string accepted_ack_operation_ids = 4 [json_name = "acceptedAckOperationIds"];</code>
+   * @param index The index of the element to return.
+   * @return The acceptedAckOperationIds at the given index.
+   */
+  java.lang.String getAcceptedAckOperationIds(int index);
+  /**
+   * <pre>
+   * The Agent removes a locally persisted ACK only when its operation_id is
+   * returned here. An empty list is not an acknowledgement.
+   * </pre>
+   *
+   * <code>repeated string accepted_ack_operation_ids = 4 [json_name = "acceptedAckOperationIds"];</code>
+   * @param index The index of the value to return.
+   * @return The bytes of the acceptedAckOperationIds at the given index.
+   */
+  com.google.protobuf.ByteString
+      getAcceptedAckOperationIdsBytes(int index);
 }

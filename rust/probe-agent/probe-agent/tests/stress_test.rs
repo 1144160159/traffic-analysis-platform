@@ -20,9 +20,8 @@ async fn stress_test_pcap_replay() {
     println!("╚══════════════════════════════════════════════╝");
 
     // 1. Create replayer at max speed
-    let mut replayer =
-        PcapReplayer::new(path.to_str().unwrap(), ReplaySpeed::MaxSpeed, false)
-            .expect("Failed to create replayer");
+    let mut replayer = PcapReplayer::new(path.to_str().unwrap(), ReplaySpeed::MaxSpeed, false)
+        .expect("Failed to create replayer");
 
     // 2. Create flow table
     let partitions = 16usize;
@@ -172,7 +171,12 @@ fn make_eth_ip_tcp_packet(index: u64) -> Vec<u8> {
     packet.push(64);
     packet.push(6);
     packet.extend_from_slice(&0u16.to_be_bytes());
-    packet.extend_from_slice(&[192, 168, ((index / 254) % 254 + 1) as u8, (index % 254 + 1) as u8]);
+    packet.extend_from_slice(&[
+        192,
+        168,
+        ((index / 254) % 254 + 1) as u8,
+        (index % 254 + 1) as u8,
+    ]);
     packet.extend_from_slice(&[10, 0, ((index / 512) % 6) as u8, (index % 254 + 1) as u8]);
 
     let src_port = 1024 + (index % 60_000) as u16;

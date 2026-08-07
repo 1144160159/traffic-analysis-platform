@@ -23,6 +23,32 @@ pub struct EventHeader {
     /// flink_out_ts is the millisecond timestamp assigned when a Flink job emits or persists the derived event.
     #[prost(int64, tag="9")]
     pub flink_out_ts: i64,
+    /// The fields below are an additive v1 event envelope. Existing fields remain
+    /// wire-compatible while producers migrate to the complete contract.
+    #[prost(string, tag="10")]
+    pub event_type: ::prost::alloc::string::String,
+    #[prost(string, tag="11")]
+    pub schema_version: ::prost::alloc::string::String,
+    #[prost(string, tag="12")]
+    pub aggregate_type: ::prost::alloc::string::String,
+    #[prost(string, tag="13")]
+    pub aggregate_id: ::prost::alloc::string::String,
+    #[prost(uint64, tag="14")]
+    pub aggregate_version: u64,
+    #[prost(int64, tag="15")]
+    pub occurred_at: i64,
+    #[prost(int64, tag="16")]
+    pub produced_at: i64,
+    #[prost(string, tag="17")]
+    pub trace_id: ::prost::alloc::string::String,
+    #[prost(string, tag="18")]
+    pub causation_id: ::prost::alloc::string::String,
+    #[prost(string, tag="19")]
+    pub correlation_id: ::prost::alloc::string::String,
+    #[prost(string, tag="20")]
+    pub idempotency_key: ::prost::alloc::string::String,
+    #[prost(string, tag="21")]
+    pub producer: ::prost::alloc::string::String,
 }
 /// FiveTuple 五元组
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -377,6 +403,10 @@ pub struct Alert {
     pub feedback_count: u32,
     #[prost(uint64, tag="32")]
     pub state_version: u64,
+    /// trace_id is the 32-character lowercase W3C trace identifier propagated
+    /// from the originating request/event through every alert projection.
+    #[prost(string, tag="33")]
+    pub trace_id: ::prost::alloc::string::String,
 }
 /// Evidence 证据
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -1104,6 +1134,12 @@ pub struct DetectionBehavior {
     pub top_label: ::prost::alloc::string::String,
     #[prost(float, tag="10")]
     pub top_score: f32,
+    /// Additive source context: consumers must not manufacture an empty tuple or
+    /// evidence list when producing an alert projection.
+    #[prost(message, optional, tag="11")]
+    pub tuple: ::core::option::Option<FiveTuple>,
+    #[prost(string, repeated, tag="12")]
+    pub evidence_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 /// DetectionBusiness 业务检测结果
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -1195,6 +1231,11 @@ pub struct FeatureStat {
     pub tcp_init_win_bytes_bwd: u32,
     #[prost(float, repeated, tag="22")]
     pub extra: ::prost::alloc::vec::Vec<f32>,
+    /// Original session context required by downstream detections and evidence.
+    #[prost(message, optional, tag="23")]
+    pub tuple: ::core::option::Option<FiveTuple>,
+    #[prost(string, repeated, tag="24")]
+    pub evidence_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 /// FeatureSeq L2 序列特征
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -1889,6 +1930,11 @@ pub struct HeartbeatRequest {
     pub probe_id: ::prost::alloc::string::String,
     #[prost(message, optional, tag="3")]
     pub status: ::core::option::Option<ProbeStatus>,
+    /// Final receipts are retried by the Agent until the authenticated Gateway
+    /// durably accepts them. The Gateway must reject receipts whose tenant/probe
+    /// identity differs from the authenticated context.
+    #[prost(message, repeated, tag="4")]
+    pub operation_acks: ::prost::alloc::vec::Vec<ProbeOperationAck>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1897,6 +1943,69 @@ pub struct HeartbeatResponse {
     pub ok: bool,
     #[prost(message, optional, tag="2")]
     pub config: ::core::option::Option<ProbeConfig>,
+    /// Commands are selected by the Gateway after authenticating tenant_id and
+    /// probe_id. The Agent still validates both identities, expiry, revision and
+    /// the deterministic command hash before execution.
+    #[prost(message, repeated, tag="3")]
+    pub operation_commands: ::prost::alloc::vec::Vec<ProbeOperationCommand>,
+    /// The Agent removes a locally persisted ACK only when its operation_id is
+    /// returned here. An empty list is not an acknowledgement.
+    #[prost(string, repeated, tag="4")]
+    pub accepted_ack_operation_ids: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// ProbeOperationCommand is the edge-delivery representation of an accepted
+/// traffic.probe.v2.OperationRequested event. Kafka remains the durable command
+/// source; this message prevents exposing shared broker credentials to probes.
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ProbeOperationCommand {
+    #[prost(string, tag="1")]
+    pub event_id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub tenant_id: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub probe_id: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub operation_id: ::prost::alloc::string::String,
+    #[prost(string, tag="5")]
+    pub operation_type: ::prost::alloc::string::String,
+    #[prost(int64, tag="6")]
+    pub command_revision: i64,
+    #[prost(string, tag="7")]
+    pub desired_version: ::prost::alloc::string::String,
+    #[prost(string, tag="8")]
+    pub command_hash: ::prost::alloc::string::String,
+    #[prost(int64, tag="9")]
+    pub expires_at_ms: i64,
+    #[prost(string, tag="10")]
+    pub trace_id: ::prost::alloc::string::String,
+    #[prost(bytes="vec", tag="11")]
+    pub command_json: ::prost::alloc::vec::Vec<u8>,
+}
+/// ProbeOperationAck is produced only after the Agent has persisted the
+/// operation result locally. applied=false is a real terminal failure, never a
+/// transport acknowledgement or optimistic success.
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ProbeOperationAck {
+    #[prost(string, tag="1")]
+    pub operation_id: ::prost::alloc::string::String,
+    #[prost(int64, tag="2")]
+    pub command_revision: i64,
+    #[prost(string, tag="3")]
+    pub reported_version: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub reported_hash: ::prost::alloc::string::String,
+    #[prost(string, tag="5")]
+    pub agent_version: ::prost::alloc::string::String,
+    #[prost(bool, tag="6")]
+    pub applied: bool,
+    #[prost(string, tag="7")]
+    pub error: ::prost::alloc::string::String,
+    #[prost(int64, tag="8")]
+    pub acknowledged_at_ms: i64,
+    #[prost(bytes="vec", tag="9")]
+    pub detail_json: ::prost::alloc::vec::Vec<u8>,
 }
 // ==================== 探针注册 ====================
 

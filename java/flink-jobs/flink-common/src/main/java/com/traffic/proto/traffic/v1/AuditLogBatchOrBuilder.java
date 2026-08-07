@@ -11,7 +11,7 @@ public interface AuditLogBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.AuditLog events = 1 [json_name = "events"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.AuditLog> 
+  java.util.List<com.traffic.proto.traffic.v1.AuditLog>
       getEventsList();
   /**
    * <code>repeated .traffic.v1.AuditLog events = 1 [json_name = "events"];</code>
@@ -24,7 +24,7 @@ public interface AuditLogBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.AuditLog events = 1 [json_name = "events"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.AuditLogOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.AuditLogOrBuilder>
       getEventsOrBuilderList();
   /**
    * <code>repeated .traffic.v1.AuditLog events = 1 [json_name = "events"];</code>

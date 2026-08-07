@@ -9,6 +9,7 @@ import com.traffic.flink.cep.select.*;
 import com.traffic.flink.cep.sink.ClickHouseSinkFactory;
 import com.traffic.flink.cep.sink.KafkaSinkFactory;
 import com.traffic.flink.common.ConfigUtils;
+import com.traffic.flink.common.KafkaStartingOffsets;
 import com.traffic.flink.common.ProtoDeserializer;
 import com.traffic.proto.traffic.v1.Alert;
 import com.traffic.proto.traffic.v1.Campaign;
@@ -23,7 +24,6 @@ import org.apache.flink.connector.base.DeliveryGuarantee;
 import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
 import org.apache.flink.connector.kafka.sink.KafkaSink;
 import org.apache.flink.connector.kafka.source.KafkaSource;
-import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.contrib.streaming.state.EmbeddedRocksDBStateBackend;
 import org.apache.flink.runtime.state.storage.FileSystemCheckpointStorage;
 import org.apache.flink.streaming.api.CheckpointingMode;
@@ -86,6 +86,11 @@ public class CepJob {
 
         int parallelism = ConfigUtils.getInt(params, "parallelism", 4);
         long checkpointInterval = ConfigUtils.getLong(params, "checkpoint.interval.ms", 60000);
+        long checkpointTimeout = ConfigUtils.getLong(params, "checkpoint.timeout.ms", 600000);
+        int checkpointTolerableFailures =
+                ConfigUtils.getInt(params, "checkpoint.tolerable.failures", 3);
+        boolean unalignedCheckpoints =
+                ConfigUtils.getBoolean(params, "checkpoint.unaligned.enabled", true);
 
         // 模式配置
         PatternConfig patternConfig = loadPatternConfig(params);
@@ -95,12 +100,19 @@ public class CepJob {
         env.setParallelism(parallelism);
 
         // 配置 Checkpoint
-        configureCheckpoint(env, checkpointPath, checkpointInterval);
+        configureCheckpoint(
+                env,
+                checkpointPath,
+                checkpointInterval,
+                checkpointTimeout,
+                checkpointTolerableFailures,
+                unalignedCheckpoints);
 
-        // 配置重启策略
+        // 配置重启策略。默认覆盖短时 Kafka/存储故障窗口，仍允许通过合同化参数调整。
         env.setRestartStrategy(RestartStrategies.fixedDelayRestart(
-                3,
-                org.apache.flink.api.common.time.Time.seconds(30)
+                ConfigUtils.getInt(params, "restart.attempts", 10),
+                org.apache.flink.api.common.time.Time.seconds(
+                        ConfigUtils.getInt(params, "restart.delay.seconds", 30))
         ));
 
         // ==================== Kafka Source ====================
@@ -108,7 +120,7 @@ public class CepJob {
                 .setBootstrapServers(kafkaBrokers)
                 .setTopics(inputTopic)
                 .setGroupId(groupId)
-                .setStartingOffsets(OffsetsInitializer.latest())
+                .setStartingOffsets(KafkaStartingOffsets.from(params))
                 .setValueOnlyDeserializer(new ProtoDeserializer<>(Alert.class))
                 .setProperties(ConfigUtils.kafkaClientProperties(params))
                 .setProperty("partition.discovery.interval.ms", "30000")
@@ -459,15 +471,22 @@ public class CepJob {
     private static void configureCheckpoint(
             StreamExecutionEnvironment env,
             String checkpointPath,
-            long intervalMs
+            long intervalMs,
+            long timeoutMs,
+            int tolerableFailures,
+            boolean unalignedCheckpoints
     ) {
         // 启用 Checkpoint
         env.enableCheckpointing(intervalMs, CheckpointingMode.EXACTLY_ONCE);
 
         CheckpointConfig config = env.getCheckpointConfig();
 
-        // CEP 作业状态较大，需要更长的超时时间
-        config.setCheckpointTimeout(180000); // 3 分钟
+        // CEP 作业状态较大；超时与可容忍连续失败次数必须可按真实状态规模调整。
+        config.setCheckpointTimeout(timeoutMs);
+        config.setTolerableCheckpointFailureNumber(tolerableFailures);
+        if (unalignedCheckpoints) {
+            config.enableUnalignedCheckpoints();
+        }
 
         // Checkpoint 之间的最小间隔
         config.setMinPauseBetweenCheckpoints(intervalMs / 2);

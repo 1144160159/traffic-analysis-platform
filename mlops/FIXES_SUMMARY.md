@@ -130,7 +130,7 @@ fn_features = X[false_negatives].mean()
 # 1. MinIO 上传
 from minio import Minio
 
-client = Minio(endpoint, access_key, secret_key, secure=False)
+client = Minio(endpoint, access_key, secret_key, secure=secure)
 client.fput_object(bucket, object_name, model_path)
 
 # 2. Kafka 通知（热更新）
@@ -217,9 +217,10 @@ FEATURE_SET_ID=v1
 TENANT_ID=campus-net
 MODEL_VERSION=v20240115_120000
 MINIO_ENDPOINT=minio:9000
-MINIO_ACCESS_KEY=minioadmin
-MINIO_SECRET_KEY=minioadmin
+MINIO_ACCESS_KEY=<model-writer-access-key-from-secret>
+MINIO_SECRET_KEY=<model-writer-secret-key-from-secret>
 MINIO_BUCKET=traffic-models
+MINIO_SECURE=false  # 仅隔离开发；生产目标必须迁移到TLS
 MODEL_REGISTRY_URL=http://rule-manager:8080
 API_TOKEN=<jwt-token>
 KAFKA_BOOTSTRAP_SERVERS=kafka:9092

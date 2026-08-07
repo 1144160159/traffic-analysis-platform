@@ -24,6 +24,10 @@ message DetectionBehavior {
   repeated float scores = 8;
   string top_label = 9;
   float top_score = 10;
+  // Additive source context: consumers must not manufacture an empty tuple or
+  // evidence list when producing an alert projection.
+  FiveTuple tuple = 11;
+  repeated string evidence_ids = 12;
 }
 
 // DetectionBusiness 业务检测结果

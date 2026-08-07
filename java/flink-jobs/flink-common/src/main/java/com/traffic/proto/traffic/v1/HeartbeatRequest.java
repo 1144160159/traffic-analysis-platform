@@ -19,6 +19,7 @@ private static final long serialVersionUID = 0L;
   private HeartbeatRequest() {
     tenantId_ = "";
     probeId_ = "";
+    operationAcks_ = java.util.Collections.emptyList();
   }
 
   @java.lang.Override
@@ -55,7 +56,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       tenantId_ = s;
@@ -71,7 +72,7 @@ private static final long serialVersionUID = 0L;
       getTenantIdBytes() {
     java.lang.Object ref = tenantId_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       tenantId_ = b;
@@ -94,7 +95,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       probeId_ = s;
@@ -110,7 +111,7 @@ private static final long serialVersionUID = 0L;
       getProbeIdBytes() {
     java.lang.Object ref = probeId_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       probeId_ = b;
@@ -146,6 +147,77 @@ private static final long serialVersionUID = 0L;
     return status_ == null ? com.traffic.proto.traffic.v1.ProbeStatus.getDefaultInstance() : status_;
   }
 
+  public static final int OPERATION_ACKS_FIELD_NUMBER = 4;
+  @SuppressWarnings("serial")
+  private java.util.List<com.traffic.proto.traffic.v1.ProbeOperationAck> operationAcks_;
+  /**
+   * <pre>
+   * Final receipts are retried by the Agent until the authenticated Gateway
+   * durably accepts them. The Gateway must reject receipts whose tenant/probe
+   * identity differs from the authenticated context.
+   * </pre>
+   *
+   * <code>repeated .traffic.v1.ProbeOperationAck operation_acks = 4 [json_name = "operationAcks"];</code>
+   */
+  @java.lang.Override
+  public java.util.List<com.traffic.proto.traffic.v1.ProbeOperationAck> getOperationAcksList() {
+    return operationAcks_;
+  }
+  /**
+   * <pre>
+   * Final receipts are retried by the Agent until the authenticated Gateway
+   * durably accepts them. The Gateway must reject receipts whose tenant/probe
+   * identity differs from the authenticated context.
+   * </pre>
+   *
+   * <code>repeated .traffic.v1.ProbeOperationAck operation_acks = 4 [json_name = "operationAcks"];</code>
+   */
+  @java.lang.Override
+  public java.util.List<? extends com.traffic.proto.traffic.v1.ProbeOperationAckOrBuilder>
+      getOperationAcksOrBuilderList() {
+    return operationAcks_;
+  }
+  /**
+   * <pre>
+   * Final receipts are retried by the Agent until the authenticated Gateway
+   * durably accepts them. The Gateway must reject receipts whose tenant/probe
+   * identity differs from the authenticated context.
+   * </pre>
+   *
+   * <code>repeated .traffic.v1.ProbeOperationAck operation_acks = 4 [json_name = "operationAcks"];</code>
+   */
+  @java.lang.Override
+  public int getOperationAcksCount() {
+    return operationAcks_.size();
+  }
+  /**
+   * <pre>
+   * Final receipts are retried by the Agent until the authenticated Gateway
+   * durably accepts them. The Gateway must reject receipts whose tenant/probe
+   * identity differs from the authenticated context.
+   * </pre>
+   *
+   * <code>repeated .traffic.v1.ProbeOperationAck operation_acks = 4 [json_name = "operationAcks"];</code>
+   */
+  @java.lang.Override
+  public com.traffic.proto.traffic.v1.ProbeOperationAck getOperationAcks(int index) {
+    return operationAcks_.get(index);
+  }
+  /**
+   * <pre>
+   * Final receipts are retried by the Agent until the authenticated Gateway
+   * durably accepts them. The Gateway must reject receipts whose tenant/probe
+   * identity differs from the authenticated context.
+   * </pre>
+   *
+   * <code>repeated .traffic.v1.ProbeOperationAck operation_acks = 4 [json_name = "operationAcks"];</code>
+   */
+  @java.lang.Override
+  public com.traffic.proto.traffic.v1.ProbeOperationAckOrBuilder getOperationAcksOrBuilder(
+      int index) {
+    return operationAcks_.get(index);
+  }
+
   private byte memoizedIsInitialized = -1;
   @java.lang.Override
   public final boolean isInitialized() {
@@ -169,6 +241,9 @@ private static final long serialVersionUID = 0L;
     if (((bitField0_ & 0x00000001) != 0)) {
       output.writeMessage(3, getStatus());
     }
+    for (int i = 0; i < operationAcks_.size(); i++) {
+      output.writeMessage(4, operationAcks_.get(i));
+    }
     getUnknownFields().writeTo(output);
   }
 
@@ -187,6 +262,10 @@ private static final long serialVersionUID = 0L;
     if (((bitField0_ & 0x00000001) != 0)) {
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(3, getStatus());
+    }
+    for (int i = 0; i < operationAcks_.size(); i++) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeMessageSize(4, operationAcks_.get(i));
     }
     size += getUnknownFields().getSerializedSize();
     memoizedSize = size;
@@ -212,6 +291,8 @@ private static final long serialVersionUID = 0L;
       if (!getStatus()
           .equals(other.getStatus())) return false;
     }
+    if (!getOperationAcksList()
+        .equals(other.getOperationAcksList())) return false;
     if (!getUnknownFields().equals(other.getUnknownFields())) return false;
     return true;
   }
@@ -230,6 +311,10 @@ private static final long serialVersionUID = 0L;
     if (hasStatus()) {
       hash = (37 * hash) + STATUS_FIELD_NUMBER;
       hash = (53 * hash) + getStatus().hashCode();
+    }
+    if (getOperationAcksCount() > 0) {
+      hash = (37 * hash) + OPERATION_ACKS_FIELD_NUMBER;
+      hash = (53 * hash) + getOperationAcksList().hashCode();
     }
     hash = (29 * hash) + getUnknownFields().hashCode();
     memoizedHashCode = hash;
@@ -362,6 +447,7 @@ private static final long serialVersionUID = 0L;
       if (com.google.protobuf.GeneratedMessageV3
               .alwaysUseFieldBuilders) {
         getStatusFieldBuilder();
+        getOperationAcksFieldBuilder();
       }
     }
     @java.lang.Override
@@ -375,6 +461,13 @@ private static final long serialVersionUID = 0L;
         statusBuilder_.dispose();
         statusBuilder_ = null;
       }
+      if (operationAcksBuilder_ == null) {
+        operationAcks_ = java.util.Collections.emptyList();
+      } else {
+        operationAcks_ = null;
+        operationAcksBuilder_.clear();
+      }
+      bitField0_ = (bitField0_ & ~0x00000008);
       return this;
     }
 
@@ -401,9 +494,22 @@ private static final long serialVersionUID = 0L;
     @java.lang.Override
     public com.traffic.proto.traffic.v1.HeartbeatRequest buildPartial() {
       com.traffic.proto.traffic.v1.HeartbeatRequest result = new com.traffic.proto.traffic.v1.HeartbeatRequest(this);
+      buildPartialRepeatedFields(result);
       if (bitField0_ != 0) { buildPartial0(result); }
       onBuilt();
       return result;
+    }
+
+    private void buildPartialRepeatedFields(com.traffic.proto.traffic.v1.HeartbeatRequest result) {
+      if (operationAcksBuilder_ == null) {
+        if (((bitField0_ & 0x00000008) != 0)) {
+          operationAcks_ = java.util.Collections.unmodifiableList(operationAcks_);
+          bitField0_ = (bitField0_ & ~0x00000008);
+        }
+        result.operationAcks_ = operationAcks_;
+      } else {
+        result.operationAcks_ = operationAcksBuilder_.build();
+      }
     }
 
     private void buildPartial0(com.traffic.proto.traffic.v1.HeartbeatRequest result) {
@@ -481,6 +587,32 @@ private static final long serialVersionUID = 0L;
       if (other.hasStatus()) {
         mergeStatus(other.getStatus());
       }
+      if (operationAcksBuilder_ == null) {
+        if (!other.operationAcks_.isEmpty()) {
+          if (operationAcks_.isEmpty()) {
+            operationAcks_ = other.operationAcks_;
+            bitField0_ = (bitField0_ & ~0x00000008);
+          } else {
+            ensureOperationAcksIsMutable();
+            operationAcks_.addAll(other.operationAcks_);
+          }
+          onChanged();
+        }
+      } else {
+        if (!other.operationAcks_.isEmpty()) {
+          if (operationAcksBuilder_.isEmpty()) {
+            operationAcksBuilder_.dispose();
+            operationAcksBuilder_ = null;
+            operationAcks_ = other.operationAcks_;
+            bitField0_ = (bitField0_ & ~0x00000008);
+            operationAcksBuilder_ =
+              com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+                 getOperationAcksFieldBuilder() : null;
+          } else {
+            operationAcksBuilder_.addAllMessages(other.operationAcks_);
+          }
+        }
+      }
       this.mergeUnknownFields(other.getUnknownFields());
       onChanged();
       return this;
@@ -524,6 +656,19 @@ private static final long serialVersionUID = 0L;
               bitField0_ |= 0x00000004;
               break;
             } // case 26
+            case 34: {
+              com.traffic.proto.traffic.v1.ProbeOperationAck m =
+                  input.readMessage(
+                      com.traffic.proto.traffic.v1.ProbeOperationAck.parser(),
+                      extensionRegistry);
+              if (operationAcksBuilder_ == null) {
+                ensureOperationAcksIsMutable();
+                operationAcks_.add(m);
+              } else {
+                operationAcksBuilder_.addMessage(m);
+              }
+              break;
+            } // case 34
             default: {
               if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                 done = true; // was an endgroup tag
@@ -566,7 +711,7 @@ private static final long serialVersionUID = 0L;
         getTenantIdBytes() {
       java.lang.Object ref = tenantId_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         tenantId_ = b;
@@ -638,7 +783,7 @@ private static final long serialVersionUID = 0L;
         getProbeIdBytes() {
       java.lang.Object ref = probeId_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         probeId_ = b;
@@ -793,7 +938,7 @@ private static final long serialVersionUID = 0L;
      * <code>.traffic.v1.ProbeStatus status = 3 [json_name = "status"];</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
-        com.traffic.proto.traffic.v1.ProbeStatus, com.traffic.proto.traffic.v1.ProbeStatus.Builder, com.traffic.proto.traffic.v1.ProbeStatusOrBuilder> 
+        com.traffic.proto.traffic.v1.ProbeStatus, com.traffic.proto.traffic.v1.ProbeStatus.Builder, com.traffic.proto.traffic.v1.ProbeStatusOrBuilder>
         getStatusFieldBuilder() {
       if (statusBuilder_ == null) {
         statusBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -804,6 +949,354 @@ private static final long serialVersionUID = 0L;
         status_ = null;
       }
       return statusBuilder_;
+    }
+
+    private java.util.List<com.traffic.proto.traffic.v1.ProbeOperationAck> operationAcks_ =
+      java.util.Collections.emptyList();
+    private void ensureOperationAcksIsMutable() {
+      if (!((bitField0_ & 0x00000008) != 0)) {
+        operationAcks_ = new java.util.ArrayList<com.traffic.proto.traffic.v1.ProbeOperationAck>(operationAcks_);
+        bitField0_ |= 0x00000008;
+       }
+    }
+
+    private com.google.protobuf.RepeatedFieldBuilderV3<
+        com.traffic.proto.traffic.v1.ProbeOperationAck, com.traffic.proto.traffic.v1.ProbeOperationAck.Builder, com.traffic.proto.traffic.v1.ProbeOperationAckOrBuilder> operationAcksBuilder_;
+
+    /**
+     * <pre>
+     * Final receipts are retried by the Agent until the authenticated Gateway
+     * durably accepts them. The Gateway must reject receipts whose tenant/probe
+     * identity differs from the authenticated context.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationAck operation_acks = 4 [json_name = "operationAcks"];</code>
+     */
+    public java.util.List<com.traffic.proto.traffic.v1.ProbeOperationAck> getOperationAcksList() {
+      if (operationAcksBuilder_ == null) {
+        return java.util.Collections.unmodifiableList(operationAcks_);
+      } else {
+        return operationAcksBuilder_.getMessageList();
+      }
+    }
+    /**
+     * <pre>
+     * Final receipts are retried by the Agent until the authenticated Gateway
+     * durably accepts them. The Gateway must reject receipts whose tenant/probe
+     * identity differs from the authenticated context.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationAck operation_acks = 4 [json_name = "operationAcks"];</code>
+     */
+    public int getOperationAcksCount() {
+      if (operationAcksBuilder_ == null) {
+        return operationAcks_.size();
+      } else {
+        return operationAcksBuilder_.getCount();
+      }
+    }
+    /**
+     * <pre>
+     * Final receipts are retried by the Agent until the authenticated Gateway
+     * durably accepts them. The Gateway must reject receipts whose tenant/probe
+     * identity differs from the authenticated context.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationAck operation_acks = 4 [json_name = "operationAcks"];</code>
+     */
+    public com.traffic.proto.traffic.v1.ProbeOperationAck getOperationAcks(int index) {
+      if (operationAcksBuilder_ == null) {
+        return operationAcks_.get(index);
+      } else {
+        return operationAcksBuilder_.getMessage(index);
+      }
+    }
+    /**
+     * <pre>
+     * Final receipts are retried by the Agent until the authenticated Gateway
+     * durably accepts them. The Gateway must reject receipts whose tenant/probe
+     * identity differs from the authenticated context.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationAck operation_acks = 4 [json_name = "operationAcks"];</code>
+     */
+    public Builder setOperationAcks(
+        int index, com.traffic.proto.traffic.v1.ProbeOperationAck value) {
+      if (operationAcksBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureOperationAcksIsMutable();
+        operationAcks_.set(index, value);
+        onChanged();
+      } else {
+        operationAcksBuilder_.setMessage(index, value);
+      }
+      return this;
+    }
+    /**
+     * <pre>
+     * Final receipts are retried by the Agent until the authenticated Gateway
+     * durably accepts them. The Gateway must reject receipts whose tenant/probe
+     * identity differs from the authenticated context.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationAck operation_acks = 4 [json_name = "operationAcks"];</code>
+     */
+    public Builder setOperationAcks(
+        int index, com.traffic.proto.traffic.v1.ProbeOperationAck.Builder builderForValue) {
+      if (operationAcksBuilder_ == null) {
+        ensureOperationAcksIsMutable();
+        operationAcks_.set(index, builderForValue.build());
+        onChanged();
+      } else {
+        operationAcksBuilder_.setMessage(index, builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <pre>
+     * Final receipts are retried by the Agent until the authenticated Gateway
+     * durably accepts them. The Gateway must reject receipts whose tenant/probe
+     * identity differs from the authenticated context.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationAck operation_acks = 4 [json_name = "operationAcks"];</code>
+     */
+    public Builder addOperationAcks(com.traffic.proto.traffic.v1.ProbeOperationAck value) {
+      if (operationAcksBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureOperationAcksIsMutable();
+        operationAcks_.add(value);
+        onChanged();
+      } else {
+        operationAcksBuilder_.addMessage(value);
+      }
+      return this;
+    }
+    /**
+     * <pre>
+     * Final receipts are retried by the Agent until the authenticated Gateway
+     * durably accepts them. The Gateway must reject receipts whose tenant/probe
+     * identity differs from the authenticated context.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationAck operation_acks = 4 [json_name = "operationAcks"];</code>
+     */
+    public Builder addOperationAcks(
+        int index, com.traffic.proto.traffic.v1.ProbeOperationAck value) {
+      if (operationAcksBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureOperationAcksIsMutable();
+        operationAcks_.add(index, value);
+        onChanged();
+      } else {
+        operationAcksBuilder_.addMessage(index, value);
+      }
+      return this;
+    }
+    /**
+     * <pre>
+     * Final receipts are retried by the Agent until the authenticated Gateway
+     * durably accepts them. The Gateway must reject receipts whose tenant/probe
+     * identity differs from the authenticated context.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationAck operation_acks = 4 [json_name = "operationAcks"];</code>
+     */
+    public Builder addOperationAcks(
+        com.traffic.proto.traffic.v1.ProbeOperationAck.Builder builderForValue) {
+      if (operationAcksBuilder_ == null) {
+        ensureOperationAcksIsMutable();
+        operationAcks_.add(builderForValue.build());
+        onChanged();
+      } else {
+        operationAcksBuilder_.addMessage(builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <pre>
+     * Final receipts are retried by the Agent until the authenticated Gateway
+     * durably accepts them. The Gateway must reject receipts whose tenant/probe
+     * identity differs from the authenticated context.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationAck operation_acks = 4 [json_name = "operationAcks"];</code>
+     */
+    public Builder addOperationAcks(
+        int index, com.traffic.proto.traffic.v1.ProbeOperationAck.Builder builderForValue) {
+      if (operationAcksBuilder_ == null) {
+        ensureOperationAcksIsMutable();
+        operationAcks_.add(index, builderForValue.build());
+        onChanged();
+      } else {
+        operationAcksBuilder_.addMessage(index, builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <pre>
+     * Final receipts are retried by the Agent until the authenticated Gateway
+     * durably accepts them. The Gateway must reject receipts whose tenant/probe
+     * identity differs from the authenticated context.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationAck operation_acks = 4 [json_name = "operationAcks"];</code>
+     */
+    public Builder addAllOperationAcks(
+        java.lang.Iterable<? extends com.traffic.proto.traffic.v1.ProbeOperationAck> values) {
+      if (operationAcksBuilder_ == null) {
+        ensureOperationAcksIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, operationAcks_);
+        onChanged();
+      } else {
+        operationAcksBuilder_.addAllMessages(values);
+      }
+      return this;
+    }
+    /**
+     * <pre>
+     * Final receipts are retried by the Agent until the authenticated Gateway
+     * durably accepts them. The Gateway must reject receipts whose tenant/probe
+     * identity differs from the authenticated context.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationAck operation_acks = 4 [json_name = "operationAcks"];</code>
+     */
+    public Builder clearOperationAcks() {
+      if (operationAcksBuilder_ == null) {
+        operationAcks_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000008);
+        onChanged();
+      } else {
+        operationAcksBuilder_.clear();
+      }
+      return this;
+    }
+    /**
+     * <pre>
+     * Final receipts are retried by the Agent until the authenticated Gateway
+     * durably accepts them. The Gateway must reject receipts whose tenant/probe
+     * identity differs from the authenticated context.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationAck operation_acks = 4 [json_name = "operationAcks"];</code>
+     */
+    public Builder removeOperationAcks(int index) {
+      if (operationAcksBuilder_ == null) {
+        ensureOperationAcksIsMutable();
+        operationAcks_.remove(index);
+        onChanged();
+      } else {
+        operationAcksBuilder_.remove(index);
+      }
+      return this;
+    }
+    /**
+     * <pre>
+     * Final receipts are retried by the Agent until the authenticated Gateway
+     * durably accepts them. The Gateway must reject receipts whose tenant/probe
+     * identity differs from the authenticated context.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationAck operation_acks = 4 [json_name = "operationAcks"];</code>
+     */
+    public com.traffic.proto.traffic.v1.ProbeOperationAck.Builder getOperationAcksBuilder(
+        int index) {
+      return getOperationAcksFieldBuilder().getBuilder(index);
+    }
+    /**
+     * <pre>
+     * Final receipts are retried by the Agent until the authenticated Gateway
+     * durably accepts them. The Gateway must reject receipts whose tenant/probe
+     * identity differs from the authenticated context.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationAck operation_acks = 4 [json_name = "operationAcks"];</code>
+     */
+    public com.traffic.proto.traffic.v1.ProbeOperationAckOrBuilder getOperationAcksOrBuilder(
+        int index) {
+      if (operationAcksBuilder_ == null) {
+        return operationAcks_.get(index);  } else {
+        return operationAcksBuilder_.getMessageOrBuilder(index);
+      }
+    }
+    /**
+     * <pre>
+     * Final receipts are retried by the Agent until the authenticated Gateway
+     * durably accepts them. The Gateway must reject receipts whose tenant/probe
+     * identity differs from the authenticated context.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationAck operation_acks = 4 [json_name = "operationAcks"];</code>
+     */
+    public java.util.List<? extends com.traffic.proto.traffic.v1.ProbeOperationAckOrBuilder>
+         getOperationAcksOrBuilderList() {
+      if (operationAcksBuilder_ != null) {
+        return operationAcksBuilder_.getMessageOrBuilderList();
+      } else {
+        return java.util.Collections.unmodifiableList(operationAcks_);
+      }
+    }
+    /**
+     * <pre>
+     * Final receipts are retried by the Agent until the authenticated Gateway
+     * durably accepts them. The Gateway must reject receipts whose tenant/probe
+     * identity differs from the authenticated context.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationAck operation_acks = 4 [json_name = "operationAcks"];</code>
+     */
+    public com.traffic.proto.traffic.v1.ProbeOperationAck.Builder addOperationAcksBuilder() {
+      return getOperationAcksFieldBuilder().addBuilder(
+          com.traffic.proto.traffic.v1.ProbeOperationAck.getDefaultInstance());
+    }
+    /**
+     * <pre>
+     * Final receipts are retried by the Agent until the authenticated Gateway
+     * durably accepts them. The Gateway must reject receipts whose tenant/probe
+     * identity differs from the authenticated context.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationAck operation_acks = 4 [json_name = "operationAcks"];</code>
+     */
+    public com.traffic.proto.traffic.v1.ProbeOperationAck.Builder addOperationAcksBuilder(
+        int index) {
+      return getOperationAcksFieldBuilder().addBuilder(
+          index, com.traffic.proto.traffic.v1.ProbeOperationAck.getDefaultInstance());
+    }
+    /**
+     * <pre>
+     * Final receipts are retried by the Agent until the authenticated Gateway
+     * durably accepts them. The Gateway must reject receipts whose tenant/probe
+     * identity differs from the authenticated context.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationAck operation_acks = 4 [json_name = "operationAcks"];</code>
+     */
+    public java.util.List<com.traffic.proto.traffic.v1.ProbeOperationAck.Builder>
+         getOperationAcksBuilderList() {
+      return getOperationAcksFieldBuilder().getBuilderList();
+    }
+    private com.google.protobuf.RepeatedFieldBuilderV3<
+        com.traffic.proto.traffic.v1.ProbeOperationAck, com.traffic.proto.traffic.v1.ProbeOperationAck.Builder, com.traffic.proto.traffic.v1.ProbeOperationAckOrBuilder>
+        getOperationAcksFieldBuilder() {
+      if (operationAcksBuilder_ == null) {
+        operationAcksBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
+            com.traffic.proto.traffic.v1.ProbeOperationAck, com.traffic.proto.traffic.v1.ProbeOperationAck.Builder, com.traffic.proto.traffic.v1.ProbeOperationAckOrBuilder>(
+                operationAcks_,
+                ((bitField0_ & 0x00000008) != 0),
+                getParentForChildren(),
+                isClean());
+        operationAcks_ = null;
+      }
+      return operationAcksBuilder_;
     }
     @java.lang.Override
     public final Builder setUnknownFields(

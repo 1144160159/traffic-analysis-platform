@@ -11,7 +11,7 @@ public interface AlertBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.Alert alerts = 1 [json_name = "alerts"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.Alert> 
+  java.util.List<com.traffic.proto.traffic.v1.Alert>
       getAlertsList();
   /**
    * <code>repeated .traffic.v1.Alert alerts = 1 [json_name = "alerts"];</code>
@@ -24,7 +24,7 @@ public interface AlertBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.Alert alerts = 1 [json_name = "alerts"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.AlertOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.AlertOrBuilder>
       getAlertsOrBuilderList();
   /**
    * <code>repeated .traffic.v1.Alert alerts = 1 [json_name = "alerts"];</code>
@@ -35,7 +35,7 @@ public interface AlertBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.Evidence evidences = 2 [json_name = "evidences"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.Evidence> 
+  java.util.List<com.traffic.proto.traffic.v1.Evidence>
       getEvidencesList();
   /**
    * <code>repeated .traffic.v1.Evidence evidences = 2 [json_name = "evidences"];</code>
@@ -48,7 +48,7 @@ public interface AlertBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.Evidence evidences = 2 [json_name = "evidences"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.EvidenceOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.EvidenceOrBuilder>
       getEvidencesOrBuilderList();
   /**
    * <code>repeated .traffic.v1.Evidence evidences = 2 [json_name = "evidences"];</code>
@@ -59,7 +59,7 @@ public interface AlertBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.Campaign campaigns = 3 [json_name = "campaigns"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.Campaign> 
+  java.util.List<com.traffic.proto.traffic.v1.Campaign>
       getCampaignsList();
   /**
    * <code>repeated .traffic.v1.Campaign campaigns = 3 [json_name = "campaigns"];</code>
@@ -72,7 +72,7 @@ public interface AlertBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.Campaign campaigns = 3 [json_name = "campaigns"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.CampaignOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.CampaignOrBuilder>
       getCampaignsOrBuilderList();
   /**
    * <code>repeated .traffic.v1.Campaign campaigns = 3 [json_name = "campaigns"];</code>

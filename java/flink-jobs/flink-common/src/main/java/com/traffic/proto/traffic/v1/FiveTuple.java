@@ -58,7 +58,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       srcIp_ = s;
@@ -74,7 +74,7 @@ private static final long serialVersionUID = 0L;
       getSrcIpBytes() {
     java.lang.Object ref = srcIp_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       srcIp_ = b;
@@ -97,7 +97,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       dstIp_ = s;
@@ -113,7 +113,7 @@ private static final long serialVersionUID = 0L;
       getDstIpBytes() {
     java.lang.Object ref = dstIp_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       dstIp_ = b;
@@ -604,7 +604,7 @@ private static final long serialVersionUID = 0L;
         getSrcIpBytes() {
       java.lang.Object ref = srcIp_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         srcIp_ = b;
@@ -676,7 +676,7 @@ private static final long serialVersionUID = 0L;
         getDstIpBytes() {
       java.lang.Object ref = dstIp_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         dstIp_ = b;

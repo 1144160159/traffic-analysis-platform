@@ -220,7 +220,10 @@ public final class AssetServiceGrpc {
 
     /**
      * <pre>
-     * RegisterOrUpdate creates or updates an asset.
+     * RegisterOrUpdate creates or updates an asset. Mutation metadata must carry
+     * authorization: Bearer &lt;access JWT&gt;, idempotency-key, x-expected-revision,
+     * x-reason and x-trace-id. The token must grant asset:discover and its tenant
+     * is authoritative over any tenant supplied in the payload.
      * </pre>
      */
     default void upsertAsset(com.traffic.proto.traffic.v1.UpsertAssetRequest request,
@@ -250,7 +253,10 @@ public final class AssetServiceGrpc {
 
     /**
      * <pre>
-     * RecordMacIpBinding records a MAC→IP binding observed from traffic.
+     * RecordMacIpBinding records a MAC→IP binding observed from traffic. Direct
+     * gRPC delivery requires the same Bearer access JWT/asset:discover tenant
+     * gate plus observed_at; Kafka delivery instead uses the canonical
+     * topic/partition/offset/item identity before committing offset.
      * </pre>
      */
     default void recordMacIpBinding(com.traffic.proto.traffic.v1.RecordMacIpBindingRequest request,
@@ -298,7 +304,10 @@ public final class AssetServiceGrpc {
 
     /**
      * <pre>
-     * RegisterOrUpdate creates or updates an asset.
+     * RegisterOrUpdate creates or updates an asset. Mutation metadata must carry
+     * authorization: Bearer &lt;access JWT&gt;, idempotency-key, x-expected-revision,
+     * x-reason and x-trace-id. The token must grant asset:discover and its tenant
+     * is authoritative over any tenant supplied in the payload.
      * </pre>
      */
     public void upsertAsset(com.traffic.proto.traffic.v1.UpsertAssetRequest request,
@@ -331,7 +340,10 @@ public final class AssetServiceGrpc {
 
     /**
      * <pre>
-     * RecordMacIpBinding records a MAC→IP binding observed from traffic.
+     * RecordMacIpBinding records a MAC→IP binding observed from traffic. Direct
+     * gRPC delivery requires the same Bearer access JWT/asset:discover tenant
+     * gate plus observed_at; Kafka delivery instead uses the canonical
+     * topic/partition/offset/item identity before committing offset.
      * </pre>
      */
     public void recordMacIpBinding(com.traffic.proto.traffic.v1.RecordMacIpBindingRequest request,
@@ -370,7 +382,10 @@ public final class AssetServiceGrpc {
 
     /**
      * <pre>
-     * RegisterOrUpdate creates or updates an asset.
+     * RegisterOrUpdate creates or updates an asset. Mutation metadata must carry
+     * authorization: Bearer &lt;access JWT&gt;, idempotency-key, x-expected-revision,
+     * x-reason and x-trace-id. The token must grant asset:discover and its tenant
+     * is authoritative over any tenant supplied in the payload.
      * </pre>
      */
     public com.traffic.proto.traffic.v1.UpsertAssetResponse upsertAsset(com.traffic.proto.traffic.v1.UpsertAssetRequest request) {
@@ -400,7 +415,10 @@ public final class AssetServiceGrpc {
 
     /**
      * <pre>
-     * RecordMacIpBinding records a MAC→IP binding observed from traffic.
+     * RecordMacIpBinding records a MAC→IP binding observed from traffic. Direct
+     * gRPC delivery requires the same Bearer access JWT/asset:discover tenant
+     * gate plus observed_at; Kafka delivery instead uses the canonical
+     * topic/partition/offset/item identity before committing offset.
      * </pre>
      */
     public com.traffic.proto.traffic.v1.RecordMacIpBindingResponse recordMacIpBinding(com.traffic.proto.traffic.v1.RecordMacIpBindingRequest request) {
@@ -437,7 +455,10 @@ public final class AssetServiceGrpc {
 
     /**
      * <pre>
-     * RegisterOrUpdate creates or updates an asset.
+     * RegisterOrUpdate creates or updates an asset. Mutation metadata must carry
+     * authorization: Bearer &lt;access JWT&gt;, idempotency-key, x-expected-revision,
+     * x-reason and x-trace-id. The token must grant asset:discover and its tenant
+     * is authoritative over any tenant supplied in the payload.
      * </pre>
      */
     public com.google.common.util.concurrent.ListenableFuture<com.traffic.proto.traffic.v1.UpsertAssetResponse> upsertAsset(
@@ -470,7 +491,10 @@ public final class AssetServiceGrpc {
 
     /**
      * <pre>
-     * RecordMacIpBinding records a MAC→IP binding observed from traffic.
+     * RecordMacIpBinding records a MAC→IP binding observed from traffic. Direct
+     * gRPC delivery requires the same Bearer access JWT/asset:discover tenant
+     * gate plus observed_at; Kafka delivery instead uses the canonical
+     * topic/partition/offset/item identity before committing offset.
      * </pre>
      */
     public com.google.common.util.concurrent.ListenableFuture<com.traffic.proto.traffic.v1.RecordMacIpBindingResponse> recordMacIpBinding(

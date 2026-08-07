@@ -13,10 +13,10 @@ data:
       endpoint: minio.minio.svc:9000
       insecure: true
       accessKeySecret:
-        name: my-minio-cred
+        name: minio-argo-artifact-credentials
         key: accesskey
       secretKeySecret:
-        name: my-minio-cred
+        name: minio-argo-artifact-credentials
         key: secretkey
   my-key: |
     archiveLogs: true
@@ -25,10 +25,10 @@ data:
       endpoint: minio.minio.svc:9000
       insecure: true
       accessKeySecret:
-        name: my-minio-cred
+        name: minio-argo-artifact-credentials
         key: accesskey
       secretKeySecret:
-        name: my-minio-cred
+        name: minio-argo-artifact-credentials
         key: secretkey
 ---
 apiVersion: v1
@@ -43,10 +43,10 @@ data:
       endpoint: minio.minio.svc:9000
       insecure: true
       accessKeySecret:
-        name: my-minio-cred
+        name: minio-argo-artifact-credentials
         key: accesskey
       secretKeySecret:
-        name: my-minio-cred
+        name: minio-argo-artifact-credentials
         key: secretkey
   columns: |
     - name: Workflow Completed

@@ -2,6 +2,7 @@ package com.traffic.flink.rule;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.traffic.flink.common.ConfigUtils;
+import com.traffic.flink.common.KafkaStartingOffsets;
 import com.traffic.flink.common.ProtoDeserializer;
 import com.traffic.flink.rule.broadcast.RuleBroadcastProcessFunction;
 import com.traffic.flink.rule.model.Rule;
@@ -99,10 +100,11 @@ public class RuleJob {
         // 配置 Checkpoint
         configureCheckpoint(env, checkpointPath, checkpointInterval);
 
-        // 配置重启策略
+        // 配置重启策略。默认覆盖短时 Kafka/存储故障窗口，仍允许通过合同化参数调整。
         env.setRestartStrategy(RestartStrategies.fixedDelayRestart(
-                3,
-                org.apache.flink.api.common.time.Time.seconds(30)
+                ConfigUtils.getInt(params, "restart.attempts", 10),
+                org.apache.flink.api.common.time.Time.seconds(
+                        ConfigUtils.getInt(params, "restart.delay.seconds", 30))
         ));
 
         // ==================== 主流：Feature 数据 ====================
@@ -110,7 +112,7 @@ public class RuleJob {
                 .setBootstrapServers(kafkaBrokers)
                 .setTopics(featureTopic)
                 .setGroupId(groupId)
-                .setStartingOffsets(OffsetsInitializer.latest())
+                .setStartingOffsets(KafkaStartingOffsets.from(params))
                 .setValueOnlyDeserializer(new ProtoDeserializer<>(FeatureStat.class))
                 .setProperties(ConfigUtils.kafkaClientProperties(params))
                 .setProperty("partition.discovery.interval.ms", "30000")

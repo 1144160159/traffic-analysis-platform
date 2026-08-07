@@ -21,6 +21,32 @@ pub enum EvictionReason {
     TCPFlagFinish, // TCP FIN/RST 正常结束
 }
 
+fn deterministic_flow_uuid(kind: &str, identity: &str) -> String {
+    uuid::Uuid::new_v5(
+        &uuid::Uuid::NAMESPACE_OID,
+        format!("traffic-probe-flow/v1\0{kind}\0{identity}").as_bytes(),
+    )
+    .to_string()
+}
+
+#[cfg(test)]
+mod deterministic_id_tests {
+    use super::deterministic_flow_uuid;
+
+    #[test]
+    fn replay_identity_is_stable_and_kind_scoped() {
+        let identity = "tenant-a\0probe-a\0run-a\0community-a\0192.0.2.1\0198.51.100.1\01234\0443\06\0100\0200";
+        assert_eq!(
+            deterministic_flow_uuid("event", identity),
+            deterministic_flow_uuid("event", identity)
+        );
+        assert_ne!(
+            deterministic_flow_uuid("event", identity),
+            deterministic_flow_uuid("flow", identity)
+        );
+    }
+}
+
 /// 淘汰统计 — 实时监控流淘汰行为
 #[derive(Debug, Default)]
 pub struct EvictionStats {
@@ -416,6 +442,26 @@ impl Eviction {
     }
     fn to_flow_event(&self, key: &FlowKey, value: &FlowValue, _now_ms: u64) -> FlowEvent {
         let normalized = key.normalize();
+        let community_id = key.community_id().to_string();
+        let ts_start = value.start_time.load(Ordering::Relaxed) as i64;
+        let ts_end = value.last_seen.load(Ordering::Relaxed) as i64;
+        let produced_at = chrono::Utc::now().timestamp_millis();
+        let source_identity = format!(
+            "{}\0{}\0{}\0{}\0{}\0{}\0{}\0{}\0{}\0{}\0{}",
+            self.config.tenant_id,
+            self.config.probe_id,
+            self.config.run_id,
+            community_id,
+            normalized.src_ip,
+            normalized.dst_ip,
+            normalized.src_port,
+            normalized.dst_port,
+            normalized.protocol,
+            ts_start,
+            ts_end,
+        );
+        let flow_id = deterministic_flow_uuid("flow", &source_identity);
+        let event_id = deterministic_flow_uuid("event", &source_identity);
         let iat_fwd_count = value.iat_fwd_stats.count();
         let iat_bwd_count = value.iat_bwd_stats.count();
         let total_iat_count = iat_fwd_count + iat_bwd_count;
@@ -501,18 +547,30 @@ impl Eviction {
         };
         FlowEvent {
             header: Some(EventHeader {
-                event_id: uuid::Uuid::new_v4().to_string(),
+                event_id: event_id.clone(),
                 tenant_id: self.config.tenant_id.clone(),
                 run_id: self.config.run_id.clone(),
-                event_ts: value.last_seen.load(Ordering::Relaxed) as i64,
-                ingest_ts: chrono::Utc::now().timestamp_millis(),
+                event_ts: ts_end,
+                ingest_ts: produced_at,
                 probe_id: self.config.probe_id.clone(),
                 feature_set_id: self.config.feature_set_id.clone(),
                 kafka_ts: 0,
                 flink_out_ts: 0,
+                event_type: "traffic.flow.v1".to_string(),
+                schema_version: "1".to_string(),
+                aggregate_type: "flow".to_string(),
+                aggregate_id: flow_id.clone(),
+                aggregate_version: 1,
+                occurred_at: ts_end,
+                produced_at,
+                trace_id: event_id.clone(),
+                causation_id: event_id.clone(),
+                correlation_id: community_id.clone(),
+                idempotency_key: event_id,
+                producer: "probe-agent".to_string(),
             }),
-            flow_id: uuid::Uuid::new_v4().to_string(),
-            community_id: key.community_id().to_string(),
+            flow_id,
+            community_id,
             tuple: Some(FiveTuple {
                 src_ip: normalized.src_ip.to_string(),
                 dst_ip: normalized.dst_ip.to_string(),
@@ -521,8 +579,8 @@ impl Eviction {
                 protocol: normalized.protocol as u32,
             }),
             direction: "c2s".to_string(),
-            ts_start: value.start_time.load(Ordering::Relaxed) as i64,
-            ts_end: value.last_seen.load(Ordering::Relaxed) as i64,
+            ts_start,
+            ts_end,
             duration_ms,
             packets_fwd: value.packets_fwd.load(Ordering::Relaxed) as u32,
             packets_bwd: value.packets_bwd.load(Ordering::Relaxed) as u32,

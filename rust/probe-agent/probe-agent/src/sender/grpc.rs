@@ -9,11 +9,14 @@ use tonic::Request;
 use tracing::{debug, error, info, trace, warn};
 
 use crate::interface_monitor::InterfaceMonitor;
-use proto_gen::{HeartbeatRequest, InterfaceStatus as ProtoInterfaceStatus, ProbeStatus};
+use proto_gen::{
+    HeartbeatRequest, HeartbeatResponse, InterfaceStatus as ProtoInterfaceStatus,
+    ProbeOperationAck, ProbeStatus,
+};
 
 use proto_gen::{
-    ingest_service_client::IngestServiceClient, FlowEvent, StreamFlowsRequest, StreamFlowsResponse,
-    UploadFlowsRequest, UploadFlowsResponse,
+    ingest_service_client::IngestServiceClient, FlowEvent, StreamFlowsRequest, UploadFlowsRequest,
+    UploadFlowsResponse,
 };
 
 use super::auth::AuthProvider;
@@ -369,7 +372,11 @@ impl GrpcSender {
         warn!("Disconnected from gateway");
     }
 
-    pub async fn send_heartbeat(&self, monitor: Option<&InterfaceMonitor>) -> Result<()> {
+    pub async fn send_heartbeat(
+        &self,
+        monitor: Option<&InterfaceMonitor>,
+        operation_acks: Vec<ProbeOperationAck>,
+    ) -> Result<HeartbeatResponse> {
         let mut client = self
             .state
             .get_client()
@@ -412,19 +419,20 @@ impl GrpcSender {
                 uptime_seconds: get_uptime_seconds(),
                 interfaces,
             }),
+            operation_acks,
         });
 
         self.add_metadata(&mut request).await?;
 
-        let response = client.heartbeat(request).await?;
+        let response = client.heartbeat(request).await?.into_inner();
 
-        if let Some(config) = response.into_inner().config {
+        if let Some(config) = response.config.as_ref() {
             debug!("Received config update: version={}", config.config_version);
         }
 
         metrics::HEARTBEAT_SUCCESS.inc();
 
-        Ok(())
+        Ok(response)
     }
 
     async fn add_metadata<T>(&self, request: &mut Request<T>) -> Result<()> {

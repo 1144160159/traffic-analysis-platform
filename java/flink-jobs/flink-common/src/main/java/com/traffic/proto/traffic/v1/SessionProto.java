@@ -17,12 +17,12 @@ public final class SessionProto {
   }
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_SessionEvent_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_SessionEvent_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_SessionBatch_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_SessionBatch_fieldAccessorTable;
 

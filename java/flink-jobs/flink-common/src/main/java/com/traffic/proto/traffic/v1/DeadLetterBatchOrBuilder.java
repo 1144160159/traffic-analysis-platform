@@ -11,7 +11,7 @@ public interface DeadLetterBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.DeadLetter events = 1 [json_name = "events"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.DeadLetter> 
+  java.util.List<com.traffic.proto.traffic.v1.DeadLetter>
       getEventsList();
   /**
    * <code>repeated .traffic.v1.DeadLetter events = 1 [json_name = "events"];</code>
@@ -24,7 +24,7 @@ public interface DeadLetterBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.DeadLetter events = 1 [json_name = "events"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.DeadLetterOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.DeadLetterOrBuilder>
       getEventsOrBuilderList();
   /**
    * <code>repeated .traffic.v1.DeadLetter events = 1 [json_name = "events"];</code>

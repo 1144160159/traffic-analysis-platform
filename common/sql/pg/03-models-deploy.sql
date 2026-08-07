@@ -45,14 +45,19 @@ CREATE INDEX IF NOT EXISTS idx_model_versions_feature_set ON model_versions(feat
 
 CREATE TABLE IF NOT EXISTS model_action_jobs (
   job_id       TEXT PRIMARY KEY,
+  event_id     UUID NOT NULL UNIQUE,
   action_id    TEXT NOT NULL UNIQUE,
+  revision     BIGINT NOT NULL DEFAULT 1,
   tenant_id    TEXT NOT NULL REFERENCES tenants(tenant_id) ON DELETE CASCADE,
   model_id     UUID NOT NULL REFERENCES models(model_id) ON DELETE CASCADE,
   version      TEXT NOT NULL DEFAULT '',
   action       TEXT NOT NULL,
   target       TEXT NOT NULL,
   payload      JSONB NOT NULL DEFAULT '{}'::jsonb,
-  status       TEXT NOT NULL DEFAULT 'queued' CHECK (status IN ('queued', 'running', 'completed', 'failed')),
+  status       TEXT NOT NULL DEFAULT 'queued' CHECK (status IN ('queued','running','dispatched','awaiting_executor','completed','partial','failed','cancelled')),
+  trace_id     TEXT NOT NULL DEFAULT '',
+  result       JSONB NOT NULL DEFAULT '{}'::jsonb,
+  error        TEXT NOT NULL DEFAULT '',
   requested_by TEXT NOT NULL,
   created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -60,6 +65,53 @@ CREATE TABLE IF NOT EXISTS model_action_jobs (
 
 CREATE INDEX IF NOT EXISTS idx_model_action_jobs_lookup
   ON model_action_jobs (tenant_id, model_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS model_action_outbox (
+  outbox_id BIGSERIAL PRIMARY KEY,
+  event_id UUID NOT NULL UNIQUE REFERENCES model_action_jobs(event_id) ON DELETE RESTRICT,
+  job_id TEXT NOT NULL UNIQUE REFERENCES model_action_jobs(job_id) ON DELETE RESTRICT,
+  tenant_id TEXT NOT NULL,
+  model_id UUID NOT NULL,
+  partition_key TEXT NOT NULL,
+  event_type TEXT NOT NULL DEFAULT 'model.action.requested.v1',
+  schema_version INTEGER NOT NULL DEFAULT 1 CHECK (schema_version=1),
+  aggregate_version BIGINT NOT NULL DEFAULT 1 CHECK (aggregate_version=1),
+  payload JSONB NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','processing','published','dead')),
+  attempt_count INTEGER NOT NULL DEFAULT 0 CHECK (attempt_count>=0),
+  available_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  locked_until TIMESTAMPTZ,
+  locked_by TEXT NOT NULL DEFAULT '',
+  last_error TEXT NOT NULL DEFAULT '',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  published_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_model_action_outbox_pending ON model_action_outbox(available_at,outbox_id) WHERE status='pending';
+CREATE INDEX IF NOT EXISTS idx_model_action_outbox_reclaim ON model_action_outbox(locked_until,outbox_id) WHERE status='processing';
+
+CREATE TABLE IF NOT EXISTS model_action_execution_inbox (
+  event_id UUID PRIMARY KEY,
+  job_id TEXT NOT NULL UNIQUE REFERENCES model_action_jobs(job_id) ON DELETE RESTRICT,
+  tenant_id TEXT NOT NULL,
+  model_id UUID NOT NULL,
+  action_id TEXT NOT NULL,
+  action TEXT NOT NULL,
+  state TEXT NOT NULL DEFAULT 'awaiting_executor' CHECK (state IN ('awaiting_executor','processing','completed','partial','failed','cancelled','dead_letter')),
+  payload JSONB NOT NULL,
+  attempt_count INTEGER NOT NULL DEFAULT 0 CHECK (attempt_count>=0),
+  available_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  locked_until TIMESTAMPTZ,
+  locked_by TEXT NOT NULL DEFAULT '',
+  result JSONB NOT NULL DEFAULT '{}'::jsonb,
+  error TEXT NOT NULL DEFAULT '',
+  kafka_partition INTEGER NOT NULL,
+  kafka_offset BIGINT NOT NULL,
+  received_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  completed_at TIMESTAMPTZ,
+  UNIQUE (kafka_partition,kafka_offset)
+);
+CREATE INDEX IF NOT EXISTS idx_model_action_execution_ready ON model_action_execution_inbox(available_at,received_at) WHERE state='awaiting_executor';
+CREATE INDEX IF NOT EXISTS idx_model_action_execution_tenant_model ON model_action_execution_inbox(tenant_id,model_id,received_at DESC);
 
 -- Transactional model registry outbox. The state change, applied audit and
 -- event are committed together; deterministic event_id makes broker retries
@@ -205,6 +257,82 @@ CREATE INDEX IF NOT EXISTS idx_deployment_outbox_ready ON deployment_outbox (ava
 CREATE INDEX IF NOT EXISTS idx_deployment_outbox_aggregate ON deployment_outbox (deployment_id, id);
 CREATE INDEX IF NOT EXISTS idx_deployment_outbox_lease ON deployment_outbox (locked_at) WHERE status = 'processing';
 CREATE INDEX IF NOT EXISTS idx_deployment_outbox_published ON deployment_outbox (published_at) WHERE status = 'published';
+
+CREATE TABLE IF NOT EXISTS deployment_event_projection (
+    event_id UUID PRIMARY KEY,
+    deployment_id TEXT NOT NULL,
+    tenant_id TEXT NOT NULL,
+    action TEXT NOT NULL,
+    status TEXT NOT NULL,
+    operator_id TEXT NOT NULL DEFAULT '',
+    event_timestamp_ms BIGINT NOT NULL CHECK (event_timestamp_ms > 0),
+    payload JSONB NOT NULL,
+    kafka_partition INTEGER NOT NULL,
+    kafka_offset BIGINT NOT NULL,
+    projected_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (kafka_partition,kafka_offset)
+);
+CREATE INDEX IF NOT EXISTS idx_deployment_event_projection_tenant_deployment ON deployment_event_projection (tenant_id,deployment_id,event_timestamp_ms);
+
+CREATE TABLE IF NOT EXISTS deployment_state_projection (
+    tenant_id TEXT NOT NULL,
+    deployment_id TEXT NOT NULL,
+    action TEXT NOT NULL,
+    status TEXT NOT NULL,
+    operator_id TEXT NOT NULL DEFAULT '',
+    event_timestamp_ms BIGINT NOT NULL CHECK (event_timestamp_ms > 0),
+    last_event_id UUID NOT NULL,
+    payload JSONB NOT NULL,
+    kafka_partition INTEGER NOT NULL,
+    kafka_offset BIGINT NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (tenant_id,deployment_id)
+);
+CREATE INDEX IF NOT EXISTS idx_deployment_state_projection_tenant_status ON deployment_state_projection (tenant_id,status,updated_at DESC);
+
+CREATE TABLE IF NOT EXISTS alert_feedback_event_projection (
+    event_id UUID PRIMARY KEY,
+    feedback_id UUID NOT NULL UNIQUE,
+    tenant_id TEXT NOT NULL,
+    alert_id TEXT NOT NULL,
+    user_id TEXT NOT NULL DEFAULT '',
+    label TEXT NOT NULL CHECK (label IN ('TP','FP')),
+    reason_code TEXT NOT NULL DEFAULT '',
+    event_timestamp_ms BIGINT NOT NULL CHECK (event_timestamp_ms > 0),
+    payload JSONB NOT NULL,
+    kafka_partition INTEGER NOT NULL,
+    kafka_offset BIGINT NOT NULL,
+    projected_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (kafka_partition,kafka_offset)
+);
+CREATE INDEX IF NOT EXISTS idx_alert_feedback_event_tenant_alert ON alert_feedback_event_projection (tenant_id,alert_id,event_timestamp_ms);
+
+CREATE TABLE IF NOT EXISTS model_feedback_inbox (
+    feedback_id UUID PRIMARY KEY,
+    event_id UUID NOT NULL UNIQUE,
+    tenant_id TEXT NOT NULL,
+    alert_id TEXT NOT NULL,
+    user_id TEXT NOT NULL DEFAULT '',
+    label TEXT NOT NULL CHECK (label IN ('TP','FP')),
+    reason_code TEXT NOT NULL DEFAULT '',
+    model_version TEXT NOT NULL DEFAULT '',
+    rule_version TEXT NOT NULL DEFAULT '',
+    event_timestamp_ms BIGINT NOT NULL CHECK (event_timestamp_ms > 0),
+    payload JSONB NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','processing','applied','failed','dead_letter')),
+    attempts INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0),
+    last_error TEXT NOT NULL DEFAULT '',
+    next_attempt_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    locked_until TIMESTAMPTZ,
+    locked_by TEXT NOT NULL DEFAULT '',
+    applied_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_model_feedback_inbox_pending ON model_feedback_inbox (next_attempt_at,created_at,feedback_id) WHERE status IN ('pending','failed');
+CREATE INDEX IF NOT EXISTS idx_model_feedback_inbox_tenant_model ON model_feedback_inbox (tenant_id,model_version,event_timestamp_ms);
+CREATE INDEX IF NOT EXISTS idx_model_feedback_inbox_reclaim ON model_feedback_inbox (locked_until,updated_at,feedback_id) WHERE status='processing';
+CREATE INDEX IF NOT EXISTS idx_model_feedback_inbox_dead_letter ON model_feedback_inbox (updated_at,feedback_id) WHERE status='dead_letter';
 
 CREATE TABLE IF NOT EXISTS deployment_workbench_items (
   item_id       TEXT PRIMARY KEY,

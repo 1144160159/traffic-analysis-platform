@@ -145,13 +145,14 @@ public class ClickHouseAlertSinkFactory {
         ps.setLong(idx++, toEpochMillis(alert.getLastSeen(), now));
         ps.setInt(idx++, alert.getCount());
 
-        // 27-30: 版本与事件
+        // 27-31: 版本、事件与跨存储追踪
         ps.setString(idx++, nullToEmpty(alert.getModelVersion()));
         ps.setString(idx++, nullToEmpty(alert.getRuleVersion()));
         ps.setLong(idx++, Math.max(0L, alert.getStateVersion()));
         ps.setString(idx++, nullToEmpty(alert.getEventId()));
+        ps.setString(idx++, nullToEmpty(alert.getTraceId()));
 
-        // 31-32: 创建与更新时间，真实表字段名为 created_at / updated_at。
+        // 32-33: 创建与更新时间，真实表字段名为 created_at / updated_at。
         ps.setLong(idx++, toEpochMillis(alert.getIngestTs(), now));
         ps.setLong(idx++, toEpochMillis(alert.getUpdatedTs(), now));
     }
@@ -197,7 +198,7 @@ public class ClickHouseAlertSinkFactory {
     /**
      * 构建 Alert INSERT SQL
      * 
-     * 共 32 个字段
+     * 共 33 个字段
      */
     private static String buildAlertInsertSql(String table) {
         return String.format(
@@ -214,15 +215,15 @@ public class ClickHouseAlertSinkFactory {
                         "evidence_ids, arkime_session_link, feedback_label, feedback_count, " +
                         // 24-26: 时间窗口与次数
                         "first_seen, last_seen, count, " +
-                        // 27-30: 版本与事件
-                        "model_version, rule_version, state_version, event_id, " +
-                        // 31-32: 创建与更新时间
+                        // 27-31: 版本、事件与跨存储追踪
+                        "model_version, rule_version, state_version, event_id, trace_id, " +
+                        // 32-33: 创建与更新时间
                         "created_at, updated_at" +
                         ") VALUES (" +
                         "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, " +  // 1-10
                         "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, " +  // 11-20
                         "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, " +  // 21-30
-                        "?, ?" +                            // 31-32
+                        "?, ?, ?" +                         // 31-33
                         ")",
                 table
         );

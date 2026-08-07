@@ -63,7 +63,7 @@ private static final long serialVersionUID = 0L;
    * <code>repeated .traffic.v1.FeatureStat stats = 1 [json_name = "stats"];</code>
    */
   @java.lang.Override
-  public java.util.List<? extends com.traffic.proto.traffic.v1.FeatureStatOrBuilder> 
+  public java.util.List<? extends com.traffic.proto.traffic.v1.FeatureStatOrBuilder>
       getStatsOrBuilderList() {
     return stats_;
   }
@@ -104,7 +104,7 @@ private static final long serialVersionUID = 0L;
    * <code>repeated .traffic.v1.FeatureSeq sequences = 2 [json_name = "sequences"];</code>
    */
   @java.lang.Override
-  public java.util.List<? extends com.traffic.proto.traffic.v1.FeatureSeqOrBuilder> 
+  public java.util.List<? extends com.traffic.proto.traffic.v1.FeatureSeqOrBuilder>
       getSequencesOrBuilderList() {
     return sequences_;
   }
@@ -145,7 +145,7 @@ private static final long serialVersionUID = 0L;
    * <code>repeated .traffic.v1.FeatureFingerprint fingerprints = 3 [json_name = "fingerprints"];</code>
    */
   @java.lang.Override
-  public java.util.List<? extends com.traffic.proto.traffic.v1.FeatureFingerprintOrBuilder> 
+  public java.util.List<? extends com.traffic.proto.traffic.v1.FeatureFingerprintOrBuilder>
       getFingerprintsOrBuilderList() {
     return fingerprints_;
   }
@@ -185,7 +185,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       batchId_ = s;
@@ -201,7 +201,7 @@ private static final long serialVersionUID = 0L;
       getBatchIdBytes() {
     java.lang.Object ref = batchId_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       batchId_ = b;
@@ -224,7 +224,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       tenantId_ = s;
@@ -240,7 +240,7 @@ private static final long serialVersionUID = 0L;
       getTenantIdBytes() {
     java.lang.Object ref = tenantId_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       tenantId_ = b;
@@ -263,7 +263,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       runId_ = s;
@@ -279,7 +279,7 @@ private static final long serialVersionUID = 0L;
       getRunIdBytes() {
     java.lang.Object ref = runId_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       runId_ = b;
@@ -730,7 +730,7 @@ private static final long serialVersionUID = 0L;
             statsBuilder_ = null;
             stats_ = other.stats_;
             bitField0_ = (bitField0_ & ~0x00000001);
-            statsBuilder_ = 
+            statsBuilder_ =
               com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                  getStatsFieldBuilder() : null;
           } else {
@@ -756,7 +756,7 @@ private static final long serialVersionUID = 0L;
             sequencesBuilder_ = null;
             sequences_ = other.sequences_;
             bitField0_ = (bitField0_ & ~0x00000002);
-            sequencesBuilder_ = 
+            sequencesBuilder_ =
               com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                  getSequencesFieldBuilder() : null;
           } else {
@@ -782,7 +782,7 @@ private static final long serialVersionUID = 0L;
             fingerprintsBuilder_ = null;
             fingerprints_ = other.fingerprints_;
             bitField0_ = (bitField0_ & ~0x00000004);
-            fingerprintsBuilder_ = 
+            fingerprintsBuilder_ =
               com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                  getFingerprintsFieldBuilder() : null;
           } else {
@@ -1105,7 +1105,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.FeatureStat stats = 1 [json_name = "stats"];</code>
      */
-    public java.util.List<? extends com.traffic.proto.traffic.v1.FeatureStatOrBuilder> 
+    public java.util.List<? extends com.traffic.proto.traffic.v1.FeatureStatOrBuilder>
          getStatsOrBuilderList() {
       if (statsBuilder_ != null) {
         return statsBuilder_.getMessageOrBuilderList();
@@ -1131,12 +1131,12 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.FeatureStat stats = 1 [json_name = "stats"];</code>
      */
-    public java.util.List<com.traffic.proto.traffic.v1.FeatureStat.Builder> 
+    public java.util.List<com.traffic.proto.traffic.v1.FeatureStat.Builder>
          getStatsBuilderList() {
       return getStatsFieldBuilder().getBuilderList();
     }
     private com.google.protobuf.RepeatedFieldBuilderV3<
-        com.traffic.proto.traffic.v1.FeatureStat, com.traffic.proto.traffic.v1.FeatureStat.Builder, com.traffic.proto.traffic.v1.FeatureStatOrBuilder> 
+        com.traffic.proto.traffic.v1.FeatureStat, com.traffic.proto.traffic.v1.FeatureStat.Builder, com.traffic.proto.traffic.v1.FeatureStatOrBuilder>
         getStatsFieldBuilder() {
       if (statsBuilder_ == null) {
         statsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
@@ -1345,7 +1345,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.FeatureSeq sequences = 2 [json_name = "sequences"];</code>
      */
-    public java.util.List<? extends com.traffic.proto.traffic.v1.FeatureSeqOrBuilder> 
+    public java.util.List<? extends com.traffic.proto.traffic.v1.FeatureSeqOrBuilder>
          getSequencesOrBuilderList() {
       if (sequencesBuilder_ != null) {
         return sequencesBuilder_.getMessageOrBuilderList();
@@ -1371,12 +1371,12 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.FeatureSeq sequences = 2 [json_name = "sequences"];</code>
      */
-    public java.util.List<com.traffic.proto.traffic.v1.FeatureSeq.Builder> 
+    public java.util.List<com.traffic.proto.traffic.v1.FeatureSeq.Builder>
          getSequencesBuilderList() {
       return getSequencesFieldBuilder().getBuilderList();
     }
     private com.google.protobuf.RepeatedFieldBuilderV3<
-        com.traffic.proto.traffic.v1.FeatureSeq, com.traffic.proto.traffic.v1.FeatureSeq.Builder, com.traffic.proto.traffic.v1.FeatureSeqOrBuilder> 
+        com.traffic.proto.traffic.v1.FeatureSeq, com.traffic.proto.traffic.v1.FeatureSeq.Builder, com.traffic.proto.traffic.v1.FeatureSeqOrBuilder>
         getSequencesFieldBuilder() {
       if (sequencesBuilder_ == null) {
         sequencesBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
@@ -1585,7 +1585,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.FeatureFingerprint fingerprints = 3 [json_name = "fingerprints"];</code>
      */
-    public java.util.List<? extends com.traffic.proto.traffic.v1.FeatureFingerprintOrBuilder> 
+    public java.util.List<? extends com.traffic.proto.traffic.v1.FeatureFingerprintOrBuilder>
          getFingerprintsOrBuilderList() {
       if (fingerprintsBuilder_ != null) {
         return fingerprintsBuilder_.getMessageOrBuilderList();
@@ -1611,12 +1611,12 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.FeatureFingerprint fingerprints = 3 [json_name = "fingerprints"];</code>
      */
-    public java.util.List<com.traffic.proto.traffic.v1.FeatureFingerprint.Builder> 
+    public java.util.List<com.traffic.proto.traffic.v1.FeatureFingerprint.Builder>
          getFingerprintsBuilderList() {
       return getFingerprintsFieldBuilder().getBuilderList();
     }
     private com.google.protobuf.RepeatedFieldBuilderV3<
-        com.traffic.proto.traffic.v1.FeatureFingerprint, com.traffic.proto.traffic.v1.FeatureFingerprint.Builder, com.traffic.proto.traffic.v1.FeatureFingerprintOrBuilder> 
+        com.traffic.proto.traffic.v1.FeatureFingerprint, com.traffic.proto.traffic.v1.FeatureFingerprint.Builder, com.traffic.proto.traffic.v1.FeatureFingerprintOrBuilder>
         getFingerprintsFieldBuilder() {
       if (fingerprintsBuilder_ == null) {
         fingerprintsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
@@ -1655,7 +1655,7 @@ private static final long serialVersionUID = 0L;
         getBatchIdBytes() {
       java.lang.Object ref = batchId_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         batchId_ = b;
@@ -1727,7 +1727,7 @@ private static final long serialVersionUID = 0L;
         getTenantIdBytes() {
       java.lang.Object ref = tenantId_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         tenantId_ = b;
@@ -1799,7 +1799,7 @@ private static final long serialVersionUID = 0L;
         getRunIdBytes() {
       java.lang.Object ref = runId_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         runId_ = b;

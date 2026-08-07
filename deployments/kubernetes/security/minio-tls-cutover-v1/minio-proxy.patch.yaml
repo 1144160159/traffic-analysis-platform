@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio-proxy
+  namespace: minio
+  annotations:
+    traffic.platform/minio-tls-cutover: v1
+    traffic.platform/production-applied: "false"
+spec:
+  template:
+    metadata:
+      annotations:
+        traffic.platform/minio-tls-cutover: v1
+    spec:
+      containers:
+      - name: nginx
+        volumeMounts:
+        - name: minio-client-ca
+          mountPath: /etc/minio-ca
+          readOnly: true
+      volumes:
+      - name: minio-client-ca
+        secret:
+          secretName: minio-server-tls
+          optional: false
+          items:
+          - {key: ca.crt, path: ca.crt}

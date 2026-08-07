@@ -1,0 +1,6 @@
+{
+  "aliases": {
+    "alerts-v2-read": {},
+    "alerts-v2-write": {"is_write_index": true}
+  }
+}

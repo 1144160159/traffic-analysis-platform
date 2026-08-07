@@ -19,16 +19,32 @@ spec:
           KAFKA_HOME=${KAFKA_HOME:-/opt/kafka}
           KAFKA_BIN="$KAFKA_HOME/bin/kafka-topics.sh"
           ACL_BIN="$KAFKA_HOME/bin/kafka-acls.sh"
+          ACL_PLAN=/opt/traffic/kafka-acl/apply.sh
           BROKER_API_BIN="$KAFKA_HOME/bin/kafka-broker-api-versions.sh"
           BOOTSTRAP=kafka-bootstrap.middleware.svc:9092
           CLIENT_CONFIG=/tmp/kafka-client.properties
+          escape_java_property() {
+            local value="$1"
+            case "$value" in
+              *$'\n'*|*$'\r'*)
+                echo "Kafka credential contains a forbidden line break" >&2
+                return 1
+                ;;
+            esac
+            value="${value//\\/\\\\}"
+            value="${value//\"/\\\"}"
+            printf '%s' "$value"
+          }
+          KAFKA_INTER_BROKER_USERNAME_ESCAPED="$(escape_java_property "$KAFKA_INTER_BROKER_USERNAME")"
+          KAFKA_INTER_BROKER_PASSWORD_ESCAPED="$(escape_java_property "$KAFKA_INTER_BROKER_PASSWORD")"
+          KAFKA_TLS_TRUSTSTORE_PASSWORD_ESCAPED="$(escape_java_property "$KAFKA_TLS_TRUSTSTORE_PASSWORD")"
           cat > "$CLIENT_CONFIG" <<EOF
           security.protocol=SASL_SSL
           sasl.mechanism=SCRAM-SHA-512
-          sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="${KAFKA_INTER_BROKER_USERNAME}" password="${KAFKA_INTER_BROKER_PASSWORD}";
+          sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="${KAFKA_INTER_BROKER_USERNAME_ESCAPED}" password="${KAFKA_INTER_BROKER_PASSWORD_ESCAPED}";
           ssl.truststore.location=/etc/kafka/tls/kafka.truststore.p12
           ssl.truststore.type=PKCS12
-          ssl.truststore.password=${KAFKA_TLS_TRUSTSTORE_PASSWORD}
+          ssl.truststore.password=${KAFKA_TLS_TRUSTSTORE_PASSWORD_ESCAPED}
           EOF
           BROKER_COUNT=$("$BROKER_API_BIN" --bootstrap-server $BOOTSTRAP --command-config "$CLIENT_CONFIG" 2>/dev/null | grep -c 'id: ' || true)
           [ -z "$BROKER_COUNT" ] || [ "$BROKER_COUNT" -lt 1 ] && BROKER_COUNT=1
@@ -37,25 +53,43 @@ spec:
           [ "$REPLICATION_FACTOR" -lt 1 ] && REPLICATION_FACTOR=1
           echo "Using replication-factor=${REPLICATION_FACTOR} (brokers=${BROKER_COUNT})"
           for entry in \
-            "flow.events.v1:12:86400000:268435456" \
-            "session.events.v1:12:86400000:268435456" \
+            "flow.events.v1:16:86400000:268435456" \
+            "flow.projection-replay.v1:6:604800000:268435456" \
+            "session.events.v1:8:86400000:268435456" \
             "feature.stat.v1:12:86400000:268435456" \
             "detections.v1:6:86400000:268435456" \
             "detections.behavior.v1:6:259200000:268435456" \
             "detections.business.v1:6:259200000:268435456" \
-            "alerts.v1:6:259200000:268435456" \
+            "alerts.v1:8:259200000:268435456" \
             "alert.feedback.v1:3:259200000:268435456" \
             "alert.response.requested.v1:3:259200000:268435456" \
+            "alert.saved-view.events.v1:3:604800000:134217728" \
+            "whitelist.events.v2:3:604800000:134217728" \
+            "notification.governance.events.v1:3:604800000:134217728" \
+            "campaign.events.v2:6:604800000:268435456" \
+            "campaign.membership.events.v2:6:604800000:268435456" \
+            "playbook.execution.events.v2:6:604800000:268435456" \
+            "traffic.topic.action.v2:6:604800000:134217728" \
+            "dashboard.task.events.v1:6:604800000:134217728" \
+            "probe.control.v2:6:259200000:134217728" \
+            "probe.acks.v2:6:604800000:134217728" \
+            "dlq.probe.acks.v2:3:604800000:134217728" \
+            "probe.events.v2:6:604800000:134217728" \
             "campaigns.v1:6:259200000:268435456" \
-            "pcap.index.v1:6:259200000:536870912" \
+            "pcap.index.v1:8:259200000:536870912" \
             "rule.updates:1:86400000:134217728" \
             "model-updates:1:86400000:134217728" \
+            "model-update-applied.v1:4:259200000:134217728" \
             "model-actions.v1:3:259200000:134217728" \
             "deployment.events.v1:6:259200000:268435456" \
             "audit.logs:3:259200000:268435456" \
             "asset.bindings.v1:4:86400000:134217728" \
+            "asset.events.v2:6:604800000:268435456" \
+            "asset.discovery.events.v1:3:604800000:134217728" \
+            "asset.exports.v1:3:604800000:134217728" \
             "device.logs.v1:8:259200000:268435456" \
             "user.events.v1:4:259200000:268435456" \
+            "threat.intel.v1:3:604800000:134217728" \
             "l2.trigger.v1:4:86400000:134217728" \
             "dlq.v1:4:604800000:268435456" \
             "dlq.feature-job:2:604800000:268435456" \
@@ -71,15 +105,32 @@ spec:
               --config retention.ms=$ret \
               --config retention.bytes=$ret_bytes 2>&1 | grep -v WARNING
           done
-          echo "Granting Kafka ACLs to application client..."
-          $ACL_BIN --bootstrap-server "$BOOTSTRAP" --command-config "$CLIENT_CONFIG" \
-            --add --allow-principal "User:${KAFKA_CLIENT_USERNAME}" --operation All --cluster 2>&1 | grep -v WARNING || true
-          $ACL_BIN --bootstrap-server "$BOOTSTRAP" --command-config "$CLIENT_CONFIG" \
-            --add --allow-principal "User:${KAFKA_CLIENT_USERNAME}" --operation All --topic '*' 2>&1 | grep -v WARNING || true
-          $ACL_BIN --bootstrap-server "$BOOTSTRAP" --command-config "$CLIENT_CONFIG" \
-            --add --allow-principal "User:${KAFKA_CLIENT_USERNAME}" --operation All --group '*' 2>&1 | grep -v WARNING || true
+          echo "Applying generated per-service Kafka ACL plan..."
+          test -x "$ACL_PLAN"
+          "$ACL_PLAN" "$BOOTSTRAP" "$CLIENT_CONFIG" "$ACL_BIN"
+          case "${KAFKA_ACL_MIGRATION_PHASE:-expand}" in
+            expand)
+              echo "ACL expand phase: existing legacy shared-principal grants are retained for credential migration."
+              ;;
+            cutover)
+              test -n "${KAFKA_CLIENT_USERNAME:-}"
+              echo "ACL cutover phase: removing legacy wildcard grants for User:${KAFKA_CLIENT_USERNAME}."
+              $ACL_BIN --bootstrap-server "$BOOTSTRAP" --command-config "$CLIENT_CONFIG" \
+                --remove --force --allow-principal "User:${KAFKA_CLIENT_USERNAME}" --operation All --cluster 2>&1 | grep -v WARNING
+              $ACL_BIN --bootstrap-server "$BOOTSTRAP" --command-config "$CLIENT_CONFIG" \
+                --remove --force --allow-principal "User:${KAFKA_CLIENT_USERNAME}" --operation All --topic '*' 2>&1 | grep -v WARNING
+              $ACL_BIN --bootstrap-server "$BOOTSTRAP" --command-config "$CLIENT_CONFIG" \
+                --remove --force --allow-principal "User:${KAFKA_CLIENT_USERNAME}" --operation All --group '*' 2>&1 | grep -v WARNING
+              ;;
+            *)
+              echo "Unsupported KAFKA_ACL_MIGRATION_PHASE=${KAFKA_ACL_MIGRATION_PHASE}" >&2
+              exit 1
+              ;;
+          esac
           echo "Topics created."
         env:
+        - name: KAFKA_ACL_MIGRATION_PHASE
+          value: "expand"
         - name: KAFKA_CLIENT_USERNAME
           valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_CLIENT_USERNAME}}
         - name: KAFKA_INTER_BROKER_USERNAME
@@ -90,8 +141,13 @@ spec:
           valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_TLS_TRUSTSTORE_PASSWORD}}
         volumeMounts:
         - {name: kafka-client-tls, mountPath: /etc/kafka/tls, readOnly: true}
+        - {name: kafka-acl-plan, mountPath: /opt/traffic/kafka-acl, readOnly: true}
       volumes:
       - name: kafka-client-tls
         secret:
           secretName: kafka-client-tls
           optional: false
+      - name: kafka-acl-plan
+        configMap:
+          name: kafka-acl-plan-v1
+          defaultMode: 0555

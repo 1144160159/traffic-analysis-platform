@@ -1,0 +1,94 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: minio-incomplete-multipart-cleanup
+  namespace: minio
+  annotations:
+    traffic.platform/minio-tls-cutover: v1
+    traffic.platform/production-applied: "false"
+spec:
+  schedule: "37 2 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 300
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: cleanup-incomplete
+            image: docker.io/minio/mc@sha256:eb4ea9884b77704230e2423e9004d2fa738dc272876b9cc41a297d29443b8780
+            imagePullPolicy: IfNotPresent
+            env:
+            - name: MINIO_ROOT_USER
+              valueFrom: {secretKeyRef: {name: traffic-credentials, key: MINIO_ACCESS_KEY}}
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom: {secretKeyRef: {name: traffic-credentials, key: MINIO_SECRET_KEY}}
+            command: ["sh", "-c"]
+            args:
+            - |
+              set -eu
+              mc --certs-dir /etc/minio/certs alias set local https://minio.minio.svc:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
+              mc --certs-dir /etc/minio/certs rm --incomplete --recursive --force --older-than 24h local/pcap-archive/
+              mc --certs-dir /etc/minio/certs rm --incomplete --recursive --force --older-than 24h local/report-artifacts/
+            resources:
+              requests: {cpu: 50m, memory: 64Mi}
+              limits: {cpu: 200m, memory: 256Mi}
+            volumeMounts:
+            - {name: minio-client-ca, mountPath: /etc/minio/certs/CAs, readOnly: true}
+          volumes:
+          - name: minio-client-ca
+            secret:
+              secretName: minio-server-tls
+              optional: false
+              items:
+              - {key: ca.crt, path: ca.crt}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-tls-post-cutover-verify-v1
+  namespace: minio
+  annotations:
+    traffic.platform/minio-tls-cutover: v1
+    traffic.platform/production-applied: "false"
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 86400
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: verify
+        image: docker.io/minio/mc@sha256:eb4ea9884b77704230e2423e9004d2fa738dc272876b9cc41a297d29443b8780
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: MINIO_ROOT_USER
+          valueFrom: {secretKeyRef: {name: traffic-credentials, key: MINIO_ACCESS_KEY}}
+        - name: MINIO_ROOT_PASSWORD
+          valueFrom: {secretKeyRef: {name: traffic-credentials, key: MINIO_SECRET_KEY}}
+        command: ["sh", "-c"]
+        args:
+        - |
+          set -eu
+          mc --certs-dir /etc/minio/certs alias set local https://minio.minio.svc:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
+          mc --certs-dir /etc/minio/certs admin info local >/dev/null
+          mc --certs-dir /etc/minio/certs stat local/pcap-archive >/dev/null
+          mc --certs-dir /etc/minio/certs stat local/report-artifacts >/dev/null
+          mc --certs-dir /etc/minio/certs stat local/flink-checkpoints >/dev/null
+          mc --certs-dir /etc/minio/certs stat local/traffic-models >/dev/null
+          mc --certs-dir /etc/minio/certs stat local/argo-artifacts >/dev/null
+        resources:
+          requests: {cpu: 50m, memory: 64Mi}
+          limits: {cpu: 200m, memory: 256Mi}
+        volumeMounts:
+        - {name: minio-client-ca, mountPath: /etc/minio/certs/CAs, readOnly: true}
+      volumes:
+      - name: minio-client-ca
+        secret:
+          secretName: minio-server-tls
+          optional: false
+          items:
+          - {key: ca.crt, path: ca.crt}

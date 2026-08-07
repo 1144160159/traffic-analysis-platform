@@ -62,7 +62,7 @@ private static final long serialVersionUID = 0L;
    * <code>repeated .traffic.v1.Alert alerts = 1 [json_name = "alerts"];</code>
    */
   @java.lang.Override
-  public java.util.List<? extends com.traffic.proto.traffic.v1.AlertOrBuilder> 
+  public java.util.List<? extends com.traffic.proto.traffic.v1.AlertOrBuilder>
       getAlertsOrBuilderList() {
     return alerts_;
   }
@@ -103,7 +103,7 @@ private static final long serialVersionUID = 0L;
    * <code>repeated .traffic.v1.Evidence evidences = 2 [json_name = "evidences"];</code>
    */
   @java.lang.Override
-  public java.util.List<? extends com.traffic.proto.traffic.v1.EvidenceOrBuilder> 
+  public java.util.List<? extends com.traffic.proto.traffic.v1.EvidenceOrBuilder>
       getEvidencesOrBuilderList() {
     return evidences_;
   }
@@ -144,7 +144,7 @@ private static final long serialVersionUID = 0L;
    * <code>repeated .traffic.v1.Campaign campaigns = 3 [json_name = "campaigns"];</code>
    */
   @java.lang.Override
-  public java.util.List<? extends com.traffic.proto.traffic.v1.CampaignOrBuilder> 
+  public java.util.List<? extends com.traffic.proto.traffic.v1.CampaignOrBuilder>
       getCampaignsOrBuilderList() {
     return campaigns_;
   }
@@ -184,7 +184,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       batchId_ = s;
@@ -200,7 +200,7 @@ private static final long serialVersionUID = 0L;
       getBatchIdBytes() {
     java.lang.Object ref = batchId_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       batchId_ = b;
@@ -223,7 +223,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       tenantId_ = s;
@@ -239,7 +239,7 @@ private static final long serialVersionUID = 0L;
       getTenantIdBytes() {
     java.lang.Object ref = tenantId_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       tenantId_ = b;
@@ -676,7 +676,7 @@ private static final long serialVersionUID = 0L;
             alertsBuilder_ = null;
             alerts_ = other.alerts_;
             bitField0_ = (bitField0_ & ~0x00000001);
-            alertsBuilder_ = 
+            alertsBuilder_ =
               com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                  getAlertsFieldBuilder() : null;
           } else {
@@ -702,7 +702,7 @@ private static final long serialVersionUID = 0L;
             evidencesBuilder_ = null;
             evidences_ = other.evidences_;
             bitField0_ = (bitField0_ & ~0x00000002);
-            evidencesBuilder_ = 
+            evidencesBuilder_ =
               com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                  getEvidencesFieldBuilder() : null;
           } else {
@@ -728,7 +728,7 @@ private static final long serialVersionUID = 0L;
             campaignsBuilder_ = null;
             campaigns_ = other.campaigns_;
             bitField0_ = (bitField0_ & ~0x00000004);
-            campaignsBuilder_ = 
+            campaignsBuilder_ =
               com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                  getCampaignsFieldBuilder() : null;
           } else {
@@ -1041,7 +1041,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.Alert alerts = 1 [json_name = "alerts"];</code>
      */
-    public java.util.List<? extends com.traffic.proto.traffic.v1.AlertOrBuilder> 
+    public java.util.List<? extends com.traffic.proto.traffic.v1.AlertOrBuilder>
          getAlertsOrBuilderList() {
       if (alertsBuilder_ != null) {
         return alertsBuilder_.getMessageOrBuilderList();
@@ -1067,12 +1067,12 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.Alert alerts = 1 [json_name = "alerts"];</code>
      */
-    public java.util.List<com.traffic.proto.traffic.v1.Alert.Builder> 
+    public java.util.List<com.traffic.proto.traffic.v1.Alert.Builder>
          getAlertsBuilderList() {
       return getAlertsFieldBuilder().getBuilderList();
     }
     private com.google.protobuf.RepeatedFieldBuilderV3<
-        com.traffic.proto.traffic.v1.Alert, com.traffic.proto.traffic.v1.Alert.Builder, com.traffic.proto.traffic.v1.AlertOrBuilder> 
+        com.traffic.proto.traffic.v1.Alert, com.traffic.proto.traffic.v1.Alert.Builder, com.traffic.proto.traffic.v1.AlertOrBuilder>
         getAlertsFieldBuilder() {
       if (alertsBuilder_ == null) {
         alertsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
@@ -1281,7 +1281,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.Evidence evidences = 2 [json_name = "evidences"];</code>
      */
-    public java.util.List<? extends com.traffic.proto.traffic.v1.EvidenceOrBuilder> 
+    public java.util.List<? extends com.traffic.proto.traffic.v1.EvidenceOrBuilder>
          getEvidencesOrBuilderList() {
       if (evidencesBuilder_ != null) {
         return evidencesBuilder_.getMessageOrBuilderList();
@@ -1307,12 +1307,12 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.Evidence evidences = 2 [json_name = "evidences"];</code>
      */
-    public java.util.List<com.traffic.proto.traffic.v1.Evidence.Builder> 
+    public java.util.List<com.traffic.proto.traffic.v1.Evidence.Builder>
          getEvidencesBuilderList() {
       return getEvidencesFieldBuilder().getBuilderList();
     }
     private com.google.protobuf.RepeatedFieldBuilderV3<
-        com.traffic.proto.traffic.v1.Evidence, com.traffic.proto.traffic.v1.Evidence.Builder, com.traffic.proto.traffic.v1.EvidenceOrBuilder> 
+        com.traffic.proto.traffic.v1.Evidence, com.traffic.proto.traffic.v1.Evidence.Builder, com.traffic.proto.traffic.v1.EvidenceOrBuilder>
         getEvidencesFieldBuilder() {
       if (evidencesBuilder_ == null) {
         evidencesBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
@@ -1521,7 +1521,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.Campaign campaigns = 3 [json_name = "campaigns"];</code>
      */
-    public java.util.List<? extends com.traffic.proto.traffic.v1.CampaignOrBuilder> 
+    public java.util.List<? extends com.traffic.proto.traffic.v1.CampaignOrBuilder>
          getCampaignsOrBuilderList() {
       if (campaignsBuilder_ != null) {
         return campaignsBuilder_.getMessageOrBuilderList();
@@ -1547,12 +1547,12 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.Campaign campaigns = 3 [json_name = "campaigns"];</code>
      */
-    public java.util.List<com.traffic.proto.traffic.v1.Campaign.Builder> 
+    public java.util.List<com.traffic.proto.traffic.v1.Campaign.Builder>
          getCampaignsBuilderList() {
       return getCampaignsFieldBuilder().getBuilderList();
     }
     private com.google.protobuf.RepeatedFieldBuilderV3<
-        com.traffic.proto.traffic.v1.Campaign, com.traffic.proto.traffic.v1.Campaign.Builder, com.traffic.proto.traffic.v1.CampaignOrBuilder> 
+        com.traffic.proto.traffic.v1.Campaign, com.traffic.proto.traffic.v1.Campaign.Builder, com.traffic.proto.traffic.v1.CampaignOrBuilder>
         getCampaignsFieldBuilder() {
       if (campaignsBuilder_ == null) {
         campaignsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
@@ -1591,7 +1591,7 @@ private static final long serialVersionUID = 0L;
         getBatchIdBytes() {
       java.lang.Object ref = batchId_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         batchId_ = b;
@@ -1663,7 +1663,7 @@ private static final long serialVersionUID = 0L;
         getTenantIdBytes() {
       java.lang.Object ref = tenantId_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         tenantId_ = b;
