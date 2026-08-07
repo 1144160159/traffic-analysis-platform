@@ -49,7 +49,7 @@
     {
       "domain": "opensearch_topology",
       "path": "deployments/kubernetes/infrastructure/05-opensearch.yaml",
-      "sha256": "ad85a2209cf1d032dec570cac18f4de8fc3d416539d0cb09cf8983159aa19427"
+      "sha256": "c8a8242b3678ba30f87f7b4354bf52c97a3bbac2779d0b3d9bca9abaf1f5dc13"
     },
     {
       "domain": "postgres_ha_pitr",
@@ -489,5 +489,5 @@
       "external G8 HA site and third-party acceptance"
     ]
   },
-  "catalog_sha256": "06fbf717da0f9d0406f4198796e5348e01bba581b0bf4b183cedb5ac82d86fb8"
+  "catalog_sha256": "ba7a485e7080c6ca71b11dd5b6056a813905a24ac4884f3e688128a2668b37c0"
 }

@@ -19,6 +19,10 @@ CANONICAL_DEPLOYMENT = Path("deployments/kubernetes/applications/go-services.yam
 COMPATIBILITY_DEPLOYMENT = Path("go/control-plane/deployments/kubernetes/asset-service.yaml")
 RENDERER = Path("scripts/alignment/render_asset_postgres_expand.py")
 EPHEMERAL_G1 = Path("scripts/alignment/verify_asset_expand_ephemeral.py")
+OPENSEARCH_G1 = Path("scripts/alignment/verify_asset_projection_opensearch_ephemeral.py")
+OPENSEARCH_DEPLOYMENT = Path("deployments/kubernetes/infrastructure/05-opensearch.yaml")
+OPENSEARCH_DOCKERFILE = Path("deployments/opensearch/Dockerfile.ha-v1")
+IMAGE_LOCK = Path("deployments/kubernetes/image-digests.lock.json")
 RUNBOOK = Path("doc/07_alignment/runbooks/F-ASSET-002-rollback.md")
 MIGRATION_DIR = Path("deployments/postgres/migrations")
 
@@ -98,6 +102,37 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
     ):
         if token not in ephemeral_source:
             errors.append(f"asset isolated G1 verifier missing guard: {token}")
+
+    if contract.get("authority", {}).get("opensearch_g1_verifier") != OPENSEARCH_G1.as_posix():
+        errors.append("asset expand contract must bind the isolated OpenSearch G1 verifier")
+    opensearch_contract = contract.get("opensearch_g1_isolation", {})
+    opensearch_image = opensearch_contract.get("image", "")
+    if not re.fullmatch(r"docker\.io/opensearchproject/opensearch@sha256:[0-9a-f]{64}", opensearch_image):
+        errors.append("asset OpenSearch G1 image must use an immutable docker.io digest")
+    for authority in (OPENSEARCH_DEPLOYMENT, OPENSEARCH_DOCKERFILE, OPENSEARCH_G1):
+        if opensearch_image not in read(root, authority):
+            errors.append(f"OpenSearch image authority drift: {authority}")
+    image_lock = json.loads(read(root, IMAGE_LOCK))
+    locked_opensearch = [
+        image.get("repo_digest") for image in image_lock.get("images", [])
+        if image.get("normalized") == "docker.io/opensearchproject/opensearch:2.14.0"
+    ]
+    if locked_opensearch != [opensearch_image]:
+        errors.append("OpenSearch image lock does not match the asset G1 contract")
+    opensearch_source = read(root, OPENSEARCH_G1)
+    for token in (
+        "codex-ephemeral-asset-projection-sentinel",
+        "ephemeral-only",
+        '"127.0.0.1::9200"',
+        '"persistent_volume_attached": False',
+        '"shared_environment_touched": False',
+        '"production_applied": False',
+        "external version",
+        "refusing to overwrite asset OpenSearch G1 evidence",
+        'docker", "rm", "-f", container',
+    ):
+        if token not in opensearch_source:
+            errors.append(f"asset OpenSearch G1 verifier missing guard: {token}")
 
     default_off_flags = contract.get("default_off_flags", [])
     config_source = read(root, CONFIG)

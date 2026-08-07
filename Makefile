@@ -305,6 +305,11 @@ alignment-verify-asset-expand-g1: ## Replay the F-ASSET-001..006 PostgreSQL expa
 	test -n "$(RUN_ID)"
 	python scripts/alignment/verify_asset_expand_ephemeral.py --run-id "$(RUN_ID)" $(if $(OUTPUT),--output "$(OUTPUT)",)
 
+.PHONY: alignment-verify-asset-projection-opensearch-g1
+alignment-verify-asset-projection-opensearch-g1: ## Verify F-ASSET-002 projection semantics in an owned OpenSearch container (RUN_ID required)
+	test -n "$(RUN_ID)"
+	python scripts/alignment/verify_asset_projection_opensearch_ephemeral.py --run-id "$(RUN_ID)" $(if $(OUTPUT),--output "$(OUTPUT)",)
+
 .PHONY: alignment-verify-minio-object-governance
 alignment-verify-minio-object-governance: ## Verify T-MINIO-002/003/004 bucket, lifecycle and fail-closed credential governance
 	python scripts/alignment/verify_minio_object_governance.py

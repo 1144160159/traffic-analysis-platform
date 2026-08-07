@@ -120,7 +120,7 @@
     "deployments/kubernetes/infrastructure/01-kafka.yaml": "fe5ae4421e5adfef9bf98ba62188ce8f6220c8192c8d94695bae5bf0de538e2f",
     "deployments/kubernetes/infrastructure/02-clickhouse.yaml": "8ef784f4133b9f25d24b0f0031e295a7fa26f428791d6585fd2cbd8a5c613368",
     "deployments/kubernetes/infrastructure/03-postgresql.yaml": "23bad32a6ce7c00583822639b2c0c3807834eefccf881f7bec6e03bae9d62459",
-    "deployments/kubernetes/infrastructure/05-opensearch.yaml": "ad85a2209cf1d032dec570cac18f4de8fc3d416539d0cb09cf8983159aa19427",
+    "deployments/kubernetes/infrastructure/05-opensearch.yaml": "c8a8242b3678ba30f87f7b4354bf52c97a3bbac2779d0b3d9bca9abaf1f5dc13",
     "deployments/kubernetes/infrastructure/06-minio.yaml": "efecfa197f887fe61ade662581ac5f3d316d439240ed0fc4441e6347c3ea7243",
     "deployments/kubernetes/infrastructure/07-flink.yaml": "79ba8d96ee26a072c680db02b1204d3697a2a44d4072192a794416e6e45de755",
     "deployments/kubernetes/infrastructure/08-gateway.yaml": "687eaa2a0e2c31a5a46e493208ea946c7f596336c875df2ec3e74c29ed18d289",
@@ -63803,5 +63803,5 @@
       ]
     }
   ],
-  "catalog_sha256": "c55c318a6f28920b6901e376fa697d2dbba05b1335c645b290b64e4be2e83d89"
+  "catalog_sha256": "d65cf28f467a2295fa6cecbb1f0386455e4d58888ec0598bb64af2fe023f8007"
 }

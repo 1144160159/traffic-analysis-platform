@@ -1,4 +1,4 @@
-FROM docker.io/opensearchproject/opensearch@sha256:61846553903d59d51914afbc31eae4653111b585d7ca7b2a1da91c5e8b897b28
+FROM docker.io/opensearchproject/opensearch@sha256:466a49f379bb8889af29d615475e69b7b990898c6987d28470cd7105df9046ff
 
 # Snapshot credentials are never baked into this image. They must be injected
 # into the OpenSearch keystore from an approved external Secret at rollout.

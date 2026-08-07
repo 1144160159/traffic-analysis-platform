@@ -138,7 +138,7 @@
     {
       "reference": "opensearchproject/opensearch:2.14.0",
       "normalized": "docker.io/opensearchproject/opensearch:2.14.0",
-      "repo_digest": "docker.io/opensearchproject/opensearch@sha256:61846553903d59d51914afbc31eae4653111b585d7ca7b2a1da91c5e8b897b28",
+      "repo_digest": "docker.io/opensearchproject/opensearch@sha256:466a49f379bb8889af29d615475e69b7b990898c6987d28470cd7105df9046ff",
       "image_id": "sha256:bf1e1cd1fa30bd1da8596bff12630f5e67648dfb7720a52c773c495db1f0135a",
       "source": "local-cri",
       "mutable_tag": false

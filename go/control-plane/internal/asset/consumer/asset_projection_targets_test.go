@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -112,6 +113,92 @@ func TestOpenSearchAssetProjectionReadinessRequiresWriteAlias(t *testing.T) {
 	if err := target.Ready(context.Background()); err == nil ||
 		!strings.Contains(err.Error(), "write alias") {
 		t.Fatalf("expected missing write alias error, got %v", err)
+	}
+}
+
+// This test is deliberately guarded by both a loopback endpoint and a sentinel
+// document. The alignment runner creates and removes the owned OpenSearch
+// container; this test must never accept a shared or production cluster.
+func TestOpenSearchAssetProjectionEphemeralIntegration(t *testing.T) {
+	baseURL := strings.TrimRight(os.Getenv("ASSET_PROJECTION_EPHEMERAL_OS_URL"), "/")
+	if baseURL == "" {
+		t.Skip("ASSET_PROJECTION_EPHEMERAL_OS_URL is not set")
+	}
+	if !strings.HasPrefix(baseURL, "http://127.0.0.1:") {
+		t.Fatalf("refusing non-loopback OpenSearch endpoint: %q", baseURL)
+	}
+	if os.Getenv("ASSET_PROJECTION_EPHEMERAL_OS_SENTINEL") != "ephemeral-only" {
+		t.Fatal("refusing OpenSearch endpoint without explicit ephemeral sentinel")
+	}
+	response, err := http.Get(baseURL + "/codex-ephemeral-asset-projection-sentinel/_doc/ephemeral-only")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	var sentinel struct {
+		Found  bool `json:"found"`
+		Source struct {
+			Marker string `json:"marker"`
+		} `json:"_source"`
+	}
+	if err := json.NewDecoder(response.Body).Decode(&sentinel); err != nil {
+		t.Fatal(err)
+	}
+	if response.StatusCode != http.StatusOK || !sentinel.Found || sentinel.Source.Marker != "ephemeral-only" {
+		t.Fatalf("refusing non-sentinel OpenSearch cluster: status=%s sentinel=%+v", response.Status, sentinel)
+	}
+
+	target, err := NewOpenSearchAssetProjection([]string{baseURL}, "", "", "assets-v2-write")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := target.Ready(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	event := validAssetProjectionEvent()
+	projection, err := target.Projection(event)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := target.Apply(context.Background(), event, projection); err != nil {
+		t.Fatal(err)
+	}
+	if err := target.Apply(context.Background(), event, projection); err != nil {
+		t.Fatalf("same-version replay must be idempotent: %v", err)
+	}
+
+	older := event
+	older.EventID = "18c92190-a6c3-5ed9-84a8-4aaec263984f"
+	older.AggregateVersion = 1
+	older.Revision = 1
+	older.Asset.Revision = 1
+	older.TraceID = "trace-asset-1"
+	olderProjection, err := target.Projection(older)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := target.Apply(context.Background(), older, olderProjection); err == nil ||
+		!strings.Contains(err.Error(), "409") {
+		t.Fatalf("older external version must be rejected, got %v", err)
+	}
+
+	response, err = http.Get(baseURL + "/assets-v2-read/_doc/" + event.AssetID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	var stored struct {
+		Found   bool                `json:"found"`
+		Version int                 `json:"_version"`
+		Source  assetSearchDocument `json:"_source"`
+	}
+	if err := json.NewDecoder(response.Body).Decode(&stored); err != nil {
+		t.Fatal(err)
+	}
+	if response.StatusCode != http.StatusOK || !stored.Found || stored.Version != 2 ||
+		stored.Source.EventID != event.EventID || stored.Source.Revision != 2 ||
+		stored.Source.Asset.AssetID != event.AssetID {
+		t.Fatalf("unexpected durable OpenSearch projection: status=%s document=%+v", response.Status, stored)
 	}
 }
 

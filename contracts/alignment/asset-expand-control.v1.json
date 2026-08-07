@@ -13,6 +13,7 @@
   "authority": {
     "renderer": "scripts/alignment/render_asset_postgres_expand.py",
     "ephemeral_g1_verifier": "scripts/alignment/verify_asset_expand_ephemeral.py",
+    "opensearch_g1_verifier": "scripts/alignment/verify_asset_projection_opensearch_ephemeral.py",
     "runtime_config": "go/control-plane/internal/asset/config/config.go",
     "canonical_deployment": "deployments/kubernetes/applications/go-services.yaml",
     "compatibility_deployment": "go/control-plane/deployments/kubernetes/asset-service.yaml"
@@ -66,6 +67,15 @@
     "image": "postgres@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20",
     "sentinel": "codex_ephemeral_asset_expand_sentinel=ephemeral-only",
     "migration_replay_count": 2,
+    "persistent_volume": false,
+    "shared_environment": false
+  },
+  "opensearch_g1_isolation": {
+    "image": "docker.io/opensearchproject/opensearch@sha256:466a49f379bb8889af29d615475e69b7b990898c6987d28470cd7105df9046ff",
+    "sentinel": "codex-ephemeral-asset-projection-sentinel/ephemeral-only",
+    "template_authority": "deployments/kubernetes/init-jobs/04-opensearch-templates.yaml",
+    "write_alias": "assets-v2-write",
+    "version_type": "external_gte",
     "persistent_volume": false,
     "shared_environment": false
   },

@@ -33,6 +33,10 @@ class AssetExpandGuardrailsTest(unittest.TestCase):
                 MODULE.COMPATIBILITY_DEPLOYMENT,
                 MODULE.RENDERER,
                 MODULE.EPHEMERAL_G1,
+                MODULE.OPENSEARCH_G1,
+                MODULE.OPENSEARCH_DEPLOYMENT,
+                MODULE.OPENSEARCH_DOCKERFILE,
+                MODULE.IMAGE_LOCK,
                 MODULE.RUNBOOK,
             ]
             contract = __import__("json").loads((ROOT / MODULE.CONTRACT).read_text())
