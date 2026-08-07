@@ -266,10 +266,14 @@
         "doc/02_acceptance/runs/20260807-remediation-asset-expand-guardrails-v1/manifest.json#sha256=033eb16582134fc038fcc4b042ab21141dd464e6cd19bb48e7c0d0a51637f7f9",
         "scripts/alignment/verify_asset_expand_ephemeral.py",
         "doc/02_acceptance/runs/20260807-remediation-g0-full-v176/manifest.json#sha256=cccf2e64e201fbafa5a51d6fd1ddfb11d0003b8f7d9b0e713249c43dc597fd04",
-        "doc/02_acceptance/runs/20260807-remediation-asset-expand-g1-v2/manifest.json#sha256=b10bfba4e823da36788eebfe11c861c2b0b343e5eb7fab330eaaa3b5a3f33909"
+        "doc/02_acceptance/runs/20260807-remediation-asset-expand-g1-v2/manifest.json#sha256=b10bfba4e823da36788eebfe11c861c2b0b343e5eb7fab330eaaa3b5a3f33909",
+        "scripts/alignment/verify_asset_projection_opensearch_ephemeral.py",
+        "deployments/kubernetes/image-digests.lock.json",
+        "doc/02_acceptance/runs/20260807-remediation-g0-full-v177/manifest.json#sha256=0a7b42dcb235815496f1f83deb6364b48c0a246b629abc1bbb7be83a75c9be9b",
+        "doc/02_acceptance/runs/20260807-remediation-asset-projection-opensearch-g1-v1/manifest.json#sha256=0bd8805bef1ce78a4eb7657777cb38444af069c081a34956d03a5dce25df8e71"
       ],
-      "blocker": "十项资产expand迁移尚未在批准目标执行，候选镜像、topic/ACL、OpenSearch alias与Nebula space也未完成同源灰度；真实API/PG/Kafka offset/OS文档/Nebula顶点同trace对账、真实组件故障与性能、指定Windows Chrome变更旅程、发布回滚及观察窗仍未完成。",
-      "note": "资产写入、outbox与投影实现继续保持既有sentinel PostgreSQL证据；默认关闭及审批式expand护栏已由v175验证。v176同源候选又在无卷、loopback、专用sentinel PostgreSQL 16中将十项资产migration连续回放两次，schema指纹保持一致、22/22表与基线回填通过、业务outbox为0且容器已删除，因此G1的PG expand双回放切片通过；临时Kafka/OS/MinIO边界及G2—G6仍开放，状态保持VERIFYING。"
+      "blocker": "十项资产expand迁移尚未在批准目标执行，topic/ACL与Nebula space也未完成同源灰度；真实API/PG/Kafka offset/OS文档/Nebula顶点同trace对账、真实Kafka与Nebula故障、性能、指定Windows Chrome变更旅程、发布回滚及观察窗仍未完成。",
+      "note": "资产写入、outbox与投影实现继续保持既有sentinel PostgreSQL证据；v176同源候选完成PG expand双回放。v177又修正不可拉取的OpenSearch摘要，并在无卷、loopback、专用sentinel OpenSearch 2.14.0中按生产映射authority验证write/read alias、确定性文档ID、external_gte同版本重放和旧版本409拒绝，容器已删除且production_applied=false。该G1只关闭资产OpenSearch目标子切片；Kafka入口、真实Nebula、G2—G6仍开放，状态保持VERIFYING。"
     },
     "F-ASSET-003": {
       "status": "VERIFYING",
@@ -834,10 +838,14 @@
         "doc/02_acceptance/runs/20260805-remediation-g0-full-v132/manifest.json#sha256=123eee2f42c5c476165078910c431f6b9e845e1719a2f176128048c0008ecc77",
         "doc/02_acceptance/runs/20260805-remediation-opensearch-index-governance-v4/manifest.json#sha256=fadc88ae75d2d6fb3bd41854daf28c92402b592c86fda7069827cb0299b87d4f",
         "doc/02_acceptance/runs/20260805-remediation-g0-full-v133/manifest.json#sha256=7f1957d3468ff8bea9d324783f5ce5f502d55b106c020b3149d9d1019f45732d",
-        "doc/02_acceptance/runs/20260805-remediation-opensearch-index-governance-v5/manifest.json#sha256=9ba94f88c9f16e5e74b0731685f15a662bc5baf7f1c0e98901f30733006c5a3d"
+        "doc/02_acceptance/runs/20260805-remediation-opensearch-index-governance-v5/manifest.json#sha256=9ba94f88c9f16e5e74b0731685f15a662bc5baf7f1c0e98901f30733006c5a3d",
+        "scripts/alignment/verify_asset_projection_opensearch_ephemeral.py",
+        "deployments/kubernetes/image-digests.lock.json",
+        "doc/02_acceptance/runs/20260807-remediation-g0-full-v177/manifest.json#sha256=0a7b42dcb235815496f1f83deb6364b48c0a246b629abc1bbb7be83a75c9be9b",
+        "doc/02_acceptance/runs/20260807-remediation-asset-projection-opensearch-g1-v1/manifest.json#sha256=0bd8805bef1ce78a4eb7657777cb38444af069c081a34956d03a5dce25df8e71"
       ],
       "blocker": "仓库已形成alerts-v2版本化组件模板、组合模板、strict mapping、ISM、物理索引及read/write alias候选；Go和Flink的v2流量开关均默认false，production_applied=false。legacy alerts仍是动态映射单索引且没有业务alias、候选组件模板或ISM；14文档legacy只读shadow已对账为0差异，但尚未执行经批准的V2 expand、受限V2 backfill、tenant×时间桶全量计数与抽样hash/权限/性能对账、dual-write、原子read切换、延后write切换、回滚及T+0/T+1/T+3/T+7观察，G2至G8保持PARTIAL/OPEN/HOLD/BLOCKED。",
-      "note": "T-OS-002保持IMPLEMENTING：40字段dynamic=strict映射固定tenant/ID/IP/枚举/时间/数值类型，全文检索集中到search_text；模板通过component composition、version 2和priority 300治理，ISM绑定alerts-v2-write并采用数字后缀rollover。Expand审批绑定一次性nonce、不可变Secret、候选G0/manifest/合同/cluster UUID及最长4小时窗口。只读planner强制单tenant、最多1小时时间窗、100000文档、4 slices、500 requests/s和150 GiB磁盘下限；独立backfill renderer仅接受15分钟内READY计划，生成默认suspend/零重试Job，执行前后重数并在窗口过期时取消task。固定default tenant一秒窗口source_count=14、未知strict字段=0，规划器因目标write alias尚未获批创建而正确BLOCKED且production_mutations为空。该结果仅证明迁移前oracle和执行护栏可用，不替代V2 expand/backfill/cutover。"
+      "note": "T-OS-002保持IMPLEMENTING：alerts-v2版本化治理、expand审批和受限backfill护栏不变。v177同时修复OpenSearch 2.14.0失效registry摘要，资产索引映射authority已在真实临时OpenSearch中证明dynamic=strict、read/write alias、确定性ID、external_gte同版本重放与旧版本拒绝；这不等于alerts-v2 expand/backfill/cutover，也未证明生产TLS、HA、snapshot、性能或观察窗。"
     },
     "T-OS-003": {
       "status": "IMPLEMENTING",
