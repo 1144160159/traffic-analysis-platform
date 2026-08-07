@@ -73,11 +73,11 @@ spec:
         - name: ASSET_KAFKA_GROUP_ID
           value: "asset-service-bindings"
         - name: ASSET_EVENT_OUTBOX_ENABLED
-          value: "true"
+          value: "false"
         - name: ASSET_EVENT_TOPIC
           value: "asset.events.v2"
         - name: ASSET_DISCOVERY_OUTBOX_ENABLED
-          value: "true"
+          value: "false"
         - name: ASSET_DISCOVERY_EVENT_TOPIC
           value: "asset.discovery.events.v1"
         - name: ASSET_CURSOR_V2_ENABLED
@@ -114,7 +114,7 @@ spec:
         - name: ASSET_GOVERNANCE_V1_ENABLED
           value: "false"
         - name: ASSET_PROJECTION_ENABLED
-          value: "true"
+          value: "false"
         - name: ASSET_PROJECTION_GROUP_ID
           value: "asset-projection-v2"
         - name: ASSET_PROJECTION_OS_ADDRESSES

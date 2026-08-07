@@ -1,0 +1,72 @@
+{
+  "contract_version": 1,
+  "remediation_ids": [
+    "F-ASSET-001",
+    "F-ASSET-002",
+    "F-ASSET-003",
+    "F-ASSET-004",
+    "F-ASSET-005",
+    "F-ASSET-006"
+  ],
+  "status": "candidate_default_off",
+  "production_applied": false,
+  "authority": {
+    "renderer": "scripts/alignment/render_asset_postgres_expand.py",
+    "runtime_config": "go/control-plane/internal/asset/config/config.go",
+    "canonical_deployment": "deployments/kubernetes/applications/go-services.yaml",
+    "compatibility_deployment": "go/control-plane/deployments/kubernetes/asset-service.yaml"
+  },
+  "migration_phase": "expand",
+  "migration_versions": [
+    "202607302030",
+    "202607310015",
+    "202607310030",
+    "202607310045",
+    "202607310100",
+    "202607311300",
+    "202607311315",
+    "202607311330",
+    "202608031510",
+    "202608031520"
+  ],
+  "default_off_flags": [
+    "ASSET_EVENT_OUTBOX_ENABLED",
+    "ASSET_DISCOVERY_OUTBOX_ENABLED",
+    "ASSET_PROJECTION_ENABLED",
+    "ASSET_CURSOR_V2_ENABLED",
+    "ASSET_DETAIL_SNAPSHOT_V1_ENABLED",
+    "ASSET_DETAIL_CLICKHOUSE_ENABLED",
+    "ASSET_DETAIL_NEBULA_ENABLED",
+    "ASSET_DETAIL_EVIDENCE_ENABLED",
+    "ASSET_GOVERNANCE_V1_ENABLED",
+    "ASSET_DISCOVERY_JOBS_V2_ENABLED",
+    "ASSET_DISCOVERY_WORKER_ENABLED",
+    "ASSET_DISCOVERY_SCHEDULER_ENABLED",
+    "ASSET_EXPORT_JOBS_V1_ENABLED",
+    "ASSET_EXPORT_WORKER_ENABLED",
+    "ASSET_EXPORT_OUTBOX_ENABLED"
+  ],
+  "preserved_legacy_flags": {
+    "ASSET_KAFKA_ENABLED": true,
+    "reason": "asset.bindings.v1 is an existing compatibility consumer and is not an expand feature"
+  },
+  "execution_guards": [
+    "same_source_g0_pass",
+    "immutable_migration_bundle",
+    "postgres_system_identifier",
+    "expected_per_migration_state",
+    "independent_approver",
+    "immutable_approval_nonce",
+    "bounded_four_hour_window",
+    "suspended_by_default",
+    "no_overwrite_of_rendered_manifest"
+  ],
+  "post_expand_requirements": [
+    "run_asset_target_readiness_canaries",
+    "enable_one_flag_at_a_time",
+    "reconcile_pg_kafka_opensearch_nebulagraph_minio_audit",
+    "retain_t_plus_0_1_3_7_observations",
+    "keep_rollback_ids_executable"
+  ],
+  "closure_boundary": "Repository rendering and G0 evidence do not prove G2-G6, production application, observation, or canonical closure."
+}

@@ -17,7 +17,7 @@
     {
       "domain": "configuration_and_secret_binding",
       "path": "contracts/configuration/configuration-catalog.v1.json",
-      "sha256": "007c0fd0c6b5f0c48fd2efd07a7c4cdf3fbed5e7b461f1474cdc541bce36f820"
+      "sha256": "f8a88d6541c6b9279ab8dce99f6954d02669c16d7df96bcb7e74a2c85f58168d"
     },
     {
       "domain": "iam_scopes",
@@ -1911,5 +1911,5 @@
       "wildcard_or_shared_kafka_principal"
     ]
   },
-  "catalog_sha256": "7282fcdd29b9e4ca97a6abc47872e2d623e58bb2001f2128609c30b57b3168d2"
+  "catalog_sha256": "43b69b5f71a3240f0c20a3608ac400829dafad9408794d2275f759560c65643a"
 }

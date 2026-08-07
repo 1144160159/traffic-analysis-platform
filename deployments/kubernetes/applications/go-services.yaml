@@ -380,9 +380,9 @@ spec:
         - {name: KAFKA_TLS_SERVER_NAME, value: "kafka-bootstrap.middleware.svc"}
         - {name: ASSET_KAFKA_TOPIC, value: "asset.bindings.v1"}
         - {name: ASSET_KAFKA_GROUP_ID, value: "asset-service-bindings"}
-        - {name: ASSET_EVENT_OUTBOX_ENABLED, value: "true"}
+        - {name: ASSET_EVENT_OUTBOX_ENABLED, value: "false"}
         - {name: ASSET_EVENT_TOPIC, value: "asset.events.v2"}
-        - {name: ASSET_DISCOVERY_OUTBOX_ENABLED, value: "true"}
+        - {name: ASSET_DISCOVERY_OUTBOX_ENABLED, value: "false"}
         - {name: ASSET_DISCOVERY_EVENT_TOPIC, value: "asset.discovery.events.v1"}
         - {name: ASSET_CURSOR_V2_ENABLED, value: "false"}
         - {name: ASSET_DETAIL_SNAPSHOT_V1_ENABLED, value: "false"}
@@ -399,7 +399,7 @@ spec:
         - {name: ASSET_DETAIL_EVIDENCE_ENABLED, value: "false"}
         - {name: ASSET_DETAIL_EVIDENCE_LIMIT, value: "100"}
         - {name: ASSET_GOVERNANCE_V1_ENABLED, value: "false"}
-        - {name: ASSET_PROJECTION_ENABLED, value: "true"}
+        - {name: ASSET_PROJECTION_ENABLED, value: "false"}
         - {name: ASSET_PROJECTION_GROUP_ID, value: "asset-projection-v2"}
         - {name: ASSET_PROJECTION_OS_ADDRESSES, value: "http://opensearch.middleware.svc:9200"}
         - {name: ASSET_PROJECTION_OS_USERNAME, value: "admin"}

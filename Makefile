@@ -243,6 +243,7 @@ alignment-validate: ## Validate W0 registry, contracts, OpenAPI, migration and s
 	python scripts/alignment/generate_kafka_acl_plan.py --check-generated
 	python scripts/alignment/verify_kafka_dlq_commit_barrier.py
 	python scripts/alignment/verify_pcap_metadata_ack.py
+	python scripts/alignment/verify_asset_expand_guardrails.py
 	python scripts/alignment/verify_flink_state_recovery.py
 	python scripts/alignment/verify_flink_checkpoint_ha.py
 	python scripts/alignment/verify_flink_sink_reconciliation.py
@@ -292,6 +293,12 @@ alignment-verify-kafka-dlq-commit-barrier: ## Verify T-KAFKA-003 durable DLQ and
 alignment-verify-pcap-metadata-ack: ## Verify F-PROBE-001/T-KAFKA-003 non-final durable PCAP metadata receipts
 	python scripts/alignment/verify_pcap_metadata_ack.py
 	cd $(GO_DIR) && go test ./internal/ingest/queue ./internal/ingest/server
+
+.PHONY: alignment-verify-asset-expand-guardrails
+alignment-verify-asset-expand-guardrails: ## Verify F-ASSET-001..006 default-off and approval-bound PostgreSQL expand controls
+	python scripts/alignment/verify_asset_expand_guardrails.py
+	python -m unittest tests.alignment.test_asset_expand_renderer tests.alignment.test_asset_expand_guardrails -v
+	cd $(GO_DIR) && go test ./internal/asset/... ./cmd/asset-service/...
 
 .PHONY: alignment-verify-minio-object-governance
 alignment-verify-minio-object-governance: ## Verify T-MINIO-002/003/004 bucket, lifecycle and fail-closed credential governance
