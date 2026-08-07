@@ -252,7 +252,7 @@ def build_registry() -> dict[str, Any]:
             ],
             "remaining": [
                 "author backlog contracts without deleting routes actions operations scopes or audit events",
-                "implement the explicit audit batch and scope catalog OpenAPI binding gaps before claiming full runtime adoption",
+                "complete production adoption and observation for the audit batch ingress and governed scope catalog before closure",
                 "implement the draft standard-scope API migration projection and object boundaries before claiming runtime adoption",
                 "bind generated TypeScript and compatibility telemetry to every formal contract",
                 "capture old-client usage and live contract-version adoption by candidate",

@@ -77,7 +77,7 @@ func TestConsumerPersistsMessageTransactionallyBeforeSuccess(t *testing.T) {
 	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO audit_logs")).
 		WithArgs(
 			"audit-transaction", "tenant-a", "", "EXPORT", "unknown",
-			"", "{}", "", "", sqlmock.AnyArg(),
+			"", "{}", "", "", sqlmock.AnyArg(), false,
 		).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectCommit()
@@ -93,6 +93,40 @@ func TestConsumerPersistsMessageTransactionallyBeforeSuccess(t *testing.T) {
 	}
 	if !consumer.Ready() {
 		t.Fatal("successful transaction must restore readiness")
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestConsumerRejectsEventIDPayloadCollisionPermanently(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	mock.ExpectBegin()
+	mock.ExpectPrepare(regexp.QuoteMeta("INSERT INTO audit_logs"))
+	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO audit_logs")).
+		WithArgs(
+			"audit-collision", "tenant-a", "", "EXPORT", "unknown",
+			"", "{}", "", "", sqlmock.AnyArg(), false,
+		).
+		WillReturnResult(sqlmock.NewResult(0, 0))
+	mock.ExpectRollback()
+
+	event := &pb.AuditLog{EventId: "audit-collision", TenantId: "tenant-a", Action: "EXPORT"}
+	payload, err := proto.Marshal(event)
+	if err != nil {
+		t.Fatal(err)
+	}
+	consumer := &Consumer{db: db, logger: zap.NewNop()}
+	err = consumer.handleMessageWithReadiness(context.Background(), makeMsg(payload))
+	if err == nil || !auditkafka.IsPermanent(err) || !regexp.MustCompile(`payload collision`).MatchString(err.Error()) {
+		t.Fatalf("event identity collision must be permanent, got %v", err)
+	}
+	if !consumer.Ready() {
+		t.Fatal("permanent collision must remain ready for the durable DLQ barrier")
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatal(err)
@@ -232,6 +266,18 @@ func TestParseAuditLogBatchPreservesEveryEvent(t *testing.T) {
 		if result[index].eventID != event.EventId {
 			t.Fatalf("event %d id=%s want=%s", index, result[index].eventID, event.EventId)
 		}
+	}
+}
+
+func TestParseAuditLogBatchRejectsDuplicateEventID(t *testing.T) {
+	c := &Consumer{}
+	batch := &pb.AuditLogBatch{Events: []*pb.AuditLog{
+		{EventId: "audit-duplicate", TenantId: "tenant1", Action: "FIRST"},
+		{EventId: "audit-duplicate", TenantId: "tenant1", Action: "SECOND"},
+	}}
+	data, _ := proto.Marshal(batch)
+	if _, err := c.parseMessages(makeMsg(data)); err == nil || !regexp.MustCompile(`duplicate event_id`).MatchString(err.Error()) {
+		t.Fatalf("error=%v, want duplicate event_id rejection", err)
 	}
 }
 

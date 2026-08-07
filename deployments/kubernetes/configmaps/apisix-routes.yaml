@@ -66,7 +66,7 @@ data:
     : 1\n  - id: 41\n    uri: /api/v1/dlq*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"ingest-gateway.traffic-analysis.svc:8080\"\
     : 1\n  - id: 43\n    uri: /api/v1/threat-intel*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"threat-intel-service.traffic-analysis.svc:8087\"\
     : 1\n  - id: 42\n    uri: /ws*\n    enable_websocket: true\n    upstream:\n      type: roundrobin\n      nodes:\n        \"alert-service.traffic-analysis.svc:8082\"\
-    : 1\n\n  - id: 20\n    uri: /*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"web-ui.traffic-analysis.svc:80\"\
+    : 1\n  - id: 45\n    uri: /api/internal/v1/audit/batches\n    methods: [POST]\n    plugins:\n      proxy-rewrite:\n        uri: /internal/v1/audit/batches\n    upstream:\n      type: roundrobin\n      nodes:\n        \"alert-service.traffic-analysis.svc:8082\": 1\n\n  - id: 20\n    uri: /*\n    upstream:\n      type: roundrobin\n      nodes:\n        \"web-ui.traffic-analysis.svc:80\"\
     : 1\n#END\n"
   config.yaml: "nginx_config:\n  worker_processes: 4\n\ndeployment:\n  role: data_plane\n  role_data_plane:\n    config_provider: yaml\n  admin:\n    admin_key:\n\
     \      - name: admin\n        key: __APISIX_ADMIN_KEY__\n        role: admin\n"

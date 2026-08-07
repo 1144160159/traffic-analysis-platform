@@ -1348,6 +1348,33 @@
         }
       }
     },
+    "/internal/v1/audit/batches": {
+      "post": {
+        "operationId": "ingestAuditLogBatch",
+        "x-required-scope": "audit:write",
+        "x-feature-id": "F-AUDIT-001",
+        "x-rollout-flag": "AUDIT_BATCH_FAIL_CLOSED_V1_ENABLED",
+        "x-compatibility": "Additive internal ingress; existing /audit-log UI and audit command routes remain available",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/AuditLogBatchIngest"}
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Kafka acknowledged the complete immutable batch; PostgreSQL and ClickHouse projection remains non-final and queryable by event status URL",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}
+          },
+          "400": {"description": "The entire batch is rejected when any event or command field is invalid"},
+          "401": {"description": "Authenticated tenant identity required"},
+          "403": {"description": "audit:write scope required"},
+          "503": {"description": "Ingress disabled or Kafka did not acknowledge; no 202 acceptance is returned"}
+        }
+      }
+    },
     "/v1/auth/scopes": {
       "get": {
         "operationId": "getScopeCatalog",
@@ -1753,6 +1780,38 @@
       }
     },
     "schemas": {
+      "AuditLogBatchIngest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["action_id", "reason", "events"],
+        "properties": {
+          "action_id": {"const": "audit-batch-ingest"},
+          "reason": {"type": "string", "minLength": 3, "maxLength": 1000},
+          "events": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 200,
+            "items": {"$ref": "#/components/schemas/AuditLogIngestEvent"}
+          }
+        }
+      },
+      "AuditLogIngestEvent": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["event_id", "action", "created_at"],
+        "properties": {
+          "event_id": {"type": "string", "minLength": 1, "maxLength": 200},
+          "tenant_id": {"type": "string", "description": "Optional assertion that must match the authenticated tenant; it never overrides authenticated identity"},
+          "user_id": {"type": "string", "maxLength": 200},
+          "action": {"type": "string", "minLength": 1, "maxLength": 200},
+          "object_type": {"type": "string", "maxLength": 200},
+          "object_id": {"type": "string", "maxLength": 512},
+          "detail": {},
+          "ip_addr": {"type": "string", "maxLength": 128},
+          "user_agent": {"type": "string", "maxLength": 2000},
+          "created_at": {"type": "integer", "format": "int64", "minimum": 1, "description": "Stable Unix millisecond timestamp included in idempotency identity"}
+        }
+      },
       "AlertSearchRequest": {
         "type": "object",
         "additionalProperties": false,

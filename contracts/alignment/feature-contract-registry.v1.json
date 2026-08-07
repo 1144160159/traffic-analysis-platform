@@ -32,7 +32,7 @@
     {
       "domain": "rest_contract_authority",
       "path": "contracts/openapi/alignment-v1.openapi.json",
-      "sha256": "8b49496d3ebd12d4eddcce47da90ee99b085f8875c0d6a9b394880b7fd5f9fcc"
+      "sha256": "9dfce8ed3e5dfd730859fa4b8a70a30b19d44cd9d95cf21b22bab16c7cbc8323"
     },
     {
       "domain": "route_action_api_scope_inventory",
@@ -60,10 +60,8 @@
     "canonical_feature_ids": 54,
     "formal_contracts": 38,
     "formal_contracts_valid": 38,
-    "formal_contracts_openapi_bound": 24,
-    "non_draft_openapi_binding_gaps": [
-      "F-AUDIT-001"
-    ],
+    "formal_contracts_openapi_bound": 25,
+    "non_draft_openapi_binding_gaps": [],
     "standard_scope_features": 38,
     "standard_scope_formal_contracts": 38,
     "missing_standard_scope_contracts": [],
@@ -1179,9 +1177,9 @@
         "operation_id": "ingestAuditLogBatch",
         "api_method": "POST",
         "api_path": "/internal/v1/audit/batches",
-        "openapi_binding_status": "MISSING",
-        "openapi_bound_operation_id": null,
-        "openapi_bound_feature_id": null,
+        "openapi_binding_status": "EXACT",
+        "openapi_bound_operation_id": "ingestAuditLogBatch",
+        "openapi_bound_feature_id": "F-AUDIT-001",
         "required_scopes": [
           "audit:write"
         ],
@@ -1202,9 +1200,7 @@
         ],
         "validation_errors": []
       },
-      "blocking_gaps": [
-        "openapi_operation_binding_missing"
-      ]
+      "blocking_gaps": []
     },
     {
       "feature_id": "F-ADAPTER-001",
@@ -1882,7 +1878,6 @@
     }
   ],
   "blocking_gaps": [
-    "openapi_operation_binding_missing",
     "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing",
     "versioned_feature_contract_missing"
   ],
@@ -1896,12 +1891,12 @@
     ],
     "remaining": [
       "author backlog contracts without deleting routes actions operations scopes or audit events",
-      "implement the explicit audit batch and scope catalog OpenAPI binding gaps before claiming full runtime adoption",
+      "complete production adoption and observation for the audit batch ingress and governed scope catalog before closure",
       "implement the draft standard-scope API migration projection and object boundaries before claiming runtime adoption",
       "bind generated TypeScript and compatibility telemetry to every formal contract",
       "capture old-client usage and live contract-version adoption by candidate",
       "complete compatibility diff G2 through G7 and external G8 gates"
     ]
   },
-  "catalog_sha256": "cc32e8a6646149cc1c3685f41999548c6ee5ddeecf673302a57995dbe79a0c47"
+  "catalog_sha256": "11646fcd66ce4297f08f7c8b16f78b2c99ab4425918e8aa724e6e1fd99be00a1"
 }

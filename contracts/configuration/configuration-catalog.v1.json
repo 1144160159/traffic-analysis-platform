@@ -104,7 +104,7 @@
       "rendered_consumers": [
         "apisix_standalone_runtime"
       ],
-      "source_sha256": "86f9938071f94fbc7db5c548f179938b89c199300e474615cce4a1269612efd7"
+      "source_sha256": "481adaf89d580e0928fd6145d0e0c3fd4daac8880a95a39400fdaa4edc491f79"
     }
   ],
   "source_hashes": {
@@ -112,10 +112,10 @@
     "contracts/events/kafka-acl-catalog.v1.json": "06805724b42cd5dda837e52e1097428e11094a95be54fcb07f595a944df7645f",
     "contracts/events/kafka-topic-catalog.v1.json": "f517b239eaba7b288aca253e730862f3e78c374c61cbbe06116b9e4ed740abe3",
     "contracts/flink/job-registry.v1.json": "e1cfdb658c0cad53aeaa0aec55151fdc928169bb3bba8ac84a7db80009797c3c",
-    "deployments/kubernetes/applications/go-services.yaml": "47178b3d1e62914e11147eea5045e7b6c17fa231332396a12c8a949534a34e5d",
+    "deployments/kubernetes/applications/go-services.yaml": "eddc66ed850abbd435bc629714635860a86f6194b0499d7d2d0bd978aa847f9d",
     "deployments/kubernetes/applications/probe-agent.yaml": "b7969b9001297d381f09a09c9a3b71bd8bd3ccfc8bfca0a599f9a04afff865f3",
     "deployments/kubernetes/applications/web-ui.yaml": "8abbdbbef2621b300541a6cad56678cfe4115350c5c071304a9bc19f353a981f",
-    "deployments/kubernetes/configmaps/apisix-routes.yaml": "86f9938071f94fbc7db5c548f179938b89c199300e474615cce4a1269612efd7",
+    "deployments/kubernetes/configmaps/apisix-routes.yaml": "481adaf89d580e0928fd6145d0e0c3fd4daac8880a95a39400fdaa4edc491f79",
     "deployments/kubernetes/flink/flink-log-job.yaml": "de7010b9a7fd35eec2ae249aeecc3a1f139574d4801481259fe2efc029f4097d",
     "deployments/kubernetes/infrastructure/01-kafka.yaml": "fe5ae4421e5adfef9bf98ba62188ce8f6220c8192c8d94695bae5bf0de538e2f",
     "deployments/kubernetes/infrastructure/02-clickhouse.yaml": "8ef784f4133b9f25d24b0f0031e295a7fa26f428791d6585fd2cbd8a5c613368",
@@ -806,10 +806,10 @@
   },
   "conflicting_runtime_bindings": [],
   "counts": {
-    "entries": 1890,
+    "entries": 1891,
     "go_env_consumers": 926,
     "flink_properties": 261,
-    "kubernetes_env_bindings": 703,
+    "kubernetes_env_bindings": 704,
     "secret_entries": 184,
     "source_files": 76
   },
@@ -44968,6 +44968,40 @@
       ]
     },
     {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:AUDIT_BATCH_FAIL_CLOSED_V1_ENABLED:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:AUDIT_BATCH_FAIL_CLOSED_V1_ENABLED",
+      "key": "AUDIT_BATCH_FAIL_CLOSED_V1_ENABLED",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
       "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:AUTH_POSTGRES_DATABASE:deployments/kubernetes/applications/go-services.yaml",
       "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:AUTH_POSTGRES_DATABASE",
       "key": "AUTH_POSTGRES_DATABASE",
@@ -63769,5 +63803,5 @@
       ]
     }
   ],
-  "catalog_sha256": "fa7db9b800df746f69cbbfac958d723d8ac8df2d334fe0df13c3501e97de4c78"
+  "catalog_sha256": "c316fd6b423f47da2d16e45c8c3d2918407ab0124806b7522ed579e1d3c6c52d"
 }

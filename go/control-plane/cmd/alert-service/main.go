@@ -619,9 +619,25 @@ func main() {
 	topicSnapshotFeatureEnabled := getBoolEnv("TOPIC_SNAPSHOT_V1_ENABLED", true)
 	topicExecutorFeatureEnabled := getBoolEnv("TOPIC_EXECUTOR_V2_ENABLED", true) && !readOnlyVerificationMode
 	probeOperationFeatureEnabled := getBoolEnv("PROBE_OPERATION_ACK_V2_ENABLED", true) && !readOnlyVerificationMode
+	auditBatchFeatureEnabled := getBoolEnv("AUDIT_BATCH_FAIL_CLOSED_V1_ENABLED", false) && !readOnlyVerificationMode
 	systemHandler.SetCampaignAggregateV2FeatureFlag(campaignAggregateV2Enabled)
 	systemHandler.SetTopicAlignmentFeatureFlags(topicSnapshotFeatureEnabled, topicExecutorFeatureEnabled)
 	systemHandler.SetProbeOperationAckFeatureFlag(probeOperationFeatureEnabled)
+	var auditBatchProducer *kafka.Producer
+	if auditBatchFeatureEnabled {
+		auditBatchProducer, err = kafka.NewProducer(kafka.ProducerConfig{
+			Brokers: cfg.Kafka.Brokers, Topic: "audit.logs", BatchSize: 200,
+			RequiredAcks: "all", Compression: "lz4", Async: false, Security: cfg.Kafka.Security,
+		}, logger)
+		if err != nil {
+			logger.Fatal("Audit batch ingress is enabled but Kafka producer initialization failed", zap.Error(err))
+		}
+		defer auditBatchProducer.Close()
+		systemHandler.SetAuditBatchProducer(auditBatchProducer)
+		logger.Info("Fail-closed audit batch ingress enabled", zap.String("topic", auditBatchProducer.Topic()))
+	} else {
+		logger.Info("Fail-closed audit batch ingress is disabled")
+	}
 	if campaignSOARExecutorURL := strings.TrimSpace(getEnv("CAMPAIGN_SOAR_EXECUTOR_URL", "")); campaignSOARExecutorURL != "" {
 		campaignSOARExecutor, executorErr := api.NewHTTPCampaignSOARExecutor(
 			campaignSOARExecutorURL,
@@ -995,6 +1011,9 @@ func main() {
 
 	// 应用中间件链
 	applyAPIMiddlewares(apiRouter)
+	internalRouter := r.PathPrefix("/internal/v1").Subrouter()
+	applyAPIMiddlewares(internalRouter)
+	systemHandler.RegisterInternalRoutes(internalRouter)
 
 	// 注册 API 路由
 	apiHandler.RegisterRoutes(apiRouter)

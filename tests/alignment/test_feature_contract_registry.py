@@ -40,15 +40,12 @@ class FeatureContractRegistryTests(unittest.TestCase):
         self.assertEqual(38, result["coverage"]["standard_scope_features"])
         self.assertEqual([], result["coverage"]["missing_standard_scope_contracts"])
         self.assertEqual(16, len(result["coverage"]["missing_backlog_contracts"]))
-        self.assertEqual(
-            ["F-AUDIT-001"],
-            result["coverage"]["non_draft_openapi_binding_gaps"],
-        )
+        self.assertEqual([], result["coverage"]["non_draft_openapi_binding_gaps"])
 
     def test_alert_and_probe_contracts_bind_exactly_to_openapi(self) -> None:
         registry = build_registry()
         by_id = {item["feature_id"]: item for item in registry["features"]}
-        for feature_id in ("F-ALERT-003", "F-ALERT-005", "F-ALERT-006", "F-PROBE-001"):
+        for feature_id in ("F-ALERT-003", "F-ALERT-005", "F-ALERT-006", "F-AUDIT-001", "F-PROBE-001"):
             self.assertEqual(
                 "EXACT",
                 by_id[feature_id]["formal_contract"]["openapi_binding_status"],
@@ -122,14 +119,18 @@ class FeatureContractRegistryTests(unittest.TestCase):
         self.assertEqual("FAIL", result["status"])
         self.assertTrue(any("validation errors" in error for error in result["errors"]))
 
-    def test_non_draft_openapi_binding_gap_cannot_be_hidden(self) -> None:
+    def test_non_draft_openapi_binding_regression_fails_closed(self) -> None:
         registry = copy.deepcopy(build_registry())
         audit = next(item for item in registry["features"] if item["feature_id"] == "F-AUDIT-001")
-        audit["blocking_gaps"].remove("openapi_operation_binding_missing")
-        registry["coverage"]["non_draft_openapi_binding_gaps"].remove("F-AUDIT-001")
+        audit["formal_contract"]["openapi_binding_status"] = "MISSING"
+        audit["formal_contract"]["openapi_bound_operation_id"] = None
+        audit["formal_contract"]["openapi_bound_feature_id"] = None
+        audit["blocking_gaps"].append("openapi_operation_binding_missing")
+        registry["coverage"]["formal_contracts_openapi_bound"] -= 1
+        registry["coverage"]["non_draft_openapi_binding_gaps"] = ["F-AUDIT-001"]
         result = self._verify_mutation(registry)
         self.assertEqual("FAIL", result["status"])
-        self.assertTrue(any("binding gap" in error for error in result["errors"]))
+        self.assertTrue(any("binding gaps changed" in error for error in result["errors"]))
 
     def test_duplicate_operation_id_fails_closed(self) -> None:
         registry = copy.deepcopy(build_registry())

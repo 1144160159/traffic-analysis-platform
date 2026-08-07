@@ -523,6 +523,13 @@ export async function getTopicSnapshot(request: AlignmentRequest = {}) {
   return response.data;
 }
 
+export async function ingestAuditLogBatch(request: AlignmentRequest = {}) {
+  const path = resolvePath('/internal/v1/audit/batches', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
 export async function linkAlertToCampaign(request: AlignmentRequest = {}) {
   const path = resolvePath('/v1/alerts/{id}/campaign-links', request.path);
   const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;

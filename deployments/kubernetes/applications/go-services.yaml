@@ -309,6 +309,7 @@ spec:
         - {name: KAFKA_RESPONSE_ACTION_TOPIC, value: "alert.response.requested.v1"}
         - {name: KAFKA_RESPONSE_ACTION_GROUP, value: "alert-service-response-execution-v1"}
         - {name: ALERT_RESPONSE_EXECUTION_V1_ENABLED, value: "true"}
+        - {name: AUDIT_BATCH_FAIL_CLOSED_V1_ENABLED, value: "false"}
         - {name: TOPIC_SNAPSHOT_V1_ENABLED, value: "true"}
         - {name: TOPIC_EXECUTOR_V2_ENABLED, value: "true"}
         - {name: PROBE_OPERATION_ACK_V2_ENABLED, value: "true"}
