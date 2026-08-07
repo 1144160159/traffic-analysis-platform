@@ -33,6 +33,7 @@ TESTS = (
     Path("go/control-plane/internal/alert/persistence/dual_writer_projection_test.go"),
     Path("go/control-plane/internal/alert/persistence/opensearch_external_version_test.go"),
     Path("go/control-plane/internal/alert/persistence/projection_debt_test.go"),
+    Path("go/control-plane/internal/alert/persistence/projection_debt_integration_test.go"),
     Path("go/control-plane/internal/alert/repository/clickhouse_projection_query_test.go"),
     Path("go/control-plane/internal/alert/projection/worker_test.go"),
     Path("go/control-plane/internal/alert/projection/reconcile_test.go"),
@@ -76,8 +77,10 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
         errors.append("automatic repair must be limited to missing and stale")
     if scope.get("repair_terminal_receipt") != "refresh_exact_write_alias_then_requery_same_scope":
         errors.append("repair terminal receipt must refresh and requery the same bounded scope")
-    if scope.get("repair_converged") != "remaining_missing_and_stale_are_zero_and_watermark_errors_are_zero":
+    if scope.get("repair_converged") != "remaining_missing_stale_and_watermark_mismatches_are_zero_and_error_count_is_zero":
         errors.append("repair convergence definition drifted")
+    if scope.get("watermark_terminal_receipt") != "compare_source_version_and_authoritative_sha256_in_postgresql_repair_missing_receipts_then_requery":
+        errors.append("PostgreSQL watermark terminal receipt guard drifted")
     runtime = contract.get("runtime_guards", {})
     if runtime.get("feature_flag_default_enabled") is not False or runtime.get("production_mutations_in_repository_candidate") != []:
         errors.append("candidate must remain default-off with no production mutation claim")
@@ -107,7 +110,7 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
         CONSUMER: ("outcome.ClickHouseCommitted && outcome.DebtRecorded", "WriteBatchWithOutcome",
                    "alert_consumer_last_committed_offset", "alert_consumer_last_committed_event_info", "SetCommitObserver"),
         COMMON_CONSUMER: ("SetCommitObserver", "notifyCommitObserver(messages)", "CommitsSucceeded"),
-        DEBT: ("FOR UPDATE SKIP LOCKED", "alert_opensearch_projection_debts", "alert_opensearch_projection_watermarks", "AlertProjectionSHA256"),
+        DEBT: ("FOR UPDATE SKIP LOCKED", "alert_opensearch_projection_debts", "alert_opensearch_projection_watermarks", "AlertProjectionSHA256", "ListProjectionWatermarkMismatches", "jsonb_to_recordset"),
         OS_WRITER: ('VersionType: "external_gte"', '"version_type": "external_gte"', '"search_after"', "scope.TargetIndexVersion != w.TargetVersion()", "RefreshProjectionTarget",
                     'DedupFingerprint string `json:"dedup_fingerprint"`', "canonicalAlert(w.legacyReadKeywordFields)"),
         CH_REPOSITORY: ("AS first_seen_time", "AS last_seen_time"),
@@ -145,6 +148,7 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
                   "ProjectionDebtBatchCommitsAtomically", "CommitObserverReceivesIsolatedCommittedMessages",
                   "DoesNotWriteWrongIndexGeneration", "ClassifiesMissingExtraAndStale", "StopsOnTruncationBeforeRepair", "StopsAtRepairErrorThreshold", "FailsReceiptWhenRefreshFails",
                   "DoesNotConvergeWhenAcknowledgedWriteIsNotVisible", "DoesNotConvergeWhenWatermarkWriteFails",
+                  "RetriesMissingWatermarkAfterTargetAlreadyConverged", "ProjectionWatermarkMismatchQueryIsBoundedAndVersioned",
                   "AlertProjectionRepairTerminalReceiptRealOpenSearch"):
         if token not in test_text:
             errors.append(f"negative or reconciliation test missing: {token}")

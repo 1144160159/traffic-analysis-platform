@@ -53,6 +53,8 @@ type reconcileStore struct {
 	applied            []string
 	result             persistence.ProjectionReconcileResult
 	appliedErr         error
+	watermarks         map[string]bool
+	watermarkReadErr   error
 }
 
 func (s *reconcileStore) StartProjectionReconcileRun(context.Context, persistence.ProjectionReconcileRun, int) error {
@@ -66,7 +68,26 @@ func (s *reconcileStore) CompleteProjectionReconcileRun(_ context.Context, _ str
 }
 func (s *reconcileStore) RecordProjectionApplied(_ context.Context, alert *persistence.Alert, _ string) error {
 	s.applied = append(s.applied, alert.AlertID)
-	return s.appliedErr
+	if s.appliedErr != nil {
+		return s.appliedErr
+	}
+	if s.watermarks == nil {
+		s.watermarks = make(map[string]bool)
+	}
+	s.watermarks[alert.AlertID] = true
+	return nil
+}
+func (s *reconcileStore) ListProjectionWatermarkMismatches(_ context.Context, alerts []*persistence.Alert, _ string) ([]string, error) {
+	if s.watermarkReadErr != nil {
+		return nil, s.watermarkReadErr
+	}
+	missing := make([]string, 0)
+	for _, alert := range alerts {
+		if !s.watermarks[alert.AlertID] {
+			missing = append(missing, alert.AlertID)
+		}
+	}
+	return missing, nil
 }
 
 func reconcileAlert(id, status string) *persistence.Alert {
@@ -116,7 +137,7 @@ func TestRepairWritesOnlyMissingAndStaleNeverExtra(t *testing.T) {
 	if result.RepairedCount != 2 || len(target.writes) != 2 || len(store.applied) != 2 {
 		t.Fatalf("unexpected repair outcome: %+v writes=%v applied=%v", result, target.writes, store.applied)
 	}
-	if !result.VerificationPerformed || !result.RepairConverged || result.RemainingMissingCount != 0 || result.RemainingStaleCount != 0 || result.RemainingExtraCount != 1 {
+	if !result.VerificationPerformed || !result.WatermarksConverged || !result.RepairConverged || result.WatermarkMismatchCount != 0 || result.RemainingMissingCount != 0 || result.RemainingStaleCount != 0 || result.RemainingExtraCount != 1 {
 		t.Fatalf("repair did not produce a verified terminal receipt: %+v", result)
 	}
 	for _, id := range target.writes {
@@ -157,8 +178,22 @@ func TestReconcileDoesNotConvergeWhenWatermarkWriteFails(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if result.Status != "partial" || result.StopReason != "repair_errors_below_stop_threshold" || result.RepairConverged || result.RemainingMissingCount != 0 || result.ErrorCount != 1 {
+	if result.Status != "partial" || result.StopReason != "post_repair_watermark_mismatches_remain" || result.RepairConverged || result.WatermarksConverged || result.WatermarkMismatchCount != 1 || result.RemainingMissingCount != 0 || result.ErrorCount != 1 {
 		t.Fatalf("missing watermark was incorrectly reported as converged: %+v", result)
+	}
+}
+
+func TestReconcileRetriesMissingWatermarkAfterTargetAlreadyConverged(t *testing.T) {
+	alert := reconcileAlert("a", "new")
+	source := &reconcileReader{alerts: []*persistence.Alert{alert}}
+	target := &reconcileTarget{reconcileReader: reconcileReader{alerts: []*persistence.Alert{alert}}, version: "alerts-v2-write"}
+	store := &reconcileStore{}
+	result, err := newReconcilerTest(t, source, target, store, 2).Run(context.Background(), reconcileRequest("repair"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.RepairedCount != 0 || len(target.writes) != 0 || len(store.applied) != 1 || store.applied[0] != "a" || !result.WatermarksConverged || !result.RepairConverged {
+		t.Fatalf("converged target did not recover its missing watermark: result=%+v writes=%v applied=%v", result, target.writes, store.applied)
 	}
 }
 

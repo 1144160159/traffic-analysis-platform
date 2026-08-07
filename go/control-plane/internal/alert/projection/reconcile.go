@@ -27,6 +27,7 @@ type ReconcileStore interface {
 	StartProjectionReconcileRun(context.Context, persistence.ProjectionReconcileRun, int) error
 	CompleteProjectionReconcileRun(context.Context, string, persistence.ProjectionReconcileResult) error
 	RecordProjectionApplied(context.Context, *persistence.Alert, string) error
+	ListProjectionWatermarkMismatches(context.Context, []*persistence.Alert, string) ([]string, error)
 }
 
 type ReconcileConfig struct {
@@ -125,6 +126,7 @@ func (r *Reconciler) Run(ctx context.Context, request ReconcileRequest) (persist
 
 	if request.Mode == "repair" {
 		ids := append(append([]string{}, result.MissingIDs...), result.StaleIDs...)
+		writtenIDs := make(map[string]struct{}, len(ids))
 		interval := time.Second / time.Duration(r.config.RepairPerSecond)
 		for index, id := range ids {
 			if index > 0 && interval > 0 {
@@ -149,15 +151,7 @@ func (r *Reconciler) Run(ctx context.Context, request ReconcileRequest) (persist
 				}
 				continue
 			}
-			if err := r.store.RecordProjectionApplied(ctx, alert, request.Scope.TargetIndexVersion); err != nil {
-				result.ErrorCount++
-				if result.ErrorCount >= r.config.StopErrorCount {
-					result.Status, result.Partial, result.StopReason = "stopped", true, "watermark_error_threshold_reached"
-					break
-				}
-				continue
-			}
-			result.RepairedCount++
+			writtenIDs[id] = struct{}{}
 		}
 		if result.ErrorCount > 0 && result.Status == "completed" {
 			result.Status, result.Partial, result.StopReason = "partial", true, "repair_errors_below_stop_threshold"
@@ -192,9 +186,61 @@ func (r *Reconciler) Run(ctx context.Context, request ReconcileRequest) (persist
 				result.RemainingMissingCount = len(result.RemainingMissingIDs)
 				result.RemainingExtraCount = len(result.RemainingExtraIDs)
 				result.RemainingStaleCount = len(result.RemainingStaleIDs)
-				result.RepairConverged = result.RemainingMissingCount == 0 && result.RemainingStaleCount == 0 && result.ErrorCount == 0
+				remainingRepairable := make(map[string]struct{}, result.RemainingMissingCount+result.RemainingStaleCount)
+				for _, id := range result.RemainingMissingIDs {
+					remainingRepairable[id] = struct{}{}
+				}
+				for _, id := range result.RemainingStaleIDs {
+					remainingRepairable[id] = struct{}{}
+				}
+				watermarkAlerts := make([]*persistence.Alert, 0, len(sourceByID)-len(remainingRepairable))
+				for id, alert := range sourceByID {
+					if _, unresolved := remainingRepairable[id]; !unresolved {
+						watermarkAlerts = append(watermarkAlerts, alert)
+					}
+				}
+				sort.Slice(watermarkAlerts, func(i, j int) bool { return watermarkAlerts[i].AlertID < watermarkAlerts[j].AlertID })
+				watermarkMismatches, watermarkErr := r.store.ListProjectionWatermarkMismatches(ctx, watermarkAlerts, request.Scope.TargetIndexVersion)
+				if watermarkErr != nil {
+					result.ErrorCount++
+					result.Status, result.Partial, result.StopReason = "partial", true, "post_repair_watermark_read_failed"
+					_ = complete()
+					return result, watermarkErr
+				}
+				for _, id := range watermarkMismatches {
+					if err := r.store.RecordProjectionApplied(ctx, sourceByID[id], request.Scope.TargetIndexVersion); err != nil {
+						result.ErrorCount++
+						if result.ErrorCount >= r.config.StopErrorCount {
+							result.Status, result.Partial, result.StopReason = "stopped", true, "watermark_error_threshold_reached"
+							break
+						}
+					}
+				}
+				result.WatermarkMismatchIDs, watermarkErr = r.store.ListProjectionWatermarkMismatches(ctx, watermarkAlerts, request.Scope.TargetIndexVersion)
+				if watermarkErr != nil {
+					result.ErrorCount++
+					result.Status, result.Partial, result.StopReason = "partial", true, "post_repair_watermark_verify_failed"
+					_ = complete()
+					return result, watermarkErr
+				}
+				sort.Strings(result.WatermarkMismatchIDs)
+				result.WatermarkMismatchCount = len(result.WatermarkMismatchIDs)
+				result.WatermarksConverged = result.WatermarkMismatchCount == 0
+				for id := range writtenIDs {
+					if _, unresolved := remainingRepairable[id]; unresolved {
+						continue
+					}
+					if !containsSortedString(result.WatermarkMismatchIDs, id) {
+						result.RepairedCount++
+					}
+				}
+				result.RepairConverged = result.RemainingMissingCount == 0 && result.RemainingStaleCount == 0 && result.WatermarksConverged && result.ErrorCount == 0
 				if !result.RepairConverged && result.Status == "completed" {
-					result.Status, result.Partial, result.StopReason = "partial", true, "post_repair_differences_remain"
+					stopReason := "post_repair_differences_remain"
+					if result.WatermarkMismatchCount > 0 {
+						stopReason = "post_repair_watermark_mismatches_remain"
+					}
+					result.Status, result.Partial, result.StopReason = "partial", true, stopReason
 				}
 			}
 		}
@@ -203,6 +249,11 @@ func (r *Reconciler) Run(ctx context.Context, request ReconcileRequest) (persist
 		return result, err
 	}
 	return result, nil
+}
+
+func containsSortedString(values []string, target string) bool {
+	index := sort.SearchStrings(values, target)
+	return index < len(values) && values[index] == target
 }
 
 func projectionDiff(sourceByID, targetByID map[string]*persistence.Alert) (missing, extra, stale []string) {

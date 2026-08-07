@@ -26,8 +26,9 @@ func (s ephemeralProjectionSource) ListProjectionAlerts(context.Context, persist
 }
 
 type ephemeralReconcileStore struct {
-	applied []string
-	result  persistence.ProjectionReconcileResult
+	applied    []string
+	result     persistence.ProjectionReconcileResult
+	watermarks map[string]bool
 }
 
 func (*ephemeralReconcileStore) StartProjectionReconcileRun(context.Context, persistence.ProjectionReconcileRun, int) error {
@@ -41,7 +42,21 @@ func (s *ephemeralReconcileStore) CompleteProjectionReconcileRun(_ context.Conte
 
 func (s *ephemeralReconcileStore) RecordProjectionApplied(_ context.Context, alert *persistence.Alert, _ string) error {
 	s.applied = append(s.applied, alert.AlertID)
+	if s.watermarks == nil {
+		s.watermarks = make(map[string]bool)
+	}
+	s.watermarks[alert.AlertID] = true
 	return nil
+}
+
+func (s *ephemeralReconcileStore) ListProjectionWatermarkMismatches(_ context.Context, alerts []*persistence.Alert, _ string) ([]string, error) {
+	missing := make([]string, 0)
+	for _, alert := range alerts {
+		if !s.watermarks[alert.AlertID] {
+			missing = append(missing, alert.AlertID)
+		}
+	}
+	return missing, nil
 }
 
 // TestAlertProjectionRepairTerminalReceiptRealOpenSearch proves that the
@@ -128,7 +143,7 @@ func TestAlertProjectionRepairTerminalReceiptRealOpenSearch(t *testing.T) {
 	}
 	sort.Strings(store.applied)
 	if result.Status != "completed" || result.MissingCount != 1 || result.StaleCount != 1 || result.ExtraCount != 1 ||
-		result.RepairedCount != 2 || result.ErrorCount != 0 || !result.VerificationPerformed || !result.RepairConverged ||
+		result.RepairedCount != 2 || result.ErrorCount != 0 || !result.VerificationPerformed || !result.WatermarksConverged || !result.RepairConverged ||
 		result.RemainingMissingCount != 0 || result.RemainingStaleCount != 0 || result.RemainingExtraCount != 1 ||
 		len(result.RemainingExtraIDs) != 1 || result.RemainingExtraIDs[0] != "repair-extra" ||
 		strings.Join(store.applied, ",") != "repair-missing,repair-stale" || !store.result.RepairConverged {

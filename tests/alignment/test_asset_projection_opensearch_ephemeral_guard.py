@@ -46,6 +46,7 @@ class AssetProjectionOpenSearchEphemeralGuardTest(unittest.TestCase):
         source = (ROOT / "scripts/alignment/verify_asset_projection_opensearch_ephemeral.py").read_text(encoding="utf-8")
         self.assertIn("TestAlertProjectionRepairTerminalReceiptRealOpenSearch", source)
         self.assertIn('"projection_repair_terminal_receipt_verified": False', source)
+        self.assertIn('"projection_watermark_receipt_guard_verified": False', source)
 
     def test_empty_run_id_is_rejected(self) -> None:
         with self.assertRaisesRegex(ValueError, "run_id is required"):

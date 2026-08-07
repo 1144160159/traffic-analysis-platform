@@ -111,7 +111,8 @@ def main() -> int:
         "older_version_rejected": False,
         "strict_mapping_verified": False,
         "production_alert_writer_verified": False,
-		"projection_repair_terminal_receipt_verified": False,
+        "projection_repair_terminal_receipt_verified": False,
+        "projection_watermark_receipt_guard_verified": False,
         "loopback_only": True,
         "persistent_volume_attached": False,
         "shared_environment_touched": False,
@@ -243,6 +244,7 @@ def main() -> int:
         if reconcile_completed.returncode != 0:
             raise RuntimeError(f"alert projection reconcile integration exited {reconcile_completed.returncode}")
         result["projection_repair_terminal_receipt_verified"] = True
+        result["projection_watermark_receipt_guard_verified"] = True
         # The Go test also proves same-version replay and older external version
         # rejection against this exact ephemeral cluster.
         result["deterministic_document_id_verified"] = True

@@ -29,6 +29,7 @@ SOURCES = (
     "deployments/postgres/migrations/202608041100_alert_opensearch_projection_reconciliation_v1.sql",
     "go/control-plane/internal/alert/persistence/dual_writer.go",
     "go/control-plane/internal/alert/persistence/projection_debt.go",
+    "go/control-plane/internal/alert/persistence/projection_debt_integration_test.go",
     "go/control-plane/internal/alert/persistence/opensearch.go",
     "go/control-plane/internal/alert/persistence/opensearch_external_version_test.go",
     "go/control-plane/internal/alert/repository/clickhouse.go",

@@ -54,9 +54,12 @@ type ProjectionReconcileResult struct {
 	RemainingStaleCount                                int
 	RemainingMissingIDs, RemainingExtraIDs             []string
 	RemainingStaleIDs                                  []string
+	WatermarkMismatchCount                             int
+	WatermarkMismatchIDs                               []string
 	StopReason                                         string
 	Partial                                            bool
-	VerificationPerformed, RepairConverged             bool
+	VerificationPerformed, WatermarksConverged         bool
+	RepairConverged                                    bool
 }
 
 func NewProjectionDebtStore(db *sql.DB) *ProjectionDebtStore {
@@ -298,9 +301,77 @@ func projectionReconcileManifest(result ProjectionReconcileResult) ([]byte, erro
 			"missing_count": result.RemainingMissingCount, "extra_count": result.RemainingExtraCount,
 			"stale_count": result.RemainingStaleCount, "missing_ids": result.RemainingMissingIDs,
 			"extra_ids": result.RemainingExtraIDs, "stale_ids": result.RemainingStaleIDs,
-			"repair_converged": result.RepairConverged,
+			"watermark_mismatch_count": result.WatermarkMismatchCount,
+			"watermark_mismatch_ids":   result.WatermarkMismatchIDs,
+			"watermarks_converged":     result.WatermarksConverged, "repair_converged": result.RepairConverged,
 		},
 	})
+}
+
+// ListProjectionWatermarkMismatches compares a bounded authoritative image
+// with PostgreSQL receipts in one query. A later repair run can therefore
+// recover a watermark whose first write failed after OpenSearch acknowledged
+// and exposed the document.
+func (s *ProjectionDebtStore) ListProjectionWatermarkMismatches(ctx context.Context, alerts []*Alert, targetVersion string) ([]string, error) {
+	if s == nil || s.db == nil {
+		return nil, errors.New("alert projection debt store is unavailable")
+	}
+	if len(alerts) > 100000 {
+		return nil, errors.New("projection watermark comparison exceeds bounded scope")
+	}
+	type expectedWatermark struct {
+		TenantID, AlertID string
+		SourceVersion     int64
+		SourceSHA256      string
+	}
+	expected := make([]expectedWatermark, 0, len(alerts))
+	for _, alert := range alerts {
+		if alert == nil || strings.TrimSpace(alert.TenantID) == "" || strings.TrimSpace(alert.AlertID) == "" {
+			return nil, errors.New("projection watermark comparison requires tenant_id and alert_id")
+		}
+		hash, err := AlertProjectionSHA256(alert)
+		if err != nil {
+			return nil, err
+		}
+		expected = append(expected, expectedWatermark{alert.TenantID, alert.AlertID, AlertSourceVersion(alert), hash})
+	}
+	payload, err := json.Marshal(expected)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := s.db.QueryContext(ctx, `
+		WITH expected AS (
+		  SELECT * FROM jsonb_to_recordset($1::jsonb) AS item(
+		    "TenantID" text,"AlertID" text,"SourceVersion" bigint,"SourceSHA256" text
+		  )
+		)
+		SELECT expected."AlertID"
+		FROM expected
+		LEFT JOIN alert_opensearch_projection_watermarks watermark
+		  ON watermark.tenant_id=expected."TenantID"
+		 AND watermark.alert_id=expected."AlertID"
+		 AND watermark.target_index_version=$2
+		WHERE watermark.alert_id IS NULL
+		   OR watermark.source_version<>expected."SourceVersion"
+		   OR watermark.source_sha256<>expected."SourceSHA256"
+		ORDER BY expected."AlertID"
+	`, payload, normalizeProjectionTargetVersion(targetVersion))
+	if err != nil {
+		return nil, fmt.Errorf("compare alert projection watermarks: %w", err)
+	}
+	defer rows.Close()
+	mismatches := make([]string, 0)
+	for rows.Next() {
+		var alertID string
+		if err := rows.Scan(&alertID); err != nil {
+			return nil, fmt.Errorf("scan alert projection watermark mismatch: %w", err)
+		}
+		mismatches = append(mismatches, alertID)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate alert projection watermark mismatches: %w", err)
+	}
+	return mismatches, nil
 }
 
 func (s *ProjectionDebtStore) RecordProjectionApplied(ctx context.Context, alert *Alert, targetVersion string) error {

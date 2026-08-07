@@ -581,6 +581,11 @@ alignment-capture-opensearch-search-pagination: ## Capture repository and read-o
 alignment-verify-opensearch-projection-reconciliation: ## Verify T-OS-004 durable debt, external versions and bounded rebuild/reconcile guards
 	python scripts/alignment/verify_opensearch_projection_reconciliation.py
 
+.PHONY: alignment-verify-alert-projection-watermark-postgres-g1
+alignment-verify-alert-projection-watermark-postgres-g1: ## Verify T-OS-004 watermark receipts in owned PostgreSQL (RUN_ID required)
+	test -n "$(RUN_ID)"
+	python scripts/alignment/verify_alert_projection_watermark_postgres_ephemeral.py --run-id "$(RUN_ID)" $(if $(OUTPUT),--output "$(OUTPUT)",)
+
 .PHONY: alignment-capture-opensearch-projection-reconciliation
 alignment-capture-opensearch-projection-reconciliation: ## Capture repository and read-only pre-canary T-OS-004 evidence (RUN_ID and G0_MANIFEST required)
 	@test -n "$(RUN_ID)" || (echo "RUN_ID is required" && exit 1)
