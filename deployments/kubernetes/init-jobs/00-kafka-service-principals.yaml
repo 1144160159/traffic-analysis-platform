@@ -9,13 +9,13 @@ data:
     #!/usr/bin/env bash
     set -euo pipefail
     set +x
-    
+
     KAFKA_HOME=${KAFKA_HOME:-/opt/kafka}
     CONFIG_BIN="$KAFKA_HOME/bin/kafka-configs.sh"
     BROKER_API_BIN="$KAFKA_HOME/bin/kafka-broker-api-versions.sh"
     BOOTSTRAP=${KAFKA_BOOTSTRAP:-kafka-bootstrap.middleware.svc:9092}
     CLIENT_CONFIG=/tmp/kafka-admin.properties
-    
+
     safe_java_property() {
       local value="$1"
       if ! [[ "$value" =~ ^[A-Za-z0-9._@%+=:/-]+$ ]]; then
@@ -23,7 +23,7 @@ data:
       fi
       printf '%s' "$value"
     }
-    
+
     admin_username="$(safe_java_property "$KAFKA_ADMIN_USERNAME")"
     admin_password="$(safe_java_property "$KAFKA_ADMIN_PASSWORD")"
     truststore_password="$(safe_java_property "$KAFKA_TLS_TRUSTSTORE_PASSWORD")"
@@ -36,7 +36,7 @@ data:
     ssl.truststore.password=$truststore_password
     EOF
     chmod 0600 "$CLIENT_CONFIG"
-    
+
     for attempt in $(seq 1 60); do
       if "$BROKER_API_BIN" --bootstrap-server "$BOOTSTRAP" --command-config "$CLIENT_CONFIG" >/dev/null 2>&1; then
         break
@@ -47,7 +47,7 @@ data:
       fi
       sleep 5
     done
-    
+
     for entry in \
           "traffic-alert-service:KAFKA_ALERT_SERVICE_PASSWORD" \
           "traffic-asset-service:KAFKA_ASSET_SERVICE_PASSWORD" \

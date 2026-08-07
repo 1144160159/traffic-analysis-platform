@@ -253,6 +253,7 @@ normalize_generated_code() {
     local file
     while IFS= read -r -d '' file; do
         sed -i 's/[[:space:]]\+$//' "$file"
+        perl -0pi -e 's/\s+\z/\n/' "$file"
     done < <(
         find "${RUST_OUT}" "${GO_OUT}" "${JAVA_OUT}/com/traffic/proto" \
             -type f \( -name "*.rs" -o -name "*.go" -o -name "*.java" \) -print0

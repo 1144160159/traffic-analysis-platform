@@ -10,16 +10,16 @@ data:
   apply.sh: |
     #!/usr/bin/env bash
     set -euo pipefail
-    
+
     BOOTSTRAP=${1:?bootstrap server required}
     CLIENT_CONFIG=${2:?client properties required}
     ACL_BIN=${3:?kafka-acls.sh path required}
-    
+
     apply_acl() {
       "$ACL_BIN" --bootstrap-server "$BOOTSTRAP" --command-config "$CLIENT_CONFIG" \
         --add --resource-pattern-type literal "$@"
     }
-    
+
     # Generated from contracts/events/kafka-acl-catalog.v1.json. Do not edit.
     apply_acl --allow-principal User:traffic-alert-service --operation IdempotentWrite --cluster
     apply_acl --allow-principal User:traffic-alert-service --operation Describe --group alert-service

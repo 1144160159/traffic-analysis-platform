@@ -44,4 +44,3 @@ ORDER BY occurred_at LIMIT 100;
 出现跨租户、业务/history/audit/outbox 任一缺失、pending 持续增长、processing 租约不回收、dead 新增或 Kafka/schema 不兼容时立即停止扩大。回滚应用镜像不会删除新表或字段；旧路径不得恢复为请求内直接发 Kafka。保留 outbox，由兼容 worker 恢复发布。任何人工重放必须保留原 `event_id`，禁止复制成新业务事件。
 
 仓库侧合同和故障边界测试通过后，本项仅可置为 `IMPLEMENTING`。生产 migration、候选 Kafka、真实消费者幂等、故障、性能、回滚和 T+0/T+1/T+3/T+7 观察证据齐全后，才能申请后续门禁。
-
