@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-07T17:10:21Z",
+  "updated_at": "2026-08-07T17:36:37Z",
   "latest_g0": {
-    "run_id": "20260808-remediation-g0-full-v191",
-    "manifest": "doc/02_acceptance/runs/20260808-remediation-g0-full-v191/manifest.json",
-    "manifest_sha256": "87847aa944976ea12ae1c8fd912f0043009bbf8e3484c4db9c2c5e50843007ea",
-    "candidate_source_sha256": "e52a62a67b8320daa4843ec733f55f2682ec3738ef1ffa99ecf84c4fb55a468f",
+    "run_id": "20260808-remediation-g0-full-v192",
+    "manifest": "doc/02_acceptance/runs/20260808-remediation-g0-full-v192/manifest.json",
+    "manifest_sha256": "a8b58e31a45096b7fc26ebb33fcb89df594f58bb642e24996f39de13841cb959",
+    "candidate_source_sha256": "05154e296ba5e76a27a7e41ca018498db01463785f44c4e87b42be4d6f32a548",
     "status": "PASS",
     "scope": [
       "alignment-test",
@@ -440,14 +440,14 @@
   },
   "latest_alert_projection_kafka_five_store_g1": {
     "canonical_ids": ["F-ALERT-001", "F-SEARCH-001", "T-CH-004", "T-KAFKA-003", "T-OBS-001", "T-OS-002", "T-OS-004", "T-PG-002", "T-REDIS-001"],
-    "run_id": "20260808-remediation-alert-projection-kafka-five-store-g1-v4",
-    "manifest": "doc/02_acceptance/runs/20260808-remediation-alert-projection-kafka-five-store-g1-v4/manifest.json",
-    "manifest_sha256": "5b2f665014b4ec2171af868c6ea76c7144d28302f9115cd56d320f3565fef068",
-    "result": "doc/02_acceptance/runs/20260808-remediation-alert-projection-kafka-five-store-g1-v4/result.json",
-    "result_sha256": "91adf535ac325cf628230d49837789ecca99c4216ca8d95c434036ecc5ee85c1",
-    "g0_run_id": "20260808-remediation-g0-full-v191",
-    "g0_manifest_sha256": "87847aa944976ea12ae1c8fd912f0043009bbf8e3484c4db9c2c5e50843007ea",
-    "candidate_source_sha256": "e52a62a67b8320daa4843ec733f55f2682ec3738ef1ffa99ecf84c4fb55a468f",
+    "run_id": "20260808-remediation-alert-projection-kafka-five-store-g1-v5",
+    "manifest": "doc/02_acceptance/runs/20260808-remediation-alert-projection-kafka-five-store-g1-v5/manifest.json",
+    "manifest_sha256": "4dec7e09c58f0b199a6336b0b5c2ff02d7b9fa89036a6314fdb894d6412db8d6",
+    "result": "doc/02_acceptance/runs/20260808-remediation-alert-projection-kafka-five-store-g1-v5/result.json",
+    "result_sha256": "d4f2423e434de82af266b846a989ffe630456c321aed26d8c248cd071c9eb054",
+    "g0_run_id": "20260808-remediation-g0-full-v192",
+    "g0_manifest_sha256": "a8b58e31a45096b7fc26ebb33fcb89df594f58bb642e24996f39de13841cb959",
+    "candidate_source_sha256": "05154e296ba5e76a27a7e41ca018498db01463785f44c4e87b42be4d6f32a548",
     "repository_status": "PASS",
     "scoped_evidence_status": "PASS_OWNED_ALERT_PROJECTION_KAFKA_REDIS_CLICKHOUSE_POSTGRES_OPENSEARCH_RECEIPT",
     "production_alert_consumer_verified": true,
@@ -467,6 +467,8 @@
     "source_version_hash_stable_across_restart_verified": true,
     "event_identity_collision_rejected_verified": true,
     "source_time_dedup_bucket_verified": true,
+    "source_time_compatibility_unit_verified": true,
+    "legacy_envelope_broker_path_verified": false,
     "out_of_order_distinct_events_verified": true,
     "redis_first_last_monotonic_verified": true,
     "delayed_exact_replay_snapshot_verified": true,
@@ -492,7 +494,7 @@
       "G7": "OPEN",
       "G8": "BLOCKED_EXTERNAL"
     },
-    "note": "One owned fixed-digest run crosses the production alert consumer, real Redpanda, real Redis dedup, production ClickHouse and OpenSearch writers, and an atomic PostgreSQL applied receipt. After the PostgreSQL receipt failure and same-group restart, a newer distinct event followed by an older distinct event converged as four independent projections; Redis retained min first_seen, max last_seen and count 4. Delayed exact replay of the newer event kept its original tuple and SHA, left count 4, and advanced the broker to offset 5 with zero lag. Production deployment, multi-partition and multi-replica rebalance, the 883172-document gap and release gates remain open."
+    "note": "One owned fixed-digest run crosses the production alert consumer, real Redpanda, real Redis dedup, production ClickHouse and OpenSearch writers, and an atomic PostgreSQL applied receipt. After the PostgreSQL receipt failure and same-group restart, a newer distinct event followed by an older distinct event converged as four independent projections; Redis retained min first_seen, max last_seen and count 4. Delayed exact replay of the newer event kept its original tuple and SHA, left count 4, and advanced the broker to offset 5 with zero lag. Repository tests also bind source time to header.event_ts, legacy behavior.ts, then batch.created_at and fail closed if all are absent; the legacy envelope broker path is not yet proven. Production deployment, multi-partition and multi-replica rebalance, the 883172-document gap and release gates remain open."
   },
   "latest_kafka_dlq_commit_barrier": {
     "control_id": "T-KAFKA-003",
