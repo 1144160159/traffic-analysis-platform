@@ -12,6 +12,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from candidate_snapshot import build_snapshot
+
 
 ROOT = Path(__file__).resolve().parents[2]
 CONTRACT = ROOT / "contracts/opensearch/projection-shadow-backfill.v1.json"
@@ -65,6 +67,7 @@ def build_review_package(
     g0_manifest_sha256: str,
     contract: dict[str, Any],
     repository_head: str,
+    repository_content_sha256: str,
     now: datetime,
     immutable_tool_image_digest: str | None = None,
 ) -> dict[str, Any]:
@@ -127,11 +130,11 @@ def build_review_package(
         errors.append("candidate manifest is not a passing G0 result")
     if before.get("head") != after.get("head") or before.get("status") != [] or after.get("status") != []:
         errors.append("G0 candidate was not stable and clean")
-    if before.get("head") != repository_head:
-        errors.append("G0 candidate head does not match the current repository head")
     content_sha = source.get("content_sha256")
     if not isinstance(content_sha, str) or not SHA256_RE.fullmatch(content_sha):
         errors.append("G0 candidate content SHA-256 is missing")
+    elif content_sha != repository_content_sha256:
+        errors.append("G0 candidate content SHA-256 does not match the current repository source snapshot")
     if not SHA256_RE.fullmatch(g0_manifest_sha256) or not SHA256_RE.fullmatch(shadow_file_sha256):
         errors.append("input file SHA-256 binding is invalid")
     if errors:
@@ -172,6 +175,7 @@ def build_review_package(
             "g0_run_id": g0.get("run_id"),
             "g0_candidate_head": before.get("head"),
             "g0_candidate_content_sha256": content_sha,
+            "rendering_repository_head": repository_head,
             "g0_manifest_sha256": g0_manifest_sha256,
             "shadow_file_sha256": shadow_file_sha256,
             "shadow_binding_sha256": expected_binding_sha,
@@ -228,6 +232,7 @@ def main() -> int:
         shadow=load_json(shadow_path), shadow_file_sha256=file_sha256(shadow_path),
         g0=load_json(g0_path), g0_manifest_sha256=file_sha256(g0_path),
         contract=load_json(CONTRACT), repository_head=current_head(ROOT),
+        repository_content_sha256=str(build_snapshot()["content_sha256"]),
         now=datetime.now(timezone.utc), immutable_tool_image_digest=args.immutable_tool_image_digest,
     )
     output.parent.mkdir(parents=True, exist_ok=True)

@@ -65,7 +65,7 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
         ),
         RENDERER: (
             '"execution_authorized": False', '"production_mutations": []',
-            '"status": "PENDING"', '"shell": None', "G0 candidate head does not match",
+            '"status": "PENDING"', '"shell": None', "G0 candidate content SHA-256 does not match",
         ),
         G1_RUNNER: (
             '"postgres_dependency_present": False', '"production_mutations": []',
@@ -92,6 +92,7 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
         "RepairRequiresExactObservedTargetBinding",
         "TestAlertProjectionShadowRealClickHouseAndOpenSearch", "test_runner_invokes_production_readers_and_checks_unchanged_hashes",
         "test_rejects_expired_tampered_or_mutating_shadow", "test_rejects_candidate_drift_or_dirty_g0",
+        "test_allows_evidence_only_head_advance_when_source_content_is_unchanged",
     ):
         if token not in test_text:
             errors.append(f"negative test guard missing: {token}")

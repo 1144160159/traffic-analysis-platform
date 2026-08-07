@@ -95,7 +95,8 @@ class AlertProjectionShadowBackfillTests(unittest.TestCase):
         return build_review_package(
             shadow=shadow_value or shadow(self.now), shadow_file_sha256=FILE_SHA,
             g0=g0_value or g0(), g0_manifest_sha256="2" * 64,
-            contract=contract(), repository_head=HEAD, now=self.now, **kwargs,
+            contract=contract(), repository_head=HEAD, repository_content_sha256=CONTENT_SHA,
+            now=self.now, **kwargs,
         )
 
     def test_valid_shadow_renders_review_only_package(self) -> None:
@@ -146,6 +147,24 @@ class AlertProjectionShadowBackfillTests(unittest.TestCase):
         dirty["candidate_after"]["status"] = [" M unsafe"]
         with self.assertRaises(ValueError):
             self.render(g0_value=dirty)
+        with self.assertRaises(ValueError):
+            build_review_package(
+                shadow=shadow(self.now), shadow_file_sha256=FILE_SHA,
+                g0=g0(), g0_manifest_sha256="2" * 64, contract=contract(),
+                repository_head="e" * 40, repository_content_sha256="f" * 64,
+                now=self.now,
+            )
+
+    def test_allows_evidence_only_head_advance_when_source_content_is_unchanged(self) -> None:
+        package = build_review_package(
+            shadow=shadow(self.now), shadow_file_sha256=FILE_SHA,
+            g0=g0(), g0_manifest_sha256="2" * 64, contract=contract(),
+            repository_head="e" * 40, repository_content_sha256=CONTENT_SHA,
+            now=self.now,
+        )
+        self.assertEqual(package["bindings"]["g0_candidate_head"], HEAD)
+        self.assertEqual(package["bindings"]["rendering_repository_head"], "e" * 40)
+        self.assertFalse(package["execution_authorized"])
 
     def test_rejects_alias_ambiguity_and_count_identity_mismatch(self) -> None:
         ambiguous = shadow(self.now)
