@@ -231,6 +231,20 @@ def assess_vulnerability_scan(
     }
 
 
+def run_govulncheck(
+    command: list[str], *, cwd: Path, maximum_attempts: int = 3,
+) -> tuple[subprocess.CompletedProcess[str], int]:
+    if maximum_attempts < 1:
+        raise ValueError("maximum_attempts must be positive")
+    completed: subprocess.CompletedProcess[str] | None = None
+    for attempt in range(1, maximum_attempts + 1):
+        completed = run(command, cwd=cwd)
+        if completed.returncode in (0, 3):
+            return completed, attempt
+    assert completed is not None
+    return completed, maximum_attempts
+
+
 def scanner_metadata(version_output: str, *, now: datetime, maximum_db_age_seconds: int) -> dict[str, Any]:
     scanner_match = SCANNER_RE.search(version_output)
     db_match = DB_UPDATED_RE.search(version_output)
@@ -343,12 +357,18 @@ def main() -> int:
             if metadata.returncode:
                 raise SystemExit(f"go version -m failed for {name}: {metadata.stdout.strip()}")
             binary_metadata[name] = parse_go_version_modules(metadata.stdout)
-            text_scan = run([str(govulncheck), "-mode=binary", str(binary)], cwd=temp)
-            sarif_scan = run([str(govulncheck), "-mode=binary", "-format=sarif", str(binary)], cwd=temp)
+            text_scan, text_attempts = run_govulncheck(
+                [str(govulncheck), "-mode=binary", str(binary)], cwd=temp,
+            )
+            sarif_scan, sarif_attempts = run_govulncheck(
+                [str(govulncheck), "-mode=binary", "-format=sarif", str(binary)], cwd=temp,
+            )
             assessment = assess_vulnerability_scan(
                 text_returncode=text_scan.returncode, text_output=text_scan.stdout,
                 sarif_returncode=sarif_scan.returncode, sarif_output=sarif_scan.stdout,
             )
+            assessment["text_attempts"] = text_attempts
+            assessment["sarif_attempts"] = sarif_attempts
             scan_results[name] = assessment
             blockers.extend(f"{name}: {item}" for item in assessment["errors"])
             if assessment["nonreachable_module_vulnerabilities"] and args.nonreachable_adjudication is None:

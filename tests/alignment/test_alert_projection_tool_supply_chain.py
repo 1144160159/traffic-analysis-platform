@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import sys
+import subprocess
 import unittest
 from datetime import datetime, timezone
 from pathlib import Path
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -16,6 +18,7 @@ from capture_alert_projection_tool_supply_chain import (  # noqa: E402
     build_cyclonedx,
     parse_go_version_modules,
     scanner_metadata,
+    run_govulncheck,
     validate_image_binding,
 )
 
@@ -66,6 +69,22 @@ class AlertProjectionToolSupplyChainTests(unittest.TestCase):
         )
         self.assertEqual(result["status"], "FAIL")
         self.assertIn("text scan reports reachable vulnerabilities", " ".join(result["errors"]))
+
+    def test_transport_failure_is_retried_but_vulnerability_result_is_terminal(self) -> None:
+        transient = subprocess.CompletedProcess(["govulncheck"], 1, "unexpected EOF")
+        clean = subprocess.CompletedProcess(["govulncheck"], 0, "No vulnerabilities found.")
+        with patch("capture_alert_projection_tool_supply_chain.run", side_effect=[transient, clean]) as runner:
+            completed, attempts = run_govulncheck(["govulncheck"], cwd=ROOT)
+        self.assertEqual(completed.returncode, 0)
+        self.assertEqual(attempts, 2)
+        self.assertEqual(runner.call_count, 2)
+
+        vulnerable = subprocess.CompletedProcess(["govulncheck"], 3, "affected")
+        with patch("capture_alert_projection_tool_supply_chain.run", return_value=vulnerable) as runner:
+            completed, attempts = run_govulncheck(["govulncheck"], cwd=ROOT)
+        self.assertEqual(completed.returncode, 3)
+        self.assertEqual(attempts, 1)
+        self.assertEqual(runner.call_count, 1)
 
     def test_clean_scan_records_nonreachable_module_finding(self) -> None:
         result = assess_vulnerability_scan(
