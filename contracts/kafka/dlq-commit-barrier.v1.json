@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-kafka-dlq-commit-barrier-v1",
+  "remediation_id": "T-KAFKA-003",
+  "status": "verifying",
+  "production_applied": false,
+  "coverage_status": "PARTIAL_SHARED_GO_CONSUMER",
+  "guarantees": [
+    "batch source offsets are committed synchronously and only a broker acknowledgement advances processed metrics",
+    "a handler or durable DLQ failure returns to the caller with source offsets retained",
+    "DLQ security initialization fails closed without a plaintext writer fallback",
+    "one DLQ batch serialization failure rejects the whole batch",
+    "a configured canonical DLQ target is used by both single and batch delivery",
+    "asynchronous single-message commits retain pending offsets after a failed broker acknowledgement"
+  ],
+  "source_assertions": [
+    {
+      "source": "go/control-plane/internal/common/kafka/consumer.go",
+      "required_tokens": [
+        "func (c *Consumer) handleAndCommitBatch",
+        "if err := c.commitMessages(messages); err != nil {",
+        "return commitErr",
+        "batch handler failed and DLQ durability barrier failed",
+        "pendingMessages = pendingMessages[:0]",
+        "commit pending offsets"
+      ],
+      "forbidden_tokens": [
+        "doneChan := make(chan error, 1)",
+        "<-doneChan",
+        "req.doneChan <- nil"
+      ],
+      "ordered_tokens": [
+        ["c.dlqProducer.SendBatch(ctx, failedMessages)", "if err := c.commitMessages(messages); err != nil {"],
+        ["if err := c.commitMessages(messages); err != nil {", "atomic.AddInt64(&c.metrics.MessagesProcessed, int64(len(batch)))"]
+      ]
+    },
+    {
+      "source": "go/control-plane/internal/common/kafka/dlq.go",
+      "required_tokens": [
+        "initErr     error",
+        "initialize Kafka DLQ security",
+        "if p.initErr != nil {",
+        "marshal DLQ batch message at index",
+        "dlqTopic := resolveDLQTopic(p.config, msg.Topic)"
+      ],
+      "forbidden_tokens": [],
+      "ordered_tokens": [
+        ["payload, marshalErr := p.marshalMessage(dlqMsg)", "p.writer.WriteMessages(ctx, kafkaMessages...)"]
+      ]
+    },
+    {
+      "source": "go/control-plane/internal/common/kafka/consumer_batch_commit_test.go",
+      "required_tokens": [
+        "TestHandleAndCommitBatchDoesNotReportProcessedBeforeBrokerAck",
+        "TestHandleAndCommitBatchRetainsOffsetsWhenDLQBarrierFails",
+        "TestBackgroundCommitterRetainsOffsetsUntilBrokerAck"
+      ],
+      "forbidden_tokens": [],
+      "ordered_tokens": []
+    },
+    {
+      "source": "go/control-plane/internal/common/kafka/dlq_test.go",
+      "required_tokens": [
+        "TestDLQProducerSecurityInitializationFailsClosed",
+        "TestDLQBatchMarshalFailureRejectsWholeBatch"
+      ],
+      "forbidden_tokens": [],
+      "ordered_tokens": []
+    }
+  ],
+  "gate": {
+    "repository": [
+      "python scripts/alignment/verify_kafka_dlq_commit_barrier.py",
+      "go test -race ./internal/common/kafka"
+    ],
+    "remaining": [
+      "real broker poison-message and DLQ acknowledgement failure injection",
+      "source offset DLQ record PostgreSQL materialization and audit reconciliation by tenant trace event and revision",
+      "consumer restart rebalance lag and duplicate convergence evidence",
+      "approved canary rollback T+0 T+1 T+3 T+7 observation and independent sign-off",
+      "inventory and migrate non-Go and dedicated consumer paths"
+    ]
+  }
+}
