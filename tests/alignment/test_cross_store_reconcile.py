@@ -48,12 +48,13 @@ def base_payload() -> dict:
             source("opensearch", [record("alert-a"), record("alert-b")]),
             source("nebulagraph", [record("alert-a"), record("alert-b")]),
             source("minio", [record("alert-a"), record("alert-b")]),
+            source("audit", [record("alert-a"), record("alert-b")]),
         ],
     }
 
 
 class CrossStoreReconcileTest(unittest.TestCase):
-    def test_equal_six_store_manifest_passes_with_stable_hash(self) -> None:
+    def test_equal_seven_source_manifest_including_audit_passes_with_stable_hash(self) -> None:
         payload = base_payload()
         first = reconcile(payload)
         second = reconcile(copy.deepcopy(payload))
@@ -61,7 +62,7 @@ class CrossStoreReconcileTest(unittest.TestCase):
         self.assertFalse(first["partial"])
         self.assertEqual(first["report_sha256"], second["report_sha256"])
         self.assertEqual(0, sum(first["counts"].values()))
-        self.assertEqual(sorted(first["source_watermarks"]), ["clickhouse", "kafka", "minio", "nebulagraph", "opensearch", "postgresql"])
+        self.assertEqual(sorted(first["source_watermarks"]), ["audit", "clickhouse", "kafka", "minio", "nebulagraph", "opensearch", "postgresql"])
 
     def test_all_required_difference_classes_are_explicit_and_plan_only(self) -> None:
         payload = base_payload()

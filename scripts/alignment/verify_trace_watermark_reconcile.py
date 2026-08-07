@@ -92,6 +92,9 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
         errors.append("end-to-end trace stage inventory is incomplete")
 
     normalized = contract.get("normalized_reconcile_record", {})
+    required_sources = {"postgresql", "kafka", "clickhouse", "opensearch", "nebulagraph", "minio", "audit"}
+    if set(normalized.get("sources", [])) != required_sources:
+        errors.append("normalized reconciliation source inventory must include audit and all six data transports/stores")
     if normalized.get("classifications") != ["missing", "extra", "stale_version", "hash_mismatch", "unparseable"]:
         errors.append("required reconciliation classifications drifted")
     runtime = contract.get("runtime_guards", {})
@@ -160,10 +163,10 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
     _require_tokens(errors, root, TOOL, (
         "DEFAULT_MAX_RECORDS = 10_000", "FORBIDDEN_SCOPE_VALUES", '"missing"', '"extra"',
         '"stale_version"', '"hash_mismatch"', '"unparseable"', '"trace_mismatch"',
-        '"automatic_execution": False', "quarantine_review_no_delete", "report_sha256",
+        '"automatic_execution": False', "quarantine_review_no_delete", "report_sha256", '"audit"',
     ))
     _require_tokens(errors, root, CAPTURE, (
-        "build_snapshot", '"production_mutations": []', '"six_store_same_trace_manifest": None',
+        "build_snapshot", '"production_mutations": []', '"seven_source_same_trace_manifest": None',
         '"G8": "BLOCKED"', "refusing to overwrite immutable evidence directory",
     ))
     tests_text = "\n".join((root / path).read_text(encoding="utf-8") for path in TESTS)
