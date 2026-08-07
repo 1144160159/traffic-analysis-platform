@@ -1,0 +1,103 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: clickhouse-ha-alert-rules-v1
+  namespace: observability
+  labels:
+    traffic.openai.com/contract: clickhouse-ha-security-backup-v1
+data:
+  clickhouse-ha.rules.yaml: |
+    groups:
+    - name: traffic-clickhouse-ha
+      interval: 30s
+      rules:
+      - alert: ClickHouseMetricsEndpointMissing
+        expr: up{job="clickhouse"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          remediation_id: T-CH-006
+        annotations:
+          summary: ClickHouse metrics endpoint is unavailable
+          runbook: doc/07_alignment/runbooks/T-CH-006-keeper-replication-backup-security.md
+      - alert: ClickHouseKeeperQuorumAtRisk
+        expr: sum(up{job="clickhouse-keeper"}) < 2
+        for: 1m
+        labels:
+          severity: critical
+          remediation_id: T-CH-006
+        annotations:
+          summary: Fewer than two ClickHouse Keeper members are reachable
+          runbook: doc/07_alignment/runbooks/T-CH-006-keeper-replication-backup-security.md
+      - alert: ClickHouseReplicaReadonly
+        expr: ClickHouseMetrics_ReadonlyReplica > 0
+        for: 1m
+        labels:
+          severity: critical
+          remediation_id: T-CH-006
+        annotations:
+          summary: A ClickHouse replica is readonly
+          runbook: doc/07_alignment/runbooks/T-CH-006-keeper-replication-backup-security.md
+      - alert: ClickHouseReplicaQueueHigh
+        expr: ClickHouseAsyncMetrics_ReplicasMaxQueueSize > 100
+        for: 5m
+        labels:
+          severity: warning
+          remediation_id: T-CH-006
+        annotations:
+          summary: ClickHouse replica queue exceeds 100 entries
+          runbook: doc/07_alignment/runbooks/T-CH-006-keeper-replication-backup-security.md
+      - alert: ClickHouseReplicaDelayHigh
+        expr: ClickHouseAsyncMetrics_ReplicasMaxAbsoluteDelay > 300
+        for: 5m
+        labels:
+          severity: critical
+          remediation_id: T-CH-006
+        annotations:
+          summary: ClickHouse replica absolute delay exceeds five minutes
+          runbook: doc/07_alignment/runbooks/T-CH-006-keeper-replication-backup-security.md
+      - alert: ClickHousePartCountHigh
+        expr: ClickHouseAsyncMetrics_MaxPartCountForPartition > 500
+        for: 10m
+        labels:
+          severity: warning
+          remediation_id: T-CH-006
+        annotations:
+          summary: ClickHouse part count for a partition exceeds 500
+          runbook: doc/07_alignment/runbooks/T-CH-006-keeper-replication-backup-security.md
+      - alert: ClickHouseMutationLongRunning
+        expr: ClickHouseMetrics_PartMutation > 0
+        for: 30m
+        labels:
+          severity: warning
+          remediation_id: T-CH-006
+        annotations:
+          summary: ClickHouse mutation activity has remained non-zero for 30 minutes
+          runbook: doc/07_alignment/runbooks/T-CH-006-keeper-replication-backup-security.md
+      - alert: ClickHouseMergeSaturation
+        expr: ClickHouseMetrics_Merge > 12
+        for: 15m
+        labels:
+          severity: warning
+          remediation_id: T-CH-006
+        annotations:
+          summary: ClickHouse concurrent merges exceed the candidate operating budget
+          runbook: doc/07_alignment/runbooks/T-CH-006-keeper-replication-backup-security.md
+      - alert: ClickHouseDiskFreeLow
+        expr: ClickHouseAsyncMetrics_DiskAvailable_default / ClickHouseAsyncMetrics_DiskTotal_default < 0.15
+        for: 5m
+        labels:
+          severity: critical
+          remediation_id: T-CH-006
+        annotations:
+          summary: ClickHouse default disk has less than 15 percent free space
+          runbook: doc/07_alignment/runbooks/T-CH-006-keeper-replication-backup-security.md
+      - alert: ClickHouseDistributedQueueStuck
+        expr: ClickHouseMetrics_DistributedFilesToInsert > 0
+        for: 10m
+        labels:
+          severity: critical
+          remediation_id: T-CH-006
+        annotations:
+          summary: ClickHouse Distributed send queue has pending files for ten minutes
+          runbook: doc/07_alignment/runbooks/T-CH-006-keeper-replication-backup-security.md

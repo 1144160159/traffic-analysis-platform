@@ -131,7 +131,7 @@ private static final long serialVersionUID = 0L;
    * <code>repeated .traffic.v1.InterfaceStatus interfaces = 10 [json_name = "interfaces"];</code>
    */
   @java.lang.Override
-  public java.util.List<? extends com.traffic.proto.traffic.v1.InterfaceStatusOrBuilder> 
+  public java.util.List<? extends com.traffic.proto.traffic.v1.InterfaceStatusOrBuilder>
       getInterfacesOrBuilderList() {
     return interfaces_;
   }
@@ -603,7 +603,7 @@ private static final long serialVersionUID = 0L;
             interfacesBuilder_ = null;
             interfaces_ = other.interfaces_;
             bitField0_ = (bitField0_ & ~0x00000080);
-            interfacesBuilder_ = 
+            interfacesBuilder_ =
               com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                  getInterfacesFieldBuilder() : null;
           } else {
@@ -1121,7 +1121,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.InterfaceStatus interfaces = 10 [json_name = "interfaces"];</code>
      */
-    public java.util.List<? extends com.traffic.proto.traffic.v1.InterfaceStatusOrBuilder> 
+    public java.util.List<? extends com.traffic.proto.traffic.v1.InterfaceStatusOrBuilder>
          getInterfacesOrBuilderList() {
       if (interfacesBuilder_ != null) {
         return interfacesBuilder_.getMessageOrBuilderList();
@@ -1147,12 +1147,12 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.InterfaceStatus interfaces = 10 [json_name = "interfaces"];</code>
      */
-    public java.util.List<com.traffic.proto.traffic.v1.InterfaceStatus.Builder> 
+    public java.util.List<com.traffic.proto.traffic.v1.InterfaceStatus.Builder>
          getInterfacesBuilderList() {
       return getInterfacesFieldBuilder().getBuilderList();
     }
     private com.google.protobuf.RepeatedFieldBuilderV3<
-        com.traffic.proto.traffic.v1.InterfaceStatus, com.traffic.proto.traffic.v1.InterfaceStatus.Builder, com.traffic.proto.traffic.v1.InterfaceStatusOrBuilder> 
+        com.traffic.proto.traffic.v1.InterfaceStatus, com.traffic.proto.traffic.v1.InterfaceStatus.Builder, com.traffic.proto.traffic.v1.InterfaceStatusOrBuilder>
         getInterfacesFieldBuilder() {
       if (interfacesBuilder_ == null) {
         interfacesBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<

@@ -424,16 +424,24 @@ impl Umem {
 
     pub fn addr_to_frame(&self, addr: usize) -> usize {
         let base_addr = self.inner.addr as usize;
-
-        if addr < base_addr {
+        // AF_XDP descriptors carry offsets relative to the registered UMEM,
+        // while a few diagnostic callers use an absolute mapped address.
+        // Accept both forms explicitly; treating a ring offset as a pointer
+        // collapses every descriptor to frame zero and leaks the real frames.
+        let offset = if addr < self.inner.size {
+            addr
+        } else if addr >= base_addr && addr - base_addr < self.inner.size {
+            addr - base_addr
+        } else {
             warn!(
-                "Address 0x{:x} is below UMEM base 0x{:x}, using frame 0",
-                addr, base_addr
+                "Address 0x{:x} is outside UMEM [0x{:x}, 0x{:x}) and offset range [0, {}), clamping to last frame",
+                addr,
+                base_addr,
+                base_addr.saturating_add(self.inner.size),
+                self.inner.size
             );
-            return 0;
-        }
-
-        let offset = addr - base_addr;
+            return self.inner.frame_count - 1;
+        };
 
         if offset >= self.inner.size {
             warn!(
@@ -590,5 +598,39 @@ impl Umem {
 
     pub fn weak_count(&self) -> usize {
         Arc::weak_count(&self.inner)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Umem, UmemConfig};
+
+    fn test_umem() -> Umem {
+        Umem::new(&UmemConfig {
+            frame_size: 4096,
+            frame_count: 4,
+            fill_queue_size: 4,
+            comp_queue_size: 4,
+            headroom: 0,
+            use_huge_pages: false,
+        })
+        .expect("test UMEM")
+    }
+
+    #[test]
+    fn xdp_ring_offsets_map_to_their_actual_frames() {
+        let umem = test_umem();
+        for frame in 0..umem.frame_count() {
+            assert_eq!(frame, umem.addr_to_frame(umem.frame_addr_raw(frame)));
+        }
+    }
+
+    #[test]
+    fn absolute_umem_addresses_map_to_their_actual_frames() {
+        let umem = test_umem();
+        let base = umem.addr() as usize;
+        for frame in 0..umem.frame_count() {
+            assert_eq!(frame, umem.addr_to_frame(base + umem.frame_addr_raw(frame)));
+        }
     }
 }

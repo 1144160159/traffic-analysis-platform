@@ -42,6 +42,12 @@ data:
     
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     logger = logging.getLogger(__name__)
+
+    def required_env(name):
+        value = os.getenv(name, '').strip()
+        if not value:
+            raise RuntimeError(f'{name} is required; model artifact storage fails closed')
+        return value
     
     def connect_clickhouse():
         return Client(
@@ -201,21 +207,50 @@ data:
     from minio import Minio
     import requests
     import logging
+    import ssl
+    import urllib3
     
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
     
     def upload_to_minio(model_path, version):
+        endpoint = required_env('MINIO_ENDPOINT')
+        access_key = required_env('MINIO_ACCESS_KEY')
+        secret_key = required_env('MINIO_SECRET_KEY')
+        bucket = required_env('MINIO_BUCKET')
+        secure_value = required_env('MINIO_SECURE').lower()
+        if secure_value not in {'true', 'false'}:
+            raise RuntimeError('MINIO_SECURE must be explicitly true or false')
+        if '://' in endpoint:
+            raise RuntimeError('MINIO_ENDPOINT must be host:port; select TLS with MINIO_SECURE')
+        if access_key == 'minioadmin' or secret_key == 'minioadmin':
+            raise RuntimeError('default MinIO administrator credentials are prohibited')
+        secure = secure_value == 'true'
+        ca_file = os.getenv('MINIO_CA_FILE', '').strip()
+        if secure and not ca_file:
+            raise RuntimeError('MINIO_CA_FILE is required when MINIO_SECURE=true')
+        if not secure and ca_file:
+            raise RuntimeError('MINIO_CA_FILE cannot be set when MINIO_SECURE=false')
+        if ca_file and not os.path.isfile(ca_file):
+            raise RuntimeError('MINIO_CA_FILE must reference a readable CA certificate file')
+        http_client = None
+        if secure:
+            try:
+                ssl.create_default_context(cafile=ca_file)
+            except (OSError, ssl.SSLError) as exc:
+                raise RuntimeError(f'MINIO_CA_FILE is not a valid CA bundle: {exc}') from exc
+            http_client = urllib3.PoolManager(cert_reqs='CERT_REQUIRED', ca_certs=ca_file)
         client = Minio(
-            os.getenv('MINIO_ENDPOINT', 'minio:9000'),
-            access_key=os.getenv('MINIO_ACCESS_KEY'),
-            secret_key=os.getenv('MINIO_SECRET_KEY'),
-            secure=False
+            endpoint,
+            access_key=access_key,
+            secret_key=secret_key,
+            secure=secure,
+            http_client=http_client
         )
-        
-        bucket = os.getenv('MINIO_BUCKET', 'traffic-models')
         if not client.bucket_exists(bucket):
-            client.make_bucket(bucket)
+            raise RuntimeError(
+                f'MinIO bucket {bucket!r} is absent; create it through the governed bootstrap path'
+            )
         
         object_name = f"models/{version}/model.json"
         client.fput_object(bucket, object_name, model_path)

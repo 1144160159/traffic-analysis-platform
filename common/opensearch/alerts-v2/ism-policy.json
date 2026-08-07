@@ -1,0 +1,35 @@
+{
+  "policy": {
+    "description": "Versioned alerts v2 rollover and 30-day retention candidate",
+    "schema_version": 2,
+    "default_state": "hot",
+    "states": [
+      {
+        "name": "hot",
+        "actions": [
+          {
+            "rollover": {
+              "min_size": "30gb",
+              "min_index_age": "1d"
+            }
+          }
+        ],
+        "transitions": [
+          {
+            "state_name": "delete",
+            "conditions": {"min_index_age": "30d"}
+          }
+        ]
+      },
+      {
+        "name": "delete",
+        "actions": [{"delete": {}}],
+        "transitions": []
+      }
+    ],
+    "ism_template": {
+      "index_patterns": ["alerts-v2-*"],
+      "priority": 300
+    }
+  }
+}

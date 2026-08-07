@@ -56,7 +56,8 @@ public class PrivilegeEscalationDetector extends KeyedProcessFunction<String, Us
                 AnomalyEvent anomaly = new AnomalyEvent(
                     event.getTenantId(), event.getUserId(), event.getUsername(),
                     "PRIVILEGE_ESCALATION", "critical", 0.90f,
-                    String.format("Privilege escalation: %s role within 1h from %s", roleName, event.getSourceIp()));
+                    String.format("Privilege escalation: %s role within 1h from %s", roleName, event.getSourceIp()),
+                    event.getTimestamp(), event.getEventId(), roleName);
                 anomaly.sourceIp1 = event.getSourceIp();
                 anomaly.detailJson = String.format("{\"role\":\"%s\",\"source_ip\":\"%s\"}", roleName, event.getSourceIp());
                 out.collect(anomaly);

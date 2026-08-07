@@ -11,7 +11,7 @@ public interface RecordMacIpBindingRequestOrBuilder extends
   /**
    * <code>repeated .traffic.v1.MacIpBinding bindings = 1 [json_name = "bindings"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.MacIpBinding> 
+  java.util.List<com.traffic.proto.traffic.v1.MacIpBinding>
       getBindingsList();
   /**
    * <code>repeated .traffic.v1.MacIpBinding bindings = 1 [json_name = "bindings"];</code>
@@ -24,7 +24,7 @@ public interface RecordMacIpBindingRequestOrBuilder extends
   /**
    * <code>repeated .traffic.v1.MacIpBinding bindings = 1 [json_name = "bindings"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.MacIpBindingOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.MacIpBindingOrBuilder>
       getBindingsOrBuilderList();
   /**
    * <code>repeated .traffic.v1.MacIpBinding bindings = 1 [json_name = "bindings"];</code>

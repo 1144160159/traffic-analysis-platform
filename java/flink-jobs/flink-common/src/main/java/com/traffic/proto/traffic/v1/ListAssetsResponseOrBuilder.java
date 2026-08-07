@@ -11,7 +11,7 @@ public interface ListAssetsResponseOrBuilder extends
   /**
    * <code>repeated .traffic.v1.Asset assets = 1 [json_name = "assets"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.Asset> 
+  java.util.List<com.traffic.proto.traffic.v1.Asset>
       getAssetsList();
   /**
    * <code>repeated .traffic.v1.Asset assets = 1 [json_name = "assets"];</code>
@@ -24,7 +24,7 @@ public interface ListAssetsResponseOrBuilder extends
   /**
    * <code>repeated .traffic.v1.Asset assets = 1 [json_name = "assets"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.AssetOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.AssetOrBuilder>
       getAssetsOrBuilderList();
   /**
    * <code>repeated .traffic.v1.Asset assets = 1 [json_name = "assets"];</code>

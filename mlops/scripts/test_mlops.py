@@ -13,6 +13,7 @@ import sys
 import json
 import tempfile
 import unittest
+from unittest.mock import MagicMock, patch
 import numpy as np
 import pandas as pd
 
@@ -42,6 +43,100 @@ try:
 except ImportError as e:
     EVAL_OK = False
     EVAL_ERR = str(e)
+
+try:
+    from register_model import load_minio_config, require_model_bucket
+    REGISTER_OK = True
+except ImportError as e:
+    REGISTER_OK = False
+    REGISTER_ERR = str(e)
+
+
+class TestModelArtifactStorageConfig(unittest.TestCase):
+    """Model artifacts must use explicit, non-admin MinIO configuration."""
+
+    @unittest.skipIf(not REGISTER_OK, f"Dependencies missing: {REGISTER_ERR if not REGISTER_OK else ''}")
+    def test_missing_credentials_fail_closed(self):
+        with patch.dict(os.environ, {
+            'MINIO_ENDPOINT': 'minio.minio.svc:9000',
+            'MINIO_BUCKET': 'traffic-models',
+            'MINIO_SECURE': 'false',
+        }, clear=True):
+            with self.assertRaisesRegex(RuntimeError, 'MINIO_ACCESS_KEY is required'):
+                load_minio_config()
+
+    @unittest.skipIf(not REGISTER_OK, f"Dependencies missing: {REGISTER_ERR if not REGISTER_OK else ''}")
+    def test_default_administrator_credentials_are_rejected(self):
+        with patch.dict(os.environ, {
+            'MINIO_ENDPOINT': 'minio.minio.svc:9000',
+            'MINIO_ACCESS_KEY': 'minioadmin',
+            'MINIO_SECRET_KEY': 'not-default',
+            'MINIO_BUCKET': 'traffic-models',
+            'MINIO_SECURE': 'false',
+        }, clear=True):
+            with self.assertRaisesRegex(RuntimeError, 'administrator credentials are prohibited'):
+                load_minio_config()
+
+    @unittest.skipIf(not REGISTER_OK, f"Dependencies missing: {REGISTER_ERR if not REGISTER_OK else ''}")
+    def test_secure_mode_must_be_explicit_boolean(self):
+        with patch.dict(os.environ, {
+            'MINIO_ENDPOINT': 'minio.minio.svc:9000',
+            'MINIO_ACCESS_KEY': 'model-writer',
+            'MINIO_SECRET_KEY': 'secret-value',
+            'MINIO_BUCKET': 'traffic-models',
+            'MINIO_SECURE': 'maybe',
+        }, clear=True):
+            with self.assertRaisesRegex(RuntimeError, 'explicitly true or false'):
+                load_minio_config()
+
+    @unittest.skipIf(not REGISTER_OK, f"Dependencies missing: {REGISTER_ERR if not REGISTER_OK else ''}")
+    def test_explicit_scoped_configuration_is_preserved(self):
+        with tempfile.NamedTemporaryFile() as ca_file:
+            with patch.dict(os.environ, {
+                'MINIO_ENDPOINT': 'minio.minio.svc:9000',
+                'MINIO_ACCESS_KEY': 'model-writer',
+                'MINIO_SECRET_KEY': 'secret-value',
+                'MINIO_BUCKET': 'traffic-models',
+                'MINIO_SECURE': 'true',
+                'MINIO_CA_FILE': ca_file.name,
+            }, clear=True):
+                config = load_minio_config()
+        self.assertEqual(config.endpoint, 'minio.minio.svc:9000')
+        self.assertEqual(config.bucket, 'traffic-models')
+        self.assertTrue(config.secure)
+
+    @unittest.skipIf(not REGISTER_OK, f"Dependencies missing: {REGISTER_ERR if not REGISTER_OK else ''}")
+    def test_tls_requires_private_ca(self):
+        with patch.dict(os.environ, {
+            'MINIO_ENDPOINT': 'minio.minio.svc:9000',
+            'MINIO_ACCESS_KEY': 'model-writer',
+            'MINIO_SECRET_KEY': 'secret-value',
+            'MINIO_BUCKET': 'traffic-models',
+            'MINIO_SECURE': 'true',
+        }, clear=True):
+            with self.assertRaisesRegex(RuntimeError, 'MINIO_CA_FILE is required'):
+                load_minio_config()
+
+    @unittest.skipIf(not REGISTER_OK, f"Dependencies missing: {REGISTER_ERR if not REGISTER_OK else ''}")
+    def test_plaintext_rejects_tls_material(self):
+        with patch.dict(os.environ, {
+            'MINIO_ENDPOINT': 'minio.minio.svc:9000',
+            'MINIO_ACCESS_KEY': 'model-writer',
+            'MINIO_SECRET_KEY': 'secret-value',
+            'MINIO_BUCKET': 'traffic-models',
+            'MINIO_SECURE': 'false',
+            'MINIO_CA_FILE': '/tmp/ca.crt',
+        }, clear=True):
+            with self.assertRaisesRegex(RuntimeError, 'cannot be set'):
+                load_minio_config()
+
+    @unittest.skipIf(not REGISTER_OK, f"Dependencies missing: {REGISTER_ERR if not REGISTER_OK else ''}")
+    def test_application_never_creates_missing_bucket(self):
+        client = MagicMock()
+        client.bucket_exists.return_value = False
+        with self.assertRaisesRegex(RuntimeError, 'governed bootstrap path'):
+            require_model_bucket(client, 'traffic-models')
+        client.make_bucket.assert_not_called()
 
 
 class TestDataExtraction(unittest.TestCase):

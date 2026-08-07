@@ -54,7 +54,7 @@ private static final long serialVersionUID = 0L;
    * <code>repeated .traffic.v1.MacIpBinding bindings = 1 [json_name = "bindings"];</code>
    */
   @java.lang.Override
-  public java.util.List<? extends com.traffic.proto.traffic.v1.MacIpBindingOrBuilder> 
+  public java.util.List<? extends com.traffic.proto.traffic.v1.MacIpBindingOrBuilder>
       getBindingsOrBuilderList() {
     return bindings_;
   }
@@ -391,7 +391,7 @@ private static final long serialVersionUID = 0L;
             bindingsBuilder_ = null;
             bindings_ = other.bindings_;
             bitField0_ = (bitField0_ & ~0x00000001);
-            bindingsBuilder_ = 
+            bindingsBuilder_ =
               com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                  getBindingsFieldBuilder() : null;
           } else {
@@ -650,7 +650,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.MacIpBinding bindings = 1 [json_name = "bindings"];</code>
      */
-    public java.util.List<? extends com.traffic.proto.traffic.v1.MacIpBindingOrBuilder> 
+    public java.util.List<? extends com.traffic.proto.traffic.v1.MacIpBindingOrBuilder>
          getBindingsOrBuilderList() {
       if (bindingsBuilder_ != null) {
         return bindingsBuilder_.getMessageOrBuilderList();
@@ -676,12 +676,12 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.MacIpBinding bindings = 1 [json_name = "bindings"];</code>
      */
-    public java.util.List<com.traffic.proto.traffic.v1.MacIpBinding.Builder> 
+    public java.util.List<com.traffic.proto.traffic.v1.MacIpBinding.Builder>
          getBindingsBuilderList() {
       return getBindingsFieldBuilder().getBuilderList();
     }
     private com.google.protobuf.RepeatedFieldBuilderV3<
-        com.traffic.proto.traffic.v1.MacIpBinding, com.traffic.proto.traffic.v1.MacIpBinding.Builder, com.traffic.proto.traffic.v1.MacIpBindingOrBuilder> 
+        com.traffic.proto.traffic.v1.MacIpBinding, com.traffic.proto.traffic.v1.MacIpBinding.Builder, com.traffic.proto.traffic.v1.MacIpBindingOrBuilder>
         getBindingsFieldBuilder() {
       if (bindingsBuilder_ == null) {
         bindingsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<

@@ -1,5 +1,6 @@
 package com.traffic.flink.feature.processor;
 
+import com.traffic.flink.common.DeterministicId;
 import com.traffic.flink.feature.calculator.FeatureCalculator;
 import com.traffic.flink.feature.config.FeatureSetConfig;
 import com.traffic.flink.feature.config.TenantConfig;
@@ -202,12 +203,22 @@ public class FeatureProcessFunctionV3 extends BroadcastProcessFunction<SessionEv
      */
     private boolean shouldSkip(SessionEvent session, TenantConfig tenantConfig) {
         // 1. 全局采样降级
-        if (enableSampling && Math.random() > defaultSamplingRate) {
+        if (enableSampling && !DeterministicId.sample(
+                defaultSamplingRate,
+                "flink-feature-global-sampling/v1",
+                session.getHeader().getTenantId(),
+                session.getHeader().getEventId(),
+                session.getSessionId())) {
             return true;
         }
 
         // 2. 租户级采样
-        if (tenantConfig.isEnableDegradation() && Math.random() > tenantConfig.getSamplingRate()) {
+        if (tenantConfig.isEnableDegradation() && !DeterministicId.sample(
+                tenantConfig.getSamplingRate(),
+                "flink-feature-tenant-sampling/v1",
+                session.getHeader().getTenantId(),
+                session.getHeader().getEventId(),
+                session.getSessionId())) {
             return true;
         }
 

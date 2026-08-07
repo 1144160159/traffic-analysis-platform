@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "_meta": {
+    "contract": "T-OS-002",
+    "schema_version": 2,
+    "owner": "opensearch-data-owner"
+  },
+  "template": {
+    "settings": {
+      "number_of_shards": 3,
+      "number_of_replicas": 1,
+      "refresh_interval": "5s",
+      "plugins.index_state_management.rollover_alias": "alerts-v2-write"
+    }
+  }
+}

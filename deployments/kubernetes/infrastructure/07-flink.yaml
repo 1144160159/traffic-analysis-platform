@@ -8,7 +8,7 @@ spec:
     whenDeleted: Retain
     whenScaled: Retain
   podManagementPolicy: OrderedReady
-  replicas: 1
+  replicas: 2
   revisionHistoryLimit: 10
   selector:
     matchLabels:
@@ -21,6 +21,16 @@ spec:
         app: flink
         component: jobmanager
     spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: flink
+                  component: jobmanager
+              topologyKey: kubernetes.io/hostname
       containers:
       - args:
         - jobmanager
@@ -36,13 +46,28 @@ spec:
         - name: MINIO_ACCESS_KEY
           valueFrom:
             secretKeyRef:
-              name: traffic-credentials
-              key: MINIO_ACCESS_KEY
+              name: minio-flink-state-model-credentials
+              key: accesskey
         - name: MINIO_SECRET_KEY
           valueFrom:
             secretKeyRef:
+              name: minio-flink-state-model-credentials
+              key: secretkey
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: minio-flink-state-model-credentials
+              key: accesskey
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: minio-flink-state-model-credentials
+              key: secretkey
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
               name: traffic-credentials
-              key: MINIO_SECRET_KEY
+              key: PG_PASSWORD
         - name: KAFKA_SECURITY_PROTOCOL
           value: SASL_SSL
         - name: KAFKA_SASL_MECHANISM
@@ -91,19 +116,17 @@ spec:
 
             s3.path.style.access: true
 
-            s3.access-key: $(MINIO_ACCESS_KEY)
-
-            s3.secret-key: $(MINIO_SECRET_KEY)
-
             fs.allowed-fallback-filesystems: s3
 
             high-availability.type: kubernetes
 
             high-availability.cluster-id: flink-traffic
 
-            high-availability.storageDir: file:///home/k8s-data/flink/ha
+            high-availability.storageDir: s3://flink-checkpoints/ha/flink-traffic
 
-            job-result-store.storage-path: file:///home/k8s-data/flink/job-result-store
+            job-result-store.storage-path: s3://flink-checkpoints/job-result-store/flink-traffic
+
+            job-result-store.delete-on-commit: false
 
             kubernetes.cluster-id: flink-traffic
 
@@ -230,13 +253,28 @@ spec:
         - name: MINIO_ACCESS_KEY
           valueFrom:
             secretKeyRef:
-              name: traffic-credentials
-              key: MINIO_ACCESS_KEY
+              name: minio-flink-state-model-credentials
+              key: accesskey
         - name: MINIO_SECRET_KEY
           valueFrom:
             secretKeyRef:
+              name: minio-flink-state-model-credentials
+              key: secretkey
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: minio-flink-state-model-credentials
+              key: accesskey
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: minio-flink-state-model-credentials
+              key: secretkey
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
               name: traffic-credentials
-              key: MINIO_SECRET_KEY
+              key: PG_PASSWORD
         - name: KAFKA_SECURITY_PROTOCOL
           value: SASL_SSL
         - name: KAFKA_SASL_MECHANISM
@@ -285,17 +323,15 @@ spec:
 
             s3.path.style.access: true
 
-            s3.access-key: $(MINIO_ACCESS_KEY)
-
-            s3.secret-key: $(MINIO_SECRET_KEY)
-
             high-availability.type: kubernetes
 
             high-availability.cluster-id: flink-traffic
 
-            high-availability.storageDir: file:///home/k8s-data/flink/ha
+            high-availability.storageDir: s3://flink-checkpoints/ha/flink-traffic
 
-            job-result-store.storage-path: file:///home/k8s-data/flink/job-result-store
+            job-result-store.storage-path: s3://flink-checkpoints/job-result-store/flink-traffic
+
+            job-result-store.delete-on-commit: false
 
             kubernetes.cluster-id: flink-traffic
 

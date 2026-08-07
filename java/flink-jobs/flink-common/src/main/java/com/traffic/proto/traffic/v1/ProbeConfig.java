@@ -56,7 +56,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       configVersion_ = s;
@@ -72,7 +72,7 @@ private static final long serialVersionUID = 0L;
       getConfigVersionBytes() {
     java.lang.Object ref = configVersion_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       configVersion_ = b;
@@ -106,7 +106,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       bpfFilter_ = s;
@@ -122,7 +122,7 @@ private static final long serialVersionUID = 0L;
       getBpfFilterBytes() {
     java.lang.Object ref = bpfFilter_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       bpfFilter_ = b;
@@ -178,7 +178,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       featureSetVersion_ = s;
@@ -194,7 +194,7 @@ private static final long serialVersionUID = 0L;
       getFeatureSetVersionBytes() {
     java.lang.Object ref = featureSetVersion_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       featureSetVersion_ = b;
@@ -836,7 +836,7 @@ private static final long serialVersionUID = 0L;
         getConfigVersionBytes() {
       java.lang.Object ref = configVersion_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         configVersion_ = b;
@@ -940,7 +940,7 @@ private static final long serialVersionUID = 0L;
         getBpfFilterBytes() {
       java.lang.Object ref = bpfFilter_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         bpfFilter_ = b;
@@ -1108,7 +1108,7 @@ private static final long serialVersionUID = 0L;
         getFeatureSetVersionBytes() {
       java.lang.Object ref = featureSetVersion_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         featureSetVersion_ = b;
@@ -1263,7 +1263,7 @@ private static final long serialVersionUID = 0L;
      * <code>.traffic.v1.NetworkInterfaceConfig nic_config = 10 [json_name = "nicConfig"];</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
-        com.traffic.proto.traffic.v1.NetworkInterfaceConfig, com.traffic.proto.traffic.v1.NetworkInterfaceConfig.Builder, com.traffic.proto.traffic.v1.NetworkInterfaceConfigOrBuilder> 
+        com.traffic.proto.traffic.v1.NetworkInterfaceConfig, com.traffic.proto.traffic.v1.NetworkInterfaceConfig.Builder, com.traffic.proto.traffic.v1.NetworkInterfaceConfigOrBuilder>
         getNicConfigFieldBuilder() {
       if (nicConfigBuilder_ == null) {
         nicConfigBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<

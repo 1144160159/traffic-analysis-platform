@@ -334,7 +334,7 @@ spec:
             feedback_label String, feedback_count UInt32,
             first_seen Int64, last_seen Int64, count Int32,
             model_version String, rule_version String, state_version UInt64,
-            event_id String, kafka_ts Int64, flink_out_ts Int64, created_at Int64, updated_at Int64
+            event_id String, trace_id String, kafka_ts Int64, flink_out_ts Int64, created_at Int64, updated_at Int64
           )
           ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/alerts', '{replica}')
           PARTITION BY toYYYYMMDD(toDateTime(last_seen / 1000))
@@ -427,6 +427,68 @@ spec:
           CREATE TABLE IF NOT EXISTS traffic.campaigns
           AS traffic.campaigns_local
           ENGINE = Distributed(traffic_cluster, traffic, campaigns_local, rand());
+          "
+
+          echo "Creating campaign projection V2 shadow..."
+          $CH "
+          CREATE TABLE IF NOT EXISTS traffic.campaign_projection_events_v2_local (
+            projection_id FixedString(64), event_id UUID, tenant_id String,
+            stream LowCardinality(String), projection_key String, projection_version UInt64,
+            campaign_id String, relation_id String, alert_id String,
+            event_type LowCardinality(String), schema_version UInt16, trace_id String,
+            received_at DateTime64(3, 'UTC'), payload String CODEC(ZSTD(3)),
+            projection_sha256 FixedString(64),
+            projected_at DateTime64(3, 'UTC') DEFAULT now64(3)
+          )
+          ENGINE = ReplicatedReplacingMergeTree(
+            '/clickhouse/tables/{shard}/campaign_projection_events_v2_local',
+            '{replica}',
+            projected_at
+          )
+          PARTITION BY toYYYYMM(received_at)
+          ORDER BY (tenant_id, projection_key, projection_version, event_id)
+          TTL toDateTime(received_at) + INTERVAL 180 DAY
+          SETTINGS index_granularity = 8192;
+
+          CREATE TABLE IF NOT EXISTS traffic.campaign_projection_events_v2
+          AS traffic.campaign_projection_events_v2_local
+          ENGINE = Distributed(
+            traffic_cluster,
+            traffic,
+            campaign_projection_events_v2_local,
+            cityHash64(tenant_id, projection_key)
+          );
+          "
+
+          echo "Creating user anomaly V2 projection..."
+          $CH "
+          CREATE TABLE IF NOT EXISTS traffic.user_anomalies_v2_local (
+            anomaly_id String, tenant_id String, user_id String, username String,
+            detector_type LowCardinality(String), severity LowCardinality(String), score Float32,
+            description String, detail_json String CODEC(ZSTD(3)),
+            source_ip1 String, source_ip2 String,
+            detected_at DateTime64(3, 'UTC'), event_version UInt64,
+            replay_id String DEFAULT '',
+            projected_at DateTime64(3, 'UTC') DEFAULT now64(3)
+          )
+          ENGINE = ReplicatedReplacingMergeTree(
+            '/clickhouse/tables/{shard}/user_anomalies_v2_local',
+            '{replica}',
+            event_version
+          )
+          PARTITION BY toYYYYMM(detected_at)
+          ORDER BY (tenant_id, anomaly_id)
+          TTL toDateTime(detected_at) + INTERVAL 180 DAY
+          SETTINGS index_granularity = 8192;
+
+          CREATE TABLE IF NOT EXISTS traffic.user_anomalies_v2
+          AS traffic.user_anomalies_v2_local
+          ENGINE = Distributed(
+            traffic_cluster,
+            traffic,
+            user_anomalies_v2_local,
+            cityHash64(tenant_id, anomaly_id)
+          );
           "
 
           # =========================

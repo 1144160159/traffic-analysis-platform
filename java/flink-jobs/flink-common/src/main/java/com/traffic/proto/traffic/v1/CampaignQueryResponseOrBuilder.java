@@ -11,7 +11,7 @@ public interface CampaignQueryResponseOrBuilder extends
   /**
    * <code>repeated .traffic.v1.Campaign campaigns = 1 [json_name = "campaigns"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.Campaign> 
+  java.util.List<com.traffic.proto.traffic.v1.Campaign>
       getCampaignsList();
   /**
    * <code>repeated .traffic.v1.Campaign campaigns = 1 [json_name = "campaigns"];</code>
@@ -24,7 +24,7 @@ public interface CampaignQueryResponseOrBuilder extends
   /**
    * <code>repeated .traffic.v1.Campaign campaigns = 1 [json_name = "campaigns"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.CampaignOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.CampaignOrBuilder>
       getCampaignsOrBuilderList();
   /**
    * <code>repeated .traffic.v1.Campaign campaigns = 1 [json_name = "campaigns"];</code>

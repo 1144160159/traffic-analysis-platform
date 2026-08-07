@@ -11,7 +11,7 @@ public interface DetectionBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.DetectionBehavior behaviors = 1 [json_name = "behaviors"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.DetectionBehavior> 
+  java.util.List<com.traffic.proto.traffic.v1.DetectionBehavior>
       getBehaviorsList();
   /**
    * <code>repeated .traffic.v1.DetectionBehavior behaviors = 1 [json_name = "behaviors"];</code>
@@ -24,7 +24,7 @@ public interface DetectionBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.DetectionBehavior behaviors = 1 [json_name = "behaviors"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.DetectionBehaviorOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.DetectionBehaviorOrBuilder>
       getBehaviorsOrBuilderList();
   /**
    * <code>repeated .traffic.v1.DetectionBehavior behaviors = 1 [json_name = "behaviors"];</code>
@@ -35,7 +35,7 @@ public interface DetectionBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.DetectionBusiness businesses = 2 [json_name = "businesses"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.DetectionBusiness> 
+  java.util.List<com.traffic.proto.traffic.v1.DetectionBusiness>
       getBusinessesList();
   /**
    * <code>repeated .traffic.v1.DetectionBusiness businesses = 2 [json_name = "businesses"];</code>
@@ -48,7 +48,7 @@ public interface DetectionBatchOrBuilder extends
   /**
    * <code>repeated .traffic.v1.DetectionBusiness businesses = 2 [json_name = "businesses"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.DetectionBusinessOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.DetectionBusinessOrBuilder>
       getBusinessesOrBuilderList();
   /**
    * <code>repeated .traffic.v1.DetectionBusiness businesses = 2 [json_name = "businesses"];</code>

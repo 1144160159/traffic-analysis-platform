@@ -4,6 +4,7 @@
 
 package com.traffic.flink.cep.select;
 
+import com.traffic.flink.common.DeterministicId;
 import com.traffic.flink.cep.model.CampaignType;
 import com.traffic.proto.traffic.v1.Alert;
 import com.traffic.proto.traffic.v1.Campaign;
@@ -114,11 +115,10 @@ public class LateralMovementSelector extends PatternProcessFunction<Alert, Campa
             tenantId = "unknown";
         }
 
-        // 生成 Campaign ID
-        String campaignId = generateCampaignId(tenantId, tsStart);
-
-        // 生成 Event ID
-        String eventId = UUID.randomUUID().toString();
+        String eventId = DeterministicId.uuidFromSorted(
+                "flink-cep-campaign/v1", alertIds,
+                tenantId, CampaignType.LATERAL_MOVEMENT.getCode(), tsStart, tsEnd);
+        String campaignId = generateCampaignId(tenantId, tsStart, eventId);
         long now = System.currentTimeMillis();
 
         // 构建 EventHeader（Alert 没有 header 字段，使用默认值）
@@ -274,11 +274,11 @@ public class LateralMovementSelector extends PatternProcessFunction<Alert, Campa
     /**
      * 生成 Campaign ID
      */
-    private String generateCampaignId(String tenantId, long tsStart) {
+    private String generateCampaignId(String tenantId, long tsStart, String eventId) {
         return String.format("campaign-lateral-%s-%d-%s", 
                 tenantId, 
                 tsStart, 
-                UUID.randomUUID().toString().substring(0, 8));
+                eventId.substring(0, 8));
     }
 
     /**

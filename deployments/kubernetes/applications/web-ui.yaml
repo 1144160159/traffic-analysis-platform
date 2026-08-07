@@ -16,8 +16,9 @@ metadata:
   name: web-ui
   namespace: traffic-analysis
   annotations:
-    kubernetes.io/change-cause: "Topic panel r892 locks APT and encrypted-tunnel analysis geometry within each browser viewport"
-    traffic.analysis/source-revision: "5a657cecd0616a8e8d514847e35c66cdf19c3eaa0a4bda134fa254eb34b1ac61"
+    kubernetes.io/change-cause: "F-DASHBOARD-001 truthful audit and compliance deficit metrics on the unified snapshot"
+    traffic.analysis/source-sha256: "56a48b6ac667b9b6eaa8cc2107de7a881d3982b4e48f20314a1cc4c09e4eaa5d"
+    traffic.analysis/image-manifest-digest: "sha256:416fbee917aec634b319b22a20d1f69bed0dbe210c16626a253b1b5cba33f74e"
 spec:
   replicas: 1
   selector: {matchLabels: {app: web-ui}}
@@ -25,16 +26,19 @@ spec:
     metadata:
       labels: {app: web-ui}
       annotations:
-        traffic.analysis/build-id: "topic-panel-r892"
-        traffic.analysis/release: "topic-panel-r892"
-        traffic.analysis/source-digest: "5a657cecd0616a8e8d514847e35c66cdf19c3eaa0a4bda134fa254eb34b1ac61"
-        traffic.analysis/image-digest: "sha256:b6b820a96a31ea4fbe37ca5d4795d9a703aaf71efe6e2473d06246fa8e9e0980"
-        traffic.analysis/image-id: "sha256:fd9a69a8605614fe9dad9c9a630f4691839fdc90f93c84b1814ba8357d2d1904"
+        traffic.analysis/build-id: "remediation-ui-56a48b6ac667"
+        traffic.analysis/release: "frontend-remediation-20260805"
+        traffic.analysis/source-sha256: "56a48b6ac667b9b6eaa8cc2107de7a881d3982b4e48f20314a1cc4c09e4eaa5d"
+        traffic.analysis/image-manifest-digest: "sha256:416fbee917aec634b319b22a20d1f69bed0dbe210c16626a253b1b5cba33f74e"
+        traffic.analysis/image-id: "sha256:9391e229b521ece4fc7e826cdfd2faa7c30d8fe2a4b550059999602022169e70"
+        traffic.analysis/identity-prerequisite: "service-account-v1"
     spec:
+      serviceAccountName: web-ui
+      automountServiceAccountToken: false
       terminationGracePeriodSeconds: 30
       containers:
       - name: web-ui
-        image: docker.io/traffic/web-ui:topic-panel-r892
+        image: docker.io/traffic/web-ui:remediation-ui-56a48b6ac667
         imagePullPolicy: Never
         ports: [{containerPort: 80}]
         lifecycle:
@@ -52,6 +56,8 @@ spec:
         - {name: AUTH_ENABLED, value: "true"}
         - {name: USE_MOCK, value: "false"}
         - {name: ALERT_DETAIL_API_ENABLED, value: "true"}
+        - {name: ASSET_DETAIL_SNAPSHOT_V1_ENABLED, value: "false"}
+        - {name: ASSET_GOVERNANCE_V1_ENABLED, value: "false"}
         - {name: SCREEN_ACCESS_MODE, value: "protected"}
         - {name: DESKTOP_SMOKE_TOKEN_ENABLED, value: "true"}
         resources: {requests: {cpu: 100m, memory: 128Mi, ephemeral-storage: 128Mi}, limits: {cpu: 500m, memory: 512Mi, ephemeral-storage: 512Mi}}

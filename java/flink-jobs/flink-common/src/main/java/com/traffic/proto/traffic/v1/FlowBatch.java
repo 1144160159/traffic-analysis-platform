@@ -59,7 +59,7 @@ private static final long serialVersionUID = 0L;
    * <code>repeated .traffic.v1.FlowEvent flows = 1 [json_name = "flows"];</code>
    */
   @java.lang.Override
-  public java.util.List<? extends com.traffic.proto.traffic.v1.FlowEventOrBuilder> 
+  public java.util.List<? extends com.traffic.proto.traffic.v1.FlowEventOrBuilder>
       getFlowsOrBuilderList() {
     return flows_;
   }
@@ -462,7 +462,7 @@ private static final long serialVersionUID = 0L;
             flowsBuilder_ = null;
             flows_ = other.flows_;
             bitField0_ = (bitField0_ & ~0x00000001);
-            flowsBuilder_ = 
+            flowsBuilder_ =
               com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                  getFlowsFieldBuilder() : null;
           } else {
@@ -731,7 +731,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.FlowEvent flows = 1 [json_name = "flows"];</code>
      */
-    public java.util.List<? extends com.traffic.proto.traffic.v1.FlowEventOrBuilder> 
+    public java.util.List<? extends com.traffic.proto.traffic.v1.FlowEventOrBuilder>
          getFlowsOrBuilderList() {
       if (flowsBuilder_ != null) {
         return flowsBuilder_.getMessageOrBuilderList();
@@ -757,12 +757,12 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.FlowEvent flows = 1 [json_name = "flows"];</code>
      */
-    public java.util.List<com.traffic.proto.traffic.v1.FlowEvent.Builder> 
+    public java.util.List<com.traffic.proto.traffic.v1.FlowEvent.Builder>
          getFlowsBuilderList() {
       return getFlowsFieldBuilder().getBuilderList();
     }
     private com.google.protobuf.RepeatedFieldBuilderV3<
-        com.traffic.proto.traffic.v1.FlowEvent, com.traffic.proto.traffic.v1.FlowEvent.Builder, com.traffic.proto.traffic.v1.FlowEventOrBuilder> 
+        com.traffic.proto.traffic.v1.FlowEvent, com.traffic.proto.traffic.v1.FlowEvent.Builder, com.traffic.proto.traffic.v1.FlowEventOrBuilder>
         getFlowsFieldBuilder() {
       if (flowsBuilder_ == null) {
         flowsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
@@ -884,7 +884,7 @@ private static final long serialVersionUID = 0L;
      * <code>.traffic.v1.BatchMetadata metadata = 2 [json_name = "metadata"];</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
-        com.traffic.proto.traffic.v1.BatchMetadata, com.traffic.proto.traffic.v1.BatchMetadata.Builder, com.traffic.proto.traffic.v1.BatchMetadataOrBuilder> 
+        com.traffic.proto.traffic.v1.BatchMetadata, com.traffic.proto.traffic.v1.BatchMetadata.Builder, com.traffic.proto.traffic.v1.BatchMetadataOrBuilder>
         getMetadataFieldBuilder() {
       if (metadataBuilder_ == null) {
         metadataBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<

@@ -8,8 +8,13 @@ import com.traffic.proto.traffic.v1.InterArrivalStats;
 import com.traffic.proto.traffic.v1.PacketLengthStats;
 
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.api.common.state.ListState;
+import org.apache.flink.api.common.state.ListStateDescriptor;
 import org.apache.flink.metrics.Counter;
 import org.apache.flink.metrics.MetricGroup;
+import org.apache.flink.runtime.state.FunctionInitializationContext;
+import org.apache.flink.runtime.state.FunctionSnapshotContext;
+import org.apache.flink.streaming.api.checkpoint.CheckpointedFunction;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 
 import org.slf4j.Logger;
@@ -21,15 +26,12 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Batched ClickHouse sink for raw FlowEvent rows.
  */
-public class FlowRawClickHouseSinkFunction extends RichSinkFunction<FlowEvent> {
+public class FlowRawClickHouseSinkFunction extends RichSinkFunction<FlowEvent>
+        implements CheckpointedFunction {
 
     private static final long serialVersionUID = 1L;
     private static final Logger LOG = LoggerFactory.getLogger(FlowRawClickHouseSinkFunction.class);
@@ -43,9 +45,8 @@ public class FlowRawClickHouseSinkFunction extends RichSinkFunction<FlowEvent> {
     private final int maxRetries;
 
     private transient List<FlowEvent> buffer;
-    private transient ScheduledExecutorService flushScheduler;
-    private transient AtomicBoolean flushing;
-    private transient volatile boolean closing;
+    private transient ListState<FlowEvent> pendingState;
+    private transient long lastFlushTime;
 
     private transient Counter insertSuccessCounter;
     private transient Counter insertFailCounter;
@@ -67,25 +68,18 @@ public class FlowRawClickHouseSinkFunction extends RichSinkFunction<FlowEvent> {
         this.batchSize = batchSize;
         this.batchIntervalMs = batchIntervalMs;
         this.maxRetries = maxRetries;
+        this.buffer = new ArrayList<>(initialBufferCapacity());
+        this.lastFlushTime = System.currentTimeMillis();
     }
 
     @Override
     public void open(Configuration parameters) throws Exception {
         super.open(parameters);
 
-        this.buffer = new ArrayList<>(Math.min(batchSize, 4096));
-        this.flushing = new AtomicBoolean(false);
-        this.closing = false;
-        this.flushScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
-            Thread thread = new Thread(r, "clickhouse-flow-raw-flusher");
-            thread.setDaemon(true);
-            return thread;
-        });
-        this.flushScheduler.scheduleWithFixedDelay(
-                this::flushSafely,
-                batchIntervalMs,
-                batchIntervalMs,
-                TimeUnit.MILLISECONDS);
+        if (this.buffer == null) {
+            this.buffer = new ArrayList<>(initialBufferCapacity());
+        }
+        this.lastFlushTime = System.currentTimeMillis();
 
         MetricGroup metricGroup = getRuntimeContext().getMetricGroup()
                 .addGroup("clickhouse_flow_raw_sink");
@@ -100,72 +94,88 @@ public class FlowRawClickHouseSinkFunction extends RichSinkFunction<FlowEvent> {
     }
 
     @Override
-    public void invoke(FlowEvent flow, Context context) {
-        if (flow == null || closing) {
+    public void invoke(FlowEvent flow, Context context) throws Exception {
+        if (flow == null) {
             return;
         }
 
-        boolean shouldFlush;
-        synchronized (buffer) {
-            buffer.add(flow);
-            shouldFlush = buffer.size() >= batchSize;
-        }
+        buffer.add(flow);
+        long now = System.currentTimeMillis();
+        boolean shouldFlush = buffer.size() >= batchSize
+                || now - lastFlushTime >= batchIntervalMs;
 
         if (shouldFlush) {
-            flushSafely();
+            flushBuffer();
         }
     }
 
     @Override
     public void close() throws Exception {
-        closing = true;
-        if (flushScheduler != null) {
-            flushScheduler.shutdownNow();
-        }
-        flushSafely();
+        flushBuffer();
         super.close();
     }
 
-    private void flushSafely() {
-        if (flushing == null || !flushing.compareAndSet(false, true)) {
-            return;
-        }
-
-        List<FlowEvent> batch;
-        synchronized (buffer) {
-            if (buffer.isEmpty()) {
-                flushing.set(false);
-                return;
-            }
-            batch = new ArrayList<>(buffer);
-            buffer.clear();
-        }
-
-        try {
-            boolean success = writeWithRetry(batch);
-            if (success) {
-                if (insertSuccessCounter != null) {
-                    insertSuccessCounter.inc(batch.size());
-                }
-                if (batchFlushCounter != null) {
-                    batchFlushCounter.inc();
-                }
-            } else if (insertFailCounter != null) {
-                insertFailCounter.inc(batch.size());
-            }
-        } finally {
-            flushing.set(false);
+    @Override
+    public void snapshotState(FunctionSnapshotContext context) throws Exception {
+        // Do not let a checkpoint advance past rows that ClickHouse has not
+        // acknowledged. event_id makes a replay after an ACK idempotent.
+        flushBuffer();
+        pendingState.clear();
+        for (FlowEvent flow : buffer) {
+            pendingState.add(flow);
         }
     }
 
-    private boolean writeWithRetry(List<FlowEvent> batch) {
+    @Override
+    public void initializeState(FunctionInitializationContext context) throws Exception {
+        pendingState = context.getOperatorStateStore().getListState(
+                new ListStateDescriptor<>("clickhouse-flow-raw-pending-v1", FlowEvent.class));
+        buffer = new ArrayList<>(initialBufferCapacity());
+        if (context.isRestored()) {
+            for (FlowEvent flow : pendingState.get()) {
+                buffer.add(flow);
+            }
+        }
+    }
+
+    void flushBuffer() throws Exception {
+        if (buffer == null || buffer.isEmpty()) {
+            return;
+        }
+
+        List<FlowEvent> batch = new ArrayList<>(buffer);
+        try {
+            writeWithRetry(batch);
+        } catch (Exception e) {
+            if (insertFailCounter != null) {
+                insertFailCounter.inc(batch.size());
+            }
+            LOG.error("ClickHouse raw-flow batch failed; retaining {} rows for replay",
+                    batch.size(), e);
+            throw e;
+        }
+
+        // Only remove the acknowledged prefix. No background thread mutates
+        // this collection, so checkpoint and invoke share one ordered buffer.
+        buffer.subList(0, batch.size()).clear();
+        lastFlushTime = System.currentTimeMillis();
+        if (insertSuccessCounter != null) {
+            insertSuccessCounter.inc(batch.size());
+        }
+        if (batchFlushCounter != null) {
+            batchFlushCounter.inc();
+        }
+    }
+
+    private void writeWithRetry(List<FlowEvent> batch) throws Exception {
         int attempts = 0;
         Exception lastException = null;
 
-        while (attempts < maxRetries) {
+        int allowedAttempts = Math.max(1, maxRetries);
+        while (attempts < allowedAttempts) {
             try {
                 writeBatch(batch);
-                return true;
+                return;
             } catch (Exception e) {
                 attempts++;
                 lastException = e;
@@ -173,8 +183,8 @@ public class FlowRawClickHouseSinkFunction extends RichSinkFunction<FlowEvent> {
                     insertRetryCounter.inc();
                 }
                 LOG.warn("ClickHouse raw-flow insert failed (attempt {}/{}): {}",
-                        attempts, maxRetries, e.getMessage());
-                if (attempts < maxRetries) {
+                        attempts, allowedAttempts, e.getMessage());
+                if (attempts < allowedAttempts) {
                     try {
                         Thread.sleep((long) Math.pow(2, attempts) * 100L);
                     } catch (InterruptedException interrupted) {
@@ -185,12 +195,12 @@ public class FlowRawClickHouseSinkFunction extends RichSinkFunction<FlowEvent> {
             }
         }
 
-        LOG.error("ClickHouse raw-flow insert failed after {} attempts: {}",
-                maxRetries, lastException != null ? lastException.getMessage() : "unknown");
-        return false;
+        throw new SQLException(
+                "ClickHouse raw-flow insert failed after " + allowedAttempts + " attempts",
+                lastException);
     }
 
-    private void writeBatch(List<FlowEvent> batch) throws SQLException {
+    protected void writeBatch(List<FlowEvent> batch) throws SQLException {
         try (Connection conn = DriverManager.getConnection(jdbcUrl, user, password);
              PreparedStatement ps = conn.prepareStatement(buildInsertSql())) {
             for (FlowEvent flow : batch) {
@@ -199,6 +209,14 @@ public class FlowRawClickHouseSinkFunction extends RichSinkFunction<FlowEvent> {
             }
             ps.executeBatch();
         }
+    }
+
+    int pendingCount() {
+        return buffer == null ? 0 : buffer.size();
+    }
+
+    private int initialBufferCapacity() {
+        return Math.max(1, Math.min(batchSize, 4096));
     }
 
     private String buildInsertSql() {

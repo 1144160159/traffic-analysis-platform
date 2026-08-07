@@ -17,27 +17,27 @@ public final class CommonProto {
   }
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_EventHeader_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_EventHeader_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_FiveTuple_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_FiveTuple_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_PacketLengthStats_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_PacketLengthStats_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_InterArrivalStats_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_InterArrivalStats_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_ActiveIdleStats_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_ActiveIdleStats_fieldAccessorTable;
 
@@ -49,57 +49,68 @@ public final class CommonProto {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\027traffic/v1/common.proto\022\ntraffic.v1\"\222\002" +
+      "\n\027traffic/v1/common.proto\022\ntraffic.v1\"\273\005" +
       "\n\013EventHeader\022\031\n\010event_id\030\001 \001(\tR\007eventId" +
       "\022\033\n\ttenant_id\030\002 \001(\tR\010tenantId\022\025\n\006run_id\030" +
       "\003 \001(\tR\005runId\022\031\n\010event_ts\030\004 \001(\003R\007eventTs\022" +
       "\033\n\tingest_ts\030\005 \001(\003R\010ingestTs\022\031\n\010probe_id" +
       "\030\006 \001(\tR\007probeId\022$\n\016feature_set_id\030\007 \001(\tR" +
       "\014featureSetId\022\031\n\010kafka_ts\030\010 \001(\003R\007kafkaTs" +
-      "\022 \n\014flink_out_ts\030\t \001(\003R\nflinkOutTs\"\213\001\n\tF" +
-      "iveTuple\022\025\n\006src_ip\030\001 \001(\tR\005srcIp\022\025\n\006dst_i" +
-      "p\030\002 \001(\tR\005dstIp\022\031\n\010src_port\030\003 \001(\rR\007srcPor" +
-      "t\022\031\n\010dst_port\030\004 \001(\rR\007dstPort\022\032\n\010protocol" +
-      "\030\005 \001(\rR\010protocol\"]\n\021PacketLengthStats\022\020\n" +
-      "\003min\030\001 \001(\rR\003min\022\020\n\003max\030\002 \001(\rR\003max\022\022\n\004mea" +
-      "n\030\003 \001(\002R\004mean\022\020\n\003std\030\004 \001(\002R\003std\"q\n\021Inter" +
-      "ArrivalStats\022\025\n\006min_ms\030\001 \001(\002R\005minMs\022\025\n\006m" +
-      "ax_ms\030\002 \001(\002R\005maxMs\022\027\n\007mean_ms\030\003 \001(\002R\006mea" +
-      "nMs\022\025\n\006std_ms\030\004 \001(\002R\005stdMs\"o\n\017ActiveIdle" +
-      "Stats\022\025\n\006min_ms\030\001 \001(\002R\005minMs\022\027\n\007mean_ms\030" +
-      "\002 \001(\002R\006meanMs\022\025\n\006max_ms\030\003 \001(\002R\005maxMs\022\025\n\006" +
-      "std_ms\030\004 \001(\002R\005stdMs*\212\001\n\rFlowDirection\022\036\n" +
-      "\032FLOW_DIRECTION_UNSPECIFIED\020\000\022\032\n\026FLOW_DI" +
-      "RECTION_FORWARD\020\001\022\033\n\027FLOW_DIRECTION_BACK" +
-      "WARD\020\002\022 \n\034FLOW_DIRECTION_BIDIRECTIONAL\020\003" +
-      "*\210\001\n\010Severity\022\030\n\024SEVERITY_UNSPECIFIED\020\000\022" +
-      "\021\n\rSEVERITY_INFO\020\001\022\020\n\014SEVERITY_LOW\020\002\022\023\n\017" +
-      "SEVERITY_MEDIUM\020\003\022\021\n\rSEVERITY_HIGH\020\004\022\025\n\021" +
-      "SEVERITY_CRITICAL\020\005*\350\001\n\013AlertStatus\022\034\n\030A" +
-      "LERT_STATUS_UNSPECIFIED\020\000\022\024\n\020ALERT_STATU" +
-      "S_NEW\020\001\022\027\n\023ALERT_STATUS_TRIAGE\020\002\022\031\n\025ALER" +
-      "T_STATUS_ASSIGNED\020\003\022\034\n\030ALERT_STATUS_IN_P" +
-      "ROGRESS\020\004\022\031\n\025ALERT_STATUS_RESOLVED\020\005\022\027\n\023" +
-      "ALERT_STATUS_CLOSED\020\006\022\037\n\033ALERT_STATUS_FA" +
-      "LSE_POSITIVE\020\007*\317\001\n\020DeploymentStatus\022!\n\035D" +
-      "EPLOYMENT_STATUS_UNSPECIFIED\020\000\022\035\n\031DEPLOY" +
-      "MENT_STATUS_PLANNED\020\001\022\032\n\026DEPLOYMENT_STAT" +
-      "US_GRAY\020\002\022\034\n\030DEPLOYMENT_STATUS_ACTIVE\020\003\022" +
-      "\034\n\030DEPLOYMENT_STATUS_PAUSED\020\004\022!\n\035DEPLOYM" +
-      "ENT_STATUS_ROLLED_BACK\020\005*|\n\010TaskType\022\031\n\025" +
-      "TASK_TYPE_UNSPECIFIED\020\000\022\024\n\020TASK_TYPE_REP" +
-      "LAY\020\001\022\023\n\017TASK_TYPE_TRAIN\020\002\022\022\n\016TASK_TYPE_" +
-      "EVAL\020\003\022\026\n\022TASK_TYPE_PCAP_CUT\020\004*\247\001\n\nTaskS" +
-      "tatus\022\033\n\027TASK_STATUS_UNSPECIFIED\020\000\022\026\n\022TA" +
-      "SK_STATUS_QUEUED\020\001\022\027\n\023TASK_STATUS_RUNNIN" +
-      "G\020\002\022\031\n\025TASK_STATUS_SUCCEEDED\020\003\022\026\n\022TASK_S" +
-      "TATUS_FAILED\020\004\022\030\n\024TASK_STATUS_CANCELED\020\005" +
-      "B\325\001\n\034com.traffic.proto.traffic.v1B\013Commo" +
-      "nProtoP\001Z_github.com/1144160159/traffic-" +
-      "analysis-platform/go/control-plane/pkg/p" +
-      "roto/traffic/v1;trafficv1\242\002\003TXX\252\002\nTraffi" +
-      "c.V1\312\002\nTraffic\\V1\342\002\026Traffic\\V1\\GPBMetada" +
-      "ta\352\002\013Traffic::V1b\006proto3"
+      "\022 \n\014flink_out_ts\030\t \001(\003R\nflinkOutTs\022\035\n\nev" +
+      "ent_type\030\n \001(\tR\teventType\022%\n\016schema_vers" +
+      "ion\030\013 \001(\tR\rschemaVersion\022%\n\016aggregate_ty" +
+      "pe\030\014 \001(\tR\raggregateType\022!\n\014aggregate_id\030" +
+      "\r \001(\tR\013aggregateId\022+\n\021aggregate_version\030" +
+      "\016 \001(\004R\020aggregateVersion\022\037\n\013occurred_at\030\017" +
+      " \001(\003R\noccurredAt\022\037\n\013produced_at\030\020 \001(\003R\np" +
+      "roducedAt\022\031\n\010trace_id\030\021 \001(\tR\007traceId\022!\n\014" +
+      "causation_id\030\022 \001(\tR\013causationId\022%\n\016corre" +
+      "lation_id\030\023 \001(\tR\rcorrelationId\022\'\n\017idempo" +
+      "tency_key\030\024 \001(\tR\016idempotencyKey\022\032\n\010produ" +
+      "cer\030\025 \001(\tR\010producer\"\213\001\n\tFiveTuple\022\025\n\006src" +
+      "_ip\030\001 \001(\tR\005srcIp\022\025\n\006dst_ip\030\002 \001(\tR\005dstIp\022" +
+      "\031\n\010src_port\030\003 \001(\rR\007srcPort\022\031\n\010dst_port\030\004" +
+      " \001(\rR\007dstPort\022\032\n\010protocol\030\005 \001(\rR\010protoco" +
+      "l\"]\n\021PacketLengthStats\022\020\n\003min\030\001 \001(\rR\003min" +
+      "\022\020\n\003max\030\002 \001(\rR\003max\022\022\n\004mean\030\003 \001(\002R\004mean\022\020" +
+      "\n\003std\030\004 \001(\002R\003std\"q\n\021InterArrivalStats\022\025\n" +
+      "\006min_ms\030\001 \001(\002R\005minMs\022\025\n\006max_ms\030\002 \001(\002R\005ma" +
+      "xMs\022\027\n\007mean_ms\030\003 \001(\002R\006meanMs\022\025\n\006std_ms\030\004" +
+      " \001(\002R\005stdMs\"o\n\017ActiveIdleStats\022\025\n\006min_ms" +
+      "\030\001 \001(\002R\005minMs\022\027\n\007mean_ms\030\002 \001(\002R\006meanMs\022\025" +
+      "\n\006max_ms\030\003 \001(\002R\005maxMs\022\025\n\006std_ms\030\004 \001(\002R\005s" +
+      "tdMs*\212\001\n\rFlowDirection\022\036\n\032FLOW_DIRECTION" +
+      "_UNSPECIFIED\020\000\022\032\n\026FLOW_DIRECTION_FORWARD" +
+      "\020\001\022\033\n\027FLOW_DIRECTION_BACKWARD\020\002\022 \n\034FLOW_" +
+      "DIRECTION_BIDIRECTIONAL\020\003*\210\001\n\010Severity\022\030" +
+      "\n\024SEVERITY_UNSPECIFIED\020\000\022\021\n\rSEVERITY_INF" +
+      "O\020\001\022\020\n\014SEVERITY_LOW\020\002\022\023\n\017SEVERITY_MEDIUM" +
+      "\020\003\022\021\n\rSEVERITY_HIGH\020\004\022\025\n\021SEVERITY_CRITIC" +
+      "AL\020\005*\350\001\n\013AlertStatus\022\034\n\030ALERT_STATUS_UNS" +
+      "PECIFIED\020\000\022\024\n\020ALERT_STATUS_NEW\020\001\022\027\n\023ALER" +
+      "T_STATUS_TRIAGE\020\002\022\031\n\025ALERT_STATUS_ASSIGN" +
+      "ED\020\003\022\034\n\030ALERT_STATUS_IN_PROGRESS\020\004\022\031\n\025AL" +
+      "ERT_STATUS_RESOLVED\020\005\022\027\n\023ALERT_STATUS_CL" +
+      "OSED\020\006\022\037\n\033ALERT_STATUS_FALSE_POSITIVE\020\007*" +
+      "\317\001\n\020DeploymentStatus\022!\n\035DEPLOYMENT_STATU" +
+      "S_UNSPECIFIED\020\000\022\035\n\031DEPLOYMENT_STATUS_PLA" +
+      "NNED\020\001\022\032\n\026DEPLOYMENT_STATUS_GRAY\020\002\022\034\n\030DE" +
+      "PLOYMENT_STATUS_ACTIVE\020\003\022\034\n\030DEPLOYMENT_S" +
+      "TATUS_PAUSED\020\004\022!\n\035DEPLOYMENT_STATUS_ROLL" +
+      "ED_BACK\020\005*|\n\010TaskType\022\031\n\025TASK_TYPE_UNSPE" +
+      "CIFIED\020\000\022\024\n\020TASK_TYPE_REPLAY\020\001\022\023\n\017TASK_T" +
+      "YPE_TRAIN\020\002\022\022\n\016TASK_TYPE_EVAL\020\003\022\026\n\022TASK_" +
+      "TYPE_PCAP_CUT\020\004*\247\001\n\nTaskStatus\022\033\n\027TASK_S" +
+      "TATUS_UNSPECIFIED\020\000\022\026\n\022TASK_STATUS_QUEUE" +
+      "D\020\001\022\027\n\023TASK_STATUS_RUNNING\020\002\022\031\n\025TASK_STA" +
+      "TUS_SUCCEEDED\020\003\022\026\n\022TASK_STATUS_FAILED\020\004\022" +
+      "\030\n\024TASK_STATUS_CANCELED\020\005B\325\001\n\034com.traffi" +
+      "c.proto.traffic.v1B\013CommonProtoP\001Z_githu" +
+      "b.com/1144160159/traffic-analysis-platfo" +
+      "rm/go/control-plane/pkg/proto/traffic/v1" +
+      ";trafficv1\242\002\003TXX\252\002\nTraffic.V1\312\002\nTraffic\\" +
+      "V1\342\002\026Traffic\\V1\\GPBMetadata\352\002\013Traffic::V" +
+      "1b\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -110,7 +121,7 @@ public final class CommonProto {
     internal_static_traffic_v1_EventHeader_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_EventHeader_descriptor,
-        new java.lang.String[] { "EventId", "TenantId", "RunId", "EventTs", "IngestTs", "ProbeId", "FeatureSetId", "KafkaTs", "FlinkOutTs", });
+        new java.lang.String[] { "EventId", "TenantId", "RunId", "EventTs", "IngestTs", "ProbeId", "FeatureSetId", "KafkaTs", "FlinkOutTs", "EventType", "SchemaVersion", "AggregateType", "AggregateId", "AggregateVersion", "OccurredAt", "ProducedAt", "TraceId", "CausationId", "CorrelationId", "IdempotencyKey", "Producer", });
     internal_static_traffic_v1_FiveTuple_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_traffic_v1_FiveTuple_fieldAccessorTable = new

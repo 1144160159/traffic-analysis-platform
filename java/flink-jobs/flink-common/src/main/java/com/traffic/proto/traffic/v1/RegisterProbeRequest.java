@@ -57,7 +57,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       tenantId_ = s;
@@ -73,7 +73,7 @@ private static final long serialVersionUID = 0L;
       getTenantIdBytes() {
     java.lang.Object ref = tenantId_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       tenantId_ = b;
@@ -96,7 +96,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       probeId_ = s;
@@ -112,7 +112,7 @@ private static final long serialVersionUID = 0L;
       getProbeIdBytes() {
     java.lang.Object ref = probeId_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       probeId_ = b;
@@ -161,7 +161,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       softwareVersion_ = s;
@@ -177,7 +177,7 @@ private static final long serialVersionUID = 0L;
       getSoftwareVersionBytes() {
     java.lang.Object ref = softwareVersion_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       softwareVersion_ = b;
@@ -200,7 +200,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       buildCommit_ = s;
@@ -216,7 +216,7 @@ private static final long serialVersionUID = 0L;
       getBuildCommitBytes() {
     java.lang.Object ref = buildCommit_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       buildCommit_ = b;
@@ -729,7 +729,7 @@ private static final long serialVersionUID = 0L;
         getTenantIdBytes() {
       java.lang.Object ref = tenantId_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         tenantId_ = b;
@@ -801,7 +801,7 @@ private static final long serialVersionUID = 0L;
         getProbeIdBytes() {
       java.lang.Object ref = probeId_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         probeId_ = b;
@@ -956,7 +956,7 @@ private static final long serialVersionUID = 0L;
      * <code>.traffic.v1.HardwareInfo hardware = 3 [json_name = "hardware"];</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
-        com.traffic.proto.traffic.v1.HardwareInfo, com.traffic.proto.traffic.v1.HardwareInfo.Builder, com.traffic.proto.traffic.v1.HardwareInfoOrBuilder> 
+        com.traffic.proto.traffic.v1.HardwareInfo, com.traffic.proto.traffic.v1.HardwareInfo.Builder, com.traffic.proto.traffic.v1.HardwareInfoOrBuilder>
         getHardwareFieldBuilder() {
       if (hardwareBuilder_ == null) {
         hardwareBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -994,7 +994,7 @@ private static final long serialVersionUID = 0L;
         getSoftwareVersionBytes() {
       java.lang.Object ref = softwareVersion_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         softwareVersion_ = b;
@@ -1066,7 +1066,7 @@ private static final long serialVersionUID = 0L;
         getBuildCommitBytes() {
       java.lang.Object ref = buildCommit_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         buildCommit_ = b;

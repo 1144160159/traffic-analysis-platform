@@ -3,6 +3,11 @@ kind: StatefulSet
 metadata:
   name: redis-master
   namespace: databases
+  labels:
+    traffic.analysis/redis-domain: coordination
+  annotations:
+    alignment.traffic-platform.io/remediation-id: T-REDIS-001
+    alignment.traffic-platform.io/reliability-policy: noeviction-persistent
 spec:
   persistentVolumeClaimRetentionPolicy:
     whenDeleted: Retain
@@ -21,6 +26,7 @@ spec:
         app: redis
         redis-type: server
         role: master
+        traffic.analysis/redis-domain: coordination
     spec:
       containers:
       - args:
@@ -30,7 +36,7 @@ spec:
         - --maxmemory
         - 4gb
         - --maxmemory-policy
-        - allkeys-lru
+        - noeviction
         - --bind
         - 0.0.0.0
         image: docker.io/library/redis@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
@@ -104,6 +110,11 @@ kind: StatefulSet
 metadata:
   name: redis-replica
   namespace: databases
+  labels:
+    traffic.analysis/redis-domain: coordination
+  annotations:
+    alignment.traffic-platform.io/remediation-id: T-REDIS-001
+    alignment.traffic-platform.io/reliability-policy: noeviction-persistent
 spec:
   persistentVolumeClaimRetentionPolicy:
     whenDeleted: Retain
@@ -122,6 +133,7 @@ spec:
         app: redis
         redis-type: server
         role: replica
+        traffic.analysis/redis-domain: coordination
     spec:
       containers:
       - args:
@@ -130,6 +142,8 @@ spec:
         - 'yes'
         - --maxmemory
         - 4gb
+        - --maxmemory-policy
+        - noeviction
         - --replicaof
         - redis-master.databases.svc.cluster.local
         - '6379'
@@ -194,6 +208,70 @@ spec:
           storage: 100Gi
       storageClassName: local-hdd
       volumeMode: Filesystem
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-cache
+  namespace: databases
+  labels:
+    traffic.analysis/redis-domain: cache
+  annotations:
+    alignment.traffic-platform.io/remediation-id: T-REDIS-001
+    alignment.traffic-platform.io/reliability-policy: allkeys-lru-discardable
+spec:
+  serviceName: redis-cache
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis-cache
+      traffic.analysis/redis-domain: cache
+  template:
+    metadata:
+      labels:
+        app: redis-cache
+        traffic.analysis/redis-domain: cache
+    spec:
+      containers:
+      - name: redis
+        image: docker.io/library/redis@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99
+        imagePullPolicy: IfNotPresent
+        args:
+        - redis-server
+        - --save
+        - ""
+        - --appendonly
+        - "no"
+        - --maxmemory
+        - 512mb
+        - --maxmemory-policy
+        - allkeys-lru
+        - --bind
+        - 0.0.0.0
+        ports:
+        - {containerPort: 6379, protocol: TCP}
+        readinessProbe:
+          exec:
+            command: ["redis-cli", "PING"]
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 2
+        livenessProbe:
+          exec:
+            command: ["redis-cli", "PING"]
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 2
+        resources:
+          requests: {cpu: 100m, memory: 256Mi}
+          limits: {cpu: "1", memory: 1Gi}
+        volumeMounts:
+        - {name: cache-data, mountPath: /data}
+      volumes:
+      - name: cache-data
+        emptyDir:
+          sizeLimit: 1Gi
 
 ---
 apiVersion: apps/v1
@@ -282,6 +360,8 @@ kind: Service
 metadata:
   name: redis-master
   namespace: databases
+  labels:
+    traffic.analysis/redis-domain: coordination
 spec:
   internalTrafficPolicy: Cluster
   ipFamilies:
@@ -301,8 +381,27 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
+  name: redis-cache
+  namespace: databases
+  labels:
+    traffic.analysis/redis-domain: cache
+spec:
+  ports:
+  - {name: redis, port: 6379, protocol: TCP, targetPort: 6379}
+  selector:
+    app: redis-cache
+    traffic.analysis/redis-domain: cache
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
   name: redis
   namespace: databases
+  annotations:
+    alignment.traffic-platform.io/compatibility-only: "true"
+    alignment.traffic-platform.io/new-client-use: forbidden
 spec:
   internalTrafficPolicy: Cluster
   ipFamilies:

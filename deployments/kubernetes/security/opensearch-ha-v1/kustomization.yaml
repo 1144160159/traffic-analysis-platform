@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# This target is intentionally absent from deployments/kubernetes/deploy.sh.
+# Render/apply only after the T-OS-005 preflight proves three labeled zones,
+# pinned plugin image, TLS secrets, service roles, repository and rollback.
+# The canonical base is outside this opt-in directory. Use the guarded renderer
+# from scripts/alignment/render_opensearch_ha_security.py; never `kubectl apply -k`.
+resources:
+- ../../infrastructure/05-opensearch.yaml
+patches:
+- path: statefulset-ha-security.patch.yaml
+  target:
+    group: apps
+    version: v1
+    kind: StatefulSet
+    name: opensearch

@@ -55,7 +55,7 @@ private static final long serialVersionUID = 0L;
    * <code>repeated .traffic.v1.SessionEvent sessions = 1 [json_name = "sessions"];</code>
    */
   @java.lang.Override
-  public java.util.List<? extends com.traffic.proto.traffic.v1.SessionEventOrBuilder> 
+  public java.util.List<? extends com.traffic.proto.traffic.v1.SessionEventOrBuilder>
       getSessionsOrBuilderList() {
     return sessions_;
   }
@@ -95,7 +95,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       compression_ = s;
@@ -111,7 +111,7 @@ private static final long serialVersionUID = 0L;
       getCompressionBytes() {
     java.lang.Object ref = compression_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       compression_ = b;
@@ -445,7 +445,7 @@ private static final long serialVersionUID = 0L;
             sessionsBuilder_ = null;
             sessions_ = other.sessions_;
             bitField0_ = (bitField0_ & ~0x00000001);
-            sessionsBuilder_ = 
+            sessionsBuilder_ =
               com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                  getSessionsFieldBuilder() : null;
           } else {
@@ -714,7 +714,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.SessionEvent sessions = 1 [json_name = "sessions"];</code>
      */
-    public java.util.List<? extends com.traffic.proto.traffic.v1.SessionEventOrBuilder> 
+    public java.util.List<? extends com.traffic.proto.traffic.v1.SessionEventOrBuilder>
          getSessionsOrBuilderList() {
       if (sessionsBuilder_ != null) {
         return sessionsBuilder_.getMessageOrBuilderList();
@@ -740,12 +740,12 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.SessionEvent sessions = 1 [json_name = "sessions"];</code>
      */
-    public java.util.List<com.traffic.proto.traffic.v1.SessionEvent.Builder> 
+    public java.util.List<com.traffic.proto.traffic.v1.SessionEvent.Builder>
          getSessionsBuilderList() {
       return getSessionsFieldBuilder().getBuilderList();
     }
     private com.google.protobuf.RepeatedFieldBuilderV3<
-        com.traffic.proto.traffic.v1.SessionEvent, com.traffic.proto.traffic.v1.SessionEvent.Builder, com.traffic.proto.traffic.v1.SessionEventOrBuilder> 
+        com.traffic.proto.traffic.v1.SessionEvent, com.traffic.proto.traffic.v1.SessionEvent.Builder, com.traffic.proto.traffic.v1.SessionEventOrBuilder>
         getSessionsFieldBuilder() {
       if (sessionsBuilder_ == null) {
         sessionsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
@@ -784,7 +784,7 @@ private static final long serialVersionUID = 0L;
         getCompressionBytes() {
       java.lang.Object ref = compression_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         compression_ = b;

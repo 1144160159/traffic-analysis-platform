@@ -521,7 +521,7 @@ private static final long serialVersionUID = 0L;
      * <code>.traffic.v1.FlowEvent event = 1 [json_name = "event"];</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
-        com.traffic.proto.traffic.v1.FlowEvent, com.traffic.proto.traffic.v1.FlowEvent.Builder, com.traffic.proto.traffic.v1.FlowEventOrBuilder> 
+        com.traffic.proto.traffic.v1.FlowEvent, com.traffic.proto.traffic.v1.FlowEvent.Builder, com.traffic.proto.traffic.v1.FlowEventOrBuilder>
         getEventFieldBuilder() {
       if (eventBuilder_ == null) {
         eventBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<

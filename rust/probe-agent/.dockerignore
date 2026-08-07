@@ -1,10 +1,4 @@
-target/
-**/target/
-.git/
-.github/
-.vscode/
-*.pcap
-*.pcapng
+target
+test-results
+**/__pycache__
 *.log
-certs/
-tmp/

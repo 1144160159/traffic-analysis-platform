@@ -1,0 +1,18 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: asset-service, namespace: traffic-analysis}
+spec:
+  template:
+    metadata:
+      annotations: {traffic.platform/minio-tls-cutover: v1}
+    spec:
+      containers:
+      - name: asset-service
+        env:
+        - {name: S3_USE_SSL, value: "true"}
+        - {name: S3_CA_CERT, value: /etc/minio/tls/ca.crt}
+        volumeMounts:
+        - {name: minio-client-ca, mountPath: /etc/minio/tls, readOnly: true}
+      volumes:
+      - name: minio-client-ca
+        secret: {secretName: minio-client-ca, optional: false}

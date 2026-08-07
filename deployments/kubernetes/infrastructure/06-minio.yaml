@@ -178,3 +178,19 @@ spec:
         name: nginx-config
 
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio-proxy
+  namespace: minio
+spec:
+  type: ClusterIP
+  selector:
+    app: minio-proxy
+  ports:
+  - name: http
+    port: 9002
+    protocol: TCP
+    targetPort: 9002
+
+---

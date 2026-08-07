@@ -85,6 +85,7 @@ public class BehaviorJobConfig implements Serializable {
     private final boolean asyncInferenceEnabled;
     private final long asyncTimeoutMs;
     private final int asyncCapacity;
+    private final int asyncMaxRetries;
     private final int inferenceThreads;
     private final int batchInferenceSize;
 
@@ -143,6 +144,7 @@ public class BehaviorJobConfig implements Serializable {
         this.asyncInferenceEnabled = builder.asyncInferenceEnabled;
         this.asyncTimeoutMs = builder.asyncTimeoutMs;
         this.asyncCapacity = builder.asyncCapacity;
+        this.asyncMaxRetries = builder.asyncMaxRetries;
         this.inferenceThreads = builder.inferenceThreads;
         this.batchInferenceSize = builder.batchInferenceSize;
         this.minConfidenceThreshold = builder.minConfidenceThreshold;
@@ -237,6 +239,7 @@ public class BehaviorJobConfig implements Serializable {
                 .asyncInferenceEnabled(getConfigBoolean(params, fileProps, "inference.async.enabled", true))
                 .asyncTimeoutMs(getConfigLong(params, fileProps, "inference.async.timeout.ms", 5000L))
                 .asyncCapacity(getConfigInt(params, fileProps, "inference.async.capacity", 100))
+                .asyncMaxRetries(getConfigInt(params, fileProps, "inference.async.max.retries", 2))
                 .inferenceThreads(getConfigInt(params, fileProps, "inference.threads", 4))
                 .batchInferenceSize(getConfigInt(params, fileProps, "inference.batch.size", 32))
                 
@@ -394,6 +397,7 @@ public class BehaviorJobConfig implements Serializable {
     public boolean isAsyncInferenceEnabled() { return asyncInferenceEnabled; }
     public long getAsyncTimeoutMs() { return asyncTimeoutMs; }
     public int getAsyncCapacity() { return asyncCapacity; }
+    public int getAsyncMaxRetries() { return asyncMaxRetries; }
     public int getInferenceThreads() { return inferenceThreads; }
     public int getBatchInferenceSize() { return batchInferenceSize; }
     public float getMinConfidenceThreshold() { return minConfidenceThreshold; }
@@ -492,6 +496,7 @@ public class BehaviorJobConfig implements Serializable {
         private boolean asyncInferenceEnabled = true;
         private long asyncTimeoutMs = 5000L;
         private int asyncCapacity = 100;
+        private int asyncMaxRetries = 2;
         private int inferenceThreads = 4;
         private int batchInferenceSize = 32;
         private float minConfidenceThreshold = 0.5f;
@@ -543,6 +548,7 @@ public class BehaviorJobConfig implements Serializable {
         public Builder asyncInferenceEnabled(boolean val) { asyncInferenceEnabled = val; return this; }
         public Builder asyncTimeoutMs(long val) { asyncTimeoutMs = val; return this; }
         public Builder asyncCapacity(int val) { asyncCapacity = val; return this; }
+        public Builder asyncMaxRetries(int val) { asyncMaxRetries = val; return this; }
         public Builder inferenceThreads(int val) { inferenceThreads = val; return this; }
         public Builder batchInferenceSize(int val) { batchInferenceSize = val; return this; }
         public Builder minConfidenceThreshold(float val) { minConfidenceThreshold = val; return this; }

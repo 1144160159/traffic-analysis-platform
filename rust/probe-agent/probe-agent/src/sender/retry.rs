@@ -420,7 +420,9 @@ mod tests {
         assert_eq!(pending[0].1[0].flow_id, "flow-a");
         assert_eq!(pending[0].1[1].flow_id, "flow-b");
 
-        let full_error = cache.save(&batch).expect_err("full cache should reject new batches");
+        let full_error = cache
+            .save(&batch)
+            .expect_err("full cache should reject new batches");
         assert!(full_error.to_string().contains("Cache is full"));
 
         cache.remove(pending[0].0)?;

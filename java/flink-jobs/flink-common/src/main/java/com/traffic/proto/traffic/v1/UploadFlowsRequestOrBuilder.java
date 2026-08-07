@@ -11,7 +11,7 @@ public interface UploadFlowsRequestOrBuilder extends
   /**
    * <code>repeated .traffic.v1.FlowEvent events = 1 [json_name = "events"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.FlowEvent> 
+  java.util.List<com.traffic.proto.traffic.v1.FlowEvent>
       getEventsList();
   /**
    * <code>repeated .traffic.v1.FlowEvent events = 1 [json_name = "events"];</code>
@@ -24,7 +24,7 @@ public interface UploadFlowsRequestOrBuilder extends
   /**
    * <code>repeated .traffic.v1.FlowEvent events = 1 [json_name = "events"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.FlowEventOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.FlowEventOrBuilder>
       getEventsOrBuilderList();
   /**
    * <code>repeated .traffic.v1.FlowEvent events = 1 [json_name = "events"];</code>

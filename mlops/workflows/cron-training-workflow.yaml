@@ -329,15 +329,17 @@ spec:
           value: "{{workflow.name}}"
         - name: MINIO_ENDPOINT
           value: "minio:9000"
+        - name: MINIO_SECURE
+          value: "false"
         - name: MINIO_ACCESS_KEY
           valueFrom:
             secretKeyRef:
-              name: minio-secret
+              name: minio-mlops-model-writer-credentials
               key: accesskey
         - name: MINIO_SECRET_KEY
           valueFrom:
             secretKeyRef:
-              name: minio-secret
+              name: minio-mlops-model-writer-credentials
               key: secretkey
         - name: MINIO_BUCKET
           value: "traffic-models"

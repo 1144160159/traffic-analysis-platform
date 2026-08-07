@@ -1,0 +1,5 @@
+FROM docker.io/opensearchproject/opensearch@sha256:61846553903d59d51914afbc31eae4653111b585d7ca7b2a1da91c5e8b897b28
+
+# Snapshot credentials are never baked into this image. They must be injected
+# into the OpenSearch keystore from an approved external Secret at rollout.
+RUN /usr/share/opensearch/bin/opensearch-plugin install --batch repository-s3

@@ -17,6 +17,9 @@ private static final long serialVersionUID = 0L;
     super(builder);
   }
   private HeartbeatResponse() {
+    operationCommands_ = java.util.Collections.emptyList();
+    acceptedAckOperationIds_ =
+        com.google.protobuf.LazyStringArrayList.emptyList();
   }
 
   @java.lang.Override
@@ -77,6 +80,134 @@ private static final long serialVersionUID = 0L;
     return config_ == null ? com.traffic.proto.traffic.v1.ProbeConfig.getDefaultInstance() : config_;
   }
 
+  public static final int OPERATION_COMMANDS_FIELD_NUMBER = 3;
+  @SuppressWarnings("serial")
+  private java.util.List<com.traffic.proto.traffic.v1.ProbeOperationCommand> operationCommands_;
+  /**
+   * <pre>
+   * Commands are selected by the Gateway after authenticating tenant_id and
+   * probe_id. The Agent still validates both identities, expiry, revision and
+   * the deterministic command hash before execution.
+   * </pre>
+   *
+   * <code>repeated .traffic.v1.ProbeOperationCommand operation_commands = 3 [json_name = "operationCommands"];</code>
+   */
+  @java.lang.Override
+  public java.util.List<com.traffic.proto.traffic.v1.ProbeOperationCommand> getOperationCommandsList() {
+    return operationCommands_;
+  }
+  /**
+   * <pre>
+   * Commands are selected by the Gateway after authenticating tenant_id and
+   * probe_id. The Agent still validates both identities, expiry, revision and
+   * the deterministic command hash before execution.
+   * </pre>
+   *
+   * <code>repeated .traffic.v1.ProbeOperationCommand operation_commands = 3 [json_name = "operationCommands"];</code>
+   */
+  @java.lang.Override
+  public java.util.List<? extends com.traffic.proto.traffic.v1.ProbeOperationCommandOrBuilder>
+      getOperationCommandsOrBuilderList() {
+    return operationCommands_;
+  }
+  /**
+   * <pre>
+   * Commands are selected by the Gateway after authenticating tenant_id and
+   * probe_id. The Agent still validates both identities, expiry, revision and
+   * the deterministic command hash before execution.
+   * </pre>
+   *
+   * <code>repeated .traffic.v1.ProbeOperationCommand operation_commands = 3 [json_name = "operationCommands"];</code>
+   */
+  @java.lang.Override
+  public int getOperationCommandsCount() {
+    return operationCommands_.size();
+  }
+  /**
+   * <pre>
+   * Commands are selected by the Gateway after authenticating tenant_id and
+   * probe_id. The Agent still validates both identities, expiry, revision and
+   * the deterministic command hash before execution.
+   * </pre>
+   *
+   * <code>repeated .traffic.v1.ProbeOperationCommand operation_commands = 3 [json_name = "operationCommands"];</code>
+   */
+  @java.lang.Override
+  public com.traffic.proto.traffic.v1.ProbeOperationCommand getOperationCommands(int index) {
+    return operationCommands_.get(index);
+  }
+  /**
+   * <pre>
+   * Commands are selected by the Gateway after authenticating tenant_id and
+   * probe_id. The Agent still validates both identities, expiry, revision and
+   * the deterministic command hash before execution.
+   * </pre>
+   *
+   * <code>repeated .traffic.v1.ProbeOperationCommand operation_commands = 3 [json_name = "operationCommands"];</code>
+   */
+  @java.lang.Override
+  public com.traffic.proto.traffic.v1.ProbeOperationCommandOrBuilder getOperationCommandsOrBuilder(
+      int index) {
+    return operationCommands_.get(index);
+  }
+
+  public static final int ACCEPTED_ACK_OPERATION_IDS_FIELD_NUMBER = 4;
+  @SuppressWarnings("serial")
+  private com.google.protobuf.LazyStringArrayList acceptedAckOperationIds_ =
+      com.google.protobuf.LazyStringArrayList.emptyList();
+  /**
+   * <pre>
+   * The Agent removes a locally persisted ACK only when its operation_id is
+   * returned here. An empty list is not an acknowledgement.
+   * </pre>
+   *
+   * <code>repeated string accepted_ack_operation_ids = 4 [json_name = "acceptedAckOperationIds"];</code>
+   * @return A list containing the acceptedAckOperationIds.
+   */
+  public com.google.protobuf.ProtocolStringList
+      getAcceptedAckOperationIdsList() {
+    return acceptedAckOperationIds_;
+  }
+  /**
+   * <pre>
+   * The Agent removes a locally persisted ACK only when its operation_id is
+   * returned here. An empty list is not an acknowledgement.
+   * </pre>
+   *
+   * <code>repeated string accepted_ack_operation_ids = 4 [json_name = "acceptedAckOperationIds"];</code>
+   * @return The count of acceptedAckOperationIds.
+   */
+  public int getAcceptedAckOperationIdsCount() {
+    return acceptedAckOperationIds_.size();
+  }
+  /**
+   * <pre>
+   * The Agent removes a locally persisted ACK only when its operation_id is
+   * returned here. An empty list is not an acknowledgement.
+   * </pre>
+   *
+   * <code>repeated string accepted_ack_operation_ids = 4 [json_name = "acceptedAckOperationIds"];</code>
+   * @param index The index of the element to return.
+   * @return The acceptedAckOperationIds at the given index.
+   */
+  public java.lang.String getAcceptedAckOperationIds(int index) {
+    return acceptedAckOperationIds_.get(index);
+  }
+  /**
+   * <pre>
+   * The Agent removes a locally persisted ACK only when its operation_id is
+   * returned here. An empty list is not an acknowledgement.
+   * </pre>
+   *
+   * <code>repeated string accepted_ack_operation_ids = 4 [json_name = "acceptedAckOperationIds"];</code>
+   * @param index The index of the value to return.
+   * @return The bytes of the acceptedAckOperationIds at the given index.
+   */
+  public com.google.protobuf.ByteString
+      getAcceptedAckOperationIdsBytes(int index) {
+    return acceptedAckOperationIds_.getByteString(index);
+  }
+
   private byte memoizedIsInitialized = -1;
   @java.lang.Override
   public final boolean isInitialized() {
@@ -97,6 +228,12 @@ private static final long serialVersionUID = 0L;
     if (((bitField0_ & 0x00000001) != 0)) {
       output.writeMessage(2, getConfig());
     }
+    for (int i = 0; i < operationCommands_.size(); i++) {
+      output.writeMessage(3, operationCommands_.get(i));
+    }
+    for (int i = 0; i < acceptedAckOperationIds_.size(); i++) {
+      com.google.protobuf.GeneratedMessageV3.writeString(output, 4, acceptedAckOperationIds_.getRaw(i));
+    }
     getUnknownFields().writeTo(output);
   }
 
@@ -113,6 +250,18 @@ private static final long serialVersionUID = 0L;
     if (((bitField0_ & 0x00000001) != 0)) {
       size += com.google.protobuf.CodedOutputStream
         .computeMessageSize(2, getConfig());
+    }
+    for (int i = 0; i < operationCommands_.size(); i++) {
+      size += com.google.protobuf.CodedOutputStream
+        .computeMessageSize(3, operationCommands_.get(i));
+    }
+    {
+      int dataSize = 0;
+      for (int i = 0; i < acceptedAckOperationIds_.size(); i++) {
+        dataSize += computeStringSizeNoTag(acceptedAckOperationIds_.getRaw(i));
+      }
+      size += dataSize;
+      size += 1 * getAcceptedAckOperationIdsList().size();
     }
     size += getUnknownFields().getSerializedSize();
     memoizedSize = size;
@@ -136,6 +285,10 @@ private static final long serialVersionUID = 0L;
       if (!getConfig()
           .equals(other.getConfig())) return false;
     }
+    if (!getOperationCommandsList()
+        .equals(other.getOperationCommandsList())) return false;
+    if (!getAcceptedAckOperationIdsList()
+        .equals(other.getAcceptedAckOperationIdsList())) return false;
     if (!getUnknownFields().equals(other.getUnknownFields())) return false;
     return true;
   }
@@ -153,6 +306,14 @@ private static final long serialVersionUID = 0L;
     if (hasConfig()) {
       hash = (37 * hash) + CONFIG_FIELD_NUMBER;
       hash = (53 * hash) + getConfig().hashCode();
+    }
+    if (getOperationCommandsCount() > 0) {
+      hash = (37 * hash) + OPERATION_COMMANDS_FIELD_NUMBER;
+      hash = (53 * hash) + getOperationCommandsList().hashCode();
+    }
+    if (getAcceptedAckOperationIdsCount() > 0) {
+      hash = (37 * hash) + ACCEPTED_ACK_OPERATION_IDS_FIELD_NUMBER;
+      hash = (53 * hash) + getAcceptedAckOperationIdsList().hashCode();
     }
     hash = (29 * hash) + getUnknownFields().hashCode();
     memoizedHashCode = hash;
@@ -285,6 +446,7 @@ private static final long serialVersionUID = 0L;
       if (com.google.protobuf.GeneratedMessageV3
               .alwaysUseFieldBuilders) {
         getConfigFieldBuilder();
+        getOperationCommandsFieldBuilder();
       }
     }
     @java.lang.Override
@@ -297,6 +459,15 @@ private static final long serialVersionUID = 0L;
         configBuilder_.dispose();
         configBuilder_ = null;
       }
+      if (operationCommandsBuilder_ == null) {
+        operationCommands_ = java.util.Collections.emptyList();
+      } else {
+        operationCommands_ = null;
+        operationCommandsBuilder_.clear();
+      }
+      bitField0_ = (bitField0_ & ~0x00000004);
+      acceptedAckOperationIds_ =
+          com.google.protobuf.LazyStringArrayList.emptyList();
       return this;
     }
 
@@ -323,9 +494,22 @@ private static final long serialVersionUID = 0L;
     @java.lang.Override
     public com.traffic.proto.traffic.v1.HeartbeatResponse buildPartial() {
       com.traffic.proto.traffic.v1.HeartbeatResponse result = new com.traffic.proto.traffic.v1.HeartbeatResponse(this);
+      buildPartialRepeatedFields(result);
       if (bitField0_ != 0) { buildPartial0(result); }
       onBuilt();
       return result;
+    }
+
+    private void buildPartialRepeatedFields(com.traffic.proto.traffic.v1.HeartbeatResponse result) {
+      if (operationCommandsBuilder_ == null) {
+        if (((bitField0_ & 0x00000004) != 0)) {
+          operationCommands_ = java.util.Collections.unmodifiableList(operationCommands_);
+          bitField0_ = (bitField0_ & ~0x00000004);
+        }
+        result.operationCommands_ = operationCommands_;
+      } else {
+        result.operationCommands_ = operationCommandsBuilder_.build();
+      }
     }
 
     private void buildPartial0(com.traffic.proto.traffic.v1.HeartbeatResponse result) {
@@ -339,6 +523,10 @@ private static final long serialVersionUID = 0L;
             ? config_
             : configBuilder_.build();
         to_bitField0_ |= 0x00000001;
+      }
+      if (((from_bitField0_ & 0x00000008) != 0)) {
+        acceptedAckOperationIds_.makeImmutable();
+        result.acceptedAckOperationIds_ = acceptedAckOperationIds_;
       }
       result.bitField0_ |= to_bitField0_;
     }
@@ -393,6 +581,42 @@ private static final long serialVersionUID = 0L;
       if (other.hasConfig()) {
         mergeConfig(other.getConfig());
       }
+      if (operationCommandsBuilder_ == null) {
+        if (!other.operationCommands_.isEmpty()) {
+          if (operationCommands_.isEmpty()) {
+            operationCommands_ = other.operationCommands_;
+            bitField0_ = (bitField0_ & ~0x00000004);
+          } else {
+            ensureOperationCommandsIsMutable();
+            operationCommands_.addAll(other.operationCommands_);
+          }
+          onChanged();
+        }
+      } else {
+        if (!other.operationCommands_.isEmpty()) {
+          if (operationCommandsBuilder_.isEmpty()) {
+            operationCommandsBuilder_.dispose();
+            operationCommandsBuilder_ = null;
+            operationCommands_ = other.operationCommands_;
+            bitField0_ = (bitField0_ & ~0x00000004);
+            operationCommandsBuilder_ =
+              com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+                 getOperationCommandsFieldBuilder() : null;
+          } else {
+            operationCommandsBuilder_.addAllMessages(other.operationCommands_);
+          }
+        }
+      }
+      if (!other.acceptedAckOperationIds_.isEmpty()) {
+        if (acceptedAckOperationIds_.isEmpty()) {
+          acceptedAckOperationIds_ = other.acceptedAckOperationIds_;
+          bitField0_ |= 0x00000008;
+        } else {
+          ensureAcceptedAckOperationIdsIsMutable();
+          acceptedAckOperationIds_.addAll(other.acceptedAckOperationIds_);
+        }
+        onChanged();
+      }
       this.mergeUnknownFields(other.getUnknownFields());
       onChanged();
       return this;
@@ -431,6 +655,25 @@ private static final long serialVersionUID = 0L;
               bitField0_ |= 0x00000002;
               break;
             } // case 18
+            case 26: {
+              com.traffic.proto.traffic.v1.ProbeOperationCommand m =
+                  input.readMessage(
+                      com.traffic.proto.traffic.v1.ProbeOperationCommand.parser(),
+                      extensionRegistry);
+              if (operationCommandsBuilder_ == null) {
+                ensureOperationCommandsIsMutable();
+                operationCommands_.add(m);
+              } else {
+                operationCommandsBuilder_.addMessage(m);
+              }
+              break;
+            } // case 26
+            case 34: {
+              java.lang.String s = input.readStringRequireUtf8();
+              ensureAcceptedAckOperationIdsIsMutable();
+              acceptedAckOperationIds_.add(s);
+              break;
+            } // case 34
             default: {
               if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                 done = true; // was an endgroup tag
@@ -588,7 +831,7 @@ private static final long serialVersionUID = 0L;
      * <code>.traffic.v1.ProbeConfig config = 2 [json_name = "config"];</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
-        com.traffic.proto.traffic.v1.ProbeConfig, com.traffic.proto.traffic.v1.ProbeConfig.Builder, com.traffic.proto.traffic.v1.ProbeConfigOrBuilder> 
+        com.traffic.proto.traffic.v1.ProbeConfig, com.traffic.proto.traffic.v1.ProbeConfig.Builder, com.traffic.proto.traffic.v1.ProbeConfigOrBuilder>
         getConfigFieldBuilder() {
       if (configBuilder_ == null) {
         configBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -599,6 +842,510 @@ private static final long serialVersionUID = 0L;
         config_ = null;
       }
       return configBuilder_;
+    }
+
+    private java.util.List<com.traffic.proto.traffic.v1.ProbeOperationCommand> operationCommands_ =
+      java.util.Collections.emptyList();
+    private void ensureOperationCommandsIsMutable() {
+      if (!((bitField0_ & 0x00000004) != 0)) {
+        operationCommands_ = new java.util.ArrayList<com.traffic.proto.traffic.v1.ProbeOperationCommand>(operationCommands_);
+        bitField0_ |= 0x00000004;
+       }
+    }
+
+    private com.google.protobuf.RepeatedFieldBuilderV3<
+        com.traffic.proto.traffic.v1.ProbeOperationCommand, com.traffic.proto.traffic.v1.ProbeOperationCommand.Builder, com.traffic.proto.traffic.v1.ProbeOperationCommandOrBuilder> operationCommandsBuilder_;
+
+    /**
+     * <pre>
+     * Commands are selected by the Gateway after authenticating tenant_id and
+     * probe_id. The Agent still validates both identities, expiry, revision and
+     * the deterministic command hash before execution.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationCommand operation_commands = 3 [json_name = "operationCommands"];</code>
+     */
+    public java.util.List<com.traffic.proto.traffic.v1.ProbeOperationCommand> getOperationCommandsList() {
+      if (operationCommandsBuilder_ == null) {
+        return java.util.Collections.unmodifiableList(operationCommands_);
+      } else {
+        return operationCommandsBuilder_.getMessageList();
+      }
+    }
+    /**
+     * <pre>
+     * Commands are selected by the Gateway after authenticating tenant_id and
+     * probe_id. The Agent still validates both identities, expiry, revision and
+     * the deterministic command hash before execution.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationCommand operation_commands = 3 [json_name = "operationCommands"];</code>
+     */
+    public int getOperationCommandsCount() {
+      if (operationCommandsBuilder_ == null) {
+        return operationCommands_.size();
+      } else {
+        return operationCommandsBuilder_.getCount();
+      }
+    }
+    /**
+     * <pre>
+     * Commands are selected by the Gateway after authenticating tenant_id and
+     * probe_id. The Agent still validates both identities, expiry, revision and
+     * the deterministic command hash before execution.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationCommand operation_commands = 3 [json_name = "operationCommands"];</code>
+     */
+    public com.traffic.proto.traffic.v1.ProbeOperationCommand getOperationCommands(int index) {
+      if (operationCommandsBuilder_ == null) {
+        return operationCommands_.get(index);
+      } else {
+        return operationCommandsBuilder_.getMessage(index);
+      }
+    }
+    /**
+     * <pre>
+     * Commands are selected by the Gateway after authenticating tenant_id and
+     * probe_id. The Agent still validates both identities, expiry, revision and
+     * the deterministic command hash before execution.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationCommand operation_commands = 3 [json_name = "operationCommands"];</code>
+     */
+    public Builder setOperationCommands(
+        int index, com.traffic.proto.traffic.v1.ProbeOperationCommand value) {
+      if (operationCommandsBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureOperationCommandsIsMutable();
+        operationCommands_.set(index, value);
+        onChanged();
+      } else {
+        operationCommandsBuilder_.setMessage(index, value);
+      }
+      return this;
+    }
+    /**
+     * <pre>
+     * Commands are selected by the Gateway after authenticating tenant_id and
+     * probe_id. The Agent still validates both identities, expiry, revision and
+     * the deterministic command hash before execution.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationCommand operation_commands = 3 [json_name = "operationCommands"];</code>
+     */
+    public Builder setOperationCommands(
+        int index, com.traffic.proto.traffic.v1.ProbeOperationCommand.Builder builderForValue) {
+      if (operationCommandsBuilder_ == null) {
+        ensureOperationCommandsIsMutable();
+        operationCommands_.set(index, builderForValue.build());
+        onChanged();
+      } else {
+        operationCommandsBuilder_.setMessage(index, builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <pre>
+     * Commands are selected by the Gateway after authenticating tenant_id and
+     * probe_id. The Agent still validates both identities, expiry, revision and
+     * the deterministic command hash before execution.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationCommand operation_commands = 3 [json_name = "operationCommands"];</code>
+     */
+    public Builder addOperationCommands(com.traffic.proto.traffic.v1.ProbeOperationCommand value) {
+      if (operationCommandsBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureOperationCommandsIsMutable();
+        operationCommands_.add(value);
+        onChanged();
+      } else {
+        operationCommandsBuilder_.addMessage(value);
+      }
+      return this;
+    }
+    /**
+     * <pre>
+     * Commands are selected by the Gateway after authenticating tenant_id and
+     * probe_id. The Agent still validates both identities, expiry, revision and
+     * the deterministic command hash before execution.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationCommand operation_commands = 3 [json_name = "operationCommands"];</code>
+     */
+    public Builder addOperationCommands(
+        int index, com.traffic.proto.traffic.v1.ProbeOperationCommand value) {
+      if (operationCommandsBuilder_ == null) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        ensureOperationCommandsIsMutable();
+        operationCommands_.add(index, value);
+        onChanged();
+      } else {
+        operationCommandsBuilder_.addMessage(index, value);
+      }
+      return this;
+    }
+    /**
+     * <pre>
+     * Commands are selected by the Gateway after authenticating tenant_id and
+     * probe_id. The Agent still validates both identities, expiry, revision and
+     * the deterministic command hash before execution.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationCommand operation_commands = 3 [json_name = "operationCommands"];</code>
+     */
+    public Builder addOperationCommands(
+        com.traffic.proto.traffic.v1.ProbeOperationCommand.Builder builderForValue) {
+      if (operationCommandsBuilder_ == null) {
+        ensureOperationCommandsIsMutable();
+        operationCommands_.add(builderForValue.build());
+        onChanged();
+      } else {
+        operationCommandsBuilder_.addMessage(builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <pre>
+     * Commands are selected by the Gateway after authenticating tenant_id and
+     * probe_id. The Agent still validates both identities, expiry, revision and
+     * the deterministic command hash before execution.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationCommand operation_commands = 3 [json_name = "operationCommands"];</code>
+     */
+    public Builder addOperationCommands(
+        int index, com.traffic.proto.traffic.v1.ProbeOperationCommand.Builder builderForValue) {
+      if (operationCommandsBuilder_ == null) {
+        ensureOperationCommandsIsMutable();
+        operationCommands_.add(index, builderForValue.build());
+        onChanged();
+      } else {
+        operationCommandsBuilder_.addMessage(index, builderForValue.build());
+      }
+      return this;
+    }
+    /**
+     * <pre>
+     * Commands are selected by the Gateway after authenticating tenant_id and
+     * probe_id. The Agent still validates both identities, expiry, revision and
+     * the deterministic command hash before execution.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationCommand operation_commands = 3 [json_name = "operationCommands"];</code>
+     */
+    public Builder addAllOperationCommands(
+        java.lang.Iterable<? extends com.traffic.proto.traffic.v1.ProbeOperationCommand> values) {
+      if (operationCommandsBuilder_ == null) {
+        ensureOperationCommandsIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, operationCommands_);
+        onChanged();
+      } else {
+        operationCommandsBuilder_.addAllMessages(values);
+      }
+      return this;
+    }
+    /**
+     * <pre>
+     * Commands are selected by the Gateway after authenticating tenant_id and
+     * probe_id. The Agent still validates both identities, expiry, revision and
+     * the deterministic command hash before execution.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationCommand operation_commands = 3 [json_name = "operationCommands"];</code>
+     */
+    public Builder clearOperationCommands() {
+      if (operationCommandsBuilder_ == null) {
+        operationCommands_ = java.util.Collections.emptyList();
+        bitField0_ = (bitField0_ & ~0x00000004);
+        onChanged();
+      } else {
+        operationCommandsBuilder_.clear();
+      }
+      return this;
+    }
+    /**
+     * <pre>
+     * Commands are selected by the Gateway after authenticating tenant_id and
+     * probe_id. The Agent still validates both identities, expiry, revision and
+     * the deterministic command hash before execution.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationCommand operation_commands = 3 [json_name = "operationCommands"];</code>
+     */
+    public Builder removeOperationCommands(int index) {
+      if (operationCommandsBuilder_ == null) {
+        ensureOperationCommandsIsMutable();
+        operationCommands_.remove(index);
+        onChanged();
+      } else {
+        operationCommandsBuilder_.remove(index);
+      }
+      return this;
+    }
+    /**
+     * <pre>
+     * Commands are selected by the Gateway after authenticating tenant_id and
+     * probe_id. The Agent still validates both identities, expiry, revision and
+     * the deterministic command hash before execution.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationCommand operation_commands = 3 [json_name = "operationCommands"];</code>
+     */
+    public com.traffic.proto.traffic.v1.ProbeOperationCommand.Builder getOperationCommandsBuilder(
+        int index) {
+      return getOperationCommandsFieldBuilder().getBuilder(index);
+    }
+    /**
+     * <pre>
+     * Commands are selected by the Gateway after authenticating tenant_id and
+     * probe_id. The Agent still validates both identities, expiry, revision and
+     * the deterministic command hash before execution.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationCommand operation_commands = 3 [json_name = "operationCommands"];</code>
+     */
+    public com.traffic.proto.traffic.v1.ProbeOperationCommandOrBuilder getOperationCommandsOrBuilder(
+        int index) {
+      if (operationCommandsBuilder_ == null) {
+        return operationCommands_.get(index);  } else {
+        return operationCommandsBuilder_.getMessageOrBuilder(index);
+      }
+    }
+    /**
+     * <pre>
+     * Commands are selected by the Gateway after authenticating tenant_id and
+     * probe_id. The Agent still validates both identities, expiry, revision and
+     * the deterministic command hash before execution.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationCommand operation_commands = 3 [json_name = "operationCommands"];</code>
+     */
+    public java.util.List<? extends com.traffic.proto.traffic.v1.ProbeOperationCommandOrBuilder>
+         getOperationCommandsOrBuilderList() {
+      if (operationCommandsBuilder_ != null) {
+        return operationCommandsBuilder_.getMessageOrBuilderList();
+      } else {
+        return java.util.Collections.unmodifiableList(operationCommands_);
+      }
+    }
+    /**
+     * <pre>
+     * Commands are selected by the Gateway after authenticating tenant_id and
+     * probe_id. The Agent still validates both identities, expiry, revision and
+     * the deterministic command hash before execution.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationCommand operation_commands = 3 [json_name = "operationCommands"];</code>
+     */
+    public com.traffic.proto.traffic.v1.ProbeOperationCommand.Builder addOperationCommandsBuilder() {
+      return getOperationCommandsFieldBuilder().addBuilder(
+          com.traffic.proto.traffic.v1.ProbeOperationCommand.getDefaultInstance());
+    }
+    /**
+     * <pre>
+     * Commands are selected by the Gateway after authenticating tenant_id and
+     * probe_id. The Agent still validates both identities, expiry, revision and
+     * the deterministic command hash before execution.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationCommand operation_commands = 3 [json_name = "operationCommands"];</code>
+     */
+    public com.traffic.proto.traffic.v1.ProbeOperationCommand.Builder addOperationCommandsBuilder(
+        int index) {
+      return getOperationCommandsFieldBuilder().addBuilder(
+          index, com.traffic.proto.traffic.v1.ProbeOperationCommand.getDefaultInstance());
+    }
+    /**
+     * <pre>
+     * Commands are selected by the Gateway after authenticating tenant_id and
+     * probe_id. The Agent still validates both identities, expiry, revision and
+     * the deterministic command hash before execution.
+     * </pre>
+     *
+     * <code>repeated .traffic.v1.ProbeOperationCommand operation_commands = 3 [json_name = "operationCommands"];</code>
+     */
+    public java.util.List<com.traffic.proto.traffic.v1.ProbeOperationCommand.Builder>
+         getOperationCommandsBuilderList() {
+      return getOperationCommandsFieldBuilder().getBuilderList();
+    }
+    private com.google.protobuf.RepeatedFieldBuilderV3<
+        com.traffic.proto.traffic.v1.ProbeOperationCommand, com.traffic.proto.traffic.v1.ProbeOperationCommand.Builder, com.traffic.proto.traffic.v1.ProbeOperationCommandOrBuilder>
+        getOperationCommandsFieldBuilder() {
+      if (operationCommandsBuilder_ == null) {
+        operationCommandsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
+            com.traffic.proto.traffic.v1.ProbeOperationCommand, com.traffic.proto.traffic.v1.ProbeOperationCommand.Builder, com.traffic.proto.traffic.v1.ProbeOperationCommandOrBuilder>(
+                operationCommands_,
+                ((bitField0_ & 0x00000004) != 0),
+                getParentForChildren(),
+                isClean());
+        operationCommands_ = null;
+      }
+      return operationCommandsBuilder_;
+    }
+
+    private com.google.protobuf.LazyStringArrayList acceptedAckOperationIds_ =
+        com.google.protobuf.LazyStringArrayList.emptyList();
+    private void ensureAcceptedAckOperationIdsIsMutable() {
+      if (!acceptedAckOperationIds_.isModifiable()) {
+        acceptedAckOperationIds_ = new com.google.protobuf.LazyStringArrayList(acceptedAckOperationIds_);
+      }
+      bitField0_ |= 0x00000008;
+    }
+    /**
+     * <pre>
+     * The Agent removes a locally persisted ACK only when its operation_id is
+     * returned here. An empty list is not an acknowledgement.
+     * </pre>
+     *
+     * <code>repeated string accepted_ack_operation_ids = 4 [json_name = "acceptedAckOperationIds"];</code>
+     * @return A list containing the acceptedAckOperationIds.
+     */
+    public com.google.protobuf.ProtocolStringList
+        getAcceptedAckOperationIdsList() {
+      acceptedAckOperationIds_.makeImmutable();
+      return acceptedAckOperationIds_;
+    }
+    /**
+     * <pre>
+     * The Agent removes a locally persisted ACK only when its operation_id is
+     * returned here. An empty list is not an acknowledgement.
+     * </pre>
+     *
+     * <code>repeated string accepted_ack_operation_ids = 4 [json_name = "acceptedAckOperationIds"];</code>
+     * @return The count of acceptedAckOperationIds.
+     */
+    public int getAcceptedAckOperationIdsCount() {
+      return acceptedAckOperationIds_.size();
+    }
+    /**
+     * <pre>
+     * The Agent removes a locally persisted ACK only when its operation_id is
+     * returned here. An empty list is not an acknowledgement.
+     * </pre>
+     *
+     * <code>repeated string accepted_ack_operation_ids = 4 [json_name = "acceptedAckOperationIds"];</code>
+     * @param index The index of the element to return.
+     * @return The acceptedAckOperationIds at the given index.
+     */
+    public java.lang.String getAcceptedAckOperationIds(int index) {
+      return acceptedAckOperationIds_.get(index);
+    }
+    /**
+     * <pre>
+     * The Agent removes a locally persisted ACK only when its operation_id is
+     * returned here. An empty list is not an acknowledgement.
+     * </pre>
+     *
+     * <code>repeated string accepted_ack_operation_ids = 4 [json_name = "acceptedAckOperationIds"];</code>
+     * @param index The index of the value to return.
+     * @return The bytes of the acceptedAckOperationIds at the given index.
+     */
+    public com.google.protobuf.ByteString
+        getAcceptedAckOperationIdsBytes(int index) {
+      return acceptedAckOperationIds_.getByteString(index);
+    }
+    /**
+     * <pre>
+     * The Agent removes a locally persisted ACK only when its operation_id is
+     * returned here. An empty list is not an acknowledgement.
+     * </pre>
+     *
+     * <code>repeated string accepted_ack_operation_ids = 4 [json_name = "acceptedAckOperationIds"];</code>
+     * @param index The index to set the value at.
+     * @param value The acceptedAckOperationIds to set.
+     * @return This builder for chaining.
+     */
+    public Builder setAcceptedAckOperationIds(
+        int index, java.lang.String value) {
+      if (value == null) { throw new NullPointerException(); }
+      ensureAcceptedAckOperationIdsIsMutable();
+      acceptedAckOperationIds_.set(index, value);
+      bitField0_ |= 0x00000008;
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * The Agent removes a locally persisted ACK only when its operation_id is
+     * returned here. An empty list is not an acknowledgement.
+     * </pre>
+     *
+     * <code>repeated string accepted_ack_operation_ids = 4 [json_name = "acceptedAckOperationIds"];</code>
+     * @param value The acceptedAckOperationIds to add.
+     * @return This builder for chaining.
+     */
+    public Builder addAcceptedAckOperationIds(
+        java.lang.String value) {
+      if (value == null) { throw new NullPointerException(); }
+      ensureAcceptedAckOperationIdsIsMutable();
+      acceptedAckOperationIds_.add(value);
+      bitField0_ |= 0x00000008;
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * The Agent removes a locally persisted ACK only when its operation_id is
+     * returned here. An empty list is not an acknowledgement.
+     * </pre>
+     *
+     * <code>repeated string accepted_ack_operation_ids = 4 [json_name = "acceptedAckOperationIds"];</code>
+     * @param values The acceptedAckOperationIds to add.
+     * @return This builder for chaining.
+     */
+    public Builder addAllAcceptedAckOperationIds(
+        java.lang.Iterable<java.lang.String> values) {
+      ensureAcceptedAckOperationIdsIsMutable();
+      com.google.protobuf.AbstractMessageLite.Builder.addAll(
+          values, acceptedAckOperationIds_);
+      bitField0_ |= 0x00000008;
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * The Agent removes a locally persisted ACK only when its operation_id is
+     * returned here. An empty list is not an acknowledgement.
+     * </pre>
+     *
+     * <code>repeated string accepted_ack_operation_ids = 4 [json_name = "acceptedAckOperationIds"];</code>
+     * @return This builder for chaining.
+     */
+    public Builder clearAcceptedAckOperationIds() {
+      acceptedAckOperationIds_ =
+        com.google.protobuf.LazyStringArrayList.emptyList();
+      bitField0_ = (bitField0_ & ~0x00000008);;
+      onChanged();
+      return this;
+    }
+    /**
+     * <pre>
+     * The Agent removes a locally persisted ACK only when its operation_id is
+     * returned here. An empty list is not an acknowledgement.
+     * </pre>
+     *
+     * <code>repeated string accepted_ack_operation_ids = 4 [json_name = "acceptedAckOperationIds"];</code>
+     * @param value The bytes of the acceptedAckOperationIds to add.
+     * @return This builder for chaining.
+     */
+    public Builder addAcceptedAckOperationIdsBytes(
+        com.google.protobuf.ByteString value) {
+      if (value == null) { throw new NullPointerException(); }
+      checkByteStringIsUtf8(value);
+      ensureAcceptedAckOperationIdsIsMutable();
+      acceptedAckOperationIds_.add(value);
+      bitField0_ |= 0x00000008;
+      onChanged();
+      return this;
     }
     @java.lang.Override
     public final Builder setUnknownFields(

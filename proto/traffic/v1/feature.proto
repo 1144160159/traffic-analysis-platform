@@ -36,6 +36,9 @@ message FeatureStat {
   uint32 tcp_init_win_bytes_fwd = 20;
   uint32 tcp_init_win_bytes_bwd = 21;
   repeated float extra = 22;
+  // Original session context required by downstream detections and evidence.
+  FiveTuple tuple = 23;
+  repeated string evidence_ids = 24;
 }
 
 // FeatureSeq L2 序列特征

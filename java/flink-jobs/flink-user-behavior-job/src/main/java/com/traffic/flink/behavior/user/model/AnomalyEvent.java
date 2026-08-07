@@ -1,8 +1,8 @@
 package com.traffic.flink.behavior.user.model;
 
+import com.traffic.flink.common.DeterministicId;
+
 import java.io.Serializable;
-import java.time.Instant;
-import java.util.UUID;
 
 /** User behavior anomaly event — output of all detectors */
 public class AnomalyEvent implements Serializable {
@@ -22,12 +22,21 @@ public class AnomalyEvent implements Serializable {
     public String sourceIp2;     // for travel detector: IP1→IP2
     public String location1;
     public String location2;
+    public long eventVersion = 1L;
+    public String replayId = "";
 
     public AnomalyEvent() {}
 
     public AnomalyEvent(String tenantId, String userId, String username, String detectorType,
-                        String severity, float score, String description) {
-        this.anomalyId = UUID.randomUUID().toString();
+                        String severity, float score, String description,
+                        long detectedAt, String... sourceEventIds) {
+        this.anomalyId = DeterministicId.uuidFromSorted(
+                "flink-user-anomaly/v1",
+                java.util.Arrays.asList(sourceEventIds),
+                tenantId,
+                userId,
+                detectorType,
+                detectedAt);
         this.tenantId = tenantId;
         this.userId = userId;
         this.username = username;
@@ -35,17 +44,18 @@ public class AnomalyEvent implements Serializable {
         this.severity = severity;
         this.score = score;
         this.description = description;
-        this.detectedAt = System.currentTimeMillis();
+        this.detectedAt = detectedAt;
     }
 
     public String toJSON() {
         return String.format("{\"anomaly_id\":\"%s\",\"tenant_id\":\"%s\",\"user_id\":\"%s\",\"username\":\"%s\"," +
                 "\"detector_type\":\"%s\",\"severity\":\"%s\",\"score\":%.2f,\"description\":\"%s\"," +
-                "\"detail\":%s,\"source_ip1\":\"%s\",\"source_ip2\":\"%s\",\"detected_at\":%d}",
+                "\"detail\":%s,\"source_ip1\":\"%s\",\"source_ip2\":\"%s\",\"detected_at\":%d," +
+                "\"event_version\":%d,\"replay_id\":\"%s\"}",
                 anomalyId, tenantId, userId, username, detectorType, severity, score,
                 escapeJSON(description), detailJson != null ? detailJson : "{}",
                 sourceIp1 != null ? sourceIp1 : "", sourceIp2 != null ? sourceIp2 : "",
-                detectedAt);
+                detectedAt, eventVersion, replayId != null ? replayId : "");
     }
 
     private static String escapeJSON(String s) {

@@ -17,17 +17,17 @@ public final class CampaignProto {
   }
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_CampaignBatch_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_CampaignBatch_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_CampaignQuery_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_CampaignQuery_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_CampaignQueryResponse_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_CampaignQueryResponse_fieldAccessorTable;
 

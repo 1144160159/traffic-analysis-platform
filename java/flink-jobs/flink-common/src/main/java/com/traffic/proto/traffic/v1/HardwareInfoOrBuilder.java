@@ -47,7 +47,7 @@ public interface HardwareInfoOrBuilder extends
   /**
    * <code>repeated .traffic.v1.NIC nics = 5 [json_name = "nics"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.NIC> 
+  java.util.List<com.traffic.proto.traffic.v1.NIC>
       getNicsList();
   /**
    * <code>repeated .traffic.v1.NIC nics = 5 [json_name = "nics"];</code>
@@ -60,7 +60,7 @@ public interface HardwareInfoOrBuilder extends
   /**
    * <code>repeated .traffic.v1.NIC nics = 5 [json_name = "nics"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.NICOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.NICOrBuilder>
       getNicsOrBuilderList();
   /**
    * <code>repeated .traffic.v1.NIC nics = 5 [json_name = "nics"];</code>

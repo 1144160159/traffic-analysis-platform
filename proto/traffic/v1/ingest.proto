@@ -93,11 +93,54 @@ message HeartbeatRequest {
   string tenant_id = 1;
   string probe_id = 2;
   ProbeStatus status = 3;
+  // Final receipts are retried by the Agent until the authenticated Gateway
+  // durably accepts them. The Gateway must reject receipts whose tenant/probe
+  // identity differs from the authenticated context.
+  repeated ProbeOperationAck operation_acks = 4;
 }
 
 message HeartbeatResponse {
   bool ok = 1;
   ProbeConfig config = 2;
+  // Commands are selected by the Gateway after authenticating tenant_id and
+  // probe_id. The Agent still validates both identities, expiry, revision and
+  // the deterministic command hash before execution.
+  repeated ProbeOperationCommand operation_commands = 3;
+  // The Agent removes a locally persisted ACK only when its operation_id is
+  // returned here. An empty list is not an acknowledgement.
+  repeated string accepted_ack_operation_ids = 4;
+}
+
+// ProbeOperationCommand is the edge-delivery representation of an accepted
+// traffic.probe.v2.OperationRequested event. Kafka remains the durable command
+// source; this message prevents exposing shared broker credentials to probes.
+message ProbeOperationCommand {
+  string event_id = 1;
+  string tenant_id = 2;
+  string probe_id = 3;
+  string operation_id = 4;
+  string operation_type = 5;
+  int64 command_revision = 6;
+  string desired_version = 7;
+  string command_hash = 8;
+  int64 expires_at_ms = 9;
+  string trace_id = 10;
+  bytes command_json = 11;
+}
+
+// ProbeOperationAck is produced only after the Agent has persisted the
+// operation result locally. applied=false is a real terminal failure, never a
+// transport acknowledgement or optimistic success.
+message ProbeOperationAck {
+  string operation_id = 1;
+  int64 command_revision = 2;
+  string reported_version = 3;
+  string reported_hash = 4;
+  string agent_version = 5;
+  bool applied = 6;
+  string error = 7;
+  int64 acknowledged_at_ms = 8;
+  bytes detail_json = 9;
 }
 
 // ==================== 探针注册 ====================

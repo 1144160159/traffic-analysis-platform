@@ -40,7 +40,8 @@ public class ImpossibleTravelDetector extends KeyedProcessFunction<String, UserE
                     AnomalyEvent anomaly = new AnomalyEvent(
                         event.getTenantId(), event.getUserId(), event.getUsername(),
                         "IMPOSSIBLE_TRAVEL", "high", 0.85f,
-                        String.format("Impossible travel: %s→%s in %ds", ip1, ip2, interval / 1000));
+                        String.format("Impossible travel: %s→%s in %ds", ip1, ip2, interval / 1000),
+                        event.getTimestamp(), last.getEventId(), event.getEventId());
                     anomaly.sourceIp1 = ip1; anomaly.sourceIp2 = ip2;
                     anomaly.detailJson = String.format("{\"from_ip\":\"%s\",\"to_ip\":\"%s\",\"interval_sec\":%d}", ip1, ip2, interval / 1000);
                     out.collect(anomaly);

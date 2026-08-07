@@ -55,7 +55,7 @@ private static final long serialVersionUID = 0L;
    * <code>repeated .traffic.v1.Asset assets = 1 [json_name = "assets"];</code>
    */
   @java.lang.Override
-  public java.util.List<? extends com.traffic.proto.traffic.v1.AssetOrBuilder> 
+  public java.util.List<? extends com.traffic.proto.traffic.v1.AssetOrBuilder>
       getAssetsOrBuilderList() {
     return assets_;
   }
@@ -95,7 +95,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       nextPageToken_ = s;
@@ -111,7 +111,7 @@ private static final long serialVersionUID = 0L;
       getNextPageTokenBytes() {
     java.lang.Object ref = nextPageToken_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       nextPageToken_ = b;
@@ -471,7 +471,7 @@ private static final long serialVersionUID = 0L;
             assetsBuilder_ = null;
             assets_ = other.assets_;
             bitField0_ = (bitField0_ & ~0x00000001);
-            assetsBuilder_ = 
+            assetsBuilder_ =
               com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
                  getAssetsFieldBuilder() : null;
           } else {
@@ -748,7 +748,7 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.Asset assets = 1 [json_name = "assets"];</code>
      */
-    public java.util.List<? extends com.traffic.proto.traffic.v1.AssetOrBuilder> 
+    public java.util.List<? extends com.traffic.proto.traffic.v1.AssetOrBuilder>
          getAssetsOrBuilderList() {
       if (assetsBuilder_ != null) {
         return assetsBuilder_.getMessageOrBuilderList();
@@ -774,12 +774,12 @@ private static final long serialVersionUID = 0L;
     /**
      * <code>repeated .traffic.v1.Asset assets = 1 [json_name = "assets"];</code>
      */
-    public java.util.List<com.traffic.proto.traffic.v1.Asset.Builder> 
+    public java.util.List<com.traffic.proto.traffic.v1.Asset.Builder>
          getAssetsBuilderList() {
       return getAssetsFieldBuilder().getBuilderList();
     }
     private com.google.protobuf.RepeatedFieldBuilderV3<
-        com.traffic.proto.traffic.v1.Asset, com.traffic.proto.traffic.v1.Asset.Builder, com.traffic.proto.traffic.v1.AssetOrBuilder> 
+        com.traffic.proto.traffic.v1.Asset, com.traffic.proto.traffic.v1.Asset.Builder, com.traffic.proto.traffic.v1.AssetOrBuilder>
         getAssetsFieldBuilder() {
       if (assetsBuilder_ == null) {
         assetsBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
@@ -818,7 +818,7 @@ private static final long serialVersionUID = 0L;
         getNextPageTokenBytes() {
       java.lang.Object ref = nextPageToken_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         nextPageToken_ = b;

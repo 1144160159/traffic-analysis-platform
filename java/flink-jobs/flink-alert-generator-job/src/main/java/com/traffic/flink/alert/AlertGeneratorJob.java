@@ -6,6 +6,7 @@ import com.traffic.flink.alert.sink.ClickHouseAlertSinkFactory;
 import com.traffic.flink.alert.sink.KafkaAlertSinkFactory;
 import com.traffic.flink.alert.sink.OpenSearchAlertSinkFactory;
 import com.traffic.flink.common.ConfigUtils;
+import com.traffic.flink.common.KafkaStartingOffsets;
 import com.traffic.flink.common.ProtoDeserializer;
 import com.traffic.proto.traffic.v1.Alert;
 import com.traffic.proto.traffic.v1.DetectionBehavior;
@@ -17,7 +18,6 @@ import org.apache.flink.api.common.restartstrategy.RestartStrategies;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.connector.kafka.source.KafkaSource;
-import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.contrib.streaming.state.EmbeddedRocksDBStateBackend;
 import org.apache.flink.runtime.state.storage.FileSystemCheckpointStorage;
 import org.apache.flink.streaming.api.CheckpointingMode;
@@ -92,7 +92,11 @@ public class AlertGeneratorJob {
 
         // OpenSearch 配置
         String opensearchUrl = ConfigUtils.get(params, "opensearch.url", "http://localhost:9200");
-        String opensearchIndex = ConfigUtils.get(params, "opensearch.index", "alerts");
+        String opensearchLegacyIndex = ConfigUtils.get(params, "opensearch.index", "alerts");
+        boolean opensearchV2Enabled = ConfigUtils.getBoolean(params, "opensearch.alerts.v2.enabled", false);
+        String opensearchWriteAlias = ConfigUtils.get(params, "opensearch.alerts.write.alias", "alerts-v2-write");
+        String opensearchIndex = resolveOpenSearchWriteTarget(
+                opensearchV2Enabled, opensearchLegacyIndex, opensearchWriteAlias);
         String opensearchUser = ConfigUtils.get(params, "opensearch.user", "admin");
         String opensearchPassword = ConfigUtils.get(params, "opensearch.password", "admin");
 
@@ -116,6 +120,9 @@ public class AlertGeneratorJob {
         // 是否启用 Business 检测输入
         boolean enableBusinessDetection = ConfigUtils.getBoolean(params, "enable.business.detection", true);
 
+        LOG.info("OpenSearch alert projection target={}, v2Enabled={}",
+                opensearchIndex, opensearchV2Enabled);
+
         // ==================== 创建执行环境 ====================
         
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
@@ -124,10 +131,11 @@ public class AlertGeneratorJob {
         // 配置 Checkpoint
         configureCheckpoint(env, checkpointPath, checkpointInterval, checkpointTimeout);
 
-        // 配置重启策略
+        // 配置重启策略。默认覆盖短时 Kafka/存储故障窗口，仍允许通过合同化参数调整。
         env.setRestartStrategy(RestartStrategies.fixedDelayRestart(
-                3,
-                org.apache.flink.api.common.time.Time.seconds(30)
+                ConfigUtils.getInt(params, "restart.attempts", 10),
+                org.apache.flink.api.common.time.Time.seconds(
+                        ConfigUtils.getInt(params, "restart.delay.seconds", 30))
         ));
 
         // ==================== Behavior Detection Source ====================
@@ -136,7 +144,7 @@ public class AlertGeneratorJob {
                 .setBootstrapServers(kafkaBrokers)
                 .setTopics(behaviorInputTopic)
                 .setGroupId(groupId + "-behavior")
-                .setStartingOffsets(OffsetsInitializer.latest())
+                .setStartingOffsets(KafkaStartingOffsets.from(params))
                 .setValueOnlyDeserializer(new ProtoDeserializer<>(DetectionBehavior.class))
                 .setProperties(ConfigUtils.kafkaClientProperties(params))
                 .setProperty("partition.discovery.interval.ms", "30000")
@@ -187,7 +195,7 @@ public class AlertGeneratorJob {
                     .setBootstrapServers(kafkaBrokers)
                     .setTopics(businessInputTopic)
                     .setGroupId(groupId + "-business")
-                    .setStartingOffsets(OffsetsInitializer.latest())
+                    .setStartingOffsets(KafkaStartingOffsets.from(params))
                     .setValueOnlyDeserializer(new ProtoDeserializer<>(DetectionBusiness.class))
                     .setProperties(ConfigUtils.kafkaClientProperties(params))
                     .setProperty("partition.discovery.interval.ms", "30000")
@@ -319,6 +327,14 @@ public class AlertGeneratorJob {
 
         // 执行作业
         env.execute("Alert Generator Job");
+    }
+
+    static String resolveOpenSearchWriteTarget(boolean v2Enabled, String legacyIndex, String writeAlias) {
+        String target = v2Enabled ? writeAlias : legacyIndex;
+        if (target == null || target.isBlank()) {
+            throw new IllegalArgumentException("OpenSearch alert write target must not be blank");
+        }
+        return target;
     }
 
     /**

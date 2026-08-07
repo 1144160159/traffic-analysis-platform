@@ -17,6 +17,7 @@ use probe_agent::archiver::{
 };
 use probe_agent::capture::{create_capturer, AfPacketCapture, Capturer};
 use probe_agent::config::ProbeConfig;
+use probe_agent::control::{BuiltinProbeExecutor, ProbeControlProcessor};
 use probe_agent::interface_monitor::{InterfaceMonitor, InterfaceMonitorConfig};
 use probe_agent::sender::{BatchConfig, BatchSender, GrpcSender, GrpcSenderConfig};
 use probe_agent::shutdown::ShutdownManager;
@@ -205,6 +206,15 @@ async fn register_probe(config: &ProbeConfig) -> Result<()> {
         build_timestamp: 0,
     });
 
+    request.metadata_mut().insert(
+        "x-tenant-id",
+        tonic::metadata::MetadataValue::try_from(config.tenant_id.as_str())?,
+    );
+    request.metadata_mut().insert(
+        "x-probe-id",
+        tonic::metadata::MetadataValue::try_from(config.probe_id.as_str())?,
+    );
+
     if let Some(ref token) = config.sender.auth_token {
         use tonic::metadata::MetadataValue;
         let token_value = MetadataValue::try_from(token.as_str())?;
@@ -314,6 +324,7 @@ struct Components {
     upload_tx: mpsc::Sender<UploadTask>,
     upload_rx: mpsc::Receiver<UploadTask>,
     grpc_sender: Arc<GrpcSender>,
+    control_processor: Arc<ProbeControlProcessor>,
     interface_monitor: Arc<InterfaceMonitor>,
     uploader: Option<Arc<Uploader>>,
 }
@@ -425,6 +436,18 @@ async fn create_components(
             .await
             .context("Failed to create gRPC sender")?,
     );
+    let control_processor = Arc::new(
+        ProbeControlProcessor::open(
+            std::path::Path::new(&config.sender.cache_path),
+            config.tenant_id.clone(),
+            config.probe_id.clone(),
+            Arc::new(
+                BuiltinProbeExecutor::for_gateway(&config.sender.gateway_addr)
+                    .context("Failed to configure builtin probe operation executor")?,
+            ),
+        )
+        .context("Failed to create probe control processor")?,
+    );
 
     let monitor_config = InterfaceMonitorConfig {
         interfaces: vec![config.capture.interface.clone()],
@@ -443,6 +466,7 @@ async fn create_components(
         upload_tx,
         upload_rx,
         grpc_sender,
+        control_processor,
         interface_monitor,
         uploader,
     })
@@ -550,9 +574,10 @@ async fn start_components(
         let handle = shutdown_manager.register("heartbeat", 55).await;
         let sender = Arc::clone(&components.grpc_sender);
         let monitor = Arc::clone(&components.interface_monitor);
+        let control_processor = Arc::clone(&components.control_processor);
 
         tokio::spawn(async move {
-            run_heartbeat_task(handle, sender, monitor).await;
+            run_heartbeat_task(handle, sender, monitor, control_processor).await;
         });
     }
 
@@ -644,6 +669,7 @@ async fn run_heartbeat_task(
     mut handle: ShutdownHandle,
     sender: Arc<GrpcSender>,
     monitor: Arc<InterfaceMonitor>,
+    control_processor: Arc<ProbeControlProcessor>,
 ) {
     let mut ticker = tokio::time::interval(Duration::from_secs(60));
 
@@ -652,8 +678,38 @@ async fn run_heartbeat_task(
     loop {
         tokio::select! {
             _ = ticker.tick() => {
-                match sender.send_heartbeat(Some(&monitor)).await {
-                    Ok(()) => debug!("✓ Heartbeat sent successfully"),
+                let pending_acks = match control_processor.pending_acks(100) {
+                    Ok(acks) => acks,
+                    Err(error) => {
+                        error!("Failed to load persisted probe operation ACKs: {}", error);
+                        continue;
+                    }
+                };
+                match sender.send_heartbeat(Some(&monitor), pending_acks).await {
+                    Ok(response) => {
+                        if let Err(error) = control_processor
+                            .acknowledge_accepted(&response.accepted_ack_operation_ids)
+                        {
+                            error!("Failed to remove accepted probe operation ACKs: {}", error);
+                        }
+                        for command in response.operation_commands {
+                            let operation_id = command.operation_id.clone();
+                            match control_processor.process(command).await {
+                                Ok(ack) => info!(
+                                    operation_id = %operation_id,
+                                    command_revision = ack.command_revision,
+                                    applied = ack.applied,
+                                    "Probe operation executed and ACK persisted"
+                                ),
+                                Err(error) => warn!(
+                                    operation_id = %operation_id,
+                                    "Rejected probe operation before execution: {}",
+                                    error
+                                ),
+                            }
+                        }
+                        debug!("✓ Heartbeat sent successfully");
+                    }
                     Err(e) => warn!("✗ Heartbeat failed: {}", e),
                 }
             }

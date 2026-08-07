@@ -1,0 +1,115 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-scram-principal-plan-v1
+  namespace: middleware
+data:
+  provision.sh: |
+    #!/usr/bin/env bash
+    set -euo pipefail
+    set +x
+    
+    KAFKA_HOME=${KAFKA_HOME:-/opt/kafka}
+    CONFIG_BIN="$KAFKA_HOME/bin/kafka-configs.sh"
+    BROKER_API_BIN="$KAFKA_HOME/bin/kafka-broker-api-versions.sh"
+    BOOTSTRAP=${KAFKA_BOOTSTRAP:-kafka-bootstrap.middleware.svc:9092}
+    CLIENT_CONFIG=/tmp/kafka-admin.properties
+    
+    safe_java_property() {
+      local value="$1"
+      if ! [[ "$value" =~ ^[A-Za-z0-9._@%+=:/-]+$ ]]; then
+        return 1
+      fi
+      printf '%s' "$value"
+    }
+    
+    admin_username="$(safe_java_property "$KAFKA_ADMIN_USERNAME")"
+    admin_password="$(safe_java_property "$KAFKA_ADMIN_PASSWORD")"
+    truststore_password="$(safe_java_property "$KAFKA_TLS_TRUSTSTORE_PASSWORD")"
+    cat >"$CLIENT_CONFIG" <<EOF
+    security.protocol=SASL_SSL
+    sasl.mechanism=SCRAM-SHA-512
+    sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="$admin_username" password="$admin_password";
+    ssl.truststore.location=/etc/kafka/tls/kafka.truststore.p12
+    ssl.truststore.type=PKCS12
+    ssl.truststore.password=$truststore_password
+    EOF
+    chmod 0600 "$CLIENT_CONFIG"
+    
+    for attempt in $(seq 1 60); do
+      if "$BROKER_API_BIN" --bootstrap-server "$BOOTSTRAP" --command-config "$CLIENT_CONFIG" >/dev/null 2>&1; then
+        break
+      fi
+      if [ "$attempt" -eq 60 ]; then
+        echo "Kafka did not become ready for SCRAM principal provisioning" >&2
+        exit 1
+      fi
+      sleep 5
+    done
+    
+    for entry in \
+          "traffic-alert-service:KAFKA_ALERT_SERVICE_PASSWORD" \
+          "traffic-asset-service:KAFKA_ASSET_SERVICE_PASSWORD" \
+          "traffic-audit-materializer:KAFKA_AUDIT_MATERIALIZER_PASSWORD" \
+          "traffic-auth-service:KAFKA_AUTH_SERVICE_PASSWORD" \
+          "traffic-flink-alert-generator:KAFKA_FLINK_ALERT_GENERATOR_JOB_PASSWORD" \
+          "traffic-flink-behavior:KAFKA_FLINK_BEHAVIOR_JOB_PASSWORD" \
+          "traffic-flink-cep:KAFKA_FLINK_CEP_JOB_PASSWORD" \
+          "traffic-flink-feature:KAFKA_FLINK_FEATURE_JOB_PASSWORD" \
+          "traffic-flink-log:KAFKA_FLINK_LOG_JOB_PASSWORD" \
+          "traffic-flink-pcap-index:KAFKA_FLINK_PCAP_INDEX_JOB_PASSWORD" \
+          "traffic-flink-rule:KAFKA_FLINK_RULE_JOB_PASSWORD" \
+          "traffic-flink-session:KAFKA_FLINK_SESSION_JOB_PASSWORD" \
+          "traffic-flink-user-behavior:KAFKA_FLINK_USER_BEHAVIOR_JOB_PASSWORD" \
+          "traffic-forensics-service:KAFKA_FORENSICS_SERVICE_PASSWORD" \
+          "traffic-graph-service:KAFKA_GRAPH_SERVICE_PASSWORD" \
+          "traffic-ingest-gateway:KAFKA_INGEST_GATEWAY_PASSWORD" \
+          "traffic-rule-manager:KAFKA_RULE_MANAGER_PASSWORD" \
+          "traffic-threat-intel-service:KAFKA_THREAT_INTEL_SERVICE_PASSWORD"; do
+      username="${entry%%:*}"
+      password_env="${entry#*:}"
+      password="${!password_env:-}"
+      case "$username" in traffic-*) ;; *) echo "unsafe Kafka username" >&2; exit 1;; esac
+      if ! [[ "$password" =~ ^[A-Za-z0-9._@%+=:/-]{32,}$ ]]; then
+        echo "missing or unsafe password for $username" >&2
+        exit 1
+      fi
+      "$CONFIG_BIN" --bootstrap-server "$BOOTSTRAP" --command-config "$CLIENT_CONFIG" \
+        --alter --add-config "SCRAM-SHA-512=[password=$password]" \
+        --entity-type users --entity-name "$username" >/dev/null
+      echo "Provisioned SCRAM principal $username"
+    done
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: init-kafka-principals
+  namespace: middleware
+spec:
+  backoffLimit: 6
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: provision-principals
+        image: docker.io/apache/kafka@sha256:32217f809d3fba75ee46e93b1fdbea4aacc0821139443efb73691a913948c31a
+        command: [/opt/traffic/kafka-identities/provision.sh]
+        envFrom:
+        - secretRef: {name: kafka-principal-credentials}
+        env:
+        - name: KAFKA_ADMIN_USERNAME
+          valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_INTER_BROKER_USERNAME}}
+        - name: KAFKA_ADMIN_PASSWORD
+          valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_INTER_BROKER_PASSWORD}}
+        - name: KAFKA_TLS_TRUSTSTORE_PASSWORD
+          valueFrom: {secretKeyRef: {name: traffic-credentials, key: KAFKA_TLS_TRUSTSTORE_PASSWORD}}
+        volumeMounts:
+        - {name: kafka-identity-plan, mountPath: /opt/traffic/kafka-identities, readOnly: true}
+        - {name: kafka-client-tls, mountPath: /etc/kafka/tls, readOnly: true}
+      volumes:
+      - name: kafka-identity-plan
+        configMap: {name: kafka-scram-principal-plan-v1, defaultMode: 0555}
+      - name: kafka-client-tls
+        secret: {secretName: kafka-client-tls, optional: false}

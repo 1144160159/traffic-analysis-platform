@@ -107,28 +107,33 @@ fn test_afpacket_pipeline() {
     rt.block_on(async {
         capturer.start().await.expect("start");
 
-        // Generate some traffic
-        for _ in 0..5 {
-            let _ = std::net::UdpSocket::bind("127.0.0.1:0").map(|s| {
-                s.connect("127.0.0.1:9").ok();
-                s.send(&[0u8; 100]).ok()
-            });
-        }
+        // Use a bound receiver instead of the discard port. A closed UDP port
+        // can make later sends fail after ICMP delivery, which made this test
+        // depend on timing when the Rust suite ran in parallel.
+        let receiver = std::net::UdpSocket::bind("127.0.0.1:0").expect("bind receiver");
+        receiver
+            .set_nonblocking(true)
+            .expect("receiver nonblocking");
+        let sender = std::net::UdpSocket::bind("127.0.0.1:0").expect("bind sender");
+        sender
+            .connect(receiver.local_addr().expect("receiver address"))
+            .expect("connect sender");
 
         let start = Instant::now();
-        let mut parsed = 0u64;
         while start.elapsed() < Duration::from_secs(3) {
+            // Keep traffic flowing throughout the poll window so the assertion
+            // proves the live socket-to-parser path rather than a one-shot race.
+            sender.send(&[0u8; 100]).expect("send loopback packet");
             match capturer.poll() {
                 Ok(Some(batch)) => {
                     let size = batch.len();
                     proc.process_batch(&batch);
-                    parsed = proc.stats().packets_parsed;
-                    if parsed > 0 && size > 0 {
+                    if proc.stats().packets_processed > 0 && size > 0 {
                         break;
                     }
                 }
                 Ok(None) => std::thread::sleep(Duration::from_millis(10)),
-                _ => {}
+                Err(error) => panic!("AF_PACKET poll failed: {error}"),
             }
         }
 

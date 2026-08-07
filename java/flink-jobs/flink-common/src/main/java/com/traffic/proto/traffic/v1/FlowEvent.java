@@ -86,7 +86,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       flowId_ = s;
@@ -102,7 +102,7 @@ private static final long serialVersionUID = 0L;
       getFlowIdBytes() {
     java.lang.Object ref = flowId_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       flowId_ = b;
@@ -125,7 +125,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       communityId_ = s;
@@ -141,7 +141,7 @@ private static final long serialVersionUID = 0L;
       getCommunityIdBytes() {
     java.lang.Object ref = communityId_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       communityId_ = b;
@@ -190,7 +190,7 @@ private static final long serialVersionUID = 0L;
     if (ref instanceof java.lang.String) {
       return (java.lang.String) ref;
     } else {
-      com.google.protobuf.ByteString bs = 
+      com.google.protobuf.ByteString bs =
           (com.google.protobuf.ByteString) ref;
       java.lang.String s = bs.toStringUtf8();
       direction_ = s;
@@ -206,7 +206,7 @@ private static final long serialVersionUID = 0L;
       getDirectionBytes() {
     java.lang.Object ref = direction_;
     if (ref instanceof java.lang.String) {
-      com.google.protobuf.ByteString b = 
+      com.google.protobuf.ByteString b =
           com.google.protobuf.ByteString.copyFromUtf8(
               (java.lang.String) ref);
       direction_ = b;
@@ -1491,7 +1491,7 @@ private static final long serialVersionUID = 0L;
      * <code>.traffic.v1.EventHeader header = 1 [json_name = "header"];</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
-        com.traffic.proto.traffic.v1.EventHeader, com.traffic.proto.traffic.v1.EventHeader.Builder, com.traffic.proto.traffic.v1.EventHeaderOrBuilder> 
+        com.traffic.proto.traffic.v1.EventHeader, com.traffic.proto.traffic.v1.EventHeader.Builder, com.traffic.proto.traffic.v1.EventHeaderOrBuilder>
         getHeaderFieldBuilder() {
       if (headerBuilder_ == null) {
         headerBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -1529,7 +1529,7 @@ private static final long serialVersionUID = 0L;
         getFlowIdBytes() {
       java.lang.Object ref = flowId_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         flowId_ = b;
@@ -1601,7 +1601,7 @@ private static final long serialVersionUID = 0L;
         getCommunityIdBytes() {
       java.lang.Object ref = communityId_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         communityId_ = b;
@@ -1756,7 +1756,7 @@ private static final long serialVersionUID = 0L;
      * <code>.traffic.v1.FiveTuple tuple = 4 [json_name = "tuple"];</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
-        com.traffic.proto.traffic.v1.FiveTuple, com.traffic.proto.traffic.v1.FiveTuple.Builder, com.traffic.proto.traffic.v1.FiveTupleOrBuilder> 
+        com.traffic.proto.traffic.v1.FiveTuple, com.traffic.proto.traffic.v1.FiveTuple.Builder, com.traffic.proto.traffic.v1.FiveTupleOrBuilder>
         getTupleFieldBuilder() {
       if (tupleBuilder_ == null) {
         tupleBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -1794,7 +1794,7 @@ private static final long serialVersionUID = 0L;
         getDirectionBytes() {
       java.lang.Object ref = direction_;
       if (ref instanceof String) {
-        com.google.protobuf.ByteString b = 
+        com.google.protobuf.ByteString b =
             com.google.protobuf.ByteString.copyFromUtf8(
                 (java.lang.String) ref);
         direction_ = b;
@@ -2237,7 +2237,7 @@ private static final long serialVersionUID = 0L;
      * <code>.traffic.v1.PacketLengthStats pktlen_stats = 15 [json_name = "pktlenStats"];</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
-        com.traffic.proto.traffic.v1.PacketLengthStats, com.traffic.proto.traffic.v1.PacketLengthStats.Builder, com.traffic.proto.traffic.v1.PacketLengthStatsOrBuilder> 
+        com.traffic.proto.traffic.v1.PacketLengthStats, com.traffic.proto.traffic.v1.PacketLengthStats.Builder, com.traffic.proto.traffic.v1.PacketLengthStatsOrBuilder>
         getPktlenStatsFieldBuilder() {
       if (pktlenStatsBuilder_ == null) {
         pktlenStatsBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -2358,7 +2358,7 @@ private static final long serialVersionUID = 0L;
      * <code>.traffic.v1.InterArrivalStats iat_stats = 16 [json_name = "iatStats"];</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
-        com.traffic.proto.traffic.v1.InterArrivalStats, com.traffic.proto.traffic.v1.InterArrivalStats.Builder, com.traffic.proto.traffic.v1.InterArrivalStatsOrBuilder> 
+        com.traffic.proto.traffic.v1.InterArrivalStats, com.traffic.proto.traffic.v1.InterArrivalStats.Builder, com.traffic.proto.traffic.v1.InterArrivalStatsOrBuilder>
         getIatStatsFieldBuilder() {
       if (iatStatsBuilder_ == null) {
         iatStatsBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -2575,7 +2575,7 @@ private static final long serialVersionUID = 0L;
      * <code>.traffic.v1.ActiveIdleStats active_stats = 20 [json_name = "activeStats"];</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
-        com.traffic.proto.traffic.v1.ActiveIdleStats, com.traffic.proto.traffic.v1.ActiveIdleStats.Builder, com.traffic.proto.traffic.v1.ActiveIdleStatsOrBuilder> 
+        com.traffic.proto.traffic.v1.ActiveIdleStats, com.traffic.proto.traffic.v1.ActiveIdleStats.Builder, com.traffic.proto.traffic.v1.ActiveIdleStatsOrBuilder>
         getActiveStatsFieldBuilder() {
       if (activeStatsBuilder_ == null) {
         activeStatsBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
@@ -2696,7 +2696,7 @@ private static final long serialVersionUID = 0L;
      * <code>.traffic.v1.ActiveIdleStats idle_stats = 21 [json_name = "idleStats"];</code>
      */
     private com.google.protobuf.SingleFieldBuilderV3<
-        com.traffic.proto.traffic.v1.ActiveIdleStats, com.traffic.proto.traffic.v1.ActiveIdleStats.Builder, com.traffic.proto.traffic.v1.ActiveIdleStatsOrBuilder> 
+        com.traffic.proto.traffic.v1.ActiveIdleStats, com.traffic.proto.traffic.v1.ActiveIdleStats.Builder, com.traffic.proto.traffic.v1.ActiveIdleStatsOrBuilder>
         getIdleStatsFieldBuilder() {
       if (idleStatsBuilder_ == null) {
         idleStatsBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<

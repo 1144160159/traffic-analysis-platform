@@ -11,7 +11,7 @@ public interface GetAssetHistoryResponseOrBuilder extends
   /**
    * <code>repeated .traffic.v1.AssetEvent events = 1 [json_name = "events"];</code>
    */
-  java.util.List<com.traffic.proto.traffic.v1.AssetEvent> 
+  java.util.List<com.traffic.proto.traffic.v1.AssetEvent>
       getEventsList();
   /**
    * <code>repeated .traffic.v1.AssetEvent events = 1 [json_name = "events"];</code>
@@ -24,7 +24,7 @@ public interface GetAssetHistoryResponseOrBuilder extends
   /**
    * <code>repeated .traffic.v1.AssetEvent events = 1 [json_name = "events"];</code>
    */
-  java.util.List<? extends com.traffic.proto.traffic.v1.AssetEventOrBuilder> 
+  java.util.List<? extends com.traffic.proto.traffic.v1.AssetEventOrBuilder>
       getEventsOrBuilderList();
   /**
    * <code>repeated .traffic.v1.AssetEvent events = 1 [json_name = "events"];</code>

@@ -228,10 +228,7 @@ impl AuthProvider {
                     .context("Invalid token format")?;
 
                 request.metadata_mut().insert("x-tenant-token", token_value);
-                debug!(
-                    "  ✅ Added x-tenant-token: {}...",
-                    &token[..10.min(token.len())]
-                );
+                debug!("  ✅ Added x-tenant-token");
             } else {
                 let auth_value = format!("Bearer {}", token)
                     .parse::<MetadataValue<_>>()

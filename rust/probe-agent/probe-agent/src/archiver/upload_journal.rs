@@ -13,6 +13,12 @@ pub struct JournalEntry {
     pub ts_start: u64,
     pub ts_end: u64,
     pub packet_count: u64,
+    #[serde(default)]
+    pub original_size: usize,
+    #[serde(default)]
+    pub compressed_size: usize,
+    #[serde(default)]
+    pub sha256: String,
     pub tenant_id: String,
     pub probe_id: String,
     pub local_path: Option<String>,
@@ -40,6 +46,10 @@ impl JournalEntry {
 
     pub fn needs_metadata_sync(&self) -> bool {
         self.s3_key.is_some() && !self.metadata_synced
+    }
+
+    pub fn has_complete_manifest(&self) -> bool {
+        self.original_size > 0 && self.compressed_size > 0 && !self.sha256.is_empty()
     }
 }
 
@@ -71,7 +81,14 @@ impl UploadJournal {
         Ok(Self { db: Arc::new(db) })
     }
 
-    pub fn record_pending(&self, task: &UploadTask, local_path: &str) -> Result<String> {
+    pub fn record_pending(
+        &self,
+        task: &UploadTask,
+        local_path: &str,
+        original_size: usize,
+        compressed_size: usize,
+        sha256: &str,
+    ) -> Result<String> {
         let task_id = uuid::Uuid::new_v4().to_string();
 
         let entry = JournalEntry {
@@ -79,6 +96,9 @@ impl UploadJournal {
             ts_start: task.ts_start,
             ts_end: task.ts_end,
             packet_count: task.packet_count,
+            original_size,
+            compressed_size,
+            sha256: sha256.to_string(),
             tenant_id: task.tenant_id.clone(),
             probe_id: task.probe_id.clone(),
             local_path: Some(local_path.to_string()),
@@ -131,19 +151,15 @@ impl UploadJournal {
             entry.metadata_synced = true;
             entry.metadata_synced_at = Some(chrono::Utc::now().timestamp_millis() as u64);
 
-            if let Some(ref local_path) = entry.local_path {
-                if let Err(e) = std::fs::remove_file(local_path) {
-                    warn!("Failed to remove local cache file {}: {}", local_path, e);
-                } else {
-                    debug!("Removed local cache file: {}", local_path);
-                }
-            }
-
-            self.db.remove(task_id.as_bytes())?;
+            // A durable metadata ACK completes the protocol but does not
+            // delete the local evidence. Retention cleanup is a separate,
+            // observable policy and only removes fully acknowledged entries.
+            let serialized = serde_json::to_vec(&entry)?;
+            self.db.insert(task_id.as_bytes(), serialized)?;
             self.db.flush()?;
 
             debug!(
-                "Marked metadata synced and removed from journal: task_id={}",
+                "Marked metadata synced; local evidence retained: task_id={}",
                 task_id
             );
         } else {
@@ -237,7 +253,7 @@ impl UploadJournal {
             .into_iter()
             .filter(|(_, entry)| {
                 let age_ms = now.saturating_sub(entry.created_at);
-                age_ms > max_age_ms
+                entry.is_complete() && age_ms > max_age_ms
             })
             .map(|(task_id, entry)| {
                 if let Some(ref local_path) = entry.local_path {
@@ -315,5 +331,54 @@ impl std::fmt::Display for JournalStats {
             self.needs_metadata_sync,
             self.complete_but_pending
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::UploadJournal;
+    use crate::archiver::UploadTask;
+
+    #[test]
+    fn durable_metadata_ack_retains_local_evidence_and_complete_manifest() {
+        let directory = tempfile::tempdir().expect("tempdir");
+        let local_path = directory.path().join("capture.pcap.zst");
+        std::fs::write(&local_path, b"compressed-pcap").expect("local evidence");
+        let journal = UploadJournal::new(directory.path()).expect("journal");
+        let task = UploadTask {
+            data: vec![1, 2, 3],
+            ts_start: 1,
+            ts_end: 2,
+            packet_count: 1,
+            tenant_id: "tenant-a".to_string(),
+            probe_id: "probe-a".to_string(),
+        };
+        let task_id = journal
+            .record_pending(
+                &task,
+                local_path.to_str().expect("path"),
+                3,
+                15,
+                "sha256-test",
+            )
+            .expect("pending");
+
+        journal
+            .mark_s3_uploaded(&task_id, "tenant-a/probe-a/capture.pcap.zst")
+            .expect("s3");
+        journal
+            .mark_metadata_synced(&task_id)
+            .expect("metadata ack");
+
+        let entry = journal
+            .get_entry(&task_id)
+            .expect("entry lookup")
+            .expect("retained journal entry");
+        assert!(entry.metadata_synced);
+        assert!(entry.has_complete_manifest());
+        assert!(
+            local_path.exists(),
+            "ACK must not delete the local evidence"
+        );
     }
 }

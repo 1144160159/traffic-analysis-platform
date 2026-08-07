@@ -17,72 +17,72 @@ public final class AlertProto {
   }
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_Alert_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_Alert_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_Evidence_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_Evidence_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_Campaign_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_Campaign_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_AlertBatch_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_AlertBatch_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_AlertUpdate_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_AlertUpdate_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_AlertFeedback_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_AlertFeedback_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_WhitelistRule_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_WhitelistRule_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_AlertStateTransition_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_AlertStateTransition_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_DedupStats_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_DedupStats_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_StorageHealthEvent_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_StorageHealthEvent_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_ModelFeedbackMetrics_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_ModelFeedbackMetrics_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_AlertCorrelationEdge_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_AlertCorrelationEdge_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_NotificationEvent_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_NotificationEvent_fieldAccessorTable;
   static final com.google.protobuf.Descriptors.Descriptor
     internal_static_traffic_v1_AlertExtendedBatch_descriptor;
-  static final 
+  static final
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_traffic_v1_AlertExtendedBatch_fieldAccessorTable;
 
@@ -95,7 +95,7 @@ public final class AlertProto {
   static {
     java.lang.String[] descriptorData = {
       "\n\026traffic/v1/alert.proto\022\ntraffic.v1\032\027tr" +
-      "affic/v1/common.proto\"\235\010\n\005Alert\022\033\n\ttenan" +
+      "affic/v1/common.proto\"\270\010\n\005Alert\022\033\n\ttenan" +
       "t_id\030\001 \001(\tR\010tenantId\022\031\n\010alert_id\030\002 \001(\tR\007" +
       "alertId\022\035\n\nfirst_seen\030\003 \001(\003R\tfirstSeen\022\033" +
       "\n\tlast_seen\030\004 \001(\003R\010lastSeen\0220\n\010severity\030" +
@@ -121,143 +121,144 @@ public final class AlertProto {
       "kime_session_link\030\035 \001(\tR\021arkimeSessionLi" +
       "nk\022%\n\016feedback_label\030\036 \001(\tR\rfeedbackLabe" +
       "l\022%\n\016feedback_count\030\037 \001(\rR\rfeedbackCount" +
-      "\022#\n\rstate_version\030  \001(\004R\014stateVersion\"\224\003" +
-      "\n\010Evidence\022\033\n\ttenant_id\030\001 \001(\tR\010tenantId\022" +
-      "\037\n\013evidence_id\030\002 \001(\tR\nevidenceId\022\031\n\010aler" +
-      "t_id\030\003 \001(\tR\007alertId\022\016\n\002ts\030\004 \001(\003R\002ts\022\022\n\004t" +
-      "ype\030\005 \001(\tR\004type\022\030\n\007summary\030\006 \001(\tR\007summar" +
-      "y\022!\n\014metrics_json\030\007 \001(\tR\013metricsJson\022(\n\020" +
-      "snippet_ref_json\030\010 \001(\tR\016snippetRefJson\022\037" +
-      "\n\013arkime_link\030\t \001(\tR\narkimeLink\022\036\n\nconfi" +
-      "dence\030\n \001(\002R\nconfidence\022\031\n\010event_id\030\013 \001(" +
-      "\tR\007eventId\022\033\n\tingest_ts\030\014 \001(\003R\010ingestTs\022" +
-      "+\n\021visualization_url\030\r \001(\tR\020visualizatio" +
-      "nUrl\"\311\003\n\010Campaign\022\033\n\ttenant_id\030\001 \001(\tR\010te" +
-      "nantId\022\037\n\013campaign_id\030\002 \001(\tR\ncampaignId\022" +
-      "\031\n\010ts_start\030\003 \001(\003R\007tsStart\022\025\n\006ts_end\030\004 \001" +
-      "(\003R\005tsEnd\022\032\n\010entities\030\005 \003(\tR\010entities\022\026\n" +
-      "\006alerts\030\006 \003(\tR\006alerts\022\024\n\005score\030\007 \001(\002R\005sc" +
-      "ore\022\030\n\007summary\030\010 \001(\tR\007summary\022\031\n\010event_i" +
-      "d\030\t \001(\tR\007eventId\022\033\n\tingest_ts\030\n \001(\003R\010ing" +
-      "estTs\022/\n\006header\030\013 \001(\0132\027.traffic.v1.Event" +
-      "HeaderR\006header\022#\n\rcampaign_type\030\014 \001(\tR\014c" +
-      "ampaignType\022#\n\rattack_phases\030\r \003(\tR\014atta" +
-      "ckPhases\022\031\n\010rule_ids\030\016 \003(\tR\007ruleIds\022\033\n\tm" +
-      "odel_ids\030\017 \003(\tR\010modelIds\"\366\001\n\nAlertBatch\022" +
-      ")\n\006alerts\030\001 \003(\0132\021.traffic.v1.AlertR\006aler" +
-      "ts\0222\n\tevidences\030\002 \003(\0132\024.traffic.v1.Evide" +
-      "nceR\tevidences\0222\n\tcampaigns\030\003 \003(\0132\024.traf" +
-      "fic.v1.CampaignR\tcampaigns\022\031\n\010batch_id\030\004" +
-      " \001(\tR\007batchId\022\033\n\ttenant_id\030\005 \001(\tR\010tenant" +
-      "Id\022\035\n\ncreated_at\030\006 \001(\003R\tcreatedAt\"\315\001\n\013Al" +
-      "ertUpdate\022\031\n\010alert_id\030\001 \001(\tR\007alertId\022/\n\006" +
-      "status\030\002 \001(\0162\027.traffic.v1.AlertStatusR\006s" +
-      "tatus\022\032\n\010assignee\030\003 \001(\tR\010assignee\022\030\n\007com" +
-      "ment\030\004 \001(\tR\007comment\022\035\n\nupdated_by\030\005 \001(\tR" +
-      "\tupdatedBy\022\035\n\nupdated_at\030\006 \001(\003R\tupdatedA" +
-      "t\"\254\003\n\rAlertFeedback\022\033\n\ttenant_id\030\001 \001(\tR\010" +
-      "tenantId\022\037\n\013feedback_id\030\002 \001(\tR\nfeedbackI" +
-      "d\022\031\n\010alert_id\030\003 \001(\tR\007alertId\022\027\n\007user_id\030" +
-      "\004 \001(\tR\006userId\022\024\n\005label\030\005 \001(\tR\005label\022\037\n\013r" +
-      "eason_code\030\006 \001(\tR\nreasonCode\022\030\n\007comment\030" +
-      "\007 \001(\tR\007comment\022(\n\020add_to_whitelist\030\010 \001(\r" +
-      "R\016addToWhitelist\022\035\n\nalert_type\030\t \001(\tR\tal" +
-      "ertType\022\032\n\010severity\030\n \001(\tR\010severity\022#\n\rm" +
-      "odel_version\030\013 \001(\tR\014modelVersion\022!\n\014rule" +
-      "_version\030\014 \001(\tR\013ruleVersion\022\016\n\002ts\030\r \001(\003R" +
-      "\002ts\022\033\n\tingest_ts\030\016 \001(\003R\010ingestTs\"\355\003\n\rWhi" +
-      "telistRule\022\033\n\ttenant_id\030\001 \001(\tR\010tenantId\022" +
-      "\027\n\007rule_id\030\002 \001(\tR\006ruleId\022\033\n\trule_type\030\003 " +
-      "\001(\tR\010ruleType\022\025\n\006src_ip\030\004 \001(\tR\005srcIp\022\025\n\006" +
-      "dst_ip\030\005 \001(\tR\005dstIp\022\031\n\010src_port\030\006 \001(\rR\007s" +
-      "rcPort\022\031\n\010dst_port\030\007 \001(\rR\007dstPort\022\032\n\010pro" +
-      "tocol\030\010 \001(\rR\010protocol\022\035\n\nalert_type\030\t \001(" +
-      "\tR\talertType\022\037\n\013reason_code\030\n \001(\tR\nreaso" +
-      "nCode\022\030\n\007comment\030\013 \001(\tR\007comment\022\026\n\006statu" +
-      "s\030\014 \001(\tR\006status\022\035\n\ncreated_by\030\r \001(\tR\tcre" +
-      "atedBy\022\035\n\ncreated_ts\030\016 \001(\003R\tcreatedTs\022\035\n" +
-      "\nupdated_ts\030\017 \001(\003R\tupdatedTs\022\035\n\nexpires_" +
-      "at\030\020 \001(\003R\texpiresAt\022\033\n\tingest_ts\030\021 \001(\003R\010" +
-      "ingestTs\"\215\003\n\024AlertStateTransition\022\033\n\tten" +
-      "ant_id\030\001 \001(\tR\010tenantId\022\031\n\010alert_id\030\002 \001(\t" +
-      "R\007alertId\022#\n\rtransition_id\030\003 \001(\tR\014transi" +
-      "tionId\022\035\n\nold_status\030\004 \001(\tR\toldStatus\022\035\n" +
-      "\nnew_status\030\005 \001(\tR\tnewStatus\022!\n\014old_assi" +
-      "gnee\030\006 \001(\tR\013oldAssignee\022!\n\014new_assignee\030" +
-      "\007 \001(\tR\013newAssignee\022\035\n\nchanged_by\030\010 \001(\tR\t" +
-      "changedBy\022#\n\rchange_reason\030\t \001(\tR\014change" +
-      "Reason\022#\n\rstate_version\030\n \001(\004R\014stateVers" +
-      "ion\022\016\n\002ts\030\013 \001(\003R\002ts\022\033\n\tingest_ts\030\014 \001(\003R\010" +
-      "ingestTs\"\375\002\n\nDedupStats\022\033\n\ttenant_id\030\001 \001" +
-      "(\tR\010tenantId\022 \n\013fingerprint\030\002 \001(\tR\013finge" +
-      "rprint\022\035\n\nalert_type\030\003 \001(\tR\talertType\022\032\n" +
-      "\010severity\030\004 \001(\tR\010severity\022\025\n\006src_ip\030\005 \001(" +
-      "\tR\005srcIp\022\025\n\006dst_ip\030\006 \001(\tR\005dstIp\022\031\n\010dst_p" +
-      "ort\030\007 \001(\rR\007dstPort\022\035\n\nfirst_seen\030\010 \001(\003R\t" +
-      "firstSeen\022\033\n\tlast_seen\030\t \001(\003R\010lastSeen\022)" +
-      "\n\020occurrence_count\030\n \001(\004R\017occurrenceCoun" +
-      "t\022(\n\020sample_alert_ids\030\013 \003(\tR\016sampleAlert" +
-      "Ids\022\033\n\tingest_ts\030\014 \001(\003R\010ingestTs\"\367\001\n\022Sto" +
-      "rageHealthEvent\022!\n\014storage_type\030\001 \001(\tR\013s" +
-      "torageType\022!\n\014storage_name\030\002 \001(\tR\013storag" +
-      "eName\022\026\n\006status\030\003 \001(\tR\006status\022#\n\rerror_m" +
-      "essage\030\004 \001(\tR\014errorMessage\0221\n\024consecutiv" +
-      "e_failures\030\005 \001(\rR\023consecutiveFailures\022\016\n" +
-      "\002ts\030\006 \001(\003R\002ts\022\033\n\tingest_ts\030\007 \001(\003R\010ingest" +
-      "Ts\"\373\002\n\024ModelFeedbackMetrics\022\033\n\ttenant_id" +
-      "\030\001 \001(\tR\010tenantId\022#\n\rmodel_version\030\002 \001(\tR" +
-      "\014modelVersion\022\035\n\nalert_type\030\003 \001(\tR\talert" +
-      "Type\022\022\n\004hour\030\004 \001(\003R\004hour\022!\n\014total_alerts" +
-      "\030\005 \001(\004R\013totalAlerts\022\031\n\010tp_count\030\006 \001(\004R\007t" +
-      "pCount\022\031\n\010fp_count\030\007 \001(\004R\007fpCount\022\'\n\017unl" +
-      "abeled_count\030\010 \001(\004R\016unlabeledCount\022\034\n\tpr" +
-      "ecision\030\t \001(\002R\tprecision\022\026\n\006recall\030\n \001(\002" +
-      "R\006recall\022\031\n\010f1_score\030\013 \001(\002R\007f1Score\022\033\n\ti" +
-      "ngest_ts\030\014 \001(\003R\010ingestTs\"\356\002\n\024AlertCorrel" +
-      "ationEdge\022\033\n\ttenant_id\030\001 \001(\tR\010tenantId\022\027" +
-      "\n\007edge_id\030\002 \001(\tR\006edgeId\022&\n\017source_alert_" +
-      "id\030\003 \001(\tR\rsourceAlertId\022&\n\017target_alert_" +
-      "id\030\004 \001(\tR\rtargetAlertId\022)\n\020correlation_t" +
-      "ype\030\005 \001(\tR\017correlationType\022+\n\021correlatio" +
-      "n_score\030\006 \001(\002R\020correlationScore\022\'\n\017share" +
-      "d_entities\030\007 \003(\tR\016sharedEntities\022\"\n\rtime" +
-      "_delta_ms\030\010 \001(\003R\013timeDeltaMs\022\016\n\002ts\030\t \001(\003" +
-      "R\002ts\022\033\n\tingest_ts\030\n \001(\003R\010ingestTs\"\270\002\n\021No" +
-      "tificationEvent\022\033\n\ttenant_id\030\001 \001(\tR\010tena" +
-      "ntId\022\'\n\017notification_id\030\002 \001(\tR\016notificat" +
-      "ionId\022\031\n\010alert_id\030\003 \001(\tR\007alertId\022\030\n\007chan" +
-      "nel\030\004 \001(\tR\007channel\022\026\n\006status\030\005 \001(\tR\006stat" +
-      "us\022#\n\rerror_message\030\006 \001(\tR\014errorMessage\022" +
-      "\027\n\007rule_id\030\007 \001(\tR\006ruleId\022\034\n\trecipient\030\010 " +
-      "\001(\tR\trecipient\022\027\n\007sent_at\030\t \001(\003R\006sentAt\022" +
-      "\033\n\tingest_ts\030\n \001(\003R\010ingestTs\"\316\006\n\022AlertEx" +
-      "tendedBatch\022\031\n\010batch_id\030\001 \001(\tR\007batchId\022\033" +
-      "\n\ttenant_id\030\002 \001(\tR\010tenantId\022\035\n\ncreated_a" +
-      "t\030\003 \001(\003R\tcreatedAt\022)\n\006alerts\030\n \003(\0132\021.tra" +
-      "ffic.v1.AlertR\006alerts\0222\n\tevidences\030\013 \003(\013" +
-      "2\024.traffic.v1.EvidenceR\tevidences\0222\n\tcam" +
-      "paigns\030\014 \003(\0132\024.traffic.v1.CampaignR\tcamp" +
-      "aigns\0227\n\tfeedbacks\030\r \003(\0132\031.traffic.v1.Al" +
-      "ertFeedbackR\tfeedbacks\022B\n\017whitelist_rule" +
-      "s\030\016 \003(\0132\031.traffic.v1.WhitelistRuleR\016whit" +
-      "elistRules\022M\n\021state_transitions\030\017 \003(\0132 ." +
-      "traffic.v1.AlertStateTransitionR\020stateTr" +
-      "ansitions\0227\n\013dedup_stats\030\020 \003(\0132\026.traffic" +
-      ".v1.DedupStatsR\ndedupStats\022R\n\025storage_he" +
-      "alth_events\030\021 \003(\0132\036.traffic.v1.StorageHe" +
-      "althEventR\023storageHealthEvents\022V\n\026model_" +
-      "feedback_metrics\030\022 \003(\0132 .traffic.v1.Mode" +
-      "lFeedbackMetricsR\024modelFeedbackMetrics\022M" +
-      "\n\021correlation_edges\030\023 \003(\0132 .traffic.v1.A" +
-      "lertCorrelationEdgeR\020correlationEdges\022N\n" +
-      "\023notification_events\030\024 \003(\0132\035.traffic.v1." +
-      "NotificationEventR\022notificationEventsB\324\001" +
-      "\n\034com.traffic.proto.traffic.v1B\nAlertPro" +
-      "toP\001Z_github.com/1144160159/traffic-anal" +
-      "ysis-platform/go/control-plane/pkg/proto" +
-      "/traffic/v1;trafficv1\242\002\003TXX\252\002\nTraffic.V1" +
-      "\312\002\nTraffic\\V1\342\002\026Traffic\\V1\\GPBMetadata\352\002" +
-      "\013Traffic::V1b\006proto3"
+      "\022#\n\rstate_version\030  \001(\004R\014stateVersion\022\031\n" +
+      "\010trace_id\030! \001(\tR\007traceId\"\224\003\n\010Evidence\022\033\n" +
+      "\ttenant_id\030\001 \001(\tR\010tenantId\022\037\n\013evidence_i" +
+      "d\030\002 \001(\tR\nevidenceId\022\031\n\010alert_id\030\003 \001(\tR\007a" +
+      "lertId\022\016\n\002ts\030\004 \001(\003R\002ts\022\022\n\004type\030\005 \001(\tR\004ty" +
+      "pe\022\030\n\007summary\030\006 \001(\tR\007summary\022!\n\014metrics_" +
+      "json\030\007 \001(\tR\013metricsJson\022(\n\020snippet_ref_j" +
+      "son\030\010 \001(\tR\016snippetRefJson\022\037\n\013arkime_link" +
+      "\030\t \001(\tR\narkimeLink\022\036\n\nconfidence\030\n \001(\002R\n" +
+      "confidence\022\031\n\010event_id\030\013 \001(\tR\007eventId\022\033\n" +
+      "\tingest_ts\030\014 \001(\003R\010ingestTs\022+\n\021visualizat" +
+      "ion_url\030\r \001(\tR\020visualizationUrl\"\311\003\n\010Camp" +
+      "aign\022\033\n\ttenant_id\030\001 \001(\tR\010tenantId\022\037\n\013cam" +
+      "paign_id\030\002 \001(\tR\ncampaignId\022\031\n\010ts_start\030\003" +
+      " \001(\003R\007tsStart\022\025\n\006ts_end\030\004 \001(\003R\005tsEnd\022\032\n\010" +
+      "entities\030\005 \003(\tR\010entities\022\026\n\006alerts\030\006 \003(\t" +
+      "R\006alerts\022\024\n\005score\030\007 \001(\002R\005score\022\030\n\007summar" +
+      "y\030\010 \001(\tR\007summary\022\031\n\010event_id\030\t \001(\tR\007even" +
+      "tId\022\033\n\tingest_ts\030\n \001(\003R\010ingestTs\022/\n\006head" +
+      "er\030\013 \001(\0132\027.traffic.v1.EventHeaderR\006heade" +
+      "r\022#\n\rcampaign_type\030\014 \001(\tR\014campaignType\022#" +
+      "\n\rattack_phases\030\r \003(\tR\014attackPhases\022\031\n\010r" +
+      "ule_ids\030\016 \003(\tR\007ruleIds\022\033\n\tmodel_ids\030\017 \003(" +
+      "\tR\010modelIds\"\366\001\n\nAlertBatch\022)\n\006alerts\030\001 \003" +
+      "(\0132\021.traffic.v1.AlertR\006alerts\0222\n\tevidenc" +
+      "es\030\002 \003(\0132\024.traffic.v1.EvidenceR\tevidence" +
+      "s\0222\n\tcampaigns\030\003 \003(\0132\024.traffic.v1.Campai" +
+      "gnR\tcampaigns\022\031\n\010batch_id\030\004 \001(\tR\007batchId" +
+      "\022\033\n\ttenant_id\030\005 \001(\tR\010tenantId\022\035\n\ncreated" +
+      "_at\030\006 \001(\003R\tcreatedAt\"\315\001\n\013AlertUpdate\022\031\n\010" +
+      "alert_id\030\001 \001(\tR\007alertId\022/\n\006status\030\002 \001(\0162" +
+      "\027.traffic.v1.AlertStatusR\006status\022\032\n\010assi" +
+      "gnee\030\003 \001(\tR\010assignee\022\030\n\007comment\030\004 \001(\tR\007c" +
+      "omment\022\035\n\nupdated_by\030\005 \001(\tR\tupdatedBy\022\035\n" +
+      "\nupdated_at\030\006 \001(\003R\tupdatedAt\"\254\003\n\rAlertFe" +
+      "edback\022\033\n\ttenant_id\030\001 \001(\tR\010tenantId\022\037\n\013f" +
+      "eedback_id\030\002 \001(\tR\nfeedbackId\022\031\n\010alert_id" +
+      "\030\003 \001(\tR\007alertId\022\027\n\007user_id\030\004 \001(\tR\006userId" +
+      "\022\024\n\005label\030\005 \001(\tR\005label\022\037\n\013reason_code\030\006 " +
+      "\001(\tR\nreasonCode\022\030\n\007comment\030\007 \001(\tR\007commen" +
+      "t\022(\n\020add_to_whitelist\030\010 \001(\rR\016addToWhitel" +
+      "ist\022\035\n\nalert_type\030\t \001(\tR\talertType\022\032\n\010se" +
+      "verity\030\n \001(\tR\010severity\022#\n\rmodel_version\030" +
+      "\013 \001(\tR\014modelVersion\022!\n\014rule_version\030\014 \001(" +
+      "\tR\013ruleVersion\022\016\n\002ts\030\r \001(\003R\002ts\022\033\n\tingest" +
+      "_ts\030\016 \001(\003R\010ingestTs\"\355\003\n\rWhitelistRule\022\033\n" +
+      "\ttenant_id\030\001 \001(\tR\010tenantId\022\027\n\007rule_id\030\002 " +
+      "\001(\tR\006ruleId\022\033\n\trule_type\030\003 \001(\tR\010ruleType" +
+      "\022\025\n\006src_ip\030\004 \001(\tR\005srcIp\022\025\n\006dst_ip\030\005 \001(\tR" +
+      "\005dstIp\022\031\n\010src_port\030\006 \001(\rR\007srcPort\022\031\n\010dst" +
+      "_port\030\007 \001(\rR\007dstPort\022\032\n\010protocol\030\010 \001(\rR\010" +
+      "protocol\022\035\n\nalert_type\030\t \001(\tR\talertType\022" +
+      "\037\n\013reason_code\030\n \001(\tR\nreasonCode\022\030\n\007comm" +
+      "ent\030\013 \001(\tR\007comment\022\026\n\006status\030\014 \001(\tR\006stat" +
+      "us\022\035\n\ncreated_by\030\r \001(\tR\tcreatedBy\022\035\n\ncre" +
+      "ated_ts\030\016 \001(\003R\tcreatedTs\022\035\n\nupdated_ts\030\017" +
+      " \001(\003R\tupdatedTs\022\035\n\nexpires_at\030\020 \001(\003R\texp" +
+      "iresAt\022\033\n\tingest_ts\030\021 \001(\003R\010ingestTs\"\215\003\n\024" +
+      "AlertStateTransition\022\033\n\ttenant_id\030\001 \001(\tR" +
+      "\010tenantId\022\031\n\010alert_id\030\002 \001(\tR\007alertId\022#\n\r" +
+      "transition_id\030\003 \001(\tR\014transitionId\022\035\n\nold" +
+      "_status\030\004 \001(\tR\toldStatus\022\035\n\nnew_status\030\005" +
+      " \001(\tR\tnewStatus\022!\n\014old_assignee\030\006 \001(\tR\013o" +
+      "ldAssignee\022!\n\014new_assignee\030\007 \001(\tR\013newAss" +
+      "ignee\022\035\n\nchanged_by\030\010 \001(\tR\tchangedBy\022#\n\r" +
+      "change_reason\030\t \001(\tR\014changeReason\022#\n\rsta" +
+      "te_version\030\n \001(\004R\014stateVersion\022\016\n\002ts\030\013 \001" +
+      "(\003R\002ts\022\033\n\tingest_ts\030\014 \001(\003R\010ingestTs\"\375\002\n\n" +
+      "DedupStats\022\033\n\ttenant_id\030\001 \001(\tR\010tenantId\022" +
+      " \n\013fingerprint\030\002 \001(\tR\013fingerprint\022\035\n\nale" +
+      "rt_type\030\003 \001(\tR\talertType\022\032\n\010severity\030\004 \001" +
+      "(\tR\010severity\022\025\n\006src_ip\030\005 \001(\tR\005srcIp\022\025\n\006d" +
+      "st_ip\030\006 \001(\tR\005dstIp\022\031\n\010dst_port\030\007 \001(\rR\007ds" +
+      "tPort\022\035\n\nfirst_seen\030\010 \001(\003R\tfirstSeen\022\033\n\t" +
+      "last_seen\030\t \001(\003R\010lastSeen\022)\n\020occurrence_" +
+      "count\030\n \001(\004R\017occurrenceCount\022(\n\020sample_a" +
+      "lert_ids\030\013 \003(\tR\016sampleAlertIds\022\033\n\tingest" +
+      "_ts\030\014 \001(\003R\010ingestTs\"\367\001\n\022StorageHealthEve" +
+      "nt\022!\n\014storage_type\030\001 \001(\tR\013storageType\022!\n" +
+      "\014storage_name\030\002 \001(\tR\013storageName\022\026\n\006stat" +
+      "us\030\003 \001(\tR\006status\022#\n\rerror_message\030\004 \001(\tR" +
+      "\014errorMessage\0221\n\024consecutive_failures\030\005 " +
+      "\001(\rR\023consecutiveFailures\022\016\n\002ts\030\006 \001(\003R\002ts" +
+      "\022\033\n\tingest_ts\030\007 \001(\003R\010ingestTs\"\373\002\n\024ModelF" +
+      "eedbackMetrics\022\033\n\ttenant_id\030\001 \001(\tR\010tenan" +
+      "tId\022#\n\rmodel_version\030\002 \001(\tR\014modelVersion" +
+      "\022\035\n\nalert_type\030\003 \001(\tR\talertType\022\022\n\004hour\030" +
+      "\004 \001(\003R\004hour\022!\n\014total_alerts\030\005 \001(\004R\013total" +
+      "Alerts\022\031\n\010tp_count\030\006 \001(\004R\007tpCount\022\031\n\010fp_" +
+      "count\030\007 \001(\004R\007fpCount\022\'\n\017unlabeled_count\030" +
+      "\010 \001(\004R\016unlabeledCount\022\034\n\tprecision\030\t \001(\002" +
+      "R\tprecision\022\026\n\006recall\030\n \001(\002R\006recall\022\031\n\010f" +
+      "1_score\030\013 \001(\002R\007f1Score\022\033\n\tingest_ts\030\014 \001(" +
+      "\003R\010ingestTs\"\356\002\n\024AlertCorrelationEdge\022\033\n\t" +
+      "tenant_id\030\001 \001(\tR\010tenantId\022\027\n\007edge_id\030\002 \001" +
+      "(\tR\006edgeId\022&\n\017source_alert_id\030\003 \001(\tR\rsou" +
+      "rceAlertId\022&\n\017target_alert_id\030\004 \001(\tR\rtar" +
+      "getAlertId\022)\n\020correlation_type\030\005 \001(\tR\017co" +
+      "rrelationType\022+\n\021correlation_score\030\006 \001(\002" +
+      "R\020correlationScore\022\'\n\017shared_entities\030\007 " +
+      "\003(\tR\016sharedEntities\022\"\n\rtime_delta_ms\030\010 \001" +
+      "(\003R\013timeDeltaMs\022\016\n\002ts\030\t \001(\003R\002ts\022\033\n\tinges" +
+      "t_ts\030\n \001(\003R\010ingestTs\"\270\002\n\021NotificationEve" +
+      "nt\022\033\n\ttenant_id\030\001 \001(\tR\010tenantId\022\'\n\017notif" +
+      "ication_id\030\002 \001(\tR\016notificationId\022\031\n\010aler" +
+      "t_id\030\003 \001(\tR\007alertId\022\030\n\007channel\030\004 \001(\tR\007ch" +
+      "annel\022\026\n\006status\030\005 \001(\tR\006status\022#\n\rerror_m" +
+      "essage\030\006 \001(\tR\014errorMessage\022\027\n\007rule_id\030\007 " +
+      "\001(\tR\006ruleId\022\034\n\trecipient\030\010 \001(\tR\trecipien" +
+      "t\022\027\n\007sent_at\030\t \001(\003R\006sentAt\022\033\n\tingest_ts\030" +
+      "\n \001(\003R\010ingestTs\"\316\006\n\022AlertExtendedBatch\022\031" +
+      "\n\010batch_id\030\001 \001(\tR\007batchId\022\033\n\ttenant_id\030\002" +
+      " \001(\tR\010tenantId\022\035\n\ncreated_at\030\003 \001(\003R\tcrea" +
+      "tedAt\022)\n\006alerts\030\n \003(\0132\021.traffic.v1.Alert" +
+      "R\006alerts\0222\n\tevidences\030\013 \003(\0132\024.traffic.v1" +
+      ".EvidenceR\tevidences\0222\n\tcampaigns\030\014 \003(\0132" +
+      "\024.traffic.v1.CampaignR\tcampaigns\0227\n\tfeed" +
+      "backs\030\r \003(\0132\031.traffic.v1.AlertFeedbackR\t" +
+      "feedbacks\022B\n\017whitelist_rules\030\016 \003(\0132\031.tra" +
+      "ffic.v1.WhitelistRuleR\016whitelistRules\022M\n" +
+      "\021state_transitions\030\017 \003(\0132 .traffic.v1.Al" +
+      "ertStateTransitionR\020stateTransitions\0227\n\013" +
+      "dedup_stats\030\020 \003(\0132\026.traffic.v1.DedupStat" +
+      "sR\ndedupStats\022R\n\025storage_health_events\030\021" +
+      " \003(\0132\036.traffic.v1.StorageHealthEventR\023st" +
+      "orageHealthEvents\022V\n\026model_feedback_metr" +
+      "ics\030\022 \003(\0132 .traffic.v1.ModelFeedbackMetr" +
+      "icsR\024modelFeedbackMetrics\022M\n\021correlation" +
+      "_edges\030\023 \003(\0132 .traffic.v1.AlertCorrelati" +
+      "onEdgeR\020correlationEdges\022N\n\023notification" +
+      "_events\030\024 \003(\0132\035.traffic.v1.NotificationE" +
+      "ventR\022notificationEventsB\324\001\n\034com.traffic" +
+      ".proto.traffic.v1B\nAlertProtoP\001Z_github." +
+      "com/1144160159/traffic-analysis-platform" +
+      "/go/control-plane/pkg/proto/traffic/v1;t" +
+      "rafficv1\242\002\003TXX\252\002\nTraffic.V1\312\002\nTraffic\\V1" +
+      "\342\002\026Traffic\\V1\\GPBMetadata\352\002\013Traffic::V1b" +
+      "\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -269,7 +270,7 @@ public final class AlertProto {
     internal_static_traffic_v1_Alert_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_traffic_v1_Alert_descriptor,
-        new java.lang.String[] { "TenantId", "AlertId", "FirstSeen", "LastSeen", "Severity", "AlertType", "Score", "Labels", "SrcIp", "DstIp", "SrcPort", "DstPort", "Protocol", "CommunityId", "SessionId", "CampaignId", "ModelVersion", "RuleVersion", "FeatureSetId", "Status", "Assignee", "EvidenceIds", "DedupFingerprint", "UpdatedTs", "EventId", "IngestTs", "ProtocolName", "Count", "ArkimeSessionLink", "FeedbackLabel", "FeedbackCount", "StateVersion", });
+        new java.lang.String[] { "TenantId", "AlertId", "FirstSeen", "LastSeen", "Severity", "AlertType", "Score", "Labels", "SrcIp", "DstIp", "SrcPort", "DstPort", "Protocol", "CommunityId", "SessionId", "CampaignId", "ModelVersion", "RuleVersion", "FeatureSetId", "Status", "Assignee", "EvidenceIds", "DedupFingerprint", "UpdatedTs", "EventId", "IngestTs", "ProtocolName", "Count", "ArkimeSessionLink", "FeedbackLabel", "FeedbackCount", "StateVersion", "TraceId", });
     internal_static_traffic_v1_Evidence_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_traffic_v1_Evidence_fieldAccessorTable = new

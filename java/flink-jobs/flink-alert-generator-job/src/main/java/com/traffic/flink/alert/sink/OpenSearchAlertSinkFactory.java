@@ -144,12 +144,11 @@ public class OpenSearchAlertSinkFactory {
                         action.getClass().getSimpleName(),
                         restStatusCode,
                         failure.getMessage());
-                
-                // 可以在这里实现重试逻辑或 DLQ
-                if (restStatusCode == -1) {
-                    // 网络错误，可重试
-                    LOG.warn("Network error, consider retrying: {}", failure.getMessage());
-                }
+                // Bulk backoff above has already exhausted its bounded retries. Failing the
+                // operator prevents a checkpoint from acknowledging a missing projection.
+                throw new RuntimeException(
+                        "OpenSearch alert bulk item failed after retries: status=" + restStatusCode,
+                        failure);
             });
 
             return builder.build();
@@ -163,7 +162,7 @@ public class OpenSearchAlertSinkFactory {
     /**
      * Alert 到 Elasticsearch 的转换函数
      */
-    private static class AlertElasticsearchSinkFunction implements ElasticsearchSinkFunction<Alert> {
+    static class AlertElasticsearchSinkFunction implements ElasticsearchSinkFunction<Alert> {
 
         private static final long serialVersionUID = 1L;
         private final String index;
@@ -175,21 +174,26 @@ public class OpenSearchAlertSinkFactory {
         @Override
         public void process(Alert alert, RuntimeContext ctx, RequestIndexer indexer) {
             try {
-                Map<String, Object> doc = convertAlertToMap(alert);
-                String json = MAPPER.writeValueAsString(doc);
-
-                // 使用 alert_id 作为文档 ID（幂等写入）
-                IndexRequest request = Requests.indexRequest()
-                        .index(index)
-                        .id(alert.getAlertId())
-                        .source(json, XContentType.JSON);
-
-                indexer.add(request);
+                indexer.add(buildRequest(alert));
 
             } catch (Exception e) {
                 LOG.error("Failed to process alert for OpenSearch: alertId={}, error={}",
                         alert.getAlertId(), e.getMessage(), e);
+                throw new IllegalStateException(
+                        "Failed to create OpenSearch alert projection for " + alert.getAlertId(), e);
             }
+        }
+
+        IndexRequest buildRequest(Alert alert) throws Exception {
+            if (alert == null || alert.getAlertId().isBlank()) {
+                throw new IllegalArgumentException("OpenSearch alert projection requires alert_id");
+            }
+            Map<String, Object> doc = convertAlertToMap(alert);
+            String json = MAPPER.writeValueAsString(doc);
+            return Requests.indexRequest()
+                    .index(index)
+                    .id(alert.getAlertId())
+                    .source(json, XContentType.JSON);
         }
 
         /**
@@ -205,6 +209,7 @@ public class OpenSearchAlertSinkFactory {
             doc.put("tenant_id", alert.getTenantId());
             doc.put("alert_id", alert.getAlertId());
             doc.put("event_id", alert.getEventId());
+            doc.put("trace_id", alert.getTraceId());
 
             // ==================== 网络五元组 ====================
             

@@ -1,0 +1,59 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: flink-checkpoint-slo-v1
+  namespace: observability
+  labels:
+    traffic.openai.com/contract: flink-checkpoint-ha-upgrade-v1
+spec:
+  groups:
+  - name: traffic-flink-checkpoint-slo
+    interval: 30s
+    rules:
+    - record: traffic:flink_checkpoint_attempts_10m
+      expr: |
+        sum by (job_name) (
+          increase(flink_jobmanager_job_numberOfCompletedCheckpoints[10m])
+          + increase(flink_jobmanager_job_numberOfFailedCheckpoints[10m])
+        )
+    - record: traffic:flink_checkpoint_success_ratio_10m
+      expr: |
+        sum by (job_name) (increase(flink_jobmanager_job_numberOfCompletedCheckpoints[10m]))
+        /
+        clamp_min(traffic:flink_checkpoint_attempts_10m, 1)
+    - alert: FlinkCheckpointSuccessRatioBelowSLO
+      expr: |
+        traffic:flink_checkpoint_attempts_10m > 0
+        and traffic:flink_checkpoint_success_ratio_10m < 0.999
+      for: 10m
+      labels:
+        severity: critical
+        remediation_id: T-FLINK-003
+      annotations:
+        summary: Flink checkpoint success ratio is below 99.9 percent
+        runbook: doc/07_alignment/runbooks/T-FLINK-003-checkpoint-ha-upgrade.md
+    - alert: FlinkCheckpointDurationExceedsHalfInterval
+      expr: |
+        (
+          flink_jobmanager_job_lastCheckpointDuration{job_name!~"PCAP Index Job v2"} > 30000
+        )
+        or
+        (
+          flink_jobmanager_job_lastCheckpointDuration{job_name=~"PCAP Index Job v2"} > 15000
+        )
+      for: 5m
+      labels:
+        severity: warning
+        remediation_id: T-FLINK-003
+      annotations:
+        summary: Flink checkpoint duration exceeds half of the declared interval
+        runbook: doc/07_alignment/runbooks/T-FLINK-003-checkpoint-ha-upgrade.md
+    - alert: FlinkJobRecoveryExceedsRTO
+      expr: flink_jobmanager_job_downtime > 300000
+      for: 1m
+      labels:
+        severity: critical
+        remediation_id: T-FLINK-003
+      annotations:
+        summary: Critical Flink job recovery exceeded five minutes
+        runbook: doc/07_alignment/runbooks/T-FLINK-003-checkpoint-ha-upgrade.md
