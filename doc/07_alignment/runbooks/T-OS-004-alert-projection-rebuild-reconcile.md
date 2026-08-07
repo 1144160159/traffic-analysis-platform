@@ -67,7 +67,7 @@ go run ./cmd/alert-projection-reconcile \
 6. 对目标内容已经一致的记录，repair 仍批量比较 PG watermark 的 `source_version + source_sha256`。缺失或不一致的 receipt 必须补写并再次查询；因此“OS 已写入但首次 PG watermark 失败”的后续运行能够恢复，不能因本轮没有 missing/stale 就跳过水位并伪报收敛。
 7. G1至少保留一次同一自有运行内的真实OpenSearch回读与真实PostgreSQL watermark回读。两个分离容器运行的PASS只能作为单组件诊断，不能替代这一跨服务终态回执；该G1仍不替代真实ClickHouse/Kafka或生产G3。
 8. 下一层G1必须把内存权威源替换为生产ClickHouse repository：同一alert逐项比较CH authoritative SHA、OS目标SHA与PG receipt SHA/source_version。该三存储样例未包含Kafka offset/last event_id前，仍不得写成G3。
-9. 五存储G1必须使用真实Redpanda和Redis，并通过生产alert consumer路径消费protobuf。只有CH、OS和PG应用回执一致后，broker consumer group committed offset、lag和post-commit `last_event_id`才可作为同一运行证据。随后必须令PG watermark表真实不可用：CH/OS成功而PG回执失败时offset和last event不得前移；恢复PG并以同一group重启后，原event必须重投且CH/OS/PG重新收敛。精确event重投不得再次增加Redis聚合count，source version与投影SHA在重启前后必须稳定。该自有loopback运行仍不是G2/G3，也不代表883172条现网差额已回填。
+9. 五存储G1必须使用真实Redpanda和Redis，并通过生产alert consumer路径消费protobuf。只有CH、OS和PG应用回执一致后，broker consumer group committed offset、lag和post-commit `last_event_id`才可作为同一运行证据。随后必须令PG watermark表真实不可用：CH/OS成功而PG回执失败时offset和last event不得前移；恢复PG并以同一group重启后，原event必须重投且CH/OS/PG重新收敛。精确event重投不得再次增加Redis聚合count，source version与投影SHA在重启前后必须稳定。不同event按源时间乱序到达时必须独立投影，Redis聚合保持`min(first_seen) / max(last_seen)`；任何旧event在后续event之后精确重投都必须恢复该event自己的count和时间快照。该自有loopback运行仍不是G2/G3，也不代表883172条现网差额已回填。
 
 ```bash
 make alignment-verify-alert-projection-kafka-five-store-g1 \

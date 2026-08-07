@@ -180,6 +180,10 @@ def main() -> int:
         "redis_exact_event_replay_count_stable_verified": False,
         "source_version_hash_stable_across_restart_verified": False,
         "event_identity_collision_rejected_verified": False,
+        "source_time_dedup_bucket_verified": False,
+        "out_of_order_distinct_events_verified": False,
+        "redis_first_last_monotonic_verified": False,
+        "delayed_exact_replay_snapshot_verified": False,
         "loopback_only": True,
         "persistent_volume_attached": False,
         "shared_environment_touched": False,
@@ -334,6 +338,10 @@ def main() -> int:
             "redis_exact_event_replay_count_stable_verified",
             "source_version_hash_stable_across_restart_verified",
             "event_identity_collision_rejected_verified",
+            "source_time_dedup_bucket_verified",
+            "out_of_order_distinct_events_verified",
+            "redis_first_last_monotonic_verified",
+            "delayed_exact_replay_snapshot_verified",
         ):
             result[field] = True
         result["status"] = "PASS"

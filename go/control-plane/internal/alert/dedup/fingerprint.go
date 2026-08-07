@@ -31,7 +31,7 @@ func CalculateFingerprint(batch *pb.DetectionBatch, timeBucketMinutes int) strin
 		alertType = bu.GetDetectionType()
 	}
 
-	eventTime := time.Now().UTC()
+	eventTime := detectionEventTime(batch)
 	timeBucket := eventTime.Truncate(time.Duration(timeBucketMinutes) * time.Minute).Unix()
 
 	data := fmt.Sprintf("%s:%s:%s:%s:%d",
@@ -103,7 +103,7 @@ func ExtractFingerprintComponents(batch *pb.DetectionBatch, timeBucketMinutes in
 		alertType = bu.GetDetectionType()
 	}
 
-	eventTime := time.Now().UTC()
+	eventTime := detectionEventTime(batch)
 	timeBucket := eventTime.Truncate(time.Duration(timeBucketMinutes) * time.Minute).Unix()
 
 	return &FingerprintComponents{
@@ -115,6 +115,36 @@ func ExtractFingerprintComponents(batch *pb.DetectionBatch, timeBucketMinutes in
 		Severity:   severity,
 		TimeBucket: timeBucket,
 	}
+}
+
+// detectionEventTime uses the canonical source timestamp so a delayed or
+// replayed event stays in the same dedup bucket. Processing time is only a
+// compatibility fallback for legacy envelopes without source timestamps.
+func detectionEventTime(batch *pb.DetectionBatch) time.Time {
+	if batch != nil {
+		if len(batch.Behaviors) > 0 && batch.Behaviors[0] != nil {
+			behavior := batch.Behaviors[0]
+			if eventTs := behavior.GetHeader().GetEventTs(); eventTs > 0 {
+				return time.UnixMilli(eventTs).UTC()
+			}
+			if eventTs := behavior.GetTs(); eventTs > 0 {
+				return time.UnixMilli(eventTs).UTC()
+			}
+		}
+		if len(batch.Businesses) > 0 && batch.Businesses[0] != nil {
+			business := batch.Businesses[0]
+			if eventTs := business.GetHeader().GetEventTs(); eventTs > 0 {
+				return time.UnixMilli(eventTs).UTC()
+			}
+			if eventTs := business.GetTs(); eventTs > 0 {
+				return time.UnixMilli(eventTs).UTC()
+			}
+		}
+		if eventTs := batch.GetCreatedAt(); eventTs > 0 {
+			return time.UnixMilli(eventTs).UTC()
+		}
+	}
+	return time.Now().UTC()
 }
 
 // String 返回指纹组成部分的字符串表示

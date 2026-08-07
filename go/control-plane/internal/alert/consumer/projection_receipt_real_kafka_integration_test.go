@@ -33,6 +33,8 @@ const (
 	alertProjectionKafkaTenant = "tenant-alert-projection-kafka-g1"
 	alertProjectionKafkaEvent  = "event-alert-projection-kafka-g1"
 	alertProjectionKafkaRetry  = "event-alert-projection-kafka-retry-g1"
+	alertProjectionKafkaNewer  = "event-alert-projection-kafka-newer-g1"
+	alertProjectionKafkaOlder  = "event-alert-projection-kafka-older-g1"
 )
 
 // TestAlertProjectionReceiptRealKafka proves that the production alert
@@ -395,9 +397,155 @@ func TestAlertProjectionReceiptRealKafka(t *testing.T) {
 	if err != nil || countAfterCollision != countAfterRecovery {
 		t.Fatalf("event identity collision mutated Redis aggregate: before=%d after=%d err=%v", countAfterRecovery, countAfterCollision, err)
 	}
+
+	// Distinct events are independent alert identities. Publish a newer source
+	// event before an older one and prove both project, while the Redis aggregate
+	// keeps min(first_seen), max(last_seen), and a monotonic count. Replaying the
+	// newer event after the older one must recover its original per-event tuple.
+	newerDetection := alertProjectionKafkaDistinctDetection(alertProjectionKafkaNewer, 2*time.Minute, 2)
+	olderDetection := alertProjectionKafkaDistinctDetection(alertProjectionKafkaOlder, time.Minute, 3)
+	if err := writeAlertProjectionDetection(ctx, writer, topic, newerDetection); err != nil {
+		t.Fatal(err)
+	}
+	waitForAlertProjectionOffset(t, ctx, offsetReader, retryConsumer, topic, groupID, 3, alertProjectionKafkaNewer)
+	if err := writeAlertProjectionDetection(ctx, writer, topic, olderDetection); err != nil {
+		t.Fatal(err)
+	}
+	waitForAlertProjectionOffset(t, ctx, offsetReader, retryConsumer, topic, groupID, 4, alertProjectionKafkaOlder)
+
+	if err := target.RefreshProjectionTarget(ctx); err != nil {
+		t.Fatal(err)
+	}
+	authoritative, truncated, err = authority.ListProjectionAlerts(ctx, scope)
+	if err != nil || truncated || len(authoritative) != 4 {
+		t.Fatalf("unexpected ClickHouse authority after out-of-order events: count=%d truncated=%v err=%v", len(authoritative), truncated, err)
+	}
+	projected, targetTruncated, err = target.ListProjectionAlerts(ctx, scope)
+	if err != nil || targetTruncated || len(projected) != 4 {
+		t.Fatalf("unexpected OpenSearch projection after out-of-order events: count=%d truncated=%v err=%v", len(projected), targetTruncated, err)
+	}
+	newerHash := verifyProjectionEventAcrossStores(t, ctx, pgDB, authoritative, projected, alertProjectionKafkaNewer)
+	verifyProjectionEventAcrossStores(t, ctx, pgDB, authoritative, projected, alertProjectionKafkaOlder)
+	countAfterOutOfOrder, err := redisClient.Get(ctx, redisCountKey).Int64()
+	if err != nil || countAfterOutOfOrder != 4 {
+		t.Fatalf("out-of-order events produced wrong Redis count: count=%d err=%v", countAfterOutOfOrder, err)
+	}
+	firstSeenAfterOutOfOrder, err := redisClient.Get(ctx, strings.TrimSuffix(redisCountKey, ":count")+":first_seen").Int64()
+	if err != nil || firstSeenAfterOutOfOrder != alertProjectionKafkaDetection().GetBehaviors()[0].GetHeader().GetEventTs() {
+		t.Fatalf("out-of-order events changed aggregate first_seen: value=%d err=%v", firstSeenAfterOutOfOrder, err)
+	}
+	lastSeenAfterOutOfOrder, err := redisClient.Get(ctx, strings.TrimSuffix(redisCountKey, ":count")+":last_seen").Int64()
+	if err != nil || lastSeenAfterOutOfOrder != newerDetection.GetBehaviors()[0].GetHeader().GetEventTs() {
+		t.Fatalf("out-of-order event regressed aggregate last_seen: value=%d err=%v", lastSeenAfterOutOfOrder, err)
+	}
+
+	if err := writeAlertProjectionDetection(ctx, writer, topic, newerDetection); err != nil {
+		t.Fatal(err)
+	}
+	waitForAlertProjectionOffset(t, ctx, offsetReader, retryConsumer, topic, groupID, 5, alertProjectionKafkaNewer)
+	if err := target.RefreshProjectionTarget(ctx); err != nil {
+		t.Fatal(err)
+	}
+	authoritative, truncated, err = authority.ListProjectionAlerts(ctx, scope)
+	if err != nil || truncated || len(authoritative) != 4 {
+		t.Fatalf("unexpected ClickHouse authority after delayed exact replay: count=%d truncated=%v err=%v", len(authoritative), truncated, err)
+	}
+	projected, targetTruncated, err = target.ListProjectionAlerts(ctx, scope)
+	if err != nil || targetTruncated || len(projected) != 4 {
+		t.Fatalf("unexpected OpenSearch projection after delayed exact replay: count=%d truncated=%v err=%v", len(projected), targetTruncated, err)
+	}
+	newerReplayHash := verifyProjectionEventAcrossStores(t, ctx, pgDB, authoritative, projected, alertProjectionKafkaNewer)
+	if newerReplayHash != newerHash {
+		t.Fatalf("delayed exact replay changed newer event projection hash: before=%s after=%s", newerHash, newerReplayHash)
+	}
+	countAfterDelayedReplay, err := redisClient.Get(ctx, redisCountKey).Int64()
+	if err != nil || countAfterDelayedReplay != countAfterOutOfOrder {
+		t.Fatalf("delayed exact replay inflated Redis count: before=%d after=%d err=%v", countAfterOutOfOrder, countAfterDelayedReplay, err)
+	}
 	t.Logf("PASS_ALERT_PROJECTION_REAL_KAFKA_RECEIPT event_id=%s committed_offset=1 lag_before_fault=0 source_sha256=%s", lastEvent, sourceHash)
 	t.Logf("PASS_ALERT_PROJECTION_RECEIPT_FAILURE_RESTART retry_event_id=%s retained_offset=1 retained_lag=1 recovered_offset=%d recovered_lag=%d source_sha256=%s",
 		retryLastEvent, lag.TotalCommittedOffset, lag.TotalLag, retrySourceHash)
+	t.Logf("PASS_ALERT_PROJECTION_OUT_OF_ORDER_DISTINCT_EVENTS newer_event_id=%s older_event_id=%s final_offset=5 redis_count=4 aggregate_first_seen=%d aggregate_last_seen=%d newer_sha256=%s",
+		alertProjectionKafkaNewer, alertProjectionKafkaOlder, firstSeenAfterOutOfOrder, lastSeenAfterOutOfOrder, newerReplayHash)
+}
+
+func waitForAlertProjectionOffset(
+	t *testing.T,
+	ctx context.Context,
+	offsetReader *dataquality.KafkaBrokerOffsetReader,
+	consumer *Consumer,
+	topic string,
+	groupID string,
+	wantOffset int64,
+	wantEventID string,
+) {
+	t.Helper()
+	deadline := time.Now().Add(30 * time.Second)
+	var lag dataquality.KafkaLagSnapshot
+	var err error
+	var lastEvent string
+	for time.Now().Before(deadline) {
+		lag, err = offsetReader.ReadLag(ctx, topic, groupID)
+		consumer.commitMetricMu.Lock()
+		lastEvent = consumer.lastCommitEvent[topic+":0"]
+		consumer.commitMetricMu.Unlock()
+		if err == nil && lag.TotalCommittedOffset == wantOffset && lag.TotalLag == 0 && lastEvent == wantEventID {
+			return
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+	t.Fatalf("Kafka projection offset did not converge: want_offset=%d want_event=%s lag=%+v last_event=%s err=%v",
+		wantOffset, wantEventID, lag, lastEvent, err)
+}
+
+func verifyProjectionEventAcrossStores(
+	t *testing.T,
+	ctx context.Context,
+	pgDB *sql.DB,
+	authoritative []*persistence.Alert,
+	projected []*persistence.Alert,
+	eventID string,
+) string {
+	t.Helper()
+	var source, target *persistence.Alert
+	for _, alert := range authoritative {
+		if alert.EventID == eventID {
+			source = alert
+			break
+		}
+	}
+	for _, alert := range projected {
+		if alert.EventID == eventID {
+			target = alert
+			break
+		}
+	}
+	if source == nil || target == nil {
+		t.Fatalf("event %s missing from source or target: source=%v target=%v", eventID, source, target)
+	}
+	sourceHash, err := persistence.AlertProjectionSHA256(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	targetHash, err := persistence.AlertProjectionSHA256(target)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var receiptEvent, receiptHash string
+	var receiptVersion int64
+	if err := pgDB.QueryRowContext(ctx, `SELECT source_event_id,source_version,source_sha256
+		FROM alert_opensearch_projection_watermarks
+		WHERE tenant_id=$1 AND alert_id=$2 AND target_index_version='alerts-v2-write'`,
+		alertProjectionKafkaTenant, source.AlertID,
+	).Scan(&receiptEvent, &receiptVersion, &receiptHash); err != nil {
+		t.Fatal(err)
+	}
+	if receiptEvent != eventID || sourceHash != targetHash || sourceHash != receiptHash ||
+		receiptVersion != persistence.AlertSourceVersion(source) {
+		t.Fatalf("event %s cross-store mismatch: receipt_event=%s hashes=%s/%s/%s versions=%d/%d",
+			eventID, receiptEvent, sourceHash, targetHash, receiptHash, persistence.AlertSourceVersion(source), receiptVersion)
+	}
+	return sourceHash
 }
 
 func projectionHashForEvent(t *testing.T, alerts []*persistence.Alert, eventID string) string {
@@ -543,5 +691,26 @@ func alertProjectionKafkaRetryDetection() *pb.DetectionBatch {
 	behavior.Tuple.SrcPort++
 	detection.BatchId = "batch-alert-projection-kafka-retry-g1"
 	detection.CreatedAt += 1000
+	return detection
+}
+
+func alertProjectionKafkaDistinctDetection(eventID string, delta time.Duration, portDelta uint32) *pb.DetectionBatch {
+	detection := alertProjectionKafkaDetection()
+	behavior := detection.Behaviors[0]
+	deltaMillis := int64(delta / time.Millisecond)
+	behavior.Header.EventId = eventID
+	behavior.Header.IdempotencyKey = eventID
+	behavior.Header.AggregateId = "session-" + eventID
+	behavior.Header.EventTs += deltaMillis
+	behavior.Header.IngestTs += deltaMillis
+	behavior.Header.KafkaTs += deltaMillis
+	behavior.Header.FlinkOutTs += deltaMillis
+	behavior.Header.OccurredAt += deltaMillis
+	behavior.Header.ProducedAt += deltaMillis
+	behavior.Ts += deltaMillis
+	behavior.ObjectId = "session-" + eventID
+	behavior.Tuple.SrcPort += portDelta
+	detection.BatchId = "batch-" + eventID
+	detection.CreatedAt += deltaMillis
 	return detection
 }

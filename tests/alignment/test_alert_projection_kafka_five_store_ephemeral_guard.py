@@ -5,6 +5,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts/alignment/verify_alert_projection_kafka_five_store_ephemeral.py"
+DEDUP_SOURCE = ROOT / "go/control-plane/internal/alert/dedup/redis_dedup.go"
+FINGERPRINT_SOURCE = ROOT / "go/control-plane/internal/alert/dedup/fingerprint.go"
+INTEGRATION_TEST = ROOT / "go/control-plane/internal/alert/consumer/projection_receipt_real_kafka_integration_test.go"
 
 
 def load_module():
@@ -60,9 +63,25 @@ class AlertProjectionKafkaFiveStoreEphemeralGuardTest(unittest.TestCase):
         self.assertIn('"redis_exact_event_replay_count_stable_verified": False', source)
         self.assertIn('"source_version_hash_stable_across_restart_verified": False', source)
         self.assertIn('"event_identity_collision_rejected_verified": False', source)
+        self.assertIn('"source_time_dedup_bucket_verified": False', source)
+        self.assertIn('"out_of_order_distinct_events_verified": False', source)
+        self.assertIn('"redis_first_last_monotonic_verified": False', source)
+        self.assertIn('"delayed_exact_replay_snapshot_verified": False', source)
         self.assertIn('"persistent_volume_attached": False', source)
         self.assertIn('"shared_environment_touched": False', source)
         self.assertIn('"production_applied": False', source)
+
+    def test_source_time_and_out_of_order_guards_are_production_bound(self) -> None:
+        dedup_source = DEDUP_SOURCE.read_text(encoding="utf-8")
+        fingerprint_source = FINGERPRINT_SOURCE.read_text(encoding="utf-8")
+        integration_source = INTEGRATION_TEST.read_text(encoding="utf-8")
+        self.assertIn("event_id -> {fingerprint,count,first_seen,last_seen}", dedup_source)
+        self.assertIn("event_ts < first_seen", dedup_source)
+        self.assertIn("event_ts > last_seen", dedup_source)
+        self.assertIn("HGET', event_key, 'count'", dedup_source)
+        self.assertIn("eventTime := detectionEventTime(batch)", fingerprint_source)
+        self.assertIn("PASS_ALERT_PROJECTION_OUT_OF_ORDER_DISTINCT_EVENTS", integration_source)
+        self.assertIn("waitForAlertProjectionOffset", integration_source)
 
 
 if __name__ == "__main__":

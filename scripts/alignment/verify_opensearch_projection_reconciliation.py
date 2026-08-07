@@ -100,6 +100,10 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
         errors.append("Kafka exact event replay guard drifted")
     if scope.get("kafka_event_identity_collision") != "same_event_id_with_different_fingerprint_fails_closed_without_aggregate_mutation":
         errors.append("Kafka event identity collision guard drifted")
+    if scope.get("kafka_distinct_event_ordering") != "source_time_bucket_distinct_events_project_independently_with_monotonic_aggregate_bounds":
+        errors.append("Kafka distinct event ordering guard drifted")
+    if scope.get("kafka_delayed_exact_replay") != "per_event_redis_receipt_restores_original_count_first_seen_last_seen_after_later_events":
+        errors.append("Kafka delayed exact replay guard drifted")
     runtime = contract.get("runtime_guards", {})
     if runtime.get("feature_flag_default_enabled") is not False or runtime.get("production_mutations_in_repository_candidate") != []:
         errors.append("candidate must remain default-off with no production mutation claim")

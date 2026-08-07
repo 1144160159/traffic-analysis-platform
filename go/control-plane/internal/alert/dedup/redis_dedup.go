@@ -727,9 +727,10 @@ var dedupScript = redis.NewScript(`
 
 // eventIdentityDedupScript makes an event replay idempotent without changing
 // the existing fingerprint aggregation semantics. The first delivery stores
-// event_id -> fingerprint and increments the aggregate. An exact replay
-// returns the previously committed aggregate tuple without incrementing it.
-// Reusing an event_id for a different fingerprint fails closed.
+// event_id -> {fingerprint,count,first_seen,last_seen} and increments the
+// aggregate. An exact replay returns that event's original tuple without
+// incrementing it. Reusing an event_id for a different fingerprint fails
+// closed. New out-of-order events update aggregate time bounds by min/max.
 var eventIdentityDedupScript = redis.NewScript(`
     local count_key = KEYS[1]
     local first_seen_key = KEYS[2]
@@ -739,33 +740,51 @@ var eventIdentityDedupScript = redis.NewScript(`
     local ttl = tonumber(ARGV[2])
     local fingerprint = ARGV[3]
 
-    local existing_fingerprint = redis.call('GET', event_key)
+    local existing_fingerprint = redis.call('HGET', event_key, 'fingerprint')
     if existing_fingerprint then
         if existing_fingerprint ~= fingerprint then
             return redis.error_reply('event identity collision')
         end
         redis.call('EXPIRE', event_key, ttl)
-        local count = tonumber(redis.call('GET', count_key))
-        local first_seen = tonumber(redis.call('GET', first_seen_key))
-        local last_seen = tonumber(redis.call('GET', last_seen_key))
+        local count = tonumber(redis.call('HGET', event_key, 'count'))
+        local first_seen = tonumber(redis.call('HGET', event_key, 'first_seen'))
+        local last_seen = tonumber(redis.call('HGET', event_key, 'last_seen'))
         if not count or not first_seen or not last_seen then
-            return redis.error_reply('event identity receipt is missing aggregate state')
+            return redis.error_reply('event identity receipt is incomplete')
         end
         return {count, 0, first_seen, last_seen, 1}
     end
 
-    redis.call('SET', event_key, fingerprint, 'EX', ttl)
     local count = redis.call('INCR', count_key)
     redis.call('EXPIRE', count_key, ttl)
-    local is_new = redis.call('SETNX', first_seen_key, event_ts)
-    redis.call('EXPIRE', first_seen_key, ttl)
-    redis.call('SET', last_seen_key, event_ts, 'EX', ttl)
+    local first_seen = tonumber(redis.call('GET', first_seen_key))
+    local is_new = 0
+    if not first_seen then
+        first_seen = event_ts
+        is_new = 1
+    elseif event_ts < first_seen then
+        first_seen = event_ts
+    end
+    redis.call('SET', first_seen_key, first_seen, 'EX', ttl)
+
+    local last_seen = tonumber(redis.call('GET', last_seen_key))
+    if not last_seen or event_ts > last_seen then
+        last_seen = event_ts
+    end
+    redis.call('SET', last_seen_key, last_seen, 'EX', ttl)
+
+    redis.call('HSET', event_key,
+        'fingerprint', fingerprint,
+        'count', count,
+        'first_seen', first_seen,
+        'last_seen', last_seen)
+    redis.call('EXPIRE', event_key, ttl)
 
     return {
         count,
         is_new,
-        tonumber(redis.call('GET', first_seen_key)) or event_ts,
-        tonumber(redis.call('GET', last_seen_key)) or event_ts,
+        first_seen,
+        last_seen,
         0
     }
 `)
