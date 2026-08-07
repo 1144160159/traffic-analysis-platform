@@ -868,6 +868,7 @@
         "contracts/openapi/alignment-v1.openapi.json",
         "go/control-plane/internal/alert/api/dashboard_task_v2.go",
         "go/control-plane/internal/alert/api/dashboard_task_v2_integration_test.go",
+        "go/control-plane/internal/alert/api/dashboard_task_real_components_integration_test.go",
         "go/control-plane/internal/alert/api/dashboard_task_pipeline.go",
         "go/control-plane/internal/alert/api/dashboard_task_compensation.go",
         "go/control-plane/internal/alert/api/dashboard_task_http_provider.go",
@@ -885,6 +886,8 @@
         "contracts/events/kafka-topic-catalog.v1.json",
         "contracts/events/kafka-acl-catalog.v1.json",
         "scripts/alignment/capture_dashboard_task_pipeline.py",
+        "scripts/alignment/verify_dashboard_task_real_components_ephemeral.py",
+        "tests/alignment/test_dashboard_task_real_components_ephemeral_guard.py",
         "doc/07_alignment/runbooks/F-DASHBOARD-002-rollback.md",
         "doc/02_acceptance/runs/20260803-remediation-g0-full-v106/manifest.json#sha256=77446bb055128cb5568c25db0186db40613855acc5f1464f27ca273c4ccfd63c",
         "doc/02_acceptance/runs/20260803-remediation-pg-transaction-outbox-v12/manifest.json#sha256=b0734531bed9e03c3015ea461f7ef3c7b64be30bf9695025e94af12628d17974",
@@ -894,10 +897,12 @@
         "doc/02_acceptance/runs/20260805-remediation-postgres-migration-version-reconcile-v1/manifest.json#sha256=78d106fb0512afe3c23d3c01b99216056b3f1cd2f7722f60d3e13ae7335b942e",
         "doc/02_acceptance/runs/20260805-remediation-dashboard-read-task-v1/manifest.json#sha256=4d564f8da753591fa77b733b8a4f1b713a42cda49515db2f9ce8d6f1effc44bc",
         "doc/02_acceptance/runs/20260808-remediation-g0-full-v204/manifest.json#sha256=d50c2db0a395a19000166816b4d2d36bf6998cf4b8cec2ae5bc3afe406d7a6fc",
-        "doc/02_acceptance/runs/20260808-remediation-dashboard-task-compensation-g1-v2/manifest.json#sha256=6c40473f88ca36d645e9bb0d0214258879f557a5391a01ca4d06940c8dfd053e"
+        "doc/02_acceptance/runs/20260808-remediation-dashboard-task-compensation-g1-v2/manifest.json#sha256=6c40473f88ca36d645e9bb0d0214258879f557a5391a01ca4d06940c8dfd053e",
+        "doc/02_acceptance/runs/20260808-remediation-g0-full-v205/manifest.json#sha256=c5c8da119b613a58ed01094e67a183e5c04a4b2ef8d20fa138b154608b2b945d",
+        "doc/02_acceptance/runs/20260808-remediation-dashboard-task-real-components-g1-v3/manifest.json#sha256=0915637a98db9183f317093b5a378353b251a8b1cadb0ee0ae1376f958c5fa74"
       ],
-      "blocker": "历史已部署候选和指定Windows Chrome只证明真实202受理，outbox仍为pending且pipeline关闭。v204同源码的隔离G1新增补偿受理、执行/补偿租约与回执、最终结果outbox、精确重放、跨tenant拒绝和三入口双重migration证据，但该runner未启动真实Kafka broker或批准的外部执行/补偿提供方。真实发布消费、乱序/重启/DLQ、提供方幂等副作用与恢复、同trace跨链对账、队列与执行/补偿P99、资源预算、Windows Chrome补偿控件、canary、在途回滚和T+观察仍未完成，F-DASHBOARD-002保持IMPLEMENTING。",
-      "note": "F-DASHBOARD-002在默认关闭开关下新增耐久补偿合同与实现：只有原执行回执effect_state=confirmed且具有稳定effect ID时才允许补偿；HTTP 2xx不足以写入compensated，连接不确定保持compensation_partial/effect_state=unknown。G0 v204三段PASS，G1 v2八项范围检查PASS且production_applied=false；既有真实202受理证据继续保留，但新切片不冒充G2-G6或最终成功。"
+      "blocker": "历史已部署候选和指定Windows Chrome仍只证明真实202受理，outbox为pending且pipeline关闭。v205同源码自有G1已用固定摘要PostgreSQL和Redpanda、生产kafka-go producer/consumer及真实loopback HTTP执行/补偿provider证明RequireAll ACK、consumer group重启、精确broker重放、幂等副作用和传输不确定态；但这不是批准候选环境。批准服务中的发布消费、真实broker毒消息/DLQ、提供方权威幂等查询与丢响应恢复、每操作trace跨链对账、队列与执行/补偿P50/P95/P99、资源预算、Windows Chrome补偿控件、canary、在途回滚和T+观察仍未完成，F-DASHBOARD-002保持IMPLEMENTING。",
+      "note": "F-DASHBOARD-002的G1强度提升：G0 v205三段PASS，G1 v3九项范围检查PASS。正式自有运行提交12条broker消息至offset 11，3个任务形成10条唯一inbox；HTTP传输重试为执行4次调用/3个唯一副作用、补偿3次调用/2个唯一副作用，创建执行和补偿trace分别对账。两个无卷容器均删除，production_applied=false；该证据不冒充批准G2-G6、补偿UI或最终成功。"
     },
     {
       "id": "F-SCREEN-001",
