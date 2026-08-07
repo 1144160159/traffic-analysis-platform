@@ -127,7 +127,7 @@
     "deployments/kubernetes/infrastructure/09-nebula-graph.yaml": "4c26d5dc6d438bbdbb42808f6761c2ecb9535d1f5fe1a1488b7403c2e60aa17f",
     "deployments/kubernetes/infrastructure/10-observability.yaml": "8c2c1d390d40dac0096cf05cad025188603afd5698d8cd99d81d17f6f38ade24",
     "deployments/kubernetes/infrastructure/11-management.yaml": "ffd6c4384fd8376c92083c292ae2eae9c4b2a562897a629ee58c3698840e34d5",
-    "deployments/kubernetes/init-jobs/00-kafka-service-principals.yaml": "5301be563ddf3f65504dd421acde6bd81898649063b95275505ad13965f955ce",
+    "deployments/kubernetes/init-jobs/00-kafka-service-principals.yaml": "d01a637fa8238db4d86261bae66ac8ab02a032dba3bca008a707fbffa20037d8",
     "deployments/kubernetes/init-jobs/01-kafka-topics.yaml": "6e8f59c9ac3b4f0fb938bcdbb39dd07417fd506089cdb18e20ea66ba86ff0bca",
     "deployments/kubernetes/init-jobs/02-postgres-schema.yaml": "e160088d18fb92a451aa477bbab7ba6dc0b3efa627951a6b4f151ce0bb966ec2",
     "deployments/kubernetes/init-jobs/03-clickhouse-schema.yaml": "262b49eef99b05aa37056f52b88e726370b56b70c117a32a755be6fa7b6dd468",
@@ -63769,5 +63769,5 @@
       ]
     }
   ],
-  "catalog_sha256": "78a88a37c4004dd4b701f30c46df9c8b05515e2e8add48d8fcbc4e5a2077b7d2"
+  "catalog_sha256": "fa7db9b800df746f69cbbfac958d723d8ac8df2d334fe0df13c3501e97de4c78"
 }

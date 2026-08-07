@@ -1,0 +1,48 @@
+# Reproducible container fallback configuration.
+#
+# This file contains no credentials and is intentionally restricted to a
+# loopback gateway. Kubernetes replaces it with the probe-agent ConfigMap and
+# injects AUTH_TOKEN plus the mTLS material from Secrets.
+tenant_id: "${TENANT_ID:-default}"
+probe_id: "${PROBE_ID:-probe-local}"
+run_id: "${RUN_ID:-realtime}"
+
+capture:
+  interface: "${CAPTURE_INTERFACE:-eth0}"
+  mode: "af_packet"
+  queue_id: 0
+  buffer_size: 67108864
+  frame_size: 4096
+  frame_count: 16384
+  bpf_filter: null
+  promiscuous_mode: false
+  cpu_cores: []
+  numa_aware: false
+
+aggregator:
+  flow_capacity: 250000
+  idle_timeout_sec: 120
+  active_timeout_sec: 1800
+  scan_interval_sec: 1
+  use_generational: false
+
+archiver:
+  enabled: false
+
+sender:
+  gateway_addr: "${GATEWAY_ADDR:-http://127.0.0.1:50051}"
+  batch_size: 100
+  batch_timeout_ms: 100
+  max_retries: 3
+  tls_ca_cert: null
+  tls_client_cert: null
+  tls_client_key: null
+  auth_token: null
+  tenant_id: "${TENANT_ID:-default}"
+  probe_id: "${PROBE_ID:-probe-local}"
+  cache_path: "/var/lib/probe-agent/cache"
+  cache_max_size: 250000
+
+metrics:
+  enabled: true
+  listen_addr: "0.0.0.0:9091"

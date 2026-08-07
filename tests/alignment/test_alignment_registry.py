@@ -1059,7 +1059,9 @@ class AlignmentRegistryTest(unittest.TestCase):
         dockerfile = (
             ROOT / "rust/probe-agent/docker/Dockerfile"
         ).read_text(encoding="utf-8")
-        default_config = ROOT / "rust/probe-agent/probe-agent/config.yaml"
+        container_config = (
+            ROOT / "rust/probe-agent/probe-agent/config.container.yaml"
+        )
         probe_manifest = (
             ROOT / "deployments/kubernetes/applications/probe-agent.yaml"
         ).read_text(encoding="utf-8")
@@ -1070,7 +1072,14 @@ class AlignmentRegistryTest(unittest.TestCase):
             ROOT / "deployments/kubernetes/security/external-secrets-template.yaml"
         ).read_text(encoding="utf-8")
 
-        self.assertTrue(default_config.is_file())
+        self.assertTrue(container_config.is_file())
+        container_config_text = container_config.read_text(encoding="utf-8")
+        self.assertIn(
+            'gateway_addr: "${GATEWAY_ADDR:-http://127.0.0.1:50051}"',
+            container_config_text,
+        )
+        self.assertIn("auth_token: null", container_config_text)
+        self.assertNotIn("PROBE_AUTH_TOKEN", container_config_text)
         self.assertIn("FROM rust:1.93.0-slim-bookworm AS builder", dockerfile)
         self.assertIn(
             "RUSTUP_TOOLCHAIN=1.93.0-x86_64-unknown-linux-gnu",
@@ -1078,7 +1087,10 @@ class AlignmentRegistryTest(unittest.TestCase):
         )
         self.assertNotIn(" clang llvm lld cmake ", dockerfile)
         self.assertIn("cargo build --locked --release -p probe-agent", dockerfile)
-        self.assertIn("COPY probe-agent/config.yaml /etc/probe-agent/config.yaml", dockerfile)
+        self.assertIn(
+            "COPY probe-agent/config.container.yaml /etc/probe-agent/config.yaml",
+            dockerfile,
+        )
         self.assertIn('CMD ["/etc/probe-agent/config.yaml"]', dockerfile)
         self.assertNotIn('CMD ["--config"', dockerfile)
         self.assertNotIn("probe-token-default-001", probe_manifest)
