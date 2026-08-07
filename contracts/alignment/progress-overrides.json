@@ -1755,10 +1755,12 @@
         "deployments/kubernetes/security/generated-kafka-service-identities.v1.yaml",
         "doc/07_alignment/runbooks/T-SEC-001-service-identity-secret-governance.md",
         "doc/02_acceptance/runs/20260804-remediation-g0-full-v149/manifest.json#sha256=fa5f78c604188dccb57ca1c47c101a748577667bbf0fb5224cc3b2a9f168b59e",
-        "doc/02_acceptance/runs/20260804-remediation-service-identity-catalog-v1/manifest.json#sha256=52548e37b7c1634d91a88892a8cc0c4db1f2b4615d896e2159b8f22686f695ca"
+        "doc/02_acceptance/runs/20260804-remediation-service-identity-catalog-v1/manifest.json#sha256=52548e37b7c1634d91a88892a8cc0c4db1f2b4615d896e2159b8f22686f695ca",
+        "doc/02_acceptance/runs/20260807-remediation-service-identity-catalog-v1/manifest.json#sha256=1d141fcd9514d4acf01ca8f001c20d71bd8aab8b09d83a56bdcd37c2f69165ab",
+        "doc/02_acceptance/runs/20260807-remediation-g0-full-v171/manifest.json#sha256=8aa3364aa74104a9d9ab15a10a7947b476d2d1125a8293edf16804722f1bb01f"
       ],
-      "blocker": "11个治理工作负载已建立版本化候选身份，10个非探针工作负载关闭ServiceAccount token自动挂载，8个Go主容器完成non-root、禁止提权、drop ALL和RuntimeDefault加固；65个Secret引用、20个Kafka主体、共享高敏凭据和tenant fallback形成脱敏目录，9项负向测试、完整G0 v149及覆盖11个live工作负载的只读采集通过且未读取Secret值。当前live仍有28项身份/自动挂载/安全上下文发布前差异；7组共享高敏凭据、25处不可信tenant header/query fallback、2个未注册Secret供应源、5个mutable image、7个缺少服务间mTLS身份和2个未确认非root镜像仍未关闭。还需每服务存储角色、OpenSearch/Nebula/MinIO live policy、Secret两轮轮换、T-PKI证书身份、跨租户与under-scope负例、canary、回滚、性能和T+观察，G2至G8保持PARTIAL/OPEN/HOLD/BLOCKED。",
-      "note": "T-SEC-001从OPEN提升为IMPLEMENTING：目录完整性与G1仓库护栏通过，但security_compliance仍为PARTIAL且production_applied=false。探针因抓包和Kubernetes API发现保留显式特权/token例外；现网差异被保留为发布阻断证据，未在证据采集时自动apply。"
+      "blocker": "11个治理工作负载已建立版本化候选身份，10个非探针工作负载关闭ServiceAccount token自动挂载；65个Secret引用、20个Kafka主体和tenant fallback形成脱敏目录。G0 v171与同哈希只读采集通过且未读取Secret值。当前live仍有20项身份/自动挂载/安全上下文发布前差异；5组共享高敏凭据、25处不可信tenant fallback、2个未注册Secret供应源、5个mutable image、7个缺少服务间mTLS身份和2个未确认非root镜像仍未关闭。还需每服务存储角色、live policy、两轮轮换、跨租户负例、canary、回滚、性能和T+观察。",
+      "note": "T-SEC-001保持IMPLEMENTING：336456de候选目录完整性与G1仓库护栏通过，但security_compliance仍为PARTIAL且production_applied=false；20项现网差异作为发布阻断证据保留。"
     },
     "T-PKI-001": {
       "status": "IMPLEMENTING",
@@ -1797,10 +1799,12 @@
       "doc/07_alignment/runbooks/T-PKI-001-certificate-transport-rotation.md",
       "doc/02_acceptance/runs/20260807-remediation-g0-full-v154/manifest.json#sha256=67fb3a966c333735d3c1ff4f1d82f8182d1742d099916eaf1101bd906e4380e6",
       "doc/02_acceptance/runs/20260807-remediation-minio-tls-candidate-images-v1/manifest.json#sha256=de7dd7fec5118ac0f887fe2493a00c99bcf1dc4f596c77e68e3c299119fb808a",
-      "doc/02_acceptance/runs/20260807-remediation-pki-catalog-v4/manifest.json#sha256=42ddc33d2c7f5faa00035a45131f3bd5ed95952135fd38847b77adf08c92cfb5"
+      "doc/02_acceptance/runs/20260807-remediation-pki-catalog-v4/manifest.json#sha256=42ddc33d2c7f5faa00035a45131f3bd5ed95952135fd38847b77adf08c92cfb5",
+      "doc/02_acceptance/runs/20260807-remediation-pki-catalog-v5/manifest.json#sha256=f34ecf20bb558da6d03cd76f550da43cea29641d045d739bd7dc5ed088137e02",
+      "doc/02_acceptance/runs/20260807-remediation-g0-full-v171/manifest.json#sha256=8aa3364aa74104a9d9ab15a10a7947b476d2d1125a8293edf16804722f1bb01f"
     ],
-    "blocker": "probe—ingest、Kafka、Keycloak、MinIO target和OpenSearch target五个证书域已形成版本化脱敏目录，18项传输护栏全部通过；MinIO新域已固定服务端证书三件套、8个DNS SAN、30天续期窗口、3个客户端CA命名空间和14组件default-off原子切换包，但明确cutover_ready=false。完整G0 v154及只读live公共证书采集通过：7个引用找到6个，probe/ingest同CA且用途和hostname校验PASS，无证书处于30天窗口，未采集私钥或密码。当前probe DaemonSet仍共享客户端证书；Kafka叶证书825天、三broker共享且客户端无证书身份，Keycloak为825天自签leaf；MinIO五个linux/amd64候选镜像已在本机构建，但未registry签名、repo-digest固定或分发到双节点，证书Secret仍未物化；OpenSearch target证书缺失，PostgreSQL/MinIO/当前OpenSearch仍有生产明文依赖。还需批准issuer/root custody、每probe/workload身份、SAN/链/有效期/握手、撤销、dual-trust serial canary、两次轮换、故障/性能/浏览器/回滚和T+观察，G2至G8保持PARTIAL/OPEN/HOLD/BLOCKED。",
-      "note": "T-PKI-001保持IMPLEMENTING：仓库G1、MinIO default-off TLS适配包和probe现有链的只读G2切片通过，但pki_compliance仍为PARTIAL且production_applied=false。Kafka leaf因加密keystore且证据采集禁止读取密码而保持UNKNOWN；MinIO与OpenSearch target证书未部署被如实保留。"
+    "blocker": "五个证书域和18项传输护栏保持通过，G0 v171与PKI v5绑定同一336456de候选。只读live公共证书7个引用找到6个，probe/ingest同CA且用途和hostname校验PASS，未采集私钥或密码。当前probe仍共享客户端证书，Kafka broker仍共享身份，MinIO候选未签名分发且Secret未物化，OpenSearch target证书缺失，仍有3项生产明文依赖。issuer custody、逐workload身份、双信任canary、两轮轮换、故障、性能、浏览器、回滚和观察均未关闭。",
+      "note": "T-PKI-001保持IMPLEMENTING：同哈希仓库G1与只读证书切片通过，但pki_compliance仍为PARTIAL且production_applied=false。"
     },
     "T-DR-001": {
       "status": "IMPLEMENTING",
@@ -1837,10 +1841,12 @@
         "deployments/kubernetes/infrastructure/06-minio.yaml",
         "doc/07_alignment/runbooks/T-GW-001-gateway-route-catalog.md",
         "doc/02_acceptance/runs/20260804-remediation-g0-full-v148/manifest.json#sha256=2c476ac9b91b944e337fe591569d3b15f503603838d9f80110f2093470682df2",
-        "doc/02_acceptance/runs/20260804-remediation-gateway-route-catalog-v1/manifest.json#sha256=ffe5e27b303daea436201b39f01fa99118a243109d52532317e8fd327f9c3f8f"
+        "doc/02_acceptance/runs/20260804-remediation-gateway-route-catalog-v1/manifest.json#sha256=ffe5e27b303daea436201b39f01fa99118a243109d52532317e8fd327f9c3f8f",
+        "doc/02_acceptance/runs/20260807-remediation-gateway-route-catalog-v1/manifest.json#sha256=c36c1fa7a250c6f32565970d6c7ffc1448114ce1df70d85bd65a253b1b2fe46c",
+        "doc/02_acceptance/runs/20260807-remediation-g0-full-v171/manifest.json#sha256=8aa3364aa74104a9d9ab15a10a7947b476d2d1125a8293edf16804722f1bb01f"
       ],
-      "blocker": "57条APISIX路由、91个OpenAPI操作和62个声明Service已形成版本化目录，37个缺失required scope已补齐，所有OpenAPI操作都有路由覆盖，仓库缺失的minio-proxy Service已恢复；7项负向测试、完整G0 v148和只读live route hash/2副本/全部upstream ready对账通过。当前51条受保护路由仍有51条缺少网关认证、51条缺少body limit和request validation、56条缺少rate limit、50条使用隐式timeout/retry；18条管理入口未受网关保护，Grafana/Nacos/Flink/MinIO匿名GET均可到达200。还需批准的VPN/bastion边界与Keycloak client、OIDC/IP allowlist shadow和canary、跨租户/under-scope/oversize/限流/WebSocket负例、trace/audit、性能、Windows Chrome、原子回滚和T+观察，G2至G8保持PARTIAL/OPEN/HOLD/BLOCKED。",
-      "note": "T-GW-001从OPEN提升为IMPLEMENTING：目录完整性G1通过但security_compliance仍为PARTIAL，production_applied=false。业务API匿名访问由服务层返回401只能证明后端防线存在，不能替代网关层认证；管理入口匿名可达是显式未关闭风险。"
+      "blocker": "仓库目录现有58条APISIX路由、98个OpenAPI操作和62个声明Service，所有操作均有路由覆盖和required scope。实时只读集群仍为57条旧路由，候选审计route 45不存在，candidate_route_match=false，故网关专项按事实FAIL。当前52条受保护路由全部缺少网关认证、body limit和request validation，57条缺少rate limit，51条使用隐式timeout/retry；18条管理入口未受保护。还需批准的边界、OIDC/IP allowlist shadow、跨租户/oversize/限流负例、trace/audit、性能、Windows Chrome、回滚和T+观察。",
+      "note": "T-GW-001保持IMPLEMENTING：仓库G1完整但实时候选未应用，最新专项FAIL且production_applied=false；服务层401不能替代网关认证。"
     },
     "T-CONFIG-001": {
       "status": "IMPLEMENTING",
@@ -1861,10 +1867,12 @@
         "go/control-plane/deployments/kubernetes/rule-manager.yaml",
         "doc/07_alignment/runbooks/T-CONFIG-001-configuration-catalog.md",
         "doc/02_acceptance/runs/20260804-remediation-g0-full-v147/manifest.json#sha256=6776e78284f9d660ff4b4310dc013dc1d36e259af546cc3f8963f165711f0977",
-        "doc/02_acceptance/runs/20260804-remediation-configuration-catalog-v1/manifest.json#sha256=3722240eb374eb6ed922011e4854b68df3fd899c1262cb4d458b060863faf892"
+        "doc/02_acceptance/runs/20260804-remediation-configuration-catalog-v1/manifest.json#sha256=3722240eb374eb6ed922011e4854b68df3fd899c1262cb4d458b060863faf892",
+        "doc/02_acceptance/runs/20260807-remediation-configuration-catalog-v1/manifest.json#sha256=d3e59dbab1a2d59bf22d69c25d4eb1349340a36fad380d19d3a6a429cb07723b",
+        "doc/02_acceptance/runs/20260807-remediation-g0-full-v171/manifest.json#sha256=8aa3364aa74104a9d9ab15a10a7947b476d2d1125a8293edf16804722f1bb01f"
       ],
-      "blocker": "候选目录已登记1853个消费者级配置点、76个源码文件和7类共享权威源，配置优先级、Secret脱敏、合法性责任、重启/热加载语义和effective hash算法均已固定；16处重复Kubernetes声明冲突及4处非空JWT占位默认值已消除，5项负向测试和完整G0通过。只读live仍有339个受治理绑定中的22个与候选声明漂移、1个OpenSearch live键未登记；所有生产进程尚未输出统一config_version/effective_config_sha256，目录也未完全成为K8s/Docker/本地配置生成真源。还需候选发布、声明/渲染/集群/进程四层hash对账、非法值与缺少必填、部分实例、热加载ACK、Secret轮换、回滚、性能和T+观察，G2至G8保持PARTIAL/OPEN/HOLD/BLOCKED。",
-      "note": "T-CONFIG-001从OPEN提升为IMPLEMENTING：完整G0 v147与同候选配置专项v1通过，候选源码hash为7fee101c7442358f。live查询只读且未保存Secret值或执行生产写入；专项总状态保持PARTIAL，production_applied=false，不据此宣称配置治理完成。"
+      "blocker": "336456de候选目录登记1891个配置点、76个源码文件和7类共享权威源；G0 v171与配置专项仓库门禁通过。只读live 369个受治理绑定中339个匹配、28个漂移、2个未登记；所有生产进程仍未输出统一config_version/effective_config_sha256。还需候选发布、声明/渲染/集群/进程四层hash对账、非法值、热加载ACK、Secret轮换、回滚、性能和T+观察。",
+      "note": "T-CONFIG-001保持IMPLEMENTING：最新同哈希专项为PARTIAL、production_applied=false，live只读且未保存Secret值或执行生产写入。"
     },
     "T-DQ-001": {
       "status": "IMPLEMENTING",
