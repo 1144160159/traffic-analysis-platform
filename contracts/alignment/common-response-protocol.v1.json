@@ -64,6 +64,7 @@
     {"operation_id": "getAlertEvidence", "feature_id": "F-ALERT-005", "profile": "snapshot_meta", "adoption": "IMPLEMENTED_G1"},
     {"operation_id": "saveAlertView", "feature_id": "F-ALERT-006", "profile": "snapshot_meta", "adoption": "IMPLEMENTED_G1"},
     {"operation_id": "listAlertViews", "feature_id": "F-ALERT-006", "profile": "snapshot_meta", "adoption": "IMPLEMENTED_G1"},
+    {"operation_id": "getScopeCatalog", "feature_id": "F-AUTH-001", "profile": "snapshot_meta", "adoption": "IMPLEMENTED_G1"},
     {"operation_id": "createTopicActionJob", "feature_id": "F-TOPIC-002", "profile": "error_and_async_result", "adoption": "PARTIAL"}
   ],
   "adoption_gaps": [

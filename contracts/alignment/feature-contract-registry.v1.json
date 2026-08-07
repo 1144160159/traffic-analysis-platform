@@ -32,7 +32,7 @@
     {
       "domain": "rest_contract_authority",
       "path": "contracts/openapi/alignment-v1.openapi.json",
-      "sha256": "43db091e3856fb1d85f238dcb1d39299709ffc2e18ae1c6cd1e95d68ff35f581"
+      "sha256": "8b49496d3ebd12d4eddcce47da90ee99b085f8875c0d6a9b394880b7fd5f9fcc"
     },
     {
       "domain": "route_action_api_scope_inventory",
@@ -60,10 +60,9 @@
     "canonical_feature_ids": 54,
     "formal_contracts": 38,
     "formal_contracts_valid": 38,
-    "formal_contracts_openapi_bound": 23,
+    "formal_contracts_openapi_bound": 24,
     "non_draft_openapi_binding_gaps": [
-      "F-AUDIT-001",
-      "F-AUTH-001"
+      "F-AUDIT-001"
     ],
     "standard_scope_features": 38,
     "standard_scope_formal_contracts": 38,
@@ -301,15 +300,15 @@
       "formal_contract_present": true,
       "formal_contract": {
         "path": "contracts/alignment/features/F-AUTH-001.json",
-        "sha256": "689444ce761cc835a2f8019302b3a8514387cee42aa7a7b3460523036227c238",
+        "sha256": "9f83a766f7bab326e08ac7b025f63082c9d0038d23e10673488b467d42f6fa65",
         "contract_version": 1,
         "status": "verifying",
         "operation_id": "getScopeCatalog",
         "api_method": "GET",
         "api_path": "/v1/auth/scopes",
-        "openapi_binding_status": "MISSING",
-        "openapi_bound_operation_id": null,
-        "openapi_bound_feature_id": null,
+        "openapi_binding_status": "EXACT",
+        "openapi_bound_operation_id": "getScopeCatalog",
+        "openapi_bound_feature_id": "F-AUTH-001",
         "required_scopes": [
           "admin:read"
         ],
@@ -322,14 +321,13 @@
           "auth-user-oidc-sync"
         ],
         "preserved_api_operations": [
+          "GET /v1/tokens/scopes",
           "PATCH /v1/auth/me",
           "POST /v1/auth/me/password"
         ],
         "validation_errors": []
       },
-      "blocking_gaps": [
-        "openapi_operation_binding_missing"
-      ]
+      "blocking_gaps": []
     },
     {
       "feature_id": "F-TOPIC-001",
@@ -1905,5 +1903,5 @@
       "complete compatibility diff G2 through G7 and external G8 gates"
     ]
   },
-  "catalog_sha256": "2454ef7abedf6f4c62131f1ec5beff7433ce280a958abe7ba87e2feca7b881ed"
+  "catalog_sha256": "cc32e8a6646149cc1c3685f41999548c6ee5ddeecf673302a57995dbe79a0c47"
 }

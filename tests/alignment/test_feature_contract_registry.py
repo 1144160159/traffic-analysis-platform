@@ -41,7 +41,7 @@ class FeatureContractRegistryTests(unittest.TestCase):
         self.assertEqual([], result["coverage"]["missing_standard_scope_contracts"])
         self.assertEqual(16, len(result["coverage"]["missing_backlog_contracts"]))
         self.assertEqual(
-            ["F-AUDIT-001", "F-AUTH-001"],
+            ["F-AUDIT-001"],
             result["coverage"]["non_draft_openapi_binding_gaps"],
         )
 

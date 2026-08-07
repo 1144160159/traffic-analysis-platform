@@ -1784,13 +1784,13 @@
       },
       {
         "path": "go/control-plane/internal/auth/api/handler.go",
-        "line": 112,
+        "line": 147,
         "kind": "request_header",
         "line_sha256": "6fcf1223970a4d0643f2016edffee5197873862c247023dd04de63dde6678f5a"
       },
       {
         "path": "go/control-plane/internal/auth/api/handler.go",
-        "line": 499,
+        "line": 534,
         "kind": "query_parameter",
         "line_sha256": "c3eb4300ba1c1e771edafe6ea42ac6900fe9222fb2073ca9a8039399989aa04e"
       },
@@ -1911,5 +1911,5 @@
       "wildcard_or_shared_kafka_principal"
     ]
   },
-  "catalog_sha256": "6d3d45cb390944a5e8a22c9391d5eae2510ebabd98662330aabd163406913913"
+  "catalog_sha256": "91c0f58e3f3999ed6988597a643617c3c2a32f9a6664ccd554e899fa86ca585d"
 }

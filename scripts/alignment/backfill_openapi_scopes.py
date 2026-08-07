@@ -19,6 +19,7 @@ SCOPES = {
     "getAlertReportJob": "alert:export",
     "getAlertEvidence": "alert:read",
     "getAlertResponseAction": "playbook:read",
+    "getScopeCatalog": "admin:read",
     "listAlertViews": "alert:read",
     "linkAlertToCampaign": "campaign:write",
     "listAlertCampaignLinks": "campaign:read",

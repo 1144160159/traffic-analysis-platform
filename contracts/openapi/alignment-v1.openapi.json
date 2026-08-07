@@ -1348,6 +1348,22 @@
         }
       }
     },
+    "/v1/auth/scopes": {
+      "get": {
+        "operationId": "getScopeCatalog",
+        "x-required-scope": "admin:read",
+        "x-feature-id": "F-AUTH-001",
+        "x-compatibility": "/v1/tokens/scopes remains available during the additive migration window",
+        "responses": {
+          "200": {
+            "description": "Versioned canonical IAM scope catalog from the authenticated tenant context",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}
+          },
+          "401": {"description": "Authenticated identity required"},
+          "403": {"description": "admin:read scope required"}
+        }
+      }
+    },
     "/v1/auth/me": {
       "patch": {
         "operationId": "updateAuthenticatedUserProfileAtomic",

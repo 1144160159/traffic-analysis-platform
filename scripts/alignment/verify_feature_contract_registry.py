@@ -13,7 +13,7 @@ from build_feature_contract_registry import OUTPUT, ROOT, _canonical_sha256, bui
 EXPECTED_FEATURES = 54
 EXPECTED_STANDARD_SCOPE_FEATURES = 38
 EXPECTED_BACKLOG_CONTRACT_GAPS = 16
-EXPECTED_NON_DRAFT_OPENAPI_BINDING_GAPS = {"F-AUDIT-001", "F-AUTH-001"}
+EXPECTED_NON_DRAFT_OPENAPI_BINDING_GAPS = {"F-AUDIT-001"}
 EXPECTED_PILOTS = {"asset_vertical", "topic_snapshot_and_actions", "alert_query_and_actions"}
 
 

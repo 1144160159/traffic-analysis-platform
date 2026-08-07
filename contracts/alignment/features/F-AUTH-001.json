@@ -5,7 +5,7 @@
   "compatibility": {
     "preserved_routes": ["/settings"],
     "preserved_actions": ["auth-user-profile-update", "auth-user-password-change", "auth-user-oidc-sync"],
-    "preserved_api_operations": ["PATCH /v1/auth/me", "POST /v1/auth/me/password"],
+    "preserved_api_operations": ["GET /v1/tokens/scopes", "PATCH /v1/auth/me", "POST /v1/auth/me/password"],
     "strategy": "additive"
   },
   "ui": {

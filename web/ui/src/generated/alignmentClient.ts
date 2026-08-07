@@ -502,6 +502,13 @@ export async function getProbeOperation(request: AlignmentRequest = {}) {
   return response.data;
 }
 
+export async function getScopeCatalog(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/auth/scopes', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'GET', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
 export async function getTopicActionJob(request: AlignmentRequest = {}) {
   const path = resolvePath('/v1/topics/{topic}/actions/{job_id}', request.path);
   const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
