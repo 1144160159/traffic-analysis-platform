@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "run_id": "20260808-remediation-alert-projection-tools-supply-chain-g1-v1",
+  "gate": "G1_ALERT_PROJECTION_TOOL_SUPPLY_CHAIN",
+  "status": "HOLD",
+  "coverage_status": "PREPUBLISH_NON_AUTHORIZING",
+  "captured_at": "2026-08-07T20:13:56.851512+00:00",
+  "candidate_source": {
+    "head": "077aec85589a5e2164306d307ec40a9a0ef0bb43",
+    "content_sha256": "8fec3ad7908e2644fe59e000e35023895b5d704b3287f2af51a7188e8c0ff65b",
+    "file_count": 2389
+  },
+  "g0": {
+    "run_id": "20260808-remediation-g0-full-v198",
+    "manifest": "doc/02_acceptance/runs/20260808-remediation-g0-full-v198/manifest.json",
+    "manifest_sha256": "279b4d2eeb7751ed902e7407951acd176e0856d9530559c6fdc7a672b272d0f3"
+  },
+  "image": {
+    "reference": "traffic/alert-projection-tools:g0-v198-local",
+    "local_image_id": "sha256:978d0408d59c47cb4244de6b5d1cf2d17ce91b5d8bff7ad056db022f581dce14",
+    "repository_digests": [],
+    "labels": {
+      "org.opencontainers.image.revision": "077aec85589a5e2164306d307ec40a9a0ef0bb43",
+      "org.opencontainers.image.source-content-sha256": "8fec3ad7908e2644fe59e000e35023895b5d704b3287f2af51a7188e8c0ff65b",
+      "org.opencontainers.image.title": "traffic-analysis alert-projection-tools"
+    }
+  },
+  "sbom": {
+    "format": "CycloneDX",
+    "spec_version": "1.5",
+    "sha256": "7cf5a87091af3027617eb3212b97658a75ed7a597c0fca6ffcbeece1c7673e44"
+  },
+  "scanner": {
+    "name": "govulncheck",
+    "version": "v1.1.4",
+    "database": "https://vuln.go.dev",
+    "database_updated_at": "2026-07-27T20:14:16+00:00",
+    "database_age_seconds": 950380,
+    "maximum_database_age_seconds": 86400,
+    "status": "FAIL",
+    "errors": [
+      "govulncheck database is stale or dated in the future"
+    ]
+  },
+  "binary_scans": {
+    "alert-projection-shadow": {
+      "status": "PASS",
+      "reachable_known_vulnerabilities": 0,
+      "nonreachable_module_vulnerabilities": 1,
+      "text_exit_code": 0,
+      "sarif_exit_code": 0,
+      "errors": []
+    },
+    "alert-projection-reconcile": {
+      "status": "PASS",
+      "reachable_known_vulnerabilities": 0,
+      "nonreachable_module_vulnerabilities": 1,
+      "text_exit_code": 0,
+      "sarif_exit_code": 0,
+      "errors": []
+    }
+  },
+  "signature": {
+    "verified": false,
+    "bundle_sha256": null,
+    "identity": null,
+    "issuer": null
+  },
+  "provenance": {
+    "verified": false,
+    "bundle_sha256": null,
+    "type": "slsaprovenance"
+  },
+  "nonreachable_security_adjudication_sha256": null,
+  "artifact_sha256": {
+    "sbom": "7cf5a87091af3027617eb3212b97658a75ed7a597c0fca6ffcbeece1c7673e44",
+    "alert-projection-shadow.govulncheck.txt": "b5ae54ddcfa4cb39e85f84ad2d9e43556bd817c480eaab2a71bab63bfc29353b",
+    "alert-projection-shadow.govulncheck.sarif.json": "2c19542df82718ff4a2b96119437a9ce28ecef9ffd4fcdcf47bc1182a6877b59",
+    "alert-projection-reconcile.govulncheck.txt": "b5ae54ddcfa4cb39e85f84ad2d9e43556bd817c480eaab2a71bab63bfc29353b",
+    "alert-projection-reconcile.govulncheck.sarif.json": "2c19542df82718ff4a2b96119437a9ce28ecef9ffd4fcdcf47bc1182a6877b59"
+  },
+  "approval_eligible": false,
+  "blockers": [
+    "SLSA provenance verification is absent",
+    "alert-projection-reconcile: non-reachable module finding lacks security adjudication",
+    "alert-projection-shadow: non-reachable module finding lacks security adjudication",
+    "govulncheck database is stale or dated in the future",
+    "local image has no approval-eligible repository manifest digest",
+    "registry signature verification is absent"
+  ],
+  "production_applied": false,
+  "production_mutations": [],
+  "registry_push_attempted": false,
+  "cluster_access_attempted": false
+}
