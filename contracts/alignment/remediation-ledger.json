@@ -1864,6 +1864,7 @@
         "go/control-plane/internal/common/kafka/consumer.go",
         "go/control-plane/internal/alert/projection/worker.go",
         "go/control-plane/internal/alert/projection/reconcile.go",
+        "go/control-plane/internal/alert/projection/reconcile_integration_test.go",
         "go/control-plane/cmd/alert-projection-reconcile/main.go",
         "deployments/kubernetes/applications/go-services.yaml",
         "scripts/alignment/verify_opensearch_projection_reconciliation.py",
@@ -1877,10 +1878,12 @@
         "doc/02_acceptance/runs/20260805-remediation-opensearch-shadow-reconcile-v1/manifest.json#sha256=865de0be7f71460fb755bd42d49d017ee991ec82c69ab9f1be5c68b6d0cb2757",
         "go/control-plane/deployments/kubernetes/alert-service.yaml",
         "doc/02_acceptance/runs/20260805-remediation-g0-full-v130/manifest.json#sha256=aac4955fcf62771805f09c951e7fec97886a3765e5c047f1f1bef0c6429c98e0",
-        "doc/02_acceptance/runs/20260805-remediation-opensearch-projection-reconciliation-v4/manifest.json#sha256=75b826eab7c8a67e877f220841ceb28183f31d0ee21acfb00e454dad77443eee"
+        "doc/02_acceptance/runs/20260805-remediation-opensearch-projection-reconciliation-v4/manifest.json#sha256=75b826eab7c8a67e877f220841ceb28183f31d0ee21acfb00e454dad77443eee",
+        "doc/02_acceptance/runs/20260807-remediation-g0-full-v184/manifest.json#sha256=8930262904c6419c65996c10625e8e34d19e5002c468eb8d9f4572bea0165c51",
+        "doc/02_acceptance/runs/20260807-remediation-alert-projection-terminal-receipt-g1-v2/manifest.json#sha256=e980eccb881cb4ec456126b48c2cde897654e9bf71eb6ca61c4a480dcd2f09d0"
       ],
-      "blocker": "仓库候选已修复ClickHouse成功/OpenSearch失败被伪装成最终成功的边界：Kafka仅在PG投影债务已提交时允许继续offset，否则返回错误；OS使用alert_id与external_gte源版本，worker具备lease/retry/dead，CLI按tenant、时间、业务ID、索引版本和max_documents有界plan/repair且不自动删除extra。live PG已应用expand-only migration并存在三张投影表，metrics Service读取链路已修复；但当前alert-service仍为旧镜像、候选worker和post-commit指标未部署，V2 alias未获批，真实repair、Kafka lag/last event_id、全范围count/ID/SHA、性能、故障、canary回滚及T+0/T+1/T+3/T+7仍未完成，G2/G3仅为小切片PARTIAL，G4至G8保持OPEN/HOLD/BLOCKED。",
-      "note": "T-OS-004保持IMPLEMENTING/PARTIAL：ClickHouse时间别名防遮蔽、legacy dedup_fingerprint只读适配与Prometheus指标前缀过滤均有负向防回归。固定default tenant一秒窗口最终source=14,target=14,missing=extra=stale=0且repaired=0；同候选G0 v130与只读部署前检查v4通过，确认PG migration/表已存在、OpenSearch green、采集无错误，但candidate_applied=false。不得以小切片或只读检查宣称专项关闭。"
+      "blocker": "仓库候选已修复ClickHouse成功/OpenSearch失败被伪装成最终成功的边界：Kafka仅在PG投影债务已提交时允许继续offset，否则返回错误；OS使用alert_id与external_gte源版本，worker具备lease/retry/dead。CLI按tenant、时间、业务ID、索引版本和max_documents有界plan/repair，不自动删除extra；repair现在必须刷新精确V2 write alias并以同scope回读，PG run manifest同时保存修复前与修复后差异，remaining missing/stale或watermark error非零不得报收敛。固定摘要G1已用missing/stale/extra证明这一终态边界，但当前alert-service仍为旧镜像、候选worker和post-commit指标未部署，V2 alias未获批；生产883172条缺口、Kafka lag/last event_id、全范围count/ID/SHA、性能、故障、canary回滚及T+0/T+1/T+3/T+7仍未完成，G2至G8保持OPEN/HOLD/BLOCKED。",
+      "note": "T-OS-004保持IMPLEMENTING/PARTIAL。v184/v2固定摘要、无卷、loopback OpenSearch预置missing/stale/extra，生产repair target仅修复missing/stale，刷新精确V2 alias并同scope回读后remaining missing=0、stale=0、extra=1、repair_converged=true；extra未删除，容器已清理，production_applied=false。负向测试覆盖refresh失败、写ACK但不可见、PG watermark失败和剩余差异。该G1不代表生产883172条缺口、V2 expand/backfill、候选部署或切换已完成。"
     },
     {
       "id": "T-OS-005",
