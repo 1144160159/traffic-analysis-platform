@@ -44,6 +44,7 @@
     "cross_service_terminal_receipt": "same_owned_run_real_opensearch_requery_and_real_postgresql_watermark_requery",
     "authoritative_three_store_receipt": "same_owned_run_real_clickhouse_authority_real_opensearch_target_real_postgresql_receipt_equal_hash_and_version",
     "kafka_five_store_receipt": "same_owned_run_real_kafka_commit_after_redis_dedup_clickhouse_authority_opensearch_target_and_postgresql_applied_receipt",
+    "kafka_receipt_failure_recovery": "postgresql_receipt_failure_retains_offset_same_group_restart_redelivers_and_reconciles",
     "extra_after_repair": "persist_for_manual_adjudication_never_auto_delete"
   },
   "runtime_guards": {

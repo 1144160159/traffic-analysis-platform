@@ -94,6 +94,8 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
         errors.append("authoritative three-store receipt guard drifted")
     if scope.get("kafka_five_store_receipt") != "same_owned_run_real_kafka_commit_after_redis_dedup_clickhouse_authority_opensearch_target_and_postgresql_applied_receipt":
         errors.append("Kafka five-store receipt guard drifted")
+    if scope.get("kafka_receipt_failure_recovery") != "postgresql_receipt_failure_retains_offset_same_group_restart_redelivers_and_reconciles":
+        errors.append("Kafka PostgreSQL receipt failure recovery guard drifted")
     runtime = contract.get("runtime_guards", {})
     if runtime.get("feature_flag_default_enabled") is not False or runtime.get("production_mutations_in_repository_candidate") != []:
         errors.append("candidate must remain default-off with no production mutation claim")

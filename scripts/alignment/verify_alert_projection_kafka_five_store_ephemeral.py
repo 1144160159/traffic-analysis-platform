@@ -174,6 +174,9 @@ def main() -> int:
         "last_event_id_observer_verified": False,
         "cross_store_hash_and_version_verified": False,
         "receipt_failure_blocks_commit_unit_verified": False,
+        "postgres_receipt_failure_offset_retained_verified": False,
+        "same_group_restart_redelivery_verified": False,
+        "retry_cross_store_convergence_verified": False,
         "loopback_only": True,
         "persistent_volume_attached": False,
         "shared_environment_touched": False,
@@ -323,6 +326,8 @@ def main() -> int:
             "opensearch_projection_verified", "postgres_applied_receipt_verified",
             "broker_committed_offset_verified", "last_event_id_observer_verified",
             "cross_store_hash_and_version_verified", "receipt_failure_blocks_commit_unit_verified",
+            "postgres_receipt_failure_offset_retained_verified", "same_group_restart_redelivery_verified",
+            "retry_cross_store_convergence_verified",
         ):
             result[field] = True
         result["status"] = "PASS"
