@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "run_id": "20260808-remediation-alert-projection-shadow-g1-v1",
+  "gate": "G1",
+  "status": "PASS",
+  "captured_at": "2026-08-07T18:40:43Z",
+  "candidate": {
+    "git_head": "44bdabeb77a0db17ad884e2be2315324caa1727b",
+    "content_sha256": "74d4b6f03b031ad9b5b663ee7438e1e233d866ead17eea266d8f25bb37bd77da",
+    "file_count": 2379
+  },
+  "g0_reference": {
+    "run_id": "20260808-remediation-g0-full-v195",
+    "path": "doc/02_acceptance/runs/20260808-remediation-g0-full-v195/manifest.json",
+    "sha256": "4ba34f8a44d15cff3f295ad155f36420a76c0de4de7b11f41ad1da48e125b545",
+    "status": "PASS",
+    "candidate_content_sha256": "74d4b6f03b031ad9b5b663ee7438e1e233d866ead17eea266d8f25bb37bd77da"
+  },
+  "result": {
+    "path": "result.json",
+    "sha256": "b5ad58881f439f69b6b60f4b27178945d41bf3cb7f91a168158feba749b6b671",
+    "size_bytes": 2053,
+    "shadow_binding_sha256": "c8e7687eee6917d84537716b931531555c78c470171ad31873458ff561a7f3e1",
+    "production_clickhouse_authority_reader_verified": true,
+    "production_opensearch_projection_reader_verified": true,
+    "missing_stale_extra_classification_verified": true,
+    "cluster_alias_and_write_index_binding_verified": true,
+    "source_count_and_hash_unchanged_after_shadow": true,
+    "target_count_and_hash_unchanged_after_shadow": true,
+    "postgres_dependency_present": false
+  },
+  "scope": {
+    "tenant_id": "tenant-alert-shadow-g1",
+    "source_count": 2,
+    "target_count": 2,
+    "missing_count": 1,
+    "stale_count": 1,
+    "extra_count": 1,
+    "read_target": "alerts-v2-read",
+    "write_alias": "alerts-v2-write",
+    "write_index": "alerts-v2-000001",
+    "clickhouse_image": "docker.io/clickhouse/clickhouse-server@sha256:458f72c00e4abc80c2950d8070bc5723b538544d72ea4a6a58d9ff4f8fadf8d7",
+    "opensearch_image": "docker.io/opensearchproject/opensearch@sha256:466a49f379bb8889af29d615475e69b7b990898c6987d28470cd7105df9046ff",
+    "loopback_only": true,
+    "persistent_volumes": false,
+    "shared_environment_touched": false,
+    "both_containers_removed": true,
+    "production_applied": false
+  },
+  "mutation_boundary": {
+    "ephemeral_setup_mutations": [
+      "create owned ClickHouse schema and seed two authority documents",
+      "create owned OpenSearch V2 index and aliases and seed one stale plus one extra document"
+    ],
+    "shadow_comparison_mutations": [],
+    "production_mutations": []
+  },
+  "gate_boundary": {
+    "proves": [
+      "the production ClickHouse authority reader and OpenSearch V2 projection reader classify one missing one stale and one extra document in the same bounded owned scope",
+      "the shadow binding includes the owned cluster UUID exact read alias exact write alias and one physical write index",
+      "ClickHouse and OpenSearch counts and per-document projection hashes are unchanged before and after the shadow comparison",
+      "the shadow comparison has no PostgreSQL dependency and both fixed-digest no-volume loopback containers were removed"
+    ],
+    "does_not_prove": [
+      "the historical 883172-document production gap is current complete or repaired",
+      "a current production shadow window cluster identity or physical write index",
+      "production V2 expand backfill repair alias cutover or PostgreSQL watermark receipt",
+      "G2 through G8 deployment cross-store performance fault browser rollback observation or independent approval gates"
+    ]
+  },
+  "production_mutations": []
+}

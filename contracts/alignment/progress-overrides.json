@@ -877,10 +877,17 @@
         "go/control-plane/internal/alert/persistence/opensearch_integration_test.go",
         "tests/alignment/test_asset_projection_opensearch_ephemeral_guard.py",
         "doc/02_acceptance/runs/20260807-remediation-g0-full-v183/manifest.json#sha256=9a7dd6cbe5a827673db47701b1eeb1bbc840c34c7e3e1c2b772d830af8988d15",
-        "doc/02_acceptance/runs/20260807-remediation-alert-opensearch-writer-g1-v2/manifest.json#sha256=6f1bacc029820c381ccefa34e40d50872654f4c294a0cffd1fce549bd07718de"
+        "doc/02_acceptance/runs/20260807-remediation-alert-opensearch-writer-g1-v2/manifest.json#sha256=6f1bacc029820c381ccefa34e40d50872654f4c294a0cffd1fce549bd07718de",
+        "contracts/opensearch/projection-shadow-backfill.v1.json",
+        "go/control-plane/cmd/alert-projection-shadow/main.go",
+        "go/control-plane/internal/alert/projection/shadow.go",
+        "scripts/alignment/render_alert_projection_shadow_approval.py",
+        "scripts/alignment/verify_alert_projection_shadow_ephemeral.py",
+        "doc/02_acceptance/runs/20260808-remediation-g0-full-v195/manifest.json#sha256=4ba34f8a44d15cff3f295ad155f36420a76c0de4de7b11f41ad1da48e125b545",
+        "doc/02_acceptance/runs/20260808-remediation-alert-projection-shadow-g1-v1/manifest.json#sha256=3b68aed42ea39d0596506f0760f7642096e8ab8b6bd9a6fd4f13081029ca25de"
       ],
-      "blocker": "仓库已形成alerts-v2版本化组件模板、组合模板、strict mapping、ISM、物理索引及read/write alias候选；Go和Flink的v2流量开关均默认false，production_applied=false。固定摘要G1已证明Go生产单条/批量writer可被严格mapping接受，但legacy alerts仍是动态映射单索引且没有业务alias、候选组件模板或ISM；尚未执行批准的V2 expand、72M受限backfill、tenant×时间桶全量计数与抽样hash/权限/性能对账、dual-write、原子read切换、延后write切换、回滚及T+0/T+1/T+3/T+7观察，G2至G8保持PARTIAL/OPEN/HOLD/BLOCKED。",
-      "note": "T-OS-002保持IMPLEMENTING。v183/v2把`updated_at`加法加入严格mapping并保留`updated_ts`兼容，真实固定摘要OpenSearch同时接受生产Go单条和bulk告警writer，回读`updated_at/state_version/event_id/trace_id`一致；资产投影的alias与external_gte守卫也继续通过，容器删除且production_applied=false。这不等于生产expand、72M backfill、alias cutover、TLS/HA/snapshot、性能或观察窗。"
+      "blocker": "仓库已形成alerts-v2版本化组件模板、组合模板、strict mapping、ISM、物理索引及read/write alias候选，并新增无PG依赖的CH/OS只读shadow、候选哈希/cluster/alias/write-index绑定和默认不授权审批包；Go和Flink的v2流量开关仍默认false，production_applied=false。固定摘要G1只在自有回环CH/OS中证明生产reader可识别missing/stale/extra且shadow前后count/SHA不变；历史883172条差异引用的manifest在当前候选中缺失，不能直接成为执行范围。尚未执行批准的生产V2 expand、当前shadow、受限backfill、tenant×时间桶全量计数与抽样hash/权限/性能对账、dual-write、原子read切换、延后write切换、回滚及T+0/T+1/T+3/T+7观察，G2至G8保持PARTIAL/OPEN/HOLD/BLOCKED。",
+      "note": "T-OS-002保持IMPLEMENTING/PARTIAL。v195把严格无状态shadow与repair审批边界绑定到同一候选；两存储G1使用固定摘要无卷ClickHouse/OpenSearch，验证1 missing、1 stale、1 extra，比较阶段两侧count与逐文档SHA不变，两个容器已清理且production_applied=false。审批包始终execution_authorized=false；这不等于生产expand、当前883172差异复核或回填、alias cutover、性能、回滚和观察窗。"
     },
     "T-OS-003": {
       "status": "IMPLEMENTING",
@@ -965,10 +972,21 @@
         "doc/02_acceptance/runs/20260808-remediation-g0-full-v192/manifest.json#sha256=a8b58e31a45096b7fc26ebb33fcb89df594f58bb642e24996f39de13841cb959",
         "doc/02_acceptance/runs/20260808-remediation-alert-projection-kafka-five-store-g1-v5/manifest.json#sha256=4dec7e09c58f0b199a6336b0b5c2ff02d7b9fa89036a6314fdb894d6412db8d6",
         "doc/02_acceptance/runs/20260808-remediation-g0-full-v193/manifest.json#sha256=2e8633abcbc619dfd432a5fcaf4177fdd2d3e5be886efe1256f8671a376b919a",
-        "doc/02_acceptance/runs/20260808-remediation-alert-projection-kafka-five-store-g1-v6/manifest.json#sha256=e160ccca26a29d33c44312af47a94f6c13a1b4ea22f73da73fe811692c6374df"
+        "doc/02_acceptance/runs/20260808-remediation-alert-projection-kafka-five-store-g1-v6/manifest.json#sha256=e160ccca26a29d33c44312af47a94f6c13a1b4ea22f73da73fe811692c6374df",
+        "contracts/opensearch/projection-shadow-backfill.v1.json",
+        "go/control-plane/cmd/alert-projection-shadow/main.go",
+        "go/control-plane/internal/alert/projection/shadow.go",
+        "go/control-plane/internal/alert/projection/shadow_test.go",
+        "scripts/alignment/render_alert_projection_shadow_approval.py",
+        "scripts/alignment/verify_alert_projection_shadow_backfill.py",
+        "scripts/alignment/verify_alert_projection_shadow_ephemeral.py",
+        "tests/alignment/test_alert_projection_shadow_backfill.py",
+        "tests/alignment/test_alert_projection_shadow_ephemeral_guard.py",
+        "doc/02_acceptance/runs/20260808-remediation-g0-full-v195/manifest.json#sha256=4ba34f8a44d15cff3f295ad155f36420a76c0de4de7b11f41ad1da48e125b545",
+        "doc/02_acceptance/runs/20260808-remediation-alert-projection-shadow-g1-v1/manifest.json#sha256=3b68aed42ea39d0596506f0760f7642096e8ab8b6bd9a6fd4f13081029ca25de"
       ],
-      "blocker": "仓库候选现把成功水位与失败债务统一为PG原子投影回执：OS全部成功时先写applied watermark，精确bulk部分失败时同一事务写成功项watermark和失败项debt，任一回执失败都阻断Kafka offset。consumer按header.event_ts、兼容behavior.ts、batch.created_at选择确定性毫秒source version和dedup bucket，均缺失则失败关闭；Redis原子event identity hash保存每event的fingerprint/count/first_seen/last_seen，精确重投恢复原快照，新的乱序event以min/max维护聚合时间边界。v193同一固定摘要G1已通过生产alert consumer、真实Redpanda/Redis、生产CH/OS writer和真实PG applied receipt：PG故障同组重启、乱序与重放先收敛到offset=5；随后两个生产consumer稳定分配两个partition并各自提交，关闭其中一个后剩余consumer接管其partition，七个event的CH/OS/PG终态一致，offset=8、lag=0。legacy envelope仅有仓库单测，尚未在真实broker路径验证。该运行只有一个broker副本，不能证明broker复制或故障转移。当前alert-service仍为旧镜像、候选worker和post-commit指标未部署，V2 alias未获批；生产883172条缺口、全范围count/ID/SHA、性能、canary回滚及T+观察仍未完成，G2至G8保持OPEN/HOLD/BLOCKED。",
-      "note": "T-OS-004保持IMPLEMENTING/PARTIAL。v193自有五存储运行证明真实PG回执故障屏障、同组重启、源时间乱序、延迟精确重投，以及2-partition/2-member稳定分配和单member接管；最终offset=8、lag=0、七个event的CH/OS/PG回执一致。仓库测试补齐legacy source-time回退。五个固定摘要无卷loopback容器均已清理，production_applied=false。生产883172条缺口、V2 expand/backfill、候选部署、legacy envelope真实broker路径、多broker副本故障与切换仍未完成。"
+      "blocker": "仓库候选继续以PG原子回执阻断OS部分失败后的Kafka offset，并新增完全不连接PG的只读shadow：单租户、最长1小时、至少稳定15分钟、最多10000条，绑定cluster UUID、V2 read alias、write alias和唯一物理write index；截断或身份漂移失败关闭，extra绝不自动删除。v195同哈希两存储G1只在自有回环CH/OS中证明production reader识别1 missing、1 stale、1 extra且比较阶段count/SHA不变。历史883172条差异的引用manifest在当前候选中缺失，生产当前shadow尚未执行；immutable工具镜像、SRE/QA/安全/领域审批、V2 expand/backfill、同范围PG watermark终态、候选部署、性能、canary回滚及T+观察仍未完成，G2至G8保持OPEN/HOLD/BLOCKED。",
+      "note": "T-OS-004保持IMPLEMENTING/PARTIAL。提交2213489eb加入严格只读shadow和永不授权的repair review package，repair会在连接PG前重核cluster/read alias/write alias/physical write index；提交44bdabeb7加入固定摘要两存储G1。G0 v195三阶段PASS；G1验证1 missing、1 stale、1 extra、两侧count/SHA不变、无PG依赖、无生产变更且容器清理。该证据不复核或修复生产883172条差异，不提升为G2/G3。"
     },
     "T-OS-005": {
       "status": "IMPLEMENTING",
