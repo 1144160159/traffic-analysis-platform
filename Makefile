@@ -11,6 +11,12 @@ MLOPS_DIR     := mlops
 PROTO_DIR     := proto
 DEPLOY_DIR    := deployments/kubernetes
 
+# Go 1.25 is required by the security-fixed gRPC/OpenTelemetry dependency set.
+# Do not inherit a developer-global GOSUMDB=off for repository gates. A
+# restricted environment can select a verified mirror with TRAFFIC_GO_SUMDB.
+GOSUMDB := $(if $(TRAFFIC_GO_SUMDB),$(TRAFFIC_GO_SUMDB),sum.golang.org)
+export GOSUMDB
+
 REGISTRY      ?= traffic
 TAG           ?= latest
 SOURCE_REVISION ?= unknown
@@ -595,6 +601,14 @@ alignment-verify-alert-projection-shadow-g1: ## Verify production CH/OS shadow r
 .PHONY: alignment-verify-alert-projection-repair-job
 alignment-verify-alert-projection-repair-job: ## Verify immutable tool image and default-suspended four-party repair Job guards
 	python scripts/alignment/verify_alert_projection_repair_job.py
+
+.PHONY: alignment-capture-alert-projection-tool-supply-chain
+alignment-capture-alert-projection-tool-supply-chain: ## Capture non-authorizing local SBOM and govulncheck evidence (RUN_ID, G0_MANIFEST, IMAGE and GOVULNCHECK required)
+	test -n "$(RUN_ID)"
+	test -n "$(G0_MANIFEST)"
+	test -n "$(IMAGE)"
+	test -n "$(GOVULNCHECK)"
+	python scripts/alignment/capture_alert_projection_tool_supply_chain.py --run-id "$(RUN_ID)" --g0-manifest "$(G0_MANIFEST)" --image "$(IMAGE)" --govulncheck "$(GOVULNCHECK)"
 
 .PHONY: alignment-verify-alert-projection-watermark-postgres-g1
 alignment-verify-alert-projection-watermark-postgres-g1: ## Verify T-OS-004 watermark receipts in owned PostgreSQL (RUN_ID required)

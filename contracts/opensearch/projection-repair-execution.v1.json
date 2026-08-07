@@ -15,7 +15,19 @@
     "source_revision_label_required": true,
     "source_content_sha256_label_required": true,
     "registry_manifest_digest_required_for_execution": true,
-    "local_image_id_is_not_a_registry_manifest_digest": true
+    "local_image_id_is_not_a_registry_manifest_digest": true,
+    "supply_chain_capture": "scripts/alignment/capture_alert_projection_tool_supply_chain.py",
+    "sbom_format": "CycloneDX 1.5",
+    "sbom_required_for_execution": true,
+    "binary_vulnerability_scanner": "govulncheck",
+    "scanner_tool_version_and_database_timestamp_required": true,
+    "maximum_vulnerability_database_age_seconds": 86400,
+    "reachable_known_vulnerabilities_allowed": 0,
+    "nonreachable_findings_require_security_adjudication": true,
+    "registry_signature_verification_required": true,
+    "slsa_provenance_verification_required": true,
+    "source_g0_image_sbom_scan_signature_and_provenance_must_match": true,
+    "prepublish_local_capture_is_non_authorizing": true
   },
   "repair_candidate": {
     "renderer": "scripts/alignment/render_alert_projection_repair_job.py",
@@ -49,7 +61,10 @@
     "observation_windows": ["T+0", "T+1", "T+3", "T+7"]
   },
   "closure_blockers": [
+    "the current local image scan uses a vulnerability database older than the 24-hour approval limit and is not approval eligible",
+    "one non-reachable module finding still requires explicit security adjudication",
     "a pullable registry manifest digest for the final same-hash tool image is not yet published and bound",
+    "registry signature and SLSA provenance verification are absent",
     "a current approved production read-only shadow package is absent",
     "four independent production approvals are absent",
     "the suspended repair candidate has not been independently reviewed or unsuspended",

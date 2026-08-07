@@ -1,4 +1,4 @@
-FROM docker.io/library/golang@sha256:8bee1901f1e530bfb4a7850aa7a479d17ae3a18beb6e09064ed54cfd245b7191 AS builder
+FROM docker.io/library/golang@sha256:56961d79ea8129efddcc0b8643fd8a5416b4e6228cfd477e3fd61deb2672c587 AS builder
 
 WORKDIR /workspace
 ARG SOURCE_REVISION
