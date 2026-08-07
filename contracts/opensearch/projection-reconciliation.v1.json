@@ -49,6 +49,7 @@
     "kafka_event_identity_collision": "same_event_id_with_different_fingerprint_fails_closed_without_aggregate_mutation",
     "kafka_distinct_event_ordering": "source_time_bucket_distinct_events_project_independently_with_monotonic_aggregate_bounds",
     "kafka_delayed_exact_replay": "per_event_redis_receipt_restores_original_count_first_seen_last_seen_after_later_events",
+    "source_time_compatibility": "header_event_ts_then_legacy_behavior_ts_then_batch_created_at_then_fail_closed",
     "extra_after_repair": "persist_for_manual_adjudication_never_auto_delete"
   },
   "runtime_guards": {

@@ -616,7 +616,10 @@ func (c *Consumer) processMessage(ctx context.Context, msg *kafka.ReceivedMessag
 	}
 
 	// 4. 去重检查（修复：优先使用 Lua 脚本原子版本）
-	eventTs := detection.Behaviors[0].Header.GetEventTs()
+	eventTs := canonicalDetectionEventMillis(&detection)
+	if eventTs <= 0 {
+		return nil, nil, fmt.Errorf("invalid detection behavior: source event timestamp is required")
+	}
 	eventID := detection.Behaviors[0].Header.GetEventId()
 	dedupResult, err := c.redisDedup.CheckAndIncrementEventAtomic(ctx, fingerprint, eventID, eventTs, tenantID)
 	if err == nil {
@@ -747,6 +750,12 @@ func (c *Consumer) buildAlert(
 		runID = header.GetRunId()
 		eventTs = header.GetEventTs()
 	}
+	if eventTs <= 0 {
+		eventTs = detection.Behaviors[0].GetTs()
+	}
+	if eventTs <= 0 {
+		eventTs = detection.GetCreatedAt()
+	}
 
 	// Preserve the real source tuple carried through Session -> Feature ->
 	// Detection. Empty hard-coded network identity is not a valid alert.
@@ -861,6 +870,20 @@ func (c *Consumer) buildAlert(
 	)
 
 	return alert
+}
+
+func canonicalDetectionEventMillis(detection *pb.DetectionBatch) int64 {
+	if detection == nil || len(detection.Behaviors) == 0 || detection.Behaviors[0] == nil {
+		return 0
+	}
+	behavior := detection.Behaviors[0]
+	if eventTs := behavior.GetHeader().GetEventTs(); eventTs > 0 {
+		return eventTs
+	}
+	if eventTs := behavior.GetTs(); eventTs > 0 {
+		return eventTs
+	}
+	return detection.GetCreatedAt()
 }
 
 // categorizeError 分类错误类型

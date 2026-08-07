@@ -81,6 +81,26 @@ func TestBuildAlertPreservesSourceTupleEvidenceAndReplayIdentity(t *testing.T) {
 	if first.UpdatedTs.Nanosecond()%int(time.Millisecond) != 0 {
 		t.Fatalf("updated timestamp exceeds canonical millisecond precision: %s", first.UpdatedTs.Format(time.RFC3339Nano))
 	}
+	if first.UpdatedTs.UnixMilli() != behavior.Ts {
+		t.Fatalf("legacy behavior.ts was not used as source version: got=%d want=%d", first.UpdatedTs.UnixMilli(), behavior.Ts)
+	}
+}
+
+func TestCanonicalDetectionEventMillisPrefersHeaderThenLegacyBehaviorThenBatch(t *testing.T) {
+	behavior := validDetectionBehavior()
+	batch := &pb.DetectionBatch{CreatedAt: 1_600_000_000_000, Behaviors: []*pb.DetectionBehavior{behavior}}
+	if got := canonicalDetectionEventMillis(batch); got != behavior.Ts {
+		t.Fatalf("legacy behavior timestamp fallback=%d want=%d", got, behavior.Ts)
+	}
+	behavior.Header.EventTs = 1_800_000_000_000
+	if got := canonicalDetectionEventMillis(batch); got != behavior.Header.EventTs {
+		t.Fatalf("header timestamp=%d want=%d", got, behavior.Header.EventTs)
+	}
+	behavior.Header.EventTs = 0
+	behavior.Ts = 0
+	if got := canonicalDetectionEventMillis(batch); got != batch.CreatedAt {
+		t.Fatalf("batch timestamp fallback=%d want=%d", got, batch.CreatedAt)
+	}
 }
 
 func TestProcessMessageRejectsEmptyBehaviorsWithoutPanic(t *testing.T) {
