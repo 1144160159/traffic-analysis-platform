@@ -1,0 +1,44 @@
+{
+  "status": "PASS",
+  "control_id": "T-GW-001",
+  "catalog_integrity": "PASS",
+  "security_compliance": "PARTIAL",
+  "catalog_sha256": "9f97cb2dee3c4f4b02fef82ea8f1dfbe67210457fadef23a47845458de823aa4",
+  "counts": {
+    "routes": 58,
+    "route_ids": 58,
+    "protected_routes": 52,
+    "protected_routes_with_gateway_auth": 0,
+    "routes_with_blocking_gaps": 58,
+    "declared_services": 62,
+    "gap_counts": {
+      "gateway_authentication_missing": 52,
+      "gateway_body_limit_missing": 52,
+      "gateway_rate_limit_missing": 57,
+      "gateway_request_validation_missing": 52,
+      "management_entry_not_gateway_protected": 18,
+      "upstream_retry_implicit": 51,
+      "upstream_timeout_implicit": 51
+    }
+  },
+  "openapi_coverage": {
+    "operations": 98,
+    "uncovered_operation_ids": [],
+    "overlapping_operation_routes": {
+      "acknowledgeProbeOperation": [
+        "24",
+        "44"
+      ],
+      "getProbeOperation": [
+        "24",
+        "44"
+      ],
+      "pushProbeConfig": [
+        "24",
+        "44"
+      ]
+    },
+    "operations_missing_required_scope": []
+  },
+  "errors": []
+}

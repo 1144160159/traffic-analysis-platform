@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "catalog_sha256": "e89d259d3076a947ca787a18c31c17c73598737388d766f7872a4ed5e4626ece",
+  "counts": {
+    "certificate_domains": 5,
+    "domains_partial_or_default_off": 5,
+    "transport_guards": 18,
+    "transport_guards_passing": 18,
+    "plaintext_dependencies": 4,
+    "production_plaintext_gaps": 3,
+    "blocking_gaps": 19
+  }
+}

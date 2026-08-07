@@ -1,0 +1,10 @@
+{
+  "client_ca_namespace_count": 3,
+  "contract_id": "traffic-platform-minio-tls-material-v1",
+  "cutover_ready": false,
+  "errors": [],
+  "phase": "adapter_bundle_built_default_off",
+  "production_applied": false,
+  "server_san_count": 8,
+  "status": "PASS"
+}

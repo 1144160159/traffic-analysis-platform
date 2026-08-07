@@ -1,0 +1,15 @@
+test_all_go_workloads_have_dedicated_identity_and_hardening (tests.alignment.test_service_identity_catalog.ServiceIdentityCatalogTests.test_all_go_workloads_have_dedicated_identity_and_hardening) ... ok
+test_checked_in_catalog_is_current_and_explicitly_partial (tests.alignment.test_service_identity_catalog.ServiceIdentityCatalogTests.test_checked_in_catalog_is_current_and_explicitly_partial) ... ok
+test_default_service_account_fails_closed (tests.alignment.test_service_identity_catalog.ServiceIdentityCatalogTests.test_default_service_account_fails_closed) ... ok
+test_external_diagnostic_output_path_is_rendered_without_crashing (tests.alignment.test_service_identity_catalog.ServiceIdentityCatalogTests.test_external_diagnostic_output_path_is_rendered_without_crashing) ... ok
+test_incomplete_container_hardening_fails_closed (tests.alignment.test_service_identity_catalog.ServiceIdentityCatalogTests.test_incomplete_container_hardening_fails_closed) ... ok
+test_probe_exception_must_remain_explicit (tests.alignment.test_service_identity_catalog.ServiceIdentityCatalogTests.test_probe_exception_must_remain_explicit) ... ok
+test_service_account_token_automount_fails_closed (tests.alignment.test_service_identity_catalog.ServiceIdentityCatalogTests.test_service_account_token_automount_fails_closed) ... ok
+test_shared_sensitive_credential_cannot_be_hidden (tests.alignment.test_service_identity_catalog.ServiceIdentityCatalogTests.test_shared_sensitive_credential_cannot_be_hidden) ... ok
+test_tenant_fallback_site_cannot_be_hidden (tests.alignment.test_service_identity_catalog.ServiceIdentityCatalogTests.test_tenant_fallback_site_cannot_be_hidden) ... ok
+test_wildcard_kafka_principal_fails_closed (tests.alignment.test_service_identity_catalog.ServiceIdentityCatalogTests.test_wildcard_kafka_principal_fails_closed) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 10.970s
+
+OK

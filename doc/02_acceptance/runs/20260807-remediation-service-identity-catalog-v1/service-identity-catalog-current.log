@@ -1,0 +1,26 @@
+{
+  "status": "PASS",
+  "catalog_sha256": "78c3bce7b244bb3836fe592966a95d67663a1e94f35f6dc98e1e039014e76cdd",
+  "counts": {
+    "workloads": 11,
+    "dedicated_service_accounts": 11,
+    "workloads_with_token_automount_disabled": 10,
+    "approved_token_automount_exceptions": 1,
+    "hardened_or_approved_exception_containers": 9,
+    "containers": 11,
+    "secret_references": 65,
+    "literal_secret_findings": 0,
+    "unregistered_secret_references": 2,
+    "kafka_principals": 20,
+    "shared_sensitive_credentials": 5,
+    "tenant_untrusted_fallback_sites": 25,
+    "workloads_with_blocking_gaps": 11,
+    "gap_counts": {
+      "container_security_context_incomplete": 2,
+      "runtime_image_not_digest_pinned": 5,
+      "secret_provisioner_unregistered": 2,
+      "service_to_service_mtls_identity_missing": 7,
+      "shared_sensitive_credential": 8
+    }
+  }
+}

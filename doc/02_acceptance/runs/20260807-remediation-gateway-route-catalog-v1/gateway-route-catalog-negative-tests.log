@@ -1,0 +1,12 @@
+test_admin_api_external_exposure_fails_closed (tests.alignment.test_gateway_route_catalog.GatewayRouteCatalogTests.test_admin_api_external_exposure_fails_closed) ... ok
+test_checked_in_catalog_matches_apisix_openapi_and_services (tests.alignment.test_gateway_route_catalog.GatewayRouteCatalogTests.test_checked_in_catalog_matches_apisix_openapi_and_services) ... ok
+test_every_upstream_has_a_declared_service (tests.alignment.test_gateway_route_catalog.GatewayRouteCatalogTests.test_every_upstream_has_a_declared_service) ... ok
+test_missing_openapi_scope_fails_closed (tests.alignment.test_gateway_route_catalog.GatewayRouteCatalogTests.test_missing_openapi_scope_fails_closed) ... ok
+test_protected_route_cannot_hide_missing_gateway_auth (tests.alignment.test_gateway_route_catalog.GatewayRouteCatalogTests.test_protected_route_cannot_hide_missing_gateway_auth) ... ok
+test_uncovered_openapi_operation_fails_closed (tests.alignment.test_gateway_route_catalog.GatewayRouteCatalogTests.test_uncovered_openapi_operation_fails_closed) ... ok
+test_undeclared_upstream_service_fails_closed (tests.alignment.test_gateway_route_catalog.GatewayRouteCatalogTests.test_undeclared_upstream_service_fails_closed) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 6.990s
+
+OK

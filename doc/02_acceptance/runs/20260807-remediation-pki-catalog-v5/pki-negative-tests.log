@@ -1,0 +1,14 @@
+test_checked_in_catalog_is_current_and_explicitly_partial (tests.alignment.test_pki_catalog.PKICatalogTests.test_checked_in_catalog_is_current_and_explicitly_partial) ... ok
+test_domain_cannot_claim_pass_without_live_rotation (tests.alignment.test_pki_catalog.PKICatalogTests.test_domain_cannot_claim_pass_without_live_rotation) ... ok
+test_excessive_leaf_validity_gap_cannot_be_hidden (tests.alignment.test_pki_catalog.PKICatalogTests.test_excessive_leaf_validity_gap_cannot_be_hidden) ... ok
+test_minio_cutover_gap_cannot_be_hidden (tests.alignment.test_pki_catalog.PKICatalogTests.test_minio_cutover_gap_cannot_be_hidden) ... ok
+test_minio_tls_san_inventory_cannot_be_reduced (tests.alignment.test_pki_catalog.PKICatalogTests.test_minio_tls_san_inventory_cannot_be_reduced) ... ok
+test_private_key_material_is_rejected (tests.alignment.test_pki_catalog.PKICatalogTests.test_private_key_material_is_rejected) ... ok
+test_production_plaintext_inventory_cannot_be_hidden (tests.alignment.test_pki_catalog.PKICatalogTests.test_production_plaintext_inventory_cannot_be_hidden) ... ok
+test_remote_transport_guard_cannot_be_disabled (tests.alignment.test_pki_catalog.PKICatalogTests.test_remote_transport_guard_cannot_be_disabled) ... ok
+test_shared_probe_identity_gap_cannot_be_hidden (tests.alignment.test_pki_catalog.PKICatalogTests.test_shared_probe_identity_gap_cannot_be_hidden) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.030s
+
+OK

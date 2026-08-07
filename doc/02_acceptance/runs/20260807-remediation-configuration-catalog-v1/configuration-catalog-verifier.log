@@ -1,0 +1,23 @@
+{
+  "status": "PASS",
+  "control_id": "T-CONFIG-001",
+  "catalog_sha256": "c316fd6b423f47da2d16e45c8c3d2918407ab0124806b7522ed579e1d3c6c52d",
+  "counts": {
+    "entries": 1891,
+    "go_env_consumers": 926,
+    "flink_properties": 261,
+    "kubernetes_env_bindings": 704,
+    "secret_entries": 184,
+    "source_files": 76
+  },
+  "shared_authority_domains": [
+    "apisix_routes",
+    "clickhouse_schema",
+    "flink_job_topology",
+    "iam_scopes",
+    "kafka_acl",
+    "kafka_topics",
+    "minio_lifecycle"
+  ],
+  "errors": []
+}
