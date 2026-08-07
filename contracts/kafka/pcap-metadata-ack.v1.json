@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-pcap-metadata-ack-v1",
+  "remediation_ids": ["F-PROBE-001", "T-KAFKA-003"],
+  "status": "verifying",
+  "production_applied": false,
+  "coverage_status": "PARTIAL_PROBE_TO_KAFKA_RECEIPT",
+  "ack_semantics": {
+    "success": "MinIO object upload is already journaled and ingest Kafka has acknowledged the metadata with RequireAll; downstream Flink and ClickHouse indexing remains pending",
+    "failure": "the Agent retains its local object and durable upload journal and retries; the Gateway returns a non-OK gRPC status for Kafka durability failure",
+    "identity": "request tenant_id and probe_id must equal the authenticated context; omitted legacy fields are filled only from that context",
+    "deletion": "metadata ACK never deletes local evidence; retention cleanup is separate and only applies to completed journal entries"
+  },
+  "source_assertions": [
+    {
+      "source": "go/control-plane/internal/ingest/queue/producer.go",
+      "required_tokens": [
+        "ingest durability barrier requires KAFKA_REQUIRED_ACKS=all",
+        "cfg.RequiredAcks = config.KafkaRequiredAcksAll",
+        "Async:        false"
+      ],
+      "forbidden_tokens": [],
+      "ordered_tokens": []
+    },
+    {
+      "source": "go/control-plane/internal/ingest/server/handler.go",
+      "required_tokens": [
+        "bindPcapIndexIdentity(meta, tenantID, probeID)",
+        "codes.PermissionDenied",
+        "codes.Unavailable, \"pcap metadata Kafka durability barrier failed\"",
+        "pcap metadata durably accepted by Kafka; downstream index pending",
+        "\"ack_scope\":     \"kafka_durable\"",
+        "\"final_indexed\": false"
+      ],
+      "forbidden_tokens": [
+        "logger.Info(\"PCAP index uploaded\""
+      ],
+      "ordered_tokens": [
+        ["err := h.producer.WritePcapIndex(ctx, meta)", "Success: true"],
+        ["err := h.producer.WritePcapIndex(ctx, meta)", "Message: msgPcapKafkaAccepted"]
+      ]
+    },
+    {
+      "source": "rust/probe-agent/probe-agent/src/archiver/uploader.rs",
+      "required_tokens": [
+        "if resp.success",
+        "self.journal.mark_metadata_synced(&task_id)?",
+        "PCAP object uploaded but metadata was not durably acknowledged",
+        "journal and local evidence retained"
+      ],
+      "forbidden_tokens": [],
+      "ordered_tokens": [
+        ["self.upload_metadata(&key, &task, &upload_result).await", "self.journal.mark_metadata_synced(&task_id)?"],
+        ["if !metadata_synced", "journal and local evidence retained"]
+      ]
+    },
+    {
+      "source": "rust/probe-agent/probe-agent/src/archiver/upload_journal.rs",
+      "required_tokens": [
+        "A durable metadata ACK completes the protocol but does not",
+        "entry.is_complete() && age_ms > max_age_ms",
+        "ACK must not delete the local evidence"
+      ],
+      "forbidden_tokens": [],
+      "ordered_tokens": []
+    },
+    {
+      "source": "go/control-plane/internal/ingest/server/pcap_ack_test.go",
+      "required_tokens": [
+        "TestBindPcapIndexIdentityUsesAuthenticatedContext",
+        "TestBindPcapIndexIdentityRejectsTenantOrProbeMismatch",
+        "TestPcapSuccessMessageIsNonFinalKafkaReceipt"
+      ],
+      "forbidden_tokens": [],
+      "ordered_tokens": []
+    }
+  ],
+  "remaining_gates": [
+    "real MinIO upload Kafka RequireAll ACK Flink consume and ClickHouse index reconciliation by tenant probe file_key and sha256",
+    "Kafka unavailable and ambiguous ACK fault injection with Agent restart and journal replay",
+    "MinIO object manifest and hash verification before metadata acceptance",
+    "bounded local retention capacity backpressure and cleanup evidence",
+    "candidate deployment canary rollback and T+0 T+1 T+3 T+7 observation"
+  ]
+}
