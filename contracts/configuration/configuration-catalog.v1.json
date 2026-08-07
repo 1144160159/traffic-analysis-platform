@@ -168,9 +168,9 @@
     "go/control-plane/internal/ingest/auth/token_cache.go": "5fa5f7358e27d5ad3d710a56a8e9b0612bbf65545a21685428888799fdf065f4",
     "go/control-plane/internal/ingest/config/config.go": "89012db97b50fdc4758698f34061994a4ad09715ff365b003924afdfaccd603b",
     "go/control-plane/internal/ingest/dedup/lru_dedup.go": "62eda679a853f012bb89d69e8b331954e8a820c892c7d2a75394c6fd10b5b032",
-    "go/control-plane/internal/ingest/queue/producer.go": "82c12f9ee76c459e5e0ccc7c1d5dda21c4d07bae85c761596752528e4715cfaf",
+    "go/control-plane/internal/ingest/queue/producer.go": "b7ad3551586c3e9bd62a5548463b68b14aafafbd3e9ca5049921b9afd068ad72",
     "go/control-plane/internal/ingest/quota/limiter.go": "7e2a81333a841a1644c2d9bb22ee7b0f6e109fbe757b6fd3ceeabb3cc7e073b8",
-    "go/control-plane/internal/ingest/server/handler.go": "7674544c225e1f7d0b7492f6b0c3aaadd2cedbd3775e4fea6e258456494482b0",
+    "go/control-plane/internal/ingest/server/handler.go": "4f7d6edb8d25598e10419fc180d92d5a7abb5a9fad3a5f2fdf890dcc16baebdc",
     "go/control-plane/internal/rules/api/handler.go": "d5ae43f677a42ff0134caf4ae253791538803961c48c61ea8f8b367ed078be91",
     "go/control-plane/internal/rules/config/config.go": "09d767f719cd8abefc57a66421853f5978b5ec49a38ecf7c62c624e33801cbff",
     "go/control-plane/internal/rules/service/deployment_service.go": "68435994ae8df187bbd6c755386c1790bf9a338e632caadeed3c8496c17b82f6",
@@ -34201,8 +34201,8 @@
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/ingest/server/handler.go:90:MaxBatchSize:MAX_BATCH_SIZE",
-      "runtime_binding_id": "go:go/control-plane/internal/ingest/server/handler.go:90:MaxBatchSize:MAX_BATCH_SIZE",
+      "id": "go:go/control-plane/internal/ingest/server/handler.go:91:MaxBatchSize:MAX_BATCH_SIZE",
+      "runtime_binding_id": "go:go/control-plane/internal/ingest/server/handler.go:91:MaxBatchSize:MAX_BATCH_SIZE",
       "key": "MAX_BATCH_SIZE",
       "consumer": "go:ingest",
       "owner": "probe-domain-owner",
@@ -34227,15 +34227,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/ingest/server/handler.go",
-          "line": 90,
+          "line": 91,
           "field": "MaxBatchSize"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/ingest/server/handler.go:91:MaxEventSize:MAX_EVENT_SIZE",
-      "runtime_binding_id": "go:go/control-plane/internal/ingest/server/handler.go:91:MaxEventSize:MAX_EVENT_SIZE",
+      "id": "go:go/control-plane/internal/ingest/server/handler.go:92:MaxEventSize:MAX_EVENT_SIZE",
+      "runtime_binding_id": "go:go/control-plane/internal/ingest/server/handler.go:92:MaxEventSize:MAX_EVENT_SIZE",
       "key": "MAX_EVENT_SIZE",
       "consumer": "go:ingest",
       "owner": "probe-domain-owner",
@@ -34260,15 +34260,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/ingest/server/handler.go",
-          "line": 91,
+          "line": 92,
           "field": "MaxEventSize"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/ingest/server/handler.go:92:StreamBufferSize:STREAM_BUFFER_SIZE",
-      "runtime_binding_id": "go:go/control-plane/internal/ingest/server/handler.go:92:StreamBufferSize:STREAM_BUFFER_SIZE",
+      "id": "go:go/control-plane/internal/ingest/server/handler.go:93:StreamBufferSize:STREAM_BUFFER_SIZE",
+      "runtime_binding_id": "go:go/control-plane/internal/ingest/server/handler.go:93:StreamBufferSize:STREAM_BUFFER_SIZE",
       "key": "STREAM_BUFFER_SIZE",
       "consumer": "go:ingest",
       "owner": "probe-domain-owner",
@@ -34293,15 +34293,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/ingest/server/handler.go",
-          "line": 92,
+          "line": 93,
           "field": "StreamBufferSize"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/ingest/server/handler.go:93:HeartbeatInterval:HEARTBEAT_INTERVAL",
-      "runtime_binding_id": "go:go/control-plane/internal/ingest/server/handler.go:93:HeartbeatInterval:HEARTBEAT_INTERVAL",
+      "id": "go:go/control-plane/internal/ingest/server/handler.go:94:HeartbeatInterval:HEARTBEAT_INTERVAL",
+      "runtime_binding_id": "go:go/control-plane/internal/ingest/server/handler.go:94:HeartbeatInterval:HEARTBEAT_INTERVAL",
       "key": "HEARTBEAT_INTERVAL",
       "consumer": "go:ingest",
       "owner": "probe-domain-owner",
@@ -34326,15 +34326,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/ingest/server/handler.go",
-          "line": 93,
+          "line": 94,
           "field": "HeartbeatInterval"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/ingest/server/handler.go:94:EnableDLQ:ENABLE_DLQ",
-      "runtime_binding_id": "go:go/control-plane/internal/ingest/server/handler.go:94:EnableDLQ:ENABLE_DLQ",
+      "id": "go:go/control-plane/internal/ingest/server/handler.go:95:EnableDLQ:ENABLE_DLQ",
+      "runtime_binding_id": "go:go/control-plane/internal/ingest/server/handler.go:95:EnableDLQ:ENABLE_DLQ",
       "key": "ENABLE_DLQ",
       "consumer": "go:ingest",
       "owner": "probe-domain-owner",
@@ -34359,15 +34359,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/ingest/server/handler.go",
-          "line": 94,
+          "line": 95,
           "field": "EnableDLQ"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/ingest/server/handler.go:95:EnableDedup:ENABLE_DEDUP",
-      "runtime_binding_id": "go:go/control-plane/internal/ingest/server/handler.go:95:EnableDedup:ENABLE_DEDUP",
+      "id": "go:go/control-plane/internal/ingest/server/handler.go:96:EnableDedup:ENABLE_DEDUP",
+      "runtime_binding_id": "go:go/control-plane/internal/ingest/server/handler.go:96:EnableDedup:ENABLE_DEDUP",
       "key": "ENABLE_DEDUP",
       "consumer": "go:ingest",
       "owner": "probe-domain-owner",
@@ -34392,15 +34392,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/ingest/server/handler.go",
-          "line": 95,
+          "line": 96,
           "field": "EnableDedup"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/ingest/server/handler.go:96:ProbeStatusTimeout:PROBE_STATUS_TIMEOUT",
-      "runtime_binding_id": "go:go/control-plane/internal/ingest/server/handler.go:96:ProbeStatusTimeout:PROBE_STATUS_TIMEOUT",
+      "id": "go:go/control-plane/internal/ingest/server/handler.go:97:ProbeStatusTimeout:PROBE_STATUS_TIMEOUT",
+      "runtime_binding_id": "go:go/control-plane/internal/ingest/server/handler.go:97:ProbeStatusTimeout:PROBE_STATUS_TIMEOUT",
       "key": "PROBE_STATUS_TIMEOUT",
       "consumer": "go:ingest",
       "owner": "probe-domain-owner",
@@ -34425,15 +34425,15 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/ingest/server/handler.go",
-          "line": 96,
+          "line": 97,
           "field": "ProbeStatusTimeout"
         }
       ],
       "separator": null
     },
     {
-      "id": "go:go/control-plane/internal/ingest/server/handler.go:97:EnableAudit:ENABLE_AUDIT",
-      "runtime_binding_id": "go:go/control-plane/internal/ingest/server/handler.go:97:EnableAudit:ENABLE_AUDIT",
+      "id": "go:go/control-plane/internal/ingest/server/handler.go:98:EnableAudit:ENABLE_AUDIT",
+      "runtime_binding_id": "go:go/control-plane/internal/ingest/server/handler.go:98:EnableAudit:ENABLE_AUDIT",
       "key": "ENABLE_AUDIT",
       "consumer": "go:ingest",
       "owner": "probe-domain-owner",
@@ -34458,7 +34458,7 @@
         {
           "kind": "go_env_tag",
           "path": "go/control-plane/internal/ingest/server/handler.go",
-          "line": 97,
+          "line": 98,
           "field": "EnableAudit"
         }
       ],
@@ -63803,5 +63803,5 @@
       ]
     }
   ],
-  "catalog_sha256": "c316fd6b423f47da2d16e45c8c3d2918407ab0124806b7522ed579e1d3c6c52d"
+  "catalog_sha256": "94895e30f315bb2f66d40ff9749226ee177de0fc47b8ddfef26364a819701713"
 }
