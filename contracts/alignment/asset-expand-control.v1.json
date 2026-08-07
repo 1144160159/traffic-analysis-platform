@@ -15,6 +15,7 @@
     "ephemeral_g1_verifier": "scripts/alignment/verify_asset_expand_ephemeral.py",
     "opensearch_g1_verifier": "scripts/alignment/verify_asset_projection_opensearch_ephemeral.py",
     "kafka_g1_verifier": "scripts/alignment/verify_asset_projection_kafka_ephemeral.py",
+    "minio_g1_verifier": "scripts/alignment/verify_asset_export_minio_ephemeral.py",
     "runtime_config": "go/control-plane/internal/asset/config/config.go",
     "canonical_deployment": "deployments/kubernetes/applications/go-services.yaml",
     "compatibility_deployment": "go/control-plane/deployments/kubernetes/asset-service.yaml"
@@ -86,6 +87,14 @@
     "postgres_sentinel": "codex_ephemeral_asset_projection_kafka_sentinel=ephemeral-only",
     "kafka_sentinel": "ephemeral-only",
     "topic": "asset.events.v2",
+    "persistent_volume": false,
+    "shared_environment": false
+  },
+  "minio_g1_isolation": {
+    "postgres_image": "postgres@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20",
+    "minio_image": "quay.io/minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+    "postgres_sentinel": "codex_ephemeral_asset_atomic_test_sentinel=ephemeral-only",
+    "bucket": "asset-export-g1",
     "persistent_volume": false,
     "shared_environment": false
   },
