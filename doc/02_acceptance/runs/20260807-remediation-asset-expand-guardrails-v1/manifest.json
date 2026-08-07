@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "run_id": "20260807-remediation-asset-expand-guardrails-v1",
+  "captured_at": "2026-08-07T08:01:40Z",
+  "status": "PASS",
+  "scoped_evidence_status": "PARTIAL_REPOSITORY_DEFAULT_OFF_AND_SUSPENDED_EXPAND",
+  "remediation_ids": [
+    "F-ASSET-001",
+    "F-ASSET-002",
+    "F-ASSET-003",
+    "F-ASSET-004",
+    "F-ASSET-005",
+    "F-ASSET-006"
+  ],
+  "candidate": {
+    "head": "49c0e3b29372e81785e618eb6c9cbc850d364c06",
+    "source_sha256": "d269c35b233e37102473bd577d0e26beeaed64280f74ed44405b820283f33e65",
+    "source_file_count": 2338,
+    "clean_before_and_after_g0": true
+  },
+  "g0_reference": {
+    "run_id": "20260807-remediation-g0-full-v175",
+    "manifest": "doc/02_acceptance/runs/20260807-remediation-g0-full-v175/manifest.json",
+    "manifest_sha256": "518e8a5beb345810473cddd0eefedcfeccd0e1863ae16a1b21024a09eff2dfc5",
+    "status": "PASS",
+    "commands": [
+      {
+        "name": "alignment",
+        "status": "PASS",
+        "duration_seconds": 80.966,
+        "artifact": "doc/02_acceptance/runs/20260807-remediation-g0-full-v175/alignment.log",
+        "sha256": "6183ba8f23a7603fbc3dd773c77be1032656aff4bdd4a849a3a4364b8aca2b09"
+      },
+      {
+        "name": "full",
+        "status": "PASS",
+        "duration_seconds": 116.748,
+        "artifact": "doc/02_acceptance/runs/20260807-remediation-g0-full-v175/full.log",
+        "sha256": "9016493d5426b017b2c234f87f246a712d6ab1e5eeed874b4cb5fe653aa88864"
+      },
+      {
+        "name": "python",
+        "status": "PASS",
+        "duration_seconds": 210.853,
+        "artifact": "doc/02_acceptance/runs/20260807-remediation-g0-full-v175/python.log",
+        "sha256": "2268c37eaeec535f50703be820b51ccc11aecee81c2e9b8c56302c5acb4f7403"
+      }
+    ]
+  },
+  "source_artifacts": [
+    {
+      "path": "contracts/alignment/asset-expand-control.v1.json",
+      "sha256": "ccbec6ce3944bd32b697f729d592dcf37a388abf022ae773c7bcd51e0251aa61"
+    },
+    {
+      "path": "scripts/alignment/render_asset_postgres_expand.py",
+      "sha256": "7f62c2287bd5f659b2998a0f8d793ba43a0d6f0913edb2c9b5a83386cdd46c2d"
+    },
+    {
+      "path": "scripts/alignment/verify_asset_expand_guardrails.py",
+      "sha256": "34962cce855185d1dd1a83caeb2e72baf7fa07c4563dbb5f632e3e689021af81"
+    },
+    {
+      "path": "tests/alignment/test_asset_expand_guardrails.py",
+      "sha256": "31ecab00ac64a808bd6c6a007e4d97bd34668136391220602ec4209556b8d9b4"
+    },
+    {
+      "path": "tests/alignment/test_asset_expand_renderer.py",
+      "sha256": "95a83bd4e0f7f195f142e135d53e728ef064ef5610c79c101a22631a9711257e"
+    },
+    {
+      "path": "doc/07_alignment/runbooks/F-ASSET-002-rollback.md",
+      "sha256": "0806eaadb1a66bc9a226e84abd703367ea3647a6668c7ab2cc9a67fefdfb8389"
+    },
+    {
+      "path": "deployments/kubernetes/applications/go-services.yaml",
+      "sha256": "6ce7ec225f793d20ea684426f19036a67c86d8d751b718f37f176d5c25e2f46e"
+    },
+    {
+      "path": "go/control-plane/deployments/kubernetes/asset-service.yaml",
+      "sha256": "1f0ed4273cb4b6f16faeb52581cb6acef1d61091ab899c8dbadb5ae6291122a7"
+    },
+    {
+      "path": "go/control-plane/internal/asset/config/config.go",
+      "sha256": "ebab4be9914de13654e3efd514a0753fcee72236d9ee03a6ad1cf0f0cb890079"
+    }
+  ],
+  "verified_guards": [
+    "new asset outbox, discovery outbox and projection runtime defaults are false",
+    "canonical and compatibility deployment manifests explicitly keep expand flags false",
+    "legacy asset.bindings.v1 consumer remains enabled for compatibility",
+    "ten additive PostgreSQL migrations are embedded into one immutable bundle",
+    "rendering requires a same-source PASS G0 manifest and PostgreSQL system identifier",
+    "requester and approver identities must differ",
+    "approval nonce and four-hour execution window are immutable and bounded",
+    "mounted migration bytes are rehashed before database execution",
+    "rendered Job is suspended with backoffLimit zero and cannot overwrite an existing output"
+  ],
+  "gate_status": {
+    "G0": "PASS_SAME_SOURCE",
+    "G1": "PARTIAL_REPOSITORY_AND_UNIT_TESTS_ONLY_NO_APPROVED_BUNDLE_REPLAY_IN_THIS_RUN",
+    "G2": "OPEN_NO_CANDIDATE_IMAGE_OR_REAL_SERVICE_WRITE",
+    "G3": "OPEN_NO_PG_KAFKA_CH_OS_NEBULA_MINIO_AUDIT_RECONCILIATION",
+    "G4": "OPEN_NO_APPROVED_PERFORMANCE_OR_FAILURE_PROFILE",
+    "G5": "OPEN_NO_WINDOWS_CHROME_ASSET_JOURNEY",
+    "G6": "OPEN_NO_EXPAND_CANARY_SWITCH_ROLLBACK_OR_OBSERVATION",
+    "G7": "OPEN",
+    "G8": "BLOCKED_EXTERNAL"
+  },
+  "production_applied": false,
+  "production_mutations": [],
+  "closure_claim": false,
+  "next_actions": [
+    "capture read-only PostgreSQL migration state and system identifier from an approved target",
+    "render but keep suspended the same-source asset expand Job for independent review",
+    "execute dual migration replay in an isolated PostgreSQL environment",
+    "run Kafka and projection-target readiness canaries before enabling any worker",
+    "enable one asset flag at a time and reconcile the same tenant trace event revision and watermark across stores"
+  ]
+}

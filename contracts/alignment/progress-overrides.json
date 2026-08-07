@@ -198,7 +198,12 @@
         "doc/02_acceptance/runs/20260731-remediation-asset-cursor-v1/manifest.json#sha256=49438ebac6e59a9c0b6650cb376cf8a94707f3182661d8496d46df312db6dda0",
         "doc/02_acceptance/runs/20260731-remediation-asset-cursor-v2/manifest.json#sha256=40cdbdf3307f617041b67f68fa8b869b6df2939cc0d83f94377d10f3c482baed",
         "doc/02_acceptance/runs/20260731-remediation-g0-full-v35/manifest.json#sha256=671297230ce25764ad111f1f9042514eedd380f8f2d907a1e493e3c87fd94255",
-        "doc/02_acceptance/runs/20260805-remediation-postgres-migration-version-reconcile-v1/manifest.json#sha256=78d106fb0512afe3c23d3c01b99216056b3f1cd2f7722f60d3e13ae7335b942e"
+        "doc/02_acceptance/runs/20260805-remediation-postgres-migration-version-reconcile-v1/manifest.json#sha256=78d106fb0512afe3c23d3c01b99216056b3f1cd2f7722f60d3e13ae7335b942e",
+        "contracts/alignment/asset-expand-control.v1.json",
+        "scripts/alignment/render_asset_postgres_expand.py",
+        "scripts/alignment/verify_asset_expand_guardrails.py",
+        "doc/02_acceptance/runs/20260807-remediation-g0-full-v175/manifest.json#sha256=518e8a5beb345810473cddd0eefedcfeccd0e1863ae16a1b21024a09eff2dfc5",
+        "doc/02_acceptance/runs/20260807-remediation-asset-expand-guardrails-v1/manifest.json#sha256=033eb16582134fc038fcc4b042ab21141dd464e6cd19bb48e7c0d0a51637f7f9"
       ],
       "blocker": "当前镜像尚未执行24项生产migration及游标灰度；真实API/PG与OpenSearch projection watermark对账、批准规模与并发下P50/P95/P99、指定Windows Chrome翻页、发布回滚和观察窗仍未完成。10万资产首屏精确total仍为线性计数，G4保持OPEN。",
       "note": "REST和gRPC已实现HMAC签名opaque cursor，绑定认证tenant、规范化过滤、稳定排序和页大小；PostgreSQL时间水位与MVCC snapshot共同签名，普通并发插入及第一页前启动/后提交的长事务均连续两轮无重复、无跳行、无跨租户。keyset谓词现以UUID原生排序键(last_seen,asset_id)和显式uuid参数保持与ORDER BY及组合索引一致；offset继续兼容并返回deprecation元数据，rollout默认关闭。24周范围外P1/P2仍由门禁强制保持OPEN/BLOCKED，本项仅为VERIFYING。"
@@ -249,10 +254,16 @@
         "scripts/alignment/verify_asset_atomic_ephemeral.py",
         "doc/02_acceptance/runs/20260803-remediation-g0-full-v90/manifest.json#sha256=70e568c2209afbdfddb6bfe91c72ed76d390007fdcf2427d2b7093943ed3236f",
         "doc/02_acceptance/runs/20260803-pg-transaction-outbox-v8/manifest.json#sha256=2cf71133b15297ee302358d7e66e12e3d4b2a3f0f60a5716b623fd30349e46a3",
-        "doc/02_acceptance/runs/20260803-pg-mutation-inventory-v7/manifest.json#sha256=e797ae32f41816bac4640ef629553f03eaff9c512562337266fbf746c116528a"
+        "doc/02_acceptance/runs/20260803-pg-mutation-inventory-v7/manifest.json#sha256=e797ae32f41816bac4640ef629553f03eaff9c512562337266fbf746c116528a",
+        "contracts/alignment/asset-expand-control.v1.json",
+        "scripts/alignment/render_asset_postgres_expand.py",
+        "scripts/alignment/verify_asset_expand_guardrails.py",
+        "doc/07_alignment/runbooks/F-ASSET-002-rollback.md",
+        "doc/02_acceptance/runs/20260807-remediation-g0-full-v175/manifest.json#sha256=518e8a5beb345810473cddd0eefedcfeccd0e1863ae16a1b21024a09eff2dfc5",
+        "doc/02_acceptance/runs/20260807-remediation-asset-expand-guardrails-v1/manifest.json#sha256=033eb16582134fc038fcc4b042ab21141dd464e6cd19bb48e7c0d0a51637f7f9"
       ],
-      "blocker": "当前不可变镜像、批准的生产migration/topic/OS alias扩展、真实API/PG/Kafka offset/OS文档/Nebula顶点同trace对账、真实组件故障与性能、指定Windows Chrome变更旅程、发布回滚及观察窗仍未完成。",
-      "note": "HTTP与gRPC人工写入、Kafka被动binding、V1主动发现及定时inactive均已收敛到稳定action/idempotency/revision身份和原子PG边界；认证JWT租户覆盖客户端租户，旧Upsert/InsertEvent/MarkInactiveSince仓储旁路已移除。资产/history/audit/outbox/request、精确重放、冲突、outbox dispatch及幂等投影已在完整schema的sentinel隔离PG通过；G0 v90、事务专项v8和inventory v7绑定候选hash 7f6256ddc11aa90d53c562e096d233506fd72d12359bfae6e7d65cf3b29347ad。production_applied=false，未替代G2/G3 live门禁。"
+      "blocker": "十项资产expand迁移尚未在批准目标执行，候选镜像、topic/ACL、OpenSearch alias与Nebula space也未完成同源灰度；真实API/PG/Kafka offset/OS文档/Nebula顶点同trace对账、真实组件故障与性能、指定Windows Chrome变更旅程、发布回滚及观察窗仍未完成。",
+      "note": "资产写入、outbox与投影实现继续保持既有sentinel PostgreSQL证据；新增v175同源护栏将asset event outbox、discovery outbox和跨存储projection在代码及两份部署真源中改为默认关闭，并提供绑定G0、PostgreSQL system identifier、独立审批、四小时窗口、migration bundle hash和suspend的expand Job。该专项未执行生产写入，G1仅部分覆盖，状态保持VERIFYING。"
     },
     "F-ASSET-003": {
       "status": "VERIFYING",
@@ -284,7 +295,12 @@
     "doc/02_acceptance/runs/20260731-remediation-g0-full-v38/manifest.json#sha256=4fff70f0a0db53948d63f8048b0485d9064ec73a051c3803aa25cd8ff2ff7dc8",
     "doc/02_acceptance/runs/20260803-remediation-g0-full-v94/manifest.json#sha256=1f0267d7d5553377e5fc99b32bec82a3a1ab5de93e7d17353be989ea75cbfaff",
     "doc/02_acceptance/runs/20260803-pg-transaction-outbox-v9/manifest.json#sha256=37f21bfb3bf6e0132fb0de80dbd8cd2b4e7284d2df1a0bbffb586e8006145940",
-    "doc/02_acceptance/runs/20260803-pg-mutation-inventory-v9/manifest.json#sha256=14c13ff455b506f52a22fdfa0dc8d3215e0417ba4ed0430912cc6f62fca96472"
+    "doc/02_acceptance/runs/20260803-pg-mutation-inventory-v9/manifest.json#sha256=14c13ff455b506f52a22fdfa0dc8d3215e0417ba4ed0430912cc6f62fca96472",
+    "contracts/alignment/asset-expand-control.v1.json",
+    "scripts/alignment/render_asset_postgres_expand.py",
+    "scripts/alignment/verify_asset_expand_guardrails.py",
+    "doc/02_acceptance/runs/20260807-remediation-g0-full-v175/manifest.json#sha256=518e8a5beb345810473cddd0eefedcfeccd0e1863ae16a1b21024a09eff2dfc5",
+    "doc/02_acceptance/runs/20260807-remediation-asset-expand-guardrails-v1/manifest.json#sha256=033eb16582134fc038fcc4b042ab21141dd464e6cd19bb48e7c0d0a51637f7f9"
   ],
   "blocker": "生产migration、asset.discovery.events.v1 topic/ACL与候选镜像尚未应用；该topic仍为producer_only，下游消费、live offset与跨存储reconcile未完成。真实SNMP/LLDP网络扫描、批准规模P50/P95/P99、指定Windows Chrome提交/进度/取消/合并旅程、发布回滚和T+0至T+7观察窗仍未完成。",
   "note": "V2与兼容路由均使用稳定action/idempotency identity，run/history/audit/discovery outbox同事务提交；credential与topology采用确定性资源ID、revision冲突和持久重放，secret_ref内容不会进入审计或事件。dispatcher以lease领取、严格校验权威envelope，并在broker ACK后标记published，支持retry/dead。全新sentinel PostgreSQL覆盖credential重放/冲突、run三阶段、topology重放、审计/历史/outbox及无密钥泄漏，G0 v94、事务专项v9、inventory v9均通过，production_applied=false，因此本项仍为VERIFYING。"
@@ -312,7 +328,12 @@
         "doc/02_acceptance/runs/20260801-remediation-g0-full-v41/manifest.json#sha256=27272acbf44ca5f60f546525fbf7a6bad8814529d3c0cc9116d42c8506abb63d",
         "doc/02_acceptance/runs/20260801-remediation-g0-full-v42/manifest.json#sha256=2543a4fbcb5ddc819148dba15cd246c9bed75de0fb419806c11627d6e7319c8d",
         "doc/02_acceptance/runs/20260801-remediation-asset-export-v2/manifest.json#sha256=85a4cdc01e6d5d4e1873950ee43f0d7f05b8d16367492a5e7299c5e1f20e980c",
-        "doc/02_acceptance/runs/20260801-remediation-asset-export-v3/manifest.json#sha256=fc86f3d03a9bfffc59fbd8734ca9d051d4ea6ac3e16b3c3b936f4eaf1c95a1bf"
+        "doc/02_acceptance/runs/20260801-remediation-asset-export-v3/manifest.json#sha256=fc86f3d03a9bfffc59fbd8734ca9d051d4ea6ac3e16b3c3b936f4eaf1c95a1bf",
+        "contracts/alignment/asset-expand-control.v1.json",
+        "scripts/alignment/render_asset_postgres_expand.py",
+        "scripts/alignment/verify_asset_expand_guardrails.py",
+        "doc/02_acceptance/runs/20260807-remediation-g0-full-v175/manifest.json#sha256=518e8a5beb345810473cddd0eefedcfeccd0e1863ae16a1b21024a09eff2dfc5",
+        "doc/02_acceptance/runs/20260807-remediation-asset-expand-guardrails-v1/manifest.json#sha256=033eb16582134fc038fcc4b042ab21141dd464e6cd19bb48e7c0d0a51637f7f9"
       ],
       "blocker": "当前生产镜像、27项生产migration、asset.exports.v1目录/ACL和feature flag灰度尚未执行；该topic仍如实标记producer_only，正式下游消费者及生产offset对账未关闭。批准规模P50/P95/P99、指定Windows Chrome提交/进度/下载/列设置旅程、发布回滚和T+0至T+7观察窗仍未完成。",
       "note": "资产导出已从浏览器当前页CSV改为认证tenant下的202异步job；冻结查询、最小审计和requested outbox同一PG事务，worker使用repeatable-read快照生成CSV/JSONL并以PG manifest校验MinIO对象，下载审计和列偏好revision均已实现。独立asset.exports.v1采用租约、回收、退避、dead和broker ACK后published；全新sentinel PostgreSQL、真实临时MinIO及真实临时Redpanda的写入/回读/消费/对账通过。捕获器readiness失败v2、topic计数旧基线导致的G0 v40/v41失败均保留，修正后27项migration、G0 v42及资产导出v3通过；本项仅提升为VERIFYING。"
@@ -347,7 +368,12 @@
         "doc/02_acceptance/runs/20260801-remediation-g0-full-v43/manifest.json#sha256=e1635d5c97c620e21e1ec86abb00808792d25e17188b83eb81d6d61c25ee355f",
         "doc/02_acceptance/runs/20260801-remediation-asset-detail-snapshot-v1/manifest.json#sha256=2917dc004190957e02ae27a4be95e9ce2abe738f2794fc64896006a3bd06c826",
         "doc/02_acceptance/runs/20260801-remediation-g0-full-v46/manifest.json#sha256=0d634fb249fbb7687ecfe98e4f60c0c96e936f54b0b9c86f6e79aa52c259a890",
-        "doc/02_acceptance/runs/20260801-remediation-asset-detail-cross-store-v2/manifest.json#sha256=5d1cf2422d27887c936fcc1ced465dd2d0e3e349420810af1e1ea4079718ba41"
+        "doc/02_acceptance/runs/20260801-remediation-asset-detail-cross-store-v2/manifest.json#sha256=5d1cf2422d27887c936fcc1ced465dd2d0e3e349420810af1e1ea4079718ba41",
+        "contracts/alignment/asset-expand-control.v1.json",
+        "scripts/alignment/render_asset_postgres_expand.py",
+        "scripts/alignment/verify_asset_expand_guardrails.py",
+        "doc/02_acceptance/runs/20260807-remediation-g0-full-v175/manifest.json#sha256=518e8a5beb345810473cddd0eefedcfeccd0e1863ae16a1b21024a09eff2dfc5",
+        "doc/02_acceptance/runs/20260807-remediation-asset-expand-guardrails-v1/manifest.json#sha256=033eb16582134fc038fcc4b042ab21141dd464e6cd19bb48e7c0d0a51637f7f9"
       ],
       "blocker": "跨存储reader代码现已实现，本地ClickHouse SQL引擎和真实临时MinIO子集通过；但分布式ClickHouse查询/profile/同水位对账、live Nebula及关系投影对账、PG对象manifest权威与回填、批准规模P95/P99、故障注入、生产候选和四项feature flag灰度、指定Windows Chrome、发布回滚及T+0至T+7观察窗仍未完成，G4至G8不得关闭。",
       "note": "F-ASSET-005在既有repeatable-read PG快照上新增默认关闭的ClickHouse观测/告警上下文、ClickHouse证据到真实MinIO对象metadata/SHA256核验，以及tenant命名空间确定性VID的有界Nebula邻接投影；失败、陈旧、截断和完整性未知均继续进入partial/missing_sections。组件测试、ClickHouse local真实SQL语义、真实临时MinIO、前端合同与完整G0 v46通过；未运行分布式ClickHouse或live Nebula，状态保持VERIFYING。"
@@ -368,7 +394,12 @@
         "deployments/postgres/migrations/202607311330_asset_governance_work_orders_v1.sql",
         "doc/07_alignment/runbooks/F-ASSET-006-rollback.md",
         "doc/02_acceptance/runs/20260801-remediation-g0-full-v44/manifest.json#sha256=5db2c80bfe15a732dc96c6a1012cd442f4224ec52a6d47b570c92d5fec65b449",
-        "doc/02_acceptance/runs/20260801-remediation-asset-governance-v1/manifest.json#sha256=58085d0b2bf60e1c0b4e92b4dd04cff3030360333a5ef2836af831ab5fd271a8"
+        "doc/02_acceptance/runs/20260801-remediation-asset-governance-v1/manifest.json#sha256=58085d0b2bf60e1c0b4e92b4dd04cff3030360333a5ef2836af831ab5fd271a8",
+        "contracts/alignment/asset-expand-control.v1.json",
+        "scripts/alignment/render_asset_postgres_expand.py",
+        "scripts/alignment/verify_asset_expand_guardrails.py",
+        "doc/02_acceptance/runs/20260807-remediation-g0-full-v175/manifest.json#sha256=518e8a5beb345810473cddd0eefedcfeccd0e1863ae16a1b21024a09eff2dfc5",
+        "doc/02_acceptance/runs/20260807-remediation-asset-expand-guardrails-v1/manifest.json#sha256=033eb16582134fc038fcc4b042ab21141dd464e6cd19bb48e7c0d0a51637f7f9"
       ],
       "blocker": "当前仅闭合内部PostgreSQL治理工单；外部工单connector、回执鉴权与幂等adapter尚未实现。生产28项migration与双端feature flag灰度、批准规模P50/P95/P99和锁竞争预算、故障与在途回滚、指定Windows Chrome创建/独立审批/执行/证据完成/补偿旅程及T+0至T+7观察窗仍未完成，G4至G8不得关闭。",
       "note": "资产治理按钮已从disabled和metadata.ticket_steps伪进度改为真实API；创建、查询、独立审批、负责人执行、证据门禁完成、失败/取消和乐观补偿均持久化。完成与补偿在一个PG事务写资产生命周期revision、资产历史、工单历史、最小审计、治理outbox和幂等结果；同资产最多一个活动工单，跨租户、重复请求、自审批、无证据、陈旧revision均fail-closed。三种全新Schema入口、sentinel PostgreSQL HTTP/仓储对账和G0 v44通过，本项仅提升为VERIFYING。"
