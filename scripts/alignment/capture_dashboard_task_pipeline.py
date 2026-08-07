@@ -60,12 +60,14 @@ def sha256(path: Path) -> str:
 def run_command(name: str, command: list[str], output: Path) -> dict[str, Any]:
     log_path = output / f"{name}.log"
     started = datetime.now(timezone.utc)
+    environment = os.environ.copy()
+    environment["GOSUMDB"] = environment.get("TRAFFIC_GO_SUMDB") or "sum.golang.org"
     print(f"[dashboard-task-pipeline] starting {name}: {' '.join(command)}", flush=True)
     with log_path.open("wb") as log:
         completed = subprocess.run(
             command,
             cwd=ROOT,
-            env=os.environ.copy(),
+            env=environment,
             stdout=log,
             stderr=subprocess.STDOUT,
             check=False,
@@ -82,6 +84,9 @@ def run_command(name: str, command: list[str], output: Path) -> dict[str, Any]:
         "artifact": log_path.name,
         "sha256": sha256(log_path),
         "size_bytes": log_path.stat().st_size,
+        "environment_overrides": {
+            "GOSUMDB": environment["GOSUMDB"],
+        },
     }
     print(f"[dashboard-task-pipeline] {name}: {result['status']}", flush=True)
     return result
