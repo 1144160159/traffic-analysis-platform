@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-07T18:40:43Z",
+  "updated_at": "2026-08-07T19:00:17Z",
   "latest_g0": {
-    "run_id": "20260808-remediation-g0-full-v195",
-    "manifest": "doc/02_acceptance/runs/20260808-remediation-g0-full-v195/manifest.json",
-    "manifest_sha256": "4ba34f8a44d15cff3f295ad155f36420a76c0de4de7b11f41ad1da48e125b545",
-    "candidate_source_sha256": "74d4b6f03b031ad9b5b663ee7438e1e233d866ead17eea266d8f25bb37bd77da",
+    "run_id": "20260808-remediation-g0-full-v196",
+    "manifest": "doc/02_acceptance/runs/20260808-remediation-g0-full-v196/manifest.json",
+    "manifest_sha256": "831cfbe0589a7cf27f37ffac07cbf3f942bd166a9605324a19cafb42ab819b10",
+    "candidate_source_sha256": "846cd349d1e3c36de59da44e67aa2c2f2ae285e13b12af2a2268bb01d6f13057",
     "status": "PASS",
     "scope": [
       "alignment-test",
@@ -2886,16 +2886,16 @@
   "latest_opensearch_projection_v2_shadow_g1": {
     "feature_id": "T-OS-004",
     "related_ids": ["F-SEARCH-001", "T-OS-002", "T-OS-004"],
-    "run_id": "20260808-remediation-alert-projection-shadow-g1-v1",
-    "manifest": "doc/02_acceptance/runs/20260808-remediation-alert-projection-shadow-g1-v1/manifest.json",
-    "manifest_sha256": "3b68aed42ea39d0596506f0760f7642096e8ab8b6bd9a6fd4f13081029ca25de",
-    "candidate_source_sha256": "74d4b6f03b031ad9b5b663ee7438e1e233d866ead17eea266d8f25bb37bd77da",
+    "run_id": "20260808-remediation-alert-projection-shadow-g1-v2",
+    "manifest": "doc/02_acceptance/runs/20260808-remediation-alert-projection-shadow-g1-v2/manifest.json",
+    "manifest_sha256": "7891ccb53e700e0c461a6b0429a934382c364896fb5f877e40d88070a0866516",
+    "candidate_source_sha256": "846cd349d1e3c36de59da44e67aa2c2f2ae285e13b12af2a2268bb01d6f13057",
     "status": "PARTIAL",
     "coverage_status": "OWNED_LOOPBACK_CLICKHOUSE_OPENSEARCH_READ_ONLY_SHADOW_G1",
     "scoped_evidence_status": "PASS",
     "production_applied": false,
-    "g0_run_id": "20260808-remediation-g0-full-v195",
-    "g0_manifest_sha256": "4ba34f8a44d15cff3f295ad155f36420a76c0de4de7b11f41ad1da48e125b545",
+    "g0_run_id": "20260808-remediation-g0-full-v196",
+    "g0_manifest_sha256": "831cfbe0589a7cf27f37ffac07cbf3f942bd166a9605324a19cafb42ab819b10",
     "g0_status": "PASS",
     "shadow_summary": {
       "tenant_id": "tenant-alert-shadow-g1",
@@ -2907,6 +2907,7 @@
       "source_count_and_hash_unchanged": true,
       "target_count_and_hash_unchanged": true,
       "postgres_dependency_present": false,
+      "evidence_only_head_advance_guard_verified": true,
       "both_containers_removed": true
     },
     "gate_status": {

@@ -36,7 +36,7 @@ go run ./cmd/alert-projection-shadow \
   --output /tmp/<run-id>-shadow.json
 ```
 
-只有 `approval_readiness=READY_FOR_BOUNDED_REPAIR_REVIEW`、shadow 未超过 15 分钟、binding SHA 完整且 G0 manifest 与当前 HEAD 一致时，才允许生成审查包。审查包始终保持 `execution_authorized=false`，SRE、QA、安全和领域 Accountable 均默认为 `PENDING`；它不会执行 repair：
+只有 `approval_readiness=READY_FOR_BOUNDED_REPAIR_REVIEW`、shadow 未超过 15 分钟、binding SHA 完整且 G0 manifest 的候选源码内容 SHA 与当前受管源码快照一致时，才允许生成审查包。G0 HEAD 与渲染时 HEAD 都保留作审计；纯证据/账本提交可推进 HEAD，但任何受管源码漂移仍失败关闭。审查包始终保持 `execution_authorized=false`，SRE、QA、安全和领域 Accountable 均默认为 `PENDING`；它不会执行 repair：
 
 ```bash
 python scripts/alignment/render_alert_projection_shadow_approval.py \
