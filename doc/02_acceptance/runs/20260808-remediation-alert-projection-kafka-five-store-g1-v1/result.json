@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "run_id": "20260808-remediation-alert-projection-kafka-five-store-g1-v1",
+  "status": "PASS",
+  "containers": {
+    "clickhouse": "codex-alert-kafka-receipt-ch-156c15bbf018",
+    "postgres": "codex-alert-kafka-receipt-pg-156c15bbf018",
+    "opensearch": "codex-alert-kafka-receipt-os-156c15bbf018",
+    "redis": "codex-alert-kafka-receipt-redis-156c15bbf018",
+    "kafka": "codex-alert-kafka-receipt-broker-156c15bbf018"
+  },
+  "images": {
+    "clickhouse": "docker.io/clickhouse/clickhouse-server@sha256:458f72c00e4abc80c2950d8070bc5723b538544d72ea4a6a58d9ff4f8fadf8d7",
+    "postgres": "postgres@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20",
+    "opensearch": "docker.io/opensearchproject/opensearch@sha256:466a49f379bb8889af29d615475e69b7b990898c6987d28470cd7105df9046ff",
+    "redis": "docker.io/library/redis@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99",
+    "kafka": "docker.io/redpandadata/redpanda@sha256:dca9d37efbbae3c2dcdc07d6a45fa1e0a7a541bc9cdc03db3937b80a4a9eae3d"
+  },
+  "image_ids": {
+    "clickhouse": "sha256:cd3b547d16ce8ab9e122ff96fe3379564535b85d5d9a7ab8237dd8b65e964b4b",
+    "postgres": "sha256:88a36c64c1003dad93f56daa12d1f8916ec66d1fa3e5fb1fb0ae7cb77efd56d1",
+    "opensearch": "sha256:bf1e1cd1fa30bd1da8596bff12630f5e67648dfb7720a52c773c495db1f0135a",
+    "redis": "sha256:487efc0616382465781b8fdc3d6d1db449e6fd80ae23bf48432a2da6b6929908",
+    "kafka": "sha256:7d60ffd7d82a80a25826b8aacf2698e78cb9d7f7312dea56b0e7e962b39f1c50"
+  },
+  "clickhouse_schema": "common/sql/ch/00-all-tables.sql",
+  "clickhouse_schema_sha256": "b2ad3129d5b130b1ebac09c9e8d613931f64495be36efa588d8fec3f7e09e15e",
+  "postgres_migration": "deployments/postgres/migrations/202608041100_alert_opensearch_projection_reconciliation_v1.sql",
+  "alert_mapping": "common/opensearch/alerts-v2/mappings-component.json",
+  "topic": "detections.alert-projection-receipt.v1",
+  "sentinels_verified": true,
+  "production_alert_consumer_verified": true,
+  "redis_dedup_verified": true,
+  "clickhouse_authority_verified": true,
+  "opensearch_projection_verified": true,
+  "postgres_applied_receipt_verified": true,
+  "broker_committed_offset_verified": true,
+  "last_event_id_observer_verified": true,
+  "cross_store_hash_and_version_verified": true,
+  "receipt_failure_blocks_commit_unit_verified": true,
+  "loopback_only": true,
+  "persistent_volume_attached": false,
+  "shared_environment_touched": false,
+  "production_applied": false,
+  "containers_removed": {
+    "codex-alert-kafka-receipt-ch-156c15bbf018": true,
+    "codex-alert-kafka-receipt-pg-156c15bbf018": true,
+    "codex-alert-kafka-receipt-os-156c15bbf018": true,
+    "codex-alert-kafka-receipt-redis-156c15bbf018": true,
+    "codex-alert-kafka-receipt-broker-156c15bbf018": true
+  },
+  "test_output": "=== RUN   TestAlertProjectionReceiptRealKafka\n    projection_receipt_real_kafka_integration_test.go:222: PASS_ALERT_PROJECTION_REAL_KAFKA_RECEIPT event_id=event-alert-projection-kafka-g1 committed_offset=1 lag=0 source_sha256=2236b4d47c0122a0f9c3031e86139c8ee64416a9d2be8893a450d2a2898d7671\n--- PASS: TestAlertProjectionReceiptRealKafka (1.41s)\nPASS\nok  \tgithub.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/consumer\t1.419s\n=== RUN   TestWriteBatchAppliedReceiptFailureBlocksCommit\n--- PASS: TestWriteBatchAppliedReceiptFailureBlocksCommit (0.00s)\nPASS\nok  \tgithub.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/persistence\t0.005s",
+  "errors": []
+}
