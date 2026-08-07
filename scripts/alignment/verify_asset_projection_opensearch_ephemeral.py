@@ -20,6 +20,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 OPENSEARCH_IMAGE = "docker.io/opensearchproject/opensearch@sha256:466a49f379bb8889af29d615475e69b7b990898c6987d28470cd7105df9046ff"
 TEMPLATE_AUTHORITY = Path("deployments/kubernetes/init-jobs/04-opensearch-templates.yaml")
+ALERT_MAPPING_AUTHORITY = Path("common/opensearch/alerts-v2/mappings-component.json")
 SENTINEL_INDEX = "codex-ephemeral-asset-projection-sentinel"
 SENTINEL_VALUE = "ephemeral-only"
 
@@ -109,6 +110,7 @@ def main() -> int:
         "same_version_replay_verified": False,
         "older_version_rejected": False,
         "strict_mapping_verified": False,
+        "production_alert_writer_verified": False,
         "loopback_only": True,
         "persistent_volume_attached": False,
         "shared_environment_touched": False,
@@ -178,6 +180,17 @@ def main() -> int:
             "/assets-v2-000001",
             {"aliases": {"assets-v2-write": {"is_write_index": True}, "assets-v2-read": {}}},
         )
+        alert_mapping = json.loads((ROOT / ALERT_MAPPING_AUTHORITY).read_text(encoding="utf-8"))
+        request(
+            base_url,
+            "PUT",
+            "/alerts-v2-000001",
+            {
+                "settings": {"number_of_shards": 1, "number_of_replicas": 0},
+                "mappings": alert_mapping["template"]["mappings"],
+                "aliases": {"alerts-v2-write": {"is_write_index": True}, "alerts-v2-read": {}},
+            },
+        )
         simulated = request(base_url, "POST", "/_index_template/_simulate_index/assets-v2-canary")
         if simulated.get("template", {}).get("mappings", {}).get("dynamic") != "strict":
             raise RuntimeError("asset index template did not retain dynamic=strict")
@@ -197,6 +210,22 @@ def main() -> int:
         result["test_output"] = completed.stdout.decode(errors="replace").strip()
         if completed.returncode != 0:
             raise RuntimeError(f"asset OpenSearch integration exited {completed.returncode}")
+        alert_completed = run(
+            [
+                "go", "-C", "go/control-plane", "test", "./internal/alert/persistence",
+                "-run", "^TestAlertWriterRealStrictOpenSearchMapping$", "-count=1", "-v",
+            ],
+            env={
+                **test_env,
+                "ALERT_PERSISTENCE_EPHEMERAL_OS_URL": base_url,
+                "ALERT_PERSISTENCE_EPHEMERAL_OS_SENTINEL": SENTINEL_VALUE,
+            },
+            check=False,
+        )
+        result["test_output"] += "\n" + alert_completed.stdout.decode(errors="replace").strip()
+        if alert_completed.returncode != 0:
+            raise RuntimeError(f"alert OpenSearch writer integration exited {alert_completed.returncode}")
+        result["production_alert_writer_verified"] = True
         # The Go test also proves same-version replay and older external version
         # rejection against this exact ephemeral cluster.
         result["deterministic_document_id_verified"] = True

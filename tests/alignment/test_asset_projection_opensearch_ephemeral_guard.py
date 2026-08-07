@@ -36,6 +36,12 @@ class AssetProjectionOpenSearchEphemeralGuardTest(unittest.TestCase):
         self.assertEqual(properties["revision"]["type"], "long")
         self.assertEqual(properties["asset_id"]["type"], "keyword")
 
+    def test_runner_executes_production_alert_writer_against_strict_mapping(self) -> None:
+        source = (ROOT / "scripts/alignment/verify_asset_projection_opensearch_ephemeral.py").read_text(encoding="utf-8")
+        self.assertEqual(MODULE.ALERT_MAPPING_AUTHORITY.as_posix(), "common/opensearch/alerts-v2/mappings-component.json")
+        self.assertIn("TestAlertWriterRealStrictOpenSearchMapping", source)
+        self.assertIn('"production_alert_writer_verified": False', source)
+
     def test_empty_run_id_is_rejected(self) -> None:
         with self.assertRaisesRegex(ValueError, "run_id is required"):
             MODULE.container_name("  ")
