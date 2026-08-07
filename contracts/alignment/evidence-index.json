@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-07T02:59:18Z",
+  "updated_at": "2026-08-07T03:29:29Z",
   "latest_g0": {
-    "run_id": "20260807-remediation-g0-full-v160",
-    "manifest": "doc/02_acceptance/runs/20260807-remediation-g0-full-v160/manifest.json",
-    "manifest_sha256": "b84172fac0bb784eccfc1616471061f50c7865af2cfb4ba9a6e65a7cfbbc45de",
-    "candidate_source_sha256": "6bcfacf0ffccce59bb1960eb4dbcfc495437341cf776d25dda91d840343c9be8",
+    "run_id": "20260807-remediation-g0-full-v164",
+    "manifest": "doc/02_acceptance/runs/20260807-remediation-g0-full-v164/manifest.json",
+    "manifest_sha256": "dc7aa584943997d4abc415148bcba725de9b43b29e77b2a16094282adf38f856",
+    "candidate_source_sha256": "fb586f9a329c15d945812c6213cd1182854cc94b11f1ccf460ca92b467084b47",
     "status": "PASS",
     "scope": [
       "alignment-test",
@@ -2200,10 +2200,10 @@
       "T-KAFKA-001",
       "T-SCHEMA-001"
     ],
-    "run_id": "20260807-remediation-pg-transaction-outbox-v11",
-    "manifest": "doc/02_acceptance/runs/20260807-remediation-pg-transaction-outbox-v11/manifest.json",
-    "manifest_sha256": "737ba600dff20232d82d5ca6acbabe6ab7c99cd8fe5e6d794afb89590b6e5aed",
-    "candidate_source_sha256": "6bcfacf0ffccce59bb1960eb4dbcfc495437341cf776d25dda91d840343c9be8",
+    "run_id": "20260807-remediation-pg-transaction-outbox-v12",
+    "manifest": "doc/02_acceptance/runs/20260807-remediation-pg-transaction-outbox-v12/manifest.json",
+    "manifest_sha256": "20d9994d6599281aab66691ab56252d2dba50dd650523b8c9594f07fd37656da",
+    "candidate_source_sha256": "fb586f9a329c15d945812c6213cd1182854cc94b11f1ccf460ca92b467084b47",
     "status": "PARTIAL",
     "coverage_status": "PARTIAL",
     "scoped_evidence_status": "PASS",
@@ -2219,7 +2219,7 @@
       "G7": "OPEN",
       "G8": "BLOCKED"
     },
-    "note": "The governed transaction slices are bound to the same 6bcfacf0 candidate as G0 v160: authenticated tenant, task, history, minimal audit, outbox and durable replay receipt commit atomically; exact retries preserve identity, changed payloads conflict, viewer writes and cross-tenant reads fail closed, and audit failure rolls back the full transaction. The scoped evidence passes while production application, open dispatchers, final-effect consumers, release-candidate reconciliation, performance, browser and rollout evidence remain open."
+    "note": "The governed transaction slices are bound to the same fb586f9a candidate as G0 v164: authenticated tenant, task, history, minimal audit, outbox and durable replay receipt commit atomically; exact retries preserve identity, changed payloads conflict, viewer writes and cross-tenant reads fail closed, and audit failure rolls back the full transaction. The scoped evidence passes while production application, open dispatchers, final-effect consumers, release-candidate reconciliation, performance, browser and rollout evidence remain open."
   },
   "latest_pg_mutation_inventory": {
     "feature_id": "T-PG-002",
