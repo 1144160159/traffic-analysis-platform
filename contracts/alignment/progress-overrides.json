@@ -884,7 +884,9 @@
         "scripts/alignment/render_alert_projection_shadow_approval.py",
         "scripts/alignment/verify_alert_projection_shadow_ephemeral.py",
         "doc/02_acceptance/runs/20260808-remediation-g0-full-v196/manifest.json#sha256=831cfbe0589a7cf27f37ffac07cbf3f942bd166a9605324a19cafb42ab819b10",
-        "doc/02_acceptance/runs/20260808-remediation-alert-projection-shadow-g1-v2/manifest.json#sha256=7891ccb53e700e0c461a6b0429a934382c364896fb5f877e40d88070a0866516"
+        "doc/02_acceptance/runs/20260808-remediation-alert-projection-shadow-g1-v2/manifest.json#sha256=7891ccb53e700e0c461a6b0429a934382c364896fb5f877e40d88070a0866516",
+        "doc/02_acceptance/runs/20260808-remediation-g0-full-v197/manifest.json#sha256=7d0fe176ae5d379e6e437d48a2ee73169c443dd104b704330cc1bf245ce527e1",
+        "doc/02_acceptance/runs/20260808-remediation-alert-projection-tools-image-g1-v1/manifest.json#sha256=3fe39aee54ed8c561ee5b1c0c2b3cc1b299ee1f087425be3536723c1301d7796"
       ],
       "blocker": "仓库已形成alerts-v2版本化组件模板、组合模板、strict mapping、ISM、物理索引及read/write alias候选，并新增无PG依赖的CH/OS只读shadow、候选哈希/cluster/alias/write-index绑定和默认不授权审批包；Go和Flink的v2流量开关仍默认false，production_applied=false。固定摘要G1只在自有回环CH/OS中证明生产reader可识别missing/stale/extra且shadow前后count/SHA不变；历史883172条差异引用的manifest在当前候选中缺失，不能直接成为执行范围。尚未执行批准的生产V2 expand、当前shadow、受限backfill、tenant×时间桶全量计数与抽样hash/权限/性能对账、dual-write、原子read切换、延后write切换、回滚及T+0/T+1/T+3/T+7观察，G2至G8保持PARTIAL/OPEN/HOLD/BLOCKED。",
       "note": "T-OS-002保持IMPLEMENTING/PARTIAL。v196把严格无状态shadow与repair审批边界绑定到同一候选，并允许纯证据提交推进HEAD但仍以源码内容SHA阻断实际漂移；两存储G1使用固定摘要无卷ClickHouse/OpenSearch，验证1 missing、1 stale、1 extra，比较阶段两侧count与逐文档SHA不变，两个容器已清理且production_applied=false。审批包始终execution_authorized=false；这不等于生产expand、当前883172差异复核或回填、alias cutover、性能、回滚和观察窗。"
@@ -994,7 +996,7 @@
         "doc/02_acceptance/runs/20260808-remediation-alert-projection-shadow-g1-v2/manifest.json#sha256=7891ccb53e700e0c461a6b0429a934382c364896fb5f877e40d88070a0866516"
       ],
       "blocker": "仓库候选继续以PG原子回执阻断OS部分失败后的Kafka offset，并新增完全不连接PG的只读shadow：单租户、最长1小时、至少稳定15分钟、最多10000条，绑定cluster UUID、V2 read alias、write alias和唯一物理write index；截断、源码内容或目标身份漂移失败关闭，extra绝不自动删除。工具镜像Dockerfile已用固定摘要builder/runtime构建两个无shell静态命令；repair二进制在连接存储前强制复核review/approval文件SHA、精确repository@digest、四方独立审批、非自批和四小时内有效窗口。渲染器仅生成immutable ConfigMap、专用SA、NetworkPolicy和suspend=true/backoffLimit=0的Job，不apply、不自动unsuspend。v196同哈希两存储G1只在自有回环CH/OS中证明production reader识别1 missing、1 stale、1 extra且比较阶段count/SHA不变。历史883172条差异的引用manifest在当前候选中缺失，生产当前shadow尚未执行；最终同哈希工具镜像尚未发布为可拉取registry digest，SRE/QA/安全/领域审批、V2 expand/backfill、同范围PG watermark终态、候选部署、性能、canary回滚及T+观察仍未完成，G2至G8保持OPEN/HOLD/BLOCKED。",
-      "note": "T-OS-004保持IMPLEMENTING/PARTIAL。严格只读shadow和永不授权的repair review package继续有效；新增独立四方approval bundle与repair运行时校验，任何工件、镜像、审批身份、时间窗或精确范围漂移都会在连接CH/OS/PG前失败关闭。Job即使通过渲染也保持挂起，解除挂起属于后续独立变更动作。G0 v196和G1 v2仍是上一源码候选证据；本次源码变化必须重跑新G0，且现有证据不复核或修复生产883172条差异，不提升为G2/G3。"
+      "note": "T-OS-004保持IMPLEMENTING/PARTIAL。严格只读shadow和永不授权的repair review package继续有效；新增独立四方approval bundle与repair运行时校验，任何工件、镜像、审批身份、时间窗、实际argv或精确范围漂移都会在连接CH/OS/PG前失败关闭。Job即使通过渲染也保持挂起，解除挂起属于后续独立变更动作。G0 v197三阶段在源码内容SHA 6a5818eaa36c上PASS；同哈希本地scratch镜像的双命令、标签和非root运行时检查PASS，但RepoDigests为空，不能作为审批或Kubernetes拉取引用。shadow G1 v2仍是v196上一候选的自有回环证据；两份证据均不复核或修复生产883172条差异，不提升为G2/G3。"
     },
     "T-OS-005": {
       "status": "IMPLEMENTING",
