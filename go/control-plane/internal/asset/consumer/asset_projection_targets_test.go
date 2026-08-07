@@ -230,6 +230,7 @@ func TestNebulaAssetProjectionIsDeterministicAndCarriesWatermark(t *testing.T) {
 		t.Fatalf("unexpected graph projection: %+v", writer.projection)
 	}
 	if writer.projection.Metadata["event_id"] != event.EventID ||
+		writer.projection.Metadata["trace_id"] != event.TraceID ||
 		writer.projection.Metadata["revision"].(float64) != float64(event.AggregateVersion) {
 		t.Fatalf("missing graph reconciliation metadata: %+v", writer.projection.Metadata)
 	}

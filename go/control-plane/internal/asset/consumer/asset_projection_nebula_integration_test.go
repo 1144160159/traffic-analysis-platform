@@ -158,7 +158,7 @@ func TestAssetProjectionRealNebulaDeterministicTenantVID(t *testing.T) {
 	if node.EntityID != event.AssetID || node.EntityType != "asset" || node.Label != event.Asset.Hostname || len(edges) != 0 || truncated {
 		t.Fatalf("unexpected bounded projection node=%+v edges=%d truncated=%v", node, len(edges), truncated)
 	}
-	if fmt.Sprint(node.Metadata["event_id"]) != event.EventID || fmt.Sprint(node.Metadata["revision"]) != "2" {
+	if fmt.Sprint(node.Metadata["event_id"]) != event.EventID || fmt.Sprint(node.Metadata["trace_id"]) != event.TraceID || fmt.Sprint(node.Metadata["revision"]) != "2" {
 		t.Fatalf("missing event/revision watermark: %+v", node.Metadata)
 	}
 
