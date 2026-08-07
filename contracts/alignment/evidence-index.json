@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-07T04:25:49Z",
+  "updated_at": "2026-08-07T04:42:25Z",
   "latest_g0": {
-    "run_id": "20260807-remediation-g0-full-v167",
-    "manifest": "doc/02_acceptance/runs/20260807-remediation-g0-full-v167/manifest.json",
-    "manifest_sha256": "62957d6f88b78ddd4e31d6759a5d03054766c73ffa30e35cddda7d35f3689ff2",
-    "candidate_source_sha256": "2e039a73dc30ef28b433621f6a91f97f0a41a89c91305177e6ae8223f6d330f5",
+    "run_id": "20260807-remediation-g0-full-v168",
+    "manifest": "doc/02_acceptance/runs/20260807-remediation-g0-full-v168/manifest.json",
+    "manifest_sha256": "8c6cac116946b90a232a7c79edae80bf41e8ee27ba6ea5808bf57e882a09e86e",
+    "candidate_source_sha256": "240d1232c7fb8b5c24108ea2b2f2f809a0bbf0f1a13016a50a39b2f27d271a7c",
     "status": "PASS",
     "scope": [
       "alignment-test",
@@ -22,18 +22,18 @@
   },
   "latest_common_response_adapter": {
     "feature_ids": ["F-COMMON-002", "F-COMMON-004", "F-ADAPTER-002"],
-    "run_id": "20260807-remediation-common-response-adoption-v2",
-    "manifest": "doc/02_acceptance/runs/20260807-remediation-common-response-adoption-v2/manifest.json",
-    "manifest_sha256": "17df6c0e228fbe4131d8c89df4de2a09f2907fe542e6efe860d0db17d31d45b6",
-    "candidate_source_sha256": "2e039a73dc30ef28b433621f6a91f97f0a41a89c91305177e6ae8223f6d330f5",
-    "g0_run_id": "20260807-remediation-g0-full-v167",
-    "g0_manifest_sha256": "62957d6f88b78ddd4e31d6759a5d03054766c73ffa30e35cddda7d35f3689ff2",
+    "run_id": "20260807-remediation-common-response-adoption-v3",
+    "manifest": "doc/02_acceptance/runs/20260807-remediation-common-response-adoption-v3/manifest.json",
+    "manifest_sha256": "334b4fbb8dbad956cdf4f2f7465d374c36eb2e90e4ee05c9380d7ac1d6b431cc",
+    "candidate_source_sha256": "240d1232c7fb8b5c24108ea2b2f2f809a0bbf0f1a13016a50a39b2f27d271a7c",
+    "g0_run_id": "20260807-remediation-g0-full-v168",
+    "g0_manifest_sha256": "8c6cac116946b90a232a7c79edae80bf41e8ee27ba6ea5808bf57e882a09e86e",
     "status": "PARTIAL",
     "coverage_status": "PARTIAL_COMMON_RESPONSE_PROTOCOL_AND_FULL_FRONTEND_ADAPTER_RISK_RATCHET",
     "scoped_evidence_status": "PASS",
     "production_applied": false,
     "contract_summary": {
-      "feature_contract_catalog_sha256": "2454ef7abedf6f4c62131f1ec5beff7433ce280a958abe7ba87e2feca7b881ed",
+      "feature_contract_catalog_sha256": "cc32e8a6646149cc1c3685f41999548c6ee5ddeecf673302a57995dbe79a0c47",
       "formal_contracts": 38,
       "formal_contracts_valid": 38,
       "standard_scope_features": 38,
@@ -59,8 +59,14 @@
         "fixed_detail_collection_fallback": 0,
         "fixed_detail_metric_literal": 0,
         "fixed_detail_timeline_literal": 0,
+        "fixed_numeric_business_fallback": 0,
+        "fixed_page_metric_fallback": 0,
+        "fixed_screen_visual_fixture": 0,
+        "generated_business_trend": 0,
         "hardcoded_private_ip_literal": 0,
+        "runtime_business_fixture_object": 0,
         "runtime_mock_dependency": 0,
+        "runtime_static_business_fallback": 0,
         "runtime_visual_fixture_bypass": 0,
         "truthy_numeric_fallback": 0
       }
@@ -103,28 +109,28 @@
       "G7": "OPEN",
       "G8": "BLOCKED"
     },
-    "note": "The 2e039a73 candidate binds 38 formal contracts, 23 OpenAPI-bound contracts, generated TypeScript operations and additive Go Contract Envelopes for alert response, evidence and saved views. The registry still records F-AUDIT-001 and F-AUTH-001 as non-draft OpenAPI binding gaps. Production deployment, broader handler adoption, Windows Chrome and release observation remain open, so the slice stays PARTIAL and production_applied=false."
+    "note": "The 240d1232 candidate binds 38 formal contracts, 24 OpenAPI-bound contracts, generated TypeScript operations and additive Go Contract Envelopes for alert response, evidence, saved views and the governed auth scope catalog. The registry still records F-AUDIT-001 as the only non-draft OpenAPI binding gap. Production deployment, broader handler adoption, Windows Chrome and release observation remain open, so the slice stays PARTIAL and production_applied=false."
   },
   "latest_feature_contract_registry": {
     "feature_id": "F-COMMON-001",
     "related_ids": ["F-COMMON-002", "F-COMMON-003", "F-COMMON-004", "F-ADAPTER-001", "F-ADAPTER-002", "T-SCHEMA-001"],
-    "run_id": "20260807-remediation-feature-contract-registry-v3",
-    "manifest": "doc/02_acceptance/runs/20260807-remediation-feature-contract-registry-v3/manifest.json",
-    "manifest_sha256": "c002d0117ea7622e2def8a5db4dd149486ce375ca933121401221a2aa16677cd",
-    "candidate_source_sha256": "2e039a73dc30ef28b433621f6a91f97f0a41a89c91305177e6ae8223f6d330f5",
-    "g0_run_id": "20260807-remediation-g0-full-v167",
-    "g0_manifest_sha256": "62957d6f88b78ddd4e31d6759a5d03054766c73ffa30e35cddda7d35f3689ff2",
+    "run_id": "20260807-remediation-feature-contract-registry-v4",
+    "manifest": "doc/02_acceptance/runs/20260807-remediation-feature-contract-registry-v4/manifest.json",
+    "manifest_sha256": "a561afe302f5c1b02fe8c5e2cc281b30052d94b53588de49818a361e17bb96aa",
+    "candidate_source_sha256": "240d1232c7fb8b5c24108ea2b2f2f809a0bbf0f1a13016a50a39b2f27d271a7c",
+    "g0_run_id": "20260807-remediation-g0-full-v168",
+    "g0_manifest_sha256": "8c6cac116946b90a232a7c79edae80bf41e8ee27ba6ea5808bf57e882a09e86e",
     "status": "PARTIAL",
     "coverage_status": "STANDARD_SCOPE_COMPLETE_BACKLOG_PARTIAL_AND_RUNTIME_ADOPTION_OPEN",
     "scoped_evidence_status": "PASS",
     "production_applied": false,
     "registry_summary": {
-      "catalog_sha256": "2454ef7abedf6f4c62131f1ec5beff7433ce280a958abe7ba87e2feca7b881ed",
+      "catalog_sha256": "cc32e8a6646149cc1c3685f41999548c6ee5ddeecf673302a57995dbe79a0c47",
       "canonical_feature_ids": 54,
       "formal_contracts": 38,
       "formal_contracts_valid": 38,
-      "formal_contracts_openapi_bound": 23,
-      "non_draft_openapi_binding_gaps": ["F-AUDIT-001", "F-AUTH-001"],
+      "formal_contracts_openapi_bound": 24,
+      "non_draft_openapi_binding_gaps": ["F-AUDIT-001"],
       "standard_scope_features": 38,
       "standard_scope_formal_contracts": 38,
       "missing_standard_scope_contracts": 0,
@@ -153,7 +159,7 @@
       "G7": "OPEN",
       "G8": "BLOCKED"
     },
-    "note": "All 54 canonical feature IDs resolve one accountable package, acceptance case and rollback ID. All 38 standard-scope contracts are hash-bound; 23 bind exactly or as an explicit protocol profile to OpenAPI, while F-AUDIT-001 and F-AUTH-001 remain explicit non-draft binding gaps and 16 backlog contracts remain absent. Read-only live evidence observed 15 deployments, but runtime contract-version, candidate hash, old-client compatibility and unknown-enum telemetry are not implemented, so F-COMMON-001 remains PARTIAL/IMPLEMENTING and production_applied=false."
+    "note": "All 54 canonical feature IDs resolve one accountable package, acceptance case and rollback ID. All 38 standard-scope contracts are hash-bound; 24 bind exactly or as an explicit protocol profile to OpenAPI, while F-AUDIT-001 remains the only explicit non-draft binding gap and 16 backlog contracts remain absent. Read-only live evidence observed 15 deployments, but runtime contract-version, candidate hash, old-client compatibility and unknown-enum telemetry are not implemented, so F-COMMON-001 remains PARTIAL/IMPLEMENTING and production_applied=false."
   },
   "latest_configuration_catalog": {
     "feature_id": "T-CONFIG-001",
@@ -2202,10 +2208,10 @@
       "T-KAFKA-001",
       "T-SCHEMA-001"
     ],
-    "run_id": "20260807-remediation-pg-transaction-outbox-v14",
-    "manifest": "doc/02_acceptance/runs/20260807-remediation-pg-transaction-outbox-v14/manifest.json",
-    "manifest_sha256": "67253fde5f46e6493ed948a3cbd6400174390f928452b482d79ce3a64494d903",
-    "candidate_source_sha256": "2e039a73dc30ef28b433621f6a91f97f0a41a89c91305177e6ae8223f6d330f5",
+    "run_id": "20260807-remediation-pg-transaction-outbox-v15",
+    "manifest": "doc/02_acceptance/runs/20260807-remediation-pg-transaction-outbox-v15/manifest.json",
+    "manifest_sha256": "c52b3cdc003e534065419e32b5673f42682d282b786928853dfd502968793797",
+    "candidate_source_sha256": "240d1232c7fb8b5c24108ea2b2f2f809a0bbf0f1a13016a50a39b2f27d271a7c",
     "status": "PARTIAL",
     "coverage_status": "PARTIAL",
     "scoped_evidence_status": "PASS",
@@ -2221,7 +2227,7 @@
       "G7": "OPEN",
       "G8": "BLOCKED"
     },
-    "note": "The governed transaction slices are bound to the same 2e039a73 candidate as G0 v167: authenticated tenant, saved view, history, audit, outbox and durable replay receipt commit atomically; exact retries preserve identity, changed payloads conflict, viewer writes and cross-tenant reads fail closed, and audit failure rolls back the full transaction. The scoped evidence passes while production application, open dispatchers, final-effect consumers, release-candidate reconciliation, performance, browser and rollout evidence remain open."
+    "note": "The governed transaction slices are bound to the same 240d1232 candidate as G0 v168: authenticated tenant, saved view, history, audit, outbox and durable replay receipt commit atomically; exact retries preserve identity, changed payloads conflict, viewer writes and cross-tenant reads fail closed, and audit failure rolls back the full transaction. The scoped evidence passes while production application, open dispatchers, final-effect consumers, release-candidate reconciliation, performance, browser and rollout evidence remain open."
   },
   "latest_pg_mutation_inventory": {
     "feature_id": "T-PG-002",

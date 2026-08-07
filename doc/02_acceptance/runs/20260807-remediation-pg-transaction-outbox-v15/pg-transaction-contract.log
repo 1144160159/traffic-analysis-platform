@@ -1,0 +1,647 @@
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-postgres-transaction-outbox-v1",
+  "remediation_id": "T-PG-002",
+  "status": "PASS",
+  "coverage_status": "PARTIAL",
+  "implemented_slice": "SaveAlertView",
+  "publisher_status": "IMPLEMENTED_REPOSITORY",
+  "transaction_facts": 5,
+  "outbox_fields": 12,
+  "source_assertions": [
+    {
+      "source": "go/control-plane/internal/alert/api/handler_alert_actions.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "web/ui/src/services/alertTriageApi.ts",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/handler_alert_saved_view_outbox.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "contracts/events/kafka-topic-catalog.v1.json",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/notification_governance_transaction.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/notification_governance_outbox.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "web/ui/src/services/notificationGovernanceApi.ts",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/notification_template_transaction.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/notification_escalation_transaction.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/notification_silence_transaction.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/notification_settings_transaction.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/cmd/alert-service/main.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "contracts/events/kafka-topic-catalog.v1.json",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/auth/repository/user_settings_transaction.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/auth/repository/user_settings_outbox.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/auth/api/handler.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/cmd/auth-service/main.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "contracts/events/kafka-topic-catalog.v1.json",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "web/ui/src/services/pageApiPlans.ts",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/asset/repository/atomic_upsert.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/asset/repository/inactive_atomic.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/asset/repository/outbox_dispatcher.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/asset/repository/discovery_jobs.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/asset/repository/discovery_legacy_atomic.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/asset/repository/discovery_resource_atomic.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/asset/repository/discovery_outbox_dispatcher.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/auth/repository/user_command_atomic.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/auth/repository/user_command_outbox.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/auth/api/handler.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/handler_system.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/campaign_action_jobs.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/campaign_workbench_state.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/campaign_aggregate_v2.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/ingest/server/probe_registry.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/cmd/threat-intel-service/command_atomic.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/threatintel/threat_intel.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/forensics/repository/task_command_atomic.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/forensics/repository/task_repository.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/forensics/api/handler.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/whitelist/command_atomic.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/whitelist/handler.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/whitelist/outbox_dispatcher.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/rules/consumer/whitelist_rule_effect_consumer.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "web/ui/src/services/whitelistGovernanceApi.ts",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/forensics/api/handler.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/internal/alert/api/dashboard_task_v2.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "web/ui/src/services/dashboardTaskApi.ts",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "web/ui/src/pages/DashboardOperationsPage.tsx",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    },
+    {
+      "source": "go/control-plane/cmd/alert-service/main.go",
+      "missing": [],
+      "forbidden": [],
+      "ordering_failed": false
+    }
+  ],
+  "schema_sources": [
+    {
+      "source": "deployments/postgres/migrations/202608031100_alert_saved_view_transaction_v2.sql",
+      "missing": []
+    },
+    {
+      "source": "common/sql/pg/04-tasks-audit.sql",
+      "missing": []
+    },
+    {
+      "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+      "missing": []
+    },
+    {
+      "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+      "missing": []
+    }
+  ],
+  "additional_slices": [
+    "CreateNotificationRule/PatchNotificationRule",
+    "CreateNotificationTemplate/PatchNotificationTemplate",
+    "CreateNotificationEscalationPolicy/PatchNotificationEscalationPolicy",
+    "CreateNotificationSilenceRule/PatchNotificationSilenceRule",
+    "UpdateNotificationSettings",
+    "UpdateUserSettingsCommand",
+    "UpsertAtomic",
+    "MarkInactiveSinceAtomic",
+    "Create/Start/CompleteLegacyDiscoveryRunAtomic",
+    "UpsertDiscoveryCredentialAtomic",
+    "UpsertTopologyLinkAtomic",
+    "AuthenticatedUserCommandsAtomic",
+    "SyncOIDCUserAtomic",
+    "CampaignAggregateV2CommandCompatibility",
+    "ProbeRegistrationAtomic",
+    "ThreatIntelCommandAtomic",
+    "ForensicsTaskCommandAtomic",
+    "WhitelistGovernanceV2",
+    "DashboardTaskCreateV2"
+  ],
+  "noncanonical_slice_ids": [],
+  "additional_schema_groups": [
+    {
+      "name": "notification_rule_transaction_v2",
+      "sources": [
+        {
+          "source": "deployments/postgres/migrations/202608031300_notification_rule_transaction_v2.sql",
+          "missing": []
+        },
+        {
+          "source": "common/sql/pg/04-tasks-audit.sql",
+          "missing": []
+        },
+        {
+          "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "missing": []
+        },
+        {
+          "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+          "missing": []
+        }
+      ]
+    },
+    {
+      "name": "user_settings_transaction_v2",
+      "sources": [
+        {
+          "source": "deployments/postgres/migrations/202608031500_user_settings_transaction_v2.sql",
+          "missing": []
+        },
+        {
+          "source": "common/sql/pg/00-init.sql",
+          "missing": []
+        },
+        {
+          "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "missing": []
+        },
+        {
+          "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+          "missing": []
+        }
+      ]
+    },
+    {
+      "name": "asset_atomic_upsert_v2",
+      "sources": [
+        {
+          "source": "deployments/postgres/migrations/202607310015_asset_atomic_upsert_v2.sql",
+          "missing": []
+        },
+        {
+          "source": "common/sql/pg/01-assets.sql",
+          "missing": []
+        },
+        {
+          "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "missing": []
+        },
+        {
+          "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+          "missing": []
+        }
+      ]
+    },
+    {
+      "name": "asset_projection_inbox",
+      "sources": [
+        {
+          "source": "deployments/postgres/migrations/202607310030_asset_projection_inbox.sql",
+          "missing": []
+        },
+        {
+          "source": "common/sql/pg/01-assets.sql",
+          "missing": []
+        },
+        {
+          "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "missing": []
+        },
+        {
+          "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+          "missing": []
+        }
+      ]
+    },
+    {
+      "name": "asset_legacy_mutation_atomic",
+      "sources": [
+        {
+          "source": "deployments/postgres/migrations/202608031510_asset_legacy_mutation_atomic.sql",
+          "missing": []
+        },
+        {
+          "source": "common/sql/pg/01-assets.sql",
+          "missing": []
+        },
+        {
+          "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "missing": []
+        },
+        {
+          "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+          "missing": []
+        }
+      ]
+    },
+    {
+      "name": "asset_discovery_resource_atomic",
+      "sources": [
+        {
+          "source": "deployments/postgres/migrations/202608031520_asset_discovery_resource_atomic.sql",
+          "missing": []
+        },
+        {
+          "source": "common/sql/pg/01-assets.sql",
+          "missing": []
+        },
+        {
+          "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "missing": []
+        },
+        {
+          "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+          "missing": []
+        }
+      ]
+    },
+    {
+      "name": "user_commands_atomic",
+      "sources": [
+        {
+          "source": "deployments/postgres/migrations/202608031530_user_commands_atomic.sql",
+          "missing": []
+        },
+        {
+          "source": "common/sql/pg/00-init.sql",
+          "missing": []
+        },
+        {
+          "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "missing": []
+        },
+        {
+          "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+          "missing": []
+        }
+      ]
+    },
+    {
+      "name": "campaign_aggregate_v2",
+      "sources": [
+        {
+          "source": "deployments/postgres/migrations/202608010700_campaign_aggregate_v2.sql",
+          "missing": []
+        },
+        {
+          "source": "common/sql/pg/04-tasks-audit.sql",
+          "missing": []
+        },
+        {
+          "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "missing": []
+        },
+        {
+          "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+          "missing": []
+        }
+      ]
+    },
+    {
+      "name": "probe_registry_atomic",
+      "sources": [
+        {
+          "source": "deployments/postgres/migrations/202608031540_probe_registry_atomic.sql",
+          "missing": []
+        },
+        {
+          "source": "common/sql/pg/00-init.sql",
+          "missing": []
+        },
+        {
+          "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "missing": []
+        },
+        {
+          "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+          "missing": []
+        }
+      ]
+    },
+    {
+      "name": "threat_intel_command_atomic",
+      "sources": [
+        {
+          "source": "deployments/postgres/migrations/202608031550_threat_intel_command_atomic.sql",
+          "missing": []
+        },
+        {
+          "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "missing": []
+        },
+        {
+          "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+          "missing": []
+        }
+      ]
+    },
+    {
+      "name": "forensics_task_command_atomic",
+      "sources": [
+        {
+          "source": "deployments/postgres/migrations/202608031600_forensics_task_command_atomic.sql",
+          "missing": []
+        },
+        {
+          "source": "common/sql/pg/09-forensics-task-atomic.sql",
+          "missing": []
+        },
+        {
+          "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "missing": []
+        },
+        {
+          "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+          "missing": []
+        }
+      ]
+    },
+    {
+      "name": "whitelist_governance_v2",
+      "sources": [
+        {
+          "source": "deployments/postgres/migrations/202608031610_whitelist_governance_v2.sql",
+          "missing": []
+        },
+        {
+          "source": "common/sql/pg/10-whitelist-governance-v2.sql",
+          "missing": []
+        },
+        {
+          "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "missing": []
+        },
+        {
+          "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+          "missing": []
+        }
+      ]
+    },
+    {
+      "name": "dashboard_task_v2",
+      "sources": [
+        {
+          "source": "deployments/postgres/migrations/202608031620_dashboard_task_v2.sql",
+          "missing": []
+        },
+        {
+          "source": "common/sql/pg/11-dashboard-task-v2.sql",
+          "missing": []
+        },
+        {
+          "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "missing": []
+        },
+        {
+          "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+          "missing": []
+        }
+      ]
+    },
+    {
+      "name": "whitelist_rule_projection_v1",
+      "sources": [
+        {
+          "source": "deployments/postgres/migrations/202608071930_whitelist_rule_projection_v1.sql",
+          "missing": []
+        },
+        {
+          "source": "common/sql/pg/10-whitelist-governance-v2.sql",
+          "missing": []
+        },
+        {
+          "source": "deployments/kubernetes/init-jobs/02-postgres-schema.yaml",
+          "missing": []
+        },
+        {
+          "source": "go/control-plane/deployments/docker/init/postgres_merged.sql",
+          "missing": []
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "remaining_gates": [
+    "review the versioned mutable-command inventory and close each business-audit-outbox transaction gap",
+    "operate the saved-view, notification-governance, user-settings, user-command and asset outbox workers against the release-candidate Kafka and reconcile pending processing published and dead counts",
+    "run live fault injection after commit, before publish, and after Kafka ACK before published marking",
+    "prove event_id and aggregate_version deduplication in real consumers",
+    "run live debt queries, lock metrics, cleanup retention, rollback and observation gates"
+  ]
+}

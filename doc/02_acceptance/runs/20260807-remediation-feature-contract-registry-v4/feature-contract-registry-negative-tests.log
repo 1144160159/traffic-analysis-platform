@@ -1,0 +1,18 @@
+test_alert_and_probe_contracts_bind_exactly_to_openapi (tests.alignment.test_feature_contract_registry.FeatureContractRegistryTests.test_alert_and_probe_contracts_bind_exactly_to_openapi) ... ok
+test_backlog_gap_count_cannot_be_hidden (tests.alignment.test_feature_contract_registry.FeatureContractRegistryTests.test_backlog_gap_count_cannot_be_hidden) ... ok
+test_canonical_feature_cannot_be_hidden (tests.alignment.test_feature_contract_registry.FeatureContractRegistryTests.test_canonical_feature_cannot_be_hidden) ... ok
+test_checked_in_registry_has_complete_standard_scope_and_explicit_backlog (tests.alignment.test_feature_contract_registry.FeatureContractRegistryTests.test_checked_in_registry_has_complete_standard_scope_and_explicit_backlog) ... ok
+test_compatibility_removal_cannot_be_enabled (tests.alignment.test_feature_contract_registry.FeatureContractRegistryTests.test_compatibility_removal_cannot_be_enabled) ... ok
+test_duplicate_operation_id_fails_closed (tests.alignment.test_feature_contract_registry.FeatureContractRegistryTests.test_duplicate_operation_id_fails_closed) ... ok
+test_formal_contract_validation_error_fails_closed (tests.alignment.test_feature_contract_registry.FeatureContractRegistryTests.test_formal_contract_validation_error_fails_closed) ... ok
+test_missing_contract_gap_cannot_be_hidden (tests.alignment.test_feature_contract_registry.FeatureContractRegistryTests.test_missing_contract_gap_cannot_be_hidden) ... ok
+test_non_draft_openapi_binding_gap_cannot_be_hidden (tests.alignment.test_feature_contract_registry.FeatureContractRegistryTests.test_non_draft_openapi_binding_gap_cannot_be_hidden) ... ok
+test_owner_cannot_be_removed (tests.alignment.test_feature_contract_registry.FeatureContractRegistryTests.test_owner_cannot_be_removed) ... ok
+test_p0_contract_cannot_be_removed (tests.alignment.test_feature_contract_registry.FeatureContractRegistryTests.test_p0_contract_cannot_be_removed) ... ok
+test_registry_cannot_become_runtime_dependency (tests.alignment.test_feature_contract_registry.FeatureContractRegistryTests.test_registry_cannot_become_runtime_dependency) ... ok
+test_standard_scope_p1_contract_cannot_be_removed (tests.alignment.test_feature_contract_registry.FeatureContractRegistryTests.test_standard_scope_p1_contract_cannot_be_removed) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 2.383s
+
+OK

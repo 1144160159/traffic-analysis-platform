@@ -5,7 +5,7 @@
     "contracts/alignment/work-packages.json",
     "contracts/alignment/progress-overrides.json"
   ],
-  "as_of": "2026-08-07T04:25:49Z",
+  "as_of": "2026-08-07T04:42:25Z",
   "g7_status": "OPEN",
   "g8_status": "BLOCKED",
   "g8_blockers": [
@@ -46,14 +46,14 @@
         "scripts/alignment/validate.py",
         "tests/alignment/test_feature_contract_registry.py",
         "doc/07_alignment/runbooks/F-COMMON-001-feature-contract-registry.md",
-        "doc/02_acceptance/runs/20260807-remediation-feature-contract-registry-v3/manifest.json#sha256=c002d0117ea7622e2def8a5db4dd149486ce375ca933121401221a2aa16677cd",
-        "doc/02_acceptance/runs/20260807-remediation-g0-full-v167/manifest.json#sha256=62957d6f88b78ddd4e31d6759a5d03054766c73ffa30e35cddda7d35f3689ff2",
+        "doc/02_acceptance/runs/20260807-remediation-feature-contract-registry-v4/manifest.json#sha256=a561afe302f5c1b02fe8c5e2cc281b30052d94b53588de49818a361e17bb96aa",
+        "doc/02_acceptance/runs/20260807-remediation-g0-full-v168/manifest.json#sha256=8c6cac116946b90a232a7c79edae80bf41e8ee27ba6ea5808bf57e882a09e86e",
         "doc/02_acceptance/runs/20260804-remediation-feature-contract-registry-v1/manifest.json#sha256=84dcda87162d577eee2dad6f681baea28b0371ae8d2d8978e8811daefd4226c0",
         "doc/02_acceptance/runs/20260804-remediation-g0-full-v159/manifest.json#sha256=642723035cc06196a5c11d11b57bffa99f83f3fbd9ea96f91053b4bb31faaa53",
         "doc/02_acceptance/runs/20260804-remediation-common-response-adapter-v3/manifest.json#sha256=2c460115e5bc7b64247e22d65259efa5c3c82be32a2f5a941f315a2d5d216e50"
       ],
-      "blocker": "54个canonical功能ID已全部解析到唯一Accountable、工作包、接受用例和回滚ID；38个24周标准范围功能均有正式Feature Contract，23份已与OpenAPI精确或显式profile绑定。F-AUDIT-001与F-AUTH-001仍是非draft OpenAPI绑定缺口，16个backlog功能仍缺正式合同；未落地的统一批量、导出、图投影、专题对象报告和采用遥测保持draft。同哈希G0 v167与Feature Contract专项v3已通过仓库门禁，但尚未部署；生产工作负载仍未暴露contract version、候选source hash、旧客户端兼容命中量或未知枚举/字段遥测，每份合同的真实HAR、灰度回滚及T+观察也未闭环，G2至G8保持PARTIAL/OPEN/HOLD/BLOCKED。",
-      "note": "F-COMMON-001保持IMPLEMENTING：24周标准范围合同为38/38，23份OpenAPI绑定纳入fail-closed注册表，两个非draft绑定缺口和16份backlog合同显式保留。注册表是构建/发布门禁而非运行时依赖，运行时遥测、真实服务、浏览器和发布观察仍未关闭。"
+      "blocker": "54个canonical功能ID已全部解析到唯一Accountable、工作包、接受用例和回滚ID；38个24周标准范围功能均有正式Feature Contract，24份已与OpenAPI精确或显式profile绑定。F-AUDIT-001仍是唯一非draft OpenAPI绑定缺口，16个backlog功能仍缺正式合同；未落地的统一批量、导出、图投影、专题对象报告和采用遥测保持draft。同哈希G0 v168与Feature Contract专项v4已通过仓库门禁，但尚未部署；生产工作负载仍未暴露contract version、候选source hash、旧客户端兼容命中量或未知枚举/字段遥测，每份合同的真实HAR、灰度回滚及T+观察也未闭环，G2至G8保持PARTIAL/OPEN/HOLD/BLOCKED。",
+      "note": "F-COMMON-001保持IMPLEMENTING：24周标准范围合同为38/38，24份OpenAPI绑定纳入fail-closed注册表，F-AUDIT-001和16份backlog合同显式保留。注册表是构建/发布门禁而非运行时依赖，运行时遥测、真实服务、浏览器和发布观察仍未关闭。"
     },
     {
       "id": "F-COMMON-002",
@@ -74,13 +74,13 @@
         "web/ui/src/services/pageSnapshotAdapters.ts",
         "web/ui/src/services/pageSnapshotAdapters.test.ts",
         "doc/07_alignment/runbooks/F-COMMON-002-rollback.md",
-        "doc/02_acceptance/runs/20260807-remediation-common-response-adoption-v2/manifest.json#sha256=17df6c0e228fbe4131d8c89df4de2a09f2907fe542e6efe860d0db17d31d45b6",
-        "doc/02_acceptance/runs/20260807-remediation-g0-full-v167/manifest.json#sha256=62957d6f88b78ddd4e31d6759a5d03054766c73ffa30e35cddda7d35f3689ff2",
+        "doc/02_acceptance/runs/20260807-remediation-common-response-adoption-v3/manifest.json#sha256=334b4fbb8dbad956cdf4f2f7465d374c36eb2e90e4ee05c9380d7ac1d6b431cc",
+        "doc/02_acceptance/runs/20260807-remediation-g0-full-v168/manifest.json#sha256=8c6cac116946b90a232a7c79edae80bf41e8ee27ba6ea5808bf57e882a09e86e",
         "doc/02_acceptance/runs/20260804-remediation-g0-full-v159/manifest.json#sha256=642723035cc06196a5c11d11b57bffa99f83f3fbd9ea96f91053b4bb31faaa53",
         "doc/02_acceptance/runs/20260804-remediation-common-response-adapter-v3/manifest.json#sha256=2c460115e5bc7b64247e22d65259efa5c3c82be32a2f5a941f315a2d5d216e50"
       ],
-      "blocker": "统一snapshot meta的10个必填字段、Go公共响应helper、OpenAPI与生成TypeScript类型已按加法兼容方式落库；告警响应、证据、保存视图和视图列表已采用Contract Envelope并通过同哈希G0/G1。当前仍非所有handler都调用统一helper，operation_id、tenant_id和projection_status也未在所有业务响应中填充。批准候选尚未部署，真实服务的zero/empty/partial/unavailable样本、source watermark对账、性能预算、指定Windows Chrome、灰度回滚及T+观察未完成，G2至G8保持OPEN/HOLD/BLOCKED。",
-      "note": "F-COMMON-002保持IMPLEMENTING：告警四项操作完成仓库侧公共响应采用且保存视图保持HTTP 201；专项仍为PARTIAL、production_applied=false，不代表全站handler或生产候选已完成迁移。"
+      "blocker": "统一snapshot meta的10个必填字段、Go公共响应helper、OpenAPI与生成TypeScript类型已按加法兼容方式落库；告警响应、证据、保存视图、视图列表和认证scope目录已采用Contract Envelope并通过同哈希G0/G1。当前仍非所有handler都调用统一helper，operation_id、tenant_id和projection_status也未在所有业务响应中填充。批准候选尚未部署，真实服务的zero/empty/partial/unavailable样本、source watermark对账、性能预算、指定Windows Chrome、灰度回滚及T+观察未完成，G2至G8保持OPEN/HOLD/BLOCKED。",
+      "note": "F-COMMON-002保持IMPLEMENTING：告警四项操作和认证scope目录完成仓库侧公共响应采用，保存视图保持HTTP 201且兼容旧scope路由；专项仍为PARTIAL、production_applied=false，不代表全站handler或生产候选已完成迁移。"
     },
     {
       "id": "F-COMMON-003",
@@ -152,16 +152,22 @@
         "go/control-plane/internal/auth/repository/user_settings_outbox_test.go",
         "go/control-plane/internal/auth/service/auth_service.go",
         "go/control-plane/internal/auth/api/handler.go",
+        "go/control-plane/internal/auth/api/handler_scope_catalog_test.go",
+        "web/ui/src/generated/alignmentClient.ts",
         "deployments/postgres/migrations/202608031530_user_commands_atomic.sql",
         "contracts/postgres/transaction-outbox.v1.json",
         "contracts/events/kafka-topic-catalog.v1.json",
         "scripts/alignment/verify_asset_atomic_ephemeral.py",
         "doc/02_acceptance/runs/20260803-remediation-g0-full-v100/manifest.json#sha256=161c665b7f278cce4d286c4f4639936fd8be9e0fb230f1823a9bb54d62ab6e0f",
         "doc/02_acceptance/runs/20260803-remediation-pg-transaction-outbox-v8/manifest.json#sha256=583c90829421864e127157cafd669e42c461c8dcc3c16c7a375c95d349af5631",
-        "doc/02_acceptance/runs/20260803-remediation-pg-mutation-inventory-v7/manifest.json#sha256=c43cde241c2a64d8fc637491648ab00383798c2de71fc58f5ecaa9a383304c52"
+        "doc/02_acceptance/runs/20260803-remediation-pg-mutation-inventory-v7/manifest.json#sha256=c43cde241c2a64d8fc637491648ab00383798c2de71fc58f5ecaa9a383304c52",
+        "doc/02_acceptance/runs/20260807-remediation-feature-contract-registry-v4/manifest.json#sha256=a561afe302f5c1b02fe8c5e2cc281b30052d94b53588de49818a361e17bb96aa",
+        "doc/02_acceptance/runs/20260807-remediation-common-response-adoption-v3/manifest.json#sha256=334b4fbb8dbad956cdf4f2f7465d374c36eb2e90e4ee05c9380d7ac1d6b431cc",
+        "doc/02_acceptance/runs/20260807-remediation-pg-transaction-outbox-v15/manifest.json#sha256=c52b3cdc003e534065419e32b5673f42682d282b786928853dfd502968793797",
+        "doc/02_acceptance/runs/20260807-remediation-g0-full-v168/manifest.json#sha256=8c6cac116946b90a232a7c79edae80bf41e8ee27ba6ea5808bf57e882a09e86e"
       ],
-      "blocker": "生产migration、user.events.v1候选镜像与批准环境尚未应用；真实PG/Kafka offset、Flink user-behavior与ClickHouse投影、审计及outbox状态同trace对账未完成。跨租户/越权浏览器旅程、批准规模性能、故障注入、发布回滚和T+0至T+7观察窗仍未完成。",
-      "note": "UI要求与兼容scope已纳入后端目录且未扩大默认角色授权。认证用户profile/password/login、OIDC用户与精确角色集、兼容管理命令已收敛到tenant绑定、revision、history、最小audit、UserEvent outbox和持久幂等结果同事务；OIDC跨租户拒绝、角色顺序无关重放、陈旧角色移除及凭证不落证据已在sentinel PostgreSQL 16通过。G0 v100、事务v8与inventory v7绑定候选hash 81d3dcee17d8e0ecc3a6801900744ad5e5cade062e6f6049fb804c597a5a2ea2，但production_applied=false，因此保持VERIFYING。"
+      "blocker": "治理后的GET /api/v1/auth/scopes、兼容GET /api/v1/tokens/scopes、admin/admin:read权限和Contract Envelope已完成仓库验证；生产migration、user.events.v1候选镜像与批准环境仍未应用，真实PG/Kafka offset、Flink user-behavior与ClickHouse投影、审计及outbox状态同trace对账未完成。跨租户/越权浏览器旅程、批准规模性能、故障注入、发布回滚和T+0至T+7观察窗仍未完成。",
+      "note": "F-AUTH-001已消除非draft OpenAPI绑定缺口：新scope目录使用稳定getScopeCatalog操作、租户snapshot与版本水位，旧路由继续保留且默认角色权限未扩大；未认证和权限不足均fail-closed。G0 v168、合同v4、公共响应v3和事务v15绑定同一240d1232候选，但production_applied=false，因此保持VERIFYING。"
     },
     {
       "id": "F-TOPIC-001",

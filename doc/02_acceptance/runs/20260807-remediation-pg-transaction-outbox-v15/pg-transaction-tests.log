@@ -1,0 +1,11 @@
+test_missing_outbox_field_is_rejected (tests.alignment.test_pg_transaction_outbox.PostgresTransactionOutboxTest.test_missing_outbox_field_is_rejected) ... ok
+test_noncanonical_slice_id_is_rejected (tests.alignment.test_pg_transaction_outbox.PostgresTransactionOutboxTest.test_noncanonical_slice_id_is_rejected) ... ok
+test_notification_transaction_schema_drift_is_rejected (tests.alignment.test_pg_transaction_outbox.PostgresTransactionOutboxTest.test_notification_transaction_schema_drift_is_rejected) ... ok
+test_publisher_contract_requires_bounded_dead_state (tests.alignment.test_pg_transaction_outbox.PostgresTransactionOutboxTest.test_publisher_contract_requires_bounded_dead_state) ... ok
+test_repository_transaction_guard_passes_without_claiming_complete_coverage (tests.alignment.test_pg_transaction_outbox.PostgresTransactionOutboxTest.test_repository_transaction_guard_passes_without_claiming_complete_coverage) ... ok
+test_transaction_order_mutation_is_rejected (tests.alignment.test_pg_transaction_outbox.PostgresTransactionOutboxTest.test_transaction_order_mutation_is_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.311s
+
+OK
