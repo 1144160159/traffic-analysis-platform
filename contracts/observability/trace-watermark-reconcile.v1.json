@@ -12,7 +12,7 @@
     "conflicting_kafka_trace_behavior": "reject_before_publish",
     "exporter_disabled_behavior": "continue_propagation",
     "required_stages": ["http", "postgresql", "outbox", "kafka", "flink", "clickhouse", "opensearch", "nebulagraph", "minio_manifest", "audit"],
-    "implemented_candidate_stages": ["http", "kafka_header", "kafka_consumer_context", "alert_proto", "flink_alert_generation", "alert_clickhouse", "alert_opensearch"],
+    "implemented_candidate_stages": ["http", "kafka_header", "kafka_consumer_context", "alert_proto", "flink_alert_generation", "alert_clickhouse", "alert_opensearch", "asset_postgresql_outbox", "asset_kafka_inbox", "asset_opensearch", "asset_nebulagraph", "asset_audit"],
     "remaining_stages": ["generic_postgresql_outbox", "flink_metrics_and_non_alert_rows", "nebulagraph_edges", "generic_minio_manifests", "all_page_snapshots"]
   },
   "page_snapshot_meta": {
@@ -41,6 +41,19 @@
     "missing_or_stale_action": "bounded_reproject_from_authority_after_approval",
     "unparseable_action": "stop_and_fix_source_contract",
     "production_mutations_in_repository_candidate": []
+  },
+  "owned_g1_asset_reconciliation": {
+    "runner": "scripts/alignment/verify_asset_seven_source_ephemeral.py",
+    "test": "go/control-plane/internal/asset/consumer/asset_seven_source_integration_test.go",
+    "sources": ["postgresql", "kafka", "clickhouse", "opensearch", "nebulagraph", "minio", "audit"],
+    "production_asset_path": ["postgresql", "outbox", "kafka", "durable_inbox", "opensearch", "nebulagraph", "audit"],
+    "clickhouse_path": "production_alert_writer_correlated_to_asset_identity",
+    "minio_path": "explicitly_seeded_adapter_not_asset_event_consumer",
+    "fixed_digest_images": true,
+    "loopback_only": true,
+    "persistent_volumes": false,
+    "production_applied": false,
+    "does_not_prove": ["candidate_deployment", "flink", "production_g3", "performance", "browser", "rollback", "observation"]
   },
   "closure_blockers": [
     "one release-candidate user action has not yet been proven through PG outbox Kafka Flink CH OS Nebula MinIO and audit under one trace_id",

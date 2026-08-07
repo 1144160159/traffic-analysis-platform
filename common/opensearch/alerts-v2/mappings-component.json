@@ -32,6 +32,7 @@
         "severity": {"type": "keyword"},
         "first_seen": {"type": "date"},
         "last_seen": {"type": "date"},
+        "updated_at": {"type": "date"},
         "updated_ts": {"type": "date"},
         "ingest_ts": {"type": "date"},
         "first_seen_ms": {"type": "date", "format": "epoch_millis"},

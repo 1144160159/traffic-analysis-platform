@@ -49,10 +49,13 @@ SOURCES = (
     "common/opensearch/alerts-v2/mappings-component.json",
     "deployments/kubernetes/init-jobs/04-opensearch-templates.yaml",
     "scripts/alignment/cross_store_reconcile.py",
+    "scripts/alignment/verify_asset_seven_source_ephemeral.py",
     "scripts/alignment/verify_trace_watermark_reconcile.py",
     "scripts/alignment/capture_trace_watermark_reconcile.py",
     "tests/alignment/test_trace_watermark_reconcile.py",
     "tests/alignment/test_cross_store_reconcile.py",
+    "tests/alignment/test_asset_seven_source_ephemeral_guard.py",
+    "go/control-plane/internal/asset/consumer/asset_seven_source_integration_test.go",
     "doc/07_alignment/runbooks/T-OBS-001-trace-watermark-reconcile.md",
     "Makefile",
 )

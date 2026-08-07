@@ -41,7 +41,7 @@
     "approval_secret": "opensearch-alerts-v2-approval",
     "rendered_secret_immutable": true,
     "max_approval_window_seconds": 14400,
-    "contract_sha256": "c6c3b32eebf6b1ab6da472e9c0849ba613b59c8ebdeaea0e0ee1aeb8c8895c28",
+    "contract_sha256": "c6b39a49f9fa3a6b48bacbe93124e037febb02bf5eb0902787bced8b4400876c",
     "required_approval_bindings": [
       "approval_id",
       "approved_by",
