@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-07T09:55:21Z",
+  "updated_at": "2026-08-07T10:32:22Z",
   "latest_g0": {
-    "run_id": "20260807-remediation-g0-full-v180",
-    "manifest": "doc/02_acceptance/runs/20260807-remediation-g0-full-v180/manifest.json",
-    "manifest_sha256": "faeb5c76945070d6de7345890b0be844bc21da412258e59dcd76ec00a2dea85a",
-    "candidate_source_sha256": "97b866f5e14c3cb2d3cc6c6fcfa86127925f9fc7d349d55814b0f05767b4d05b",
+    "run_id": "20260807-remediation-g0-full-v181",
+    "manifest": "doc/02_acceptance/runs/20260807-remediation-g0-full-v181/manifest.json",
+    "manifest_sha256": "4351f9fad983656d410bfb093a9ce089ddae7284a2b8ea48ced465d733a2ec3c",
+    "candidate_source_sha256": "a0255715b9be82eaf03808a4230d679b2ad0f23b117454597055f4c3ece20a7e",
     "status": "PASS",
     "scope": [
       "alignment-test",
@@ -188,6 +188,40 @@
       "G4": "OPEN_NO_APPROVED_SCALE_TRUNCATION_PERFORMANCE_OR_FAILURE_PROFILE",
       "G5": "OPEN_NO_WINDOWS_CHROME_GRAPH_JOURNEY",
       "G6": "OPEN_NO_APPROVED_NEBULA_EXPAND_CANARY_SWITCH_ROLLBACK_OR_OBSERVATION",
+      "G7": "OPEN",
+      "G8": "BLOCKED_EXTERNAL"
+    }
+  },
+  "latest_asset_detail_clickhouse_g1": {
+    "canonical_ids": ["F-ASSET-005", "T-CH-003"],
+    "run_id": "20260807-remediation-asset-detail-clickhouse-g1-v1",
+    "manifest": "doc/02_acceptance/runs/20260807-remediation-asset-detail-clickhouse-g1-v1/manifest.json",
+    "manifest_sha256": "4b685e34f8873c7f1e6b306a21fd4170147ba3851a2ed0b58810b252ce7cd6b8",
+    "result": "doc/02_acceptance/runs/20260807-remediation-asset-detail-clickhouse-g1-v1/result.json",
+    "result_sha256": "599471d58e2ffe7ca22cb675e292ee12d3aaf48f12a0f6be0ee5ca9a8ae039ec",
+    "g0_run_id": "20260807-remediation-g0-full-v181",
+    "g0_manifest_sha256": "4351f9fad983656d410bfb093a9ce089ddae7284a2b8ea48ced465d733a2ec3c",
+    "candidate_source_sha256": "a0255715b9be82eaf03808a4230d679b2ad0f23b117454597055f4c3ece20a7e",
+    "repository_status": "PASS",
+    "scoped_evidence_status": "PASS_ISOLATED_ASSET_CLICKHOUSE_FACTS",
+    "real_reader_verified": true,
+    "tenant_isolation_verified": true,
+    "as_of_upper_bound_verified": true,
+    "latest_alert_state_verified": true,
+    "hard_limit_verified": true,
+    "source_watermarks_verified": true,
+    "unavailable_source_fails_closed": true,
+    "container_and_network_removed": true,
+    "production_applied": false,
+    "production_mutations": [],
+    "gate_status": {
+      "G0": "PASS_SAME_SOURCE",
+      "G1": "PASS_FOR_ISOLATED_ASSET_CLICKHOUSE_FACTS_ONLY",
+      "G2": "OPEN_NO_RELEASE_CANDIDATE_IMAGE_OR_REAL_SERVICE_WRITE",
+      "G3": "OPEN_NO_SAME_TRACE_CROSS_STORE_RECONCILIATION",
+      "G4": "OPEN_NO_DISTRIBUTED_SCALE_PERFORMANCE_PARTIAL_SHARD_OR_RECOVERY_PROFILE",
+      "G5": "OPEN_NO_WINDOWS_CHROME_ASSET_JOURNEY",
+      "G6": "OPEN_NO_APPROVED_CLUSTER_EXPAND_CANARY_SWITCH_ROLLBACK_OR_OBSERVATION",
       "G7": "OPEN",
       "G8": "BLOCKED_EXTERNAL"
     }
