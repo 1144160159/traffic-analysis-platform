@@ -1871,10 +1871,12 @@
         "scripts/alignment/verify_opensearch_projection_reconciliation.py",
         "scripts/alignment/verify_alert_projection_watermark_postgres_ephemeral.py",
         "scripts/alignment/verify_alert_projection_postgres_opensearch_ephemeral.py",
+        "scripts/alignment/verify_alert_projection_clickhouse_postgres_opensearch_ephemeral.py",
         "scripts/alignment/capture_opensearch_projection_reconciliation.py",
         "tests/alignment/test_opensearch_projection_reconciliation.py",
         "tests/alignment/test_alert_projection_watermark_postgres_ephemeral_guard.py",
         "tests/alignment/test_alert_projection_postgres_opensearch_ephemeral_guard.py",
+        "tests/alignment/test_alert_projection_clickhouse_postgres_opensearch_ephemeral_guard.py",
         "doc/07_alignment/runbooks/T-OS-004-alert-projection-rebuild-reconcile.md",
         "doc/02_acceptance/runs/20260804-remediation-g0-full-v125/manifest.json#sha256=51b4be71c1eed2c8cbbae731bde605bf6ecd0488459e97de40af1e9b8c7d5650",
         "doc/02_acceptance/runs/20260804-remediation-opensearch-projection-reconciliation-v1/manifest.json#sha256=c749561491014e377d1dd0dcdd822705c84885e6652b74145f878492a2518995",
@@ -1889,10 +1891,12 @@
         "doc/02_acceptance/runs/20260807-remediation-g0-full-v185/manifest.json#sha256=72b5c5994786170bd3ceff66ac7810ce91e7cf7f044a193c1e63311e44b01f0f",
         "doc/02_acceptance/runs/20260807-remediation-alert-projection-watermark-postgres-g1-v2/manifest.json#sha256=c8cf165ca2a8bf5762048a146a19e49616c207ad1f32db7a9106149c8af9a508",
         "doc/02_acceptance/runs/20260807-remediation-g0-full-v186/manifest.json#sha256=4875a14fdf008f7a66cf5a272d7c55a9f905054a7e713331d66ca98a29096c6d",
-        "doc/02_acceptance/runs/20260807-remediation-alert-projection-postgres-opensearch-g1-v1/manifest.json#sha256=a982b15faa3e83a32ef7e7886282764f6cf9ebe86b7156f88db05fb96602b1d1"
+        "doc/02_acceptance/runs/20260807-remediation-alert-projection-postgres-opensearch-g1-v1/manifest.json#sha256=a982b15faa3e83a32ef7e7886282764f6cf9ebe86b7156f88db05fb96602b1d1",
+        "doc/02_acceptance/runs/20260807-remediation-g0-full-v187/manifest.json#sha256=18f244e879bc92aa5fc22f923102dcc8912ff8d7e7925ecf7c77bb9cd5b147f2",
+        "doc/02_acceptance/runs/20260807-remediation-alert-projection-three-store-g1-v1/manifest.json#sha256=1262d04aab6f92178c6b75827656b99924797c8d448e5ff33e2d0152a6c2fc6f"
       ],
-      "blocker": "仓库候选已修复ClickHouse成功/OpenSearch失败被伪装成最终成功的边界：Kafka仅在PG投影债务已提交时允许继续offset，否则返回错误；OS使用alert_id与external_gte源版本，worker具备lease/retry/dead。CLI按tenant、时间、业务ID、索引版本和max_documents有界plan/repair，不自动删除extra；repair必须刷新精确V2 write alias并以同scope回读，随后批量比较PG watermark的source_version与authoritative SHA，补写缺失或漂移receipt并再次查询。remaining missing/stale、watermark mismatch或error任一非零均不得报收敛。同一固定摘要G1现已组合真实OpenSearch终态回读、真实PG watermark和durable run manifest；但权威源仍为有界测试源，未连接真实ClickHouse或Kafka。当前alert-service仍为旧镜像、候选worker和post-commit指标未部署，V2 alias未获批。生产883172条缺口、Kafka lag/last event_id、全范围count/ID/SHA、性能、故障、canary回滚及T+0/T+1/T+3/T+7仍未完成，G2至G8保持OPEN/HOLD/BLOCKED。",
-      "note": "T-OS-004保持IMPLEMENTING/PARTIAL。v186同一自有运行预置missing/stale/extra，生产Reconciler通过真实OpenSearch完成missing/stale修复、精确alias刷新和同scope回读，并在真实PG写入、重查watermark及收敛run manifest；删除一个receipt后第二次运行以0次OpenSearch写入补回水位。两个固定摘要容器均无卷、loopback、已清理且production_applied=false。该G1仍不代表真实ClickHouse/Kafka、生产883172条缺口、V2 expand/backfill、候选部署或切换已完成。"
+      "blocker": "仓库候选已修复ClickHouse成功/OpenSearch失败被伪装成最终成功的边界：Kafka仅在PG投影债务已提交时允许继续offset，否则返回错误；OS使用alert_id与external_gte源版本，worker具备lease/retry/dead。CLI按tenant、时间、业务ID、索引版本和max_documents有界plan/repair，不自动删除extra；repair必须刷新精确V2 write alias并以同scope回读，随后批量比较PG watermark的source_version与authoritative SHA，补写缺失或漂移receipt并再次查询。remaining missing/stale、watermark mismatch或error任一非零均不得报收敛。同一固定摘要G1现已组合生产ClickHouse writer/repository、真实OpenSearch终态回读、真实PG watermark和durable run manifest，并逐alert对齐SHA/version；但尚未接入真实Kafka broker offset、committed last event_id或consumer lag。当前alert-service仍为旧镜像、候选worker和post-commit指标未部署，V2 alias未获批。生产883172条缺口、全范围count/ID/SHA、性能、故障、canary回滚及T+0/T+1/T+3/T+7仍未完成，G2至G8保持OPEN/HOLD/BLOCKED。",
+      "note": "T-OS-004保持IMPLEMENTING/PARTIAL。v187同一自有运行使用生产ClickHouse writer和authoritative repository提供2条权威告警，真实OpenSearch预置missing/stale/extra并完成受控修复与终态回读，真实PG保存watermark和收敛run manifest；两条权威ID的CH SHA、OS SHA、PG receipt SHA及source_version逐项一致，extra仍保留。三个固定摘要容器均无卷、loopback、已清理且production_applied=false。该G1仍不代表Kafka、生产883172条缺口、V2 expand/backfill、候选部署或切换已完成。"
     },
     {
       "id": "T-OS-005",

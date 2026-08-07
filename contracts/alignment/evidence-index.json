@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-07T15:11:39Z",
+  "updated_at": "2026-08-07T15:35:43Z",
   "latest_g0": {
-    "run_id": "20260807-remediation-g0-full-v186",
-    "manifest": "doc/02_acceptance/runs/20260807-remediation-g0-full-v186/manifest.json",
-    "manifest_sha256": "4875a14fdf008f7a66cf5a272d7c55a9f905054a7e713331d66ca98a29096c6d",
-    "candidate_source_sha256": "18b937774831b57411d19a420bf72f459c540f6eaaa273bc83df0baa69f89106",
+    "run_id": "20260807-remediation-g0-full-v187",
+    "manifest": "doc/02_acceptance/runs/20260807-remediation-g0-full-v187/manifest.json",
+    "manifest_sha256": "18f244e879bc92aa5fc22f923102dcc8912ff8d7e7925ecf7c77bb9cd5b147f2",
+    "candidate_source_sha256": "53cb9c401f431db206cc6557015c3379441577d312c2fdb589cb7ddb71998af6",
     "status": "PASS",
     "scope": [
       "alignment-test",
@@ -397,6 +397,46 @@
       "G8": "BLOCKED_EXTERNAL"
     },
     "note": "One owned fixed-digest run now combines the production reconciler, real OpenSearch terminal re-query and real PostgreSQL watermark plus durable run-manifest re-query. A deleted receipt is recovered on a second run with zero OpenSearch writes. ClickHouse, Kafka, production scale and release gates remain open."
+  },
+  "latest_alert_projection_three_store_g1": {
+    "canonical_ids": ["F-SEARCH-001", "T-CH-004", "T-OS-002", "T-OS-004", "T-PG-002"],
+    "run_id": "20260807-remediation-alert-projection-three-store-g1-v1",
+    "manifest": "doc/02_acceptance/runs/20260807-remediation-alert-projection-three-store-g1-v1/manifest.json",
+    "manifest_sha256": "1262d04aab6f92178c6b75827656b99924797c8d448e5ff33e2d0152a6c2fc6f",
+    "result": "doc/02_acceptance/runs/20260807-remediation-alert-projection-three-store-g1-v1/result.json",
+    "result_sha256": "5dc7d66ceeab19ddb552685fab55f036f53ba3fab90bcb48853263685dee81a8",
+    "g0_run_id": "20260807-remediation-g0-full-v187",
+    "g0_manifest_sha256": "18f244e879bc92aa5fc22f923102dcc8912ff8d7e7925ecf7c77bb9cd5b147f2",
+    "candidate_source_sha256": "53cb9c401f431db206cc6557015c3379441577d312c2fdb589cb7ddb71998af6",
+    "repository_status": "PASS",
+    "scoped_evidence_status": "PASS_OWNED_ALERT_PROJECTION_CLICKHOUSE_POSTGRES_OPENSEARCH_RECEIPT",
+    "production_clickhouse_writer_verified": true,
+    "production_clickhouse_authority_verified": true,
+    "seeded_difference_classes": ["missing", "stale", "extra"],
+    "opensearch_terminal_requery_verified": true,
+    "postgres_watermarks_converged": true,
+    "three_store_hash_and_version_reconciliation_verified": true,
+    "durable_run_manifest_verified": true,
+    "authoritative_alert_count": 2,
+    "target_alert_count_after_repair": 3,
+    "automatic_extra_delete": false,
+    "clickhouse_container_removed": true,
+    "postgres_container_removed": true,
+    "opensearch_container_removed": true,
+    "production_applied": false,
+    "production_mutations": [],
+    "gate_status": {
+      "G0": "PASS_SAME_SOURCE",
+      "G1": "PASS_FOR_ONE_OWNED_REAL_CLICKHOUSE_POSTGRES_AND_OPENSEARCH_RECONCILIATION",
+      "G2": "OPEN_NO_RELEASE_CANDIDATE_IMAGE_OR_APPROVED_MULTI_SERVICE_DEPLOYMENT",
+      "G3": "OPEN_NO_REAL_KAFKA_OFFSET_LAST_EVENT_ID_OR_PRODUCTION_883172_GAP_RECONCILIATION",
+      "G4": "OPEN_NO_APPROVED_SCALE_PERFORMANCE_OR_FAILURE_PROFILE",
+      "G5": "NOT_APPLICABLE_TO_OPERATOR_CLI_UNLESS_EXPOSED_IN_UI",
+      "G6": "OPEN_NO_BACKFILL_CANARY_ALIAS_SWITCH_ROLLBACK_OR_OBSERVATION",
+      "G7": "OPEN",
+      "G8": "BLOCKED_EXTERNAL"
+    },
+    "note": "One owned fixed-digest run now uses the production ClickHouse writer and authoritative repository, production reconciler, real OpenSearch target and real PostgreSQL receipts. Each authoritative alert has equal CH, OS and PG hashes plus the same source version. Kafka and production/release gates remain open."
   },
   "latest_kafka_dlq_commit_barrier": {
     "control_id": "T-KAFKA-003",
