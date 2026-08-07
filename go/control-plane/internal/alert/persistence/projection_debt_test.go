@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"testing"
 	"time"
@@ -33,6 +34,33 @@ func TestProjectionDebtBatchCommitsAtomically(t *testing.T) {
 	}
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestProjectionReconcileManifestPersistsPostRepairReceipt(t *testing.T) {
+	payload, err := projectionReconcileManifest(ProjectionReconcileResult{
+		MissingIDs: []string{"before-missing"}, ExtraIDs: []string{"manual-extra"}, StaleIDs: []string{"before-stale"},
+		VerificationPerformed: true, VerificationTargetCount: 3, RemainingExtraCount: 1,
+		RemainingExtraIDs: []string{"manual-extra"}, RepairConverged: true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var manifest struct {
+		PostRepair struct {
+			Performed       bool     `json:"performed"`
+			TargetCount     int      `json:"target_count"`
+			ExtraCount      int      `json:"extra_count"`
+			ExtraIDs        []string `json:"extra_ids"`
+			RepairConverged bool     `json:"repair_converged"`
+		} `json:"post_repair_verification"`
+	}
+	if err := json.Unmarshal(payload, &manifest); err != nil {
+		t.Fatal(err)
+	}
+	if !manifest.PostRepair.Performed || manifest.PostRepair.TargetCount != 3 || manifest.PostRepair.ExtraCount != 1 ||
+		len(manifest.PostRepair.ExtraIDs) != 1 || manifest.PostRepair.ExtraIDs[0] != "manual-extra" || !manifest.PostRepair.RepairConverged {
+		t.Fatalf("post-repair receipt missing from manifest: %s", payload)
 	}
 }
 

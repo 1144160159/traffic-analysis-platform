@@ -61,6 +61,7 @@ go run ./cmd/alert-projection-reconcile \
 2. repair 需要额外 `--confirm-repair`。执行器只写 missing/stale，不自动删除 extra。
 3. 默认最大 10,000 文档、100 docs/s、25 个错误即停止；实际值只能更保守，放宽需新批准。
 4. 每个成功写入必须推进 PG watermark；失败保持 debt 或 run error，不得记为 repaired。
+5. CLI 在受控写入后必须刷新精确 V2 write alias，并用相同 scope 回读。run manifest 同时保存修复前 `missing/extra/stale` 和修复后 remaining 清单；只有 remaining missing/stale 为零且 watermark error 为零才返回 `repair_converged=true`。remaining extra 继续人工裁决，绝不自动删除。
 
 ```bash
 go run ./cmd/alert-projection-reconcile \

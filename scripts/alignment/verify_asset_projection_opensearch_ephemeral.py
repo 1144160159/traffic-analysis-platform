@@ -111,6 +111,7 @@ def main() -> int:
         "older_version_rejected": False,
         "strict_mapping_verified": False,
         "production_alert_writer_verified": False,
+		"projection_repair_terminal_receipt_verified": False,
         "loopback_only": True,
         "persistent_volume_attached": False,
         "shared_environment_touched": False,
@@ -226,6 +227,22 @@ def main() -> int:
         if alert_completed.returncode != 0:
             raise RuntimeError(f"alert OpenSearch writer integration exited {alert_completed.returncode}")
         result["production_alert_writer_verified"] = True
+        reconcile_completed = run(
+            [
+                "go", "-C", "go/control-plane", "test", "./internal/alert/projection",
+                "-run", "^TestAlertProjectionRepairTerminalReceiptRealOpenSearch$", "-count=1", "-v",
+            ],
+            env={
+                **test_env,
+                "ALERT_PROJECTION_RECONCILE_EPHEMERAL_OS_URL": base_url,
+                "ALERT_PROJECTION_RECONCILE_EPHEMERAL_OS_SENTINEL": SENTINEL_VALUE,
+            },
+            check=False,
+        )
+        result["test_output"] += "\n" + reconcile_completed.stdout.decode(errors="replace").strip()
+        if reconcile_completed.returncode != 0:
+            raise RuntimeError(f"alert projection reconcile integration exited {reconcile_completed.returncode}")
+        result["projection_repair_terminal_receipt_verified"] = True
         # The Go test also proves same-version replay and older external version
         # rejection against this exact ephemeral cluster.
         result["deterministic_document_id_verified"] = True

@@ -49,8 +49,14 @@ type ProjectionReconcileResult struct {
 	SourceCount, TargetCount, MissingCount, ExtraCount int
 	StaleCount, RepairedCount, ErrorCount              int
 	MissingIDs, ExtraIDs, StaleIDs                     []string
+	VerificationTargetCount                            int
+	RemainingMissingCount, RemainingExtraCount         int
+	RemainingStaleCount                                int
+	RemainingMissingIDs, RemainingExtraIDs             []string
+	RemainingStaleIDs                                  []string
 	StopReason                                         string
 	Partial                                            bool
+	VerificationPerformed, RepairConverged             bool
 }
 
 func NewProjectionDebtStore(db *sql.DB) *ProjectionDebtStore {
@@ -263,10 +269,7 @@ func (s *ProjectionDebtStore) StartProjectionReconcileRun(ctx context.Context, r
 }
 
 func (s *ProjectionDebtStore) CompleteProjectionReconcileRun(ctx context.Context, runID string, result ProjectionReconcileResult) error {
-	manifest, err := json.Marshal(map[string]interface{}{
-		"missing_ids": result.MissingIDs, "extra_ids": result.ExtraIDs, "stale_ids": result.StaleIDs,
-		"partial": result.Partial,
-	})
+	manifest, err := projectionReconcileManifest(result)
 	if err != nil {
 		return err
 	}
@@ -284,6 +287,20 @@ func (s *ProjectionDebtStore) CompleteProjectionReconcileRun(ctx context.Context
 		return errors.New("alert projection reconcile run was not running")
 	}
 	return nil
+}
+
+func projectionReconcileManifest(result ProjectionReconcileResult) ([]byte, error) {
+	return json.Marshal(map[string]interface{}{
+		"missing_ids": result.MissingIDs, "extra_ids": result.ExtraIDs, "stale_ids": result.StaleIDs,
+		"partial": result.Partial,
+		"post_repair_verification": map[string]interface{}{
+			"performed": result.VerificationPerformed, "target_count": result.VerificationTargetCount,
+			"missing_count": result.RemainingMissingCount, "extra_count": result.RemainingExtraCount,
+			"stale_count": result.RemainingStaleCount, "missing_ids": result.RemainingMissingIDs,
+			"extra_ids": result.RemainingExtraIDs, "stale_ids": result.RemainingStaleIDs,
+			"repair_converged": result.RepairConverged,
+		},
+	})
 }
 
 func (s *ProjectionDebtStore) RecordProjectionApplied(ctx context.Context, alert *Alert, targetVersion string) error {

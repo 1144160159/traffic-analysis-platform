@@ -36,6 +36,7 @@ TESTS = (
     Path("go/control-plane/internal/alert/repository/clickhouse_projection_query_test.go"),
     Path("go/control-plane/internal/alert/projection/worker_test.go"),
     Path("go/control-plane/internal/alert/projection/reconcile_test.go"),
+    Path("go/control-plane/internal/alert/projection/reconcile_integration_test.go"),
     Path("go/control-plane/internal/common/kafka/consumer_commit_observer_test.go"),
 )
 
@@ -73,6 +74,10 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
         errors.append("bounded rebuild or no-auto-delete guard drifted")
     if scope.get("automatic_repairs") != ["missing", "stale"]:
         errors.append("automatic repair must be limited to missing and stale")
+    if scope.get("repair_terminal_receipt") != "refresh_exact_write_alias_then_requery_same_scope":
+        errors.append("repair terminal receipt must refresh and requery the same bounded scope")
+    if scope.get("repair_converged") != "remaining_missing_and_stale_are_zero_and_watermark_errors_are_zero":
+        errors.append("repair convergence definition drifted")
     runtime = contract.get("runtime_guards", {})
     if runtime.get("feature_flag_default_enabled") is not False or runtime.get("production_mutations_in_repository_candidate") != []:
         errors.append("candidate must remain default-off with no production mutation claim")
@@ -103,11 +108,11 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
                    "alert_consumer_last_committed_offset", "alert_consumer_last_committed_event_info", "SetCommitObserver"),
         COMMON_CONSUMER: ("SetCommitObserver", "notifyCommitObserver(messages)", "CommitsSucceeded"),
         DEBT: ("FOR UPDATE SKIP LOCKED", "alert_opensearch_projection_debts", "alert_opensearch_projection_watermarks", "AlertProjectionSHA256"),
-        OS_WRITER: ('VersionType: "external_gte"', '"version_type": "external_gte"', '"search_after"', "scope.TargetIndexVersion != w.TargetVersion()",
+        OS_WRITER: ('VersionType: "external_gte"', '"version_type": "external_gte"', '"search_after"', "scope.TargetIndexVersion != w.TargetVersion()", "RefreshProjectionTarget",
                     'DedupFingerprint string `json:"dedup_fingerprint"`', "canonicalAlert(w.legacyReadKeywordFields)"),
         CH_REPOSITORY: ("AS first_seen_time", "AS last_seen_time"),
         WORKER: ("TargetIndexVersion != w.target.TargetVersion()", "RetryProjectionDebt", "ResolveProjectionDebt"),
-        RECONCILE: ('request.Mode != "plan" && request.Mode != "repair"', '"bounded_scope_truncated"', "result.MissingIDs", "result.StaleIDs", "result.ExtraIDs"),
+        RECONCILE: ('request.Mode != "plan" && request.Mode != "repair"', '"bounded_scope_truncated"', "result.MissingIDs", "result.StaleIDs", "result.ExtraIDs", "post_repair_differences_remain", "RepairConverged"),
         CLI: ('"confirm-repair"', '"target-index-version"', '"max-documents"'),
         CONFIG: ('env:"OPENSEARCH_ALERT_PROJECTION_RECONCILE_V1_ENABLED" envDefault:"false"', 'env:"OPENSEARCH_ALERT_PROJECTION_REBUILD_MAX_DOCUMENTS" envDefault:"10000"'),
         MAIN: ("SetProjectionDebtRecorder", "projectionWorker.Run(ctx)"),
@@ -138,7 +143,9 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
     test_text = "\n".join((root / path).read_text(encoding="utf-8") for path in TESTS)
     for token in ("DebtPersistenceFailureBlocksCommit", "RecordsOnlyAcknowledgedBulkFailures", "ExternalGTEVersioning",
                   "ProjectionDebtBatchCommitsAtomically", "CommitObserverReceivesIsolatedCommittedMessages",
-                  "DoesNotWriteWrongIndexGeneration", "ClassifiesMissingExtraAndStale", "StopsOnTruncationBeforeRepair", "StopsAtRepairErrorThreshold"):
+                  "DoesNotWriteWrongIndexGeneration", "ClassifiesMissingExtraAndStale", "StopsOnTruncationBeforeRepair", "StopsAtRepairErrorThreshold", "FailsReceiptWhenRefreshFails",
+                  "DoesNotConvergeWhenAcknowledgedWriteIsNotVisible", "DoesNotConvergeWhenWatermarkWriteFails",
+                  "AlertProjectionRepairTerminalReceiptRealOpenSearch"):
         if token not in test_text:
             errors.append(f"negative or reconciliation test missing: {token}")
     for token in ("DoNotShadowMillisecondFilterColumns", "legacy-fingerprint"):

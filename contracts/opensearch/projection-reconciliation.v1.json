@@ -34,7 +34,10 @@
     "comparison": ["count", "alert_id", "authoritative_field_sha256"],
     "classifications": ["missing", "extra", "stale"],
     "automatic_repairs": ["missing", "stale"],
-    "automatic_delete_extra": false
+    "automatic_delete_extra": false,
+    "repair_terminal_receipt": "refresh_exact_write_alias_then_requery_same_scope",
+    "repair_converged": "remaining_missing_and_stale_are_zero_and_watermark_errors_are_zero",
+    "extra_after_repair": "persist_for_manual_adjudication_never_auto_delete"
   },
   "runtime_guards": {
     "feature_flag": "OPENSEARCH_ALERT_PROJECTION_RECONCILE_V1_ENABLED",

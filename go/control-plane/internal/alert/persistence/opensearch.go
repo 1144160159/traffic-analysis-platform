@@ -126,6 +126,39 @@ func (w *OpenSearchWriter) TargetVersion() string {
 	return defaultAlertProjectionTargetVersion
 }
 
+// RefreshProjectionTarget makes acknowledged repair writes visible before the
+// operator receives a terminal reconciliation receipt. It refreshes only the
+// exact approved write alias; callers cannot select a wildcard or another
+// generation through the reconciliation request.
+func (w *OpenSearchWriter) RefreshProjectionTarget(ctx context.Context) error {
+	w.mu.RLock()
+	if w.closed {
+		w.mu.RUnlock()
+		return fmt.Errorf("writer is closed")
+	}
+	if !w.exactTarget {
+		w.mu.RUnlock()
+		return fmt.Errorf("projection repair refresh requires an exact versioned write target")
+	}
+	w.mu.RUnlock()
+
+	response, err := w.client.Indices.Refresh(
+		w.client.Indices.Refresh.WithContext(ctx),
+		w.client.Indices.Refresh.WithIndex(w.writeTarget),
+		w.client.Indices.Refresh.WithAllowNoIndices(false),
+		w.client.Indices.Refresh.WithIgnoreUnavailable(false),
+	)
+	if err != nil {
+		return fmt.Errorf("refresh OpenSearch projection target %s: %w", w.writeTarget, err)
+	}
+	defer response.Body.Close()
+	if response.IsError() {
+		body, _ := io.ReadAll(response.Body)
+		return fmt.Errorf("refresh OpenSearch projection target %s failed: %s %s", w.writeTarget, response.Status(), strings.TrimSpace(string(body)))
+	}
+	return nil
+}
+
 // retryTransport 带重试的传输层
 type retryTransport struct {
 	base       http.RoundTripper

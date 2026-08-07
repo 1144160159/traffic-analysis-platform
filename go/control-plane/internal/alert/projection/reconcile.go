@@ -19,6 +19,7 @@ type ProjectionReader interface {
 type ProjectionRepairTarget interface {
 	ProjectionReader
 	WriteAlert(context.Context, *persistence.Alert) error
+	RefreshProjectionTarget(context.Context) error
 	TargetVersion() string
 }
 
@@ -118,26 +119,7 @@ func (r *Reconciler) Run(ctx context.Context, request ReconcileRequest) (persist
 		_ = complete()
 		return result, err
 	}
-	for id, sourceAlert := range sourceByID {
-		targetAlert, exists := targetByID[id]
-		if !exists {
-			result.MissingIDs = append(result.MissingIDs, id)
-			continue
-		}
-		sourceHash, _ := persistence.AlertProjectionSHA256(sourceAlert)
-		targetHash, _ := persistence.AlertProjectionSHA256(targetAlert)
-		if sourceHash != targetHash {
-			result.StaleIDs = append(result.StaleIDs, id)
-		}
-	}
-	for id := range targetByID {
-		if _, exists := sourceByID[id]; !exists {
-			result.ExtraIDs = append(result.ExtraIDs, id)
-		}
-	}
-	sort.Strings(result.MissingIDs)
-	sort.Strings(result.StaleIDs)
-	sort.Strings(result.ExtraIDs)
+	result.MissingIDs, result.ExtraIDs, result.StaleIDs = projectionDiff(sourceByID, targetByID)
 	result.MissingCount, result.StaleCount, result.ExtraCount = len(result.MissingIDs), len(result.StaleIDs), len(result.ExtraIDs)
 	result.Status = "completed"
 
@@ -180,11 +162,71 @@ func (r *Reconciler) Run(ctx context.Context, request ReconcileRequest) (persist
 		if result.ErrorCount > 0 && result.Status == "completed" {
 			result.Status, result.Partial, result.StopReason = "partial", true, "repair_errors_below_stop_threshold"
 		}
+		if result.Status != "stopped" {
+			if err := r.target.RefreshProjectionTarget(ctx); err != nil {
+				result.ErrorCount++
+				result.Status, result.Partial, result.StopReason = "partial", true, "post_repair_refresh_failed"
+				_ = complete()
+				return result, err
+			}
+			verifiedAlerts, verifiedTruncated, err := r.target.ListProjectionAlerts(ctx, request.Scope)
+			if err != nil {
+				result.ErrorCount++
+				result.Status, result.Partial, result.StopReason = "partial", true, "post_repair_target_read_failed"
+				_ = complete()
+				return result, err
+			}
+			result.VerificationPerformed = true
+			result.VerificationTargetCount = len(verifiedAlerts)
+			if verifiedTruncated {
+				result.Status, result.Partial, result.StopReason = "partial", true, "post_repair_scope_truncated"
+			} else {
+				verifiedByID, mapErr := projectionMap(verifiedAlerts)
+				if mapErr != nil {
+					result.ErrorCount++
+					result.Status, result.Partial, result.StopReason = "partial", true, "invalid_post_repair_projection_identity"
+					_ = complete()
+					return result, mapErr
+				}
+				result.RemainingMissingIDs, result.RemainingExtraIDs, result.RemainingStaleIDs = projectionDiff(sourceByID, verifiedByID)
+				result.RemainingMissingCount = len(result.RemainingMissingIDs)
+				result.RemainingExtraCount = len(result.RemainingExtraIDs)
+				result.RemainingStaleCount = len(result.RemainingStaleIDs)
+				result.RepairConverged = result.RemainingMissingCount == 0 && result.RemainingStaleCount == 0 && result.ErrorCount == 0
+				if !result.RepairConverged && result.Status == "completed" {
+					result.Status, result.Partial, result.StopReason = "partial", true, "post_repair_differences_remain"
+				}
+			}
+		}
 	}
 	if err := complete(); err != nil {
 		return result, err
 	}
 	return result, nil
+}
+
+func projectionDiff(sourceByID, targetByID map[string]*persistence.Alert) (missing, extra, stale []string) {
+	for id, sourceAlert := range sourceByID {
+		targetAlert, exists := targetByID[id]
+		if !exists {
+			missing = append(missing, id)
+			continue
+		}
+		sourceHash, _ := persistence.AlertProjectionSHA256(sourceAlert)
+		targetHash, _ := persistence.AlertProjectionSHA256(targetAlert)
+		if sourceHash != targetHash {
+			stale = append(stale, id)
+		}
+	}
+	for id := range targetByID {
+		if _, exists := sourceByID[id]; !exists {
+			extra = append(extra, id)
+		}
+	}
+	sort.Strings(missing)
+	sort.Strings(extra)
+	sort.Strings(stale)
+	return missing, extra, stale
 }
 
 func projectionMap(alerts []*persistence.Alert) (map[string]*persistence.Alert, error) {

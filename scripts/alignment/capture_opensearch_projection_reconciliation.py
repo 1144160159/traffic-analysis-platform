@@ -37,6 +37,7 @@ SOURCES = (
     "go/control-plane/internal/common/kafka/consumer.go",
     "go/control-plane/internal/alert/projection/worker.go",
     "go/control-plane/internal/alert/projection/reconcile.go",
+    "go/control-plane/internal/alert/projection/reconcile_integration_test.go",
     "go/control-plane/cmd/alert-projection-reconcile/main.go",
     "scripts/alignment/verify_opensearch_projection_reconciliation.py",
     "scripts/alignment/capture_opensearch_projection_reconciliation.py",
