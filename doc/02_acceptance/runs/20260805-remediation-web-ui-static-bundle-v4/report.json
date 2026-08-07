@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "run_id": "20260805-remediation-web-ui-static-bundle-v4",
+  "gate": "G6_WEB_UI_STATIC_BUNDLE_RECONCILIATION",
+  "result": "pass",
+  "candidate": {
+    "image": "docker.io/traffic/web-ui:remediation-ui-c2975d525e67",
+    "source_sha256": "c2975d525e6748ff8151ccceb4957ce214d415972f993095dde2422ea8d1c76a",
+    "image_id": "sha256:164dd84cd683bf2db682bc72ca2e0141af0e5fd81b5a4864c9e4f2a88884d156",
+    "image_manifest_digest": "sha256:d258a503192a3376c4c85ca96278764f21bc2d3c35bba47c2df6dfd9c94f9eee",
+    "pod": "web-ui-7b79c7d5d4-4k8bg"
+  },
+  "local_dist_file_count": 84,
+  "compared_file_count": 83,
+  "live_static_file_count": 85,
+  "runtime_only_files": [
+    "config.js",
+    "config.js.template"
+  ],
+  "local_list_sha256": "b95c0afdb2a540cf6570ff524840e45e7645663bbfad9ce8cb8f1fc6cbda4c56",
+  "live_list_sha256": "b95c0afdb2a540cf6570ff524840e45e7645663bbfad9ce8cb8f1fc6cbda4c56",
+  "checks": [
+    {
+      "name": "same relative file set",
+      "pass": true,
+      "missing_in_live": [],
+      "extra_in_live": []
+    },
+    {
+      "name": "same per-file SHA-256",
+      "pass": true,
+      "mismatched": []
+    },
+    {
+      "name": "only declared runtime files differ",
+      "pass": true,
+      "runtime_paths": [
+        "config.js",
+        "config.js.template"
+      ]
+    },
+    {
+      "name": "runtime config is production-safe",
+      "pass": true
+    },
+    {
+      "name": "live pod is clean and ready",
+      "pass": true
+    }
+  ],
+  "secret_material_redacted": true,
+  "captured_at": "2026-08-04T17:19:19.017Z"
+}

@@ -1,0 +1,515 @@
+{
+  "schema_version": 1,
+  "run_id": "20260805-remediation-windows-chrome-g5-v13",
+  "gate": "G5_WINDOWS_CHROME_SIX_SAMPLE_READ",
+  "result": "pass",
+  "browser_backend": "Windows Chrome CDP through Xshell 127.0.0.1:9224",
+  "browser": "Chrome/151.0.7922.71",
+  "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
+  "cdp_target_count": 6,
+  "journey_count": 6,
+  "base_url": "http://10.0.5.8:30180",
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "runtime_mock": false,
+  "journeys": [
+    {
+      "id": "assets",
+      "route": "http://10.0.5.8:30180/assets?tab=server&assetId=97b6204b-b1d2-52a4-96b8-beeed0731839",
+      "status": "pass",
+      "api_responses": [
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/assets/preferences/columns?view_id=asset-inventory",
+          "trace_id": "",
+          "meta": {
+            "as_of": "2026-08-04T17:19:43.911144375Z",
+            "contract_version": 1,
+            "missing_sections": [],
+            "partial": false,
+            "revision": 0,
+            "snapshot_id": "asset-export-api-711c9e60-e358-4f32-be24-91ce7b869fce",
+            "source_watermarks": {
+              "postgresql.asset_column_preferences.revision": "0"
+            },
+            "trace_id": "711c9e60-e358-4f32-be24-91ce7b869fce",
+            "view_id": "asset-inventory"
+          },
+          "data_keys": [
+            "tenant_id",
+            "user_id",
+            "view_id",
+            "columns",
+            "revision",
+            "updated_by",
+            "created_at",
+            "updated_at"
+          ]
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/assets/stats?limit=50&page_size=50&asset_type=server",
+          "trace_id": "",
+          "meta": null,
+          "data_keys": [
+            "total",
+            "active",
+            "inactive",
+            "unknown",
+            "high_criticality",
+            "critical_assets",
+            "unowned",
+            "open_services",
+            "high_risk_services",
+            "weak_passwords",
+            "network_interfaces",
+            "configuration_changes",
+            "dependency_assets",
+            "key_services",
+            "sla_at_risk",
+            "ownership_candidates",
+            "pending_tickets",
+            "context_records"
+          ]
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/assets/discovery/runs?limit=50&page_size=50",
+          "trace_id": "",
+          "meta": null,
+          "data_keys": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9"
+          ]
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/assets/discovery/neighbors?limit=50&page_size=50",
+          "trace_id": "",
+          "meta": null,
+          "data_keys": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5"
+          ]
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/assets?limit=10&page_size=10&page=1&offset=0&asset_type=server",
+          "trace_id": "",
+          "meta": {
+            "as_of": "2026-08-04T17:19:43.913894905Z",
+            "contract_version": "1",
+            "deprecation": {
+              "offset": true,
+              "replacement": "cursor",
+              "sunset": "not-before-G7"
+            },
+            "missing_sections": [],
+            "pagination": {
+              "has_more": true,
+              "limit": 10,
+              "mode": "offset",
+              "offset": 0,
+              "total": 13
+            },
+            "partial": false,
+            "snapshot_id": "asset-pg-e8e9f469e0198f1fb43e27fe284599bc",
+            "source_watermarks": {
+              "postgresql.assets.updated_at": "2026-08-04T17:19:43.913894905Z"
+            },
+            "trace_id": "5e04820a-c98c-412f-a2f8-feff02a94295"
+          },
+          "data_keys": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9"
+          ]
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/assets/97b6204b-b1d2-52a4-96b8-beeed0731839/topology",
+          "trace_id": "",
+          "meta": null,
+          "data_keys": [
+            "asset_id",
+            "source",
+            "fixture_mode",
+            "nodes",
+            "edges",
+            "observed_at"
+          ]
+        }
+      ],
+      "scoped_api_count": 6,
+      "expected_request_params": null,
+      "expected_text": null,
+      "dom": {
+        "title": "园区网络全流量采集与分析系统",
+        "text_length": 2811,
+        "buttons": 68,
+        "tabs": 5,
+        "horizontal_overflow": false,
+        "viewport": {
+          "width": 1920,
+          "height": 1080
+        },
+        "model_metrics_layout": null
+      },
+      "screenshot": "doc/02_acceptance/runs/20260805-remediation-windows-chrome-g5-v13/assets-1920x1080.png",
+      "screenshot_sha256": "ad24162131dd9ebe798be067610faa95905432855e13690798bc179154183f8e"
+    },
+    {
+      "id": "alerts",
+      "route": "http://10.0.5.8:30180/alerts",
+      "status": "pass",
+      "api_responses": [
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/alerts/views",
+          "trace_id": "4cc6522faef6b0c82f2e4e2a33081fd8",
+          "meta": {
+            "request_id": "59ddb320-9a8e-4903-81f6-75e4cd4ed165",
+            "trace_id": "4cc6522faef6b0c82f2e4e2a33081fd8"
+          },
+          "data_keys": [
+            "total",
+            "views"
+          ]
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/alerts/trend?limit=50&page_size=50&start_time=1785777570549&end_time=1785863970549&interval=hour",
+          "trace_id": "2e32cdcf80c0024ccb84c0668810dfeb",
+          "meta": {
+            "request_id": "acfeb8cf-f681-4f7a-ac43-fe0118b12372",
+            "trace_id": "2e32cdcf80c0024ccb84c0668810dfeb"
+          },
+          "data_keys": [
+            "interval",
+            "trend"
+          ]
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/alerts/stats?limit=50&page_size=50&start_time=1785777570549&end_time=1785863970549",
+          "trace_id": "ef44341242a5c39531d1b4eb6fcf16c6",
+          "meta": {
+            "request_id": "9c4d42ae-d127-4665-89c0-ca6095745213",
+            "trace_id": "ef44341242a5c39531d1b4eb6fcf16c6"
+          },
+          "data_keys": [
+            "total",
+            "by_severity",
+            "by_status"
+          ]
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/alerts?limit=10&page_size=10&page=1&offset=0&start_time=1785777570549&end_time=1785863970549",
+          "trace_id": "719956c9447a4ba9bcd589188f33c53f",
+          "meta": {
+            "request_id": "f208c709-bfa9-448d-a69b-c34f8370eda1",
+            "trace_id": "719956c9447a4ba9bcd589188f33c53f",
+            "page": {
+              "total": 443339,
+              "limit": 10,
+              "offset": 0,
+              "has_more": true
+            }
+          },
+          "data_keys": []
+        }
+      ],
+      "scoped_api_count": 4,
+      "expected_request_params": null,
+      "expected_text": null,
+      "dom": {
+        "title": "园区网络全流量采集与分析系统",
+        "text_length": 1029,
+        "buttons": 38,
+        "tabs": 0,
+        "horizontal_overflow": false,
+        "viewport": {
+          "width": 1920,
+          "height": 1080
+        },
+        "model_metrics_layout": null
+      },
+      "screenshot": "doc/02_acceptance/runs/20260805-remediation-windows-chrome-g5-v13/alerts-1920x1080.png",
+      "screenshot_sha256": "13658275972adb37d8ed3ba8b24dcb87885cbe198cd6feec67c74f40c878fff8"
+    },
+    {
+      "id": "topics",
+      "route": "http://10.0.5.8:30180/topics?topic=tunnel&tab=tunnel",
+      "status": "pass",
+      "api_responses": [
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/topics/tunnel/snapshot?limit=200&page_size=200",
+          "trace_id": "3a50ca500dd1cd2605bfc4d39d5d7588",
+          "meta": {
+            "contract_version": 1,
+            "schema_version": 1,
+            "snapshot_id": "0e7101f6-fc4c-47b3-be38-79a3dfd9d538",
+            "as_of": "2026-08-04T17:19:54.125625475Z",
+            "generated_at": "2026-08-04T17:19:54.640050447Z",
+            "trace_id": "3a50ca500dd1cd2605bfc4d39d5d7588",
+            "result_code": "SUCCESS",
+            "tenant_id": "default",
+            "partial": true,
+            "missing_sections": [
+              "opensearch_evidence",
+              "nebulagraph_projection",
+              "minio_evidence_manifest"
+            ],
+            "source_watermarks": {
+              "clickhouse.topic_fact.watermark": "1785863994125",
+              "minio.topic_evidence.manifest": "unavailable",
+              "nebulagraph.topic_projection.version": "unavailable",
+              "opensearch.topic_evidence.projection_version": "unavailable",
+              "postgresql.topic_scope.revision": "1785441184294"
+            }
+          },
+          "data_keys": [
+            "action_catalog",
+            "data_mode",
+            "protocols",
+            "revision",
+            "scope",
+            "snapshot_id",
+            "summary",
+            "time_range",
+            "topic",
+            "updated_at",
+            "users"
+          ]
+        }
+      ],
+      "scoped_api_count": 1,
+      "expected_request_params": null,
+      "expected_text": null,
+      "dom": {
+        "title": "园区网络全流量采集与分析系统",
+        "text_length": 1570,
+        "buttons": 41,
+        "tabs": 6,
+        "horizontal_overflow": false,
+        "viewport": {
+          "width": 1920,
+          "height": 1080
+        },
+        "model_metrics_layout": null
+      },
+      "screenshot": "doc/02_acceptance/runs/20260805-remediation-windows-chrome-g5-v13/topics-1920x1080.png",
+      "screenshot_sha256": "70b654c74af09f7f73cbecf95e982341fc1032779c985d3baf95288fdfc4ed7a"
+    },
+    {
+      "id": "graph",
+      "route": "http://10.0.5.8:30180/graph",
+      "status": "pass",
+      "api_responses": [
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/graph/workbench?time_range=24h&site=main&entity_type=all&depth=2",
+          "trace_id": "2e82712e-1da1-4b93-b76d-4dc29f82e40f",
+          "meta": {
+            "cache_applicable": false,
+            "cache_hit_rate": "N/A",
+            "data_origin": "nebula_graph_persisted_projection",
+            "depth": 2,
+            "edge_count": 0,
+            "entity_type": "all",
+            "node_count": 1,
+            "node_limit": 500,
+            "query_duration_ms": 3,
+            "site": "main",
+            "slow_query": false,
+            "source": "nebula_graph",
+            "time_range": "24h"
+          },
+          "data_keys": [
+            "graph",
+            "meta"
+          ]
+        }
+      ],
+      "scoped_api_count": 1,
+      "expected_request_params": null,
+      "expected_text": null,
+      "dom": {
+        "title": "园区网络全流量采集与分析系统",
+        "text_length": 1108,
+        "buttons": 32,
+        "tabs": 4,
+        "horizontal_overflow": false,
+        "viewport": {
+          "width": 1920,
+          "height": 1080
+        },
+        "model_metrics_layout": null
+      },
+      "screenshot": "doc/02_acceptance/runs/20260805-remediation-windows-chrome-g5-v13/graph-1920x1080.png",
+      "screenshot_sha256": "efc8560f28f2f0c61f2ac9d1af1b63f343c86579324eafba6e6ccc1ed5803bd6"
+    },
+    {
+      "id": "models",
+      "route": "http://10.0.5.8:30180/models",
+      "status": "pass",
+      "api_responses": [
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/models?limit=8&page_size=8&page=1&offset=0",
+          "trace_id": "96d9de53-38c0-463c-a1b6-c52a4e05103b",
+          "meta": null,
+          "data_keys": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4"
+          ]
+        },
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/models/1b141e22-fb9c-4739-b126-2cf4e19073ef/workbench",
+          "trace_id": "969ae3d5-f8ab-4b15-8014-c2b271095be1",
+          "meta": null,
+          "data_keys": [
+            "actions",
+            "items",
+            "model",
+            "source",
+            "versions"
+          ]
+        }
+      ],
+      "scoped_api_count": 2,
+      "expected_request_params": null,
+      "expected_text": null,
+      "dom": {
+        "title": "园区网络全流量采集与分析系统",
+        "text_length": 2105,
+        "buttons": 48,
+        "tabs": 0,
+        "horizontal_overflow": false,
+        "viewport": {
+          "width": 1920,
+          "height": 1080
+        },
+        "model_metrics_layout": {
+          "client_height": 269,
+          "scroll_height": 269,
+          "clipped": false,
+          "columns": "151.958px 151.969px 151.969px 151.969px",
+          "card_count": 7,
+          "card_heights": [
+            131.3,
+            131.3,
+            131.3,
+            131.3,
+            131.3,
+            131.3,
+            131.3
+          ],
+          "viewport_bottom_gap": 140
+        }
+      },
+      "screenshot": "doc/02_acceptance/runs/20260805-remediation-windows-chrome-g5-v13/models-1920x1080.png",
+      "screenshot_sha256": "42e2c0a65120326cbb84ae46bdaf7d2f6a15b683dbdc4c995210c770cd78d5b1"
+    },
+    {
+      "id": "forensics",
+      "route": "http://10.0.5.8:30180/forensics?alert_id=AL-LIVE-5da66509-30a6-4241-8405-ad4329876e1e&campaign_id=CP-LIVE-18dc65c2-5fb5-4c51-a6cc-3926fb71c53d&baseline_id=BL-LIVE-e908a1e2-2d02-4992-98f7-d075d6dc4c7f&evidence_id=EV-LIVE-c40e3560-fee6-49b8-baff-96434fbbcb73&evidence_type=pcap",
+      "status": "pass",
+      "api_responses": [
+        {
+          "method": "GET",
+          "status": 200,
+          "url": "http://10.0.5.8:30180/api/v1/pcap/jobs?limit=5&page_size=5&page=1&offset=0&alert_id=AL-LIVE-5da66509-30a6-4241-8405-ad4329876e1e&campaign_id=CP-LIVE-18dc65c2-5fb5-4c51-a6cc-3926fb71c53d&baseline_id=BL-LIVE-e908a1e2-2d02-4992-98f7-d075d6dc4c7f&evidence_id=EV-LIVE-c40e3560-fee6-49b8-baff-96434fbbcb73&evidence_type=pcap",
+          "trace_id": "84430c69c427dd82d48bba36fd5f2c44",
+          "meta": {
+            "request_id": "a66b2760-c261-4558-878a-3a2245e7aa6b",
+            "trace_id": "84430c69c427dd82d48bba36fd5f2c44",
+            "page": {
+              "total": 1,
+              "limit": 5,
+              "offset": 0,
+              "has_more": false
+            }
+          },
+          "data_keys": [
+            "0"
+          ]
+        }
+      ],
+      "scoped_api_count": 1,
+      "expected_request_params": {
+        "alert_id": "AL-LIVE-5da66509-30a6-4241-8405-ad4329876e1e",
+        "campaign_id": "CP-LIVE-18dc65c2-5fb5-4c51-a6cc-3926fb71c53d",
+        "baseline_id": "BL-LIVE-e908a1e2-2d02-4992-98f7-d075d6dc4c7f",
+        "evidence_id": "EV-LIVE-c40e3560-fee6-49b8-baff-96434fbbcb73",
+        "evidence_type": "pcap"
+      },
+      "expected_text": "77506614-9960-579a-953e-cbbb0dfb47a5",
+      "dom": {
+        "title": "园区网络全流量采集与分析系统",
+        "text_length": 3788,
+        "buttons": 101,
+        "tabs": 0,
+        "horizontal_overflow": false,
+        "viewport": {
+          "width": 1920,
+          "height": 1080
+        },
+        "model_metrics_layout": null
+      },
+      "screenshot": "doc/02_acceptance/runs/20260805-remediation-windows-chrome-g5-v13/forensics-1920x1080.png",
+      "screenshot_sha256": "daf46f1fa0d0ddee95dd5a4b9b1646c557fcc593bce487a1f4f089a3d6e01c92"
+    }
+  ],
+  "runtime_errors": {
+    "bad_responses": [],
+    "request_failures": [],
+    "console_errors": [],
+    "page_errors": [],
+    "third_party_console_errors": [],
+    "third_party_page_errors": []
+  },
+  "token_material_redacted": true,
+  "captured_at": "2026-08-04T17:20:12.610Z"
+}

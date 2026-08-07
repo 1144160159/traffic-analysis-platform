@@ -1,0 +1,137 @@
+{
+  "schema_version": 1,
+  "run_id": "20260804-remediation-forensics-source-refs-v4",
+  "result": "pass",
+  "gate": "G2_G3_FORENSICS_SOURCE_REFERENCE_WRITE_FILTER_RECONCILE",
+  "candidate": {
+    "image": "docker.io/traffic/forensics-service:remediation-forensics-7d3aba0ae1b7",
+    "image_id": "sha256:d56d6f7442defa00b65f2ce44f8c3253f8f546d91ac3badd782a4a6aa044e4ff",
+    "source_sha256": "7d3aba0ae1b79459788d819290ffa84e94b09a5be3fd33e56fcf84cd816d1047",
+    "pod": "forensics-service-85cd568b85-d9l6z",
+    "ready": true,
+    "restarts": 0
+  },
+  "tenant": "default",
+  "other_tenant": "campus-a",
+  "job_id": "77506614-9960-579a-953e-cbbb0dfb47a5",
+  "event_id": "acc4cfed-6a01-56f2-8c79-4ea72a6afc6d",
+  "source_refs": {
+    "alert_id": "AL-LIVE-5da66509-30a6-4241-8405-ad4329876e1e",
+    "campaign_id": "CP-LIVE-18dc65c2-5fb5-4c51-a6cc-3926fb71c53d",
+    "baseline_id": "BL-LIVE-e908a1e2-2d02-4992-98f7-d075d6dc4c7f",
+    "evidence_id": "EV-LIVE-c40e3560-fee6-49b8-baff-96434fbbcb73",
+    "evidence_type": "pcap"
+  },
+  "trace_id": "abeed3949c5ba27d68390a9dcc217503",
+  "idempotency_key_sha256": "148e36a1fe13f9129af28db3978bc4c7adab393559e319227e47cb6312b5aa9a",
+  "checks_total": 9,
+  "checks_passed": 9,
+  "checks_failed": 0,
+  "checks": [
+    {
+      "name": "accepted command returns stable receipt",
+      "status": "pass",
+      "detail": {
+        "status": 202,
+        "job_id": "77506614-9960-579a-953e-cbbb0dfb47a5",
+        "event_id": "acc4cfed-6a01-56f2-8c79-4ea72a6afc6d",
+        "trace_id": "abeed3949c5ba27d68390a9dcc217503"
+      }
+    },
+    {
+      "name": "request trace propagated to response",
+      "status": "pass",
+      "detail": {
+        "requested": "abeed3949c5ba27d68390a9dcc217503",
+        "returned": "abeed3949c5ba27d68390a9dcc217503"
+      }
+    },
+    {
+      "name": "same idempotency key replays the original receipt",
+      "status": "pass",
+      "detail": {
+        "status": 202,
+        "job_id": "77506614-9960-579a-953e-cbbb0dfb47a5",
+        "replayed": true
+      }
+    },
+    {
+      "name": "idempotency key rejects a different command",
+      "status": "pass",
+      "detail": {
+        "status": 409,
+        "error_code": "BIZ_3011"
+      }
+    },
+    {
+      "name": "combined source-reference filter reads the operational task",
+      "status": "pass",
+      "detail": {
+        "status": 200,
+        "total": 1,
+        "job_ids": [
+          "77506614-9960-579a-953e-cbbb0dfb47a5"
+        ]
+      }
+    },
+    {
+      "name": "nonmatching source reference returns an authoritative empty result",
+      "status": "pass",
+      "detail": {
+        "status": 200,
+        "total": 0
+      }
+    },
+    {
+      "name": "another tenant cannot observe the source-linked task",
+      "status": "pass",
+      "detail": {
+        "status": 200,
+        "tenant": "campus-a",
+        "total": 0
+      }
+    },
+    {
+      "name": "PostgreSQL preserves every source reference",
+      "status": "pass",
+      "detail": {
+        "tenant_id": "default",
+        "task_id": "77506614-9960-579a-953e-cbbb0dfb47a5",
+        "alert_id": "AL-LIVE-5da66509-30a6-4241-8405-ad4329876e1e",
+        "campaign_id": "CP-LIVE-18dc65c2-5fb5-4c51-a6cc-3926fb71c53d",
+        "baseline_id": "BL-LIVE-e908a1e2-2d02-4992-98f7-d075d6dc4c7f",
+        "evidence_id": "EV-LIVE-c40e3560-fee6-49b8-baff-96434fbbcb73",
+        "evidence_type": "pcap",
+        "current_trace_id": "forensics.pcap-cut.worker-fail:77506614-9960-579a-953e-cbbb0dfb47a5",
+        "create_trace_id": "abeed3949c5ba27d68390a9dcc217503",
+        "initial_history": 1,
+        "initial_outbox": 1,
+        "command_request": 1,
+        "audit_record": 1
+      }
+    },
+    {
+      "name": "history, outbox, request and audit share the immutable create trace",
+      "status": "pass",
+      "detail": {
+        "create_trace_id": "abeed3949c5ba27d68390a9dcc217503",
+        "current_trace_id": "forensics.pcap-cut.worker-fail:77506614-9960-579a-953e-cbbb0dfb47a5",
+        "initial_history": 1,
+        "initial_outbox": 1,
+        "command_request": 1,
+        "audit_record": 1
+      }
+    }
+  ],
+  "artifacts": [
+    "01-create.json",
+    "02-idempotent-replay.json",
+    "03-idempotency-conflict.json",
+    "04-filter-all-source-refs.json",
+    "05-filter-nonmatch.json",
+    "06-cross-tenant-isolation.json"
+  ],
+  "secret_material_redacted": true,
+  "unexpected_error": "",
+  "captured_at": "2026-08-04T14:55:58.512Z"
+}
