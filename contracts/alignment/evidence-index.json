@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-07T09:28:41Z",
+  "updated_at": "2026-08-07T09:55:21Z",
   "latest_g0": {
-    "run_id": "20260807-remediation-g0-full-v179",
-    "manifest": "doc/02_acceptance/runs/20260807-remediation-g0-full-v179/manifest.json",
-    "manifest_sha256": "4c4675b47f398da3fb20d80eb8e9d0875fa8dc2e3ff6c8077a860d59cd65db49",
-    "candidate_source_sha256": "693477a3ef16038d6c48d610c60d54fb625496759905c6d09ee323911d25594c",
+    "run_id": "20260807-remediation-g0-full-v180",
+    "manifest": "doc/02_acceptance/runs/20260807-remediation-g0-full-v180/manifest.json",
+    "manifest_sha256": "faeb5c76945070d6de7345890b0be844bc21da412258e59dcd76ec00a2dea85a",
+    "candidate_source_sha256": "97b866f5e14c3cb2d3cc6c6fcfa86127925f9fc7d349d55814b0f05767b4d05b",
     "status": "PASS",
     "scope": [
       "alignment-test",
@@ -157,6 +157,37 @@
       "G4": "OPEN_NO_APPROVED_PERFORMANCE_OR_FAILURE_PROFILE",
       "G5": "OPEN_NO_WINDOWS_CHROME_ASSET_JOURNEY",
       "G6": "OPEN_NO_APPROVED_TARGET_EXPAND_CANARY_SWITCH_ROLLBACK_OR_OBSERVATION",
+      "G7": "OPEN",
+      "G8": "BLOCKED_EXTERNAL"
+    }
+  },
+  "latest_asset_projection_nebula_g1": {
+    "canonical_ids": ["F-ASSET-002", "F-ASSET-005", "T-NEBULA-002"],
+    "run_id": "20260807-remediation-asset-projection-nebula-g1-v1",
+    "manifest": "doc/02_acceptance/runs/20260807-remediation-asset-projection-nebula-g1-v1/manifest.json",
+    "manifest_sha256": "0f1b1f515aa3f5d131b2ce09e846392abf6c24c9898c30369de6b287884f0b67",
+    "result": "doc/02_acceptance/runs/20260807-remediation-asset-projection-nebula-g1-v1/result.json",
+    "result_sha256": "fb27471919a0984b1caf480917d39c973569c9ec65d58f322b6856299e2aca64",
+    "g0_run_id": "20260807-remediation-g0-full-v180",
+    "g0_manifest_sha256": "faeb5c76945070d6de7345890b0be844bc21da412258e59dcd76ec00a2dea85a",
+    "candidate_source_sha256": "97b866f5e14c3cb2d3cc6c6fcfa86127925f9fc7d349d55814b0f05767b4d05b",
+    "repository_status": "PASS",
+    "scoped_evidence_status": "PASS_ISOLATED_ASSET_NEBULAGRAPH_PROJECTION",
+    "three_process_topology_verified": true,
+    "deterministic_replay_verified": true,
+    "tenant_vid_isolation_verified": true,
+    "bounded_read_verified": true,
+    "containers_and_network_removed": true,
+    "production_applied": false,
+    "production_mutations": [],
+    "gate_status": {
+      "G0": "PASS_SAME_SOURCE",
+      "G1": "PASS_FOR_ISOLATED_ASSET_NEBULAGRAPH_PROJECTION_ONLY",
+      "G2": "OPEN_NO_RELEASE_CANDIDATE_IMAGE_OR_REAL_SERVICE_WRITE",
+      "G3": "OPEN_NO_FULL_CROSS_STORE_RECONCILIATION",
+      "G4": "OPEN_NO_APPROVED_SCALE_TRUNCATION_PERFORMANCE_OR_FAILURE_PROFILE",
+      "G5": "OPEN_NO_WINDOWS_CHROME_GRAPH_JOURNEY",
+      "G6": "OPEN_NO_APPROVED_NEBULA_EXPAND_CANARY_SWITCH_ROLLBACK_OR_OBSERVATION",
       "G7": "OPEN",
       "G8": "BLOCKED_EXTERNAL"
     }

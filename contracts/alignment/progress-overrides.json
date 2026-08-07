@@ -274,10 +274,14 @@
         "scripts/alignment/verify_asset_projection_kafka_ephemeral.py",
         "go/control-plane/internal/asset/consumer/asset_projection_real_kafka_integration_test.go",
         "doc/02_acceptance/runs/20260807-remediation-g0-full-v178/manifest.json#sha256=6c769f977d9ae1a4ddfa6bb40da7a0eea4344249dc3519c526422ac615d7ea8f",
-        "doc/02_acceptance/runs/20260807-remediation-asset-projection-kafka-g1-v1/manifest.json#sha256=f99a71e3fa6d82365240d1e6acbf1da08d8d58d7a66712ef384b1f3d23b40909"
+        "doc/02_acceptance/runs/20260807-remediation-asset-projection-kafka-g1-v1/manifest.json#sha256=f99a71e3fa6d82365240d1e6acbf1da08d8d58d7a66712ef384b1f3d23b40909",
+        "scripts/alignment/verify_asset_projection_nebula_ephemeral.py",
+        "go/control-plane/internal/asset/consumer/asset_projection_nebula_integration_test.go",
+        "doc/02_acceptance/runs/20260807-remediation-g0-full-v180/manifest.json#sha256=faeb5c76945070d6de7345890b0be844bc21da412258e59dcd76ec00a2dea85a",
+        "doc/02_acceptance/runs/20260807-remediation-asset-projection-nebula-g1-v1/manifest.json#sha256=0f1b1f515aa3f5d131b2ce09e846392abf6c24c9898c30369de6b287884f0b67"
       ],
-      "blocker": "十项资产expand迁移尚未在批准目标执行，生产topic/ACL与Nebula space也未完成同源灰度；真实API/PG/Kafka/OS/Nebula/MinIO/审计同trace对账、真实Nebula及MinIO故障、性能、指定Windows Chrome变更旅程、发布回滚及观察窗仍未完成。",
-      "note": "v176完成PG expand双回放，v177完成真实隔离OpenSearch目标。v178再以固定digest的无卷、loopback Redpanda和PostgreSQL证明asset.events.v2 RequireAll broker ACK先于outbox published、完整headers/payload消费、authoritative history校验后的durable inbox offset及精确重放幂等；两个容器均删除且production_applied=false。G1现关闭PG、Kafka入口和OpenSearch目标三个隔离子切片；真实Nebula、MinIO及G2—G6仍开放，状态保持VERIFYING。"
+      "blocker": "十项资产expand迁移尚未在批准目标执行，生产topic/ACL与Nebula space也未完成同源灰度；真实API/PG/Kafka/CH/OS/Nebula/MinIO/审计同trace对账、真实目标故障与恢复、性能、指定Windows Chrome变更旅程、发布回滚及观察窗仍未完成。",
+      "note": "v176完成PG expand双回放，v177完成真实隔离OpenSearch，v178完成真实Kafka到durable inbox，v180再以固定digest、无卷、专用bridge的metad/storaged/graphd证明资产确定性投影重放、相同asset ID跨tenant VID隔离和有界读取；三容器及网络均删除且production_applied=false。MinIO导出清单子切片另绑定v179。G1已覆盖四个独立子边界，但尚未形成同一运行的全存储trace对账，状态保持VERIFYING。"
     },
     "F-ASSET-003": {
       "status": "VERIFYING",
@@ -400,10 +404,14 @@
         "doc/02_acceptance/runs/20260807-remediation-asset-expand-guardrails-v1/manifest.json#sha256=033eb16582134fc038fcc4b042ab21141dd464e6cd19bb48e7c0d0a51637f7f9",
         "scripts/alignment/verify_asset_expand_ephemeral.py",
         "doc/02_acceptance/runs/20260807-remediation-g0-full-v176/manifest.json#sha256=cccf2e64e201fbafa5a51d6fd1ddfb11d0003b8f7d9b0e713249c43dc597fd04",
-        "doc/02_acceptance/runs/20260807-remediation-asset-expand-g1-v2/manifest.json#sha256=b10bfba4e823da36788eebfe11c861c2b0b343e5eb7fab330eaaa3b5a3f33909"
+        "doc/02_acceptance/runs/20260807-remediation-asset-expand-g1-v2/manifest.json#sha256=b10bfba4e823da36788eebfe11c861c2b0b343e5eb7fab330eaaa3b5a3f33909",
+        "scripts/alignment/verify_asset_projection_nebula_ephemeral.py",
+        "go/control-plane/internal/asset/consumer/asset_projection_nebula_integration_test.go",
+        "doc/02_acceptance/runs/20260807-remediation-g0-full-v180/manifest.json#sha256=faeb5c76945070d6de7345890b0be844bc21da412258e59dcd76ec00a2dea85a",
+        "doc/02_acceptance/runs/20260807-remediation-asset-projection-nebula-g1-v1/manifest.json#sha256=0f1b1f515aa3f5d131b2ce09e846392abf6c24c9898c30369de6b287884f0b67"
       ],
-      "blocker": "跨存储reader代码现已实现，本地ClickHouse SQL引擎和真实临时MinIO子集通过；但分布式ClickHouse查询/profile/同水位对账、live Nebula及关系投影对账、PG对象manifest权威与回填、批准规模P95/P99、故障注入、生产候选和四项feature flag灰度、指定Windows Chrome、发布回滚及T+0至T+7观察窗仍未完成，G4至G8不得关闭。",
-      "note": "F-ASSET-005在既有repeatable-read PG快照上新增默认关闭的ClickHouse观测/告警上下文、ClickHouse证据到真实MinIO对象metadata/SHA256核验，以及tenant命名空间确定性VID的有界Nebula邻接投影；失败、陈旧、截断和完整性未知均继续进入partial/missing_sections。组件测试、ClickHouse local真实SQL语义、真实临时MinIO、前端合同与完整G0 v46通过；未运行分布式ClickHouse或live Nebula，状态保持VERIFYING。"
+      "blocker": "跨存储reader代码现已实现，本地ClickHouse SQL引擎、真实临时MinIO和真实三进程NebulaGraph子集通过；但分布式ClickHouse查询/profile/同水位对账、真实relationLimit+1截断、PG对象manifest权威与回填、全存储同trace、批准规模P95/P99、故障注入、生产候选和四项feature flag灰度、指定Windows Chrome、发布回滚及T+0至T+7观察窗仍未完成，G4至G8不得关闭。",
+      "note": "F-ASSET-005在既有repeatable-read PG快照上新增默认关闭的ClickHouse观测/告警上下文、ClickHouse证据到真实MinIO对象metadata/SHA256核验，以及tenant命名空间确定性VID的有界Nebula邻接投影。v180使用固定digest的metad/storaged/graphd专用拓扑，真实验证两次相同投影不复制节点、相同asset ID跨tenant不覆盖、有界节点读取和event/revision水位；三容器及网络均删除。当前尚未把ClickHouse、MinIO与Nebula放入同一trace运行，状态保持VERIFYING。"
     },
     "F-ASSET-006": {
       "status": "VERIFYING",

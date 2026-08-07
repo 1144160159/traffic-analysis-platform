@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "run_id": "20260807-remediation-asset-projection-nebula-g1-v1",
+  "status": "PASS",
+  "network": "codex-asset-projection-nebula-net-fcfb08e547c3",
+  "meta_container": "codex-asset-projection-nebula-meta-fcfb08e547c3",
+  "storage_container": "codex-asset-projection-nebula-storage-fcfb08e547c3",
+  "graph_container": "codex-asset-projection-nebula-graph-fcfb08e547c3",
+  "meta_image": "docker.io/vesoft/nebula-metad@sha256:6d72a76fd44a738d1353186d8f2a8d467752239f4f85030f56c1b53b657b21d8",
+  "storage_image": "docker.io/vesoft/nebula-storaged@sha256:29b9dccaecc339ed0e98b21575105eb45afc44afe84b8ca0cc9b0dca03c14fae",
+  "graph_image": "docker.io/vesoft/nebula-graphd@sha256:0457a789213499fbfa2a07fb01cbea174843e9617771536a5b67cd89d96bcbf9",
+  "image_ids": {
+    "meta": "sha256:e160f99aa8b44e4a70ae1dcdf09d08ffc2a8e9d5b555b7fb0248bdc351322151",
+    "storage": "sha256:6121adf9100c3ee832b370d2c8769f91d25368a5b0035c8dcea8981962168ac1",
+    "graph": "sha256:9ffa939c73f4ba97750f4ac071b50e51c71737aba2ed37f9e07933f1f5d63231"
+  },
+  "sentinel_verified": true,
+  "three_process_topology_verified": true,
+  "deterministic_replay_verified": true,
+  "tenant_vid_isolation_verified": true,
+  "bounded_read_verified": true,
+  "loopback_only_graph_endpoint": true,
+  "persistent_volume_attached": false,
+  "shared_environment_touched": false,
+  "production_applied": false,
+  "containers_removed": true,
+  "network_removed": true,
+  "test_output": "=== RUN   TestAssetProjectionRealNebulaDeterministicTenantVID\n--- PASS: TestAssetProjectionRealNebulaDeterministicTenantVID (20.59s)\nPASS\nok  \tgithub.com/1144160159/traffic-analysis-platform/go/control-plane/internal/asset/consumer\t20.604s",
+  "errors": []
+}
