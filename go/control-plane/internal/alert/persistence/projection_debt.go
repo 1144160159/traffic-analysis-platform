@@ -14,10 +14,12 @@ import (
 
 const defaultAlertProjectionTargetVersion = "legacy-date-index-v1"
 
-// ProjectionDebtRecorder is the durable commit barrier between the ClickHouse
-// source of truth and the rebuildable OpenSearch alert projection.
-type ProjectionDebtRecorder interface {
-	RecordProjectionDebt(context.Context, []*Alert, string, error) error
+// ProjectionReceiptRecorder is the durable commit barrier between the
+// ClickHouse source of truth and the rebuildable OpenSearch alert projection.
+// A precise bulk response may contain both applied and pending alerts; both
+// sides must be committed in one PostgreSQL transaction before Kafka advances.
+type ProjectionReceiptRecorder interface {
+	RecordProjectionOutcome(context.Context, []*Alert, []*Alert, string, error) error
 }
 
 type ProjectionDebtStore struct {
@@ -83,8 +85,23 @@ func (s *ProjectionDebtStore) CheckSchema(ctx context.Context) error {
 // A replay may advance the source version but can never replace newer debt with
 // an older projection image.
 func (s *ProjectionDebtStore) RecordProjectionDebt(ctx context.Context, alerts []*Alert, targetVersion string, cause error) error {
+	return s.RecordProjectionOutcome(ctx, nil, alerts, targetVersion, cause)
+}
+
+// RecordProjectionOutcome atomically records acknowledged OpenSearch
+// projections and durable repair debt for one ClickHouse batch.
+func (s *ProjectionDebtStore) RecordProjectionOutcome(
+	ctx context.Context,
+	appliedAlerts []*Alert,
+	pendingAlerts []*Alert,
+	targetVersion string,
+	cause error,
+) error {
 	if s == nil || s.db == nil {
 		return errors.New("alert projection debt store is unavailable")
+	}
+	if len(appliedAlerts) == 0 && len(pendingAlerts) == 0 {
+		return nil
 	}
 	targetVersion = normalizeProjectionTargetVersion(targetVersion)
 	tx, err := s.db.BeginTx(ctx, nil)
@@ -93,8 +110,29 @@ func (s *ProjectionDebtStore) RecordProjectionDebt(ctx context.Context, alerts [
 	}
 	defer tx.Rollback()
 
+	for _, alert := range appliedAlerts {
+		if err := validateProjectionReceiptAlert(alert); err != nil {
+			return err
+		}
+		hash, hashErr := AlertProjectionSHA256(alert)
+		if hashErr != nil {
+			return fmt.Errorf("hash alert %s applied projection: %w", alert.AlertID, hashErr)
+		}
+		if _, err := tx.ExecContext(ctx, `
+			INSERT INTO alert_opensearch_projection_watermarks(
+			  tenant_id,alert_id,source_event_id,source_version,source_sha256,target_index_version,applied_at
+			) VALUES ($1,$2,$3,$4,$5,$6,now())
+			ON CONFLICT (tenant_id,alert_id,target_index_version) DO UPDATE SET
+			  source_event_id=EXCLUDED.source_event_id,source_version=EXCLUDED.source_version,
+			  source_sha256=EXCLUDED.source_sha256,applied_at=now()
+			WHERE EXCLUDED.source_version >= alert_opensearch_projection_watermarks.source_version
+		`, alert.TenantID, alert.AlertID, alert.EventID, AlertSourceVersion(alert), hash, targetVersion); err != nil {
+			return fmt.Errorf("record alert %s applied projection: %w", alert.AlertID, err)
+		}
+	}
+
 	message := projectionErrorMessage(cause)
-	for _, alert := range alerts {
+	for _, alert := range pendingAlerts {
 		if alert == nil || strings.TrimSpace(alert.TenantID) == "" || strings.TrimSpace(alert.AlertID) == "" {
 			return errors.New("projection debt requires tenant_id and alert_id")
 		}
@@ -121,7 +159,14 @@ func (s *ProjectionDebtStore) RecordProjectionDebt(ctx context.Context, alerts [
 		}
 	}
 	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("commit alert projection debt: %w", err)
+		return fmt.Errorf("commit alert projection outcome: %w", err)
+	}
+	return nil
+}
+
+func validateProjectionReceiptAlert(alert *Alert) error {
+	if alert == nil || strings.TrimSpace(alert.TenantID) == "" || strings.TrimSpace(alert.AlertID) == "" {
+		return errors.New("applied projection requires tenant_id and alert_id")
 	}
 	return nil
 }
@@ -375,26 +420,7 @@ func (s *ProjectionDebtStore) ListProjectionWatermarkMismatches(ctx context.Cont
 }
 
 func (s *ProjectionDebtStore) RecordProjectionApplied(ctx context.Context, alert *Alert, targetVersion string) error {
-	if alert == nil {
-		return errors.New("applied projection alert is nil")
-	}
-	hash, err := AlertProjectionSHA256(alert)
-	if err != nil {
-		return err
-	}
-	_, err = s.db.ExecContext(ctx, `
-		INSERT INTO alert_opensearch_projection_watermarks(
-		  tenant_id,alert_id,source_event_id,source_version,source_sha256,target_index_version,applied_at
-		) VALUES ($1,$2,$3,$4,$5,$6,now())
-		ON CONFLICT (tenant_id,alert_id,target_index_version) DO UPDATE SET
-		  source_event_id=EXCLUDED.source_event_id,source_version=EXCLUDED.source_version,
-		  source_sha256=EXCLUDED.source_sha256,applied_at=now()
-		WHERE EXCLUDED.source_version >= alert_opensearch_projection_watermarks.source_version
-	`, alert.TenantID, alert.AlertID, alert.EventID, AlertSourceVersion(alert), hash, normalizeProjectionTargetVersion(targetVersion))
-	if err != nil {
-		return fmt.Errorf("record applied alert projection: %w", err)
-	}
-	return nil
+	return s.RecordProjectionOutcome(ctx, []*Alert{alert}, nil, targetVersion, nil)
 }
 
 func nullTime(value time.Time) interface{} {

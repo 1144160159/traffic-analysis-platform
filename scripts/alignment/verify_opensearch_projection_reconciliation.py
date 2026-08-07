@@ -38,6 +38,7 @@ TESTS = (
     Path("go/control-plane/internal/alert/projection/worker_test.go"),
     Path("go/control-plane/internal/alert/projection/reconcile_test.go"),
     Path("go/control-plane/internal/alert/projection/reconcile_integration_test.go"),
+    Path("go/control-plane/internal/alert/consumer/projection_receipt_real_kafka_integration_test.go"),
     Path("go/control-plane/internal/common/kafka/consumer_commit_observer_test.go"),
 )
 
@@ -68,6 +69,12 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
         errors.append("CH success plus OS failure must require durable projection debt")
     if boundary.get("debt_persistence_failure") != "return_error_and_block_offset_commit":
         errors.append("debt persistence failure must block Kafka offset advancement")
+    if boundary.get("opensearch_success_with_receipt_store") != "record_applied_watermarks_before_offset_commit":
+        errors.append("successful OpenSearch writes must record applied watermarks before Kafka advances")
+    if boundary.get("precise_partial_bulk") != "atomically_record_applied_watermarks_and_failed_debts_before_offset_commit":
+        errors.append("precise partial bulk outcomes must have one atomic PostgreSQL receipt")
+    if boundary.get("receipt_persistence_failure") != "return_error_and_block_offset_commit":
+        errors.append("applied receipt persistence failure must block Kafka offset advancement")
     if boundary.get("version_type") != "external_gte" or boundary.get("projection_id") != "alert_id":
         errors.append("deterministic alert_id and external_gte guards drifted")
     scope = contract.get("rebuild_scope", {})
@@ -85,6 +92,8 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
         errors.append("cross-service terminal receipt guard drifted")
     if scope.get("authoritative_three_store_receipt") != "same_owned_run_real_clickhouse_authority_real_opensearch_target_real_postgresql_receipt_equal_hash_and_version":
         errors.append("authoritative three-store receipt guard drifted")
+    if scope.get("kafka_five_store_receipt") != "same_owned_run_real_kafka_commit_after_redis_dedup_clickhouse_authority_opensearch_target_and_postgresql_applied_receipt":
+        errors.append("Kafka five-store receipt guard drifted")
     runtime = contract.get("runtime_guards", {})
     if runtime.get("feature_flag_default_enabled") is not False or runtime.get("production_mutations_in_repository_candidate") != []:
         errors.append("candidate must remain default-off with no production mutation claim")
@@ -92,6 +101,8 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
         errors.append("truncated reconciliation must remain partial")
     if contract.get("canonical_hash", {}).get("runtime_fields_excluded") != ["attack_phase", "arkime_link", "evidence_count"]:
         errors.append("canonical hash runtime-field exclusion drifted")
+    if contract.get("canonical_hash", {}).get("timestamp_precision") != "utc_milliseconds_before_storage_writes_and_hashing":
+        errors.append("canonical alert timestamp precision drifted")
     observability = contract.get("observability", {})
     if observability.get("metrics_service_port") != 9093 or observability.get("metrics_target_port") != 8082:
         errors.append("alert metrics service-to-listener mapping drifted")
@@ -110,11 +121,11 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
         errors.append("canonical F-SEARCH-001 authority contract drifted")
 
     tokens = {
-        DUAL: ("WriteBatchWithOutcome", "ProjectionPendingError", "RecordProjectionDebt", "projectionDebtAlerts"),
+        DUAL: ("WriteBatchWithOutcome", "ProjectionPendingError", "RecordProjectionOutcome", "projectionDebtAlerts", "projectionAppliedAlerts", "ReceiptRecorded"),
         CONSUMER: ("outcome.ClickHouseCommitted && outcome.DebtRecorded", "WriteBatchWithOutcome",
                    "alert_consumer_last_committed_offset", "alert_consumer_last_committed_event_info", "SetCommitObserver"),
         COMMON_CONSUMER: ("SetCommitObserver", "notifyCommitObserver(messages)", "CommitsSucceeded"),
-        DEBT: ("FOR UPDATE SKIP LOCKED", "alert_opensearch_projection_debts", "alert_opensearch_projection_watermarks", "AlertProjectionSHA256", "ListProjectionWatermarkMismatches", "jsonb_to_recordset"),
+        DEBT: ("FOR UPDATE SKIP LOCKED", "alert_opensearch_projection_debts", "alert_opensearch_projection_watermarks", "AlertProjectionSHA256", "ListProjectionWatermarkMismatches", "RecordProjectionOutcome", "jsonb_to_recordset"),
         OS_WRITER: ('VersionType: "external_gte"', '"version_type": "external_gte"', '"search_after"', "scope.TargetIndexVersion != w.TargetVersion()", "RefreshProjectionTarget",
                     'DedupFingerprint string `json:"dedup_fingerprint"`', "canonicalAlert(w.legacyReadKeywordFields)"),
         CH_REPOSITORY: ("AS first_seen_time", "AS last_seen_time"),
@@ -154,7 +165,8 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
                   "DoesNotConvergeWhenAcknowledgedWriteIsNotVisible", "DoesNotConvergeWhenWatermarkWriteFails",
                   "RetriesMissingWatermarkAfterTargetAlreadyConverged", "ProjectionWatermarkMismatchQueryIsBoundedAndVersioned",
                   "AlertProjectionRepairTerminalReceiptRealOpenSearch", "AlertProjectionRepairRealPostgresAndOpenSearch",
-                  "AlertProjectionRepairRealClickHousePostgresAndOpenSearch"):
+                  "AlertProjectionRepairRealClickHousePostgresAndOpenSearch", "WriteBatchAppliedReceiptFailureBlocksCommit",
+                  "ProjectionOutcomeCommitsAppliedAndPendingAtomically", "AlertProjectionReceiptRealKafka"):
         if token not in test_text:
             errors.append(f"negative or reconciliation test missing: {token}")
     for token in ("DoNotShadowMillisecondFilterColumns", "legacy-fingerprint"):

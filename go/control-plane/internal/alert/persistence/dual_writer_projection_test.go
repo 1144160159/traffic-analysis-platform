@@ -36,13 +36,15 @@ func (w *projectionTestWriter) Close() error               { return nil }
 func (w *projectionTestWriter) TargetVersion() string      { return w.version }
 
 type projectionTestDebtRecorder struct {
-	err     error
-	alerts  []*Alert
-	version string
+	err           error
+	appliedAlerts []*Alert
+	pendingAlerts []*Alert
+	version       string
 }
 
-func (r *projectionTestDebtRecorder) RecordProjectionDebt(_ context.Context, alerts []*Alert, version string, _ error) error {
-	r.alerts = append([]*Alert(nil), alerts...)
+func (r *projectionTestDebtRecorder) RecordProjectionOutcome(_ context.Context, applied, pending []*Alert, version string, _ error) error {
+	r.appliedAlerts = append([]*Alert(nil), applied...)
+	r.pendingAlerts = append([]*Alert(nil), pending...)
 	r.version = version
 	return r.err
 }
@@ -71,8 +73,8 @@ func TestWriteBatchRequiresDurableProjectionDebtBeforeCommit(t *testing.T) {
 	if !outcome.ClickHouseCommitted || outcome.OpenSearchCommitted || !outcome.DebtRecorded || outcome.DebtCount != 2 {
 		t.Fatalf("unexpected outcome: %+v", outcome)
 	}
-	if len(recorder.alerts) != 2 || recorder.version != "alerts-v2-write" {
-		t.Fatalf("unexpected debt record: alerts=%d version=%q", len(recorder.alerts), recorder.version)
+	if len(recorder.pendingAlerts) != 2 || len(recorder.appliedAlerts) != 0 || recorder.version != "alerts-v2-write" {
+		t.Fatalf("unexpected debt record: applied=%d pending=%d version=%q", len(recorder.appliedAlerts), len(recorder.pendingAlerts), recorder.version)
 	}
 	if err := dual.WriteBatch(context.Background(), projectionTestAlerts()); err == nil {
 		t.Fatal("ordinary caller must not observe projection-pending as final success")
@@ -107,8 +109,39 @@ func TestWriteBatchRecordsOnlyAcknowledgedBulkFailures(t *testing.T) {
 	dual.SetProjectionDebtRecorder(recorder)
 
 	outcome, err := dual.WriteBatchWithOutcome(context.Background(), projectionTestAlerts())
-	if err == nil || outcome.DebtCount != 1 || len(recorder.alerts) != 1 || recorder.alerts[0].AlertID != "alert-b" {
-		t.Fatalf("expected only failed item debt, outcome=%+v alerts=%v err=%v", outcome, recorder.alerts, err)
+	if err == nil || outcome.DebtCount != 1 || outcome.ReceiptCount != 1 ||
+		len(recorder.pendingAlerts) != 1 || recorder.pendingAlerts[0].AlertID != "alert-b" ||
+		len(recorder.appliedAlerts) != 1 || recorder.appliedAlerts[0].AlertID != "alert-a" {
+		t.Fatalf("expected one applied receipt and one failed item debt, outcome=%+v applied=%v pending=%v err=%v", outcome, recorder.appliedAlerts, recorder.pendingAlerts, err)
+	}
+}
+
+func TestWriteBatchRecordsAppliedReceiptsBeforeSuccess(t *testing.T) {
+	ch := &projectionTestWriter{}
+	os := &projectionTestWriter{version: "alerts-v2-write"}
+	dual := NewDualWriter(ch, os, 100, zap.NewNop())
+	recorder := &projectionTestDebtRecorder{}
+	dual.SetProjectionDebtRecorder(recorder)
+
+	outcome, err := dual.WriteBatchWithOutcome(context.Background(), projectionTestAlerts())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !outcome.ClickHouseCommitted || !outcome.OpenSearchCommitted || !outcome.ReceiptRecorded ||
+		outcome.ReceiptCount != 2 || outcome.DebtRecorded || len(recorder.appliedAlerts) != 2 || len(recorder.pendingAlerts) != 0 {
+		t.Fatalf("successful projection receipt was not durable: outcome=%+v recorder=%+v", outcome, recorder)
+	}
+}
+
+func TestWriteBatchAppliedReceiptFailureBlocksCommit(t *testing.T) {
+	ch := &projectionTestWriter{}
+	os := &projectionTestWriter{version: "alerts-v2-write"}
+	dual := NewDualWriter(ch, os, 100, zap.NewNop())
+	dual.SetProjectionDebtRecorder(&projectionTestDebtRecorder{err: errors.New("PostgreSQL unavailable")})
+
+	outcome, err := dual.WriteBatchWithOutcome(context.Background(), projectionTestAlerts())
+	if err == nil || outcome.ReceiptRecorded {
+		t.Fatalf("applied receipt failure must block commit: outcome=%+v err=%v", outcome, err)
 	}
 }
 

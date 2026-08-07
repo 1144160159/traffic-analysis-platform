@@ -6,7 +6,9 @@
 
 - ClickHouse `traffic.alerts_latest` 是告警事实权威源；OpenSearch 仅为可重建搜索投影。
 - ClickHouse 成功、OpenSearch 失败不是最终成功。只有 PG `alert_opensearch_projection_debts` 已提交时，Kafka 消费者才可把该批次归类为 `projection_pending` 并继续 offset；PG 记债失败必须返回错误。
+- OpenSearch全部成功时，只要PG回执store已启用，也必须先批量提交`alert_opensearch_projection_watermarks`再允许Kafka提交。精确bulk部分失败时，成功项watermark与失败项debt必须在同一PG事务内提交；事务任一行失败时不得推进offset。
 - OpenSearch `_id=alert_id`，写入使用 `version_type=external_gte` 和源时间毫秒版本，旧重放不能覆盖新投影。
+- consumer在写入和计算权威SHA前把`updated_at`规范到UTC毫秒，避免ClickHouse毫秒权威像与OpenSearch/PG纳秒像在同一source version下产生不同SHA。
 - 权威字段哈希排除 `attack_phase`、`arkime_link`、`evidence_count`；它们不是 ClickHouse 权威列。
 
 ## 前置检查
@@ -65,6 +67,12 @@ go run ./cmd/alert-projection-reconcile \
 6. 对目标内容已经一致的记录，repair 仍批量比较 PG watermark 的 `source_version + source_sha256`。缺失或不一致的 receipt 必须补写并再次查询；因此“OS 已写入但首次 PG watermark 失败”的后续运行能够恢复，不能因本轮没有 missing/stale 就跳过水位并伪报收敛。
 7. G1至少保留一次同一自有运行内的真实OpenSearch回读与真实PostgreSQL watermark回读。两个分离容器运行的PASS只能作为单组件诊断，不能替代这一跨服务终态回执；该G1仍不替代真实ClickHouse/Kafka或生产G3。
 8. 下一层G1必须把内存权威源替换为生产ClickHouse repository：同一alert逐项比较CH authoritative SHA、OS目标SHA与PG receipt SHA/source_version。该三存储样例未包含Kafka offset/last event_id前，仍不得写成G3。
+9. 五存储G1必须使用真实Redpanda和Redis，并通过生产alert consumer路径消费protobuf。只有CH、OS和PG应用回执一致后，broker consumer group committed offset、lag和post-commit `last_event_id`才可作为同一运行证据。该自有loopback运行仍不是G2/G3，也不代表883172条现网差额已回填。
+
+```bash
+make alignment-verify-alert-projection-kafka-five-store-g1 \
+  RUN_ID=<immutable-run-id> OUTPUT=/tmp/<run-id>.json
+```
 
 ```bash
 go run ./cmd/alert-projection-reconcile \

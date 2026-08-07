@@ -4547,44 +4547,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 107,
-          "mutation_id": "sql-bd1e736302808bd9",
-          "resolved_tables": [
-            "alert_opensearch_projection_debts"
-          ],
-          "role": "inbox_projection",
-          "table_expression": "alert_opensearch_projection_debts",
-          "verb": "INSERT INTO"
-        },
-        {
-          "backend": "postgresql",
-          "dynamic_identifier": false,
-          "line": 142,
-          "mutation_id": "sql-22551dcfea38e30c",
-          "resolved_tables": [
-            "alert_opensearch_projection_debts"
-          ],
-          "role": "inbox_projection",
-          "table_expression": "alert_opensearch_projection_debts",
-          "verb": "UPDATE"
-        },
-        {
-          "backend": "postgresql",
-          "dynamic_identifier": false,
-          "line": 177,
-          "mutation_id": "sql-9603c62e8fb49dc7",
-          "resolved_tables": [
-            "alert_opensearch_projection_debts"
-          ],
-          "role": "inbox_projection",
-          "table_expression": "alert_opensearch_projection_debts",
-          "verb": "UPDATE"
-        },
-        {
-          "backend": "postgresql",
-          "dynamic_identifier": false,
-          "line": 206,
-          "mutation_id": "sql-c802bfcd38a8597b",
+          "line": 122,
+          "mutation_id": "sql-74c17f1e9c3da4c0",
           "resolved_tables": [
             "alert_opensearch_projection_watermarks"
           ],
@@ -4595,8 +4559,20 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 217,
-          "mutation_id": "sql-428319aa91c74b3b",
+          "line": 145,
+          "mutation_id": "sql-09811e691c249c01",
+          "resolved_tables": [
+            "alert_opensearch_projection_debts"
+          ],
+          "role": "inbox_projection",
+          "table_expression": "alert_opensearch_projection_debts",
+          "verb": "INSERT INTO"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 187,
+          "mutation_id": "sql-db6808c3ce96699d",
           "resolved_tables": [
             "alert_opensearch_projection_debts"
           ],
@@ -4607,20 +4583,56 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 241,
-          "mutation_id": "sql-22c91bda016df0e4",
+          "line": 222,
+          "mutation_id": "sql-10ab03a0e604f07b",
           "resolved_tables": [
             "alert_opensearch_projection_debts"
           ],
           "role": "inbox_projection",
           "table_expression": "alert_opensearch_projection_debts",
           "verb": "UPDATE"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 251,
+          "mutation_id": "sql-331e37b7992e9f02",
+          "resolved_tables": [
+            "alert_opensearch_projection_watermarks"
+          ],
+          "role": "inbox_projection",
+          "table_expression": "alert_opensearch_projection_watermarks",
+          "verb": "INSERT INTO"
         },
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
           "line": 262,
-          "mutation_id": "sql-db72add2e8fc1712",
+          "mutation_id": "sql-3602b2a5edb0751e",
+          "resolved_tables": [
+            "alert_opensearch_projection_debts"
+          ],
+          "role": "inbox_projection",
+          "table_expression": "alert_opensearch_projection_debts",
+          "verb": "UPDATE"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 286,
+          "mutation_id": "sql-39d68241c88f5178",
+          "resolved_tables": [
+            "alert_opensearch_projection_debts"
+          ],
+          "role": "inbox_projection",
+          "table_expression": "alert_opensearch_projection_debts",
+          "verb": "UPDATE"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 307,
+          "mutation_id": "sql-a261c0b2a1e51066",
           "resolved_tables": [
             "alert_opensearch_reconcile_runs"
           ],
@@ -4631,26 +4643,14 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 280,
-          "mutation_id": "sql-35086b5d0eeb1b7b",
+          "line": 325,
+          "mutation_id": "sql-dda2dd8fa379ccd2",
           "resolved_tables": [
             "alert_opensearch_reconcile_runs"
           ],
           "role": "business",
           "table_expression": "alert_opensearch_reconcile_runs",
           "verb": "UPDATE"
-        },
-        {
-          "backend": "postgresql",
-          "dynamic_identifier": false,
-          "line": 386,
-          "mutation_id": "sql-702083d52a29ea31",
-          "resolved_tables": [
-            "alert_opensearch_projection_watermarks"
-          ],
-          "role": "inbox_projection",
-          "table_expression": "alert_opensearch_projection_watermarks",
-          "verb": "INSERT INTO"
         }
       ],
       "source": "go/control-plane/internal/alert/persistence/projection_debt.go",

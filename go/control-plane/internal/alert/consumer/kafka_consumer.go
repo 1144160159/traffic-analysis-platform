@@ -839,9 +839,13 @@ func (c *Consumer) buildAlert(
 		LastSeen:  lastSeen,
 		Count:     int32(dedupResult.Count),
 
-		Status:    state.StatusNew.String(),
-		Assignee:  "",
-		UpdatedTs: time.Now(),
+		Status:   state.StatusNew.String(),
+		Assignee: "",
+		// ClickHouse stores the canonical alert timestamp at millisecond
+		// precision. Normalize before hashing/writing so OpenSearch and the PG
+		// receipt cannot preserve extra nanoseconds that disappear from the
+		// authoritative ClickHouse image.
+		UpdatedTs: time.Now().UTC().Truncate(time.Millisecond),
 
 		ModelVersion: detection.Behaviors[0].GetModelVersion(),
 		RuleVersion:  "",

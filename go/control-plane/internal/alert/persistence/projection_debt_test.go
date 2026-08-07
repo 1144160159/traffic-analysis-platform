@@ -37,6 +37,54 @@ func TestProjectionDebtBatchCommitsAtomically(t *testing.T) {
 	}
 }
 
+func TestProjectionOutcomeCommitsAppliedAndPendingAtomically(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	mock.ExpectBegin()
+	mock.ExpectExec("INSERT INTO alert_opensearch_projection_watermarks").
+		WithArgs("tenant-a", "alert-a", "event-a", sqlmock.AnyArg(), sqlmock.AnyArg(), "alerts-v2-write").
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("INSERT INTO alert_opensearch_projection_debts").
+		WithArgs("tenant-a", "alert-b", "event-b", sqlmock.AnyArg(), sqlmock.AnyArg(), "alerts-v2-write", "one item rejected").
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectCommit()
+	now := time.Unix(1_800_000_000, 0).UTC()
+	alerts := projectionTestAlerts()
+	alerts[0].UpdatedTs, alerts[1].UpdatedTs = now, now
+	if err := NewProjectionDebtStore(db).RecordProjectionOutcome(
+		context.Background(), alerts[:1], alerts[1:], "alerts-v2-write", errors.New("one item rejected"),
+	); err != nil {
+		t.Fatal(err)
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestProjectionOutcomeRollsBackAppliedIfDebtFails(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	mock.ExpectBegin()
+	mock.ExpectExec("INSERT INTO alert_opensearch_projection_watermarks").WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec("INSERT INTO alert_opensearch_projection_debts").WillReturnError(errors.New("PostgreSQL unavailable"))
+	mock.ExpectRollback()
+	alerts := projectionTestAlerts()
+	if err := NewProjectionDebtStore(db).RecordProjectionOutcome(
+		context.Background(), alerts[:1], alerts[1:], "alerts-v2-write", errors.New("one item rejected"),
+	); err == nil {
+		t.Fatal("mixed projection outcome must roll back when debt persistence fails")
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestProjectionReconcileManifestPersistsPostRepairReceipt(t *testing.T) {
 	payload, err := projectionReconcileManifest(ProjectionReconcileResult{
 		MissingIDs: []string{"before-missing"}, ExtraIDs: []string{"manual-extra"}, StaleIDs: []string{"before-stale"},

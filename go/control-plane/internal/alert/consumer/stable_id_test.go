@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/dedup"
 	commonkafka "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/kafka"
@@ -76,6 +77,9 @@ func TestBuildAlertPreservesSourceTupleEvidenceAndReplayIdentity(t *testing.T) {
 	}
 	if first.SessionID != "session-42" || strings.Join(first.EvidenceIDs, ",") != "flow-1,flow-2" || first.EventID != "event-42" {
 		t.Fatalf("source identity/evidence lost: session=%s evidence=%v event=%s", first.SessionID, first.EvidenceIDs, first.EventID)
+	}
+	if first.UpdatedTs.Nanosecond()%int(time.Millisecond) != 0 {
+		t.Fatalf("updated timestamp exceeds canonical millisecond precision: %s", first.UpdatedTs.Format(time.RFC3339Nano))
 	}
 }
 

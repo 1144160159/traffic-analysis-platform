@@ -596,6 +596,11 @@ alignment-verify-alert-projection-three-store-g1: ## Verify T-OS-004 authoritati
 	test -n "$(RUN_ID)"
 	python scripts/alignment/verify_alert_projection_clickhouse_postgres_opensearch_ephemeral.py --run-id "$(RUN_ID)" $(if $(OUTPUT),--output "$(OUTPUT)",)
 
+.PHONY: alignment-verify-alert-projection-kafka-five-store-g1
+alignment-verify-alert-projection-kafka-five-store-g1: ## Verify Kafka commit after Redis, ClickHouse, OpenSearch and PostgreSQL receipts (RUN_ID required)
+	test -n "$(RUN_ID)"
+	python scripts/alignment/verify_alert_projection_kafka_five_store_ephemeral.py --run-id "$(RUN_ID)" $(if $(OUTPUT),--output "$(OUTPUT)",)
+
 .PHONY: alignment-capture-opensearch-projection-reconciliation
 alignment-capture-opensearch-projection-reconciliation: ## Capture repository and read-only pre-canary T-OS-004 evidence (RUN_ID and G0_MANIFEST required)
 	@test -n "$(RUN_ID)" || (echo "RUN_ID is required" && exit 1)

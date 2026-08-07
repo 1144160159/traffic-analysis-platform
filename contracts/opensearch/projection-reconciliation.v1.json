@@ -1,5 +1,5 @@
 {
-  "contract_version": "1.0.0",
+  "contract_version": "1.1.0",
   "feature_id": "F-SEARCH-001",
   "remediation_id": "T-OS-004",
   "work_package": "WP-23-OS",
@@ -15,6 +15,9 @@
   "write_boundary": {
     "clickhouse_success_opensearch_failure": "projection_pending_only_after_durable_debt",
     "debt_persistence_failure": "return_error_and_block_offset_commit",
+    "opensearch_success_with_receipt_store": "record_applied_watermarks_before_offset_commit",
+    "precise_partial_bulk": "atomically_record_applied_watermarks_and_failed_debts_before_offset_commit",
+    "receipt_persistence_failure": "return_error_and_block_offset_commit",
     "projection_id": "alert_id",
     "version_type": "external_gte",
     "source_version_order": ["updated_ts_unix_millis", "last_seen_unix_millis", "first_seen_unix_millis", "1"]
@@ -40,6 +43,7 @@
     "watermark_terminal_receipt": "compare_source_version_and_authoritative_sha256_in_postgresql_repair_missing_receipts_then_requery",
     "cross_service_terminal_receipt": "same_owned_run_real_opensearch_requery_and_real_postgresql_watermark_requery",
     "authoritative_three_store_receipt": "same_owned_run_real_clickhouse_authority_real_opensearch_target_real_postgresql_receipt_equal_hash_and_version",
+    "kafka_five_store_receipt": "same_owned_run_real_kafka_commit_after_redis_dedup_clickhouse_authority_opensearch_target_and_postgresql_applied_receipt",
     "extra_after_repair": "persist_for_manual_adjudication_never_auto_delete"
   },
   "runtime_guards": {
@@ -53,6 +57,7 @@
   },
   "canonical_hash": {
     "runtime_fields_excluded": ["attack_phase", "arkime_link", "evidence_count"],
+    "timestamp_precision": "utc_milliseconds_before_storage_writes_and_hashing",
     "reason": "these fields are not authoritative ClickHouse columns and cannot be deterministically rebuilt"
   },
   "read_compatibility": {
@@ -72,7 +77,7 @@
   },
   "closure_blockers": [
     "the expand-only PostgreSQL migration is present, but the candidate worker and an approved V2 OpenSearch target have not been deployed or exercised",
-    "real Kafka offset decisions and consumer lag versus last event_id have not been captured",
+    "owned G1 captures Kafka offset and last event_id, but the same candidate has not been deployed to the approved production-like G2 environment",
     "real missing extra stale manifests and successful automatic repair rates are absent",
     "fixed-scale P50 P95 P99 and resource budgets are not approved",
     "canary rollback and T+0 T+1 T+3 T+7 observation are incomplete"
