@@ -46,11 +46,13 @@
         "scripts/alignment/validate.py",
         "tests/alignment/test_feature_contract_registry.py",
         "doc/07_alignment/runbooks/F-COMMON-001-feature-contract-registry.md",
+        "doc/02_acceptance/runs/20260807-remediation-feature-contract-registry-v2/manifest.json#sha256=3e580b44a732b3ca767b932865372ada31782d220a30f555b6dd6ff2ef4fd812",
+        "doc/02_acceptance/runs/20260807-remediation-g0-full-v166/manifest.json#sha256=6b75a912b6f37491d96b1614c8c26eb941d94e74f1f442c99493839f09dc4448",
         "doc/02_acceptance/runs/20260804-remediation-feature-contract-registry-v1/manifest.json#sha256=84dcda87162d577eee2dad6f681baea28b0371ae8d2d8978e8811daefd4226c0",
         "doc/02_acceptance/runs/20260804-remediation-g0-full-v159/manifest.json#sha256=642723035cc06196a5c11d11b57bffa99f83f3fbd9ea96f91053b4bb31faaa53",
         "doc/02_acceptance/runs/20260804-remediation-common-response-adapter-v3/manifest.json#sha256=2c460115e5bc7b64247e22d65259efa5c3c82be32a2f5a941f315a2d5d216e50"
       ],
-      "blocker": "54个canonical功能ID已全部解析到唯一Accountable、工作包、接受用例和回滚ID；38个24周标准范围功能现均有正式Feature Contract并通过当前语义、唯一operation_id和兼容库存校验，16个P0合同齐全。16个backlog功能仍缺正式合同并保持显式。新增合同中未落地的统一批量、导出、图投影、专题对象报告和采用遥测均保持draft，不据此声明实现。当前G0 v164早于本次合同冻结，必须以新候选哈希重跑；生产工作负载仍未暴露contract version、候选source hash、旧客户端兼容命中量或未知枚举/字段遥测，每份合同的真实HAR、灰度回滚及T+观察也未闭环，G2至G8保持PARTIAL/OPEN/HOLD/BLOCKED。",
+      "blocker": "54个canonical功能ID已全部解析到唯一Accountable、工作包、接受用例和回滚ID；38个24周标准范围功能现均有正式Feature Contract并通过当前语义、唯一operation_id和兼容库存校验，16个P0合同齐全。16个backlog功能仍缺正式合同并保持显式。新增合同中未落地的统一批量、导出、图投影、专题对象报告和采用遥测均保持draft，不据此声明实现。同哈希G0 v166与Feature Contract专项v2已通过仓库门禁，但尚未部署；生产工作负载仍未暴露contract version、候选source hash、旧客户端兼容命中量或未知枚举/字段遥测，每份合同的真实HAR、灰度回滚及T+观察也未闭环，G2至G8保持PARTIAL/OPEN/HOLD/BLOCKED。",
       "note": "F-COMMON-001保持IMPLEMENTING：24周标准范围合同覆盖已从27/38提升到38/38，contract_coverage为STANDARD_SCOPE_COMPLETE_BACKLOG_PARTIAL；这只关闭W1合同编制缺口。注册表是构建/发布门禁而非运行时依赖，16份backlog缺口、OpenAPI/生成客户端采用、运行时遥测、真实服务、浏览器和发布观察仍未关闭。"
     },
     {
