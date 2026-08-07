@@ -14,7 +14,7 @@
     {
       "domain": "clickhouse_topology",
       "path": "deployments/kubernetes/infrastructure/02-clickhouse.yaml",
-      "sha256": "8ef784f4133b9f25d24b0f0031e295a7fa26f428791d6585fd2cbd8a5c613368"
+      "sha256": "7765ef3745db9d84f988024ee7fef42f1e8d6b5b73259ac5f11d8c7c3c35891d"
     },
     {
       "domain": "flink_checkpoint_ha",
@@ -489,5 +489,5 @@
       "external G8 HA site and third-party acceptance"
     ]
   },
-  "catalog_sha256": "ba7a485e7080c6ca71b11dd5b6056a813905a24ac4884f3e688128a2668b37c0"
+  "catalog_sha256": "5fc51ac017767b80fb95ad3be685e071a781279bb4bfa1d4bc2296fa5d67d65e"
 }

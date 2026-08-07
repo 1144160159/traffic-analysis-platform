@@ -58,7 +58,7 @@
     {
       "reference": "clickhouse/clickhouse-server:24.3",
       "normalized": "docker.io/clickhouse/clickhouse-server:24.3",
-      "repo_digest": "docker.io/clickhouse/clickhouse-server@sha256:b052ae89097c2d0f718b15ba1f4ce1c2a781eda8375980cf1cddd8f203981b58",
+      "repo_digest": "docker.io/clickhouse/clickhouse-server@sha256:458f72c00e4abc80c2950d8070bc5723b538544d72ea4a6a58d9ff4f8fadf8d7",
       "image_id": "sha256:cd3b547d16ce8ab9e122ff96fe3379564535b85d5d9a7ab8237dd8b65e964b4b",
       "source": "live-pod-image-id-and-local-cri",
       "mutable_tag": false

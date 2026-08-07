@@ -17,6 +17,7 @@
     "kafka_g1_verifier": "scripts/alignment/verify_asset_projection_kafka_ephemeral.py",
     "minio_g1_verifier": "scripts/alignment/verify_asset_export_minio_ephemeral.py",
     "nebula_g1_verifier": "scripts/alignment/verify_asset_projection_nebula_ephemeral.py",
+    "clickhouse_g1_verifier": "scripts/alignment/verify_asset_detail_clickhouse_ephemeral.py",
     "runtime_config": "go/control-plane/internal/asset/config/config.go",
     "canonical_deployment": "deployments/kubernetes/applications/go-services.yaml",
     "compatibility_deployment": "go/control-plane/deployments/kubernetes/asset-service.yaml"
@@ -105,6 +106,14 @@
     "graph_image": "docker.io/vesoft/nebula-graphd@sha256:0457a789213499fbfa2a07fb01cbea174843e9617771536a5b67cd89d96bcbf9",
     "sentinel": "ASSET_PROJECTION_EPHEMERAL_NEBULA_SENTINEL=ephemeral-only",
     "topology": "one metad, one storaged and one graphd on an owned bridge network",
+    "persistent_volume": false,
+    "shared_environment": false
+  },
+  "clickhouse_g1_isolation": {
+    "image": "docker.io/clickhouse/clickhouse-server@sha256:458f72c00e4abc80c2950d8070bc5723b538544d72ea4a6a58d9ff4f8fadf8d7",
+    "sentinel": "traffic.codex_ephemeral_asset_detail_sentinel=ephemeral-only",
+    "schema_authority": "common/sql/ch/00-all-tables.sql",
+    "topology": "one owned standalone ClickHouse process with canonical sessions and alerts columns and local MergeTree engines",
     "persistent_volume": false,
     "shared_environment": false
   },

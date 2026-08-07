@@ -325,6 +325,11 @@ alignment-verify-asset-projection-nebula-g1: ## Verify F-ASSET-002/005 determini
 	test -n "$(RUN_ID)"
 	python scripts/alignment/verify_asset_projection_nebula_ephemeral.py --run-id "$(RUN_ID)" $(if $(OUTPUT),--output "$(OUTPUT)",)
 
+.PHONY: alignment-verify-asset-detail-clickhouse-g1
+alignment-verify-asset-detail-clickhouse-g1: ## Verify F-ASSET-005 facts and watermarks in an owned ClickHouse container (RUN_ID required)
+	test -n "$(RUN_ID)"
+	python scripts/alignment/verify_asset_detail_clickhouse_ephemeral.py --run-id "$(RUN_ID)" $(if $(OUTPUT),--output "$(OUTPUT)",)
+
 .PHONY: alignment-verify-minio-object-governance
 alignment-verify-minio-object-governance: ## Verify T-MINIO-002/003/004 bucket, lifecycle and fail-closed credential governance
 	python scripts/alignment/verify_minio_object_governance.py

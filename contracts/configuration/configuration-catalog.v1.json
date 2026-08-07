@@ -77,7 +77,7 @@
         "common/sql/ch/00-all-tables.sql",
         "deployments/kubernetes/init-jobs/03-clickhouse-schema.yaml"
       ],
-      "source_sha256": "8cc2faf54d1d0ea8cbc93e931e61f3b5fb10d81035931be673f3bcda506cca02"
+      "source_sha256": "ebb88a91605ba9273e5e9ee2370e4ed165a6503a99485e3b6b37662f4d7b5a90"
     },
     {
       "domain": "minio_lifecycle",
@@ -108,7 +108,7 @@
     }
   ],
   "source_hashes": {
-    "contracts/clickhouse/schema-authority.v1.json": "8cc2faf54d1d0ea8cbc93e931e61f3b5fb10d81035931be673f3bcda506cca02",
+    "contracts/clickhouse/schema-authority.v1.json": "ebb88a91605ba9273e5e9ee2370e4ed165a6503a99485e3b6b37662f4d7b5a90",
     "contracts/events/kafka-acl-catalog.v1.json": "06805724b42cd5dda837e52e1097428e11094a95be54fcb07f595a944df7645f",
     "contracts/events/kafka-topic-catalog.v1.json": "f517b239eaba7b288aca253e730862f3e78c374c61cbbe06116b9e4ed740abe3",
     "contracts/flink/job-registry.v1.json": "e1cfdb658c0cad53aeaa0aec55151fdc928169bb3bba8ac84a7db80009797c3c",
@@ -118,7 +118,7 @@
     "deployments/kubernetes/configmaps/apisix-routes.yaml": "481adaf89d580e0928fd6145d0e0c3fd4daac8880a95a39400fdaa4edc491f79",
     "deployments/kubernetes/flink/flink-log-job.yaml": "de7010b9a7fd35eec2ae249aeecc3a1f139574d4801481259fe2efc029f4097d",
     "deployments/kubernetes/infrastructure/01-kafka.yaml": "fe5ae4421e5adfef9bf98ba62188ce8f6220c8192c8d94695bae5bf0de538e2f",
-    "deployments/kubernetes/infrastructure/02-clickhouse.yaml": "8ef784f4133b9f25d24b0f0031e295a7fa26f428791d6585fd2cbd8a5c613368",
+    "deployments/kubernetes/infrastructure/02-clickhouse.yaml": "7765ef3745db9d84f988024ee7fef42f1e8d6b5b73259ac5f11d8c7c3c35891d",
     "deployments/kubernetes/infrastructure/03-postgresql.yaml": "23bad32a6ce7c00583822639b2c0c3807834eefccf881f7bec6e03bae9d62459",
     "deployments/kubernetes/infrastructure/05-opensearch.yaml": "c8a8242b3678ba30f87f7b4354bf52c97a3bbac2779d0b3d9bca9abaf1f5dc13",
     "deployments/kubernetes/infrastructure/06-minio.yaml": "efecfa197f887fe61ade662581ac5f3d316d439240ed0fc4441e6347c3ea7243",
@@ -130,7 +130,7 @@
     "deployments/kubernetes/init-jobs/00-kafka-service-principals.yaml": "d01a637fa8238db4d86261bae66ac8ab02a032dba3bca008a707fbffa20037d8",
     "deployments/kubernetes/init-jobs/01-kafka-topics.yaml": "6e8f59c9ac3b4f0fb938bcdbb39dd07417fd506089cdb18e20ea66ba86ff0bca",
     "deployments/kubernetes/init-jobs/02-postgres-schema.yaml": "e160088d18fb92a451aa477bbab7ba6dc0b3efa627951a6b4f151ce0bb966ec2",
-    "deployments/kubernetes/init-jobs/03-clickhouse-schema.yaml": "262b49eef99b05aa37056f52b88e726370b56b70c117a32a755be6fa7b6dd468",
+    "deployments/kubernetes/init-jobs/03-clickhouse-schema.yaml": "8ca1010db70655b9740a0b3bf2327f99838145bf15b20d109c98dcb976895c6b",
     "deployments/kubernetes/init-jobs/04-opensearch-templates.yaml": "6d4fe42c60dd9f14fe27e65e924ea75bfcce2029989448f4e09f55d44fb5a44f",
     "deployments/kubernetes/init-jobs/05-nebula-schema.yaml": "7dfc2a4b67af004d132edc5c7882a67c705428d5529d8889108f6b0e4f1730c9",
     "deployments/kubernetes/init-jobs/06-minio-lifecycle.yaml": "d38d6008931e4442e7de6f28fb08ac3a6a59a28629bf39d190242743ed17922c",
@@ -63803,5 +63803,5 @@
       ]
     }
   ],
-  "catalog_sha256": "d65cf28f467a2295fa6cecbb1f0386455e4d58888ec0598bb64af2fe023f8007"
+  "catalog_sha256": "09e5ba4dc62ea4cf5b0ecb80cfea10f1de8e833ab12a844e93f9bb6319366916"
 }

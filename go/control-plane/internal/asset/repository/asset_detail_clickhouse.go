@@ -81,9 +81,9 @@ func (r *AssetDetailClickHouseReader) ReadAssetObservations(
 			coalesce(max(ts_end), 0) AS last_observed
 		FROM traffic.sessions
 		WHERE tenant_id = ?
-		  AND ts_start >= ? AND ts_start <= ?
+		  AND ts_start >= ? AND ts_start <= ? AND ts_end <= ?
 		  AND (src_ip = ? OR dst_ip = ?)`,
-		ip, tenantID, windowStart.UnixMilli(), windowEnd.UnixMilli(), ip, ip,
+		ip, tenantID, windowStart.UnixMilli(), windowEnd.UnixMilli(), windowEnd.UnixMilli(), ip, ip,
 	).Scan(
 		&sessionCount, &bytesTotal, &packetsTotal, &distinctPeers,
 		&protocolsJSON, &firstObservedMillis, &lastObservedMillis,

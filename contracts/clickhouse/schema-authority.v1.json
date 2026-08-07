@@ -34,7 +34,7 @@
     },
     {
       "path": "deployments/kubernetes/init-jobs/03-clickhouse-schema.yaml",
-      "sha256": "262b49eef99b05aa37056f52b88e726370b56b70c117a32a755be6fa7b6dd468",
+      "sha256": "8ca1010db70655b9740a0b3bf2327f99838145bf15b20d109c98dcb976895c6b",
       "disposition": "legacy_kubernetes_entrypoint"
     },
     {
