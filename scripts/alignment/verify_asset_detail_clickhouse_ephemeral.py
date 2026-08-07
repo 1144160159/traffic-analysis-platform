@@ -14,6 +14,8 @@ import time
 from pathlib import Path
 from typing import Any
 
+from candidate_snapshot import build_snapshot
+
 
 ROOT = Path(__file__).resolve().parents[2]
 IMAGE = "docker.io/clickhouse/clickhouse-server@sha256:458f72c00e4abc80c2950d8070bc5723b538544d72ea4a6a58d9ff4f8fadf8d7"
@@ -21,6 +23,27 @@ SCHEMA_AUTHORITY = ROOT / "common/sql/ch/00-all-tables.sql"
 SENTINEL_VALUE = "ephemeral-only"
 EPHEMERAL_USER = "codex_ephemeral"
 EPHEMERAL_PASSWORD = "codex-ephemeral-only"
+
+
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        for chunk in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def load_g0(path: Path, candidate: dict[str, Any]) -> dict[str, Any]:
+    resolved = path.resolve()
+    if not resolved.is_file():
+        raise ValueError(f"G0 manifest does not exist: {resolved}")
+    manifest = json.loads(resolved.read_text(encoding="utf-8"))
+    if manifest.get("gate") != "G0" or manifest.get("status") != "PASS":
+        raise ValueError("referenced G0 manifest is not a PASS G0 result")
+    expected = (manifest.get("candidate_source") or {}).get("content_sha256")
+    if not expected or expected != candidate.get("content_sha256"):
+        raise ValueError("referenced G0 manifest does not cover the current candidate source")
+    return manifest
 
 
 def run(
@@ -115,11 +138,28 @@ def bootstrap_sql() -> tuple[str, str]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--run-id", required=True)
+    parser.add_argument("--g0-manifest", type=Path, required=True)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
+    output = args.output.resolve() if args.output else None
+    if output and output.exists():
+        raise SystemExit(f"refusing to overwrite asset ClickHouse G1 evidence: {output}")
+    candidate_before = build_snapshot()
+    try:
+        g0_path = args.g0_manifest.resolve()
+        g0 = load_g0(g0_path, candidate_before)
+    except (ValueError, json.JSONDecodeError) as exc:
+        raise SystemExit(str(exc)) from exc
     network, container = names(args.run_id)
     result: dict[str, Any] = {
         "schema_version": 1, "run_id": args.run_id, "status": "FAIL",
+        "candidate_source": candidate_before, "candidate_source_stable": False,
+        "g0_reference": {
+            "run_id": g0.get("run_id"),
+            "manifest": str(g0_path.relative_to(ROOT)),
+            "manifest_sha256": sha256(g0_path),
+            "candidate_source_sha256": candidate_before["content_sha256"],
+        },
         "network": network, "container": container, "image": IMAGE,
         "image_id": "", "schema_authority": str(SCHEMA_AUTHORITY.relative_to(ROOT)),
         "schema_authority_sha256": "", "canonical_schema_derived": False,
@@ -230,15 +270,25 @@ def main() -> int:
         result["container_removed"] = container_absent(container)
         result["network_removed"] = network_absent(network)
 
+    candidate_after = build_snapshot()
+    result["candidate_source_stable"] = (
+        candidate_before["content_sha256"] == candidate_after["content_sha256"]
+    )
+    if not result["candidate_source_stable"]:
+        result["status"] = "FAIL"
+        result["errors"].append("candidate source changed during ClickHouse G1 verification")
+
     payload = json.dumps(result, indent=2, ensure_ascii=False) + "\n"
-    if args.output:
-        output = args.output.resolve()
-        if output.exists():
-            raise SystemExit(f"refusing to overwrite asset ClickHouse G1 evidence: {output}")
+    if output:
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(payload, encoding="utf-8")
     print(payload, end="")
-    return 0 if result["status"] == "PASS" and result["container_removed"] and result["network_removed"] else 1
+    return 0 if (
+        result["status"] == "PASS"
+        and result["container_removed"]
+        and result["network_removed"]
+        and result["candidate_source_stable"]
+    ) else 1
 
 
 if __name__ == "__main__":

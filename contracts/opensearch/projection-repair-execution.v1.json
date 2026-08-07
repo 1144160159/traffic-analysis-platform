@@ -62,7 +62,6 @@
   },
   "closure_blockers": [
     "the current local image scan uses a vulnerability database older than the 24-hour approval limit and is not approval eligible",
-    "one non-reachable module finding still requires explicit security adjudication",
     "a pullable registry manifest digest for the final same-hash tool image is not yet published and bound",
     "registry signature and SLSA provenance verification are absent",
     "a current approved production read-only shadow package is absent",

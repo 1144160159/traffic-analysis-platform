@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import importlib.util
+import json
+import sys
+import tempfile
 import unittest
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "scripts/alignment"))
 SPEC = importlib.util.spec_from_file_location(
     "verify_asset_detail_clickhouse_ephemeral",
     ROOT / "scripts/alignment/verify_asset_detail_clickhouse_ephemeral.py",
@@ -49,6 +53,24 @@ class AssetDetailClickHouseEphemeralGuardTest(unittest.TestCase):
         self.assertNotEqual(MODULE.EPHEMERAL_USER, "default")
         with self.assertRaisesRegex(ValueError, "run_id is required"):
             MODULE.names(" ")
+
+    def test_g0_binding_accepts_only_current_pass_candidate(self) -> None:
+        candidate = {"content_sha256": "a" * 64}
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "manifest.json"
+            path.write_text(json.dumps({
+                "gate": "G0", "status": "PASS",
+                "candidate_source": {"content_sha256": "a" * 64},
+            }), encoding="utf-8")
+            loaded = MODULE.load_g0(path, candidate)
+            self.assertEqual(loaded["status"], "PASS")
+
+            path.write_text(json.dumps({
+                "gate": "G0", "status": "PASS",
+                "candidate_source": {"content_sha256": "b" * 64},
+            }), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "does not cover the current candidate"):
+                MODULE.load_g0(path, candidate)
 
 
 if __name__ == "__main__":

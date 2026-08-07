@@ -334,9 +334,10 @@ alignment-verify-asset-projection-nebula-g1: ## Verify F-ASSET-002/005 determini
 	python scripts/alignment/verify_asset_projection_nebula_ephemeral.py --run-id "$(RUN_ID)" $(if $(OUTPUT),--output "$(OUTPUT)",)
 
 .PHONY: alignment-verify-asset-detail-clickhouse-g1
-alignment-verify-asset-detail-clickhouse-g1: ## Verify F-ASSET-005 facts and watermarks in an owned ClickHouse container (RUN_ID required)
+alignment-verify-asset-detail-clickhouse-g1: ## Verify F-ASSET-005 facts and watermarks in an owned ClickHouse container (RUN_ID and G0_MANIFEST required)
 	test -n "$(RUN_ID)"
-	python scripts/alignment/verify_asset_detail_clickhouse_ephemeral.py --run-id "$(RUN_ID)" $(if $(OUTPUT),--output "$(OUTPUT)",)
+	test -n "$(G0_MANIFEST)"
+	python scripts/alignment/verify_asset_detail_clickhouse_ephemeral.py --run-id "$(RUN_ID)" --g0-manifest "$(G0_MANIFEST)" $(if $(OUTPUT),--output "$(OUTPUT)",)
 
 .PHONY: alignment-verify-asset-seven-source-g1
 alignment-verify-asset-seven-source-g1: ## Reconcile one bounded asset revision across seven owned sources (RUN_ID required)
