@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "run_id": "20260808-remediation-alert-projection-kafka-five-store-g1-v2",
+  "gate": "G1",
+  "status": "PASS",
+  "captured_at": "2026-08-07T16:31:06Z",
+  "candidate": {
+    "git_head": "df88d4234c886f01e71f8085a0547139cce91d3e",
+    "content_sha256": "cbe7d9b904e1e98bac56c260b2fb218d8d8e68c48d925ba796c9b07fbedeccd1",
+    "file_count": 2370
+  },
+  "g0_reference": {
+    "run_id": "20260808-remediation-g0-full-v189",
+    "path": "doc/02_acceptance/runs/20260808-remediation-g0-full-v189/manifest.json",
+    "sha256": "0064b8981c2caa4c7fadff46bd49ea2dd24e72c00dc7787042ed977aa4785221",
+    "status": "PASS",
+    "candidate_content_sha256": "cbe7d9b904e1e98bac56c260b2fb218d8d8e68c48d925ba796c9b07fbedeccd1"
+  },
+  "result": {
+    "path": "result.json",
+    "sha256": "8e9f27f2be846de5ade22682a169e346810c9594eb67fb73017f53cd7ba848df",
+    "size_bytes": 4032,
+    "sentinels_verified": true,
+    "production_alert_consumer_verified": true,
+    "redis_dedup_verified": true,
+    "clickhouse_authority_verified": true,
+    "opensearch_projection_verified": true,
+    "postgres_applied_receipt_verified": true,
+    "broker_committed_offset_verified": true,
+    "last_event_id_observer_verified": true,
+    "cross_store_hash_and_version_verified": true,
+    "receipt_failure_blocks_commit_unit_verified": true,
+    "postgres_receipt_failure_offset_retained_verified": true,
+    "same_group_restart_redelivery_verified": true,
+    "retry_cross_store_convergence_verified": true
+  },
+  "scope": {
+    "topic": "detections.alert-projection-receipt.v1",
+    "consumer_group": "alert-projection-receipt-g1",
+    "first_event_id": "event-alert-projection-kafka-g1",
+    "retry_event_id": "event-alert-projection-kafka-retry-g1",
+    "broker_committed_offset_before_fault": 1,
+    "broker_lag_before_fault": 0,
+    "broker_committed_offset_during_receipt_failure": 1,
+    "broker_lag_during_receipt_failure": 1,
+    "broker_committed_offset_after_restart": 2,
+    "broker_lag_after_restart": 0,
+    "clickhouse_image": "docker.io/clickhouse/clickhouse-server@sha256:458f72c00e4abc80c2950d8070bc5723b538544d72ea4a6a58d9ff4f8fadf8d7",
+    "postgres_image": "postgres@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20",
+    "opensearch_image": "docker.io/opensearchproject/opensearch@sha256:466a49f379bb8889af29d615475e69b7b990898c6987d28470cd7105df9046ff",
+    "redis_image": "docker.io/library/redis@sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99",
+    "kafka_image": "docker.io/redpandadata/redpanda@sha256:dca9d37efbbae3c2dcdc07d6a45fa1e0a7a541bc9cdc03db3937b80a4a9eae3d",
+    "clickhouse_schema": "common/sql/ch/00-all-tables.sql",
+    "clickhouse_schema_sha256": "b2ad3129d5b130b1ebac09c9e8d613931f64495be36efa588d8fec3f7e09e15e",
+    "postgres_migration": "deployments/postgres/migrations/202608041100_alert_opensearch_projection_reconciliation_v1.sql",
+    "alert_mapping": "common/opensearch/alerts-v2/mappings-component.json",
+    "failure_injection": "rename_ephemeral_postgresql_applied_receipt_table",
+    "reconciled_fields": [
+      "event_id",
+      "alert_id",
+      "source_version",
+      "clickhouse_authoritative_sha256",
+      "opensearch_sha256",
+      "postgres_receipt_sha256",
+      "kafka_committed_offset",
+      "kafka_last_event_id"
+    ],
+    "loopback_only": true,
+    "persistent_volumes": false,
+    "shared_environment_touched": false,
+    "all_five_containers_removed": true,
+    "production_applied": false
+  },
+  "gate_boundary": {
+    "proves": [
+      "the production alert consumer accepts the canonical DetectionBatch protobuf through a real Redpanda broker and real Redis dedup path",
+      "the production ClickHouse writer, OpenSearch writer and atomic PostgreSQL applied receipt converge to one source version and authoritative field SHA before the broker consumer group offset advances",
+      "a real ephemeral PostgreSQL applied-receipt table outage after successful ClickHouse and OpenSearch writes leaves the same consumer group at committed offset 1 with lag 1 and leaves the post-commit last event unchanged",
+      "restoring PostgreSQL and restarting the production consumer with the same group redelivers the same event, advances the offset to 2 with zero lag and reconciles ClickHouse, OpenSearch and PostgreSQL hashes and source version",
+      "all five fixed-digest loopback-only containers are removed after the test"
+    ],
+    "does_not_prove": [
+      "the production 883172-document projection gap has been repaired",
+      "multi-replica Kafka rebalance behavior or duplicate and out-of-order replay convergence beyond the same-group restart exercised here",
+      "approved candidate deployment, production template application, full backfill, shadow count and hash reconciliation or alias cutover",
+      "fixed-scale performance, broader fault recovery, Windows Chrome, rollback or T+0 T+1 T+3 T+7 observation"
+    ]
+  },
+  "production_mutations": []
+}

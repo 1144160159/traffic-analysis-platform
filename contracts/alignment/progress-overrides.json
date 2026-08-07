@@ -955,10 +955,12 @@
         "doc/02_acceptance/runs/20260807-remediation-g0-full-v187/manifest.json#sha256=18f244e879bc92aa5fc22f923102dcc8912ff8d7e7925ecf7c77bb9cd5b147f2",
         "doc/02_acceptance/runs/20260807-remediation-alert-projection-three-store-g1-v1/manifest.json#sha256=1262d04aab6f92178c6b75827656b99924797c8d448e5ff33e2d0152a6c2fc6f",
         "doc/02_acceptance/runs/20260808-remediation-g0-full-v188/manifest.json#sha256=e0002d8a9abb56b07cd45741acead9aabb678ba6ac1f916c9868820ac0365704",
-        "doc/02_acceptance/runs/20260808-remediation-alert-projection-kafka-five-store-g1-v1/manifest.json#sha256=d9c7296099ead3f7c0613ec65270057f98e0317e9058e415e05c7f0e40fde70f"
+        "doc/02_acceptance/runs/20260808-remediation-alert-projection-kafka-five-store-g1-v1/manifest.json#sha256=d9c7296099ead3f7c0613ec65270057f98e0317e9058e415e05c7f0e40fde70f",
+        "doc/02_acceptance/runs/20260808-remediation-g0-full-v189/manifest.json#sha256=0064b8981c2caa4c7fadff46bd49ea2dd24e72c00dc7787042ed977aa4785221",
+        "doc/02_acceptance/runs/20260808-remediation-alert-projection-kafka-five-store-g1-v2/manifest.json#sha256=4c74b478dc317a0d5cd535c2fc154d8be2ee150f2fc7f0c4d482bbeaebb0966d"
       ],
-      "blocker": "仓库候选现把成功水位与失败债务统一为PG原子投影回执：OS全部成功时先写applied watermark，精确bulk部分失败时同一事务写成功项watermark和失败项debt，任一回执失败都阻断Kafka offset。consumer将updated_at规范到UTC毫秒，避免CH权威像与OS/PG在同一source_version下SHA分叉。v188同一固定摘要G1已通过生产alert consumer、真实Redpanda/Redis、生产CH/OS writer和真实PG applied receipt，broker committed offset=1、lag=0且post-commit last_event_id与跨存储event/hash/version一致。当前alert-service仍为旧镜像、候选worker和post-commit指标未部署，V2 alias未获批；真实PG故障下offset阻断、consumer重启/rebalance、重复乱序重放、生产883172条缺口、全范围count/ID/SHA、性能、canary回滚及T+观察仍未完成，G2至G8保持OPEN/HOLD/BLOCKED。",
-      "note": "T-OS-004保持IMPLEMENTING/PARTIAL。v188自有五存储运行证明正常成功路径在真实Kafka offset提交前已完成Redis去重、CH权威写入、OS投影和PG applied receipt，CH/OS/PG SHA与source_version一致，last_event_id匹配且lag为0；五个固定摘要无卷loopback容器均已清理，production_applied=false。失败回执阻断当前为单元证据，生产883172条缺口、V2 expand/backfill、候选部署、故障重启重放和切换仍未完成。"
+      "blocker": "仓库候选现把成功水位与失败债务统一为PG原子投影回执：OS全部成功时先写applied watermark，精确bulk部分失败时同一事务写成功项watermark和失败项debt，任一回执失败都阻断Kafka offset。consumer将updated_at规范到UTC毫秒，避免CH权威像与OS/PG在同一source_version下SHA分叉。v189同一固定摘要G1已通过生产alert consumer、真实Redpanda/Redis、生产CH/OS writer和真实PG applied receipt；真实临时PG回执表故障后offset保持1、lag为1、last_event不前移，恢复PG并以同一group重启后原event重投，offset推进到2、lag归零且CH/OS/PG event/hash/version重新一致。当前alert-service仍为旧镜像、候选worker和post-commit指标未部署，V2 alias未获批；多副本rebalance、重复乱序重放、生产883172条缺口、全范围count/ID/SHA、性能、canary回滚及T+观察仍未完成，G2至G8保持OPEN/HOLD/BLOCKED。",
+      "note": "T-OS-004保持IMPLEMENTING/PARTIAL。v189自有五存储运行同时证明正常提交路径和真实PG applied receipt故障屏障：失败时broker offset不前移，同组重启重投后CH/OS/PG SHA与source_version收敛；五个固定摘要无卷loopback容器均已清理，production_applied=false。生产883172条缺口、V2 expand/backfill、候选部署、多副本rebalance、重复乱序和切换仍未完成。"
     },
     "T-OS-005": {
       "status": "IMPLEMENTING",
