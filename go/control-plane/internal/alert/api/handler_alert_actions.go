@@ -510,7 +510,7 @@ func (h *Handler) SaveAlertView(w http.ResponseWriter, r *http.Request) {
 			httpx.JSONError(w, ctx, http.StatusInternalServerError, "PERSISTENCE_FAILED", "failed to commit alert view replay")
 			return
 		}
-		httpx.JSONCreated(w, ctx, view)
+		httpx.JSONContractCreated(w, ctx, view, alertSavedViewContractMeta(ctx, tenantID, view.ViewID, view.Revision, "saveAlertView"))
 		return
 	}
 	if err != sql.ErrNoRows {
@@ -565,7 +565,7 @@ func (h *Handler) SaveAlertView(w http.ResponseWriter, r *http.Request) {
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "PERSISTENCE_FAILED", "failed to commit alert view")
 		return
 	}
-	httpx.JSONCreated(w, ctx, view)
+	httpx.JSONContractCreated(w, ctx, view, alertSavedViewContractMeta(ctx, tenantID, view.ViewID, view.Revision, "saveAlertView"))
 }
 
 func (h *Handler) ListAlertViews(w http.ResponseWriter, r *http.Request) {
@@ -598,7 +598,25 @@ func (h *Handler) ListAlertViews(w http.ResponseWriter, r *http.Request) {
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "PERSISTENCE_FAILED", err.Error())
 		return
 	}
-	httpx.JSONSuccess(w, ctx, map[string]interface{}{"views": views, "total": len(views)})
+	httpx.JSONContractSuccess(w, ctx, map[string]interface{}{"views": views, "total": len(views)}, alertSavedViewContractMeta(ctx, h.extractTenantID(r), "alert-views:"+httpx.GetTraceID(ctx), int64(len(views)), "listAlertViews"))
+}
+
+func alertSavedViewContractMeta(ctx context.Context, tenantID, snapshotID string, revision int64, operationID string) httpx.ContractMeta {
+	watermarkKey := "postgresql.alert_saved_views.revision"
+	if operationID == "listAlertViews" {
+		watermarkKey = "postgresql.alert_saved_views.result_count"
+	}
+	return httpx.ContractMeta{
+		ContractVersion: 1,
+		SnapshotID:      snapshotID,
+		OperationID:     operationID,
+		TenantID:        tenantID,
+		Partial:         false,
+		MissingSections: []string{},
+		SourceWatermarks: map[string]string{
+			watermarkKey: fmt.Sprint(revision),
+		},
+	}
 }
 
 func decodeAlertActionRequest(w http.ResponseWriter, r *http.Request) (alertWorkbenchActionRequest, bool) {

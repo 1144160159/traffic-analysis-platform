@@ -8,7 +8,7 @@
     "route_source_sha256": "86f9938071f94fbc7db5c548f179938b89c199300e474615cce4a1269612efd7",
     "rendered_apisix_sha256": "7ec73cd52560c30b8fc285e365644200f252834a90d453db1f584e5753d3ad78",
     "openapi_source": "contracts/openapi/alignment-v1.openapi.json",
-    "openapi_sha256": "ff966bef98ef0c863ac553b99244359a5498b2b93ca61f88da3a7d5edabbd54b"
+    "openapi_sha256": "43db091e3856fb1d85f238dcb1d39299709ffc2e18ae1c6cd1e95d68ff35f581"
   },
   "trust_zones": {
     "public_web_ui": "static application shell only; no business API authorization",
@@ -632,6 +632,7 @@
         "required_scopes": [
           "alert:export",
           "alert:read",
+          "alert:write",
           "campaign:read",
           "campaign:write",
           "playbook:approve",
@@ -675,6 +676,22 @@
           "compatibility_scopes": []
         },
         {
+          "operation_id": "listAlertViews",
+          "method": "GET",
+          "path": "/api/v1/alerts/views",
+          "feature_id": "F-ALERT-006",
+          "required_scope": "alert:read",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "saveAlertView",
+          "method": "POST",
+          "path": "/api/v1/alerts/views",
+          "feature_id": "F-ALERT-006",
+          "required_scope": "alert:write",
+          "compatibility_scopes": []
+        },
+        {
           "operation_id": "listAlertCampaignLinks",
           "method": "GET",
           "path": "/api/v1/alerts/{id}/campaign-links",
@@ -696,6 +713,14 @@
           "path": "/api/v1/alerts/{id}/campaign-links/{campaign_id}",
           "feature_id": "F-ALERT-002",
           "required_scope": "campaign:write",
+          "compatibility_scopes": []
+        },
+        {
+          "operation_id": "getAlertEvidence",
+          "method": "GET",
+          "path": "/api/v1/alerts/{id}/evidence",
+          "feature_id": "F-ALERT-005",
+          "required_scope": "alert:read",
           "compatibility_scopes": []
         },
         {
@@ -742,8 +767,8 @@
           "operation_id": "createAlertResponseAction",
           "method": "POST",
           "path": "/api/v1/alerts/{id}/response-actions",
-          "feature_id": "F-COMMON-003",
-          "required_scope": "playbook:execute",
+          "feature_id": "F-ALERT-003",
+          "required_scope": "alert:write",
           "compatibility_scopes": []
         },
         {
@@ -2140,7 +2165,7 @@
           "compatibility_scopes": []
         },
         {
-          "operation_id": "pushProbeConfigV2",
+          "operation_id": "pushProbeConfig",
           "method": "POST",
           "path": "/api/v1/probes/{id}/config",
           "feature_id": "F-PROBE-001",
@@ -3670,7 +3695,7 @@
           "compatibility_scopes": []
         },
         {
-          "operation_id": "pushProbeConfigV2",
+          "operation_id": "pushProbeConfig",
           "method": "POST",
           "path": "/api/v1/probes/{id}/config",
           "feature_id": "F-PROBE-001",
@@ -4604,7 +4629,7 @@
     }
   ],
   "openapi_coverage": {
-    "operations": 93,
+    "operations": 96,
     "uncovered_operation_ids": [],
     "overlapping_operation_routes": {
       "acknowledgeProbeOperation": [
@@ -4615,7 +4640,7 @@
         "24",
         "44"
       ],
-      "pushProbeConfigV2": [
+      "pushProbeConfig": [
         "24",
         "44"
       ]
@@ -4651,5 +4676,5 @@
       "admin_api_external_exposure"
     ]
   },
-  "catalog_sha256": "563890c4faa69209aa298ae74f2770e834b777b51c30b57f2ff0ac4ea96e6936"
+  "catalog_sha256": "3466de6dcd872a063d4c393373fcd48555eec02c19ed6b0d8907849bb35422fc"
 }

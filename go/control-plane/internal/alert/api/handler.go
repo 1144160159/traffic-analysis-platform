@@ -629,10 +629,20 @@ func (h *Handler) GetAlertEvidence(w http.ResponseWriter, r *http.Request) {
 		errors.WriteError(w, err, httpx.GetTraceID(ctx), r.URL.Path)
 		return
 	}
-	httpx.JSONSuccess(w, ctx, map[string]interface{}{
+	httpx.JSONContractSuccess(w, ctx, map[string]interface{}{
 		"alert_id":  alertID,
 		"evidences": evidences,
 		"count":     len(evidences),
+	}, httpx.ContractMeta{
+		ContractVersion: 1,
+		SnapshotID:      alertID + ":" + httpx.GetTraceID(ctx),
+		OperationID:     "getAlertEvidence",
+		TenantID:        tenantID,
+		Partial:         false,
+		MissingSections: []string{},
+		SourceWatermarks: map[string]string{
+			"alert.evidence.count": strconv.Itoa(len(evidences)),
+		},
 	})
 }
 

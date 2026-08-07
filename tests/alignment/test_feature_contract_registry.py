@@ -40,6 +40,24 @@ class FeatureContractRegistryTests(unittest.TestCase):
         self.assertEqual(38, result["coverage"]["standard_scope_features"])
         self.assertEqual([], result["coverage"]["missing_standard_scope_contracts"])
         self.assertEqual(16, len(result["coverage"]["missing_backlog_contracts"]))
+        self.assertEqual(
+            ["F-AUDIT-001", "F-AUTH-001"],
+            result["coverage"]["non_draft_openapi_binding_gaps"],
+        )
+
+    def test_alert_and_probe_contracts_bind_exactly_to_openapi(self) -> None:
+        registry = build_registry()
+        by_id = {item["feature_id"]: item for item in registry["features"]}
+        for feature_id in ("F-ALERT-003", "F-ALERT-005", "F-ALERT-006", "F-PROBE-001"):
+            self.assertEqual(
+                "EXACT",
+                by_id[feature_id]["formal_contract"]["openapi_binding_status"],
+                feature_id,
+            )
+        self.assertEqual(
+            "PROFILED",
+            by_id["F-COMMON-003"]["formal_contract"]["openapi_binding_status"],
+        )
 
     def test_canonical_feature_cannot_be_hidden(self) -> None:
         registry = copy.deepcopy(build_registry())
@@ -103,6 +121,15 @@ class FeatureContractRegistryTests(unittest.TestCase):
         result = self._verify_mutation(registry)
         self.assertEqual("FAIL", result["status"])
         self.assertTrue(any("validation errors" in error for error in result["errors"]))
+
+    def test_non_draft_openapi_binding_gap_cannot_be_hidden(self) -> None:
+        registry = copy.deepcopy(build_registry())
+        audit = next(item for item in registry["features"] if item["feature_id"] == "F-AUDIT-001")
+        audit["blocking_gaps"].remove("openapi_operation_binding_missing")
+        registry["coverage"]["non_draft_openapi_binding_gaps"].remove("F-AUDIT-001")
+        result = self._verify_mutation(registry)
+        self.assertEqual("FAIL", result["status"])
+        self.assertTrue(any("binding gap" in error for error in result["errors"]))
 
     def test_duplicate_operation_id_fails_closed(self) -> None:
         registry = copy.deepcopy(build_registry())

@@ -721,11 +721,81 @@
   "/v1/alerts/{id}/response-actions": {
       "post": {
         "operationId": "createAlertResponseAction",
-        "x-required-scope": "playbook:execute",
-        "x-feature-id": "F-COMMON-003",
+        "x-required-scope": "alert:write",
+        "x-feature-id": "F-ALERT-003",
+        "x-contract-profile-feature-ids": ["F-COMMON-003"],
         "parameters": [{"$ref": "#/components/parameters/ResourceId"}, {"$ref": "#/components/parameters/IdempotencyKey"}],
         "requestBody": {"required": true, "content": {"application/json": {"schema": {"type": "object", "required": ["action_id", "action", "target", "reason", "dry_run", "expected_revision"], "properties": {"action_id": {"type": "string", "minLength": 1}, "action": {"type": "string", "minLength": 1}, "target": {"type": "string"}, "reason": {"type": "string", "minLength": 4, "maxLength": 1000}, "dry_run": {"type": "boolean"}, "expected_revision": {"const": 0}, "detail": {"type": "object"}}}}}},
         "responses": {"202": {"description": "Idempotent action request accepted; real effects remain pending independent approval", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}}}
+      }
+    },
+    "/v1/alerts/{id}/evidence": {
+      "get": {
+        "operationId": "getAlertEvidence",
+        "x-required-scope": "alert:read",
+        "x-feature-id": "F-ALERT-005",
+        "parameters": [{"$ref": "#/components/parameters/ResourceId"}],
+        "responses": {
+          "200": {
+            "description": "Tenant-bound evidence manifest and object metadata; object access remains separately audited",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}
+          },
+          "403": {"description": "alert:read scope required"},
+          "404": {"description": "Alert or evidence is absent from the authenticated tenant"},
+          "503": {"description": "Evidence manifest or object storage is unavailable"}
+        }
+      }
+    },
+    "/v1/alerts/views": {
+      "get": {
+        "operationId": "listAlertViews",
+        "x-required-scope": "alert:read",
+        "x-feature-id": "F-ALERT-006",
+        "responses": {
+          "200": {
+            "description": "Tenant-bound saved alert views ordered by latest revision",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}
+          },
+          "403": {"description": "alert:read scope required"}
+        }
+      },
+      "post": {
+        "operationId": "saveAlertView",
+        "x-required-scope": "alert:write",
+        "x-feature-id": "F-ALERT-006",
+        "parameters": [{"$ref": "#/components/parameters/IdempotencyKey"}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["action_id", "action", "target", "reason", "detail"],
+                "properties": {
+                  "action_id": {"const": "alert-view-save"},
+                  "action": {"const": "save_view"},
+                  "target": {"type": "string", "minLength": 1, "maxLength": 200},
+                  "reason": {"type": "string", "minLength": 4, "maxLength": 1000},
+                  "detail": {
+                    "type": "object",
+                    "required": ["filters"],
+                    "properties": {"filters": {"type": "object"}}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "View, immutable history, audit, outbox and idempotency receipt committed atomically",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}
+          },
+          "400": {"description": "Missing stable action, reason, target, filters or idempotency key"},
+          "403": {"description": "alert:write scope required"},
+          "409": {"description": "Idempotency key reused with a different saved-view command"},
+          "503": {"description": "PostgreSQL, migration, audit or transaction boundary unavailable"}
+        }
       }
     },
     "/v1/alerts/{id}/response-actions/{job_id}": {
@@ -1188,7 +1258,7 @@
     },
     "/v1/probes/{id}/config": {
       "post": {
-        "operationId": "pushProbeConfigV2",
+        "operationId": "pushProbeConfig",
         "x-required-scope": "probe:write",
         "x-feature-id": "F-PROBE-001",
         "parameters": [
