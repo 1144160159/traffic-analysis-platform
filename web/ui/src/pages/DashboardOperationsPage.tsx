@@ -640,12 +640,14 @@ const createDashboardAction = (title: string, target: string): DashboardAction =
 };
 
 const isTerminalDashboardTaskStatus = (status?: DashboardTaskStatus) =>
-  status === 'completed' || status === 'partial' || status === 'failed' || status === 'cancelled';
+  status === 'completed' || status === 'partial' || status === 'failed' || status === 'cancelled'
+  || status === 'compensated' || status === 'compensation_partial' || status === 'compensation_failed';
 
 const dashboardTaskAlertType = (status?: DashboardTaskStatus): 'info' | 'success' | 'warning' | 'error' => {
-  if (status === 'completed') return 'success';
-  if (status === 'failed') return 'error';
-  if (status === 'partial' || status === 'cancelled' || status === 'running') return 'warning';
+  if (status === 'completed' || status === 'compensated') return 'success';
+  if (status === 'failed' || status === 'compensation_failed') return 'error';
+  if (status === 'partial' || status === 'cancelled' || status === 'running'
+    || status === 'compensating' || status === 'compensation_partial') return 'warning';
   return 'info';
 };
 
@@ -656,4 +658,8 @@ const dashboardTaskStatusMessage = (status?: DashboardTaskStatus) => ({
   partial: '任务部分完成，请检查缺失项',
   failed: '任务最终失败',
   cancelled: '任务已取消或补偿',
+  compensating: '任务补偿执行中，尚未最终完成',
+  compensated: '任务外部效果已确认补偿',
+  compensation_partial: '任务补偿结果不确定，请人工对账',
+  compensation_failed: '任务补偿最终失败',
 }[status ?? 'accepted']);

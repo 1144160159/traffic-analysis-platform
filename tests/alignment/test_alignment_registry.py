@@ -1539,6 +1539,10 @@ class AlignmentRegistryTest(unittest.TestCase):
             "/v1/dashboard/tasks/sla": ("post", "createDashboardSLATask"),
             "/v1/dashboard/tasks/compliance": ("post", "createDashboardComplianceTask"),
             "/v1/dashboard/tasks/{task_id}": ("get", "getDashboardTask"),
+            "/v1/dashboard/tasks/{task_id}/compensations": (
+                "post",
+                "compensateDashboardTask",
+            ),
         }
         for path, (method, operation_id) in operations.items():
             operation = openapi["paths"][path][method]
@@ -1568,6 +1572,9 @@ class AlignmentRegistryTest(unittest.TestCase):
         provider = (
             ROOT / "go/control-plane/internal/alert/api/dashboard_task_http_provider.go"
         ).read_text(encoding="utf-8")
+        compensation = (
+            ROOT / "go/control-plane/internal/alert/api/dashboard_task_compensation.go"
+        ).read_text(encoding="utf-8")
         service = (ROOT / "go/control-plane/cmd/alert-service/main.go").read_text(
             encoding="utf-8"
         )
@@ -1576,6 +1583,8 @@ class AlignmentRegistryTest(unittest.TestCase):
             "dashboard_task_event_inbox",
             "dashboard_task_execution_attempts",
             "dashboard_task_execution_receipts",
+            "dashboard_task_compensation_attempts",
+            "dashboard_task_compensation_receipts",
             "CommitOnHandlerError: false",
             "DLQPermanentOnly: true",
             'RequiredAcks: "all"',
@@ -1583,6 +1592,9 @@ class AlignmentRegistryTest(unittest.TestCase):
             self.assertIn(fragment, pipeline + service)
         self.assertIn("Idempotency-Key", provider)
         self.assertIn("dashboard task executor response exceeds", provider)
+        self.assertIn("dashboard_task_compensation_requests", compensation)
+        self.assertIn("DASHBOARD_TASK_COMPENSATION_REQUESTED", compensation)
+        self.assertIn("CompensateDashboardTask", provider)
         self.assertEqual(
             "dashboard.task.events.v1", contract["data"]["event_topic"]
         )
@@ -1626,6 +1638,17 @@ class AlignmentRegistryTest(unittest.TestCase):
             "dashboard_task_event_inbox",
         ):
             self.assertIn(table, pipeline_schema)
+        compensation_schema = (
+            ROOT
+            / "deployments/postgres/migrations"
+            / "202608082100_dashboard_task_compensation_v1.sql"
+        ).read_text(encoding="utf-8")
+        for table in (
+            "dashboard_task_compensation_requests",
+            "dashboard_task_compensation_attempts",
+            "dashboard_task_compensation_receipts",
+        ):
+            self.assertIn(table, compensation_schema)
 
         for manifest_path in (
             ROOT / "deployments/kubernetes/applications/go-services.yaml",
@@ -1638,6 +1661,10 @@ class AlignmentRegistryTest(unittest.TestCase):
             )
             self.assertIn(
                 '{name: DASHBOARD_TASK_PIPELINE_V1_ENABLED, value: "false"}',
+                manifest,
+            )
+            self.assertIn(
+                '{name: DASHBOARD_TASK_COMPENSATION_V1_ENABLED, value: "false"}',
                 manifest,
             )
             self.assertIn("dashboard.task.events.v1", manifest)

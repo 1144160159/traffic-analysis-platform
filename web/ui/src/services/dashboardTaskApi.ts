@@ -9,7 +9,17 @@ export type DashboardTaskActionId =
   | 'dashboard-sla-task-create'
   | 'dashboard-compliance-task-create';
 
-export type DashboardTaskStatus = 'accepted' | 'running' | 'completed' | 'partial' | 'failed' | 'cancelled';
+export type DashboardTaskStatus =
+  | 'accepted'
+  | 'running'
+  | 'completed'
+  | 'partial'
+  | 'failed'
+  | 'cancelled'
+  | 'compensating'
+  | 'compensated'
+  | 'compensation_partial'
+  | 'compensation_failed';
 
 export type DashboardTaskReceipt = {
   taskId: string;
@@ -139,7 +149,10 @@ function unwrap(value: Envelope<Record<string, unknown>>): Record<string, unknow
 
 function normalizeStatus(value: unknown): DashboardTaskStatus {
   const status = text(value) as DashboardTaskStatus;
-  return ['accepted', 'running', 'completed', 'partial', 'failed', 'cancelled'].includes(status) ? status : 'accepted';
+  return [
+    'accepted', 'running', 'completed', 'partial', 'failed', 'cancelled',
+    'compensating', 'compensated', 'compensation_partial', 'compensation_failed',
+  ].includes(status) ? status : 'accepted';
 }
 
 const text = (value: unknown) => typeof value === 'string' ? value.trim() : '';

@@ -292,8 +292,10 @@ spec:
         - {name: PLAYBOOK_EXECUTION_V2_ENABLED, value: "false"}
         - {name: DASHBOARD_TASK_V2_ENABLED, value: "false"}
         - {name: DASHBOARD_TASK_PIPELINE_V1_ENABLED, value: "false"}
+        - {name: DASHBOARD_TASK_COMPENSATION_V1_ENABLED, value: "false"}
         - {name: DASHBOARD_TASK_EVENT_TOPIC, value: "dashboard.task.events.v1"}
         - {name: DASHBOARD_TASK_EXECUTOR_TIMEOUT_SECONDS, value: "30"}
+        - {name: DASHBOARD_TASK_COMPENSATOR_TIMEOUT_SECONDS, value: "30"}
         - {name: DASHBOARD_SNAPSHOT_V1_ENABLED, value: "true"}
         - {name: PLAYBOOK_EXECUTION_EVENT_PIPELINE_V2_ENABLED, value: "false"}
         - {name: PLAYBOOK_EXECUTION_PROVIDER_URL, value: ""}

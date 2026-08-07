@@ -152,6 +152,13 @@ export async function compensateCampaignSOARJob(request: AlignmentRequest = {}) 
   return response.data;
 }
 
+export async function compensateDashboardTask(request: AlignmentRequest = {}) {
+  const path = resolvePath('/v1/dashboard/tasks/{task_id}/compensations', request.path);
+  const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;
+  const response = await api.request({ method: 'POST', url: path, params: request.query, data: request.body, headers });
+  return response.data;
+}
+
 export async function compensatePlaybookExecution(request: AlignmentRequest = {}) {
   const path = resolvePath('/v1/playbooks/executions/{execution_id}/compensate', request.path);
   const headers = request.idempotencyKey ? { 'Idempotency-Key': request.idempotencyKey } : undefined;

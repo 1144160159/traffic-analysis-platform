@@ -126,6 +126,25 @@
         }
       }
     },
+    "/v1/dashboard/tasks/{task_id}/compensations": {
+      "post": {
+        "operationId": "compensateDashboardTask",
+        "x-feature-id": "F-DASHBOARD-002",
+        "x-required-scope": "dashboard:write",
+        "parameters": [
+          {"name": "task_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"$ref": "#/components/parameters/IdempotencyKey"}
+        ],
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DashboardTaskCompensationCreate"}}}},
+        "responses": {
+          "202": {"description": "Provider compensation durably accepted; final success still requires a confirmed provider receipt", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Envelope"}}}},
+          "403": {"description": "dashboard:write scope required"},
+          "404": {"description": "Task or confirmed provider receipt is absent from the authenticated tenant"},
+          "409": {"description": "Idempotency, revision or task-state conflict"},
+          "503": {"description": "Compensation pipeline, provider or versioned schema unavailable"}
+        }
+      }
+    },
     "/v1/alerts/search": {
       "post": {
         "operationId": "searchAlertsCursorV1",
@@ -1880,6 +1899,16 @@
           "snapshot_id": {"type": "string", "minLength": 1, "maxLength": 500},
           "reason": {"type": "string", "minLength": 1, "maxLength": 2000},
           "context": {"type": "object", "additionalProperties": true}
+        }
+      },
+      "DashboardTaskCompensationCreate": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["action_id", "expected_revision", "reason"],
+        "properties": {
+          "action_id": {"const": "dashboard-task-compensate"},
+          "expected_revision": {"type": "integer", "minimum": 1},
+          "reason": {"type": "string", "minLength": 8, "maxLength": 2000}
         }
       },
       "Envelope": {

@@ -1423,44 +1423,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 96,
-          "mutation_id": "sql-1511c8f232467e84",
-          "resolved_tables": [
-            "dashboard_task_outbox"
-          ],
-          "role": "outbox",
-          "table_expression": "dashboard_task_outbox",
-          "verb": "UPDATE"
-        },
-        {
-          "backend": "postgresql",
-          "dynamic_identifier": false,
-          "line": 144,
-          "mutation_id": "sql-d45af10e582bd233",
-          "resolved_tables": [
-            "dashboard_task_outbox"
-          ],
-          "role": "outbox",
-          "table_expression": "dashboard_task_outbox",
-          "verb": "UPDATE"
-        },
-        {
-          "backend": "postgresql",
-          "dynamic_identifier": false,
-          "line": 161,
-          "mutation_id": "sql-36a54a7085015673",
-          "resolved_tables": [
-            "dashboard_task_outbox"
-          ],
-          "role": "outbox",
-          "table_expression": "dashboard_task_outbox",
-          "verb": "UPDATE"
-        },
-        {
-          "backend": "postgresql",
-          "dynamic_identifier": false,
-          "line": 318,
-          "mutation_id": "sql-609c115fcea294f1",
+          "line": 195,
+          "mutation_id": "sql-603649b00d711656",
           "resolved_tables": [
             "dashboard_tasks"
           ],
@@ -1471,8 +1435,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 329,
-          "mutation_id": "sql-03062aa99421b655",
+          "line": 205,
+          "mutation_id": "sql-67676cad75b24b34",
           "resolved_tables": [
             "dashboard_task_history"
           ],
@@ -1483,8 +1447,107 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 341,
-          "mutation_id": "sql-a7a4f49032745164",
+          "line": 220,
+          "mutation_id": "sql-b3f5ebab68d35f84",
+          "resolved_tables": [
+            "dashboard_task_outbox"
+          ],
+          "role": "outbox",
+          "table_expression": "dashboard_task_outbox",
+          "verb": "INSERT INTO"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 230,
+          "mutation_id": "sql-7584f0a4cadfe7fc",
+          "resolved_tables": [
+            "dashboard_task_compensation_requests"
+          ],
+          "role": "control_idempotency",
+          "table_expression": "dashboard_task_compensation_requests",
+          "verb": "INSERT INTO"
+        }
+      ],
+      "source": "go/control-plane/internal/alert/api/dashboard_task_compensation.go",
+      "source_facts": {
+        "has_audit_signal": true,
+        "has_direct_database_call": false,
+        "has_history_signal": true,
+        "has_idempotency_signal": true,
+        "has_outbox_signal": true,
+        "has_transaction_begin": true,
+        "uses_transaction_handle": true
+      },
+      "workload_class": "command_path"
+    },
+    {
+      "mutations": [
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 107,
+          "mutation_id": "sql-9d275e32ce5c8ddf",
+          "resolved_tables": [
+            "dashboard_task_outbox"
+          ],
+          "role": "outbox",
+          "table_expression": "dashboard_task_outbox",
+          "verb": "UPDATE"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 156,
+          "mutation_id": "sql-79616f3c89050084",
+          "resolved_tables": [
+            "dashboard_task_outbox"
+          ],
+          "role": "outbox",
+          "table_expression": "dashboard_task_outbox",
+          "verb": "UPDATE"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 173,
+          "mutation_id": "sql-78ddb6f2fe7406b8",
+          "resolved_tables": [
+            "dashboard_task_outbox"
+          ],
+          "role": "outbox",
+          "table_expression": "dashboard_task_outbox",
+          "verb": "UPDATE"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 351,
+          "mutation_id": "sql-a64d77854ddac55f",
+          "resolved_tables": [
+            "dashboard_tasks"
+          ],
+          "role": "business",
+          "table_expression": "dashboard_tasks",
+          "verb": "UPDATE"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 362,
+          "mutation_id": "sql-c08a93bad35410b2",
+          "resolved_tables": [
+            "dashboard_task_history"
+          ],
+          "role": "history",
+          "table_expression": "dashboard_task_history",
+          "verb": "INSERT INTO"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 374,
+          "mutation_id": "sql-eaf7af2794a4c7af",
           "resolved_tables": [
             "dashboard_task_execution_attempts"
           ],
@@ -1495,8 +1558,20 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 355,
-          "mutation_id": "sql-15745a05d44206d1",
+          "line": 391,
+          "mutation_id": "sql-054ca0ff09a8cc6c",
+          "resolved_tables": [
+            "dashboard_task_compensation_attempts"
+          ],
+          "role": "business",
+          "table_expression": "dashboard_task_compensation_attempts",
+          "verb": "INSERT INTO"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 404,
+          "mutation_id": "sql-e0763c697bd2bf84",
           "resolved_tables": [
             "dashboard_task_event_inbox"
           ],
@@ -1507,8 +1582,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 402,
-          "mutation_id": "sql-c20d245a7532c5cd",
+          "line": 451,
+          "mutation_id": "sql-fb0be86e5c63b4bf",
           "resolved_tables": [
             "dashboard_task_execution_attempts"
           ],
@@ -1519,8 +1594,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 511,
-          "mutation_id": "sql-74b206cd3ff690c4",
+          "line": 560,
+          "mutation_id": "sql-4768f37ebce17925",
           "resolved_tables": [
             "dashboard_task_execution_attempts"
           ],
@@ -1531,8 +1606,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 531,
-          "mutation_id": "sql-3b40081268e8fd12",
+          "line": 580,
+          "mutation_id": "sql-05080f2fb1ef2874",
           "resolved_tables": [
             "dashboard_tasks"
           ],
@@ -1543,8 +1618,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 542,
-          "mutation_id": "sql-c9bea0f383f5f6c5",
+          "line": 591,
+          "mutation_id": "sql-5232dc43def9bcb5",
           "resolved_tables": [
             "dashboard_task_execution_receipts"
           ],
@@ -1555,8 +1630,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 555,
-          "mutation_id": "sql-518bce0108e8b473",
+          "line": 604,
+          "mutation_id": "sql-b2f150d36138b6ce",
           "resolved_tables": [
             "dashboard_task_history"
           ],
@@ -1567,8 +1642,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 576,
-          "mutation_id": "sql-64a046fd5a5214b8",
+          "line": 625,
+          "mutation_id": "sql-77884325def8ab02",
           "resolved_tables": [
             "dashboard_task_outbox"
           ],
@@ -1579,8 +1654,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 582,
-          "mutation_id": "sql-d1a08639b6a5766f",
+          "line": 631,
+          "mutation_id": "sql-1ac13e78b1b3ea1a",
           "resolved_tables": [
             "dashboard_task_execution_attempts"
           ],
@@ -1591,8 +1666,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 591,
-          "mutation_id": "sql-4c023caa6f27dd69",
+          "line": 640,
+          "mutation_id": "sql-d3a6cc4595ad6dd4",
           "resolved_tables": [
             "dashboard_task_execution_attempts"
           ],
@@ -1603,8 +1678,104 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 611,
-          "mutation_id": "sql-fb6b69f48f660efd",
+          "line": 690,
+          "mutation_id": "sql-d3d04333add60111",
+          "resolved_tables": [
+            "dashboard_task_compensation_attempts"
+          ],
+          "role": "business",
+          "table_expression": "dashboard_task_compensation_attempts",
+          "verb": "UPDATE"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 808,
+          "mutation_id": "sql-16fbef5707bd1fc2",
+          "resolved_tables": [
+            "dashboard_task_compensation_attempts"
+          ],
+          "role": "business",
+          "table_expression": "dashboard_task_compensation_attempts",
+          "verb": "UPDATE"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 832,
+          "mutation_id": "sql-299e64ef5f9a110e",
+          "resolved_tables": [
+            "dashboard_tasks"
+          ],
+          "role": "business",
+          "table_expression": "dashboard_tasks",
+          "verb": "UPDATE"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 843,
+          "mutation_id": "sql-fb344b3bcee7c903",
+          "resolved_tables": [
+            "dashboard_task_compensation_receipts"
+          ],
+          "role": "business",
+          "table_expression": "dashboard_task_compensation_receipts",
+          "verb": "INSERT INTO"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 855,
+          "mutation_id": "sql-2f5787761694ab01",
+          "resolved_tables": [
+            "dashboard_task_history"
+          ],
+          "role": "history",
+          "table_expression": "dashboard_task_history",
+          "verb": "INSERT INTO"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 874,
+          "mutation_id": "sql-33a859f63c480479",
+          "resolved_tables": [
+            "dashboard_task_outbox"
+          ],
+          "role": "outbox",
+          "table_expression": "dashboard_task_outbox",
+          "verb": "INSERT INTO"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 880,
+          "mutation_id": "sql-da3eccf1423a7a87",
+          "resolved_tables": [
+            "dashboard_task_compensation_attempts"
+          ],
+          "role": "business",
+          "table_expression": "dashboard_task_compensation_attempts",
+          "verb": "UPDATE"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 888,
+          "mutation_id": "sql-3b53eb11225006d1",
+          "resolved_tables": [
+            "dashboard_task_compensation_attempts"
+          ],
+          "role": "business",
+          "table_expression": "dashboard_task_compensation_attempts",
+          "verb": "UPDATE"
+        },
+        {
+          "backend": "postgresql",
+          "dynamic_identifier": false,
+          "line": 908,
+          "mutation_id": "sql-72231f6d08f00fbf",
           "resolved_tables": [
             "audit_logs"
           ],
@@ -1630,8 +1801,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 296,
-          "mutation_id": "sql-02a262ed4ccc4648",
+          "line": 300,
+          "mutation_id": "sql-ad02fe7fd771fb45",
           "resolved_tables": [
             "dashboard_tasks"
           ],
@@ -1642,8 +1813,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 310,
-          "mutation_id": "sql-c36eedb77670ff69",
+          "line": 314,
+          "mutation_id": "sql-77ad63764ddf924c",
           "resolved_tables": [
             "dashboard_task_history"
           ],
@@ -1654,8 +1825,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 325,
-          "mutation_id": "sql-3d473741d2edeb60",
+          "line": 329,
+          "mutation_id": "sql-2dc0e79af3003f5f",
           "resolved_tables": [
             "dashboard_task_outbox"
           ],
@@ -1666,8 +1837,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 340,
-          "mutation_id": "sql-885aed7572ce9bff",
+          "line": 344,
+          "mutation_id": "sql-eba8b9d2d232cf4b",
           "resolved_tables": [
             "dashboard_task_requests"
           ],
@@ -1678,8 +1849,8 @@
         {
           "backend": "postgresql",
           "dynamic_identifier": false,
-          "line": 399,
-          "mutation_id": "sql-3bb7124e98c8962b",
+          "line": 403,
+          "mutation_id": "sql-5a803ccf3fcca5d4",
           "resolved_tables": [
             "audit_logs"
           ],
@@ -9645,23 +9816,23 @@
   "summary": {
     "backend_counts": {
       "clickhouse": 16,
-      "postgresql": 624
+      "postgresql": 637
     },
-    "mutation_statements": 640,
+    "mutation_statements": 653,
     "postgres_role_counts": {
       "audit": 77,
-      "business": 287,
-      "control_idempotency": 28,
-      "history": 68,
+      "business": 295,
+      "control_idempotency": 29,
+      "history": 70,
       "inbox_projection": 44,
-      "outbox": 120
+      "outbox": 122
     },
     "review_priority_counts": {
       "P1_REVIEW": 19,
       "P2_REVIEW": 8
     },
     "review_queue": 27,
-    "source_files": 101,
+    "source_files": 102,
     "unclassified": 0
   },
   "table_role_overrides": {

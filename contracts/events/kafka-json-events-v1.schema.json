@@ -212,7 +212,9 @@
         "event_id": {"type": "string", "format": "uuid"},
         "event_type": {"enum": [
           "traffic.dashboard.v1.TaskRequested",
-          "traffic.dashboard.v1.TaskResult"
+          "traffic.dashboard.v1.TaskResult",
+          "traffic.dashboard.v1.TaskCompensationRequested",
+          "traffic.dashboard.v1.TaskCompensationResult"
         ]},
         "schema_version": {"const": 1},
         "aggregate_type": {"const": "dashboard_task"},
@@ -222,7 +224,7 @@
         "tenant_id": {"type": "string", "minLength": 1},
         "task_id": {"type": "string", "format": "uuid"},
         "action_id": {"type": "string", "minLength": 1},
-        "status": {"enum": ["accepted", "running", "completed", "partial", "failed"]},
+        "status": {"enum": ["accepted", "running", "completed", "partial", "failed", "compensating", "compensated", "compensation_partial", "compensation_failed"]},
         "snapshot_id": {"type": "string", "minLength": 1},
         "provider": {"type": "string", "minLength": 1},
         "provider_receipt_id": {"type": "string", "minLength": 1},
@@ -241,7 +243,11 @@
           "then": {"required": ["provider", "provider_receipt_id", "effect_state", "effect_ids", "result", "receipt_sha256"]}
         },
         {
-          "if": {"properties": {"status": {"const": "completed"}}},
+          "if": {"properties": {"event_type": {"const": "traffic.dashboard.v1.TaskCompensationResult"}}},
+          "then": {"required": ["provider", "provider_receipt_id", "effect_state", "effect_ids", "result", "receipt_sha256"]}
+        },
+        {
+          "if": {"properties": {"status": {"enum": ["completed", "compensated"]}}},
           "then": {
             "properties": {
               "effect_state": {"const": "confirmed"},

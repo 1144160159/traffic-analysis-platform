@@ -1028,8 +1028,11 @@ func main() {
 	apiRouter.HandleFunc("/dashboard/top-ips/{type}", dashboardHandler.GetTopIPs).Methods("GET")
 	apiRouter.HandleFunc("/dashboard/encrypted/trend", dashboardHandler.GetEncryptedTrend).Methods("GET")
 	dashboardTaskHandler := api.NewDashboardTaskHandler(db, logger, getBoolEnv("DASHBOARD_TASK_V2_ENABLED", true))
+	dashboardTaskPipelineEnabled := getBoolEnv("DASHBOARD_TASK_PIPELINE_V1_ENABLED", false) && !readOnlyVerificationMode
+	dashboardTaskCompensationEnabled := getBoolEnv("DASHBOARD_TASK_COMPENSATION_V1_ENABLED", false) && dashboardTaskPipelineEnabled
+	dashboardTaskHandler.EnableCompensation(dashboardTaskCompensationEnabled)
 	dashboardTaskHandler.RegisterRoutes(apiRouter)
-	if getBoolEnv("DASHBOARD_TASK_PIPELINE_V1_ENABLED", false) && !readOnlyVerificationMode {
+	if dashboardTaskPipelineEnabled {
 		if db == nil {
 			logger.Fatal("Dashboard task execution pipeline requires PostgreSQL")
 		}
@@ -1063,6 +1066,25 @@ func main() {
 		}
 		if workerErr := pipeline.StartExecutionWorker(ctx, 2*time.Second); workerErr != nil {
 			logger.Fatal("Failed to start dashboard task execution worker", zap.Error(workerErr))
+		}
+		if dashboardTaskCompensationEnabled {
+			compensatorURL := strings.TrimSpace(getEnv("DASHBOARD_TASK_COMPENSATOR_URL", ""))
+			if compensatorURL == "" {
+				logger.Fatal("Dashboard task compensation requires DASHBOARD_TASK_COMPENSATOR_URL")
+			}
+			compensator, compensatorErr := api.NewHTTPDashboardTaskCompensator(
+				compensatorURL, getEnv("DASHBOARD_TASK_COMPENSATOR_TOKEN", ""),
+				time.Duration(getIntEnv("DASHBOARD_TASK_COMPENSATOR_TIMEOUT_SECONDS", 30))*time.Second,
+			)
+			if compensatorErr != nil {
+				logger.Fatal("Invalid dashboard task compensator configuration", zap.Error(compensatorErr))
+			}
+			if enableErr := pipeline.EnableCompensation(compensator); enableErr != nil {
+				logger.Fatal("Failed to enable dashboard task compensation", zap.Error(enableErr))
+			}
+			if workerErr := pipeline.StartCompensationWorker(ctx, 2*time.Second); workerErr != nil {
+				logger.Fatal("Failed to start dashboard task compensation worker", zap.Error(workerErr))
+			}
 		}
 		kafkaConsumer, consumerErr := kafka.NewConsumer(kafka.ConsumerConfig{
 			Brokers: cfg.Kafka.Brokers, Topic: topic,

@@ -55,6 +55,7 @@ K8S_FILES = (
     "25-data-quality-repair-lifecycle-v1.sql",
     "26-data-quality-replay-projection-v1.sql",
     "27-dashboard-task-execution-pipeline-v1.sql",
+    "28-dashboard-task-compensation-v1.sql",
 )
 PLAYBOOK_TABLES = (
     "alert_playbook_executions",
@@ -104,6 +105,9 @@ PLAYBOOK_TABLES = (
     "dashboard_task_execution_attempts",
     "dashboard_task_execution_receipts",
     "dashboard_task_event_inbox",
+    "dashboard_task_compensation_requests",
+    "dashboard_task_compensation_attempts",
+    "dashboard_task_compensation_receipts",
     "data_quality_datasets",
     "data_quality_rules",
     "data_quality_baselines",
@@ -382,10 +386,10 @@ def main() -> int:
             SENTINEL_DATABASE,
             sql=(
                 "SELECT version FROM alignment_schema_migrations "
-                "WHERE version IN ('202608021000','202608021030','202608031500','202608031540','202608031550','202608031600','202608031610','202608031620','202608041100','202608041400','202608041500','202608041600','202608041700','202608041800','202608041900','202608041930') ORDER BY version"
+                "WHERE version IN ('202608021000','202608021030','202608031500','202608031540','202608031550','202608031600','202608031610','202608031620','202608041100','202608041400','202608041500','202608041600','202608041700','202608041800','202608041900','202608041930','202608082100') ORDER BY version"
             ),
         ).decode().splitlines()
-        if migration_versions != ["202608021000", "202608021030", "202608031500", "202608031540", "202608031550", "202608031600", "202608031610", "202608031620", "202608041100", "202608041400", "202608041500", "202608041600", "202608041700", "202608041800", "202608041900", "202608041930"]:
+        if migration_versions != ["202608021000", "202608021030", "202608031500", "202608031540", "202608031550", "202608031600", "202608031610", "202608031620", "202608041100", "202608041400", "202608041500", "202608041600", "202608041700", "202608041800", "202608041900", "202608041930", "202608082100"]:
             raise RuntimeError("versioned transaction migrations were not registered")
         print(
             json.dumps(

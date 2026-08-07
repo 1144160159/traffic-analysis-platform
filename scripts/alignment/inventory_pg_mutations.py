@@ -125,7 +125,7 @@ def source_facts(source: str) -> dict[str, bool]:
         ),
         "has_audit_signal": bool(
             re.search(
-                r"audit_logs|AuditTx|auditTrail|auditWriter|actionAudit|recordWithExecutor|insertAuditWithRunner|insertThreatIntelAudit",
+                r"audit_logs|AuditTx|auditTrail|auditWriter|actionAudit|recordWithExecutor|insertAuditWithRunner|insertThreatIntelAudit|insertDashboardTaskPipelineAudit",
                 source,
                 re.I,
             )

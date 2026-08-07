@@ -112,7 +112,7 @@
     "contracts/events/kafka-acl-catalog.v1.json": "06805724b42cd5dda837e52e1097428e11094a95be54fcb07f595a944df7645f",
     "contracts/events/kafka-topic-catalog.v1.json": "f517b239eaba7b288aca253e730862f3e78c374c61cbbe06116b9e4ed740abe3",
     "contracts/flink/job-registry.v1.json": "e1cfdb658c0cad53aeaa0aec55151fdc928169bb3bba8ac84a7db80009797c3c",
-    "deployments/kubernetes/applications/go-services.yaml": "6ce7ec225f793d20ea684426f19036a67c86d8d751b718f37f176d5c25e2f46e",
+    "deployments/kubernetes/applications/go-services.yaml": "0a58e78c71265258f5a93c24dc060461b08f312b3c30c3616b13e08701422d99",
     "deployments/kubernetes/applications/probe-agent.yaml": "b7969b9001297d381f09a09c9a3b71bd8bd3ccfc8bfca0a599f9a04afff865f3",
     "deployments/kubernetes/applications/web-ui.yaml": "8abbdbbef2621b300541a6cad56678cfe4115350c5c071304a9bc19f353a981f",
     "deployments/kubernetes/configmaps/apisix-routes.yaml": "481adaf89d580e0928fd6145d0e0c3fd4daac8880a95a39400fdaa4edc491f79",
@@ -129,14 +129,14 @@
     "deployments/kubernetes/infrastructure/11-management.yaml": "ffd6c4384fd8376c92083c292ae2eae9c4b2a562897a629ee58c3698840e34d5",
     "deployments/kubernetes/init-jobs/00-kafka-service-principals.yaml": "d01a637fa8238db4d86261bae66ac8ab02a032dba3bca008a707fbffa20037d8",
     "deployments/kubernetes/init-jobs/01-kafka-topics.yaml": "6e8f59c9ac3b4f0fb938bcdbb39dd07417fd506089cdb18e20ea66ba86ff0bca",
-    "deployments/kubernetes/init-jobs/02-postgres-schema.yaml": "e160088d18fb92a451aa477bbab7ba6dc0b3efa627951a6b4f151ce0bb966ec2",
+    "deployments/kubernetes/init-jobs/02-postgres-schema.yaml": "d466609aa4b12ca8d92673b0b4206ccb9fd5a33b48ca5983ff2318058326eec7",
     "deployments/kubernetes/init-jobs/03-clickhouse-schema.yaml": "8ca1010db70655b9740a0b3bf2327f99838145bf15b20d109c98dcb976895c6b",
     "deployments/kubernetes/init-jobs/04-opensearch-templates.yaml": "6d4fe42c60dd9f14fe27e65e924ea75bfcce2029989448f4e09f55d44fb5a44f",
     "deployments/kubernetes/init-jobs/05-nebula-schema.yaml": "7dfc2a4b67af004d132edc5c7882a67c705428d5529d8889108f6b0e4f1730c9",
     "deployments/kubernetes/init-jobs/06-minio-lifecycle.yaml": "d38d6008931e4442e7de6f28fb08ac3a6a59a28629bf39d190242743ed17922c",
     "deployments/kubernetes/init-jobs/06-nebula-workbench-seed.yaml": "74efd6ebe9c7689b95f6fd6a864f67982cf0d7ec059f763c5b82ce4e2c3e76b5",
     "deployments/kubernetes/init-jobs/07-fusion-acceptance-fixture.yaml": "c948d74059758ffab63249324f2a7638488fd37e3ec82a8e91996e7cc72b47a0",
-    "go/control-plane/deployments/kubernetes/alert-service.yaml": "c46ff9f9f9238252cbb21e3829674c755b9439cf4f1cb5f589e5dcfea68e8e84",
+    "go/control-plane/deployments/kubernetes/alert-service.yaml": "de404aec925cf147e4c0e210cbe1169b318e22ffe63c243da386462059f9f044",
     "go/control-plane/deployments/kubernetes/asset-service.yaml": "1f0ed4273cb4b6f16faeb52581cb6acef1d61091ab899c8dbadb5ae6291122a7",
     "go/control-plane/deployments/kubernetes/forensics-service.yaml": "2f51466bb01a7b306c0b624ef27426549015226eec663b563db899ee3181962d",
     "go/control-plane/deployments/kubernetes/ingest-gateway.yaml": "08f17aae3b4a0e6e10a2a25b933fd8fe399b5a60e22f3814549522044cebcf61",
@@ -258,6 +258,14 @@
     "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_SNAPSHOT_V1_ENABLED": [
       "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_SNAPSHOT_V1_ENABLED:deployments/kubernetes/applications/go-services.yaml",
       "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_SNAPSHOT_V1_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATION_V1_ENABLED": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATION_V1_ENABLED:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATION_V1_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml"
+    ],
+    "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATOR_TIMEOUT_SECONDS": [
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATOR_TIMEOUT_SECONDS:deployments/kubernetes/applications/go-services.yaml",
+      "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATOR_TIMEOUT_SECONDS:go/control-plane/deployments/kubernetes/alert-service.yaml"
     ],
     "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_EVENT_TOPIC": [
       "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_EVENT_TOPIC:deployments/kubernetes/applications/go-services.yaml",
@@ -806,10 +814,10 @@
   },
   "conflicting_runtime_bindings": [],
   "counts": {
-    "entries": 1891,
+    "entries": 1895,
     "go_env_consumers": 926,
     "flink_properties": 261,
-    "kubernetes_env_bindings": 704,
+    "kubernetes_env_bindings": 708,
     "secret_entries": 184,
     "source_files": 76
   },
@@ -46334,6 +46342,142 @@
       ]
     },
     {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATION_V1_ENABLED:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATION_V1_ENABLED",
+      "key": "DASHBOARD_TASK_COMPENSATION_V1_ENABLED",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATION_V1_ENABLED:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATION_V1_ENABLED",
+      "key": "DASHBOARD_TASK_COMPENSATION_V1_ENABLED",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATOR_TIMEOUT_SECONDS:deployments/kubernetes/applications/go-services.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATOR_TIMEOUT_SECONDS",
+      "key": "DASHBOARD_TASK_COMPENSATOR_TIMEOUT_SECONDS",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "deployments/kubernetes/applications/go-services.yaml",
+          "reference": {
+            "value_sha256": "624b60c58c9d8bfb6ff1886c2fd605d2adeb6ea4da576068201b6c6958ce93f4",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATOR_TIMEOUT_SECONDS:go/control-plane/deployments/kubernetes/alert-service.yaml",
+      "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_COMPENSATOR_TIMEOUT_SECONDS",
+      "key": "DASHBOARD_TASK_COMPENSATOR_TIMEOUT_SECONDS",
+      "consumer": "k8s:traffic-analysis/Deployment/alert-service/alert-service",
+      "owner": "alert-domain-owner",
+      "type": "string",
+      "default": null,
+      "default_present": false,
+      "secret_default_nonempty": false,
+      "required": true,
+      "secret": false,
+      "legal_range": {
+        "mode": "consumer_parser",
+        "rule": "the referenced consumer must reject values outside its parser or validator"
+      },
+      "hot_reload": "unsupported",
+      "restart_required": true,
+      "environment_override": false,
+      "deprecation": {
+        "status": "active",
+        "replacement": null
+      },
+      "sources": [
+        {
+          "kind": "kubernetes_literal",
+          "path": "go/control-plane/deployments/kubernetes/alert-service.yaml",
+          "reference": {
+            "value_sha256": "624b60c58c9d8bfb6ff1886c2fd605d2adeb6ea4da576068201b6c6958ce93f4",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
       "id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_EVENT_TOPIC:deployments/kubernetes/applications/go-services.yaml",
       "runtime_binding_id": "k8s:traffic-analysis:Deployment:alert-service:alert-service:DASHBOARD_TASK_EVENT_TOPIC",
       "key": "DASHBOARD_TASK_EVENT_TOPIC",
@@ -63803,5 +63947,5 @@
       ]
     }
   ],
-  "catalog_sha256": "09e5ba4dc62ea4cf5b0ecb80cfea10f1de8e833ab12a844e93f9bb6319366916"
+  "catalog_sha256": "0312aca91390170920288356cf97aeba2a7529b5f264bfec6dda1661db6abd9f"
 }

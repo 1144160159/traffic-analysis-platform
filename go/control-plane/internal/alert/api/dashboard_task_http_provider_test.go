@@ -90,6 +90,52 @@ func TestValidateDashboardTaskExecutionReceiptRejectsUnknownFailure(t *testing.T
 	}
 }
 
+func TestHTTPDashboardTaskCompensatorRequiresConfirmedEffect(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Idempotency-Key") != "dashboard-task-compensation:event-00000001" || r.Header.Get("X-Tenant-ID") != "tenant-a" {
+			t.Fatalf("missing stable compensation identity headers: %+v", r.Header)
+		}
+		_ = json.NewEncoder(w).Encode(DashboardTaskCompensationReceipt{
+			Status: "compensated", Provider: "ticketing", ProviderReceiptID: "compensation-receipt-1",
+			EffectState: "unknown", CompensatedEffectIDs: []string{}, Result: map[string]interface{}{},
+			CompensatedAt: time.Now().UTC(),
+		})
+	}))
+	defer server.Close()
+	compensator, err := NewHTTPDashboardTaskCompensator(server.URL, "", time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = compensator.CompensateDashboardTask(context.Background(), dashboardProviderTestCompensationCommand())
+	if err == nil || !strings.Contains(err.Error(), "compensation requires confirmed external effects") {
+		t.Fatalf("HTTP 2xx without confirmed compensation was accepted: %v", err)
+	}
+}
+
+func TestHTTPDashboardTaskCompensatorAcceptsDurableReceipt(t *testing.T) {
+	now := time.Now().UTC().Truncate(time.Millisecond)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_ = json.NewEncoder(w).Encode(DashboardTaskCompensationReceipt{
+			Status: "compensated", Provider: " ticketing ", ProviderReceiptID: " compensation-receipt-2 ",
+			EffectState: "confirmed", CompensatedEffectIDs: []string{" ticket-42 "},
+			Result: map[string]interface{}{"deleted": true}, CompensatedAt: now,
+		})
+	}))
+	defer server.Close()
+	compensator, err := NewHTTPDashboardTaskCompensator(server.URL, "", time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	receipt, err := compensator.CompensateDashboardTask(context.Background(), dashboardProviderTestCompensationCommand())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if receipt.Provider != "ticketing" || receipt.ProviderReceiptID != "compensation-receipt-2" ||
+		len(receipt.CompensatedEffectIDs) != 1 || receipt.CompensatedEffectIDs[0] != "ticket-42" {
+		t.Fatalf("compensation receipt was not normalized: %+v", receipt)
+	}
+}
+
 func dashboardProviderTestCommand() DashboardTaskExecutionRequest {
 	return DashboardTaskExecutionRequest{
 		RequestEventID: "00000000-0000-0000-0000-000000000001", TenantID: "tenant-a",
@@ -97,5 +143,16 @@ func dashboardProviderTestCommand() DashboardTaskExecutionRequest {
 		TaskType: "closure", Target: "dashboard", Priority: "high", SnapshotID: "snapshot-1",
 		Reason: "prove durable provider receipt", RequestedBy: "operator", TraceID: "trace-dashboard-provider",
 		Context: map[string]interface{}{}, IdempotencyKey: "dashboard-task:event-00000001",
+	}
+}
+
+func dashboardProviderTestCompensationCommand() DashboardTaskCompensationRequest {
+	return DashboardTaskCompensationRequest{
+		RequestEventID: "00000000-0000-0000-0000-000000000003", TenantID: "tenant-a",
+		TaskID: "00000000-0000-0000-0000-000000000002", ActionID: dashboardTaskCompensationAction,
+		SnapshotID: "snapshot-1", Reason: "remove confirmed provider effect", RequestedBy: "operator",
+		TraceID: "trace-dashboard-compensator", OriginalProvider: "ticketing", OriginalReceiptID: "receipt-2",
+		OriginalEffectIDs: []string{"ticket-42"}, OriginalResult: map[string]interface{}{"ticket_id": "ticket-42"},
+		CompensationIdempotency: "dashboard-task-compensation:event-00000001",
 	}
 }
