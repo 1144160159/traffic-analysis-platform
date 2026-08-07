@@ -1806,10 +1806,14 @@
         "scripts/alignment/verify_asset_projection_opensearch_ephemeral.py",
         "deployments/kubernetes/image-digests.lock.json",
         "doc/02_acceptance/runs/20260807-remediation-g0-full-v177/manifest.json#sha256=0a7b42dcb235815496f1f83deb6364b48c0a246b629abc1bbb7be83a75c9be9b",
-        "doc/02_acceptance/runs/20260807-remediation-asset-projection-opensearch-g1-v1/manifest.json#sha256=0bd8805bef1ce78a4eb7657777cb38444af069c081a34956d03a5dce25df8e71"
+        "doc/02_acceptance/runs/20260807-remediation-asset-projection-opensearch-g1-v1/manifest.json#sha256=0bd8805bef1ce78a4eb7657777cb38444af069c081a34956d03a5dce25df8e71",
+        "go/control-plane/internal/alert/persistence/opensearch_integration_test.go",
+        "tests/alignment/test_asset_projection_opensearch_ephemeral_guard.py",
+        "doc/02_acceptance/runs/20260807-remediation-g0-full-v183/manifest.json#sha256=9a7dd6cbe5a827673db47701b1eeb1bbc840c34c7e3e1c2b772d830af8988d15",
+        "doc/02_acceptance/runs/20260807-remediation-alert-opensearch-writer-g1-v2/manifest.json#sha256=6f1bacc029820c381ccefa34e40d50872654f4c294a0cffd1fce549bd07718de"
       ],
-      "blocker": "仓库已形成alerts-v2版本化组件模板、组合模板、strict mapping、ISM、物理索引及read/write alias候选；Go和Flink的v2流量开关均默认false，production_applied=false。legacy alerts仍是动态映射单索引且没有业务alias、候选组件模板或ISM；14文档legacy只读shadow已对账为0差异，但尚未执行经批准的V2 expand、受限V2 backfill、tenant×时间桶全量计数与抽样hash/权限/性能对账、dual-write、原子read切换、延后write切换、回滚及T+0/T+1/T+3/T+7观察，G2至G8保持PARTIAL/OPEN/HOLD/BLOCKED。",
-      "note": "T-OS-002保持IMPLEMENTING：alerts-v2版本化治理、expand审批和受限backfill护栏不变。v177同时修复OpenSearch 2.14.0失效registry摘要，资产索引映射authority已在真实临时OpenSearch中证明dynamic=strict、read/write alias、确定性ID、external_gte同版本重放与旧版本拒绝；这不等于alerts-v2 expand/backfill/cutover，也未证明生产TLS、HA、snapshot、性能或观察窗。"
+      "blocker": "仓库已形成alerts-v2版本化组件模板、组合模板、strict mapping、ISM、物理索引及read/write alias候选；Go和Flink的v2流量开关均默认false，production_applied=false。固定摘要G1已证明Go生产单条/批量writer可被严格mapping接受，但legacy alerts仍是动态映射单索引且没有业务alias、候选组件模板或ISM；尚未执行批准的V2 expand、72M受限backfill、tenant×时间桶全量计数与抽样hash/权限/性能对账、dual-write、原子read切换、延后write切换、回滚及T+0/T+1/T+3/T+7观察，G2至G8保持PARTIAL/OPEN/HOLD/BLOCKED。",
+      "note": "T-OS-002保持IMPLEMENTING。v183/v2把`updated_at`加法加入严格mapping并保留`updated_ts`兼容，真实固定摘要OpenSearch同时接受生产Go单条和bulk告警writer，回读`updated_at/state_version/event_id/trace_id`一致；资产投影的alias与external_gte守卫也继续通过，容器删除且production_applied=false。这不等于生产expand、72M backfill、alias cutover、TLS/HA/snapshot、性能或观察窗。"
     },
     {
       "id": "T-OS-003",

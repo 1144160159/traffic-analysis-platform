@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-07T11:22:16Z",
+  "updated_at": "2026-08-07T11:41:39Z",
   "latest_g0": {
-    "run_id": "20260807-remediation-g0-full-v182",
-    "manifest": "doc/02_acceptance/runs/20260807-remediation-g0-full-v182/manifest.json",
-    "manifest_sha256": "655bf973c92fa636b87784e3d497fa391feb9c7c0707b97ae085451de2887834",
-    "candidate_source_sha256": "475161825f4e174d35fa987090ab4d742e58b78365fe3ab2dc6aaab32325c193",
+    "run_id": "20260807-remediation-g0-full-v183",
+    "manifest": "doc/02_acceptance/runs/20260807-remediation-g0-full-v183/manifest.json",
+    "manifest_sha256": "9a7dd6cbe5a827673db47701b1eeb1bbc840c34c7e3e1c2b772d830af8988d15",
+    "candidate_source_sha256": "379e1f314579089c950db471b3fbab31277709fbc084e8dea705aa73917d5be3",
     "status": "PASS",
     "scope": [
       "alignment-test",
@@ -260,6 +260,38 @@
       "G8": "BLOCKED_EXTERNAL"
     },
     "note": "This is a G1 owned integration bound to G0 v182. The production asset repository, outbox, Kafka, durable inbox, OpenSearch and NebulaGraph projection code share one asset identity and audit record; ClickHouse uses the production alert writer and MinIO is explicitly seeded. It is not a production or full G3 claim."
+  },
+  "latest_alert_opensearch_writer_g1": {
+    "canonical_ids": ["T-OS-001", "T-OS-002", "T-OBS-001"],
+    "run_id": "20260807-remediation-alert-opensearch-writer-g1-v2",
+    "manifest": "doc/02_acceptance/runs/20260807-remediation-alert-opensearch-writer-g1-v2/manifest.json",
+    "manifest_sha256": "6f1bacc029820c381ccefa34e40d50872654f4c294a0cffd1fce549bd07718de",
+    "result": "doc/02_acceptance/runs/20260807-remediation-alert-opensearch-writer-g1-v2/result.json",
+    "result_sha256": "3a9162d2d0bcbc4ccc666c058b1470c68658d65fa1c93e249b941d663e480d97",
+    "g0_run_id": "20260807-remediation-g0-full-v183",
+    "g0_manifest_sha256": "9a7dd6cbe5a827673db47701b1eeb1bbc840c34c7e3e1c2b772d830af8988d15",
+    "candidate_source_sha256": "379e1f314579089c950db471b3fbab31277709fbc084e8dea705aa73917d5be3",
+    "repository_status": "PASS",
+    "scoped_evidence_status": "PASS_OWNED_STRICT_ALERT_OPENSEARCH_WRITER",
+    "strict_mapping_verified": true,
+    "production_alert_writer_verified": true,
+    "single_and_bulk_write_verified": true,
+    "updated_at_state_version_trace_id_readback": true,
+    "container_removed": true,
+    "production_applied": false,
+    "production_mutations": [],
+    "gate_status": {
+      "G0": "PASS_SAME_SOURCE",
+      "G1": "PASS_FOR_OWNED_STRICT_MAPPING_SINGLE_AND_BULK_WRITER",
+      "G2": "OPEN_NO_RELEASE_CANDIDATE_IMAGE_OR_PRODUCTION_TEMPLATE",
+      "G3": "OPEN_NO_72M_SHADOW_BACKFILL_OR_PRODUCTION_RECONCILIATION",
+      "G4": "OPEN_NO_APPROVED_SCALE_PERFORMANCE_OR_FAILURE_PROFILE",
+      "G5": "NOT_APPLICABLE_TO_SERVER_SIDE_WRITER_SLICE",
+      "G6": "OPEN_NO_DUAL_WRITE_ALIAS_SWITCH_ROLLBACK_OR_OBSERVATION",
+      "G7": "OPEN",
+      "G8": "BLOCKED_EXTERNAL"
+    },
+    "note": "The exact alerts-v2 strict mapping accepted both production Go writer paths and preserved updated_at, state_version, event_id and trace_id. This fixed-digest loopback G1 does not prove production expand, 72M backfill, alias cutover or observation."
   },
   "latest_kafka_dlq_commit_barrier": {
     "control_id": "T-KAFKA-003",
