@@ -12,7 +12,7 @@
 2. 先将`DASHBOARD_TASK_COMPENSATION_V1_ENABLED`设为`false`，停止新的补偿受理；再将`DASHBOARD_TASK_PIPELINE_V1_ENABLED`设为`false`并滚动停止该候选的consumer、dispatcher、executor和compensator worker。先阻断新租约，再等待当前HTTP调用达到批准超时，不得并行启动旧消费者。
 3. 记录最后一个`trace_id`、`task_id`、执行/补偿请求`event_id`、结果`event_id`、Kafka partition/offset和两类提供方幂等键。对执行或补偿状态仍为`processing`的行标记为待人工对账，不得根据连接中断推断失败或重试产生副作用。
 4. 禁止删除`dashboard_tasks`、`dashboard_task_history`、`dashboard_task_outbox`、`dashboard_task_requests`、`dashboard_task_execution_attempts`、`dashboard_task_execution_receipts`、`dashboard_task_compensation_requests`、`dashboard_task_compensation_attempts`、`dashboard_task_compensation_receipts`、`dashboard_task_event_inbox`或相关`audit_logs`；三次迁移均为expand-only，回滚应用不回滚Schema。
-5. 对每个已受理任务执行PostgreSQL reconciliation，按`tenant_id/task_id/revision/event_id`核对任务、历史、审计、outbox、inbox、执行/补偿租约和提供方回执；不允许用直接SQL伪造completed或compensated状态。执行调用不确定时保持`partial/effect_state=unknown`；补偿调用不确定时保持`compensation_partial/effect_state=unknown`，等待稳定幂等键查询或人工裁决。
+5. 对每个已受理任务执行PostgreSQL reconciliation，按`tenant_id/task_id/revision/event_id`核对任务、历史、审计、outbox、inbox、执行/补偿租约和提供方回执；不允许用直接SQL伪造completed状态，也不允许伪造compensated状态。执行调用不确定时保持`partial/effect_state=unknown`；补偿调用不确定时保持`compensation_partial/effect_state=unknown`，等待稳定幂等键查询或人工裁决。
 6. 未发布的outbox保持`pending`并记录外部阻塞；已获Kafka ACK但尚未标记published的行允许按相同event ID重发，由inbox去重。不得删除或重写事件来追求数量一致。
 7. 如需恢复为“仅受理”兼容路径，只启用`DASHBOARD_TASK_V2_ENABLED`，保持pipeline flag关闭；UI必须继续显示accepted/running而不是成功。
 8. 恢复执行前重新运行OpenAPI/Feature Contract、隔离PG原子与事件重放测试、生产bundle构建和候选浏览器验收，并确认旧worker全部退出。
