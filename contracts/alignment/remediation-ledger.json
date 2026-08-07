@@ -514,10 +514,14 @@
         "doc/02_acceptance/runs/20260807-remediation-asset-expand-guardrails-v1/manifest.json#sha256=033eb16582134fc038fcc4b042ab21141dd464e6cd19bb48e7c0d0a51637f7f9",
         "scripts/alignment/verify_asset_expand_ephemeral.py",
         "doc/02_acceptance/runs/20260807-remediation-g0-full-v176/manifest.json#sha256=cccf2e64e201fbafa5a51d6fd1ddfb11d0003b8f7d9b0e713249c43dc597fd04",
-        "doc/02_acceptance/runs/20260807-remediation-asset-expand-g1-v2/manifest.json#sha256=b10bfba4e823da36788eebfe11c861c2b0b343e5eb7fab330eaaa3b5a3f33909"
+        "doc/02_acceptance/runs/20260807-remediation-asset-expand-g1-v2/manifest.json#sha256=b10bfba4e823da36788eebfe11c861c2b0b343e5eb7fab330eaaa3b5a3f33909",
+        "scripts/alignment/verify_asset_export_minio_ephemeral.py",
+        "tests/alignment/test_asset_export_minio_ephemeral_guard.py",
+        "doc/02_acceptance/runs/20260807-remediation-g0-full-v179/manifest.json#sha256=4c4675b47f398da3fb20d80eb8e9d0875fa8dc2e3ff6c8077a860d59cd65db49",
+        "doc/02_acceptance/runs/20260807-remediation-asset-export-minio-g1-v1/manifest.json#sha256=97f9fcf7f0df0acf41d394d5896c88880aad02925ec99c983341903825ba99e2"
       ],
-      "blocker": "当前生产镜像、27项生产migration、asset.exports.v1目录/ACL和feature flag灰度尚未执行；该topic仍如实标记producer_only，正式下游消费者及生产offset对账未关闭。批准规模P50/P95/P99、指定Windows Chrome提交/进度/下载/列设置旅程、发布回滚和T+0至T+7观察窗仍未完成。",
-      "note": "资产导出已从浏览器当前页CSV改为认证tenant下的202异步job；冻结查询、最小审计和requested outbox同一PG事务，worker使用repeatable-read快照生成CSV/JSONL并以PG manifest校验MinIO对象，下载审计和列偏好revision均已实现。独立asset.exports.v1采用租约、回收、退避、dead和broker ACK后published；全新sentinel PostgreSQL、真实临时MinIO及真实临时Redpanda的写入/回读/消费/对账通过。捕获器readiness失败v2、topic计数旧基线导致的G0 v40/v41失败均保留，修正后27项migration、G0 v42及资产导出v3通过；本项仅提升为VERIFYING。"
+      "blocker": "当前生产镜像、生产migration、asset.exports.v1目录/ACL和feature flag灰度尚未执行；该topic仍如实标记producer_only，正式下游消费者及生产offset对账未关闭。PG/Kafka/ClickHouse/OpenSearch/NebulaGraph/MinIO/审计同trace全链路对账、批准规模P50/P95/P99、指定Windows Chrome提交/进度/下载响应头/列设置旅程、发布回滚和T+0至T+7观察窗仍未完成。",
+      "note": "资产导出已从浏览器当前页CSV改为认证tenant下的202异步job；冻结查询、最小审计和requested outbox同一PG事务，worker使用repeatable-read快照生成CSV/JSONL并以PG manifest校验MinIO对象。v179同源码G0后，固定digest、无卷、loopback PostgreSQL/MinIO G1把job、四项source watermark、requested/completed outbox、requested/completed/downloaded审计、对象Stat和下载SHA-256统一到trace-real-minio，容器均删除且production_applied=false。历史Redpanda ACK/consume证据仍绑定旧候选；本项保持VERIFYING。"
     },
     {
       "id": "F-ASSET-005",
