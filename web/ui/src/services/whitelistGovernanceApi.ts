@@ -29,6 +29,12 @@ export type WhitelistEntry = {
   expires_at?: string;
   created_at: string;
   updated_at: string;
+  archived_at?: string;
+  last_action_id?: string;
+  last_trace_id?: string;
+  rule_effect_status?: 'pending' | 'applied' | 'failed';
+  rule_desired_state?: 'effective' | 'revoked';
+  rule_revision?: string;
 };
 
 type Envelope<T> = { success: boolean; data: T };
@@ -58,7 +64,7 @@ export async function createWhitelistDraft(input: CreateWhitelistDraft): Promise
     ...input,
     status: 'draft',
     approval_status: 'draft',
-  });
+  }, whitelistCommandConfig('whitelist-create'));
   return response.data.data;
 }
 
@@ -77,9 +83,9 @@ export async function transitionWhitelistEntry({
   expiresAt?: string;
   ownerRole?: string;
 }): Promise<WhitelistEntry> {
-  const common = { expected_version: entry.version };
+  const common = { expected_revision: entry.version };
   const body = action === 'submit'
-    ? { ...common, status: 'pending', approval_status: 'pending' }
+    ? { ...common, status: 'pending', approval_status: 'pending', reason: reason || '提交独立审批' }
     : action === 'approve'
       ? { ...common, status: 'active', approval_status: 'approved', reason: reason || entry.reason }
       : action === 'reject'
@@ -89,7 +95,11 @@ export async function transitionWhitelistEntry({
           : action === 'assign'
             ? { ...common, owner_role: ownerRole }
             : { ...common, status: 'disabled', reason: reason || entry.reason };
-  const response = await api.patch<Envelope<WhitelistEntry>>(`/v1/whitelist/${encodeURIComponent(entry.id)}`, body);
+  const response = await api.patch<Envelope<WhitelistEntry>>(
+    `/v1/whitelist/${encodeURIComponent(entry.id)}`,
+    body,
+    whitelistCommandConfig(whitelistActionID(action)),
+  );
   return response.data.data;
 }
 
@@ -102,4 +112,23 @@ export const whitelistTypeLabels: Record<WhitelistType, string> = {
   rule: '规则',
   model: '模型',
   fingerprint: '指纹',
+};
+
+const whitelistActionID = (action: WhitelistTransition) => ({
+  submit: 'whitelist-submit-approval',
+  approve: 'whitelist-approve',
+  reject: 'whitelist-reject',
+  extend: 'whitelist-extend',
+  disable: 'whitelist-disable',
+  assign: 'whitelist-assign',
+} as const)[action];
+
+const whitelistCommandConfig = (actionID: string) => {
+  const nonce = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  return {
+    headers: {
+      'X-Action-ID': actionID,
+      'Idempotency-Key': `whitelist:${actionID}:${nonce}`,
+    },
+  };
 };

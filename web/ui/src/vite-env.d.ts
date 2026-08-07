@@ -8,6 +8,8 @@ interface Window {
     AUTH_ENABLED?: string | boolean;
     USE_MOCK?: string | boolean;
     ALERT_DETAIL_API_ENABLED?: string | boolean;
+    ASSET_DETAIL_SNAPSHOT_V1_ENABLED?: string | boolean;
+    ASSET_GOVERNANCE_V1_ENABLED?: string | boolean;
     ENABLE_REALTIME?: string | boolean;
     SCREEN_ACCESS_MODE?: 'protected' | 'masked-demo';
     DESKTOP_SMOKE_TOKEN_ENABLED?: string | boolean;

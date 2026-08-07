@@ -21,6 +21,11 @@ const apisixRoutePrefixes = Array.from(
 ).map((match) => stripApiPrefix(match[1]));
 
 describe("pageApiPlans", () => {
+  it("loads dashboard from one canonical snapshot operation", () => {
+    expect(pageApiPlans.dashboard.primary).toBe("/v1/dashboard/snapshot");
+    expect(getPageLoadSecondaryEndpoints("dashboard")).toEqual([]);
+  });
+
   it("defines an explicit real API plan for every UI route", () => {
     const missing = allRoutes
       .map((route) => route.id)
@@ -202,6 +207,9 @@ describe("pageApiPlans", () => {
     expect(endpoints).toContain("/v1/topics/subscriptions/{id}");
     expect(endpoints).toContain("/v1/topics/reports/export");
     expect(endpoints).toContain("/v1/topics/evidence-packages/export");
+    expect(pageApiPlans["topic-tunnel"].primary).toBe("/v1/topics/tunnel/snapshot");
+    expect(pageApiPlans["topic-exfil"].primary).toBe("/v1/topics/exfil/snapshot");
+    expect(pageApiPlans["topic-apt"].primary).toBe("/v1/topics/apt/snapshot");
     expect(saveAction?.auditEvent).toBe("TOPIC_VIEW_SAVED");
     expect(saveAction?.guardrails).toContain(
       "saved views must persist topic_saved_views rows",
@@ -282,6 +290,10 @@ describe("pageApiPlans", () => {
   it("binds playbook actions to SOAR state-machine APIs", () => {
     const endpoints = getPlanEndpoints(getPageApiPlan("playbooks"));
     const executeAction = getPageActionPlan("playbooks", "playbook-execute");
+    const statusAction = getPageActionPlan("playbooks", "playbook-execution-status");
+    const approvalAction = getPageActionPlan("playbooks", "playbook-execution-approval");
+    const cancelAction = getPageActionPlan("playbooks", "playbook-execution-cancel");
+    const compensateAction = getPageActionPlan("playbooks", "playbook-execution-compensate");
     const updateAction = getPageActionPlan(
       "playbooks",
       "playbook-state-update",
@@ -290,16 +302,33 @@ describe("pageApiPlans", () => {
     expect(endpoints).toContain("/v1/playbooks/catalog");
     expect(endpoints).toContain("/v1/playbooks/executions");
     expect(endpoints).toContain("/v1/playbooks/{name}/execute");
+    expect(endpoints).toContain("/v1/playbooks/executions/{execution_id}");
+    expect(endpoints).toContain("/v1/playbooks/executions/{execution_id}/approval");
+    expect(endpoints).toContain("/v1/playbooks/executions/{execution_id}/cancel");
+    expect(endpoints).toContain("/v1/playbooks/executions/{execution_id}/compensate");
     expect(endpoints).toContain("/v1/playbooks/{name}");
     expect(executeAction?.method).toBe("POST");
+    expect(executeAction?.requiredScopes).toEqual(["playbook:execute"]);
+    expect(executeAction?.defaultBody).toMatchObject({
+      expected_version: 1,
+      alert_context: { alert_id: "alert-id-required" },
+    });
     expect(executeAction?.guardrails).toContain(
-      "manual execution must respect enabled and max_runs state",
+      "acceptance, independent approval, provider execution and compensation are distinct states",
+    );
+    expect(statusAction?.method).toBe("GET");
+    expect(approvalAction?.requiredScopes).toEqual(["playbook:approve"]);
+    expect(cancelAction?.requiredScopes).toEqual(["playbook:execute"]);
+    expect(compensateAction?.guardrails).toContain(
+      "compensation requires a completed or partial execution with a durable external-effect receipt",
     );
     expect(updateAction?.method).toBe("PATCH");
+    expect(updateAction?.requiredScopes).toEqual(["playbook:write"]);
     expect(updateAction?.guardrails).toContain(
-      "state updates must be persisted in alert_playbook_overrides",
+      "definition state transitions and audit records must commit atomically",
     );
     expect(isCoveredByApisix("/v1/playbooks/block-scanner/execute")).toBe(true);
+    expect(isCoveredByApisix("/v1/playbooks/executions/execution-a/approval")).toBe(true);
     expect(isCoveredByApisix("/v1/playbooks/block-scanner")).toBe(true);
   });
 
@@ -370,11 +399,12 @@ describe("pageApiPlans", () => {
     expect(endpoints).toContain("/v1/probes/{id}/config");
     expect(endpoints).toContain("/v1/probes/{id}/connectivity-test");
     expect(endpoints).toContain("/v1/probes/{id}/certificates/rotate");
+    expect(endpoints).toContain("/v1/probes/operations/{operation_id}");
     expect(batchUpgradeAction?.method).toBe("POST");
     expect(batchUpgradeAction?.requiredScopes).toContain("probe:write");
     expect(batchUpgradeAction?.auditEvent).toBe("PROBE_BATCH_UPGRADE_QUEUED");
     expect(batchUpgradeAction?.guardrails).toContain(
-      "batch upgrades must persist queued probe_operations rows without claiming agent completion",
+      "batch upgrades must persist accepted probe_operations rows without claiming agent completion",
     );
     expect(configAction?.auditEvent).toBe("PROBE_CONFIG_PUSH_QUEUED");
     expect(configAction?.defaultBody).toMatchObject({
@@ -744,6 +774,13 @@ describe("pageApiPlans", () => {
     expect(saveAction?.auditEvent).toBe("USER_UPDATE");
     expect(saveAction?.guardrails).toContain(
       "settings category must be notifications or display",
+    );
+    expect(saveAction?.defaultBody).toMatchObject({
+      action_id: "settings-action-001",
+      expected_revision: 0,
+    });
+    expect(saveAction?.guardrails).toContain(
+      "Idempotency-Key and action_id must identify retries while expected_revision prevents lost updates",
     );
     expect(createAction?.method).toBe("POST");
     expect(createAction?.requiredScopes).toContain("token:write");

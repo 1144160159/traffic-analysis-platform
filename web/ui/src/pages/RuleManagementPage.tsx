@@ -41,6 +41,7 @@ import { MetricTile } from '@/components/MetricTile';
 import { OverlayContractHost, type OverlayContract } from '@/components/OverlayContractHost';
 import { StatusTag } from '@/components/StatusTag';
 import { WorkPanel } from '@/components/WorkPanel';
+import { ruleLifecycleLabel } from '@/pages/ruleManagementLogic';
 import type { NavRoute } from '@/routes/routeManifest';
 import {
   fetchPageSnapshot,
@@ -89,10 +90,10 @@ const sampleRows = [
 ];
 
 const sessionSampleRows = [
-  ['ses_20260619_001', '10.12.4.12:53120 → 10.20.4.19:443', 'TLS / JA3命中', 'tls.sni · ja3_hash'],
-  ['ses_20260619_002', '10.12.4.12:49102 → 10.20.4.20:3306', 'MySQL 异常外联', 'dst_port · bytes_out'],
-  ['ses_20260619_003', '10.12.4.18:55221 → 10.20.0.53:53', 'DNS 查询突增', 'qname · qtype'],
-  ['ses_20260619_004', '10.12.7.23:3389 → 10.12.4.21:445', 'RDP/SMB 横向', 'proto · duration'],
+  ['ses_20260619_001', '会话端点暂不可用', 'TLS / JA3命中', 'tls.sni · ja3_hash'],
+  ['ses_20260619_002', '会话端点暂不可用', 'MySQL 异常外联', 'dst_port · bytes_out'],
+  ['ses_20260619_003', '会话端点暂不可用', 'DNS 查询突增', 'qname · qtype'],
+  ['ses_20260619_004', '会话端点暂不可用', 'RDP/SMB 横向', 'proto · duration'],
 ];
 
 const logSampleRows = [
@@ -143,9 +144,9 @@ const fpRows = [
 ];
 
 const whitelistRows = [
-  ['10.12.2.45', '156'],
-  ['10.12.3.78', '121'],
-  ['172.16.5.23', '98'],
+  ['资产地址暂不可用', '156'],
+  ['资产地址暂不可用', '121'],
+  ['资产地址暂不可用', '98'],
   ['update.campus.local', '86'],
   ['backup.internal.local', '65'],
 ];
@@ -187,7 +188,7 @@ type RuleAction = {
 };
 
 export function RuleManagementPage({ route }: { route: NavRoute }) {
-  const visualMode = isVisualBreakdownMode();
+  const visualMode = import.meta.env.DEV && isVisualBreakdownMode();
   const [editorTab, setEditorTab] = useState('规则定义');
   const [sampleTab, setSampleTab] = useState('PCAP 样本 32');
   const [selectedKey, setSelectedKey] = useState<string>();
@@ -248,7 +249,7 @@ export function RuleManagementPage({ route }: { route: NavRoute }) {
     }),
     onSuccess: () => setActionSubmitted(true),
   });
-  const metrics = route.page.kpis.map((label) => data?.metrics.find((item) => item.label === label) ?? fallbackMetric(label));
+  const metrics = route.page.kpis.map((label) => data?.metrics.find((item) => item.label === label) ?? unavailableMetric(label));
   const columns: ColumnsType<SnapshotRow> = route.page.tableColumns.map((column) => ({
     title: column,
     dataIndex: column,
@@ -414,14 +415,15 @@ function RuleEditor({
 }) {
   const definition = firstWorkbenchItem(workbench, 'rule_definition');
   const conditions = visualMode ? ruleConditions : ruleDefinitionConditions(definition, workbench?.rule.conditions);
-  const defaultDsl = textValue(definition.dsl) || buildRuleDsl(String(selected?.['规则ID'] ?? 'C2_Tunnel_v3'));
+  const selectedRuleID = String(selected?.['规则ID'] ?? 'C2_Tunnel_v3');
+  const defaultDsl = textValue(definition.dsl) || buildRuleDsl(selectedRuleID);
   const mitreLabel = textValue(definition.mitre) || 'TA0011 指挥与控制';
   const [dsl, setDsl] = useState(defaultDsl);
   const [mitreVisible, setMitreVisible] = useState(true);
   useEffect(() => {
     setDsl(defaultDsl);
     setMitreVisible(true);
-  }, [defaultDsl, selected?.['规则ID']]);
+  }, [defaultDsl, selectedRuleID]);
   return (
     <div className="taf-rules-editor">
       <nav className="taf-rules-editor-tabs">
@@ -798,16 +800,6 @@ const ruleRecordToSnapshotRow = (rule: RuleRecord): SnapshotRow => ({
   状态操作人: rule.updated_by || rule.created_by || 'system',
 });
 
-export function ruleLifecycleLabel(status: string): '草稿' | '待审' | '灰度' | '启用' | '停用' | '回滚' {
-  const normalized = status.trim().toLowerCase();
-  if (['rollback', '回滚'].some((value) => normalized.includes(value))) return '回滚';
-  if (['disabled', 'inactive', 'deprecated', 'archived', '停用', '禁用'].some((value) => normalized.includes(value))) return '停用';
-  if (['gray', 'canary', '灰度'].some((value) => normalized.includes(value))) return '灰度';
-  if (['pending', 'review', '待审'].some((value) => normalized.includes(value))) return '待审';
-  if (['active', 'enabled', '启用'].some((value) => normalized.includes(value))) return '启用';
-  return '草稿';
-}
-
 const formatRuleTime = (value: string) => {
   const timestamp = Date.parse(value);
   if (!Number.isFinite(timestamp)) return value || '—';
@@ -834,9 +826,9 @@ const ruleDefinitionConditions = (definition: Record<string, unknown>, ruleCondi
   return rows.length ? rows : [['未配置字段', '等于', '未配置']];
 };
 
-const fallbackMetric = (label: string): PageSnapshot['metrics'][number] => ({
+const unavailableMetric = (label: string): PageSnapshot['metrics'][number] => ({
   label,
-  value: label.includes('率') ? '92.0%' : '0',
-  delta: 'API',
-  status: 'info',
+  value: '-',
+  delta: '暂不可用',
+  status: 'warn',
 });

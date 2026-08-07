@@ -19,9 +19,20 @@ export const appConfig = {
   wsUrl: runtime.WS_URL || import.meta.env.VITE_WS_URL || '/ws/events',
   arkimeBaseUrl: runtime.ARKIME_BASE_URL || import.meta.env.VITE_ARKIME_BASE_URL || '',
   authEnabled: toBoolean(runtime.AUTH_ENABLED ?? import.meta.env.VITE_AUTH_ENABLED, true),
-  useMock: toBoolean(runtime.USE_MOCK ?? import.meta.env.VITE_USE_MOCK, false),
+  // Runtime config must never be able to turn fixtures back on in a production
+  // bundle. Vite replaces DEV with false at build time, which also makes mock
+  // branches and imports eligible for dead-code elimination.
+  useMock: import.meta.env.DEV && toBoolean(runtime.USE_MOCK ?? import.meta.env.VITE_USE_MOCK, false),
   enableAlertDetailApi: toBoolean(
     runtime.ALERT_DETAIL_API_ENABLED ?? import.meta.env.VITE_ALERT_DETAIL_API_ENABLED,
+    false,
+  ),
+  enableAssetDetailSnapshotV1: toBoolean(
+    runtime.ASSET_DETAIL_SNAPSHOT_V1_ENABLED ?? import.meta.env.VITE_ASSET_DETAIL_SNAPSHOT_V1_ENABLED,
+    false,
+  ),
+  enableAssetGovernanceV1: toBoolean(
+    runtime.ASSET_GOVERNANCE_V1_ENABLED ?? import.meta.env.VITE_ASSET_GOVERNANCE_V1_ENABLED,
     false,
   ),
   enableRealtime: toBoolean(runtime.ENABLE_REALTIME ?? import.meta.env.VITE_ENABLE_REALTIME, false),

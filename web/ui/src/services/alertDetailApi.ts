@@ -1,7 +1,6 @@
 import { appConfig } from '@/config/runtime';
 import { api } from '@/services/api';
 import { alertStatusLabel } from '@/services/alertStatus';
-import { isVisualBreakdownMode } from '@/utils/visualBreakdownMode';
 
 export type AlertDetailMetric = {
   label: string;
@@ -97,7 +96,7 @@ export type AlertDetailGraphPathEvidence = {
   relatedEntities: string[];
   generatedAt: string;
   status: string;
-  riskScore: number;
+  riskScore?: number;
   nodes: AlertDetailGraphPathNode[];
   edges: AlertDetailGraphPathEdge[];
   resources: string[];
@@ -128,7 +127,7 @@ export type AlertDetailSnapshot = {
   alertId: string;
   title: string;
   severity: string;
-  score: number;
+  score?: number;
   confidence: string;
   status: string;
   stateVersion?: number;
@@ -231,10 +230,18 @@ export const buildAlertFeedbackRequest = (input: AlertFeedbackInput) => ({
 
 type AlertFeedbackRequestPayload = ReturnType<typeof buildAlertFeedbackRequest>;
 
+function requiredAlertId(alertId: string): string {
+  const normalized = alertId.trim();
+  if (!normalized) throw new Error('alert_id 不能为空');
+  return normalized;
+}
+
 export async function fetchAlertDetailSnapshot(alertId: string): Promise<AlertDetailSnapshot> {
-  const normalizedId = alertId || 'AL-20260620-000123';
-  if (isVisualBreakdownMode()) return buildMockAlertDetailSnapshot('AL-20260620-000123');
-  if (appConfig.useMock || !appConfig.enableAlertDetailApi) return buildMockAlertDetailSnapshot(normalizedId);
+  const normalizedId = requiredAlertId(alertId);
+  if (appConfig.useMock) return buildMockAlertDetailSnapshot(normalizedId);
+  if (!appConfig.enableAlertDetailApi) {
+    throw new Error('告警详情真实 API 未启用；禁止回退到演示快照');
+  }
 
   const [alertResponse, evidenceResponse, feedbackResponse] = await Promise.all([
     api.get(`/v1/alerts/${encodeURIComponent(normalizedId)}`),
@@ -252,7 +259,7 @@ export async function fetchAlertDetailSnapshot(alertId: string): Promise<AlertDe
 }
 
 export async function updateAlertStatus(alertId: string, status: string, reason: string, stateVersion?: number): Promise<UpdateAlertStatusResult> {
-  const normalizedId = alertId || 'AL-20260620-000123';
+  const normalizedId = requiredAlertId(alertId);
   const request = buildUpdateAlertStatusRequest(status, reason, stateVersion);
   if (appConfig.useMock) {
     return {
@@ -276,7 +283,7 @@ export async function updateAlertStatus(alertId: string, status: string, reason:
 }
 
 export async function assignAlert(alertId: string, assignee: string): Promise<AssignAlertResult> {
-  const normalizedId = alertId || 'AL-20260620-000123';
+  const normalizedId = requiredAlertId(alertId);
   const request = buildAssignAlertRequest(assignee);
   if (appConfig.useMock) {
     return {
@@ -296,7 +303,7 @@ export async function assignAlert(alertId: string, assignee: string): Promise<As
 }
 
 export async function closeAlert(alertId: string, reason: string): Promise<CloseAlertResult> {
-  const normalizedId = alertId || 'AL-20260620-000123';
+  const normalizedId = requiredAlertId(alertId);
   const request = buildCloseAlertRequest(reason);
   if (appConfig.useMock) {
     return {
@@ -316,7 +323,7 @@ export async function closeAlert(alertId: string, reason: string): Promise<Close
 }
 
 export async function reopenAlert(alertId: string): Promise<ReopenAlertResult> {
-  const normalizedId = alertId || 'AL-20260620-000123';
+  const normalizedId = requiredAlertId(alertId);
   if (appConfig.useMock) {
     return {
       alertId: normalizedId,
@@ -333,7 +340,7 @@ export async function reopenAlert(alertId: string): Promise<ReopenAlertResult> {
 }
 
 export async function submitAlertFeedback(alertId: string, input: AlertFeedbackInput): Promise<AlertFeedbackResult> {
-  const normalizedId = alertId || 'AL-20260620-000123';
+  const normalizedId = requiredAlertId(alertId);
   const request = buildAlertFeedbackRequest(input);
   if (appConfig.useMock) {
     return {
@@ -347,7 +354,7 @@ export async function submitAlertFeedback(alertId: string, input: AlertFeedbackI
         ? {
             id: 'mock-whitelist-draft',
             type: 'ip',
-            value: '172.16.5.10',
+            value: '192.0.2.10',
             reason: request.reason_code,
             status: 'draft',
             sourceAlertId: normalizedId,
@@ -404,46 +411,53 @@ export function normalizeAlertDetailSnapshot(
   const feedback = unwrapPayload(feedbackPayload);
   const alertRecord = isRecord(alert) ? alert : {};
   const evidenceList = evidenceRows;
-  const score = normalizeScore(numberAt(alertRecord, ['score', 'risk_score', 'riskScore']) || 92);
-  const confidenceValue = numberAt(alertRecord, ['confidence', 'probability']);
+  const score = normalizeScore(optionalNumberAt(alertRecord, ['score', 'risk_score', 'riskScore']));
+  const confidenceValue = optionalNumberAt(alertRecord, ['confidence', 'probability']);
   const alertId = textFrom(alertRecord, ['alert_id', 'alertId', 'id']) || requestedAlertId;
-  const severity = severityLabel(textFrom(alertRecord, ['severity', 'risk_level', 'riskLevel']) || 'critical');
-  const status = alertStatusLabel(textFrom(alertRecord, ['status']) || 'triage');
+  const severity = severityLabel(textFrom(alertRecord, ['severity', 'risk_level', 'riskLevel']));
+  const status = alertStatusLabel(textFrom(alertRecord, ['status']));
   const stateVersion =
     stateVersionFrom(valueAt(alertRecord, ['state_version', 'stateVersion', 'version'])) ??
     stateVersionFrom(valueAt(alertRecord, ['updated_ts', 'updated_at', 'updatedAt']));
-  const srcIp = textFrom(alertRecord, ['src_ip', 'source_ip', 'srcIp']) || '172.16.5.10';
-  const dstIp = textFrom(alertRecord, ['dst_ip', 'destination_ip', 'dstIp']) || '185.22.14.9';
+  const srcIp = textFrom(alertRecord, ['src_ip', 'source_ip', 'srcIp']) || '暂不可用';
+  const dstIp = textFrom(alertRecord, ['dst_ip', 'destination_ip', 'dstIp']) || '暂不可用';
   const title = alertTitle(alertRecord);
-  const ruleModel = textFrom(alertRecord, ['rule_name', 'rule_version', 'model_version', 'alert_type', 'alertType']) || 'C2_Tunnel_v3';
-  const firstSeen = formatDateTime(textFrom(alertRecord, ['first_seen', 'firstSeen'])) || '2026-06-20 03:42:11';
+  const ruleModel = textFrom(alertRecord, ['rule_name', 'rule_version', 'model_version', 'alert_type', 'alertType']) || '暂不可用';
+  const firstSeen = formatDateTime(textFrom(alertRecord, ['first_seen', 'firstSeen'])) || '暂不可用';
   const evidenceAvailable = !isSecondaryError(evidencePayload) && evidenceRows.length > 0;
   const feedbackAvailable = !isSecondaryError(feedbackPayload) && Object.keys(isRecord(feedback) ? feedback : {}).length > 0;
   const feedbackResult = textFrom(feedback, ['result', 'verdict', 'classification']);
+  const tags = stringListFrom(valueAt(alertRecord, ['labels', 'tags'])).slice(0, 4);
+  const stageTrail = normalizeAlertTimeline(valueAt(alertRecord, ['stage_trail', 'stageTrail', 'attack_stages', 'attackStages']));
+  const timeline = normalizeAlertTimeline(valueAt(alertRecord, ['timeline', 'events', 'history']));
+  const responseActions = normalizeResponseActions(valueAt(alertRecord, ['response_actions', 'responseActions', 'action_catalog', 'actionCatalog']));
+  const confidenceText = confidenceValue === undefined
+    ? '暂不可用'
+    : confidenceValue > 1
+      ? `${confidenceValue}%`
+      : confidenceValue.toFixed(2);
 
   return {
     alertId,
     title,
     severity,
     score,
-    confidence: confidenceValue ? confidenceValue.toFixed(confidenceValue > 1 ? 0 : 2) : '0.98',
+    confidence: confidenceText,
     status,
     stateVersion,
-    assignee: textFrom(alertRecord, ['assignee', 'owner']) || 'sec_analyst',
+    assignee: textFrom(alertRecord, ['assignee', 'owner']) || '未分配',
     ruleModel,
     attackPhase: attackPhaseLabel(textFrom(alertRecord, ['attack_phase', 'phase']) || ruleModel),
     firstSeen,
-    businessSystem: textFrom(alertRecord, ['business_system', 'businessSystem']) || '教学区核心业务',
-    recommendation: textFrom(alertRecord, ['recommendation', 'suggestion']) || '隔离受控主机并阻断 C2 通信',
-    tags: stringListFrom(valueAt(alertRecord, ['labels', 'tags'])).length
-      ? stringListFrom(valueAt(alertRecord, ['labels', 'tags'])).slice(0, 4)
-      : ['C2通信', '横向移动', '可疑外联'],
+    businessSystem: textFrom(alertRecord, ['business_system', 'businessSystem']) || '暂不可用',
+    recommendation: textFrom(alertRecord, ['recommendation', 'suggestion']) || '暂不可用',
+    tags,
     metrics: [
-      metric('风险评分', `${score}/100`, severity, score >= 85 ? 'risk' : 'warn'),
-      metric('置信度', confidenceValue ? (confidenceValue > 1 ? `${confidenceValue}%` : confidenceValue.toFixed(2)) : '0.98', ruleModel, 'ok'),
-      metric('影响主机', '2 台', `${srcIp} -> ${dstIp}`, 'warn'),
-      metric('证据链', `${evidenceList.length} 项`, evidenceAvailable ? 'API' : '默认证据视图', evidenceAvailable ? 'ok' : 'warn'),
-      metric('处置动作', '5 项', '需写审计', 'info'),
+      metric('风险评分', score === undefined ? '暂不可用' : `${score}/100`, severity, score === undefined ? 'info' : score >= 85 ? 'risk' : 'warn'),
+      metric('置信度', confidenceText, ruleModel, confidenceValue === undefined ? 'info' : 'ok'),
+      metric('影响主机', srcIp === '暂不可用' && dstIp === '暂不可用' ? '暂不可用' : `${Number(srcIp !== '暂不可用') + Number(dstIp !== '暂不可用')} 台`, `${srcIp} -> ${dstIp}`, 'warn'),
+      metric('证据链', `${evidenceList.length} 项`, evidenceAvailable ? 'API' : '暂无权威证据', evidenceAvailable ? 'ok' : 'warn'),
+      metric('处置动作', `${responseActions.length} 项`, responseActions.length ? '服务端目录' : '暂无权威动作', responseActions.length ? 'info' : 'warn'),
       metric('反馈状态', feedbackResultLabel(feedbackResult), feedbackAvailable ? '已读取' : '待提交', feedbackAvailable ? 'ok' : 'warn'),
     ],
     assets: [
@@ -451,62 +465,44 @@ export function normalizeAlertDetailSnapshot(
         title: '源端资产',
         role: '受控主机',
         ip: srcIp,
-        hostname: textFrom(alertRecord, ['src_hostname', 'source_hostname']) || '办公室-WS-1024',
-        service: textFrom(alertRecord, ['src_service']) || 'Windows 10 22H2',
-        business: textFrom(alertRecord, ['src_business']) || '办公区',
-        risk: '异常流量 / 可疑外联',
+        hostname: textFrom(alertRecord, ['src_hostname', 'source_hostname']) || '暂不可用',
+        service: textFrom(alertRecord, ['src_service']) || '暂不可用',
+        business: textFrom(alertRecord, ['src_business']) || '暂不可用',
+        risk: textFrom(alertRecord, ['src_risk', 'source_risk']) || '暂不可用',
         facts: [
           { label: 'IP 地址', value: srcIp },
-          { label: 'MAC 地址', value: textFrom(alertRecord, ['src_mac', 'source_mac']) || '00:0c:29:3a:7c:1d' },
-          { label: '操作系统', value: textFrom(alertRecord, ['src_os', 'source_os']) || 'Windows 10 22H2' },
-          { label: '所属部门', value: textFrom(alertRecord, ['src_department', 'department']) || '办公区' },
-          { label: '最近风险画像', value: '异常流量 / 可疑外联' },
+          { label: 'MAC 地址', value: textFrom(alertRecord, ['src_mac', 'source_mac']) || '暂不可用' },
+          { label: '操作系统', value: textFrom(alertRecord, ['src_os', 'source_os']) || '暂不可用' },
+          { label: '所属部门', value: textFrom(alertRecord, ['src_department', 'department']) || '暂不可用' },
+          { label: '最近风险画像', value: textFrom(alertRecord, ['src_risk', 'source_risk']) || '暂不可用' },
         ],
       },
       {
         title: '目的端资产（外部）',
         role: 'C2 节点',
         ip: dstIp,
-        hostname: textFrom(alertRecord, ['dst_hostname', 'destination_hostname']) || 'Example GmbH',
-        service: textFrom(alertRecord, ['dst_service']) || 'TLS/443',
-        business: textFrom(alertRecord, ['dst_geo']) || '德国 法兰克福',
-        risk: '攻击基础设施',
+        hostname: textFrom(alertRecord, ['dst_hostname', 'destination_hostname']) || '暂不可用',
+        service: textFrom(alertRecord, ['dst_service']) || '暂不可用',
+        business: textFrom(alertRecord, ['dst_geo']) || '暂不可用',
+        risk: textFrom(alertRecord, ['dst_risk', 'destination_risk']) || '暂不可用',
         facts: [
           { label: 'IP 地址', value: dstIp },
-          { label: '地理位置', value: textFrom(alertRecord, ['dst_geo']) || '德国 法兰克福' },
-          { label: 'ASN', value: textFrom(alertRecord, ['dst_asn']) || 'AS132203' },
-          { label: '所属组织', value: textFrom(alertRecord, ['dst_org', 'destination_org']) || 'Example GmbH' },
-          { label: '最近风险画像', value: 'C2节点 / 攻击基础设施' },
+          { label: '地理位置', value: textFrom(alertRecord, ['dst_geo']) || '暂不可用' },
+          { label: 'ASN', value: textFrom(alertRecord, ['dst_asn']) || '暂不可用' },
+          { label: '所属组织', value: textFrom(alertRecord, ['dst_org', 'destination_org']) || '暂不可用' },
+          { label: '最近风险画像', value: textFrom(alertRecord, ['dst_risk', 'destination_risk']) || '暂不可用' },
         ],
       },
     ],
-    stageTrail: [
-      timelineItem('03:41:02', '初始访问', '可疑外联建立', 'info'),
-      timelineItem('03:42:18', '异常行为', '规则命中', 'ok'),
-      timelineItem('03:43:02', '横向移动', 'SMB 扫描迹象', 'warn'),
-      timelineItem('03:43:47', 'C2 连接', '高危通信确认', 'risk'),
-      timelineItem('03:44:12', '凭证利用', '待进一步验证', 'info'),
-    ],
-    timeline: [
-      timelineItem(firstSeen.slice(11, 19) || '03:42:11', '首次发生', `检测到主机 ${srcIp} 向 ${dstIp} 发起异常外联`, 'info'),
-      timelineItem('03:42:18', '规则命中', `命中规则/模型 ${ruleModel}`, 'warn'),
-      timelineItem('03:43:02', '证据生成', `生成 ${evidenceList.length} 项证据，含 PCAP / Session / 日志`, 'ok'),
-      timelineItem('03:43:47', '横向移动', '检测到内网扫描与会话探测行为', 'risk'),
-      timelineItem('03:44:12', '处置动作', '已生成隔离与阻断建议，等待确认执行', 'info'),
-    ],
-    evidenceRows: evidenceList.map((item, index) => evidenceRow(item, alertId, index)),
-    responseActions: [
-      { label: '隔离主机', risk: '高危', status: 'risk' },
-      { label: '阻断 IP', risk: '高危', status: 'risk' },
-      { label: '封禁账户', risk: '中危', status: 'warn' },
-      { label: '下发脚本', risk: '低危', status: 'info' },
-      { label: '创建工单', risk: '低危', status: 'info' },
-    ],
+    stageTrail,
+    timeline,
+    evidenceRows: evidenceList.map((item) => evidenceRow(item, alertId)),
+    responseActions,
     feedback: {
       defaultResult: feedbackResult === 'fp' || feedbackResult === 'false_positive' ? 'fp' : feedbackResult === 'pending' ? 'pending' : 'tp',
       reason: textFrom(feedback, ['reason', 'false_positive_reason']) || '',
-      whitelistDraft: textFrom(feedback, ['whitelist_draft', 'whitelist']) || `${srcIp} / ${dstIp}`,
-      sampleReturn: textFrom(feedback, ['sample_return', 'mlops_sample']) || '回流至 MLOps',
+      whitelistDraft: textFrom(feedback, ['whitelist_draft', 'whitelist']),
+      sampleReturn: textFrom(feedback, ['sample_return', 'mlops_sample']),
     },
     evidence: [
       metric('Alert Detail API', `/v1/alerts/${alertId}`, 'primary', 'ok'),
@@ -519,7 +515,7 @@ export function normalizeAlertDetailSnapshot(
   };
 }
 
-function buildMockAlertDetailSnapshot(alertId: string): AlertDetailSnapshot {
+export function buildMockAlertDetailSnapshot(alertId: string): AlertDetailSnapshot {
   return normalizeAlertDetailSnapshot(
     alertId,
     {
@@ -531,8 +527,8 @@ function buildMockAlertDetailSnapshot(alertId: string): AlertDetailSnapshot {
         confidence: 0.98,
         status: 'triage',
         assignee: 'sec_analyst',
-        src_ip: '172.16.5.10',
-        dst_ip: '185.22.14.9',
+        src_ip: '192.0.2.10',
+        dst_ip: '198.51.100.9',
         rule_version: 'C2_Tunnel_v3',
         first_seen: '2026-06-20 03:42:11',
         business_system: '教学区核心业务',
@@ -568,7 +564,7 @@ function buildMockAlertDetailSnapshot(alertId: string): AlertDetailSnapshot {
           status: 'generated',
           session_evidence: {
             session_id: 'session-20260620-000123.json',
-            tuple_lines: ['172.16.5.10:443 ->', '185.22.14.9:8443 / TCP'],
+            tuple_lines: ['192.0.2.10:443 ->', '198.51.100.9:8443 / TCP'],
             summary_lines: ['异常长连接，双向持续传输，', 'SNI 缺失'],
             bytes: '1.2 MB',
             duration: '12m 38s',
@@ -591,7 +587,7 @@ function buildMockAlertDetailSnapshot(alertId: string): AlertDetailSnapshot {
           status: 'generated',
           session_evidence: {
             session_id: 'session-20260620-000124.json',
-            tuple_lines: ['10.20.4.18:51514 ->', '185.22.14.9:443 / TCP'],
+            tuple_lines: ['192.0.2.18:51514 ->', '198.51.100.9:443 / TCP'],
             summary_lines: ['周期心跳，每 30s 上行小包'],
             bytes: '768 KB',
             duration: '08m 16s',
@@ -615,7 +611,7 @@ function buildMockAlertDetailSnapshot(alertId: string): AlertDetailSnapshot {
             generated_at: '2026-06-20 03:43:05',
             status: '已生成',
             highlighted_fields: [
-              { key: 'dst_ip', value: '185.22.14.9' },
+              { key: 'dst_ip', value: '198.51.100.9' },
               { key: 'sni', value: 'null' },
               { key: 'bytes_out_p95', value: '5.8MB' },
               { key: 'user_event', value: 'svc_backup login' },
@@ -630,13 +626,13 @@ function buildMockAlertDetailSnapshot(alertId: string): AlertDetailSnapshot {
         {
           type: '图谱路径',
           evidence_id: 'path-20260620-000123.json',
-          summary: '172.16.5.10 -> 185.22.14.9 路径关系',
+          summary: '192.0.2.10 -> 198.51.100.9 路径关系',
           size: '78 KB',
           timestamp: '2026-06-20 03:43:10',
           status: 'generated',
           graph_path: {
             path_file: 'path-20260620-000123.json',
-            path_summary: '172.16.5.10 -> 185.22.14.9\n路径关系',
+            path_summary: '192.0.2.10 -> 198.51.100.9\n路径关系',
             edge_weight: '0.86',
             relation_type: '横向访问',
             related_entities: ['资产 DB-SRV-01', '账号 svc_backup', '域名 downloads.campus.local'],
@@ -645,9 +641,9 @@ function buildMockAlertDetailSnapshot(alertId: string): AlertDetailSnapshot {
             risk_score: 85,
             resources: ['PCAP 1', 'Session 2', '日志 1'],
             nodes: [
-              { id: 'external-ip', label: '可疑外部IP', value: '185.22.14.9', kind: 'external' },
-              { id: 'gateway', label: '边界网关', value: '10.20.0.1', kind: 'gateway' },
-              { id: 'server', label: '核心业务服务器', value: '10.20.4.18', kind: 'server' },
+              { id: 'external-ip', label: '可疑外部IP', value: '198.51.100.9', kind: 'external' },
+              { id: 'gateway', label: '边界网关', value: '192.0.2.1', kind: 'gateway' },
+              { id: 'server', label: '核心业务服务器', value: '192.0.2.18', kind: 'server' },
               { id: 'account', label: '账号', value: 'svc_backup', kind: 'account' },
             ],
             edges: [
@@ -675,127 +671,7 @@ function buildMockAlertDetailSnapshot(alertId: string): AlertDetailSnapshot {
   );
 }
 
-function derivedEvidence(alert: Record<string, unknown>, alertId: string): Record<string, unknown>[] {
-  const ids = stringListFrom(valueAt(alert, ['evidence_ids']));
-  if (ids.length) return ids.map((id) => ({ evidence_id: id, type: '证据', status: 'referenced' }));
-  return [
-    {
-      type: 'PCAP',
-      evidence_id: `${alertId}.pcap`,
-      summary: 'PCAP 切片，TLS over HTTP 隧道，疑似隧道通信',
-      size: '24.8 MB',
-      timestamp: '2026-06-20 03:43:05',
-      status: 'generated',
-      pcap_evidence: {
-        file_name: `${alertId}.pcap`,
-        content_summary: 'PCAP 切片，TLS over HTTP 隧道，疑似隧道通信',
-        size: '24.8 MB',
-        generated_at: '2026-06-20 03:43:05',
-        status_lines: ['已生成 /', 'SHA256通过'],
-        download_audit: 'sec_analyst 03:44 下载',
-        object_path: `minio://traffic-evidence/alerts/2026/06/20/${alertId}.pcap`,
-        sha256: '1a2b3c4d5bef79a8h9i0j...',
-      },
-    },
-    {
-      type: 'Session',
-      evidence_id: 'session-20260620-000123.json',
-      summary: '异常长连接，双向持续传输，SNI 缺失',
-      size: '1.2 MB',
-      timestamp: '2026-06-20 03:43:05',
-      status: 'generated',
-      session_evidence: {
-        session_id: 'session-20260620-000123.json',
-        tuple_lines: ['172.16.5.10:443 ->', '185.22.14.9:8443 / TCP'],
-        summary_lines: ['异常长连接，双向持续传输，', 'SNI 缺失'],
-        bytes: '1.2 MB',
-        duration: '12m 38s',
-        status_label: '已生成',
-        action_kind: 'reload',
-        timeline: [
-          { time: '03:31', label: '建连' },
-          { time: '03:34', label: '心跳' },
-          { time: '03:43', label: '切片关联' },
-        ],
-        linked_pcap: 'AL-20260620-000123.pcap',
-      },
-    },
-    {
-      type: 'Session',
-      evidence_id: 'session-20260620-000124.json',
-      summary: '周期心跳，每 30s 上行小包',
-      size: '768 KB',
-      timestamp: '2026-06-20 03:43:06',
-      status: 'generated',
-      session_evidence: {
-        session_id: 'session-20260620-000124.json',
-        tuple_lines: ['10.20.4.18:51514 ->', '185.22.14.9:443 / TCP'],
-        summary_lines: ['周期心跳，每 30s 上行小包'],
-        bytes: '768 KB',
-        duration: '08m 16s',
-        status_label: '已生成',
-        action_kind: 'file',
-        linked_pcap: 'AL-20260620-000123.pcap',
-      },
-    },
-    {
-      type: '日志',
-      evidence_id: `ids-${alertId}.log`,
-      summary: '设备日志与规则命中日志，命中 C2_Tunnel_v3',
-      size: '-',
-      timestamp: '2026-06-20 03:43:05',
-      status: 'generated',
-      log_evidence: {
-        log_file: 'ids-20260620-000123.log',
-        source: 'IDS / 探针-07',
-        hit_fields: ['rule=C2_Tunnel_v3,', 'ja3_score=0.91'],
-        content_summary: '设备日志与规则命中日志，命中 C2_Tunnel_v3',
-        generated_at: '2026-06-20 03:43:05',
-        status: '已生成',
-        highlighted_fields: [
-          { key: 'dst_ip', value: '185.22.14.9' },
-          { key: 'sni', value: 'null' },
-          { key: 'bytes_out_p95', value: '5.8MB' },
-          { key: 'user_event', value: 'svc_backup login' },
-        ],
-        source_tags: [
-          { label: '设备日志', kind: 'device' },
-          { label: '规则命中', kind: 'rule' },
-          { label: '用户事件', kind: 'user' },
-        ],
-      },
-    },
-    {
-      type: '图谱路径',
-      evidence_id: `path-${alertId}.json`,
-      summary: '等待图谱路径证据',
-      size: '-',
-      status: 'pending',
-      graph_path: {
-        path_file: `path-${alertId}.json`,
-        path_summary: '172.16.5.10 -> 185.22.14.9\n路径关系',
-        edge_weight: '0.86',
-        relation_type: '横向访问',
-        related_entities: ['资产 DB-SRV-01', '账号 svc_backup', '域名 downloads.campus.local'],
-        generated_at: '2026-06-20 03:43:10',
-        status: '已生成',
-        risk_score: 85,
-        resources: ['PCAP 1', 'Session 2', '日志 1'],
-      },
-    },
-    {
-      type: '文件',
-      evidence_id: `hash-${alertId}.txt`,
-      summary: '等待 Hash 校验与签名 URL',
-      size: '-',
-      status: 'pending',
-      evidence_kind: 'hash 清单 / 附件',
-      signed_url: `https://evidence.campus.local/signed/${alertId}`,
-    },
-  ];
-}
-
-function evidenceRow(item: Record<string, unknown>, alertId: string, index: number): AlertDetailEvidenceRow {
+function evidenceRow(item: Record<string, unknown>, alertId: string): AlertDetailEvidenceRow {
   const metrics = valueAt(item, ['metrics']);
   const snippetRef = valueAt(item, ['snippet_ref', 'snippetRef']);
   const source = {
@@ -803,31 +679,29 @@ function evidenceRow(item: Record<string, unknown>, alertId: string, index: numb
     ...(isRecord(snippetRef) ? snippetRef : {}),
     ...item,
   };
-  const type = textFrom(source, ['type', 'evidence_type']) || ['PCAP', 'Session', '日志', '图谱路径', 'Hash', '签名 URL'][index % 6];
-  const id = textFrom(source, ['evidence_id', 'id', 'file_key', 'path']) || `${type}-${alertId}-${index + 1}`;
-  const status = evidenceStatusLabel(textFrom(source, ['status']) || 'generated');
+  const type = textFrom(source, ['type', 'evidence_type']) || '未知证据';
+  const id = textFrom(source, ['evidence_id', 'id', 'file_key', 'path']) || '暂不可用';
+  const status = evidenceStatusLabel(textFrom(source, ['status']));
   const hashValue = textFrom(source, ['hash', 'sha256', 'checksum']) || '';
   const signedUrl = textFrom(source, ['signed_url', 'signedUrl', 'url']) || '';
   const viewUrl = textFrom(source, ['redirect_url', 'redirectUrl', 'view_url', 'viewUrl']) || '';
   const fileTags = stringListFrom(valueAt(source, ['tags', 'labels'])).length
     ? stringListFrom(valueAt(source, ['tags', 'labels']))
-    : type.includes('文件')
-      ? ['报告附件', '导出脚本', 'hash 校验', '下载审计 sec_analyst 03:45']
-      : [];
-  const pcapEvidence = pcapEvidenceFrom(source, alertId, type, id, status);
+    : [];
+  const pcapEvidence = pcapEvidenceFrom(source, alertId, type, id);
   const sessionEvidence = sessionEvidenceFrom(source, alertId, type, id, status);
   const graphPath = graphPathFrom(source, alertId, type, id, status);
   const logEvidence = logEvidenceFrom(source, alertId, type, id, status);
   return {
     证据类型: type,
     文件记录: id,
-    内容摘要: textFrom(source, ['summary', 'description']) || `${type} 证据已关联告警上下文`,
+    内容摘要: textFrom(source, ['summary', 'description']) || '暂不可用',
     大小: textFrom(source, ['size', 'bytes']) || '-',
     生成时间: formatDateTime(textFrom(source, ['timestamp', 'created_at', 'generated_at'])) || '-',
     状态: status,
-    操作: status === '待生成' ? '等待' : '下载 / 查看',
+    操作: status === '待生成' ? '等待' : status === '暂不可用' ? '不可用' : '下载 / 查看',
     evidenceId: id,
-    evidenceKind: textFrom(source, ['evidence_kind', 'evidenceKind', 'kind']) || (type.includes('文件') ? 'hash 清单 / 附件' : type),
+    evidenceKind: textFrom(source, ['evidence_kind', 'evidenceKind', 'kind']) || '暂不可用',
     hashValue,
     signedUrl,
     viewUrl,
@@ -844,30 +718,23 @@ function pcapEvidenceFrom(
   alertId: string,
   type: string,
   evidenceId: string,
-  status: string,
 ): AlertDetailPcapEvidence | undefined {
   const sourceValue = valueAt(item, ['pcap_evidence', 'pcapEvidence', 'pcap']);
   const source = isRecord(sourceValue) ? sourceValue : item;
   const typeText = `${type} ${evidenceId}`.toLowerCase();
   if (!typeText.includes('pcap')) return undefined;
-  const generatedAt =
-    formatDateTime(textFrom(source, ['generated_at', 'generatedAt', 'timestamp', 'created_at'])) ||
-    '2026-06-20 03:43:05';
+  const generatedAt = formatDateTime(textFrom(source, ['generated_at', 'generatedAt', 'timestamp', 'created_at'])) || '暂不可用';
   const statusLines = stringListFrom(valueAt(source, ['status_lines', 'statusLines', 'check_status', 'checkStatus']));
   const fileName = textFrom(source, ['file_name', 'fileName', 'evidence_id', 'id']) || evidenceId || `${alertId}.pcap`;
   return {
     fileName,
-    contentSummary:
-      textFrom(source, ['content_summary', 'contentSummary', 'summary', 'description']) ||
-      'PCAP 切片，TLS over HTTP 隧道，疑似隧道通信',
-    size: textFrom(source, ['size', 'bytes']) || '24.8 MB',
+    contentSummary: textFrom(source, ['content_summary', 'contentSummary', 'summary', 'description']) || '暂不可用',
+    size: textFrom(source, ['size', 'bytes']) || '暂不可用',
     generatedAt,
-    statusLines: statusLines.length ? statusLines : [`${status || '已生成'} /`, 'SHA256通过'],
-    downloadAudit: textFrom(source, ['download_audit', 'downloadAudit', 'audit']) || 'sec_analyst 03:44 下载',
-    objectPath:
-      textFrom(source, ['object_path', 'objectPath', 'minio_path', 'minioPath', 'path']) ||
-      `minio://traffic-evidence/alerts/2026/06/20/${fileName}`,
-    sha256: textFrom(source, ['sha256', 'hash', 'checksum']) || '1a2b3c4d5bef79a8h9i0j...',
+    statusLines,
+    downloadAudit: textFrom(source, ['download_audit', 'downloadAudit', 'audit']) || '暂不可用',
+    objectPath: textFrom(source, ['object_path', 'objectPath', 'minio_path', 'minioPath', 'path']),
+    sha256: textFrom(source, ['sha256', 'hash', 'checksum']),
   };
 }
 
@@ -882,55 +749,27 @@ function sessionEvidenceFrom(
   const source = isRecord(sourceValue) ? sourceValue : item;
   const typeText = `${type} ${evidenceId}`.toLowerCase();
   if (!typeText.includes('session')) return undefined;
-  const timeline = recordsFrom(valueAt(source, ['timeline', 'events', 'session_timeline', 'sessionTimeline'])).map((event, index) => ({
-    time: textFrom(event, ['time', 'at']) || ['03:31', '03:34', '03:43'][index] || '',
-    label: textFrom(event, ['label', 'title']) || ['建连', '心跳', '切片关联'][index] || '事件',
+  const timeline = recordsFrom(valueAt(source, ['timeline', 'events', 'session_timeline', 'sessionTimeline'])).map((event) => ({
+    time: textFrom(event, ['time', 'at']) || '暂不可用',
+    label: textFrom(event, ['label', 'title']) || '暂不可用',
   }));
   const tupleLines = stringListFrom(valueAt(source, ['tuple_lines', 'tupleLines', 'five_tuple', 'fiveTuple']));
   const summaryLines = stringListFrom(valueAt(source, ['summary_lines', 'summaryLines']));
-  const fallbackIndex = evidenceId.includes('000124') || evidenceId.includes('flow') ? 1 : 0;
-  const fallbackRows = [
-    {
-      sessionId: 'session-20260620-000123.json',
-      tupleLines: ['172.16.5.10:443 ->', '185.22.14.9:8443 / TCP'],
-      summaryLines: ['异常长连接，双向持续传输，', 'SNI 缺失'],
-      bytes: '1.2 MB',
-      duration: '12m 38s',
-      actionKind: 'reload' as const,
-    },
-    {
-      sessionId: 'session-20260620-000124.json',
-      tupleLines: ['10.20.4.18:51514 ->', '185.22.14.9:443 / TCP'],
-      summaryLines: ['周期心跳，每 30s 上行小包'],
-      bytes: '768 KB',
-      duration: '08m 16s',
-      actionKind: 'file' as const,
-    },
-  ];
-  const fallback = fallbackRows[fallbackIndex];
   const actionKindText = textFrom(source, ['action_kind', 'actionKind', 'action']).toLowerCase();
   return {
-    sessionId: textFrom(source, ['session_id', 'sessionId', 'evidence_id', 'id']) || evidenceId || fallback.sessionId,
-    tupleLines: tupleLines.length ? tupleLines : fallback.tupleLines,
+    sessionId: textFrom(source, ['session_id', 'sessionId', 'evidence_id', 'id']) || evidenceId || '暂不可用',
+    tupleLines: tupleLines.length ? tupleLines : ['会话五元组暂不可用'],
     summaryLines: summaryLines.length
       ? summaryLines
       : (textFrom(source, ['content_summary', 'contentSummary', 'summary', 'description'])
           ? [textFrom(source, ['content_summary', 'contentSummary', 'summary', 'description'])]
-          : fallback.summaryLines),
-    bytes: textFrom(source, ['bytes', 'size']) || fallback.bytes,
-    duration: textFrom(source, ['duration', 'duration_text', 'durationText']) || fallback.duration,
-    status: textFrom(source, ['status_label', 'statusLabel']) || status || '已生成',
-    actionKind: actionKindText.includes('file') || actionKindText.includes('doc') ? 'file' : fallback.actionKind,
-    timeline: timeline.length
-      ? timeline
-      : [
-          { time: '03:31', label: '建连' },
-          { time: '03:34', label: '心跳' },
-          { time: '03:43', label: '切片关联' },
-        ],
-    linkedPcap:
-      textFrom(source, ['linked_pcap', 'linkedPcap', 'pcap', 'pcap_file', 'pcapFile']) ||
-      `AL-20260620-000123.pcap`.replace('AL-20260620-000123', alertId || 'AL-20260620-000123'),
+          : ['Session 摘要暂不可用']),
+    bytes: textFrom(source, ['bytes', 'size']) || '暂不可用',
+    duration: textFrom(source, ['duration', 'duration_text', 'durationText']) || '暂不可用',
+    status: textFrom(source, ['status_label', 'statusLabel']) || status || '暂不可用',
+    actionKind: actionKindText.includes('file') || actionKindText.includes('doc') ? 'file' : 'reload',
+    timeline,
+    linkedPcap: textFrom(source, ['linked_pcap', 'linkedPcap', 'pcap', 'pcap_file', 'pcapFile']),
   };
 }
 
@@ -950,35 +789,20 @@ function logEvidenceFrom(
     value: textFrom(field, ['value']) || '-',
   }));
   const sourceTags = recordsFrom(valueAt(source, ['source_tags', 'sourceTags', 'tags'])).map((tag, index) => ({
-    label: textFrom(tag, ['label', 'name']) || ['设备日志', '规则命中', '用户事件'][index] || '日志',
+    label: textFrom(tag, ['label', 'name']) || '暂不可用',
     kind: logTagKind(textFrom(tag, ['kind', 'type']), index),
   }));
   return {
     logFile: textFrom(source, ['log_file', 'logFile', 'evidence_id', 'id']) || evidenceId || `ids-${alertId}.log`,
-    source: textFrom(source, ['source', 'origin']) || 'IDS / 探针-07',
+    source: textFrom(source, ['source', 'origin']) || '暂不可用',
     hitFields: stringListFrom(valueAt(source, ['hit_fields', 'hitFields', 'match_fields', 'matchFields'])).length
       ? stringListFrom(valueAt(source, ['hit_fields', 'hitFields', 'match_fields', 'matchFields']))
-      : ['rule=C2_Tunnel_v3,', 'ja3_score=0.91'],
-    contentSummary:
-      textFrom(source, ['content_summary', 'contentSummary', 'summary', 'description']) ||
-      '设备日志与规则命中日志，命中 C2_Tunnel_v3',
-    generatedAt: formatDateTime(textFrom(source, ['generated_at', 'generatedAt', 'timestamp', 'created_at'])) || '2026-06-20 03:43:05',
-    status: textFrom(source, ['status_label', 'statusLabel']) || status || '已生成',
-    highlightedFields: highlightedFields.length
-      ? highlightedFields
-      : [
-          { key: 'dst_ip', value: '185.22.14.9' },
-          { key: 'sni', value: 'null' },
-          { key: 'bytes_out_p95', value: '5.8MB' },
-          { key: 'user_event', value: 'svc_backup login' },
-        ],
-    sourceTags: sourceTags.length
-      ? sourceTags
-      : [
-          { label: '设备日志', kind: 'device' },
-          { label: '规则命中', kind: 'rule' },
-          { label: '用户事件', kind: 'user' },
-        ],
+      : [],
+    contentSummary: textFrom(source, ['content_summary', 'contentSummary', 'summary', 'description']) || '暂不可用',
+    generatedAt: formatDateTime(textFrom(source, ['generated_at', 'generatedAt', 'timestamp', 'created_at'])) || '暂不可用',
+    status: textFrom(source, ['status_label', 'statusLabel']) || status || '暂不可用',
+    highlightedFields,
+    sourceTags,
   };
 }
 
@@ -1003,46 +827,33 @@ function graphPathFrom(
   if (!type.includes('图谱') && !typeText.includes('graph') && !typeText.includes('path')) return undefined;
   const nodes = recordsFrom(valueAt(source, ['nodes', 'path_nodes', 'pathNodes'])).map((node, index) => ({
     id: textFrom(node, ['id']) || `node-${index}`,
-    label: textFrom(node, ['label', 'name']) || ['可疑外部IP', '边界网关', '核心业务服务器', '账号'][index] || `节点 ${index + 1}`,
-    value: textFrom(node, ['value', 'ip', 'account']) || ['185.22.14.9', '10.20.0.1', '10.20.4.18', 'svc_backup'][index] || '-',
+    label: textFrom(node, ['label', 'name']) || '暂不可用',
+    value: textFrom(node, ['value', 'ip', 'account']) || '暂不可用',
     kind: graphNodeKind(textFrom(node, ['kind', 'type']), index),
   }));
   const edges = recordsFrom(valueAt(source, ['edges', 'path_edges', 'pathEdges'])).map((edge, index) => ({
     from: textFrom(edge, ['from', 'source']) || (nodes[index]?.id ?? `node-${index}`),
     to: textFrom(edge, ['to', 'target']) || (nodes[index + 1]?.id ?? `node-${index + 1}`),
-    label: textFrom(edge, ['label', 'relation']) || ['通信', '登录', '访问'][index] || '访问',
+    label: textFrom(edge, ['label', 'relation']) || '暂不可用',
   }));
   return {
     pathFile: textFrom(source, ['path_file', 'pathFile', 'evidence_id', 'id']) || evidenceId || `path-${alertId}.json`,
     pathSummary:
       textFrom(source, ['path_summary', 'pathSummary', 'summary', 'description']) ||
-      '172.16.5.10 -> 185.22.14.9\n路径关系',
-    edgeWeight: textFrom(source, ['edge_weight', 'edgeWeight', 'weight']) || '0.86',
-    relationType: textFrom(source, ['relation_type', 'relationType', 'relation']) || '横向访问',
+      '路径关系暂不可用',
+    edgeWeight: textFrom(source, ['edge_weight', 'edgeWeight', 'weight']) || '暂不可用',
+    relationType: textFrom(source, ['relation_type', 'relationType', 'relation']) || '暂不可用',
     relatedEntities: stringListFrom(valueAt(source, ['related_entities', 'relatedEntities', 'entities'])).length
       ? stringListFrom(valueAt(source, ['related_entities', 'relatedEntities', 'entities']))
-      : ['资产 DB-SRV-01', '账号 svc_backup', '域名 downloads.campus.local'],
-    generatedAt: formatDateTime(textFrom(source, ['generated_at', 'generatedAt', 'timestamp', 'created_at'])) || '2026-06-20 03:43:10',
-    status: textFrom(source, ['status_label', 'statusLabel']) || status || '已生成',
-    riskScore: normalizeScore(numberAt(source, ['risk_score', 'riskScore']) || 85),
-    nodes: nodes.length
-      ? nodes
-      : [
-          { id: 'external-ip', label: '可疑外部IP', value: '185.22.14.9', kind: 'external' },
-          { id: 'gateway', label: '边界网关', value: '10.20.0.1', kind: 'gateway' },
-          { id: 'server', label: '核心业务服务器', value: '10.20.4.18', kind: 'server' },
-          { id: 'account', label: '账号', value: 'svc_backup', kind: 'account' },
-        ],
-    edges: edges.length
-      ? edges
-      : [
-          { from: 'external-ip', to: 'gateway', label: '通信' },
-          { from: 'gateway', to: 'server', label: '登录' },
-          { from: 'server', to: 'account', label: '访问' },
-        ],
+      : [],
+    generatedAt: formatDateTime(textFrom(source, ['generated_at', 'generatedAt', 'timestamp', 'created_at'])) || '暂不可用',
+    status: textFrom(source, ['status_label', 'statusLabel']) || status || '暂不可用',
+    riskScore: normalizeScore(optionalNumberAt(source, ['risk_score', 'riskScore'])),
+    nodes,
+    edges,
     resources: stringListFrom(valueAt(source, ['resources', 'related_resources', 'relatedResources'])).length
       ? stringListFrom(valueAt(source, ['resources', 'related_resources', 'relatedResources']))
-      : ['PCAP 1', 'Session 2', '日志 1'],
+      : [],
   };
 }
 
@@ -1068,9 +879,48 @@ function timelineItem(
   return { time, title, description, status };
 }
 
+function normalizeAlertTimeline(value: unknown): AlertDetailTimelineItem[] {
+  return recordsFrom(value).map((item) => {
+    const rawStatus = textFrom(item, ['status', 'severity', 'level']).toLowerCase();
+    const status: AlertDetailTimelineItem['status'] = rawStatus.includes('critical') || rawStatus.includes('high') || rawStatus.includes('risk')
+      ? 'risk'
+      : rawStatus.includes('medium') || rawStatus.includes('warn')
+        ? 'warn'
+        : rawStatus.includes('success') || rawStatus.includes('ok')
+          ? 'ok'
+          : 'info';
+    return timelineItem(
+      formatDateTime(textFrom(item, ['time', 'timestamp', 'created_at', 'createdAt'])) || '暂不可用',
+      textFrom(item, ['title', 'label', 'phase', 'name']) || '暂不可用',
+      textFrom(item, ['description', 'summary', 'detail', 'message']) || '暂不可用',
+      status,
+    );
+  });
+}
+
+function normalizeResponseActions(value: unknown): AlertDetailSnapshot['responseActions'] {
+  return recordsFrom(value).flatMap((item) => {
+    const label = textFrom(item, ['label', 'name', 'title']);
+    if (!label) return [];
+    const rawStatus = textFrom(item, ['status', 'severity', 'risk_level', 'riskLevel']).toLowerCase();
+    const status: AlertDetailSnapshot['responseActions'][number]['status'] = rawStatus.includes('critical') || rawStatus.includes('high') || rawStatus.includes('risk')
+      ? 'risk'
+      : rawStatus.includes('medium') || rawStatus.includes('warn')
+        ? 'warn'
+        : rawStatus.includes('success') || rawStatus.includes('ok')
+          ? 'ok'
+          : 'info';
+    return [{
+      label,
+      risk: textFrom(item, ['risk', 'risk_label', 'riskLabel', 'severity']) || '未提供',
+      status,
+    }];
+  });
+}
+
 function alertTitle(alert: Record<string, unknown>) {
   const type = textFrom(alert, ['name', 'title', 'alert_type', 'alertType']);
-  if (!type) return '疑似 C2 隧道通信';
+  if (!type) return '暂不可用';
   if (type.toLowerCase().includes('c2')) return '疑似 C2 隧道通信';
   return type;
 }
@@ -1080,7 +930,7 @@ function attackPhaseLabel(value: string) {
   if (lower.includes('c2') || lower.includes('command')) return 'C2 连接';
   if (lower.includes('lateral')) return '横向移动';
   if (lower.includes('exfil')) return '数据外传';
-  return value || 'C2 连接';
+  return value || '暂不可用';
 }
 
 function severityLabel(value: string) {
@@ -1088,16 +938,18 @@ function severityLabel(value: string) {
   if (lower.includes('critical') || lower.includes('high') || value.includes('高')) return '高危';
   if (lower.includes('medium') || value.includes('中')) return '中危';
   if (lower.includes('low') || value.includes('低')) return '低危';
-  return value || '高危';
+  return value || '暂不可用';
 }
 
 function evidenceStatusLabel(value: string) {
   const lower = value.toLowerCase();
+  if (!lower) return '暂不可用';
   if (lower.includes('pending') || lower.includes('waiting')) return '待生成';
+  if (lower.includes('generated') || lower.includes('ready') || lower.includes('complete')) return '已生成';
   if (lower.includes('calcul')) return '已计算';
   if (lower.includes('access')) return '可访问';
   if (lower.includes('fail')) return '失败';
-  return '已生成';
+  return value;
 }
 
 function feedbackResultLabel(value: string) {
@@ -1108,8 +960,8 @@ function feedbackResultLabel(value: string) {
   return '待确认';
 }
 
-function normalizeScore(value: number) {
-  if (!Number.isFinite(value)) return 92;
+function normalizeScore(value: number | undefined) {
+  if (value === undefined || !Number.isFinite(value)) return undefined;
   if (value <= 1) return Math.round(value * 100);
   return Math.max(0, Math.min(100, Math.round(value)));
 }
@@ -1191,10 +1043,11 @@ function booleanFrom(value: unknown) {
   return normalized === 'true' || normalized === '1' || normalized === 'yes';
 }
 
-function numberAt(source: Record<string, unknown>, keys: string[]) {
+function optionalNumberAt(source: Record<string, unknown>, keys: string[]) {
   const value = valueAt(source, keys);
+  if (value === undefined || value === null || value === '') return undefined;
   const numeric = typeof value === 'number' ? value : Number(value);
-  return Number.isFinite(numeric) ? numeric : 0;
+  return Number.isFinite(numeric) ? numeric : undefined;
 }
 
 function stringListFrom(value: unknown): string[] {

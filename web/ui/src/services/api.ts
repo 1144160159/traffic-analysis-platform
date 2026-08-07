@@ -1,12 +1,12 @@
 import axios from 'axios';
 import { appConfig } from '@/config/runtime';
-import { buildVisualBreakdownSnapshot, type PageSnapshot } from '@/services/mockData';
+import type { PageSnapshot } from '@/services/mockData';
 import { findRouteById } from '@/routes/routeManifest';
 import type { PageSpec } from '@/routes/routeManifest';
 import { getPageActionPlan, getPageApiPlan, getPageLoadSecondaryEndpoints } from '@/services/pageApiPlans';
 import { adaptKnownPageSnapshot } from '@/services/pageSnapshotAdapters';
+import { normalizeDashboardSnapshot } from '@/services/dashboardSnapshotApi';
 import { clearAuthTokens, getAuthToken } from '@/services/authStorage';
-import { isVisualBreakdownMode } from '@/utils/visualBreakdownMode';
 
 export type LoginPayload = {
   tenant_id?: string;
@@ -203,6 +203,11 @@ export type PageSnapshotRequestOptions = {
   sourceAssetId?: string;
   sourceAssetIp?: string;
   sourceEntity?: string;
+  sourceAlertId?: string;
+  sourceCampaignId?: string;
+  sourceBaselineId?: string;
+  sourceEvidenceId?: string;
+  sourceEvidenceType?: string;
   alertFilters?: AlertSnapshotFilters;
   forensicsFilters?: {
     assetId?: string;
@@ -281,7 +286,7 @@ export type EntityGraphWorkbenchPath = {
 };
 
 export const fetchEntityGraphWorkbench = async (
-  centerId = 'host:10.20.4.18',
+  centerId: string | undefined,
   filters: EntityGraphWorkbenchFilters = { timeRange: '24h', site: 'main', entityType: 'all', depth: 2 },
 ): Promise<EntityGraphWorkbench> => {
   const response = await api.get<{
@@ -290,7 +295,7 @@ export const fetchEntityGraphWorkbench = async (
     meta?: EntityGraphWorkbench['meta'];
   }>('/v1/graph/workbench', {
     params: {
-      center_id: centerId,
+      ...(centerId ? { center_id: centerId } : {}),
       time_range: filters.timeRange,
       site: filters.site,
       entity_type: filters.entityType,
@@ -666,6 +671,7 @@ export type AssetRecord = {
   metadata?: Record<string, unknown>;
   first_seen: string;
   last_seen: string;
+  revision?: number;
 };
 
 export type AssetEvent = {
@@ -768,6 +774,146 @@ export type AssetTopologyGraph = {
   observed_at: string;
 };
 
+export type ContractMeta = {
+  contract_version: number;
+  snapshot_id: string;
+  as_of: string;
+  trace_id: string;
+  partial: boolean;
+  missing_sections: string[];
+  source_watermarks: Record<string, string>;
+};
+
+export type AssetResolvedIdentity = {
+  kind: string;
+  value: string;
+  asset_revision: number;
+};
+
+export type AssetObservationSummary = {
+  asset_id: string;
+  resolved_identity: AssetResolvedIdentity;
+  source: string;
+  window_start: string;
+  window_end: string;
+  first_observed_at?: string;
+  last_observed_at?: string;
+  session_count: number;
+  bytes_total: number;
+  packets_total: number;
+  distinct_peers: number;
+  protocols: number[];
+};
+
+export type AssetAlertSummary = {
+  alert_id: string;
+  severity: string;
+  status: string;
+  alert_type: string;
+  src_ip: string;
+  dst_ip: string;
+  src_port: number;
+  dst_port: number;
+  protocol: number;
+  score: number;
+  evidence_ids: string[];
+  first_seen: string;
+  last_seen: string;
+  state_version: number;
+  event_id: string;
+};
+
+export type AssetAlertContext = {
+  asset_id: string;
+  resolved_identity: AssetResolvedIdentity;
+  source: string;
+  window_start: string;
+  window_end: string;
+  alerts: AssetAlertSummary[];
+  truncated: boolean;
+};
+
+export type AssetGraphProjectionRelation = {
+  relation_id: string;
+  source_id: string;
+  target_id: string;
+  relation_type: string;
+  risk_level?: string;
+  evidence_id?: string;
+  attributes?: Record<string, unknown>;
+  weight: number;
+  observed_at?: string;
+};
+
+export type AssetGraphProjection = {
+  asset_id: string;
+  source: string;
+  label: string;
+  detail: string;
+  risk_score: number;
+  risk_level: string;
+  icon: string;
+  metadata: Record<string, unknown>;
+  projected_revision: number;
+  postgres_revision: number;
+  updated_at: string;
+  relations: AssetGraphProjectionRelation[];
+  truncated: boolean;
+  stale: boolean;
+};
+
+export type AssetEvidenceObjectManifest = {
+  evidence_id: string;
+  alert_id: string;
+  evidence_type: string;
+  summary: string;
+  bucket: string;
+  object_key: string;
+  object_version?: string;
+  content_type: string;
+  size_bytes: number;
+  etag?: string;
+  sha256?: string;
+  integrity_status: string;
+  evidence_at: string;
+  last_modified: string;
+};
+
+export type AssetEvidenceObjectSet = {
+  asset_id: string;
+  source: string;
+  objects: AssetEvidenceObjectManifest[];
+  missing_evidence_ids: string[];
+  truncated: boolean;
+  partial: boolean;
+};
+
+export type AssetDetailSnapshot = {
+  contract_version: number;
+  snapshot_id: string;
+  asset: AssetRecord;
+  details: AssetDetails;
+  history: AssetEvent[];
+  topology: AssetTopologyGraph;
+  observations?: AssetObservationSummary;
+  alert_context?: AssetAlertContext;
+  graph_projection?: AssetGraphProjection;
+  evidence_objects?: AssetEvidenceObjectSet;
+  available_sections: string[];
+  missing_sections: string[];
+  partial: boolean;
+  source_watermarks: Record<string, string>;
+  as_of: string;
+};
+
+export type AssetDetailSnapshotEnvelope = {
+  success: boolean;
+  data: AssetDetailSnapshot;
+  meta: ContractMeta;
+  error: null;
+  timestamp: string;
+};
+
 export type ProbeTopologyPoint = {
   x: number;
   y: number;
@@ -842,6 +988,14 @@ export const fetchAssetTopology = async (assetId: string): Promise<AssetTopology
   return response.data.data;
 };
 
+export const fetchAssetDetailSnapshot = async (assetId: string, historyLimit = 50): Promise<AssetDetailSnapshotEnvelope> => {
+  if (!assetId) throw new Error('asset id required');
+  const response = await api.get<AssetDetailSnapshotEnvelope>(`/v1/assets/${encodeURIComponent(assetId)}/snapshot`, {
+    params: { history_limit: historyLimit },
+  });
+  return response.data;
+};
+
 export const fetchProbeTopology = async (mode: '2d' | '3d'): Promise<ProbeTopologyGraph> => {
   const response = await api.get<{ data: ProbeTopologyGraph }>('/v1/probes/topology', { params: { mode } });
   return response.data.data;
@@ -850,10 +1004,6 @@ export const fetchProbeTopology = async (mode: '2d' | '3d'): Promise<ProbeTopolo
 export const fetchPageSnapshot = async (pageId: string, options: PageSnapshotRequestOptions = {}): Promise<PageSnapshot> => {
   const route = findRouteById(pageId);
   if (!route) throw new Error(`Unknown page: ${pageId}`);
-
-  if (isVisualBreakdownMode() && pageId !== 'assets' && !pageId.startsWith('topic-')) {
-    return buildVisualBreakdownSnapshot(route.page);
-  }
 
   if (appConfig.useMock) {
     const response = await api.get<PageSnapshot>(`/v1/ui/pages/${pageId}`);
@@ -865,13 +1015,21 @@ export const fetchPageSnapshot = async (pageId: string, options: PageSnapshotReq
 
 export type TopicActionResult = {
   action_id: string;
+  job_id?: string;
   tenant_id: string;
   topic: 'tunnel' | 'exfil' | 'apt';
-  action: string;
-  label: string;
+  action?: string;
+  label?: string;
   target: string;
-  data_mode: 'live' | 'partial' | 'simulated';
+  data_mode?: 'live' | 'partial' | 'simulated';
   status: string;
+  snapshot_id?: string;
+  expected_revision?: number;
+  revision?: number;
+  executor?: string;
+  trace_id?: string;
+  receipt?: Record<string, unknown>;
+  error?: Record<string, unknown>;
   business_effect?: {
     operation: string;
     state: string;
@@ -918,6 +1076,8 @@ const topicActionCode = (label: string) => {
 
 export type TopicDataContext = {
   data_mode: 'live' | 'partial' | 'simulated';
+  snapshot_id?: string;
+  expected_revision?: number;
   simulation_id?: string;
   simulation_version?: string;
   scope_snapshot?: Record<string, unknown>;
@@ -931,8 +1091,50 @@ export const submitTopicAction = async (
   context?: TopicDataContext,
 ): Promise<TopicActionResult> => {
   const topicKey = topicActionKey(topic);
+  const actionId = topicActionCode(label);
+  if (context?.snapshot_id && context.expected_revision) {
+    const idempotencyKey = globalThis.crypto?.randomUUID?.()
+      ?? `${topicKey}-${actionId}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const response = await api.post<{ data: TopicActionResult }>(
+      `/v1/topics/${topicKey}/actions`,
+      {
+        action_id: actionId,
+        label,
+        target,
+        snapshot_id: context.snapshot_id,
+        expected_revision: context.expected_revision,
+        reason: `topic-workbench:${label}`,
+        detail: {
+          source: 'topic-workbench',
+          view_state: context.view_state,
+        },
+      },
+      { headers: { 'Idempotency-Key': idempotencyKey } },
+    );
+    let result = response.data.data;
+    if (!result.job_id || !['accepted', 'running'].includes(result.status)) return result;
+    const jobId = result.job_id;
+    for (let attempt = 0; attempt < 60; attempt += 1) {
+      await new Promise((resolve) => window.setTimeout(resolve, 500));
+      result = await fetchTopicActionJob(topicKey, jobId);
+      if (!['accepted', 'running', 'compensating'].includes(result.status)) break;
+    }
+    if (!['completed', 'partial'].includes(result.status)) {
+      const message = typeof result.error?.message === 'string' ? result.error.message : `专题任务状态：${result.status}`;
+      throw new Error(message);
+    }
+    return {
+      ...result,
+      business_effect: {
+        operation: result.action_id,
+        state: result.status,
+        result_type: 'executor_receipt',
+        message: result.status === 'completed' ? '专题任务已由执行器完成并生成回执' : '专题任务部分完成',
+      },
+    };
+  }
   const response = await api.post<{ data?: TopicActionResult } & Partial<TopicActionResult>>(`/v1/topics/${topicKey}/actions`, {
-    action: topicActionCode(label),
+    action: actionId,
     label,
     target,
     data_mode: context?.data_mode ?? 'live',
@@ -945,6 +1147,14 @@ export const submitTopicAction = async (
     },
   });
   return (response.data.data ?? response.data) as TopicActionResult;
+};
+
+export const fetchTopicActionJob = async (topic: string, jobId: string): Promise<TopicActionResult> => {
+  const topicKey = topicActionKey(topic);
+  const response = await api.get<{ data: TopicActionResult }>(
+    `/v1/topics/${topicKey}/actions/${encodeURIComponent(jobId)}`,
+  );
+  return response.data.data;
 };
 
 export type TopicSavedView = {
@@ -1089,11 +1299,20 @@ export const updateTopicViewPreference = async (
   return response.data.data;
 };
 
-type ApiEnvelope = {
+export type ApiEnvelope = {
   data?: unknown;
   total?: number;
   pagination?: { total?: number };
-  meta?: { page?: { total?: number } };
+  meta?: {
+    page?: { total?: number };
+    contract_version?: number;
+    snapshot_id?: string;
+    as_of?: string;
+    trace_id?: string;
+    partial?: boolean;
+    missing_sections?: string[];
+    source_watermarks?: Record<string, string>;
+  };
   [key: string]: unknown;
 };
 
@@ -1172,6 +1391,20 @@ export type ProbeOperationResult = {
   upgraded_count?: number;
   desired_state?: string;
   target_version?: string;
+  operation_type?: string;
+  command_revision?: number;
+  state_revision?: number;
+  desired_version?: string;
+  command_hash?: string;
+  reported_version?: string;
+  reported_hash?: string;
+  agent_version?: string;
+  ack_error?: string;
+  trace_id?: string;
+  expires_at?: number;
+  acknowledged_at?: number;
+  outbox_published?: boolean;
+  accepted_count?: number;
   checks?: Array<{
     target: string;
     status: string;
@@ -1191,7 +1424,19 @@ export const submitProbeOperation = async (actionId: ProbeOperationActionId, pro
     ...overrides,
     ...(actionId === 'probe-batch-upgrade' || actionId === 'probe-batch-state' ? { probe_ids: normalizedProbeIds } : {}),
   };
-  const response = await api.post<{ data?: ProbeOperationResult } & Partial<ProbeOperationResult>>(endpoint, body);
+  const requestNonce = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const response = await api.post<{ data?: ProbeOperationResult } & Partial<ProbeOperationResult>>(endpoint, body, {
+    headers: { 'Idempotency-Key': `probe:${actionId}:${requestNonce}` },
+  });
+  return (response.data.data ?? response.data) as ProbeOperationResult;
+};
+
+export const fetchProbeOperation = async (operationId: string): Promise<ProbeOperationResult> => {
+  const normalized = operationId.trim();
+  if (!normalized) throw new Error('operation_id 不能为空');
+  const response = await api.get<{ data?: ProbeOperationResult } & Partial<ProbeOperationResult>>(
+    `/v1/probes/operations/${encodeURIComponent(normalized)}`,
+  );
   return (response.data.data ?? response.data) as ProbeOperationResult;
 };
 
@@ -1304,6 +1549,11 @@ export const downloadDataQualityDailyReport = async (timeRange: DataQualityTimeR
 
 export type ForensicsJobInput = {
   assetId?: string;
+  alertId?: string;
+  campaignId?: string;
+  baselineId?: string;
+  evidenceId?: string;
+  evidenceType?: string;
   probeId?: string;
   srcIp?: string;
   dstIp?: string;
@@ -1345,6 +1595,11 @@ export const createForensicsJob = async (input: ForensicsJobInput): Promise<Fore
   if (!plan || plan.method !== 'POST') throw new Error('未找到取证任务创建 API');
   const response = await api.post<{ data?: ForensicsJobActionResult } & Partial<ForensicsJobActionResult>>(plan.endpoint, {
     asset_id: input.assetId || undefined,
+    alert_id: input.alertId || undefined,
+    campaign_id: input.campaignId || undefined,
+    baseline_id: input.baselineId || undefined,
+    evidence_id: input.evidenceId || undefined,
+    evidence_type: input.evidenceType || undefined,
     probe_id: input.probeId || undefined,
     src_ip: input.srcIp || undefined,
     dst_ip: input.dstIp || undefined,
@@ -1388,6 +1643,10 @@ export const cancelForensicsJob = async (jobId: string): Promise<ForensicsJobAct
 const fetchRealPageSnapshot = async (page: PageSpec, options: PageSnapshotRequestOptions): Promise<PageSnapshot> => {
   const plan = getPageApiPlan(page.id);
   const requestParams = getPageRequestParams(page.id, options);
+  if (page.id === 'dashboard') {
+    const response = await api.get<ApiEnvelope>(plan.primary, { params: requestParams });
+    return normalizeDashboardSnapshot(response.data);
+  }
   const secondaryEndpoints = getPageLoadSecondaryEndpoints(page.id);
   const isTopicSnapshot = page.id === 'topic-tunnel' || page.id === 'topic-exfil' || page.id === 'topic-apt';
   const primaryPageSize = isTopicSnapshot ? 200 : 8;
@@ -1450,7 +1709,7 @@ const getPageRequestParams = (pageId: string, options: PageSnapshotRequestOption
       : {};
   if (pageId === 'graph')
     return {
-      ip: options.sourceAssetIp || '10.20.4.18',
+      ...(options.sourceAssetIp ? { ip: options.sourceAssetIp } : {}),
       depth: 2,
       run_id: 'realtime',
     };
@@ -1481,6 +1740,11 @@ const getPageRequestParams = (pageId: string, options: PageSnapshotRequestOption
             asset_id: options.forensicsFilters?.assetId || options.sourceAssetId,
           }
         : {}),
+      ...(options.sourceAlertId ? { alert_id: options.sourceAlertId } : {}),
+      ...(options.sourceCampaignId ? { campaign_id: options.sourceCampaignId } : {}),
+      ...(options.sourceBaselineId ? { baseline_id: options.sourceBaselineId } : {}),
+      ...(options.sourceEvidenceId ? { evidence_id: options.sourceEvidenceId } : {}),
+      ...(options.sourceEvidenceType ? { evidence_type: options.sourceEvidenceType } : {}),
       ...(options.forensicsFilters?.srcIp ? { src_ip: options.forensicsFilters.srcIp } : {}),
       ...(options.forensicsFilters?.dstIp ? { dst_ip: options.forensicsFilters.dstIp } : {}),
       ...(options.forensicsFilters?.protocol && options.forensicsFilters.protocol !== '全部' ? { protocol: options.forensicsFilters.protocol } : {}),
@@ -1576,25 +1840,39 @@ const normalizeRealSnapshot = (page: PageSpec, payload: ApiEnvelope, secondaryPa
   const adapted = adaptKnownPageSnapshot(page, payload, secondaryPayloads);
   if (adapted) return adapted;
 
-  const data = unwrapPayload(payload);
-  const rows = toRows(data, page);
-  const total = extractTotal(payload, rows.length);
-  const numericFacts = collectNumericFacts(data, page.kpis);
+  return normalizeUnadaptedPageSnapshot(page, payload, secondaryPayloads);
+};
+
+export const normalizeUnadaptedPageSnapshot = (
+  page: PageSpec,
+  payload: ApiEnvelope,
+  secondaryPayloads: unknown[],
+): PageSnapshot => {
+  const explicitTotal = payload.total ?? payload.pagination?.total ?? payload.meta?.page?.total;
+  const meta = payload.meta;
+  const missingSections = [...new Set([...(meta?.missing_sections ?? []), 'typed_page_adapter'])];
+  const hasSnapshotMeta = Boolean(
+    meta?.contract_version
+      && meta.snapshot_id
+      && meta.as_of
+      && meta.trace_id,
+  );
 
   return {
     id: page.id,
-    metrics: page.kpis.slice(0, 8).map((label, index) => ({
+    ...(explicitTotal !== undefined ? { total: explicitTotal } : {}),
+    metrics: page.kpis.slice(0, 8).map((label) => ({
       label,
-      value: formatMetricValue(label, numericFacts[index] ?? (index === 0 ? total : rows.length + index * 3)),
-      delta: index % 2 === 0 ? '实时' : 'API',
-      status: index === 0 ? 'info' : index % 3 === 0 ? 'warn' : 'ok',
+      value: '暂不可用',
+      delta: '缺少类型化页面适配器',
+      status: 'warn',
     })),
-    rows,
+    rows: [],
     timeline: [
       {
-        title: '真实 API 已接入',
-        description: `${page.title} 生产态数据来自 ${getPageApiPlan(page.id).primary}`,
-        status: 'ok',
+        title: '类型化页面适配器缺失',
+        description: `${page.title} 已收到 ${getPageApiPlan(page.id).primary} 响应，但未将未知字段猜测为 KPI、表格或业务关系。`,
+        status: 'warn',
       },
       ...secondaryPayloads.slice(0, 4).map((item, index) => ({
         title: `关联接口 ${index + 1}`,
@@ -1610,89 +1888,29 @@ const normalizeRealSnapshot = (page: PageSpec, payload: ApiEnvelope, secondaryPa
       },
       {
         label: '返回记录',
-        value: String(rows.length),
-        status: rows.length > 0 ? 'ok' : 'warn',
+        value: explicitTotal === undefined ? '暂不可用' : String(explicitTotal),
+        status: explicitTotal === undefined ? 'warn' : 'info',
       },
       {
-        label: '数据模式',
-        value: Array.isArray(data) ? '列表' : '对象',
-        status: 'info',
+        label: '页面状态',
+        value: 'partial / typed adapter missing',
+        status: 'warn',
       },
     ],
+    ...(hasSnapshotMeta
+      ? {
+          snapshot: {
+            contractVersion: Number(meta?.contract_version),
+            snapshotId: String(meta?.snapshot_id),
+            asOf: String(meta?.as_of),
+            traceId: String(meta?.trace_id),
+            partial: true,
+            missingSections,
+            sourceWatermarks: meta?.source_watermarks ?? {},
+          },
+        }
+      : {}),
   };
-};
-
-const unwrapPayload = (payload: unknown): unknown => {
-  if (!isRecord(payload)) return payload;
-  if ('data' in payload) return unwrapPayload(payload.data);
-  return payload;
-};
-
-const toRows = (payload: unknown, page: PageSpec) => {
-  const source = Array.isArray(payload) ? payload : inferList(payload);
-  if (source.length === 0 && isRecord(payload)) {
-    return [payloadToRow(payload, page, 0)];
-  }
-  return source.slice(0, 8).map((item, index) => payloadToRow(item, page, index));
-};
-
-const inferList = (payload: unknown): unknown[] => {
-  if (!isRecord(payload)) return [];
-  for (const value of Object.values(payload)) {
-    if (Array.isArray(value)) return value;
-    if (isRecord(value)) {
-      const nested = inferList(value);
-      if (nested.length) return nested;
-    }
-  }
-  return [];
-};
-
-const payloadToRow = (item: unknown, page: PageSpec, index: number) => {
-  const record = isRecord(item) ? item : { value: item };
-  const keys = Object.keys(record);
-  return Object.fromEntries(
-    page.tableColumns.map((column, columnIndex) => {
-      const key = findMatchingKey(column, keys) ?? keys[columnIndex % Math.max(keys.length, 1)];
-      const value = key ? record[key] : undefined;
-      return [column, formatCell(value, page.id, column, index)];
-    }),
-  );
-};
-
-const findMatchingKey = (column: string, keys: string[]) => {
-  const normalizedColumn = normalizeText(column);
-  return keys.find((key) => normalizedColumn.includes(normalizeText(key)) || normalizeText(key).includes(normalizedColumn));
-};
-
-const collectNumericFacts = (payload: unknown, labels: string[]): number[] => {
-  const numbers: number[] = [];
-  const visit = (value: unknown) => {
-    if (typeof value === 'number' && Number.isFinite(value)) numbers.push(value);
-    if (Array.isArray(value)) value.forEach(visit);
-    if (isRecord(value)) Object.values(value).forEach(visit);
-  };
-  visit(payload);
-  return numbers.length ? numbers : labels.map((_, index) => index + 1);
-};
-
-const extractTotal = (payload: ApiEnvelope, fallback: number) => payload.total ?? payload.pagination?.total ?? payload.meta?.page?.total ?? fallback;
-
-const formatMetricValue = (label: string, value: number) => {
-  if (label.includes('率') || label.includes('健康') || label.includes('完整') || label.includes('通过')) {
-    return `${Number(value).toFixed(value > 1 ? 1 : 2)}%`;
-  }
-  return Number.isInteger(value) ? String(value) : Number(value).toFixed(2);
-};
-
-const formatCell = (value: unknown, pageId: string, column: string, index: number) => {
-  if (value === undefined || value === null || value === '') {
-    if (column.includes('ID') || column.includes('对象')) return `${pageId.toUpperCase()}-${String(index + 1).padStart(4, '0')}`;
-    if (column.includes('状态')) return '已接入';
-    return '-';
-  }
-  if (typeof value === 'object') return JSON.stringify(value).slice(0, 80);
-  return String(value);
 };
 
 const summarizePayload = (payload: unknown) => {
@@ -1702,7 +1920,6 @@ const summarizePayload = (payload: unknown) => {
   return '关联接口已返回';
 };
 
-const normalizeText = (value: string) => value.toLowerCase().replace(/[_\-\s:/]/g, '');
 
 const normalizeError = (error: unknown) => {
   if (axios.isAxiosError(error)) {

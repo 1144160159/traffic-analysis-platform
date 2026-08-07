@@ -12,7 +12,7 @@ import {
   SearchOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { Alert, Button, Drawer, Empty, Input, Space, Tooltip } from 'antd';
 import { useMemo, useState } from 'react';
 import { DashboardKpiSparklineChart, DashboardStageRateCardChart, DashboardTopTalkersChart, EvidenceClosureRingChart } from '@/components/charts';
@@ -20,12 +20,20 @@ import { OverlayContractHost, type OverlayContract } from '@/components/OverlayC
 import { WorkPanel } from '@/components/WorkPanel';
 import type { NavRoute } from '@/routes/routeManifest';
 import { fetchPageSnapshot } from '@/services/api';
+import {
+  fetchDashboardTask,
+  submitDashboardTask,
+  type DashboardTaskActionId,
+  type DashboardTaskStatus,
+} from '@/services/dashboardTaskApi';
 import { pageApiPlans } from '@/services/pageApiPlans';
 import type { DashboardVisuals, PageSnapshot, SnapshotRow } from '@/services/mockData';
+import { formatDashboardDeficitContext, formatDashboardMetricDisplay } from './dashboardDisplay';
 
 const DASHBOARD_QUEUE_PAGE_SIZE = 8;
 
 type DashboardAction = {
+  actionId: DashboardTaskActionId;
   title: string;
   target: string;
   endpoint: string;
@@ -61,7 +69,8 @@ const dashboardOverlays: OverlayContract[] = [
 
 export function DashboardOperationsPage({ route }: { route: NavRoute }) {
   const [action, setAction] = useState<DashboardAction>();
-  const [actionSubmitted, setActionSubmitted] = useState(false);
+  const [actionReason, setActionReason] = useState('');
+  const [acceptedTaskId, setAcceptedTaskId] = useState('');
   const { data, error, isError, isLoading, refetch } = useQuery({
     queryKey: ['page-snapshot', route.id],
     queryFn: () => fetchPageSnapshot(route.id),
@@ -74,12 +83,38 @@ export function DashboardOperationsPage({ route }: { route: NavRoute }) {
   const timeoutSla = metricValue(data, '超时 SLA');
   const evidenceGap = metricValue(data, '待取证');
   const feedbackGap = metricValue(data, '待反馈');
-  const reviewGap = metricValue(data, '待复核');
-  const complianceGap = metricValue(data, '合规门禁缺口', reviewGap);
+  const auditGap = metricValue(data, '审计留痕缺口');
+  const complianceGap = metricValue(data, '合规门禁缺口');
+  const pageSnapshotId = data?.snapshot?.snapshotId ?? '';
+  const taskMutation = useMutation({
+    mutationFn: submitDashboardTask,
+    onSuccess: (receipt) => setAcceptedTaskId(receipt.taskId),
+  });
+  const taskQuery = useQuery({
+    queryKey: ['dashboard-task', acceptedTaskId],
+    queryFn: () => fetchDashboardTask(acceptedTaskId),
+    enabled: Boolean(acceptedTaskId),
+    refetchInterval: (query) => isTerminalDashboardTaskStatus(query.state.data?.status) ? false : 3000,
+  });
+  const taskStatus = taskQuery.data?.status ?? taskMutation.data?.status;
 
   const openAction = (title: string, target: string) => {
-    setActionSubmitted(false);
+    taskMutation.reset();
+    setAcceptedTaskId('');
+    setActionReason(`仪表盘运营动作：${title}`);
     setAction(createDashboardAction(title, target));
+  };
+
+  const submitAction = () => {
+    if (!action || !pageSnapshotId) return;
+    taskMutation.mutate({
+      actionId: action.actionId,
+      target: action.target,
+      priority: 'high',
+      snapshotId: pageSnapshotId,
+      reason: actionReason,
+      context: { page_id: route.id, source: 'dashboard-operations', audit_event: action.auditEvent },
+    });
   };
 
   return (
@@ -113,6 +148,14 @@ export function DashboardOperationsPage({ route }: { route: NavRoute }) {
       )}
 
       <WorkPanel title="脱敏运营 KPI">
+        {data?.snapshot?.partial && (
+          <Alert
+            showIcon
+            type="warning"
+            message="统一快照部分可用"
+            description={`缺失分区：${data.snapshot.missingSections.join('、') || '未声明'}`}
+          />
+        )}
         <div className="taf-dashboard-kpis">
           {(data?.metrics ?? []).map((metric, index) => (
             <DashboardKpiTile key={metric.label} metric={metric} index={index} sparkValues={dashboardVisuals?.kpiSparks[index]} />
@@ -137,11 +180,12 @@ export function DashboardOperationsPage({ route }: { route: NavRoute }) {
         <WorkPanel title={route.page.rightRailTitle} className="taf-dashboard-deficits">
           <DeficitList
             items={[
+              ['高危未处理数', highRisk, metricDelta(data, '高危未处理'), '处置告警'],
               ['待补证据数', evidenceGap, metricDelta(data, '待取证'), '补齐证据'],
               ['待回流样本数', feedbackGap, metricDelta(data, '待反馈'), '回流样本'],
-              ['审计留痕缺口', reviewGap, metricDelta(data, '待复核'), '完善留痕'],
+              ['审计留痕缺口', auditGap, metricDelta(data, '审计留痕缺口'), '完善留痕'],
               ['工单逾期数', timeoutSla, metricDelta(data, '超时 SLA'), '跟进处理'],
-              ['合规门禁缺口', complianceGap, metricDelta(data, '合规门禁缺口', metricDelta(data, '待复核')), '修复门禁'],
+              ['合规门禁缺口', complianceGap, metricDelta(data, '合规门禁缺口'), '修复门禁'],
             ]}
             onAction={openAction}
           />
@@ -166,23 +210,65 @@ export function DashboardOperationsPage({ route }: { route: NavRoute }) {
         width="min(520px, calc(var(--taf-window-inner-width, 100dvw) - 40px))"
         onClose={() => {
           setAction(undefined);
-          setActionSubmitted(false);
+          setActionReason('');
+          setAcceptedTaskId('');
+          taskMutation.reset();
         }}
         extra={(
-          <Button size="small" type="primary" disabled={actionSubmitted} onClick={() => setActionSubmitted(true)}>
-            {actionSubmitted ? '已写入任务队列' : '确认提交'}
+          <Button
+            size="small"
+            type="primary"
+            loading={taskMutation.isPending}
+            disabled={!actionReason.trim() || !pageSnapshotId || Boolean(taskMutation.data)}
+            onClick={submitAction}
+          >
+            {taskMutation.data ? '任务已受理' : '确认提交'}
           </Button>
         )}
       >
         {action && (
           <div className="taf-alert-detail-action-body">
-            <p>将为仪表盘对象创建“{action.title}”仿真任务，并保留租户、来源指标与审计上下文。</p>
+            <p>将创建“{action.title}”真实任务。提交成功只表示后端已受理，最终状态以任务查询结果为准。</p>
             <dl>
               <dt>任务目标</dt><dd>{action.target}</dd>
-              <dt>接口预留</dt><dd>{action.endpoint}</dd>
+              <dt>请求端点</dt><dd>{action.endpoint}</dd>
+              <dt>页面数据版本</dt><dd>{pageSnapshotId}</dd>
               <dt>审计事件</dt><dd>{action.auditEvent}</dd>
             </dl>
-            {actionSubmitted && <Alert type="success" showIcon message="仪表盘业务操作已进入仿真任务队列" />}
+            <Input.TextArea
+              aria-label="任务提交原因"
+              value={actionReason}
+              onChange={(event) => setActionReason(event.target.value)}
+              rows={3}
+              maxLength={500}
+              showCount
+              disabled={Boolean(taskMutation.data)}
+            />
+            {taskMutation.isError && (
+              <Alert
+                type="error"
+                showIcon
+                message="真实任务提交失败"
+                description={taskMutation.error instanceof Error ? taskMutation.error.message : '请检查权限、数据库Schema和服务状态。'}
+              />
+            )}
+            {taskMutation.data && (
+              <Alert
+                type={dashboardTaskAlertType(taskStatus)}
+                showIcon
+                message={dashboardTaskStatusMessage(taskStatus)}
+                description={`任务 ${taskMutation.data.jobId} · trace ${taskMutation.data.traceId} · revision ${taskQuery.data?.revision ?? taskMutation.data.revision}${taskMutation.data.replayed ? ' · 幂等重放' : ''}`}
+              />
+            )}
+            {taskQuery.isError && (
+              <Alert
+                type="warning"
+                showIcon
+                message="任务状态恢复失败"
+                description={taskQuery.error instanceof Error ? taskQuery.error.message : '任务已受理，但当前无法读取最终状态。'}
+                action={<Button size="small" onClick={() => void taskQuery.refetch()}>重试</Button>}
+              />
+            )}
           </div>
         )}
       </Drawer>
@@ -231,7 +317,7 @@ function DashboardKpiTile({
         </div>
       ) : (
         <>
-          <strong title={metric.value}>{metric.value}</strong>
+          <strong title={metric.value}>{formatDashboardMetricDisplay(metric.value)}</strong>
           <small title={metric.delta}>{metric.delta}</small>
           <div className="taf-dashboard-kpi__spark">
             <DashboardKpiSparklineChart
@@ -264,8 +350,8 @@ function DashboardQueueTable({
   const totalPages = Math.max(1, Math.ceil(totalRows / DASHBOARD_QUEUE_PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const pageRows = useMemo(
-    () => dashboardQueuePageRows(rows, columns, currentPage, DASHBOARD_QUEUE_PAGE_SIZE, totalRows),
-    [columns, currentPage, rows, totalRows],
+    () => rows.slice((currentPage - 1) * DASHBOARD_QUEUE_PAGE_SIZE, currentPage * DASHBOARD_QUEUE_PAGE_SIZE),
+    [currentPage, rows],
   );
   const pages = dashboardPaginationItems(currentPage, totalPages);
 
@@ -371,9 +457,15 @@ function DeficitList({
         <div key={label} className="taf-deficit-item">
           <span className="taf-deficit-item__icon"><FileDoneOutlined /></span>
           <span title={label}>{label}</span>
-          <strong title={value}>{value}</strong>
-          <em title={formatYesterdayDelta(delta)}>{formatYesterdayDelta(delta)}</em>
-          <button type="button" className="taf-deficit-action" title={action} onClick={() => onAction(action, label)}>
+          <strong title={value}>{formatDashboardMetricDisplay(value)}</strong>
+          <em title={delta || '未提供口径'}>{formatDashboardDeficitContext(delta || '未提供口径')}</em>
+          <button
+            type="button"
+            className="taf-deficit-action"
+            title={isActionableDeficit(value) ? action : `${action}（当前无可操作缺口）`}
+            disabled={!isActionableDeficit(value)}
+            onClick={() => onAction(action, label)}
+          >
             {compactActionLabel(action)}
           </button>
         </div>
@@ -387,12 +479,12 @@ function StageBasket({ stages }: { stages: DashboardVisuals['stages'] }) {
 
   return (
     <div className="taf-stage-basket">
-      <div className="taf-stage-basket__cards">
+      <div className="taf-stage-basket__cards" data-stage-count={stages.length}>
         {stages.map((stage, index) => (
           <div key={stage.label} className={`taf-stage-card is-${stage.status}`}>
             <span title={stage.label}><StageIcon index={index} />{stage.label}</span>
-            <strong title={stage.value}>{stage.value}</strong>
-            <em title={metricDeltaText(stage.value, stage.status)}>{metricDeltaText(stage.value, stage.status)}</em>
+            <strong title={stage.value}>{formatDashboardMetricDisplay(stage.value)}</strong>
+            <em title={dashboardStageStateLabel(stage.status)}>{dashboardStageStateLabel(stage.status)}</em>
             <div className="taf-stage-rate-chart">
               <DashboardStageRateCardChart
                 label={stage.label}
@@ -468,17 +560,17 @@ function StageIcon({ index }: { index: number }) {
   return icons[index] ?? <FileDoneOutlined />;
 }
 
-const metricDeltaText = (value: string, status: DashboardVisuals['stages'][number]['status']) => {
-  const numeric = Math.max(0, Math.round(Number.parseFloat(value.replace(/[^\d.-]/g, '')) || 0));
-  const base = status === 'risk' ? Math.max(1, Math.round(numeric * 0.13)) : status === 'warn' ? Math.max(1, Math.round(numeric * 0.06)) : Math.max(0, Math.round(numeric * 0.04));
-  const sign = status === 'info' ? '-' : '+';
-  return `较昨日 ${sign}${base}`;
-};
+const dashboardStageStateLabel = (status: DashboardVisuals['stages'][number]['status']) => ({
+  risk: '需优先处理',
+  warn: '需要关注',
+  ok: '状态正常',
+  info: '状态信息',
+}[status]);
 
-const formatYesterdayDelta = (delta: string) => {
-  if (delta.includes('较昨日')) return delta;
-  if (/^[+-]?\d/.test(delta.trim())) return `较昨日 ${delta}`;
-  return '较昨日 --';
+const isActionableDeficit = (value: string) => {
+  if (!value || value === '--') return false;
+  const parsed = Number.parseFloat(value.replace(/[^\d.-]/g, ''));
+  return Number.isFinite(parsed) && parsed > 0;
 };
 
 const compactActionLabel = (action: string) => {
@@ -490,7 +582,7 @@ const compactActionLabel = (action: string) => {
   return action.slice(0, 2);
 };
 
-const metricValue = (data: PageSnapshot | undefined, label: string, fallback = '0') =>
+const metricValue = (data: PageSnapshot | undefined, label: string, fallback = '--') =>
   data?.metrics.find((metric) => metric.label === label)?.value ?? fallback;
 
 const metricDelta = (data: PageSnapshot | undefined, label: string, fallback = '实时') =>
@@ -523,38 +615,6 @@ const dashboardTone = (value: string): 'ok' | 'warn' | 'risk' => {
 const isDashboardStatusColumn = (column: string) =>
   column.includes('状态') || column.includes('风险') || column.includes('级别') || column.includes('结果');
 
-const dashboardQueuePageRows = (
-  rows: SnapshotRow[],
-  columns: string[],
-  page: number,
-  pageSize: number,
-  totalRows: number,
-) => {
-  const start = (page - 1) * pageSize;
-  const directRows = rows.slice(start, start + pageSize);
-  if (directRows.length === pageSize || totalRows <= rows.length) return directRows;
-
-  const seedRows = rows.length ? rows : [Object.fromEntries(columns.map((column) => [column, '-'])) as SnapshotRow];
-  const generatedRows = Array.from({ length: pageSize - directRows.length }, (_, index) =>
-    deriveDashboardQueueRow(seedRows[(start + index) % seedRows.length], columns, start + directRows.length + index),
-  );
-  return [...directRows, ...generatedRows].slice(0, Math.max(0, Math.min(pageSize, totalRows - start)));
-};
-
-const deriveDashboardQueueRow = (seed: SnapshotRow, columns: string[], index: number): SnapshotRow => {
-  const risks = ['高危', '高危', '中危', '中危', '低危'];
-  const stages = ['检测分析', '响应处置', '监控观察', '证据补齐', '复核闭环'];
-  const evidence = ['缺失', '不完整', '完整', '待补齐'];
-  return Object.fromEntries(columns.map((column) => {
-    if (column.includes('ID')) return [column, `DASHBOARD-EVT-${String(index + 1).padStart(4, '0')}`];
-    if (column.includes('风险')) return [column, risks[index % risks.length]];
-    if (column.includes('阶段')) return [column, stages[index % stages.length]];
-    if (column.includes('剩余')) return [column, `${String(Math.floor((index * 7) % 2)).padStart(2, '0')}:${String((index * 11) % 60).padStart(2, '0')}:${String((index * 17) % 60).padStart(2, '0')}`];
-    if (column.includes('证据')) return [column, evidence[index % evidence.length]];
-    return [column, seed[column] ?? '-'];
-  }));
-};
-
 const dashboardPaginationItems = (currentPage: number, totalPages: number): Array<number | 'ellipsis'> => {
   if (totalPages <= 7) return Array.from({ length: totalPages }, (_, index) => index + 1);
   const middle = new Set([1, totalPages, currentPage - 1, currentPage, currentPage + 1, 2, 3].filter((item) => item >= 1 && item <= totalPages));
@@ -571,9 +631,29 @@ const formatDashboardNumber = (value: number) =>
 const createDashboardAction = (title: string, target: string): DashboardAction => {
   const plan = pageApiPlans.dashboard.actions?.find((item) => item.label === title);
   return {
+    actionId: (plan?.id ?? 'dashboard-task-create') as DashboardTaskActionId,
     title,
     target,
     endpoint: plan?.endpoint ?? '/v1/dashboard/tasks',
     auditEvent: plan?.auditEvent ?? 'DASHBOARD_TASK_CREATED',
   };
 };
+
+const isTerminalDashboardTaskStatus = (status?: DashboardTaskStatus) =>
+  status === 'completed' || status === 'partial' || status === 'failed' || status === 'cancelled';
+
+const dashboardTaskAlertType = (status?: DashboardTaskStatus): 'info' | 'success' | 'warning' | 'error' => {
+  if (status === 'completed') return 'success';
+  if (status === 'failed') return 'error';
+  if (status === 'partial' || status === 'cancelled' || status === 'running') return 'warning';
+  return 'info';
+};
+
+const dashboardTaskStatusMessage = (status?: DashboardTaskStatus) => ({
+  accepted: '任务已受理，尚未最终完成',
+  running: '任务执行中，尚未最终完成',
+  completed: '任务最终完成',
+  partial: '任务部分完成，请检查缺失项',
+  failed: '任务最终失败',
+  cancelled: '任务已取消或补偿',
+}[status ?? 'accepted']);

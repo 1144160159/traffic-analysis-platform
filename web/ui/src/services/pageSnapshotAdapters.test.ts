@@ -3,7 +3,7 @@ import { findRouteById } from '@/routes/routeManifest';
 import { adaptKnownPageSnapshot } from '@/services/pageSnapshotAdapters';
 
 describe('pageSnapshotAdapters', () => {
-  it('maps dashboard stats into duty metrics and evidence rows', () => {
+  it('does not synthesize dashboard data from the legacy multi-request adapter', () => {
     const route = findRouteById('dashboard');
     expect(route).toBeTruthy();
 
@@ -20,11 +20,7 @@ describe('pageSnapshotAdapters', () => {
       [{ data: { trend: [{ hour: '09:00', count: 8, severity: 'high' }] } }, { data: { phases: [{ phase: '执行', count: 4 }] } }],
     );
 
-    expect(snapshot?.metrics.find((item) => item.label === '高危未处理')?.value).toBe('12 条');
-    expect(snapshot?.metrics.find((item) => item.label === '待复核')?.value).toBe('5 项');
-    expect(snapshot?.rows[0]['事件 ID']).toBe('DASHBOARD-HEALTH-GATE');
-    expect(snapshot?.rows[0]['业务系统']).toBe('采集分析链路');
-    expect(snapshot?.evidence.map((item) => item.label)).toContain('Dashboard API');
+    expect(snapshot).toBeUndefined();
   });
 
   it('maps situational screen stats into full-loop screen metrics', () => {
@@ -154,6 +150,7 @@ describe('pageSnapshotAdapters', () => {
         data: {
           timestamp: '2026-06-20T03:45:00Z',
           overall: 'degraded',
+          score: 84,
           metrics: {
             flow_rate: 4200,
             session_count_1h: 1000,
@@ -161,7 +158,19 @@ describe('pageSnapshotAdapters', () => {
             p95_latency_ms: 1600,
             flows_raw_columns: 86,
             insert_rate_per_min: 3900,
+            dlq_count: 12845,
           },
+          topics: [{
+            topic: 'flow_original',
+            partitions: 36,
+            throughput_per_min: 4200,
+            consumer_p95_ms: 1600,
+            lag: 3900,
+            lag_trend: '波动',
+            partition_skew: '1.08x',
+            message_p95_ms: 1152,
+            action: '重放 DLQ',
+          }],
           checks: [
             { name: 'flow_rate', status: 'pass', message: 'Flow rate is healthy', value: 4200, threshold: 100 },
             { name: 'data_completeness', status: 'pass', message: 'Completeness is healthy', value: 0.963, threshold: 0.9 },
@@ -179,9 +188,43 @@ describe('pageSnapshotAdapters', () => {
     expect(snapshot?.metrics.find((item) => item.label === 'DLQ 数量')?.value).toBe('12.8K 条');
     expect(snapshot?.rows[0].Topic).toBe('flow_original');
     expect(snapshot?.rows[0]['当前吞吐量']).toBe('4.2K msg/min');
-    expect(snapshot?.rows[6].Topic).toBe('dlq.v1');
+    expect(snapshot?.rows).toHaveLength(1);
     expect(snapshot?.timeline.map((item) => item.title)).toContain('Data Quality API 已接入');
     expect(snapshot?.evidence.map((item) => item.label)).toContain('Data Quality API');
+    expect(snapshot?.dataQualityChecks).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: 'end_to_end_latency', status: 'warn', measured: true }),
+      expect.objectContaining({ name: 'schema_drift', status: 'warn', measured: true }),
+    ]));
+  });
+
+  it('keeps data-quality zero distinct from missing and never fabricates topic rows', () => {
+    const route = findRouteById('data-quality');
+    expect(route).toBeTruthy();
+
+    const zeroSnapshot = adaptKnownPageSnapshot(
+      route!.page,
+      {
+        data: {
+          score: 0,
+          metrics: {
+            data_completeness: 0,
+            duplicate_rate: 0,
+            field_missing_rate: 0,
+            dlq_count: 0,
+          },
+          topics: [{ topic: 'dlq.v1', partitions: 0, throughput_per_min: 0, lag: 0, consumer_p95_ms: 0, message_p95_ms: 0 }],
+        },
+      },
+      [],
+    );
+    const missingSnapshot = adaptKnownPageSnapshot(route!.page, { data: { metrics: {}, checks: [] } }, []);
+
+    expect(zeroSnapshot?.metrics.find((item) => item.label === '质量总分')?.value).toBe('0 分');
+    expect(zeroSnapshot?.metrics.find((item) => item.label === '完整性')?.value).toBe('0.0%');
+    expect(zeroSnapshot?.metrics.find((item) => item.label === 'DLQ 数量')?.value).toBe('0 条');
+    expect(zeroSnapshot?.rows[0]).toMatchObject({ Topic: 'dlq.v1', 分区数: 0, 当前吞吐量: '0 msg/min', 积压量: '0' });
+    expect(missingSnapshot?.metrics.every((item) => item.value === '暂不可用')).toBe(true);
+    expect(missingSnapshot?.rows).toEqual([]);
   });
 
   it('maps alert list payload into alert workbench columns', () => {
@@ -558,7 +601,7 @@ describe('pageSnapshotAdapters', () => {
 
     expect(snapshot?.metrics.find((item) => item.label === '偏离资产')?.value).toBe('1 个');
     expect(snapshot?.metrics.find((item) => item.label === '新端口')?.value).toBe('1 个');
-    expect(snapshot?.metrics.find((item) => item.label === '基线稳定度')?.value).toBe('50.0%');
+    expect(snapshot?.metrics.find((item) => item.label === '基线稳定度')?.value).toBe('暂不可用');
     expect(snapshot?.rows[0]['对象']).toBe('IP行为基线 10.12.4.12');
     expect(snapshot?.rows[0]['基线类型']).toBe('动态基线');
     expect(snapshot?.rows[0]['偏离值']).toBe('3.6x');
@@ -658,6 +701,30 @@ describe('pageSnapshotAdapters', () => {
     expect(snapshot?.total).toBe(2933709);
   });
 
+  it('uses authoritative campaign member_count including zero and carries the lifecycle snapshot', () => {
+    const route = findRouteById('campaigns');
+    expect(route).toBeTruthy();
+    const snapshot = adaptKnownPageSnapshot(route!.page, {
+      data: {
+        campaigns: [{
+          campaign_id: 'campaign-authoritative-zero',
+          alerts: ['stale-ch-alert-a', 'stale-ch-alert-b'],
+          member_count: 0,
+          state_version: 9,
+          snapshot_id: 'campaign:campaign-authoritative-zero:revision:9:0123456789abcdef',
+          snapshot_sha256: '0'.repeat(64),
+          score: 0.7,
+        }],
+        total: 1,
+      },
+    }, []);
+
+    expect(snapshot?.rows[0]['告警数']).toBe(0);
+    expect(snapshot?.rows[0].__alert_count).toBe(0);
+    expect(snapshot?.rows[0].__snapshot_id).toBe('campaign:campaign-authoritative-zero:revision:9:0123456789abcdef');
+    expect(snapshot?.rows[0].__snapshot_sha256).toBe('0'.repeat(64));
+  });
+
   it('maps attack chain payload into attack chain rows and evidence', () => {
     const route = findRouteById('attack-chains');
     expect(route).toBeTruthy();
@@ -740,6 +807,7 @@ describe('pageSnapshotAdapters', () => {
           summary: { protocol_count: 2, active_users: 2, session_count: 1280, total_bytes: 2_147_483_648, high_risk_users: 1 },
           protocols: [{ protocol: 'TLS', count: 900, total_bytes: 1_600_000_000 }],
           users: [{ ip: '10.12.2.36', count: 320, protocol: 'DoH/TLS', risk: 'high', total_bytes: 900_000_000, last_seen: 1792886400 }],
+          events: [{ event_id: 'TUN-001', ip: '10.12.2.36', count: 320, protocol: 'DoH/TLS', risk: 'high', total_bytes: 900_000_000, last_seen: 1792886400 }],
           tunnel_trend_unit: 'GB',
           tunnel_trend: [{ label: '06-19', value: 18.2 }],
         },
@@ -882,10 +950,38 @@ describe('pageSnapshotAdapters', () => {
   });
 
   it('preserves explicit zero topic summary values instead of replacing them with list counts', () => {
+    const tunnel = findRouteById('topic-tunnel');
     const exfil = findRouteById('topic-exfil');
     const apt = findRouteById('topic-apt');
+    expect(tunnel).toBeTruthy();
     expect(exfil).toBeTruthy();
     expect(apt).toBeTruthy();
+
+    const tunnelSnapshot = adaptKnownPageSnapshot(
+      tunnel!.page,
+      {
+        data: {
+          summary: {
+            session_count: 0,
+            protocol_count: 0,
+            active_users: 0,
+            high_risk_users: 0,
+            total_bytes: 0,
+            encrypted_traffic_gbps: 0,
+            endpoint_count: 0,
+            suspicious_ratio: 0,
+            evidence_completeness: 0,
+            report_confidence: 0,
+            open_risk_count: 0,
+            total_events: 0,
+          },
+          protocols: [{ protocol: 'TLS', count: 900 }],
+          users: [{ ip: '10.12.2.36', count: 320, risk: 'high' }],
+          events: [{ event_id: 'TUN-SHOULD-NOT-CHANGE-SUMMARY' }],
+        },
+      },
+      [],
+    );
 
     const exfilSnapshot = adaptKnownPageSnapshot(
       exfil!.page,
@@ -930,12 +1026,45 @@ describe('pageSnapshotAdapters', () => {
       [],
     );
 
+    expect(tunnelSnapshot?.total).toBe(0);
+    expect(tunnelSnapshot?.metrics.find((item) => item.label === '隧道协议数')?.value).toBe('0');
+    expect(tunnelSnapshot?.metrics.find((item) => item.label === '高频隧道源')?.value).toBe('0');
+    expect(tunnelSnapshot?.metrics.find((item) => item.label === '报告置信度')?.value).toBe('0%');
+    expect(tunnelSnapshot?.metrics.every((item) => !item.delta.includes('较昨日'))).toBe(true);
     expect(exfilSnapshot?.total).toBe(0);
     expect(exfilSnapshot?.metrics.find((item) => item.label === '外传路径数')?.value).toBe('0');
     expect(exfilSnapshot?.metrics.find((item) => item.label === '可疑外传源')?.value).toBe('0');
     expect(aptSnapshot?.total).toBe(0);
     expect(aptSnapshot?.metrics.find((item) => item.label === '关联战役数')?.value).toBe('0');
     expect(aptSnapshot?.metrics.find((item) => item.label === '攻击阶段覆盖')?.value).toBe('0/0');
+  });
+
+  it('renders missing tunnel summary fields as unavailable without deriving business rows', () => {
+    const tunnel = findRouteById('topic-tunnel');
+    expect(tunnel).toBeTruthy();
+
+    const snapshot = adaptKnownPageSnapshot(
+      tunnel!.page,
+      {
+        data: {
+          summary: {},
+          protocols: [{ protocol: 'TLS', count: 900 }],
+          users: [{ ip: '10.12.2.36', count: 320, risk: 'high' }],
+        },
+        meta: {
+          partial: true,
+          missing_sections: ['summary', 'events'],
+          source_watermarks: {},
+        },
+      },
+      [],
+    );
+
+    expect(snapshot?.rows).toEqual([]);
+    expect(snapshot?.metrics.find((item) => item.label === '活跃隧道会话')?.value).toBe('暂不可用');
+    expect(snapshot?.metrics.find((item) => item.label === '报告置信度')?.value).toBe('暂不可用');
+    expect(snapshot?.visuals?.topic?.partial).toBe(true);
+    expect(snapshot?.visuals?.topic?.missingSections).toEqual(['summary', 'events']);
   });
 
   it('maps encrypted traffic payload into encrypted workbench rows and evidence', () => {
@@ -1409,16 +1538,14 @@ describe('pageSnapshotAdapters', () => {
     );
 
     expect(snapshot?.metrics.find((item) => item.label === '训练任务')?.value).toBe('2 项');
-    expect(snapshot?.metrics.find((item) => item.label === '评估任务')?.value).toBe('3 项');
-    expect(snapshot?.metrics.find((item) => item.label === '注册任务')?.value).toBe('3 项');
-    expect(snapshot?.metrics.find((item) => item.label === '发布任务')?.value).toBe('3 项');
-    expect(snapshot?.metrics.find((item) => item.label === '失败任务')?.value).toBe('0 项');
-    expect(snapshot?.metrics.find((item) => item.label === '门禁通过率')?.value).toBe('86.7%');
-    expect(snapshot?.rows[0].任务ID).toBe('TR-20250527-006');
-    expect(snapshot?.rows[0].阶段).toBe('训练任务');
-    expect(snapshot?.rows[0].资源占用).toContain('GPU 70%');
-    expect(snapshot?.rows[6].阶段).toBe('反馈触发');
-    expect(snapshot?.rows[7].阶段).toBe('误报触发');
+    expect(snapshot?.metrics.find((item) => item.label === '评估任务')?.value).toBe('暂不可用');
+    expect(snapshot?.metrics.find((item) => item.label === '注册任务')?.value).toBe('暂不可用');
+    expect(snapshot?.metrics.find((item) => item.label === '发布任务')?.value).toBe('暂不可用');
+    expect(snapshot?.metrics.find((item) => item.label === '失败任务')?.value).toBe('暂不可用');
+    expect(snapshot?.metrics.find((item) => item.label === '门禁通过率')?.value).toBe('暂不可用');
+    expect(snapshot?.rows).toEqual([]);
+    expect(JSON.stringify(snapshot)).not.toContain('TR-20250527-');
+    expect(JSON.stringify(snapshot)).not.toContain('GPU 70%');
     expect(snapshot?.evidence.map((item) => item.label)).toContain('MLOps Status API');
     expect(snapshot?.evidence.map((item) => item.label)).toContain('Conditions API');
     expect(snapshot?.evidence.map((item) => item.label)).toContain('ClickHouse');

@@ -27,8 +27,8 @@ import {
   UserDeleteOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
-import { useQuery } from '@tanstack/react-query';
-import { Alert, Button, Drawer, Input, Modal, Progress, Select, Space, Table, Tabs, Tooltip } from 'antd';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { Alert, Button, Checkbox, Drawer, Input, Modal, Progress, Select, Space, Table, Tabs, Tooltip, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -47,8 +47,27 @@ import {
 } from '@/components/charts';
 import { StatusTag } from '@/components/StatusTag';
 import { WorkPanel } from '@/components/WorkPanel';
+import { appConfig } from '@/config/runtime';
 import type { NavRoute } from '@/routes/routeManifest';
+import { auditLogRoute } from '@/routes/pageRouteState';
 import { fetchAssetTopology, fetchPageSnapshot, type AssetSnapshotFilters, type AssetTopologyGraph } from '@/services/api';
+import {
+  createAssetExportJob,
+  downloadAssetExport,
+  fetchAssetColumnPreference,
+  fetchAssetExportJob,
+  newAssetExportIdempotencyKey,
+  updateAssetColumnPreference,
+  type AssetExportFormat,
+} from '@/services/assetExportApi';
+import {
+  applyAssetGovernanceAction,
+  createAssetGovernanceWorkOrder,
+  listAssetGovernanceWorkOrders,
+  newAssetGovernanceIdempotencyKey,
+  type AssetGovernanceAction,
+  type AssetLifecycleState,
+} from '@/services/assetGovernanceApi';
 import type { SnapshotRow } from '@/services/mockData';
 import { isVisualBreakdownMode } from '@/utils/visualBreakdownMode';
 import { AssetDetailWorkspace } from './AssetDetailWorkspace';
@@ -144,13 +163,14 @@ type AssetSelectionContext = {
   risk: string;
   status: string;
   owner: string;
+  revision: number;
   lastSeen: string;
   sourceRow?: SnapshotRow;
 };
 
 export function AssetInventoryPage({ route }: { route: NavRoute }) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const visualBreakdownMode = isVisualBreakdownMode();
+  const visualBreakdownMode = import.meta.env.DEV && isVisualBreakdownMode();
   const activeTab = resolveAssetTab(searchParams.get('tab'));
   const activeDetail = resolveAssetDetail(searchParams.get('detail'));
   const requestedAssetId = searchParams.get('assetId') ?? '';
@@ -161,10 +181,10 @@ export function AssetInventoryPage({ route }: { route: NavRoute }) {
   const [draftFilters, setDraftFilters] = useState<AssetSnapshotFilters>(() => requestedSearch ? { search: requestedSearch } : {});
   const [appliedFilters, setAppliedFilters] = useState<AssetSnapshotFilters>(() => requestedSearch ? { search: requestedSearch } : {});
   const nextSearchParams = useCallback((state: Parameters<typeof assetSearchParams>[0]) => {
-    const next = assetSearchParams({ ...state, search: state.search ?? requestedSearch });
+    const next = assetSearchParams({ ...state, search: state.search ?? requestedSearch }, searchParams);
     if (visualBreakdownMode) next.set('__codex_ui_breakdown_production', '1');
     return next;
-  }, [requestedSearch, visualBreakdownMode]);
+  }, [requestedSearch, searchParams, visualBreakdownMode]);
 
   const { data, error, isError, isLoading, refetch } = useQuery({
     queryKey: ['page-snapshot', route.id, activeTab, page, appliedFilters],
@@ -290,6 +310,7 @@ export function AssetInventoryPage({ route }: { route: NavRoute }) {
 
           <AssetCategoryContent
             activeTab={activeTab}
+            appliedFilters={appliedFilters}
             columns={columns}
             isLoading={isLoading}
             rows={rows}
@@ -367,6 +388,7 @@ function AssetFilter({ activeTab, value, onChange, onApply, onReset }: {
 
 function AssetCategoryContent({
   activeTab,
+  appliedFilters,
   columns,
   isLoading,
   rows,
@@ -381,6 +403,7 @@ function AssetCategoryContent({
   onRefresh,
 }: {
   activeTab: AssetTabSlug;
+  appliedFilters: AssetSnapshotFilters;
   columns: ColumnsType<SnapshotRow>;
   isLoading: boolean;
   rows: SnapshotRow[];
@@ -394,19 +417,28 @@ function AssetCategoryContent({
   selectAsset: (assetId: string) => void;
   onRefresh: () => void;
 }) {
+  const [visibleColumns, setVisibleColumns] = useState<string[]>();
   const label = assetTabs.find((item) => item.slug === activeTab)?.label ?? '资产';
   const ledgerTitle = `${label}资产清单（共 ${total.toLocaleString()} 条）`;
+  const visibleColumnSet = visibleColumns ? new Set(visibleColumns) : undefined;
+  const displayedColumns = visibleColumnSet
+    ? columns.filter((column) => {
+      if (column.key === '操作') return true;
+      const canonical = assetColumnCanonicalName(String(column.key ?? ''));
+      return !canonical || visibleColumnSet.has(canonical);
+    })
+    : columns;
   const ledger = (
     <WorkPanel
       title={ledgerTitle}
       className="taf-asset-ledger-panel"
-      extra={<Space><Button size="small" icon={<ReloadOutlined />} onClick={onRefresh}>刷新</Button><Button size="small" icon={<DownloadOutlined />} disabled={!rows.length} onClick={() => exportAssetRows(rows)}>导出</Button><Tooltip title="列设置与用户偏好存储尚未接入"><Button size="small" disabled icon={<SettingOutlined />} aria-label="清单设置" /></Tooltip></Space>}
+      extra={<AssetLedgerActions activeTab={activeTab} filters={appliedFilters} total={total} onColumnsChange={setVisibleColumns} onRefresh={onRefresh} />}
     >
       <Table
         rowKey={rowKey}
         size="small"
         loading={isLoading}
-        columns={columns}
+        columns={displayedColumns}
         dataSource={rows}
         pagination={{ current: page, pageSize, total, size: 'small', hideOnSinglePage: false, showSizeChanger: false, showQuickJumper: true, showTotal: (count) => `共 ${count.toLocaleString()} 条`, onChange: onPageChange }}
         rowSelection={{
@@ -430,6 +462,191 @@ function AssetCategoryContent({
       <AssetCategoryWorkspace activeTab={activeTab} selectedRow={selectedRow} topologyGraph={topologyGraph} topologyLoading={topologyLoading} topologyError={topologyError} />
     </>
   );
+}
+
+const assetPreferenceColumns = [
+  { value: 'display_code', label: '资产 ID' },
+  { value: 'ip_address', label: 'IP 地址' },
+  { value: 'mac_address', label: 'MAC 地址' },
+  { value: 'hostname', label: '主机名' },
+  { value: 'asset_type', label: '资产类型' },
+  { value: 'status', label: '资产状态' },
+  { value: 'department', label: '部门' },
+  { value: 'campus', label: '园区' },
+  { value: 'owner', label: '负责人' },
+  { value: 'os_type', label: '操作系统' },
+  { value: 'vendor', label: '厂商' },
+  { value: 'source', label: '来源' },
+  { value: 'criticality', label: '重要性' },
+  { value: 'last_seen', label: '最近活跃' },
+] as const;
+
+const defaultAssetPreferenceColumns = [
+  'display_code', 'ip_address', 'mac_address', 'hostname', 'asset_type',
+  'status', 'department', 'campus', 'owner', 'criticality', 'last_seen',
+];
+
+function AssetLedgerActions({ activeTab, filters, total, onColumnsChange, onRefresh }: {
+  activeTab: AssetTabSlug;
+  filters: AssetSnapshotFilters;
+  total: number;
+  onColumnsChange: (columns: string[]) => void;
+  onRefresh: () => void;
+}) {
+  const [messageApi, messageContext] = message.useMessage();
+  const [exportOpen, setExportOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [format, setFormat] = useState<AssetExportFormat>('csv');
+  const [reason, setReason] = useState('导出当前资产筛选结果');
+  const [exportJobID, setExportJobID] = useState('');
+  const [preferenceColumns, setPreferenceColumns] = useState<string[]>(defaultAssetPreferenceColumns);
+
+  const preferenceQuery = useQuery({
+    queryKey: ['asset-column-preference', 'asset-inventory'],
+    queryFn: fetchAssetColumnPreference,
+    retry: false,
+  });
+  useEffect(() => {
+    if (!preferenceQuery.data) return;
+    setPreferenceColumns(preferenceQuery.data.columns);
+    onColumnsChange(preferenceQuery.data.columns);
+  }, [onColumnsChange, preferenceQuery.data]);
+
+  const exportMutation = useMutation({
+    mutationFn: (input: { format: AssetExportFormat; reason: string; idempotencyKey: string }) => createAssetExportJob({
+      format: input.format,
+      columns: preferenceColumns,
+      filter: { asset_type: activeTab, ...filters },
+      reason: input.reason,
+      idempotencyKey: input.idempotencyKey,
+    }),
+    onSuccess: (job) => {
+      setExportJobID(job.job_id);
+      messageApi.info(`导出任务已受理：${job.job_id}`);
+    },
+    onError: (error) => messageApi.error(assetExportErrorText(error)),
+  });
+  const jobQuery = useQuery({
+    queryKey: ['asset-export-job', exportJobID],
+    queryFn: () => fetchAssetExportJob(exportJobID),
+    enabled: Boolean(exportJobID),
+    retry: false,
+    refetchInterval: (query) => ['completed', 'failed', 'cancelled'].includes(query.state.data?.status ?? '') ? false : 1500,
+  });
+  const currentJob = jobQuery.data ?? exportMutation.data;
+  const downloadMutation = useMutation({
+    mutationFn: () => {
+      if (!currentJob) throw new Error('导出任务尚未就绪');
+      return downloadAssetExport(currentJob);
+    },
+    onSuccess: () => messageApi.success('已下载服务端校验后的导出制品'),
+    onError: (error) => messageApi.error(assetExportErrorText(error)),
+  });
+  const preferenceMutation = useMutation({
+    mutationFn: () => updateAssetColumnPreference({
+      columns: preferenceColumns,
+      expectedRevision: preferenceQuery.data?.revision ?? 0,
+      reason: '调整资产清单可见列',
+    }),
+    onSuccess: async (preference) => {
+      onColumnsChange(preference.columns);
+      setPreferenceColumns(preference.columns);
+      setSettingsOpen(false);
+      messageApi.success(`列偏好已保存（revision ${preference.revision}）`);
+      await preferenceQuery.refetch();
+    },
+    onError: (error) => messageApi.error(assetExportErrorText(error)),
+  });
+
+  const openExport = () => {
+    exportMutation.reset();
+    setExportJobID('');
+    setReason(`导出当前${assetTabs.find((item) => item.slug === activeTab)?.label ?? ''}资产筛选结果`);
+    setExportOpen(true);
+  };
+  const submitExport = () => exportMutation.mutate({ format, reason: reason.trim(), idempotencyKey: newAssetExportIdempotencyKey() });
+
+  return (
+    <>
+      {messageContext}
+      <Space>
+        <Button size="small" icon={<ReloadOutlined />} onClick={onRefresh}>刷新</Button>
+        <Button data-action-id="asset-inventory-export" size="small" icon={<DownloadOutlined />} disabled={total <= 0} onClick={openExport}>导出</Button>
+        <Tooltip title="保存到当前登录用户的资产清单列偏好">
+          <Button data-action-id="asset-column-preference-update" size="small" icon={<SettingOutlined />} aria-label="清单设置" onClick={() => setSettingsOpen(true)} />
+        </Tooltip>
+      </Space>
+      <Modal
+        title="服务端资产导出"
+        open={exportOpen}
+        onCancel={() => setExportOpen(false)}
+        destroyOnClose={false}
+        footer={[
+          <Button key="close" onClick={() => setExportOpen(false)}>关闭</Button>,
+          <Button key="download" data-action-id="asset-inventory-export-download" icon={<DownloadOutlined />} disabled={currentJob?.status !== 'completed'} loading={downloadMutation.isPending} onClick={() => downloadMutation.mutate()}>下载已校验制品</Button>,
+          <Button key="submit" type="primary" loading={exportMutation.isPending} disabled={reason.trim().length < 4 || Boolean(exportJobID)} onClick={submitExport}>提交导出任务</Button>,
+        ]}
+      >
+        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          <Alert type="info" showIcon message={`将冻结当前筛选并由服务端导出全部 ${total.toLocaleString()} 条匹配资产；不会只导出浏览器当前页。`} />
+          <label><span>制品格式</span><Select style={{ width: '100%' }} value={format} options={[{ value: 'csv', label: 'CSV（UTF-8）' }, { value: 'jsonl', label: 'JSON Lines' }]} onChange={setFormat} /></label>
+          <label><span>操作原因</span><Input.TextArea value={reason} maxLength={1000} showCount rows={3} onChange={(event) => setReason(event.target.value)} /></label>
+          {currentJob && (
+            <Alert
+              type={currentJob.status === 'completed' ? 'success' : currentJob.status === 'failed' || currentJob.status === 'cancelled' ? 'error' : 'warning'}
+              showIcon
+              message={assetExportStatusText(currentJob.status)}
+              description={currentJob.status === 'completed'
+                ? `${currentJob.row_count.toLocaleString()} 条 · ${currentJob.size_bytes.toLocaleString()} bytes · ${currentJob.artifact_sha256 ?? '等待校验和'}`
+                : currentJob.error_message || `job_id: ${currentJob.job_id} · revision ${currentJob.revision}`}
+            />
+          )}
+          {jobQuery.isError && <Alert type="error" showIcon message="读取导出任务最终状态失败" description={assetExportErrorText(jobQuery.error)} />}
+        </Space>
+      </Modal>
+      <Modal
+        title="资产清单基础列设置"
+        open={settingsOpen}
+        onCancel={() => setSettingsOpen(false)}
+        okText="保存偏好"
+        confirmLoading={preferenceMutation.isPending}
+        okButtonProps={{ disabled: preferenceColumns.length === 0 || preferenceQuery.isError }}
+        onOk={() => preferenceMutation.mutate()}
+      >
+        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          {preferenceQuery.isError && <Alert type="error" showIcon message="列偏好服务当前不可用" description="功能开关未启用或资产服务不可达；未修改本地显示。" />}
+          <Checkbox.Group
+            style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10 }}
+            options={assetPreferenceColumns.map((item) => ({ label: item.label, value: item.value }))}
+            value={preferenceColumns}
+            onChange={(values) => setPreferenceColumns(values.map(String))}
+          />
+          <small>偏好按 tenant、user 和 view 保存；并通过 expected_revision 防止覆盖其他会话中的修改。</small>
+        </Space>
+      </Modal>
+    </>
+  );
+}
+
+function assetColumnCanonicalName(title: string): string | undefined {
+  return ({
+    '资产 ID': 'display_code', 'IP/MAC': 'ip_address', '主机名': 'hostname',
+    '类型': 'asset_type', '园区/部门': 'department', '操作系统': 'os_type',
+    '重要性': 'criticality', '资产状态': 'status', '最近活跃': 'last_seen',
+    '厂商': 'vendor', '管理IP': 'ip_address', '责任部门': 'department', '来源': 'source',
+  } as Record<string, string>)[title];
+}
+
+function assetExportStatusText(status: string): string {
+  return ({ accepted: '导出任务已受理', running: '导出任务执行中', completed: '导出制品最终成功', failed: '导出任务失败', cancelled: '导出任务已取消' } as Record<string, string>)[status] ?? status;
+}
+
+function assetExportErrorText(error: unknown): string {
+  if (error && typeof error === 'object' && 'response' in error) {
+    const response = (error as { response?: { data?: { error?: { message?: string }; message?: string } } }).response;
+    return response?.data?.error?.message ?? response?.data?.message ?? '资产导出服务请求失败';
+  }
+  return error instanceof Error ? error.message : '资产导出服务请求失败';
 }
 
 function AssetCategoryWorkspace({ activeTab, selectedRow, topologyGraph, topologyLoading, topologyError }: { activeTab: AssetTabSlug; selectedRow?: SnapshotRow; topologyGraph?: AssetTopologyGraph; topologyLoading: boolean; topologyError: boolean }) {
@@ -549,16 +766,6 @@ function PeerRanking({ items }: { items: Record<string, unknown>[] }) {
   })}</div>;
 }
 
-function PeriodicHeatmap({ values }: { values: number[] }) {
-  return (
-    <div className="taf-asset-heatmap" aria-label="最近七天周期性连接热力图">
-      {['周一', '周二', '周三', '周四', '周五', '周六', '周日'].map((day, dayIndex) => (
-        <div key={day}><span>{day}</span>{Array.from({ length: 14 }, (_, index) => <i key={index} className={(values[index] ?? 0) + dayIndex >= 38 ? 'is-hot' : 'is-cold'} />)}</div>
-      ))}
-    </div>
-  );
-}
-
 function EvidenceStrip({ selectedRow }: { selectedRow?: SnapshotRow }) {
   const navigate = useNavigate();
   const evidence = metadataRecord(selectedRow, 'evidence');
@@ -603,7 +810,7 @@ function MetadataTable({ items, fields, maxRows = 7 }: { items: Record<string, u
       <div className="taf-asset-data-table__head">{fields.map(([label]) => <strong key={label}>{label}</strong>)}</div>
       {items.slice(0, maxRows).map((item, index) => (
         <div key={`${stringValue(item[fields[0][1]])}-${index}`} className="taf-asset-data-table__row">
-          {fields.map(([label, key]) => {
+          {fields.map(([, key]) => {
             const value = stringValue(item[key]);
             return <span key={key} title={value}>{/(高危|高风险|异常|降级|中危|中风险|在线|健康|正常)/.test(value) ? <StatusTag value={value} /> : value || '-'}</span>;
           })}
@@ -753,10 +960,6 @@ function AssetTopology({ row, graph, loading, error, mode }: { row?: SnapshotRow
   );
 }
 
-function StateCards({ items }: { items: Record<string, unknown>[] }) {
-  return <div className="taf-asset-state-cards">{items.map((item, index) => <div key={`${stringValue(item.label)}-${index}`}><strong>{stringValue(item.value)}</strong><span>{stringValue(item.label)}</span><StatusTag value={stringValue(item.status)} /></div>)}</div>;
-}
-
 function TopologyGlyph({ kind, x, y }: { kind?: string; x: number; y: number }) {
   const value = String(kind ?? '').toLowerCase();
   const transform = `translate(${x} ${y})`;
@@ -793,14 +996,6 @@ function OwnershipSummary({ row }: { row?: SnapshotRow }) {
   return <div className="taf-asset-owner-cards">{items.map(([label, value]) => <div key={label}><span>{label}</span><strong>{value}</strong></div>)}</div>;
 }
 
-function ServiceExposure({ services }: { services: Record<string, unknown>[] }) {
-  const high = services.filter((item) => stringValue(item.risk_level).includes('高')).length;
-  const external = services.filter((item) => stringValue(item.exposure_scope).includes('外网')).length;
-  const alerts = services.reduce((sum, item) => sum + numberValue(item.alert_count), 0);
-  const sources = services.reduce((sum, item) => sum + numberValue(item.access_source_count), 0);
-  return <div className="taf-asset-exposure-cards">{[['开放服务',services.length,'info'],['高危服务',high,'risk'],['外网暴露',external,'warn'],['关联告警',alerts,'risk'],['访问来源',sources,'info']].map(([label,value,tone]) => <div key={String(label)} className={`is-${tone}`}><strong>{String(value)}</strong><span>{String(label)}</span></div>)}</div>;
-}
-
 function InterfaceStatusPanel({ title, items }: { title: string; items: Record<string, unknown>[] }) {
   const [open, setOpen] = useState(false);
   return (
@@ -833,13 +1028,6 @@ function InterfaceStatusMatrix({ items }: { items: Record<string, unknown>[] }) 
   );
 }
 
-function InterfaceSummary({ items }: { items: Record<string, unknown>[] }) {
-  const up = items.filter((item) => stringValue(item.status) === 'up').length;
-  const down = items.filter((item) => stringValue(item.status) === 'down').length;
-  const mirror = items.filter((item) => !['', 'no'].includes(stringValue(item.mirror_mode))).length;
-  return <div className="taf-asset-state-cards">{[['接口总数',items.length,'info'],['Up 接口',up,'健康'],['Down 接口',down,'高风险'],['镜像口',mirror,'中风险']].map(([label,value,status]) => <div key={String(label)}><strong>{String(value)}</strong><span>{String(label)}</span><StatusTag value={String(status)} /></div>)}</div>;
-}
-
 function BusinessRisk({ row, items }: { row?: SnapshotRow; items: AssetDistributionItem[] }) {
   const score = Math.max(0, Math.min(100, numberValue(metadataOf(row).risk_score)));
   return <AssetDistributionDonutChart items={items} centerLabel={score >= 80 ? '高风险' : score >= 60 ? '中风险' : '低风险'} centerValue={String(score)} ariaLabel={`${text(row, '主机名', '业务系统')}风险评分与风险区间分布`} tone="risk" />;
@@ -850,28 +1038,6 @@ function DependencyHealth({ items }: { items: Record<string, unknown>[] }) {
   const abnormal = items.reduce((sum, item) => sum + numberValue(item.abnormal), 0);
   const health = total ? Number((((total - abnormal) / total) * 100).toFixed(1)) : 0;
   return <div className="taf-asset-dependency-health-panel"><MetadataTable maxRows={4} items={items} fields={[['类型','type'],['总数','total'],['异常','abnormal']]} /><AssetMetricRingsChart items={[{ label: '综合健康度', value: health, max: 100, suffix: '%', color: health >= 95 ? '#39c978' : '#ffb020' }]} ariaLabel="业务系统依赖资产综合健康度" /></div>;
-}
-
-function BusinessSummary({ row }: { row?: SnapshotRow }) {
-  const metadata = metadataOf(row);
-  const items = [['业务域',stringValue(metadata.business_domain)],['系统等级',stringValue(metadata.system_level)],['SLA 目标',stringValue(metadata.sla_target)],['当前 SLA',stringValue(metadata.sla_current)],['责任部门',text(row, '园区/部门', '-')],['负责人',text(row, '__owner', '未分配')]];
-  return <div className="taf-asset-owner-cards">{items.map(([label,value]) => <div key={label}><span>{label}</span><strong>{value || '-'}</strong></div>)}</div>;
-}
-
-function DiscoveryTimeline({ items }: { items: Record<string, unknown>[] }) {
-  return <div className="taf-asset-discovery">{items.map((item, index) => <div key={`${stringValue(item.event)}-${index}`} className={stringValue(item.status).includes('完成') ? 'is-ok' : 'is-warn'}><i /><strong>{stringValue(item.event)}</strong><StatusTag value={stringValue(item.status)} /><span>{stringValue(item.time)}</span></div>)}</div>;
-}
-
-function Fingerprint({ row }: { row?: SnapshotRow }) {
-  const fingerprint = metadataRecord(row, 'fingerprint');
-  const labels: Array<[string, string]> = [['MAC OUI','mac_oui'],['DHCP 主机名','dhcp_hostname'],['TTL / OS','ttl_os'],['开放端口','open_ports'],['JA3 指纹','ja3'],['通信特征','behavior']];
-  return <div className="taf-asset-fingerprint">{labels.map(([label,key]) => <div key={key}><span>{label}</span><strong>{stringValue(fingerprint[key]) || '-'}</strong></div>)}</div>;
-}
-
-function ExposureSummary({ row }: { row?: SnapshotRow }) {
-  const exposure = metadataRecord(row, 'exposure');
-  const items: Array<[string, string, string]> = [['风险评分','risk_score','risk'],['暴露端口','open_ports','risk'],['高危服务','high_services','warn'],['弱口令','weak_password','risk'],['关联告警','related_alerts','warn'],['识别置信度','confidence','info']];
-  return <div className="taf-asset-exposure-cards">{items.map(([label,key,tone]) => <div key={key} className={`is-${tone}`}><strong>{key === 'confidence' ? stringValue(metadataOf(row).confidence) : stringValue(exposure[key])}</strong><span>{label}</span></div>)}</div>;
 }
 
 function UnknownExposure({ row, items }: { row?: SnapshotRow; items: AssetDistributionItem[] }) {
@@ -885,8 +1051,17 @@ function UnknownExposure({ row, items }: { row?: SnapshotRow; items: AssetDistri
 }
 
 function TicketSteps({ row }: { row?: SnapshotRow }) {
-  const steps = metadataArray(row, 'ticket_steps').map(stringValue);
-  return <div className="taf-asset-ticket">{steps.map((step) => <span key={step}>{step}</span>)}</div>;
+  const assetID = row ? rowKey(row) : '';
+  const query = useQuery({
+    queryKey: ['asset-governance-work-orders', assetID, 'ticket-steps'],
+    queryFn: () => listAssetGovernanceWorkOrders(assetID),
+    enabled: appConfig.enableAssetGovernanceV1 && Boolean(assetID),
+  });
+  if (!appConfig.enableAssetGovernanceV1) return <Alert type="info" showIcon message="治理工单灰度未启用" />;
+  if (query.isLoading) return <Alert type="info" showIcon message="正在读取真实工单状态" />;
+  if (query.isError) return <Alert type="error" showIcon message="治理工单读取失败" />;
+  if (!query.data?.length) return <Alert type="info" showIcon message="该资产暂无治理工单" />;
+  return <div className="taf-asset-ticket">{query.data.slice(0, 4).map((order) => <span key={order.work_order_id}>{governanceStatusLabel(order.status)} · {order.target_lifecycle_state} · r{order.revision}</span>)}</div>;
 }
 
 const metadataOf = (row?: SnapshotRow): Record<string, unknown> => parseJsonRecord(row?.__metadataJson);
@@ -901,7 +1076,6 @@ const distributionItems = (row: SnapshotRow | undefined, key: string): AssetDist
   color: stringValue(item.color) || undefined,
   detail: stringValue(item.detail || item.percent_label) || undefined,
 })).filter((item) => item.label && item.value >= 0);
-const rowArray = (row: SnapshotRow | undefined, key: string): Record<string, unknown>[] => parseJsonArray(row?.[`${key}Json`]).filter(isPlainRecord);
 const recordArray = (value: unknown): Record<string, unknown>[] => Array.isArray(value) ? value.filter(isPlainRecord) : [];
 const isPlainRecord = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 const parseJsonRecord = (value: unknown): Record<string, unknown> => {
@@ -911,15 +1085,6 @@ const parseJsonRecord = (value: unknown): Record<string, unknown> => {
     return isPlainRecord(parsed) ? parsed : {};
   } catch {
     return {};
-  }
-};
-const parseJsonArray = (value: unknown): unknown[] => {
-  if (typeof value !== 'string' || !value) return [];
-  try {
-    const parsed: unknown = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
   }
 };
 const stringValue = (value: unknown) => value === undefined || value === null ? '' : String(value);
@@ -937,7 +1102,7 @@ function AssetSummaryRail({ context, activeTab, assetId, onClose, onOpenDetail }
       <AssetDetailCard context={context} onClose={onClose} />
       <RiskSummary context={context} />
       <AssetGovernanceCard context={context} />
-      <AssetActionRail activeTab={activeTab} assetId={assetId} onOpenDetail={onOpenDetail} />
+      <AssetActionRail activeTab={activeTab} context={context} assetId={assetId} onOpenDetail={onOpenDetail} />
     </div>
   );
 }
@@ -1079,7 +1244,7 @@ function evidenceRoute(label: string, row?: SnapshotRow) {
   const assetId = row ? rowKey(row) : '';
   const query = new URLSearchParams({ assetId });
   if (/告警/.test(label)) return `/alerts?${query.toString()}`;
-  if (/配置|变更/.test(label)) return `/audit-log?${query.toString()}`;
+  if (/配置|变更/.test(label)) return auditLogRoute('asset', assetId);
   if (/DNS/.test(label)) query.set('evidenceType', 'dns');
   else if (/TLS/.test(label)) query.set('evidenceType', 'tls');
   else if (/Session/.test(label)) query.set('evidenceType', 'session');
@@ -1087,18 +1252,114 @@ function evidenceRoute(label: string, row?: SnapshotRow) {
   return `/forensics?${query.toString()}`;
 }
 
-function AssetActionRail({ activeTab, assetId, onOpenDetail }: { activeTab: AssetTabSlug; assetId: string; onOpenDetail: (detail?: AssetDetailSlug) => void }) {
+function AssetActionRail({ activeTab, context, assetId, onOpenDetail }: { activeTab: AssetTabSlug; context: AssetSelectionContext; assetId: string; onOpenDetail: (detail?: AssetDetailSlug) => void }) {
   const navigate = useNavigate();
+  const [messageApi, messageContext] = message.useMessage();
+  const [governanceOpen, setGovernanceOpen] = useState(false);
+  const [targetState, setTargetState] = useState<AssetLifecycleState>('isolated');
+  const [targetAssetID, setTargetAssetID] = useState('');
+  const [owner, setOwner] = useState(context.owner === '未分配' ? '' : context.owner);
+  const [dueAt, setDueAt] = useState(() => new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16));
+  const [reason, setReason] = useState('基于当前资产风险与责任边界创建整改工单');
+  const [evidenceRefs, setEvidenceRefs] = useState('');
+  useEffect(() => {
+    setOwner(context.owner === '未分配' ? '' : context.owner);
+    setGovernanceOpen(false);
+  }, [context.id, context.owner]);
+  const ordersQuery = useQuery({
+    queryKey: ['asset-governance-work-orders', assetId],
+    queryFn: () => listAssetGovernanceWorkOrders(assetId),
+    enabled: governanceOpen && appConfig.enableAssetGovernanceV1 && Boolean(assetId),
+  });
+  const createMutation = useMutation({
+    mutationFn: () => createAssetGovernanceWorkOrder({
+      assetID: assetId,
+      targetLifecycleState: targetState,
+      targetAssetID: targetState === 'merged' ? targetAssetID.trim() : undefined,
+      owner: owner.trim(),
+      dueAt: new Date(dueAt).toISOString(),
+      evidenceRequired: true,
+      reason: reason.trim(),
+      expectedAssetRevision: context.revision,
+      idempotencyKey: newAssetGovernanceIdempotencyKey('create'),
+    }),
+    onSuccess: async (order) => {
+      messageApi.success(`工单已受理：${order.work_order_id}，等待审批`);
+      await ordersQuery.refetch();
+    },
+    onError: (error) => messageApi.error(error instanceof Error ? error.message : '工单创建失败'),
+  });
+  const actionMutation = useMutation({
+    mutationFn: ({ actionID, revision }: { actionID: AssetGovernanceAction; revision: number }) => applyAssetGovernanceAction({
+      workOrderID: ordersQuery.data?.[0]?.work_order_id ?? '',
+      actionID,
+      expectedRevision: revision,
+      reason: reason.trim(),
+      evidenceRefs: evidenceRefs.split('\n').map((item) => item.trim()).filter(Boolean),
+      idempotencyKey: newAssetGovernanceIdempotencyKey(actionID),
+    }),
+    onSuccess: async (order) => {
+      messageApi.success(`工单状态已提交：${governanceStatusLabel(order.status)}（revision ${order.revision}）`);
+      await ordersQuery.refetch();
+    },
+    onError: (error) => messageApi.error(error instanceof Error ? error.message : '工单状态变更失败'),
+  });
+  const latestOrder = ordersQuery.data?.[0];
+  const availableActions = latestOrder ? governanceAvailableActions(latestOrder.status) : [];
+  const createDisabled = !owner.trim() || !reason.trim() || context.revision < 1 || !dueAt || (targetState === 'merged' && !targetAssetID.trim());
   return (
-    <div className="taf-asset-action-rail">
-      <Tooltip title={activeTab === 'server' ? '打开服务器资产详情' : '该分类的详情工作区尚未接入'}>
-        <Button size="small" type="primary" icon={<ProfileOutlined />} disabled={activeTab !== 'server'} onClick={() => onOpenDetail('basic')}>打开资产详情</Button>
-      </Tooltip>
-      <Button size="small" icon={<ClusterOutlined />} onClick={() => navigate(`/graph?assetId=${encodeURIComponent(assetId)}`)}>跳转实体图谱</Button>
-      <Tooltip title="整改工单后端尚未接入"><Button size="small" danger disabled icon={<FileSearchOutlined />}>生成整改工单</Button></Tooltip>
-      <Button size="small" className="is-forensics" icon={<FileSearchOutlined />} onClick={() => navigate(`/forensics?assetId=${encodeURIComponent(assetId)}`)}>进入取证分析</Button>
-    </div>
+    <>
+      {messageContext}
+      <div className="taf-asset-action-rail">
+        <Tooltip title={activeTab === 'server' ? '打开服务器资产详情' : '该分类的详情工作区尚未接入'}>
+          <Button size="small" type="primary" icon={<ProfileOutlined />} disabled={activeTab !== 'server'} onClick={() => onOpenDetail('basic')}>打开资产详情</Button>
+        </Tooltip>
+        <Button size="small" icon={<ClusterOutlined />} onClick={() => navigate(`/graph?assetId=${encodeURIComponent(assetId)}`)}>跳转实体图谱</Button>
+        <Tooltip title={appConfig.enableAssetGovernanceV1 ? '创建并跟踪真实资产治理工单' : '整改工单灰度开关尚未启用'}>
+          <Button size="small" danger disabled={!appConfig.enableAssetGovernanceV1 || context.revision < 1} icon={<FileSearchOutlined />} onClick={() => setGovernanceOpen(true)}>生成整改工单</Button>
+        </Tooltip>
+        <Button size="small" className="is-forensics" icon={<FileSearchOutlined />} onClick={() => navigate(`/forensics?assetId=${encodeURIComponent(assetId)}`)}>进入取证分析</Button>
+      </div>
+      <Modal title="资产治理工单" open={governanceOpen} width={520} footer={null} onCancel={() => setGovernanceOpen(false)} destroyOnClose>
+        <Space direction="vertical" size={12} style={{ width: '100%' }}>
+          <Alert type="info" showIcon message={`资产 ${context.displayCode} · revision ${context.revision}`} description="提交仅表示工单已受理；资产生命周期只会在审批、执行并完成证据门禁后变化。" />
+          {ordersQuery.isError && <Alert type="error" showIcon message="工单读取失败" description={ordersQuery.error instanceof Error ? ordersQuery.error.message : '请重试'} />}
+          {latestOrder && (
+            <Alert type={latestOrder.status === 'completed' ? 'success' : latestOrder.status === 'failed' ? 'error' : 'warning'} showIcon
+              message={`最新工单：${governanceStatusLabel(latestOrder.status)} · r${latestOrder.revision}`}
+              description={`${latestOrder.source_lifecycle_state} → ${latestOrder.target_lifecycle_state}；负责人 ${latestOrder.owner}；截止 ${formatDateTime(latestOrder.due_at)}`} />
+          )}
+          <Select value={targetState} onChange={setTargetState} options={[
+            { value: 'confirmed', label: '确认资产' }, { value: 'managed', label: '纳入受管' },
+            { value: 'isolated', label: '隔离资产' }, { value: 'retired', label: '退役资产' },
+            { value: 'merged', label: '合并到其他资产' }, { value: 'candidate', label: '回退为候选' },
+          ]} />
+          {targetState === 'merged' && <Input value={targetAssetID} onChange={(event) => setTargetAssetID(event.target.value)} placeholder="目标资产 UUID" />}
+          <Input value={owner} onChange={(event) => setOwner(event.target.value)} placeholder="负责人（必须与执行人身份一致）" />
+          <Input type="datetime-local" value={dueAt} onChange={(event) => setDueAt(event.target.value)} />
+          <Input.TextArea rows={3} value={reason} onChange={(event) => setReason(event.target.value)} placeholder="业务原因（至少 8 个字符）" />
+          <Input.TextArea rows={2} value={evidenceRefs} onChange={(event) => setEvidenceRefs(event.target.value)} placeholder="证据引用，每行一个；完成动作必须提供" />
+          <Space wrap>
+            <Button type="primary" loading={createMutation.isPending} disabled={createDisabled} onClick={() => createMutation.mutate()}>创建工单</Button>
+            {availableActions.map((item) => <Button key={item.actionID} danger={item.danger} loading={actionMutation.isPending} onClick={() => actionMutation.mutate({ actionID: item.actionID, revision: latestOrder!.revision })}>{item.label}</Button>)}
+            <Button onClick={() => void ordersQuery.refetch()} loading={ordersQuery.isFetching}>刷新状态</Button>
+          </Space>
+        </Space>
+      </Modal>
+    </>
   );
+}
+
+function governanceStatusLabel(status: string) {
+  return ({ pending_approval: '待审批', approved: '已批准', rejected: '已拒绝', executing: '执行中', completed: '已完成', failed: '失败', cancelled: '已取消', compensated: '已补偿' } as Record<string, string>)[status] ?? status;
+}
+
+function governanceAvailableActions(status: string): Array<{ actionID: AssetGovernanceAction; label: string; danger?: boolean }> {
+  if (status === 'pending_approval') return [{ actionID: 'asset-governance-approve', label: '批准' }, { actionID: 'asset-governance-reject', label: '拒绝', danger: true }, { actionID: 'asset-governance-cancel', label: '取消' }];
+  if (status === 'approved') return [{ actionID: 'asset-governance-start', label: '开始执行' }, { actionID: 'asset-governance-cancel', label: '取消' }];
+  if (status === 'executing') return [{ actionID: 'asset-governance-complete', label: '提交完成' }, { actionID: 'asset-governance-fail', label: '标记失败', danger: true }, { actionID: 'asset-governance-cancel', label: '取消' }];
+  if (status === 'completed') return [{ actionID: 'asset-governance-compensate', label: '补偿回退', danger: true }];
+  return [];
 }
 
 function buildSelectionContext(tab: AssetTabSlug, assetId: string, row?: SnapshotRow): AssetSelectionContext {
@@ -1116,6 +1377,7 @@ function buildSelectionContext(tab: AssetTabSlug, assetId: string, row?: Snapsho
     risk: row ? riskLevel(row) : '未评估',
     status: text(row, '__status', '未知'),
     owner: text(row, '__owner', '未分配'),
+    revision: Number(row?.__revision ?? 0),
     lastSeen: formatDateTime(text(row, '最近活跃', '-')),
     sourceRow: row,
   };
@@ -1129,17 +1391,6 @@ const renderAssetCell = (column: string, value: unknown): ReactNode => {
 };
 
 const rowKey = (record: SnapshotRow) => String(record.__assetId ?? record['资产 ID'] ?? JSON.stringify(record));
-const exportAssetRows = (rows: SnapshotRow[]) => {
-  const headers = ['资产 ID', 'IP/MAC', '主机名', '类型', '园区/部门', '操作系统', '重要性', '风险标签', '最近活跃', '暴露端口'];
-  const quote = (value: unknown) => `"${String(value ?? '').replace(/"/g, '""')}"`;
-  const csv = `\uFEFF${[headers, ...rows.map((row) => headers.map((header) => row[header]))].map((line) => line.map(quote).join(',')).join('\n')}`;
-  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = `asset-inventory-${new Date().toISOString().slice(0, 10)}.csv`;
-  anchor.click();
-  URL.revokeObjectURL(url);
-};
 const text = (row: SnapshotRow | undefined, key: string, fallback: string) => {
   const value = row?.[key];
   return value === undefined || value === null || value === '' ? fallback : String(value);

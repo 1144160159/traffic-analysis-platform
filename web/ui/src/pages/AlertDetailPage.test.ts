@@ -4,7 +4,7 @@ import {
   evidenceFocusRoute,
   evidenceFocusView,
   evidenceViewRoute,
-} from '@/pages/AlertDetailPage';
+} from '@/pages/alertDetailLogic';
 
 describe('alert detail inline evidence tab routing', () => {
   it.each([

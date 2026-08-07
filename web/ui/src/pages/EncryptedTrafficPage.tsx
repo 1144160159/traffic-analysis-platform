@@ -192,7 +192,10 @@ export function EncryptedTrafficPage({ route }: { route: NavRoute }) {
 
   const rows = useMemo(() => data?.rows ?? [], [data?.rows]);
   const encryptedVisuals = data?.visuals?.encryptedTraffic;
-  const evidenceSessions = encryptedVisuals?.evidenceCenter.sessions ?? [];
+  const evidenceSessions = useMemo(
+    () => encryptedVisuals?.evidenceCenter.sessions ?? [],
+    [encryptedVisuals?.evidenceCenter.sessions],
+  );
   const hasActiveEvidenceLocateFilters = hasEvidenceLocateFilters(evidenceLocateFilters);
   const locatedEvidenceSessions = useMemo(
     () => evidenceSessions.filter((item) => matchesEvidenceLocateFilters(item, evidenceLocateFilters)),
@@ -228,7 +231,7 @@ export function EncryptedTrafficPage({ route }: { route: NavRoute }) {
       dataMode: encryptedVisuals?.evidenceCenter.availability.state ?? 'unavailable',
     }),
   });
-  const metrics = route.page.kpis.map((label) => data?.metrics.find((item) => item.label === label) ?? fallbackMetric(label));
+  const metrics = route.page.kpis.map((label) => data?.metrics.find((item) => item.label === label) ?? unavailableMetric(label));
   const evidenceKpis = encryptedVisuals?.evidenceCenter.kpis ?? [];
   const columns: ColumnsType<SnapshotRow> = route.page.tableColumns.map((column) => ({
     title: column,
@@ -265,26 +268,6 @@ export function EncryptedTrafficPage({ route }: { route: NavRoute }) {
       setIsAnalysisRunning(false);
     }
   };
-  const exportEgressReport = () => {
-    const payload = JSON.stringify({
-      generatedAt: new Date().toISOString(),
-      target: currentEgressTarget,
-      availability: encryptedVisuals?.egressAvailability,
-      destinations: encryptedVisuals?.destinationRows ?? [],
-      domains: encryptedVisuals?.egressDomainCards ?? [],
-    }, null, 2);
-    const href = URL.createObjectURL(new Blob([payload], { type: 'application/json' }));
-    const anchor = document.createElement('a');
-    anchor.href = href;
-    anchor.download = `encrypted-egress-${Date.now()}.json`;
-    anchor.style.display = 'none';
-    document.body.append(anchor);
-    anchor.click();
-    anchor.remove();
-    window.setTimeout(() => URL.revokeObjectURL(href), 0);
-    message.success('外联画像 JSON 报告已生成');
-  };
-
   return (
     <div className={`taf-page taf-encrypted taf-encrypted--${activeTab}`} data-tab-slug={activeTab}>
       <section className="taf-encrypted-shell">
@@ -362,7 +345,7 @@ export function EncryptedTrafficPage({ route }: { route: NavRoute }) {
                 visuals={encryptedVisuals}
                 target={currentEgressTarget}
                 onAction={openEgressAction}
-                onExport={exportEgressReport}
+                onExport={() => openEvidenceAction('导出证据报告', currentEgressTarget)}
                 onNavigate={(path) => navigate(path)}
               />
             ) : activeTab === 'evidence-center' ? (
@@ -887,7 +870,7 @@ function EvidenceAnchorPanel({
   ];
   const sourceHint = entropyTrend.length ? 'Payload entropy API' : 'Payload entropy 未返回';
   return (
-    <WorkPanel title="证据锚点概览" extra={<StatusTag value={session?.risk || '未知'} />}>
+    <WorkPanel title="证据锚点概览" extra={<><EvidenceAvailability availability={availability} /><StatusTag value={session?.risk || '未知'} /></>}>
       <div className="taf-evidence-anchor">
         <div className="taf-evidence-anchor__facts">
           {facts.map(([label, value]) => <div key={label}><span>{label}</span><strong>{value}</strong></div>)}
@@ -1754,7 +1737,6 @@ function evidenceKpiIcon(label: string) {
   return <LockOutlined />;
 }
 
-function fallbackMetric(label: string): PageSnapshot['metrics'][number] {
-  const value = label.includes('占比') || label.includes('比例') ? '0.0%' : '0';
-  return { label, value, delta: '等待 API', status: 'info' };
+function unavailableMetric(label: string): PageSnapshot['metrics'][number] {
+  return { label, value: '-', delta: '暂不可用', status: 'warn' };
 }

@@ -11,7 +11,7 @@ import {
   SearchOutlined,
 } from '@ant-design/icons';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Alert, Button, Descriptions, Drawer, Select, Slider, Space, Table, Tooltip } from 'antd';
+import { Alert, Button, Descriptions, Drawer, Input, InputNumber, Select, Slider, Space, Table, Tooltip, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { MouseEvent } from 'react';
 import { useMemo, useState } from 'react';
@@ -24,8 +24,8 @@ import { WorkPanel } from '@/components/WorkPanel';
 import type { NavRoute } from '@/routes/routeManifest';
 import { fetchPageSnapshot } from '@/services/api';
 import type { PageSnapshot, SnapshotRow } from '@/services/mockData';
-import { buildModelActionRequestBody, submitModelAction, type ModelActionId } from '@/services/modelActionApi';
-import { buildModelMetricTrend } from '@/services/modelChartData';
+import { buildModelActionRequestBody, modelActionRequiresVersion, submitModelAction, validateModelActionInput, type ModelActionId } from '@/services/modelActionApi';
+import { modelMetricDeltaDisplay, modelMetricTrendFrom } from '@/services/modelChartData';
 import { fetchModelWorkbench, type ModelWorkbench } from '@/services/modelWorkbenchApi';
 import { pageApiPlans, type ActionEndpointPlan } from '@/services/pageApiPlans';
 
@@ -42,6 +42,16 @@ const modelOverlays: OverlayContract[] = [
 
 const modelActionPlans = pageApiPlans.models.actions ?? [];
 const modelPageSize = 8;
+const modelColumnWidths: Record<string, number> = {
+  模型名: 170,
+  类型: 100,
+  版本: 150,
+  状态: 90,
+  线上版本: 150,
+  训练时间: 140,
+  负责人: 120,
+  操作: 90,
+};
 
 type ModelActionState = {
   actionId: ModelActionId;
@@ -100,14 +110,22 @@ export function ModelManagementPage({ route }: { route: NavRoute }) {
   const totalPages = Math.max(1, Math.ceil(filteredTotal / modelPageSize));
   const currentPage = Math.min(page, totalPages);
   const visibleRows = filteredRows;
-  const metrics = route.page.kpis.map((label) => data?.metrics.find((item) => item.label === label) ?? fallbackMetric(label));
+  const metrics = route.page.kpis.map((label) => data?.metrics.find((item) => item.label === label) ?? unavailableMetric(label));
   const openAction = (label: string, actionId: ModelActionId = 'model-context-action', targetRow = selected, payload?: Record<string, unknown>) => {
     const plan = modelActionPlans.find((item) => item.id === actionId)
       ?? modelActionPlans.find((item) => item.id === 'model-context-action')
       ?? modelActionPlans[0];
     if (!plan) return;
-    const modelId = String(targetRow?.__model_id ?? targetRow?.模型名 ?? 'selected-model');
-    const version = String(targetRow?.版本 ?? targetRow?.线上版本 ?? 'current');
+    const modelId = String(targetRow?.__model_id ?? targetRow?.model_id ?? '').trim();
+    const version = String(targetRow?.__version ?? targetRow?.model_version ?? targetRow?.版本 ?? targetRow?.线上版本 ?? '').trim();
+    if (!modelId) {
+      message.warning('当前记录缺少权威 model_id，模型动作未打开');
+      return;
+    }
+    if (modelActionRequiresVersion(actionId) && !version) {
+      message.warning('当前记录缺少权威 model_version，模型动作未打开');
+      return;
+    }
     actionMutation.reset();
     setActionState({
       actionId,
@@ -115,16 +133,22 @@ export function ModelManagementPage({ route }: { route: NavRoute }) {
       plan,
       endpoint: plan.endpoint.replace('{id}', encodeURIComponent(modelId)).replace('{version}', encodeURIComponent(version)),
       modelId,
-      target: String(targetRow?.模型名 ?? modelId),
+      target: String(targetRow?.模型名 ?? targetRow?.name ?? modelId),
       version,
       payload,
     });
   };
+  const updateActionPayload = (updates: Record<string, unknown>) => setActionState((current) => current ? ({
+    ...current,
+    payload: { ...(current.payload ?? {}), ...updates },
+  }) : current);
+  const actionValidationError = modelActionValidationError(actionState);
 
   const columns: ColumnsType<SnapshotRow> = route.page.tableColumns.map((column) => ({
     title: column,
     dataIndex: column,
     key: column,
+    width: modelColumnWidths[column],
     ellipsis: true,
     render: (value, record) => renderModelCell(column, value, record, openAction),
   }));
@@ -152,15 +176,19 @@ export function ModelManagementPage({ route }: { route: NavRoute }) {
               <Tooltip title="需先在 MLOps 编排中绑定真实制品与特征集">
                 <Button size="small" icon={<ImportOutlined />} disabled data-model-action-managed="true">导入模型</Button>
               </Tooltip>
-              <Button size="small" icon={<CloudUploadOutlined />} data-model-action-managed="true" onClick={() => openAction('追加反馈样本', 'model-feedback-append')}>追加反馈样本</Button>
-              <Button size="small" icon={<ExperimentOutlined />} data-model-action-managed="true" onClick={() => openAction('发起重训', 'model-retrain-request')}>发起重训</Button>
+              <Tooltip title={selectedModelId ? '输入权威数据集 ID 和样本数后提交' : '请先选择带有 model_id 的模型'}>
+                <Button size="small" icon={<CloudUploadOutlined />} disabled={!selectedModelId} data-model-action-managed="true" onClick={() => openAction('追加反馈样本', 'model-feedback-append')}>追加反馈样本</Button>
+              </Tooltip>
+              <Tooltip title={selectedModelId ? '输入权威训练数据集和原因后提交' : '请先选择带有 model_id 的模型'}>
+                <Button size="small" icon={<ExperimentOutlined />} disabled={!selectedModelId} data-model-action-managed="true" onClick={() => openAction('发起重训', 'model-retrain-request')}>发起重训</Button>
+              </Tooltip>
               <Tooltip title={activationBlocked ? `门禁未通过：${reviewGates.length ? pendingGateNames(reviewGates) : '缺少持久化评审门禁'}` : !candidateVersion ? '没有可激活候选版本' : '全量激活候选版本；分阶段流量请使用部署编排'}>
                 <Button size="small" type="primary" icon={<PlayCircleOutlined />} disabled={activationBlocked || !candidateVersion} data-model-action-managed="true" onClick={() => openAction('激活候选', 'model-version-activate', { ...selected, 版本: candidateVersion })}>激活候选</Button>
               </Tooltip>
               <Tooltip title={rollbackVersion ? `回滚到 ${rollbackVersion}` : '没有可回滚的已停用版本'}>
                 <Button size="small" danger ghost icon={<RollbackOutlined />} disabled={!rollbackVersion} data-model-action-managed="true" onClick={() => openAction(`回滚到 ${rollbackVersion}`, 'model-version-rollback', { ...selected, 版本: rollbackVersion })}>回滚线上版本</Button>
               </Tooltip>
-              <Button size="small" icon={<BranchesOutlined />} data-model-action-managed="true" onClick={() => openAction('进入 MLOps 编排')}>进入 MLOps 编排</Button>
+              <Button size="small" icon={<BranchesOutlined />} disabled={!selectedModelId} data-model-action-managed="true" onClick={() => openAction('进入 MLOps 编排')}>进入 MLOps 编排</Button>
               <Tooltip title="刷新模型状态">
                 <Button size="small" icon={<ReloadOutlined />} data-model-action-managed="true" onClick={() => void refetch()} />
               </Tooltip>
@@ -192,8 +220,8 @@ export function ModelManagementPage({ route }: { route: NavRoute }) {
                   <label><SearchOutlined /><input aria-label="搜索模型" placeholder="搜索模型名、类型或负责人" value={searchValue} onChange={(event) => { setSearchValue(event.target.value); setPage(1); }} /></label>
                   <Select size="small" value={typeFilter} onChange={(value) => { setTypeFilter(value); setPage(1); }} options={[{ value: '全部类型' }, { value: '分类' }, { value: '检测' }, { value: '聚类' }]} />
                   <Select size="small" value={statusFilter} onChange={(value) => { setStatusFilter(value); setPage(1); }} options={[{ value: '全部状态' }, { value: '线上' }, { value: '候选' }, { value: '漂移' }]} />
-                  <Tooltip title="评估当前筛选模型">
-                    <Button size="small" icon={<BarChartOutlined />} data-model-action-managed="true" onClick={() => openAction('评估当前筛选模型', 'model-evaluation-request')} />
+                  <Tooltip title={selectedModelId ? '评估当前选中模型版本' : '请先选择带有 model_id 和 model_version 的模型'}>
+                    <Button size="small" icon={<BarChartOutlined />} disabled={!selectedModelId} aria-label="评估当前选中模型" data-model-action-managed="true" onClick={() => openAction('评估当前选中模型', 'model-evaluation-request')} />
                   </Tooltip>
                 </div>
                 <Table
@@ -215,7 +243,10 @@ export function ModelManagementPage({ route }: { route: NavRoute }) {
               </WorkPanel>
 
               <div className="taf-models-left-bottom">
-                <WorkPanel title={`模型指标（${String(selected?.模型名 ?? 'UEBA 行为分析')} ${String(selected?.版本 ?? 'v1.8.0')}）`}>
+                <WorkPanel
+                  title="选中版本指标"
+                  extra={<span className="taf-models-selected-context" title={`${String(selected?.模型名 ?? '未选择模型')} · ${String(selected?.版本 ?? '版本暂不可用')}`}>{String(selected?.模型名 ?? '未选择模型')} · {String(selected?.版本 ?? '版本暂不可用')}</span>}
+                >
                   <ModelMetrics selected={selected} workbench={workbench} />
                 </WorkPanel>
               <WorkPanel title="解释与特征">
@@ -245,7 +276,7 @@ export function ModelManagementPage({ route }: { route: NavRoute }) {
         open={Boolean(actionState)}
         width={520}
         onClose={() => { setActionState(undefined); actionMutation.reset(); }}
-        extra={<Button size="small" type="primary" loading={actionMutation.isPending} disabled={!actionState} onClick={() => actionState && actionMutation.mutate({ actionId: actionState.actionId, modelId: actionState.modelId, version: actionState.version, target: actionState.target, payload: actionState.payload })}>确认提交</Button>}
+        extra={<Tooltip title={actionValidationError || '提交真实模型动作'}><span><Button size="small" type="primary" loading={actionMutation.isPending} disabled={!actionState || Boolean(actionValidationError)} onClick={() => actionState && actionMutation.mutate({ actionId: actionState.actionId, modelId: actionState.modelId, version: actionState.version, target: actionState.target, payload: actionState.payload })}>确认提交</Button></span></Tooltip>}
       >
         {actionState && (
           <div className="taf-models-action-body">
@@ -255,14 +286,74 @@ export function ModelManagementPage({ route }: { route: NavRoute }) {
               <Descriptions.Item label="审计事件">{actionState.plan.auditEvent}</Descriptions.Item>
               <Descriptions.Item label="请求体"><code>{JSON.stringify(buildModelActionRequestBody({ actionId: actionState.actionId, modelId: actionState.modelId, version: actionState.version, target: actionState.target, payload: actionState.payload }))}</code></Descriptions.Item>
             </Descriptions>
+            <ModelActionParameters actionState={actionState} onChange={updateActionPayload} />
+            {actionValidationError && <Alert type="warning" showIcon message="尚不能提交" description={actionValidationError} />}
             <Alert type="info" showIcon message="真实 API 与审计门禁" description={actionState.plan.guardrails.join('；')} />
-            {actionMutation.data && <Alert type="success" showIcon message={`任务 ${actionMutation.data.jobId} 已由服务端受理`} description={`${actionMutation.data.auditEvent}；${actionMutation.data.apiContract}；状态 ${actionMutation.data.status}`} />}
+            {actionMutation.data && <Alert type={modelActionStatusTone(actionMutation.data.status)} showIcon message={`任务 ${actionMutation.data.jobId}：${modelActionStatusLabel(actionMutation.data.status)}`} description={`${actionMutation.data.auditEvent}；${actionMutation.data.apiContract}；服务端状态 ${actionMutation.data.status}`} />}
             {actionMutation.isError && <Alert type="error" showIcon message="模型动作提交失败" description={actionMutation.error instanceof Error ? actionMutation.error.message : '未知错误'} />}
           </div>
         )}
       </Drawer>
     </div>
   );
+}
+
+function ModelActionParameters({ actionState, onChange }: { actionState: ModelActionState; onChange: (updates: Record<string, unknown>) => void }) {
+  const payload = actionState.payload ?? {};
+  const datasetField = (label: string) => (
+    <label><span>{label}</span><Input value={String(payload.dataset_id ?? '')} placeholder="输入服务端登记的数据集 ID" onChange={(event) => onChange({ dataset_id: event.target.value })} /></label>
+  );
+  if (actionState.actionId === 'model-feedback-append') {
+    return <div className="taf-models-action-parameters">{datasetField('反馈数据集 ID')}<label><span>权威样本数</span><InputNumber min={1} precision={0} value={Number(payload.sample_count) || null} onChange={(value) => onChange({ sample_count: value ?? undefined })} /></label></div>;
+  }
+  if (actionState.actionId === 'model-retrain-request') {
+    return <div className="taf-models-action-parameters">{datasetField('训练数据集 ID')}<label><span>重训策略</span><Select value={String(payload.strategy ?? '') || undefined} placeholder="选择策略" onChange={(value) => onChange({ strategy: value })} options={[{ value: 'incremental', label: '增量训练' }, { value: 'full', label: '全量训练' }]} /></label><label><span>重训原因</span><Input value={String(payload.reason ?? '')} placeholder="填写本次重训的可审计原因" onChange={(event) => onChange({ reason: event.target.value })} /></label></div>;
+  }
+  if (actionState.actionId === 'model-evaluation-request') {
+    return <div className="taf-models-action-parameters">{datasetField('评估数据集 ID')}<label><span>解释结果</span><Select value={payload.include_explanations === false ? 'false' : 'true'} onChange={(value) => onChange({ include_explanations: value === 'true' })} options={[{ value: 'true', label: '生成解释' }, { value: 'false', label: '不生成解释' }]} /></label></div>;
+  }
+  if (actionState.actionId === 'model-version-rollback') {
+    return <div className="taf-models-action-parameters"><label><span>回滚原因</span><Input value={String(payload.reason ?? '')} placeholder="填写审批通过的回滚原因" onChange={(event) => onChange({ reason: event.target.value })} /></label></div>;
+  }
+  if (actionState.actionId === 'model-version-register') {
+    return <div className="taf-models-action-parameters"><label><span>新版本</span><Input value={String(payload.version ?? '')} onChange={(event) => onChange({ version: event.target.value })} /></label><label><span>制品 URI</span><Input value={String(payload.artifact_uri ?? '')} onChange={(event) => onChange({ artifact_uri: event.target.value })} /></label><label><span>特征集 ID</span><Input value={String(payload.feature_set_id ?? '')} onChange={(event) => onChange({ feature_set_id: event.target.value })} /></label><label><span>模型类型</span><Input value={String(payload.model_type ?? '')} onChange={(event) => onChange({ model_type: event.target.value })} /></label></div>;
+  }
+  return null;
+}
+
+function modelActionValidationError(actionState?: ModelActionState): string {
+  if (!actionState) return '';
+  try {
+    validateModelActionInput({
+      actionId: actionState.actionId,
+      modelId: actionState.modelId,
+      version: actionState.version,
+      target: actionState.target,
+      payload: actionState.payload,
+    });
+    return '';
+  } catch (error) {
+    return error instanceof Error ? error.message : '模型动作参数不完整';
+  }
+}
+
+function modelActionStatusTone(status: string): 'success' | 'info' | 'warning' | 'error' {
+  const normalized = status.trim().toLowerCase();
+  if (['succeeded', 'success', 'completed'].includes(normalized)) return 'success';
+  if (['failed', 'failure', 'cancelled', 'canceled'].includes(normalized)) return 'error';
+  if (['partial', 'compensated'].includes(normalized)) return 'warning';
+  return 'info';
+}
+
+function modelActionStatusLabel(status: string): string {
+  const normalized = status.trim().toLowerCase();
+  if (['succeeded', 'success', 'completed'].includes(normalized)) return '最终成功';
+  if (['failed', 'failure'].includes(normalized)) return '执行失败';
+  if (['cancelled', 'canceled'].includes(normalized)) return '已取消';
+  if (normalized === 'partial') return '部分完成';
+  if (normalized === 'compensated') return '已补偿';
+  if (normalized === 'running') return '执行中';
+  return '已受理，等待终态';
 }
 
 function ModelFocusSurface({ kind, selected, workbench, loading, error }: { kind: string; selected?: SnapshotRow; workbench?: ModelWorkbench; loading: boolean; error: Error | null }) {
@@ -279,7 +370,7 @@ function ModelFocusSurface({ kind, selected, workbench, loading, error }: { kind
   const actions = workbench?.actions ?? [];
   const pending = reviewGates.filter((item) => !isApprovedGate(textValue(item, 'status')));
   const exportAudit = () => {
-    const report = { generated_at: new Date().toISOString(), model: workbench?.model, versions: workbench?.versions, review_gates: reviewGates, actions };
+    const report = { scope: 'current-browser-snapshot', audit_evidence: false, generated_at: new Date().toISOString(), model: workbench?.model, versions: workbench?.versions, review_gates: reviewGates, actions };
     const link = document.createElement('a');
     link.href = URL.createObjectURL(new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' }));
     link.download = `model-audit-${String(workbench?.model.model_id ?? 'unknown')}.json`;
@@ -308,7 +399,7 @@ function ModelFocusSurface({ kind, selected, workbench, loading, error }: { kind
             </article>
           </div>
           <article className="taf-models-focus-audit-log"><h2>审计记录</h2><div><span>时间</span><span>操作</span><span>模型版本</span><span>操作人</span><span>trace_id</span></div>{actions.slice(0, 4).map((action) => <div key={action.job_id}><time>{formatShortTime(action.created_at)}</time><b>{action.action}</b><span>{action.version || String(selected?.版本 ?? '-')}</span><span>{action.requested_by}</span><em>{action.job_id}</em></div>)}</article>
-          <footer><Button size="large" onClick={exportAudit}>生成审计报告</Button><Tooltip title={pending.length ? `门禁未通过：${pendingGateNames(reviewGates)}` : '返回模型工作台继续激活'}><Button size="large" type="primary" onClick={() => window.location.assign('/models')}>继续审批</Button></Tooltip><Button size="large" danger onClick={() => window.location.assign('/models')}>返回工作台处理驳回</Button></footer>
+          <footer><Tooltip title="仅下载当前浏览器已加载的模型快照，不是服务端审计证据"><Button size="large" onClick={exportAudit}>下载本地快照 JSON</Button></Tooltip><Tooltip title={pending.length ? `门禁未通过：${pendingGateNames(reviewGates)}` : '返回模型工作台继续激活'}><Button size="large" type="primary" onClick={() => window.location.assign('/models')}>继续审批</Button></Tooltip><Button size="large" danger onClick={() => window.location.assign('/models')}>返回工作台处理驳回</Button></footer>
         </>
       ) : (
         <>
@@ -331,11 +422,13 @@ function FocusImportantFeatures({ rows }: { rows: Array<Record<string, unknown>>
 }
 
 function FocusRuleContribution({ rows }: { rows: Array<Record<string, unknown>> }) {
-  return <div className="taf-models-focus-two-column"><article><h2>规则正负贡献图</h2><div className="taf-models-focus-score"><span>基线分值 <b>0.500</b></span><span>最终分值 <b>0.873</b></span></div><DataQualityTrendChart ariaLabel="聚焦态规则正负贡献" className="taf-models-focus-chart" categories={rows.map((item) => textValue(item, 'rule'))} series={[{ name: '规则贡献', color: '#13c2c2', type: 'bar', values: rows.map((item) => numberValue(item, 'delta')) }]} valueFormatter={(value) => value.toFixed(3)} /></article><article><h2>规则贡献表（当前样本）</h2><div className="taf-models-focus-data-table is-rules"><div><span>规则</span><span>方向</span><span>权重</span><span>贡献</span></div>{rows.map((item) => <div key={textValue(item, 'rule')}><b>{textValue(item, 'rule')}</b><span>{textValue(item, 'direction') === 'protect' ? '保护' : '风险'}</span><span>{Math.abs(numberValue(item, 'score')).toFixed(2)}</span><em className={textValue(item, 'direction') === 'protect' ? 'is-protect' : 'is-risk'}>{numberValue(item, 'delta') > 0 ? '+' : ''}{numberValue(item, 'delta').toFixed(3)}</em></div>)}</div></article></div>;
+  return <div className="taf-models-focus-two-column"><article><h2>规则正负贡献图</h2><div className="taf-models-focus-score"><span>基线分值 <b>暂不可用</b></span><span>最终分值 <b>暂不可用</b></span></div><DataQualityTrendChart ariaLabel="聚焦态规则正负贡献" className="taf-models-focus-chart" categories={rows.map((item) => textValue(item, 'rule'))} series={[{ name: '规则贡献', color: '#13c2c2', type: 'bar', values: rows.map((item) => numberValue(item, 'delta')) }]} valueFormatter={(value) => value.toFixed(3)} /></article><article><h2>规则贡献表（当前样本）</h2><div className="taf-models-focus-data-table is-rules"><div><span>规则</span><span>方向</span><span>权重</span><span>贡献</span></div>{rows.map((item) => <div key={textValue(item, 'rule')}><b>{textValue(item, 'rule')}</b><span>{textValue(item, 'direction') === 'protect' ? '保护' : '风险'}</span><span>{Math.abs(numberValue(item, 'score')).toFixed(2)}</span><em className={textValue(item, 'direction') === 'protect' ? 'is-protect' : 'is-risk'}>{numberValue(item, 'delta') > 0 ? '+' : ''}{numberValue(item, 'delta').toFixed(3)}</em></div>)}</div></article></div>;
 }
 
 function FocusAnomalyExplanation({ causes, samples, metrics }: { causes: Array<Record<string, unknown>>; samples: Array<Record<string, unknown>>; metrics: Array<Record<string, unknown>> }) {
-  return <div className="taf-models-focus-two-column"><article><h2>异常原因解释</h2><div className="taf-models-focus-causes">{causes.map((item) => <div key={textValue(item, 'cause')}><b>{textValue(item, 'cause')}</b><span>{textValue(item, 'evidence')}</span><i style={{ '--confidence': `${Math.round(numberValue(item, 'confidence') * 100)}%` } as React.CSSProperties} /><strong>+{numberValue(item, 'confidence').toFixed(3)}</strong></div>)}</div><div className="taf-models-focus-confidence"><span>置信区间</span><b>{textValue(metrics.find((item) => textValue(item, 'label').includes('置信区间')), 'value') || '[0.942, 0.953]'}</b><span>当前得分</span><strong>0.948</strong></div></article><article><h2>相似样本（异常会话）</h2><div className="taf-models-focus-data-table is-samples"><div><span>时间</span><span>源 IP</span><span>相似原因</span><span>得分</span></div>{samples.map((item) => <div key={`${textValue(item, 'time')}-${textValue(item, 'src_ip')}`}><span>{textValue(item, 'time')}</span><b>{textValue(item, 'src_ip')}</b><span>{textValue(item, 'topic')}</span><em>{numberValue(item, 'score').toFixed(2)}</em></div>)}</div></article></div>;
+  const confidenceInterval = textValue(metrics.find((item) => textValue(item, 'label').includes('置信区间')), 'value') || '暂不可用';
+  const currentScore = textValue(metrics.find((item) => textValue(item, 'label').includes('当前得分')), 'value') || '暂不可用';
+  return <div className="taf-models-focus-two-column"><article><h2>异常原因解释</h2><div className="taf-models-focus-causes">{causes.map((item) => <div key={textValue(item, 'cause')}><b>{textValue(item, 'cause')}</b><span>{textValue(item, 'evidence')}</span><i style={{ '--confidence': `${Math.round(numberValue(item, 'confidence') * 100)}%` } as React.CSSProperties} /><strong>+{numberValue(item, 'confidence').toFixed(3)}</strong></div>)}</div><div className="taf-models-focus-confidence"><span>置信区间</span><b>{confidenceInterval}</b><span>当前得分</span><strong>{currentScore}</strong></div></article><article><h2>相似样本（异常会话）</h2><div className="taf-models-focus-data-table is-samples"><div><span>时间</span><span>源 IP</span><span>相似原因</span><span>得分</span></div>{samples.map((item) => <div key={`${textValue(item, 'time')}-${textValue(item, 'src_ip')}`}><span>{textValue(item, 'time')}</span><b>{textValue(item, 'src_ip')}</b><span>{textValue(item, 'topic')}</span><em>{numberValue(item, 'score').toFixed(2)}</em></div>)}</div></article></div>;
 }
 
 function FocusSampleExamples({ datasets, distribution, samples }: { datasets: Array<Record<string, unknown>>; distribution: Array<Record<string, unknown>>; samples: Array<Record<string, unknown>> }) {
@@ -349,13 +442,15 @@ function ChampionState({ selected, workbench }: { selected?: SnapshotRow; workbe
   const candidate = versions.find((version) => version.status === 'registered' || version.status === 'validating');
   const rollbackVersions = versions.filter((version) => version.status === 'deprecated').slice(0, 3);
   const reviewGates = workbenchItems(workbench, 'review_gates');
+  const onlineVersion = active?.model_version ?? String(selected?.线上版本 ?? '暂无线上版本');
+  const candidateVersion = candidate?.model_version ?? '暂无候选版本';
   return (
     <div className="taf-models-champion">
       <div className="taf-models-champion-card is-online">
         <span>Champion（线上）</span>
-        <b>{active?.model_version ?? String(selected?.线上版本 ?? '暂无线上版本')}</b>
-        <em>{String(selected?.模型名 ?? 'UEBA 行为分析')}</em>
-        <strong>F1 {metricNumber(active?.metrics, 'f1_score', 0).toFixed(3)} | PostgreSQL</strong>
+        <b title={onlineVersion}>{onlineVersion}</b>
+        <em>{String(selected?.模型名 ?? '未选择模型')}</em>
+        <strong>{active ? `${metricDisplay(active.metrics, 'f1_score', 'F1')} | PostgreSQL` : '等待权威线上版本'}</strong>
       </div>
       <div className="taf-models-gray">
         <span>模型注册表切换比例</span>
@@ -366,9 +461,9 @@ function ChampionState({ selected, workbench }: { selected?: SnapshotRow; workbe
       </div>
       <div className="taf-models-champion-card is-candidate">
         <span>Challenger（候选）</span>
-        <b>{candidate?.model_version ?? '暂无候选版本'}</b>
-        <em>{String(selected?.模型名 ?? 'UEBA 行为分析')}</em>
-        <strong>{candidate ? `F1 ${metricNumber(candidate.metrics, 'f1_score', 0).toFixed(3)} | ${candidate.status}` : '等待模型注册与评估'}</strong>
+        <b title={candidateVersion}>{candidateVersion}</b>
+        <em>{String(selected?.模型名 ?? '未选择模型')}</em>
+        <strong>{candidate ? `${metricDisplay(candidate.metrics, 'f1_score', 'F1')} | ${candidate.status}` : '等待模型注册与评估'}</strong>
       </div>
       <div className="taf-models-versions">
         <span>可回滚版本</span>
@@ -437,12 +532,12 @@ function ModelMetrics({ selected, workbench }: { selected?: SnapshotRow; workben
   const metricSeries = persisted.length ? persisted.map((item) => [
     textValue(item, 'label'),
     `${item.value ?? '-' }${textValue(item, 'unit')}`,
-    numberValue(item, 'delta') > 0 ? `+${numberValue(item, 'delta')}` : `${numberValue(item, 'delta')}`,
+    modelMetricDeltaDisplay(item),
     textValue(item, 'tone') || 'info',
   ]) : buildMetricSeries(selected);
   return (
     <div className="taf-models-metrics">
-      {metricSeries.map(([label, value, delta, tone], index) => (
+      {metricSeries.map(([label, value, delta, tone]) => (
         <div key={label}>
           <span>{label}</span>
           <strong className={`is-${tone}`}>{value}</strong>
@@ -454,12 +549,11 @@ function ModelMetrics({ selected, workbench }: { selected?: SnapshotRow; workben
             series={[{
               name: label,
               color: tone === 'risk' ? '#ff4d4f' : tone === 'info' ? '#18a8ff' : '#36d66b',
-              values: buildModelMetricTrend(selected, index),
+              values: modelMetricTrendFrom(persisted.find((item) => textValue(item, 'label') === label)),
             }]}
           />
         </div>
       ))}
-      <footer><span>当前</span><span>基线</span><span>阈值上限</span><span>阈值下限</span></footer>
     </div>
   );
 }
@@ -506,7 +600,7 @@ function ExplainSamples({ samples, distribution }: { samples: Array<Record<strin
 type OpenModelAction = (label: string, actionId?: ModelActionId, targetRow?: SnapshotRow, payload?: Record<string, unknown>) => void;
 
 const renderModelCell = (column: string, value: unknown, record: SnapshotRow, onAction: OpenModelAction) => {
-  if (column === '模型名') return <span className="taf-models-name"><ExperimentOutlined />{String(value)}</span>;
+  if (column === '模型名') return <span className="taf-models-name" title={String(value)}><ExperimentOutlined />{String(value)}</span>;
   if (column === '状态') return <StatusTag value={value} />;
   if (column === '操作') return (
     <span className="taf-models-row-actions">
@@ -515,29 +609,36 @@ const renderModelCell = (column: string, value: unknown, record: SnapshotRow, on
       <button type="button" title="请在右侧激活区选择候选版本" aria-label="请在右侧激活区选择候选版本" data-model-action-managed="true" disabled><BranchesOutlined /></button>
     </span>
   );
-  return String(value);
+  return <span className="taf-models-cell-text" title={String(value)}>{String(value)}</span>;
 };
 
 const rowKey = (row: SnapshotRow) => String(row.__model_id ?? row.模型名 ?? row.model_id ?? JSON.stringify(row));
 
-const numericRowValue = (row: SnapshotRow | undefined, key: string, fallback: number) => {
+const optionalRowNumber = (row: SnapshotRow | undefined, key: string) => {
   const value = Number(row?.[key]);
-  return Number.isFinite(value) ? value : fallback;
+  return Number.isFinite(value) ? value : undefined;
 };
 
 const buildMetricSeries = (selected?: SnapshotRow) => {
-  const f1 = numericRowValue(selected, '__f1_score', 0.948);
-  const auc = numericRowValue(selected, '__auc', 0.982);
-  const drift = numericRowValue(selected, '__drift', 0.12);
-  const fpDelta = numericRowValue(selected, '__false_positive_delta', -6.2);
+  const accuracy = optionalRowNumber(selected, '__accuracy');
+  const recall = optionalRowNumber(selected, '__recall');
+  const f1 = optionalRowNumber(selected, '__f1_score');
+  const auc = optionalRowNumber(selected, '__auc');
+  const falsePositiveRate = optionalRowNumber(selected, '__false_positive_rate');
+  const drift = optionalRowNumber(selected, '__drift');
+  const confidenceLow = optionalRowNumber(selected, '__f1_confidence_low');
+  const confidenceHigh = optionalRowNumber(selected, '__f1_confidence_high');
+  const unavailable = (label: string) => [label, '-', '暂不可用', 'warn'];
   return [
-    ['准确率', Math.min(0.995, f1 + 0.023).toFixed(3), '+0.018', 'ok'],
-    ['召回率', Math.max(0.7, f1 - 0.023).toFixed(3), '+0.011', 'ok'],
-    ['F1', f1.toFixed(3), '+0.012', 'ok'],
-    ['AUC', auc.toFixed(3), '+0.009', 'ok'],
-    ['误报率', `${Math.abs(fpDelta / 7.5).toFixed(2)}%`, `${fpDelta.toFixed(1)}%`, 'risk'],
-    ['漂移 (PSI)', drift.toFixed(2), drift > 0.25 ? '关注' : '正常', drift > 0.25 ? 'risk' : 'ok'],
-    ['置信区间 (F1)', `[${Math.max(0, f1 - 0.006).toFixed(3)},${Math.min(1, f1 + 0.005).toFixed(3)}]`, '稳定', 'info'],
+    accuracy === undefined ? unavailable('准确率') : ['准确率', accuracy.toFixed(3), 'API', 'ok'],
+    recall === undefined ? unavailable('召回率') : ['召回率', recall.toFixed(3), 'API', 'ok'],
+    f1 === undefined ? unavailable('F1') : ['F1', f1.toFixed(3), 'API', 'ok'],
+    auc === undefined ? unavailable('AUC') : ['AUC', auc.toFixed(3), 'API', 'ok'],
+    falsePositiveRate === undefined ? unavailable('误报率') : ['误报率', `${falsePositiveRate.toFixed(2)}%`, 'API', 'risk'],
+    drift === undefined ? unavailable('漂移 (PSI)') : ['漂移 (PSI)', drift.toFixed(2), drift > 0.25 ? '关注' : '正常', drift > 0.25 ? 'risk' : 'ok'],
+    confidenceLow === undefined || confidenceHigh === undefined
+      ? unavailable('置信区间 (F1)')
+      : ['置信区间 (F1)', `[${confidenceLow.toFixed(3)},${confidenceHigh.toFixed(3)}]`, 'API', 'info'],
   ];
 };
 
@@ -554,9 +655,9 @@ const numberValue = (item: Record<string, unknown> | undefined, key: string) => 
   return Number.isFinite(value) ? value : 0;
 };
 
-const metricNumber = (metrics: Record<string, unknown> | undefined, key: string, fallback: number) => {
+const metricDisplay = (metrics: Record<string, unknown> | undefined, key: string, label: string) => {
   const value = Number(metrics?.[key]);
-  return Number.isFinite(value) ? value : fallback;
+  return Number.isFinite(value) ? `${label} ${value.toFixed(3)}` : `${label} 暂不可用`;
 };
 
 const activationThreshold = (index: number, metrics: Array<Record<string, unknown>>) => {
@@ -569,9 +670,13 @@ const activationThreshold = (index: number, metrics: Array<Record<string, unknow
 
 const activationEvidence = (index: number, metrics: Array<Record<string, unknown>>) => {
   const metric = (label: string) => metrics.find((item) => textValue(item, 'label').includes(label));
-  if (index === 0) return `F1 = ${numberValue(metric('F1'), 'value').toFixed(3)}`;
-  if (index === 1) return `误报率 = ${numberValue(metric('误报率'), 'value').toFixed(2)}%`;
-  if (index === 2) return `PSI = ${numberValue(metric('漂移'), 'value').toFixed(2)}`;
+  const formatted = (item: Record<string, unknown> | undefined, digits: number, suffix = '') => {
+    const value = Number(item?.value);
+    return Number.isFinite(value) ? `${value.toFixed(digits)}${suffix}` : '暂不可用';
+  };
+  if (index === 0) return `F1 = ${formatted(metric('F1'), 3)}`;
+  if (index === 1) return `误报率 = ${formatted(metric('误报率'), 2, '%')}`;
+  if (index === 2) return `PSI = ${formatted(metric('漂移'), 2)}`;
   return '发布与回滚均需留痕';
 };
 
@@ -581,9 +686,9 @@ const formatShortTime = (value: string) => {
   return date.toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
 };
 
-const fallbackMetric = (label: string): PageSnapshot['metrics'][number] => ({
+const unavailableMetric = (label: string): PageSnapshot['metrics'][number] => ({
   label,
-  value: label.includes('F1') ? '0.947' : label.includes('误报') ? '-6.2%' : '0',
-  delta: 'API',
-  status: 'info',
+  value: '-',
+  delta: '暂不可用',
+  status: 'warn',
 });

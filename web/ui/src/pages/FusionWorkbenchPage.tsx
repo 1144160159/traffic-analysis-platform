@@ -315,7 +315,7 @@ export function FusionWorkbenchPage({ route }: { route: NavRoute }) {
 
       <Modal
         className="taf-overlay-modal taf-fusion-rule-modal"
-        title={selectedRule ? <div className="taf-fusion-rule-modal-title"><div><strong>融合规则编辑</strong><span>规则 ID {selectedRule.rule_id}　/　{selectedRule.rule_name}　/　v{selectedRule.version}</span></div><em>{ruleStatus === 'draft' ? '草稿' : ruleStatus === 'disabled' ? '已停用' : '已启用'}</em><b>影响 {formatNumber(detailNumber(selectedRule, 'matches'))} 条匹配记录</b></div> : '融合规则编辑'}
+        title={selectedRule ? <div className="taf-fusion-rule-modal-title"><div><strong>融合规则编辑</strong><span>规则 ID {selectedRule.rule_id} / {selectedRule.rule_name} / v{selectedRule.version}</span></div><em>{ruleStatus === 'draft' ? '草稿' : ruleStatus === 'disabled' ? '已停用' : '已启用'}</em><b>影响 {formatNumber(detailNumber(selectedRule, 'matches'))} 条匹配记录</b></div> : '融合规则编辑'}
         open={ruleModalOpen}
         width="min(1200px, calc(var(--taf-window-inner-width, 100dvw) - 220px))"
         onCancel={() => setRuleModalOpen(false)}
@@ -326,12 +326,12 @@ export function FusionWorkbenchPage({ route }: { route: NavRoute }) {
             <h3>规则配置</h3>
             <div className="taf-fusion-rule-form">
               <label className="is-full"><span>规则名称</span><Input value={selectedRule.rule_name} readOnly /></label>
-              <label><span>匹配对象</span><Input value={`${detailText(selectedRule, 'field')}　→　${ruleOutputLabel(selectedRule.rule_id)}`} readOnly /></label>
+              <label><span>匹配对象</span><Input value={`${detailText(selectedRule, 'field')} → ${ruleOutputLabel(selectedRule.rule_id)}`} readOnly /></label>
               <label><span>运行状态</span><Select value={ruleStatus} onChange={setRuleStatus} options={[{ value: 'active', label: '已启用' }, { value: 'draft', label: '草稿' }, { value: 'disabled', label: '已停用' }]} /></label>
               <label className="is-full"><span>主键与来源优先级</span><Input value={`${detailText(selectedRule, 'source_a')} → ${detailText(selectedRule, 'source_b')}；${strategyLabel(ruleStrategy)}`} readOnly /></label>
               <label><span>冲突字段处理策略</span><Select value={ruleStrategy} onChange={setRuleStrategy} options={[{ value: 'authoritative-source', label: '权威来源优先' }, { value: 'weighted-confidence', label: '置信度加权' }, { value: 'latest-observation', label: '最新观测优先' }, { value: 'manual-review', label: '人工复核' }]} /></label>
               <label><span>置信度阈值</span><InputNumber value={ruleThreshold} min={0} max={1} step={0.01} onChange={(value) => setRuleThreshold(value ?? 0.85)} /></label>
-              <div className="taf-fusion-rule-trust is-full"><span>数据源可信度</span><div><b><i className="is-ok" />{detailText(selectedRule, 'source_a')}　{Math.min(0.99, ruleThreshold + 0.09).toFixed(2)}</b><b><i className="is-info" />{detailText(selectedRule, 'source_b')}　{ruleThreshold.toFixed(2)}</b><b><i className="is-warn" />其他来源　{Math.max(0, ruleThreshold - 0.16).toFixed(2)}</b></div></div>
+              <div className="taf-fusion-rule-trust is-full"><span>数据源可信度</span><div><b><i className="is-ok" />{detailText(selectedRule, 'source_a')} {Math.min(0.99, ruleThreshold + 0.09).toFixed(2)}</b><b><i className="is-info" />{detailText(selectedRule, 'source_b')} {ruleThreshold.toFixed(2)}</b><b><i className="is-warn" />其他来源 {Math.max(0, ruleThreshold - 0.16).toFixed(2)}</b></div></div>
               <label className="is-full"><span>变更说明</span><Input.TextArea rows={4} value={ruleNote} onChange={(event) => setRuleNote(event.target.value)} maxLength={240} showCount /></label>
             </div>
           </section>
@@ -339,7 +339,7 @@ export function FusionWorkbenchPage({ route }: { route: NavRoute }) {
             <section><h3>1. 权限与门禁</h3><p><SafetyCertificateOutlined /> {canWriteFusion ? `已验证 ${currentUser.username} 的 rule:write 权限` : '缺少 rule:write 权限，仅允许查看'}</p></section>
             <section><h3>2. 影响范围（实时）</h3><dl><dt>当前匹配记录</dt><dd>{formatNumber(detailNumber(selectedRule, 'matches'))}</dd><dt>待处理冲突</dt><dd>{formatNumber(data?.pending_count ?? 0)}</dd><dt>融合规则</dt><dd>{formatNumber(data?.rule_total ?? 0)}</dd><dt>审计记录</dt><dd>{formatNumber(data?.audit_total ?? 0)}</dd></dl></section>
             <section><h3>3. 状态解释</h3><ul><li><CheckCircleOutlined /> 当前成功率 <b>{percent(detailNumber(selectedRule, 'success_rate'))}</b></li><li><WarningOutlined /> 阈值调整为 <b>{ruleThreshold.toFixed(2)}</b></li><li><HistoryOutlined /> 保存后版本 <b>v{selectedRule.version + 1}</b></li></ul></section>
-            <section><h3>4. 下一步动作</h3><div className="taf-fusion-rule-steps"><b>1　保存新版本</b><span>→</span><b>2　冲突预检</b><span>→</span><b>3　审计留痕</b></div></section>
+            <section><h3>4. 下一步动作</h3><div className="taf-fusion-rule-steps"><b>1 保存新版本</b><span>→</span><b>2 冲突预检</b><span>→</span><b>3 审计留痕</b></div></section>
             <section><h3>5. 审计留痕</h3><dl><dt>操作者</dt><dd>{currentUser.username}</dd><dt>变更摘要</dt><dd title={ruleNote}>{ruleNote || '未填写'}</dd><dt>并发校验</dt><dd>expected_version = {selectedRule.version}</dd><dt>审计动作</dt><dd>FUSION_RULE_UPDATED</dd></dl></section>
           </aside>
         </div>}

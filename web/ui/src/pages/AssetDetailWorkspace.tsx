@@ -15,18 +15,28 @@ import { RingChart } from '@/components/charts';
 import { AssetTypeIcon } from '@/components/AssetTypeIcon';
 import { StatusTag } from '@/components/StatusTag';
 import { WorkPanel } from '@/components/WorkPanel';
+import { appConfig } from '@/config/runtime';
 import {
   fetchAsset,
+  fetchAssetDetailSnapshot,
   fetchAssetDetails,
   fetchAssetHistory,
   type AssetDetails,
+  type AssetAlertContext,
+  type AssetAlertSummary,
   type AssetEvent,
   type AssetNetworkInterface,
   type AssetOpenService,
   type AssetOwnership,
   type AssetOwnershipLink,
+  type AssetObservationSummary,
+  type AssetGraphProjection,
+  type AssetGraphProjectionRelation,
+  type AssetEvidenceObjectManifest,
+  type AssetEvidenceObjectSet,
   type AssetRecord,
   type AssetResponsibility,
+  type AssetTopologyGraph,
 } from '@/services/api';
 import { assetDetailTabs, type AssetDetailSlug } from './assetInventoryState';
 
@@ -86,27 +96,43 @@ export function AssetDetailWorkspace({
   onDetailChange: (detail: AssetDetailSlug) => void;
 }) {
   const navigate = useNavigate();
+  const snapshotEnabled = appConfig.enableAssetDetailSnapshotV1;
+  const snapshotQuery = useQuery({
+    queryKey: ['asset-detail-snapshot-v1', assetId],
+    queryFn: () => fetchAssetDetailSnapshot(assetId),
+    enabled: Boolean(assetId) && snapshotEnabled,
+  });
   const assetQuery = useQuery({
     queryKey: ['asset-detail', assetId],
     queryFn: () => fetchAsset(assetId),
-    enabled: Boolean(assetId),
+    enabled: Boolean(assetId) && !snapshotEnabled,
   });
   const historyQuery = useQuery({
     queryKey: ['asset-history', assetId],
     queryFn: () => fetchAssetHistory(assetId),
-    enabled: Boolean(assetId) && (detail === 'history' || detail === 'ownership'),
+    enabled: Boolean(assetId) && !snapshotEnabled && (detail === 'history' || detail === 'ownership'),
   });
   const detailsQuery = useQuery({
     queryKey: ['asset-details', assetId],
     queryFn: () => fetchAssetDetails(assetId),
-    enabled: Boolean(assetId) && detail !== 'basic' && detail !== 'history',
+    enabled: Boolean(assetId) && !snapshotEnabled && detail !== 'basic' && detail !== 'history',
   });
-  const asset = assetQuery.data;
+  const snapshotEnvelope = snapshotQuery.data;
+  const snapshot = snapshotEnvelope?.data;
+  const asset = snapshotEnabled ? snapshot?.asset : assetQuery.data;
+  const details = snapshotEnabled ? snapshot?.details : detailsQuery.data;
+  const events = snapshotEnabled ? snapshot?.history ?? [] : historyQuery.data ?? [];
+  const topology = snapshotEnabled ? snapshot?.topology : undefined;
+  const primaryQuery = snapshotEnabled ? snapshotQuery : assetQuery;
   const displayName = asset?.hostname || asset?.display_code || assetId;
   const tags = useMemo(() => tagValues(asset), [asset]);
   const detailAvailable = enabledDetailTabs.includes(detail);
 
   const refresh = async () => {
+    if (snapshotEnabled) {
+      await snapshotQuery.refetch();
+      return;
+    }
     await assetQuery.refetch();
     if (detail === 'history') await historyQuery.refetch();
     if (detail !== 'basic' && detail !== 'history') await detailsQuery.refetch();
@@ -121,22 +147,44 @@ export function AssetDetailWorkspace({
         </div>
         <Space>
           <Tooltip title="重新读取真实资产数据">
-            <Button aria-label="刷新当前资产" loading={assetQuery.isFetching || historyQuery.isFetching || detailsQuery.isFetching} icon={<ReloadOutlined />} onClick={() => void refresh()} />
+            <Button aria-label="刷新当前资产" loading={primaryQuery.isFetching || historyQuery.isFetching || detailsQuery.isFetching} icon={<ReloadOutlined />} onClick={() => void refresh()} />
           </Tooltip>
           <Tooltip title="返回资产列表"><Button aria-label="返回资产列表" icon={<ArrowLeftOutlined />} onClick={onClose} /></Tooltip>
           <Tooltip title="关闭详情"><Button aria-label="关闭详情" icon={<CloseOutlined />} onClick={onClose} /></Tooltip>
         </Space>
       </header>
 
-      {assetQuery.isError && (
+      {primaryQuery.isError && (
         <Alert
           showIcon
           type="error"
           message="资产详情读取失败"
-          description={assetQuery.error instanceof Error ? assetQuery.error.message : '请检查资产服务、鉴权和租户上下文。'}
-          action={<Button size="small" danger onClick={() => void assetQuery.refetch()}>重试</Button>}
+          description={primaryQuery.error instanceof Error ? primaryQuery.error.message : '请检查资产服务、鉴权和租户上下文。'}
+          action={<Button size="small" danger onClick={() => void primaryQuery.refetch()}>重试</Button>}
         />
       )}
+
+      {snapshotEnabled && snapshotEnvelope ? (
+        <SnapshotContractStatus
+          snapshotId={snapshotEnvelope.meta.snapshot_id || snapshotEnvelope.data.snapshot_id}
+          traceId={snapshotEnvelope.meta.trace_id}
+          asOf={snapshotEnvelope.meta.as_of || snapshotEnvelope.data.as_of}
+          partial={snapshotEnvelope.meta.partial || snapshotEnvelope.data.partial}
+          missingSections={snapshotEnvelope.meta.missing_sections.length ? snapshotEnvelope.meta.missing_sections : snapshotEnvelope.data.missing_sections}
+          sourceWatermarks={Object.keys(snapshotEnvelope.meta.source_watermarks).length ? snapshotEnvelope.meta.source_watermarks : snapshotEnvelope.data.source_watermarks}
+          topology={topology}
+        />
+      ) : null}
+
+      {snapshotEnabled && snapshot ? (
+        <CrossStoreSnapshotSections
+          observations={snapshot.observations}
+          alertContext={snapshot.alert_context}
+          graphProjection={snapshot.graph_projection}
+          evidenceObjects={snapshot.evidence_objects}
+          missingSections={snapshot.missing_sections}
+        />
+      ) : null}
 
       <div className="taf-asset-detail-workspace__identity">
         <span className="taf-asset-detail-workspace__asset-icon"><AssetTypeIcon kind={asset?.asset_type} /></span>
@@ -146,7 +194,7 @@ export function AssetDetailWorkspace({
         <span>{asset?.display_code || '-'} · {asset?.ip_address || '-'} · {asset?.os_type || assetTypeLabels[asset?.asset_type ?? 'unknown']}</span>
       </div>
 
-      <DetailMetrics detail={detail} asset={asset} details={detailsQuery.data} events={historyQuery.data ?? []} />
+      <DetailMetrics detail={detail} asset={asset} details={details} events={events} />
 
       <Tabs
         className="taf-asset-detail-workspace__tabs"
@@ -160,14 +208,14 @@ export function AssetDetailWorkspace({
       />
 
       <div className="taf-asset-detail-workspace__content">
-        {assetQuery.isLoading ? <div className="taf-asset-detail-loading"><Spin tip="正在读取资产详情" /></div> : null}
-        {!assetQuery.isLoading && !detailAvailable ? <Alert showIcon type="warning" message="未知详情状态" /> : null}
-        {detailsQuery.isError && detail !== 'basic' && detail !== 'history' ? <Alert showIcon type="error" message="资产上下文读取失败" description={detailsQuery.error instanceof Error ? detailsQuery.error.message : '请检查资产详情接口。'} action={<Button size="small" danger onClick={() => void detailsQuery.refetch()}>重试</Button>} /> : null}
-        {!assetQuery.isLoading && detail === 'basic' && asset ? <BasicDetail asset={asset} tags={tags} /> : null}
-        {!assetQuery.isLoading && detail === 'network-interface' ? <NetworkInterfaceDetail rows={detailsQuery.data?.network_interfaces ?? []} loading={detailsQuery.isLoading} /> : null}
-        {!assetQuery.isLoading && detail === 'open-services' ? <OpenServicesDetail rows={detailsQuery.data?.open_services ?? []} loading={detailsQuery.isLoading} /> : null}
-        {!assetQuery.isLoading && detail === 'ownership' ? <OwnershipDetail ownership={detailsQuery.data?.ownership} loading={detailsQuery.isLoading} /> : null}
-        {!assetQuery.isLoading && detail === 'history' ? <HistoryDetail events={historyQuery.data ?? []} loading={historyQuery.isLoading} error={historyQuery.error} onRetry={() => void historyQuery.refetch()} /> : null}
+        {primaryQuery.isLoading ? <div className="taf-asset-detail-loading"><Spin tip="正在读取资产详情" /></div> : null}
+        {!primaryQuery.isLoading && !detailAvailable ? <Alert showIcon type="warning" message="未知详情状态" /> : null}
+        {!snapshotEnabled && detailsQuery.isError && detail !== 'basic' && detail !== 'history' ? <Alert showIcon type="error" message="资产上下文读取失败" description={detailsQuery.error instanceof Error ? detailsQuery.error.message : '请检查资产详情接口。'} action={<Button size="small" danger onClick={() => void detailsQuery.refetch()}>重试</Button>} /> : null}
+        {!primaryQuery.isLoading && detail === 'basic' && asset ? <BasicDetail asset={asset} tags={tags} /> : null}
+        {!primaryQuery.isLoading && detail === 'network-interface' ? <NetworkInterfaceDetail rows={details?.network_interfaces ?? []} loading={snapshotEnabled ? snapshotQuery.isLoading : detailsQuery.isLoading} /> : null}
+        {!primaryQuery.isLoading && detail === 'open-services' ? <OpenServicesDetail rows={details?.open_services ?? []} loading={snapshotEnabled ? snapshotQuery.isLoading : detailsQuery.isLoading} /> : null}
+        {!primaryQuery.isLoading && detail === 'ownership' ? <OwnershipDetail ownership={details?.ownership} loading={snapshotEnabled ? snapshotQuery.isLoading : detailsQuery.isLoading} /> : null}
+        {!primaryQuery.isLoading && detail === 'history' ? <HistoryDetail events={events} loading={snapshotEnabled ? snapshotQuery.isLoading : historyQuery.isLoading} error={snapshotEnabled ? null : historyQuery.error} onRetry={() => void (snapshotEnabled ? snapshotQuery.refetch() : historyQuery.refetch())} /> : null}
       </div>
 
       <footer className="taf-asset-detail-workspace__actions">
@@ -176,6 +224,182 @@ export function AssetDetailWorkspace({
         <Button icon={<ProfileOutlined />} onClick={() => onDetailChange('history')}>查看变更历史</Button>
       </footer>
     </section>
+  );
+}
+
+function CrossStoreSnapshotSections({
+  observations,
+  alertContext,
+  graphProjection,
+  evidenceObjects,
+  missingSections,
+}: {
+  observations?: AssetObservationSummary;
+  alertContext?: AssetAlertContext;
+  graphProjection?: AssetGraphProjection;
+  evidenceObjects?: AssetEvidenceObjectSet;
+  missingSections: string[];
+}) {
+  const alertColumns: ColumnsType<AssetAlertSummary> = [
+    { title: '告警ID', dataIndex: 'alert_id', key: 'alert_id', width: 160, ellipsis: true },
+    { title: '类型', dataIndex: 'alert_type', key: 'alert_type', width: 120, ellipsis: true },
+    { title: '级别', dataIndex: 'severity', key: 'severity', width: 86, render: (value: string) => <StatusTag value={value} /> },
+    { title: '状态', dataIndex: 'status', key: 'status', width: 90, render: (value: string) => <StatusTag value={value} /> },
+    { title: '通信对端', key: 'peer', width: 180, render: (_, row) => `${row.src_ip}:${row.src_port} → ${row.dst_ip}:${row.dst_port}` },
+    { title: '证据', key: 'evidence', width: 72, render: (_, row) => row.evidence_ids.length },
+    { title: '最后发生', dataIndex: 'last_seen', key: 'last_seen', width: 170, render: formatTime },
+  ];
+  const relationColumns: ColumnsType<AssetGraphProjectionRelation> = [
+    { title: '关系ID', dataIndex: 'relation_id', key: 'relation_id', width: 150, ellipsis: true },
+    { title: '源实体', dataIndex: 'source_id', key: 'source_id', width: 150, ellipsis: true },
+    { title: '关系', dataIndex: 'relation_type', key: 'relation_type', width: 110 },
+    { title: '目标实体', dataIndex: 'target_id', key: 'target_id', width: 150, ellipsis: true },
+    { title: '风险', dataIndex: 'risk_level', key: 'risk_level', width: 86, render: (value?: string) => <StatusTag value={value || 'unknown'} /> },
+    { title: '证据ID', dataIndex: 'evidence_id', key: 'evidence_id', width: 130, render: emptyDash },
+    { title: '观测时间', dataIndex: 'observed_at', key: 'observed_at', width: 170, render: formatTime },
+  ];
+  const evidenceColumns: ColumnsType<AssetEvidenceObjectManifest> = [
+    { title: '证据ID', dataIndex: 'evidence_id', key: 'evidence_id', width: 150, ellipsis: true },
+    { title: '类型', dataIndex: 'evidence_type', key: 'evidence_type', width: 88 },
+    { title: '对象', key: 'object', width: 240, ellipsis: true, render: (_, row) => `${row.bucket}/${row.object_key}` },
+    { title: '大小', dataIndex: 'size_bytes', key: 'size_bytes', width: 90, render: formatBytes },
+    { title: '完整性', dataIndex: 'integrity_status', key: 'integrity_status', width: 150, render: (value: string) => <StatusTag value={value === 'verified_metadata' ? 'SHA256已验证元数据' : '缺少SHA256'} /> },
+    { title: 'SHA256', dataIndex: 'sha256', key: 'sha256', width: 180, ellipsis: true, render: emptyDash },
+    { title: '对象水位', dataIndex: 'last_modified', key: 'last_modified', width: 170, render: formatTime },
+  ];
+  return (
+    <div className="taf-asset-detail-dense-grid" data-testid="asset-cross-store-snapshot">
+      <WorkPanel title="ClickHouse 流量观测">
+        {missingSections.includes('clickhouse_observations') || !observations ? (
+          <Alert showIcon type="warning" message="流量观测分区缺失" description="接口已明确标记 partial；页面不会用资产元数据或零值冒充ClickHouse结果。" />
+        ) : (
+          <Descriptions size="small" column={1} bordered items={[
+            { key: 'identity', label: '解析身份', children: `${observations.resolved_identity.kind}:${observations.resolved_identity.value} @ rev ${observations.resolved_identity.asset_revision}` },
+            { key: 'window', label: '查询窗口', children: `${formatTime(observations.window_start)} — ${formatTime(observations.window_end)}` },
+            { key: 'sessions', label: '会话数', children: observations.session_count.toLocaleString() },
+            { key: 'traffic', label: '流量 / 报文', children: `${formatBytes(observations.bytes_total)} / ${observations.packets_total.toLocaleString()}` },
+            { key: 'peers', label: '通信对端', children: observations.distinct_peers.toLocaleString() },
+            { key: 'protocols', label: '协议号', children: observations.protocols.join('、') || '窗口内无会话' },
+            { key: 'watermark', label: '最后观测', children: formatTime(observations.last_observed_at) },
+            { key: 'source', label: '权威来源', children: observations.source },
+          ]} />
+        )}
+      </WorkPanel>
+      <WorkPanel title={`告警上下文（${alertContext?.alerts.length ?? 0}）`} className="taf-asset-detail-span-2">
+        {missingSections.includes('alert_context') || !alertContext ? (
+          <Alert showIcon type="warning" message="告警上下文分区缺失" description="告警读取失败或未启用时保持missing，不根据开放服务或风险标签推导告警。" />
+        ) : (
+          <>
+            {alertContext.truncated ? <Alert showIcon type="warning" message="告警结果已按服务端预算截断" /> : null}
+            <Table<AssetAlertSummary>
+              size="small"
+              rowKey="alert_id"
+              columns={alertColumns}
+              dataSource={alertContext.alerts}
+              pagination={false}
+              scroll={{ x: 920 }}
+              locale={{ emptyText: '该时间窗口内没有关联告警' }}
+            />
+          </>
+        )}
+      </WorkPanel>
+      <WorkPanel title={`NebulaGraph资产投影（${graphProjection?.relations.length ?? 0}条关系）`} className="taf-asset-detail-span-3">
+        {missingSections.includes('nebulagraph_projection') && !graphProjection ? (
+          <Alert showIcon type="warning" message="图投影分区缺失" description="服务端未执行整租户扫描；无当前资产投影时保持partial。" />
+        ) : graphProjection ? (
+          <Space direction="vertical" size="small" style={{ width: '100%' }}>
+            {graphProjection.stale || graphProjection.truncated ? (
+              <Alert
+                showIcon
+                type="warning"
+                message={graphProjection.stale ? 'NebulaGraph投影revision落后或超前于PG快照' : 'NebulaGraph关系已按服务端预算截断'}
+                description={`PG revision=${graphProjection.postgres_revision}；Nebula revision=${graphProjection.projected_revision}；该分区仍保持partial。`}
+              />
+            ) : null}
+            <Descriptions size="small" column={3} bordered items={[
+              { key: 'asset', label: '稳定资产ID', children: graphProjection.asset_id },
+              { key: 'revision', label: '投影 / PG revision', children: `${graphProjection.projected_revision} / ${graphProjection.postgres_revision}` },
+              { key: 'watermark', label: '投影水位', children: formatTime(graphProjection.updated_at) },
+              { key: 'label', label: '图实体', children: graphProjection.label || '-' },
+              { key: 'risk', label: '风险', children: <StatusTag value={graphProjection.risk_level || 'unknown'} /> },
+              { key: 'source', label: '来源', children: graphProjection.source },
+            ]} />
+            <Table<AssetGraphProjectionRelation>
+              size="small"
+              rowKey="relation_id"
+              columns={relationColumns}
+              dataSource={graphProjection.relations}
+              pagination={false}
+              scroll={{ x: 980 }}
+              locale={{ emptyText: '该资产当前没有NebulaGraph邻接关系' }}
+            />
+          </Space>
+        ) : null}
+      </WorkPanel>
+      <WorkPanel title={`MinIO证据对象（${evidenceObjects?.objects.length ?? 0}）`} className="taf-asset-detail-span-3">
+        {missingSections.includes('evidence_objects') && !evidenceObjects ? (
+          <Alert showIcon type="warning" message="证据对象分区缺失" description="未获得ClickHouse证据引用与MinIO对象元数据的可对账结果。" />
+        ) : evidenceObjects ? (
+          <Space direction="vertical" size="small" style={{ width: '100%' }}>
+            {evidenceObjects.partial ? (
+              <Alert
+                showIcon
+                type="warning"
+                message="证据对象清单为partial"
+                description={`缺失或未验证证据：${evidenceObjects.missing_evidence_ids.join('、') || '结果被截断'}。没有SHA256的对象不会被标记为完整。`}
+              />
+            ) : null}
+            <Table<AssetEvidenceObjectManifest>
+              size="small"
+              rowKey="evidence_id"
+              columns={evidenceColumns}
+              dataSource={evidenceObjects.objects}
+              pagination={false}
+              scroll={{ x: 1100 }}
+              locale={{ emptyText: '当前告警上下文没有对象化证据引用' }}
+            />
+          </Space>
+        ) : null}
+      </WorkPanel>
+    </div>
+  );
+}
+
+function SnapshotContractStatus({
+  snapshotId,
+  traceId,
+  asOf,
+  partial,
+  missingSections,
+  sourceWatermarks,
+  topology,
+}: {
+  snapshotId: string;
+  traceId: string;
+  asOf: string;
+  partial: boolean;
+  missingSections: string[];
+  sourceWatermarks: Record<string, string>;
+  topology?: AssetTopologyGraph;
+}) {
+  const watermarkSummary = Object.entries(sourceWatermarks)
+    .filter(([, value]) => value)
+    .map(([key, value]) => `${key}=${value}`)
+    .join('；');
+  return (
+    <Alert
+      showIcon
+      type={partial ? 'warning' : 'success'}
+      message={partial ? '统一资产快照为 partial，缺失数据未按零值展示' : '统一资产快照完整'}
+      description={(
+        <Space direction="vertical" size={2}>
+          <span>快照 {snapshotId} · trace {traceId || '-'} · 截止 {formatTime(asOf)}</span>
+          <span>缺失分区：{missingSections.length ? missingSections.join('、') : '无'}</span>
+          <span>PG 拓扑：{topology?.nodes.length ?? 0} 节点 / {topology?.edges.length ?? 0} 边；来源：{topology?.source || '-'}</span>
+          <span>水位：{watermarkSummary || '无可用水位'}</span>
+        </Space>
+      )}
+    />
   );
 }
 

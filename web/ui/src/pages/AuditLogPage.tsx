@@ -16,12 +16,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Alert, Button, Checkbox, DatePicker, Drawer, Input, Modal, Select, Space, Table, Tag, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { Dayjs } from 'dayjs';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { MetricTile } from '@/components/MetricTile';
 import { DataQualityKpiSparklineChart } from '@/components/charts';
 import { StatusTag } from '@/components/StatusTag';
 import { WorkPanel } from '@/components/WorkPanel';
+import { auditDetailTabSlug, mergeRouteSearchParams, resolveAuditDetailTab } from '@/routes/pageRouteState';
 import type { NavRoute } from '@/routes/routeManifest';
 import { getAuthToken } from '@/services/authStorage';
 import {
@@ -49,12 +50,13 @@ type AuditAction = {
 };
 
 export function AuditLogPage({ route }: { route: NavRoute }) {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const sourceObjectId = searchParams.get('object_id') ?? '';
   const sourceObjectType = searchParams.get('object_type') ?? '';
+  const requestedLogID = searchParams.get('log_id') ?? '';
+  const requestedDetailTab = resolveAuditDetailTab(searchParams.get('detail'));
   const queryClient = useQueryClient();
   const detailPanelRef = useRef<HTMLDivElement>(null);
-  const [selectedKey, setSelectedKey] = useState<string>();
   const [userFilter, setUserFilter] = useState('全部用户/角色');
   const [tenantFilter, setTenantFilter] = useState('全部租户');
   const [objectFilter, setObjectFilter] = useState(() => auditObjectTypeLabel(sourceObjectType));
@@ -63,7 +65,6 @@ export function AuditLogPage({ route }: { route: NavRoute }) {
   const [requestQuery, setRequestQuery] = useState('');
   const [traceQuery, setTraceQuery] = useState('');
   const [timeRange, setTimeRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
-  const [detailTab, setDetailTab] = useState('字段变更对比');
   const [exportFormat, setExportFormat] = useState('PDF');
   const [exportScope, setExportScope] = useState<'selected' | 'query'>('selected');
   const [maskSensitive, setMaskSensitive] = useState(true);
@@ -75,6 +76,17 @@ export function AuditLogPage({ route }: { route: NavRoute }) {
   const permissions = readAuditPermissions(getAuthToken());
   const canWrite = hasAuditScope(permissions, 'audit:write');
   const canExport = hasAuditScope(permissions, 'audit:export');
+  const detailTab = requestedDetailTab === '复核操作' && !canWrite ? '字段变更对比' : requestedDetailTab;
+  useEffect(() => {
+    setObjectFilter(auditObjectTypeLabel(sourceObjectType));
+  }, [sourceObjectType]);
+  useEffect(() => {
+    if (requestedDetailTab !== '复核操作' || canWrite) return;
+    setSearchParams(
+      (current) => mergeRouteSearchParams(current, { detail: auditDetailTabSlug('字段变更对比') }),
+      { replace: true },
+    );
+  }, [canWrite, requestedDetailTab, setSearchParams]);
   const pageSize = 10;
   const businessFilters = useMemo<AuditLogFilters>(() => ({
     ...(userFilter !== '全部用户/角色' ? { user_id: userFilter } : {}),
@@ -104,7 +116,7 @@ export function AuditLogPage({ route }: { route: NavRoute }) {
   const userOptions = useMemo(() => [{ value: '全部用户/角色', label: '全部用户/角色' }, ...uniqueOptions(records.map((record) => record.user_id).filter(Boolean))], [records]);
   const tenantOptions = useMemo(() => [{ value: '全部租户', label: '全部租户' }, ...uniqueOptions(records.map((record) => record.tenant_id).filter(Boolean))], [records]);
   const actionOptions = useMemo(() => [{ value: '全部', label: '全部' }, ...uniqueOptions(records.map((record) => record.action).filter(Boolean), auditActionLabel)], [records]);
-  const selected = useMemo(() => rows.find((row) => rowKey(row) === selectedKey) ?? rows[0], [rows, selectedKey]);
+  const selected = useMemo(() => rows.find((row) => rowKey(row) === requestedLogID) ?? rows[0], [requestedLogID, rows]);
   const selectedRecord = useMemo(() => records.find((record) => record.log_id === String(selected?.记录ID ?? '')) ?? records[0], [records, selected]);
   const detailLogID = detailTab === '操作详情' ? selectedRecord?.log_id : undefined;
   const detailQuery = useQuery({
@@ -118,7 +130,7 @@ export function AuditLogPage({ route }: { route: NavRoute }) {
   );
   const exportOverLimit = exportScope === 'query' && (auditData?.total ?? 0) > 10_000;
   const canActOnRecord = Boolean(selectedRecord) && !isFetching;
-  const metrics = route.page.kpis.map((label) => data?.metrics.find((item) => item.label === label) ?? fallbackMetric(label));
+  const metrics = route.page.kpis.map((label) => data?.metrics.find((item) => item.label === label) ?? unavailableMetric(label));
   const columns: ColumnsType<SnapshotRow> = route.page.tableColumns.map((column) => ({
     title: column,
     dataIndex: column,
@@ -176,17 +188,24 @@ export function AuditLogPage({ route }: { route: NavRoute }) {
     setActionResult(undefined);
     const next = createAuditAction(title, target);
     if (next.kind === 'detail' || next.kind === 'review' || next.kind === 'export' || next.kind === 'evidence') next.auditLogID = target || selectedRecord?.log_id;
-    if (next.kind === 'detail' && next.auditLogID) setSelectedKey(next.auditLogID);
+    if (next.kind === 'detail' && next.auditLogID) {
+      setSearchParams((current) => mergeRouteSearchParams(current, {
+        log_id: next.auditLogID,
+        detail: auditDetailTabSlug('操作详情'),
+      }));
+    }
     if (next.kind === 'export' || next.kind === 'evidence') setExportConfirmed(false);
     setAction(next);
   }
   function revealDetailTab(tab: string, target = String(selectedRecord?.log_id ?? '')) {
-    if (target && target !== selectedKey) {
-      setSelectedKey(target);
+    if (target && target !== requestedLogID) {
       setActionResult(undefined);
       actionMutation.reset();
     }
-    setDetailTab(tab);
+    setSearchParams((current) => mergeRouteSearchParams(current, {
+      log_id: target || requestedLogID || undefined,
+      detail: auditDetailTabSlug(tab),
+    }));
     setActionResult(undefined);
     if (tab !== '复核操作') setAction(undefined);
     window.requestAnimationFrame(() => detailPanelRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }));
@@ -906,11 +925,11 @@ const createAuditAction = (title: string, target: string): AuditAction => {
   throw new Error(`不支持的审计操作：${title}`);
 };
 
-const fallbackMetric = (label: string): PageSnapshot['metrics'][number] => ({
+const unavailableMetric = (label: string): PageSnapshot['metrics'][number] => ({
   label,
-  value: label.includes('率') ? '0.00%' : '0',
-  delta: 'API',
-  status: 'info',
+  value: '-',
+  delta: '暂不可用',
+  status: 'warn',
 });
 
 const resultClass = (value: string) => {

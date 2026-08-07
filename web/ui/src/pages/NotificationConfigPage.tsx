@@ -18,7 +18,7 @@ import {
   WarningOutlined,
 } from '@ant-design/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Alert, Button, Drawer, Input, Select, Space, Switch, Table, Tooltip } from 'antd';
+import { Alert, Button, Drawer, Input, Select, Space, Switch, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import axios from 'axios';
 import type { ChangeEvent, ReactNode } from 'react';
@@ -113,7 +113,7 @@ export function NotificationConfigPage({ route }: { route: NavRoute }) {
   useEffect(() => {
     setRuleConditions(selectedRule?.conditions ?? {});
     setRuleChannels(selectedRule?.channels ?? []);
-  }, [selectedRule?.rule_id, selectedRule?.updated_at]);
+  }, [selectedRule?.channels, selectedRule?.conditions, selectedRule?.rule_id, selectedRule?.updated_at]);
 
   const mutation = useMutation({
     mutationFn: async (task: MutationTask) => task.run(),
@@ -143,7 +143,7 @@ export function NotificationConfigPage({ route }: { route: NavRoute }) {
   const ruleColumns = buildRuleColumns({
     selectedRuleID: selectedRule?.rule_id,
     onSelect: (rule) => setSelectedRuleID(rule.rule_id),
-    onToggle: (rule) => run({ label: `${rule.enabled ? '停用' : '启用'}订阅规则`, run: () => patchNotificationRule(rule.rule_id, { enabled: !rule.enabled }) }),
+    onToggle: (rule) => run({ label: `${rule.enabled ? '停用' : '启用'}订阅规则`, run: () => patchNotificationRule(rule.rule_id, { enabled: !rule.enabled }, rule.revision, `${rule.enabled ? '停用' : '启用'}订阅规则`) }),
     onDetail: (rule) => setDrawer({ mode: 'rule-detail', title: '订阅规则详情', values: { rule } }),
   });
 
@@ -154,7 +154,7 @@ export function NotificationConfigPage({ route }: { route: NavRoute }) {
     }
     run({
       label: '保存订阅策略',
-      run: () => patchNotificationRule(selectedRule.rule_id, { conditions: ruleConditions, channels: ruleChannels }),
+      run: () => patchNotificationRule(selectedRule.rule_id, { conditions: ruleConditions, channels: ruleChannels }, selectedRule.revision, '保存订阅策略'),
     });
   };
 
@@ -162,7 +162,7 @@ export function NotificationConfigPage({ route }: { route: NavRoute }) {
     if (!workbench) return;
     run({
       label: `${enabled ? '启用' : '停用'}${channelLabels[channel]}`,
-      run: () => updateNotificationSettings({ channels: { ...workbench.settings.channels, [channel]: enabled } }),
+      run: () => updateNotificationSettings({ channels: { ...workbench.settings.channels, [channel]: enabled } }, workbench.settings.revision),
     });
   };
 
@@ -173,7 +173,7 @@ export function NotificationConfigPage({ route }: { route: NavRoute }) {
     if (drawer.mode === 'channel-create') {
       const channel = value('channel') as NotificationChannelKey;
       if (!channel || !workbench) return setActionResult('请选择需要启用的通知渠道。');
-      run({ label: `启用${channelLabels[channel]}`, run: () => updateNotificationSettings({ channels: { ...workbench.settings.channels, [channel]: true } }) });
+      run({ label: `启用${channelLabels[channel]}`, run: () => updateNotificationSettings({ channels: { ...workbench.settings.channels, [channel]: true } }, workbench.settings.revision) });
       return;
     }
     if (drawer.mode === 'channel-test') {
@@ -193,7 +193,7 @@ export function NotificationConfigPage({ route }: { route: NavRoute }) {
       const policy = drawer.values.policy as NotificationEscalationPolicy;
       const stages = parseEscalationStages(value('stages_json'));
       if (!stages) return setActionResult('升级阶段 JSON 必须是包含 after_minutes 与 target_role 的数组。');
-      run({ label: '更新升级策略', run: () => patchNotificationEscalationPolicy(policy.policy_id, { name: value('name') || policy.name, stages, enabled }) });
+      run({ label: '更新升级策略', run: () => patchNotificationEscalationPolicy(policy.policy_id, { name: value('name') || policy.name, stages, enabled }, policy.revision, '更新升级策略') });
       return;
     }
     if (drawer.mode === 'template-create') {
@@ -203,7 +203,7 @@ export function NotificationConfigPage({ route }: { route: NavRoute }) {
     }
     if (drawer.mode === 'template-edit') {
       const template = drawer.values.template as NotificationTemplate;
-      run({ label: '更新通知模板', run: () => patchNotificationTemplate(template.template_id, { template_type: value('template_type') || template.template_type, name: value('name') || template.name, subject: value('subject'), body: value('body'), enabled }) });
+      run({ label: '更新通知模板', run: () => patchNotificationTemplate(template.template_id, { template_type: value('template_type') || template.template_type, name: value('name') || template.name, subject: value('subject'), body: value('body'), enabled }, template.version, '更新通知模板') });
       return;
     }
     if (drawer.mode === 'silence-create') {
@@ -218,7 +218,7 @@ export function NotificationConfigPage({ route }: { route: NavRoute }) {
       const startsAt = value('starts_at');
       const endsAt = value('ends_at');
       if (!value('name') || !startsAt || !endsAt) return setActionResult('静默窗口名称、开始和结束时间不能为空。');
-      run({ label: '更新静默窗口', run: () => patchNotificationSilenceRule(silence.rule_id, { name: value('name'), scope: value('scope'), starts_at: new Date(startsAt).toISOString(), ends_at: new Date(endsAt).toISOString(), affected_targets: value('affected_targets').split('/').map((item) => item.trim()).filter(Boolean), policy: value('policy'), reason: value('reason'), enabled }) });
+      run({ label: '更新静默窗口', run: () => patchNotificationSilenceRule(silence.rule_id, { name: value('name'), scope: value('scope'), starts_at: new Date(startsAt).toISOString(), ends_at: new Date(endsAt).toISOString(), affected_targets: value('affected_targets').split('/').map((item) => item.trim()).filter(Boolean), policy: value('policy'), reason: value('reason'), enabled }, silence.revision) });
     }
   };
 
@@ -270,7 +270,7 @@ export function NotificationConfigPage({ route }: { route: NavRoute }) {
             </WorkPanel>
 
             <WorkPanel title="D. 升级策略流程" className="taf-notifications-escalation-panel" extra={<WarningOutlined />}>
-              <EscalationFlow policy={workbench?.escalation_policies[0]} pending={mutation.isPending} onToggle={(policy, enabled) => run({ label: `${enabled ? '启用' : '停用'}升级策略`, run: () => patchNotificationEscalationPolicy(policy.policy_id, { enabled }) })} onEdit={(policy) => setDrawer({ mode: 'escalation-edit', title: '编辑升级策略', values: { policy, name: policy.name, stages_json: JSON.stringify(policy.stages, null, 2), enabled: policy.enabled } })} />
+              <EscalationFlow policy={workbench?.escalation_policies[0]} pending={mutation.isPending} onToggle={(policy, enabled) => run({ label: `${enabled ? '启用' : '停用'}升级策略`, run: () => patchNotificationEscalationPolicy(policy.policy_id, { enabled }, policy.revision, `${enabled ? '启用' : '停用'}升级策略`) })} onEdit={(policy) => setDrawer({ mode: 'escalation-edit', title: '编辑升级策略', values: { policy, name: policy.name, stages_json: JSON.stringify(policy.stages, null, 2), enabled: policy.enabled } })} />
             </WorkPanel>
 
             <WorkPanel title="E. 模板管理" className="taf-notifications-templates-panel" extra={<Space size={6}><Button size="small" type="primary" onClick={() => setDrawer({ mode: 'template-create', title: '新建通知模板', values: { template_type: '告警模板', enabled: true } })}>新建模板</Button><Button size="small" aria-label="刷新通知配置" icon={<ReloadOutlined />} loading={workbenchQuery.isFetching} onClick={() => void workbenchQuery.refetch()} /></Space>}>
@@ -282,7 +282,7 @@ export function NotificationConfigPage({ route }: { route: NavRoute }) {
             </WorkPanel>
 
             <WorkPanel title="G. 抑制与静默" className="taf-notifications-silence-panel" extra={<Space size={6}><Button size="small" type="primary" onClick={() => setDrawer(newSilenceDrawer())}>新建维护窗口</Button><Button size="small" onClick={() => calendarInputRef.current?.click()}>导入日历</Button><input ref={calendarInputRef} hidden type="file" accept=".ics,text/calendar" onChange={(event) => void onCalendarFile(event)} /></Space>}>
-              <SilenceWindows silences={workbench?.silence_rules ?? []} pending={mutation.isPending} onEdit={(silence) => setDrawer(silenceDrawer(silence))} onToggle={(silence) => run({ label: `${silence.enabled ? '停用' : '启用'}静默窗口`, run: () => patchNotificationSilenceRule(silence.rule_id, { enabled: !silence.enabled }) })} />
+              <SilenceWindows silences={workbench?.silence_rules ?? []} pending={mutation.isPending} onEdit={(silence) => setDrawer(silenceDrawer(silence))} onToggle={(silence) => run({ label: `${silence.enabled ? '停用' : '启用'}静默窗口`, run: () => patchNotificationSilenceRule(silence.rule_id, { enabled: !silence.enabled }, silence.revision) })} />
             </WorkPanel>
           </div>
         </main>

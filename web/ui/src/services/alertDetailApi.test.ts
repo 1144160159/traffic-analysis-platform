@@ -48,6 +48,9 @@ describe('alertDetailApi', () => {
             size: '1.2 MB',
             timestamp: '2026-06-20T03:43:05Z',
             status: 'generated',
+            session_evidence: {
+              tuple_lines: ['172.16.5.10:443 ->', '185.22.14.9:8443 / TCP'],
+            },
           },
         ],
       },
@@ -70,6 +73,79 @@ describe('alertDetailApi', () => {
     expect(snapshot.evidenceRows[1].sessionEvidence?.sessionId).toBe('session-20260620-000123.json');
     expect(snapshot.evidenceRows[1].sessionEvidence?.tupleLines).toContain('172.16.5.10:443 ->');
     expect(snapshot.evidence.map((item) => item.label)).toContain('Evidence API');
+  });
+
+  it('renders missing session tuple data as unavailable instead of a fixed business address', () => {
+    const snapshot = normalizeAlertDetailSnapshot(
+      'AL-2',
+      { data: { alert_id: 'AL-2', severity: 'high', score: 87 } },
+      { evidences: [{ type: 'Session', evidence_id: 'session-missing-tuple', status: 'generated' }] },
+      {},
+    );
+
+    expect(snapshot.assets[0].ip).toBe('暂不可用');
+    expect(snapshot.assets[1].ip).toBe('暂不可用');
+    expect(snapshot.evidenceRows[0].sessionEvidence?.tupleLines).toEqual(['会话五元组暂不可用']);
+  });
+
+  it('keeps an explicit zero score and renders a missing score as unavailable', () => {
+    const zero = normalizeAlertDetailSnapshot('AL-ZERO', { data: { alert_id: 'AL-ZERO', score: 0 } }, {}, {});
+    const missing = normalizeAlertDetailSnapshot('AL-MISSING', { data: { alert_id: 'AL-MISSING' } }, {}, {});
+
+    expect(zero.score).toBe(0);
+    expect(zero.metrics.find((item) => item.label === '风险评分')?.value).toBe('0/100');
+    expect(missing.score).toBeUndefined();
+    expect(missing.metrics.find((item) => item.label === '风险评分')?.value).toBe('暂不可用');
+  });
+
+  it('does not invent missing alert detail facts, timelines, actions or evidence metadata', () => {
+    const snapshot = normalizeAlertDetailSnapshot(
+      'AL-MINIMAL',
+      { data: { alert_id: 'AL-MINIMAL', confidence: 0 } },
+      { evidences: [{ type: 'PCAP' }] },
+      {},
+    );
+
+    expect(snapshot.confidence).toBe('0.00');
+    expect(snapshot.title).toBe('暂不可用');
+    expect(snapshot.severity).toBe('暂不可用');
+    expect(snapshot.assignee).toBe('未分配');
+    expect(snapshot.ruleModel).toBe('暂不可用');
+    expect(snapshot.firstSeen).toBe('暂不可用');
+    expect(snapshot.tags).toEqual([]);
+    expect(snapshot.stageTrail).toEqual([]);
+    expect(snapshot.timeline).toEqual([]);
+    expect(snapshot.responseActions).toEqual([]);
+    expect(snapshot.evidenceRows[0].文件记录).toBe('暂不可用');
+    expect(snapshot.evidenceRows[0].状态).toBe('暂不可用');
+    expect(snapshot.evidenceRows[0].pcapEvidence).toMatchObject({
+      contentSummary: '暂不可用',
+      size: '暂不可用',
+      generatedAt: '暂不可用',
+      statusLines: [],
+      objectPath: '',
+      sha256: '',
+    });
+  });
+
+  it('renders timeline and response actions only from authoritative payload fields', () => {
+    const snapshot = normalizeAlertDetailSnapshot(
+      'AL-AUTHORITY',
+      {
+        data: {
+          alert_id: 'AL-AUTHORITY',
+          timeline: [{ timestamp: '2026-08-04T01:02:03Z', title: '规则命中', description: '服务端事件', severity: 'high' }],
+          response_actions: [{ name: '隔离主机', risk: '高危', status: 'high' }],
+        },
+      },
+      {},
+      {},
+    );
+
+    expect(snapshot.timeline).toEqual([
+      { time: '2026-08-04 09:02:03', title: '规则命中', description: '服务端事件', status: 'risk' },
+    ]);
+    expect(snapshot.responseActions).toEqual([{ label: '隔离主机', risk: '高危', status: 'risk' }]);
   });
 
   it('keeps secondary API failures visible without failing the primary alert detail', () => {
