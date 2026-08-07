@@ -31,8 +31,8 @@ AUTHORITY_PATHS = {
 }
 PILOT_FEATURES = {
     "asset_vertical": ["F-ASSET-001", "F-ASSET-002", "F-ASSET-003", "F-ASSET-004", "F-ASSET-005", "F-ASSET-006"],
-    "topic_snapshot_and_actions": ["F-TOPIC-001", "F-TOPIC-002"],
-    "alert_query_and_actions": ["F-ALERT-001", "F-ALERT-002"],
+    "topic_snapshot_and_actions": ["F-TOPIC-001", "F-TOPIC-002", "F-TOPIC-003", "F-TOPIC-004"],
+    "alert_query_and_actions": ["F-ALERT-001", "F-ALERT-002", "F-ALERT-003", "F-ALERT-004", "F-ALERT-005", "F-ALERT-006"],
 }
 
 
@@ -205,12 +205,12 @@ def build_registry() -> dict[str, Any]:
             "repository": [
                 "all 54 feature IDs resolve to exactly one accountable work package",
                 "all existing formal contracts hash-bind UI API domain data permission performance acceptance and rollout fields",
-                "all P0 feature contracts are present and the asset topic and alert pilots are traceable",
-                "missing standard-scope and backlog contracts remain explicit and cannot be hidden",
+                "all 38 standard-scope feature contracts are present and the asset topic and alert pilots are traceable",
+                "missing backlog contracts remain explicit and cannot be hidden",
             ],
             "remaining": [
-                "author the missing standard-scope contracts before W1 contract freeze",
                 "author backlog contracts without deleting routes actions operations scopes or audit events",
+                "implement the draft standard-scope API migration projection and object boundaries before claiming runtime adoption",
                 "bind generated TypeScript and compatibility telemetry to every formal contract",
                 "capture old-client usage and live contract-version adoption by candidate",
                 "complete compatibility diff G2 through G7 and external G8 gates",

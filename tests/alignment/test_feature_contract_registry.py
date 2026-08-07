@@ -31,14 +31,15 @@ class FeatureContractRegistryTests(unittest.TestCase):
             ):
                 return verifier.verify()
 
-    def test_checked_in_registry_is_current_and_explicitly_partial(self) -> None:
+    def test_checked_in_registry_has_complete_standard_scope_and_explicit_backlog(self) -> None:
         result = verifier.verify()
         self.assertEqual("PASS", result["status"], result["errors"])
-        self.assertEqual("PARTIAL", result["contract_coverage"])
+        self.assertEqual("STANDARD_SCOPE_COMPLETE_BACKLOG_PARTIAL", result["contract_coverage"])
         self.assertEqual(54, result["coverage"]["canonical_feature_ids"])
-        self.assertEqual(27, result["coverage"]["formal_contracts"])
+        self.assertEqual(38, result["coverage"]["formal_contracts"])
         self.assertEqual(38, result["coverage"]["standard_scope_features"])
-        self.assertEqual(11, len(result["coverage"]["missing_standard_scope_contracts"]))
+        self.assertEqual([], result["coverage"]["missing_standard_scope_contracts"])
+        self.assertEqual(16, len(result["coverage"]["missing_backlog_contracts"]))
 
     def test_canonical_feature_cannot_be_hidden(self) -> None:
         registry = copy.deepcopy(build_registry())
@@ -71,6 +72,29 @@ class FeatureContractRegistryTests(unittest.TestCase):
         result = self._verify_mutation(registry)
         self.assertEqual("FAIL", result["status"])
         self.assertTrue(any("all P0" in error for error in result["errors"]))
+
+    def test_standard_scope_p1_contract_cannot_be_removed(self) -> None:
+        registry = copy.deepcopy(build_registry())
+        standard_p1 = next(
+            item
+            for item in registry["features"]
+            if item["priority"] == "P1" and item["standard_24w_scope"]
+        )
+        standard_p1["formal_contract_present"] = False
+        standard_p1["formal_contract"] = None
+        standard_p1["blocking_gaps"] = ["versioned_feature_contract_missing"]
+        result = self._verify_mutation(registry)
+        self.assertEqual("FAIL", result["status"])
+        self.assertTrue(any("all 38 standard-scope" in error for error in result["errors"]))
+
+    def test_backlog_gap_count_cannot_be_hidden(self) -> None:
+        registry = copy.deepcopy(build_registry())
+        registry["coverage"]["missing_backlog_contracts"] = registry["coverage"][
+            "missing_backlog_contracts"
+        ][1:]
+        result = self._verify_mutation(registry)
+        self.assertEqual("FAIL", result["status"])
+        self.assertTrue(any("backlog contract gaps" in error for error in result["errors"]))
 
     def test_formal_contract_validation_error_fails_closed(self) -> None:
         registry = copy.deepcopy(build_registry())

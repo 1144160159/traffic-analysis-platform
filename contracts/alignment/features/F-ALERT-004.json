@@ -1,0 +1,66 @@
+{
+  "feature_id": "F-ALERT-004",
+  "contract_version": 1,
+  "status": "draft",
+  "compatibility": {
+    "preserved_routes": ["/alerts"],
+    "preserved_actions": [],
+    "preserved_api_operations": [],
+    "preserved_query_states": ["status", "source_ip", "rule_version", "model_version", "attack_phase", "asset_ip", "destination_ip", "min_score", "start_time", "end_time"],
+    "strategy": "expand-migrate-contract"
+  },
+  "ui": {
+    "query_id": "alert.batch-assignment.job",
+    "controls": [],
+    "states": ["loading", "accepted", "running", "success", "partial", "failed", "cancelled"]
+  },
+  "api": {
+    "operation_id": "createAlertBatchAssignment",
+    "method": "POST",
+    "path": "/v1/alerts/batches/assign",
+    "response_envelope": "data-meta-error",
+    "async": true,
+    "idempotency_key": "Idempotency-Key",
+    "revision_field": "selection_snapshot_id"
+  },
+  "domain": {
+    "kind": "command",
+    "invariants": [
+      "one server-side selection token freezes tenant, filters, sort and snapshot before assignment",
+      "batch and item results distinguish accepted, applied, conflicted, forbidden and failed without hiding partial success",
+      "a retried idempotency key never dispatches the same alert revision twice"
+    ],
+    "states": ["accepted", "running", "completed", "partial", "failed", "cancelled"],
+    "compensation": "restore only items whose resulting revision still equals the batch revision and append per-item audit history"
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": ["postgresql", "opensearch"],
+    "migration": "additive alert_assignment_batches, alert_assignment_batch_items, history, outbox and idempotency receipt migration required",
+    "event_types": ["alert.batch-assignment.requested.v1", "alert.assignment.changed.v1"],
+    "source_watermarks": ["postgresql.alert_assignment_batches.revision", "postgresql.alert_assignment_batch_items.revision", "opensearch.alerts.projection_version"]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["alert:write"],
+    "negative_tests": [
+      "selection token from another tenant is rejected without revealing count",
+      "expired or changed selection snapshot is rejected",
+      "unauthorized assignee or stale item revision produces an explicit item failure"
+    ]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["100-item explicit selection", "bounded filter selection", "partial revision conflicts and retry"],
+    "stop_conditions": ["batch size, lock time, outbox lag or per-item error budget is exceeded"]
+  },
+  "acceptance": {
+    "tests": ["G0 contract and generated client", "G1 selection/idempotency/partial semantics", "G2 real PostgreSQL batch worker", "G3 batch-item-outbox-audit reconciliation", "G4 concurrent batch and retry profile", "G5 Windows Chrome partial-result recovery"],
+    "evidence": ["one batch_id proves a frozen selection and a complete per-item result set with no duplicate dispatch after network retry"]
+  },
+  "rollout": {
+    "feature_flag": "ALERT_BATCH_ASSIGNMENT_V1_ENABLED",
+    "strategy": "canary",
+    "rollback_runbook": "doc/07_alignment/runbooks/F-ALERT-004-rollback.md"
+  }
+}

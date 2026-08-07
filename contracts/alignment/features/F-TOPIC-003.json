@@ -1,0 +1,68 @@
+{
+  "feature_id": "F-TOPIC-003",
+  "contract_version": 1,
+  "status": "draft",
+  "compatibility": {
+    "preserved_routes": ["/topics", "/topics/tunnel", "/topics/exfil", "/topics/apt"],
+    "preserved_actions": ["topic-report-export", "topic-evidence-package-export"],
+    "preserved_api_operations": ["POST /v1/topics/reports/export", "POST /v1/topics/evidence-packages/export"],
+    "strategy": "expand-migrate-contract"
+  },
+  "ui": {
+    "query_id": "topic.report.job",
+    "controls": [
+      {"control_id": "topic-report-export", "action_id": "topic-report-export"},
+      {"control_id": "topic-evidence-package-export", "action_id": "topic-evidence-package-export"}
+    ],
+    "states": ["loading", "accepted", "running", "success", "partial", "failed", "cancelled"]
+  },
+  "api": {
+    "operation_id": "createTopicReport",
+    "method": "POST",
+    "path": "/v1/topics/reports/export",
+    "response_envelope": "data-meta-error",
+    "async": true,
+    "idempotency_key": "Idempotency-Key",
+    "revision_field": "snapshot_id"
+  },
+  "domain": {
+    "kind": "command",
+    "invariants": [
+      "one deterministic report model produces all requested formats from a frozen topic snapshot",
+      "PostgreSQL stores job and object metadata only; report bytes and evidence packages are checksum-verified MinIO objects",
+      "missing report sections and partial source windows remain explicit in the report manifest"
+    ],
+    "states": ["accepted", "running", "completed", "partial", "failed", "cancelled"],
+    "compensation": "delete only the verified job-owned object and retain job, history and audit metadata"
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": ["postgresql", "minio"],
+    "migration": "replace topic_exports.content_base64 with additive object_key, version_id, size_bytes, sha256 and manifest_sha256 metadata before cutover",
+    "event_types": ["topic.report.requested.v1", "topic.report.completed.v1"],
+    "source_watermarks": ["postgresql.topic_exports.revision", "postgresql.topic_snapshot_manifests.snapshot_id", "minio.topic_reports.version_id"]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["topic:export"],
+    "negative_tests": [
+      "cross-tenant topic job and object cannot be enumerated",
+      "object hash mismatch or expired manifest blocks download",
+      "oversized export fails explicitly without storing base64 fallback"
+    ]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["topic PDF report", "evidence package", "partial snapshot report", "cancel and cleanup"],
+    "stop_conditions": ["PostgreSQL row growth, object size, queue lag or generation time exceeds budget"]
+  },
+  "acceptance": {
+    "tests": ["G0 report model and API", "G1 object metadata migration and idempotency", "G2 real PostgreSQL and MinIO", "G3 snapshot-job-object-audit reconciliation", "G4 large report and cancellation profile", "G5 Windows Chrome create-status-download"],
+    "evidence": ["PG contains no new report base64 while downloaded bytes match both object and manifest hashes for the same snapshot_id"]
+  },
+  "rollout": {
+    "feature_flag": "TOPIC_OBJECT_REPORTS_V1_ENABLED",
+    "strategy": "dual-write",
+    "rollback_runbook": "doc/07_alignment/runbooks/F-TOPIC-003-rollback.md"
+  }
+}

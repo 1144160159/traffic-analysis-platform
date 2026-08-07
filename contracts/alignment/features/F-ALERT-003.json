@@ -1,0 +1,76 @@
+{
+  "feature_id": "F-ALERT-003",
+  "contract_version": 1,
+  "status": "verifying",
+  "compatibility": {
+    "preserved_routes": ["/alerts", "/alerts/:alertId"],
+    "preserved_actions": ["alert-response-request", "alert-response-status", "alert-response-approval", "alert-response-cancel", "alert-response-compensate"],
+    "preserved_api_operations": [
+      "POST /v1/alerts/{id}/response-actions",
+      "GET /v1/alerts/{id}/response-actions/{job_id}",
+      "POST /v1/alerts/{id}/response-actions/{job_id}/approval",
+      "POST /v1/alerts/{id}/response-actions/{job_id}/cancel",
+      "POST /v1/alerts/{id}/response-actions/{job_id}/compensations"
+    ],
+    "strategy": "additive"
+  },
+  "ui": {
+    "query_id": "alert.response-action.job",
+    "controls": [
+      {"control_id": "alert-response-request", "action_id": "alert-response-request"},
+      {"control_id": "alert-response-status", "action_id": "alert-response-status"},
+      {"control_id": "alert-response-cancel", "action_id": "alert-response-cancel"},
+      {"control_id": "alert-response-compensate", "action_id": "alert-response-compensate"}
+    ],
+    "states": ["loading", "accepted", "running", "success", "partial", "failed", "cancelled", "compensating"]
+  },
+  "api": {
+    "operation_id": "createAlertResponseAction",
+    "method": "POST",
+    "path": "/v1/alerts/{id}/response-actions",
+    "response_envelope": "data-meta-error",
+    "async": true,
+    "idempotency_key": "Idempotency-Key",
+    "revision_field": "expected_revision"
+  },
+  "domain": {
+    "kind": "command",
+    "invariants": [
+      "HTTP 202 means durably accepted and never means the external response effect completed",
+      "job status survives page refresh and exposes approval, outbox, execution receipt, failure and compensation boundaries",
+      "terminal receipts are monotonic and stale or reordered callbacks cannot overwrite a newer revision"
+    ],
+    "states": ["accepted", "approval_required", "approved", "running", "completed", "failed", "cancelled", "compensation_blocked"],
+    "compensation": "execute only a catalogued inverse after a terminal receipt proves external_effect=true; otherwise remain explicitly blocked"
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": ["postgresql", "redis"],
+    "migration": "deployments/postgres/migrations/202607302300_alert_response_execution_projection.sql",
+    "event_types": ["alert.response.requested.v1", "alert.response.approved.v1", "alert.response.cancelled.v1", "alert.response.compensation.requested.v1"],
+    "source_watermarks": ["postgresql.alert_response_actions.revision", "postgresql.alert_response_outbox.outbox_id", "postgresql.alert_response_execution_receipts.kafka_offset"]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["alert:write"],
+    "negative_tests": [
+      "cross-tenant alert or job returns not found",
+      "requester cannot self-approve a protected response action",
+      "stale revision changes no job, audit or outbox state"
+    ]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["create and poll to terminal receipt", "refresh during approval", "worker retry and compensation"],
+    "stop_conditions": ["job heartbeat, outbox lag or terminal receipt latency exceeds the approved budget"]
+  },
+  "acceptance": {
+    "tests": ["G0 OpenAPI and generated client", "G1 transaction and state-machine boundaries", "G2 real PostgreSQL and executor", "G3 request-outbox-receipt-audit reconciliation", "G4 retry and worker-kill profile", "G5 Windows Chrome refresh-cancel-compensate"],
+    "evidence": ["one trace_id reconciles accepted job, revisions, outbox ACK, terminal receipt and audit without treating 202 as completion"]
+  },
+  "rollout": {
+    "feature_flag": "ALERT_RESPONSE_EXECUTION_V1_ENABLED",
+    "strategy": "canary",
+    "rollback_runbook": "doc/07_alignment/runbooks/F-ALERT-003-rollback.md"
+  }
+}

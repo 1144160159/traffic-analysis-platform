@@ -58,23 +58,11 @@
   },
   "coverage": {
     "canonical_feature_ids": 54,
-    "formal_contracts": 27,
-    "formal_contracts_valid": 27,
+    "formal_contracts": 38,
+    "formal_contracts_valid": 38,
     "standard_scope_features": 38,
-    "standard_scope_formal_contracts": 27,
-    "missing_standard_scope_contracts": [
-      "F-ALERT-003",
-      "F-ALERT-004",
-      "F-ALERT-005",
-      "F-ALERT-006",
-      "F-COMMON-001",
-      "F-EXPORT-001",
-      "F-GRAPH-002",
-      "F-GRAPH-003",
-      "F-GRAPH-004",
-      "F-TOPIC-003",
-      "F-TOPIC-004"
-    ],
+    "standard_scope_formal_contracts": 38,
+    "missing_standard_scope_contracts": [],
     "missing_backlog_contracts": [
       "F-ATTACKCHAIN-001",
       "F-BASELINE-001",
@@ -119,7 +107,9 @@
       "pilot_id": "topic_snapshot_and_actions",
       "feature_ids": [
         "F-TOPIC-001",
-        "F-TOPIC-002"
+        "F-TOPIC-002",
+        "F-TOPIC-003",
+        "F-TOPIC-004"
       ],
       "all_formal_contracts_present": true
     },
@@ -127,7 +117,11 @@
       "pilot_id": "alert_query_and_actions",
       "feature_ids": [
         "F-ALERT-001",
-        "F-ALERT-002"
+        "F-ALERT-002",
+        "F-ALERT-003",
+        "F-ALERT-004",
+        "F-ALERT-005",
+        "F-ALERT-006"
       ],
       "all_formal_contracts_present": true
     }
@@ -141,12 +135,26 @@
       "acceptance_case": "AC-WP-00-INVENTORY",
       "rollback_runbook_id": "RB-WP-00-INVENTORY",
       "standard_24w_scope": true,
-      "formal_contract_present": false,
-      "formal_contract": null,
-      "blocking_gaps": [
-        "versioned_feature_contract_missing",
-        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
-      ]
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-COMMON-001.json",
+        "sha256": "b0215a85a641de260849e87b9f5171bfe28054cbf001f8c3ebbcfae3dfa07c8f",
+        "contract_version": 1,
+        "status": "draft",
+        "operation_id": "getFeatureContractAdoption",
+        "api_method": "GET",
+        "api_path": "/v1/meta/feature-contracts/adoption",
+        "required_scopes": [
+          "admin:read"
+        ],
+        "preserved_routes": [
+          "/dashboard"
+        ],
+        "preserved_actions": [],
+        "preserved_api_operations": [],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
     },
     {
       "feature_id": "F-COMMON-002",
@@ -380,12 +388,35 @@
       "acceptance_case": "AC-WP-09-TOPIC",
       "rollback_runbook_id": "RB-WP-09-TOPIC",
       "standard_24w_scope": true,
-      "formal_contract_present": false,
-      "formal_contract": null,
-      "blocking_gaps": [
-        "versioned_feature_contract_missing",
-        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
-      ]
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-TOPIC-003.json",
+        "sha256": "5eee05d96b7779c7c42a89e63fd9a55ee9cdb788dda827b7004ef7eaa11c4213",
+        "contract_version": 1,
+        "status": "draft",
+        "operation_id": "createTopicReport",
+        "api_method": "POST",
+        "api_path": "/v1/topics/reports/export",
+        "required_scopes": [
+          "topic:export"
+        ],
+        "preserved_routes": [
+          "/topics",
+          "/topics/tunnel",
+          "/topics/exfil",
+          "/topics/apt"
+        ],
+        "preserved_actions": [
+          "topic-report-export",
+          "topic-evidence-package-export"
+        ],
+        "preserved_api_operations": [
+          "POST /v1/topics/reports/export",
+          "POST /v1/topics/evidence-packages/export"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
     },
     {
       "feature_id": "F-TOPIC-004",
@@ -395,12 +426,31 @@
       "acceptance_case": "AC-WP-09-TOPIC",
       "rollback_runbook_id": "RB-WP-09-TOPIC",
       "standard_24w_scope": true,
-      "formal_contract_present": false,
-      "formal_contract": null,
-      "blocking_gaps": [
-        "versioned_feature_contract_missing",
-        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
-      ]
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-TOPIC-004.json",
+        "sha256": "5fec5ae4d9955324dc2d69a0bc38c54d6f6ee7eabee7c2bc5cc8630db690357b",
+        "contract_version": 1,
+        "status": "draft",
+        "operation_id": "getTopicSnapshotSources",
+        "api_method": "GET",
+        "api_path": "/v1/topics/{topic}/snapshot",
+        "required_scopes": [
+          "topic:read"
+        ],
+        "preserved_routes": [
+          "/topics",
+          "/topics/tunnel",
+          "/topics/exfil",
+          "/topics/apt"
+        ],
+        "preserved_actions": [],
+        "preserved_api_operations": [
+          "GET /v1/topics/{topic}/snapshot"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
     },
     {
       "feature_id": "F-ALERT-001",
@@ -489,12 +539,39 @@
       "acceptance_case": "AC-WP-07-ALERT",
       "rollback_runbook_id": "RB-WP-07-ALERT",
       "standard_24w_scope": true,
-      "formal_contract_present": false,
-      "formal_contract": null,
-      "blocking_gaps": [
-        "versioned_feature_contract_missing",
-        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
-      ]
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-ALERT-003.json",
+        "sha256": "fa7cdd46258ed3d441420fe617bfcc824563eb16903bb15f107b8aceb2d5c8f0",
+        "contract_version": 1,
+        "status": "verifying",
+        "operation_id": "createAlertResponseAction",
+        "api_method": "POST",
+        "api_path": "/v1/alerts/{id}/response-actions",
+        "required_scopes": [
+          "alert:write"
+        ],
+        "preserved_routes": [
+          "/alerts",
+          "/alerts/:alertId"
+        ],
+        "preserved_actions": [
+          "alert-response-request",
+          "alert-response-status",
+          "alert-response-approval",
+          "alert-response-cancel",
+          "alert-response-compensate"
+        ],
+        "preserved_api_operations": [
+          "POST /v1/alerts/{id}/response-actions",
+          "GET /v1/alerts/{id}/response-actions/{job_id}",
+          "POST /v1/alerts/{id}/response-actions/{job_id}/approval",
+          "POST /v1/alerts/{id}/response-actions/{job_id}/cancel",
+          "POST /v1/alerts/{id}/response-actions/{job_id}/compensations"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
     },
     {
       "feature_id": "F-ALERT-004",
@@ -504,12 +581,26 @@
       "acceptance_case": "AC-WP-07-ALERT",
       "rollback_runbook_id": "RB-WP-07-ALERT",
       "standard_24w_scope": true,
-      "formal_contract_present": false,
-      "formal_contract": null,
-      "blocking_gaps": [
-        "versioned_feature_contract_missing",
-        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
-      ]
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-ALERT-004.json",
+        "sha256": "b3a071a4b603cff654b75fdfdfb6739d796987da1013fdc19da60e48c76b629a",
+        "contract_version": 1,
+        "status": "draft",
+        "operation_id": "createAlertBatchAssignment",
+        "api_method": "POST",
+        "api_path": "/v1/alerts/batches/assign",
+        "required_scopes": [
+          "alert:write"
+        ],
+        "preserved_routes": [
+          "/alerts"
+        ],
+        "preserved_actions": [],
+        "preserved_api_operations": [],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
     },
     {
       "feature_id": "F-ALERT-005",
@@ -519,12 +610,32 @@
       "acceptance_case": "AC-WP-07-ALERT",
       "rollback_runbook_id": "RB-WP-07-ALERT",
       "standard_24w_scope": true,
-      "formal_contract_present": false,
-      "formal_contract": null,
-      "blocking_gaps": [
-        "versioned_feature_contract_missing",
-        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
-      ]
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-ALERT-005.json",
+        "sha256": "f2de94db57cde740c3dfbe2bc28bd422bfe1e10ccddf5eba412279346fca897a",
+        "contract_version": 1,
+        "status": "verifying",
+        "operation_id": "getAlertEvidence",
+        "api_method": "GET",
+        "api_path": "/v1/alerts/{id}/evidence",
+        "required_scopes": [
+          "alert:read"
+        ],
+        "preserved_routes": [
+          "/alerts",
+          "/alerts/:alertId"
+        ],
+        "preserved_actions": [
+          "alert-evidence-access"
+        ],
+        "preserved_api_operations": [
+          "GET /v1/alerts/{id}/evidence",
+          "POST /v1/alerts/{id}/evidence/access"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
     },
     {
       "feature_id": "F-ALERT-006",
@@ -534,12 +645,28 @@
       "acceptance_case": "AC-WP-07-ALERT",
       "rollback_runbook_id": "RB-WP-07-ALERT",
       "standard_24w_scope": true,
-      "formal_contract_present": false,
-      "formal_contract": null,
-      "blocking_gaps": [
-        "versioned_feature_contract_missing",
-        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
-      ]
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-ALERT-006.json",
+        "sha256": "e98d760a8acf4deebcbac92bb101e5e8e4a7c237f9f0b50273798ff7007be828",
+        "contract_version": 1,
+        "status": "verifying",
+        "operation_id": "saveAlertView",
+        "api_method": "POST",
+        "api_path": "/v1/alerts/views",
+        "required_scopes": [
+          "alert:write"
+        ],
+        "preserved_routes": [
+          "/alerts"
+        ],
+        "preserved_actions": [
+          "alert-view-save"
+        ],
+        "preserved_api_operations": [],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
     },
     {
       "feature_id": "F-ASSET-001",
@@ -788,12 +915,28 @@
       "acceptance_case": "AC-WP-12-GRAPH",
       "rollback_runbook_id": "RB-WP-12-GRAPH",
       "standard_24w_scope": true,
-      "formal_contract_present": false,
-      "formal_contract": null,
-      "blocking_gaps": [
-        "versioned_feature_contract_missing",
-        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
-      ]
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-GRAPH-002.json",
+        "sha256": "1c15d1c01092c21f56506ea4b5ecbefa73856f2c3da1b9d9a2bba4cdc8e5b095",
+        "contract_version": 1,
+        "status": "draft",
+        "operation_id": "saveGraphView",
+        "api_method": "POST",
+        "api_path": "/v1/graph/views",
+        "required_scopes": [
+          "graph:read"
+        ],
+        "preserved_routes": [
+          "/graph"
+        ],
+        "preserved_actions": [],
+        "preserved_api_operations": [
+          "GET /v1/graph/explore"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
     },
     {
       "feature_id": "F-GRAPH-003",
@@ -803,12 +946,29 @@
       "acceptance_case": "AC-WP-12-GRAPH",
       "rollback_runbook_id": "RB-WP-12-GRAPH",
       "standard_24w_scope": true,
-      "formal_contract_present": false,
-      "formal_contract": null,
-      "blocking_gaps": [
-        "versioned_feature_contract_missing",
-        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
-      ]
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-GRAPH-003.json",
+        "sha256": "18e59e827dc7cedb2485462ae87f42e96c8167c5f8aac7014fb8968091cc5c3f",
+        "contract_version": 1,
+        "status": "draft",
+        "operation_id": "resolveGraphAssetContext",
+        "api_method": "GET",
+        "api_path": "/v1/graph/context/assets/{asset_id}",
+        "required_scopes": [
+          "graph:read"
+        ],
+        "preserved_routes": [
+          "/graph",
+          "/assets"
+        ],
+        "preserved_actions": [],
+        "preserved_api_operations": [
+          "GET /v1/graph/explore"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
     },
     {
       "feature_id": "F-GRAPH-004",
@@ -818,12 +978,28 @@
       "acceptance_case": "AC-WP-12-GRAPH",
       "rollback_runbook_id": "RB-WP-12-GRAPH",
       "standard_24w_scope": true,
-      "formal_contract_present": false,
-      "formal_contract": null,
-      "blocking_gaps": [
-        "versioned_feature_contract_missing",
-        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
-      ]
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-GRAPH-004.json",
+        "sha256": "049b6ef1b20b1e3bdcc9cc44526eadee81861ee4ba77b6ed952e72c27aa3b859",
+        "contract_version": 1,
+        "status": "draft",
+        "operation_id": "getGraphProjectionStatus",
+        "api_method": "GET",
+        "api_path": "/v1/graph/projections/status",
+        "required_scopes": [
+          "graph:read"
+        ],
+        "preserved_routes": [
+          "/graph"
+        ],
+        "preserved_actions": [],
+        "preserved_api_operations": [
+          "GET /v1/graph/explore"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
     },
     {
       "feature_id": "F-SEARCH-001",
@@ -864,12 +1040,41 @@
       "acceptance_case": "AC-WP-20-SEARCH-EXPORT",
       "rollback_runbook_id": "RB-WP-20-SEARCH-EXPORT",
       "standard_24w_scope": true,
-      "formal_contract_present": false,
-      "formal_contract": null,
-      "blocking_gaps": [
-        "versioned_feature_contract_missing",
-        "ui_api_domain_data_permission_performance_acceptance_rollout_traceability_missing"
-      ]
+      "formal_contract_present": true,
+      "formal_contract": {
+        "path": "contracts/alignment/features/F-EXPORT-001.json",
+        "sha256": "cfca367db409ca20b29e50f760a0ef3413e6a3b905883c463bcf8d17a49ecf5f",
+        "contract_version": 1,
+        "status": "draft",
+        "operation_id": "createUnifiedExportJob",
+        "api_method": "POST",
+        "api_path": "/v1/exports",
+        "required_scopes": [
+          "asset:export"
+        ],
+        "preserved_routes": [
+          "/alerts",
+          "/assets",
+          "/topics"
+        ],
+        "preserved_actions": [
+          "alert-report-export",
+          "asset-inventory-export",
+          "asset-inventory-export-download",
+          "topic-report-export",
+          "topic-evidence-package-export"
+        ],
+        "preserved_api_operations": [
+          "POST /v1/alerts/{id}/reports/export",
+          "POST /v1/assets/exports",
+          "GET /v1/assets/exports/{job_id}",
+          "GET /v1/assets/exports/{job_id}/download",
+          "POST /v1/topics/reports/export",
+          "POST /v1/topics/evidence-packages/export"
+        ],
+        "validation_errors": []
+      },
+      "blocking_gaps": []
     },
     {
       "feature_id": "F-AUDIT-001",
@@ -1563,16 +1768,16 @@
     "repository": [
       "all 54 feature IDs resolve to exactly one accountable work package",
       "all existing formal contracts hash-bind UI API domain data permission performance acceptance and rollout fields",
-      "all P0 feature contracts are present and the asset topic and alert pilots are traceable",
-      "missing standard-scope and backlog contracts remain explicit and cannot be hidden"
+      "all 38 standard-scope feature contracts are present and the asset topic and alert pilots are traceable",
+      "missing backlog contracts remain explicit and cannot be hidden"
     ],
     "remaining": [
-      "author the missing standard-scope contracts before W1 contract freeze",
       "author backlog contracts without deleting routes actions operations scopes or audit events",
+      "implement the draft standard-scope API migration projection and object boundaries before claiming runtime adoption",
       "bind generated TypeScript and compatibility telemetry to every formal contract",
       "capture old-client usage and live contract-version adoption by candidate",
       "complete compatibility diff G2 through G7 and external G8 gates"
     ]
   },
-  "catalog_sha256": "96c9a23e405aeaefab52418d4fe979777004fea2ad86c47126db5844127c7e4f"
+  "catalog_sha256": "e6acaa117b7b8b89ee1ab58400e78684e9e95b80ac75f75dd8b349d3f02fb75d"
 }

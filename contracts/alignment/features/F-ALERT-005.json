@@ -1,0 +1,61 @@
+{
+  "feature_id": "F-ALERT-005",
+  "contract_version": 1,
+  "status": "verifying",
+  "compatibility": {
+    "preserved_routes": ["/alerts", "/alerts/:alertId"],
+    "preserved_actions": ["alert-evidence-access"],
+    "preserved_api_operations": ["GET /v1/alerts/{id}/evidence", "POST /v1/alerts/{id}/evidence/access"],
+    "strategy": "additive"
+  },
+  "ui": {
+    "query_id": "alert.evidence.snapshot",
+    "controls": [{"control_id": "alert-evidence-access", "action_id": "alert-evidence-access"}],
+    "states": ["loading", "empty", "success", "partial", "stale", "forbidden", "failed"]
+  },
+  "api": {
+    "operation_id": "getAlertEvidence",
+    "method": "GET",
+    "path": "/v1/alerts/{id}/evidence",
+    "response_envelope": "data-meta-error",
+    "async": false
+  },
+  "domain": {
+    "kind": "query",
+    "invariants": [
+      "alert_id is deterministic for the detection identity and replay never creates a second alert",
+      "each evidence_ref identifies a typed immutable source or a checksum-verified MinIO object",
+      "missing, expired, unavailable and integrity-failed evidence are explicit states and never replaced with fixture content"
+    ]
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": ["postgresql", "clickhouse", "opensearch", "minio"],
+    "migration": "deployments/postgres/migrations/202607302045_alert_schema_runtime_ddl_exit.sql",
+    "event_types": ["traffic.alert.v2.AlertCreated", "traffic.alert.v2.AlertEvidenceLinked"],
+    "source_watermarks": ["postgresql.alerts.revision", "clickhouse.detection_events.watermark", "opensearch.alerts.projection_version", "minio.evidence_manifest.sha256"]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["alert:read"],
+    "negative_tests": [
+      "cross-tenant alert and evidence object are not observable",
+      "expired signed URL cannot be reused",
+      "manifest hash mismatch blocks download and records an audit failure"
+    ]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["alert detail with no evidence", "mixed inline and object evidence", "replayed detection event"],
+    "stop_conditions": ["duplicate alert rate, evidence lookup latency or object integrity failures exceed budget"]
+  },
+  "acceptance": {
+    "tests": ["G0 evidence reference contract", "G1 deterministic identity and replay", "G2 real PG-CH-OS-MinIO read", "G3 alert-event-object reconciliation", "G4 replay and partial-source profile", "G5 Windows Chrome missing-download-error states"],
+    "evidence": ["one detection event_id maps to one stable alert_id and every displayed evidence row reconciles to a source watermark or verified object manifest"]
+  },
+  "rollout": {
+    "feature_flag": "ALERT_EVIDENCE_CHAIN_V1_ENABLED",
+    "strategy": "shadow-read",
+    "rollback_runbook": "doc/07_alignment/runbooks/F-ALERT-005-rollback.md"
+  }
+}

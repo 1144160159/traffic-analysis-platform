@@ -1,0 +1,77 @@
+{
+  "feature_id": "F-EXPORT-001",
+  "contract_version": 1,
+  "status": "draft",
+  "compatibility": {
+    "preserved_routes": ["/alerts", "/assets", "/topics"],
+    "preserved_actions": ["alert-report-export", "asset-inventory-export", "asset-inventory-export-download", "topic-report-export", "topic-evidence-package-export"],
+    "preserved_api_operations": [
+      "POST /v1/alerts/{id}/reports/export",
+      "POST /v1/assets/exports",
+      "GET /v1/assets/exports/{job_id}",
+      "GET /v1/assets/exports/{job_id}/download",
+      "POST /v1/topics/reports/export",
+      "POST /v1/topics/evidence-packages/export"
+    ],
+    "strategy": "expand-migrate-contract"
+  },
+  "ui": {
+    "query_id": "export.job-center",
+    "controls": [
+      {"control_id": "export-alert-report", "action_id": "alert-report-export"},
+      {"control_id": "export-asset-inventory", "action_id": "asset-inventory-export"},
+      {"control_id": "export-topic-report", "action_id": "topic-report-export"},
+      {"control_id": "export-topic-evidence", "action_id": "topic-evidence-package-export"}
+    ],
+    "states": ["loading", "empty", "accepted", "running", "success", "partial", "failed", "cancelled", "compensating"]
+  },
+  "api": {
+    "operation_id": "createUnifiedExportJob",
+    "method": "POST",
+    "path": "/v1/exports",
+    "response_envelope": "data-meta-error",
+    "async": true,
+    "idempotency_key": "Idempotency-Key",
+    "revision_field": "snapshot_id"
+  },
+  "domain": {
+    "kind": "command",
+    "invariants": [
+      "each domain supplies a deterministic export model while the common executor owns job lifecycle, budgets, object manifest and retention",
+      "HTTP 202 means accepted; status, failure, cancellation, compensation and expiry remain queryable",
+      "row or byte limits fail explicitly and never silently truncate a formal export"
+    ],
+    "states": ["accepted", "running", "completed", "partial", "failed", "cancelled", "expired", "compensating"],
+    "compensation": "remove only the job-owned temporary or final object after manifest identity verification and retain immutable job and audit history"
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": ["postgresql", "minio"],
+    "migration": "additive common export_jobs, export_history, export_outbox and export_object_manifests migration required",
+    "event_types": ["platform.export.requested.v1", "platform.export.completed.v1", "platform.export.failed.v1"],
+    "source_watermarks": ["postgresql.export_jobs.revision", "postgresql.export_object_manifests.sha256", "minio.object.version_id"]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["asset:export"],
+    "negative_tests": [
+      "cross-tenant job status and download return not found",
+      "expired or checksum-mismatched object is never streamed",
+      "a domain export requires its domain-specific export scope in addition to common job access"
+    ]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["small synchronous-source export", "large object export", "cancel and cleanup", "expired object lookup"],
+    "stop_conditions": ["queue lag, memory, object size, generation time or retention cleanup budget is exceeded"]
+  },
+  "acceptance": {
+    "tests": ["G0 common job OpenAPI and client", "G1 deterministic models and lifecycle", "G2 real PostgreSQL and MinIO", "G3 job-model-object-audit reconciliation", "G4 size/queue/cancel profile", "G5 Windows Chrome create-poll-download-error"],
+    "evidence": ["downloaded bytes match the PostgreSQL manifest and MinIO object hash while domain snapshot and row/byte budgets remain traceable"]
+  },
+  "rollout": {
+    "feature_flag": "UNIFIED_EXPORT_CENTER_V1_ENABLED",
+    "strategy": "canary",
+    "rollback_runbook": "doc/07_alignment/runbooks/F-EXPORT-001-rollback.md"
+  }
+}

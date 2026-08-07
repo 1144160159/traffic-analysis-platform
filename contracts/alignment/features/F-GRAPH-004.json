@@ -1,0 +1,62 @@
+{
+  "feature_id": "F-GRAPH-004",
+  "contract_version": 1,
+  "status": "draft",
+  "compatibility": {
+    "preserved_routes": ["/graph"],
+    "preserved_actions": [],
+    "preserved_api_operations": ["GET /v1/graph/explore"],
+    "strategy": "expand-migrate-contract"
+  },
+  "ui": {
+    "query_id": "graph.projection-status",
+    "controls": [],
+    "states": ["loading", "empty", "success", "partial", "stale", "forbidden", "failed"]
+  },
+  "api": {
+    "operation_id": "getGraphProjectionStatus",
+    "method": "GET",
+    "path": "/v1/graph/projections/status",
+    "response_envelope": "data-meta-error",
+    "async": false
+  },
+  "domain": {
+    "kind": "query",
+    "invariants": [
+      "node and edge VID are deterministic from tenant, entity type and canonical identity",
+      "each relation records source event, aggregate version, validity interval, projection hash and revocation state",
+      "projection consumes stable event identity idempotently, advances a durable watermark only after Nebula acknowledgement and supports bounded replay",
+      "full rebuild and incremental projection reconcile to the same node, edge and hash counts"
+    ]
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": ["postgresql", "clickhouse", "nebulagraph"],
+    "migration": "additive graph projection inbox, watermark, dead-letter and deterministic identity migration required",
+    "event_types": ["graph.entity.upserted.v1", "graph.relation.upserted.v1", "graph.relation.revoked.v1"],
+    "source_watermarks": ["postgresql.graph_projection_inbox.offset", "clickhouse.graph_source_events.watermark", "nebulagraph.graph_projection.version"]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["graph:read"],
+    "negative_tests": [
+      "tenant identifier is part of every deterministic VID and cross-tenant collision is impossible",
+      "older aggregate version cannot resurrect a revoked edge",
+      "unbounded replay or automatic destructive repair is rejected"
+    ]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["steady incremental projection", "duplicate and reordered events", "bounded replay", "full rebuild comparison"],
+    "stop_conditions": ["projection lag, DLQ, replay scope, Nebula latency or rebuild resource budget is exceeded"]
+  },
+  "acceptance": {
+    "tests": ["G0 event and deterministic identity contract", "G1 idempotency/order/revocation tests", "G2 real PG-CH-Kafka-Nebula projection", "G3 event-watermark-node-edge reconciliation", "G4 lag/replay/rebuild profile", "G5 Windows Chrome stale-partial projection metadata"],
+    "evidence": ["one bounded replay and one full rebuild produce deterministic VID/edge hashes and reconcile source events, durable watermarks and Nebula facts"]
+  },
+  "rollout": {
+    "feature_flag": "GRAPH_CONTINUOUS_PROJECTION_V1_ENABLED",
+    "strategy": "shadow-read",
+    "rollback_runbook": "doc/07_alignment/runbooks/F-GRAPH-004-rollback.md"
+  }
+}

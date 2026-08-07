@@ -1,0 +1,62 @@
+{
+  "feature_id": "F-COMMON-001",
+  "contract_version": 1,
+  "status": "draft",
+  "compatibility": {
+    "preserved_routes": ["/dashboard"],
+    "preserved_actions": [],
+    "preserved_api_operations": [],
+    "strategy": "additive"
+  },
+  "ui": {
+    "query_id": "platform.feature-contract-adoption",
+    "controls": [],
+    "states": ["loading", "empty", "success", "partial", "stale", "forbidden", "failed"]
+  },
+  "api": {
+    "operation_id": "getFeatureContractAdoption",
+    "method": "GET",
+    "path": "/v1/meta/feature-contracts/adoption",
+    "response_envelope": "data-meta-error",
+    "async": false
+  },
+  "domain": {
+    "kind": "query",
+    "invariants": [
+      "each canonical feature resolves exactly one accountable owner, acceptance case, rollback ID and versioned contract",
+      "OpenAPI is REST authority, Protobuf is gRPC and event authority, migrations are storage authority and generated TypeScript is the browser authority",
+      "the registry is a build and release gate rather than a runtime business dependency",
+      "runtime adoption telemetry exposes candidate hash, contract version, compatibility hits and unknown fields without exposing secrets"
+    ]
+  },
+  "data": {
+    "authoritative_store": "external",
+    "read_models": ["postgresql"],
+    "migration": "no business-state migration; additive redacted deployment-adoption telemetry schema required",
+    "event_types": ["platform.feature-contract.adoption.v1"],
+    "source_watermarks": ["git.candidate_source_sha256", "deployment.image_digest", "deployment.effective_config_hash", "openapi.contract_version"]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["admin:read"],
+    "negative_tests": [
+      "a missing canonical owner or rollback ID fails the build",
+      "a duplicate operation_id fails the build",
+      "runtime adoption output never includes secret values or raw tokens"
+    ]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["repository registry build", "generated client compatibility diff", "redacted runtime adoption inventory"],
+    "stop_conditions": ["registry generation, compatibility scan or adoption query exceeds the release-gate budget"]
+  },
+  "acceptance": {
+    "tests": ["G0 canonical/schema/OpenAPI/Proto/client diff", "G1 duplicate-owner-operation and removal guards", "G2 candidate deployment adoption inventory", "G3 contract-version and compatibility-hit reconciliation", "G4 gate duration and telemetry budget", "G5 Windows Chrome HAR contract-version check"],
+    "evidence": ["all standard-scope contracts are hash-bound and every deployed workload reports the same candidate, image, config and contract versions with compatibility gaps explicit"]
+  },
+  "rollout": {
+    "feature_flag": "FEATURE_CONTRACT_ADOPTION_TELEMETRY_V1_ENABLED",
+    "strategy": "canary",
+    "rollback_runbook": "doc/07_alignment/runbooks/F-COMMON-001-feature-contract-registry.md"
+  }
+}

@@ -12,6 +12,7 @@ from build_feature_contract_registry import OUTPUT, ROOT, _canonical_sha256, bui
 
 EXPECTED_FEATURES = 54
 EXPECTED_STANDARD_SCOPE_FEATURES = 38
+EXPECTED_BACKLOG_CONTRACT_GAPS = 16
 EXPECTED_PILOTS = {"asset_vertical", "topic_snapshot_and_actions", "alert_query_and_actions"}
 
 
@@ -26,7 +27,7 @@ def verify() -> dict[str, Any]:
     if actual.get("schema_version") != 1 or actual.get("feature_id") != "F-COMMON-001":
         errors.append("registry identity must be schema v1 and F-COMMON-001")
     if actual.get("status") != "implementing":
-        errors.append("registry cannot claim closure while formal contract gaps remain")
+        errors.append("registry cannot claim closure while backlog and runtime-adoption gaps remain")
     if actual.get("production_runtime_dependency") is not False:
         errors.append("Feature Contract registry must remain a build and release gate, not a runtime dependency")
 
@@ -128,14 +129,19 @@ def verify() -> dict[str, Any]:
     }
     if coverage != expected_coverage:
         errors.append("Feature Contract coverage counts do not match registry content")
-    if not coverage.get("missing_standard_scope_contracts"):
-        errors.append("repository evidence cannot hide the current standard-scope contract backlog")
+    if expected_coverage["missing_standard_scope_contracts"]:
+        errors.append("all 38 standard-scope features must have formal contracts after W1 freeze")
+    if (
+        len(expected_coverage["missing_backlog_contracts"]) != EXPECTED_BACKLOG_CONTRACT_GAPS
+        or len(coverage.get("missing_backlog_contracts") or []) != EXPECTED_BACKLOG_CONTRACT_GAPS
+    ):
+        errors.append("repository evidence cannot hide or invent backlog contract gaps")
 
     return {
         "status": "PASS" if not errors else "FAIL",
         "feature_id": "F-COMMON-001",
         "registry_integrity": "PASS" if not errors else "FAIL",
-        "contract_coverage": "PARTIAL",
+        "contract_coverage": "STANDARD_SCOPE_COMPLETE_BACKLOG_PARTIAL",
         "catalog_sha256": actual.get("catalog_sha256"),
         "coverage": coverage,
         "errors": errors,
