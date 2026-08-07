@@ -177,6 +177,9 @@ def main() -> int:
         "postgres_receipt_failure_offset_retained_verified": False,
         "same_group_restart_redelivery_verified": False,
         "retry_cross_store_convergence_verified": False,
+        "redis_exact_event_replay_count_stable_verified": False,
+        "source_version_hash_stable_across_restart_verified": False,
+        "event_identity_collision_rejected_verified": False,
         "loopback_only": True,
         "persistent_volume_attached": False,
         "shared_environment_touched": False,
@@ -328,6 +331,9 @@ def main() -> int:
             "cross_store_hash_and_version_verified", "receipt_failure_blocks_commit_unit_verified",
             "postgres_receipt_failure_offset_retained_verified", "same_group_restart_redelivery_verified",
             "retry_cross_store_convergence_verified",
+            "redis_exact_event_replay_count_stable_verified",
+            "source_version_hash_stable_across_restart_verified",
+            "event_identity_collision_rejected_verified",
         ):
             result[field] = True
         result["status"] = "PASS"

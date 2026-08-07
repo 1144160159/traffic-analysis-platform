@@ -617,21 +617,10 @@ func (c *Consumer) processMessage(ctx context.Context, msg *kafka.ReceivedMessag
 
 	// 4. 去重检查（修复：优先使用 Lua 脚本原子版本）
 	eventTs := detection.Behaviors[0].Header.GetEventTs()
-	var dedupResult *dedup.DedupResult
-	var err error
-
-	if c.useLuaScript {
-		// 使用 Lua 脚本原子操作（性能更好）
-		dedupResult, err = c.redisDedup.CheckAndIncrementAtomic(ctx, fingerprint, eventTs, tenantID)
-		if err == nil {
-			dedupMethodUsed.WithLabelValues("lua_script").Inc()
-		}
-	} else {
-		// 回退到 Pipeline 版本
-		dedupResult, err = c.redisDedup.CheckAndIncrementWithTenant(ctx, fingerprint, eventTs, tenantID)
-		if err == nil {
-			dedupMethodUsed.WithLabelValues("pipeline").Inc()
-		}
+	eventID := detection.Behaviors[0].Header.GetEventId()
+	dedupResult, err := c.redisDedup.CheckAndIncrementEventAtomic(ctx, fingerprint, eventID, eventTs, tenantID)
+	if err == nil {
+		dedupMethodUsed.WithLabelValues("event_identity_lua_script").Inc()
 	}
 
 	if err != nil {
@@ -685,6 +674,7 @@ func (c *Consumer) processMessage(ctx context.Context, msg *kafka.ReceivedMessag
 		zap.String("tenant_id", tenantID),
 		zap.String("fingerprint", fingerprint),
 		zap.Bool("is_new", dedupResult.IsNew),
+		zap.Bool("exact_replay", dedupResult.ExactReplay),
 		zap.Int64("count", dedupResult.Count),
 		zap.Int("evidence_count", len(evidences)),
 		zap.Bool("used_lua_script", c.useLuaScript))
@@ -841,11 +831,10 @@ func (c *Consumer) buildAlert(
 
 		Status:   state.StatusNew.String(),
 		Assignee: "",
-		// ClickHouse stores the canonical alert timestamp at millisecond
-		// precision. Normalize before hashing/writing so OpenSearch and the PG
-		// receipt cannot preserve extra nanoseconds that disappear from the
-		// authoritative ClickHouse image.
-		UpdatedTs: time.Now().UTC().Truncate(time.Millisecond),
+		// Bind the projection version to source event time. Reprocessing the same
+		// event after a downstream failure must produce the same version and hash,
+		// while OpenSearch external_gte rejects an older event for the same alert.
+		UpdatedTs: time.UnixMilli(eventTs).UTC(),
 
 		ModelVersion: detection.Behaviors[0].GetModelVersion(),
 		RuleVersion:  "",

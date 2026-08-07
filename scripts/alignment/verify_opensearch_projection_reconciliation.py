@@ -96,6 +96,10 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
         errors.append("Kafka five-store receipt guard drifted")
     if scope.get("kafka_receipt_failure_recovery") != "postgresql_receipt_failure_retains_offset_same_group_restart_redelivers_and_reconciles":
         errors.append("Kafka PostgreSQL receipt failure recovery guard drifted")
+    if scope.get("kafka_exact_event_replay") != "stable_event_identity_preserves_redis_count_source_version_and_cross_store_hash_across_restart":
+        errors.append("Kafka exact event replay guard drifted")
+    if scope.get("kafka_event_identity_collision") != "same_event_id_with_different_fingerprint_fails_closed_without_aggregate_mutation":
+        errors.append("Kafka event identity collision guard drifted")
     runtime = contract.get("runtime_guards", {})
     if runtime.get("feature_flag_default_enabled") is not False or runtime.get("production_mutations_in_repository_candidate") != []:
         errors.append("candidate must remain default-off with no production mutation claim")

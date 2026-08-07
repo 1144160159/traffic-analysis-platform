@@ -101,10 +101,11 @@ func TestAlertProjectionReceiptRealKafka(t *testing.T) {
 
 	groupID := "alert-projection-receipt-g1"
 	topic := "detections.alert-projection-receipt.v1"
+	redisDedup := dedup.NewRedisDedup(redisClient, 10*time.Minute, logger)
 	alertConsumer := NewConsumer(
 		alertconfig.KafkaConfig{Brokers: []string{settings.kafkaBroker}, Topic: topic, GroupID: groupID, BatchSize: 1},
 		alertconfig.DedupConfig{TimeBucketMinutes: 10, TTL: 10 * time.Minute},
-		dedup.NewRedisDedup(redisClient, 10*time.Minute, logger), dualWriter, logger,
+		redisDedup, dualWriter, logger,
 	)
 	if alertConsumer == nil {
 		t.Fatal("production alert consumer could not be created")
@@ -251,6 +252,28 @@ func TestAlertProjectionReceiptRealKafka(t *testing.T) {
 		t.Fatalf("receipt outage advanced Kafka or observer state: lag=%+v metrics=%+v running=%v last_event=%q err=%v",
 			lag, metrics, alertConsumer.IsRunning(), failedLastEvent, err)
 	}
+	if err := target.RefreshProjectionTarget(ctx); err != nil {
+		t.Fatal(err)
+	}
+	failureAuthoritative, truncated, err := authority.ListProjectionAlerts(ctx, scope)
+	if err != nil || truncated || len(failureAuthoritative) != 2 {
+		t.Fatalf("unexpected ClickHouse authority during receipt failure: count=%d truncated=%v err=%v", len(failureAuthoritative), truncated, err)
+	}
+	failureProjected, targetTruncated, err := target.ListProjectionAlerts(ctx, scope)
+	if err != nil || targetTruncated || len(failureProjected) != 2 {
+		t.Fatalf("unexpected OpenSearch projection during receipt failure: count=%d truncated=%v err=%v", len(failureProjected), targetTruncated, err)
+	}
+	failureSourceHash := projectionHashForEvent(t, failureAuthoritative, alertProjectionKafkaRetry)
+	failureTargetHash := projectionHashForEvent(t, failureProjected, alertProjectionKafkaRetry)
+	if failureSourceHash != failureTargetHash {
+		t.Fatalf("CH and OS diverged before receipt recovery: source=%s target=%s", failureSourceHash, failureTargetHash)
+	}
+	retryFingerprint := dedup.CalculateFingerprint(alertProjectionKafkaRetryDetection(), 10)
+	redisCountKey := fmt.Sprintf("alert:dedup:%s:%s:count", alertProjectionKafkaTenant, retryFingerprint)
+	countDuringFailure, err := redisClient.Get(ctx, redisCountKey).Int64()
+	if err != nil || countDuringFailure != 2 {
+		t.Fatalf("unexpected Redis aggregate count during receipt failure: count=%d err=%v", countDuringFailure, err)
+	}
 	restoreReceiptTable()
 	var retryReceiptCount int
 	if err := pgDB.QueryRowContext(ctx, `SELECT count(*) FROM alert_opensearch_projection_watermarks WHERE source_event_id=$1`, alertProjectionKafkaRetry).Scan(&retryReceiptCount); err != nil {
@@ -354,9 +377,43 @@ func TestAlertProjectionReceiptRealKafka(t *testing.T) {
 		t.Fatalf("retried Kafka/CH/OS/PG identity mismatch: event=%q hashes=%s/%s/%s versions=%d/%d",
 			receiptEvent, retrySourceHash, retryTargetHash, receiptHash, persistence.AlertSourceVersion(retrySource), receiptVersion)
 	}
+	countAfterRecovery, err := redisClient.Get(ctx, redisCountKey).Int64()
+	if err != nil || countAfterRecovery != countDuringFailure {
+		t.Fatalf("exact event replay inflated Redis aggregate count: before=%d after=%d err=%v", countDuringFailure, countAfterRecovery, err)
+	}
+	if retrySourceHash != failureSourceHash || retryTargetHash != failureTargetHash {
+		t.Fatalf("exact event replay changed projection hash: before=%s/%s after=%s/%s",
+			failureSourceHash, failureTargetHash, retrySourceHash, retryTargetHash)
+	}
+	if _, collisionErr := redisDedup.CheckAndIncrementEventAtomic(
+		ctx, retryFingerprint+"-different-payload", alertProjectionKafkaRetry,
+		alertProjectionKafkaRetryDetection().GetBehaviors()[0].GetHeader().GetEventTs(), alertProjectionKafkaTenant,
+	); collisionErr == nil || !strings.Contains(collisionErr.Error(), "event identity collision") {
+		t.Fatalf("event identity collision did not fail closed: %v", collisionErr)
+	}
+	countAfterCollision, err := redisClient.Get(ctx, redisCountKey).Int64()
+	if err != nil || countAfterCollision != countAfterRecovery {
+		t.Fatalf("event identity collision mutated Redis aggregate: before=%d after=%d err=%v", countAfterRecovery, countAfterCollision, err)
+	}
 	t.Logf("PASS_ALERT_PROJECTION_REAL_KAFKA_RECEIPT event_id=%s committed_offset=1 lag_before_fault=0 source_sha256=%s", lastEvent, sourceHash)
 	t.Logf("PASS_ALERT_PROJECTION_RECEIPT_FAILURE_RESTART retry_event_id=%s retained_offset=1 retained_lag=1 recovered_offset=%d recovered_lag=%d source_sha256=%s",
 		retryLastEvent, lag.TotalCommittedOffset, lag.TotalLag, retrySourceHash)
+}
+
+func projectionHashForEvent(t *testing.T, alerts []*persistence.Alert, eventID string) string {
+	t.Helper()
+	for _, alert := range alerts {
+		if alert.EventID != eventID {
+			continue
+		}
+		hash, err := persistence.AlertProjectionSHA256(alert)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return hash
+	}
+	t.Fatalf("projection event %s not found", eventID)
+	return ""
 }
 
 func writeAlertProjectionDetection(ctx context.Context, writer *segmentkafka.Writer, topic string, detection *pb.DetectionBatch) error {

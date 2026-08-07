@@ -45,6 +45,8 @@
     "authoritative_three_store_receipt": "same_owned_run_real_clickhouse_authority_real_opensearch_target_real_postgresql_receipt_equal_hash_and_version",
     "kafka_five_store_receipt": "same_owned_run_real_kafka_commit_after_redis_dedup_clickhouse_authority_opensearch_target_and_postgresql_applied_receipt",
     "kafka_receipt_failure_recovery": "postgresql_receipt_failure_retains_offset_same_group_restart_redelivers_and_reconciles",
+    "kafka_exact_event_replay": "stable_event_identity_preserves_redis_count_source_version_and_cross_store_hash_across_restart",
+    "kafka_event_identity_collision": "same_event_id_with_different_fingerprint_fails_closed_without_aggregate_mutation",
     "extra_after_repair": "persist_for_manual_adjudication_never_auto_delete"
   },
   "runtime_guards": {
