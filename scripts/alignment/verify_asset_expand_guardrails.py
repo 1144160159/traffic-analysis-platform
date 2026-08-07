@@ -18,6 +18,7 @@ CONFIG = Path("go/control-plane/internal/asset/config/config.go")
 CANONICAL_DEPLOYMENT = Path("deployments/kubernetes/applications/go-services.yaml")
 COMPATIBILITY_DEPLOYMENT = Path("go/control-plane/deployments/kubernetes/asset-service.yaml")
 RENDERER = Path("scripts/alignment/render_asset_postgres_expand.py")
+EPHEMERAL_G1 = Path("scripts/alignment/verify_asset_expand_ephemeral.py")
 RUNBOOK = Path("doc/07_alignment/runbooks/F-ASSET-002-rollback.md")
 MIGRATION_DIR = Path("deployments/postgres/migrations")
 
@@ -80,6 +81,23 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
     ):
         if token not in renderer_source:
             errors.append(f"asset expand renderer missing guard: {token}")
+
+    if contract.get("authority", {}).get("ephemeral_g1_verifier") != EPHEMERAL_G1.as_posix():
+        errors.append("asset expand contract must bind the isolated G1 verifier")
+    ephemeral_source = read(root, EPHEMERAL_G1)
+    for token in (
+        "POSTGRES_IMAGE",
+        "codex_ephemeral_asset_expand_sentinel",
+        "ephemeral-only",
+        '"persistent_volume_attached": False',
+        '"shared_environment_touched": False',
+        "for replay in range(1, 3)",
+        "schema_fingerprint",
+        "refusing to overwrite asset expand G1 evidence",
+        'docker", "rm", "-f", container',
+    ):
+        if token not in ephemeral_source:
+            errors.append(f"asset isolated G1 verifier missing guard: {token}")
 
     default_off_flags = contract.get("default_off_flags", [])
     config_source = read(root, CONFIG)

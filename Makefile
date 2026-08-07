@@ -300,6 +300,11 @@ alignment-verify-asset-expand-guardrails: ## Verify F-ASSET-001..006 default-off
 	python -m unittest tests.alignment.test_asset_expand_renderer tests.alignment.test_asset_expand_guardrails -v
 	cd $(GO_DIR) && go test ./internal/asset/... ./cmd/asset-service/...
 
+.PHONY: alignment-verify-asset-expand-g1
+alignment-verify-asset-expand-g1: ## Replay the F-ASSET-001..006 PostgreSQL expand twice in an owned sentinel container (RUN_ID required)
+	test -n "$(RUN_ID)"
+	python scripts/alignment/verify_asset_expand_ephemeral.py --run-id "$(RUN_ID)" $(if $(OUTPUT),--output "$(OUTPUT)",)
+
 .PHONY: alignment-verify-minio-object-governance
 alignment-verify-minio-object-governance: ## Verify T-MINIO-002/003/004 bucket, lifecycle and fail-closed credential governance
 	python scripts/alignment/verify_minio_object_governance.py
