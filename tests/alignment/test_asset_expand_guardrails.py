@@ -34,6 +34,7 @@ class AssetExpandGuardrailsTest(unittest.TestCase):
                 MODULE.RENDERER,
                 MODULE.EPHEMERAL_G1,
                 MODULE.OPENSEARCH_G1,
+                MODULE.KAFKA_G1,
                 MODULE.OPENSEARCH_DEPLOYMENT,
                 MODULE.OPENSEARCH_DOCKERFILE,
                 MODULE.IMAGE_LOCK,

@@ -20,6 +20,7 @@ COMPATIBILITY_DEPLOYMENT = Path("go/control-plane/deployments/kubernetes/asset-s
 RENDERER = Path("scripts/alignment/render_asset_postgres_expand.py")
 EPHEMERAL_G1 = Path("scripts/alignment/verify_asset_expand_ephemeral.py")
 OPENSEARCH_G1 = Path("scripts/alignment/verify_asset_projection_opensearch_ephemeral.py")
+KAFKA_G1 = Path("scripts/alignment/verify_asset_projection_kafka_ephemeral.py")
 OPENSEARCH_DEPLOYMENT = Path("deployments/kubernetes/infrastructure/05-opensearch.yaml")
 OPENSEARCH_DOCKERFILE = Path("deployments/opensearch/Dockerfile.ha-v1")
 IMAGE_LOCK = Path("deployments/kubernetes/image-digests.lock.json")
@@ -133,6 +134,28 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
     ):
         if token not in opensearch_source:
             errors.append(f"asset OpenSearch G1 verifier missing guard: {token}")
+
+    if contract.get("authority", {}).get("kafka_g1_verifier") != KAFKA_G1.as_posix():
+        errors.append("asset expand contract must bind the isolated Kafka G1 verifier")
+    kafka_contract = contract.get("kafka_g1_isolation", {})
+    kafka_source = read(root, KAFKA_G1)
+    for key in ("postgres_image", "kafka_image"):
+        if kafka_contract.get(key) not in kafka_source:
+            errors.append(f"asset Kafka G1 {key} authority drift")
+    for token in (
+        "codex_ephemeral_asset_projection_kafka_sentinel",
+        "ephemeral-only",
+        "asset.events.v2",
+        "127.0.0.1",
+        '"persistent_volume_attached": False',
+        '"shared_environment_touched": False',
+        '"production_applied": False',
+        "refusing to overwrite asset Kafka G1 evidence",
+        'docker", "rm", "-f", postgres_container',
+        'docker", "rm", "-f", kafka_container',
+    ):
+        if token not in kafka_source:
+            errors.append(f"asset Kafka G1 verifier missing guard: {token}")
 
     default_off_flags = contract.get("default_off_flags", [])
     config_source = read(root, CONFIG)
