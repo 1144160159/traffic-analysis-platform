@@ -320,6 +320,11 @@ alignment-verify-asset-export-minio-g1: ## Verify F-ASSET-004 manifest, audit an
 	test -n "$(RUN_ID)"
 	python scripts/alignment/verify_asset_export_minio_ephemeral.py --run-id "$(RUN_ID)" $(if $(OUTPUT),--output "$(OUTPUT)",)
 
+.PHONY: alignment-verify-asset-projection-nebula-g1
+alignment-verify-asset-projection-nebula-g1: ## Verify F-ASSET-002/005 deterministic projection in owned NebulaGraph containers (RUN_ID required)
+	test -n "$(RUN_ID)"
+	python scripts/alignment/verify_asset_projection_nebula_ephemeral.py --run-id "$(RUN_ID)" $(if $(OUTPUT),--output "$(OUTPUT)",)
+
 .PHONY: alignment-verify-minio-object-governance
 alignment-verify-minio-object-governance: ## Verify T-MINIO-002/003/004 bucket, lifecycle and fail-closed credential governance
 	python scripts/alignment/verify_minio_object_governance.py
