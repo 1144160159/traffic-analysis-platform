@@ -1823,10 +1823,13 @@
         "scripts/alignment/capture_alert_projection_tool_supply_chain.py",
         "tests/alignment/test_alert_projection_tool_supply_chain.py",
         "doc/02_acceptance/runs/20260808-remediation-g0-full-v198/manifest.json#sha256=279b4d2eeb7751ed902e7407951acd176e0856d9530559c6fdc7a672b272d0f3",
-        "doc/02_acceptance/runs/20260808-remediation-alert-projection-tools-supply-chain-g1-v1/manifest.json#sha256=83ea477e6987bbb1d7a0a5a384a38f9c54a51b5dafb6c9b242b438795621632d"
+        "doc/02_acceptance/runs/20260808-remediation-alert-projection-tools-supply-chain-g1-v1/manifest.json#sha256=83ea477e6987bbb1d7a0a5a384a38f9c54a51b5dafb6c9b242b438795621632d",
+        "doc/02_acceptance/runs/20260808-remediation-g0-full-v200/manifest.json#sha256=0365868c703e1c93b8925d036475cd7f4e88ec8332b816aad411d49cf80de96b",
+        "doc/02_acceptance/runs/20260808-clickhouse-driver-v2322-compat-g1-v2/manifest.json#sha256=de4a620f4d74b12a6f97dea7d934f4f0076f9d415d5f4138a2228b81ec7029dd",
+        "doc/02_acceptance/runs/20260808-remediation-alert-projection-tools-supply-chain-g1-v4/manifest.json#sha256=34201a072b09be84331e0dd5f2cde7e1b0e6f277538a4c9854285c3706406663"
       ],
-      "blocker": "仓库已形成alerts-v2版本化索引、严格只读shadow和默认不授权审批包；Go/Flink v2流量仍默认false，production_applied=false。v198将投影工具升级到Go 1.25.12及已修复的gRPC、OpenTelemetry、x/net、x/text、compress依赖，并生成同源码CycloneDX SBOM；两个二进制的可达已知漏洞均为0。但漏洞库距采集时约11天，超过24小时审批限值；每个二进制仍有1个不可达模块发现待安全裁决，且RepoDigests为空、签名和SLSA provenance缺失，所以镜像明确HOLD。历史883172条差异仍未在当前生产复核；批准的V2 expand、当前shadow、回填、对账、切换、回滚和观察尚未执行。",
-      "note": "T-OS-002保持IMPLEMENTING/PARTIAL。G0 v198在源码内容SHA 8fec3ad7908e上三段PASS；同哈希本地镜像完成确定性CycloneDX 1.5 SBOM与双二进制govulncheck取证，可达漏洞为0。供应链清单仍为PREPUBLISH_NON_AUTHORIZING/HOLD，不提升G2/G3，也不替代v196自有回环shadow证据或生产883172差异复核。"
+      "blocker": "仓库已形成alerts-v2版本化索引、严格只读shadow和默认不授权审批包；Go/Flink v2流量仍默认false，production_applied=false。v200将clickhouse-go升级到v2.32.2、ch-go升级到v0.65.1，消除GO-2025-3603不可达模块发现；同源码CycloneDX SBOM和双二进制文本/SARIF扫描均为0可达、0不可达。供应链仍因漏洞库超过24小时、RepoDigests为空、签名和SLSA provenance缺失而HOLD。历史883172条差异仍未在当前生产复核；批准的V2 expand、当前shadow、回填、对账、切换、回滚和观察尚未执行。",
+      "note": "T-OS-002保持IMPLEMENTING/PARTIAL。G0 v200在源码内容SHA 016f280e9c38上三段PASS；同哈希自有ClickHouse G1验证升级驱动兼容生产reader/writer，同哈希本地镜像的双二进制govulncheck为0可达、0不可达。供应链清单仍为PREPUBLISH_NON_AUTHORIZING/HOLD，不提升G2/G3，也不替代v196自有回环shadow证据或生产883172差异复核。"
     },
     {
       "id": "T-OS-003",
@@ -1944,10 +1947,13 @@
         "scripts/alignment/capture_alert_projection_tool_supply_chain.py",
         "tests/alignment/test_alert_projection_tool_supply_chain.py",
         "doc/02_acceptance/runs/20260808-remediation-g0-full-v198/manifest.json#sha256=279b4d2eeb7751ed902e7407951acd176e0856d9530559c6fdc7a672b272d0f3",
-        "doc/02_acceptance/runs/20260808-remediation-alert-projection-tools-supply-chain-g1-v1/manifest.json#sha256=83ea477e6987bbb1d7a0a5a384a38f9c54a51b5dafb6c9b242b438795621632d"
+        "doc/02_acceptance/runs/20260808-remediation-alert-projection-tools-supply-chain-g1-v1/manifest.json#sha256=83ea477e6987bbb1d7a0a5a384a38f9c54a51b5dafb6c9b242b438795621632d",
+        "doc/02_acceptance/runs/20260808-remediation-g0-full-v200/manifest.json#sha256=0365868c703e1c93b8925d036475cd7f4e88ec8332b816aad411d49cf80de96b",
+        "doc/02_acceptance/runs/20260808-clickhouse-driver-v2322-compat-g1-v2/manifest.json#sha256=de4a620f4d74b12a6f97dea7d934f4f0076f9d415d5f4138a2228b81ec7029dd",
+        "doc/02_acceptance/runs/20260808-remediation-alert-projection-tools-supply-chain-g1-v4/manifest.json#sha256=34201a072b09be84331e0dd5f2cde7e1b0e6f277538a4c9854285c3706406663"
       ],
-      "blocker": "PG原子回执、严格只读shadow、四方审批和始终挂起的repair Job边界继续有效。v198进一步升级Go与受影响依赖并新增CycloneDX SBOM、govulncheck文本/SARIF双判定、漏洞库时效、不可达发现安全裁决、registry digest、cosign签名和SLSA provenance门禁；SARIF即使退出0但含error也会失败关闭。当前两个二进制可达漏洞为0，但数据库超过24小时、每个二进制1个不可达模块发现未裁决、RepoDigests为空且签名/provenance缺失，故本地镜像不具审批资格。生产当前shadow、四方审批、expand/backfill/repair、PG watermark终态、性能、回滚和T+观察仍未完成。",
-      "note": "T-OS-004保持IMPLEMENTING/PARTIAL。G0 v198三段在源码内容SHA 8fec3ad7908e上PASS；同哈希本地scratch镜像ID为978d0408…dce14，CycloneDX SBOM SHA为7cf5a870…73e44，双二进制可达已知漏洞为0。供应链清单仍为HOLD/PREPUBLISH_NON_AUTHORIZING；shadow G1 v2仍绑定v196自有回环证据，两者都不复核或修复生产883172条差异，不提升为G2/G3。"
+      "blocker": "PG原子回执、严格只读shadow、四方审批和始终挂起的repair Job边界继续有效。v200升级clickhouse-go/ch-go并以同哈希自有ClickHouse验证生产reader/writer；双二进制CycloneDX与govulncheck文本/SARIF结果均为0可达、0不可达，扫描器对异常退出进行最多3次有界重试但漏洞返回码3立即终止。当前漏洞库仍超过24小时、RepoDigests为空且签名/provenance缺失，故本地镜像不具审批资格。生产当前shadow、四方审批、expand/backfill/repair、PG watermark终态、性能、回滚和T+观察仍未完成。",
+      "note": "T-OS-004保持IMPLEMENTING/PARTIAL。G0 v200三段在源码内容SHA 016f280e9c38上PASS；同哈希本地scratch镜像ID为58b5e6ea…b9c4，CycloneDX SBOM SHA为486a08b1…dcab，双二进制可达和不可达已知漏洞均为0。供应链清单仍为HOLD/PREPUBLISH_NON_AUTHORIZING；shadow G1 v2仍绑定v196自有回环证据，两者都不复核或修复生产883172条差异，不提升为G2/G3。"
     },
     {
       "id": "T-OS-005",

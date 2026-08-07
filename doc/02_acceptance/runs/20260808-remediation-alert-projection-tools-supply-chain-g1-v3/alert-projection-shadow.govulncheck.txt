@@ -1,0 +1,1 @@
+govulncheck: fetching vulnerabilities: Get "https://vuln.go.dev/ID/GO-2022-1039.json.gz": unexpected EOF
