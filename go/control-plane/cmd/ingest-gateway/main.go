@@ -27,8 +27,10 @@ import (
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 
+	commonkafka "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/kafka"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/ingest/auth"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/ingest/config"
+	ingestcontrol "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/ingest/control"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/ingest/dedup"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/ingest/dlq"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/ingest/metrics"
@@ -91,7 +93,12 @@ func main() {
 	}
 
 	handler := initHandler(producer, dlqProducer, deduper, configManager, m, cfg.Handler, logger)
+	if pgDB != nil {
+		handler.SetProbeRegistry(server.NewPostgresProbeRegistry(pgDB))
+	}
 	handler.StartProbeStatusCleaner(mainCtx)
+	closeProbeControl := initProbeControlBridge(mainCtx, cfg.Kafka, rdb, handler, logger)
+	defer closeProbeControl()
 
 	grpcServer := createGRPCServer(cfg, tokenCache, limiter, handler, logger)
 	healthServer := registerHealthCheck(grpcServer)
@@ -141,12 +148,97 @@ func logConfigSummary(logger *zap.Logger, cfg *config.Config) {
 		zap.String("flow_topic", cfg.Kafka.FlowTopic),
 		zap.String("session_topic", cfg.Kafka.SessionTopic),
 		zap.String("pcap_topic", cfg.Kafka.PcapTopic),
+		zap.String("probe_control_topic", cfg.Kafka.ProbeControlTopic),
+		zap.String("probe_ack_topic", cfg.Kafka.ProbeAckTopic),
 		zap.Bool("require_mtls", cfg.Auth.RequireMTLS),
 		zap.Bool("allow_no_token", cfg.Auth.AllowNoToken),
 		zap.String("default_tenant_id", cfg.Auth.DefaultTenantID),
 		zap.Bool("metrics_enabled", cfg.Metrics.Enabled),
 		zap.Bool("enable_dedup", cfg.Dedup.Enabled),
 		zap.Bool("dedup_redis_enabled", cfg.Dedup.RedisEnabled))
+}
+
+func initProbeControlBridge(
+	ctx context.Context,
+	cfg config.KafkaConfig,
+	rdb redis.UniversalClient,
+	handler *server.IngestHandler,
+	logger *zap.Logger,
+) func() {
+	if rdb == nil || len(cfg.Brokers) == 0 {
+		logger.Warn("Probe control bridge disabled: Redis and Kafka are both required")
+		return func() {}
+	}
+	store, err := ingestcontrol.NewRedisCommandStore(rdb, 24*time.Hour)
+	if err != nil {
+		logger.Warn("Probe control bridge disabled", zap.Error(err))
+		return func() {}
+	}
+	ackProducer, err := commonkafka.NewProducer(commonkafka.ProducerConfig{
+		Brokers:      cfg.Brokers,
+		Topic:        cfg.ProbeAckTopic,
+		BatchSize:    100,
+		BatchTimeout: 100 * time.Millisecond,
+		MaxAttempts:  cfg.MaxRetries,
+		RequiredAcks: "all",
+		Compression:  "lz4",
+		Async:        false,
+		Security:     cfg.Security,
+	}, logger)
+	if err != nil {
+		logger.Warn("Probe control ACK publisher unavailable", zap.Error(err))
+		return func() {}
+	}
+	bridge, err := ingestcontrol.NewBridge(
+		store,
+		&ingestcontrol.KafkaAckPublisher{Producer: ackProducer},
+	)
+	if err != nil {
+		_ = ackProducer.Close()
+		logger.Warn("Probe control bridge disabled", zap.Error(err))
+		return func() {}
+	}
+	router, err := ingestcontrol.NewRouter(store)
+	if err != nil {
+		_ = ackProducer.Close()
+		logger.Warn("Probe control router disabled", zap.Error(err))
+		return func() {}
+	}
+	commandConsumer, err := commonkafka.NewConsumer(commonkafka.ConsumerConfig{
+		Brokers:              cfg.Brokers,
+		Topic:                cfg.ProbeControlTopic,
+		GroupID:              cfg.ProbeControlGroup,
+		MaxRetries:           cfg.MaxRetries,
+		RetryBackoff:         time.Second,
+		CommitOnHandlerError: false,
+		EnableDLQ:            false,
+		Security:             cfg.Security,
+	}, logger)
+	if err != nil {
+		_ = ackProducer.Close()
+		logger.Warn("Probe control command consumer unavailable", zap.Error(err))
+		return func() {}
+	}
+	handler.SetProbeControlBridge(bridge)
+	go func() {
+		err := commandConsumer.Consume(ctx, func(messageCtx context.Context, message *commonkafka.ReceivedMessage) error {
+			return router.Route(messageCtx, message.Value)
+		})
+		if err != nil && ctx.Err() == nil {
+			logger.Error("Probe control command consumer stopped", zap.Error(err))
+		}
+	}()
+	logger.Info(
+		"Probe control bridge started",
+		zap.String("command_topic", cfg.ProbeControlTopic),
+		zap.String("ack_topic", cfg.ProbeAckTopic),
+		zap.String("consumer_group", cfg.ProbeControlGroup),
+	)
+	return func() {
+		handler.SetProbeControlBridge(nil)
+		_ = commandConsumer.Close()
+		_ = ackProducer.Close()
+	}
 }
 
 func initRedis(cfg config.RedisConfig, logger *zap.Logger) redis.UniversalClient {
@@ -495,17 +587,18 @@ func createAuthInterceptor(
 	logger *zap.Logger,
 ) *auth.Interceptor {
 	interceptorConfig := auth.InterceptorConfig{
-		RequireMTLS:     cfg.Auth.RequireMTLS,
-		AllowNoToken:    cfg.Auth.AllowNoToken,
-		EnableRateLimit: true,
-		GlobalRPS:       cfg.Quota.GlobalRPS,
-		GlobalBurst:     cfg.Quota.GlobalBurst,
-		TenantRPS:       cfg.Quota.TenantRPS,
-		DefaultTenantID: cfg.Auth.DefaultTenantID,
-		RequireScopes:   cfg.Auth.RequireScopes,
-		RequiredScopes:  cfg.Auth.RequiredScopes,
-		EnableAuditLog:  cfg.Auth.EnableAudit,
-		EnableProbeRBAC: cfg.Auth.EnableProbeRBAC,
+		RequireMTLS:        cfg.Auth.RequireMTLS,
+		SharedMTLSIdentity: cfg.Auth.SharedMTLSIdentity,
+		AllowNoToken:       cfg.Auth.AllowNoToken,
+		EnableRateLimit:    true,
+		GlobalRPS:          cfg.Quota.GlobalRPS,
+		GlobalBurst:        cfg.Quota.GlobalBurst,
+		TenantRPS:          cfg.Quota.TenantRPS,
+		DefaultTenantID:    cfg.Auth.DefaultTenantID,
+		RequireScopes:      cfg.Auth.RequireScopes,
+		RequiredScopes:     cfg.Auth.RequiredScopes,
+		EnableAuditLog:     cfg.Auth.EnableAudit,
+		EnableProbeRBAC:    cfg.Auth.EnableProbeRBAC,
 	}
 
 	interceptor := auth.NewInterceptor(logger, tokenCache, interceptorConfig)

@@ -13,6 +13,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -24,6 +25,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/middleware"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/repository"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/service"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/audit"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/errors"
@@ -297,7 +299,12 @@ func (h *Handler) UpdateCurrentUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.authService.UpdateCurrentUser(r.Context(), claims.UserID, &req)
+	meta := repository.UserCommandMetadata{
+		TenantID: claims.TenantID, ActorID: claims.UserID,
+		IdempotencyKey: r.Header.Get("Idempotency-Key"), TraceID: httpx.GetTraceID(r.Context()),
+		SourceIP: httpx.GetClientIP(r), UserAgent: r.UserAgent(),
+	}
+	user, err := h.authService.UpdateCurrentUser(r.Context(), claims.UserID, claims.TenantID, &req, meta)
 	if err != nil {
 		h.logger.Warn("Profile update failed",
 			zap.String("user_id", claims.UserID.String()),
@@ -306,18 +313,16 @@ func (h *Handler) UpdateCurrentUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if h.auditLogger != nil {
-		h.auditLogger.LogUserAction(r.Context(), audit.EventTypeUserUpdate, claims.TenantID, claims.UserID.String(), claims.UserID.String(),
-			map[string]interface{}{"fields": []string{"email"}})
-	}
-
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(user)
 }
 
 type changePasswordRequest struct {
-	CurrentPassword string `json:"current_password"`
-	NewPassword     string `json:"new_password"`
+	CurrentPassword  string `json:"current_password"`
+	NewPassword      string `json:"new_password"`
+	ActionID         string `json:"action_id,omitempty"`
+	Reason           string `json:"reason,omitempty"`
+	ExpectedRevision *int64 `json:"expected_revision,omitempty"`
 }
 
 // ChangePassword 修改当前用户密码
@@ -336,7 +341,13 @@ func (h *Handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.authService.ChangePassword(r.Context(), claims.UserID, req.CurrentPassword, req.NewPassword); err != nil {
+	meta := repository.UserCommandMetadata{
+		TenantID: claims.TenantID, ActorID: claims.UserID, ActionID: req.ActionID, Reason: req.Reason,
+		IdempotencyKey: r.Header.Get("Idempotency-Key"), ExpectedRevision: req.ExpectedRevision,
+		TraceID: httpx.GetTraceID(r.Context()), SourceIP: httpx.GetClientIP(r), UserAgent: r.UserAgent(),
+	}
+	result, err := h.authService.ChangePassword(r.Context(), claims.UserID, claims.TenantID, req.CurrentPassword, req.NewPassword, meta)
+	if err != nil {
 		h.logger.Warn("Password change failed",
 			zap.String("user_id", claims.UserID.String()),
 			zap.Error(err))
@@ -344,12 +355,10 @@ func (h *Handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if h.auditLogger != nil {
-		h.auditLogger.LogUserAction(r.Context(), audit.EventTypeUserUpdate, claims.TenantID, claims.UserID.String(), claims.UserID.String(),
-			map[string]interface{}{"action": "password_change"})
-	}
-
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Resource-Revision", strconv.FormatInt(result.Revision, 10))
+	w.Header().Set("X-Event-ID", result.EventID)
+	w.Header().Set("X-Outbox-Status", result.OutboxStatus)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Password updated successfully"})
 }
 
@@ -390,7 +399,37 @@ func (h *Handler) UpdateUserSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	category := mux.Vars(r)["category"]
-	settings, err := h.authService.UpdateUserSettings(r.Context(), claims.TenantID, claims.UserID, category, req)
+	actionID, err := optionalStringCommandField(req, "action_id")
+	if err != nil {
+		errors.WriteErrorWithStatus(w, http.StatusBadRequest, errors.ErrCodeInvalidParameter,
+			err.Error(), httpx.GetTraceID(r.Context()), r.URL.Path)
+		return
+	}
+	reason, err := optionalStringCommandField(req, "reason")
+	if err != nil {
+		errors.WriteErrorWithStatus(w, http.StatusBadRequest, errors.ErrCodeInvalidParameter,
+			err.Error(), httpx.GetTraceID(r.Context()), r.URL.Path)
+		return
+	}
+	var expectedRevision *int64
+	if raw, exists := req["expected_revision"]; exists {
+		value, ok := raw.(float64)
+		if !ok || value < 0 || value > 9007199254740991 || value != math.Trunc(value) {
+			errors.WriteErrorWithStatus(w, http.StatusBadRequest, errors.ErrCodeInvalidParameter,
+				"expected_revision must be a non-negative safe integer", httpx.GetTraceID(r.Context()), r.URL.Path)
+			return
+		}
+		revision := int64(value)
+		expectedRevision = &revision
+	}
+	delete(req, "action_id")
+	delete(req, "reason")
+	delete(req, "expected_revision")
+	settings, err := h.authService.UpdateUserSettingsCommand(r.Context(), claims.TenantID, claims.UserID, category, service.UserSettingsUpdateCommand{
+		Settings: req, ActionID: actionID, Reason: reason, ExpectedRevision: expectedRevision,
+		IdempotencyKey: r.Header.Get("Idempotency-Key"), Username: claims.Username,
+		TraceID: httpx.GetTraceID(r.Context()), SourceIP: httpx.GetClientIP(r), UserAgent: r.UserAgent(),
+	})
 	if err != nil {
 		h.logger.Warn("User settings update failed",
 			zap.String("user_id", claims.UserID.String()),
@@ -400,13 +439,22 @@ func (h *Handler) UpdateUserSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if h.auditLogger != nil {
-		h.auditLogger.LogUserAction(r.Context(), audit.EventTypeUserUpdate, claims.TenantID, claims.UserID.String(), claims.UserID.String(),
-			map[string]interface{}{"action": "settings_update", "category": category})
-	}
-
+	w.Header().Set("X-Event-ID", settings.EventID)
+	w.Header().Set("X-Outbox-Status", settings.OutboxStatus)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(settings)
+}
+
+func optionalStringCommandField(values map[string]interface{}, key string) (string, error) {
+	raw, exists := values[key]
+	if !exists {
+		return "", nil
+	}
+	value, ok := raw.(string)
+	if !ok {
+		return "", fmt.Errorf("%s must be a string", key)
+	}
+	return strings.TrimSpace(value), nil
 }
 
 // ValidateToken 验证令牌
@@ -565,7 +613,13 @@ func (h *Handler) OIDCCallback(w http.ResponseWriter, r *http.Request) {
 	redirectURL := stateData["redirect"]
 	clientIP := stateData["client_ip"]
 
-	resp, err := h.authService.HandleOIDCCallback(r.Context(), code, tenantID)
+	meta := repository.UserCommandMetadata{
+		TenantID: tenantID, ActionID: repository.UserOIDCSyncAction,
+		Reason:         "verified OIDC callback identity and role synchronization",
+		IdempotencyKey: "oidc-callback-" + state, TraceID: httpx.GetTraceID(r.Context()),
+		SourceIP: httpx.GetClientIP(r), UserAgent: r.UserAgent(),
+	}
+	resp, err := h.authService.HandleOIDCCallback(r.Context(), code, tenantID, meta)
 	if err != nil {
 		h.logger.Error("OIDC callback failed", zap.Error(err))
 

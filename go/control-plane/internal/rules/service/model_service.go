@@ -37,6 +37,7 @@ type ModelServiceConfig struct {
 	MaxModelsPerTenant            int  `env:"MODEL_MAX_PER_TENANT" envDefault:"50"`
 	MaxVersionsPerModel           int  `env:"MODEL_MAX_VERSIONS_PER_MODEL" envDefault:"100"`
 	AppliedAckExpectedParallelism int  `env:"MODEL_APPLIED_ACK_EXPECTED_PARALLELISM" envDefault:"4"`
+	EnableModelActionOutbox       bool `env:"MODEL_ACTION_OUTBOX_V1_ENABLED" envDefault:"true"`
 	EnableKafkaNotification       bool `env:"MODEL_ENABLE_KAFKA_NOTIFICATION" envDefault:"true"`
 	AutoActivateNewVersion        bool `env:"MODEL_AUTO_ACTIVATE_NEW_VERSION" envDefault:"false"`
 }
@@ -47,6 +48,7 @@ func DefaultModelServiceConfig() ModelServiceConfig {
 		MaxModelsPerTenant:            50,
 		MaxVersionsPerModel:           100,
 		AppliedAckExpectedParallelism: 4,
+		EnableModelActionOutbox:       true,
 		EnableKafkaNotification:       true,
 		AutoActivateNewVersion:        false,
 	}
@@ -90,6 +92,11 @@ func (s *ModelService) StartActionWorker(parent context.Context) {
 		for {
 			if err := s.processModelUpdateOutbox(ctx); err != nil {
 				s.logger.Error("Model update outbox dispatch failed", zap.Error(err))
+			}
+			if s.config.EnableModelActionOutbox {
+				if err := s.processModelActionOutbox(ctx); err != nil {
+					s.logger.Error("Model action outbox dispatch failed", zap.Error(err))
+				}
 			}
 			if err := s.dispatchNextModelAction(ctx); err != nil {
 				s.logger.Error("Model action dispatch failed", zap.Error(err))
@@ -145,30 +152,13 @@ func (s *ModelService) dispatchNextModelAction(ctx context.Context) error {
 		// MODEL_VERSION_ROLLBACK_COMPLETED on the next outbox pass.
 		return nil
 	}
-	if s.publisher == nil {
-		err := errors.New(errors.ErrCodeServiceUnavailable, "model action publisher is not configured")
-		if finishErr := s.repo.FinishModelAction(ctx, job, "failed", "MODEL_ACTION_DISPATCH_FAILED", err.Error()); finishErr != nil {
-			return finishErr
-		}
-		return nil
-	}
-	event, err := json.Marshal(map[string]interface{}{
-		"event_type": "model_action_requested",
-		"job_id":     job.JobID, "action_id": job.ActionID, "tenant_id": job.TenantID,
-		"model_id": job.ModelID, "version": job.Version, "action": job.Action,
-		"target": job.Target, "payload": job.Payload, "requested_by": job.RequestedBy,
-		"requested_at": job.CreatedAt,
-	})
-	if err == nil {
-		err = s.publisher.PublishModelAction(ctx, job.ModelID, event)
-	}
-	if err != nil {
-		if finishErr := s.repo.FinishModelAction(ctx, job, "failed", "MODEL_ACTION_DISPATCH_FAILED", err.Error()); finishErr != nil {
-			return finishErr
-		}
-		return nil
-	}
-	return s.repo.FinishModelAction(ctx, job, "completed", auditAction, "")
+	invariantErr := errors.New(
+		errors.ErrCodeInvalidStateTransition,
+		"asynchronous model actions must be dispatched through model_action_outbox",
+	)
+	return s.repo.FinishModelAction(
+		ctx, job, "failed", "MODEL_ACTION_DISPATCH_INVARIANT_FAILED", invariantErr.Error(),
+	)
 }
 
 // NewModelService 创建模型服务
@@ -836,6 +826,8 @@ func (s *ModelService) SubmitModelAction(
 	job := &model.ModelActionJob{
 		JobID:       uuid.NewString(),
 		ActionID:    req.ActionID,
+		Revision:    1,
+		TraceID:     otel.GetTraceID(ctx),
 		TenantID:    modelObj.TenantID,
 		ModelID:     modelID,
 		Version:     req.Version,
@@ -844,8 +836,12 @@ func (s *ModelService) SubmitModelAction(
 		Payload:     req.Payload,
 		Status:      "queued",
 		RequestedBy: opCtx.UserID,
-		CreatedAt:   time.Now().UTC(),
+		CreatedAt:   time.Now().UTC().Truncate(time.Microsecond),
 	}
+	job.EventID = uuid.NewSHA1(
+		uuid.NameSpaceOID,
+		[]byte("model.action.requested.v1:"+job.JobID),
+	).String()
 	if err := s.repo.CreateModelAction(ctx, job, auditAction, opCtx.IPAddr, opCtx.UserAgent); err != nil {
 		return nil, err
 	}

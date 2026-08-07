@@ -22,6 +22,7 @@ import (
 	alertservice "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/service"
 	commonerrors "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/errors"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/httpx"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/miniohttp"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/minio/minio-go/v7"
@@ -406,9 +407,15 @@ func (h *Handler) alertEvidenceObjectStore() (alertEvidenceObjectStore, error) {
 	if accessKey == "" || secretKey == "" {
 		return nil, errEvidenceObjectStoreUnavailable
 	}
+	secure := strings.EqualFold(strings.TrimSpace(os.Getenv("S3_USE_SSL")), "true")
+	transport, err := miniohttp.NewTransport(secure, os.Getenv("S3_CA_CERT"))
+	if err != nil {
+		return nil, fmt.Errorf("%w: configure MinIO TLS: %v", errEvidenceObjectStoreUnavailable, err)
+	}
 	client, err := minio.New(endpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
-		Secure: strings.EqualFold(strings.TrimSpace(os.Getenv("S3_USE_SSL")), "true"),
+		Creds:     credentials.NewStaticV4(accessKey, secretKey, ""),
+		Secure:    secure,
+		Transport: transport,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", errEvidenceObjectStoreUnavailable, err)

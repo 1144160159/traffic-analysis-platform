@@ -19,7 +19,10 @@ type ModelActionRequest struct {
 // audit row is written in the same transaction.
 type ModelActionJob struct {
 	JobID       string                 `json:"job_id"`
+	EventID     string                 `json:"event_id"`
 	ActionID    string                 `json:"action_id"`
+	Revision    int64                  `json:"revision"`
+	TraceID     string                 `json:"trace_id"`
 	TenantID    string                 `json:"tenant_id"`
 	ModelID     string                 `json:"model_id"`
 	Version     string                 `json:"version,omitempty"`
@@ -27,6 +30,8 @@ type ModelActionJob struct {
 	Target      string                 `json:"target"`
 	Payload     map[string]interface{} `json:"payload,omitempty"`
 	Status      string                 `json:"status"`
+	Result      map[string]interface{} `json:"result,omitempty"`
+	Error       string                 `json:"error,omitempty"`
 	RequestedBy string                 `json:"requested_by"`
 	CreatedAt   time.Time              `json:"created_at"`
 }

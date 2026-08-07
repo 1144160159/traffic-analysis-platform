@@ -22,15 +22,19 @@ import (
 )
 
 type NotificationRuleRecord struct {
-	RuleID     string                 `json:"rule_id"`
-	TenantID   string                 `json:"tenant_id"`
-	Name       string                 `json:"name"`
-	Conditions map[string]interface{} `json:"conditions"`
-	Channels   []string               `json:"channels"`
-	Enabled    bool                   `json:"enabled"`
-	CreatedBy  string                 `json:"created_by"`
-	CreatedAt  time.Time              `json:"created_at"`
-	UpdatedAt  time.Time              `json:"updated_at"`
+	RuleID          string                 `json:"rule_id"`
+	TenantID        string                 `json:"tenant_id"`
+	Name            string                 `json:"name"`
+	Conditions      map[string]interface{} `json:"conditions"`
+	Channels        []string               `json:"channels"`
+	Enabled         bool                   `json:"enabled"`
+	CreatedBy       string                 `json:"created_by"`
+	Revision        int64                  `json:"revision"`
+	EventID         string                 `json:"event_id,omitempty"`
+	OutboxStatus    string                 `json:"outbox_status,omitempty"`
+	IdempotentReuse bool                   `json:"idempotent_reuse,omitempty"`
+	CreatedAt       time.Time              `json:"created_at"`
+	UpdatedAt       time.Time              `json:"updated_at"`
 }
 
 type NotificationTemplateRecord struct {
@@ -45,19 +49,26 @@ type NotificationTemplateRecord struct {
 	ValidationState string                 `json:"validation_status"`
 	Enabled         bool                   `json:"enabled"`
 	CreatedBy       string                 `json:"created_by"`
+	EventID         string                 `json:"event_id,omitempty"`
+	OutboxStatus    string                 `json:"outbox_status,omitempty"`
+	IdempotentReuse bool                   `json:"idempotent_reuse,omitempty"`
 	CreatedAt       time.Time              `json:"created_at"`
 	UpdatedAt       time.Time              `json:"updated_at"`
 }
 
 type NotificationEscalationPolicyRecord struct {
-	PolicyID  string                   `json:"policy_id"`
-	TenantID  string                   `json:"tenant_id"`
-	Name      string                   `json:"name"`
-	Stages    []map[string]interface{} `json:"stages"`
-	Enabled   bool                     `json:"enabled"`
-	CreatedBy string                   `json:"created_by"`
-	CreatedAt time.Time                `json:"created_at"`
-	UpdatedAt time.Time                `json:"updated_at"`
+	PolicyID        string                   `json:"policy_id"`
+	TenantID        string                   `json:"tenant_id"`
+	Name            string                   `json:"name"`
+	Stages          []map[string]interface{} `json:"stages"`
+	Enabled         bool                     `json:"enabled"`
+	CreatedBy       string                   `json:"created_by"`
+	Revision        int64                    `json:"revision"`
+	EventID         string                   `json:"event_id,omitempty"`
+	OutboxStatus    string                   `json:"outbox_status,omitempty"`
+	IdempotentReuse bool                     `json:"idempotent_reuse,omitempty"`
+	CreatedAt       time.Time                `json:"created_at"`
+	UpdatedAt       time.Time                `json:"updated_at"`
 }
 
 type NotificationDeliveryRecord struct {
@@ -77,25 +88,34 @@ type NotificationDeliveryRecord struct {
 }
 
 type notificationRuleRequest struct {
-	Name       string                 `json:"name"`
-	Conditions map[string]interface{} `json:"conditions"`
-	Channels   []string               `json:"channels"`
-	Enabled    *bool                  `json:"enabled"`
+	Name             string                 `json:"name"`
+	Conditions       map[string]interface{} `json:"conditions"`
+	Channels         []string               `json:"channels"`
+	Enabled          *bool                  `json:"enabled"`
+	ActionID         string                 `json:"action_id,omitempty"`
+	Reason           string                 `json:"reason,omitempty"`
+	ExpectedRevision *int64                 `json:"expected_revision,omitempty"`
 }
 
 type notificationTemplateRequest struct {
-	TemplateType   string                 `json:"template_type"`
-	Name           string                 `json:"name"`
-	Subject        string                 `json:"subject"`
-	Body           string                 `json:"body"`
-	VariableSchema map[string]interface{} `json:"variable_schema"`
-	Enabled        *bool                  `json:"enabled"`
+	TemplateType    string                 `json:"template_type"`
+	Name            string                 `json:"name"`
+	Subject         string                 `json:"subject"`
+	Body            string                 `json:"body"`
+	VariableSchema  map[string]interface{} `json:"variable_schema"`
+	Enabled         *bool                  `json:"enabled"`
+	ActionID        string                 `json:"action_id,omitempty"`
+	Reason          string                 `json:"reason,omitempty"`
+	ExpectedVersion *int                   `json:"expected_version,omitempty"`
 }
 
 type notificationEscalationRequest struct {
-	Name    string                   `json:"name"`
-	Stages  []map[string]interface{} `json:"stages"`
-	Enabled *bool                    `json:"enabled"`
+	Name             string                   `json:"name"`
+	Stages           []map[string]interface{} `json:"stages"`
+	Enabled          *bool                    `json:"enabled"`
+	ActionID         string                   `json:"action_id,omitempty"`
+	Reason           string                   `json:"reason,omitempty"`
+	ExpectedRevision *int64                   `json:"expected_revision,omitempty"`
 }
 
 func (h *AdvancedHandler) GetNotificationWorkbench(w http.ResponseWriter, r *http.Request) {
@@ -216,15 +236,13 @@ func (h *AdvancedHandler) CreateNotificationRule(w http.ResponseWriter, r *http.
 	if !h.requireNotificationRepository(w) {
 		return
 	}
-	record, err := h.advancedRepo.CreateNotificationRule(r.Context(), tenantIDFromRequest(r), httpx.GetUserID(r.Context()), req)
+	record, err := h.advancedRepo.CreateNotificationRule(r.Context(), r, tenantIDFromRequest(r), httpx.GetUserID(r.Context()), req)
 	if err != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]interface{}{"success": false, "message": err.Error()})
+		writeNotificationRuleCommandError(w, r.Context(), err)
 		return
 	}
-	if err := h.recordNotificationAudit(r, "NOTIFICATION_RULE_CREATED", "notification_rule", record.RuleID, map[string]interface{}{"name": record.Name, "channels": record.Channels, "enabled": record.Enabled}); err != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]interface{}{"success": false, "message": err.Error()})
-		return
-	}
+	w.Header().Set("X-Event-ID", record.EventID)
+	w.Header().Set("X-Outbox-Status", record.OutboxStatus)
 	writeJSON(w, http.StatusCreated, map[string]interface{}{"success": true, "data": record})
 }
 
@@ -244,19 +262,17 @@ func (h *AdvancedHandler) PatchNotificationRule(w http.ResponseWriter, r *http.R
 		writeJSON(w, http.StatusBadRequest, map[string]interface{}{"success": false, "message": err.Error()})
 		return
 	}
-	record, ok, err := h.advancedRepo.PatchNotificationRule(r.Context(), tenantIDFromRequest(r), mux.Vars(r)["id"], req)
+	record, ok, err := h.advancedRepo.PatchNotificationRule(r.Context(), r, tenantIDFromRequest(r), mux.Vars(r)["id"], httpx.GetUserID(r.Context()), req)
 	if err != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]interface{}{"success": false, "message": err.Error()})
+		writeNotificationRuleCommandError(w, r.Context(), err)
 		return
 	}
 	if !ok {
 		writeJSON(w, http.StatusNotFound, map[string]interface{}{"success": false, "message": "notification rule not found"})
 		return
 	}
-	if err := h.recordNotificationAudit(r, "NOTIFICATION_RULE_UPDATED", "notification_rule", record.RuleID, map[string]interface{}{"name": record.Name, "channels": record.Channels, "enabled": record.Enabled}); err != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]interface{}{"success": false, "message": err.Error()})
-		return
-	}
+	w.Header().Set("X-Event-ID", record.EventID)
+	w.Header().Set("X-Outbox-Status", record.OutboxStatus)
 	writeJSON(w, http.StatusOK, map[string]interface{}{"success": true, "data": record})
 }
 
@@ -276,15 +292,13 @@ func (h *AdvancedHandler) CreateNotificationTemplate(w http.ResponseWriter, r *h
 	if !h.requireNotificationRepository(w) {
 		return
 	}
-	record, err := h.advancedRepo.CreateNotificationTemplate(r.Context(), tenantIDFromRequest(r), httpx.GetUserID(r.Context()), req)
+	record, err := h.advancedRepo.CreateNotificationTemplate(r.Context(), r, tenantIDFromRequest(r), httpx.GetUserID(r.Context()), req)
 	if err != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]interface{}{"success": false, "message": err.Error()})
+		writeNotificationRuleCommandError(w, r.Context(), err)
 		return
 	}
-	if err := h.recordNotificationAudit(r, "NOTIFICATION_TEMPLATE_CREATED", "notification_template", record.TemplateID, map[string]interface{}{"name": record.Name, "version": record.Version}); err != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]interface{}{"success": false, "message": err.Error()})
-		return
-	}
+	w.Header().Set("X-Event-ID", record.EventID)
+	w.Header().Set("X-Outbox-Status", record.OutboxStatus)
 	writeJSON(w, http.StatusCreated, map[string]interface{}{"success": true, "data": record})
 }
 
@@ -304,19 +318,17 @@ func (h *AdvancedHandler) PatchNotificationTemplate(w http.ResponseWriter, r *ht
 		writeJSON(w, http.StatusBadRequest, map[string]interface{}{"success": false, "message": err.Error()})
 		return
 	}
-	record, ok, err := h.advancedRepo.PatchNotificationTemplate(r.Context(), tenantIDFromRequest(r), mux.Vars(r)["id"], req)
+	record, ok, err := h.advancedRepo.PatchNotificationTemplate(r.Context(), r, tenantIDFromRequest(r), mux.Vars(r)["id"], httpx.GetUserID(r.Context()), req)
 	if err != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]interface{}{"success": false, "message": err.Error()})
+		writeNotificationRuleCommandError(w, r.Context(), err)
 		return
 	}
 	if !ok {
 		writeJSON(w, http.StatusNotFound, map[string]interface{}{"success": false, "message": "notification template not found"})
 		return
 	}
-	if err := h.recordNotificationAudit(r, "NOTIFICATION_TEMPLATE_UPDATED", "notification_template", record.TemplateID, map[string]interface{}{"name": record.Name, "version": record.Version, "enabled": record.Enabled}); err != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]interface{}{"success": false, "message": err.Error()})
-		return
-	}
+	w.Header().Set("X-Event-ID", record.EventID)
+	w.Header().Set("X-Outbox-Status", record.OutboxStatus)
 	writeJSON(w, http.StatusOK, map[string]interface{}{"success": true, "data": record})
 }
 
@@ -408,15 +420,13 @@ func (h *AdvancedHandler) CreateNotificationEscalationPolicy(w http.ResponseWrit
 	if !h.requireNotificationRepository(w) {
 		return
 	}
-	record, err := h.advancedRepo.CreateNotificationEscalationPolicy(r.Context(), tenantIDFromRequest(r), httpx.GetUserID(r.Context()), req)
+	record, err := h.advancedRepo.CreateNotificationEscalationPolicy(r.Context(), r, tenantIDFromRequest(r), httpx.GetUserID(r.Context()), req)
 	if err != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]interface{}{"success": false, "message": err.Error()})
+		writeNotificationRuleCommandError(w, r.Context(), err)
 		return
 	}
-	if err := h.recordNotificationAudit(r, "NOTIFICATION_ESCALATION_CREATED", "notification_escalation_policy", record.PolicyID, map[string]interface{}{"name": record.Name, "stages": len(record.Stages)}); err != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]interface{}{"success": false, "message": err.Error()})
-		return
-	}
+	w.Header().Set("X-Event-ID", record.EventID)
+	w.Header().Set("X-Outbox-Status", record.OutboxStatus)
 	writeJSON(w, http.StatusCreated, map[string]interface{}{"success": true, "data": record})
 }
 
@@ -436,19 +446,17 @@ func (h *AdvancedHandler) PatchNotificationEscalationPolicy(w http.ResponseWrite
 		writeJSON(w, http.StatusBadRequest, map[string]interface{}{"success": false, "message": err.Error()})
 		return
 	}
-	record, ok, err := h.advancedRepo.PatchNotificationEscalationPolicy(r.Context(), tenantIDFromRequest(r), mux.Vars(r)["id"], req)
+	record, ok, err := h.advancedRepo.PatchNotificationEscalationPolicy(r.Context(), r, tenantIDFromRequest(r), mux.Vars(r)["id"], httpx.GetUserID(r.Context()), req)
 	if err != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]interface{}{"success": false, "message": err.Error()})
+		writeNotificationRuleCommandError(w, r.Context(), err)
 		return
 	}
 	if !ok {
 		writeJSON(w, http.StatusNotFound, map[string]interface{}{"success": false, "message": "notification escalation policy not found"})
 		return
 	}
-	if err := h.recordNotificationAudit(r, "NOTIFICATION_ESCALATION_UPDATED", "notification_escalation_policy", record.PolicyID, map[string]interface{}{"name": record.Name, "enabled": record.Enabled}); err != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]interface{}{"success": false, "message": err.Error()})
-		return
-	}
+	w.Header().Set("X-Event-ID", record.EventID)
+	w.Header().Set("X-Outbox-Status", record.OutboxStatus)
 	writeJSON(w, http.StatusOK, map[string]interface{}{"success": true, "data": record})
 }
 
@@ -684,7 +692,7 @@ var notificationChannelNames = map[string]struct{}{
 }
 
 func (r *AdvancedRepository) ListNotificationRules(ctx context.Context, tenantID string, limit int) ([]NotificationRuleRecord, error) {
-	rows, err := r.db.QueryContext(ctx, `SELECT rule_id::text, tenant_id, name, conditions, channels, enabled, COALESCE(created_by::text, ''), created_at, updated_at FROM notification_rules WHERE tenant_id=$1 ORDER BY updated_at DESC, name ASC, rule_id ASC LIMIT $2`, tenantID, limit)
+	rows, err := r.db.QueryContext(ctx, `SELECT rule_id::text, tenant_id, name, conditions, channels, enabled, COALESCE(created_by::text, ''), revision, created_at, updated_at FROM notification_rules WHERE tenant_id=$1 ORDER BY updated_at DESC, name ASC, rule_id ASC LIMIT $2`, tenantID, limit)
 	if err != nil {
 		return nil, fmt.Errorf("list notification rules: %w", err)
 	}
@@ -989,41 +997,12 @@ func notificationEscalationConditionMatches(condition string, alert *notificatio
 	return false
 }
 
-func (r *AdvancedRepository) CreateNotificationRule(ctx context.Context, tenantID, createdBy string, req notificationRuleRequest) (*NotificationRuleRecord, error) {
-	conditions, _ := json.Marshal(req.Conditions)
-	channels, _ := json.Marshal(req.Channels)
-	enabled := true
-	if req.Enabled != nil {
-		enabled = *req.Enabled
-	}
-	createdBy = validNotificationUUID(createdBy)
-	row := r.db.QueryRowContext(ctx, `INSERT INTO notification_rules (tenant_id,name,conditions,channels,enabled,created_by) VALUES ($1,$2,$3::jsonb,$4::jsonb,$5,NULLIF($6,'')::uuid) RETURNING rule_id::text,tenant_id,name,conditions,channels,enabled,COALESCE(created_by::text,''),created_at,updated_at`, tenantID, strings.TrimSpace(req.Name), string(conditions), string(channels), enabled, createdBy)
-	record, err := scanNotificationRule(row)
-	if err != nil {
-		return nil, fmt.Errorf("create notification rule: %w", err)
-	}
-	return &record, nil
+func (r *AdvancedRepository) CreateNotificationRule(ctx context.Context, request *http.Request, tenantID, createdBy string, req notificationRuleRequest) (*NotificationRuleRecord, error) {
+	return r.createNotificationRuleCommand(ctx, request, tenantID, createdBy, req)
 }
 
-func (r *AdvancedRepository) PatchNotificationRule(ctx context.Context, tenantID, ruleID string, req notificationRuleRequest) (*NotificationRuleRecord, bool, error) {
-	var conditions, channels interface{}
-	if req.Conditions != nil {
-		encoded, _ := json.Marshal(req.Conditions)
-		conditions = string(encoded)
-	}
-	if req.Channels != nil {
-		encoded, _ := json.Marshal(req.Channels)
-		channels = string(encoded)
-	}
-	row := r.db.QueryRowContext(ctx, `UPDATE notification_rules SET name=COALESCE(NULLIF($3,''),name),conditions=COALESCE($4::jsonb,conditions),channels=COALESCE($5::jsonb,channels),enabled=COALESCE($6,enabled),updated_at=now() WHERE tenant_id=$1 AND rule_id::text=$2 RETURNING rule_id::text,tenant_id,name,conditions,channels,enabled,COALESCE(created_by::text,''),created_at,updated_at`, tenantID, ruleID, strings.TrimSpace(req.Name), conditions, channels, req.Enabled)
-	record, err := scanNotificationRule(row)
-	if err == sql.ErrNoRows {
-		return nil, false, nil
-	}
-	if err != nil {
-		return nil, false, fmt.Errorf("patch notification rule: %w", err)
-	}
-	return &record, true, nil
+func (r *AdvancedRepository) PatchNotificationRule(ctx context.Context, request *http.Request, tenantID, ruleID, actor string, req notificationRuleRequest) (*NotificationRuleRecord, bool, error) {
+	return r.patchNotificationRuleCommand(ctx, request, tenantID, ruleID, actor, req)
 }
 
 type notificationRuleScanner interface{ Scan(...interface{}) error }
@@ -1031,7 +1010,7 @@ type notificationRuleScanner interface{ Scan(...interface{}) error }
 func scanNotificationRule(scanner notificationRuleScanner) (NotificationRuleRecord, error) {
 	var record NotificationRuleRecord
 	var conditions, channels []byte
-	if err := scanner.Scan(&record.RuleID, &record.TenantID, &record.Name, &conditions, &channels, &record.Enabled, &record.CreatedBy, &record.CreatedAt, &record.UpdatedAt); err != nil {
+	if err := scanner.Scan(&record.RuleID, &record.TenantID, &record.Name, &conditions, &channels, &record.Enabled, &record.CreatedBy, &record.Revision, &record.CreatedAt, &record.UpdatedAt); err != nil {
 		return record, err
 	}
 	_ = json.Unmarshal(conditions, &record.Conditions)
@@ -1073,33 +1052,12 @@ func (r *AdvancedRepository) GetNotificationTemplate(ctx context.Context, tenant
 	return &record, true, nil
 }
 
-func (r *AdvancedRepository) CreateNotificationTemplate(ctx context.Context, tenantID, createdBy string, req notificationTemplateRequest) (*NotificationTemplateRecord, error) {
-	variables, _ := json.Marshal(req.VariableSchema)
-	enabled := true
-	if req.Enabled != nil {
-		enabled = *req.Enabled
-	}
-	record, err := scanNotificationTemplate(r.db.QueryRowContext(ctx, `INSERT INTO notification_templates (tenant_id,template_type,name,subject,body,variable_schema,enabled,created_by) VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7,$8) RETURNING template_id::text,tenant_id,template_type,name,version,subject,body,variable_schema,validation_status,enabled,created_by,created_at,updated_at`, tenantID, strings.TrimSpace(req.TemplateType), strings.TrimSpace(req.Name), req.Subject, req.Body, string(variables), enabled, createdBy))
-	if err != nil {
-		return nil, fmt.Errorf("create notification template: %w", err)
-	}
-	return &record, nil
+func (r *AdvancedRepository) CreateNotificationTemplate(ctx context.Context, request *http.Request, tenantID, createdBy string, req notificationTemplateRequest) (*NotificationTemplateRecord, error) {
+	return r.createNotificationTemplateCommand(ctx, request, tenantID, createdBy, req)
 }
 
-func (r *AdvancedRepository) PatchNotificationTemplate(ctx context.Context, tenantID, templateID string, req notificationTemplateRequest) (*NotificationTemplateRecord, bool, error) {
-	var variables interface{}
-	if req.VariableSchema != nil {
-		encoded, _ := json.Marshal(req.VariableSchema)
-		variables = string(encoded)
-	}
-	record, err := scanNotificationTemplate(r.db.QueryRowContext(ctx, `UPDATE notification_templates SET template_type=COALESCE(NULLIF($3,''),template_type),name=COALESCE(NULLIF($4,''),name),subject=CASE WHEN $5='' THEN subject ELSE $5 END,body=CASE WHEN $6='' THEN body ELSE $6 END,variable_schema=COALESCE($7::jsonb,variable_schema),enabled=COALESCE($8,enabled),version=version+1,updated_at=now() WHERE tenant_id=$1 AND template_id::text=$2 RETURNING template_id::text,tenant_id,template_type,name,version,subject,body,variable_schema,validation_status,enabled,created_by,created_at,updated_at`, tenantID, templateID, strings.TrimSpace(req.TemplateType), strings.TrimSpace(req.Name), req.Subject, req.Body, variables, req.Enabled))
-	if err == sql.ErrNoRows {
-		return nil, false, nil
-	}
-	if err != nil {
-		return nil, false, fmt.Errorf("patch notification template: %w", err)
-	}
-	return &record, true, nil
+func (r *AdvancedRepository) PatchNotificationTemplate(ctx context.Context, request *http.Request, tenantID, templateID, actor string, req notificationTemplateRequest) (*NotificationTemplateRecord, bool, error) {
+	return r.patchNotificationTemplateCommand(ctx, request, tenantID, templateID, actor, req)
 }
 
 type notificationTemplateScanner interface{ Scan(...interface{}) error }
@@ -1119,7 +1077,7 @@ func scanNotificationTemplate(scanner notificationTemplateScanner) (Notification
 }
 
 func (r *AdvancedRepository) ListNotificationEscalationPolicies(ctx context.Context, tenantID string, limit int) ([]NotificationEscalationPolicyRecord, error) {
-	rows, err := r.db.QueryContext(ctx, `SELECT policy_id::text,tenant_id,name,stages,enabled,created_by,created_at,updated_at FROM notification_escalation_policies WHERE tenant_id=$1 ORDER BY updated_at DESC, name ASC, policy_id ASC LIMIT $2`, tenantID, limit)
+	rows, err := r.db.QueryContext(ctx, `SELECT policy_id::text,tenant_id,name,stages,enabled,created_by,revision,created_at,updated_at FROM notification_escalation_policies WHERE tenant_id=$1 ORDER BY updated_at DESC, name ASC, policy_id ASC LIMIT $2`, tenantID, limit)
 	if err != nil {
 		return nil, fmt.Errorf("list notification escalation policies: %w", err)
 	}
@@ -1135,33 +1093,12 @@ func (r *AdvancedRepository) ListNotificationEscalationPolicies(ctx context.Cont
 	return result, rows.Err()
 }
 
-func (r *AdvancedRepository) CreateNotificationEscalationPolicy(ctx context.Context, tenantID, createdBy string, req notificationEscalationRequest) (*NotificationEscalationPolicyRecord, error) {
-	stages, _ := json.Marshal(req.Stages)
-	enabled := true
-	if req.Enabled != nil {
-		enabled = *req.Enabled
-	}
-	record, err := scanNotificationEscalationPolicy(r.db.QueryRowContext(ctx, `INSERT INTO notification_escalation_policies (tenant_id,name,stages,enabled,created_by) VALUES ($1,$2,$3::jsonb,$4,$5) RETURNING policy_id::text,tenant_id,name,stages,enabled,created_by,created_at,updated_at`, tenantID, strings.TrimSpace(req.Name), string(stages), enabled, createdBy))
-	if err != nil {
-		return nil, fmt.Errorf("create notification escalation policy: %w", err)
-	}
-	return &record, nil
+func (r *AdvancedRepository) CreateNotificationEscalationPolicy(ctx context.Context, request *http.Request, tenantID, createdBy string, req notificationEscalationRequest) (*NotificationEscalationPolicyRecord, error) {
+	return r.createNotificationEscalationCommand(ctx, request, tenantID, createdBy, req)
 }
 
-func (r *AdvancedRepository) PatchNotificationEscalationPolicy(ctx context.Context, tenantID, policyID string, req notificationEscalationRequest) (*NotificationEscalationPolicyRecord, bool, error) {
-	var stages interface{}
-	if req.Stages != nil {
-		encoded, _ := json.Marshal(req.Stages)
-		stages = string(encoded)
-	}
-	record, err := scanNotificationEscalationPolicy(r.db.QueryRowContext(ctx, `UPDATE notification_escalation_policies SET name=COALESCE(NULLIF($3,''),name),stages=COALESCE($4::jsonb,stages),enabled=COALESCE($5,enabled),updated_at=now() WHERE tenant_id=$1 AND policy_id::text=$2 RETURNING policy_id::text,tenant_id,name,stages,enabled,created_by,created_at,updated_at`, tenantID, policyID, strings.TrimSpace(req.Name), stages, req.Enabled))
-	if err == sql.ErrNoRows {
-		return nil, false, nil
-	}
-	if err != nil {
-		return nil, false, fmt.Errorf("patch notification escalation policy: %w", err)
-	}
-	return &record, true, nil
+func (r *AdvancedRepository) PatchNotificationEscalationPolicy(ctx context.Context, request *http.Request, tenantID, policyID, actor string, req notificationEscalationRequest) (*NotificationEscalationPolicyRecord, bool, error) {
+	return r.patchNotificationEscalationCommand(ctx, request, tenantID, policyID, actor, req)
 }
 
 type notificationEscalationScanner interface{ Scan(...interface{}) error }
@@ -1169,7 +1106,7 @@ type notificationEscalationScanner interface{ Scan(...interface{}) error }
 func scanNotificationEscalationPolicy(scanner notificationEscalationScanner) (NotificationEscalationPolicyRecord, error) {
 	var record NotificationEscalationPolicyRecord
 	var stages []byte
-	err := scanner.Scan(&record.PolicyID, &record.TenantID, &record.Name, &stages, &record.Enabled, &record.CreatedBy, &record.CreatedAt, &record.UpdatedAt)
+	err := scanner.Scan(&record.PolicyID, &record.TenantID, &record.Name, &stages, &record.Enabled, &record.CreatedBy, &record.Revision, &record.CreatedAt, &record.UpdatedAt)
 	if err != nil {
 		return record, err
 	}

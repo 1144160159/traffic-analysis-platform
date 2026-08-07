@@ -8,6 +8,7 @@ package persistence
 
 import (
 	"context"
+	stderrors "errors"
 	"fmt"
 	"time"
 
@@ -20,6 +21,36 @@ import (
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/logging"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/otel"
 )
+
+type AlertPrimaryWriter interface {
+	WriteAlert(context.Context, *Alert) error
+	WriteBatch(context.Context, []*Alert) error
+	Ping(context.Context) error
+	Close() error
+}
+
+type AlertProjectionWriter interface {
+	AlertPrimaryWriter
+	TargetVersion() string
+}
+
+type WriteOutcome struct {
+	ClickHouseCommitted bool
+	OpenSearchCommitted bool
+	DebtRecorded        bool
+	DebtCount           int
+}
+
+type ProjectionPendingError struct {
+	Cause     error
+	DebtCount int
+}
+
+func (e *ProjectionPendingError) Error() string {
+	return fmt.Sprintf("ClickHouse committed but OpenSearch projection is pending for %d alerts: %v", e.DebtCount, e.Cause)
+}
+
+func (e *ProjectionPendingError) Unwrap() error { return e.Cause }
 
 // DualWriter metrics
 var (
@@ -66,8 +97,9 @@ var (
 
 // DualWriter 双写器（ClickHouse + OpenSearch）
 type DualWriter struct {
-	chWriter      *ClickHouseWriter
-	osWriter      *OpenSearchWriter
+	chWriter      AlertPrimaryWriter
+	osWriter      AlertProjectionWriter
+	debtRecorder  ProjectionDebtRecorder
 	fallback      *fallback.FallbackStrategy
 	maxRetries    int
 	retryInterval time.Duration
@@ -76,8 +108,8 @@ type DualWriter struct {
 
 // NewDualWriter 创建双写器
 func NewDualWriter(
-	chWriter *ClickHouseWriter,
-	osWriter *OpenSearchWriter,
+	chWriter AlertPrimaryWriter,
+	osWriter AlertProjectionWriter,
 	failThreshold int,
 	logger *zap.Logger,
 ) *DualWriter {
@@ -89,6 +121,12 @@ func NewDualWriter(
 		retryInterval: 100 * time.Millisecond,
 		logger:        logger,
 	}
+}
+
+// SetProjectionDebtRecorder installs the durable acknowledgement barrier. It
+// must only be called after migration 202608041100 passes CheckSchema.
+func (d *DualWriter) SetProjectionDebtRecorder(recorder ProjectionDebtRecorder) {
+	d.debtRecorder = recorder
 }
 
 // writeResult 写入结果
@@ -113,6 +151,11 @@ func (d *DualWriter) WriteAlert(ctx context.Context, alert *Alert) error {
 
 	// 使用 channel 收集结果（修复数据竞争）
 	resultChan := make(chan writeResult, 2)
+	var chAttempted, osAttempted bool
+	for _, target := range targets {
+		chAttempted = chAttempted || target == fallback.StorageClickHouse
+		osAttempted = osAttempted || target == fallback.StorageOpenSearch
+	}
 
 	for _, target := range targets {
 		go func(t fallback.StorageType) {
@@ -159,6 +202,12 @@ func (d *DualWriter) WriteAlert(ctx context.Context, alert *Alert) error {
 			}
 		}
 	}
+	if !chAttempted {
+		chErr = stderrors.New("ClickHouse write target was unavailable")
+	}
+	if !osAttempted {
+		osErr = stderrors.New("OpenSearch write target was unavailable")
+	}
 
 	// 记录结果
 	logger := logging.L(ctx)
@@ -181,6 +230,18 @@ func (d *DualWriter) WriteAlert(ctx context.Context, alert *Alert) error {
 
 	if chErr != nil || osErr != nil {
 		dualWritePartialFailures.Inc()
+	}
+	if chErr == nil && osErr != nil {
+		if d.debtRecorder == nil {
+			return fmt.Errorf("OpenSearch projection failed and durable debt recorder is unavailable: %w", osErr)
+		}
+		if err := d.debtRecorder.RecordProjectionDebt(ctx, []*Alert{alert}, d.osWriter.TargetVersion(), osErr); err != nil {
+			return fmt.Errorf("OpenSearch projection failed and debt persistence failed: projection=%v debt=%w", osErr, err)
+		}
+		return &ProjectionPendingError{Cause: osErr, DebtCount: 1}
+	}
+	if chErr != nil {
+		return fmt.Errorf("primary storage failed: %w", chErr)
 	}
 
 	return nil
@@ -238,19 +299,33 @@ func (d *DualWriter) writeToOpenSearch(ctx context.Context, alert *Alert) error 
 	return lastErr
 }
 
-// WriteBatch 批量写入（修复版：消除数据竞争）
+// WriteBatch preserves the conservative caller contract: a projection that is
+// merely queued for repair is not represented as final success.
 func (d *DualWriter) WriteBatch(ctx context.Context, alerts []*Alert) error {
+	_, err := d.WriteBatchWithOutcome(ctx, alerts)
+	return err
+}
+
+// WriteBatchWithOutcome lets the Kafka consumer distinguish a durably recorded
+// projection debt from a write failure that must block offset advancement.
+func (d *DualWriter) WriteBatchWithOutcome(ctx context.Context, alerts []*Alert) (WriteOutcome, error) {
+	var outcome WriteOutcome
 	ctx, span := otel.StartSpan(ctx, "dual_writer.write_batch")
 	defer span.End()
 
 	if len(alerts) == 0 {
-		return nil
+		return outcome, nil
 	}
 
 	targets := d.fallback.GetWriteTargets()
 	if len(targets) == 0 {
 		dualWriteTotalFailures.Inc()
-		return errors.New(errors.ErrCodeServiceUnavailable, "all storage backends unavailable")
+		return outcome, errors.New(errors.ErrCodeServiceUnavailable, "all storage backends unavailable")
+	}
+	var chAttempted, osAttempted bool
+	for _, target := range targets {
+		chAttempted = chAttempted || target == fallback.StorageClickHouse
+		osAttempted = osAttempted || target == fallback.StorageOpenSearch
 	}
 
 	// 使用 channel 收集结果（修复数据竞争）
@@ -307,6 +382,14 @@ func (d *DualWriter) WriteBatch(ctx context.Context, alerts []*Alert) error {
 			osErr = result.err
 		}
 	}
+	if !chAttempted {
+		chErr = stderrors.New("ClickHouse write target was unavailable")
+	}
+	if !osAttempted {
+		osErr = stderrors.New("OpenSearch write target was unavailable")
+	}
+	outcome.ClickHouseCommitted = chErr == nil
+	outcome.OpenSearchCommitted = osErr == nil
 
 	if chErr != nil && osErr != nil {
 		dualWriteTotalFailures.Inc()
@@ -314,7 +397,7 @@ func (d *DualWriter) WriteBatch(ctx context.Context, alerts []*Alert) error {
 			zap.Int("count", len(alerts)),
 			zap.NamedError("clickhouse_error", chErr),
 			zap.NamedError("opensearch_error", osErr))
-		return fmt.Errorf("all backends failed: ch=%v, os=%v", chErr, osErr)
+		return outcome, fmt.Errorf("all backends failed: ch=%v, os=%v", chErr, osErr)
 	}
 
 	if chErr != nil {
@@ -323,18 +406,54 @@ func (d *DualWriter) WriteBatch(ctx context.Context, alerts []*Alert) error {
 			zap.Int("count", len(alerts)),
 			zap.Error(chErr))
 		// ClickHouse失败视为严重错误，返回错误
-		return fmt.Errorf("primary storage failed: %w", chErr)
+		return outcome, fmt.Errorf("primary storage failed: %w", chErr)
 	}
 
 	if osErr != nil {
 		dualWritePartialFailures.Inc()
-		logging.L(ctx).Warn("Secondary storage (OpenSearch) failed, continuing",
+		logging.L(ctx).Warn("OpenSearch projection failed; durable debt is required before offset commit",
 			zap.Int("count", len(alerts)),
 			zap.Error(osErr))
-		// OpenSearch失败仅记录警告，不影响主流程
+		failedAlerts := projectionDebtAlerts(alerts, osErr)
+		if d.debtRecorder == nil {
+			return outcome, fmt.Errorf("OpenSearch projection failed and durable debt recorder is unavailable: %w", osErr)
+		}
+		if err := d.debtRecorder.RecordProjectionDebt(ctx, failedAlerts, d.osWriter.TargetVersion(), osErr); err != nil {
+			return outcome, fmt.Errorf("OpenSearch projection failed and debt persistence failed: projection=%v debt=%w", osErr, err)
+		}
+		outcome.DebtRecorded = true
+		outcome.DebtCount = len(failedAlerts)
+		return outcome, &ProjectionPendingError{Cause: osErr, DebtCount: len(failedAlerts)}
 	}
 
-	return nil
+	return outcome, nil
+}
+
+func projectionDebtAlerts(alerts []*Alert, projectionErr error) []*Alert {
+	var partial interface{ FailedIDs() []string }
+	if stderrors.As(projectionErr, &partial) {
+		ids := partial.FailedIDs()
+		if len(ids) > 0 {
+			wanted := make(map[string]struct{}, len(ids))
+			for _, id := range ids {
+				wanted[id] = struct{}{}
+			}
+			failed := make([]*Alert, 0, len(ids))
+			for _, alert := range alerts {
+				if alert != nil {
+					if _, ok := wanted[alert.AlertID]; ok {
+						failed = append(failed, alert)
+					}
+				}
+			}
+			if len(failed) == len(wanted) {
+				return failed
+			}
+		}
+	}
+	// Transport errors, malformed acknowledgements, and incomplete bulk
+	// responses make item-level success unknowable, so debt all submitted IDs.
+	return alerts
 }
 
 // GetStatus 获取存储健康状态

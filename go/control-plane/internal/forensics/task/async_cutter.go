@@ -28,19 +28,25 @@ import (
 
 // CutTaskRequest 裁剪任务请求
 type CutTaskRequest struct {
-	TenantID    string `json:"tenant_id"`
-	UserID      string `json:"user_id"`
-	AssetID     string `json:"asset_id,omitempty"`
-	ProbeID     string `json:"probe_id,omitempty"`
-	SrcIP       string `json:"src_ip,omitempty"`
-	DstIP       string `json:"dst_ip,omitempty"`
-	SrcPort     uint16 `json:"src_port,omitempty"`
-	DstPort     uint16 `json:"dst_port,omitempty"`
-	Protocol    uint8  `json:"protocol,omitempty"`
-	CommunityID string `json:"community_id,omitempty"`
-	StartTime   int64  `json:"start_time"`
-	EndTime     int64  `json:"end_time"`
-	MaxPackets  int64  `json:"max_packets,omitempty"`
+	TenantID     string                     `json:"tenant_id"`
+	UserID       string                     `json:"user_id"`
+	AssetID      string                     `json:"asset_id,omitempty"`
+	AlertID      string                     `json:"alert_id,omitempty"`
+	CampaignID   string                     `json:"campaign_id,omitempty"`
+	BaselineID   string                     `json:"baseline_id,omitempty"`
+	EvidenceID   string                     `json:"evidence_id,omitempty"`
+	EvidenceType string                     `json:"evidence_type,omitempty"`
+	ProbeID      string                     `json:"probe_id,omitempty"`
+	SrcIP        string                     `json:"src_ip,omitempty"`
+	DstIP        string                     `json:"dst_ip,omitempty"`
+	SrcPort      uint16                     `json:"src_port,omitempty"`
+	DstPort      uint16                     `json:"dst_port,omitempty"`
+	Protocol     uint8                      `json:"protocol,omitempty"`
+	CommunityID  string                     `json:"community_id,omitempty"`
+	StartTime    int64                      `json:"start_time"`
+	EndTime      int64                      `json:"end_time"`
+	MaxPackets   int64                      `json:"max_packets,omitempty"`
+	CommandMeta  repository.TaskCommandMeta `json:"-"`
 }
 
 // Validate 验证请求
@@ -76,9 +82,16 @@ func (r *CutTaskRequest) ToCutQuery() *cutter.CutQuery {
 
 // CutTaskResponse 裁剪任务响应
 type CutTaskResponse struct {
-	JobID     string    `json:"job_id"`
-	Status    string    `json:"status"`
-	CreatedAt time.Time `json:"created_at"`
+	JobID             string    `json:"job_id"`
+	Status            string    `json:"status"`
+	CreatedAt         time.Time `json:"created_at"`
+	Revision          int64     `json:"revision"`
+	EventID           string    `json:"event_id"`
+	ActionID          string    `json:"action_id"`
+	IdempotencyKey    string    `json:"idempotency_key"`
+	OutboxStatus      string    `json:"outbox_status"`
+	Replayed          bool      `json:"replayed"`
+	CompatibilityMode bool      `json:"compatibility_mode"`
 }
 
 // AsyncCutterConfig 异步裁剪器配置
@@ -261,35 +274,43 @@ func (a *AsyncCutter) SubmitTask(ctx context.Context, req *CutTaskRequest) (*Cut
 	}
 
 	// 保存到数据库
-	if err := a.taskRepo.Create(ctx, task); err != nil {
+	receipt, err := a.taskRepo.CreateAtomic(ctx, task, req.CommandMeta)
+	if err != nil {
 		return nil, err
 	}
 
 	// 尝试加入队列
-	select {
-	case a.taskQueue <- task:
-		a.logger.Info("Task submitted",
-			zap.String("task_id", task.TaskID),
-			zap.String("tenant_id", task.TenantID))
-	default:
-		// 队列满了，任务会通过轮询器处理
-		a.logger.Warn("Task queue full, task will be picked up by poller",
-			zap.String("task_id", task.TaskID))
+	if !receipt.Replayed {
+		select {
+		case a.taskQueue <- task:
+			a.logger.Info("Task submitted",
+				zap.String("task_id", task.TaskID),
+				zap.String("tenant_id", task.TenantID))
+		default:
+			// 队列满了，任务会通过轮询器处理
+			a.logger.Warn("Task queue full, task will be picked up by poller",
+				zap.String("task_id", task.TaskID))
+		}
 	}
 
 	return &CutTaskResponse{
-		JobID:     task.TaskID,
-		Status:    task.Status,
-		CreatedAt: task.CreatedAt,
+		JobID: task.TaskID, Status: receipt.Status, CreatedAt: receipt.CreatedAt,
+		Revision: receipt.Revision, EventID: receipt.EventID, OutboxStatus: receipt.OutboxStatus,
+		ActionID: receipt.ActionID, IdempotencyKey: receipt.IdempotencyKey,
+		Replayed: receipt.Replayed, CompatibilityMode: receipt.CompatibilityMode,
 	}, nil
 }
 
 // CancelTask 取消任务
-func (a *AsyncCutter) CancelTask(ctx context.Context, taskID string) error {
+func (a *AsyncCutter) CancelTask(ctx context.Context, tenantID, taskID string, meta repository.TaskCommandMeta) (*repository.TaskCommandReceipt, error) {
 	ctx, span := otel.StartSpan(ctx, "AsyncCutter.CancelTask")
 	defer span.End()
+	receipt, err := a.taskRepo.CancelForTenant(ctx, tenantID, taskID, meta)
+	if err != nil {
+		return nil, err
+	}
 
-	// 取消正在运行的任务
+	// The authoritative state is committed before stopping the in-memory worker.
 	a.cancelLock.RLock()
 	cancelFn, running := a.cancelMap[taskID]
 	a.cancelLock.RUnlock()
@@ -298,9 +319,7 @@ func (a *AsyncCutter) CancelTask(ctx context.Context, taskID string) error {
 		cancelFn()
 		a.logger.Info("Task cancelled", zap.String("task_id", taskID))
 	}
-
-	// 更新数据库状态
-	return a.taskRepo.Cancel(ctx, taskID)
+	return receipt, nil
 }
 
 // worker 工作协程
@@ -349,9 +368,12 @@ func (a *AsyncCutter) processTask(task *repository.Task) {
 		zap.Duration("timeout", a.config.TaskTimeout))
 
 	// 更新状态为处理中
-	if err := a.taskRepo.UpdateStatus(ctx, task.TaskID, repository.TaskStatusProcessing); err != nil {
-		a.logger.Error("Failed to update task status", zap.Error(err))
-		return
+	if task.Status != repository.TaskStatusProcessing {
+		if err := a.taskRepo.UpdateStatus(ctx, task.TaskID, repository.TaskStatusProcessing); err != nil {
+			a.logger.Error("Failed to update task status", zap.Error(err))
+			return
+		}
+		task.Status = repository.TaskStatusProcessing
 	}
 
 	// 解析参数

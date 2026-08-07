@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"crypto/sha256"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -13,6 +14,7 @@ import (
 
 	authmodel "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/model"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/httpx"
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/lib/pq"
 )
@@ -66,6 +68,7 @@ type probeRestartRequest struct {
 
 type probeOperationInserter interface {
 	QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row
+	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
 }
 
 type probeAuditExecutor interface {
@@ -107,7 +110,7 @@ func (h *SystemHandler) PushProbeConfig(w http.ResponseWriter, r *http.Request) 
 	requestedAt := time.Now().UTC()
 	result := map[string]interface{}{
 		"probe_id":       probeID,
-		"status":         "queued",
+		"status":         "accepted",
 		"applied":        false,
 		"config_version": req.ConfigVersion,
 		"requested_at":   requestedAt.Format(time.RFC3339),
@@ -122,7 +125,7 @@ func (h *SystemHandler) PushProbeConfig(w http.ResponseWriter, r *http.Request) 
 	}
 
 	result["operation_id"] = operationID
-	httpx.JSONSuccess(w, ctx, result)
+	writeProbeOperationAccepted(w, ctx, result)
 }
 
 func (h *SystemHandler) RunProbeConnectivityTest(w http.ResponseWriter, r *http.Request) {
@@ -147,12 +150,12 @@ func (h *SystemHandler) RunProbeConnectivityTest(w http.ResponseWriter, r *http.
 	}
 	req.Targets = normalizeStringList(req.Targets)
 	if len(req.Targets) == 0 {
-		req.Targets = []string{"ingest-gateway", "kafka", "clickhouse"}
+		req.Targets = []string{"ingest-gateway"}
 	}
 
 	result := map[string]interface{}{
 		"probe_id":     probeID,
-		"status":       "queued",
+		"status":       "accepted",
 		"requested_at": time.Now().UTC().Format(time.RFC3339),
 		"targets":      req.Targets,
 	}
@@ -165,7 +168,7 @@ func (h *SystemHandler) RunProbeConnectivityTest(w http.ResponseWriter, r *http.
 	}
 
 	result["operation_id"] = operationID
-	httpx.JSONSuccess(w, ctx, result)
+	writeProbeOperationAccepted(w, ctx, result)
 }
 
 func (h *SystemHandler) RotateProbeCertificate(w http.ResponseWriter, r *http.Request) {
@@ -206,7 +209,7 @@ func (h *SystemHandler) RotateProbeCertificate(w http.ResponseWriter, r *http.Re
 	requestedAt := time.Now().UTC()
 	result := map[string]interface{}{
 		"probe_id":        probeID,
-		"status":          "queued",
+		"status":          "accepted",
 		"secret_ref":      req.SecretRef,
 		"rotation_window": req.RotationWindow,
 		"requested_at":    requestedAt.Format(time.RFC3339),
@@ -221,7 +224,7 @@ func (h *SystemHandler) RotateProbeCertificate(w http.ResponseWriter, r *http.Re
 	}
 
 	result["operation_id"] = operationID
-	httpx.JSONSuccess(w, ctx, result)
+	writeProbeOperationAccepted(w, ctx, result)
 }
 
 func (h *SystemHandler) BatchUpgradeProbes(w http.ResponseWriter, r *http.Request) {
@@ -231,6 +234,7 @@ func (h *SystemHandler) BatchUpgradeProbes(w http.ResponseWriter, r *http.Reques
 	}
 
 	tenantID := writeTenantID(r)
+	ctx = withProbeOperationIdempotency(ctx, r)
 	var req probeBatchUpgradeRequest
 	if !decodeRequiredProbeJSON(w, r, &req) {
 		return
@@ -279,7 +283,7 @@ func (h *SystemHandler) BatchUpgradeProbes(w http.ResponseWriter, r *http.Reques
 		result := map[string]interface{}{
 			"batch_id":         batchID,
 			"probe_id":         probeID,
-			"status":           "queued",
+			"status":           "accepted",
 			"target_version":   req.TargetVersion,
 			"rollout_strategy": req.RolloutStrategy,
 		}
@@ -310,14 +314,15 @@ func (h *SystemHandler) BatchUpgradeProbes(w http.ResponseWriter, r *http.Reques
 	}
 	committed = true
 
-	httpx.JSONSuccess(w, ctx, map[string]interface{}{
+	writeProbeOperationAccepted(w, ctx, map[string]interface{}{
 		"batch_id":         batchID,
 		"operation_ids":    operationIDs,
 		"queued_count":     len(req.ProbeIDs),
 		"probe_ids":        req.ProbeIDs,
 		"target_version":   req.TargetVersion,
 		"rollout_strategy": req.RolloutStrategy,
-		"status":           "queued",
+		"status":           "accepted",
+		"accepted_count":   len(req.ProbeIDs),
 	})
 }
 
@@ -328,6 +333,7 @@ func (h *SystemHandler) BatchSetProbeState(w http.ResponseWriter, r *http.Reques
 	}
 
 	tenantID := writeTenantID(r)
+	ctx = withProbeOperationIdempotency(ctx, r)
 	var req probeBatchStateRequest
 	if !decodeRequiredProbeJSON(w, r, &req) {
 		return
@@ -372,7 +378,7 @@ func (h *SystemHandler) BatchSetProbeState(w http.ResponseWriter, r *http.Reques
 	operationIDs := make([]string, 0, len(req.ProbeIDs))
 	for _, probeID := range req.ProbeIDs {
 		result := map[string]interface{}{
-			"probe_id": probeID, "status": "queued", "desired_state": req.DesiredState,
+			"probe_id": probeID, "status": "accepted", "desired_state": req.DesiredState,
 			"requested_at": requestedAt.Format(time.RFC3339),
 		}
 		operationID, insertErr := h.insertProbeOperation(ctx, tx, tenantID, probeID, probeOperationBatchState, req, result)
@@ -393,9 +399,10 @@ func (h *SystemHandler) BatchSetProbeState(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	committed = true
-	httpx.JSONSuccess(w, ctx, map[string]interface{}{
+	writeProbeOperationAccepted(w, ctx, map[string]interface{}{
 		"operation_ids": operationIDs, "probe_ids": req.ProbeIDs, "desired_state": req.DesiredState,
-		"queued_count": len(req.ProbeIDs), "status": "queued", "requested_at": requestedAt.Format(time.RFC3339),
+		"queued_count": len(req.ProbeIDs), "accepted_count": len(req.ProbeIDs),
+		"status": "accepted", "requested_at": requestedAt.Format(time.RFC3339),
 	})
 }
 
@@ -419,7 +426,7 @@ func (h *SystemHandler) RestartProbe(w http.ResponseWriter, r *http.Request) {
 	}
 	requestedAt := time.Now().UTC()
 	result := map[string]interface{}{
-		"probe_id": probeID, "status": "queued", "requested_at": requestedAt.Format(time.RFC3339),
+		"probe_id": probeID, "status": "accepted", "requested_at": requestedAt.Format(time.RFC3339),
 	}
 	operationID, err := h.insertProbeOperationWithAudit(ctx, tenantID, probeID, probeOperationRestart, req, result, "PROBE_RESTART_QUEUED", "probe", probeID, map[string]interface{}{}, r)
 	if err != nil {
@@ -427,7 +434,7 @@ func (h *SystemHandler) RestartProbe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	result["operation_id"] = operationID
-	httpx.JSONSuccess(w, ctx, result)
+	writeProbeOperationAccepted(w, ctx, result)
 }
 
 func (h *SystemHandler) requireProbeWritePermission(w http.ResponseWriter, r *http.Request) bool {
@@ -449,31 +456,19 @@ func (h *SystemHandler) requireProbeReadPermission(w http.ResponseWriter, r *htt
 }
 
 func (h *SystemHandler) ensureProbeOperationSchema(w http.ResponseWriter, ctx context.Context) bool {
-	stmts := []string{
-		`ALTER TABLE probes ADD COLUMN IF NOT EXISTS hardware_info JSONB`,
-		`ALTER TABLE probes ADD COLUMN IF NOT EXISTS software_version TEXT`,
-		`ALTER TABLE probes ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now()`,
-		`CREATE TABLE IF NOT EXISTS probe_operations (
-			operation_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			tenant_id TEXT NOT NULL,
-			probe_id TEXT NOT NULL,
-			operation_type TEXT NOT NULL,
-			status TEXT NOT NULL DEFAULT 'queued',
-			requested_by TEXT NOT NULL DEFAULT '',
-			request JSONB NOT NULL DEFAULT '{}'::jsonb,
-			result JSONB NOT NULL DEFAULT '{}'::jsonb,
-			created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-		)`,
-		`CREATE INDEX IF NOT EXISTS idx_probe_operations_tenant_probe_time ON probe_operations (tenant_id, probe_id, created_at DESC)`,
-		`CREATE INDEX IF NOT EXISTS idx_probe_operations_tenant_type_time ON probe_operations (tenant_id, operation_type, created_at DESC)`,
+	var ready bool
+	if err := h.pgDB.QueryRowContext(ctx, `
+		SELECT to_regclass('public.probe_operations') IS NOT NULL
+		   AND to_regclass('public.probe_operation_outbox') IS NOT NULL
+		   AND to_regclass('public.probe_operation_ack_receipts') IS NOT NULL
+		   AND to_regclass('public.probe_operation_history') IS NOT NULL`).Scan(&ready); err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "PERSISTENCE_FAILED", "failed to verify probe operation schema")
+		return false
 	}
-	for _, stmt := range stmts {
-		if _, err := h.pgDB.ExecContext(ctx, stmt); err != nil {
-			httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
-			return false
-		}
+	if !ready {
+		httpx.JSONError(w, ctx, http.StatusServiceUnavailable, "MIGRATION_REQUIRED", "probe operation ACK migration is not applied")
 	}
-	return true
+	return ready
 }
 
 func (h *SystemHandler) requireProbeInTenant(w http.ResponseWriter, ctx context.Context, tenantID, probeID string) bool {
@@ -528,22 +523,125 @@ func (h *SystemHandler) patchProbeHardware(ctx context.Context, tenantID, probeI
 	return err
 }
 
+type probeIdempotencyContextKey struct{}
+
+func withProbeOperationIdempotency(ctx context.Context, r *http.Request) context.Context {
+	key := strings.TrimSpace(r.Header.Get("Idempotency-Key"))
+	if key == "" {
+		key = "legacy-" + uuid.NewString()
+	}
+	if len(key) > 160 {
+		key = key[:160]
+	}
+	return context.WithValue(ctx, probeIdempotencyContextKey{}, key)
+}
+
+func probeOperationIdempotency(ctx context.Context, operationType, probeID string) string {
+	base, _ := ctx.Value(probeIdempotencyContextKey{}).(string)
+	if base == "" {
+		base = "legacy-" + uuid.NewString()
+	}
+	return base + ":" + operationType + ":" + probeID
+}
+
+func probeDesiredVersion(request interface{}) string {
+	raw, _ := json.Marshal(request)
+	values := map[string]interface{}{}
+	_ = json.Unmarshal(raw, &values)
+	for _, key := range []string{"config_version", "target_version", "desired_state", "rotation_window"} {
+		if value := strings.TrimSpace(fmt.Sprint(values[key])); value != "" && value != "<nil>" {
+			return value
+		}
+	}
+	return ""
+}
+
 func (h *SystemHandler) insertProbeOperation(ctx context.Context, db probeOperationInserter, tenantID, probeID, operationType string, request, result interface{}) (string, error) {
-	requestJSON, _ := json.Marshal(request)
+	requestJSON, err := canonicalProbeCommandJSON(request)
+	if err != nil {
+		return "", fmt.Errorf("canonicalize probe command: %w", err)
+	}
 	resultJSON, _ := json.Marshal(result)
-	status := "queued"
+	status := "accepted"
 	if values, ok := result.(map[string]interface{}); ok {
 		if value, ok := values["status"].(string); ok && strings.TrimSpace(value) != "" {
 			status = strings.TrimSpace(value)
 		}
 	}
+	requestDigest := sha256.Sum256(requestJSON)
+	idempotencyKey := probeOperationIdempotency(ctx, operationType, probeID)
+	lockKey := tenantID + ":" + probeID
+	if _, err := db.ExecContext(ctx, `SELECT pg_advisory_xact_lock(hashtextextended($1,0))`, lockKey); err != nil {
+		return "", err
+	}
 	var operationID string
-	err := db.QueryRowContext(ctx, `
-		INSERT INTO probe_operations (tenant_id, probe_id, operation_type, status, requested_by, request, result)
-		VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb)
-		RETURNING operation_id::text`,
-		tenantID, probeID, operationType, status, httpx.GetUserID(ctx), string(requestJSON), string(resultJSON)).Scan(&operationID)
-	return operationID, err
+	var commandRevision int64
+	var created bool
+	err = db.QueryRowContext(ctx, `
+		WITH next_revision AS (
+			SELECT COALESCE(max(command_revision),0)+1 AS value
+			FROM probe_operations WHERE tenant_id=$1 AND probe_id=$2
+		), inserted AS (
+			INSERT INTO probe_operations
+				(tenant_id,probe_id,operation_type,status,requested_by,request,result,
+				 idempotency_key,command_revision,desired_version,command_hash,trace_id,expires_at)
+			SELECT $1,$2,$3,$4,$5,$6::jsonb,$7::jsonb,$8,value,$9,$10,$11,now()+interval '10 minutes'
+			FROM next_revision
+			ON CONFLICT (tenant_id,idempotency_key) WHERE idempotency_key IS NOT NULL DO NOTHING
+			RETURNING operation_id,command_revision,true AS created
+		)
+		SELECT operation_id::text,command_revision,created FROM inserted
+		UNION ALL
+		SELECT operation_id::text,command_revision,false
+		FROM probe_operations WHERE tenant_id=$1 AND idempotency_key=$8
+		LIMIT 1`,
+		tenantID, probeID, operationType, status, httpx.GetUserID(ctx), string(requestJSON),
+		string(resultJSON), idempotencyKey, probeDesiredVersion(request),
+		fmt.Sprintf("%x", requestDigest[:]), httpx.GetTraceID(ctx)).
+		Scan(&operationID, &commandRevision, &created)
+	if err != nil {
+		return "", err
+	}
+	if values, ok := result.(map[string]interface{}); ok {
+		values["operation_id"] = operationID
+		values["command_revision"] = commandRevision
+		values["idempotent_replay"] = !created
+	}
+	if !created {
+		return operationID, nil
+	}
+	eventID := uuid.NewString()
+	payload, _ := json.Marshal(map[string]interface{}{
+		"event_id": eventID, "event_type": "traffic.probe.v2.OperationRequested", "schema_version": 2,
+		"tenant_id": tenantID, "probe_id": probeID, "operation_id": operationID,
+		"operation_type": operationType, "command_revision": commandRevision,
+		"desired_version": probeDesiredVersion(request), "command_hash": fmt.Sprintf("%x", requestDigest[:]),
+		"expires_at": time.Now().UTC().Add(10 * time.Minute).Format(time.RFC3339Nano),
+		"trace_id":   httpx.GetTraceID(ctx), "command": json.RawMessage(requestJSON),
+	})
+	if _, err := db.ExecContext(ctx, `
+		INSERT INTO probe_operation_outbox
+			(event_id,operation_id,tenant_id,event_type,partition_key,aggregate_version,payload)
+		VALUES ($1::uuid,$2::uuid,$3,'traffic.probe.v2.OperationRequested',$4,$5,$6::jsonb)`,
+		eventID, operationID, tenantID, tenantID+":"+probeID, commandRevision, string(payload)); err != nil {
+		return "", err
+	}
+	return operationID, nil
+}
+
+// canonicalProbeCommandJSON makes command_hash independent of Go struct field
+// order and PostgreSQL jsonb object ordering. Rust Agent validation uses the
+// same recursively key-sorted JSON representation.
+func canonicalProbeCommandJSON(value interface{}) ([]byte, error) {
+	raw, err := json.Marshal(value)
+	if err != nil {
+		return nil, err
+	}
+	var normalized interface{}
+	if err := json.Unmarshal(raw, &normalized); err != nil {
+		return nil, err
+	}
+	return json.Marshal(normalized)
 }
 
 func (h *SystemHandler) insertProbeOperationWithAudit(
@@ -554,6 +652,7 @@ func (h *SystemHandler) insertProbeOperationWithAudit(
 	auditDetail map[string]interface{},
 	r *http.Request,
 ) (string, error) {
+	ctx = withProbeOperationIdempotency(ctx, r)
 	tx, err := h.pgDB.BeginTx(ctx, nil)
 	if err != nil {
 		return "", err
@@ -562,6 +661,14 @@ func (h *SystemHandler) insertProbeOperationWithAudit(
 	operationID, err := h.insertProbeOperation(ctx, tx, tenantID, probeID, operationType, request, result)
 	if err != nil {
 		return "", err
+	}
+	if values, ok := result.(map[string]interface{}); ok {
+		if replay, _ := values["idempotent_replay"].(bool); replay {
+			if err := tx.Commit(); err != nil {
+				return "", err
+			}
+			return operationID, nil
+		}
 	}
 	detail := make(map[string]interface{}, len(auditDetail)+1)
 	for key, value := range auditDetail {
@@ -575,6 +682,26 @@ func (h *SystemHandler) insertProbeOperationWithAudit(
 		return "", err
 	}
 	return operationID, nil
+}
+
+func writeProbeOperationAccepted(w http.ResponseWriter, ctx context.Context, result map[string]interface{}) {
+	snapshotID := strings.TrimSpace(fmt.Sprint(result["operation_id"]))
+	if snapshotID == "<nil>" {
+		snapshotID = ""
+	}
+	if snapshotID == "" {
+		if ids, ok := result["operation_ids"].([]string); ok && len(ids) > 0 {
+			snapshotID = ids[0]
+		}
+	}
+	httpx.JSONContractAccepted(w, ctx, result, httpx.ContractMeta{
+		ContractVersion:  1,
+		SnapshotID:       snapshotID,
+		TraceID:          httpx.GetTraceID(ctx),
+		Partial:          false,
+		MissingSections:  []string{},
+		SourceWatermarks: map[string]string{"postgresql.probe_operations.revision": fmt.Sprint(result["command_revision"])},
+	})
 }
 
 func (h *SystemHandler) insertProbeAuditLog(ctx context.Context, db probeAuditExecutor, tenantID, userID, action, objectType, objectID string, detail map[string]interface{}, r *http.Request) error {

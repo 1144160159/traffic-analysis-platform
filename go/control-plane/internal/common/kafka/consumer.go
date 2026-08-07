@@ -2,13 +2,21 @@ package kafka
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
+	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/segmentio/kafka-go"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/proto"
+
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/logging"
+	commonotel "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/otel"
 )
 
 type ConsumerConfig struct {
@@ -24,38 +32,46 @@ type ConsumerConfig struct {
 	RetryBackoff   time.Duration
 	EnableDLQ      bool
 	DLQTopicPrefix string
+	DLQTopic       string
 
 	CommitOnDLQSuccess   bool
 	CommitOnHandlerError bool
+	DLQPermanentOnly     bool
 	Security             SecurityConfig
 }
 
 type Consumer struct {
-	reader        *kafka.Reader
-	config        ConsumerConfig
-	logger        *zap.Logger
-	metrics       ConsumerMetrics
-	closed        int32
-	mu            sync.RWMutex
-	commitChan    chan commitRequest
-	stopCommitter chan struct{}
-	dlqProducer   *DLQProducer
-	fetchFailures int64
-	lastFetchErr  string
-	lastFetchAt   time.Time
+	reader             *kafka.Reader
+	config             ConsumerConfig
+	logger             *zap.Logger
+	metrics            ConsumerMetrics
+	closed             int32
+	mu                 sync.RWMutex
+	commitChan         chan commitRequest
+	stopCommitter      chan struct{}
+	dlqProducer        *DLQProducer
+	fetchFailures      int64
+	lastFetchErr       string
+	lastFetchAt        time.Time
+	processingFailures int64
+	lastProcessingErr  string
+	lastProcessingAt   time.Time
+	commitObserver     func([]kafka.Message)
 }
 
 type ConsumerMetrics struct {
-	MessagesReceived         int64
-	MessagesProcessed        int64
-	MessagesFailed           int64
-	MessagesDLQ              int64
-	CommitsSucceeded         int64
-	CommitsFailed            int64
-	LastOffset               int64
-	Lag                      int64
-	ConsecutiveFetchFailures int64
-	LastFetchErrorUnix       int64
+	MessagesReceived              int64
+	MessagesProcessed             int64
+	MessagesFailed                int64
+	MessagesDLQ                   int64
+	CommitsSucceeded              int64
+	CommitsFailed                 int64
+	LastOffset                    int64
+	Lag                           int64
+	ConsecutiveFetchFailures      int64
+	LastFetchErrorUnix            int64
+	ConsecutiveProcessingFailures int64
+	LastProcessingErrorUnix       int64
 }
 
 type commitRequest struct {
@@ -133,6 +149,7 @@ func NewConsumer(config ConsumerConfig, logger *zap.Logger) (*Consumer, error) {
 		dlqConfig := DLQConfig{
 			Brokers:     config.Brokers,
 			TopicPrefix: config.DLQTopicPrefix,
+			TargetTopic: config.DLQTopic,
 			BatchSize:   100,
 			MaxRetries:  3,
 			RetryDelay:  100 * time.Millisecond,
@@ -146,6 +163,10 @@ func NewConsumer(config ConsumerConfig, logger *zap.Logger) (*Consumer, error) {
 	}
 
 	return c, nil
+}
+
+func (c *Consumer) dlqEligible(err error) bool {
+	return !c.config.DLQPermanentOnly || IsPermanent(err)
 }
 
 func (c *Consumer) backgroundCommitter() {
@@ -209,8 +230,36 @@ func (c *Consumer) commitMessages(messages []kafka.Message) error {
 
 	c.logger.Debug("Messages committed",
 		zap.Int("count", len(messages)))
+	c.notifyCommitObserver(messages)
 
 	return nil
+}
+
+// SetCommitObserver installs a post-commit observer for progress metrics. The
+// callback runs only after Kafka acknowledges the offset commit and cannot
+// change commit success semantics.
+func (c *Consumer) SetCommitObserver(observer func([]kafka.Message)) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.commitObserver = observer
+}
+
+func (c *Consumer) notifyCommitObserver(messages []kafka.Message) {
+	c.mu.RLock()
+	observer := c.commitObserver
+	c.mu.RUnlock()
+	if observer == nil {
+		return
+	}
+	committed := append([]kafka.Message(nil), messages...)
+	func() {
+		defer func() {
+			if recovered := recover(); recovered != nil {
+				c.logger.Error("Kafka commit observer panicked after successful commit", zap.Any("panic", recovered))
+			}
+		}()
+		observer(committed)
+	}()
 }
 
 type ReceivedMessage struct {
@@ -300,10 +349,13 @@ func (m *ReceivedMessage) ProtoMessageType() string {
 }
 
 func (m *ReceivedMessage) UnmarshalProto(v interface{}) error {
+	if message, ok := v.(proto.Message); ok {
+		return proto.Unmarshal(m.Value, message)
+	}
 	if unmarshaler, ok := v.(interface{ Unmarshal([]byte) error }); ok {
 		return unmarshaler.Unmarshal(m.Value)
 	}
-	return fmt.Errorf("type does not implement Unmarshal method")
+	return fmt.Errorf("type does not implement protobuf message or legacy Unmarshal method")
 }
 
 func (m *ReceivedMessage) GetMetadata() map[string]interface{} {
@@ -319,6 +371,36 @@ func (m *ReceivedMessage) GetMetadata() map[string]interface{} {
 		"content_type": m.ContentType(),
 		"timestamp":    m.Time.Format(time.RFC3339),
 	}
+}
+
+// Context reconstructs the W3C parent carried by Kafka. Legacy 32-hex
+// trace_id-only messages remain correlated, while malformed legacy values are
+// not trusted as trace identities.
+func (m *ReceivedMessage) Context(parent context.Context) context.Context {
+	carrier := map[string]string{}
+	for key, value := range m.GetAllHeaders() {
+		lower := strings.ToLower(strings.TrimSpace(key))
+		if lower == "traceparent" || lower == "tracestate" {
+			carrier[lower] = value
+		}
+	}
+	ctx := commonotel.ExtractFromMap(parent, carrier)
+	spanContext := trace.SpanContextFromContext(ctx)
+	if !spanContext.IsValid() {
+		traceID := strings.TrimSpace(m.TraceID())
+		if len(traceID) == 32 {
+			digest := sha256.Sum256([]byte(m.Topic + ":" + strconv.Itoa(m.Partition) + ":" + strconv.FormatInt(m.Offset, 10)))
+			spanID := fmt.Sprintf("%x", digest[:8])
+			if fallback, err := commonotel.NewSpanContext(traceID, spanID, true); err == nil && fallback.IsValid() {
+				ctx = commonotel.ContextWithRemoteSpanContext(parent, fallback)
+				spanContext = fallback
+			}
+		}
+	}
+	if spanContext.IsValid() {
+		ctx = logging.WithTraceID(ctx, spanContext.TraceID().String())
+	}
+	return ctx
 }
 
 type MessageHandler func(context.Context, *ReceivedMessage) error
@@ -354,7 +436,8 @@ func (c *Consumer) Consume(ctx context.Context, handler MessageHandler) error {
 		receivedMsg := &ReceivedMessage{Message: msg}
 
 		shouldCommit := true
-		if err := handler(ctx, receivedMsg); err != nil {
+		messageContext := receivedMsg.Context(ctx)
+		if err := handler(messageContext, receivedMsg); err != nil {
 			atomic.AddInt64(&c.metrics.MessagesFailed, 1)
 			c.logger.Error("Message handler error",
 				zap.String("topic", msg.Topic),
@@ -363,26 +446,37 @@ func (c *Consumer) Consume(ctx context.Context, handler MessageHandler) error {
 				zap.String("event_id", receivedMsg.EventID()),
 				zap.Error(err))
 
-			if c.dlqProducer != nil {
+			shouldCommit = c.config.CommitOnHandlerError
+			if c.dlqProducer != nil && c.dlqEligible(err) {
 				if dlqErr := c.dlqProducer.Send(ctx, receivedMsg, err); dlqErr != nil {
 					c.logger.Error("Failed to send to DLQ",
 						zap.Error(dlqErr),
 						zap.String("event_id", receivedMsg.EventID()))
 
 					shouldCommit = false
+					c.recordProcessingFailure(dlqErr)
 				} else {
 					atomic.AddInt64(&c.metrics.MessagesDLQ, 1)
 
 					shouldCommit = c.config.CommitOnDLQSuccess
+					if shouldCommit {
+						c.recordProcessingSuccess()
+					} else {
+						c.recordProcessingFailure(err)
+					}
 					c.logger.Info("Message sent to DLQ",
 						zap.String("event_id", receivedMsg.EventID()),
 						zap.Bool("will_commit", shouldCommit))
 				}
 			} else {
 				// At-least-once consumers must not lose a message on a transient
-				// handler or database failure. Callers can explicitly opt into the
-				// old commit-on-error behavior when required.
-				shouldCommit = c.config.CommitOnHandlerError
+				// handler or database failure. Only explicitly permanent errors are
+				// eligible for DLQ quarantine; callers can still opt into the old
+				// commit-on-error behavior when required.
+				c.recordProcessingFailure(err)
+			}
+			if shouldCommit && (c.dlqProducer == nil || (c.config.DLQPermanentOnly && !IsPermanent(err))) {
+				c.recordProcessingSuccess()
 			}
 
 			if !shouldCommit {
@@ -392,12 +486,16 @@ func (c *Consumer) Consume(ctx context.Context, handler MessageHandler) error {
 			}
 		} else {
 			atomic.AddInt64(&c.metrics.MessagesProcessed, 1)
+			c.recordProcessingSuccess()
 		}
 
 		if c.config.CommitInterval > 0 {
 			c.commitChan <- commitRequest{messages: []kafka.Message{msg}}
 		} else {
-			c.commitMessages([]kafka.Message{msg})
+			if err := c.commitMessages([]kafka.Message{msg}); err != nil {
+				c.recordProcessingFailure(fmt.Errorf("commit offset: %w", err))
+				continue
+			}
 		}
 	}
 }
@@ -547,24 +645,28 @@ func (c *Consumer) Commit(ctx context.Context, messages ...kafka.Message) error 
 
 func (c *Consumer) Lag(ctx context.Context) (int64, error) {
 	stats := c.reader.Stats()
+	atomic.StoreInt64(&c.metrics.Lag, stats.Lag)
 	return stats.Lag, nil
 }
 
 func (c *Consumer) GetMetrics() ConsumerMetrics {
 	c.mu.RLock()
 	lastFetchAt := c.lastFetchAt
+	lastProcessingAt := c.lastProcessingAt
 	c.mu.RUnlock()
 	return ConsumerMetrics{
-		MessagesReceived:         atomic.LoadInt64(&c.metrics.MessagesReceived),
-		MessagesProcessed:        atomic.LoadInt64(&c.metrics.MessagesProcessed),
-		MessagesFailed:           atomic.LoadInt64(&c.metrics.MessagesFailed),
-		MessagesDLQ:              atomic.LoadInt64(&c.metrics.MessagesDLQ),
-		CommitsSucceeded:         atomic.LoadInt64(&c.metrics.CommitsSucceeded),
-		CommitsFailed:            atomic.LoadInt64(&c.metrics.CommitsFailed),
-		LastOffset:               atomic.LoadInt64(&c.metrics.LastOffset),
-		Lag:                      atomic.LoadInt64(&c.metrics.Lag),
-		ConsecutiveFetchFailures: atomic.LoadInt64(&c.fetchFailures),
-		LastFetchErrorUnix:       lastFetchAt.Unix(),
+		MessagesReceived:              atomic.LoadInt64(&c.metrics.MessagesReceived),
+		MessagesProcessed:             atomic.LoadInt64(&c.metrics.MessagesProcessed),
+		MessagesFailed:                atomic.LoadInt64(&c.metrics.MessagesFailed),
+		MessagesDLQ:                   atomic.LoadInt64(&c.metrics.MessagesDLQ),
+		CommitsSucceeded:              atomic.LoadInt64(&c.metrics.CommitsSucceeded),
+		CommitsFailed:                 atomic.LoadInt64(&c.metrics.CommitsFailed),
+		LastOffset:                    atomic.LoadInt64(&c.metrics.LastOffset),
+		Lag:                           atomic.LoadInt64(&c.metrics.Lag),
+		ConsecutiveFetchFailures:      atomic.LoadInt64(&c.fetchFailures),
+		LastFetchErrorUnix:            lastFetchAt.Unix(),
+		ConsecutiveProcessingFailures: atomic.LoadInt64(&c.processingFailures),
+		LastProcessingErrorUnix:       lastProcessingAt.Unix(),
 	}
 }
 
@@ -576,7 +678,14 @@ func (c *Consumer) HealthCheck() error {
 	}
 	failures := atomic.LoadInt64(&c.fetchFailures)
 	if failures < 3 {
-		return nil
+		processingFailures := atomic.LoadInt64(&c.processingFailures)
+		if processingFailures == 0 {
+			return nil
+		}
+		c.mu.RLock()
+		lastErr := c.lastProcessingErr
+		c.mu.RUnlock()
+		return fmt.Errorf("message processing failed %d consecutive times: %s", processingFailures, lastErr)
 	}
 	c.mu.RLock()
 	lastErr := c.lastFetchErr
@@ -597,6 +706,22 @@ func (c *Consumer) recordFetchSuccess() {
 	c.mu.Lock()
 	c.lastFetchErr = ""
 	c.lastFetchAt = time.Time{}
+	c.mu.Unlock()
+}
+
+func (c *Consumer) recordProcessingFailure(err error) {
+	atomic.AddInt64(&c.processingFailures, 1)
+	c.mu.Lock()
+	c.lastProcessingErr = err.Error()
+	c.lastProcessingAt = time.Now()
+	c.mu.Unlock()
+}
+
+func (c *Consumer) recordProcessingSuccess() {
+	atomic.StoreInt64(&c.processingFailures, 0)
+	c.mu.Lock()
+	c.lastProcessingErr = ""
+	c.lastProcessingAt = time.Time{}
 	c.mu.Unlock()
 }
 

@@ -2,7 +2,6 @@ package audit
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"sync"
@@ -200,9 +199,24 @@ func (c *EventConsumer) handleDeadLetters(ctx context.Context, msgs []*kafka.Rec
 // ---- JSON 兼容 ----
 
 func jsonToDeviceLog(raw map[string]interface{}) *pb.DeviceLog {
-	s := func(k string) string { if v, ok := raw[k].(string); ok { return v }; return "" }
-	u := func(k string) uint32 { if v, ok := raw[k].(float64); ok { return uint32(v) }; return 0 }
-	i := func(k string) int64 { if v, ok := raw[k].(float64); ok { return int64(v) }; return 0 }
+	s := func(k string) string {
+		if v, ok := raw[k].(string); ok {
+			return v
+		}
+		return ""
+	}
+	u := func(k string) uint32 {
+		if v, ok := raw[k].(float64); ok {
+			return uint32(v)
+		}
+		return 0
+	}
+	i := func(k string) int64 {
+		if v, ok := raw[k].(float64); ok {
+			return int64(v)
+		}
+		return 0
+	}
 	lid := s("log_id")
 	if lid == "" {
 		return nil
@@ -213,9 +227,24 @@ func jsonToDeviceLog(raw map[string]interface{}) *pb.DeviceLog {
 }
 
 func jsonToDeadLetter(raw map[string]interface{}) *pb.DeadLetter {
-	s := func(k string) string { if v, ok := raw[k].(string); ok { return v }; return "" }
-	u := func(k string) uint32 { if v, ok := raw[k].(float64); ok { return uint32(v) }; return 0 }
-	i := func(k string) int64 { if v, ok := raw[k].(float64); ok { return int64(v) }; return 0 }
+	s := func(k string) string {
+		if v, ok := raw[k].(string); ok {
+			return v
+		}
+		return ""
+	}
+	u := func(k string) uint32 {
+		if v, ok := raw[k].(float64); ok {
+			return uint32(v)
+		}
+		return 0
+	}
+	i := func(k string) int64 {
+		if v, ok := raw[k].(float64); ok {
+			return int64(v)
+		}
+		return 0
+	}
 	eid := s("event_id")
 	if eid == "" {
 		return nil
@@ -223,30 +252,4 @@ func jsonToDeadLetter(raw map[string]interface{}) *pb.DeadLetter {
 	return &pb.DeadLetter{EventId: eid, TenantId: s("tenant_id"), SourceTopic: s("source_topic"),
 		SourceKey: s("source_key"), ErrorMsg: s("error_msg"), RawPayload: s("raw_payload"),
 		RetryCount: u("retry_count"), CreatedAt: i("created_at")}
-}
-
-// ---- DDL ----
-
-func InitEventSchemas(ctx context.Context, db *sql.DB) error {
-	for _, ddl := range []string{
-		`CREATE TABLE IF NOT EXISTS traffic.user_events (
-			event_id String, tenant_id String, user_id String, username String,
-			event_type String, source_ip String, user_agent String,
-			resource String, action String, result String, timestamp DateTime64(3)
-		) ENGINE = MergeTree() ORDER BY (tenant_id, timestamp) TTL timestamp + INTERVAL 180 DAY`,
-		`CREATE TABLE IF NOT EXISTS traffic.device_logs (
-			log_id String, tenant_id String, device_ip String, device_type String,
-			facility UInt32, severity UInt32, timestamp DateTime64(3),
-			message String, parsed String, source String
-		) ENGINE = MergeTree() ORDER BY (tenant_id, device_ip, timestamp) TTL timestamp + INTERVAL 30 DAY`,
-		`CREATE TABLE IF NOT EXISTS traffic.dlq_events (
-			event_id String, tenant_id String, source_topic String, source_key String,
-			error_msg String, raw_payload String, retry_count UInt32, created_at DateTime64(3)
-		) ENGINE = MergeTree() ORDER BY (tenant_id, created_at) TTL created_at + INTERVAL 168 DAY`,
-	} {
-		if _, err := db.ExecContext(ctx, ddl); err != nil {
-			return fmt.Errorf("init event schema: %w", err)
-		}
-	}
-	return nil
 }

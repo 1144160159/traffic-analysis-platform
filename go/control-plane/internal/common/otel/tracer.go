@@ -34,6 +34,16 @@ type TracerProvider struct {
 	config   TracerConfig
 }
 
+func init() {
+	// Propagation must work even when exporting is disabled. This lets HTTP and
+	// Kafka retain a single W3C trace identity without coupling business traffic
+	// to collector availability.
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
+		propagation.TraceContext{},
+		propagation.Baggage{},
+	))
+}
+
 func NewTracerProvider(cfg TracerConfig) (*TracerProvider, error) {
 	if !cfg.Enabled {
 		return &TracerProvider{

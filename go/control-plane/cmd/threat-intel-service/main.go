@@ -60,24 +60,31 @@ type feedRunResult struct {
 	EventID         string                 `json:"event_id"`
 	AuditWritten    bool                   `json:"audit_written"`
 	KafkaPublished  bool                   `json:"kafka_published"`
+	EventDelivery   string                 `json:"event_delivery"`
 	KafkaTopic      string                 `json:"kafka_topic"`
 	SchedulerStatus string                 `json:"scheduler_status"`
 }
 
 type threatIntelEvent struct {
-	EventID    string                   `json:"event_id"`
-	EventType  string                   `json:"event_type"`
-	Version    int                      `json:"version"`
-	TenantID   string                   `json:"tenant_id"`
-	UserID     string                   `json:"user_id,omitempty"`
-	Username   string                   `json:"username,omitempty"`
-	Source     string                   `json:"source"`
-	Entry      *threatintel.IntelEntry  `json:"entry,omitempty"`
-	Entries    []threatintel.IntelEntry `json:"entries,omitempty"`
-	Count      int                      `json:"count"`
-	RequestID  string                   `json:"request_id,omitempty"`
-	TraceID    string                   `json:"trace_id,omitempty"`
-	OccurredAt time.Time                `json:"occurred_at"`
+	EventID           string                   `json:"event_id"`
+	EventType         string                   `json:"event_type"`
+	Version           int                      `json:"version"`
+	SchemaVersion     int                      `json:"schema_version"`
+	AggregateVersion  int64                    `json:"aggregate_version"`
+	TenantID          string                   `json:"tenant_id"`
+	UserID            string                   `json:"user_id,omitempty"`
+	Username          string                   `json:"username,omitempty"`
+	ActionID          string                   `json:"action_id,omitempty"`
+	Reason            string                   `json:"reason,omitempty"`
+	CompatibilityMode bool                     `json:"compatibility_mode,omitempty"`
+	Source            string                   `json:"source"`
+	Entry             *threatintel.IntelEntry  `json:"entry,omitempty"`
+	Entries           []threatintel.IntelEntry `json:"entries,omitempty"`
+	Feed              *threatintel.FeedSource  `json:"feed,omitempty"`
+	Count             int                      `json:"count"`
+	RequestID         string                   `json:"request_id,omitempty"`
+	TraceID           string                   `json:"trace_id"`
+	OccurredAt        time.Time                `json:"occurred_at"`
 }
 
 func main() {
@@ -116,12 +123,6 @@ func main() {
 	defer pgClient.Close()
 
 	intel := threatintel.NewService(pgClient.DB(), logger)
-	schemaCtx, cancel := context.WithTimeout(ctx, 20*time.Second)
-	if err := intel.InitSchema(schemaCtx); err != nil {
-		cancel()
-		logger.Fatal("Failed to initialize threat intel schema", zap.Error(err))
-	}
-	cancel()
 
 	threatIntelTopic := getEnv("KAFKA_THREAT_INTEL_TOPIC", "threat.intel.v1")
 	threatIntelProducer, err := newThreatIntelProducer(logger, threatIntelTopic)
@@ -142,6 +143,13 @@ func main() {
 		threatIntelProducer: threatIntelProducer,
 		threatIntelTopic:    threatIntelTopic,
 		logger:              logger,
+	}
+	if getBoolEnv("THREAT_INTEL_OUTBOX_V1_ENABLED", true) {
+		if err := srv.startThreatIntelOutboxWorker(ctx, 2*time.Second); err != nil {
+			logger.Fatal("Failed to start threat intel transactional outbox worker", zap.Error(err))
+		}
+	} else {
+		logger.Warn("Threat intel transactional outbox dispatch is disabled")
 	}
 	router := mux.NewRouter()
 	router.HandleFunc("/health", srv.health).Methods(http.MethodGet)
@@ -296,25 +304,42 @@ func (s *server) upsertEntry(w http.ResponseWriter, r *http.Request) {
 		httpx.JSONError(w, r.Context(), http.StatusBadRequest, "THREAT_INTEL_BAD_REQUEST", "invalid entry JSON")
 		return
 	}
-	if err := s.intel.InsertForTenant(r.Context(), requestTenantID(r), &entry); err != nil {
+	meta, err := newThreatIntelCommandMeta(
+		r, requestTenantID(r), "entry_upsert", entry, entry.Revision,
+	)
+	if err != nil {
+		httpx.JSONError(w, r.Context(), http.StatusBadRequest, "THREAT_INTEL_COMMAND_INVALID", err.Error())
+		return
+	}
+	prepared, err := s.intel.PrepareEntriesForTenant(
+		requestTenantID(r), []threatintel.IntelEntry{entry}, entry.Source,
+	)
+	if err != nil {
 		httpx.JSONError(w, r.Context(), http.StatusBadRequest, "THREAT_INTEL_UPSERT_FAILED", err.Error())
 		return
 	}
+	entry = prepared[0]
 	event := s.newThreatIntelEvent(r, "threat_intel.entry_upserted", entry.Source, &entry, nil, 1)
-	if err := s.recordThreatIntelAudit(r.Context(), r, event, "THREAT_INTEL_ENTRY_UPSERTED", entry.Type+":"+entry.Value); err != nil {
-		httpx.JSONError(w, r.Context(), http.StatusBadGateway, "THREAT_INTEL_AUDIT_FAILED", err.Error())
+	receipt, err := s.commitThreatIntelCommand(r.Context(), r, threatIntelCommand{
+		Entries: prepared, Event: event, Meta: meta,
+		Action: "THREAT_INTEL_ENTRY_UPSERTED", ObjectID: entry.Type + ":" + entry.Value,
+	})
+	if err != nil {
+		writeThreatIntelCommandError(w, r, err)
 		return
 	}
-	if err := s.publishThreatIntelEvent(r.Context(), event); err != nil {
-		httpx.JSONError(w, r.Context(), http.StatusBadGateway, "THREAT_INTEL_KAFKA_PUBLISH_FAILED", err.Error())
-		return
-	}
-	httpx.JSONCreated(w, r.Context(), map[string]interface{}{
-		"entry":           entry,
-		"event_id":        event.EventID,
-		"audit_written":   true,
-		"kafka_published": true,
-		"kafka_topic":     s.threatIntelTopic,
+	resultEntry := receipt.Entries[0]
+	httpx.JSONAccepted(w, r.Context(), map[string]interface{}{
+		"entry":              resultEntry,
+		"event_id":           receipt.EventID,
+		"action_id":          receipt.ActionID,
+		"revision":           receipt.AggregateVersion,
+		"replayed":           receipt.Replayed,
+		"compatibility_mode": receipt.Compatibility,
+		"audit_written":      true,
+		"kafka_published":    false,
+		"event_delivery":     "queued",
+		"kafka_topic":        s.threatIntelTopic,
 	})
 }
 
@@ -327,27 +352,38 @@ func (s *server) importEntries(w http.ResponseWriter, r *http.Request) {
 	if req.Source == "" {
 		req.Source = "manual"
 	}
-	imported, err := s.intel.ImportEntriesForTenant(r.Context(), requestTenantID(r), req.Entries, req.Source)
+	meta, err := newThreatIntelCommandMeta(r, requestTenantID(r), "entry_import", req, 0)
+	if err != nil {
+		httpx.JSONError(w, r.Context(), http.StatusBadRequest, "THREAT_INTEL_COMMAND_INVALID", err.Error())
+		return
+	}
+	prepared, err := s.intel.PrepareEntriesForTenant(requestTenantID(r), req.Entries, req.Source)
 	if err != nil {
 		httpx.JSONError(w, r.Context(), http.StatusBadRequest, "THREAT_INTEL_IMPORT_FAILED", err.Error())
 		return
 	}
-	event := s.newThreatIntelEvent(r, "threat_intel.feed_imported", req.Source, nil, req.Entries[:imported], imported)
-	if err := s.recordThreatIntelAudit(r.Context(), r, event, "THREAT_INTEL_FEED_IMPORTED", req.Source); err != nil {
-		httpx.JSONError(w, r.Context(), http.StatusBadGateway, "THREAT_INTEL_AUDIT_FAILED", err.Error())
+	imported := len(prepared)
+	event := s.newThreatIntelEvent(r, "threat_intel.feed_imported", req.Source, nil, prepared, imported)
+	receipt, err := s.commitThreatIntelCommand(r.Context(), r, threatIntelCommand{
+		Entries: prepared, Event: event, Meta: meta,
+		Action: "THREAT_INTEL_FEED_IMPORTED", ObjectID: req.Source,
+	})
+	if err != nil {
+		writeThreatIntelCommandError(w, r, err)
 		return
 	}
-	if err := s.publishThreatIntelEvent(r.Context(), event); err != nil {
-		httpx.JSONError(w, r.Context(), http.StatusBadGateway, "THREAT_INTEL_KAFKA_PUBLISH_FAILED", err.Error())
-		return
-	}
-	httpx.JSONCreated(w, r.Context(), map[string]interface{}{
-		"imported":        imported,
-		"source":          req.Source,
-		"event_id":        event.EventID,
-		"audit_written":   true,
-		"kafka_published": true,
-		"kafka_topic":     s.threatIntelTopic,
+	httpx.JSONAccepted(w, r.Context(), map[string]interface{}{
+		"imported":           imported,
+		"source":             req.Source,
+		"event_id":           receipt.EventID,
+		"action_id":          receipt.ActionID,
+		"revision":           receipt.AggregateVersion,
+		"replayed":           receipt.Replayed,
+		"compatibility_mode": receipt.Compatibility,
+		"audit_written":      true,
+		"kafka_published":    false,
+		"event_delivery":     "queued",
+		"kafka_topic":        s.threatIntelTopic,
 	})
 }
 
@@ -366,7 +402,13 @@ func (s *server) upsertFeed(w http.ResponseWriter, r *http.Request) {
 		httpx.JSONError(w, r.Context(), http.StatusBadRequest, "THREAT_INTEL_BAD_REQUEST", "invalid feed JSON")
 		return
 	}
-	feed.TenantID = requestTenantID(r)
+	tenantID := requestTenantID(r)
+	meta, err := newThreatIntelCommandMeta(r, tenantID, "feed_upsert", feed, feed.Revision)
+	if err != nil {
+		httpx.JSONError(w, r.Context(), http.StatusBadRequest, "THREAT_INTEL_COMMAND_INVALID", err.Error())
+		return
+	}
+	feed.TenantID = tenantID
 	if feed.IntervalSeconds <= 0 {
 		feed.IntervalSeconds = getIntEnv("THREAT_INTEL_FEED_DEFAULT_INTERVAL_SECONDS", 3600)
 	}
@@ -374,12 +416,26 @@ func (s *server) upsertFeed(w http.ResponseWriter, r *http.Request) {
 		now := time.Now().UTC()
 		feed.NextRunAt = &now
 	}
-	updated, err := s.intel.UpsertFeed(r.Context(), &feed)
+	prepared, err := s.intel.PrepareFeedForTenant(tenantID, &feed)
 	if err != nil {
 		httpx.JSONError(w, r.Context(), http.StatusBadRequest, "THREAT_INTEL_FEED_UPSERT_FAILED", err.Error())
 		return
 	}
-	httpx.JSONCreated(w, r.Context(), updated)
+	event := s.newThreatIntelEvent(r, "threat_intel.feed_configured", prepared.Name, nil, nil, 0)
+	receipt, err := s.commitThreatIntelCommand(r.Context(), r, threatIntelCommand{
+		Feed: prepared, Event: event, Meta: meta,
+		Action: "THREAT_INTEL_FEED_CONFIGURED", ObjectID: prepared.Name,
+	})
+	if err != nil {
+		writeThreatIntelCommandError(w, r, err)
+		return
+	}
+	httpx.JSONAccepted(w, r.Context(), map[string]interface{}{
+		"feed": receipt.Feed, "event_id": receipt.EventID, "action_id": receipt.ActionID,
+		"revision": receipt.AggregateVersion, "replayed": receipt.Replayed,
+		"compatibility_mode": receipt.Compatibility, "audit_written": true,
+		"kafka_published": false, "event_delivery": "queued", "kafka_topic": s.threatIntelTopic,
+	})
 }
 
 func (s *server) runFeed(w http.ResponseWriter, r *http.Request) {
@@ -419,20 +475,17 @@ func (s *server) newThreatIntelEventWithTenant(ctx context.Context, tenantID, ev
 	if tenantID == "" {
 		tenantID = "default"
 	}
+	eventID := "ti-" + uuid.NewString()
+	traceID := strings.TrimSpace(httpx.GetTraceID(ctx))
+	if traceID == "" {
+		traceID = eventID
+	}
 	return threatIntelEvent{
-		EventID:    "ti-" + uuid.NewString(),
-		EventType:  eventType,
-		Version:    1,
-		TenantID:   tenantID,
-		UserID:     httpx.GetUserID(ctx),
-		Username:   httpx.GetUsername(ctx),
-		Source:     source,
-		Entry:      entry,
-		Entries:    entries,
-		Count:      count,
-		RequestID:  httpx.GetRequestID(ctx),
-		TraceID:    httpx.GetTraceID(ctx),
-		OccurredAt: time.Now().UTC(),
+		EventID: eventID, EventType: eventType, Version: 1,
+		SchemaVersion: 1, AggregateVersion: 1,
+		TenantID: tenantID, UserID: httpx.GetUserID(ctx), Username: httpx.GetUsername(ctx),
+		Source: source, Entry: entry, Entries: entries, Count: count,
+		RequestID: httpx.GetRequestID(ctx), TraceID: traceID, OccurredAt: time.Now().UTC(),
 	}
 }
 
@@ -441,33 +494,43 @@ func (s *server) runThreatIntelFeed(ctx context.Context, feed *threatintel.FeedS
 		return nil, fmt.Errorf("nil threat intel feed")
 	}
 	startedAt := time.Now().UTC()
-	imported, err := s.intel.ImportEntriesForTenant(ctx, feed.TenantID, feed.Entries, feed.Name)
+	prepared, err := s.intel.PrepareEntriesForTenant(feed.TenantID, feed.Entries, feed.Name)
 	if err != nil {
-		_ = s.intel.RecordFeedRun(ctx, *feed, "failed", err.Error(), startedAt)
 		return nil, err
 	}
-	event := s.newThreatIntelEventWithTenant(ctx, feed.TenantID, eventType, feed.Name, nil, feed.Entries[:imported], imported)
-	if err := s.recordThreatIntelAudit(ctx, r, event, action, feed.Name); err != nil {
-		_ = s.intel.RecordFeedRun(ctx, *feed, "failed", err.Error(), startedAt)
-		return nil, err
-	}
-	if err := s.publishThreatIntelEvent(ctx, event); err != nil {
-		_ = s.intel.RecordFeedRun(ctx, *feed, "failed", err.Error(), startedAt)
-		return nil, err
-	}
-	if err := s.intel.RecordFeedRun(ctx, *feed, "success", "", startedAt); err != nil {
-		return nil, err
-	}
-	updated, err := s.intel.GetFeed(ctx, feed.TenantID, feed.Name)
+	imported := len(prepared)
+	metaPayload := struct {
+		FeedName     string                   `json:"feed_name"`
+		FeedRevision int64                    `json:"feed_revision"`
+		ScheduledFor *time.Time               `json:"scheduled_for,omitempty"`
+		Entries      []threatintel.IntelEntry `json:"entries"`
+	}{feed.Name, feed.Revision, feed.NextRunAt, prepared}
+	meta, err := newThreatIntelCommandMeta(r, feed.TenantID, "feed_run", metaPayload, feed.Revision)
 	if err != nil {
-		updated = feed
+		return nil, err
+	}
+	updatedFeed := *feed
+	updatedFeed.LastRunAt = &startedAt
+	nextRunAt := startedAt.Add(time.Duration(updatedFeed.IntervalSeconds) * time.Second)
+	updatedFeed.NextRunAt = &nextRunAt
+	updatedFeed.LastStatus = "success"
+	updatedFeed.LastError = ""
+	updatedFeed.RunCount++
+	event := s.newThreatIntelEventWithTenant(ctx, feed.TenantID, eventType, feed.Name, nil, prepared, imported)
+	receipt, err := s.commitThreatIntelCommand(ctx, r, threatIntelCommand{
+		Entries: prepared, Feed: &updatedFeed, Event: event, Meta: meta,
+		Action: action, ObjectID: feed.Name,
+	})
+	if err != nil {
+		return nil, err
 	}
 	return &feedRunResult{
-		Feed:            *updated,
+		Feed:            *receipt.Feed,
 		Imported:        imported,
-		EventID:         event.EventID,
+		EventID:         receipt.EventID,
 		AuditWritten:    true,
-		KafkaPublished:  true,
+		KafkaPublished:  false,
+		EventDelivery:   "queued",
 		KafkaTopic:      s.threatIntelTopic,
 		SchedulerStatus: "success",
 	}, nil
@@ -510,30 +573,179 @@ func (s *server) publishThreatIntelEvent(ctx context.Context, event threatIntelE
 	if s.threatIntelProducer == nil {
 		return fmt.Errorf("threat intel Kafka producer is not configured")
 	}
-	key := event.TenantID + ":" + event.EventType + ":" + event.Source + ":" + event.EventID
-	return s.threatIntelProducer.SendJSON(ctx, key, event,
+	// Tenant is the stable partition key so all indicators for a tenant preserve
+	// import order, including multi-indicator feed events.
+	return s.threatIntelProducer.SendJSON(ctx, event.TenantID, event,
 		commonkafka.MessageHeader{Key: "event_id", Value: event.EventID},
 		commonkafka.MessageHeader{Key: "event_type", Value: event.EventType},
+		commonkafka.MessageHeader{Key: "schema_version", Value: "1"},
+		commonkafka.MessageHeader{Key: "aggregate_version", Value: strconv.FormatInt(event.AggregateVersion, 10)},
 		commonkafka.MessageHeader{Key: "tenant_id", Value: event.TenantID},
 		commonkafka.MessageHeader{Key: "user_id", Value: event.UserID},
 		commonkafka.MessageHeader{Key: "source", Value: event.Source},
 		commonkafka.MessageHeader{Key: "request_id", Value: event.RequestID},
 		commonkafka.MessageHeader{Key: "trace_id", Value: event.TraceID},
+		commonkafka.MessageHeader{Key: "content_type", Value: "application/json"},
 	)
+}
+
+type threatIntelSQLExecer interface {
+	ExecContext(context.Context, string, ...interface{}) (sql.Result, error)
+}
+
+func (s *server) startThreatIntelOutboxWorker(ctx context.Context, interval time.Duration) error {
+	if s.auditDB == nil {
+		return fmt.Errorf("threat intel outbox database is not configured")
+	}
+	if s.threatIntelProducer == nil {
+		return fmt.Errorf("threat intel Kafka producer is not configured")
+	}
+	var columns int
+	if err := s.auditDB.QueryRowContext(ctx, `
+		SELECT count(*) FROM information_schema.columns
+		WHERE table_schema=current_schema()
+		  AND table_name='threat_intel_event_outbox'`,
+	).Scan(&columns); err != nil {
+		return fmt.Errorf("verify threat intel outbox schema: %w", err)
+	}
+	if columns < 12 {
+		return fmt.Errorf("threat intel outbox schema is incomplete: columns=%d want>=12", columns)
+	}
+	if interval <= 0 {
+		interval = 2 * time.Second
+	}
+	go func() {
+		timer := time.NewTimer(interval)
+		defer timer.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-timer.C:
+				for processed := 0; processed < 50; processed++ {
+					found, err := s.dispatchNextThreatIntelOutbox(ctx)
+					if err != nil {
+						s.logger.Warn("Threat intel outbox dispatch failed", zap.Error(err))
+						break
+					}
+					if !found {
+						break
+					}
+				}
+				timer.Reset(interval)
+			}
+		}
+	}()
+	return nil
+}
+
+func (s *server) dispatchNextThreatIntelOutbox(ctx context.Context) (bool, error) {
+	var eventID string
+	var payload []byte
+	var attemptCount int
+	err := s.auditDB.QueryRowContext(ctx, `
+		WITH candidate AS (
+			SELECT event_id
+			FROM threat_intel_event_outbox
+			WHERE (status='pending' AND available_at<=now())
+			   OR (status='processing' AND locked_until<now())
+			ORDER BY created_at,event_id
+			FOR UPDATE SKIP LOCKED
+			LIMIT 1
+		)
+		UPDATE threat_intel_event_outbox outbox
+		SET status='processing',
+		    attempt_count=outbox.attempt_count+1,
+		    locked_until=now()+interval '30 seconds',
+		    locked_by=$1
+		FROM candidate
+		WHERE outbox.event_id=candidate.event_id
+		RETURNING outbox.event_id,outbox.payload::text,outbox.attempt_count`,
+		serviceName,
+	).Scan(&eventID, &payload, &attemptCount)
+	if err == sql.ErrNoRows {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("lease threat intel outbox: %w", err)
+	}
+	var event threatIntelEvent
+	if err := json.Unmarshal(payload, &event); err != nil {
+		return true, s.failThreatIntelOutbox(ctx, eventID, attemptCount, err)
+	}
+	if err := s.publishThreatIntelEvent(ctx, event); err != nil {
+		return true, s.failThreatIntelOutbox(ctx, eventID, attemptCount, err)
+	}
+	result, err := s.auditDB.ExecContext(ctx, `
+		UPDATE threat_intel_event_outbox
+		SET status='published',published_at=now(),locked_until=NULL,locked_by='',last_error=''
+		WHERE event_id=$1 AND status='processing'`,
+		eventID,
+	)
+	if err != nil {
+		return true, fmt.Errorf("mark threat intel outbox published: %w", err)
+	}
+	updated, err := result.RowsAffected()
+	if err != nil || updated != 1 {
+		return true, fmt.Errorf("threat intel outbox publish state collision")
+	}
+	return true, nil
+}
+
+func (s *server) failThreatIntelOutbox(
+	ctx context.Context,
+	eventID string,
+	attemptCount int,
+	dispatchErr error,
+) error {
+	status := "pending"
+	if attemptCount >= 8 {
+		status = "dead"
+	}
+	retrySeconds := 1 << min(attemptCount, 8)
+	_, err := s.auditDB.ExecContext(ctx, `
+		UPDATE threat_intel_event_outbox
+		SET status=$2,
+		    available_at=now()+($3*interval '1 second'),
+		    locked_until=NULL,
+		    locked_by='',
+		    last_error=$4
+		WHERE event_id=$1 AND status='processing'`,
+		eventID, status, retrySeconds, dispatchErr.Error(),
+	)
+	if err != nil {
+		return fmt.Errorf("record threat intel outbox failure: %w", err)
+	}
+	return dispatchErr
 }
 
 func (s *server) recordThreatIntelAudit(ctx context.Context, r *http.Request, event threatIntelEvent, action, objectID string) error {
 	if s.auditDB == nil {
 		return fmt.Errorf("audit database is not configured")
 	}
+	return s.insertThreatIntelAudit(ctx, s.auditDB, r, event, action, objectID)
+}
+
+func (s *server) insertThreatIntelAudit(
+	ctx context.Context,
+	execer threatIntelSQLExecer,
+	r *http.Request,
+	event threatIntelEvent,
+	action string,
+	objectID string,
+) error {
 	detail := map[string]interface{}{
-		"event_id":    event.EventID,
-		"event_type":  event.EventType,
-		"source":      event.Source,
-		"count":       event.Count,
-		"kafka_topic": s.threatIntelTopic,
-		"request_id":  event.RequestID,
-		"trace_id":    event.TraceID,
+		"event_id":           event.EventID,
+		"event_type":         event.EventType,
+		"action_id":          event.ActionID,
+		"reason":             event.Reason,
+		"aggregate_version":  event.AggregateVersion,
+		"compatibility_mode": event.CompatibilityMode,
+		"source":             event.Source,
+		"count":              event.Count,
+		"kafka_topic":        s.threatIntelTopic,
+		"request_id":         event.RequestID,
+		"trace_id":           event.TraceID,
 	}
 	if event.Entry != nil {
 		detail["entry_type"] = event.Entry.Type
@@ -554,10 +766,10 @@ func (s *server) recordThreatIntelAudit(ctx context.Context, r *http.Request, ev
 	if r != nil {
 		userAgent = r.UserAgent()
 	}
-	_, err = s.auditDB.ExecContext(ctx, `
+	_, err = execer.ExecContext(ctx, `
 		INSERT INTO audit_logs (event_id, tenant_id, user_id, action, object_type, object_id, detail, ip_addr, user_agent)
 		VALUES ($1, $2, NULLIF($3, '')::uuid, $4, $5, $6, $7::jsonb, $8, $9)`,
-		"audit-"+uuid.NewString(),
+		"audit-"+event.EventID,
 		event.TenantID,
 		userID,
 		action,

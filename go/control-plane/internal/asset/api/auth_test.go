@@ -1,6 +1,8 @@
 package api
 
 import (
+	"bytes"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -126,6 +128,102 @@ func TestRequireAssetDiscoveryWriteRejectsViewerScope(t *testing.T) {
 	}
 }
 
+func TestRequireAssetExportUsesDedicatedScope(t *testing.T) {
+	const signingKey = "asset-export-scope-test-signing-key"
+	for _, tc := range []struct {
+		name       string
+		scopes     []string
+		wantStatus int
+		wantOK     bool
+	}{
+		{name: "dedicated export", scopes: []string{authmodel.ScopeAssetExport}, wantOK: true},
+		{name: "asset wildcard", scopes: []string{authmodel.ScopeAssetAll}, wantOK: true},
+		{name: "read only", scopes: []string{authmodel.ScopeAssetRead}, wantStatus: http.StatusForbidden},
+		{name: "discover only", scopes: []string{authmodel.ScopeAssetDiscover}, wantStatus: http.StatusForbidden},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodPost, "/api/v1/assets/exports", nil)
+			req.Header.Set("Authorization", "Bearer "+signAccessToken(t, signingKey, "tenant-a", tc.scopes))
+			rr := httptest.NewRecorder()
+			identity, ok := (&HTTPHandler{jwtSigningKey: signingKey}).requireAssetExport(rr, req)
+			if ok != tc.wantOK {
+				t.Fatalf("ok=%v want=%v status=%d body=%s", ok, tc.wantOK, rr.Code, rr.Body.String())
+			}
+			if tc.wantOK && identity.TenantID != "tenant-a" {
+				t.Fatalf("tenant=%q want tenant-a", identity.TenantID)
+			}
+			if !tc.wantOK && rr.Code != tc.wantStatus {
+				t.Fatalf("status=%d want=%d body=%s", rr.Code, tc.wantStatus, rr.Body.String())
+			}
+		})
+	}
+}
+
+func TestRequireAssetGovernanceUsesDedicatedScope(t *testing.T) {
+	const signingKey = "asset-governance-scope-test-signing-key"
+	for _, tc := range []struct {
+		name   string
+		scopes []string
+		wantOK bool
+	}{
+		{name: "dedicated governance", scopes: []string{authmodel.ScopeAssetGovern}, wantOK: true},
+		{name: "asset wildcard", scopes: []string{authmodel.ScopeAssetAll}, wantOK: true},
+		{name: "read only", scopes: []string{authmodel.ScopeAssetRead}},
+		{name: "discover only", scopes: []string{authmodel.ScopeAssetDiscover}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodPost, "/api/v1/assets/11111111-1111-1111-1111-111111111111/governance/work-orders", nil)
+			req.Header.Set("Authorization", "Bearer "+signAccessToken(t, signingKey, "tenant-a", tc.scopes))
+			rr := httptest.NewRecorder()
+			identity, ok := (&HTTPHandler{jwtSigningKey: signingKey}).requireAssetGovernance(rr, req)
+			if ok != tc.wantOK {
+				t.Fatalf("ok=%v want=%v status=%d body=%s", ok, tc.wantOK, rr.Code, rr.Body.String())
+			}
+			if ok && identity.TenantID != "tenant-a" {
+				t.Fatalf("tenant=%q", identity.TenantID)
+			}
+			if !ok && rr.Code != http.StatusForbidden {
+				t.Fatalf("status=%d body=%s", rr.Code, rr.Body.String())
+			}
+		})
+	}
+}
+
+func TestAssetPreferenceUsesStableUserID(t *testing.T) {
+	identity := requestIdentity{UserID: "11111111-1111-1111-1111-111111111111", Username: "renameable-user"}
+	if got := assetPreferenceUserID(identity); got != identity.UserID {
+		t.Fatalf("preference user=%q want stable user_id %q", got, identity.UserID)
+	}
+}
+
+func TestAssetExportAuthorizationFailureUsesContractEnvelope(t *testing.T) {
+	const signingKey = "asset-export-envelope-test-key"
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/assets/exports", nil)
+	req.Header.Set("Authorization", "Bearer "+signAccessToken(t, signingKey, "tenant-a", []string{authmodel.ScopeAssetRead}))
+	req.Header.Set("X-Trace-ID", "trace-export-denied")
+	rr := httptest.NewRecorder()
+	if _, ok := (&HTTPHandler{jwtSigningKey: signingKey}).requireAssetExport(rr, req); ok {
+		t.Fatal("asset:read must not pass asset:export")
+	}
+	var envelope struct {
+		Meta struct {
+			SnapshotID string `json:"snapshot_id"`
+			AsOf       string `json:"as_of"`
+			TraceID    string `json:"trace_id"`
+		} `json:"meta"`
+		Error struct {
+			Code    string `json:"code"`
+			TraceID string `json:"trace_id"`
+		} `json:"error"`
+	}
+	if err := json.Unmarshal(rr.Body.Bytes(), &envelope); err != nil {
+		t.Fatal(err)
+	}
+	if rr.Code != http.StatusForbidden || envelope.Meta.SnapshotID == "" || envelope.Meta.AsOf == "" || envelope.Meta.TraceID != "trace-export-denied" || envelope.Error.Code != "forbidden" || envelope.Error.TraceID != envelope.Meta.TraceID {
+		t.Fatalf("unexpected envelope status=%d body=%s", rr.Code, rr.Body.String())
+	}
+}
+
 func signAccessToken(t *testing.T, signingKey, tenantID string, permissions []string) string {
 	t.Helper()
 	now := time.Now()
@@ -157,5 +255,39 @@ func TestHasDiscoveryWriteScopeAcceptsWildcards(t *testing.T) {
 		if !hasDiscoveryWriteScope(scopes) {
 			t.Fatalf("scope set %v should pass discovery write gate", scopes)
 		}
+	}
+}
+
+func TestAtomicAssetUpsertRejectsBodyTenantConflictBeforeDatabase(t *testing.T) {
+	const signingKey = "asset-upsert-tenant-test-key"
+	req := httptest.NewRequest(
+		http.MethodPost,
+		"/api/v1/assets",
+		bytes.NewBufferString(`{"asset":{"tenant_id":"tenant-b","mac_address":"00:11:22:33:44:55"},"expected_revision":0}`),
+	)
+	req.Header.Set("Authorization", "Bearer "+signAccessToken(t, signingKey, "tenant-a", []string{authmodel.ScopeAssetDiscover}))
+	req.Header.Set("Idempotency-Key", "asset-upsert-tenant-conflict")
+	rr := httptest.NewRecorder()
+	(&HTTPHandler{jwtSigningKey: signingKey}).ServeHTTP(rr, req)
+	if rr.Code != http.StatusConflict {
+		t.Fatalf("status=%d want=%d body=%s", rr.Code, http.StatusConflict, rr.Body.String())
+	}
+	if !bytes.Contains(rr.Body.Bytes(), []byte(`"code":"tenant_conflict"`)) {
+		t.Fatalf("missing contract error: %s", rr.Body.String())
+	}
+}
+
+func TestAtomicAssetUpsertRejectsViewerBeforeDatabase(t *testing.T) {
+	const signingKey = "asset-upsert-viewer-test-key"
+	req := httptest.NewRequest(
+		http.MethodPost,
+		"/api/v1/assets",
+		bytes.NewBufferString(`{"asset":{"mac_address":"00:11:22:33:44:55"},"expected_revision":0}`),
+	)
+	req.Header.Set("Authorization", "Bearer "+signAccessToken(t, signingKey, "tenant-a", []string{authmodel.ScopeAssetRead}))
+	rr := httptest.NewRecorder()
+	(&HTTPHandler{jwtSigningKey: signingKey}).ServeHTTP(rr, req)
+	if rr.Code != http.StatusForbidden {
+		t.Fatalf("status=%d want=%d body=%s", rr.Code, http.StatusForbidden, rr.Body.String())
 	}
 }

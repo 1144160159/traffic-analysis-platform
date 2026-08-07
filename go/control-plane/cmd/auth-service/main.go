@@ -34,6 +34,7 @@ import (
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/service"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/audit"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/httpx"
+	commonkafka "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/kafka"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/logging"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/otel"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/storage"
@@ -117,6 +118,16 @@ func main() {
 	userRepo := repository.NewUserRepository(pgClient.DB(), logger)
 	tokenRepo := repository.NewTokenRepository(pgClient.DB(), logger)
 	systemSettingsRepo := repository.NewSystemSettingsRepository(pgClient.DB(), logger)
+	userEventProducer, err := initUserEventProducer(cfg, logger)
+	if err != nil {
+		logger.Fatal("Failed to initialize user event producer", zap.Error(err))
+	}
+	defer func() {
+		if closeErr := userEventProducer.Close(); closeErr != nil {
+			logger.Warn("Failed to close user event producer", zap.Error(closeErr))
+		}
+	}()
+	userSettingsOutboxWorker := repository.NewUserSettingsOutboxWorker(pgClient.DB(), userEventProducer, logger)
 	logger.Info("Repository layer initialized")
 
 	// =========================================================================
@@ -213,6 +224,14 @@ func main() {
 	go func() {
 		defer backgroundTasksWg.Done()
 		startSessionCleanupWorker(ctx, jwtService, logger)
+	}()
+
+	backgroundTasksWg.Add(1)
+	go func() {
+		defer backgroundTasksWg.Done()
+		if err := userSettingsOutboxWorker.Run(ctx, 2*time.Second); err != nil && ctx.Err() == nil {
+			logger.Error("User settings outbox worker stopped", zap.Error(err))
+		}
 	}()
 
 	logger.Info("Background tasks started")
@@ -415,6 +434,15 @@ func initAuditLogger(cfg *config.Config, logger *zap.Logger) (*audit.Logger, err
 		zap.Int("batch_size", cfg.Audit.BatchSize))
 
 	return auditLogger, nil
+}
+
+func initUserEventProducer(cfg *config.Config, logger *zap.Logger) (*commonkafka.Producer, error) {
+	return commonkafka.NewProducer(commonkafka.ProducerConfig{
+		Brokers: cfg.Kafka.Brokers, Topic: cfg.Kafka.UserEventTopic,
+		BatchSize: 100, BatchTimeout: 100 * time.Millisecond, MaxAttempts: 3,
+		RequiredAcks: "all", Compression: "lz4", Async: false,
+		IdempotentKey: "tenant_id+user_id", Security: cfg.KafkaSecurity,
+	}, logger)
 }
 
 // initJWTService 初始化 JWT Service（修复 #7）

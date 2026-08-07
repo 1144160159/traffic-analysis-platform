@@ -6,9 +6,7 @@ package repository
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -32,8 +30,8 @@ const alertSelectColumns = `
 	tenant_id, alert_id, dedup_fingerprint, community_id, session_id, campaign_id,
 	src_ip, dst_ip, src_port, dst_port, protocol,
 	alert_type, labels, score, severity,
-	fromUnixTimestamp64Milli(first_seen) AS first_seen,
-	fromUnixTimestamp64Milli(last_seen) AS last_seen,
+	fromUnixTimestamp64Milli(first_seen) AS first_seen_time,
+	fromUnixTimestamp64Milli(last_seen) AS last_seen_time,
 	count, status, assignee,
 	fromUnixTimestamp64Milli(updated_at) AS updated_ts,
 	model_version, rule_version, feature_set_id,
@@ -45,8 +43,8 @@ const alertSelectColumns = `
 const alertListSelectColumns = `
 	tenant_id, alert_id, src_ip, dst_ip, src_port, dst_port, protocol,
 	alert_type, score, severity,
-	fromUnixTimestamp64Milli(first_seen) AS first_seen,
-	fromUnixTimestamp64Milli(last_seen) AS last_seen,
+	fromUnixTimestamp64Milli(first_seen) AS first_seen_time,
+	fromUnixTimestamp64Milli(last_seen) AS last_seen_time,
 	count, status, assignee,
 	fromUnixTimestamp64Milli(updated_at) AS updated_ts,
 	model_version, rule_version`
@@ -110,6 +108,50 @@ type ListQuery struct {
 type ListResult struct {
 	Alerts []*persistence.Alert
 	Total  int64
+}
+
+// ListProjectionAlerts returns a bounded authoritative image for OpenSearch
+// reconciliation. max+1 rows are requested so callers can fail closed rather
+// than silently treating truncation as a complete comparison.
+func (r *AlertRepository) ListProjectionAlerts(ctx context.Context, scope persistence.ProjectionScope) ([]*persistence.Alert, bool, error) {
+	if strings.TrimSpace(scope.TenantID) == "" || scope.MaxDocuments < 1 || scope.MaxDocuments > 100000 {
+		return nil, false, fmt.Errorf("invalid projection reconciliation scope")
+	}
+	conditions := []string{"tenant_id = ?"}
+	args := []interface{}{scope.TenantID}
+	if !scope.StartTime.IsZero() {
+		conditions = append(conditions, "last_seen >= ?")
+		args = append(args, scope.StartTime.UTC().UnixMilli())
+	}
+	if !scope.EndTime.IsZero() {
+		conditions = append(conditions, "last_seen <= ?")
+		args = append(args, scope.EndTime.UTC().UnixMilli())
+	}
+	if len(scope.BusinessIDs) > 0 {
+		conditions = append(conditions, "alert_id IN ?")
+		args = append(args, scope.BusinessIDs)
+	}
+	args = append(args, scope.MaxDocuments+1)
+	query := fmt.Sprintf(`
+		SELECT %s FROM %s
+		WHERE %s
+		ORDER BY alert_id ASC
+		LIMIT ?
+	`, alertSelectColumns, alertLatestProjection, strings.Join(conditions, " AND "))
+	rows, err := r.client.Query(ctx, query, args...)
+	if err != nil {
+		return nil, false, errors.Wrap(err, errors.ErrCodeDatabaseError, "list authoritative projection alerts")
+	}
+	defer rows.Close()
+	alerts, err := r.scanAlerts(rows)
+	if err != nil {
+		return nil, false, err
+	}
+	truncated := len(alerts) > scope.MaxDocuments
+	if truncated {
+		alerts = alerts[:scope.MaxDocuments]
+	}
+	return alerts, truncated, nil
 }
 
 // List 查询告警列表
@@ -211,42 +253,27 @@ func (r *AlertRepository) List(ctx context.Context, query *ListQuery) (*ListResu
 		offset = query.Offset
 	}
 
+	// Return bounded structured rows. The previous groupArray(map(...)) plus
+	// toJSONString path made ClickHouse stringify typed columns and made Go
+	// allocate and decode a second page representation. Offset remains for API
+	// compatibility; a stable cursor is introduced by a separate contract.
 	dataSQL := fmt.Sprintf(`
-		SELECT toJSONString(groupArray(map(
-			'tenant_id', toString(tenant_id), 'alert_id', toString(alert_id),
-			'src_ip', toString(src_ip), 'dst_ip', toString(dst_ip),
-			'src_port', toString(src_port), 'dst_port', toString(dst_port),
-			'protocol', toString(protocol), 'alert_type', toString(alert_type),
-			'score', toString(score), 'severity', toString(severity),
-			'first_seen', toString(first_seen), 'last_seen', toString(last_seen),
-			'count', toString(count), 'status', toString(status),
-			'assignee', toString(assignee), 'updated_at', toString(updated_at),
-			'model_version', toString(model_version), 'rule_version', toString(rule_version),
-			'attack_phase', toString(attack_phase)
-		)))
-		FROM (
-			SELECT tenant_id, alert_id, src_ip, dst_ip, src_port, dst_port, protocol,
-				alert_type, score, severity, first_seen, last_seen, count, status,
-				assignee, updated_at, model_version, rule_version, %s AS attack_phase
-			FROM %s
-			WHERE %s
-			ORDER BY %s %s
-			LIMIT %d OFFSET %d
-		)
-	`, alertAttackPhaseExpression, latestSource, whereClause, sortBy, sortOrder, limit, offset)
+		SELECT %s, %s AS attack_phase
+		FROM %s
+		WHERE %s
+		ORDER BY %s %s
+		LIMIT %d OFFSET %d
+	`, alertListSelectColumns, alertAttackPhaseExpression, latestSource, whereClause, sortBy, sortOrder, limit, offset)
 
-	dataRow, err := r.client.QueryRow(ctx, dataSQL, queryArgs...)
+	rows, err := r.client.Query(ctx, dataSQL, queryArgs...)
 	if err != nil {
 		r.logger.Error("Failed to query alerts", zap.Error(err))
 		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to query alerts")
 	}
-	var pageJSON string
-	if err := dataRow.Scan(&pageJSON); err != nil {
-		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to scan alert list page")
-	}
-	alerts, err := decodeAlertListPage(pageJSON)
+	defer rows.Close()
+	alerts, err := r.scanAlertListRows(rows)
 	if err != nil {
-		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to decode alert list page")
+		return nil, err
 	}
 	r.logger.Info("Alert list page loaded",
 		zap.String("tenant_id", query.TenantID),
@@ -268,35 +295,6 @@ func (r *AlertRepository) List(ctx context.Context, query *ListQuery) (*ListResu
 		Alerts: alerts,
 		Total:  int64(total),
 	}, nil
-}
-
-func decodeAlertListPage(payload string) ([]*persistence.Alert, error) {
-	var records []map[string]string
-	if err := json.Unmarshal([]byte(payload), &records); err != nil {
-		return nil, err
-	}
-	alerts := make([]*persistence.Alert, 0, len(records))
-	for _, record := range records {
-		srcPort, _ := strconv.ParseUint(record["src_port"], 10, 16)
-		dstPort, _ := strconv.ParseUint(record["dst_port"], 10, 16)
-		protocol, _ := strconv.ParseUint(record["protocol"], 10, 8)
-		count, _ := strconv.ParseInt(record["count"], 10, 32)
-		score, _ := strconv.ParseFloat(record["score"], 32)
-		firstSeen, _ := strconv.ParseInt(record["first_seen"], 10, 64)
-		lastSeen, _ := strconv.ParseInt(record["last_seen"], 10, 64)
-		updatedAt, _ := strconv.ParseInt(record["updated_at"], 10, 64)
-		alerts = append(alerts, &persistence.Alert{
-			TenantID: record["tenant_id"], AlertID: record["alert_id"],
-			SrcIP: record["src_ip"], DstIP: record["dst_ip"],
-			SrcPort: uint16(srcPort), DstPort: uint16(dstPort), Protocol: uint8(protocol),
-			AlertType: record["alert_type"], Score: float32(score), Severity: record["severity"],
-			FirstSeen: time.UnixMilli(firstSeen), LastSeen: time.UnixMilli(lastSeen), Count: int32(count),
-			Status: record["status"], Assignee: record["assignee"], UpdatedTs: time.UnixMilli(updatedAt),
-			ModelVersion: record["model_version"], RuleVersion: record["rule_version"],
-			AttackPhase: record["attack_phase"],
-		})
-	}
-	return alerts, nil
 }
 
 // GetByID 根据ID查询告警
@@ -591,7 +589,7 @@ func (r *AlertRepository) BatchUpsertAlerts(ctx context.Context, alerts []*persi
 	ctx, span := otel.StartSpan(ctx, "alert_repository.batch_upsert_alerts")
 	defer span.End()
 	sql := `
-		INSERT INTO traffic.alerts_local (
+		INSERT INTO traffic.alerts (
 			tenant_id, alert_id, dedup_fingerprint, community_id, session_id, campaign_id,
 			src_ip, dst_ip, src_port, dst_port, protocol,
 			alert_type, labels, score, severity,
@@ -836,7 +834,7 @@ func (r *AlertRepository) StreamAlerts(ctx context.Context, query *ListQuery, ha
 // upsertAlert 插入或更新告警
 func (r *AlertRepository) upsertAlert(ctx context.Context, alert *persistence.Alert) error {
 	sql := `
-		INSERT INTO traffic.alerts_local (
+		INSERT INTO traffic.alerts (
 			tenant_id, alert_id, dedup_fingerprint, community_id, session_id, campaign_id,
 			src_ip, dst_ip, src_port, dst_port, protocol,
 			alert_type, labels, score, severity,
@@ -875,25 +873,33 @@ func (r *AlertRepository) scanAlerts(rows driver.Rows) ([]*persistence.Alert, er
 func (r *AlertRepository) scanAlertListRows(rows driver.Rows) ([]*persistence.Alert, error) {
 	alerts := make([]*persistence.Alert, 0)
 	for rows.Next() {
-		var alert persistence.Alert
-		var srcPort, dstPort, protocol uint32
-		if err := rows.Scan(
-			&alert.TenantID, &alert.AlertID, &alert.SrcIP, &alert.DstIP,
-			&srcPort, &dstPort, &protocol, &alert.AlertType, &alert.Score, &alert.Severity,
-			&alert.FirstSeen, &alert.LastSeen, &alert.Count, &alert.Status, &alert.Assignee,
-			&alert.UpdatedTs, &alert.ModelVersion, &alert.RuleVersion,
-		); err != nil {
+		alert, err := scanAlertListRow(rows)
+		if err != nil {
 			return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to scan alert list row")
 		}
-		alert.SrcPort = uint16(srcPort)
-		alert.DstPort = uint16(dstPort)
-		alert.Protocol = uint8(protocol)
-		alerts = append(alerts, &alert)
+		alerts = append(alerts, alert)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed while reading alert list rows")
 	}
 	return alerts, nil
+}
+
+func scanAlertListRow(scanner alertRowScanner) (*persistence.Alert, error) {
+	var alert persistence.Alert
+	var srcPort, dstPort, protocol uint32
+	if err := scanner.Scan(
+		&alert.TenantID, &alert.AlertID, &alert.SrcIP, &alert.DstIP,
+		&srcPort, &dstPort, &protocol, &alert.AlertType, &alert.Score, &alert.Severity,
+		&alert.FirstSeen, &alert.LastSeen, &alert.Count, &alert.Status, &alert.Assignee,
+		&alert.UpdatedTs, &alert.ModelVersion, &alert.RuleVersion, &alert.AttackPhase,
+	); err != nil {
+		return nil, err
+	}
+	alert.SrcPort = uint16(srcPort)
+	alert.DstPort = uint16(dstPort)
+	alert.Protocol = uint8(protocol)
+	return &alert, nil
 }
 
 type alertRowScanner interface {

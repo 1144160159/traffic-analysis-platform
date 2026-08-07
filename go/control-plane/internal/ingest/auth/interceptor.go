@@ -23,24 +23,31 @@ import (
 type contextKey string
 
 const (
-	TenantIDKey  contextKey = "tenant_id"
-	ProbeIDKey   contextKey = "probe_id"
-	ScopesKey    contextKey = "scopes"
-	TokenInfoKey contextKey = "token_info"
+	TenantIDKey         contextKey = "tenant_id"
+	ProbeIDKey          contextKey = "probe_id"
+	TransportProbeIDKey contextKey = "transport_probe_id"
+	ScopesKey           contextKey = "scopes"
+	TokenInfoKey        contextKey = "token_info"
 )
 
 type InterceptorConfig struct {
-	RequireMTLS     bool     `env:"REQUIRE_MTLS" envDefault:"false"`
-	AllowNoToken    bool     `env:"ALLOW_NO_TOKEN" envDefault:"false"`
-	EnableRateLimit bool     `env:"ENABLE_RATE_LIMIT" envDefault:"true"`
-	GlobalRPS       float64  `env:"RATE_LIMIT_GLOBAL_RPS" envDefault:"100000"`
-	GlobalBurst     int      `env:"RATE_LIMIT_GLOBAL_BURST" envDefault:"200000"`
-	TenantRPS       float64  `env:"RATE_LIMIT_TENANT_RPS" envDefault:"10000"`
-	DefaultTenantID string   `env:"DEFAULT_TENANT_ID" envDefault:""`
-	RequireScopes   bool     `env:"REQUIRE_SCOPES" envDefault:"true"`
-	RequiredScopes  []string `env:"REQUIRED_SCOPES" envSeparator:"," envDefault:"ingest:write"`
-	EnableAuditLog  bool     `env:"ENABLE_AUDIT_LOG" envDefault:"true"`
-	EnableProbeRBAC bool     `env:"ENABLE_PROBE_RBAC" envDefault:"true"`
+	RequireMTLS        bool     `env:"REQUIRE_MTLS" envDefault:"false"`
+	SharedMTLSIdentity string   `env:"MTLS_SHARED_IDENTITY" envDefault:""`
+	AllowNoToken       bool     `env:"ALLOW_NO_TOKEN" envDefault:"false"`
+	EnableRateLimit    bool     `env:"ENABLE_RATE_LIMIT" envDefault:"true"`
+	GlobalRPS          float64  `env:"RATE_LIMIT_GLOBAL_RPS" envDefault:"100000"`
+	GlobalBurst        int      `env:"RATE_LIMIT_GLOBAL_BURST" envDefault:"200000"`
+	TenantRPS          float64  `env:"RATE_LIMIT_TENANT_RPS" envDefault:"10000"`
+	DefaultTenantID    string   `env:"DEFAULT_TENANT_ID" envDefault:""`
+	RequireScopes      bool     `env:"REQUIRE_SCOPES" envDefault:"true"`
+	RequiredScopes     []string `env:"REQUIRED_SCOPES" envSeparator:"," envDefault:"ingest:write"`
+	EnableAuditLog     bool     `env:"ENABLE_AUDIT_LOG" envDefault:"true"`
+	EnableProbeRBAC    bool     `env:"ENABLE_PROBE_RBAC" envDefault:"true"`
+}
+
+type probeIdentity struct {
+	TransportID string
+	EffectiveID string
 }
 
 type TokenInfo struct {
@@ -122,16 +129,18 @@ func (i *Interceptor) UnaryInterceptor(
 
 	ctx, span := otel.StartSpan(ctx, "auth.unary_interceptor")
 	defer span.End()
+	ctx = i.withRequestedProbeIdentity(ctx, req)
 
 	clientIP := i.extractClientIP(ctx)
 
-	probeID, err := i.extractProbeID(ctx)
+	identity, err := i.extractProbeIdentity(ctx)
 	if err != nil {
-		return i.handleAuthError(ctx, "", probeID, info.FullMethod, clientIP,
+		return i.handleAuthError(ctx, "", identity.EffectiveID, info.FullMethod, clientIP,
 			errors.Wrap(err, errors.ErrCodeUnauthorized, "probe ID extraction failed"))
 	}
+	probeID := identity.EffectiveID
 
-	tokenInfo, err := i.extractAndValidateToken(ctx, probeID)
+	tokenInfo, err := i.extractAndValidateToken(ctx, identity.TransportID)
 	if err != nil {
 
 		if i.config.AllowNoToken {
@@ -148,6 +157,7 @@ func (i *Interceptor) UnaryInterceptor(
 				errors.Wrap(err, errors.ErrCodeUnauthorized, "token validation failed"))
 		}
 	}
+	tokenInfo = bindEffectiveProbeIdentity(tokenInfo, probeID)
 
 	tenantID := tokenInfo.TenantID
 
@@ -164,17 +174,43 @@ func (i *Interceptor) UnaryInterceptor(
 		}
 	}
 
-	ctx = i.enrichContext(ctx, tokenInfo)
+	ctx = i.enrichContext(ctx, tokenInfo, identity.TransportID)
 
 	i.recordAudit(ctx, "auth_success", tenantID, probeID, info.FullMethod, clientIP, "", tokenInfo.Scopes)
 
 	i.logger.Debug("Request authenticated",
 		zap.String("tenant_id", tenantID),
 		zap.String("probe_id", probeID),
+		zap.String("transport_probe_id", identity.TransportID),
 		zap.String("method", info.FullMethod),
 		zap.Strings("scopes", tokenInfo.Scopes))
 
 	return handler(ctx, req)
+}
+
+type probeIDCarrier interface {
+	GetProbeId() string
+}
+
+func (i *Interceptor) withRequestedProbeIdentity(ctx context.Context, req interface{}) context.Context {
+	if !i.config.RequireMTLS || i.config.SharedMTLSIdentity == "" {
+		return ctx
+	}
+	carrier, ok := req.(probeIDCarrier)
+	if !ok {
+		return ctx
+	}
+	requestedID := carrier.GetProbeId()
+	if !validProbeIdentity(requestedID) {
+		return ctx
+	}
+	md, _ := metadata.FromIncomingContext(ctx)
+	if getFirstMetadataValue(md, "x-probe-id", "probe-id", "probe_id") != "" {
+		return ctx
+	}
+	md = md.Copy()
+	md.Set("x-probe-id", requestedID)
+	return metadata.NewIncomingContext(ctx, md)
 }
 
 func (i *Interceptor) StreamInterceptor(
@@ -196,14 +232,15 @@ func (i *Interceptor) StreamInterceptor(
 
 	clientIP := i.extractClientIP(ctx)
 
-	probeID, err := i.extractProbeID(ctx)
+	identity, err := i.extractProbeIdentity(ctx)
 	if err != nil {
-		_, grpcErr := i.handleAuthError(ctx, "", probeID, info.FullMethod, clientIP,
+		_, grpcErr := i.handleAuthError(ctx, "", identity.EffectiveID, info.FullMethod, clientIP,
 			errors.Wrap(err, errors.ErrCodeUnauthorized, "probe ID extraction failed"))
 		return grpcErr
 	}
+	probeID := identity.EffectiveID
 
-	tokenInfo, err := i.extractAndValidateToken(ctx, probeID)
+	tokenInfo, err := i.extractAndValidateToken(ctx, identity.TransportID)
 	if err != nil {
 		if i.config.AllowNoToken {
 			tokenInfo = i.resolveTenantIDFallback(probeID)
@@ -218,6 +255,7 @@ func (i *Interceptor) StreamInterceptor(
 			return grpcErr
 		}
 	}
+	tokenInfo = bindEffectiveProbeIdentity(tokenInfo, probeID)
 
 	tenantID := tokenInfo.TenantID
 
@@ -235,7 +273,7 @@ func (i *Interceptor) StreamInterceptor(
 		}
 	}
 
-	newCtx := i.enrichContext(ctx, tokenInfo)
+	newCtx := i.enrichContext(ctx, tokenInfo, identity.TransportID)
 	wrapped := &wrappedServerStream{
 		ServerStream: ss,
 		ctx:          newCtx,
@@ -255,9 +293,20 @@ func (w *wrappedServerStream) Context() context.Context {
 	return w.ctx
 }
 
-func (i *Interceptor) enrichContext(ctx context.Context, tokenInfo *TokenInfo) context.Context {
+func bindEffectiveProbeIdentity(tokenInfo *TokenInfo, probeID string) *TokenInfo {
+	if tokenInfo == nil {
+		return nil
+	}
+	bound := *tokenInfo
+	bound.ProbeID = probeID
+	bound.Scopes = append([]string(nil), tokenInfo.Scopes...)
+	return &bound
+}
+
+func (i *Interceptor) enrichContext(ctx context.Context, tokenInfo *TokenInfo, transportProbeID string) context.Context {
 	ctx = context.WithValue(ctx, TenantIDKey, tokenInfo.TenantID)
 	ctx = context.WithValue(ctx, ProbeIDKey, tokenInfo.ProbeID)
+	ctx = context.WithValue(ctx, TransportProbeIDKey, transportProbeID)
 	ctx = context.WithValue(ctx, ScopesKey, tokenInfo.Scopes)
 	ctx = context.WithValue(ctx, TokenInfoKey, tokenInfo)
 
@@ -345,42 +394,79 @@ func (i *Interceptor) resolveTenantIDFallback(probeID string) *TokenInfo {
 	return nil
 }
 
-func (i *Interceptor) extractProbeID(ctx context.Context) (string, error) {
+func (i *Interceptor) extractProbeIdentity(ctx context.Context) (probeIdentity, error) {
 
 	if !i.config.RequireMTLS {
 		md, ok := metadata.FromIncomingContext(ctx)
 		if !ok {
-			return "", fmt.Errorf("no metadata in context")
+			return probeIdentity{}, fmt.Errorf("no metadata in context")
 		}
 
 		probeID := getFirstMetadataValue(md, "x-probe-id", "probe-id", "probe_id")
 		if probeID == "" {
-			return "", fmt.Errorf("probe-id not found in metadata")
+			return probeIdentity{}, fmt.Errorf("probe-id not found in metadata")
 		}
-		return probeID, nil
+		if !validProbeIdentity(probeID) {
+			return probeIdentity{}, fmt.Errorf("invalid probe-id metadata")
+		}
+		return probeIdentity{TransportID: probeID, EffectiveID: probeID}, nil
 	}
 
 	p, ok := peer.FromContext(ctx)
 	if !ok {
-		return "", fmt.Errorf("no peer info in context")
+		return probeIdentity{}, fmt.Errorf("no peer info in context")
 	}
 
 	tlsInfo, ok := p.AuthInfo.(credentials.TLSInfo)
 	if !ok {
-		return "", fmt.Errorf("no TLS info in peer")
+		return probeIdentity{}, fmt.Errorf("no TLS info in peer")
 	}
 
 	if len(tlsInfo.State.VerifiedChains) == 0 || len(tlsInfo.State.VerifiedChains[0]) == 0 {
-		return "", fmt.Errorf("no verified certificate chains")
+		return probeIdentity{}, fmt.Errorf("no verified certificate chains")
 	}
 
 	cert := tlsInfo.State.VerifiedChains[0][0]
-	probeID := cert.Subject.CommonName
-	if probeID == "" {
-		return "", fmt.Errorf("empty CommonName in certificate")
+	transportID := cert.Subject.CommonName
+	if transportID == "" {
+		return probeIdentity{}, fmt.Errorf("empty CommonName in certificate")
+	}
+	if !validProbeIdentity(transportID) {
+		return probeIdentity{}, fmt.Errorf("invalid CommonName in certificate")
 	}
 
-	return probeID, nil
+	effectiveID := transportID
+	if md, ok := metadata.FromIncomingContext(ctx); ok {
+		requestedID := getFirstMetadataValue(md, "x-probe-id", "probe-id", "probe_id")
+		if requestedID != "" && requestedID != transportID {
+			if i.config.SharedMTLSIdentity == "" || i.config.SharedMTLSIdentity != transportID {
+				return probeIdentity{TransportID: transportID}, fmt.Errorf("certificate identity is not authorized to delegate probe-id")
+			}
+			if !validProbeIdentity(requestedID) {
+				return probeIdentity{TransportID: transportID}, fmt.Errorf("invalid delegated probe-id metadata")
+			}
+			effectiveID = requestedID
+		}
+	}
+
+	return probeIdentity{TransportID: transportID, EffectiveID: effectiveID}, nil
+}
+
+func validProbeIdentity(value string) bool {
+	if len(value) == 0 || len(value) > 128 {
+		return false
+	}
+	for index := 0; index < len(value); index++ {
+		character := value[index]
+		if (character >= 'a' && character <= 'z') ||
+			(character >= 'A' && character <= 'Z') ||
+			(character >= '0' && character <= '9') ||
+			character == '.' || character == '_' || character == ':' || character == '-' {
+			continue
+		}
+		return false
+	}
+	return true
 }
 
 func (i *Interceptor) extractAndValidateToken(ctx context.Context, probeID string) (*TokenInfo, error) {
@@ -476,6 +562,13 @@ func GetTenantID(ctx context.Context) string {
 
 func GetProbeID(ctx context.Context) string {
 	if v := ctx.Value(ProbeIDKey); v != nil {
+		return v.(string)
+	}
+	return ""
+}
+
+func GetTransportProbeID(ctx context.Context) string {
+	if v := ctx.Value(TransportProbeIDKey); v != nil {
 		return v.(string)
 	}
 	return ""

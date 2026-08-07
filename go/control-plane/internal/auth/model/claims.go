@@ -9,9 +9,9 @@ package model
 import (
 	"strings"
 
-	"time"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"time"
 )
 
 // JWTTokenType JWT Token 类型
@@ -94,6 +94,11 @@ func (c *Claims) GetEmail() string {
 // GetSessionID 获取会话 ID
 func (c *Claims) GetSessionID() string {
 	return c.SessionID
+}
+
+// GetProbeID returns the immutable identity carried by a probe-scoped token.
+func (c *Claims) GetProbeID() string {
+	return c.ProbeID
 }
 
 // HasRole 检查是否有指定角色

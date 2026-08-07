@@ -108,6 +108,9 @@ func Load() (*Config, error) {
 	}
 
 	cfg.SetDefaults()
+	if err := cfg.Validate(); err != nil {
+		return nil, err
+	}
 
 	if err := validateProductionConfig(cfg, environment); err != nil {
 		return nil, err
@@ -133,11 +136,11 @@ func validateProductionConfig(cfg *Config, environment string) error {
 	}
 
 	if !cfg.Auth.RequireMTLS {
-		fmt.Println("WARNING: mTLS is disabled in production, this is not recommended")
+		return fmt.Errorf("REQUIRE_MTLS must be enabled in production environment")
 	}
 
 	if cfg.Auth.AllowNoToken {
-		fmt.Println("WARNING: AllowNoToken is enabled in production, this is not recommended")
+		return fmt.Errorf("ALLOW_NO_TOKEN must be disabled in production environment")
 	}
 
 	if !cfg.Audit.Enabled {

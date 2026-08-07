@@ -15,6 +15,8 @@ import (
 const (
 	requiredAssetReadScope     = authmodel.ScopeAssetRead
 	requiredAssetDiscoverScope = authmodel.ScopeAssetDiscover
+	requiredAssetExportScope   = authmodel.ScopeAssetExport
+	requiredAssetGovernScope   = authmodel.ScopeAssetGovern
 )
 
 type requestIdentity struct {
@@ -58,34 +60,93 @@ func (h *HTTPHandler) requireAssetDiscoveryWrite(w http.ResponseWriter, r *http.
 	return identity, true
 }
 
+func (h *HTTPHandler) requireAssetExport(w http.ResponseWriter, r *http.Request) (requestIdentity, bool) {
+	identity, status, message := h.requestIdentity(r)
+	if status != 0 {
+		writeAssetCommandError(w, status, traceIDFromRequest(r), "authorization_failed", message)
+		return requestIdentity{}, false
+	}
+	if !hasAssetExportScope(identity.Scopes) {
+		writeAssetCommandError(w, http.StatusForbidden, traceIDFromRequest(r), "forbidden", requiredAssetExportScope+" scope required")
+		return requestIdentity{}, false
+	}
+	if identity.TenantID == "" {
+		writeAssetCommandError(w, http.StatusForbidden, traceIDFromRequest(r), "tenant_required", "verified tenant identity required")
+		return requestIdentity{}, false
+	}
+	return identity, true
+}
+
+func (h *HTTPHandler) requireAssetGovernance(w http.ResponseWriter, r *http.Request) (requestIdentity, bool) {
+	identity, status, message := h.requestIdentity(r)
+	if status != 0 {
+		writeAssetCommandError(w, status, traceIDFromRequest(r), "authorization_failed", message)
+		return requestIdentity{}, false
+	}
+	if !hasAssetGovernanceScope(identity.Scopes) {
+		writeAssetCommandError(w, http.StatusForbidden, traceIDFromRequest(r), "forbidden", requiredAssetGovernScope+" scope required")
+		return requestIdentity{}, false
+	}
+	if identity.TenantID == "" {
+		writeAssetCommandError(w, http.StatusForbidden, traceIDFromRequest(r), "tenant_required", "verified tenant identity required")
+		return requestIdentity{}, false
+	}
+	return identity, true
+}
+
+func (h *HTTPHandler) requireAssetPreferenceRead(w http.ResponseWriter, r *http.Request) (requestIdentity, bool) {
+	identity, status, message := h.requestIdentity(r)
+	if status != 0 {
+		writeAssetCommandError(w, status, traceIDFromRequest(r), "authorization_failed", message)
+		return requestIdentity{}, false
+	}
+	if !hasAssetReadScope(identity.Scopes) {
+		writeAssetCommandError(w, http.StatusForbidden, traceIDFromRequest(r), "forbidden", requiredAssetReadScope+" scope required")
+		return requestIdentity{}, false
+	}
+	if identity.TenantID == "" {
+		writeAssetCommandError(w, http.StatusForbidden, traceIDFromRequest(r), "tenant_required", "verified tenant identity required")
+		return requestIdentity{}, false
+	}
+	return identity, true
+}
+
 func (h *HTTPHandler) requestIdentity(r *http.Request) (requestIdentity, int, string) {
 	if tokenString := bearerToken(r); tokenString != "" {
-		if h.jwtSigningKey == "" {
-			return requestIdentity{}, http.StatusUnauthorized, "JWT signing key is not configured"
-		}
-		claims := &authmodel.Claims{}
-		token, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (interface{}, error) {
-			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
-			}
-			return []byte(h.jwtSigningKey), nil
-		})
-		if err != nil || token == nil || !token.Valid || claims.TokenType != authmodel.JWTTokenAccess {
-			return requestIdentity{}, http.StatusUnauthorized, "invalid or expired access token"
-		}
-		return requestIdentity{
-			TenantID: claims.TenantID,
-			UserID:   claims.UserID.String(),
-			Username: claims.Username,
-			Scopes:   claims.GetPermissions(),
-		}, 0, ""
+		return accessTokenIdentity(tokenString, h.jwtSigningKey)
 	}
 
 	return requestIdentity{}, http.StatusUnauthorized, "authorization required"
 }
 
+func accessTokenIdentity(tokenString, signingKey string) (requestIdentity, int, string) {
+	if signingKey == "" {
+		return requestIdentity{}, http.StatusUnauthorized, "JWT signing key is not configured"
+	}
+	claims := &authmodel.Claims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (interface{}, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
+		}
+		return []byte(signingKey), nil
+	})
+	if err != nil || token == nil || !token.Valid || claims.TokenType != authmodel.JWTTokenAccess {
+		return requestIdentity{}, http.StatusUnauthorized, "invalid or expired access token"
+	}
+	return requestIdentity{
+		TenantID: claims.TenantID,
+		UserID:   claims.UserID.String(),
+		Username: claims.Username,
+		Scopes:   claims.GetPermissions(),
+	}, 0, ""
+}
+
 func bearerToken(r *http.Request) string {
-	authHeader := strings.TrimSpace(r.Header.Get("Authorization"))
+	return bearerTokenValue(r.Header.Get("Authorization"))
+}
+
+func bearerTokenValue(header string) string {
+	authHeader := strings.TrimSpace(header)
 	if authHeader == "" {
 		return ""
 	}
@@ -98,6 +159,24 @@ func bearerToken(r *http.Request) string {
 
 func hasDiscoveryWriteScope(scopes []string) bool {
 	for _, accepted := range []string{authmodel.ScopeAssetDiscover, "asset:*", authmodel.ScopeAdminAll, authmodel.ScopeAll} {
+		if authmodel.HasScope(scopes, accepted) {
+			return true
+		}
+	}
+	return false
+}
+
+func hasAssetExportScope(scopes []string) bool {
+	for _, accepted := range []string{authmodel.ScopeAssetExport, authmodel.ScopeAssetAll, authmodel.ScopeAdminAll, authmodel.ScopeAll} {
+		if authmodel.HasScope(scopes, accepted) {
+			return true
+		}
+	}
+	return false
+}
+
+func hasAssetGovernanceScope(scopes []string) bool {
+	for _, accepted := range []string{authmodel.ScopeAssetGovern, authmodel.ScopeAssetAll, authmodel.ScopeAdminAll, authmodel.ScopeAll} {
 		if authmodel.HasScope(scopes, accepted) {
 			return true
 		}

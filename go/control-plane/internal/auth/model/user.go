@@ -28,6 +28,7 @@ type User struct {
 	Status       string            `json:"status" db:"status"`
 	ExternalID   string            `json:"external_id,omitempty" db:"external_id"`     // OIDC subject
 	LastLoginAt  *time.Time        `json:"last_login_at,omitempty" db:"last_login_at"` // 修复 #A2：新增字段
+	Revision     int64             `json:"revision" db:"revision"`
 	Metadata     map[string]string `json:"metadata,omitempty" db:"-"`
 	CreatedAt    time.Time         `json:"created_at" db:"created_at"`
 	UpdatedAt    time.Time         `json:"updated_at" db:"updated_at"`
@@ -113,7 +114,7 @@ var DefaultRoleScopes = map[string][]string{
 		ScopeRuleRead, ScopeRuleWrite, ScopeRuleDelete,
 		ScopePcapRead, ScopePcapDownload, ScopePcapCut,
 		ScopeGraphRead,
-		ScopeAssetRead, ScopeAssetDiscover,
+		ScopeAssetRead, ScopeAssetDiscover, ScopeAssetExport, ScopeAssetGovern,
 		ScopeScreenView,
 		ScopeAdminAll,
 		ScopeTokenRead, ScopeTokenWrite,
@@ -130,7 +131,7 @@ var DefaultRoleScopes = map[string][]string{
 		ScopeRuleRead,
 		ScopePcapRead, ScopePcapDownload,
 		ScopeGraphRead,
-		ScopeAssetRead,
+		ScopeAssetRead, ScopeAssetExport,
 		ScopeScreenView,
 		ScopeDataQualityRead,
 		ScopeComplianceRead,
@@ -153,7 +154,7 @@ var DefaultRoleScopes = map[string][]string{
 		ScopeRuleRead,
 		ScopePcapRead,
 		ScopeGraphRead,
-		ScopeAssetRead, ScopeAssetDiscover,
+		ScopeAssetRead, ScopeAssetDiscover, ScopeAssetGovern,
 		ScopeScreenView,
 		ScopeDeployRead,
 		ScopeDataQualityRead, ScopeDataQualityWrite,

@@ -296,6 +296,27 @@ func TestCutRequestParams_ValidateAndNormalize_SpaceTrim(t *testing.T) {
 	}
 }
 
+func TestCutRequestParams_Validate_SourceReferences(t *testing.T) {
+	p := validBaseParams()
+	p.AlertID = " AL-1 "
+	p.CampaignID = " CP-1 "
+	p.BaselineID = " BL-1 "
+	p.EvidenceID = " EV-1 "
+	p.EvidenceType = " pcap "
+	if err := p.Validate(); err != nil {
+		t.Fatalf("Validate should accept bounded source references: %v", err)
+	}
+	if p.AlertID != "AL-1" || p.CampaignID != "CP-1" || p.BaselineID != "BL-1" || p.EvidenceID != "EV-1" || p.EvidenceType != "pcap" {
+		t.Fatalf("source references were not normalized: %+v", p)
+	}
+
+	p = validBaseParams()
+	p.EvidenceID = "bad\nreference"
+	if err := p.Validate(); err == nil {
+		t.Fatal("Validate should reject source references containing control characters")
+	}
+}
+
 // =============================================================================
 // Protocol name helpers
 // =============================================================================

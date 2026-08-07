@@ -281,9 +281,14 @@ func NewKafkaPublisherWithConfig(cfg PublisherConfig, logger *zap.Logger) (*Kafk
 	}, nil
 }
 
-// PublishModelAction publishes a durable MLOps work request to the dedicated
-// model-actions topic. This topic has a different schema from model-updates.
-func (p *KafkaPublisher) PublishModelAction(ctx context.Context, key string, value []byte) error {
+// PublishModelAction publishes one stable outbox event to the dedicated model
+// action topic. Kafka acknowledgement is delivery evidence only.
+func (p *KafkaPublisher) PublishModelAction(
+	ctx context.Context,
+	key, eventID, tenantID, jobID, actionID, traceID string,
+	aggregateVersion int64,
+	value []byte,
+) error {
 	if atomic.LoadInt32(&p.closed) == 1 {
 		return errors.New(errors.ErrCodeServiceUnavailable, "publisher is closed")
 	}
@@ -293,9 +298,14 @@ func (p *KafkaPublisher) PublishModelAction(ctx context.Context, key string, val
 	ctx, cancel := context.WithTimeout(ctx, p.config.SendTimeout)
 	defer cancel()
 	headers := []kafka.MessageHeader{
-		{Key: "event_id", Value: uuid.NewString()},
-		{Key: "event_type", Value: "model_action_requested"},
-		{Key: "event_ts", Value: fmt.Sprintf("%d", time.Now().UnixMilli())},
+		{Key: "event_id", Value: eventID},
+		{Key: "event_type", Value: "model.action.requested.v1"},
+		{Key: "schema_version", Value: "1"},
+		{Key: "aggregate_version", Value: fmt.Sprint(aggregateVersion)},
+		{Key: "tenant_id", Value: tenantID},
+		{Key: "job_id", Value: jobID},
+		{Key: "action_id", Value: actionID},
+		{Key: "trace_id", Value: traceID},
 		{Key: "content_type", Value: "application/json"},
 	}
 	if err := p.modelActionProducer.Send(ctx, key, value, headers...); err != nil {

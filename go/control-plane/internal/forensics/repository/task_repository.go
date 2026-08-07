@@ -13,7 +13,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"go.uber.org/zap"
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/errors"
@@ -54,6 +53,8 @@ type Task struct {
 	CreatedAt     time.Time  `db:"created_at"`
 	UpdatedAt     time.Time  `db:"updated_at"`
 	CompletedAt   *time.Time `db:"completed_at"`
+	Revision      int64      `db:"revision"`
+	DeletedAt     *time.Time `db:"deleted_at"`
 }
 
 // TaskRepository 任务仓库
@@ -74,53 +75,8 @@ func NewTaskRepository(client *storage.PostgresClient, logger *zap.Logger) *Task
 func (r *TaskRepository) Create(ctx context.Context, task *Task) error {
 	ctx, span := otel.StartSpan(ctx, "TaskRepository.Create")
 	defer span.End()
-
-	if task.TaskID == "" {
-		task.TaskID = uuid.New().String()
-	}
-	if task.Status == "" {
-		task.Status = TaskStatusQueued
-	}
-	task.CreatedAt = time.Now()
-	task.UpdatedAt = time.Now()
-
-	query := `
-			INSERT INTO tasks (
-				task_id, tenant_id, task_type, status, progress, params,
-				result_file_key, result_sha256, result_packets, result_bytes, files_scanned,
-				error_message, run_id, created_by, created_at, updated_at
-			) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
-		`
-
-	_, err := r.client.Exec(ctx, query,
-		task.TaskID,
-		task.TenantID,
-		task.TaskType,
-		task.Status,
-		task.Progress,
-		task.ParamsJSON,
-		task.ResultFileKey,
-		task.ResultSHA256,
-		task.ResultPackets,
-		task.ResultBytes,
-		task.FilesScanned,
-		task.ErrorMessage,
-		task.RunID,
-		task.CreatedBy,
-		task.CreatedAt,
-		task.UpdatedAt,
-	)
-
-	if err != nil {
-		return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to create task")
-	}
-
-	r.logger.Info("Task created",
-		zap.String("task_id", task.TaskID),
-		zap.String("tenant_id", task.TenantID),
-		zap.String("task_type", task.TaskType))
-
-	return nil
+	_, err := r.CreateAtomic(ctx, task, TaskCommandMeta{CompatibilityMode: true})
+	return err
 }
 
 // GetByID 根据 ID 获取任务
@@ -132,12 +88,25 @@ func (r *TaskRepository) GetByID(ctx context.Context, taskID string) (*Task, err
 			SELECT
 				task_id, tenant_id, task_type, status, progress, params,
 				result_file_key, result_sha256, result_packets, result_bytes, files_scanned,
-				error_message, run_id, created_by, created_at, updated_at, completed_at
+				error_message, run_id, created_by, created_at, updated_at, completed_at, revision, deleted_at
 			FROM tasks
-		WHERE task_id = $1
+		WHERE task_id = $1 AND deleted_at IS NULL
 	`
 
 	row := r.client.QueryRow(ctx, query, taskID)
+	return r.scanTask(ctx, row)
+}
+
+// GetByIDForTenant resolves a live task without exposing whether another
+// tenant owns the same identifier.
+func (r *TaskRepository) GetByIDForTenant(ctx context.Context, tenantID, taskID string) (*Task, error) {
+	ctx, span := otel.StartSpan(ctx, "TaskRepository.GetByIDForTenant")
+	defer span.End()
+	row := r.client.QueryRow(ctx, `SELECT
+		task_id,tenant_id,task_type,status,progress,params,result_file_key,result_sha256,
+		result_packets,result_bytes,files_scanned,error_message,run_id,created_by,
+		created_at,updated_at,completed_at,revision,deleted_at
+		FROM tasks WHERE tenant_id=$1 AND task_id=$2 AND deleted_at IS NULL`, tenantID, taskID)
 	return r.scanTask(ctx, row)
 }
 
@@ -150,9 +119,9 @@ func (r *TaskRepository) GetByResultFileKey(ctx context.Context, resultFileKey s
 		SELECT
 			task_id, tenant_id, task_type, status, progress, params,
 			result_file_key, result_sha256, result_packets, result_bytes, files_scanned,
-			error_message, run_id, created_by, created_at, updated_at, completed_at
+			error_message, run_id, created_by, created_at, updated_at, completed_at, revision, deleted_at
 		FROM tasks
-		WHERE result_file_key = $1
+		WHERE result_file_key = $1 AND deleted_at IS NULL
 		ORDER BY completed_at DESC NULLS LAST, updated_at DESC
 		LIMIT 1
 	`
@@ -165,7 +134,7 @@ func (r *TaskRepository) GetByResultFileKey(ctx context.Context, resultFileKey s
 func (r *TaskRepository) scanTask(ctx context.Context, row *sql.Row) (*Task, error) {
 	var task Task
 	var resultFileKey, resultSHA256, errorMessage, runID, createdBy sql.NullString
-	var completedAt sql.NullTime
+	var completedAt, deletedAt sql.NullTime
 
 	err := row.Scan(
 		&task.TaskID,
@@ -185,6 +154,8 @@ func (r *TaskRepository) scanTask(ctx context.Context, row *sql.Row) (*Task, err
 		&task.CreatedAt,
 		&task.UpdatedAt,
 		&completedAt,
+		&task.Revision,
+		&deletedAt,
 	)
 
 	if err != nil {
@@ -213,6 +184,9 @@ func (r *TaskRepository) scanTask(ctx context.Context, row *sql.Row) (*Task, err
 	if completedAt.Valid {
 		task.CompletedAt = &completedAt.Time
 	}
+	if deletedAt.Valid {
+		task.DeletedAt = &deletedAt.Time
+	}
 
 	return &task, nil
 }
@@ -221,179 +195,66 @@ func (r *TaskRepository) scanTask(ctx context.Context, row *sql.Row) (*Task, err
 func (r *TaskRepository) UpdateStatus(ctx context.Context, taskID, status string) error {
 	ctx, span := otel.StartSpan(ctx, "TaskRepository.UpdateStatus")
 	defer span.End()
-
-	query := `
-		UPDATE tasks
-		SET status = $1, updated_at = $2
-		WHERE task_id = $3
-	`
-
-	result, err := r.client.Exec(ctx, query, status, time.Now(), taskID)
-	if err != nil {
-		return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to update task status")
-	}
-
-	rowsAffected, _ := result.RowsAffected()
-	if rowsAffected == 0 {
-		return errors.Newf(errors.ErrCodeResourceNotFound, "task not found: %s", taskID)
-	}
-
-	return nil
+	_, err := r.mutateTaskAtomic(ctx, taskID, TaskCommandMeta{CompatibilityMode: true}, taskMutation{Operation: "status", Status: status})
+	return err
 }
 
 // UpdateProgress 更新任务进度
 func (r *TaskRepository) UpdateProgress(ctx context.Context, taskID string, progress int, packetsFound int64) error {
 	ctx, span := otel.StartSpan(ctx, "TaskRepository.UpdateProgress")
 	defer span.End()
-
-	query := `
-		UPDATE tasks
-		SET progress = $1, result_packets = $2, updated_at = $3
-		WHERE task_id = $4
-	`
-
-	_, err := r.client.Exec(ctx, query, progress, packetsFound, time.Now(), taskID)
-	if err != nil {
-		return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to update task progress")
-	}
-
-	return nil
+	_, err := r.mutateTaskAtomic(ctx, taskID, TaskCommandMeta{CompatibilityMode: true}, taskMutation{
+		Operation: "progress", Progress: taskInt(progress), Packets: taskInt64(packetsFound),
+	})
+	return err
 }
 
 // Complete 标记任务完成
 func (r *TaskRepository) Complete(ctx context.Context, taskID, resultFileKey, resultSHA256 string, packets, bytes int64, filesScanned int) error {
 	ctx, span := otel.StartSpan(ctx, "TaskRepository.Complete")
 	defer span.End()
-
-	now := time.Now()
-
-	query := `
-			UPDATE tasks
-		SET status = $1, progress = 100, result_file_key = $2, result_sha256 = $3,
-			result_packets = $4, result_bytes = $5, files_scanned = $6,
-			updated_at = $7, completed_at = $8
-		WHERE task_id = $9
-	`
-
-	result, err := r.client.Exec(ctx, query,
-		TaskStatusCompleted,
-		resultFileKey,
-		resultSHA256,
-		packets,
-		bytes,
-		filesScanned,
-		now,
-		now,
-		taskID,
-	)
-
-	if err != nil {
-		return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to complete task")
-	}
-
-	rowsAffected, _ := result.RowsAffected()
-	if rowsAffected == 0 {
-		return errors.Newf(errors.ErrCodeResourceNotFound, "task not found: %s", taskID)
-	}
-
-	r.logger.Info("Task completed",
-		zap.String("task_id", taskID),
-		zap.Int64("packets", packets),
-		zap.Int64("bytes", bytes))
-
-	return nil
+	_, err := r.mutateTaskAtomic(ctx, taskID, TaskCommandMeta{CompatibilityMode: true}, taskMutation{
+		Operation: "complete", Status: TaskStatusCompleted, ResultFileKey: resultFileKey,
+		ResultSHA256: resultSHA256, Packets: taskInt64(packets), Bytes: taskInt64(bytes),
+		FilesScanned: taskInt(filesScanned), Completed: true,
+	})
+	return err
 }
 
 // Fail 标记任务失败
 func (r *TaskRepository) Fail(ctx context.Context, taskID, errorMessage string) error {
 	ctx, span := otel.StartSpan(ctx, "TaskRepository.Fail")
 	defer span.End()
-
-	now := time.Now()
-
-	query := `
-		UPDATE tasks
-		SET status = $1, error_message = $2, updated_at = $3, completed_at = $4
-		WHERE task_id = $5
-	`
-
-	result, err := r.client.Exec(ctx, query,
-		TaskStatusFailed,
-		errorMessage,
-		now,
-		now,
-		taskID,
-	)
-
-	if err != nil {
-		return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to fail task")
-	}
-
-	rowsAffected, _ := result.RowsAffected()
-	if rowsAffected == 0 {
-		return errors.Newf(errors.ErrCodeResourceNotFound, "task not found: %s", taskID)
-	}
-
-	r.logger.Warn("Task failed",
-		zap.String("task_id", taskID),
-		zap.String("error", errorMessage))
-
-	return nil
+	_, err := r.mutateTaskAtomic(ctx, taskID, TaskCommandMeta{CompatibilityMode: true}, taskMutation{
+		Operation: "fail", Status: TaskStatusFailed, ErrorMessage: errorMessage, Completed: true,
+	})
+	return err
 }
 
 // Cancel 取消任务
 func (r *TaskRepository) Cancel(ctx context.Context, taskID string) error {
 	ctx, span := otel.StartSpan(ctx, "TaskRepository.Cancel")
 	defer span.End()
-
-	now := time.Now()
-
-	query := `
-		UPDATE tasks
-		SET status = $1, updated_at = $2, completed_at = $3
-		WHERE task_id = $4 AND status IN ($5, $6)
-	`
-
-	result, err := r.client.Exec(ctx, query,
-		TaskStatusCancelled,
-		now,
-		now,
-		taskID,
-		TaskStatusQueued,
-		TaskStatusProcessing,
-	)
-
-	if err != nil {
-		return errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to cancel task")
-	}
-
-	rowsAffected, _ := result.RowsAffected()
-	if rowsAffected == 0 {
-		// 可能任务已完成或不存在
-		task, err := r.GetByID(ctx, taskID)
-		if err != nil {
-			return err
-		}
-		if task.Status != TaskStatusQueued && task.Status != TaskStatusProcessing {
-			return errors.Newf(errors.ErrCodeInvalidStateTransition, "cannot cancel task in status: %s", task.Status)
-		}
-		return errors.Newf(errors.ErrCodeResourceNotFound, "task not found: %s", taskID)
-	}
-
-	r.logger.Info("Task cancelled", zap.String("task_id", taskID))
-
-	return nil
+	_, err := r.mutateTaskAtomic(ctx, taskID, TaskCommandMeta{CompatibilityMode: true}, taskMutation{
+		Operation: "cancel", Status: TaskStatusCancelled, Completed: true,
+	})
+	return err
 }
 
 type TaskListFilter struct {
-	Status   string
-	AssetID  string
-	SrcIP    string
-	DstIP    string
-	Protocol string
-	Port     string
-	Tuple    string
-	TaskID   string
+	Status       string
+	AssetID      string
+	AlertID      string
+	CampaignID   string
+	BaselineID   string
+	EvidenceID   string
+	EvidenceType string
+	SrcIP        string
+	DstIP        string
+	Protocol     string
+	Port         string
+	Tuple        string
+	TaskID       string
 }
 
 // List preserves the worker-facing compact API.
@@ -407,7 +268,7 @@ func (r *TaskRepository) ListFiltered(ctx context.Context, tenantID string, filt
 	defer span.End()
 
 	// 计数查询
-	countQuery := `SELECT COUNT(*) FROM tasks WHERE tenant_id = $1`
+	countQuery := `SELECT COUNT(*) FROM tasks WHERE tenant_id = $1 AND deleted_at IS NULL`
 	countArgs := []interface{}{tenantID}
 
 	countArgIndex := 2
@@ -434,9 +295,9 @@ func (r *TaskRepository) ListFiltered(ctx context.Context, tenantID string, filt
 			SELECT
 				task_id, tenant_id, task_type, status, progress, params,
 				result_file_key, result_sha256, result_packets, result_bytes, files_scanned,
-				error_message, run_id, created_by, created_at, updated_at, completed_at
+				error_message, run_id, created_by, created_at, updated_at, completed_at, revision, deleted_at
 		FROM tasks
-		WHERE tenant_id = $1
+		WHERE tenant_id = $1 AND deleted_at IS NULL
 	`
 	listArgs := []interface{}{tenantID}
 	argIndex := 2
@@ -476,6 +337,11 @@ func appendTaskFilters(query string, args []interface{}, argIndex int, filter Ta
 		repeatedArgRef bool
 	}{
 		{filter.SrcIP, `params->>'src_ip' = $%d`, false},
+		{filter.AlertID, `params->>'alert_id' = $%d`, false},
+		{filter.CampaignID, `params->>'campaign_id' = $%d`, false},
+		{filter.BaselineID, `params->>'baseline_id' = $%d`, false},
+		{filter.EvidenceID, `params->>'evidence_id' = $%d`, false},
+		{filter.EvidenceType, `lower(params->>'evidence_type') = lower($%d)`, false},
 		{filter.DstIP, `params->>'dst_ip' = $%d`, false},
 		{filter.Protocol, `lower(params->>'protocol') = lower($%d)`, false},
 		{filter.Port, `(params->>'src_port' = $%d OR params->>'dst_port' = $%d)`, true},
@@ -503,7 +369,7 @@ func (r *TaskRepository) scanTasks(rows *sql.Rows) ([]*Task, int64, error) {
 	for rows.Next() {
 		var task Task
 		var resultFileKey, resultSHA256, errorMessage, runID, createdBy sql.NullString
-		var completedAt sql.NullTime
+		var completedAt, deletedAt sql.NullTime
 
 		err := rows.Scan(
 			&task.TaskID,
@@ -523,6 +389,8 @@ func (r *TaskRepository) scanTasks(rows *sql.Rows) ([]*Task, int64, error) {
 			&task.CreatedAt,
 			&task.UpdatedAt,
 			&completedAt,
+			&task.Revision,
+			&deletedAt,
 		)
 		if err != nil {
 			return nil, 0, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to scan task")
@@ -546,6 +414,9 @@ func (r *TaskRepository) scanTasks(rows *sql.Rows) ([]*Task, int64, error) {
 		if completedAt.Valid {
 			task.CompletedAt = &completedAt.Time
 		}
+		if deletedAt.Valid {
+			task.DeletedAt = &deletedAt.Time
+		}
 
 		tasks = append(tasks, &task)
 	}
@@ -565,91 +436,7 @@ func (r *TaskRepository) GetPendingTasks(ctx context.Context, limit int) ([]*Tas
 
 // getPendingTasksWithLock 使用行锁获取待处理任务
 func (r *TaskRepository) getPendingTasksWithLock(ctx context.Context, limit int) ([]*Task, error) {
-	// 使用 CTE 和 FOR UPDATE SKIP LOCKED
-	// 1. 选择待处理任务并加锁
-	// 2. 立即更新状态为 processing
-	// 3. 返回被选中的任务
-	query := `
-		WITH selected_tasks AS (
-			SELECT task_id
-			FROM tasks
-			WHERE status = $1
-			ORDER BY created_at ASC
-			LIMIT $2
-			FOR UPDATE SKIP LOCKED
-		)
-		UPDATE tasks t
-		SET status = $3, updated_at = $4
-		FROM selected_tasks s
-		WHERE t.task_id = s.task_id
-			RETURNING t.task_id, t.tenant_id, t.task_type, t.status, t.progress, t.params,
-				t.result_file_key, t.result_sha256, t.result_packets, t.result_bytes, t.files_scanned,
-				t.error_message, t.run_id, t.created_by, t.created_at, t.updated_at, t.completed_at
-	`
-
-	rows, err := r.client.Query(ctx, query, TaskStatusQueued, limit, TaskStatusProcessing, time.Now())
-	if err != nil {
-		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to get pending tasks")
-	}
-	defer rows.Close()
-
-	var tasks []*Task
-	for rows.Next() {
-		var task Task
-		var resultFileKey, resultSHA256, errorMessage, runID, createdBy sql.NullString
-		var completedAt sql.NullTime
-
-		err := rows.Scan(
-			&task.TaskID,
-			&task.TenantID,
-			&task.TaskType,
-			&task.Status,
-			&task.Progress,
-			&task.ParamsJSON,
-			&resultFileKey,
-			&resultSHA256,
-			&task.ResultPackets,
-			&task.ResultBytes,
-			&task.FilesScanned,
-			&errorMessage,
-			&runID,
-			&createdBy,
-			&task.CreatedAt,
-			&task.UpdatedAt,
-			&completedAt,
-		)
-		if err != nil {
-			return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to scan task")
-		}
-
-		if resultFileKey.Valid {
-			task.ResultFileKey = resultFileKey.String
-		}
-		if resultSHA256.Valid {
-			task.ResultSHA256 = resultSHA256.String
-		}
-		if errorMessage.Valid {
-			task.ErrorMessage = errorMessage.String
-		}
-		if runID.Valid {
-			task.RunID = runID.String
-		}
-		if createdBy.Valid {
-			task.CreatedBy = createdBy.String
-		}
-		if completedAt.Valid {
-			task.CompletedAt = &completedAt.Time
-		}
-
-		tasks = append(tasks, &task)
-	}
-
-	if len(tasks) > 0 {
-		r.logger.Debug("Acquired pending tasks",
-			zap.Int("count", len(tasks)))
-	}
-
-	return tasks, rows.Err()
+	return r.leasePendingTasksAtomic(ctx, limit)
 }
 
 // CleanupOldTasks 清理旧任务
@@ -657,27 +444,7 @@ func (r *TaskRepository) CleanupOldTasks(ctx context.Context, olderThan time.Dur
 	ctx, span := otel.StartSpan(ctx, "TaskRepository.CleanupOldTasks")
 	defer span.End()
 
-	cutoff := time.Now().Add(-olderThan)
-
-	query := `
-		DELETE FROM tasks
-		WHERE completed_at IS NOT NULL AND completed_at < $1
-	`
-
-	result, err := r.client.Exec(ctx, query, cutoff)
-	if err != nil {
-		return 0, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to cleanup old tasks")
-	}
-
-	rowsAffected, _ := result.RowsAffected()
-
-	if rowsAffected > 0 {
-		r.logger.Info("Cleaned up old tasks",
-			zap.Int64("deleted", rowsAffected),
-			zap.Duration("older_than", olderThan))
-	}
-
-	return rowsAffected, nil
+	return r.archiveOldTasksAtomic(ctx, time.Now().UTC().Add(-olderThan))
 }
 
 // GetTaskStats 获取任务统计
@@ -688,7 +455,7 @@ func (r *TaskRepository) GetTaskStats(ctx context.Context, tenantID string) (map
 	query := `
 		SELECT status, COUNT(*) as count
 		FROM tasks
-		WHERE tenant_id = $1
+		WHERE tenant_id = $1 AND deleted_at IS NULL
 		GROUP BY status
 	`
 
@@ -716,26 +483,5 @@ func (r *TaskRepository) ResetStuckTasks(ctx context.Context, stuckDuration time
 	ctx, span := otel.StartSpan(ctx, "TaskRepository.ResetStuckTasks")
 	defer span.End()
 
-	cutoff := time.Now().Add(-stuckDuration)
-
-	query := `
-		UPDATE tasks
-		SET status = $1, updated_at = $2
-		WHERE status = $3 AND updated_at < $4
-	`
-
-	result, err := r.client.Exec(ctx, query, TaskStatusQueued, time.Now(), TaskStatusProcessing, cutoff)
-	if err != nil {
-		return 0, errors.Wrap(err, errors.ErrCodeDatabaseError, "failed to reset stuck tasks")
-	}
-
-	rowsAffected, _ := result.RowsAffected()
-
-	if rowsAffected > 0 {
-		r.logger.Warn("Reset stuck tasks",
-			zap.Int64("count", rowsAffected),
-			zap.Duration("stuck_duration", stuckDuration))
-	}
-
-	return rowsAffected, nil
+	return r.recoverStuckTasksAtomic(ctx, time.Now().UTC().Add(-stuckDuration))
 }

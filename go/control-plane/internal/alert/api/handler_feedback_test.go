@@ -1,15 +1,48 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/service"
+	pb "github.com/1144160159/traffic-analysis-platform/go/control-plane/pkg/proto/traffic/v1"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 )
+
+func TestAlertFeedbackProtoRoundTripBuildsStableEventEnvelope(t *testing.T) {
+	event := FromProtoFeedback(&pb.AlertFeedback{
+		FeedbackId: "11111111-1111-4111-8111-111111111111",
+		TenantId:   "tenant-a", AlertId: "alert-1", UserId: "user-a",
+		Label: "FP", ReasonCode: "FALSE_ALARM", Comment: "known scanner",
+		AddToWhitelist: 1, ModelVersion: "model-v1", RuleVersion: "rule-v1",
+		AlertType: "scan", Severity: "medium", Ts: 1720000000123,
+	})
+	if event.EventID != event.FeedbackID || event.EventType != "alert.feedback.v1" ||
+		event.SchemaVersion != 1 || event.AggregateVersion != 1 {
+		t.Fatalf("invalid stable feedback envelope: %#v", event)
+	}
+	payload, err := json.Marshal(event)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, field := range []string{
+		`"event_id"`, `"event_type"`, `"schema_version"`,
+		`"aggregate_version"`, `"feedback_id"`,
+	} {
+		if !strings.Contains(string(payload), field) {
+			t.Fatalf("feedback event payload missing %s: %s", field, payload)
+		}
+	}
+	roundTrip := event.ToProtoFeedback()
+	if roundTrip.GetFeedbackId() != event.FeedbackID ||
+		roundTrip.GetAddToWhitelist() != 1 || roundTrip.GetTs() != event.Timestamp {
+		t.Fatalf("feedback proto round trip lost identity or command fields: %#v", roundTrip)
+	}
+}
 
 func TestFeedbackWhitelistDraftRequiresAlertWriteBeforeAlertLookup(t *testing.T) {
 	handler := NewFeedbackHandler(nil, nil, nil, nil, nil, zap.NewNop())

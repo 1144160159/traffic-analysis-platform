@@ -38,20 +38,20 @@ func (w *ClickHouseWriter) WriteAlert(ctx context.Context, alert *Alert) error {
 
 	// 注意：添加了 count 字段（需要先执行 DDL 迁移）
 	query := `
-		INSERT INTO traffic.alerts_local (
+		INSERT INTO traffic.alerts (
 			tenant_id, alert_id, dedup_fingerprint, community_id, session_id, campaign_id,
 			src_ip, dst_ip, src_port, dst_port, protocol,
 			alert_type, labels, score, severity,
 			first_seen, last_seen, count, status, assignee, updated_ts,
 			model_version, rule_version, feature_set_id,
-			evidence_ids, event_id
+			evidence_ids, event_id, trace_id
 		) VALUES (
 			?, ?, ?, ?, ?, ?,
 			?, ?, ?, ?, ?,
 			?, ?, ?, ?,
 			?, ?, ?, ?, ?, ?,
 			?, ?, ?,
-			?, ?
+			?, ?, ?
 		)
 	`
 
@@ -83,6 +83,7 @@ func (w *ClickHouseWriter) WriteAlert(ctx context.Context, alert *Alert) error {
 		alert.FeatureSetID,
 		alert.EvidenceIDs,
 		alert.EventID,
+		alert.TraceID,
 	)
 
 	if err != nil {
@@ -114,13 +115,13 @@ func (w *ClickHouseWriter) WriteBatch(ctx context.Context, alerts []*Alert) erro
 
 	// 使用正确的 driver.Batch 类型
 	err := w.client.BatchInsert(ctx, `
-		INSERT INTO traffic.alerts_local (
+		INSERT INTO traffic.alerts (
 			tenant_id, alert_id, dedup_fingerprint, community_id, session_id, campaign_id,
 			src_ip, dst_ip, src_port, dst_port, protocol,
 			alert_type, labels, score, severity,
 			first_seen, last_seen, count, status, assignee, updated_ts,
 			model_version, rule_version, feature_set_id,
-			evidence_ids, event_id
+			evidence_ids, event_id, trace_id
 		)
 	`, func(batch driver.Batch) error {
 		for _, alert := range alerts {
@@ -151,6 +152,7 @@ func (w *ClickHouseWriter) WriteBatch(ctx context.Context, alerts []*Alert) erro
 				alert.FeatureSetID,
 				alert.EvidenceIDs,
 				alert.EventID,
+				alert.TraceID,
 			); err != nil {
 				w.logger.Error("Failed to append alert to batch",
 					zap.String("alert_id", alert.AlertID),
@@ -183,7 +185,7 @@ func (w *ClickHouseWriter) WriteEvidence(ctx context.Context, evidence *Evidence
 	defer span.End()
 
 	query := `
-		INSERT INTO traffic.evidence_local (
+		INSERT INTO traffic.evidence (
 			tenant_id, evidence_id, alert_id, ts,
 			type, summary, metrics_json, snippet_ref_json, arkime_link,
 			confidence, event_id
@@ -224,7 +226,7 @@ func (w *ClickHouseWriter) WriteEvidenceBatch(ctx context.Context, evidences []*
 	defer span.End()
 
 	err := w.client.BatchInsert(ctx, `
-		INSERT INTO traffic.evidence_local (
+		INSERT INTO traffic.evidence (
 			tenant_id, evidence_id, alert_id, ts,
 			type, summary, metrics_json, snippet_ref_json, arkime_link,
 			confidence, event_id

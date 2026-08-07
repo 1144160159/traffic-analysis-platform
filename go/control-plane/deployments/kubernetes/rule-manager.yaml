@@ -8,8 +8,8 @@ spec:
     app: rule-manager
   ports:
     - name: http
-      port: 8082
-      targetPort: 8082
+      port: 8084
+      targetPort: 8084
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -30,7 +30,7 @@ spec:
       - name: rule-manager
         image: registry.example.com/traffic/rule-manager:latest
         ports:
-        - containerPort: 8082
+        - containerPort: 8084
         env:
         - name: POSTGRES_DSN
           valueFrom:
@@ -38,13 +38,35 @@ spec:
               name: postgres-credentials
               key: dsn
         - name: KAFKA_BROKERS
-          value: "kafka-0.kafka:9092,kafka-1.kafka:9092"
+          value: "kafka-bootstrap.middleware.svc:9092"
         - name: KAFKA_RULE_TOPIC
           value: "rule.updates"
+        - name: KAFKA_DEPLOYMENT_TOPIC
+          value: "deployment.events.v1"
+        - name: KAFKA_DEPLOYMENT_EVENT_GROUP
+          value: "rule-manager-deployment-projection-v1"
+        - name: DEPLOYMENT_EVENT_PROJECTION_V1_ENABLED
+          value: "true"
+        - name: KAFKA_ALERT_FEEDBACK_TOPIC
+          value: "alert.feedback.v1"
+        - name: KAFKA_ALERT_FEEDBACK_EVENT_GROUP
+          value: "rule-manager-alert-feedback-projection-v1"
+        - name: ALERT_FEEDBACK_PROJECTION_V1_ENABLED
+          value: "true"
+        - name: KAFKA_WHITELIST_EVENT_TOPIC
+          value: "whitelist.events.v2"
+        - name: KAFKA_WHITELIST_EVENT_GROUP
+          value: "rule-manager-whitelist-rule-effect-v2"
+        - name: WHITELIST_EVENT_PIPELINE_V2_ENABLED
+          value: "false"
+        - name: MODEL_FEEDBACK_CLICKHOUSE_PROJECTION_V1_ENABLED
+          value: "true"
+        - name: MODEL_FEEDBACK_CLICKHOUSE_PROJECTION_INTERVAL
+          value: "2s"
         - name: KAFKA_AUDIT_TOPIC
           value: "audit.logs"
         - name: API_LISTEN_ADDR
-          value: ":8082"
+          value: ":8084"
         resources:
           requests:
             memory: "128Mi"

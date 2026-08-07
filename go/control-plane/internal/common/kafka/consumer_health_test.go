@@ -28,3 +28,20 @@ func TestConsumerHealthCheckTracksPersistentFetchFailuresAndRecovery(t *testing.
 		t.Fatalf("successful fetch should restore readiness: %v", err)
 	}
 }
+
+func TestConsumerHealthCheckFailsImmediatelyOnProcessingBarrier(t *testing.T) {
+	consumer := &Consumer{}
+	consumer.recordProcessingFailure(errors.New("postgres unavailable"))
+	if err := consumer.HealthCheck(); err == nil {
+		t.Fatal("an uncommitted processing failure must withdraw readiness")
+	}
+	metrics := consumer.GetMetrics()
+	if metrics.ConsecutiveProcessingFailures != 1 || metrics.LastProcessingErrorUnix <= 0 {
+		t.Fatalf("unexpected processing health metrics: %+v", metrics)
+	}
+
+	consumer.recordProcessingSuccess()
+	if err := consumer.HealthCheck(); err != nil {
+		t.Fatalf("successful processing should restore readiness: %v", err)
+	}
+}

@@ -25,15 +25,24 @@ import (
 	authmodel "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/model"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/dataquality"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/httpx"
+	commonkafka "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/kafka"
 )
 
 // AdvancedHandler 高级告警功能处理器
 type AdvancedHandler struct {
-	notifier     *notification.NotificationService
-	scorer       *risk.AssetRiskScorer
-	playbook     *playbook.PlaybookEngine
-	dqMonitor    *dataquality.Monitor
-	advancedRepo *AdvancedRepository
+	notifier                       *notification.NotificationService
+	scorer                         *risk.AssetRiskScorer
+	playbook                       *playbook.PlaybookEngine
+	dqMonitor                      *dataquality.Monitor
+	advancedRepo                   *AdvancedRepository
+	playbookExecutionV2            bool
+	dataQualityRepairExecution     bool
+	dataQualityRepairExecutor      DataQualityRepairExecutor
+	dataQualityRepairEvidence      DataQualityRepairEvidenceProvider
+	playbookExecutionProvider      PlaybookExecutionProvider
+	playbookExecutionPublish       func(context.Context, string, []byte, ...commonkafka.MessageHeader) error
+	playbookExecutionTopic         string
+	notificationGovernanceProducer notificationGovernanceEventProducer
 }
 
 func NewAdvancedHandler(
@@ -70,6 +79,10 @@ func (h *AdvancedHandler) RegisterAPIRoutes(api *mux.Router) {
 	playbookRouter.HandleFunc("", h.CreatePlaybookDraft).Methods("POST")
 	playbookRouter.HandleFunc("/catalog", h.GetPlaybookCatalog).Methods("GET")
 	playbookRouter.HandleFunc("/executions", h.GetPlaybookExecutions).Methods("GET")
+	playbookRouter.HandleFunc("/executions/{execution_id}", h.GetPlaybookExecutionV2).Methods("GET")
+	playbookRouter.HandleFunc("/executions/{execution_id}/approval", h.DecidePlaybookExecutionV2).Methods("POST")
+	playbookRouter.HandleFunc("/executions/{execution_id}/cancel", h.CancelPlaybookExecutionV2).Methods("POST")
+	playbookRouter.HandleFunc("/executions/{execution_id}/compensate", h.CompensatePlaybookExecutionV2).Methods("POST")
 	playbookRouter.HandleFunc("/audits", h.GetPlaybookAudits).Methods("GET")
 	playbookRouter.HandleFunc("/evidence/export", h.ExportPlaybookEvidence).Methods("GET")
 	playbookRouter.HandleFunc("/executions/{execution_id}/rollback", h.RollbackPlaybookDrill).Methods("POST")
@@ -91,6 +104,13 @@ func (h *AdvancedHandler) RegisterAPIRoutes(api *mux.Router) {
 	dqRouter.HandleFunc("/latency-chain", h.GetLatencyChain).Methods("GET")
 	dqRouter.HandleFunc("/baseline", h.UpdateBaseline).Methods("POST")
 	dqRouter.HandleFunc("/actions", h.CreateDataQualityAction).Methods("POST")
+	dqRouter.HandleFunc("/datasets", h.ListDataQualityDatasets).Methods("GET")
+	dqRouter.HandleFunc("/datasets/{dataset_id}", h.UpsertDataQualityDataset).Methods("PUT")
+	dqRouter.HandleFunc("/rules", h.ListDataQualityRules).Methods("GET")
+	dqRouter.HandleFunc("/rules", h.CreateDataQualityRule).Methods("POST")
+	dqRouter.HandleFunc("/rules/{rule_id}/transitions", h.TransitionDataQualityRule).Methods("POST")
+	dqRouter.HandleFunc("/events/{quality_event_id}/repairs", h.CreateDataQualityRepair).Methods("POST")
+	dqRouter.HandleFunc("/repairs/{repair_id}/transitions", h.TransitionDataQualityRepair).Methods("POST")
 
 	// 通知配置与测试
 	notificationRouter := api.PathPrefix("/notifications").Subrouter()
@@ -675,14 +695,7 @@ func (h *AdvancedHandler) ExportPlaybookEvidence(w http.ResponseWriter, r *http.
 }
 
 func (h *AdvancedHandler) ExecutePlaybook(w http.ResponseWriter, r *http.Request) {
-	if !h.requirePlaybookWritePermission(w, r) {
-		return
-	}
-	// The built-in executor only renders intended action messages; it has no
-	// external network, endpoint, capture, or notification provider. Reject the
-	// legacy live route explicitly so it cannot bypass the durable tenant-owned
-	// approval state or create evidence that claims an effect was applied.
-	httpx.JSONError(w, r.Context(), http.StatusNotImplemented, "PLAYBOOK_LIVE_EXECUTION_NOT_CONFIGURED", "live playbook execution is unavailable until a verified external provider is configured; use /drill for simulated validation")
+	h.executePlaybookV2(w, r)
 }
 
 // =============================================================================
@@ -731,7 +744,27 @@ func (h *AdvancedHandler) GetDataQuality(w http.ResponseWriter, r *http.Request)
 			}
 		}
 	}
-	writeJSON(w, http.StatusOK, map[string]interface{}{"success": true, "data": data})
+	missingSections := make([]string, 0)
+	for _, check := range report.Checks {
+		if !check.Measured {
+			missingSections = append(missingSections, check.Name)
+		}
+	}
+	traceID := httpx.GetTraceID(r.Context())
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"success": true,
+		"data":    data,
+		"meta": map[string]interface{}{
+			"contract_version":  "data-quality-control-plane-v1",
+			"snapshot_id":       "data-quality-" + traceID,
+			"as_of":             report.Timestamp,
+			"trace_id":          traceID,
+			"partial":           len(missingSections) > 0,
+			"missing_sections":  missingSections,
+			"source_watermarks": report.SourceWatermarks,
+		},
+		"error": nil,
+	})
 }
 
 func (h *AdvancedHandler) GetLatencyChain(w http.ResponseWriter, r *http.Request) {
@@ -770,11 +803,31 @@ func (h *AdvancedHandler) UpdateBaseline(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if err := h.dqMonitor.UpdateBaseline(r.Context()); err != nil {
+	baseline, err := h.dqMonitor.UpdateBaseline(
+		r.Context(),
+		tenantIDFromRequest(r),
+		httpx.GetUserID(r.Context()),
+		httpx.GetTraceID(r.Context()),
+	)
+	if err != nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]interface{}{"success": false, "message": err.Error()})
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]interface{}{"success": true, "message": "baseline updated"})
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"success": true,
+		"message": "persistent baseline activated",
+		"data":    baseline,
+		"meta": map[string]interface{}{
+			"contract_version":  "data-quality-control-plane-v1",
+			"snapshot_id":       baseline.BaselineID,
+			"as_of":             baseline.UpdatedAt,
+			"trace_id":          httpx.GetTraceID(r.Context()),
+			"partial":           false,
+			"missing_sections":  []string{},
+			"source_watermarks": baseline.SourceWatermarks,
+		},
+		"error": nil,
+	})
 }
 
 type dataQualityActionRequest struct {
@@ -840,7 +893,20 @@ func (h *AdvancedHandler) CreateDataQualityAction(w http.ResponseWriter, r *http
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "ACTION_PERSIST_FAILED", err.Error())
 		return
 	}
-	writeJSON(w, http.StatusAccepted, map[string]interface{}{"success": true, "data": record})
+	writeJSON(w, http.StatusAccepted, map[string]interface{}{
+		"success": true,
+		"data":    record,
+		"meta": map[string]interface{}{
+			"contract_version":  "data-quality-control-plane-v1",
+			"snapshot_id":       record.ActionID,
+			"as_of":             record.CreatedAt,
+			"trace_id":          httpx.GetTraceID(ctx),
+			"partial":           true,
+			"missing_sections":  []string{"durable_job", "executor_receipt", "cross_store_reconciliation"},
+			"source_watermarks": map[string]interface{}{},
+		},
+		"error": nil,
+	})
 }
 
 func (h *AdvancedHandler) requireDataQualityReadPermission(w http.ResponseWriter, r *http.Request) bool {
@@ -996,6 +1062,16 @@ func (h *AdvancedHandler) UpdateNotificationSettings(w http.ResponseWriter, r *h
 		writeJSON(w, http.StatusBadRequest, map[string]interface{}{"success": false, "message": err.Error()})
 		return
 	}
+	actionID, _ := payload["action_id"].(string)
+	actionReason, _ := payload["reason"].(string)
+	expectedRevision, err := notificationExpectedRevision(payload["expected_revision"])
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]interface{}{"success": false, "message": err.Error()})
+		return
+	}
+	delete(payload, "action_id")
+	delete(payload, "reason")
+	delete(payload, "expected_revision")
 	if err := rejectInlineSecrets(payload, ""); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]interface{}{"success": false, "message": err.Error()})
 		return
@@ -1018,39 +1094,50 @@ func (h *AdvancedHandler) UpdateNotificationSettings(w http.ResponseWriter, r *h
 		return
 	}
 	settings["min_severity"] = severity
-	if h.advancedRepo != nil {
-		if err := h.advancedRepo.SaveNotificationSettings(r.Context(), tenantIDFromRequest(r), settings); err != nil {
-			writeJSON(w, http.StatusServiceUnavailable, map[string]interface{}{"success": false, "message": err.Error()})
-			return
-		}
-	}
-	if err := h.recordNotificationAudit(r, "NOTIFICATION_SETTINGS_UPDATED", "notification_settings", tenantIDFromRequest(r), notificationSettingsAuditDetail(settings)); err != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]interface{}{"success": false, "message": err.Error()})
+	if h.advancedRepo == nil {
+		writeJSON(w, http.StatusServiceUnavailable, map[string]interface{}{"success": false, "message": "advanced repository is not available"})
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]interface{}{"success": true, "data": settings})
+	updated, err := h.advancedRepo.SaveNotificationSettingsCommand(r.Context(), r, tenantIDFromRequest(r), httpx.GetUserID(r.Context()), settings, actionID, actionReason, expectedRevision)
+	if err != nil {
+		writeNotificationRuleCommandError(w, r.Context(), err)
+		return
+	}
+	if eventID, ok := updated["event_id"].(string); ok {
+		w.Header().Set("X-Event-ID", eventID)
+	}
+	if status, ok := updated["outbox_status"].(string); ok {
+		w.Header().Set("X-Outbox-Status", status)
+	}
+	writeJSON(w, http.StatusOK, map[string]interface{}{"success": true, "data": updated})
 }
 
 type notificationSilenceRuleRequest struct {
-	Name            string    `json:"name"`
-	Scope           string    `json:"scope"`
-	StartsAt        time.Time `json:"starts_at"`
-	EndsAt          time.Time `json:"ends_at"`
-	AffectedTargets []string  `json:"affected_targets"`
-	Policy          string    `json:"policy"`
-	Reason          string    `json:"reason"`
-	Enabled         *bool     `json:"enabled"`
+	Name             string    `json:"name"`
+	Scope            string    `json:"scope"`
+	StartsAt         time.Time `json:"starts_at"`
+	EndsAt           time.Time `json:"ends_at"`
+	AffectedTargets  []string  `json:"affected_targets"`
+	Policy           string    `json:"policy"`
+	Reason           string    `json:"reason"`
+	Enabled          *bool     `json:"enabled"`
+	ActionID         string    `json:"action_id,omitempty"`
+	ActionReason     string    `json:"action_reason,omitempty"`
+	ExpectedRevision *int64    `json:"expected_revision,omitempty"`
 }
 
 type notificationSilencePatchRequest struct {
-	Name            *string    `json:"name"`
-	Scope           *string    `json:"scope"`
-	StartsAt        *time.Time `json:"starts_at"`
-	EndsAt          *time.Time `json:"ends_at"`
-	AffectedTargets *[]string  `json:"affected_targets"`
-	Policy          *string    `json:"policy"`
-	Reason          *string    `json:"reason"`
-	Enabled         *bool      `json:"enabled"`
+	Name             *string    `json:"name"`
+	Scope            *string    `json:"scope"`
+	StartsAt         *time.Time `json:"starts_at"`
+	EndsAt           *time.Time `json:"ends_at"`
+	AffectedTargets  *[]string  `json:"affected_targets"`
+	Policy           *string    `json:"policy"`
+	Reason           *string    `json:"reason"`
+	Enabled          *bool      `json:"enabled"`
+	ActionID         string     `json:"action_id,omitempty"`
+	ActionReason     string     `json:"action_reason,omitempty"`
+	ExpectedRevision *int64     `json:"expected_revision,omitempty"`
 }
 
 func (h *AdvancedHandler) ListNotificationSilenceRules(w http.ResponseWriter, r *http.Request) {
@@ -1113,28 +1200,17 @@ func (h *AdvancedHandler) CreateNotificationSilenceRule(w http.ResponseWriter, r
 		writeJSON(w, http.StatusServiceUnavailable, map[string]interface{}{"success": false, "message": "advanced repository is not available"})
 		return
 	}
-	created, err := h.advancedRepo.CreateNotificationSilenceRule(r.Context(), rule)
+	created, err := h.advancedRepo.CreateNotificationSilenceRule(r.Context(), r, rule, payload)
 	if err != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]interface{}{"success": false, "message": err.Error()})
+		writeNotificationRuleCommandError(w, r.Context(), err)
 		return
 	}
 	if created == nil {
 		writeJSON(w, http.StatusServiceUnavailable, map[string]interface{}{"success": false, "message": "advanced repository is not available"})
 		return
 	}
-	if err := h.recordNotificationAudit(r, "NOTIFICATION_SILENCE_RULE_CREATED", "notification_silence_rule", created.RuleID, map[string]interface{}{
-		"name":             created.Name,
-		"scope":            created.Scope,
-		"starts_at":        created.StartsAt,
-		"ends_at":          created.EndsAt,
-		"affected_targets": created.AffectedTargets,
-		"policy":           created.Policy,
-		"reason":           created.Reason,
-		"enabled":          created.Enabled,
-	}); err != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]interface{}{"success": false, "message": err.Error()})
-		return
-	}
+	w.Header().Set("X-Event-ID", created.EventID)
+	w.Header().Set("X-Outbox-Status", created.OutboxStatus)
 	writeJSON(w, http.StatusCreated, map[string]interface{}{"success": true, "data": created})
 }
 
@@ -1172,23 +1248,17 @@ func (h *AdvancedHandler) PatchNotificationSilenceRule(w http.ResponseWriter, r 
 		writeJSON(w, http.StatusBadRequest, map[string]interface{}{"success": false, "message": "ends_at must be after starts_at"})
 		return
 	}
-	updated, ok, err := h.advancedRepo.PatchNotificationSilenceRule(r.Context(), tenantIDFromRequest(r), ruleID, payload)
+	updated, ok, err := h.advancedRepo.PatchNotificationSilenceRule(r.Context(), r, tenantIDFromRequest(r), ruleID, httpx.GetUserID(r.Context()), payload)
 	if err != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]interface{}{"success": false, "message": err.Error()})
+		writeNotificationRuleCommandError(w, r.Context(), err)
 		return
 	}
 	if !ok || updated == nil {
 		writeJSON(w, http.StatusNotFound, map[string]interface{}{"success": false, "message": "notification silence rule not found"})
 		return
 	}
-	if err := h.recordNotificationAudit(r, "NOTIFICATION_SILENCE_RULE_UPDATED", "notification_silence_rule", updated.RuleID, map[string]interface{}{
-		"name":    updated.Name,
-		"enabled": updated.Enabled,
-		"policy":  updated.Policy,
-	}); err != nil {
-		writeJSON(w, http.StatusServiceUnavailable, map[string]interface{}{"success": false, "message": err.Error()})
-		return
-	}
+	w.Header().Set("X-Event-ID", updated.EventID)
+	w.Header().Set("X-Outbox-Status", updated.OutboxStatus)
 	writeJSON(w, http.StatusOK, map[string]interface{}{"success": true, "data": updated})
 }
 
@@ -1342,6 +1412,15 @@ func (h *AdvancedHandler) requirePlaybookDrillPermission(w http.ResponseWriter, 
 	return false
 }
 
+func (h *AdvancedHandler) requirePlaybookExecutePermission(w http.ResponseWriter, r *http.Request) bool {
+	ctx := r.Context()
+	if hasAnySystemPermission(ctx, authmodel.ScopePlaybookExecute, authmodel.ScopePlaybookWrite, authmodel.ScopeAlertWrite) || hasSystemPermission(ctx, authmodel.ScopeAdminAll) {
+		return true
+	}
+	httpx.JSONError(w, ctx, http.StatusForbidden, "PERMISSION_DENIED", "permission denied: playbook:execute required")
+	return false
+}
+
 func (h *AdvancedHandler) requirePlaybookApprovePermission(w http.ResponseWriter, r *http.Request) bool {
 	ctx := r.Context()
 	if hasSystemPermission(ctx, authmodel.ScopePlaybookApprove) || hasSystemPermission(ctx, authmodel.ScopeAdminAll) {
@@ -1419,7 +1498,32 @@ func defaultNotificationSettings() map[string]interface{} {
 			"feishu":   false,
 		},
 		"secret_ref": "",
+		"revision":   int64(0),
 	}
+}
+
+func notificationExpectedRevision(value interface{}) (*int64, error) {
+	if value == nil {
+		return nil, nil
+	}
+	var revision int64
+	switch typed := value.(type) {
+	case float64:
+		revision = int64(typed)
+		if float64(revision) != typed {
+			return nil, errors.New("expected_revision must be an integer")
+		}
+	case int64:
+		revision = typed
+	case int:
+		revision = int64(typed)
+	default:
+		return nil, errors.New("expected_revision must be an integer")
+	}
+	if revision < 0 {
+		return nil, errors.New("expected_revision must not be negative")
+	}
+	return &revision, nil
 }
 
 func notificationChannelEnabled(settings map[string]interface{}, channel string) bool {

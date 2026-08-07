@@ -69,3 +69,32 @@ func TestPostgresConnectionStringPrefersExplicitDSN(t *testing.T) {
 		t.Fatalf("ConnectionString() = %q, want explicit DSN", got)
 	}
 }
+
+func productionConfig() *Config {
+	cfg := &Config{}
+	cfg.SetDefaults()
+	cfg.Kafka.Brokers = []string{"kafka-bootstrap.middleware.svc:9092"}
+	cfg.JWT.SigningKey = "test-only-nonempty-signing-key"
+	cfg.Auth.RequireMTLS = true
+	cfg.Auth.AllowNoToken = false
+	cfg.Server.TLSCAFile = "/run/pki/ca.crt"
+	cfg.Server.TLSCertFile = "/run/pki/tls.crt"
+	cfg.Server.TLSKeyFile = "/run/pki/tls.key"
+	return cfg
+}
+
+func TestProductionConfigRejectsDisabledMTLS(t *testing.T) {
+	cfg := productionConfig()
+	cfg.Auth.RequireMTLS = false
+	if err := validateProductionConfig(cfg, EnvironmentProduction); err == nil {
+		t.Fatal("production configuration accepted disabled mTLS")
+	}
+}
+
+func TestProductionConfigRejectsAnonymousProbeTokens(t *testing.T) {
+	cfg := productionConfig()
+	cfg.Auth.AllowNoToken = true
+	if err := validateProductionConfig(cfg, EnvironmentProduction); err == nil {
+		t.Fatal("production configuration accepted ALLOW_NO_TOKEN")
+	}
+}

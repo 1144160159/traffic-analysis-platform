@@ -4,25 +4,32 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 )
 
 type campaignActionJob struct {
-	JobID        string                 `json:"job_id"`
-	TenantID     string                 `json:"tenant_id"`
-	CampaignID   string                 `json:"campaign_id"`
-	ActionID     string                 `json:"action_id"`
-	Target       string                 `json:"target"`
-	Metadata     map[string]interface{} `json:"metadata"`
-	Simulation   bool                   `json:"simulation"`
-	DryRun       bool                   `json:"dry_run"`
-	Status       string                 `json:"status"`
-	Result       map[string]interface{} `json:"result"`
-	ErrorMessage string                 `json:"error_message,omitempty"`
-	CreatedBy    string                 `json:"created_by"`
-	CreatedAt    time.Time              `json:"created_at"`
-	CompletedAt  time.Time              `json:"completed_at"`
+	JobID            string                 `json:"job_id"`
+	TenantID         string                 `json:"tenant_id"`
+	CampaignID       string                 `json:"campaign_id"`
+	ActionID         string                 `json:"action_id"`
+	Target           string                 `json:"target"`
+	Metadata         map[string]interface{} `json:"metadata"`
+	Simulation       bool                   `json:"simulation"`
+	DryRun           bool                   `json:"dry_run"`
+	Status           string                 `json:"status"`
+	Result           map[string]interface{} `json:"result"`
+	ErrorMessage     string                 `json:"error_message,omitempty"`
+	IdempotencyKey   string                 `json:"-"`
+	RequestSHA256    string                 `json:"request_sha256,omitempty"`
+	ExpectedRevision int64                  `json:"expected_revision,omitempty"`
+	ResourceRevision int64                  `json:"resource_revision,omitempty"`
+	Reason           string                 `json:"reason,omitempty"`
+	IdempotentReuse  bool                   `json:"idempotent_reuse,omitempty"`
+	CreatedBy        string                 `json:"created_by"`
+	CreatedAt        time.Time              `json:"created_at"`
+	CompletedAt      time.Time              `json:"completed_at"`
 }
 
 type postgresCampaignActionJobStore struct {
@@ -74,6 +81,9 @@ func commitCampaignActionTransaction(
 	job campaignActionJob,
 	record AlertActionAuditRecord,
 ) error {
+	if !job.Simulation || !job.DryRun {
+		return errors.New("mutating campaign actions require the aggregate v2 transaction")
+	}
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -81,11 +91,6 @@ func commitCampaignActionTransaction(
 	return runCampaignActionTransaction(
 		tx,
 		func(executor campaignTransaction) error {
-			if !job.Simulation {
-				if err := applyCampaignActionMutation(ctx, executor, &job); err != nil {
-					return err
-				}
-			}
 			return jobs.recordWithExecutor(ctx, executor, job)
 		},
 		func(executor campaignTransaction) error {
@@ -122,11 +127,13 @@ func (s *postgresCampaignActionJobStore) Get(ctx context.Context, tenantID, jobI
 	var completedAt sql.NullTime
 	err := s.db.QueryRowContext(ctx, `
 		SELECT job_id, tenant_id, campaign_id, action_id, target, metadata, simulation, dry_run,
-		       status, result, error_message, created_by, created_at, completed_at
+		       status, result, error_message, created_by, created_at, completed_at,
+		       idempotency_key,request_sha256,expected_revision,resource_revision,reason
 		FROM campaign_action_jobs WHERE tenant_id=$1 AND job_id=$2`, tenantID, jobID).Scan(
 		&job.JobID, &job.TenantID, &job.CampaignID, &job.ActionID, &job.Target, &metadata,
 		&job.Simulation, &job.DryRun, &job.Status, &result, &job.ErrorMessage,
-		&job.CreatedBy, &job.CreatedAt, &completedAt,
+		&job.CreatedBy, &job.CreatedAt, &completedAt, &job.IdempotencyKey, &job.RequestSHA256,
+		&job.ExpectedRevision, &job.ResourceRevision, &job.Reason,
 	)
 	if err != nil {
 		return campaignActionJob{}, err
