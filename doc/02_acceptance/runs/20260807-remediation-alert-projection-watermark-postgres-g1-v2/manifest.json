@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "run_id": "20260807-remediation-alert-projection-watermark-postgres-g1-v2",
+  "gate": "G1",
+  "status": "PASS",
+  "captured_at": "2026-08-07T13:29:05Z",
+  "candidate": {
+    "git_head": "82e26633a7f2f90f49f7bc5f22d5029c2bdc038a",
+    "content_sha256": "cc93596c5f937fa2e6fdb6530fe75a6141831b6abeffe98a64052fa1e16ce397",
+    "file_count": 2363
+  },
+  "g0_reference": {
+    "run_id": "20260807-remediation-g0-full-v185",
+    "path": "doc/02_acceptance/runs/20260807-remediation-g0-full-v185/manifest.json",
+    "sha256": "72b5c5994786170bd3ceff66ac7810ce91e7cf7f044a193c1e63311e44b01f0f",
+    "status": "PASS",
+    "candidate_content_sha256": "cc93596c5f937fa2e6fdb6530fe75a6141831b6abeffe98a64052fa1e16ce397"
+  },
+  "result": {
+    "path": "result.json",
+    "sha256": "e9d7f66ea91d7cfc7fd8a91d180cbe78d3069c153e382069bf67321dbb4e786a",
+    "size_bytes": 1182,
+    "schema_ready": true,
+    "sentinel_verified": true,
+    "initial_missing_receipt_detected": true,
+    "receipt_write_and_requery_verified": true,
+    "same_version_hash_drift_detected": true,
+    "same_version_hash_repair_verified": true,
+    "target_version_isolation_verified": true
+  },
+  "scope": {
+    "postgres_image": "postgres@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20",
+    "migration": "deployments/postgres/migrations/202608041100_alert_opensearch_projection_reconciliation_v1.sql",
+    "receipt_key": [
+      "tenant_id",
+      "alert_id",
+      "target_index_version"
+    ],
+    "compared_fields": [
+      "source_version",
+      "source_sha256"
+    ],
+    "loopback_only": true,
+    "persistent_volumes": false,
+    "shared_environment_touched": false,
+    "container_removed": true,
+    "production_applied": false
+  },
+  "gate_boundary": {
+    "proves": [
+      "the exact expand migration creates the alert OpenSearch projection watermark schema in an owned fixed-digest PostgreSQL container",
+      "the production persistence store detects a missing receipt and converges only after the receipt is written and re-queried",
+      "an authoritative content change inside the same millisecond is detected by source_sha256 and the same-version receipt can be repaired",
+      "a receipt for one target index version cannot satisfy another target index version"
+    ],
+    "does_not_prove": [
+      "the production 883172-document projection gap has been repaired",
+      "approved candidate PostgreSQL, ClickHouse, Kafka or OpenSearch deployment",
+      "real cross-service repair atomicity or reconciliation across PostgreSQL, ClickHouse, Kafka and OpenSearch",
+      "production backfill, shadow count and hash reconciliation, alias cutover, performance, fault recovery, rollback or observation windows"
+    ]
+  },
+  "production_mutations": []
+}

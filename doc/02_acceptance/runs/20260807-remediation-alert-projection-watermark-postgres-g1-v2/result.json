@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "run_id": "20260807-remediation-alert-projection-watermark-postgres-g1-v2",
+  "status": "PASS",
+  "container": "codex-alert-projection-pg-346a570d4784",
+  "image": "postgres@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20",
+  "image_id": "sha256:88a36c64c1003dad93f56daa12d1f8916ec66d1fa3e5fb1fb0ae7cb77efd56d1",
+  "migration": "deployments/postgres/migrations/202608041100_alert_opensearch_projection_reconciliation_v1.sql",
+  "schema_ready": true,
+  "sentinel_verified": true,
+  "initial_missing_receipt_detected": true,
+  "receipt_write_and_requery_verified": true,
+  "same_version_hash_drift_detected": true,
+  "same_version_hash_repair_verified": true,
+  "target_version_isolation_verified": true,
+  "loopback_only": true,
+  "persistent_volume_attached": false,
+  "shared_environment_touched": false,
+  "production_applied": false,
+  "container_removed": true,
+  "test_output": "=== RUN   TestProjectionWatermarkReceiptRealPostgres\n--- PASS: TestProjectionWatermarkReceiptRealPostgres (0.01s)\nPASS\nok  \tgithub.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/persistence\t0.014s",
+  "errors": []
+}

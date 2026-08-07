@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-07T12:24:09Z",
+  "updated_at": "2026-08-07T13:29:05Z",
   "latest_g0": {
-    "run_id": "20260807-remediation-g0-full-v184",
-    "manifest": "doc/02_acceptance/runs/20260807-remediation-g0-full-v184/manifest.json",
-    "manifest_sha256": "8930262904c6419c65996c10625e8e34d19e5002c468eb8d9f4572bea0165c51",
-    "candidate_source_sha256": "9f0b8a5d7a1a4ff0221a1750b7ff334531a52fc60c72ec2875da2939eae0dca6",
+    "run_id": "20260807-remediation-g0-full-v185",
+    "manifest": "doc/02_acceptance/runs/20260807-remediation-g0-full-v185/manifest.json",
+    "manifest_sha256": "72b5c5994786170bd3ceff66ac7810ce91e7cf7f044a193c1e63311e44b01f0f",
+    "candidate_source_sha256": "cc93596c5f937fa2e6fdb6530fe75a6141831b6abeffe98a64052fa1e16ce397",
     "status": "PASS",
     "scope": [
       "alignment-test",
@@ -328,6 +328,39 @@
       "G8": "BLOCKED_EXTERNAL"
     },
     "note": "The owned fixed-digest OpenSearch G1 proves that the production repair target refreshes the exact V2 alias and re-reads the same bounded tenant scope before declaring repair convergence. It does not apply the candidate or repair the production 883172-document gap."
+  },
+  "latest_alert_projection_watermark_postgres_g1": {
+    "canonical_ids": ["F-SEARCH-001", "T-OS-004", "T-PG-002"],
+    "run_id": "20260807-remediation-alert-projection-watermark-postgres-g1-v2",
+    "manifest": "doc/02_acceptance/runs/20260807-remediation-alert-projection-watermark-postgres-g1-v2/manifest.json",
+    "manifest_sha256": "c8cf165ca2a8bf5762048a146a19e49616c207ad1f32db7a9106149c8af9a508",
+    "result": "doc/02_acceptance/runs/20260807-remediation-alert-projection-watermark-postgres-g1-v2/result.json",
+    "result_sha256": "e9d7f66ea91d7cfc7fd8a91d180cbe78d3069c153e382069bf67321dbb4e786a",
+    "g0_run_id": "20260807-remediation-g0-full-v185",
+    "g0_manifest_sha256": "72b5c5994786170bd3ceff66ac7810ce91e7cf7f044a193c1e63311e44b01f0f",
+    "candidate_source_sha256": "cc93596c5f937fa2e6fdb6530fe75a6141831b6abeffe98a64052fa1e16ce397",
+    "repository_status": "PASS",
+    "scoped_evidence_status": "PASS_OWNED_ALERT_PROJECTION_POSTGRES_WATERMARK_RECEIPT",
+    "initial_missing_receipt_detected": true,
+    "receipt_write_and_requery_verified": true,
+    "same_version_hash_drift_detected": true,
+    "same_version_hash_repair_verified": true,
+    "target_version_isolation_verified": true,
+    "container_removed": true,
+    "production_applied": false,
+    "production_mutations": [],
+    "gate_status": {
+      "G0": "PASS_SAME_SOURCE",
+      "G1": "PASS_FOR_OWNED_POSTGRES_WATERMARK_QUERY_UPSERT_HASH_DRIFT_AND_TARGET_VERSION_ISOLATION",
+      "G2": "OPEN_NO_RELEASE_CANDIDATE_IMAGE_OR_APPROVED_MULTI_SERVICE_DEPLOYMENT",
+      "G3": "OPEN_NO_REAL_CH_KAFKA_OPENSEARCH_AND_POSTGRES_SAME_TRACE_RECONCILIATION",
+      "G4": "OPEN_NO_APPROVED_SCALE_PERFORMANCE_OR_FAILURE_PROFILE",
+      "G5": "NOT_APPLICABLE_TO_SERVER_SIDE_RECEIPT_SLICE",
+      "G6": "OPEN_NO_BACKFILL_CANARY_ALIAS_SWITCH_ROLLBACK_OR_OBSERVATION",
+      "G7": "OPEN",
+      "G8": "BLOCKED_EXTERNAL"
+    },
+    "note": "The owned fixed-digest PostgreSQL G1 proves that a missing or same-version hash-drifted projection watermark is detected, repaired and re-queried with target-version isolation. It does not connect real OpenSearch, ClickHouse or Kafka and does not repair the production 883172-document gap."
   },
   "latest_kafka_dlq_commit_barrier": {
     "control_id": "T-KAFKA-003",
