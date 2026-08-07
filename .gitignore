@@ -47,7 +47,9 @@ __pycache__/
 
 # traffic-analysis local private/generated exclusions
 /tmp/
-/doc/02_acceptance/runs/
+/doc/02_acceptance/runs/*
+!/doc/02_acceptance/runs/20260804-ui-page-design-contract-v1/
+!/doc/02_acceptance/runs/20260804-ui-page-design-contract-v1/**
 /common/config/credentials.yaml
 /deployments/kubernetes/configmaps/credentials-secret.yaml
 /mlops/workflows/mlops-secrets.yaml

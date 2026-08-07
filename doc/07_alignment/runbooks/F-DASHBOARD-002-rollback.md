@@ -1,0 +1,26 @@
+# F-DASHBOARD-002 回滚与停止扩大手册
+
+适用范围：仪表盘闭环、证据、反馈、审计、SLA和合规任务的V2受理、事件分发、执行和最终效果链路。该手册不授权修改共享环境；执行部署动作前仍需候选环境和发布窗口批准。
+
+## 停止扩大条件
+
+出现以下任一情况立即停止扩大：跨租户任务可见、同一幂等键产生多个任务或提供方副作用、任务/历史/审计/outbox/执行回执数量不一致、持续PG或Kafka错误、事件积压或重试超过预算、执行器HTTP 2xx被错误写成成功、未知副作用被写成失败、候选bundle仍显示仿真成功、任务受理或执行P99及资源超过批准预算。
+
+## 回滚步骤
+
+1. 将候选tenant的`DASHBOARD_TASK_V2_ENABLED`设为`false`，先停止新命令；保留GET/POST路由，关闭状态明确返回503，不得回退成本地伪成功。
+2. 将`DASHBOARD_TASK_PIPELINE_V1_ENABLED`设为`false`并滚动停止该候选的consumer、dispatcher和executor worker；先阻断新执行租约，再等待当前HTTP调用达到批准超时，不得并行启动旧消费者。
+3. 记录最后一个`trace_id`、`task_id`、请求`event_id`、结果`event_id`、Kafka partition/offset和提供方幂等键。对状态仍为`processing`的任务标记为待人工对账，不得根据连接中断推断失败或重试产生副作用。
+4. 禁止删除`dashboard_tasks`、`dashboard_task_history`、`dashboard_task_outbox`、`dashboard_task_requests`、`dashboard_task_execution_attempts`、`dashboard_task_execution_receipts`、`dashboard_task_event_inbox`或相关`audit_logs`；两次迁移均为expand-only，回滚应用不回滚Schema。
+5. 对每个已受理任务执行PostgreSQL reconciliation，按`tenant_id/task_id/revision/event_id`核对任务、历史、审计、outbox、inbox、执行租约和提供方回执；不允许用直接SQL伪造completed状态。提供方调用结果不确定时保持`partial/effect_state=unknown`，等待稳定幂等键查询或人工裁决。
+6. 未发布的outbox保持`pending`并记录外部阻塞；已获Kafka ACK但尚未标记published的行允许按相同event ID重发，由inbox去重。不得删除或重写事件来追求数量一致。
+7. 如需恢复为“仅受理”兼容路径，只启用`DASHBOARD_TASK_V2_ENABLED`，保持pipeline flag关闭；UI必须继续显示accepted/running而不是成功。
+8. 恢复执行前重新运行OpenAPI/Feature Contract、隔离PG原子与事件重放测试、生产bundle构建和候选浏览器验收，并确认旧worker全部退出。
+
+## 回滚成功判定
+
+- 新建请求稳定返回`FEATURE_DISABLED`，没有新任务行。
+- 已有任务仍可由受控查询或数据库对账恢复，审计和历史未丢失。
+- 不存在跨租户结果、重复任务或提供方副作用、孤儿历史、孤儿outbox、孤儿回执，且任务状态未被伪造为完成。
+- `dashboard_task_execution_receipts`中的completed均有`effect_state=confirmed`和非空稳定effect ID；连接不确定的任务仍为partial并进入人工对账清单。
+- 发布记录保留关闭时间、操作者、候选hash、最后trace和reconciliation结果。

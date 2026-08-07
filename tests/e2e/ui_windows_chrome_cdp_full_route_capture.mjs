@@ -20,8 +20,8 @@ const defaults = {
   screenWaitMs: 3000,
   maxPixelRatio: 0.015,
   channelTolerance: 0,
-  alertId: process.env.UI_VISUAL_ALERT_ID || 'alert-default-1782752318016-1dd589c4',
-  campaignId: process.env.UI_VISUAL_CAMPAIGN_ID || 'campaign-exfil-default-1782729598739-e1d2dc37',
+  alertId: process.env.UI_VISUAL_ALERT_ID || 'auto',
+  campaignId: process.env.UI_VISUAL_CAMPAIGN_ID || 'auto',
   notFoundPath: '/__codex_visual_not_found__',
   smokeTokenEnv: 'DESKTOP_SMOKE_TOKEN',
   useSmokeToken: true,
@@ -34,6 +34,7 @@ const defaults = {
   username: 'codex-windows-cdp-admin',
   targetMode: 'routes',
   routeIds: '',
+  routeQuery: '',
   runId: '',
   skipDiff: false,
   failOnVisualDiff: false,
@@ -152,6 +153,40 @@ function loadSmokeToken() {
   );
   const secret = Buffer.from(encodedSecret, 'base64').toString('utf8');
   return makeJwt(secret);
+}
+
+async function discoverRuntimeRouteIds(token) {
+  const selectedRouteTemplates = selectedRoutes().map((route) => String(route.route || '')).join('\n');
+  const required = [
+    { argument: 'alertId', placeholder: ':alertId', endpoint: '/api/v1/alerts?limit=1', collection: 'alerts', id: 'alert_id' },
+    { argument: 'campaignId', placeholder: ':campaignId', endpoint: '/api/v1/campaigns?limit=1', collection: 'campaigns', id: 'campaign_id' },
+  ].filter((candidate) => (
+    selectedRouteTemplates.includes(candidate.placeholder)
+    && String(args[candidate.argument]).trim().toLowerCase() === 'auto'
+  ));
+  if (!required.length) return;
+  if (!token) throw new Error('generated or explicit smoke token is required for automatic route ID discovery');
+
+  for (const candidate of required) {
+    const response = await fetch(`${normalizeBaseUrl(args.baseUrl)}${candidate.endpoint}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'X-Tenant-ID': String(args.tenant),
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`automatic ${candidate.argument} discovery failed with HTTP ${response.status}`);
+    }
+    const payload = await response.json();
+    const records = Array.isArray(payload?.data)
+      ? payload.data
+      : (payload?.data?.[candidate.collection] ?? payload?.data?.items ?? payload?.[candidate.collection]);
+    const resolved = Array.isArray(records) ? String(records[0]?.[candidate.id] || '').trim() : '';
+    if (!resolved) {
+      throw new Error(`automatic ${candidate.argument} discovery returned no current ${candidate.id}`);
+    }
+    args[candidate.argument] = resolved;
+  }
 }
 
 function redactUrl(value) {
@@ -393,6 +428,7 @@ fs.mkdirSync(resolveRepo(acceptanceDir), { recursive: true });
 
 const cdpState = await readCdpState();
 const smokeToken = loadSmokeToken();
+await discoverRuntimeRouteIds(smokeToken);
 const browser = await chromium.connectOverCDP(String(args.cdpUrl));
 const context = browser.contexts()[0] ?? await browser.newContext();
 const routes = [];
@@ -402,8 +438,11 @@ for (const route of selectedRoutes()) {
   await page.setViewportSize({ width: Number(args.width), height: Number(args.height) });
   const badResponses = [];
   const requestFailures = [];
+  const thirdPartyRequestFailures = [];
   const consoleErrors = [];
+  const thirdPartyConsoleErrors = [];
   const pageErrors = [];
+  const thirdPartyPageErrors = [];
   page.on('response', (response) => {
     const responseUrl = response.url();
     const status = response.status();
@@ -412,15 +451,28 @@ for (const route of selectedRoutes()) {
     }
   });
   page.on('requestfailed', (request) => {
-    requestFailures.push({ url: request.url(), method: request.method(), failure: request.failure()?.errorText || '' });
+    const record = { url: request.url(), method: request.method(), failure: request.failure()?.errorText || '' };
+    if (badResponseApplies(request.url())) requestFailures.push(record);
+    else thirdPartyRequestFailures.push(record);
   });
   page.on('console', (message) => {
-    if (message.type() === 'error') consoleErrors.push({ type: message.type(), text: message.text().slice(0, 1200) });
+    if (message.type() !== 'error') return;
+    const record = {
+      type: message.type(),
+      text: message.text().slice(0, 1200),
+      location: message.location(),
+    };
+    if (message.location().url.startsWith(normalizeBaseUrl(args.baseUrl))) consoleErrors.push(record);
+    else thirdPartyConsoleErrors.push(record);
   });
-  page.on('pageerror', (error) => pageErrors.push({ message: error.message }));
+  page.on('pageerror', (error) => {
+    const record = { message: error.message, stack: error.stack ?? '' };
+    if (record.stack.includes('chrome-extension://')) thirdPartyPageErrors.push(record);
+    else pageErrors.push(record);
+  });
 
   const routePath = resolveRoutePath(route.route);
-  const url = absoluteUrl(routePath, route.query || '');
+  const url = absoluteUrl(routePath, args.routeQuery || route.query || '');
   const tokenRequired = requiresSmokeToken(route);
   if (tokenRequired && truthy(args.useSmokeToken) && !smokeToken) {
     throw new Error(`${args.smokeTokenEnv} or generated JWT smoke token is required for protected route ${route.id}`);
@@ -440,7 +492,13 @@ for (const route of selectedRoutes()) {
   fs.mkdirSync(resolveRepo(routeDir), { recursive: true });
   const screenshot = repoRel(path.join(evidenceDir, `${route.id}-${args.width}x${args.height}.png`));
   const acceptanceActual = repoRel(path.join(routeDir, 'actual-1920.png'));
-  await page.screenshot({ path: resolveRepo(screenshot), fullPage: false });
+  await page.screenshot({
+    path: resolveRepo(screenshot),
+    fullPage: false,
+    animations: 'disabled',
+    caret: 'hide',
+    timeout: 45_000,
+  });
   fs.copyFileSync(resolveRepo(screenshot), resolveRepo(acceptanceActual));
 
   const metrics = await page.evaluate(() => {
@@ -520,8 +578,11 @@ for (const route of selectedRoutes()) {
     goto_error: gotoError,
     bad_responses: badResponses,
     request_failures: requestFailures,
+    third_party_request_failures: thirdPartyRequestFailures,
     console_errors: consoleErrors,
+    third_party_console_errors: thirdPartyConsoleErrors,
     page_errors: pageErrors,
+    third_party_page_errors: thirdPartyPageErrors,
     metrics,
     protected_route: tokenRequired,
     smoke_token_used: Boolean(tokenRequired && smokeToken),
