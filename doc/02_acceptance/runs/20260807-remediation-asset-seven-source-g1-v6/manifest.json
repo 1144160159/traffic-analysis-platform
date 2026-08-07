@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "run_id": "20260807-remediation-asset-seven-source-g1-v6",
+  "gate": "G1",
+  "status": "PASS",
+  "captured_at": "2026-08-07T11:22:16Z",
+  "candidate": {
+    "git_head": "84adda1f09f060428f6dba11f7caec1308459d64",
+    "content_sha256": "475161825f4e174d35fa987090ab4d742e58b78365fe3ab2dc6aaab32325c193",
+    "file_count": 2358
+  },
+  "g0_reference": {
+    "run_id": "20260807-remediation-g0-full-v182",
+    "path": "doc/02_acceptance/runs/20260807-remediation-g0-full-v182/manifest.json",
+    "sha256": "655bf973c92fa636b87784e3d497fa391feb9c7c0707b97ae085451de2887834",
+    "status": "PASS",
+    "candidate_content_sha256": "475161825f4e174d35fa987090ab4d742e58b78365fe3ab2dc6aaab32325c193"
+  },
+  "result": {
+    "path": "seven-source-result.json",
+    "sha256": "7ebf0e8ee81d5cc855140ea592ddf6a1e93be79200ec25816ad56195c130f75b",
+    "size_bytes": 3744,
+    "oracle_status": "PASS",
+    "normalized_manifest_sha256": "9bf92d030b30511d3d0b6150cd45bbd509eca337cd977d60bb98fa6bfe0bcbeb",
+    "oracle_report_sha256": "5e9c2d83379d5249ab824300b8e1f1e777475f3600cffec08574acde4eedff66"
+  },
+  "scope": {
+    "sources": [
+      "postgresql",
+      "kafka",
+      "clickhouse",
+      "opensearch",
+      "nebulagraph",
+      "minio",
+      "audit"
+    ],
+    "production_asset_event_path": [
+      "postgresql",
+      "outbox",
+      "kafka",
+      "durable_inbox",
+      "opensearch",
+      "nebulagraph",
+      "audit"
+    ],
+    "clickhouse": "production_alert_writer_correlated_to_the_same_asset_identity",
+    "minio": "explicitly_seeded_adapter_not_asset_event_consumer",
+    "owned_fixed_digest_containers": 8,
+    "loopback_only": true,
+    "persistent_volumes": false,
+    "shared_environment_touched": false,
+    "production_applied": false
+  },
+  "gate_boundary": {
+    "proves": [
+      "one bounded owned asset revision reconciles across seven normalized sources",
+      "the production asset repository outbox Kafka inbox and OpenSearch NebulaGraph projection code executes together",
+      "the production ClickHouse alert writer persists the same event trace and state version",
+      "the audit record participates in the reconciliation oracle",
+      "all owned containers and the scoped network are removed"
+    ],
+    "does_not_prove": [
+      "same-image candidate deployment",
+      "Flink participation",
+      "production G3 reconciliation",
+      "performance or fault recovery",
+      "Windows Chrome acceptance",
+      "canary rollback or T+ observation"
+    ]
+  },
+  "production_mutations": []
+}

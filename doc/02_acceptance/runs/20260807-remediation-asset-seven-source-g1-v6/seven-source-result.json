@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "run_id": "20260807-remediation-asset-seven-source-g1-v6",
+  "status": "PASS",
+  "network": "codex-seven-source-net-860abad74a31",
+  "containers": {
+    "postgresql": "codex-seven-source-pg-860abad74a31",
+    "kafka": "codex-seven-source-kafka-860abad74a31",
+    "clickhouse": "codex-seven-source-clickhouse-860abad74a31",
+    "opensearch": "codex-seven-source-opensearch-860abad74a31",
+    "minio": "codex-seven-source-minio-860abad74a31",
+    "nebula_meta": "codex-seven-source-nebula-meta-860abad74a31",
+    "nebula_storage": "codex-seven-source-nebula-storage-860abad74a31",
+    "nebula_graph": "codex-seven-source-nebula-graph-860abad74a31"
+  },
+  "images": {
+    "postgresql": "postgres@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20",
+    "kafka": "docker.io/redpandadata/redpanda@sha256:dca9d37efbbae3c2dcdc07d6a45fa1e0a7a541bc9cdc03db3937b80a4a9eae3d",
+    "clickhouse": "docker.io/clickhouse/clickhouse-server@sha256:458f72c00e4abc80c2950d8070bc5723b538544d72ea4a6a58d9ff4f8fadf8d7",
+    "opensearch": "docker.io/opensearchproject/opensearch@sha256:466a49f379bb8889af29d615475e69b7b990898c6987d28470cd7105df9046ff",
+    "minio": "quay.io/minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e",
+    "nebula_meta": "docker.io/vesoft/nebula-metad@sha256:6d72a76fd44a738d1353186d8f2a8d467752239f4f85030f56c1b53b657b21d8",
+    "nebula_storage": "docker.io/vesoft/nebula-storaged@sha256:29b9dccaecc339ed0e98b21575105eb45afc44afe84b8ca0cc9b0dca03c14fae",
+    "nebula_graph": "docker.io/vesoft/nebula-graphd@sha256:0457a789213499fbfa2a07fb01cbea174843e9617771536a5b67cd89d96bcbf9"
+  },
+  "image_ids": {
+    "postgresql": "sha256:88a36c64c1003dad93f56daa12d1f8916ec66d1fa3e5fb1fb0ae7cb77efd56d1",
+    "kafka": "sha256:7d60ffd7d82a80a25826b8aacf2698e78cb9d7f7312dea56b0e7e962b39f1c50",
+    "clickhouse": "sha256:cd3b547d16ce8ab9e122ff96fe3379564535b85d5d9a7ab8237dd8b65e964b4b",
+    "opensearch": "sha256:bf1e1cd1fa30bd1da8596bff12630f5e67648dfb7720a52c773c495db1f0135a",
+    "minio": "sha256:69b2ec208575b69597784255eec6fa6a2985ee9e1a47f4411a51f7f5fdd193a9",
+    "nebula_meta": "sha256:e160f99aa8b44e4a70ae1dcdf09d08ffc2a8e9d5b555b7fb0248bdc351322151",
+    "nebula_storage": "sha256:6121adf9100c3ee832b370d2c8769f91d25368a5b0035c8dcea8981962168ac1",
+    "nebula_graph": "sha256:9ffa939c73f4ba97750f4ac071b50e51c71737aba2ed37f9e07933f1f5d63231"
+  },
+  "seven_sources": [
+    "postgresql",
+    "kafka",
+    "clickhouse",
+    "opensearch",
+    "nebulagraph",
+    "minio",
+    "audit"
+  ],
+  "production_asset_event_path_verified": true,
+  "production_clickhouse_writer_verified": true,
+  "minio_seeded_adapter_verified": true,
+  "audit_reconciled": true,
+  "oracle_status": "PASS",
+  "normalized_manifest_sha256": "9bf92d030b30511d3d0b6150cd45bbd509eca337cd977d60bb98fa6bfe0bcbeb",
+  "oracle_report_sha256": "5e9c2d83379d5249ab824300b8e1f1e777475f3600cffec08574acde4eedff66",
+  "loopback_only": true,
+  "persistent_volume_attached": false,
+  "shared_environment_touched": false,
+  "production_applied": false,
+  "containers_removed": true,
+  "network_removed": true,
+  "test_output": "=== RUN   TestAssetSevenSourceTraceReconciliation\n--- PASS: TestAssetSevenSourceTraceReconciliation (25.09s)\nPASS\nok  \tgithub.com/1144160159/traffic-analysis-platform/go/control-plane/internal/asset/consumer\t25.100s",
+  "errors": [],
+  "evidence_boundary": "G1 owned integration. PostgreSQL/outbox/Kafka/inbox/OpenSearch/NebulaGraph use the production asset path; ClickHouse uses the production alert writer with the same identity; MinIO is explicitly seeded. This does not prove candidate deployment, Flink, production G3, performance, browser, rollback or observation."
+}
