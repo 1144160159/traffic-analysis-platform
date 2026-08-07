@@ -17,7 +17,7 @@
     {
       "domain": "configuration_and_secret_binding",
       "path": "contracts/configuration/configuration-catalog.v1.json",
-      "sha256": "f84d4b4c96de8449a04f629ddc90c0beb5649db68bbe36c83fca30e46fdd8b69"
+      "sha256": "314c9bda46fa1e5640415b4582b1ca13df78f8bbca16fdaca36fb73e09ddd63a"
     },
     {
       "domain": "iam_scopes",
@@ -1766,7 +1766,7 @@
       },
       {
         "path": "go/control-plane/internal/alert/api/handler_system.go",
-        "line": 2813,
+        "line": 2825,
         "kind": "query_parameter",
         "line_sha256": "65f50649b6420f4c5aa63a786035c3ebf9763b6535ad5402813604ab623fa0d8"
       },
@@ -1911,5 +1911,5 @@
       "wildcard_or_shared_kafka_principal"
     ]
   },
-  "catalog_sha256": "91c0f58e3f3999ed6988597a643617c3c2a32f9a6664ccd554e899fa86ca585d"
+  "catalog_sha256": "78c3bce7b244bb3836fe592966a95d67663a1e94f35f6dc98e1e039014e76cdd"
 }
