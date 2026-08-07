@@ -32,7 +32,9 @@ run_web() {
 
 run_java() {
   cd "${ROOT_DIR}/java/flink-jobs"
-  mvn test
+  # Maven includes K8s-backed integration tests. A loopback proxy inherited
+  # from the developer shell makes kubectl fail with a misleading TLS timeout.
+  env -u HTTP_PROXY -u HTTPS_PROXY -u ALL_PROXY -u http_proxy -u https_proxy -u all_proxy mvn test
 }
 
 run_rust() {
@@ -64,11 +66,13 @@ case "${MODE}" in
     run_k8s_health
     ;;
   full)
+    # Protobuf is the cross-language source of truth. Generate it before any
+    # language compiler consumes generated Go, Java or Rust types.
+    run_proto
     run_go
     run_web
     run_java
     run_rust
-    run_proto
     ;;
   live)
     run_live

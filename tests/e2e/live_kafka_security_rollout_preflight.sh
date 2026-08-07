@@ -107,16 +107,37 @@ else
   json_log "repo" "repo Kafka TLS store type and headless DNS are rollout-safe" "blocker" false "missing" "PKCS12 store type, controller mTLS, or publishNotReadyAddresses missing" "01-kafka.yaml"
 fi
 
-if rg -q 'kafka-acls\.sh|--allow-principal "User:\$\{KAFKA_CLIENT_USERNAME\}"|--operation All --topic|--operation All --group' deployments/kubernetes/init-jobs/01-kafka-topics.yaml; then
-  json_log "repo" "repo Kafka init job grants application ACLs" "info" true "ok" "topic/group/cluster ACL commands present" "01-kafka-topics.yaml"
+if rg -q 'kafka-acl-plan-v1|KAFKA_ACL_MIGRATION_PHASE' deployments/kubernetes/init-jobs/01-kafka-topics.yaml &&
+   ! rg -q -- '--add[^[:cntrl:]]*--operation All' deployments/kubernetes/init-jobs/01-kafka-topics.yaml &&
+   python3 scripts/alignment/generate_kafka_acl_plan.py --check-generated >/dev/null; then
+  json_log "repo" "repo Kafka init job uses generated least-privilege ACLs" "info" true "ok" "literal per-service plan present; no wildcard All grant" "kafka-acl-catalog.v1.json"
 else
-  json_log "repo" "repo Kafka init job grants application ACLs" "blocker" false "missing" "ACL grant commands missing" "01-kafka-topics.yaml"
+  json_log "repo" "repo Kafka init job uses generated least-privilege ACLs" "blocker" false "missing" "generated ACL plan missing, stale, or broad grant remains" "01-kafka-topics.yaml"
 fi
 
 if rg -q 'KAFKA_SECURITY_PROTOCOL.*SASL_SSL|kafka.security.protocol:.*SASL_SSL|security.protocol=SASL_SSL' deployments/kubernetes/applications deployments/kubernetes/infrastructure deployments/kubernetes/flink deployments/kubernetes/init-jobs; then
   json_log "repo" "repo Kafka clients are configured for SASL_SSL" "info" true "ok" "Go/Flink/init-job client markers present" "deployments/kubernetes"
 else
   json_log "repo" "repo Kafka clients are configured for SASL_SSL" "blocker" false "missing" "client SASL_SSL markers missing" "deployments/kubernetes"
+fi
+
+if ! rg -q 'key: KAFKA_CLIENT_USERNAME|key: KAFKA_CLIENT_PASSWORD' deployments/kubernetes/applications/go-services.yaml &&
+   [[ "$(rg -o 'name: kafka-[a-z0-9-]+-credentials, key: username' deployments/kubernetes/applications/go-services.yaml | sort -u | wc -l)" -eq 8 ]] &&
+   [[ "$(rg -o 'name: kafka-[a-z0-9-]+-credentials, key: password' deployments/kubernetes/applications/go-services.yaml | sort -u | wc -l)" -eq 8 ]]; then
+  json_log "repo" "Go services use distinct Kafka credential Secrets" "info" true "ok" "8 username and 8 password bindings are unique" "go-services.yaml"
+else
+  json_log "repo" "Go services use distinct Kafka credential Secrets" "blocker" false "shared_or_missing" "shared client reference remains or service Secret bindings are incomplete" "go-services.yaml"
+fi
+
+if python3 scripts/alignment/render_audit_materializer_expand.py \
+     --image "docker.io/traffic/audit-materializer@sha256:$(printf '1%.0s' {1..64})" \
+     >"$LOG_DIR/audit-materializer-expand-rendered.yaml" &&
+   rg -q 'name: kafka-audit-materializer-credentials, key: username' "$LOG_DIR/audit-materializer-expand-rendered.yaml" &&
+   rg -q 'name: kafka-audit-materializer-credentials, key: password' "$LOG_DIR/audit-materializer-expand-rendered.yaml" &&
+   ! rg -q '\$\{' "$LOG_DIR/audit-materializer-expand-rendered.yaml"; then
+  json_log "repo" "audit materializer has an immutable-image expand manifest" "info" true "ok" "dedicated identity and digest-only renderer present" "audit-materializer-expand-rendered.yaml"
+else
+  json_log "repo" "audit materializer has an immutable-image expand manifest" "blocker" false "missing" "renderer, digest pin, or dedicated Secret binding is incomplete" "audit-materializer-expand.template.yaml"
 fi
 
 declare -a REQUIRED_SECRET_SPECS=(
@@ -132,8 +153,35 @@ declare -a REQUIRED_SECRET_SPECS=(
   "middleware kafka-broker-tls ca.crt"
   "middleware kafka-client-tls kafka.truststore.p12"
   "middleware kafka-client-tls ca.crt"
+  "middleware kafka-principal-credentials KAFKA_ALERT_SERVICE_PASSWORD"
+  "middleware kafka-principal-credentials KAFKA_AUDIT_MATERIALIZER_PASSWORD"
+  "middleware kafka-principal-credentials KAFKA_ASSET_SERVICE_PASSWORD"
+  "middleware kafka-principal-credentials KAFKA_AUTH_SERVICE_PASSWORD"
+  "middleware kafka-principal-credentials KAFKA_FORENSICS_SERVICE_PASSWORD"
+  "middleware kafka-principal-credentials KAFKA_GRAPH_SERVICE_PASSWORD"
+  "middleware kafka-principal-credentials KAFKA_INGEST_GATEWAY_PASSWORD"
+  "middleware kafka-principal-credentials KAFKA_RULE_MANAGER_PASSWORD"
+  "middleware kafka-principal-credentials KAFKA_THREAT_INTEL_SERVICE_PASSWORD"
   "traffic-analysis kafka-client-tls kafka.truststore.p12"
   "traffic-analysis kafka-client-tls ca.crt"
+  "traffic-analysis kafka-ingest-gateway-credentials username"
+  "traffic-analysis kafka-ingest-gateway-credentials password"
+  "traffic-analysis kafka-auth-service-credentials username"
+  "traffic-analysis kafka-auth-service-credentials password"
+  "traffic-analysis kafka-alert-service-credentials username"
+  "traffic-analysis kafka-alert-service-credentials password"
+  "traffic-analysis kafka-audit-materializer-credentials username"
+  "traffic-analysis kafka-audit-materializer-credentials password"
+  "traffic-analysis kafka-asset-service-credentials username"
+  "traffic-analysis kafka-asset-service-credentials password"
+  "traffic-analysis kafka-rule-manager-credentials username"
+  "traffic-analysis kafka-rule-manager-credentials password"
+  "traffic-analysis kafka-graph-service-credentials username"
+  "traffic-analysis kafka-graph-service-credentials password"
+  "traffic-analysis kafka-threat-intel-service-credentials username"
+  "traffic-analysis kafka-threat-intel-service-credentials password"
+  "traffic-analysis kafka-forensics-service-credentials username"
+  "traffic-analysis kafka-forensics-service-credentials password"
   "flink kafka-client-tls kafka.truststore.p12"
   "flink kafka-client-tls ca.crt"
 )
@@ -285,22 +333,58 @@ if [[ "$SCRAM_DESCRIBE_RC" -eq 0 ]]; then
     SCRAM_BROKER_PRESENT=1
   fi
 fi
+python3 - \
+  contracts/events/kafka-acl-catalog.v1.json \
+  "$LOG_DIR/kafka-scram-users.txt" \
+  "$SCRAM_DESCRIBE_RC" \
+  >"$LOG_DIR/kafka-workload-scram-readiness.json" <<'PY'
+import json
+import sys
+
+catalog = json.load(open(sys.argv[1], encoding="utf-8"))
+observed = open(sys.argv[2], encoding="utf-8", errors="replace").read()
+describe_ok = int(sys.argv[3]) == 0
+expected = sorted(
+    item["principal"].removeprefix("User:")
+    for item in catalog["principals"]
+    if item.get("rollout_state") == "expand" and isinstance(item.get("credential"), dict)
+)
+present = [item for item in expected if describe_ok and item in observed]
+missing = sorted(set(expected) - set(present))
+print(json.dumps({
+    "expected": expected,
+    "present": present,
+    "missing": missing,
+    "expected_count": len(expected),
+    "present_count": len(present),
+    "ready": describe_ok and not missing,
+}, ensure_ascii=False, indent=2))
+PY
+SCRAM_WORKLOAD_EXPECTED="$(jq -r '.expected_count' "$LOG_DIR/kafka-workload-scram-readiness.json")"
+SCRAM_WORKLOAD_PRESENT="$(jq -r '.present_count' "$LOG_DIR/kafka-workload-scram-readiness.json")"
+SCRAM_WORKLOAD_READY="$(jq -r '.ready' "$LOG_DIR/kafka-workload-scram-readiness.json")"
 jq -n \
   --argjson describe_rc "$SCRAM_DESCRIBE_RC" \
   --arg describe_mode "$SCRAM_DESCRIBE_MODE" \
   --argjson client_present "$SCRAM_CLIENT_PRESENT" \
   --argjson broker_present "$SCRAM_BROKER_PRESENT" \
+  --argjson workload_expected "$SCRAM_WORKLOAD_EXPECTED" \
+  --argjson workload_present "$SCRAM_WORKLOAD_PRESENT" \
+  --argjson workload_ready "$SCRAM_WORKLOAD_READY" \
   '{
     describe_rc:$describe_rc,
     describe_mode:$describe_mode,
     client_user_present:($client_present == 1),
     broker_user_present:($broker_present == 1),
-    scram_prereq_ready:($describe_rc == 0 and $client_present == 1 and $broker_present == 1)
+    workload_users_expected:$workload_expected,
+    workload_users_present:$workload_present,
+    workload_users_ready:$workload_ready,
+    scram_prereq_ready:($describe_rc == 0 and $broker_present == 1 and $workload_ready)
   }' >"$LOG_DIR/kafka-scram-readiness.json"
-if [[ "$SCRAM_DESCRIBE_RC" -eq 0 && "$SCRAM_CLIENT_PRESENT" -eq 1 && "$SCRAM_BROKER_PRESENT" -eq 1 ]]; then
-  json_log "live" "Kafka SCRAM users exist before SASL_SSL rollout" "info" true "ok" "client and broker users present" "kafka-scram-readiness.json"
+if [[ "$SCRAM_DESCRIBE_RC" -eq 0 && "$SCRAM_BROKER_PRESENT" -eq 1 && "$SCRAM_WORKLOAD_READY" == "true" ]]; then
+  json_log "live" "Kafka SCRAM users exist before SASL_SSL rollout" "info" true "ok" "broker and all $SCRAM_WORKLOAD_EXPECTED workload users present" "kafka-scram-readiness.json"
 else
-  json_log "live" "Kafka SCRAM users exist before SASL_SSL rollout" "blocker" false "missing" "describe_rc=$SCRAM_DESCRIBE_RC client=$SCRAM_CLIENT_PRESENT broker=$SCRAM_BROKER_PRESENT" "kafka-scram-readiness.json"
+  json_log "live" "Kafka SCRAM users exist before SASL_SSL rollout" "blocker" false "missing" "describe_rc=$SCRAM_DESCRIBE_RC broker=$SCRAM_BROKER_PRESENT workload=$SCRAM_WORKLOAD_PRESENT/$SCRAM_WORKLOAD_EXPECTED" "kafka-workload-scram-readiness.json"
 fi
 
 ACL_LIST_MODE="secure"
@@ -381,6 +465,9 @@ jq -s \
   --arg scram_describe_mode "$SCRAM_DESCRIBE_MODE" \
   --argjson scram_client_present "$SCRAM_CLIENT_PRESENT" \
   --argjson scram_broker_present "$SCRAM_BROKER_PRESENT" \
+  --argjson scram_workload_expected "$SCRAM_WORKLOAD_EXPECTED" \
+  --argjson scram_workload_present "$SCRAM_WORKLOAD_PRESENT" \
+  --argjson scram_workload_ready "$SCRAM_WORKLOAD_READY" \
   --argjson acl_list_rc "$ACL_LIST_RC" \
   --arg acl_list_mode "$ACL_LIST_MODE" \
   --argjson acl_authorizer_disabled "$ACL_AUTHORIZER_DISABLED" \
@@ -403,6 +490,9 @@ jq -s \
     scram_describe_mode:$scram_describe_mode,
     scram_client_present:($scram_client_present == 1),
     scram_broker_present:($scram_broker_present == 1),
+    scram_workload_expected:$scram_workload_expected,
+    scram_workload_present:$scram_workload_present,
+    scram_workload_ready:$scram_workload_ready,
     acl_list_rc:$acl_list_rc,
     acl_list_mode:$acl_list_mode,
     acl_authorizer_disabled:($acl_authorizer_disabled == 1),
@@ -434,6 +524,7 @@ This preflight is non-rolling. It checks whether the live plaintext Kafka cluste
 | TLS validation blockers | $TLS_VALIDATION_BLOCKERS |
 | SCRAM client user present | $SCRAM_CLIENT_PRESENT |
 | SCRAM broker user present | $SCRAM_BROKER_PRESENT |
+| SCRAM workload users present | $SCRAM_WORKLOAD_PRESENT / $SCRAM_WORKLOAD_EXPECTED |
 | ACL authorizer disabled | $ACL_AUTHORIZER_DISABLED |
 | Live Kafka plaintext markers | $LIVE_KAFKA_PLAINTEXT_COUNT |
 | Live Kafka SASL_SSL markers | $LIVE_KAFKA_SASL_SSL_COUNT |
@@ -445,12 +536,13 @@ This preflight is non-rolling. It checks whether the live plaintext Kafka cluste
 - \`kafka-security-secret-readiness.json\`
 - \`kafka-tls-material-validation.json\`
 - \`kafka-scram-readiness.json\`
+- \`kafka-workload-scram-readiness.json\`
 - \`kafka-acl-live-summary.json\`
 - \`live-kafka-listener-summary.json\`
 
 ## Interpretation
 
-The repo Kafka profile, client manifests, Secret/TLS material, SCRAM users, live ACL authorizer state, and live listener state are checked separately. A later Kafka rollout remains blocked while live listener markers are plaintext or ACL authorizer is disabled. Prerequisite blockers should be zero before rolling the StatefulSet.
+The repo Kafka profile, per-workload client manifests, Secret/TLS material, broker plus workload SCRAM users, live ACL authorizer state, and live listener state are checked separately. The legacy shared client is observed only for expand compatibility and does not satisfy workload-identity readiness. A later Kafka rollout remains blocked while workload users are missing, live listener markers are plaintext, or ACL authorizer is disabled. Prerequisite blockers should be zero before rolling the StatefulSet.
 EOF
 
 cp "$SUMMARY" "$SECURITY_DIR/kafka-security-rollout-preflight-latest.json"
@@ -458,6 +550,7 @@ cp "$LOCAL_REPORT" "$SECURITY_DIR/kafka-security-rollout-preflight-latest.md"
 cp "$LOG_DIR/kafka-security-secret-readiness.json" "$SECURITY_DIR/kafka-security-secret-readiness-latest.json"
 cp "$LOG_DIR/kafka-tls-material-validation.json" "$SECURITY_DIR/kafka-tls-material-validation-latest.json"
 cp "$LOG_DIR/kafka-scram-readiness.json" "$SECURITY_DIR/kafka-scram-readiness-latest.json"
+cp "$LOG_DIR/kafka-workload-scram-readiness.json" "$SECURITY_DIR/kafka-workload-scram-readiness-latest.json"
 cp "$LOG_DIR/kafka-acl-live-summary.json" "$SECURITY_DIR/kafka-acl-live-summary-latest.json"
 cp "$LOG_DIR/live-kafka-listener-summary.json" "$SECURITY_DIR/live-kafka-listener-summary-latest.json"
 

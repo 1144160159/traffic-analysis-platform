@@ -6,7 +6,12 @@ import { execFileSync } from 'node:child_process';
 
 const root = process.cwd();
 const baseUrl = process.env.ALERT_BASE_URL || 'http://10.0.5.8:30180/api/v1';
-const outputPath = path.join(root, 'doc/02_acceptance/02-regression/alert-center-live-preflight-latest.json');
+const runId = process.env.RUN_ID || `alert-center-live-preflight-${Date.now()}`;
+const outputPath = path.resolve(
+  root,
+  process.env.ALERT_PREFLIGHT_OUTPUT_PATH
+    || path.join('doc/02_acceptance/runs', runId, 'report.json'),
+);
 for (const key of ['HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY', 'http_proxy', 'https_proxy', 'all_proxy']) delete process.env[key];
 
 function token({ roles = ['admin'], permissions = ['*', 'admin:*', 'alert:read', 'alert:write', 'alert:export'] } = {}) {
@@ -20,7 +25,7 @@ function token({ roles = ['admin'], permissions = ['*', 'admin:*', 'alert:read',
 
 const authorization = `Bearer ${token()}`;
 const viewerAuthorization = `Bearer ${token({ roles: ['viewer'], permissions: [] })}`;
-const requestId = `alert-center-r651-${Date.now()}`;
+const requestId = `alert-center-${runId}-${Date.now()}`;
 const endTime = Date.now();
 const startTime = endTime - 24 * 60 * 60 * 1000;
 const checks = [];
