@@ -164,6 +164,8 @@ def main() -> int:
         "postgres_migration": POSTGRES_MIGRATION.as_posix(),
         "alert_mapping": ALERT_MAPPING.as_posix(),
         "topic": TOPIC,
+        "topic_partitions": 2,
+        "broker_replicas": 1,
         "sentinels_verified": False,
         "production_alert_consumer_verified": False,
         "redis_dedup_verified": False,
@@ -184,6 +186,8 @@ def main() -> int:
         "out_of_order_distinct_events_verified": False,
         "redis_first_last_monotonic_verified": False,
         "delayed_exact_replay_snapshot_verified": False,
+        "multi_partition_two_member_rebalance_verified": False,
+        "departed_partition_takeover_verified": False,
         "loopback_only": True,
         "persistent_volume_attached": False,
         "shared_environment_touched": False,
@@ -295,7 +299,7 @@ def main() -> int:
             raise RuntimeError("ephemeral Kafka did not become ready")
         run([
             "docker", "exec", kafka_container, "rpk", "topic", "create", TOPIC,
-            "--brokers", "127.0.0.1:9092", "--partitions", "1", "--replicas", "1",
+            "--brokers", "127.0.0.1:9092", "--partitions", "2", "--replicas", "1",
             "-c", "cleanup.policy=delete", "-c", "retention.ms=3600000",
         ])
         result["sentinels_verified"] = True
@@ -328,6 +332,8 @@ def main() -> int:
             raise RuntimeError(
                 f"alert Kafka receipt integration exited integration={integration.returncode} barrier={barrier.returncode}"
             )
+        if "PASS_ALERT_PROJECTION_MULTI_PARTITION_REBALANCE" not in result["test_output"]:
+            raise RuntimeError("multi-partition two-member rebalance sentinel is missing")
         for field in (
             "production_alert_consumer_verified", "redis_dedup_verified", "clickhouse_authority_verified",
             "opensearch_projection_verified", "postgres_applied_receipt_verified",
@@ -342,6 +348,8 @@ def main() -> int:
             "out_of_order_distinct_events_verified",
             "redis_first_last_monotonic_verified",
             "delayed_exact_replay_snapshot_verified",
+            "multi_partition_two_member_rebalance_verified",
+            "departed_partition_takeover_verified",
         ):
             result[field] = True
         result["status"] = "PASS"

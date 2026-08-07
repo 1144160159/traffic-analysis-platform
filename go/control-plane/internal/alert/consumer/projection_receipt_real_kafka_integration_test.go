@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -35,6 +36,9 @@ const (
 	alertProjectionKafkaRetry  = "event-alert-projection-kafka-retry-g1"
 	alertProjectionKafkaNewer  = "event-alert-projection-kafka-newer-g1"
 	alertProjectionKafkaOlder  = "event-alert-projection-kafka-older-g1"
+	alertProjectionKafkaP0     = "event-alert-projection-kafka-partition-0-g1"
+	alertProjectionKafkaP1     = "event-alert-projection-kafka-partition-1-g1"
+	alertProjectionKafkaMove   = "event-alert-projection-kafka-rebalance-takeover-g1"
 )
 
 // TestAlertProjectionReceiptRealKafka proves that the production alert
@@ -148,12 +152,10 @@ func TestAlertProjectionReceiptRealKafka(t *testing.T) {
 	deadline := time.Now().Add(30 * time.Second)
 	for time.Now().Before(deadline) {
 		lag, err = offsetReader.ReadLag(ctx, topic, groupID)
-		alertConsumer.commitMetricMu.Lock()
-		lastEvent := alertConsumer.lastCommitEvent[topic+":0"]
-		alertConsumer.commitMetricMu.Unlock()
+		_, observed := committedEventPartition(alertConsumer, topic, alertProjectionKafkaEvent)
 		metrics := alertConsumer.kafkaConsumer.GetMetrics()
 		if err == nil && lag.TotalLag == 0 && lag.TotalCommittedOffset == 1 &&
-			metrics.CommitsSucceeded == 1 && metrics.LastOffset == 0 && lastEvent == alertProjectionKafkaEvent {
+			metrics.CommitsSucceeded == 1 && metrics.LastOffset == 0 && observed {
 			break
 		}
 		time.Sleep(100 * time.Millisecond)
@@ -162,12 +164,11 @@ func TestAlertProjectionReceiptRealKafka(t *testing.T) {
 		t.Fatalf("broker offset did not converge after projection receipts: lag=%+v err=%v", lag, err)
 	}
 	metrics := alertConsumer.kafkaConsumer.GetMetrics()
-	alertConsumer.commitMetricMu.Lock()
-	lastEvent := alertConsumer.lastCommitEvent[topic+":0"]
-	alertConsumer.commitMetricMu.Unlock()
-	if metrics.CommitsSucceeded != 1 || metrics.LastOffset != 0 || lastEvent != alertProjectionKafkaEvent {
-		t.Fatalf("post-ACK observer mismatch: metrics=%+v last_event_id=%q", metrics, lastEvent)
+	_, observed := committedEventPartition(alertConsumer, topic, alertProjectionKafkaEvent)
+	if metrics.CommitsSucceeded != 1 || metrics.LastOffset != 0 || !observed {
+		t.Fatalf("post-ACK observer mismatch: metrics=%+v event_observed=%v", metrics, observed)
 	}
+	lastEvent := alertProjectionKafkaEvent
 
 	authority := alertrepo.NewAlertRepository(chClient, logger)
 	scope := persistence.ProjectionScope{TenantID: alertProjectionKafkaTenant, MaxDocuments: 10, TargetIndexVersion: "alerts-v2-write"}
@@ -246,13 +247,12 @@ func TestAlertProjectionReceiptRealKafka(t *testing.T) {
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
-	alertConsumer.commitMetricMu.Lock()
-	failedLastEvent := alertConsumer.lastCommitEvent[topic+":0"]
-	alertConsumer.commitMetricMu.Unlock()
+	_, originalObserved := committedEventPartition(alertConsumer, topic, alertProjectionKafkaEvent)
+	_, failedEventObserved := committedEventPartition(alertConsumer, topic, alertProjectionKafkaRetry)
 	if err != nil || alertConsumer.IsRunning() || metrics.MessagesFailed < 1 || metrics.CommitsSucceeded != 1 ||
-		lag.TotalCommittedOffset != 1 || lag.TotalLag != 1 || failedLastEvent != alertProjectionKafkaEvent {
-		t.Fatalf("receipt outage advanced Kafka or observer state: lag=%+v metrics=%+v running=%v last_event=%q err=%v",
-			lag, metrics, alertConsumer.IsRunning(), failedLastEvent, err)
+		lag.TotalCommittedOffset != 1 || lag.TotalLag != 1 || !originalObserved || failedEventObserved {
+		t.Fatalf("receipt outage advanced Kafka or observer state: lag=%+v metrics=%+v running=%v original_observed=%v failed_observed=%v err=%v",
+			lag, metrics, alertConsumer.IsRunning(), originalObserved, failedEventObserved, err)
 	}
 	if err := target.RefreshProjectionTarget(ctx); err != nil {
 		t.Fatal(err)
@@ -306,8 +306,12 @@ func TestAlertProjectionReceiptRealKafka(t *testing.T) {
 	}
 	retryCtx, stopRetry := context.WithCancel(ctx)
 	retryDone := make(chan error, 1)
+	retryConsumerClosed := false
 	go func() { retryDone <- retryConsumer.Start(retryCtx) }()
 	t.Cleanup(func() {
+		if retryConsumerClosed {
+			return
+		}
 		stopRetry()
 		_ = retryConsumer.Close()
 		select {
@@ -318,22 +322,21 @@ func TestAlertProjectionReceiptRealKafka(t *testing.T) {
 	deadline = time.Now().Add(30 * time.Second)
 	for time.Now().Before(deadline) {
 		lag, err = offsetReader.ReadLag(ctx, topic, groupID)
-		retryConsumer.commitMetricMu.Lock()
-		retryLastEvent := retryConsumer.lastCommitEvent[topic+":0"]
-		retryConsumer.commitMetricMu.Unlock()
+		_, retryObserved := committedEventPartition(retryConsumer, topic, alertProjectionKafkaRetry)
 		retryMetrics := retryConsumer.kafkaConsumer.GetMetrics()
 		if err == nil && lag.TotalLag == 0 && lag.TotalCommittedOffset == 2 &&
-			retryMetrics.CommitsSucceeded == 1 && retryMetrics.LastOffset == 1 && retryLastEvent == alertProjectionKafkaRetry {
+			retryMetrics.CommitsSucceeded == 1 && retryObserved {
 			break
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
-	retryConsumer.commitMetricMu.Lock()
-	retryLastEvent := retryConsumer.lastCommitEvent[topic+":0"]
-	retryConsumer.commitMetricMu.Unlock()
-	if err != nil || lag.TotalLag != 0 || lag.TotalCommittedOffset != 2 || retryLastEvent != alertProjectionKafkaRetry {
-		t.Fatalf("same-group retry did not converge: lag=%+v last_event=%q err=%v", lag, retryLastEvent, err)
+	_, retryObserved := committedEventPartition(retryConsumer, topic, alertProjectionKafkaRetry)
+	retryLastEvent := alertProjectionKafkaRetry
+	if err != nil || lag.TotalLag != 0 || lag.TotalCommittedOffset != 2 || !retryObserved {
+		t.Fatalf("same-group retry did not converge: lag=%+v event_observed=%v err=%v", lag, retryObserved, err)
 	}
+	recoveredOffset := lag.TotalCommittedOffset
+	recoveredLag := lag.TotalLag
 	if err := target.RefreshProjectionTarget(ctx); err != nil {
 		t.Fatal(err)
 	}
@@ -462,11 +465,128 @@ func TestAlertProjectionReceiptRealKafka(t *testing.T) {
 	if err != nil || countAfterDelayedReplay != countAfterOutOfOrder {
 		t.Fatalf("delayed exact replay inflated Redis count: before=%d after=%d err=%v", countAfterOutOfOrder, countAfterDelayedReplay, err)
 	}
+
+	// Add a second member to the two-partition group, require a stable one-
+	// partition assignment per member, and publish one event directly to each
+	// partition. Both consumers must commit before the first member leaves. The
+	// remaining member must then take over the partition previously owned by the
+	// departed member without losing its next projection receipt.
+	rebalanceConsumer := NewConsumer(
+		alertconfig.KafkaConfig{Brokers: []string{settings.kafkaBroker}, Topic: topic, GroupID: groupID, BatchSize: 1},
+		alertconfig.DedupConfig{TimeBucketMinutes: 10, TTL: 10 * time.Minute},
+		dedup.NewRedisDedup(redisClient, 10*time.Minute, logger), dualWriter, logger,
+	)
+	if rebalanceConsumer == nil {
+		t.Fatal("second production alert consumer could not be created")
+	}
+	rebalanceCtx, stopRebalance := context.WithCancel(ctx)
+	rebalanceDone := make(chan error, 1)
+	go func() { rebalanceDone <- rebalanceConsumer.Start(rebalanceCtx) }()
+	t.Cleanup(func() {
+		stopRebalance()
+		_ = rebalanceConsumer.Close()
+		select {
+		case <-rebalanceDone:
+		case <-time.After(2 * time.Second):
+		}
+	})
+	waitForAlertProjectionGroupAssignments(t, ctx, settings.kafkaBroker, topic, groupID, 2, 2)
+	primaryCommitsBeforeRebalance := retryConsumer.kafkaConsumer.GetMetrics().CommitsSucceeded
+	p0Detection := alertProjectionKafkaDistinctDetection(alertProjectionKafkaP0, 3*time.Minute, 4)
+	p1Detection := alertProjectionKafkaDistinctDetection(alertProjectionKafkaP1, 4*time.Minute, 5)
+	if err := writeAlertProjectionDetectionToPartition(ctx, settings.kafkaBroker, topic, 0, p0Detection); err != nil {
+		t.Fatal(err)
+	}
+	if err := writeAlertProjectionDetectionToPartition(ctx, settings.kafkaBroker, topic, 1, p1Detection); err != nil {
+		t.Fatal(err)
+	}
+	deadline = time.Now().Add(30 * time.Second)
+	for time.Now().Before(deadline) {
+		lag, err = offsetReader.ReadLag(ctx, topic, groupID)
+		primaryMetrics := retryConsumer.kafkaConsumer.GetMetrics()
+		secondaryMetrics := rebalanceConsumer.kafkaConsumer.GetMetrics()
+		_, p0Primary := committedEventPartition(retryConsumer, topic, alertProjectionKafkaP0)
+		_, p1Primary := committedEventPartition(retryConsumer, topic, alertProjectionKafkaP1)
+		_, p0Secondary := committedEventPartition(rebalanceConsumer, topic, alertProjectionKafkaP0)
+		_, p1Secondary := committedEventPartition(rebalanceConsumer, topic, alertProjectionKafkaP1)
+		if err == nil && lag.TotalCommittedOffset == 7 && lag.TotalLag == 0 &&
+			primaryMetrics.CommitsSucceeded > primaryCommitsBeforeRebalance && secondaryMetrics.CommitsSucceeded > 0 &&
+			(p0Primary || p0Secondary) && (p1Primary || p1Secondary) {
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+	primaryPartition, primaryP0 := committedEventPartition(retryConsumer, topic, alertProjectionKafkaP0)
+	primaryPartitionP1, primaryP1 := committedEventPartition(retryConsumer, topic, alertProjectionKafkaP1)
+	if primaryP0 == primaryP1 {
+		t.Fatalf("two-member assignment did not produce exactly one new partition commit on primary: p0=%v p1=%v lag=%+v err=%v", primaryP0, primaryP1, lag, err)
+	}
+	if primaryP1 {
+		primaryPartition = primaryPartitionP1
+	}
+	secondaryPartition, secondaryP0 := committedEventPartition(rebalanceConsumer, topic, alertProjectionKafkaP0)
+	secondaryPartitionP1, secondaryP1 := committedEventPartition(rebalanceConsumer, topic, alertProjectionKafkaP1)
+	if secondaryP0 == secondaryP1 {
+		t.Fatalf("two-member assignment did not produce exactly one new partition commit on secondary: p0=%v p1=%v lag=%+v err=%v", secondaryP0, secondaryP1, lag, err)
+	}
+	if secondaryP1 {
+		secondaryPartition = secondaryPartitionP1
+	}
+	if err != nil || lag.TotalCommittedOffset != 7 || lag.TotalLag != 0 || primaryPartition == secondaryPartition {
+		t.Fatalf("two-partition projection did not converge across both consumers: primary_partition=%d secondary_partition=%d lag=%+v err=%v",
+			primaryPartition, secondaryPartition, lag, err)
+	}
+
+	stopRetry()
+	if err := retryConsumer.Close(); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case <-retryDone:
+	case <-time.After(2 * time.Second):
+		t.Fatal("primary rebalance consumer did not stop")
+	}
+	retryConsumerClosed = true
+	waitForAlertProjectionGroupAssignments(t, ctx, settings.kafkaBroker, topic, groupID, 1, 2)
+	takeoverDetection := alertProjectionKafkaDistinctDetection(alertProjectionKafkaMove, 5*time.Minute, 6)
+	if err := writeAlertProjectionDetectionToPartition(ctx, settings.kafkaBroker, topic, primaryPartition, takeoverDetection); err != nil {
+		t.Fatal(err)
+	}
+	deadline = time.Now().Add(30 * time.Second)
+	for time.Now().Before(deadline) {
+		lag, err = offsetReader.ReadLag(ctx, topic, groupID)
+		takeoverPartition, takeoverObserved := committedEventPartition(rebalanceConsumer, topic, alertProjectionKafkaMove)
+		if err == nil && lag.TotalCommittedOffset == 8 && lag.TotalLag == 0 && takeoverObserved && takeoverPartition == primaryPartition {
+			break
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+	takeoverPartition, takeoverObserved := committedEventPartition(rebalanceConsumer, topic, alertProjectionKafkaMove)
+	if err != nil || lag.TotalCommittedOffset != 8 || lag.TotalLag != 0 || !takeoverObserved || takeoverPartition != primaryPartition {
+		t.Fatalf("remaining consumer did not take over departed partition: departed_partition=%d observed_partition=%d observed=%v lag=%+v err=%v",
+			primaryPartition, takeoverPartition, takeoverObserved, lag, err)
+	}
+	if err := target.RefreshProjectionTarget(ctx); err != nil {
+		t.Fatal(err)
+	}
+	authoritative, truncated, err = authority.ListProjectionAlerts(ctx, persistence.ProjectionScope{TenantID: alertProjectionKafkaTenant, MaxDocuments: 20, TargetIndexVersion: "alerts-v2-write"})
+	if err != nil || truncated || len(authoritative) != 7 {
+		t.Fatalf("unexpected ClickHouse authority after rebalance: count=%d truncated=%v err=%v", len(authoritative), truncated, err)
+	}
+	projected, targetTruncated, err = target.ListProjectionAlerts(ctx, persistence.ProjectionScope{TenantID: alertProjectionKafkaTenant, MaxDocuments: 20, TargetIndexVersion: "alerts-v2-write"})
+	if err != nil || targetTruncated || len(projected) != 7 {
+		t.Fatalf("unexpected OpenSearch projection after rebalance: count=%d truncated=%v err=%v", len(projected), targetTruncated, err)
+	}
+	verifyProjectionEventAcrossStores(t, ctx, pgDB, authoritative, projected, alertProjectionKafkaP0)
+	verifyProjectionEventAcrossStores(t, ctx, pgDB, authoritative, projected, alertProjectionKafkaP1)
+	verifyProjectionEventAcrossStores(t, ctx, pgDB, authoritative, projected, alertProjectionKafkaMove)
 	t.Logf("PASS_ALERT_PROJECTION_REAL_KAFKA_RECEIPT event_id=%s committed_offset=1 lag_before_fault=0 source_sha256=%s", lastEvent, sourceHash)
 	t.Logf("PASS_ALERT_PROJECTION_RECEIPT_FAILURE_RESTART retry_event_id=%s retained_offset=1 retained_lag=1 recovered_offset=%d recovered_lag=%d source_sha256=%s",
-		retryLastEvent, lag.TotalCommittedOffset, lag.TotalLag, retrySourceHash)
+		retryLastEvent, recoveredOffset, recoveredLag, retrySourceHash)
 	t.Logf("PASS_ALERT_PROJECTION_OUT_OF_ORDER_DISTINCT_EVENTS newer_event_id=%s older_event_id=%s final_offset=5 redis_count=4 aggregate_first_seen=%d aggregate_last_seen=%d newer_sha256=%s",
 		alertProjectionKafkaNewer, alertProjectionKafkaOlder, firstSeenAfterOutOfOrder, lastSeenAfterOutOfOrder, newerReplayHash)
+	t.Logf("PASS_ALERT_PROJECTION_MULTI_PARTITION_REBALANCE partitions=2 members_before_leave=2 primary_partition=%d secondary_partition=%d takeover_partition=%d final_offset=8 final_lag=0 projected_events=7",
+		primaryPartition, secondaryPartition, takeoverPartition)
 }
 
 func waitForAlertProjectionOffset(
@@ -486,16 +606,77 @@ func waitForAlertProjectionOffset(
 	var lastEvent string
 	for time.Now().Before(deadline) {
 		lag, err = offsetReader.ReadLag(ctx, topic, groupID)
-		consumer.commitMetricMu.Lock()
-		lastEvent = consumer.lastCommitEvent[topic+":0"]
-		consumer.commitMetricMu.Unlock()
-		if err == nil && lag.TotalCommittedOffset == wantOffset && lag.TotalLag == 0 && lastEvent == wantEventID {
+		_, observed := committedEventPartition(consumer, topic, wantEventID)
+		if observed {
+			lastEvent = wantEventID
+		}
+		if err == nil && lag.TotalCommittedOffset == wantOffset && lag.TotalLag == 0 && observed {
 			return
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
 	t.Fatalf("Kafka projection offset did not converge: want_offset=%d want_event=%s lag=%+v last_event=%s err=%v",
 		wantOffset, wantEventID, lag, lastEvent, err)
+}
+
+func committedEventPartition(consumer *Consumer, topic, eventID string) (int, bool) {
+	consumer.commitMetricMu.Lock()
+	defer consumer.commitMetricMu.Unlock()
+	prefix := topic + ":"
+	for key, committedEventID := range consumer.lastCommitEvent {
+		if committedEventID != eventID || !strings.HasPrefix(key, prefix) {
+			continue
+		}
+		partition, err := strconv.Atoi(strings.TrimPrefix(key, prefix))
+		if err == nil {
+			return partition, true
+		}
+	}
+	return 0, false
+}
+
+func waitForAlertProjectionGroupAssignments(
+	t *testing.T,
+	ctx context.Context,
+	broker string,
+	topic string,
+	groupID string,
+	wantMembers int,
+	wantPartitions int,
+) {
+	t.Helper()
+	client := &segmentkafka.Client{Addr: segmentkafka.TCP(broker)}
+	deadline := time.Now().Add(30 * time.Second)
+	var lastState string
+	var lastMembers, lastPartitions int
+	var lastErr error
+	for time.Now().Before(deadline) {
+		response, err := client.DescribeGroups(ctx, &segmentkafka.DescribeGroupsRequest{GroupIDs: []string{groupID}})
+		lastErr = err
+		if err == nil && len(response.Groups) == 1 {
+			group := response.Groups[0]
+			lastState = group.GroupState
+			lastMembers = len(group.Members)
+			assigned := map[int]struct{}{}
+			for _, member := range group.Members {
+				for _, assignment := range member.MemberAssignments.Topics {
+					if assignment.Topic != topic {
+						continue
+					}
+					for _, partition := range assignment.Partitions {
+						assigned[partition] = struct{}{}
+					}
+				}
+			}
+			lastPartitions = len(assigned)
+			if group.Error == nil && group.GroupState == "Stable" && lastMembers == wantMembers && lastPartitions == wantPartitions {
+				return
+			}
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+	t.Fatalf("consumer group assignment did not stabilize: state=%s members=%d partitions=%d want_members=%d want_partitions=%d err=%v",
+		lastState, lastMembers, lastPartitions, wantMembers, wantPartitions, lastErr)
 }
 
 func verifyProjectionEventAcrossStores(
@@ -565,12 +746,37 @@ func projectionHashForEvent(t *testing.T, alerts []*persistence.Alert, eventID s
 }
 
 func writeAlertProjectionDetection(ctx context.Context, writer *segmentkafka.Writer, topic string, detection *pb.DetectionBatch) error {
-	payload, err := proto.Marshal(detection)
+	message, err := alertProjectionKafkaMessage(topic, detection)
 	if err != nil {
 		return err
 	}
+	return writer.WriteMessages(ctx, message)
+}
+
+func writeAlertProjectionDetectionToPartition(ctx context.Context, broker, topic string, partition int, detection *pb.DetectionBatch) error {
+	connection, err := segmentkafka.DialLeader(ctx, "tcp", broker, topic, partition)
+	if err != nil {
+		return err
+	}
+	defer connection.Close()
+	if deadline, ok := ctx.Deadline(); ok {
+		_ = connection.SetWriteDeadline(deadline)
+	}
+	message, err := alertProjectionKafkaMessage("", detection)
+	if err != nil {
+		return err
+	}
+	_, err = connection.WriteMessages(message)
+	return err
+}
+
+func alertProjectionKafkaMessage(topic string, detection *pb.DetectionBatch) (segmentkafka.Message, error) {
+	payload, err := proto.Marshal(detection)
+	if err != nil {
+		return segmentkafka.Message{}, err
+	}
 	eventID := detection.GetBehaviors()[0].GetHeader().GetEventId()
-	return writer.WriteMessages(ctx, segmentkafka.Message{
+	return segmentkafka.Message{
 		Topic: topic, Key: []byte(alertProjectionKafkaTenant + ":" + eventID), Value: payload,
 		Headers: []segmentkafka.Header{
 			{Key: "tenant_id", Value: []byte(alertProjectionKafkaTenant)},
@@ -579,7 +785,7 @@ func writeAlertProjectionDetection(ctx context.Context, writer *segmentkafka.Wri
 			{Key: "content_type", Value: []byte("application/x-protobuf")},
 			{Key: "proto_message_type", Value: []byte("traffic.v1.DetectionBatch")},
 		},
-	})
+	}, nil
 }
 
 type alertProjectionKafkaSettings struct {

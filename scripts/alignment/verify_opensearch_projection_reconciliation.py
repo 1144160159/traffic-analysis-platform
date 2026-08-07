@@ -104,6 +104,8 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
         errors.append("Kafka distinct event ordering guard drifted")
     if scope.get("kafka_delayed_exact_replay") != "per_event_redis_receipt_restores_original_count_first_seen_last_seen_after_later_events":
         errors.append("Kafka delayed exact replay guard drifted")
+    if scope.get("kafka_multi_partition_rebalance") != "two_partitions_two_members_then_one_member_takeover_with_receipts_before_each_commit":
+        errors.append("Kafka multi-partition rebalance guard drifted")
     if scope.get("source_time_compatibility") != "header_event_ts_then_legacy_behavior_ts_then_batch_created_at_then_fail_closed":
         errors.append("alert source time compatibility guard drifted")
     runtime = contract.get("runtime_guards", {})
