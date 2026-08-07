@@ -48,9 +48,9 @@ import { isVisualBreakdownMode } from '@/utils/visualBreakdownMode';
 const visualPhases = [
   ['侦察', 'TA0043', '203.0.113.45', '端口扫描探测', 'DNS 解析记录', '封禁源 IP', 'info'],
   ['初始访问', 'TA0001', '边界防火墙 FW-01', 'Web 漏洞利用', 'HTTP 请求包', 'WAF 规则加固', 'ok'],
-  ['执行', 'TA0002', 'WEB 服务器 10.12.5.23', '恶意命令执行', '进程创建日志', '终止恶意进程', 'ok'],
-  ['横向移动', 'TA0008', '域控服务器 10.12.1.10', '凭证窃取', 'LSASS 访问', '重置域控凭证', 'warn'],
-  ['C2 通信', 'TA0011', '内网主机 10.12.8.45', 'C2 隧道通信', 'TLS 流量会话', '阻断 C2 域名', 'warn'],
+  ['执行', 'TA0002', 'WEB 服务器（地址暂不可用）', '恶意命令执行', '进程创建日志', '终止恶意进程', 'ok'],
+  ['横向移动', 'TA0008', '域控服务器（地址暂不可用）', '凭证窃取', 'LSASS 访问', '重置域控凭证', 'warn'],
+  ['C2 通信', 'TA0011', '内网主机（地址暂不可用）', 'C2 隧道通信', 'TLS 流量会话', '阻断 C2 域名', 'warn'],
   ['数据外传', 'TA0010', '外部域名 c2.example.com', '数据外传尝试', '外传流量样本', '阻断外传通道', 'risk'],
 ];
 
@@ -66,8 +66,8 @@ const visualEvidenceRows = [
 const visualRecommendations = [
   ['高', 'c2.example.com', '封禁域名', '低影响'],
   ['高', '198.51.100.27', '阻断 IP', '低影响'],
-  ['中', '10.12.8.45', '隔离主机', '中等影响'],
-  ['中', '10.12.5.23', '加强访问控制', '低影响'],
+  ['中', '资产地址暂不可用', '隔离主机', '中等影响'],
+  ['中', '资产地址暂不可用', '加强访问控制', '低影响'],
   ['低', 'SMB 445', '收紧防火墙策略', '低影响'],
   ['低', 'RDP 3389', '限制管理网段', '低影响'],
 ];
@@ -102,7 +102,7 @@ const ATTACK_PATH_PAGE_SIZE = 3;
 export function AttackChainAnalysisPage({ route }: { route: NavRoute }) {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const visualBreakdownMode = isVisualBreakdownMode();
+  const visualBreakdownMode = import.meta.env.DEV && isVisualBreakdownMode();
   const sourceEntity = searchParams.get('entity') ?? '';
   const sourceChain = searchParams.get('chain') ?? '';
   const sourceCampaign = searchParams.get('campaign') ?? '';
@@ -311,6 +311,12 @@ export function AttackChainAnalysisPage({ route }: { route: NavRoute }) {
       const phase = selectedChain?.phases[index];
       return phase?.key_events.some((event) => event.src_ip === assetScope || event.dst_ip === assetScope) ?? false;
     });
+  const scopeHasNoMatches = assetScope !== '全部资产' && scopedPhaseRows.length === 0;
+  const visiblePathRows = scopeHasNoMatches ? [] : pathRows;
+  const visibleEvidenceAnchorRows = scopeHasNoMatches ? [] : evidenceAnchorRows;
+  const visibleResponseRows = scopeHasNoMatches ? [] : responseRows;
+  const visiblePathTotal = scopeHasNoMatches ? 0 : pathTotal;
+  const visibleEvidenceTotal = scopeHasNoMatches ? 0 : evidenceTotal;
   const activeError = visualBreakdownMode
     ? error
     : chainListQuery.error ?? detailQuery.error ?? evidenceQuery.error ?? pathQuery.error ?? recommendationQuery.error;
@@ -338,8 +344,8 @@ export function AttackChainAnalysisPage({ route }: { route: NavRoute }) {
               size="small"
               icon={<DownloadOutlined />}
               loading={actionMutation.isPending}
-              onClick={() => void runChainAction('campaign-export', '导出攻击链报告', { format: 'json' })
-                .then(() => exportAttackChain(rows))
+              onClick={() => void runChainAction('campaign-report-generate', '导出攻击链报告', { format: 'json', sections: ['attack_phases', 'evidence'] })
+                .then((result) => message.info(`攻击链报告已受理（job_id=${result.jobId}）；请等待服务端终态后下载。`))
                 .catch(() => {})}
             >
               导出报告
@@ -443,14 +449,14 @@ export function AttackChainAnalysisPage({ route }: { route: NavRoute }) {
             </section>
             <div className="taf-attack-bottom">
               <WorkPanel title="ATT&CK 阶段矩阵">
-                <PhaseMatrix metrics={detail ? [{ label: '置信度', value: `${detail.risk_score}%`, delta: '服务端聚合', status: 'info' }] : data?.metrics ?? []} phases={phaseRows} />
+                <PhaseMatrix metrics={detail ? [{ label: '置信度', value: `${detail.risk_score}%`, delta: '服务端聚合', status: 'info' }] : data?.metrics ?? []} phases={scopedPhaseRows} />
               </WorkPanel>
               <WorkPanel title="路径明细（关键跳转）">
                 <PathDetail
-                  rows={pathRows}
+                  rows={visiblePathRows}
                   columns={columns}
                   isLoading={pathQuery.isLoading}
-                  total={pathTotal}
+                  total={visiblePathTotal}
                   page={pathPage}
                   pageSize={ATTACK_PATH_PAGE_SIZE}
                   onPageChange={setPathPage}
@@ -460,8 +466,8 @@ export function AttackChainAnalysisPage({ route }: { route: NavRoute }) {
           </main>
           <aside className="taf-attack-rail">
             <EvidenceAnchorList
-              rows={evidenceAnchorRows}
-              total={evidenceTotal}
+              rows={visibleEvidenceAnchorRows}
+              total={visibleEvidenceTotal}
               page={evidencePage}
               pageSize={ATTACK_EVIDENCE_PAGE_SIZE}
               loading={evidenceQuery.isLoading}
@@ -474,7 +480,7 @@ export function AttackChainAnalysisPage({ route }: { route: NavRoute }) {
               onInspect={(target) => void runChainAction('campaign-evidence-view', '查看攻击链证据', { evidence: target })}
             />
             <ResponseRecommendations
-              rows={responseRows}
+              rows={visibleResponseRows}
               loading={recommendationQuery.isLoading}
               selectedTab={recommendationTab}
               onTabChange={setRecommendationTab}
@@ -496,17 +502,17 @@ export function AttackChainAnalysisPage({ route }: { route: NavRoute }) {
         <AttackChainDetailDrawer
           chain={selectedChain}
           phases={phaseRows}
-          evidenceRows={evidenceAnchorRows}
+          evidenceRows={visibleEvidenceAnchorRows}
           sourceEntity={sourceEntity}
           pending={actionMutation.isPending}
           onClose={closeAttackDetail}
           onInvestigate={(action) => {
             const encodedChain = encodeURIComponent(selectedChain?.chain_id ?? effectiveChainId);
-            if (action === '查看 Session 复放') return void runChainAction('campaign-evidence-view', action, { evidence_type: 'session' }).then(() => navigate(`/forensics?campaign=${encodedChain}&tab=session`));
-            if (action === '拉取 PCAP') return void runChainAction('campaign-evidence-view', action, { evidence_type: 'pcap' }).then(() => navigate(`/forensics?campaign=${encodedChain}&tab=pcap`));
+            if (action === '查看 Session 复放') return void runChainAction('campaign-evidence-view', action, { evidence_type: 'session' }).then(() => navigate(`/forensics?campaign_id=${encodedChain}&tab=session`));
+            if (action === '拉取 PCAP') return void runChainAction('campaign-evidence-view', action, { evidence_type: 'pcap' }).then(() => navigate(`/forensics?campaign_id=${encodedChain}&tab=pcap`));
             if (action === '打开图谱路径') return void runChainAction('campaign-graph-view', action).then(() => navigate(`/graph?campaign=${encodedChain}`));
             if (action === '触发 SOAR 剧本') return void runChainAction('campaign-soar-response', action, { dry_run: true }).then(() => navigate(`/playbooks?campaign=${encodedChain}`));
-            return void runChainAction('campaign-context-action', action).then(() => navigate(`/forensics?campaign=${encodedChain}&create=1`));
+            return void runChainAction('campaign-context-action', action).then(() => navigate(`/forensics?campaign_id=${encodedChain}&create=1`));
           }}
           onSubmit={() => void runChainAction('campaign-status-change', '提交攻击链调查结论', { next_status: 'contained' }).then(closeAttackDetail).catch(() => {})}
         />
@@ -790,7 +796,9 @@ function AttackObjectMatrixCanvas({
 }
 
 function PhaseMatrix({ metrics, phases }: { metrics: PageSnapshot['metrics']; phases: string[][] }) {
-  const confidence = metrics.find((item) => item.label === '置信度')?.value ?? '92%';
+  const confidence = phases.length
+    ? metrics.find((item) => item.label === '置信度')?.value ?? '未提供'
+    : '暂无链路';
   return (
     <div className="taf-attack-matrix">
       {phases.map(([phase, technique, , , , , tone]) => (
@@ -1117,16 +1125,6 @@ function AttackChainDetailDrawer({
       </footer>
     </div>
   );
-}
-
-function exportAttackChain(rows: SnapshotRow[]) {
-  const blob = new Blob([JSON.stringify(rows, null, 2)], { type: 'application/json;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = `attack-chain-${new Date().toISOString().slice(0, 10)}.json`;
-  anchor.click();
-  URL.revokeObjectURL(url);
 }
 
 function NodeIcon({ tone, phase }: { tone: unknown; phase: string }) {

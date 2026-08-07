@@ -31,13 +31,21 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { Alert, Button, Checkbox, Empty, message, Modal, Select, Space, Table, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { CSSProperties, ReactNode } from 'react';
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { DataQualityDonutChart } from '@/components/charts';
 import { StatusTag } from '@/components/StatusTag';
 import { WorkPanel } from '@/components/WorkPanel';
 import type { NavRoute } from '@/routes/routeManifest';
-import { submitCampaignAction } from '@/services/campaignActionApi';
+import {
+  classifyCampaignActionStatus,
+  downloadCampaignReport,
+  saveCampaignReportArtifact,
+  submitCampaignAction,
+  waitForCampaignReport,
+  type CampaignActionStatus,
+  type CampaignReportStatus,
+} from '@/services/campaignActionApi';
 import {
   fetchCampaignDetailSnapshot,
   type CampaignDetailAccountRow,
@@ -55,6 +63,23 @@ import { isVisualBreakdownMode } from '@/utils/visualBreakdownMode';
 const cellTitle = <T extends Record<string, string>>(key: keyof T) => (record: T) => ({
   title: record[key],
 });
+
+const showCampaignActionNotice = (status: CampaignActionStatus, jobId: string) => {
+  const statusClass = classifyCampaignActionStatus(status);
+  if (statusClass === 'in_progress') {
+    message.info(`战役操作已受理，尚未最终完成：${jobId}`);
+  } else if (statusClass === 'succeeded') {
+    message.success(`战役操作已完成并写入审计：${jobId}`);
+  } else if (statusClass === 'partial') {
+    message.warning(`战役操作部分完成，请检查失败目标与补偿状态：${jobId}`);
+  } else if (statusClass === 'cancelled') {
+    message.warning(`战役操作已取消，未形成最终成功：${jobId}`);
+  } else if (statusClass === 'compensated') {
+    message.warning(`战役操作已补偿，原操作不应按成功关闭：${jobId}`);
+  } else {
+    message.error(`战役操作失败，请检查权威回执：${jobId}`);
+  }
+};
 
 const alertColumns: ColumnsType<CampaignDetailAlertRow> = [
   {
@@ -94,22 +119,74 @@ export function CampaignDetailPage({ route }: { route: NavRoute }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const visualPageId = searchParams.get('__codex_page_id') ?? '';
   const [reportOpen, setReportOpen] = useState(visualPageId === 'modal-campaign-report-export');
-  const visualBreakdownMode = isVisualBreakdownMode();
+  const [reportStatus, setReportStatus] = useState<CampaignReportStatus>();
+  const reportAbortRef = useRef<AbortController>();
+  const visualBreakdownMode = import.meta.env.DEV && isVisualBreakdownMode();
   const campaignId = params.campaignId ?? 'APT-20260619-001';
+  const requestedSnapshotId = searchParams.get('snapshot_id') ?? '';
   const activeImpact = resolveCampaignImpact(searchParams.get('impact'));
   const alertRiskFilter = resolveAlertRisk(searchParams.get('alertRisk'));
   const { data, error, isError, isLoading, refetch } = useQuery({
-    queryKey: ['campaign-detail', campaignId],
-    queryFn: () => fetchCampaignDetailSnapshot(campaignId),
+    queryKey: ['campaign-detail', campaignId, requestedSnapshotId],
+    queryFn: () => fetchCampaignDetailSnapshot(campaignId, requestedSnapshotId || undefined),
     refetchInterval: visualBreakdownMode ? false : 30_000,
   });
+  const snapshot = data ?? emptySnapshot(campaignId);
+  const releasePinnedSnapshot = () => {
+    if (!requestedSnapshotId) return;
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      next.delete('snapshot_id');
+      return next;
+    }, { replace: true });
+  };
   const actionMutation = useMutation({
     mutationFn: submitCampaignAction,
-    onSuccess: (result) => message.success(`操作已完成并写入审计：${result.jobId}`),
+    onSuccess: (result) => {
+      showCampaignActionNotice(result.jobStatus, result.jobId);
+      if (result.mode === 'server-persisted-mutation') releasePinnedSnapshot();
+    },
     onError: (mutationError) => message.error(mutationError instanceof Error ? mutationError.message : '战役操作提交失败'),
   });
-
-  const snapshot = data ?? emptySnapshot(campaignId);
+  const reportMutation = useMutation({
+    mutationFn: async (payload: Record<string, unknown>) => {
+      reportAbortRef.current?.abort();
+      const controller = new AbortController();
+      reportAbortRef.current = controller;
+      setReportStatus(undefined);
+      try {
+        const receipt = await submitCampaignAction({
+          actionId: 'campaign-report-generate',
+          campaignId,
+          target: '生成战役报告',
+          metadata: {
+            ...payload,
+            ...(snapshot.snapshotId ? { snapshot_id: snapshot.snapshotId } : {}),
+          },
+          expectedRevision: snapshot.stateVersion,
+          reason: '冻结当前战役快照并生成可校验的复盘报告',
+        });
+        const reportId = typeof receipt.result.report_id === 'string' ? receipt.result.report_id.trim() : '';
+        if (!reportId) throw new Error('战役报告受理响应缺少稳定 report_id');
+        message.info(`战役报告已受理，正在等待执行器终态：${receipt.jobId}`);
+        const completed = await waitForCampaignReport(campaignId, reportId, {
+          signal: controller.signal,
+          onStatus: setReportStatus,
+        });
+        const artifact = await downloadCampaignReport(campaignId, completed);
+        saveCampaignReportArtifact(artifact);
+        return { receipt, completed, artifact };
+      } finally {
+        if (reportAbortRef.current === controller) reportAbortRef.current = undefined;
+      }
+    },
+    onSuccess: async ({ completed, artifact }) => {
+      releasePinnedSnapshot();
+      if (!requestedSnapshotId) await refetch();
+      message.success(`战役报告已完成并校验下载：${artifact.filename}（${completed.artifactSHA256}）`);
+    },
+    onError: (mutationError) => message.error(mutationError instanceof Error ? mutationError.message : '战役报告执行失败'),
+  });
   const filteredAlerts = useMemo(
     () => alertRiskFilter === '全部'
       ? snapshot.alerts
@@ -120,19 +197,33 @@ export function CampaignDetailPage({ route }: { route: NavRoute }) {
     actionId: Parameters<typeof submitCampaignAction>[0]['actionId'],
     target: string,
     metadata?: Record<string, unknown>,
-  ) => actionMutation.mutateAsync({ actionId, campaignId, target, metadata });
-  const exportCampaignPackage = async () => {
-    const receipt = await runAction('campaign-export', '导出战役包', {
+  ) => actionMutation.mutateAsync({
+    actionId,
+    campaignId,
+    target,
+    metadata: {
+      ...(metadata ?? {}),
+      ...(snapshot.snapshotId ? { snapshot_id: snapshot.snapshotId } : {}),
+    },
+    expectedRevision: snapshot.stateVersion,
+    reason: `战役详情操作：${target}`,
+  });
+  const openCampaignReport = () => {
+    setReportStatus(undefined);
+    setReportOpen(true);
+  };
+  const closeCampaignReport = () => {
+    if (reportMutation.isPending) {
+      reportAbortRef.current?.abort();
+      message.info('已停止浏览器等待；服务端已受理的报告任务仍会继续执行。');
+    }
+    setReportOpen(false);
+  };
+  const exportCampaignPackage = () => {
+    reportMutation.mutate({
       format: 'json',
       sections: ['profile', 'attack_phases', 'alerts', 'impact', 'evidence', 'response', 'review'],
     });
-    const blob = new Blob([JSON.stringify({ campaign: snapshot, receipt }, null, 2)], { type: 'application/json;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = `${snapshot.campaignId}-bundle.json`;
-    anchor.click();
-    URL.revokeObjectURL(url);
   };
   const changeImpact = (nextImpact: string) => {
     setSearchParams((current) => {
@@ -158,8 +249,8 @@ export function CampaignDetailPage({ route }: { route: NavRoute }) {
         </div>
         <Space size={8}>
           <Button size="small" icon={<ReloadOutlined />} loading={isLoading} onClick={() => void refetch()}>刷新</Button>
-          <Button size="small" icon={<CloudDownloadOutlined />} loading={actionMutation.isPending} onClick={() => void exportCampaignPackage()}>导出战役包</Button>
-          <Button size="small" type="primary" icon={<FileDoneOutlined />} onClick={() => setReportOpen(true)}>生成战役报告</Button>
+          <Button size="small" icon={<CloudDownloadOutlined />} loading={reportMutation.isPending} onClick={exportCampaignPackage}>导出战役包</Button>
+          <Button size="small" type="primary" icon={<FileDoneOutlined />} onClick={openCampaignReport}>生成战役报告</Button>
           <Button size="small" icon={<AuditOutlined />} loading={actionMutation.isPending} onClick={() => void runAction('campaign-context-action', '写入审计', { event: 'CAMPAIGN_DETAIL_AUDIT_REQUESTED' })}>写入审计</Button>
           <Button size="small" icon={<MoreOutlined />}>更多</Button>
           <Tooltip title="返回战役列表">
@@ -365,10 +456,11 @@ export function CampaignDetailPage({ route }: { route: NavRoute }) {
       <CampaignReportModal
         open={reportOpen}
         snapshot={snapshot}
-        pending={actionMutation.isPending}
-        onCancel={() => setReportOpen(false)}
+        pending={reportMutation.isPending}
+        reportStatus={reportStatus}
+        onCancel={closeCampaignReport}
         onSubmit={async (payload) => {
-          await runAction('campaign-report-generate', '生成战役报告', payload);
+          await reportMutation.mutateAsync(payload);
           setReportOpen(false);
         }}
       />
@@ -468,12 +560,14 @@ function CampaignReportModal({
   open,
   snapshot,
   pending,
+  reportStatus,
   onCancel,
   onSubmit,
 }: {
   open: boolean;
   snapshot: CampaignDetailSnapshot;
   pending: boolean;
+  reportStatus?: CampaignReportStatus;
   onCancel: () => void;
   onSubmit: (payload: Record<string, unknown>) => Promise<void>;
 }) {
@@ -484,7 +578,7 @@ function CampaignReportModal({
   const [recommendation, setRecommendation] = useState<string>();
   const [format, setFormat] = useState('PDF');
   const [includeAttachments, setIncludeAttachments] = useState(true);
-  const phases = snapshot.phases.map((phase) => phase.phase);
+  const phases = useMemo(() => snapshot.phases.map((phase) => phase.phase), [snapshot.phases]);
   const effectiveSelectedPhases = selectedPhases ?? phases;
   const readyEvidence = snapshot.evidenceSummaryRows.filter((row) => row.状态.includes('完整') || row.状态.includes('就绪')).length;
   useEffect(() => {
@@ -496,7 +590,7 @@ function CampaignReportModal({
     setRecommendation(undefined);
     setFormat('PDF');
     setIncludeAttachments(true);
-  }, [open, snapshot.campaignId]);
+  }, [open, phases, snapshot.campaignId]);
   return (
     <Modal
       className="taf-campaign-report-modal"
@@ -518,7 +612,7 @@ function CampaignReportModal({
         <ReportMetric icon={<SafetyOutlined />} label="关联告警" value={`${snapshot.alertCount} 条`} tone="risk" />
         <ReportMetric icon={<DatabaseOutlined />} label="影响资产" value={`${snapshot.assetCount} 个`} tone="warn" />
         <ReportMetric icon={<SafetyCertificateOutlined />} label="证据完整度" value={snapshot.evidenceCompletenessAvailable ? `${snapshot.evidenceCompleteness}%` : '--'} tone="ok" />
-        <ReportMetric icon={<UserSwitchOutlined />} label="审批状态" value="需复核" tone="warn" />
+        <ReportMetric icon={<UserSwitchOutlined />} label="执行状态" value={campaignReportStatusLabel(reportStatus?.status)} tone={reportStatus?.status === 'completed' ? 'ok' : reportStatus?.status === 'failed' ? 'risk' : 'warn'} />
       </div>
       <div className="taf-campaign-report-modal__body">
         <section className="taf-campaign-report-scope">
@@ -527,7 +621,7 @@ function CampaignReportModal({
           <Checkbox.Group value={effectiveSelectedPhases} onChange={(values) => setSelectedPhases(values.map(String))}>
             {phases.map((phase) => <Checkbox key={phase} value={phase}>{phase}</Checkbox>)}
           </Checkbox.Group>
-          <label><span>时间窗口</span><strong>{snapshot.firstSeen}　~　{snapshot.lastUpdated}</strong></label>
+          <label><span>时间窗口</span><strong>{snapshot.firstSeen} ~ {snapshot.lastUpdated}</strong></label>
           <label><span>资产范围</span><strong>所有受影响资产（{snapshot.assetCount}）</strong></label>
           <label><span>地域范围</span><strong>{snapshot.impactCampus.total ? `${snapshot.impactCampus.total} 个校区` : '未提供'}</strong></label>
           <p>将包含选定阶段内的关键事件、证据与处置记录。</p>
@@ -564,7 +658,14 @@ function CampaignReportModal({
         </section>
       </div>
       <footer className="taf-campaign-report-modal__footer">
-        <Alert type="warning" showIcon message="需审批：安全负责人复核通过后，方可导出并写入审计。" description={`当前审批人：${snapshot.assignee || '未分配'}`} />
+        <Alert
+          type={reportStatus?.status === 'completed' ? 'success' : reportStatus?.status === 'failed' ? 'error' : 'info'}
+          showIcon
+          message={reportStatus ? `报告状态：${campaignReportStatusLabel(reportStatus.status)}` : '提交后将冻结快照并等待服务端最终结果'}
+          description={reportStatus
+            ? `report_id=${reportStatus.reportId}，尝试次数=${reportStatus.attempts}${reportStatus.errorMessage ? `，最近错误=${reportStatus.errorMessage}` : ''}`
+            : 'HTTP 202 仅代表已受理；完成后浏览器将校验对象大小与摘要，再触发下载并写入审计。'}
+        />
         <Space>
           <Button onClick={onCancel}>取消</Button>
           <Button onClick={() => message.info('报告预览将在生成任务完成后开放')}>预览报告</Button>
@@ -582,14 +683,27 @@ function CampaignReportModal({
               residual_risk: residualRisk,
               recommendation,
               include_attachments: includeAttachments,
-            })}
+            }).catch(() => {})}
           >
-            导出并写入审计
+            生成、校验并下载
           </Button>
         </Space>
       </footer>
     </Modal>
   );
+}
+
+function campaignReportStatusLabel(status?: CampaignReportStatus['status']) {
+  switch (status) {
+    case 'accepted': return '已受理';
+    case 'running': return '执行中';
+    case 'completed': return '最终成功';
+    case 'partial': return '部分完成';
+    case 'failed': return '失败';
+    case 'cancelled': return '已取消';
+    case 'compensated': return '已补偿';
+    default: return '尚未提交';
+  }
 }
 
 function ReportMetric({ icon, label, value, tone }: { icon: ReactNode; label: string; value: string; tone: string }) {
@@ -1106,6 +1220,13 @@ function riskClass(risk: string) {
 function emptySnapshot(campaignId: string): CampaignDetailSnapshot {
   return {
     campaignId,
+    stateVersion: 0,
+    snapshotId: '',
+    snapshotSHA256: '',
+    partial: true,
+    missingSections: ['campaign_snapshot'],
+    sourceWatermarks: {},
+    reports: [],
     campaignType: '未分类',
     title: '战役详情加载中',
     riskScore: 0,

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { alertTableVerticalScrollHeight, alertTimelineItems } from '@/pages/AlertTriagePage';
+import {
+  ALERT_ROW_CONTROLS,
+  alertTableVerticalScrollHeight,
+  alertTimelineItems,
+  createAlertAction,
+} from '@/pages/alertTriageLogic';
 
 describe('alertTableVerticalScrollHeight', () => {
   it('keeps a ten-row page free of vertical scrolling when the panel has enough room', () => {
@@ -59,5 +64,20 @@ describe('alertTimelineItems', () => {
         time: '--:--:--',
       }),
     ]);
+  });
+});
+
+describe('stable alert action contracts', () => {
+  it('keeps command identity and endpoint stable when display copy changes', () => {
+    const original = createAlertAction(ALERT_ROW_CONTROLS.reanalyze, 'alert-1');
+    const renamed = createAlertAction(
+      {...ALERT_ROW_CONTROLS.reanalyze, title: '再次分析'},
+      'alert-1',
+    );
+
+    expect(renamed.actionId).toBe('alert-response-reanalyze');
+    expect(renamed.actionId).toBe(original.actionId);
+    expect(renamed.endpoint).toBe(original.endpoint);
+    expect(renamed.title).not.toBe(original.title);
   });
 });

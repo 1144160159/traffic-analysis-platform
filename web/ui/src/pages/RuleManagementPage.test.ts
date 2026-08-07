@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { ruleLifecycleLabel } from './RuleManagementPage';
+import { ruleLifecycleLabel } from './ruleManagementLogic';
 
 describe('ruleLifecycleLabel', () => {
   it.each([

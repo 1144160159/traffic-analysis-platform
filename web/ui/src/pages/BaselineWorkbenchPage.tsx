@@ -30,7 +30,7 @@ import { WorkPanel } from '@/components/WorkPanel';
 import { BaselineTypeWorkspace } from '@/pages/BaselineTypeWorkspace';
 import type { BaselineEvidenceTarget } from '@/pages/BaselineTypeWorkspace';
 import type { NavRoute } from '@/routes/routeManifest';
-import { baselineTabSlug, resolveBaselineTab } from '@/routes/pageRouteState';
+import { auditLogRoute, baselineTabSlug, resolveBaselineTab } from '@/routes/pageRouteState';
 import {
   fetchBehaviorBaselines,
   fetchBehaviorBaselineOverview,
@@ -157,7 +157,7 @@ export function BaselineWorkbenchPage({ route }: { route: NavRoute }) {
       await queryClient.invalidateQueries({ queryKey: ['behavior-baseline-actions', result.action.baseline_id] });
       await queryClient.invalidateQueries({ queryKey: ['behavior-baseline-analytics', result.action.baseline_id] });
       if (result.action.action === 'audit_trace') {
-        navigate(`/audit?objectType=baseline&objectId=${encodeURIComponent(result.action.baseline_id)}`);
+        navigate(auditLogRoute('baseline', result.action.baseline_id));
       }
       if (result.action.status === 'applied') {
         message.success(`${actionMeta[result.action.action as GovernanceAction]?.title ?? '操作'}已写入治理状态并完成审计`);
@@ -174,7 +174,7 @@ export function BaselineWorkbenchPage({ route }: { route: NavRoute }) {
       return;
     }
     if (action === 'forensics') {
-      navigate(`/forensics?baselineId=${encodeURIComponent(selected.baseline_id)}`);
+      navigate(`/forensics?baseline_id=${encodeURIComponent(selected.baseline_id)}`);
       return;
     }
     const meta = actionMeta[action];
@@ -188,11 +188,11 @@ export function BaselineWorkbenchPage({ route }: { route: NavRoute }) {
   };
 
   const openEvidence = (target: BaselineEvidenceTarget) => {
-    const context = selected?.baseline_id ? `baselineId=${encodeURIComponent(selected.baseline_id)}` : `baselineType=${baselineType}`;
+    const context = selected?.baseline_id ? `baseline_id=${encodeURIComponent(selected.baseline_id)}` : `baseline_type=${baselineType}`;
     if (target === 'alerts') navigate(`/alerts?${context}`);
     else if (target === 'pcap') navigate(`/forensics?tab=PCAP%E8%AF%81%E6%8D%AE&${context}`);
     else if (target === 'sessions') navigate(`/forensics?tab=Session%E8%AE%B0%E5%BD%95&${context}`);
-    else if (target === 'audit') navigate(`/audit?objectType=baseline&objectId=${encodeURIComponent(selected?.baseline_id ?? baselineType)}`);
+    else if (target === 'audit') navigate(auditLogRoute('baseline', selected?.baseline_id ?? baselineType));
     else document.querySelector('.taf-baseline-tertiary')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
 
@@ -677,10 +677,12 @@ function buildChartData(selected?: BehaviorBaseline, analytics?: BehaviorBaselin
   const primary = selected?.metrics.find((metric) => metric.metric_name === analytics?.metric_name) ?? selected?.metrics[0];
   const mean = primary?.mean ?? 0;
   const std = Math.max(primary?.std_dev ?? 0, 1);
-  const scatter = (analytics?.series ?? []).flatMap((point) => point.samples.map((value, index) => {
+  const warningMultiplier = primary?.threshold_config.warning_multiplier;
+  const alertMultiplier = primary?.threshold_config.alert_multiplier;
+  const scatter = warningMultiplier === undefined || alertMultiplier === undefined ? [] : (analytics?.series ?? []).flatMap((point) => point.samples.map((value, index) => {
     const z = Math.abs(value - mean) / std;
     const date = new Date(point.timestamp);
-    return { hour: date.getHours() + Math.min(.95, index / Math.max(1, point.samples.length)), value, level: z >= (primary?.threshold_config.alert_multiplier ?? 3) ? 'danger' : z >= (primary?.threshold_config.warning_multiplier ?? 2) ? 'warning' : 'normal' } as BaselineScatterDatum;
+    return { hour: date.getHours() + Math.min(.95, index / Math.max(1, point.samples.length)), value, level: z >= alertMultiplier ? 'danger' : z >= warningMultiplier ? 'warning' : 'normal' } as BaselineScatterDatum;
   }));
   const series = analytics?.series ?? [];
   return { boxplots, scatter, trend: { labels: series.map((point) => new Date(point.timestamp).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit' })), mean: series.map((point) => point.mean), p50: series.map((point) => point.p50), p95: series.map((point) => point.p95), p99: series.map((point) => point.p99), upper: series.map((point) => point.upper), lower: series.map((point) => point.lower) } };

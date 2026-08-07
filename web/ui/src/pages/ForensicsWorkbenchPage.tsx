@@ -1,6 +1,5 @@
 import {
   ApiOutlined,
-  AuditOutlined,
   CalendarOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
@@ -24,6 +23,8 @@ import { ForensicsSessionTimelineChart } from '@/components/charts';
 import { StatusTag } from '@/components/StatusTag';
 import { WorkPanel } from '@/components/WorkPanel';
 import type { NavRoute } from '@/routes/routeManifest';
+import { forensicsSourceLabel, resolveForensicsSourceContext } from '@/routes/forensicsRouteState';
+import { mergeRouteSearchParams } from '@/routes/pageRouteState';
 import {
   cancelForensicsJob,
   createForensicsJob,
@@ -51,8 +52,10 @@ const emptyVisuals: ForensicsVisuals = {
 };
 
 export function ForensicsWorkbenchPage({ route }: { route: NavRoute }) {
-  const [searchParams] = useSearchParams();
-  const sourceAssetId = searchParams.get('assetId') ?? '';
+  const [searchParams, setSearchParams] = useSearchParams();
+  const sourceContext = resolveForensicsSourceContext(searchParams);
+  const sourceContextLabel = forensicsSourceLabel(sourceContext);
+  const sourceAssetId = sourceContext.assetId;
   const [listPage, setListPage] = useState(1);
   const [protocol, setProtocol] = useState('全部');
   const [asset, setAsset] = useState(sourceAssetId || '全部资产');
@@ -73,8 +76,18 @@ export function ForensicsWorkbenchPage({ route }: { route: NavRoute }) {
   }, [sourceAssetId]);
 
   const { data, error, isError, isLoading, refetch } = useQuery({
-    queryKey: ['page-snapshot', route.id, sourceAssetId, listPage, pageSize, appliedFilters],
-    queryFn: () => fetchPageSnapshot(route.id, { sourceAssetId, page: listPage, pageSize, forensicsFilters: appliedFilters }),
+    queryKey: ['page-snapshot', route.id, sourceContext, listPage, pageSize, appliedFilters],
+    queryFn: () => fetchPageSnapshot(route.id, {
+      sourceAssetId,
+      sourceAlertId: sourceContext.alertId,
+      sourceCampaignId: sourceContext.campaignId,
+      sourceBaselineId: sourceContext.baselineId,
+      sourceEvidenceId: sourceContext.evidenceId,
+      sourceEvidenceType: sourceContext.evidenceType,
+      page: listPage,
+      pageSize,
+      forensicsFilters: appliedFilters,
+    }),
   });
   const visuals = data?.visuals?.forensics ?? emptyVisuals;
   const rows = data?.rows ?? [];
@@ -95,6 +108,11 @@ export function ForensicsWorkbenchPage({ route }: { route: NavRoute }) {
         const firstSession = visuals.sessions[0];
         return createForensicsJob({
           assetId: isUuid(sourceAssetId) ? sourceAssetId : undefined,
+          alertId: sourceContext.alertId || undefined,
+          campaignId: sourceContext.campaignId || undefined,
+          baselineId: sourceContext.baselineId || undefined,
+          evidenceId: sourceContext.evidenceId || undefined,
+          evidenceType: sourceContext.evidenceType || undefined,
           srcIp: firstSession?.source !== '-' ? firstSession?.source.split(':')[0] : undefined,
           dstIp: firstSession?.destination.split(':')[0] || undefined,
           startTime: endTime - 60 * 60 * 1_000,
@@ -115,18 +133,31 @@ export function ForensicsWorkbenchPage({ route }: { route: NavRoute }) {
     setAction(createForensicsAction(title, target, options));
   }
 
+  useEffect(() => {
+    if (!sourceContext.createRequested) return;
+    setAction((current) => current ?? createForensicsAction('新建取证任务', sourceContextLabel));
+  }, [sourceContext.createRequested, sourceContextLabel]);
+
+  const closeAction = () => {
+    setAction(undefined);
+    actionMutation.reset();
+    if (searchParams.get('create') === '1') {
+      setSearchParams((current) => mergeRouteSearchParams(current, { create: null }), { replace: true });
+    }
+  };
+
   const currentJob = visuals.jobs[0];
   const currentSession = visuals.sessions[0];
   const assetOptions = Array.from(new Set(['全部资产', ...rows.map((row) => String(row['资产'] ?? '')).filter(Boolean), asset])).map((value) => ({ value, label: value }));
 
   return (
-    <div className="taf-page taf-forensics">
+    <div className="taf-page taf-forensics" data-evidence-focus={sourceContext.focus}>
       <section className="taf-forensics-shell">
         <main className="taf-forensics-workspace">
           <header className="taf-forensics-titlebar">
             <div className="taf-forensics-heading"><h1>{route.page.title}</h1><span>证据检索、会话复放、完整性校验与受控导出</span></div>
             <div className="taf-forensics-context-row">
-              <div className="taf-forensics-source"><b>来源上下文</b><button type="button" onClick={() => openAction('查看关联任务', currentJob?.id || '-')}>任务（{currentJob?.id || '暂无'}）</button><button type="button" onClick={() => openAction('查看关联资产', sourceAssetId || '未指定资产')}>资产（{sourceAssetId || '未指定'}）</button><button type="button" onClick={() => openAction('查看关联会话', currentSession?.sessionId || '-')}>会话（{currentSession?.sessionId || '暂无'}）</button><button type="button" onClick={() => openAction('查看图谱路径', sourceAssetId || currentSession?.source || '-')}>图谱路径 &gt;</button></div>
+              <div className="taf-forensics-source"><b>来源上下文</b><button type="button" onClick={() => openAction('查看来源上下文', sourceContextLabel)}>{sourceContextLabel}</button><button type="button" onClick={() => openAction('查看关联任务', currentJob?.id || '-')}>任务（{currentJob?.id || '暂无'}）</button><button type="button" onClick={() => openAction('查看关联会话', currentSession?.sessionId || '-')}>会话（{currentSession?.sessionId || '暂无'}）</button><button type="button" onClick={() => openAction('查看证据焦点', sourceContext.focus)}>焦点（{sourceContext.focus}）</button></div>
               <Button size="small" type="link" onClick={() => { setProtocol('全部'); setAsset(sourceAssetId || '全部资产'); setSrcIp(''); setDstIp(''); setPort('全部'); setTuple(''); setTaskId(''); setAppliedFilters({}); setListPage(1); }}>清空条件</Button>
             </div>
           </header>
@@ -157,7 +188,7 @@ export function ForensicsWorkbenchPage({ route }: { route: NavRoute }) {
         </aside>
       </section>
 
-      <Drawer className="taf-forensics-action-drawer" title={action ? `${action.title}${action.kind === 'view' ? '' : '确认'}` : '取证操作确认'} open={Boolean(action)} width="min(520px, calc(var(--taf-window-inner-width, 100dvw) - 40px))" onClose={() => { setAction(undefined); actionMutation.reset(); }} extra={action?.kind === 'view' ? <Button size="small" onClick={() => setAction(undefined)}>关闭</Button> : <Button size="small" type="primary" loading={actionMutation.isPending} disabled={!action || actionMutation.isSuccess} onClick={() => action && actionMutation.mutate(action)}>{actionMutation.isSuccess ? '已完成' : '确认提交'}</Button>}>
+      <Drawer className="taf-forensics-action-drawer" title={action ? `${action.title}${action.kind === 'view' ? '' : '确认'}` : '取证操作确认'} open={Boolean(action)} width="min(520px, calc(var(--taf-window-inner-width, 100dvw) - 40px))" onClose={closeAction} extra={action?.kind === 'view' ? <Button size="small" onClick={closeAction}>关闭</Button> : <Button size="small" type="primary" loading={actionMutation.isPending} disabled={!action || actionMutation.isSuccess} onClick={() => action && actionMutation.mutate(action)}>{actionMutation.isSuccess ? '已完成' : '确认提交'}</Button>}>
         {action && <div className="taf-alert-detail-action-body"><p>{action.kind === 'view' ? `当前展示已由取证查询接口加载的“${action.title}”上下文。` : `将对取证对象执行“${action.title}”，并保留授权、证据与审计上下文。`}</p><dl><dt>取证对象</dt><dd>{action.target}</dd><dt>数据/操作接口</dt><dd>{action.endpoint}</dd><dt>审计事件</dt><dd>{action.auditEvent}</dd></dl>{actionMutation.isSuccess && action.kind === 'verify' && !isVerifiedResult(actionMutation.data) && <Alert type="error" showIcon message="PCAP 完整性校验不匹配" description={JSON.stringify(actionMutation.data)} />}{actionMutation.isSuccess && (action.kind !== 'verify' || isVerifiedResult(actionMutation.data)) && <Alert type="success" showIcon message="取证操作已完成" description={JSON.stringify(actionMutation.data)} />}{actionMutation.isError && <Alert type="error" showIcon message="取证操作失败" description={actionMutation.error instanceof Error ? actionMutation.error.message : 'unknown error'} />}</div>}
       </Drawer>
     </div>

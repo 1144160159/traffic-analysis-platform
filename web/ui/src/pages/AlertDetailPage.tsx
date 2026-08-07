@@ -27,7 +27,7 @@ import {
   UserSwitchOutlined,
 } from '@ant-design/icons';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Alert, Button, Checkbox, Empty, Input, Modal, Radio, Select, Space, Table, Tooltip, message } from 'antd';
+import { Alert, Button, Checkbox, Empty, Input, Modal, Popconfirm, Radio, Select, Space, Table, Tooltip, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { CSSProperties, ReactNode } from 'react';
 import { Fragment, useEffect, useMemo, useState } from 'react';
@@ -35,6 +35,7 @@ import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'reac
 import { RiskScoreRingChart } from '@/components/charts';
 import { StatusTag } from '@/components/StatusTag';
 import { WorkPanel } from '@/components/WorkPanel';
+import { ALERT_DETAIL_EVIDENCE_PAGE_SIZE, evidenceFocusRoute, evidenceFocusView, evidenceViewRoute } from '@/pages/alertDetailLogic';
 import type { NavRoute } from '@/routes/routeManifest';
 import {
   fetchAlertDetailSnapshot,
@@ -45,17 +46,21 @@ import {
 } from '@/services/alertDetailApi';
 import {
   alertDetailActionErrorMessage,
+  cancelAlertReportWithRevisionRefresh,
+  compensateAlertReport,
   downloadAlertEvidenceFile,
+  fetchAlertCampaignLinks,
+  fetchAlertReportJob,
   submitAlertDetailAction,
+  submitAlertReportWithSnapshotRetry,
+  type AlertCampaignLink,
   type AlertDetailActionId,
   type AlertDetailActionResult,
 } from '@/services/alertDetailActionApi';
 import {
   alertAllowedNextStatuses,
   alertStatusLabel,
-  alertStatusOptions,
   canTransitionAlertStatus,
-  normalizeAlertStatus,
   type AlertStatusCode,
 } from '@/services/alertStatus';
 import { isVisualBreakdownMode } from '@/utils/visualBreakdownMode';
@@ -66,8 +71,6 @@ type AlertDetailBusinessAction = {
   target: string;
   description: string;
 };
-
-export const ALERT_DETAIL_EVIDENCE_PAGE_SIZE = 5;
 
 function buildEvidenceColumns(
   onDownload: (row: AlertDetailEvidenceRow) => void,
@@ -115,18 +118,27 @@ function buildEvidenceColumns(
   ];
 }
 
-export function evidenceViewRoute(row: AlertDetailEvidenceRow, alertId: string) {
-  const configuredRoute = row.viewUrl?.trim();
-  if (configuredRoute?.startsWith('/') && !configuredRoute.startsWith('//')) return configuredRoute;
-  const params = new URLSearchParams({
-    alert_id: alertId,
-    evidence: row.文件记录,
-    type: row.evidenceKind || row.证据类型,
-  });
-  return `/forensics?${params.toString()}`;
-}
-
 type FeedbackChoice = 'tp' | 'fp' | 'pending';
+
+const alertActionStatusLabels: Record<AlertDetailActionResult['status'], string> = {
+  recorded: '已记录',
+  pending_approval: '待审批',
+  approved_awaiting_executor: '已审批，等待执行器',
+  blocked_external_executor: '外部执行器未配置',
+  compensation_blocked_external_executor: '补偿执行器未配置',
+  linked: '已关联',
+  unlinked: '已解除关联',
+  accepted: '已受理',
+  running: '执行中',
+  cancel_requested: '取消中',
+  completed: '最终成功',
+  partial: '部分成功',
+  failed: '失败',
+  cancelled: '已取消',
+  compensating: '补偿中',
+  compensated: '已补偿',
+  compensation_failed: '补偿失败',
+};
 
 const feedbackReasonOptions = [
   { value: 'FALSE_ALARM', label: '规则/模型误报' },
@@ -143,49 +155,54 @@ function renderTextCell(value: unknown) {
   return <span title={text}>{text}</span>;
 }
 
-function createAlertDetailAction(label: string, target: string, description?: string): AlertDetailBusinessAction {
-  if (label.includes('标签')) {
+function createAlertDetailAction(
+  id: AlertDetailActionId,
+  label: string,
+  target: string,
+  description?: string,
+): AlertDetailBusinessAction {
+  if (id === 'alert-label-update') {
     return {
-      id: 'alert-label-update',
+      id,
       label,
       target,
       description: description ?? `编辑 ${target} 的告警标签；保存后写入告警版本和审计日志。`,
     };
   }
-  if (label.includes('导出')) {
+  if (id === 'alert-report-export') {
     return {
-      id: 'alert-report-export',
+      id,
       label,
       target,
       description: description ?? `将为 ${target} 创建告警报告导出任务，并保留下载审计。`,
     };
   }
-  if (label.includes('战役')) {
+  if (id === 'alert-campaign-link') {
     return {
-      id: 'alert-campaign-link',
+      id,
       label,
       target,
-      description: description ?? `将根据 ${target} 的攻击阶段和关联实体生成战役关联建议。`,
+      description: description ?? '输入同租户战役 ID；系统将在一个事务内写入关系、历史、投影 outbox 与审计。',
     };
   }
-  if (label.includes('隔离') || label.includes('阻断') || label.includes('封禁') || label.includes('脚本') || label.includes('工单')) {
+  if (id === 'alert-response-request') {
     return {
-      id: 'alert-response-request',
+      id,
       label,
       target,
       description: description ?? `将为 ${target} 创建“${label}”的受控响应请求，默认仅生成 dry-run 任务。`,
     };
   }
-  if (label.includes('证据') || label.includes('下载') || label.includes('查看')) {
+  if (id === 'alert-evidence-access') {
     return {
-      id: 'alert-evidence-access',
+      id,
       label,
       target,
       description: description ?? `将登记 ${target} 的证据访问请求，并生成受控访问任务。`,
     };
   }
   return {
-    id: 'alert-investigation-note',
+    id,
     label,
     target,
     description: description ?? `将把“${label}”记录为 ${target} 的研判操作，并生成审计任务。`,
@@ -219,7 +236,7 @@ function EvidenceFocusAction({
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [result, setResult] = useState<AlertDetailActionResult>();
-  const action = createAlertDetailAction(title, target, description);
+  const action = createAlertDetailAction('alert-evidence-access', title, target, description);
   const mutation = useMutation({
     mutationFn: submitAlertDetailAction,
     onSuccess: (submission) => {
@@ -308,29 +325,11 @@ function EvidenceFocusAction({
   );
 }
 
-export function evidenceFocusView(title: string) {
-  if (title.startsWith('全部 ') || title.startsWith('查看全部证据')) return 'all';
-  if (title.startsWith('PCAP ') || title.startsWith('查看全部 PCAP')) return 'pcap';
-  if (title.startsWith('Session ') || title.startsWith('查看全部 Session')) return 'session';
-  if (title.startsWith('日志 ') || title.startsWith('查看全部 日志')) return 'logs';
-  if (title.startsWith('图谱路径 ') || title.startsWith('查看全部 图谱路径')) return 'graph-path';
-  if (title.startsWith('文件 ') || title.startsWith('查看全部 文件')) return 'files';
-  return '';
-}
-
-export function evidenceFocusRoute(alertId: string, currentSearch: string, focusedEvidenceView: string) {
-  const nextSearch = new URLSearchParams(currentSearch);
-  nextSearch.delete('evidence');
-  nextSearch.set('evidenceView', focusedEvidenceView);
-  const query = nextSearch.toString();
-  return `/alerts/${encodeURIComponent(alertId)}${query ? `?${query}` : ''}`;
-}
-
 export function AlertDetailPage({ route }: { route: NavRoute }) {
   const params = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const visualBreakdownMode = isVisualBreakdownMode();
+  const visualBreakdownMode = import.meta.env.DEV && isVisualBreakdownMode();
   const visualPageId = searchParams.get('__codex_page_id') || searchParams.get('pageId') || '';
   const evidenceView = searchParams.get('evidenceView') || searchParams.get('evidence') || '';
   const requestedReturnTo = searchParams.get('returnTo') || '';
@@ -418,15 +417,105 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
       message.error(mutationError instanceof Error ? mutationError.message : '反馈提交失败');
     },
   });
+  const campaignLinksQuery = useQuery({
+    queryKey: ['alert-campaign-links', alertId],
+    queryFn: () => fetchAlertCampaignLinks(alertId),
+    enabled: Boolean(alertId),
+    staleTime: 10_000,
+  });
   const businessActionMutation = useMutation({
-    mutationFn: submitAlertDetailAction,
+    mutationFn: (input: Parameters<typeof submitAlertDetailAction>[0]) => (
+      input.actionId === 'alert-report-export'
+        ? submitAlertReportWithSnapshotRetry(input, async () => {
+          const refreshed = await refetch();
+          const stateVersion = refreshed.data?.stateVersion;
+          if (!Number.isSafeInteger(stateVersion) || Number(stateVersion) < 0) {
+            throw new Error('刷新告警详情后未返回可用 revision');
+          }
+          return `alert:${alertId}:revision:${stateVersion}`;
+        })
+        : submitAlertDetailAction(input)
+    ),
     onSuccess: async (result) => {
       setBusinessActionResult(result);
       message.success(`${result.action}已持久化：${result.jobId}`);
-      await refetch();
+      await Promise.all([refetch(), campaignLinksQuery.refetch()]);
     },
     onError: (mutationError) => {
       message.error(mutationError instanceof Error ? mutationError.message : '业务动作提交失败');
+    },
+  });
+  const unlinkCampaignMutation = useMutation({
+    mutationFn: (link: AlertCampaignLink) => submitAlertDetailAction({
+      alertId,
+      actionId: 'alert-campaign-unlink',
+      target: link.campaignId,
+      reason: `告警详情确认解除与战役 ${link.campaignId} 的成员关系`,
+      detail: {
+        expectedRevision: link.revision,
+        ...(link.currentCampaignRevision > 0
+          ? { expectedCampaignRevision: link.currentCampaignRevision }
+          : {}),
+      },
+    }),
+    onSuccess: async (result) => {
+      message.success(`战役关系已解除：${result.target}`);
+      await Promise.all([refetch(), campaignLinksQuery.refetch()]);
+    },
+    onError: (mutationError) => {
+      message.error(alertDetailActionErrorMessage(mutationError, '解除战役关系失败，请刷新revision后重试'));
+    },
+  });
+  const reportJobQuery = useQuery({
+    queryKey: ['alert-report-job', alertId, businessActionResult?.jobId],
+    queryFn: () => fetchAlertReportJob(alertId, businessActionResult?.jobId ?? ''),
+    enabled: businessActionResult?.actionId === 'alert-report-export' && Boolean(businessActionResult.jobId),
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      return status && ['completed', 'partial', 'failed', 'cancelled', 'compensated', 'compensation_failed'].includes(status) ? false : 1_500;
+    },
+  });
+  const activeBusinessActionResult = reportJobQuery.data ?? businessActionResult;
+  const reportCancelMutation = useMutation({
+    mutationFn: () => {
+      if (!activeBusinessActionResult?.jobId || !activeBusinessActionResult.revision) {
+        throw new Error('报告任务 revision 暂不可用，请刷新任务状态后重试');
+      }
+      return cancelAlertReportWithRevisionRefresh(
+        alertId,
+        activeBusinessActionResult.jobId,
+        activeBusinessActionResult.revision,
+        `用户在告警详情取消报告导出：${businessActionReason.trim()}`,
+      );
+    },
+    onSuccess: async (result) => {
+      if (result.status === 'cancelled') message.success('报告任务已取消');
+      else if (result.status === 'cancel_requested') message.success('取消请求已受理，正在清理临时对象');
+      else message.warning(`报告任务已先进入${reportJobStatusLabel(result.status)}，当前取消未执行`);
+      await reportJobQuery.refetch();
+    },
+    onError: (mutationError) => {
+      message.error(alertDetailActionErrorMessage(mutationError, '报告取消失败，请刷新 revision 后重试'));
+    },
+  });
+  const reportCompensationMutation = useMutation({
+    mutationFn: () => {
+      if (!activeBusinessActionResult?.jobId || !activeBusinessActionResult.revision) {
+        throw new Error('报告任务 revision 暂不可用，请刷新任务状态后重试');
+      }
+      return compensateAlertReport(
+        alertId,
+        activeBusinessActionResult.jobId,
+        activeBusinessActionResult.revision,
+        `用户确认重试报告对象清理补偿：${businessActionReason.trim()}`,
+      );
+    },
+    onSuccess: async () => {
+      message.success('对象清理补偿已受理，正在等待最终回执');
+      await reportJobQuery.refetch();
+    },
+    onError: (mutationError) => {
+      message.error(alertDetailActionErrorMessage(mutationError, '对象清理补偿失败，请刷新 revision 后重试'));
     },
   });
   const evidenceDownloadMutation = useMutation({
@@ -462,10 +551,15 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
     setBusinessActionResult(undefined);
     businessActionMutation.reset();
   };
-  const openBusinessAction = (label: string, target = snapshot.alertId, description?: string) => {
+  const openBusinessAction = (
+    actionId: AlertDetailActionId,
+    label: string,
+    target = actionId === 'alert-campaign-link' ? '' : snapshot.alertId,
+    description?: string,
+  ) => {
     businessActionMutation.reset();
     setBusinessActionResult(undefined);
-    const nextAction = createAlertDetailAction(label, target, description);
+    const nextAction = createAlertDetailAction(actionId, label, target, description);
     setBusinessAction(nextAction);
     setBusinessActionTarget(nextAction.id === 'alert-label-update' ? snapshot.tags.join('，') : nextAction.target);
     setBusinessActionReason(nextAction.description);
@@ -509,7 +603,7 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
   );
 
   return (
-    <div className="taf-page taf-alert-detail-page is-visual-target">
+    <div className="taf-page taf-alert-detail-page is-visual-target" data-route-id={route.id}>
       <header className="taf-alert-detail-titlebar">
         <div className="taf-alert-detail-titlebar__context">
           <h1>告警详情</h1>
@@ -523,8 +617,8 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
           >
             返回告警列表
           </Button>
-          <Button size="small" icon={<CloudDownloadOutlined />} title="导出报告" onClick={() => openBusinessAction('导出报告')}>导出报告</Button>
-          <Button size="small" icon={<CheckCircleOutlined />} title="标记为战役" onClick={() => openBusinessAction('标记为战役')}>标记为战役</Button>
+          <Button size="small" icon={<CloudDownloadOutlined />} title="导出报告" data-action-id="alert-report-export" onClick={() => openBusinessAction('alert-report-export', '导出报告')}>导出报告</Button>
+          <Button size="small" icon={<CheckCircleOutlined />} title="标记为战役" data-action-id="alert-campaign-link" onClick={() => openBusinessAction('alert-campaign-link', '标记为战役')}>标记为战役</Button>
           <Button
             size="small"
             icon={<SafetyCertificateOutlined />}
@@ -537,7 +631,7 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
           >
             加入白名单
           </Button>
-          <Button size="small" icon={<MoreOutlined />} title="更多操作" onClick={() => openBusinessAction('更多操作')}>更多操作</Button>
+          <Button size="small" icon={<MoreOutlined />} title="更多操作" data-action-id="alert-investigation-note" onClick={() => openBusinessAction('alert-investigation-note', '更多操作')}>更多操作</Button>
           <Tooltip title="刷新告警详情">
             <Button size="small" icon={<ReloadOutlined />} onClick={() => void refetch()} />
           </Tooltip>
@@ -556,10 +650,12 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
 
       <div className="taf-alert-detail-grid">
         <main className="taf-alert-detail-main">
-          <WorkPanel title="研判摘要" className="taf-alert-detail-summary-panel" extra={<Button type="link" size="small" onClick={() => openBusinessAction('编辑标签')}>编辑标签</Button>}>
+          <WorkPanel title="研判摘要" className="taf-alert-detail-summary-panel" extra={<Button type="link" size="small" data-action-id="alert-label-update" onClick={() => openBusinessAction('alert-label-update', '编辑标签')}>编辑标签</Button>}>
             <div className="taf-alert-detail-summary">
-              <div className="taf-alert-detail-score" title={`置信评分 ${snapshot.score} / 100，${snapshot.severity}`}>
-                <RiskScoreRingChart value={snapshot.score} size={116} ariaLabel={`告警风险评分 ${snapshot.score} 分 ECharts 圆环图`} />
+              <div className="taf-alert-detail-score" title={snapshot.score === undefined ? `置信评分暂不可用，${snapshot.severity}` : `置信评分 ${snapshot.score} / 100，${snapshot.severity}`}>
+                {snapshot.score === undefined
+                  ? <div className="taf-alert-detail-score-unavailable" role="status">评分暂不可用</div>
+                  : <RiskScoreRingChart value={snapshot.score} size={116} ariaLabel={`告警风险评分 ${snapshot.score} 分 ECharts 圆环图`} />}
                 <strong>{snapshot.severity}</strong>
               </div>
               <div className="taf-alert-detail-facts">
@@ -617,7 +713,7 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
               </div>
             </WorkPanel>
 
-            <WorkPanel title="时间线" className="taf-alert-detail-timeline-panel" extra={<Button type="link" size="small" onClick={() => openBusinessAction('查看完整时间线')}>查看完整时间线</Button>}>
+            <WorkPanel title="时间线" className="taf-alert-detail-timeline-panel" extra={<Button type="link" size="small" data-action-id="alert-investigation-note" onClick={() => openBusinessAction('alert-investigation-note', '查看完整时间线')}>查看完整时间线</Button>}>
               <div className="taf-alert-detail-timeline">
                 {snapshot.timeline.map((item) => (
                   <div key={`${item.time}-${item.title}`} className={`taf-alert-detail-timeline-item is-${item.status}`}>
@@ -644,29 +740,96 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
                 description={`${snapshot.evidenceApiError}；当前空表不代表该告警没有证据。`}
               />
             )}
-            <Table
-              rowKey={(row) => `${row.证据类型}-${row.文件记录}`}
-              size="small"
-              loading={isLoading}
-              pagination={{
-                current: evidencePage,
-                pageSize: ALERT_DETAIL_EVIDENCE_PAGE_SIZE,
-                total: visibleEvidenceRows.length,
-                showSizeChanger: false,
-                hideOnSinglePage: false,
-                onChange: setEvidencePage,
-              }}
-              scroll={{ x: 920, y: 190 }}
-              columns={evidenceColumns}
-              dataSource={visibleEvidenceRows}
-              locale={{
-                emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无证据链数据" />,
-              }}
-            />
+            {activeEvidenceTab === 'files' ? (
+              <AlertEvidenceFilesFocusView snapshot={snapshot} isLoading={isLoading} />
+            ) : activeEvidenceTab === 'pcap' ? (
+              <AlertEvidencePcapFocusView snapshot={snapshot} isLoading={isLoading} />
+            ) : activeEvidenceTab === 'session' ? (
+              <AlertEvidenceSessionFocusView snapshot={snapshot} isLoading={isLoading} />
+            ) : activeEvidenceTab === 'logs' ? (
+              <AlertEvidenceLogsFocusView snapshot={snapshot} isLoading={isLoading} />
+            ) : activeEvidenceTab === 'graph' ? (
+              <AlertEvidenceGraphPathFocusView snapshot={snapshot} isLoading={isLoading} />
+            ) : (
+              <Table
+                rowKey={(row) => `${row.证据类型}-${row.文件记录}`}
+                size="small"
+                loading={isLoading}
+                pagination={{
+                  current: evidencePage,
+                  pageSize: ALERT_DETAIL_EVIDENCE_PAGE_SIZE,
+                  total: visibleEvidenceRows.length,
+                  showSizeChanger: false,
+                  hideOnSinglePage: false,
+                  onChange: setEvidencePage,
+                }}
+                scroll={{ x: 920, y: 190 }}
+                columns={evidenceColumns}
+                dataSource={visibleEvidenceRows}
+                locale={{
+                  emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无证据链数据" />,
+                }}
+              />
+            )}
           </WorkPanel>
         </main>
 
         <aside className="taf-alert-detail-rail">
+          <WorkPanel title="关联战役" extra={<Link to="/campaigns">查看战役</Link>}>
+            {campaignLinksQuery.isError && (
+              <Alert
+                type="warning"
+                showIcon
+                message="战役关系暂不可用"
+                description={alertDetailActionErrorMessage(campaignLinksQuery.error, '请检查关系API或数据库迁移')}
+              />
+            )}
+            {campaignLinksQuery.data?.partial && (
+              <Alert
+                type="warning"
+                showIcon
+                message="战役关系为部分快照"
+                description={`待补齐：${campaignLinksQuery.data.missingSections.join('、') || '关系水位对账'}`}
+              />
+            )}
+            {Boolean(campaignLinksQuery.data?.links.length) && !campaignLinksQuery.data?.unlinkAvailable && (
+              <Alert
+                type="info"
+                showIcon
+                message="解除关系尚未开放"
+                description="CAMPAIGN_AGGREGATE_V2 仍处于默认关闭阶段；当前只读展示既有关系。"
+              />
+            )}
+            <Space direction="vertical" size={6} style={{ width: '100%' }}>
+              {(campaignLinksQuery.data?.links ?? []).map((link) => (
+                <Space key={link.relationId} style={{ width: '100%', justifyContent: 'space-between' }}>
+                  <span title={`关系revision ${link.revision}；战役revision ${link.currentCampaignRevision || '兼容模式'}`}>
+                    <LinkOutlined /> {link.campaignId}
+                  </span>
+                  <Popconfirm
+                    title="解除战役关系"
+                    description="该操作会追加unlink历史并递增关系与战役revision。"
+                    okText="确认解除"
+                    cancelText="取消"
+                    onConfirm={() => unlinkCampaignMutation.mutate(link)}
+                  >
+                    <Button
+                      size="small"
+                      danger
+                      data-action-id="alert-campaign-unlink"
+                      disabled={!campaignLinksQuery.data?.unlinkAvailable}
+                      loading={unlinkCampaignMutation.isPending && unlinkCampaignMutation.variables?.relationId === link.relationId}
+                    >
+                      解除
+                    </Button>
+                  </Popconfirm>
+                </Space>
+              ))}
+              {!campaignLinksQuery.isLoading && !campaignLinksQuery.isError && !(campaignLinksQuery.data?.links.length) && (
+                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="当前告警未关联战役" />
+              )}
+            </Space>
+          </WorkPanel>
           <WorkPanel title="攻击阶段轨迹" extra={<Link to="/attack-chains">查看攻击链</Link>}>
             <div className="taf-alert-detail-stage">
               {snapshot.stageTrail.map((item, index) => (
@@ -689,7 +852,7 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
                 <span className="taf-alert-detail-path-node is-risk">
                   <span className="taf-alert-detail-path-icon"><StopOutlined /></span>
                   <strong>源端主机</strong>
-                  <em>{sourceAsset?.ip ?? '172.16.5.10'}</em>
+                  <em>{sourceAsset?.ip ?? '暂不可用'}</em>
                 </span>
                 <i />
                 <span className="taf-alert-detail-path-node">
@@ -714,7 +877,8 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
                   key={action.label}
                   type="button"
                   className={`is-${action.status}`}
-                  onClick={() => openBusinessAction(action.label, snapshot.alertId, `将为 ${snapshot.alertId} 创建“${action.label}”响应请求。`)}
+                  data-action-id="alert-response-request"
+                  onClick={() => openBusinessAction('alert-response-request', action.label, snapshot.alertId, `将为 ${snapshot.alertId} 创建“${action.label}”响应请求。`)}
                 >
                   {responseIcon(index)}
                   <span>{action.label}</span>
@@ -722,6 +886,39 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
                 </button>
               ))}
               <p>执行前请确认影响范围，所有操作将记录审计日志。</p>
+            </div>
+          </WorkPanel>
+
+          <WorkPanel title="状态流转">
+            <div className="taf-alert-detail-action-body">
+              <dl>
+                <dt>当前状态</dt><dd>{alertStatusLabel(snapshot.status)}</dd>
+                <dt>状态版本</dt><dd>{snapshot.stateVersion}</dd>
+              </dl>
+              <Select
+                size="small"
+                value={targetStatus}
+                placeholder={allowedNextStatuses.length ? '选择目标状态' : '当前无可用状态流转'}
+                options={allowedNextStatuses.map((status) => ({ value: status, label: alertStatusLabel(status) }))}
+                disabled={!allowedNextStatuses.length || statusMutation.isPending}
+                onChange={setTargetStatus}
+              />
+              <Input.TextArea
+                rows={2}
+                value={statusReason}
+                placeholder="填写状态变更原因，至少 4 个字符"
+                disabled={statusMutation.isPending}
+                onChange={(event) => setStatusReason(event.target.value)}
+              />
+              <Button
+                size="small"
+                type="primary"
+                loading={statusMutation.isPending}
+                disabled={!canSubmitStatusChange}
+                onClick={() => statusMutation.mutate()}
+              >
+                提交状态变更
+              </Button>
             </div>
           </WorkPanel>
 
@@ -819,7 +1016,13 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
               size="small"
               type="primary"
               loading={businessActionMutation.isPending}
-              disabled={Boolean(businessActionResult) || !businessActionTarget.trim() || businessActionReason.trim().length < 4}
+              disabled={
+                Boolean(businessActionResult)
+                || !businessActionTarget.trim()
+                || businessActionReason.trim().length < 4
+                || (businessAction?.id === 'alert-report-export'
+                  && (!Number.isSafeInteger(snapshot.stateVersion) || Number(snapshot.stateVersion) < 1))
+              }
               onClick={() => {
                 if (businessAction) businessActionMutation.mutate({
                   alertId,
@@ -828,7 +1031,11 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
                   reason: businessActionReason,
                   detail: {
                     previous_target: businessAction.target,
-                    labels: businessAction.label.includes('标签')
+                    ...(Number.isSafeInteger(snapshot.stateVersion) && Number(snapshot.stateVersion) > 0
+                      ? { snapshotId: `alert:${alertId}:revision:${snapshot.stateVersion}` }
+                      : {}),
+                    format: businessAction.id === 'alert-report-export' ? 'pdf' : undefined,
+                    labels: businessAction.id === 'alert-label-update'
                       ? businessActionTarget.split(/[,，]/).map((item) => item.trim()).filter(Boolean)
                       : undefined,
                   },
@@ -843,10 +1050,10 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
         <div className="taf-alert-detail-action-body">
           <p>{businessAction?.description}</p>
           <label>
-            <span>{businessAction?.label.includes('标签') ? '标签内容' : '操作目标'}</span>
+            <span>{businessAction?.id === 'alert-label-update' ? '标签内容' : businessAction?.id === 'alert-campaign-link' ? '战役ID' : '操作目标'}</span>
             <Input
               value={businessActionTarget}
-              placeholder={businessAction?.label.includes('标签') ? '多个标签使用逗号分隔' : '输入本次操作目标'}
+              placeholder={businessAction?.id === 'alert-label-update' ? '多个标签使用逗号分隔' : businessAction?.id === 'alert-campaign-link' ? '输入同租户战役ID，例如 CAM-20260730-001' : '输入本次操作目标'}
               onChange={(event) => setBusinessActionTarget(event.target.value)}
             />
           </label>
@@ -863,15 +1070,56 @@ export function AlertDetailPage({ route }: { route: NavRoute }) {
             <dt>告警对象</dt><dd>{alertId}</dd>
             <dt>操作目标</dt><dd>{businessActionTarget || '-'}</dd>
             <dt>接口契约</dt><dd>已在 alert-detail 页面 API 计划中注册</dd>
-            <dt>执行状态</dt><dd>{businessActionResult?.status === 'pending_approval' ? '已进入响应审批队列' : '已记录并保留审计事件'}</dd>
+            <dt>执行状态</dt><dd>{activeBusinessActionResult ? alertActionStatusLabels[activeBusinessActionResult.status] : '尚未提交'}</dd>
           </dl>
-          {businessActionResult && (
+          {activeBusinessActionResult && (
             <Alert
-              type="success"
+              type={['failed', 'compensation_failed'].includes(activeBusinessActionResult.status) ? 'error' : activeBusinessActionResult.status === 'partial' ? 'warning' : 'success'}
               showIcon
-              message={`任务 ${businessActionResult.jobId} 已排队`}
-              description={`${businessActionResult.auditEvent}；${businessActionResult.apiContract}`}
+              message={`任务 ${activeBusinessActionResult.jobId}：${alertActionStatusLabels[activeBusinessActionResult.status]}`}
+              description={`${activeBusinessActionResult.auditEvent}；${activeBusinessActionResult.apiContract}`}
             />
+          )}
+          {activeBusinessActionResult?.status === 'completed' && activeBusinessActionResult.downloadUrl && (
+            <Button
+              size="small"
+              type="primary"
+              icon={<CloudDownloadOutlined />}
+              onClick={() => void downloadAlertEvidenceFile(
+                activeBusinessActionResult.downloadUrl ?? '',
+                activeBusinessActionResult.fileName ?? `alert-${alertId}.pdf`,
+              )}
+            >
+              下载并校验报告
+            </Button>
+          )}
+          {activeBusinessActionResult?.actionId === 'alert-report-export'
+            && ['accepted', 'running'].includes(activeBusinessActionResult.status) && (
+            <Popconfirm
+              title="取消报告导出"
+              description="运行中的任务会先进入取消中；临时对象清理成功后才会显示已取消。"
+              okText="确认取消"
+              cancelText="继续执行"
+              onConfirm={() => reportCancelMutation.mutate()}
+            >
+              <Button size="small" danger loading={reportCancelMutation.isPending} data-action-id="alert-report-cancel">
+                取消报告任务
+              </Button>
+            </Popconfirm>
+          )}
+          {activeBusinessActionResult?.actionId === 'alert-report-export'
+            && ['partial', 'compensation_failed'].includes(activeBusinessActionResult.status) && (
+            <Popconfirm
+              title="重试对象清理补偿"
+              description="仅删除该任务 manifest 绑定的精确对象；收到删除回执后才会显示已补偿。"
+              okText="确认补偿"
+              cancelText="暂不处理"
+              onConfirm={() => reportCompensationMutation.mutate()}
+            >
+              <Button size="small" danger loading={reportCompensationMutation.isPending} data-action-id="alert-report-compensate">
+                重试清理补偿
+              </Button>
+            </Popconfirm>
           )}
         </div>
       </Modal>
@@ -914,37 +1162,6 @@ function EvidenceTabsHeader({
         </EvidenceFocusAction>
       ))}
     </div>
-  );
-}
-
-function AlertEvidenceAllFocusView({
-  snapshot,
-  isLoading,
-  onOpenRow,
-}: {
-  snapshot: AlertDetailSnapshot;
-  isLoading: boolean;
-  onOpenRow: (row: AlertDetailEvidenceRow) => void;
-}) {
-  const columns = useMemo(() => buildEvidenceColumns(onOpenRow, onOpenRow, false), [onOpenRow]);
-
-  return (
-    <section className="taf-alert-evidence-all-focus" data-page-id="alert-detail-evidence-all" aria-label="告警详情全部证据链">
-      <div className="taf-alert-evidence-all-card">
-        <div className="taf-alert-evidence-all-table">
-          <Table
-            rowKey={(row) => `${row.证据类型}-${row.文件记录}`}
-            size="small"
-            loading={isLoading}
-            pagination={false}
-            scroll={{ x: 820, y: 360 }}
-            columns={columns}
-            dataSource={snapshot.evidenceRows}
-            locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="暂无证据链数据" /> }}
-          />
-        </div>
-      </div>
-    </section>
   );
 }
 
@@ -1043,11 +1260,11 @@ function AlertEvidenceFilesFocusView({ snapshot, isLoading }: { snapshot: AlertD
 function AlertEvidencePcapFocusView({ snapshot, isLoading }: { snapshot: AlertDetailSnapshot; isLoading: boolean }) {
   const counts = evidenceBucketCounts(snapshot.evidenceRows);
   const pcapRow = snapshot.evidenceRows.find((row) => isPcapEvidence(row)) ?? snapshot.evidenceRows[0];
-  const pcap = pcapRow?.pcapEvidence ?? defaultPcapEvidence(snapshot.alertId);
-  const generatedAt = compactDateTime(pcap.generatedAt || pcapRow?.生成时间) || '06-20 03:43:05';
-  const statusLines = pcap.statusLines.length ? pcap.statusLines : ['已生成 /', 'SHA256通过'];
-  const summaryText = pcap.contentSummary || 'PCAP 切片，TLS over HTTP 隧道，疑似隧道通信';
-  const objectPath = pcap.objectPath || `minio://traffic-evidence/alerts/2026/06/20/${pcap.fileName}`;
+  const pcap = pcapRow?.pcapEvidence ?? unavailablePcapEvidence();
+  const generatedAt = compactDateTime(pcap.generatedAt || pcapRow?.生成时间) || '暂不可用';
+  const statusLines = pcap.statusLines.length ? pcap.statusLines : ['暂不可用'];
+  const summaryText = pcap.contentSummary || '暂不可用';
+  const objectPath = pcap.objectPath || '暂不可用';
 
   return (
     <section className="taf-alert-evidence-pcap-focus" data-page-id="alert-detail-evidence-pcap" aria-label="告警详情证据链 PCAP">
@@ -1077,8 +1294,8 @@ function AlertEvidencePcapFocusView({ snapshot, isLoading }: { snapshot: AlertDe
             <span title={generatedAt}>{generatedAt}</span>
             <span className="taf-alert-evidence-pcap-status" title={statusLines.join(' ')}>
               <CheckCircleOutlined />
-              <em>{statusLines[0] ?? '已生成 /'}</em>
-              <b>{statusLines[1] ?? 'SHA256通过'}</b>
+              <em>{statusLines[0] ?? '暂不可用'}</em>
+              <b>{statusLines[1] ?? ''}</b>
             </span>
             <span className="taf-alert-evidence-pcap-audit" title={pcap.downloadAudit}>{pcap.downloadAudit}</span>
             <div className="taf-alert-evidence-pcap-actions" aria-label="PCAP 操作">
@@ -1118,11 +1335,11 @@ function AlertEvidencePcapFocusView({ snapshot, isLoading }: { snapshot: AlertDe
 function AlertEvidenceSessionFocusView({ snapshot, isLoading }: { snapshot: AlertDetailSnapshot; isLoading: boolean }) {
   const counts = evidenceBucketCounts(snapshot.evidenceRows);
   const sessionRows = snapshot.evidenceRows.filter((row) => isSessionEvidence(row));
-  const sessions = sessionRows.map((row, index) => row.sessionEvidence ?? defaultSessionEvidence(snapshot.alertId, index));
-  while (sessions.length < 2) sessions.push(defaultSessionEvidence(snapshot.alertId, sessions.length));
+  const sessions = sessionRows.map((row) => row.sessionEvidence ?? unavailableSessionEvidence());
+  if (!sessions.length) sessions.push(unavailableSessionEvidence());
   const visibleSessions = sessions.slice(0, 2);
-  const timeline = visibleSessions.find((session) => session.timeline.length)?.timeline ?? defaultSessionTimeline();
-  const linkedPcap = visibleSessions.find((session) => session.linkedPcap)?.linkedPcap || 'AL-20260620-000123.pcap';
+  const timeline = visibleSessions.find((session) => session.timeline.length)?.timeline ?? [];
+  const linkedPcap = visibleSessions.find((session) => session.linkedPcap)?.linkedPcap;
 
   return (
     <section className="taf-alert-evidence-session-focus" data-page-id="alert-detail-evidence-session" aria-label="告警详情证据链 Session">
@@ -1172,11 +1389,16 @@ function AlertEvidenceSessionFocusView({ snapshot, isLoading }: { snapshot: Aler
                 <em>{event.label}</em>
               </span>
             ))}
-            <EvidenceFocusAction alertId={snapshot.alertId} as="link" className="taf-alert-evidence-session-linked-pcap" title={`关联 PCAP: ${linkedPcap}`} target={linkedPcap}>
-              <LinkOutlined />
-              <span>关联 PCAP: </span>
-              <strong>{linkedPcap}</strong>
-            </EvidenceFocusAction>
+            {!timeline.length && <span className="taf-alert-evidence-session-event"><em>Session 事件链暂不可用</em></span>}
+            {linkedPcap
+              ? (
+                  <EvidenceFocusAction alertId={snapshot.alertId} as="link" className="taf-alert-evidence-session-linked-pcap" title={`关联 PCAP: ${linkedPcap}`} target={linkedPcap}>
+                    <LinkOutlined />
+                    <span>关联 PCAP: </span>
+                    <strong>{linkedPcap}</strong>
+                  </EvidenceFocusAction>
+                )
+              : <span className="taf-alert-evidence-session-linked-pcap">关联 PCAP 暂不可用</span>}
           </div>
 
           <footer className="taf-alert-evidence-session-footer">
@@ -1191,7 +1413,7 @@ function AlertEvidenceSessionFocusView({ snapshot, isLoading }: { snapshot: Aler
 function AlertEvidenceLogsFocusView({ snapshot, isLoading }: { snapshot: AlertDetailSnapshot; isLoading: boolean }) {
   const counts = evidenceBucketCounts(snapshot.evidenceRows);
   const logRow = snapshot.evidenceRows.find((row) => isLogEvidence(row)) ?? snapshot.evidenceRows.find((row) => row.logEvidence);
-  const log = logRow?.logEvidence ?? defaultLogEvidence(snapshot.alertId);
+  const log = logRow?.logEvidence ?? unavailableLogEvidence();
   const generatedAt = compactDateTime(log.generatedAt || logRow?.生成时间) || '06-20 03:43:05';
   const hitFieldText = log.hitFields.join('\n');
 
@@ -1267,10 +1489,10 @@ function AlertEvidenceLogsFocusView({ snapshot, isLoading }: { snapshot: AlertDe
 function AlertEvidenceGraphPathFocusView({ snapshot, isLoading }: { snapshot: AlertDetailSnapshot; isLoading: boolean }) {
   const counts = evidenceBucketCounts(snapshot.evidenceRows);
   const graphRow = snapshot.evidenceRows.find((row) => isGraphPathEvidence(row)) ?? snapshot.evidenceRows.find((row) => row.graphPath);
-  const graph = graphRow?.graphPath ?? defaultGraphPathEvidence(snapshot.alertId);
-  const generatedAt = compactDateTime(graph.generatedAt || graphRow?.生成时间) || '06-20 03:43:10';
+  const graph = graphRow?.graphPath ?? unavailableGraphPathEvidence();
+  const generatedAt = compactDateTime(graph.generatedAt || graphRow?.生成时间) || '暂不可用';
   const summaryLines = graph.pathSummary.split(/\n|；|;/).map((item) => item.trim()).filter(Boolean);
-  const resources = graph.resources.length ? graph.resources : ['PCAP 1', 'Session 2', '日志 1'];
+  const resources = graph.resources;
 
   return (
     <section className="taf-alert-evidence-graph-focus" data-page-id="alert-detail-evidence-graph-path" aria-label="告警详情证据链图谱路径">
@@ -1294,8 +1516,8 @@ function AlertEvidenceGraphPathFocusView({ snapshot, isLoading }: { snapshot: Al
             </div>
             <EvidenceFocusAction alertId={snapshot.alertId} as="link" className="taf-alert-evidence-graph-file" title={`查看图谱路径：${graph.pathFile}`} target={graph.pathFile}>{graph.pathFile}</EvidenceFocusAction>
             <div className="taf-alert-evidence-graph-summary" title={graph.pathSummary}>
-              <span>{summaryLines[0] ?? '172.16.5.10 -> 185.22.14.9'}</span>
-              <em>{summaryLines[1] ?? '路径关系'}</em>
+              <span>{summaryLines[0] ?? '路径摘要暂不可用'}</span>
+              <em>{summaryLines[1] ?? '路径关系暂不可用'}</em>
             </div>
             <span className="taf-alert-evidence-graph-weight" title={`${graph.edgeWeight} / ${graph.relationType}`}>
               {graph.edgeWeight} / {graph.relationType}
@@ -1331,7 +1553,7 @@ function AlertEvidenceGraphPathFocusView({ snapshot, isLoading }: { snapshot: Al
                 <dt>节点数：</dt><dd>{graph.nodes.length}</dd>
                 <dt>边数：</dt><dd>{graph.edges.length}</dd>
                 <dt>平均边权重：</dt><dd>{graph.edgeWeight}</dd>
-                <dt>风险评分：</dt><dd className="is-risk">{graph.riskScore}（高风险）</dd>
+                <dt>风险评分：</dt><dd className={graph.riskScore === undefined ? undefined : 'is-risk'}>{graph.riskScore === undefined ? '暂不可用' : `${graph.riskScore}（高风险）`}</dd>
               </dl>
             </aside>
           </div>
@@ -1449,100 +1671,58 @@ function isGraphPathEvidence(row: AlertDetailEvidenceRow) {
   return Boolean(row.graphPath) || text.includes('图谱') || text.includes('graph') || text.includes('path');
 }
 
-function defaultPcapEvidence(alertId: string): NonNullable<AlertDetailEvidenceRow['pcapEvidence']> {
-  const fileName = `${alertId || 'AL-20260620-000123'}.pcap`;
+function unavailablePcapEvidence(): NonNullable<AlertDetailEvidenceRow['pcapEvidence']> {
   return {
-    fileName,
-    contentSummary: 'PCAP 切片，TLS over HTTP 隧道，疑似隧道通信',
-    size: '24.8 MB',
-    generatedAt: '2026-06-20 03:43:05',
-    statusLines: ['已生成 /', 'SHA256通过'],
-    downloadAudit: 'sec_analyst 03:44 下载',
-    objectPath: `minio://traffic-evidence/alerts/2026/06/20/${fileName}`,
-    sha256: '1a2b3c4d5bef79a8h9i0j...',
+    fileName: '暂不可用',
+    contentSummary: 'PCAP 证据暂不可用',
+    size: '暂不可用',
+    generatedAt: '暂不可用',
+    statusLines: ['暂不可用'],
+    downloadAudit: '暂不可用',
+    objectPath: '',
+    sha256: '',
   };
 }
 
-function defaultSessionTimeline(): NonNullable<AlertDetailEvidenceRow['sessionEvidence']>['timeline'] {
-  return [
-    { time: '03:31', label: '建连' },
-    { time: '03:34', label: '心跳' },
-    { time: '03:43', label: '切片关联' },
-  ];
-}
-
-function defaultSessionEvidence(_alertId: string, index = 0): NonNullable<AlertDetailEvidenceRow['sessionEvidence']> {
-  const rows: Array<NonNullable<AlertDetailEvidenceRow['sessionEvidence']>> = [
-    {
-      sessionId: 'session-20260620-000123.json',
-      tupleLines: ['172.16.5.10:443 ->', '185.22.14.9:8443 / TCP'],
-      summaryLines: ['异常长连接，双向持续传输，', 'SNI 缺失'],
-      bytes: '1.2 MB',
-      duration: '12m 38s',
-      status: '已生成',
-      actionKind: 'reload',
-      timeline: defaultSessionTimeline(),
-      linkedPcap: 'AL-20260620-000123.pcap',
-    },
-    {
-      sessionId: 'session-20260620-000124.json',
-      tupleLines: ['10.20.4.18:51514 ->', '185.22.14.9:443 / TCP'],
-      summaryLines: ['周期心跳，每 30s 上行小包'],
-      bytes: '768 KB',
-      duration: '08m 16s',
-      status: '已生成',
-      actionKind: 'file',
-      timeline: defaultSessionTimeline(),
-      linkedPcap: 'AL-20260620-000123.pcap',
-    },
-  ];
-  return rows[index] ?? rows[0];
-}
-
-function defaultLogEvidence(_alertId: string): NonNullable<AlertDetailEvidenceRow['logEvidence']> {
+function unavailableSessionEvidence(): NonNullable<AlertDetailEvidenceRow['sessionEvidence']> {
   return {
-    logFile: 'ids-20260620-000123.log',
-    source: 'IDS / 探针-07',
-    hitFields: ['rule=C2_Tunnel_v3,', 'ja3_score=0.91'],
-    contentSummary: '设备日志与规则命中日志，命中 C2_Tunnel_v3',
-    generatedAt: '2026-06-20 03:43:05',
-    status: '已生成',
-    highlightedFields: [
-      { key: 'dst_ip', value: '185.22.14.9' },
-      { key: 'sni', value: 'null' },
-      { key: 'bytes_out_p95', value: '5.8MB' },
-      { key: 'user_event', value: 'svc_backup login' },
-    ],
-    sourceTags: [
-      { label: '设备日志', kind: 'device' },
-      { label: '规则命中', kind: 'rule' },
-      { label: '用户事件', kind: 'user' },
-    ],
+    sessionId: '暂不可用',
+    tupleLines: ['会话五元组暂不可用'],
+    summaryLines: ['Session 证据暂不可用'],
+    bytes: '暂不可用',
+    duration: '暂不可用',
+    status: '暂不可用',
+    actionKind: 'file',
+    timeline: [],
+    linkedPcap: '',
   };
 }
 
-function defaultGraphPathEvidence(alertId: string): NonNullable<AlertDetailEvidenceRow['graphPath']> {
+function unavailableLogEvidence(): NonNullable<AlertDetailEvidenceRow['logEvidence']> {
   return {
-    pathFile: `path-${alertId || '20260620-000123'}.json`,
-    pathSummary: '172.16.5.10 -> 185.22.14.9\n路径关系',
-    edgeWeight: '0.86',
-    relationType: '横向访问',
-    relatedEntities: ['资产 DB-SRV-01', '账号 svc_backup', '域名 downloads.campus.local'],
-    generatedAt: '2026-06-20 03:43:10',
-    status: '已生成',
-    riskScore: 85,
-    nodes: [
-      { id: 'external-ip', label: '可疑外部IP', value: '185.22.14.9', kind: 'external' },
-      { id: 'gateway', label: '边界网关', value: '10.20.0.1', kind: 'gateway' },
-      { id: 'server', label: '核心业务服务器', value: '10.20.4.18', kind: 'server' },
-      { id: 'account', label: '账号', value: 'svc_backup', kind: 'account' },
-    ],
-    edges: [
-      { from: 'external-ip', to: 'gateway', label: '通信' },
-      { from: 'gateway', to: 'server', label: '登录' },
-      { from: 'server', to: 'account', label: '访问' },
-    ],
-    resources: ['PCAP 1', 'Session 2', '日志 1'],
+    logFile: '暂不可用',
+    source: '暂不可用',
+    hitFields: [],
+    contentSummary: '日志证据暂不可用',
+    generatedAt: '暂不可用',
+    status: '暂不可用',
+    highlightedFields: [],
+    sourceTags: [],
+  };
+}
+
+function unavailableGraphPathEvidence(): NonNullable<AlertDetailEvidenceRow['graphPath']> {
+  return {
+    pathFile: '暂不可用',
+    pathSummary: '路径关系暂不可用',
+    edgeWeight: '暂不可用',
+    relationType: '暂不可用',
+    relatedEntities: [],
+    generatedAt: '暂不可用',
+    status: '暂不可用',
+    nodes: [],
+    edges: [],
+    resources: [],
   };
 }
 
@@ -1577,6 +1757,17 @@ function compactDateTime(value: string | undefined) {
   const match = value.match(/(\d{2})-(\d{2})\s+(\d{2}:\d{2}:\d{2})$/);
   if (match) return `${match[1]}-${match[2]} ${match[3]}`;
   return value.replace(/^2026-/, '').replace(/^20\d{2}-/, '');
+}
+
+function reportJobStatusLabel(status: AlertDetailActionResult['status']) {
+  const labels: Partial<Record<AlertDetailActionResult['status'], string>> = {
+    completed: '已完成',
+    partial: '部分完成',
+    failed: '失败',
+    compensated: '已补偿',
+    compensation_failed: '补偿失败',
+  };
+  return labels[status] ?? status;
 }
 
 function emptySnapshot(alertId: string): AlertDetailSnapshot {

@@ -1097,7 +1097,7 @@
 
   .taf-topic-tunnel-delivery-stats span,
   .taf-topic-exfil-delivery-stats span {
-    grid-template-columns: clamp(9px, 0.52vw, 11px) minmax(0, 1fr) clamp(28px, 2vw, 42px);
+    grid-template-columns: clamp(9px, 0.52vw, 11px) minmax(0, 1fr) clamp(48px, 3vw, 64px);
     gap: clamp(6px, 0.48vw, 10px);
   }
 

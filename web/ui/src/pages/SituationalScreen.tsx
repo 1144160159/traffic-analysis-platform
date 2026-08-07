@@ -33,8 +33,7 @@ import {
 import { WorkPanel } from '@/components/WorkPanel';
 import type { NavRoute } from '@/routes/routeManifest';
 import { fetchPageSnapshot } from '@/services/api';
-import type { ScreenAbnormalLink, ScreenEvidenceRing, ScreenVisualEdge, ScreenVisualNode, ScreenVisuals } from '@/services/mockData';
-import { isVisualBreakdownMode } from '@/utils/visualBreakdownMode';
+import type { ScreenVisualEdge, ScreenVisualNode, ScreenVisuals } from '@/services/mockData';
 
 type Tone = 'ok' | 'warn' | 'info' | 'risk';
 type TopologyMode = '2d' | '3d';
@@ -62,17 +61,9 @@ type TopologyNode = {
   probes: string;
   links: string;
   assets: string;
-  riskScore: number;
+  riskScore: number | string;
   bandwidth: string;
   href: string;
-};
-
-type ProbeMapNode = {
-  id: string;
-  label: string;
-  x: number;
-  y: number;
-  status: 'online' | 'offline' | 'maintenance';
 };
 
 type TopologyEdge = {
@@ -82,177 +73,55 @@ type TopologyEdge = {
   width?: number;
 };
 
-const pipeline: PipelineNode[] = [
-  { label: '探针采集', metricLabel: '在线累计', value: '24 / 25', noteLabel: '采集带宽', note: '78.3 Gbps', icon: <AimOutlined />, href: '/probes', trend: [34, 42, 37, 45, 44, 52, 49, 57], tone: 'ok' },
-  { label: '协议解析', metricLabel: '协议识别', value: '58 种', noteLabel: '解析成功率', note: '99.2%', icon: <NodeIndexOutlined />, href: '/data-quality', trend: [24, 28, 31, 30, 36, 40, 39, 45], tone: 'ok', trendTone: 'info' },
-  { label: '归一化', metricLabel: '流量标准化', value: '98.1%', noteLabel: '规范化率', note: '98.1%', icon: <DeploymentUnitOutlined />, href: '/data-quality', trend: [42, 39, 44, 47, 46, 51, 49, 55], tone: 'ok' },
-  { label: 'Kafka 集群', metricLabel: '分区', value: '48 / 48', noteLabel: '积压', note: '12,324', icon: <ClusterOutlined />, href: '/data-quality', trend: [28, 30, 34, 41, 36, 39, 42, 40], tone: 'warn' },
-  { label: 'Flink 处理', metricLabel: '任务', value: '58', noteLabel: '处理延迟', note: '1.2 s', icon: <ThunderboltOutlined />, href: '/data-quality', trend: [32, 34, 31, 38, 36, 42, 45, 43], tone: 'ok' },
-  { label: 'ClickHouse', metricLabel: '写入', value: '78.3 Gbps', noteLabel: '查询延迟', note: '0.4 s', icon: <DatabaseOutlined />, href: '/data-quality', trend: [38, 40, 43, 45, 44, 48, 49, 52], tone: 'ok' },
-  { label: 'OpenSearch', metricLabel: '写入', value: '12.6 K EPS', noteLabel: '查询延迟', note: '0.6 s', icon: <FileProtectOutlined />, href: '/forensics', trend: [22, 27, 31, 29, 35, 33, 40, 44], tone: 'ok' },
-  { label: 'NebulaGraph', metricLabel: '图谱更新', value: '2.1 K/s', noteLabel: '图谱状态', note: '正常', icon: <FundProjectionScreenOutlined />, href: '/graph', trend: [20, 25, 27, 35, 34, 39, 43, 48], tone: 'ok' },
-  { label: 'MinIO 存储', metricLabel: '存储使用', value: '72.4 TB', noteLabel: '容量', note: '120 TB', icon: <HddOutlined />, href: '/forensics', trend: [18, 24, 30, 36, 41, 44, 48, 51], tone: 'ok' },
+const pipelineDefinition: PipelineNode[] = [
+  { label: '探针采集', metricLabel: '在线累计', value: '-', noteLabel: '采集带宽', note: '-', icon: <AimOutlined />, href: '/probes', trend: [], tone: 'info' },
+  { label: '协议解析', metricLabel: '协议识别', value: '-', noteLabel: '解析成功率', note: '-', icon: <NodeIndexOutlined />, href: '/data-quality', trend: [], tone: 'info' },
+  { label: '归一化', metricLabel: '流量标准化', value: '-', noteLabel: '规范化率', note: '-', icon: <DeploymentUnitOutlined />, href: '/data-quality', trend: [], tone: 'info' },
+  { label: 'Kafka 集群', metricLabel: '分区', value: '-', noteLabel: '积压', note: '-', icon: <ClusterOutlined />, href: '/data-quality', trend: [], tone: 'info' },
+  { label: 'Flink 处理', metricLabel: '任务', value: '-', noteLabel: '处理延迟', note: '-', icon: <ThunderboltOutlined />, href: '/data-quality', trend: [], tone: 'info' },
+  { label: 'ClickHouse', metricLabel: '写入', value: '-', noteLabel: '查询延迟', note: '-', icon: <DatabaseOutlined />, href: '/data-quality', trend: [], tone: 'info' },
+  { label: 'OpenSearch', metricLabel: '写入', value: '-', noteLabel: '查询延迟', note: '-', icon: <FileProtectOutlined />, href: '/forensics', trend: [], tone: 'info' },
+  { label: 'NebulaGraph', metricLabel: '图谱更新', value: '-', noteLabel: '图谱状态', note: '-', icon: <FundProjectionScreenOutlined />, href: '/graph', trend: [], tone: 'info' },
+  { label: 'MinIO 存储', metricLabel: '存储使用', value: '-', noteLabel: '容量', note: '-', icon: <HddOutlined />, href: '/forensics', trend: [], tone: 'info' },
 ];
 
-const topologyNodes: TopologyNode[] = [
-  { id: 'teach-a', label: '教学楼A', meta: '探针在线', type: '教学区', x: 25, y: 32, tone: 'ok', probes: '3 / 3', links: '5 条', assets: '418', riskScore: 18, bandwidth: '8.6 Gbps', href: '/assets' },
-  { id: 'teach-b', label: '教学楼B', meta: '汇聚正常', type: '教学区', x: 37, y: 25, tone: 'ok', probes: '4 / 4', links: '6 条', assets: '512', riskScore: 22, bandwidth: '9.8 Gbps', href: '/assets' },
-  { id: 'library', label: '图书馆', meta: '核心链路', type: '公共区', x: 49, y: 18, tone: 'info', probes: '2 / 2', links: '8 条', assets: '236', riskScore: 31, bandwidth: '7.2 Gbps', href: '/graph' },
-  { id: 'lab', label: '实验楼群', meta: '维护中', type: '实验区', x: 68, y: 31, tone: 'warn', probes: '5 / 6', links: '7 条', assets: '684', riskScore: 64, bandwidth: '16.4 Gbps', href: '/alerts' },
-  { id: 'soc', label: '安全运营中心', meta: '高风险区', type: '核心运营', x: 82, y: 39, tone: 'risk', probes: '2 / 3', links: '9 条', assets: '124', riskScore: 87, bandwidth: '11.7 Gbps', href: '/alerts' },
-  { id: 'dc', label: '数据中心', meta: '入库正常', type: '数据底座', x: 60, y: 63, tone: 'info', probes: '4 / 4', links: '11 条', assets: '196', riskScore: 38, bandwidth: '78.3 Gbps', href: '/data-quality' },
-  { id: 'dorm', label: '宿舍区', meta: '在线', type: '生活区', x: 77, y: 70, tone: 'ok', probes: '3 / 3', links: '5 条', assets: '1,286', riskScore: 42, bandwidth: '14.2 Gbps', href: '/assets' },
-  { id: 'admin', label: '行政楼', meta: '在线', type: '办公区', x: 34, y: 69, tone: 'ok', probes: '2 / 2', links: '4 条', assets: '211', riskScore: 27, bandwidth: '5.4 Gbps', href: '/assets' },
-  { id: 'canteen', label: '食堂', meta: '汇聚正常', type: '生活服务', x: 20, y: 61, tone: 'info', probes: '2 / 2', links: '3 条', assets: '96', riskScore: 21, bandwidth: '2.8 Gbps', href: '/graph' },
-  { id: 'stadium', label: '体育馆', meta: '带宽 57%', type: '活动场馆', x: 74, y: 56, tone: 'warn', probes: '1 / 2', links: '4 条', assets: '162', riskScore: 58, bandwidth: '6.9 Gbps', href: '/data-quality' },
+const responseDefinitions = [
+  { label: '隔离动作数', value: '-', icon: <SafetyOutlined />, href: '/playbooks' },
+  { label: '阻断动作数', value: '-', icon: <AimOutlined />, href: '/playbooks' },
+  { label: '封禁动作数', value: '-', icon: <CheckCircleOutlined />, href: '/playbooks' },
+  { label: '下发脚本数', value: '-', icon: <DeploymentUnitOutlined />, href: '/deployments' },
+  { label: '反馈标注数', value: '-', icon: <DotChartOutlined />, href: '/mlops' },
 ];
 
-const topologyEdges: TopologyEdge[] = [
-  { from: 'core', to: 'teach-a', tone: 'core', width: 3 },
-  { from: 'core', to: 'teach-b', tone: 'core', width: 2.6 },
-  { from: 'core', to: 'library', tone: 'core', width: 2.8 },
-  { from: 'core', to: 'dc', tone: 'core', width: 3 },
-  { from: 'core', to: 'lab', tone: 'risk', width: 2.6 },
-  { from: 'core', to: 'dorm', tone: 'converge', width: 2.2 },
-  { from: 'dc', to: 'stadium', tone: 'risk', width: 2 },
-  { from: 'dc', to: 'admin', tone: 'converge', width: 1.8 },
-  { from: 'teach-a', to: 'canteen', tone: 'converge', width: 1.8 },
-  { from: 'soc', to: 'lab', tone: 'risk', width: 2 },
-  { from: 'teach-b', to: 'admin', tone: 'converge', width: 1.6 },
-  { from: 'library', to: 'teach-b', tone: 'converge', width: 1.6 },
-];
+const runtimeMetricLabels = ['大屏刷新间隔', '拓扑渲染延迟', '链路带宽水位', '流向动画帧率'];
 
-const probeMapNodes: ProbeMapNode[] = [
-  { id: 'core', label: '核心区', x: 132, y: 118, status: 'online' },
-  { id: 'teach-a', label: '教学楼A', x: 84, y: 92, status: 'online' },
-  { id: 'teach-b', label: '教学楼B', x: 108, y: 66, status: 'online' },
-  { id: 'library', label: '图书馆', x: 155, y: 74, status: 'online' },
-  { id: 'lab', label: '实验楼', x: 178, y: 98, status: 'maintenance' },
-  { id: 'dc', label: '数据中心', x: 148, y: 143, status: 'online' },
-  { id: 'office', label: '办公区', x: 96, y: 142, status: 'online' },
-  { id: 'canteen', label: '食堂', x: 64, y: 131, status: 'online' },
-  { id: 'dorm', label: '宿舍区', x: 186, y: 158, status: 'online' },
-  { id: 'stadium', label: '体育馆', x: 205, y: 130, status: 'online' },
-  { id: 'soc', label: '安全运营', x: 202, y: 190, status: 'offline' },
-  { id: 'edge', label: '边界', x: 54, y: 176, status: 'online' },
-];
+const emptyScreenVisuals: ScreenVisuals = {
+  probeMapNodes: [],
+  probeMapLinks: [],
+  topologyNodes: [],
+  topologyEdges: [],
+  campaignDensityPoints: [],
+  riskMapPoints: [],
+  egressMapPoints: [],
+  egressMapFlows: [],
+  abnormalLinks: [],
+  evidenceRings: [],
+};
 
-const probeMapLinks: Array<[string, string]> = [
-  ['core', 'teach-a'],
-  ['core', 'teach-b'],
-  ['core', 'library'],
-  ['core', 'lab'],
-  ['core', 'dc'],
-  ['core', 'office'],
-  ['dc', 'dorm'],
-  ['dc', 'stadium'],
-  ['office', 'canteen'],
-  ['office', 'edge'],
-  ['dorm', 'soc'],
-  ['teach-a', 'canteen'],
-];
-
-const evidenceRings: ScreenEvidenceRing[] = [
-  { label: 'PCAP 覆盖率', value: 98.6, caption: '覆盖流量 78.3Gbps', href: '/forensics', level: 'low' },
-  { label: 'Session 还原率', value: 95.7, caption: '还原会话 1.23M', href: '/forensics', level: 'low' },
-  { label: '日志关联率', value: 93.2, caption: '关联日志 246.5M', href: '/audit-log', level: 'medium' },
-  { label: '对象存储归档率', value: 99.1, caption: '归档 72.4TB', href: '/forensics', level: 'low' },
-  { label: 'hash 校验通过率', value: 99.8, caption: '校验文件 18.6M', href: '/compliance', level: 'low' },
-  { label: '签名 URL 可用率', value: 99.6, caption: '可用链接 12,645', href: '/forensics', level: 'low' },
-];
-
-const attackStages = [
-  { id: 'recon', label: '侦察', value: 2186, pct: 12, tone: 'danger', detail: '端口扫描与弱服务枚举集中在实验区边界。' },
-  { id: 'exploit', label: '资源利用', value: 3276, pct: 18, tone: 'danger', detail: 'Web 服务与 VPN 暴露资产存在异常利用链。' },
-  { id: 'initial', label: '初始访问', value: 4932, pct: 27, tone: 'danger', detail: '钓鱼回连和异常登录形成最高热度阶段。' },
-  { id: 'exec', label: '执行', value: 3184, pct: 17, tone: 'warn', detail: '脚本执行与横向测试行为正在被剧本阻断。' },
-  { id: 'credential', label: '凭证访问', value: 2104, pct: 11, tone: 'ok', detail: '凭证访问已压低，仍需关注宿舍区异常会话。' },
-  { id: 'impact', label: '影响达成', value: 2536, pct: 15, tone: 'ok', detail: '核心数据区未出现持续影响达成迹象。' },
-];
-
-const abnormalLinks: ScreenAbnormalLink[] = [
-  { name: '实验区 - 核心区', linkCount: 1286, assetCount: 432, level: 'high' },
-  { name: '宿舍区 - 核心区', linkCount: 923, assetCount: 311, level: 'medium' },
-  { name: '办公区 - 核心区', linkCount: 612, assetCount: 207, level: 'medium' },
-  { name: '教学区 - 图书馆', linkCount: 484, assetCount: 162, level: 'low' },
-  { name: '生活区 - 核心区', linkCount: 371, assetCount: 128, level: 'low' },
-];
-
-const responseStats = [
-  { label: '隔离动作数', value: '68', icon: <SafetyOutlined />, href: '/playbooks' },
-  { label: '阻断动作数', value: '128', icon: <AimOutlined />, href: '/playbooks' },
-  { label: '封禁动作数', value: '46', icon: <CheckCircleOutlined />, href: '/playbooks' },
-  { label: '下发脚本数', value: '32', icon: <DeploymentUnitOutlined />, href: '/deployments' },
-  { label: '反馈标注数', value: '236', icon: <DotChartOutlined />, href: '/mlops' },
-];
-
-const runtimeStats = [
-  ['大屏刷新间隔', '5 s'],
-  ['拓扑渲染延迟', '286 ms'],
-  ['链路带宽水位', '57%'],
-  ['流向动画帧率', '28 FPS'],
-];
-
-const riskMapPoints: WorldActivityPoint[] = [
-  { name: '北美异常入口', coord: [206, 206], value: 28, level: 'high' },
-  { name: '东海岸扫描簇', coord: [282, 224], value: 18, level: 'medium' },
-  { name: '欧洲战役节点', coord: [487, 178], value: 23, level: 'high' },
-  { name: '北非中转', coord: [522, 285], value: 16, level: 'medium' },
-  { name: '西亚代理池', coord: [606, 236], value: 24, level: 'high' },
-  { name: '东亚回连', coord: [742, 213], value: 21, level: 'high' },
-  { name: '东南亚跳板', coord: [788, 270], value: 14, level: 'medium' },
-  { name: '南美低频', coord: [312, 338], value: 9, level: 'low' },
-];
-
-const egressMapPoints: WorldActivityPoint[] = [
-  { name: '北美洲', coord: [220, 210], value: 42.7, level: 'high' },
-  { name: '欧洲', coord: [492, 166], value: 18.6, level: 'medium' },
-  { name: '东南亚', coord: [690, 282], value: 31.2, level: 'high' },
-  { name: '东亚', coord: [763, 206], value: 12.9, level: 'medium' },
-  { name: '澳洲', coord: [842, 356], value: 6.3, level: 'low' },
-  { name: '非洲', coord: [535, 306], value: 9.8, level: 'medium' },
-];
-
-const egressMapFlows: WorldActivityFlow[] = [
-  { name: '园区 -> 北美洲', from: [630, 235], to: [220, 210], value: 42.7, level: 'high' },
-  { name: '园区 -> 东南亚', from: [630, 235], to: [690, 282], value: 31.2, level: 'high' },
-  { name: '园区 -> 欧洲', from: [630, 235], to: [492, 166], value: 18.6, level: 'medium' },
-  { name: '园区 -> 东亚', from: [630, 235], to: [763, 206], value: 12.9, level: 'medium' },
-  { name: '园区 -> 澳洲', from: [630, 235], to: [842, 356], value: 6.3, level: 'low' },
-  { name: '园区 -> 非洲', from: [630, 235], to: [535, 306], value: 9.8, level: 'medium' },
-  { name: '欧洲 -> 北美洲', from: [492, 166], to: [220, 210], value: 14.2, level: 'medium' },
-  { name: '欧洲 -> 东亚', from: [492, 166], to: [763, 206], value: 11.6, level: 'medium' },
-  { name: '东亚 -> 澳洲', from: [763, 206], to: [842, 356], value: 7.5, level: 'low' },
-  { name: '非洲 -> 欧洲', from: [535, 306], to: [492, 166], value: 8.8, level: 'medium' },
-  { name: '北美洲 -> 欧洲', from: [220, 210], to: [492, 166], value: 18.4, level: 'high' },
-];
-
-const campaignDensityPoints: CampaignDensityPoint[] = [
-  { name: '钓鱼回连簇', x: 52, y: 48, value: 47, level: 'high' },
-  { name: 'VPN 弱口令簇', x: 42, y: 36, value: 35, level: 'high' },
-  { name: '实验区扫描簇', x: 60, y: 31, value: 28, level: 'medium' },
-  { name: '凭证访问簇', x: 36, y: 58, value: 22, level: 'medium' },
-  { name: '脚本执行簇', x: 55, y: 66, value: 26, level: 'medium' },
-  { name: '边界代理簇', x: 70, y: 48, value: 19, level: 'low' },
-  { name: '横向探测簇', x: 31, y: 45, value: 18, level: 'low' },
-  { name: '数据打包簇', x: 67, y: 70, value: 24, level: 'medium' },
-  { name: '异常登录簇', x: 46, y: 72, value: 17, level: 'low' },
-  { name: '外联跳板簇', x: 75, y: 58, value: 31, level: 'high' },
-  { name: '办公区噪声簇', x: 28, y: 67, value: 13, level: 'low' },
-  { name: '宿舍区风险簇', x: 61, y: 82, value: 20, level: 'medium' },
-];
-
-const fallbackScreenVisuals: ScreenVisuals = {
-  probeMapNodes,
-  probeMapLinks,
-  topologyNodes,
-  topologyEdges,
-  campaignDensityPoints,
-  riskMapPoints,
-  egressMapPoints,
-  egressMapFlows,
-  abnormalLinks,
-  evidenceRings,
+const unavailableTopologyNode: TopologyNode = {
+  id: 'unavailable',
+  label: '暂无拓扑节点',
+  meta: '等待 API',
+  type: '-',
+  x: 50,
+  y: 50,
+  tone: 'info',
+  probes: '-',
+  links: '-',
+  assets: '-',
+  riskScore: '-',
+  bandwidth: '-',
+  href: '/graph',
 };
 
 const normalizeTone = (tone?: ScreenVisualNode['tone']): Tone => tone ?? 'info';
@@ -260,17 +129,17 @@ const normalizeTone = (tone?: ScreenVisualNode['tone']): Tone => tone ?? 'info';
 const normalizeTopologyNode = (node: ScreenVisualNode): TopologyNode => ({
   id: node.id,
   label: node.label,
-  meta: node.meta ?? '在线',
-  type: node.type ?? '园区节点',
+  meta: node.meta ?? '-',
+  type: node.type ?? '-',
   x: node.x,
   y: node.y,
   tone: normalizeTone(node.tone),
-  probes: node.probes ?? '2 / 2',
-  links: node.links ?? '3 条',
-  assets: node.assets ?? '128',
-  riskScore: node.riskScore ?? 38,
-  bandwidth: node.bandwidth ?? '6.8 Gbps',
-  href: node.href ?? '/assets',
+  probes: node.probes ?? '-',
+  links: node.links ?? '-',
+  assets: node.assets ?? '-',
+  riskScore: node.riskScore ?? '-',
+  bandwidth: node.bandwidth ?? '-',
+  href: node.href ?? '/graph',
 });
 
 const normalizeTopologyEdge = (edge: ScreenVisualEdge): TopologyEdge => ({
@@ -280,13 +149,14 @@ const normalizeTopologyEdge = (edge: ScreenVisualEdge): TopologyEdge => ({
   width: edge.width,
 });
 
-const normalizeCampaignPoint = (point: ScreenVisuals['campaignDensityPoints'][number]): CampaignDensityPoint => ({
-  name: point.name,
-  x: point.x,
-  y: point.y,
-  value: point.value ?? 12,
-  level: point.level,
-});
+const normalizeCampaignPoint = (point: ScreenVisuals['campaignDensityPoints'][number]): CampaignDensityPoint | undefined =>
+  point.value === undefined ? undefined : {
+    name: point.name,
+    x: point.x,
+    y: point.y,
+    value: point.value,
+    level: point.level,
+  };
 
 function ProbeCoverageMap({ nodes: probeNodes, links }: { nodes: ScreenVisualNode[]; links: Array<[string, string]> }) {
   const nodeById = new Map(probeNodes.map((node) => [node.id, node]));
@@ -463,52 +333,43 @@ function TopologyTwinLayer({ mode, nodes, edges, selectedNodeId }: { mode: Topol
 export function SituationalScreen({ route, maskedDemo = false }: { route: NavRoute; maskedDemo?: boolean }) {
   const [topologyMode, setTopologyMode] = useState<TopologyMode>('3d');
   const [selectedNodeId, setSelectedNodeId] = useState('soc');
-  const [selectedStageId, setSelectedStageId] = useState('initial');
+  const [selectedStageId, setSelectedStageId] = useState('');
   const [readonlyTokenOpen, setReadonlyTokenOpen] = useState(false);
-  const visualBreakdownMode = isVisualBreakdownMode();
   const { data, error, isError, isLoading, refetch } = useQuery({
     queryKey: ['page-snapshot', route.id],
     queryFn: () => fetchPageSnapshot(route.id),
-    enabled: !maskedDemo && !visualBreakdownMode,
-    refetchInterval: maskedDemo || visualBreakdownMode ? false : 5000,
+    enabled: !maskedDemo,
+    refetchInterval: maskedDemo ? false : 5000,
     refetchIntervalInBackground: true,
   });
-  const selectedStage = attackStages.find((stage) => stage.id === selectedStageId) ?? attackStages[0];
-  const snapshotRows = visualBreakdownMode ? [] : data?.rows ?? [];
   const displayValue = (value: string | number) => (maskedDemo ? '脱敏' : value);
-  const screenMetric = (label: string, fallback: string) => (visualBreakdownMode ? fallback : data?.metrics.find((item) => item.label === label)?.value ?? fallback);
-  const screenEvidence = (label: string, fallback: string) => (visualBreakdownMode ? fallback : data?.evidence.find((item) => item.label === label)?.value ?? fallback);
-  const screenVisuals = data?.visuals?.screen ?? fallbackScreenVisuals;
+  const screenMetric = (label: string) => data?.metrics.find((item) => item.label === label)?.value ?? '-';
+  const screenEvidence = (label: string) => data?.evidence.find((item) => item.label === label)?.value ?? '-';
+  const screenVisuals = data?.visuals?.screen ?? emptyScreenVisuals;
   const liveTopologyNodes = screenVisuals.topologyNodes.map(normalizeTopologyNode);
   const liveTopologyEdges = screenVisuals.topologyEdges.map(normalizeTopologyEdge);
-  const metricNumber = (label: string, fallback: number) => {
-    const raw = screenMetric(label, String(fallback));
+  const metricNumber = (label: string) => {
+    const raw = screenMetric(label);
     const parsed = Number.parseFloat(String(raw).replace(/,/g, ''));
-    return Number.isFinite(parsed) ? parsed : fallback;
+    return Number.isFinite(parsed) ? parsed : undefined;
   };
-  const topologyGraphNodes: TopologyNode[] = [
-    {
-      id: 'core',
-      label: '核心区',
-      meta: `${liveTopologyEdges.length} 条链路`,
-      type: '核心交换',
-      x: 47,
-      y: 50,
-      tone: 'info',
-      probes: screenEvidence('探针在线', '24/25'),
-      links: `${liveTopologyEdges.length} 条`,
-      assets: screenEvidence('楼宇覆盖', '27/28'),
-      riskScore: metricNumber('高危告警', 12) ? 55 : 24,
-      bandwidth: screenMetric('采集吞吐', '78.3 Gbps'),
-      href: '/graph',
-    },
-    ...liveTopologyNodes,
-  ];
-  const liveCampaignDensityPoints = screenVisuals.campaignDensityPoints.map(normalizeCampaignPoint);
-  const liveRiskMapPoints: WorldActivityPoint[] = screenVisuals.riskMapPoints?.length ? screenVisuals.riskMapPoints : riskMapPoints;
-  const liveEgressMapPoints: WorldActivityPoint[] = screenVisuals.egressMapPoints?.length ? screenVisuals.egressMapPoints : egressMapPoints;
-  const liveEgressMapFlows: WorldActivityFlow[] = screenVisuals.egressMapFlows?.length ? screenVisuals.egressMapFlows : egressMapFlows;
-  const liveAbnormalLinks = screenVisuals.abnormalLinks ?? abnormalLinks;
+  const topologyGraphNodes: TopologyNode[] = liveTopologyNodes;
+  const liveCampaignDensityPoints = screenVisuals.campaignDensityPoints.flatMap((point) => {
+    const normalized = normalizeCampaignPoint(point);
+    return normalized ? [normalized] : [];
+  });
+  const attackStages = liveCampaignDensityPoints.map((point) => ({
+    id: point.name,
+    label: point.name,
+    value: point.value,
+    tone: point.level === 'high' ? 'danger' : point.level === 'medium' ? 'warn' : 'ok',
+  }));
+  const selectedStage = attackStages.find((stage) => stage.id === selectedStageId) ?? attackStages[0];
+  const attackStageMax = Math.max(1, ...attackStages.map((stage) => stage.value));
+  const liveRiskMapPoints: WorldActivityPoint[] = screenVisuals.riskMapPoints ?? [];
+  const liveEgressMapPoints: WorldActivityPoint[] = screenVisuals.egressMapPoints ?? [];
+  const liveEgressMapFlows: WorldActivityFlow[] = screenVisuals.egressMapFlows ?? [];
+  const liveAbnormalLinks = screenVisuals.abnormalLinks ?? [];
   const abnormalAssetTotal = liveAbnormalLinks.reduce((sum, item) => sum + item.assetCount, 0);
   const riskLevelCounts = liveRiskMapPoints.reduce(
     (acc, point) => {
@@ -519,49 +380,26 @@ export function SituationalScreen({ route, maskedDemo = false }: { route: NavRou
     },
     { high: 0, medium: 0, low: 0 },
   );
-  const visualTargetEgressRows: WorldActivityPoint[] = [
-    { name: '北美洲', coord: [220, 210], value: 42.7, level: 'high' },
-    { name: '东南亚', coord: [690, 282], value: 31.2, level: 'high' },
-    { name: '欧洲', coord: [492, 166], value: 18.6, level: 'medium' },
-    { name: '东亚', coord: [763, 206], value: 12.9, level: 'medium' },
-    { name: '其他', coord: [842, 356], value: 6.3, level: 'low' },
-  ];
-  const liveEgressRows = visualBreakdownMode
-    ? visualTargetEgressRows
-    : liveEgressMapPoints
-        .slice()
-        .sort((left, right) => right.value - left.value)
-        .slice(0, 5);
-  const riskLegendValues = visualBreakdownMode
-    ? { high: '12 条', medium: '23', low: '41' }
-    : {
-        high: screenMetric('高危告警', `${riskLevelCounts.high} 条`),
-        medium: String(riskLevelCounts.medium || 1),
-        low: String(riskLevelCounts.low || 1),
-      };
-  const selectedNode = topologyGraphNodes.find((node) => node.id === selectedNodeId) ?? topologyGraphNodes[0];
-  const trendFromMetric = (label: string, fallbackTrend: number[], spread = 18) => {
-    const seed = Math.max(1, metricNumber(label, fallbackTrend[fallbackTrend.length - 1] ?? 45));
-    return fallbackTrend.map((value, index) => {
-      const wave = Math.sin(index * 0.95 + seed / 17) * spread;
-      return Math.max(8, Math.min(96, value * 0.45 + seed * 0.55 + wave));
-    });
+  const liveEgressRows = liveEgressMapPoints.slice().sort((left, right) => right.value - left.value).slice(0, 5);
+  const riskLegendValues = {
+    high: screenMetric('高危告警') !== '-' ? screenMetric('高危告警') : liveRiskMapPoints.length ? `${riskLevelCounts.high} 条` : '-',
+    medium: liveRiskMapPoints.length ? String(riskLevelCounts.medium) : '-',
+    low: liveRiskMapPoints.length ? String(riskLevelCounts.low) : '-',
   };
-  const livePipeline: PipelineNode[] = pipeline.map((item): PipelineNode => {
-    if (item.label === '探针采集') return { ...item, value: screenEvidence('探针在线', item.value), note: screenMetric('采集吞吐', item.note), trend: trendFromMetric('采集吞吐', item.trend, 12) };
-    if (item.label === '协议解析') return { ...item, note: screenMetric('协议解析率', item.note), trend: trendFromMetric('协议解析率', item.trend, 5) };
-    if (item.label === 'Kafka 集群') return { ...item, note: screenMetric('Kafka 积压', item.note), tone: metricNumber('Kafka 积压', 0) >= 500 ? 'warn' : 'ok', trend: trendFromMetric('Kafka 积压', item.trend, 22) };
-    if (item.label === 'Flink 处理') return { ...item, note: screenMetric('Flink P95', item.note), tone: metricNumber('Flink P95', 0) >= 5000 ? 'warn' : 'ok', trend: trendFromMetric('Flink P95', item.trend, 14) };
-    if (item.label === 'ClickHouse') return { ...item, value: screenMetric('采集吞吐', item.value), trend: trendFromMetric('采集吞吐', item.trend, 10) };
+  const selectedNode = topologyGraphNodes.find((node) => node.id === selectedNodeId) ?? topologyGraphNodes[0] ?? unavailableTopologyNode;
+  const livePipeline: PipelineNode[] = pipelineDefinition.map((item): PipelineNode => {
+    if (item.label === '探针采集') return { ...item, value: screenEvidence('探针在线'), note: screenMetric('采集吞吐') };
+    if (item.label === '协议解析') return { ...item, note: screenMetric('协议解析率') };
+    if (item.label === 'Kafka 集群') return { ...item, note: screenMetric('Kafka 积压'), tone: (metricNumber('Kafka 积压') ?? 0) >= 500 ? 'warn' : 'info' };
+    if (item.label === 'Flink 处理') return { ...item, note: screenMetric('Flink P95'), tone: (metricNumber('Flink P95') ?? 0) >= 5000 ? 'warn' : 'info' };
+    if (item.label === 'ClickHouse') return { ...item, value: screenMetric('采集吞吐') };
     return item;
   });
-  const liveEvidenceRings = screenVisuals.evidenceRings ?? evidenceRings;
-  const liveResponseStats = responseStats.map((item, index) =>
-    index === 0 ? { ...item, value: screenMetric('闭环动作', item.value) } : item,
+  const liveEvidenceRings = screenVisuals.evidenceRings ?? [];
+  const liveResponseStats = responseDefinitions.map((item, index) =>
+    index === 0 ? { ...item, value: screenMetric('闭环动作') } : item,
   );
-  const liveRuntimeStats = runtimeStats.map(([label, value]) =>
-    label === '大屏刷新间隔' ? [label, snapshotRows.length ? `${snapshotRows.length} 条` : value] : [label, value],
-  );
+  const liveRuntimeStats = runtimeMetricLabels.map((label) => [label, screenMetric(label)] as const);
 
   return (
     <div className={`taf-screen ${maskedDemo ? 'is-masked-demo' : ''}`}>
@@ -614,21 +452,21 @@ export function SituationalScreen({ route, maskedDemo = false }: { route: NavRou
         >
           <div className="taf-screen-coverage__summary">
             <Link to="/assets">
-              <strong>{displayValue(screenMetric('楼宇覆盖率', '96.4%'))}</strong>
+              <strong>{displayValue(screenMetric('楼宇覆盖率'))}</strong>
               楼宇覆盖率
-              <small>建筑 {screenEvidence('楼宇覆盖', '27/28')}</small>
+              <small>建筑 {screenEvidence('楼宇覆盖')}</small>
             </Link>
             <Link to="/probes">
-              <strong>{displayValue(screenMetric('探针在线率', '95.2%'))}</strong>
+              <strong>{displayValue(screenMetric('探针在线率'))}</strong>
               校区在线覆盖
-              <small>校区 {screenEvidence('校区覆盖', '4/4')}</small>
+              <small>校区 {screenEvidence('校区覆盖')}</small>
             </Link>
           </div>
           <div className="taf-link-grid">
             {[
-              ['核心链路', '正常', '8 / 8', 'ok', '/graph'],
-              ['汇聚链路', '正常', '24 / 26', 'ok', '/data-quality'],
-              ['异常链路', '3 处', '需复核', 'risk', '/alerts'],
+              ['核心链路', '-', '等待 API', 'info', '/graph'],
+              ['汇聚链路', '-', '等待 API', 'info', '/data-quality'],
+              ['异常链路', '-', '等待 API', 'info', '/alerts'],
             ].map(([label, value, note, tone, href]) => (
               <Link key={label} to={href} className={`is-${tone}`}>
                 <em>{label}</em>
@@ -704,8 +542,8 @@ export function SituationalScreen({ route, maskedDemo = false }: { route: NavRou
             </div>
             <div className="taf-topology__frame">
               <span>园区边界</span>
-              <span>{visualBreakdownMode ? '实时重算 5s' : `API 节点 ${topologyGraphNodes.length}`}</span>
-              <span>建筑 {screenEvidence('楼宇覆盖', `${topologyGraphNodes.length}/${topologyGraphNodes.length}`)}</span>
+              <span>API 节点 {topologyGraphNodes.length}</span>
+              <span>建筑 {screenEvidence('楼宇覆盖')}</span>
             </div>
             {topologyGraphNodes.map((node) => (
               <button
@@ -745,9 +583,8 @@ export function SituationalScreen({ route, maskedDemo = false }: { route: NavRou
             </div>
             <div className="taf-topology__abnormal">
               <strong>异常链路位置</strong>
-              <Link to="/alerts">实验楼群 - 核心区链路</Link>
-              <Link to="/alerts">安全运营中心外联边界</Link>
-              <Link to="/data-quality">体育馆 - 汇聚区A链路</Link>
+              {liveAbnormalLinks.slice(0, 3).map((item) => <Link key={item.name} to="/alerts">{item.name}</Link>)}
+              {!liveAbnormalLinks.length && <span>暂无 API 异常链路</span>}
             </div>
             <div className="taf-topology__compass" aria-hidden="true">
               <span>N</span>
@@ -794,7 +631,7 @@ export function SituationalScreen({ route, maskedDemo = false }: { route: NavRou
                   </dl>
                   <SparklineChart trend={node.trend} tone={node.trendTone ?? node.tone} />
                 </Link>
-                {index < pipeline.length - 1 && <span className="taf-pipeline__connector" aria-hidden="true" />}
+                {index < pipelineDefinition.length - 1 && <span className="taf-pipeline__connector" aria-hidden="true" />}
               </div>
             ))}
           </div>
@@ -820,7 +657,7 @@ export function SituationalScreen({ route, maskedDemo = false }: { route: NavRou
               <CheckCircleOutlined />
               模型学习批次数
             </span>
-            <strong>{displayValue('8 批')}</strong>
+            <strong>{displayValue(screenMetric('模型学习批次'))}</strong>
             <Link to="/mlops">
               查看学习任务 <ArrowRightOutlined />
             </Link>
@@ -844,17 +681,16 @@ export function SituationalScreen({ route, maskedDemo = false }: { route: NavRou
                 <button
                   type="button"
                   key={stage.id}
-                  className={`is-${stage.tone} ${selectedStage.id === stage.id ? 'is-active' : ''}`}
-                  aria-pressed={selectedStage.id === stage.id}
+                  className={`is-${stage.tone} ${selectedStage?.id === stage.id ? 'is-active' : ''}`}
+                  aria-pressed={selectedStage?.id === stage.id}
                   onClick={() => setSelectedStageId(stage.id)}
                 >
                   <em>{stage.label}</em>
-                  <i><b style={{ width: `${Math.max(stage.pct * 3, 22)}%` }} /></i>
+                  <i><b style={{ width: `${Math.max((stage.value / attackStageMax) * 100, 8)}%` }} /></i>
                   <strong>{displayValue(stage.value)}</strong>
-                  <small>{stage.pct}%</small>
                 </button>
               ))}
-              <p>{selectedStage.detail}</p>
+              <p>{selectedStage ? '阶段值来自实时攻击阶段 API。' : '暂无攻击阶段 API 数据。'}</p>
             </div>
             <div className="taf-campaign-radar">
               <CampaignDensityChart points={liveCampaignDensityPoints} ariaLabel="战役簇密度图" />
@@ -950,7 +786,7 @@ export function SituationalScreen({ route, maskedDemo = false }: { route: NavRou
           <div className="taf-runtime-status">
             <RadarChartOutlined />
             <span>展示脱敏状态</span>
-            <strong>{maskedDemo ? '已脱敏' : '已脱敏'}</strong>
+            <strong>{maskedDemo ? '已脱敏' : '正常视图'}</strong>
           </div>
         </WorkPanel>
       </section>

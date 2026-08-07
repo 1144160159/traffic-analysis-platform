@@ -149,7 +149,7 @@ export function SettingsGovernancePage({ route }: { route: NavRoute }) {
 
   const rows = useMemo(() => data?.rows ?? [], [data?.rows]);
   const selected = useMemo(() => rows.find((row) => settingsRowKey(row) === selectedKey) ?? rows.find(tokenActionable) ?? rows[0], [rows, selectedKey]);
-  const metrics = route.page.kpis.map((label) => data?.metrics.find((item) => item.label === label) ?? fallbackMetric(label));
+  const metrics = route.page.kpis.map((label) => data?.metrics.find((item) => item.label === label) ?? unavailableMetric(label));
   const columns: ColumnsType<SnapshotRow> = route.page.tableColumns.map((column) => ({
     title: column,
     dataIndex: column,
@@ -713,7 +713,7 @@ const tokenIDFrom = (row?: SnapshotRow) => String(row?.token_id ?? '').trim();
 const tokenActionable = (row?: SnapshotRow) => Boolean(tokenIDFrom(row)) && !['revoked', 'expired'].includes(String(row?.token_status ?? '').toLowerCase());
 const scopesFrom = (row?: SnapshotRow) => String(row?.scopes ?? '').split(',').map((value) => value.trim()).filter(Boolean);
 
-const fallbackMetric = (label: string): PageSnapshot['metrics'][number] => ({ label, value: '0', delta: 'API', status: 'info' });
+const unavailableMetric = (label: string): PageSnapshot['metrics'][number] => ({ label, value: '-', delta: '暂不可用', status: 'warn' });
 const metricValue = (data: PageSnapshot | undefined, label: string, fallback: string) => data?.metrics.find((metric) => metric.label === label)?.value ?? fallback;
 
 const scopeOptions = (scopes?: Array<{ name: string; description?: string }>) => (scopes ?? []).map((scope) => ({ value: scope.name, label: scope.description ? `${scope.name} · ${scope.description}` : scope.name }));

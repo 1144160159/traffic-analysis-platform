@@ -1,0 +1,14 @@
+ARG BASE_WEB_UI_IMAGE=docker.io/traffic/web-ui:remediation-6649eef63f6d
+FROM ${BASE_WEB_UI_IMAGE}
+
+ARG SOURCE_SHA256
+LABEL traffic.analysis.source-sha256=${SOURCE_SHA256}
+
+# The base image can contain hashed assets from earlier candidates. Replacing
+# the entire, narrowly scoped static root prevents unreachable old bundles from
+# leaking into the next immutable image.
+RUN cp /usr/share/nginx/html/config.js.template /tmp/traffic-config.js.template \
+    && rm -rf /usr/share/nginx/html \
+    && mkdir -p /usr/share/nginx/html \
+    && mv /tmp/traffic-config.js.template /usr/share/nginx/html/config.js.template
+COPY dist/ /usr/share/nginx/html/

@@ -28,11 +28,14 @@ import { StatusTag } from '@/components/StatusTag';
 import { WorkPanel } from '@/components/WorkPanel';
 import type { NavRoute } from '@/routes/routeManifest';
 import {
+  applyPlaybookExecutionOperation,
   downloadPlaybookEvidence,
   drillPlaybook,
   fetchPlaybookCatalog,
   fetchPlaybookWorkbench,
+  getPlaybookExecution,
   newPlaybookDraft,
+  requestPlaybookExecution,
   rollbackPlaybookDrill,
   savePlaybookDraft,
   setPlaybookEnabled,
@@ -42,6 +45,7 @@ import {
   type PlaybookDefinition,
   type PlaybookDefinitionRecord,
   type PlaybookExecutionRecord,
+  type PlaybookExecutionOperation,
 } from '@/services/playbookAutomationApi';
 import type { PageSnapshot } from '@/services/mockData';
 
@@ -71,6 +75,10 @@ export function PlaybookAutomationPage({ route }: { route: NavRoute }) {
   const [editing, setEditing] = useState<PlaybookDefinitionRecord>();
   const [rollbackExecution, setRollbackExecution] = useState<PlaybookExecutionRecord>();
   const [rollbackReason, setRollbackReason] = useState('演练验证完成，记录回滚证据');
+  const [liveModalOpen, setLiveModalOpen] = useState(false);
+  const [liveExecution, setLiveExecution] = useState<PlaybookExecutionRecord>();
+  const [liveAlertId, setLiveAlertId] = useState('');
+  const [liveReason, setLiveReason] = useState('安全运营确认请求执行本次响应剧本');
 
   const catalogQuery = useQuery({ queryKey: ['playbook-catalog'], queryFn: fetchPlaybookCatalog });
   const catalog = useMemo(() => catalogQuery.data ?? [], [catalogQuery.data]);
@@ -101,16 +109,16 @@ export function PlaybookAutomationPage({ route }: { route: NavRoute }) {
     mutationFn: async (input: { kind: 'submit' | 'approve' | 'reject' | 'drill' | 'enable' | 'disable'; reason?: string }) => {
       if (!selected) throw new Error('请先选择剧本');
       if (input.kind === 'drill') return drillPlaybook(selected.name, selected.version);
-	  if (input.kind === 'enable' || input.kind === 'disable') return setPlaybookEnabled(selected.name, input.kind === 'enable', selected.version);
+    if (input.kind === 'enable' || input.kind === 'disable') return setPlaybookEnabled(selected.name, input.kind === 'enable', selected.version);
       const action = input.kind === 'submit' ? 'submit-approval' : input.kind;
       return transitionPlaybook(selected.name, action, selected.version, input.reason);
     },
     onSuccess: async (_, input) => {
-	  const successMessage = input.kind === 'drill'
-	    ? '演练已完成：所有动作均为模拟，未施加外部影响'
-	    : input.kind === 'enable' ? '剧本已启用并写入审计'
-	      : input.kind === 'disable' ? '剧本已停用并写入审计' : '剧本状态已更新并写入审计';
-	  messageApi.success(successMessage);
+    const successMessage = input.kind === 'drill'
+      ? '演练已完成：所有动作均为模拟，未施加外部影响'
+      : input.kind === 'enable' ? '剧本已启用并写入审计'
+        : input.kind === 'disable' ? '剧本已停用并写入审计' : '剧本状态已更新并写入审计';
+    messageApi.success(successMessage);
       await refresh();
     },
     onError: (error) => messageApi.error(errorText(error)),
@@ -148,6 +156,43 @@ export function PlaybookAutomationPage({ route }: { route: NavRoute }) {
     },
     onError: (error) => messageApi.error(errorText(error)),
   });
+  const liveExecutionMutation = useMutation({
+    mutationFn: async () => {
+      if (!selected) throw new Error('请先选择剧本');
+      if (!liveAlertId.trim()) throw new Error('实行动作必须绑定真实告警编号');
+      return requestPlaybookExecution(selected.name, selected.version, liveReason, {
+        alert_id: liveAlertId.trim(),
+        alert_type: selected.definition.trigger.alert_type,
+        severity: selected.definition.trigger.severity_min,
+      });
+    },
+    onSuccess: async (execution) => {
+      setLiveExecution(execution);
+      messageApi.info(`实行动作已受理：${execution.status}，尚未宣告外部效果成功`);
+      await refresh();
+    },
+    onError: (error) => messageApi.error(errorText(error)),
+  });
+  const liveControlMutation = useMutation({
+    mutationFn: async (operation: PlaybookExecutionOperation) => {
+      if (!liveExecution?.workflow_revision) throw new Error('缺少权威执行 revision');
+      return applyPlaybookExecutionOperation(liveExecution.execution_id, operation, liveExecution.workflow_revision, liveReason);
+    },
+    onSuccess: async (execution) => {
+      setLiveExecution(execution);
+      messageApi.info(`执行工作流已更新：${execution.status}`);
+      await refresh();
+    },
+    onError: (error) => messageApi.error(errorText(error)),
+  });
+  const refreshLiveExecution = async () => {
+    if (!liveExecution) return;
+    try {
+      setLiveExecution(await getPlaybookExecution(liveExecution.execution_id));
+    } catch (error) {
+      messageApi.error(errorText(error));
+    }
+  };
 
   const openEditor = (record?: PlaybookDefinitionRecord) => {
     const definition = record?.definition ?? newPlaybookDraft();
@@ -198,15 +243,16 @@ export function PlaybookAutomationPage({ route }: { route: NavRoute }) {
       <section className="taf-playbooks-shell">
         <main className="taf-playbooks-main">
           <header className="taf-playbooks-titlebar">
-            <div><h1>{route.page.title}</h1><span>PostgreSQL 租户剧本 · 两人审批 · 仅演练执行 · 全链路审计</span></div>
+            <div><h1>{route.page.title}</h1><span>PostgreSQL 租户剧本 · 两人审批 · 演练与provider实行动作分离 · 全链路审计</span></div>
             <Space size={6} wrap>
               <Button size="small" type="primary" icon={<ThunderboltOutlined />} onClick={() => openEditor()}>新建剧本</Button>
               <Button size="small" icon={<SaveOutlined />} disabled={!selected || selected.stage === 'approval_pending'} onClick={() => selected && openEditor(selected)}>保存草稿</Button>
               <Button size="small" icon={<AuditOutlined />} disabled={!selected || !['draft', 'rejected'].includes(selected.stage)} loading={lifecycleMutation.isPending} onClick={() => lifecycleMutation.mutate({ kind: 'submit' })}>提交审批</Button>
               {selected?.stage === 'approval_pending' && <Button size="small" icon={<CheckCircleOutlined />} onClick={() => lifecycleMutation.mutate({ kind: 'approve' })}>独立审批</Button>}
               {selected?.stage === 'approval_pending' && <Button size="small" danger icon={<CloseCircleOutlined />} onClick={() => lifecycleMutation.mutate({ kind: 'reject', reason: '审批证据不完整，需要补充后重新提交' })}>驳回</Button>}
-			  {selected?.stage === 'approved' && <Button size="small" icon={<PoweroffOutlined />} loading={lifecycleMutation.isPending} onClick={() => lifecycleMutation.mutate({ kind: selected.enabled ? 'disable' : 'enable' })}>{selected.enabled ? '停用' : '启用'}</Button>}
+        {selected?.stage === 'approved' && <Button size="small" icon={<PoweroffOutlined />} loading={lifecycleMutation.isPending} onClick={() => lifecycleMutation.mutate({ kind: selected.enabled ? 'disable' : 'enable' })}>{selected.enabled ? '停用' : '启用'}</Button>}
               <Tooltip title="验证动作计划并持久化 simulated 结果，不调用网络、终端或通知提供方"><Button size="small" icon={<PlayCircleOutlined />} disabled={!selected} onClick={() => lifecycleMutation.mutate({ kind: 'drill' })}>执行演练</Button></Tooltip>
+              <Tooltip title="提交真实provider执行请求；受理、审批和最终步骤回执是不同状态"><Button size="small" danger icon={<ThunderboltOutlined />} disabled={!selected?.enabled || selected?.stage !== 'approved'} onClick={() => { setLiveExecution(undefined); setLiveAlertId(''); setLiveModalOpen(true); }}>请求执行</Button></Tooltip>
               <Button size="small" danger ghost icon={<RollbackOutlined />} disabled={!latestRollbackCandidate} onClick={() => { setRollbackExecution(latestRollbackCandidate); setRollbackReason('演练验证完成，记录回滚证据'); }}>回滚演练</Button>
               <Button size="small" icon={<DownloadOutlined />} onClick={() => void exportEvidence()}>导出审计</Button>
               <Button size="small" icon={<ReloadOutlined />} onClick={() => void refresh()} />
@@ -270,6 +316,47 @@ export function PlaybookAutomationPage({ route }: { route: NavRoute }) {
         <Alert type="warning" showIcon message="此操作只回滚演练记录状态，不声称恢复任何外部网络或终端配置。" />
         <Input.TextArea value={rollbackReason} onChange={(event) => setRollbackReason(event.target.value)} rows={3} style={{ marginTop: 12 }} />
       </Modal>
+
+      <Modal
+        title="剧本实行动作工作流"
+        open={liveModalOpen}
+        width={760}
+        onCancel={() => setLiveModalOpen(false)}
+        footer={null}
+        destroyOnClose={false}
+      >
+        <Alert
+          type={liveExecution && ['completed', 'compensated'].includes(liveExecution.status) ? 'success' : 'info'}
+          showIcon
+          message={liveExecution ? `权威状态：${liveExecution.status}` : '请求只会进入审批工作流，不代表provider已执行'}
+          description={liveExecution ? `审批：${liveExecution.approval_status}；执行器：${liveExecution.executor_status}；revision：${liveExecution.workflow_revision}` : '必须绑定真实告警编号、当前已批准且已启用的剧本版本，并提供操作原因。'}
+        />
+        {!liveExecution ? (
+          <Space direction="vertical" style={{ width: '100%', marginTop: 12 }}>
+            <Input aria-label="实行动作告警编号" value={liveAlertId} onChange={(event) => setLiveAlertId(event.target.value)} placeholder="真实告警编号" />
+            <Input.TextArea aria-label="实行动作原因" value={liveReason} onChange={(event) => setLiveReason(event.target.value)} autoSize={{ minRows: 2, maxRows: 4 }} />
+            <Button type="primary" danger loading={liveExecutionMutation.isPending} disabled={!liveAlertId.trim() || liveReason.trim().length < 8} onClick={() => liveExecutionMutation.mutate()}>提交实行动作请求</Button>
+          </Space>
+        ) : (
+          <Space direction="vertical" style={{ width: '100%', marginTop: 12 }}>
+            <dl>
+              <dt>执行编号</dt><dd>{liveExecution.execution_id}</dd>
+              <dt>剧本版本</dt><dd>{liveExecution.playbook_name} / v{liveExecution.playbook_version}</dd>
+              <dt>请求人 / 审批人</dt><dd>{liveExecution.requested_by || '-'} / {liveExecution.approved_by || '尚未审批'}</dd>
+              <dt>执行步骤回执</dt><dd><pre>{JSON.stringify(liveExecution.execution_receipt ?? {}, null, 2)}</pre></dd>
+              <dt>补偿步骤回执</dt><dd><pre>{JSON.stringify(liveExecution.compensation_receipt ?? {}, null, 2)}</pre></dd>
+            </dl>
+            <Input.TextArea aria-label="执行控制原因" value={liveReason} onChange={(event) => setLiveReason(event.target.value)} autoSize={{ minRows: 2, maxRows: 4 }} />
+            <Space wrap>
+              <Button loading={liveControlMutation.isPending} onClick={() => void refreshLiveExecution()} icon={<ReloadOutlined />}>刷新权威状态</Button>
+              {liveExecution.status === 'pending_approval' && <Button type="primary" loading={liveControlMutation.isPending} disabled={liveReason.trim().length < 8} onClick={() => liveControlMutation.mutate('approve')}>独立批准</Button>}
+              {liveExecution.status === 'pending_approval' && <Button danger loading={liveControlMutation.isPending} disabled={liveReason.trim().length < 8} onClick={() => liveControlMutation.mutate('reject')}>拒绝</Button>}
+              {['pending_approval', 'approved_awaiting_executor'].includes(liveExecution.status) && <Button loading={liveControlMutation.isPending} disabled={liveReason.trim().length < 8} onClick={() => liveControlMutation.mutate('cancel')}>取消请求</Button>}
+              {['completed', 'partial'].includes(liveExecution.status) && <Button danger loading={liveControlMutation.isPending} disabled={liveReason.trim().length < 8} onClick={() => liveControlMutation.mutate('compensate')}>独立批准补偿</Button>}
+            </Space>
+          </Space>
+        )}
+      </Modal>
     </div>
   );
 }
@@ -282,15 +369,14 @@ function PlaybookFlow({ definition }: { definition?: PlaybookDefinition }) {
 function PlaybookFlowCanvas({ definition }: { definition: PlaybookDefinition }) {
   const flowRef = useRef<HTMLDivElement>(null);
   const [geometry, setGeometry] = useState<PlaybookFlowGeometry>();
-  const actionNodes = definition.actions.slice(0, 4);
-  const nodes: FlowNode[] = [
+  const actionNodes = useMemo(() => definition.actions.slice(0, 4), [definition.actions]);
+  const nodes = useMemo<FlowNode[]>(() => [
     { id: 'start', title: '开始', caption: definition.trigger.alert_type, icon: <PlayCircleOutlined />, tone: 'ok' },
     { id: 'condition', title: '触发条件', caption: `${definition.trigger.severity_min} / ${definition.trigger.score_min}`, icon: <BranchesOutlined />, tone: 'ok' },
     { id: 'confirm', title: '独立审批', caption: definition.approval_policy.two_person_rule ? '两人规则' : '单人规则', icon: <LockOutlined />, tone: 'warn' },
     ...actionNodes.map((action, index): FlowNode => ({ id: ['isolate', 'block', 'rollback', 'script'][index], title: actionLabel(action.type), caption: '模拟验证', icon: <ThunderboltOutlined />, tone: actionRisk(action.type) ? 'risk' : 'info' })),
     { id: 'end', title: '结束', caption: '写入审计', icon: <CheckCircleOutlined />, tone: 'ok' },
-  ];
-  const nodeSignature = nodes.map((node) => `${node.id}:${node.tone}`).join('|');
+  ], [actionNodes, definition.approval_policy.two_person_rule, definition.trigger.alert_type, definition.trigger.score_min, definition.trigger.severity_min]);
 
   useLayoutEffect(() => {
     const root = flowRef.current;
@@ -340,7 +426,7 @@ function PlaybookFlowCanvas({ definition }: { definition: PlaybookDefinition }) 
       observer.disconnect();
       window.removeEventListener('resize', update);
     };
-  }, [nodeSignature]);
+  }, [nodes]);
 
   return <div ref={flowRef} className={`taf-playbooks-flow has-${actionNodes.length}-actions`}><PlaybookFlowConnectionsChart geometry={geometry} />{nodes.map((node) => <button key={node.id} type="button" data-flow-node-id={node.id} title={`${node.title} · ${node.caption}`} aria-label={`${node.title}：${node.caption}`} className={`taf-playbooks-flow-node is-${node.tone} is-${node.id}`}><span>{node.icon}</span><b>{node.title}</b><em>{node.caption}</em><small>{node.id === 'confirm' ? '审批门禁' : 'simulated'}</small></button>)}<div className="taf-playbooks-flow-legend"><i className="is-ok" />已定义<i className="is-warn" />审批门禁<i className="is-risk" />高风险模拟<i className="is-info" />普通模拟</div></div>;
 }

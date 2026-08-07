@@ -89,6 +89,7 @@ export function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
   const [ssoSubmitting, setSsoSubmitting] = useState(false);
   const visualShieldMode =
+    import.meta.env.DEV &&
     typeof window !== 'undefined' &&
     (new URLSearchParams(window.location.search).get('__taf_visual') === '1' || isVisualBreakdownMode());
   const requiresCaptcha = appConfig.authEnabled && !appConfig.useMock;

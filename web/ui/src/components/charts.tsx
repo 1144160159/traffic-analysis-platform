@@ -29,6 +29,7 @@ import type { BarSeriesOption, BoxplotSeriesOption, CustomSeriesOption, GaugeSer
 import type { GridComponentOption, LegendComponentOption, TitleComponentOption, TooltipComponentOption, VisualMapComponentOption } from 'echarts/components';
 import { useEffect, useRef, useState } from 'react';
 import type { WheelEvent } from 'react';
+import { compactTopicTopologyLabel, safeTopicTopologyRichText } from './topicTopologyLabel';
 
 echarts.use([LineChart, GaugeChart, ScatterChart, HeatmapChart, LinesChart, CustomChart, PieChart, BarChart, BoxplotChart, SankeyChart, GraphChart, GridComponent, TooltipComponent, TitleComponent, LegendComponent, VisualMapComponent, CanvasRenderer]);
 
@@ -2717,10 +2718,16 @@ const topicTopologyFrameSize = (node: TopicTopologyNode, visualProfile: 'default
   const apiWidth = Array.isArray(node.size) ? node.size[0] : 104;
   const apiHeight = Array.isArray(node.size) ? node.size[1] : 46;
   if (visualProfile === 'apt-reference') {
-    if (node.id.startsWith('campaign-')) return [Math.max(112, apiWidth), Math.max(68, apiHeight)];
-    if (node.id.startsWith('phase-')) return [Math.max(88, apiWidth), Math.max(52, apiHeight)];
-    if (node.id.startsWith('evidence-')) return [Math.max(104, apiWidth), Math.max(52, apiHeight)];
-    if (node.id.startsWith('asset-')) return [Math.max(96, apiWidth), Math.max(54, apiHeight)];
+    // The APT reference uses four horizontal business lanes. Server-provided
+    // dimensions are hints, but allowing six 124-144px frames in one lane
+    // exceeds the 1920x1080 workbench canvas and clips stable IDs. Compact
+    // lane-specific frames preserve every node and expose the full value in
+    // the tooltip.
+    if (node.id.startsWith('campaign-')) return [132, 58];
+    if (node.id.startsWith('phase-')) return [92, 50];
+    if (node.id.startsWith('evidence-')) return [96, 52];
+    if (node.id.startsWith('asset-')) return [96, 52];
+    return [96, 52];
   }
   // Rich-text fragments have their own padding and an inter-fragment gap.
   // Reserve that space in the frame itself so an icon or a long CJK label can
@@ -2791,11 +2798,17 @@ export function TopicTopologyGraph({
   const seriesWidth = Math.max(1, chartSize.width - seriesInset * 2);
   const seriesHeight = Math.max(1, chartSize.height - seriesInset * 2);
   const minimumFrameGap = 13;
+  const aptReference = visualProfile === 'apt-reference';
   let nodeContentOverflowCount = 0;
   let nodeInsetViolationCount = 0;
   const preparedGraphNodes = uniqueNodes.map((node) => {
-    const [nodeWidth, nodeHeight] = topicTopologyFrameSize(node, visualProfile);
-    const aptReference = visualProfile === 'apt-reference';
+    const [nodeWidth, preferredNodeHeight] = topicTopologyFrameSize(node, visualProfile);
+    // Five destination nodes plus the normal 13px gutter need 322px. The
+    // compact 1366px workbench exposes a 309px chart, so use a 48px frame in
+    // that viewport instead of clipping the last authoritative destination.
+    const nodeHeight = !aptReference && seriesHeight < 330
+      ? Math.min(preferredNodeHeight, 48)
+      : preferredNodeHeight;
     const minX = Math.min(50, ((nodeWidth / 2 + frameInset) / seriesWidth) * 100);
     const maxX = Math.max(50, 100 - minX);
     const minY = Math.min(50, ((nodeHeight / 2 + frameInset) / seriesHeight) * 100);
@@ -2825,6 +2838,7 @@ export function TopicTopologyGraph({
       id: node.id,
       name: node.id,
       value: node.detail,
+      displayLabel: safeTopicTopologyRichText(compactTopicTopologyLabel(node.label, aptReference ? 18 : 28)),
       x,
       y,
       symbol: 'roundRect' as const,
@@ -2848,10 +2862,10 @@ export function TopicTopologyGraph({
         overflow: 'truncate' as const,
         width: nodeWidth - 16,
         formatter: aptReference && node.id.startsWith('campaign-')
-          ? `{icon|} {kicker|战役簇}\n{title|${node.label}}\n{detail|${node.detail}}`
+          ? `{icon|} {kicker|战役簇}\n{title|${safeTopicTopologyRichText(compactTopicTopologyLabel(node.label, 18))}}\n{detail|${safeTopicTopologyRichText(node.detail)}}`
           : node.icon
-            ? `{icon|} {title|${node.label}}\n{detail|${node.detail}}`
-            : `{title|${node.label}}\n{detail|${node.detail}}`,
+            ? `{icon|} {title|${safeTopicTopologyRichText(compactTopicTopologyLabel(node.label, aptReference ? 18 : 28))}}\n{detail|${safeTopicTopologyRichText(node.detail)}}`
+            : `{title|${safeTopicTopologyRichText(compactTopicTopologyLabel(node.label, aptReference ? 18 : 28))}}\n{detail|${safeTopicTopologyRichText(node.detail)}}`,
         rich: {
           icon: {
             width: 14,
@@ -2927,38 +2941,74 @@ export function TopicTopologyGraph({
     }
     return positions;
   };
-  const columnGroups: PreparedGraphNode[][] = [];
-  [...preparedGraphNodes]
-    .sort((left, right) => left.x - right.x || left.y - right.y)
-    .forEach((node) => {
-      const current = columnGroups[columnGroups.length - 1];
-      if (!current || Math.abs(current[0].x - node.x) > 0.5) columnGroups.push([node]);
-      else current.push(node);
-    });
-  const columnPositions = distributeAxis(
-    columnGroups.map((column) => ({
-      desired: column.reduce((total, node) => total + node.x, 0) / column.length / 100 * seriesWidth,
-      size: Math.max(...column.map((node) => node.symbolSize[0])),
-    })),
-    seriesWidth,
-  );
-  columnGroups.forEach((column, columnIndex) => {
-    const centerX = columnPositions[columnIndex];
-    column.forEach((node) => {
-      node.x = centerX / seriesWidth * 100;
-    });
-    const orderedNodes = [...column].sort((left, right) => left.y - right.y);
+  if (aptReference) {
+    // APT coordinates describe horizontal semantic lanes (campaign, phase,
+    // entity and evidence). Packing them as vertical columns transposes the
+    // contract and can force six wide columns outside the canvas. Lay out each
+    // lane independently so long, real identifiers remain bounded and legible.
+    const rowGroups: PreparedGraphNode[][] = [];
+    [...preparedGraphNodes]
+      .sort((left, right) => left.y - right.y || left.x - right.x)
+      .forEach((node) => {
+        const current = rowGroups[rowGroups.length - 1];
+        if (!current || Math.abs(current[0].y - node.y) > 0.5) rowGroups.push([node]);
+        else current.push(node);
+      });
     const rowPositions = distributeAxis(
-      orderedNodes.map((node) => ({
-        desired: node.y / 100 * seriesHeight,
-        size: node.symbolSize[1],
+      rowGroups.map((row) => ({
+        desired: row.reduce((total, node) => total + node.y, 0) / row.length / 100 * seriesHeight,
+        size: Math.max(...row.map((node) => node.symbolSize[1])),
       })),
       seriesHeight,
     );
-    orderedNodes.forEach((node, rowIndex) => {
-      node.y = rowPositions[rowIndex] / seriesHeight * 100;
+    rowGroups.forEach((row, rowIndex) => {
+      const orderedNodes = [...row].sort((left, right) => left.x - right.x);
+      const columnPositions = distributeAxis(
+        orderedNodes.map((node) => ({
+          desired: node.x / 100 * seriesWidth,
+          size: node.symbolSize[0],
+        })),
+        seriesWidth,
+      );
+      orderedNodes.forEach((node, columnIndex) => {
+        node.x = columnPositions[columnIndex] / seriesWidth * 100;
+        node.y = rowPositions[rowIndex] / seriesHeight * 100;
+      });
     });
-  });
+  } else {
+    const columnGroups: PreparedGraphNode[][] = [];
+    [...preparedGraphNodes]
+      .sort((left, right) => left.x - right.x || left.y - right.y)
+      .forEach((node) => {
+        const current = columnGroups[columnGroups.length - 1];
+        if (!current || Math.abs(current[0].x - node.x) > 0.5) columnGroups.push([node]);
+        else current.push(node);
+      });
+    const columnPositions = distributeAxis(
+      columnGroups.map((column) => ({
+        desired: column.reduce((total, node) => total + node.x, 0) / column.length / 100 * seriesWidth,
+        size: Math.max(...column.map((node) => node.symbolSize[0])),
+      })),
+      seriesWidth,
+    );
+    columnGroups.forEach((column, columnIndex) => {
+      const centerX = columnPositions[columnIndex];
+      column.forEach((node) => {
+        node.x = centerX / seriesWidth * 100;
+      });
+      const orderedNodes = [...column].sort((left, right) => left.y - right.y);
+      const rowPositions = distributeAxis(
+        orderedNodes.map((node) => ({
+          desired: node.y / 100 * seriesHeight,
+          size: node.symbolSize[1],
+        })),
+        seriesHeight,
+      );
+      orderedNodes.forEach((node, rowIndex) => {
+        node.y = rowPositions[rowIndex] / seriesHeight * 100;
+      });
+    });
+  }
   const graphNodes = preparedGraphNodes;
   nodeInsetViolationCount = 0;
   graphNodes.forEach((node) => {

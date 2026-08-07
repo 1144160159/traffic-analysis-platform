@@ -20,7 +20,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Alert, Button, Drawer, Empty, Input, Modal, Popconfirm, Select, Space, Table, Tabs, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { ReactNode } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { CampaignAttackGraphChart, DataQualityDonutChart } from '@/components/charts';
 import { MetricTile } from '@/components/MetricTile';
@@ -29,7 +29,22 @@ import { WorkPanel } from '@/components/WorkPanel';
 import { CampaignImpactModalContent } from '@/pages/CampaignDetailPage';
 import type { NavRoute } from '@/routes/routeManifest';
 import { fetchPageSnapshot } from '@/services/api';
-import { submitCampaignAction, type CampaignActionId, type CampaignActionResult } from '@/services/campaignActionApi';
+import {
+  CampaignReportTerminalError,
+  applyCampaignSOAROperation,
+  classifyCampaignActionStatus,
+  downloadCampaignReport,
+  getCampaignSOARJob,
+  saveCampaignReportArtifact,
+  submitCampaignAction,
+  waitForCampaignReport,
+  type CampaignActionId,
+  type CampaignActionResult,
+  type CampaignActionStatus,
+  type CampaignReportStatus,
+  type CampaignSOARJob,
+  type CampaignSOAROperation,
+} from '@/services/campaignActionApi';
 import { fetchCampaignDetailSnapshot, type CampaignDetailSnapshot } from '@/services/campaignDetailApi';
 import type { PageSnapshot, SnapshotRow } from '@/services/mockData';
 import { isVisualBreakdownMode } from '@/utils/visualBreakdownMode';
@@ -78,6 +93,9 @@ type CampaignFilters = {
 type CampaignActionContext = {
   title: string;
   result: CampaignActionResult;
+  report?: CampaignReportStatus;
+  soar?: CampaignSOARJob;
+  reportError?: string;
 };
 
 const emptyCampaignFilters: CampaignFilters = { risk: '全部', status: '全部', phase: '全部', keyword: '' };
@@ -86,7 +104,7 @@ export function CampaignWorkbenchPage({ route }: { route: NavRoute }) {
   const navigate = useNavigate();
   const [routeSearch, setRouteSearch] = useSearchParams();
   const queryClient = useQueryClient();
-  const visualBreakdownMode = isVisualBreakdownMode();
+  const visualBreakdownMode = import.meta.env.DEV && isVisualBreakdownMode();
   const visualPageId = routeSearch.get('__codex_page_id') ?? '';
   const requestedCampaign = routeSearch.get('campaign') ?? '';
   const drawerRequested = routeSearch.get('drawer') === 'campaign-detail';
@@ -96,9 +114,12 @@ export function CampaignWorkbenchPage({ route }: { route: NavRoute }) {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(visualBreakdownMode ? 10 : 8);
   const [actionContext, setActionContext] = useState<CampaignActionContext>();
+  const [soarControlPending, setSoarControlPending] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [impactOpen, setImpactOpen] = useState(false);
   const [activeImpact, setActiveImpact] = useState('asset');
+  const reportAbortRef = useRef<AbortController>();
+  useEffect(() => () => reportAbortRef.current?.abort(), []);
   useEffect(() => {
     setPage(1);
     setPageSize(visualBreakdownMode ? 10 : 8);
@@ -139,11 +160,12 @@ export function CampaignWorkbenchPage({ route }: { route: NavRoute }) {
     mutationFn: submitCampaignAction,
     onSuccess: async (result) => {
       await queryClient.invalidateQueries({ queryKey: ['page-snapshot', route.id] });
-      message.success(`战役操作已完成：${result.jobId}`);
+      showCampaignActionNotice(result.jobStatus, result.jobId);
     },
     onError: (mutationError) => message.error(mutationError instanceof Error ? mutationError.message : '战役操作提交失败'),
   });
   const selectedCampaignId = text(selectedRow, '战役名称', '');
+  const selectedSnapshotId = text(selectedRow, '__snapshot_id', '');
   const selectCampaign = (record: SnapshotRow) => {
     const targetId = rowKey(record);
     setSelectedRowKey(targetId);
@@ -153,8 +175,8 @@ export function CampaignWorkbenchPage({ route }: { route: NavRoute }) {
     setRouteSearch(next, { replace: true });
   };
   const detailQuery = useQuery({
-    queryKey: ['campaign-detail-drawer', selectedCampaignId],
-    queryFn: () => fetchCampaignDetailSnapshot(selectedCampaignId),
+    queryKey: ['campaign-detail-drawer', selectedCampaignId, selectedSnapshotId],
+    queryFn: () => fetchCampaignDetailSnapshot(selectedCampaignId, selectedSnapshotId || undefined),
     enabled: Boolean(selectedCampaignId),
     staleTime: 15_000,
   });
@@ -167,15 +189,101 @@ export function CampaignWorkbenchPage({ route }: { route: NavRoute }) {
     if (!campaignId) {
       throw new Error('当前没有可操作的战役，请调整筛选条件后重试');
     }
+    const targetRow = filteredRows.find((row) => rowKey(row) === campaignId) ?? selectedRow;
+    const detailRevision = detailQuery.data?.campaignId === campaignId ? detailQuery.data.stateVersion : undefined;
+    const snapshotId = detailQuery.data?.campaignId === campaignId
+      ? detailQuery.data.snapshotId
+      : String(targetRow?.__snapshot_id ?? '');
+    const expectedRevision = Number(detailRevision ?? targetRow?.__state_version ?? 0);
     const result = await actionMutation.mutateAsync({
       actionId,
       campaignId,
       target: options?.target ?? title,
-      metadata: options?.metadata,
+      metadata: {
+        ...(options?.metadata ?? {}),
+        ...(snapshotId ? { snapshot_id: snapshotId } : {}),
+      },
+      expectedRevision: Number.isSafeInteger(expectedRevision) && expectedRevision >= 0 ? expectedRevision : 0,
+      reason: `战役工作台操作：${title}`,
     });
     if (options?.showReceipt !== false) setActionContext({ title, result });
+    if (actionId === 'campaign-soar-response') {
+      try {
+        const soar = await getCampaignSOARJob(campaignId, result.jobId);
+        if (options?.showReceipt !== false) setActionContext({ title, result, soar });
+      } catch (soarError) {
+        const errorMessage = soarError instanceof Error ? soarError.message : 'SOAR 状态读取失败';
+        if (options?.showReceipt !== false) setActionContext({ title, result, reportError: errorMessage });
+        throw soarError;
+      }
+    }
+    if (actionId === 'campaign-report-generate') {
+      const reportId = typeof result.result.report_id === 'string' ? result.result.report_id.trim() : '';
+      if (!reportId) throw new Error('战役报告受理响应缺少稳定 report_id');
+      reportAbortRef.current?.abort();
+      const controller = new AbortController();
+      reportAbortRef.current = controller;
+      try {
+        const report = await waitForCampaignReport(campaignId, reportId, {
+          signal: controller.signal,
+          onStatus: (status) => {
+            if (options?.showReceipt !== false) setActionContext({ title, result, report: status });
+          },
+        });
+        const artifact = await downloadCampaignReport(campaignId, report);
+        saveCampaignReportArtifact(artifact);
+        if (options?.showReceipt !== false) setActionContext({ title, result, report });
+        message.success(`战役报告已校验并下载：${artifact.filename}`);
+      } catch (reportError) {
+        if (controller.signal.aborted) throw reportError;
+        const report = reportError instanceof CampaignReportTerminalError ? reportError.report : undefined;
+        const errorMessage = reportError instanceof Error ? reportError.message : '战役报告执行失败';
+        if (options?.showReceipt !== false) setActionContext({ title, result, report, reportError: errorMessage });
+        message.error(errorMessage);
+        throw reportError;
+      } finally {
+        if (reportAbortRef.current === controller) reportAbortRef.current = undefined;
+      }
+    }
     if (options?.navigateTo) navigate(options.navigateTo);
     return result;
+  };
+  const controlSOAR = async (operation: CampaignSOAROperation, reason: string) => {
+    const current = actionContext?.soar;
+    if (!current) return;
+    setSoarControlPending(true);
+    try {
+      const soar = await applyCampaignSOAROperation(
+        current.campaignId,
+        current.jobId,
+        operation,
+        current.revision,
+        reason,
+      );
+      setActionContext((existing) => existing ? { ...existing, soar, reportError: undefined } : existing);
+      message.info(`SOAR 操作已提交：${soar.status}`);
+    } catch (controlError) {
+      const errorMessage = controlError instanceof Error ? controlError.message : 'SOAR 操作失败';
+      setActionContext((existing) => existing ? { ...existing, reportError: errorMessage } : existing);
+      message.error(errorMessage);
+    } finally {
+      setSoarControlPending(false);
+    }
+  };
+  const refreshSOAR = async () => {
+    const current = actionContext?.soar;
+    if (!current) return;
+    setSoarControlPending(true);
+    try {
+      const soar = await getCampaignSOARJob(current.campaignId, current.jobId);
+      setActionContext((existing) => existing ? { ...existing, soar, reportError: undefined } : existing);
+    } catch (refreshError) {
+      const errorMessage = refreshError instanceof Error ? refreshError.message : 'SOAR 状态刷新失败';
+      setActionContext((existing) => existing ? { ...existing, reportError: errorMessage } : existing);
+      message.error(errorMessage);
+    } finally {
+      setSoarControlPending(false);
+    }
   };
   const openDetail = async () => {
     if (!selectedCampaignId) return;
@@ -198,14 +306,11 @@ export function CampaignWorkbenchPage({ route }: { route: NavRoute }) {
       message.info('当前查询结果为空，无可导出数据');
       return;
     }
-    await executeAction('campaign-export', '导出当前页', { target: `当前页 ${filteredRows.length} 条` });
-    const blob = new Blob([JSON.stringify(filteredRows, null, 2)], { type: 'application/json;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = `campaigns-${new Date().toISOString().slice(0, 10)}.json`;
-    anchor.click();
-    URL.revokeObjectURL(url);
+    await executeAction('campaign-export', '导出当前页', {
+      target: `当前页 ${filteredRows.length} 条`,
+      metadata: { selection: 'current-page', row_count: filteredRows.length, format: 'json' },
+    });
+    message.info('战役列表导出请求已受理；服务端制品与下载终态尚未返回，本次不会生成浏览器伪制品。');
   };
 
   const columns: ColumnsType<SnapshotRow> = route.page.tableColumns.map((column) => ({
@@ -396,7 +501,7 @@ export function CampaignWorkbenchPage({ route }: { route: NavRoute }) {
                 void openDetail();
                 return;
               }
-              void handleCampaignAction(action, selectedCampaignId, selectedRow, executeAction);
+              void handleCampaignAction(action, selectedCampaignId, selectedRow, executeAction).catch(() => {});
             }}
           />
         </aside>
@@ -407,9 +512,12 @@ export function CampaignWorkbenchPage({ route }: { route: NavRoute }) {
         width="min(520px, calc(100dvw - 40px))"
         open={Boolean(actionContext)}
         footer={null}
-        onCancel={() => setActionContext(undefined)}
+        onCancel={() => {
+          reportAbortRef.current?.abort();
+          setActionContext(undefined);
+        }}
       >
-        {actionContext && <CampaignActionReceipt context={actionContext} />}
+        {actionContext && <CampaignActionReceipt context={actionContext} pending={soarControlPending} onSOAROperation={controlSOAR} onSOARRefresh={refreshSOAR} />}
       </Modal>
       <Modal
         className="taf-campaign-impact-modal"
@@ -456,7 +564,7 @@ export function CampaignWorkbenchPage({ route }: { route: NavRoute }) {
           error={detailQuery.error}
           onRetry={() => void detailQuery.refetch()}
           onClose={closeDetail}
-          onOpenFull={() => navigate(`/campaigns/${encodeURIComponent(selectedCampaignId)}`)}
+          onOpenFull={() => navigate(`/campaigns/${encodeURIComponent(selectedCampaignId)}${detailQuery.data?.snapshotId ? `?snapshot_id=${encodeURIComponent(detailQuery.data.snapshotId)}` : ''}`)}
           onAction={(actionId, target, metadata) => executeAction(actionId, target, { metadata })}
         />
       </Drawer>
@@ -559,7 +667,7 @@ function AttackPhaseView({
   return (
     <div className="taf-campaign-attack" aria-busy={detailLoading}>
       <div className="taf-campaign-phase-line">
-        {phaseNodes.map(({ phase, alertCount, evidenceCount, tone, Icon }, index) => (
+        {phaseNodes.map(({ phase, alertCount, tone, Icon }, index) => (
           <div key={phase} className={`taf-campaign-phase is-${tone}`}>
             <span>{phase}</span>
             <i>
@@ -855,6 +963,23 @@ const renderCampaignCell = (
 
 const rowKey = (record: SnapshotRow) => String(record['战役名称'] ?? JSON.stringify(record));
 
+const showCampaignActionNotice = (status: CampaignActionStatus, jobId: string) => {
+  const statusClass = classifyCampaignActionStatus(status);
+  if (statusClass === 'in_progress') {
+    message.info(`战役操作已受理，尚未最终完成：${jobId}`);
+  } else if (statusClass === 'succeeded') {
+    message.success(`战役操作已完成：${jobId}`);
+  } else if (statusClass === 'partial') {
+    message.warning(`战役操作部分完成，请检查失败目标与补偿状态：${jobId}`);
+  } else if (statusClass === 'cancelled') {
+    message.warning(`战役操作已取消，未形成最终成功：${jobId}`);
+  } else if (statusClass === 'compensated') {
+    message.warning(`战役操作已补偿，原操作不应按成功关闭：${jobId}`);
+  } else {
+    message.error(`战役操作失败，请检查权威回执：${jobId}`);
+  }
+};
+
 const campaignColumnWidth = (column: string) => {
   if (column === '战役名称') return 116;
   if (column === '阶段') return 54;
@@ -927,30 +1052,81 @@ const handleCampaignAction = async (
   if (action === '生成报告') return executeAction('campaign-report-generate', action, { target: '战役复盘报告', metadata: { format: 'pdf', sections: ['攻击阶段', '影响范围', '证据链', '处置结论'], evidence_count: 5 } });
   if (action === '下钻攻击链') return executeAction('campaign-attack-chain-view', action, { navigateTo: `/attack-chains?chain=${encodedId}` });
   if (action === '跳转资产图谱') return executeAction('campaign-graph-view', action, { navigateTo: `/graph?campaign=${encodedId}` });
-  if (action === 'SOAR 处置') return executeAction('campaign-soar-response', action, { navigateTo: `/playbooks?campaign=${encodedId}`, metadata: { dry_run: true } });
+  if (action === 'SOAR 处置') return executeAction('campaign-soar-response', action, { metadata: { playbook_id: 'quarantine-c2' } });
   return executeAction('campaign-context-action', action);
 };
 
-function CampaignActionReceipt({ context }: { context: CampaignActionContext }) {
+function CampaignActionReceipt({
+  context,
+  pending,
+  onSOAROperation,
+  onSOARRefresh,
+}: {
+  context: CampaignActionContext;
+  pending: boolean;
+  onSOAROperation: (operation: CampaignSOAROperation, reason: string) => Promise<void>;
+  onSOARRefresh: () => Promise<void>;
+}) {
   const { result } = context;
+  const [reason, setReason] = useState('战役工作台审批确认执行本次处置');
+  const status = context.soar?.status ?? context.report?.status ?? result.jobStatus;
+  const statusClass = classifyCampaignActionStatus(status as CampaignActionStatus);
+  const inProgress = statusClass === 'in_progress';
+  const failed = Boolean(context.reportError) || statusClass === 'failed';
+  const interrupted = ['partial', 'cancelled', 'compensated'].includes(statusClass);
+  const soar = context.soar;
   return (
     <div className="taf-campaign-action-receipt">
       <Alert
-        type="success"
+        type={failed ? 'error' : inProgress ? 'info' : interrupted ? 'warning' : 'success'}
         showIcon
-        message={result.mode === 'server-persisted-mutation' ? '业务操作已持久化' : '访问操作已审计'}
-        description={result.mode === 'server-persisted-mutation' ? '业务状态或报告任务已写入 PostgreSQL，审计已写入 audit_logs。' : '本次查看或导出操作已写入 campaign_action_jobs 与 audit_logs。'}
+        message={failed ? '业务操作失败' : inProgress ? '业务操作执行中' : statusClass === 'partial' ? '业务操作部分完成' : statusClass === 'cancelled' ? '业务操作已取消' : statusClass === 'compensated' ? '业务操作已补偿' : result.mode === 'server-persisted-mutation' ? '业务操作已完成' : '访问操作已审计'}
+        description={context.reportError ?? (inProgress ? '命令、聚合版本、审计和 outbox 已提交；正在等待审批或权威执行终态，尚未宣告最终成功。' : statusClass === 'partial' ? '仅有部分目标完成；请检查业务结果、失败目标和补偿状态，不能按成功关闭。' : statusClass === 'cancelled' ? '作业已取消；已受理不代表产生最终业务效果。' : statusClass === 'compensated' ? '原操作已执行补偿；补偿终态不等同于原操作成功。' : context.report ? '报告对象已按 PostgreSQL manifest 校验并下载。' : soar ? 'SOAR provider 回执已持久化并与聚合事件、审计完成对账。' : result.mode === 'server-persisted-mutation' ? '业务状态、聚合历史与审计已在 PostgreSQL 完成提交。' : '本次查看或导出操作已写入 campaign_action_jobs 与 audit_logs。')}
       />
       <dl>
         <dt>操作</dt><dd>{context.title}</dd>
         <dt>任务编号</dt><dd>{result.jobId}</dd>
         <dt>接口</dt><dd>{result.endpoint}</dd>
         <dt>审计事件</dt><dd>{result.auditEvent}</dd>
-        <dt>作业状态</dt><dd>{result.jobStatus}</dd>
+        <dt>作业状态</dt><dd>{status}</dd>
         <dt>审计状态</dt><dd>{result.status}</dd>
+        {context.report && <><dt>报告编号</dt><dd>{context.report.reportId}</dd><dt>快照编号</dt><dd>{context.report.snapshotId}</dd><dt>执行次数</dt><dd>{context.report.attempts}</dd><dt>对象摘要</dt><dd>{context.report.artifactSHA256 || '终态前尚未生成'}</dd></>}
+        {soar && <>
+          <dt>剧本</dt><dd>{soar.playbookId}</dd>
+          <dt>审批状态</dt><dd>{soar.approvalStatus}</dd>
+          <dt>执行器状态</dt><dd>{soar.executorStatus}</dd>
+          <dt>工作流版本</dt><dd>{soar.revision}</dd>
+          <dt>请求人 / 审批人</dt><dd>{soar.requestedBy} / {soar.approvedBy || '尚未审批'}</dd>
+          <dt>执行回执</dt><dd><pre>{JSON.stringify(soar.executionReceipt, null, 2)}</pre></dd>
+          <dt>补偿回执</dt><dd><pre>{JSON.stringify(soar.compensationReceipt, null, 2)}</pre></dd>
+        </>}
         <dt>业务结果</dt><dd><pre>{JSON.stringify(result.result, null, 2)}</pre></dd>
         <dt>请求体</dt><dd><pre>{JSON.stringify(result.requestBody, null, 2)}</pre></dd>
       </dl>
+      {soar && (
+        <Space direction="vertical" style={{ width: '100%' }}>
+          <Input.TextArea
+            aria-label="SOAR 操作原因"
+            value={reason}
+            onChange={(event) => setReason(event.target.value)}
+            maxLength={1000}
+            autoSize={{ minRows: 2, maxRows: 4 }}
+          />
+          <Space wrap>
+            <Button loading={pending} onClick={() => void onSOARRefresh()}>刷新权威状态</Button>
+            {soar.status === 'pending_approval' && <>
+              <Button type="primary" loading={pending} disabled={reason.trim().length < 8} onClick={() => void onSOAROperation('approve', reason)}>批准执行</Button>
+              <Button danger loading={pending} disabled={reason.trim().length < 8} onClick={() => void onSOAROperation('reject', reason)}>拒绝</Button>
+            </>}
+            {['pending_approval', 'approved_awaiting_executor'].includes(soar.status) && (
+              <Button loading={pending} disabled={reason.trim().length < 8} onClick={() => void onSOAROperation('cancel', reason)}>取消请求</Button>
+            )}
+            {['completed', 'partial'].includes(soar.status) && (
+              <Button danger loading={pending} disabled={reason.trim().length < 8} onClick={() => void onSOAROperation('compensate', reason)}>批准补偿</Button>
+            )}
+          </Space>
+        </Space>
+      )}
     </div>
   );
 }
@@ -1000,7 +1176,7 @@ function CampaignDetailDrawerContent({
   return (
     <div className="taf-campaign-detail-drawer__content">
       <header className="taf-campaign-detail-drawer__header">
-        <div><h2>战役详情</h2><p>{snapshot.campaignId}　/　{snapshot.title}　/　置信度 {snapshot.riskScore}%</p></div>
+        <div><h2>战役详情</h2><p>{snapshot.campaignId} / {snapshot.title} / 置信度 {snapshot.riskScore}%</p></div>
         <Space>
           <StatusTag value={snapshot.status} />
           <StatusTag value={snapshot.riskScore >= 80 ? '高危' : '中危'} />
@@ -1102,7 +1278,9 @@ function CampaignDetailDrawerContent({
                   okText="确认执行"
                   cancelText="取消"
                   okButtonProps={{ loading: pending }}
-                  onConfirm={() => onAction(actionId as CampaignActionId, item, actionId === 'campaign-report-generate' ? { format: 'pdf', sections: snapshot.phases.map((phase) => phase.phase), evidence_count: snapshot.evidenceSummaryRows.length } : { dry_run: actionId !== 'campaign-report-generate' })}
+                  onConfirm={() => onAction(actionId as CampaignActionId, item, actionId === 'campaign-report-generate'
+                    ? { format: 'pdf', sections: snapshot.phases.map((phase) => phase.phase), evidence_count: snapshot.evidenceSummaryRows.length }
+                    : actionId === 'campaign-soar-response' ? { playbook_id: 'quarantine-c2' } : { dry_run: true })}
                 >
                   <button type="button" disabled={pending}>
                     <CheckCircleOutlined />{item}
@@ -1128,7 +1306,7 @@ function CampaignDetailDrawerContent({
             okText="确认触发"
             cancelText="取消"
             okButtonProps={{ loading: pending }}
-            onConfirm={() => void onAction('campaign-soar-response', '触发剧本', { dry_run: true })}
+            onConfirm={() => void onAction('campaign-soar-response', '触发剧本', { playbook_id: 'quarantine-c2' })}
           >
             <Button icon={<BranchesOutlined />} disabled={pending}>触发剧本</Button>
           </Popconfirm>

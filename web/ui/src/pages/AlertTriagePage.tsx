@@ -22,6 +22,17 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { RiskScoreRingChart } from '@/components/charts';
 import { StatusTag } from '@/components/StatusTag';
 import { WorkPanel } from '@/components/WorkPanel';
+import {
+  ALERT_RESPONSE_CONTROLS,
+  ALERT_ROW_CONTROLS,
+  ALERT_SAVE_VIEW_CONTROL,
+  alertDetailRoute,
+  alertTableVerticalScrollHeight,
+  alertTimelineItems,
+  createAlertAction,
+  type AlertAction,
+  type AlertActionControl,
+} from '@/pages/alertTriageLogic';
 import type { NavRoute } from '@/routes/routeManifest';
 import { fetchPageSnapshot } from '@/services/api';
 import { batchUpdateAlertStatus } from '@/services/alertBatchApi';
@@ -29,39 +40,12 @@ import { submitAlertFeedback } from '@/services/alertDetailApi';
 import { submitAlertTriageAction } from '@/services/alertTriageApi';
 import { fetchAlertSavedViews } from '@/services/alertTriageApi';
 import { batchAssignAlerts, exportAlertQueueCsv } from '@/services/alertQueueActionsApi';
-import { pageApiPlans } from '@/services/pageApiPlans';
 import { alertAllowedNextStatuses, alertStatusLabel, alertStatusOptions, canTransitionAlertStatus, type AlertStatusCode } from '@/services/alertStatus';
 import type { PageSnapshot, SnapshotRow } from '@/services/mockData';
 import { isVisualBreakdownMode } from '@/utils/visualBreakdownMode';
 
 type FeedbackResult = 'tp' | 'fp' | 'pending';
-type AlertAction = { title: string; alertId: string; target: string; endpoint: string; auditEvent: string; kind: 'saved-view' | 'response-action' | 'investigation-note' };
 type BatchDialog = 'assign' | 'status';
-
-const ALERT_TABLE_ROW_HEIGHT = 39;
-const ALERT_TABLE_HEADER_HEIGHT = 39;
-const ALERT_TABLE_PAGINATION_RESERVE = 50;
-
-export const alertTableVerticalScrollHeight = (
-  viewportHeight: number,
-  rowCount: number,
-  pageSize: number,
-  internalScrollAllowed = true,
-): number | undefined => {
-  if (!internalScrollAllowed) return undefined;
-  const naturalBodyHeight = Math.min(rowCount, pageSize) * ALERT_TABLE_ROW_HEIGHT;
-  const availableBodyHeight = Math.max(
-    1,
-    Math.floor(viewportHeight - ALERT_TABLE_HEADER_HEIGHT - ALERT_TABLE_PAGINATION_RESERVE),
-  );
-  return availableBodyHeight + 1 < naturalBodyHeight ? availableBodyHeight : undefined;
-};
-
-export function alertDetailRoute(alertId: string, currentSearch: URLSearchParams): string {
-  const query = currentSearch.toString();
-  const returnTo = `/alerts${query ? `?${query}` : ''}`;
-  return `/alerts/${encodeURIComponent(alertId)}?returnTo=${encodeURIComponent(returnTo)}`;
-}
 
 export function AlertTriagePage({ route }: { route: NavRoute }) {
   const [searchParams] = useSearchParams();
@@ -89,7 +73,7 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
   const [actionReason, setActionReason] = useState('安全运营人员确认提交');
   const alertTableViewportRef = useRef<HTMLDivElement>(null);
   const [alertTableScrollY, setAlertTableScrollY] = useState<number>();
-  const visualBreakdownMode = isVisualBreakdownMode();
+  const visualBreakdownMode = import.meta.env.DEV && isVisualBreakdownMode();
   const { data, error, isError, isLoading, refetch } = useQuery({
     queryKey: ['page-snapshot', route.id, sourceEntity, listPage, pageSize, appliedFilters, appliedTimeWindow],
     queryFn: () => fetchPageSnapshot(route.id, {
@@ -222,9 +206,10 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
       if (!action) throw new Error('请选择告警操作');
       return submitAlertTriageAction({
         kind: action.kind,
+        actionId: action.actionId,
         alertId: action.kind === 'saved-view' ? undefined : action.alertId,
         action: action.title,
-        target: action.target,
+        target: action.targetValue,
         reason: actionReason,
         dryRun: action.kind === 'response-action',
         detail: { filter_notice: filterNotice, view, filters: appliedFilters, time_window: appliedTimeWindow },
@@ -234,7 +219,11 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
       setActionSubmitted(true);
       if (action?.kind === 'saved-view') await refetchSavedViews();
       if (action?.kind === 'response-action') {
-        message.success(result.outbox_status === 'published' ? '响应请求已持久化并发送至审批队列' : '响应请求已持久化，后台正在重试投递');
+        message.success(result.outbox_status === 'awaiting_approval'
+          ? '响应请求已持久化，等待独立审批'
+          : result.outbox_status === 'pending_retry'
+            ? '模拟响应已受理，后台正在投递'
+            : '响应请求状态已持久化');
       } else {
         message.success('告警操作已持久化并写入审计日志');
       }
@@ -265,18 +254,25 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
     key: column,
     width: alertColumnWidth(column),
     ellipsis: true,
-    render: (value, record) => renderAlertCell(column, value, record, (title) => {
-      const alertId = alertIdFromRow(record);
-      if (title === '查看告警详情') navigate(alertDetailRoute(alertId, searchParams));
-      else openAction(title, alertId);
-    }),
+    render: (value, record) => renderAlertCell(
+      column,
+      value,
+      record,
+      () => navigate(alertDetailRoute(alertIdFromRow(record), searchParams)),
+      (control) => openAction(control, alertIdFromRow(record)),
+    ),
   }));
   const totalRows = data?.total ?? rows.length;
-  function openAction(title: string, target?: string) {
+  function openAction(control: AlertActionControl, providedTarget?: string) {
     setActionSubmitted(false);
-    const isResponse = /隔离|阻断|封禁|脚本|工单|剧本|白名单/.test(title);
-    const resolvedTarget = target ?? (isResponse && /IP|阻断|封禁/.test(title) ? text(selectedRow, '源 IP', selectedAlertID) : isResponse && title.includes('隔离') ? text(selectedRow, '受影响资产', selectedAlertID) : selectedAlertID);
-    setAction(createAlertAction(title, resolvedTarget, selectedAlertID));
+    const resolvedTarget = providedTarget ?? (
+      control.target === 'source-ip'
+        ? text(selectedRow, '源 IP', selectedAlertID)
+        : control.target === 'asset'
+          ? text(selectedRow, '受影响资产', selectedAlertID)
+          : selectedAlertID
+    );
+    setAction(createAlertAction(control, resolvedTarget, selectedAlertID));
   }
   const applyFilters = () => {
     setListPage(1);
@@ -354,7 +350,7 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
             </div>
             <Space>
               <Select size="small" value={view} options={Array.from(new Set(['自定义视图', ...savedViews.map((saved) => saved.name)])).map((value) => ({ value }))} onChange={loadSavedView} />
-              <Button size="small" onClick={() => openAction('保存告警视图', view)}>保存视图</Button>
+              <Button size="small" onClick={() => openAction(ALERT_SAVE_VIEW_CONTROL, view)}>保存视图</Button>
               <Tooltip title="刷新告警队列">
                 <Button icon={<ReloadOutlined />} size="small" onClick={() => void refetch()} />
               </Tooltip>
@@ -490,13 +486,12 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
         <aside className="taf-alert-detail">
           <AlertSummary row={selectedRow} onAction={(title, target) => {
             if (title === '进入告警详情' && target) navigate(alertDetailRoute(target, searchParams));
-            else if (title === '跳转取证' && target) navigate(`/forensics?alert=${encodeURIComponent(target)}`);
-            else openAction(title, target);
+            else if (title === '跳转取证' && target) navigate(`/forensics?alert_id=${encodeURIComponent(target)}`);
           }} />
           <TriageTimeline row={selectedRow} />
           <ClusterCards row={selectedRow} rows={rows} onAction={applyClusterFilter} />
           <FeedbackForm
-            actions={route.page.actions}
+            controls={ALERT_RESPONSE_CONTROLS}
             feedbackResult={feedbackResult}
             onFeedbackResultChange={setFeedbackResult}
             reason={feedbackReason}
@@ -511,7 +506,7 @@ export function AlertTriagePage({ route }: { route: NavRoute }) {
         </aside>
       </div>
       <Drawer className="taf-alert-triage-action-drawer" title={action ? `${action.title}确认` : '告警操作确认'} open={Boolean(action)} width="min(520px, calc(var(--taf-window-inner-width, 100dvw) - 40px))" onClose={() => { setAction(undefined); setActionSubmitted(false); actionMutation.reset(); }} extra={<Button size="small" type="primary" disabled={actionSubmitted || actionReason.trim().length < 4} loading={actionMutation.isPending} onClick={() => actionMutation.mutate()}>{actionSubmitted ? '已持久化' : '确认提交'}</Button>}>
-        {action && <div className="taf-alert-detail-action-body"><p>{action.kind === 'response-action' ? `将创建“${action.title}”受控响应请求；当前状态为待审批，不宣称已经执行。` : `将持久化“${action.title}”并保留租户、权限和审计上下文。`}</p><dl><dt>告警对象</dt><dd>{action.target || '-'}</dd><dt>业务接口</dt><dd>{action.endpoint}</dd><dt>审计事件</dt><dd>{action.auditEvent}</dd></dl><Input.TextArea rows={3} value={actionReason} onChange={(event) => setActionReason(event.target.value)} placeholder="请输入操作原因（至少 4 个字符）" />{actionMutation.isError && <Alert type="error" showIcon message="告警业务操作提交失败" description={actionMutation.error instanceof Error ? actionMutation.error.message : 'unknown error'} />}{actionSubmitted && <Alert type="success" showIcon message={action?.kind === 'response-action' ? '响应请求待审批' : '告警业务操作已持久化'} description={`记录：${actionMutation.data?.job_id ?? actionMutation.data?.view_id ?? '-'}`} />}</div>}
+        {action && <div className="taf-alert-detail-action-body"><p>{action.kind === 'response-action' ? `将创建“${action.title}”受控响应请求；当前状态为待审批，不宣称已经执行。` : `将持久化“${action.title}”并保留租户、权限和审计上下文。`}</p><dl><dt>动作 ID</dt><dd>{action.actionId}</dd><dt>告警对象</dt><dd>{action.targetValue || '-'}</dd><dt>业务接口</dt><dd>{action.endpoint}</dd><dt>审计事件</dt><dd>{action.auditEvent}</dd></dl><Input.TextArea rows={3} value={actionReason} onChange={(event) => setActionReason(event.target.value)} placeholder="请输入操作原因（至少 4 个字符）" />{actionMutation.isError && <Alert type="error" showIcon message="告警业务操作提交失败" description={actionMutation.error instanceof Error ? actionMutation.error.message : 'unknown error'} />}{actionSubmitted && <Alert type="success" showIcon message={action?.kind === 'response-action' ? '响应请求待审批' : '告警业务操作已持久化'} description={`记录：${actionMutation.data?.job_id ?? actionMutation.data?.view_id ?? '-'}`} />}</div>}
       </Drawer>
       <Modal
         className="taf-alert-batch-modal"
@@ -662,94 +657,6 @@ function TriageTimeline({ row }: { row?: SnapshotRow }) {
   );
 }
 
-type AlertTriageTimelineItem = PageSnapshot['timeline'][number] & {
-  time: string;
-  timestamp: number;
-};
-
-export const alertTimelineItems = (row?: SnapshotRow): AlertTriageTimelineItem[] => {
-  if (!row) {
-    return [{
-      time: '--:--:--',
-      timestamp: 0,
-      title: '暂无研判事件',
-      description: '请选择一条告警以查看该记录的真实时间字段。',
-      status: 'info',
-    }];
-  }
-  const name = text(row, '告警名称', '-');
-  const source = text(row, '源 IP', '-');
-  const destination = text(row, '目的 IP', '-');
-  const status = text(row, '状态', '-');
-  const stateVersion = text(row, '__stateVersion', '');
-  const timestamps = {
-    firstSeen: text(row, '__firstSeen', text(row, '首次发生', '')),
-    createdAt: text(row, '__createdAt', ''),
-    lastSeen: text(row, '__lastSeen', ''),
-    updatedAt: text(row, '__updatedAt', ''),
-  };
-  const timedItems = [
-    {
-      rawTime: timestamps.firstSeen,
-      title: '首次发生',
-      description: `${name} 首次观测，通信 ${source} → ${destination}`,
-      status: 'info' as const,
-    },
-    {
-      rawTime: timestamps.createdAt,
-      title: '告警创建',
-      description: '告警记录已写入研判队列。',
-      status: 'warn' as const,
-    },
-    {
-      rawTime: timestamps.lastSeen,
-      title: '最近观测',
-      description: '这是告警记录返回的最近观测时间。',
-      status: 'warn' as const,
-    },
-    {
-      rawTime: timestamps.updatedAt,
-      title: '最近更新',
-      description: stateVersion ? `状态记录已更新，版本 ${stateVersion}。` : '状态记录已更新。',
-      status: /确认|关闭|忽略/.test(status) ? 'ok' as const : 'info' as const,
-    },
-  ]
-    .filter((item) => Boolean(item.rawTime))
-    .map((item) => ({
-      time: alertTimelineClock(item.rawTime),
-      timestamp: alertTimelineEpoch(item.rawTime),
-      title: item.title,
-      description: item.description,
-      status: item.status,
-    }))
-    .sort((left, right) => left.timestamp - right.timestamp);
-  const currentTime = timestamps.updatedAt || timestamps.lastSeen || timestamps.createdAt || timestamps.firstSeen;
-  const currentItem: AlertTriageTimelineItem = {
-    time: alertTimelineClock(currentTime),
-    timestamp: alertTimelineEpoch(currentTime),
-    title: '当前状态',
-    description: `当前状态为 ${status}；未返回的研判动作不在此处推断。`,
-    status: /确认|关闭|忽略/.test(status) ? 'ok' : 'info',
-  };
-  return [...timedItems, currentItem].slice(-5);
-};
-
-const alertTimelineEpoch = (value: string) => {
-  if (!value) return 0;
-  const numeric = Number(value);
-  const parsed = Number.isFinite(numeric) && numeric > 0
-    ? new Date(numeric < 10_000_000_000 ? numeric * 1_000 : numeric)
-    : new Date(value);
-  return Number.isFinite(parsed.getTime()) ? parsed.getTime() : 0;
-};
-
-const alertTimelineClock = (value: string) => {
-  if (!value) return '--:--:--';
-  const timestamp = alertTimelineEpoch(value);
-  if (timestamp > 0) return new Date(timestamp).toLocaleTimeString('zh-CN', { hour12: false });
-  return value.match(/(\d{2}:\d{2}:\d{2})/)?.[1] ?? '--:--:--';
-};
-
 const compactAlertMetricValue = (value: string) => {
   const normalized = value.replace(/\s*条\s*$/u, '').replace(/\s+/g, '');
   const numeric = Number(normalized.replace(/,/g, ''));
@@ -787,7 +694,7 @@ function ClusterCards({ row, rows, onAction }: { row?: SnapshotRow; rows: Snapsh
 }
 
 function FeedbackForm({
-  actions,
+  controls,
   feedbackResult,
   onFeedbackResultChange,
   reason,
@@ -799,7 +706,7 @@ function FeedbackForm({
   onSubmit,
   onAction,
 }: {
-  actions: string[];
+  controls: AlertActionControl[];
   feedbackResult: FeedbackResult;
   onFeedbackResultChange: (value: FeedbackResult) => void;
   reason: string;
@@ -809,15 +716,15 @@ function FeedbackForm({
   pending: boolean;
   submitDisabled: boolean;
   onSubmit: () => void;
-  onAction: (title: string, target?: string) => void;
+  onAction: (control: AlertActionControl, target?: string) => void;
 }) {
   return (
     <WorkPanel title="处理与反馈">
       <div className="taf-alert-actions">
-        {actions.map((action) => (
-          <Tooltip key={action} title={action}>
-            <Button size="small" title={action} icon={action === '加入白名单' ? <CloseCircleOutlined /> : <BlockOutlined />} onClick={() => onAction(action)}>
-              {action}
+        {controls.map((control) => (
+          <Tooltip key={control.actionId} title={control.title}>
+            <Button size="small" title={control.title} data-action-id={control.actionId} icon={control.actionId === 'alert-response-add-whitelist' ? <CloseCircleOutlined /> : <BlockOutlined />} onClick={() => onAction(control)}>
+              {control.title}
             </Button>
           </Tooltip>
         ))}
@@ -857,7 +764,13 @@ function FeedbackForm({
   );
 }
 
-const renderAlertCell = (column: string, value: unknown, record: SnapshotRow, onAction: (title: string) => void): ReactNode => {
+const renderAlertCell = (
+  column: string,
+  value: unknown,
+  record: SnapshotRow,
+  onView: () => void,
+  onAction: (control: AlertActionControl) => void,
+): ReactNode => {
   if (column === '告警 ID') {
     return (
       <span className="taf-alert-id" title={String(value)}>
@@ -871,13 +784,13 @@ const renderAlertCell = (column: string, value: unknown, record: SnapshotRow, on
     return (
       <Space size={4} className="taf-alert-row-actions">
         <Tooltip title="查看详情">
-          <Button size="small" type="text" icon={<EyeOutlined />} onClick={(event) => { event.stopPropagation(); onAction('查看告警详情'); }} />
+          <Button size="small" type="text" icon={<EyeOutlined />} onClick={(event) => { event.stopPropagation(); onView(); }} />
         </Tooltip>
         <Tooltip title="重新研判">
-          <Button size="small" type="text" icon={<ReloadOutlined />} onClick={(event) => { event.stopPropagation(); onAction('重新研判告警'); }} />
+          <Button size="small" type="text" data-action-id={ALERT_ROW_CONTROLS.reanalyze.actionId} icon={<ReloadOutlined />} onClick={(event) => { event.stopPropagation(); onAction(ALERT_ROW_CONTROLS.reanalyze); }} />
         </Tooltip>
         <Tooltip title="补充研判记录">
-          <Button size="small" type="text" icon={<MoreOutlined />} onClick={(event) => { event.stopPropagation(); onAction('补充研判记录'); }} />
+          <Button size="small" type="text" data-action-id={ALERT_ROW_CONTROLS.note.actionId} icon={<MoreOutlined />} onClick={(event) => { event.stopPropagation(); onAction(ALERT_ROW_CONTROLS.note); }} />
         </Tooltip>
       </Space>
     );
@@ -906,24 +819,6 @@ const alertColumnWidth = (column: string) => {
 };
 
 const rowKey = (record: SnapshotRow) => String(record['告警 ID'] ?? record['事件 ID'] ?? JSON.stringify(record));
-
-const createAlertAction = (title: string, target: string, alertId = target): AlertAction => {
-  const actions = pageApiPlans['alert-detail'].actions ?? [];
-  const actionId = title.includes('导出') ? 'alert-report-export'
-    : /详情|证据|关联/.test(title) ? 'alert-evidence-access'
-      : /隔离|阻断|剧本|白名单|重新研判/.test(title) ? 'alert-response-request'
-        : 'alert-investigation-note';
-  const plan = actions.find((item) => item.id === actionId);
-  const kind = title.includes('保存告警视图') ? 'saved-view' : /隔离|阻断|封禁|脚本|工单|剧本|白名单|重新研判/.test(title) ? 'response-action' : 'investigation-note';
-  return {
-    title,
-    alertId,
-    target,
-    endpoint: kind === 'saved-view' ? '/v1/alerts/views' : kind === 'response-action' ? `/v1/alerts/${alertId}/response-actions` : `/v1/alerts/${alertId}/investigation-notes`,
-    auditEvent: kind === 'saved-view' ? 'ALERT_VIEW_SAVED' : kind === 'response-action' ? 'ALERT_RESPONSE_ACTION_REQUESTED' : plan?.auditEvent ?? 'ALERT_INVESTIGATION_NOTE_RECORDED',
-    kind,
-  };
-};
 
 const alertIdFromRow = (row: SnapshotRow | undefined) => text(row, '__alertId', text(row, '告警 ID', ''));
 

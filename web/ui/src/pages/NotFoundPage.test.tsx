@@ -24,7 +24,10 @@ function renderPage() {
   queryClient.setQueryData(['current-user'], { username: 'tester', permissions: ['*'], roles: ['admin'] });
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={['/__missing__']}>
+      <MemoryRouter
+        initialEntries={['/__missing__']}
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
         <NotFoundPage knownRoutes={knownRoutes} />
       </MemoryRouter>
     </QueryClientProvider>,

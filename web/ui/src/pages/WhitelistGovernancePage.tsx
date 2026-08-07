@@ -86,21 +86,12 @@ const typeByTab: Record<BuilderTab, WhitelistType> = {
   IP: 'subnet', 资产: 'asset', 账号: 'account', 域名: 'domain', 规则: 'rule', 模型: 'model',
 };
 
-const tabByType = (type: WhitelistType): BuilderTab => {
-  if (type === 'ip' || type === 'subnet') return 'IP';
-  if (type === 'asset') return '资产';
-  if (type === 'account') return '账号';
-  if (type === 'rule') return '规则';
-  if (type === 'model') return '模型';
-  return '域名';
-};
-
 const draftPreset = (tab: BuilderTab): DraftState => {
   const expires = new Date(Date.now() + (tab === '模型' ? 90 : tab === '规则' ? 60 : 30) * 86_400_000).toISOString();
   const presets: Record<BuilderTab, Omit<DraftState, 'tab' | 'expires_at' | 'type'>> = {
-    IP: { value: '10.12.4.0/24', matchMode: 'CIDR', scope: '全网 / 办公网', reason: '研发网段维护窗口，触发端口扫描误报', description: '仅抑制对应网段的告警输出，原始流量与证据继续保留。', source_alert_id: 'AL-20260619-0451', feedback_id: '', owner_role: '安全运营', risk_level: 'low', covered_alerts: 42, covered_assets: 8, tags: ['IP例外', '端口扫描', '低风险'], extras: { direction: '源 IP / 目的 IP', association: '异常 TLS 外联检测', businessSystem: '研发数据平台', organization: '主校区 / 信息中心', primaryLabel: '适用资产组', primaryValue: '核心业务区', secondaryLabel: '端口 / 协议', secondaryValue: 'TCP / 443', timeMode: '绝对时间', startsAt: '2026-07-19', confidence: 82, ruleType: '', threshold: '' } },
+    IP: { value: '', matchMode: 'CIDR', scope: '全网 / 办公网', reason: '研发网段维护窗口，触发端口扫描误报', description: '仅抑制对应网段的告警输出，原始流量与证据继续保留。', source_alert_id: 'AL-20260619-0451', feedback_id: '', owner_role: '安全运营', risk_level: 'low', covered_alerts: 42, covered_assets: 8, tags: ['IP例外', '端口扫描', '低风险'], extras: { direction: '源 IP / 目的 IP', association: '异常 TLS 外联检测', businessSystem: '研发数据平台', organization: '主校区 / 信息中心', primaryLabel: '适用资产组', primaryValue: '核心业务区', secondaryLabel: '端口 / 协议', secondaryValue: 'TCP / 443', timeMode: '绝对时间', startsAt: '2026-07-19', confidence: 82, ruleType: '', threshold: '' } },
     资产: { value: 'ASSET-SRV-0421', matchMode: '资产 ID', scope: '仅本资产 / 同组资产', reason: '业务巡检产生固定备份流量，命中数据外传误报', description: '科研数据平台实验楼服务器，需按资产组复审。', source_alert_id: 'AL-20260619-0322', feedback_id: '', owner_role: '平台团队', risk_level: 'medium', covered_alerts: 86, covered_assets: 23, tags: ['备份流量', '服务器组', '需复审'], extras: { direction: '资产对象', association: '数据外传检测规则', businessSystem: '科研数据平台', organization: '主校区 / 信息中心', primaryLabel: '资产组', primaryValue: '高流量服务器组 / 数据库服务组', secondaryLabel: '生命周期', secondaryValue: '生产 / 受控维护', timeMode: '绝对时间', startsAt: '2026-07-19', confidence: 76, ruleType: '', threshold: '' } },
-    账号: { value: 'svc_backup', matchMode: '服务账号', scope: '备份系统 / 夜间窗口', reason: '夜间备份账号访问数据库，触发非工作时间登录误报', description: '限制登录源与访问目标，周期时间窗 22:00-03:00。', source_alert_id: 'AL-20260614-0059', feedback_id: '', owner_role: '平台团队', risk_level: 'medium', covered_alerts: 54, covered_assets: 12, tags: ['服务账号', '夜间备份', '账号例外'], extras: { direction: '服务账号', association: '非工作时间登录', businessSystem: '统一备份系统', organization: '数据中心 / 运维组', primaryLabel: '登录源', primaryValue: '10.23.8.0/24', secondaryLabel: '访问目标', secondaryValue: '数据库集群 / 对象存储', timeMode: '周期时间窗', startsAt: '22:00-03:00', confidence: 71, ruleType: '', threshold: '' } },
+    账号: { value: 'svc_backup', matchMode: '服务账号', scope: '备份系统 / 夜间窗口', reason: '夜间备份账号访问数据库，触发非工作时间登录误报', description: '限制登录源与访问目标，周期时间窗 22:00-03:00。', source_alert_id: 'AL-20260614-0059', feedback_id: '', owner_role: '平台团队', risk_level: 'medium', covered_alerts: 54, covered_assets: 12, tags: ['服务账号', '夜间备份', '账号例外'], extras: { direction: '服务账号', association: '非工作时间登录', businessSystem: '统一备份系统', organization: '数据中心 / 运维组', primaryLabel: '登录源', primaryValue: '', secondaryLabel: '访问目标', secondaryValue: '数据库集群 / 对象存储', timeMode: '周期时间窗', startsAt: '22:00-03:00', confidence: 71, ruleType: '', threshold: '' } },
     域名: { value: 'update.campus.local', matchMode: '等于', scope: '全网 / 办公网', reason: '业务系统自动更新，触发 DNS 异常告警（误报）', description: '只抑制 DNS 异常告警，不影响其他规则和模型输出。', source_alert_id: 'AL-20260619-0187', feedback_id: '', owner_role: '安全运营', risk_level: 'medium', covered_alerts: 128, covered_assets: 23, tags: ['DNS异常', '系统更新', '误报'], extras: { direction: '域名解析', association: 'DNS 隧道异常', businessSystem: '终端更新服务', organization: '全网 / 办公网', primaryLabel: '包含子域名', primaryValue: '是 / 仅可信更新域', secondaryLabel: '解析类型', secondaryValue: 'A / AAAA / CNAME', timeMode: '绝对时间', startsAt: '2026-07-19', confidence: 68, ruleType: '', threshold: '' } },
     规则: { value: 'Rule-100324 / C2_Tunnel_v3', matchMode: '规则 ID', scope: '全网 / 办公网', reason: '固定业务探测命中 C2 规则，人工确认误报', description: '限定 src_ip 与 bytes_out_p95 条件，防止扩大规则盲区。', source_alert_id: 'FP-20260619-001', feedback_id: '', owner_role: '安全运营', risk_level: 'high', covered_alerts: 128, covered_assets: 1, tags: ['规则例外', 'C2误报', '待复审'], extras: { direction: '检测规则', association: 'C2_Tunnel_v3', businessSystem: '固定业务探测', organization: '全网 / 办公网', primaryLabel: '命中字段', primaryValue: 'src_ip, bytes_out_p95', secondaryLabel: '例外条件', secondaryValue: 'bytes_out_p95 < 8MB', timeMode: '绝对时间', startsAt: '2026-07-19', confidence: 91, ruleType: '流量检测', threshold: '' } },
     模型: { value: 'UEBA 行为分析 v1.8.0', matchMode: '模型版本', scope: '办公网 / 备份系统', reason: '模型对固定备份行为高分，需按样本来源降低误报', description: '置信度阈值 0.87，绑定反馈样本池和验证集。', source_alert_id: 'mdl-fp-20260619-003', feedback_id: 'feedback-pool-5231', owner_role: '数据科学', risk_level: 'medium', covered_alerts: 64, covered_assets: 1, tags: ['模型例外', '高置信误报', '需复训'], extras: { direction: '模型版本', association: 'UEBA 登录异常', businessSystem: '备份系统', organization: '办公网 / 数据中心', primaryLabel: '特征条件', primaryValue: 'login_hour, bytes_out_p95', secondaryLabel: '样本来源', secondaryValue: 'feedback-pool-5231 / 验证集', timeMode: '模型版本周期', startsAt: 'v1.8.0', confidence: 87, ruleType: '', threshold: '0.87' } },
@@ -163,7 +154,14 @@ export function WhitelistGovernancePage({ route }: { route: NavRoute }) {
   const transitionMutation = useMutation({
     mutationFn: ({ entry, action, reason, expiresAt, ownerRole }: { entry: WhitelistEntry; action: WhitelistTransition; reason?: string; expiresAt?: string; ownerRole?: string }) => transitionWhitelistEntry({ entry, action, reason, expiresAt, ownerRole }),
     onSuccess: async (entry, input) => {
-      messageApi.success(`${actionLabel(input.action)}成功，白名单已更新至 v${entry.version} 并写入审计`);
+      const effect = entry.rule_effect_status === 'pending'
+        ? '；规则效果已受理，等待执行 ACK'
+        : entry.rule_effect_status === 'failed'
+          ? '；规则执行失败，当前未生效'
+          : entry.rule_effect_status === 'applied'
+            ? '；规则效果已 ACK'
+            : '';
+      messageApi.success(`${actionLabel(input.action)}已提交，白名单更新至 v${entry.version}，审计与 outbox 已提交${effect}`);
       await refresh();
     },
     onError: (error) => messageApi.error(errorText(error)),
@@ -177,7 +175,8 @@ export function WhitelistGovernancePage({ route }: { route: NavRoute }) {
       return results;
     },
     onSuccess: async (results, input) => {
-      messageApi.success(`${input.action === 'extend' ? '批量延期' : '批量停用'} ${results.length} 条成功，全部已写入审计`);
+      const pending = results.filter((entry) => entry.rule_effect_status === 'pending').length;
+      messageApi.success(`${input.action === 'extend' ? '批量延期' : '批量停用'} ${results.length} 条已提交，审计与 outbox 已落库${pending ? `；${pending} 条等待规则 ACK` : ''}`);
       await refresh();
     },
     onError: (error) => messageApi.error(errorText(error)),
@@ -378,7 +377,7 @@ const renderWhitelistCell = (column: string, value: unknown, entry: WhitelistEnt
 const toTableRow = (entry: WhitelistEntry): WhitelistTableRow => ({ key: entry.id, entry, 对象类型: whitelistTypeLabels[entry.type] ?? entry.type, 匹配条件: entry.value, 生效范围: entry.scope || '-', 有效期: periodLabel(entry), 责任角色: entry.owner_role || '未归属', 来源告警: entry.source_alert_id || '-', 状态: statusLabel(entry), 操作: '查看 / 编辑 / 延期' });
 
 const buildMetrics = (route: NavRoute, entries: WhitelistEntry[]): PageSnapshot['metrics'] => {
-  const active = entries.filter((entry) => entry.status === 'active' && !isExpired(entry)).length;
+  const active = entries.filter((entry) => entry.status === 'active' && entry.rule_effect_status === 'applied' && !isExpired(entry)).length;
   const pending = entries.filter((entry) => entry.status === 'pending').length;
   const soon = entries.filter(isExpiringSoon).length;
   const long = entries.filter(isLongLived).length;
@@ -398,7 +397,19 @@ const expiryCells = (entry: WhitelistEntry | undefined, tab: string): string[] =
   return [type, entry.value, entry.scope || '-', formatDate(entry.expires_at), entry.owner_role || '(未归属)', riskLabel(entry.risk_level), '延期 / 停用'];
 };
 
-const statusLabel = (entry: WhitelistEntry) => entry.status === 'draft' ? '草稿' : entry.status === 'pending' ? '待审批' : entry.status === 'disabled' ? '停用' : isExpired(entry) ? '过期' : isExpiringSoon(entry) ? '即将到期' : '生效';
+const statusLabel = (entry: WhitelistEntry) => entry.status === 'draft'
+  ? '草稿'
+  : entry.status === 'pending'
+    ? '待审批'
+    : entry.status === 'disabled'
+      ? entry.rule_effect_status === 'pending' ? '停用处理中' : '停用'
+      : isExpired(entry)
+        ? '过期'
+        : entry.rule_effect_status === 'failed'
+          ? '规则生效失败'
+          : entry.rule_effect_status !== 'applied'
+            ? '待规则生效'
+            : isExpiringSoon(entry) ? '即将到期' : '生效';
 const approvalLabel = (entry?: WhitelistEntry) => entry?.approval_status === 'approved' ? '已批准' : entry?.approval_status === 'rejected' ? '已驳回' : entry?.approval_status === 'pending' ? '待审批' : '草案';
 const isExpired = (entry: WhitelistEntry) => Boolean(entry.expires_at && Date.parse(entry.expires_at) < Date.now());
 const isExpiringSoon = (entry: WhitelistEntry) => { const diff = entry.expires_at ? (Date.parse(entry.expires_at) - Date.now()) / 86_400_000 : Number.POSITIVE_INFINITY; return entry.status !== 'disabled' && diff >= 0 && diff <= 7; };

@@ -72,7 +72,7 @@ export function GraphEntityPage({ route }: { route: NavRoute }) {
     queryFn: () => fetchAsset(sourceAssetId),
     enabled: Boolean(sourceAssetId),
   });
-  const centerId = sourceAsset.data?.ip_address ? `host:${sourceAsset.data.ip_address}` : 'host:10.20.4.18';
+  const centerId = sourceAsset.data?.ip_address ? `host:${sourceAsset.data.ip_address}` : undefined;
   const filters = useMemo<EntityGraphWorkbenchFilters>(() => ({ timeRange, site, entityType, depth }), [depth, entityType, site, timeRange]);
   const graphQuery = useQuery({
     queryKey: ['entity-graph-workbench', centerId, filters],
@@ -123,7 +123,7 @@ export function GraphEntityPage({ route }: { route: NavRoute }) {
     queryKey: ['entity-graph-workbench-path', pathMode, pathSourceNode?.entity_id, pathTargetId, selectedNode?.entity_id, filters],
     queryFn: () => fetchEntityGraphWorkbenchPath({
       sourceId: pathSourceNode?.entity_id ?? '',
-      targetId: pathTargetId,
+      targetId: pathTargetId ?? '',
       anchorId: selectedNode?.entity_id,
       mode: pathMode,
       maxDepth: depth,
@@ -137,16 +137,16 @@ export function GraphEntityPage({ route }: { route: NavRoute }) {
     setFeedback('当前图谱视图已保存到本地工作区。');
   };
 
-  const exportEvidence = () => {
+  const exportViewSnapshot = () => {
     if (!graph) return;
     const blob = new Blob([JSON.stringify(graph, null, 2)], { type: 'application/json' });
     const href = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = href;
-    link.download = `entity-graph-${graph.center_id.replace(/[^a-zA-Z0-9.-]+/g, '-')}.json`;
+    link.download = `entity-graph-view-${graph.center_id.replace(/[^a-zA-Z0-9.-]+/g, '-')}.json`;
     link.click();
     URL.revokeObjectURL(href);
-    setFeedback('实体、关系与证据索引已导出。');
+    setFeedback('已导出当前浏览器收到的图谱 JSON；该文件不是服务端证据对象，也不替代审计导出。');
   };
 
   const showPathAnalysis = () => {
@@ -197,7 +197,7 @@ export function GraphEntityPage({ route }: { route: NavRoute }) {
             <Select size="small" value={entityType} onChange={setEntityType} options={[{ value: 'all', label: '实体类型：全部' }, { value: 'host', label: '主机' }, { value: 'ip', label: 'IP地址' }, { value: 'account', label: '账号' }, { value: 'domain', label: '域名' }, { value: 'service', label: '服务' }, { value: 'alert', label: '告警' }, { value: 'evidence', label: '证据' }]} />
             <Button size="small" type="primary" icon={<BranchesOutlined />} onClick={showPathAnalysis}>路径分析</Button>
             <Button size="small" onClick={saveView}>保存视图</Button>
-            <Button size="small" onClick={exportEvidence} disabled={!graph}>导出证据</Button>
+            <Button size="small" onClick={exportViewSnapshot} disabled={!graph}>导出视图 JSON</Button>
           </div>
           {feedback && <div className="taf-graph-inline-feedback" role="status"><SafetyCertificateOutlined />{feedback}<button type="button" onClick={() => setFeedback(undefined)}>关闭</button></div>}
           <WorkPanel
@@ -253,7 +253,7 @@ export function GraphEntityPage({ route }: { route: NavRoute }) {
               />
             </WorkPanel>
 
-            <WorkPanel title="查询治理" className="taf-graph-query-governance-panel">
+            <WorkPanel title="查询治理（当前浏览器）" className="taf-graph-query-governance-panel">
               <QueryGovernance graph={graph} history={queryHistory} />
             </WorkPanel>
           </div>
@@ -466,14 +466,15 @@ function QueryGovernance({ graph, history }: { graph?: EntityGraphWorkbench; his
     : graph?.meta.query_duration_ms ?? 0;
   const slowQueries = history.filter((item) => item.duration_ms >= 500).length;
   const stats = [
-    ['慢查询数', String(slowQueries), slowQueries ? 'warn' : 'ok'],
+    ['本地慢查询', String(slowQueries), slowQueries ? 'warn' : 'ok'],
     ['节点上限', (graph?.meta.node_limit ?? 500).toLocaleString('zh-CN'), 'ok'],
     [graph?.meta.cache_applicable ? '图缓存命中率' : '图缓存状态', graph?.meta.cache_applicable ? graph.meta.cache_hit_rate : '未启用', 'ok'],
-    ['平均查询耗时', `${averageDuration} ms`, averageDuration >= 500 ? 'warn' : 'info'],
+    ['本地平均耗时', `${averageDuration} ms`, averageDuration >= 500 ? 'warn' : 'info'],
   ];
   const recent = history.slice(0, 4);
   return (
     <div className="taf-graph-governance">
+      <p className="taf-graph-governance__scope" role="note">耗时历史仅来自当前浏览器已返回的查询，不代表服务端全局指标。</p>
       <div className="taf-graph-governance__stats">
         {stats.map(([label, value, tone]) => (
           <span key={label} className={`is-${tone}`}>
@@ -484,11 +485,11 @@ function QueryGovernance({ graph, history }: { graph?: EntityGraphWorkbench; his
       </div>
       <div className="taf-graph-query-history-grid">
         <section className="taf-graph-query-chart">
-          <strong>查询历史</strong>
+          <strong>本浏览器查询历史</strong>
           <div>
             {recent.length ? (
               <QueryHistoryBarChart
-                ariaLabel={`查询历史耗时，共 ${recent.length} 次查询`}
+                ariaLabel={`本浏览器查询历史耗时，共 ${recent.length} 次查询`}
                 items={recent.slice().reverse().map((item) => ({
                   label: new Date(item.created_at).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }),
                   value: item.duration_ms,
@@ -498,13 +499,13 @@ function QueryGovernance({ graph, history }: { graph?: EntityGraphWorkbench; his
           </div>
         </section>
         <section className="taf-graph-recent-queries">
-          <strong>最近查询</strong>
+          <strong>最近查询（本地）</strong>
           {recent.map((item) => (
             <div key={item.id}>
               <span title={item.label}>{item.label}</span>
               <time>{new Date(item.created_at).toLocaleTimeString('zh-CN', { hour12: false })}</time>
               <b>{item.duration_ms} ms</b>
-              <em>通过</em>
+              <em>已返回</em>
             </div>
           ))}
           {!recent.length && <div><span>当前筛选条件无查询记录</span><time>-</time><b>-</b><em>-</em></div>}

@@ -20,6 +20,13 @@ describe('asset inventory route state', () => {
     expect(assetSearchParams({ tab: 'unknown' }).toString()).toBe('tab=unknown');
   });
 
+  it('preserves source context while replacing only asset-owned state', () => {
+    const current = new URLSearchParams('campaign=campaign-1&trace_id=trace-1&tab=endpoint&assetId=old&detail=history');
+    const params = assetSearchParams({ tab: 'server', assetId: 'asset-2' }, current);
+    expect(params.toString()).toBe('campaign=campaign-1&trace_id=trace-1&tab=server&assetId=asset-2');
+    expect(current.get('assetId')).toBe('old');
+  });
+
   it('rejects unknown category and detail values without coupling them', () => {
     expect(resolveAssetTab('open-services')).toBe('endpoint');
     expect(resolveAssetDetail('server')).toBeNull();
