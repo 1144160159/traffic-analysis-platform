@@ -665,6 +665,13 @@
     "F-PROBE-001": {
       "status": "OBSERVING",
       "evidence": [
+        "contracts/kafka/pcap-metadata-ack.v1.json",
+        "scripts/alignment/verify_pcap_metadata_ack.py",
+        "tests/alignment/test_pcap_metadata_ack.py",
+        "go/control-plane/internal/ingest/server/pcap_ack_test.go",
+        "go/control-plane/internal/ingest/queue/producer_test.go",
+        "rust/probe-agent/probe-agent/src/archiver/uploader.rs",
+        "rust/probe-agent/probe-agent/src/archiver/upload_journal.rs",
         "go/control-plane/internal/alert/api/handler_probe_ack_test.go",
         "go/control-plane/internal/alert/api/handler_probe_outbox_test.go",
         "go/control-plane/internal/alert/consumer/probe_ack_consumer_test.go",
@@ -695,10 +702,11 @@
         "doc/02_acceptance/runs/20260803-remediation-pg-transaction-outbox-v8/manifest.json#sha256=583c90829421864e127157cafd669e42c461c8dcc3c16c7a375c95d349af5631",
         "doc/02_acceptance/runs/20260803-remediation-pg-mutation-inventory-v7/manifest.json#sha256=c43cde241c2a64d8fc637491648ab00383798c2de71fc58f5ecaa9a383304c52",
         "doc/02_acceptance/runs/20260804-remediation-g0-full-v133/manifest.json#sha256=babb158b7db5db46d97977a3aef432408387cf0eb4d55bc8f39aa69ca2617bb3",
-        "doc/02_acceptance/runs/20260804-remediation-g0-full-v134/manifest.json#sha256=60dcc2feab961b31570025bd7618a545e84a588976ca654d57de704307ec2807"
+        "doc/02_acceptance/runs/20260804-remediation-g0-full-v134/manifest.json#sha256=60dcc2feab961b31570025bd7618a545e84a588976ca654d57de704307ec2807",
+        "doc/02_acceptance/runs/20260807-remediation-g0-full-v174/manifest.json#sha256=6885920c64a9f1f85cd15a4101f762c05e1c9093bc3c40b6b23e1c378f224ead"
       ],
-      "blocker": "隔离canary的connectivity_test已通过G2/G3；生产DaemonSet仍受共享client证书CN与逐节点probe_id身份契约阻塞，不得滚动。AF_XDP ring offset映射和stop时kernel-owned UMEM frame回收已在仓库候选修复，但尚未构建或灰度到生产probe镜像，也未完成真实网卡持续采集、丢包与资源观察。probe.events.v2投影尚缺当前镜像、consumer group offset及PG live对账；新probe registration outbox尚缺dispatcher和release-candidate Kafka ACK-before-published证据；config_push、cert_rotate、restart、batch_upgrade仍缺批准执行器，故障恢复、G4、G5、G6和G7未完成。",
-      "note": "既有隔离canary已完成HTTP受理、command outbox、Agent执行、ACK receipt/history/audit/lifecycle outbox和Redis删除同trace对账；认证探针注册已收敛为tenant绑定、revision、history、最小audit、outbox和持久幂等结果同一serializable事务。本轮G0 v133真实暴露AF_XDP把ring offset误当虚拟指针、frame映射到0并在stop泄漏UMEM的SIGABRT；候选改为兼容offset/绝对地址映射，跟踪并在socket关闭后回收kernel-owned frames，地址映射单测、在线采集默认并行5轮和完整G0 v134均通过。production_applied=false，状态保持OBSERVING。"
+      "blocker": "隔离canary的connectivity_test已通过G2/G3；生产DaemonSet仍受共享client证书CN与逐节点probe_id身份契约阻塞，不得滚动。AF_XDP ring offset映射和stop时kernel-owned UMEM frame回收已在仓库候选修复，但尚未构建或灰度到生产probe镜像，也未完成真实网卡持续采集、丢包与资源观察。PCAP元数据ACK现仅声明MinIO已journal且Kafka RequireAll已确认，下游Flink/ClickHouse仍pending；尚缺真实MinIO manifest/hash核验、Kafka故障与Agent重启重放、file_key/sha256最终索引对账、本地容量/清理证据。probe.events.v2投影尚缺当前镜像、consumer group offset及PG live对账；新probe registration outbox尚缺dispatcher和release-candidate Kafka ACK-before-published证据；config_push、cert_rotate、restart、batch_upgrade仍缺批准执行器，故障恢复、G4、G5、G6和G7未完成。",
+      "note": "既有隔离canary已完成HTTP受理、command outbox、Agent执行、ACK receipt/history/audit/lifecycle outbox和Redis删除同trace对账；认证探针注册已收敛为tenant绑定、revision、history、最小audit、outbox和持久幂等结果同一serializable事务。AF_XDP候选已修复ring offset映射及stop时kernel-owned UMEM回收。新增PCAP元数据非最终receipt：ingest拒绝非all Kafka ACK配置和认证tenant/probe不一致请求，Kafka失败返回gRPC Unavailable，成功消息明确downstream index pending；Agent只有收到success才标metadata_synced，且ACK不删除本地证据。合同、静态verifier、4项负向测试、全Go与G0 v174通过，覆盖仅PARTIAL_PROBE_TO_KAFKA_RECEIPT，production_applied=false，状态保持OBSERVING。"
     },
     "F-MODEL-001": {
       "status": "VERIFYING",
@@ -1319,10 +1327,16 @@
         "go/control-plane/internal/common/kafka/errors.go",
         "go/control-plane/internal/common/kafka/consumer.go",
         "go/control-plane/internal/common/audit/consumer.go",
+        "contracts/kafka/pcap-metadata-ack.v1.json",
+        "scripts/alignment/verify_pcap_metadata_ack.py",
+        "tests/alignment/test_pcap_metadata_ack.py",
+        "go/control-plane/internal/ingest/server/pcap_ack_test.go",
+        "go/control-plane/internal/ingest/queue/producer_test.go",
         "doc/02_acceptance/runs/20260807-remediation-g0-full-v173/manifest.json#sha256=1fabbebddd5061a33d3640583fe8c117208fdb4ac281d2fd3dd5aacbd5ded0b1",
+        "doc/02_acceptance/runs/20260807-remediation-g0-full-v174/manifest.json#sha256=6885920c64a9f1f85cd15a4101f762c05e1c9093bc3c40b6b23e1c378f224ead",
         "doc/02_acceptance/runs/20260802-remediation-kafka-acl-v4/manifest.json#sha256=f93a96c35c647dcea3a3be2c2abb0477cd68be6a6459e9d5c19ba0be03f26bf2"
       ],
-      "note": "共享Go BatchConsume现已把broker offset ACK作为最终持久化屏障：不再把异步排队当成提交成功，真实commit错误向调用方传播且processed指标只在ACK后增加；后台单消息提交失败保留pending offset重试。DLQ安全初始化失败不再退化为无认证writer，批内任一序列化失败整批拒绝，单条与批量均采用canonical TargetTopic。独立合同、静态verifier、5项负向变异测试、race测试和同哈希G0 v173已PASS；覆盖仍仅为PARTIAL_SHARED_GO_CONSUMER。资产binding和audit permanent-only策略继续保持fail-closed。尚缺真实broker毒消息、DLQ/PG中断、source offset-DLQ-PG/CH审计同trace对账、重启/rebalance、非Go与专用consumer盘点、性能、灰度回滚及T+观察，故状态保持VERIFYING。"
+      "note": "共享Go BatchConsume现已把broker offset ACK作为最终持久化屏障：不再把异步排队当成提交成功，真实commit错误向调用方传播且processed指标只在ACK后增加；后台单消息提交失败保留pending offset重试。DLQ安全初始化、整批序列化和TargetTopic均fail closed。PCAP元数据入口进一步强制KAFKA_REQUIRED_ACKS=all、认证tenant/probe绑定、Kafka失败gRPC Unavailable及非最终downstream-pending成功语义；Agent日志与本地证据在ACK失败时保留。两份独立合同、静态verifier、9项负向测试、race/Go测试和同哈希G0 v174已PASS；覆盖仍仅为PARTIAL共享Go consumer与probe-to-Kafka receipt。尚缺真实broker毒消息/DLQ/PG中断、MinIO manifest/hash、source offset-DLQ-PG/CH审计及PCAP最终索引同trace对账、重启/rebalance、非Go与专用consumer盘点、性能、灰度回滚及T+观察，故状态保持VERIFYING。"
     },
     "T-KAFKA-005": {
       "status": "IMPLEMENTING",

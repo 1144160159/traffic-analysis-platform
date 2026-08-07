@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-07T07:17:25Z",
+  "updated_at": "2026-08-07T07:34:48Z",
   "latest_g0": {
-    "run_id": "20260807-remediation-g0-full-v173",
-    "manifest": "doc/02_acceptance/runs/20260807-remediation-g0-full-v173/manifest.json",
-    "manifest_sha256": "1fabbebddd5061a33d3640583fe8c117208fdb4ac281d2fd3dd5aacbd5ded0b1",
-    "candidate_source_sha256": "bfe9d9bf307b061486ee061e1d9b580dd91dc6f3514d0663129b07a4caea9d57",
+    "run_id": "20260807-remediation-g0-full-v174",
+    "manifest": "doc/02_acceptance/runs/20260807-remediation-g0-full-v174/manifest.json",
+    "manifest_sha256": "6885920c64a9f1f85cd15a4101f762c05e1c9093bc3c40b6b23e1c378f224ead",
+    "candidate_source_sha256": "1238876d28bca4c6eca45f7112eee199feccf2a24d71bf606900cd4fd6670431",
     "status": "PASS",
     "scope": [
       "alignment-test",
@@ -29,9 +29,9 @@
       "go/control-plane/internal/common/kafka/consumer_batch_commit_test.go",
       "go/control-plane/internal/common/kafka/dlq_test.go"
     ],
-    "g0_run_id": "20260807-remediation-g0-full-v173",
-    "g0_manifest_sha256": "1fabbebddd5061a33d3640583fe8c117208fdb4ac281d2fd3dd5aacbd5ded0b1",
-    "candidate_source_sha256": "bfe9d9bf307b061486ee061e1d9b580dd91dc6f3514d0663129b07a4caea9d57",
+    "g0_run_id": "20260807-remediation-g0-full-v174",
+    "g0_manifest_sha256": "6885920c64a9f1f85cd15a4101f762c05e1c9093bc3c40b6b23e1c378f224ead",
+    "candidate_source_sha256": "1238876d28bca4c6eca45f7112eee199feccf2a24d71bf606900cd4fd6670431",
     "repository_status": "PASS",
     "coverage_status": "PARTIAL_SHARED_GO_CONSUMER",
     "production_applied": false,
@@ -43,6 +43,30 @@
       "inventory and migrate non-Go and dedicated consumer paths"
     ],
     "note": "Batch processing now requires a real Kafka commit acknowledgement before processed metrics advance; DLQ security, serialization and write failures retain source offsets. Repository proof does not establish live broker or production completion."
+  },
+  "latest_pcap_metadata_ack": {
+    "canonical_ids": ["F-PROBE-001", "T-KAFKA-003"],
+    "contract": "contracts/kafka/pcap-metadata-ack.v1.json",
+    "verifier": "scripts/alignment/verify_pcap_metadata_ack.py",
+    "tests": [
+      "tests/alignment/test_pcap_metadata_ack.py",
+      "go/control-plane/internal/ingest/server/pcap_ack_test.go",
+      "go/control-plane/internal/ingest/queue/producer_test.go"
+    ],
+    "g0_run_id": "20260807-remediation-g0-full-v174",
+    "g0_manifest_sha256": "6885920c64a9f1f85cd15a4101f762c05e1c9093bc3c40b6b23e1c378f224ead",
+    "candidate_source_sha256": "1238876d28bca4c6eca45f7112eee199feccf2a24d71bf606900cd4fd6670431",
+    "repository_status": "PASS",
+    "coverage_status": "PARTIAL_PROBE_TO_KAFKA_RECEIPT",
+    "production_applied": false,
+    "ack_scope": "MINIO_JOURNALED_AND_KAFKA_REQUIRE_ALL_DOWNSTREAM_INDEX_PENDING",
+    "remaining_gates": [
+      "real MinIO upload Kafka RequireAll ACK Flink consume and ClickHouse index reconciliation by tenant probe file_key and sha256",
+      "Kafka unavailable and ambiguous ACK fault injection with Agent restart and journal replay",
+      "MinIO object manifest and hash verification before metadata acceptance",
+      "bounded local retention capacity backpressure and cleanup evidence",
+      "candidate deployment canary rollback and T+0 T+1 T+3 T+7 observation"
+    ]
   },
   "latest_common_response_adapter": {
     "feature_ids": ["F-COMMON-002", "F-COMMON-004", "F-ADAPTER-002"],
