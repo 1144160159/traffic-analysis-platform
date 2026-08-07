@@ -421,10 +421,14 @@
         "scripts/alignment/verify_asset_projection_opensearch_ephemeral.py",
         "deployments/kubernetes/image-digests.lock.json",
         "doc/02_acceptance/runs/20260807-remediation-g0-full-v177/manifest.json#sha256=0a7b42dcb235815496f1f83deb6364b48c0a246b629abc1bbb7be83a75c9be9b",
-        "doc/02_acceptance/runs/20260807-remediation-asset-projection-opensearch-g1-v1/manifest.json#sha256=0bd8805bef1ce78a4eb7657777cb38444af069c081a34956d03a5dce25df8e71"
+        "doc/02_acceptance/runs/20260807-remediation-asset-projection-opensearch-g1-v1/manifest.json#sha256=0bd8805bef1ce78a4eb7657777cb38444af069c081a34956d03a5dce25df8e71",
+        "scripts/alignment/verify_asset_projection_kafka_ephemeral.py",
+        "go/control-plane/internal/asset/consumer/asset_projection_real_kafka_integration_test.go",
+        "doc/02_acceptance/runs/20260807-remediation-g0-full-v178/manifest.json#sha256=6c769f977d9ae1a4ddfa6bb40da7a0eea4344249dc3519c526422ac615d7ea8f",
+        "doc/02_acceptance/runs/20260807-remediation-asset-projection-kafka-g1-v1/manifest.json#sha256=f99a71e3fa6d82365240d1e6acbf1da08d8d58d7a66712ef384b1f3d23b40909"
       ],
-      "blocker": "十项资产expand迁移尚未在批准目标执行，topic/ACL与Nebula space也未完成同源灰度；真实API/PG/Kafka offset/OS文档/Nebula顶点同trace对账、真实Kafka与Nebula故障、性能、指定Windows Chrome变更旅程、发布回滚及观察窗仍未完成。",
-      "note": "资产写入、outbox与投影实现继续保持既有sentinel PostgreSQL证据；v176同源候选完成PG expand双回放。v177又修正不可拉取的OpenSearch摘要，并在无卷、loopback、专用sentinel OpenSearch 2.14.0中按生产映射authority验证write/read alias、确定性文档ID、external_gte同版本重放和旧版本409拒绝，容器已删除且production_applied=false。该G1只关闭资产OpenSearch目标子切片；Kafka入口、真实Nebula、G2—G6仍开放，状态保持VERIFYING。"
+      "blocker": "十项资产expand迁移尚未在批准目标执行，生产topic/ACL与Nebula space也未完成同源灰度；真实API/PG/Kafka/OS/Nebula/MinIO/审计同trace对账、真实Nebula及MinIO故障、性能、指定Windows Chrome变更旅程、发布回滚及观察窗仍未完成。",
+      "note": "v176完成PG expand双回放，v177完成真实隔离OpenSearch目标。v178再以固定digest的无卷、loopback Redpanda和PostgreSQL证明asset.events.v2 RequireAll broker ACK先于outbox published、完整headers/payload消费、authoritative history校验后的durable inbox offset及精确重放幂等；两个容器均删除且production_applied=false。G1现关闭PG、Kafka入口和OpenSearch目标三个隔离子切片；真实Nebula、MinIO及G2—G6仍开放，状态保持VERIFYING。"
     },
     {
       "id": "F-ASSET-003",
@@ -2059,10 +2063,14 @@
         "go/control-plane/internal/ingest/queue/producer_test.go",
         "doc/02_acceptance/runs/20260807-remediation-g0-full-v173/manifest.json#sha256=1fabbebddd5061a33d3640583fe8c117208fdb4ac281d2fd3dd5aacbd5ded0b1",
         "doc/02_acceptance/runs/20260807-remediation-g0-full-v174/manifest.json#sha256=6885920c64a9f1f85cd15a4101f762c05e1c9093bc3c40b6b23e1c378f224ead",
-        "doc/02_acceptance/runs/20260802-remediation-kafka-acl-v4/manifest.json#sha256=f93a96c35c647dcea3a3be2c2abb0477cd68be6a6459e9d5c19ba0be03f26bf2"
+        "doc/02_acceptance/runs/20260802-remediation-kafka-acl-v4/manifest.json#sha256=f93a96c35c647dcea3a3be2c2abb0477cd68be6a6459e9d5c19ba0be03f26bf2",
+        "scripts/alignment/verify_asset_projection_kafka_ephemeral.py",
+        "go/control-plane/internal/asset/consumer/asset_projection_real_kafka_integration_test.go",
+        "doc/02_acceptance/runs/20260807-remediation-g0-full-v178/manifest.json#sha256=6c769f977d9ae1a4ddfa6bb40da7a0eea4344249dc3519c526422ac615d7ea8f",
+        "doc/02_acceptance/runs/20260807-remediation-asset-projection-kafka-g1-v1/manifest.json#sha256=f99a71e3fa6d82365240d1e6acbf1da08d8d58d7a66712ef384b1f3d23b40909"
       ],
       "blocker": null,
-      "note": "共享Go BatchConsume现已把broker offset ACK作为最终持久化屏障：不再把异步排队当成提交成功，真实commit错误向调用方传播且processed指标只在ACK后增加；后台单消息提交失败保留pending offset重试。DLQ安全初始化、整批序列化和TargetTopic均fail closed。PCAP元数据入口进一步强制KAFKA_REQUIRED_ACKS=all、认证tenant/probe绑定、Kafka失败gRPC Unavailable及非最终downstream-pending成功语义；Agent日志与本地证据在ACK失败时保留。两份独立合同、静态verifier、9项负向测试、race/Go测试和同哈希G0 v174已PASS；覆盖仍仅为PARTIAL共享Go consumer与probe-to-Kafka receipt。尚缺真实broker毒消息/DLQ/PG中断、MinIO manifest/hash、source offset-DLQ-PG/CH审计及PCAP最终索引同trace对账、重启/rebalance、非Go与专用consumer盘点、性能、灰度回滚及T+观察，故状态保持VERIFYING。"
+      "note": "共享Go BatchConsume的commit/DLQ屏障与PCAP非最终ACK语义不变。v178新增固定digest Redpanda/PostgreSQL资产投影实测：asset.events.v2 RequireAll ACK后才标outbox published，严格headers/payload经consumer进入authoritative-history校验的durable inbox并记录partition/offset，精确broker重放只提交新offset、不复制inbox。该证据不覆盖毒消息、DLQ ACK失败、PG中断、rebalance、非Go consumer或生产ACL/性能/观察窗，故T-KAFKA-003仍为VERIFYING。"
     },
     {
       "id": "T-KAFKA-004",
