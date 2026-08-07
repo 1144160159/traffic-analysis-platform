@@ -1,0 +1,29 @@
+{
+  "status": "PASS",
+  "dist": "/home/wangwt/phase_2/code/traffic-analysis-platform-remediation-integration/web/ui/dist",
+  "bundle_sha256": "5987a7219cc75484e9ce4c520e1439ffbd764115e54a917e784c53043ec47485",
+  "file_count": 84,
+  "size_bytes": 95935720,
+  "index_assets": [
+    "assets/index-Cg4Bo8tI.css",
+    "assets/index-CxTxAHFn.js",
+    "assets/vendor-ant-design-fast-color-a4DwzfPV.js",
+    "assets/vendor-ant-design-iL5Z5GZv.js",
+    "assets/vendor-antd-Cl21FpTz.js",
+    "assets/vendor-babel-runtime-DOsDFnm7.js",
+    "assets/vendor-data-38j4_Kgc.js",
+    "assets/vendor-dayjs-Csm2ddBZ.js",
+    "assets/vendor-misc-Ic7fAJjT.js",
+    "assets/vendor-rc-Bx0d6omx.js",
+    "assets/vendor-react-DcxXCZkJ.js",
+    "assets/vendor-remix-run-router-DTlRP5cs.js",
+    "assets/vendor-router-CQ_4Ibzk.js",
+    "assets/vendor-stylis-BmaM3nay.js",
+    "config.js"
+  ],
+  "missing_index_assets": [],
+  "forbidden_paths": [],
+  "forbidden_tokens": [],
+  "forbidden_manifest_sources": [],
+  "errors": []
+}

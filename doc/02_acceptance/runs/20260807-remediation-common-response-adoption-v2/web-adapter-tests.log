@@ -1,0 +1,19 @@
+
+> traffic-analysis-ui@2.0.0 test
+> vitest --run src/services/alertDetailApi.test.ts src/services/campaignDetailApi.test.ts src/services/pageSnapshotFallback.test.ts src/services/pageSnapshotAdapters.test.ts src/services/topicApi.test.ts src/pages/AlertDetailPage.test.ts
+
+
+ RUN  v1.6.1 /home/wangwt/phase_2/code/traffic-analysis-platform-remediation-integration/web/ui
+
+ ✓ src/pages/AlertDetailPage.test.ts  (9 tests) 4ms
+ ✓ src/services/pageSnapshotFallback.test.ts  (3 tests) 6ms
+ ✓ src/services/topicApi.test.ts  (3 tests) 7ms
+ ✓ src/services/alertDetailApi.test.ts  (9 tests) 24ms
+ ✓ src/services/campaignDetailApi.test.ts  (7 tests) 29ms
+ ✓ src/services/pageSnapshotAdapters.test.ts  (32 tests) 54ms
+
+ Test Files  6 passed (6)
+      Tests  63 passed (63)
+   Start at  12:17:59
+   Duration  3.85s (transform 1.17s, setup 274ms, collect 3.88s, tests 124ms, environment 10.40s, prepare 2.18s)
+

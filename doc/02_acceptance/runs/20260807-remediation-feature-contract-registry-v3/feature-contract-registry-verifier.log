@@ -1,0 +1,41 @@
+{
+  "status": "PASS",
+  "feature_id": "F-COMMON-001",
+  "registry_integrity": "PASS",
+  "contract_coverage": "STANDARD_SCOPE_COMPLETE_BACKLOG_PARTIAL",
+  "catalog_sha256": "2454ef7abedf6f4c62131f1ec5beff7433ce280a958abe7ba87e2feca7b881ed",
+  "coverage": {
+    "canonical_feature_ids": 54,
+    "formal_contracts": 38,
+    "formal_contracts_valid": 38,
+    "formal_contracts_openapi_bound": 23,
+    "non_draft_openapi_binding_gaps": [
+      "F-AUDIT-001",
+      "F-AUTH-001"
+    ],
+    "standard_scope_features": 38,
+    "standard_scope_formal_contracts": 38,
+    "missing_standard_scope_contracts": [],
+    "missing_backlog_contracts": [
+      "F-ATTACKCHAIN-001",
+      "F-BASELINE-001",
+      "F-COMPLIANCE-001",
+      "F-DEPLOY-001",
+      "F-ENCRYPTED-001",
+      "F-ENCRYPTED-002",
+      "F-FORENSICS-001",
+      "F-FUSION-001",
+      "F-MLOPS-001",
+      "F-NOTIFICATION-001",
+      "F-NOTIFY-001",
+      "F-PREF-001",
+      "F-PROBE-002",
+      "F-RULE-001",
+      "F-SCREEN-001",
+      "F-SETTINGS-001"
+    ],
+    "p0_features": 16,
+    "p0_features_with_formal_contract": 16
+  },
+  "errors": []
+}
