@@ -502,3 +502,177 @@ func TestAlertProjectionRepairRealClickHousePostgresAndOpenSearch(t *testing.T) 
 		t.Fatalf("durable three-store terminal receipt count=%d want=1", convergedRunCount)
 	}
 }
+
+// TestAlertProjectionShadowRealClickHouseAndOpenSearch proves the production
+// readers can classify one bounded V2 scope without a PostgreSQL dependency or
+// any target mutation. The surrounding runner owns and removes both services.
+func TestAlertProjectionShadowRealClickHouseAndOpenSearch(t *testing.T) {
+	baseURL := strings.TrimRight(os.Getenv("ALERT_PROJECTION_RECONCILE_EPHEMERAL_OS_URL"), "/")
+	clickHouseHost := os.Getenv("ALERT_PROJECTION_RECONCILE_EPHEMERAL_CH_HOST")
+	if baseURL == "" || clickHouseHost == "" {
+		t.Skip("combined ephemeral ClickHouse and OpenSearch endpoints are not set")
+	}
+	parsedOS, err := url.Parse(baseURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	osHost, _, osHostErr := net.SplitHostPort(parsedOS.Host)
+	chHost, _, chHostErr := net.SplitHostPort(clickHouseHost)
+	if osHostErr != nil || parsedOS.Scheme != "http" || net.ParseIP(osHost) == nil || !net.ParseIP(osHost).IsLoopback() ||
+		chHostErr != nil || net.ParseIP(chHost) == nil || !net.ParseIP(chHost).IsLoopback() {
+		t.Fatalf("refusing non-loopback shadow endpoints: os_err=%v ch_err=%v", osHostErr, chHostErr)
+	}
+	if os.Getenv("ALERT_PROJECTION_RECONCILE_EPHEMERAL_OS_SENTINEL") != "ephemeral-only" ||
+		os.Getenv("ALERT_PROJECTION_RECONCILE_EPHEMERAL_CH_SENTINEL") != "ephemeral-only" {
+		t.Fatal("refusing shadow endpoints without explicit ephemeral sentinels")
+	}
+	response, err := http.Get(baseURL + "/codex-ephemeral-alert-reconcile-sentinel/_doc/ephemeral-only")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	var osSentinel struct {
+		Found  bool `json:"found"`
+		Source struct {
+			Marker string `json:"marker"`
+		} `json:"_source"`
+	}
+	if err := json.NewDecoder(response.Body).Decode(&osSentinel); err != nil {
+		t.Fatal(err)
+	}
+	if response.StatusCode != http.StatusOK || !osSentinel.Found || osSentinel.Source.Marker != "ephemeral-only" {
+		t.Fatalf("refusing non-sentinel OpenSearch: status=%s sentinel=%+v", response.Status, osSentinel)
+	}
+
+	ctx := context.Background()
+	clickHouseClient, err := storage.NewClickHouseClient(storage.ClickHouseConfig{
+		Hosts: []string{clickHouseHost}, Database: "traffic",
+		Username:     os.Getenv("ALERT_PROJECTION_RECONCILE_EPHEMERAL_CH_USER"),
+		Password:     os.Getenv("ALERT_PROJECTION_RECONCILE_EPHEMERAL_CH_PASSWORD"),
+		MaxOpenConns: 2, MaxIdleConns: 1, DialTimeout: 5 * time.Second,
+		CompressionLZ4: true, EnableAutoReconnect: false,
+	}, zap.NewNop())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer clickHouseClient.Close()
+	row, err := clickHouseClient.QueryRow(ctx, `SELECT marker FROM traffic.codex_ephemeral_alert_reconcile_sentinel LIMIT 1`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var chMarker string
+	if err := row.Scan(&chMarker); err != nil || chMarker != "ephemeral-only" {
+		t.Fatalf("refusing ClickHouse without ephemeral sentinel: marker=%q err=%v", chMarker, err)
+	}
+
+	target, err := persistence.NewOpenSearchReconcileTarget(
+		[]string{baseURL}, "", "", "alerts-v2-read", "alerts-v2-write", true, false, zap.NewNop(),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer target.Close()
+	metadata, err := target.ProjectionMetadata(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(metadata.WriteIndices) != 1 || !metadata.WriteIndices[0].IsWriteIndex {
+		t.Fatalf("ephemeral V2 write alias is not unique: %+v", metadata)
+	}
+	tenantID := "tenant-alert-shadow-g1"
+	base := time.Date(2026, 8, 7, 18, 0, 0, 0, time.UTC)
+	alert := func(id, status string, updated time.Time) *persistence.Alert {
+		return &persistence.Alert{
+			TenantID: tenantID, AlertID: id, Fingerprint: "fingerprint-" + id,
+			CommunityID: "community-" + id, SessionID: "session-" + id,
+			SrcIP: "192.0.2.95", DstIP: "203.0.113.95", SrcPort: 49005, DstPort: 443,
+			Protocol: 6, AlertType: "projection-shadow", Labels: []string{"integration"},
+			Severity: "high", Score: 0.95, FirstSeen: base.Add(-time.Minute), LastSeen: updated,
+			UpdatedTs: updated, Count: 1, Status: status, ModelVersion: "model-g1", RuleVersion: "rule-g1",
+			FeatureSetID: "feature-g1", EvidenceIDs: []string{"evidence-" + id}, EventID: "event-" + id,
+			TraceID: "1234567890abcdef1234567890abcdef", StateVersion: uint64(updated.UnixMilli()),
+		}
+	}
+	sourceAlerts := []*persistence.Alert{
+		alert("shadow-missing", "new", base.Add(2*time.Second)),
+		alert("shadow-stale", "closed", base.Add(3*time.Second)),
+	}
+	clickHouseWriter, err := persistence.NewClickHouseWriter(clickHouseClient, zap.NewNop())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := clickHouseWriter.WriteBatch(ctx, sourceAlerts); err != nil {
+		t.Fatal(err)
+	}
+	for _, seed := range []*persistence.Alert{
+		alert("shadow-stale", "new", base),
+		alert("shadow-extra", "new", base.Add(time.Second)),
+	} {
+		if err := target.WriteAlert(ctx, seed); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := target.RefreshProjectionTarget(ctx); err != nil {
+		t.Fatal(err)
+	}
+	authority := alertrepo.NewAlertRepository(clickHouseClient, zap.NewNop())
+	scope := persistence.ProjectionScope{
+		TenantID: tenantID, StartTime: base.Add(-5 * time.Minute), EndTime: base.Add(5 * time.Minute),
+		TargetIndexVersion: "alerts-v2-write", MaxDocuments: 100,
+	}
+	sourceBefore, sourceTruncated, err := authority.ListProjectionAlerts(ctx, scope)
+	if err != nil || sourceTruncated || len(sourceBefore) != 2 {
+		t.Fatalf("unexpected pre-shadow authority: count=%d truncated=%t err=%v", len(sourceBefore), sourceTruncated, err)
+	}
+	targetBefore, targetTruncated, err := target.ListProjectionAlerts(ctx, scope)
+	if err != nil || targetTruncated || len(targetBefore) != 2 {
+		t.Fatalf("unexpected pre-shadow target: count=%d truncated=%t err=%v", len(targetBefore), targetTruncated, err)
+	}
+	manifest, err := BuildShadowManifest(ctx, ShadowConfig{
+		MaxDocuments: 10_000, MaxWindow: time.Hour, MinimumWindowAge: 15 * time.Minute,
+		Now: func() time.Time { return base.Add(time.Hour) },
+	}, authority, target, ShadowRequest{
+		RequestedBy: "ephemeral-shadow-runner", TraceID: "trace-alert-shadow-g1", EnvironmentID: "owned-loopback-g1", Scope: scope,
+		Target: ShadowTargetMetadata{
+			ClusterUUID: metadata.ClusterUUID, ReadTarget: metadata.ReadTarget, WriteAlias: metadata.WriteAlias,
+			WriteIndices: []ShadowWriteIndex{{Index: metadata.WriteIndices[0].Index, IsWriteIndex: metadata.WriteIndices[0].IsWriteIndex}},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if manifest.Status != ShadowStatusDiff || manifest.ApprovalReadiness != ShadowApprovalReady ||
+		manifest.MissingCount != 1 || manifest.StaleCount != 1 || manifest.ExtraCount != 1 ||
+		manifest.ProductionApplied || len(manifest.ProductionMutations) != 0 || manifest.BindingSHA256 == "" {
+		t.Fatalf("unexpected real-service shadow manifest: %+v", manifest)
+	}
+	sourceAfter, sourceTruncated, err := authority.ListProjectionAlerts(ctx, scope)
+	if err != nil || sourceTruncated || len(sourceAfter) != len(sourceBefore) {
+		t.Fatalf("authority changed during shadow: before=%d after=%d truncated=%t err=%v", len(sourceBefore), len(sourceAfter), sourceTruncated, err)
+	}
+	targetAfter, targetTruncated, err := target.ListProjectionAlerts(ctx, scope)
+	if err != nil || targetTruncated || len(targetAfter) != len(targetBefore) {
+		t.Fatalf("target changed during shadow: before=%d after=%d truncated=%t err=%v", len(targetBefore), len(targetAfter), targetTruncated, err)
+	}
+	for index := range sourceBefore {
+		before, hashErr := persistence.AlertProjectionSHA256(sourceBefore[index])
+		if hashErr != nil {
+			t.Fatal(hashErr)
+		}
+		after, hashErr := persistence.AlertProjectionSHA256(sourceAfter[index])
+		if hashErr != nil || before != after {
+			t.Fatalf("authority hash changed during shadow: before=%s after=%s err=%v", before, after, hashErr)
+		}
+	}
+	for index := range targetBefore {
+		before, hashErr := persistence.AlertProjectionSHA256(targetBefore[index])
+		if hashErr != nil {
+			t.Fatal(hashErr)
+		}
+		after, hashErr := persistence.AlertProjectionSHA256(targetAfter[index])
+		if hashErr != nil || before != after {
+			t.Fatalf("target hash changed during shadow: before=%s after=%s err=%v", before, after, hashErr)
+		}
+	}
+	t.Logf("shadow_binding_sha256=%s cluster_uuid=%s write_index=%s production_mutations=0", manifest.BindingSHA256, metadata.ClusterUUID, metadata.WriteIndices[0].Index)
+}

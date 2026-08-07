@@ -15,16 +15,18 @@ CLI = Path("go/control-plane/cmd/alert-projection-shadow/main.go")
 REPAIR_CLI = Path("go/control-plane/cmd/alert-projection-reconcile/main.go")
 METADATA = Path("go/control-plane/internal/alert/persistence/opensearch.go")
 RENDERER = Path("scripts/alignment/render_alert_projection_shadow_approval.py")
+G1_RUNNER = Path("scripts/alignment/verify_alert_projection_shadow_ephemeral.py")
 TESTS = (
     Path("go/control-plane/internal/alert/projection/shadow_test.go"),
     Path("go/control-plane/internal/alert/persistence/opensearch_external_version_test.go"),
     Path("go/control-plane/cmd/alert-projection-reconcile/main_test.go"),
     Path("tests/alignment/test_alert_projection_shadow_backfill.py"),
+    Path("tests/alignment/test_alert_projection_shadow_ephemeral_guard.py"),
 )
 
 
 def verify(root: Path = ROOT) -> dict[str, Any]:
-    required = (CONTRACT, SHADOW, CLI, REPAIR_CLI, METADATA, RENDERER, *TESTS)
+    required = (CONTRACT, SHADOW, CLI, REPAIR_CLI, METADATA, RENDERER, G1_RUNNER, *TESTS)
     missing = [str(path) for path in required if not (root / path).is_file()]
     if missing:
         return {"status": "FAIL", "errors": [f"missing required files: {missing}"]}
@@ -65,6 +67,11 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
             '"execution_authorized": False', '"production_mutations": []',
             '"status": "PENDING"', '"shell": None', "G0 candidate head does not match",
         ),
+        G1_RUNNER: (
+            '"postgres_dependency_present": False', '"production_mutations": []',
+            "TestAlertProjectionShadowRealClickHouseAndOpenSearch", "clickhouse_container_removed",
+            "opensearch_container_removed",
+        ),
     }
     for path, expected in tokens.items():
         text = (root / path).read_text(encoding="utf-8")
@@ -83,6 +90,7 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
         "ClassifiesAndBindsReadOnlyDiff", "BindingIsDeterministic", "BlocksTruncatedAndAmbiguousAlias",
         "RejectsUnsafeScopesBeforeReads", "ProjectionMetadataBindsClusterAndSingleWriteIndexReadOnly",
         "RepairRequiresExactObservedTargetBinding",
+        "TestAlertProjectionShadowRealClickHouseAndOpenSearch", "test_runner_invokes_production_readers_and_checks_unchanged_hashes",
         "test_rejects_expired_tampered_or_mutating_shadow", "test_rejects_candidate_drift_or_dirty_g0",
     ):
         if token not in test_text:

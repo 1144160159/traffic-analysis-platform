@@ -585,6 +585,11 @@ alignment-verify-opensearch-projection-reconciliation: ## Verify T-OS-004 durabl
 alignment-verify-alert-projection-shadow-backfill: ## Verify read-only CH/OS shadow comparison and non-authorizing repair review package
 	python scripts/alignment/verify_alert_projection_shadow_backfill.py
 
+.PHONY: alignment-verify-alert-projection-shadow-g1
+alignment-verify-alert-projection-shadow-g1: ## Verify production CH/OS shadow readers in owned loopback services (RUN_ID required)
+	test -n "$(RUN_ID)"
+	python scripts/alignment/verify_alert_projection_shadow_ephemeral.py --run-id "$(RUN_ID)" $(if $(OUTPUT),--output "$(OUTPUT)",)
+
 .PHONY: alignment-verify-alert-projection-watermark-postgres-g1
 alignment-verify-alert-projection-watermark-postgres-g1: ## Verify T-OS-004 watermark receipts in owned PostgreSQL (RUN_ID required)
 	test -n "$(RUN_ID)"

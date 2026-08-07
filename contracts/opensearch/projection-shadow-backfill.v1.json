@@ -92,6 +92,25 @@
     "all_approvals_default": "PENDING",
     "proposed_command_is_argv_not_shell": true
   },
+  "owned_g1": {
+    "runner": "scripts/alignment/verify_alert_projection_shadow_ephemeral.py",
+    "services": [
+      "clickhouse",
+      "opensearch"
+    ],
+    "postgres_dependency_present": false,
+    "persistent_volume_attached": false,
+    "shared_environment_touched": false,
+    "production_applied": false,
+    "required_assertions": [
+      "production ClickHouse authority reader",
+      "production OpenSearch projection reader",
+      "missing stale and extra classification",
+      "cluster alias and physical write index binding",
+      "source count and hashes unchanged after shadow",
+      "target count and hashes unchanged after shadow"
+    ]
+  },
   "execution_guards": {
     "repair_command": "alert-projection-reconcile",
     "repair_mode": "repair",
