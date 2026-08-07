@@ -11,7 +11,6 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"time"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -45,73 +44,13 @@ func (r *UserRepository) DB() *sql.DB {
 
 // Create 创建用户
 func (r *UserRepository) Create(ctx context.Context, user *model.User, password string) error {
-	if user == nil {
-		return errors.New(errors.ErrCodeInvalidParameter, "user cannot be nil")
-	}
-
-	if password == "" {
-		return errors.New(errors.ErrCodeMissingParameter, "password is required")
-	}
-
-	// 哈希密码
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return errors.Wrap(err, errors.ErrCodeInternal, "Failed to hash password")
-	}
-
-	// 生成 UUID
-	user.UserID = uuid.New()
-	user.PasswordHash = string(hashedPassword)
-	user.Status = model.UserStatusActive
-	user.CreatedAt = time.Now()
-	user.UpdatedAt = time.Now()
-
-	query := `
-		INSERT INTO users (user_id, tenant_id, username, email, password_hash, status, external_id, last_login_at, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-	`
-
-	// 处理 ExternalID（可能为空）
-	var externalID interface{}
-	if user.ExternalID != "" {
-		externalID = user.ExternalID
-	} else {
-		externalID = nil
-	}
-
-	_, err = r.db.ExecContext(ctx, query,
-		user.UserID,
-		user.TenantID,
-		user.Username,
-		user.Email,
-		user.PasswordHash,
-		user.Status,
-		externalID,
-		user.LastLoginAt, // 修复 #A2：包含新字段
-		user.CreatedAt,
-		user.UpdatedAt,
-	)
-
-	if err != nil {
-		r.logger.Error("Failed to create user",
-			zap.String("username", user.Username),
-			zap.String("tenant_id", user.TenantID),
-			zap.Error(err))
-		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to create user")
-	}
-
-	r.logger.Info("User created",
-		zap.String("user_id", user.UserID.String()),
-		zap.String("username", user.Username),
-		zap.String("tenant_id", user.TenantID))
-
-	return nil
+	return r.CreateLocalUserAtomic(ctx, user, password)
 }
 
 // GetByID 根据 ID 获取用户（修复 #A2：包含 last_login_at）
 func (r *UserRepository) GetByID(ctx context.Context, userID uuid.UUID) (*model.User, error) {
 	query := `
-		SELECT user_id, tenant_id, username, email, password_hash, status, external_id, last_login_at, created_at, updated_at
+		SELECT user_id, tenant_id, username, email, password_hash, status, external_id, last_login_at, revision, created_at, updated_at
 		FROM users
 		WHERE user_id = $1
 	`
@@ -119,6 +58,7 @@ func (r *UserRepository) GetByID(ctx context.Context, userID uuid.UUID) (*model.
 	var user model.User
 	var externalID sql.NullString
 	var email sql.NullString
+	var passwordHash sql.NullString
 	var lastLoginAt sql.NullTime // 修复 #A2：新增字段
 
 	err := r.db.QueryRowContext(ctx, query, userID).Scan(
@@ -126,10 +66,11 @@ func (r *UserRepository) GetByID(ctx context.Context, userID uuid.UUID) (*model.
 		&user.TenantID,
 		&user.Username,
 		&email,
-		&user.PasswordHash,
+		&passwordHash,
 		&user.Status,
 		&externalID,
 		&lastLoginAt, // 修复 #A2：扫描新字段
+		&user.Revision,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
@@ -148,6 +89,9 @@ func (r *UserRepository) GetByID(ctx context.Context, userID uuid.UUID) (*model.
 	if email.Valid {
 		user.Email = email.String
 	}
+	if passwordHash.Valid {
+		user.PasswordHash = passwordHash.String
+	}
 	if externalID.Valid {
 		user.ExternalID = externalID.String
 	}
@@ -162,7 +106,7 @@ func (r *UserRepository) GetByID(ctx context.Context, userID uuid.UUID) (*model.
 // GetByUsername 根据用户名获取用户（修复 #A2）
 func (r *UserRepository) GetByUsername(ctx context.Context, tenantID, username string) (*model.User, error) {
 	query := `
-		SELECT user_id, tenant_id, username, email, password_hash, status, external_id, last_login_at, created_at, updated_at
+		SELECT user_id, tenant_id, username, email, password_hash, status, external_id, last_login_at, revision, created_at, updated_at
 		FROM users
 		WHERE tenant_id = $1 AND username = $2
 	`
@@ -170,6 +114,7 @@ func (r *UserRepository) GetByUsername(ctx context.Context, tenantID, username s
 	var user model.User
 	var externalID sql.NullString
 	var email sql.NullString
+	var passwordHash sql.NullString
 	var lastLoginAt sql.NullTime
 
 	err := r.db.QueryRowContext(ctx, query, tenantID, username).Scan(
@@ -177,10 +122,11 @@ func (r *UserRepository) GetByUsername(ctx context.Context, tenantID, username s
 		&user.TenantID,
 		&user.Username,
 		&email,
-		&user.PasswordHash,
+		&passwordHash,
 		&user.Status,
 		&externalID,
 		&lastLoginAt,
+		&user.Revision,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
@@ -199,6 +145,9 @@ func (r *UserRepository) GetByUsername(ctx context.Context, tenantID, username s
 	if email.Valid {
 		user.Email = email.String
 	}
+	if passwordHash.Valid {
+		user.PasswordHash = passwordHash.String
+	}
 	if externalID.Valid {
 		user.ExternalID = externalID.String
 	}
@@ -212,7 +161,7 @@ func (r *UserRepository) GetByUsername(ctx context.Context, tenantID, username s
 // GetByExternalID 根据外部 ID 获取用户（OIDC）（修复 #A2）
 func (r *UserRepository) GetByExternalID(ctx context.Context, externalID string) (*model.User, error) {
 	query := `
-		SELECT user_id, tenant_id, username, email, password_hash, status, external_id, last_login_at, created_at, updated_at
+		SELECT user_id, tenant_id, username, email, password_hash, status, external_id, last_login_at, revision, created_at, updated_at
 		FROM users
 		WHERE external_id = $1
 	`
@@ -220,6 +169,7 @@ func (r *UserRepository) GetByExternalID(ctx context.Context, externalID string)
 	var user model.User
 	var extID sql.NullString
 	var email sql.NullString
+	var passwordHash sql.NullString
 	var lastLoginAt sql.NullTime
 
 	err := r.db.QueryRowContext(ctx, query, externalID).Scan(
@@ -227,10 +177,11 @@ func (r *UserRepository) GetByExternalID(ctx context.Context, externalID string)
 		&user.TenantID,
 		&user.Username,
 		&email,
-		&user.PasswordHash,
+		&passwordHash,
 		&user.Status,
 		&extID,
 		&lastLoginAt,
+		&user.Revision,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
@@ -248,6 +199,9 @@ func (r *UserRepository) GetByExternalID(ctx context.Context, externalID string)
 	if email.Valid {
 		user.Email = email.String
 	}
+	if passwordHash.Valid {
+		user.PasswordHash = passwordHash.String
+	}
 	if extID.Valid {
 		user.ExternalID = extID.String
 	}
@@ -260,29 +214,14 @@ func (r *UserRepository) GetByExternalID(ctx context.Context, externalID string)
 
 // UpdateLastLoginAt 更新最后登录时间（修复 #A2：新增方法）
 func (r *UserRepository) UpdateLastLoginAt(ctx context.Context, userID uuid.UUID) error {
-	query := `
-		UPDATE users
-		SET last_login_at = NOW(), updated_at = NOW()
-		WHERE user_id = $1
-	`
-
-	result, err := r.db.ExecContext(ctx, query, userID)
+	user, err := r.GetByID(ctx, userID)
 	if err != nil {
-		r.logger.Error("Failed to update last login time",
-			zap.String("user_id", userID.String()),
-			zap.Error(err))
-		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to update last login time")
+		return err
 	}
-
-	rows, _ := result.RowsAffected()
-	if rows == 0 {
+	if user == nil {
 		return errors.New(errors.ErrCodeUserNotFound, "User not found")
 	}
-
-	r.logger.Debug("Last login time updated",
-		zap.String("user_id", userID.String()))
-
-	return nil
+	return r.RecordLoginAtomic(ctx, userID, user.TenantID)
 }
 
 // CreateOrUpdateFromOIDC 从 OIDC 创建或更新用户
@@ -295,111 +234,8 @@ func (r *UserRepository) CreateOrUpdateFromOIDC(ctx context.Context, claims *mod
 		return nil, errors.New(errors.ErrCodeMissingParameter, "OIDC subject is required")
 	}
 
-	// 检查用户是否存在
-	existingUser, err := r.GetByExternalID(ctx, claims.Subject)
-	if err != nil {
-		return nil, err
-	}
-
-	if existingUser != nil {
-		// 更新用户信息
-		query := `
-			UPDATE users 
-			SET email = $1, username = $2, last_login_at = NOW(), updated_at = NOW()
-			WHERE external_id = $3
-			RETURNING user_id, tenant_id, username, email, password_hash, status, external_id, last_login_at, created_at, updated_at
-		`
-
-		var user model.User
-		var email sql.NullString
-		var externalID sql.NullString
-		var lastLoginAt sql.NullTime
-
-		err := r.db.QueryRowContext(ctx, query,
-			claims.Email,
-			claims.PreferredUsername,
-			claims.Subject,
-		).Scan(
-			&user.UserID,
-			&user.TenantID,
-			&user.Username,
-			&email,
-			&user.PasswordHash,
-			&user.Status,
-			&externalID,
-			&lastLoginAt,
-			&user.CreatedAt,
-			&user.UpdatedAt,
-		)
-
-		if err != nil {
-			r.logger.Error("Failed to update user from OIDC",
-				zap.String("external_id", claims.Subject),
-				zap.Error(err))
-			return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to update user")
-		}
-
-		if email.Valid {
-			user.Email = email.String
-		}
-		if externalID.Valid {
-			user.ExternalID = externalID.String
-		}
-		if lastLoginAt.Valid {
-			user.LastLoginAt = &lastLoginAt.Time
-		}
-
-		r.logger.Info("User updated from OIDC",
-			zap.String("user_id", user.UserID.String()),
-			zap.String("username", user.Username))
-
-		return &user, nil
-	}
-
-	// 创建新用户
-	now := time.Now()
-	user := &model.User{
-		UserID:      uuid.New(),
-		TenantID:    tenantID,
-		Username:    claims.PreferredUsername,
-		Email:       claims.Email,
-		Status:      model.UserStatusActive,
-		ExternalID:  claims.Subject,
-		LastLoginAt: &now, // 修复 #A2：设置初始登录时间
-		CreatedAt:   now,
-		UpdatedAt:   now,
-	}
-
-	query := `
-		INSERT INTO users (user_id, tenant_id, username, email, status, external_id, last_login_at, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-	`
-
-	_, err = r.db.ExecContext(ctx, query,
-		user.UserID,
-		user.TenantID,
-		user.Username,
-		user.Email,
-		user.Status,
-		user.ExternalID,
-		user.LastLoginAt,
-		user.CreatedAt,
-		user.UpdatedAt,
-	)
-
-	if err != nil {
-		r.logger.Error("Failed to create user from OIDC",
-			zap.String("external_id", claims.Subject),
-			zap.Error(err))
-		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to create user")
-	}
-
-	r.logger.Info("User created from OIDC",
-		zap.String("user_id", user.UserID.String()),
-		zap.String("username", user.Username),
-		zap.String("tenant_id", tenantID))
-
-	return user, nil
+	user, _, err := r.SyncOIDCUserAtomic(ctx, claims, nil, UserCommandMetadata{TenantID: tenantID, CompatibilityMode: true})
+	return user, err
 }
 
 // GetUserRoles 获取用户角色
@@ -441,47 +277,12 @@ func (r *UserRepository) GetUserRoles(ctx context.Context, userID uuid.UUID) ([]
 
 // AssignRole 分配角色
 func (r *UserRepository) AssignRole(ctx context.Context, userID, roleID uuid.UUID) error {
-	query := `INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`
-
-	_, err := r.db.ExecContext(ctx, query, userID, roleID)
-	if err != nil {
-		r.logger.Error("Failed to assign role",
-			zap.String("user_id", userID.String()),
-			zap.String("role_id", roleID.String()),
-			zap.Error(err))
-		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to assign role")
-	}
-
-	r.logger.Info("Role assigned",
-		zap.String("user_id", userID.String()),
-		zap.String("role_id", roleID.String()))
-
-	return nil
+	return r.AssignRoleAtomic(ctx, userID, roleID, false)
 }
 
 // RemoveRole 移除角色（修复 #A5：新增方法）
 func (r *UserRepository) RemoveRole(ctx context.Context, userID, roleID uuid.UUID) error {
-	query := `DELETE FROM user_roles WHERE user_id = $1 AND role_id = $2`
-
-	result, err := r.db.ExecContext(ctx, query, userID, roleID)
-	if err != nil {
-		r.logger.Error("Failed to remove role",
-			zap.String("user_id", userID.String()),
-			zap.String("role_id", roleID.String()),
-			zap.Error(err))
-		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to remove role")
-	}
-
-	rows, _ := result.RowsAffected()
-	if rows == 0 {
-		return errors.New(errors.ErrCodeEntityNotFound, "Role assignment not found")
-	}
-
-	r.logger.Info("Role removed",
-		zap.String("user_id", userID.String()),
-		zap.String("role_id", roleID.String()))
-
-	return nil
+	return r.AssignRoleAtomic(ctx, userID, roleID, true)
 }
 
 // GetRoleIDByName 根据角色名称获取角色 ID
@@ -507,7 +308,7 @@ func (r *UserRepository) GetRoleIDByName(ctx context.Context, tenantID, roleName
 // GetUsersByRole 获取拥有特定角色的所有用户（修复 #A5：新增方法）
 func (r *UserRepository) GetUsersByRole(ctx context.Context, tenantID string, roleID uuid.UUID) ([]*model.User, error) {
 	query := `
-		SELECT u.user_id, u.tenant_id, u.username, u.email, u.password_hash, u.status, u.external_id, u.last_login_at, u.created_at, u.updated_at
+		SELECT u.user_id, u.tenant_id, u.username, u.email, u.password_hash, u.status, u.external_id, u.last_login_at, u.revision, u.created_at, u.updated_at
 		FROM users u
 		JOIN user_roles ur ON u.user_id = ur.user_id
 		WHERE u.tenant_id = $1 AND ur.role_id = $2
@@ -524,6 +325,7 @@ func (r *UserRepository) GetUsersByRole(ctx context.Context, tenantID string, ro
 	for rows.Next() {
 		var user model.User
 		var email sql.NullString
+		var passwordHash sql.NullString
 		var externalID sql.NullString
 		var lastLoginAt sql.NullTime
 
@@ -532,10 +334,11 @@ func (r *UserRepository) GetUsersByRole(ctx context.Context, tenantID string, ro
 			&user.TenantID,
 			&user.Username,
 			&email,
-			&user.PasswordHash,
+			&passwordHash,
 			&user.Status,
 			&externalID,
 			&lastLoginAt,
+			&user.Revision,
 			&user.CreatedAt,
 			&user.UpdatedAt,
 		)
@@ -548,6 +351,9 @@ func (r *UserRepository) GetUsersByRole(ctx context.Context, tenantID string, ro
 
 		if email.Valid {
 			user.Email = email.String
+		}
+		if passwordHash.Valid {
+			user.PasswordHash = passwordHash.String
 		}
 		if externalID.Valid {
 			user.ExternalID = externalID.String
@@ -578,43 +384,7 @@ func (r *UserRepository) VerifyPassword(user *model.User, password string) bool 
 
 // Update 更新用户
 func (r *UserRepository) Update(ctx context.Context, user *model.User) error {
-	if user == nil {
-		return errors.New(errors.ErrCodeInvalidParameter, "user cannot be nil")
-	}
-
-	user.UpdatedAt = time.Now()
-
-	query := `
-		UPDATE users
-		SET username = $2, email = $3, status = $4, updated_at = $5
-		WHERE user_id = $1
-	`
-
-	result, err := r.db.ExecContext(ctx, query,
-		user.UserID,
-		user.Username,
-		user.Email,
-		user.Status,
-		user.UpdatedAt,
-	)
-
-	if err != nil {
-		r.logger.Error("Failed to update user",
-			zap.String("user_id", user.UserID.String()),
-			zap.Error(err))
-		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to update user")
-	}
-
-	rows, _ := result.RowsAffected()
-	if rows == 0 {
-		return errors.New(errors.ErrCodeUserNotFound, "User not found")
-	}
-
-	r.logger.Info("User updated",
-		zap.String("user_id", user.UserID.String()),
-		zap.String("username", user.Username))
-
-	return nil
+	return r.UpdateUserLegacyAtomic(ctx, user)
 }
 
 // UpdatePassword 更新密码
@@ -623,62 +393,12 @@ func (r *UserRepository) UpdatePassword(ctx context.Context, userID uuid.UUID, n
 		return errors.New(errors.ErrCodeMissingParameter, "password is required")
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
-	if err != nil {
-		return errors.Wrap(err, errors.ErrCodeInternal, "Failed to hash password")
-	}
-
-	query := `
-		UPDATE users
-		SET password_hash = $2, updated_at = $3
-		WHERE user_id = $1
-	`
-
-	result, err := r.db.ExecContext(ctx, query,
-		userID,
-		string(hashedPassword),
-		time.Now(),
-	)
-
-	if err != nil {
-		r.logger.Error("Failed to update password",
-			zap.String("user_id", userID.String()),
-			zap.Error(err))
-		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to update password")
-	}
-
-	rows, _ := result.RowsAffected()
-	if rows == 0 {
-		return errors.New(errors.ErrCodeUserNotFound, "User not found")
-	}
-
-	r.logger.Info("Password updated",
-		zap.String("user_id", userID.String()))
-
-	return nil
+	return r.SetPasswordLegacyAtomic(ctx, userID, newPassword)
 }
 
 // Delete 删除用户
 func (r *UserRepository) Delete(ctx context.Context, userID uuid.UUID) error {
-	query := `DELETE FROM users WHERE user_id = $1`
-
-	result, err := r.db.ExecContext(ctx, query, userID)
-	if err != nil {
-		r.logger.Error("Failed to delete user",
-			zap.String("user_id", userID.String()),
-			zap.Error(err))
-		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to delete user")
-	}
-
-	rows, _ := result.RowsAffected()
-	if rows == 0 {
-		return errors.New(errors.ErrCodeUserNotFound, "User not found")
-	}
-
-	r.logger.Info("User deleted",
-		zap.String("user_id", userID.String()))
-
-	return nil
+	return r.DeleteUserAtomic(ctx, userID)
 }
 
 // ListByTenant 列出租户的所有用户
@@ -700,7 +420,7 @@ func (r *UserRepository) ListByTenant(ctx context.Context, tenantID string, limi
 
 	// 获取列表
 	query := `
-		SELECT user_id, tenant_id, username, email, password_hash, status, external_id, last_login_at, created_at, updated_at
+		SELECT user_id, tenant_id, username, email, password_hash, status, external_id, last_login_at, revision, created_at, updated_at
 		FROM users
 		WHERE tenant_id = $1
 		ORDER BY created_at DESC
@@ -717,6 +437,7 @@ func (r *UserRepository) ListByTenant(ctx context.Context, tenantID string, limi
 	for rows.Next() {
 		var user model.User
 		var email sql.NullString
+		var passwordHash sql.NullString
 		var externalID sql.NullString
 		var lastLoginAt sql.NullTime
 
@@ -725,10 +446,11 @@ func (r *UserRepository) ListByTenant(ctx context.Context, tenantID string, limi
 			&user.TenantID,
 			&user.Username,
 			&email,
-			&user.PasswordHash,
+			&passwordHash,
 			&user.Status,
 			&externalID,
 			&lastLoginAt,
+			&user.Revision,
 			&user.CreatedAt,
 			&user.UpdatedAt,
 		)
@@ -741,6 +463,9 @@ func (r *UserRepository) ListByTenant(ctx context.Context, tenantID string, limi
 
 		if email.Valid {
 			user.Email = email.String
+		}
+		if passwordHash.Valid {
+			user.PasswordHash = passwordHash.String
 		}
 		if externalID.Valid {
 			user.ExternalID = externalID.String
@@ -761,29 +486,5 @@ func (r *UserRepository) ListByTenant(ctx context.Context, tenantID string, limi
 
 // UpdateStatus 更新用户状态
 func (r *UserRepository) UpdateStatus(ctx context.Context, userID uuid.UUID, status string) error {
-	query := `
-		UPDATE users
-		SET status = $2, updated_at = $3
-		WHERE user_id = $1
-	`
-
-	result, err := r.db.ExecContext(ctx, query, userID, status, time.Now())
-	if err != nil {
-		r.logger.Error("Failed to update user status",
-			zap.String("user_id", userID.String()),
-			zap.String("status", status),
-			zap.Error(err))
-		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to update user status")
-	}
-
-	rows, _ := result.RowsAffected()
-	if rows == 0 {
-		return errors.New(errors.ErrCodeUserNotFound, "User not found")
-	}
-
-	r.logger.Info("User status updated",
-		zap.String("user_id", userID.String()),
-		zap.String("status", status))
-
-	return nil
+	return r.UpdateUserStatusAtomic(ctx, userID, status)
 }

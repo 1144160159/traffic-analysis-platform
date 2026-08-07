@@ -43,6 +43,7 @@ const (
 	MaxCommunityIDLength = 128
 	MaxProbeIDLength     = 64
 	MaxTenantIDLength    = 64
+	MaxReferenceIDLength = 256
 
 	// IP/端口验证
 	MinPort = 0
@@ -67,18 +68,23 @@ var (
 
 // CutRequestParams API 裁剪请求参数
 type CutRequestParams struct {
-	TenantID    string `json:"tenant_id,omitempty"`
-	AssetID     string `json:"asset_id,omitempty"`
-	ProbeID     string `json:"probe_id,omitempty"`
-	SrcIP       string `json:"src_ip,omitempty"`
-	DstIP       string `json:"dst_ip,omitempty"`
-	SrcPort     uint16 `json:"src_port,omitempty"`
-	DstPort     uint16 `json:"dst_port,omitempty"`
-	Protocol    uint8  `json:"protocol,omitempty"`
-	CommunityID string `json:"community_id,omitempty"`
-	StartTime   int64  `json:"start_time"`
-	EndTime     int64  `json:"end_time"`
-	MaxPackets  int64  `json:"max_packets,omitempty"`
+	TenantID     string `json:"tenant_id,omitempty"`
+	AssetID      string `json:"asset_id,omitempty"`
+	AlertID      string `json:"alert_id,omitempty"`
+	CampaignID   string `json:"campaign_id,omitempty"`
+	BaselineID   string `json:"baseline_id,omitempty"`
+	EvidenceID   string `json:"evidence_id,omitempty"`
+	EvidenceType string `json:"evidence_type,omitempty"`
+	ProbeID      string `json:"probe_id,omitempty"`
+	SrcIP        string `json:"src_ip,omitempty"`
+	DstIP        string `json:"dst_ip,omitempty"`
+	SrcPort      uint16 `json:"src_port,omitempty"`
+	DstPort      uint16 `json:"dst_port,omitempty"`
+	Protocol     uint8  `json:"protocol,omitempty"`
+	CommunityID  string `json:"community_id,omitempty"`
+	StartTime    int64  `json:"start_time"`
+	EndTime      int64  `json:"end_time"`
+	MaxPackets   int64  `json:"max_packets,omitempty"`
 }
 
 // Validate 验证请求参数（修复版：完整验证）
@@ -87,6 +93,15 @@ func (p *CutRequestParams) Validate() error {
 		p.AssetID = strings.TrimSpace(p.AssetID)
 		if _, err := uuid.Parse(p.AssetID); err != nil {
 			return errors.New(errors.ErrCodeInvalidParameter, "asset_id must be a valid UUID")
+		}
+	}
+	for name, value := range map[string]*string{
+		"alert_id": &p.AlertID, "campaign_id": &p.CampaignID, "baseline_id": &p.BaselineID,
+		"evidence_id": &p.EvidenceID, "evidence_type": &p.EvidenceType,
+	} {
+		*value = strings.TrimSpace(*value)
+		if len(*value) > MaxReferenceIDLength || strings.ContainsAny(*value, "\x00\r\n") {
+			return errors.Newf(errors.ErrCodeInvalidParameter, "%s is invalid", name)
 		}
 	}
 	// ========== 1. 时间戳合法性验证 ==========
@@ -286,21 +301,28 @@ func (p *CutRequestParams) ToIndexQuery() *index.IndexQuery {
 
 // JobResponse 任务响应
 type JobResponse struct {
-	JobID         string                 `json:"job_id"`
-	Status        string                 `json:"status"`
-	Progress      int                    `json:"progress"`
-	TotalPackets  int64                  `json:"total_packets"`
-	TotalBytes    int64                  `json:"total_bytes"`
-	FilesScanned  int                    `json:"files_scanned"`
-	ResultFileKey string                 `json:"result_file_key,omitempty"`
-	SHA256        string                 `json:"sha256,omitempty"`
-	DownloadURL   string                 `json:"download_url,omitempty"`
-	ExpiresAt     *int64                 `json:"expires_at,omitempty"`
-	ErrorMessage  string                 `json:"error_message,omitempty"`
-	Params        map[string]interface{} `json:"params,omitempty"`
-	CreatedAt     int64                  `json:"created_at"`
-	UpdatedAt     int64                  `json:"updated_at"`
-	CompletedAt   *int64                 `json:"completed_at,omitempty"`
+	JobID             string                 `json:"job_id"`
+	Status            string                 `json:"status"`
+	Progress          int                    `json:"progress"`
+	TotalPackets      int64                  `json:"total_packets"`
+	TotalBytes        int64                  `json:"total_bytes"`
+	FilesScanned      int                    `json:"files_scanned"`
+	ResultFileKey     string                 `json:"result_file_key,omitempty"`
+	SHA256            string                 `json:"sha256,omitempty"`
+	DownloadURL       string                 `json:"download_url,omitempty"`
+	ExpiresAt         *int64                 `json:"expires_at,omitempty"`
+	ErrorMessage      string                 `json:"error_message,omitempty"`
+	Params            map[string]interface{} `json:"params,omitempty"`
+	CreatedAt         int64                  `json:"created_at"`
+	UpdatedAt         int64                  `json:"updated_at"`
+	CompletedAt       *int64                 `json:"completed_at,omitempty"`
+	Revision          int64                  `json:"revision"`
+	EventID           string                 `json:"event_id,omitempty"`
+	ActionID          string                 `json:"action_id,omitempty"`
+	IdempotencyKey    string                 `json:"idempotency_key,omitempty"`
+	OutboxStatus      string                 `json:"outbox_status,omitempty"`
+	Replayed          bool                   `json:"replayed,omitempty"`
+	CompatibilityMode bool                   `json:"compatibility_mode,omitempty"`
 }
 
 // FromTask 从 Task 实体转换
@@ -316,6 +338,7 @@ func (r *JobResponse) FromTask(task *repository.Task) {
 	r.ErrorMessage = task.ErrorMessage
 	r.CreatedAt = task.CreatedAt.UnixMilli()
 	r.UpdatedAt = task.UpdatedAt.UnixMilli()
+	r.Revision = task.Revision
 	if task.CompletedAt != nil {
 		completedAt := task.CompletedAt.UnixMilli()
 		r.CompletedAt = &completedAt

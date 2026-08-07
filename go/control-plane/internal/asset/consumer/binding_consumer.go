@@ -75,11 +75,22 @@ func (c *BindingConsumer) Run(ctx context.Context) {
 				zap.Int("partition", msg.Partition),
 				zap.Int64("offset", msg.Offset),
 				zap.Error(err))
-			_ = c.reader.CommitMessages(ctx, msg)
+			// No DLQ is wired for this dedicated consumer yet. Fail closed:
+			// leave the offset uncommitted so a poison record is visible and
+			// replayable instead of being silently discarded.
 			continue
 		}
 
-		accepted, rejected, err := c.svc.RecordMacIpBinding(ctx, bindings)
+		accepted, rejected, err := c.svc.RecordMacIpBinding(ctx, bindings, service.BindingProvenance{
+			Channel:     service.BindingChannelKafka,
+			Topic:       msg.Topic,
+			Partition:   msg.Partition,
+			Offset:      msg.Offset,
+			MessageTime: msg.Time,
+			Actor:       "kafka:asset-service-bindings",
+			TraceID:     fmt.Sprintf("asset-binding:%s:%d:%d", msg.Topic, msg.Partition, msg.Offset),
+			RequestID:   fmt.Sprintf("%s/%d/%d", msg.Topic, msg.Partition, msg.Offset),
+		})
 		if err != nil {
 			c.logger.Warn("record asset bindings failed",
 				zap.Int("bindings", len(bindings)),

@@ -146,6 +146,7 @@ type S3Config struct {
 	AccessKey    string `env:"S3_ACCESS_KEY"`
 	SecretKey    string `env:"S3_SECRET_KEY"`
 	UseSSL       bool   `env:"S3_USE_SSL" envDefault:"false"`
+	CAFile       string `env:"S3_CA_CERT"`
 	Region       string `env:"S3_REGION" envDefault:"us-east-1"`
 }
 
@@ -189,7 +190,7 @@ type KafkaConfig struct {
 // AuthConfig 认证配置
 type AuthConfig struct {
 	Enabled          bool          `env:"AUTH_ENABLED" envDefault:"false"`
-	JWTSigningKey    string        `env:"JWT_SIGNING_KEY" envDefault:"your-256-bit-secret-key-here"`
+	JWTSigningKey    string        `env:"JWT_SIGNING_KEY"`
 	JWTSigningMethod string        `env:"JWT_SIGNING_METHOD" envDefault:"HS256"`
 	AccessTokenTTL   time.Duration `env:"JWT_ACCESS_TOKEN_TTL" envDefault:"15m"`
 	RefreshTokenTTL  time.Duration `env:"JWT_REFRESH_TOKEN_TTL" envDefault:"168h"` // 7 days

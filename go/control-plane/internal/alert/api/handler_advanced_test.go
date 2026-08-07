@@ -244,7 +244,7 @@ func TestDataQualityPermissionAndActionValidation(t *testing.T) {
 	}
 }
 
-func TestAdvancedHandlerRejectsLivePlaybookWithoutProvider(t *testing.T) {
+func TestAdvancedHandlerKeepsLivePlaybookV2DefaultOff(t *testing.T) {
 	router := newAdvancedTestRouter(NewAdvancedHandler(nil, nil, newAdvancedTestPlaybookEngine(t), nil, nil))
 
 	rr := doAdvancedRequestWithPermissions(t, router, http.MethodPost, "/api/v1/playbooks/isolate-host/execute", `{
@@ -256,13 +256,13 @@ func TestAdvancedHandlerRejectsLivePlaybookWithoutProvider(t *testing.T) {
 		"dest_ip":"198.51.100.20",
 		"related_alert_count":7,
 		"asset_risk":"high"
-	}`, []string{"operator"}, []string{authmodel.ScopePlaybookWrite})
-	if rr.Code != http.StatusNotImplemented {
-		t.Fatalf("status=%d want=%d body=%s", rr.Code, http.StatusNotImplemented, rr.Body.String())
+	}`, []string{"operator"}, []string{authmodel.ScopePlaybookExecute})
+	if rr.Code != http.StatusServiceUnavailable {
+		t.Fatalf("status=%d want=%d body=%s", rr.Code, http.StatusServiceUnavailable, rr.Body.String())
 	}
 	body := decodeAdvancedBody(t, rr)
 	errorObject, ok := body["error"].(map[string]interface{})
-	if !ok || errorObject["code"] != "PLAYBOOK_LIVE_EXECUTION_NOT_CONFIGURED" {
+	if !ok || errorObject["code"] != "PLAYBOOK_EXECUTION_V2_DISABLED" {
 		t.Fatalf("unexpected live execution rejection: %#v", body)
 	}
 }
@@ -288,7 +288,7 @@ func TestAdvancedHandlerPlaybookExecutionsLimitValidation(t *testing.T) {
 	}
 }
 
-func TestAdvancedHandlerNotificationSettingsRejectInlineSecrets(t *testing.T) {
+func TestAdvancedHandlerNotificationSettingsRejectInlineSecretsAndPseudoSuccess(t *testing.T) {
 	router := newAdvancedTestRouter(NewAdvancedHandler(nil, nil, nil, nil, nil))
 
 	rr := doAdvancedRequestWithPermissions(t, router, http.MethodPut, "/api/v1/notifications/settings", `{
@@ -296,20 +296,8 @@ func TestAdvancedHandlerNotificationSettingsRejectInlineSecrets(t *testing.T) {
 		"channels":{"email":true},
 		"secret_ref":"traffic-analysis/notification-secret"
 	}`, []string{"admin"}, []string{"admin:*"})
-	if rr.Code != http.StatusOK {
-		t.Fatalf("status=%d want=%d body=%s", rr.Code, http.StatusOK, rr.Body.String())
-	}
-	body := decodeAdvancedBody(t, rr)
-	data := body["data"].(map[string]interface{})
-	if data["enabled"] != false {
-		t.Fatalf("enabled=%v want false", data["enabled"])
-	}
-	channels := data["channels"].(map[string]interface{})
-	if channels["email"] != true || channels["webhook"] != false {
-		t.Fatalf("channels were not merged as expected: %#v", channels)
-	}
-	if data["secret_ref"] != "traffic-analysis/notification-secret" {
-		t.Fatalf("secret_ref=%v", data["secret_ref"])
+	if rr.Code != http.StatusServiceUnavailable {
+		t.Fatalf("status=%d want=%d body=%s", rr.Code, http.StatusServiceUnavailable, rr.Body.String())
 	}
 
 	rr = doAdvancedRequestWithPermissions(t, router, http.MethodPut, "/api/v1/notifications/settings", `{"webhook_token":"plain-text-token"}`, []string{"admin"}, []string{"admin:*"})

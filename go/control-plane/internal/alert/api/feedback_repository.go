@@ -39,51 +39,6 @@ func NewFeedbackRepository(client *storage.ClickHouseClient, logger *zap.Logger)
 	return &FeedbackRepository{client: client, logger: logger}
 }
 
-// InitSchema 初始化反馈表
-func (r *FeedbackRepository) InitSchema(ctx context.Context) error {
-	localDDL := `
-	CREATE TABLE IF NOT EXISTS traffic.alert_feedback_local (
-		feedback_id     String,
-		alert_id        String,
-		tenant_id       String,
-		user_id         String,
-		label           LowCardinality(String),
-		reason_code     String,
-		comment         String,
-		add_to_whitelist UInt8,
-		alert_type      String,
-		severity        LowCardinality(String),
-		model_version   String,
-		rule_version    String,
-		created_at      DateTime
-	) ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/alert_feedback_local', '{replica}')
-	PARTITION BY toYYYYMM(created_at)
-	ORDER BY (tenant_id, alert_id, created_at)
-	TTL created_at + INTERVAL 365 DAY
-	`
-	if err := r.client.Exec(ctx, localDDL); err != nil {
-		return err
-	}
-
-	distributedDDL := `
-	CREATE TABLE IF NOT EXISTS traffic.alert_feedback
-	AS traffic.alert_feedback_local
-	ENGINE = Distributed(traffic_cluster, traffic, alert_feedback_local, rand())
-	`
-	return r.client.Exec(ctx, distributedDDL)
-}
-
-// Insert 插入反馈记录
-func (r *FeedbackRepository) Insert(ctx context.Context, record *FeedbackRecord) error {
-	sql := `INSERT INTO traffic.alert_feedback_local (feedback_id, alert_id, tenant_id, user_id, label, reason_code, comment, add_to_whitelist, alert_type, severity, model_version, rule_version, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-	return r.client.Exec(ctx, sql,
-		record.FeedbackID, record.AlertID, record.TenantID, record.UserID,
-		record.Label, record.ReasonCode, record.Comment, record.AddToWhitelist,
-		record.AlertType, record.Severity, record.ModelVersion, record.RuleVersion,
-		record.CreatedAt,
-	)
-}
-
 // GetByAlertID 查询告警的所有反馈记录
 func (r *FeedbackRepository) GetByAlertID(ctx context.Context, tenantID, alertID string) ([]*FeedbackRecord, error) {
 	sql := `SELECT feedback_id, alert_id, tenant_id, user_id, label, reason_code, comment, add_to_whitelist, alert_type, severity, model_version, rule_version, created_at FROM traffic.alert_feedback WHERE tenant_id = ? AND alert_id = ? ORDER BY created_at DESC`

@@ -421,6 +421,51 @@ func TestBehaviorBaselineActionAdminReachesPostgresGate(t *testing.T) {
 	}
 }
 
+func TestBehaviorBaselineListAllowsOneBoundedFiveHundredRowPage(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/baselines?limit=500&offset=0", nil)
+	if behaviorBaselineListMax != 500 {
+		t.Fatalf("behavior baseline max=%d want 500", behaviorBaselineListMax)
+	}
+	limit, offset := parsePageLimitOffset(req, 20, behaviorBaselineListMax)
+	if limit != 500 || offset != 0 {
+		t.Fatalf("limit=%d offset=%d want one bounded 500-row page", limit, offset)
+	}
+}
+
+func TestBehaviorBaselineSettingsAreLoadedInTwoBatchQueries(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	handler := NewSystemHandler(nil, db, nil)
+	items := []behaviorBaselineDTO{
+		{BaselineID: "asset:10.0.0.1", BaselineType: "asset", EntityID: "10.0.0.1", Status: "active", Version: 1, Metrics: []behaviorMetricDTO{metricDTO("bytes_per_session", "bytes", 1, 0, 1)}},
+		{BaselineID: "asset:10.0.0.2", BaselineType: "asset", EntityID: "10.0.0.2", Status: "active", Version: 1, Metrics: []behaviorMetricDTO{metricDTO("bytes_per_session", "bytes", 1, 0, 1)}},
+	}
+	mock.ExpectQuery("FROM behavior_baseline_resets").
+		WithArgs("tenant-a", sqlmock.AnyArg()).
+		WillReturnRows(sqlmock.NewRows([]string{"baseline_id", "reset_at"}))
+	mock.ExpectQuery("FROM behavior_baseline_settings").
+		WithArgs("tenant-a", sqlmock.AnyArg()).
+		WillReturnRows(sqlmock.NewRows([]string{"baseline_id", "warning_multiplier", "alert_multiplier", "frozen", "drift_watch", "version"}).
+			AddRow("asset:10.0.0.1", 2.5, 4.0, true, false, 7).
+			AddRow("asset:10.0.0.2", 2.0, 3.5, false, true, 5))
+
+	if err := handler.applyBehaviorBaselineSettingsBatch(context.Background(), "tenant-a", items); err != nil {
+		t.Fatalf("apply batch settings: %v", err)
+	}
+	if !items[0].Frozen || items[0].Status != "frozen" || items[0].Version != 7 || items[0].Metrics[0].ThresholdConfig.AlertMultiplier != 4.0 {
+		t.Fatalf("unexpected first governed baseline: %+v", items[0])
+	}
+	if !items[1].DriftWatch || items[1].Status != "drift" || items[1].Version != 5 || items[1].Metrics[0].ThresholdConfig.WarningMultiplier != 2.0 {
+		t.Fatalf("unexpected second governed baseline: %+v", items[1])
+	}
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestEncryptedTrafficEgressActionRequiresAlertWritePermission(t *testing.T) {
 	handler := NewSystemHandler(nil, nil, nil)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/encrypted-traffic/egress-actions", strings.NewReader(`{"action":"create_alert","target":"203.0.113.45","data_mode":"simulated"}`))

@@ -58,6 +58,9 @@ type KafkaConfig struct {
 	PcapTopic         string        `env:"KAFKA_PCAP_TOPIC" envDefault:"pcap.index.v1"`
 	SessionTopic      string        `env:"KAFKA_SESSION_TOPIC" envDefault:"session.events.v1"`
 	DLQTopic          string        `env:"KAFKA_DLQ_TOPIC" envDefault:"dlq.ingest-gateway"`
+	ProbeControlTopic string        `env:"KAFKA_PROBE_CONTROL_TOPIC" envDefault:"probe.control.v2"`
+	ProbeAckTopic     string        `env:"KAFKA_PROBE_ACK_TOPIC" envDefault:"probe.acks.v2"`
+	ProbeControlGroup string        `env:"KAFKA_PROBE_CONTROL_GROUP" envDefault:"ingest-gateway-probe-control-v2"`
 	BatchSize         int           `env:"KAFKA_BATCH_SIZE" envDefault:"1000"`
 	BatchTimeout      time.Duration `env:"KAFKA_BATCH_TIMEOUT" envDefault:"100ms"`
 	Compression       string        `env:"KAFKA_COMPRESSION" envDefault:"lz4"`
@@ -130,16 +133,17 @@ func (c PostgresConfig) ConnectionString() string {
 }
 
 type AuthConfig struct {
-	RequireMTLS     bool          `env:"REQUIRE_MTLS" envDefault:"false"`
-	AllowNoToken    bool          `env:"ALLOW_NO_TOKEN" envDefault:"false"`
-	TokenTTL        time.Duration `env:"TOKEN_TTL" envDefault:"5m"`
-	LocalCacheTTL   time.Duration `env:"LOCAL_CACHE_TTL" envDefault:"30s"`
-	LocalCacheSize  int           `env:"LOCAL_CACHE_SIZE" envDefault:"10000"`
-	DefaultTenantID string        `env:"DEFAULT_TENANT_ID" envDefault:""`
-	RequireScopes   bool          `env:"REQUIRE_SCOPES" envDefault:"true"`
-	RequiredScopes  []string      `env:"REQUIRED_SCOPES" envSeparator:"," envDefault:"ingest:write"`
-	EnableAudit     bool          `env:"ENABLE_AUDIT" envDefault:"true"`
-	EnableProbeRBAC bool          `env:"ENABLE_PROBE_RBAC" envDefault:"true"`
+	RequireMTLS        bool          `env:"REQUIRE_MTLS" envDefault:"false"`
+	SharedMTLSIdentity string        `env:"MTLS_SHARED_IDENTITY" envDefault:""`
+	AllowNoToken       bool          `env:"ALLOW_NO_TOKEN" envDefault:"false"`
+	TokenTTL           time.Duration `env:"TOKEN_TTL" envDefault:"5m"`
+	LocalCacheTTL      time.Duration `env:"LOCAL_CACHE_TTL" envDefault:"30s"`
+	LocalCacheSize     int           `env:"LOCAL_CACHE_SIZE" envDefault:"10000"`
+	DefaultTenantID    string        `env:"DEFAULT_TENANT_ID" envDefault:""`
+	RequireScopes      bool          `env:"REQUIRE_SCOPES" envDefault:"true"`
+	RequiredScopes     []string      `env:"REQUIRED_SCOPES" envSeparator:"," envDefault:"ingest:write"`
+	EnableAudit        bool          `env:"ENABLE_AUDIT" envDefault:"true"`
+	EnableProbeRBAC    bool          `env:"ENABLE_PROBE_RBAC" envDefault:"true"`
 }
 
 type MetricsConfig struct {
@@ -213,7 +217,7 @@ type OIDCConfig struct {
 }
 
 type JWTConfig struct {
-	SigningKey      string        `env:"JWT_SIGNING_KEY" envDefault:"your-256-bit-secret-key-here"`
+	SigningKey      string        `env:"JWT_SIGNING_KEY"`
 	SigningMethod   string        `env:"JWT_SIGNING_METHOD" envDefault:"HS256"`
 	AccessTokenTTL  time.Duration `env:"JWT_ACCESS_TOKEN_TTL" envDefault:"15m"`
 	RefreshTokenTTL time.Duration `env:"JWT_REFRESH_TOKEN_TTL" envDefault:"168h"`
@@ -241,6 +245,15 @@ func (c *Config) SetDefaults() {
 	}
 	if c.Kafka.DLQTopic == "" {
 		c.Kafka.DLQTopic = TopicDLQ
+	}
+	if c.Kafka.ProbeControlTopic == "" {
+		c.Kafka.ProbeControlTopic = "probe.control.v2"
+	}
+	if c.Kafka.ProbeAckTopic == "" {
+		c.Kafka.ProbeAckTopic = "probe.acks.v2"
+	}
+	if c.Kafka.ProbeControlGroup == "" {
+		c.Kafka.ProbeControlGroup = "ingest-gateway-probe-control-v2"
 	}
 	if c.Kafka.BatchSize == 0 {
 		c.Kafka.BatchSize = DefaultKafkaBatchSize

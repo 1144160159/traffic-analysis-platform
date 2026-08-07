@@ -65,13 +65,12 @@ func TestSubmitCampaignActionRecordsAuthorizedRequest(t *testing.T) {
 		mutates    bool
 	}{
 		{
-			name:       "campaign-specific action",
+			name:       "campaign-specific read action",
 			path:       "/campaigns/campaign-42/actions",
-			actionID:   "campaign-status-change",
-			permission: authmodel.ScopeAlertWrite,
+			actionID:   "campaign-phase-inspect",
+			permission: authmodel.ScopeAlertRead,
 			objectID:   "campaign-42",
-			auditEvent: "CAMPAIGN_STATUS_CHANGED",
-			mutates:    true,
+			auditEvent: "CAMPAIGN_PHASE_VIEWED",
 		},
 		{
 			name:       "collection action",
@@ -174,12 +173,15 @@ func TestSubmitCampaignActionEnforcesActionScopes(t *testing.T) {
 	}{
 		{name: "read permits inspect", actionID: "campaign-phase-inspect", permission: authmodel.ScopeAlertRead, wantStatus: http.StatusOK},
 		{name: "write permits inspect", actionID: "campaign-phase-inspect", permission: authmodel.ScopeAlertWrite, wantStatus: http.StatusOK},
+		{name: "campaign read permits inspect", actionID: "campaign-phase-inspect", permission: authmodel.ScopeCampaignRead, wantStatus: http.StatusOK},
+		{name: "campaign write passes permission then rollout gate blocks status change", actionID: "campaign-status-change", permission: authmodel.ScopeCampaignWrite, wantStatus: http.StatusServiceUnavailable},
+		{name: "legacy alert write passes permission then rollout gate blocks status change", actionID: "campaign-status-change", permission: authmodel.ScopeAlertWrite, wantStatus: http.StatusServiceUnavailable},
 		{name: "read cannot change status", actionID: "campaign-status-change", permission: authmodel.ScopeAlertRead, wantStatus: http.StatusForbidden},
 		{name: "graph requires graph read", actionID: "campaign-graph-view", permission: authmodel.ScopeAlertRead, wantStatus: http.StatusForbidden},
 		{name: "graph read permits graph", actionID: "campaign-graph-view", permission: authmodel.ScopeGraphRead, wantStatus: http.StatusOK},
 		{name: "soar requires execute", actionID: "campaign-soar-response", permission: authmodel.ScopeAlertWrite, wantStatus: http.StatusForbidden},
-		{name: "playbook execute permits soar", actionID: "campaign-soar-response", permission: "playbook:execute", wantStatus: http.StatusOK},
-		{name: "admin permits write", actionID: "campaign-report-generate", permission: authmodel.ScopeAdminAll, wantStatus: http.StatusOK},
+		{name: "playbook execute still fails closed without v2 executor", actionID: "campaign-soar-response", permission: "playbook:execute", wantStatus: http.StatusServiceUnavailable},
+		{name: "admin cannot receive fake report completion without v2 executor", actionID: "campaign-report-generate", permission: authmodel.ScopeAdminAll, wantStatus: http.StatusServiceUnavailable},
 	}
 
 	for _, test := range tests {
@@ -207,7 +209,7 @@ func TestSubmitCampaignActionEnforcesActionScopes(t *testing.T) {
 			router.ServeHTTP(recorder, request)
 
 			require.Equal(t, test.wantStatus, recorder.Code, recorder.Body.String())
-			if test.wantStatus == http.StatusForbidden {
+			if test.wantStatus == http.StatusForbidden || test.wantStatus == http.StatusServiceUnavailable {
 				require.Empty(t, audit.records)
 			} else {
 				require.Len(t, audit.records, 1)
@@ -272,7 +274,7 @@ func TestSubmitCampaignActionDoesNotSucceedWithoutAuditWriter(t *testing.T) {
 	require.Empty(t, jobs.failedJobs)
 }
 
-func TestSubmitCampaignActionUsesAtomicCommitterWhenConfigured(t *testing.T) {
+func TestSubmitCampaignReadOnlyActionUsesAtomicCommitterWhenConfigured(t *testing.T) {
 	handler := newCampaignActionTestHandler()
 	var committedJob campaignActionJob
 	var committedAudit AlertActionAuditRecord
@@ -283,7 +285,7 @@ func TestSubmitCampaignActionUsesAtomicCommitterWhenConfigured(t *testing.T) {
 	}
 	router := mux.NewRouter()
 	handler.RegisterRoutes(router)
-	body := `{"action_id":"campaign-status-change","target":"campaign-42","metadata":{"campaign_id":"campaign-42","next_status":"investigating","dry_run":false},"simulation":false,"dry_run":false}`
+	body := `{"action_id":"campaign-context-action","target":"campaign-42","metadata":{"campaign_id":"campaign-42","dry_run":true},"simulation":true,"dry_run":true}`
 	request := campaignActionRequestWithPermissions(httptest.NewRequest(http.MethodPost, "/campaigns/campaign-42/actions", strings.NewReader(body)), authmodel.ScopeAlertWrite)
 	recorder := httptest.NewRecorder()
 
@@ -293,6 +295,27 @@ func TestSubmitCampaignActionUsesAtomicCommitterWhenConfigured(t *testing.T) {
 	require.NotEmpty(t, committedJob.JobID)
 	require.Equal(t, committedJob.JobID, committedAudit.Detail["job_id"])
 	require.Equal(t, "tenant-test", committedJob.TenantID)
+	require.True(t, committedJob.Simulation)
+}
+
+func TestSubmitCampaignMutationFailsClosedWhenAggregateDisabled(t *testing.T) {
+	handler := newCampaignActionTestHandler()
+	committerCalled := false
+	handler.commitCampaignAction = func(_ context.Context, _ *http.Request, _ campaignActionJob, _ AlertActionAuditRecord) error {
+		committerCalled = true
+		return nil
+	}
+	router := mux.NewRouter()
+	handler.RegisterRoutes(router)
+	body := `{"action_id":"campaign-status-change","target":"campaign-42","metadata":{"campaign_id":"campaign-42","next_status":"investigating","dry_run":false},"simulation":false,"dry_run":false}`
+	request := campaignActionRequestWithPermissions(httptest.NewRequest(http.MethodPost, "/campaigns/campaign-42/actions", strings.NewReader(body)), authmodel.ScopeAlertWrite)
+	recorder := httptest.NewRecorder()
+
+	router.ServeHTTP(recorder, request)
+
+	require.Equal(t, http.StatusServiceUnavailable, recorder.Code, recorder.Body.String())
+	require.Contains(t, recorder.Body.String(), "CAMPAIGN_AGGREGATE_UNAVAILABLE")
+	require.False(t, committerCalled)
 }
 
 func TestSubmitCampaignActionRequiresJobStore(t *testing.T) {

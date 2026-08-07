@@ -305,7 +305,7 @@ func (r *AdvancedRepository) revalidateNotificationEscalation(ctx context.Contex
 }
 
 func (r *AdvancedRepository) getNotificationRule(ctx context.Context, tenantID, ruleID string) (NotificationRuleRecord, bool, error) {
-	rule, err := scanNotificationRule(r.db.QueryRowContext(ctx, `SELECT rule_id::text,tenant_id,name,conditions,channels,enabled,COALESCE(created_by::text,''),created_at,updated_at FROM notification_rules WHERE tenant_id=$1 AND rule_id::text=$2`, tenantID, ruleID))
+	rule, err := scanNotificationRule(r.db.QueryRowContext(ctx, `SELECT rule_id::text,tenant_id,name,conditions,channels,enabled,COALESCE(created_by::text,''),revision,created_at,updated_at FROM notification_rules WHERE tenant_id=$1 AND rule_id::text=$2`, tenantID, ruleID))
 	if err == sql.ErrNoRows {
 		return NotificationRuleRecord{}, false, nil
 	}

@@ -30,7 +30,7 @@ func TestRegisterDiscoveryCredentialRejectsPlainMissingSecretRef(t *testing.T) {
 		TenantID: "default",
 		Name:     "core-switches",
 		Protocol: "snmp_lldp",
-	})
+	}, config.DiscoveryResourceCommand{})
 	if err == nil {
 		t.Fatal("expected missing secret_ref to fail")
 	}
@@ -46,7 +46,7 @@ func TestRegisterDiscoveryCredentialRejectsInvalidProtocol(t *testing.T) {
 		Name:      "core-switches",
 		Protocol:  "telnet",
 		SecretRef: "k8s://traffic-analysis/traffic-credentials#ASSET_DISCOVERY_SNMP",
-	})
+	}, config.DiscoveryResourceCommand{})
 	if err == nil {
 		t.Fatal("expected invalid protocol to fail")
 	}

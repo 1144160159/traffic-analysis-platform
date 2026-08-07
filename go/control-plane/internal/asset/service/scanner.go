@@ -87,9 +87,22 @@ func (s *SNMPDiscoveryScanner) Scan(ctx context.Context, req *config.ActiveDisco
 		return nil, err
 	}
 	var observations []config.DiscoveryObservation
-	for _, target := range targets {
+	var minimumInterval time.Duration
+	if req.RateLimit > 0 {
+		minimumInterval = time.Second / time.Duration(req.RateLimit)
+	}
+	for index, target := range targets {
 		if err := ctx.Err(); err != nil {
 			return observations, err
+		}
+		if index > 0 && minimumInterval > 0 {
+			timer := time.NewTimer(minimumInterval)
+			select {
+			case <-ctx.Done():
+				timer.Stop()
+				return observations, ctx.Err()
+			case <-timer.C:
+			}
 		}
 		observation, err := s.scanSNMPTarget(target, community, mode == config.DiscoveryModeSNMPLLDP)
 		if err != nil {

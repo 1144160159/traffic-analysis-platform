@@ -46,6 +46,7 @@ func TestEvaluateOverall(t *testing.T) {
 		{"one warn", []QualityCheck{{Status: "warn"}, {Status: "pass"}}, "healthy"},
 		{"two warns", []QualityCheck{{Status: "warn"}, {Status: "warn"}}, "degraded"},
 		{"one fail", []QualityCheck{{Status: "fail"}, {Status: "pass"}}, "unhealthy"},
+		{"unmeasured is not healthy", []QualityCheck{{Status: "pass"}, {Status: "unknown"}}, "unknown"},
 	}
 	for _, tc := range tests {
 		report := &DataQualityReport{Checks: tc.checks}
@@ -57,14 +58,35 @@ func TestEvaluateOverall(t *testing.T) {
 
 func TestBaselineManagement(t *testing.T) {
 	monitor := NewMonitor(nil, MonitorConfig{}, zap.NewNop())
-	if monitor.GetBaseline() != nil {
+	baseline, err := monitor.GetBaseline(context.Background(), "tenant-test")
+	if err != nil {
+		t.Fatalf("GetBaseline without control DB: %v", err)
+	}
+	if baseline != nil {
 		t.Error("baseline should be nil initially")
 	}
-	err := monitor.UpdateBaseline(context.Background())
+	_, err = monitor.UpdateBaseline(context.Background(), "tenant-test", "user-test", "0123456789abcdef0123456789abcdef")
 	if err == nil {
 		t.Error("UpdateBaseline with nil DB MUST return error")
 	}
 	t.Logf("Correct: nil DB returns error: %v", err)
+}
+
+func TestKafkaLagCannotUseClickHouseProxyAsMeasuredSignal(t *testing.T) {
+	monitor := NewMonitor(nil, MonitorConfig{}, zap.NewNop())
+	report := &DataQualityReport{Timestamp: time.Now(), Metrics: map[string]float64{}, SourceWatermarks: map[string]interface{}{}}
+	monitor.applyHandoffSignals(context.Background(), "tenant-test", report)
+	if len(report.Checks) != 3 {
+		t.Fatalf("checks=%d want=3", len(report.Checks))
+	}
+	for _, check := range report.Checks {
+		if check.Status != "unknown" || check.Measured {
+			t.Fatalf("missing persisted hand-off signal must be unknown: %#v", check)
+		}
+	}
+	if _, ok := report.Metrics["insert_rate_per_min"]; ok {
+		t.Fatal("ClickHouse insert-rate proxy must not be published as Kafka lag")
+	}
 }
 
 func TestQualityCheckTypes(t *testing.T) {

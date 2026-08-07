@@ -12,7 +12,9 @@ package service
 
 import (
 	"context"
+	"sort"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -81,22 +83,47 @@ type LoginResponse struct {
 
 // UserInfo 用户信息
 type UserInfo struct {
-	UserID   string   `json:"user_id"`
-	TenantID string   `json:"tenant_id"`
-	Username string   `json:"username"`
-	Email    string   `json:"email"`
-	Roles    []string `json:"roles"`
+	UserID          string   `json:"user_id"`
+	TenantID        string   `json:"tenant_id"`
+	Username        string   `json:"username"`
+	Email           string   `json:"email"`
+	Roles           []string `json:"roles"`
+	Revision        int64    `json:"revision,omitempty"`
+	EventID         string   `json:"event_id,omitempty"`
+	OutboxStatus    string   `json:"outbox_status,omitempty"`
+	IdempotentReuse bool     `json:"idempotent_reuse,omitempty"`
 }
 
 // UpdateCurrentUserRequest 当前用户资料更新请求
 type UpdateCurrentUserRequest struct {
-	Email string `json:"email"`
+	Email            string `json:"email"`
+	ActionID         string `json:"action_id,omitempty"`
+	Reason           string `json:"reason,omitempty"`
+	ExpectedRevision *int64 `json:"expected_revision,omitempty"`
 }
 
 // UserSettingsResponse 用户偏好设置响应。
 type UserSettingsResponse struct {
-	Category string                 `json:"category"`
-	Settings map[string]interface{} `json:"settings"`
+	Category        string                 `json:"category"`
+	Settings        map[string]interface{} `json:"settings"`
+	Revision        int64                  `json:"revision"`
+	EventID         string                 `json:"event_id,omitempty"`
+	OutboxStatus    string                 `json:"outbox_status,omitempty"`
+	IdempotentReuse bool                   `json:"idempotent_reuse,omitempty"`
+	UpdatedAt       time.Time              `json:"updated_at,omitempty"`
+}
+
+// UserSettingsUpdateCommand contains command metadata separated from the settings document.
+type UserSettingsUpdateCommand struct {
+	Settings         map[string]interface{}
+	ActionID         string
+	Reason           string
+	IdempotencyKey   string
+	ExpectedRevision *int64
+	Username         string
+	TraceID          string
+	SourceIP         string
+	UserAgent        string
 }
 
 // Login 登录（修复 #A2：更新最后登录时间）
@@ -132,7 +159,7 @@ func (s *AuthService) Login(ctx context.Context, req *LoginRequest) (*LoginRespo
 	}
 
 	// 修复 #A2：更新最后登录时间
-	if err := s.userRepo.UpdateLastLoginAt(ctx, user.UserID); err != nil {
+	if err := s.userRepo.RecordLoginAtomic(ctx, user.UserID, user.TenantID); err != nil {
 		// 记录错误但不阻止登录
 		s.logger.Warn("Failed to update last login time",
 			zap.String("user_id", user.UserID.String()),
@@ -245,23 +272,28 @@ func (s *AuthService) Logout(ctx context.Context, sessionID string) error {
 }
 
 // UpdateCurrentUser 更新当前用户可自助维护的资料
-func (s *AuthService) UpdateCurrentUser(ctx context.Context, userID uuid.UUID, req *UpdateCurrentUserRequest) (*UserInfo, error) {
+func (s *AuthService) UpdateCurrentUser(ctx context.Context, userID uuid.UUID, tenantID string, req *UpdateCurrentUserRequest, meta repository.UserCommandMetadata) (*UserInfo, error) {
+	if req == nil {
+		return nil, errors.New(errors.ErrCodeInvalidParameter, "profile update is required")
+	}
+	email := strings.TrimSpace(req.Email)
+	if email != "" && !strings.Contains(email, "@") {
+		return nil, errors.New(errors.ErrCodeInvalidParameter, "invalid email")
+	}
+	meta.TenantID = tenantID
+	meta.ActionID = req.ActionID
+	meta.Reason = req.Reason
+	meta.ExpectedRevision = req.ExpectedRevision
+	result, err := s.userRepo.UpdateProfileAtomic(ctx, userID, email, meta)
+	if err != nil {
+		return nil, err
+	}
 	user, err := s.userRepo.GetByID(ctx, userID)
 	if err != nil {
-		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to query user")
+		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to query updated user")
 	}
-	if user == nil {
-		return nil, errors.New(errors.ErrCodeUserNotFound, "User not found")
-	}
-	if req != nil {
-		email := strings.TrimSpace(req.Email)
-		if email != "" && !strings.Contains(email, "@") {
-			return nil, errors.New(errors.ErrCodeInvalidParameter, "invalid email")
-		}
-		user.Email = email
-	}
-	if err := s.userRepo.Update(ctx, user); err != nil {
-		return nil, err
+	if user == nil || user.TenantID != tenantID {
+		return nil, errors.New(errors.ErrCodeUserNotFound, "User not found in authenticated tenant")
 	}
 	roles, err := s.userRepo.GetUserRoles(ctx, user.UserID)
 	if err != nil {
@@ -271,33 +303,28 @@ func (s *AuthService) UpdateCurrentUser(ctx context.Context, userID uuid.UUID, r
 		roles = []string{}
 	}
 	return &UserInfo{
-		UserID:   user.UserID.String(),
-		TenantID: user.TenantID,
-		Username: user.Username,
-		Email:    user.Email,
-		Roles:    roles,
+		UserID:          user.UserID.String(),
+		TenantID:        user.TenantID,
+		Username:        user.Username,
+		Email:           user.Email,
+		Roles:           roles,
+		Revision:        result.Revision,
+		EventID:         result.EventID,
+		OutboxStatus:    result.OutboxStatus,
+		IdempotentReuse: result.IdempotentReuse,
 	}, nil
 }
 
 // ChangePassword 校验当前密码后更新密码
-func (s *AuthService) ChangePassword(ctx context.Context, userID uuid.UUID, currentPassword, newPassword string) error {
+func (s *AuthService) ChangePassword(ctx context.Context, userID uuid.UUID, tenantID, currentPassword, newPassword string, meta repository.UserCommandMetadata) (*repository.UserCommandResult, error) {
 	if currentPassword == "" {
-		return errors.New(errors.ErrCodeMissingParameter, "current_password is required")
+		return nil, errors.New(errors.ErrCodeMissingParameter, "current_password is required")
 	}
 	if len(newPassword) < 8 {
-		return errors.New(errors.ErrCodeInvalidParameter, "new_password must be at least 8 characters")
+		return nil, errors.New(errors.ErrCodeInvalidParameter, "new_password must be at least 8 characters")
 	}
-	user, err := s.userRepo.GetByID(ctx, userID)
-	if err != nil {
-		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to query user")
-	}
-	if user == nil {
-		return errors.New(errors.ErrCodeUserNotFound, "User not found")
-	}
-	if !s.userRepo.VerifyPassword(user, currentPassword) {
-		return errors.New(errors.ErrCodeInvalidCredentials, "Invalid current password")
-	}
-	return s.userRepo.UpdatePassword(ctx, user.UserID, newPassword)
+	meta.TenantID = tenantID
+	return s.userRepo.ChangePasswordAtomic(ctx, userID, currentPassword, newPassword, meta)
 }
 
 // GetUserSettings 获取当前用户某类偏好设置；没有保存过时返回服务端默认值。
@@ -308,7 +335,7 @@ func (s *AuthService) GetUserSettings(ctx context.Context, tenantID string, user
 	}
 	values := defaultUserSettings(category)
 	if s.settingsRepo == nil {
-		return &UserSettingsResponse{Category: category, Settings: values}, nil
+		return &UserSettingsResponse{Category: category, Settings: values, Revision: 0}, nil
 	}
 	stored, err := s.settingsRepo.Get(ctx, tenantID, userID, category)
 	if err != nil {
@@ -319,27 +346,50 @@ func (s *AuthService) GetUserSettings(ctx context.Context, tenantID string, user
 			values[key] = value
 		}
 	}
-	return &UserSettingsResponse{Category: category, Settings: values}, nil
+	revision := int64(0)
+	var updatedAt time.Time
+	if stored != nil {
+		revision = stored.Revision
+		updatedAt = stored.UpdatedAt
+	}
+	return &UserSettingsResponse{Category: category, Settings: values, Revision: revision, UpdatedAt: updatedAt}, nil
 }
 
 // UpdateUserSettings 保存当前用户某类偏好设置。
 func (s *AuthService) UpdateUserSettings(ctx context.Context, tenantID string, userID uuid.UUID, category string, values map[string]interface{}) (*UserSettingsResponse, error) {
+	actionID := uuid.NewString()
+	return s.UpdateUserSettingsCommand(ctx, tenantID, userID, category, UserSettingsUpdateCommand{
+		Settings: values, ActionID: actionID, IdempotencyKey: actionID, Reason: "update user settings",
+	})
+}
+
+// UpdateUserSettingsCommand atomically persists state, audit, history, outbox and idempotency facts.
+func (s *AuthService) UpdateUserSettingsCommand(ctx context.Context, tenantID string, userID uuid.UUID, category string, command UserSettingsUpdateCommand) (*UserSettingsResponse, error) {
 	category = normalizeSettingsCategory(category)
 	if category == "" {
 		return nil, errors.New(errors.ErrCodeInvalidParameter, "invalid settings category")
 	}
 	merged := defaultUserSettings(category)
-	for key, value := range values {
+	for key, value := range command.Settings {
 		merged[key] = value
 	}
 	if s.settingsRepo == nil {
-		return &UserSettingsResponse{Category: category, Settings: merged}, nil
+		return nil, errors.New(errors.ErrCodeServiceUnavailable, "user settings repository is unavailable")
 	}
-	stored, err := s.settingsRepo.Upsert(ctx, tenantID, userID, category, merged)
+	stored, err := s.settingsRepo.SaveCommand(ctx, repository.UserSettingsCommand{
+		TenantID: tenantID, UserID: userID, Username: command.Username, Category: category, Settings: merged,
+		ActionID: command.ActionID, Reason: command.Reason, IdempotencyKey: command.IdempotencyKey,
+		ExpectedRevision: command.ExpectedRevision, TraceID: command.TraceID,
+		SourceIP: command.SourceIP, UserAgent: command.UserAgent,
+	})
 	if err != nil {
 		return nil, err
 	}
-	return &UserSettingsResponse{Category: category, Settings: stored.Settings}, nil
+	return &UserSettingsResponse{
+		Category: stored.Category, Settings: stored.Settings, Revision: stored.Revision,
+		EventID: stored.EventID, OutboxStatus: stored.OutboxStatus,
+		IdempotentReuse: stored.IdempotentReuse, UpdatedAt: stored.UpdatedAt,
+	}, nil
 }
 
 func normalizeSettingsCategory(category string) string {
@@ -386,7 +436,7 @@ func (s *AuthService) GetOIDCAuthURL(state string) string {
 }
 
 // HandleOIDCCallback 处理 OIDC 回调（修复 #A13：角色持久化）
-func (s *AuthService) HandleOIDCCallback(ctx context.Context, code, tenantID string) (*LoginResponse, error) {
+func (s *AuthService) HandleOIDCCallback(ctx context.Context, code, tenantID string, meta repository.UserCommandMetadata) (*LoginResponse, error) {
 	if s.oidcProvider == nil {
 		return nil, errors.New(errors.ErrCodeOIDCError, "OIDC is not configured")
 	}
@@ -403,23 +453,14 @@ func (s *AuthService) HandleOIDCCallback(ctx context.Context, code, tenantID str
 		return nil, errors.Wrap(err, errors.ErrCodeOIDCError, "Failed to validate ID token")
 	}
 
-	// 获取或创建用户
-	user, err := s.userRepo.CreateOrUpdateFromOIDC(ctx, claims, tenantID)
-	if err != nil {
-		return nil, errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to sync user from OIDC")
-	}
-
 	// 映射 OIDC 角色到本地角色
 	clientID := s.getOIDCClientID()
 	oidcRoles := claims.GetRoles(clientID)
 	roles := s.mapOIDCRoles(oidcRoles)
-
-	// 修复 #A13：持久化角色到数据库
-	if err := s.syncUserRoles(ctx, user.UserID, roles, tenantID); err != nil {
-		s.logger.Error("Failed to sync user roles",
-			zap.String("user_id", user.UserID.String()),
-			zap.Error(err))
-		// 不阻止登录流程
+	meta.TenantID = tenantID
+	user, commandResult, err := s.userRepo.SyncOIDCUserAtomic(ctx, claims, roles, meta)
+	if err != nil {
+		return nil, err
 	}
 
 	permissions := s.getPermissionsFromRoles(roles)
@@ -441,57 +482,17 @@ func (s *AuthService) HandleOIDCCallback(ctx context.Context, code, tenantID str
 		ExpiresIn:    tokenPair.ExpiresIn,
 		TokenType:    tokenPair.TokenType,
 		User: UserInfo{
-			UserID:   user.UserID.String(),
-			TenantID: user.TenantID,
-			Username: user.Username,
-			Email:    user.Email,
-			Roles:    roles,
+			UserID:          user.UserID.String(),
+			TenantID:        user.TenantID,
+			Username:        user.Username,
+			Email:           user.Email,
+			Roles:           roles,
+			Revision:        commandResult.Revision,
+			EventID:         commandResult.EventID,
+			OutboxStatus:    commandResult.OutboxStatus,
+			IdempotentReuse: commandResult.IdempotentReuse,
 		},
 	}, nil
-}
-
-// syncUserRoles 同步用户角色到数据库（修复 #A13：新增方法）
-func (s *AuthService) syncUserRoles(ctx context.Context, userID uuid.UUID, rolesToSync []string, tenantID string) error {
-	// 获取当前角色
-	currentRoles, err := s.userRepo.GetUserRoles(ctx, userID)
-	if err != nil {
-		return errors.Wrap(err, errors.ErrCodeDatabaseError, "Failed to get current roles")
-	}
-
-	currentRolesMap := make(map[string]bool)
-	for _, role := range currentRoles {
-		currentRolesMap[role] = true
-	}
-
-	targetRolesMap := make(map[string]bool)
-	for _, role := range rolesToSync {
-		targetRolesMap[role] = true
-	}
-
-	// 需要添加的角色
-	for _, role := range rolesToSync {
-		if !currentRolesMap[role] {
-			// 查找角色 ID
-			roleID, err := s.userRepo.GetRoleIDByName(ctx, tenantID, role)
-			if err != nil {
-				s.logger.Warn("Failed to find role",
-					zap.String("role", role),
-					zap.Error(err))
-				continue
-			}
-
-			if roleID != uuid.Nil {
-				if err := s.userRepo.AssignRole(ctx, userID, roleID); err != nil {
-					s.logger.Error("Failed to assign role",
-						zap.String("user_id", userID.String()),
-						zap.String("role_id", roleID.String()),
-						zap.Error(err))
-				}
-			}
-		}
-	}
-
-	return nil
 }
 
 // ValidateToken 验证 Token
@@ -555,6 +556,7 @@ func (s *AuthService) mapOIDCRoles(oidcRoles []string) []string {
 	if len(roles) == 0 {
 		roles = append(roles, "viewer")
 	}
+	sort.Strings(roles)
 
 	return roles
 }

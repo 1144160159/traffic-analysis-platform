@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -205,8 +206,10 @@ func (h *Handler) checkCrossTenantAccess(ctx context.Context, userTenantID, reso
 	if userTenantID == resourceTenantID {
 		return true
 	}
+	return hasForensicsCrossTenantPermission(ctx)
+}
 
-	// 检查权限
+func hasForensicsCrossTenantPermission(ctx context.Context) bool {
 	permissions := httpx.GetPermissions(ctx)
 	for _, p := range permissions {
 		if p == "admin:cross_tenant" || p == "forensics:cross_tenant" {
@@ -305,6 +308,47 @@ func (h *Handler) recordPcapAudit(ctx context.Context, r *http.Request, eventTyp
 	return nil
 }
 
+func forensicsTaskCommandMeta(r *http.Request, tenantID, actorID, actionID string, expectedRevision int64, compatibility bool) repository.TaskCommandMeta {
+	reason := strings.TrimSpace(r.Header.Get("X-Action-Reason"))
+	if reason == "" {
+		reason = strings.TrimSpace(r.Header.Get("X-Reason"))
+	}
+	idempotencyKey := strings.TrimSpace(r.Header.Get("Idempotency-Key"))
+	if reason == "" || idempotencyKey == "" {
+		compatibility = true
+	}
+	return repository.TaskCommandMeta{
+		TenantID: tenantID, ActorID: actorID, ActionID: actionID,
+		IdempotencyKey: idempotencyKey, ExpectedRevision: &expectedRevision,
+		Reason: reason, TraceID: httpx.GetTraceID(r.Context()),
+		SourceIP: httpx.GetClientIP(r), UserAgent: r.UserAgent(),
+		CompatibilityMode: compatibility,
+	}
+}
+
+func parseForensicsTaskRevision(r *http.Request, fallback int64) (int64, bool, error) {
+	header := strings.TrimSpace(r.Header.Get("If-Match"))
+	if header == "" {
+		return fallback, true, nil
+	}
+	header = strings.TrimSpace(strings.TrimPrefix(header, "W/"))
+	header = strings.Trim(header, `"`)
+	revision, err := strconv.ParseInt(header, 10, 64)
+	if err != nil || revision <= 0 {
+		return 0, false, errors.New(errors.ErrCodeInvalidParameter, "If-Match must contain a positive task revision")
+	}
+	return revision, false, nil
+}
+
+func writeForensicsCommandError(rw *httpx.ResponseWriter, err error) {
+	code := errors.GetCode(err)
+	status := errors.GetHTTPStatus(err)
+	if code == errors.ErrCodeDedupConflict || code == errors.ErrCodeInvalidStateTransition || code == errors.ErrCodeVersionConflict || code == errors.ErrCodeConcurrentModify {
+		status = http.StatusConflict
+	}
+	rw.Error(status, string(code), err.Error(), nil)
+}
+
 // ========== API 处理方法 ==========
 
 // CreateJob 创建异步裁剪任务（修复版）
@@ -387,35 +431,31 @@ func (h *Handler) CreateJob(w http.ResponseWriter, r *http.Request) {
 
 	// 创建任务请求
 	taskReq := &task.CutTaskRequest{
-		TenantID:    req.TenantID,
-		UserID:      userID,
-		AssetID:     req.AssetID,
-		ProbeID:     req.ProbeID,
-		SrcIP:       req.SrcIP,
-		DstIP:       req.DstIP,
-		SrcPort:     req.SrcPort,
-		DstPort:     req.DstPort,
-		Protocol:    req.Protocol,
-		CommunityID: req.CommunityID,
-		StartTime:   req.StartTime,
-		EndTime:     req.EndTime,
-		MaxPackets:  req.MaxPackets,
+		TenantID:     req.TenantID,
+		UserID:       userID,
+		AssetID:      req.AssetID,
+		AlertID:      req.AlertID,
+		CampaignID:   req.CampaignID,
+		BaselineID:   req.BaselineID,
+		EvidenceID:   req.EvidenceID,
+		EvidenceType: req.EvidenceType,
+		ProbeID:      req.ProbeID,
+		SrcIP:        req.SrcIP,
+		DstIP:        req.DstIP,
+		SrcPort:      req.SrcPort,
+		DstPort:      req.DstPort,
+		Protocol:     req.Protocol,
+		CommunityID:  req.CommunityID,
+		StartTime:    req.StartTime,
+		EndTime:      req.EndTime,
+		MaxPackets:   req.MaxPackets,
+		CommandMeta:  forensicsTaskCommandMeta(r, req.TenantID, userID, repository.ForensicsTaskCreateAction, 0, false),
 	}
 
 	job, err := h.asyncCutter.SubmitTask(ctx, taskReq)
 	if err != nil {
 		h.logger.Error("Failed to create job", zap.Error(err))
-		appErr := errors.Wrap(err, errors.ErrCodeInternal, "Failed to create job")
-		rw.Error(appErr.HTTPStatus(), string(appErr.Code), appErr.Message, nil)
-		return
-	}
-
-	if err := h.recordPcapAudit(ctx, r, audit.EventTypePcapCut, req.TenantID, userID, job.JobID, map[string]interface{}{
-		"probe_id": req.ProbeID, "src_ip": req.SrcIP, "dst_ip": req.DstIP,
-		"community_id": req.CommunityID, "start_time": req.StartTime, "end_time": req.EndTime,
-	}); err != nil {
-		h.logger.Error("Failed to persist PCAP cut audit", zap.String("job_id", job.JobID), zap.Error(err))
-		rw.Error(http.StatusInternalServerError, "AUDIT_PERSIST_FAILED", "PCAP job was created but its audit record could not be persisted", nil)
+		writeForensicsCommandError(rw, err)
 		return
 	}
 
@@ -424,9 +464,14 @@ func (h *Handler) CreateJob(w http.ResponseWriter, r *http.Request) {
 		JobID:     job.JobID,
 		Status:    job.Status,
 		CreatedAt: job.CreatedAt.UnixMilli(),
+		Revision:  job.Revision, EventID: job.EventID, ActionID: job.ActionID,
+		IdempotencyKey: job.IdempotencyKey, OutboxStatus: job.OutboxStatus,
+		Replayed: job.Replayed, CompatibilityMode: job.CompatibilityMode,
 	}
-
-	rw.Created(response)
+	w.Header().Set("ETag", fmt.Sprintf(`W/"%d"`, job.Revision))
+	w.Header().Set("Idempotency-Key", job.IdempotencyKey)
+	w.Header().Set("X-Event-ID", job.EventID)
+	rw.Accepted(response)
 }
 
 // GetJob 获取任务状态（修复版：添加租户隔离检查）
@@ -449,7 +494,13 @@ func (h *Handler) GetJob(w http.ResponseWriter, r *http.Request) {
 		userTenantID = "default"
 	}
 
-	job, err := h.taskRepo.GetByID(ctx, jobID)
+	var job *repository.Task
+	var err error
+	if hasForensicsCrossTenantPermission(ctx) {
+		job, err = h.taskRepo.GetByID(ctx, jobID)
+	} else {
+		job, err = h.taskRepo.GetByIDForTenant(ctx, userTenantID, jobID)
+	}
 	if err != nil {
 		if errors.IsCode(err, errors.ErrCodeResourceNotFound) {
 			rw.Error(http.StatusNotFound, "JOB_NOT_FOUND", "Job not found", nil)
@@ -516,7 +567,13 @@ func (h *Handler) CancelJob(w http.ResponseWriter, r *http.Request) {
 		userTenantID = "default"
 	}
 
-	job, err := h.taskRepo.GetByID(ctx, jobID)
+	var job *repository.Task
+	var err error
+	if hasForensicsCrossTenantPermission(ctx) {
+		job, err = h.taskRepo.GetByID(ctx, jobID)
+	} else {
+		job, err = h.taskRepo.GetByIDForTenant(ctx, userTenantID, jobID)
+	}
 	if err != nil {
 		if errors.IsCode(err, errors.ErrCodeResourceNotFound) {
 			rw.Error(http.StatusNotFound, "JOB_NOT_FOUND", "Job not found", nil)
@@ -537,37 +594,26 @@ func (h *Handler) CancelJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 执行取消
-	err = h.asyncCutter.CancelTask(ctx, jobID)
+	expectedRevision, compatibility, err := parseForensicsTaskRevision(r, job.Revision)
+	if err != nil {
+		writeForensicsCommandError(rw, err)
+		return
+	}
+	meta := forensicsTaskCommandMeta(r, job.TenantID, httpx.GetUserID(ctx), repository.ForensicsTaskCancelAction, expectedRevision, compatibility)
+	receipt, err := h.asyncCutter.CancelTask(ctx, job.TenantID, jobID, meta)
 	if err != nil {
 		if errors.IsCode(err, errors.ErrCodeResourceNotFound) {
 			rw.Error(http.StatusNotFound, "JOB_NOT_FOUND", "Job not found", nil)
 			return
 		}
-		if errors.IsCode(err, errors.ErrCodeInvalidStateTransition) {
-			rw.Error(http.StatusConflict, "INVALID_STATE", err.Error(), nil)
-			return
-		}
 		h.logger.Error("Failed to cancel job", zap.String("job_id", jobID), zap.Error(err))
-		rw.Error(http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to cancel job", nil)
+		writeForensicsCommandError(rw, err)
 		return
 	}
-
-	if err := h.recordPcapAudit(ctx, r, audit.EventTypePcapCancel, job.TenantID, httpx.GetUserID(ctx), jobID, map[string]interface{}{
-		"mode":            "cancel",
-		"job_id":          jobID,
-		"previous_status": job.Status,
-		"task_type":       job.TaskType,
-	}); err != nil {
-		h.logger.Error("Failed to persist PCAP cancel audit", zap.String("job_id", jobID), zap.Error(err))
-		rw.Error(http.StatusInternalServerError, "AUDIT_PERSIST_FAILED", "PCAP job was cancelled but its audit record could not be persisted", nil)
-		return
-	}
-
-	rw.Success(map[string]string{
-		"job_id": jobID,
-		"status": "cancelled",
-	})
+	w.Header().Set("ETag", fmt.Sprintf(`W/"%d"`, receipt.Revision))
+	w.Header().Set("Idempotency-Key", receipt.IdempotencyKey)
+	w.Header().Set("X-Event-ID", receipt.EventID)
+	rw.Success(receipt)
 }
 
 // ListJobs 列出任务
@@ -611,7 +657,10 @@ func (h *Handler) ListJobs(w http.ResponseWriter, r *http.Request) {
 	assetID := strings.TrimSpace(r.URL.Query().Get("asset_id"))
 	filter := repository.TaskListFilter{
 		Status: status, AssetID: assetID,
-		SrcIP: strings.TrimSpace(r.URL.Query().Get("src_ip")), DstIP: strings.TrimSpace(r.URL.Query().Get("dst_ip")),
+		AlertID: strings.TrimSpace(r.URL.Query().Get("alert_id")), CampaignID: strings.TrimSpace(r.URL.Query().Get("campaign_id")),
+		BaselineID: strings.TrimSpace(r.URL.Query().Get("baseline_id")), EvidenceID: strings.TrimSpace(r.URL.Query().Get("evidence_id")),
+		EvidenceType: strings.TrimSpace(r.URL.Query().Get("evidence_type")),
+		SrcIP:        strings.TrimSpace(r.URL.Query().Get("src_ip")), DstIP: strings.TrimSpace(r.URL.Query().Get("dst_ip")),
 		Protocol: strings.TrimSpace(r.URL.Query().Get("protocol")), Port: strings.TrimSpace(r.URL.Query().Get("port")),
 		Tuple: strings.TrimSpace(r.URL.Query().Get("tuple")), TaskID: strings.TrimSpace(r.URL.Query().Get("task_id")),
 	}
@@ -622,10 +671,11 @@ func (h *Handler) ListJobs(w http.ResponseWriter, r *http.Request) {
 	}
 	if h.loadUIFixture(ctx, tenantID, "jobs", &fixture) {
 		fixtureJobs := filterFixtureJobs(fixture.Jobs, filter)
-		// An exact task lookup that is not part of the canonical visual scenario
-		// must still reach the operational repository. This keeps newly created
-		// jobs observable without perturbing the fixed unfiltered acceptance view.
-		if filter.TaskID == "" || len(fixtureJobs) > 0 {
+		// A filtered lookup that is not part of the canonical visual scenario must
+		// still reach the operational repository. This keeps newly created jobs and
+		// their source references observable without perturbing the fixed,
+		// unfiltered acceptance view.
+		if shouldServeFixtureJobs(filter, len(fixtureJobs)) {
 			start := min(offset, len(fixtureJobs))
 			end := min(start+limit, len(fixtureJobs))
 			total := fixture.Total
@@ -653,9 +703,14 @@ func (h *Handler) ListJobs(w http.ResponseWriter, r *http.Request) {
 	rw.Paginated(responses, total, limit, offset)
 }
 
+func shouldServeFixtureJobs(filter repository.TaskListFilter, matched int) bool {
+	return !hasTaskListFilter(filter) || matched > 0
+}
+
 func hasTaskListFilter(filter repository.TaskListFilter) bool {
 	return filter.Status != "" || filter.AssetID != "" || filter.SrcIP != "" || filter.DstIP != "" ||
-		filter.Protocol != "" || filter.Port != "" || filter.Tuple != "" || filter.TaskID != ""
+		filter.Protocol != "" || filter.Port != "" || filter.Tuple != "" || filter.TaskID != "" ||
+		filter.AlertID != "" || filter.CampaignID != "" || filter.BaselineID != "" || filter.EvidenceID != "" || filter.EvidenceType != ""
 }
 
 func filterFixtureJobs(jobs []json.RawMessage, filter repository.TaskListFilter) []json.RawMessage {
@@ -668,12 +723,17 @@ func filterFixtureJobs(jobs []json.RawMessage, filter repository.TaskListFilter)
 			JobID  string `json:"job_id"`
 			Status string `json:"status"`
 			Params struct {
-				AssetID  string `json:"asset_id"`
-				SrcIP    string `json:"src_ip"`
-				DstIP    string `json:"dst_ip"`
-				SrcPort  int    `json:"src_port"`
-				DstPort  int    `json:"dst_port"`
-				Protocol string `json:"protocol"`
+				AssetID      string `json:"asset_id"`
+				AlertID      string `json:"alert_id"`
+				CampaignID   string `json:"campaign_id"`
+				BaselineID   string `json:"baseline_id"`
+				EvidenceID   string `json:"evidence_id"`
+				EvidenceType string `json:"evidence_type"`
+				SrcIP        string `json:"src_ip"`
+				DstIP        string `json:"dst_ip"`
+				SrcPort      int    `json:"src_port"`
+				DstPort      int    `json:"dst_port"`
+				Protocol     string `json:"protocol"`
 			} `json:"params"`
 		}
 		if json.Unmarshal(job, &decoded) != nil {
@@ -683,6 +743,11 @@ func filterFixtureJobs(jobs []json.RawMessage, filter repository.TaskListFilter)
 		portMatches := filter.Port == "" || filter.Port == fmt.Sprint(decoded.Params.SrcPort) || filter.Port == fmt.Sprint(decoded.Params.DstPort)
 		if (filter.Status == "" || strings.EqualFold(filter.Status, decoded.Status)) &&
 			(filter.AssetID == "" || filter.AssetID == decoded.Params.AssetID) &&
+			(filter.AlertID == "" || filter.AlertID == decoded.Params.AlertID) &&
+			(filter.CampaignID == "" || filter.CampaignID == decoded.Params.CampaignID) &&
+			(filter.BaselineID == "" || filter.BaselineID == decoded.Params.BaselineID) &&
+			(filter.EvidenceID == "" || filter.EvidenceID == decoded.Params.EvidenceID) &&
+			(filter.EvidenceType == "" || strings.EqualFold(filter.EvidenceType, decoded.Params.EvidenceType)) &&
 			(filter.SrcIP == "" || filter.SrcIP == decoded.Params.SrcIP) &&
 			(filter.DstIP == "" || filter.DstIP == decoded.Params.DstIP) &&
 			(filter.Protocol == "" || strings.EqualFold(filter.Protocol, decoded.Params.Protocol)) && portMatches &&
@@ -1151,6 +1216,21 @@ func (h *Handler) HealthCheck(w http.ResponseWriter, r *http.Request) {
 // ReadinessCheck 就绪检查
 func (h *Handler) ReadinessCheck(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	w.Header().Set("Content-Type", "application/json")
+
+	// A TCP-level PostgreSQL connection is insufficient: the process can be
+	// alive while every task command fails because its versioned schema has not
+	// been applied. Keep the probe coupled to the minimum contract required by
+	// Create/List/worker paths.
+	if err := h.checkForensicsSchema(ctx); err != nil {
+		h.logger.Error("Forensics schema readiness check failed", zap.Error(err))
+		w.WriteHeader(http.StatusServiceUnavailable)
+		json.NewEncoder(w).Encode(map[string]string{
+			"status": "not ready",
+			"error":  "PostgreSQL schema is not ready",
+		})
+		return
+	}
 
 	// 检查 S3 连接
 	if err := h.s3Client.Ping(ctx); err != nil {
@@ -1172,8 +1252,34 @@ func (h *Handler) ReadinessCheck(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"status": "ready"})
+}
+
+func (h *Handler) checkForensicsSchema(ctx context.Context) error {
+	if h.auditDB == nil {
+		return fmt.Errorf("PostgreSQL dependency is unavailable")
+	}
+	var ready bool
+	err := h.auditDB.QueryRowContext(ctx, `
+		SELECT
+			(SELECT count(*) = 4
+			 FROM information_schema.columns
+			 WHERE table_schema='public' AND table_name='tasks'
+			   AND column_name IN ('revision','deleted_at','last_action_id','last_trace_id'))
+			AND to_regclass('public.forensics_task_history') IS NOT NULL
+			AND to_regclass('public.forensics_task_outbox') IS NOT NULL
+			AND to_regclass('public.forensics_task_requests') IS NOT NULL
+			AND EXISTS (
+				SELECT 1 FROM alignment_schema_migrations
+				WHERE version='202608031600'
+			)`).Scan(&ready)
+	if err != nil {
+		return fmt.Errorf("inspect required forensics schema: %w", err)
+	}
+	if !ready {
+		return fmt.Errorf("required forensics schema version 202608031600 is incomplete")
+	}
+	return nil
 }
 
 // parseIntParam 解析整数参数

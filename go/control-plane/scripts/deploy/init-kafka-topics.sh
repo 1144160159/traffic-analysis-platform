@@ -21,3 +21,17 @@ kafka-topics.sh --bootstrap-server $KAFKA_BOOTSTRAP --create --if-not-exists \
   --partitions 3 \
   --replication-factor 2 \
   --config retention.ms=7776000000  # 90天
+
+kafka-topics.sh --bootstrap-server $KAFKA_BOOTSTRAP --create --if-not-exists \
+  --topic alert.saved-view.events.v1 \
+  --partitions 3 \
+  --replication-factor 2 \
+  --config retention.ms=604800000 \
+  --config retention.bytes=134217728
+
+kafka-topics.sh --bootstrap-server $KAFKA_BOOTSTRAP --create --if-not-exists \
+  --topic notification.governance.events.v1 \
+  --partitions 3 \
+  --replication-factor 2 \
+  --config retention.ms=604800000 \
+  --config retention.bytes=134217728

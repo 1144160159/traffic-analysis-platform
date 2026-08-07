@@ -23,6 +23,7 @@ import (
 	authmodel "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/auth/model"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/httpx"
 	"github.com/gorilla/mux"
+	"github.com/lib/pq"
 	"go.uber.org/zap"
 )
 
@@ -411,6 +412,8 @@ type alignedEntityDTO struct {
 	AssetCriticality string            `json:"asset_criticality"`
 	LastUpdated      int64             `json:"last_updated"`
 }
+
+const behaviorBaselineListMax = 500
 
 type behaviorBaselineDTO struct {
 	BaselineID   string              `json:"baseline_id"`
@@ -1524,6 +1527,7 @@ func (h *SystemHandler) GetExfiltrationTopic(w http.ResponseWriter, r *http.Requ
 		httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
 		return
 	}
+	topologyNodes, topologyLinks := buildExfiltrationTopicTopology(paths)
 	durationSeconds := math.Max(1, float64(end-start)/1000)
 	peakUploadGbps := float64(maxSourceUploadBytes) * 8 / durationSeconds / 1_000_000_000
 
@@ -1541,12 +1545,14 @@ func (h *SystemHandler) GetExfiltrationTopic(w http.ResponseWriter, r *http.Requ
 			"risk_type_count":   len(risks),
 			"peak_upload_gbps":  peakUploadGbps,
 		},
-		"top_sources":  sources,
-		"destinations": destinations,
-		"risk_types":   risks,
-		"paths":        paths,
-		"trend":        trend,
-		"scope":        scope,
+		"top_sources":    sources,
+		"destinations":   destinations,
+		"risk_types":     risks,
+		"paths":          paths,
+		"trend":          trend,
+		"topology_nodes": topologyNodes,
+		"topology_links": topologyLinks,
+		"scope":          scope,
 	})
 }
 
@@ -1575,6 +1581,7 @@ func (h *SystemHandler) GetAPTTopic(w http.ResponseWriter, r *http.Request) {
 	}
 
 	phaseDistribution, summary := summarizeAPTTopicCampaigns(campaigns, total)
+	topologyNodes, topologyLinks := buildAPTTopicTopology(campaigns)
 
 	httpx.JSONSuccess(w, ctx, map[string]interface{}{
 		"topic":              "apt",
@@ -1583,6 +1590,8 @@ func (h *SystemHandler) GetAPTTopic(w http.ResponseWriter, r *http.Request) {
 		"campaigns":          campaigns,
 		"phase_distribution": phaseDistribution,
 		"summary":            summary,
+		"topology_nodes":     topologyNodes,
+		"topology_links":     topologyLinks,
 		"scope":              scope,
 	})
 }
@@ -2445,7 +2454,7 @@ func (h *SystemHandler) validateTopicActionDataMode(ctx context.Context, tenantI
 	return nil
 }
 
-func (h *SystemHandler) SubmitTopicAction(w http.ResponseWriter, r *http.Request) {
+func (h *SystemHandler) SubmitLegacyTopicAction(w http.ResponseWriter, r *http.Request) {
 	if !h.requireTopicWritePermission(w, r) {
 		return
 	}
@@ -3840,7 +3849,10 @@ func (h *SystemHandler) UpdateFusionRule(w http.ResponseWriter, r *http.Request)
 func (h *SystemHandler) ListBehaviorBaselines(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	tenantID := queryTenantID(r)
-	limit, offset := parsePageLimitOffset(r, 20, 200)
+	// The workbench consumes at most 500 real entities for its client-side
+	// chooser and filters. Keep that bounded scope in one request so the API
+	// does not repeat the same aggregation across three pages.
+	limit, offset := parsePageLimitOffset(r, 20, behaviorBaselineListMax)
 	baselineType := strings.TrimSpace(r.URL.Query().Get("baseline_type"))
 	if baselineType == "" {
 		baselineType = "asset"
@@ -5197,85 +5209,9 @@ func (h *SystemHandler) requireTopicExportPermission(w http.ResponseWriter, r *h
 }
 
 func (h *SystemHandler) ensureTopicGovernanceSchema(w http.ResponseWriter, ctx context.Context) bool {
-	stmts := []string{
-		`CREATE TABLE IF NOT EXISTS topic_saved_views (
-			view_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			tenant_id TEXT NOT NULL,
-			topic TEXT NOT NULL,
-			name TEXT NOT NULL,
-			filters JSONB NOT NULL DEFAULT '{}'::jsonb,
-			visibility TEXT NOT NULL DEFAULT 'private',
-			favorite BOOLEAN NOT NULL DEFAULT false,
-			shared BOOLEAN NOT NULL DEFAULT false,
-			share_token TEXT,
-			created_by TEXT NOT NULL DEFAULT '',
-			created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-			updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-		)`,
-		`CREATE INDEX IF NOT EXISTS idx_topic_saved_views_tenant_topic
-			ON topic_saved_views (tenant_id, topic, updated_at DESC)`,
-		`CREATE TABLE IF NOT EXISTS topic_scope_overrides (
-			tenant_id TEXT NOT NULL,
-			topic TEXT NOT NULL,
-			scope_name TEXT NOT NULL DEFAULT '',
-			included_assets JSONB NOT NULL DEFAULT '[]'::jsonb,
-			excluded_assets JSONB NOT NULL DEFAULT '[]'::jsonb,
-			risk_levels JSONB NOT NULL DEFAULT '[]'::jsonb,
-			time_window TEXT NOT NULL DEFAULT '24h',
-			detail JSONB NOT NULL DEFAULT '{}'::jsonb,
-			updated_by TEXT NOT NULL DEFAULT '',
-			updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-			PRIMARY KEY (tenant_id, topic)
-		)`,
-		`CREATE TABLE IF NOT EXISTS topic_subscriptions (
-			subscription_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			tenant_id TEXT NOT NULL,
-			topic TEXT NOT NULL,
-			channel TEXT NOT NULL,
-			threshold TEXT NOT NULL DEFAULT 'high',
-			schedule TEXT NOT NULL DEFAULT 'realtime',
-			recipients JSONB NOT NULL DEFAULT '[]'::jsonb,
-			enabled BOOLEAN NOT NULL DEFAULT true,
-			created_by TEXT NOT NULL DEFAULT '',
-			created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-			updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-			detail JSONB NOT NULL DEFAULT '{}'::jsonb
-		)`,
-		`CREATE INDEX IF NOT EXISTS idx_topic_subscriptions_tenant_topic
-			ON topic_subscriptions (tenant_id, topic, updated_at DESC)`,
-		`CREATE TABLE IF NOT EXISTS topic_exports (
-			export_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			tenant_id TEXT NOT NULL,
-			topic TEXT NOT NULL,
-			export_type TEXT NOT NULL,
-			status TEXT NOT NULL DEFAULT 'completed',
-			parameters JSONB NOT NULL DEFAULT '{}'::jsonb,
-			result JSONB NOT NULL DEFAULT '{}'::jsonb,
-			generated_by TEXT NOT NULL DEFAULT '',
-			generated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-		)`,
-		`CREATE INDEX IF NOT EXISTS idx_topic_exports_tenant_time
-			ON topic_exports (tenant_id, generated_at DESC)`,
-		`CREATE TABLE IF NOT EXISTS topic_actions (
-			action_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			tenant_id TEXT NOT NULL,
-			topic TEXT NOT NULL,
-			action TEXT NOT NULL,
-			target TEXT NOT NULL,
-			status TEXT NOT NULL DEFAULT 'queued',
-			detail JSONB NOT NULL DEFAULT '{}'::jsonb,
-			requested_by TEXT NOT NULL DEFAULT '',
-			created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-			updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-		)`,
-		`CREATE INDEX IF NOT EXISTS idx_topic_actions_tenant_topic
-			ON topic_actions (tenant_id, topic, created_at DESC)`,
-	}
-	for _, stmt := range stmts {
-		if _, err := h.pgDB.ExecContext(ctx, stmt); err != nil {
-			httpx.JSONError(w, ctx, http.StatusInternalServerError, "INTERNAL", err.Error())
-			return false
-		}
+	if err := verifyTopicGovernanceSchema(ctx, h.pgDB); err != nil {
+		httpx.JSONError(w, ctx, http.StatusInternalServerError, "SCHEMA_UNAVAILABLE", "topic governance schema is unavailable")
+		return false
 	}
 	return true
 }
@@ -6557,10 +6493,18 @@ func (h *SystemHandler) queryBehaviorBaselines(ctx context.Context, tenantID, ba
 			},
 			Status: status, CreatedAt: start, UpdatedAt: updated, Version: 1,
 		}
-		h.applyBehaviorBaselineSettings(ctx, tenantID, &dto)
 		baselines = append(baselines, dto)
 	}
-	return baselines, int(total), rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+	if err := rows.Close(); err != nil {
+		return nil, 0, err
+	}
+	if err := h.applyBehaviorBaselineSettingsBatch(ctx, tenantID, baselines); err != nil {
+		return nil, 0, err
+	}
+	return baselines, int(total), nil
 }
 
 func (h *SystemHandler) queryAccountBehaviorBaselines(ctx context.Context, tenantID string, limit, offset, windowDays int) ([]behaviorBaselineDTO, int, error) {
@@ -6608,10 +6552,18 @@ func (h *SystemHandler) queryAccountBehaviorBaselines(ctx context.Context, tenan
 				metricDTO("login_hour", "hour", loginHourMean, loginHourStd, loginHourCurrent),
 			},
 		}
-		h.applyBehaviorBaselineSettings(ctx, tenantID, &dto)
 		result = append(result, dto)
 	}
-	return result, int(total), rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+	if err := rows.Close(); err != nil {
+		return nil, 0, err
+	}
+	if err := h.applyBehaviorBaselineSettingsBatch(ctx, tenantID, result); err != nil {
+		return nil, 0, err
+	}
+	return result, int(total), nil
 }
 
 func baselineDisplayName(baselineType, entityID string) string {
@@ -6654,6 +6606,115 @@ func (h *SystemHandler) applyBehaviorBaselineSettings(ctx context.Context, tenan
 	} else if dto.DriftWatch {
 		dto.Status = "drift"
 	}
+}
+
+type behaviorBaselinePersistedSetting struct {
+	warningMultiplier float64
+	alertMultiplier   float64
+	frozen            bool
+	driftWatch        bool
+	version           int
+}
+
+// applyBehaviorBaselineSettingsBatch preserves the per-entity governance
+// semantics while replacing the list path's two PostgreSQL round trips per
+// entity with two bounded batch reads. Reset-specific ClickHouse refreshes are
+// still executed only for entities that actually have an in-window reset.
+func (h *SystemHandler) applyBehaviorBaselineSettingsBatch(ctx context.Context, tenantID string, items []behaviorBaselineDTO) error {
+	if h.pgDB == nil || len(items) == 0 {
+		return nil
+	}
+	ids := make([]string, 0, len(items))
+	for index := range items {
+		ids = append(ids, items[index].BaselineID)
+	}
+
+	resets := make(map[string]time.Time)
+	rows, err := h.pgDB.QueryContext(ctx, `
+		SELECT baseline_id, reset_at
+		FROM behavior_baseline_resets
+		WHERE tenant_id=$1 AND baseline_id=ANY($2)`, tenantID, pq.Array(ids))
+	if err != nil {
+		return fmt.Errorf("load behavior baseline resets: %w", err)
+	}
+	for rows.Next() {
+		var id string
+		var resetAt time.Time
+		if err := rows.Scan(&id, &resetAt); err != nil {
+			rows.Close()
+			return fmt.Errorf("scan behavior baseline reset: %w", err)
+		}
+		resets[id] = resetAt
+	}
+	if err := rows.Err(); err != nil {
+		rows.Close()
+		return fmt.Errorf("iterate behavior baseline resets: %w", err)
+	}
+	if err := rows.Close(); err != nil {
+		return fmt.Errorf("close behavior baseline resets: %w", err)
+	}
+
+	settings := make(map[string]behaviorBaselinePersistedSetting)
+	rows, err = h.pgDB.QueryContext(ctx, `
+		SELECT baseline_id, warning_multiplier, alert_multiplier, frozen, drift_watch, version
+		FROM behavior_baseline_settings
+		WHERE tenant_id=$1 AND baseline_id=ANY($2)`, tenantID, pq.Array(ids))
+	if err != nil {
+		return fmt.Errorf("load behavior baseline settings: %w", err)
+	}
+	for rows.Next() {
+		var id string
+		var setting behaviorBaselinePersistedSetting
+		if err := rows.Scan(&id, &setting.warningMultiplier, &setting.alertMultiplier, &setting.frozen, &setting.driftWatch, &setting.version); err != nil {
+			rows.Close()
+			return fmt.Errorf("scan behavior baseline setting: %w", err)
+		}
+		settings[id] = setting
+	}
+	if err := rows.Err(); err != nil {
+		rows.Close()
+		return fmt.Errorf("iterate behavior baseline settings: %w", err)
+	}
+	if err := rows.Close(); err != nil {
+		return fmt.Errorf("close behavior baseline settings: %w", err)
+	}
+
+	for index := range items {
+		item := &items[index]
+		if resetAt, ok := resets[item.BaselineID]; ok && resetAt.UnixMilli() > item.CreatedAt {
+			if refreshed, refreshErr := h.queryBehaviorBaselineByEntityFromStart(ctx, tenantID, item.BaselineType, item.EntityID, resetAt.UnixMilli()); refreshErr == nil {
+				item.Metrics = refreshed.Metrics
+				item.Status = refreshed.Status
+				item.CreatedAt = resetAt.UnixMilli()
+				item.UpdatedAt = refreshed.UpdatedAt
+			} else {
+				item.CreatedAt = resetAt.UnixMilli()
+				item.Status = "learning"
+				for metricIndex := range item.Metrics {
+					item.Metrics[metricIndex].Mean = 0
+					item.Metrics[metricIndex].StdDev = 0
+					item.Metrics[metricIndex].CurrentValue = 0
+					item.Metrics[metricIndex].DeviationScore = 0
+					item.Metrics[metricIndex].NormalRange = [2]float64{}
+				}
+			}
+		}
+		if setting, ok := settings[item.BaselineID]; ok {
+			item.Frozen = setting.frozen
+			item.DriftWatch = setting.driftWatch
+			item.Version = setting.version
+			for metricIndex := range item.Metrics {
+				item.Metrics[metricIndex].ThresholdConfig.WarningMultiplier = setting.warningMultiplier
+				item.Metrics[metricIndex].ThresholdConfig.AlertMultiplier = setting.alertMultiplier
+			}
+		}
+		if item.Frozen {
+			item.Status = "frozen"
+		} else if item.DriftWatch {
+			item.Status = "drift"
+		}
+	}
+	return nil
 }
 
 func (h *SystemHandler) queryBehaviorBaseline(ctx context.Context, tenantID, id string) (behaviorBaselineDTO, error) {

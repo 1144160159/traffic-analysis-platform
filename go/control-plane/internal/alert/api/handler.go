@@ -13,8 +13,10 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/audit"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/repository"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/service"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/state"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/whitelist"
@@ -28,14 +30,27 @@ import (
 
 // Handler Alert API处理器
 type Handler struct {
-	alertService     *service.AlertService
-	feedbackHandler  *FeedbackHandler
-	auditLogger      *audit.AlertAuditLogger
-	actionAudit      *AlertActionAuditWriter
-	evidenceObjects  alertEvidenceObjectStore
-	responseProducer *kafka.Producer
-	consumerHealth   func(context.Context) error
-	logger           *zap.Logger
+	alertService        *service.AlertService
+	feedbackHandler     *FeedbackHandler
+	auditLogger         *audit.AlertAuditLogger
+	actionAudit         *AlertActionAuditWriter
+	campaignLookup      AlertCampaignLookup
+	reportBuilder       AlertReportBuilder
+	reportObjects       AlertReportObjectStore
+	evidenceObjects     alertEvidenceObjectStore
+	alertReportEnabled  bool
+	campaignLinkEnabled bool
+	campaignAggregateV2 bool
+	responseProducer    *kafka.Producer
+	savedViewProducer   savedViewEventProducer
+	consumerHealth      func(context.Context) error
+	readinessChecks     []namedReadinessCheck
+	logger              *zap.Logger
+}
+
+type namedReadinessCheck struct {
+	name  string
+	check func(context.Context) error
 }
 
 // NewHandler 创建Handler
@@ -45,9 +60,11 @@ func NewHandler(
 	logger *zap.Logger,
 ) *Handler {
 	return &Handler{
-		alertService: alertService,
-		auditLogger:  auditLogger,
-		logger:       logger,
+		alertService:        alertService,
+		auditLogger:         auditLogger,
+		alertReportEnabled:  true,
+		campaignLinkEnabled: true,
+		logger:              logger,
 	}
 }
 
@@ -59,9 +76,11 @@ func NewHandlerWithFeedback(
 	logger *zap.Logger,
 ) *Handler {
 	h := &Handler{
-		alertService: alertService,
-		auditLogger:  auditLogger,
-		logger:       logger,
+		alertService:        alertService,
+		auditLogger:         auditLogger,
+		alertReportEnabled:  true,
+		campaignLinkEnabled: true,
+		logger:              logger,
 	}
 	// 初始化 FeedbackHandler
 	h.feedbackHandler = NewFeedbackHandler(alertService, kafkaProducer, auditLogger, nil, nil, logger)
@@ -82,6 +101,15 @@ func (h *Handler) SetFeedbackWhitelistRepo(repo *whitelist.Repository) {
 	}
 }
 
+// SetFeedbackTransactionalOutboxEnabled provides a fail-closed rollback gate.
+// Disabled mode does not restore the historical ClickHouse/Kafka partial-write
+// request path.
+func (h *Handler) SetFeedbackTransactionalOutboxEnabled(enabled bool) {
+	if h.feedbackHandler != nil {
+		h.feedbackHandler.transactionalOutboxEnabled = enabled
+	}
+}
+
 // SetActionAuditWriter 设置告警动作同步审计写入器。
 func (h *Handler) SetActionAuditWriter(writer *AlertActionAuditWriter) {
 	h.actionAudit = writer
@@ -97,10 +125,57 @@ func (h *Handler) SetResponseActionProducer(producer *kafka.Producer) {
 	h.responseProducer = producer
 }
 
+// SetSavedViewEventProducer enables post-commit delivery of saved-view domain
+// events. The HTTP transaction remains authoritative when Kafka is unavailable;
+// committed rows stay pending until this publisher recovers.
+func (h *Handler) SetSavedViewEventProducer(producer savedViewEventProducer) {
+	h.savedViewProducer = producer
+}
+
+// SetCampaignLookup configures the ClickHouse authority used to prove that a
+// campaign belongs to the authenticated tenant before a PostgreSQL relation is
+// created.
+func (h *Handler) SetCampaignLookup(lookup AlertCampaignLookup) {
+	h.campaignLookup = lookup
+}
+
+func (h *Handler) SetAlertReportBuilder(builder AlertReportBuilder) {
+	h.reportBuilder = builder
+}
+
+func (h *Handler) SetAlertReportObjectStore(store AlertReportObjectStore) {
+	h.reportObjects = store
+}
+
+// SetAlignmentFeatureFlags provides a reversible cutover without restoring the
+// historical UI adapters that wrote investigation notes as fake side effects.
+func (h *Handler) SetAlignmentFeatureFlags(alertReports, campaignLinks bool) {
+	h.alertReportEnabled = alertReports
+	h.campaignLinkEnabled = campaignLinks
+}
+
+// SetCampaignAggregateV2FeatureFlag binds alert-side membership commands to
+// the versioned campaign aggregate. It stays default-off until the additive
+// membership migration and tenant backfill have been reconciled.
+func (h *Handler) SetCampaignAggregateV2FeatureFlag(enabled bool) {
+	h.campaignAggregateV2 = enabled
+}
+
 // SetConsumerHealthCheck includes the asynchronous Kafka ingestion path in
 // readiness without making it a liveness dependency.
 func (h *Handler) SetConsumerHealthCheck(check func(context.Context) error) {
 	h.consumerHealth = check
+}
+
+// AddReadinessCheck registers a required asynchronous dependency without
+// turning it into a liveness dependency. Registration occurs during startup,
+// before the HTTP server begins serving requests.
+func (h *Handler) AddReadinessCheck(name string, check func(context.Context) error) {
+	name = strings.TrimSpace(name)
+	if name == "" || check == nil {
+		return
+	}
+	h.readinessChecks = append(h.readinessChecks, namedReadinessCheck{name: name, check: check})
 }
 
 // RegisterRoutes 注册路由
@@ -108,6 +183,7 @@ func (h *Handler) RegisterRoutes(r *mux.Router) {
 	// 告警列表与详情
 	r.HandleFunc("/alerts", h.ListAlerts).Methods("GET")
 	r.HandleFunc("/alerts/search", h.SearchAlerts).Methods("POST")
+	r.HandleFunc("/alerts/search/cursor", h.CloseSearchCursor).Methods("DELETE")
 	// 统计与趋势
 	r.HandleFunc("/alerts/stats", h.GetStats).Methods("GET")
 	r.HandleFunc("/alerts/trend", h.GetTrend).Methods("GET")
@@ -129,7 +205,18 @@ func (h *Handler) RegisterRoutes(r *mux.Router) {
 	r.HandleFunc("/alerts/{id}/reopen", h.ReopenAlert).Methods("POST")
 	r.HandleFunc("/alerts/{id}/response-actions", h.CreateAlertResponseAction).Methods("POST")
 	r.HandleFunc("/alerts/{id}/response-actions/{job_id}", h.GetAlertResponseAction).Methods("GET")
+	r.HandleFunc("/alerts/{id}/response-actions/{job_id}/approval", h.DecideAlertResponseAction).Methods("POST")
+	r.HandleFunc("/alerts/{id}/response-actions/{job_id}/cancel", h.CancelAlertResponseAction).Methods("POST")
+	r.HandleFunc("/alerts/{id}/response-actions/{job_id}/compensations", h.RequestAlertResponseCompensation).Methods("POST")
 	r.HandleFunc("/alerts/{id}/investigation-notes", h.CreateAlertInvestigationNote).Methods("POST")
+	r.HandleFunc("/alerts/{id}/campaign-links", h.LinkAlertToCampaign).Methods("POST")
+	r.HandleFunc("/alerts/{id}/campaign-links", h.ListAlertCampaignLinks).Methods("GET")
+	r.HandleFunc("/alerts/{id}/campaign-links/{campaign_id}", h.UnlinkAlertFromCampaign).Methods("DELETE")
+	r.HandleFunc("/alerts/{id}/reports/export", h.CreateAlertReport).Methods("POST")
+	r.HandleFunc("/alerts/{id}/reports/{job_id}", h.GetAlertReportJob).Methods("GET")
+	r.HandleFunc("/alerts/{id}/reports/{job_id}/cancel", h.CancelAlertReport).Methods("POST")
+	r.HandleFunc("/alerts/{id}/reports/{job_id}/compensations", h.CompensateAlertReport).Methods("POST")
+	r.HandleFunc("/alerts/{id}/reports/{job_id}/download", h.DownloadAlertReport).Methods("GET")
 	// 证据相关 API
 	r.HandleFunc("/evidence/{id}", h.GetEvidenceByID).Methods("GET")
 	r.HandleFunc("/evidence/alert/{alert_id}", h.GetEvidenceByAlertID).Methods("GET")
@@ -159,6 +246,18 @@ func (h *Handler) ReadinessCheck(w http.ResponseWriter, r *http.Request) {
 	if h.consumerHealth != nil {
 		if err := h.consumerHealth(r.Context()); err != nil {
 			httpx.JSONError(w, r.Context(), http.StatusServiceUnavailable, "KAFKA_NOT_READY", err.Error())
+			return
+		}
+	}
+	for _, readiness := range h.readinessChecks {
+		if err := readiness.check(r.Context()); err != nil {
+			httpx.JSONError(
+				w,
+				r.Context(),
+				http.StatusServiceUnavailable,
+				"DEPENDENCY_NOT_READY",
+				readiness.name+": "+err.Error(),
+			)
 			return
 		}
 	}
@@ -280,6 +379,8 @@ type SearchAlertsRequest struct {
 	Size       int      `json:"size"`
 	SortField  string   `json:"sort_field,omitempty"`
 	SortOrder  string   `json:"sort_order,omitempty"`
+	Cursor     string   `json:"cursor,omitempty"`
+	CursorMode string   `json:"cursor_mode,omitempty"`
 }
 
 // SearchAlerts 全文搜索告警
@@ -296,9 +397,13 @@ func (h *Handler) SearchAlerts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req SearchAlertsRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 32<<10)).Decode(&req); err != nil {
 		errors.WriteError(w, errors.New(errors.ErrCodeInvalidRequest, "invalid request body"),
 			httpx.GetTraceID(ctx), r.URL.Path)
+		return
+	}
+	if err := validateSearchAlertsRequest(&req); err != nil {
+		errors.WriteError(w, err, httpx.GetTraceID(ctx), r.URL.Path)
 		return
 	}
 	// 构建搜索查询
@@ -315,6 +420,8 @@ func (h *Handler) SearchAlerts(w http.ResponseWriter, r *http.Request) {
 		Size:       req.Size,
 		SortField:  req.SortField,
 		SortOrder:  req.SortOrder,
+		Cursor:     req.Cursor,
+		CursorMode: req.CursorMode,
 	}
 	if req.StartTime > 0 {
 		query.StartTime = time.UnixMilli(req.StartTime)
@@ -332,7 +439,122 @@ func (h *Handler) SearchAlerts(w http.ResponseWriter, r *http.Request) {
 		errors.WriteError(w, err, httpx.GetTraceID(ctx), r.URL.Path)
 		return
 	}
+	if result.CursorMode != "" {
+		snapshotID := result.SnapshotID
+		if snapshotID == "" {
+			snapshotID = "alert-os-live-" + httpx.GetTraceID(ctx)
+		}
+		httpx.JSONContractSuccess(w, ctx, result, httpx.ContractMeta{
+			ContractVersion: 1,
+			SnapshotID:      snapshotID,
+			AsOf:            result.AsOf,
+			Partial:         false,
+			MissingSections: []string{},
+			SourceWatermarks: map[string]string{
+				"opensearch.alerts.search": result.AsOf,
+			},
+		})
+		return
+	}
 	httpx.JSONSuccess(w, ctx, result)
+}
+
+var allowedAlertSearchSortFields = map[string]struct{}{
+	"last_seen": {}, "first_seen": {}, "score": {}, "severity": {},
+	"status": {}, "alert_type": {}, "alert_id": {},
+}
+
+func validateSearchAlertsRequest(req *SearchAlertsRequest) error {
+	if req == nil {
+		return errors.New(errors.ErrCodeInvalidRequest, "search request is required")
+	}
+	if utf8.RuneCountInString(req.Query) > 256 {
+		return errors.New(errors.ErrCodeInvalidParameter, "query exceeds 256 characters")
+	}
+	if req.From < 0 || req.Size < 0 {
+		return errors.New(errors.ErrCodeInvalidParameter, "from and size must be non-negative")
+	}
+	if len(req.Cursor) > 8192 {
+		return errors.New(errors.ErrCodeInvalidParameter, "cursor is too large")
+	}
+	if req.CursorMode != "" && req.CursorMode != repository.SearchCursorModeLive && req.CursorMode != repository.SearchCursorModePIT {
+		return errors.New(errors.ErrCodeInvalidParameter, "cursor_mode must be live or pit")
+	}
+	if (req.Cursor != "" || req.CursorMode != "") && (req.From != 0 || req.Size > 200) {
+		return errors.New(errors.ErrCodeInvalidParameter, "cursor traversal requires from=0 and size<=200")
+	}
+	if req.Cursor == "" && req.CursorMode == "" && req.Size > 1000 {
+		return errors.New(errors.ErrCodeInvalidParameter, "legacy search size must not exceed 1000")
+	}
+	if req.SortField != "" {
+		if _, allowed := allowedAlertSearchSortFields[req.SortField]; !allowed {
+			return errors.New(errors.ErrCodeInvalidParameter, "sort_field is not allowed")
+		}
+	}
+	if req.SortOrder != "" && req.SortOrder != "asc" && req.SortOrder != "desc" {
+		return errors.New(errors.ErrCodeInvalidParameter, "sort_order must be asc or desc")
+	}
+	if req.StartTime > 0 && req.EndTime > 0 && req.StartTime > req.EndTime {
+		return errors.New(errors.ErrCodeInvalidParameter, "start_time must not be after end_time")
+	}
+	if len(req.SrcIP) > 64 || len(req.DstIP) > 64 {
+		return errors.New(errors.ErrCodeInvalidParameter, "IP filter is too long")
+	}
+	filterCount := 0
+	for _, values := range [][]string{req.Severity, req.Status, req.AlertTypes, req.Labels} {
+		if len(values) > 20 {
+			return errors.New(errors.ErrCodeInvalidParameter, "each filter accepts at most 20 values")
+		}
+		filterCount += len(values)
+		for _, value := range values {
+			if utf8.RuneCountInString(value) > 128 {
+				return errors.New(errors.ErrCodeInvalidParameter, "filter value exceeds 128 characters")
+			}
+		}
+	}
+	if filterCount > 64 {
+		return errors.New(errors.ErrCodeInvalidParameter, "search contains too many filter clauses")
+	}
+	return nil
+}
+
+type closeSearchCursorRequest struct {
+	Cursor string `json:"cursor"`
+}
+
+// CloseSearchCursor releases a PIT before its natural expiry. Live cursors are
+// accepted as an idempotent no-op because they hold no server-side context.
+func (h *Handler) CloseSearchCursor(w http.ResponseWriter, r *http.Request) {
+	if !h.requireAlertReadPermission(w, r) {
+		return
+	}
+	ctx := r.Context()
+	tenantID := h.extractTenantID(r)
+	if tenantID == "" {
+		errors.WriteError(w, errors.New(errors.ErrCodeTenantNotFound, "tenant_id is required"),
+			httpx.GetTraceID(ctx), r.URL.Path)
+		return
+	}
+	var req closeSearchCursorRequest
+	decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 16<<10))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&req); err != nil || req.Cursor == "" || len(req.Cursor) > 8192 {
+		errors.WriteError(w, errors.New(errors.ErrCodeInvalidRequest, "a valid cursor is required"),
+			httpx.GetTraceID(ctx), r.URL.Path)
+		return
+	}
+	if err := h.alertService.CloseSearchCursor(ctx, tenantID, req.Cursor); err != nil {
+		errors.WriteError(w, err, httpx.GetTraceID(ctx), r.URL.Path)
+		return
+	}
+	httpx.JSONContractSuccess(w, ctx, map[string]any{"closed": true}, httpx.ContractMeta{
+		ContractVersion:  1,
+		SnapshotID:       "alert-os-cursor-close-" + httpx.GetTraceID(ctx),
+		AsOf:             time.Now().UTC().Format(time.RFC3339Nano),
+		Partial:          false,
+		MissingSections:  []string{},
+		SourceWatermarks: map[string]string{},
+	})
 }
 
 // GetAlert 获取告警详情

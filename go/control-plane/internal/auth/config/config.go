@@ -138,7 +138,7 @@ func (c RedisConfig) ToStorageConfig() storage.RedisConfig {
 
 // JWTConfig JWT 配置
 type JWTConfig struct {
-	SigningKey      string        `env:"SIGNING_KEY" envDefault:"change-me-in-production-must-be-at-least-32-bytes-long"`
+	SigningKey      string        `env:"SIGNING_KEY"`
 	SigningMethod   string        `env:"SIGNING_METHOD" envDefault:"HS256"`
 	AccessTokenTTL  time.Duration `env:"ACCESS_TOKEN_TTL" envDefault:"15m"`
 	RefreshTokenTTL time.Duration `env:"REFRESH_TOKEN_TTL" envDefault:"168h"`
@@ -185,7 +185,8 @@ type AuditConfig struct {
 
 // KafkaConfig Kafka 配置
 type KafkaConfig struct {
-	Brokers []string `env:"BROKERS" envSeparator:"," envDefault:"kafka-bootstrap.middleware.svc:9092"`
+	Brokers        []string `env:"BROKERS" envSeparator:"," envDefault:"kafka-bootstrap.middleware.svc:9092"`
+	UserEventTopic string   `env:"USER_EVENT_TOPIC" envDefault:"user.events.v1"`
 }
 
 // APIConfig API 配置

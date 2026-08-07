@@ -276,7 +276,7 @@ func (g *Generator) generateStatEvidence(ctx context.Context, alert *persistence
 		LIMIT 1
 	`
 
-	row , _ := g.chClient.QueryRow(ctx, query, alert.TenantID, alert.CommunityID)
+	row, _ := g.chClient.QueryRow(ctx, query, alert.TenantID, alert.CommunityID)
 
 	var pps, bps, upDownRatio float32
 	var pktlenMean, pktlenStd, iatMean, iatStd float32
@@ -370,7 +370,7 @@ func (g *Generator) generateSequenceEvidence(ctx context.Context, alert *persist
 		LIMIT 1
 	`
 
-	row , _ := g.chClient.QueryRow(ctx, query, alert.TenantID, alert.CommunityID)
+	row, _ := g.chClient.QueryRow(ctx, query, alert.TenantID, alert.CommunityID)
 
 	var pktlenHash, iatHash string
 	var waveletFwd, waveletBwd, entropyFwd, entropyBwd float32
@@ -459,7 +459,7 @@ func (g *Generator) generateFingerprintEvidence(ctx context.Context, alert *pers
 		LIMIT 1
 	`
 
-	row , _ := g.chClient.QueryRow(ctx, query, alert.TenantID, alert.CommunityID, alert.SessionID)
+	row, _ := g.chClient.QueryRow(ctx, query, alert.TenantID, alert.CommunityID, alert.SessionID)
 
 	var isEncrypted uint8
 	var tlsVersion, ja3, sniHash, certSha256 string
@@ -644,7 +644,7 @@ func (g *Generator) SaveEvidence(ctx context.Context, evidence *Evidence) error 
 	}
 
 	query := `
-		INSERT INTO traffic.evidence_local (
+		INSERT INTO traffic.evidence (
 			tenant_id, evidence_id, alert_id, ts,
 			type, summary, metrics_json, snippet_ref_json, arkime_link,
 			confidence, event_id
@@ -842,7 +842,7 @@ func (g *Generator) GetEvidenceByID(ctx context.Context, tenantID, evidenceID st
 		LIMIT 1
 	`
 
-	row , _ := g.chClient.QueryRow(ctx, query, tenantID, evidenceID)
+	row, _ := g.chClient.QueryRow(ctx, query, tenantID, evidenceID)
 
 	var e Evidence
 	var metricsJSON, snippetRefJSON string
@@ -868,29 +868,6 @@ func (g *Generator) GetEvidenceByID(ctx context.Context, tenantID, evidenceID st
 	}
 
 	return &e, nil
-}
-
-// DeleteEvidenceByAlertID 删除告警相关的所有证据
-func (g *Generator) DeleteEvidenceByAlertID(ctx context.Context, tenantID, alertID string) error {
-	ctx, span := otel.StartSpan(ctx, "evidence_generator.delete_evidence_by_alert_id")
-	defer span.End()
-
-	// 注意：ClickHouse 删除是异步的，使用 ALTER TABLE DELETE
-	query := `
-		ALTER TABLE traffic.evidence_local DELETE 
-		WHERE tenant_id = ? AND alert_id = ?
-	`
-
-	err := g.chClient.Exec(ctx, query, tenantID, alertID)
-	if err != nil {
-		return fmt.Errorf("failed to delete evidence: %w", err)
-	}
-
-	g.logger.Info("Evidence deleted",
-		zap.String("alert_id", alertID),
-		zap.String("tenant_id", tenantID))
-
-	return nil
 }
 
 // SetConfig 更新配置

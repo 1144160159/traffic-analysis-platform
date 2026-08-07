@@ -87,6 +87,12 @@ func (w *AlertActionAuditWriter) recordWithExecutor(ctx context.Context, executo
 	if err != nil {
 		return err
 	}
+	ipAddress := ""
+	userAgent := ""
+	if r != nil {
+		ipAddress = clientIP(r)
+		userAgent = r.UserAgent()
+	}
 
 	userIDExpr := "NULLIF($3, '')"
 	userID := record.UserID
@@ -110,8 +116,8 @@ func (w *AlertActionAuditWriter) recordWithExecutor(ctx context.Context, executo
 			objectType,
 			objectID,
 			string(detailJSON),
-			clientIP(r),
-			r.UserAgent())
+			ipAddress,
+			userAgent)
 		return err
 	}
 
@@ -124,8 +130,8 @@ func (w *AlertActionAuditWriter) recordWithExecutor(ctx context.Context, executo
 		objectType,
 		objectID,
 		string(detailJSON),
-		clientIP(r),
-		r.UserAgent())
+		ipAddress,
+		userAgent)
 	return err
 }
 

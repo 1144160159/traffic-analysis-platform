@@ -92,16 +92,20 @@ type PostgreSQLConfig struct {
 
 // ClickHouseConfig ClickHouse 配置（用于 MLOps 自编排评估）
 type ClickHouseConfig struct {
-	Enabled         bool          `env:"CLICKHOUSE_ENABLED" envDefault:"true"`
-	Hosts           []string      `env:"CLICKHOUSE_HOSTS" envSeparator:","`
-	Database        string        `env:"CLICKHOUSE_DATABASE" envDefault:"traffic"`
-	Username        string        `env:"CLICKHOUSE_USERNAME" envDefault:"default"`
-	Password        string        `env:"CLICKHOUSE_PASSWORD"`
-	MaxOpenConns    int           `env:"CLICKHOUSE_MAX_OPEN_CONNS" envDefault:"10"`
-	MaxIdleConns    int           `env:"CLICKHOUSE_MAX_IDLE_CONNS" envDefault:"5"`
-	ConnMaxLifetime time.Duration `env:"CLICKHOUSE_CONN_MAX_LIFETIME" envDefault:"1h"`
-	DialTimeout     time.Duration `env:"CLICKHOUSE_DIAL_TIMEOUT" envDefault:"10s"`
-	ReadTimeout     time.Duration `env:"CLICKHOUSE_READ_TIMEOUT" envDefault:"30s"`
+	Enabled                     bool          `env:"CLICKHOUSE_ENABLED" envDefault:"true"`
+	FeedbackProjectionEnabled   bool          `env:"MODEL_FEEDBACK_CLICKHOUSE_PROJECTION_V1_ENABLED" envDefault:"true"`
+	FeedbackProjectionV2Enabled bool          `env:"MODEL_FEEDBACK_CLICKHOUSE_PROJECTION_V2_ENABLED" envDefault:"false"`
+	FeedbackProjectionV2Table   string        `env:"MODEL_FEEDBACK_CLICKHOUSE_PROJECTION_V2_TABLE" envDefault:"traffic.alert_feedback_v2"`
+	FeedbackProjectionInterval  time.Duration `env:"MODEL_FEEDBACK_CLICKHOUSE_PROJECTION_INTERVAL" envDefault:"2s"`
+	Hosts                       []string      `env:"CLICKHOUSE_HOSTS" envSeparator:","`
+	Database                    string        `env:"CLICKHOUSE_DATABASE" envDefault:"traffic"`
+	Username                    string        `env:"CLICKHOUSE_USERNAME" envDefault:"default"`
+	Password                    string        `env:"CLICKHOUSE_PASSWORD"`
+	MaxOpenConns                int           `env:"CLICKHOUSE_MAX_OPEN_CONNS" envDefault:"10"`
+	MaxIdleConns                int           `env:"CLICKHOUSE_MAX_IDLE_CONNS" envDefault:"5"`
+	ConnMaxLifetime             time.Duration `env:"CLICKHOUSE_CONN_MAX_LIFETIME" envDefault:"1h"`
+	DialTimeout                 time.Duration `env:"CLICKHOUSE_DIAL_TIMEOUT" envDefault:"10s"`
+	ReadTimeout                 time.Duration `env:"CLICKHOUSE_READ_TIMEOUT" envDefault:"30s"`
 }
 
 // KafkaConfig Kafka 配置
@@ -110,9 +114,20 @@ type KafkaConfig struct {
 	RuleTopic                       string        `env:"KAFKA_RULE_TOPIC" envDefault:"rule.updates"`
 	ModelTopic                      string        `env:"KAFKA_MODEL_TOPIC" envDefault:"model-updates"`
 	ModelActionTopic                string        `env:"KAFKA_MODEL_ACTION_TOPIC" envDefault:"model-actions.v1"`
+	ModelActionEventGroup           string        `env:"KAFKA_MODEL_ACTION_EVENT_GROUP" envDefault:"rule-manager-model-action-execution-v1"`
+	ModelActionOutboxEnabled        bool          `env:"MODEL_ACTION_OUTBOX_V1_ENABLED" envDefault:"true"`
+	ModelActionInboxEnabled         bool          `env:"MODEL_ACTION_INBOX_V1_ENABLED" envDefault:"true"`
 	ModelAppliedTopic               string        `env:"KAFKA_MODEL_APPLIED_TOPIC" envDefault:"model-update-applied.v1"`
 	ModelAppliedExpectedParallelism int           `env:"MODEL_APPLIED_ACK_EXPECTED_PARALLELISM" envDefault:"4"`
 	DeploymentTopic                 string        `env:"KAFKA_DEPLOYMENT_TOPIC" envDefault:"deployment.events.v1"`
+	DeploymentEventGroup            string        `env:"KAFKA_DEPLOYMENT_EVENT_GROUP" envDefault:"rule-manager-deployment-projection-v1"`
+	DeploymentProjectionEnabled     bool          `env:"DEPLOYMENT_EVENT_PROJECTION_V1_ENABLED" envDefault:"true"`
+	AlertFeedbackTopic              string        `env:"KAFKA_ALERT_FEEDBACK_TOPIC" envDefault:"alert.feedback.v1"`
+	AlertFeedbackEventGroup         string        `env:"KAFKA_ALERT_FEEDBACK_EVENT_GROUP" envDefault:"rule-manager-alert-feedback-projection-v1"`
+	AlertFeedbackProjectionEnabled  bool          `env:"ALERT_FEEDBACK_PROJECTION_V1_ENABLED" envDefault:"true"`
+	WhitelistEventTopic             string        `env:"KAFKA_WHITELIST_EVENT_TOPIC" envDefault:"whitelist.events.v2"`
+	WhitelistEventGroup             string        `env:"KAFKA_WHITELIST_EVENT_GROUP" envDefault:"rule-manager-whitelist-rule-effect-v2"`
+	WhitelistEventPipelineEnabled   bool          `env:"WHITELIST_EVENT_PIPELINE_V2_ENABLED" envDefault:"false"`
 	AuditTopic                      string        `env:"KAFKA_AUDIT_TOPIC" envDefault:"audit.logs"`
 	DLQTopicPrefix                  string        `env:"KAFKA_DLQ_TOPIC_PREFIX" envDefault:"dlq."`
 	BatchSize                       int           `env:"KAFKA_BATCH_SIZE" envDefault:"100"`

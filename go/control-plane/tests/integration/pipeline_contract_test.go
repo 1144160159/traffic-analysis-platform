@@ -1,127 +1,101 @@
-// Pipeline Contract Test — 验证 Kafka Topic ↔ Proto ↔ Storage 完整契约
-// 覆盖: 12 Kafka Topics, Protobuf 序列化/反序列化, 数据库 Schema 映射
 package integration
 
 import (
+	"encoding/json"
+	"os"
+	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-// PipelineContract 定义完整数据管线契约
-type PipelineContract struct {
-	KafkaTopic   string
-	ProtoMessage string
-	StorageTable string
-	Producer     string // rust/go/java
-	Consumer     string // go/java
+type kafkaTopicCatalog struct {
+	SchemaVersion int `json:"schema_version"`
+	Topics        []struct {
+		Name        string   `json:"name"`
+		MessageType string   `json:"message_type"`
+		Readiness   string   `json:"readiness"`
+		Producers   []string `json:"producers"`
+		Consumers   []string `json:"consumers"`
+		Schema      struct {
+			Kind       string `json:"kind"`
+			Path       string `json:"path"`
+			Message    string `json:"message"`
+			Definition string `json:"definition"`
+		} `json:"schema"`
+	} `json:"topics"`
 }
 
-// 全链路 12 条 Topic 契约
-var pipelineContracts = []PipelineContract{
-	// 实时流量管线 (Rust → Java)
-	{KafkaTopic: "flow.events.v1", ProtoMessage: "FlowEvent", StorageTable: "flows_raw", Producer: "rust", Consumer: "java"},
-	{KafkaTopic: "session.events.v1", ProtoMessage: "SessionEvent", StorageTable: "sessions", Producer: "java", Consumer: "go"},
-	{KafkaTopic: "feature.stat.v1", ProtoMessage: "FeatureStatV1", StorageTable: "feature_stat", Producer: "java", Consumer: "java"},
-	// 检测与告警管线
-	{KafkaTopic: "detections.v1", ProtoMessage: "DetectionBatch", StorageTable: "detections", Producer: "java", Consumer: "go"},
-	{KafkaTopic: "alerts.v1", ProtoMessage: "Alert", StorageTable: "alerts", Producer: "java", Consumer: "go"},
-	{KafkaTopic: "pcap.index.v1", ProtoMessage: "PcapIndexMeta", StorageTable: "pcap_index", Producer: "go", Consumer: "java"},
-	// 配置与管理管线
-	{KafkaTopic: "rule.updates", ProtoMessage: "RuleCommand", StorageTable: "rule_versions", Producer: "go", Consumer: "java"},
-	{KafkaTopic: "audit.logs", ProtoMessage: "AuditLog", StorageTable: "audit_logs", Producer: "go", Consumer: "go"},
-	{KafkaTopic: "asset.bindings.v1", ProtoMessage: "MacIpBinding", StorageTable: "assets", Producer: "go", Consumer: "go"},
-	// 扩展管线 (P1/P2)
-	{KafkaTopic: "device.logs.v1", ProtoMessage: "DeviceLog", StorageTable: "device_logs", Producer: "go", Consumer: "java"},
-	{KafkaTopic: "user.events.v1", ProtoMessage: "UserEvent", StorageTable: "user_events", Producer: "go", Consumer: "java"},
-	{KafkaTopic: "dlq.v1", ProtoMessage: "DeadLetter", StorageTable: "dlq_events", Producer: "go", Consumer: "go"},
-}
-
-func TestPipelineContract_CompleteMapping(t *testing.T) {
-	assert.Equal(t, 12, len(pipelineContracts), "Expected 12 Kafka topics in pipeline contract")
-
-	topics := make(map[string]bool)
-	producers := []string{}
-	consumers := []string{}
-
-	for _, c := range pipelineContracts {
-		// Verify no duplicate topics
-		assert.False(t, topics[c.KafkaTopic], "Duplicate topic: %s", c.KafkaTopic)
-		topics[c.KafkaTopic] = true
-
-		// Verify proto message is non-empty
-		assert.NotEmpty(t, c.ProtoMessage, "ProtoMessage should not be empty for %s", c.KafkaTopic)
-		assert.NotEmpty(t, c.StorageTable, "StorageTable should not be empty for %s", c.KafkaTopic)
-
-		producers = append(producers, c.Producer)
-		consumers = append(consumers, c.Consumer)
+func repositoryRoot(t *testing.T) string {
+	t.Helper()
+	directory, err := os.Getwd()
+	require.NoError(t, err)
+	for {
+		if _, err := os.Stat(filepath.Join(directory, "contracts", "events")); err == nil {
+			return directory
+		}
+		parent := filepath.Dir(directory)
+		require.NotEqual(t, directory, parent, "repository root not found from %s", directory)
+		directory = parent
 	}
-
-	t.Logf("Pipeline contract: %d topics, producers: %v, consumers: %v",
-		len(pipelineContracts), producers, consumers)
 }
 
-func TestPipelineContract_RustProducedTopics(t *testing.T) {
-	for _, c := range pipelineContracts {
-		if c.Producer == "rust" {
-			t.Logf("Rust → %s (%s) → %s → %s", c.KafkaTopic, c.ProtoMessage, c.StorageTable, c.Consumer)
+func loadKafkaTopicCatalog(t *testing.T) (string, kafkaTopicCatalog) {
+	t.Helper()
+	root := repositoryRoot(t)
+	payload, err := os.ReadFile(filepath.Join(root, "contracts", "events", "kafka-topic-catalog.v1.json"))
+	require.NoError(t, err)
+	var catalog kafkaTopicCatalog
+	require.NoError(t, json.Unmarshal(payload, &catalog))
+	return root, catalog
+}
+
+func TestPipelineContractCompleteMapping(t *testing.T) {
+	root, catalog := loadKafkaTopicCatalog(t)
+	require.Equal(t, 1, catalog.SchemaVersion)
+	require.Len(t, catalog.Topics, 35)
+
+	seen := map[string]struct{}{}
+	for _, topic := range catalog.Topics {
+		require.NotEmpty(t, topic.Name)
+		require.NotEmpty(t, topic.MessageType, topic.Name)
+		require.NotEmpty(t, topic.Schema.Kind, topic.Name)
+		require.FileExists(t, filepath.Join(root, topic.Schema.Path), topic.Name)
+		_, duplicate := seen[topic.Name]
+		require.False(t, duplicate, "duplicate Kafka topic %s", topic.Name)
+		seen[topic.Name] = struct{}{}
+
+		switch topic.Readiness {
+		case "active":
+			require.NotEmpty(t, topic.Producers, topic.Name)
+			require.NotEmpty(t, topic.Consumers, topic.Name)
+		case "producer_only":
+			require.NotEmpty(t, topic.Producers, topic.Name)
+			require.Empty(t, topic.Consumers, topic.Name)
+		case "consumer_only":
+			require.Empty(t, topic.Producers, topic.Name)
+			require.NotEmpty(t, topic.Consumers, topic.Name)
+		case "dlq":
+			require.NotEmpty(t, topic.Producers, topic.Name)
+		default:
+			t.Fatalf("topic %s has unsupported readiness %q", topic.Name, topic.Readiness)
 		}
 	}
 }
 
-func TestPipelineContract_GoConsumedTopics(t *testing.T) {
-	count := 0
-	for _, c := range pipelineContracts {
-		if c.Consumer == "go" || (c.Consumer == "go" && c.Producer == "go") {
-			t.Logf("Go consumes: %s (%s) → %s", c.KafkaTopic, c.ProtoMessage, c.StorageTable)
-			count++
+func TestPipelineContractSchemaKindsRemainExplicit(t *testing.T) {
+	_, catalog := loadKafkaTopicCatalog(t)
+	counts := map[string]int{}
+	for _, topic := range catalog.Topics {
+		counts[topic.Schema.Kind]++
+		if topic.Schema.Kind == "protobuf" {
+			require.NotEmpty(t, topic.Schema.Message, topic.Name)
+			require.Empty(t, topic.Schema.Definition, topic.Name)
+		} else {
+			require.Equal(t, "json-schema", topic.Schema.Kind, topic.Name)
+			require.NotEmpty(t, topic.Schema.Definition, topic.Name)
+			require.Empty(t, topic.Schema.Message, topic.Name)
 		}
 	}
-	assert.Greater(t, count, 3, "Go should consume at least 4 topics")
-}
-
-func TestPipelineContract_JavaConsumedTopics(t *testing.T) {
-	count := 0
-	for _, c := range pipelineContracts {
-		if c.Consumer == "java" {
-			t.Logf("Java consumes: %s (%s) → %s", c.KafkaTopic, c.ProtoMessage, c.StorageTable)
-			count++
-		}
-	}
-	assert.Greater(t, count, 2, "Java should consume at least 3 topics")
-}
-
-func TestPipelineContract_AllTopicsHaveStorage(t *testing.T) {
-	for _, c := range pipelineContracts {
-		assert.NotEmpty(t, c.StorageTable, "Topic %s must have a storage table mapping", c.KafkaTopic)
-	}
-}
-
-// CrossCutting: verify Proto messages exist in generated code
-func TestProtoMessageFilesExist(t *testing.T) {
-	// Key proto messages that must be present across all languages
-	requiredMessages := []string{
-		"FlowEvent", "SessionEvent", "FeatureStatV1", "DetectionBatch",
-		"Alert", "PcapIndexMeta", "AuditLog", "MacIpBinding",
-		"DeviceLog", "UserEvent", "DeadLetter",
-	}
-	for _, msg := range requiredMessages {
-		t.Logf("Required Proto message: %s", msg)
-	}
-}
-
-func TestStorageTableMapping(t *testing.T) {
-	// Verify that each Kafka topic has a corresponding ClickHouse or PostgreSQL table
-	expectedCHTables := []string{
-		"flows_raw", "sessions", "feature_stat", "detections",
-		"alerts", "pcap_index", "device_logs", "user_events", "dlq_events",
-	}
-	expectedPGTables := []string{
-		"rule_versions", "audit_logs", "assets",
-	}
-
-	allTables := append(expectedCHTables, expectedPGTables...)
-	assert.Equal(t, 12, len(allTables), "Total storage tables should match topic count")
-	t.Logf("Storage tables: %d ClickHouse + %d PostgreSQL = %d total",
-		len(expectedCHTables), len(expectedPGTables), len(allTables))
+	require.Equal(t, map[string]int{"json-schema": 25, "protobuf": 10}, counts)
 }

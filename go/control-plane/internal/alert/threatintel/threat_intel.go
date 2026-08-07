@@ -37,6 +37,7 @@ const (
 type IntelEntry struct {
 	ID          string     `json:"id"`
 	TenantID    string     `json:"tenant_id,omitempty"`
+	Revision    int64      `json:"revision,omitempty"`
 	Type        string     `json:"type"` // ip | domain | hash
 	Value       string     `json:"value"`
 	Reputation  Reputation `json:"reputation"`
@@ -57,6 +58,7 @@ type ListFilter struct {
 type FeedSource struct {
 	ID              string       `json:"id,omitempty"`
 	TenantID        string       `json:"tenant_id,omitempty"`
+	Revision        int64        `json:"revision,omitempty"`
 	Name            string       `json:"name"`
 	Enabled         bool         `json:"enabled"`
 	IntervalSeconds int          `json:"interval_seconds"`
@@ -100,63 +102,6 @@ func NewService(db *sql.DB, logger *zap.Logger) *Service {
 	}
 	svc.loadBuiltinThreats()
 	return svc
-}
-
-// InitSchema 初始化威胁情报表
-func (s *Service) InitSchema(ctx context.Context) error {
-	_, err := s.db.ExecContext(ctx, `
-		CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-		CREATE TABLE IF NOT EXISTS threat_intel (
-			id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			tenant_id   TEXT NOT NULL DEFAULT 'default',
-			type        TEXT NOT NULL CHECK (type IN ('ip','domain','hash')),
-			value       TEXT NOT NULL,
-			reputation  TEXT NOT NULL DEFAULT 'unknown',
-			category    TEXT NOT NULL DEFAULT '',
-			source      TEXT NOT NULL DEFAULT 'manual',
-			description TEXT NOT NULL DEFAULT '',
-			last_seen   TIMESTAMPTZ NOT NULL DEFAULT now(),
-			updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-			UNIQUE(tenant_id, type, value)
-		);
-		ALTER TABLE threat_intel ADD COLUMN IF NOT EXISTS tenant_id TEXT NOT NULL DEFAULT 'default';
-		ALTER TABLE threat_intel ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
-		ALTER TABLE threat_intel DROP CONSTRAINT IF EXISTS threat_intel_type_value_key;
-		CREATE UNIQUE INDEX IF NOT EXISTS idx_threat_intel_tenant_type_value ON threat_intel(tenant_id, type, value);
-		CREATE INDEX IF NOT EXISTS idx_threat_intel_value ON threat_intel(type, value);
-		CREATE INDEX IF NOT EXISTS idx_threat_intel_tenant_value ON threat_intel(tenant_id, type, value);
-		CREATE INDEX IF NOT EXISTS idx_threat_intel_rep ON threat_intel(reputation);
-		CREATE INDEX IF NOT EXISTS idx_threat_intel_source ON threat_intel(source);
-		CREATE TABLE IF NOT EXISTS threat_intel_feeds (
-			id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			tenant_id        TEXT NOT NULL DEFAULT 'default',
-			name             TEXT NOT NULL,
-			enabled          BOOLEAN NOT NULL DEFAULT true,
-			interval_seconds INTEGER NOT NULL DEFAULT 3600 CHECK (interval_seconds >= 1),
-			entries          JSONB NOT NULL DEFAULT '[]'::jsonb,
-			last_run_at      TIMESTAMPTZ,
-			next_run_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-			last_status      TEXT NOT NULL DEFAULT 'never',
-			last_error       TEXT NOT NULL DEFAULT '',
-			run_count        INTEGER NOT NULL DEFAULT 0,
-			created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
-			updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
-			UNIQUE(tenant_id, name)
-		);
-		ALTER TABLE threat_intel_feeds ADD COLUMN IF NOT EXISTS tenant_id TEXT NOT NULL DEFAULT 'default';
-		ALTER TABLE threat_intel_feeds ADD COLUMN IF NOT EXISTS enabled BOOLEAN NOT NULL DEFAULT true;
-		ALTER TABLE threat_intel_feeds ADD COLUMN IF NOT EXISTS interval_seconds INTEGER NOT NULL DEFAULT 3600;
-		ALTER TABLE threat_intel_feeds ADD COLUMN IF NOT EXISTS entries JSONB NOT NULL DEFAULT '[]'::jsonb;
-		ALTER TABLE threat_intel_feeds ADD COLUMN IF NOT EXISTS last_run_at TIMESTAMPTZ;
-		ALTER TABLE threat_intel_feeds ADD COLUMN IF NOT EXISTS next_run_at TIMESTAMPTZ NOT NULL DEFAULT now();
-		ALTER TABLE threat_intel_feeds ADD COLUMN IF NOT EXISTS last_status TEXT NOT NULL DEFAULT 'never';
-		ALTER TABLE threat_intel_feeds ADD COLUMN IF NOT EXISTS last_error TEXT NOT NULL DEFAULT '';
-		ALTER TABLE threat_intel_feeds ADD COLUMN IF NOT EXISTS run_count INTEGER NOT NULL DEFAULT 0;
-		ALTER TABLE threat_intel_feeds ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now();
-		ALTER TABLE threat_intel_feeds ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
-		CREATE INDEX IF NOT EXISTS idx_threat_intel_feeds_due ON threat_intel_feeds(enabled, next_run_at);
-		CREATE INDEX IF NOT EXISTS idx_threat_intel_feeds_tenant ON threat_intel_feeds(tenant_id, name);`)
-	return err
 }
 
 // ---- 内置威胁源 ----
@@ -270,12 +215,13 @@ func (s *Service) LookupForTenant(ctx context.Context, tenantID, typ, value stri
 
 	var entry IntelEntry
 	err := s.db.QueryRowContext(ctx, `
-		SELECT id::text, tenant_id, type, value, reputation, category, source, description, last_seen
+		SELECT id::text, tenant_id, revision, type, value, reputation, category, source, description, last_seen
 		FROM threat_intel
 		WHERE tenant_id = $1 AND type = $2 AND value = $3
 	`, tenantID, typ, value).Scan(
 		&entry.ID,
 		&entry.TenantID,
+		&entry.Revision,
 		&entry.Type,
 		&entry.Value,
 		&entry.Reputation,
@@ -361,62 +307,38 @@ func (s *Service) ImportFromFile(path string) error {
 	return nil
 }
 
-// Insert 插入威胁情报条目到数据库
-func (s *Service) Insert(ctx context.Context, entry *IntelEntry) error {
-	return s.InsertForTenant(ctx, "default", entry)
+// PrepareEntriesForTenant returns normalized copies suitable for an
+// authoritative transaction owned by the caller. It does not mutate storage or
+// cache.
+func (s *Service) PrepareEntriesForTenant(
+	tenantID string,
+	entries []IntelEntry,
+	defaultSource string,
+) ([]IntelEntry, error) {
+	tenantID = normalizeTenantID(tenantID)
+	prepared := make([]IntelEntry, len(entries))
+	copy(prepared, entries)
+	for index := range prepared {
+		prepared[index].TenantID = tenantID
+		if strings.TrimSpace(prepared[index].Source) == "" {
+			prepared[index].Source = defaultSource
+		}
+		if err := normalizeEntry(&prepared[index]); err != nil {
+			return nil, fmt.Errorf("normalize threat intel entry %d: %w", index, err)
+		}
+	}
+	return prepared, nil
 }
 
-func (s *Service) InsertForTenant(ctx context.Context, tenantID string, entry *IntelEntry) error {
-	if entry == nil {
-		return fmt.Errorf("nil threat intel entry")
-	}
-	entry.TenantID = normalizeTenantID(tenantID)
-	if err := normalizeEntry(entry); err != nil {
-		return err
-	}
-	if s.db == nil {
-		s.mu.Lock()
-		s.builtinThreats[entry.TenantID+":"+entry.Type+":"+entry.Value] = cloneEntry(entry)
-		s.mu.Unlock()
-		return nil
-	}
-	_, err := s.db.ExecContext(ctx,
-		`INSERT INTO threat_intel (tenant_id, type, value, reputation, category, source, description, last_seen)
-		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-		 ON CONFLICT (tenant_id, type, value) DO UPDATE SET
-		   reputation=$4,
-		   category=$5,
-		   source=$6,
-		   description=$7,
-		   last_seen=$8,
-		   updated_at=now()`,
-		entry.TenantID, entry.Type, entry.Value, entry.Reputation, entry.Category, entry.Source, entry.Description, entry.LastSeen)
-	if err != nil {
-		return err
-	}
-
+// CacheCommittedEntries updates only the local read-through cache after the
+// caller has committed the authoritative database transaction.
+func (s *Service) CacheCommittedEntries(entries []IntelEntry) {
 	s.mu.Lock()
-	s.cache[entry.TenantID+":"+entry.Type+":"+entry.Value] = cloneEntry(entry)
-	s.mu.Unlock()
-	return nil
-}
-
-func (s *Service) ImportEntries(ctx context.Context, entries []IntelEntry, defaultSource string) (int, error) {
-	return s.ImportEntriesForTenant(ctx, "default", entries, defaultSource)
-}
-
-func (s *Service) ImportEntriesForTenant(ctx context.Context, tenantID string, entries []IntelEntry, defaultSource string) (int, error) {
-	imported := 0
-	for i := range entries {
-		if entries[i].Source == "" {
-			entries[i].Source = defaultSource
-		}
-		if err := s.InsertForTenant(ctx, tenantID, &entries[i]); err != nil {
-			return imported, err
-		}
-		imported++
+	defer s.mu.Unlock()
+	for index := range entries {
+		entry := entries[index]
+		s.cache[entry.TenantID+":"+entry.Type+":"+entry.Value] = cloneEntry(&entry)
 	}
-	return imported, nil
 }
 
 func (s *Service) List(ctx context.Context, filter ListFilter) ([]IntelEntry, int64, error) {
@@ -486,7 +408,7 @@ func (s *Service) ListForTenant(ctx context.Context, tenantID string, filter Lis
 
 	args = append(args, limit, offset)
 	rows, err := s.db.QueryContext(ctx, fmt.Sprintf(`
-		SELECT id::text, tenant_id, type, value, reputation, category, source, description, last_seen
+		SELECT id::text, tenant_id, revision, type, value, reputation, category, source, description, last_seen
 		FROM threat_intel
 		%s
 		ORDER BY last_seen DESC, value ASC
@@ -503,6 +425,7 @@ func (s *Service) ListForTenant(ctx context.Context, tenantID string, filter Lis
 		if err := rows.Scan(
 			&entry.ID,
 			&entry.TenantID,
+			&entry.Revision,
 			&entry.Type,
 			&entry.Value,
 			&entry.Reputation,
@@ -518,56 +441,26 @@ func (s *Service) ListForTenant(ctx context.Context, tenantID string, filter Lis
 	return entries, total, rows.Err()
 }
 
-func (s *Service) UpsertFeed(ctx context.Context, feed *FeedSource) (*FeedSource, error) {
+// PrepareFeedForTenant normalizes a feed without mutating storage. The caller
+// owns the authoritative revision/history/audit/outbox transaction.
+func (s *Service) PrepareFeedForTenant(tenantID string, feed *FeedSource) (*FeedSource, error) {
 	if feed == nil {
 		return nil, fmt.Errorf("nil threat intel feed")
 	}
-	normalizeFeed(feed)
-	if feed.Name == "" {
+	prepared := *feed
+	prepared.TenantID = normalizeTenantID(tenantID)
+	normalizeFeed(&prepared)
+	if prepared.Name == "" {
 		return nil, fmt.Errorf("feed name is required")
 	}
-	if feed.IntervalSeconds <= 0 {
-		feed.IntervalSeconds = 3600
-	}
-	if feed.TenantID == "" {
-		feed.TenantID = "default"
-	}
-	if feed.NextRunAt == nil {
+	if prepared.NextRunAt == nil {
 		now := time.Now().UTC()
-		feed.NextRunAt = &now
+		prepared.NextRunAt = &now
 	}
-	if feed.LastStatus == "" {
-		feed.LastStatus = "configured"
+	if prepared.LastStatus == "" {
+		prepared.LastStatus = "configured"
 	}
-	entriesJSON, err := json.Marshal(feed.Entries)
-	if err != nil {
-		return nil, err
-	}
-	if s.db == nil {
-		return feed, nil
-	}
-	row := s.db.QueryRowContext(ctx, `
-		INSERT INTO threat_intel_feeds (tenant_id, name, enabled, interval_seconds, entries, next_run_at, last_status, last_error)
-		VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,$8)
-		ON CONFLICT (tenant_id, name) DO UPDATE SET
-		  enabled=$3,
-		  interval_seconds=$4,
-		  entries=$5::jsonb,
-		  next_run_at=$6,
-		  last_status=$7,
-		  last_error=$8,
-		  updated_at=now()
-		RETURNING id::text, tenant_id, name, enabled, interval_seconds, entries, last_run_at, next_run_at, last_status, last_error, run_count, created_at, updated_at`,
-		feed.TenantID,
-		feed.Name,
-		feed.Enabled,
-		feed.IntervalSeconds,
-		string(entriesJSON),
-		feed.NextRunAt,
-		feed.LastStatus,
-		feed.LastError,
-	)
-	return scanFeed(row)
+	return &prepared, nil
 }
 
 func (s *Service) ListFeeds(ctx context.Context, tenantID, name string, enabledOnly bool) ([]FeedSource, error) {
@@ -588,7 +481,7 @@ func (s *Service) ListFeeds(ctx context.Context, tenantID, name string, enabledO
 		clauses = append(clauses, "enabled = true")
 	}
 	rows, err := s.db.QueryContext(ctx, fmt.Sprintf(`
-		SELECT id::text, tenant_id, name, enabled, interval_seconds, entries, last_run_at, next_run_at, last_status, last_error, run_count, created_at, updated_at
+		SELECT id::text, tenant_id, revision, name, enabled, interval_seconds, entries, last_run_at, next_run_at, last_status, last_error, run_count, created_at, updated_at
 		FROM threat_intel_feeds
 		WHERE %s
 		ORDER BY enabled DESC, next_run_at ASC, name ASC
@@ -627,7 +520,7 @@ func (s *Service) DueFeeds(ctx context.Context, now time.Time, limit int) ([]Fee
 		limit = 20
 	}
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT id::text, tenant_id, name, enabled, interval_seconds, entries, last_run_at, next_run_at, last_status, last_error, run_count, created_at, updated_at
+		SELECT id::text, tenant_id, revision, name, enabled, interval_seconds, entries, last_run_at, next_run_at, last_status, last_error, run_count, created_at, updated_at
 		FROM threat_intel_feeds
 		WHERE enabled = true AND next_run_at <= $1
 		ORDER BY next_run_at ASC, name ASC
@@ -645,36 +538,6 @@ func (s *Service) DueFeeds(ctx context.Context, now time.Time, limit int) ([]Fee
 		feeds = append(feeds, *feed)
 	}
 	return feeds, rows.Err()
-}
-
-func (s *Service) RecordFeedRun(ctx context.Context, feed FeedSource, status, lastError string, ranAt time.Time) error {
-	if s.db == nil {
-		return nil
-	}
-	normalizeFeed(&feed)
-	if feed.TenantID == "" || feed.Name == "" {
-		return fmt.Errorf("feed tenant_id and name are required")
-	}
-	if ranAt.IsZero() {
-		ranAt = time.Now().UTC()
-	}
-	nextRunAt := ranAt.Add(time.Duration(feed.IntervalSeconds) * time.Second)
-	_, err := s.db.ExecContext(ctx, `
-		UPDATE threat_intel_feeds
-		SET last_run_at=$1,
-		    next_run_at=$2,
-		    last_status=$3,
-		    last_error=$4,
-		    run_count=run_count+1,
-		    updated_at=now()
-		WHERE tenant_id=$5 AND name=$6`,
-		ranAt.UTC(),
-		nextRunAt.UTC(),
-		status,
-		lastError,
-		feed.TenantID,
-		feed.Name)
-	return err
 }
 
 func normalizeEntry(entry *IntelEntry) error {
@@ -720,6 +583,7 @@ func scanFeed(scanner feedScanner) (*FeedSource, error) {
 	if err := scanner.Scan(
 		&feed.ID,
 		&feed.TenantID,
+		&feed.Revision,
 		&feed.Name,
 		&feed.Enabled,
 		&feed.IntervalSeconds,

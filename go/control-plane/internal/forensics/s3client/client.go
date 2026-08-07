@@ -11,6 +11,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/errors"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/miniohttp"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/otel"
 )
 
@@ -26,12 +27,18 @@ type S3Client struct {
 func NewS3Client(
 	endpoint, accessKey, secretKey, bucket string,
 	useSSL bool,
+	caFile string,
 	resultBucket string,
 	logger *zap.Logger,
 ) (*S3Client, error) {
+	transport, err := miniohttp.NewTransport(useSSL, caFile)
+	if err != nil {
+		return nil, fmt.Errorf("configure minio transport: %w", err)
+	}
 	client, err := minio.New(endpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
-		Secure: useSSL,
+		Creds:     credentials.NewStaticV4(accessKey, secretKey, ""),
+		Secure:    useSSL,
+		Transport: transport,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create minio client: %w", err)

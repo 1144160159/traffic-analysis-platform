@@ -36,6 +36,7 @@ services:
 
       # Kafka
       - KAFKA_BROKERS=kafka:9092
+      - KAFKA_USER_EVENT_TOPIC=user.events.v1
 
       # OTEL
       - OTEL_ENABLED=true

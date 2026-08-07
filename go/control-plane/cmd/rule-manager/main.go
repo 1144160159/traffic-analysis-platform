@@ -44,6 +44,7 @@ import (
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/storage"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/rules/api"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/rules/config"
+	rulesconsumer "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/rules/consumer"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/rules/health"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/rules/publisher"
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/rules/rbac"
@@ -363,6 +364,7 @@ func main() {
 	// Model Service (MLOps)
 	modelServiceCfg := service.DefaultModelServiceConfig()
 	modelServiceCfg.AppliedAckExpectedParallelism = cfg.Kafka.ModelAppliedExpectedParallelism
+	modelServiceCfg.EnableModelActionOutbox = cfg.Kafka.ModelActionOutboxEnabled
 	modelService := service.NewModelService(
 		pgClient.DB(),
 		kafkaPublisher,
@@ -371,7 +373,6 @@ func main() {
 		logger,
 		modelServiceCfg,
 	)
-	modelService.StartActionWorker(context.Background())
 	defer modelService.Close()
 
 	modelAppliedConsumer, err := commonkafka.NewConsumer(commonkafka.ConsumerConfig{
@@ -397,6 +398,212 @@ func main() {
 			logger.Error("Model applied acknowledgement consumer stopped", zap.Error(err))
 		}
 	}()
+	if cfg.Kafka.ModelActionInboxEnabled {
+		modelActionInbox, inboxErr := rulesconsumer.NewPostgresModelActionExecutionInbox(pgClient.DB())
+		if inboxErr != nil {
+			logger.Fatal("Failed to initialize model action execution inbox", zap.Error(inboxErr))
+		}
+		verifyCtx, cancelVerify := context.WithTimeout(context.Background(), 10*time.Second)
+		inboxErr = modelActionInbox.VerifySchema(verifyCtx)
+		cancelVerify()
+		if inboxErr != nil {
+			logger.Fatal("Model action execution inbox schema is unavailable", zap.Error(inboxErr))
+		}
+		modelActionKafkaConsumer, consumerErr := commonkafka.NewConsumer(commonkafka.ConsumerConfig{
+			Brokers: cfg.Kafka.Brokers, Topic: cfg.Kafka.ModelActionTopic,
+			GroupID: cfg.Kafka.ModelActionEventGroup, MinBytes: 1, MaxWait: 500 * time.Millisecond,
+			MaxRetries: 3, RetryBackoff: time.Second, EnableDLQ: true, DLQTopic: "dlq.v1",
+			CommitOnDLQSuccess: true, CommitOnHandlerError: false, Security: cfg.Kafka.Security,
+		}, logger)
+		if consumerErr != nil {
+			logger.Fatal("Failed to create model action execution consumer", zap.Error(consumerErr))
+		}
+		modelActionEventConsumer, consumerErr := rulesconsumer.NewModelActionEventConsumer(
+			modelActionKafkaConsumer, modelActionInbox, logger,
+		)
+		if consumerErr != nil {
+			_ = modelActionKafkaConsumer.Close()
+			logger.Fatal("Failed to initialize model action event consumer", zap.Error(consumerErr))
+		}
+		modelActionEventCtx, cancelModelActionEvent := context.WithCancel(context.Background())
+		defer cancelModelActionEvent()
+		defer modelActionEventConsumer.Close()
+		go func() {
+			logger.Info(
+				"Starting model action execution inbox consumer",
+				zap.String("topic", cfg.Kafka.ModelActionTopic),
+				zap.String("group_id", cfg.Kafka.ModelActionEventGroup),
+				zap.String("dlq_topic", "dlq.v1"),
+			)
+			if err := modelActionEventConsumer.Start(modelActionEventCtx); err != nil &&
+				err != context.Canceled {
+				logger.Error("Model action event consumer stopped", zap.Error(err))
+			}
+		}()
+	} else {
+		logger.Warn("Model action execution inbox consumer is disabled")
+	}
+	modelService.StartActionWorker(context.Background())
+	if cfg.Kafka.WhitelistEventPipelineEnabled {
+		whitelistProjection, projectionErr := rulesconsumer.NewPostgresWhitelistRuleProjection(pgClient.DB())
+		if projectionErr != nil {
+			logger.Fatal("Failed to initialize whitelist rule projection", zap.Error(projectionErr))
+		}
+		verifyCtx, cancelVerify := context.WithTimeout(context.Background(), 10*time.Second)
+		projectionErr = whitelistProjection.VerifySchema(verifyCtx)
+		cancelVerify()
+		if projectionErr != nil {
+			logger.Fatal("Whitelist rule projection schema is unavailable", zap.Error(projectionErr))
+		}
+		whitelistKafkaConsumer, consumerErr := commonkafka.NewConsumer(commonkafka.ConsumerConfig{
+			Brokers: cfg.Kafka.Brokers, Topic: cfg.Kafka.WhitelistEventTopic,
+			GroupID: cfg.Kafka.WhitelistEventGroup, MinBytes: 1, MaxWait: 500 * time.Millisecond,
+			MaxRetries: 3, RetryBackoff: time.Second, EnableDLQ: true, DLQTopic: "dlq.v1",
+			CommitOnDLQSuccess: true, CommitOnHandlerError: false, DLQPermanentOnly: true,
+			Security: cfg.Kafka.Security,
+		}, logger)
+		if consumerErr != nil {
+			logger.Fatal("Failed to create whitelist rule effect consumer", zap.Error(consumerErr))
+		}
+		whitelistEventConsumer, consumerErr := rulesconsumer.NewWhitelistRuleEffectConsumer(
+			whitelistKafkaConsumer, whitelistProjection, cfg.Kafka.WhitelistEventTopic, logger)
+		if consumerErr != nil {
+			_ = whitelistKafkaConsumer.Close()
+			logger.Fatal("Failed to initialize whitelist rule effect consumer", zap.Error(consumerErr))
+		}
+		whitelistEventCtx, cancelWhitelistEvent := context.WithCancel(context.Background())
+		defer cancelWhitelistEvent()
+		defer whitelistEventConsumer.Close()
+		go func() {
+			logger.Info("Starting whitelist rule effect consumer",
+				zap.String("topic", cfg.Kafka.WhitelistEventTopic),
+				zap.String("group_id", cfg.Kafka.WhitelistEventGroup))
+			if err := whitelistEventConsumer.Start(whitelistEventCtx); err != nil && err != context.Canceled {
+				logger.Error("Whitelist rule effect consumer stopped", zap.Error(err))
+			}
+		}()
+	} else {
+		logger.Warn("Whitelist event pipeline is disabled")
+	}
+	if cfg.Kafka.DeploymentProjectionEnabled {
+		deploymentProjection, projectionErr := rulesconsumer.NewPostgresDeploymentEventProjection(pgClient.DB())
+		if projectionErr != nil {
+			logger.Fatal("Failed to initialize deployment event projection", zap.Error(projectionErr))
+		}
+		deploymentProjectionCtx, cancelDeploymentProjection := context.WithTimeout(context.Background(), 10*time.Second)
+		projectionErr = deploymentProjection.VerifySchema(deploymentProjectionCtx)
+		cancelDeploymentProjection()
+		if projectionErr != nil {
+			logger.Fatal("Deployment event projection schema is unavailable", zap.Error(projectionErr))
+		}
+		deploymentEventKafkaConsumer, consumerErr := commonkafka.NewConsumer(commonkafka.ConsumerConfig{
+			Brokers: cfg.Kafka.Brokers, Topic: cfg.Kafka.DeploymentTopic,
+			GroupID: cfg.Kafka.DeploymentEventGroup, MinBytes: 1, MaxWait: 500 * time.Millisecond,
+			MaxRetries: 3, RetryBackoff: time.Second, EnableDLQ: true, DLQTopic: "dlq.v1",
+			CommitOnDLQSuccess: true, CommitOnHandlerError: false, Security: cfg.Kafka.Security,
+		}, logger)
+		if consumerErr != nil {
+			logger.Fatal("Failed to create deployment event projection consumer", zap.Error(consumerErr))
+		}
+		deploymentEventConsumer, consumerErr := rulesconsumer.NewDeploymentEventConsumer(
+			deploymentEventKafkaConsumer, deploymentProjection, logger,
+		)
+		if consumerErr != nil {
+			_ = deploymentEventKafkaConsumer.Close()
+			logger.Fatal("Failed to initialize deployment event projection consumer", zap.Error(consumerErr))
+		}
+		deploymentEventCtx, cancelDeploymentEvent := context.WithCancel(context.Background())
+		defer cancelDeploymentEvent()
+		defer deploymentEventConsumer.Close()
+		go func() {
+			logger.Info(
+				"Starting deployment event projection consumer",
+				zap.String("topic", cfg.Kafka.DeploymentTopic),
+				zap.String("group_id", cfg.Kafka.DeploymentEventGroup),
+				zap.String("dlq_topic", "dlq.v1"),
+			)
+			if err := deploymentEventConsumer.Start(deploymentEventCtx); err != nil && err != context.Canceled {
+				logger.Error("Deployment event projection consumer stopped", zap.Error(err))
+			}
+		}()
+	} else {
+		logger.Warn("Deployment event projection consumer is disabled")
+	}
+	if cfg.Kafka.AlertFeedbackProjectionEnabled {
+		feedbackProjection, projectionErr := rulesconsumer.NewPostgresAlertFeedbackProjection(pgClient.DB())
+		if projectionErr != nil {
+			logger.Fatal("Failed to initialize alert feedback projection", zap.Error(projectionErr))
+		}
+		feedbackProjectionCtx, cancelFeedbackProjection := context.WithTimeout(context.Background(), 10*time.Second)
+		projectionErr = feedbackProjection.VerifySchema(feedbackProjectionCtx)
+		cancelFeedbackProjection()
+		if projectionErr != nil {
+			logger.Fatal("Alert feedback projection schema is unavailable", zap.Error(projectionErr))
+		}
+		feedbackEventKafkaConsumer, consumerErr := commonkafka.NewConsumer(commonkafka.ConsumerConfig{
+			Brokers: cfg.Kafka.Brokers, Topic: cfg.Kafka.AlertFeedbackTopic,
+			GroupID: cfg.Kafka.AlertFeedbackEventGroup, MinBytes: 1, MaxWait: 500 * time.Millisecond,
+			MaxRetries: 3, RetryBackoff: time.Second, EnableDLQ: true, DLQTopic: "dlq.v1",
+			CommitOnDLQSuccess: true, CommitOnHandlerError: false, Security: cfg.Kafka.Security,
+		}, logger)
+		if consumerErr != nil {
+			logger.Fatal("Failed to create alert feedback projection consumer", zap.Error(consumerErr))
+		}
+		feedbackEventConsumer, consumerErr := rulesconsumer.NewAlertFeedbackEventConsumer(
+			feedbackEventKafkaConsumer, feedbackProjection, logger,
+		)
+		if consumerErr != nil {
+			_ = feedbackEventKafkaConsumer.Close()
+			logger.Fatal("Failed to initialize alert feedback projection consumer", zap.Error(consumerErr))
+		}
+		feedbackEventCtx, cancelFeedbackEvent := context.WithCancel(context.Background())
+		defer cancelFeedbackEvent()
+		defer feedbackEventConsumer.Close()
+		go func() {
+			logger.Info(
+				"Starting alert feedback MLOps inbox consumer",
+				zap.String("topic", cfg.Kafka.AlertFeedbackTopic),
+				zap.String("group_id", cfg.Kafka.AlertFeedbackEventGroup),
+				zap.String("dlq_topic", "dlq.v1"),
+			)
+			if err := feedbackEventConsumer.Start(feedbackEventCtx); err != nil && err != context.Canceled {
+				logger.Error("Alert feedback projection consumer stopped", zap.Error(err))
+			}
+		}()
+	} else {
+		logger.Warn("Alert feedback projection consumer is disabled")
+	}
+	if cfg.ClickHouse.FeedbackProjectionEnabled {
+		if chDB == nil {
+			logger.Fatal("Model feedback ClickHouse projection is enabled but ClickHouse is unavailable")
+		}
+		feedbackInboxWorker, workerErr := rulesconsumer.NewModelFeedbackInboxWorkerWithOptions(
+			pgClient.DB(), chDB, logger, rulesconsumer.ModelFeedbackProjectionOptions{
+				V2Enabled: cfg.ClickHouse.FeedbackProjectionV2Enabled,
+				V2Table:   cfg.ClickHouse.FeedbackProjectionV2Table,
+			},
+		)
+		if workerErr != nil {
+			logger.Fatal("Failed to initialize model feedback inbox worker", zap.Error(workerErr))
+		}
+		feedbackWorkerVerifyCtx, cancelFeedbackWorkerVerify := context.WithTimeout(context.Background(), 10*time.Second)
+		workerErr = feedbackInboxWorker.VerifySchema(feedbackWorkerVerifyCtx)
+		cancelFeedbackWorkerVerify()
+		if workerErr != nil {
+			logger.Fatal("Model feedback inbox or ClickHouse projection schema is unavailable", zap.Error(workerErr))
+		}
+		feedbackWorkerCtx, cancelFeedbackWorker := context.WithCancel(context.Background())
+		defer cancelFeedbackWorker()
+		feedbackInboxWorker.Start(feedbackWorkerCtx, cfg.ClickHouse.FeedbackProjectionInterval)
+		logger.Info(
+			"Started model feedback ClickHouse projection worker",
+			zap.Duration("interval", cfg.ClickHouse.FeedbackProjectionInterval),
+			zap.Bool("v2_enabled", cfg.ClickHouse.FeedbackProjectionV2Enabled),
+			zap.String("v2_table", cfg.ClickHouse.FeedbackProjectionV2Table),
+		)
+	} else {
+		logger.Warn("Model feedback ClickHouse projection worker is disabled")
+	}
 	// =========================================================================
 	// 11. 初始化健康检查器
 	// =========================================================================

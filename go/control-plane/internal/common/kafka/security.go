@@ -1,9 +1,11 @@
 package kafka
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"net"
 	"os"
 	"strings"
 	"time"
@@ -66,6 +68,39 @@ func (c SecurityConfig) Dialer(defaultClientID string) (*kafka.Dialer, error) {
 		ClientID:      clientID,
 		TLS:           tlsConfig,
 		SASLMechanism: mechanism,
+	}, nil
+}
+
+// Transport builds the authenticated transport used by kafka-go's protocol
+// client. Readers and writers use Dialer, while metadata/offset APIs use a
+// Transport; keeping both constructors here prevents monitoring clients from
+// silently dropping the production SASL/TLS policy.
+func (c SecurityConfig) Transport(defaultClientID string) (*kafka.Transport, error) {
+	if err := c.validateProtocol(); err != nil {
+		return nil, err
+	}
+	mechanism, err := c.saslMechanism()
+	if err != nil {
+		return nil, err
+	}
+	tlsConfig, err := c.tlsConfig()
+	if err != nil {
+		return nil, err
+	}
+	clientID := strings.TrimSpace(c.ClientID)
+	if clientID == "" {
+		clientID = defaultClientID
+	}
+	dialer := &net.Dialer{Timeout: 10 * time.Second, KeepAlive: 30 * time.Second}
+	return &kafka.Transport{
+		Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
+			return dialer.DialContext(ctx, network, address)
+		},
+		DialTimeout: 10 * time.Second,
+		IdleTimeout: 30 * time.Second,
+		ClientID:    clientID,
+		TLS:         tlsConfig,
+		SASL:        mechanism,
 	}, nil
 }
 

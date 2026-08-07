@@ -136,14 +136,24 @@ type SearchQuery struct {
 	Size       int
 	SortField  string
 	SortOrder  string
+	Cursor     string
+	CursorMode string
 }
 
 // SearchResult 搜索结果
 type SearchResult struct {
-	Alerts       []*AlertDTO            `json:"alerts"`
-	Total        int64                  `json:"total"`
-	Aggregations map[string]interface{} `json:"aggregations,omitempty"`
-	Took         int                    `json:"took"`
+	Alerts              []*AlertDTO            `json:"alerts"`
+	Total               int64                  `json:"total"`
+	TotalRelation       string                 `json:"total_relation,omitempty"`
+	Aggregations        map[string]interface{} `json:"aggregations,omitempty"`
+	AggregationsOmitted bool                   `json:"aggregations_omitted,omitempty"`
+	Took                int                    `json:"took"`
+	NextCursor          string                 `json:"next_cursor,omitempty"`
+	HasMore             bool                   `json:"has_more"`
+	CursorMode          string                 `json:"cursor_mode,omitempty"`
+	SnapshotID          string                 `json:"snapshot_id,omitempty"`
+	AsOf                string                 `json:"as_of,omitempty"`
+	Partial             bool                   `json:"partial"`
 }
 
 // ==================== DTO 定义 ====================
@@ -295,6 +305,8 @@ func (s *AlertService) SearchAlerts(ctx context.Context, query *SearchQuery) (*S
 		Size:       query.Size,
 		SortField:  query.SortField,
 		SortOrder:  query.SortOrder,
+		Cursor:     query.Cursor,
+		CursorMode: query.CursorMode,
 	}
 	result, err := s.osRepo.Search(ctx, osQuery)
 	if err != nil {
@@ -306,11 +318,29 @@ func (s *AlertService) SearchAlerts(ctx context.Context, query *SearchQuery) (*S
 		alerts = append(alerts, s.toAlertDTO(a))
 	}
 	return &SearchResult{
-		Alerts:       alerts,
-		Total:        result.Total,
-		Aggregations: result.Aggregations,
-		Took:         result.Took,
+		Alerts:              alerts,
+		Total:               result.Total,
+		TotalRelation:       result.TotalRelation,
+		Aggregations:        result.Aggregations,
+		AggregationsOmitted: result.AggregationsOmitted,
+		Took:                result.Took,
+		NextCursor:          result.NextCursor,
+		HasMore:             result.HasMore,
+		CursorMode:          result.CursorMode,
+		SnapshotID:          result.SnapshotID,
+		AsOf:                result.AsOf,
+		Partial:             result.Partial,
 	}, nil
+}
+
+// CloseSearchCursor releases the tenant-bound PIT carried by a signed cursor.
+func (s *AlertService) CloseSearchCursor(ctx context.Context, tenantID, cursor string) error {
+	ctx, span := otel.StartSpan(ctx, "alert_service.close_search_cursor")
+	defer span.End()
+	if s.osRepo == nil {
+		return errors.New(errors.ErrCodeServiceUnavailable, "search not available")
+	}
+	return s.osRepo.CloseSearchCursor(ctx, tenantID, cursor)
 }
 
 // GetAlert 获取告警详情

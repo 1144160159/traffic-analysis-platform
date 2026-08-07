@@ -19,7 +19,7 @@ import (
 // 对应 ClickHouse 表 traffic.alerts_local
 //
 // DDL 参考：
-// CREATE TABLE traffic.alerts_local (
+// Table definition for traffic.alerts_local:
 //
 //	tenant_id       String,
 //	alert_id        String,
@@ -46,7 +46,8 @@ import (
 //	rule_version    String,
 //	feature_set_id  String,
 //	evidence_ids    Array(String),
-//	event_id        String
+//	event_id        String,
+//	trace_id        String
 //
 // ) ENGINE = ReplicatedReplacingMergeTree('/clickhouse/tables/{shard}/alerts_local', '{replica}', updated_ts)
 // PARTITION BY toDate(first_seen)
@@ -144,6 +145,9 @@ type Alert struct {
 	// event_id: 原始事件 ID（用于追溯）
 	EventID string `json:"event_id" ch:"event_id"`
 
+	// trace_id: W3C trace ID（32位小写十六进制），用于跨存储归因
+	TraceID string `json:"trace_id" ch:"trace_id"`
+
 	// ==================== 扩展字段（不存储到 ClickHouse）====================
 	// arkime_link: Arkime 查询链接（运行时生成）
 	ArkimeLink string `json:"arkime_link,omitempty" ch:"-"`
@@ -193,6 +197,7 @@ func NewAlertFromProto(detection *pb.DetectionBatch, alertID, fingerprint string
 	// Extract from first behavior/business in batch
 	tenantID := detection.GetTenantId()
 	eventID := detection.GetBatchId()
+	traceID := ""
 	featureSetID := ""
 	srcIP, dstIP := "", ""
 	var srcPort, dstPort uint16
@@ -212,6 +217,7 @@ func NewAlertFromProto(detection *pb.DetectionBatch, alertID, fingerprint string
 		if b.Header != nil {
 			eventID = b.Header.GetEventId()
 			featureSetID = b.Header.GetFeatureSetId()
+			traceID = b.Header.GetTraceId()
 		}
 		communityID = b.GetCommunityId()
 		alertType = b.GetObjectType()
@@ -223,6 +229,7 @@ func NewAlertFromProto(detection *pb.DetectionBatch, alertID, fingerprint string
 		if bu.Header != nil {
 			eventID = bu.Header.GetEventId()
 			featureSetID = bu.Header.GetFeatureSetId()
+			traceID = bu.Header.GetTraceId()
 		}
 		communityID = bu.GetCommunityId()
 		sessionID = bu.GetSessionId()
@@ -270,6 +277,7 @@ func NewAlertFromProto(detection *pb.DetectionBatch, alertID, fingerprint string
 
 		EvidenceIDs: evidenceIDs,
 		EventID:     eventID,
+		TraceID:     traceID,
 	}
 }
 
@@ -350,6 +358,7 @@ func (a *Alert) ToProto() *pb.Alert {
 		FeatureSetId:     a.FeatureSetID,
 		EvidenceIds:      a.EvidenceIDs,
 		EventId:          a.EventID,
+		TraceId:          a.TraceID,
 		SrcIp:            a.SrcIP,
 		DstIp:            a.DstIP,
 		SrcPort:          uint32(a.SrcPort),

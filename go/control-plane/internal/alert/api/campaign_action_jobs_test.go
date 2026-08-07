@@ -64,3 +64,13 @@ func TestRunCampaignActionTransactionCommitsBothRecords(t *testing.T) {
 	require.True(t, tx.committed)
 	require.True(t, tx.rolledBack, "deferred rollback must release transaction resources after commit")
 }
+
+func TestCommitCampaignActionTransactionRejectsMutationBeforeDatabaseAccess(t *testing.T) {
+	err := commitCampaignActionTransaction(
+		context.Background(), nil, nil, nil, nil,
+		campaignActionJob{Simulation: false, DryRun: false},
+		AlertActionAuditRecord{},
+	)
+
+	require.EqualError(t, err, "mutating campaign actions require the aggregate v2 transaction")
+}

@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"crypto/sha256"
+	"fmt"
 	"time"
 
 	"go.uber.org/zap"
@@ -51,12 +53,45 @@ func (s *AssetService) runDiscoveryScheduler(ctx context.Context, initialDelay, 
 func (s *AssetService) executeScheduledDiscovery(ctx context.Context) {
 	req := &config.ActiveDiscoveryRequest{
 		TenantID:     s.cfg.Discovery.TenantID,
+		ActionID:     discoveryActionID,
 		Mode:         s.cfg.Discovery.Mode,
 		TargetCIDR:   s.cfg.Discovery.TargetCIDR,
 		CredentialID: s.cfg.Discovery.CredentialID,
 		RequestedBy:  s.cfg.Discovery.RequestedBy,
+		Reason:       s.cfg.Discovery.SchedulerReason,
+		ApprovedBy:   s.cfg.Discovery.SchedulerApprover,
+		RateLimit:    s.cfg.Discovery.SchedulerRate,
 	}
-	result, err := s.RunActiveDiscovery(ctx, req)
+	bucketInterval := s.cfg.Discovery.Interval
+	if bucketInterval <= 0 {
+		bucketInterval = 30 * time.Minute
+	}
+	bucket := time.Now().UTC().Truncate(bucketInterval)
+	keyMaterial := fmt.Sprintf(
+		"%s:%s:%s:%s",
+		req.TenantID, req.TargetCIDR, req.Mode, bucket.Format(time.RFC3339),
+	)
+	keyHash := sha256.Sum256([]byte(keyMaterial))
+	traceID := fmt.Sprintf("asset-discovery-scheduler-%x", keyHash[:12])
+	command := config.DiscoveryJobCommand{
+		IdempotencyKey: traceID,
+		Actor:          s.cfg.Discovery.RequestedBy,
+		TraceID:        traceID,
+		RequestID:      traceID,
+	}
+	if s.cfg.Discovery.JobsV2Enabled {
+		run, err := s.SubmitActiveDiscovery(ctx, req, command)
+		if err != nil {
+			s.logger.Warn("scheduled active discovery job was not accepted", zap.Error(err))
+			return
+		}
+		s.logger.Info("scheduled active discovery job accepted",
+			zap.String("run_id", run.RunID),
+			zap.String("status", run.Status),
+			zap.Bool("idempotent_replay", run.IdempotentReplay))
+		return
+	}
+	result, err := s.RunActiveDiscovery(ctx, req, command)
 	if err != nil {
 		s.logger.Warn("scheduled active discovery failed before run persisted", zap.Error(err))
 		return
