@@ -38,6 +38,11 @@ class AssetDetailClickHouseEphemeralGuardTest(unittest.TestCase):
         self.assertNotIn("Distributed(", sql)
         self.assertIn("codex_ephemeral_asset_detail_sentinel", sql)
 
+    def test_runner_executes_production_alert_writer_regression(self) -> None:
+        source = (ROOT / "scripts/alignment/verify_asset_detail_clickhouse_ephemeral.py").read_text(encoding="utf-8")
+        self.assertIn("TestAlertWriterRealCanonicalClickHouseTimestampsAndTrace", source)
+        self.assertIn('"production_alert_writer_verified": False', source)
+
     def test_sentinel_and_empty_run_id_guard(self) -> None:
         self.assertEqual(MODULE.SENTINEL_VALUE, "ephemeral-only")
         self.assertEqual(MODULE.EPHEMERAL_USER, "codex_ephemeral")

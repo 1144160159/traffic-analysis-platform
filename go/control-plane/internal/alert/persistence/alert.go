@@ -36,12 +36,12 @@ import (
 //	labels          Array(String),
 //	score           Float32,
 //	severity        String,
-//	first_seen      DateTime64(3),
-//	last_seen       DateTime64(3),
+//	first_seen      Int64,
+//	last_seen       Int64,
 //	count           Int32,
 //	status          String,
 //	assignee        String,
-//	updated_ts      DateTime64(3),
+//	updated_at      Int64,
 //	model_version   String,
 //	rule_version    String,
 //	feature_set_id  String,
@@ -49,10 +49,9 @@ import (
 //	event_id        String,
 //	trace_id        String
 //
-// ) ENGINE = ReplicatedReplacingMergeTree('/clickhouse/tables/{shard}/alerts_local', '{replica}', updated_ts)
-// PARTITION BY toDate(first_seen)
-// ORDER BY (tenant_id, first_seen, community_id, alert_id)
-// TTL first_seen + INTERVAL 30 DAY;
+// ) ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/alerts', '{replica}')
+// PARTITION BY toYYYYMMDD(toDateTime(last_seen / 1000))
+// ORDER BY (tenant_id, last_seen, severity, alert_type, alert_id)
 type Alert struct {
 	// ==================== 租户与标识 ====================
 	// tenant_id: 租户标识，用于数据隔离
@@ -125,8 +124,8 @@ type Alert struct {
 	// assignee: 分配给的处理人
 	Assignee string `json:"assignee,omitempty" ch:"assignee"`
 
-	// updated_ts: 更新时间戳（用于 ReplacingMergeTree 版本控制）
-	UpdatedTs time.Time `json:"updated_ts" ch:"updated_ts"`
+	// updated_at: 当前权威表使用的毫秒时间戳；writer仍兼容旧updated_ts DateTime64表。
+	UpdatedTs time.Time `json:"updated_at" ch:"updated_at"`
 
 	// ==================== 版本信息 ====================
 	// model_version: 检测模型版本

@@ -124,6 +124,7 @@ def main() -> int:
         "image_id": "", "schema_authority": str(SCHEMA_AUTHORITY.relative_to(ROOT)),
         "schema_authority_sha256": "", "canonical_schema_derived": False,
         "sentinel_verified": False, "real_reader_verified": False,
+        "production_alert_writer_verified": False,
         "tenant_isolation_verified": False, "as_of_upper_bound_verified": False,
         "latest_alert_state_verified": False, "hard_limit_verified": False,
         "source_watermarks_verified": False, "unavailable_source_fails_closed": False,
@@ -193,6 +194,25 @@ def main() -> int:
                 f"asset ClickHouse integration exited {completed.returncode}\n"
                 + logs.stdout.decode(errors="replace")[-8192:]
             )
+        writer_completed = run([
+            "go", "-C", "go/control-plane", "test", "./internal/alert/persistence",
+            "-run", "^TestAlertWriterRealCanonicalClickHouseTimestampsAndTrace$",
+            "-count=1", "-v",
+        ], env={
+            **test_env,
+            "ALERT_PERSISTENCE_EPHEMERAL_CLICKHOUSE_HOST": f"127.0.0.1:{native_port}",
+            "ALERT_PERSISTENCE_EPHEMERAL_CLICKHOUSE_USER": EPHEMERAL_USER,
+            "ALERT_PERSISTENCE_EPHEMERAL_CLICKHOUSE_PASSWORD": EPHEMERAL_PASSWORD,
+            "ALERT_PERSISTENCE_EPHEMERAL_CLICKHOUSE_SENTINEL": SENTINEL_VALUE,
+        }, check=False)
+        result["test_output"] += "\n" + writer_completed.stdout.decode(errors="replace").strip()
+        if writer_completed.returncode != 0:
+            logs = run(["docker", "logs", "--tail", "120", container], check=False)
+            raise RuntimeError(
+                f"alert ClickHouse writer integration exited {writer_completed.returncode}\n"
+                + logs.stdout.decode(errors="replace")[-8192:]
+            )
+        result["production_alert_writer_verified"] = True
         for field in (
             "real_reader_verified", "tenant_isolation_verified", "as_of_upper_bound_verified",
             "latest_alert_state_verified", "hard_limit_verified", "source_watermarks_verified",
