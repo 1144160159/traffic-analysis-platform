@@ -64,6 +64,7 @@ go run ./cmd/alert-projection-reconcile \
 5. CLI 在受控写入后必须刷新精确 V2 write alias，并用相同 scope 回读。run manifest 同时保存修复前 `missing/extra/stale` 和修复后 remaining 清单；只有 remaining missing/stale 为零且 watermark error 为零才返回 `repair_converged=true`。remaining extra 继续人工裁决，绝不自动删除。
 6. 对目标内容已经一致的记录，repair 仍批量比较 PG watermark 的 `source_version + source_sha256`。缺失或不一致的 receipt 必须补写并再次查询；因此“OS 已写入但首次 PG watermark 失败”的后续运行能够恢复，不能因本轮没有 missing/stale 就跳过水位并伪报收敛。
 7. G1至少保留一次同一自有运行内的真实OpenSearch回读与真实PostgreSQL watermark回读。两个分离容器运行的PASS只能作为单组件诊断，不能替代这一跨服务终态回执；该G1仍不替代真实ClickHouse/Kafka或生产G3。
+8. 下一层G1必须把内存权威源替换为生产ClickHouse repository：同一alert逐项比较CH authoritative SHA、OS目标SHA与PG receipt SHA/source_version。该三存储样例未包含Kafka offset/last event_id前，仍不得写成G3。
 
 ```bash
 go run ./cmd/alert-projection-reconcile \

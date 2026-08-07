@@ -40,6 +40,7 @@ SOURCES = (
     "go/control-plane/internal/alert/projection/reconcile.go",
     "go/control-plane/internal/alert/projection/reconcile_integration_test.go",
     "scripts/alignment/verify_alert_projection_postgres_opensearch_ephemeral.py",
+    "scripts/alignment/verify_alert_projection_clickhouse_postgres_opensearch_ephemeral.py",
     "go/control-plane/cmd/alert-projection-reconcile/main.go",
     "scripts/alignment/verify_opensearch_projection_reconciliation.py",
     "scripts/alignment/capture_opensearch_projection_reconciliation.py",

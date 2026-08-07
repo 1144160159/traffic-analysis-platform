@@ -17,6 +17,8 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/persistence"
+	alertrepo "github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/alert/repository"
+	"github.com/1144160159/traffic-analysis-platform/go/control-plane/internal/common/storage"
 )
 
 type ephemeralProjectionSource struct {
@@ -310,5 +312,193 @@ func TestAlertProjectionRepairRealPostgresAndOpenSearch(t *testing.T) {
 	}
 	if receiptCount != 2 {
 		t.Fatalf("deleted receipt was not recovered: watermarks=%d", receiptCount)
+	}
+}
+
+// TestAlertProjectionRepairRealClickHousePostgresAndOpenSearch replaces the
+// bounded in-memory authority with the production ClickHouse repository. One
+// owned run must finish with equal authoritative and target hashes plus the
+// matching durable PostgreSQL receipt for every source alert.
+func TestAlertProjectionRepairRealClickHousePostgresAndOpenSearch(t *testing.T) {
+	baseURL := strings.TrimRight(os.Getenv("ALERT_PROJECTION_RECONCILE_EPHEMERAL_OS_URL"), "/")
+	pgDSN := os.Getenv("ALERT_PROJECTION_RECONCILE_EPHEMERAL_PG_DSN")
+	clickHouseHost := strings.TrimSpace(os.Getenv("ALERT_PROJECTION_RECONCILE_EPHEMERAL_CH_HOST"))
+	if baseURL == "" || pgDSN == "" || clickHouseHost == "" {
+		t.Skip("three-store ephemeral ClickHouse, PostgreSQL and OpenSearch endpoints are not set")
+	}
+	parsedOS, err := url.Parse(baseURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	osHost, _, osHostErr := net.SplitHostPort(parsedOS.Host)
+	parsedPG, err := url.Parse(pgDSN)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pgHost, _, pgHostErr := net.SplitHostPort(parsedPG.Host)
+	chHost, _, chHostErr := net.SplitHostPort(clickHouseHost)
+	if osHostErr != nil || parsedOS.Scheme != "http" || net.ParseIP(osHost) == nil || !net.ParseIP(osHost).IsLoopback() ||
+		pgHostErr != nil || net.ParseIP(pgHost) == nil || !net.ParseIP(pgHost).IsLoopback() || parsedPG.Query().Get("sslmode") != "disable" ||
+		chHostErr != nil || net.ParseIP(chHost) == nil || !net.ParseIP(chHost).IsLoopback() {
+		t.Fatalf("refusing non-loopback three-store endpoints: os_err=%v pg_err=%v ch_err=%v", osHostErr, pgHostErr, chHostErr)
+	}
+	if os.Getenv("ALERT_PROJECTION_RECONCILE_EPHEMERAL_OS_SENTINEL") != "ephemeral-only" ||
+		os.Getenv("ALERT_PROJECTION_RECONCILE_EPHEMERAL_CH_SENTINEL") != "ephemeral-only" {
+		t.Fatal("refusing three-store endpoints without explicit ephemeral sentinels")
+	}
+	response, err := http.Get(baseURL + "/codex-ephemeral-alert-reconcile-sentinel/_doc/ephemeral-only")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer response.Body.Close()
+	var osSentinel struct {
+		Found  bool `json:"found"`
+		Source struct {
+			Marker string `json:"marker"`
+		} `json:"_source"`
+	}
+	if err := json.NewDecoder(response.Body).Decode(&osSentinel); err != nil {
+		t.Fatal(err)
+	}
+	if response.StatusCode != http.StatusOK || !osSentinel.Found || osSentinel.Source.Marker != "ephemeral-only" {
+		t.Fatalf("refusing non-sentinel OpenSearch: status=%s sentinel=%+v", response.Status, osSentinel)
+	}
+
+	pgDB, err := sql.Open("postgres", pgDSN)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer pgDB.Close()
+	ctx := context.Background()
+	var pgMarker string
+	if err := pgDB.QueryRowContext(ctx, `SELECT marker FROM codex_ephemeral_alert_projection_sentinel LIMIT 1`).Scan(&pgMarker); err != nil || pgMarker != "ephemeral-only" {
+		t.Fatalf("refusing PostgreSQL without ephemeral sentinel: marker=%q err=%v", pgMarker, err)
+	}
+	store := persistence.NewProjectionDebtStore(pgDB)
+	if err := store.CheckSchema(ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	clickHouseClient, err := storage.NewClickHouseClient(storage.ClickHouseConfig{
+		Hosts: []string{clickHouseHost}, Database: "traffic",
+		Username:     os.Getenv("ALERT_PROJECTION_RECONCILE_EPHEMERAL_CH_USER"),
+		Password:     os.Getenv("ALERT_PROJECTION_RECONCILE_EPHEMERAL_CH_PASSWORD"),
+		MaxOpenConns: 2, MaxIdleConns: 1, DialTimeout: 5 * time.Second,
+		CompressionLZ4: true, EnableAutoReconnect: false,
+	}, zap.NewNop())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer clickHouseClient.Close()
+	row, err := clickHouseClient.QueryRow(ctx, `SELECT marker FROM traffic.codex_ephemeral_alert_reconcile_sentinel LIMIT 1`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var chMarker string
+	if err := row.Scan(&chMarker); err != nil || chMarker != "ephemeral-only" {
+		t.Fatalf("refusing ClickHouse without ephemeral sentinel: marker=%q err=%v", chMarker, err)
+	}
+
+	tenantID := "tenant-alert-three-store-g1"
+	defer pgDB.ExecContext(ctx, `DELETE FROM alert_opensearch_reconcile_runs WHERE tenant_id=$1`, tenantID)
+	defer pgDB.ExecContext(ctx, `DELETE FROM alert_opensearch_projection_watermarks WHERE tenant_id=$1`, tenantID)
+	target, err := persistence.NewOpenSearchReconcileTarget(
+		[]string{baseURL}, "", "", "alerts-v2-read", "alerts-v2-write", true, false, zap.NewNop(),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer target.Close()
+	base := time.Date(2026, 8, 7, 15, 30, 0, 0, time.UTC)
+	alert := func(id, status string, updated time.Time) *persistence.Alert {
+		return &persistence.Alert{
+			TenantID: tenantID, AlertID: id, Fingerprint: "fingerprint-" + id,
+			CommunityID: "community-" + id, SessionID: "session-" + id,
+			SrcIP: "192.0.2.94", DstIP: "203.0.113.94", SrcPort: 49004, DstPort: 443,
+			Protocol: 6, AlertType: "projection-three-store", Labels: []string{"integration"},
+			Severity: "high", Score: 0.94, FirstSeen: base.Add(-time.Minute), LastSeen: updated,
+			UpdatedTs: updated, Count: 1, Status: status, ModelVersion: "model-g1", RuleVersion: "rule-g1",
+			FeatureSetID: "feature-g1", EvidenceIDs: []string{"evidence-" + id}, EventID: "event-" + id,
+			TraceID: "1234567890abcdef1234567890abcdef", StateVersion: uint64(updated.UnixMilli()),
+		}
+	}
+	sourceAlerts := []*persistence.Alert{
+		alert("three-store-missing", "new", base.Add(2*time.Second)),
+		alert("three-store-stale", "closed", base.Add(3*time.Second)),
+	}
+	clickHouseWriter, err := persistence.NewClickHouseWriter(clickHouseClient, zap.NewNop())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := clickHouseWriter.WriteBatch(ctx, sourceAlerts); err != nil {
+		t.Fatal(err)
+	}
+	for _, seed := range []*persistence.Alert{
+		alert("three-store-stale", "new", base),
+		alert("three-store-extra", "new", base.Add(time.Second)),
+	} {
+		if err := target.WriteAlert(ctx, seed); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := target.RefreshProjectionTarget(ctx); err != nil {
+		t.Fatal(err)
+	}
+	authority := alertrepo.NewAlertRepository(clickHouseClient, zap.NewNop())
+	countedTarget := &countingProjectionTarget{ProjectionRepairTarget: target}
+	reconciler, err := NewReconciler(
+		ReconcileConfig{MaxDocuments: 100, StopErrorCount: 2, RepairPerSecond: 100000}, authority, countedTarget, store,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	scope := persistence.ProjectionScope{TenantID: tenantID, TargetIndexVersion: "alerts-v2-write", MaxDocuments: 100}
+	result, err := reconciler.Run(ctx, ReconcileRequest{
+		Mode: "repair", RequestedBy: "ephemeral-three-store-runner", TraceID: "trace-alert-three-store-g1", Scope: scope,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Status != "completed" || result.MissingCount != 1 || result.StaleCount != 1 || result.ExtraCount != 1 ||
+		result.RepairedCount != 2 || countedTarget.writes != 2 || !result.VerificationPerformed || !result.WatermarksConverged ||
+		!result.RepairConverged || result.RemainingMissingCount != 0 || result.RemainingStaleCount != 0 || result.RemainingExtraCount != 1 {
+		t.Fatalf("unexpected three-store terminal receipt: %+v writes=%d", result, countedTarget.writes)
+	}
+	authoritative, sourceTruncated, err := authority.ListProjectionAlerts(ctx, scope)
+	if err != nil || sourceTruncated || len(authoritative) != 2 {
+		t.Fatalf("unexpected ClickHouse authority: alerts=%d truncated=%v err=%v", len(authoritative), sourceTruncated, err)
+	}
+	projected, targetTruncated, err := target.ListProjectionAlerts(ctx, scope)
+	if err != nil || targetTruncated || len(projected) != 3 {
+		t.Fatalf("unexpected OpenSearch target: alerts=%d truncated=%v err=%v", len(projected), targetTruncated, err)
+	}
+	projectedByID := make(map[string]*persistence.Alert, len(projected))
+	for _, item := range projected {
+		projectedByID[item.AlertID] = item
+	}
+	for _, sourceAlert := range authoritative {
+		sourceHash, err := persistence.AlertProjectionSHA256(sourceAlert)
+		if err != nil {
+			t.Fatal(err)
+		}
+		targetHash, err := persistence.AlertProjectionSHA256(projectedByID[sourceAlert.AlertID])
+		if err != nil {
+			t.Fatal(err)
+		}
+		var receiptVersion int64
+		var receiptHash string
+		if err := pgDB.QueryRowContext(ctx, `SELECT source_version,source_sha256 FROM alert_opensearch_projection_watermarks WHERE tenant_id=$1 AND alert_id=$2 AND target_index_version='alerts-v2-write'`, tenantID, sourceAlert.AlertID).Scan(&receiptVersion, &receiptHash); err != nil {
+			t.Fatal(err)
+		}
+		if sourceHash != targetHash || receiptHash != sourceHash || receiptVersion != persistence.AlertSourceVersion(sourceAlert) {
+			t.Fatalf("three-store hash/version mismatch alert=%s source=%s target=%s receipt=%s version=%d", sourceAlert.AlertID, sourceHash, targetHash, receiptHash, receiptVersion)
+		}
+	}
+	var convergedRunCount int
+	if err := pgDB.QueryRowContext(ctx, `SELECT count(*) FROM alert_opensearch_reconcile_runs WHERE tenant_id=$1 AND status='completed' AND (result_manifest->'post_repair_verification'->>'repair_converged')::boolean`, tenantID).Scan(&convergedRunCount); err != nil {
+		t.Fatal(err)
+	}
+	if convergedRunCount != 1 {
+		t.Fatalf("durable three-store terminal receipt count=%d want=1", convergedRunCount)
 	}
 }

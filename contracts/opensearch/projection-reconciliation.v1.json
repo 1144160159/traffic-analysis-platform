@@ -39,6 +39,7 @@
     "repair_converged": "remaining_missing_stale_and_watermark_mismatches_are_zero_and_error_count_is_zero",
     "watermark_terminal_receipt": "compare_source_version_and_authoritative_sha256_in_postgresql_repair_missing_receipts_then_requery",
     "cross_service_terminal_receipt": "same_owned_run_real_opensearch_requery_and_real_postgresql_watermark_requery",
+    "authoritative_three_store_receipt": "same_owned_run_real_clickhouse_authority_real_opensearch_target_real_postgresql_receipt_equal_hash_and_version",
     "extra_after_repair": "persist_for_manual_adjudication_never_auto_delete"
   },
   "runtime_guards": {
