@@ -71,11 +71,11 @@ func (w *ClickHouseWriter) WriteAlert(ctx context.Context, alert *Alert) error {
 			tenant_id, alert_id, dedup_fingerprint, community_id, session_id, campaign_id,
 			src_ip, dst_ip, src_port, dst_port, protocol,
 			alert_type, labels, score, severity,
-			first_seen, last_seen, count, status, assignee, %s,
+			first_seen, last_seen, count, status, assignee, state_version, %s,
 			model_version, rule_version, feature_set_id,
 			evidence_ids, event_id, trace_id
 		) VALUES (
-			?, ?, ?, ?, ?, ?,
+			?, ?, ?, ?, ?, ?, ?,
 			?, ?, ?, ?, ?,
 			?, ?, ?, ?,
 			?, ?, ?, ?, ?, ?,
@@ -106,6 +106,7 @@ func (w *ClickHouseWriter) WriteAlert(ctx context.Context, alert *Alert) error {
 		alert.Count,
 		alert.Status,
 		alert.Assignee,
+		alert.StateVersion,
 		schema.timestamp(alert.UpdatedTs),
 		alert.ModelVersion,
 		alert.RuleVersion,
@@ -157,7 +158,7 @@ func (w *ClickHouseWriter) WriteBatch(ctx context.Context, alerts []*Alert) erro
 			tenant_id, alert_id, dedup_fingerprint, community_id, session_id, campaign_id,
 			src_ip, dst_ip, src_port, dst_port, protocol,
 			alert_type, labels, score, severity,
-			first_seen, last_seen, count, status, assignee, %s,
+			first_seen, last_seen, count, status, assignee, state_version, %s,
 			model_version, rule_version, feature_set_id,
 			evidence_ids, event_id, trace_id
 		)
@@ -184,6 +185,7 @@ func (w *ClickHouseWriter) WriteBatch(ctx context.Context, alerts []*Alert) erro
 				alert.Count,
 				alert.Status,
 				alert.Assignee,
+				alert.StateVersion,
 				schema.timestamp(alert.UpdatedTs),
 				alert.ModelVersion,
 				alert.RuleVersion,

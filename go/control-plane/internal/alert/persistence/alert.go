@@ -127,6 +127,9 @@ type Alert struct {
 	// updated_at: 当前权威表使用的毫秒时间戳；writer仍兼容旧updated_ts DateTime64表。
 	UpdatedTs time.Time `json:"updated_at" ch:"updated_at"`
 
+	// state_version: 告警投影的确定性修订号，用于argMax和跨存储对账。
+	StateVersion uint64 `json:"state_version" ch:"state_version"`
+
 	// ==================== 版本信息 ====================
 	// model_version: 检测模型版本
 	ModelVersion string `json:"model_version" ch:"model_version"`

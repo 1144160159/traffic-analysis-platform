@@ -61,7 +61,8 @@ func TestAlertWriterRealCanonicalClickHouseTimestampsAndTrace(t *testing.T) {
 			Protocol: 6, AlertType: "trace-reconcile", Labels: []string{"integration"},
 			Score: 0.98, Severity: "high", FirstSeen: observed.Add(-time.Second), LastSeen: observed,
 			Count: 1, Status: "new", UpdatedTs: observed, ModelVersion: "model-g1",
-			RuleVersion: "rule-g1", FeatureSetID: "feature-g1", EvidenceIDs: []string{"evidence-" + id},
+			StateVersion: 7,
+			RuleVersion:  "rule-g1", FeatureSetID: "feature-g1", EvidenceIDs: []string{"evidence-" + id},
 			EventID: "event-" + id, TraceID: "0123456789abcdef0123456789abcdef",
 		}
 	}
@@ -75,7 +76,7 @@ func TestAlertWriterRealCanonicalClickHouseTimestampsAndTrace(t *testing.T) {
 	}
 
 	rows, err := client.Query(ctx, `
-		SELECT alert_id,event_id,trace_id,first_seen,last_seen,updated_at
+		SELECT alert_id,event_id,trace_id,state_version,first_seen,last_seen,updated_at
 		FROM traffic.alerts
 		WHERE tenant_id=?
 		ORDER BY alert_id`, first.TenantID)
@@ -87,12 +88,13 @@ func TestAlertWriterRealCanonicalClickHouseTimestampsAndTrace(t *testing.T) {
 	count := 0
 	for rows.Next() {
 		var alertID, eventID, traceID string
+		var stateVersion uint64
 		var firstSeen, lastSeen, updatedAt int64
-		if err := rows.Scan(&alertID, &eventID, &traceID, &firstSeen, &lastSeen, &updatedAt); err != nil {
+		if err := rows.Scan(&alertID, &eventID, &traceID, &stateVersion, &firstSeen, &lastSeen, &updatedAt); err != nil {
 			t.Fatal(err)
 		}
 		expected := found[alertID]
-		if expected == nil || eventID != expected.EventID || traceID != expected.TraceID ||
+		if expected == nil || eventID != expected.EventID || traceID != expected.TraceID || stateVersion != expected.StateVersion ||
 			firstSeen != expected.FirstSeen.UnixMilli() || lastSeen != expected.LastSeen.UnixMilli() ||
 			updatedAt != expected.UpdatedTs.UnixMilli() {
 			t.Fatalf("unexpected persisted alert id=%q event=%q trace=%q times=%d/%d/%d", alertID, eventID, traceID, firstSeen, lastSeen, updatedAt)
