@@ -8,9 +8,9 @@ import (
 
 func TestProducerConfigDefaults(t *testing.T) {
 	cfg := ProducerConfig{
-		Brokers:    []string{"localhost:9092"},
-		FlowTopic:  "",
-		BatchSize:  0,
+		Brokers:     []string{"localhost:9092"},
+		FlowTopic:   "",
+		BatchSize:   0,
 		Compression: "",
 	}
 	p, err := NewProducer(cfg, zap.NewNop())
@@ -32,6 +32,20 @@ func TestProducerNoBrokers(t *testing.T) {
 	_, err := NewProducer(ProducerConfig{}, zap.NewNop())
 	if err == nil {
 		t.Error("expected error for empty brokers")
+	}
+}
+
+func TestProducerRejectsNonDurableKafkaAcknowledgements(t *testing.T) {
+	for _, requiredAcks := range []string{"none", "one"} {
+		t.Run(requiredAcks, func(t *testing.T) {
+			_, err := NewProducer(ProducerConfig{
+				Brokers:      []string{"localhost:9092"},
+				RequiredAcks: requiredAcks,
+			}, zap.NewNop())
+			if err == nil {
+				t.Fatalf("NewProducer accepted RequiredAcks=%q", requiredAcks)
+			}
+		})
 	}
 }
 

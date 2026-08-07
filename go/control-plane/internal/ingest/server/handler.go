@@ -40,6 +40,7 @@ const (
 	errMsgEventTooLarge       = "event size exceeds maximum"
 
 	msgSuccess              = "success"
+	msgPcapKafkaAccepted    = "pcap metadata durably accepted by Kafka; downstream index pending"
 	msgPartialFailure       = "partial failure: %s"
 	msgRejectedDeduplicated = "%d rejected, %d deduplicated"
 )
@@ -747,6 +748,10 @@ func (h *IngestHandler) UploadPcapIndex(ctx context.Context, req *pb.UploadPcapI
 		})
 		return nil, status.Error(codes.Unauthenticated, errMsgTenantIDRequired)
 	}
+	if probeID == "" {
+		h.metrics.RecordReject401()
+		return nil, status.Error(codes.Unauthenticated, "probe_id not found in context")
+	}
 
 	if req == nil || req.Index == nil {
 		h.metrics.RecordReject400()
@@ -757,12 +762,12 @@ func (h *IngestHandler) UploadPcapIndex(ctx context.Context, req *pb.UploadPcapI
 	}
 
 	meta := req.Index
-
-	if meta.TenantId == "" {
-		meta.TenantId = tenantID
-	}
-	if meta.ProbeId == "" {
-		meta.ProbeId = probeID
+	if err := bindPcapIndexIdentity(meta, tenantID, probeID); err != nil {
+		h.metrics.RecordReject403()
+		h.recordAudit(ctx, audit.EventTypeAccessDenied, tenantID, probeID, "upload_pcap_index", map[string]interface{}{
+			"reason": "authenticated_identity_mismatch",
+		})
+		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
 	if meta.FileKey == "" {
@@ -796,7 +801,11 @@ func (h *IngestHandler) UploadPcapIndex(ctx context.Context, req *pb.UploadPcapI
 		h.metrics.RecordReject503()
 
 		if h.handlerConfig.EnableDLQ && h.dlqProducer != nil {
-			h.dlqProducer.SendPcapIndex(ctx, meta, err)
+			if dlqErr := h.dlqProducer.SendPcapIndex(ctx, meta, err); dlqErr != nil {
+				logger.Error("Failed to persist rejected PCAP index to DLQ",
+					zap.String("file_key", meta.FileKey),
+					zap.Error(dlqErr))
+			}
 		}
 
 		h.recordAudit(ctx, audit.EventTypeSystemError, tenantID, probeID, "upload_pcap_index", map[string]interface{}{
@@ -804,30 +813,44 @@ func (h *IngestHandler) UploadPcapIndex(ctx context.Context, req *pb.UploadPcapI
 			"error":    err.Error(),
 		})
 
-		return &pb.UploadPcapIndexResponse{
-			Success: false,
-			Message: "failed to write pcap index: " + err.Error(),
-		}, nil
+		return nil, status.Error(codes.Unavailable, "pcap metadata Kafka durability barrier failed")
 	}
 
 	h.metrics.RecordPcapIndex(tenantID)
 	h.metrics.RecordLatency("upload_pcap_index", time.Since(start))
 
-	logger.Info("PCAP index uploaded",
+	logger.Info("PCAP metadata durably accepted by Kafka",
 		zap.String("tenant_id", tenantID),
 		zap.String("probe_id", probeID),
 		zap.String("file_key", meta.FileKey),
 		zap.Duration("duration", time.Since(start)))
 
 	h.recordAudit(ctx, audit.EventTypeDataIngested, tenantID, probeID, "upload_pcap_index", map[string]interface{}{
-		"file_key": meta.FileKey,
-		"size":     meta.ByteSize,
+		"file_key":      meta.FileKey,
+		"size":          meta.ByteSize,
+		"ack_scope":     "kafka_durable",
+		"final_indexed": false,
 	})
 
 	return &pb.UploadPcapIndexResponse{
 		Success: true,
-		Message: msgSuccess,
+		Message: msgPcapKafkaAccepted,
 	}, nil
+}
+
+func bindPcapIndexIdentity(meta *pb.PcapIndexMeta, tenantID, probeID string) error {
+	if meta == nil {
+		return fmt.Errorf("pcap index metadata is required")
+	}
+	if meta.TenantId != "" && meta.TenantId != tenantID {
+		return fmt.Errorf("pcap index tenant_id does not match authenticated tenant")
+	}
+	if meta.ProbeId != "" && meta.ProbeId != probeID {
+		return fmt.Errorf("pcap index probe_id does not match authenticated probe")
+	}
+	meta.TenantId = tenantID
+	meta.ProbeId = probeID
+	return nil
 }
 
 func (h *IngestHandler) StreamFlows(stream pb.IngestService_StreamFlowsServer) error {

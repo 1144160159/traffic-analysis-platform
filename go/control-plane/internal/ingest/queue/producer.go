@@ -57,6 +57,15 @@ func NewProducer(cfg ProducerConfig, logger *zap.Logger) (*Producer, error) {
 	if cfg.Compression == "" {
 		cfg.Compression = config.DefaultKafkaCompression
 	}
+	if cfg.RequiredAcks == "" {
+		cfg.RequiredAcks = config.KafkaRequiredAcksAll
+	}
+	if cfg.RequiredAcks != config.KafkaRequiredAcksAll {
+		return nil, fmt.Errorf(
+			"ingest durability barrier requires KAFKA_REQUIRED_ACKS=all, got %q",
+			cfg.RequiredAcks,
+		)
+	}
 
 	multiProducer := kafkaCommon.NewMultiTopicProducer(logger)
 
