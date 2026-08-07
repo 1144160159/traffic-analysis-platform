@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-minio-object-governance-v1",
+  "remediation_ids": [
+    "T-MINIO-002",
+    "T-MINIO-003",
+    "T-MINIO-004"
+  ],
+  "status": "implementing",
+  "coverage_status": "REPOSITORY_BUCKET_AND_POLICY_BASELINE_PARTIAL",
+  "production_applied": false,
+  "required_object_classes": [
+    "pcap",
+    "evidence",
+    "report",
+    "export",
+    "model",
+    "flink_checkpoint",
+    "flink_savepoint",
+    "argo_artifact"
+  ],
+  "security_policy": {
+    "application_root_credentials_allowed": false,
+    "runtime_bucket_creation_allowed": false,
+    "credentials_from_secret_provider_required": true,
+    "per_service_prefix_policy_required": true,
+    "tls_required": true,
+    "certificate_verification_required": true,
+    "presigned_url_max_ttl_seconds": 900,
+    "production_plaintext_allowed": false
+  },
+  "delete_protocol": {
+    "steps": [
+      "mark_manifest_tombstone",
+      "check_business_references",
+      "check_legal_hold_and_retention",
+      "approve_bounded_delete_batch",
+      "delete_object_version",
+      "write_audit_event",
+      "reconcile_manifest_and_object"
+    ],
+    "direct_application_delete_allowed": false,
+    "temporary_object_cleanup_requires_age_and_prefix_bound": true
+  },
+  "bucket_registry": [
+    {
+      "bucket": "pcap-archive",
+      "object_classes": ["pcap", "evidence"],
+      "owner": "forensics-domain-owner",
+      "key_rule": "tenants/{tenant_id}/pcap/{capture_id}/{sha256}",
+      "manifest_authority": "postgresql.pcap_files",
+      "versioning": "required_not_applied",
+      "object_lock": "required_not_applied",
+      "legal_hold": "supported_by_manifest_not_live_proven",
+      "lifecycle": {"current_days": 37, "target": "align_with_clickhouse_index_or_explicit_expired_manifest"},
+      "encryption": "tls_and_server_side_encryption_required_not_applied",
+      "replication": "required_not_applied",
+      "quota": "approval_required",
+      "policy": "probe-writer-and-forensics-reader-prefix-scoped-not_applied",
+      "restore_priority": 1
+    },
+    {
+      "bucket": "report-artifacts",
+      "object_classes": ["report", "export", "evidence"],
+      "owner": "report-and-export-domain-owners",
+      "key_rule": "tenants/{tenant_id}/{domain}/{aggregate_id}/{job_id}.{extension}",
+      "manifest_authority": "postgresql.domain_report_and_export_manifests",
+      "versioning": "required_not_applied",
+      "object_lock": "evidence_prefix_required_not_applied",
+      "legal_hold": "required_for_evidence_prefix_not_applied",
+      "lifecycle": {"current_days": 90, "target": "object-class-specific-retention"},
+      "encryption": "tls_and_server_side_encryption_required_not_applied",
+      "replication": "required_not_applied",
+      "quota": "approval_required",
+      "policy": "domain-writer-and-authorized-download-proxy-prefix-scoped-not_applied",
+      "restore_priority": 2
+    },
+    {
+      "bucket": "traffic-models",
+      "object_classes": ["model"],
+      "owner": "model-domain-owner",
+      "key_rule": "tenants/{tenant_id}/models/{model_id}/versions/{version}/{artifact_sha256}/{file}",
+      "manifest_authority": "postgresql.model_versions",
+      "versioning": "required_not_applied",
+      "object_lock": "immutable_activated_versions_required_not_applied",
+      "legal_hold": "not_applicable_unless_model_is_evidence",
+      "lifecycle": {"current_days": null, "target": "activation-and-reference-aware-retention"},
+      "encryption": "tls_and_server_side_encryption_required_not_applied",
+      "replication": "required_not_applied",
+      "quota": "approval_required",
+      "policy": "model-writer-and-flink-model-reader-prefix-scoped-not_applied",
+      "restore_priority": 3
+    },
+    {
+      "bucket": "flink-checkpoints",
+      "object_classes": ["flink_checkpoint", "flink_savepoint"],
+      "owner": "flink-data-owner",
+      "key_rule": "{checkpoints|savepoints|ha|job-result-store}/{job_id}/{artifact_or_run_id}",
+      "manifest_authority": "contracts.flink_job_registry_and_savepoint_manifest",
+      "versioning": "required_not_applied",
+      "object_lock": "savepoint_manual_governance_required_not_applied",
+      "legal_hold": "not_applicable",
+      "lifecycle": {"current_days": null, "target": "checkpoint_auto_cleanup_savepoint_manual_only"},
+      "encryption": "tls_and_server_side_encryption_required_not_applied",
+      "replication": "required_not_applied",
+      "quota": "per_job_budget_required",
+      "policy": "per-flink-job-prefix-scoped-not_applied",
+      "restore_priority": 1
+    },
+    {
+      "bucket": "argo-artifacts",
+      "object_classes": ["argo_artifact"],
+      "owner": "mlops-platform-owner",
+      "key_rule": "{namespace}/{workflow_uid}/{node_id}/{artifact_name}",
+      "manifest_authority": "argo_workflow_status_and_release_evidence",
+      "versioning": "required_not_applied",
+      "object_lock": "release_evidence_prefix_required_not_applied",
+      "legal_hold": "release_evidence_prefix_required_not_applied",
+      "lifecycle": {"current_days": null, "target": "workflow-and-release-evidence-specific-retention"},
+      "encryption": "tls_and_server_side_encryption_required_not_applied",
+      "replication": "required_not_applied",
+      "quota": "per_namespace_budget_required",
+      "policy": "argo-workflow-controller-prefix-scoped-not_applied",
+      "restore_priority": 4
+    }
+  ],
+  "repository_lifecycle_buckets": [
+    "pcap-archive",
+    "report-artifacts"
+  ],
+  "topology_target": {
+    "minimum_servers": 4,
+    "minimum_failure_domains": 3,
+    "proxy_replicas": 2,
+    "disk_and_node_anti_affinity_required": true,
+    "capacity_alerts_required": true,
+    "scrub_schedule_required": true
+  },
+  "known_gaps": [
+    "candidate MinIO transport and lifecycle jobs still use plaintext HTTP",
+    "the StatefulSet and lifecycle bootstrap still use the shared bootstrap credential while the seven scoped service identities remain candidate-only",
+    "only pcap-archive and report-artifacts have repository lifecycle rules",
+    "versioning Object Lock legal hold replication quotas and server-side encryption are not applied",
+    "minio-proxy has one replica and no TLS identity",
+    "the five-bucket governed bootstrap is repository-only and has not been applied or reconciled against live MinIO",
+    "live service identity and bucket policy exact diff credential rotation scrub restore and cross-region recovery are absent"
+  ],
+  "closure_blockers": [
+    "approve and apply TLS plus per-service identities and prefix policies",
+    "apply the five-bucket governed bootstrap and reconcile live bucket identities without using application credentials",
+    "apply versioning retention Object Lock legal hold replication quota and encryption by object class",
+    "run bounded manifest-to-object scrub for missing extra version size hash retention and temporary-object differences",
+    "prove node disk proxy credential and region failure recovery with business manifests and hashes",
+    "complete canary rollback and T+0 T+1 T+3 T+7 observation"
+  ]
+}

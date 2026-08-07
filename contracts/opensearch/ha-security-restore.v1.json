@@ -1,0 +1,86 @@
+{
+  "contract_version": "1.0.0",
+  "remediation_id": "T-OS-005",
+  "work_package": "WP-23-OS",
+  "status": "implementing",
+  "coverage_status": "PARTIAL",
+  "production_applied": false,
+  "authority": {
+    "opensearch_role": "rebuildable_projection",
+    "authoritative_rebuild_sources": ["clickhouse", "postgresql", "kafka", "minio_manifests"],
+    "snapshot_role": "accelerated_projection_recovery_not_authoritative_backup"
+  },
+  "failure_domains": {
+    "topology_key": "topology.kubernetes.io/zone",
+    "required_distinct_zones": 3,
+    "allocation_awareness_attribute": "zone",
+    "forced_awareness": true,
+    "pod_spread_max_skew": 1,
+    "when_unsatisfiable": "DoNotSchedule",
+    "base_manifest_mutated": false,
+    "target_overlay_default_applied": false
+  },
+  "security": {
+    "http_tls": true,
+    "transport_tls": true,
+    "transport_hostname_verification": true,
+    "certificate_source": "external_secret_opensearch_node_tls",
+    "admin_certificate_source": "external_secret_opensearch_admin_tls",
+    "plaintext_fallback_allowed": false,
+    "default_admin_application_access_allowed": false,
+    "service_identities": ["alert-service", "asset-service", "flink-alert-generator", "opensearch-snapshot-operator", "opensearch-monitor"],
+    "audit_enabled": true,
+    "rotation_requires_serial_canary": true
+  },
+  "watermarks": {
+    "disk_low": "70%",
+    "disk_high": "80%",
+    "disk_flood_stage": "90%",
+    "alerts": ["cluster_unavailable", "cluster_red", "unassigned_shards", "relocation_stalled", "pending_cluster_tasks", "write_rejections", "disk_high", "disk_flood_stage", "snapshot_stale", "snapshot_failure", "tls_expiry", "zone_concentration"]
+  },
+  "snapshot_restore": {
+    "repository_type": "s3",
+    "repository_plugin": "repository-s3",
+    "bucket": "opensearch-snapshots",
+    "base_path": "traffic-os",
+    "credentials_source": "external_secret_opensearch_snapshot_credentials",
+    "restore_target_must_be_isolated": true,
+    "same_cluster_restore_forbidden": true,
+    "restore_renames_indices": true,
+    "required_snapshot_state": "SUCCESS",
+    "required_verification": ["mapping_sha256", "settings_sha256", "aliases", "document_count", "sample_document_ids", "sample_versions", "sample_content_sha256", "query_oracle"],
+    "pit_coordination": "wait_for_active_pit_zero_or_approved_expiry_before_old_index_delete"
+  },
+  "runtime_guards": {
+    "overlay_path": "deployments/kubernetes/security/opensearch-ha-v1",
+    "overlay_in_default_deploy_path": false,
+    "snapshot_tool_default_mode": "plan",
+    "snapshot_mutation_requires_execute": true,
+    "restore_requires_approved_manifest": true,
+    "production_mutations_in_repository_candidate": []
+  },
+  "client_degradation": {
+    "unavailable_must_not_render_as_empty": true,
+    "required_api_state": "partial_or_error_with_missing_sections_and_trace_id",
+    "required_ui_state": "source_unavailable_retryable_degradation",
+    "browser_evidence_required_before_closure": true
+  },
+  "stop_conditions": [
+    "fewer than three labeled schedulable zones",
+    "any plaintext client or default-admin application dependency remains",
+    "TLS trust hostname or certificate expiry verification fails",
+    "unassigned shards or pending tasks grow after canary",
+    "disk reaches high or flood-stage watermark",
+    "snapshot is incomplete or restore verification differs",
+    "active PIT would be invalidated by lifecycle or alias action",
+    "document loss cross-tenant exposure or query oracle mismatch"
+  ],
+  "closure_blockers": [
+    "live cluster has only two nodes and no topology.kubernetes.io/zone labels",
+    "two OpenSearch pods share one node so three-zone failure isolation is impossible",
+    "live OpenSearch security plugin is disabled, HTTP is plaintext, and alert-service still uses the shared admin credential",
+    "live snapshot repository inventory is empty and no isolated restore exists",
+    "normalized metrics collector evaluator notification route and alert firing evidence are absent",
+    "node zone disk bulk mapping alias snapshot and restore drills plus T+0 T+1 T+3 T+7 observation are incomplete"
+  ]
+}

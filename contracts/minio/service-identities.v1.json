@@ -1,0 +1,221 @@
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-minio-service-identities-v1",
+  "remediation_ids": [
+    "T-MINIO-003",
+    "T-MINIO-004"
+  ],
+  "status": "implementing",
+  "coverage_status": "REPOSITORY_IDENTITY_EXPAND_PHASE_NOT_APPLIED",
+  "production_applied": false,
+  "bootstrap": {
+    "manifest": "deployments/kubernetes/security/minio-service-identities.v1.yaml",
+    "job_name": "minio-service-identities-v1",
+    "namespace": "minio",
+    "suspended_by_default": true,
+    "root_secret": "traffic-credentials",
+    "identity_secret": "minio-service-identity-bootstrap",
+    "expand_only": true,
+    "legacy_identity_removed": false
+  },
+  "external_secret_source": {
+    "manifest": "deployments/kubernetes/security/external-secrets-template.yaml",
+    "store": "traffic-platform-secret-store",
+    "remote_key": "traffic-platform-prod-minio-identities",
+    "refresh_interval": "1h"
+  },
+  "guardrails": {
+    "wildcard_bucket_resource_allowed": false,
+    "wildcard_s3_action_allowed": false,
+    "admin_action_allowed": false,
+    "application_root_credentials_allowed": false,
+    "policy_max_bytes": 2048,
+    "secret_values_in_repository_allowed": false,
+    "tls_cutover_in_this_slice": false,
+    "live_apply_in_this_slice": false
+  },
+  "identities": [
+    {
+      "identity_id": "probe-agent",
+      "policy_name": "traffic-probe-agent-v1",
+      "bootstrap_access_property": "PROBE_AGENT_ACCESS_KEY",
+      "bootstrap_secret_property": "PROBE_AGENT_SECRET_KEY",
+      "workload_secrets": [
+        {"namespace": "traffic-analysis", "name": "minio-probe-agent-credentials"}
+      ],
+      "consumers": [
+        "deployments/kubernetes/applications/probe-agent.yaml"
+      ],
+      "permissions": [
+        {
+          "bucket": "pcap-archive",
+          "prefixes": ["*"],
+          "bucket_actions": ["s3:GetBucketLocation", "s3:ListBucket", "s3:ListBucketMultipartUploads"],
+          "object_actions": ["s3:AbortMultipartUpload", "s3:ListMultipartUploadParts", "s3:PutObject"]
+        }
+      ]
+    },
+    {
+      "identity_id": "alert-service",
+      "policy_name": "traffic-alert-service-v1",
+      "bootstrap_access_property": "ALERT_SERVICE_ACCESS_KEY",
+      "bootstrap_secret_property": "ALERT_SERVICE_SECRET_KEY",
+      "workload_secrets": [
+        {"namespace": "traffic-analysis", "name": "minio-alert-service-credentials"}
+      ],
+      "consumers": [
+        "deployments/kubernetes/applications/go-services.yaml",
+        "go/control-plane/deployments/kubernetes/alert-service.yaml"
+      ],
+      "permissions": [
+        {
+          "bucket": "report-artifacts",
+          "prefixes": ["*/alerts/*", "*/campaigns/*"],
+          "bucket_actions": ["s3:GetBucketLocation", "s3:ListBucket"],
+          "object_actions": ["s3:AbortMultipartUpload", "s3:DeleteObject", "s3:GetObject", "s3:ListMultipartUploadParts", "s3:PutObject"]
+        },
+        {
+          "bucket": "pcap-archive",
+          "prefixes": ["*"],
+          "bucket_actions": ["s3:GetBucketLocation", "s3:ListBucket"],
+          "object_actions": ["s3:GetObject"]
+        }
+      ]
+    },
+    {
+      "identity_id": "asset-service",
+      "policy_name": "traffic-asset-service-v1",
+      "bootstrap_access_property": "ASSET_SERVICE_ACCESS_KEY",
+      "bootstrap_secret_property": "ASSET_SERVICE_SECRET_KEY",
+      "workload_secrets": [
+        {"namespace": "traffic-analysis", "name": "minio-asset-service-credentials"}
+      ],
+      "consumers": [
+        "deployments/kubernetes/applications/go-services.yaml",
+        "go/control-plane/deployments/kubernetes/asset-service.yaml"
+      ],
+      "permissions": [
+        {
+          "bucket": "report-artifacts",
+          "prefixes": ["*/assets/exports/*"],
+          "bucket_actions": ["s3:GetBucketLocation", "s3:ListBucket"],
+          "object_actions": ["s3:AbortMultipartUpload", "s3:GetObject", "s3:ListMultipartUploadParts", "s3:PutObject"]
+        },
+        {
+          "bucket": "pcap-archive",
+          "prefixes": ["*"],
+          "bucket_actions": ["s3:GetBucketLocation", "s3:ListBucket"],
+          "object_actions": ["s3:GetObject"]
+        }
+      ]
+    },
+    {
+      "identity_id": "forensics-service",
+      "policy_name": "traffic-forensics-service-v1",
+      "bootstrap_access_property": "FORENSICS_SERVICE_ACCESS_KEY",
+      "bootstrap_secret_property": "FORENSICS_SERVICE_SECRET_KEY",
+      "workload_secrets": [
+        {"namespace": "traffic-analysis", "name": "minio-forensics-service-credentials"}
+      ],
+      "consumers": [
+        "deployments/kubernetes/applications/go-services.yaml",
+        "go/control-plane/deployments/kubernetes/forensics-service.yaml"
+      ],
+      "permissions": [
+        {
+          "bucket": "pcap-archive",
+          "prefixes": ["*"],
+          "bucket_actions": ["s3:GetBucketLocation", "s3:ListBucket"],
+          "object_actions": ["s3:AbortMultipartUpload", "s3:DeleteObject", "s3:GetObject", "s3:ListMultipartUploadParts", "s3:PutObject"]
+        }
+      ]
+    },
+    {
+      "identity_id": "mlops-model-writer",
+      "policy_name": "traffic-mlops-model-writer-v1",
+      "bootstrap_access_property": "MLOPS_MODEL_WRITER_ACCESS_KEY",
+      "bootstrap_secret_property": "MLOPS_MODEL_WRITER_SECRET_KEY",
+      "workload_secrets": [
+        {"namespace": "argo", "name": "minio-mlops-model-writer-credentials"},
+        {"namespace": "traffic-analysis", "name": "minio-mlops-model-writer-credentials"}
+      ],
+      "consumers": [
+        "deployments/kubernetes/argo-events/mlops-training-template.yaml",
+        "mlops/workflows/cron-training-workflow.yaml",
+        "mlops/workflows/mlops-workflow-template.yaml",
+        "mlops/workflows/training-workflow.yaml"
+      ],
+      "permissions": [
+        {
+          "bucket": "traffic-models",
+          "prefixes": ["models/*", "tenants/*/models/*"],
+          "bucket_actions": ["s3:GetBucketLocation", "s3:ListBucket"],
+          "object_actions": ["s3:AbortMultipartUpload", "s3:GetObject", "s3:ListMultipartUploadParts", "s3:PutObject"]
+        }
+      ]
+    },
+    {
+      "identity_id": "flink-state-model-reader",
+      "policy_name": "traffic-flink-state-model-reader-v1",
+      "bootstrap_access_property": "FLINK_STATE_MODEL_ACCESS_KEY",
+      "bootstrap_secret_property": "FLINK_STATE_MODEL_SECRET_KEY",
+      "workload_secrets": [
+        {"namespace": "flink", "name": "minio-flink-state-model-credentials"}
+      ],
+      "consumers": [
+        "deployments/kubernetes/infrastructure/07-flink.yaml"
+      ],
+      "permissions": [
+        {
+          "bucket": "flink-checkpoints",
+          "prefixes": ["checkpoints/*", "ha/*", "job-result-store/*", "savepoints/*"],
+          "bucket_actions": ["s3:GetBucketLocation", "s3:ListBucket", "s3:ListBucketMultipartUploads"],
+          "object_actions": ["s3:AbortMultipartUpload", "s3:DeleteObject", "s3:GetObject", "s3:ListMultipartUploadParts", "s3:PutObject"]
+        },
+        {
+          "bucket": "traffic-models",
+          "prefixes": ["models/*", "tenants/*/models/*"],
+          "bucket_actions": ["s3:GetBucketLocation", "s3:ListBucket"],
+          "object_actions": ["s3:GetObject"]
+        }
+      ]
+    },
+    {
+      "identity_id": "argo-artifact-controller",
+      "policy_name": "traffic-argo-artifact-controller-v1",
+      "bootstrap_access_property": "ARGO_ARTIFACT_ACCESS_KEY",
+      "bootstrap_secret_property": "ARGO_ARTIFACT_SECRET_KEY",
+      "workload_secrets": [
+        {"namespace": "argo", "name": "minio-argo-artifact-credentials"},
+        {"namespace": "traffic-analysis", "name": "minio-argo-artifact-credentials"}
+      ],
+      "consumers": [
+        "deployments/kubernetes/argo-events/argo-artifact-repository.yaml",
+        "mlops/workflows/training-workflow.yaml"
+      ],
+      "permissions": [
+        {
+          "bucket": "argo-artifacts",
+          "prefixes": ["*"],
+          "bucket_actions": ["s3:GetBucketLocation", "s3:ListBucket", "s3:ListBucketMultipartUploads"],
+          "object_actions": ["s3:AbortMultipartUpload", "s3:DeleteObject", "s3:GetObject", "s3:ListMultipartUploadParts", "s3:PutObject"]
+        }
+      ]
+    }
+  ],
+  "known_gaps": [
+    "identity policies and workload Secret references are repository-only and have not been applied",
+    "the identity bootstrap Job remains suspended until an approved production expand window",
+    "MinIO server TLS and client CA verification remain outside this identity-only slice",
+    "legacy shared root credentials remain present during expand and have not been rotated or removed",
+    "live policy diff credential rotation canary rollback and cross-tenant negative probes are absent"
+  ],
+  "closure_blockers": [
+    "approve ExternalSecret identity material and the suspended bootstrap Job execution",
+    "prove exact live user and policy diff without exposing secret values",
+    "canary each consumer identity with allowed and denied prefix probes",
+    "complete MinIO TLS server identity CA distribution and client verification",
+    "remove application root credential references only after all consumers are healthy",
+    "rotate legacy root credentials and complete T+0 T+1 T+3 T+7 observation"
+  ]
+}

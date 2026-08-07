@@ -1,0 +1,5 @@
+{
+  "schema_version": 1,
+  "policy": "No new runtime production DDL. Existing locations are debt and must decrease through versioned migrations.",
+  "allowed_runtime_ddl": {}
+}

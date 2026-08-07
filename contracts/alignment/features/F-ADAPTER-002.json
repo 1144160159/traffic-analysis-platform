@@ -1,0 +1,77 @@
+{
+  "feature_id": "F-ADAPTER-002",
+  "contract_version": 1,
+  "status": "draft",
+  "compatibility": {
+    "preserved_routes": ["/dashboard", "/assets", "/alerts", "/graph", "/topics", "/topics/tunnel", "/topics/exfil", "/topics/apt"],
+    "preserved_actions": [],
+    "preserved_api_operations": [
+      "GET /v1/dashboard/snapshot",
+      "GET /v1/assets/{asset_id}/snapshot",
+      "GET /v1/topics/{topic}/snapshot",
+      "GET /v1/graph/explore"
+    ],
+    "strategy": "compatibility-adapter"
+  },
+  "ui": {
+    "query_id": "adapter.typed-data-normalization.v1",
+    "controls": [],
+    "states": ["loading", "empty", "success", "partial", "stale", "failed"]
+  },
+  "api": {
+    "operation_id": "normalizeTypedPageSnapshotV1",
+    "method": "GET",
+    "path": "/v1/{domain}/snapshot",
+    "response_envelope": "data-meta-error",
+    "async": false
+  },
+  "domain": {
+    "kind": "query",
+    "invariants": [
+      "zero, empty string, empty list, null, missing and unavailable are never collapsed by truthy fallback",
+      "production adapters do not invent IP addresses, identifiers, counts, trends, topology or business rows",
+      "a frontend list cannot be promoted into a production graph, KPI or relationship fact",
+      "live responses never fall back to fixture data and simulation remains explicitly labeled",
+      "legacy field aliases and pagination parameters are explicit versioned mappings with an owner and usage telemetry"
+    ],
+    "states": ["complete", "partial", "stale", "failed"],
+    "compensation": "restore the prior typed adapter artifact while retaining every route, field, control and operation; never restore prohibited demo fill into a write path"
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": ["postgresql", "clickhouse", "opensearch", "nebulagraph", "minio"],
+    "migration": "typed response expansion precedes removal of internal guessing; no external field is removed in this program",
+    "event_types": [],
+    "source_watermarks": ["response.meta.snapshot_id", "response.meta.as_of", "response.meta.source_watermarks"]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["*"],
+    "negative_tests": [
+      "explicit zero remains zero when non-empty child arrays exist",
+      "missing topology or source IP renders unavailable and never a hard-coded private address",
+      "mock-disabled live response cannot import runtime fixture values"
+    ]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["legal zero", "empty collection", "missing required field", "partial source", "legacy explicit alias"],
+    "stop_conditions": ["adapter-derived value differs from the contract field or hides an unavailable source"]
+  },
+  "acceptance": {
+    "tests": [
+      "G0 adapter inventory and no-new-risk ratchet",
+      "G1 typed zero empty missing and partial unit tests",
+      "G2 fixture/live schema diff against real pilot services",
+      "G3 sampled displayed value to source fact reconciliation",
+      "G5 Windows Chrome mock-off missing-source rendering",
+      "G6 canary rollback without removed compatibility surface"
+    ],
+    "evidence": ["production bundle, HAR and trace show no fixture fallback, hard-coded business fact or silent inferred value for the sampled pilot fields"]
+  },
+  "rollout": {
+    "feature_flag": "typed_adapter_cleanup_v1",
+    "strategy": "canary",
+    "rollback_runbook": "doc/07_alignment/runbooks/F-ADAPTER-002-rollback.md"
+  }
+}

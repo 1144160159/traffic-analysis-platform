@@ -1,0 +1,73 @@
+{
+  "feature_id": "F-ALERT-002",
+  "contract_version": 6,
+  "status": "verifying",
+  "compatibility": {
+    "preserved_routes": ["/alerts", "/alerts/:alertId", "/campaigns"],
+    "preserved_actions": ["alert-campaign-link"],
+    "preserved_api_operations": ["GET /v1/alerts/{id}/campaign-links", "POST /v1/alerts/{id}/campaign-links", "DELETE /v1/alerts/{id}/campaign-links/{campaign_id}", "GET /v1/campaigns/{id}/members"],
+    "strategy": "additive-default-off-v2"
+  },
+  "ui": {
+    "query_id": "alert.campaign-links",
+    "controls": [{"control_id": "alert-detail-campaign-link", "action_id": "alert-campaign-link"}, {"control_id": "alert-detail-campaign-unlink", "action_id": "alert-campaign-unlink"}],
+    "states": ["loading", "empty", "accepted", "linked", "unlinked", "partial", "failed", "forbidden"]
+  },
+  "api": {
+    "operation_id": "linkAlertToCampaign",
+    "method": "POST",
+    "path": "/v1/alerts/{id}/campaign-links",
+    "response_envelope": "data-meta-error",
+    "async": false,
+    "idempotency_key": "Idempotency-Key",
+    "revision_field": "expected_revision"
+  },
+  "domain": {
+    "kind": "command",
+    "invariants": [
+      "campaign membership is a relation entity and never an investigation note",
+      "tenant-scoped alert and campaign authorities are checked before the PostgreSQL relation transaction; campaign workbench state is locked inside that transaction",
+      "duplicate commands return the original durable receipt even after a later unlink or relink",
+      "link and unlink atomically advance relation and campaign aggregate revisions, member_count, both histories, both outboxes and audit",
+      "campaign-side member reads and alert-side link reads are tenant-scoped views of the same PostgreSQL relations",
+      "membership event projection ordering is scoped by tenant and relation revision, while aggregate ordering remains scoped by tenant and campaign revision",
+      "ClickHouse, OpenSearch and NebulaGraph acknowledge each relation event independently and no partial target outcome is presented as fully projected"
+    ],
+    "states": ["linked", "unlinked"],
+    "compensation": "unlink using the same relation revision and append an audit event"
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": ["postgresql", "clickhouse", "opensearch", "nebulagraph"],
+    "migration": "deployments/postgres/migrations/202608010800_campaign_event_delivery_projection_v2.sql",
+    "target_projection_migration": "deployments/postgres/migrations/202608010830_campaign_target_projection_worker_v2.sql",
+    "clickhouse_projection_migration": "deployments/clickhouse/migrations/202608010900_campaign_projection_events_v2.sql",
+    "opensearch_projection": {"template": "campaign-projections-v2-template", "write_alias": "campaign-projections-v2-write", "read_alias": "campaign-projections-v2-read"},
+    "event_types": ["traffic.campaign.v2.AlertLinked", "traffic.campaign.v2.AlertUnlinked"],
+    "source_watermarks": ["postgresql.campaign_alert_links.revision", "postgresql.campaign_workbench_state.state_version", "postgresql.campaign_event_projection_watermarks.last_offset", "postgresql.campaign_target_projection_watermarks.target+projection_version+event_id+projection_sha256", "clickhouse.campaign_projection_events_v2.projection_version", "opensearch.campaign-projections-v2-read.projection_version", "nebulagraph.relation.attributes_json.relation_revision", "nebulagraph.relation.attributes_json.projection_sha256"]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["alert:write", "campaign:write"],
+    "negative_tests": ["cross-tenant alert or campaign returns not found", "closed campaign rejects a new link but permits unlink compensation", "stale relation or campaign revision changes no state"]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["link existing campaign", "idempotent duplicate link", "unlink and reconcile counts"],
+    "stop_conditions": ["member counts diverge or relation outbox lag exceeds budget"]
+  },
+  "acceptance": {
+    "tests": ["G0 relation contract and migration", "G1 transaction and idempotency", "G2 real PostgreSQL", "G3 one real Kafka relation event and trace reconciled through PostgreSQL, ClickHouse, OpenSearch and NebulaGraph", "G4 concurrent-link profile", "G5 Windows Chrome link and reverse lookup"],
+    "evidence": ["one trace_id proves alert link, campaign member, audit, outbox and both UI directions", "one relation revision and deterministic projection hash reconcile across PostgreSQL, ClickHouse, OpenSearch and NebulaGraph"]
+  },
+  "rollout": {
+    "feature_flag": "CAMPAIGN_ALERT_LINKS_V1_ENABLED",
+    "aggregate_feature_flag": "CAMPAIGN_AGGREGATE_V2_ENABLED",
+    "event_pipeline_feature_flag": "CAMPAIGN_EVENT_PIPELINE_V2_ENABLED",
+    "target_projection_feature_flag": "CAMPAIGN_TARGET_PROJECTION_V2_ENABLED",
+    "event_topics": ["campaign.events.v2", "campaign.membership.events.v2"],
+    "default": false,
+    "strategy": "canary",
+    "rollback_runbook": "doc/07_alignment/runbooks/F-ALERT-002-rollback.md"
+  }
+}

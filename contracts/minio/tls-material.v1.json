@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-minio-tls-material-v1",
+  "remediation_ids": [
+    "T-MINIO-003",
+    "T-PKI-001"
+  ],
+  "status": "implementing",
+  "phase": "adapter_bundle_built_default_off",
+  "production_applied": false,
+  "cutover_ready": false,
+  "material_manifest": "deployments/kubernetes/security/minio-tls-material.v1.yaml",
+  "external_secret": {
+    "store": "traffic-platform-secret-store",
+    "remote_key": "traffic-platform-prod-minio-tls",
+    "refresh_interval": "1h"
+  },
+  "server_identity": {
+    "namespace": "minio",
+    "external_secret": "minio-server-tls",
+    "target_secret": "minio-server-tls",
+    "secret_keys": [
+      "ca.crt",
+      "private.key",
+      "public.crt"
+    ],
+    "certs_dir": "/etc/minio/certs",
+    "file_mapping": {
+      "public.crt": "public.crt",
+      "private.key": "private.key",
+      "ca.crt": "CAs/ca.crt"
+    },
+    "required_dns_sans": [
+      "minio",
+      "minio.minio",
+      "minio.minio.svc",
+      "minio.minio.svc.cluster.local",
+      "minio-0.minio.minio.svc.cluster.local",
+      "minio-1.minio.minio.svc.cluster.local",
+      "minio-2.minio.minio.svc.cluster.local",
+      "minio-3.minio.minio.svc.cluster.local"
+    ],
+    "extended_key_usage": [
+      "serverAuth"
+    ],
+    "minimum_tls_version": "TLS1.2",
+    "renew_before_days": 30
+  },
+  "client_ca_distribution": [
+    {
+      "namespace": "traffic-analysis",
+      "external_secret": "minio-client-ca",
+      "target_secret": "minio-client-ca",
+      "secret_keys": [
+        "ca.crt"
+      ]
+    },
+    {
+      "namespace": "flink",
+      "external_secret": "minio-client-ca",
+      "target_secret": "minio-client-ca",
+      "secret_keys": [
+        "ca.crt",
+        "truststore.p12"
+      ]
+    },
+    {
+      "namespace": "argo",
+      "external_secret": "minio-client-ca",
+      "target_secret": "minio-client-ca",
+      "secret_keys": [
+        "ca.crt"
+      ]
+    }
+  ],
+  "guardrails": {
+    "secret_values_in_repository_allowed": false,
+    "private_key_in_evidence_allowed": false,
+    "insecure_skip_verify_allowed": false,
+    "partial_server_or_client_cutover_allowed": false,
+    "base_statefulset_modified_in_this_phase": false,
+    "base_consumers_modified_in_this_phase": false,
+    "live_apply_in_this_phase": false
+  },
+  "required_preflight": [
+    "approved issuer and external Secret path exist",
+    "certificate and private key match without emitting private material",
+    "certificate verifies against ca.crt for sslserver purpose",
+    "all required DNS SANs pass hostname verification",
+    "certificate remains valid beyond the 30 day renewal guard",
+    "server and every client adapter patch are built from the same candidate hash",
+    "rollback bundle and current checkpoint multipart and job inventory are captured"
+  ],
+  "known_gaps": [
+    "approved certificate material has not been placed in the external Secret backend",
+    "default-off server and client cutover patches have not been applied",
+    "candidate Go Rust and MLOps images containing the adapters have not been built and signed",
+    "live SAN chain expiry hostname and handshake evidence is absent",
+    "dual trust rotation revoke rollback and two consecutive rotations are unproven"
+  ],
+  "official_references": [
+    "https://docs.min.io/aistor/installation/linux/network-encryption/enable-tls-encryption/",
+    "https://docs.min.io/aistor/installation/linux/network-encryption/",
+    "https://docs.min.io/aistor/operations/network-encryption/tls-troubleshooting/"
+  ]
+}

@@ -1,0 +1,166 @@
+{
+  "feature_id": "F-CAMPAIGN-001",
+  "contract_version": 13,
+  "status": "verifying",
+  "compatibility": {
+    "preserved_routes": ["/campaigns", "/campaigns/:campaignId"],
+    "preserved_actions": ["campaign-assign-owner", "campaign-status-change", "campaign-merge", "campaign-report-generate", "campaign-soar-response"],
+    "preserved_api_operations": ["GET /v1/campaigns", "GET /v1/campaigns/{id}", "POST /v1/campaigns/actions", "POST /v1/campaigns/{id}/actions", "GET /v1/campaigns/{id}/members", "GET /v1/campaigns/{id}/reports/{report_id}", "GET /v1/campaigns/{id}/reports/{report_id}/download", "GET /v1/campaigns/{id}/soar-jobs/{job_id}", "POST /v1/campaigns/{id}/soar-jobs/{job_id}/approval", "POST /v1/campaigns/{id}/soar-jobs/{job_id}/cancel", "POST /v1/campaigns/{id}/soar-jobs/{job_id}/compensate"],
+    "strategy": "expand-migrate-contract"
+  },
+  "ui": {
+    "query_id": "campaign.lifecycle.snapshot",
+    "controls": [
+      {"control_id": "campaign-owner", "action_id": "campaign-assign-owner"},
+      {"control_id": "campaign-status", "action_id": "campaign-status-change"},
+      {"control_id": "campaign-members", "action_id": "campaign-members-read"},
+      {"control_id": "campaign-merge", "action_id": "campaign-merge"},
+      {"control_id": "campaign-soar-request", "action_id": "campaign-soar-response"},
+      {"control_id": "campaign-soar-approval", "action_id": "campaign-soar-approval"},
+      {"control_id": "campaign-soar-cancel", "action_id": "campaign-soar-cancel"},
+      {"control_id": "campaign-soar-compensate", "action_id": "campaign-soar-compensate"}
+    ],
+    "states": ["loading", "empty", "accepted", "pending_approval", "approved_awaiting_executor", "running", "success", "partial", "failed", "cancelled", "compensation_queued", "compensating", "compensated", "compensation_failed"]
+  },
+  "api": {
+    "operation_id": "submitCampaignCommand",
+    "method": "POST",
+    "path": "/v1/campaigns/{id}/actions",
+    "response_envelope": "data-meta-error",
+    "async": true,
+    "idempotency_key": "Idempotency-Key",
+    "revision_field": "expected_revision",
+    "reason_required": true,
+    "accepted_status": 202,
+    "soar_operations": ["getCampaignSOARJob", "decideCampaignSOARJob", "cancelCampaignSOARJob", "compensateCampaignSOARJob"]
+  },
+  "domain": {
+    "kind": "command",
+    "invariants": [
+      "campaign is a versioned aggregate with member, stage, owner and status history",
+      "list rows, detail, membership and report requests share one content-addressed lifecycle snapshot bound to the PostgreSQL aggregate revision, authoritative member count and last event plus the ClickHouse campaign fact watermark",
+      "detail and membership reads reject a stale optional snapshot_id with CAMPAIGN_SNAPSHOT_CONFLICT, and every UI mutation carries the currently displayed snapshot_id while compatibility callers may omit it during rollout",
+    "every aggregate mutation uses stable idempotency and optimistic revision",
+    "when CAMPAIGN_AGGREGATE_V2_ENABLED is false every mutating action fails closed with 503 and no legacy business mutation is executed",
+    "when the aggregate is enabled a compatibility caller missing idempotency, expected revision or reason is normalized explicitly, records compatibility_mode in result, event and audit, and receives the generated idempotency key in the response",
+      "membership link and unlink atomically update the relation and campaign aggregate",
+      "membership is bidirectionally queryable from one repeatable-read PostgreSQL snapshot",
+      "merge locks source and target aggregates in lexical campaign-id order and atomically closes the source, transfers its authoritative members and records one immutable manifest",
+      "a merged source campaign cannot accept later aggregate or membership commands and returns its target campaign identifier",
+      "historical membership backfill is manifest-bound and resumable per campaign, binds only linked revision-zero rows, inserts missing rows and never resurrects an explicit unlink",
+      "report accepted freezes one typed PostgreSQL snapshot and never claims an object exists before its manifest commits",
+      "a leased executor renders JSON, PDF and DOCX from the same frozen model, uploads a deterministic MinIO key and atomically commits report terminal state, action job, aggregate history, outbox and audit",
+      "download is tenant and campaign scoped and verifies size and sha256 against the PostgreSQL object manifest before returning bytes",
+      "SOAR request, approval, executor and compensation states are separate; the original requester cannot approve execution or compensation",
+      "SOAR provider calls use the stable job_id as the idempotency identity and execute outside the PostgreSQL transaction under a recoverable lease",
+      "SOAR completed, partial, failed and compensated states require an immutable provider receipt; HTTP 2xx without a provider receipt never proves an external effect",
+      "SOAR terminal receipt, workflow state, campaign action job, aggregate revision, history, outbox and audit commit in one serializable PostgreSQL transaction",
+      "ClickHouse, OpenSearch and NebulaGraph acknowledge independently and the inbox is applied only after all three target watermarks commit",
+      "a lower projection revision is superseded, while a same-revision event or projection hash mismatch is an identity collision and never reaches an external target",
+      "target replay uses deterministic projection bytes and may reset one target without rewriting already acknowledged targets"
+    ],
+    "states": ["active", "investigating", "contained", "closed"],
+    "compensation": "append an inverse versioned command when the action catalog permits it"
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": ["postgresql", "clickhouse", "opensearch", "nebulagraph", "minio"],
+    "migration": "deployments/postgres/migrations/202608010800_campaign_event_delivery_projection_v2.sql",
+    "merge_migration": "deployments/postgres/migrations/202608010900_campaign_merge_v2.sql",
+    "membership_backfill_migration": "deployments/postgres/migrations/202608010930_campaign_membership_backfill_v1.sql",
+    "report_executor_migration": "deployments/postgres/migrations/202608011000_campaign_report_executor_v2.sql",
+    "soar_workflow_migration": "deployments/postgres/migrations/202608020900_campaign_soar_workflow_v1.sql",
+    "target_projection_migration": "deployments/postgres/migrations/202608010830_campaign_target_projection_worker_v2.sql",
+    "clickhouse_projection_migration": "deployments/clickhouse/migrations/202608010900_campaign_projection_events_v2.sql",
+    "opensearch_projection": {
+      "template": "campaign-projections-v2-template",
+      "write_alias": "campaign-projections-v2-write",
+      "read_alias": "campaign-projections-v2-read"
+    },
+    "target_projection_identity": "tenant_id + length-delimited projection_key; immutable event rows use tenant_id + stream + event_id",
+    "event_types": [
+      "traffic.campaign.v2.OwnerAssigned",
+      "traffic.campaign.v2.StatusChanged",
+      "traffic.campaign.v2.ReportRequested",
+      "traffic.campaign.v2.ReportCompleted",
+      "traffic.campaign.v2.ReportFailed",
+      "traffic.campaign.v2.SoarRequested",
+      "traffic.campaign.v2.SoarCompleted",
+      "traffic.campaign.v2.SoarPartial",
+      "traffic.campaign.v2.SoarFailed",
+      "traffic.campaign.v2.SoarCompensated",
+      "traffic.campaign.v2.SoarCompensationFailed",
+      "traffic.campaign.v2.AlertLinked",
+      "traffic.campaign.v2.AlertUnlinked",
+      "traffic.campaign.v2.Merged",
+      "traffic.campaign.v2.MergeReceived",
+      "traffic.campaign.v2.MembershipBackfilled"
+    ],
+    "source_watermarks": [
+      "postgresql.campaign_workbench_state.state_version",
+      "postgresql.campaign_workbench_state.last_event_id+member_count",
+      "postgresql.campaign_aggregate_history.aggregate_revision",
+      "postgresql.campaign_alert_links.revision",
+      "postgresql.campaign_reports.campaign_revision+snapshot_sha256+artifact_sha256",
+      "postgresql.campaign_soar_jobs.revision+approval_status+executor_status",
+      "postgresql.campaign_soar_execution_receipts.provider+provider_receipt_id+payload_sha256",
+      "postgresql.campaign_event_projection_watermarks.last_offset",
+      "postgresql.campaign_target_projection_watermarks.target+projection_version+event_id+projection_sha256",
+      "clickhouse.campaign_projection_events_v2.projection_version",
+      "opensearch.campaign-projections-v2-read.projection_version",
+      "nebulagraph.entity.metadata_json.projection_version",
+      "nebulagraph.entity.metadata_json.projection_sha256"
+    ]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["campaign:write"],
+    "compatibility_scopes": ["alert:write"],
+    "action_overrides": {"campaign-report-download": ["campaign:report"], "campaign-soar-response": ["playbook:execute"], "campaign-soar-approval": ["playbook:approve"], "campaign-soar-cancel": ["playbook:execute", "campaign:write"], "campaign-soar-compensate": ["playbook:approve"]},
+    "negative_tests": ["cross-tenant member is rejected", "cross-tenant report is not found", "tampered report object is rejected", "closed campaign rejects invalid transition", "SOAR requester self-approval is rejected", "SOAR compensation without a proven external-effect receipt is rejected", "SOAR provider success without a durable receipt is rejected"]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["member link and unlink", "bidirectional member read", "status conflict", "report snapshot and deterministic artifact", "SOAR independent approval, provider receipt and compensation", "bounded source-to-target merge", "bounded resumable membership backfill"],
+    "stop_conditions": ["member counts diverge or action queue budget is exceeded"]
+  },
+  "acceptance": {
+    "tests": [
+      "G0 aggregate contract",
+    "G1 state machine, default-off mutation rejection and compatibility metadata normalization",
+    "G2 real PostgreSQL atomic state, history, audit, outbox, idempotency replay, compatibility propagation, lease, retry, collision, tenant isolation and target rebuild",
+      "G3 one real Kafka event and trace reconciled through PostgreSQL, ClickHouse, OpenSearch and NebulaGraph",
+      "G4 large campaign profile",
+      "G5 Windows Chrome lifecycle"
+    ],
+    "evidence": [
+      "same campaign revision across list, detail, membership, report, audit and projection",
+      "same lifecycle snapshot_id across the selected list row, detail, membership and report source_snapshot_id; a changed lifecycle returns 409 rather than silently mixing versions",
+      "same snapshot sha256 across accepted command, artifact model, PostgreSQL manifest and completion event",
+      "immutable source manifest, per-campaign receipt and per-alert inserted/bound/unchanged/skipped outcome reconcile exactly",
+      "one immutable event document hash and independent applied watermark for each of clickhouse, opensearch and nebulagraph"
+    ]
+  },
+  "rollout": {
+    "feature_flag": "CAMPAIGN_AGGREGATE_V2_ENABLED",
+    "event_pipeline_feature_flag": "CAMPAIGN_EVENT_PIPELINE_V2_ENABLED",
+    "target_projection_feature_flag": "CAMPAIGN_TARGET_PROJECTION_V2_ENABLED",
+    "event_topics": ["campaign.events.v2", "campaign.membership.events.v2"],
+    "event_identity": "stream+event_id",
+    "default": false,
+    "prerequisites": [
+      "versioned migration applied",
+      "campaign membership backfill reconciled",
+      "both topics and ACLs exist",
+      "PostgreSQL target worker migration and ClickHouse shadow table exist",
+      "OpenSearch versioned write/read aliases exist",
+      "NebulaGraph space, entity tag and relation edge accept deterministic tenant-scoped writes",
+      "all three target readiness checks pass before the worker starts",
+      "report-artifacts bucket and lifecycle exist and S3 credentials are injected",
+      "campaign SOAR provider URL and token are injected only when a verified provider is available",
+      "current image bound to evidence manifest"
+    ],
+    "strategy": "canary",
+    "rollback_runbook": "doc/07_alignment/runbooks/F-CAMPAIGN-001-rollback.md"
+  }
+}

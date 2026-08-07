@@ -1,0 +1,14 @@
+{
+  "feature_id": "F-MODEL-001",
+  "contract_version": 1,
+  "status": "draft",
+  "compatibility": {"preserved_routes": ["/models"], "preserved_actions": ["model-version-register", "model-version-activate", "model-version-rollback", "model-evaluation-request"], "preserved_api_operations": ["POST /v1/models/{id}/versions", "POST /v1/models/{id}/versions/{version}/activate", "POST /v1/models/{id}/versions/{version}/rollback"], "strategy": "expand-migrate-contract"},
+  "ui": {"query_id": "model.governance.snapshot", "controls": [{"control_id": "model-activate", "action_id": "model-version-activate"}, {"control_id": "model-rollback", "action_id": "model-version-rollback"}], "states": ["loading", "empty", "accepted", "running", "success", "partial", "failed"]},
+  "api": {"operation_id": "activateModelVersion", "method": "POST", "path": "/v1/models/{id}/versions/{version}/activate", "response_envelope": "data-meta-error", "async": true, "idempotency_key": "Idempotency-Key", "revision_field": "expected_revision"},
+  "domain": {"kind": "command", "invariants": ["activation requires immutable artifact, lineage, evaluation and approved gates", "one model has at most one active version", "broker ACK and serving state are distinct"], "states": ["registered", "validating", "approved", "activating", "active", "deprecated", "failed"], "compensation": "restore the previous approved active version and reconcile serving ACK"},
+  "data": {"authoritative_store": "postgresql", "read_models": ["postgresql", "minio", "redis"], "migration": "add artifact manifest, evaluation gates, revision, outbox and ACK history", "event_types": ["traffic.model.v2.ActivationRequested", "traffic.model.v2.ServingAcknowledged"], "source_watermarks": ["postgresql.model_versions.revision", "kafka.model_updates.offset"]},
+  "permissions": {"tenant_source": "authenticated_identity", "required_scopes": ["model:activate"], "negative_tests": ["unapproved version cannot activate", "cross-tenant artifact is rejected"]},
+  "performance": {"baseline_required": true, "journeys": ["activate", "duplicate activation", "rollback after missing ACK"], "stop_conditions": ["serving/model registry divergence or missing artifact hash"]},
+  "acceptance": {"tests": ["G0 model contract", "G1 lifecycle", "G2 real registry and MinIO", "G3 serving reconcile", "G4 activation load", "G5 Windows Chrome state"], "evidence": ["artifact hash, evaluation, approval, outbox, serving ACK and UI state share one model version"]},
+  "rollout": {"feature_flag": "model_governance_v2", "strategy": "canary", "rollback_runbook": "doc/07_alignment/runbooks/F-MODEL-001-rollback.md"}
+}

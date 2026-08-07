@@ -1,0 +1,223 @@
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-clickhouse-deterministic-sharding-v1",
+  "remediation_id": "T-CH-002",
+  "status": "implementing",
+  "coverage_status": "PARTIAL_ALERT_FEEDBACK_V2_CANDIDATE",
+  "production_applied": false,
+  "captured_at": "2026-08-03T00:00:00+08:00",
+  "source": "read_only_live_inventory_and_repository_writer_reader_scan",
+  "cluster": "traffic_cluster",
+  "migration_policy": {
+    "sequence": [
+      "expand_v2",
+      "enable_guarded_dual_write",
+      "partition_backfill",
+      "business_key_count_hash_sample_reconcile",
+      "shadow_read_correctness_and_performance",
+      "read_cutover",
+      "stop_v1_writes",
+      "rollback_observation",
+      "lifecycle_cleanup"
+    ],
+    "in_place_rewrite_forbidden": true,
+    "silent_secondary_write_failure_forbidden": true,
+    "online_resource_budget_required": true
+  },
+  "first_vertical_candidate": {
+    "table": "alert_feedback",
+    "reason": "small live footprint and a durable PostgreSQL inbox permit a reversible fail-closed dual-write slice",
+    "migration": "deployments/clickhouse/migrations/202608031330_alert_feedback_v2.sql",
+    "write_flag": "MODEL_FEEDBACK_CLICKHOUSE_PROJECTION_V2_ENABLED",
+    "write_flag_default": false,
+    "write_table": "traffic.alert_feedback_v2",
+    "read_cutover_implemented": false,
+    "backfill_executed": false
+  },
+  "distributed_tables": [
+    {
+      "table": "alert_feedback",
+      "current_sharding_key": "rand()",
+      "target_sharding_key": "cityHash64(tenant_id,alert_id)",
+      "business_identity": ["tenant_id", "feedback_id"],
+      "primary_access_key": ["tenant_id", "alert_id"],
+      "live_rows_by_primary_shard": [150, 104],
+      "writers": ["rules/model_feedback_inbox_worker"],
+      "readers": ["rules/mlops_orchestrator", "alert/feedback_repository_fallback"],
+      "rollout_stage": "expand_candidate"
+    },
+    {
+      "table": "alerts",
+      "current_sharding_key": "rand()",
+      "target_sharding_key": "cityHash64(tenant_id,alert_id)",
+      "business_identity": ["tenant_id", "alert_id"],
+      "live_rows_by_primary_shard": [175710172, 175722067],
+      "writers": ["flink-alert-generator-job"],
+      "readers": ["control-plane alert and dashboard services"],
+      "rollout_stage": "inventory"
+    },
+    {
+      "table": "alerts_latest",
+      "current_sharding_key": "cityHash64(tenant_id,alert_id)",
+      "target_sharding_key": "cityHash64(tenant_id,alert_id)",
+      "business_identity": ["tenant_id", "alert_id"],
+      "writers": ["ClickHouse projection"],
+      "readers": ["control-plane alert services"],
+      "rollout_stage": "already_deterministic"
+    },
+    {
+      "table": "attack_chain_recommendations",
+      "current_sharding_key": "rand()",
+      "target_sharding_key": "cityHash64(tenant_id,campaign_id)",
+      "business_identity": ["tenant_id", "campaign_id"],
+      "live_rows_by_primary_shard": [11, 13],
+      "writers": ["campaign recommendation projection"],
+      "readers": ["campaign services"],
+      "rollout_stage": "inventory"
+    },
+    {
+      "table": "campaigns",
+      "current_sharding_key": "rand()",
+      "target_sharding_key": "cityHash64(tenant_id,campaign_id)",
+      "business_identity": ["tenant_id", "campaign_id"],
+      "live_rows_by_primary_shard": [9121140, 9122184],
+      "writers": ["flink-cep-job"],
+      "readers": ["campaign services"],
+      "rollout_stage": "inventory"
+    },
+    {
+      "table": "detections_behavior",
+      "current_sharding_key": "rand()",
+      "target_sharding_key": "cityHash64(tenant_id,community_id)",
+      "business_identity": ["tenant_id", "community_id", "window_start", "entity_id"],
+      "live_rows_by_primary_shard": [175704508, 175668629],
+      "writers": ["flink-rule-job", "flink-behavior-job"],
+      "readers": ["detection services"],
+      "rollout_stage": "inventory"
+    },
+    {
+      "table": "device_logs",
+      "current_sharding_key": "rand()",
+      "target_sharding_key": "cityHash64(tenant_id,log_id)",
+      "business_identity": ["tenant_id", "log_id"],
+      "live_rows_by_primary_shard": [0, 0],
+      "writers": ["audit event consumer"],
+      "readers": ["audit services"],
+      "rollout_stage": "inventory"
+    },
+    {
+      "table": "dlq_events",
+      "current_sharding_key": "rand()",
+      "target_sharding_key": "cityHash64(tenant_id,source_topic,source_key)",
+      "business_identity": ["tenant_id", "source_topic", "source_partition", "source_offset"],
+      "live_rows_by_primary_shard": [0, 0],
+      "writers": ["audit event consumer"],
+      "readers": ["operations services"],
+      "rollout_stage": "inventory"
+    },
+    {
+      "table": "entity_graph_edges",
+      "current_sharding_key": "cityHash64(tenant_id,relation_id)",
+      "target_sharding_key": "cityHash64(tenant_id,relation_id)",
+      "business_identity": ["tenant_id", "relation_id"],
+      "writers": ["graph projection"],
+      "readers": ["graph services"],
+      "rollout_stage": "already_deterministic"
+    },
+    {
+      "table": "entity_graph_nodes",
+      "current_sharding_key": "cityHash64(tenant_id,entity_id)",
+      "target_sharding_key": "cityHash64(tenant_id,entity_id)",
+      "business_identity": ["tenant_id", "entity_id"],
+      "writers": ["graph projection"],
+      "readers": ["graph services"],
+      "rollout_stage": "already_deterministic"
+    },
+    {
+      "table": "evidence",
+      "current_sharding_key": "rand()",
+      "target_sharding_key": "cityHash64(tenant_id,alert_id)",
+      "business_identity": ["tenant_id", "evidence_id"],
+      "live_rows_by_primary_shard": [100263175, 100262287],
+      "writers": ["flink-alert-generator-job", "alert auto-generator"],
+      "readers": ["alert evidence services"],
+      "rollout_stage": "inventory"
+    },
+    {
+      "table": "feature_fp",
+      "current_sharding_key": "cityHash64(tenant_id,community_id)",
+      "target_sharding_key": "cityHash64(tenant_id,community_id)",
+      "business_identity": ["tenant_id", "community_id", "window_start"],
+      "writers": ["feature projection"],
+      "readers": ["feature services"],
+      "rollout_stage": "already_deterministic"
+    },
+    {
+      "table": "feature_stat",
+      "current_sharding_key": "rand()",
+      "target_sharding_key": "cityHash64(tenant_id,community_id)",
+      "business_identity": ["tenant_id", "community_id", "window_start", "feature_name"],
+      "live_rows_by_primary_shard": [175818834, 175801016],
+      "writers": ["flink-feature-job"],
+      "readers": ["feature and MLOps services"],
+      "rollout_stage": "inventory"
+    },
+    {
+      "table": "flows_raw",
+      "current_sharding_key": "rand()",
+      "target_sharding_key": "cityHash64(tenant_id,community_id)",
+      "business_identity": ["tenant_id", "flow_id"],
+      "live_rows_by_primary_shard": [575668374, 575681144],
+      "writers": ["flink-session-job"],
+      "readers": ["flow, asset, topic, graph and detection services"],
+      "rollout_stage": "inventory"
+    },
+    {
+      "table": "graph_query_log",
+      "current_sharding_key": "cityHash64(tenant_id,query_id)",
+      "target_sharding_key": "cityHash64(tenant_id,query_id)",
+      "business_identity": ["tenant_id", "query_id"],
+      "writers": ["graph service"],
+      "readers": ["graph operations"],
+      "rollout_stage": "already_deterministic"
+    },
+    {
+      "table": "pcap_index",
+      "current_sharding_key": "rand()",
+      "target_sharding_key": "cityHash64(tenant_id,file_key)",
+      "business_identity": ["tenant_id", "file_key"],
+      "live_rows_by_primary_shard": [0, 0],
+      "writers": ["flink-pcap-index-job"],
+      "readers": ["pcap services"],
+      "rollout_stage": "inventory"
+    },
+    {
+      "table": "sessions",
+      "current_sharding_key": "rand()",
+      "target_sharding_key": "cityHash64(tenant_id,community_id)",
+      "business_identity": ["tenant_id", "session_id"],
+      "live_rows_by_primary_shard": [205158725, 205148444],
+      "writers": ["flink-session-job"],
+      "readers": ["session, asset, topic and graph services"],
+      "rollout_stage": "inventory"
+    },
+    {
+      "table": "user_events",
+      "current_sharding_key": "rand()",
+      "target_sharding_key": "cityHash64(tenant_id,user_id)",
+      "business_identity": ["tenant_id", "event_id"],
+      "live_rows_by_primary_shard": [180, 140],
+      "writers": ["audit event consumer"],
+      "readers": ["audit and user analytics services"],
+      "rollout_stage": "inventory"
+    }
+  ],
+  "closure_blockers": [
+    "apply the alert_feedback V2 expand migration through the immutable migration runner on every node",
+    "capture replica health before enabling V2 dual-write",
+    "backfill and reconcile alert_feedback by business key count hash and sample",
+    "implement and prove shadow reads before any read cutover",
+    "profile and migrate the remaining twelve rand-sharded tables under explicit resource budgets",
+    "observe rollback windows before stopping V1 writes or removing V1 tables"
+  ]
+}

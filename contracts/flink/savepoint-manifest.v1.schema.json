@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://traffic.analysis.local/contracts/flink/savepoint-manifest.v1.schema.json",
+  "title": "Flink application migration savepoint manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "source_cluster_id", "savepoints"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "source_cluster_id": {"const": "flink-traffic"},
+    "savepoints": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": false,
+      "patternProperties": {
+        "^flink-[a-z0-9-]+-job$": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["uri", "sha256", "source_job_id"],
+          "properties": {
+            "uri": {
+              "type": "string",
+              "pattern": "^s3://flink-checkpoints/savepoints/[A-Za-z0-9._/-]+$"
+            },
+            "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            "source_job_id": {"type": "string", "pattern": "^[0-9a-f]{32}$"}
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "contract_id": "traffic-platform-kafka-event-envelope-idempotency-v1",
+  "remediation_id": "T-KAFKA-002",
+  "status": "implementing",
+  "production_applied": false,
+  "coverage_status": "PARTIAL_DETECTION_VERTICAL_SLICE",
+  "wire_source": "proto/traffic/v1/common.proto",
+  "envelope_message": "traffic.v1.EventHeader",
+  "required_fields": [
+    "event_id", "event_type", "schema_version", "tenant_id",
+    "aggregate_type", "aggregate_id", "aggregate_version",
+    "occurred_at", "produced_at", "trace_id", "causation_id",
+    "correlation_id", "idempotency_key", "producer"
+  ],
+  "compatibility": {
+    "mode": "additive",
+    "removed_fields": [],
+    "renumbered_fields": [],
+    "legacy_event_header_fields_preserved": [
+      "event_id", "tenant_id", "run_id", "event_ts", "ingest_ts",
+      "probe_id", "feature_set_id", "kafka_ts", "flink_out_ts"
+    ],
+    "unknown_enum_policy": "consumers retain or reject unknown values explicitly; no silent zero-value success",
+    "large_object_policy": "object-reference-only"
+  },
+  "detection_vertical_slice": {
+    "root_event_source": "probe-agent traffic.v1.FlowEvent",
+    "source": "traffic.v1.SessionEvent",
+    "feature": "traffic.v1.FeatureStat",
+    "detection": "traffic.v1.DetectionBehavior",
+    "projection": "alert-service Alert",
+    "event_type": "traffic.detection.behavior.v1",
+    "schema_version": "1",
+    "partition_key": "tenant_id:community_id",
+    "identity_rule": "deterministic UUIDv5 flow and event IDs from the canonical flow window; deterministic behavior event_id from source event identity; deterministic tenant-scoped alert_id from event_id",
+    "idempotency_rule": "idempotency_key equals event_id; replay keeps the same event_id and alert_id",
+    "source_context": ["FiveTuple tuple", "repeated string evidence_ids"],
+    "consumer_policy": "fail closed to DLQ before offset commit when envelope or source tuple is incomplete"
+  },
+  "migration": {
+    "current_stage": "EXPAND_AND_OFFLINE_VERIFY",
+    "required_sequence": [
+      "publish additive Proto and regenerated Go Java Rust clients",
+      "deploy feature and behavior producers before strict alert consumer",
+      "drain or version-route legacy messages without the v1 envelope",
+      "shadow replay a frozen detection set and compare event_id alert_id tuple and evidence references",
+      "enable strict consumer for an internal tenant",
+      "inject duplicate out-of-order poison and DLQ acknowledgement failures",
+      "reconcile Kafka offsets with alert projections and audit watermarks",
+      "observe T+0 T+1 T+3 T+7 before broader rollout"
+    ],
+    "rollback": "disable strict-consumer rollout and restore the previous consumer image while retaining additive fields and immutable source events; never rewrite committed event IDs"
+  },
+  "remaining_gates": [
+    "inventory and migrate every canonical producer and consumer to the envelope",
+    "register Proto and JSON compatibility policy in the approved registry",
+    "real Kafka replay proves one business ID set for the same source events",
+    "real duplicate out-of-order poison and DLQ failure injection",
+    "offset projection audit and cross-store reconciliation",
+    "partition ordering lag message-size PII and throughput budgets",
+    "approved canary rollback observation and independent sign-off"
+  ]
+}

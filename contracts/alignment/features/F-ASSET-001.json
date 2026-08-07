@@ -1,0 +1,57 @@
+{
+  "feature_id": "F-ASSET-001",
+  "contract_version": 1,
+  "status": "draft",
+  "compatibility": {
+    "preserved_routes": ["/assets"],
+    "preserved_actions": [],
+    "preserved_api_operations": [],
+    "preserved_query_states": ["limit", "offset", "asset_type", "status", "search", "department", "campus"],
+    "strategy": "expand-migrate-contract"
+  },
+  "ui": {
+    "query_id": "asset.inventory.list",
+    "controls": [],
+    "states": ["loading", "empty", "success", "partial", "stale", "forbidden", "failed"]
+  },
+  "api": {
+    "operation_id": "listAssetsV2",
+    "method": "GET",
+    "path": "/v1/assets",
+    "response_envelope": "data-meta-error",
+    "async": false
+  },
+  "domain": {
+    "kind": "query",
+    "invariants": [
+      "canonical clients use an opaque cursor bound to tenant, filters and stable sort",
+      "offset remains additive compatibility and emits deprecation metadata",
+      "concurrent inserts do not duplicate or skip rows in one snapshot"
+    ]
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": ["postgresql", "opensearch"],
+    "migration": "expand cursor index and signed cursor codec before client cutover",
+    "source_watermarks": ["postgresql.assets.updated_at", "opensearch.assets.projection_version"]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["asset:read"],
+    "negative_tests": ["cross-tenant cursor is rejected", "cursor with changed filters is rejected"]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["first page", "deep cursor page", "filtered search with cold and warm cache"],
+    "stop_conditions": ["P99 or database scan budget exceeds the approved baseline"]
+  },
+  "acceptance": {
+    "tests": ["G0 generated-client contract", "G1 cursor codec and repository", "G2 real PostgreSQL", "G3 PostgreSQL/OpenSearch reconcile", "G4 fixed-scale performance", "G5 Windows Chrome pagination"],
+    "evidence": ["HAR, trace, query profile and page-boundary row identities from one run_id"]
+  },
+  "rollout": {
+    "feature_flag": "asset_cursor_v2",
+    "strategy": "shadow-read",
+    "rollback_runbook": "doc/07_alignment/runbooks/F-ASSET-001-rollback.md"
+  }
+}

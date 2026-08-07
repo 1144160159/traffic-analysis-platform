@@ -1,0 +1,366 @@
+{
+  "schema_version": 1,
+  "control_id": "T-PKI-001",
+  "status": "candidate_default_off",
+  "production_applied": false,
+  "authorities": [
+    {
+      "domain": "cluster_secret_and_manual_issuer_workflow",
+      "path": "deployments/kubernetes/deploy.sh",
+      "sha256": "bf4dc04e6a9945981ee924fa458727e4f984659c17c3196d281d8f1a291ede78"
+    },
+    {
+      "domain": "external_secret_rotation_metadata",
+      "path": "deployments/kubernetes/security/external-secrets-template.yaml",
+      "sha256": "6cf6fb052d137d7331bedafd5246ccecccf0fe6fd92ffb8c29e765309ab9944a"
+    },
+    {
+      "domain": "gateway_and_keycloak_transport",
+      "path": "deployments/kubernetes/infrastructure/08-gateway.yaml",
+      "sha256": "687eaa2a0e2c31a5a46e493208ea946c7f596336c875df2ec3e74c29ed18d289"
+    },
+    {
+      "domain": "go_workload_bindings",
+      "path": "deployments/kubernetes/applications/go-services.yaml",
+      "sha256": "47178b3d1e62914e11147eea5045e7b6c17fa231332396a12c8a949534a34e5d"
+    },
+    {
+      "domain": "ingest_production_guard",
+      "path": "go/control-plane/internal/ingest/config/loader.go",
+      "sha256": "5d88b8b21f12d723a88f7110b34e548a6c0680b6a36e469a05ac1ba87bb19675"
+    },
+    {
+      "domain": "ingest_server_configuration",
+      "path": "go/control-plane/internal/ingest/config/config.go",
+      "sha256": "89012db97b50fdc4758698f34061994a4ad09715ff365b003924afdfaccd603b"
+    },
+    {
+      "domain": "ingest_tls_listener",
+      "path": "go/control-plane/cmd/ingest-gateway/main.go",
+      "sha256": "0558e30f07e5280c42927f830d76d767e87c43919c3e0ca93f1d9cb914ec5d1b"
+    },
+    {
+      "domain": "kafka_broker_transport",
+      "path": "deployments/kubernetes/infrastructure/01-kafka.yaml",
+      "sha256": "fe5ae4421e5adfef9bf98ba62188ce8f6220c8192c8d94695bae5bf0de538e2f"
+    },
+    {
+      "domain": "minio_tls_material",
+      "path": "deployments/kubernetes/security/minio-tls-material.v1.yaml",
+      "sha256": "bd40d5c92a5c1fa0ce51cb815e259ad950340edffb84d75af7fb2f0ec0182a05"
+    },
+    {
+      "domain": "opensearch_target_pki",
+      "path": "deployments/kubernetes/security/opensearch-ha-v1/external-secrets.template.yaml",
+      "sha256": "366c4374a06628c6b880c47861d2d7dd9fac318183ce20a34b50a791c1745698"
+    },
+    {
+      "domain": "probe_grpc_transport",
+      "path": "rust/probe-agent/probe-agent/src/sender/grpc.rs",
+      "sha256": "45168c0b1f8bd96dac2c2b77a8b64fb586f4eb47f1e956d7b09a7fa786f658b3"
+    },
+    {
+      "domain": "probe_leaf_certificate_profile",
+      "path": "rust/probe-agent/scripts/generate-mtls-certs.sh",
+      "sha256": "126c332cdbf6d222bddc88bbd11dcf305d2dbcf9b72b46e62faaf80f21f53e1c"
+    },
+    {
+      "domain": "probe_transport_guard",
+      "path": "rust/probe-agent/probe-agent/src/config.rs",
+      "sha256": "fad305ec12c957ecff1cc36556d40bdc9a643be653c1423a4d6dcba998b2f46d"
+    },
+    {
+      "domain": "probe_workload_bindings",
+      "path": "deployments/kubernetes/applications/probe-agent.yaml",
+      "sha256": "b7969b9001297d381f09a09c9a3b71bd8bd3ccfc8bfca0a599f9a04afff865f3"
+    }
+  ],
+  "policy": {
+    "remote_transport": "TLS with hostname verification; mTLS where client identity is required",
+    "plaintext_exception": "loopback development only or explicitly reviewed internal non-secret health/metrics",
+    "leaf_maximum_validity_days": 90,
+    "renew_before_days": 30,
+    "private_key_serialization": "forbidden",
+    "rotation": "expand dual trust serial canary cutover revoke rollback and two consecutive live rotations",
+    "revocation": "issuer-specific revocation or short-lived identity replacement must be proven"
+  },
+  "certificate_domains": [
+    {
+      "domain_id": "probe_ingest_mtls",
+      "owner": "probe-domain-owner",
+      "current_issuer": "repository_generated_self_signed_ca",
+      "server_identity": {
+        "workload": "traffic-analysis/Deployment/ingest-gateway",
+        "secret": "ingest-gateway-certs",
+        "certificate_key": "server-cert.pem",
+        "private_key_reference": "server-key.pem",
+        "dns_names": [
+          "ingest-gateway",
+          "ingest-gateway.traffic-analysis.svc",
+          "ingest-gateway.traffic-analysis.svc.cluster.local"
+        ],
+        "extended_key_usage": [
+          "serverAuth"
+        ]
+      },
+      "client_identity": {
+        "workload": "traffic-analysis/DaemonSet/probe-agent",
+        "secret": "probe-agent-certs",
+        "certificate_key": "client-cert.pem",
+        "private_key_reference": "client-key.pem",
+        "dns_names": [
+          "probe-agent"
+        ],
+        "extended_key_usage": [
+          "clientAuth"
+        ],
+        "identity_cardinality": "shared_daemonset_secret"
+      },
+      "leaf_validity_days": 90,
+      "renewal_guard_days": 30,
+      "server_minimum_tls": "TLS1.3",
+      "production_required": true,
+      "rotation_mode": "stop_before_expiry_then_controlled_dual_trust_rotation",
+      "status": "PARTIAL",
+      "blocking_gaps": [
+        "per_probe_certificate_identity_missing",
+        "approved_online_issuer_and_revocation_missing",
+        "dual_trust_canary_and_rollback_unproven",
+        "two_consecutive_live_rotations_unproven"
+      ]
+    },
+    {
+      "domain_id": "kafka_tls_and_scram",
+      "owner": "kafka-platform-owner",
+      "current_issuer": "repository_generated_self_signed_ca",
+      "server_identity": {
+        "workload": "middleware/StatefulSet/kafka",
+        "secret": "kafka-broker-tls",
+        "certificate_key": "kafka.keystore.p12",
+        "private_key_reference": "embedded_in_keystore",
+        "dns_name_count": 7,
+        "identity_cardinality": "one_certificate_shared_by_three_brokers"
+      },
+      "client_identity": {
+        "secret": "kafka-client-tls",
+        "material": [
+          "kafka.truststore.p12",
+          "ca.crt"
+        ],
+        "client_certificate_present": false,
+        "authentication": "SCRAM_SHA_512"
+      },
+      "leaf_validity_days": 825,
+      "renewal_guard_days": null,
+      "server_minimum_tls": "runtime_default_not_explicit",
+      "production_required": true,
+      "rotation_mode": "manual_regeneration_without_serial_canary",
+      "status": "PARTIAL",
+      "blocking_gaps": [
+        "leaf_validity_exceeds_90_days",
+        "per_broker_certificate_identity_missing",
+        "client_certificate_identity_missing",
+        "expiry_guard_and_dual_trust_rotation_missing",
+        "minimum_tls_version_not_explicit"
+      ]
+    },
+    {
+      "domain_id": "keycloak_https",
+      "owner": "security-platform-owner",
+      "current_issuer": "self_signed_leaf",
+      "server_identity": {
+        "workload": "iam/Deployment/keycloak",
+        "secret": "keycloak-tls",
+        "certificate_key": "tls.crt",
+        "private_key_reference": "tls.key",
+        "dns_names": [
+          "keycloak",
+          "keycloak.iam",
+          "keycloak.iam.svc",
+          "keycloak.iam.svc.cluster.local"
+        ]
+      },
+      "client_identity": null,
+      "leaf_validity_days": 825,
+      "renewal_guard_days": null,
+      "server_minimum_tls": "runtime_default_not_explicit",
+      "production_required": true,
+      "rotation_mode": "create_only_if_missing",
+      "status": "PARTIAL",
+      "blocking_gaps": [
+        "self_signed_leaf_without_approved_chain",
+        "leaf_validity_exceeds_90_days",
+        "expiry_guard_rotation_and_revocation_missing",
+        "public_hostname_and_browser_chain_acceptance_unproven"
+      ]
+    },
+    {
+      "domain_id": "minio_server_tls_target",
+      "owner": "minio-platform-owner",
+      "current_issuer": "approved_external_secret_store_placeholder",
+      "server_identity": {
+        "workload": "minio/StatefulSet/minio",
+        "secret": "minio-server-tls",
+        "certificate_key": "public.crt",
+        "private_key_reference": "private.key",
+        "ca_key": "ca.crt",
+        "certs_dir": "/etc/minio/certs",
+        "dns_names": [
+          "minio",
+          "minio.minio",
+          "minio.minio.svc",
+          "minio.minio.svc.cluster.local",
+          "minio-0.minio.minio.svc.cluster.local",
+          "minio-1.minio.minio.svc.cluster.local",
+          "minio-2.minio.minio.svc.cluster.local",
+          "minio-3.minio.minio.svc.cluster.local"
+        ],
+        "identity_cardinality": "one_multi_san_certificate_for_four_servers"
+      },
+      "client_ca_namespaces": [
+        "argo",
+        "flink",
+        "traffic-analysis"
+      ],
+      "leaf_validity_days": null,
+      "renewal_guard_days": 30,
+      "server_minimum_tls": "TLS1.2",
+      "production_required": true,
+      "rotation_mode": "external_secret_expand_then_all_consumer_serial_cutover",
+      "status": "CANDIDATE_DEFAULT_OFF",
+      "blocking_gaps": [
+        "approved_minio_issuer_path_not_materialized",
+        "candidate_images_and_live_cutover_evidence_incomplete",
+        "live_minio_san_chain_expiry_hostname_and_handshake_unproven",
+        "minio_dual_trust_rotation_revoke_and_rollback_unproven",
+        "two_consecutive_live_rotations_unproven"
+      ]
+    },
+    {
+      "domain_id": "opensearch_target_mtls",
+      "owner": "opensearch-platform-owner",
+      "current_issuer": "approved_external_secret_store_placeholder",
+      "server_identity": {
+        "workload": "middleware/StatefulSet/opensearch",
+        "secret": "opensearch-node-tls",
+        "certificate_key": "tls.crt",
+        "private_key_reference": "tls.key"
+      },
+      "client_identities": [
+        "alert-service-opensearch-tls",
+        "asset-service-opensearch-tls",
+        "flink-alert-generator-opensearch-tls",
+        "opensearch-admin-tls",
+        "opensearch-monitor-tls",
+        "opensearch-node-tls",
+        "opensearch-snapshot-operator-tls"
+      ],
+      "leaf_validity_days": null,
+      "renewal_guard_days": 14,
+      "server_minimum_tls": "TLS1.2_target",
+      "production_required": true,
+      "rotation_mode": "external_secret_refresh_then_serial_canary_target",
+      "status": "CANDIDATE_DEFAULT_OFF",
+      "blocking_gaps": [
+        "approved_issuer_paths_not_materialized",
+        "candidate_not_applied",
+        "certificate_san_chain_revocation_and_rotation_unproven"
+      ]
+    }
+  ],
+  "transport_guards": {
+    "probe_remote_plaintext_rejected": true,
+    "probe_https_requires_complete_mtls": true,
+    "probe_partial_identity_rejected": true,
+    "probe_generator_has_no_fixed_node_ip": true,
+    "probe_leaf_validity_at_most_90_days": true,
+    "probe_existing_certificates_checked_for_30_days": true,
+    "probe_existing_chain_and_hostname_verified": true,
+    "ingest_production_requires_mtls": true,
+    "ingest_production_rejects_anonymous_token_mode": true,
+    "ingest_load_runs_full_validation": true,
+    "ingest_server_requires_verified_client_certificate": true,
+    "ingest_server_minimum_tls13": true,
+    "ingest_workload_declares_production_mtls": true,
+    "probe_workload_declares_https_and_identity": true,
+    "kafka_transport_uses_sasl_ssl": true,
+    "kafka_client_hostname_verification_not_disabled": true,
+    "external_secret_refresh_metadata_present": true,
+    "minio_tls_bundle_is_default_off_and_guarded": true
+  },
+  "plaintext_dependencies": [
+    {
+      "binding_id": "postgresql_application_clients",
+      "observed": "sslmode=disable",
+      "classification": "production_gap",
+      "owner": "postgres-platform-owner"
+    },
+    {
+      "binding_id": "minio_application_and_init_clients",
+      "observed": "http://minio.minio.svc:9000",
+      "classification": "production_gap_with_default_off_tls_bundle",
+      "owner": "minio-platform-owner"
+    },
+    {
+      "binding_id": "opensearch_current_application_clients",
+      "observed": "http://opensearch.middleware.svc:9200",
+      "classification": "production_gap_with_default_off_tls_target",
+      "owner": "opensearch-platform-owner"
+    },
+    {
+      "binding_id": "cluster_local_health_and_metrics",
+      "observed": "loopback_or_cluster_internal_http",
+      "classification": "requires_network_policy_and_non_secret_payload_review",
+      "owner": "sre-platform-owner"
+    }
+  ],
+  "blocking_gaps": [
+    "approved_issuer_paths_not_materialized",
+    "approved_minio_issuer_path_not_materialized",
+    "approved_online_issuer_and_revocation_missing",
+    "candidate_images_and_live_cutover_evidence_incomplete",
+    "candidate_not_applied",
+    "certificate_san_chain_revocation_and_rotation_unproven",
+    "client_certificate_identity_missing",
+    "dual_trust_canary_and_rollback_unproven",
+    "expiry_guard_and_dual_trust_rotation_missing",
+    "expiry_guard_rotation_and_revocation_missing",
+    "leaf_validity_exceeds_90_days",
+    "live_minio_san_chain_expiry_hostname_and_handshake_unproven",
+    "minimum_tls_version_not_explicit",
+    "minio_dual_trust_rotation_revoke_and_rollback_unproven",
+    "per_broker_certificate_identity_missing",
+    "per_probe_certificate_identity_missing",
+    "public_hostname_and_browser_chain_acceptance_unproven",
+    "self_signed_leaf_without_approved_chain",
+    "two_consecutive_live_rotations_unproven"
+  ],
+  "counts": {
+    "certificate_domains": 5,
+    "domains_partial_or_default_off": 5,
+    "transport_guards": 18,
+    "transport_guards_passing": 18,
+    "plaintext_dependencies": 4,
+    "production_plaintext_gaps": 3,
+    "blocking_gaps": 19
+  },
+  "acceptance": {
+    "repository": [
+      "catalog and authority hashes are current",
+      "remote probe transport cannot downgrade to plaintext or partial TLS",
+      "ingest production startup requires mTLS token auth and full config validation",
+      "probe leaf profile has bounded validity SAN EKU and key permissions",
+      "existing probe certificates fail deploy readiness within the renewal window",
+      "MinIO server and three client namespaces have an expand-only redacted TLS material contract"
+    ],
+    "remaining": [
+      "approved issuer inventory and offline root custody",
+      "per-workload and per-probe unique identities",
+      "live SAN chain EKU expiry revocation and trust reconciliation",
+      "two consecutive rotations dual trust canary rollback and T+ observation",
+      "PostgreSQL MinIO OpenSearch Kafka and browser transport migration",
+      "performance fault Windows Chrome independent G7 and external G8 gates"
+    ]
+  },
+  "catalog_sha256": "a8aa990682e5b65f5f720c600b0ea3d6e7003b4da232c3437854b79e8639507a"
+}

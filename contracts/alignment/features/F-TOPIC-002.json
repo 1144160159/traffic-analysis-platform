@@ -1,0 +1,61 @@
+{
+  "feature_id": "F-TOPIC-002",
+  "contract_version": 1,
+  "status": "verifying",
+  "compatibility": {
+    "preserved_routes": ["/topics"],
+    "preserved_actions": ["topic-action-submit"],
+    "preserved_api_operations": ["POST /v1/topics/{topic}/actions"],
+    "strategy": "expand-migrate-contract"
+  },
+  "ui": {
+    "query_id": "topic.action.job",
+    "controls": [{"control_id": "topic-action-submit", "action_id": "topic-action-submit"}],
+    "states": ["accepted", "running", "success", "partial", "failed", "cancelled", "compensating"]
+  },
+  "api": {
+    "operation_id": "createTopicActionJob",
+    "method": "POST",
+    "path": "/v1/topics/{topic}/actions",
+    "response_envelope": "data-meta-error",
+    "async": true,
+    "idempotency_key": "Idempotency-Key",
+    "revision_field": "expected_revision"
+  },
+  "domain": {
+    "kind": "command",
+    "invariants": [
+      "queued means accepted and never final success",
+      "action catalog defines approval, retry and compensation",
+      "final success references a verifiable downstream effect"
+    ],
+    "states": ["accepted", "running", "completed", "partial", "failed", "cancelled", "compensating", "compensated"],
+    "compensation": "execute the action-catalog compensation and persist its final receipt"
+  },
+  "data": {
+    "authoritative_store": "postgresql",
+    "read_models": ["postgresql", "clickhouse", "opensearch", "nebulagraph", "minio"],
+    "migration": "deployments/postgres/migrations/202607302000_topic_alignment.sql",
+    "event_types": ["traffic.topic.v2.ActionRequested", "traffic.topic.v2.ActionResult"],
+    "source_watermarks": ["postgresql.topic_actions.revision", "kafka.traffic.topic.action.v2.offset"]
+  },
+  "permissions": {
+    "tenant_source": "authenticated_identity",
+    "required_scopes": ["topic:write"],
+    "negative_tests": ["viewer cannot create an action", "cross-tenant target cannot be resolved"]
+  },
+  "performance": {
+    "baseline_required": true,
+    "journeys": ["idempotent submit", "executor retry", "cancel while running", "compensation"],
+    "stop_conditions": ["unrecoverable executor lag or duplicate external effect"]
+  },
+  "acceptance": {
+    "tests": ["G0 action catalog contract", "G1 state machine and idempotency", "G2 real executor", "G3 final-effect reconcile", "G4 queue performance", "G5 Windows Chrome lifecycle"],
+    "evidence": ["one trace_id connects browser, job, audit, outbox, executor receipt and final effect"]
+  },
+  "rollout": {
+    "feature_flag": "topic_executor_v2",
+    "strategy": "canary",
+    "rollback_runbook": "doc/07_alignment/runbooks/F-TOPIC-002-rollback.md"
+  }
+}
