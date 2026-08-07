@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -37,6 +38,18 @@ type OpenSearchWriter struct {
 	logger                  *zap.Logger
 	mu                      sync.RWMutex
 	closed                  bool
+}
+
+type OpenSearchProjectionWriteIndex struct {
+	Index        string `json:"index"`
+	IsWriteIndex bool   `json:"is_write_index"`
+}
+
+type OpenSearchProjectionMetadata struct {
+	ClusterUUID  string                           `json:"cluster_uuid"`
+	ReadTarget   string                           `json:"read_target"`
+	WriteAlias   string                           `json:"write_alias"`
+	WriteIndices []OpenSearchProjectionWriteIndex `json:"write_indices"`
 }
 
 // NewOpenSearchWriter 创建OpenSearch写入器
@@ -124,6 +137,74 @@ func (w *OpenSearchWriter) TargetVersion() string {
 		return w.writeTarget
 	}
 	return defaultAlertProjectionTargetVersion
+}
+
+// ProjectionMetadata reads the immutable cluster identity and current alias
+// membership without creating an index, refreshing a target, or changing an
+// alias. A missing alias is returned as an empty write-index list so a shadow
+// plan can remain evidence-bearing while correctly blocking execution.
+func (w *OpenSearchWriter) ProjectionMetadata(ctx context.Context) (OpenSearchProjectionMetadata, error) {
+	w.mu.RLock()
+	if w.closed {
+		w.mu.RUnlock()
+		return OpenSearchProjectionMetadata{}, fmt.Errorf("writer is closed")
+	}
+	readTarget, writeTarget := w.readTarget, w.writeTarget
+	w.mu.RUnlock()
+
+	infoResponse, err := (opensearchapi.InfoRequest{}).Do(ctx, w.client)
+	if err != nil {
+		return OpenSearchProjectionMetadata{}, fmt.Errorf("read OpenSearch projection cluster identity: %w", err)
+	}
+	defer infoResponse.Body.Close()
+	if infoResponse.IsError() {
+		body, _ := io.ReadAll(infoResponse.Body)
+		return OpenSearchProjectionMetadata{}, fmt.Errorf("read OpenSearch projection cluster identity failed: %s %s", infoResponse.Status(), strings.TrimSpace(string(body)))
+	}
+	var info struct {
+		ClusterUUID string `json:"cluster_uuid"`
+	}
+	if err := json.NewDecoder(infoResponse.Body).Decode(&info); err != nil {
+		return OpenSearchProjectionMetadata{}, fmt.Errorf("decode OpenSearch projection cluster identity: %w", err)
+	}
+	if strings.TrimSpace(info.ClusterUUID) == "" {
+		return OpenSearchProjectionMetadata{}, fmt.Errorf("OpenSearch projection cluster UUID is empty")
+	}
+
+	allowNoIndices := true
+	ignoreUnavailable := true
+	aliasResponse, err := (opensearchapi.IndicesGetAliasRequest{
+		Name: []string{writeTarget}, AllowNoIndices: &allowNoIndices, IgnoreUnavailable: &ignoreUnavailable,
+	}).Do(ctx, w.client)
+	if err != nil {
+		return OpenSearchProjectionMetadata{}, fmt.Errorf("read OpenSearch projection write alias: %w", err)
+	}
+	defer aliasResponse.Body.Close()
+	metadata := OpenSearchProjectionMetadata{ClusterUUID: info.ClusterUUID, ReadTarget: readTarget, WriteAlias: writeTarget, WriteIndices: []OpenSearchProjectionWriteIndex{}}
+	if aliasResponse.StatusCode == http.StatusNotFound {
+		return metadata, nil
+	}
+	if aliasResponse.IsError() {
+		body, _ := io.ReadAll(aliasResponse.Body)
+		return OpenSearchProjectionMetadata{}, fmt.Errorf("read OpenSearch projection write alias failed: %s %s", aliasResponse.Status(), strings.TrimSpace(string(body)))
+	}
+	var aliases map[string]struct {
+		Aliases map[string]struct {
+			IsWriteIndex bool `json:"is_write_index"`
+		} `json:"aliases"`
+	}
+	if err := json.NewDecoder(aliasResponse.Body).Decode(&aliases); err != nil {
+		return OpenSearchProjectionMetadata{}, fmt.Errorf("decode OpenSearch projection write alias: %w", err)
+	}
+	for indexName, index := range aliases {
+		alias, exists := index.Aliases[writeTarget]
+		if !exists {
+			continue
+		}
+		metadata.WriteIndices = append(metadata.WriteIndices, OpenSearchProjectionWriteIndex{Index: indexName, IsWriteIndex: alias.IsWriteIndex})
+	}
+	sort.Slice(metadata.WriteIndices, func(i, j int) bool { return metadata.WriteIndices[i].Index < metadata.WriteIndices[j].Index })
+	return metadata, nil
 }
 
 // RefreshProjectionTarget makes acknowledged repair writes visible before the

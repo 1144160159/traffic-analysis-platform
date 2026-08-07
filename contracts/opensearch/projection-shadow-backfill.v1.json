@@ -1,0 +1,123 @@
+{
+  "contract_version": "1.0.0",
+  "remediation_ids": [
+    "T-OS-002",
+    "T-OS-004"
+  ],
+  "work_package": "WP-23-OS",
+  "status": "implementing",
+  "coverage_status": "PARTIAL",
+  "production_applied": false,
+  "production_mutations": [],
+  "authority": "clickhouse",
+  "projection_target": "opensearch",
+  "historical_gap": {
+    "source_count": 1442312,
+    "target_count": 559140,
+    "delta": 883172,
+    "evidence_reference": "doc/02_acceptance/runs/20260805-remediation-dashboard-read-task-v1/manifest.json",
+    "reference_manifest_present_in_candidate": false,
+    "interpretation": "historical observed delta only; not a current executable scope and not closure evidence"
+  },
+  "shadow": {
+    "mode": "READ_ONLY_SHADOW",
+    "command": "go/control-plane/cmd/alert-projection-shadow",
+    "maximum_window_seconds": 3600,
+    "minimum_window_age_seconds": 900,
+    "maximum_documents": 10000,
+    "explicit_single_tenant": true,
+    "wildcards_forbidden": true,
+    "closed_window_required": true,
+    "cluster_uuid_required": true,
+    "exact_read_target_required": true,
+    "exact_write_alias_required": true,
+    "single_write_index_required": true,
+    "source_or_target_truncation": "BLOCKED",
+    "automatic_repair_classes": [
+      "missing",
+      "stale"
+    ],
+    "automatic_delete_extra": false,
+    "read_only_operations": [
+      "clickhouse_projection_select",
+      "opensearch_projection_search",
+      "opensearch_info",
+      "opensearch_get_alias"
+    ],
+    "forbidden_dependencies": [
+      "postgresql",
+      "projection_reconcile_run_store"
+    ],
+    "forbidden_operations": [
+      "opensearch_bulk",
+      "opensearch_refresh",
+      "opensearch_reindex",
+      "opensearch_alias_update",
+      "postgresql_insert",
+      "postgresql_update"
+    ]
+  },
+  "approval_package": {
+    "renderer": "scripts/alignment/render_alert_projection_shadow_approval.py",
+    "maximum_shadow_age_seconds": 900,
+    "execution_authorized": false,
+    "required_candidate_bindings": [
+      "g0_run_id",
+      "g0_candidate_head",
+      "g0_candidate_content_sha256",
+      "g0_manifest_sha256"
+    ],
+    "required_shadow_bindings": [
+      "shadow_file_sha256",
+      "shadow_binding_sha256",
+      "environment_id",
+      "tenant_id",
+      "start_time",
+      "end_time",
+      "cluster_uuid",
+      "read_target",
+      "write_alias",
+      "write_index",
+      "missing_count",
+      "stale_count",
+      "extra_count"
+    ],
+    "required_execution_bindings_before_authorization": [
+      "immutable_tool_image_digest",
+      "sre_approval",
+      "qa_approval",
+      "security_approval",
+      "domain_accountable_approval"
+    ],
+    "all_approvals_default": "PENDING",
+    "proposed_command_is_argv_not_shell": true
+  },
+  "execution_guards": {
+    "repair_command": "alert-projection-reconcile",
+    "repair_mode": "repair",
+    "confirm_repair_required": true,
+    "maximum_documents": 10000,
+    "maximum_repairs_per_second": 50,
+    "stop_error_count": 1,
+    "same_scope_terminal_requery_required": true,
+    "postgresql_watermark_receipt_required": true,
+    "repair_requires_bound_cluster_read_alias_write_alias_and_physical_index": true,
+    "read_alias_switch_in_this_package": false,
+    "legacy_index_retained": true,
+    "extra_documents_never_auto_deleted": true,
+    "observation_windows": [
+      "T+0",
+      "T+1",
+      "T+3",
+      "T+7"
+    ]
+  },
+  "closure_blockers": [
+    "the historical 883172-document gap is not bound to a present immutable source manifest",
+    "a current production read-only shadow manifest has not been captured",
+    "an immutable alert projection tool image has not been built and bound",
+    "SRE, QA, security and domain accountable approvals are absent",
+    "bounded repair, same-scope terminal reconciliation and PostgreSQL watermark receipts have not run in production",
+    "canary, rollback exercise and T+0/T+1/T+3/T+7 observation are incomplete"
+  ]
+}

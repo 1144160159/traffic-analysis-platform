@@ -21,6 +21,32 @@
 
 ## 只读 plan
 
+### 无状态 V2 shadow 与审批包
+
+历史 `--mode plan` 会在 PostgreSQL 写入 reconcile run，因此只能作为有审计副作用的诊断，不能作为严格无变更 shadow。候选新增独立 `alert-projection-shadow`：它只连接 ClickHouse 与 OpenSearch，只调用 SELECT/search/info/get-alias，并把本地 JSON 作为唯一输出；不连接 PostgreSQL，不写索引、不 refresh、不变更 alias。窗口必须是至少稳定 15 分钟的单租户闭区间，最长 1 小时、最多 10,000 条；任一侧截断、集群身份缺失或 write alias 不是唯一 write index 都返回 `BLOCKED`。
+
+```bash
+go run ./cmd/alert-projection-shadow \
+  --tenant <tenant_id> --requested-by <operator_id> \
+  --trace-id <stable_trace_id> --environment-id <candidate_environment_id> \
+  --start <RFC3339> --end <RFC3339> \
+  --read-target alerts-v2-read \
+  --target-write-alias alerts-v2-write \
+  --max-documents 10000 \
+  --output /tmp/<run-id>-shadow.json
+```
+
+只有 `approval_readiness=READY_FOR_BOUNDED_REPAIR_REVIEW`、shadow 未超过 15 分钟、binding SHA 完整且 G0 manifest 与当前 HEAD 一致时，才允许生成审查包。审查包始终保持 `execution_authorized=false`，SRE、QA、安全和领域 Accountable 均默认为 `PENDING`；它不会执行 repair：
+
+```bash
+python scripts/alignment/render_alert_projection_shadow_approval.py \
+  --shadow-manifest /tmp/<run-id>-shadow.json \
+  --g0-manifest doc/02_acceptance/runs/<g0-run-id>/manifest.json \
+  --output /tmp/<run-id>-repair-review.json
+```
+
+历史固定窗口 `ClickHouse=1,442,312 / OpenSearch=559,140 / delta=883,172` 的索引引用在当前候选中缺少对应 manifest；该数字只保留为历史差异，不能直接转成待执行 alert ID 或作为现状已复核证据。必须先在批准的环境重新取得当前 shadow。
+
 CLI 必须指定租户、操作者、精确索引版本和数量上限；时间或业务 ID 至少选一项用于首轮小范围验证。
 
 ```bash
@@ -79,10 +105,14 @@ go run ./cmd/alert-projection-reconcile \
   --mode repair --confirm-repair \
   --tenant <tenant_id> --requested-by <operator_id> \
   --target-index-version <approved_version> \
+  --expected-cluster-uuid <shadow_cluster_uuid> \
+  --expected-read-target alerts-v2-read \
+  --expected-write-alias alerts-v2-write \
+  --expected-write-index <shadow_physical_write_index> \
   --alert-ids <id1,id2> --max-documents 100
 ```
 
-repair 后用相同 scope 再跑 plan，要求 missing/stale 为零；extra 进入人工裁决清单。CLI 的 read target 与 write target 相互独立：legacy plan 读取冻结的精确索引，V2 repair 读取 read alias 并写 write alias；不得通过把两个字符串强行设为同一未批准索引来绕过迁移门禁。
+repair 在连接 PostgreSQL 之前会重新读取 cluster UUID、read target、write alias 和唯一 physical write index；任一值与 shadow 审批绑定不一致即失败关闭。repair 后用相同 scope 再跑 shadow，要求 missing/stale 为零；extra 进入人工裁决清单。CLI 的 read target 与 write target 相互独立：legacy plan 读取冻结的精确索引，V2 repair 读取 read alias 并写 write alias；不得通过把两个字符串强行设为同一未批准索引来绕过迁移门禁。
 
 ## 债务 worker 灰度
 
