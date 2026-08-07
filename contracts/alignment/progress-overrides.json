@@ -141,6 +141,7 @@
         "go/control-plane/internal/alert/api/dashboard_task_v2.go",
         "go/control-plane/internal/alert/api/dashboard_task_v2_integration_test.go",
         "go/control-plane/internal/alert/api/dashboard_task_pipeline.go",
+        "go/control-plane/internal/alert/api/dashboard_task_compensation.go",
         "go/control-plane/internal/alert/api/dashboard_task_http_provider.go",
         "go/control-plane/internal/alert/api/dashboard_task_http_provider_test.go",
         "go/control-plane/cmd/alert-service/main.go",
@@ -149,10 +150,13 @@
         "web/ui/src/pages/DashboardOperationsPage.tsx",
         "deployments/postgres/migrations/202608031620_dashboard_task_v2.sql",
         "deployments/postgres/migrations/202608041930_dashboard_task_execution_pipeline_v1.sql",
+        "deployments/postgres/migrations/202608082100_dashboard_task_compensation_v1.sql",
         "common/sql/pg/11-dashboard-task-v2.sql",
         "common/sql/pg/12-dashboard-task-execution-pipeline-v1.sql",
+        "common/sql/pg/13-dashboard-task-compensation-v1.sql",
         "contracts/events/kafka-topic-catalog.v1.json",
         "contracts/events/kafka-acl-catalog.v1.json",
+        "scripts/alignment/capture_dashboard_task_pipeline.py",
         "doc/07_alignment/runbooks/F-DASHBOARD-002-rollback.md",
         "doc/02_acceptance/runs/20260803-remediation-g0-full-v106/manifest.json#sha256=77446bb055128cb5568c25db0186db40613855acc5f1464f27ca273c4ccfd63c",
         "doc/02_acceptance/runs/20260803-remediation-pg-transaction-outbox-v12/manifest.json#sha256=b0734531bed9e03c3015ea461f7ef3c7b64be30bf9695025e94af12628d17974",
@@ -160,10 +164,12 @@
         "doc/02_acceptance/runs/20260804-remediation-g0-full-dashboard-pipeline-v2/manifest.json#sha256=5dfac73683c08a6837561b7379796d302261bb9575ad9ac5a3af62ad7770398f",
         "doc/02_acceptance/runs/20260804-remediation-dashboard-task-pipeline-v1/manifest.json#sha256=051a3abf9bc88760f9a6e8c76ab6853209807f06c399ef097283bb56c07c0c1d",
         "doc/02_acceptance/runs/20260805-remediation-postgres-migration-version-reconcile-v1/manifest.json#sha256=78d106fb0512afe3c23d3c01b99216056b3f1cd2f7722f60d3e13ae7335b942e",
-        "doc/02_acceptance/runs/20260805-remediation-dashboard-read-task-v1/manifest.json#sha256=4d564f8da753591fa77b733b8a4f1b713a42cda49515db2f9ce8d6f1effc44bc"
+        "doc/02_acceptance/runs/20260805-remediation-dashboard-read-task-v1/manifest.json#sha256=4d564f8da753591fa77b733b8a4f1b713a42cda49515db2f9ce8d6f1effc44bc",
+        "doc/02_acceptance/runs/20260808-remediation-g0-full-v204/manifest.json#sha256=d50c2db0a395a19000166816b4d2d36bf6998cf4b8cec2ae5bc3afe406d7a6fc",
+        "doc/02_acceptance/runs/20260808-remediation-dashboard-task-compensation-g1-v2/manifest.json#sha256=6c40473f88ca36d645e9bb0d0214258879f557a5391a01ca4d06940c8dfd053e"
       ],
-      "blocker": "共享PostgreSQL Schema以及live Kafka topic/ACL均已对账，同一已部署候选和指定Windows Chrome完成真实202任务受理；task、history、request、outbox、audit以同一task/event/trace/revision各一条对账。当前outbox仍为pending，pipeline保持关闭且没有合法外部执行器，execution attempt、receipt和inbox均为0；因此尚未证明Kafka发布消费、重复/乱序/重启/DLQ、真实提供方最终效果或补偿。队列与执行P99、资源预算、canary、在途回滚和T+观察仍未完成，F-DASHBOARD-002保持IMPLEMENTING。",
-      "note": "F-DASHBOARD-002新增真实候选受理证据：Windows Chrome提交dashboard-compliance-task-create后返回稳定task/job 362cd783-623a-4c16-a3e2-8cab7e478bfd、event ed127353-cf76-478e-8c23-51d23da66f6a及trace a3a1fce452f8b6dfab726e2fa6b110a5c，PostgreSQL事务记录逐项一致且审计成功。此切片只证明耐久accepted，不把HTTP 202、pending outbox或未执行任务写成最终成功；真实执行器闭环完成前状态不提升。"
+      "blocker": "历史已部署候选和指定Windows Chrome只证明真实202受理，outbox仍为pending且pipeline关闭。v204同源码的隔离G1新增补偿受理、执行/补偿租约与回执、最终结果outbox、精确重放、跨tenant拒绝和三入口双重migration证据，但该runner未启动真实Kafka broker或批准的外部执行/补偿提供方。真实发布消费、乱序/重启/DLQ、提供方幂等副作用与恢复、同trace跨链对账、队列与执行/补偿P99、资源预算、Windows Chrome补偿控件、canary、在途回滚和T+观察仍未完成，F-DASHBOARD-002保持IMPLEMENTING。",
+      "note": "F-DASHBOARD-002在默认关闭开关下新增耐久补偿合同与实现：只有原执行回执effect_state=confirmed且具有稳定effect ID时才允许补偿；HTTP 2xx不足以写入compensated，连接不确定保持compensation_partial/effect_state=unknown。G0 v204三段PASS，G1 v2八项范围检查PASS且production_applied=false；既有真实202受理证据继续保留，但新切片不冒充G2-G6或最终成功。"
     },
     "F-DATAQUALITY-001": {
       "status": "IMPLEMENTING",

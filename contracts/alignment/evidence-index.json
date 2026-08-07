@@ -1,11 +1,11 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-07T20:53:35Z",
+  "updated_at": "2026-08-07T21:44:22Z",
   "latest_g0": {
-    "run_id": "20260808-remediation-g0-full-v200",
-    "manifest": "doc/02_acceptance/runs/20260808-remediation-g0-full-v200/manifest.json",
-    "manifest_sha256": "0365868c703e1c93b8925d036475cd7f4e88ec8332b816aad411d49cf80de96b",
-    "candidate_source_sha256": "016f280e9c38e61136b1eaa98b6b40d9bbd7f53bcdfc74da9159933280bf6d40",
+    "run_id": "20260808-remediation-g0-full-v204",
+    "manifest": "doc/02_acceptance/runs/20260808-remediation-g0-full-v204/manifest.json",
+    "manifest_sha256": "d50c2db0a395a19000166816b4d2d36bf6998cf4b8cec2ae5bc3afe406d7a6fc",
+    "candidate_source_sha256": "c7fe162814d120c7423d73a8fb7fbd0057f70ed01aae673ff098bcebfa3b6248",
     "status": "PASS",
     "scope": [
       "alignment-test",
@@ -19,6 +19,40 @@
       "G2-G6",
       "G8"
     ]
+  },
+  "latest_dashboard_task_compensation_g1": {
+    "canonical_ids": [
+      "F-DASHBOARD-002",
+      "T-PG-002",
+      "T-KAFKA-001",
+      "T-SCHEMA-001"
+    ],
+    "run_id": "20260808-remediation-dashboard-task-compensation-g1-v2",
+    "manifest": "doc/02_acceptance/runs/20260808-remediation-dashboard-task-compensation-g1-v2/manifest.json",
+    "manifest_sha256": "6c40473f88ca36d645e9bb0d0214258879f557a5391a01ca4d06940c8dfd053e",
+    "candidate_source_sha256": "c7fe162814d120c7423d73a8fb7fbd0057f70ed01aae673ff098bcebfa3b6248",
+    "status": "PARTIAL",
+    "coverage_status": "PARTIAL",
+    "scoped_evidence_status": "PASS",
+    "g0_run_id": "20260808-remediation-g0-full-v204",
+    "g0_manifest_sha256": "d50c2db0a395a19000166816b4d2d36bf6998cf4b8cec2ae5bc3afe406d7a6fc",
+    "candidate_source_stable": true,
+    "production_applied": false,
+    "real_kafka_verified": false,
+    "real_provider_verified": false,
+    "compensation_ui_verified": false,
+    "gate_status": {
+      "G0": "PASS",
+      "G1": "PASS_FOR_REPOSITORY_COMPONENTS_AND_OWNED_EPHEMERAL_POSTGRESQL_LIFECYCLE",
+      "G2": "OPEN_FOR_RELEASE_CANDIDATE_POSTGRESQL_KAFKA_AND_EXECUTOR",
+      "G3": "OPEN_FOR_SAME_TRACE_TASK_EVENT_RECEIPT_AUDIT_AND_PROVIDER_EFFECT_RECONCILIATION",
+      "G4": "OPEN_FOR_QUEUE_LAG_RETRY_EXECUTOR_P99_AND_RESOURCE_BUDGETS",
+      "G5": "OPEN_FOR_CURRENT_CANDIDATE_WINDOWS_CHROME_MOCK_OFF",
+      "G6": "HOLD_FOR_EXPAND_SHADOW_CANARY_ROLLBACK_AND_OBSERVATION",
+      "G7": "OPEN",
+      "G8": "BLOCKED"
+    },
+    "note": "The same-source G0-bound slice proves default-off compensation acceptance, durable PostgreSQL request/attempt/receipt facts, optimistic revision and exact replay, atomic history/audit/outbox updates, confirmed-effect-only compensated state, unknown-effect partial semantics, schema entrypoint double replay, event catalog and ACL consistency. It does not run a real Kafka broker or approved external provider and does not establish G2-G6 or closure."
   },
   "latest_clickhouse_driver_compatibility_g1": {
     "canonical_ids": ["F-ASSET-005", "T-CH-004", "T-OS-004"],
