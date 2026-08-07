@@ -81,6 +81,8 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
         errors.append("repair convergence definition drifted")
     if scope.get("watermark_terminal_receipt") != "compare_source_version_and_authoritative_sha256_in_postgresql_repair_missing_receipts_then_requery":
         errors.append("PostgreSQL watermark terminal receipt guard drifted")
+    if scope.get("cross_service_terminal_receipt") != "same_owned_run_real_opensearch_requery_and_real_postgresql_watermark_requery":
+        errors.append("cross-service terminal receipt guard drifted")
     runtime = contract.get("runtime_guards", {})
     if runtime.get("feature_flag_default_enabled") is not False or runtime.get("production_mutations_in_repository_candidate") != []:
         errors.append("candidate must remain default-off with no production mutation claim")
@@ -149,7 +151,7 @@ def verify(root: Path = ROOT) -> dict[str, Any]:
                   "DoesNotWriteWrongIndexGeneration", "ClassifiesMissingExtraAndStale", "StopsOnTruncationBeforeRepair", "StopsAtRepairErrorThreshold", "FailsReceiptWhenRefreshFails",
                   "DoesNotConvergeWhenAcknowledgedWriteIsNotVisible", "DoesNotConvergeWhenWatermarkWriteFails",
                   "RetriesMissingWatermarkAfterTargetAlreadyConverged", "ProjectionWatermarkMismatchQueryIsBoundedAndVersioned",
-                  "AlertProjectionRepairTerminalReceiptRealOpenSearch"):
+                  "AlertProjectionRepairTerminalReceiptRealOpenSearch", "AlertProjectionRepairRealPostgresAndOpenSearch"):
         if token not in test_text:
             errors.append(f"negative or reconciliation test missing: {token}")
     for token in ("DoNotShadowMillisecondFilterColumns", "legacy-fingerprint"):

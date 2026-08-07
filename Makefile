@@ -586,6 +586,11 @@ alignment-verify-alert-projection-watermark-postgres-g1: ## Verify T-OS-004 wate
 	test -n "$(RUN_ID)"
 	python scripts/alignment/verify_alert_projection_watermark_postgres_ephemeral.py --run-id "$(RUN_ID)" $(if $(OUTPUT),--output "$(OUTPUT)",)
 
+.PHONY: alignment-verify-alert-projection-postgres-opensearch-g1
+alignment-verify-alert-projection-postgres-opensearch-g1: ## Verify T-OS-004 terminal receipts across owned PostgreSQL and OpenSearch (RUN_ID required)
+	test -n "$(RUN_ID)"
+	python scripts/alignment/verify_alert_projection_postgres_opensearch_ephemeral.py --run-id "$(RUN_ID)" $(if $(OUTPUT),--output "$(OUTPUT)",)
+
 .PHONY: alignment-capture-opensearch-projection-reconciliation
 alignment-capture-opensearch-projection-reconciliation: ## Capture repository and read-only pre-canary T-OS-004 evidence (RUN_ID and G0_MANIFEST required)
 	@test -n "$(RUN_ID)" || (echo "RUN_ID is required" && exit 1)
